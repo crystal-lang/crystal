@@ -303,6 +303,9 @@ describe UNIXServer do
       ret.should be_nil
     end
   end
+
+  typeof(UNIXServer.new(Socket::UNIXAddress.new("/tmp/crystal-unix-socket")))
+  typeof(UNIXServer.open(Socket::UNIXAddress.new("/tmp/crystal-unix-socket")) { })
 end
 
 describe UNIXSocket do
@@ -402,6 +405,9 @@ describe UNIXSocket do
       sizes.should contain(left.recv_buffer_size)
     end
   end
+
+  typeof(UNIXSocket.new(Socket::UNIXAddress.new("/tmp/crystal-unix-socket")))
+  typeof(UNIXSocket.open(Socket::UNIXAddress.new("/tmp/crystal-unix-socket")) { })
 end
 
 describe TCPServer do
@@ -437,6 +443,9 @@ describe TCPServer do
       TCPServer.open("::", server.local_address.port, reuse_port: true) { }
     end
   end
+
+  typeof(TCPServer.new(Socket::IPAddress.new("localhost", 123456)))
+  typeof(TCPServer.open(Socket::IPAddress.new("localhost", 123456)) { })
 end
 
 describe TCPSocket do
@@ -548,6 +557,9 @@ describe TCPSocket do
       TCPSocket.new("doesnotexist.example.org.", 0)
     end
   end
+
+  typeof(TCPSocket.new(Socket::IPAddress.new("localhost", 123456)))
+  typeof(TCPSocket.open(Socket::IPAddress.new("localhost", 123456)) { })
 end
 
 describe UDPSocket do
@@ -644,6 +656,9 @@ describe UDPSocket do
     client.send("broadcast").should eq(9)
     client.close
   end
+
+  typeof(UDPSocket.new.connect Socket::IPAddress.new("localhost", 123456))
+  typeof(UDPSocket.new.bind Socket::IPAddress.new("localhost", 123456))
 end
 
 private def free_udp_socket_port

@@ -31,10 +31,25 @@ class UNIXServer < UNIXSocket
   # ```
   # UNIXServer.new("/tmp/dgram.sock", Socket::Type::DGRAM)
   # ```
-  def initialize(@path : String, type : Type = Type::STREAM, backlog = 128)
+  def self.new(path : String, type : Type = Type::STREAM, backlog = 128)
+    new(UNIXAddress.new(path), type, backlog)
+  end
+
+  # Creates a named UNIX socket, listening on a filesystem pathname.
+  #
+  # Always deletes any existing filesystam pathname first, in order to cleanup
+  # any leftover socket file.
+  #
+  # The server is of stream type by default, but this can be changed for
+  # another type. For example datagram messages:
+  # ```
+  # UNIXServer.new("/tmp/dgram.sock", Socket::Type::DGRAM)
+  # ```
+  def initialize(address : UNIXAddress, type : Type = Type::STREAM, backlog = 128)
     super(Family::UNIX, type)
 
-    bind(UNIXAddress.new(path)) do |error|
+    @path = address.path
+    bind(address) do |error|
       close(delete: false)
       raise error
     end
@@ -49,7 +64,7 @@ class UNIXServer < UNIXSocket
   # server socket when the block returns.
   #
   # Returns the value of the block.
-  def self.open(path, type : Type = Type::STREAM, backlog = 128)
+  def self.open(path : String | UNIXAddress, type : Type = Type::STREAM, backlog = 128)
     server = new(path, type, backlog)
     begin
       yield server

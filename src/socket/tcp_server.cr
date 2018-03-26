@@ -28,6 +28,11 @@ class TCPServer < TCPSocket
     super(family)
   end
 
+  # Binds a socket to *address*.
+  def self.new(address : IPAddress, backlog = SOMAXCONN, dns_timeout = nil, reuse_port = false)
+    new(address.address, address.port, backlog, dns_timeout, reuse_port)
+  end
+
   # Binds a socket to the *host* and *port* combination.
   def initialize(host : String, port : Int, backlog = SOMAXCONN, dns_timeout = nil, reuse_port = false)
     Addrinfo.tcp(host, port, timeout: dns_timeout) do |addrinfo|
@@ -57,7 +62,20 @@ class TCPServer < TCPSocket
   # server socket when the block returns.
   #
   # Returns the value of the block.
-  def self.open(host, port, backlog = SOMAXCONN, reuse_port = false)
+  def self.open(address : IPAddress, backlog = SOMAXCONN, reuse_port = false)
+    server = new(address, backlog, reuse_port: reuse_port)
+    begin
+      yield server
+    ensure
+      server.close
+    end
+  end
+
+  # Creates a new TCP server and yields it to the block. Eventually closes the
+  # server socket when the block returns.
+  #
+  # Returns the value of the block.
+  def self.open(host : String, port : Int, backlog = SOMAXCONN, reuse_port = false)
     server = new(host, port, backlog, reuse_port: reuse_port)
     begin
       yield server

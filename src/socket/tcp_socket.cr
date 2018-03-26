@@ -24,7 +24,18 @@ class TCPSocket < IPSocket
   # must be in seconds (integers or floats).
   #
   # Note that `dns_timeout` is currently ignored.
-  def initialize(host, port, dns_timeout = nil, connect_timeout = nil)
+  def self.new(address : IPAddress, dns_timeout = nil, connect_timeout = nil)
+    new(address.address, address.port, dns_timeout, connect_timeout)
+  end
+
+  # Creates a new TCP connection to a remote TCP server.
+  #
+  # You may limit the DNS resolution time with `dns_timeout` and limit the
+  # connection time to the remote server with `connect_timeout`. Both values
+  # must be in seconds (integers or floats).
+  #
+  # Note that `dns_timeout` is currently ignored.
+  def initialize(host : String, port : Int32, dns_timeout = nil, connect_timeout = nil)
     Addrinfo.tcp(host, port, timeout: dns_timeout) do |addrinfo|
       super(addrinfo.family, addrinfo.type, addrinfo.protocol)
       connect(addrinfo, timeout: connect_timeout) do |error|
@@ -46,7 +57,20 @@ class TCPSocket < IPSocket
   # eventually closes the socket when the block returns.
   #
   # Returns the value of the block.
-  def self.open(host, port)
+  def self.open(address : IPAddress)
+    sock = new(address)
+    begin
+      yield sock
+    ensure
+      sock.close
+    end
+  end
+
+  # Opens a TCP socket to a remote TCP server, yields it to the block, then
+  # eventually closes the socket when the block returns.
+  #
+  # Returns the value of the block.
+  def self.open(host : String, port : Int)
     sock = new(host, port)
     begin
       yield sock
