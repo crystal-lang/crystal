@@ -190,6 +190,31 @@ module HTTP
         response.respond_with_error("Bad Request", 400)
         io.to_s.should eq("HTTP/1.1 400 Bad Request\r\nContent-Type: text/plain\r\nTransfer-Encoding: chunked\r\n\r\n10\r\n400 Bad Request\n\r\n")
       end
+
+      it "makes local_address and remote_adress available" do
+        TCPServer.open(0) do |server|
+          TCPSocket.open(server.local_address.address, server.local_address.port) do |client|
+            socket = server.accept
+            response = Response.new(socket)
+            response.local_address.should eq Socket::IPAddress.new("::1", server.local_address.port)
+            response.remote_address.to_s.should eq client.local_address.to_s
+          end
+        end
+
+        path = "/tmp/crystal-unix-server"
+        begin
+          UNIXServer.open(path) do |server|
+            UNIXSocket.open(server.local_address.path) do |client|
+              socket = server.accept
+              response = Response.new(socket)
+              response.local_address.should eq server.local_address
+              response.remote_address.should eq client.local_address
+            end
+          end
+        ensure
+          File.delete(path) if File.exists?(path)
+        end
+      end
     end
   end
 
