@@ -1651,7 +1651,7 @@ describe "String" do
   end
 
   it "escapes chars" do
-    "\a"[0].should eq('\a')
+    "\a"[0].should eq(7.chr) #TODO: use \a
     "\b"[0].should eq('\b')
     "\t"[0].should eq('\t')
     "\n"[0].should eq('\n')
