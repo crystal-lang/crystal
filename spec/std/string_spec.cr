@@ -2285,34 +2285,37 @@ describe "String" do
       end
     end
 
-    it "raises if illegal byte sequence" do
-      expect_raises ArgumentError, "Invalid multibyte sequence" do
-        "ñ".encode("GB2312")
+    # Musl does not support GB2312 encoding.
+    {% unless flag?(:musl) %}
+      it "raises if illegal byte sequence" do
+        expect_raises ArgumentError, "Invalid multibyte sequence" do
+          "ñ".encode("GB2312")
+        end
       end
-    end
 
-    it "doesn't raise on invalid byte sequence" do
-      "好ñ是".encode("GB2312", invalid: :skip).to_a.should eq([186, 195, 202, 199])
-    end
-
-    it "raises if incomplete byte sequence" do
-      expect_raises ArgumentError, "Incomplete multibyte sequence" do
-        "好".byte_slice(0, 1).encode("GB2312")
+      it "doesn't raise on invalid byte sequence" do
+        "好ñ是".encode("GB2312", invalid: :skip).to_a.should eq([186, 195, 202, 199])
       end
-    end
 
-    it "doesn't raise if incomplete byte sequence" do
-      ("好".byte_slice(0, 1) + "是").encode("GB2312", invalid: :skip).to_a.should eq([202, 199])
-    end
+      it "raises if incomplete byte sequence" do
+        expect_raises ArgumentError, "Incomplete multibyte sequence" do
+          "好".byte_slice(0, 1).encode("GB2312")
+        end
+      end
+
+      it "doesn't raise if incomplete byte sequence" do
+        ("好".byte_slice(0, 1) + "是").encode("GB2312", invalid: :skip).to_a.should eq([202, 199])
+      end
+
+      it "decodes with skip" do
+        bytes = Bytes[186, 195, 140, 202, 199]
+        String.new(bytes, "GB2312", invalid: :skip).should eq("好是")
+      end
+    {% end %}
 
     it "decodes" do
       bytes = "Hello".encode("UTF-16LE")
       String.new(bytes, "UTF-16LE").should eq("Hello")
-    end
-
-    it "decodes with skip" do
-      bytes = Bytes[186, 195, 140, 202, 199]
-      String.new(bytes, "GB2312", invalid: :skip).should eq("好是")
     end
   end
 

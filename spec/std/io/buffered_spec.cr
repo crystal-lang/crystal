@@ -374,15 +374,18 @@ describe "IO::Buffered" do
         end
       end
 
-      it "gets big GB2312 string" do
-        str = ("你好我是人\n" * 1000).encode("GB2312")
-        base_io = IO::Memory.new(str)
-        io = BufferedWrapper.new(base_io)
-        io.set_encoding("GB2312")
-        1000.times do
-          io.gets(chomp: false).should eq("你好我是人\n")
+      # Musl does not support GB2312 encoding.
+      {% unless flag?(:musl) %}
+        it "gets big GB2312 string" do
+          str = ("你好我是人\n" * 1000).encode("GB2312")
+          base_io = IO::Memory.new(str)
+          io = BufferedWrapper.new(base_io)
+          io.set_encoding("GB2312")
+          1000.times do
+            io.gets(chomp: false).should eq("你好我是人\n")
+          end
         end
-      end
+      {% end %}
 
       it "reads char" do
         str = "x\nHello world" + ("1234567890" * 1000)

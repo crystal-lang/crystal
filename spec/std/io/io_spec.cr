@@ -550,16 +550,19 @@ describe IO do
         end
       end
 
-      it "gets big GB2312 string" do
-        2.times do
-          str = ("你好我是人\n" * 1000).encode("GB2312")
-          io = SimpleIOMemory.new(str)
-          io.set_encoding("GB2312")
-          1000.times do
-            io.gets.should eq("你好我是人")
+      # Musl does not support GB2312 encoding.
+      {% unless flag?(:musl) %}
+        it "gets big GB2312 string" do
+          2.times do
+            str = ("你好我是人\n" * 1000).encode("GB2312")
+            io = SimpleIOMemory.new(str)
+            io.set_encoding("GB2312")
+            1000.times do
+              io.gets.should eq("你好我是人")
+            end
           end
         end
-      end
+      {% end %}
 
       it "does gets on unicode with char and limit without off-by-one" do
         io = SimpleIOMemory.new("test\nabc".encode("UCS-2LE"))
@@ -635,51 +638,54 @@ describe IO do
         io.read_utf8_byte.should be_nil
       end
 
-      it "reads utf8" do
-        io = IO::Memory.new("你".encode("GB2312"))
-        io.set_encoding("GB2312")
+      # Musl does not support GB2312 encoding.
+      {% unless flag?(:musl) %}
+        it "reads utf8" do
+          io = IO::Memory.new("你".encode("GB2312"))
+          io.set_encoding("GB2312")
 
-        buffer = uninitialized UInt8[1024]
-        bytes_read = io.read_utf8(buffer.to_slice) # => 3
-        bytes_read.should eq(3)
-        buffer.to_slice[0, bytes_read].to_a.should eq("你".bytes)
-      end
-
-      it "raises on incomplete byte sequence" do
-        io = SimpleIOMemory.new("好".byte_slice(0, 1))
-        io.set_encoding("GB2312")
-        expect_raises ArgumentError, "Incomplete multibyte sequence" do
-          io.read_char
+          buffer = uninitialized UInt8[1024]
+          bytes_read = io.read_utf8(buffer.to_slice) # => 3
+          bytes_read.should eq(3)
+          buffer.to_slice[0, bytes_read].to_a.should eq("你".bytes)
         end
-      end
 
-      it "says invalid byte sequence" do
-        io = SimpleIOMemory.new(Slice.new(1, 140_u8))
-        io.set_encoding("GB2312")
-        expect_raises ArgumentError, "Invalid multibyte sequence" do
-          io.read_char
+        it "raises on incomplete byte sequence" do
+          io = SimpleIOMemory.new("好".byte_slice(0, 1))
+          io.set_encoding("GB2312")
+          expect_raises ArgumentError, "Incomplete multibyte sequence" do
+            io.read_char
+          end
         end
-      end
 
-      it "skips invalid byte sequences" do
-        string = String.build do |str|
-          str.write "好".encode("GB2312")
-          str.write_byte 140_u8
-          str.write "是".encode("GB2312")
+        it "says invalid byte sequence" do
+          io = SimpleIOMemory.new(Slice.new(1, 140_u8))
+          io.set_encoding("GB2312")
+          expect_raises ArgumentError, "Invalid multibyte sequence" do
+            io.read_char
+          end
         end
-        io = SimpleIOMemory.new(string)
-        io.set_encoding("GB2312", invalid: :skip)
-        io.read_char.should eq('好')
-        io.read_char.should eq('是')
-        io.read_char.should be_nil
-      end
 
-      it "says invalid 'invalid' option" do
-        io = SimpleIOMemory.new
-        expect_raises ArgumentError, "Valid values for `invalid` option are `nil` and `:skip`, not :foo" do
-          io.set_encoding("GB2312", invalid: :foo)
+        it "skips invalid byte sequences" do
+          string = String.build do |str|
+            str.write "好".encode("GB2312")
+            str.write_byte 140_u8
+            str.write "是".encode("GB2312")
+          end
+          io = SimpleIOMemory.new(string)
+          io.set_encoding("GB2312", invalid: :skip)
+          io.read_char.should eq('好')
+          io.read_char.should eq('是')
+          io.read_char.should be_nil
         end
-      end
+
+        it "says invalid 'invalid' option" do
+          io = SimpleIOMemory.new
+          expect_raises ArgumentError, "Valid values for `invalid` option are `nil` and `:skip`, not :foo" do
+            io.set_encoding("GB2312", invalid: :foo)
+          end
+        end
+      {% end %}
 
       it "says invalid encoding" do
         io = SimpleIOMemory.new("foo")
@@ -803,28 +809,31 @@ describe IO do
         slice.should eq("hi-123-45.67".encode("UCS-2LE"))
       end
 
-      it "raises on invalid byte sequence" do
-        io = SimpleIOMemory.new
-        io.set_encoding("GB2312")
-        expect_raises ArgumentError, "Invalid multibyte sequence" do
+      # Musl does not support GB2312 encoding.
+      {% unless flag?(:musl) %}
+        it "raises on invalid byte sequence" do
+          io = SimpleIOMemory.new
+          io.set_encoding("GB2312")
+          expect_raises ArgumentError, "Invalid multibyte sequence" do
+            io.print "ñ"
+          end
+        end
+
+        it "skips on invalid byte sequence" do
+          io = SimpleIOMemory.new
+          io.set_encoding("GB2312", invalid: :skip)
           io.print "ñ"
+          io.print "foo"
         end
-      end
 
-      it "skips on invalid byte sequence" do
-        io = SimpleIOMemory.new
-        io.set_encoding("GB2312", invalid: :skip)
-        io.print "ñ"
-        io.print "foo"
-      end
-
-      it "raises on incomplete byte sequence" do
-        io = SimpleIOMemory.new
-        io.set_encoding("GB2312")
-        expect_raises ArgumentError, "Incomplete multibyte sequence" do
-          io.print "好".byte_slice(0, 1)
+        it "raises on incomplete byte sequence" do
+          io = SimpleIOMemory.new
+          io.set_encoding("GB2312")
+          expect_raises ArgumentError, "Incomplete multibyte sequence" do
+            io.print "好".byte_slice(0, 1)
+          end
         end
-      end
+      {% end %}
 
       it "says invalid encoding" do
         io = SimpleIOMemory.new
