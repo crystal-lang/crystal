@@ -507,13 +507,13 @@ module Crystal::Playground
 
       host = @host
       if host
-        server.bind host, @port
+        address = server.bind_tcp host, @port
       else
-        server.bind @port
-        host = "localhost"
+        address = server.bind_tcp @port
       end
+      @port = address.port
 
-      puts "Listening on http://#{host}:#{@port}"
+      puts "Listening on http://#{address}"
       if host == "0.0.0.0"
         puts "WARNING running playground with 0.0.0.0 is unsecure."
       end

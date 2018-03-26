@@ -123,28 +123,26 @@ class HTTP::Server
     @processor = RequestProcessor.new(handler)
   end
 
-  # Creates a `TCPServer` and adds it as a socket, returning the local address
+  # Creates a `TCPServer` listenting on `host:port` and adds it as a socket, returning the local address
   # and port the server listens on.
   #
-  # If *port* is `0`, a random, free port will be chosen.
-  #
-  # You may set *reuse_port* to `true` to enable the `SO_REUSEPORT` socket option,
+  # If *reuse_port* is `true`, it enables the `SO_REUSEPORT` socket option,
   # which allows multiple processes to bind to the same port.
-  def bind(host : String, port : Int32, reuse_port : Bool = false) : Socket::IPAddress
+  def bind_tcp(host : String, port : Int32, reuse_port : Bool = false) : Socket::IPAddress
     tcp_server = TCPServer.new(host, port, reuse_port: reuse_port)
+
     bind(tcp_server)
+
     tcp_server.local_address
   end
 
-  # Creates a `TCPServer` listenting on `127.0.0.1` and adds it as a socket,
+  # Creates a `TCPServer` listenting on `127.0.0.1:port` and adds it as a socket,
   # returning the local address and port the server listens on.
   #
-  # If *port* is `0`, a random, free port will be chosen.
-  #
-  # You may set *reuse_port* to true to enable the `SO_REUSEPORT` socket option,
+  # If *reuse_port* is `true`, it enables the `SO_REUSEPORT` socket option,
   # which allows multiple processes to bind to the same port.
-  def bind(port : Int32, reuse_port : Bool = false) : Socket::IPAddress
-    bind "127.0.0.1", port, reuse_port
+  def bind_tcp(port : Int32, reuse_port : Bool = false) : Socket::IPAddress
+    bind_tcp "127.0.0.1", port, reuse_port
   end
 
   # Creates a `TCPServer` listening on an unused port and adds it as a socket.
@@ -156,7 +154,7 @@ class HTTP::Server
   # server.bind_unused_port # => Socket::IPAddress.new("127.0.0.1", 12345)
   # ```
   def bind_unused_port(host : String = "127.0.0.1", reuse_port : Bool = false) : Socket::IPAddress
-    bind host, 0, reuse_port
+    bind_tcp host, 0, reuse_port
   end
 
   # Adds a `Socket::Server` *socket* to this server.
@@ -164,6 +162,26 @@ class HTTP::Server
     @sockets << socket
 
     socket
+  end
+
+  # Creates a `TCPServer` listenting on `127.0.0.1:port`, adds it as a socket
+  # and starts the server. Blocks until the server is closed.
+  #
+  # See `#bind(port : Int32)` for details.
+  def listen(port : Int32, reuse_port : Bool = false)
+    bind_tcp(port, reuse_port)
+
+    listen
+  end
+
+  # Creates a `TCPServer` listenting on `host:port`, adds it as a socket
+  # and starts the server. Blocks until the server is closed.
+  #
+  # See `#bind(host : String, port : Int32)` for details.
+  def listen(host : String, port : Int32, reuse_port : Bool = false)
+    bind_tcp(host, port, reuse_port)
+
+    listen
   end
 
   # Starts the server. Blocks until the server is closed.

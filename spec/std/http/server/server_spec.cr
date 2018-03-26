@@ -200,7 +200,7 @@ module HTTP
       address.port.should_not eq(0)
 
       server = Server.new { |ctx| }
-      port = server.bind(0).port
+      port = server.bind_tcp(0).port
       port.should_not eq(0)
     end
 
@@ -221,7 +221,7 @@ module HTTP
       address = s1.bind_unused_port(reuse_port: true)
 
       s2 = Server.new { |ctx| }
-      s2.bind(address.port, reuse_port: true)
+      s2.bind_tcp(address.port, reuse_port: true)
 
       s1.close
       s2.close
@@ -331,7 +331,7 @@ module HTTP
   typeof(begin
     # Initialize with custom host
     server = Server.new { |ctx| }
-    server.bind "0.0.0.0", 0
+    server.bind_tcp "0.0.0.0", 0
     server.listen
     server.close
 
@@ -342,18 +342,18 @@ module HTTP
       StaticFileHandler.new("."),
     ]
     )
-    server.bind "0.0.0.0", 0
+    server.bind_tcp "0.0.0.0", 0
     server.listen
     server.close
 
     server = Server.new([StaticFileHandler.new(".")]) { |ctx| }
-    server.bind "0.0.0.0", 0
+    server.bind_tcp "0.0.0.0", 0
     server.listen
     server.close
 
     # Initialize with default host
     server = Server.new { |ctx| }
-    server.bind 0
+    server.bind_tcp 0
     server.listen
     server.close
 
@@ -364,12 +364,12 @@ module HTTP
       StaticFileHandler.new("."),
     ]
     )
-    server.bind 0
+    server.bind_tcp 0
     server.listen
     server.close
 
     server = Server.new([StaticFileHandler.new(".")]) { |ctx| }
-    server.bind 0
+    server.bind_tcp 0
     server.listen
     server.close
   end)
