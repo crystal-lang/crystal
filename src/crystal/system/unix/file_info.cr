@@ -40,10 +40,10 @@ struct Crystal::System::FileInfo < ::File::Info
 
   def modification_time : ::Time
     {% if flag?(:darwin) %}
-        ::Time.new(@stat.st_mtimespec, ::Time::Location::UTC)
-      {% else %}
-        ::Time.new(@stat.st_mtim, ::Time::Location::UTC)
-      {% end %}
+      ::Time.new(@stat.st_mtimespec, ::Time::Location::UTC)
+    {% else %}
+      ::Time.new(@stat.st_mtim, ::Time::Location::UTC)
+    {% end %}
   end
 
   def owner : UInt32
