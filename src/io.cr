@@ -7,7 +7,7 @@ require "c/errno"
 # The `IO` class is the basis for all input and output in Crystal.
 #
 # This class is inherited by types like `File`, `Socket` and `IO::Memory` and
-# provide many useful methods for reading from and writing to an IO, like `print`, `puts`,
+# provides many useful methods for reading from and writing to an IO, like `print`, `puts`,
 # `gets` and `printf`.
 #
 # The only requirement for a type including the `IO` module is to define
