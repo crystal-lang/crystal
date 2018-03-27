@@ -22,6 +22,51 @@ describe "Logger" do
     end
   end
 
+  it "logs components selectively" do
+    IO.pipe do |r, w|
+      logger = Logger.new(w)
+      logger.set_level Logger::ERROR
+      logger.set_level Logger::WARN, "Foo::Bar"
+      logger.warn "root:warn"
+      logger.warn "foo:warn", "Foo"
+      logger.warn "foobar:warn", "Foo::Bar"
+      logger.warn "fooquux:warn", "Foo::Quux"
+      logger.warn "foobarbaz:warn", "Foo::Bar::Baz"
+
+      r.gets.should match(/foobar:warn/)
+      r.gets.should match(/foobarbaz:warn/)
+
+      logger.set_level Logger::DEBUG, "Foo"
+      logger.debug "root:debug"
+      logger.debug "foo:debug", "Foo"
+      logger.debug "foobar:debug", "Foo::Bar"
+      logger.debug "foobarbaz:debug", "Foo::Bar::Baz"
+      logger.debug "fooquux:debug", "Foo::Quux"
+
+      r.gets.should match(/foo:debug/)
+      r.gets.should match(/fooquux:debug/)
+
+      logger.unset_level "Foo::Bar"
+      logger.debug "foobar:debug", "Foo::Bar"
+      logger.debug "foobarbaz:debug", "Foo::Bar::Baz"
+
+      r.gets.should match(/foobar:debug/)
+      r.gets.should match(/foobarbaz:debug/)
+    end
+  end
+
+  it "converts SILENT to UNKNOWN" do
+    IO.pipe do |r, w|
+      logger = Logger.new(w)
+      logger.level = Logger::SILENT
+      logger.log(Logger::SILENT, "skip")
+      logger.level = Logger::UNKNOWN
+      logger.log(Logger::SILENT, "show")
+
+      r.gets.should match(/ANY.*show/)
+    end
+  end
+
   it "logs any object" do
     IO.pipe do |r, w|
       logger = Logger.new(w)
@@ -31,25 +76,25 @@ describe "Logger" do
     end
   end
 
-  it "formats message" do
-    IO.pipe do |r, w|
-      logger = Logger.new(w)
-      logger.progname = "crystal"
-      logger.warn "message"
+  it "uses adapters" do
+    IO.pipe do |r1, w1|
+      IO.pipe do |r2, w2|
+        adapter1 = Logger::IOAdapter.new(w1)
+        adapter2 = Logger::IOAdapter.new(w2)
+        logger = Logger.new(adapter1)
+        logger.info "one"
+        logger.adapters << adapter2
+        logger.info "two"
+        logger.adapters.clear
+        logger.info "three"
+        logger.adapters << adapter1
+        logger.info "four"
 
-      r.gets(chomp: false).should match(/W, \[.+? #\d+\]  WARN -- crystal: message\n/)
-    end
-  end
-
-  it "uses custom formatter" do
-    IO.pipe do |r, w|
-      logger = Logger.new(w)
-      logger.formatter = Logger::Formatter.new do |severity, datetime, progname, message, io|
-        io << severity.to_s[0] << ' ' << progname << ": " << message
+        r1.gets.should match(/one/)
+        r1.gets.should match(/two/)
+        r1.gets.should match(/four/)
+        r2.gets.should match(/two/)
       end
-      logger.warn "message", "prog"
-
-      r.gets(chomp: false).should eq("W prog: message\n")
     end
   end
 
@@ -85,12 +130,5 @@ describe "Logger" do
     logger = Logger.new(nil)
     logger.info { a = 1 }
     a.should eq(0)
-  end
-
-  it "closes" do
-    IO.pipe do |r, w|
-      Logger.new(w).close
-      w.closed?.should be_true
-    end
   end
 end
