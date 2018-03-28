@@ -198,8 +198,8 @@ module Crystal
       # If they have different number of arguments, splat index or presence of
       # double splat, no override.
       if args.size != other.args.size ||
-         splat_index != other.splat_index ||
-         !!double_splat != other.double_splat
+          splat_index != other.splat_index ||
+          !!double_splat != !!other.double_splat
         return false
       end
 
