@@ -199,7 +199,7 @@ struct XML::Node
     object_id.to_s(16, io)
 
     if text?
-      io << " "
+      io << ' '
       content.inspect(io)
     else
       unless document?
@@ -225,7 +225,7 @@ struct XML::Node
       end
     end
 
-    io << ">"
+    io << '>'
     io
   end
 

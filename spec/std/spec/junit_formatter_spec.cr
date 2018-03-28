@@ -100,7 +100,7 @@ describe "JUnit Formatter" do
     name.should eq("Something happened")
 
     backtrace = xml.xpath_string("string(//testsuite/testcase[1]/failure/text())")
-    backtrace.should eq(cause.backtrace.join("\n"))
+    backtrace.should eq(cause.backtrace.join('\n'))
   end
 
   it "report error stacktrace if present" do
@@ -115,7 +115,7 @@ describe "JUnit Formatter" do
     name.should eq("Something happened")
 
     backtrace = xml.xpath_string("string(//testsuite/testcase[1]/error/text())")
-    backtrace.should eq(cause.backtrace.join("\n"))
+    backtrace.should eq(cause.backtrace.join('\n'))
   end
 end
 

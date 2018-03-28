@@ -51,7 +51,7 @@ hash_items = String.build do |io|
     entry[:key].inspect(io)
     io << " => "
     entry[:zones].inspect(io)
-    io << ", # " << entry[:tzdata_name] << "\n"
+    io << ", # " << entry[:tzdata_name] << '\n'
   end
 end
 

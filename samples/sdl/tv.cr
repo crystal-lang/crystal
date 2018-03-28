@@ -87,7 +87,7 @@ end
 
 def parse_rectangles
   rects = [] of Rectangle
-  lines = File.read("#{__DIR__}/tv.txt").split("\n").map { |line| line.rstrip }
+  lines = File.read("#{__DIR__}/tv.txt").split('\n').map { |line| line.rstrip }
   lines.each_with_index do |line, y|
     x = 0
     line.each_char do |c|

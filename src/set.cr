@@ -353,7 +353,7 @@ struct Set(T)
   def to_s(io)
     io << "Set{"
     join ", ", io, &.inspect(io)
-    io << "}"
+    io << '}'
   end
 
   # Returns `true` if the set is a subset of the *other* set.

@@ -37,13 +37,13 @@ class SemanticVersion
   end
 
   def to_s(io : IO)
-    io << major << "." << minor << "." << patch
+    io << major << '.' << minor << '.' << patch
     unless prerelease.identifiers.empty?
-      io << "-"
+      io << '-'
       prerelease.to_s io
     end
     if build
-      io << "+" << build
+      io << '+' << build
     end
   end
 

@@ -227,7 +227,7 @@ struct HTTP::Headers
         values.inspect(io)
       end
     end
-    io << "}"
+    io << '}'
   end
 
   def inspect(io : IO)

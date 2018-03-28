@@ -320,7 +320,7 @@ struct Pointer(T)
   def to_s(io : IO)
     io << "Pointer("
     io << T.to_s
-    io << ")"
+    io << ')'
     if address == 0
       io << ".null"
     else

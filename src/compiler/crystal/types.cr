@@ -1465,7 +1465,7 @@ module Crystal
     end
 
     def to_s_with_options(io : IO, skip_union_parens : Bool = false, generic_args : Bool = true, codegen = false)
-      io << "*" << @splatted_type
+      io << '*' << @splatted_type
     end
   end
 
@@ -1510,9 +1510,9 @@ module Crystal
     def to_s_with_options(io : IO, skip_union_parens : Bool = false, generic_args : Bool = true, codegen = false)
       super
       if generic_args
-        io << "("
+        io << '('
         type_vars.join(", ", io, &.to_s(io))
-        io << ")"
+        io << ')'
       end
     end
   end
@@ -1570,9 +1570,9 @@ module Crystal
     def to_s_with_options(io : IO, skip_union_parens : Bool = false, generic_args : Bool = true, codegen = false)
       super
       if generic_args
-        io << "("
+        io << '('
         type_vars.join(", ", io, &.to_s(io))
-        io << ")"
+        io << ')'
       end
     end
   end
@@ -1696,7 +1696,7 @@ module Crystal
 
     def to_s_with_options(io : IO, skip_union_parens : Bool = false, generic_args : Bool = true, codegen = false)
       generic_type.append_full_name(io)
-      io << "("
+      io << '('
       type_vars.each_value.with_index do |type_var, i|
         io << ", " if i > 0
         if type_var.is_a?(Var)
@@ -1715,7 +1715,7 @@ module Crystal
           type_var.to_s(io)
         end
       end
-      io << ")"
+      io << ')'
     end
   end
 
@@ -2006,7 +2006,7 @@ module Crystal
       return_type = self.return_type
       return_type = return_type.devirtualize unless codegen
       return_type.to_s_with_options(io, codegen: codegen)
-      io << ")"
+      io << ')'
     end
   end
 
@@ -2115,7 +2115,7 @@ module Crystal
         tuple_type = tuple_type.devirtualize unless codegen
         tuple_type.to_s_with_options(io, skip_union_parens: true, codegen: codegen)
       end
-      io << ")"
+      io << ')'
     end
 
     def type_desc
@@ -2235,7 +2235,7 @@ module Crystal
         entry_type = entry_type.devirtualize unless codegen
         entry_type.to_s_with_options(io, skip_union_parens: true, codegen: codegen)
       end
-      io << ")"
+      io << ')'
     end
 
     def type_desc
@@ -2731,7 +2731,7 @@ module Crystal
     end
 
     def to_s_with_options(io : IO, skip_union_parens : Bool = false, generic_args : Bool = true, codegen = false)
-      io << "(" unless skip_union_parens
+      io << '(' unless skip_union_parens
       union_types = @union_types
       # Make sure to put Nil at the end
       if nil_type_index = @union_types.index(&.nil_type?)
@@ -2742,7 +2742,7 @@ module Crystal
         type = type.devirtualize unless codegen
         type.to_s_with_options(io, codegen: codegen)
       end
-      io << ")" unless skip_union_parens
+      io << ')' unless skip_union_parens
     end
 
     def type_desc
@@ -2961,7 +2961,7 @@ module Crystal
 
     def to_s_with_options(io : IO, skip_union_parens : Bool = false, generic_args : Bool = true, codegen = false)
       base_type.to_s(io)
-      io << "+"
+      io << '+'
     end
 
     def name

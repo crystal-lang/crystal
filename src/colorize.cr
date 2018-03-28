@@ -160,14 +160,14 @@ struct Colorize::Object(T)
   private BACK_LIGHT_CYAN    = "106"
   private BACK_WHITE         = "107"
 
-  private MODE_DEFAULT   = "0"
-  private MODE_BOLD      = "1"
-  private MODE_BRIGHT    = "1"
-  private MODE_DIM       = "2"
-  private MODE_UNDERLINE = "4"
-  private MODE_BLINK     = "5"
-  private MODE_REVERSE   = "7"
-  private MODE_HIDDEN    = "8"
+  private MODE_DEFAULT   = '0'
+  private MODE_BOLD      = '1'
+  private MODE_BRIGHT    = '1'
+  private MODE_DIM       = '2'
+  private MODE_UNDERLINE = '4'
+  private MODE_BLINK     = '5'
+  private MODE_REVERSE   = '7'
+  private MODE_HIDDEN    = '8'
 
   private MODE_BOLD_FLAG      =  1
   private MODE_BRIGHT_FLAG    =  1
@@ -304,13 +304,13 @@ struct Colorize::Object(T)
       end
 
       unless fore_is_default
-        io << ";" if printed
+        io << ';' if printed
         io << @fore
         printed = true
       end
 
       unless back_is_default
-        io << ";" if printed
+        io << ';' if printed
         io << @back
         printed = true
       end
@@ -319,14 +319,14 @@ struct Colorize::Object(T)
         # Can't reuse MODES constant because it has bold/bright duplicated
         {% for name in %w(bold dim underline blink reverse hidden) %}
           if @mode.bits_set? MODE_{{name.upcase.id}}_FLAG
-            io << ";" if printed
+            io << ';' if printed
             io << MODE_{{name.upcase.id}}
             printed = true
           end
         {% end %}
       end
 
-      io << "m"
+      io << 'm'
 
       true
     end

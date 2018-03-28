@@ -2,7 +2,7 @@ require "spec"
 require "http"
 
 private def parse(delim, data, *, gsub = true)
-  data_io = IO::Memory.new(gsub ? data.gsub("\n", "\r\n") : data)
+  data_io = IO::Memory.new(gsub ? data.gsub('\n', "\r\n") : data)
   parser = HTTP::Multipart::Parser.new(data_io, delim)
 
   parsed = [] of {headers: HTTP::Headers, body: String}
@@ -89,7 +89,7 @@ describe HTTP::Multipart::Parser do
       Foo
       --AaB03x--
       MULTIPART
-    parser = HTTP::Multipart::Parser.new(IO::Memory.new(input.gsub("\n", "\r\n")), "AaB03x")
+    parser = HTTP::Multipart::Parser.new(IO::Memory.new(input.gsub('\n', "\r\n")), "AaB03x")
 
     parser.next { }
     parser.has_next?.should eq(false)
@@ -126,7 +126,7 @@ describe HTTP::Multipart::Parser do
       --b--
       MULTIPART
 
-    parser = HTTP::Multipart::Parser.new(IO::Memory.new(input.gsub("\n", "\r\n")), "b")
+    parser = HTTP::Multipart::Parser.new(IO::Memory.new(input.gsub('\n', "\r\n")), "b")
 
     ios = [] of IO
 

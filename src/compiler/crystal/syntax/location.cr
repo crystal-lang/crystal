@@ -45,7 +45,7 @@ class Crystal::Location
   end
 
   def to_s(io)
-    io << filename << ":" << line_number << ":" << column_number
+    io << filename << ':' << line_number << ':' << column_number
   end
 
   def pretty_print(pp)

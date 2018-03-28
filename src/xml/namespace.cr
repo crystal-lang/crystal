@@ -33,7 +33,7 @@ struct XML::Namespace
       href.inspect(io)
     end
 
-    io << ">"
+    io << '>'
     io
   end
 

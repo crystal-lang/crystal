@@ -264,7 +264,7 @@ module Crystal
         name = String.build do |str|
           str << "new"
           named_args.each do |named_arg|
-            str << ":"
+            str << ':'
             str << named_arg
             def_args << Arg.new(named_arg)
             i += 1

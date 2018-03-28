@@ -90,7 +90,7 @@ class PrettyPrint
     if group.break?
       flush
       @output << @newline
-      @indent.times { @output << " " }
+      @indent.times { @output << ' ' }
       @output_width = @indent
       @buffer_width = 0
     else
@@ -227,7 +227,7 @@ class PrettyPrint
       @group.breakables.shift
       if @group.break?
         out << @pp.newline
-        @indent.times { out << " " }
+        @indent.times { out << ' ' }
         @indent
       else
         @pp.group_queue.delete @group if @group.breakables.empty?

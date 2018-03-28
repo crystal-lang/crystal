@@ -160,7 +160,7 @@ class JSON::Builder
     start_scalar
     @current_indent += 1
     @state.push ArrayState.new(empty: true)
-    @io << "["
+    @io << '['
   end
 
   # Writes the end of an array.
@@ -172,7 +172,7 @@ class JSON::Builder
       raise JSON::Error.new("Can't do end_array: not inside an array")
     end
     write_indent state
-    @io << "]"
+    @io << ']'
     @current_indent -= 1
     end_scalar
   end
@@ -189,7 +189,7 @@ class JSON::Builder
     start_scalar
     @current_indent += 1
     @state.push ObjectState.new(empty: true, name: true)
-    @io << "{"
+    @io << '{'
   end
 
   # Writes the end of an object.
@@ -204,7 +204,7 @@ class JSON::Builder
       raise JSON::Error.new("Can't do end_object: not inside an object")
     end
     write_indent state
-    @io << "}"
+    @io << '}'
     @current_indent -= 1
     end_scalar
   end
@@ -312,16 +312,16 @@ class JSON::Builder
   end
 
   private def comma
-    @io << ","
+    @io << ','
   end
 
   private def colon
-    @io << ":"
-    @io << " " if @indent
+    @io << ':'
+    @io << ' ' if @indent
   end
 
   private def newline
-    @io << "\n"
+    @io << '\n'
   end
 
   private def write_indent
