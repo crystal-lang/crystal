@@ -56,11 +56,11 @@ module Crystal
         1
       end
 
-    AtExitHandlers.run status
-    ex.inspect_with_backtrace STDERR if ex
+    AtExitHandlers.exception = ex if ex
+
+    status = AtExitHandlers.run status
     STDOUT.flush
     STDERR.flush
-
     restore_blocking_state
 
     status

@@ -125,22 +125,40 @@ end
 module AtExitHandlers
   @@running = false
 
+  class_property exception : Exception?
+
+  private class_getter(handlers) { [] of Int32 -> }
+
   def self.add(handler)
-    handlers = @@handlers ||= [] of Int32 ->
+    raise "Cannot use at_exit from an at_exit handler" if @@running
+
     handlers << handler
   end
 
   def self.run(status)
-    return if @@running
     @@running = true
 
-    @@handlers.try &.reverse_each do |handler|
-      begin
-        handler.call status
-      rescue handler_ex
-        STDERR.puts "Error running at_exit handler: #{handler_ex}"
+    if handlers = @@handlers
+      # Run the registered handlers in reverse order
+      while handler = handlers.pop?
+        begin
+          handler.call status
+        rescue handler_ex
+          STDERR.puts "Error running at_exit handler: #{handler_ex}"
+          status = 1 if status.zero?
+        end
       end
     end
+
+    if ex = @@exception
+      # Print the registered exception(s) after all at_exit handlers, to make sure
+      # the user sees them.
+
+      STDERR.print "Unhandled exception: "
+      ex.inspect_with_backtrace(STDERR)
+    end
+
+    status
   end
 end
 
@@ -171,7 +189,7 @@ end
 #
 # Registered `at_exit` procs are executed.
 def exit(status = 0) : NoReturn
-  AtExitHandlers.run status
+  status = AtExitHandlers.run status
   STDOUT.flush
   STDERR.flush
   Crystal.restore_blocking_state
