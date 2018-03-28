@@ -1,29 +1,29 @@
 require "../../spec_helper"
 
 describe "Semantic: macro overload" do
-  it "something between 2 macros (I need a name!!!)" do
+  it "doesn't overwrite last macro definition if named args differs" do
     assert_type(%(
       macro foo(*, arg1)
-        {{ arg1 }}
+        1
       end
 
       macro foo(*, arg2)
-        {{ arg2 }}
+        "foo"
       end
 
-      foo(arg1: 1)
+      foo(arg1: true)
     )) { int32 }
 
     assert_type(%(
       macro foo(*, arg1)
-        {{ arg1 }}
+        1
       end
 
       macro foo(*, arg2)
-        {{ arg2 }}
+        "foo"
       end
 
-      foo(arg2: "test")
+      foo(arg2: true)
     )) { string }
   end
 end

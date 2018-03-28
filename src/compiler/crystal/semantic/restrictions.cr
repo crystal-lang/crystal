@@ -197,9 +197,9 @@ module Crystal
     def overrides?(other : Macro)
       # If they have different number of arguments, splat index or presence of
       # double splat, no override.
-      unless args.size == other.args.size &&
-             splat_index == other.splat_index &&
-             !!double_splat == !!other.double_splat
+      if args.size != other.args.size ||
+         splat_index != other.splat_index ||
+         !!double_splat != other.double_splat
         return false
       end
 
