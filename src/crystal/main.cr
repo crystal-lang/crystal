@@ -56,7 +56,7 @@ module Crystal
         1
       end
 
-    AtExitHandlers.add_exception ex if ex
+    AtExitHandlers.exception = ex if ex
 
     status = AtExitHandlers.run status
     STDOUT.flush
