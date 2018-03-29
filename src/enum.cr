@@ -117,7 +117,7 @@ struct Enum
 
   # Returns a `String` representation of this enum member.
   # In the case of regular enums, this is just the name of the member.
-  # In the case of flag enums, it's the names joined by commas, or "None",
+  # In the case of flag enums, it's the names joined by vertical bars, or "None",
   # if the value is zero.
   #
   # If an enum's value doesn't match a member's value, the raw value
