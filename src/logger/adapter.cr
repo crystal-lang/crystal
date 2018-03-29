@@ -7,7 +7,7 @@ class Logger
   module Adapter
     # Receives log data from a `Logger` and does something with it, typically
     # persisting the message somewhere or shipping it to a log aggregator.
-    abstract def write(severity : Logger::Severity, datetime : Time, progname : String, message : String)
+    abstract def write(severity : Severity, message : String, time : Time, component : String)
   end
 
   # `IOAdapter` is the built-in `Adapter`. It is automatically
@@ -15,60 +15,21 @@ class Logger
   class IOAdapter
     include Adapter
 
-    alias Formatter = Severity, Time, String, String, IO ->
-    # Customizable `Proc` (with a reasonable default)
-    # which the `IOAdapter` uses to format and print its entries.
-    #
-    # Use this setter to provide a custom formatter.
-    # The `IOAdapter` will invoke it with the following arguments:
-    #  - severity: a `Logger::Severity`
-    #  - datetime: `Time`, the entry's timestamp
-    #  - progname: `String`, the program name, if set when the logger was built
-    #  - message: `String`, the body of a message
-    #  - io: `IO`, the Logger's stream, to which you must write the final output
-    #
-    # Example:
-    #
-    # ```
-    # require "logger"
-    #
-    # formatter = Logger::IOAdapter::Formatter.new do |severity, datetime, progname, message, io|
-    #   case severity
-    #   when .>= Logger::ERROR
-    #     io << "!!"
-    #   when .>= Logger::INFO
-    #     io << "--"
-    #   else
-    #     io << ".."
-    #   end
-    #   io << ' ' << datetime << ' ' << severity.to_s.rjust(5) << ' ' << progname << ": " << message
-    # end
-    #
-    # logger = Logger.new(STDOUT, formatter: formatter, progname: "YodaBot")
-    # logger.warn("Fear leads to anger. Anger leads to hate. Hate leads to suffering.")
-    #
-    # # Prints to the console:
-    # # "-- 2017-05-06 18:00:41 -03:00  WARN YodaBot: Fear leads to anger.
-    # # Anger leads to hate. Hate leads to suffering."
-    # ```
-    property formatter : Formatter
-    DEFAULT_FORMATTER = Formatter.new do |severity, datetime, progname, message, io|
-      label = severity.unknown? ? "ANY" : severity.to_s
-      io << label[0] << ", [" << datetime << " #" << Process.pid << "] "
-      io << label.rjust(5) << " -- " << progname << ": " << message
-    end
+    # The name of the program, as should be included in log messages.
+    getter program_name : String
 
-    # Creates a new IOLogAdapter. If not supplied with a `formatter`, a
-    # default is used.
-    def initialize(@io : IO, @formatter = DEFAULT_FORMATTER)
+    # Creates a new IOLogAdapter. If not supplied with a program name, the
+    # filename of the running executable is used.
+    def initialize(@io : IO, program_name = self.class.find_program_name)
+      @program_name = program_name.to_s
       @closed = false
       @mutex = Mutex.new
     end
 
     # Writes a message to `@io`.
-    def write(severity, datetime, progname, message)
+    def write(severity : Severity, message : String, time : Time, component : String)
       @mutex.synchronize do
-        @formatter.call(severity, datetime, progname.to_s, message.to_s, @io)
+        format(severity, message, time, component)
         @io.puts
         @io.flush
       end
@@ -82,6 +43,51 @@ class Logger
       @mutex.synchronize do
         @io.close
       end
+    end
+
+    protected def self.find_program_name
+      if path = Process.executable_path
+        File.basename(path)
+      else
+        ""
+      end
+    end
+
+    # Formats a single `Logger::Entry` and prints it to the given `IO`.
+    #
+    # To provide a custom formatter, simply subclass `IOAdapter` and override this method.
+    # Example:
+    #
+    # ```
+    # require "logger"
+    #
+    # class MyAdapter < Logger::IOAdapter
+    #   def format(severity, message, time, component)
+    #     case severity
+    #     when .>= Logger::ERROR
+    #       @io << "!!"
+    #     when .>= Logger::INFO
+    #       @io << "--"
+    #     else
+    #       @io << ".."
+    #     end
+    #     @io << ' ' << time << ' ' << severity.to_s << ' ' << @program_name << ": " << message
+    #   end
+    # end
+    #
+    # logger = Logger.new(MyAdapter.new(STDERR, program_name: "YodaBot"))
+    # logger.warn("Fear leads to anger. Anger leads to hate. Hate leads to suffering.")
+    #
+    # # Prints to the console:
+    # # -- 2018-03-29 00:13:38 -07:00 WARN YodaBot: Fear leads to anger. Anger leads to hate. Hate leads to suffering.
+    # ```
+
+    def format(severity, message, time, component)
+      label = severity.unknown? ? "ANY" : severity.to_s
+      @io << label[0] << ", [" << time << " #" << Process.pid << "] " << label.rjust(5)
+      @io << " -- " << @program_name unless @program_name.empty?
+      @io << " / " << component unless component.empty?
+      @io << ": " << message
     end
   end
 end

@@ -1,4 +1,4 @@
-require "logger/adapter"
+require "./logger/*"
 
 # The `Logger` class provides a simple but sophisticated logging utility that you can use to output messages.
 #
@@ -36,7 +36,6 @@ require "logger/adapter"
 # end
 # ```
 class Logger
-  property progname : String
   property adapters : Array(Adapter)
 
   # A logger severity level.
@@ -65,20 +64,20 @@ class Logger
   DEFAULT_SEVERITY = Severity::INFO
 
   # Creates a new logger that will log to the given *io*.
-  def self.new(io : IO, level = DEFAULT_SEVERITY, formatter = IOAdapter::DEFAULT_FORMATTER, progname = "")
-    adapter = IOAdapter.new(io, formatter)
-    new([adapter] of Adapter, level, progname)
+  def self.new(io : IO, level = DEFAULT_SEVERITY, program_name = "")
+    adapter = IOAdapter.new(io, program_name)
+    new([adapter] of Adapter, level)
   end
 
   # Creates a new logger that will use the given *Adapter* to log messages.
-  def self.new(adapter : Adapter?, level = DEFAULT_SEVERITY, progname = "")
-    return new([] of Adapter, level, progname) unless adapter
-    return new([adapter] of Adapter, level, progname)
+  def self.new(adapter : Adapter?, level = DEFAULT_SEVERITY)
+    return new([] of Adapter, level) unless adapter
+    return new([adapter] of Adapter, level)
   end
 
   # Creates a new logger that will use multiple *Adapter*s to log messages.
-  def initialize(@adapters : Array(Adapter), level = DEFAULT_SEVERITY, @progname = "")
-    @levels = {"" => level} of String => Severity?
+  def initialize(@adapters : Array(Adapter), level = DEFAULT_SEVERITY)
+    @levels = {"" => level} of String => Severity
   end
 
   # Searches up the component hierarchy to find the log level for the given component.
@@ -134,34 +133,33 @@ class Logger
 
     {% unless name.stringify == "SILENT" %}
       # Logs *message* if the logger's current severity is lower or equal to `{{name.id}}`.
-      # *progname* overrides a default progname set in this logger.
       def {{name.id.downcase}}(message, component = nil)
-        log(Severity::{{name.id}}, message, component)
+        log(Severity::{{name.id}}, message, component.to_s)
       end
 
       # Logs the message as returned from the given block if the logger's current severity
       # is lower or equal to `{{name.id}}`. The block is not run if the severity is higher.
-      # *progname* overrides a default progname set in this logger.
+      # This is preferable to passing the message in directly when building the message adds
+      # significant overhead.
       def {{name.id.downcase}}(component = nil)
-        log(Severity::{{name.id}}, component) { yield }
+        log(Severity::{{name.id}}, component.to_s) { yield }
       end
     {% end %}
   {% end %}
 
-  # Logs *message* if *severity* is higher or equal with the logger's current
-  # severity. *progname* overrides a default progname set in this logger.
-  def log(severity, message, component = nil)
+  # Logs *message* if *severity* is higher or equal with the logger's current severity.
+  def log(severity, message, component)
     severity = UNKNOWN if SILENT == severity
-    return if severity < effective_level(component.to_s)
-    @adapters.each &.write(severity, Time.now, component, message.to_s)
+    return if severity < effective_level(component)
+    @adapters.each &.write(severity, message.to_s, Time.now, component)
   end
 
   # Logs the message as returned from the given block if *severity*
   # is higher or equal with the loggers current severity. The block is not run
-  # if *severity* is lower. *progname* overrides a default progname set in this logger.
-  def log(severity, component = nil)
+  # if *severity* is lower.
+  def log(severity, component)
     severity = UNKNOWN if SILENT == severity
-    return if severity < effective_level(component.to_s)
-    @adapters.each &.write(severity, Time.now, component, yield.to_s)
+    return if severity < effective_level(component)
+    @adapters.each &.write(severity, yield.to_s, Time.now, component)
   end
 end

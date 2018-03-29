@@ -59,9 +59,9 @@ describe "Logger" do
     IO.pipe do |r, w|
       logger = Logger.new(w)
       logger.level = Logger::SILENT
-      logger.log(Logger::SILENT, "skip")
+      logger.log(Logger::SILENT, "skip", "")
       logger.level = Logger::UNKNOWN
-      logger.log(Logger::SILENT, "show")
+      logger.log(Logger::SILENT, "show", "")
 
       r.gets.should match(/ANY.*show/)
     end
@@ -102,21 +102,10 @@ describe "Logger" do
     IO.pipe do |r, w|
       logger = Logger.new(w)
       logger.error { "message" }
-      logger.unknown { "another message" }
+      logger.unknown(component: "comp") { "another message" }
 
-      r.gets(chomp: false).should match(/ERROR -- : message\n/)
-      r.gets(chomp: false).should match(/  ANY -- : another message\n/)
-    end
-  end
-
-  it "yields message with progname" do
-    IO.pipe do |r, w|
-      logger = Logger.new(w)
-      logger.error("crystal") { "message" }
-      logger.unknown("shard") { "another message" }
-
-      r.gets(chomp: false).should match(/ERROR -- crystal: message\n/)
-      r.gets(chomp: false).should match(/  ANY -- shard: another message\n/)
+      r.gets(chomp: false).should match(/ERROR: message\n/)
+      r.gets(chomp: false).should match(/  ANY \/ comp: another message\n/)
     end
   end
 
