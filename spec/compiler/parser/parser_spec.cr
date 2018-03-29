@@ -1202,12 +1202,12 @@ describe "Parser" do
   it_parses "<<-HERE1; <<-HERE2\nHERE1\nHERE2", ["".string_interpolation, "".string_interpolation] of ASTNode
   it_parses "<<-HERE1; <<-HERE2\nhere1\nHERE1\nHERE2", ["here1".string_interpolation, "".string_interpolation] of ASTNode
   it_parses "<<-HERE1; <<-HERE2\nHERE1\nhere2\nHERE2", ["".string_interpolation, "here2".string_interpolation] of ASTNode
-  assert_syntax_error "<<-HERE\n   One\nwrong\n  Zero\n  HERE", "heredoc line must have an indent greater or equal than 2", 3, 1
-  assert_syntax_error "<<-HERE\n   One\n wrong\n  Zero\n  HERE", "heredoc line must have an indent greater or equal than 2", 3, 1
-  assert_syntax_error "<<-HERE\n   One\n \#{1}\n  Zero\n  HERE", "heredoc line must have an indent greater or equal than 2", 3, 1
-  assert_syntax_error "<<-HERE\n   One\n  \#{1}\n wrong\n  HERE", "heredoc line must have an indent greater or equal than 2", 4, 1
-  assert_syntax_error "<<-HERE\n   One\n  \#{1}\n wrong\#{1}\n  HERE", "heredoc line must have an indent greater or equal than 2", 4, 1
-  assert_syntax_error "<<-HERE\n One\n  \#{1}\n  HERE", "heredoc line must have an indent greater or equal than 2", 2, 1
+  assert_syntax_error "<<-HERE\n   One\nwrong\n  Zero\n  HERE", "heredoc line must have an indent greater than or equal to 2", 3, 1
+  assert_syntax_error "<<-HERE\n   One\n wrong\n  Zero\n  HERE", "heredoc line must have an indent greater than or equal to 2", 3, 1
+  assert_syntax_error "<<-HERE\n   One\n \#{1}\n  Zero\n  HERE", "heredoc line must have an indent greater than or equal to 2", 3, 1
+  assert_syntax_error "<<-HERE\n   One\n  \#{1}\n wrong\n  HERE", "heredoc line must have an indent greater than or equal to 2", 4, 1
+  assert_syntax_error "<<-HERE\n   One\n  \#{1}\n wrong\#{1}\n  HERE", "heredoc line must have an indent greater than or equal to 2", 4, 1
+  assert_syntax_error "<<-HERE\n One\n  \#{1}\n  HERE", "heredoc line must have an indent greater than or equal to 2", 2, 1
   assert_syntax_error %("\#{<<-HERE}"\nHERE), "heredoc cannot be used inside interpolation"
   assert_syntax_error %("foo" "bar")
 
