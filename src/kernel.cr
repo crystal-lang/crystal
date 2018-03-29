@@ -151,8 +151,8 @@ module AtExitHandlers
     end
 
     if ex = @@exception
-      # Print the registered exception(s) after all at_exit handlers, to make sure
-      # the user sees them.
+      # Print the exception after all at_exit handlers, to make sure
+      # the user sees it.
 
       STDERR.print "Unhandled exception: "
       ex.inspect_with_backtrace(STDERR)
