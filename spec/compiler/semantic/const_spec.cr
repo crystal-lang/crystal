@@ -3,8 +3,7 @@ require "../../spec_helper"
 describe "Semantic: const" do
   it "types a constant" do
     input = parse("CONST = 1").as(Assign)
-    result = semantic input
-    mod = result.program
+    semantic input
     input.target.type?.should be_nil # Don't type value until needed
   end
 
@@ -14,6 +13,24 @@ describe "Semantic: const" do
 
   it "types a nested constant" do
     assert_type("class Foo; A = 1; end; Foo::A") { int32 }
+  end
+
+  it "types a constant using Path" do
+    assert_type(%(
+      Foo::Bar = 1
+
+      Foo::Bar
+      )) { int32 }
+  end
+
+  it "types a nested constant using Path" do
+    assert_type(%(
+      class Foo
+        Bar::Baz = 1
+      end
+
+      Foo::Bar::Baz
+      )) { int32 }
   end
 
   it "types a constant inside a def" do
