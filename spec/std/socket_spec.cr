@@ -169,14 +169,66 @@ describe Socket::IPAddress do
 end
 
 describe Socket::UNIXAddress do
-  it "transforms into a C struct and back" do
-    addr1 = Socket::UNIXAddress.new("/tmp/service.sock")
-    addr2 = Socket::UNIXAddress.from(addr1.to_unsafe, addr1.size)
+  {% if flag?(:linux) %}
+    it "can be abstract on Linux" do
+      path = "/abstract.sock"
+      addr = Socket::UNIXAddress.new('@' + path)
+      addr.abstract?.should be_true
+      addr.path.should eq(path)
+    end
+  {% else %}
+    it "raises for abstract UNIX address on non-Linux" do
+      expect_raises(ArgumentError, "Unsupported") do
+        Socket::UNIXAddress.new("@/abstract.sock")
+      end
+    end
+  {% end %}
 
+  it "is not abstract for a non-abstract address" do
+    path = "/tmp/unix.sock"
+    addr = Socket::UNIXAddress.new(path)
+    addr.abstract?.should be_false
+    addr.path.should eq(path)
+  end
+
+  it "creates a non-abstract UNIX address starting with @" do
+    path = "./@non-abstract.sock"
+    addr = Socket::UNIXAddress.new(path)
+    addr.abstract?.should be_false
+    addr.path.should eq(path)
+  end
+
+  it "transforms into a C struct and back" do
+    path = "/tmp/service.sock"
+
+    addr1 = Socket::UNIXAddress.new(path)
+    addr1.abstract?.should be_false
+    addr1.path.should eq(path)
+
+    addr2 = Socket::UNIXAddress.from(addr1.to_unsafe, addr1.size)
     addr2.family.should eq(addr1.family)
     addr2.path.should eq(addr1.path)
-    addr2.to_s.should eq("/tmp/service.sock")
+    addr2.abstract?.should eq(addr1.abstract?)
+    addr2.to_s.should eq(path)
   end
+
+  {% if flag?(:linux) %}
+    it "transforms an abstract address into a C struct and back" do
+      path = "/abstract-service.sock"
+
+      addr1 = Socket::UNIXAddress.new('@' + path)
+      addr1.path.should eq(path)
+      addr1.abstract?.should be_true
+
+      sockaddr_un = addr1.to_unsafe.as(LibC::SockaddrUn*).value
+      sockaddr_un.sun_path[0].should eq(0_u8)
+      String.new(sockaddr_un.sun_path.to_unsafe + 1).should eq(path)
+
+      addr2 = Socket::UNIXAddress.new(pointerof(sockaddr_un), nil)
+      addr2.path.should eq(addr1.path)
+      addr2.abstract?.should eq(addr1.abstract?)
+    end
+  {% end %}
 
   it "raises when path is too long" do
     path = "/tmp/crystal-test-too-long-unix-socket-#{("a" * 2048)}.sock"
@@ -186,6 +238,12 @@ describe Socket::UNIXAddress do
   it "to_s" do
     Socket::UNIXAddress.new("some_path").to_s.should eq("some_path")
   end
+
+  {% if flag?(:linux) %}
+    it "to_s for abstract UNIX address" do
+      Socket::UNIXAddress.new("@some_path").to_s.should eq("@some_path")
+    end
+  {% end %}
 end
 
 describe UNIXServer do
@@ -194,6 +252,26 @@ describe UNIXServer do
     expect_raises(ArgumentError, "Path size exceeds the maximum size") { UNIXServer.new(path) }
     File.exists?(path).should be_false
   end
+
+  {% if flag?(:linux) %}
+    it "is not abstract when path is not an abstract address" do
+      path = "/tmp/crystal-test-unix-sock"
+
+      UNIXServer.open(path) do |server|
+        server.abstract?.should be_false
+      end
+    end
+  {% end %}
+
+  {% if flag?(:linux) %}
+    it "is abstract when path is an abstract address" do
+      path = "/tmp/crystal-test-unix-abstract-sock"
+
+      UNIXServer.open('@' + path) do |server|
+        server.abstract?.should be_true
+      end
+    end
+  {% end %}
 
   it "creates the socket file" do
     path = "/tmp/crystal-test-unix-sock"
@@ -204,6 +282,34 @@ describe UNIXServer do
 
     File.exists?(path).should be_false
   end
+
+  it "creates the socket file with path starting with @" do
+    path = "@crystal-test-unix-sock-starting-with-at-symbol"
+    forced_non_abstract_path = "./#{path}"
+
+    File.exists?(path).should be_false
+
+    UNIXServer.open(forced_non_abstract_path) do
+      File.exists?(path).should be_true
+    end
+
+    File.exists?(path).should be_false
+  end
+
+  {% if flag?(:linux) %}
+    it "does not create any file for abstract server" do
+      path = "/tmp/crystal-test-unix-abstract-sock"
+      abstract_path = '@' + path
+
+      File.exists?(path).should be_false
+      File.exists?(abstract_path).should be_false
+
+      UNIXServer.open(abstract_path) do
+        File.exists?(path).should be_false
+        File.exists?(abstract_path).should be_false
+      end
+    end
+  {% end %}
 
   it "deletes socket file on close" do
     path = "/tmp/crystal-test-unix-sock"
@@ -216,6 +322,23 @@ describe UNIXServer do
       File.delete(path) if File.exists?(path)
     end
   end
+
+  {% if flag?(:linux) %}
+    it "does not delete any file on close for abstract server" do
+      path = "/tmp/crystal-test-close-unix-abstract-sock"
+
+      File.touch(path)
+      File.exists?(path).should be_true
+
+      begin
+        server = UNIXServer.new('@' + path)
+        server.close
+        File.exists?(path).should be_true
+      ensure
+        File.delete(path) if File.exists?(path)
+      end
+    end
+  {% end %}
 
   it "raises when socket file already exists" do
     path = "/tmp/crystal-test-unix-sock"
@@ -231,7 +354,7 @@ describe UNIXServer do
   it "won't delete existing file on bind failure" do
     path = "/tmp/crystal-test-unix.sock"
 
-    File.write(path, "")
+    File.touch(path)
     File.exists?(path).should be_true
 
     begin
@@ -247,14 +370,33 @@ describe UNIXServer do
 
   describe "accept" do
     it "returns the client UNIXSocket" do
-      UNIXServer.open("/tmp/crystal-test-unix-sock") do |server|
-        UNIXSocket.open("/tmp/crystal-test-unix-sock") do |_|
+      path = "/tmp/crystal-test-unix-sock"
+
+      UNIXServer.open(path) do |server|
+        UNIXSocket.open(path) do |_|
           client = server.accept
           client.should be_a(UNIXSocket)
+          client.abstract?.should be_false
           client.close
         end
       end
     end
+
+    {% if flag?(:linux) %}
+      it "returns an abstract client UNIXSocket for abstract server" do
+        path = "/tmp/crystal-test-abstract-unix-sock"
+        abstract_path = '@' + path
+
+        UNIXServer.open(abstract_path) do |server|
+          UNIXSocket.open(abstract_path) do |_|
+            client = server.accept
+            client.should be_a(UNIXSocket)
+            client.abstract?.should be_true
+            client.close
+          end
+        end
+      end
+    {% end %}
 
     it "raises when server is closed" do
       server = UNIXServer.new("/tmp/crystal-test-unix-sock")
@@ -280,8 +422,10 @@ describe UNIXServer do
 
   describe "accept?" do
     it "returns the client UNIXSocket" do
-      UNIXServer.open("/tmp/crystal-test-unix-sock") do |server|
-        UNIXSocket.open("/tmp/crystal-test-unix-sock") do |_|
+      path = "/tmp/crystal-test-unix-sock"
+
+      UNIXServer.open(path) do |server|
+        UNIXSocket.open(path) do |_|
           client = server.accept?.not_nil!
           client.should be_a(UNIXSocket)
           client.close
@@ -338,6 +482,36 @@ describe UNIXSocket do
       end
     end
   end
+
+  {% if flag?(:linux) %}
+    it "sends and receives messages over an abstract STREAM socket" do
+      path = "/abstract-service.sock"
+      abstract_path = '@' + path
+
+      UNIXServer.open(abstract_path) do |server|
+        server.local_address.abstract?.should be_true
+        server.local_address.path.should eq(path)
+
+        UNIXSocket.open(abstract_path) do |client|
+          client.local_address.abstract?.should be_true
+          client.local_address.path.should eq(path)
+
+          server.accept do |sock|
+            sock.local_address.path.should eq("")
+            sock.local_address.abstract?.should be_true
+
+            sock.remote_address.path.should eq("")
+            sock.remote_address.abstract?.should be_true
+
+            client << "ping"
+            sock.gets(4).should eq("ping")
+            sock << "pong"
+            client.gets(4).should eq("pong")
+          end
+        end
+      end
+    end
+  {% end %}
 
   it "sync flag after accept" do
     path = "/tmp/crystal-test-unix-sock"

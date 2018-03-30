@@ -24,17 +24,21 @@ class UNIXServer < UNIXSocket
   # Creates a named UNIX socket, listening on a filesystem pathname.
   #
   # Always deletes any existing filesystam pathname first, in order to cleanup
-  # any leftover socket file.
+  #
+  # NOTE: An abstract UNIX server act on virtual files, thus not creating nor deleting anything.
   #
   # The server is of stream type by default, but this can be changed for
   # another type. For example datagram messages:
   # ```
   # UNIXServer.new("/tmp/dgram.sock", Socket::Type::DGRAM)
   # ```
-  def initialize(@path : String, type : Type = Type::STREAM, backlog = 128)
+  def initialize(path : String, type : Type = Type::STREAM, backlog = 128)
     super(Family::UNIX, type)
 
-    bind(UNIXAddress.new(path)) do |error|
+    addr = UNIXAddress.new(path)
+    @abstract = addr.abstract?
+    @path = addr.path
+    bind(addr) do |error|
       close(delete: false)
       raise error
     end
@@ -64,7 +68,7 @@ class UNIXServer < UNIXSocket
   # this method.
   def accept? : UNIXSocket?
     if client_fd = accept_impl
-      sock = UNIXSocket.new(client_fd, type)
+      sock = UNIXSocket.new(client_fd, type, @abstract)
       sock.sync = sync?
       sock
     end
@@ -74,9 +78,9 @@ class UNIXServer < UNIXSocket
   def close(delete = true)
     super()
   ensure
-    if delete && (path = @path)
+    if !abstract? && delete && (path = @path)
       File.delete(path) if File.exists?(path)
-      @path = nil
     end
+    @path = nil
   end
 end
