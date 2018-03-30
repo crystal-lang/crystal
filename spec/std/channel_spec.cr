@@ -137,6 +137,29 @@ describe Channel::Unbuffered do
     spawn { ch.send 123 }
     ch.receive?.should eq(123)
   end
+
+  it "wakes up the sender fiber when channel is closed" do
+    ch = Channel::Unbuffered(Nil).new
+    sender_closed = false
+    spawn do
+      ch.send nil
+      ch.send nil
+    rescue Channel::ClosedError
+      sender_closed = true
+    end
+    receiver_closed = false
+    spawn do
+      Fiber.yield
+      ch.receive
+    rescue Channel::ClosedError
+      receiver_closed = true
+    end
+    Fiber.yield
+    ch.close
+    Fiber.yield
+    sender_closed.should be_true
+    receiver_closed.should be_true
+  end
 end
 
 describe Channel::Buffered do

@@ -30,6 +30,8 @@ abstract class Channel(T)
 
   def close
     @closed = true
+    Scheduler.enqueue @senders
+    @senders.clear
     Scheduler.enqueue @receivers
     @receivers.clear
     nil
@@ -259,6 +261,7 @@ class Channel::Unbuffered(T) < Channel(T)
     @value.tap do
       @has_value = false
       Scheduler.enqueue @sender.not_nil!
+      @sender = nil
     end
   end
 
@@ -268,5 +271,13 @@ class Channel::Unbuffered(T) < Channel(T)
 
   def full?
     @has_value || @receivers.empty?
+  end
+
+  def close
+    super
+    if sender = @sender
+      Scheduler.enqueue sender
+      @sender = nil
+    end
   end
 end
