@@ -410,12 +410,14 @@ struct Int
     raise ArgumentError.new("Invalid base #{base}") unless 2 <= base <= 36 || base == 62
     raise ArgumentError.new("upcase must be false for base 62") if upcase && base == 62
 
-    case self
-    when 0
-      return "0"
-    when 1
-      return "1"
-    end
+    {% begin %}
+      case self
+      {% for int in (0..9) %}
+        when {{int}}
+          return "{{int}}"
+      {% end %}
+      end
+    {% end %}
 
     internal_to_s(base, upcase) do |ptr, count|
       String.new(ptr, count, count)
@@ -426,14 +428,15 @@ struct Int
     raise ArgumentError.new("Invalid base #{base}") unless 2 <= base <= 36 || base == 62
     raise ArgumentError.new("upcase must be false for base 62") if upcase && base == 62
 
-    case self
-    when 0
-      io << '0'
-      return
-    when 1
-      io << '1'
-      return
-    end
+    {% begin %}
+      case self
+      {% for int in (0..9) %}
+        when {{int}}
+          io << '{{int}}'
+          return
+      {% end %}
+      end
+    {% end %}
 
     internal_to_s(base, upcase) do |ptr, count|
       io.write_utf8 Slice.new(ptr, count)
