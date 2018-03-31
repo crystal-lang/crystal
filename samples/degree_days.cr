@@ -45,12 +45,12 @@ class DegreeDays
 
   private def heating_day(temps)
     heat = avg temps.map { |temp| heating_degree(temp) }
-    (heat > heating_threshold) ? heat : nil
+    heat if heat > heating_threshold
   end
 
   private def cooling_day(temps)
     cool = avg temps.map { |temp| cooling_degree(temp) }
-    (cool > cooling_threshold) ? cool : nil
+    cool if cool > cooling_threshold
   end
 
   private def heating_degree(temp)

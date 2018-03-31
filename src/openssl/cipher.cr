@@ -108,8 +108,6 @@ class OpenSSL::Cipher
     if LibCrypto.evp_cipherinit_ex(@ctx, cipher, engine, key, iv, enc) != 1
       raise Error.new "EVP_CipherInit_ex"
     end
-
-    nil
   end
 
   private def cipher

@@ -1887,8 +1887,6 @@ module Crystal
       @malloc_fun ||= @main_mod.functions[MALLOC_NAME]?
       if malloc_fun = @malloc_fun
         check_main_fun MALLOC_NAME, malloc_fun
-      else
-        nil
       end
     end
 
@@ -1896,8 +1894,6 @@ module Crystal
       @malloc_atomic_fun ||= @main_mod.functions[MALLOC_ATOMIC_NAME]?
       if malloc_fun = @malloc_atomic_fun
         check_main_fun MALLOC_ATOMIC_NAME, malloc_fun
-      else
-        nil
       end
     end
 
@@ -1905,8 +1901,6 @@ module Crystal
       @realloc_fun ||= @main_mod.functions[REALLOC_NAME]?
       if realloc_fun = @realloc_fun
         check_main_fun REALLOC_NAME, realloc_fun
-      else
-        nil
       end
     end
 

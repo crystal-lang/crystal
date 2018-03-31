@@ -114,8 +114,6 @@ class StringScanner
       @byte_offset = new_byte_offset if advance
 
       @str.byte_slice(start, new_byte_offset - start)
-    else
-      nil
     end
   end
 

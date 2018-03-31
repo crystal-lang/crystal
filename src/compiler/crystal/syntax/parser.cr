@@ -3051,7 +3051,7 @@ module Crystal
 
           return MacroIf.new(BoolLiteral.new(true), body).at_end(token_end_location)
         when :else, :elsif, :end
-          return nil
+          return
         end
       end
 
@@ -4074,8 +4074,6 @@ module Crystal
         end
 
         parse_call_args_space_consumed check_plus_and_minus: true, allow_curly: allow_curly, control: control
-      else
-        nil
       end
     ensure
       @call_args_nest -= 1
@@ -4087,37 +4085,37 @@ module Crystal
       @call_args_nest += 1
 
       if @token.keyword?(:end) && !next_comes_colon_space?
-        return nil
+        return
       end
 
       case @token.type
       when :"&"
-        return nil if current_char.ascii_whitespace?
+        return if current_char.ascii_whitespace?
       when :"+", :"-"
         if check_plus_and_minus
-          return nil if current_char.ascii_whitespace?
+          return if current_char.ascii_whitespace?
         end
       when :"{"
-        return nil unless allow_curly
+        return unless allow_curly
       when :CHAR, :STRING, :DELIMITER_START, :STRING_ARRAY_START, :SYMBOL_ARRAY_START, :NUMBER, :IDENT, :SYMBOL, :INSTANCE_VAR, :CLASS_VAR, :CONST, :GLOBAL, :"$~", :"$?", :GLOBAL_MATCH_DATA_INDEX, :REGEX, :"(", :"!", :"[", :"[]", :"~", :"->", :"{{", :__LINE__, :__END_LINE__, :__FILE__, :__DIR__, :UNDERSCORE
         # Nothing
       when :"*", :"**"
         if current_char.ascii_whitespace?
-          return nil
+          return
         end
       when :"::"
         if current_char.ascii_whitespace?
-          return nil
+          return
         end
       else
-        return nil
+        return
       end
 
       case @token.value
       when :if, :unless, :while, :until, :rescue, :ensure
-        return nil unless next_comes_colon_space?
+        return unless next_comes_colon_space?
       when :yield
-        return nil if @stop_on_yield > 0 && !next_comes_colon_space?
+        return if @stop_on_yield > 0 && !next_comes_colon_space?
       end
 
       args = [] of ASTNode

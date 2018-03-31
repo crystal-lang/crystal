@@ -166,7 +166,7 @@ module HTTP
   # :nodoc:
   def self.content_length(headers)
     length_headers = headers.get? "Content-Length"
-    return nil unless length_headers
+    return unless length_headers
     first_header = length_headers[0]
     if length_headers.size > 1 && length_headers.any? { |header| header != first_header }
       raise ArgumentError.new("Multiple Content-Length headers received did not match: #{length_headers}")

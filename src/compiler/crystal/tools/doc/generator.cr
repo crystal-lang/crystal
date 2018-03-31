@@ -230,14 +230,14 @@ class Crystal::Doc::Generator
 
   def summary(obj : Type | Method | Macro | Constant)
     doc = obj.doc
-    return nil unless doc
+    return unless doc
 
     summary obj, doc
   end
 
   def summary(context, string)
     line = fetch_doc_lines(string).lines.first?
-    return nil unless line
+    return unless line
 
     dot_index = line =~ /\.($|\s)/
     if dot_index
@@ -249,7 +249,7 @@ class Crystal::Doc::Generator
 
   def doc(obj : Type | Method | Macro | Constant)
     doc = obj.doc
-    return nil unless doc
+    return unless doc
 
     doc obj, doc
   end

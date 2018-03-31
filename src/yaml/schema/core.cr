@@ -62,7 +62,7 @@ module YAML::Schema::Core
   # ```
   def self.parse_scalar(string : String) : Nil | Bool | Int64 | Float64 | String | Time | Bytes
     if parse_null?(string)
-      return nil
+      return
     end
 
     value = parse_bool?(string)
@@ -249,7 +249,7 @@ module YAML::Schema::Core
 
   protected def self.parse_null(string, location) : Nil
     if parse_null?(string)
-      return nil
+      return
     end
 
     raise YAML::ParseException.new("Invalid null", *location)
@@ -300,8 +300,6 @@ module YAML::Schema::Core
       true
     when "no", "No", "NO", "false", "False", "FALSE", "off", "Off", "OFF"
       false
-    else
-      nil
     end
   end
 
@@ -326,14 +324,12 @@ module YAML::Schema::Core
       -Float64::INFINITY
     when ".nan", ".NaN", ".NAN"
       Float64::NAN
-    else
-      nil
     end
   end
 
   private def self.parse_time?(string)
     # Minimum length is that of YYYY-M-D
-    return nil if string.size < 8
+    return if string.size < 8
 
     TimeParser.new(string).parse
   end

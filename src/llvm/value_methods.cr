@@ -71,8 +71,9 @@ module LLVM::ValueMethods
   end
 
   def initializer
-    init = LibLLVM.get_initializer(self)
-    init ? LLVM::Value.new(init) : nil
+    if init = LibLLVM.get_initializer(self)
+      LLVM::Value.new(init)
+    end
   end
 
   def volatile=(volatile)

@@ -116,11 +116,10 @@ module GC
     # Nothing
   end
 
-  private def self.add_finalizer_impl(object : T) forall T
+  private def self.add_finalizer_impl(object : T) : Nil forall T
     LibGC.register_finalizer_ignore_self(object.as(Void*),
       ->(obj, data) { obj.as(T).finalize },
       nil, nil, nil)
-    nil
   end
 
   def self.add_root(object : Reference)

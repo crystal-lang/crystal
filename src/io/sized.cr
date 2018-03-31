@@ -41,8 +41,6 @@ class IO::Sized < IO
       byte = @io.read_byte
       @read_remaining -= 1 if byte
       byte
-    else
-      nil
     end
   end
 
@@ -52,7 +50,7 @@ class IO::Sized < IO
     return Bytes.empty if @read_remaining == 0 # EOF
 
     peek = @io.peek
-    return nil unless peek
+    return unless peek
 
     if @read_remaining < peek.size
       peek = peek[0, @read_remaining]

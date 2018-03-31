@@ -49,8 +49,6 @@ class IO::ARGF < IO
     if !@read_from_stdin && !@argv.empty?
       read_next_argv
       self.peek
-    else
-      nil
     end
   end
 

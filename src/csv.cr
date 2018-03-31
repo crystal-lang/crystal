@@ -328,8 +328,6 @@ class CSV
       index = csv.indices[header]?
       if index
         maybe_strip(@row[index]? || "")
-      else
-        nil
       end
     end
 
@@ -352,7 +350,7 @@ class CSV
 
       value = @row[column]?
       value ||= "" if 0 <= column < size
-      value ? maybe_strip(value) : nil
+      maybe_strip(value) if value
     end
 
     # Returns this row's value corresponding to the given *header_pattern*.
@@ -373,7 +371,6 @@ class CSV
           return maybe_strip(@row[i]? || "")
         end
       end
-      nil
     end
 
     # Returns the number of columns in this row, regardless of the number

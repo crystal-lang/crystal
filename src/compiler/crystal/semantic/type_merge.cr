@@ -5,7 +5,7 @@ module Crystal
     def type_merge(types : Array(Type?))
       case types.size
       when 0
-        return nil
+        return
       when 1
         return types.first
       when 2
@@ -21,7 +21,7 @@ module Crystal
     def type_merge(nodes : Array(ASTNode))
       case nodes.size
       when 0
-        return nil
+        return
       when 1
         return nodes.first.type?
       when 2
@@ -164,7 +164,6 @@ module Crystal
     end
 
     def common_ancestor(other)
-      nil
     end
   end
 
@@ -172,8 +171,6 @@ module Crystal
     def common_ancestor(other : Type)
       if other.implements?(self)
         self
-      else
-        nil
       end
     end
   end
@@ -182,8 +179,6 @@ module Crystal
     def common_ancestor(other : Type)
       if other.implements?(self)
         self
-      else
-        nil
       end
     end
   end
@@ -192,8 +187,6 @@ module Crystal
     def common_ancestor(other : Type)
       if other.implements?(self)
         self
-      else
-        nil
       end
     end
   end
@@ -250,7 +243,6 @@ module Crystal
 
   class PrimitiveType
     def common_ancestor(other)
-      nil
     end
   end
 
@@ -276,14 +268,12 @@ module Crystal
       if other.return_type.no_return? && arg_types == other.arg_types
         return self
       end
-
-      nil
     end
   end
 
   class TupleInstanceType
     def common_ancestor(other : TupleInstanceType)
-      return nil unless self.size == other.size
+      return unless self.size == other.size
 
       result_types = tuple_types.map_with_index do |self_tuple_type, index|
         Type.merge!(self_tuple_type, other.tuple_types[index]).as(Type)
@@ -294,14 +284,14 @@ module Crystal
 
   class NamedTupleInstanceType
     def common_ancestor(other : NamedTupleInstanceType)
-      return nil if self.size != other.size
+      return if self.size != other.size
 
       self_entries = self.entries.sort_by &.name
       other_entries = other.entries.sort_by &.name
 
       # First check if the names are the same
       self_entries.zip(other_entries) do |self_entry, other_entry|
-        return nil unless self_entry.name == other_entry.name
+        return unless self_entry.name == other_entry.name
       end
 
       # If the names are the same we now merge the types for each key
@@ -321,12 +311,12 @@ end
 private def class_common_ancestor(t1, t2)
   # This discards Object, Reference and Value
   if t1.depth <= 1
-    return nil
+    return
   end
 
   case t1
   when t1.program.struct, t1.program.number, t1.program.int, t1.program.float
-    return nil
+    return
   when t2
     return t1
   end
@@ -336,19 +326,15 @@ private def class_common_ancestor(t1, t2)
     t2_superclass = t2.superclass
 
     if t1_superclass && t2_superclass
-      return t1_superclass.common_ancestor(t2_superclass)
+      t1_superclass.common_ancestor(t2_superclass)
     end
   elsif t1.depth > t2.depth
-    t1_superclass = t1.superclass
-    if t1_superclass
-      return t1_superclass.common_ancestor(t2)
+    if t1_superclass = t1.superclass
+      t1_superclass.common_ancestor(t2)
     end
   elsif t1.depth < t2.depth
-    t2_superclass = t2.superclass
-    if t2_superclass
-      return t1.common_ancestor(t2_superclass)
+    if t2_superclass = t2.superclass
+      t1.common_ancestor(t2_superclass)
     end
   end
-
-  nil
 end

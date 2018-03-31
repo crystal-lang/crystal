@@ -5,13 +5,12 @@ class Scheduler
   @@runnables = Deque(Fiber).new
   @@eb = Event::Base.new
 
-  def self.reschedule
+  def self.reschedule : Nil
     if runnable = @@runnables.shift?
       runnable.resume
     else
       loop_fiber.resume
     end
-    nil
   end
 
   def self.loop_fiber

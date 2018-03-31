@@ -60,7 +60,7 @@ class Zip::Reader
   # After reading a next entry, previous entries can no
   # longer be read (their `IO` will be closed.)
   def next_entry : Entry?
-    return nil if @reached_end
+    return if @reached_end
 
     if last_entry = @last_entry
       last_entry.close
@@ -86,7 +86,7 @@ class Zip::Reader
       else
         # Other signature: we are done with entries (next comes metadata)
         @reached_end = true
-        return nil
+        return
       end
     end
 

@@ -103,7 +103,7 @@ module IO::Buffered
   end
 
   # Buffered implementation of `IO#write(slice)`.
-  def write(slice : Bytes)
+  def write(slice : Bytes) : Nil
     check_open
 
     count = slice.size
@@ -134,11 +134,10 @@ module IO::Buffered
 
     slice.copy_to(out_buffer + @out_count, count)
     @out_count += count
-    nil
   end
 
   # :nodoc:
-  def write_byte(byte : UInt8)
+  def write_byte(byte : UInt8) : Nil
     check_open
 
     if sync?

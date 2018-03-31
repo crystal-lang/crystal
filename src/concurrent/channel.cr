@@ -28,13 +28,12 @@ abstract class Channel(T)
     Buffered(T).new(capacity)
   end
 
-  def close
+  def close : Nil
     @closed = true
     Scheduler.enqueue @senders
     @senders.clear
     Scheduler.enqueue @receivers
     @receivers.clear
-    nil
   end
 
   def closed?
@@ -46,7 +45,7 @@ abstract class Channel(T)
   end
 
   def receive?
-    receive_impl { return nil }
+    receive_impl { return }
   end
 
   def inspect(io)
@@ -85,13 +84,12 @@ abstract class Channel(T)
     self.select(channels.map(&.receive_select_action))[1]
   end
 
-  def self.send_first(value, *channels)
+  def self.send_first(value, *channels) : Nil
     send_first value, channels
   end
 
-  def self.send_first(value, channels : Tuple | Array)
+  def self.send_first(value, channels : Tuple | Array) : Nil
     self.select(channels.map(&.send_select_action(value)))
-    nil
   end
 
   def self.select(*ops : SelectAction)

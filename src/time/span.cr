@@ -142,7 +142,7 @@ struct Time::Span
       if raise_exception
         raise ArgumentError.new "Time::Span too big or too small"
       end
-      return nil
+      return
     end
 
     s

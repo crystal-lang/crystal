@@ -185,8 +185,6 @@ module Crystal
     def required_named_arguments
       if (splat_index = self.def.splat_index) && splat_index != self.def.args.size - 1
         self.def.args[splat_index + 1..-1].select { |arg| !arg.default_value }.sort_by &.external_name
-      else
-        nil
       end
     end
   end
@@ -306,8 +304,6 @@ module Crystal
       if parents.try &.any? &.restriction_of?(other, context.instantiated_type)
         return self
       end
-
-      nil
     end
 
     def restrict(other : AliasType, context)
@@ -329,18 +325,18 @@ module Crystal
 
     def restrict(other : UnionType, context)
       restricted = other.union_types.any? { |union_type| restrict(union_type, context) }
-      restricted ? self : nil
+      self if restricted
     end
 
     def restrict(other : VirtualType, context)
-      implements?(other.base_type) ? self : nil
+      self if implements?(other.base_type)
     end
 
     def restrict(other : Union, context)
       types = other.types.compact_map do |ident|
         restrict(ident, context).as(Type?)
       end
-      types.size > 0 ? program.type_merge_union_of(types) : nil
+      program.type_merge_union_of(types) if types.size > 0
     end
 
     def restrict(other : Path, context)
@@ -411,11 +407,9 @@ module Crystal
     end
 
     def restrict(other : Metaclass, context)
-      nil
     end
 
     def restrict(other : ProcNotation, context)
-      nil
     end
 
     def restrict(other : Underscore, context)
@@ -427,11 +421,9 @@ module Crystal
     end
 
     def restrict(other : NumberLiteral, context)
-      nil
     end
 
     def restrict(other : Splat, context)
-      nil
     end
 
     def restrict(other : ASTNode, context)
@@ -531,9 +523,9 @@ module Crystal
         other_type_var = other.type_vars[name]
         if type_var.is_a?(Var) && other_type_var.is_a?(Var)
           restricted = type_var.type.implements?(other_type_var.type)
-          return nil unless restricted
+          return unless restricted
         else
-          return nil unless type_var == other_type_var
+          return unless type_var == other_type_var
         end
       end
 
@@ -556,7 +548,7 @@ module Crystal
           other.raise "can only instantiate NamedTuple with named arguments"
         end
         # We match named tuples in NamedTupleInstanceType
-        return nil
+        return
       end
 
       # Consider the case of a splat in the type vars
@@ -565,7 +557,7 @@ module Crystal
         types = Array(Type).new(type_vars.size)
         i = 0
         type_vars.each_value do |var|
-          return nil unless var.is_a?(Var)
+          return unless var.is_a?(Var)
 
           var_type = var.type
           if i == self.splat_index
@@ -584,13 +576,13 @@ module Crystal
             found_splat = true
 
             count = types.size - (other.type_vars.size - 1)
-            return nil unless count >= 0
+            return unless count >= 0
 
             arg_types = types[i, count]
             arg_types_tuple = context.instantiated_type.program.tuple_of(arg_types)
 
             restricted = arg_types_tuple.restrict(type_var.exp, context)
-            return nil unless restricted == arg_types_tuple
+            return unless restricted == arg_types_tuple
 
             i += count
           else
@@ -613,7 +605,7 @@ module Crystal
       type_vars.each do |name, type_var|
         other_type_var = other.type_vars[i]
         restricted = restrict_type_var(type_var, other_type_var, context)
-        return nil unless restricted
+        return unless restricted
         i += 1
       end
 
@@ -647,7 +639,7 @@ module Crystal
             # number, there's no match
             existing = context.get_free_var(name)
             if existing && existing != type_var
-              return nil
+              return
             end
 
             context.set_free_var(name, type_var)
@@ -699,13 +691,13 @@ module Crystal
             found_splat = true
 
             count = tuple_types.size - (other.type_vars.size - 1)
-            return nil unless count >= 0
+            return unless count >= 0
 
             arg_types = tuple_types[i, count]
             arg_types_tuple = context.instantiated_type.program.tuple_of(arg_types)
 
             restricted = arg_types_tuple.restrict(type_var.exp, context)
-            return nil unless restricted == arg_types_tuple
+            return unless restricted == arg_types_tuple
 
             i += count
           else
@@ -719,11 +711,11 @@ module Crystal
 
         return self
       else
-        return nil unless other.type_vars.size == tuple_types.size
+        return unless other.type_vars.size == tuple_types.size
 
         tuple_types.zip(other.type_vars) do |tuple_type, type_var|
           restricted = tuple_type.restrict(type_var, context)
-          return nil unless restricted == tuple_type
+          return unless restricted == tuple_type
         end
       end
 
@@ -731,7 +723,7 @@ module Crystal
     end
 
     def restrict(other : TupleInstanceType, context)
-      self.implements?(other) ? self : nil
+      self if implements?(other)
     end
   end
 
@@ -755,7 +747,7 @@ module Crystal
       other_names = other_named_args.map(&.name).sort!
       self_names = self.entries.map(&.name).sort!
 
-      return nil unless self_names == other_names
+      return unless self_names == other_names
 
       # Now match name by name
       other_named_args.each do |named_arg|
@@ -763,14 +755,14 @@ module Crystal
         other_type = named_arg.value
 
         restricted = self_type.restrict(other_type, context)
-        return nil unless restricted
+        return unless restricted
       end
 
       self
     end
 
     def restrict(other : NamedTupleInstanceType, context)
-      self.implements?(other) ? self : nil
+      self if implements?(other)
     end
   end
 
@@ -792,8 +784,9 @@ module Crystal
         end
         program.type_merge types
       elsif other.is_a?(VirtualType)
-        result = base_type.restrict(other.base_type, context) || other.base_type.restrict(base_type, context)
-        result ? result.virtual_type : nil
+        if result = base_type.restrict(other.base_type, context) || other.base_type.restrict(base_type, context)
+          result.virtual_type
+        end
       elsif other.implements?(base_type)
         other.virtual_type
       elsif base_type.implements?(other)
@@ -815,8 +808,6 @@ module Crystal
             return instance
           end
         end
-        nil
-      else
         nil
       end
     end
@@ -887,7 +878,7 @@ module Crystal
       return self if self == other
 
       if !self.simple? && !other.simple?
-        return nil
+        return
       end
 
       remove_alias.restrict(other, context)
@@ -922,12 +913,12 @@ module Crystal
   class MetaclassType
     def restrict(other : Metaclass, context)
       restricted = instance_type.restrict(other.name, context)
-      instance_type == restricted ? self : nil
+      self if instance_type == restricted
     end
 
     def restrict(other : VirtualMetaclassType, context)
       restricted = instance_type.restrict(other.instance_type.base_type, context)
-      restricted ? self : nil
+      self if restricted
     end
 
     def restriction_of?(other : VirtualMetaclassType, owner)
@@ -938,28 +929,28 @@ module Crystal
   class GenericClassInstanceMetaclassType
     def restrict(other : Metaclass, context)
       restricted = instance_type.restrict(other.name, context)
-      instance_type == restricted ? self : nil
+      self if instance_type == restricted
     end
 
     def restrict(other : MetaclassType, context)
       return self if instance_type.generic_type.metaclass == other
 
       restricted = instance_type.restrict(other.instance_type, context)
-      restricted ? self : nil
+      self if restricted
     end
   end
 
   class GenericModuleInstanceMetaclassType
     def restrict(other : Metaclass, context)
       restricted = instance_type.restrict(other.name, context)
-      instance_type == restricted ? self : nil
+      self if instance_type == restricted
     end
 
     def restrict(other : MetaclassType, context)
       return self if instance_type.generic_type.metaclass == other
 
       restricted = instance_type.restrict(other.instance_type, context)
-      restricted ? self : nil
+      self if restricted
     end
   end
 
@@ -975,13 +966,13 @@ module Crystal
         inputs.each do |input|
           if input.is_a?(Splat)
             count = arg_types.size - (inputs.size - 1)
-            return nil unless count >= 0
+            return unless count >= 0
 
             input_arg_types = arg_types[i, count]
             input_arg_types_tuple = context.instantiated_type.program.tuple_of(input_arg_types)
 
             restricted = input_arg_types_tuple.restrict(input.exp, context)
-            return nil unless restricted == input_arg_types_tuple
+            return unless restricted == input_arg_types_tuple
 
             i += count
           else
@@ -993,12 +984,12 @@ module Crystal
           end
         end
       else
-        return nil if arg_types.size != inputs_size
+        return if arg_types.size != inputs_size
 
         if inputs
           inputs.zip(arg_types) do |input, my_input|
             restricted = my_input.restrict(input, context)
-            return nil unless restricted == my_input
+            return unless restricted == my_input
           end
         end
       end
@@ -1009,7 +1000,7 @@ module Crystal
           # Ok, NoReturn can be "cast" to anything
         else
           restricted = my_output.restrict(output, context)
-          return nil unless restricted == my_output
+          return unless restricted == my_output
         end
 
         self
@@ -1019,7 +1010,7 @@ module Crystal
     end
 
     def restrict(other : ProcInstanceType, context)
-      compatible_with?(other) ? other : nil
+      other if compatible_with?(other)
     end
 
     def restrict(other : Generic, context)
@@ -1035,13 +1026,13 @@ module Crystal
         other.type_vars.each do |type_var|
           if type_var.is_a?(Splat)
             count = proc_types.size - (other.type_vars.size - 1)
-            return nil unless count >= 0
+            return unless count >= 0
 
             arg_types = proc_types[i, count]
             arg_types_tuple = context.instantiated_type.program.tuple_of(arg_types)
 
             restricted = arg_types_tuple.restrict(type_var.exp, context)
-            return nil unless restricted == arg_types_tuple
+            return unless restricted == arg_types_tuple
 
             i += count
           else
@@ -1057,13 +1048,13 @@ module Crystal
       end
 
       unless other.type_vars.size == arg_types.size + 1
-        return nil
+        return
       end
 
       other.type_vars.each_with_index do |other_type_var, i|
         proc_type = arg_types[i]? || return_type
         restricted = proc_type.restrict other_type_var, context
-        return nil unless restricted == proc_type
+        return unless restricted == proc_type
       end
 
       self
@@ -1081,7 +1072,7 @@ module Crystal
       end
 
       # Disallow casting a function to another one accepting different argument count
-      return nil if arg_types.size != other.arg_types.size
+      return if arg_types.size != other.arg_types.size
 
       arg_types.zip(other.arg_types) do |arg_type, other_arg_type|
         return false unless arg_type == other_arg_type

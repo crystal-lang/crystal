@@ -337,8 +337,6 @@ struct CallStack
             end
           end
         end
-
-        nil
       end
 
       # The address offset at which the program was loaded at.
@@ -430,7 +428,6 @@ struct CallStack
     end
 
     def self.decode_function_name(pc)
-      nil
     end
   {% end %}
 

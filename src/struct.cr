@@ -106,7 +106,6 @@ struct Struct
       @{{ivar.id}}.inspect(io)
     {% end %}
     io << ")"
-    nil
   end
 
   def pretty_print(pp) : Nil

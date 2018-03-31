@@ -66,20 +66,20 @@ def intersect_sphere(ray, center, radius)
   l = center - ray.orig
   tca = l.dot(ray.dir)
   if tca < 0.0
-    return nil
+    return
   end
 
   d2 = l.dot(l) - tca*tca
   r2 = radius*radius
   if d2 > r2
-    return nil
+    return
   end
 
   thc = Math.sqrt(r2 - d2)
   t0 = tca - thc
   # t1 = tca + thc
   if t0 > 10_000
-    return nil
+    return
   end
 
   t0

@@ -8,7 +8,9 @@ struct XML::Namespace
   def_hash object_id
 
   def href
-    @ns.value.href ? String.new(@ns.value.href) : nil
+    if ptr = @ns.value.href
+      String.new(ptr)
+    end
   end
 
   def object_id
@@ -16,7 +18,9 @@ struct XML::Namespace
   end
 
   def prefix
-    @ns.value.prefix ? String.new(@ns.value.prefix) : nil
+    if ptr = @ns.value.prefix
+      String.new(ptr)
+    end
   end
 
   def to_s(io)

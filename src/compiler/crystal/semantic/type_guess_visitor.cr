@@ -432,26 +432,21 @@ module Crystal
       if name = node.name
         type = lookup_type_no_check?(name)
         if type.is_a?(GenericClassType)
-          element_types = guess_array_literal_element_types(node)
-          if element_types
+          if element_types = guess_array_literal_element_types(node)
             return type.instantiate([Type.merge!(element_types)] of TypeVar)
           end
         else
           return check_allowed_in_generics(node, type)
         end
       elsif node_of = node.of
-        type = lookup_type?(node_of)
-        if type
+        if type = lookup_type?(node_of)
           return program.array_of(type.virtual_type)
         end
       else
-        element_types = guess_array_literal_element_types(node)
-        if element_types
+        if element_types = guess_array_literal_element_types(node)
           return program.array_of(Type.merge!(element_types))
         end
       end
-
-      nil
     end
 
     def guess_array_literal_element_types(node)
@@ -479,10 +474,10 @@ module Crystal
         end
       elsif node_of = node.of
         key_type = lookup_type?(node_of.key)
-        return nil unless key_type
+        return unless key_type
 
         value_type = lookup_type?(node_of.value)
-        return nil unless value_type
+        return unless value_type
 
         return program.hash_of(key_type.virtual_type, value_type.virtual_type)
       else
@@ -491,8 +486,6 @@ module Crystal
           return program.hash_of(Type.merge!(key_types), Type.merge!(value_types))
         end
       end
-
-      nil
     end
 
     def guess_hash_literal_key_value_types(node : HashLiteral)
@@ -520,8 +513,6 @@ module Crystal
 
       if from_type && to_type
         program.range_of(from_type, to_type)
-      else
-        nil
       end
     end
 
@@ -533,7 +524,7 @@ module Crystal
       element_types = nil
       node.elements.each do |element|
         element_type = guess_type(element)
-        return nil unless element_type
+        return unless element_type
 
         element_types ||= [] of Type
         element_types << element_type
@@ -541,8 +532,6 @@ module Crystal
 
       if element_types
         program.tuple_of(element_types)
-      else
-        nil
       end
     end
 
@@ -550,7 +539,7 @@ module Crystal
       entries = nil
       node.entries.each do |entry|
         element_type = guess_type(entry.value)
-        return nil unless element_type
+        return unless element_type
 
         entries ||= [] of NamedArgumentType
         entries << NamedArgumentType.new(entry.key, element_type)
@@ -558,8 +547,6 @@ module Crystal
 
       if entries
         program.named_tuple_of(entries)
-      else
-        nil
       end
     end
 
@@ -612,8 +599,6 @@ module Crystal
 
       type = guess_type_call_with_type_annotation(node)
       return type if type
-
-      nil
     end
 
     # If it's Pointer.malloc(size, value), infer element type from value
@@ -625,13 +610,11 @@ module Crystal
          obj.single?("Pointer") && node.name == "malloc"
         type = lookup_type_no_check?(obj)
         if type.is_a?(PointerType)
-          element_type = guess_type(node.args[1])
-          if element_type
+          if element_type = guess_type(node.args[1])
             return @program.pointer_of(element_type)
           end
         end
       end
-      nil
     end
 
     def guess_type_call_lib_fun(node)
@@ -655,7 +638,6 @@ module Crystal
           return external_type
         end
       end
-      nil
     end
 
     # Guess type from T.method, where T is a Path and
@@ -663,11 +645,11 @@ module Crystal
     # (use the type annotation)
     def guess_type_call_with_type_annotation(node)
       obj = node.obj
-      return nil unless obj
-      return nil unless obj.is_a?(Path) || obj.is_a?(Generic)
+      return unless obj
+      return unless obj.is_a?(Path) || obj.is_a?(Generic)
 
       obj_type = lookup_type_no_check?(obj)
-      return nil unless obj_type
+      return unless obj_type
 
       guess_type_from_method(obj_type, node)
     end
@@ -717,14 +699,14 @@ module Crystal
 
       # If we only have one def, check the body, we might be
       # able to infer something from it if it's sufficiently simple
-      return nil unless defs.size == 1
+      return unless defs.size == 1
 
       a_def = defs.first
       body = a_def.body
 
       # Prevent infinite recursion
       if @methods_being_checked.any? &.same?(a_def)
-        return nil
+        return
       end
 
       @methods_being_checked.push a_def
@@ -763,8 +745,9 @@ module Crystal
     end
 
     def guess_type(node : NilableCast)
-      type = lookup_type?(node.to)
-      type ? @program.nilable(type) : nil
+      if type = lookup_type?(node.to)
+        @program.nilable(type)
+      end
     end
 
     def guess_type(node : UninitializedVar)
@@ -776,14 +759,13 @@ module Crystal
         if current_type.is_a?(NonGenericClassType)
           return current_type.virtual_type
         else
-          return nil
+          return
         end
       end
 
       if args = @args
         # Find an argument with the same name as this variable
-        arg = args.find { |arg| arg.name == node.name }
-        if arg
+        if arg = args.find { |arg| arg.name == node.name }
           # If the argument has a restriction, guess the type from it
           if restriction = arg.restriction
             type = lookup_type?(restriction)
@@ -799,8 +781,7 @@ module Crystal
 
       # Try to guess type from a block argument with the same name
       if (block_arg = @block_arg) && block_arg.name == node.name
-        restriction = block_arg.restriction
-        if restriction
+        if restriction = block_arg.restriction
           type = lookup_type?(restriction)
           return type if type
         else
@@ -808,8 +789,6 @@ module Crystal
           return @program.proc_of([@program.void] of Type)
         end
       end
-
-      nil
     end
 
     def guess_type(node : InstanceVar)
@@ -822,8 +801,6 @@ module Crystal
       info = @guessed_instance_vars[current_type]?.try &.[node.name]?
       if info
         info.type
-      else
-        nil
       end
     end
 
@@ -864,16 +841,16 @@ module Crystal
         end
       end
 
-      types ? Type.merge!(types) : nil
+      Type.merge!(types) if types
     end
 
     def guess_type(node : Path)
       type = lookup_type_var?(node)
-      return nil unless type
+      return unless type
 
       if type.is_a?(Const)
         # Don't solve a constant we've already seen
-        return nil if @consts.includes?(type)
+        return if @consts.includes?(type)
 
         # Check if the const's value is actually an enum member
         if type.value.type?.try &.is_a?(EnumType)
@@ -890,8 +867,9 @@ module Crystal
     end
 
     def guess_type(node : Expressions)
-      last = node.expressions.last?
-      last ? guess_type(last) : nil
+      if last = node.expressions.last?
+        guess_type(last)
+      end
     end
 
     def guess_type_in_method_body(node : Expressions)
@@ -902,7 +880,7 @@ module Crystal
       types = nil
       nodes.each do |node|
         type = guess_type(node)
-        return nil unless type
+        return unless type
 
         types ||= [] of Type
         types << type
@@ -910,8 +888,6 @@ module Crystal
 
       if types
         Type.merge!(types)
-      else
-        nil
       end
     end
 
@@ -921,7 +897,7 @@ module Crystal
       end
 
       type_var = process_assign(node)
-      type_var.is_a?(Type) ? type_var : nil
+      type_var if type_var.is_a?(Type)
     end
 
     def guess_type(node : Not)
@@ -961,7 +937,6 @@ module Crystal
     end
 
     def guess_type(node : ASTNode)
-      nil
     end
 
     def check_has_self(node)
@@ -1026,7 +1001,7 @@ module Crystal
 
     def lookup_type_var?(node, root = current_type)
       type_var = root.lookup_type_var?(node)
-      return nil unless type_var.is_a?(Type)
+      return unless type_var.is_a?(Type)
 
       check_allowed_in_generics(node, type_var)
       type_var
@@ -1041,7 +1016,7 @@ module Crystal
       # and as variables types, so we disallow them.
       if type && !type.allowed_in_generics?
         @error = Error.new(node, type)
-        return nil
+        return
       end
 
       case type

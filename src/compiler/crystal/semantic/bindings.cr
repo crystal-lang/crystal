@@ -380,7 +380,7 @@ module Crystal
     property! call : Call
 
     def map_type(type)
-      return nil unless call.type?
+      return unless call.type?
 
       arg_types = call.args.map &.type
       arg_types.push call.type

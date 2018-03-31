@@ -55,7 +55,6 @@ def Array.from_json(string_or_io) : Nil
   new(parser) do |element|
     yield element
   end
-  nil
 end
 
 def Nil.new(pull : JSON::PullParser)

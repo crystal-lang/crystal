@@ -9,8 +9,9 @@ struct LLVM::GlobalCollection
   end
 
   def []?(name)
-    global = LibLLVM.get_named_global(@mod, name)
-    global ? Value.new(global) : nil
+    if global = LibLLVM.get_named_global(@mod, name)
+      Value.new(global)
+    end
   end
 
   def [](name)

@@ -32,8 +32,6 @@ module Crystal
         interpret_raise(node)
       when "run"
         interpret_run(node)
-      else
-        nil
       end
     end
 
@@ -2154,8 +2152,6 @@ private def intepret_array_or_tuple_method(object, klass, method, args, block, i
       end
       klass.new(object.elements + other_elements)
     end
-  else
-    nil
   end
 end
 

@@ -11,12 +11,10 @@ module Crystal
 
     # Returns any doc comments associated to this type.
     def doc : String?
-      nil
     end
 
     # Returns all locations where this type is declared
     def locations : Array(Location)?
-      nil
     end
 
     # Returns `true` if this type has the give attribute.
@@ -83,13 +81,11 @@ module Crystal
     # Returns the methods defined in this type, indexed by their name.
     # This does not include methods defined in ancestors.
     def defs : Hash(String, Array(DefWithMetadata))?
-      nil
     end
 
     # Returns all macros defines in this type, indexed by their name.
     # This does not inlcude methods defined in ancestors.
     def macros : Hash(String, Array(Macro))?
-      nil
     end
 
     # Returns this type's metaclass, which holds class methods for this type.
@@ -275,7 +271,6 @@ module Crystal
     end
 
     def filter_by_responds_to(name)
-      nil
     end
 
     def add_instance_var_initializer(name, value, meta_vars)
@@ -296,11 +291,9 @@ module Crystal
     end
 
     def types?
-      nil
     end
 
     def parents
-      nil
     end
 
     def ancestors
@@ -318,7 +311,6 @@ module Crystal
 
     # Returns this type's superclass, or `nil` if it doesn't have one
     def superclass : Type?
-      nil
     end
 
     def lookup_defs(name : String, lookup_ancestors_for_new : Bool = false)
@@ -415,8 +407,6 @@ module Crystal
         parent_macro = parent.lookup_macro(name, args, named_args)
         return parent_macro if parent_macro
       end
-
-      nil
     end
 
     # Looks up macros with the given name. Returns:
@@ -443,8 +433,6 @@ module Crystal
         parent_macros = parent.lookup_macros(name)
         return parent_macros if parent_macros
       end
-
-      nil
     end
 
     def add_including_type(mod)
@@ -490,8 +478,6 @@ module Crystal
           index = instance_vars.key_index(name)
           if index
             superclass.all_instance_vars_count + index
-          else
-            nil
           end
         end
       else
@@ -509,7 +495,6 @@ module Crystal
     end
 
     def lookup_class_var?(name)
-      nil
     end
 
     def lookup_class_var(name)
@@ -563,7 +548,6 @@ module Crystal
     end
 
     def splat_index
-      nil
     end
 
     def type_vars
@@ -753,7 +737,7 @@ module Crystal
             return ex_item.def
           else
             list.insert(i, item)
-            return nil
+            return
           end
         end
       end
@@ -806,7 +790,7 @@ module Crystal
     end
 
     def filter_by_responds_to(name)
-      has_def?(name) ? self : nil
+      self if has_def?(name)
     end
 
     def include(mod)
@@ -962,8 +946,6 @@ module Crystal
         all_types = Array(Type).new(including_types.size)
         add_to_including_types(all_types)
         program.type_merge_union_of(all_types)
-      else
-        nil
       end
     end
 
@@ -1776,7 +1758,7 @@ module Crystal
       splat_index, double_variadic?, to: @generic_type
 
     def filter_by_responds_to(name)
-      @generic_type.filter_by_responds_to(name) ? self : nil
+      self if @generic_type.filter_by_responds_to(name)
     end
 
     def class?
@@ -1830,8 +1812,6 @@ module Crystal
         all_types = Array(Type).new(including_types.size)
         add_to_including_types(all_types)
         program.type_merge_union_of(all_types)
-      else
-        nil
       end
     end
 
@@ -1860,7 +1840,7 @@ module Crystal
     end
 
     def filter_by_responds_to(name)
-      @generic_type.filter_by_responds_to(name) ? self : nil
+      self if @generic_type.filter_by_responds_to(name)
     end
 
     def module?
@@ -2187,14 +2167,14 @@ module Crystal
 
     def implements?(other)
       if other.is_a?(NamedTupleInstanceType)
-        return nil unless self.size == other.size
+        return unless self.size == other.size
 
         self_entries = self.entries.sort_by &.name
         other_entries = other.entries.sort_by &.name
 
         self_entries.zip(other_entries) do |self_entry, other_entry|
-          return nil unless self_entry.name == other_entry.name
-          return nil unless self_entry.type.implements?(other_entry.type)
+          return unless self_entry.name == other_entry.name
+          return unless self_entry.type.implements?(other_entry.type)
         end
 
         self
@@ -2277,10 +2257,10 @@ module Crystal
 
     def lookup_var(name)
       a_def = lookup_first_def(name, false)
-      return nil unless a_def
+      return unless a_def
 
       body = a_def.body
-      return nil unless body.is_a?(Primitive) && body.name == "external_var_get"
+      return unless body.is_a?(Primitive) && body.name == "external_var_get"
 
       a_def
     end
@@ -2330,8 +2310,6 @@ module Crystal
       process_value
       if aliased_type = @aliased_type
         aliased_type.types?
-      else
-        nil
       end
     end
 
@@ -2557,8 +2535,6 @@ module Crystal
     def filter_by_responds_to(name)
       if instance_type.generic_type.metaclass.filter_by_responds_to(name)
         self
-      else
-        nil
       end
     end
 
@@ -2949,10 +2925,8 @@ module Crystal
         var.initializer = class_var.initializer
         var.bind_to(class_var)
         self.class_vars[name] = var
-        return var
+        var
       end
-
-      nil
     end
 
     def replace_type_parameters(instance)
@@ -3015,10 +2989,8 @@ module Crystal
         var.initializer = class_var.initializer
         var.bind_to(class_var)
         self.class_vars[name] = var
-        return var
+        var
       end
-
-      nil
     end
 
     def implements?(other : VirtualMetaclassType)

@@ -395,7 +395,6 @@ class Regex
   # /ax/ =~ "input data" # => nil
   # ```
   def =~(other)
-    nil
   end
 
   # Convert to `String` in literal format. Returns the source as a `String` in

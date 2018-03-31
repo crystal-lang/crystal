@@ -94,7 +94,7 @@ module HTTP
       while true
         if @chunk_remaining > 0
           peek = @io.peek
-          return nil unless peek
+          return unless peek
 
           if @chunk_remaining < peek.size
             peek = peek[0, @chunk_remaining]

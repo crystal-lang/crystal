@@ -56,8 +56,6 @@ class Crystal::Doc::Type
     case type = @type
     when GenericType
       type.type_vars
-    else
-      nil
     end
   end
 
@@ -91,8 +89,6 @@ class Crystal::Doc::Type
 
     if superclass
       @generator.type(superclass)
-    else
-      nil
     end
   end
 

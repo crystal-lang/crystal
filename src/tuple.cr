@@ -456,11 +456,10 @@ struct Tuple
   # "hello"
   # 1
   # ```
-  def reverse_each
+  def reverse_each : Nil
     {% for i in 1..T.size %}
       yield self[{{T.size - i}}]
     {% end %}
-    nil
   end
 
   # Returns the first element of this tuple. Doesn't compile
@@ -485,9 +484,7 @@ struct Tuple
   # empty.first? # => nil
   # ```
   def first?
-    {% if T.size == 0 %}
-      nil
-    {% else %}
+    {% unless T.size == 0 %}
       self[0]
     {% end %}
   end
@@ -516,9 +513,7 @@ struct Tuple
   # empty.last? # => nil
   # ```
   def last?
-    {% if T.size == 0 %}
-      nil
-    {% else %}
+    {% unless T.size == 0 %}
       self[{{T.size - 1}}]
     {% end %}
   end

@@ -468,7 +468,6 @@ class Crystal::Call
         raise "index out of bounds for #{owner} (#{arg} not in #{-instance_type.size}..#{instance_type.size - 1})"
       end
     end
-    nil
   end
 
   def named_tuple_indexer_helper(args, arg_types, owner, instance_type, nilable)
@@ -489,7 +488,6 @@ class Crystal::Call
         raise "missing key '#{name}' for named tuple #{owner}"
       end
     end
-    nil
   end
 
   def replace_splats
@@ -656,7 +654,7 @@ class Crystal::Call
       when Macro
         return result
       when Type::DefInMacroLookup
-        return nil
+        return
       end
     end
   end

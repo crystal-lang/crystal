@@ -45,8 +45,6 @@ module Readline
     if line
       LibReadline.add_history(line) if add_history
       String.new(line).tap { LibC.free(line.as(Void*)) }
-    else
-      nil
     end
   end
 
@@ -55,7 +53,7 @@ module Readline
 
   def line_buffer
     line = LibReadline.rl_line_buffer
-    return nil unless line
+    return unless line
 
     String.new(line)
   end

@@ -302,7 +302,7 @@ class OptionParser
       index = @args.index { |arg| yield arg }
       if index
         if (double_dash_index = @double_dash_index) && index >= double_dash_index
-          return nil
+          return
         end
       end
       index

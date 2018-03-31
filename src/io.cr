@@ -209,7 +209,6 @@ abstract class IO
   # ```
   def print(obj) : Nil
     self << obj
-    nil
   end
 
   # Writes the given objects into this `IO` by invoking `to_s(io)`
@@ -224,7 +223,6 @@ abstract class IO
     objects.each do |obj|
       print obj
     end
-    nil
   end
 
   # Writes the given string to this `IO` followed by a newline character
@@ -239,7 +237,6 @@ abstract class IO
   def puts(string : String) : Nil
     self << string
     puts unless string.ends_with?('\n')
-    nil
   end
 
   # Writes the given object to this `IO` followed by a newline character.
@@ -264,7 +261,6 @@ abstract class IO
   # ```
   def puts : Nil
     print '\n'
-    nil
   end
 
   # Writes the given objects, each followed by a newline character.
@@ -278,7 +274,6 @@ abstract class IO
     objects.each do |obj|
       puts obj
     end
-    nil
   end
 
   def printf(format_string, *args) : Nil
@@ -288,7 +283,6 @@ abstract class IO
   # ditto
   def printf(format_string, args : Array | Tuple) : Nil
     String::Formatter(typeof(args)).new(format_string, args, self).format
-    nil
   end
 
   # Reads a single byte from this `IO`. Returns `nil` if there is no more
@@ -303,8 +297,6 @@ abstract class IO
     byte = uninitialized UInt8
     if read(Slice.new(pointerof(byte), 1)) == 1
       byte
-    else
-      nil
     end
   end
 
@@ -317,8 +309,9 @@ abstract class IO
   # io.read_char # => nil
   # ```
   def read_char : Char?
-    info = read_char_with_bytesize
-    info ? info[0] : nil
+    if info = read_char_with_bytesize
+      info[0]
+    end
   end
 
   private def read_char_with_bytesize
@@ -326,7 +319,7 @@ abstract class IO
     # If so, this will be faster than reading byte per byte.
     if !decoder && (peek = self.peek)
       if peek.empty?
-        return nil
+        return
       else
         return read_char_with_bytesize_peek(peek)
       end
@@ -362,7 +355,7 @@ abstract class IO
 
   private def read_char_with_bytesize_slow
     first = read_utf8_byte
-    return nil unless first
+    return unless first
 
     first = first.to_u32
     return first.unsafe_chr, 1 if first < 0x80
@@ -481,32 +474,26 @@ abstract class IO
   # that provide buffering or wrap other IOs should override
   # this method.
   def peek : Bytes?
-    nil
   end
 
   # Writes a slice of UTF-8 encoded bytes to this `IO`, using the current encoding.
-  def write_utf8(slice : Bytes)
+  def write_utf8(slice : Bytes) : Nil
     if encoder = encoder()
       encoder.write(self, slice)
     else
       write(slice)
     end
-    nil
   end
 
   private def encoder
     if encoding = @encoding
       @encoder ||= Encoder.new(encoding)
-    else
-      nil
     end
   end
 
   private def decoder
     if encoding = @encoding
       @decoder ||= Decoder.new(encoding)
-    else
-      nil
     end
   end
 
@@ -539,7 +526,7 @@ abstract class IO
     count = slice.size
     while slice.size > 0
       read_bytes = read slice
-      return nil if read_bytes == 0
+      return if read_bytes == 0
       slice += read_bytes
     end
     count
@@ -705,7 +692,7 @@ abstract class IO
 
         if !peek || peek.empty?
           if buffer.bytesize == 0
-            return nil
+            return
           else
             break
           end
@@ -1033,7 +1020,7 @@ abstract class IO
   #
   # String operations (`gets`, `gets_to_end`, `read_char`, `<<`, `print`, `puts`
   # `printf`) will use this encoding.
-  def set_encoding(encoding : String, invalid : Symbol? = nil)
+  def set_encoding(encoding : String, invalid : Symbol? = nil) : Nil
     if (encoding == "UTF-8") && (invalid != :skip)
       @encoding = nil
     else
@@ -1043,7 +1030,6 @@ abstract class IO
     @decoder.try &.close
     @encoder = nil
     @decoder = nil
-    nil
   end
 
   # Returns this `IO`'s encoding. The default is `UTF-8`.

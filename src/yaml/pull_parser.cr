@@ -57,7 +57,7 @@ class YAML::PullParser
     when .scalar?
       ptr = @event.data.scalar.tag
     end
-    ptr ? String.new(ptr) : nil
+    String.new(ptr) if ptr
   end
 
   # Returns the scalar value, assuming the pull parser
@@ -81,8 +81,6 @@ class YAML::PullParser
       read_anchor @event.data.mapping_start.anchor
     when .alias?
       read_anchor @event.data.alias.anchor
-    else
-      nil
     end
   end
 
@@ -316,7 +314,7 @@ class YAML::PullParser
   end
 
   private def read_anchor(anchor)
-    anchor ? String.new(anchor) : nil
+    String.new(anchor) if anchor
   end
 
   def raise(msg : String, line_number = self.start_line, column_number = self.start_column, context_info = nil)

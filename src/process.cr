@@ -89,8 +89,6 @@ class Process
   def self.fork : self?
     if pid = fork_internal
       new pid
-    else
-      nil
     end
   end
 

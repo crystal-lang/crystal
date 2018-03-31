@@ -475,8 +475,6 @@ module Crystal
       when UInt16 then uint16
       when UInt32 then uint32
       when UInt64 then uint64
-      else
-        nil
       end
     end
 
@@ -552,13 +550,13 @@ module Crystal
     end
 
     def check_private(node)
-      return nil unless node.visibility.private?
+      return unless node.visibility.private?
 
       location = node.location
-      return nil unless location
+      return unless location
 
       filename = location.filename
-      return nil unless filename.is_a?(String)
+      return unless filename.is_a?(String)
 
       file_module(filename)
     end

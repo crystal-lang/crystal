@@ -214,7 +214,7 @@ module Crystal
       def overwrite_checks
         overwriting_files = views.compact_map do |view|
           path = view.full_path
-          File.exists?(path) ? path : nil
+          path if File.exists?(path)
         end
 
         if overwriting_files.any?

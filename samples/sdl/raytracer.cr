@@ -76,11 +76,11 @@ class Sphere
   def intersect(ray, distance)
     vl = @center - ray.start
     a = vl.dot(ray.dir)
-    return nil if a < 0
+    return if a < 0
 
     b2 = vl.dot(vl) - a * a
     r2 = @radius * @radius
-    return nil if b2 > r2
+    return if b2 > r2
 
     c = Math.sqrt(r2 - b2)
     near = a - c

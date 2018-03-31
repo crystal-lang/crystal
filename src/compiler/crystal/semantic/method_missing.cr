@@ -24,7 +24,7 @@ module Crystal
 
     def lookup_method_missing
       a_macro = lookup_macro("method_missing", ONE_ARG, nil)
-      a_macro.is_a?(Macro) ? a_macro : nil
+      a_macro if a_macro.is_a?(Macro)
     end
 
     def define_method_from_method_missing(method_missing, signature, original_call)

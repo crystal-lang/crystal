@@ -12,8 +12,9 @@ struct LLVM::Target
   end
 
   def self.first? : self?
-    target = LibLLVM.get_first_target
-    target ? Target.new(target) : nil
+    if target = LibLLVM.get_first_target
+      target
+    end
   end
 
   def self.from_triple(triple) : self

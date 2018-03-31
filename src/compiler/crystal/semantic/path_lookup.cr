@@ -70,7 +70,7 @@ module Crystal
       type = types?.try &.[name]?
       if type
         if type.private? && !include_private
-          return nil
+          return
         end
 
         return type
@@ -109,7 +109,7 @@ module Crystal
       # If we are Foo(T) and somebody looks up the type T, we return `nil` because we don't
       # know what type T is, and we don't want to continue search in the namespace
       if type_vars.includes?(name)
-        return nil
+        return
       end
       super
     end

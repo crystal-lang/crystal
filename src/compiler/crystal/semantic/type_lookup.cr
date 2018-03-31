@@ -87,7 +87,7 @@ class Crystal::Type
         if @raise
           node.raise "#{type_var} is not a type, it's a constant"
         else
-          return nil
+          return
         end
       when Type
         return type_var
@@ -97,8 +97,6 @@ class Crystal::Type
 
       if @raise
         raise_undefined_constant(node)
-      else
-        nil
       end
     end
 
@@ -108,8 +106,6 @@ class Crystal::Type
 
       if @raise
         raise_undefined_constant(node)
-      else
-        nil
       end
     end
 

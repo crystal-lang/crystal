@@ -285,7 +285,6 @@ class Crystal::Call
     when "and"; "&&"
     when "or" ; "||"
     when "not"; "!"
-    else        nil
     end
   end
 
@@ -343,7 +342,7 @@ class Crystal::Call
       return "missing arguments: #{missing_args.join ", "}"
     end
 
-    return nil
+    return
   end
 
   def append_error_when_no_matching_defs(owner, def_name, all_arguments_sizes, real_args_size, min_splat, defs, io)
@@ -609,8 +608,6 @@ class Crystal::Call
                   type.namespace
                 when GenericClassInstanceType
                   type.namespace
-                else
-                  nil
                 end
     case namespace
     when Program

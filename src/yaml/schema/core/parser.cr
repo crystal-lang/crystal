@@ -109,8 +109,6 @@ class YAML::Schema::Core::Parser < YAML::Parser
       parse_set
     when "tag:yaml.org,2002:seq"
       parse_sequence
-    else
-      nil
     end
   end
 

@@ -311,11 +311,11 @@ module Enumerable(T)
   #
   # This can be used to prevent many memory allocations when each slice of
   # interest is to be used in a read-only fashion.
-  def each_slice(count : Int, reuse = false)
+  def each_slice(count : Int, reuse = false) : Nil
     each_slice_internal(count, Array(T), reuse) { |slice| yield slice }
   end
 
-  private def each_slice_internal(count : Int, type, reuse)
+  private def each_slice_internal(count : Int, type, reuse) : Nil
     if reuse
       unless reuse.is_a?(Array)
         reuse = type.new(count)
@@ -339,7 +339,6 @@ module Enumerable(T)
       end
     end
     yield slice unless slice.empty?
-    nil
   end
 
   # Iterates over the collection, yielding both the elements and their index.
@@ -731,7 +730,7 @@ module Enumerable(T)
   # Like `max_by` but returns `nil` if the collection is empty.
   def max_by?(&block : T -> U) forall U
     found, value = max_by_internal { |value| yield value }
-    found ? value : nil
+    value if found
   end
 
   private def max_by_internal(&block : T -> U) forall U
@@ -765,7 +764,7 @@ module Enumerable(T)
   # Like `max_of` but returns `nil` if the collection is empty.
   def max_of?(&block : T -> U) forall U
     found, value = max_of_internal { |value| yield value }
-    found ? value : nil
+    value if found
   end
 
   private def max_of_internal(&block : T -> U) forall U
@@ -820,7 +819,7 @@ module Enumerable(T)
   # Like `min_by` but returns `nil` if the collection is empty.
   def min_by?(&block : T -> U) forall U
     found, value = min_by_internal { |value| yield value }
-    found ? value : nil
+    value if found
   end
 
   private def min_by_internal(&block : T -> U) forall U
@@ -854,7 +853,7 @@ module Enumerable(T)
   # Like `min_of` but returns `nil` if the collection is empty.
   def min_of?(&block : T -> U) forall U
     found, value = min_of_internal { |value| yield value }
-    found ? value : nil
+    value if found
   end
 
   private def min_of_internal(&block : T -> U) forall U

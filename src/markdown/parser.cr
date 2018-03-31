@@ -92,8 +92,6 @@ class Markdown::Parser
     if next_line_is_all?('-')
       return :header2
     end
-
-    nil
   end
 
   def render_prefix_header(level, line)
@@ -445,13 +443,13 @@ class Markdown::Parser
       pos += 1
     end
 
-    return nil unless bracket_count == 0
+    return unless bracket_count == 0
     bracket_idx = pos
 
-    return nil unless str[bracket_idx + 1] === '('
+    return unless str[bracket_idx + 1] === '('
 
     paren_idx = (str + bracket_idx + 1).to_slice(bytesize - bracket_idx - 1).index ')'.ord
-    return nil unless paren_idx
+    return unless paren_idx
 
     String.new(Slice.new(str + bracket_idx + 2, paren_idx - 1))
   end

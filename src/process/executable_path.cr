@@ -64,7 +64,7 @@ end
 
       if LibC._NSGetExecutablePath(buf, pointerof(size)) == -1
         buf = GC.malloc_atomic(size).as(UInt8*)
-        return nil if LibC._NSGetExecutablePath(buf, pointerof(size)) == -1
+        return if LibC._NSGetExecutablePath(buf, pointerof(size)) == -1
       end
 
       String.new(buf)

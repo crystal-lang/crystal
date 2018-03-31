@@ -281,7 +281,6 @@ module Crystal
     end
 
     def deepest_error_message
-      nil
     end
   end
 

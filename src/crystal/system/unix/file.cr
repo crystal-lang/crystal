@@ -73,7 +73,7 @@ module Crystal::System::File
   def self.stat?(path : String) : ::File::Stat?
     if LibC.stat(path.check_no_null_byte, out stat) != 0
       if {Errno::ENOENT, Errno::ENOTDIR}.includes? Errno.value
-        return nil
+        return
       else
         raise Errno.new("Unable to get stat for '#{path}'")
       end
@@ -84,7 +84,7 @@ module Crystal::System::File
   def self.lstat?(path : String) : ::File::Stat?
     if LibC.lstat(path.check_no_null_byte, out stat) != 0
       if {Errno::ENOENT, Errno::ENOTDIR}.includes? Errno.value
-        return nil
+        return
       else
         raise Errno.new("Unable to get lstat for '#{path}'")
       end
@@ -196,13 +196,11 @@ module Crystal::System::File
     flock LibC::FlockOp::UN
   end
 
-  private def flock(op : LibC::FlockOp, blocking : Bool = true)
+  private def flock(op : LibC::FlockOp, blocking : Bool = true) : Nil
     op |= LibC::FlockOp::NB unless blocking
 
     if LibC.flock(@fd, op) != 0
       raise Errno.new("flock")
     end
-
-    nil
   end
 end
