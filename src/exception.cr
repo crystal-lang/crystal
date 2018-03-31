@@ -44,7 +44,7 @@ class Exception
   end
 
   def inspect(io : IO)
-    io << "#<" << self.class.name << ":" << message << ">"
+    io << "#<" << self.class.name << ':' << message << '>'
   end
 
   def inspect_with_backtrace

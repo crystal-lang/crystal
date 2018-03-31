@@ -120,7 +120,7 @@ class File
       io << ", atime=" << atime
       io << ", mtime=" << mtime
       io << ", ctime=" << ctime
-      io << ">"
+      io << '>'
     end
 
     def pretty_print(pp)

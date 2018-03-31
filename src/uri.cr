@@ -127,9 +127,9 @@ class URI
   # ```
   def full_path
     String.build do |str|
-      str << (@path.try { |p| !p.empty? } ? @path : "/")
+      str << (@path.try { |p| !p.empty? } ? @path : '/')
       if (query = @query) && !query.empty?
-        str << "?" << query
+        str << '?' << query
       end
     end
   end

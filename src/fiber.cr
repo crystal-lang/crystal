@@ -293,7 +293,7 @@ class Fiber
     if name = @name
       io << ": " << name
     end
-    io << ">"
+    io << '>'
   end
 
   def inspect(io)

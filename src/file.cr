@@ -793,7 +793,7 @@ class File < IO::FileDescriptor
   def inspect(io)
     io << "#<File:" << @path
     io << " (closed)" if closed?
-    io << ">"
+    io << '>'
     io
   end
 

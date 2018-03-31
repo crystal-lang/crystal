@@ -35,7 +35,7 @@ struct Symbol
   # :crystal.inspect # => ":crystal"
   # ```
   def inspect(io : IO)
-    io << ":"
+    io << ':'
 
     value = to_s
     if Symbol.needs_quotes?(value)

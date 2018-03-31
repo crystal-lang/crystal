@@ -148,7 +148,7 @@ sudoku = "
 
 def solve_all(sudoku)
   mr, mc = sd_genmat()
-  sudoku.split("\n").map do |line|
+  sudoku.split('\n').map do |line|
     if line.size >= 81
       ret = sd_solve(mr, mc, line)
       ret.map { |s2| s2.join }

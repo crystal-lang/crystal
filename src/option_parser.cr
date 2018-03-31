@@ -161,9 +161,9 @@ class OptionParser
   def to_s(io : IO)
     if banner = @banner
       io << banner
-      io << "\n"
+      io << '\n'
     end
-    @flags.join "\n", io
+    @flags.join '\n', io
   end
 
   private def append_flag(flag, description)

@@ -89,11 +89,11 @@ module Crystal
       String.build do |flags|
         link_attributes.reverse_each do |attr|
           if ldflags = attr.ldflags
-            flags << " " << ldflags
+            flags << ' ' << ldflags
           end
 
           if libname = attr.lib
-            flags << " " << libname << ".lib"
+            flags << ' ' << libname << ".lib"
           end
         end
       end
@@ -106,7 +106,7 @@ module Crystal
       String.build do |flags|
         link_attributes.reverse_each do |attr|
           if ldflags = attr.ldflags
-            flags << " " << ldflags
+            flags << ' ' << ldflags
           end
 
           if libname = attr.lib
@@ -117,9 +117,9 @@ module Crystal
             static = has_flag?("static") || attr.static?
 
             if has_pkg_config && (libflags = pkg_config_flags(libname, static, library_path))
-              flags << " " << libflags
+              flags << ' ' << libflags
             elsif static && (static_lib = find_static_lib(libname, library_path))
-              flags << " " << static_lib
+              flags << ' ' << static_lib
             else
               flags << " -l" << libname
             end
@@ -157,7 +157,7 @@ module Crystal
               flags << cfg
             end
           end
-          flags.join " "
+          flags.join ' '
         else
           `pkg-config #{libname} --libs`.chomp
         end

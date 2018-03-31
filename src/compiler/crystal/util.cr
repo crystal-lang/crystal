@@ -39,6 +39,6 @@ module Crystal
         end
       end
       str
-    end.join "\n"
+    end.join '\n'
   end
 end

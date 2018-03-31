@@ -252,7 +252,7 @@ class Dir
   end
 
   def to_s(io)
-    io << "#<Dir:" << @path << ">"
+    io << "#<Dir:" << @path << '>'
   end
 
   def inspect(io)

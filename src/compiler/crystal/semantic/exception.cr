@@ -95,7 +95,7 @@ module Crystal
       when String
         if File.file?(filename)
           lines = File.read_lines(filename)
-          io << "in " << relative_filename(filename) << ":" << @line << ": "
+          io << "in " << relative_filename(filename) << ':' << @line << ": "
           append_error_message io, msg
         else
           lines = source ? source.lines.to_a : nil
@@ -115,24 +115,24 @@ module Crystal
       if lines && (line_number = @line) && (line = lines[line_number - 1]?)
         io << "\n\n"
         io << replace_leading_tabs_with_spaces(line.chomp)
-        io << "\n"
+        io << '\n'
         io << (" " * (@column - 1))
         with_color.green.bold.surround(io) do
-          io << "^"
+          io << '^'
           if @size > 0
             io << ("~" * (@size - 1))
           end
         end
       end
-      io << "\n"
+      io << '\n'
 
       if is_macro
-        io << "\n"
+        io << '\n'
         append_error_message io, @message
       end
 
       if inner && inner.has_location?
-        io << "\n"
+        io << '\n'
         inner.append_to_s source, io
       end
     end
@@ -254,7 +254,7 @@ module Crystal
 
       io << "\n\n"
       io << "  "
-      io << relative_filename(filename) << ":" << line_number
+      io << relative_filename(filename) << ':' << line_number
       io << "\n\n"
 
       return unless lines
@@ -273,7 +273,7 @@ module Crystal
       io << "    "
       io << (" " * (name_column - 1))
       with_color.green.bold.surround(io) do
-        io << "^"
+        io << '^'
         if name_size > 0
           io << ("~" * (name_size - 1)) if name_size
         end

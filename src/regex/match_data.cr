@@ -334,11 +334,11 @@ class Regex
 
       io << "#<Regex::MatchData"
       size.times do |i|
-        io << " "
-        io << name_table.fetch(i, i) << ":" if i > 0
+        io << ' '
+        io << name_table.fetch(i, i) << ':' if i > 0
         self[i]?.inspect(io)
       end
-      io << ">"
+      io << '>'
     end
 
     def pretty_print(pp) : Nil

@@ -229,7 +229,7 @@ struct StaticArray(T, N)
   def to_s(io : IO)
     io << "StaticArray["
     join ", ", io, &.inspect(io)
-    io << "]"
+    io << ']'
   end
 
   def pretty_print(pp)

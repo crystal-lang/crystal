@@ -289,13 +289,13 @@ module Spec
       case message
       when Regex
         unless (ex_to_s =~ message)
-          backtrace = ex.backtrace.join("\n") { |f| "  # #{f}" }
+          backtrace = ex.backtrace.join('\n') { |f| "  # #{f}" }
           fail "Expected #{klass} with message matching #{message.inspect}, " \
                "got #<#{ex.class}: #{ex_to_s}> with backtrace:\n#{backtrace}", file, line
         end
       when String
         unless ex_to_s.includes?(message)
-          backtrace = ex.backtrace.join("\n") { |f| "  # #{f}" }
+          backtrace = ex.backtrace.join('\n') { |f| "  # #{f}" }
           fail "Expected #{klass} with #{message.inspect}, got #<#{ex.class}: " \
                "#{ex_to_s}> with backtrace:\n#{backtrace}", file, line
         end
@@ -303,7 +303,7 @@ module Spec
 
       ex
     rescue ex
-      backtrace = ex.backtrace.join("\n") { |f| "  # #{f}" }
+      backtrace = ex.backtrace.join('\n') { |f| "  # #{f}" }
       fail "Expected #{klass}, got #<#{ex.class}: #{ex.to_s}> with backtrace:\n" \
            "#{backtrace}", file, line
     else

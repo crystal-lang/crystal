@@ -28,7 +28,7 @@ describe HTTP::Headers do
     headers = HTTP::Headers{"FOO_BAR" => "bar", "Foobar-foo" => "baz"}
     serialized = String.build do |io|
       headers.each do |name, values|
-        io << name << ": " << values.first << ";"
+        io << name << ": " << values.first << ';'
       end
     end
 

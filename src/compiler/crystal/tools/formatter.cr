@@ -540,9 +540,9 @@ module Crystal
 
       node.expressions.each do |exp|
         if @token.type == :DELIMITER_END
-          # If the delimiter ends with "\n" it's something like "\n  HEREDOC",
+          # If the delimiter ends with '\n' it's something like "\n  HEREDOC",
           # so we are done
-          break if @token.raw.starts_with?("\n")
+          break if @token.raw.starts_with?('\n')
 
           # This is for " ... " \
           #     " ... "
@@ -4415,7 +4415,7 @@ module Crystal
       write_line
       skip_space_or_newline last: true
       result = to_s.strip
-      lines = result.split("\n")
+      lines = result.split('\n')
       fix_heredocs(lines, @heredoc_fixes)
       align_infos(lines, @when_infos)
       align_infos(lines, @hash_infos)
@@ -4431,7 +4431,7 @@ module Crystal
           line.rstrip
         end
       end
-      result = lines.join("\n") + '\n'
+      result = lines.join('\n') + '\n'
       result = "" if result == "\n"
       if @shebang
         result = result[0] + result[2..-1]
@@ -4504,7 +4504,7 @@ module Crystal
       after = line[middle..-1]
       result = String.build do |str|
         str << before
-        gap.times { str << " " }
+        gap.times { str << ' ' }
         str << after
       end
 
@@ -4558,7 +4558,7 @@ module Crystal
 
       result = String.build do |str|
         str << source_line
-        gap.times { str << " " }
+        gap.times { str << ' ' }
         str << comment_line
       end
       result
@@ -4585,7 +4585,7 @@ module Crystal
           formatted_lines = formatted_comment.lines
           formatted_lines.map! do |line|
             String.build do |str|
-              sharp_index.times { str << " " }
+              sharp_index.times { str << ' ' }
               str << "# "
               str << line
             end

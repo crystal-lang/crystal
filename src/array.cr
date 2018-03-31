@@ -1657,9 +1657,9 @@ class Array(T)
 
   def to_s(io : IO)
     executed = exec_recursive(:to_s) do
-      io << "["
+      io << '['
       join ", ", io, &.inspect(io)
-      io << "]"
+      io << ']'
     end
     io << "[...]" unless executed
   end

@@ -637,7 +637,7 @@ class Markdown::Parser
     line -= 1 if line == @lines.size
 
     if line > start
-      @lines[line] = (start..line).join("\n") { |i| @lines[i] }
+      @lines[line] = (start..line).join('\n') { |i| @lines[i] }
       @line = line
     end
   end

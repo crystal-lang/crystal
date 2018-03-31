@@ -198,7 +198,7 @@ struct Proc
     if closure?
       io << ":closure"
     end
-    io << ">"
+    io << '>'
     nil
   end
 end
