@@ -201,8 +201,8 @@ class PrettyPrint
       @width = 0
     end
 
-    def output(out, output_width)
-      @objs.each { |obj| out << obj }
+    def output(io, output_width)
+      @objs.each { |obj| io << obj }
       output_width + @width
     end
 
@@ -223,15 +223,15 @@ class PrettyPrint
       @group.breakables.push self
     end
 
-    def output(out, output_width)
+    def output(io, output_width)
       @group.breakables.shift
       if @group.break?
-        out << @pp.newline
-        @indent.times { out << ' ' }
+        io << @pp.newline
+        @indent.times { io << ' ' }
         @indent
       else
         @pp.group_queue.delete @group if @group.breakables.empty?
-        out << @obj
+        io << @obj
         output_width + @width
       end
     end
