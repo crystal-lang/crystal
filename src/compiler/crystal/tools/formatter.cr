@@ -4327,6 +4327,7 @@ module Crystal
       old_indent = @indent
       @indent = indent
       value = yield
+      @passed_backslash_newline = false
       @indent = old_indent
       value
     end
