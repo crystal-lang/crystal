@@ -779,8 +779,8 @@ module Crystal
       found_comment = false
       found_first_newline = false
 
-      skip_space
-      if @token.type == :NEWLINE
+      found_comment = skip_space
+      if found_comment || @token.type == :NEWLINE
         # add one level of indentation for contents if a newline is present
         offset = @indent + 2
 
