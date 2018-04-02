@@ -11,11 +11,25 @@ enum SpecEnum2
   FOURTY_FOUR
 end
 
+enum SpecNonUniqueEnum
+  One      = 1
+  Two      = 2
+  OneAgain = 1
+end
+
 @[Flags]
 enum SpecEnumFlags
   One
   Two
   Three
+end
+
+@[Flags]
+enum SpecNonUniqueEnumFlags
+  One    = 0b001
+  Two    = 0b010
+  Four   = 0b100
+  OneTwo = 0b011
 end
 
 describe Enum do
@@ -95,6 +109,14 @@ describe Enum do
 
     it "for flags enum" do
       SpecEnumFlags.size.should eq 3
+    end
+
+    it "gives number of unique enum values" do
+      SpecNonUniqueEnum.size.should eq 2
+    end
+
+    it "gives number of unique enum flags" do
+      SpecNonUniqueEnumFlags.size.should eq 3
     end
   end
 

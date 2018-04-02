@@ -307,7 +307,7 @@ struct Enum
     {% end %}
   end
 
-  # Returns the number of enum members.
+  # Returns the number of unique enum members.
   #
   # ```
   # Color.size  # => 3
@@ -315,7 +315,7 @@ struct Enum
   # ```
   def self.size : Int32
     {% if @type.has_attribute?("Flags") %}
-      {{ @type.constants.size - 2 }}
+      {{ @type }}::All.value.popcount
     {% else %}
       {{ @type.constants.size }}
     {% end %}
