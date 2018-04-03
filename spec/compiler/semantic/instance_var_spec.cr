@@ -4854,4 +4854,18 @@ describe "Semantic: instance var" do
       Baz.new
       )) { types["Baz"] }
   end
+
+  it "cannot guess type from argument assigned in body" do
+    assert_error %(
+      class Foo
+        def initialize(x : String)
+          x = 1
+          @x = x
+        end
+      end
+
+      Foo.new "foo"
+      ),
+      "Can't infer the type of instance variable '@x' of Foo"
+  end
 end
