@@ -13,15 +13,15 @@ require "./location/loader"
 # Initializing a `Time` instance with specified `Location`:
 #
 # ```
-# time = Time.new(2016, 2, 15, 21, 1, 10, location)
+# time = Time.new(2016, 2, 15, 21, 1, 10, location: location)
 # ```
 #
 # Alternatively, you can switch the `Location` for any `Time` instance:
 #
 # ```
-# time.location # => Europe/Berlin
-# time.in(Time::Location.load("Asia/Jerusalem"))
-# time.location # => Asia/Jerusalem
+# time.location.to_s # => "Europe/Berlin"
+# time = time.in(Time::Location.load("Asia/Jerusalem"))
+# time.location.to_s # => "Asia/Jerusalem"
 # ```
 #
 # There are also a few special conversions:

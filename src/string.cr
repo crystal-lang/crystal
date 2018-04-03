@@ -3853,7 +3853,7 @@ class String
   # Returns a representation of `self` using character escapes for special characters and wrapped in quotes.
   #
   # ```
-  # "\u{1f48e} - à la carte\n".inspect # => %("\u{1E48E} - à la carte\\n")
+  # "\u{1f48e} - à la carte\n".inspect # => %("\u{1F48E} - à la carte\\n")
   # ```
   def inspect : String
     super
@@ -3869,7 +3869,7 @@ class String
   # Returns a representation of `self` using character escapes for special characters but not wrapped in quotes.
   #
   # ```
-  # "\u{1f48e} - à la carte\n".inspect_unquoted # => %(\u{1E48E} - à la carte\\n)
+  # "\u{1f48e} - à la carte\n".inspect_unquoted # => %(\u{1F48E} - à la carte\\n)
   # ```
   def inspect_unquoted : String
     String.build do |io|
@@ -3888,7 +3888,7 @@ class String
   # and and non-ascii characters (unicode codepoints > 128), wrapped in quotes.
   #
   # ```
-  # "\u{1f48e} - à la carte\n".dump # => %("\\u1f48e - \\u00e0 la carte\\n")
+  # "\u{1f48e} - à la carte\n".dump # => %("\\u{1F48E} - \\u00E0 la carte\\n")
   # ```
   def dump : String
     String.build do |io|
@@ -3908,7 +3908,7 @@ class String
   # and and non-ascii characters (unicode codepoints > 128), but not wrapped in quotes.
   #
   # ```
-  # "\u{1f48e} - à la carte\n".dump_unquoted # => %(\\u1f48e - \\u00e0 la carte\\n)
+  # "\u{1f48e} - à la carte\n".dump_unquoted # => %(\\u{1F48E} - \\u00E0 la carte\\n)
   # ```
   def dump_unquoted : String
     String.build do |io|

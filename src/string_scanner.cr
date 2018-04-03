@@ -85,7 +85,7 @@ class StringScanner
   # s.scan(/\w+/)   # => "test"
   # s.scan(/\w+/)   # => nil
   # s.scan(/\s\w+/) # => " string"
-  # s.scan(/.*/)    # => nil
+  # s.scan(/.*/)    # => ""
   # ```
   def scan(pattern)
     match(pattern, advance: true, options: Regex::Options::ANCHORED)

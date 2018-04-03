@@ -19,7 +19,7 @@ module HTTP::FormData
     # parser = HTTP::FormData::Parser.new(IO::Memory.new(form_data), "aA40")
     # parser.next do |part|
     #   part.name                    # => "field1"
-    #   part.io.gets_to_end          # => "field data"
+    #   part.body.gets_to_end        # => "field data"
     #   part.filename                # => "foo.txt"
     #   part.size                    # => 13
     #   part.headers["Content-Type"] # => "text/plain"

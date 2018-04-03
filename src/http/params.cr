@@ -79,7 +79,7 @@ module HTTP
     # Returns the given key value pairs as a url-encoded HTTP form/query.
     #
     # ```
-    # HTTP::Params.encode({"foo" => "bar", "baz" => "qux"}) # => foo=bar&baz=qux
+    # HTTP::Params.encode({"foo" => "bar", "baz" => "qux"}) # => "foo=bar&baz=qux"
     # ```
     def self.encode(hash : Hash(String, String))
       build do |builder|
@@ -92,7 +92,7 @@ module HTTP
     # Returns the given key value pairs as a url-encoded HTTP form/query.
     #
     # ```
-    # HTTP::Params.encode({foo: "bar", baz: "qux"}) # => foo=bar&baz=qux
+    # HTTP::Params.encode({foo: "bar", baz: "qux"}) # => "foo=bar&baz=qux"
     # ```
     def self.encode(named_tuple : NamedTuple)
       build do |builder|

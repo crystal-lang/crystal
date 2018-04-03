@@ -114,7 +114,7 @@ struct Time
   #
   # ```
   # time = Time.new(2016, 2, 15)
-  # time.day_of_week # => Monday
+  # time.day_of_week # => Time::DayOfWeek::Monday
   # ```
   #
   # Alternatively, you can use question methods:

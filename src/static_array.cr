@@ -169,7 +169,7 @@ struct StaticArray(T, N)
   #
   # ```
   # array = StaticArray[1, 2.5, "a"]
-  # tuple.map &.to_s # => StaticArray["1", "2.5", "a"]
+  # array.map &.to_s # => StaticArray["1", "2.5", "a"]
   # ```
   def map(&block : T -> U) forall U
     StaticArray(U, N).new { |i| yield to_unsafe[i] }
