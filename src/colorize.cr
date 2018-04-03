@@ -338,7 +338,7 @@ struct Colorize::Object(T)
 
   private def self.append_start(io, color)
     last_color_is_default =
-      @@last_color[:fore] == ColorANSI::Default  &&
+      @@last_color[:fore] == ColorANSI::Default &&
         @@last_color[:back] == ColorANSI::Default &&
         @@last_color[:mode] == 0
 
