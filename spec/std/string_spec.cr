@@ -969,14 +969,6 @@ describe "String" do
       $1.should eq("oo")
       $2.should eq("r")
     end
-
-    it "returns nil with string" do
-      ("foo" =~ "foo").should be_nil
-    end
-
-    it "returns nil with regex and regex" do
-      (/foo/ =~ /foo/).should be_nil
-    end
   end
 
   describe "delete" do

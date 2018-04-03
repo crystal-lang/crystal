@@ -388,14 +388,14 @@ class Regex
     match.try &.begin(0)
   end
 
-  # Match. When the argument is not a `String`, always returns `nil`.
-  #
-  # ```
-  # /at/ =~ "input data" # => 7
-  # /ax/ =~ "input data" # => nil
-  # ```
-  def =~(other)
+  # ditto
+  def =~(other : Nil)
     nil
+  end
+
+  # Shortcut to `!(self =~ other)`.
+  def !~(other : String?) : Bool
+    !(self =~ other)
   end
 
   # Convert to `String` in literal format. Returns the source as a `String` in
