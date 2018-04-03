@@ -724,7 +724,7 @@ module Crystal::Macros
     def double_splat(trailing_string : StringLiteral = nil) : MacroId
     end
 
-    # Similar to `NamedTuple#[]`
+    # Similar to `NamedTuple#[]` but returns `NilLiteral` if *key* is undefined.
     def [](key : ASTNode) : ASTNode
     end
 
