@@ -170,7 +170,7 @@ module Spec
     end
 
     def match(actual_value)
-      actual_value =~ @expected_value
+      actual_value.responds_to?(:=~) && actual_value =~ @expected_value
     end
 
     def failure_message(actual_value)
