@@ -326,6 +326,7 @@ describe Crystal::Formatter do
   assert_format "1  &&  2", "1 && 2"
   assert_format "1 &&\n2", "1 &&\n  2"
   assert_format "1 &&\n2 &&\n3", "1 &&\n  2 &&\n  3"
+  assert_format "1 && # foo\n  2 &&\n  3"
   assert_format "if 0\n1 &&\n2 &&\n3\nend", "if 0\n  1 &&\n    2 &&\n    3\nend"
   assert_format "if 1 &&\n2 &&\n3\n4\nend", "if 1 &&\n   2 &&\n   3\n  4\nend"
   assert_format "if 1 &&\n   (2 || 3)\n  1\nelse\n  2\nend"

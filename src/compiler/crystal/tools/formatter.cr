@@ -2946,8 +2946,8 @@ module Crystal
       end
 
       write_token " ", token
-      skip_space
-      if @token.type == :NEWLINE
+      found_comment = skip_space
+      if found_comment || @token.type == :NEWLINE
         if @inside_call_or_assign == 0
           next_indent = @inside_cond == 0 ? @indent + 2 : @indent
         else
