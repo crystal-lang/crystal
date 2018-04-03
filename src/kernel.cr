@@ -127,7 +127,7 @@ module AtExitHandlers
 
   class_property exception : Exception?
 
-  private class_getter(handlers) { [] of Int32 -> }
+  private class_getter(handlers) { [] of Int32, Exception? -> }
 
   def self.add(handler)
     raise "Cannot use at_exit from an at_exit handler" if @@running
@@ -142,7 +142,7 @@ module AtExitHandlers
       # Run the registered handlers in reverse order
       while handler = handlers.pop?
         begin
-          handler.call status
+          handler.call status, exception
         rescue handler_ex
           STDERR.puts "Error running at_exit handler: #{handler_ex}"
           status = 1 if status.zero?
@@ -180,7 +180,13 @@ end
 # ```text
 # goodbye cruel world
 # ```
-def at_exit(&handler : Int32 ->) : Nil
+#
+# The exit status code that will be returned by this program is passed to
+# the block as its first argument. In case of any unhandled exception, it is
+# passed as the second argument to the block, if the program terminates
+# normally or `exit(status)` is called explicitly, then the second argument
+# will be nil.
+def at_exit(&handler : Int32, Exception? ->) : Nil
   AtExitHandlers.add(handler)
 end
 

@@ -225,4 +225,20 @@ describe "at_exit" do
                            Unhandled exception: Kaboom!
                            OUTPUT
   end
+
+  it "can get unhandled exception in at_exit handler" do
+    status, _, error = build_and_run <<-CODE
+      at_exit do |_, ex|
+        STDERR.puts ex.try &.message
+      end
+
+      raise "Kaboom!"
+    CODE
+
+    status.success?.should be_false
+    error.should contain <<-OUTPUT
+                           Kaboom!
+                           Unhandled exception: Kaboom!
+                           OUTPUT
+  end
 end
