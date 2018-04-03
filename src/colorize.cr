@@ -173,12 +173,12 @@ module Colorize
     blue : UInt8 do
     def fore(io : IO) : Nil
       io << "38;2;"
-      {red, green, blue}.join(";", io, &.to_s io)
+      {red, green, blue}.join(';', io, &.to_s io)
     end
 
     def back(io : IO) : Nil
       io << "48;2;"
-      {red, green, blue}.join(";", io, &.to_s io)
+      {red, green, blue}.join(';', io, &.to_s io)
     end
   end
 end
