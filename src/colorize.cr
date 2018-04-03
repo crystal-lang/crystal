@@ -289,12 +289,6 @@ struct Colorize::Object(T)
     end
   end
 
-  def inspect(io)
-    surround(io) do
-      @object.inspect(io)
-    end
-  end
-
   def surround(io = STDOUT)
     must_append_end = append_start(io)
     yield io
