@@ -181,10 +181,11 @@ end
 # goodbye cruel world
 # ```
 #
-# The first block argument is the status code that will be returned by this
-# program and the second is unhandled exception of this program.
-# When the second argument is `nil`, it means this program is succeeded or
-# calls `exit(status)` explicitly.
+# The exit status code that will be returned by this program is passed to
+# the block as its first argument. In case of any unhandled exception, it is
+# passed as the second argument to the block, if the program terminates
+# normally or `exit(status)` is called explicitly, then the second argument
+# will be nil.
 def at_exit(&handler : Int32, Exception? ->) : Nil
   AtExitHandlers.add(handler)
 end
