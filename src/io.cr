@@ -282,7 +282,7 @@ abstract class IO
   end
 
   # Writes a formatted string to this IO.
-  # For details on the format string, see `Kernel::sprintf`
+  # For details on the format string, see `Kernel::sprintf`.
   def printf(format_string, *args) : Nil
     printf format_string, args
   end
