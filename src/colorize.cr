@@ -145,23 +145,25 @@ module Colorize
     LightCyan    = 96
     White        = 97
 
-    def fore
-      to_i.to_s
+    def fore(io : IO) : Nil
+      to_i.to_s io
     end
 
-    def back
-      (to_i + 10).to_s
+    def back(io : IO) : Nil
+      (to_i + 10).to_s io
     end
   end
 
   record Color256,
     value : UInt8 do
-    def fore
-      "38;5;#{value}"
+    def fore(io : IO) : Nil
+      io << "38;5;"
+      value.to_s io
     end
 
-    def back
-      "48;5;#{value}"
+    def back(io : IO) : Nil
+      io << "48;5;"
+      value.to_s io
     end
   end
 
@@ -169,12 +171,14 @@ module Colorize
     red : UInt8,
     green : UInt8,
     blue : UInt8 do
-    def fore
-      "38;2;#{red};#{green};#{blue}"
+    def fore(io : IO) : Nil
+      io << "38;2;"
+      {red, green, blue}.join(";", io, &.to_s io)
     end
 
-    def back
-      "48;2;#{red};#{green};#{blue}"
+    def back(io : IO) : Nil
+      io << "48;2;"
+      {red, green, blue}.join(";", io, &.to_s io)
     end
   end
 end
@@ -336,13 +340,13 @@ struct Colorize::Object(T)
 
       unless fore_is_default
         io << ';' if printed
-        io << @fore.fore
+        @fore.fore io
         printed = true
       end
 
       unless back_is_default
         io << ';' if printed
-        io << @back.back
+        @back.back io
         printed = true
       end
 
