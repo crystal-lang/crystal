@@ -180,6 +180,11 @@ end
 # ```text
 # goodbye cruel world
 # ```
+#
+# The first block argument is the status code that will be returned by this
+# program and the second is unhandled exception of this program.
+# When the second argument is `nil`, it means this program is succeeded or
+# calls `exit(status)` explicitly.
 def at_exit(&handler : Int32, Exception? ->) : Nil
   AtExitHandlers.add(handler)
 end
