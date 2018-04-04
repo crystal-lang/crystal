@@ -1718,6 +1718,8 @@ describe "String" do
       "hello".tr("helo", "1212").should eq("12112")
       "this".tr("this", "ⓧ").should eq("ⓧⓧⓧⓧ")
       "über".tr("ü", "u").should eq("uber")
+      "aabbcc".tr("a", "xyz").should eq("xxbbcc")
+      "aabbcc".tr("a", "いろは").should eq("いいbbcc")
     end
 
     context "given no replacement characters" do

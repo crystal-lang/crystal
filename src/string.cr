@@ -1591,7 +1591,7 @@ class String
     return delete(from) if to.empty?
 
     if from.bytesize == 1
-      return gsub(from.unsafe_byte_at(0).unsafe_chr, to)
+      return gsub(from.unsafe_byte_at(0).unsafe_chr, to[0])
     end
 
     multi = nil
