@@ -66,7 +66,7 @@ _crystal()
             COMPREPLY=( $(compgen -f ${cur}) )
             ;;
         *)
-            # When any of sumbcommands matches directly
+            # When any of subcommands matches directly
             if [[ "${prev}" == "${program}" && $(compgen -W "${commands}" -- ${cur})  ]] ; then
                 COMPREPLY=( $(compgen -W "${commands}" -- ${cur}) )
             else
