@@ -75,7 +75,7 @@ end
 #
 # The syntax for a format specifier is:
 #
-# ```
+# ```pre
 # %[flags][width][.precision]type
 # ```
 #
@@ -86,15 +86,15 @@ end
 # modify that interpretation.
 #
 # The field type characters are:
-# ```
+# ```pre
 #     Field |  Integer Format
 #     ------+--------------------------------------------------------------
 #       b   | Formats argument as a binary number.
 #       d   | Formats argument as a decimal number.
-#       i   | Same as `d`.
+#       i   | Same as d.
 #       o   | Formats argument as an octal number.
 #       x   | Formats argument as a hexadecimal number using lowercase letters.
-#       X   | Same as `x`, but uses uppercase letters.
+#       X   | Same as x, but uses uppercase letters.
 #
 #     Field |  Float Format
 #     ------+--------------------------------------------------------------
@@ -102,7 +102,7 @@ end
 #           | with one digit before the decimal point as [-]d.dddddde[+-]dd.
 #           | The precision specifies the number of digits after the decimal
 #           | point (defaulting to six).
-#       E   | Equivalent to `e`, but uses an uppercase E to indicate
+#       E   | Equivalent to e, but uses an uppercase E to indicate
 #           | the exponent.
 #       f   | Formats floating point argument as [-]ddd.dddddd,
 #           | where the precision specifies the number of digits after
@@ -111,11 +111,11 @@ end
 #           | if the exponent is less than -4 or greater than or
 #           | equal to the precision, or in dd.dddd form otherwise.
 #           | The precision specifies the number of significant digits.
-#       G   | Equivalent to `g`, but use an uppercase `E` in exponent form.
+#       G   | Equivalent to g, but use an uppercase E in exponent form.
 #       a   | Formats floating point argument as [-]0xh.hhhhp[+-]dd,
 #           | which is consisted from optional sign, "0x", fraction part
 #           | as hexadecimal, "p", and exponential part as decimal.
-#       A   | Equivalent to `a`, but use uppercase `X` and `P`.
+#       A   | Equivalent to a, but use uppercase X and P.
 #
 #     Field |  Other Format
 #     ------+--------------------------------------------------------------
@@ -128,27 +128,25 @@ end
 # ```
 # The flags modifies the behavior of the formats.
 # The flag characters are:
-# ```
+# ```pre
 #   Flag     | Applies to    | Meaning
 #   ---------+---------------+-----------------------------------------
 #   space    | bdiouxX       | Leave a space at the start of
 #            | aAeEfgG       | non-negative numbers.
-#            | (numeric fmt) | For `o`, `x`, `X`, `b`, use
+#            | (numeric fmt) | For o, x, X, b, use
 #            |               | a minus sign with absolute value for
 #            |               | negative values.
 #   ---------+---------------+-----------------------------------------
-#    #       | boxX          | ?
-#   ---------+---------------+-----------------------------------------
 #   +        | bdiouxX       | Add a leading plus sign to non-negative
 #            | aAeEfgG       | numbers.
-#            | (numeric fmt) | For `o`, `x`, `X`, `b`, use
+#            | (numeric fmt) | For o, x, X, b, use
 #            |               | a minus sign with absolute value for
 #            |               | negative values.
 #   ---------+---------------+-----------------------------------------
 #   -        | all           | Left-justify the result of this conversion.
 #   ---------+---------------+-----------------------------------------
 #   0 (zero) | bdiouxX       | Pad with zeros, not spaces.
-#            | aAeEfgG       | For `o`, `x`, `X`, `b`, radix-1
+#            | aAeEfgG       | For o, x, X, b, radix-1
 #            | (numeric fmt) | is used for negative numbers formatted as
 #            |               | complements.
 # ```
