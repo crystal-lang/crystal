@@ -707,15 +707,17 @@ class File < IO::FileDescriptor
   # ```
   def self.join(parts : Array | Tuple) : String
     String.build do |str|
+      first = true
       parts.each_with_index do |part, index|
         part.check_no_null_byte
+        next if part.empty? && index != parts.size - 1
 
-        str << SEPARATOR if index > 0
+        str << SEPARATOR unless first
 
         byte_start = 0
         byte_count = part.bytesize
 
-        if index > 0 && part.starts_with?(SEPARATOR)
+        if !first && part.starts_with?(SEPARATOR)
           byte_start += 1
           byte_count -= 1
         end
@@ -725,6 +727,8 @@ class File < IO::FileDescriptor
         end
 
         str.write part.unsafe_byte_slice(byte_start, byte_count)
+
+        first = false
       end
     end
   end
