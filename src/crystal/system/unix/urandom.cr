@@ -1,5 +1,4 @@
-# TODO: replace with `flag?(:unix) && !flag?(:openbsd) && !flag?(:linux)` after crystal > 0.22.0 is released
-{% skip_file() if flag?(:openbsd) && flag?(:linux) %}
+{% skip_file unless flag?(:unix) && !flag?(:openbsd) && !flag?(:linux) %}
 
 module Crystal::System::Random
   @@initialized = false

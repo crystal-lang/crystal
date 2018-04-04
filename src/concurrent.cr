@@ -105,7 +105,7 @@ macro spawn(call, *, name = nil)
       {% end %}
       ) {
       spawn(name: {{name}}) do
-        {{call.name}}(
+        {% if call.receiver %}{{ call.receiver }}.{% end %}{{call.name}}(
           {% for arg, i in call.args %}
             __arg{{i}},
           {% end %}

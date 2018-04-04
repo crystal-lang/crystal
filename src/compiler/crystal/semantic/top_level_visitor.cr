@@ -42,6 +42,8 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
   record FinishedHook, scope : ModuleType, macro : Macro
   @finished_hooks = [] of FinishedHook
 
+  @method_added_running = false
+
   @last_doc : String?
 
   def visit(node : ClassDef)
@@ -343,7 +345,11 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
         new_expansions << {original: node, expanded: new_method}
       end
 
-      run_hooks target_type.metaclass, target_type, :method_added, node, Call.new(nil, "method_added", [node] of ASTNode).at(node.location)
+      unless @method_added_running
+        @method_added_running = true
+        run_hooks target_type.metaclass, target_type, :method_added, node, Call.new(nil, "method_added", [node] of ASTNode).at(node.location)
+        @method_added_running = false
+      end
     end
 
     false
@@ -433,6 +439,11 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
       type.struct = true
       type.extern = true
       type.extern_union = node.union?
+
+      if location = node.location
+        type.add_location(location)
+      end
+
       current_type.types[node.name] = type
     end
 
@@ -642,18 +653,18 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
     check_outside_exp node, "declare constant"
     @exp_nest += 1
 
-    scope = current_type_scope(target)
+    scope, name = lookup_type_def_name(target)
 
-    type = scope.types[target.names.first]?
+    type = scope.types[name]?
     if type
       target.raise "already initialized constant #{type}"
     end
 
-    const = Const.new(@program, scope, target.names.first, value)
+    const = Const.new(@program, scope, name, value)
     const.private = true if target.visibility.private?
     attach_doc const, node
 
-    scope.types[target.names.first] = const
+    scope.types[name] = const
 
     target.target_const = const
   end

@@ -27,7 +27,7 @@ describe "ECR" do
       %(__str__ << " "),
       %(__str__ << "<% \\"string\\" %>"),
     ]
-    program.should eq(pieces.join("\n") + "\n")
+    program.should eq(pieces.join('\n') + '\n')
   end
 
   it "does ECR.def_to_s" do

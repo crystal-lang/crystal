@@ -37,23 +37,23 @@ module Crystal
 
     def mangled_name(program, self_type)
       name = String.build do |str|
-        str << "*"
+        str << '*'
 
         if owner = @owner
           if owner.metaclass?
             self_type.instance_type.llvm_name(str)
             if original_owner != self_type
-              str << "@"
+              str << '@'
               original_owner.instance_type.llvm_name(str)
             end
             str << "::"
           elsif !owner.is_a?(Crystal::Program)
             self_type.llvm_name(str)
             if original_owner != self_type
-              str << "@"
+              str << '@'
               original_owner.llvm_name(str)
             end
-            str << "#"
+            str << '#'
           end
         end
 
@@ -61,12 +61,12 @@ module Crystal
 
         next_def = self.next
         while next_def
-          str << "'"
+          str << '\''
           next_def = next_def.next
         end
 
         if args.size > 0 || uses_block_arg?
-          str << "<"
+          str << '<'
           if args.size > 0
             args.each_with_index do |arg, i|
               str << ", " if i > 0
@@ -75,13 +75,13 @@ module Crystal
           end
           if uses_block_arg?
             str << ", " if args.size > 0
-            str << "&"
+            str << '&'
             block_arg.not_nil!.type.llvm_name(str)
           end
-          str << ">"
+          str << '>'
         end
         if return_type = @type
-          str << ":"
+          str << ':'
           return_type.llvm_name(str)
         end
       end

@@ -30,7 +30,7 @@ module HTTP
     typeof(Client.new(URI.new))
     typeof(Client.new(URI.parse("http://www.example.com")))
 
-    {% for method in %w(get post put head delete patch) %}
+    {% for method in %w(get post put head delete patch options) %}
       typeof(Client.{{method.id}} "url")
       typeof(Client.new("host").{{method.id}}("uri"))
       typeof(Client.new("host").{{method.id}}("uri", headers: Headers {"Content-Type" => "text/plain"}))

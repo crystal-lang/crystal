@@ -248,15 +248,15 @@ describe "macro methods" do
     end
 
     it "executes split without arguments" do
-      assert_macro "", %({{"1 2 3".split}}), [] of ASTNode, %(["1", "2", "3"])
+      assert_macro "", %({{"1 2 3".split}}), [] of ASTNode, %(["1", "2", "3"] of ::String)
     end
 
     it "executes split with argument" do
-      assert_macro "", %({{"1-2-3".split("-")}}), [] of ASTNode, %(["1", "2", "3"])
+      assert_macro "", %({{"1-2-3".split("-")}}), [] of ASTNode, %(["1", "2", "3"] of ::String)
     end
 
     it "executes split with char argument" do
-      assert_macro "", %({{"1-2-3".split('-')}}), [] of ASTNode, %(["1", "2", "3"])
+      assert_macro "", %({{"1-2-3".split('-')}}), [] of ASTNode, %(["1", "2", "3"] of ::String)
     end
 
     it "executes strip" do
@@ -276,11 +276,11 @@ describe "macro methods" do
     end
 
     it "executes chars" do
-      assert_macro "x", %({{x.chars}}), [StringLiteral.new("123")] of ASTNode, %(['1', '2', '3'])
+      assert_macro "x", %({{x.chars}}), [StringLiteral.new("123")] of ASTNode, %(['1', '2', '3'] of ::Char)
     end
 
     it "executes lines" do
-      assert_macro "x", %({{x.lines}}), [StringLiteral.new("1\n2\n3")] of ASTNode, %(["1", "2", "3"])
+      assert_macro "x", %({{x.lines}}), [StringLiteral.new("1\n2\n3")] of ASTNode, %(["1", "2", "3"] of ::String)
     end
 
     it "executes size" do
@@ -999,9 +999,9 @@ describe "macro methods" do
     end
 
     it "executes options" do
-      assert_macro "", %({{ //.options }}), [] of ASTNode, %([])
-      assert_macro "", %({{ /a/i.options }}), [] of ASTNode, %([:i])
-      assert_macro "", %({{ /re/mix.options }}), [] of ASTNode, %([:i, :m, :x])
+      assert_macro "", %({{ //.options }}), [] of ASTNode, %([] of ::Symbol)
+      assert_macro "", %({{ /a/i.options }}), [] of ASTNode, %([:i] of ::Symbol)
+      assert_macro "", %({{ /re/mix.options }}), [] of ASTNode, %([:i, :m, :x] of ::Symbol)
     end
   end
 

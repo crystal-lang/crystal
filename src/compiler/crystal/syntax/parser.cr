@@ -36,6 +36,8 @@ module Crystal
       @wants_doc = false
       @doc_enabled = false
       @no_type_declaration = 0
+      @consuming_heredocs = false
+      @inside_interpolation = false
 
       # This flags tells the parser where it has to consider a "do"
       # as belonging to the current parsed call. For example when writing
@@ -1632,6 +1634,8 @@ module Crystal
     end
 
     def parse_fun_literal
+      location = @token.location
+
       next_token_skip_space_or_newline
 
       unless @token.type == :"{" || @token.type == :"(" || @token.keyword?(:do)
@@ -1677,7 +1681,8 @@ module Crystal
 
       pop_def
 
-      ProcLiteral.new(Def.new("->", args, body)).at_end(end_location)
+      a_def = Def.new("->", args, body).at(location).at_end(end_location)
+      ProcLiteral.new(a_def).at(location).at_end(end_location)
     end
 
     def check_not_pipe_before_proc_literal_body
@@ -1782,13 +1787,23 @@ module Crystal
 
     def parse_delimiter(want_skip_space = true)
       if @token.type == :STRING
-        return node_and_next_token StringLiteral.new(@token.value.to_s)
+        return node_and_next_token StringLiteral.new(@token.value.to_s).at(@token.location)
       end
 
       location = @token.location
       delimiter_state = @token.delimiter_state
 
       check :DELIMITER_START
+
+      if delimiter_state.kind == :heredoc
+        if @inside_interpolation
+          raise "heredoc cannot be used inside interpolation", location
+        end
+        node = StringInterpolation.new([] of ASTNode).at(location)
+        @heredocs << {delimiter_state, node}
+        next_token
+        return node
+      end
 
       next_string_token(delimiter_state)
       delimiter_state = @token.delimiter_state
@@ -1814,22 +1829,10 @@ module Crystal
       end
 
       if has_interpolation
-        if needs_heredoc_indent_removed?(delimiter_state)
-          pieces = remove_heredoc_indent(pieces, delimiter_state.heredoc_indent)
-        else
-          pieces = pieces.map do |piece|
-            value = piece.value
-            value.is_a?(String) ? StringLiteral.new(value) : value
-          end
-        end
+        pieces = combine_interpolation_pieces(pieces, delimiter_state)
         result = StringInterpolation.new(pieces).at(location)
       else
-        if needs_heredoc_indent_removed?(delimiter_state)
-          pieces = remove_heredoc_indent(pieces, delimiter_state.heredoc_indent)
-          string = pieces.join { |piece| piece.as(StringLiteral).value }
-        else
-          string = pieces.map(&.value).join
-        end
+        string = combine_pieces(pieces, delimiter_state)
         result = StringLiteral.new string
       end
 
@@ -1847,6 +1850,26 @@ module Crystal
       result.end_location = token_end_location
 
       result
+    end
+
+    private def combine_interpolation_pieces(pieces, delimiter_state)
+      if needs_heredoc_indent_removed?(delimiter_state)
+        remove_heredoc_indent(pieces, delimiter_state.heredoc_indent)
+      else
+        pieces.map do |piece|
+          value = piece.value
+          value.is_a?(String) ? StringLiteral.new(value) : value
+        end
+      end
+    end
+
+    private def combine_pieces(pieces, delimiter_state)
+      if needs_heredoc_indent_removed?(delimiter_state)
+        pieces = remove_heredoc_indent(pieces, delimiter_state.heredoc_indent)
+        pieces.join { |piece| piece.as(StringLiteral).value }
+      else
+        pieces.map(&.value).join
+      end
     end
 
     def consume_delimiter(pieces, delimiter_state, has_interpolation)
@@ -1881,6 +1904,8 @@ module Crystal
           line_number = @token.line_number
           delimiter_state = @token.delimiter_state
           next_token_skip_space_or_newline
+          old_inside_interpolation = @inside_interpolation
+          @inside_interpolation = true
           exp = preserve_stop_on_do { parse_expression }
 
           if exp.is_a?(StringLiteral)
@@ -1897,6 +1922,7 @@ module Crystal
 
           @token.delimiter_state = delimiter_state
           next_string_token(delimiter_state)
+          @inside_interpolation = old_inside_interpolation
           delimiter_state = @token.delimiter_state
         end
       end
@@ -1927,6 +1953,35 @@ module Crystal
       options
     end
 
+    def consume_heredocs
+      @consuming_heredocs = true
+      @heredocs.reverse!
+      while heredoc = @heredocs.pop?
+        consume_heredoc(heredoc[0], heredoc[1].as(StringInterpolation))
+      end
+      @consuming_heredocs = false
+    end
+
+    def consume_heredoc(delimiter_state, node)
+      next_string_token(delimiter_state)
+      delimiter_state = @token.delimiter_state
+
+      pieces = [] of Piece
+      has_interpolation = false
+
+      delimiter_state, has_interpolation, options, token_end_location = consume_delimiter pieces, delimiter_state, has_interpolation
+
+      if has_interpolation
+        pieces = combine_interpolation_pieces(pieces, delimiter_state)
+        node.expressions.concat(pieces)
+      else
+        string = combine_pieces(pieces, delimiter_state)
+        node.expressions.push(StringLiteral.new(string).at(node.location).at_end(token_end_location))
+      end
+
+      node.end_location = token_end_location
+    end
+
     def needs_heredoc_indent_removed?(delimiter_state)
       delimiter_state.kind == :heredoc && delimiter_state.heredoc_indent > 0
     end
@@ -1939,6 +1994,7 @@ module Crystal
       pieces.each_with_index do |piece, i|
         value = piece.value
         line_number = piece.line_number
+
         this_piece_is_in_new_line = line_number != previous_line_number
         next_piece_is_in_new_line = i == pieces.size - 1 || pieces[i + 1].line_number != line_number
         if value.is_a?(String)
@@ -1951,8 +2007,8 @@ module Crystal
               current_line.clear
               remove_indent = true
             end
-          elsif (slash_n = value.starts_with?("\n")) || value.starts_with?("\r\n")
-            current_line << (slash_n ? "\n" : "\r\n")
+          elsif (slash_n = value.starts_with?('\n')) || value.starts_with?("\r\n")
+            current_line << (slash_n ? '\n' : "\r\n")
             line = current_line.to_s
             line = remove_heredoc_from_line(line, indent, line_number - 1) if remove_indent
             add_heredoc_piece new_pieces, line
@@ -1966,7 +2022,7 @@ module Crystal
           if remove_indent
             line = current_line.to_s
             if (line.size < indent) || !line.each_char.first(indent).all?(&.ascii_whitespace?)
-              raise "heredoc line must have an indent greater or equal than #{indent}", line_number, 1
+              raise "heredoc line must have an indent greater than or equal to #{indent}", line_number, 1
             else
               line = line[indent..-1]
             end
@@ -2015,7 +2071,7 @@ module Crystal
           line[indent..-1]
         end
       else
-        raise "heredoc line must have an indent greater or equal than #{indent}", line_number, 1
+        raise "heredoc line must have an indent greater than or equal to #{indent}", line_number, 1
       end
     end
 
@@ -3007,6 +3063,8 @@ module Crystal
     end
 
     def parse_macro_if(start_line, start_column, macro_state, check_end = true)
+      location = @token.location
+
       next_token_skip_space
 
       @in_macro_expression = true
@@ -3014,7 +3072,7 @@ module Crystal
       @in_macro_expression = false
 
       if @token.type != :"%}" && check_end
-        an_if = parse_if_after_condition cond, true
+        an_if = parse_if_after_condition cond, location, true
         return MacroExpression.new(an_if, output: false).at_end(token_end_location)
       end
 
@@ -3359,6 +3417,7 @@ module Crystal
       if @token.type == :"&"
         next_token_skip_space_or_newline
         block_arg = parse_block_arg(extra_assigns)
+        skip_space_or_newline
         if args.any?(&.name.==(block_arg.name)) || (found_double_splat && found_double_splat.name == block_arg.name)
           raise "duplicated argument name: #{block_arg.name}", block_arg.location.not_nil!
         end
@@ -3590,14 +3649,16 @@ module Crystal
     end
 
     def parse_if(check_end = true)
+      location = @token.location
+
       slash_is_regex!
       next_token_skip_space_or_newline
 
       cond = parse_op_assign_no_control allow_suffix: false
-      parse_if_after_condition cond, check_end
+      parse_if_after_condition cond, location, check_end
     end
 
-    def parse_if_after_condition(cond, check_end)
+    def parse_if_after_condition(cond, location, check_end)
       slash_is_regex!
       skip_statement_end
 
@@ -3621,7 +3682,7 @@ module Crystal
         next_token_skip_space
       end
 
-      If.new(cond, a_then, a_else).at_end(end_location)
+      If.new(cond, a_then, a_else).at(location).at_end(end_location)
     end
 
     def parse_unless
@@ -5537,5 +5598,19 @@ module Crystal
       @visibility = old_visibility
       value
     end
+
+    def next_token
+      token = super
+
+      if token.type == :NEWLINE && !@consuming_heredocs && !@heredocs.empty?
+        consume_heredocs
+      end
+
+      token
+    end
+  end
+
+  class StringInterpolation
+    include Lexer::HeredocItem
   end
 end

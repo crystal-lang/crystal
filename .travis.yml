@@ -9,9 +9,9 @@ services:
 matrix:
   fast_finish: true
   include:
-    - env: ARCH=i386 ARCH_CMD=linux32 ARCH_LIBRARY_PATH=/opt/crystal/embedded/lib/
+    - env: ARCH=i386 ARCH_CMD=linux32
       os: linux
-    - env: ARCH=x86_64 ARCH_CMD=linux64 DEPLOY=true
+    - env: ARCH=x86_64 ARCH_CMD=linux64
       os: linux
 
 before_install:
@@ -25,13 +25,11 @@ install:
 script:
   - bin/ci build
 
-after_success:
-  - bin/ci deploy
-
 branches:
   only:
     - master
     - /\Arelease\/.+\z/
+    - /.*\bci\b.*/
 
 env:
   global:

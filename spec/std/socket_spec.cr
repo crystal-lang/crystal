@@ -91,7 +91,7 @@ describe Socket::Addrinfo do
     end
 
     it "eventually raises returned error" do
-      expect_raises(Socket::Error) do |addrinfo|
+      expect_raises(Socket::Error) do
         Socket::Addrinfo.resolve("localhost", 80, type: Socket::Type::DGRAM) do |addrinfo|
           Socket::Error.new("please fail")
         end

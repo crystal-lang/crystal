@@ -143,7 +143,7 @@ class IO::FileDescriptor < IO
     else
       io << " fd=" << @fd
     end
-    io << ">"
+    io << '>'
     io
   end
 

@@ -25,7 +25,7 @@ describe HTTP::Multipart::Builder do
       --fixed-boundary--
       MULTIPART
 
-    io.to_s.should eq(expected_message.gsub("\n", "\r\n"))
+    io.to_s.should eq(expected_message.gsub('\n', "\r\n"))
   end
 
   it "generates valid multipart messages with preamble and epilogue" do
@@ -59,7 +59,7 @@ describe HTTP::Multipart::Builder do
       Irelevant textMuch more irelevant text
       MULTIPART
 
-    io.to_s.should eq(expected_message.gsub("\n", "\r\n"))
+    io.to_s.should eq(expected_message.gsub('\n', "\r\n"))
   end
 
   describe "#content_type" do
@@ -99,7 +99,7 @@ describe HTTP::Multipart::Builder do
         --boundary--
         MULTIPART
 
-      generated_multipart.should eq(expected_multipart.gsub("\n", "\r\n"))
+      generated_multipart.should eq(expected_multipart.gsub('\n', "\r\n"))
     end
 
     it "raises when called after starting the body" do
@@ -156,7 +156,7 @@ describe HTTP::Multipart::Builder do
         --boundary--
         MULTIPART
 
-      generated_multipart.should eq(expected_multipart.gsub("\n", "\r\n"))
+      generated_multipart.should eq(expected_multipart.gsub('\n', "\r\n"))
     end
 
     it "raises when called after finishing" do
@@ -211,7 +211,7 @@ describe HTTP::Multipart::Builder do
 
         MULTIPART
 
-      generated_multipart.should eq(expected_multipart.gsub("\n", "\r\n"))
+      generated_multipart.should eq(expected_multipart.gsub('\n', "\r\n"))
     end
 
     it "raises when called after finishing" do

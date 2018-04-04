@@ -19,9 +19,6 @@ module Crystal::System::Dir
   # Sets the current working directory of the application.
   # def self.current=(path : String)
 
-  # Returns `true` if *path* exists and is a directory.
-  # def self.exists?(path : String) : Bool
-
   # Creates a new directory at *path*. The UNIX-style directory mode *node*
   # must be applied.
   # def self.create(path : String, mode : Int32) : Nil

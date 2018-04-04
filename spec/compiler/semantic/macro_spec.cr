@@ -275,13 +275,27 @@ describe "Semantic: macro" do
   end
 
   it "executes raise inside macro" do
-    assert_error %(
+    ex = assert_error %(
       macro foo
         {{ raise "OH NO" }}
       end
 
       foo
       ), "OH NO"
+
+    ex.to_s.should_not contain("expanding macro")
+  end
+
+  it "executes raise inside macro, with node (#5669)" do
+    ex = assert_error %(
+      macro foo(x)
+        {{ x.raise "OH\nNO" }}
+      end
+
+      foo(1)
+      ), "OH\nNO"
+
+    ex.to_s.should_not contain("expanding macro")
   end
 
   it "can specify tuple as return type" do
@@ -1049,7 +1063,7 @@ describe "Semantic: macro" do
         class A
         end
 
-        {% skip_file() %}
+        {% skip_file %}
 
         class B
         end
@@ -1066,7 +1080,7 @@ describe "Semantic: macro" do
 
         {% if true %}
           class C; end
-          {% skip_file() %}
+          {% skip_file %}
           class D; end
         {% end %}
 

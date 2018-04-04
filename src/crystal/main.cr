@@ -3,14 +3,6 @@ lib LibCrystalMain
   fun __crystal_main(argc : Int32, argv : UInt8**)
 end
 
-# :nodoc:
-def _crystal_main(argc : Int32, argv : UInt8**)
-  # TODO: remove this method and embed this inside
-  # Crystal.main. A bug in Crystal 0.23.1 prevents invoking
-  # __crystal_main from anywhere except the top level.
-  LibCrystalMain.__crystal_main(argc, argv)
-end
-
 module Crystal
   @@stdin_is_blocking = false
   @@stdout_is_blocking = false
@@ -56,11 +48,11 @@ module Crystal
         1
       end
 
-    AtExitHandlers.run status
-    ex.inspect_with_backtrace STDERR if ex
+    AtExitHandlers.exception = ex if ex
+
+    status = AtExitHandlers.run status
     STDOUT.flush
     STDERR.flush
-
     restore_blocking_state
 
     status
@@ -109,7 +101,7 @@ module Crystal
   # redefine C's main function. See `Crystal.main` for
   # more details.
   def self.main_user_code(argc : Int32, argv : UInt8**)
-    _crystal_main(argc, argv)
+    LibCrystalMain.__crystal_main(argc, argv)
   end
 
   # :nodoc:

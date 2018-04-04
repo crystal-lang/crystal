@@ -544,7 +544,7 @@ describe Iterator do
     end
   end
 
-  describe "integreation" do
+  describe "integration" do
     it "combines many iterators" do
       (1..100).each
         .select { |x| 50 <= x < 60 }

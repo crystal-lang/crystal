@@ -66,15 +66,15 @@ struct Time::Format
   getter pattern : String
 
   # Creates a new `Time::Format` with the given *pattern*. The given time
-  # *kind* will be used when parsing a `Time` and no time zone is found in it.
-  def initialize(@pattern : String, @kind = Time::Kind::Unspecified)
+  # *location* will be used when parsing a `Time` and no time zone is found in it.
+  def initialize(@pattern : String, @location : Location? = nil)
   end
 
   # Parses a string into a `Time`.
-  def parse(string, kind = @kind) : Time
+  def parse(string, location = @location) : Time
     parser = Parser.new(string)
     parser.visit(pattern)
-    parser.time(kind)
+    parser.time(location)
   end
 
   # Turns a `Time` into a `String`.

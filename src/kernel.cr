@@ -125,22 +125,40 @@ end
 module AtExitHandlers
   @@running = false
 
+  class_property exception : Exception?
+
+  private class_getter(handlers) { [] of Int32, Exception? -> }
+
   def self.add(handler)
-    handlers = @@handlers ||= [] of Int32 ->
+    raise "Cannot use at_exit from an at_exit handler" if @@running
+
     handlers << handler
   end
 
   def self.run(status)
-    return if @@running
     @@running = true
 
-    @@handlers.try &.reverse_each do |handler|
-      begin
-        handler.call status
-      rescue handler_ex
-        STDERR.puts "Error running at_exit handler: #{handler_ex}"
+    if handlers = @@handlers
+      # Run the registered handlers in reverse order
+      while handler = handlers.pop?
+        begin
+          handler.call status, exception
+        rescue handler_ex
+          STDERR.puts "Error running at_exit handler: #{handler_ex}"
+          status = 1 if status.zero?
+        end
       end
     end
+
+    if ex = @@exception
+      # Print the exception after all at_exit handlers, to make sure
+      # the user sees it.
+
+      STDERR.print "Unhandled exception: "
+      ex.inspect_with_backtrace(STDERR)
+    end
+
+    status
   end
 end
 
@@ -162,7 +180,13 @@ end
 # ```text
 # goodbye cruel world
 # ```
-def at_exit(&handler : Int32 ->) : Nil
+#
+# The exit status code that will be returned by this program is passed to
+# the block as its first argument. In case of any unhandled exception, it is
+# passed as the second argument to the block, if the program terminates
+# normally or `exit(status)` is called explicitly, then the second argument
+# will be nil.
+def at_exit(&handler : Int32, Exception? ->) : Nil
   AtExitHandlers.add(handler)
 end
 
@@ -171,9 +195,10 @@ end
 #
 # Registered `at_exit` procs are executed.
 def exit(status = 0) : NoReturn
-  AtExitHandlers.run status
+  status = AtExitHandlers.run status
   STDOUT.flush
   STDERR.flush
+  Crystal.restore_blocking_state
   Process.exit(status)
 end
 
@@ -189,18 +214,14 @@ class Process
   def self.after_fork_child_callbacks
     @@after_fork_child_callbacks ||= [
       ->Scheduler.after_fork,
-      ->Event::SignalHandler.after_fork,
-      ->{ Event::SignalChildHandler.instance.after_fork },
+      ->Crystal::Signal.after_fork,
+      ->Crystal::SignalChildHandler.after_fork,
       ->Random::DEFAULT.new_seed,
     ] of -> Nil
   end
 end
 
 {% unless flag?(:win32) %}
-  Signal.setup_default_handlers
-
-  at_exit { Event::SignalHandler.close }
-
   # Background loop to cleanup unused fiber stacks.
   spawn do
     loop do
@@ -208,4 +229,7 @@ end
       Fiber.stack_pool_collect
     end
   end
+
+  Signal.setup_default_handlers
+  LibExt.setup_sigfault_handler
 {% end %}

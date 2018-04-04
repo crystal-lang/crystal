@@ -707,12 +707,20 @@ describe "String" do
 
   describe "rindex" do
     describe "by char" do
+      it { "bbbb".rindex('b').should eq(3) }
       it { "foobar".rindex('a').should eq(4) }
       it { "foobar".rindex('g').should be_nil }
       it { "日本語日本語".rindex('本').should eq(4) }
       it { "あいう_えお".rindex('_').should eq(3) }
 
       describe "with offset" do
+        it { "bbbb".rindex('b', 2).should eq(2) }
+        it { "abbbb".rindex('b', 0).should be_nil }
+        it { "abbbb".rindex('b', 1).should eq(1) }
+        it { "abbbb".rindex('a', 0).should eq(0) }
+        it { "bbbb".rindex('b', -2).should eq(2) }
+        it { "bbbb".rindex('b', -5).should be_nil }
+        it { "bbbb".rindex('b', -4).should eq(0) }
         it { "faobar".rindex('a', 3).should eq(1) }
         it { "faobarbaz".rindex('a', -3).should eq(4) }
         it { "日本語日本語".rindex('本', 3).should eq(1) }
@@ -720,11 +728,19 @@ describe "String" do
     end
 
     describe "by string" do
+      it { "bbbb".rindex("b").should eq(3) }
       it { "foo baro baz".rindex("o b").should eq(7) }
       it { "foo baro baz".rindex("fg").should be_nil }
       it { "日本語日本語".rindex("日本").should eq(3) }
 
       describe "with offset" do
+        it { "bbbb".rindex("b", 2).should eq(2) }
+        it { "abbbb".rindex("b", 0).should be_nil }
+        it { "abbbb".rindex("b", 1).should eq(1) }
+        it { "abbbb".rindex("a", 0).should eq(0) }
+        it { "bbbb".rindex("b", -2).should eq(2) }
+        it { "bbbb".rindex("b", -5).should be_nil }
+        it { "bbbb".rindex("b", -4).should eq(0) }
         it { "foo baro baz".rindex("o b", 6).should eq(2) }
         it { "foo".rindex("", 3).should eq(3) }
         it { "foo".rindex("", 4).should eq(3) }
@@ -738,8 +754,12 @@ describe "String" do
       it { "bbbb".rindex(/\d/).should be_nil }
 
       describe "with offset" do
-        it { "bbbb".rindex(/b/, -3).should eq(2) }
-        it { "bbbb".rindex(/b/, -1235).should be_nil }
+        it { "bbbb".rindex(/b/, 2).should eq(2) }
+        it { "abbbb".rindex(/b/, 0).should be_nil }
+        it { "abbbb".rindex(/a/, 0).should eq(0) }
+        it { "bbbb".rindex(/b/, -2).should eq(2) }
+        it { "bbbb".rindex(/b/, -5).should be_nil }
+        it { "bbbb".rindex(/b/, -4).should eq(0) }
         it { "日本語日本語".rindex(/日本/, 2).should eq(0) }
       end
     end
@@ -1420,50 +1440,65 @@ describe "String" do
     str.should eq("ooooo")
   end
 
-  it "dumps" do
-    "a".dump.should eq("\"a\"")
-    "\\".dump.should eq("\"\\\\\"")
-    "\"".dump.should eq("\"\\\"\"")
-    "\b".dump.should eq("\"\\b\"")
-    "\e".dump.should eq("\"\\e\"")
-    "\f".dump.should eq("\"\\f\"")
-    "\n".dump.should eq("\"\\n\"")
-    "\r".dump.should eq("\"\\r\"")
-    "\t".dump.should eq("\"\\t\"")
-    "\v".dump.should eq("\"\\v\"")
-    "\#{".dump.should eq("\"\\\#{\"")
-    "á".dump.should eq("\"\\u00e1\"")
-    "\u{81}".dump.should eq("\"\\u0081\"")
+  it "#dump" do
+    "a".dump.should eq %("a")
+    "\\".dump.should eq %("\\\\")
+    "\"".dump.should eq %("\\\"")
+    "\b".dump.should eq %("\\b")
+    "\e".dump.should eq %("\\e")
+    "\f".dump.should eq %("\\f")
+    "\n".dump.should eq %("\\n")
+    "\r".dump.should eq %("\\r")
+    "\t".dump.should eq %("\\t")
+    "\v".dump.should eq %("\\v")
+    "\#{".dump.should eq %("\\\#{")
+    "á".dump.should eq %("\\u00E1")
+    "\u{81}".dump.should eq %("\\u0081")
+    "\u{1F48E}".dump.should eq %("\\u{1F48E}")
+    "\u{1f48e}".dump.should eq %("\\u{1F48E}")
   end
 
-  it "dumps unquoted" do
-    "a".dump_unquoted.should eq("a")
-    "\\".dump_unquoted.should eq("\\\\")
-    "á".dump_unquoted.should eq("\\u00e1")
-    "\u{81}".dump_unquoted.should eq("\\u0081")
+  it "#dump_unquoted" do
+    "a".dump_unquoted.should eq %(a)
+    "\\".dump_unquoted.should eq %(\\\\)
+    "á".dump_unquoted.should eq %(\\u00E1)
+    "\u{81}".dump_unquoted.should eq %(\\u0081)
+    "\u{1F48E}".dump_unquoted.should eq %(\\u{1F48E})
+    "\u{1f48e}".dump_unquoted.should eq %(\\u{1F48E})
   end
 
-  it "inspects" do
-    "a".inspect.should eq("\"a\"")
-    "\\".inspect.should eq("\"\\\\\"")
-    "\"".inspect.should eq("\"\\\"\"")
-    "\b".inspect.should eq("\"\\b\"")
-    "\e".inspect.should eq("\"\\e\"")
-    "\f".inspect.should eq("\"\\f\"")
-    "\n".inspect.should eq("\"\\n\"")
-    "\r".inspect.should eq("\"\\r\"")
-    "\t".inspect.should eq("\"\\t\"")
-    "\v".inspect.should eq("\"\\v\"")
-    "\#{".inspect.should eq("\"\\\#{\"")
-    "á".inspect.should eq("\"á\"")
-    "\u{81}".inspect.should eq("\"\\u0081\"")
+  it "#inspect" do
+    "a".inspect.should eq %("a")
+    "\\".inspect.should eq %("\\\\")
+    "\"".inspect.should eq %("\\\"")
+    "\b".inspect.should eq %("\\b")
+    "\e".inspect.should eq %("\\e")
+    "\f".inspect.should eq %("\\f")
+    "\n".inspect.should eq %("\\n")
+    "\r".inspect.should eq %("\\r")
+    "\t".inspect.should eq %("\\t")
+    "\v".inspect.should eq %("\\v")
+    "\#{".inspect.should eq %("\\\#{")
+    "á".inspect.should eq %("á")
+    "\u{81}".inspect.should eq %("\\u0081")
+    "\u{1F48E}".inspect.should eq %("\u{1F48E}")
+    "\u{1f48e}".inspect.should eq %("\u{1F48E}")
   end
 
-  it "inspects unquoted" do
-    "a".inspect_unquoted.should eq("a")
-    "\\".inspect_unquoted.should eq("\\\\")
-    "á".inspect_unquoted.should eq("á")
-    "\u{81}".inspect_unquoted.should eq("\\u0081")
+  it "#inspect_unquoted" do
+    "a".inspect_unquoted.should eq %(a)
+    "\\".inspect_unquoted.should eq %(\\\\)
+    "á".inspect_unquoted.should eq %(á)
+    "\u{81}".inspect_unquoted.should eq %(\\u0081)
+    "\u{1F48E}".inspect_unquoted.should eq %(\u{1F48E})
+    "\u{1f48e}".inspect_unquoted.should eq %(\u{1F48E})
+  end
+
+  it "does pretty_inspect" do
+    "a".pretty_inspect.should eq(%("a"))
+    "hello\nworld".pretty_inspect.should eq(%("hello\\n" + "world"))
+    "hello\nworld".pretty_inspect(width: 9).should eq(%("hello\\n" +\n"world"))
+    "hello\nworld\n".pretty_inspect(width: 9).should eq(%("hello\\n" +\n"world\\n"))
   end
 
   it "does *" do
@@ -1683,6 +1718,8 @@ describe "String" do
       "hello".tr("helo", "1212").should eq("12112")
       "this".tr("this", "ⓧ").should eq("ⓧⓧⓧⓧ")
       "über".tr("ü", "u").should eq("uber")
+      "aabbcc".tr("a", "xyz").should eq("xxbbcc")
+      "aabbcc".tr("a", "いろは").should eq("いいbbcc")
     end
 
     context "given no replacement characters" do

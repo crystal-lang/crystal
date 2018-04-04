@@ -159,7 +159,7 @@ class Crystal::Command
         check_files << FormatResult.new(filename, FormatResult::Code::FORMAT)
       else
         File.write(filename, result)
-        STDOUT << "Format".colorize(:green).toggle(@color) << " " << filename << "\n"
+        STDOUT << "Format".colorize(:green).toggle(@color) << ' ' << filename << '\n'
       end
     rescue ex : InvalidByteSequenceError
       if check_files
@@ -173,7 +173,7 @@ class Crystal::Command
       if check_files
         check_files << FormatResult.new(filename, FormatResult::Code::SYNTAX)
       else
-        STDERR << "Syntax Error:".colorize(:yellow).toggle(@color) << " " << ex.message << " at " << filename << ":" << ex.line_number << ":" << ex.column_number << "\n"
+        STDERR << "Syntax Error:".colorize(:yellow).toggle(@color) << ' ' << ex.message << " at " << filename << ':' << ex.line_number << ':' << ex.column_number << '\n'
       end
     rescue ex
       if check_files

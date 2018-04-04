@@ -44,7 +44,7 @@ class CSV::Builder
   # to `IO` after the block exits.
   def row
     yield Row.new(self)
-    @io << "\n"
+    @io << '\n'
     @first_cell_in_row = true
   end
 
@@ -86,7 +86,7 @@ class CSV::Builder
   end
 
   private def append_cell
-    @io << "," unless @first_cell_in_row
+    @io << ',' unless @first_cell_in_row
     yield
     @first_cell_in_row = false
   end

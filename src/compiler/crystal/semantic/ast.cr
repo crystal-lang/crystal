@@ -195,6 +195,7 @@ module Crystal
       a_def.always_inline = always_inline?
       a_def.returns_twice = returns_twice?
       a_def.naked = naked?
+      a_def.new = new?
       a_def
     end
 

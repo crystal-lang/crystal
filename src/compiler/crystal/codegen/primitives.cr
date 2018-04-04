@@ -504,7 +504,7 @@ class Crystal::CodeGenVisitor
     if (extra = node.extra)
       existing_value = context.vars["value"]?
       context.vars["value"] = LLVMVar.new(call_arg, node.type, true)
-      request_value { extra.accept self }
+      request_value { accept extra }
       call_arg = @last
       context.vars["value"] = existing_value if existing_value
     end

@@ -267,17 +267,8 @@ module Spec
     end
 
     # Creates an `Expectation` that passes if actual is of type *type* (`is_a?`).
-    macro be_a(type)
-      Spec::BeAExpectation({{type}}).new
-    end
-
-    # Runs the block and passes if it raises an exception of type *klass*.
-    #
-    # It returns the rescued exception.
-    macro expect_raises(klass)
-      expect_raises({{klass}}, nil) do
-        {{yield}}
-      end
+    def be_a(type : T.class) forall T
+      Spec::BeAExpectation(T).new
     end
 
     # Runs the block and passes if it raises an exception of type *klass* and the error message matches.
@@ -286,43 +277,37 @@ module Spec
     # If *message* is a regular expression, it is used to match the error message.
     #
     # It returns the rescued exception.
-    macro expect_raises(klass, message, file = __FILE__, line = __LINE__)
-      %failed = false
-      begin
-        {{yield}}
-        %failed = true
-        fail "Expected {{klass.id}} but nothing was raised", {{file}}, {{line}}
-      rescue %ex : {{klass.id}}
-        # We usually bubble Spec::AssertaionFailed, unless this is the expected exception
-        if %ex.class == Spec::AssertionFailed && {{klass}} != Spec::AssertionFailed
-          raise %ex
-        end
+    def expect_raises(klass : T.class, message = nil, file = __FILE__, line = __LINE__) forall T
+      yield
+    rescue ex : T
+      # We usually bubble Spec::AssertaionFailed, unless this is the expected exception
+      if ex.is_a?(Spec::AssertionFailed) && klass != Spec::AssertionFailed
+        raise ex
+      end
 
-        %msg = {{message}}
-        %ex_to_s = %ex.to_s
-        case %msg
-        when Regex
-          unless (%ex_to_s =~ %msg)
-            backtrace = %ex.backtrace.map { |f| "  # #{f}" }.join "\n"
-            fail "Expected {{klass.id}} with message matching #{ %msg.inspect }, got #<#{ %ex.class }: #{ %ex_to_s }> with backtrace:\n#{backtrace}", {{file}}, {{line}}
-          end
-        when String
-          unless %ex_to_s.includes?(%msg)
-            backtrace = %ex.backtrace.map { |f| "  # #{f}" }.join "\n"
-            fail "Expected {{klass.id}} with #{ %msg.inspect }, got #<#{ %ex.class }: #{ %ex_to_s }> with backtrace:\n#{backtrace}", {{file}}, {{line}}
-          end
+      ex_to_s = ex.to_s
+      case message
+      when Regex
+        unless (ex_to_s =~ message)
+          backtrace = ex.backtrace.join('\n') { |f| "  # #{f}" }
+          fail "Expected #{klass} with message matching #{message.inspect}, " \
+               "got #<#{ex.class}: #{ex_to_s}> with backtrace:\n#{backtrace}", file, line
         end
-
-        %ex
-      rescue %ex
-        if %failed
-          raise %ex
-        else
-          %ex_to_s = %ex.to_s
-          backtrace = %ex.backtrace.map { |f| "  # #{f}" }.join "\n"
-          fail "Expected {{klass.id}}, got #<#{ %ex.class }: #{ %ex_to_s }> with backtrace:\n#{backtrace}", {{file}}, {{line}}
+      when String
+        unless ex_to_s.includes?(message)
+          backtrace = ex.backtrace.join('\n') { |f| "  # #{f}" }
+          fail "Expected #{klass} with #{message.inspect}, got #<#{ex.class}: " \
+               "#{ex_to_s}> with backtrace:\n#{backtrace}", file, line
         end
       end
+
+      ex
+    rescue ex
+      backtrace = ex.backtrace.join('\n') { |f| "  # #{f}" }
+      fail "Expected #{klass}, got #<#{ex.class}: #{ex.to_s}> with backtrace:\n" \
+           "#{backtrace}", file, line
+    else
+      fail "Expected #{klass} but nothing was raised", file, line
     end
   end
 

@@ -120,7 +120,7 @@ class File
       io << ", atime=" << atime
       io << ", mtime=" << mtime
       io << ", ctime=" << ctime
-      io << ">"
+      io << '>'
     end
 
     def pretty_print(pp)
@@ -202,7 +202,7 @@ class File
       end
     {% else %}
       private def time(value)
-        Time.new value, Time::Kind::Utc
+        Time.new value, Time::Location::UTC
       end
     {% end %}
   end

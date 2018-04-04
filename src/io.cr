@@ -7,13 +7,13 @@ require "c/errno"
 # The `IO` class is the basis for all input and output in Crystal.
 #
 # This class is inherited by types like `File`, `Socket` and `IO::Memory` and
-# provide many useful methods for reading to and writing from an IO, like `print`, `puts`,
+# provides many useful methods for reading from and writing to an IO, like `print`, `puts`,
 # `gets` and `printf`.
 #
 # The only requirement for a type including the `IO` module is to define
 # these two methods:
 #
-# * `read(slice : Bytes)`: read at most *slice.size* bytes into *slice* and return the number of bytes read
+# * `read(slice : Bytes)`: read at most *slice.size* bytes from IO into *slice* and return the number of bytes read
 # * `write(slice : Bytes)`: write the whole *slice* into the IO
 #
 # For example, this is a simple `IO` on top of a `Bytes`:
@@ -145,7 +145,7 @@ abstract class IO
     # reader.gets # => "hello"
     # reader.gets # => "world"
     # ```
-    def self.pipe(read_blocking = false, write_blocking = false)
+    def self.pipe(read_blocking = false, write_blocking = false) : {IO::FileDescriptor, IO::FileDescriptor}
       pipe_fds = uninitialized StaticArray(LibC::Int, 2)
       if LibC.pipe(pipe_fds) != 0
         raise Errno.new("Could not create pipe")

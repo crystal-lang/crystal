@@ -82,7 +82,7 @@ module Spec
             end
             puts
 
-            ex.to_s.split("\n").each do |line|
+            ex.to_s.split('\n').each do |line|
               print "       "
               puts Spec.color(line, :error)
             end

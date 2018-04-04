@@ -116,9 +116,17 @@ describe "File" do
 
     it "raises an error when the file does not exist" do
       filename = "#{__DIR__}/data/non_existing_file.txt"
-      expect_raises Errno do
+      expect_raises(Errno, /Error determining size/) do
         File.empty?(filename)
       end
+    end
+
+    it "raises an error when a component of the path is a file" do
+      filename = "#{__DIR__}/data/non_existing_file.txt"
+      ex = expect_raises(Errno, /Error determining size/) do
+        File.empty?("#{__FILE__}/")
+      end
+      ex.errno.should eq(Errno::ENOTDIR)
     end
   end
 
@@ -130,11 +138,23 @@ describe "File" do
     it "gives false" do
       File.exists?("#{__DIR__}/data/non_existing_file.txt").should be_false
     end
+
+    it "gives false when a component of the path is a file" do
+      File.exists?("#{__FILE__}/").should be_false
+    end
   end
 
   describe "executable?" do
     it "gives false" do
       File.executable?("#{__DIR__}/data/test_file.txt").should be_false
+    end
+
+    it "gives false when the file doesn't exist" do
+      File.executable?("#{__DIR__}/data/non_existing_file.txt").should be_false
+    end
+
+    it "gives false when a component of the path is a file" do
+      File.executable?("#{__FILE__}/").should be_false
     end
   end
 
@@ -142,11 +162,27 @@ describe "File" do
     it "gives true" do
       File.readable?("#{__DIR__}/data/test_file.txt").should be_true
     end
+
+    it "gives false when the file doesn't exist" do
+      File.readable?("#{__DIR__}/data/non_existing_file.txt").should be_false
+    end
+
+    it "gives false when a component of the path is a file" do
+      File.readable?("#{__FILE__}/").should be_false
+    end
   end
 
   describe "writable?" do
     it "gives true" do
       File.writable?("#{__DIR__}/data/test_file.txt").should be_true
+    end
+
+    it "gives false when the file doesn't exist" do
+      File.writable?("#{__DIR__}/data/non_existing_file.txt").should be_false
+    end
+
+    it "gives false when a component of the path is a file" do
+      File.writable?("#{__FILE__}/").should be_false
     end
   end
 
@@ -158,6 +194,14 @@ describe "File" do
     it "gives false" do
       File.file?("#{__DIR__}/data").should be_false
     end
+
+    it "gives false when the file doesn't exist" do
+      File.file?("#{__DIR__}/data/non_existing_file.txt").should be_false
+    end
+
+    it "gives false when a component of the path is a file" do
+      File.file?("#{__FILE__}/").should be_false
+    end
   end
 
   describe "directory?" do
@@ -167,6 +211,14 @@ describe "File" do
 
     it "gives false" do
       File.directory?("#{__DIR__}/data/test_file.txt").should be_false
+    end
+
+    it "gives false when the directory doesn't exist" do
+      File.directory?("#{__DIR__}/data/non_existing").should be_false
+    end
+
+    it "gives false when a component of the path is a file" do
+      File.directory?("#{__FILE__}/").should be_false
     end
   end
 
@@ -204,6 +256,14 @@ describe "File" do
       File.symlink?("#{__DIR__}/data/test_file.txt").should be_false
       File.symlink?("#{__DIR__}/data/unknown_file.txt").should be_false
     end
+
+    it "gives false when the symlink doesn't exist" do
+      File.symlink?("#{__DIR__}/data/non_existing_file.txt").should be_false
+    end
+
+    it "gives false when a component of the path is a file" do
+      File.symlink?("#{__FILE__}/").should be_false
+    end
   end
 
   it "gets dirname" do
@@ -230,6 +290,12 @@ describe "File" do
     File.extname("/foo/bar/.profile").should eq("")
     File.extname("/foo/bar/.profile.sh").should eq(".sh")
     File.extname("/foo/bar/foo.").should eq("")
+    File.extname("/foo.bar/baz").should eq("")
+    File.extname("test.cr").should eq(".cr")
+    File.extname("test.cr.cz").should eq(".cz")
+    File.extname(".test").should eq("")
+    File.extname(".test.cr").should eq(".cr")
+    File.extname(".test.cr.cz").should eq(".cz")
     File.extname("test").should eq("")
   end
 
@@ -240,6 +306,11 @@ describe "File" do
     File.join(["foo", "bar", "baz"]).should eq("foo/bar/baz")
     File.join(["foo", "//bar//", "baz///"]).should eq("foo//bar//baz///")
     File.join(["/foo/", "/bar/", "/baz/"]).should eq("/foo/bar/baz/")
+    File.join(["", "foo"]).should eq("foo")
+    File.join(["foo", ""]).should eq("foo/")
+    File.join(["", "", "foo"]).should eq("foo")
+    File.join(["foo", "", "bar"]).should eq("foo/bar")
+    File.join(["foo", "", "", "bar"]).should eq("foo/bar")
   end
 
   it "chown" do
@@ -375,6 +446,21 @@ describe "File" do
       File.open("#{__DIR__}/data/test_file.txt", "r") do |file|
         file.size.should eq(240)
       end
+    end
+
+    it "raises an error when the file does not exist" do
+      filename = "#{__DIR__}/data/non_existing_file.txt"
+      expect_raises(Errno, /Error determining size/) do
+        File.size(filename)
+      end
+    end
+
+    it "raises an error when a component of the path is a file" do
+      filename = "#{__DIR__}/data/non_existing_file.txt"
+      ex = expect_raises(Errno, /Error determining size/) do
+        File.size("#{__FILE__}/")
+      end
+      ex.errno.should eq(Errno::ENOTDIR)
     end
   end
 
@@ -958,8 +1044,8 @@ describe "File" do
       filename = "#{__DIR__}/data/temp_write.txt"
       File.write(filename, "")
 
-      atime = Time.new(2000, 1, 2)
-      mtime = Time.new(2000, 3, 4)
+      atime = Time.utc(2000, 1, 2)
+      mtime = Time.utc(2000, 3, 4)
 
       File.utime(atime, mtime, filename)
 
@@ -971,8 +1057,8 @@ describe "File" do
     end
 
     it "raises if file not found" do
-      atime = Time.new(2000, 1, 2)
-      mtime = Time.new(2000, 3, 4)
+      atime = Time.utc(2000, 1, 2)
+      mtime = Time.utc(2000, 3, 4)
 
       expect_raises Errno, "Error setting time to file" do
         File.utime(atime, mtime, "#{__DIR__}/nonexistent_file")
@@ -994,7 +1080,7 @@ describe "File" do
 
     it "sets file times to given time" do
       filename = "#{__DIR__}/data/temp_touch.txt"
-      time = Time.new(2000, 3, 4)
+      time = Time.utc(2000, 3, 4)
       begin
         File.touch(filename, time)
 

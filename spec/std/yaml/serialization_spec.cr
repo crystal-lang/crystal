@@ -153,7 +153,7 @@ describe "YAML serialization" do
       ctx = YAML::ParseContext.new
       nodes = YAML::Nodes.parse("--- 2014-01-02\n...\n").nodes.first
       value = Time::Format.new("%F").from_yaml(ctx, nodes)
-      value.should eq(Time.new(2014, 1, 2))
+      value.should eq(Time.utc(2014, 1, 2))
     end
 
     it "deserializes union" do

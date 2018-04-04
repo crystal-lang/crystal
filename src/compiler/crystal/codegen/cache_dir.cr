@@ -92,7 +92,7 @@ module Crystal
         io.puts "Crystal needs a cache directory. These directories were candidates for it:"
         io.puts
         candidates.each do |candidate|
-          io << " - " << candidate << "\n"
+          io << " - " << candidate << '\n'
         end
         io.puts
         io.puts "but none of them are writable."

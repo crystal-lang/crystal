@@ -304,7 +304,7 @@ LibXML.xmlGcMemSetup(
   ->GC.malloc(LibC::SizeT),
   ->GC.realloc(Void*, LibC::SizeT),
   ->(str) {
-    len = LibC.strlen(str)
+    len = LibC.strlen(str) + 1
     copy = Pointer(UInt8).malloc(len)
     copy.copy_from(str, len)
     copy

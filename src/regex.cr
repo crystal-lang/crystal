@@ -406,12 +406,12 @@ class Regex
   # /ab+c/ix.inspect # => "/ab+c/ix"
   # ```
   def inspect(io : IO)
-    io << "/"
+    io << '/'
     append_source(io)
-    io << "/"
-    io << "i" if options.ignore_case?
-    io << "m" if options.multiline?
-    io << "x" if options.extended?
+    io << '/'
+    io << 'i' if options.ignore_case?
+    io << 'm' if options.multiline?
+    io << 'x' if options.extended?
   end
 
   # Match at character index. Matches a regular expression against `String`
@@ -504,27 +504,33 @@ class Regex
   # ```
   def to_s(io : IO)
     io << "(?"
-    io << "i" if options.ignore_case?
+    io << 'i' if options.ignore_case?
     io << "ms" if options.multiline?
-    io << "x" if options.extended?
+    io << 'x' if options.extended?
 
-    io << "-"
-    io << "i" unless options.ignore_case?
+    io << '-'
+    io << 'i' unless options.ignore_case?
     io << "ms" unless options.multiline?
-    io << "x" unless options.extended?
+    io << 'x' unless options.extended?
 
-    io << ":"
+    io << ':'
     append_source(io)
-    io << ")"
+    io << ')'
   end
 
   private def append_source(io)
-    source.each_char do |char|
-      if char == '/'
+    reader = Char::Reader.new(source)
+    while reader.has_next?
+      case char = reader.current_char
+      when '\\'
+        io << '\\'
+        io << reader.next_char
+      when '/'
         io << "\\/"
       else
         io << char
       end
+      reader.next_char
     end
   end
 

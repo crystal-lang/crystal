@@ -296,6 +296,17 @@ struct Int
     self >> bit & 1
   end
 
+  # Returns `true` if all bits in *mask* are set on `self`.
+  #
+  # ```
+  # 0b0110.bits_set?(0b0110) # => true
+  # 0b1101.bits_set?(0b0111) # => false
+  # 0b1101.bits_set?(0b1100) # => true
+  # ```
+  def bits_set?(mask)
+    (self & mask) == mask
+  end
+
   def gcd(other : Int)
     self == 0 ? other.abs : (other % self).gcd(self)
   end

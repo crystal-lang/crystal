@@ -33,7 +33,7 @@ class Exception
   # “0xAddress: Function at File Line Column”.
   def backtrace?
     {% if flag?(:win32) %}
-      nil
+      Array(String).new
     {% else %}
       @callstack.try &.printable_backtrace
     {% end %}
@@ -44,7 +44,7 @@ class Exception
   end
 
   def inspect(io : IO)
-    io << "#<" << self.class.name << ":" << message << ">"
+    io << "#<" << self.class.name << ':' << message << '>'
   end
 
   def inspect_with_backtrace
@@ -59,6 +59,12 @@ class Exception
       io.print "  from "
       io.puts frame
     end
+
+    if cause = @cause
+      io << "Caused by: "
+      cause.inspect_with_backtrace(io)
+    end
+
     io.flush
   end
 end

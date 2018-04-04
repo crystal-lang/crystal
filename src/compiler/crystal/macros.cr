@@ -100,19 +100,19 @@ module Crystal::Macros
 
   # Skips the rest of the file from which it is executed.
   # Typical usage is to skip files that have platform specific code,
-  # without having to surround the most relevant code in `{%...%}` macro blocks.
+  # without having to surround the most relevant code in `{% if flag?(...) %} ... {% end %}` macro blocks.
   #
   # Example:
   #
   # ```
   # # sth_for_osx.cr
-  # {% skip unless flag?(:darwin) %}
+  # {% skip_file unless flag?(:darwin) %}
   #
   # # Class FooForMac will only be defined if we're compiling on OS X
   # class FooForMac
   # end
   # ```
-  def skip : Nop
+  def skip_file : Nop
   end
 
   # This is the base class of all AST nodes. This methods are
@@ -542,6 +542,10 @@ module Crystal::Macros
     def splat(trailing_string : StringLiteral = nil) : MacroId
     end
 
+    # Similar to `Array#clear`
+    def clear : ArrayLiteral
+    end
+
     # Similar to `Array#empty?`
     def empty? : BoolLiteral
     end
@@ -625,6 +629,10 @@ module Crystal::Macros
 
   # A hash literal.
   class HashLiteral < ASTNode
+    # Similar to `Hash#clear`
+    def clear : HashLiteral
+    end
+
     # Similar to `Hash#empty?`
     def empty? : BoolLiteral
     end

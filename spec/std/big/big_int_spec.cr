@@ -22,6 +22,8 @@ describe "BigInt" do
 
   it "creates from string" do
     BigInt.new("12345678").to_s.should eq("12345678")
+    BigInt.new("+12345678").to_s.should eq("12345678")
+    BigInt.new("-12345678").to_s.should eq("-12345678")
   end
 
   it "raises if creates from string but invalid" do

@@ -769,7 +769,7 @@ class Hash(K, V)
   # ```
   def to_s(io : IO)
     executed = exec_recursive(:to_s) do
-      io << "{"
+      io << '{'
       found_one = false
       each do |key, value|
         io << ", " if found_one
@@ -778,7 +778,7 @@ class Hash(K, V)
         value.inspect(io)
         found_one = true
       end
-      io << "}"
+      io << '}'
     end
     io << "{...}" unless executed
   end

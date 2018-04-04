@@ -48,18 +48,6 @@ module Crystal::System::Dir
     path
   end
 
-  def self.exists?(path : String) : Bool
-    if LibC.stat(path.check_no_null_byte, out stat) != 0
-      if Errno.value == Errno::ENOENT || Errno.value == Errno::ENOTDIR
-        return false
-      else
-        raise Errno.new("stat")
-      end
-    end
-
-    (stat.st_mode & LibC::S_IFMT) == LibC::S_IFDIR
-  end
-
   def self.create(path : String, mode : Int32) : Nil
     if LibC.mkdir(path.check_no_null_byte, mode) == -1
       raise Errno.new("Unable to create directory '#{path}'")

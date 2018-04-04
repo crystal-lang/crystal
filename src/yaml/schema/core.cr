@@ -19,7 +19,7 @@ module YAML::Schema::Core
   # parses it according to the core schema, taking the
   # scalar's style and tag into account, then advances
   # the pull parser.
-  def self.parse_scalar(pull_parser : YAML::PullParser) : Type
+  def self.parse_scalar(pull_parser : YAML::PullParser) : Nil | Bool | Int64 | Float64 | String | Time | Bytes
     string = pull_parser.value
 
     # Check for core schema tags
@@ -36,7 +36,7 @@ module YAML::Schema::Core
   end
 
   # Parses a scalar value from the given *node*.
-  def self.parse_scalar(node : YAML::Nodes::Scalar) : Type
+  def self.parse_scalar(node : YAML::Nodes::Scalar) : Nil | Bool | Int64 | Float64 | String | Time | Bytes
     string = node.value
 
     # Check for core schema tags
@@ -60,7 +60,7 @@ module YAML::Schema::Core
   # YAML::Schema::Core.parse_scalar("1.2")   # => 1.2
   # YAML::Schema::Core.parse_scalar("false") # => false
   # ```
-  def self.parse_scalar(string : String) : Type
+  def self.parse_scalar(string : String) : Nil | Bool | Int64 | Float64 | String | Time | Bytes
     if parse_null?(string)
       return nil
     end
@@ -79,7 +79,12 @@ module YAML::Schema::Core
          .starts_with?("-0x")
       value = string.to_i64?(base: 16, prefix: true)
       return value || string
+    when .starts_with?("0."),
+         .starts_with?('.')
+      value = parse_float?(string)
+      return value || string
     when .starts_with?('0')
+      return 0_i64 if string.size == 1
       value = string.to_i64?(base: 8, prefix: true)
       return value || string
     when .starts_with?('-'),

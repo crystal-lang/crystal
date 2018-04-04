@@ -37,9 +37,16 @@ describe "Dir" do
     end
 
     it "tests empty? on nonexistent directory" do
-      expect_raises Errno do
+      expect_raises(Errno, /Error determining size of/) do
         Dir.empty?(File.join([__DIR__, "/foo/bar/"]))
       end
+    end
+
+    it "tests empty? on a directory path to a file" do
+      ex = expect_raises(Errno, /Error determining size of/) do
+        Dir.empty?("#{__FILE__}/")
+      end
+      ex.errno.should eq(Errno::ENOTDIR)
     end
   end
 
@@ -335,7 +342,7 @@ describe "Dir" do
     filenames = [] of String
 
     dir = Dir.new(__DIR__)
-    dir.each_entry do |filename|
+    dir.each do |filename|
       filenames << filename
     end.should be_nil
     dir.close
@@ -347,7 +354,7 @@ describe "Dir" do
     filenames = [] of String
 
     Dir.open(__DIR__) do |dir|
-      dir.each_entry do |filename|
+      dir.each do |filename|
         filenames << filename
       end.should be_nil
     end
@@ -373,7 +380,7 @@ describe "Dir" do
   it "gets dir iterator" do
     filenames = [] of String
 
-    iter = Dir.new(__DIR__).each_entry
+    iter = Dir.new(__DIR__).each
     iter.each do |filename|
       filenames << filename
     end

@@ -11,6 +11,14 @@ describe "BigFloat" do
     it "new(String)" do
       bigfloat_of_integer_value.to_s.should eq(string_of_integer_value)
       bigfloat_of_float_value.to_s.should eq(string_of_float_value)
+      BigFloat.new("+#{string_of_integer_value}").to_s.should eq(string_of_integer_value)
+      BigFloat.new("-#{string_of_integer_value}").to_s.should eq("-#{string_of_integer_value}")
+    end
+
+    it "raises an ArgumentError unless string denotes valid float" do
+      expect_raises(ArgumentError) { BigFloat.new("abc") }
+      expect_raises(ArgumentError) { BigFloat.new("+") }
+      expect_raises(ArgumentError) { BigFloat.new("") }
     end
 
     it "new(BigInt)" do

@@ -77,7 +77,7 @@ module Crystal
                    @scope : Type, @path_lookup : Type, @location : Location?,
                    @vars = {} of String => ASTNode, @block : Block? = nil, @def : Def? = nil,
                    @in_macro = false)
-      @str = IO::Memory.new(512) # Can't be String::Builder because of `{{debug()}}
+      @str = IO::Memory.new(512) # Can't be String::Builder because of `{{debug}}`
       @last = Nop.new
     end
 
@@ -149,7 +149,7 @@ module Crystal
             @last.to_s(str)
           end
         end
-      end)
+      end).at(node)
       false
     end
 
@@ -349,6 +349,8 @@ module Crystal
 
         begin
           @last = receiver.interpret(node.name, args, node.block, self)
+        rescue ex : MacroRaiseException
+          raise ex
         rescue ex : Crystal::Exception
           node.raise ex.message, inner: ex
         rescue ex

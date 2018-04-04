@@ -799,7 +799,7 @@ class Crystal::Call
             wrong_number_of "block arguments", block.args.size, fun_args.size
           end
 
-          a_def = Def.new("->", fun_args, block.body)
+          a_def = Def.new("->", fun_args, block.body).at(block)
           a_def.captured_block = true
 
           fun_literal = ProcLiteral.new(a_def).at(self)

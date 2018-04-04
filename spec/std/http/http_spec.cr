@@ -33,7 +33,7 @@ describe HTTP do
   it "parses and is local (#2744)" do
     date = "Mon, 09 Sep 2011 23:36:00 -0300"
     parsed_time = HTTP.parse_time(date).not_nil!
-    parsed_time.local?.should be_true
+    parsed_time.offset.should eq -3 * 3600
     parsed_time.to_utc.to_s.should eq("2011-09-10 02:36:00 UTC")
   end
 
@@ -44,16 +44,8 @@ describe HTTP do
     end
 
     it "with local time zone" do
-      tz = ENV["TZ"]?
-      ENV["TZ"] = "Europe/Berlin"
-      LibC.tzset
-      begin
-        time = Time.new(1994, 11, 6, 8, 49, 37, nanosecond: 0, kind: Time::Kind::Local)
-        HTTP.rfc1123_date(time).should eq(time.to_utc.to_s("%a, %d %b %Y %H:%M:%S GMT"))
-      ensure
-        ENV["TZ"] = tz
-        LibC.tzset
-      end
+      time = Time.new(1994, 11, 6, 8, 49, 37, nanosecond: 0, location: Time::Location.load("Europe/Berlin"))
+      HTTP.rfc1123_date(time).should eq(time.to_utc.to_s("%a, %d %b %Y %H:%M:%S GMT"))
     end
   end
 

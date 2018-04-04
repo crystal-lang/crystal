@@ -45,7 +45,7 @@ struct Complex
     io << @real
     io << (@imag >= 0 ? " + " : " - ")
     io << @imag.abs
-    io << "i"
+    io << 'i'
   end
 
   # Write this complex object to an *io*, surrounded by parentheses.

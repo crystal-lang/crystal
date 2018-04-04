@@ -1,7 +1,6 @@
 require "c/signal"
 require "c/stdlib"
 require "c/sys/times"
-require "c/sys/wait"
 require "c/unistd"
 
 class Process
@@ -198,7 +197,7 @@ class Process
   # A pipe to this process's error. Raises if a pipe wasn't asked when creating the process.
   getter! error : IO::FileDescriptor
 
-  @waitpid_future : Concurrent::Future(Process::Status)
+  @waitpid : Channel::Buffered(Int32)
 
   # Creates a process, executes it, but doesn't wait for it to complete.
   #
@@ -260,7 +259,7 @@ class Process
       end
     end
 
-    @waitpid_future = Event::SignalChildHandler.instance.waitpid(pid)
+    @waitpid = Crystal::SignalChildHandler.wait(pid)
 
     fork_input.try &.close
     fork_output.try &.close
@@ -268,7 +267,7 @@ class Process
   end
 
   private def initialize(@pid)
-    @waitpid_future = Event::SignalChildHandler.instance.waitpid(pid)
+    @waitpid = Crystal::SignalChildHandler.wait(pid)
     @wait_count = 0
   end
 
@@ -287,7 +286,7 @@ class Process
     end
     @wait_count = 0
 
-    @waitpid_future.get
+    Process::Status.new(@waitpid.receive)
   ensure
     close
   end
@@ -300,7 +299,7 @@ class Process
 
   # Whether this process is already terminated.
   def terminated?
-    @waitpid_future.completed? || !Process.exists?(@pid)
+    @waitpid.closed? || !Process.exists?(@pid)
   end
 
   # Closes any pipes to the child process.

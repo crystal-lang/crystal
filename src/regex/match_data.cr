@@ -162,7 +162,7 @@ class Regex
     # matched capture group.
     #
     # ```
-    # "Crystal".match(/(?<ok>Cr)|(?<ok>al)/).not_nil!["ok"]? # => "al"
+    # "Crystal".match(/(?<ok>Cr).*(?<ok>al)/).not_nil!["ok"]? # => "al"
     # ```
     def []?(group_name : String)
       max_start = -1
@@ -189,7 +189,7 @@ class Regex
     # matched capture group.
     #
     # ```
-    # "Crystal".match(/(?<ok>Cr)|(?<ok>al)/).not_nil!["ok"] # => "al"
+    # "Crystal".match(/(?<ok>Cr).*(?<ok>al)/).not_nil!["ok"] # => "al"
     # ```
     def [](group_name : String)
       match = self[group_name]?
@@ -334,11 +334,11 @@ class Regex
 
       io << "#<Regex::MatchData"
       size.times do |i|
-        io << " "
-        io << name_table.fetch(i, i) << ":" if i > 0
+        io << ' '
+        io << name_table.fetch(i, i) << ':' if i > 0
         self[i]?.inspect(io)
       end
-      io << ">"
+      io << '>'
     end
 
     def pretty_print(pp) : Nil

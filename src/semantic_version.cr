@@ -37,13 +37,13 @@ class SemanticVersion
   end
 
   def to_s(io : IO)
-    io << major << "." << minor << "." << patch
+    io << major << '.' << minor << '.' << patch
     unless prerelease.identifiers.empty?
-      io << "-"
+      io << '-'
       prerelease.to_s io
     end
     if build
-      io << "+" << build
+      io << '+' << build
     end
   end
 
@@ -80,10 +80,7 @@ class SemanticVersion
     end
 
     def to_s(io : IO)
-      identifiers.each_with_index do |s, i|
-        io << "." if i > 0
-        io << s
-      end
+      identifiers.join(".", io)
     end
 
     def <=>(other : self) : Int32

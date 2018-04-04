@@ -479,7 +479,7 @@ struct Char
       if ascii_control?
         io << "\\u{"
         ord.to_s(16, io)
-        io << "}"
+        io << '}'
       else
         to_s(io)
       end
@@ -507,7 +507,7 @@ struct Char
       if ascii_control? || ord >= 0x80
         io << "\\u{"
         ord.to_s(16, io)
-        io << "}"
+        io << '}'
       else
         to_s(io)
       end

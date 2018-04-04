@@ -185,10 +185,10 @@ module Crystal
 
         @program.global_vars[global_name] = global_var
 
-        first_assign = Assign.new(Var.new(temp_name), Global.new(global_name))
-        regex = regex_new_call(node, StringLiteral.new(string))
-        second_assign = Assign.new(Global.new(global_name), regex)
-        If.new(first_assign, Var.new(temp_name), second_assign)
+        first_assign = Assign.new(Var.new(temp_name).at(node), Global.new(global_name).at(node)).at(node)
+        regex = regex_new_call(node, StringLiteral.new(string).at(node))
+        second_assign = Assign.new(Global.new(global_name).at(node), regex).at(node)
+        If.new(first_assign, Var.new(temp_name).at(node), second_assign).at(node)
       else
         regex_new_call(node, node_value)
       end
@@ -211,16 +211,16 @@ module Crystal
       left = node.left.single_expression
 
       new_node = if left.is_a?(Var) || (left.is_a?(IsA) && left.obj.is_a?(Var))
-                   If.new(left, node.right, left.clone)
+                   If.new(left, node.right, left.clone).at(node)
                  elsif left.is_a?(Assign) && left.target.is_a?(Var)
-                   If.new(left, node.right, left.target.clone)
+                   If.new(left, node.right, left.target.clone).at(node)
                  elsif left.is_a?(Not) && left.exp.is_a?(Var)
-                   If.new(left, node.right, left.clone)
+                   If.new(left, node.right, left.clone).at(node)
                  elsif left.is_a?(Not) && ((left_exp = left.exp).is_a?(IsA) && left_exp.obj.is_a?(Var))
-                   If.new(left, node.right, left.clone)
+                   If.new(left, node.right, left.clone).at(node)
                  else
                    temp_var = new_temp_var
-                   If.new(Assign.new(temp_var.clone, left), node.right, temp_var.clone)
+                   If.new(Assign.new(temp_var.clone, left).at(node), node.right, temp_var.clone).at(node)
                  end
       new_node.and = true
       new_node.location = node.location
@@ -244,16 +244,16 @@ module Crystal
       left = node.left.single_expression
 
       new_node = if left.is_a?(Var) || (left.is_a?(IsA) && left.obj.is_a?(Var))
-                   If.new(left, left.clone, node.right)
+                   If.new(left, left.clone, node.right).at(node)
                  elsif left.is_a?(Assign) && left.target.is_a?(Var)
-                   If.new(left, left.target.clone, node.right)
+                   If.new(left, left.target.clone, node.right).at(node)
                  elsif left.is_a?(Not) && left.exp.is_a?(Var)
-                   If.new(left, left.clone, node.right)
+                   If.new(left, left.clone, node.right).at(node)
                  elsif left.is_a?(Not) && ((left_exp = left.exp).is_a?(IsA) && left_exp.obj.is_a?(Var))
-                   If.new(left, left.clone, node.right)
+                   If.new(left, left.clone, node.right).at(node)
                  else
                    temp_var = new_temp_var
-                   If.new(Assign.new(temp_var.clone, left), temp_var.clone, node.right)
+                   If.new(Assign.new(temp_var.clone, left).at(node), temp_var.clone, node.right).at(node)
                  end
       new_node.or = true
       new_node.location = node.location
@@ -390,7 +390,7 @@ module Crystal
             assigns << cond
           else
             temp_var = new_temp_var
-            assigns << Assign.new(temp_var.clone, cond)
+            assigns << Assign.new(temp_var.clone, cond).at(node_cond)
           end
           temp_var
         end
@@ -411,7 +411,7 @@ module Crystal
 
                 sub_comp = case_when_comparison(rh, lh).at(cond)
                 if comp
-                  comp = And.new(comp, sub_comp)
+                  comp = And.new(comp, sub_comp).at(comp)
                 else
                   comp = sub_comp
                 end
@@ -427,7 +427,7 @@ module Crystal
           next unless comp
 
           if final_comp
-            final_comp = Or.new(final_comp, comp)
+            final_comp = Or.new(final_comp, comp).at(final_comp)
           else
             final_comp = comp
           end
@@ -435,7 +435,7 @@ module Crystal
 
         final_comp ||= BoolLiteral.new(true)
 
-        wh_if = If.new(final_comp, wh.body)
+        wh_if = If.new(final_comp, wh.body).at(final_comp)
         if a_if
           a_if.else = wh_if
         else
@@ -451,7 +451,7 @@ module Crystal
       final_if = final_if.not_nil!
       final_exp = if assigns && !assigns.empty?
                     assigns << final_if
-                    Expressions.new(assigns)
+                    Expressions.new(assigns).at(node)
                   else
                     final_if
                   end

@@ -225,7 +225,7 @@ module HTTP
   def self.parse_time(time_str : String) : Time?
     DATE_PATTERNS.each do |pattern|
       begin
-        return Time.parse(time_str, pattern, kind: Time::Kind::Utc)
+        return Time.parse(time_str, pattern, location: Time::Location::UTC)
       rescue Time::Format::Error
       end
     end

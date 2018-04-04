@@ -1,5 +1,7 @@
 require "spec"
 require "json"
+require "uuid"
+require "uuid/json"
 require "big/json"
 
 private class JSONPerson
@@ -30,6 +32,10 @@ end
 
 private class JSONWithBool
   JSON.mapping value: Bool
+end
+
+private class JSONWithUUID
+  JSON.mapping value: UUID
 end
 
 private class JSONWithBigDecimal
@@ -249,10 +255,16 @@ describe "JSON mapping" do
     json.value.should be_false
   end
 
+  it "parses UUID" do
+    uuid = JSONWithUUID.from_json(%({"value": "ba714f86-cac6-42c7-8956-bcf5105e1b81"}))
+    uuid.should be_a(JSONWithUUID)
+    uuid.value.should eq(UUID.new("ba714f86-cac6-42c7-8956-bcf5105e1b81"))
+  end
+
   it "parses json with Time::Format converter" do
     json = JSONWithTime.from_json(%({"value": "2014-10-31 23:37:16"}))
     json.value.should be_a(Time)
-    json.value.to_s.should eq("2014-10-31 23:37:16")
+    json.value.to_s.should eq("2014-10-31 23:37:16 UTC")
     json.to_json.should eq(%({"value":"2014-10-31 23:37:16"}))
   end
 

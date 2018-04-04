@@ -279,7 +279,7 @@ struct NamedTuple
   # tuple.to_s # => %({name: "Crystal", year: 2011})
   # ```
   def to_s(io)
-    io << "{"
+    io << '{'
     {% for key, value, i in T %}
       {% if i > 0 %}
         io << ", "
@@ -293,7 +293,7 @@ struct NamedTuple
       io << ": "
       self[{{key.symbolize}}].inspect(io)
     {% end %}
-    io << "}"
+    io << '}'
   end
 
   def pretty_print(pp)

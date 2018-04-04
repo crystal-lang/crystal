@@ -43,5 +43,11 @@ describe "String UTF16" do
       input = Slice[0xdc00_u16, 0xd800_u16]
       String.from_utf16(input).should eq("\u{fffd}\u{fffd}")
     end
+
+    it "handles null bytes" do
+      slice = Slice[104_u16, 105_u16, 0_u16, 55296_u16, 56485_u16]
+      String.from_utf16(slice).should eq("hi\0000𐂥")
+      String.from_utf16(slice.to_unsafe).should eq("hi")
+    end
   end
 end

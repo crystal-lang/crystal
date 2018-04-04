@@ -5,18 +5,6 @@ fail() {
   exit 1
 }
 
-on_deploy() {
-  if [ "${TRAVIS_PULL_REQUEST}" = "false" ]; then
-    if [ "${DEPLOY}" = "true" ]; then
-      echo "${@}"
-      eval "${@}"
-      return $?
-    else
-      return 0
-    fi
-  fi
-}
-
 on_tag() {
   if [ -n "$CURRENT_TAG" ]; then
     echo "${@}"
@@ -78,8 +66,10 @@ on_osx() {
 }
 
 prepare_system() {
+  on_linux 'echo '"'"'{"ipv6":true, "fixed-cidr-v6":"2001:db8:1::/64"}'"'"' | sudo tee /etc/docker/daemon.json'
+  on_linux sudo service docker restart
+
   on_osx brew update
-  on_deploy sudo pip install awscli
 }
 
 build() {
@@ -89,67 +79,17 @@ build() {
   with_build_env './bin/crystal tool format --check samples spec src'
 }
 
-deploy() {
-  export CURRENT_TAG=$(git describe --tags --exact-match 2> /dev/null)
-  export GIT_VERSION=$(git describe --tags --long --always 2>/dev/null)
-  on_deploy 'echo $GIT_VERSION > docs/revision.txt'
-
-  on_deploy aws s3 sync docs/ s3://crystal-api/api/$TRAVIS_BRANCH
-
-  on_deploy on_tag aws s3 sync docs/ s3://crystal-api/api/$CURRENT_TAG
-  cat - > .aws-config <<EOF
-    {
-      "IndexDocument": {
-        "Suffix": "index.html"
-      },
-      "RoutingRules": [
-        {
-          "Condition": {
-            "KeyPrefixEquals": "api/latest/${CURRENT_TAG}/"
-          },
-          "Redirect": {
-            "HttpRedirectCode": "302",
-            "ReplaceKeyWith": "404",
-            "Protocol": "https",
-            "HostName": "crystal-lang.org"
-          }
-        },
-        {
-          "Condition": {
-            "KeyPrefixEquals": "api/latest/"
-          },
-          "Redirect": {
-            "HttpRedirectCode": "302",
-            "ReplaceKeyPrefixWith": "api/${CURRENT_TAG}/",
-            "Protocol": "https",
-            "HostName": "crystal-lang.org"
-          }
-        },
-        {
-          "Condition": {
-            "KeyPrefixEquals": "api/",
-            "HttpErrorCodeReturnedEquals": "404"
-          },
-          "Redirect": {
-            "HttpRedirectCode": "301",
-            "ReplaceKeyPrefixWith": "api/latest/",
-            "Protocol": "https",
-            "HostName": "crystal-lang.org"
-          }
-        }
-      ]
-    }
-EOF
-  on_deploy on_tag cat .aws-config
-  on_deploy on_tag aws s3api put-bucket-website --bucket crystal-api --website-configuration file://.aws-config
-}
-
 prepare_build() {
   on_linux verify_linux_environment
 
   on_linux docker pull "jhass/crystal-build-$ARCH"
 
-  on_osx brew install llvm crystal-lang
+  on_osx brew install crystal-lang
+
+  # Make sure binaries from llvm are available in PATH
+  on_osx brew install jq
+  on_osx OSX_LLVM_PACKAGE=`brew info --json=v1 crystal-lang | jq '.[].dependencies | .[] | select(startswith("llvm"))'`
+  on_osx brew link --force $OSX_LLVM_PACKAGE
 }
 
 with_build_env() {
@@ -159,16 +99,28 @@ with_build_env() {
   export TZ="America/New_York"
 
   on_linux verify_linux_environment
+
+  export DOCKER_TEST_PREFIX="crystallang/crystal:0.24.2"
+
+  case $ARCH in
+    x86_64)
+      export DOCKER_TEST_IMAGE="$DOCKER_TEST_PREFIX-build"
+      ;;
+    i386)
+      export DOCKER_TEST_IMAGE="$DOCKER_TEST_PREFIX-i386-build"
+      ;;
+  esac
+
   on_linux docker run \
     --rm -t \
     -u $(id -u) \
     -v $PWD:/mnt \
     -w /mnt \
-    -e LIBRARY_PATH="${ARCH_LIBRARY_PATH:-/usr/lib/crystal/lib/}" \
     -e CRYSTAL_CACHE_DIR="/tmp/crystal" \
-    "jhass/crystal-build-$ARCH" \
+    "$DOCKER_TEST_IMAGE" \
     "$ARCH_CMD" /bin/sh -c "'$command'"
 
+  on_osx sudo systemsetup -settimezone $TZ
   on_osx PATH="/usr/local/opt/llvm/bin:\$PATH" \
     CRYSTAL_CACHE_DIR="/tmp/crystal" \
     /bin/sh -c "'$command'"
@@ -185,7 +137,6 @@ Commands:
   prepare_system          setup any necessaries repositories etc.
   prepare_build           download and extract any dependencies needed for the build
   build                   run specs, build crystal, run format check, build samples, build the docs
-  deploy                  deploy the docs
   with_build_env command  run command in the build environment
   help                    display this
 
@@ -207,9 +158,6 @@ case $command in
     ;;
   build)
     build
-    ;;
-  deploy)
-    deploy
     ;;
   -h|--help|help)
     usage

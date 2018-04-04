@@ -34,6 +34,36 @@ class File < IO::FileDescriptor
 
   getter path : String
 
+  # Returns a `File::Stat` object for the file given by *path* or returns `nil`
+  # if the file does not exist. Raises `Errno` in case of an error. In case of
+  # a symbolic link it is followed and information about the target is returned.
+  #
+  # ```
+  # File.write("foo", "foo")
+  # File.stat?("foo").try(&.size) # => 3
+  # File.stat?("non_existent")    # => nil
+  # ```
+  def self.stat?(path : String) : Stat?
+    Crystal::System::File.stat?(path)
+  end
+
+  # Returns a `File::Stat` object for the file given by *path* or returns `nil`
+  # if the file does not exist. Raises `Errno` in case of an error. In case of
+  # a symbolic link information about the link itself is returned.
+  #
+  # ```
+  # File.write("foo", "foo")
+  # File.lstat?("foo").try(&.size) # => 3
+  #
+  # File.symlink("foo", "bar")
+  # File.lstat?("bar").try(&.symlink?) # => true
+  #
+  # File.lstat?("non_existent") # => nil
+  # ```
+  def self.lstat?(path : String) : Stat?
+    Crystal::System::File.lstat?(path)
+  end
+
   # Returns a `File::Stat` object for the file given by *path* or raises
   # `Errno` in case of an error. In case of a symbolic link
   # it is followed and information about the target is returned.
@@ -44,12 +74,12 @@ class File < IO::FileDescriptor
   # File.stat("foo").mtime # => 2015-09-23 06:24:19 UTC
   # ```
   def self.stat(path) : Stat
-    Crystal::System::File.stat(path)
+    stat?(path) || raise Errno.new("Unable to get stat for #{path.inspect}")
   end
 
   # Returns a `File::Stat` object for the file given by *path* or raises
   # `Errno` in case of an error. In case of a symbolic link
-  # information about it is returned.
+  # information about the link itself is returned.
   #
   # ```
   # File.write("foo", "foo")
@@ -57,7 +87,7 @@ class File < IO::FileDescriptor
   # File.lstat("foo").mtime # => 2015-09-23 06:24:19 UTC
   # ```
   def self.lstat(path) : Stat
-    Crystal::System::File.lstat(path)
+    lstat?(path) || raise Errno.new("Unable to get stat for #{path.inspect}")
   end
 
   # Returns `true` if *path* exists else returns `false`
@@ -72,6 +102,20 @@ class File < IO::FileDescriptor
     Crystal::System::File.exists?(path)
   end
 
+  # Returns the size of *filename* bytes. Raises `Errno` if the file at *path*
+  # does not exist.
+  #
+  # ```
+  # File.size("foo") # raises Errno
+  # File.write("foo", "foo")
+  # File.size("foo") # => 3
+  # ```
+  def self.size(filename) : UInt64
+    stat(filename).size
+  rescue ex : Errno
+    raise Errno.new("Error determining size of #{filename.inspect}", ex.errno)
+  end
+
   # Returns `true` if the file at *path* is empty, otherwise returns `false`.
   # Raises `Errno` if the file at *path* does not exist.
   #
@@ -82,7 +126,7 @@ class File < IO::FileDescriptor
   # File.empty?("foo") # => false
   # ```
   def self.empty?(path) : Bool
-    Crystal::System::File.empty?(path)
+    size(path) == 0
   end
 
   # Returns `true` if *path* is readable by the real user id of this process else returns `false`.
@@ -125,7 +169,11 @@ class File < IO::FileDescriptor
   # File.file?("foobar") # => false
   # ```
   def self.file?(path) : Bool
-    Crystal::System::File.file?(path)
+    if stat = stat?(path)
+      stat.file?
+    else
+      false
+    end
   end
 
   # Returns `true` if the given *path* exists and is a directory.
@@ -250,7 +298,7 @@ class File < IO::FileDescriptor
 
     dot_index = filename.rindex('.')
 
-    if dot_index && dot_index != filename.size - 1 && filename[dot_index - 1] != SEPARATOR
+    if dot_index && dot_index != filename.size - 1 && dot_index - 1 > (filename.rindex(SEPARATOR) || 0)
       filename[dot_index, filename.size - dot_index]
     else
       ""
@@ -527,7 +575,11 @@ class File < IO::FileDescriptor
 
   # Returns `true` if the *path* is a symbolic link.
   def self.symlink?(path) : Bool
-    Crystal::System::File.symlink?(path)
+    if stat = lstat?(path)
+      stat.symlink?
+    else
+      false
+    end
   end
 
   # Opens the file named by *filename*. If a file is being created, its initial
@@ -655,15 +707,17 @@ class File < IO::FileDescriptor
   # ```
   def self.join(parts : Array | Tuple) : String
     String.build do |str|
+      first = true
       parts.each_with_index do |part, index|
         part.check_no_null_byte
+        next if part.empty? && index != parts.size - 1
 
-        str << SEPARATOR if index > 0
+        str << SEPARATOR unless first
 
         byte_start = 0
         byte_count = part.bytesize
 
-        if index > 0 && part.starts_with?(SEPARATOR)
+        if !first && part.starts_with?(SEPARATOR)
           byte_start += 1
           byte_count -= 1
         end
@@ -673,13 +727,10 @@ class File < IO::FileDescriptor
         end
 
         str.write part.unsafe_byte_slice(byte_start, byte_count)
+
+        first = false
       end
     end
-  end
-
-  # Returns the size of *filename* bytes.
-  def self.size(filename) : UInt64
-    stat(filename.check_no_null_byte).size
   end
 
   # Moves *old_filename* to *new_filename*.
@@ -746,7 +797,7 @@ class File < IO::FileDescriptor
   def inspect(io)
     io << "#<File:" << @path
     io << " (closed)" if closed?
-    io << ">"
+    io << '>'
     io
   end
 

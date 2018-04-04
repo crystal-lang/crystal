@@ -126,10 +126,10 @@ module Float::Printer::Grisu3
     # We need to do the following tests in this order to avoid over- and
     # underflows.
     while (
-            rest < small_distance &&    # Negated condition 1
- unsafe_interval - rest >= ten_kappa && # Negated condition 2
- (rest + ten_kappa < small_distance ||  # buffer{-1} > w_high
- small_distance - rest >= rest + ten_kappa - small_distance)
+            rest < small_distance &&               # Negated condition 1
+            unsafe_interval - rest >= ten_kappa && # Negated condition 2
+            (rest + ten_kappa < small_distance ||  # buffer{-1} > w_high
+            small_distance - rest >= rest + ten_kappa - small_distance)
           )
       buffer[length - 1] -= 1
       rest += ten_kappa

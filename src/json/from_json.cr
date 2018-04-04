@@ -237,7 +237,7 @@ end
 struct Time::Format
   def from_json(pull : JSON::PullParser)
     string = pull.read_string
-    parse(string)
+    parse(string, Time::Location::UTC)
   end
 end
 

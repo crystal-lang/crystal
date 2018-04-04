@@ -243,9 +243,9 @@ describe IO do
 
     it "gets with single byte string as delimiter" do
       io = SimpleIOMemory.new("hello\nworld\nbye")
-      io.gets("\n").should eq("hello\n")
-      io.gets("\n").should eq("world\n")
-      io.gets("\n").should eq("bye")
+      io.gets('\n').should eq("hello\n")
+      io.gets('\n').should eq("world\n")
+      io.gets('\n').should eq("bye")
     end
 
     it "does gets with limit" do

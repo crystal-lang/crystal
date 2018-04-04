@@ -77,7 +77,7 @@ abstract class OpenSSL::SSL::Context
 
       self.verify_mode = OpenSSL::SSL::VerifyMode::PEER
       {% if LibSSL::OPENSSL_102 %}
-      self.default_verify_param = "ssl_client"
+      self.default_verify_param = "ssl_server"
       {% end %}
     end
 
@@ -130,7 +130,7 @@ abstract class OpenSSL::SSL::Context
 
       add_options(OpenSSL::SSL::Options::CIPHER_SERVER_PREFERENCE)
       {% if LibSSL::OPENSSL_102 %}
-      self.default_verify_param = "ssl_server"
+      self.default_verify_param = "ssl_client"
       {% end %}
 
       set_tmp_ecdh_key(curve: LibCrypto::NID_X9_62_prime256v1)

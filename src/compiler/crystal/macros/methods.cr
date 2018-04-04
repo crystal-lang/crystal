@@ -160,13 +160,7 @@ module Crystal
     end
 
     def interpret_raise(node)
-      msg = node.args.map do |arg|
-        arg.accept self
-        @last.to_macro_id
-      end
-      msg = msg.join " "
-
-      node.raise msg, exception_type: MacroRaiseException
+      macro_raise(node, node.args, self)
     end
 
     def interpret_run(node)
@@ -299,9 +293,7 @@ module Crystal
       when "class_name"
         interpret_argless_method("class_name", args) { class_name }
       when "raise"
-        interpret_one_arg_method(method, args) do |arg|
-          raise arg.to_s
-        end
+        macro_raise self, args, interpreter
       when "filename"
         interpret_argless_method("filename", args) do
           filename = location.try &.original_filename
@@ -609,7 +601,7 @@ module Crystal
       when "capitalize"
         interpret_argless_method(method, args) { StringLiteral.new(@value.capitalize) }
       when "chars"
-        interpret_argless_method(method, args) { ArrayLiteral.map(@value.chars) { |value| CharLiteral.new(value) } }
+        interpret_argless_method(method, args) { ArrayLiteral.map(@value.chars, Path.global("Char")) { |value| CharLiteral.new(value) } }
       when "chomp"
         interpret_argless_method(method, args) { StringLiteral.new(@value.chomp) }
       when "downcase"
@@ -659,11 +651,11 @@ module Crystal
       when "size"
         interpret_argless_method(method, args) { NumberLiteral.new(@value.size) }
       when "lines"
-        interpret_argless_method(method, args) { ArrayLiteral.map(@value.lines) { |value| StringLiteral.new(value) } }
+        interpret_argless_method(method, args) { ArrayLiteral.map(@value.lines, Path.global("String")) { |value| StringLiteral.new(value) } }
       when "split"
         case args.size
         when 0
-          ArrayLiteral.map(@value.split) { |value| StringLiteral.new(value) }
+          ArrayLiteral.map(@value.split, Path.global("String")) { |value| StringLiteral.new(value) }
         when 1
           first_arg = args.first
           case first_arg
@@ -675,7 +667,7 @@ module Crystal
             splitter = first_arg.to_s
           end
 
-          ArrayLiteral.map(@value.split(splitter)) { |value| StringLiteral.new(value) }
+          ArrayLiteral.map(@value.split(splitter), Path.global("String")) { |value| StringLiteral.new(value) }
         else
           wrong_number_of_arguments "StringLiteral#split", args.size, "0..1"
         end
@@ -753,6 +745,11 @@ module Crystal
         interpret_argless_method(method, args) { @of || Nop.new }
       when "type"
         interpret_argless_method(method, args) { @name || Nop.new }
+      when "clear"
+        interpret_argless_method(method, args) do
+          elements.clear
+          self
+        end
       else
         value = intepret_array_or_tuple_method(self, ArrayLiteral, method, args, block, interpreter)
         value || super
@@ -837,6 +834,11 @@ module Crystal
         interpret_argless_method(method, args) { @of.try(&.value) || Nop.new }
       when "type"
         interpret_argless_method(method, args) { @name || Nop.new }
+      when "clear"
+        interpret_argless_method(method, args) do
+          entries.clear
+          self
+        end
       else
         super
       end
@@ -1034,7 +1036,7 @@ module Crystal
           options << :i if @options.ignore_case?
           options << :m if @options.multiline?
           options << :x if @options.extended?
-          ArrayLiteral.map(options) { |opt| SymbolLiteral.new(opt.to_s) }
+          ArrayLiteral.map(options, Path.global("Symbol")) { |opt| SymbolLiteral.new(opt.to_s) }
         end
       else
         super
@@ -1502,8 +1504,9 @@ module Crystal
             raise "TypeNode##{method} expects TypeNode, not #{arg.class_desc}"
           end
 
-          self_type = self.type
-          other_type = arg.type
+          self_type = self.type.devirtualize
+          other_type = arg.type.devirtualize
+
           case method
           when "<"
             value = self_type != other_type && self_type.implements?(other_type)
@@ -1533,24 +1536,37 @@ module Crystal
     def self.type_vars(type)
       if type.is_a?(GenericClassInstanceType)
         if type.is_a?(TupleInstanceType)
-          ArrayLiteral.map(type.tuple_types) do |tuple_type|
-            TypeNode.new(tuple_type)
+          if type.tuple_types.empty?
+            empty_no_return_array
+          else
+            ArrayLiteral.map(type.tuple_types) do |tuple_type|
+              TypeNode.new(tuple_type)
+            end
           end
         else
-          ArrayLiteral.map(type.type_vars.values) do |type_var|
-            if type_var.is_a?(Var)
-              TypeNode.new(type_var.type)
-            else
-              type_var
+          if type.type_vars.empty?
+            empty_no_return_array
+          else
+            ArrayLiteral.map(type.type_vars.values) do |type_var|
+              if type_var.is_a?(Var)
+                TypeNode.new(type_var.type)
+              else
+                type_var
+              end
             end
           end
         end
       elsif type.is_a?(GenericType)
-        ArrayLiteral.map(type.as(GenericType).type_vars) do |type_var|
-          MacroId.new(type_var)
+        t = type.as(GenericType)
+        if t.type_vars.empty?
+          empty_no_return_array
+        else
+          ArrayLiteral.map(t.type_vars) do |type_var|
+            MacroId.new(type_var)
+          end
         end
       else
-        ArrayLiteral.new
+        empty_no_return_array
       end
     end
 
@@ -1560,12 +1576,17 @@ module Crystal
           MetaVar.new(name[1..-1], ivar.type)
         end
       else
-        ArrayLiteral.new
+        empty_no_return_array
       end
     end
 
     def self.ancestors(type)
-      ArrayLiteral.map(type.ancestors) { |ancestor| TypeNode.new(ancestor) }
+      ancestors = type.ancestors
+      if ancestors.empty?
+        empty_no_return_array
+      else
+        ArrayLiteral.map(type.ancestors) { |ancestor| TypeNode.new(ancestor) }
+      end
     end
 
     def self.superclass(type)
@@ -1576,11 +1597,21 @@ module Crystal
     end
 
     def self.subclasses(type)
-      ArrayLiteral.map(type.devirtualize.subclasses) { |subtype| TypeNode.new(subtype) }
+      subclasses = type.devirtualize.subclasses
+      if subclasses.empty?
+        empty_no_return_array
+      else
+        ArrayLiteral.map(subclasses) { |subtype| TypeNode.new(subtype) }
+      end
     end
 
     def self.all_subclasses(type)
-      ArrayLiteral.map(type.devirtualize.all_subclasses) { |subtype| TypeNode.new(subtype) }
+      subclasses = type.devirtualize.all_subclasses
+      if subclasses.empty?
+        empty_no_return_array
+      else
+        ArrayLiteral.map(subclasses) { |subtype| TypeNode.new(subtype) }
+      end
     end
 
     def self.union_types(type)
@@ -1589,8 +1620,12 @@ module Crystal
     end
 
     def self.constants(type)
-      names = type.types.map { |name, member_type| MacroId.new(name).as(ASTNode) }
-      ArrayLiteral.new names
+      if type.types.empty?
+        empty_no_return_array
+      else
+        names = type.types.map { |name, member_type| MacroId.new(name).as(ASTNode) }
+        ArrayLiteral.new names
+      end
     end
 
     def self.has_constant?(type, name)
@@ -2135,6 +2170,20 @@ private def visibility_to_symbol(visibility)
       "public"
     end
   Crystal::SymbolLiteral.new(visibility_name)
+end
+
+private def macro_raise(node, args, interpreter)
+  msg = args.map do |arg|
+    arg.accept interpreter
+    interpreter.last.to_macro_id
+  end
+  msg = msg.join " "
+
+  node.raise msg, exception_type: Crystal::MacroRaiseException
+end
+
+private def empty_no_return_array
+  Crystal::ArrayLiteral.new(of: Crystal::Path.global("NoReturn"))
 end
 
 def filter(object, klass, block, interpreter, keep = true)

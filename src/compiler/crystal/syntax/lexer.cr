@@ -18,6 +18,13 @@ module Crystal
     @token_end_location : Location?
     @string_pool : StringPool
 
+    # This is an interface for storing data associated to a heredoc
+    module HeredocItem
+    end
+
+    # Heredocs pushed when found. Should be processed when encountering a newline
+    getter heredocs = [] of {Token::DelimiterState, HeredocItem}
+
     def initialize(string, string_pool : StringPool? = nil)
       @reader = Char::Reader.new(string)
       @token = Token.new
@@ -158,30 +165,36 @@ module Crystal
             found_closing_single_quote = false
 
             char = next_char
+            start_here = current_pos
+
             if char == '\''
               has_single_quote = true
               char = next_char
+              start_here = current_pos
             end
 
-            unless ident_start?(char)
+            unless ident_part?(char)
               raise "heredoc identifier starts with invalid character"
             end
 
-            here << char
+            end_here = 0
+
             while true
               char = next_char
               case
               when char == '\r'
                 if peek_next_char == '\n'
-                  next
+                  end_here = current_pos
+                  next_char
+                  break
                 else
                   raise "expecting '\\n' after '\\r'"
                 end
               when char == '\n'
-                incr_line_number 0
+                end_here = current_pos
                 break
               when ident_part?(char)
-                here << char
+                # ok
               when char == '\0'
                 raise "Unexpected EOF on heredoc identifier"
               else
@@ -191,8 +204,11 @@ module Crystal
                   if peek != '\r' && peek != '\n'
                     raise "expecting '\\n' or '\\r' after closing single quote"
                   end
+                elsif has_single_quote
+                  # wait until another quote
                 else
-                  raise "invalid character #{char.inspect} for heredoc identifier"
+                  end_here = current_pos
+                  break
                 end
               end
             end
@@ -201,8 +217,11 @@ module Crystal
               raise "expecting closing single quote"
             end
 
-            here = here.to_s
-            delimited_pair :heredoc, here, here, start, allow_escapes: !has_single_quote
+            end_here -= 1 if has_single_quote
+
+            here = string_range(start_here, end_here)
+
+            delimited_pair :heredoc, here, here, start, allow_escapes: !has_single_quote, advance: false
           else
             @token.type = :"<<"
           end
@@ -1176,6 +1195,10 @@ module Crystal
     end
 
     def consume_newlines
+      # If there are heredocs we don't freely consume newlines because
+      # these will be part of the heredoc string
+      return unless @heredocs.empty?
+
       if @count_whitespace
         return
       end
@@ -1721,11 +1744,20 @@ module Crystal
 
     def next_string_token(delimiter_state)
       @token.line_number = @line_number
+      @token.delimiter_state = delimiter_state
 
       start = current_pos
       string_end = delimiter_state.end
       string_nest = delimiter_state.nest
       string_open_count = delimiter_state.open_count
+
+      # For empty heredocs:
+      if @token.type == :NEWLINE && delimiter_state.kind == :heredoc
+        if check_heredoc_end delimiter_state
+          set_token_raw_from_start start
+          return @token
+        end
+      end
 
       case current_char
       when '\0'
@@ -1737,13 +1769,13 @@ module Crystal
         else
           @token.type = :STRING
           @token.value = string_end.to_s
-          @token.delimiter_state = @token.delimiter_state.with_open_count_delta(-1)
+          @token.delimiter_state = delimiter_state.with_open_count_delta(-1)
         end
       when string_nest
         next_char
         @token.type = :STRING
         @token.value = string_nest.to_s
-        @token.delimiter_state = @token.delimiter_state.with_open_count_delta(+1)
+        @token.delimiter_state = delimiter_state.with_open_count_delta(+1)
       when '\\'
         if delimiter_state.allow_escapes
           if delimiter_state.kind == :regex
@@ -1853,64 +1885,16 @@ module Crystal
         @token.column_number = @column_number
 
         if delimiter_state.kind == :heredoc
-          string_end = string_end.to_s
-          old_pos = current_pos
-          old_column = @column_number
-
-          while current_char == ' ' || current_char == '\t'
-            next_char
-          end
-
-          indent = @column_number - 1
-
-          if string_end.starts_with?(current_char)
-            reached_end = false
-
-            string_end.each_char do |c|
-              unless c == current_char
-                reached_end = false
-                break
-              end
-              next_char
-              reached_end = true
-            end
-
-            if reached_end &&
-               (current_char == '\n' || current_char == '\0' ||
-               (current_char == '\r' && peek_next_char == '\n' && next_char) ||
-               !ident_part?(current_char))
-              @token.type = :DELIMITER_END
-              @token.delimiter_state = @token.delimiter_state.with_heredoc_indent(indent)
-            else
-              @reader.pos = old_pos
-              @column_number = old_column
-              @token.column_number = @column_number
-              next_string_token delimiter_state
-              @token.value = (is_slash_r ? "\r\n" : '\n') + @token.value.to_s
-            end
-          else
-            @reader.pos = old_pos
-            @column_number = old_column
-            @token.column_number = @column_number
-            @token.type = :STRING
-            @token.value = is_slash_r ? "\r\n" : "\n"
+          unless check_heredoc_end delimiter_state
+            next_string_token_noescape delimiter_state
+            @token.value = string_range(start)
           end
         else
           @token.type = :STRING
           @token.value = is_slash_r ? "\r\n" : "\n"
         end
       else
-        while current_char != string_end &&
-              current_char != string_nest &&
-              current_char != '\0' &&
-              current_char != '\\' &&
-              current_char != '#' &&
-              current_char != '\r' &&
-              current_char != '\n'
-          next_char
-        end
-
-        @token.type = :STRING
+        next_string_token_noescape delimiter_state
         @token.value = string_range(start)
       end
 
@@ -1919,12 +1903,69 @@ module Crystal
       @token
     end
 
+    def next_string_token_noescape(delimiter_state)
+      string_end = delimiter_state.end
+      string_nest = delimiter_state.nest
+
+      while current_char != string_end &&
+            current_char != string_nest &&
+            current_char != '\0' &&
+            current_char != '\\' &&
+            current_char != '#' &&
+            current_char != '\r' &&
+            current_char != '\n'
+        next_char
+      end
+
+      @token.type = :STRING
+    end
+
+    def check_heredoc_end(delimiter_state)
+      string_end = delimiter_state.end.to_s
+      old_pos = current_pos
+      old_column = @column_number
+
+      while current_char == ' ' || current_char == '\t'
+        next_char
+      end
+
+      indent = @column_number - 1
+
+      if string_end.starts_with?(current_char)
+        reached_end = false
+
+        string_end.each_char do |c|
+          unless c == current_char
+            reached_end = false
+            break
+          end
+          next_char
+          reached_end = true
+        end
+
+        if reached_end &&
+           (current_char == '\n' || current_char == '\0' ||
+           (current_char == '\r' && peek_next_char == '\n' && next_char))
+          @token.type = :DELIMITER_END
+          @token.delimiter_state = delimiter_state.with_heredoc_indent(indent)
+          return true
+        end
+      end
+
+      @reader.pos = old_pos
+      @column_number = old_column
+      @token.column_number = @column_number
+
+      false
+    end
+
     def raise_unterminated_quoted(delimiter_state)
       msg = case delimiter_state.kind
             when :command then "Unterminated command literal"
             when :regex   then "Unterminated regular expression"
-            when :heredoc then "Unterminated heredoc"
-            when :string  then "Unterminated string literal"
+            when :heredoc
+              "Unterminated heredoc: can't find \"#{delimiter_state.end}\" anywhere before the end of file"
+            when :string then "Unterminated string literal"
             else
               ::raise "unreachable"
             end
@@ -2409,8 +2450,8 @@ module Crystal
       @token.value = value
     end
 
-    def delimited_pair(kind, string_nest, string_end, start, allow_escapes = true)
-      next_char
+    def delimited_pair(kind, string_nest, string_end, start, allow_escapes = true, advance = true)
+      next_char if advance
       @token.type = :DELIMITER_START
       @token.delimiter_state = Token::DelimiterState.new(kind, string_nest, string_end, allow_escapes)
       set_token_raw_from_start(start)
@@ -2436,7 +2477,40 @@ module Crystal
       end
 
       start = current_pos
-      while !current_char.ascii_whitespace? && current_char != '\0' && current_char != @token.delimiter_state.end
+      sub_start = start
+      value = String::Builder.new
+
+      escaped = false
+      while true
+        case current_char
+        when Char::ZERO
+          break # raise is handled by parser
+        when @token.delimiter_state.end
+          unless escaped
+            if @token.delimiter_state.open_count == 0
+              break
+            else
+              @token.delimiter_state = @token.delimiter_state.with_open_count_delta(-1)
+            end
+          end
+        when @token.delimiter_state.nest
+          unless escaped
+            @token.delimiter_state = @token.delimiter_state.with_open_count_delta(+1)
+          end
+        when .ascii_whitespace?
+          break unless escaped
+        else
+          if escaped
+            value << '\\'
+          end
+        end
+
+        escaped = current_char == '\\'
+        if escaped
+          value.write @reader.string.to_slice[sub_start, current_pos - sub_start]
+          sub_start = current_pos + 1
+        end
+
         next_char
       end
 
@@ -2445,8 +2519,10 @@ module Crystal
         return @token
       end
 
+      value.write @reader.string.to_slice[sub_start, current_pos - sub_start]
+
       @token.type = :STRING
-      @token.value = string_range(start)
+      @token.value = value.to_s
       set_token_raw_from_start(start)
 
       @token

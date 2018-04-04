@@ -502,7 +502,7 @@ class Crystal::Doc::Type
   end
 
   def node_to_html(node : Generic, io, links = true)
-    match = lookup_path(node.name)
+    match = lookup_path(node.name.as(Path))
     if match
       if match.must_be_included?
         if links
@@ -520,11 +520,11 @@ class Crystal::Doc::Type
     else
       io << node.name
     end
-    io << "("
+    io << '('
     node.type_vars.join(", ", io) do |type_var|
       node_to_html type_var, io, links: links
     end
-    io << ")"
+    io << ')'
   end
 
   def node_to_html(node : ProcNotation, io, links = true)
@@ -557,12 +557,12 @@ class Crystal::Doc::Type
 
   private def nilable_type_to_html(node : ASTNode, io, links)
     node_to_html node, io, links: links
-    io << "?"
+    io << '?'
   end
 
   private def nilable_type_to_html(type : Crystal::Type, io, text, links)
     type_to_html(type, io, text, links: links)
-    io << "?"
+    io << '?'
   end
 
   def nil_type?(node : ASTNode)
@@ -603,7 +603,7 @@ class Crystal::Doc::Type
       type_to_html union_type, io, text, links: links
     end
 
-    io << ")" if has_type_splat
+    io << ')' if has_type_splat
   end
 
   def type_to_html(type : Crystal::ProcInstanceType, io, text = nil, links = true)
@@ -616,15 +616,15 @@ class Crystal::Doc::Type
   end
 
   def type_to_html(type : Crystal::TupleInstanceType, io, text = nil, links = true)
-    io << "{"
+    io << '{'
     type.tuple_types.join(", ", io) do |tuple_type|
       type_to_html tuple_type, io, links: links
     end
-    io << "}"
+    io << '}'
   end
 
   def type_to_html(type : Crystal::NamedTupleInstanceType, io, text = nil, links = true)
-    io << "{"
+    io << '{'
     type.entries.join(", ", io) do |entry|
       if Symbol.needs_quotes?(entry.name)
         entry.name.inspect(io)
@@ -634,7 +634,7 @@ class Crystal::Doc::Type
       io << ": "
       type_to_html entry.type, io, links: links
     end
-    io << "}"
+    io << '}'
   end
 
   def type_to_html(type : Crystal::GenericInstanceType, io, text = nil, links = true)

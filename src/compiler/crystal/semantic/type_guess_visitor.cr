@@ -26,6 +26,9 @@ module Crystal
     @args : Array(Arg)?
     @block_arg : Arg?
 
+    @args_hash_initialized = true
+    @args_hash = {} of String => Arg
+
     # Before checking types, we set this to nil.
     # Afterwards, this is non-nil if an error was found
     # (a type like Class or Reference is used)
@@ -75,12 +78,8 @@ module Crystal
       # Check for an argument that mathces this var, and see
       # if it has a default value. If so, we do a `self` check
       # to make sure `self` isn't used
-      if args = @args
-        # Find an argument with the same name as this variable
-        arg = args.find { |arg| arg.name == node.name }
-        if arg && (default_value = arg.default_value)
-          check_has_self(default_value)
-        end
+      if (arg = args_hash[node.name]?) && (default_value = arg.default_value)
+        check_has_self(default_value)
       end
 
       check_var_is_self(node)
@@ -113,11 +112,21 @@ module Crystal
     end
 
     def visit(node : Assign)
+      # Invalidate the argument after assigned
+      if (target = node.target).is_a?(Var)
+        args_hash.delete target.name
+      end
+
       process_assign(node)
       false
     end
 
     def visit(node : MultiAssign)
+      # Invalidate the argument after assigned
+      node.targets.each do |target|
+        args_hash.delete target.name if target.is_a?(Var)
+      end
+
       process_multi_assign(node)
       false
     end
@@ -597,7 +606,8 @@ module Crystal
       end
 
       # If it's Pointer(T).malloc or Pointer(T).null, guess it to Pointer(T)
-      if obj.is_a?(Generic) && obj.name.single?("Pointer") &&
+      if obj.is_a?(Generic) &&
+         (name = obj.name).is_a?(Path) && name.single?("Pointer") &&
          (node.name == "malloc" || node.name == "null")
         type = lookup_type?(obj)
         return type if type.is_a?(PointerInstanceType)
@@ -779,31 +789,21 @@ module Crystal
         end
       end
 
-      if args = @args
-        # Find an argument with the same name as this variable
-        arg = args.find { |arg| arg.name == node.name }
-        if arg
-          # If the argument has a restriction, guess the type from it
-          if restriction = arg.restriction
-            type = lookup_type?(restriction)
-            return type if type
-          end
-
-          # If the argument has a default value, guess the type from it
-          if default_value = arg.default_value
-            return guess_type(default_value)
-          end
-        end
-      end
-
-      # Try to guess type from a block argument with the same name
-      if (block_arg = @block_arg) && block_arg.name == node.name
-        restriction = block_arg.restriction
-        if restriction
+      if arg = args_hash[node.name]?
+        # If the argument has a restriction, guess the type from it
+        if restriction = arg.restriction
           type = lookup_type?(restriction)
           return type if type
-        else
-          # If there's no restriction it means it's a `-> Void` proc
+        end
+
+        # If the argument has a default value, guess the type from it
+        if default_value = arg.default_value
+          return guess_type(default_value)
+        end
+
+        # If the node points block args and there's no restriction,
+        # it means it's a `-> Void` proc
+        if (block_arg = @block_arg) && block_arg.name == node.name
           return @program.proc_of([@program.void] of Type)
         end
       end
@@ -1088,6 +1088,7 @@ module Crystal
       @found_self = false
       @args = node.args
       @block_arg = node.block_arg
+      @args_hash_initialized = false
 
       if !node.receiver && node.name == "initialize" && !current_type.is_a?(Program)
         initialize_info = @initialize_info = InitializeInfo.new(node)
@@ -1106,6 +1107,8 @@ module Crystal
       @initialize_info = nil
       @block_arg = nil
       @args = nil
+      @args_hash.clear
+      @args_hash_initialized = true
       @outside_def = true
 
       false
@@ -1115,8 +1118,11 @@ module Crystal
       if body = node.body
         @outside_def = false
         @args = node.args
+        @args_hash_initialized = false
         body.accept self
         @args = nil
+        @args_hash.clear
+        @args_hash_initialized = true
         @outside_def = true
       end
 
@@ -1152,6 +1158,22 @@ module Crystal
 
     def current_type
       @type_override || @current_type
+    end
+
+    def args_hash
+      unless @args_hash_initialized
+        @args.try &.each do |arg|
+          @args_hash[arg.name] = arg
+        end
+
+        @block_arg.try do |arg|
+          @args_hash[arg.name] = arg
+        end
+
+        @args_hash_initialized = true
+      end
+
+      @args_hash
     end
   end
 

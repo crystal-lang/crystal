@@ -13,7 +13,7 @@ module Crystal::Doc
     def to_jsonp(io : IO)
       io << "crystal_doc_search_index_callback("
       to_json(io)
-      io << ")"
+      io << ')'
     end
 
     def to_json(builder : JSON::Builder)

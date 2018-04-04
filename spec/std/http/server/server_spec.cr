@@ -350,5 +350,5 @@ module HTTP
 end
 
 private def requestize(string)
-  string.gsub("\n", "\r\n")
+  string.gsub('\n', "\r\n")
 end

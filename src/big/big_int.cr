@@ -28,6 +28,8 @@ struct BigInt < Int
   # BigInt.new("1234567890ABCDEF", base: 16)           # => 1311768467294899695
   # ```
   def initialize(str : String, base = 10)
+    # Strip leading '+' char to smooth out cases with strings like "+123"
+    str = str.lchop('+')
     err = LibGMP.init_set_str(out @mpz, str, base)
     if err == -1
       raise ArgumentError.new("Invalid BigInt: #{str}")

@@ -5,12 +5,12 @@ module Crystal
     def visit(node : Arg)
       if node.external_name != node.name
         visit_named_arg_name(node.external_name)
-        @str << " "
+        @str << ' '
       end
       if node.name
         @str << decorate_arg(node, node.name)
       else
-        @str << "?"
+        @str << '?'
       end
       if type = node.type?
         @str << " : "
