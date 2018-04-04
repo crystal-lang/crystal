@@ -162,7 +162,7 @@ class Regex
     # matched capture group.
     #
     # ```
-    # "Crystal".match(/(?<ok>Cr)|(?<ok>al)/).not_nil!["ok"]? # => "al"
+    # "Crystal".match(/(?<ok>Cr).*(?<ok>al)/).not_nil!["ok"]? # => "al"
     # ```
     def []?(group_name : String)
       max_start = -1
@@ -189,7 +189,7 @@ class Regex
     # matched capture group.
     #
     # ```
-    # "Crystal".match(/(?<ok>Cr)|(?<ok>al)/).not_nil!["ok"] # => "al"
+    # "Crystal".match(/(?<ok>Cr).*(?<ok>al)/).not_nil!["ok"] # => "al"
     # ```
     def [](group_name : String)
       match = self[group_name]?
