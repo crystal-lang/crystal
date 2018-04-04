@@ -71,7 +71,7 @@ end
 # The string is produced according to the *format_string* with format specifiers
 # being replaced by values from *args* formatted according to the specifier.
 # Within the format string, any characters other than format specifiers
-# (specifiers beginning with %) are copied to the result.
+# (specifiers beginning with `%`) are copied to the result.
 #
 # The syntax for a format specifier is:
 #
