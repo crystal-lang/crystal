@@ -75,7 +75,7 @@ end
 #
 # The syntax for a format specifier is:
 #
-# ```pre
+# ```text
 # %[flags][width][.precision]type
 # ```
 #
@@ -86,7 +86,7 @@ end
 # modify that interpretation.
 #
 # The field type characters are:
-# ```pre
+# ```text
 #     Field |  Integer Format
 #     ------+--------------------------------------------------------------
 #       b   | Formats argument as a binary number.
@@ -128,7 +128,7 @@ end
 # ```
 # The flags modifies the behavior of the formats.
 # The flag characters are:
-# ```pre
+# ```text
 #   Flag     | Applies to    | Meaning
 #   ---------+---------------+-----------------------------------------
 #   space    | bdiouxX       | Leave a space at the start of
