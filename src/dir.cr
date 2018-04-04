@@ -231,7 +231,11 @@ class Dir
     return 0 if Dir.exists?(path)
 
     components = path.split(File::SEPARATOR)
-    if components.first == "." || components.first == ""
+    case components.first
+    when ""
+      components.shift
+      subpath = "/"
+    when "."
       subpath = components.shift
     else
       subpath = "."

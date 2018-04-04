@@ -307,7 +307,7 @@ describe "File" do
     File.join(["foo", "//bar//", "baz///"]).should eq("foo//bar//baz///")
     File.join(["/foo/", "/bar/", "/baz/"]).should eq("/foo/bar/baz/")
     File.join(["", "foo"]).should eq("foo")
-    File.join(["foo", ""]).should eq("foo")
+    File.join(["foo", ""]).should eq("foo/")
     File.join(["", "", "foo"]).should eq("foo")
     File.join(["foo", "", "bar"]).should eq("foo/bar")
     File.join(["foo", "", "", "bar"]).should eq("foo/bar")
