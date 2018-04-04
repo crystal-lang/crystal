@@ -707,10 +707,13 @@ class File < IO::FileDescriptor
   # ```
   def self.join(parts : Array | Tuple) : String
     String.build do |str|
+      first = true
       parts.each_with_index do |part, index|
         part.check_no_null_byte
+        next if part.empty?
 
-        str << SEPARATOR if index > 0
+        str << SEPARATOR unless first
+        first = false
 
         byte_start = 0
         byte_count = part.bytesize
