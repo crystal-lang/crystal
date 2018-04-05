@@ -29,12 +29,12 @@ module HTTP::Multipart
     # builder.content_type("mixed") # => "multipart/mixed; boundary=\"a4VF\""
     # ```
     def content_type(subtype = "mixed")
-      String.build do |str|
-        str << "multipart/"
-        str << subtype
-        str << "; boundary=\""
-        HTTP.quote_string(@boundary, str)
-        str << '"'
+      String.build do |io|
+        io << "multipart/"
+        io << subtype
+        io << "; boundary=\""
+        HTTP.quote_string(io, @boundary)
+        io << '"'
       end
     end
 

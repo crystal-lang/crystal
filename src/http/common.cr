@@ -277,7 +277,7 @@ module HTTP
   # HTTP.quote_string(string, io)
   # io.gets_to_end # => %q(\"foo\\\ bar\")
   # ```
-  def self.quote_string(string, io)
+  def self.quote_string(io : IO, string)
     # Escaping rules: https://evolvis.org/pipermail/evolvis-platfrm-discuss/2014-November/000675.html
 
     string.each_byte do |byte|
@@ -300,7 +300,7 @@ module HTTP
   # ```
   def self.quote_string(string)
     String.build do |io|
-      quote_string(string, io)
+      quote_string(io, string)
     end
   end
 

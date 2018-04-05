@@ -28,10 +28,10 @@ module HTTP::FormData
     # builder.content_type # => "multipart/form-data; boundary=\"a4VF\""
     # ```
     def content_type
-      String.build do |str|
-        str << "multipart/form-data; boundary=\""
-        HTTP.quote_string(@boundary, str)
-        str << '"'
+      String.build do |io|
+        io << "multipart/form-data; boundary=\""
+        HTTP.quote_string(io, @boundary)
+        io << '"'
       end
     end
 
@@ -78,12 +78,12 @@ module HTTP::FormData
     private def generate_content_disposition(name, metadata)
       String.build do |io|
         io << "form-data; name=\""
-        HTTP.quote_string(name, io)
+        HTTP.quote_string(io, name)
         io << '"'
 
         if filename = metadata.filename
           io << "; filename=\""
-          HTTP.quote_string(filename, io)
+          HTTP.quote_string(io, filename)
           io << '"'
         end
 
