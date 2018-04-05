@@ -164,6 +164,13 @@ struct UUID
     to_slice == other.to_slice
   end
 
+  # Convert to `String` in literal format.
+  def inspect(io : IO)
+    io << "UUID("
+    to_s(io)
+    io << ')'
+  end
+
   def to_s(io : IO)
     slice = to_slice
 
