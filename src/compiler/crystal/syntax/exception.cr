@@ -25,7 +25,7 @@ module Crystal
       end
     end
 
-    def append_to_s(source, io)
+    def append_to_s(io : IO, source)
       if @filename
         io << "Syntax error in #{relative_filename(@filename)}:#{@line_number}: #{colorize(@message).bold}"
       else
@@ -57,8 +57,8 @@ module Crystal
       end
     end
 
-    def to_s_with_source(source, io)
-      append_to_s fetch_source(source), io
+    def to_s_with_source(io : IO, source)
+      append_to_s io, fetch_source(source)
     end
 
     def fetch_source(source)

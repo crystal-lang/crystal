@@ -72,12 +72,12 @@ module Crystal
       end
     end
 
-    def to_s_with_source(source, io)
+    def to_s_with_source(io : IO, source)
       io << "Error "
-      append_to_s source, io
+      append_to_s io, source
     end
 
-    def append_to_s(source, io)
+    def append_to_s(io : IO, source)
       inner = @inner
       filename = @filename
 
@@ -133,7 +133,7 @@ module Crystal
 
       if inner && inner.has_location?
         io << '\n'
-        inner.append_to_s source, io
+        inner.append_to_s io, source
       end
     end
 
@@ -174,11 +174,11 @@ module Crystal
     def to_json_single(json)
     end
 
-    def to_s_with_source(source, io)
-      append_to_s(source, io)
+    def to_s_with_source(io : IO, source)
+      append_to_s(io, source)
     end
 
-    def append_to_s(source, io)
+    def append_to_s(io : IO, source)
       has_trace = @trace.any?(&.location)
       nil_reason = @nil_reason
 
