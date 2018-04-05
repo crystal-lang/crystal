@@ -102,15 +102,15 @@ class File
     def inspect(io)
       io << "#<File::Stat"
       io << " dev=0x"
-      dev.to_s(16, io)
+      dev.to_s(io, 16)
       io << ", ino=" << ino
       io << ", mode=0o"
-      mode.to_s(8, io)
+      mode.to_s(io, 8)
       io << ", nlink=" << nlink
       io << ", uid=" << uid
       io << ", gid=" << gid
       io << ", rdev=0x"
-      rdev.to_s(16, io)
+      rdev.to_s(io, 16)
       io << ", size=" << size
       {% unless flag?(:win32) %}
         # These two getters raise NotImplementedError on windows.

@@ -3994,7 +3994,7 @@ class String
   private def dump_hex(char, io)
     io << "\\x"
     io << '0' if char < 0x0F
-    char.to_s(16, io, upcase: true)
+    char.to_s(io, 16, upcase: true)
   end
 
   private def dump_unicode(char, io)
@@ -4003,7 +4003,7 @@ class String
     io << '0' if char.ord < 0x1000
     io << '0' if char.ord < 0x0100
     io << '0' if char.ord < 0x0010
-    char.ord.to_s(16, io, upcase: true)
+    char.ord.to_s(io, 16, upcase: true)
     io << '}' if char.ord > 0xFFFF
   end
 

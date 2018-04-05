@@ -231,7 +231,7 @@ struct String::Formatter(A)
         end
       end
 
-      int.to_s(flags.base, @io, upcase: flags.type == 'X')
+      int.to_s(@io, flags.base, upcase: flags.type == 'X')
 
       if flags.right_padding?
         pad_int int, flags

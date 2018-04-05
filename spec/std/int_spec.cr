@@ -2,11 +2,11 @@ require "spec"
 require "big"
 
 private def to_s_with_io(num)
-  String.build { |str| num.to_s(str) }
+  String.build { |io| num.to_s(io) }
 end
 
 private def to_s_with_io(num, base, upcase = false)
-  String.build { |str| num.to_s(base, str, upcase) }
+  String.build { |io| num.to_s(io, base, upcase) }
 end
 
 describe "Int" do

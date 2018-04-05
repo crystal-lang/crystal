@@ -2057,14 +2057,14 @@ module Crystal
 
   def self.safe_mangling(program, name)
     if program.has_flag?("windows")
-      String.build do |str|
+      String.build do |io|
         name.each_char do |char|
           if char.ascii_alphanumeric? || char == '_'
-            str << char
+            io << char
           else
-            str << '.'
-            char.ord.to_s(16, str, upcase: true)
-            str << '.'
+            io << '.'
+            char.ord.to_s(io, 16, upcase: true)
+            io << '.'
           end
         end
       end

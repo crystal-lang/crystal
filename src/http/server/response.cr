@@ -169,7 +169,7 @@ class HTTP::Server
         ensure_headers_written
 
         if @chunked
-          slice.size.to_s(16, @io)
+          slice.size.to_s(@io, 16)
           @io << "\r\n"
           @io.write(slice)
           @io << "\r\n"
