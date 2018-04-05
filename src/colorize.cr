@@ -296,64 +296,82 @@ struct Colorize::Object(T)
   end
 
   def surround(io = STDOUT)
-    must_append_end = append_start(io)
-    yield io
-    append_end(io) if must_append_end
-  end
+    return yield io unless @enabled
 
-  STACK = [] of Colorize::Object(String)
-
-  def push(io = STDOUT)
-    last_color = STACK.last?
-
-    append_start(io, !!last_color)
-
-    STACK.push self
-    yield io
-    STACK.pop
-
-    if last_color
-      last_color.append_start(io, true)
-    else
-      append_end(io)
+    Object.surround(io, to_named_tuple) do |io|
+      yield io
     end
   end
 
-  protected def append_start(io, reset = false)
-    return false unless @enabled
+  private def to_named_tuple
+    {
+      fore: @fore,
+      back: @back,
+      mode: @mode,
+    }
+  end
 
-    fore_is_default = @fore == ColorANSI::Default
-    back_is_default = @back == ColorANSI::Default
-    mode_is_default = @mode == 0
+  @@last_color = {
+    fore: ColorANSI::Default.as(Color),
+    back: ColorANSI::Default.as(Color),
+    mode: 0,
+  }
 
-    if fore_is_default && back_is_default && mode_is_default && !reset
+  protected def self.surround(io, color)
+    last_color = @@last_color
+    must_append_end = append_start(io, color)
+    @@last_color = color
+
+    begin
+      yield io
+    ensure
+      append_start(io, last_color) if must_append_end
+      @@last_color = last_color
+    end
+  end
+
+  private def self.append_start(io, color)
+    last_color_is_default =
+      @@last_color[:fore] == ColorANSI::Default &&
+        @@last_color[:back] == ColorANSI::Default &&
+        @@last_color[:mode] == 0
+
+    fore = color[:fore]
+    back = color[:back]
+    mode = color[:mode]
+
+    fore_is_default = fore == ColorANSI::Default
+    back_is_default = back == ColorANSI::Default
+    mode_is_default = mode == 0
+
+    if fore_is_default && back_is_default && mode_is_default && last_color_is_default || @@last_color == color
       false
     else
       io << "\e["
 
       printed = false
 
-      if reset
+      unless last_color_is_default
         io << MODE_DEFAULT
         printed = true
       end
 
       unless fore_is_default
         io << ';' if printed
-        @fore.fore io
+        fore.fore io
         printed = true
       end
 
       unless back_is_default
         io << ';' if printed
-        @back.back io
+        back.back io
         printed = true
       end
 
       unless mode_is_default
         # Can't reuse MODES constant because it has bold/bright duplicated
         {% for name in %w(bold dim underline blink reverse hidden) %}
-          if @mode.bits_set? MODE_{{name.upcase.id}}_FLAG
+          if mode.bits_set? MODE_{{name.upcase.id}}_FLAG
             io << ';' if printed
             io << MODE_{{name.upcase.id}}
             printed = true
@@ -365,9 +383,5 @@ struct Colorize::Object(T)
 
       true
     end
-  end
-
-  protected def append_end(io)
-    Colorize.reset(io)
   end
 end

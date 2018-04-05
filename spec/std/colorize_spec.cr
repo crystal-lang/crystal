@@ -9,6 +9,14 @@ private def with_color_wrap(*args)
   with_color(*args).toggle(true)
 end
 
+private class ColorizeToS
+  def to_s(io)
+    io << "hello"
+    io << "world".colorize.blue
+    io << "bye"
+  end
+end
+
 describe "colorize" do
   it "colorizes without change" do
     colorize("hello").to_s.should eq("hello")
@@ -121,27 +129,11 @@ describe "colorize" do
     colorize("hello", :red).inspect.should eq("\e[31m\"hello\"\e[0m")
   end
 
-  it "colorizes io with method" do
+  it "colorizes with surround" do
     io = IO::Memory.new
     with_color_wrap.red.surround(io) do
       io << "hello"
-    end
-    io.to_s.should eq("\e[31mhello\e[0m")
-  end
-
-  it "colorizes io with symbol" do
-    io = IO::Memory.new
-    with_color_wrap(:red).surround(io) do
-      io << "hello"
-    end
-    io.to_s.should eq("\e[31mhello\e[0m")
-  end
-
-  it "colorizes with push and pop" do
-    io = IO::Memory.new
-    with_color_wrap.red.push(io) do
-      io << "hello"
-      with_color_wrap.green.push(io) do
+      with_color.green.surround(io) do
         io << "world"
       end
       io << "bye"
@@ -149,16 +141,44 @@ describe "colorize" do
     io.to_s.should eq("\e[31mhello\e[0;32mworld\e[0;31mbye\e[0m")
   end
 
-  it "colorizes with push and pop resets" do
+  it "colorizes with surround and reset" do
     io = IO::Memory.new
-    with_color_wrap.red.push(io) do
+    with_color_wrap.red.surround(io) do
       io << "hello"
-      with_color_wrap.green.bold.push(io) do
+      with_color_wrap.green.bold.surround(io) do
         io << "world"
       end
       io << "bye"
     end
     io.to_s.should eq("\e[31mhello\e[0;32;1mworld\e[0;31mbye\e[0m")
+  end
+
+  it "colorizes with surround and no reset" do
+    io = IO::Memory.new
+    with_color_wrap.red.surround(io) do
+      io << "hello"
+      with_color_wrap.red.surround(io) do
+        io << "world"
+      end
+      io << "bye"
+    end
+    io.to_s.should eq("\e[31mhelloworldbye\e[0m")
+  end
+
+  it "colorizes with surround and default" do
+    io = IO::Memory.new
+    with_color_wrap.red.surround(io) do
+      io << "hello"
+      with_color_wrap.surround(io) do
+        io << "world"
+      end
+      io << "bye"
+    end
+    io.to_s.should eq("\e[31mhello\e[0mworld\e[31mbye\e[0m")
+  end
+
+  it "colorizes with to_s" do
+    ColorizeToS.new.colorize.red.to_s.should eq("\e[31mhello\e[0;34mworld\e[0;31mbye\e[0m")
   end
 
   it "toggles off" do
