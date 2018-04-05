@@ -1,165 +1,109 @@
 require "./logger/*"
 
-# The `Logger` class provides a simple but sophisticated logging utility that you can use to output messages.
+# The `Logger` class provides a logging utility that you can (and should) use
+# to output messages.
 #
-# The messages have associated levels, such as `INFO` or `ERROR` that indicate their importance.
-# You can then give the `Logger` a level, and only messages at that level of higher will be printed.
+# The logging system consists of three parts: a `Logger`, which is associated
+# with a single component of your program (usually a class or module), a
+# `Handler`, which receives messages from `Logger` and filters them based on
+# severity level, and one or more `Adapter` objects, which output log messages
+# in some way, such as by writing them to an `IO` or sending them to a
+# database.
 #
-# For instance, in a production system, you may have your `Logger` set to `INFO` or even `WARN`.
-# When you are developing the system, however, you probably want to know about the program’s internal state,
-# and would set the `Logger` to `DEBUG`.
+# Each message has an associated level, such as `INFO` or `ERROR`, that
+# indicates its importance. You can assign different severity thresholds to
+# different components of your program, and the `Handler` will ignore messages
+# that do not meet the respective threshold.
 #
-# ### Example
+# The bulk of the logging functionality is contained in the `Handler` class.
+# `Logger` itself mostly delegates methods to a handler, supplying its
+# component name.
 #
+# Crystal provides a default `Handler` whose adapter writes to `STDERR`, so if
+# all you want is some console output getting started is easy:
 # ```
 # require "logger"
 #
-# log = Logger.new(STDOUT)
-# log.level = Logger::WARN
+# module MyProgram
+#   @@logger = Logger.new(name)
 #
-# # or
-# log = Logger.new(STDOUT, level: Logger::WARN)
+#   class Config
+#     @@logger = Logger.new(name)
 #
-# log.debug("Created logger")
-# log.info("Program started")
-# log.warn("Nothing to do!")
-#
-# begin
-#   File.each_line("/foo/bar.log") do |line|
-#     unless line =~ /^(\w+) = (.*)$/
-#       log.error("Line in wrong format: #{line}")
+#     def initialize
+#       @@logger.debug "Finding config..." # Not printed; default level is INFO
+#       @@logger.error "No config found!"
 #     end
 #   end
-# rescue err
-#   log.fatal("Caught exception; exiting")
-#   log.fatal(err)
+#
+#   def self.main
+#     @@logger.info "Initializing..."
+#     Config.new
+#   end
 # end
+#
+# MyProgram.main
+#
+# # Produces:
+# # I, [2018-04-04 13:14:58 -07:00 #14093]  INFO -- program / MyProgram: Initializing...
+# # E, [2018-04-04 13:14:58 -07:00 #14093] ERROR -- program / MyProgram::Config: No config found!
 # ```
 class Logger
-  property adapters : Array(Adapter)
+  # The `Handler` instance that will filter messages by level and pass them to
+  # its adapters.
+  getter handler
+  # The component string that will be passed to `handler`.
+  getter component
 
-  # A logger severity level.
-  enum Severity
-    # Low-level information for developers
-    DEBUG
-
-    # Generic (useful) information about system operation
-    INFO
-
-    # A warning
-    WARN
-
-    # A handleable error condition
-    ERROR
-
-    # An unhandleable error that results in a program crash
-    FATAL
-
-    UNKNOWN
-
-    # Mutes all output when used as a threshold. Logging at this level will produce UNKNOWN.
-    SILENT
+  # Creates a new logger for the given component and log handler.
+  def initialize(@component : String, @handler = Logger.default_handler)
   end
 
-  DEFAULT_SEVERITY = Severity::INFO
-
-  # Creates a new logger that will log to the given *io*.
-  def self.new(io : IO, level = DEFAULT_SEVERITY, program_name = "")
-    adapter = IOAdapter.new(io, program_name)
-    new([adapter] of Adapter, level)
-  end
-
-  # Creates a new logger that will use the given *Adapter* to log messages.
-  def self.new(adapter : Adapter?, level = DEFAULT_SEVERITY)
-    return new([] of Adapter, level) unless adapter
-    return new([adapter] of Adapter, level)
-  end
-
-  # Creates a new logger that will use multiple *Adapter*s to log messages.
-  def initialize(@adapters : Array(Adapter), level = DEFAULT_SEVERITY)
-    @levels = {"" => level} of String => Severity
-  end
-
-  # Searches up the component hierarchy to find the log level for the given component.
-  def effective_level(component : String = "")
-    if severity = @levels[component]?
-      return severity
-    end
-
-    parts = component.split "::"
-    until parts.empty?
-      parts.pop
-      if severity = @levels[parts.join "::"]?
-        return severity
-      end
-    end
-
-    # Should never execute
-    raise "No log level found for #{component}"
-  end
-
-  # Gets the log level of the given component, returning `nil` if none is set.
-  def level(component : String = "")
-    @levels[component]?
-  end
-
-  # Sets the log level for the root component
-  def level=(level : Severity)
-    set_level level
-  end
-
-  # Sets the log level for the given component
-  def set_level(level : Severity, component : String = "") : Nil
-    @levels[component] = level
-  end
-
-  # Removes the log level for a given component, causing it to fall back on its parents in the hierarchy.
-  # Unsetting the root component sets it to INFO.
-  def unset_level(component : String = "") : Nil
-    if component.empty?
-      @levels[""] = DEFAULT_SEVERITY
-    else
-      @levels.delete component
-    end
+  # Creates a new logger for the root component.
+  def self.new(handler = Logger.default_handler)
+    new("", handler)
   end
 
   {% for name in Severity.constants %}
-    {{name.id}} = Severity::{{name.id}}
-
-    # Returns `true` if the logger's current severity is lower or equal to `{{name.id}}`.
-    def {{name.id.downcase}}?
-      level <= Severity::{{name.id}}
+    # Returns `true` if a message with severity `{{name.id}}` will be logged
+    # at the current level.
+    def {{ name.id.downcase }}?
+      level! <= {{ name.id }}
     end
 
     {% unless name.stringify == "SILENT" %}
-      # Logs *message* if the logger's current severity is lower or equal to `{{name.id}}`.
-      def {{name.id.downcase}}(message, component = nil)
-        log(Severity::{{name.id}}, message, component.to_s)
+      # Sends *message* with severity `{{name.id}}` to the handler.
+      def {{ name.id.downcase }}(message)
+        @handler.log({{ name.id }}, message, @component)
       end
 
-      # Logs the message as returned from the given block if the logger's current severity
-      # is lower or equal to `{{name.id}}`. The block is not run if the severity is higher.
-      # This is preferable to passing the message in directly when building the message adds
-      # significant overhead.
-      def {{name.id.downcase}}(component = nil)
-        log(Severity::{{name.id}}, component.to_s) { yield }
+      # Forwards the block to the handler with severity `{{name.id}}`. If this
+      # meets or exceeds this logger's level, the handler will evaluate the
+      # block and log the result. This is preferable to passing the message
+      # directly when building the message adds significant overhead.
+      def {{ name.id.downcase }}
+        @handler.log({{ name.id }}, @component) { yield }
       end
     {% end %}
   {% end %}
 
-  # Logs *message* if *severity* is higher or equal with the logger's current severity.
-  def log(severity, message, component)
-    severity = UNKNOWN if SILENT == severity
-    return if severity < effective_level(component)
-    @adapters.each &.write(severity, message.to_s, Time.now, component)
+  # Delegates to `Handler#level?`, passing `component`.
+  def level?
+    @handler.level?(@component)
   end
 
-  # Logs the message as returned from the given block if *severity*
-  # is higher or equal with the loggers current severity. The block is not run
-  # if *severity* is lower.
-  def log(severity, component)
-    severity = UNKNOWN if SILENT == severity
-    return if severity < effective_level(component)
-    @adapters.each &.write(severity, yield.to_s, Time.now, component)
+  # Delegates to `Handler#level!`, passing `component`.
+  def level!
+    @handler.level!(@component)
+  end
+
+  # Delegates to `Handler#set_level`, passing `component`.
+  def level=(severity : Severity)
+    @handler.set_level(@component, severity)
+  end
+
+  # Delegates to `Handler#unset_level`, passing `component`.
+  def level=(severity : Nil)
+    @handler.unset_level(@component)
   end
 end
