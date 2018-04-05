@@ -16,11 +16,11 @@ module Crystal
 
     def self.pretty_type_name(type)
       String.build do |io|
-        type.to_s_with_options(io, true)
+        pretty_type_name(io, type)
       end
     end
 
-    def self.pretty_type_name(type, io)
+    def self.pretty_type_name(io : IO, type)
       type.to_s_with_options(io, true)
     end
   end
@@ -60,7 +60,7 @@ module Crystal
               cell expr
               ctxs.each do |ctx|
                 cell align: :center do |io|
-                  PrettyTypeNameJsonConverter.pretty_type_name(ctx[expr], io)
+                  PrettyTypeNameJsonConverter.pretty_type_name(io, ctx[expr])
                 end
               end
             end
