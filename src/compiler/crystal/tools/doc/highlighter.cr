@@ -82,13 +82,13 @@ module Crystal::Doc::Highlighter
   private def highlight_delimiter_state(lexer, token, io)
     start_highlight_class "s", io
 
-    HTML.escape(token.raw, io)
+    HTML.escape(io, token.raw)
 
     while true
       token = lexer.next_string_token(token.delimiter_state)
       case token.type
       when :DELIMITER_END
-        HTML.escape(token.raw, io)
+        HTML.escape(io, token.raw)
         end_highlight_class io
         break
       when :INTERPOLATION_START
@@ -100,22 +100,22 @@ module Crystal::Doc::Highlighter
       when :EOF
         break
       else
-        HTML.escape(token.raw, io)
+        HTML.escape(io, token.raw)
       end
     end
   end
 
   private def highlight_string_array(lexer, token, io)
     start_highlight_class "s", io
-    HTML.escape(token.raw, io)
+    HTML.escape(io, token.raw)
     while true
       consume_space_or_newline(lexer, io)
       token = lexer.next_string_array_token
       case token.type
       when :STRING
-        HTML.escape(token.raw, io)
+        HTML.escape(io, token.raw)
       when :STRING_ARRAY_END
-        HTML.escape(token.raw, io)
+        HTML.escape(io, token.raw)
         end_highlight_class io
         break
       when :EOF

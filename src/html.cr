@@ -27,10 +27,10 @@ module HTML
   #
   # ```
   # io = IO::Memory.new
-  # HTML.escape("Crystal & You", io) # => nil
+  # HTML.escape(io, "Crystal & You") # => nil
   # io.to_s                          # => "Crystal &amp; You"
   # ```
-  def self.escape(string : String, io : IO) : Nil
+  def self.escape(io : IO, string : String) : Nil
     string.each_char do |char|
       io << SUBSTITUTIONS.fetch(char, char)
     end
