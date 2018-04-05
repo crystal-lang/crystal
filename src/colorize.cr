@@ -303,12 +303,6 @@ struct Colorize::Object(T)
     end
   end
 
-  # DEPRECATED: Use `#surround`.
-  def push(io = STDOUT)
-    {{ puts "Warning: `Colorize::Object#push` is deprecated and will be removed, use `Colorize::Object#surround` instead".id }}
-    surround(io) { |io| yield io }
-  end
-
   private def to_named_tuple
     {
       fore: @fore,
