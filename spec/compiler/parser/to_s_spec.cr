@@ -124,4 +124,5 @@ describe "ASTNode#to_s" do
   expect_to_s %(foo(1, (2 + 3), bar: (4 + 5)))
   expect_to_s %(if (1 + 2\n3)\n  4\nend)
   expect_to_s "%x(whoami)", "`whoami`"
+  expect_to_s %(begin\n  ()\nend)
 end
