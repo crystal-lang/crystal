@@ -79,13 +79,13 @@ struct Time::Format
 
   # Turns a `Time` into a `String`.
   def format(time : Time) : String
-    String.build do |str|
-      format time, str
+    String.build do |io|
+      format io, time
     end
   end
 
   # Formats a `Time` into the given *io*.
-  def format(time : Time, io : IO)
+  def format(io : IO, time : Time)
     formatter = Formatter.new(time, io)
     formatter.visit(pattern)
     io

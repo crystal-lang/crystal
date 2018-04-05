@@ -474,12 +474,12 @@ struct Time
   def inspect(io : IO)
     case
     when utc?
-      to_s "%F %T UTC", io
+      to_s io, "%F %T UTC"
     else
       if offset % 60 == 0
-        to_s "%F %T %:z", io
+        to_s io, "%F %T %:z"
       else
-        to_s "%F %T %::z", io
+        to_s io, "%F %T %::z"
       end
       io << ' ' << location.name unless location.fixed? || location.name == "Local"
     end
@@ -498,8 +498,8 @@ struct Time
 
   # Formats this time using the given format (see `Time::Format`)
   # into the given *io*.
-  def to_s(format : String, io : IO) : Nil
-    Format.new(format).format(self, io)
+  def to_s(io : IO, format : String) : Nil
+    Format.new(format).format(io, self)
   end
 
   # Parses a Time in the given *time* string, using the given *pattern* (see
