@@ -80,7 +80,7 @@ class SemanticVersion
     end
 
     def to_s(io : IO)
-      identifiers.join(".", io)
+      identifiers.join(io, ".")
     end
 
     def <=>(other : self) : Int32

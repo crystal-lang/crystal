@@ -575,9 +575,9 @@ describe "Enumerable" do
     end
 
     it "joins with io and block" do
-      str = IO::Memory.new
-      [1, 2, 3].join(", ", str) { |x, io| io << x + 1 }
-      str.to_s.should eq("2, 3, 4")
+      String.build do |io|
+        [1, 2, 3].join(io, ", ") { |x, io| io << x + 1 }
+      end.should eq("2, 3, 4")
     end
 
     it "joins with only separator" do

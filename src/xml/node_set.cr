@@ -33,7 +33,7 @@ struct XML::NodeSet
 
   def inspect(io)
     io << '['
-    join ", ", io, &.inspect(io)
+    join io, ", ", &.inspect(io)
     io << ']'
   end
 
@@ -46,7 +46,7 @@ struct XML::NodeSet
   end
 
   def to_s(io)
-    join '\n', io
+    join io, '\n'
   end
 
   def to_unsafe

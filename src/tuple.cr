@@ -384,7 +384,7 @@ struct Tuple
   # ```
   def to_s(io)
     io << '{'
-    join ", ", io, &.inspect(io)
+    join io, ", ", &.inspect(io)
     io << '}'
   end
 

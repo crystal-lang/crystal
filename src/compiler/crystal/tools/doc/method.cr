@@ -164,7 +164,7 @@ class Crystal::Doc::Method
 
     if free_vars = @def.free_vars
       io << " forall "
-      free_vars.join(", ", io)
+      free_vars.join(io, ", ")
     end
 
     io

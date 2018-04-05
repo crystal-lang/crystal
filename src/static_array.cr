@@ -228,7 +228,7 @@ struct StaticArray(T, N)
   # ```
   def to_s(io : IO)
     io << "StaticArray["
-    join ", ", io, &.inspect(io)
+    join io, ", ", &.inspect(io)
     io << ']'
   end
 

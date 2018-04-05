@@ -346,11 +346,11 @@ class File < IO::FileDescriptor
       end
     end
 
-    String.build do |str|
+    String.build do |io|
       {% if !flag?(:windows) %}
-        str << SEPARATOR_STRING
+        io << SEPARATOR_STRING
       {% end %}
-      items.join SEPARATOR_STRING, str
+      items.join io, SEPARATOR_STRING
     end
   end
 
