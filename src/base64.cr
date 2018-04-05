@@ -56,9 +56,9 @@ module Base64
   # Line feeds are added to every 60 encoded characters.
   #
   # ```
-  # Base64.encode("Now is the time for all good coders\nto learn Crystal", STDOUT)
+  # Base64.encode(STDOUT, "Now is the time for all good coders\nto learn Crystal")
   # ```
-  def encode(data, io : IO)
+  def encode(io : IO, data)
     count = 0
     encode_with_new_lines(data.to_slice) do |byte|
       io.write_byte byte
@@ -115,11 +115,11 @@ module Base64
   # ```
   # Base64.strict_encode("Now is the time for all good coders\nto learn Crystal", STDOUT)
   # ```
-  def strict_encode(data, io : IO)
-    strict_encode_to_io_internal(data, io, CHARS_STD, pad: true)
+  def strict_encode(io : IO, data)
+    strict_encode_to_io_internal(io, data, CHARS_STD, pad: true)
   end
 
-  private def strict_encode_to_io_internal(data, io, alphabet, pad)
+  private def strict_encode_to_io_internal(io, data, alphabet, pad)
     count = 0
     to_base64(data.to_slice, alphabet, pad: pad) do |byte|
       count += 1
@@ -152,8 +152,8 @@ module Base64
   # Alphabet" in [RFC 4648](https://tools.ietf.org/html/rfc4648).
   #
   # The alphabet uses `'-'` instead of `'+'` and `'_'` instead of `'/'`.
-  def urlsafe_encode(data, io : IO)
-    strict_encode_to_io_internal(data, io, CHARS_SAFE, pad: true)
+  def urlsafe_encode(io : IO, data)
+    strict_encode_to_io_internal(io, data, CHARS_SAFE, pad: true)
   end
 
   # Returns the base64-decoded version of *data* as a `Bytes`.
@@ -168,7 +168,7 @@ module Base64
 
   # Write the base64-decoded version of *data* to *io*.
   # This will decode either the normal or urlsafe alphabets.
-  def decode(data, io : IO)
+  def decode(io : IO, data)
     count = 0
     from_base64(data.to_slice) do |byte|
       io.write_byte byte
