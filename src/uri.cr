@@ -203,7 +203,7 @@ class URI
   # URI.unescape("%27Stop%21%27+said+Fred", plus_to_space: true) # => "'Stop!' said Fred"
   # ```
   def self.unescape(string : String, plus_to_space = false) : String
-    String.build { |io| unescape(string, io, plus_to_space) }
+    String.build { |io| unescape(io, string, plus_to_space) }
   end
 
   # URL-decode a `String`.
@@ -212,18 +212,18 @@ class URI
   # whose is less than `0x80`. The bytes that block returns `true`
   # are not unescaped, other characters are unescaped.
   def self.unescape(string : String, plus_to_space = false, &block) : String
-    String.build { |io| unescape(string, io, plus_to_space) { |byte| yield byte } }
+    String.build { |io| unescape(io, string, plus_to_space) { |byte| yield byte } }
   end
 
   # URL-decode a string and write the result to an `IO`.
-  def self.unescape(string : String, io : IO, plus_to_space = false)
-    self.unescape(string, io, plus_to_space) { false }
+  def self.unescape(io : IO, string : String, plus_to_space = false)
+    self.unescape(io, string, plus_to_space) { false }
   end
 
   # URL-decode a `String` and write the result to an `IO`.
   #
   # This method requires block.
-  def self.unescape(string : String, io : IO, plus_to_space = false, &block)
+  def self.unescape(io : IO, string : String, plus_to_space = false, &block)
     i = 0
     bytesize = string.bytesize
     while i < bytesize
@@ -243,8 +243,8 @@ class URI
   # URI.escape("'Stop!' said Fred")                      # => "%27Stop%21%27%20said%20Fred"
   # URI.escape("'Stop!' said Fred", space_to_plus: true) # => "%27Stop%21%27+said+Fred"
   # ```
-  def self.escape(string : String, space_to_plus = false) : String
-    String.build { |io| escape(string, io, space_to_plus) }
+  def self.escape(string : String, space_to_plus : Bool = false) : String
+    String.build { |io| escape(io, string, space_to_plus) }
   end
 
   # URL-encode a `String`.
@@ -260,19 +260,19 @@ class URI
   # end
   # # => "/foo/file%3F%281%29.txt"
   # ```
-  def self.escape(string : String, space_to_plus = false, &block) : String
-    String.build { |io| escape(string, io, space_to_plus) { |byte| yield byte } }
+  def self.escape(string : String, space_to_plus : Bool = false, &block) : String
+    String.build { |io| escape(io, string, space_to_plus) { |byte| yield byte } }
   end
 
   # URL-encode a `String` and write the result to an `IO`.
-  def self.escape(string : String, io : IO, space_to_plus = false)
-    self.escape(string, io, space_to_plus) { |byte| URI.unreserved? byte }
+  def self.escape(io : IO, string : String, space_to_plus : Bool = false)
+    self.escape(io, string, space_to_plus) { |byte| URI.unreserved? byte }
   end
 
   # URL-encode a `String` and write the result to an `IO`.
   #
   # This method requires block.
-  def self.escape(string : String, io : IO, space_to_plus = false, &block)
+  def self.escape(io : IO, string : String, space_to_plus : Bool = false, &block)
     string.each_byte do |byte|
       char = byte.unsafe_chr
       if char == ' ' && space_to_plus
@@ -422,10 +422,10 @@ class URI
   end
 
   private def userinfo(user, io)
-    URI.escape(user, io)
+    URI.escape(io, user)
     if password = @password
       io << ':'
-      URI.escape(password, io)
+      URI.escape(io, password)
     end
   end
 

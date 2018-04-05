@@ -20,9 +20,9 @@ struct OAuth::Params
     @params.sort_by! &.[0]
     @params.each_with_index do |(key, value), i|
       io << "%26" if i > 0
-      URI.escape key, io
+      URI.escape io, key
       io << "%3D"
-      URI.escape value, io
+      URI.escape io, value
     end
   end
 end

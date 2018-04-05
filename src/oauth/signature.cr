@@ -9,10 +9,10 @@ struct OAuth::Signature
 
   def key
     String.build do |str|
-      URI.escape @client_shared_secret, str
+      URI.escape str, @client_shared_secret
       str << '&'
       if token_shared_secret = @token_shared_secret
-        URI.escape token_shared_secret, str
+        URI.escape str, token_shared_secret
       end
     end
   end
@@ -47,14 +47,14 @@ struct OAuth::Signature
       str << '&'
       str << (tls ? "https" : "http")
       str << "%3A%2F%2F"
-      URI.escape host, str
+      URI.escape str, host
       if port
         str << "%3A"
         str << port
       end
       uri_path = request.path || "/"
       uri_path = "/" if uri_path.empty?
-      URI.escape(uri_path, str)
+      URI.escape(str, uri_path)
       str << '&'
       str << params
     end

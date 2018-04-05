@@ -307,7 +307,7 @@ module HTTP
 
     # :nodoc:
     def self.encode_www_form_component(string : String, io : IO)
-      URI.escape(string, io, true)
+      URI.escape(io, string, true)
     end
 
     # :nodoc:
@@ -331,7 +331,7 @@ module HTTP
       def add(key, value)
         @io << '&' unless @first
         @first = false
-        URI.escape key, @io
+        URI.escape @io, key
         @io << '='
         Params.encode_www_form_component value, @io if value
         self

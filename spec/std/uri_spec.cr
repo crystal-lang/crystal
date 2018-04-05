@@ -192,16 +192,16 @@ describe "URI" do
       end
 
       it "unescapes #{from} to IO" do
-        String.build do |str|
-          URI.unescape(from, str)
+        String.build do |io|
+          URI.unescape(io, from)
         end.should eq(to)
       end
     end
 
     it "unescapes plus to space" do
       URI.unescape("hello+world", plus_to_space: true).should eq("hello world")
-      String.build do |str|
-        URI.unescape("hello+world", str, plus_to_space: true)
+      String.build do |io|
+        URI.unescape(io, "hello+world", plus_to_space: true)
       end.should eq("hello world")
     end
 
@@ -229,8 +229,8 @@ describe "URI" do
       end
 
       it "escapes #{to} to IO" do
-        String.build do |str|
-          URI.escape(to, str)
+        String.build do |io|
+          URI.escape(io, to)
         end.should eq(from)
       end
     end
@@ -243,8 +243,8 @@ describe "URI" do
       end
 
       it "escapes to IO without failing" do
-        String.build do |str|
-          URI.escape(input, str)
+        String.build do |io|
+          URI.escape(io, input)
         end.should eq("%FF")
       end
     end

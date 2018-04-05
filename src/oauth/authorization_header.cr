@@ -12,7 +12,7 @@ struct OAuth::AuthorizationHeader
     @str << ", " unless @first
     @str << key
     @str << %(=")
-    URI.escape value, @str
+    URI.escape @str, value
     @str << '"'
     @first = false
   end
