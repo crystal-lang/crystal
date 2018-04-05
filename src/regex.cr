@@ -218,7 +218,7 @@ class Regex
   #
   # ```
   # /ab+c/ix.options      # => Regex::Options::IGNORE_CASE | Regex::Options::EXTENDED
-  # /ab+c/ix.options.to_s # => "IGNORE_CASE, EXTENDED"
+  # /ab+c/ix.options.to_s # => "IGNORE_CASE | EXTENDED"
   # ```
   getter options : Options
 
