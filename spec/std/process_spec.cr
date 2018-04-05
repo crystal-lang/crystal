@@ -184,6 +184,8 @@ describe Process do
 
     File.exists?(tmpfile.path).should be_true
     tmpfile.unlink
+  ensure
+    File.delete(tmpfile.path) if tmpfile && File.exists?(tmpfile.path)
   end
 
   it "checks for existence" do
