@@ -265,6 +265,8 @@ describe Crystal::Formatter do
   assert_format "foo(1,\n2,\n)", "foo(1,\n  2,\n)"
   assert_format "foo(out x)", "foo(out x)"
   assert_format "foo(\n  1,\n  a: 1,\n  b: 2,\n)"
+  assert_format "foo(1, ) { }", "foo(1) { }"
+  assert_format "foo(1, ) do\nend", "foo(1) do\nend"
 
   assert_format "foo.bar\n.baz", "foo.bar\n  .baz"
   assert_format "foo.bar.baz\n.qux", "foo.bar.baz\n  .qux"

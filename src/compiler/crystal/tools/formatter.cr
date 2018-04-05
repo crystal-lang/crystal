@@ -2366,6 +2366,10 @@ module Crystal
         needs_space = !has_parentheses || has_args
         block_indent = @multiline_call_indent || @indent
         skip_space
+        if has_parentheses && @token.type == :","
+          next_token_skip_space
+          write "," if @token.type != :")" # foo(1, &.foo) case
+        end
         if has_parentheses && @token.type == :")"
           if ends_with_newline
             write_line unless found_comment
