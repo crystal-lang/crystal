@@ -150,6 +150,8 @@ describe Crystal::Formatter do
   assert_format "begin; 1; end", "begin\n  1\nend"
   assert_format "begin\n1\n2\n3\nend", "begin\n  1\n  2\n  3\nend"
   assert_format "begin\n1 ? 2 : 3\nend", "begin\n  1 ? 2 : 3\nend"
+  assert_format "begin\n  begin\n\n  end\nend"
+  assert_format "begin\n  ()\nend"
 
   assert_format "def   foo  \n  end", "def foo\nend"
   assert_format "def foo\n1\nend", "def foo\n  1\nend"
