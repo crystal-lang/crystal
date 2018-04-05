@@ -288,7 +288,7 @@ struct Char
   #
   # The backslash character \ can be used to escape ^ or - and
   # is otherwise ignored unless it appears at the end of a range
-  # or the end of a a set.
+  # or set.
   #
   # ```
   # 'l'.in_set? "lo"          # => true
