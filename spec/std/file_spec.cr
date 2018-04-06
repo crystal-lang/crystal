@@ -657,6 +657,28 @@ describe "File" do
       end
       File.delete(filename)
     end
+
+    it "can create a new file in append mode" do
+      filename = Tempfile.tempname
+      begin
+        File.write(filename, "hello", mode: "a")
+        File.read(filename).should eq("hello")
+      ensure
+        File.delete(filename)
+      end
+    end
+
+    it "can append to an existing file" do
+      filename = Tempfile.tempname
+      begin
+        File.write(filename, "hello")
+        File.read(filename).should eq("hello")
+        File.write(filename, " world", mode: "a")
+        File.read(filename).should eq("hello world")
+      ensure
+        File.delete(filename)
+      end
+    end
   end
 
   it "does to_s" do
