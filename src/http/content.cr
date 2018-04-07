@@ -50,7 +50,7 @@ module HTTP
     @chunk_remaining : Int32
 
     def initialize(@io : IO)
-      @chunk_remaining = io.gets.not_nil!.to_i(16)
+      @chunk_remaining = read_chunk_remaining
       @read_chunk_start = false
       check_last_chunk
     end
@@ -72,6 +72,10 @@ module HTTP
       bytes_read = @io.read slice[0, to_read]
       @chunk_remaining -= bytes_read
 
+      if bytes_read < to_read
+        missing_bytes = @chunk_remaining - bytes_read
+        raise IO::Error.new("ChunkedContent missing data (expected #{missing_bytes} more bytes)")
+      end
       check_chunk_remaining_is_zero
 
       bytes_read
@@ -83,6 +87,8 @@ module HTTP
         if byte
           @chunk_remaining -= 1
           check_chunk_remaining_is_zero
+        else
+          raise IO::Error.new("ChunkedContent missing data (expected #{@chunk_remaining} more bytes)")
         end
         byte
       else
@@ -94,10 +100,13 @@ module HTTP
       while true
         if @chunk_remaining > 0
           peek = @io.peek
+
           return nil unless peek
 
           if @chunk_remaining < peek.size
             peek = peek[0, @chunk_remaining]
+          elsif peek.size == 0 && @chunk_remaining > 0
+            raise IO::Error.new("ChunkedContent missing data (expected #{@chunk_remaining} more bytes)")
           end
 
           return peek
@@ -134,7 +143,7 @@ module HTTP
 
     private def read_chunk_start
       read_chunk_end
-      @chunk_remaining = @io.gets.not_nil!.to_i(16)
+      read_chunk_remaining
       check_last_chunk
       @read_chunk_start = false
     end
@@ -142,6 +151,13 @@ module HTTP
     private def read_chunk_end
       # Read "\r\n"
       @io.skip(2)
+    end
+
+    private def read_chunk_remaining
+      chunk_remaining = @io.gets
+
+      raise IO::Error.new("ChunkedContent misses chunk remaining") unless chunk_remaining
+      @chunk_remaining = chunk_remaining.to_i(16)
     end
 
     private def check_last_chunk

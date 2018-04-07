@@ -55,4 +55,68 @@ describe HTTP::ChunkedContent do
     content.skip(4)
     content.gets_to_end.should eq("456")
   end
+
+  it "#read handles interrupted io" do
+    mem = IO::Memory.new("3\r\n123\n\r")
+    content = HTTP::ChunkedContent.new(mem)
+
+    content.skip(3)
+    expect_raises IO::Error, "ChunkedContent misses chunk remaining" do
+      content.read Bytes.new(5)
+    end
+  end
+
+  it "#read_byte handles interrupted io" do
+    mem = IO::Memory.new("3\r\n123\n\r")
+    content = HTTP::ChunkedContent.new(mem)
+
+    content.skip(3)
+    expect_raises IO::Error, "ChunkedContent misses chunk remaining" do
+      content.read_byte
+    end
+  end
+
+  it "#peek handles interrupted io" do
+    mem = IO::Memory.new("3\r\n123\n\r")
+    content = HTTP::ChunkedContent.new(mem)
+
+    content.skip(3)
+    expect_raises IO::Error, "ChunkedContent misses chunk remaining" do
+      content.peek
+    end
+  end
+
+  it "#read handles empty data" do
+    mem = IO::Memory.new("3\r\n")
+    content = HTTP::ChunkedContent.new(mem)
+
+    expect_raises IO::Error, "ChunkedContent missing data (expected 3 more bytes)" do
+      content.read Bytes.new(1)
+    end
+  end
+
+  it "#read_byte handles empty data" do
+    mem = IO::Memory.new("3\r\n")
+    content = HTTP::ChunkedContent.new(mem)
+
+    expect_raises IO::Error, "ChunkedContent missing data (expected 3 more bytes)" do
+      content.read_byte
+    end
+  end
+
+  it "#peek handles empty data" do
+    mem = IO::Memory.new("3\r\n")
+    content = HTTP::ChunkedContent.new(mem)
+
+    expect_raises IO::Error, "ChunkedContent missing data (expected 3 more bytes)" do
+      content.peek
+    end
+  end
+
+  it "handles empty io" do
+    mem = IO::Memory.new("")
+    expect_raises IO::Error, "ChunkedContent misses chunk remaining" do
+      HTTP::ChunkedContent.new(mem)
+    end
+  end
 end
