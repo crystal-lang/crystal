@@ -72,7 +72,7 @@ module HTTP
       bytes_read = @io.read slice[0, to_read]
 
       if bytes_read == 0
-        raise IO::Error.new("ChunkedContent missing data (expected #{@chunk_remaining} more bytes)")
+        raise IO::Error.new("Invalid HTTP chunked content: expected data but got EOF (missing #{@chunk_remaining} more bytes)")
       end
 
       @chunk_remaining -= bytes_read
@@ -88,7 +88,7 @@ module HTTP
           @chunk_remaining -= 1
           check_chunk_remaining_is_zero
         else
-          raise IO::Error.new("ChunkedContent missing data (expected #{@chunk_remaining} more bytes)")
+          raise IO::Error.new("Invalid HTTP chunked content: expected data but got EOF (missing #{@chunk_remaining} more bytes)")
         end
         byte
       else
@@ -106,7 +106,7 @@ module HTTP
           if @chunk_remaining < peek.size
             peek = peek[0, @chunk_remaining]
           elsif peek.size == 0
-            raise IO::Error.new("ChunkedContent missing data (expected #{@chunk_remaining} more bytes)")
+            raise IO::Error.new("Invalid HTTP chunked content: expected data but got EOF (missing #{@chunk_remaining} more bytes)")
           end
 
           return peek
@@ -156,8 +156,11 @@ module HTTP
     private def read_chunk_remaining
       chunk_remaining = @io.gets
 
-      raise IO::Error.new("ChunkedContent misses chunk remaining") unless chunk_remaining
-      @chunk_remaining = chunk_remaining.to_i(16)
+      if chunk_remaining
+        @chunk_remaining = chunk_remaining.to_i(16)
+      else
+        raise IO::Error.new("Invalid HTTP chunked content: expected size but got EOF")
+      end
     end
 
     private def check_last_chunk

@@ -61,7 +61,7 @@ describe HTTP::ChunkedContent do
     content = HTTP::ChunkedContent.new(mem)
 
     content.skip(3)
-    expect_raises IO::Error, "ChunkedContent misses chunk remaining" do
+    expect_raises IO::Error, "Invalid HTTP chunked content: expected size but got EOF" do
       content.read Bytes.new(5)
     end
   end
@@ -71,7 +71,7 @@ describe HTTP::ChunkedContent do
     content = HTTP::ChunkedContent.new(mem)
 
     content.skip(3)
-    expect_raises IO::Error, "ChunkedContent misses chunk remaining" do
+    expect_raises IO::Error, "Invalid HTTP chunked content: expected size but got EOF" do
       content.read_byte
     end
   end
@@ -81,7 +81,7 @@ describe HTTP::ChunkedContent do
     content = HTTP::ChunkedContent.new(mem)
 
     content.skip(3)
-    expect_raises IO::Error, "ChunkedContent misses chunk remaining" do
+    expect_raises IO::Error, "Invalid HTTP chunked content: expected size but got EOF" do
       content.peek
     end
   end
@@ -90,7 +90,7 @@ describe HTTP::ChunkedContent do
     mem = IO::Memory.new("3\r\n")
     content = HTTP::ChunkedContent.new(mem)
 
-    expect_raises IO::Error, "ChunkedContent missing data (expected 3 more bytes)" do
+    expect_raises IO::Error, "Invalid HTTP chunked content: expected data but got EOF (missing 3 more bytes)" do
       content.read Bytes.new(1)
     end
   end
@@ -99,7 +99,7 @@ describe HTTP::ChunkedContent do
     mem = IO::Memory.new("3\r\n")
     content = HTTP::ChunkedContent.new(mem)
 
-    expect_raises IO::Error, "ChunkedContent missing data (expected 3 more bytes)" do
+    expect_raises IO::Error, "Invalid HTTP chunked content: expected data but got EOF (missing 3 more bytes)" do
       content.read_byte
     end
   end
@@ -108,14 +108,14 @@ describe HTTP::ChunkedContent do
     mem = IO::Memory.new("3\r\n")
     content = HTTP::ChunkedContent.new(mem)
 
-    expect_raises IO::Error, "ChunkedContent missing data (expected 3 more bytes)" do
+    expect_raises IO::Error, "Invalid HTTP chunked content: expected data but got EOF (missing 3 more bytes)" do
       content.peek
     end
   end
 
   it "handles empty io" do
     mem = IO::Memory.new("")
-    expect_raises IO::Error, "ChunkedContent misses chunk remaining" do
+    expect_raises IO::Error, "Invalid HTTP chunked content: expected size but got EOF" do
       HTTP::ChunkedContent.new(mem)
     end
   end
