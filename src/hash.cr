@@ -612,8 +612,8 @@ class Hash(K, V)
   # Returns the first key if it exists, or returns `nil`.
   #
   # ```
-  # hash = {"foo" => "bar"}
-  # hash.first_key? # => "foo"
+  # hash = {"foo1" => "bar1", "foz2" => "baz2"}
+  # hash.first_key? # => "foo1"
   # hash.clear
   # hash.first_key? # => nil
   # ```
@@ -626,9 +626,50 @@ class Hash(K, V)
     @first.not_nil!.value
   end
 
-  # Similar to `#first_key?`, but returns its value.
+  # Returns the first value if it exists, or returns `nil`.
+  #
+  # ```
+  # hash = {"foo1" => "bar1", "foz2" => "baz2"}
+  # hash.first_value? # => "bar1"
+  # hash.clear
+  # hash.first_value? # => nil
+  # ```
   def first_value?
     @first.try &.value
+  end
+
+  # Returns the last key in the hash.
+  def last_key
+    @last.not_nil!.key
+  end
+
+  # Returns the last key if it exists, or returns `nil`.
+  #
+  # ```
+  # hash = {"foo1" => "bar1", "foz2" => "baz2"}
+  # hash.last_key? # => "foz2"
+  # hash.clear
+  # hash.last_key? # => nil
+  # ```
+  def last_key?
+    @last.try &.key
+  end
+
+  # Returns the last value in the hash.
+  def last_value
+    @last.not_nil!.value
+  end
+
+  # Returns the last value if it exists, or returns `nil`.
+  #
+  # ```
+  # hash = {"foo1" => "bar1", "foz2" => "baz2"}
+  # hash.last_value? # => "baz2"
+  # hash.clear
+  # hash.last_value? # => nil
+  # ```
+  def last_value?
+    @last.try &.value
   end
 
   # Deletes and returns the first key-value pair in the hash,

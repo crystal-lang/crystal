@@ -482,6 +482,16 @@ describe "Hash" do
     h.first_value.should eq(2)
   end
 
+  it "gets last key" do
+    h = {1 => 2, 3 => 4}
+    h.last_key.should eq(3)
+  end
+
+  it "gets last value" do
+    h = {1 => 2, 3 => 4}
+    h.last_value.should eq(4)
+  end
+
   it "shifts" do
     h = {1 => 2, 3 => 4}
     h.shift.should eq({1, 2})
