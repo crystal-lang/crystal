@@ -67,15 +67,15 @@ module HTTP
 
       return 0 if @chunk_remaining == 0
 
-      to_read = Math.min(slice.size, @chunk_remaining)
+      to_read = Math.min(count, @chunk_remaining)
 
       bytes_read = @io.read slice[0, to_read]
-      @chunk_remaining -= bytes_read
 
-      if bytes_read < to_read
-        missing_bytes = @chunk_remaining - bytes_read
-        raise IO::Error.new("ChunkedContent missing data (expected #{missing_bytes} more bytes)")
+      if bytes_read == 0
+        raise IO::Error.new("ChunkedContent missing data (expected #{@chunk_remaining} more bytes)")
       end
+
+      @chunk_remaining -= bytes_read
       check_chunk_remaining_is_zero
 
       bytes_read
@@ -105,7 +105,7 @@ module HTTP
 
           if @chunk_remaining < peek.size
             peek = peek[0, @chunk_remaining]
-          elsif peek.size == 0 && @chunk_remaining > 0
+          elsif peek.size == 0
             raise IO::Error.new("ChunkedContent missing data (expected #{@chunk_remaining} more bytes)")
           end
 
