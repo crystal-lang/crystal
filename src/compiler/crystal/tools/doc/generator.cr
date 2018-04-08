@@ -158,7 +158,7 @@ class Crystal::Doc::Generator
     end
   end
 
-  def must_include?(nil : Nil)
+  def must_include?(a_nil : Nil)
     false
   end
 
