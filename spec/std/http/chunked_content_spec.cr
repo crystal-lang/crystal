@@ -9,7 +9,7 @@ describe HTTP::ChunkedContent do
     bytes_read = content.read(bytes.to_slice)
     bytes_read.should eq(4)
     String.new(bytes.to_slice).should eq("123\n")
-    mem.pos.should eq(7) # only this chunk was read
+    mem.pos.should eq(9) # only this chunk was read
   end
 
   it "peeks" do
@@ -56,32 +56,64 @@ describe HTTP::ChunkedContent do
     content.gets_to_end.should eq("456")
   end
 
+  it "#gets reads multiple chunks" do
+    mem = IO::Memory.new("1\r\nA\r\n1\r\nB\r\n0\r\n\r\n")
+    content = HTTP::ChunkedContent.new(mem)
+
+    content.gets.should eq "AB"
+    mem.pos.should eq mem.bytesize
+  end
+
+  it "#read reads empty content" do
+    mem = IO::Memory.new("0\r\n\r\n")
+    content = HTTP::ChunkedContent.new(mem)
+
+    content.read(Bytes.new(5)).should eq 0
+    mem.pos.should eq mem.bytesize
+  end
+
+  it "#read_byte reads empty content" do
+    mem = IO::Memory.new("0\r\n\r\n")
+    content = HTTP::ChunkedContent.new(mem)
+
+    content.read_byte.should be_nil
+    mem.pos.should eq mem.bytesize
+  end
+
+  it "#peek reads empty content" do
+    mem = IO::Memory.new("0\r\n\r\n")
+    content = HTTP::ChunkedContent.new(mem)
+
+    content.peek.should be_nil
+    mem.pos.should eq mem.bytesize
+  end
+
   it "#read handles interrupted io" do
-    mem = IO::Memory.new("3\r\n123\n\r")
+    mem = IO::Memory.new("3\r\n123\r\n")
     content = HTTP::ChunkedContent.new(mem)
 
     content.skip(3)
-    expect_raises IO::Error, "Invalid HTTP chunked content: expected size but got EOF" do
+    expect_raises IO::EOFError do
       content.read Bytes.new(5)
     end
   end
 
   it "#read_byte handles interrupted io" do
-    mem = IO::Memory.new("3\r\n123\n\r")
+    mem = IO::Memory.new("3\r\n123\r\n")
     content = HTTP::ChunkedContent.new(mem)
 
     content.skip(3)
-    expect_raises IO::Error, "Invalid HTTP chunked content: expected size but got EOF" do
+    expect_raises IO::EOFError do
       content.read_byte
     end
   end
 
   it "#peek handles interrupted io" do
-    mem = IO::Memory.new("3\r\n123\n\r")
+    mem = IO::Memory.new("3\r\n123\r\n")
     content = HTTP::ChunkedContent.new(mem)
 
     content.skip(3)
-    expect_raises IO::Error, "Invalid HTTP chunked content: expected size but got EOF" do
+    expect_raises IO::EOFError do
       content.peek
     end
   end
@@ -90,7 +122,7 @@ describe HTTP::ChunkedContent do
     mem = IO::Memory.new("3\r\n")
     content = HTTP::ChunkedContent.new(mem)
 
-    expect_raises IO::Error, "Invalid HTTP chunked content: expected data but got EOF (missing 3 more bytes)" do
+    expect_raises IO::EOFError do
       content.read Bytes.new(1)
     end
   end
@@ -99,7 +131,7 @@ describe HTTP::ChunkedContent do
     mem = IO::Memory.new("3\r\n")
     content = HTTP::ChunkedContent.new(mem)
 
-    expect_raises IO::Error, "Invalid HTTP chunked content: expected data but got EOF (missing 3 more bytes)" do
+    expect_raises IO::Error do
       content.read_byte
     end
   end
@@ -108,15 +140,98 @@ describe HTTP::ChunkedContent do
     mem = IO::Memory.new("3\r\n")
     content = HTTP::ChunkedContent.new(mem)
 
-    expect_raises IO::Error, "Invalid HTTP chunked content: expected data but got EOF (missing 3 more bytes)" do
+    expect_raises IO::EOFError do
       content.peek
     end
   end
 
   it "handles empty io" do
     mem = IO::Memory.new("")
-    expect_raises IO::Error, "Invalid HTTP chunked content: expected size but got EOF" do
-      HTTP::ChunkedContent.new(mem)
+    chunked = HTTP::ChunkedContent.new(mem)
+    expect_raises IO::EOFError do
+      chunked.gets
     end
+  end
+
+  it "reads chunk extensions" do
+    mem = IO::Memory.new(%(1;progress=50;foo="bar"\r\nA\r\n1;progress=100\r\nB\r\n0\r\n\r\n"))
+
+    chunked = HTTP::ChunkedContent.new(mem)
+    chunked.gets(2).should eq "AB"
+  end
+
+  it "reads chunked trailer part" do
+    mem = IO::Memory.new("0\r\nAdditional-Header: Foo\r\n\r\n")
+
+    chunked = HTTP::ChunkedContent.new(mem)
+    chunked.gets.should be_nil
+    mem.gets.should be_nil
+    chunked.headers.should eq HTTP::Headers{"Additional-Header" => "Foo"}
+  end
+
+  it "fails if unterminated chunked trailer part" do
+    mem = IO::Memory.new("0\r\nAdditional-Header: Foo")
+
+    chunked = HTTP::ChunkedContent.new(mem)
+    expect_raises IO::Error, "Invalid HTTP chunked content: expected CRLF" do
+      chunked.gets
+    end
+  end
+
+  it "fails if not properly delimited" do
+    mem = IO::Memory.new("0\r\n")
+
+    chunked = HTTP::ChunkedContent.new(mem)
+    expect_raises IO::EOFError do
+      chunked.gets
+    end
+  end
+
+  it "fails if not properly delimited" do
+    mem = IO::Memory.new("1\r\nA\r\n0\r\n")
+
+    chunked = HTTP::ChunkedContent.new(mem)
+    expect_raises IO::EOFError do
+      chunked.gets
+    end
+  end
+
+  it "fails if invalid chunk size" do
+    mem = IO::Memory.new("G\r\n")
+
+    chunked = HTTP::ChunkedContent.new(mem)
+    expect_raises IO::Error, "Invalid HTTP chunked content: invalid chunk size" do
+      chunked.gets
+    end
+  end
+
+  it "#read stops reading after final chunk" do
+    mem = IO::Memory.new("0\r\n\r\n1\r\nA\r\n0\r\n\r\n")
+
+    chunked = HTTP::ChunkedContent.new(mem)
+    chunked.read(Bytes.new(8)).should eq 0
+    mem.pos.should eq 5
+    chunked.read(Bytes.new(8)).should eq 0
+    mem.pos.should eq 5
+  end
+
+  it "#read_byte stops reading after final chunk" do
+    mem = IO::Memory.new("0\r\n\r\n1\r\nA\r\n0\r\n\r\n")
+
+    chunked = HTTP::ChunkedContent.new(mem)
+    chunked.read_byte.should be_nil
+    mem.pos.should eq 5
+    chunked.read_byte.should be_nil
+    mem.pos.should eq 5
+  end
+
+  it "#peek stops reading after final chunk" do
+    mem = IO::Memory.new("0\r\n\r\n1\r\nA\r\n0\r\n\r\n")
+
+    chunked = HTTP::ChunkedContent.new(mem)
+    chunked.peek.should be_nil
+    mem.pos.should eq 5
+    chunked.peek.should be_nil
+    mem.pos.should eq 5
   end
 end

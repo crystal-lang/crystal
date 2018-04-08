@@ -1,3 +1,5 @@
+require "http/common"
+
 module HTTP
   # :nodoc:
   module Content
@@ -47,23 +49,27 @@ module HTTP
   # :nodoc:
   class ChunkedContent < IO
     include Content
-    @chunk_remaining : Int32
+
+    # Returns trailing headers read by this chunked content.
+    #
+    # Thiel value will only be populated once the entire content has been read,
+    # i.e. this IO is at EOF.
+    #
+    # All headers in the trailing headers section will be returned. Applications
+    # need to make sure to ignore them or fail if headers are not allowed
+    # in the chunked trailer part (see [RFC 7230 section 4.1.2](https://tools.ietf.org/html/rfc7230#section-4.1.2)).
+    getter headers : HTTP::Headers = HTTP::Headers.new
 
     def initialize(@io : IO)
-      @chunk_remaining = read_chunk_remaining
-      @read_chunk_start = false
-      check_last_chunk
+      @chunk_remaining = 0
+      @expect_chunk_start = true
     end
 
     def read(slice : Bytes)
       count = slice.size
       return 0 if count == 0
 
-      # Check if the last read consumed a chunk and we
-      # need to start consuming the next one.
-      if @read_chunk_start
-        read_chunk_start
-      end
+      next_chunk
 
       return 0 if @chunk_remaining == 0
 
@@ -72,100 +78,113 @@ module HTTP
       bytes_read = @io.read slice[0, to_read]
 
       if bytes_read == 0
-        raise IO::Error.new("Invalid HTTP chunked content: expected data but got EOF (missing #{@chunk_remaining} more bytes)")
+        raise IO::EOFError.new("Invalid HTTP chunked content: unexpected end of file")
       end
 
-      @chunk_remaining -= bytes_read
-      check_chunk_remaining_is_zero
+      chunk_bytes_read bytes_read
 
       bytes_read
     end
 
     def read_byte
-      if @chunk_remaining > 0
-        byte = @io.read_byte
-        if byte
-          @chunk_remaining -= 1
-          check_chunk_remaining_is_zero
-        else
-          raise IO::Error.new("Invalid HTTP chunked content: expected data but got EOF (missing #{@chunk_remaining} more bytes)")
-        end
+      next_chunk
+      return super if @chunk_remaining == 0
+
+      byte = @io.read_byte
+      if byte
+        chunk_bytes_read 1
         byte
       else
-        super
+        raise IO::EOFError.new("Invalid HTTP chunked content: unexpected end of file")
       end
     end
 
     def peek
-      while true
-        if @chunk_remaining > 0
-          peek = @io.peek
+      next_chunk
+      return nil if @chunk_remaining == 0
 
-          return nil unless peek
+      peek = @io.peek || return
 
-          if @chunk_remaining < peek.size
-            peek = peek[0, @chunk_remaining]
-          elsif peek.size == 0
-            raise IO::Error.new("Invalid HTTP chunked content: expected data but got EOF (missing #{@chunk_remaining} more bytes)")
-          end
-
-          return peek
-        elsif @read_chunk_start
-          read_chunk_start
-          next
-        end
-
-        break
+      if @chunk_remaining < peek.size
+        peek = peek[0, @chunk_remaining]
+      elsif peek.size == 0
+        raise IO::EOFError.new("Invalid HTTP chunked content: unexpected end of file")
       end
 
-      nil
+      peek
     end
 
     def skip(bytes_count)
       if bytes_count <= @chunk_remaining
         @io.skip(bytes_count)
-        @chunk_remaining -= bytes_count
-        check_chunk_remaining_is_zero
+        chunk_bytes_read bytes_count
       else
         super
       end
     end
 
-    private def check_chunk_remaining_is_zero
+    private def chunk_bytes_read(size)
+      @chunk_remaining -= size
+
       # As soon as we finish reading a chunk we return,
       # in case the next content is delayed (see #3270).
-      # We set @read_chunk_start to true so we read the next
+      # We set @expect_chunk_start to true so we read the next
       # chunk start on the next call to `read`.
       if @chunk_remaining == 0
-        @read_chunk_start = true
+        read_crlf
+        @expect_chunk_start = true
       end
     end
 
-    private def read_chunk_start
-      read_chunk_end
-      read_chunk_remaining
-      check_last_chunk
-      @read_chunk_start = false
+    # Check if the last read consumed a chunk and we
+    # need to start consuming the next one.
+    private def next_chunk
+      return unless @expect_chunk_start
+
+      if read_chunk_size == 0
+        read_trailer
+      end
+
+      @expect_chunk_start = false
     end
 
-    private def read_chunk_end
-      # Read "\r\n"
-      @io.skip(2)
+    private def read_crlf
+      bytes = Bytes.new(2)
+      @io.read_fully(bytes)
+      unless bytes == "\r\n".to_slice
+        raise IO::Error.new("Invalid HTTP chunked content: expected CRLF")
+      end
     end
 
-    private def read_chunk_remaining
-      chunk_remaining = @io.gets
+    private def read_chunk_size
+      line = read_delimited_line
 
-      if chunk_remaining
-        @chunk_remaining = chunk_remaining.to_i(16)
+      if index = line.byte_index(';'.ord)
+        chunk_size = line.byte_slice(0, index)
       else
-        raise IO::Error.new("Invalid HTTP chunked content: expected size but got EOF")
+        chunk_size = line
+      end
+
+      @chunk_remaining = chunk_size.to_i?(16) || raise IO::Error.new("Invalid HTTP chunked content: invalid chunk size (#{chunk_size.dump})")
+    end
+
+    private def read_trailer
+      while true
+        line = read_delimited_line
+        break if line.empty?
+
+        key, value = HTTP.parse_header(line)
+        break unless @headers.add?(key, value)
       end
     end
 
-    private def check_last_chunk
-      # If we read "0\r\n", we need to read another "\r\n"
-      read_chunk_end if @chunk_remaining == 0
+    private def read_delimited_line
+      line = @io.read_line(16_384, chomp: false)
+      if line.ends_with? "\r\n"
+        line.byte_slice(0, line.bytesize - 2)
+      else
+        raise IO::Error.new("Invalid HTTP chunked content: expected CRLF")
+      end
     end
 
     def write(slice : Bytes)
