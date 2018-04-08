@@ -52,7 +52,7 @@ class INI
       end
     end
 
-    ini.delete_if { |_, v| v.empty? }
+    ini.delete("") if ini[""].empty?
     ini
   end
 
