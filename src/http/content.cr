@@ -78,7 +78,7 @@ module HTTP
       bytes_read = @io.read slice[0, to_read]
 
       if bytes_read == 0
-        raise IO::EOFError.new("Invalid HTTP chunked content: unexpected end of file")
+        raise IO::EOFError.new("Invalid HTTP chunked content")
       end
 
       chunk_bytes_read bytes_read
@@ -95,7 +95,7 @@ module HTTP
         chunk_bytes_read 1
         byte
       else
-        raise IO::EOFError.new("Invalid HTTP chunked content: unexpected end of file")
+        raise IO::EOFError.new("Invalid HTTP chunked content")
       end
     end
 
@@ -108,7 +108,7 @@ module HTTP
       if @chunk_remaining < peek.size
         peek = peek[0, @chunk_remaining]
       elsif peek.size == 0
-        raise IO::EOFError.new("Invalid HTTP chunked content: unexpected end of file")
+        raise IO::EOFError.new("Invalid HTTP chunked content")
       end
 
       peek
@@ -167,7 +167,7 @@ module HTTP
         chunk_size = line
       end
 
-      @chunk_remaining = chunk_size.to_i?(16) || raise IO::Error.new("Invalid HTTP chunked content: invalid chunk size (#{chunk_size.dump})")
+      @chunk_remaining = chunk_size.to_i?(16) || raise IO::Error.new("Invalid HTTP chunked content: invalid chunk size")
     end
 
     private def read_trailer
