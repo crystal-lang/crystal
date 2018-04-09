@@ -221,7 +221,7 @@ describe "JSON mapping" do
   end
 
   it "parses strict person with unknown attributes" do
-    ex = expect_raises JSON::ParseException, "Unknown json attribute: foo" do
+    ex = expect_raises JSON::MappingError, "Unknown JSON attribute: foo\n  parsing StrictJSONPerson" do
       StrictJSONPerson.from_json <<-JSON
         {
           "name": "John",
@@ -234,10 +234,32 @@ describe "JSON mapping" do
   end
 
   it "raises if non-nilable attribute is nil" do
-    ex = expect_raises JSON::ParseException, "Missing json attribute: name" do
+    ex = expect_raises JSON::MappingError, "Missing JSON attribute: name\n  parsing JSONPerson at 1:1" do
       JSONPerson.from_json(%({"age": 30}))
     end
     ex.location.should eq({1, 1})
+  end
+
+  it "raises if not an object" do
+    ex = expect_raises JSON::MappingError, "Expected begin_object but was string at 1:1\n  parsing StrictJSONPerson at 0:0" do
+      StrictJSONPerson.from_json <<-JSON
+        "foo"
+        JSON
+    end
+    ex.location.should eq({1, 1})
+  end
+
+  it "raises if data type does not match" do
+    ex = expect_raises JSON::MappingError, "Expected int but was string at 3:15\n  parsing StrictJSONPerson#age at 3:3" do
+      StrictJSONPerson.from_json <<-JSON
+        {
+          "name": "John",
+          "age": "foo",
+          "foo": "bar"
+        }
+        JSON
+    end
+    ex.location.should eq({3, 15})
   end
 
   it "doesn't emit null by default when doing to_json" do
@@ -523,7 +545,7 @@ describe "JSON mapping" do
     end
 
     it "raises if non-nilable attribute is nil" do
-      ex = expect_raises JSON::ParseException, "Missing json attribute: foo" do
+      ex = expect_raises JSON::MappingError, "Missing JSON attribute: foo\n  parsing JSONWithQueryAttributes at 1:1" do
         JSONWithQueryAttributes.from_json(%({"is_bar": true}))
       end
       ex.location.should eq({1, 1})
