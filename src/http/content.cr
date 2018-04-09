@@ -62,7 +62,7 @@ module HTTP
 
     def initialize(@io : IO)
       @chunk_remaining = -1
-      @expect_chunk_start = true
+      @received_final_chunk = false
     end
 
     def read(slice : Bytes)
@@ -81,7 +81,7 @@ module HTTP
         raise IO::EOFError.new("Invalid HTTP chunked content")
       end
 
-      chunk_bytes_read bytes_read
+      @chunk_remaining -= bytes_read
 
       bytes_read
     end
@@ -92,7 +92,7 @@ module HTTP
 
       byte = @io.read_byte
       if byte
-        chunk_bytes_read 1
+        @chunk_remaining -= 1
         byte
       else
         raise IO::EOFError.new("Invalid HTTP chunked content")
@@ -101,7 +101,7 @@ module HTTP
 
     def peek
       next_chunk
-      return nil if @chunk_remaining == 0
+      return if @chunk_remaining == 0
 
       peek = @io.peek || return
 
@@ -117,40 +117,27 @@ module HTTP
     def skip(bytes_count)
       if bytes_count <= @chunk_remaining
         @io.skip(bytes_count)
-        chunk_bytes_read bytes_count
+        @chunk_remaining -= bytes_count
       else
         super
-      end
-    end
-
-    private def chunk_bytes_read(size)
-      @chunk_remaining -= size
-
-      # As soon as we finish reading a chunk we return,
-      # in case the next content is delayed (see #3270).
-      # We set @expect_chunk_start to true so we read the next
-      # chunk start on the next call to `read`.
-      if @chunk_remaining == 0
-        @expect_chunk_start = true
       end
     end
 
     # Check if the last read consumed a chunk and we
     # need to start consuming the next one.
     private def next_chunk
-      return unless @expect_chunk_start
+      return if @chunk_remaining > 0 || @received_final_chunk
 
-      # -1 is the initial value
-      unless @chunk_remaining == -1
-        read_crlf
-      end
+      # As soon as we finish reading a chunk we return,
+      # in case the following content is delayed (see #3270) and read the chunk
+      # delimiter and next chunk start on the next call to `read`.
+      read_crlf unless @chunk_remaining == -1 # -1 is the initial value
 
       @chunk_remaining = read_chunk_size
       if @chunk_remaining == 0
         read_trailer
+        @received_final_chunk = true
       end
-
-      @expect_chunk_start = false
     end
 
     private def read_crlf
