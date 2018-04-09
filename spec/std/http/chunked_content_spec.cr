@@ -173,7 +173,7 @@ describe HTTP::ChunkedContent do
     mem = IO::Memory.new("0\r\nAdditional-Header: Foo")
 
     chunked = HTTP::ChunkedContent.new(mem)
-    expect_raises IO::Error, "Invalid HTTP chunked content: expected CRLF" do
+    expect_raises IO::EOFError do
       chunked.gets
     end
   end

@@ -149,15 +149,17 @@ module HTTP
     end
 
     private def read_crlf
-      bytes = Bytes.new(2)
-      @io.read_fully(bytes)
-      unless bytes == "\r\n".to_slice
+      char = @io.read_char
+      if char == '\r'
+        char = @io.read_char
+      end
+      if char != '\n'
         raise IO::Error.new("Invalid HTTP chunked content: expected CRLF")
       end
     end
 
     private def read_chunk_size
-      line = read_delimited_line
+      line = @io.read_line(16_384, chomp: true)
 
       if index = line.byte_index(';'.ord)
         chunk_size = line.byte_slice(0, index)
@@ -170,20 +172,11 @@ module HTTP
 
     private def read_trailer
       while true
-        line = read_delimited_line
+        line = @io.read_line(16_384, chomp: true)
         break if line.empty?
 
         key, value = HTTP.parse_header(line)
         break unless @headers.add?(key, value)
-      end
-    end
-
-    private def read_delimited_line
-      line = @io.read_line(16_384, chomp: false)
-      if line.ends_with? "\r\n"
-        line.byte_slice(0, line.bytesize - 2)
-      else
-        raise IO::Error.new("Invalid HTTP chunked content: expected CRLF")
       end
     end
 
