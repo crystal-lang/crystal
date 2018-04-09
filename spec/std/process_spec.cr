@@ -2,6 +2,8 @@ require "spec"
 require "process"
 require "tempfile"
 
+require "../spec_helper"
+
 describe Process do
   it "runs true" do
     process = Process.new("true")
@@ -79,6 +81,22 @@ describe Process do
   it "closes ios after block" do
     Process.run("/bin/cat") { }
     $?.exit_code.should eq(0)
+  end
+
+  it "chroot raises when unprivileged" do
+    status, output = build_and_run <<-'CODE'
+      begin
+        Process.chroot("/usr")
+        puts "FAIL"
+      rescue ex : Errno
+        puts (ex.errno == Errno::EPERM) ? "Success" : "FAIL: #{ex.message}"
+      rescue ex
+        puts "FAIL: #{ex.message}"
+      end
+    CODE
+
+    status.success?.should be_true
+    output.should eq("Success\n")
   end
 
   it "sets working directory" do
