@@ -64,6 +64,16 @@ describe HTTP::ChunkedContent do
     mem.pos.should eq mem.bytesize
   end
 
+  it "#gets reads multiple chunks with \n" do
+    # The RFC format requires CRLF, but several standard implementations also
+    # accept LF, so we should too.
+    mem = IO::Memory.new("1\nA\n1\nB\n0\n\n")
+    content = HTTP::ChunkedContent.new(mem)
+
+    content.gets.should eq "AB"
+    mem.pos.should eq mem.bytesize
+  end
+
   it "#read reads empty content" do
     mem = IO::Memory.new("0\r\n\r\n")
     content = HTTP::ChunkedContent.new(mem)

@@ -52,7 +52,7 @@ module HTTP
 
     # Returns trailing headers read by this chunked content.
     #
-    # Thiel value will only be populated once the entire content has been read,
+    # The value will only be populated once the entire content has been read,
     # i.e. this IO is at EOF.
     #
     # All headers in the trailing headers section will be returned. Applications
