@@ -965,6 +965,32 @@ describe Time do
     Time.days_in_year(1990).should eq(365)
   end
 
+  describe ".leap_year?" do
+    it "knows that 400-year centuries are leap years" do
+      {1600, 2000, 2400}.each do |year|
+        Time.leap_year?(year).should be_true
+      end
+    end
+
+    it "knows that 100-year centuries are normal years" do
+      {1700, 1800, 1900, 2100, 2200, 2300}.each do |year|
+        Time.leap_year?(year).should be_false
+      end
+    end
+
+    it "knows that typical non-century leap years are divisibly by 4" do
+      {1968, 1972, 2004, 2020}.each do |year|
+        Time.leap_year?(year).should be_true
+      end
+    end
+
+    it "knows years *not* divisible by 4 are normal" do
+      {1965, 1999, 2001, 2018, 2019, 2021, 2099, 2101}.each do |year|
+        Time.leap_year?(year).should be_false
+      end
+    end
+  end
+
   typeof(Time.now.year)
   typeof(1.minute.from_now.year)
   typeof(1.minute.ago.year)

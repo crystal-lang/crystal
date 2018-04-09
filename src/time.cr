@@ -468,7 +468,7 @@ struct Time
       raise ArgumentError.new "Invalid year"
     end
 
-    (year % 4 == 0 && year % 100 != 0) || (year % 400 == 0)
+    year % 4 == 0 && (year % 100 != 0 || year % 400 == 0)
   end
 
   def inspect(io : IO)
