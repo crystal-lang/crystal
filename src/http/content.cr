@@ -58,7 +58,7 @@ module HTTP
     # All headers in the trailing headers section will be returned. Applications
     # need to make sure to ignore them or fail if headers are not allowed
     # in the chunked trailer part (see [RFC 7230 section 4.1.2](https://tools.ietf.org/html/rfc7230#section-4.1.2)).
-    getter headers : HTTP::Headers = HTTP::Headers.new
+    getter headers : HTTP::Headers { HTTP::Headers.new }
 
     def initialize(@io : IO)
       @chunk_remaining = 0
@@ -176,7 +176,7 @@ module HTTP
         break if line.empty?
 
         key, value = HTTP.parse_header(line)
-        break unless @headers.add?(key, value)
+        break unless headers.add?(key, value)
       end
     end
 
