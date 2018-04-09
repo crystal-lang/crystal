@@ -35,7 +35,7 @@ describe "INI" do
 
     it "ignores whitespaces" do
       INI.parse("   key   =   value  ").should eq({"" => {"key" => "value"}})
-      INI.parse("  [foo]").should eq({} of String => Hash(String, String))
+      INI.parse("  [foo]").should eq({"foo" => Hash(String, String).new})
     end
 
     it "ignores comments" do
@@ -50,8 +50,8 @@ describe "INI" do
       INI.parse("[foo]\na=1\n[foo]\nb=2").should eq({"foo" => {"a" => "1", "b" => "2"}})
     end
 
-    it "ignores an empty section" do
-      INI.parse("[section]").should eq({} of String => Hash(String, String))
+    it "parses empty section" do
+      INI.parse("[section]").should eq({"section" => Hash(String, String).new})
     end
 
     it "parses a file" do
