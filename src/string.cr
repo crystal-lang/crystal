@@ -4020,6 +4020,10 @@ class String
     false
   end
 
+  def starts_with?(re : Regex)
+    !!($~ = re.match_at_byte_index(self, 0, Regex::Options::ANCHORED))
+  end
+
   def ends_with?(str : String)
     return false if str.bytesize > bytesize
     (to_unsafe + bytesize - str.bytesize).memcmp(str.to_unsafe, str.bytesize) == 0
@@ -4040,6 +4044,10 @@ class String
     end
 
     true
+  end
+
+  def ends_with?(re : Regex)
+    !!($~ = /#{re}\z/.match(self))
   end
 
   # Interpolates *other* into the string using `Kernel#sprintf`.

@@ -945,6 +945,8 @@ describe "String" do
     it { "foobar".starts_with?("").should be_true }
     it { "foobar".starts_with?("foobarbaz").should be_false }
     it { "foobar".starts_with?("foox").should be_false }
+    it { "foobar".starts_with?(/foo/).should be_true }
+    it { "foobar".starts_with?(/bar/).should be_false }
     it { "foobar".starts_with?('f').should be_true }
     it { "foobar".starts_with?('g').should be_false }
     it { "よし".starts_with?('よ').should be_true }
@@ -956,6 +958,8 @@ describe "String" do
     it { "foobar".ends_with?("").should be_true }
     it { "foobar".ends_with?("foobarbaz").should be_false }
     it { "foobar".ends_with?("xbar").should be_false }
+    it { "foobar".ends_with?(/bar/).should be_true }
+    it { "foobar".ends_with?(/foo|baz/).should be_false }
     it { "foobar".ends_with?('r').should be_true }
     it { "foobar".ends_with?('x').should be_false }
     it { "よし".ends_with?('し').should be_true }
