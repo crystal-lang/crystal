@@ -9,7 +9,7 @@ describe HTTP::ChunkedContent do
     bytes_read = content.read(bytes.to_slice)
     bytes_read.should eq(4)
     String.new(bytes.to_slice).should eq("123\n")
-    mem.pos.should eq(9) # only this chunk was read
+    mem.pos.should eq(7) # only this chunk was read
   end
 
   it "peeks" do

@@ -61,7 +61,7 @@ module HTTP
     getter headers : HTTP::Headers { HTTP::Headers.new }
 
     def initialize(@io : IO)
-      @chunk_remaining = 0
+      @chunk_remaining = -1
       @expect_chunk_start = true
     end
 
@@ -131,7 +131,6 @@ module HTTP
       # We set @expect_chunk_start to true so we read the next
       # chunk start on the next call to `read`.
       if @chunk_remaining == 0
-        read_crlf
         @expect_chunk_start = true
       end
     end
@@ -141,7 +140,13 @@ module HTTP
     private def next_chunk
       return unless @expect_chunk_start
 
-      if read_chunk_size == 0
+      # -1 is the initial value
+      unless @chunk_remaining == -1
+        read_crlf
+      end
+
+      @chunk_remaining = read_chunk_size
+      if @chunk_remaining == 0
         read_trailer
       end
 
@@ -167,7 +172,7 @@ module HTTP
         chunk_size = line
       end
 
-      @chunk_remaining = chunk_size.to_i?(16) || raise IO::Error.new("Invalid HTTP chunked content: invalid chunk size")
+      chunk_size.to_i?(16) || raise IO::Error.new("Invalid HTTP chunked content: invalid chunk size")
     end
 
     private def read_trailer
