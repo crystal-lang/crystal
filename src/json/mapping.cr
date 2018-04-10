@@ -80,7 +80,7 @@ module JSON
       {% end %}
 
       {% if value[:getter] == nil ? true : value[:getter] %}
-        def {{key.id}}
+        def {{key.id}} : {{value[:type]}} {{ (value[:nilable] ? "?" : "").id }}
           @{{value[:key_id]}}
         end
       {% end %}
