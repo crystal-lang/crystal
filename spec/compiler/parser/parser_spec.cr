@@ -857,6 +857,7 @@ describe "Parser" do
   it_parses "/ /; / /", [regex(" "), regex(" ")] of ASTNode
   it_parses "/ /\n/ /", [regex(" "), regex(" ")] of ASTNode
   it_parses "a = / /", Assign.new("a".var, regex(" "))
+  it_parses "(/ /)", Expressions.new([regex(" ")] of ASTNode)
   it_parses "a = /=/", Assign.new("a".var, regex("="))
   it_parses "a; if / /; / /; elsif / /; / /; end", ["a".call, If.new(regex(" "), regex(" "), If.new(regex(" "), regex(" ")))]
   it_parses "a; if / /\n/ /\nelsif / /\n/ /\nend", ["a".call, If.new(regex(" "), regex(" "), If.new(regex(" "), regex(" ")))]
