@@ -7,6 +7,9 @@ module HTTP
   private DATE_PATTERNS = {"%a, %d %b %Y %H:%M:%S %z", "%d %b %Y %H:%M:%S %z", "%A, %d-%b-%y %H:%M:%S %z", "%a %b %e %H:%M:%S %Y"}
 
   # :nodoc:
+  MAX_HEADER_SIZE = 16_384
+
+  # :nodoc:
   enum BodyType
     OnDemand
     Prohibited
@@ -18,9 +21,9 @@ module HTTP
     headers = Headers.new
 
     headers_size = 0
-    while line = io.gets(16_384, chomp: true)
+    while line = io.gets(MAX_HEADER_SIZE, chomp: true)
       headers_size += line.bytesize
-      break if headers_size > 16_384
+      break if headers_size > MAX_HEADER_SIZE
 
       if line.empty?
         body = nil
