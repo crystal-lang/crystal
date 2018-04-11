@@ -18,7 +18,15 @@ jobs:
       TRAVIS_OS_NAME: linux
       ARCH: x86_64
       ARCH_CMD: linux64
-    steps: *ci_steps
+    steps:
+      - checkout
+      - run: bin/ci prepare_system
+      - run: bin/ci prepare_build
+      - run: bin/ci build
+      - persist_to_workspace:
+          root: .
+          paths:
+            - docs
 
   test_linux32:
     machine: true
@@ -36,6 +44,20 @@ jobs:
       <<: *env
       TRAVIS_OS_NAME: osx
     steps: *ci_steps
+
+  sync_docs_s3:
+    machine: true
+    steps:
+      - attach_workspace:
+          at: /tmp/workspace
+      - run: |
+          echo $CIRCLE_SHA1 > /tmp/workspace/docs/revision.txt
+      - run: |
+          docker run -v /tmp/workspace/docs:/docs \
+            -e AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID} \
+            -e AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY} \
+            mesosphere/aws-cli \
+            s3 sync /docs/ s3://crystal-api/api/master --delete
 
   prepare_common:
     docker:
@@ -243,7 +265,13 @@ workflows:
       - test_linux
       - test_linux32
       - test_darwin
-
+      - sync_docs_s3:
+          filters:
+            branches:
+              only:
+                - master
+          requires:
+            - test_linux
   tagged_release:
     jobs:
       - test_linux:
