@@ -1,4 +1,3 @@
-require "spec"
 require "./spec_helper"
 
 def Time.expect_invalid

@@ -1,23 +1,6 @@
-require "spec"
 require "./spec_helper"
 
 class Time::Location
-  def __cached_range
-    @cached_range
-  end
-
-  def __cached_zone
-    @cached_zone
-  end
-
-  def __cached_zone=(zone)
-    @cached_zone = zone
-  end
-
-  def self.__clear_location_cache
-    @@location_cache.clear
-  end
-
   describe Time::Location do
     describe ".load" do
       it "loads Europe/Berlin" do
