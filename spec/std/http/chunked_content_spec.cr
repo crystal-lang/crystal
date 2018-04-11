@@ -17,6 +17,8 @@ describe HTTP::ChunkedContent do
     content = HTTP::ChunkedContent.new(mem)
 
     content.peek.should eq("123\n".to_slice)
+    content.skip(4)
+    content.peek.should eq Bytes.empty
   end
 
   it "peeks into next chunk" do
@@ -94,7 +96,7 @@ describe HTTP::ChunkedContent do
     mem = IO::Memory.new("0\r\n\r\n")
     content = HTTP::ChunkedContent.new(mem)
 
-    content.peek.should be_nil
+    content.peek.should eq Bytes.empty
     mem.pos.should eq mem.bytesize
   end
 
@@ -239,9 +241,9 @@ describe HTTP::ChunkedContent do
     mem = IO::Memory.new("0\r\n\r\n1\r\nA\r\n0\r\n\r\n")
 
     chunked = HTTP::ChunkedContent.new(mem)
-    chunked.peek.should be_nil
+    chunked.peek.should eq Bytes.empty
     mem.pos.should eq 5
-    chunked.peek.should be_nil
+    chunked.peek.should eq Bytes.empty
     mem.pos.should eq 5
   end
 end
