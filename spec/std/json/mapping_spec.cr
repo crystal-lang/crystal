@@ -510,8 +510,8 @@ describe "JSON mapping" do
     it "defines query getter with class restriction" do
       {% begin %}
         {% methods = JSONWithQueryAttributes.methods %}
-        {{methods.find(&.name.==("foo?")).return_type}}.should eq(Bool)
-        {{methods.find(&.name.==("bar?")).return_type}}.should eq(Bool)
+        {{ methods.find(&.name.==("foo?")).return_type }}.should eq(Bool)
+        {{ methods.find(&.name.==("bar?")).return_type }}.should eq(Bool)
       {% end %}
     end
 
