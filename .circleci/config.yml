@@ -7,10 +7,6 @@ defaults:
     - run: bin/ci prepare_system
     - run: bin/ci prepare_build
     - run: bin/ci build
-    - persist_to_workspace:
-        root: .
-        paths:
-          - docs
 
 version: 2
 
@@ -22,7 +18,15 @@ jobs:
       TRAVIS_OS_NAME: linux
       ARCH: x86_64
       ARCH_CMD: linux64
-    steps: *ci_steps
+    steps:
+      - checkout
+      - run: bin/ci prepare_system
+      - run: bin/ci prepare_build
+      - run: bin/ci build
+      - persist_to_workspace:
+          root: .
+          paths:
+            - docs
 
   test_linux32:
     machine: true
