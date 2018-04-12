@@ -70,6 +70,9 @@ describe Markdown do
   assert_render "```crystal\nHello\nWorld\n```", %(<pre><code class="language-crystal">Hello\nWorld</code></pre>)
   assert_render "Hello\n```\nWorld\n```", "<p>Hello</p>\n\n<pre><code>World</code></pre>"
   assert_render "```\n---\n```", "<pre><code>---</code></pre>"
+  assert_render "````\n---\n````", "<pre><code>---</code></pre>"
+  # TODO: this should render as one code block:
+  assert_render "```invisible man```", "<p><code></code><code>invisible man</code><code></code></p>"
 
   assert_render "> Hello World\n", "<blockquote>Hello World</blockquote>"
   assert_render "> __Hello World__", "<blockquote><strong>Hello World</strong></blockquote>"
