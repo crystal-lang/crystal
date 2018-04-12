@@ -71,7 +71,7 @@ module HTTP
 
       next_chunk
 
-      return 0 if @chunk_remaining == 0
+      return 0 if @received_final_chunk
 
       to_read = Math.min(count, @chunk_remaining)
 
@@ -88,7 +88,7 @@ module HTTP
 
     def read_byte
       next_chunk
-      return super if @chunk_remaining == 0
+      return super if @received_final_chunk
 
       byte = @io.read_byte
       if byte
@@ -101,7 +101,7 @@ module HTTP
 
     def peek
       next_chunk
-      return if @chunk_remaining == 0
+      return Bytes.empty if @received_final_chunk
 
       peek = @io.peek || return
 
