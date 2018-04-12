@@ -705,5 +705,20 @@ describe "FileUtils" do
         FileUtils.rm_rf(dir)
       end
     end
+
+    it "creates a symlink even if there's nothing to overwrite" do
+      path1 = "/tmp/crystal_ln_sf_test_#{Process.pid}"
+      path2 = "/tmp/crystal_ln_sf_test_#{Process.pid + 1}"
+
+      begin
+        FileUtils.touch(path1)
+        File.exists?(path2).should be_false
+
+        FileUtils.ln_sf(path1, path2)
+        File.symlink?(path2).should be_true
+      ensure
+        FileUtils.rm_rf([path1, path2])
+      end
+    end
   end
 end
