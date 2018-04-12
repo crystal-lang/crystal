@@ -568,7 +568,7 @@ class File < IO::FileDescriptor
     Crystal::System::File.link(old_path, new_path)
   end
 
-  # Creates a symbolic link at *new_path* to an existing file given by *old_path.
+  # Creates a symbolic link at *new_path* to an existing file given by *old_path*.
   def self.symlink(old_path, new_path)
     Crystal::System::File.symlink(old_path, new_path)
   end
