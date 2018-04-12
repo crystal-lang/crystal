@@ -1,14 +1,14 @@
 # The JSON module allows parsing and generating [JSON](http://json.org/) documents.
 #
-# ### Parsing and generating with `JSON#mapping`
+# ### Parsing and generating with `JSON.mapping`
 #
-# Use `JSON#mapping` to define how an object is mapped to JSON, making it
+# Use `JSON.mapping` to define how an object is mapped to JSON, making it
 # the recommended easy, type-safe and efficient option for parsing and generating
 # JSON. Refer to that module's documentation to learn about it.
 #
-# ### Parsing with `JSON#parse`
+# ### Parsing with `JSON.parse`
 #
-# `JSON#parse` will return an `Any`, which is a convenient wrapper around all possible JSON types,
+# `JSON.parse` will return an `Any`, which is a convenient wrapper around all possible JSON types,
 # making it easy to traverse a complex JSON structure but requires some casts from time to time,
 # mostly via some method invocations.
 #
@@ -26,7 +26,18 @@
 # value[0].as_i + 10 # => 11
 # ```
 #
-# The above is useful for dealing with a dynamic JSON structure but is slower than using `JSON#mapping`.
+# `JSON.parse` can read from an `IO` directly (such as a file) which saves
+# allocating a string:
+#
+# ```
+# require "json"
+#
+# json = File.open("path/to/file.json") do |file|
+#   JSON.parse(file)
+# end
+# ```
+#
+# Parsing with `JSON.parse` is useful for dealing with a dynamic JSON structure but is slower than using `JSON.mapping`.
 #
 # ### Generating with `JSON.build`
 #
@@ -55,7 +66,7 @@
 #
 # `to_json`, `to_json(IO)` and `to_json(JSON::Builder)` methods are provided
 # for primitive types, but you need to define `to_json(JSON::Builder)`
-# for custom objects, either manually or using `JSON#mapping`.
+# for custom objects, either manually or using `JSON.mapping`.
 module JSON
   # Generic JSON error.
   class Error < Exception
