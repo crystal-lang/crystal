@@ -507,6 +507,14 @@ describe "JSON mapping" do
       json.bar?.should be_false
     end
 
+    it "defines query getter with class restriction" do
+      {% begin %}
+        {% methods = JSONWithQueryAttributes.methods %}
+        {{ methods.find(&.name.==("foo?")).return_type }}.should eq(Bool)
+        {{ methods.find(&.name.==("bar?")).return_type }}.should eq(Bool)
+      {% end %}
+    end
+
     it "defines non-query setter and presence methods" do
       json = JSONWithQueryAttributes.from_json(%({"foo": false}))
       json.bar_present?.should be_false

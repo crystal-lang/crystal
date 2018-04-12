@@ -71,16 +71,16 @@ module JSON
     {% end %}
 
     {% for key, value in _properties_ %}
-      @{{value[:key_id]}} : {{value[:type]}} {{ (value[:nilable] ? "?" : "").id }}
+      @{{value[:key_id]}} : {{value[:type]}}{{ (value[:nilable] ? "?" : "").id }}
 
       {% if value[:setter] == nil ? true : value[:setter] %}
-        def {{value[:key_id]}}=(_{{value[:key_id]}} : {{value[:type]}} {{ (value[:nilable] ? "?" : "").id }})
+        def {{value[:key_id]}}=(_{{value[:key_id]}} : {{value[:type]}}{{ (value[:nilable] ? "?" : "").id }})
           @{{value[:key_id]}} = _{{value[:key_id]}}
         end
       {% end %}
 
       {% if value[:getter] == nil ? true : value[:getter] %}
-        def {{key.id}}
+        def {{key.id}} : {{value[:type]}}{{ (value[:nilable] ? "?" : "").id }}
           @{{value[:key_id]}}
         end
       {% end %}
