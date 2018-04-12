@@ -1,6 +1,5 @@
 require "../abi"
 
-# Based on https://github.com/rust-lang/rust/blob/master/src/librustc_trans/trans/cabi_x86.rs
 class LLVM::ABI::X86 < LLVM::ABI
   def abi_info(atys : Array(Type), rty : Type, ret_def : Bool, context : Context)
     ret_ty = compute_return_type(rty, ret_def, context)
