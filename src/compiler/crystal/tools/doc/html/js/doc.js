@@ -19,10 +19,10 @@ document.addEventListener('DOMContentLoaded', function() {
     };
   }
 
-  var repositoryName = document.getElementById('repository-name').getAttribute('content');
-  var typesList = document.getElementById('types-list');
-  var searchInput = document.getElementById('search-input');
-  var parents = document.querySelectorAll('#types-list li.parent');
+  var repositoryName = document.querySelector('#repository-name').getAttribute('content');
+  var typesList = document.querySelector('.types-list');
+  var searchInput = document.querySelector('.search-input');
+  var parents = document.querySelectorAll('.types-list li.parent');
 
   var setPersistentSearchQuery = function(value){
     sessionStorage.setItem(repositoryName + '::search-input:value', value);
@@ -56,7 +56,7 @@ document.addEventListener('DOMContentLoaded', function() {
     window.focus();
   }
 
-  var navigator = new Navigator(document.querySelector('#types-list'), searchInput, document.querySelector(".search-results"), leaveSearchScope);
+  var navigator = new Navigator(document.querySelector('.types-list'), searchInput, document.querySelector(".search-results"), leaveSearchScope);
 
   CrystalDoc.loadIndex();
   var searchTimeout;
