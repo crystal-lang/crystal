@@ -239,7 +239,7 @@ end
 # displayed.
 #
 # For string fields, the precision determines the maximum
-# number of characters to be copied from the string. 
+# number of characters to be copied from the string.
 #
 # Examples of precisions:
 #
