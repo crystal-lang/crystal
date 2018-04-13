@@ -172,8 +172,8 @@ describe "Parser" do
     instance_sizeof typeof private protected asm
     end
   ).each do |kw|
-    assert_syntax_error "def foo(#{kw}); end", "cannot use '#{kw}' as argument name", 1, 9
-    assert_syntax_error "def foo(foo #{kw}); end", "cannot use '#{kw}' as argument name", 1, 13
+    assert_syntax_error "def foo(#{kw}); end", "cannot use '#{kw}' as an argument name", 1, 9
+    assert_syntax_error "def foo(foo #{kw}); end", "cannot use '#{kw}' as an argument name", 1, 13
     it_parses "def foo(#{kw} foo); end", Def.new("foo", [Arg.new("foo", external_name: kw.to_s)])
   end
 
