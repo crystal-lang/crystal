@@ -48,7 +48,7 @@ describe "Code gen: sizeof" do
     # be struct { 8 bytes, 8 bytes }.
     #
     # In 32 bits structs are aligned to 4 bytes, so it remains the same.
-    {% if flag?(:x86_64) %}
+    {% if flag?(:bits64) %}
       size.should eq(16)
     {% else %}
       size.should eq(12)
@@ -137,7 +137,7 @@ describe "Code gen: sizeof" do
       sizeof(typeof(foo))
       )).to_i
 
-    {% if flag?(:x86_64) %}
+    {% if flag?(:bits64) %}
       size.should eq(8)
     {% else %}
       size.should eq(4)
