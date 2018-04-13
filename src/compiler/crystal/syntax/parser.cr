@@ -920,6 +920,8 @@ module Crystal
       when :__DIR__
         node_and_next_token MagicConstant.expand_dir_node(@token.location)
       when :IDENT
+        # NOTE: Update `Parser#invalid_internal_name?` keyword list
+        # when adding or removing keyword to handle here.
         case @token.value
         when :begin
           check_type_declaration { parse_begin }
@@ -3593,7 +3595,7 @@ module Crystal
       case @token.type
       when :IDENT
         if @token.keyword? && invalid_internal_name?(@token.value)
-          raise "cannot use '#{@token}' as argument name", @token
+          raise "cannot use '#{@token}' as an argument name", @token
         end
 
         arg_name = @token.value.to_s
@@ -3641,7 +3643,7 @@ module Crystal
             raise "unexpected token: #{@token}, expected argument internal name"
           end
           if invalid_internal_name
-            raise "cannot use '#{invalid_internal_name}' as argument name", invalid_internal_name
+            raise "cannot use '#{invalid_internal_name}' as an argument name", invalid_internal_name
           end
           arg_name = external_name
         else
@@ -3661,7 +3663,7 @@ module Crystal
 
     def invalid_internal_name?(keyword)
       case keyword
-      # These names are handled as keyword by `parser_atomic_without_location`.
+      # These names are handled as keyword by `Parser#parse_atomic_without_location`.
       # We cannot assign value into them and never reference them,
       # so they are invalid internal name.
       when :begin, :nil, :true, :false, :yield, :with, :abstract,
