@@ -16,7 +16,7 @@ class File < IO::FileDescriptor
   {% end %}
 
   # :nodoc:
-  DEFAULT_CREATE_PERMISSIONS = 0o644
+  DEFAULT_CREATE_PERMISSIONS = File::Permissions.new(0o644)
 
   include Crystal::System::File
 

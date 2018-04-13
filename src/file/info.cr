@@ -104,6 +104,24 @@ class File
     # On unix, this compares device and inode fields, and will compare equal for
     # hard linked files.
     abstract def ==(other : File::Info)
+
+    # Returns true if this `Info` represents a standard file. Shortcut for
+    # `type.file?`.
+    def file?
+      type.file?
+    end
+
+    # Returns true if this `Info` represents a directory. Shortcut for
+    # `type.directory?`.
+    def directory?
+      type.directory?
+    end
+
+    # Returns true if this `Info` represents a symbolic link to another file.
+    # Shortcut for `type.symlink?`.
+    def symlink?
+      type.symlink?
+    end
   end
 end
 
