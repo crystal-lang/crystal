@@ -325,10 +325,10 @@ describe UNIXSocket do
 
         server.accept do |sock|
           sock.local_address.family.should eq(Socket::Family::UNIX)
-          sock.local_address.path.should eq("")
+          sock.local_address.path.should eq(path)
 
           sock.remote_address.family.should eq(Socket::Family::UNIX)
-          sock.remote_address.path.should eq("")
+          sock.remote_address.path.should eq(path)
 
           client << "ping"
           sock.gets(4).should eq("ping")
