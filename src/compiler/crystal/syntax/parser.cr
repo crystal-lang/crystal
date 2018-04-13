@@ -2870,6 +2870,7 @@ module Crystal
         when :MACRO_CONTROL_START
           macro_control = parse_macro_control(start_line, start_column, macro_state)
           if macro_control
+            check :"%}"
             pieces << macro_control
             skip_whitespace = check_macro_skip_whitespace
           else
