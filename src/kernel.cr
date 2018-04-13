@@ -70,6 +70,7 @@ end
 # Returns a formatted string.
 # The string is produced according to the *format_string* with format specifiers
 # being replaced by values from *args* formatted according to the specifier.
+#
 # Within the format string, any characters other than format specifiers
 # (specifiers beginning with `%`) are copied to the result.
 #
@@ -81,11 +82,14 @@ end
 #
 # A format specifier consists of a percent sign, followed by optional flags,
 # width, and precision indicators, then terminated with a field type
-# character.  The field type controls how the corresponding
+# character.
+#
+# The field type controls how the corresponding
 # `sprintf` argument is to be interpreted, while the flags
 # modify that interpretation.
 #
 # The field type characters are:
+#
 # ```text
 #     Field |  Integer Format
 #     ------+--------------------------------------------------------------
@@ -125,13 +129,15 @@ end
 #           | sequence contains a precision, at most that many characters
 #           | will be copied.
 #       %   | A percent sign itself will be displayed.  No argument taken.
+#
 # ```
 # The flags modifies the behavior of the formats.
 # The flag characters are:
 # ```text
+#
 #   Flag     | Applies to    | Meaning
 #   ---------+---------------+-----------------------------------------
-#   space    | bdiouxX       | Leave a space at the start of
+#   space    | bdiouxX       | Add a leading space character to
 #            | aAeEfgG       | non-negative numbers.
 #            | (numeric fmt) | For o, x, X, b, use
 #            |               | a minus sign with absolute value for
@@ -212,7 +218,7 @@ end
 # ```
 #
 # The field width is an optional integer, followed optionally by a
-# period and a precision.  The width specifies the minimum number of
+# period and a precision. The width specifies the minimum number of
 # characters that will be written to the result for this field.
 #
 # Examples of width:
@@ -230,14 +236,14 @@ end
 # ```
 #
 # For numeric fields, the precision controls the number of decimal places
-# displayed.  For string fields, the precision determines the maximum
-# number of characters to be copied from the string.  (Thus, the format
-# sequence <code>%10.10s</code> will always contribute exactly ten
-# characters to the result.)
+# displayed.
+#
+# For string fields, the precision determines the maximum
+# number of characters to be copied from the string. 
 #
 # Examples of precisions:
 #
-# precision for `d`, `o`, `x` and `b` is
+# Precision for `d`, `o`, `x` and `b` is
 # minimum number of digits
 # ```
 # sprintf "%20.8d", 123   # => "                 123"
@@ -254,28 +260,24 @@ end
 # sprintf "%20.8b", -11   # => "               -1011"
 # ```
 #
-# precision for `e` is number of
-# digits after the decimal point
+# Precision for `e` is number of digits after the decimal point.
 # ```
 # sprintf "%20.8e", 1234.56789 # => "      1.23456789e+03"
 # ```
 #
-# precision for `f` is number of
-# digits after the decimal point
+# Precision for `f` is number of digits after the decimal point.
 # ```
 # sprintf "%20.8f", 1234.56789 # => "       1234.56789000"
 # ```
 #
-# precision for `g` is number of
-# significant digits
+# Precision for `g` is number of significant digits.
 # ```
 # sprintf "%20.8g", 1234.56789 # => "           1234.5679"
 # sprintf "%20.8g", 123456789  # => "       1.2345679e+08"
 # sprintf "%-20.8g", 123456789 # => "1.2345679e+08       "
 # ```
 #
-# precision for `s` is
-# maximum number of characters
+# Precision for `s` is maximum number of characters.
 # ```
 # sprintf "%20.8s", "string test" # => "            string t"
 # ```
