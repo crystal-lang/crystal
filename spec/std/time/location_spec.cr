@@ -338,10 +338,10 @@ class Time::Location
 
   describe Time::Location::Zone do
     it "#inspect" do
-      Time::Location::Zone.new("CET", 3600, false).inspect.should eq "#<Time::Location::Zone CET +01:00 (3600s) STD>"
-      Time::Location::Zone.new("CEST", 7200, true).inspect.should eq "#<Time::Location::Zone CEST +02:00 (7200s) DST>"
-      Time::Location::Zone.new(nil, 9000, true).inspect.should eq "#<Time::Location::Zone +02:30 (9000s) DST>"
-      Time::Location::Zone.new(nil, 9012, true).inspect.should eq "#<Time::Location::Zone +02:30:12 (9012s) DST>"
+      Time::Location::Zone.new("CET", 3600, false).inspect.should eq "Time::Location::Zone(CET +01:00 (3600s) STD)"
+      Time::Location::Zone.new("CEST", 7200, true).inspect.should eq "Time::Location::Zone(CEST +02:00 (7200s) DST)"
+      Time::Location::Zone.new(nil, 9000, true).inspect.should eq "Time::Location::Zone(+02:30 (9000s) DST)"
+      Time::Location::Zone.new(nil, 9012, true).inspect.should eq "Time::Location::Zone(+02:30:12 (9012s) DST)"
     end
 
     it "#name" do

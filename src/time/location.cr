@@ -63,8 +63,12 @@ class Time::Location
       @name || format
     end
 
+    # Prints this `Zone` to *io*.
+    #
+    # It contains the `name`, hour-minute-second format (see `#format`),
+    # `offset` in seconds and `"DST"` if `#dst?`, otherwise `"STD"`.
     def inspect(io : IO)
-      io << "#<Time::Location::Zone "
+      io << "Time::Location::Zone("
       io << @name << ' ' unless @name.nil?
       format(io)
       io << " (" << offset << "s)"
@@ -73,7 +77,7 @@ class Time::Location
       else
         io << " STD"
       end
-      io << '>'
+      io << ')'
     end
 
     # Prints `#offset` to *io* in the format `+HH:mm:ss`.
@@ -131,7 +135,7 @@ class Time::Location
     getter? standard, utc
 
     def inspect(io : IO)
-      io << "#<Time::Location::ZoneTransition "
+      io << "Time::Location::ZoneTransition("
       io << '#' << index << ' '
       Time.epoch(self.when).to_s("%F %T", io)
       if standard?
@@ -140,7 +144,7 @@ class Time::Location
         io << " DST"
       end
       io << " UTC" if utc?
-      io << '>'
+      io << ')'
     end
   end
 
