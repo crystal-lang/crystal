@@ -920,6 +920,8 @@ module Crystal
       when :__DIR__
         node_and_next_token MagicConstant.expand_dir_node(@token.location)
       when :IDENT
+        # NOTE: Update `Parser#invalid_internal_name?` keyword list
+        # when adding or removing keyword to handle here.
         case @token.value
         when :begin
           check_type_declaration { parse_begin }
@@ -3574,9 +3576,13 @@ module Crystal
     def parse_arg_name(location, extra_assigns, allow_external_name)
       do_next_token = true
       found_string_literal = false
+      invalid_internal_name = nil
 
       if allow_external_name && (@token.type == :IDENT || string_literal_start?)
         if @token.type == :IDENT
+          if @token.keyword? && invalid_internal_name?(@token.value)
+            invalid_internal_name = @token.dup
+          end
           external_name = @token.type == :IDENT ? @token.value.to_s : ""
           next_token
         else
@@ -3590,6 +3596,10 @@ module Crystal
 
       case @token.type
       when :IDENT
+        if @token.keyword? && invalid_internal_name?(@token.value)
+          raise "cannot use '#{@token}' as an argument name", @token
+        end
+
         arg_name = @token.value.to_s
         if arg_name == external_name
           raise "when specified, external name must be different than internal name", @token
@@ -3634,6 +3644,9 @@ module Crystal
           if found_string_literal
             raise "unexpected token: #{@token}, expected argument internal name"
           end
+          if invalid_internal_name
+            raise "cannot use '#{invalid_internal_name}' as an argument name", invalid_internal_name
+          end
           arg_name = external_name
         else
           raise "unexpected token: #{@token}"
@@ -3648,6 +3661,24 @@ module Crystal
       skip_space_or_newline
 
       {arg_name, external_name, found_space, uses_arg}
+    end
+
+    def invalid_internal_name?(keyword)
+      case keyword
+      # These names are handled as keyword by `Parser#parse_atomic_without_location`.
+      # We cannot assign value into them and never reference them,
+      # so they are invalid internal name.
+      when :begin, :nil, :true, :false, :yield, :with, :abstract,
+           :def, :macro, :require, :case, :select, :if, :unless, :include,
+           :extend, :class, :struct, :module, :enum, :while, :until, :return,
+           :next, :break, :lib, :fun, :alias, :pointerof, :sizeof,
+           :instance_sizeof, :typeof, :private, :protected, :asm,
+      # `end` is also invalid because it maybe terminate `def` block.
+           :end
+        true
+      else
+        false
+      end
     end
 
     def parse_if(check_end = true)
