@@ -71,7 +71,7 @@ module ENV
 
   # Retrieves a value corresponding to a given *key*. Return the value of the block if
   # the *key* does not exist.
-  def self.fetch(key : String, &block : String -> String? | NoReturn)
+  def self.fetch(key : String, &block : String -> String?)
     value = LibC.getenv key
     return String.new(value) if value
     yield(key)
