@@ -746,51 +746,57 @@ module Crystal
       list.each_with_index do |ex_item, i|
         if item.restriction_of?(ex_item, self)
           if ex_item.restriction_of?(item, self)
+            # The two defs have the same signature so item overrides ex_item.
             list[i] = item
             a_def.previous = ex_item
             a_def.doc ||= ex_item.def.doc
             ex_item.def.next = a_def
             return ex_item.def
           else
+            # item has a new signature, stricter than ex_item.
             list.insert(i, item)
             return nil
           end
         end
       end
+
+      # item has a new signature, less strict than the existing defs with same name.
       list << item
 
       nil
     end
 
-    def add_macro(a_def)
-      case a_def.name
+    def add_macro(a_macro)
+      case a_macro.name
       when "inherited"
-        return add_hook :inherited, a_def
+        return add_hook :inherited, a_macro
       when "included"
-        return add_hook :included, a_def
+        return add_hook :included, a_macro
       when "extended"
-        return add_hook :extended, a_def
+        return add_hook :extended, a_macro
       when "method_added"
-        return add_hook :method_added, a_def, args_size: 1
+        return add_hook :method_added, a_macro, args_size: 1
       when "method_missing"
-        if a_def.args.size != 1
+        if a_macro.args.size != 1
           raise TypeException.new "macro 'method_missing' expects 1 argument (call)"
         end
       end
 
       macros = (@macros ||= {} of String => Array(Macro))
-      array = (macros[a_def.name] ||= [] of Macro)
-      index = array.index { |existing_macro| a_def.overrides?(existing_macro) }
+      array = (macros[a_macro.name] ||= [] of Macro)
+      index = array.index { |existing_macro| a_macro.overrides?(existing_macro) }
       if index
-        a_def.doc ||= array[index].doc
-        array[index] = a_def
+        # a_macro has the same signature of an existing macro, we override it.
+        a_macro.doc ||= array[index].doc
+        array[index] = a_macro
       else
-        array.push a_def
+        # a_macro has a new signature, add it with the others.
+        array << a_macro
       end
     end
 
-    def add_hook(kind, a_def, args_size = 0)
-      if a_def.args.size != args_size
+    def add_hook(kind, a_macro, args_size = 0)
+      if a_macro.args.size != args_size
         case args_size
         when 0
           raise TypeException.new "macro '#{kind}' must not have arguments"
@@ -802,7 +808,7 @@ module Crystal
       end
 
       hooks = @hooks ||= [] of Hook
-      hooks << Hook.new(kind, a_def)
+      hooks << Hook.new(kind, a_macro)
     end
 
     def filter_by_responds_to(name)
