@@ -193,8 +193,8 @@ class Dir
 
   # Returns `true` if the given path exists and is a directory
   def self.exists?(path) : Bool
-    if stat = File.stat?(path)
-      stat.directory?
+    if info = File.info?(path)
+      info.type.directory?
     else
       false
     end

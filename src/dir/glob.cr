@@ -267,11 +267,11 @@ class Dir
     end
 
     private def self.dir?(path)
-      return true unless path
-      stat = File.lstat(path)
-      stat.directory? && !stat.symlink?
-    rescue Errno
-      false
+      if info = File.info?(path, follow_symlinks: false)
+        info.type.directory?
+      else
+        false
+      end
     end
 
     private def self.join(path, entry)

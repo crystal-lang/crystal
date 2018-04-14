@@ -70,26 +70,23 @@ module Crystal::System::File
     tmpdir.rchop(::File::SEPARATOR)
   end
 
-  def self.stat?(path : String) : ::File::Stat?
-    if LibC.stat(path.check_no_null_byte, out stat) != 0
-      if {Errno::ENOENT, Errno::ENOTDIR}.includes? Errno.value
-        return nil
-      else
-        raise Errno.new("Unable to get stat for '#{path}'")
-      end
+  def self.info?(path : String, follow_symlinks : Bool) : ::File::Info?
+    stat = uninitialized LibC::Stat
+    if follow_symlinks
+      ret = LibC.stat(path.check_no_null_byte, pointerof(stat))
+    else
+      ret = LibC.lstat(path.check_no_null_byte, pointerof(stat))
     end
-    ::File::Stat.new(stat)
-  end
 
-  def self.lstat?(path : String) : ::File::Stat?
-    if LibC.lstat(path.check_no_null_byte, out stat) != 0
+    if ret == 0
+      FileInfo.new(stat)
+    else
       if {Errno::ENOENT, Errno::ENOTDIR}.includes? Errno.value
         return nil
       else
-        raise Errno.new("Unable to get lstat for '#{path}'")
+        raise Errno.new("Unable to get info for '#{path}'")
       end
     end
-    ::File::Stat.new(stat)
   end
 
   def self.exists?(path)
@@ -121,7 +118,7 @@ module Crystal::System::File
     raise Errno.new("Error changing owner of '#{path}'") if ret == -1
   end
 
-  def self.chmod(path, mode : Int)
+  def self.chmod(path, mode)
     if LibC.chmod(path, mode) == -1
       raise Errno.new("Error changing permissions of '#{path}'")
     end

@@ -44,8 +44,8 @@ class IO::FileDescriptor < IO
     end
   {% end %}
 
-  def stat
-    system_stat
+  def info
+    system_info
   end
 
   # Seeks to a given *offset* (in bytes) according to the *whence* argument.

@@ -16,7 +16,7 @@ class File < IO::FileDescriptor
   {% end %}
 
   # :nodoc:
-  DEFAULT_CREATE_MODE = LibC::S_IRUSR | LibC::S_IWUSR | LibC::S_IRGRP | LibC::S_IROTH
+  DEFAULT_CREATE_PERMISSIONS = File::Permissions.new(0o644)
 
   include Crystal::System::File
 
@@ -27,67 +27,47 @@ class File < IO::FileDescriptor
     super(fd, blocking)
   end
 
-  def self.new(filename : String, mode = "r", perm = DEFAULT_CREATE_MODE, encoding = nil, invalid = nil)
+  def self.new(filename : String, mode = "r", perm = DEFAULT_CREATE_PERMISSIONS, encoding = nil, invalid = nil)
     fd = Crystal::System::File.open(filename, mode, perm)
     new(filename, fd, blocking: true, encoding: encoding, invalid: invalid)
   end
 
   getter path : String
 
-  # Returns a `File::Stat` object for the file given by *path* or returns `nil`
-  # if the file does not exist. Raises `Errno` in case of an error. In case of
-  # a symbolic link it is followed and information about the target is returned.
+  # Returns a `File::Info` object for the file given by *path* or returns `nil`
+  # if the file does not exist.
+  #
+  # If *follow_symlinks* is set (the default), symbolic links are followed. Otherwise,
+  # symbolic links return information on the symlink itself.
   #
   # ```
   # File.write("foo", "foo")
-  # File.stat?("foo").try(&.size) # => 3
-  # File.stat?("non_existent")    # => nil
-  # ```
-  def self.stat?(path : String) : Stat?
-    Crystal::System::File.stat?(path)
-  end
-
-  # Returns a `File::Stat` object for the file given by *path* or returns `nil`
-  # if the file does not exist. Raises `Errno` in case of an error. In case of
-  # a symbolic link information about the link itself is returned.
-  #
-  # ```
-  # File.write("foo", "foo")
-  # File.lstat?("foo").try(&.size) # => 3
+  # File.info?("foo").try(&.size) # => 3
+  # File.info?("non_existent")    # => nil
   #
   # File.symlink("foo", "bar")
-  # File.lstat?("bar").try(&.symlink?) # => true
-  #
-  # File.lstat?("non_existent") # => nil
+  # File.info?("bar", follow_symlinks: false).try(&.type.symlink?) # => true
   # ```
-  def self.lstat?(path : String) : Stat?
-    Crystal::System::File.lstat?(path)
+  def self.info?(path : String, follow_symlinks = true) : Info?
+    Crystal::System::File.info?(path, follow_symlinks)
   end
 
-  # Returns a `File::Stat` object for the file given by *path* or raises
-  # `Errno` in case of an error. In case of a symbolic link
-  # it is followed and information about the target is returned.
+  # Returns a `File::Info` object for the file given by *path* or raises
+  # `Errno` in case of an error.
+  #
+  # If *follow_symlinks* is set (the default), symbolic links are followed. Otherwise,
+  # symbolic links return information on the symlink itself.
   #
   # ```
   # File.write("foo", "foo")
-  # File.stat("foo").size  # => 3
-  # File.stat("foo").mtime # => 2015-09-23 06:24:19 UTC
-  # ```
-  def self.stat(path) : Stat
-    stat?(path) || raise Errno.new("Unable to get stat for #{path.inspect}")
-  end
-
-  # Returns a `File::Stat` object for the file given by *path* or raises
-  # `Errno` in case of an error. In case of a symbolic link
-  # information about the link itself is returned.
+  # File.info("foo").size              # => 3
+  # File.info("foo").modification_time # => 2015-09-23 06:24:19 UTC
   #
+  # File.symlink("foo", "bar")
+  # File.info("bar", follow_symlinks: false).type.symlink? # => true
   # ```
-  # File.write("foo", "foo")
-  # File.lstat("foo").size  # => 3
-  # File.lstat("foo").mtime # => 2015-09-23 06:24:19 UTC
-  # ```
-  def self.lstat(path) : Stat
-    lstat?(path) || raise Errno.new("Unable to get stat for #{path.inspect}")
+  def self.info(path, follow_symlinks = true) : Info
+    info?(path, follow_symlinks) || raise Errno.new("Unable to get info for #{path.inspect}")
   end
 
   # Returns `true` if *path* exists else returns `false`
@@ -111,7 +91,7 @@ class File < IO::FileDescriptor
   # File.size("foo") # => 3
   # ```
   def self.size(filename) : UInt64
-    stat(filename).size
+    info(filename).size
   rescue ex : Errno
     raise Errno.new("Error determining size of #{filename.inspect}", ex.errno)
   end
@@ -169,8 +149,8 @@ class File < IO::FileDescriptor
   # File.file?("foobar") # => false
   # ```
   def self.file?(path) : Bool
-    if stat = stat?(path)
-      stat.file?
+    if info = info?(path)
+      info.type.file?
     else
       false
     end
@@ -268,13 +248,13 @@ class File < IO::FileDescriptor
   #
   # ```
   # File.chmod("foo", 0o755)
-  # File.stat("foo").perm # => 0o755
+  # File.info("foo").permissions # => 0o755
   #
   # File.chmod("foo", 0o700)
-  # File.stat("foo").perm # => 0o700
+  # File.info("foo").permissions # => 0o700
   # ```
-  def self.chmod(path, mode : Int)
-    Crystal::System::File.chmod(path, mode)
+  def self.chmod(path, permissions : Int | Permissions)
+    Crystal::System::File.chmod(path, permissions)
   end
 
   # Delete the file at *path*. Deleting non-existent file will raise an exception.
@@ -575,8 +555,8 @@ class File < IO::FileDescriptor
 
   # Returns `true` if the *path* is a symbolic link.
   def self.symlink?(path) : Bool
-    if stat = lstat?(path)
-      stat.symlink?
+    if info = info?(path, follow_symlinks: false)
+      info.type.symlink?
     else
       false
     end
@@ -584,14 +564,14 @@ class File < IO::FileDescriptor
 
   # Opens the file named by *filename*. If a file is being created, its initial
   # permissions may be set using the *perm* parameter.
-  def self.open(filename, mode = "r", perm = DEFAULT_CREATE_MODE, encoding = nil, invalid = nil) : self
+  def self.open(filename, mode = "r", perm = DEFAULT_CREATE_PERMISSIONS, encoding = nil, invalid = nil) : self
     new filename, mode, perm, encoding, invalid
   end
 
   # Opens the file named by *filename*. If a file is being created, its initial
   # permissions may be set using the *perm* parameter. Then given block will be passed the opened
   # file as an argument, the file will be automatically closed when the block returns.
-  def self.open(filename, mode = "r", perm = DEFAULT_CREATE_MODE, encoding = nil, invalid = nil)
+  def self.open(filename, mode = "r", perm = DEFAULT_CREATE_PERMISSIONS, encoding = nil, invalid = nil)
     file = new filename, mode, perm, encoding, invalid
     begin
       yield file
@@ -679,7 +659,7 @@ class File < IO::FileDescriptor
   # If it's an `IO`, all bytes from the `IO` will be written.
   # Otherwise, the string representation of *content* will be written
   # (the result of invoking `to_s` on *content*).
-  def self.write(filename, content, perm = DEFAULT_CREATE_MODE, encoding = nil, invalid = nil, mode = "w")
+  def self.write(filename, content, perm = DEFAULT_CREATE_PERMISSIONS, encoding = nil, invalid = nil, mode = "w")
     open(filename, mode, perm, encoding: encoding, invalid: invalid) do |file|
       case content
       when Bytes
@@ -768,7 +748,7 @@ class File < IO::FileDescriptor
 
   # Return the size in bytes of the currently opened file.
   def size
-    stat.size
+    info.size
   end
 
   # Truncates the file to the specified *size*. Requires that the current file is opened

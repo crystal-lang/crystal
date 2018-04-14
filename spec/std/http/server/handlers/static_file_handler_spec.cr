@@ -24,26 +24,26 @@ describe HTTP::StaticFileHandler do
   context "with header If-Modified-Since" do
     it "should return 304 Not Modified if file mtime is equal" do
       headers = HTTP::Headers.new
-      headers["If-Modified-Since"] = HTTP.rfc1123_date(File.stat("#{__DIR__}/static/test.txt").mtime)
+      headers["If-Modified-Since"] = HTTP.rfc1123_date(File.info("#{__DIR__}/static/test.txt").modification_time)
       response = handle HTTP::Request.new("GET", "/test.txt", headers), ignore_body: true
       response.status_code.should eq(304)
-      response.headers["Last-Modified"].should eq(HTTP.rfc1123_date(File.stat("#{__DIR__}/static/test.txt").mtime))
+      response.headers["Last-Modified"].should eq(HTTP.rfc1123_date(File.info("#{__DIR__}/static/test.txt").modification_time))
     end
 
     it "should return 304 Not Modified if file mtime is older" do
       headers = HTTP::Headers.new
-      headers["If-Modified-Since"] = HTTP.rfc1123_date(File.stat("#{__DIR__}/static/test.txt").mtime + 1.hour)
+      headers["If-Modified-Since"] = HTTP.rfc1123_date(File.info("#{__DIR__}/static/test.txt").modification_time + 1.hour)
       response = handle HTTP::Request.new("GET", "/test.txt", headers), ignore_body: true
       response.status_code.should eq(304)
-      response.headers["Last-Modified"].should eq(HTTP.rfc1123_date(File.stat("#{__DIR__}/static/test.txt").mtime))
+      response.headers["Last-Modified"].should eq(HTTP.rfc1123_date(File.info("#{__DIR__}/static/test.txt").modification_time))
     end
 
     it "should serve file if file mtime is younger" do
       headers = HTTP::Headers.new
-      headers["If-Modified-Since"] = HTTP.rfc1123_date(File.stat("#{__DIR__}/static/test.txt").mtime - 1.hour)
+      headers["If-Modified-Since"] = HTTP.rfc1123_date(File.info("#{__DIR__}/static/test.txt").modification_time - 1.hour)
       response = handle HTTP::Request.new("GET", "/test.txt")
       response.status_code.should eq(200)
-      response.headers["Last-Modified"].should eq(HTTP.rfc1123_date(File.stat("#{__DIR__}/static/test.txt").mtime))
+      response.headers["Last-Modified"].should eq(HTTP.rfc1123_date(File.info("#{__DIR__}/static/test.txt").modification_time))
       response.body.should eq(File.read("#{__DIR__}/static/test.txt"))
     end
   end

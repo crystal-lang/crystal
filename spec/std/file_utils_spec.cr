@@ -136,6 +136,23 @@ describe "FileUtils" do
       end
     end
 
+    it "copies permissions" do
+      src_path = File.join(__DIR__, "data/new_test_file.txt")
+      out_path = File.join(__DIR__, "data/test_file_cp.txt")
+      begin
+        File.write(src_path, "foo")
+        File.chmod(src_path, 0o700)
+
+        FileUtils.cp(src_path, out_path)
+
+        File.info(out_path).permissions.should eq(File::Permissions.new(0o700))
+        FileUtils.cmp(src_path, out_path).should be_true
+      ensure
+        File.delete(src_path) if File.exists?(out_path)
+        File.delete(out_path) if File.exists?(out_path)
+      end
+    end
+
     it "raises an error if the directory doesn't exists" do
       expect_raises(ArgumentError, "No such directory : not_existing_dir") do
         FileUtils.cp({File.join(__DIR__, "data/test_file.text")}, "not_existing_dir")

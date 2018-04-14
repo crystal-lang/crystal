@@ -44,7 +44,7 @@ class Time::Location
   private def self.open_file_cached(name : String, path : String)
     return nil unless File.exists?(path)
 
-    mtime = File.stat(path).mtime
+    mtime = File.info(path).modification_time
     if (cache = @@location_cache[name]?) && cache[:time] == mtime
       return cache[:location]
     else
