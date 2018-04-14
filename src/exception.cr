@@ -134,7 +134,27 @@ end
 # This can be used either to stub out method bodies, or when the method is not
 # implemented on the current platform.
 class NotImplementedError < Exception
-  def initialize(item)
-    super("Not Implemented: #{item}")
+  def initialize(item, platform)
+    super("#{item} is not implemented on #{platform}")
+  end
+
+  def self.new(item)
+    new(item, current_os)
+  end
+
+  private def self.current_os
+    {% if flag?(:win32) %}
+      "Win32"
+    {% elsif flag?(:linux) %}
+      "Linux"
+    {% elsif flag?(:darwin) %}
+      "Darwin"
+    {% elsif flag?(:openbsd) %}
+      "OpenBSD"
+    {% elsif flag?(:freebsd) %}
+      "FreeBSD"
+    {% else %}
+      "(BUG: undefined platform in NotImplementedError.current_os)"
+    {% end %}
   end
 end
