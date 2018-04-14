@@ -414,6 +414,32 @@ class Process
   private def close_io(io)
     io.close if io
   end
+
+  # Changes the root directory and the current working directory for the current
+  # process.
+  #
+  # Security: `chroot` on its own is not an effective means of mitigation. At minimum
+  # the process needs to also drop privilages as soon as feasible after the `chroot`.
+  # Changes to the directory hierarchy or file descriptors passed via `recvmsg(2)` from
+  # outside the `chroot` jail may allow a restricted process to escape, even if it is
+  # unprivileged.
+  #
+  # ```
+  # Process.chroot("/var/empty")
+  # ```
+  def self.chroot(path : String) : Nil
+    path.check_no_null_byte
+    if LibC.chroot(path) != 0
+      raise Errno.new("Failed to chroot")
+    end
+
+    if LibC.chdir("/") != 0
+      errno = Errno.new("chdir after chroot failed")
+      errno.callstack = CallStack.new
+      errno.inspect_with_backtrace(STDERR)
+      abort("Unresolvable state, exiting...")
+    end
+  end
 end
 
 # Executes the given command in a subshell.
