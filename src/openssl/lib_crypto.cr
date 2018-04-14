@@ -11,7 +11,7 @@
 
 {% begin %}
   lib LibCrypto
-    OPENSSL_110 = {{ (LibCrypto::LIBRESSL_VERSION == 0) && (LibCrypto::OPENSSL_VERSION >= 0x10101000) }}
+    OPENSSL_110 = {{ (LibCrypto::LIBRESSL_VERSION == 0) && (LibCrypto::OPENSSL_VERSION >= 0x10100000) }}
     OPENSSL_102 = {{ (LibCrypto::LIBRESSL_VERSION == 0) && (LibCrypto::OPENSSL_VERSION >= 0x10002000) }}
     LIBRESSL_250 = {{ LibCrypto::LIBRESSL_VERSION >= 0x205000000 }}
   end
