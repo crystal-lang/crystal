@@ -4050,6 +4050,14 @@ class String
     !!($~ = /#{re}\z/.match(self))
   end
 
+  def enclosed_with?(delimiter)
+    starts_with?(delimiter) && ends_with?(delimiter)
+  end
+
+  def enclosed_with?(start_delimiter, end_delimiter)
+    starts_with?(start_delimiter) && ends_with?(end_delimiter)
+  end
+
   # Interpolates *other* into the string using `Kernel#sprintf`.
   #
   # ```
