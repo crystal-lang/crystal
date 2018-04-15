@@ -967,6 +967,25 @@ describe "String" do
     it { "あいう_".ends_with?('_').should be_true }
   end
 
+  describe "enclosed_with?" do
+    it { "foobar".enclosed_with?("foo", "bar").should be_true }
+    it { "foobar".enclosed_with?("bar", "foo").should be_false }
+    it { "foobar".enclosed_with?("foo").should be_false }
+    it { "foobar".enclosed_with?("foobarbaz").should be_false }
+    it { "foobarfoo".enclosed_with?("foo").should be_true }
+    it { "foobar".enclosed_with?("").should be_true }
+    it { "_foobar_".enclosed_with?('_').should be_true }
+    it { "foobar".enclosed_with?('f', 'r').should be_true }
+    it { "foobar".enclosed_with?(/fo|ar/).should be_true }
+    it { "foobar".enclosed_with?(/oo|ba/).should be_false }
+    it { "foobar".enclosed_with?(/foo/).should be_false }
+    it { "foobar".enclosed_with?(/bar/).should be_false }
+    it { "foobar".enclosed_with?(/bar/, /foo/).should be_false }
+    it { "foobarし".enclosed_with?(/foo/, 'し').should be_true }
+    it { "しよし".enclosed_with?('し').should be_true }
+    it { "よし".enclosed_with?('な', 'し').should be_false }
+  end
+
   describe "=~" do
     it "matches with group" do
       "foobar" =~ /(o+)ba(r?)/
