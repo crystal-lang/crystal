@@ -4050,8 +4050,17 @@ class String
     !!($~ = /#{re}\z/.match(self))
   end
 
-  def enclosed_with?(delimiter)
+  def enclosed_with?(str : String)
+    return false if str.bytesize > bytesize
+    (to_unsafe + bytesize - str.bytesize).memcmp(str.to_unsafe, str.bytesize) == to_unsafe.memcmp(str.to_unsafe, str.bytesize) == 0
+  end
+
+  def enclosed_with?(delimiter : Char)
     starts_with?(delimiter) && ends_with?(delimiter)
+  end
+
+  def enclosed_with?(re : Regex)
+    !!($~ = /^#{re}.*#{re}\z/.match(self))
   end
 
   def enclosed_with?(start_delimiter, end_delimiter)

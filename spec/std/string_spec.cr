@@ -972,11 +972,14 @@ describe "String" do
     it { "foobar".enclosed_with?("bar", "foo").should be_false }
     it { "foobar".enclosed_with?("foo").should be_false }
     it { "foobar".enclosed_with?("foobarbaz").should be_false }
-    it { "foobar".enclosed_with?("oba").should be_false }
+    it { "foobarfoo".enclosed_with?("foo").should be_true }
     it { "foobar".enclosed_with?("").should be_true }
     it { "_foobar_".enclosed_with?('_').should be_true }
     it { "foobar".enclosed_with?('f', 'r').should be_true }
     it { "foobar".enclosed_with?(/fo|ar/).should be_true }
+    it { "foobar".enclosed_with?(/oo|ba/).should be_false }
+    it { "foobar".enclosed_with?(/foo/).should be_false }
+    it { "foobar".enclosed_with?(/bar/).should be_false }
     it { "foobar".enclosed_with?(/bar/, /foo/).should be_false }
     it { "foobarし".enclosed_with?(/foo/, 'し').should be_true }
     it { "しよし".enclosed_with?('し').should be_true }
