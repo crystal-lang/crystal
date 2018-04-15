@@ -210,7 +210,7 @@ class HTTP::Server
         until @wants_close
           spawn handle_client(socket.accept? || break)
         end
-
+      ensure
         done.send nil
       end
     end
