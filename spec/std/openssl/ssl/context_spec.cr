@@ -1,4 +1,4 @@
-require "spec"
+require "../../spec_helper"
 require "openssl"
 require "../../../support/finalize"
 
@@ -70,24 +70,24 @@ describe OpenSSL::SSL::Context do
 
   it "sets certificate chain" do
     context = OpenSSL::SSL::Context::Client.new
-    context.certificate_chain = File.join(__DIR__, "openssl.crt")
+    context.certificate_chain = datapath("openssl", "openssl.crt")
   end
 
   it "fails to set certificate chain" do
     context = OpenSSL::SSL::Context::Client.new
-    expect_raises(OpenSSL::Error) { context.certificate_chain = File.join(__DIR__, "unknown.crt") }
-    expect_raises(OpenSSL::Error) { context.certificate_chain = __FILE__ }
+    expect_raises(OpenSSL::Error) { context.certificate_chain = datapath("nonexistent.crt") }
+    expect_raises(OpenSSL::Error) { context.certificate_chain = datapath("test_file.txt") }
   end
 
   it "sets private key" do
     context = OpenSSL::SSL::Context::Client.new
-    context.private_key = File.join(__DIR__, "openssl.key")
+    context.private_key = datapath("openssl", "openssl.key")
   end
 
   it "fails to set private key" do
     context = OpenSSL::SSL::Context::Client.new
-    expect_raises(OpenSSL::Error) { context.private_key = File.join(__DIR__, "unknown.key") }
-    expect_raises(OpenSSL::Error) { context.private_key = __FILE__ }
+    expect_raises(OpenSSL::Error) { context.private_key = datapath("nonexistent.key") }
+    expect_raises(OpenSSL::Error) { context.private_key = datapath("test_file.txt") }
   end
 
   it "sets ciphers" do

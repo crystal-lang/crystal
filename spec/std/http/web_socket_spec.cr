@@ -1,4 +1,4 @@
-require "spec"
+require "../spec_helper"
 require "http/web_socket"
 require "random/secure"
 
@@ -129,7 +129,7 @@ describe HTTP::WebSocket do
     end
 
     it "read long packet" do
-      data = File.read("#{__DIR__}/../data/websocket_longpacket.bin")
+      data = File.read(datapath("websocket_longpacket.bin"))
       io = IO::Memory.new(data)
       ws = HTTP::WebSocket::Protocol.new(io)
 
@@ -352,8 +352,8 @@ describe HTTP::WebSocket do
 
       http_server = http_ref = HTTP::Server.new([ws_handler])
       tls = http_server.tls = OpenSSL::SSL::Context::Server.new
-      tls.certificate_chain = File.join(__DIR__, "../openssl/ssl/openssl.crt")
-      tls.private_key = File.join(__DIR__, "../openssl/ssl/openssl.key")
+      tls.certificate_chain = datapath("openssl", "openssl.crt")
+      tls.private_key = datapath("openssl", "openssl.key")
       address = http_server.bind_unused_port
       address_chan.send(address)
       http_server.listen
