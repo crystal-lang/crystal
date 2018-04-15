@@ -158,10 +158,8 @@ class HTTP::Server
   end
 
   # Adds a `Socket::Server` *socket* to this server.
-  def bind(socket : Socket::Server) : Socket::Server
+  def bind(socket : Socket::Server) : Nil
     @sockets << socket
-
-    socket
   end
 
   # Enumerates all addresses this server is bound to.
