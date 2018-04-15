@@ -1,3 +1,5 @@
+require "c/synchapi"
+
 struct CallStack
   def self.skip(*args)
     # do nothing
@@ -62,4 +64,12 @@ class Process
   def self.exit(status = 0)
     LibC.exit(status)
   end
+end
+
+def sleep(seconds : Number)
+  sleep(seconds.seconds)
+end
+
+def sleep(time : Time::Span)
+  LibC.Sleep(time.total_milliseconds)
 end
