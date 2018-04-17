@@ -194,21 +194,19 @@ module HTTP
   end
 
   describe HTTP::Server do
-    it "re-sets special port zero after bind" do
-      server = Server.new(0) { |ctx| }
-      server.bind
-      server.port.should_not eq(0)
-    end
+    it "binds to unused port" do
+      server = Server.new { |ctx| }
+      address = server.bind_unused_port
+      address.port.should_not eq(0)
 
-    it "re-sets port to zero after close" do
-      server = Server.new(0) { |ctx| }
-      server.bind
-      server.close
-      server.port.should eq(0)
+      server = Server.new { |ctx| }
+      port = server.bind_tcp(0).port
+      port.should_not eq(0)
     end
 
     it "doesn't raise on accept after close #2692" do
-      server = Server.new("0.0.0.0", 0) { }
+      server = Server.new { }
+      server.bind_unused_port
 
       spawn do
         server.close
@@ -219,14 +217,98 @@ module HTTP
     end
 
     it "reuses the TCP port (SO_REUSEPORT)" do
-      s1 = Server.new(0) { |ctx| }
-      s1.bind(reuse_port: true)
+      s1 = Server.new { |ctx| }
+      address = s1.bind_unused_port(reuse_port: true)
 
-      s2 = Server.new(s1.port) { |ctx| }
-      s2.bind(reuse_port: true)
+      s2 = Server.new { |ctx| }
+      s2.bind_tcp(address.port, reuse_port: true)
 
       s1.close
       s2.close
+    end
+
+    it "binds to different ports" do
+      server = Server.new do |context|
+        context.response.print "Test Server (#{context.request.headers["Host"]?})"
+      end
+
+      tcp_server = TCPServer.new("127.0.0.1", 0)
+      server.bind tcp_server
+      address1 = tcp_server.local_address
+
+      address2 = server.bind_unused_port
+
+      address1.should_not eq address2
+
+      spawn { server.listen }
+
+      Fiber.yield
+
+      HTTP::Client.get("http://#{address2}/").body.should eq "Test Server (#{address2})"
+      HTTP::Client.get("http://#{address1}/").body.should eq "Test Server (#{address1})"
+      HTTP::Client.get("http://#{address1}/").body.should eq "Test Server (#{address1})"
+    end
+
+    it "lists addresses" do
+      server = Server.new { }
+
+      tcp_server = TCPServer.new("127.0.0.1", 0)
+      addresses = [server.bind_unused_port, server.bind_unused_port, tcp_server.local_address]
+      server.bind tcp_server
+
+      server.addresses.should eq addresses
+    end
+
+    describe "#bind" do
+      it "fails after listen" do
+        server = Server.new { }
+        server.bind_unused_port
+        spawn { server.listen }
+        Fiber.yield
+        expect_raises(Exception, "Can't add socket to running server") do
+          server.bind_unused_port
+        end
+        server.close
+      end
+
+      it "fails after close" do
+        server = Server.new { }
+        server.bind_unused_port
+        spawn { server.listen }
+        Fiber.yield
+        server.close
+        expect_raises(Exception, "Can't add socket to closed server") do
+          server.bind_unused_port
+        end
+        server.close unless server.closed?
+      end
+    end
+
+    describe "#listen" do
+      it "fails after listen" do
+        server = Server.new { }
+        server.bind_unused_port
+        spawn { server.listen }
+        Fiber.yield
+        server.listening?.should be_true
+        expect_raises(Exception, "Can't start running server") do
+          server.listen
+        end
+        server.close
+      end
+
+      it "fails after close" do
+        server = Server.new { }
+        server.bind_unused_port
+        spawn { server.listen }
+        Fiber.yield
+        server.listening?.should be_true
+        server.close
+        server.listening?.should be_false
+        expect_raises(Exception, "Can't re-start closed server") do
+          server.listen
+        end
+      end
     end
   end
 
@@ -310,40 +392,46 @@ module HTTP
 
   typeof(begin
     # Initialize with custom host
-    server = Server.new("0.0.0.0", 0) { |ctx| }
+    server = Server.new { |ctx| }
+    server.bind_tcp "0.0.0.0", 0
     server.listen
     server.close
 
-    server = Server.new("0.0.0.0", 0, [
+    server = Server.new([
       ErrorHandler.new,
       LogHandler.new,
       CompressHandler.new,
       StaticFileHandler.new("."),
     ]
     )
+    server.bind_tcp "0.0.0.0", 0
     server.listen
     server.close
 
-    server = Server.new("0.0.0.0", 0, [StaticFileHandler.new(".")]) { |ctx| }
+    server = Server.new([StaticFileHandler.new(".")]) { |ctx| }
+    server.bind_tcp "0.0.0.0", 0
     server.listen
     server.close
 
     # Initialize with default host
-    server = Server.new(0) { |ctx| }
+    server = Server.new { |ctx| }
+    server.bind_tcp 0
     server.listen
     server.close
 
-    server = Server.new(0, [
+    server = Server.new([
       ErrorHandler.new,
       LogHandler.new,
       CompressHandler.new,
       StaticFileHandler.new("."),
     ]
     )
+    server.bind_tcp 0
     server.listen
     server.close
 
-    server = Server.new(0, [StaticFileHandler.new(".")]) { |ctx| }
+    server = Server.new([StaticFileHandler.new(".")]) { |ctx| }
+    server.bind_tcp 0
     server.listen
     server.close
   end)

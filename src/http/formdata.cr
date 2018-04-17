@@ -12,7 +12,7 @@ require "./formdata/**"
 # require "http"
 # require "tempfile"
 #
-# server = HTTP::Server.new(8085) do |context|
+# server = HTTP::Server.new do |context|
 #   name = nil
 #   file = nil
 #   HTTP::FormData.parse(context.request) do |part|
@@ -34,6 +34,7 @@ require "./formdata/**"
 #   context.response << file.path
 # end
 #
+# server.bind 8085
 # server.listen
 # ```
 #

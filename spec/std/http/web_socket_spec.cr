@@ -295,7 +295,7 @@ describe HTTP::WebSocket do
   end
 
   it "negotiates over HTTP correctly" do
-    port_chan = Channel(Int32).new
+    address_chan = Channel(Socket::IPAddress).new
 
     spawn do
       http_ref = nil
@@ -313,15 +313,15 @@ describe HTTP::WebSocket do
         end
       end
 
-      http_server = http_ref = HTTP::Server.new(0, [ws_handler])
-      http_server.bind
-      port_chan.send(http_server.port)
+      http_server = http_ref = HTTP::Server.new([ws_handler])
+      address = http_server.bind_unused_port
+      address_chan.send(address)
       http_server.listen
     end
 
-    listen_port = port_chan.receive
+    listen_address = address_chan.receive
 
-    ws2 = HTTP::WebSocket.new("ws://127.0.0.1:#{listen_port}/foo/bar?query=arg&yes=please")
+    ws2 = HTTP::WebSocket.new("ws://#{listen_address}/foo/bar?query=arg&yes=please")
 
     random = Random::Secure.hex
     ws2.on_message do |str|
@@ -334,7 +334,7 @@ describe HTTP::WebSocket do
   end
 
   it "negotiates over HTTPS correctly" do
-    port_chan = Channel(Int32).new
+    address_chan = Channel(Socket::IPAddress).new
 
     spawn do
       http_ref = nil
@@ -350,19 +350,19 @@ describe HTTP::WebSocket do
         end
       end
 
-      http_server = http_ref = HTTP::Server.new(0, [ws_handler])
+      http_server = http_ref = HTTP::Server.new([ws_handler])
       tls = http_server.tls = OpenSSL::SSL::Context::Server.new
       tls.certificate_chain = File.join(__DIR__, "../openssl/ssl/openssl.crt")
       tls.private_key = File.join(__DIR__, "../openssl/ssl/openssl.key")
-      http_server.bind
-      port_chan.send(http_server.port)
+      address = http_server.bind_unused_port
+      address_chan.send(address)
       http_server.listen
     end
 
-    listen_port = port_chan.receive
+    listen_address = address_chan.receive
 
     client_context = OpenSSL::SSL::Context::Client.insecure
-    ws2 = HTTP::WebSocket.new("127.0.0.1", port: listen_port, path: "/", tls: client_context)
+    ws2 = HTTP::WebSocket.new(listen_address.address, port: listen_address.port, path: "/", tls: client_context)
 
     random = Random::Secure.hex
     ws2.on_message do |str|
