@@ -603,8 +603,17 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
       end
 
       const_value.type = enum_type
-      counter = is_flags ? counter * 2 : counter + 1
-      {counter, all_value}
+      new_counter =
+        if is_flags
+          if counter == 0 # In case the member is set to 0
+            1
+          else
+            counter * 2
+          end
+        else
+          counter + 1
+        end
+      {new_counter, all_value}
     else
       member.accept self
       {counter, all_value}
