@@ -258,6 +258,58 @@ module HTTP
 
       server.addresses.should eq addresses
     end
+
+    describe "#bind" do
+      it "fails after listen" do
+        server = Server.new { }
+        server.bind_unused_port
+        spawn { server.listen }
+        Fiber.yield
+        expect_raises(Exception, "Can't add socket to running server") do
+          server.bind_unused_port
+        end
+        server.close
+      end
+
+      it "fails after close" do
+        server = Server.new { }
+        server.bind_unused_port
+        spawn { server.listen }
+        Fiber.yield
+        server.close
+        expect_raises(Exception, "Can't add socket to closed server") do
+          server.bind_unused_port
+        end
+        server.close unless server.closed?
+      end
+    end
+
+    describe "#listen" do
+      it "fails after listen" do
+        server = Server.new { }
+        server.bind_unused_port
+        spawn { server.listen }
+        Fiber.yield
+        server.listening?.should be_true
+        expect_raises(Exception, "Can't start running server") do
+          server.listen
+        end
+        server.close
+      end
+
+      it "fails after close" do
+        server = Server.new { }
+        server.bind_unused_port
+        spawn { server.listen }
+        Fiber.yield
+        server.listening?.should be_true
+        server.close
+        server.listening?.should be_false
+        expect_raises(Exception, "Can't re-start closed server") do
+          server.listen
+        end
+      end
+    end
   end
 
   describe HTTP::Server::RequestProcessor do

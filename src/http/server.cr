@@ -99,8 +99,13 @@ class HTTP::Server
     property tls : OpenSSL::SSL::Context::Server?
   {% end %}
 
-  @wants_close = false
   @sockets = [] of Socket::Server
+
+  # Returns `true` if this server is closed.
+  getter? closed : Bool = false
+
+  # Returns `true` if this server is listening on it's sockets.
+  getter? listening : Bool = false
 
   # Creates a new HTTP server with the given block as handler.
   def self.new(&handler : HTTP::Handler::Proc) : self
@@ -159,6 +164,9 @@ class HTTP::Server
 
   # Adds a `Socket::Server` *socket* to this server.
   def bind(socket : Socket::Server) : Nil
+    raise "Can't add socket to running server" if listening?
+    raise "Can't add socket to closed server" if closed?
+
     @sockets << socket
   end
 
@@ -199,13 +207,16 @@ class HTTP::Server
 
   # Starts the server. Blocks until the server is closed.
   def listen
-    raise "Can't start server with not sockets to listen to" if @sockets.empty?
+    raise "Can't re-start closed server" if closed?
+    raise "Can't start server with no sockets to listen to, use HTTP::Server#bind first" if @sockets.empty?
+    raise "Can't start running server" if listening?
 
+    @listening = true
     done = Channel(Nil).new
 
     @sockets.each do |socket|
       spawn do
-        until @wants_close
+        until closed?
           spawn handle_client(socket.accept? || break)
         end
       ensure
@@ -219,7 +230,9 @@ class HTTP::Server
   # Gracefully terminates the server. It will process currently accepted
   # requests, but it won't accept new connections.
   def close
-    @wants_close = true
+    raise "Can't close server, it's already closed" if closed?
+
+    @closed = true
     @processor.close
 
     @sockets.each do |socket|
@@ -228,6 +241,7 @@ class HTTP::Server
       # ignore exception on close
     end
 
+    @listening = false
     @sockets.clear
   end
 
