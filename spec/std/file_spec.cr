@@ -565,7 +565,7 @@ describe "File" do
     it "converts a pathname to an absolute pathname, using ~ (home) as base" do
       File.expand_path("~/").should eq(home)
       File.expand_path("~/..badfilename").should eq(File.join(home, "..badfilename"))
-      File.expand_path("..").should eq("/#{base.split("/")[0...-1].join("/")}".gsub(%r{\A//}, "/"))
+      File.expand_path("..").should eq("/#{base.split('/')[0...-1].join('/')}".gsub(%r{\A//}, "/"))
       File.expand_path("~/a", "~/b").should eq(File.join(home, "a"))
       File.expand_path("~").should eq(home)
       File.expand_path("~", "/tmp/gumby/ddd").should eq(home)
@@ -578,7 +578,7 @@ describe "File" do
         ENV["HOME"] = __DIR__ + "/"
         File.expand_path("~/").should eq(home)
         File.expand_path("~/..badfilename").should eq(File.join(home, "..badfilename"))
-        File.expand_path("..").should eq("/#{base.split("/")[0...-1].join("/")}".gsub(%r{\A//}, "/"))
+        File.expand_path("..").should eq("/#{base.split('/')[0...-1].join('/')}".gsub(%r{\A//}, "/"))
         File.expand_path("~/a", "~/b").should eq(File.join(home, "a"))
         File.expand_path("~").should eq(home)
         File.expand_path("~", "/tmp/gumby/ddd").should eq(home)
@@ -594,7 +594,7 @@ describe "File" do
         ENV["HOME"] = "/"
         File.expand_path("~/").should eq(home)
         File.expand_path("~/..badfilename").should eq(File.join(home, "..badfilename"))
-        File.expand_path("..").should eq("/#{base.split("/")[0...-1].join("/")}".gsub(%r{\A//}, "/"))
+        File.expand_path("..").should eq("/#{base.split('/')[0...-1].join('/')}".gsub(%r{\A//}, "/"))
         File.expand_path("~/a", "~/b").should eq(File.join(home, "a"))
         File.expand_path("~").should eq(home)
         File.expand_path("~", "/tmp/gumby/ddd").should eq(home)

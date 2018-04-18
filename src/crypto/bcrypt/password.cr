@@ -39,7 +39,7 @@ class Crypto::Bcrypt::Password
   # password.digest  # => "8/Po4wTL0fhdDNdAdjcKN/Fup8tGCya"
   # ```
   def initialize(@raw_hash : String)
-    parts = @raw_hash.split("$")
+    parts = @raw_hash.split('$')
 
     @version = parts[1]
     @cost = parts[2].to_i

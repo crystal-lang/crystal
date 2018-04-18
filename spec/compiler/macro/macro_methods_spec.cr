@@ -252,7 +252,7 @@ describe "macro methods" do
     end
 
     it "executes split with argument" do
-      assert_macro "", %({{"1-2-3".split("-")}}), [] of ASTNode, %(["1", "2", "3"] of ::String)
+      assert_macro "", %({{"1-2-3".split('-')}}), [] of ASTNode, %(["1", "2", "3"] of ::String)
     end
 
     it "executes split with char argument" do

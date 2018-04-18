@@ -250,7 +250,7 @@ class OptionParser
     end
 
     private def process_double_flag(flag, block, raise_if_missing = false)
-      while index = args_index { |arg| arg.split("=")[0] == flag }
+      while index = args_index { |arg| arg.split('=')[0] == flag }
         arg = @args[index]
         if arg.size == flag.size
           delete_arg_at_index(index)

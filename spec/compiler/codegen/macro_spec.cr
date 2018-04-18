@@ -554,7 +554,7 @@ describe "Code gen: macro" do
           @x = 1; @x = 1.1
         end
         def foo
-          {{ @type.instance_vars.first.type.union_types.map(&.name).sort }}.join("-")
+          {{ @type.instance_vars.first.type.union_types.map(&.name).sort }}.join('-')
         end
       end
       Foo.new.foo
@@ -599,7 +599,7 @@ describe "Code gen: macro" do
       require "prelude"
       class Foo(T, K)
         def self.foo : String
-          {{ @type.type_vars.map(&.stringify) }}.join("-")
+          {{ @type.type_vars.map(&.stringify) }}.join('-')
         end
       end
       Foo.foo
@@ -693,7 +693,7 @@ describe "Code gen: macro" do
       end
 
       names = {{ Foo.subclasses.map &.name }}
-      names.join("-")
+      names.join('-')
       )).to_string.should eq("Bar-Baz")
   end
 
@@ -711,7 +711,7 @@ describe "Code gen: macro" do
       end
 
       names = {{ Foo.all_subclasses.map &.name }}
-      names.join("-")
+      names.join('-')
       )).to_string.should eq("Bar-Baz")
   end
 

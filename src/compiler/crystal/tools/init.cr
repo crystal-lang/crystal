@@ -198,7 +198,7 @@ module Crystal
       end
 
       def module_name
-        config.name.split("-").map(&.camelcase).join("::")
+        config.name.split('-').map(&.camelcase).join("::")
       end
 
       abstract def full_path
