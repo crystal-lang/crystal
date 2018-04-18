@@ -162,6 +162,20 @@ class HTTP::Server
     bind_tcp host, 0, reuse_port
   end
 
+  # Creates a `UNIXServer` bound to *path* and adds it as a socket.
+  #
+  # ```
+  # server = HTTP::Server.new { }
+  # server.bind_unix "/tmp/my-socket.sock"
+  # ```
+  def bind_unix(path : String) : Socket::UNIXAddress
+    server = UNIXServer.new(path)
+
+    bind(server)
+
+    server.local_address
+  end
+
   # Adds a `Socket::Server` *socket* to this server.
   def bind(socket : Socket::Server) : Nil
     raise "Can't add socket to running server" if listening?
