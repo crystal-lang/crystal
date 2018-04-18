@@ -270,7 +270,9 @@ class HTTP::Server
   end
 
   private def handle_client(io : IO)
-    io.sync = false
+    if io.is_a?(IO::Buffered)
+      io.sync = false
+    end
 
     {% if !flag?(:without_openssl) %}
       if tls = @tls
