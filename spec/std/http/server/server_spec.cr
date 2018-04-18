@@ -1,5 +1,6 @@
 require "spec"
 require "http/server"
+require "http/client/response"
 require "tempfile"
 
 private class RaiseErrno < IO
@@ -41,21 +42,13 @@ private class ReverseResponseOutput < IO
   end
 end
 
-# TODO: replace with `HTTP::Client` once it supports connecting to Unix socket.
+# TODO: replace with `HTTP::Client` once it supports connecting to Unix socket (#2735)
 private def unix_request(path)
   UNIXSocket.open(path) do |io|
-    io << "GET / HTTP/1.1\r\n"
-    io << "X-Unix-Socket: #{path}\r\n"
-    io << "\r\n"
-    io.flush
+    request = HTTP::Request.new("GET", "/", HTTP::Headers{"X-Unix-Socket" => path})
+    request.to_io(io)
 
-    loop do
-      line = io.gets || break
-
-      if line.empty?
-        return io.gets
-      end
-    end
+    HTTP::Client::Response.from_io(io).body
   end
 end
 
@@ -331,39 +324,39 @@ module HTTP
     end
 
     {% if flag?(:unix) %}
-    describe "#bind_unix" do
-      it "binds to different unix sockets" do
-        path1 = Tempfile.tempname
-        path2 = Tempfile.tempname
+      describe "#bind_unix" do
+        it "binds to different unix sockets" do
+          path1 = Tempfile.tempname
+          path2 = Tempfile.tempname
 
-        begin
-          server = Server.new do |context|
-            # TODO: Replace custom header with local_address
-            context.response.puts "Test Server (#{context.request.headers["X-Unix-Socket"]?})"
-            context.response.close
+          begin
+            server = Server.new do |context|
+              # TODO: Replace custom header with local_address (#5784)
+              context.response.print "Test Server (#{context.request.headers["X-Unix-Socket"]?})"
+              context.response.close
+            end
+
+            socket1 = UNIXServer.new(path1)
+            server.bind socket1
+            socket2 = server.bind_unix path2
+
+            spawn server.listen
+
+            Fiber.yield
+
+            unix_request(path1).should eq "Test Server (#{path1})"
+            unix_request(path2).should eq "Test Server (#{path2})"
+
+            server.close
+
+            File.exists?(path1).should be_false
+            File.exists?(path2).should be_false
+          ensure
+            File.delete(path1) if File.exists?(path1)
+            File.delete(path2) if File.exists?(path2)
           end
-
-          socket1 = UNIXServer.new(path1)
-          server.bind socket1
-          socket2 = server.bind_unix path2
-
-          spawn server.listen
-
-          Fiber.yield
-
-          unix_request(path1).should eq "Test Server (#{path1})"
-          unix_request(path2).should eq "Test Server (#{path2})"
-
-          server.close
-
-          File.exists?(path1).should be_false
-          File.exists?(path2).should be_false
-        ensure
-          File.delete(path1) if File.exists?(path1)
-          File.delete(path2) if File.exists?(path2)
         end
       end
-    end
     {% end %}
   end
 
