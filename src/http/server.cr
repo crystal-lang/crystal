@@ -1,11 +1,11 @@
-{% if !flag?(:without_openssl) %}
-  require "openssl"
-{% end %}
 require "socket"
 require "./server/context"
 require "./server/handler"
 require "./server/response"
 require "./common"
+{% unless flag?(:without_openssl) %}
+  require "openssl"
+{% end %}
 
 # An HTTP server.
 #
@@ -95,10 +95,6 @@ require "./common"
 # server.listen
 # ```
 class HTTP::Server
-  {% if !flag?(:without_openssl) %}
-    property tls : OpenSSL::SSL::Context::Server?
-  {% end %}
-
   @sockets = [] of Socket::Server
 
   # Returns `true` if this server is closed.
@@ -185,6 +181,43 @@ class HTTP::Server
 
     server.local_address
   end
+
+  {% unless flag?(:without_openssl) %}
+    # Creates a `OpenSSL::SSL::Server` and adds it as a socket.
+    #
+    # The SSL server wraps a `TCPServer` listenting on `host:port`.
+    #
+    # ```
+    # server = HTTP::Server.new { }
+    # context = OpenSSL::SSL::Context::Server.new
+    # context.certificate_chain = "openssl.crt"
+    # context.private_key = "openssl.key"
+    # server.bind_ssl "127.0.0.1", 8080, context
+    # ```
+    def bind_ssl(host : String, port : Int32, context : OpenSSL::SSL::Context::Server, reuse_port : Bool = false) : Socket::IPAddress
+      tcp_server = TCPServer.new(host, port, reuse_port)
+      server = OpenSSL::SSL::Server.new(tcp_server, context)
+
+      bind(server)
+
+      tcp_server.local_address
+    end
+
+    # Creates a `OpenSSL::SSL::Server` and adds it as a socket.
+    #
+    # The SSL server wraps a `TCPServer` listenting on an unused port on *host*.
+    #
+    # ```
+    # server = HTTP::Server.new { }
+    # context = OpenSSL::SSL::Context::Server.new
+    # context.certificate_chain = "openssl.crt"
+    # context.private_key = "openssl.key"
+    # address = server.bind_ssl "127.0.0.1", context
+    # ```
+    def bind_ssl(host : String, context : OpenSSL::SSL::Context::Server) : Socket::IPAddress
+      bind_ssl(host, 0, context)
+    end
+  {% end %}
 
   # Adds a `Socket::Server` *socket* to this server.
   def bind(socket : Socket::Server) : Nil
@@ -273,12 +306,6 @@ class HTTP::Server
     if io.is_a?(IO::Buffered)
       io.sync = false
     end
-
-    {% if !flag?(:without_openssl) %}
-      if tls = @tls
-        io = OpenSSL::SSL::Socket::Server.new(io, tls, sync_close: true)
-      end
-    {% end %}
 
     @processor.process(io, io)
   end
