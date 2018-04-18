@@ -45,6 +45,17 @@ describe "Regex" do
     expect_raises(ArgumentError) { Regex.new("foo)") }
   end
 
+  it "checks if Char need to be escaped" do
+    Regex.needs_escape?('*').should be_true
+    Regex.needs_escape?('|').should be_true
+    Regex.needs_escape?('@').should be_false
+  end
+
+  it "checks if String need to be escaped" do
+    Regex.needs_escape?("10$").should be_true
+    Regex.needs_escape?("foo").should be_false
+  end
+
   it "escapes" do
     Regex.escape(" .\\+*?[^]$(){}=!<>|:-hello").should eq("\\ \\.\\\\\\+\\*\\?\\[\\^\\]\\$\\(\\)\\{\\}\\=\\!\\<\\>\\|\\:\\-hello")
   end
