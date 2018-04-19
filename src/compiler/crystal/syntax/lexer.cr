@@ -540,7 +540,7 @@ module Crystal
             while ident_part?(next_char)
               # Nothing to do
             end
-            if current_char == '!' || current_char == '?'
+            if current_char == '!' || current_char == '?' || current_char == '='
               next_char
             end
             @token.type = :SYMBOL
