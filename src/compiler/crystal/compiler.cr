@@ -324,7 +324,7 @@ module Crystal
 
         link_flags = @link_flags || ""
         link_flags += " -rdynamic"
-        link_flags += " -static" if static?
+        link_flags += " -static" if static? && !program.has_flag? "darwin"
 
         %(#{cc} #{object_name} -o '#{output_filename}' #{link_flags} #{program.lib_flags})
       end

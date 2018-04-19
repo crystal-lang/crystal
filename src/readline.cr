@@ -1,6 +1,8 @@
 @[Link("readline")]
 {% if flag?(:openbsd) %}
 @[Link("termcap")]
+{% elsif flag?(:darwin) %}
+@[Link("ncurses")]
 {% end %}
 lib LibReadline
   alias Int = LibC::Int
