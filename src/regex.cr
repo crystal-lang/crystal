@@ -304,7 +304,13 @@ class Regex
   def self.escape(str) : String
     String.build do |result|
       str.each_byte do |byte|
-        result << '\\' if needs_escape?(byte.unsafe_chr)
+        case byte.unsafe_chr
+        # See `Regex::SPECIAL_CHARACTERS`
+        when ' ', '.', '\\', '+', '*', '?', '[',
+             '^', ']', '$', '(', ')', '{', '}',
+             '=', '!', '<', '>', '|', ':', '-'
+          result << '\\'
+        end
         result.write_byte byte
       end
     end
