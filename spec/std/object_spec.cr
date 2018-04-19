@@ -98,6 +98,13 @@ private class TestObject
   end
 end
 
+private class DelegatedTestObject
+  delegate "property1=", to: @test_object
+
+  def initialize(@test_object : TestObject)
+  end
+end
+
 private class TestObjectWithFinalize
   property key : Symbol?
 
@@ -128,6 +135,13 @@ describe Object do
         matches << match[0]
       end
       matches.should eq(["l", "l"])
+    end
+
+    it "delegates setter" do
+      test_object = TestObject.new
+      delegated = DelegatedTestObject.new(test_object)
+      delegated.property1 = 42
+      test_object.property1.should eq 42
     end
   end
 
