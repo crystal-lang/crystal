@@ -1,17 +1,16 @@
 require "spec"
 
-# TODO: uncomment at v > 0.24
-# private class A
-# end
+private class A
+end
 
-# private class B1 < A
-# end
+private class B1 < A
+end
 
-# private class C1 < B1
-# end
+private class C1 < B1
+end
 
-# private class B2 < A
-# end
+private class B2 < A
+end
 
 describe Class do
   it "does ===" do
@@ -51,96 +50,95 @@ describe Class do
     Int32?.nilable?.should be_true
   end
 
-  # TODO: uncomment at v > 0.24
-  # describe "comparison operators" do
-  #   t = [A, B1, B2, C1]
+  describe "comparison operators" do
+    t = [A, B1, B2, C1]
 
-  #   it "<" do
-  #     (t[0] < t[0]).should eq(false)
-  #     (t[0] < t[1]).should eq(false)
-  #     (t[0] < t[2]).should eq(false)
-  #     (t[0] < t[3]).should eq(false)
+    it "<" do
+      (t[0] < t[0]).should be_false
+      (t[0] < t[1]).should be_false
+      (t[0] < t[2]).should be_false
+      (t[0] < t[3]).should be_false
 
-  #     (t[1] < t[0]).should eq(true)
-  #     (t[1] < t[1]).should eq(false)
-  #     (t[1] < t[2]).should eq(false)
-  #     (t[1] < t[3]).should eq(false)
+      (t[1] < t[0]).should be_true
+      (t[1] < t[1]).should be_false
+      (t[1] < t[2]).should be_false
+      (t[1] < t[3]).should be_false
 
-  #     (t[2] < t[0]).should eq(true)
-  #     (t[2] < t[1]).should eq(false)
-  #     (t[2] < t[2]).should eq(false)
-  #     (t[2] < t[3]).should eq(false)
+      (t[2] < t[0]).should be_true
+      (t[2] < t[1]).should be_false
+      (t[2] < t[2]).should be_false
+      (t[2] < t[3]).should be_false
 
-  #     (t[3] < t[0]).should eq(true)
-  #     (t[3] < t[1]).should eq(true)
-  #     (t[3] < t[2]).should eq(false)
-  #     (t[3] < t[3]).should eq(false)
-  #   end
+      (t[3] < t[0]).should be_true
+      (t[3] < t[1]).should be_true
+      (t[3] < t[2]).should be_false
+      (t[3] < t[3]).should be_false
+    end
 
-  #   it "<=" do
-  #     (t[0] <= t[0]).should eq(true)
-  #     (t[0] <= t[1]).should eq(false)
-  #     (t[0] <= t[2]).should eq(false)
-  #     (t[0] <= t[3]).should eq(false)
+    it "<=" do
+      (t[0] <= t[0]).should be_true
+      (t[0] <= t[1]).should be_false
+      (t[0] <= t[2]).should be_false
+      (t[0] <= t[3]).should be_false
 
-  #     (t[1] <= t[0]).should eq(true)
-  #     (t[1] <= t[1]).should eq(true)
-  #     (t[1] <= t[2]).should eq(false)
-  #     (t[1] <= t[3]).should eq(false)
+      (t[1] <= t[0]).should be_true
+      (t[1] <= t[1]).should be_true
+      (t[1] <= t[2]).should be_false
+      (t[1] <= t[3]).should be_false
 
-  #     (t[2] <= t[0]).should eq(true)
-  #     (t[2] <= t[1]).should eq(false)
-  #     (t[2] <= t[2]).should eq(true)
-  #     (t[2] <= t[3]).should eq(false)
+      (t[2] <= t[0]).should be_true
+      (t[2] <= t[1]).should be_false
+      (t[2] <= t[2]).should be_true
+      (t[2] <= t[3]).should be_false
 
-  #     (t[3] <= t[0]).should eq(true)
-  #     (t[3] <= t[1]).should eq(true)
-  #     (t[3] <= t[2]).should eq(false)
-  #     (t[3] <= t[3]).should eq(true)
-  #   end
+      (t[3] <= t[0]).should be_true
+      (t[3] <= t[1]).should be_true
+      (t[3] <= t[2]).should be_false
+      (t[3] <= t[3]).should be_true
+    end
 
-  #   it ">" do
-  #     (t[0] > t[0]).should eq(false)
-  #     (t[0] > t[1]).should eq(true)
-  #     (t[0] > t[2]).should eq(true)
-  #     (t[0] > t[3]).should eq(true)
+    it ">" do
+      (t[0] > t[0]).should be_false
+      (t[0] > t[1]).should be_true
+      (t[0] > t[2]).should be_true
+      (t[0] > t[3]).should be_true
 
-  #     (t[1] > t[0]).should eq(false)
-  #     (t[1] > t[1]).should eq(false)
-  #     (t[1] > t[2]).should eq(false)
-  #     (t[1] > t[3]).should eq(true)
+      (t[1] > t[0]).should be_false
+      (t[1] > t[1]).should be_false
+      (t[1] > t[2]).should be_false
+      (t[1] > t[3]).should be_true
 
-  #     (t[2] > t[0]).should eq(false)
-  #     (t[2] > t[1]).should eq(false)
-  #     (t[2] > t[2]).should eq(false)
-  #     (t[2] > t[3]).should eq(false)
+      (t[2] > t[0]).should be_false
+      (t[2] > t[1]).should be_false
+      (t[2] > t[2]).should be_false
+      (t[2] > t[3]).should be_false
 
-  #     (t[3] > t[0]).should eq(false)
-  #     (t[3] > t[1]).should eq(false)
-  #     (t[3] > t[2]).should eq(false)
-  #     (t[3] > t[3]).should eq(false)
-  #   end
+      (t[3] > t[0]).should be_false
+      (t[3] > t[1]).should be_false
+      (t[3] > t[2]).should be_false
+      (t[3] > t[3]).should be_false
+    end
 
-  #   it ">=" do
-  #     (t[0] >= t[0]).should eq(true)
-  #     (t[0] >= t[1]).should eq(true)
-  #     (t[0] >= t[2]).should eq(true)
-  #     (t[0] >= t[3]).should eq(true)
+    it ">=" do
+      (t[0] >= t[0]).should be_true
+      (t[0] >= t[1]).should be_true
+      (t[0] >= t[2]).should be_true
+      (t[0] >= t[3]).should be_true
 
-  #     (t[1] >= t[0]).should eq(false)
-  #     (t[1] >= t[1]).should eq(true)
-  #     (t[1] >= t[2]).should eq(false)
-  #     (t[1] >= t[3]).should eq(true)
+      (t[1] >= t[0]).should be_false
+      (t[1] >= t[1]).should be_true
+      (t[1] >= t[2]).should be_false
+      (t[1] >= t[3]).should be_true
 
-  #     (t[2] >= t[0]).should eq(false)
-  #     (t[2] >= t[1]).should eq(false)
-  #     (t[2] >= t[2]).should eq(true)
-  #     (t[2] >= t[3]).should eq(false)
+      (t[2] >= t[0]).should be_false
+      (t[2] >= t[1]).should be_false
+      (t[2] >= t[2]).should be_true
+      (t[2] >= t[3]).should be_false
 
-  #     (t[3] >= t[0]).should eq(false)
-  #     (t[3] >= t[1]).should eq(false)
-  #     (t[3] >= t[2]).should eq(false)
-  #     (t[3] >= t[3]).should eq(true)
-  #   end
-  # end
+      (t[3] >= t[0]).should be_false
+      (t[3] >= t[1]).should be_false
+      (t[3] >= t[2]).should be_false
+      (t[3] >= t[3]).should be_true
+    end
+  end
 end
