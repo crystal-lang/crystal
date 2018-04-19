@@ -313,7 +313,7 @@ class Crystal::Command
       end
 
       unless no_codegen
-        opts.on("--emit [#{VALID_EMIT_VALUES.join("|")}]", "Comma separated list of types of output for the compiler to emit") do |emit_values|
+        opts.on("--emit [#{VALID_EMIT_VALUES.join('|')}]", "Comma separated list of types of output for the compiler to emit") do |emit_values|
           compiler.emit = validate_emit_values(emit_values.split(',').map(&.strip))
         end
       end
@@ -426,7 +426,7 @@ class Crystal::Command
       end
     end
 
-    compiler.link_flags = link_flags.join(" ") unless link_flags.empty?
+    compiler.link_flags = link_flags.join(' ') unless link_flags.empty?
 
     output_filename = opt_output_filename
     filenames += opt_filenames.not_nil!

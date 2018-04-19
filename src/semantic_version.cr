@@ -64,7 +64,7 @@ class SemanticVersion
   struct Prerelease
     def self.parse(str : String) : self
       identifiers = [] of String | Int32
-      str.split(".").each do |val|
+      str.split('.').each do |val|
         if val.match /^\d+$/
           identifiers << val.to_i32
         else
