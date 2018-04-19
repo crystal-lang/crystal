@@ -407,7 +407,7 @@ class Regex
   # ```
   def inspect(io : IO)
     io << '/'
-    append_source(io)
+    Regex.append_source(source, io)
     io << '/'
     io << 'i' if options.ignore_case?
     io << 'm' if options.multiline?
@@ -514,11 +514,12 @@ class Regex
     io << 'x' unless options.extended?
 
     io << ':'
-    append_source(io)
+    Regex.append_source(source, io)
     io << ')'
   end
 
-  private def append_source(io)
+  # :nodoc:
+  def self.append_source(source, io) : Nil
     reader = Char::Reader.new(source)
     while reader.has_next?
       case char = reader.current_char

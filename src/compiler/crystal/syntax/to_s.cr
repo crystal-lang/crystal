@@ -102,7 +102,7 @@ module Crystal
 
     def visit(node : StringInterpolation)
       @str << '"'
-      visit_interpolation node, &.gsub('"', "\\\"")
+      visit_interpolation node, &.inspect_unquoted
       @str << '"'
       false
     end
@@ -499,9 +499,9 @@ module Crystal
       @str << '`'
       case exp
       when StringLiteral
-        @str << exp.value.inspect[1..-2]
+        @str << exp.value.inspect_unquoted.gsub('`', "\\`")
       when StringInterpolation
-        visit_interpolation exp, &.gsub('`', "\\`")
+        visit_interpolation exp, &.inspect_unquoted.gsub('`', "\\`")
       end
       @str << '`'
       false
@@ -968,9 +968,9 @@ module Crystal
       @str << '/'
       case exp = node.value
       when StringLiteral
-        @str << exp.value.gsub('/', "\\/")
+        Regex.append_source exp.value, @str
       when StringInterpolation
-        visit_interpolation exp, &.gsub('/', "\\/")
+        visit_interpolation(exp) { |s| Regex.append_source s, @str }
       end
       @str << '/'
       @str << 'i' if node.options.includes? Regex::Options::IGNORE_CASE
