@@ -1083,15 +1083,21 @@ class Object
   # ```
   macro delegate(*methods, to object)
     {% for method in methods %}
-      def {{method.id}}(*args, **options)
-        {{object.id}}.{{method.id}}(*args, **options)
-      end
-
-      def {{method.id}}(*args, **options)
-        {{object.id}}.{{method.id}}(*args, **options) do |*yield_args|
-          yield *yield_args
+      {% if method.id.ends_with?('=') %}
+        def {{method.id}}(arg)
+          {{object.id}}.{{method.id}} arg
         end
-      end
+      {% else %}
+        def {{method.id}}(*args, **options)
+          {{object.id}}.{{method.id}}(*args, **options)
+        end
+
+        def {{method.id}}(*args, **options)
+          {{object.id}}.{{method.id}}(*args, **options) do |*yield_args|
+            yield *yield_args
+          end
+        end
+      {% end %}
     {% end %}
   end
 
