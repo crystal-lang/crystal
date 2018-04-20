@@ -1044,7 +1044,7 @@ module Crystal
     end
   end
 
-  class MetaVar < ASTNode
+  class MetaMacroVar < ASTNode
     def to_macro_id
       @name
     end
@@ -1060,6 +1060,14 @@ module Crystal
           else
             NilLiteral.new
           end
+        end
+      when "default_value"
+        interpret_argless_method(method, args) do
+          default_value || NilLiteral.new
+        end
+      when "has_default_value?"
+        interpret_argless_method(method, args) do
+          BoolLiteral.new(!!default_value)
         end
       else
         super
@@ -1572,8 +1580,14 @@ module Crystal
 
     def self.instance_vars(type)
       if type.is_a?(InstanceVarContainer)
+        if type.is_a?(InstanceVarInitializerContainer)
+          initializers = type.instance_vars_initializers
+        end
+
         ArrayLiteral.map(type.all_instance_vars) do |name, ivar|
-          MetaVar.new(name[1..-1], ivar.type)
+          meta_var = MetaMacroVar.new(name[1..-1], ivar.type)
+          meta_var.default_value = initializers.try &.find { |init| init.name == name }.try &.value
+          meta_var
         end
       else
         empty_no_return_array

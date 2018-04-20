@@ -717,4 +717,21 @@ module Crystal
 
     def_equals_and_hash value
   end
+
+  # Ficticious node representing a variable in macros
+  class MetaMacroVar < ASTNode
+    property name : String
+    property default_value : ASTNode?
+
+    def initialize(@name, @type)
+    end
+
+    def class_desc
+      "MetaVar"
+    end
+
+    def clone_without_location
+      self
+    end
+  end
 end
