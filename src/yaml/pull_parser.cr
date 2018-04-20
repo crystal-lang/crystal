@@ -320,6 +320,6 @@ class YAML::PullParser
   end
 
   def raise(msg : String, line_number = self.start_line, column_number = self.start_column, context_info = nil)
-    ::raise ParseException.new(msg, line_number, column_number, context_info)
+    ::raise ParseError.new(msg, line_number, column_number, context_info)
   end
 end

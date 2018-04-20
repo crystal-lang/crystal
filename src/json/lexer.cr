@@ -362,7 +362,7 @@ abstract class JSON::Lexer
   end
 
   private def raise(msg)
-    ::raise ParseException.new(msg, @line_number, @column_number)
+    ::raise ParseError.new(msg, @line_number, @column_number)
   end
 end
 

@@ -74,7 +74,7 @@ module YAML
   end
 
   # Exception thrown on a YAML parse error.
-  class ParseException < Error
+  class ParseError < Error
     getter line_number : Int32
     getter column_number : Int32
 

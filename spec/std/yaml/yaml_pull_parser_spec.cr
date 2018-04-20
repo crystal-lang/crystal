@@ -110,7 +110,7 @@ module YAML
       parser.read_stream do
         parser.read_document do
           parser.read_sequence do
-            ex = expect_raises(YAML::ParseException) do
+            ex = expect_raises(YAML::ParseError) do
               parser.read_mapping do
               end
             end

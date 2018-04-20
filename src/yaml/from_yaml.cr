@@ -195,7 +195,7 @@ def Union.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node)
   {% for type in T %}
     begin
       return {{type}}.new(ctx, node)
-    rescue YAML::ParseException
+    rescue YAML::ParseError
       # Ignore
     end
   {% end %}

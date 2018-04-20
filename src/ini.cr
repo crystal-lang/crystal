@@ -1,6 +1,6 @@
 class INI
   # Exception thrown on an INI parse error.
-  class ParseException < Exception
+  class ParseError < Exception
     getter line_number : Int32
     getter column_number : Int32
 
@@ -14,7 +14,7 @@ class INI
   end
 
   # Parses INI-style configuration from the given string.
-  # Raises a `ParseException` on any errors.
+  # Raises a `ParseError` on any errors.
   #
   # ```
   # INI.parse("[foo]\na = 1") # => {"foo" => {"a" => "1"}}
@@ -39,14 +39,14 @@ class INI
         next
       when '['
         end_idx = line.index(']', offset)
-        raise ParseException.new("unterminated section", lineno, line.size) unless end_idx
-        raise ParseException.new("data after section", lineno, end_idx + 1) unless end_idx == line.size - 1
+        raise ParseError.new("unterminated section", lineno, line.size) unless end_idx
+        raise ParseError.new("data after section", lineno, end_idx + 1) unless end_idx == line.size - 1
 
         current_section_name = line[offset + 1...end_idx]
         current_section = ini[current_section_name] ||= Hash(String, String).new
       else
         key, eq, value = line.partition('=')
-        raise ParseException.new("expected declaration", lineno, key.size) if eq != "="
+        raise ParseError.new("expected declaration", lineno, key.size) if eq != "="
 
         current_section[key.strip] = value.strip
       end

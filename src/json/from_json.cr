@@ -166,7 +166,7 @@ def NamedTuple.new(pull : JSON::PullParser)
 
     {% for key in T.keys %}
       if %var{key.id}.nil?
-        raise JSON::ParseException.new("Missing json attribute: {{key}}", *location)
+        raise JSON::ParseError.new("Missing json attribute: {{key}}", *location)
       end
     {% end %}
 
@@ -223,11 +223,11 @@ def Union.new(pull : JSON::PullParser)
   {% for type in T %}
     begin
       return {{type}}.from_json(string)
-    rescue JSON::ParseException
+    rescue JSON::ParseError
       # Ignore
     end
   {% end %}
-  raise JSON::ParseException.new("Couldn't parse #{self} from #{string}", *location)
+  raise JSON::ParseError.new("Couldn't parse #{self} from #{string}", *location)
 end
 
 def Time.new(pull : JSON::PullParser)

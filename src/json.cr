@@ -72,8 +72,8 @@ module JSON
   class Error < Exception
   end
 
-  # Exception thrown on a JSON parse error.
-  class ParseException < Error
+  # Error thrown on a JSON parse error.
+  class ParseError < Error
     getter line_number : Int32
     getter column_number : Int32
 
