@@ -786,6 +786,19 @@ module Crystal::Macros
     # Returns the type of this variable, if known, or `nil`.
     def type : TypeNode | NilLiteral
     end
+
+    # Returns the default value of this variable.
+    # Note that if the variable doesn't have a default value,
+    # or the default value is `nil`, a `NilLiteral` will be
+    # returned. To distinguish between these cases, use
+    # `has_default_value?`.
+    def default_value : ASTNode
+    end
+
+    # Returns whether this variable has a default value (which.
+    # can in turn be `nil`).
+    def has_default_value? : BoolLiteral
+    end
   end
 
   # A local variable or block argument.

@@ -1007,15 +1007,19 @@ describe "macro methods" do
 
   describe "metavar methods" do
     it "executes nothing" do
-      assert_macro "x", %({{x}}), [MetaVar.new("foo", Program.new.int32)] of ASTNode, %(foo)
+      assert_macro "x", %({{x}}), [MetaMacroVar.new("foo", Program.new.int32)] of ASTNode, %(foo)
     end
 
     it "executes name" do
-      assert_macro "x", %({{x.name}}), [MetaVar.new("foo", Program.new.int32)] of ASTNode, %(foo)
+      assert_macro "x", %({{x.name}}), [MetaMacroVar.new("foo", Program.new.int32)] of ASTNode, %(foo)
     end
 
     it "executes id" do
-      assert_macro "x", %({{x.id}}), [MetaVar.new("foo", Program.new.int32)] of ASTNode, %(foo)
+      assert_macro "x", %({{x.id}}), [MetaMacroVar.new("foo", Program.new.int32)] of ASTNode, %(foo)
+    end
+
+    it "executes is_a?" do
+      assert_macro "x", %({{x.is_a?(MetaVar)}}), [MetaMacroVar.new("foo", Program.new.int32)] of ASTNode, %(true)
     end
   end
 

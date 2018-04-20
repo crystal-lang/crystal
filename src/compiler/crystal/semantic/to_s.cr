@@ -35,6 +35,10 @@ module Crystal
       @str << node.name
     end
 
+    def visit(node : MetaMacroVar)
+      @str << node.name
+    end
+
     def visit(node : TypeFilteredNode)
       false
     end

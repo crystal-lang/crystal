@@ -1712,4 +1712,65 @@ describe "Code gen: macro" do
       {{ Foo.union_types.size }}
       )).to_i.should eq(2)
   end
+
+  it "gets default value of instance variable" do
+    run(%(
+      class Foo
+        @x = 1
+
+        def default
+          {{@type.instance_vars.first.default_value}}
+        end
+      end
+
+      Foo.new.default
+      )).to_i.should eq(1)
+  end
+
+  it "gets default value of instance variable of generic type" do
+    run(%(
+      require "prelude"
+
+      struct Int32
+        def self.foo
+          10
+        end
+      end
+
+      class Foo(T)
+        @x : T = T.foo
+
+        def default
+          {{@type.instance_vars.first.default_value}}
+        end
+      end
+
+      Foo(Int32).new.default
+      )).to_i.should eq(10)
+  end
+
+  it "determines if variable has default value" do
+    run(%(
+      class Foo
+        @x = 1
+        @y : Int32
+
+        def initialize(@y)
+        end
+
+        def defaults
+          {
+            {{ @type.instance_vars.find { |i| i.name == "x" }.has_default_value? }},
+            {{ @type.instance_vars.find { |i| i.name == "y" }.has_default_value? }},
+          }
+        end
+      end
+
+      x, y = Foo.new(2).defaults
+      a = 0
+      a += 1 if x
+      a += 2 if y
+      a
+    )).to_i.should eq(1)
+  end
 end
