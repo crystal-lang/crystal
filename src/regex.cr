@@ -308,9 +308,11 @@ class Regex
           case byte.unsafe_chr
           when {{*SPECIAL_CHARACTERS}}
             result << '\\'
+            result.write_byte byte
+          else
+            result.write_byte byte
           end
         {% end %}
-        result.write_byte byte
       end
     end
   end
