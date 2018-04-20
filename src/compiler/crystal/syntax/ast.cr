@@ -214,8 +214,8 @@ module Crystal
     def initialize(@value : String, @kind = :i32)
     end
 
-    def initialize(value : Number, @kind = :i32)
-      @value = value.to_s
+    def self.new(value : Number)
+      new(value.to_s, kind_from_number(value))
     end
 
     def has_sign?
@@ -243,6 +243,24 @@ module Crystal
 
     def_equals value.to_f64, kind
     def_hash value, kind
+
+    def self.kind_from_number(number : Number)
+      case number
+      when Int8    then :i8
+      when Int16   then :i16
+      when Int32   then :i32
+      when Int64   then :i64
+      when Int128  then :i128
+      when UInt8   then :u8
+      when UInt16  then :u16
+      when UInt32  then :u32
+      when UInt64  then :u64
+      when UInt128 then :u128
+      when Float32 then :f32
+      when Float64 then :f64
+      else              raise "Unsupported Number type for NumberLiteral: #{number.class}"
+      end
+    end
   end
 
   # A char literal.

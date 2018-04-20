@@ -173,6 +173,10 @@ module Crystal
         assert_macro "", "{{1 + 2}}", [] of ASTNode, "3"
       end
 
+      it "executes + and preserves type" do
+        assert_macro "", "{{1_u64 + 2_u64}}", [] of ASTNode, "3_u64"
+      end
+
       it "executes -" do
         assert_macro "", "{{1 - 2}}", [] of ASTNode, "-1"
       end
