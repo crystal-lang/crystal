@@ -74,9 +74,7 @@ class Crystal::InstanceVarsInitializerVisitor < Crystal::SemanticVisitor
     # the info of which instance vars have initializers (so they are not nil)
     initializers.each do |i|
       scope = i.scope
-      unless scope.lookup_instance_var?(i.target.name)
-        program.undefined_instance_variable(i.target, scope, nil)
-      end
+      program.undefined_instance_variable(i.target, scope, nil) unless scope.lookup_instance_var?(i.target.name)
 
       scope.add_instance_var_initializer(i.target.name, i.value, scope.is_a?(GenericType) ? nil : i.meta_vars)
     end

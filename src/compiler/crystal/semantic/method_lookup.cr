@@ -23,13 +23,10 @@ module Crystal
       cover = matches.cover
 
       is_new = owner.metaclass? && signature.name == "new"
-      if is_new
-        # For a `new` method we need to do this in case a `new` is defined
-        # in a module type
-        my_parents = instance_type.parents.try &.map(&.metaclass)
-      else
-        my_parents = parents
-      end
+
+      # For a `new` method we need to do this in case a `new` is defined
+      # in a module type
+      my_parents = is_new ? instance_type.parents.try &.map(&.metaclass) : parents
 
       # `new` must only be searched in ancestors if this type itself doesn't define
       # an `initialize` or `self.new` method. This was already computed in `new.cr`
@@ -37,11 +34,8 @@ module Crystal
       if my_parents && !(!lookup_new_in_ancestors? && is_new)
         my_parents.each do |parent|
           matches = parent.lookup_matches(signature, owner, parent, matches_array)
-          if matches.cover_all?
-            return matches
-          else
-            matches_array = matches.matches
-          end
+          return matches if matches.cover_all?
+          matches_array = matches.matches
         end
       end
 
@@ -134,15 +128,11 @@ module Crystal
       signature = self
 
       # If yieldness isn't the same there's no match
-      if def_metadata.yields != !!signature.block
-        return nil
-      end
+      return if def_metadata.yields != !!signature.block
 
       # If there are more positional arguments than those required, there's no match
       # (if there's less they might be matched with named arguments)
-      if signature.arg_types.size > def_metadata.max_size
-        return nil
-      end
+      return if signature.arg_types.size > def_metadata.max_size
 
       a_def = def_metadata.def
       arg_types = signature.arg_types
@@ -155,9 +145,7 @@ module Crystal
       # If there are arguments past the splat index and no named args, there's no match,
       # unless all args past it have default values
       if splat_index && a_def.args.size > splat_index + 1 && !named_args
-        unless (splat_index + 1...a_def.args.size).all? { |i| a_def.args[i].default_value }
-          return nil
-        end
+        return unless (splat_index + 1...a_def.args.size).all? { |i| a_def.args[i].default_value }
       end
 
       # If there are named args we must check that all mandatory args
@@ -192,22 +180,17 @@ module Crystal
         end
 
         match_arg_type = arg_type.restrict(arg, context)
-        if match_arg_type
-          matched_arg_types ||= [] of Type
-          matched_arg_types.push match_arg_type
-          mandatory_args[arg_index] = true if mandatory_args
-        else
-          return nil
-        end
+        return if !match_arg_type
+        matched_arg_types ||= [] of Type
+        matched_arg_types.push match_arg_type
+        mandatory_args[arg_index] = true if mandatory_args
       end
 
       # Match splat arguments against splat restriction
       if splat_arg_types && splat_restriction.is_a?(Splat)
         tuple_type = context.instantiated_type.program.tuple_of(splat_arg_types)
         match_arg_type = tuple_type.restrict(splat_restriction.exp, context)
-        unless match_arg_type
-          return nil
-        end
+        return unless match_arg_type
       end
 
       found_unmatched_named_arg = false
@@ -223,26 +206,18 @@ module Crystal
           found_index = a_def.args.index { |arg| arg.external_name == named_arg.name }
           if found_index
             # A named arg can't target the splat index
-            if found_index == splat_index
-              return nil
-            end
+            return if found_index == splat_index
 
             # Check whether the named arg refers to an argument that was already specified
             if mandatory_args
-              if mandatory_args[found_index]
-                return nil
-              end
+              return if mandatory_args[found_index]
               mandatory_args[found_index] = true
             else
-              if found_index < min_index
-                return nil
-              end
+              return if found_index < min_index
             end
 
             match_arg_type = named_arg.type.restrict(a_def.args[found_index], context)
-            unless match_arg_type
-              return nil
-            end
+            return unless match_arg_type
 
             matched_named_arg_types ||= [] of NamedArgumentType
             matched_named_arg_types << NamedArgumentType.new(named_arg.name, match_arg_type)
@@ -257,9 +232,7 @@ module Crystal
                   double_splat_entries << named_arg
                 else
                   match_arg_type = named_arg.type.restrict(double_splat_restriction, context)
-                  unless match_arg_type
-                    return nil
-                  end
+                  return unless match_arg_type
                 end
               end
 
@@ -270,7 +243,7 @@ module Crystal
               next
             end
 
-            return nil
+            return
           end
         end
       end
@@ -279,25 +252,21 @@ module Crystal
       if double_splat_entries && double_splat_restriction.is_a?(DoubleSplat)
         named_tuple_type = context.instantiated_type.program.named_tuple_of(double_splat_entries)
         value = named_tuple_type.restrict(double_splat_restriction.exp, context)
-        unless value
-          return nil
-        end
+        return unless value
       end
 
       # Check that all mandatory args were specified
       # (either with positional arguments or with named arguments)
       if mandatory_args
         a_def.args.each_with_index do |arg, index|
-          if index != splat_index && !arg.default_value && !mandatory_args[index]
-            return nil
-          end
+          return if index != splat_index && !arg.default_value && !mandatory_args[index]
         end
       end
 
       # If there's a restriction on a double splat, zero matching named arguments don't matc
       if double_splat && double_splat_restriction &&
          !double_splat_restriction.is_a?(DoubleSplat) && !found_unmatched_named_arg
-        return nil
+        return
       end
 
       # We reuse a match context without free vars, but we create
@@ -326,16 +295,12 @@ module Crystal
       base_type_matches = base_type_lookup.lookup_matches(signature, self)
 
       # If there are no subclasses no need to look further
-      if leaf?
-        return base_type_matches
-      end
+      return base_type_matches if leaf?
 
       base_type_covers_all = base_type_matches.cover_all?
 
       # If the base type doesn't cover every possible type combination, it's a failure
-      if !base_type.abstract? && !base_type_covers_all
-        return Matches.new(base_type_matches.matches, base_type_matches.cover, base_type_lookup, false)
-      end
+      return Matches.new(base_type_matches.matches, base_type_matches.cover, base_type_lookup, false) if !base_type.abstract? && !base_type_covers_all
 
       type_to_matches = nil
       matches = base_type_matches.matches
@@ -354,9 +319,7 @@ module Crystal
         # all subtypes must have an initialize with the same number of arguments.
         if is_new && subtype_matches.empty?
           other_initializers = subtype_lookup.instance_type.lookup_defs_with_modules("initialize")
-          unless other_initializers.empty?
-            return Matches.new(nil, false)
-          end
+          return Matches.new(nil, false) unless other_initializers.empty?
         end
 
         # If we didn't find a match in a subclass, and the base type match is a macro
@@ -384,9 +347,7 @@ module Crystal
                 change_owner = subtype_lookup
                 change_owner = change_owner.generic_type if change_owner.is_a?(GenericInstanceType)
 
-                if change_owner.is_a?(ModuleType)
-                  changes << Change.new(change_owner, cloned_def)
-                end
+                changes << Change.new(change_owner, cloned_def) if change_owner.is_a?(ModuleType)
 
                 new_subtype_matches ||= [] of Match
                 new_subtype_matches.push Match.new(cloned_def, full_subtype_match.arg_types, MatchContext.new(subtype_lookup, full_subtype_match.context.defining_type, full_subtype_match.context.free_vars), full_subtype_match.named_arg_types)
@@ -394,9 +355,7 @@ module Crystal
             end
           end
 
-          if new_subtype_matches
-            subtype_matches = Matches.new(new_subtype_matches, Cover.create(signature, new_subtype_matches))
-          end
+          subtype_matches = Matches.new(new_subtype_matches, Cover.create(signature, new_subtype_matches)) if new_subtype_matches
         end
 
         if !subtype.leaf? && subtype_matches.size > 0
@@ -406,10 +365,8 @@ module Crystal
 
         # If the subtype is non-abstract but doesn't cover all,
         # we need to check if a parent covers it
-        if !subtype.abstract? && !base_type_covers_all && !subtype_matches.cover_all?
-          unless covered_by_superclass?(subtype, type_to_matches)
-            return Matches.new(subtype_matches.matches, subtype_matches.cover, subtype_lookup, false)
-          end
+        if !subtype.abstract? && !base_type_covers_all && !subtype_matches.cover_all? && !covered_by_superclass?(subtype, type_to_matches)
+          return Matches.new(subtype_matches.matches, subtype_matches.cover, subtype_lookup, false)
         end
 
         if !subtype_matches.empty? && (subtype_matches_matches = subtype_matches.matches)
@@ -437,9 +394,8 @@ module Crystal
       superclass = subtype.superclass
       while superclass && superclass != base_type
         superclass_matches = type_to_matches.try &.[superclass]?
-        if superclass_matches && superclass_matches.cover_all?
-          return true
-        end
+        return true if superclass_matches && superclass_matches.cover_all?
+
         superclass = superclass.superclass
       end
       false

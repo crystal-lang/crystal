@@ -146,11 +146,8 @@ module Crystal
     end
 
     def has_location?
-      if @inner.try &.has_location?
-        true
-      else
-        @filename || @line
-      end
+      return true if @inner.try &.has_location?
+      @filename || @line
     end
 
     def deepest_error_message

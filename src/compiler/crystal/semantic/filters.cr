@@ -9,9 +9,7 @@ module Crystal
     def update(from = nil)
       from_type = from.try &.type?
 
-      if from_type
-        self.type = @filter.apply(from_type)
-      end
+      self.type = @filter.apply(from_type) if from_type
     end
 
     def clone_without_location

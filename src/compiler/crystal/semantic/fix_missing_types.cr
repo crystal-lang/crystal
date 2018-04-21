@@ -66,9 +66,7 @@ class Crystal::FixMissingTypes < Crystal::Visitor
 
     # If the block doesn't have a type, it's a no-return.
     block = node.block
-    if block && !block.type?
-      block.type = @program.no_return
-    end
+    block.type = @program.no_return if block && !block.type?
 
     node.target_defs.try &.each do |target_def|
       unless @fixed.includes?(target_def.object_id)

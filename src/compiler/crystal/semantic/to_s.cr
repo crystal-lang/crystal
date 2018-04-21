@@ -27,8 +27,7 @@ module Crystal
     end
 
     def visit(node : Primitive)
-      @str << "# primitive: "
-      @str << node.name
+      @str << "# primitive: " << node.name
     end
 
     def visit(node : MetaVar)

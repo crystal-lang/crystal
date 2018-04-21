@@ -136,8 +136,7 @@ class URI
 
   def to_s(io : IO)
     if scheme
-      io << scheme
-      io << ':'
+      io << scheme << ':'
       io << "//" unless opaque
     end
     if opaque
@@ -148,24 +147,11 @@ class URI
       userinfo(user, io)
       io << '@'
     end
-    if host
-      io << host
-    end
-    unless port.nil? || default_port?
-      io << ':'
-      io << port
-    end
-    if path
-      io << path
-    end
-    if query
-      io << '?'
-      io << query
-    end
-    if fragment
-      io << '#'
-      io << fragment
-    end
+    io << host if host
+    io << ':' << port unless port.nil? || default_port?
+    io << path if path
+    io << '?' << query if query
+    io << '#' << fragment if fragment
   end
 
   # Returns normalized URI.
@@ -379,31 +365,32 @@ class URI
     while path.size > 0
       # A.  If the input buffer begins with a prefix of "../" or "./",
       #     then remove that prefix from the input buffer; otherwise,
-      if path.starts_with?("../")
+      case path
+      when .starts_with? "../"
         path = path[3..-1]
-      elsif path.starts_with?("./")
+      when .starts_with? "./"
         path = path[2..-1]
         # B.  if the input buffer begins with a prefix of "/./" or "/.",
         #     where "." is a complete path segment, then replace that
         #     prefix with "/" in the input buffer; otherwise,
-      elsif path.starts_with?("/./")
+      when .starts_with? "/./"
         path = "/" + path[3..-1]
-      elsif path == "/."
+      when "/."
         path = "/" + path[2..-1]
         # C.  if the input buffer begins with a prefix of "/../" or "/..",
         #     where ".." is a complete path segment, then replace that
         #     prefix with "/" in the input buffer and remove the last
         #     segment and its preceding "/" (if any) from the output
         #     buffer; otherwise,
-      elsif path.starts_with?("/../")
+      when .starts_with? "/../"
         path = "/" + path[4..-1]
         result.pop if result.size > 0
-      elsif path == "/.."
+      when "/.."
         path = "/" + path[3..-1]
         result.pop if result.size > 0
         # D.  if the input buffer consists only of "." or "..", then remove
         #     that from the input buffer; otherwise,
-      elsif path == ".." || path == "."
+      when "..", "."
         path = ""
         # E.  move the first path segment in the input buffer to the end of
         #     the output buffer, including the initial "/" character (if

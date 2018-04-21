@@ -249,16 +249,12 @@ module Crystal
       # If there are arguments past the splat index and no named args, there's no match,
       # unless all args past it have default values
       if splat_index && my_args_size > splat_index + 1 && !named_args
-        unless (splat_index + 1...args.size).all? { |i| args[i].default_value }
-          return false
-        end
+        return false unless (splat_index + 1...args.size).all? { |i| args[i].default_value }
       end
 
       # If there are more positional arguments than those required, there's no match
       # (if there's less they might be matched with named arguments)
-      if call_args_size > max_args_size
-        return false
-      end
+      return false if call_args_size > max_args_size
 
       # If there are named args we must check that all mandatory args
       # are covered by positional arguments or named arguments.
@@ -278,21 +274,15 @@ module Crystal
         found_index = args.index { |arg| arg.external_name == named_arg.name }
         if found_index
           # A named arg can't target the splat index
-          if found_index == splat_index
-            return false
-          end
+          return false if found_index == splat_index
 
           # Check whether the named arg refers to an argument that was already specified
           if mandatory_args
-            if mandatory_args[found_index]
-              return false
-            end
+            return false if mandatory_args[found_index]
 
             mandatory_args[found_index] = true
-          else
-            if found_index < call_args_size
-              return false
-            end
+          elsif found_index < call_args_size
+            return false
           end
         else
           # A double splat matches all named args
@@ -306,9 +296,7 @@ module Crystal
       # (either with positional arguments or with named arguments)
       if mandatory_args
         self.args.each_with_index do |arg, index|
-          if index != splat_index && !arg.default_value && !mandatory_args[index]
-            return false
-          end
+          return false if index != splat_index && !arg.default_value && !mandatory_args[index]
         end
       end
 
@@ -367,11 +355,8 @@ module Crystal
 
     # Returns the splat size of this def matching the given objects.
     def self.size(a_def, objects, splat_index = a_def.splat_index)
-      if splat_index
-        objects.size - splat_index
-      else
-        0
-      end
+      return objects.size - splat_index if splat_index
+      0
     end
   end
 
@@ -484,11 +469,8 @@ module Crystal
     def kind
       case name[0]
       when '@'
-        if name[1] == '@'
-          :class
-        else
-          :instance
-        end
+        return :class if name[1] == '@'
+        :instance
       else
         :global
       end

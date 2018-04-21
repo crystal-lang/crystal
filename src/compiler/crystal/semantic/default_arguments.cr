@@ -14,9 +14,7 @@ class Crystal::Def
           break
         end
       end
-      if all_match
-        return self
-      end
+      return self if all_match
     end
 
     # If there are no named args and all unspecified default arguments are magic
@@ -29,9 +27,7 @@ class Crystal::Def
           break
         end
       end
-      if all_magic
-        return self
-      end
+      return self if all_magic
     end
 
     retain_body = yields || splat_index || double_splat || assigns_special_var? || macro_def? || args.any? { |arg| arg.default_value && arg.restriction }

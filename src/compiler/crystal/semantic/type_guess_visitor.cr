@@ -527,11 +527,8 @@ module Crystal
       from_type = guess_type(node.from)
       to_type = guess_type(node.to)
 
-      if from_type && to_type
-        program.range_of(from_type, to_type)
-      else
-        nil
-      end
+      return program.range_of(from_type, to_type) if from_type && to_type
+      nil
     end
 
     def guess_type(node : RegexLiteral)
@@ -548,11 +545,8 @@ module Crystal
         element_types << element_type
       end
 
-      if element_types
-        program.tuple_of(element_types)
-      else
-        nil
-      end
+      return program.tuple_of(element_types) if element_types
+      nil
     end
 
     def guess_type(node : NamedTupleLiteral)
@@ -565,11 +559,9 @@ module Crystal
         entries << NamedArgumentType.new(entry.key, element_type)
       end
 
-      if entries
-        program.named_tuple_of(entries)
-      else
-        nil
-      end
+      return program.named_tuple_of(entries) if entries
+
+      nil
     end
 
     def guess_type(node : Call)
@@ -732,9 +724,7 @@ module Crystal
       body = a_def.body
 
       # Prevent infinite recursion
-      if @methods_being_checked.any? &.same?(a_def)
-        return nil
-      end
+      return nil if @methods_being_checked.any? &.same?(a_def)
 
       @methods_being_checked.push a_def
 
@@ -819,11 +809,9 @@ module Crystal
       end
 
       info = @guessed_instance_vars[current_type]?.try &.[node.name]?
-      if info
-        info.type
-      else
-        nil
-      end
+      return info.type if info
+
+      nil
     end
 
     def guess_type(node : BinaryOp)
