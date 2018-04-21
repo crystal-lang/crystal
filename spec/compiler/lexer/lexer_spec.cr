@@ -452,6 +452,42 @@ describe "Lexer" do
     token.value.should eq("\\")
   end
 
+  it "lexes symbol followed by !=" do
+    lexer = Lexer.new ":a!=:a"
+    token = lexer.next_token
+    token.type.should eq(:SYMBOL)
+    token.value.should eq ("a")
+    token = lexer.next_token
+    token.type.should eq(:"!=")
+    token = lexer.next_token
+    token.type.should eq(:SYMBOL)
+    token.value.should eq ("a")
+  end
+
+  it "lexes symbol followed by ==" do
+    lexer = Lexer.new ":a==:a"
+    token = lexer.next_token
+    token.type.should eq(:SYMBOL)
+    token.value.should eq ("a")
+    token = lexer.next_token
+    token.type.should eq(:"==")
+    token = lexer.next_token
+    token.type.should eq(:SYMBOL)
+    token.value.should eq ("a")
+  end
+
+  it "lexes symbol followed by ===" do
+    lexer = Lexer.new ":a===:a"
+    token = lexer.next_token
+    token.type.should eq(:SYMBOL)
+    token.value.should eq ("a")
+    token = lexer.next_token
+    token.type.should eq(:"===")
+    token = lexer.next_token
+    token.type.should eq(:SYMBOL)
+    token.value.should eq ("a")
+  end
+
   it "lexes /=" do
     lexer = Lexer.new("/=")
     lexer.slash_is_regex = false
