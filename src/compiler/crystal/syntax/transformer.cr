@@ -30,12 +30,9 @@ module Crystal
         end
       end
 
-      if exps.size == 1
-        exps[0]
-      else
-        node.expressions = exps
-        node
-      end
+      return exps[0] if exps.size == 1
+      node.expressions = exps
+      node
     end
 
     def transform(node : Call)

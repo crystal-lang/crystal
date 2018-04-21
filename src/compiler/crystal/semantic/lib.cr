@@ -38,9 +38,7 @@ class Crystal::Call
     named_args = self.named_args
     return unless named_args
 
-    if external.varargs?
-      raise "can't use named args with variadic function"
-    end
+    raise "can't use named args with variadic function" if external.varargs?
 
     # We check that all arguments are covered, and then we
     # rewrite this call to not have named arguments
@@ -60,9 +58,7 @@ class Crystal::Call
         named_arg.raise "no argument named '#{named_arg.name}'"
       end
 
-      if covered[found_index]
-        named_arg.raise "argument '#{named_arg.name}' already specified"
-      end
+      named_arg.raise "argument '#{named_arg.name}' already specified" if covered[found_index]
 
       covered[found_index] = true
       sorted_named_args << {found_index, named_arg}
@@ -97,9 +93,7 @@ class Crystal::Call
     call_args_count = args.size
     all_args_count = external.args.size
 
-    if external.varargs? && call_args_count >= all_args_count
-      return
-    end
+    return if external.varargs? && call_args_count >= all_args_count
 
     required_args_count = external.args.count { |arg| !arg.default_value }
 

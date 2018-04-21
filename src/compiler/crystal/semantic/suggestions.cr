@@ -21,11 +21,8 @@ module Crystal
             end
           end
 
-          if best_match
-            return (names[0...idx] + [best_match]).join "::"
-          else
-            break
-          end
+          return (names[0...idx] + [best_match]).join "::" if best_match
+          break
         end
       end
 

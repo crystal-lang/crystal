@@ -157,9 +157,7 @@ struct Crystal::TypeDeclarationProcessor
   end
 
   private def declare_meta_type_var(vars, owner, name, type : Type, location : Location? = nil, instance_var = false, freeze_type = true)
-    if instance_var && location && !owner.allows_instance_vars?
-      raise_cant_declare_instance_var(owner, location)
-    end
+    raise_cant_declare_instance_var(owner, location) if instance_var && location && !owner.allows_instance_vars?
 
     remove_error owner, name
 
@@ -188,9 +186,7 @@ struct Crystal::TypeDeclarationProcessor
   end
 
   private def declare_meta_type_var(vars, owner, name, info : TypeDeclarationWithLocation, instance_var = false, check_nilable = true, freeze_type = true)
-    if instance_var && !owner.allows_instance_vars?
-      raise_cant_declare_instance_var(owner, info.location)
-    end
+    raise_cant_declare_instance_var(owner, info.location) if instance_var && !owner.allows_instance_vars?
 
     var = declare_meta_type_var(vars, owner, name, info.type.as(Type), info.location, freeze_type: freeze_type)
     var.location = info.location
@@ -201,10 +197,8 @@ struct Crystal::TypeDeclarationProcessor
     # If the variable is gueseed to be nilable because it is not initialized
     # in all of the initialize methods, and the explicit type is not nilable,
     # give an error right now
-    if check_nilable && instance_var && !var.type.includes_type?(@program.nil)
-      if nilable_instance_var?(owner, name)
-        raise_not_initialized_in_all_initialize(var, name, owner)
-      end
+    if check_nilable && instance_var && !var.type.includes_type?(@program.nil) && nilable_instance_var?(owner, name)
+      raise_not_initialized_in_all_initialize(var, name, owner)
     end
 
     var
@@ -334,29 +328,21 @@ struct Crystal::TypeDeclarationProcessor
       return if supervar
 
       type = type_info.type
-      if nilable_instance_var?(owner, name)
-        type = Type.merge!(type, @program.nil)
-      end
+      type = Type.merge!(type, @program.nil) if nilable_instance_var?(owner, name)
 
       # If the only type that we were able to infer was nil, it's the same
       # as not being able to infer anything (having a variable of just
       # Nil is not useful and is the same as not having it at all, at
       # least for non-generic types)
-      if type.nil_type?
-        raise_nil_instance_var owner, name, type_info.location
-      end
+      raise_nil_instance_var(owner, name, type_info.location) if type.nil_type?
 
       declare_meta_type_var(owner.instance_vars, owner, name, type, type_info.location, instance_var: true)
     when NonGenericModuleType
       type = type_info.type
-      if nilable_instance_var?(owner, name)
-        type = Type.merge!([type, @program.nil])
-      end
+      type = Type.merge!([type, @program.nil]) if nilable_instance_var?(owner, name)
 
       # Same as above, only Nil makes no sense
-      if type.nil_type?
-        return
-      end
+      return if type.nil_type?
 
       declare_meta_type_var(owner.instance_vars, owner, name, type, type_info.location, instance_var: true)
       remove_error owner, name
@@ -366,14 +352,10 @@ struct Crystal::TypeDeclarationProcessor
       end
     when GenericClassType
       type = type_info.type
-      if nilable_instance_var?(owner, name)
-        type = Type.merge!([type, @program.nil])
-      end
+      type = Type.merge!([type, @program.nil]) if nilable_instance_var?(owner, name)
 
       # Same as above, only Nil makes no sense
-      if type.nil_type?
-        raise_nil_instance_var owner, name, type_info.location
-      end
+      raise_nil_instance_var(owner, name, type_info.location) if type.nil_type?
 
       declare_meta_type_var(owner.instance_vars, owner, name, type, type_info.location, instance_var: true)
 
@@ -385,9 +367,7 @@ struct Crystal::TypeDeclarationProcessor
       remove_error owner, name
     when GenericModuleType
       type = type_info.type
-      if nilable_instance_var?(owner, name)
-        type = Type.merge!([type, @program.nil])
-      end
+      type = Type.merge!([type, @program.nil]) if nilable_instance_var?(owner, name)
 
       declare_meta_type_var(owner.instance_vars, owner, name, type, type_info.location, instance_var: true)
       remove_error owner, name
@@ -428,17 +408,13 @@ struct Crystal::TypeDeclarationProcessor
       # And add them all into one array
       non_nilable = merge_non_nilable_vars(non_nilable, non_nilable_outisde)
 
-      if non_nilable
-        @non_nilable_instance_vars[owner] = non_nilable
-      end
+      @non_nilable_instance_vars[owner] = non_nilable if non_nilable
     end
   end
 
   private def merge_non_nilable_vars(v1, v2)
     if v1
-      if v2
-        v1 = (v1 + v2).uniq!
-      end
+      v1 = (v1 + v2).uniq! if v2
     elsif v2
       v1 = v2
     end
@@ -449,9 +425,8 @@ struct Crystal::TypeDeclarationProcessor
     # Get ancestor's non-nilable variables
     ancestor = owner.ancestors.first?
     ancestor = uninstantiate(ancestor)
-    if ancestor
-      ancestor_non_nilable = @non_nilable_instance_vars[ancestor]?
-    end
+
+    ancestor_non_nilable = @non_nilable_instance_vars[ancestor]? if ancestor
 
     # If the ancestor has non-nilable instance vars, check that all initialize either call
     # super or assign all of those variables
@@ -519,9 +494,7 @@ struct Crystal::TypeDeclarationProcessor
   end
 
   private def initialized_outside?(owner, name)
-    if @instance_vars_outside[owner]?.try &.includes?(name)
-      return true
-    end
+    return true if @instance_vars_outside[owner]?.try &.includes?(name)
 
     owner.ancestors.any? do |ancestor|
       ancestor = uninstantiate(ancestor)
@@ -701,10 +674,7 @@ struct Crystal::TypeDeclarationProcessor
   end
 
   private def uninstantiate(type)
-    if type.is_a?(GenericInstanceType)
-      type.generic_type
-    else
-      type
-    end
+    return type.generic_type if type.is_a?(GenericInstanceType)
+    type
   end
 end

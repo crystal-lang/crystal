@@ -19,11 +19,8 @@ class Crystal::Call
 
   def target_def
     if defs = @target_defs
-      if defs.size == 1
-        return defs.first
-      else
-        ::raise "#{defs.size} target defs for #{self}"
-      end
+      return defs.first if defs.size == 1
+      ::raise "#{defs.size} target defs for #{self}"
     end
 
     ::raise "Zero target defs for #{self}"
@@ -633,14 +630,10 @@ class Crystal::Call
 
   def enclosing_def(context)
     fun_literal_context = parent_visitor.fun_literal_context
-    if fun_literal_context.is_a?(Def)
-      return fun_literal_context
-    end
+    return fun_literal_context if fun_literal_context.is_a?(Def)
 
     untyped_def = parent_visitor.untyped_def?
-    if untyped_def
-      return untyped_def
-    end
+    return untyped_def if untyped_def
 
     raise "can't use '#{context}' outside method"
   end

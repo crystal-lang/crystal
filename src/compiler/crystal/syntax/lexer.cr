@@ -1266,11 +1266,9 @@ module Crystal
 
       while true
         char = next_char
-        if char.ascii_number?
-          # Nothing to do
-        elsif char == '_'
+        if char == '_'
           has_underscore = true
-        else
+        elsif !char.ascii_number?
           break
         end
       end
@@ -1282,11 +1280,9 @@ module Crystal
 
           while true
             char = next_char
-            if char.ascii_number?
-              # Nothing to do
-            elsif char == '_'
+            if char == '_'
               has_underscore = true
-            else
+            elsif !char.ascii_number?
               break
             end
           end
@@ -1294,16 +1290,12 @@ module Crystal
           if current_char == 'e' || current_char == 'E'
             next_char
 
-            if current_char == '+' || current_char == '-'
-              next_char
-            end
+            next_char if current_char == '+' || current_char == '-'
 
             while true
-              if current_char.ascii_number?
-                # Nothing to do
-              elsif current_char == '_'
+              if current_char == '_'
                 has_underscore = true
-              else
+              elsif !current_char.ascii_number?
                 break
               end
               next_char
@@ -1323,16 +1315,12 @@ module Crystal
         is_integer = false
         next_char
 
-        if current_char == '+' || current_char == '-'
-          next_char
-        end
+        next_char if current_char == '+' || current_char == '-'
 
         while true
-          if current_char.ascii_number?
-            # Nothing to do
-          elsif current_char == '_'
+          if current_char == '_'
             has_underscore = true
-          else
+          elsif !current_char.ascii_number?
             break
           end
           next_char
@@ -1684,13 +1672,10 @@ module Crystal
       when '1'
         case next_char
         when '2'
-          if next_char == '8'
-            next_char
-            @token.number_kind = :u128
-            4
-          else
-            raise "invalid uint suffix"
-          end
+          raise "invalid uint suffix" if next_char != '8'
+          next_char
+          @token.number_kind = :u128
+          4
         when '6'
           next_char
           @token.number_kind = :u16
@@ -1699,21 +1684,15 @@ module Crystal
           raise "invalid uint suffix"
         end
       when '3'
-        if next_char == '2'
-          next_char
-          @token.number_kind = :u32
-          3
-        else
-          raise "invalid uint suffix"
-        end
+        raise "invalid uint suffix" if next_char != '2'
+        next_char
+        @token.number_kind = :u32
+        3
       when '6'
-        if next_char == '4'
-          next_char
-          @token.number_kind = :u64
-          3
-        else
-          raise "invalid uint suffix"
-        end
+        raise "invalid uint suffix" if next_char != '4'
+        next_char
+        @token.number_kind = :u64
+        3
       else
         raise "invalid uint suffix"
       end
@@ -1722,21 +1701,15 @@ module Crystal
     def consume_float_suffix
       case next_char
       when '3'
-        if next_char == '2'
-          next_char
-          @token.number_kind = :f32
-          3
-        else
-          raise "invalid float suffix"
-        end
+        raise "invalid float suffix" if next_char != '2'
+        next_char
+        @token.number_kind = :f32
+        3
       when '6'
-        if next_char == '4'
-          next_char
-          @token.number_kind = :f64
-          3
-        else
-          raise "invalid float suffix"
-        end
+        raise "invalid float suffix" if next_char != '4'
+        next_char
+        @token.number_kind = :f64
+        3
       else
         raise "invalid float suffix"
       end

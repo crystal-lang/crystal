@@ -84,14 +84,10 @@ module Crystal
 
               initialize_methods.each do |initialize|
                 # If the type has `self.new()`, don't override it
-                if initialize.args.empty? && !initialize.yields && has_default_self_new
-                  next
-                end
+                next if initialize.args.empty? && !initialize.yields && has_default_self_new
 
                 # Only copy initialize methods from the first ancestor that has them
-                if initialize_owner && initialize.owner != initialize_owner
-                  break
-                end
+                break if initialize_owner && initialize.owner != initialize_owner
 
                 initialize_owner = initialize.owner
 

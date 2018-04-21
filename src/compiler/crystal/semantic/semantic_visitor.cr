@@ -33,9 +33,7 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
       return false
     end
 
-    if inside_exp?
-      node.raise "can't require dynamically"
-    end
+    node.raise "can't require dynamically" if inside_exp?
 
     location = node.location
     filename = node.string
@@ -415,11 +413,7 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
         attr.raise "illegal attribute for #{desc}, valid attributes are: #{valid_attributes.join ", "}"
       end
 
-      if attr.name != "Primitive"
-        if !attr.args.empty? || attr.named_args
-          attr.raise "#{attr.name} attribute can't receive arguments"
-        end
-      end
+      attr.raise "#{attr.name} attribute can't receive arguments" if attr.name != "Primitive" && (!attr.args.empty? || attr.named_args)
     end
 
     attributes
@@ -435,9 +429,7 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
       node.raise msg
     end
 
-    if type.is_a?(TypeDefType) && type.typedef.proc?
-      type = type.typedef
-    end
+    type = type.typedef if type.is_a?(TypeDefType) && type.typedef.proc?
 
     type
   end
@@ -445,9 +437,7 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
   def check_declare_var_type(node, declared_type, variable_kind)
     type = declared_type.instance_type
 
-    if type.is_a?(GenericClassType)
-      node.raise "can't declare variable of generic non-instantiated type #{type}"
-    end
+    node.raise "can't declare variable of generic non-instantiated type #{type}" if type.is_a?(GenericClassType)
 
     Crystal.check_type_allowed_in_generics(node, type, "can't use #{type} as the type of #{variable_kind}")
 

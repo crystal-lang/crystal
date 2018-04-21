@@ -61,9 +61,7 @@ module Crystal
 
       constructor = Call.new(node.name, "new").at(node)
 
-      if node.elements.empty?
-        return constructor
-      end
+      return constructor if node.elements.empty?
 
       exps = Array(ASTNode).new(node.elements.size + 2)
       exps << Assign.new(temp_var.clone, constructor).at(node)
@@ -78,9 +76,7 @@ module Crystal
     def expand_named(node : HashLiteral)
       constructor = Call.new(node.name, "new").at(node)
 
-      if node.entries.empty?
-        return constructor
-      end
+      return constructor if node.entries.empty?
 
       temp_var = new_temp_var
 

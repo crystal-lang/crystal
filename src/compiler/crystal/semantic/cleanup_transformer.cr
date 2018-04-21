@@ -19,9 +19,7 @@ module Crystal
       end
 
       self.class_var_and_const_initializers.each do |initializer|
-        if initializer.is_a?(ClassVarInitializer)
-          initializer.node = initializer.node.transform(transformer)
-        end
+        initializer.node = initializer.node.transform(transformer) if initializer.is_a?(ClassVarInitializer)
       end
     end
 
@@ -155,9 +153,7 @@ module Crystal
         end
       else
         exps << exp
-        if exp.is_a?(Break) || exp.is_a?(Next) || exp.is_a?(Return) || exp.no_returns?
-          return true
-        end
+        return true if exp.is_a?(Break) || exp.is_a?(Next) || exp.is_a?(Return) || exp.no_returns?
       end
       false
     end
@@ -172,16 +168,12 @@ module Crystal
     def transform(node : Assign)
       reset_last_status
 
-      if void_lib_call?(node.value)
-        node.value.raise "assigning Void return value of lib fun call has no effect"
-      end
+      node.value.raise "assigning Void return value of lib fun call has no effect" if void_lib_call?(node.value)
 
       target = node.target
 
       # Ignore class var initializers
-      if target.is_a?(ClassVar) && !target.type?
-        return node
-      end
+      return node if target.is_a?(ClassVar) && !target.type?
 
       # This is the case of an instance variable initializer
       if @def_nest_count == 0 && target.is_a?(InstanceVar)
@@ -192,16 +184,12 @@ module Crystal
         const = target.target_const.not_nil!
         return node unless const.used?
 
-        unless const.value.type?
-          node.raise "can't infer type of constant #{const} (maybe the constant refers to itself?)"
-        end
+        node.raise "can't infer type of constant #{const} (maybe the constant refers to itself?)" unless const.value.type?
       end
 
       node.value = node.value.transform self
 
-      unless node.value.type?
-        return untyped_expression node
-      end
+      return untyped_expression node unless node.value.type?
 
       if target.is_a?(Path)
         const = const.not_nil!
@@ -214,9 +202,7 @@ module Crystal
 
       # We don't want to transform constant assignments into no return
       unless node.target.is_a?(Path)
-        if node.value.type?.try &.no_return?
-          return node.value
-        end
+        return node.value if node.value.type?.try &.no_return?
       end
 
       node
@@ -269,15 +255,11 @@ module Crystal
       # ~~~
 
       node.args.each do |arg|
-        if void_lib_call?(arg)
-          arg.raise "passing Void return value of lib fun call has no effect"
-        end
+        arg.raise "passing Void return value of lib fun call has no effect" if void_lib_call?(arg)
       end
 
       named_args.try &.each do |arg|
-        if void_lib_call?(arg)
-          arg.raise "passing Void return value of lib fun call has no effect"
-        end
+        arg.raise "passing Void return value of lib fun call has no effect" if void_lib_call?(arg)
       end
 
       obj = node.obj
@@ -287,23 +269,17 @@ module Crystal
       # It might happen that a call was made on a module or an abstract class
       # and we don't know the type because there are no including classes or subclasses.
       # In that case, turn this into an untyped expression.
-      if !node.type? && obj && obj_type && (obj_type.module? || obj_type.abstract?)
-        return untyped_expression(node, "`#{node}` has no type")
-      end
+      return untyped_expression(node, "`#{node}` has no type") if !node.type? && obj && obj_type && (obj_type.module? || obj_type.abstract?)
 
       if block && (fun_literal = block.fun_literal)
         block.fun_literal = fun_literal.transform(self)
       end
 
       # Check if we have an untyped expression in this call. Replace it with raise.
-      if (obj && !obj_type)
-        return untyped_expression(node, "`#{obj}` has no type")
-      end
+      return untyped_expression(node, "`#{obj}` has no type") if obj && !obj_type
 
       node.args.each do |arg|
-        unless arg.type?
-          return untyped_expression(node, "`#{arg}` has no type")
-        end
+        return untyped_expression(node, "`#{arg}` has no type") unless arg.type?
       end
 
       # Check if the block has its type freezed and it doesn't match the current type
@@ -394,9 +370,7 @@ module Crystal
       end
 
       def visit(node : Var)
-        if @a_def.vars.try &.[node.name]?.try &.closured?
-          @vars << node
-        end
+        @vars << node if @a_def.vars.try &.[node.name]?.try &.closured?
       end
 
       def visit(node : InstanceVar)
@@ -414,21 +388,15 @@ module Crystal
         when ProcLiteral
           if arg.def.closure?
             vars = ClosuredVarsCollector.collect arg.def
-            unless vars.empty?
-              message += " (closured vars: #{vars.join ", "})"
-            end
+            message += " (closured vars: #{vars.join ", "})" unless vars.empty?
 
             arg.raise message
           end
         when ProcPointer
-          if arg.obj.try &.type?.try &.passed_as_self?
-            arg.raise "#{message} (closured vars: self)"
-          end
+          arg.raise "#{message} (closured vars: self)" if arg.obj.try &.type?.try &.passed_as_self?
 
           owner = arg.call.target_def.owner
-          if owner.passed_as_self?
-            arg.raise "#{message} (closured vars: self)"
-          end
+          arg.raise "#{message} (closured vars: self)" if owner.passed_as_self?
         end
       end
     end
@@ -441,9 +409,7 @@ module Crystal
 
         # If the transform didn't end up in a Call, it means the
         # call will never be executed.
-        if result.is_a?(Call)
-          node.call = result
-        end
+        node.call = result if result.is_a?(Call)
       end
 
       node
@@ -462,10 +428,7 @@ module Crystal
     def untyped_expression(node, msg = nil)
       ex_msg = String.build do |str|
         str << "can't execute `" << node << "` at " << node.location
-        if msg
-          str << ": "
-          str << msg
-        end
+        (str << ": " << msg) if msg
       end
 
       build_raise ex_msg, node
@@ -501,9 +464,7 @@ module Crystal
 
       # If the condition is a NoReturn, just replace the whole
       # while with it, since the body will never be executed
-      if node.cond.no_returns?
-        return node.cond
-      end
+      return node.cond if node.cond.no_returns?
 
       node
     end
@@ -515,9 +476,7 @@ module Crystal
       cond_is_truthy, cond_is_falsey = @last_is_truthy, @last_is_falsey
       reset_last_status
 
-      if node_cond.no_returns?
-        return node_cond
-      end
+      return node_cond if node_cond.no_returns?
 
       case
       when node_cond.true_literal?
@@ -646,29 +605,20 @@ module Crystal
       obj_type = node.obj.type?
       return node unless obj_type
 
-      if node.obj.no_returns?
-        return node.obj
-      end
+      return node.obj if node.obj.no_returns?
 
       to_type = node.to.type
 
       if to_type.pointer?
-        if obj_type.pointer? || obj_type.reference_like?
-          return node
-        else
-          node.raise "can't cast #{obj_type} to #{to_type}"
-        end
+        return node if obj_type.pointer? || obj_type.reference_like?
+        node.raise "can't cast #{obj_type} to #{to_type}"
       end
 
       if obj_type.pointer?
-        unless to_type.pointer? || to_type.reference_like?
-          node.raise "can't cast #{obj_type} to #{to_type}"
-        end
+        node.raise "can't cast #{obj_type} to #{to_type}" unless to_type.pointer? || to_type.reference_like?
       else
         resulting_type = obj_type.filter_by(to_type)
-        unless resulting_type
-          node.raise "can't cast #{obj_type} to #{to_type}"
-        end
+        node.raise "can't cast #{obj_type} to #{to_type}" unless resulting_type
       end
 
       node
@@ -677,9 +627,7 @@ module Crystal
     def transform(node : NilableCast)
       node = super
 
-      if node.obj.no_returns?
-        return node.obj
-      end
+      return node.obj if node.obj.no_returns?
 
       node
     end
@@ -699,9 +647,7 @@ module Crystal
     def transform(node : ExceptionHandler)
       node = super
 
-      if node.body.no_returns?
-        node.else = nil
-      end
+      node.else = nil if node.body.no_returns?
 
       node
     end

@@ -320,9 +320,7 @@ end
 
 private def class_common_ancestor(t1, t2)
   # This discards Object, Reference and Value
-  if t1.depth <= 1
-    return nil
-  end
+  return nil if t1.depth <= 1
 
   case t1
   when t1.program.struct, t1.program.number, t1.program.int, t1.program.float
@@ -335,19 +333,13 @@ private def class_common_ancestor(t1, t2)
     t1_superclass = t1.superclass
     t2_superclass = t2.superclass
 
-    if t1_superclass && t2_superclass
-      return t1_superclass.common_ancestor(t2_superclass)
-    end
+    return t1_superclass.common_ancestor(t2_superclass) if t1_superclass && t2_superclass
   elsif t1.depth > t2.depth
     t1_superclass = t1.superclass
-    if t1_superclass
-      return t1_superclass.common_ancestor(t2)
-    end
+    return t1_superclass.common_ancestor(t2) if t1_superclass
   elsif t1.depth < t2.depth
     t2_superclass = t2.superclass
-    if t2_superclass
-      return t1.common_ancestor(t2_superclass)
-    end
+    return t1.common_ancestor(t2_superclass) if t2_superclass
   end
 
   nil

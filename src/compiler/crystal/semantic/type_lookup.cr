@@ -84,33 +84,25 @@ class Crystal::Type
 
       case type_var
       when Const
-        if @raise
-          node.raise "#{type_var} is not a type, it's a constant"
-        else
-          return nil
-        end
+        node.raise "#{type_var} is not a type, it's a constant" if @raise
+        return
       when Type
         return type_var
       when Self
         return lookup(type_var)
       end
 
-      if @raise
-        raise_undefined_constant(node)
-      else
-        nil
-      end
+      raise_undefined_constant(node) if @raise
+
+      nil
     end
 
     def lookup_type_var(node : Path)
       type_var = lookup_type_var?(node)
       return type_var if type_var
 
-      if @raise
-        raise_undefined_constant(node)
-      else
-        nil
-      end
+      raise_undefined_constant(node) if @raise
+      nil
     end
 
     def lookup_type_var?(node : Path)
@@ -127,11 +119,8 @@ class Crystal::Type
 
       if type.is_a?(Type)
         if @in_generic_args == 0 && type.is_a?(AliasType) && !type.aliased_type?
-          if type.value_processed?
-            node.raise "infinite recursive definition of alias #{type}"
-          else
-            type.process_value
-          end
+          node.raise "infinite recursive definition of alias #{type}" if type.value_processed?
+          type.process_value
         end
         type = type.remove_alias_if_simple
       end
@@ -170,16 +159,12 @@ class Crystal::Type
       case instance_type
       when NamedTupleType
         named_args = node.named_args
-        unless named_args
-          node.raise "can only instantiate NamedTuple with named arguments"
-        end
+        node.raise "can only instantiate NamedTuple with named arguments" unless named_args
 
         entries = named_args.map do |named_arg|
           subnode = named_arg.value
 
-          if subnode.is_a?(NumberLiteral)
-            subnode.raise "can't use number as type for NamedTuple"
-          end
+          subnode.raise "can't use number as type for NamedTuple" if subnode.is_a?(NumberLiteral)
 
           type = in_generic_args { lookup(subnode) }
           return if !@raise && !type
@@ -196,18 +181,12 @@ class Crystal::Type
         end
       when GenericType
         if instance_type.splat_index
-          if node.named_args
-            node.raise "can only use named arguments with NamedTuple"
-          end
+          node.raise "can only use named arguments with NamedTuple" if node.named_args
 
           min_needed = instance_type.type_vars.size - 1
-          if node.type_vars.size < min_needed
-            node.wrong_number_of "type vars", instance_type, node.type_vars.size, "#{min_needed}+"
-          end
+          node.wrong_number_of("type vars", instance_type, node.type_vars.size, "#{min_needed}+") if node.type_vars.size < min_needed
         else
-          if node.named_args
-            node.raise "can only use named arguments with NamedTuple"
-          end
+          node.raise "can only use named arguments with NamedTuple" if node.named_args
 
           if instance_type.type_vars.size != node.type_vars.size
             node.wrong_number_of "type vars", instance_type, node.type_vars.size, instance_type.type_vars.size
@@ -307,11 +286,8 @@ class Crystal::Type
             if a_type.is_a?(TupleInstanceType)
               types.concat(a_type.tuple_types)
             else
-              if @raise
-                input.exp.raise "can only splat tuple type, not #{a_type}"
-              else
-                return
-              end
+              input.exp.raise "can only splat tuple type, not #{a_type}" if @raise
+              return
             end
           else
             type = in_generic_args { lookup(input) }
@@ -341,9 +317,7 @@ class Crystal::Type
     end
 
     def lookup(node : Self)
-      if @self_type.is_a?(Program)
-        node.raise "there's no self in this scope"
-      end
+      node.raise "there's no self in this scope" if @self_type.is_a?(Program)
 
       if (self_type = @self_type).is_a?(GenericType)
         params = self_type.type_vars.map { |type_var| self_type.type_parameter(type_var).as(TypeVar) }
@@ -355,11 +329,8 @@ class Crystal::Type
 
     def lookup(node : TypeOf)
       unless @allow_typeof
-        if @raise
-          node.raise "can't use 'typeof' here"
-        else
-          return
-        end
+        node.raise "can't use 'typeof' here" if @raise
+        return
       end
 
       meta_vars = MetaVars{"self" => MetaVar.new("self", @self_type)}
@@ -402,9 +373,7 @@ class Crystal::Type
     def check_cant_infer_generic_type_parameter(scope, node)
       if scope.is_a?(MetaclassType) && (instance_type = scope.instance_type).is_a?(GenericClassType)
         first_name = node.names.first
-        if instance_type.type_vars.includes?(first_name)
-          node.raise "can't infer the type parameter #{first_name} for the #{instance_type.type_desc} #{instance_type}. Please provide it explicitly"
-        end
+        node.raise "can't infer the type parameter #{first_name} for the #{instance_type.type_desc} #{instance_type}. Please provide it explicitly" if instance_type.type_vars.includes? first_name
       end
     end
 

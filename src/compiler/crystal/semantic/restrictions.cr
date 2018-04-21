@@ -154,9 +154,7 @@ module Crystal
           other_restriction = other_arg.restriction
           return false if self_restriction == nil && other_restriction != nil
 
-          if self_restriction && other_restriction
-            return false unless self_restriction.restriction_of?(other_restriction, owner)
-          end
+          return false if self_restriction && other_restriction && !self_restriction.restriction_of?(other_restriction, owner)
         end
 
         return true
@@ -237,11 +235,8 @@ module Crystal
       self_type = owner.lookup_path(self)
       if self_type
         other_type = owner.lookup_path(other)
-        if other_type
-          return self_type.restriction_of?(other_type, owner)
-        else
-          return true
-        end
+        return self_type.restriction_of?(other_type, owner) if other_type
+        return true
       end
 
       false
@@ -256,9 +251,7 @@ module Crystal
       self_type = owner.lookup_path(self)
       if self_type
         other_type = owner.lookup_type?(other)
-        if other_type
-          return self_type.restriction_of?(other_type, owner)
-        end
+        return self_type.restriction_of?(other_type, owner) if other_type
       end
 
       false
@@ -308,11 +301,8 @@ module Crystal
     def restriction_of?(other : Metaclass, owner)
       self_type = owner.lookup_type?(self)
       other_type = owner.lookup_type?(other)
-      if self_type && other_type
-        self_type.restriction_of?(other_type, owner)
-      else
-        self == other
-      end
+      return self_type.restriction_of?(other_type, owner) if self_type && other_type
+      self == other
     end
   end
 
@@ -322,28 +312,15 @@ module Crystal
     end
 
     def restrict(other : Type, context)
-      if self == other
-        return self
-      end
-
       # Allow Nil to match Void (useful for `Pointer(Void)#value=`)
-      if nil_type? && other.void?
-        return self
-      end
-
-      if parents.try &.any? &.restriction_of?(other, context.instantiated_type)
-        return self
-      end
+      return self if self == other || nil_type? && other.void? || parents.try &.any? &.restriction_of?(other, context.instantiated_type)
 
       nil
     end
 
     def restrict(other : AliasType, context)
-      if self == other
-        self
-      else
-        restrict(other.remove_alias, context)
-      end
+      return self if self == other
+      restrict(other.remove_alias, context)
     end
 
     def restrict(other : Self, context)
@@ -375,9 +352,7 @@ module Crystal
       single_name = other.names.size == 1
       if single_name
         first_name = other.names.first
-        if context.has_def_free_var?(first_name)
-          return context.set_free_var(first_name, self)
-        end
+        return context.set_free_var(first_name, self) if context.has_def_free_var?(first_name)
       end
 
       if single_name
@@ -400,33 +375,24 @@ module Crystal
       ident_type ||= context.defining_type.lookup_path other
 
       if ident_type
-        if ident_type.is_a?(Const)
-          other.raise "#{ident_type} is not a type, it's a constant"
-        end
+        other.raise "#{ident_type} is not a type, it's a constant" if ident_type.is_a?(Const)
 
         return restrict ident_type, context
       end
 
       if single_name
         first_name = other.names.first
-        if context.defining_type.type_var?(first_name)
-          return context.set_free_var(first_name, self)
-        end
+        return context.set_free_var(first_name, self) if context.defining_type.type_var?(first_name)
       end
 
-      if had_ident_type
-        other.raise "undefined constant #{other}"
-      else
-        other.raise_undefined_constant(context.defining_type)
-      end
+      other.raise "undefined constant #{other}" if had_ident_type
+      other.raise_undefined_constant(context.defining_type)
     end
 
     def restrict(other : Generic, context)
       # Special case: consider `Union(X, Y, ...)` the same as `X | Y | ...`
       generic_type = get_generic_type(other, context)
-      if generic_type.is_a?(GenericUnionType)
-        return restrict(Union.new(other.type_vars), context)
-      end
+      return restrict(Union.new(other.type_vars), context) if generic_type.is_a?(GenericUnionType)
 
       parents.try &.each do |parent|
         next if parent.is_a?(NonGenericModuleType)
@@ -475,19 +441,14 @@ module Crystal
     end
 
     def restriction_of?(other : Type, owner)
-      if self == other
-        return true
-      end
+      return true if self == other
 
       parents.try &.any? &.restriction_of?(other, owner)
     end
 
     def restriction_of?(other : AliasType, owner)
-      if self == other
-        true
-      else
-        restriction_of?(other.remove_alias, owner)
-      end
+      return true if self == other
+      restriction_of?(other.remove_alias, owner)
     end
 
     def restriction_of?(other : ASTNode, owner)
@@ -560,8 +521,8 @@ module Crystal
         if type_var.is_a?(Var) && other_type_var.is_a?(Var)
           restricted = type_var.type.implements?(other_type_var.type)
           return nil unless restricted
-        else
-          return nil unless type_var == other_type_var
+        elsif type_var != other_type_var
+          return nil
         end
       end
 
@@ -580,9 +541,8 @@ module Crystal
       generic_type = generic_type.as(GenericType)
 
       if other.named_args
-        unless generic_type.is_a?(NamedTupleType)
-          other.raise "can only instantiate NamedTuple with named arguments"
-        end
+        other.raise "can only instantiate NamedTuple with named arguments" unless generic_type.is_a?(NamedTupleType)
+
         # We match named tuples in NamedTupleInstanceType
         return nil
       end
@@ -664,9 +624,7 @@ module Crystal
       if type_var.is_a?(NumberLiteral)
         case other_type_var
         when NumberLiteral
-          if type_var == other_type_var
-            return type_var
-          end
+          return type_var if type_var == other_type_var
         when Path
           if other_type_var.names.size == 1
             name = other_type_var.names.first
@@ -674,9 +632,7 @@ module Crystal
             # If the free variable is already set to another
             # number, there's no match
             existing = context.get_free_var(name)
-            if existing && existing != type_var
-              return nil
-            end
+            return nil if existing && existing != type_var
 
             context.set_free_var(name, type_var)
             return type_var
@@ -775,9 +731,7 @@ module Crystal
       return super unless generic_type == self.generic_type
 
       other_named_args = other.named_args
-      unless other_named_args
-        other.raise "can only instantiate NamedTuple with named arguments"
-      end
+      other.raise "can only instantiate NamedTuple with named arguments" unless other_named_args
 
       # Check that the names are the same
       other_names = other_named_args.map(&.name).sort!
@@ -852,9 +806,7 @@ module Crystal
     def restrict(other : Generic, context)
       # Restrict first against the base type
       restricted = base_type.restrict(other, context)
-      if restricted
-        return restricted.virtual_type
-      end
+      return restricted.virtual_type if restricted
 
       types = base_type.subclasses.compact_map do |subclass|
         subclass.virtual_type.restrict(other, context).as(Type?)
@@ -886,25 +838,18 @@ module Crystal
       single_name = other.names.size == 1
       if single_name
         first_name = other.names.first
-        if context.has_def_free_var?(first_name)
-          return context.set_free_var(first_name, self)
-        end
+        return context.set_free_var(first_name, self) if context.has_def_free_var?(first_name)
       end
 
       other_type = context.defining_type.lookup_path other
       if other_type
-        if other_type == self
-          return self
-        end
+        return self if other_type == self
       else
         single_name = other.names.size == 1
         if single_name
           first_name = other.names.first
-          if context.defining_type.type_var?(first_name)
-            return context.set_free_var(first_name, self)
-          else
-            other.raise_undefined_constant(context.defining_type)
-          end
+          return context.set_free_var(first_name, self) if context.defining_type.type_var?(first_name)
+          other.raise_undefined_constant(context.defining_type)
         end
       end
 
@@ -914,9 +859,7 @@ module Crystal
     def restrict(other : AliasType, context)
       return self if self == other
 
-      if !self.simple? && !other.simple?
-        return nil
-      end
+      return nil if !self.simple? && !other.simple?
 
       remove_alias.restrict(other, context)
     end
@@ -937,9 +880,10 @@ module Crystal
       return self if self == other
 
       restricted = typedef.restrict(other, context)
-      if restricted == typedef
+      case restricted
+      when typedef
         return self
-      elsif restricted.is_a?(UnionType)
+      when .is_a? UnionType
         program.type_merge(restricted.union_types.map { |t| t == typedef ? self : t })
       else
         restricted
@@ -1122,9 +1066,7 @@ end
 
 private def get_generic_type(node, context)
   name = node.name
-  if name.is_a?(Crystal::Path)
-    context.defining_type.lookup_path name
-  else
-    name.type
-  end
+  return context.defining_type.lookup_path name if name.is_a?(Crystal::Path)
+
+  name.type
 end
