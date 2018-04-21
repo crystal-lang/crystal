@@ -221,7 +221,11 @@ describe "JSON mapping" do
   end
 
   it "parses strict person with unknown attributes" do
-    ex = expect_raises JSON::MappingError, "Unknown JSON attribute: foo\n  parsing StrictJSONPerson" do
+    error_message = <<-'MSG'
+      Unknown JSON attribute: foo
+        parsing StrictJSONPerson
+      MSG
+    ex = expect_raises JSON::MappingError, error_message do
       StrictJSONPerson.from_json <<-JSON
         {
           "name": "John",
@@ -234,14 +238,22 @@ describe "JSON mapping" do
   end
 
   it "raises if non-nilable attribute is nil" do
-    ex = expect_raises JSON::MappingError, "Missing JSON attribute: name\n  parsing JSONPerson at 1:1" do
+    error_message = <<-'MSG'
+      Missing JSON attribute: name
+        parsing JSONPerson at 1:1
+      MSG
+    ex = expect_raises JSON::MappingError, error_message do
       JSONPerson.from_json(%({"age": 30}))
     end
     ex.location.should eq({1, 1})
   end
 
   it "raises if not an object" do
-    ex = expect_raises JSON::MappingError, "Expected begin_object but was string at 1:1\n  parsing StrictJSONPerson at 0:0" do
+    error_message = <<-'MSG'
+      Expected begin_object but was string at 1:1
+        parsing StrictJSONPerson at 0:0
+      MSG
+    ex = expect_raises JSON::MappingError, error_message do
       StrictJSONPerson.from_json <<-JSON
         "foo"
         JSON
@@ -250,7 +262,11 @@ describe "JSON mapping" do
   end
 
   it "raises if data type does not match" do
-    ex = expect_raises JSON::MappingError, "Expected int but was string at 3:15\n  parsing StrictJSONPerson#age at 3:3" do
+    error_message = <<-'MSG'
+      Expected int but was string at 3:15
+        parsing StrictJSONPerson#age at 3:3
+      MSG
+    ex = expect_raises JSON::MappingError, error_message do
       StrictJSONPerson.from_json <<-JSON
         {
           "name": "John",
@@ -545,7 +561,11 @@ describe "JSON mapping" do
     end
 
     it "raises if non-nilable attribute is nil" do
-      ex = expect_raises JSON::MappingError, "Missing JSON attribute: foo\n  parsing JSONWithQueryAttributes at 1:1" do
+      error_message = <<-'MSG'
+        Missing JSON attribute: foo
+          parsing JSONWithQueryAttributes at 1:1
+        MSG
+      ex = expect_raises JSON::MappingError, error_message do
         JSONWithQueryAttributes.from_json(%({"is_bar": true}))
       end
       ex.location.should eq({1, 1})
