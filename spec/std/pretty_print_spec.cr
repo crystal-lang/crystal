@@ -350,7 +350,7 @@ private def hello(width)
   end
 end
 
-private def stritc_pretty(width)
+private def strict_pretty(width)
   String.build do |io|
     PrettyPrint.format(io, width) do |q|
       q.group do
@@ -443,7 +443,7 @@ end
 private def assert_strict_pretty(range, expected)
   it "pretty prints strict pretty #{range}" do
     range.each do |width|
-      stritc_pretty(width).should eq(expected)
+      strict_pretty(width).should eq(expected)
     end
   end
 end
