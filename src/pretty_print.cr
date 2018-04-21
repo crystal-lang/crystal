@@ -14,7 +14,7 @@ class PrettyPrint
   # Creates a new pretty printer that will write to the given *output*
   # and be capped at *maxwidth*.
   def initialize(@output : IO, @maxwidth = 79, @newline = "\n", @indent = 0)
-    @output_width = 0
+    @output_width = @indent
     @buffer_width = 0
 
     # Buffer of object that can't yet be printed to
