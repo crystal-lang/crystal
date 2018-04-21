@@ -4466,9 +4466,8 @@ module Crystal
         skip_space_or_newline
 
         named_args << NamedArgument.new(name, type)
-        if @token.type == :","
-          next_token_skip_space_or_newline
-        end
+        break unless @token.type == :","
+        next_token_skip_space_or_newline
       end
 
       named_args
