@@ -1,4 +1,7 @@
 module Crystal::Doc
+  CRYSTAL_REPOSITORY_NAME = "github.com/crystal-lang/crystal"
+  CANONICAL_BASE_URL      = "https://crystal-lang.org/api/latest"
+
   record Main, body : String, program : Type, repository_name : String do
     def to_s(io : IO)
       to_json(io)

@@ -7,6 +7,9 @@
   <script type="text/javascript">
     CrystalDoc.base_path = "<%= type.path_to "" %>";
   </script>
+  <% if type.repository_name == CRYSTAL_REPOSITORY_NAME %>
+    <link rel="canonical" href="<%= "#{CANONICAL_BASE_URL}/#{type.path}" %>" />
+  <% end %>
 </head>
 <body>
 
