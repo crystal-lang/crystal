@@ -255,7 +255,7 @@ describe "Lexer" do
   it_lexes_instance_var "@foo"
   it_lexes_class_var "@@foo"
   it_lexes_globals ["$foo", "$FOO", "$_foo", "$foo123"]
-  it_lexes_symbols [":foo", ":foo!", ":foo?", ":\"foo\"", ":かたな", ":+", ":-", ":*", ":/",
+  it_lexes_symbols [":foo", ":foo!", ":foo?", ":foo=", ":\"foo\"", ":かたな", ":+", ":-", ":*", ":/",
                     ":==", ":<", ":<=", ":>", ":>=", ":!", ":!=", ":=~", ":!~", ":&", ":|",
                     ":^", ":~", ":**", ":>>", ":<<", ":%", ":[]", ":[]?", ":[]=", ":<=>", ":===",
   ]
@@ -450,6 +450,42 @@ describe "Lexer" do
     token = lexer.next_token
     token.type.should eq(:SYMBOL)
     token.value.should eq("\\")
+  end
+
+  it "lexes symbol followed by !=" do
+    lexer = Lexer.new ":a!=:a"
+    token = lexer.next_token
+    token.type.should eq(:SYMBOL)
+    token.value.should eq ("a")
+    token = lexer.next_token
+    token.type.should eq(:"!=")
+    token = lexer.next_token
+    token.type.should eq(:SYMBOL)
+    token.value.should eq ("a")
+  end
+
+  it "lexes symbol followed by ==" do
+    lexer = Lexer.new ":a==:a"
+    token = lexer.next_token
+    token.type.should eq(:SYMBOL)
+    token.value.should eq ("a")
+    token = lexer.next_token
+    token.type.should eq(:"==")
+    token = lexer.next_token
+    token.type.should eq(:SYMBOL)
+    token.value.should eq ("a")
+  end
+
+  it "lexes symbol followed by ===" do
+    lexer = Lexer.new ":a===:a"
+    token = lexer.next_token
+    token.type.should eq(:SYMBOL)
+    token.value.should eq ("a")
+    token = lexer.next_token
+    token.type.should eq(:"===")
+    token = lexer.next_token
+    token.type.should eq(:SYMBOL)
+    token.value.should eq ("a")
   end
 
   it "lexes /=" do
