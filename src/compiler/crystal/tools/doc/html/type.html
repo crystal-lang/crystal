@@ -7,6 +7,9 @@
   <script type="text/javascript">
     CrystalDoc.base_path = "<%= type.path_to "" %>";
   </script>
+  <% if base_url = canonical_base_url %>
+    <link rel="canonical" href="<%= File.join(base_url, type.path) %>" />
+  <% end %>
 </head>
 <body>
 

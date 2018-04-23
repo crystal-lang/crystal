@@ -6,6 +6,7 @@
 class Crystal::Command
   private def docs
     output_directory = File.join(".", "docs")
+    canonical_base_url = nil
 
     OptionParser.parse(options) do |opts|
       opts.banner = <<-'BANNER'
@@ -18,6 +19,10 @@ class Crystal::Command
 
       opts.on("--output=DIR", "-o DIR", "Set the output directory (default: #{output_directory})") do |value|
         output_directory = value
+      end
+
+      opts.on("--canonical-base-url=URL", "-b URL", "Set the canonical base url") do |value|
+        canonical_base_url = value
       end
 
       opts.on("-h", "--help", "Show this message") do
@@ -41,6 +46,6 @@ class Crystal::Command
     compiler.wants_doc = true
     result = compiler.top_level_semantic sources
 
-    Doc::Generator.new(result.program, included_dirs, output_directory).run
+    Doc::Generator.new(result.program, included_dirs, output_directory, canonical_base_url).run
   end
 end
