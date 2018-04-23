@@ -29,7 +29,7 @@ module Crystal::Doc
     ECR.def_to_s "#{__DIR__}/html/main.html"
   end
 
-  record HeadTemplate, base_path : String do
+  record HeadTemplate, type : Type?, canonical_base_url : String? do
     ECR.def_to_s "#{__DIR__}/html/_head.html"
   end
 
