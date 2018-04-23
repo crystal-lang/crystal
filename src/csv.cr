@@ -118,9 +118,9 @@ class CSV
   # end
   # result # => "one,two\nthree\n"
   # ```
-  def self.build : String
+  def self.build(separator : Char = DEFAULT_SEPARATOR, quote_char : Char = DEFAULT_QUOTE_CHAR) : String
     String.build do |io|
-      build(io) { |builder| yield builder }
+      build(io, separator, quote_char) { |builder| yield builder }
     end
   end
 
@@ -136,8 +136,8 @@ class CSV
   # end
   # io.to_s # => "HEADER\none,two\nthree\n"
   # ```
-  def self.build(io : IO)
-    builder = Builder.new(io)
+  def self.build(io : IO, separator : Char = DEFAULT_SEPARATOR, quote_char : Char = DEFAULT_QUOTE_CHAR)
+    builder = Builder.new(io, separator, quote_char)
     yield builder
   end
 

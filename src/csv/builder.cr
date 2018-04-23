@@ -36,14 +36,14 @@ require "csv"
 # ```
 class CSV::Builder
   # Creates a builder that will write to the given `IO`.
-  def initialize(@io : IO)
+  def initialize(@io : IO, @separator : Char = DEFAULT_SEPARATOR, @quote_char : Char = DEFAULT_QUOTE_CHAR)
     @first_cell_in_row = true
   end
 
   # Yields a `CSV::Row` to append a row. A newline is appended
   # to `IO` after the block exits.
   def row
-    yield Row.new(self)
+    yield Row.new(self, @separator, @quote_char)
     @io << '\n'
     @first_cell_in_row = true
   end
@@ -72,21 +72,21 @@ class CSV::Builder
   # :nodoc:
   def quote_cell(value)
     append_cell do
-      @io << '"'
+      @io << @quote_char
       value.each_byte do |byte|
         case byte
-        when '"'
-          @io << %("")
+        when @quote_char
+          @io << @quote_char << @quote_char
         else
           @io.write_byte byte
         end
       end
-      @io << '"'
+      @io << @quote_char
     end
   end
 
   private def append_cell
-    @io << ',' unless @first_cell_in_row
+    @io << @separator unless @first_cell_in_row
     yield
     @first_cell_in_row = false
   end
@@ -96,7 +96,7 @@ class CSV::Builder
     @builder : Builder
 
     # :nodoc:
-    def initialize(@builder)
+    def initialize(@builder, @separator : Char = DEFAULT_SEPARATOR, @quote_char : Char = DEFAULT_QUOTE_CHAR)
     end
 
     # Appends the given value to this row.
@@ -138,7 +138,7 @@ class CSV::Builder
     private def needs_quotes?(value)
       value.each_byte do |byte|
         case byte.unsafe_chr
-        when ',', '\n', '"'
+        when @separator, @quote_char, '\n'
           return true
         end
       end
