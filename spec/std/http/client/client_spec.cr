@@ -58,14 +58,14 @@ module HTTP
       it "has sane defaults" do
         cl = Client.new(URI.parse("http://example.com"))
         cl.tls?.should be_nil
-        cl.port.should eq(80)
+        cl.base_uri.port.should eq(80)
       end
 
       {% if !flag?(:without_openssl) %}
         it "detects HTTPS" do
           cl = Client.new(URI.parse("https://example.com"))
           cl.tls?.should be_truthy
-          cl.port.should eq(443)
+          cl.base_uri.port.should eq(443)
         end
 
         it "keeps context" do
@@ -84,7 +84,7 @@ module HTTP
         it "allows for specified ports" do
           cl = Client.new(URI.parse("https://example.com:9999"))
           cl.tls?.should be_truthy
-          cl.port.should eq(9999)
+          cl.base_uri.port.should eq(9999)
         end
       {% else %}
         it "raises when trying to activate TLS" do
@@ -149,17 +149,17 @@ module HTTP
 
     it "tests read_timeout" do
       TestServer.open("localhost", 0, 0) do |server|
-        transport = Client::Transport::Default.new
+        transport = Client::Transport::TCPTransport.new("localhost", server.local_address.port)
         transport.read_timeout = 1.seconds
-        client = Client.new("localhost", server.local_address.port, transport: transport)
+        client = Client.new(transport)
         client.get("/")
       end
 
       TestServer.open("localhost", 0, 0.5) do |server|
-        transport = Client::Transport::Default.new
+        transport = Client::Transport::TCPTransport.new("localhost", server.local_address.port)
         transport.read_timeout = 0.001.seconds
 
-        client = Client.new("localhost", server.local_address.port, transport: transport)
+        client = Client.new(transport)
         expect_raises(IO::Timeout, "Read timed out") do
           client.get("/?sleep=1")
         end
@@ -168,10 +168,10 @@ module HTTP
 
     it "tests connect_timeout" do
       TestServer.open("localhost", 0, 0) do |server|
-        transport = Client::Transport::Default.new
+        transport = Client::Transport::TCPTransport.new("localhost", server.local_address.port)
         transport.connect_timeout = 0.5.seconds
 
-        client = Client.new("localhost", server.local_address.port, transport: transport)
+        client = Client.new(transport)
         client.get("/")
       end
     end

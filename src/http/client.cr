@@ -56,22 +56,6 @@ class HTTP::Client
   # The set of possible valid body types.
   alias BodyType = String | Bytes | IO | Nil
 
-  # Returns the target host.
-  #
-  # ```
-  # client = HTTP::Client.new "www.example.com"
-  # client.host # => "www.example.com"
-  # ```
-  getter host : String
-
-  # Returns the target port.
-  #
-  # ```
-  # client = HTTP::Client.new "www.example.com"
-  # client.port # => 80
-  # ```
-  getter port : Int32
-
   # If this client uses TLS, returns its `OpenSSL::SSL::Context::Client`, raises otherwise.
   #
   # Changes made after the initial request will have no effect.
@@ -87,15 +71,15 @@ class HTTP::Client
   {% end %}
 
   # Whether automatic compression/decompression is enabled.
-  property? compress : Bool
+  property? compress : Bool = true
 
-  getter transport : Transport do
-    self.class.default_transport
-  end
+  getter transport : Transport
 
   class_getter default_transport do
     Transport::Default.new
   end
+
+  getter base_uri : URI
 
   # Creates a new HTTP client with the given *host*, *port* and *tls*
   # configurations. If no port is given, the default one will
@@ -103,28 +87,35 @@ class HTTP::Client
   # 443 if *tls* is truthy. If *tls* is `true` a new `OpenSSL::SSL::Context::Client` will
   # be used, else the given one. In any case the active context can be accessed through `tls`.
   {% if flag?(:without_openssl) %}
-    def initialize(@host : String, port = nil, tls : Bool = false, @transport : Transport? = nil)
-      @tls = nil
+    def initialize(@transport : Transport? = self.class.default_transport, tls : Bool = false, @base_uri : URI = URI.new)
       if tls
         raise "HTTP::Client TLS is disabled because `-D without_openssl` was passed at compile time"
       end
 
-      @port = (port || (@tls ? 443 : 80)).to_i
-      @compress = true
+      @tls = nil
+    end
+
+    def self.new(host : String, port = nil, tls : Bool = false)
+      port = (port || (tls ? 443 : 80)).to_i
+
+      new(Transport::TCPTransport.new(host, port), tls, base_uri: URI.new((tls ? "https" : "http"), host, port))
     end
   {% else %}
-    def initialize(@host : String, port = nil, tls : Bool | OpenSSL::SSL::Context::Client = false, @transport : Transport? = nil)
+    def initialize(@transport : Transport? = self.class.default_transport, tls : Bool | OpenSSL::SSL::Context::Client = false, @base_uri : URI = URI.new)
       @tls = case tls
-             when true
-               OpenSSL::SSL::Context::Client.new
-             when OpenSSL::SSL::Context::Client
-               tls
-             when false
-               nil
-             end
+              when true
+                OpenSSL::SSL::Context::Client.new
+              when OpenSSL::SSL::Context::Client
+                tls
+              when false
+                nil
+              end
+    end
 
-      @port = (port || (@tls ? 443 : 80)).to_i
-      @compress = true
+    def self.new(host : String, port = nil, tls : Bool | OpenSSL::SSL::Context::Client = false)
+      port = (port || (tls ? 443 : 80)).to_i
+
+      new(Transport::TCPTransport.new(host, port), tls, base_uri: URI.new((tls ? "https" : "http"), host, port))
     end
   {% end %}
 
@@ -552,11 +543,11 @@ class HTTP::Client
   end
 
   private def connect(request)
-    io = transport.connect(URI.new(host: host, port: port, path: request.resource), request)
+    io = transport.connect(@base_uri, request)
 
     {% if !flag?(:without_openssl) %}
       if tls = @tls
-        io = OpenSSL::SSL::Socket::Client.new(io, context: tls, sync_close: true, hostname: @host)
+        io = OpenSSL::SSL::Socket::Client.new(io, context: tls, sync_close: true, hostname: @base_uri.host)
       end
     {% end %}
 
@@ -564,10 +555,12 @@ class HTTP::Client
   end
 
   private def host_header
-    if (@tls && @port != 443) || (!@tls && @port != 80)
-      "#{@host}:#{@port}"
+    host = @base_uri.host
+    port = @base_uri.port
+    if (@tls && port != 443) || (!@tls && port != 80)
+      "#{host}:#{port}"
     else
-      @host
+      host.to_s
     end
   end
 
