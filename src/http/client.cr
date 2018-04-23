@@ -89,15 +89,13 @@ class HTTP::Client
   # Whether automatic compression/decompression is enabled.
   property? compress : Bool
 
-  {% if flag?(:without_openssl) %}
-    @socket : TCPSocket | Nil
-  {% else %}
-    @socket : TCPSocket | OpenSSL::SSL::Socket | Nil
-  {% end %}
+  getter transport : Transport do
+    self.class.default_transport
+  end
 
-  @dns_timeout : Float64?
-  @connect_timeout : Float64?
-  @read_timeout : Float64?
+  class_getter default_transport do
+    Transport::Default.new
+  end
 
   # Creates a new HTTP client with the given *host*, *port* and *tls*
   # configurations. If no port is given, the default one will
@@ -105,7 +103,7 @@ class HTTP::Client
   # 443 if *tls* is truthy. If *tls* is `true` a new `OpenSSL::SSL::Context::Client` will
   # be used, else the given one. In any case the active context can be accessed through `tls`.
   {% if flag?(:without_openssl) %}
-    def initialize(@host : String, port = nil, tls : Bool = false)
+    def initialize(@host : String, port = nil, tls : Bool = false, @transport : Transport? = nil)
       @tls = nil
       if tls
         raise "HTTP::Client TLS is disabled because `-D without_openssl` was passed at compile time"
@@ -115,7 +113,7 @@ class HTTP::Client
       @compress = true
     end
   {% else %}
-    def initialize(@host : String, port = nil, tls : Bool | OpenSSL::SSL::Context::Client = false)
+    def initialize(@host : String, port = nil, tls : Bool | OpenSSL::SSL::Context::Client = false, @transport : Transport? = nil)
       @tls = case tls
              when true
                OpenSSL::SSL::Context::Client.new
@@ -213,100 +211,6 @@ class HTTP::Client
     before_request do |request|
       request.headers["Authorization"] = header
     end
-  end
-
-  # Set the number of seconds to wait when reading before raising an `IO::Timeout`.
-  #
-  # ```
-  # client = HTTP::Client.new("example.org")
-  # client.read_timeout = 1.5
-  # begin
-  #   response = client.get("/")
-  # rescue IO::Timeout
-  #   puts "Timeout!"
-  # end
-  # ```
-  def read_timeout=(read_timeout : Number)
-    @read_timeout = read_timeout.to_f
-  end
-
-  # Set the read timeout with a `Time::Span`, to wait when reading before raising an `IO::Timeout`.
-  #
-  # ```
-  # client = HTTP::Client.new("example.org")
-  # client.read_timeout = 5.minutes
-  # begin
-  #   response = client.get("/")
-  # rescue IO::Timeout
-  #   puts "Timeout!"
-  # end
-  # ```
-  def read_timeout=(read_timeout : Time::Span)
-    self.read_timeout = read_timeout.total_seconds
-  end
-
-  # Set the number of seconds to wait when connecting, before raising an `IO::Timeout`.
-  #
-  # ```
-  # client = HTTP::Client.new("example.org")
-  # client.connect_timeout = 1.5
-  # begin
-  #   response = client.get("/")
-  # rescue IO::Timeout
-  #   puts "Timeout!"
-  # end
-  # ```
-  def connect_timeout=(connect_timeout : Number)
-    @connect_timeout = connect_timeout.to_f
-  end
-
-  # Set the open timeout with a `Time::Span` to wait when connecting, before raising an `IO::Timeout`.
-  #
-  # ```
-  # client = HTTP::Client.new("example.org")
-  # client.connect_timeout = 5.minutes
-  # begin
-  #   response = client.get("/")
-  # rescue IO::Timeout
-  #   puts "Timeout!"
-  # end
-  # ```
-  def connect_timeout=(connect_timeout : Time::Span)
-    self.connect_timeout = connect_timeout.total_seconds
-  end
-
-  # **This method has no effect right now**
-  #
-  # Set the number of seconds to wait when resolving a name, before raising an `IO::Timeout`.
-  #
-  # ```
-  # client = HTTP::Client.new("example.org")
-  # client.dns_timeout = 1.5
-  # begin
-  #   response = client.get("/")
-  # rescue IO::Timeout
-  #   puts "Timeout!"
-  # end
-  # ```
-  def dns_timeout=(dns_timeout : Number)
-    @dns_timeout = dns_timeout.to_f
-  end
-
-  # **This method has no effect right now**
-  #
-  # Set the number of seconds to wait when resolving a name with a `Time::Span`, before raising an `IO::Timeout`.
-  #
-  # ```
-  # client = HTTP::Client.new("example.org")
-  # client.dns_timeout = 1.5.seconds
-  # begin
-  #   response = client.get("/")
-  # rescue IO::Timeout
-  #   puts "Timeout!"
-  # end
-  # ```
-  def dns_timeout=(dns_timeout : Time::Span)
-    self.dns_timeout = dns_timeout.total_seconds
   end
 
   # Adds a callback to execute before each request. This is usually
@@ -495,8 +399,8 @@ class HTTP::Client
   end
 
   private def exec_internal_single(request)
-    decompress = send_request(request)
-    HTTP::Client::Response.from_io?(socket, ignore_body: request.ignore_body?, decompress: decompress)
+    decompress, io = send_request(request)
+    HTTP::Client::Response.from_io?(io, ignore_body: request.ignore_body?, decompress: decompress)
   end
 
   private def handle_response(response)
@@ -540,8 +444,8 @@ class HTTP::Client
   end
 
   private def exec_internal_single(request)
-    decompress = send_request(request)
-    HTTP::Client::Response.from_io?(socket, ignore_body: request.ignore_body?, decompress: decompress) do |response|
+    decompress, io = send_request(request)
+    HTTP::Client::Response.from_io?(io, ignore_body: request.ignore_body?, decompress: decompress) do |response|
       yield response
     end
   end
@@ -556,9 +460,11 @@ class HTTP::Client
   private def send_request(request)
     decompress = set_defaults request
     run_before_request_callbacks(request)
-    request.to_io(socket)
-    socket.flush
-    decompress
+    io = connect(request)
+    request.to_io(io)
+    io.flush
+
+    {decompress, io}
   end
 
   private def set_defaults(request)
@@ -637,8 +543,6 @@ class HTTP::Client
 
   # Closes this client. If used again, a new connection will be opened.
   def close
-    @socket.try &.close
-    @socket = nil
   end
 
   private def new_request(method, path, headers, body : BodyType)
@@ -647,23 +551,16 @@ class HTTP::Client
     end
   end
 
-  private def socket
-    socket = @socket
-    return socket if socket
-
-    socket = TCPSocket.new @host, @port, @dns_timeout, @connect_timeout
-    socket.read_timeout = @read_timeout if @read_timeout
-    socket.sync = false
-    @socket = socket
+  private def connect(request)
+    io = transport.connect(URI.new(host: host, port: port, path: request.resource), request)
 
     {% if !flag?(:without_openssl) %}
       if tls = @tls
-        tls_socket = OpenSSL::SSL::Socket::Client.new(socket, context: tls, sync_close: true, hostname: @host)
-        @socket = socket = tls_socket
+        io = OpenSSL::SSL::Socket::Client.new(io, context: tls, sync_close: true, hostname: @host)
       end
     {% end %}
 
-    socket
+    io
   end
 
   private def host_header
@@ -753,4 +650,5 @@ require "socket"
 require "uri"
 require "base64"
 require "./client/response"
+require "./client/transport"
 require "./common"

@@ -149,15 +149,18 @@ module HTTP
 
     it "tests read_timeout" do
       TestServer.open("localhost", 0, 0) do |server|
-        client = Client.new("localhost", server.local_address.port)
-        client.read_timeout = 1.second
+        transport = Client::Transport::Default.new
+        transport.read_timeout = 1.seconds
+        client = Client.new("localhost", server.local_address.port, transport: transport)
         client.get("/")
       end
 
       TestServer.open("localhost", 0, 0.5) do |server|
-        client = Client.new("localhost", server.local_address.port)
+        transport = Client::Transport::Default.new
+        transport.read_timeout = 0.001.seconds
+
+        client = Client.new("localhost", server.local_address.port, transport: transport)
         expect_raises(IO::Timeout, "Read timed out") do
-          client.read_timeout = 0.001
           client.get("/?sleep=1")
         end
       end
@@ -165,8 +168,10 @@ module HTTP
 
     it "tests connect_timeout" do
       TestServer.open("localhost", 0, 0) do |server|
-        client = Client.new("localhost", server.local_address.port)
-        client.connect_timeout = 0.5
+        transport = Client::Transport::Default.new
+        transport.connect_timeout = 0.5.seconds
+
+        client = Client.new("localhost", server.local_address.port, transport: transport)
         client.get("/")
       end
     end
