@@ -57,14 +57,14 @@ module HTTP
     describe "from URI" do
       it "has sane defaults" do
         cl = Client.new(URI.parse("http://example.com"))
-        cl.tls?.should be_nil
+        cl.tls.should be_nil
         cl.base_uri.port.should eq(80)
       end
 
       {% if !flag?(:without_openssl) %}
         it "detects HTTPS" do
           cl = Client.new(URI.parse("https://example.com"))
-          cl.tls?.should be_truthy
+          cl.tls.should be_truthy
           cl.base_uri.port.should eq(443)
         end
 
@@ -83,7 +83,7 @@ module HTTP
 
         it "allows for specified ports" do
           cl = Client.new(URI.parse("https://example.com:9999"))
-          cl.tls?.should be_truthy
+          cl.tls.should be_truthy
           cl.base_uri.port.should eq(9999)
         end
       {% else %}

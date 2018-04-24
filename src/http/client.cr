@@ -56,18 +56,14 @@ class HTTP::Client
   # The set of possible valid body types.
   alias BodyType = String | Bytes | IO | Nil
 
-  # If this client uses TLS, returns its `OpenSSL::SSL::Context::Client`, raises otherwise.
-  #
-  # Changes made after the initial request will have no effect.
+  # If this client uses TLS, returns its `OpenSSL::SSL::Context::Client` or `nil` otherwise.
   #
   # ```
   # client = HTTP::Client.new "www.example.com", tls: true
   # client.tls # => #<OpenSSL::SSL::Context::Client ...>
   # ```
-  {% if flag?(:without_openssl) %}
-    getter! tls : Nil
-  {% else %}
-    getter! tls : OpenSSL::SSL::Context::Client
+  {% unless flag?(:without_openssl) %}
+    getter tls : OpenSSL::SSL::Context::Client?
   {% end %}
 
   # Whether automatic compression/decompression is enabled.
@@ -91,8 +87,6 @@ class HTTP::Client
       if tls
         raise "HTTP::Client TLS is disabled because `-D without_openssl` was passed at compile time"
       end
-
-      @tls = nil
     end
 
     def self.new(host : String, port = nil, tls : Bool = false)
@@ -101,7 +95,7 @@ class HTTP::Client
       new(Transport::TCPTransport.new(host, port), tls, base_uri: URI.new((port == 443 ? "https" : "http"), host, port))
     end
   {% else %}
-    def initialize(@transport : Transport? = self.class.default_transport, tls : Bool | OpenSSL::SSL::Context::Client = false, @base_uri : URI = URI.new)
+    def initialize(@transport : Transport? = self.class.default_transport, tls : Bool | OpenSSL::SSL::Context::Client = true, @base_uri : URI = URI.new)
       @tls = case tls
               when true
                 OpenSSL::SSL::Context::Client.new
@@ -112,7 +106,7 @@ class HTTP::Client
               end
     end
 
-    def self.new(host : String, port = nil, tls : Bool | OpenSSL::SSL::Context::Client = false)
+    def self.new(host : String, port = nil, tls : Bool | OpenSSL::SSL::Context::Client = true)
       port = (port || (tls ? 443 : 80)).to_i
 
       new(Transport::TCPTransport.new(host, port), tls, base_uri: URI.new((port == 443 ? "https" : "http"), host, port))
