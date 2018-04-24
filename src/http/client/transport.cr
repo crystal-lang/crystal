@@ -23,13 +23,19 @@ abstract class HTTP::Client::Transport
     def connect(uri : URI, request : Request) : IO
       host = uri.host
       raise "Empty host" if !host || host.empty?
-      port = uri.port || ((scheme = uri.scheme) && URI.default_port(scheme)) || raise "Unknown scheme: #{uri.scheme}"
+      port = uri.port || default_port(uri) || raise "Unknown scheme: #{uri.scheme}"
 
       transport = TCPTransport.new(host, port.to_i)
       transport.dns_timeout = @dns_timeout
       transport.connect_timeout = @connect_timeout
       transport.read_timeout = @read_timeout
       transport.connect(uri, request)
+    end
+
+    private def default_port(uri)
+      if scheme = uri.scheme
+        URI.default_port(scheme)
+      end
     end
   end
 
