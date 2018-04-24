@@ -98,7 +98,7 @@ class HTTP::Client
     def self.new(host : String, port = nil, tls : Bool = false)
       port = (port || (tls ? 443 : 80)).to_i
 
-      new(Transport::TCPTransport.new(host, port), tls, base_uri: URI.new((tls ? "https" : "http"), host, port))
+      new(Transport::TCPTransport.new(host, port), tls, base_uri: URI.new((port == 443 ? "https" : "http"), host, port))
     end
   {% else %}
     def initialize(@transport : Transport? = self.class.default_transport, tls : Bool | OpenSSL::SSL::Context::Client = false, @base_uri : URI = URI.new)
@@ -115,7 +115,7 @@ class HTTP::Client
     def self.new(host : String, port = nil, tls : Bool | OpenSSL::SSL::Context::Client = false)
       port = (port || (tls ? 443 : 80)).to_i
 
-      new(Transport::TCPTransport.new(host, port), tls, base_uri: URI.new((tls ? "https" : "http"), host, port))
+      new(Transport::TCPTransport.new(host, port), tls, base_uri: URI.new((port == 443 ? "https" : "http"), host, port))
     end
   {% end %}
 
@@ -556,7 +556,7 @@ class HTTP::Client
     io = transport.connect(uri, request)
 
     {% if !flag?(:without_openssl) %}
-      if tls = @tls
+      if (tls = @tls) && uri.scheme == "https"
         io = OpenSSL::SSL::Socket::Client.new(io, context: tls, sync_close: true, hostname: @base_uri.host)
       end
     {% end %}
@@ -570,7 +570,7 @@ class HTTP::Client
 
     raise "Missing host" if !host || host.empty?
 
-    if port && ((@tls && port != 443) || (!@tls && port != 80))
+    if port && ((uri.scheme == "https" && port != 443) || (uri.scheme == "http" && port != 80))
       "#{host}:#{port}"
     else
       host
@@ -585,7 +585,7 @@ class HTTP::Client
       uri = URI.parse("http://#{string}")
     end
 
-    exec(uri, tls, transport) do |client, path|
+    exec(uri, tls) do |client, path|
       yield client, path
     end
   end
