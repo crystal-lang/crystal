@@ -75,6 +75,10 @@ class HTTP::Client
     Transport::Default.new
   end
 
+  class_getter default_client do
+    Client.new
+  end
+
   getter base_uri : URI
 
   # Creates a new HTTP client with the given *host*, *port* and *tls*
@@ -532,17 +536,26 @@ class HTTP::Client
   end
 
   private def new_request(method, path, headers, body : BodyType)
-    uri = URI.parse(path)
-
-    if uri.scheme || uri.host
+    if path.is_a?(URI)
+      uri = path
       path = uri.full_path
-      host_header = host_header(uri)
     else
-      host_header = host_header(@base_uri)
+      uri = URI.parse(path)
+      if uri.scheme || uri.host
+        path = uri.full_path
+      end
     end
 
+    host = uri.host || @base_uri.host
+    raise ArgumentError.new("Missing host: #{uri}") if !host || host.empty?
+
+    scheme = uri.scheme || @base_uri.scheme
+    raise ArgumentError.new("Missing scheme: #{uri}") if !scheme || scheme.empty?
+
+    port = uri.port || @base_uri.port || URI.default_port(scheme)
+
     HTTP::Request.new(method, path, headers, body).tap do |request|
-      request.headers["Host"] ||= host_header
+      request.headers["Host"] ||= host_header(host, port, scheme)
 
       user = uri.user
       password = uri.password
@@ -564,13 +577,8 @@ class HTTP::Client
     io
   end
 
-  private def host_header(uri)
-    host = uri.host
-    port = uri.port
-
-    raise "Missing host" if !host || host.empty?
-
-    if port && ((uri.scheme == "https" && port != 443) || (uri.scheme == "http" && port != 80))
+  private def host_header(host, port, scheme)
+    if port && ((scheme == "https" && port != 443) || (scheme == "http" && port != 80))
       "#{host}:#{port}"
     else
       host
@@ -590,8 +598,8 @@ class HTTP::Client
     end
   end
 
-  private def relative_uri(path)
-    uri = URI.parse(path)
+  private def relative_uri(uri : String | URI)
+    uri = URI.parse(uri) unless uri.is_a?(URI)
 
     return uri if uri.scheme || uri.host
 
@@ -644,15 +652,7 @@ class HTTP::Client
   end
 
   private def self.exec(uri : URI, tls = nil)
-    tls = tls_flag(uri, tls)
-    host = validate_host(uri)
-
-    port = uri.port
-    path = uri.full_path
-
-    HTTP::Client.new(host, port, tls) do |client|
-      yield client, path
-    end
+    yield default_client, uri
   end
 end
 

@@ -137,12 +137,12 @@ module HTTP
 
     it "raises if URI is missing scheme" do
       expect_raises(ArgumentError, "Missing scheme") do
-        HTTP::Client.get URI.parse("www.example.com")
+        HTTP::Client.get URI.parse("//www.example.com")
       end
     end
 
     it "raises if URI is missing host" do
-      expect_raises(ArgumentError, "must have host") do
+      expect_raises(ArgumentError, "Missing host") do
         HTTP::Client.get URI.parse("http://")
       end
     end
