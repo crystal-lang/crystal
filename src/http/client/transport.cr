@@ -63,4 +63,21 @@ abstract class HTTP::Client::Transport
       socket
     end
   end
+
+  class UNIX < Transport
+    getter path : String
+
+    def initialize(@path)
+    end
+
+    getter socket : UNIXSocket do
+      UNIXSocket.new(@path).tap do |socket|
+        socket.sync = false
+      end
+    end
+
+    def connect(uri : URI, request : Request) : IO
+      socket
+    end
+  end
 end

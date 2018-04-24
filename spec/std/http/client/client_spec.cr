@@ -223,5 +223,28 @@ module HTTP
 
       io.to_s.lines.first.should eq "GET /foo/bar HTTP/1.1"
     end
+
+    it "uses Unix pipe transport" do
+      UNIXServer.open("/tmp/http-client-transport-socket.sock") do |server|
+        spawn do
+          client = server.accept
+          request = HTTP::Request.from_io(client)
+
+          request.should be_a(HTTP::Request)
+          request = request.as(HTTP::Request)
+          request.host.should eq "example.com"
+          request.path.should eq "/foo/bar"
+
+          HTTP::Server::Response.new(client).close
+        end
+        Fiber.yield
+
+        transport = Client::Transport::UNIX.new("/tmp/http-client-transport-socket.sock")
+        Client.get("http://example.com/foo/bar", transport: transport)
+        transport.socket.close
+      end
+    ensure
+      File.delete("/tmp/http-client-transport-socket.sock") if File.exists?("/tmp/http-client-transport-socket.sock")
+    end
   end
 end
