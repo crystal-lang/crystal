@@ -93,9 +93,7 @@ class HTTP::Client
       end
     end
 
-    def self.new(host : String, port = nil, tls : Bool = false)
-      port = (port || (tls ? 443 : 80)).to_i
-
+    def self.new(host : String, port : Int32, tls : Bool = false)
       new(Transport::TCPTransport.new(host, port), tls, base_uri: URI.new((port == 443 ? "https" : "http"), host, port))
     end
   {% else %}
@@ -110,9 +108,7 @@ class HTTP::Client
               end
     end
 
-    def self.new(host : String, port = nil, tls : Bool | OpenSSL::SSL::Context::Client = true)
-      port = (port || (tls ? 443 : 80)).to_i
-
+    def self.new(host : String, port : Int32, tls : Bool | OpenSSL::SSL::Context::Client = true)
       new(Transport::TCPTransport.new(host, port), tls, base_uri: URI.new((port == 443 ? "https" : "http"), host, port))
     end
   {% end %}
@@ -138,10 +134,12 @@ class HTTP::Client
   #
   # This constructor will raise an exception if any scheme but HTTP or HTTPS
   # is used.
-  def self.new(uri : URI, tls = nil)
-    tls = tls_flag(uri, tls)
-    host = validate_host(uri)
-    new(host, uri.port, tls)
+  def self.new(base_uri : URI, tls = true)
+    host = validate_host(base_uri)
+    if !base_uri.port && (scheme = base_uri.scheme)
+      base_uri.port = URI.default_port(scheme)
+    end
+    new(default_transport, tls, base_uri)
   end
 
   # Creates a new HTTP client from a URI, yields it to the block and closes the
@@ -165,10 +163,8 @@ class HTTP::Client
   #
   # This constructor will raise an exception if any scheme but HTTP or HTTPS
   # is used.
-  def self.new(uri : URI, tls = nil)
-    tls = tls_flag(uri, tls)
-    host = validate_host(uri)
-    client = new(host, uri.port, tls)
+  def self.open(uri : URI, tls = true)
+    client = new(uri, tls)
     begin
       yield client
     ensure
@@ -184,8 +180,25 @@ class HTTP::Client
   #   client.get "/"
   # end
   # ```
-  def self.new(host : String, port = nil, tls = false, transport = nil)
+  def self.open(host : String, port : Int32, tls = true)
     client = new(host, port, tls)
+    begin
+      yield client
+    ensure
+      client.close
+    end
+  end
+
+  # Creates a new HTTP client, yields it to the block, and closes
+  # the client afterwards.
+  #
+  # ```
+  # HTTP::Client.open(HTTP::Client::Transport::Unix.new("/path/to/unix/socket.sock")) do |client|
+  #   client.get "/"
+  # end
+  # ```
+  def self.open(transport : Transport, tls = true, base_uri = nil)
+    client = new(transport, tls, base_uri)
     begin
       yield client
     ensure
@@ -646,6 +659,7 @@ class HTTP::Client
 
   protected def self.validate_host(uri)
     host = uri.host
+
     return host if host && !host.empty?
 
     raise ArgumentError.new %(Request URI must have host (URI is: #{uri}))

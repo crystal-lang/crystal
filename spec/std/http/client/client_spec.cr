@@ -24,40 +24,39 @@ end
 
 module HTTP
   describe Client do
-    typeof(Client.new("host"))
     typeof(Client.new("host", port: 8080))
-    typeof(Client.new("host", tls: true))
+    typeof(Client.new("host", 80, tls: true))
     typeof(Client.new(URI.new))
     typeof(Client.new(URI.parse("http://www.example.com")))
 
     {% for method in %w(get post put head delete patch options) %}
       typeof(Client.{{method.id}} "url")
-      typeof(Client.new("host").{{method.id}}("uri"))
-      typeof(Client.new("host").{{method.id}}("uri", headers: Headers {"Content-Type" => "text/plain"}))
-      typeof(Client.new("host").{{method.id}}("uri", body: "body"))
+      typeof(Client.new.{{method.id}}("uri"))
+      typeof(Client.new.{{method.id}}("uri", headers: Headers {"Content-Type" => "text/plain"}))
+      typeof(Client.new.{{method.id}}("uri", body: "body"))
     {% end %}
 
     typeof(Client.post "url", form: {"a" => "b"})
     typeof(Client.post("url", form: {"a" => "b"}) { })
     typeof(Client.put "url", form: {"a" => "b"})
     typeof(Client.put("url", form: {"a" => "b"}) { })
-    typeof(Client.new("host").basic_auth("username", "password"))
-    typeof(Client.new("host").before_request { |req| })
-    typeof(Client.new("host").close)
-    typeof(Client.new("host").compress = true)
-    typeof(Client.new("host").compress?)
+    typeof(Client.new.basic_auth("username", "password"))
+    typeof(Client.new.before_request { |req| })
+    typeof(Client.new.close)
+    typeof(Client.new.compress = true)
+    typeof(Client.new.compress?)
     typeof(Client.get(URI.parse("http://www.example.com")))
     typeof(Client.get(URI.parse("http://www.example.com")))
     typeof(Client.get("http://www.example.com"))
     typeof(Client.post("http://www.example.com", body: IO::Memory.new))
-    typeof(Client.new("host").post("/", body: IO::Memory.new))
+    typeof(Client.new.post("/", body: IO::Memory.new))
     typeof(Client.post("http://www.example.com", body: Bytes[65]))
-    typeof(Client.new("host").post("/", body: Bytes[65]))
+    typeof(Client.new.post("/", body: Bytes[65]))
 
     describe "from URI" do
       it "has sane defaults" do
         cl = Client.new(URI.parse("http://example.com"))
-        cl.tls.should be_nil
+        cl.tls.should be_a(OpenSSL::SSL::Context::Client)
         cl.base_uri.port.should eq(80)
       end
 
@@ -74,13 +73,6 @@ module HTTP
           cl.tls.should be(ctx)
         end
 
-        it "doesn't take context for HTTP" do
-          ctx = OpenSSL::SSL::Context::Client.new
-          expect_raises(ArgumentError, "TLS context given") do
-            Client.new(URI.parse("http://example.com"), ctx)
-          end
-        end
-
         it "allows for specified ports" do
           cl = Client.new(URI.parse("https://example.com:9999"))
           cl.tls.should be_truthy
@@ -94,12 +86,6 @@ module HTTP
         end
       {% end %}
 
-      it "raises error if not http schema" do
-        expect_raises(ArgumentError, "Unsupported scheme: ssh") do
-          Client.new(URI.parse("ssh://example.com"))
-        end
-      end
-
       it "raises error if URI is missing host" do
         expect_raises(ArgumentError, "must have host") do
           Client.new(URI.parse("http:/"))
@@ -107,7 +93,7 @@ module HTTP
       end
 
       it "yields to a block" do
-        Client.new(URI.parse("http://example.com")) do |client|
+        Client.open(URI.parse("http://example.com")) do |client|
           typeof(client)
         end
       end
@@ -115,7 +101,7 @@ module HTTP
 
     context "from a host" do
       it "yields to a block" do
-        Client.new("example.com") do |client|
+        Client.open("example.com", 80) do |client|
           typeof(client)
         end
       end
