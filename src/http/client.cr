@@ -549,6 +549,12 @@ class HTTP::Client
 
     HTTP::Request.new(method, path, headers, body).tap do |request|
       request.headers["Host"] ||= host_header
+
+      user = uri.user
+      password = uri.password
+      if user && password
+        request.headers["Authorization"] = "Basic #{Base64.strict_encode("#{user}:#{password}")}"
+      end
     end
   end
 
@@ -649,13 +655,8 @@ class HTTP::Client
 
     port = uri.port
     path = uri.full_path
-    user = uri.user
-    password = uri.password
 
     HTTP::Client.new(host, port, tls) do |client|
-      if user && password
-        client.basic_auth(user, password)
-      end
       yield client, path
     end
   end
