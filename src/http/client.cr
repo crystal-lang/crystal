@@ -546,6 +546,7 @@ class HTTP::Client
 
   # Closes this client. If used again, a new connection will be opened.
   def close
+    transport.close
   end
 
   private def new_request(method, path, headers, body : BodyType)

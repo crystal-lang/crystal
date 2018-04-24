@@ -4,6 +4,12 @@ require "uri"
 abstract class HTTP::Client::Transport
   abstract def connect(uri : URI, request : Request) : IO
 
+  # Asks this transport to close.
+  #
+  # This method does nothing by default but can be overwritten by implementations.
+  def close
+  end
+
   def self.new(&block : URI, Request -> IO)
     Proc.new(&block)
   end
@@ -68,6 +74,12 @@ abstract class HTTP::Client::Transport
     def connect(uri : URI, request : Request) : IO
       socket
     end
+
+    # Closes the TCP socket.
+    def close
+      @socket.try &.close
+      @socket = nil
+    end
   end
 
   class UNIX < Transport
@@ -84,6 +96,12 @@ abstract class HTTP::Client::Transport
 
     def connect(uri : URI, request : Request) : IO
       socket
+    end
+
+    # Closes the Unix socket.
+    def close
+      @socket.try &.close
+      @socket = nil
     end
   end
 end
