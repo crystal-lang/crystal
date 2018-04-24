@@ -184,7 +184,7 @@ class HTTP::Client
   #   client.get "/"
   # end
   # ```
-  def self.new(host : String, port = nil, tls = false)
+  def self.new(host : String, port = nil, tls = false, transport = nil)
     client = new(host, port, tls)
     begin
       yield client
@@ -254,8 +254,8 @@ class HTTP::Client
     # response = HTTP::Client.{{method.id}}("/", headers: HTTP::Headers{"User-Agent" => "AwesomeApp"}, body: "Hello!")
     # response.body #=> "..."
     # ```
-    def self.{{method.id}}(url : String | URI, headers : HTTP::Headers? = nil, body : BodyType = nil, tls = nil) : HTTP::Client::Response
-      exec {{method.upcase}}, url, headers, body, tls
+    def self.{{method.id}}(url : String | URI, headers : HTTP::Headers? = nil, body : BodyType = nil, tls = true, transport : Transport? = nil) : HTTP::Client::Response
+      exec {{method.upcase}}, url, headers, body, tls, transport
     end
 
     # Executes a {{method.id.upcase}} request and yields the response to the block.
@@ -266,8 +266,8 @@ class HTTP::Client
     #   response.body_io.gets #=> "..."
     # end
     # ```
-    def self.{{method.id}}(url : String | URI, headers : HTTP::Headers? = nil, body : BodyType = nil, tls = nil)
-      exec {{method.upcase}}, url, headers, body, tls do |response|
+    def self.{{method.id}}(url : String | URI, headers : HTTP::Headers? = nil, body : BodyType = nil, tls = true, transport : Transport? = nil)
+      exec {{method.upcase}}, url, headers, body, tls, transport do |response|
         yield response
       end
     end
@@ -338,8 +338,8 @@ class HTTP::Client
     # ```
     # response = HTTP::Client.{{method.id}} "http://www.example.com", form: "foo=bar"
     # ```
-    def self.{{method.id}}(url, headers : HTTP::Headers? = nil, tls = nil, *, form : String | IO | Hash) : HTTP::Client::Response
-      exec(url, tls) do |client, path|
+    def self.{{method.id}}(url, headers : HTTP::Headers? = nil, tls = true, *, form : String | IO | Hash, transport : Transport? = nil) : HTTP::Client::Response
+      exec(url, tls, transport) do |client, path|
         client.{{method.id}}(path, form: form, headers: headers)
       end
     end
@@ -353,8 +353,8 @@ class HTTP::Client
     #   response.body_io.gets
     # end
     # ```
-    def self.{{method.id}}(url, headers : HTTP::Headers? = nil, tls = nil, *, form : String | IO | Hash)
-      exec(url, tls) do |client, path|
+    def self.{{method.id}}(url, headers : HTTP::Headers? = nil, tls = true, *, form : String | IO | Hash, transport : Transport? = nil)
+      exec(url, tls, transport) do |client, path|
         client.{{method.id}}(path, form: form, headers: headers) do |response|
           yield response
         end
@@ -509,8 +509,8 @@ class HTTP::Client
   # response = HTTP::Client.exec "GET", "http://www.example.com"
   # response.body # => "..."
   # ```
-  def self.exec(method, url : String | URI, headers : HTTP::Headers? = nil, body : BodyType = nil, tls = nil) : HTTP::Client::Response
-    exec(url, tls) do |client, path|
+  def self.exec(method, url : String | URI, headers : HTTP::Headers? = nil, body : BodyType = nil, tls = true, transport : Transport? = nil) : HTTP::Client::Response
+    exec(url, tls, transport) do |client, path|
       client.exec method, path, headers, body
     end
   end
@@ -523,8 +523,8 @@ class HTTP::Client
   #   response.body_io.gets # => "..."
   # end
   # ```
-  def self.exec(method, url : String | URI, headers : HTTP::Headers? = nil, body : BodyType = nil, tls = nil)
-    exec(url, tls) do |client, path|
+  def self.exec(method, url : String | URI, headers : HTTP::Headers? = nil, body : BodyType = nil, tls = true, transport : Transport? = nil)
+    exec(url, tls, transport) do |client, path|
       client.exec(method, path, headers, body) do |response|
         yield response
       end
@@ -585,7 +585,7 @@ class HTTP::Client
     end
   end
 
-  private def self.exec(string : String, tls = nil)
+  private def self.exec(string : String, tls = true, transport = nil)
     uri = URI.parse(string)
 
     unless uri.scheme && uri.host
@@ -593,7 +593,7 @@ class HTTP::Client
       uri = URI.parse("http://#{string}")
     end
 
-    exec(uri, tls) do |client, path|
+    exec(uri, tls, transport) do |client, path|
       yield client, path
     end
   end
@@ -651,8 +651,18 @@ class HTTP::Client
     raise ArgumentError.new %(Request URI must have host (URI is: #{uri}))
   end
 
-  private def self.exec(uri : URI, tls = nil)
-    yield default_client, uri
+  private def self.exec(uri : URI, tls = true, transport = nil)
+    if transport
+      client = HTTP::Client.new(transport: transport, tls: tls)
+      begin
+        # FIXME: explicit cast is required because of #4290
+        yield client.as(Client), uri
+      ensure
+        client.close
+      end
+    else
+      yield default_client, uri
+    end
   end
 end
 

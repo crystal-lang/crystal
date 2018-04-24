@@ -4,6 +4,19 @@ require "uri"
 abstract class HTTP::Client::Transport
   abstract def connect(uri : URI, request : Request) : IO
 
+  def self.new(&block : URI, Request -> IO)
+    Proc.new(&block)
+  end
+
+  class Proc < Transport
+    def initialize(&@block : URI, Request -> IO)
+    end
+
+    def connect(uri : URI, request : Request) : IO
+      @block.call(uri, request)
+    end
+  end
+
   class Default < Transport
     include Socket::TCPConfig
 

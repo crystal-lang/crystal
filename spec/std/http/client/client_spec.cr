@@ -184,4 +184,44 @@ module HTTP
       client.get("/foo/bar")
     end
   end
+
+  describe "transport" do
+    it "#get uses transport" do
+      io = IO::Memory.new
+
+      transport = Client::Transport.new do |uri, request|
+        request.host.should eq "example.com"
+        request.resource.should eq "/foo/bar"
+        request.method.should eq "GET"
+        uri.should eq URI.parse("http://example.com/foo/bar")
+
+        io
+      end
+
+      expect_raises(Exception, "Unexpected end of http response") do
+        Client.new(transport).get("http://example.com/foo/bar")
+      end
+
+      io.to_s.lines.first.should eq "GET /foo/bar HTTP/1.1"
+    end
+
+    it ".get uses transport" do
+      io = IO::Memory.new
+
+      transport = Client::Transport.new do |uri, request|
+        request.host.should eq "example.com"
+        request.resource.should eq "/foo/bar"
+        request.method.should eq "GET"
+        uri.should eq URI.parse("http://example.com/foo/bar")
+
+        io
+      end
+
+      expect_raises(Exception, "Unexpected end of http response") do
+        Client.get("http://example.com/foo/bar", transport: transport)
+      end
+
+      io.to_s.lines.first.should eq "GET /foo/bar HTTP/1.1"
+    end
+  end
 end
