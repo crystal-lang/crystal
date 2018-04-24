@@ -62,7 +62,7 @@ abstract class OAuth2::AccessToken
 
   def authenticate(client : HTTP::Client)
     client.before_request do |request|
-      authenticate request, client.tls?
+      authenticate request, client.tls
     end
   end
 end

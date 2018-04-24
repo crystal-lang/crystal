@@ -52,7 +52,7 @@ describe OAuth::Consumer do
 
     access_token = OAuth::AccessToken.new "token", "secret"
 
-    http_client = HTTP::Client.new "example.com"
+    http_client = HTTP::Client.new "example.com", 80
     consumer.authenticate http_client, access_token
   end)
 end

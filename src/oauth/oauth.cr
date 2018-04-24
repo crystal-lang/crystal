@@ -53,6 +53,6 @@ module OAuth
     nonce = Random::Secure.hex
 
     signature = Signature.new consumer_key, consumer_secret, token, token_secret, extra_params
-    signature.authorization_header request, client.tls?, ts, nonce
+    signature.authorization_header request, client.tls, ts, nonce
   end
 end

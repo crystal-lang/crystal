@@ -7,6 +7,6 @@ module OAuth2
     token = OAuth2::AccessToken::Bearer.new("token", 3600)
     session = Session.new(client, token) { |s| }
     session = Session.new(client, token, Time.new) { |s| }
-    session.authenticate(HTTP::Client.new("localhost"))
+    session.authenticate(HTTP::Client.new("localhost", 80))
   end)
 end
