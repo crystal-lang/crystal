@@ -151,7 +151,7 @@ module HTTP
       TestServer.open("localhost", 0, 0) do |server|
         transport = Client::Transport::TCPTransport.new("localhost", server.local_address.port)
         transport.read_timeout = 1.seconds
-        client = Client.new(transport)
+        client = Client.new(transport, base_uri: URI.new("http", "localhost", server.local_address.port))
         client.get("/")
       end
 
@@ -159,7 +159,7 @@ module HTTP
         transport = Client::Transport::TCPTransport.new("localhost", server.local_address.port)
         transport.read_timeout = 0.001.seconds
 
-        client = Client.new(transport)
+        client = Client.new(transport, base_uri: URI.new("http", "localhost", server.local_address.port))
         expect_raises(IO::Timeout, "Read timed out") do
           client.get("/?sleep=1")
         end
@@ -171,9 +171,17 @@ module HTTP
         transport = Client::Transport::TCPTransport.new("localhost", server.local_address.port)
         transport.connect_timeout = 0.5.seconds
 
-        client = Client.new(transport)
+        client = Client.new(transport, base_uri: URI.new("http", "localhost", server.local_address.port))
         client.get("/")
       end
+    end
+  end
+
+  it "raises when host is empty" do
+    client = Client.new
+
+    expect_raises(Exception, "Missing host") do
+      client.get("/foo/bar")
     end
   end
 end

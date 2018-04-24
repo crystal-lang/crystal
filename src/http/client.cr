@@ -372,25 +372,26 @@ class HTTP::Client
   # response = client.exec HTTP::Request.new("GET", "/")
   # response.body # => "..."
   # ```
-  def exec(request : HTTP::Request) : HTTP::Client::Response
-    exec_internal(request)
+  def exec(request : HTTP::Request, uri = @base_uri) : HTTP::Client::Response
+    exec_internal(uri, request)
   end
 
-  private def exec_internal(request)
-    response = exec_internal_single(request)
+  private def exec_internal(uri, request)
+    response = exec_internal_single(uri, request)
     return handle_response(response) if response
 
     # Server probably closed the connection, so retry one
     close
     request.body.try &.rewind
-    response = exec_internal_single(request)
+    response = exec_internal_single(uri, request)
     return handle_response(response) if response
 
     raise "Unexpected end of http response"
   end
 
-  private def exec_internal_single(request)
-    decompress, io = send_request(request)
+  private def exec_internal_single(uri, request)
+    decompress, io = send_request(uri, request)
+
     HTTP::Client::Response.from_io?(io, ignore_body: request.ignore_body?, decompress: decompress)
   end
 
@@ -408,14 +409,14 @@ class HTTP::Client
   #   response.body_io.gets # => "..."
   # end
   # ```
-  def exec(request : HTTP::Request, &block)
-    exec_internal(request) do |response|
+  def exec(request : HTTP::Request, uri = @base_uri, &block)
+    exec_internal(uri, request) do |response|
       yield response
     end
   end
 
-  private def exec_internal(request, &block : Response -> T) : T forall T
-    exec_internal_single(request) do |response|
+  private def exec_internal(uri, request, &block : Response -> T) : T forall T
+    exec_internal_single(uri, request) do |response|
       if response
         return handle_response(response) { yield response }
       end
@@ -423,7 +424,7 @@ class HTTP::Client
       # Server probably closed the connection, so retry once
       close
       request.body.try &.rewind
-      exec_internal_single(request) do |response|
+      exec_internal_single(uri, request) do |response|
         if response
           return handle_response(response) do
             yield response
@@ -434,8 +435,8 @@ class HTTP::Client
     raise "Unexpected end of http response"
   end
 
-  private def exec_internal_single(request)
-    decompress, io = send_request(request)
+  private def exec_internal_single(uri, request)
+    decompress, io = send_request(uri, request)
     HTTP::Client::Response.from_io?(io, ignore_body: request.ignore_body?, decompress: decompress) do |response|
       yield response
     end
@@ -448,10 +449,10 @@ class HTTP::Client
     value
   end
 
-  private def send_request(request)
+  private def send_request(uri, request)
     decompress = set_defaults request
     run_before_request_callbacks(request)
-    io = connect(request)
+    io = connect(uri, request)
     request.to_io(io)
     io.flush
 
@@ -485,7 +486,7 @@ class HTTP::Client
   # response.body # => "..."
   # ```
   def exec(method : String, path, headers : HTTP::Headers? = nil, body : BodyType = nil) : HTTP::Client::Response
-    exec new_request method, path, headers, body
+    exec new_request(method, path, headers, body), relative_uri(path)
   end
 
   # Executes a request.
@@ -498,7 +499,7 @@ class HTTP::Client
   # end
   # ```
   def exec(method : String, path, headers : HTTP::Headers? = nil, body : BodyType = nil)
-    exec(new_request(method, path, headers, body)) do |response|
+    exec(new_request(method, path, headers, body), relative_uri(path)) do |response|
       yield response
     end
   end
@@ -537,13 +538,22 @@ class HTTP::Client
   end
 
   private def new_request(method, path, headers, body : BodyType)
+    uri = URI.parse(path)
+
+    if uri.scheme || uri.host
+      path = uri.full_path
+      host_header = host_header(uri)
+    else
+      host_header = host_header(@base_uri)
+    end
+
     HTTP::Request.new(method, path, headers, body).tap do |request|
       request.headers["Host"] ||= host_header
     end
   end
 
-  private def connect(request)
-    io = transport.connect(@base_uri, request)
+  private def connect(uri, request)
+    io = transport.connect(uri, request)
 
     {% if !flag?(:without_openssl) %}
       if tls = @tls
@@ -554,13 +564,16 @@ class HTTP::Client
     io
   end
 
-  private def host_header
-    host = @base_uri.host
-    port = @base_uri.port
-    if (@tls && port != 443) || (!@tls && port != 80)
+  private def host_header(uri)
+    host = uri.host
+    port = uri.port
+
+    raise "Missing host" if !host || host.empty?
+
+    if port && ((@tls && port != 443) || (!@tls && port != 80))
       "#{host}:#{port}"
     else
-      host.to_s
+      host
     end
   end
 
@@ -572,9 +585,21 @@ class HTTP::Client
       uri = URI.parse("http://#{string}")
     end
 
-    exec(uri, tls) do |client, path|
+    exec(uri, tls, transport) do |client, path|
       yield client, path
     end
+  end
+
+  private def relative_uri(path)
+    uri = URI.parse(path)
+
+    return uri if uri.scheme || uri.host
+
+    uri.scheme ||= @base_uri.scheme
+    uri.host ||= @base_uri.host
+    uri.port ||= @base_uri.port
+
+    uri
   end
 
   {% if flag?(:without_openssl) %}
