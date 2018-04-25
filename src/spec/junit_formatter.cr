@@ -10,15 +10,6 @@ module Spec
     def initialize(@output)
     end
 
-    def push(context)
-    end
-
-    def pop
-    end
-
-    def before_example(description)
-    end
-
     def report(result)
       current = @summary[result.kind]? || 0
       @summary[result.kind] = current + 1
@@ -27,13 +18,16 @@ module Spec
 
     def finish
       io = @output
-      io << "<testsuite tests=\"#{@results.size}\" \
-                        errors=\"#{@summary[:error]? || 0}\" \
-                        failed=\"#{@summary[:fail]? || 0}\">\n"
+      io.puts %(<?xml version="1.0"?>)
+      io << %(<testsuite tests=") << @results.size
+      io << %(" errors=") << (@summary[:error]? || 0)
+      io << %(" failures=") << (@summary[:fail]? || 0) << %(">)
+
+      io.puts
 
       @results.each { |r| write_report(r, io) }
 
-      io << "</testsuite>"
+      io << %(</testsuite>)
       io.close
     end
 
@@ -46,44 +40,45 @@ module Spec
 
     # -------- private utility methods
     private def write_report(result, io)
-      io << "<testcase file=\"#{result.file}\" classname=\"#{classname(result)}\" name=\"#{HTML.escape(result.description)}\">\n"
+      io << %(  <testcase file=") << result.file
+      io << %(" classname=") << classname(result) << %(" name=")
+      HTML.escape(result.description, io)
 
-      if (has_inner_content(result.kind))
-        tag = inner_content_tag(result.kind)
-        ex = result.exception
-        if ex
-          write_inner_content(tag, ex, io)
+      if tag = inner_content_tag(result.kind)
+        io.puts %(">)
+
+        if exception = result.exception
+          write_inner_content(tag, exception, io)
         else
-          io << "<#{tag} />\n"
+          io << "    <" << tag << "/>\n"
         end
+        io.puts "  </testcase>"
+      else
+        io.puts %("/>)
       end
-
-      io << "</testcase>\n"
-    end
-
-    private def has_inner_content(kind)
-      kind == :fail || kind == :error
     end
 
     private def inner_content_tag(kind)
       case kind
-      when :error
-        :error
-      when :fail
-        :failure
+      when :error then "error"
+      when :fail  then "failure"
       end
     end
 
     private def write_inner_content(tag, exception, io)
-      m = exception.message
-      if m
-        io << "<#{tag} message=\"#{HTML.escape(m)}\">"
-      else
-        io << "<#{tag}>"
+      io << "    <" << tag
+
+      if message = exception.message
+        io << %( message=")
+        HTML.escape(message, io)
       end
-      backtrace = exception.backtrace? || ([] of String)
-      io << HTML.escape(backtrace.join("\n"))
-      io << "</#{tag}>\n"
+      io << %(">)
+
+      if backtrace = exception.backtrace?
+        HTML.escape(backtrace.join('\n'), io)
+      end
+
+      io << "</" << tag << ">\n"
     end
 
     private def classname(result)
