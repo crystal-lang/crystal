@@ -20,6 +20,8 @@ describe "Codegen: private" do
     tempfile.close
 
     compiler.compile sources, output_filename
+  ensure
+    File.delete(tempfile.path) if tempfile
   end
 
   it "codegens overloaded private def in same file" do
@@ -45,6 +47,8 @@ describe "Codegen: private" do
     tempfile.close
 
     compiler.compile sources, output_filename
+  ensure
+    File.delete(tempfile.path) if tempfile
   end
 
   it "doesn't include filename for private types" do

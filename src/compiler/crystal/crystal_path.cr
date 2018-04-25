@@ -11,12 +11,12 @@ module Crystal
 
     @crystal_path : Array(String)
 
-    def initialize(path = CrystalPath.default_path, target_triple = LLVM.default_target_triple)
+    def initialize(path = CrystalPath.default_path, target_triple = Crystal::Config.default_target_triple)
       @crystal_path = path.split(':').reject &.empty?
       add_target_path(target_triple)
     end
 
-    private def add_target_path(target_triple = LLVM.default_target_triple)
+    private def add_target_path(target_triple = Crystal::Config.default_target_triple)
       triple = target_triple.split('-')
       triple.delete(triple[1]) if triple.size == 4 # skip vendor
 
@@ -50,16 +50,20 @@ module Crystal
 
     def find(filename, relative_to = nil) : Array(String)?
       relative_to = File.dirname(relative_to) if relative_to.is_a?(String)
+
       if filename.starts_with? '.'
         result = find_in_path_relative_to_dir(filename, relative_to)
       else
-        result = find_in_crystal_path(filename, relative_to)
+        result = find_in_crystal_path(filename)
       end
+
+      cant_find_file filename, relative_to unless result
+
       result = [result] if result.is_a?(String)
       result
     end
 
-    private def find_in_path_relative_to_dir(filename, relative_to, check_crystal_path = true)
+    private def find_in_path_relative_to_dir(filename, relative_to)
       if relative_to.is_a?(String)
         # Check if it's a wildcard.
         if filename.ends_with?("/*") || (recursive = filename.ends_with?("/**"))
@@ -116,22 +120,18 @@ module Crystal
         end
       end
 
-      if check_crystal_path
-        find_in_crystal_path filename, relative_to
-      else
-        nil
-      end
+      nil
     end
 
     private def gather_dir_files(dir, files_accumulator, recursive)
       files = [] of String
       dirs = [] of String
 
-      Dir.foreach(dir) do |filename|
+      Dir.each_child(dir) do |filename|
         full_name = "#{dir}/#{filename}"
 
         if File.directory?(full_name)
-          if filename != "." && filename != ".." && recursive
+          if recursive
             dirs << filename
           end
         else
@@ -158,12 +158,16 @@ module Crystal
       File.expand_path(filename)
     end
 
-    private def find_in_crystal_path(filename, relative_to)
+    private def find_in_crystal_path(filename)
       @crystal_path.each do |path|
-        required = find_in_path_relative_to_dir(filename, path, check_crystal_path: false)
+        required = find_in_path_relative_to_dir(filename, path)
         return required if required
       end
 
+      nil
+    end
+
+    private def cant_find_file(filename, relative_to)
       if relative_to
         raise Error.new("can't find file '#{filename}' relative to '#{relative_to}'")
       else

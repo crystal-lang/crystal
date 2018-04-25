@@ -154,12 +154,27 @@ class Crystal::CodeGenVisitor
   end
 
   def read_const(const)
-    @last = read_const_pointer(const)
-    @last = to_lhs @last, const.value.type
+    # We inline constants. Otherwise we use an LLVM const global.
+    @last =
+      case value = const.compile_time_value
+      when Bool   then int1(value ? 1 : 0)
+      when Char   then int32(value.ord)
+      when Int8   then int8(value)
+      when Int16  then int16(value)
+      when Int32  then int32(value)
+      when Int64  then int64(value)
+      when UInt8  then int8(value)
+      when UInt16 then int16(value)
+      when UInt32 then int32(value)
+      when UInt64 then int64(value)
+      else
+        last = read_const_pointer(const)
+        to_lhs last, const.value.type
+      end
   end
 
   def read_const_pointer(const)
-    if const == @program.argc || const == @program.argv
+    if const == @program.argc || const == @program.argv || const.initializer
       global_name = const.llvm_name
       global = declare_const(const)
 

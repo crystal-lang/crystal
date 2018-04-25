@@ -89,19 +89,6 @@ class LLVM::Builder
     Value.new LibLLVM.build_load(self, ptr, name)
   end
 
-  def malloc(type, name = "")
-    # check_type("malloc", type)
-
-    Value.new LibLLVM.build_malloc(self, type, name)
-  end
-
-  def array_malloc(type, value, name = "")
-    # check_type("array_malloc", type)
-    # check_value(value)
-
-    Value.new LibLLVM.build_array_malloc(self, type, value, name)
-  end
-
   {% for method_name in %w(gep inbounds_gep) %}
     def {{method_name.id}}(value, indices : Array(LLVM::ValueRef), name = "")
       # check_value(value)

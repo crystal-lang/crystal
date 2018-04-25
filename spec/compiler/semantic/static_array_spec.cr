@@ -60,6 +60,27 @@ describe "Semantic: static array" do
       )) { static_array_of(char, 3) }
   end
 
+  it "types static array new with size being a nested constant inside type declaration (#5426)" do
+    assert_type(%(
+      module Moo
+        SIZE = 3
+      end
+
+      class Foo
+        @x : StaticArray(Char, Moo::SIZE)
+
+        def initialize(@x)
+        end
+
+        def x
+          @x
+        end
+      end
+
+      Foo.new(StaticArray(Char, Moo::SIZE).new).x
+      )) { static_array_of(char, 3) }
+  end
+
   it "types static array new with size being a computed constant" do
     assert_type(%(
       OTHER = 10

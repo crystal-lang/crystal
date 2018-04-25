@@ -1,4 +1,5 @@
 require "spec"
+require "../support/finalize"
 
 private class StringWrapper
   delegate downcase, to: @string
@@ -97,6 +98,26 @@ private class TestObject
   end
 end
 
+private class DelegatedTestObject
+  # TODO: Replace with `:property1=` when v > 0.24.2
+  delegate "property1=", to: @test_object
+
+  def initialize(@test_object : TestObject)
+  end
+end
+
+private class TestObjectWithFinalize
+  property key : Symbol?
+
+  def finalize
+    if key = self.key
+      State.inc(key)
+    end
+  end
+
+  def_clone
+end
+
 describe Object do
   describe "delegate" do
     it "delegates" do
@@ -115,6 +136,13 @@ describe Object do
         matches << match[0]
       end
       matches.should eq(["l", "l"])
+    end
+
+    it "delegates setter" do
+      test_object = TestObject.new
+      delegated = DelegatedTestObject.new(test_object)
+      delegated.property1 = 42
+      test_object.property1.should eq 42
     end
   end
 
@@ -162,7 +190,7 @@ describe Object do
   describe "getter!" do
     it "uses getter!" do
       obj = TestObject.new
-      expect_raises do
+      expect_raises(Exception, "Nil assertion failed") do
         obj.getter5
       end
       obj.getter5 = 5
@@ -173,7 +201,7 @@ describe Object do
 
     it "uses getter! with type declaration" do
       obj = TestObject.new
-      expect_raises do
+      expect_raises(Exception, "Nil assertion failed") do
         obj.getter6
       end
       obj.getter6 = 6
@@ -287,7 +315,7 @@ describe Object do
   describe "property!" do
     it "uses property!" do
       obj = TestObject.new
-      expect_raises do
+      expect_raises(Exception, "Nil assertion failed") do
         obj.property5
       end
       obj.property5 = 5
@@ -296,7 +324,7 @@ describe Object do
 
     it "uses property! with type declaration" do
       obj = TestObject.new
-      expect_raises do
+      expect_raises(Exception, "Nil assertion failed") do
         obj.property6
       end
       obj.property6 = 6
@@ -336,5 +364,10 @@ describe Object do
 
   it "#unsafe_as" do
     0x12345678.unsafe_as(Tuple(UInt8, UInt8, UInt8, UInt8)).should eq({0x78, 0x56, 0x34, 0x12})
+  end
+
+  it "calls #finalize on #clone'd objects" do
+    obj = TestObjectWithFinalize.new
+    assert_finalizes(:clone) { obj.clone }
   end
 end

@@ -325,7 +325,7 @@ private def class_common_ancestor(t1, t2)
   end
 
   case t1
-  when t1.program.struct, t1.program.int, t1.program.float
+  when t1.program.struct, t1.program.number, t1.program.int, t1.program.float
     return nil
   when t2
     return t1

@@ -24,4 +24,13 @@ class Crystal::Doc::Constant
   def formatted_value
     Highlighter.highlight value.to_s
   end
+
+  def to_json(builder : JSON::Builder)
+    builder.object do
+      builder.field "name", name
+      builder.field "value", value.try(&.to_s)
+      builder.field "doc", doc
+      builder.field "summary", formatted_summary
+    end
+  end
 end

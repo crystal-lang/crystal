@@ -19,6 +19,7 @@ class JSON::PullParser
     @raw_value = ""
     @object_stack = [] of Symbol
     @skip_count = 0
+    @location = {0, 0}
 
     next_token
     case token.type
@@ -396,6 +397,18 @@ class JSON::PullParser
     @lexer.skip = false
   end
 
+  def line_number
+    @location[0]
+  end
+
+  def column_number
+    @location[1]
+  end
+
+  def location
+    @location
+  end
+
   private def skip_internal
     @skip_count += 1
     case @kind
@@ -450,9 +463,19 @@ class JSON::PullParser
     @object_stack.last?
   end
 
-  private delegate token, to: @lexer
-  private delegate next_token, to: @lexer
-  private delegate next_token_expect_object_key, to: @lexer
+  private def token
+    @lexer.token
+  end
+
+  private def next_token
+    @location = {@lexer.token.line_number, @lexer.token.column_number}
+    @lexer.next_token
+  end
+
+  private def next_token_expect_object_key
+    @location = {@lexer.token.line_number, @lexer.token.column_number}
+    @lexer.next_token_expect_object_key
+  end
 
   private def next_token_after_value
     case next_token.type

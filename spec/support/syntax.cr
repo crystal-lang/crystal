@@ -12,6 +12,14 @@ struct Number
     NumberLiteral.new to_s, :i64
   end
 
+  def int128
+    NumberLiteral.new to_s, :i128
+  end
+
+  def uint128
+    NumberLiteral.new to_s, :u128
+  end
+
   def float32
     NumberLiteral.new to_f32.to_s, :f32
   end
@@ -80,6 +88,10 @@ class String
 
   def string
     StringLiteral.new self
+  end
+
+  def string_interpolation
+    StringInterpolation.new([self.string] of ASTNode)
   end
 
   def float32

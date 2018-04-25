@@ -27,7 +27,7 @@ struct XML::Builder
 
   # Emits the start of the document.
   def start_document(version = nil, encoding = nil) : Nil
-    call StartDocument, version, encoding, nil
+    call StartDocument, string_to_unsafe(version), string_to_unsafe(encoding), nil
   end
 
   # Emits the end of a document.
@@ -44,12 +44,12 @@ struct XML::Builder
 
   # Emits the start of an element.
   def start_element(name : String) : Nil
-    call StartElement, name
+    call StartElement, string_to_unsafe(name)
   end
 
   # Emits the start of an element with namespace info.
   def start_element(prefix : String?, name : String, namespace_uri : String?) : Nil
-    call StartElementNS, string_to_unsafe(prefix), name, string_to_unsafe(namespace_uri)
+    call StartElementNS, string_to_unsafe(prefix), string_to_unsafe(name), string_to_unsafe(namespace_uri)
   end
 
   # Emits the end of an element.
@@ -111,12 +111,12 @@ struct XML::Builder
 
   # Emits the start of an attribute.
   def start_attribute(name : String) : Nil
-    call StartAttribute, name
+    call StartAttribute, string_to_unsafe(name)
   end
 
   # Emits the start of an attribute with namespace info.
   def start_attribute(prefix : String?, name : String, namespace_uri : String?)
-    call StartAttributeNS, string_to_unsafe(prefix), name, string_to_unsafe(namespace_uri)
+    call StartAttributeNS, string_to_unsafe(prefix), string_to_unsafe(name), string_to_unsafe(namespace_uri)
   end
 
   # Emits the end of an attribute.
@@ -133,12 +133,12 @@ struct XML::Builder
 
   # Emits an attribute with a *value*.
   def attribute(name : String, value) : Nil
-    call WriteAttribute, name, value.to_s
+    call WriteAttribute, string_to_unsafe(name), string_to_unsafe(value.to_s)
   end
 
   # Emits an attribute with namespace info and a *value*.
   def attribute(prefix : String?, name : String, namespace_uri : String?, value) : Nil
-    call WriteAttributeNS, string_to_unsafe(prefix), name, string_to_unsafe(namespace_uri), value.to_s
+    call WriteAttributeNS, string_to_unsafe(prefix), string_to_unsafe(name), string_to_unsafe(namespace_uri), string_to_unsafe(value.to_s)
   end
 
   # Emits the given *attributes* with their values.
@@ -157,7 +157,7 @@ struct XML::Builder
   #
   # Text content can happen inside of an `element`, `attribute` value, `cdata`, `dtd`, etc.
   def text(content : String) : Nil
-    call WriteString, content
+    call WriteString, string_to_unsafe(content)
   end
 
   # Emits the start of a `CDATA` section.
@@ -179,7 +179,7 @@ struct XML::Builder
 
   # Emits a `CDATA` section.
   def cdata(text : String) : Nil
-    call WriteCDATA, text
+    call WriteCDATA, string_to_unsafe(text)
   end
 
   # Emits the start of a comment.
@@ -201,12 +201,12 @@ struct XML::Builder
 
   # Emits a comment.
   def comment(text : String) : Nil
-    call WriteComment, text
+    call WriteComment, string_to_unsafe(text)
   end
 
   # Emits the start of a `DTD`.
   def start_dtd(name : String, pubid : String, sysid : String) : Nil
-    call StartDTD, name, pubid, sysid
+    call StartDTD, string_to_unsafe(name), string_to_unsafe(pubid), string_to_unsafe(sysid)
   end
 
   # Emits the end of a `DTD`.
@@ -223,7 +223,7 @@ struct XML::Builder
 
   # Emits a `DTD`.
   def dtd(name : String, pubid : String, sysid : String, subset : String? = nil) : Nil
-    call WriteDTD, name, pubid, sysid, string_to_unsafe(subset)
+    call WriteDTD, string_to_unsafe(name), string_to_unsafe(pubid), string_to_unsafe(sysid), string_to_unsafe(subset)
   end
 
   # Emits a namespace.
@@ -243,7 +243,7 @@ struct XML::Builder
       call SetIndent, 0
     else
       call SetIndent, 1
-      call SetIndentString, str
+      call SetIndentString, string_to_unsafe(str)
     end
   end
 
@@ -275,8 +275,13 @@ struct XML::Builder
     raise XML::Error.new("Error in #{msg}", 0) if ret < 0
   end
 
-  private def string_to_unsafe(string)
-    string ? string.to_unsafe : Pointer(UInt8).null
+  private def string_to_unsafe(string : String)
+    raise XML::Error.new("String cannot contain null character", 0) if string.includes? '\0'
+    string.to_unsafe
+  end
+
+  private def string_to_unsafe(string : Nil)
+    Pointer(UInt8).null
   end
 end
 

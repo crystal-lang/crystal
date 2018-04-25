@@ -16,22 +16,22 @@ class Crystal::CodeGenVisitor
     input_values = [] of LLVM::Value
 
     if inputs = node.inputs
-      constraints << "," unless constraints.empty?
+      constraints << ',' unless constraints.empty?
 
       inputs.each_with_index do |input, i|
-        input.exp.accept self
+        accept input.exp
         input_types << llvm_type(input.exp.type)
         input_values << @last
-        constraints << "," if i > 0
+        constraints << ',' if i > 0
         constraints << input.constraint
       end
     end
 
     if clobbers = node.clobbers
-      constraints << "," unless constraints.empty?
+      constraints << ',' unless constraints.empty?
 
       clobbers.each_with_index do |clobber, i|
-        constraints << "," if i > 0
+        constraints << ',' if i > 0
         constraints << "~{"
         constraints << clobber
         constraints << '}'
@@ -45,7 +45,7 @@ class Crystal::CodeGenVisitor
     asm_value = call value, input_values
 
     if ptrof
-      ptrof.accept self
+      accept ptrof
       store asm_value, @last
     end
 

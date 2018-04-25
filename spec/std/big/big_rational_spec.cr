@@ -1,5 +1,5 @@
 require "spec"
-require "big_rational"
+require "big"
 
 private def br(n, d)
   BigRational.new(n, d)
@@ -25,13 +25,13 @@ end
 describe BigRational do
   it "initialize" do
     BigRational.new(BigInt.new(10), BigInt.new(3))
-               .should eq(BigRational.new(10, 3))
+      .should eq(BigRational.new(10, 3))
 
-    expect_raises(DivisionByZero) do
+    expect_raises(DivisionByZeroError) do
       BigRational.new(BigInt.new(2), BigInt.new(0))
     end
 
-    expect_raises(DivisionByZero) do
+    expect_raises(DivisionByZeroError) do
       BigRational.new(2, 0)
     end
   end
@@ -72,8 +72,22 @@ describe BigRational do
     r.to_f32.should be_close(f, 0.001)
   end
 
+  it "#to_big_f" do
+    r = br(10, 3)
+    f = 10.to_big_f / 3.to_big_f
+    r.to_big_f.should be_close(f, 0.001)
+  end
+
   it "Int#to_big_r" do
     3.to_big_r.should eq(br(3, 1))
+  end
+
+  it "Float32#to_big_r" do
+    0.3333333333333333333333_f32.to_big_r.should eq(br(11184811, 33554432))
+  end
+
+  it "Float64#to_big_r" do
+    0.3333333333333333333333_f64.to_big_r.should eq(br(6004799503160661, 18014398509481984))
   end
 
   it "#<=>(:BigRational) and Comparable" do
@@ -120,7 +134,7 @@ describe BigRational do
 
   it "#/" do
     (br(10, 7) / br(3, 7)).should eq(br(10, 3))
-    expect_raises(DivisionByZero) { br(10, 7) / br(0, 10) }
+    expect_raises(DivisionByZeroError) { br(10, 7) / br(0, 10) }
     (br(10, 7) / 3).should eq(br(10, 21))
     (1 / br(10, 7)).should eq(br(7, 10))
   end
@@ -131,7 +145,7 @@ describe BigRational do
 
   it "#inv" do
     (br(10, 3).inv).should eq(br(3, 10))
-    expect_raises(DivisionByZero) { br(0, 3).inv }
+    expect_raises(DivisionByZeroError) { br(0, 3).inv }
   end
 
   it "#abs" do
@@ -159,5 +173,11 @@ describe BigRational do
   it "clones" do
     x = br(10, 3)
     x.clone.should eq(x)
+  end
+end
+
+describe "BigRational Math" do
+  it "sqrt" do
+    Math.sqrt(BigRational.new(BigInt.new("1" + "0"*48), 1)).should eq(BigFloat.new("1" + "0"*24))
   end
 end

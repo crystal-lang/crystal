@@ -1,6 +1,6 @@
 require "crystal/system/time"
 
-# `Time` represents an instance in time. Here are some examples:
+# `Time` represents an instance in incremental time. Here are some examples:
 #
 # ### Basic Usage
 #
@@ -15,11 +15,15 @@ require "crystal/system/time"
 # time.second  # => 30
 # time.monday? # => true
 #
-# # Creating a time instance with a date only
-# Time.new(2016, 2, 15) # => 2016-02-15 00:00:00
+# # Creating a time instance with a date only in local timezone `Time::Location.local`.
+# # The examples show an offset of `+01:00` but that can vary depending on
+# Time.new(2016, 2, 15) # => 2016-02-15 00:00:00 +01:00
 #
 # # Specifying a time
-# Time.new(2016, 2, 15, 10, 20, 30) # => 2016-02-15 10:20:30 UTC
+# Time.new(2016, 2, 15, 10, 20, 30) # => 2016-02-15 10:20:30 +01:00
+#
+# # Creating a time instance in UTC
+# Time.utc(2016, 2, 15, 10, 20, 30) # => 2016-02-15 10:20:30 UTC
 # ```
 #
 # ### Formatting Time
@@ -36,7 +40,7 @@ require "crystal/system/time"
 # ### Calculation
 #
 # ```
-# Time.new(2015, 10, 10) - 5.days # => 2015-10-05 00:00:00
+# Time.new(2015, 10, 10) - 5.days # => 2015-10-05 00:00:00 +01:00
 #
 # # Time calculation returns a Time::Span instance
 # span = Time.new(2015, 10, 10) - Time.new(2015, 9, 10)
@@ -53,92 +57,153 @@ require "crystal/system/time"
 # span.hours # => 1
 # ```
 struct Time
-  # *Heavily* inspired by Mono's DateTime class:
-  # https://github.com/mono/mono/blob/master/mcs/class/corlib/System/DateTime.cs
+  class FloatingTimeConversionError < Exception
+  end
 
   include Comparable(self)
 
-  TicksMask       =      0x3fffffffffffffff
-  KindMask        =      0xc000000000000000
-  MAX_VALUE_TICKS = 3155378975999999999_i64
+  # :nodoc:
+  DAYS_MONTH = {0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31}
 
-  DAYS_MONTH      = [0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
-  DAYS_MONTH_LEAP = [0, 31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
+  # :nodoc:
+  DAYS_MONTH_LEAP = {0, 31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31}
 
-  DP400 = 146097
-  DP100 =  36524
-  DP4   =   1461
+  # :nodoc:
+  SECONDS_PER_MINUTE = 60
 
-  # `Kind` represents a specified time zone.
-  #
-  # Initializing a `Time` instance with specified `Kind`:
+  # :nodoc:
+  SECONDS_PER_HOUR = 60 * SECONDS_PER_MINUTE
+
+  # :nodoc:
+  SECONDS_PER_DAY = 24 * SECONDS_PER_HOUR
+
+  # :nodoc:
+  SECONDS_PER_WEEK = 7 * SECONDS_PER_DAY
+
+  # :nodoc:
+  NANOSECONDS_PER_MILLISECOND = 1_000_000_i64
+
+  # :nodoc:
+  NANOSECONDS_PER_SECOND = 1_000_000_000_i64
+
+  # :nodoc:
+  NANOSECONDS_PER_MINUTE = NANOSECONDS_PER_SECOND * 60
+
+  # :nodoc:
+  NANOSECONDS_PER_HOUR = NANOSECONDS_PER_MINUTE * 60
+
+  # :nodoc:
+  NANOSECONDS_PER_DAY = NANOSECONDS_PER_HOUR * 24
+
+  # :nodoc:
+  DAYS_PER_400_YEARS = 365*400 + 97
+
+  # :nodoc:
+  DAYS_PER_100_YEARS = 365*100 + 24
+
+  # :nodoc:
+  DAYS_PER_4_YEARS = 365*4 + 1
+
+  # :nodoc:
+  UNIX_SECONDS = SECONDS_PER_DAY.to_i64 * (1969*365 + 1969/4 - 1969/100 + 1969/400)
+
+  # :nodoc:
+  MAX_SECONDS = 315537897599_i64
+
+  # `DayOfWeek` represents the day.
   #
   # ```
-  # time = Time.new(2016, 2, 15, 21, 1, 10, 0, Time::Kind::Local)
+  # time = Time.new(2016, 2, 15)
+  # time.day_of_week # => Time::DayOfWeek::Monday
   # ```
   #
-  # Alternatively, you can switch the `Kind` for any instance:
+  # Alternatively, you can use question methods:
   #
   # ```
-  # time.to_utc   # => 2016-02-15 21:00:00 UTC
-  # time.to_local # => 2016-02-16 05:01:10 +0800
+  # time.friday? # => false
+  # time.monday? # => true
   # ```
-  #
-  # Inspection:
-  #
-  # ```
-  # time.local? # => true
-  # time.utc?   # => false
-  # ```
-  #
-  enum Kind : Int64
-    Unspecified = 0
-    Utc         = 1
-    Local       = 2
+  enum DayOfWeek
+    Sunday
+    Monday
+    Tuesday
+    Wednesday
+    Thursday
+    Friday
+    Saturday
   end
 
-  KindShift = 62_i64
+  @seconds : Int64
+  @nanoseconds : Int32
+  @location : Location
 
-  MaxValue = new 3155378975999999999
-  MinValue = new 0
-
-  UnixEpoch = 621355968000000000_i64
-
-  # 1 tick is a tenth of a millisecond
-  # The 2 higher bits are reserved for the kind of time.
-  @encoded : Int64
-  protected property encoded
-
-  def initialize
-    initialize Time.local_ticks, kind: Kind::Local
+  # Returns a clock from an unspecified starting point, but strictly linearly
+  # increasing. This clock should be independent from discontinuous jumps in the
+  # system time, such as leap seconds, time zone adjustments or manual changes
+  # to the computer's time.
+  #
+  # For example, the monotonic clock must always be used to measure an elapsed
+  # time.
+  def self.monotonic : Time::Span
+    seconds, nanoseconds = Crystal::System::Time.monotonic
+    Time::Span.new(seconds: seconds, nanoseconds: nanoseconds)
   end
 
-  def initialize(ticks : Int, kind = Kind::Unspecified)
-    if ticks < 0 || ticks > MAX_VALUE_TICKS
-      raise ArgumentError.new "Invalid ticks value"
-    end
-
-    @encoded = ticks.to_i64
-    @encoded |= kind.value << KindShift
+  # Measures how long the block took to run. Relies on `monotonic` to not be
+  # affected by time fluctuations.
+  def self.measure : Time::Span
+    start = monotonic
+    yield
+    monotonic - start
   end
 
-  def initialize(year, month, day, hour = 0, minute = 0, second = 0, millisecond = 0, kind = Kind::Unspecified)
+  def self.new(location = Location.local)
+    seconds, nanoseconds = Crystal::System::Time.compute_utc_seconds_and_nanoseconds
+    new(seconds: seconds, nanoseconds: nanoseconds, location: location)
+  end
+
+  def self.new(year, month, day, hour = 0, minute = 0, second = 0, *, nanosecond = 0, location = Location.local)
     unless 1 <= year <= 9999 &&
            1 <= month <= 12 &&
            1 <= day <= Time.days_in_month(year, month) &&
            0 <= hour <= 23 &&
            0 <= minute <= 59 &&
            0 <= second <= 59 &&
-           0 <= millisecond <= 999
+           0 <= nanosecond <= 999_999_999
       raise ArgumentError.new "Invalid time"
     end
 
-    @encoded = Span.new(Time.absolute_days(year, month, day), hour, minute, second, millisecond).ticks
-    @encoded |= kind.value << KindShift
+    days = absolute_days(year, month, day)
+
+    seconds = 1_i64 *
+              SECONDS_PER_DAY * days +
+              SECONDS_PER_HOUR * hour +
+              SECONDS_PER_MINUTE * minute +
+              second
+
+    # Normalize internal representation to UTC
+    seconds = seconds - zone_offset_at(seconds, location)
+
+    new(seconds: seconds, nanoseconds: nanosecond.to_i, location: location)
   end
 
-  def self.new(time : LibC::Timespec, kind = Kind::Unspecified)
-    new(UnixEpoch + time.tv_sec.to_i64 * Span::TicksPerSecond + (time.tv_nsec.to_i64 * 0.01).to_i64, kind)
+  {% unless flag?(:win32) %}
+    # :nodoc:
+    def self.new(time : LibC::Timespec, location = Location.local)
+      seconds = UNIX_SECONDS + time.tv_sec
+      nanoseconds = time.tv_nsec.to_i
+      new(seconds: seconds, nanoseconds: nanoseconds, location: location)
+    end
+  {% end %}
+
+  def initialize(*, @seconds : Int64, @nanoseconds : Int32, @location : Location)
+    unless 0 <= offset_seconds <= MAX_SECONDS
+      raise ArgumentError.new "Invalid time: seconds out of range"
+    end
+
+    unless 0 <= @nanoseconds < NANOSECONDS_PER_SECOND
+      raise ArgumentError.new "Invalid time: nanoseconds out of range"
+    end
   end
 
   # Returns a new `Time` instance that corresponds to the number
@@ -147,8 +212,8 @@ struct Time
   # ```
   # Time.epoch(981173106) # => 2001-02-03 04:05:06 UTC
   # ```
-  def self.epoch(seconds : Int) : self
-    new(UnixEpoch + seconds.to_i64 * Span::TicksPerSecond, Kind::Utc)
+  def self.epoch(seconds : Int) : Time
+    utc(seconds: UNIX_SECONDS + seconds, nanoseconds: 0)
   end
 
   # Returns a new `Time` instance that corresponds to the number
@@ -158,27 +223,44 @@ struct Time
   # time = Time.epoch_ms(981173106789) # => 2001-02-03 04:05:06.789 UTC
   # time.millisecond                   # => 789
   # ```
-  def self.epoch_ms(milliseconds : Int) : self
-    new(UnixEpoch + milliseconds.to_i64 * Span::TicksPerMillisecond, Kind::Utc)
+  def self.epoch_ms(milliseconds : Int) : Time
+    milliseconds = milliseconds.to_i64
+    seconds = UNIX_SECONDS + (milliseconds / 1_000)
+    nanoseconds = (milliseconds % 1000) * NANOSECONDS_PER_MILLISECOND
+    utc(seconds: seconds, nanoseconds: nanoseconds.to_i)
   end
 
-  def clone
+  # Returns a new `Time` instance at the specified time in UTC time zone.
+  def self.utc(year, month, day, hour = 0, minute = 0, second = 0, *, nanosecond = 0) : Time
+    new(year, month, day, hour, minute, second, nanosecond: nanosecond, location: Location::UTC)
+  end
+
+  # Returns a new `Time` instance at the specified time in UTC time zone.
+  def self.utc(*, seconds : Int64, nanoseconds : Int32) : Time
+    new(seconds: seconds, nanoseconds: nanoseconds, location: Location::UTC)
+  end
+
+  def clone : self
     self
   end
 
-  def +(other : Span)
-    add_ticks other.ticks
+  # Returns a `Time` that is later than this `Time` by the `Time::Span` *span*.
+  def +(span : Time::Span) : Time
+    add_span span.to_i, span.nanoseconds
   end
 
-  def -(other : Span)
-    add_ticks -other.ticks
+  # Returns a `Time` that is earlier than this `Time` by the `Time::Span` *span*.
+  def -(span : Time::Span) : Time
+    add_span -span.to_i, -span.nanoseconds
   end
 
-  def +(other : MonthSpan)
+  # Adds a number of months specified by *other*'s value.
+  def +(other : Time::MonthSpan) : Time
     add_months other.value
   end
 
-  def -(other : MonthSpan)
+  # Subtracts a number of months specified by *other*'s value.
+  def -(other : Time::MonthSpan) : Time
     add_months -other.value
   end
 
@@ -200,120 +282,164 @@ struct Time
       day = maxday
     end
 
-    temp = mask Time.new(year, month, day)
+    temp = Time.new(year, month, day, location: location)
     temp + time_of_day
   end
 
-  def add_ticks(value)
-    res = (value + (encoded & TicksMask)).to_i64
-    unless 0 <= res <= MAX_VALUE_TICKS
-      raise ArgumentError.new "Invalid time"
+  # Returns a `Time` that is this number of *seconds* and *nanoseconds* later.
+  #
+  # Negative values are subtracted, meaning an earlier point in time.
+  def add_span(seconds : Int, nanoseconds : Int) : Time
+    if seconds == 0 && nanoseconds == 0
+      return self
     end
 
-    mask Time.new(res)
-  end
+    seconds = total_seconds + seconds
+    nanoseconds = self.nanosecond.to_i64 + nanoseconds
 
-  def -(other : Int)
-    Time.new(ticks - other)
-  end
+    # Nanoseconds might end up outside the min/max nanosecond
+    # range, so take care of that
+    seconds += nanoseconds.tdiv(NANOSECONDS_PER_SECOND)
+    nanoseconds = nanoseconds.remainder(NANOSECONDS_PER_SECOND)
 
-  def -(other : Time)
-    if local? && other.utc?
-      self - other.to_local
-    elsif utc? && other.local?
-      self - other.to_utc
-    else
-      Span.new(ticks - other.ticks)
+    if nanoseconds < 0
+      seconds -= 1
+      nanoseconds += NANOSECONDS_PER_SECOND
     end
+
+    Time.new(seconds: seconds, nanoseconds: nanoseconds.to_i, location: location)
   end
 
-  def self.now : self
-    new
+  # Returns the amount of time between *other* and `self`.
+  #
+  # The amount can be negative if `self` is a `Time` that happens before *other*.
+  def -(other : Time) : Time::Span
+    Span.new(
+      seconds: total_seconds - other.total_seconds,
+      nanoseconds: nanosecond - other.nanosecond,
+    )
   end
 
-  def self.utc_now : self
-    new utc_ticks, Kind::Utc
+  # Returns the current time in the time zone currently observed in *location*,
+  # using local time zone by default.
+  def self.now(location = Location.local) : Time
+    new(location)
   end
 
-  def ticks
-    encoded & TicksMask
+  # Returns the current time in UTC time zone.
+  def self.utc_now : Time
+    now(Location::UTC)
   end
 
-  def date
-    mask Time.new(year, month, day)
+  # Returns a copy of `self` with time-of-day components (hour, minute, ...) set to zero.
+  def date : Time
+    Time.new(year, month, day, location: location)
   end
 
-  def year
+  # Returns the year number (in the Common Era).
+  def year : Int32
     year_month_day_day_year[0]
   end
 
-  def month
+  # Returns the month number of the year (`1..12`).
+  def month : Int32
     year_month_day_day_year[1]
   end
 
-  def day
+  # Returns the day number of the month (`1..31`).
+  def day : Int32
     year_month_day_day_year[2]
   end
 
-  def hour
-    ((encoded & TicksMask) % Span::TicksPerDay / Span::TicksPerHour).to_i32
+  # Returns the hour of the day (`0..23`).
+  def hour : Int32
+    ((offset_seconds % SECONDS_PER_DAY) / SECONDS_PER_HOUR).to_i
   end
 
-  def minute
-    ((encoded & TicksMask) % Span::TicksPerHour / Span::TicksPerMinute).to_i32
+  # Returns the minute of the hour (`0..59`).
+  def minute : Int32
+    ((offset_seconds % SECONDS_PER_HOUR) / SECONDS_PER_MINUTE).to_i
   end
 
-  def second
-    ((encoded & TicksMask) % Span::TicksPerMinute / Span::TicksPerSecond).to_i32
+  # Returns the second of the minute (`0..59`).
+  def second : Int32
+    (offset_seconds % SECONDS_PER_MINUTE).to_i
   end
 
-  def millisecond
-    ((encoded & TicksMask) % Span::TicksPerSecond / Span::TicksPerMillisecond).to_i32
+  # Returns the millisecond of the second (`0..999`).
+  def millisecond : Int32
+    nanosecond / NANOSECONDS_PER_MILLISECOND
   end
 
-  def time_of_day
-    Span.new((encoded & TicksMask) % Span::TicksPerDay)
+  # Returns the nanosecond of the second (`0..999_999_999`).
+  def nanosecond : Int32
+    @nanoseconds
   end
 
-  def day_of_week
-    value = (((encoded & TicksMask) / Span::TicksPerDay) + 1) % 7
+  # Returns how much time has passed since midnight of this day.
+  def time_of_day : Time::Span
+    Span.new(nanoseconds: NANOSECONDS_PER_SECOND * (offset_seconds % SECONDS_PER_DAY) + nanosecond)
+  end
+
+  # Returns the day of the week (`Sunday..Saturday`).
+  def day_of_week : Time::DayOfWeek
+    value = ((offset_seconds / SECONDS_PER_DAY) + 1) % 7
     DayOfWeek.new value.to_i
   end
 
-  def day_of_year
+  # Returns the day number of the year (`1..365`, or `1..366` on leap years).
+  def day_of_year : Int32
     year_month_day_day_year[3]
   end
 
-  # Returns `Kind` of the instance.
-  def kind
-    Kind.new((encoded.to_u64 >> KindShift).to_i64)
+  # Returns `Location` of the instance.
+  def location : Location
+    @location
   end
 
-  # Returns `true` if `Kind` is set to *Utc*.
-  def utc?
-    kind == Kind::Utc
+  # Returns the time zone in effect in `location` at this point in time.
+  def zone
+    location.lookup(self)
   end
 
-  # Returns `true` if `Kind` is set to *Local*.
-  def local?
-    kind == Kind::Local
+  # Returns the offset from UTC (in seconds) in `location` at this point in time.
+  def offset : Int32
+    zone.offset
+  end
+
+  # Returns `true` if `#location` equals to `Location::UTC`.
+  def utc? : Bool
+    location.utc?
+  end
+
+  # Returns `true` if this time's `#location` equals to the current
+  # local location as returned by `Location.local`.
+  #
+  # Since the system's settings may change during a programm's runtime,
+  # the result may not be identical between different invocations.
+  def local? : Bool
+    location.local?
   end
 
   def <=>(other : self)
-    if utc? && other.local?
-      self <=> other.to_utc
-    elsif local? && other.utc?
-      to_utc <=> other
-    else
-      ticks <=> other.ticks
-    end
+    cmp = total_seconds <=> other.total_seconds
+    cmp = nanosecond <=> other.nanosecond if cmp == 0
+    cmp
   end
 
-  def hash
-    @encoded
+  def ==(other : self)
+    total_seconds == other.total_seconds && nanosecond == other.nanosecond
   end
 
-  def self.days_in_month(year, month) : Int32
+  def_hash total_seconds, nanosecond
+
+  # Returns how many days this *month* (`1..12`) of this *year* has (28, 29, 30 or 31).
+  #
+  # ```
+  # Time.days_in_month(2016, 2) # => 29
+  # Time.days_in_month(1990, 4) # => 30
+  # ```
+  def self.days_in_month(year : Int, month : Int) : Int32
     unless 1 <= month <= 12
       raise ArgumentError.new "Invalid month"
     end
@@ -326,18 +452,37 @@ struct Time
     days[month]
   end
 
-  def self.leap_year?(year) : Bool
+  # Returns number of days in *year*.
+  #
+  # ```
+  # Time.days_in_year(1990) # => 365
+  # Time.days_in_year(2004) # => 366
+  # ```
+  def self.days_in_year(year : Int) : Int32
+    leap_year?(year) ? 366 : 365
+  end
+
+  # Returns whether this *year* is leap (February has one more day).
+  def self.leap_year?(year : Int) : Bool
     unless 1 <= year <= 9999
       raise ArgumentError.new "Invalid year"
     end
 
-    (year % 4 == 0 && year % 100 != 0) || (year % 400 == 0)
+    year % 4 == 0 && (year % 100 != 0 || year % 400 == 0)
   end
 
   def inspect(io : IO)
-    Format.new("%F %T").format(self, io)
-    io << " UTC" if utc?
-    Format.new(" %z").format(self, io) if local?
+    case
+    when utc?
+      to_s "%F %T UTC", io
+    else
+      if offset % 60 == 0
+        to_s "%F %T %:z", io
+      else
+        to_s "%F %T %::z", io
+      end
+      io << ' ' << location.name unless location.fixed? || location.name == "Local"
+    end
     io
   end
 
@@ -353,7 +498,7 @@ struct Time
 
   # Formats this time using the given format (see `Time::Format`)
   # into the given *io*.
-  def to_s(format : String, io : IO)
+  def to_s(format : String, io : IO) : Nil
     Format.new(format).format(self, io)
   end
 
@@ -361,10 +506,10 @@ struct Time
   # `Time::Format`).
   #
   # ```
-  # Time.parse("2016-04-05", "%F") # => 2016-04-05 00:00:00
+  # Time.parse("2016-04-05", "%F") # => 2016-04-05 00:00:00 +01:00
   # ```
-  def self.parse(time : String, pattern : String, kind = Time::Kind::Unspecified) : self
-    Format.new(pattern, kind).parse(time)
+  def self.parse(time : String, pattern : String, location = nil) : Time
+    Format.new(pattern, location).parse(time)
   end
 
   # Returns the number of seconds since the Epoch for this time.
@@ -374,7 +519,7 @@ struct Time
   # time.epoch # => 1452567845
   # ```
   def epoch : Int64
-    (to_utc.ticks - UnixEpoch) / Span::TicksPerSecond
+    (total_seconds - UNIX_SECONDS).to_i64
   end
 
   # Returns the number of milliseconds since the Epoch for this time.
@@ -384,7 +529,7 @@ struct Time
   # time.epoch_ms # => 1452567845678
   # ```
   def epoch_ms : Int64
-    (to_utc.ticks - UnixEpoch) / Span::TicksPerMillisecond
+    epoch * 1_000 + (nanosecond / NANOSECONDS_PER_MILLISECOND)
   end
 
   # Returns the number of seconds since the Epoch for this time,
@@ -395,41 +540,74 @@ struct Time
   # time.epoch_f # => 1452567845.678
   # ```
   def epoch_f : Float64
-    (to_utc.ticks - UnixEpoch) / Span::TicksPerSecond.to_f
+    epoch.to_f + nanosecond.to_f / 1e9
   end
 
-  def to_utc
+  # Retuns this instance of time represented in `Location` *location*.
+  #
+  # ```
+  # time = Time.new(2018, 1, 7, 15, 51, location: Time::Location.load("Europe/Berlin"))
+  # time # => 2018-01-07 15:51:00 +01:00 Europe/Berlin
+  # time = time.in(Time::Location.load("Australia/Sydney"))
+  # time # => 2018-01-08 01:51:00 +11:00 Australia/Sydney
+  # ```
+  def in(location : Location) : Time
+    return self if location == self.location
+
+    Time.new(
+      seconds: total_seconds,
+      nanoseconds: nanosecond,
+      location: location
+    )
+  end
+
+  # Returns a copy of this `Time` converted to UTC.
+  def to_utc : Time
     if utc?
       self
     else
-      Time.new(Time.compute_utc_ticks(ticks), Kind::Utc)
+      Time.utc(
+        seconds: total_seconds,
+        nanoseconds: nanosecond
+      )
     end
   end
 
-  def to_local
+  # Returns a copy of this `Time` converted to the local time zone.
+  def to_local : Time
     if local?
       self
     else
-      Time.new(Time.compute_local_ticks(ticks), Kind::Local)
+      in(Location.local)
     end
   end
 
-  private macro def_at(name)
-    def at_{{name.id}}
+  private macro def_at_beginning(interval)
+    # Returns the time when the {{interval.id}} that contains `self` starts.
+    def at_beginning_of_{{interval.id}} : Time
       year, month, day, day_year = year_month_day_day_year
-      mask({{yield}})
+      {{yield}}
     end
   end
 
-  def_at(beginning_of_year) { Time.new(year, 1, 1) }
-  def_at(beginning_of_semester) { Time.new(year, ((month - 1) / 6) * 6 + 1, 1) }
-  def_at(beginning_of_quarter) { Time.new(year, ((month - 1) / 3) * 3 + 1, 1) }
-  def_at(beginning_of_month) { Time.new(year, month, 1) }
-  def_at(beginning_of_day) { Time.new(year, month, day) }
-  def_at(beginning_of_hour) { Time.new(year, month, day, hour) }
-  def_at(beginning_of_minute) { Time.new(year, month, day, hour, minute) }
+  private macro def_at_end(interval)
+    # Returns the time when the {{interval.id}} that includes `self` ends.
+    def at_end_of_{{interval.id}} : Time
+      year, month, day, day_year = year_month_day_day_year
+      {{yield}}
+    end
+  end
 
-  def at_beginning_of_week
+  def_at_beginning(year) { Time.new(year, 1, 1, location: location) }
+  def_at_beginning(semester) { Time.new(year, ((month - 1) / 6) * 6 + 1, 1, location: location) }
+  def_at_beginning(quarter) { Time.new(year, ((month - 1) / 3) * 3 + 1, 1, location: location) }
+  def_at_beginning(month) { Time.new(year, month, 1, location: location) }
+  def_at_beginning(day) { Time.new(year, month, day, location: location) }
+  def_at_beginning(hour) { Time.new(year, month, day, hour, location: location) }
+  def_at_beginning(minute) { Time.new(year, month, day, hour, minute, location: location) }
+
+  # Returns the time when the week that includes `self` starts.
+  def at_beginning_of_week : Time
     dow = day_of_week.value
     if dow == 0
       (self - 6.days).at_beginning_of_day
@@ -438,19 +616,21 @@ struct Time
     end
   end
 
-  def_at(end_of_year) { Time.new(year, 12, 31, 23, 59, 59, 999) }
+  def_at_end(year) { Time.new(year, 12, 31, 23, 59, 59, nanosecond: 999_999_999, location: location) }
 
-  def at_end_of_semester
+  # Returns the time when the half-year that includes `self` ends.
+  def at_end_of_semester : Time
     year, month = year_month_day_day_year
     if month <= 6
       month, day = 6, 30
     else
       month, day = 12, 31
     end
-    mask Time.new(year, month, day, 23, 59, 59, 999)
+    Time.new(year, month, day, 23, 59, 59, nanosecond: 999_999_999, location: location)
   end
 
-  def at_end_of_quarter
+  # Returns the time when the quarter-year that includes `self` ends.
+  def at_end_of_quarter : Time
     year, month = year_month_day_day_year
     if month <= 3
       month, day = 3, 31
@@ -461,12 +641,13 @@ struct Time
     else
       month, day = 12, 31
     end
-    mask Time.new(year, month, day, 23, 59, 59, 999)
+    Time.new(year, month, day, 23, 59, 59, nanosecond: 999_999_999, location: location)
   end
 
-  def_at(end_of_month) { Time.new(year, month, Time.days_in_month(year, month), 23, 59, 59, 999) }
+  def_at_end(month) { Time.new(year, month, Time.days_in_month(year, month), 23, 59, 59, nanosecond: 999_999_999, location: location) }
 
-  def at_end_of_week
+  # Returns the time when the week that includes `self` ends.
+  def at_end_of_week : Time
     dow = day_of_week.value
     if dow == 0
       at_end_of_day
@@ -475,14 +656,20 @@ struct Time
     end
   end
 
-  def_at(end_of_day) { Time.new(year, month, day, 23, 59, 59, 999) }
-  def_at(end_of_hour) { Time.new(year, month, day, hour, 59, 59, 999) }
-  def_at(end_of_minute) { Time.new(year, month, day, hour, minute, 59, 999) }
-  def_at(midday) { Time.new(year, month, day, 12, 0, 0, 0) }
+  def_at_end(day) { Time.new(year, month, day, 23, 59, 59, nanosecond: 999_999_999, location: location) }
+  def_at_end(hour) { Time.new(year, month, day, hour, 59, 59, nanosecond: 999_999_999, location: location) }
+  def_at_end(minute) { Time.new(year, month, day, hour, minute, 59, nanosecond: 999_999_999, location: location) }
 
-  {% for name, index in %w(sunday monday tuesday wednesday thursday friday saturday) %}
-    def {{name.id}}?
-      day_of_week.value == {{index}}
+  # Returns the midday (12:00) of the day represented by `self`.
+  def at_midday : Time
+    year, month, day = year_month_day_day_year
+    Time.new(year, month, day, 12, 0, 0, nanosecond: 0, location: location)
+  end
+
+  {% for name in DayOfWeek.constants %}
+    # Does `self` happen on {{name.id}}?
+    def {{name.id.downcase}}? : Bool
+      day_of_week.{{name.id.downcase}}?
     end
   {% end %}
 
@@ -499,23 +686,31 @@ struct Time
     (day - 1) + temp + (365*(year - 1)) + ((year - 1)/4) - ((year - 1)/100) + ((year - 1)/400)
   end
 
+  protected def total_seconds
+    @seconds
+  end
+
+  protected def offset_seconds
+    @seconds + offset
+  end
+
   private def year_month_day_day_year
     m = 1
 
     days = DAYS_MONTH
-    totaldays = ((encoded & TicksMask) / Span::TicksPerDay).to_i32
+    totaldays = offset_seconds / SECONDS_PER_DAY
 
-    num400 = totaldays / DP400
-    totaldays -= num400 * DP400
+    num400 = totaldays / DAYS_PER_400_YEARS
+    totaldays -= num400 * DAYS_PER_400_YEARS
 
-    num100 = totaldays / DP100
+    num100 = totaldays / DAYS_PER_100_YEARS
     if num100 == 4 # leap
       num100 = 3
     end
-    totaldays -= num100 * DP100
+    totaldays -= num100 * DAYS_PER_100_YEARS
 
-    num4 = totaldays / DP4
-    totaldays -= num4 * DP4
+    num4 = totaldays / DAYS_PER_4_YEARS
+    totaldays -= num4 * DAYS_PER_4_YEARS
 
     numyears = totaldays / 365
 
@@ -540,71 +735,23 @@ struct Time
     month = m
     day = totaldays + 1
 
-    {year, month, day, day_year}
+    {year.to_i, month.to_i, day.to_i, day_year.to_i}
   end
 
-  private def mask(time)
-    time.encoded |= encoded & KindMask
-    time
-  end
+  protected def self.zone_offset_at(seconds, location)
+    unix = seconds - UNIX_SECONDS
+    zone, range = location.lookup_with_boundaries(unix)
 
-  def self.local_ticks
-    ticks, offset = compute_ticks_and_offset
-    ticks + offset
-  end
+    if zone.offset != 0
+      case utc = unix - zone.offset
+      when .<(range[0])
+        zone = location.lookup(range[0] - 1)
+      when .>=(range[1])
+        zone = location.lookup(range[1])
+      end
+    end
 
-  def self.utc_ticks
-    compute_ticks
-  end
-
-  # Returns the local time offset in minutes relative to GMT.
-  #
-  # ```
-  # # Assume in Argentina, where it's GMT-3
-  # Time.local_offset_in_minutes # => -180
-  # ```
-  def self.local_offset_in_minutes
-    compute_offset / Span::TicksPerMinute
-  end
-
-  protected def self.compute_utc_ticks(ticks)
-    ticks - compute_offset
-  end
-
-  protected def self.compute_local_ticks(ticks)
-    ticks + compute_offset
-  end
-
-  # Returns `ticks, offset`, where `ticks` is the number of ticks
-  # for "now", and `offset` is the number of ticks for now's timezone offset.
-  private def self.compute_ticks_and_offset
-    second, tenth_microsecond = compute_second_and_tenth_microsecond
-    ticks = compute_ticks(second, tenth_microsecond)
-    offset = compute_offset(second)
-    {ticks, offset}
-  end
-
-  private def self.compute_ticks
-    second, tenth_microsecond = compute_second_and_tenth_microsecond
-    compute_ticks(second, tenth_microsecond)
-  end
-
-  private def self.compute_ticks(second, tenth_microsecond)
-    second.to_i64 * Span::TicksPerSecond +
-      tenth_microsecond.to_i64
-  end
-
-  private def self.compute_offset
-    second, tenth_microsecond = compute_second_and_tenth_microsecond
-    compute_offset(second)
-  end
-
-  private def self.compute_offset(second)
-    Crystal::System::Time.compute_utc_offset(second) / 60 * Span::TicksPerMinute
-  end
-
-  private def self.compute_second_and_tenth_microsecond
-    Crystal::System::Time.compute_utc_second_and_tenth_microsecond
+    zone.offset
   end
 end
 

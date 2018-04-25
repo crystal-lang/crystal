@@ -11,6 +11,8 @@ describe "Compiler" do
     File.exists?(tempfile.path).should be_true
 
     `#{tempfile.path}`.should eq("Hello!")
+  ensure
+    File.delete(tempfile.path) if tempfile
   end
 
   it "runs subcommand in preference to a filename " do
@@ -23,6 +25,8 @@ describe "Compiler" do
       File.exists?(tempfile.path).should be_true
 
       `#{tempfile.path}`.should eq("Hello!")
+    ensure
+      File.delete(tempfile.path) if tempfile
     end
   end
 end

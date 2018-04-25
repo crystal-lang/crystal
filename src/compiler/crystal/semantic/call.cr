@@ -9,6 +9,7 @@ class Crystal::Call
   property! parent_visitor : MainVisitor
   property target_defs : Array(Def)?
   property expanded : ASTNode?
+  property expanded_macro : Macro?
   property? uses_with_scope = false
   getter? raises = false
 
@@ -216,7 +217,7 @@ class Crystal::Call
     instantiate matches, owner, self_type: nil
   end
 
-  def lookup_matches_in_type(owner, arg_types, named_args_types, self_type, def_name, search_in_parents)
+  def lookup_matches_in_type(owner, arg_types, named_args_types, self_type, def_name, search_in_parents, search_in_toplevel = true)
     signature = CallSignature.new(def_name, arg_types, block, named_args_types)
 
     matches = check_tuple_indexer(owner, def_name, args, arg_types)
@@ -224,7 +225,7 @@ class Crystal::Call
 
     # If we didn't find a match and this call doesn't have a receiver,
     # and we are not at the top level, let's try searching the top-level
-    if matches.empty? && !obj && owner != program
+    if matches.empty? && !obj && owner != program && search_in_toplevel
       program_matches = lookup_matches_with_signature(program, signature, search_in_parents)
       matches = program_matches unless program_matches.empty?
     end
@@ -439,9 +440,14 @@ class Crystal::Call
         instance_type.tuple_metaclass_indexer(index)
       end
     elsif owner.is_a?(NamedTupleInstanceType)
-      # Check named tuple inexer
+      # Check named tuple indexer
       named_tuple_indexer_helper(args, arg_types, owner, owner, nilable) do |instance_type, index|
         instance_type.tuple_indexer(index)
+      end
+    elsif owner.metaclass? && (instance_type = owner.instance_type).is_a?(NamedTupleInstanceType)
+      # Check named tuple metaclass indexer
+      named_tuple_indexer_helper(args, arg_types, owner, instance_type, nilable) do |instance_type, index|
+        instance_type.tuple_metaclass_indexer(index)
       end
     end
   end
@@ -450,6 +456,7 @@ class Crystal::Call
     arg = args.first
     if arg.is_a?(NumberLiteral) && arg.kind == :i32
       index = arg.value.to_i
+      index += instance_type.size if index < 0
       in_bounds = (0 <= index < instance_type.size)
       if nilable || in_bounds
         indexer_def = yield instance_type, (in_bounds ? index : -1)
@@ -458,7 +465,7 @@ class Crystal::Call
       elsif instance_type.size == 0
         raise "index '#{arg}' out of bounds for empty tuple"
       else
-        raise "index out of bounds for #{owner} (#{arg} not in 0..#{instance_type.size - 1})"
+        raise "index out of bounds for #{owner} (#{arg} not in #{-instance_type.size}..#{instance_type.size - 1})"
       end
     end
     nil
@@ -585,10 +592,10 @@ class Crystal::Call
     if parents && parents.size > 0
       parents.each_with_index do |parent, i|
         if parent.lookup_first_def(enclosing_def.name, block)
-          return lookup_matches_in_type(parent, arg_types, named_args_types, scope, enclosing_def.name, !in_initialize)
+          return lookup_matches_in_type(parent, arg_types, named_args_types, scope, enclosing_def.name, !in_initialize, search_in_toplevel: false)
         end
       end
-      lookup_matches_in_type(parents.last, arg_types, named_args_types, scope, enclosing_def.name, !in_initialize)
+      lookup_matches_in_type(parents.last, arg_types, named_args_types, scope, enclosing_def.name, !in_initialize, search_in_toplevel: false)
     else
       raise "there's no superclass in this scope"
     end
@@ -664,7 +671,10 @@ class Crystal::Call
     node_scope = node_scope.base_type if node_scope.is_a?(VirtualType)
 
     macros = yield node_scope
-    if !macros && node_scope.module?
+
+    # If the scope is a module (through its instance type), lookup in Object too
+    # (so macros like `property` and others, defined in Object, work at the module level)
+    if !macros && node_scope.instance_type.module?
       macros = yield program.object
     end
 
@@ -789,7 +799,7 @@ class Crystal::Call
             wrong_number_of "block arguments", block.args.size, fun_args.size
           end
 
-          a_def = Def.new("->", fun_args, block.body)
+          a_def = Def.new("->", fun_args, block.body).at(block)
           a_def.captured_block = true
 
           fun_literal = ProcLiteral.new(a_def).at(self)
@@ -870,7 +880,7 @@ class Crystal::Call
           match.context.def_free_vars = match.def.free_vars
           matched = block_type.restrict(output, match.context)
           if (!matched || (matched && !block_type.implements?(matched))) && !void_return_type?(match.context, output)
-            if output.is_a?(ASTNode) && !output.is_a?(Underscore)
+            if output.is_a?(ASTNode) && !output.is_a?(Underscore) && block_type.no_return?
               begin
                 block_type = lookup_node_type(match.context, output).virtual_type
               rescue ex : Crystal::Exception
@@ -917,7 +927,7 @@ class Crystal::Call
 
   private def void_return_type?(match_context, output)
     if output.is_a?(Path)
-      type = match_context.defining_type.lookup_path(output)
+      type = lookup_node_type(match_context, output)
     else
       type = output
     end

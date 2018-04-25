@@ -1,11 +1,11 @@
 require "spec"
 require "http/server"
+require "http/client/response"
+require "tempfile"
 
-private class RaiseErrno
+private class RaiseErrno < IO
   def initialize(@value : Int32)
   end
-
-  include IO
 
   def read(slice : Bytes)
     Errno.value = @value
@@ -17,9 +17,7 @@ private class RaiseErrno
   end
 end
 
-private class ReverseResponseOutput
-  include IO
-
+private class ReverseResponseOutput < IO
   @output : IO
 
   def initialize(@output : IO)
@@ -41,6 +39,16 @@ private class ReverseResponseOutput
 
   def flush
     @output.flush
+  end
+end
+
+# TODO: replace with `HTTP::Client` once it supports connecting to Unix socket (#2735)
+private def unix_request(path)
+  UNIXSocket.open(path) do |io|
+    request = HTTP::Request.new("GET", "/", HTTP::Headers{"X-Unix-Socket" => path})
+    request.to_io(io)
+
+    HTTP::Client::Response.from_io(io).body
   end
 end
 
@@ -198,21 +206,19 @@ module HTTP
   end
 
   describe HTTP::Server do
-    it "re-sets special port zero after bind" do
-      server = Server.new(0) { |ctx| }
-      server.bind
-      server.port.should_not eq(0)
-    end
+    it "binds to unused port" do
+      server = Server.new { |ctx| }
+      address = server.bind_unused_port
+      address.port.should_not eq(0)
 
-    it "re-sets port to zero after close" do
-      server = Server.new(0) { |ctx| }
-      server.bind
-      server.close
-      server.port.should eq(0)
+      server = Server.new { |ctx| }
+      port = server.bind_tcp(0).port
+      port.should_not eq(0)
     end
 
     it "doesn't raise on accept after close #2692" do
-      server = Server.new("0.0.0.0", 0) { }
+      server = Server.new { }
+      server.bind_unused_port
 
       spawn do
         server.close
@@ -223,15 +229,135 @@ module HTTP
     end
 
     it "reuses the TCP port (SO_REUSEPORT)" do
-      s1 = Server.new(0) { |ctx| }
-      s1.bind(reuse_port: true)
+      s1 = Server.new { |ctx| }
+      address = s1.bind_unused_port(reuse_port: true)
 
-      s2 = Server.new(s1.port) { |ctx| }
-      s2.bind(reuse_port: true)
+      s2 = Server.new { |ctx| }
+      s2.bind_tcp(address.port, reuse_port: true)
 
       s1.close
       s2.close
     end
+
+    it "binds to different ports" do
+      server = Server.new do |context|
+        context.response.print "Test Server (#{context.request.headers["Host"]?})"
+      end
+
+      tcp_server = TCPServer.new("127.0.0.1", 0)
+      server.bind tcp_server
+      address1 = tcp_server.local_address
+
+      address2 = server.bind_unused_port
+
+      address1.should_not eq address2
+
+      spawn { server.listen }
+
+      Fiber.yield
+
+      HTTP::Client.get("http://#{address2}/").body.should eq "Test Server (#{address2})"
+      HTTP::Client.get("http://#{address1}/").body.should eq "Test Server (#{address1})"
+      HTTP::Client.get("http://#{address1}/").body.should eq "Test Server (#{address1})"
+    end
+
+    it "lists addresses" do
+      server = Server.new { }
+
+      tcp_server = TCPServer.new("127.0.0.1", 0)
+      addresses = [server.bind_unused_port, server.bind_unused_port, tcp_server.local_address]
+      server.bind tcp_server
+
+      server.addresses.should eq addresses
+    end
+
+    describe "#bind" do
+      it "fails after listen" do
+        server = Server.new { }
+        server.bind_unused_port
+        spawn { server.listen }
+        Fiber.yield
+        expect_raises(Exception, "Can't add socket to running server") do
+          server.bind_unused_port
+        end
+        server.close
+      end
+
+      it "fails after close" do
+        server = Server.new { }
+        server.bind_unused_port
+        spawn { server.listen }
+        Fiber.yield
+        server.close
+        expect_raises(Exception, "Can't add socket to closed server") do
+          server.bind_unused_port
+        end
+        server.close unless server.closed?
+      end
+    end
+
+    describe "#listen" do
+      it "fails after listen" do
+        server = Server.new { }
+        server.bind_unused_port
+        spawn { server.listen }
+        Fiber.yield
+        server.listening?.should be_true
+        expect_raises(Exception, "Can't start running server") do
+          server.listen
+        end
+        server.close
+      end
+
+      it "fails after close" do
+        server = Server.new { }
+        server.bind_unused_port
+        spawn { server.listen }
+        Fiber.yield
+        server.listening?.should be_true
+        server.close
+        server.listening?.should be_false
+        expect_raises(Exception, "Can't re-start closed server") do
+          server.listen
+        end
+      end
+    end
+
+    {% if flag?(:unix) %}
+      describe "#bind_unix" do
+        it "binds to different unix sockets" do
+          path1 = Tempfile.tempname
+          path2 = Tempfile.tempname
+
+          begin
+            server = Server.new do |context|
+              # TODO: Replace custom header with local_address (#5784)
+              context.response.print "Test Server (#{context.request.headers["X-Unix-Socket"]?})"
+              context.response.close
+            end
+
+            socket1 = UNIXServer.new(path1)
+            server.bind socket1
+            socket2 = server.bind_unix path2
+
+            spawn server.listen
+
+            Fiber.yield
+
+            unix_request(path1).should eq "Test Server (#{path1})"
+            unix_request(path2).should eq "Test Server (#{path2})"
+
+            server.close
+
+            File.exists?(path1).should be_false
+            File.exists?(path2).should be_false
+          ensure
+            File.delete(path1) if File.exists?(path1)
+            File.delete(path2) if File.exists?(path2)
+          end
+        end
+      end
+    {% end %}
   end
 
   describe HTTP::Server::RequestProcessor do
@@ -314,45 +440,51 @@ module HTTP
 
   typeof(begin
     # Initialize with custom host
-    server = Server.new("0.0.0.0", 0) { |ctx| }
+    server = Server.new { |ctx| }
+    server.bind_tcp "0.0.0.0", 0
     server.listen
     server.close
 
-    server = Server.new("0.0.0.0", 0, [
+    server = Server.new([
       ErrorHandler.new,
       LogHandler.new,
       CompressHandler.new,
       StaticFileHandler.new("."),
     ]
     )
+    server.bind_tcp "0.0.0.0", 0
     server.listen
     server.close
 
-    server = Server.new("0.0.0.0", 0, [StaticFileHandler.new(".")]) { |ctx| }
+    server = Server.new([StaticFileHandler.new(".")]) { |ctx| }
+    server.bind_tcp "0.0.0.0", 0
     server.listen
     server.close
 
     # Initialize with default host
-    server = Server.new(0) { |ctx| }
+    server = Server.new { |ctx| }
+    server.bind_tcp 0
     server.listen
     server.close
 
-    server = Server.new(0, [
+    server = Server.new([
       ErrorHandler.new,
       LogHandler.new,
       CompressHandler.new,
       StaticFileHandler.new("."),
     ]
     )
+    server.bind_tcp 0
     server.listen
     server.close
 
-    server = Server.new(0, [StaticFileHandler.new(".")]) { |ctx| }
+    server = Server.new([StaticFileHandler.new(".")]) { |ctx| }
+    server.bind_tcp 0
     server.listen
     server.close
   end)
 end
 
 private def requestize(string)
-  string.gsub("\n", "\r\n")
+  string.gsub('\n', "\r\n")
 end

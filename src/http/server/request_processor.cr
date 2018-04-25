@@ -62,7 +62,11 @@ class HTTP::Server::RequestProcessor
     rescue ex : Errno
       # IO-related error, nothing to do
     ensure
-      input.close if must_close
+      begin
+        input.close if must_close
+      rescue ex : Errno
+        # IO-related error, nothing to do
+      end
     end
   end
 end

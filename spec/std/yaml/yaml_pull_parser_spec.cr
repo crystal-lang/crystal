@@ -1,17 +1,6 @@
 require "spec"
 require "yaml"
 
-private def assert_raw(string, expected = string, file = __FILE__, line = __LINE__)
-  it "parses raw #{string.inspect}", file, line do
-    pull = YAML::PullParser.new(string)
-    pull.read_stream do
-      pull.read_document do
-        pull.read_raw.should eq(expected)
-      end
-    end
-  end
-end
-
 module YAML
   describe PullParser do
     it "reads empty stream" do
@@ -35,6 +24,15 @@ module YAML
       parser.read_stream do
         parser.read_document do
           parser.read_scalar.should eq("foo")
+        end
+      end
+    end
+
+    it "reads a scalar having a null character" do
+      parser = PullParser.new(%(--- "foo\\0bar"\n...\n))
+      parser.read_stream do
+        parser.read_document do
+          parser.read_scalar.should eq("foo\0bar")
         end
       end
     end
@@ -107,10 +105,21 @@ module YAML
       end
     end
 
-    assert_raw %(hello)
-    assert_raw %("hello"), %(hello)
-    assert_raw %(["hello"])
-    assert_raw %(["hello","world"])
-    assert_raw %({"hello":"world"})
+    it "raises exception at correct location" do
+      parser = PullParser.new("[1]")
+      parser.read_stream do
+        parser.read_document do
+          parser.read_sequence do
+            ex = expect_raises(YAML::ParseException) do
+              parser.read_mapping do
+              end
+            end
+            ex.location.should eq({1, 2})
+
+            parser.read_scalar
+          end
+        end
+      end
+    end
   end
 end

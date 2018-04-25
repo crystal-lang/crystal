@@ -288,7 +288,7 @@ struct Char
   #
   # The backslash character \ can be used to escape ^ or - and
   # is otherwise ignored unless it appears at the end of a range
-  # or the end of a a set.
+  # or set.
   #
   # ```
   # 'l'.in_set? "lo"          # => true
@@ -414,9 +414,9 @@ struct Char
     Unicode.upcase(self, options) { |char| yield char }
   end
 
-  # Returns this char's codepoint.
-  def hash
-    ord
+  # See `Object#hash(hasher)`
+  def hash(hasher)
+    hasher.char(self)
   end
 
   # Returns a Char that is one codepoint bigger than this char's codepoint.
@@ -479,7 +479,7 @@ struct Char
       if ascii_control?
         io << "\\u{"
         ord.to_s(16, io)
-        io << "}"
+        io << '}'
       else
         to_s(io)
       end
@@ -507,7 +507,7 @@ struct Char
       if ascii_control? || ord >= 0x80
         io << "\\u{"
         ord.to_s(16, io)
-        io << "}"
+        io << '}'
       else
         to_s(io)
       end

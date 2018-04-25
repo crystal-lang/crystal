@@ -33,7 +33,7 @@ class Zip::File
   getter comment = ""
 
   # Opens a `Zip::File` for reading from the given *io*.
-  def initialize(@io : ::File | ::IO::Memory, @sync_close = false)
+  def initialize(@io : IO, @sync_close = false)
     directory_end_offset = find_directory_end_offset
     entries_size, directory_offset = read_directory_end(directory_end_offset)
     @entries = Array(Entry).new(entries_size)
@@ -158,7 +158,7 @@ class Zip::File
     include FileInfo
 
     # :nodoc:
-    def initialize(@io : ::File | ::IO::Memory)
+    def initialize(@io : IO)
       super(at_central_directory_header: io)
     end
 

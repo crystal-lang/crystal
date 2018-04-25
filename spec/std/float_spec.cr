@@ -20,7 +20,7 @@ describe "Float" do
 
   describe "modulo" do
     it "raises when mods by zero" do
-      expect_raises(DivisionByZero) { 1.2.modulo 0.0 }
+      expect_raises(DivisionByZeroError) { 1.2.modulo 0.0 }
     end
 
     it { (13.0.modulo 4.0).should eq(1.0) }
@@ -35,7 +35,7 @@ describe "Float" do
 
   describe "remainder" do
     it "raises when mods by zero" do
-      expect_raises(DivisionByZero) { 1.2.remainder 0.0 }
+      expect_raises(DivisionByZeroError) { 1.2.remainder 0.0 }
     end
 
     it { (13.0.remainder 4.0).should eq(1.0) }
@@ -184,13 +184,33 @@ describe "Float" do
     end
   end
 
+  describe "#inspect" do
+    it "does inspect for f64" do
+      3.2.inspect.should eq("3.2")
+    end
+
+    it "does inspect for f32" do
+      3.2_f32.inspect.should eq("3.2_f32")
+    end
+
+    it "does inspect for f64 with IO" do
+      str = String.build { |io| 3.2.inspect(io) }
+      str.should eq("3.2")
+    end
+
+    it "does inspect for f32" do
+      str = String.build { |io| 3.2_f32.inspect(io) }
+      str.should eq("3.2_f32")
+    end
+  end
+
   describe "hash" do
     it "does for Float32" do
-      1.2_f32.hash.should_not eq(0)
+      1.2_f32.hash.should eq(1.2_f32.hash)
     end
 
     it "does for Float64" do
-      1.2.hash.should_not eq(0)
+      1.2.hash.should eq(1.2.hash)
     end
   end
 

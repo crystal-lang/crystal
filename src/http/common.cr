@@ -7,6 +7,9 @@ module HTTP
   private DATE_PATTERNS = {"%a, %d %b %Y %H:%M:%S %z", "%d %b %Y %H:%M:%S %z", "%A, %d-%b-%y %H:%M:%S %z", "%a %b %e %H:%M:%S %Y"}
 
   # :nodoc:
+  MAX_HEADER_SIZE = 16_384
+
+  # :nodoc:
   enum BodyType
     OnDemand
     Prohibited
@@ -18,16 +21,15 @@ module HTTP
     headers = Headers.new
 
     headers_size = 0
-    while line = io.gets(16_384, chomp: true)
+    while line = io.gets(MAX_HEADER_SIZE, chomp: true)
       headers_size += line.bytesize
-      break if headers_size > 16_384
+      break if headers_size > MAX_HEADER_SIZE
 
       if line.empty?
         body = nil
         if body_type.prohibited?
           body = nil
-        elsif content_length = headers["Content-Length"]?
-          content_length = content_length.to_u64
+        elsif content_length = content_length(headers)
           if content_length != 0
             # Don't create IO for Content-Length == 0
             body = FixedLengthContent.new(io, content_length)
@@ -59,7 +61,7 @@ module HTTP
       end
 
       name, value = parse_header(line)
-      headers.add(name, value)
+      break unless headers.add?(name, value)
     end
   end
 
@@ -166,7 +168,13 @@ module HTTP
 
   # :nodoc:
   def self.content_length(headers)
-    headers["Content-Length"]?.try &.to_u64?
+    length_headers = headers.get? "Content-Length"
+    return nil unless length_headers
+    first_header = length_headers[0]
+    if length_headers.size > 1 && length_headers.any? { |header| header != first_header }
+      raise ArgumentError.new("Multiple Content-Length headers received did not match: #{length_headers}")
+    end
+    first_header.to_u64
   end
 
   # :nodoc:
@@ -220,7 +228,7 @@ module HTTP
   def self.parse_time(time_str : String) : Time?
     DATE_PATTERNS.each do |pattern|
       begin
-        return Time.parse(time_str, pattern, kind: Time::Kind::Utc)
+        return Time.parse(time_str, pattern, location: Time::Location::UTC)
       rescue Time::Format::Error
       end
     end
@@ -270,6 +278,7 @@ module HTTP
   # string = %q("foo\ bar")
   # io = IO::Memory.new
   # HTTP.quote_string(string, io)
+  # io.rewind
   # io.gets_to_end # => %q(\"foo\\\ bar\")
   # ```
   def self.quote_string(string, io)

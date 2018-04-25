@@ -91,7 +91,7 @@ describe Socket::Addrinfo do
     end
 
     it "eventually raises returned error" do
-      expect_raises(Socket::Error) do |addrinfo|
+      expect_raises(Socket::Error) do
         Socket::Addrinfo.resolve("localhost", 80, type: Socket::Type::DGRAM) do |addrinfo|
           Socket::Error.new("please fail")
         end
@@ -325,10 +325,10 @@ describe UNIXSocket do
 
         server.accept do |sock|
           sock.local_address.family.should eq(Socket::Family::UNIX)
-          sock.local_address.path.should eq("")
+          sock.local_address.path.should eq(path)
 
           sock.remote_address.family.should eq(Socket::Family::UNIX)
-          sock.remote_address.path.should eq("")
+          sock.remote_address.path.should eq(path)
 
           client << "ping"
           sock.gets(4).should eq("ping")
@@ -538,13 +538,13 @@ describe TCPSocket do
   end
 
   it "fails when host doesn't exist" do
-    expect_raises(Socket::Error, /No address found for doesnotexist.example.org.:12345/) do
+    expect_raises(Socket::Error, /No address/i) do
       TCPSocket.new("doesnotexist.example.org.", 12345)
     end
   end
 
   it "fails (rather than segfault on darwin) when host doesn't exist and port is 0" do
-    expect_raises(Socket::Error, /No address found for doesnotexist.example.org.:0/) do
+    expect_raises(Socket::Error, /No address/i) do
       TCPSocket.new("doesnotexist.example.org.", 0)
     end
   end

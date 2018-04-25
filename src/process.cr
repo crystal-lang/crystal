@@ -1,7 +1,6 @@
 require "c/signal"
 require "c/stdlib"
 require "c/sys/times"
-require "c/sys/wait"
 require "c/unistd"
 
 class Process
@@ -104,7 +103,7 @@ class Process
         yield
         LibC._exit 0
       rescue ex
-        ex.inspect STDERR
+        ex.inspect_with_backtrace STDERR
         STDERR.flush
         LibC._exit 1
       ensure
@@ -129,19 +128,28 @@ class Process
     pid
   end
 
-  # The standard `IO` configuration of a process:
-  #
-  # * `nil`: use a pipe
-  # * `false`: no `IO` (`/dev/null`)
-  # * `true`: inherit from parent
-  # * `IO`: use the given `IO`
-  alias Stdio = Nil | Bool | IO
+  # How to redirect the standard input, output and error IO of a process.
+  enum Redirect
+    # Pipe the IO so the parent process can read (or write) to the process IO
+    # throught `#input`, `#output` or `#error`.
+    Pipe
+
+    # Discards the IO.
+    Close
+
+    # Use the IO of the parent process.
+    Inherit
+  end
+
+  # The standard `IO` configuration of a process.
+  alias Stdio = Redirect | IO
   alias Env = Nil | Hash(String, Nil) | Hash(String, String?) | Hash(String, String)
 
   # Executes a process and waits for it to complete.
   #
   # By default the process is configured without input, output or error.
-  def self.run(command : String, args = nil, env : Env = nil, clear_env : Bool = false, shell : Bool = false, input : Stdio = false, output : Stdio = false, error : Stdio = false, chdir : String? = nil) : Process::Status
+  def self.run(command : String, args = nil, env : Env = nil, clear_env : Bool = false, shell : Bool = false,
+               input : Stdio = Redirect::Close, output : Stdio = Redirect::Close, error : Stdio = Redirect::Close, chdir : String? = nil) : Process::Status
     status = new(command, args, env, clear_env, shell, input, output, error, chdir).wait
     $? = status
     status
@@ -153,7 +161,8 @@ class Process
   # will be closed automatically at the end of the block.
   #
   # Returns the block's value.
-  def self.run(command : String, args = nil, env : Env = nil, clear_env : Bool = false, shell : Bool = false, input : Stdio = nil, output : Stdio = nil, error : Stdio = nil, chdir : String? = nil)
+  def self.run(command : String, args = nil, env : Env = nil, clear_env : Bool = false, shell : Bool = false,
+               input : Stdio = Redirect::Pipe, output : Stdio = Redirect::Pipe, error : Stdio = Redirect::Pipe, chdir : String? = nil)
     process = new(command, args, env, clear_env, shell, input, output, error, chdir)
     begin
       value = yield process
@@ -171,7 +180,8 @@ class Process
   # * `false`: no `IO` (`/dev/null`)
   # * `true`: inherit from parent
   # * `IO`: use the given `IO`
-  def self.exec(command : String, args = nil, env : Env = nil, clear_env : Bool = false, shell : Bool = false, input : Bool | IO::FileDescriptor = true, output : Bool | IO::FileDescriptor = true, error : Bool | IO::FileDescriptor = true, chdir : String? = nil)
+  def self.exec(command : String, args = nil, env : Env = nil, clear_env : Bool = false, shell : Bool = false,
+                input : Stdio = Redirect::Inherit, output : Stdio = Redirect::Inherit, error : Stdio = Redirect::Inherit, chdir : String? = nil)
     command, argv = prepare_argv(command, args, shell)
     exec_internal(command, argv, env, clear_env, input, output, error, chdir)
   end
@@ -187,21 +197,22 @@ class Process
   # A pipe to this process's error. Raises if a pipe wasn't asked when creating the process.
   getter! error : IO::FileDescriptor
 
-  @waitpid_future : Concurrent::Future(Process::Status)
+  @waitpid : Channel::Buffered(Int32)
 
   # Creates a process, executes it, but doesn't wait for it to complete.
   #
   # To wait for it to finish, invoke `wait`.
   #
   # By default the process is configured without input, output or error.
-  def initialize(command : String, args = nil, env : Env = nil, clear_env : Bool = false, shell : Bool = false, input : Stdio = false, output : Stdio = false, error : Stdio = false, chdir : String? = nil)
+  def initialize(command : String, args = nil, env : Env = nil, clear_env : Bool = false, shell : Bool = false,
+                 input : Stdio = Redirect::Close, output : Stdio = Redirect::Close, error : Stdio = Redirect::Close, chdir : String? = nil)
     command, argv = Process.prepare_argv(command, args, shell)
 
     @wait_count = 0
 
     if needs_pipe?(input)
       fork_input, process_input = IO.pipe(read_blocking: true)
-      if input
+      if input.is_a?(IO)
         @wait_count += 1
         spawn { copy_io(input, process_input, channel, close_dst: true) }
       else
@@ -211,7 +222,7 @@ class Process
 
     if needs_pipe?(output)
       process_output, fork_output = IO.pipe(write_blocking: true)
-      if output
+      if output.is_a?(IO)
         @wait_count += 1
         spawn { copy_io(process_output, output, channel, close_src: true) }
       else
@@ -221,7 +232,7 @@ class Process
 
     if needs_pipe?(error)
       process_error, fork_error = IO.pipe(write_blocking: true)
-      if error
+      if error.is_a?(IO)
         @wait_count += 1
         spawn { copy_io(process_error, error, channel, close_src: true) }
       else
@@ -248,7 +259,7 @@ class Process
       end
     end
 
-    @waitpid_future = Event::SignalChildHandler.instance.waitpid(pid)
+    @waitpid = Crystal::SignalChildHandler.wait(pid)
 
     fork_input.try &.close
     fork_output.try &.close
@@ -256,7 +267,7 @@ class Process
   end
 
   private def initialize(@pid)
-    @waitpid_future = Event::SignalChildHandler.instance.waitpid(pid)
+    @waitpid = Crystal::SignalChildHandler.wait(pid)
     @wait_count = 0
   end
 
@@ -275,7 +286,7 @@ class Process
     end
     @wait_count = 0
 
-    @waitpid_future.get
+    Process::Status.new(@waitpid.receive)
   ensure
     close
   end
@@ -288,7 +299,7 @@ class Process
 
   # Whether this process is already terminated.
   def terminated?
-    @waitpid_future.completed? || !Process.exists?(@pid)
+    @waitpid.closed? || !Process.exists?(@pid)
   end
 
   # Closes any pipes to the child process.
@@ -334,7 +345,7 @@ class Process
   end
 
   private def needs_pipe?(io)
-    io.nil? || (io.is_a?(IO) && !io.is_a?(IO::FileDescriptor))
+    (io == Redirect::Pipe) || (io.is_a?(IO) && !io.is_a?(IO::FileDescriptor))
   end
 
   private def copy_io(src, dst, channel, close_src = false, close_dst = false)
@@ -387,10 +398,9 @@ class Process
     when IO::FileDescriptor
       src_io.blocking = true
       dst_io.reopen(src_io)
-    when true
-      # use same io as parent
+    when Redirect::Inherit
       dst_io.blocking = true
-    when false
+    when Redirect::Close
       File.open("/dev/null", mode) do |file|
         dst_io.reopen(file)
       end
@@ -403,6 +413,32 @@ class Process
 
   private def close_io(io)
     io.close if io
+  end
+
+  # Changes the root directory and the current working directory for the current
+  # process.
+  #
+  # Security: `chroot` on its own is not an effective means of mitigation. At minimum
+  # the process needs to also drop privilages as soon as feasible after the `chroot`.
+  # Changes to the directory hierarchy or file descriptors passed via `recvmsg(2)` from
+  # outside the `chroot` jail may allow a restricted process to escape, even if it is
+  # unprivileged.
+  #
+  # ```
+  # Process.chroot("/var/empty")
+  # ```
+  def self.chroot(path : String) : Nil
+    path.check_no_null_byte
+    if LibC.chroot(path) != 0
+      raise Errno.new("Failed to chroot")
+    end
+
+    if LibC.chdir("/") != 0
+      errno = Errno.new("chdir after chroot failed")
+      errno.callstack = CallStack.new
+      errno.inspect_with_backtrace(STDERR)
+      abort("Unresolvable state, exiting...")
+    end
   end
 end
 
@@ -431,7 +467,7 @@ end
 # LICENSE shard.yml Readme.md spec src
 # ```
 def system(command : String, args = nil) : Bool
-  status = Process.run(command, args, shell: true, input: true, output: true, error: true)
+  status = Process.run(command, args, shell: true, input: Process::Redirect::Inherit, output: Process::Redirect::Inherit, error: Process::Redirect::Inherit)
   $? = status
   status.success?
 end
@@ -446,7 +482,7 @@ end
 # `echo hi` # => "hi\n"
 # ```
 def `(command) : String
-  process = Process.new(command, shell: true, input: true, output: nil, error: true)
+  process = Process.new(command, shell: true, input: Process::Redirect::Inherit, output: Process::Redirect::Pipe, error: Process::Redirect::Inherit)
   output = process.output.gets_to_end
   status = process.wait
   $? = status

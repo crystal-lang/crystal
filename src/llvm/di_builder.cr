@@ -31,16 +31,8 @@ struct LLVM::DIBuilder
 
   def create_function(scope, name, linkage_name, file, line, composite_type, is_local_to_unit, is_definition,
                       scope_line, flags, is_optimized, func)
-    {% if LibLLVM::IS_36 || LibLLVM::IS_35 %}
-      LibLLVMExt.di_builder_create_function(self, scope, name, linkage_name, file, line, composite_type,
-                                            is_local_to_unit ? 1 : 0,
-                                            is_definition ? 1 : 0,
-                                            scope_line, flags,
-                                            is_optimized ? 1 : 0, func)
-    {% else %}
-      LibLLVMExt.di_builder_create_function(self, scope, name, linkage_name, file, line, composite_type,
-                                            is_local_to_unit, is_definition, scope_line, flags, is_optimized, func)
-    {% end %}
+    LibLLVMExt.di_builder_create_function(self, scope, name, linkage_name, file, line, composite_type,
+      is_local_to_unit, is_definition, scope_line, flags, is_optimized, func)
   end
 
   def create_auto_variable(scope, name, file, line, type, align_in_bits)
@@ -87,19 +79,11 @@ struct LLVM::DIBuilder
   end
 
   def create_replaceable_composite_type(scope, name, file, line, context : Context)
-    {% if LibLLVM::IS_35 || LibLLVM::IS_36 %}
-      LibLLVMExt.temporary_md_node(context, nil, 0).as(LibLLVMExt::Metadata)
-    {% else %}
-      LibLLVMExt.di_builder_create_replaceable_composite_type(self, scope, name, file, line)
-    {% end %}
+    LibLLVMExt.di_builder_create_replaceable_composite_type(self, scope, name, file, line)
   end
 
   def replace_temporary(from, to)
-    {% if LibLLVM::IS_35 || LibLLVM::IS_36 %}
-      LibLLVMExt.metadata_replace_all_uses_with(from, to)
-    {% else %}
-      LibLLVMExt.di_builder_replace_temporary(self, from, to)
-    {% end %}
+    LibLLVMExt.di_builder_replace_temporary(self, from, to)
   end
 
   def end

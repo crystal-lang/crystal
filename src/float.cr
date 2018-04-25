@@ -67,7 +67,7 @@ struct Float
 
   def modulo(other)
     if other == 0.0
-      raise DivisionByZero.new
+      raise DivisionByZeroError.new
     else
       self - other * self.fdiv(other).floor
     end
@@ -75,7 +75,7 @@ struct Float
 
   def remainder(other)
     if other == 0.0
-      raise DivisionByZero.new
+      raise DivisionByZeroError.new
     else
       mod = self % other
       return self.class.zero if mod == 0.0
@@ -84,6 +84,11 @@ struct Float
 
       mod - other
     end
+  end
+
+  # See `Object#hash(hasher)`
+  def hash(hasher)
+    hasher.float(self)
   end
 
   # Writes this float to the given *io* in the given *format*.
@@ -127,7 +132,11 @@ struct Float32
   end
 
   def **(other : Int32)
-    LibM.powi_f32(self, other)
+    {% if flag?(:win32) %}
+      self ** other.to_f32
+    {% else %}
+      LibM.powi_f32(self, other)
+    {% end %}
   end
 
   def **(other : Float32)
@@ -148,8 +157,9 @@ struct Float32
     Printer.print(self, io)
   end
 
-  def hash
-    unsafe_as(Int32)
+  def inspect(io)
+    to_s(io)
+    io << "_f32"
   end
 
   def clone
@@ -185,7 +195,11 @@ struct Float64
   end
 
   def **(other : Int32)
-    LibM.powi_f64(self, other)
+    {% if flag?(:win32) %}
+      self ** other.to_f64
+    {% else %}
+      LibM.powi_f64(self, other)
+    {% end %}
   end
 
   def **(other : Float64)
@@ -204,10 +218,6 @@ struct Float64
 
   def to_s(io : IO)
     Printer.print(self, io)
-  end
-
-  def hash
-    unsafe_as(Int64)
   end
 
   def clone

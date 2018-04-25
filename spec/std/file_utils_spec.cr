@@ -1,9 +1,7 @@
 require "spec"
 require "file_utils"
 
-private class OneByOneIO
-  include IO
-
+private class OneByOneIO < IO
   @bytes : Bytes
 
   def initialize(string)
@@ -35,7 +33,7 @@ describe "FileUtils" do
     end
 
     it "raises" do
-      expect_raises do
+      expect_raises(Errno, "No such file or directory") do
         FileUtils.cd("/nope")
       end
     end
@@ -134,6 +132,23 @@ describe "FileUtils" do
         File.exists?(out_path).should be_true
         FileUtils.cmp(src_path, out_path).should be_true
       ensure
+        File.delete(out_path) if File.exists?(out_path)
+      end
+    end
+
+    it "copies permissions" do
+      src_path = File.join(__DIR__, "data/new_test_file.txt")
+      out_path = File.join(__DIR__, "data/test_file_cp.txt")
+      begin
+        File.write(src_path, "foo")
+        File.chmod(src_path, 0o700)
+
+        FileUtils.cp(src_path, out_path)
+
+        File.info(out_path).permissions.should eq(File::Permissions.new(0o700))
+        FileUtils.cmp(src_path, out_path).should be_true
+      ensure
+        File.delete(src_path) if File.exists?(out_path)
         File.delete(out_path) if File.exists?(out_path)
       end
     end
@@ -369,34 +384,47 @@ describe "FileUtils" do
   end
 
   it "tests mkdir with multiples existing paths" do
-    expect_raises Errno do
-      FileUtils.mkdir([__DIR__, __DIR__], 0o700)
-    end
-    expect_raises Errno do
-      FileUtils.mkdir(["/tmp/crystal_mkdir_test_#{Process.pid}/", __DIR__], 0o700)
+    path = "/tmp/crystal_mkdir_test_#{Process.pid}/"
+    begin
+      expect_raises Errno do
+        FileUtils.mkdir([__DIR__, __DIR__], 0o700)
+      end
+      expect_raises Errno do
+        FileUtils.mkdir([path, __DIR__], 0o700)
+      end
+    ensure
+      FileUtils.rmdir(path)
     end
   end
 
   it "tests mkdir_p with a new path" do
-    path = "/tmp/crystal_mkdir_ptest_#{Process.pid}/"
-    FileUtils.mkdir_p(path).should be_nil
-    Dir.exists?(path).should be_true
-    path = File.join({path, "a", "b", "c"})
-    FileUtils.mkdir_p(path).should be_nil
-    Dir.exists?(path).should be_true
+    path1 = "/tmp/crystal_mkdir_ptest_#{Process.pid}/"
+    begin
+      FileUtils.mkdir_p(path1).should be_nil
+      Dir.exists?(path1).should be_true
+      path2 = File.join({path1, "a", "b", "c"})
+      FileUtils.mkdir_p(path2).should be_nil
+      Dir.exists?(path2).should be_true
+    ensure
+      FileUtils.rm_rf(path1)
+    end
   end
 
   it "tests mkdir_p with multiples new path" do
     path1 = "/tmp/crystal_mkdir_ptest_#{Process.pid}/"
     path2 = "/tmp/crystal_mkdir_ptest_#{Process.pid + 1}"
-    FileUtils.mkdir_p([path1, path2]).should be_nil
-    Dir.exists?(path1).should be_true
-    Dir.exists?(path2).should be_true
-    path1 = File.join({path1, "a", "b", "c"})
-    path2 = File.join({path2, "a", "b", "c"})
-    FileUtils.mkdir_p([path1, path2]).should be_nil
-    Dir.exists?(path1).should be_true
-    Dir.exists?(path2).should be_true
+    begin
+      FileUtils.mkdir_p([path1, path2]).should be_nil
+      Dir.exists?(path1).should be_true
+      Dir.exists?(path2).should be_true
+      path3 = File.join({path1, "a", "b", "c"})
+      path4 = File.join({path2, "a", "b", "c"})
+      FileUtils.mkdir_p([path3, path4]).should be_nil
+      Dir.exists?(path3).should be_true
+      Dir.exists?(path4).should be_true
+    ensure
+      FileUtils.rm_rf([path1, path2])
+    end
   end
 
   it "tests mkdir_p with an existing path" do

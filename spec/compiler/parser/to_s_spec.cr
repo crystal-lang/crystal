@@ -5,7 +5,14 @@ private def expect_to_s(original, expected = original, emit_doc = false, file = 
     str = IO::Memory.new expected.bytesize
     parser = Parser.new original
     parser.wants_doc = emit_doc
-    parser.parse.to_s(str, emit_doc: emit_doc)
+    node = parser.parse
+    node.to_s(str, emit_doc: emit_doc)
+    str.to_s.should eq(expected), file, line
+
+    # Check keeping information for `to_s` on clone
+    cloned = node.clone
+    str.clear
+    cloned.to_s(str, emit_doc: emit_doc)
     str.to_s.should eq(expected), file, line
   end
 end
@@ -18,9 +25,9 @@ describe "ASTNode#to_s" do
   expect_to_s "1 && (a = 2)"
   expect_to_s "(a = 2) && 1"
   expect_to_s "foo(a.as(Int32))"
-  expect_to_s "(1 + 2).as(Int32)", "((1 + 2)).as(Int32)"
+  expect_to_s "(1 + 2).as(Int32)", "(1 + 2).as(Int32)"
   expect_to_s "a.as?(Int32)"
-  expect_to_s "(1 + 2).as?(Int32)", "((1 + 2)).as?(Int32)"
+  expect_to_s "(1 + 2).as?(Int32)", "(1 + 2).as?(Int32)"
   expect_to_s "@foo.bar"
   expect_to_s %(:foo)
   expect_to_s %(:"{")
@@ -47,7 +54,7 @@ describe "ASTNode#to_s" do
   expect_to_s %({% for foo in bar %}\n  {{ foo }}\n{% end %})
   expect_to_s %(macro foo\n  {% for foo in bar %}\n    {{ foo }}\n  {% end %}\nend)
   expect_to_s %[1.as(Int32)]
-  expect_to_s %[(1 || 1.1).as(Int32)], %[((1 || 1.1)).as(Int32)]
+  expect_to_s %[(1 || 1.1).as(Int32)], %[(1 || 1.1).as(Int32)]
   expect_to_s %[1 & 2 & (3 | 4)], %[(1 & 2) & (3 | 4)]
   expect_to_s %[(1 & 2) & (3 | 4)]
   expect_to_s "def foo(x : T = 1)\nend"
@@ -104,5 +111,24 @@ describe "ASTNode#to_s" do
   expect_to_s %(enum Foo\n  A = 0\n  B\nend)
   expect_to_s %(alias Foo = Void)
   expect_to_s %(type(Foo = Void))
-  expect_to_s %(return true ? 1 : 2), %(return begin\n  if true\n    1\n  else\n    2\n  end\nend)
+  expect_to_s %(return true ? 1 : 2)
+  expect_to_s %(1 <= 2 <= 3)
+  expect_to_s %((1 <= 2) <= 3)
+  expect_to_s %(1 <= (2 <= 3))
+  expect_to_s %(case 1; when .foo?; 2; end), %(case 1\nwhen .foo?\n  2\nend)
+  expect_to_s %({(1 + 2)})
+  expect_to_s %({foo: (1 + 2)})
+  expect_to_s %q("#{(1 + 2)}")
+  expect_to_s %({(1 + 2) => (3 + 4)})
+  expect_to_s %([(1 + 2)] of Int32)
+  expect_to_s %(foo(1, (2 + 3), bar: (4 + 5)))
+  expect_to_s %(if (1 + 2\n3)\n  4\nend)
+  expect_to_s "%x(whoami)", "`whoami`"
+  expect_to_s %(begin\n  ()\nend)
+  expect_to_s %q("\e\0\""), %q("\e\u0000\"")
+  expect_to_s %q("#{1}\0"), %q("#{1}\u0000")
+  expect_to_s %q(%r{\/\0}), %q(/\/\0/)
+  expect_to_s %q(%r{#{1}\/\0}), %q(/#{1}\/\0/)
+  expect_to_s %q(`\n\0`), %q(`\n\u0000`)
+  expect_to_s %q(`#{1}\n\0`), %q(`#{1}\n\u0000`)
 end

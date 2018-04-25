@@ -454,4 +454,204 @@ describe "Semantic: exception" do
       b
       )) { int32 }
   end
+
+  it "detects reading nil-if-read variable after exception handler (#4723)" do
+    result = assert_type(%(
+      if true
+        foo = 42
+      end
+
+      # Now, `@vars["foo"].type` is `Int32` and `@vars["foo"].nil_if_read?` is `true`.
+
+      begin
+      rescue
+      end
+
+      # If `@vars["foo"].nil_if_read?` is `true`, `foo` on `program.vars`
+      # binds to `nil` node, so `program.vars["foo"].type` becomes `Int32 | Nil`.
+      # However if not (it is BUG), `program.vars["foo"].type` is `Int32`
+      # even though the type of the node `foo` is `Int32 | Nil`.
+      foo
+    )) { nilable int32 }
+    program = result.program
+    program.vars["foo"].type.should be(program.nilable program.int32)
+  end
+
+  it "can't return from ensure (#4470)" do
+    assert_error(%(
+      def foo
+        return 1
+      ensure
+        return 2
+      end
+
+      foo
+    ), "can't return from ensure")
+  end
+
+  it "can't return from block inside ensure (#4470)" do
+    assert_error(%(
+      def once
+        yield
+      end
+
+      def foo
+        return 1
+      ensure
+        once do
+          return 2
+        end
+      end
+
+      foo
+    ), "can't return from ensure")
+  end
+
+  it "can't return from while inside ensure (#4470)" do
+    assert_error(%(
+      def foo
+        return 1
+      ensure
+        while true
+          return 2
+        end
+      end
+
+      foo
+    ), "can't return from ensure")
+  end
+
+  it "can't use break inside while inside ensure (#4470)" do
+    assert_error(%(
+      while true
+        begin
+          break
+        ensure
+          break
+        end
+      end
+    ), "can't use break inside ensure")
+  end
+
+  it "can use break inside while inside ensure (#4470)" do
+    assert_type(%(
+      while true
+        begin
+          break
+        ensure
+          while true
+            break
+          end
+        end
+      end
+    )) { nil_type }
+  end
+
+  it "can't use break inside block inside ensure (#4470)" do
+    assert_error(%(
+      def loop
+        while true
+          yield
+        end
+      end
+
+      loop do
+        begin
+          break
+        ensure
+          break
+        end
+      end
+    ), "can't use break inside ensure")
+  end
+
+  it "can use break inside block inside ensure (#4470)" do
+    assert_type(%(
+      def loop
+        while true
+          yield
+        end
+      end
+
+      loop do
+        begin
+          break
+        ensure
+          loop do
+            break
+          end
+        end
+      end
+    )) { nil_type }
+  end
+
+  it "can't use next inside while inside ensure (#4470)" do
+    assert_error(%(
+      while true
+        begin
+          break
+        ensure
+          next
+        end
+      end
+    ), "can't use next inside ensure")
+  end
+
+  it "can't use next inside block inside ensure (#4470)" do
+    assert_error(%(
+      def loop
+        while true
+          yield
+        end
+      end
+
+      loop do
+        begin
+          break
+        ensure
+          next
+        end
+      end
+    ), "can't use next inside ensure")
+  end
+
+  it "can use next inside while inside ensure (#4470)" do
+    assert_type(%(
+      while true
+        begin
+          break
+        ensure
+          a = 0
+          while a < 1
+            a = 1
+            next
+          end
+        end
+      end
+    )) { nil_type }
+  end
+
+  it "can use next inside block inside ensure (#4470)" do
+    assert_type(%(
+      def loop
+        while true
+          yield
+        end
+      end
+
+      def once
+        yield
+      end
+
+      loop do
+        begin
+          break
+        ensure
+          once do
+            next
+          end
+        end
+      end
+    )) { nil_type }
+  end
 end

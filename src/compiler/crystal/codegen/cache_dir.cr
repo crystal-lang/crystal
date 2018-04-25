@@ -92,7 +92,7 @@ module Crystal
         io.puts "Crystal needs a cache directory. These directories were candidates for it:"
         io.puts
         candidates.each do |candidate|
-          io << " - " << candidate << "\n"
+          io << " - " << candidate << '\n'
         end
         io.puts
         io.puts "but none of them are writable."
@@ -107,16 +107,14 @@ module Crystal
     private def cleanup_dirs(entries)
       entries
         .select { |dir| Dir.exists?(dir) }
-        .sort_by! { |dir| File.stat(dir).mtime rescue Time.epoch(0) }
+        .sort_by! { |dir| File.info?(dir).try(&.modification_time) || Time.epoch(0) }
         .reverse!
         .skip(10)
         .each { |name| `rm -rf "#{name}"` rescue nil }
     end
 
     private def gather_cache_entries(dir)
-      Dir.entries(dir)
-         .reject { |name| name == "." || name == ".." }
-         .map! { |name| File.join(dir, name) }
+      Dir.children(dir).map! { |name| File.join(dir, name) }
     end
   end
 end

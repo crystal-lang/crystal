@@ -42,14 +42,14 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
   record FinishedHook, scope : ModuleType, macro : Macro
   @finished_hooks = [] of FinishedHook
 
+  @method_added_running = false
+
   @last_doc : String?
 
   def visit(node : ClassDef)
     check_outside_exp node, "declare class"
 
-    scope, name = lookup_type_def_name(node)
-
-    type = scope.types[name]?
+    scope, name, type = lookup_type_def(node)
 
     created_new_type = false
     extern = false
@@ -126,7 +126,20 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
         free_vars = nil
       end
 
-      superclass = lookup_type(node_superclass, free_vars: free_vars)
+      # find_root_generic_type_parameters is false because
+      # we don't want to find T in this case:
+      #
+      # class A(T)
+      #   class B < T
+      #   end
+      # end
+      #
+      # We search for a superclass starting from the current
+      # type, A(T) in this case, but we don't want to find
+      # type parameters because they will always be unbound.
+      superclass = lookup_type(node_superclass,
+        free_vars: free_vars,
+        find_root_generic_type_parameters: false).devirtualize
       case superclass
       when GenericClassType
         node_superclass.raise "wrong number of type vars for #{superclass} (given 0, expected #{superclass.type_vars.size})"
@@ -185,9 +198,8 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
   def visit(node : ModuleDef)
     check_outside_exp node, "declare module"
 
-    scope, name = lookup_type_def_name(node)
+    scope, name, type = lookup_type_def(node)
 
-    type = scope.types[name]?
     if type
       type = type.remove_alias
 
@@ -333,7 +345,11 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
         new_expansions << {original: node, expanded: new_method}
       end
 
-      run_hooks target_type.metaclass, target_type, :method_added, node, Call.new(nil, "method_added", [node] of ASTNode).at(node.location)
+      unless @method_added_running
+        @method_added_running = true
+        run_hooks target_type.metaclass, target_type, :method_added, node, Call.new(nil, "method_added", [node] of ASTNode).at(node.location)
+        @method_added_running = false
+      end
     end
 
     false
@@ -423,6 +439,11 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
       type.struct = true
       type.extern = true
       type.extern_union = node.union?
+
+      if location = node.location
+        type.add_location(location)
+      end
+
       current_type.types[node.name] = type
     end
 
@@ -450,9 +471,8 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
     attributes = check_valid_attributes node, ValidEnumDefAttributes, "enum"
     attributes_doc = attributes_doc()
 
-    scope, name = lookup_type_def_name(node)
+    scope, name, enum_type = lookup_type_def(node)
 
-    enum_type = scope.types[name]?
     if enum_type
       unless enum_type.is_a?(EnumType)
         node.raise "#{name} is not a enum, it's a #{enum_type.type_desc}"
@@ -633,24 +653,32 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
     check_outside_exp node, "declare constant"
     @exp_nest += 1
 
-    scope = current_type_scope(target)
+    scope, name = lookup_type_def_name(target)
 
-    type = scope.types[target.names.first]?
+    type = scope.types[name]?
     if type
       target.raise "already initialized constant #{type}"
     end
 
-    const = Const.new(@program, scope, target.names.first, value)
+    const = Const.new(@program, scope, name, value)
     const.private = true if target.visibility.private?
     attach_doc const, node
 
-    scope.types[target.names.first] = const
+    scope.types[name] = const
 
     target.target_const = const
   end
 
   def type_assign(target, value, node)
     value.accept self
+
+    # Prevent to assign instance variables inside nested expressions.
+    # `@exp_nest > 1` is to check nested expressions. We cannot use `inside_exp?` simply
+    # because `@exp_nest` is increased when `node` is `Assign`.
+    if @exp_nest > 1 && target.is_a?(InstanceVar)
+      node.raise "can't use instance variables at the top level"
+    end
+
     false
   end
 
@@ -983,6 +1011,15 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
     @attributes = nil
 
     {extern, extern_union, packed}
+  end
+
+  def lookup_type_def(node : ASTNode)
+    scope, name = lookup_type_def_name(node)
+    type = scope.types[name]?
+    if type && node.doc
+      type.doc = node.doc
+    end
+    {scope, name, type}
   end
 
   def lookup_type_def_name(node : ASTNode)

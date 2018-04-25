@@ -1,5 +1,5 @@
 # :nodoc:
-class File::PReader
+class File::PReader < IO
   include IO::Buffered
 
   getter? closed = false

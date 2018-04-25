@@ -47,18 +47,6 @@
 # string # => "<?xml version=\"1.0\"?>\n<person id=\"1\">\n  <firstname>Jane</firstname>\n  <lastname>Doe</lastname>\n</person>\n"
 # ```
 module XML
-  SUBSTITUTIONS = {
-    '>'  => "&gt;",
-    '<'  => "&lt;",
-    '"'  => "&quot;",
-    '\'' => "&apos;",
-    '&'  => "&amp;",
-  }
-
-  def self.escape(string : String)
-    string.gsub(SUBSTITUTIONS)
-  end
-
   # Parses an XML document from *string* with *options* into an `XML::Node`.
   #
   # See `ParserOptions.default` for default options.

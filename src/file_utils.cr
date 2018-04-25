@@ -102,12 +102,12 @@ module FileUtils
   # ```
   # File.chmod("afile", 0o600)
   # FileUtils.cp("afile", "afile_copy")
-  # File.stat("afile_copy").perm # => 0o600
+  # File.info("afile_copy").permissions # => 0o600
   # ```
   def cp(src_path : String, dest : String)
     File.open(src_path) do |s|
       dest += File::SEPARATOR + File.basename(src_path) if Dir.exists?(dest)
-      File.open(dest, "wb", s.stat.mode) do |d|
+      File.open(dest, "wb", s.info.permissions) do |d|
         IO.copy(s, d)
       end
     end
@@ -136,14 +136,10 @@ module FileUtils
   def cp_r(src_path : String, dest_path : String)
     if Dir.exists?(src_path)
       Dir.mkdir(dest_path)
-      Dir.open(src_path) do |dir|
-        dir.each do |entry|
-          if entry != "." && entry != ".."
-            src = File.join(src_path, entry)
-            dest = File.join(dest_path, entry)
-            cp_r(src, dest)
-          end
-        end
+      Dir.each_child(src_path) do |entry|
+        src = File.join(src_path, entry)
+        dest = File.join(dest_path, entry)
+        cp_r(src, dest)
       end
     else
       cp(src_path, dest_path)
@@ -268,13 +264,9 @@ module FileUtils
   # ```
   def rm_r(path : String) : Nil
     if Dir.exists?(path) && !File.symlink?(path)
-      Dir.open(path) do |dir|
-        dir.each do |entry|
-          if entry != "." && entry != ".."
-            src = File.join(path, entry)
-            rm_r(src)
-          end
-        end
+      Dir.each_child(path) do |entry|
+        src = File.join(path, entry)
+        rm_r(src)
       end
       Dir.rmdir(path)
     else

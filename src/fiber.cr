@@ -28,7 +28,7 @@ class Fiber
     @stack_bottom = @stack + STACK_SIZE
     fiber_main = ->(f : Fiber) { f.run }
 
-    stack_ptr = @stack + STACK_SIZE - sizeof(Void*)
+    stack_ptr = @stack_bottom - sizeof(Void*)
 
     # Align the stack pointer to 16 bytes
     stack_ptr = Pointer(Void*).new(stack_ptr.address & ~0x0f_u64)
@@ -83,7 +83,7 @@ class Fiber
     @proc = Proc(Void).new { }
     @stack = Pointer(Void).null
     @stack_top = _fiber_get_stack_top
-    @stack_bottom = LibGC.stackbottom
+    @stack_bottom = GC.stack_bottom
     @name = "main"
 
     @@first_fiber = @@last_fiber = self
@@ -93,7 +93,8 @@ class Fiber
     @@stack_pool.pop? || LibC.mmap(nil, Fiber::STACK_SIZE,
       LibC::PROT_READ | LibC::PROT_WRITE,
       LibC::MAP_PRIVATE | LibC::MAP_ANON,
-      -1, 0).tap do |pointer|
+      -1, 0
+    ).tap do |pointer|
       raise Errno.new("Cannot allocate new fiber stack") if pointer == LibC::MAP_FAILED
       {% if flag?(:linux) %}
         LibC.madvise(pointer, Fiber::STACK_SIZE, LibC::MADV_NOHUGEPAGE)
@@ -256,7 +257,7 @@ class Fiber
 
   def resume : Nil
     current, Thread.current.current_fiber = Thread.current.current_fiber, self
-    LibGC.stackbottom = @stack_bottom
+    GC.stack_bottom = @stack_bottom
     {% if flag?(:aarch64) %}
       Fiber.switch_stacks(pointerof(current.@stack_top), @stack_top)
     {% else %}
@@ -264,10 +265,14 @@ class Fiber
     {% end %}
   end
 
-  def sleep(time)
+  def sleep(time : Time::Span)
     event = @resume_event ||= Scheduler.create_resume_event(self)
     event.add(time)
     Scheduler.reschedule
+  end
+
+  def sleep(time : Number)
+    sleep(time.seconds)
   end
 
   def yield
@@ -288,7 +293,7 @@ class Fiber
     if name = @name
       io << ": " << name
     end
-    io << ">"
+    io << '>'
   end
 
   def inspect(io)
@@ -297,7 +302,7 @@ class Fiber
 
   protected def push_gc_roots
     # Push the used section of the stack
-    LibGC.push_all_eager @stack_top, @stack_bottom
+    GC.push_stack @stack_top, @stack_bottom
   end
 
   @@root = new
@@ -312,12 +317,8 @@ class Fiber
     Thread.current.current_fiber
   end
 
-  @@prev_push_other_roots = LibGC.get_push_other_roots
-
   # This will push all fibers stacks whenever the GC wants to collect some memory
-  LibGC.set_push_other_roots ->do
-    @@prev_push_other_roots.call
-
+  GC.before_collect do
     fiber = @@first_fiber
     while fiber
       fiber.push_gc_roots unless fiber == Thread.current.current_fiber

@@ -1273,4 +1273,16 @@ describe "Code gen: exception" do
       end
       )).to_string.should eq("good")
   end
+
+  it "types parenthesized expression (#5511)" do
+    run(%(
+      require "prelude"
+
+      begin
+        ((raise "foo").bar).baz
+      rescue ex
+        ex.message
+      end
+      )).to_string.should eq("foo")
+  end
 end

@@ -37,13 +37,13 @@ class Crystal::Program
   end
 
   def expand_macro(a_macro : Macro, call : Call, scope : Type, path_lookup : Type? = nil, a_def : Def? = nil)
-    interpreter = MacroInterpreter.new self, scope, path_lookup || scope, a_macro, call, a_def
+    interpreter = MacroInterpreter.new self, scope, path_lookup || scope, a_macro, call, a_def, in_macro: true
     a_macro.body.accept interpreter
     interpreter.to_s
   end
 
   def expand_macro(node : ASTNode, scope : Type, path_lookup : Type? = nil, free_vars = nil, a_def : Def? = nil)
-    interpreter = MacroInterpreter.new self, scope, path_lookup || scope, node.location, def: a_def
+    interpreter = MacroInterpreter.new self, scope, path_lookup || scope, node.location, def: a_def, in_macro: false
     interpreter.free_vars = free_vars
     node.accept interpreter
     interpreter.to_s
@@ -87,13 +87,16 @@ class Crystal::Program
     end
   end
 
+  record MacroRunResult, stdout : String, stderr : String, status : Process::Status
+
   def macro_run(filename, args)
     compiled_macro_run = @compiled_macros_cache[filename] ||= macro_compile(filename)
     compiled_file = compiled_macro_run.filename
 
-    io = IO::Memory.new
-    Process.run(compiled_file, args: args, shell: true, output: io)
-    {$?.success?, io.to_s}
+    out_io = IO::Memory.new
+    err_io = IO::Memory.new
+    Process.run(compiled_file, args: args, output: out_io, error: err_io)
+    MacroRunResult.new(out_io.to_s, err_io.to_s, $?)
   end
 
   record RequireWithTimestamp, filename : String, epoch : Int64 do
@@ -101,7 +104,7 @@ class Crystal::Program
   end
 
   def macro_compile(filename)
-    time = Time.now
+    time = Time.monotonic
 
     source = File.read(filename)
 
@@ -124,7 +127,7 @@ class Crystal::Program
     File.utime(now, now, program_dir)
 
     if can_reuse_previous_compilation?(filename, executable_path, recorded_requires_path, requires_path)
-      elapsed_time = Time.now - time
+      elapsed_time = Time.monotonic - time
       return CompiledMacroRun.new(executable_path, elapsed_time, true)
     end
 
@@ -155,7 +158,7 @@ class Crystal::Program
     # Together with their timestamp
     # (this is the list of all effective files that were required)
     requires_with_timestamps = result.program.requires.map do |required_file|
-      epoch = File.stat(required_file).mtime.epoch
+      epoch = File.info(required_file).modification_time.epoch
       RequireWithTimestamp.new(required_file, epoch)
     end
 
@@ -163,7 +166,7 @@ class Crystal::Program
       requires_with_timestamps.to_json(file)
     end
 
-    elapsed_time = Time.now - time
+    elapsed_time = Time.monotonic - time
     CompiledMacroRun.new(executable_path, elapsed_time, false)
   end
 
@@ -200,7 +203,7 @@ class Crystal::Program
     end
 
     new_requires_with_timestamps = required_files.map do |required_file|
-      epoch = File.stat(required_file).mtime.epoch
+      epoch = File.info(required_file).modification_time.epoch
       RequireWithTimestamp.new(required_file, epoch)
     end
 

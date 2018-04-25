@@ -4,6 +4,7 @@ struct Time::Format
     include Pattern
 
     @epoch : Int64?
+    @location : Location?
 
     def initialize(string)
       @reader = Char::Reader.new(string)
@@ -13,30 +14,23 @@ struct Time::Format
       @hour = 0
       @minute = 0
       @second = 0
-      @millisecond = 0
+      @nanosecond = 0
       @pm = false
     end
 
-    def time(kind = Time::Kind::Unspecified)
+    def time(location : Location? = nil)
       @hour += 12 if @pm
-
-      time_kind = @kind || kind
 
       if epoch = @epoch
         return Time.epoch(epoch)
       end
 
-      time = Time.new @year, @month, @day, @hour, @minute, @second, @millisecond, time_kind
-
-      if offset_in_minutes = @offset_in_minutes
-        time -= offset_in_minutes.minutes if offset_in_minutes != 0
-
-        if (offset_in_minutes != 0) || (kind == Time::Kind::Local && !time.local?)
-          time = time.to_local
-        end
+      location = @location || location
+      if location.nil?
+        raise "Time format did not include time zone and no default location provided"
       end
 
-      time
+      Time.new @year, @month, @day, @hour, @minute, @second, nanosecond: @nanosecond, location: location
     end
 
     def year
@@ -164,15 +158,35 @@ struct Time::Format
     end
 
     def milliseconds
-      # Consume more than 3 digits (12 seems a good maximum),
-      # and later just use the first 3 digits because Time
-      # only has microsecond precision.
-      pos = @reader.pos
-      @millisecond = consume_number(12)
-      digits = @reader.pos - pos
-      if digits > 3
-        @millisecond /= 10 ** (digits - 3)
+      second_decimals 3
+    end
+
+    def microseconds
+      second_decimals 6
+    end
+
+    def nanoseconds
+      second_decimals 9
+    end
+
+    def second_fraction
+      second_decimals 9
+      # consume trailing numbers
+      while current_char.ascii_number?
+        next_char
       end
+    end
+
+    private def second_decimals(precision)
+      pos = @reader.pos
+      # Consume at most *precision* digits as i64
+      decimals = consume_number_i64(precision)
+      # Multiply the parsed value if does not match the expected precision
+      digits = @reader.pos - pos
+      precision_shift = digits < precision ? precision - digits : 0
+      # Adjust to nanoseconds
+      nanoseconds_shift = 9 - precision
+      @nanosecond = (decimals * 10 ** (precision_shift + nanoseconds_shift)).to_i
     end
 
     def am_pm
@@ -212,16 +226,14 @@ struct Time::Format
       @epoch = consume_number_i64(19) * (epoch_negative ? -1 : 1)
     end
 
-    def time_zone
+    def time_zone(with_seconds = false)
       case char = current_char
       when 'Z'
-        @offset_in_minutes = 0
-        @kind = Time::Kind::Utc
+        @location = Location::UTC
         next_char
       when 'U'
         if next_char == 'T' && next_char == 'C'
-          @offset_in_minutes = 0
-          @kind = Time::Kind::Utc
+          @location = Location::UTC
           next_char
         else
           raise "Invalid timezone"
@@ -235,7 +247,7 @@ struct Time::Format
 
         char = next_char
         raise "Invalid timezone" unless char.ascii_number?
-        hours = 10*hours + char.to_i
+        hours = 10 * hours + char.to_i
 
         char = next_char
         char = next_char if char == ':'
@@ -244,10 +256,22 @@ struct Time::Format
 
         char = next_char
         raise "Invalid timezone" unless char.ascii_number?
-        minutes = 10*minutes + char.to_i
+        minutes = 10 * minutes + char.to_i
 
-        @offset_in_minutes = sign * (60*hours + minutes)
-        @kind = Time::Kind::Utc
+        if with_seconds
+          char = next_char
+          char = next_char if char == ':'
+          raise "Invalid timezone" unless char.ascii_number?
+          seconds = char.to_i
+
+          char = next_char
+          raise "Invalid timezone" unless char.ascii_number?
+          seconds = 10 * seconds + char.to_i
+        else
+          seconds = 0
+        end
+
+        @location = Location.fixed(sign * (3600 * hours + 60 * minutes + seconds))
         char = next_char
 
         if @reader.has_next?
@@ -268,7 +292,7 @@ struct Time::Format
     end
 
     def time_zone_colon_with_seconds
-      time_zone
+      time_zone(with_seconds: true)
     end
 
     def char(char)

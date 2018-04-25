@@ -87,7 +87,7 @@ module Crystal
     end
 
     # Returns all macros defines in this type, indexed by their name.
-    # This does not inlcude methods defined in ancestors.
+    # This does not include methods defined in ancestors.
     def macros : Hash(String, Array(Macro))?
       nil
     end
@@ -382,7 +382,7 @@ module Crystal
 
     record DefInMacroLookup
 
-    # Looks up a macro with the give name and matching the given args
+    # Looks up a macro with the given name and matching the given args
     # and named_args. Returns:
     # - a `Macro`, if found
     # - `nil`, if not found
@@ -407,7 +407,11 @@ module Crystal
         return DefInMacroLookup.new
       end
 
-      parents.try &.each do |parent|
+      # We need to go through the instance type because of module
+      # inclusion and inheritance.
+      instance_type.parents.try &.each do |parent|
+        # Make sure to start the search in the metaclass if we are a metaclass
+        parent = parent.metaclass if self.metaclass?
         parent_macro = parent.lookup_macro(name, args, named_args)
         return parent_macro if parent_macro
       end
@@ -431,7 +435,11 @@ module Crystal
         return DefInMacroLookup.new
       end
 
-      parents.try &.each do |parent|
+      # We need to go through the instance type because of module
+      # inclusion and inheritance.
+      instance_type.parents.try &.each do |parent|
+        # Make sure to start the search in the metaclass if we are a metaclass
+        parent = parent.metaclass if self.metaclass?
         parent_macros = parent.lookup_macros(name)
         return parent_macros if parent_macros
       end
@@ -738,49 +746,57 @@ module Crystal
       list.each_with_index do |ex_item, i|
         if item.restriction_of?(ex_item, self)
           if ex_item.restriction_of?(item, self)
+            # The two defs have the same signature so item overrides ex_item.
             list[i] = item
             a_def.previous = ex_item
+            a_def.doc ||= ex_item.def.doc
             ex_item.def.next = a_def
             return ex_item.def
           else
+            # item has a new signature, stricter than ex_item.
             list.insert(i, item)
             return nil
           end
         end
       end
+
+      # item has a new signature, less strict than the existing defs with same name.
       list << item
 
       nil
     end
 
-    def add_macro(a_def)
-      case a_def.name
+    def add_macro(a_macro)
+      case a_macro.name
       when "inherited"
-        return add_hook :inherited, a_def
+        return add_hook :inherited, a_macro
       when "included"
-        return add_hook :included, a_def
+        return add_hook :included, a_macro
       when "extended"
-        return add_hook :extended, a_def
+        return add_hook :extended, a_macro
       when "method_added"
-        return add_hook :method_added, a_def, args_size: 1
+        return add_hook :method_added, a_macro, args_size: 1
       when "method_missing"
-        if a_def.args.size != 1
+        if a_macro.args.size != 1
           raise TypeException.new "macro 'method_missing' expects 1 argument (call)"
         end
       end
 
       macros = (@macros ||= {} of String => Array(Macro))
-      array = (macros[a_def.name] ||= [] of Macro)
-      index = array.index { |existing_macro| a_def.overrides?(existing_macro) }
+      array = (macros[a_macro.name] ||= [] of Macro)
+      index = array.index { |existing_macro| a_macro.overrides?(existing_macro) }
       if index
-        array[index] = a_def
+        # a_macro has the same signature of an existing macro, we override it.
+        a_macro.doc ||= array[index].doc
+        array[index] = a_macro
       else
-        array.push a_def
+        # a_macro has a new signature, add it with the others.
+        array << a_macro
       end
     end
 
-    def add_hook(kind, a_def, args_size = 0)
-      if a_def.args.size != args_size
+    def add_hook(kind, a_macro, args_size = 0)
+      if a_macro.args.size != args_size
         case args_size
         when 0
           raise TypeException.new "macro '#{kind}' must not have arguments"
@@ -792,7 +808,7 @@ module Crystal
       end
 
       hooks = @hooks ||= [] of Hook
-      hooks << Hook.new(kind, a_def)
+      hooks << Hook.new(kind, a_macro)
     end
 
     def filter_by_responds_to(name)
@@ -898,13 +914,15 @@ module Crystal
 
       # No meta vars means this initializer came from a generic type,
       # so we must type it now that we are defining it in a concrete type
-      unless meta_vars
+      if !meta_vars && !self.is_a?(GenericType)
         meta_vars = MetaVars.new
         visitor = MainVisitor.new(program, vars: meta_vars, meta_vars: meta_vars)
         visitor.scope = self
         value = value.clone
         value.accept visitor
       end
+
+      meta_vars ||= MetaVars.new
 
       unless self.is_a?(GenericType)
         instance_var = lookup_instance_var(name)
@@ -1453,7 +1471,7 @@ module Crystal
     end
 
     def to_s_with_options(io : IO, skip_union_parens : Bool = false, generic_args : Bool = true, codegen = false)
-      io << "*" << @splatted_type
+      io << '*' << @splatted_type
     end
   end
 
@@ -1498,12 +1516,9 @@ module Crystal
     def to_s_with_options(io : IO, skip_union_parens : Bool = false, generic_args : Bool = true, codegen = false)
       super
       if generic_args
-        io << "("
-        type_vars.each_with_index do |type_var, i|
-          io << ", " if i > 0
-          type_var.to_s(io)
-        end
-        io << ")"
+        io << '('
+        type_vars.join(", ", io, &.to_s(io))
+        io << ')'
       end
     end
   end
@@ -1561,12 +1576,9 @@ module Crystal
     def to_s_with_options(io : IO, skip_union_parens : Bool = false, generic_args : Bool = true, codegen = false)
       super
       if generic_args
-        io << "("
-        type_vars.each_with_index do |type_var, i|
-          io << ", " if i > 0
-          type_var.to_s(io)
-        end
-        io << ")"
+        io << '('
+        type_vars.join(", ", io, &.to_s(io))
+        io << ')'
       end
     end
   end
@@ -1690,15 +1702,13 @@ module Crystal
 
     def to_s_with_options(io : IO, skip_union_parens : Bool = false, generic_args : Bool = true, codegen = false)
       generic_type.append_full_name(io)
-      io << "("
-      i = 0
-      type_vars.each_value do |type_var|
+      io << '('
+      type_vars.each_value.with_index do |type_var, i|
         io << ", " if i > 0
         if type_var.is_a?(Var)
           if i == splat_index
             tuple = type_var.type.as(TupleInstanceType)
-            tuple.tuple_types.each_with_index do |tuple_type, j|
-              io << ", " if j > 0
+            tuple.tuple_types.join(", ", io) do |tuple_type|
               tuple_type = tuple_type.devirtualize unless codegen
               tuple_type.to_s_with_options(io, codegen: codegen)
             end
@@ -1710,9 +1720,8 @@ module Crystal
         else
           type_var.to_s(io)
         end
-        i += 1
       end
-      io << ")"
+      io << ')'
     end
   end
 
@@ -1995,7 +2004,7 @@ module Crystal
 
     def to_s_with_options(io : IO, skip_union_parens : Bool = false, generic_args : Bool = true, codegen = false)
       io << "Proc("
-      arg_types.each_with_index do |type, i|
+      arg_types.each do |type|
         type = type.devirtualize unless codegen
         type.to_s_with_options(io, codegen: codegen)
         io << ", "
@@ -2003,7 +2012,7 @@ module Crystal
       return_type = self.return_type
       return_type = return_type.devirtualize unless codegen
       return_type.to_s_with_options(io, codegen: codegen)
-      io << ")"
+      io << ')'
     end
   end
 
@@ -2108,12 +2117,11 @@ module Crystal
 
     def to_s_with_options(io : IO, skip_union_parens : Bool = false, generic_args : Bool = true, codegen = false)
       io << "Tuple("
-      @tuple_types.each_with_index do |tuple_type, i|
-        io << ", " if i > 0
+      @tuple_types.join(", ", io) do |tuple_type|
         tuple_type = tuple_type.devirtualize unless codegen
         tuple_type.to_s_with_options(io, skip_union_parens: true, codegen: codegen)
       end
-      io << ")"
+      io << ')'
     end
 
     def type_desc
@@ -2169,6 +2177,11 @@ module Crystal
       tuple_indexer(indexers, index)
     end
 
+    def tuple_metaclass_indexer(index)
+      indexers = @tuple_metaclass_indexers ||= {} of Int32 => Def
+      tuple_indexer(indexers, index)
+    end
+
     private def tuple_indexer(indexers, index)
       indexers[index] ||= begin
         body = index == -1 ? NilLiteral.new : TupleIndexer.new(index)
@@ -2217,8 +2230,7 @@ module Crystal
 
     def to_s_with_options(io : IO, skip_union_parens : Bool = false, generic_args : Bool = true, codegen = false)
       io << "NamedTuple("
-      @entries.each_with_index do |entry, i|
-        io << ", " if i > 0
+      @entries.join(", ", io) do |entry|
         if Symbol.needs_quotes?(entry.name)
           entry.name.inspect(io)
         else
@@ -2229,7 +2241,7 @@ module Crystal
         entry_type = entry_type.devirtualize unless codegen
         entry_type.to_s_with_options(io, skip_union_parens: true, codegen: codegen)
       end
-      io << ")"
+      io << ')'
     end
 
     def type_desc
@@ -2267,6 +2279,16 @@ module Crystal
 
       add_def setter
       add_def getter
+    end
+
+    def lookup_var(name)
+      a_def = lookup_first_def(name, false)
+      return nil unless a_def
+
+      body = a_def.body
+      return nil unless body.is_a?(Primitive) && body.name == "external_var_get"
+
+      a_def
     end
 
     def type_desc
@@ -2360,7 +2382,9 @@ module Crystal
     def process_value
       return if @value_processed
       @value_processed = true
-      @aliased_type = namespace.lookup_type(@value, allow_typeof: false)
+      @aliased_type = namespace.lookup_type(@value,
+        allow_typeof: false,
+        find_root_generic_type_parameters: false)
     end
 
     def includes_type?(other)
@@ -2713,19 +2737,18 @@ module Crystal
     end
 
     def to_s_with_options(io : IO, skip_union_parens : Bool = false, generic_args : Bool = true, codegen = false)
-      io << "(" unless skip_union_parens
+      io << '(' unless skip_union_parens
       union_types = @union_types
       # Make sure to put Nil at the end
       if nil_type_index = @union_types.index(&.nil_type?)
         union_types = @union_types.dup
         union_types << union_types.delete_at(nil_type_index)
       end
-      union_types.each_with_index do |type, i|
-        io << " | " if i > 0
+      union_types.join(" | ", io) do |type|
         type = type.devirtualize unless codegen
         type.to_s_with_options(io, codegen: codegen)
       end
-      io << ")" unless skip_union_parens
+      io << ')' unless skip_union_parens
     end
 
     def type_desc
@@ -2944,7 +2967,7 @@ module Crystal
 
     def to_s_with_options(io : IO, skip_union_parens : Bool = false, generic_args : Bool = true, codegen = false)
       base_type.to_s(io)
-      io << "+"
+      io << '+'
     end
 
     def name

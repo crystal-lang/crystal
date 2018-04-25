@@ -318,19 +318,19 @@ describe "Code gen: module" do
         end
       end
 
-      module IO2
+      module Moo
       end
 
-      module IO2::Sub
-        include IO2
+      module Moo::Sub
+        include Moo
       end
 
       class File2
-        include IO2::Sub
+        include Moo::Sub
       end
 
       file = File2.new
-      file2 = file.as(IO2)
+      file2 = file.as(Moo)
 
       file.method(file2)
       )).to_i.should eq(1)

@@ -1061,4 +1061,18 @@ describe "Semantic: class" do
       ),
       "undefined method 'bar' for Foo:Class"
   end
+
+  it "inherits self twice (#5495)" do
+    assert_type(%(
+      class Foo
+        class Bar < self
+        end
+
+        class Baz < self
+        end
+      end
+
+      { {{ Foo::Bar.superclass }}, {{ Foo::Baz.superclass }} }
+    )) { tuple_of [types["Foo"].metaclass, types["Foo"].metaclass] }
+  end
 end

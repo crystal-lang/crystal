@@ -1,4 +1,4 @@
-require "./csv"
+require "csv"
 
 # A CSV parser. It lets you consume a CSV row by row.
 #

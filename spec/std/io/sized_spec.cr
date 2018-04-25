@@ -1,8 +1,6 @@
 require "spec"
 
-private class NoPeekIO
-  include IO
-
+private class NoPeekIO < IO
   def read(bytes : Bytes)
     0
   end

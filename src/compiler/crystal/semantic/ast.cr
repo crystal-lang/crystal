@@ -195,6 +195,7 @@ module Crystal
       a_def.always_inline = always_inline?
       a_def.returns_twice = returns_twice?
       a_def.naked = naked?
+      a_def.new = new?
       a_def
     end
 
@@ -715,5 +716,22 @@ module Crystal
     end
 
     def_equals_and_hash value
+  end
+
+  # Ficticious node representing a variable in macros
+  class MetaMacroVar < ASTNode
+    property name : String
+    property default_value : ASTNode?
+
+    def initialize(@name, @type)
+    end
+
+    def class_desc
+      "MetaVar"
+    end
+
+    def clone_without_location
+      self
+    end
   end
 end

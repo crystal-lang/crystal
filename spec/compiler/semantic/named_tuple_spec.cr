@@ -294,4 +294,21 @@ describe "Semantic: named tuples" do
       ),
       "Can't convert an empty NamedTuple to a Hash"
   end
+
+  it "types T as a tuple of metaclasses" do
+    assert_type("
+      struct NamedTuple
+        def named_args
+          T
+        end
+      end
+
+      x = {a: 1, b: 1.5, c: 'a'}
+      x.named_args
+      ") do
+      meta = named_tuple_of({"a": int32, "b": float64, "c": char}).metaclass
+      meta.metaclass?.should be_true
+      meta
+    end
+  end
 end

@@ -126,13 +126,12 @@ module Crystal
     def expand_new_signature_from_initialize(instance_type)
       def_args = args.clone
 
-      new_def = Def.new("new", def_args, Nop.new)
+      new_def = Def.new("new", def_args, Nop.new).at(self)
       new_def.splat_index = splat_index
       new_def.double_splat = double_splat.clone
       new_def.yields = yields
       new_def.visibility = Visibility::Private if visibility.private?
       new_def.new = true
-      new_def.location = location
       new_def.doc = doc
       new_def.free_vars = free_vars
 
@@ -265,7 +264,7 @@ module Crystal
         name = String.build do |str|
           str << "new"
           named_args.each do |named_arg|
-            str << ":"
+            str << ':'
             str << named_arg
             def_args << Arg.new(named_arg)
             i += 1
@@ -275,7 +274,7 @@ module Crystal
         name = "new"
       end
 
-      expansion = Def.new(name, def_args, Nop.new, splat_index: splat_index)
+      expansion = Def.new(name, def_args, Nop.new, splat_index: splat_index).at(self)
       expansion.yields = yields
       expansion.visibility = Visibility::Private if visibility.private?
       if uses_block_arg?

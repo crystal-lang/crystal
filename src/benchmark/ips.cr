@@ -43,13 +43,15 @@ module Benchmark
       def report
         max_label = ran_items.max_of &.label.size
         max_compare = ran_items.max_of &.human_compare.size
+        max_bytes_per_op = ran_items.max_of &.bytes_per_op.to_s.size
 
         ran_items.each do |item|
-          printf "%s %s (%s) (±%5.2f%%) %s\n",
+          printf "%s %s (%s) (±%5.2f%%)  %s B/op  %s\n",
             item.label.rjust(max_label),
             item.human_mean,
             item.human_iteration_time,
             item.relative_stddev,
+            item.bytes_per_op.to_s.rjust(max_bytes_per_op),
             item.human_compare.rjust(max_compare)
         end
       end
@@ -60,18 +62,17 @@ module Benchmark
         @items.each do |item|
           GC.collect
 
-          before = Time.now
-          target = Time.now + @warmup_time
           count = 0
+          elapsed = Time.measure do
+            target = Time.monotonic + @warmup_time
 
-          while Time.now < target
-            item.call
-            count += 1
+            while Time.monotonic < target
+              item.call
+              count += 1
+            end
           end
 
-          after = Time.now
-
-          item.set_cycles(after - before, count)
+          item.set_cycles(elapsed, count)
         end
       end
 
@@ -80,22 +81,24 @@ module Benchmark
           GC.collect
 
           measurements = [] of Time::Span
-          target = Time.now + @calculation_time
+          bytes = 0_i64
+          cycles = 0_i64
+
+          target = Time.monotonic + @calculation_time
 
           loop do
-            before = Time.now
-            item.call_for_100ms
-            after = Time.now
-
-            measurements << after - before
-
-            break if Time.now >= target
+            bytes_before_measure = GC.stats.total_bytes
+            elapsed = Time.measure { item.call_for_100ms }
+            bytes += (GC.stats.total_bytes - bytes_before_measure).to_i64
+            cycles += item.cycles
+            measurements << elapsed
+            break if Time.monotonic >= target
           end
-
-          final_time = Time.now
 
           ips = measurements.map { |m| item.cycles.to_f / m.total_seconds }
           item.calculate_stats(ips)
+
+          item.bytes_per_op = (bytes.to_f / cycles.to_f).round.to_i
 
           if @interactive
             run_comparison
@@ -145,6 +148,9 @@ module Benchmark
 
       # Multiple slower than the fastest entry
       property! slower : Float64
+
+      # Number of bytes allocated per operation
+      property! bytes_per_op : Int32
 
       @ran : Bool
       @ran = false

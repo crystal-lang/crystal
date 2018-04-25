@@ -87,14 +87,13 @@ class Crystal::Def
       new_name = name
     end
 
-    expansion = Def.new(new_name, new_args, nil, receiver.clone, block_arg.clone, return_type.clone, macro_def?, yields)
+    expansion = Def.new(new_name, new_args, nil, receiver.clone, block_arg.clone, return_type.clone, macro_def?, yields).at(self)
     expansion.args.each { |arg| arg.default_value = nil }
     expansion.calls_super = calls_super?
     expansion.calls_initialize = calls_initialize?
     expansion.calls_previous_def = calls_previous_def?
     expansion.uses_block_arg = uses_block_arg?
     expansion.yields = yields
-    expansion.location = location
     expansion.raises = raises?
     expansion.free_vars = free_vars
     if owner = self.owner?
@@ -122,10 +121,10 @@ class Crystal::Def
           if default_value.is_a?(MagicConstant)
             expansion.args.push arg.clone
           else
-            new_body << Assign.new(Var.new(arg.name), default_value)
+            new_body << Assign.new(Var.new(arg.name).at(arg), default_value).at(arg)
 
             if restriction = arg.restriction
-              new_body << TypeRestriction.new(Var.new(arg.name), restriction).at(arg)
+              new_body << TypeRestriction.new(Var.new(arg.name).at(arg), restriction).at(arg)
             end
           end
         end
@@ -135,10 +134,11 @@ class Crystal::Def
       if splat_names && splat_index
         tuple_args = [] of ASTNode
         splat_size.times do |i|
-          tuple_args << Var.new(splat_names[i])
+          tuple_args << Var.new(splat_names[i]).at(self)
         end
-        tuple = TupleLiteral.new(tuple_args).at(args[splat_index])
-        new_body << Assign.new(Var.new(args[splat_index].name), tuple)
+        splat_arg = args[splat_index]
+        tuple = TupleLiteral.new(tuple_args).at(splat_arg)
+        new_body << Assign.new(Var.new(splat_arg.name).at(splat_arg), tuple).at(splat_arg)
       end
 
       # Double splat argument
@@ -151,7 +151,7 @@ class Crystal::Def
           named_tuple_entries << NamedTupleLiteral::Entry.new(named_arg, Var.new(named_arg))
         end
         named_tuple = NamedTupleLiteral.new(named_tuple_entries).at(double_splat)
-        new_body << Assign.new(Var.new(double_splat.name), named_tuple)
+        new_body << Assign.new(Var.new(double_splat.name).at(double_splat), named_tuple).at(double_splat)
       end
 
       new_body.push body
@@ -182,8 +182,8 @@ class Crystal::Def
             new_args.push Var.new(arg.name)
             expansion.args.push arg.clone
           else
-            body << Assign.new(Var.new(arg.name), default_value.clone)
-            new_args.push Var.new(arg.name)
+            body << Assign.new(Var.new(arg.name).at(arg), default_value.clone).at(arg)
+            new_args.push Var.new(arg.name).at(arg)
           end
         end
       end

@@ -476,4 +476,14 @@ describe "Semantic: def" do
       foo(1)
       )) { int32.metaclass }
   end
+
+  it "can't use self in toplevel method" do
+    assert_error %(
+      def foo
+        self
+      end
+
+      foo
+    ), "there's no self in this scope"
+  end
 end

@@ -165,4 +165,16 @@ describe "Char::Reader" do
   it "errors if first_byte >= 0xF5" do
     assert_invalid_byte_sequence Bytes[0xf5, 0x8F, 0xA0, 0xA0], 4
   end
+
+  it "errors if second_byte is out of bounds" do
+    assert_invalid_byte_sequence Bytes[0xf4], 1
+  end
+
+  it "errors if third_byte is out of bounds" do
+    assert_invalid_byte_sequence Bytes[0xf4, 0x8f], 2
+  end
+
+  it "errors if fourth_byte is out of bounds" do
+    assert_invalid_byte_sequence Bytes[0xf4, 0x8f, 0xa0], 3
+  end
 end

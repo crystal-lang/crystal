@@ -59,7 +59,6 @@ struct Float::Printer::DiyFP
   #
   # This result is not normalized.
   def -(other : DiyFP)
-    _invariant self.exp == other.exp && frac >= other.frac
     self.class.new(frac - other.frac, exp)
   end
 
@@ -93,7 +92,6 @@ struct Float::Printer::DiyFP
   end
 
   def normalize
-    _invariant frac != 0
     f = frac
     e = exp
 
@@ -117,7 +115,6 @@ struct Float::Printer::DiyFP
   end
 
   def self.from_f(d : Float64 | Float32)
-    _invariant d > 0
     frac, exp = IEEE.frac_and_exp(d)
     new(frac, exp)
   end
@@ -138,13 +135,5 @@ struct Float::Printer::DiyFP
     f <<= DiyFP::SIGNIFICAND_SIZE - IEEE::SIGNIFICAND_SIZE_64
     e -= DiyFP::SIGNIFICAND_SIZE - IEEE::SIGNIFICAND_SIZE_64
     DiyFP.new(f, e)
-  end
-
-  private macro _invariant(exp, file = __FILE__, line = __LINE__)
-    {% if !flag?(:release) %}
-      unless {{exp}}
-        raise "Assertion Failed #{{{file}}}:#{{{line}}}"
-      end
-    {% end %}
   end
 end

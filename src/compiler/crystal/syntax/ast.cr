@@ -89,6 +89,18 @@ module Crystal
     def pretty_print(pp)
       pp.text to_s
     end
+
+    # It yields itself for any node, but `Expressions` yields first node
+    # if it holds only a node.
+    def single_expression
+      single_expression? || self
+    end
+
+    # It yields `nil` always.
+    # (It is overrided by `Expressions` to implement `#single_expression`.)
+    def single_expression?
+      nil
+    end
   end
 
   class Nop < ASTNode
@@ -146,12 +158,19 @@ module Crystal
       @end_location || @expressions.last?.try &.end_location
     end
 
+    # It yields first node if this holds only one node, or yields `nil`.
+    def single_expression?
+      return @expressions.first.single_expression if @expressions.size == 1
+
+      nil
+    end
+
     def accept_children(visitor)
       @expressions.each &.accept visitor
     end
 
     def clone_without_location
-      Expressions.new(@expressions.clone)
+      Expressions.new(@expressions.clone).tap &.keyword = keyword
     end
 
     def_equals_and_hash expressions
@@ -283,8 +302,8 @@ module Crystal
     def initialize(@elements = [] of ASTNode, @of = nil, @name = nil)
     end
 
-    def self.map(values)
-      new(values.map { |value| (yield value).as(ASTNode) })
+    def self.map(values, of = nil)
+      new(values.map { |value| (yield value).as(ASTNode) }, of: of)
     end
 
     def accept_children(visitor)
@@ -587,8 +606,9 @@ module Crystal
     property cond : ASTNode
     property then : ASTNode
     property else : ASTNode
+    property? ternary : Bool
 
-    def initialize(@cond, a_then = nil, a_else = nil)
+    def initialize(@cond, a_then = nil, a_else = nil, @ternary = false)
       @then = Expressions.from a_then
       @else = Expressions.from a_else
     end
@@ -600,7 +620,7 @@ module Crystal
     end
 
     def clone_without_location
-      If.new(@cond.clone, @then.clone, @else.clone)
+      If.new(@cond.clone, @then.clone, @else.clone, @ternary)
     end
 
     def_equals_and_hash @cond, @then, @else
@@ -891,10 +911,6 @@ module Crystal
   #     'def' [ receiver '.' ] name '(' [ arg [ ',' arg ]* ] ')'
   #       body
   #     'end'
-  #   |
-  #     'def' [ receiver '.' ] name arg [ ',' arg ]*
-  #       body
-  #     'end'
   #
   class Def < ASTNode
     property free_vars : Array(String)?
@@ -1175,9 +1191,7 @@ module Crystal
       self
     end
 
-    def hash
-      0
-    end
+    def_hash
   end
 
   # A qualified identifier.
@@ -1333,7 +1347,9 @@ module Crystal
   end
 
   class Generic < ASTNode
-    property name : Path
+    # Usually a Path, but can also be a TypeNode in the case of a
+    # custom array/hash-like literal.
+    property name : ASTNode
     property type_vars : Array(ASTNode)
     property named_args : Array(NamedArgument)?
 
@@ -1545,9 +1561,7 @@ module Crystal
       Self.new
     end
 
-    def hash
-      0
-    end
+    def_hash
   end
 
   abstract class ControlExpression < ASTNode
@@ -2025,9 +2039,7 @@ module Crystal
       Underscore.new
     end
 
-    def hash
-      0
-    end
+    def_hash
   end
 
   class Splat < UnaryExpression

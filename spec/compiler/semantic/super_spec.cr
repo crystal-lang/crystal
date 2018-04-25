@@ -366,4 +366,20 @@ describe "Semantic: super" do
       ),
       "can't use 'super' outside method"
   end
+
+  it "errors on super where only target would be a top level method (#5201)" do
+    assert_error %(
+      def bar
+      end
+
+      class Foo
+        def bar
+          super
+        end
+      end
+
+      Foo.new.bar
+      ),
+      "no overload matches 'bar'"
+  end
 end

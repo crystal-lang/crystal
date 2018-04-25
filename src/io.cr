@@ -1,28 +1,25 @@
-require "c/fcntl"
 require "c/stdio"
-require "c/sys/select"
-require "c/sys/wait"
 require "c/errno"
-require "c/unistd"
+{% unless flag?(:win32) %}
+  require "c/unistd"
+{% end %}
 
-# The `IO` module is the basis for all input and output in Crystal.
+# The `IO` class is the basis for all input and output in Crystal.
 #
-# This module is included by types like `File`, `Socket` and `IO::Memory` and
-# provide many useful methods for reading to and writing from an IO, like `print`, `puts`,
+# This class is inherited by types like `File`, `Socket` and `IO::Memory` and
+# provides many useful methods for reading from and writing to an IO, like `print`, `puts`,
 # `gets` and `printf`.
 #
 # The only requirement for a type including the `IO` module is to define
 # these two methods:
 #
-# * `read(slice : Bytes)`: read at most *slice.size* bytes into *slice* and return the number of bytes read
+# * `read(slice : Bytes)`: read at most *slice.size* bytes from IO into *slice* and return the number of bytes read
 # * `write(slice : Bytes)`: write the whole *slice* into the IO
 #
 # For example, this is a simple `IO` on top of a `Bytes`:
 #
 # ```
-# class SimpleSliceIO
-#   include IO
-#
+# class SimpleSliceIO < IO
 #   def initialize(@slice : Bytes)
 #   end
 #
@@ -61,7 +58,7 @@ require "c/unistd"
 # Mixing string and byte operations might not give correct results and should be
 # avoided, as string operations might need to read extra bytes in order to get characters
 # in the given encoding.
-module IO
+abstract class IO
   # Argument to a `seek` operation.
   enum Seek
     # Seeks to an absolute location
@@ -76,6 +73,10 @@ module IO
     End = 2
   end
 
+  @encoding : EncodingOptions?
+  @encoder : Encoder?
+  @decoder : Decoder?
+
   # Raised when an `IO` operation times out.
   #
   # ```
@@ -86,7 +87,8 @@ module IO
   end
 
   # Reads at most *slice.size* bytes from this `IO` into *slice*.
-  # Returns the number of bytes read.
+  # Returns the number of bytes read, which is 0 if and only if there is no
+  # more data to read (so checking for 0 is the way to detect end of file).
   #
   # ```
   # io = IO::Memory.new "hello"
@@ -95,6 +97,7 @@ module IO
   # slice          # => Bytes[104, 101, 108, 108]
   # io.read(slice) # => 1
   # slice          # => Bytes[111, 101, 108, 108]
+  # io.read(slice) # => 0
   # ```
   abstract def read(slice : Bytes)
 
@@ -131,52 +134,54 @@ module IO
   def flush
   end
 
-  # Creates a pair of pipe endpoints (connected to each other)
-  # and returns them as a two-element `Tuple`.
-  #
-  # ```
-  # reader, writer = IO.pipe
-  # writer.puts "hello"
-  # writer.puts "world"
-  # reader.gets # => "hello"
-  # reader.gets # => "world"
-  # ```
-  def self.pipe(read_blocking = false, write_blocking = false)
-    pipe_fds = uninitialized StaticArray(LibC::Int, 2)
-    if LibC.pipe(pipe_fds) != 0
-      raise Errno.new("Could not create pipe")
+  {% unless flag?(:win32) %}
+    # Creates a pair of pipe endpoints (connected to each other)
+    # and returns them as a two-element `Tuple`.
+    #
+    # ```
+    # reader, writer = IO.pipe
+    # writer.puts "hello"
+    # writer.puts "world"
+    # reader.gets # => "hello"
+    # reader.gets # => "world"
+    # ```
+    def self.pipe(read_blocking = false, write_blocking = false) : {IO::FileDescriptor, IO::FileDescriptor}
+      pipe_fds = uninitialized StaticArray(LibC::Int, 2)
+      if LibC.pipe(pipe_fds) != 0
+        raise Errno.new("Could not create pipe")
+      end
+
+      r = IO::FileDescriptor.new(pipe_fds[0], read_blocking)
+      w = IO::FileDescriptor.new(pipe_fds[1], write_blocking)
+      r.close_on_exec = true
+      w.close_on_exec = true
+      w.sync = true
+
+      {r, w}
     end
 
-    r = IO::FileDescriptor.new(pipe_fds[0], read_blocking)
-    w = IO::FileDescriptor.new(pipe_fds[1], write_blocking)
-    r.close_on_exec = true
-    w.close_on_exec = true
-    w.sync = true
-
-    {r, w}
-  end
-
-  # Creates a pair of pipe endpoints (connected to each other) and passes them
-  # to the given block. Both endpoints are closed after the block.
-  #
-  # ```
-  # IO.pipe do |reader, writer|
-  #   writer.puts "hello"
-  #   writer.puts "world"
-  #   reader.gets # => "hello"
-  #   reader.gets # => "world"
-  # end
-  # ```
-  def self.pipe(read_blocking = false, write_blocking = false)
-    r, w = IO.pipe(read_blocking, write_blocking)
-    begin
-      yield r, w
-    ensure
-      w.flush
-      r.close
-      w.close
+    # Creates a pair of pipe endpoints (connected to each other) and passes them
+    # to the given block. Both endpoints are closed after the block.
+    #
+    # ```
+    # IO.pipe do |reader, writer|
+    #   writer.puts "hello"
+    #   writer.puts "world"
+    #   reader.gets # => "hello"
+    #   reader.gets # => "world"
+    # end
+    # ```
+    def self.pipe(read_blocking = false, write_blocking = false)
+      r, w = IO.pipe(read_blocking, write_blocking)
+      begin
+        yield r, w
+      ensure
+        w.flush
+        r.close
+        w.close
+      end
     end
-  end
+  {% end %}
 
   # Writes the given object into this `IO`.
   # This ends up calling `to_s(io)` on the object.
@@ -276,6 +281,8 @@ module IO
     nil
   end
 
+  # Writes a formatted string to this IO.
+  # For details on the format string, see `Kernel::sprintf`.
   def printf(format_string, *args) : Nil
     printf format_string, args
   end
@@ -679,7 +686,7 @@ module IO
       return string
     end
 
-    # We didn't find the delimiter, so we append to a String::Builde
+    # We didn't find the delimiter, so we append to a String::Builder
     # until we find it or we reach the limit, appending what we have
     # in the peek buffer and peeking again.
     String.build do |buffer|
@@ -816,7 +823,7 @@ module IO
   end
 
   # Same as `gets`, but raises `EOFError` if called at the end of this `IO`.
-  def read_line(*args, **options) : String?
+  def read_line(*args, **options) : String
     gets(*args, **options) || raise EOFError.new
   end
 
@@ -883,7 +890,7 @@ module IO
   # `from_io(io : IO, format : IO::ByteFormat = IO::ByteFormat::SystemEndian)`
   # method can be read in this way.
   #
-  # See `Int#from_io` and `Float#from_io`.
+  # See `Int.from_io` and `Float.from_io`.
   #
   # ```
   # io = IO::Memory.new
@@ -1044,6 +1051,75 @@ module IO
   # Returns this `IO`'s encoding. The default is `UTF-8`.
   def encoding : String
     @encoding.try(&.name) || "UTF-8"
+  end
+
+  # Seeks to a given *offset* (in bytes) according to the *whence* argument.
+  #
+  # The `IO` class raises on this method, but some subclasses, notable
+  # `IO::FileDescriptor` and `IO::Memory` implement it.
+  #
+  # Returns `self`.
+  #
+  # ```
+  # File.write("testfile", "abc")
+  #
+  # file = File.new("testfile")
+  # file.gets(3) # => "abc"
+  # file.seek(1, IO::Seek::Set)
+  # file.gets(2) # => "bc"
+  # file.seek(-1, IO::Seek::Current)
+  # file.gets(1) # => "c"
+  # ```
+  def seek(offset, whence : Seek = Seek::Set)
+    raise Error.new "Unable to seek"
+  end
+
+  # Returns the current position (in bytes) in this `IO`.
+  #
+  # The `IO` class raises on this method, but some subclasses, notable
+  # `IO::FileDescriptor` and `IO::Memory` implement it.
+  #
+  # ```
+  # File.write("testfile", "hello")
+  #
+  # file = File.new("testfile")
+  # file.pos     # => 0
+  # file.gets(2) # => "he"
+  # file.pos     # => 2
+  # ```
+  def pos
+    raise Error.new "Unable to pos"
+  end
+
+  # Sets the current position (in bytes) in this `IO`.
+  #
+  # The `IO` class raises on this method, but some subclasses, notable
+  # `IO::FileDescriptor` and `IO::Memory` implement it.
+  #
+  # ```
+  # File.write("testfile", "hello")
+  #
+  # file = File.new("testfile")
+  # file.pos = 3
+  # file.gets_to_end # => "lo"
+  # ```
+  def pos=(value)
+    raise Error.new "Unable to pos="
+  end
+
+  # Same as `pos`.
+  def tell
+    pos
+  end
+
+  # Yields an `IO` to read a section inside this IO.
+  #
+  # The `IO` class raises on this method, but some subclasses, notable
+  # `File` and `IO::Memory` implement it.
+  #
+  # Multiple sections can be read concurrently.
+  def read_at(offset, bytesize, &block)
+    raise Error.new "Unable to read_at"
   end
 
   # Copy all contents from *src* to *dst*.

@@ -326,7 +326,7 @@ describe "Char" do
     it { 'a'.in_set?("ab", "ac", "ad").should be_true }
 
     it "rejects invalid ranges" do
-      expect_raises do
+      expect_raises(ArgumentError, "Invalid range c-a") do
         'a'.in_set?("c-a")
       end
     end

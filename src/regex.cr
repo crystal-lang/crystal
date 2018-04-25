@@ -192,6 +192,15 @@ require "./regex/*"
 # `Hash` of `String` => `Int32`, and therefore requires named capture groups to have
 # unique names within a single `Regex`.
 class Regex
+  # List of metacharacters that need to be escaped.
+  #
+  # See `Regex.needs_escape?` and `Regex.escape`.
+  SPECIAL_CHARACTERS = {
+    ' ', '.', '\\', '+', '*', '?', '[',
+    '^', ']', '$', '(', ')', '{', '}',
+    '=', '!', '<', '>', '|', ':', '-',
+  }
+
   @[Flags]
   enum Options
     IGNORE_CASE = 1
@@ -210,13 +219,15 @@ class Regex
     UTF_8 = 0x00000800
     # :nodoc:
     NO_UTF8_CHECK = 0x00002000
+    # :nodoc:
+    DUPNAMES = 0x00080000
   end
 
   # Return a `Regex::Options` representing the optional flags applied to this `Regex`.
   #
   # ```
   # /ab+c/ix.options      # => Regex::Options::IGNORE_CASE | Regex::Options::EXTENDED
-  # /ab+c/ix.options.to_s # => "IGNORE_CASE, EXTENDED"
+  # /ab+c/ix.options.to_s # => "IGNORE_CASE | EXTENDED"
   # ```
   getter options : Options
 
@@ -240,7 +251,7 @@ class Regex
     source = source.gsub('\u{0}', "\\0")
     @source = source
 
-    @re = LibPCRE.compile(@source, (options | Options::UTF_8 | Options::NO_UTF8_CHECK), out errptr, out erroffset, nil)
+    @re = LibPCRE.compile(@source, (options | Options::UTF_8 | Options::NO_UTF8_CHECK | Options::DUPNAMES), out errptr, out erroffset, nil)
     raise ArgumentError.new("#{String.new(errptr)} at #{erroffset}") if @re.null?
     @extra = LibPCRE.study(@re, 0, out studyerrptr)
     raise ArgumentError.new("#{String.new(studyerrptr)}") if @extra.null? && studyerrptr
@@ -255,12 +266,33 @@ class Regex
   # Regex.error?("(foo|bar")  # => "missing ) at 8"
   # ```
   def self.error?(source)
-    re = LibPCRE.compile(source, (Options::UTF_8 | Options::NO_UTF8_CHECK), out errptr, out erroffset, nil)
+    re = LibPCRE.compile(source, (Options::UTF_8 | Options::NO_UTF8_CHECK | Options::DUPNAMES), out errptr, out erroffset, nil)
     if re
       nil
     else
       "#{String.new(errptr)} at #{erroffset}"
     end
+  end
+
+  # Returns `true` if *char* need to be escaped, `false` otherwise.
+  #
+  # ```
+  # Regex.needs_escape?('*') # => true
+  # Regex.needs_escape?('@') # => false
+  # ```
+  def self.needs_escape?(char : Char) : Bool
+    SPECIAL_CHARACTERS.includes?(char)
+  end
+
+  # Returns `true` if *str* need to be escaped, `false` otherwise.
+  #
+  # ```
+  # Regex.needs_escape?("10$") # => true
+  # Regex.needs_escape?("foo") # => false
+  # ```
+  def self.needs_escape?(str : String) : Bool
+    str.each_char { |char| return true if SPECIAL_CHARACTERS.includes?(char) }
+    false
   end
 
   # Returns a `String` constructed by escaping any metacharacters in *str*.
@@ -272,22 +304,21 @@ class Regex
   def self.escape(str) : String
     String.build do |result|
       str.each_byte do |byte|
-        case byte.unsafe_chr
-        when ' ', '.', '\\', '+', '*', '?', '[',
-             '^', ']', '$', '(', ')', '{', '}',
-             '=', '!', '<', '>', '|', ':', '-'
-          result << '\\'
-          result.write_byte byte
-        else
-          result.write_byte byte
-        end
+        {% begin %}
+          case byte.unsafe_chr
+          when {{*SPECIAL_CHARACTERS}}
+            result << '\\'
+            result.write_byte byte
+          else
+            result.write_byte byte
+          end
+        {% end %}
       end
     end
   end
 
-  # Union. Returns a `Regex` that matches any of *patterns*. If any pattern
-  # contains a named capture group using the same name as a named capture
-  # group in any other pattern, an ArgumentError will be raised at runtime.
+  # Union. Returns a `Regex` that matches any of *patterns*.
+  #
   # All capture groups in the patterns after the first one will have their
   # indexes offset.
   #
@@ -300,12 +331,11 @@ class Regex
   # re.match("sledding") # => #<Regex::MatchData "sledding">
   # ```
   def self.union(patterns : Enumerable(Regex | String)) : self
-    new patterns.map { |pattern| union_part pattern }.join("|")
+    new patterns.map { |pattern| union_part pattern }.join('|')
   end
 
-  # Union. Returns a `Regex` that matches any of *patterns*. If any pattern
-  # contains a named capture group using the same name as a named capture
-  # group in any other pattern, an ArgumentError will be raised at runtime.
+  # Union. Returns a `Regex` that matches any of *patterns*.
+  #
   # All capture groups in the patterns after the first one will have their
   # indexes offset.
   #
@@ -326,10 +356,9 @@ class Regex
     escape pattern
   end
 
-  # Union. Returns a `Regex` that matches either of the operands. If either
-  # operand contains a named capture groups using the same name as a named
-  # capture group in the other operand, an ArgumentError will be raised at
-  # runtime. All capture groups in the second operand will have their indexes
+  # Union. Returns a `Regex` that matches either of the operands.
+  #
+  # All capture groups in the second operand will have their indexes
   # offset.
   #
   # ```
@@ -407,12 +436,12 @@ class Regex
   # /ab+c/ix.inspect # => "/ab+c/ix"
   # ```
   def inspect(io : IO)
-    io << "/"
-    append_source(io)
-    io << "/"
-    io << "i" if options.ignore_case?
-    io << "m" if options.multiline?
-    io << "x" if options.extended?
+    io << '/'
+    Regex.append_source(source, io)
+    io << '/'
+    io << 'i' if options.ignore_case?
+    io << 'm' if options.multiline?
+    io << 'x' if options.extended?
   end
 
   # Match at character index. Matches a regular expression against `String`
@@ -505,27 +534,34 @@ class Regex
   # ```
   def to_s(io : IO)
     io << "(?"
-    io << "i" if options.ignore_case?
+    io << 'i' if options.ignore_case?
     io << "ms" if options.multiline?
-    io << "x" if options.extended?
+    io << 'x' if options.extended?
 
-    io << "-"
-    io << "i" unless options.ignore_case?
+    io << '-'
+    io << 'i' unless options.ignore_case?
     io << "ms" unless options.multiline?
-    io << "x" unless options.extended?
+    io << 'x' unless options.extended?
 
-    io << ":"
-    append_source(io)
-    io << ")"
+    io << ':'
+    Regex.append_source(source, io)
+    io << ')'
   end
 
-  private def append_source(io)
-    source.each_char do |char|
-      if char == '/'
+  # :nodoc:
+  def self.append_source(source, io) : Nil
+    reader = Char::Reader.new(source)
+    while reader.has_next?
+      case char = reader.current_char
+      when '\\'
+        io << '\\'
+        io << reader.next_char
+      when '/'
         io << "\\/"
       else
         io << char
       end
+      reader.next_char
     end
   end
 

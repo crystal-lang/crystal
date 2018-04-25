@@ -225,8 +225,20 @@ describe XML do
     root.text = "Peter"
     root.text.should eq("Peter")
 
-    root.content = "Foo"
-    root.content.should eq("Foo")
+    root.content = "Foo 👌"
+    root.content.should eq("Foo 👌")
+  end
+
+  it "doesn't set invalid node content" do
+    doc = XML.parse(<<-XML
+      <?xml version='1.0' encoding='UTF-8'?>
+      <name>John</name>
+      XML
+    )
+    root = doc.root.not_nil!
+    expect_raises(Exception, "Cannot escape") do
+      root.content = "\0"
+    end
   end
 
   it "gets empty content" do
@@ -243,6 +255,31 @@ describe XML do
     root = doc.root.not_nil!
     root.name = "last-name"
     root.name.should eq("last-name")
+  end
+
+  it "doesn't set invalid node name" do
+    doc = XML.parse(<<-XML
+      <?xml version='1.0' encoding='UTF-8'?>
+      <name>John</name>
+      XML
+    )
+    root = doc.root.not_nil!
+
+    expect_raises(XML::Error, "Invalid node name") do
+      root.name = " foo bar"
+    end
+
+    expect_raises(XML::Error, "Invalid node name") do
+      root.name = "foo bar"
+    end
+
+    expect_raises(XML::Error, "Invalid node name") do
+      root.name = "1foo"
+    end
+
+    expect_raises(XML::Error, "Invalid node name") do
+      root.name = "\0foo"
+    end
   end
 
   it "gets encoding" do
@@ -300,20 +337,6 @@ describe XML do
 
     doc = XML.parse(xml_str)
     doc.root.to_s.should eq("<person>\n  <name>たろう</name>\n</person>")
-  end
-
-  describe "escape" do
-    it "does not change a safe string" do
-      str = XML.escape("safe_string")
-
-      str.should eq("safe_string")
-    end
-
-    it "escapes dangerous characters from a string" do
-      str = XML.escape("< & >")
-
-      str.should eq("&lt; &amp; &gt;")
-    end
   end
 
   it "sets an attribute" do

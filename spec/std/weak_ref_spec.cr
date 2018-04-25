@@ -79,5 +79,8 @@ describe WeakRef do
     State.count(:weak_foo_ref).should be > 0
     instances.select { |wr| wr.value.nil? }.size.should be > 0
     instances[-1].value.should_not be_nil
+
+    # Use `last` to stop the variable from being optimised away in release mode.
+    last.to_s
   end
 end

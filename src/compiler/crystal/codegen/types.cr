@@ -120,7 +120,7 @@ module Crystal
     def llvm_name(io)
       if extern?
         io << (extern_union? ? "union" : "struct")
-        io << "."
+        io << '.'
       end
       to_s_with_options io, codegen: true
     end
@@ -171,8 +171,36 @@ module Crystal
       "#{llvm_name}:init"
     end
 
+    # Returns `true` if this constant's value is a simple literal, like
+    # `nil`, a number, char, string or symbol literal.
     def simple?
       value.simple_literal?
+    end
+
+    @compile_time_value : (Int16 | Int32 | Int64 | Int8 | UInt16 | UInt32 | UInt64 | UInt8 | Bool | Char | Nil)
+    @computed_compile_time_value = false
+
+    # Returns a value if this constant's value can be evaluated at
+    # compile time (things like `1 + 2` and such). Returns nil otherwise.
+    def compile_time_value
+      unless @computed_compile_time_value
+        @computed_compile_time_value = true
+
+        case value = self.value
+        when BoolLiteral
+          @compile_time_value = value.value
+        when CharLiteral
+          @compile_time_value = value.value
+        else
+          case type = value.type?
+          when IntegerType, EnumType
+            interpreter = MathInterpreter.new(namespace, visitor)
+            @compile_time_value = interpreter.interpret(value) rescue nil
+          end
+        end
+      end
+
+      @compile_time_value
     end
   end
 end

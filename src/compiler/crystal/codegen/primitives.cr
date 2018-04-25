@@ -504,7 +504,7 @@ class Crystal::CodeGenVisitor
     if (extra = node.extra)
       existing_value = context.vars["value"]?
       context.vars["value"] = LLVMVar.new(call_arg, node.type, true)
-      request_value { extra.accept self }
+      request_value { accept extra }
       call_arg = @last
       context.vars["value"] = existing_value if existing_value
     end
@@ -557,8 +557,7 @@ class Crystal::CodeGenVisitor
 
   def codegen_primitive_external_var_get(node, target_def, call_args)
     external = target_def.as(External)
-    name = target_def.as(External).real_name
-    var = declare_lib_var name, node.type, external.thread_local?
+    var = get_external_var(external)
 
     if external.type.passed_by_value?
       @last = var
@@ -571,7 +570,12 @@ class Crystal::CodeGenVisitor
     @last
   end
 
-  def codegen_primitive_object_id(node, target_def, call_args)
+  def get_external_var(external)
+    name = external.as(External).real_name
+    declare_lib_var name, external.type, external.thread_local?
+  end
+
+  def codegen_primitive_object_id(node, external, call_args)
     ptr2int call_args[0], llvm_context.int64
   end
 
@@ -651,7 +655,7 @@ class Crystal::CodeGenVisitor
     c_calling_convention = target_def.proc_c_calling_convention?
 
     proc_type = context.type.as(ProcInstanceType)
-    0.upto(target_def.args.size - 1) do |i|
+    target_def.args.size.times do |i|
       arg = args[i]
       proc_arg_type = proc_type.arg_types[i]
       target_def_arg_type = target_def.args[i].type
@@ -685,6 +689,9 @@ class Crystal::CodeGenVisitor
       # arguments according to the ABI.
       # For this we temporarily set the target_def's `abi_info` and `c_calling_convention`
       # properties for the non-closure branch, and then reset it.
+      old_abi_info = target_def.abi_info?
+      old_c_calling_convention = target_def.c_calling_convention
+
       if c_calling_convention
         null_fun_ptr, null_args = codegen_extern_primitive_proc_call(target_def, args, fun_ptr)
       else
@@ -695,8 +702,6 @@ class Crystal::CodeGenVisitor
       phi.add value, node.type
 
       # Reset abi_info + c_calling_convention so the closure part is generated as usual
-      old_abi_info = target_def.abi_info?
-      old_c_calling_convention = target_def.c_calling_convention?
       target_def.abi_info = false
       target_def.c_calling_convention = nil
 
@@ -707,7 +712,7 @@ class Crystal::CodeGenVisitor
       phi.add value, node.type, true
 
       target_def.abi_info = old_abi_info
-      target_def.c_calling_convention = !!old_c_calling_convention
+      target_def.c_calling_convention = old_c_calling_convention
     end
 
     old_needs_value = @needs_value
@@ -783,8 +788,15 @@ class Crystal::CodeGenVisitor
       ptr = aggregate_index value, index
       to_lhs ptr, type.entries[index].type
     else
-      type = (type.instance_type.as(TupleInstanceType))
-      type_id(type.tuple_types[index].as(Type).metaclass)
+      type = type.instance_type
+      case type
+      when TupleInstanceType
+        type_id(type.tuple_types[index].as(Type).metaclass)
+      when NamedTupleInstanceType
+        type_id(type.entries[index].type.as(Type).metaclass)
+      else
+        raise "BUG: unsupported codegen for tuple_indexer"
+      end
     end
   end
 
@@ -858,7 +870,7 @@ class Crystal::CodeGenVisitor
     when CharType
       inst.alignment = 4
     else
-      inst.alignment = @program.has_flag?("x86_64") || @program.has_flag?("aarch64") ? 8 : 4
+      inst.alignment = @program.bits64? ? 8 : 4
     end
   end
 

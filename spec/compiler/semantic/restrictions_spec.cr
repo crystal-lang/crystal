@@ -77,7 +77,8 @@ describe "Restrictions" do
   it "self always matches instance type in return type" do
     assert_type(%(
       class Foo
-        macro def self.foo : self
+        def self.foo : self
+          {{ @type }}
           Foo.new
         end
       end
@@ -413,5 +414,17 @@ describe "Restrictions" do
       foo(1)
       ),
       "undefined constant T"
+  end
+
+  it "sets number as free variable (#2699)" do
+    assert_error %(
+      def foo(x : T[N], y : T[N]) forall T, N
+      end
+
+      x = uninitialized UInt8[10]
+      y = uninitialized UInt8[11]
+      foo(x, y)
+      ),
+      "no overload matches"
   end
 end

@@ -109,7 +109,13 @@ describe "StaticArray" do
     a[2].should eq(1)
   end
 
-  it "maps!" do
+  it "does map" do
+    a = StaticArray[0, 1, 2]
+    b = a.map { |e| e * 2 }
+    b.should eq(StaticArray[0, 2, 4])
+  end
+
+  it "does map!" do
     a = StaticArray(Int32, 3).new { |i| i + 1 }
     a.map! { |i| i + 1 }
     a[0].should eq(2)
@@ -117,7 +123,13 @@ describe "StaticArray" do
     a[2].should eq(4)
   end
 
-  it "map_with_index!" do
+  it "does map_with_index" do
+    a = StaticArray[1, 1, 2, 2]
+    b = a.map_with_index { |e, i| e + i }
+    b.should eq(StaticArray[1, 2, 4, 5])
+  end
+
+  it "does map_with_index!" do
     a = StaticArray(Int32, 3).new { |i| i + 1 }
     a.map_with_index! { |e, i| i * 2 }
     a[0].should eq(0)

@@ -21,6 +21,14 @@ describe "Semantic: tuples" do
     assert_type("{1, 'a'}[1]") { char }
   end
 
+  it "types tuple [-1]" do
+    assert_type("{1, 'a'}[-1]") { char }
+  end
+
+  it "types tuple [-2]" do
+    assert_type("{1, 'a'}[-2]") { int32 }
+  end
+
   it "types tuple [0]?" do
     assert_type("{1, 'a'}[0]?") { int32 }
   end
@@ -33,6 +41,18 @@ describe "Semantic: tuples" do
     assert_type("{1, 'a'}[2]?") { nil_type }
   end
 
+  it "types tuple [-1]?" do
+    assert_type("{1, 'a'}[-1]?") { char }
+  end
+
+  it "types tuple [-2]?" do
+    assert_type("{1, 'a'}[-2]?") { int32 }
+  end
+
+  it "types tuple [-3]?" do
+    assert_type("{1, 'a'}[-3]?") { nil_type }
+  end
+
   it "types tuple metaclass [0]" do
     assert_type("{1, 'a'}.class[0]") { int32.metaclass }
   end
@@ -41,9 +61,17 @@ describe "Semantic: tuples" do
     assert_type("{1, 'a'}.class[1]") { char.metaclass }
   end
 
+  it "types tuple metaclass [-1]" do
+    assert_type("{1, 'a'}.class[-1]") { char.metaclass }
+  end
+
+  it "types tuple metaclass [-2]" do
+    assert_type("{1, 'a'}.class[-2]") { int32.metaclass }
+  end
+
   it "gives error when indexing out of range" do
     assert_error "{1, 'a'}[2]",
-      "index out of bounds for Tuple(Int32, Char) (2 not in 0..1)"
+      "index out of bounds for Tuple(Int32, Char) (2 not in -2..1)"
   end
 
   it "gives error when indexing out of range on empty tuple" do
@@ -61,16 +89,16 @@ describe "Semantic: tuples" do
     assert_type("Tuple(Int32, Float64)") { tuple_of([int32, float64]).metaclass }
   end
 
-  it "types T as a tuple of metalcasses" do
+  it "types T as a tuple of metaclasses" do
     assert_type("
       struct Tuple
-        def types
+        def type_args
           T
         end
       end
 
       x = {1, 1.5, 'a'}
-      x.types
+      x.type_args
       ") do
       meta = tuple_of([int32, float64, char]).metaclass
       meta.metaclass?.should be_true

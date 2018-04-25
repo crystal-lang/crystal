@@ -30,9 +30,9 @@ module Spec
 
       XML.build(io, indent: 2) do |xml|
         attributes = {
-          tests:  @results.size,
-          errors: @summary[:error]? || 0,
-          failed: @summary[:fail]? || 0,
+          tests:    @results.size,
+          errors:   @summary[:error]? || 0,
+          failures: @summary[:fail]? || 0,
         }
 
         xml.element("testsuite", attributes) do

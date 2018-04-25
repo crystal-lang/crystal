@@ -7,7 +7,6 @@ _crystal_commands() {
   commands=(
     "init:generate new crystal project"
     "build:build an executable"
-    "deps:install project dependencies"
     "docs:generate documentation"
     "env:print Crystal environment information"
     "eval:eval code from args or standard input"
@@ -100,18 +99,6 @@ _crystal-build() {
     && ret=0
 }
 
-_crystal-deps() {
-  _arguments \
-    '1:type:(build check init install list prune update)' \
-    $help_args \
-    $no_color_args \
-    '(--version)--version[version]' \
-    '(--production)--production[production mode]' \
-    '(-v --verbose)'{-v,--verbose}'[verbose mode]' \
-    '(-q --quiet)'{-q,--quiet}'[quiet mode]' \
-    && ret=0
-}
-
 _crystal-env() {
   _arguments \
     '(--help)--help[prints help]' \
@@ -147,6 +134,7 @@ _crystal-run() {
 
 _crystal-spec() {
   _arguments \
+    $programfile \
     $help_args \
     $no_color_args \
     $exec_args \
@@ -185,6 +173,7 @@ _crystal-tool() {
       case $line[1] in
         (context)
           _arguments \
+            $programfile \
             $help_args \
             $no_color_args \
             $exec_args \
@@ -195,6 +184,7 @@ _crystal-tool() {
 
         (expand)
           _arguments \
+            $programfile \
             $help_args \
             $no_color_args \
             $exec_args \
@@ -205,14 +195,16 @@ _crystal-tool() {
 
         (format)
           _arguments \
-              $help_args \
-              $no_color_args \
-              $format_args \
-              '(--check)--check[checks that formatting code produces no changes]'
+            $programfile \
+            $help_args \
+            $no_color_args \
+            $format_args \
+            '(--check)--check[checks that formatting code produces no changes]' \
         ;;
 
         (hierarchy)
           _arguments \
+            $programfile \
             $help_args \
             $no_color_args \
             $exec_args \
@@ -223,6 +215,7 @@ _crystal-tool() {
 
         (implementations)
           _arguments \
+            $programfile \
             $help_args \
             $no_color_args \
             $exec_args \
@@ -233,6 +226,7 @@ _crystal-tool() {
 
         (types)
           _arguments \
+            $programfile \
             $help_args \
             $no_color_args \
             $exec_args \

@@ -159,16 +159,48 @@ struct NamedTuple
     yield
   end
 
+  # Merges two named tuples into one, returning a new named tuple.
+  # If a key is defined in both tuples, the value and its type is used from *other*.
+  #
+  # ```
+  # a = {foo: "Hello", bar: "Old"}
+  # b = {bar: "New", baz: "Bye"}
+  # a.merge(b) # => {foo: "Hello", bar: "New", baz: "Bye"}
+  # ```
+  def merge(other : NamedTuple)
+    merge(**other)
+  end
+
+  # ditto
+  def merge(**other : **U) forall U
+    {% begin %}
+    {
+      {% for k in T %} {% unless U.keys.includes?(k) %} {{k.stringify}}: self[{{k.symbolize}}],{% end %} {% end %}
+      {% for k in U %} {{k.stringify}}: other[{{k.symbolize}}], {% end %}
+    }
+    {% end %}
+  end
+
   # Returns a hash value based on this name tuple's size, keys and values.
   #
   # See also: `Object#hash`.
-  def hash
-    hash = 31 * size
+  # See `Object#hash(hasher)`
+  def hash(hasher)
     {% for key in T.keys.sort %}
-      hash = 31 * hash + {{key.symbolize}}.hash
-      hash = 31 * hash + self[{{key.symbolize}}].hash
+      hasher = {{key.symbolize}}.hash(hasher)
+      hasher = self[{{key.symbolize}}].hash(hasher)
     {% end %}
-    hash
+    hasher
+  end
+
+  # Returns the types of this named tuple type.
+  #
+  # ```
+  # tuple = {a: 1, b: "hello", c: 'x'}
+  # tuple.class.types # => {a: Int32, b: String, c: Char}
+  # ```
+  def self.types
+    NamedTuple.new(**{{T}})
   end
 
   # Same as `to_s`.
@@ -186,6 +218,16 @@ struct NamedTuple
     {% begin %}
       Tuple.new(
         {% for key in T %}
+          {{key.symbolize}},
+        {% end %}
+      )
+    {% end %}
+  end
+
+  protected def sorted_keys
+    {% begin %}
+      Tuple.new(
+        {% for key in T.keys.sort %}
           {{key.symbolize}},
         {% end %}
       )
@@ -237,7 +279,7 @@ struct NamedTuple
   # tuple.to_s # => %({name: "Crystal", year: 2011})
   # ```
   def to_s(io)
-    io << "{"
+    io << '{'
     {% for key, value, i in T %}
       {% if i > 0 %}
         io << ", "
@@ -251,7 +293,7 @@ struct NamedTuple
       io << ": "
       self[{{key.symbolize}}].inspect(io)
     {% end %}
-    io << "}"
+    io << '}'
   end
 
   def pretty_print(pp)
@@ -452,19 +494,13 @@ struct NamedTuple
 
   # ditto
   def ==(other : NamedTuple)
-    compare_with_other_named_tuple(other)
-  end
+    return false unless sorted_keys == other.sorted_keys
 
-  private def compare_with_other_named_tuple(other : U) forall U
-    {% if T.keys.sort == U.keys.sort %}
-      {% for key in T %}
-        return false unless self[{{key.symbolize}}] == other[{{key.symbolize}}]
-      {% end %}
-
-      true
-    {% else %}
-      false
+    {% for key in T %}
+      return false unless self[{{key.symbolize}}] == other[{{key.symbolize}}]?
     {% end %}
+
+    return true
   end
 
   # Returns a named tuple with the same keys but with cloned values, using the `clone` method.

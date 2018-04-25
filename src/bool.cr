@@ -41,8 +41,13 @@ struct Bool
     self != other
   end
 
-  # Returns a hash value for this boolean: 0 for `false`, 1 for `true`.
-  def hash
+  # See `Object#hash(hasher)`
+  def hash(hasher)
+    hasher.bool(self)
+  end
+
+  # Returns `1` for `true` and `0` for `false`.
+  def to_unsafe
     self ? 1 : 0
   end
 
