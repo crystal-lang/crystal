@@ -1045,16 +1045,16 @@ module Crystal
     property? extern_union = false
     property? packed = false
 
-    def initialize(program, namespace, name, @superclass, add_subclass = true)
+    def initialize(program, namespace, name, superclass, add_subclass = true)
       super(program, namespace, name)
-      superclass = @superclass
+      @superclass = superclass
       @depth = superclass ? (superclass.depth + 1) : 0
       parents.push superclass if superclass
       force_add_subclass if add_subclass
     end
 
-    def superclass=(@superclass)
-      superclass = @superclass
+    def superclass=(superclass)
+      @superclass = superclass
       @depth = superclass ? (superclass.depth + 1) : 0
       parents.push superclass if superclass
     end
