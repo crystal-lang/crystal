@@ -71,8 +71,9 @@ module Spec
       if message = exception.message
         io << %( message=")
         HTML.escape(message, io)
+        io << '"'
       end
-      io << %(">)
+      io << '>'
 
       if backtrace = exception.backtrace?
         HTML.escape(backtrace.join('\n'), io)
