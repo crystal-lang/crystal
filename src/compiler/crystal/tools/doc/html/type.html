@@ -1,12 +1,9 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <%= HeadTemplate.new(type.path_to "") %>
+  <%= HeadTemplate.new(type, canonical_base_url) %>
   <meta id="repository-name" content="<%= type.repository_name %>">
   <title><%= type.full_name %> - <%= type.repository_name %></title>
-  <script type="text/javascript">
-    CrystalDoc.base_path = "<%= type.path_to "" %>";
-  </script>
 </head>
 <body>
 
