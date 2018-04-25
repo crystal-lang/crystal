@@ -293,6 +293,13 @@ describe "JSON mapping" do
     person.other["extra2"].should eq [1, 2, 3]
   end
 
+  it "should pack extra fields" do
+    person = JSONPersonWithExtra.from_json(%({"name": "John", "age": 30, "extra1" : 1, "extra2" : [1,2,3]}))
+    person.other["extra3"] = JSON::Any.new("bla")
+    person.other.delete("extra1")
+    person.to_json.should eq "{\"name\":\"John\",\"age\":30,\"extra2\":[1,2,3],\"extra3\":\"bla\"}"
+  end
+
   it "doesn't emit null by default when doing to_json" do
     person = JSONPerson.from_json(%({"name": "John"}))
     (person.to_json =~ /age/).should be_falsey

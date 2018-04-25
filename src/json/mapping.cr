@@ -238,6 +238,12 @@ module JSON
             end
           {% end %}
         {% end %}
+
+        {% if extra %}
+          @{{extra.id}}.each do |key, obj|
+            json.field(key) { obj.to_json(json) }
+          end
+        {% end %}
       end
     end
   end
