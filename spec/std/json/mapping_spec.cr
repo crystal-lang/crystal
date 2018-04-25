@@ -286,7 +286,7 @@ describe "JSON mapping" do
   end
 
   it "should unpack extra fields" do
-    person = JSONPersonWithExtra.from_json(%({"name": "John", "age": 30, "extra1" : 1, "extra2" : [1,2,3]}))
+    person = JSONPersonWithExtra.from_json(%({"name": "John", "age": 30, "extra1": 1, "extra2": [1,2,3]}))
     person.name.should eq("John")
     person.age.should eq(30)
     person.other["extra1"].should eq 1
@@ -294,7 +294,7 @@ describe "JSON mapping" do
   end
 
   it "should pack extra fields" do
-    person = JSONPersonWithExtra.from_json(%({"name": "John", "age": 30, "extra1" : 1, "extra2" : [1,2,3]}))
+    person = JSONPersonWithExtra.from_json(%({"name": "John", "age": 30, "extra1": 1, "extra2": [1,2,3]}))
     person.other["extra3"] = JSON::Any.new("bla")
     person.other.delete("extra1")
     person.to_json.should eq "{\"name\":\"John\",\"age\":30,\"extra2\":[1,2,3],\"extra3\":\"bla\"}"
