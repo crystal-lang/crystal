@@ -15,7 +15,9 @@ class UNIXSocket < Socket
   getter path : String?
 
   # Connects a named UNIX socket, bound to a filesystem pathname.
-  def initialize(@path : String, type : Type = Type::STREAM)
+  def initialize(path : String, type : Type = Type::STREAM)
+    @path = path
+
     super(Family::UNIX, type, Protocol::IP)
 
     connect(UNIXAddress.new(path)) do |error|

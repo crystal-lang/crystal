@@ -312,9 +312,10 @@ struct Range(B, E)
 
     @range : Range(B, E)
     @current : B
-    @reached_end : Bool
+    @reached_end = false
 
-    def initialize(@range : Range(B, E), @current = range.begin, @reached_end = false)
+    def initialize(@range : Range(B, E))
+      @current = @range.begin
     end
 
     def next
@@ -348,7 +349,8 @@ struct Range(B, E)
     @range : Range(B, E)
     @current : E
 
-    def initialize(@range : Range(B, E), @current = range.end)
+    def initialize(@range : Range(B, E))
+      @current = @range.end
       rewind
     end
 
@@ -374,9 +376,10 @@ struct Range(B, E)
     @range : R
     @step : N
     @current : B
-    @reached_end : Bool
+    @reached_end = false
 
-    def initialize(@range, @step, @current = range.begin, @reached_end = false)
+    def initialize(@range, @step)
+      @current = @range.begin
     end
 
     def next

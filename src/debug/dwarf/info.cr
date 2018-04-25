@@ -15,7 +15,7 @@ module Debug
       @ref_offset : LibC::OffT
 
       def initialize(@io : IO::FileDescriptor, @offset)
-        @ref_offset = offset
+        @ref_offset = @offset
 
         @unit_length = @io.read_bytes(UInt32)
         if @unit_length == 0xffffffff

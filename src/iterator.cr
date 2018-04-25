@@ -1071,7 +1071,10 @@ module Iterator(T)
     include Iterator({T, Int32})
     include IteratorWrapper
 
-    def initialize(@iterator : I, @offset : O, @index : O = offset)
+    @index : O
+
+    def initialize(@iterator : I, @offset : O)
+      @index = @offset
     end
 
     def next

@@ -5,7 +5,7 @@ class IO
     getter invalid : Symbol?
 
     def initialize(@name : String, @invalid : Symbol?)
-      EncodingOptions.check_invalid(invalid)
+      EncodingOptions.check_invalid(@invalid)
     end
 
     def self.check_invalid(invalid)
@@ -19,7 +19,7 @@ class IO
 
   private class Encoder
     def initialize(@encoding_options : EncodingOptions)
-      @iconv = Iconv.new("UTF-8", encoding_options.name, encoding_options.invalid)
+      @iconv = Iconv.new("UTF-8", @encoding_options.name, @encoding_options.invalid)
       @closed = false
     end
 
@@ -58,7 +58,7 @@ class IO
     @in_buffer : Pointer(UInt8)
 
     def initialize(@encoding_options : EncodingOptions)
-      @iconv = Iconv.new(encoding_options.name, "UTF-8", encoding_options.invalid)
+      @iconv = Iconv.new(@encoding_options.name, "UTF-8", @encoding_options.invalid)
       @buffer = Bytes.new((GC.malloc_atomic(BUFFER_SIZE).as(UInt8*)), BUFFER_SIZE)
       @in_buffer = @buffer.to_unsafe
       @in_buffer_left = LibC::SizeT.new(0)

@@ -569,7 +569,10 @@ module Indexable(T)
   private class ReverseItemIterator(A, T)
     include Iterator(T)
 
-    def initialize(@array : A, @index : Int32 = array.size - 1)
+    @index : Int32
+
+    def initialize(@array : A)
+      @index = @array.size - 1
     end
 
     def next

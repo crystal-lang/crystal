@@ -23,7 +23,7 @@ class YAML::Builder
 
   # Creates a `YAML::Builder` that will write to the given `IO`.
   def initialize(@io : IO)
-    @box = Box.box(io)
+    @box = Box.box(@io)
     @emitter = Pointer(Void).malloc(LibYAML::EMITTER_SIZE).as(LibYAML::Emitter*)
     @event = LibYAML::Event.new
     @closed = false

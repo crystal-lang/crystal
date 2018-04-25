@@ -64,7 +64,7 @@ module Levenshtein
     @tolerance : Int32
 
     def initialize(@target : String, tolerance : Int? = nil)
-      @tolerance = tolerance || (target.size / 5.0).ceil.to_i
+      @tolerance = tolerance || (@target.size / 5.0).ceil.to_i
     end
 
     def test(name : String, value : String = name)

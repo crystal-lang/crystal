@@ -29,7 +29,7 @@ module Crystal
       @def_nest = 0
       @type_nest = 0
       @call_args_nest = 0
-      @block_arg_count = 0
+      @temp_arg_count = 0
       @in_macro_expression = false
       @stop_on_yield = 0
       @inside_c_struct = false
@@ -1380,8 +1380,7 @@ module Crystal
       next_token_skip_space
 
       if @token.type == :"."
-        block_arg_name = "__arg#{@block_arg_count}"
-        @block_arg_count += 1
+        block_arg_name = new_temp_arg_name
 
         obj = Var.new(block_arg_name)
 
@@ -3613,6 +3612,9 @@ module Crystal
           raise "when specified, external name must be different than internal name", @token
         end
 
+        external_name ||= arg_name
+        arg_name = new_temp_arg_name
+
         ivar = InstanceVar.new(@token.value.to_s).at(location)
         var = Var.new(arg_name).at(location)
         assign = Assign.new(ivar, var).at(location)
@@ -3628,6 +3630,9 @@ module Crystal
         if arg_name == external_name
           raise "when specified, external name must be different than internal name", @token
         end
+
+        external_name ||= arg_name
+        arg_name = new_temp_arg_name
 
         cvar = ClassVar.new(@token.value.to_s).at(location)
         var = Var.new(arg_name).at(location)
@@ -3946,8 +3951,7 @@ module Crystal
           when :UNDERSCORE
             arg_name = "_"
           when :"("
-            block_arg_name = "__arg#{@block_arg_count}"
-            @block_arg_count += 1
+            block_arg_name = new_temp_arg_name
 
             next_token_skip_space_or_newline
 
@@ -5639,6 +5643,12 @@ module Crystal
       end
 
       token
+    end
+
+    def new_temp_arg_name
+      name = "__arg#{@temp_arg_count}"
+      @temp_arg_count += 1
+      name
     end
   end
 

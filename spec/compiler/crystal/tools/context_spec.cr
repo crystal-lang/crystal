@@ -321,7 +321,7 @@ describe "context" do
     end
 
     Bar.new("s")
-    ), "self", "@ivar", "ivar"
+    ), "self", "@ivar", "__arg0"
   end
 
   it "can get context in generic class" do

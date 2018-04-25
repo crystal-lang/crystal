@@ -35,7 +35,7 @@ module Crystal
       # message with that message. In this way the error message will
       # look like a regular message produced by the compiler, and not
       # because of an incorrect macro expansion.
-      if inner.is_a?(MacroRaiseException)
+      if (inner = @inner).is_a?(MacroRaiseException)
         message = inner.message
         @inner = nil
       end

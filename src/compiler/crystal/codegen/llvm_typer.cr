@@ -49,7 +49,7 @@ module Crystal
 
       @structs = {} of String => LLVM::Type
 
-      machine = program.target_machine
+      machine = @program.target_machine
       @layout = machine.data_layout
       @landing_pad_type = @llvm_context.struct([@llvm_context.void_pointer, @llvm_context.int32], "landing_pad")
     end
