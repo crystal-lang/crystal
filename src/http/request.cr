@@ -95,6 +95,9 @@ class HTTP::Request
     return BadRequest.new unless parts.size == 3
 
     method, resource, http_version = parts
+
+    return BadRequest.new unless HTTP::SUPPORTED_VERSIONS.includes?(http_version)
+
     HTTP.parse_headers_and_body(io) do |headers, body|
       return new method, resource, headers, body, http_version
     end
