@@ -88,6 +88,9 @@ class Time::Location
     # Creates a new `Zone` named *name* with *offset* from UTC in seconds.
     # The parameter *dst* is used to declare this zone as daylight savings time.
     #
+    # If `name` is `nil`, the formatted `offset` will be used as `name` (see
+    # `#format`).
+    #
     # Raises `InvalidTimezoneOffsetError` if *seconds* is outside the supported
     # value range `-86_400..86_400` seconds (`-24:00` to `+24:00`).
     def initialize(@name : String?, @offset : Int32, @dst : Bool)
