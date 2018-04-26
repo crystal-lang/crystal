@@ -40,8 +40,11 @@ module Spec
 
     # -------- private utility methods
     private def write_report(result, io)
-      io << %(  <testcase file=") << result.file
-      io << %(" classname=") << classname(result) << %(" name=")
+      io << %(  <testcase file=")
+      HTML.escape(result.file, io)
+      io << %(" classname=")
+      HTML.escape(classname(result), io)
+      io << %(" name=")
       HTML.escape(result.description, io)
 
       if tag = inner_content_tag(result.kind)
