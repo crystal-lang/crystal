@@ -1111,6 +1111,9 @@ describe Crystal::Formatter do
   assert_format "x 1, \\\n  2", "x 1,\n  2"
   assert_format "begin\n  1 + \\\n    2\n  3\nend"
   assert_format "begin\n  1 \\\n    + 2\n  3\nend"
+  assert_format "foo \\\n  1,\n  2"
+  assert_format "foo \\\n  foo: 1,\n  bar: 2"
+  assert_format "foo \\\n  1,\n  2\n\nbar \\\n  foo: 1,\n  bar: 2"
 
   assert_format "alias X = ((Y, Z) ->)"
 
