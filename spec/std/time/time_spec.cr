@@ -335,56 +335,65 @@ describe Time do
     (Time.now - Time.now(Time::Location.fixed(1234))).should be_close(0.seconds, 1.second)
   end
 
-  describe "to_s" do
-    it "prints local time" do
-      with_env("TZ", nil) do
-        t = Time.new 2014, 10, 30, 21, 18, 13
-        t.to_s.should eq("2014-10-30 21:18:13 #{t.to_s("%:z")}")
-
-        t = Time.new 2014, 1, 30, 21, 18, 13
-        t.to_s.should eq("2014-01-30 21:18:13 #{t.to_s("%:z")}")
-
-        t = Time.new 2014, 10, 1, 21, 18, 13
-        t.to_s.should eq("2014-10-01 21:18:13 #{t.to_s("%:z")}")
-
-        t = Time.new 2014, 10, 30, 1, 18, 13
-        t.to_s.should eq("2014-10-30 01:18:13 #{t.to_s("%:z")}")
-
-        t = Time.new 2014, 10, 30, 21, 1, 13
-        t.to_s.should eq("2014-10-30 21:01:13 #{t.to_s("%:z")}")
-
-        t = Time.new 2014, 10, 30, 21, 18, 1
-        t.to_s.should eq("2014-10-30 21:18:01 #{t.to_s("%:z")}")
-      end
+  describe "#to_s" do
+    it "prints date-time fields" do
+      Time.utc(2014, 1, 30, 21, 18, 13).to_s.should eq("2014-01-30 21:18:13 UTC")
+      Time.utc(2014, 10, 1, 21, 18, 13).to_s.should eq("2014-10-01 21:18:13 UTC")
+      Time.utc(2014, 10, 30, 1, 18, 13).to_s.should eq("2014-10-30 01:18:13 UTC")
+      Time.utc(2014, 10, 30, 21, 1, 13).to_s.should eq("2014-10-30 21:01:13 UTC")
+      Time.utc(2014, 10, 30, 21, 18, 1).to_s.should eq("2014-10-30 21:18:01 UTC")
     end
 
-    it "prints without nanoseconds" do
-      with_env("TZ", nil) do
-        t = Time.new 2014, 10, 30, 21, 18, 13, nanosecond: 12345
-        t.to_s.should eq("2014-10-30 21:18:13 #{t.to_s("%:z")}")
-      end
+    it "omits nanoseconds" do
+      Time.utc(2014, 10, 30, 21, 18, 13).to_s.should eq("2014-10-30 21:18:13 UTC")
+      Time.utc(2014, 10, 30, 21, 18, 13, nanosecond: 12345).to_s.should eq("2014-10-30 21:18:13 UTC")
     end
 
-    it "prints UTC" do
-      t = Time.utc 2014, 10, 30, 21, 18, 13
-      t.to_s.should eq("2014-10-30 21:18:13 UTC")
-    end
-
-    it "prints zone" do
+    it "prints offset for location" do
       with_zoneinfo do
         location = Time::Location.load("Europe/Berlin")
-        t = Time.new 2014, 10, 30, 21, 18, 13, location: location
-        t.to_s.should eq("2014-10-30 21:18:13 +01:00 Europe/Berlin")
+        Time.new(2014, 10, 30, 21, 18, 13, location: location).to_s.should eq("2014-10-30 21:18:13 +01:00")
+        Time.new(2014, 10, 30, 21, 18, 13, nanosecond: 123_456, location: location).to_s.should eq("2014-10-30 21:18:13 +01:00")
 
-        t = Time.new 2014, 10, 10, 21, 18, 13, location: location
-        t.to_s.should eq("2014-10-10 21:18:13 +02:00 Europe/Berlin")
+        Time.new(2014, 10, 10, 21, 18, 13, location: location).to_s.should eq("2014-10-10 21:18:13 +02:00")
+        Time.new(2014, 10, 10, 21, 18, 13, nanosecond: 123_456, location: location).to_s.should eq("2014-10-10 21:18:13 +02:00")
       end
     end
 
-    it "prints offset" do
+    it "prints offset for fixed location" do
+      location = Time::Location.fixed(3601)
+      Time.new(2014, 1, 2, 3, 4, 5, location: location).to_s.should eq "2014-01-02 03:04:05 +01:00:01"
+      Time.new(2014, 1, 2, 3, 4, 5, nanosecond: 123_456_789, location: location).to_s.should eq "2014-01-02 03:04:05 +01:00:01"
+
       t = Time.new 2014, 10, 30, 21, 18, 13, location: Time::Location.fixed(-9000)
       t.to_s.should eq("2014-10-30 21:18:13 -02:30")
     end
+
+    it "prints local time" do
+      # Simulates loading non-fixed offset local time from /etc/localtime
+      old_local = Time::Location.local
+      begin
+        location = Time::Location.new "Local", [Time::Location::Zone.new("STZ", 3600, false), Time::Location::Zone.new("DTZ", -3600, false)], [] of Time::Location::ZoneTransition
+        Time::Location.local = location
+
+        Time.new(2014, 10, 30, 21, 18, 13).to_s.should eq("2014-10-30 21:18:13 +01:00")
+      ensure
+        Time::Location.local = old_local
+      end
+    end
+  end
+
+  it "#inspect" do
+    Time.utc(2014, 1, 2, 3, 4, 5).inspect.should eq "2014-01-02 03:04:05.0 UTC"
+    Time.utc(2014, 1, 2, 3, 4, 5, nanosecond: 123_456_789).inspect.should eq "2014-01-02 03:04:05.123456789 UTC"
+
+    location = Time::Location.load("Europe/Berlin")
+    Time.new(2014, 1, 2, 3, 4, 5, location: location).inspect.should eq "2014-01-02 03:04:05.0 +01:00 Europe/Berlin"
+    Time.new(2014, 1, 2, 3, 4, 5, nanosecond: 123_456_789, location: location).inspect.should eq "2014-01-02 03:04:05.123456789 +01:00 Europe/Berlin"
+
+    location = Time::Location.fixed(3601)
+    Time.new(2014, 1, 2, 3, 4, 5, location: location).inspect.should eq "2014-01-02 03:04:05.0 +01:00:01"
+    Time.new(2014, 1, 2, 3, 4, 5, nanosecond: 123_456_789, location: location).inspect.should eq "2014-01-02 03:04:05.123456789 +01:00:01"
   end
 
   it "formats" do
@@ -934,7 +943,7 @@ describe Time do
 
       location = Time::Location.load("Europe/Berlin")
       time = Time.new(2017, 11, 25, 22, 6, 17, location: location)
-      time.to_s.should eq "2017-11-25 22:06:17 +01:00 Europe/Berlin"
+      time.to_s.should eq "2017-11-25 22:06:17 +01:00"
     end
   end
 

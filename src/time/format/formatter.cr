@@ -148,50 +148,15 @@ struct Time::Format
     end
 
     def time_zone(with_seconds = false)
-      negative, hours, minutes, seconds = local_time_zone_info
-      io << (negative ? '-' : '+')
-      io << '0' if hours < 10
-      io << hours
-      io << '0' if minutes < 10
-      io << minutes
-      if with_seconds
-        io << '0' if seconds < 10
-        io << seconds
-      end
+      time.zone.format(io, with_colon: false, with_seconds: with_seconds)
     end
 
     def time_zone_colon(with_seconds = false)
-      negative, hours, minutes, seconds = local_time_zone_info
-      io << (negative ? '-' : '+')
-      io << '0' if hours < 10
-      io << hours
-      io << ':'
-      io << '0' if minutes < 10
-      io << minutes
-      if with_seconds
-        io << ':'
-        io << '0' if seconds < 10
-        io << seconds
-      end
+      time.zone.format(io, with_colon: true, with_seconds: with_seconds)
     end
 
     def time_zone_colon_with_seconds
       time_zone_colon(with_seconds: true)
-    end
-
-    def local_time_zone_info
-      offset = time.offset
-      if offset < 0
-        offset = -offset
-        negative = true
-      else
-        negative = false
-      end
-      seconds = offset % 60
-      minutes = offset / 60
-      hours = minutes / 60
-      minutes = minutes % 60
-      {negative, hours, minutes, seconds}
     end
 
     def char(char)

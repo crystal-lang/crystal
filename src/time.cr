@@ -471,19 +471,49 @@ struct Time
     year % 4 == 0 && (year % 100 != 0 || year % 400 == 0)
   end
 
-  def inspect(io : IO)
-    case
-    when utc?
-      to_s "%F %T UTC", io
-    else
-      if offset % 60 == 0
-        to_s "%F %T %:z", io
+  # Prints this `Time` to *io*.
+  #
+  # The local date-time is formatted as date string `YYYY-MM-DD HH:mm:ss.nnnnnnnnn +ZZ:ZZ:ZZ`.
+  # Nanoseconds are omitted if *with_nanoseconds* is `false`.
+  # When the location is `UTC`, the offset is omitted. Offset seconds are omitted if `0`.
+  #
+  # The name of the location is appended unless it is a fixed zone offset.
+  def inspect(io : IO, with_nanoseconds = true)
+    to_s "%F %T", io
+
+    if with_nanoseconds
+      if @nanoseconds == 0
+        io << ".0"
       else
-        to_s "%F %T %::z", io
+        to_s ".%N", io
       end
-      io << ' ' << location.name unless location.fixed? || location.name == "Local"
     end
+
+    if utc?
+      io << " UTC"
+    else
+      io << ' '
+      zone.format(io)
+      io << ' ' << location.name unless location.fixed?
+    end
+
     io
+  end
+
+  # Prints this `Time` to *io*.
+  #
+  # The local date-time is formatted as date string `YYYY-MM-DD HH:mm:ss +ZZ:ZZ:ZZ`.
+  # Nanoseconds are always omitted.
+  # When the location is `UTC`, the offset is replaced with the string `UTC`.
+  # Offset seconds are omitted if `0`.
+  def to_s(io : IO)
+    to_s("%F %T ", io)
+
+    if utc?
+      io << "UTC"
+    else
+      zone.format(io)
+    end
   end
 
   # Formats this time using the given format (see `Time::Format`).

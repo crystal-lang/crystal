@@ -176,8 +176,19 @@ class Time::Location
     end
 
     describe ".fixed" do
-      it "accepts a name" do
-        location = Location.fixed("Fixed", 1800)
+      it "without name" do
+        location = Location.fixed -9012
+        location.name.should eq "-02:30:12"
+        location.zones.should eq [Zone.new(nil, -9012, false)]
+        location.transitions.size.should eq 0
+
+        location.utc?.should be_false
+        location.fixed?.should be_true
+        location.local?.should be_false
+      end
+
+      it "with name" do
+        location = Location.fixed "Fixed", 1800
         location.name.should eq "Fixed"
         location.zones.should eq [Zone.new("Fixed", 1800, false)]
         location.transitions.size.should eq 0
@@ -189,13 +200,13 @@ class Time::Location
 
       it "positive" do
         location = Location.fixed 8000
-        location.name.should eq "+02:13"
+        location.name.should eq "+02:13:20"
         location.zones.first.offset.should eq 8000
       end
 
-      it "ngeative" do
+      it "negative" do
         location = Location.fixed -7539
-        location.name.should eq "-02:05"
+        location.name.should eq "-02:05:39"
         location.zones.first.offset.should eq -7539
       end
 
@@ -305,6 +316,20 @@ class Time::Location
           location.lookup(Time.utc(2017, 11, 23, 22, 6, 12)).should eq cached_zone
         end
       end
+    end
+  end
+
+  describe Time::Location::Zone do
+    it "#inspect" do
+      Time::Location::Zone.new("CET", 3600, false).inspect.should eq "Time::Location::Zone(CET +01:00 (3600s) STD)"
+      Time::Location::Zone.new("CEST", 7200, true).inspect.should eq "Time::Location::Zone(CEST +02:00 (7200s) DST)"
+      Time::Location::Zone.new(nil, 9000, true).inspect.should eq "Time::Location::Zone(+02:30 (9000s) DST)"
+      Time::Location::Zone.new(nil, 9012, true).inspect.should eq "Time::Location::Zone(+02:30:12 (9012s) DST)"
+    end
+
+    it "#name" do
+      Time::Location::Zone.new("CEST", 7200, true).name.should eq "CEST"
+      Time::Location::Zone.new(nil, 9000, true).name.should eq "+02:30"
     end
   end
 end

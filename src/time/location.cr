@@ -49,23 +49,84 @@ class Time::Location
   struct Zone
     UTC = new "UTC", 0, false
 
-    getter name : String
     getter offset : Int32
     getter? dst : Bool
 
-    def initialize(@name : String, @offset : Int32, @dst : Bool)
+    def initialize(@name : String?, @offset : Int32, @dst : Bool)
       # Maximium offets of IANA timezone database are -12:00 and +14:00.
       # +/-24 hours allows a generous padding for unexpected offsets.
       # TODO: Maybe reduce to Int16 (+/- 18 hours).
       raise InvalidTimezoneOffsetError.new(offset) if offset >= SECONDS_PER_DAY || offset <= -SECONDS_PER_DAY
     end
 
+    def name : String
+      @name || format
+    end
+
+    # Prints this `Zone` to *io*.
+    #
+    # It contains the `name`, hour-minute-second format (see `#format`),
+    # `offset` in seconds and `"DST"` if `#dst?`, otherwise `"STD"`.
     def inspect(io : IO)
-      io << "Time::Zone<"
-      io << offset
-      io << ", " << name
-      io << " (DST)" if dst?
-      io << '>'
+      io << "Time::Location::Zone("
+      io << @name << ' ' unless @name.nil?
+      format(io)
+      io << " (" << offset << "s)"
+      if dst?
+        io << " DST"
+      else
+        io << " STD"
+      end
+      io << ')'
+    end
+
+    # Prints `#offset` to *io* in the format `+HH:mm:ss`.
+    # When *with_colon* is `false`, the format is `+HHmmss`.
+    #
+    # When *with_seconds* is `false`, seconds are omitted; when `:auto`, seconds
+    # are ommitted if `0`.
+    def format(io : IO, with_colon = true, with_seconds = :auto)
+      sign, hours, minutes, seconds = sign_hours_minutes_seconds
+
+      io << sign
+      io << '0' if hours < 10
+      io << hours
+      io << ':' if with_colon
+      io << '0' if minutes < 10
+      io << minutes
+
+      if with_seconds == true || (seconds != 0 && with_seconds == :auto)
+        io << ':' if with_colon
+        io << '0' if seconds < 10
+        io << seconds
+      end
+    end
+
+    # Returns the `#offset` formatted as `+HH:mm:ss`.
+    # When *with_colon* is `false`, the format is `+HHmmss`.
+    #
+    # When *with_seconds* is `false`, seconds are omitted; when `:auto`, seconds
+    # are ommitted if `0`.
+    def format(with_colon = true, with_seconds = :auto)
+      String.build do |io|
+        format(io, with_colon: with_colon, with_seconds: with_seconds)
+      end
+    end
+
+    # :nodoc:
+    def sign_hours_minutes_seconds
+      offset = @offset
+      if offset < 0
+        offset = -offset
+        sign = '-'
+      else
+        sign = '+'
+      end
+      seconds = offset % 60
+      minutes = offset / 60
+      hours = minutes / 60
+      minutes = minutes % 60
+      {sign, hours, minutes, seconds}
     end
   end
 
@@ -74,12 +135,16 @@ class Time::Location
     getter? standard, utc
 
     def inspect(io : IO)
-      io << "Time::ZoneTransition<"
-      io << '#' << index << ", "
+      io << "Time::Location::ZoneTransition("
+      io << '#' << index << ' '
       Time.epoch(self.when).to_s("%F %T", io)
-      io << ", STD" if standard?
-      io << ", UTC" if utc?
-      io << '>'
+      if standard?
+        io << " STD"
+      else
+        io << " DST"
+      end
+      io << " UTC" if utc?
+      io << ')'
     end
   end
 
@@ -106,9 +171,8 @@ class Time::Location
 
   # Creates a `Location` instance with fixed *offset*.
   def self.fixed(offset : Int32)
-    span = offset.abs.seconds
-    name = sprintf("%s%02d:%02d", offset.sign < 0 ? '-' : '+', span.hours, span.minutes)
-    fixed name, offset
+    zone = Zone.new(nil, offset, false)
+    new zone.name, [zone]
   end
 
   # Returns the `Location` with the given name.
@@ -204,7 +268,7 @@ class Time::Location
   end
 
   def inspect(io : IO)
-    io << "Time::Location<"
+    io << "#<Time::Location "
     to_s(io)
     io << '>'
   end
