@@ -241,7 +241,7 @@ module Crystal
         if next_needs_indent
           write_indent(@indent, exp)
         else
-          accept exp
+          indent(@indent, exp)
         end
         @multiline_call_indent = nil
 
@@ -2399,7 +2399,7 @@ module Crystal
       format_args node.args, has_parentheses, node.named_args, node.block_arg
     end
 
-    def format_args(args : Array, has_parentheses, named_args = nil, block_arg = nil, needed_indent = @indent + 2, do_consume_newlines = false)
+    def format_args(args : Array, has_parentheses, named_args = nil, block_arg = nil, needed_indent = @indent + (@passed_backslash_newline ? 0 : 2), do_consume_newlines = false)
       has_newlines = false
       found_comment = false
       @inside_call_or_assign += 1
