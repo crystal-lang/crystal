@@ -268,7 +268,7 @@ class Screen
   @rects : Array(Rectangle)
 
   def initialize(@surface : SDL::Surface)
-    @background = Array(UInt32).new(surface.width * surface.height, 0_u32)
+    @background = Array(UInt32).new(@surface.width * @surface.height, 0_u32)
     @rects = parse_rectangles("#{__DIR__}/fire.txt")
   end
 
