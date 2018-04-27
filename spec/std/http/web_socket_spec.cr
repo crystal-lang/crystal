@@ -374,61 +374,6 @@ describe HTTP::WebSocket do
     ws2.run
   end
 
-  it "handshake fails if server does not switch protocols" do
-    port_chan = Channel(Int32).new
-    spawn do
-      http_ref = nil
-      http_server = http_ref = HTTP::Server.new(0) do |context|
-        context.response.status_code = 200
-      end
-
-      http_server.bind
-      port_chan.send(http_server.port)
-      http_server.listen
-
-      http_ref.not_nil!.close
-    end
-
-    listen_port = port_chan.receive
-
-    expect_raises(Socket::Error, "Handshake got denied. Status code was 200.") do
-      HTTP::WebSocket::Protocol.new("127.0.0.1", port: listen_port, path: "/")
-    end
-  end
-
-  it "handshake fails if server does not verify Sec-WebSocket-Key" do
-    port_chan = Channel(Int32).new
-    spawn do
-      http_ref = nil
-      has_been_called = false
-
-      http_server = http_ref = HTTP::Server.new(0) do |context|
-        response = context.response
-        response.status_code = 101
-        response.headers["Upgrade"] = "websocket"
-        response.headers["Connection"] = "Upgrade"
-        if has_been_called
-          response.headers["Sec-WebSocket-Accept"] = "foobar"
-          http_ref.not_nil!.close
-        else
-          has_been_called = true
-        end
-      end
-
-      http_server.bind
-      port_chan.send(http_server.port)
-      http_server.listen
-    end
-
-    listen_port = port_chan.receive
-
-    2.times do
-      expect_raises(Socket::Error, "Handshake got denied. Server did not verify WebSocket challenge.") do
-        HTTP::WebSocket::Protocol.new("127.0.0.1", port: listen_port, path: "/")
-      end
-    end
-  end
-
   typeof(HTTP::WebSocket.new(URI.parse("ws://localhost")))
   typeof(HTTP::WebSocket.new("localhost", "/"))
   typeof(HTTP::WebSocket.new("ws://localhost"))
