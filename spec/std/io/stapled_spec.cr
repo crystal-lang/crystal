@@ -25,7 +25,7 @@ describe IO::Stapled do
       reader.closed?.should be_false
       writer.closed?.should be_false
     end
-    
+
     it "closes underlying IOs when sync_close is true" do
       reader, writer = IO::Memory.new, IO::Memory.new
       io = IO::Stapled.new reader, writer, sync_close: true
@@ -43,7 +43,7 @@ describe IO::Stapled do
       io.closed?.should be_true
       reader.closed?.should be_false
       writer.closed?.should be_false
-      
+
       expect_raises(IO::Error, "Closed stream") do
         io.gets
       end
@@ -110,4 +110,3 @@ describe IO::Stapled do
     end
   end
 end
-

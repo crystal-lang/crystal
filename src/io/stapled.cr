@@ -1,6 +1,6 @@
 # This class staples together two unidirectional `IO`s to form a single,
 # bidirectional `IO`.
-# 
+#
 # Example (loopback):
 # ```
 # io = IO::Stapled.new(*IO.pipe)
@@ -36,9 +36,16 @@ class IO::Stapled < IO
     @reader.read(slice)
   end
 
+  # Gets a string from `reader`.
+  def gets(delimiter : Char, limit : Int, chomp = false) : String?
+    check_open
+
+    @reader.gets(delimiter, limit, chomp)
+  end
+
   # Peeks into *reader*.
   def peek : Bytes?
-    check_open 
+    check_open
 
     @reader.peek
   end
@@ -59,18 +66,18 @@ class IO::Stapled < IO
 
   # Writes a slice to `writer`.
   def write(slice : Bytes) : Nil
-    check_open 
+    check_open
 
     @writer.write(slice)
   end
 
-  #`Flushes `writer`.
-  def flush : self 
+  # `Flushes `writer`.
+  def flush : self
     check_open
 
     @writer.flush
 
-    self 
+    self
   end
 
   # Closes this ÌO`.
@@ -81,37 +88,35 @@ class IO::Stapled < IO
     @closed = true
 
     if @sync_close
-      @reader.close 
+      @reader.close
       @writer.close
     end
   end
 
-  {% unless flag?(:win32) %}
-    # Creates a pair of bidirectional pipe endpints connected with each other
-    # and passes them to the given block.
-    #
-    # Both endpoints and the underlying ÌO`s are closed after the block
-    # (even if `sync_close?` is `false`).
-    def self.pipe(read_blocking : Bool = false, write_blocking : Bool = false)
-      IO.pipe(read_blocking, write_blocking) do |a_read, a_write|
-        IO.pipe(read_blocking, write_blocking) do |b_read, b_write|
-          a, b = new(a_read, b_write, true), new(b_read, a_write, true)
-          begin
-            yield a, b
-          ensure
-            a.close
-            b.close
-          end
+  # Creates a pair of bidirectional pipe endpints connected with each other
+  # and passes them to the given block.
+  #
+  # Both endpoints and the underlying ÌO`s are closed after the block
+  # (even if `sync_close?` is `false`).
+  def self.pipe(read_blocking : Bool = false, write_blocking : Bool = false)
+    IO.pipe(read_blocking, write_blocking) do |a_read, a_write|
+      IO.pipe(read_blocking, write_blocking) do |b_read, b_write|
+        a, b = new(a_read, b_write, true), new(b_read, a_write, true)
+        begin
+          yield a, b
+        ensure
+          a.close
+          b.close
         end
       end
     end
-    
-    # Creates a pair of bidirectional pipe endpints connected with each other
-    # and returns them in a `Tuple`.
-    def self.pipe(read_blocking : Bool = false, write_blocking : Bool = false) : {self, self}
-      a_read, a_write = IO.pipe(read_blocking, write_blocking)
-      b_read, b_write = IO.pipe(read_blocking, write_blocking)
-      return new(a_read, b_write, true), new(b_read, a_write, true)
-    end
-  {% end %}
+  end
+
+  # Creates a pair of bidirectional pipe endpints connected with each other
+  # and returns them in a `Tuple`.
+  def self.pipe(read_blocking : Bool = false, write_blocking : Bool = false) : {self, self}
+    a_read, a_write = IO.pipe(read_blocking, write_blocking)
+    b_read, b_write = IO.pipe(read_blocking, write_blocking)
+    return new(a_read, b_write, true), new(b_read, a_write, true)
+  end
 end
