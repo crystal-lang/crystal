@@ -15,20 +15,28 @@ class HTTP::WebSocketHandler
 
   def call(context)
     if websocket_upgrade_request? context.request
-      key = context.request.headers["Sec-Websocket-Key"]
-
-      accept_code =
-        {% if flag?(:without_openssl) %}
-          Digest::SHA1.base64digest("#{key}258EAFA5-E914-47DA-95CA-C5AB0DC85B11")
-        {% else %}
-          Base64.strict_encode(OpenSSL::SHA1.hash("#{key}258EAFA5-E914-47DA-95CA-C5AB0DC85B11"))
-        {% end %}
-
       response = context.response
+
+      version = context.request.headers["Sec-WebSocket-Version"]?
+      unless version == WebSocket::Protocol::VERSION
+        response.status_code = 426
+        response.headers["Sec-WebSocket-Version"] = WebSocket::Protocol::VERSION
+        return
+      end
+
+      key = context.request.headers["Sec-WebSocket-Key"]?
+
+      unless key
+        response.status_code = 400
+        return
+      end
+
+      accept_code = WebSocket::Protocol.key_challenge(key)
+
       response.status_code = 101
       response.headers["Upgrade"] = "websocket"
       response.headers["Connection"] = "Upgrade"
-      response.headers["Sec-Websocket-Accept"] = accept_code
+      response.headers["Sec-WebSocket-Accept"] = accept_code
       response.upgrade do |io|
         ws_session = WebSocket.new(io)
         @proc.call(ws_session, context)
