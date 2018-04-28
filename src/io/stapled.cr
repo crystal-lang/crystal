@@ -93,7 +93,7 @@ class IO::Stapled < IO
     end
   end
 
-  # Creates a pair of bidirectional pipe endpints connected with each other
+  # Creates a pair of bidirectional pipe endpoints connected with each other
   # and passes them to the given block.
   #
   # Both endpoints and the underlying ÌO`s are closed after the block
@@ -112,7 +112,7 @@ class IO::Stapled < IO
     end
   end
 
-  # Creates a pair of bidirectional pipe endpints connected with each other
+  # Creates a pair of bidirectional pipe endpoints connected with each other
   # and returns them in a `Tuple`.
   def self.pipe(read_blocking : Bool = false, write_blocking : Bool = false) : {self, self}
     a_read, a_write = IO.pipe(read_blocking, write_blocking)
