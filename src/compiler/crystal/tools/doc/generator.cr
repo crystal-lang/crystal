@@ -300,6 +300,10 @@ class Crystal::Doc::Generator
   end
 
   def compute_repository
+    # check whether inside git work-tree
+    `git rev-parse --is-inside-work-tree >/dev/null 2>&1`
+    return unless $?.success?
+
     remotes = `git remote -v`
     return unless $?.success?
 
