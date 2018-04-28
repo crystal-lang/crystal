@@ -109,4 +109,12 @@ struct Nil
   def clone
     self
   end
+
+  def =~(other) : Bool
+    false
+  end
+
+  def !~(other) : Bool
+    true
+  end
 end

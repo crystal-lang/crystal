@@ -2446,8 +2446,13 @@ class String
   end
 
   # ditto
-  def =~(other)
+  def =~(other : Nil)
     nil
+  end
+
+  # Shortcut to `!(self =~ other)`.
+  def !~(other : Regex?) : Bool
+    !(self =~ other)
   end
 
   # Concatenates *str* and *other*.

@@ -14,11 +14,6 @@ class Object
     !(self == other)
   end
 
-  # Shortcut to `!(self =~ other)`.
-  def !~(other)
-    !(self =~ other)
-  end
-
   # Case equality.
   #
   # The `===` method is used in a `case ... when ... end` expression.
@@ -48,14 +43,6 @@ class Object
   # (notably `Regex`) can override it to provide meaningful case-equality semantics.
   def ===(other)
     self == other
-  end
-
-  # Pattern match.
-  #
-  # Overridden by descendants (notably `Regex` and `String`) to provide meaningful
-  # pattern-match semantics.
-  def =~(other)
-    nil
   end
 
   # Appends this object's value to *hasher*, and returns the modified *hasher*.
