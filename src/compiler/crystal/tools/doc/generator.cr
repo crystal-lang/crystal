@@ -34,9 +34,6 @@ class Crystal::Doc::Generator
     @repo_name = ""
     @is_crystal_repo = false
     compute_repository
-    if @repo_name == ""
-      puts "WARNING cannot detect GitHub/GitLab repository, some features are not available."
-    end
   end
 
   def run
