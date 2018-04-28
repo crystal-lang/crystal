@@ -1,6 +1,6 @@
 require "crystal/system/time"
 
-# `Time` represents a date-time instant in incremental time observed in
+# `Time` represents a date-time instant in [incremental time](https://www.w3.org/International/articles/definitions-time/#incremental_time) observed in
 # a specific time zone.
 #
 # The calendaric calculations are based on the rules of the proleptic Gregorian
