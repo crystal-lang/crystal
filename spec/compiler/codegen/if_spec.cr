@@ -286,4 +286,15 @@ describe "Code gen: if" do
       1
       ))
   end
+
+  it "doesn't detect type in else condition (#5717)" do
+    run(%(
+      v = nil : String
+      if v.nil?
+        0
+      else
+        sizeof(typeof(v))
+      end
+      )).to_i.should eq(0)
+  end
 end
