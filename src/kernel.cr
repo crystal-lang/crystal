@@ -15,7 +15,7 @@ ARGV         = Array.new(ARGC_UNSAFE - 1) { |i| String.new(ARGV_UNSAFE[1 + i]) }
 ARGF         = IO::ARGF.new(ARGV, STDIN)
 
 # Repeatedly executes the block, passing an incremental `Int32`
-# that starts with `0`.
+# that starts with the argument, which defaults to `0`.
 #
 # ```
 # loop do |i|
@@ -25,11 +25,10 @@ ARGF         = IO::ARGF.new(ARGV, STDIN)
 #   # ...
 # end
 # ```
-def loop
-  i = 0
+def loop(start = 0)
   while true
-    yield i
-    i += 1
+    yield start
+    start += 1
   end
 end
 
