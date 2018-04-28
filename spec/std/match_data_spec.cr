@@ -2,28 +2,27 @@ require "spec"
 
 describe "Regex::MatchData" do
   it "does inspect" do
-    /f(o)(x)/.match("the fox").inspect.should eq(%(#<Regex::MatchData "fox" 1:"o" 2:"x">))
-    /f(o)(x)?/.match("the fort").inspect.should eq(%(#<Regex::MatchData "fo" 1:"o" 2:nil>))
-    /fox/.match("the fox").inspect.should eq(%(#<Regex::MatchData "fox">))
+    /f(o)(x)/.match("the fox").inspect.should eq(%(Regex::MatchData("fox" 1:"o" 2:"x")))
+    /f(o)(x)?/.match("the fort").inspect.should eq(%(Regex::MatchData("fo" 1:"o" 2:nil)))
+    /fox/.match("the fox").inspect.should eq(%(Regex::MatchData("fox")))
   end
 
   it "does to_s" do
-    /f(o)(x)/.match("the fox").to_s.should eq(%(#<Regex::MatchData "fox" 1:"o" 2:"x">))
-    /f(?<lettero>o)(?<letterx>x)/.match("the fox").to_s.should eq(%(#<Regex::MatchData "fox" lettero:"o" letterx:"x">))
-    /fox/.match("the fox").to_s.should eq(%(#<Regex::MatchData "fox">))
+    /f(o)(x)/.match("the fox").to_s.should eq(%(Regex::MatchData("fox" 1:"o" 2:"x")))
+    /f(?<lettero>o)(?<letterx>x)/.match("the fox").to_s.should eq(%(Regex::MatchData("fox" lettero:"o" letterx:"x")))
+    /fox/.match("the fox").to_s.should eq(%(Regex::MatchData("fox")))
   end
 
   it "does pretty_print" do
-    /f(o)(x)?/.match("the fo").pretty_inspect.should eq(%(#<Regex::MatchData "fo" 1:"o" 2:nil>))
+    /f(o)(x)?/.match("the fo").pretty_inspect.should eq(%(Regex::MatchData("fo" 1:"o" 2:nil)))
 
     expected = <<-REGEX
-      #<Regex::MatchData
-       "foooo"
+      Regex::MatchData("foooo"
        first:"f"
        second:"oooo"
        third:"ooo"
        fourth:"oo"
-       fifth:"o">
+       fifth:"o")
       REGEX
 
     /(?<first>f)(?<second>o(?<third>o(?<fourth>o(?<fifth>o))))/.match("fooooo").pretty_inspect.should eq(expected)
