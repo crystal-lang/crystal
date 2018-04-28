@@ -9,7 +9,16 @@ private def it_parses(string, expected_node, file = __FILE__, line = __LINE__)
     parser = Parser.new(string)
     parser.filename = "/foo/bar/baz.cr"
     node = parser.parse
-    node.should eq(Expressions.from expected_node)
+
+    # If it's an Array, map it all to ASTNode (the array might be of a
+    # union that's not exactly ASTNode). Not having to write `[...] of ASTNode`
+    # simplifies testing a bit.
+    local_expected_node = expected_node
+    if local_expected_node.is_a?(Array)
+      local_expected_node = local_expected_node.map(&.as(ASTNode))
+    end
+
+    node.should eq(Expressions.from(local_expected_node))
   end
 end
 
@@ -977,8 +986,8 @@ describe "Parser" do
   it_parses "def foo(x); end; x", [Def.new("foo", ["x".arg]), "x".call]
   it_parses "def foo; / /; end", Def.new("foo", body: regex(" "))
 
-  it_parses "\"foo\#{bar}baz\"", StringInterpolation.new(["foo".string, "bar".call, "baz".string])
-  it_parses "qux \"foo\#{bar do end}baz\"", Call.new(nil, "qux", StringInterpolation.new(["foo".string, Call.new(nil, "bar", block: Block.new), "baz".string]))
+  it_parses "\"foo\#{bar}baz\"", StringInterpolation.new(["foo".string, "bar".call, "baz".string] of ASTNode)
+  it_parses "qux \"foo\#{bar do end}baz\"", Call.new(nil, "qux", StringInterpolation.new(["foo".string, Call.new(nil, "bar", block: Block.new), "baz".string] of ASTNode))
   it_parses "\"\#{1\n}\"", StringInterpolation.new([1.int32] of ASTNode)
 
   # When interpolating a string we don't necessarily need interpolation.
@@ -1080,7 +1089,7 @@ describe "Parser" do
   it_parses "1.as(Bar)", Cast.new(1.int32, "Bar".path)
   it_parses "foo.as(Bar)", Cast.new("foo".call, "Bar".path)
   it_parses "foo.bar.as(Bar)", Cast.new(Call.new("foo".call, "bar"), "Bar".path)
-  it_parses "call(foo.as Bar, Baz)", Call.new(nil, "call", args: [Cast.new("foo".call, "Bar".path), "Baz".path])
+  it_parses "call(foo.as Bar, Baz)", Call.new(nil, "call", args: [Cast.new("foo".call, "Bar".path), "Baz".path] of ASTNode)
 
   it_parses "as(Bar)", Cast.new(Var.new("self"), "Bar".path)
 
@@ -1152,11 +1161,11 @@ describe "Parser" do
   it_parses "foo **bar", Call.new(nil, "foo", DoubleSplat.new("bar".call))
   it_parses "foo(**bar)", Call.new(nil, "foo", DoubleSplat.new("bar".call))
 
-  it_parses "foo 1, **bar", Call.new(nil, "foo", [1.int32, DoubleSplat.new("bar".call)])
-  it_parses "foo(1, **bar)", Call.new(nil, "foo", [1.int32, DoubleSplat.new("bar".call)])
+  it_parses "foo 1, **bar", Call.new(nil, "foo", [1.int32, DoubleSplat.new("bar".call)] of ASTNode)
+  it_parses "foo(1, **bar)", Call.new(nil, "foo", [1.int32, DoubleSplat.new("bar".call)] of ASTNode)
 
-  it_parses "foo 1, **bar, &block", Call.new(nil, "foo", args: [1.int32, DoubleSplat.new("bar".call)], block_arg: "block".call)
-  it_parses "foo(1, **bar, &block)", Call.new(nil, "foo", args: [1.int32, DoubleSplat.new("bar".call)], block_arg: "block".call)
+  it_parses "foo 1, **bar, &block", Call.new(nil, "foo", args: [1.int32, DoubleSplat.new("bar".call)] of ASTNode, block_arg: "block".call)
+  it_parses "foo(1, **bar, &block)", Call.new(nil, "foo", args: [1.int32, DoubleSplat.new("bar".call)] of ASTNode, block_arg: "block".call)
 
   assert_syntax_error "foo **bar, 1", "argument not allowed after double splat"
   assert_syntax_error "foo(**bar, 1)", "argument not allowed after double splat"

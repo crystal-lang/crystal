@@ -260,7 +260,7 @@ module Crystal
 
       # (1); (4)
       if assign
-        Expressions.new([assign, call]).at(node)
+        Expressions.new([assign, call] of ASTNode).at(node)
       else
         call
       end

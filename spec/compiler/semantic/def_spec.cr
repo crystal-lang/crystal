@@ -316,7 +316,7 @@ describe "Semantic: def" do
 
   it "says compile-time type on error" do
     assert_error %(
-      abstract class Foo
+      class Foo
       end
 
       class Bar < Foo
@@ -328,7 +328,7 @@ describe "Semantic: def" do
       class Baz < Foo
       end
 
-      f = Bar.new || Baz.new
+      f = Bar.new || Foo.new
       f.bar
       ),
       "compile-time type is Foo+"

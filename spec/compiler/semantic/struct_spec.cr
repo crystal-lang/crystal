@@ -39,7 +39,7 @@ describe "Semantic: struct" do
       struct Baz < Foo
       end
 
-      Bar.new || Baz.new
+      (Bar.new || Baz.new).as(Foo)
       ") { types["Foo"].virtual_type! }
   end
 
