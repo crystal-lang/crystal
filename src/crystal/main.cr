@@ -125,10 +125,12 @@ module Crystal
   end
 end
 
-# Main function that acts as C's main function.
-# Invokes `Crystal.main`.
-#
-# Can be redefined. See `Crystal.main` for examples.
-fun main(argc : Int32, argv : UInt8**) : Int32
-  Crystal.main(argc, argv)
-end
+{% unless flag?(:android) || flag?(:without_main) %}
+  # Main function that acts as C's main function.
+  # Invokes `Crystal.main`.
+  #
+  # Can be redefined. See `Crystal.main` for examples.
+  fun main(argc : Int32, argv : UInt8**) : Int32
+    Crystal.main(argc, argv)
+  end
+{% end %}

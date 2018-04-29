@@ -50,16 +50,21 @@ class Thread
 
   # All threads, so the GC can see them (GC doesn't scan thread locals)
   # and we can find the current thread on platforms that don't support
-  # thread local storage (eg: OpenBSD)
+  # thread local storage (eg: OpenBSD, Android)
   @@threads = Set(Thread).new
 
-  {% if flag?(:openbsd) %}
+  {% if flag?(:android) || flag?(:openbsd) %}
     @@main = new
 
     def self.current : Thread
-      if LibC.pthread_main_np == 1
-        return @@main
-      end
+      {% if flag?(:openbsd) %}
+        if LibC.pthread_main_np == 1
+          return @@main
+        end
+      {% else %}
+        # forces @@main to be defined and present in @@threads
+        @@main
+      {% end %}
 
       current_thread_id = LibC.pthread_self
 
@@ -84,7 +89,7 @@ class Thread
   {% end %}
 
   protected def start
-    {% unless flag?(:openbsd) %}
+    {% unless flag?(:openbsd) || flag?(:android) %}
     @@current = self
     {% end %}
     begin

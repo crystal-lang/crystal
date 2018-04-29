@@ -276,3 +276,7 @@ fun __crystal_sigfault_handler(sig : LibC::Int, addr : Void*)
   CallStack.print_backtrace
   LibC._exit(sig)
 end
+
+{% unless flag?(:without_sigfault_handler) %}
+  LibExt.setup_sigfault_handler
+{% end %}
