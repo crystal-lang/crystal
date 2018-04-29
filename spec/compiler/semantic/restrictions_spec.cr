@@ -427,4 +427,16 @@ describe "Restrictions" do
       ),
       "no overload matches"
   end
+
+  it "can instantiate NamedTuple by self" do
+    assert_type(%(
+      struct NamedTuple
+        def self.foo : self
+          {x: 42}
+        end
+      end
+
+      NamedTuple.foo
+      )) { named_tuple_of({"x": int32}) }
+  end
 end
