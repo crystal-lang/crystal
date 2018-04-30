@@ -294,6 +294,8 @@ lib LibXML
   fun xmlGetNsList(doc : Doc*, node : Node*) : NS**
 
   fun xmlSetProp(node : Node*, name : UInt8*, value : UInt8*) : Attr*
+
+  fun xmlValidateNameValue(value : UInt8*) : Int
 end
 
 LibXML.xmlGcMemSetup(
@@ -302,7 +304,7 @@ LibXML.xmlGcMemSetup(
   ->GC.malloc(LibC::SizeT),
   ->GC.realloc(Void*, LibC::SizeT),
   ->(str) {
-    len = LibC.strlen(str)
+    len = LibC.strlen(str) + 1
     copy = Pointer(UInt8).malloc(len)
     copy.copy_from(str, len)
     copy

@@ -1,4 +1,4 @@
-require "crystal/system/random"
+require "random/secure"
 
 # (c) Bob Jenkins, March 1996, Public Domain
 # You may use this code in any way you wish, and it is free.  No warrantee.
@@ -17,7 +17,7 @@ class Random::ISAAC
   private def random_seeds
     result = uninitialized Seeds
     result_slice = result.unsafe_as(StaticArray(UInt8, sizeof(Seeds))).to_slice
-    Crystal::System::Random.random_bytes(result_slice)
+    Random::Secure.random_bytes(result_slice)
     result
   end
 

@@ -91,7 +91,5 @@ describe "Proc" do
     f2.call('r').should eq(2)
   end
 
-  it "#hash" do
-    ->{ 1 }.hash.should_not eq(0)
-  end
+  typeof(->{ 1 }.hash)
 end

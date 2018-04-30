@@ -12,7 +12,7 @@ require "./formdata/**"
 # require "http"
 # require "tempfile"
 #
-# server = HTTP::Server.new(8085) do |context|
+# server = HTTP::Server.new do |context|
 #   name = nil
 #   file = nil
 #   HTTP::FormData.parse(context.request) do |part|
@@ -34,12 +34,13 @@ require "./formdata/**"
 #   context.response << file.path
 # end
 #
+# server.bind 8085
 # server.listen
 # ```
 #
 # To test the server, use the curl command below.
 #
-# ```
+# ```console
 # $ curl http://localhost:8085/ -F name=foo -F file=@/path/to/test.file
 # /tmp/upload.Yxn7cc
 # ```
@@ -153,8 +154,6 @@ module HTTP::FormData
         modification_time = HTTP.parse_time value
       when "read-date"
         read_time = HTTP.parse_time value
-      when "creation-date"
-        creation_time = HTTP.parse_time value
       when "size"
         size = value.to_u64
       when "name"
@@ -199,7 +198,7 @@ module HTTP::FormData
   # response.close
   #
   # response.headers["Content-Type"] # => "multipart/form-data; boundary=\"boundary\""
-  # io.to_s                          # => "HTTP/1.1 200 OK\r\nContent-Type: multipart/form-data; boundary=\"boundary\"\r\n ...
+  # io.to_s                          # => "HTTP/1.1 200 OK\r\nContent-Type: multipart/form-data; boundary=\"boundary\"\r\nContent-Length: 75\r\n\r\n--boundary\r\nContent-Disposition: form-data; name=\"foo\"\r\n\r\nbar\r\n--boundary--"
   # ```
   #
   # See: `FormData::Builder`

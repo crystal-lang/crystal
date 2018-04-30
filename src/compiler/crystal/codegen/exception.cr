@@ -205,7 +205,7 @@ class Crystal::CodeGenVisitor
       next unless target_ensure
 
       with_context(exception_handler.context) do
-        target_ensure.accept self
+        accept target_ensure
       end
     end
   end

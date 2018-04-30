@@ -150,9 +150,3 @@ lib LibSDL
   fun get_ticks = SDL_GetTicks : UInt32
   fun flip = SDL_Flip(screen : Surface*) : Int32
 end
-
-{% if flag?(:darwin) %}
-  redefine_main(SDL_main) do |main|
-    \{{main}}
-  end
-{% end %}

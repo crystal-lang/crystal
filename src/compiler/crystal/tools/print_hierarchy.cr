@@ -27,7 +27,7 @@ module Crystal
         compute_targets(@program.types, exp, false)
       end
 
-      with_color.light_gray.bold.push(STDOUT) do
+      with_color.light_gray.bold.surround(STDOUT) do
         print_type @program.object
       end
     end
@@ -126,7 +126,7 @@ module Crystal
       if (type.is_a?(NonGenericClassType) || type.is_a?(GenericClassInstanceType)) &&
          !type.is_a?(PointerInstanceType) && !type.is_a?(ProcInstanceType)
         size = @llvm_typer.size_of(@llvm_typer.llvm_struct_type(type))
-        with_color.light_gray.push(STDOUT) do
+        with_color.light_gray.surround(STDOUT) do
           print " ("
           print size.to_s
           print " bytes)"
@@ -176,7 +176,7 @@ module Crystal
           print "      "
         end
 
-        with_color.light_gray.push(STDOUT) do
+        with_color.light_gray.surround(STDOUT) do
           print name.ljust(max_name_size)
           print " : "
           print var
@@ -211,13 +211,13 @@ module Crystal
           print "      "
         end
 
-        with_color.light_gray.push(STDOUT) do
+        with_color.light_gray.surround(STDOUT) do
           print ivar.name.ljust(max_name_size)
           print " : "
           if ivar_type = ivar.type?
             print ivar_type.to_s.ljust(max_type_size)
             size = @llvm_typer.size_of(@llvm_typer.llvm_embedded_type(ivar_type))
-            with_color.light_gray.push(STDOUT) do
+            with_color.light_gray.surround(STDOUT) do
               print " ("
               print size.to_s.rjust(max_bytes_size)
               print " bytes)"

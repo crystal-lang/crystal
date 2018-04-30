@@ -7,6 +7,12 @@ describe "Backtrace" do
     tempfile.close
     sample = "#{__DIR__}/data/backtrace_sample"
 
+    # CallStack tries to make files relative to the current dir,
+    # so we do the same for tests
+    current_dir = Dir.current
+    current_dir += File::SEPARATOR unless current_dir.ends_with?(File::SEPARATOR)
+    sample = sample.lchop(current_dir)
+
     `bin/crystal build --debug #{sample.inspect} -o #{tempfile.path.inspect}`
     File.exists?(tempfile.path).should be_true
 
@@ -17,14 +23,18 @@ describe "Backtrace" do
     output = `#{tempfile.path}`
 
     # resolved file line:column
-    output.should match(/callee1 at #{sample} 3:10/)
-    output.should match(/callee3 at #{sample} 15:3/)
-    output.should match(/__crystal_main at #{sample} 17:1/)
+    output.should match(/#{sample}:3:10 in 'callee1'/)
+
+    unless output =~ /#{sample}:13:5 in 'callee3'/
+      fail "didn't find callee3 in the backtrace"
+    end
 
     # skipped internal details
     output.should_not match(/src\/callstack\.cr/)
     output.should_not match(/src\/exception\.cr/)
     output.should_not match(/src\/raise\.cr/)
+  ensure
+    File.delete(tempfile.path) if tempfile
   end
 
   it "prints exception backtrace to stderr" do
@@ -41,6 +51,8 @@ describe "Backtrace" do
 
     output.to_s.empty?.should be_true
     error.to_s.should contain("IndexError")
+  ensure
+    File.delete(tempfile.path) if tempfile
   end
 
   it "prints crash backtrace to stderr" do
@@ -57,5 +69,7 @@ describe "Backtrace" do
 
     output.to_s.empty?.should be_true
     error.to_s.should contain("Invalid memory access")
+  ensure
+    File.delete(tempfile.path) if tempfile
   end
 end

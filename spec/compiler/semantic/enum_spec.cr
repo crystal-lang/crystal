@@ -183,6 +183,21 @@ describe "Semantic: enum" do
       )) { int32 }
   end
 
+  it "doesn't break assigned values in enum flags when a member has value 0 (#5767)" do
+    result = semantic(%(
+      @[Flags]
+      enum Foo
+        OtherNone = 0
+        Bar
+        Baz
+      end
+      ))
+    enum_type = result.program.types["Foo"].as(EnumType)
+    enum_type.types["OtherNone"].as(Const).value.should eq(NumberLiteral.new(0, :i32))
+    enum_type.types["Bar"].as(Const).value.should eq(NumberLiteral.new(1, :i32))
+    enum_type.types["Baz"].as(Const).value.should eq(NumberLiteral.new(2, :i32))
+  end
+
   it "disallows None value when defined with @[Flags]" do
     assert_error %(
       @[Flags]

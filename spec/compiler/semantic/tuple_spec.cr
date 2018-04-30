@@ -89,16 +89,16 @@ describe "Semantic: tuples" do
     assert_type("Tuple(Int32, Float64)") { tuple_of([int32, float64]).metaclass }
   end
 
-  it "types T as a tuple of metalcasses" do
+  it "types T as a tuple of metaclasses" do
     assert_type("
       struct Tuple
-        def types
+        def type_args
           T
         end
       end
 
       x = {1, 1.5, 'a'}
-      x.types
+      x.type_args
       ") do
       meta = tuple_of([int32, float64, char]).metaclass
       meta.metaclass?.should be_true

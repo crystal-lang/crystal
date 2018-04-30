@@ -1,5 +1,6 @@
 require "spec"
 require "yaml"
+require "../../support/finalize"
 
 private class YAMLPerson
   YAML.mapping({
@@ -36,6 +37,12 @@ private class YAMLWithKey
     value: Int32,
     pull:  Int32,
   })
+end
+
+private class YAMLWithPropertiesKey
+  YAML.mapping(
+    properties: Hash(String, String),
+  )
 end
 
 private class YAMLWithDefaults
@@ -96,6 +103,64 @@ private class YAMLWithPresence
   })
 end
 
+class YAMLRecursive
+  YAML.mapping({
+    name:  String,
+    other: YAMLRecursive,
+  })
+end
+
+class YAMLRecursiveNilable
+  YAML.mapping({
+    name:  String,
+    other: YAMLRecursiveNilable?,
+  })
+end
+
+class YAMLRecursiveArray
+  YAML.mapping({
+    name:  String,
+    other: Array(YAMLRecursiveArray),
+  })
+end
+
+class YAMLRecursiveHash
+  YAML.mapping({
+    name:  String,
+    other: Hash(String, YAMLRecursiveHash),
+  })
+end
+
+private class YAMLWithQueryAttributes
+  YAML.mapping({
+    foo?: Bool,
+    bar?: {type: Bool, default: false, presence: true, key: "is_bar"},
+  })
+end
+
+private class YAMLWithOverwritingQueryAttributes
+  property foo : Symbol?
+  property bar : Symbol?
+  YAML.mapping({
+    foo?: Bool,
+    bar?: {type: Bool, default: false, presence: true, key: "is_bar"},
+  })
+end
+
+private class YAMLWithFinalize
+  YAML.mapping({
+    value: YAML::Any,
+  })
+
+  property key : Symbol?
+
+  def finalize
+    if key = self.key
+      State.inc(key)
+    end
+  end
+end
+
 describe "YAML mapping" do
   it "parses person" do
     person = YAMLPerson.from_yaml("---\nname: John\nage: 30\n")
@@ -125,6 +190,35 @@ describe "YAML mapping" do
     people.size.should eq(2)
     people[0].name.should eq("John")
     people[1].name.should eq("Doe")
+  end
+
+  it "parses array of people with merge" do
+    yaml = <<-YAML
+      - &1
+        name: foo
+        age: 1
+      -
+        <<: *1
+        age: 2
+      YAML
+
+    people = Array(YAMLPerson).from_yaml(yaml)
+    people[1].name.should eq("foo")
+    people[1].age.should eq(2)
+  end
+
+  it "parses array of people with merge, doesn't hang on infinite recursion" do
+    yaml = <<-YAML
+      - &1
+        name: foo
+        <<: *1
+        <<: [ *1, *1 ]
+        age: 1
+      YAML
+
+    people = Array(YAMLPerson).from_yaml(yaml)
+    people[0].name.should eq("foo")
+    people[0].age.should eq(1)
   end
 
   it "parses person with unknown attributes" do
@@ -175,8 +269,8 @@ describe "YAML mapping" do
   it "parses yaml with Time::Format converter" do
     yaml = YAMLWithTime.from_yaml("---\nvalue: 2014-10-31 23:37:16\n")
     yaml.value.should be_a(Time)
-    yaml.value.to_s.should eq("2014-10-31 23:37:16")
-    yaml.value.should eq(Time.new(2014, 10, 31, 23, 37, 16))
+    yaml.value.to_s.should eq("2014-10-31 23:37:16 UTC")
+    yaml.value.should eq(Time.utc(2014, 10, 31, 23, 37, 16))
     yaml.to_yaml.should eq("---\nvalue: 2014-10-31 23:37:16\n")
   end
 
@@ -187,6 +281,14 @@ describe "YAML mapping" do
     yaml.pull.should eq(2)
   end
 
+  it "outputs YAML with properties key" do
+    input = {
+      properties: {"foo" => "bar"},
+    }.to_yaml
+    yaml = YAMLWithPropertiesKey.from_yaml(input)
+    yaml.to_yaml.should eq(input)
+  end
+
   it "allows small types of integer" do
     yaml = YAMLWithSmallIntegers.from_yaml(%({"foo": 21, "bar": 7}))
 
@@ -195,6 +297,68 @@ describe "YAML mapping" do
 
     yaml.bar.should eq(7)
     typeof(yaml.bar).should eq(Int8)
+  end
+
+  it "parses recursive" do
+    yaml = <<-YAML
+      --- &1
+      name: foo
+      other: *1
+      YAML
+
+    rec = YAMLRecursive.from_yaml(yaml)
+    rec.name.should eq("foo")
+    rec.other.should be(rec)
+  end
+
+  it "parses recursive nilable (1)" do
+    yaml = <<-YAML
+      --- &1
+      name: foo
+      other: *1
+      YAML
+
+    rec = YAMLRecursiveNilable.from_yaml(yaml)
+    rec.name.should eq("foo")
+    rec.other.should be(rec)
+  end
+
+  it "parses recursive nilable (2)" do
+    yaml = <<-YAML
+      --- &1
+      name: foo
+      YAML
+
+    rec = YAMLRecursiveNilable.from_yaml(yaml)
+    rec.name.should eq("foo")
+    rec.other.should be_nil
+  end
+
+  it "parses recursive array" do
+    yaml = <<-YAML
+      ---
+      name: foo
+      other: &1
+        - name: bar
+          other: *1
+      YAML
+
+    rec = YAMLRecursiveArray.from_yaml(yaml)
+    rec.other[0].other.should be(rec.other)
+  end
+
+  it "parses recursive hash" do
+    yaml = <<-YAML
+      ---
+      name: foo
+      other: &1
+        foo:
+          name: bar
+          other: *1
+      YAML
+
+    rec = YAMLRecursiveHash.from_yaml(yaml)
+    rec.other["foo"].other.should be(rec.other)
   end
 
   describe "parses YAML with defaults" do
@@ -214,11 +378,22 @@ describe "YAML mapping" do
       json = YAMLWithDefaults.from_yaml(%({}))
       json.a.should eq 11
       json.b.should eq "Haha"
+    end
 
-      # There's no "null" in YAML? Maybe we should support this eventually
-      # json = YAMLWithDefaults.from_yaml(%({"a":null,"b":null}))
-      # json.a.should eq 11
-      # json.b.should eq "Haha"
+    it "mixes with all defaults (#2873)" do
+      yaml = YAMLWithDefaults.from_yaml("")
+      yaml.a.should eq 11
+      yaml.b.should eq "Haha"
+    end
+
+    it "raises when not a mapping or empty scalar" do
+      expect_raises(YAML::ParseException) do
+        YAMLWithDefaults.from_yaml("1")
+      end
+
+      expect_raises(YAML::ParseException) do
+        YAMLWithDefaults.from_yaml("[1]")
+      end
     end
 
     it "bool" do
@@ -314,5 +489,45 @@ describe "YAML mapping" do
       yaml.last_name.should be_nil
       yaml.last_name_present?.should be_false
     end
+  end
+
+  describe "with query attributes" do
+    it "defines query getter" do
+      yaml = YAMLWithQueryAttributes.from_yaml(%({"foo": true}))
+      yaml.foo?.should be_true
+      yaml.bar?.should be_false
+    end
+
+    it "defines non-query setter and presence methods" do
+      yaml = YAMLWithQueryAttributes.from_yaml(%({"foo": false}))
+      yaml.bar_present?.should be_false
+      yaml.bar = true
+      yaml.bar?.should be_true
+    end
+
+    it "maps non-query attributes" do
+      yaml = YAMLWithQueryAttributes.from_yaml(%({"foo": false, "is_bar": false}))
+      yaml.bar_present?.should be_true
+      yaml.bar?.should be_false
+      yaml.bar = true
+      yaml.to_yaml.should eq(%(---\nfoo: false\nis_bar: true\n))
+    end
+
+    it "raises if non-nilable attribute is nil" do
+      ex = expect_raises YAML::ParseException, "Missing yaml attribute: foo" do
+        YAMLWithQueryAttributes.from_yaml(%({"is_bar": true}))
+      end
+      ex.location.should eq({1, 1})
+    end
+
+    it "overwrites non-query attributes" do
+      yaml = YAMLWithOverwritingQueryAttributes.from_yaml(%({"foo": true}))
+      typeof(yaml.@foo).should eq(Bool)
+      typeof(yaml.@bar).should eq(Bool)
+    end
+  end
+
+  it "calls #finalize" do
+    assert_finalizes(:yaml) { YAMLWithFinalize.from_yaml("---\nvalue: 1\n") }
   end
 end

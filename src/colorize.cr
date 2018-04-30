@@ -123,51 +123,75 @@ class Object
   include Colorize::ObjectExtensions
 end
 
+module Colorize
+  alias Color = ColorANSI | Color256 | ColorRGB
+
+  enum ColorANSI
+    Default      = 39
+    Black        = 30
+    Red          = 31
+    Green        = 32
+    Yellow       = 33
+    Blue         = 34
+    Magenta      = 35
+    Cyan         = 36
+    LightGray    = 37
+    DarkGray     = 90
+    LightRed     = 91
+    LightGreen   = 92
+    LightYellow  = 93
+    LightBlue    = 94
+    LightMagenta = 95
+    LightCyan    = 96
+    White        = 97
+
+    def fore(io : IO) : Nil
+      to_i.to_s io
+    end
+
+    def back(io : IO) : Nil
+      (to_i + 10).to_s io
+    end
+  end
+
+  record Color256,
+    value : UInt8 do
+    def fore(io : IO) : Nil
+      io << "38;5;"
+      value.to_s io
+    end
+
+    def back(io : IO) : Nil
+      io << "48;5;"
+      value.to_s io
+    end
+  end
+
+  record ColorRGB,
+    red : UInt8,
+    green : UInt8,
+    blue : UInt8 do
+    def fore(io : IO) : Nil
+      io << "38;2;"
+      {red, green, blue}.join(';', io, &.to_s io)
+    end
+
+    def back(io : IO) : Nil
+      io << "48;2;"
+      {red, green, blue}.join(';', io, &.to_s io)
+    end
+  end
+end
+
 struct Colorize::Object(T)
-  private FORE_DEFAULT       = "39"
-  private FORE_BLACK         = "30"
-  private FORE_RED           = "31"
-  private FORE_GREEN         = "32"
-  private FORE_YELLOW        = "33"
-  private FORE_BLUE          = "34"
-  private FORE_MAGENTA       = "35"
-  private FORE_CYAN          = "36"
-  private FORE_LIGHT_GRAY    = "37"
-  private FORE_DARK_GRAY     = "90"
-  private FORE_LIGHT_RED     = "91"
-  private FORE_LIGHT_GREEN   = "92"
-  private FORE_LIGHT_YELLOW  = "93"
-  private FORE_LIGHT_BLUE    = "94"
-  private FORE_LIGHT_MAGENTA = "95"
-  private FORE_LIGHT_CYAN    = "96"
-  private FORE_WHITE         = "97"
-
-  private BACK_DEFAULT       = "49"
-  private BACK_BLACK         = "40"
-  private BACK_RED           = "41"
-  private BACK_GREEN         = "42"
-  private BACK_YELLOW        = "43"
-  private BACK_BLUE          = "44"
-  private BACK_MAGENTA       = "45"
-  private BACK_CYAN          = "46"
-  private BACK_LIGHT_GRAY    = "47"
-  private BACK_DARK_GRAY     = "100"
-  private BACK_LIGHT_RED     = "101"
-  private BACK_LIGHT_GREEN   = "102"
-  private BACK_LIGHT_YELLOW  = "103"
-  private BACK_LIGHT_BLUE    = "104"
-  private BACK_LIGHT_MAGENTA = "105"
-  private BACK_LIGHT_CYAN    = "106"
-  private BACK_WHITE         = "107"
-
-  private MODE_DEFAULT   = "0"
-  private MODE_BOLD      = "1"
-  private MODE_BRIGHT    = "1"
-  private MODE_DIM       = "2"
-  private MODE_UNDERLINE = "4"
-  private MODE_BLINK     = "5"
-  private MODE_REVERSE   = "7"
-  private MODE_HIDDEN    = "8"
+  private MODE_DEFAULT   = '0'
+  private MODE_BOLD      = '1'
+  private MODE_BRIGHT    = '1'
+  private MODE_DIM       = '2'
+  private MODE_UNDERLINE = '4'
+  private MODE_BLINK     = '5'
+  private MODE_REVERSE   = '7'
+  private MODE_HIDDEN    = '8'
 
   private MODE_BOLD_FLAG      =  1
   private MODE_BRIGHT_FLAG    =  1
@@ -180,21 +204,24 @@ struct Colorize::Object(T)
   private COLORS = %w(black red green yellow blue magenta cyan light_gray dark_gray light_red light_green light_yellow light_blue light_magenta light_cyan white)
   private MODES  = %w(bold bright dim underline blink reverse hidden)
 
+  @fore : Color
+  @back : Color
+
   def initialize(@object : T)
-    @fore = FORE_DEFAULT
-    @back = BACK_DEFAULT
+    @fore = ColorANSI::Default
+    @back = ColorANSI::Default
     @mode = 0
     @enabled = Colorize.enabled?
   end
 
   {% for name in COLORS %}
     def {{name.id}}
-      @fore = FORE_{{name.upcase.id}}
+      @fore = ColorANSI::{{name.camelcase.id}}
       self
     end
 
     def on_{{name.id}}
-      @back = BACK_{{name.upcase.id}}
+      @back = ColorANSI::{{name.camelcase.id}}
       self
     end
   {% end %}
@@ -209,7 +236,7 @@ struct Colorize::Object(T)
   def fore(color : Symbol)
     {% for name in COLORS %}
       if color == :{{name.id}}
-        @fore = FORE_{{name.upcase.id}}
+        @fore = ColorANSI::{{name.camelcase.id}}
         return self
       end
     {% end %}
@@ -217,15 +244,23 @@ struct Colorize::Object(T)
     raise ArgumentError.new "Unknown color: #{color}"
   end
 
+  def fore(@fore : Color)
+    self
+  end
+
   def back(color : Symbol)
     {% for name in COLORS %}
       if color == :{{name.id}}
-        @back = BACK_{{name.upcase.id}}
+        @back = ColorANSI::{{name.camelcase.id}}
         return self
       end
     {% end %}
 
     raise ArgumentError.new "Unknown color: #{color}"
+  end
+
+  def back(@back : Color)
+    self
   end
 
   def mode(mode : Symbol)
@@ -261,78 +296,92 @@ struct Colorize::Object(T)
   end
 
   def surround(io = STDOUT)
-    must_append_end = append_start(io)
-    yield io
-    append_end(io) if must_append_end
-  end
+    return yield io unless @enabled
 
-  STACK = [] of Colorize::Object(String)
-
-  def push(io = STDOUT)
-    last_color = STACK.last?
-
-    append_start(io, !!last_color)
-
-    STACK.push self
-    yield io
-    STACK.pop
-
-    if last_color
-      last_color.append_start(io, true)
-    else
-      append_end(io)
+    Object.surround(io, to_named_tuple) do |io|
+      yield io
     end
   end
 
-  protected def append_start(io, reset = false)
-    return false unless @enabled
+  private def to_named_tuple
+    {
+      fore: @fore,
+      back: @back,
+      mode: @mode,
+    }
+  end
 
-    fore_is_default = @fore == FORE_DEFAULT
-    back_is_default = @back == BACK_DEFAULT
-    mode_is_default = @mode == 0
+  @@last_color = {
+    fore: ColorANSI::Default.as(Color),
+    back: ColorANSI::Default.as(Color),
+    mode: 0,
+  }
 
-    if fore_is_default && back_is_default && mode_is_default && !reset
+  protected def self.surround(io, color)
+    last_color = @@last_color
+    must_append_end = append_start(io, color)
+    @@last_color = color
+
+    begin
+      yield io
+    ensure
+      append_start(io, last_color) if must_append_end
+      @@last_color = last_color
+    end
+  end
+
+  private def self.append_start(io, color)
+    last_color_is_default =
+      @@last_color[:fore] == ColorANSI::Default &&
+        @@last_color[:back] == ColorANSI::Default &&
+        @@last_color[:mode] == 0
+
+    fore = color[:fore]
+    back = color[:back]
+    mode = color[:mode]
+
+    fore_is_default = fore == ColorANSI::Default
+    back_is_default = back == ColorANSI::Default
+    mode_is_default = mode == 0
+
+    if fore_is_default && back_is_default && mode_is_default && last_color_is_default || @@last_color == color
       false
     else
       io << "\e["
 
       printed = false
 
-      if reset
+      unless last_color_is_default
         io << MODE_DEFAULT
         printed = true
       end
 
       unless fore_is_default
-        io << ";" if printed
-        io << @fore
+        io << ';' if printed
+        fore.fore io
         printed = true
       end
 
       unless back_is_default
-        io << ";" if printed
-        io << @back
+        io << ';' if printed
+        back.back io
         printed = true
       end
 
       unless mode_is_default
         # Can't reuse MODES constant because it has bold/bright duplicated
         {% for name in %w(bold dim underline blink reverse hidden) %}
-          if (@mode & MODE_{{name.upcase.id}}_FLAG) != 0
-            io << ";" if printed
+          if mode.bits_set? MODE_{{name.upcase.id}}_FLAG
+            io << ';' if printed
             io << MODE_{{name.upcase.id}}
             printed = true
           end
         {% end %}
       end
 
-      io << "m"
+      io << 'm'
 
       true
     end
-  end
-
-  protected def append_end(io)
-    Colorize.reset(io)
   end
 end

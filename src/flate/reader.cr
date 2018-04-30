@@ -3,9 +3,7 @@
 # Instances of this class wrap another IO object. When you read from this instance
 # instance, it reads data from the underlying IO, decompresses it, and returns
 # it to the caller.
-class Flate::Reader
-  include IO
-
+class Flate::Reader < IO
   # If `#sync_close?` is `true`, closing this IO will close the underlying IO.
   property? sync_close : Bool
 

@@ -32,12 +32,20 @@ describe "URI" do
   assert_uri("/foo?q=1", path: "/foo", query: "q=1")
   assert_uri("mailto:foo@example.org", scheme: "mailto", path: nil, opaque: "foo@example.org")
 
-  it { URI.parse("http://www.example.com/foo").full_path.should eq("/foo") }
-  it { URI.parse("http://www.example.com").full_path.should eq("/") }
-  it { URI.parse("http://www.example.com/foo?q=1").full_path.should eq("/foo?q=1") }
-  it { URI.parse("http://www.example.com/?q=1").full_path.should eq("/?q=1") }
-  it { URI.parse("http://www.example.com?q=1").full_path.should eq("/?q=1") }
-  it { URI.parse("http://test.dev/a%3Ab").full_path.should eq("/a%3Ab") }
+  describe "full_path" do
+    it { URI.parse("http://www.example.com/foo").full_path.should eq("/foo") }
+    it { URI.parse("http://www.example.com").full_path.should eq("/") }
+    it { URI.parse("http://www.example.com/foo?q=1").full_path.should eq("/foo?q=1") }
+    it { URI.parse("http://www.example.com/?q=1").full_path.should eq("/?q=1") }
+    it { URI.parse("http://www.example.com?q=1").full_path.should eq("/?q=1") }
+    it { URI.parse("http://test.dev/a%3Ab").full_path.should eq("/a%3Ab") }
+
+    it "does not add '?' to the end if the query params are empty" do
+      uri = URI.parse("http://www.example.com/foo")
+      uri.query = ""
+      uri.full_path.should eq("/foo")
+    end
+  end
 
   describe "normalize" do
     it "removes dot notation from path" do
@@ -100,10 +108,69 @@ describe "URI" do
     end
     it { URI.new("http", "www.example.com", user: "@al:ce", password: "s/cr3t").to_s.should eq("http://%40al%3Ace:s%2Fcr3t@www.example.com") }
     it { URI.new("http", "www.example.com", fragment: "top").to_s.should eq("http://www.example.com#top") }
-    it { URI.new("http", "www.example.com", 1234).to_s.should eq("http://www.example.com:1234") }
     it { URI.new("http", "www.example.com", 80, "/hello").to_s.should eq("http://www.example.com/hello") }
     it { URI.new("http", "www.example.com", 80, "/hello", "a=1").to_s.should eq("http://www.example.com/hello?a=1") }
     it { URI.new("mailto", opaque: "foo@example.com").to_s.should eq("mailto:foo@example.com") }
+
+    it "removes default port" do
+      URI.new("http", "www.example.com", 80).to_s.should eq("http://www.example.com")
+      URI.new("https", "www.example.com", 443).to_s.should eq("https://www.example.com")
+      URI.new("ftp", "www.example.com", 21).to_s.should eq("ftp://www.example.com")
+      URI.new("sftp", "www.example.com", 22).to_s.should eq("sftp://www.example.com")
+      URI.new("ldap", "www.example.com", 389).to_s.should eq("ldap://www.example.com")
+      URI.new("ldaps", "www.example.com", 636).to_s.should eq("ldaps://www.example.com")
+    end
+
+    it "preserves non-default port" do
+      URI.new("http", "www.example.com", 1234).to_s.should eq("http://www.example.com:1234")
+      URI.new("https", "www.example.com", 1234).to_s.should eq("https://www.example.com:1234")
+      URI.new("ftp", "www.example.com", 1234).to_s.should eq("ftp://www.example.com:1234")
+      URI.new("sftp", "www.example.com", 1234).to_s.should eq("sftp://www.example.com:1234")
+      URI.new("ldap", "www.example.com", 1234).to_s.should eq("ldap://www.example.com:1234")
+      URI.new("ldaps", "www.example.com", 1234).to_s.should eq("ldaps://www.example.com:1234")
+    end
+
+    it "preserves port for unknown scheme" do
+      URI.new("xyz", "www.example.com").to_s.should eq("xyz://www.example.com")
+      URI.new("xyz", "www.example.com", 1234).to_s.should eq("xyz://www.example.com:1234")
+    end
+
+    it "preserves port for nil scheme" do
+      URI.new(nil, "www.example.com", 1234).to_s.should eq("www.example.com:1234")
+    end
+  end
+
+  describe ".default_port" do
+    it "returns default port for well known schemes" do
+      URI.default_port("http").should eq(80)
+      URI.default_port("https").should eq(443)
+    end
+
+    it "returns nil for unknown schemes" do
+      URI.default_port("xyz").should eq(nil)
+    end
+
+    it "treats scheme case insensitively" do
+      URI.default_port("Http").should eq(80)
+      URI.default_port("HTTP").should eq(80)
+    end
+  end
+
+  describe ".set_default_port" do
+    it "registers port for scheme" do
+      URI.set_default_port("ponzi", 9999)
+      URI.default_port("ponzi").should eq(9999)
+    end
+
+    it "unregisters port for scheme" do
+      URI.set_default_port("ftp", nil)
+      URI.default_port("ftp").should eq(nil)
+    end
+
+    it "treats scheme case insensitively" do
+      URI.set_default_port("UNKNOWN", 1234)
+      URI.default_port("unknown").should eq(1234)
+    end
   end
 
   describe ".unescape" do
@@ -140,7 +207,7 @@ describe "URI" do
 
     it "does not unescape string when block returns true" do
       URI.unescape("hello%26world") { |byte| URI.reserved? byte }
-         .should eq("hello%26world")
+        .should eq("hello%26world")
     end
   end
 
@@ -189,7 +256,7 @@ describe "URI" do
 
     it "does not escape character when block returns true" do
       URI.unescape("hello&world") { |byte| URI.reserved? byte }
-         .should eq("hello&world")
+        .should eq("hello&world")
     end
   end
 

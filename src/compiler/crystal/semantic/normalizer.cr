@@ -51,8 +51,6 @@ module Crystal
       case exps.size
       when 0
         Nop.new
-      when 1
-        exps[0]
       else
         node.expressions = exps
         node
@@ -84,11 +82,11 @@ module Crystal
           right = Call.new(middle.clone, node.name, node.args).at(middle)
         else
           temp_var = program.new_temp_var
-          temp_assign = Assign.new(temp_var.clone, middle)
+          temp_assign = Assign.new(temp_var.clone, middle).at(middle)
           left = Call.new(obj.obj, obj.name, temp_assign).at(obj.obj)
           right = Call.new(temp_var.clone, node.name, node.args).at(node)
         end
-        node = And.new(left, right)
+        node = And.new(left, right).at(left)
         node = node.transform self
       else
         node = super
@@ -262,7 +260,7 @@ module Crystal
 
       # (1); (4)
       if assign
-        Expressions.new([assign, call]).at(node)
+        Expressions.new([assign, call] of ASTNode).at(node)
       else
         call
       end
@@ -376,6 +374,17 @@ module Crystal
         # a = (1)
         Assign.new(target.clone, call).at(node)
       end
+    end
+
+    def transform(node : StringInterpolation)
+      # If the interpolation has just one string literal inside it,
+      # return that instead of an interpolation
+      if node.expressions.size == 1
+        first = node.expressions.first
+        return first if first.is_a?(StringLiteral)
+      end
+
+      super
     end
   end
 end

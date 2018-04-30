@@ -212,13 +212,17 @@ struct Slice(T)
   def reverse!
     check_writable
 
-    i = 0
-    j = size - 1
-    while i < j
-      @pointer.swap i, j
-      i += 1
-      j -= 1
+    return self if size <= 1
+
+    p = @pointer
+    q = @pointer + size - 1
+
+    while p < q
+      p.value, q.value = q.value, p.value
+      p += 1
+      q -= 1
     end
+
     self
   end
 
@@ -234,6 +238,44 @@ struct Slice(T)
     check_writable
 
     @pointer.shuffle!(size, random)
+  end
+
+  # Invokes the given block for each element of `self`, replacing the element
+  # with the value returned by the block. Returns `self`.
+  #
+  # ```
+  # slice = Slice[1, 2, 3]
+  # slice.map! { |x| x * x }
+  # slice # => Slice[1, 4, 9]
+  # ```
+  def map!
+    check_writable
+
+    @pointer.map!(size) { |e| yield e }
+    self
+  end
+
+  # Returns a new slice where elements are mapped by the given block.
+  #
+  # ```
+  # slice = Slice[1, 2.5, "a"]
+  # slice.map &.to_s # => Slice["1", "2.5", "a"]
+  # ```
+  def map(*, read_only = false, &block : T -> U) forall U
+    Slice.new(size, read_only: read_only) { |i| yield @pointer[i] }
+  end
+
+  # Like `map!`, but the block gets passed both the element and its index.
+  def map_with_index!(&block : (T, Int32) -> T)
+    check_writable
+
+    @pointer.map_with_index!(size) { |e, i| yield e, i }
+    self
+  end
+
+  # Like `map`, but the block gets passed both the element and its index.
+  def map_with_index(*, read_only = false, &block : (T, Int32) -> U) forall U
+    Slice.new(size, read_only: read_only) { |i| yield @pointer[i], i }
   end
 
   def copy_from(source : Pointer(T), count)
@@ -436,16 +478,14 @@ struct Slice(T)
 
   def to_s(io)
     if T == UInt8
-      io << "Bytes"
-      io << "["
+      io << "Bytes["
       # Inspect using to_s because we know this is a UInt8.
       join ", ", io, &.to_s(io)
-      io << "]"
+      io << ']'
     else
-      io << "Slice"
-      io << "["
+      io << "Slice["
       join ", ", io, &.inspect(io)
-      io << "]"
+      io << ']'
     end
   end
 
@@ -493,6 +533,15 @@ struct Slice(T)
     end
 
     nil
+  end
+
+  # See `Object#hash(hasher)`
+  def hash(hasher)
+    {% if T == UInt8 %}
+      hasher.bytes(self)
+    {% else %}
+      super hasher
+    {% end %}
   end
 
   protected def check_writable

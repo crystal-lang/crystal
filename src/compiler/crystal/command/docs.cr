@@ -1,10 +1,36 @@
 # Implementation of the `crystal docs` command
 #
 # This is just the command-line part. Everything else
-# is in `crystal/tools/doc.cr`
+# is in `crystal/tools/doc/`
 
 class Crystal::Command
   private def docs
+    output_directory = File.join(".", "docs")
+    canonical_base_url = nil
+
+    OptionParser.parse(options) do |opts|
+      opts.banner = <<-'BANNER'
+        Usage: crystal docs [options]
+
+        Generates API documentation from inline docstrings in all Crystal files inside ./src directory.
+
+        Options:
+        BANNER
+
+      opts.on("--output=DIR", "-o DIR", "Set the output directory (default: #{output_directory})") do |value|
+        output_directory = value
+      end
+
+      opts.on("--canonical-base-url=URL", "-b URL", "Set the canonical base url") do |value|
+        canonical_base_url = value
+      end
+
+      opts.on("-h", "--help", "Show this message") do
+        puts opts
+        exit
+      end
+    end
+
     if options.empty?
       sources = [Compiler::Source.new("require", %(require "./src/**"))]
       included_dirs = [] of String
@@ -20,6 +46,6 @@ class Crystal::Command
     compiler.wants_doc = true
     result = compiler.top_level_semantic sources
 
-    Doc::Generator.new(result.program, included_dirs).run
+    Doc::Generator.new(result.program, included_dirs, output_directory, canonical_base_url).run
   end
 end

@@ -13,7 +13,7 @@ struct ANSI
   end
 end
 
-module IO
+class IO
   def ansi
     ANSI.new self
   end

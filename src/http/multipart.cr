@@ -1,3 +1,4 @@
+require "random/secure"
 require "./multipart/*"
 
 # The `HTTP::Multipart` module contains utilities for parsing MIME multipart
@@ -89,7 +90,7 @@ module HTTP::Multipart
   # HTTP::Multipart.generate_boundary # => "---------------------------dQu6bXHYb4m5zrRC3xPTGwV"
   # ```
   def self.generate_boundary
-    "--------------------------#{SecureRandom.urlsafe_base64(18)}"
+    "--------------------------#{Random::Secure.urlsafe_base64(18)}"
   end
 
   class Error < Exception

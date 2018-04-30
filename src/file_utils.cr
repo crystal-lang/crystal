@@ -102,12 +102,12 @@ module FileUtils
   # ```
   # File.chmod("afile", 0o600)
   # FileUtils.cp("afile", "afile_copy")
-  # File.stat("afile_copy").perm # => 0o600
+  # File.info("afile_copy").permissions # => 0o600
   # ```
   def cp(src_path : String, dest : String)
     File.open(src_path) do |s|
       dest += File::SEPARATOR + File.basename(src_path) if Dir.exists?(dest)
-      File.open(dest, "wb", s.stat.mode) do |d|
+      File.open(dest, "wb", s.info.permissions) do |d|
         IO.copy(s, d)
       end
     end

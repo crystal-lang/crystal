@@ -264,4 +264,50 @@ describe "Semantic: alias" do
       Baz::Bar.baz
       )) { int32 }
   end
+
+  it "finds type through alias (#4645)" do
+    assert_type(%(
+      module FooBar
+        module Foo
+          A = 10
+        end
+
+        module Bar
+          include Foo
+        end
+      end
+
+      class Baz
+        alias Bar = FooBar::Bar
+
+        def test
+          Bar::A
+        end
+      end
+
+      Baz.new.test
+      )) { int32 }
+  end
+
+  it "doesn't find type parameter in alias (#3502)" do
+    assert_error %(
+      class A(T)
+        alias B = A(T)
+      end
+      ),
+      "undefined constant T"
+  end
+
+  it "doesn't crash by infinite recursion against type alias and generics (#5329)" do
+    assert_error %(
+      class Foo(T)
+        def initialize(@foo : T)
+        end
+      end
+
+      alias Bar = Foo(Bar | Int32)
+
+      Foo(Bar).new(Foo.new(1).as(Bar))
+    ), "can't cast Foo(Int32) to Bar"
+  end
 end

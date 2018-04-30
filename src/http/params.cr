@@ -58,7 +58,7 @@ module HTTP
           if key
             yield key.not_nil!, value
           else
-            yield value, ""
+            yield value, "" unless value.empty?
           end
 
           key = nil
@@ -72,13 +72,16 @@ module HTTP
       if key
         yield key.not_nil!, buffer.to_s
       else
-        yield buffer.to_s, ""
+        yield buffer.to_s, "" unless buffer.empty?
       end
     end
 
-    # Returns the given key value pairs as a
-    # url-encoded HTTP form/query.
-    def self.encode(hash : Hash(String, _))
+    # Returns the given key value pairs as a url-encoded HTTP form/query.
+    #
+    # ```
+    # HTTP::Params.encode({"foo" => "bar", "baz" => "qux"}) # => "foo=bar&baz=qux"
+    # ```
+    def self.encode(hash : Hash(String, String))
       build do |builder|
         hash.each do |key, value|
           builder.add key, value
@@ -86,7 +89,11 @@ module HTTP
       end
     end
 
-    # ditto
+    # Returns the given key value pairs as a url-encoded HTTP form/query.
+    #
+    # ```
+    # HTTP::Params.encode({foo: "bar", baz: "qux"}) # => "foo=bar&baz=qux"
+    # ```
     def self.encode(named_tuple : NamedTuple)
       build do |builder|
         named_tuple.each do |key, value|

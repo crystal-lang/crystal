@@ -620,6 +620,6 @@ describe "expand" do
     end
     CODE
 
-    assert_expand_simple code, original: "foo(hello)", expanded: expanded + "\n"
+    assert_expand_simple code, original: "foo(hello)", expanded: expanded + '\n'
   end
 end

@@ -54,7 +54,7 @@ class Markdown::HTMLRenderer
     if language.nil?
       @io << "<pre><code>"
     else
-      @io << "<pre><code class='language-#{language}'>"
+      @io << %(<pre><code class="language-#{language}">)
     end
   end
 

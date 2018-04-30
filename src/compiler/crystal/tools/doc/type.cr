@@ -134,12 +134,12 @@ class Crystal::Doc::Type
   end
 
   def alias_definition
-    alias_def = @type.as(AliasType).aliased_type
+    alias_def = @type.as?(AliasType).try(&.aliased_type)
     alias_def
   end
 
   def formatted_alias_definition
-    type_to_html alias_definition
+    type_to_html alias_definition.as(Crystal::Type)
   end
 
   @types : Array(Type)?
@@ -502,7 +502,7 @@ class Crystal::Doc::Type
   end
 
   def node_to_html(node : Generic, io, links = true)
-    match = lookup_path(node.name)
+    match = lookup_path(node.name.as(Path))
     if match
       if match.must_be_included?
         if links
@@ -520,11 +520,11 @@ class Crystal::Doc::Type
     else
       io << node.name
     end
-    io << "("
+    io << '('
     node.type_vars.join(", ", io) do |type_var|
       node_to_html type_var, io, links: links
     end
-    io << ")"
+    io << ')'
   end
 
   def node_to_html(node : ProcNotation, io, links = true)
@@ -557,12 +557,12 @@ class Crystal::Doc::Type
 
   private def nilable_type_to_html(node : ASTNode, io, links)
     node_to_html node, io, links: links
-    io << "?"
+    io << '?'
   end
 
   private def nilable_type_to_html(type : Crystal::Type, io, text, links)
     type_to_html(type, io, text, links: links)
-    io << "?"
+    io << '?'
   end
 
   def nil_type?(node : ASTNode)
@@ -603,7 +603,7 @@ class Crystal::Doc::Type
       type_to_html union_type, io, text, links: links
     end
 
-    io << ")" if has_type_splat
+    io << ')' if has_type_splat
   end
 
   def type_to_html(type : Crystal::ProcInstanceType, io, text = nil, links = true)
@@ -616,15 +616,15 @@ class Crystal::Doc::Type
   end
 
   def type_to_html(type : Crystal::TupleInstanceType, io, text = nil, links = true)
-    io << "{"
+    io << '{'
     type.tuple_types.join(", ", io) do |tuple_type|
       type_to_html tuple_type, io, links: links
     end
-    io << "}"
+    io << '}'
   end
 
   def type_to_html(type : Crystal::NamedTupleInstanceType, io, text = nil, links = true)
-    io << "{"
+    io << '{'
     type.entries.join(", ", io) do |entry|
       if Symbol.needs_quotes?(entry.name)
         entry.name.inspect(io)
@@ -634,7 +634,7 @@ class Crystal::Doc::Type
       io << ": "
       type_to_html entry.type, io, links: links
     end
-    io << "}"
+    io << '}'
   end
 
   def type_to_html(type : Crystal::GenericInstanceType, io, text = nil, links = true)
@@ -772,4 +772,66 @@ class Crystal::Doc::Type
   end
 
   delegate to_s, inspect, to: @type
+
+  def to_json(builder : JSON::Builder)
+    builder.object do
+      builder.field "html_id", html_id
+      builder.field "path", path
+      builder.field "kind", kind
+      builder.field "full_name", full_name
+      builder.field "name", name
+      builder.field "abstract", abstract?
+      builder.field "superclass" { superclass.try(&.to_json_simple(builder)) || builder.scalar(nil) }
+      builder.field "ancestors" do
+        builder.array do
+          ancestors.each &.to_json_simple(builder)
+        end
+      end
+      builder.field "locations", locations
+      builder.field "repository_name", repository_name
+      builder.field "program", program?
+      builder.field "enum", enum?
+      builder.field "alias", alias?
+      builder.field "aliased", alias_definition.to_s
+      builder.field "const", const?
+      builder.field "constants", constants
+      builder.field "included_modules" do
+        builder.array do
+          included_modules.each &.to_json_simple(builder)
+        end
+      end
+      builder.field "extended_modules" do
+        builder.array do
+          extended_modules.each &.to_json_simple(builder)
+        end
+      end
+      builder.field "subclasses" do
+        builder.array do
+          subclasses.each &.to_json_simple(builder)
+        end
+      end
+      builder.field "including_types" do
+        builder.array do
+          including_types.each &.to_json_simple(builder)
+        end
+      end
+      builder.field "namespace" { namespace.try(&.to_json_simple(builder)) || builder.scalar(nil) }
+      builder.field "doc", doc
+      builder.field "summary", formatted_summary
+      builder.field "class_methods", class_methods
+      builder.field "constructors", constructors
+      builder.field "instance_methods", instance_methods
+      builder.field "macros", macros
+      builder.field "types", types
+    end
+  end
+
+  def to_json_simple(builder : JSON::Builder)
+    builder.object do
+      builder.field "html_id", html_id
+      builder.field "kind", kind
+      builder.field "full_name", full_name
+      builder.field "name", name
+    end
+  end
 end

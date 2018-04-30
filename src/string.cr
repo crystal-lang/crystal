@@ -1,5 +1,4 @@
 require "c/stdlib"
-require "c/stdio"
 require "c/string"
 
 # A `String` represents an immutable sequence of UTF-8 characters.
@@ -121,7 +120,7 @@ require "c/string"
 # "\377" # string with one byte with value 255
 #
 # # Hexadecimal escape sequences
-# "\x45" # # => "A"
+# "\x41" # # => "A"
 # "\xFF" # string with one byte with value 255
 # ```
 #
@@ -837,7 +836,7 @@ class String
     index += size if index < 0
 
     byte_index = char_index_to_byte_index(index)
-    if byte_index
+    if byte_index && byte_index < @bytesize
       reader = Char::Reader.new(self, pos: byte_index)
       return reader.current_char
     else
@@ -1590,6 +1589,11 @@ class String
   # ```
   def tr(from : String, to : String)
     return delete(from) if to.empty?
+
+    if from.bytesize == 1
+      return gsub(from.unsafe_byte_at(0).unsafe_chr, to[0])
+    end
+
     multi = nil
     table = StaticArray(Int32, 256).new(-1)
     reader = Char::Reader.new(to)
@@ -1853,7 +1857,7 @@ class String
   end
 
   private def sub_index(index, replacement)
-    index += size + 1 if index < 0
+    index += size if index < 0
 
     byte_index = char_index_to_byte_index(index)
     raise IndexError.new unless byte_index
@@ -2005,10 +2009,31 @@ class String
   # "hello world".gsub('o', 'a') # => "hella warld"
   # ```
   def gsub(char : Char, replacement)
+    if replacement.is_a?(String) && replacement.bytesize == 1
+      return gsub(char, replacement.unsafe_byte_at(0).unsafe_chr)
+    end
+
     if includes?(char)
+      if replacement.is_a?(Char) && char.ascii? && replacement.ascii?
+        return gsub_ascii_char(char, replacement)
+      end
+
       gsub { |my_char| char == my_char ? replacement : my_char }
     else
       self
+    end
+  end
+
+  private def gsub_ascii_char(char, replacement)
+    String.new(bytesize) do |buffer|
+      to_slice.each_with_index do |byte, i|
+        if char.ord == byte
+          buffer[i] = replacement.ord.to_u8
+        else
+          buffer[i] = byte
+        end
+      end
+      {bytesize, bytesize}
     end
   end
 
@@ -2094,7 +2119,11 @@ class String
   # "hello yellow".gsub("ll", "dd") # => "heddo yeddow"
   # ```
   def gsub(string : String, replacement)
-    gsub(string) { replacement }
+    if string.bytesize == 1
+      gsub(string.unsafe_byte_at(0).unsafe_chr, replacement)
+    else
+      gsub(string) { replacement }
+    end
   end
 
   # Returns a `String` where all occurrences of the given *string* are replaced
@@ -2464,7 +2493,7 @@ class String
   #
   # ```
   # "Developers! " * 4
-  # # => "Developers! Developers! Developers! Developers!"
+  # # => "Developers! Developers! Developers! Developers! "
   # ```
   def *(times : Int)
     raise ArgumentError.new "Negative argument" if times < 0
@@ -2709,16 +2738,17 @@ class String
   end
 
   # ditto
-  def rindex(search : Regex, offset = 0)
+  def rindex(search : Regex, offset = size - 1)
     offset += size if offset < 0
     return nil unless 0 <= offset <= size
 
     match_result = nil
-    self[0, self.size - offset].scan(search) do |match_data|
+    scan(search) do |match_data|
+      break if (index = match_data.begin) && index > offset
       match_result = match_data
     end
 
-    match_result.try &.begin(0)
+    match_result.try &.begin
   end
 
   # Searches separator or pattern (`Regex`) in the string, and returns
@@ -2921,11 +2951,11 @@ class String
     !!index(search)
   end
 
-  # Makes an array by splitting the string on any ASCII whitespace characters
-  # (and removing that whitespace).
+  # Makes an array by splitting the string on any amount of ASCII whitespace
+  # characters (and removing that whitespace).
   #
-  # If *limit* is present, up to *limit* new strings will be created,
-  # with the entire remainder added to the last string.
+  # If *limit* is present, up to *limit* new strings will be created, with the
+  # entire remainder added to the last string.
   #
   # ```
   # old_pond = "
@@ -2944,10 +2974,11 @@ class String
     ary
   end
 
-  # Splits the string after any ASCII whitespace character and yields each part to a block.
+  # Splits the string after any amount of ASCII whitespace characters and yields
+  # each non-whitespace part to a block.
   #
-  # If *limit* is present, up to *limit* new strings will be created,
-  # with the entire remainder added to the last string.
+  # If *limit* is present, up to *limit* new strings will be created, with the
+  # entire remainder added to the last string.
   #
   # ```
   # ary = [] of String
@@ -3022,13 +3053,16 @@ class String
   # If *limit* is present, up to *limit* new strings will be created,
   # with the entire remainder added to the last string.
   #
+  # If *remove_empty* is `true`, any empty strings are removed from the result.
+  #
   # ```
-  # "foo,bar,baz".split(',')    # => ["foo", "bar", "baz"]
-  # "foo,bar,baz".split(',', 2) # => ["foo", "bar,baz"]
+  # "foo,,bar,baz".split(',')                     # => ["foo", "", "bar", "baz"]
+  # "foo,,bar,baz".split(',', remove_empty: true) # => ["foo", "bar", "baz"]
+  # "foo,bar,baz".split(',', 2)                   # => ["foo", "bar,baz"]
   # ```
-  def split(separator : Char, limit = nil)
+  def split(separator : Char, limit = nil, *, remove_empty = false)
     ary = Array(String).new
-    split(separator, limit) do |string|
+    split(separator, limit, remove_empty: remove_empty) do |string|
       ary << string
     end
     ary
@@ -3039,18 +3073,29 @@ class String
   # If *limit* is present, up to *limit* new strings will be created,
   # with the entire remainder added to the last string.
   #
+  # If *remove_empty* is `true`, any empty strings are not yielded.
+  #
   # ```
   # ary = [] of String
   #
-  # "foo,bar,baz".split(',') { |string| ary << string }
+  # "foo,,bar,baz".split(',') { |string| ary << string }
+  # ary # => ["foo", "", "bar", "baz"]
+  # ary.clear
+  #
+  # "foo,,bar,baz".split(',', remove_empty: true) { |string| ary << string }
   # ary # => ["foo", "bar", "baz"]
   # ary.clear
   #
   # "foo,bar,baz".split(',', 2) { |string| ary << string }
   # ary # => ["foo", "bar,baz"]
   # ```
-  def split(separator : Char, limit = nil, &block : String -> _)
-    if empty? || limit && limit <= 1
+  def split(separator : Char, limit = nil, *, remove_empty = false, &block : String -> _)
+    if empty?
+      yield "" unless remove_empty
+      return
+    end
+
+    if limit && limit <= 1
       yield self
       return
     end
@@ -3062,7 +3107,7 @@ class String
     reader.each do |char|
       if char == separator
         piece_bytesize = reader.pos - byte_offset
-        yield String.new(to_unsafe + byte_offset, piece_bytesize)
+        yield String.new(to_unsafe + byte_offset, piece_bytesize) unless remove_empty && piece_bytesize == 0
         yielded += 1
         byte_offset = reader.pos + reader.current_char_width
         break if limit && yielded + 1 == limit
@@ -3070,6 +3115,7 @@ class String
     end
 
     piece_bytesize = bytesize - byte_offset
+    return if remove_empty && piece_bytesize == 0
     yield String.new(to_unsafe + byte_offset, piece_bytesize)
   end
 
@@ -3080,15 +3126,18 @@ class String
   #
   # If *separator* is an empty string (`""`), the string will be separated into one-character strings.
   #
+  # If *remove_empty* is `true`, any empty strings are removed from the result.
+  #
   # ```
   # long_river_name = "Mississippi"
-  # long_river_name.split("ss") # => ["Mi", "i", "ippi"]
-  # long_river_name.split("i")  # => ["M", "ss", "ss", "pp", ""]
-  # long_river_name.split("")   # => ["M", "i", "s", "s", "i", "s", "s", "i", "p", "p", "i"]
+  # long_river_name.split("ss")                    # => ["Mi", "i", "ippi"]
+  # long_river_name.split("i")                     # => ["M", "ss", "ss", "pp", ""]
+  # long_river_name.split("i", remove_empty: true) # => ["M", "ss", "ss", "pp"]
+  # long_river_name.split("")                      # => ["M", "i", "s", "s", "i", "s", "s", "i", "p", "p", "i"]
   # ```
-  def split(separator : String, limit = nil)
+  def split(separator : String, limit = nil, *, remove_empty = false)
     ary = Array(String).new
-    split(separator, limit) do |string|
+    split(separator, limit, remove_empty: remove_empty) do |string|
       ary << string
     end
     ary
@@ -3100,6 +3149,8 @@ class String
   # the final item will contain the remainder of the string.
   #
   # If *separator* is an empty string (`""`), the string will be separated into one-character strings.
+  #
+  # If *remove_empty* is `true`, any empty strings are removed from the result.
   #
   # ```
   # ary = [] of String
@@ -3113,11 +3164,20 @@ class String
   # ary # => ["M", "ss", "ss", "pp", ""]
   # ary.clear
   #
+  # long_river_name.split("i", remove_empty: true) { |s| ary << s }
+  # ary # => ["M", "ss", "ss", "pp"]
+  # ary.clear
+  #
   # long_river_name.split("") { |s| ary << s }
   # ary # => ["M", "i", "s", "s", "i", "s", "s", "i", "p", "p", "i"]
   # ```
-  def split(separator : String, limit = nil, &block : String -> _)
-    if empty? || (limit && limit <= 1)
+  def split(separator : String, limit = nil, *, remove_empty = false, &block : String -> _)
+    if empty?
+      yield "" unless remove_empty
+      return
+    end
+
+    if limit && limit <= 1
       yield self
       return
     end
@@ -3141,7 +3201,9 @@ class String
       if (to_unsafe + i).memcmp(separator.to_unsafe, separator_bytesize) == 0
         piece_bytesize = i - byte_offset
         piece_size = single_byte_optimizable ? piece_bytesize : 0
-        yield String.new(to_unsafe + byte_offset, piece_bytesize, piece_size)
+        unless remove_empty && piece_bytesize == 0
+          yield String.new(to_unsafe + byte_offset, piece_bytesize, piece_size)
+        end
         yielded += 1
         byte_offset = i + separator_bytesize
         i += separator_bytesize - 1
@@ -3151,6 +3213,7 @@ class String
     end
 
     piece_bytesize = bytesize - byte_offset
+    return if remove_empty && piece_bytesize == 0
     piece_size = single_byte_optimizable ? piece_bytesize : 0
     yield String.new(to_unsafe + byte_offset, piece_bytesize, piece_size)
   end
@@ -3161,6 +3224,8 @@ class String
   # the final item will contain the remainder of the string.
   #
   # If *separator* is an empty regex (`//`), the string will be separated into one-character strings.
+  #
+  # If *remove_empty* is `true`, any empty strings are removed from the result.
   #
   # ```
   # ary = [] of String
@@ -3173,9 +3238,9 @@ class String
   # long_river_name.split(//) { |s| ary << s }
   # ary # => ["M", "i", "s", "s", "i", "s", "s", "i", "p", "p", "i"]
   # ```
-  def split(separator : Regex, limit = nil)
+  def split(separator : Regex, limit = nil, *, remove_empty = false)
     ary = Array(String).new
-    split(separator, limit) do |string|
+    split(separator, limit, remove_empty: remove_empty) do |string|
       ary << string
     end
     ary
@@ -3188,13 +3253,20 @@ class String
   #
   # If *separator* is an empty regex (`//`), the string will be separated into one-character strings.
   #
+  # If *remove_empty* is `true`, any empty strings are removed from the result.
+  #
   # ```
   # long_river_name = "Mississippi"
   # long_river_name.split(/s+/) # => ["Mi", "i", "ippi"]
   # long_river_name.split(//)   # => ["M", "i", "s", "s", "i", "s", "s", "i", "p", "p", "i"]
   # ```
-  def split(separator : Regex, limit = nil, &block : String -> _)
-    if empty? || (limit && limit <= 1)
+  def split(separator : Regex, limit = nil, *, remove_empty = false, &block : String -> _)
+    if empty?
+      yield "" unless remove_empty
+      return
+    end
+
+    if limit && limit <= 1
       yield self
       return
     end
@@ -3219,7 +3291,7 @@ class String
       else
         slice_size = index - slice_offset
 
-        yield byte_slice(slice_offset, slice_size)
+        yield byte_slice(slice_offset, slice_size) unless remove_empty && slice_size == 0
         count += 1
 
         1.upto(match.size) do |i|
@@ -3235,7 +3307,7 @@ class String
       break if match_offset >= bytesize
     end
 
-    yield byte_slice(slice_offset)
+    yield byte_slice(slice_offset) unless remove_empty && slice_offset == bytesize
   end
 
   private def split_by_empty_separator(limit, &block : String -> _)
@@ -3757,58 +3829,107 @@ class String
     Array.new(bytesize) { |i| to_unsafe[i] }
   end
 
-  def inspect(io)
+  # Pretty prints `self` into the given printer.
+  def pretty_print(pp : PrettyPrint) : Nil
+    printed_bytesize = 0
+    pp.group do
+      split('\n') do |part|
+        printed_bytesize += part.bytesize
+        if printed_bytesize != bytesize
+          printed_bytesize += 1 # == "\n".bytesize
+          pp.text("\"")
+          pp.text(part.inspect_unquoted)
+          pp.text("\\n\"")
+          break if printed_bytesize == bytesize
+          pp.text(" +")
+          pp.breakable
+        else
+          pp.text(part.inspect)
+        end
+      end
+    end
+  end
+
+  # Returns a representation of `self` using character escapes for special characters and wrapped in quotes.
+  #
+  # ```
+  # "\u{1f48e} - à la carte\n".inspect # => %("\u{1F48E} - à la carte\\n")
+  # ```
+  def inspect : String
+    super
+  end
+
+  # Appends `self` to the given `IO` object using character escapes for special characters and wrapped in double quotes.
+  def inspect(io : IO) : Nil
     dump_or_inspect(io) do |char, error|
       inspect_char(char, error, io)
     end
   end
 
-  def pretty_print(pp)
-    pp.text(inspect)
-  end
-
-  def inspect_unquoted
+  # Returns a representation of `self` using character escapes for special characters but not wrapped in quotes.
+  #
+  # ```
+  # "\u{1f48e} - à la carte\n".inspect_unquoted # => %(\u{1F48E} - à la carte\\n)
+  # ```
+  def inspect_unquoted : String
     String.build do |io|
       inspect_unquoted(io)
     end
   end
 
-  def inspect_unquoted(io)
+  # Appends `self` to the given `IO` object using character escapes for special characters but not wrapped in quotes.
+  def inspect_unquoted(io : IO) : Nil
     dump_or_inspect_unquoted(io) do |char, error|
       inspect_char(char, error, io)
     end
   end
 
-  def dump
+  # Returns a representation of `self` using character escapes for special characters
+  # and and non-ascii characters (unicode codepoints > 128), wrapped in quotes.
+  #
+  # ```
+  # "\u{1f48e} - à la carte\n".dump # => %("\\u{1F48E} - \\u00E0 la carte\\n")
+  # ```
+  def dump : String
     String.build do |io|
       dump io
     end
   end
 
-  def dump(io)
+  # Appends `self` to the given `IO` object using character escapes for special characters
+  # and and non-ascii characters (unicode codepoints > 128), wrapped in quotes.
+  def dump(io : IO) : Nil
     dump_or_inspect(io) do |char, error|
       dump_char(char, error, io)
     end
   end
 
-  def dump_unquoted
+  # Returns a representation of `self` using character escapes for special characters
+  # and and non-ascii characters (unicode codepoints > 128), but not wrapped in quotes.
+  #
+  # ```
+  # "\u{1f48e} - à la carte\n".dump_unquoted # => %(\\u{1F48E} - \\u00E0 la carte\\n)
+  # ```
+  def dump_unquoted : String
     String.build do |io|
       dump_unquoted(io)
     end
   end
 
-  def dump_unquoted(io)
+  # Appends `self` to the given `IO` object using character escapes for special characters
+  # and and non-ascii characters (unicode codepoints > 128), but not wrapped in quotes.
+  def dump_unquoted(io : IO) : Nil
     dump_or_inspect_unquoted(io) do |char, error|
       dump_char(char, error, io)
     end
   end
 
   private def dump_or_inspect(io)
-    io << "\""
+    io << '"'
     dump_or_inspect_unquoted(io) do |char, error|
       yield char, error
     end
-    io << "\""
+    io << '"'
   end
 
   private def dump_or_inspect_unquoted(io)
@@ -3855,7 +3976,7 @@ class String
   end
 
   private def dump_char(char, error, io)
-    dump_or_inspect_char(char, error, io) do
+    dump_or_inspect_char char, error, io do
       char.ascii_control? || char.ord >= 0x80
     end
   end
@@ -3870,19 +3991,20 @@ class String
     end
   end
 
-  private def dump_hex(error, io)
+  private def dump_hex(char, io)
     io << "\\x"
-    io << "0" if error < 16
-    error.to_s(16, io, upcase: true)
+    io << '0' if char < 0x0F
+    char.to_s(16, io, upcase: true)
   end
 
   private def dump_unicode(char, io)
     io << "\\u"
-    io << "0" if char.ord < 4096
-    io << "0" if char.ord < 256
-    io << "0" if char.ord < 16
-    char.ord.to_s(16, io)
-    io << ""
+    io << '{' if char.ord > 0xFFFF
+    io << '0' if char.ord < 0x1000
+    io << '0' if char.ord < 0x0100
+    io << '0' if char.ord < 0x0010
+    char.ord.to_s(16, io, upcase: true)
+    io << '}' if char.ord > 0xFFFF
   end
 
   def starts_with?(str : String)
@@ -3896,6 +4018,10 @@ class String
     end
 
     false
+  end
+
+  def starts_with?(re : Regex)
+    !!($~ = re.match_at_byte_index(self, 0, Regex::Options::ANCHORED))
   end
 
   def ends_with?(str : String)
@@ -3920,6 +4046,10 @@ class String
     true
   end
 
+  def ends_with?(re : Regex)
+    !!($~ = /#{re}\z/.match(self))
+  end
+
   # Interpolates *other* into the string using `Kernel#sprintf`.
   #
   # ```
@@ -3929,15 +4059,9 @@ class String
     sprintf self, other
   end
 
-  # Returns a hash based on this string’s size and content.
-  #
-  # See also: `Object#hash`.
-  def hash
-    h = 0
-    each_byte do |c|
-      h = 31 * h + c
-    end
-    h
+  # See `Object#hash(hasher)`
+  def hash(hasher)
+    hasher.string(self)
   end
 
   # Returns the number of unicode codepoints in this string.
@@ -4207,5 +4331,4 @@ class String
   end
 end
 
-require "./string/formatter"
-require "./string/builder"
+require "./string/*"

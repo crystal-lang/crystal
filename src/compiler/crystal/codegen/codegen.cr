@@ -8,9 +8,9 @@ require "./llvm_builder_helper"
 module Crystal
   MAIN_NAME          = "__crystal_main"
   RAISE_NAME         = "__crystal_raise"
-  MALLOC_NAME        = "__crystal_malloc"
-  MALLOC_ATOMIC_NAME = "__crystal_malloc_atomic"
-  REALLOC_NAME       = "__crystal_realloc"
+  MALLOC_NAME        = "__crystal_malloc64"
+  MALLOC_ATOMIC_NAME = "__crystal_malloc_atomic64"
+  REALLOC_NAME       = "__crystal_realloc64"
   PERSONALITY_NAME   = "__crystal_personality"
   GET_EXCEPTION_NAME = "__crystal_get_exception"
 
@@ -60,9 +60,9 @@ module Crystal
       end
     end
 
-    def codegen(node, single_module = false, debug = Debug::Default, expose_crystal_main = true)
-      visitor = CodeGenVisitor.new self, node, single_module: single_module, debug: debug, expose_crystal_main: expose_crystal_main
-      node.accept visitor
+    def codegen(node, single_module = false, debug = Debug::Default)
+      visitor = CodeGenVisitor.new self, node, single_module: single_module, debug: debug
+      visitor.accept node
       visitor.process_finished_hooks
       visitor.finish
 
@@ -131,15 +131,17 @@ module Crystal
     @rescue_block : LLVM::BasicBlock?
     @malloc_fun : LLVM::Function?
     @malloc_atomic_fun : LLVM::Function?
+    @c_malloc_fun : LLVM::Function?
     @sret_value : LLVM::Value?
     @cant_pass_closure_to_c_exception_call : Call?
     @realloc_fun : LLVM::Function?
+    @c_realloc_fun : LLVM::Function?
     @main_llvm_context : LLVM::Context
     @main_llvm_typer : LLVMTyper
     @main_module_info : ModuleInfo
     @main_builder : CrystalLLVMBuilder
 
-    def initialize(@program : Program, @node : ASTNode, single_module = false, @debug = Debug::Default, expose_crystal_main = true)
+    def initialize(@program : Program, @node : ASTNode, single_module = false, @debug = Debug::Default)
       @single_module = !!single_module
       @abi = @program.target_machine.abi
       @llvm_context = LLVM::Context.new
@@ -153,7 +155,6 @@ module Crystal
       @main_ret_type = node.type? || @program.nil_type
       ret_type = @llvm_typer.llvm_return_type(@main_ret_type)
       @main = @llvm_mod.functions.add(MAIN_NAME, [llvm_context.int32, llvm_context.void_pointer.pointer], ret_type)
-      @main.linkage = LLVM::Linkage::Internal unless expose_crystal_main
 
       emit_main_def_debug_metadata(@main, "??") unless @debug.none?
 
@@ -380,7 +381,7 @@ module Crystal
 
           emit_vars_debug_info(vars) if @debug.variables?
         end
-        node.node.accept self
+        accept node.node
         @last = llvm_nil
       end
 
@@ -421,10 +422,18 @@ module Crystal
         @last = int64(node.value.to_i64)
       when :u64
         @last = int64(node.value.to_u64)
+      when :i128
+        # TODO: implement String#to_i128 and use it
+        @last = int128(node.value.to_i64)
+      when :u128
+        # TODO: implement String#to_u128 and use it
+        @last = int128(node.value.to_u64)
       when :f32
         @last = llvm_context.float.const_float(node.value)
       when :f64
         @last = llvm_context.double.const_double(node.value)
+      else
+        node.raise "Bug: unhandled number kind: #{node.kind}"
       end
     end
 
@@ -441,7 +450,7 @@ module Crystal
         type = node.type.as(TupleInstanceType)
         @last = allocate_tuple(type) do |tuple_type, i|
           exp = node.elements[i]
-          exp.accept self
+          accept exp
           {exp.type, @last}
         end
       end
@@ -453,7 +462,7 @@ module Crystal
         type = node.type.as(NamedTupleInstanceType)
         struct_type = alloca llvm_type(type)
         node.entries.each do |entry|
-          entry.value.accept self
+          accept entry.value
           index = type.name_index(entry.key).not_nil!
           assign aggregate_index(struct_type, index), type.entries[index].type, entry.value.type, @last
         end
@@ -481,8 +490,13 @@ module Crystal
                 const = node_exp.target_const.not_nil!
                 read_const_pointer(const)
               when ReadInstanceVar
-                node_exp.obj.accept self
+                accept node_exp.obj
                 instance_var_ptr (node_exp.obj.type), node_exp.name, @last
+              when Call
+                # lib external var
+                extern = node_exp.dependencies.first.as(External)
+                var = get_external_var(extern)
+                check_c_fun extern.type, var
               else
                 raise "BUG: #{node}"
               end
@@ -623,7 +637,9 @@ module Crystal
     end
 
     def visit(node : ClassDef)
-      node.hook_expansions.try &.each &.accept self
+      node.hook_expansions.try &.each do |hook|
+        accept hook
+      end
       accept node.body
       @last = llvm_nil
       false
@@ -637,7 +653,7 @@ module Crystal
 
     def visit(node : LibDef)
       @in_lib = true
-      node.body.accept self
+      accept node.body
       @in_lib = false
       @last = llvm_nil
       false
@@ -651,7 +667,7 @@ module Crystal
     def visit(node : EnumDef)
       node.members.each do |member|
         if member.is_a?(Assign)
-          member.accept self
+          accept member
         end
       end
 
@@ -690,14 +706,18 @@ module Crystal
     end
 
     def visit(node : Include)
-      node.hook_expansions.try &.each &.accept self
+      node.hook_expansions.try &.each do |hook|
+        accept hook
+      end
 
       @last = llvm_nil
       false
     end
 
     def visit(node : Extend)
-      node.hook_expansions.try &.each &.accept self
+      node.hook_expansions.try &.each do |hook|
+        accept hook
+      end
 
       @last = llvm_nil
       false
@@ -705,8 +725,8 @@ module Crystal
 
     def visit(node : If)
       if node.truthy?
-        node.cond.accept self
-        node.then.accept self
+        accept node.cond
+        accept node.then
         if @needs_value && (node_type = node.type?) && (then_type = node.then.type?)
           @last = upcast(@last, node_type, then_type)
         end
@@ -714,8 +734,8 @@ module Crystal
       end
 
       if node.falsey?
-        node.cond.accept self
-        node.else.accept self
+        accept node.cond
+        accept node.else
         if @needs_value && (node_type = node.type?) && (else_type = node.else.type?)
           @last = upcast(@last, node_type, else_type)
         end
@@ -1292,7 +1312,9 @@ module Crystal
     end
 
     def visit(node : Def)
-      node.hook_expansions.try &.each &.accept self
+      node.hook_expansions.try &.each do |hook|
+        accept hook
+      end
 
       @last = llvm_nil
       false
@@ -1398,7 +1420,7 @@ module Crystal
             exp_value = exp_values.first[0]
             exp_type.tuple_types.each_with_index do |tuple_type, i|
               arg = block.args[i]?
-              if arg
+              if arg && arg.name != "_"
                 t_type = tuple_type
                 t_value = codegen_tuple_indexer(exp_type, exp_value, i)
                 block_var = block_context.vars[arg.name]
@@ -1407,7 +1429,7 @@ module Crystal
             end
           else
             exp_values.each_with_index do |(exp_value, exp_type), i|
-              if arg = block.args[i]?
+              if (arg = block.args[i]?) && arg.name != "_"
                 block_var = block_context.vars[arg.name]
                 assign block_var.pointer, block_var.type, exp_type, exp_value
               end
@@ -1812,7 +1834,7 @@ module Crystal
           context.vars["self"] = LLVMVar.new(type_ptr, real_type)
           alloca_vars init.meta_vars
 
-          init.value.accept self
+          accept init.value
 
           ivar_ptr = instance_var_ptr real_type, init.name, type_ptr
           assign ivar_ptr, ivar.type, init.value.type, @last
@@ -1821,48 +1843,47 @@ module Crystal
     end
 
     def malloc(type)
-      generic_malloc(type) { malloc_fun }
+      generic_malloc(type) { crystal_malloc_fun }
     end
 
     def malloc_atomic(type)
-      generic_malloc(type) { malloc_atomic_fun }
+      generic_malloc(type) { crystal_malloc_atomic_fun }
     end
 
     def generic_malloc(type)
+      size = type.size
+
       if malloc_fun = yield
-        size = trunc(type.size, llvm_context.int32)
         pointer = call malloc_fun, size
-        bit_cast pointer, type.pointer
       else
-        builder.malloc type
+        pointer = call_c_malloc size
       end
+
+      bit_cast pointer, type.pointer
     end
 
     def array_malloc(type, count)
-      generic_array_malloc(type, count) { malloc_fun }
+      generic_array_malloc(type, count) { crystal_malloc_fun }
     end
 
     def array_malloc_atomic(type, count)
-      generic_array_malloc(type, count) { malloc_atomic_fun }
+      generic_array_malloc(type, count) { crystal_malloc_atomic_fun }
     end
 
     def generic_array_malloc(type, count)
-      size = trunc(type.size, llvm_context.int32)
-      count = trunc(count, llvm_context.int32)
-      size = builder.mul size, count
+      size = builder.mul type.size, count
+
       if malloc_fun = yield
         pointer = call malloc_fun, size
-        memset pointer, int8(0), size
-        bit_cast pointer, type.pointer
       else
-        pointer = builder.array_malloc(type, count)
-        void_pointer = bit_cast pointer, llvm_context.void_pointer
-        memset void_pointer, int8(0), size
-        pointer
+        pointer = call_c_malloc size
       end
+
+      memset pointer, int8(0), size
+      bit_cast pointer, type.pointer
     end
 
-    def malloc_fun
+    def crystal_malloc_fun
       @malloc_fun ||= @main_mod.functions[MALLOC_NAME]?
       if malloc_fun = @malloc_fun
         check_main_fun MALLOC_NAME, malloc_fun
@@ -1871,13 +1892,54 @@ module Crystal
       end
     end
 
-    def malloc_atomic_fun
+    def crystal_malloc_atomic_fun
       @malloc_atomic_fun ||= @main_mod.functions[MALLOC_ATOMIC_NAME]?
       if malloc_fun = @malloc_atomic_fun
         check_main_fun MALLOC_ATOMIC_NAME, malloc_fun
       else
         nil
       end
+    end
+
+    def crystal_realloc_fun
+      @realloc_fun ||= @main_mod.functions[REALLOC_NAME]?
+      if realloc_fun = @realloc_fun
+        check_main_fun REALLOC_NAME, realloc_fun
+      else
+        nil
+      end
+    end
+
+    # We only use C's malloc in tests that don't require the prelude,
+    # so they don't require the GC. Outside tests these are not used,
+    # and __crystal_* functions are invoked instead.
+
+    def call_c_malloc(size)
+      size = trunc(size, llvm_context.int32) unless @program.bits64?
+      call c_malloc_fun, size
+    end
+
+    def c_malloc_fun
+      malloc_fun = @c_malloc_fun = @main_mod.functions["malloc"]? || begin
+        size = @program.bits64? ? @main_llvm_context.int64 : @main_llvm_context.int32
+        @main_mod.functions.add("malloc", ([size]), @main_llvm_context.void_pointer)
+      end
+
+      check_main_fun "malloc", malloc_fun
+    end
+
+    def call_c_realloc(buffer, size)
+      size = trunc(size, llvm_context.int32) unless @program.bits64?
+      call c_realloc_fun, [buffer, size]
+    end
+
+    def c_realloc_fun
+      realloc_fun = @c_realloc_fun = @main_mod.functions["realloc"]? || begin
+        size = @program.bits64? ? @main_llvm_context.int64 : @main_llvm_context.int32
+        @main_mod.functions.add("realloc", ([@main_llvm_context.void_pointer, size]), @main_llvm_context.void_pointer)
+      end
+
+      check_main_fun "realloc", realloc_fun
     end
 
     def memset(pointer, value, size)
@@ -1890,13 +1952,10 @@ module Crystal
     end
 
     def realloc(buffer, size)
-      @realloc_fun ||= @main_mod.functions[REALLOC_NAME]?
-      if realloc_fun = @realloc_fun
-        realloc_fun = check_main_fun REALLOC_NAME, realloc_fun
-        size = trunc(size, llvm_context.int32)
+      if realloc_fun = crystal_realloc_fun
         call realloc_fun, [buffer, size]
       else
-        call @program.realloc(@llvm_mod, llvm_context), [buffer, size]
+        call_c_realloc buffer, size
       end
     end
 
@@ -1998,14 +2057,15 @@ module Crystal
 
   def self.safe_mangling(program, name)
     if program.has_flag?("windows")
-      name.gsub do |char|
-        case char
-        when '<', '>', '(', ')', '*', ':', ',', '#', '@', ' '
-          "."
-        when '+'
-          ".."
-        else
-          char
+      String.build do |str|
+        name.each_char do |char|
+          if char.ascii_alphanumeric? || char == '_'
+            str << char
+          else
+            str << '.'
+            char.ord.to_s(16, str, upcase: true)
+            str << '.'
+          end
         end
       end
     else
@@ -2014,10 +2074,6 @@ module Crystal
   end
 
   class Program
-    def sprintf(llvm_mod, llvm_context)
-      llvm_mod.functions["sprintf"]? || llvm_mod.functions.add("sprintf", [llvm_context.void_pointer], llvm_context.int32, true)
-    end
-
     def printf(llvm_mod, llvm_context)
       llvm_mod.functions["printf"]? || llvm_mod.functions.add("printf", [llvm_context.void_pointer], llvm_context.int32, true)
     end

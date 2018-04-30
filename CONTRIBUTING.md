@@ -81,7 +81,7 @@ The [standard library documentation](https://crystal-lang.org/api/) is on the co
 There is a version updated with every push to the master branch [here](https://crystal-lang.org/api/master/).
 It uses a subset of [Markdown](http://daringfireball.net/projects/markdown/). You can [use Ruby as a source
 of inspiration](https://twitter.com/yukihiro_matz/status/549317901002342400) whenever applicable. To generate
-the docs execute `make doc`. Please follow the guidelines described in our
+the docs execute `make docs`. Please follow the guidelines described in our
 [language documentation](https://crystal-lang.org/docs/conventions/documenting_code.html), like the use of the third person.
 
 ### The standard library

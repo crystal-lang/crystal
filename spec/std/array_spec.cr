@@ -354,18 +354,11 @@ describe "Array" do
     a.should eq([1, nil, 2, nil, 3])
   end
 
-  describe "compact!" do
-    it "returns true if removed" do
-      a = [1, nil, 2, nil, 3]
-      b = a.compact!.should be_true
-      a.should eq([1, 2, 3])
-    end
-
-    it "returns false if not removed" do
-      a = [1]
-      b = a.compact!.should be_false
-      a.should eq([1])
-    end
+  it "does compact!" do
+    a = [1, nil, 2, nil, 3]
+    b = a.compact!
+    b.should eq([1, 2, 3])
+    b.should be(a)
   end
 
   describe "concat" do
@@ -1307,28 +1300,12 @@ describe "Array" do
     ary2.should be(ary1)
   end
 
-  it "returns nil when using select! and no changes were made" do
-    ary1 = [1, 2, 3, 4, 5]
-
-    ary2 = ary1.select! { true }
-    ary2.should eq(nil)
-    ary1.should eq([1, 2, 3, 4, 5])
-  end
-
   it "rejects!" do
     ary1 = [1, 2, 3, 4, 5]
 
     ary2 = ary1.reject! { |elem| elem % 2 == 0 }
     ary2.should eq([1, 3, 5])
     ary2.should be(ary1)
-  end
-
-  it "returns nil when using reject! and no changes were made" do
-    ary1 = [1, 2, 3, 4, 5]
-
-    ary2 = ary1.reject! { false }
-    ary2.should eq(nil)
-    ary1.should eq([1, 2, 3, 4, 5])
   end
 
   it "does map_with_index" do

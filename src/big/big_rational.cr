@@ -1,12 +1,10 @@
-require "big"
-
 # Rational numbers are represented as the quotient of arbitrarily large
 # numerators and denominators. Rationals are canonicalized such that the
 # denominator and the numerator have no common factors, and that the
 # denominator is positive. Zero has the unique representation 0/1.
 #
 # ```
-# require "big_rational"
+# require "big"
 #
 # r = BigRational.new(7.to_big_i, 3.to_big_i)
 # r.to_s # => "7/3"
@@ -161,9 +159,8 @@ struct BigRational < Number
     BigRational.new { |mpq| LibGMP.mpq_abs(mpq, self) }
   end
 
-  def hash
-    to_f64.hash
-  end
+  # TODO: improve this
+  def_hash to_f64
 
   # Returns the `Float64` representing this rational.
   def to_f
@@ -227,7 +224,7 @@ struct BigRational < Number
   end
 
   private def check_division_by_zero(value)
-    raise DivisionByZero.new if value == 0
+    raise DivisionByZeroError.new if value == 0
   end
 end
 
@@ -270,5 +267,29 @@ struct Float
 
   def <=>(other : BigRational)
     -(other <=> self)
+  end
+end
+
+module Math
+  def sqrt(value : BigRational)
+    sqrt(value.to_big_f)
+  end
+end
+
+# :nodoc:
+struct Crystal::Hasher
+  private HASH_MODULUS_RAT_P = BigRational.new((1_u64 << HASH_BITS) - 1)
+  private HASH_MODULUS_RAT_N = -BigRational.new((1_u64 << HASH_BITS) - 1)
+
+  def float(value : BigRational)
+    rem = value
+    if value >= HASH_MODULUS_RAT_P || value <= HASH_MODULUS_RAT_N
+      num = value.numerator
+      denom = value.denominator
+      div = num.tdiv(denom)
+      floor = div.tdiv(HASH_MODULUS)
+      rem -= floor * HASH_MODULUS
+    end
+    rem.to_big_f.hash
   end
 end

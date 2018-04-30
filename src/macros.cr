@@ -100,7 +100,7 @@ macro pp(*exps)
     %prefix = "#{{{ exp.stringify }}} # => "
     ::print %prefix
     %object = {{exp}}
-    PrettyPrint.format(%object, STDOUT, width: 80 - %prefix.size, indent: %prefix.size)
+    PrettyPrint.format(%object, STDOUT, width: 80, indent: %prefix.size)
     ::puts
     %object
   {% else %}
@@ -112,7 +112,7 @@ macro pp(*exps)
           %prefix = "#{%names[{{i}}].ljust(%max_size)} # => "
           ::print %prefix
           %object = {{exp}}
-          PrettyPrint.format(%object, STDOUT, width: 80 - %prefix.size, indent: %prefix.size)
+          PrettyPrint.format(%object, STDOUT, width: 80, indent: %prefix.size)
           ::puts
           %object
         end,

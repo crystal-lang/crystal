@@ -541,7 +541,7 @@ class Array(T)
     compact_map &.itself
   end
 
-  # Removes all `nil` elements from `self`.
+  # Removes all `nil` elements from `self` and returns `self`.
   #
   # ```
   # ary = ["a", nil, "b", nil, "c"]
@@ -549,7 +549,7 @@ class Array(T)
   # ary # => ["a", "b", "c"]
   # ```
   def compact!
-    !!(reject! &.nil?)
+    reject! &.nil?
   end
 
   # Appends the elements of *other* to `self`, and returns `self`.
@@ -888,7 +888,7 @@ class Array(T)
   end
 
   # Modifies `self`, keeping only the elements in the collection for which the
-  # passed block returns `true`. Returns `nil` if no changes were made.
+  # passed block returns `true`. Returns `self`.
   #
   # See also: `Array#select`.
   def select!
@@ -896,11 +896,12 @@ class Array(T)
   end
 
   # Modifies `self`, deleting the elements in the collection for which the
-  # passed block returns `true`. Returns `nil` if no changes were made.
+  # passed block returns `true`. Returns `self`.
   #
   # See also: `Array#reject`.
   def reject!
-    internal_delete { |e| yield e }[0]
+    internal_delete { |e| yield e }
+    self
   end
 
   # `reject!` and `delete` implementation: returns a tuple {x, y}
@@ -1388,8 +1389,7 @@ class Array(T)
 
   def rotate!(n = 1)
     return self if size == 0
-    n %= size if n.abs >= size
-    n += size if n < 0
+    n %= size
     return self if n == 0
     if n <= size / 2
       tmp = self[0..n]
@@ -1405,8 +1405,7 @@ class Array(T)
 
   def rotate(n = 1)
     return self if size == 0
-    n %= size if n.abs >= size
-    n += size if n < 0
+    n %= size
     return self if n == 0
     res = Array(T).new(size)
     res.to_unsafe.copy_from(@buffer + n, size - n)
@@ -1432,10 +1431,10 @@ class Array(T)
     when 0
       return [] of T
     when 1
-      return [sample] of T
+      return [sample(random)] of T
     else
       if n >= size
-        return dup.shuffle!
+        return dup.shuffle!(random)
       end
 
       ary = Array(T).new(n) { |i| @buffer[i] }
@@ -1536,49 +1535,91 @@ class Array(T)
     self
   end
 
-  # Returns an array with all elements in the collection sorted.
+  # Returns a new array with all elements sorted based on the return value of
+  # their comparison method `#<=>`
   #
   # ```
   # a = [3, 1, 2]
   # a.sort # => [1, 2, 3]
   # a      # => [3, 1, 2]
   # ```
-  #
-  # Optionally, a block may be given that must implement a comparison, either with the comparison operator `<=>`
-  # or a comparison between *a* and *b*, where a < b yields -1, a == b yields 0, and a > b yields 1.
-  def sort
+  def sort : Array(T)
     dup.sort!
   end
 
-  def sort(&block : T, T -> Int32)
+  # Returns a new array with all elements sorted based on the comparator in the
+  # given block.
+  #
+  # The block must implement a comparison between two elements *a* and *b*,
+  # where `a < b` returns `-1`, `a == b` returns `0`, and `a > b` returns `1`.
+  # The comparison operator `<=>` can be used for this.
+  #
+  # ```
+  # a = [3, 1, 2]
+  # b = a.sort { |a, b| b <=> a }
+  #
+  # b # => [3, 2, 1]
+  # a # => [3, 1, 2]
+  # ```
+  def sort(&block : T, T -> Int32) : Array(T)
     dup.sort! &block
   end
 
-  # Modifies `self` by sorting the elements in the collection.
+  # Modifies `self` by sorting all elements based on the return value of their
+  # comparison method `#<=>`
   #
   # ```
   # a = [3, 1, 2]
   # a.sort!
   # a # => [1, 2, 3]
   # ```
-  #
-  # Optionally, a block may be given that must implement a comparison, either with the comparison operator `<=>`
-  # or a comparison between *a* and *b*, where a < b yields -1, a == b yields 0, and a > b yields 1.
-  def sort!
+  def sort! : Array(T)
     Array.intro_sort!(@buffer, @size)
     self
   end
 
-  def sort!(&block : T, T -> Int32)
+  # Modifies `self` by sorting all elements based on the comparator in the given
+  # block.
+  #
+  # The given block must implement a comparison between two elements
+  # *a* and *b*, where `a < b` returns `-1`, `a == b` returns `0`,
+  # and `a > b` returns `1`.
+  # The comparison operator `<=>` can be used for this.
+  #
+  # ```
+  # a = [3, 1, 2]
+  # a.sort! { |a, b| b <=> a }
+  # a # => [3, 2, 1]
+  # ```
+  def sort!(&block : T, T -> Int32) : Array(T)
     Array.intro_sort!(@buffer, @size, block)
     self
   end
 
-  def sort_by(&block : T -> _)
+  # Returns a new array with all elements sorted. The given block is called for
+  # each element, then the comparison method #<=> is called on the object
+  # returned from the block to determine sort order.
+  #
+  # ```
+  # a = %w(apple pear fig)
+  # b = a.sort_by { |word| word.size }
+  # b # => ["fig", "pear", "apple"]
+  # a # => ["apple", "pear", "fig"]
+  # ```
+  def sort_by(&block : T -> _) : Array(T)
     dup.sort_by! { |e| yield(e) }
   end
 
-  def sort_by!(&block : T -> _)
+  # Modifies `self` by sorting all elements. The given block is called for
+  # each element, then the comparison method #<=> is called on the object
+  # returned from the block to determine sort order.
+  #
+  # ```
+  # a = %w(apple pear fig)
+  # a.sort_by! { |word| word.size }
+  # a # => ["fig", "pear", "apple"]
+  # ```
+  def sort_by!(&block : T -> _) : Array(T)
     sorted = map { |e| {e, yield(e)} }.sort! { |x, y| x[1] <=> y[1] }
     @size.times do |i|
       @buffer[i] = sorted.to_unsafe[i][0]
@@ -1586,7 +1627,18 @@ class Array(T)
     self
   end
 
-  def swap(index0, index1)
+  # Swaps the elements at *index0* and *index1* and returns `self`.
+  # Raises an `IndexError` if either index is out of bounds.
+  #
+  # ```
+  # a = ["first", "second", "third"]
+  # a.swap(1, 2)  # => ["first", "third", "second"]
+  # a             # => ["first", "third", "second"]
+  # a.swap(0, -1) # => ["second", "third", "first"]
+  # a             # => ["second", "third", "first"]
+  # a.swap(2, 3)  # => raises "Index out of bounds (IndexError)"
+  # ```
+  def swap(index0, index1) : Array(T)
     index0 += size if index0 < 0
     index1 += size if index1 < 0
 
@@ -1605,9 +1657,9 @@ class Array(T)
 
   def to_s(io : IO)
     executed = exec_recursive(:to_s) do
-      io << "["
+      io << '['
       join ", ", io, &.inspect(io)
-      io << "]"
+      io << ']'
     end
     io << "[...]" unless executed
   end

@@ -3,7 +3,7 @@ module Crystal
     getter last : ASTNode
     property free_vars : Hash(String, TypeVar)?
 
-    def self.new(program, scope : Type, path_lookup : Type, a_macro : Macro, call, a_def : Def? = nil)
+    def self.new(program, scope : Type, path_lookup : Type, a_macro : Macro, call, a_def : Def? = nil, in_macro = false)
       vars = {} of String => ASTNode
       splat_index = a_macro.splat_index
       double_splat = a_macro.double_splat
@@ -51,7 +51,7 @@ module Crystal
         next if vars.has_key?(macro_arg.name)
 
         default_value = default_value.expand_node(call.location, call.end_location) if default_value.is_a?(MagicConstant)
-        vars[macro_arg.name] = default_value
+        vars[macro_arg.name] = default_value.clone
       end
 
       # The named arguments
@@ -68,15 +68,16 @@ module Crystal
         vars[macro_block_arg.name] = call_block || Nop.new
       end
 
-      new(program, scope, path_lookup, a_macro.location, vars, call.block, a_def)
+      new(program, scope, path_lookup, a_macro.location, vars, call.block, a_def, in_macro)
     end
 
     record MacroVarKey, name : String, exps : Array(ASTNode)?
 
     def initialize(@program : Program,
                    @scope : Type, @path_lookup : Type, @location : Location?,
-                   @vars = {} of String => ASTNode, @block : Block? = nil, @def : Def? = nil)
-      @str = IO::Memory.new(512) # Can't be String::Builder because of `{{debug()}}
+                   @vars = {} of String => ASTNode, @block : Block? = nil, @def : Def? = nil,
+                   @in_macro = false)
+      @str = IO::Memory.new(512) # Can't be String::Builder because of `{{debug}}`
       @last = Nop.new
     end
 
@@ -148,7 +149,7 @@ module Crystal
             @last.to_s(str)
           end
         end
-      end)
+      end).at(node)
       false
     end
 
@@ -348,6 +349,8 @@ module Crystal
 
         begin
           @last = receiver.interpret(node.name, args, node.block, self)
+        rescue ex : MacroRaiseException
+          raise ex
         rescue ex : Crystal::Exception
           node.raise ex.message, inner: ex
         rescue ex
@@ -362,6 +365,10 @@ module Crystal
     end
 
     def visit(node : Yield)
+      unless @in_macro
+        node.raise "can't use `{{yield}}` outside a macro"
+      end
+
       if block = @block
         if node.exps.empty?
           @last = block.body.clone
@@ -402,6 +409,8 @@ module Crystal
       when Const
         matched_type.value
       when Type
+        matched_type = matched_type.remove_alias
+
         # If it's the T of a variadic generic type, produce tuple literals
         # or named tuple literals. The compiler has them as a type
         # (a tuple type, or a named tuple type) but the user should see

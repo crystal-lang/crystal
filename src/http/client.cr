@@ -326,7 +326,7 @@ class HTTP::Client
     before_request << callback
   end
 
-  {% for method in %w(get post put head delete patch) %}
+  {% for method in %w(get post put head delete patch options) %}
     # Executes a {{method.id.upcase}} request.
     # The response will have its body as a `String`, accessed via `HTTP::Client::Response#body`.
     #
@@ -378,93 +378,91 @@ class HTTP::Client
         yield response
       end
     end
-  {% end %}
 
-  {% for http_method in %w(post put patch) %}
-    # Executes a {{http_method.id.upcase}} request with form data and returns a `Response`. The "Content-Type" header is set
+    # Executes a {{method.id.upcase}} request with form data and returns a `Response`. The "Content-Type" header is set
     # to "application/x-www-form-urlencoded".
     #
     # ```
     # client = HTTP::Client.new "www.example.com"
-    # response = client.{{http_method.id}}_form "/", "foo=bar"
+    # response = client.{{method.id}} "/", form: "foo=bar"
     # ```
-    def {{http_method.id}}_form(path, form : String | IO, headers : HTTP::Headers? = nil) : HTTP::Client::Response
-      request = new_request({{http_method.upcase}}, path, headers, form)
+    def {{method.id}}(path, headers : HTTP::Headers? = nil, *, form : String | IO) : HTTP::Client::Response
+      request = new_request({{method.upcase}}, path, headers, form)
       request.headers["Content-Type"] = "application/x-www-form-urlencoded"
       exec request
     end
 
-    # Executes a {{http_method.id.upcase}} request with form data and yields the response to the block.
+    # Executes a {{method.id.upcase}} request with form data and yields the response to the block.
     # The response will have its body as an `IO` accessed via `HTTP::Client::Response#body_io`.
     # The "Content-Type" header is set to "application/x-www-form-urlencoded".
     #
     # ```
     # client = HTTP::Client.new "www.example.com"
-    # client.{{http_method.id}}_form("/", "foo=bar") do |response|
+    # client.{{method.id}}("/", form: "foo=bar") do |response|
     #   response.body_io.gets
     # end
     # ```
-    def {{http_method.id}}_form(path, form : String | IO, headers : HTTP::Headers? = nil)
-      request = new_request({{http_method.upcase}}, path, headers, form)
+    def {{method.id}}(path, headers : HTTP::Headers? = nil, *, form : String | IO)
+      request = new_request({{method.upcase}}, path, headers, form)
       request.headers["Content-Type"] = "application/x-www-form-urlencoded"
       exec(request) do |response|
         yield response
       end
     end
 
-    # Executes a {{http_method.id.upcase}} request with form data and returns a `Response`. The "Content-Type" header is set
+    # Executes a {{method.id.upcase}} request with form data and returns a `Response`. The "Content-Type" header is set
     # to "application/x-www-form-urlencoded".
     #
     # ```
     # client = HTTP::Client.new "www.example.com"
-    # response = client.{{http_method.id}}_form "/", {"foo" => "bar"}
+    # response = client.{{method.id}} "/", form: {"foo" => "bar"}
     # ```
-    def {{http_method.id}}_form(path, form : Hash(String, _) | NamedTuple, headers : HTTP::Headers? = nil) : HTTP::Client::Response
+    def {{method.id}}(path, headers : HTTP::Headers? = nil, *, form : Hash(String, String) | NamedTuple) : HTTP::Client::Response
       body = HTTP::Params.encode(form)
-      {{http_method.id}}_form path, body, headers
+      {{method.id}} path, form: body, headers: headers
     end
 
-    # Executes a {{http_method.id.upcase}} request with form data and yields the response to the block.
+    # Executes a {{method.id.upcase}} request with form data and yields the response to the block.
     # The response will have its body as an `IO` accessed via `HTTP::Client::Response#body_io`.
     # The "Content-type" header is set to "application/x-www-form-urlencoded".
     #
     # ```
     # client = HTTP::Client.new "www.example.com"
-    # client.{{http_method.id}}_form("/", {"foo" => "bar"}) do |response|
+    # client.{{method.id}}("/", form: {"foo" => "bar"}) do |response|
     #   response.body_io.gets
     # end
     # ```
-    def {{http_method.id}}_form(path, form : Hash(String, _) | NamedTuple, headers : HTTP::Headers? = nil)
+    def {{method.id}}(path, headers : HTTP::Headers? = nil, *, form : Hash(String, String) | NamedTuple)
       body = HTTP::Params.encode(form)
-      {{http_method.id}}_form(path, body, headers) do |response|
+      {{method.id}}(path, form: body, headers: headers) do |response|
         yield response
       end
     end
 
-    # Executes a {{http_method.id.upcase}} request with form data and returns a `Response`. The "Content-Type" header is set
+    # Executes a {{method.id.upcase}} request with form data and returns a `Response`. The "Content-Type" header is set
     # to "application/x-www-form-urlencoded".
     #
     # ```
-    # response = HTTP::Client.{{http_method.id}}_form "http://www.example.com", "foo=bar"
+    # response = HTTP::Client.{{method.id}} "http://www.example.com", form: "foo=bar"
     # ```
-    def self.{{http_method.id}}_form(url, form : String | IO | Hash, headers : HTTP::Headers? = nil, tls = nil) : HTTP::Client::Response
+    def self.{{method.id}}(url, headers : HTTP::Headers? = nil, tls = nil, *, form : String | IO | Hash) : HTTP::Client::Response
       exec(url, tls) do |client, path|
-        client.{{http_method.id}}_form(path, form, headers)
+        client.{{method.id}}(path, form: form, headers: headers)
       end
     end
 
-    # Executes a {{http_method.id.upcase}} request with form data and yields the response to the block.
+    # Executes a {{method.id.upcase}} request with form data and yields the response to the block.
     # The response will have its body as an `IO` accessed via `HTTP::Client::Response#body_io`.
     # The "Content-Type" header is set to "application/x-www-form-urlencoded".
     #
     # ```
-    # HTTP::Client.{{http_method.id}}_form("http://www.example.com", "foo=bar") do |response|
+    # HTTP::Client.{{method.id}}("http://www.example.com", form: "foo=bar") do |response|
     #   response.body_io.gets
     # end
     # ```
-    def self.{{http_method.id}}_form(url, form : String | IO | Hash, headers : HTTP::Headers? = nil, tls = nil)
+    def self.{{method.id}}(url, headers : HTTP::Headers? = nil, tls = nil, *, form : String | IO | Hash)
       exec(url, tls) do |client, path|
-        client.{{http_method.id}}_form(path, form, headers) do |response|
+        client.{{method.id}}(path, form: form, headers: headers) do |response|
           yield response
         end
       end
@@ -480,7 +478,6 @@ class HTTP::Client
   # response.body # => "..."
   # ```
   def exec(request : HTTP::Request) : HTTP::Client::Response
-    execute_callbacks(request)
     exec_internal(request)
   end
 
@@ -498,9 +495,7 @@ class HTTP::Client
   end
 
   private def exec_internal_single(request)
-    decompress = set_defaults request
-    request.to_io(socket)
-    socket.flush
+    decompress = send_request(request)
     HTTP::Client::Response.from_io?(socket, ignore_body: request.ignore_body?, decompress: decompress)
   end
 
@@ -519,7 +514,6 @@ class HTTP::Client
   # end
   # ```
   def exec(request : HTTP::Request, &block)
-    execute_callbacks(request)
     exec_internal(request) do |response|
       yield response
     end
@@ -546,9 +540,7 @@ class HTTP::Client
   end
 
   private def exec_internal_single(request)
-    decompress = set_defaults request
-    request.to_io(socket)
-    socket.flush
+    decompress = send_request(request)
     HTTP::Client::Response.from_io?(socket, ignore_body: request.ignore_body?, decompress: decompress) do |response|
       yield response
     end
@@ -559,6 +551,14 @@ class HTTP::Client
     response.body_io?.try &.close
     close unless response.keep_alive?
     value
+  end
+
+  private def send_request(request)
+    decompress = set_defaults request
+    run_before_request_callbacks(request)
+    request.to_io(socket)
+    socket.flush
+    decompress
   end
 
   private def set_defaults(request)
@@ -573,6 +573,10 @@ class HTTP::Client
         false
       end
     {% end %}
+  end
+
+  private def run_before_request_callbacks(request)
+    @before_request.try &.each &.call(request)
   end
 
   # Executes a request.
@@ -641,10 +645,6 @@ class HTTP::Client
     HTTP::Request.new(method, path, headers, body).tap do |request|
       request.headers["Host"] ||= host_header
     end
-  end
-
-  private def execute_callbacks(request)
-    @before_request.try &.each &.call(request)
   end
 
   private def socket

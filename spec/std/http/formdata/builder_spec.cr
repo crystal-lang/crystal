@@ -9,7 +9,7 @@ describe HTTP::FormData::Builder do
       g.field("baz", "qux", HTTP::Headers{"X-Testing" => "headers"})
 
       body = IO::Memory.new "file content"
-      time = Time.new(2016, 1, 1, 12, 0, 0, kind: Time::Kind::Utc)
+      time = Time.utc(2016, 1, 1, 12, 0, 0)
       metadata = HTTP::FormData::FileMetadata.new("filename.txt \"", time, time, time, 12_u64)
       headers = HTTP::Headers{"Foo" => "Bar", "Baz" => "Qux"}
       g.file("file-test", body, metadata, headers)
@@ -35,7 +35,27 @@ describe HTTP::FormData::Builder do
       --fixed-boundary--
       MULTIPART
 
-    generated.should eq(expected.gsub("\n", "\r\n"))
+    generated.should eq(expected.gsub('\n', "\r\n"))
+  end
+
+  describe "#field" do
+    it "converts value to a string" do
+      io = IO::Memory.new
+      HTTP::FormData.build(io, "fixed-boundary") do |g|
+        g.field("foo", 12)
+      end
+
+      generated = io.to_s
+      expected = <<-'MULTIPART'
+        --fixed-boundary
+        Content-Disposition: form-data; name="foo"
+
+        12
+        --fixed-boundary--
+        MULTIPART
+
+      generated.should eq(expected.gsub('\n', "\r\n"))
+    end
   end
 
   describe "#content_type" do

@@ -12,11 +12,9 @@ module OpenSSL
   # io = OpenSSL::DigestIO.new(underlying_io, "SHA256")
   # buffer = Bytes.new(256)
   # io.read(buffer)
-  # io.digest # => 2c26b46b68ffc68ff99b453c1d30413413422d706483bfa0f98a5e886266e7ae
+  # io.digest.hexstring # => "2c26b46b68ffc68ff99b453c1d30413413422d706483bfa0f98a5e886266e7ae"
   # ```
-  class DigestIO
-    include IO
-
+  class DigestIO < IO
     getter io : IO
     getter digest_algorithm : OpenSSL::Digest
     getter mode : DigestMode

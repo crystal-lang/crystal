@@ -6,6 +6,7 @@ module HTTP
     describe ".parse" do
       {
         {"", {} of String => Array(String)},
+        {"&&", {} of String => Array(String)},
         {"   ", {"   " => [""]}},
         {"foo=bar", {"foo" => ["bar"]}},
         {"foo=bar&foo=baz", {"foo" => ["bar", "baz"]}},

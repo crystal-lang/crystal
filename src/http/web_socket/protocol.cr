@@ -42,9 +42,7 @@ class HTTP::WebSocket::Protocol
     @masked = !!masked
   end
 
-  class StreamIO
-    include IO
-
+  class StreamIO < IO
     def initialize(@websocket : Protocol, binary, frame_size)
       @opcode = binary ? Opcode::BINARY : Opcode::TEXT
       @buffer = Bytes.new(frame_size)
@@ -255,7 +253,7 @@ class HTTP::WebSocket::Protocol
         else
           context = tls
         end
-        socket = OpenSSL::SSL::Socket::Client.new(socket, context: context, sync_close: true)
+        socket = OpenSSL::SSL::Socket::Client.new(socket, context: context, sync_close: true, hostname: host)
       end
     {% end %}
 
@@ -280,7 +278,7 @@ class HTTP::WebSocket::Protocol
   def self.new(uri : URI | String, headers = HTTP::Headers.new)
     uri = URI.parse(uri) if uri.is_a?(String)
 
-    if (host = uri.host) && (path = uri.path)
+    if (host = uri.host) && (path = uri.full_path)
       tls = uri.scheme == "https" || uri.scheme == "wss"
       return new(host, path, uri.port, tls, headers)
     end

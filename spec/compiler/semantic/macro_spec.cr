@@ -18,21 +18,41 @@ describe "Semantic: macro" do
 
   it "types macro def" do
     assert_type(%(
-      macro def foo : Int32
-        1
+      class Foo
+        def foo : Int32
+          {{ @type }}
+          1
+        end
       end
 
-      foo
+      Foo.new.foo
       )) { int32 }
   end
 
   it "errors if macro def type not found" do
-    assert_error "macro def foo : Foo; end; foo",
+    assert_error %(
+      class Baz
+        def foo : Foo
+          {{ @type }}
+        end
+      end
+
+      Baz.new.foo
+      ),
       "undefined constant Foo"
   end
 
   it "errors if macro def type doesn't match found" do
-    assert_error "macro def foo : Int32; 'a'; end; foo",
+    assert_error %(
+      class Foo
+        def foo : Int32
+          {{ @type}}
+          'a'
+        end
+      end
+
+      Foo.new.foo
+      ),
       "type must be Int32, not Char"
   end
 
@@ -50,11 +70,14 @@ describe "Semantic: macro" do
         end
       end
 
-      macro def foobar : Foo
-        Bar.new
+      class Baz
+        def foobar : Foo
+          {{ @type }}
+          Bar.new
+        end
       end
 
-      foobar.foo
+      Baz.new.foobar.foo
     }).to_i.should eq(2)
   end
 
@@ -74,11 +97,14 @@ describe "Semantic: macro" do
         end
       end
 
-      macro def foobar : Foo
-        Bar.new
+      class Baz
+        def foobar : Foo
+          {{ @type }}
+          Bar.new
+        end
       end
 
-      foobar.foo
+      Baz.new.foobar.foo
     }).to_i.should eq(2)
   end
 
@@ -93,11 +119,14 @@ describe "Semantic: macro" do
         end
       end
 
-      macro def foobar : Foo(Int32)
-        Foo.new(2)
+      class Baz
+        def foobar : Foo(Int32)
+          {{ @type }}
+          Foo.new(2)
+        end
       end
 
-      foobar.foo
+      Baz.new.foobar.foo
     }).to_i.should eq(2)
 
     assert_error %{
@@ -106,22 +135,28 @@ describe "Semantic: macro" do
         end
       end
 
-      macro def bar : Foo(String)
-        Foo.new(3)
+      class Bar
+        def bar : Foo(String)
+          {{ @type }}
+          Foo.new(3)
+        end
       end
 
-      bar
+      Bar.new.bar
     }, "type must be Foo(String), not Foo(Int32)",
       inject_primitives: false
   end
 
   it "allows union return types for macro def" do
     assert_type(%{
-      macro def foo : String | Int32
-        1
+      class Foo
+        def foo : String | Int32
+          {{ @type }}
+          1
+        end
       end
 
-      foo
+      Foo.new.foo
     }) { int32 }
   end
 
@@ -131,24 +166,9 @@ describe "Semantic: macro" do
         1
       end
 
-      macro def foo : Int32
-        {% begin %}
-          bar_{{ "baz".id }}
-        {% end %}
-      end
-
-      foo
-      )) { int32 }
-  end
-
-  it "types macro def that calls another method inside a class" do
-    assert_type(%(
       class Foo
-        def bar_baz
-          1
-        end
-
-        macro def foo : Int32
+        def foo : Int32
+          {{ @type }}
           {% begin %}
             bar_{{ "baz".id }}
           {% end %}
@@ -162,7 +182,27 @@ describe "Semantic: macro" do
   it "types macro def that calls another method inside a class" do
     assert_type(%(
       class Foo
-        macro def foo : Int32
+        def bar_baz
+          1
+        end
+
+        def foo : Int32
+          {{ @type }}
+          {% begin %}
+            bar_{{ "baz".id }}
+          {% end %}
+        end
+      end
+
+      Foo.new.foo
+      )) { int32 }
+  end
+
+  it "types macro def that calls another method inside a class" do
+    assert_type(%(
+      class Foo
+        def foo : Int32
+          {{ @type }}
           {% begin %}
             bar_{{ "baz".id }}
           {% end %}
@@ -181,11 +221,14 @@ describe "Semantic: macro" do
 
   it "types macro def with argument" do
     assert_type(%(
-      macro def foo(x) : Int32
-        x
+      class Foo
+        def foo(x) : Int32
+          {{ @type }}
+          x
+        end
       end
 
-      foo(1)
+      Foo.new.foo(1)
       )) { int32 }
   end
 
@@ -232,29 +275,47 @@ describe "Semantic: macro" do
   end
 
   it "executes raise inside macro" do
-    assert_error %(
+    ex = assert_error %(
       macro foo
         {{ raise "OH NO" }}
       end
 
       foo
       ), "OH NO"
+
+    ex.to_s.should_not contain("expanding macro")
+  end
+
+  it "executes raise inside macro, with node (#5669)" do
+    ex = assert_error %(
+      macro foo(x)
+        {{ x.raise "OH\nNO" }}
+      end
+
+      foo(1)
+      ), "OH\nNO"
+
+    ex.to_s.should_not contain("expanding macro")
   end
 
   it "can specify tuple as return type" do
     assert_type(%(
-      macro def foo : {Int32, Int32}
-        {1, 2}
+      class Foo
+        def foo : {Int32, Int32}
+          {{ @type }}
+          {1, 2}
+        end
       end
 
-      foo
+      Foo.new.foo
       )) { tuple_of([int32, int32] of Type) }
   end
 
   it "allows specifying self as macro def return type" do
     assert_type(%(
       class Foo
-        macro def foo : self
+        def foo : self
+          {{ @type }}
           self
         end
       end
@@ -266,7 +327,8 @@ describe "Semantic: macro" do
   it "allows specifying self as macro def return type (2)" do
     assert_type(%(
       class Foo
-        macro def foo : self
+        def foo : self
+          {{ @type }}
           self
         end
       end
@@ -366,11 +428,14 @@ describe "Semantic: macro" do
 
   it "can return class type in macro def" do
     assert_type(%(
-      macro def foo : Int32.class
-        Int32
+      class Foo
+        def foo : Int32.class
+          {{ @type }}
+          Int32
+        end
       end
 
-      foo
+      Foo.new.foo
       )) { types["Int32"].metaclass }
   end
 
@@ -382,11 +447,14 @@ describe "Semantic: macro" do
       class Bar < Foo
       end
 
-      macro def foo : Foo.class
-        1 == 1 ? Foo : Bar
+      class Foo
+        def foo : Foo.class
+          {{ @type }}
+          1 == 1 ? Foo : Bar
+        end
       end
 
-      foo
+      Foo.new.foo
       )) { types["Foo"].metaclass.virtual_type }
   end
 
@@ -995,7 +1063,7 @@ describe "Semantic: macro" do
         class A
         end
 
-        {% skip_file() %}
+        {% skip_file %}
 
         class B
         end
@@ -1012,7 +1080,7 @@ describe "Semantic: macro" do
 
         {% if true %}
           class C; end
-          {% skip_file() %}
+          {% skip_file %}
           class D; end
         {% end %}
 
@@ -1168,5 +1236,20 @@ describe "Semantic: macro" do
 
       Foo.new.foo
     )) { int32 }
+  end
+
+  it "clones default value before expanding" do
+    assert_type(%(
+      FOO = {} of String => String?
+
+      macro foo(x = {} of String => String)
+        {% FOO["foo"] = x["foo"] %}
+        {% x["foo"] = "foo" %}
+      end
+
+      foo
+      foo
+      {{ FOO["foo"] }}
+    )) { nil_type }
   end
 end

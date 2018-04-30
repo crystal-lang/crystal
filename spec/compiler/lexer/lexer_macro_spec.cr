@@ -39,7 +39,7 @@ describe "Lexer macro" do
     token.type.should eq(:MACRO_END)
   end
 
-  ["begin", "do", "if", "unless", "class", "struct", "module", "def", "while", "until", "case", "macro", "fun", "lib", "union", "macro def"].each do |keyword|
+  ["begin", "do", "if", "unless", "class", "struct", "module", "def", "while", "until", "case", "macro", "fun", "lib", "union"].each do |keyword|
     it "lexes macro with nested #{keyword}" do
       lexer = Lexer.new(%(hello\n  #{keyword} {{world}} end end))
 
@@ -595,5 +595,13 @@ describe "Lexer macro" do
 
     token = lexer.next_macro_token(token.macro_state, false)
     token.type.should eq(:MACRO_EXPRESSION_START)
+  end
+
+  it "keeps correct line number after lexes the part of keyword and newline (#4656)" do
+    lexer = Lexer.new(%(ab\ncd)) # 'ab' means the part of 'abstract'
+    token = lexer.next_macro_token(Token::MacroState.default, false)
+    token.type.should eq(:MACRO_LITERAL)
+    token.value.should eq("ab\ncd")
+    lexer.line_number.should eq(2)
   end
 end

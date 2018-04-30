@@ -671,7 +671,7 @@ module Iterator(T)
     end
   end
 
-  # Returns an iterator that only returns elements for which the the passed in
+  # Returns an iterator that only returns elements for which the passed in
   # block returns a falsey value.
   #
   # ```
@@ -700,7 +700,7 @@ module Iterator(T)
     end
   end
 
-  # Returns an iterator that only returns elements for which the the passed
+  # Returns an iterator that only returns elements for which the passed
   # in block returns a truthy value.
   #
   # ```

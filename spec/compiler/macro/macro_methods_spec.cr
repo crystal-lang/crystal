@@ -248,15 +248,15 @@ describe "macro methods" do
     end
 
     it "executes split without arguments" do
-      assert_macro "", %({{"1 2 3".split}}), [] of ASTNode, %(["1", "2", "3"])
+      assert_macro "", %({{"1 2 3".split}}), [] of ASTNode, %(["1", "2", "3"] of ::String)
     end
 
     it "executes split with argument" do
-      assert_macro "", %({{"1-2-3".split("-")}}), [] of ASTNode, %(["1", "2", "3"])
+      assert_macro "", %({{"1-2-3".split('-')}}), [] of ASTNode, %(["1", "2", "3"] of ::String)
     end
 
     it "executes split with char argument" do
-      assert_macro "", %({{"1-2-3".split('-')}}), [] of ASTNode, %(["1", "2", "3"])
+      assert_macro "", %({{"1-2-3".split('-')}}), [] of ASTNode, %(["1", "2", "3"] of ::String)
     end
 
     it "executes strip" do
@@ -276,11 +276,11 @@ describe "macro methods" do
     end
 
     it "executes chars" do
-      assert_macro "x", %({{x.chars}}), [StringLiteral.new("123")] of ASTNode, %(['1', '2', '3'])
+      assert_macro "x", %({{x.chars}}), [StringLiteral.new("123")] of ASTNode, %(['1', '2', '3'] of ::Char)
     end
 
     it "executes lines" do
-      assert_macro "x", %({{x.lines}}), [StringLiteral.new("1\n2\n3")] of ASTNode, %(["1", "2", "3"])
+      assert_macro "x", %({{x.lines}}), [StringLiteral.new("1\n2\n3")] of ASTNode, %(["1", "2", "3"] of ::String)
     end
 
     it "executes size" do
@@ -553,6 +553,14 @@ describe "macro methods" do
 
     it "executes map" do
       assert_macro "", %({{[1, 2, 3].map { |e| e == 2 }}}), [] of ASTNode, "[false, true, false]"
+    end
+
+    it "executes reduce with no initial value" do
+      assert_macro "", %({{[1, 2, 3].reduce { |acc, val| acc * val }}}), [] of ASTNode, "6"
+    end
+
+    it "executes reduce with initial value" do
+      assert_macro "", %({{[1, 2, 3].reduce(4) { |acc, val| acc * val }}}), [] of ASTNode, "24"
     end
 
     it "executes map with constants" do
@@ -991,23 +999,27 @@ describe "macro methods" do
     end
 
     it "executes options" do
-      assert_macro "", %({{ //.options }}), [] of ASTNode, %([])
-      assert_macro "", %({{ /a/i.options }}), [] of ASTNode, %([:i])
-      assert_macro "", %({{ /re/mix.options }}), [] of ASTNode, %([:i, :m, :x])
+      assert_macro "", %({{ //.options }}), [] of ASTNode, %([] of ::Symbol)
+      assert_macro "", %({{ /a/i.options }}), [] of ASTNode, %([:i] of ::Symbol)
+      assert_macro "", %({{ /re/mix.options }}), [] of ASTNode, %([:i, :m, :x] of ::Symbol)
     end
   end
 
   describe "metavar methods" do
     it "executes nothing" do
-      assert_macro "x", %({{x}}), [MetaVar.new("foo", Program.new.int32)] of ASTNode, %(foo)
+      assert_macro "x", %({{x}}), [MetaMacroVar.new("foo", Program.new.int32)] of ASTNode, %(foo)
     end
 
     it "executes name" do
-      assert_macro "x", %({{x.name}}), [MetaVar.new("foo", Program.new.int32)] of ASTNode, %(foo)
+      assert_macro "x", %({{x.name}}), [MetaMacroVar.new("foo", Program.new.int32)] of ASTNode, %(foo)
     end
 
     it "executes id" do
-      assert_macro "x", %({{x.id}}), [MetaVar.new("foo", Program.new.int32)] of ASTNode, %(foo)
+      assert_macro "x", %({{x.id}}), [MetaMacroVar.new("foo", Program.new.int32)] of ASTNode, %(foo)
+    end
+
+    it "executes is_a?" do
+      assert_macro "x", %({{x.is_a?(MetaVar)}}), [MetaMacroVar.new("foo", Program.new.int32)] of ASTNode, %(true)
     end
   end
 
@@ -1194,6 +1206,56 @@ describe "macro methods" do
 
     it "executes type" do
       assert_macro "x", %({{x.type}}), [UninitializedVar.new(Var.new("some_name"), Path.new("SomeType"))] of ASTNode, "SomeType"
+    end
+  end
+
+  describe "proc notation methods" do
+    it "gets single input" do
+      assert_macro "x", %({{x.inputs}}), [ProcNotation.new([Path.new("SomeType")] of ASTNode, Path.new("SomeResult"))] of ASTNode, "[SomeType]"
+    end
+
+    it "gets single output" do
+      assert_macro "x", %({{x.output}}), [ProcNotation.new([Path.new("SomeType")] of ASTNode, Path.new("SomeResult"))] of ASTNode, "SomeResult"
+    end
+
+    it "gets multiple inputs" do
+      assert_macro "x", %({{x.inputs}}), [ProcNotation.new([Path.new("SomeType"), Path.new("OtherType")] of ASTNode)] of ASTNode, "[SomeType, OtherType]"
+    end
+
+    it "gets empty output" do
+      assert_macro "x", %({{x.output}}), [ProcNotation.new([Path.new("SomeType")] of ASTNode)] of ASTNode, "nil"
+    end
+  end
+
+  describe "proc literal methods" do
+    it "executes body" do
+      assert_macro "x", %({{x.body}}), [ProcLiteral.new(Def.new("->", body: 1.int32))] of ASTNode, "1"
+    end
+
+    it "executes args" do
+      assert_macro "x", %({{x.args}}), [ProcLiteral.new(Def.new("->", args: [Arg.new("z")]))] of ASTNode, "[z]"
+    end
+  end
+
+  describe "proc pointer methods" do
+    it "executes obj when present" do
+      assert_macro "x", %({{x.obj}}), [ProcPointer.new(Var.new("some_object"), "method", [] of ASTNode)] of ASTNode, "some_object"
+    end
+
+    it "executes obj when absent" do
+      assert_macro "x", %({{x.obj}}), [ProcPointer.new(NilLiteral.new, "method", [] of ASTNode)] of ASTNode, "nil"
+    end
+
+    it "executes name" do
+      assert_macro "x", %({{x.name}}), [ProcPointer.new(Var.new("some_object"), "method", [] of ASTNode)] of ASTNode, "method"
+    end
+
+    it "executes args when empty" do
+      assert_macro "x", %({{x.args}}), [ProcPointer.new(Var.new("some_object"), "method", [] of ASTNode)] of ASTNode, "[]"
+    end
+
+    it "executes args when not empty" do
+      assert_macro "x", %({{x.args}}), [ProcPointer.new(Var.new("some_object"), "method", [Path.new("SomeType"), Path.new("OtherType")] of ASTNode)] of ASTNode, "[SomeType, OtherType]"
     end
   end
 

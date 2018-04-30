@@ -146,7 +146,7 @@ describe StringScanner, "#[]" do
     s = StringScanner.new("Fri Dec 12 1975 14:39")
     s.scan(/this is not there/)
 
-    expect_raises { s[0] }
+    expect_raises(Exception, "Nil assertion failed") { s[0] }
   end
 
   it "raises when there is no subgroup" do
@@ -155,8 +155,8 @@ describe StringScanner, "#[]" do
     s.scan(regex)
 
     s[0].should_not be_nil
-    expect_raises { s[5] }
-    expect_raises { s["something"] }
+    expect_raises(IndexError) { s[5] }
+    expect_raises(KeyError, "Capture group 'something' does not exist") { s["something"] }
   end
 end
 

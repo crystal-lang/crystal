@@ -8,7 +8,7 @@ module HTTP::FormData
   # builder = HTTP::FormData::Builder.new(io, "aA47")
   # builder.field("name", "joe")
   # file = IO::Memory.new("file contents")
-  # builder.file("upload", file, FileMetadata.new(filename: "test.txt"))
+  # builder.file("upload", file, HTTP::FormData::FileMetadata.new(filename: "test.txt"))
   # builder.finish
   # io.to_s # => "--aA47\r\nContent-Disposition: form-data; name=\"name\"\r\n\r\njoe\r\n--aA47\r\nContent-Disposition: form-data; name=\"upload\"; filename=\"test.txt\"\r\n\r\nfile contents\r\n--aA47--"
   # ```
@@ -37,15 +37,15 @@ module HTTP::FormData
 
     # Adds a form part with the given *name* and *value*. *Headers* can
     # optionally be provided for the form part.
-    def field(name, value, headers : HTTP::Headers = HTTP::Headers.new)
-      file(name, IO::Memory.new(value), headers: headers)
+    def field(name : String, value, headers : HTTP::Headers = HTTP::Headers.new)
+      file(name, IO::Memory.new(value.to_s), headers: headers)
     end
 
     # Adds a form part called *name*, with data from *io* as the value.
     # *Metadata* can be provided to add extra metadata about the file to the
     # Content-Disposition header for the form part. Other headers can be added
     # using *headers*.
-    def file(name, io, metadata : FileMetadata = FileMetadata.new, headers : HTTP::Headers = HTTP::Headers.new)
+    def file(name : String, io, metadata : FileMetadata = FileMetadata.new, headers : HTTP::Headers = HTTP::Headers.new)
       fail "Cannot add form part: already finished" if @state == :FINISHED
 
       headers["Content-Disposition"] = generate_content_disposition(name, metadata)

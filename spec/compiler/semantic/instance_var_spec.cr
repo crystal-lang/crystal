@@ -4707,4 +4707,165 @@ describe "Semantic: instance var" do
       ),
       "can't use instance variables at the top level"
   end
+
+  it "doesn't check call of non-self instance (#4830)" do
+    assert_type(%(
+      class Container
+        def initialize(other : Container, x)
+          initialize(other)
+          @foo = "x"
+        end
+
+        def initialize(other : Container)
+          @foo = other.foo
+        end
+
+        def initialize(@foo : String, bar)
+        end
+
+        def foo
+          @foo
+        end
+      end
+
+      container = Container.new("foo", nil)
+      Container.new(container, "foo2")
+      )) { types["Container"] }
+  end
+
+  it "errors when assigning instance variable inside nested expression" do
+    assert_error %(
+      class Foo
+        if true
+          @foo = 1
+        end
+      end
+      ),
+      "can't use instance variables at the top level"
+  end
+
+  it "doesn't find T in generic type that's not the current type (#4460)" do
+    assert_error %(
+      class Gen(T)
+        def self.new
+          Gen(T).new
+        end
+      end
+
+      class Foo
+        @x = Gen.new
+      end
+      ),
+      "can't use Gen(T) as the type of instance variable @x of Foo"
+  end
+
+  it "doesn't consider instance var as nilable if assigned before self access (#4981)" do
+    assert_type(%(
+      def f(x)
+      end
+
+      class A
+        def initialize
+          @a = 0
+          f(self)
+          @a = 0
+        end
+
+        def a
+          @a
+        end
+      end
+
+      A.new.a
+      )) { int32 }
+  end
+
+  it "doesn't combine union of Number and Number subclass (#5073)" do
+    assert_type(%(
+      class Gen(T)
+      end
+
+      struct A < Number
+        def hash(hasher)
+          hasher
+        end
+
+        def to_s(io : IO)
+        end
+      end
+
+      class Foo
+        @foo = Gen(Int32 | A).new
+      end
+
+      Foo.new.@foo
+    )) { generic_class "Gen", union_of(int32, types["A"]) }
+  end
+
+  it "uses T.new (#4291)" do
+    assert_type(%(
+      class Foo
+      end
+
+      class Gen(T)
+        @x = T.new
+
+        def x
+          @x
+        end
+      end
+
+      Gen(Foo).new.x
+      )) { types["Foo"] }
+  end
+
+  it "can type ivar from module included by generic class (#5281)" do
+    assert_type(%(
+      module Foo
+        def initialize(@x = "foo")
+        end
+      end
+
+      class Bar(T)
+        include Foo
+
+        @y = 42
+      end
+
+      class Baz < Bar(String); end
+
+      Baz.new
+      )) { types["Baz"] }
+  end
+
+  it "can type ivar from class inherited by generic class (#5281)" do
+    assert_type(%(
+      class Foo
+        def initialize(@x = "foo")
+        end
+      end
+
+      class Bar(T) < Foo
+        @y = 42
+      end
+
+      class Baz < Bar(String); end
+
+      Baz.new
+      )) { types["Baz"] }
+  end
+
+  it "cannot guess type from argument assigned in body" do
+    assert_error %(
+      class Foo
+        def initialize(x : String)
+          x = 1
+          @x = x
+        end
+      end
+
+      Foo.new "foo"
+      ),
+      "Can't infer the type of instance variable '@x' of Foo"
+  end
 end

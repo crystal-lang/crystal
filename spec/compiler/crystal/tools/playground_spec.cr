@@ -47,10 +47,10 @@ describe Playground::Agent do
   it "should send json messages and return inspected value" do
     agent = TestAgent.new(".", 32)
     agent.i(1) { 5 }.should eq(5)
-    agent.last_message.should eq(%({"tag":32,"type":"value","line":1,"value":"5","value_type":"Int32"}))
+    agent.last_message.should eq(%({"tag":32,"type":"value","line":1,"value":"5","html_value":"5","value_type":"Int32"}))
     x, y = 3, 4
     agent.i(1, ["x", "y"]) { {x, y} }.should eq({3, 4})
-    agent.last_message.should eq(%({"tag":32,"type":"value","line":1,"value":"{3, 4}","value_type":"Tuple(Int32, Int32)","data":{"x":"3","y":"4"}}))
+    agent.last_message.should eq(%({"tag":32,"type":"value","line":1,"value":"{3, 4}","html_value":"{3, 4}","value_type":"Tuple(Int32, Int32)","data":{"x":"3","y":"4"}}))
   end
 end
 
@@ -64,6 +64,7 @@ describe Playground::AgentInstrumentorTransformer do
     assert_agent %('c'), %(_p.i(1) { 'c' })
     assert_agent %(:foo), %(_p.i(1) { :foo })
     assert_agent %([1, 2]), %(_p.i(1) { [1, 2] })
+    assert_agent %({} of Int32 => Int32), %(_p.i(1) { {} of Int32 => Int32 })
     assert_agent %(/a/), %(_p.i(1) { /a/ })
   end
 

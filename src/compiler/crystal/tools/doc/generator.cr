@@ -28,8 +28,8 @@ class Crystal::Doc::Generator
     },
   }
 
-  def initialize(@program : Program, @included_dirs : Array(String), @dir = "./doc")
-    @base_dir = `pwd`.chomp
+  def initialize(@program : Program, @included_dirs : Array(String), @output_dir : String, @canonical_base_url : String?)
+    @base_dir = Dir.current.chomp
     @types = {} of Crystal::Type => Doc::Type
     @repo_name = ""
     @is_crystal_repo = false
@@ -37,7 +37,7 @@ class Crystal::Doc::Generator
   end
 
   def run
-    Dir.mkdir_p @dir
+    Dir.mkdir_p @output_dir
 
     types = collect_subtypes(@program)
 
@@ -55,7 +55,7 @@ class Crystal::Doc::Generator
 
   def generate_docs(program_type, types)
     copy_files
-    generate_types_docs types, @dir, types
+    generate_types_docs types, @output_dir, types
     generate_readme program_type, types
   end
 
@@ -67,37 +67,43 @@ class Crystal::Doc::Generator
     end
 
     if filename
-      body = doc(program_type, File.read(filename))
+      raw_body = File.read(filename)
+      body = doc(program_type, raw_body)
     else
+      raw_body = ""
       body = ""
     end
 
-    File.write "#{@dir}/index.html", MainTemplate.new(body, types, repository_name)
+    File.write File.join(@output_dir, "index.html"), MainTemplate.new(body, types, repository_name, @canonical_base_url)
+
+    main_index = Main.new(raw_body, Type.new(self, @program), repository_name)
+    File.write File.join(@output_dir, "index.json"), main_index
+    File.write File.join(@output_dir, "search-index.js"), main_index.to_jsonp
   end
 
   def copy_files
-    Dir.mkdir_p "#{@dir}/css"
-    Dir.mkdir_p "#{@dir}/js"
+    Dir.mkdir_p File.join(@output_dir, "css")
+    Dir.mkdir_p File.join(@output_dir, "js")
 
-    File.write "#{@dir}/css/style.css", StyleTemplate.new
-    File.write "#{@dir}/js/doc.js", JsTypeTemplate.new
+    File.write File.join(@output_dir, "css", "style.css"), StyleTemplate.new
+    File.write File.join(@output_dir, "js", "doc.js"), JsTypeTemplate.new
   end
 
   def generate_types_docs(types, dir, all_types)
     types.each do |type|
       if type.program?
-        filename = "#{dir}/toplevel.html"
+        filename = File.join(dir, "toplevel.html")
       else
-        filename = "#{dir}/#{type.name}.html"
+        filename = File.join(dir, "#{type.name}.html")
       end
 
-      File.write filename, TypeTemplate.new(type, all_types)
+      File.write filename, TypeTemplate.new(type, all_types, @canonical_base_url)
 
       next if type.program?
 
       subtypes = type.types
       if subtypes && !subtypes.empty?
-        dirname = "#{dir}/#{type.name}"
+        dirname = File.join(dir, type.name)
         Dir.mkdir_p dirname
         generate_types_docs subtypes, dirname, all_types
       end
@@ -112,6 +118,9 @@ class Crystal::Doc::Generator
     return false if type.private?
     return false if nodoc?(type)
     return true if crystal_builtin?(type)
+
+    # Don't include lib types or types inside a lib type
+    return false if type.is_a?(Crystal::LibType) || type.namespace.is_a?(LibType)
 
     type.locations.try &.any? do |type_location|
       must_include? type_location
@@ -149,7 +158,7 @@ class Crystal::Doc::Generator
     end
   end
 
-  def must_include?(nil : Nil)
+  def must_include?(a_nil : Nil)
     false
   end
 
@@ -291,6 +300,10 @@ class Crystal::Doc::Generator
   end
 
   def compute_repository
+    # check whether inside git work-tree
+    `git rev-parse --is-inside-work-tree >/dev/null 2>&1`
+    return unless $?.success?
+
     remotes = `git remote -v`
     return unless $?.success?
 
@@ -347,7 +360,15 @@ class Crystal::Doc::Generator
     filename[@base_dir.size..-1]
   end
 
-  record RelativeLocation, filename : String, line_number : Int32, url : String?
+  record RelativeLocation, filename : String, line_number : Int32, url : String? do
+    def to_json(builder : JSON::Builder)
+      builder.object do
+        builder.field "filename", filename
+        builder.field "line_number", line_number
+        builder.field "url", url
+      end
+    end
+  end
   SRC_SEP = "src#{File::SEPARATOR}"
 
   def relative_locations(type)
