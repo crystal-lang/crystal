@@ -796,6 +796,16 @@ struct Char
     ord === byte
   end
 
+  # Returns the codepoint of this char.
+  # Same as `ord`.
+  #
+  # ```
+  # 'c'.code_point # => 99
+  # ```
+  def code_point : Int32
+    ord
+  end
+
   def clone
     self
   end
