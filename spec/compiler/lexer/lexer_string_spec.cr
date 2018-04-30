@@ -245,7 +245,7 @@ describe "Lexer string" do
     end
   end
 
-  it "raises when identifier doesn't start with a leter or number" do
+  it "raises when identifier doesn't start with a letter or number" do
     lexer = Lexer.new("<<-!!!\\ntest\n!!!\n")
 
     expect_raises Crystal::SyntaxException, /heredoc identifier starts with invalid character/ do
