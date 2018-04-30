@@ -80,6 +80,7 @@ module Crystal
       {"example", "example_app", "example-lib", "camel_example-camel_lib"}.each do |name|
         describe_file "#{name}/.editorconfig" do |editorconfig|
           parsed = INI.parse(editorconfig)
+          parsed["root"].should eq("true")
           cr_ext = parsed["*.cr"]
           cr_ext["charset"].should eq("utf-8")
           cr_ext["end_of_line"].should eq("lf")
