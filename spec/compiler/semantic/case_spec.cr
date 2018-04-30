@@ -143,7 +143,7 @@ describe "Semantic: case" do
       ), "found non-exhaustive patterns: nil, false, FooBar::Bar"
   end
 
-  it "passes exhaustivness check if 'case' has 'when _' block" do
+  it "passes exhaustivness check if 'case' has 'else' block" do
     assert_type %(
       require "prelude"
 
@@ -151,7 +151,7 @@ describe "Semantic: case" do
 
       case! foo
       when  String
-      when  _
+      else
       end
       ) { nil_type }
   end
@@ -216,7 +216,7 @@ describe "Semantic: case" do
       ) { symbol }
   end
 
-  it "passes tuple exhaustivness check if 'case' has 'when _' block" do
+  it "passes tuple exhaustivness check if 'case' has 'else' block" do
     assert_type %(
       require "prelude"
 
@@ -225,7 +225,7 @@ describe "Semantic: case" do
 
       case! foo
       when  {String, Float64}
-      when  _
+      else
       end
       ) { nil_type }
   end

@@ -31,7 +31,7 @@ class Crystal::Case
   def update(from = nil)
     super
 
-    return unless check_exhaustiveness?
+    return if !check_exhaustiveness? || self.else
 
     expansion = expanded.not_nil!
     self.unbind_from expansion

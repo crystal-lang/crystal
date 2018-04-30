@@ -2499,9 +2499,6 @@ module Crystal
             skip_space_or_newline
             whens << When.new(when_conds, when_body).at(location)
           when :else
-            if check_exhaustiveness
-              unexpected_token @token.to_s, "'case!' cannot have 'else', use 'when _' instead"
-            end
             if whens.size == 0
               unexpected_token @token.to_s, "expecting when"
             end
