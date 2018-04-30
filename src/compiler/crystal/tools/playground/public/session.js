@@ -281,7 +281,7 @@ Playground.Session = function(options) {
         .append(this.sidebarDom = cdiv("sidebar"))
       )
   );
-
+  this.isRunning = false;
   this.stdout = options.stdout;
   this.stdoutRawContent = "";
   this.outputIndicator = new Playground.OutputIndicator(options.outputIndicator);
@@ -406,7 +406,9 @@ Playground.Session = function(options) {
 
   this.run = function() {
     if (Playground.connectLostShown) return;
+    if (this.isRunning) return;
 
+    this.isRunning = true;
     this._removeScheduledRun();
     this.runTag++;
 
@@ -454,6 +456,7 @@ Playground.Session = function(options) {
     }.bind(this);
 
     this.onFinish = function() {
+      this.isRunning = false;
       runButtons.showPlay();
       if (codeFormatter && codeFormatter.isRunning) {
         codeFormatter.stop();
@@ -622,6 +625,9 @@ Playground.Session = function(options) {
     function run() {
       if (isRunning) {
         return console.info('code formatter is already running. Attempt aborted...');
+      }
+      if (sessionInstance.isRunning) {
+        return console.info('compiler running. Formatter attempt aborted...')
       }
       btn.classList.add('running');
       isRunning = true;
