@@ -505,6 +505,11 @@ class Crystal::CodeGenVisitor
   end
 
   def upcast_distinct(value, to_type : MetaclassType | GenericClassInstanceMetaclassType | GenericModuleInstanceMetaclassType | VirtualMetaclassType, from_type)
+    # Special case: union of metaclasses is still represented as a union
+    if from_type.is_a?(MixedUnionType)
+      return load(union_type_id(value))
+    end
+
     value
   end
 
