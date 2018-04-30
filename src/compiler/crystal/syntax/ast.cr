@@ -1142,6 +1142,7 @@ module Crystal
     end
 
     def accept_children(visitor)
+      @cond.try &.accept visitor
       @whens.each &.accept visitor
       @else.try &.accept visitor
     end
