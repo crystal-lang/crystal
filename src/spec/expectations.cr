@@ -200,6 +200,42 @@ module Spec
     end
   end
 
+  # :nodoc:
+  struct StartWithExpectation(T)
+    def initialize(@expected_value : T)
+    end
+
+    def match(actual_value)
+      actual_value.starts_with?(@expected_value)
+    end
+
+    def failure_message(actual_value)
+      "Expected:   #{actual_value.inspect}\nto start with: #{@expected_value.inspect}"
+    end
+
+    def negative_failure_message(actual_value)
+      "Expected: value #{actual_value.inspect}\nnot to start with: #{@expected_value.inspect}"
+    end
+  end
+
+  # :nodoc:
+  struct EndWithExpectation(T)
+    def initialize(@expected_value : T)
+    end
+
+    def match(actual_value)
+      actual_value.ends_with?(@expected_value)
+    end
+
+    def failure_message(actual_value)
+      "Expected:   #{actual_value.inspect}\nto end with: #{@expected_value.inspect}"
+    end
+
+    def negative_failure_message(actual_value)
+      "Expected: value #{actual_value.inspect}\nnot to end with: #{@expected_value.inspect}"
+    end
+  end
+
   # This module defines a number of methods to create expectations, which are
   # automatically included into the top level namespace.
   #
@@ -264,6 +300,18 @@ module Spec
     # Works on collections and `String`.
     def contain(expected)
       Spec::ContainExpectation.new(expected)
+    end
+
+    # Creates an `Expectation` that  passes if actual starts with *expected* (`.starts_with?`).
+    # Works on `String`.
+    def start_with(expected)
+      Spec::StartWithExpectation.new(expected)
+    end
+
+    # Creates an `Expectation` that  passes if actual ends with *expected* (`.ends_with?`).
+    # Works on `String`.
+    def end_with(expected)
+      Spec::EndWithExpectation.new(expected)
     end
 
     # Creates an `Expectation` that passes if actual is of type *type* (`is_a?`).
