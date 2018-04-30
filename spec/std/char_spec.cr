@@ -396,6 +396,12 @@ describe "Char" do
     '酒'.ascii?.should be_false
   end
 
+  it "returns proper code_point" do
+    'A'.code_point.should eq 65
+    'a'.code_point.should eq 97
+    '\n'.code_point.should eq 10
+  end
+
   describe "clone" do
     it { 'a'.clone.should eq('a') }
   end
