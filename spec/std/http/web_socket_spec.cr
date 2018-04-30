@@ -380,42 +380,52 @@ describe HTTP::WebSocket do
     end
 
     address = http_server.bind_unused_port
-    spawn http_server.not_nil!.listen
+    spawn http_server.not_nil!.listen # TODO: Remove .not_nil! when #6037 is fixed
 
     expect_raises(Socket::Error, "Handshake got denied. Status code was 200.") do
       HTTP::WebSocket::Protocol.new(address.address, port: address.port, path: "/")
     end
   ensure
-    http_server.try &.close
+    # http_server.try &.close # TODO: Uncomment when #5958 is fixed
   end
 
-  it "handshake fails if server does not verify Sec-WebSocket-Key" do
-    has_been_called = false
-
-    http_server = nil
-    http_server = HTTP::Server.new do |context|
-      response = context.response
-      response.status_code = 101
-      response.headers["Upgrade"] = "websocket"
-      response.headers["Connection"] = "Upgrade"
-      if has_been_called
-        response.headers["Sec-WebSocket-Accept"] = "foobar"
-        http_server.try &.close
-      else
-        has_been_called = true
+  describe "handshake fails if server does not verify Sec-WebSocket-Key" do
+    it "Sec-WebSocket-Accept missing" do
+      http_server = HTTP::Server.new do |context|
+        response = context.response
+        response.status_code = 101
+        response.headers["Upgrade"] = "websocket"
+        response.headers["Connection"] = "Upgrade"
       end
-    end
 
-    address = http_server.not_nil!.bind_unused_port
-    spawn http_server.not_nil!.listen
+      address = http_server.bind_unused_port
+      spawn http_server.not_nil!.listen # TODO: Remove .not_nil! when #6037 is fixed
 
-    2.times do
       expect_raises(Socket::Error, "Handshake got denied. Server did not verify WebSocket challenge.") do
         HTTP::WebSocket::Protocol.new(address.address, port: address.port, path: "/")
       end
+    ensure
+      # http_server.try &.close # TODO: Uncomment when #5958 is fixed
     end
-  ensure
-    http_server.try &.close unless http_server.try &.closed?
+
+    it "Sec-WebSocket-Accept incorrect" do
+      http_server = HTTP::Server.new do |context|
+        response = context.response
+        response.status_code = 101
+        response.headers["Upgrade"] = "websocket"
+        response.headers["Connection"] = "Upgrade"
+        response.headers["Sec-WebSocket-Accept"] = "foobar"
+      end
+
+      address = http_server.bind_unused_port
+      spawn http_server.not_nil!.listen # TODO: Remove .not_nil! when #6037 is fixed
+
+      expect_raises(Socket::Error, "Handshake got denied. Server did not verify WebSocket challenge.") do
+        HTTP::WebSocket::Protocol.new(address.address, port: address.port, path: "/")
+      end
+    ensure
+      # http_server.try &.close # TODO: Uncomment when #5958 is fixed
+    end
   end
 
   typeof(HTTP::WebSocket.new(URI.parse("ws://localhost")))
