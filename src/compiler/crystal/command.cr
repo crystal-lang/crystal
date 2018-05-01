@@ -462,6 +462,8 @@ class Crystal::Command
       error "You have input an invalid format, only text and JSON are supported"
     end
 
+    error "maximum number of threads cannot be lower than 1" if compiler.n_threads < 1
+
     if !no_codegen && !run && Dir.exists?(output_filename)
       error "can't use `#{output_filename}` as output filename because it's a directory"
     end
