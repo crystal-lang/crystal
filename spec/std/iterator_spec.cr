@@ -513,8 +513,8 @@ describe Iterator do
     end
   end
 
-  describe "with object" do
-    it "does with object" do
+  describe "with_object" do
+    it "does with_object" do
       iter = (1..3).each.with_object("a")
       iter.next.should eq({1, "a"})
       iter.next.should eq({2, "a"})
@@ -523,6 +523,13 @@ describe Iterator do
 
       iter.rewind
       iter.next.should eq({1, "a"})
+    end
+
+    it "does with_object with block" do
+      output = (1..5).each.with_object([] of Int32) do |value, object|
+        object << value if value % 2 == 0
+      end
+      output.should eq([2, 4])
     end
   end
 
