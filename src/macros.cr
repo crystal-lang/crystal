@@ -83,26 +83,25 @@ macro record(name, *properties)
   end
 end
 
-# Prints a series of expressions together with their values.
+# Prints a series of expressions together with their pretty printed values.
 # Useful for print style debugging.
 #
 # ```
 # a = 1
-# pp a # => "a # => 1"
+# pp! a # => "a # => 1"
 #
-# pp [1, 2, 3].map(&.to_s) # => "[1, 2, 3].map(&.to_s) # => ["1", "2", "3"]"
+# pp! [1, 2, 3].map(&.to_s) # => "[1, 2, 3].map(&.to_s) # => ["1", "2", "3"]"
 # ```
-macro pp(*exps)
+#
+# See also: `pp`, `Object#pretty_inspect`.
+macro pp!(*exps)
   {% if exps.size == 0 %}
     # Nothing
   {% elsif exps.size == 1 %}
     {% exp = exps.first %}
     %prefix = "#{{{ exp.stringify }}} # => "
     ::print %prefix
-    %object = {{exp}}
-    PrettyPrint.format(%object, STDOUT, width: 80, indent: %prefix.size)
-    ::puts
-    %object
+    ::pp {{exp}}
   {% else %}
     %names = { {{*exps.map(&.stringify)}} }
     %max_size = %names.max_of &.size
@@ -111,10 +110,41 @@ macro pp(*exps)
         begin
           %prefix = "#{%names[{{i}}].ljust(%max_size)} # => "
           ::print %prefix
-          %object = {{exp}}
-          PrettyPrint.format(%object, STDOUT, width: 80, indent: %prefix.size)
-          ::puts
-          %object
+          ::pp {{exp}}
+        end,
+      {% end %}
+    }
+  {% end %}
+end
+
+# Prints a series of expressions together with their inspected values.
+# Useful for print style debugging.
+#
+# ```
+# a = 1
+# p! a # => "a # => 1"
+#
+# p! [1, 2, 3].map(&.to_s) # => "[1, 2, 3].map(&.to_s) # => ["1", "2", "3"]"
+# ```
+#
+# See also: `p`, `Object#inspect`.
+macro p!(*exps)
+  {% if exps.size == 0 %}
+    # Nothing
+  {% elsif exps.size == 1 %}
+    {% exp = exps.first %}
+    %prefix = "#{{{ exp.stringify }}} # => "
+    ::print %prefix
+    ::p {{exp}}
+  {% else %}
+    %names = { {{*exps.map(&.stringify)}} }
+    %max_size = %names.max_of &.size
+    {
+      {% for exp, i in exps %}
+        begin
+          %prefix = "#{%names[{{i}}].ljust(%max_size)} # => "
+          ::print %prefix
+          ::p {{exp}}
         end,
       {% end %}
     }
