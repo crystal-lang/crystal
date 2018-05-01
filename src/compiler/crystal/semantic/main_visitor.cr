@@ -2461,19 +2461,18 @@ module Crystal
       @in_type_args -= 1
 
       type = node.exp.type?
-      unless type
-        raise "BUG: #{node} at #{node.location} should receive a type"
-      end
 
       # Try to resolve the sizeof right now to a number literal
       # (useful for sizeof inside as a generic type argument, but also
       # to make it easier for LLVM to optimize things)
-      if !node.exp.is_a?(TypeOf)
+      if type && !node.exp.is_a?(TypeOf)
         expanded = NumberLiteral.new(@program.size_of(type.sizeof_type))
         expanded.type = @program.int32
         node.expanded = expanded
       end
+
       node.type = @program.int32
+
       false
     end
 
@@ -2483,9 +2482,6 @@ module Crystal
       @in_type_args -= 1
 
       type = node.exp.type?
-      unless type
-        raise "BUG: #{node} at #{node.location} should receive a type"
-      end
 
       if type.is_a? GenericType
         node.raise "can't calculate instance_sizeof of generic class #{type} without specifying its type vars"
@@ -2494,12 +2490,14 @@ module Crystal
       # Try to resolve the instance_sizeof right now to a number literal
       # (useful for sizeof inside as a generic type argument, but also
       # to make it easier for LLVM to optimize things)
-      if type.instance_type.devirtualize.class? && !node.exp.is_a?(TypeOf)
+      if type && type.instance_type.devirtualize.class? && !node.exp.is_a?(TypeOf)
         expanded = NumberLiteral.new(@program.instance_size_of(type.sizeof_type))
         expanded.type = @program.int32
         node.expanded = expanded
       end
+
       node.type = @program.int32
+
       false
     end
 
