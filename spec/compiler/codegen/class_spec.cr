@@ -1039,4 +1039,24 @@ describe "Code gen: class" do
       foo.x
       ), inject_primitives: false).to_i.should eq(1)
   end
+
+  it "can use self.is_a? inside type (#5911)" do
+    run(%(
+      class Foo
+        @x = 0
+        def x; @x; end
+        def x=(@x); end
+      end
+
+      FOO = Foo.new
+
+      module Moo
+        if self.is_a?(Moo.class)
+          FOO.x = 3
+        end
+      end
+
+      FOO.x
+    )).to_i.should eq(3)
+  end
 end

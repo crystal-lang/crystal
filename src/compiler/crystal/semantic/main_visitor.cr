@@ -367,7 +367,21 @@ module Crystal
         if current_type.is_a?(Program)
           node.raise "there's no self in this scope"
         else
-          node.type = current_type.metaclass
+          self_type = current_type.metaclass
+
+          # Define the "self" var as it might be used later,
+          # for example if someone filters it with an is_a?
+          var = MetaVar.new(node.name)
+          var.type = self_type
+          var.bind_to(var)
+          @vars[node.name] = var
+
+          meta_var = new_meta_var(node.name)
+          meta_var.type = self_type
+          meta_var.bind_to(meta_var)
+          @meta_vars[node.name] = meta_var
+
+          node.type = self_type
         end
       elsif node.special_var?
         special_var = define_special_var(node.name, program.nil_var)
