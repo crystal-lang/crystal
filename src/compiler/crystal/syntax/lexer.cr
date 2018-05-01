@@ -200,10 +200,9 @@ module Crystal
               else
                 if char == '\'' && has_single_quote
                   found_closing_single_quote = true
-                  peek = peek_next_char
-                  if peek != '\r' && peek != '\n'
-                    raise "expecting '\\n' or '\\r' after closing single quote"
-                  end
+                  end_here = current_pos
+                  next_char
+                  break
                 elsif has_single_quote
                   # wait until another quote
                 else
@@ -216,8 +215,6 @@ module Crystal
             if has_single_quote && !found_closing_single_quote
               raise "expecting closing single quote"
             end
-
-            end_here -= 1 if has_single_quote
 
             here = string_range(start_here, end_here)
 
