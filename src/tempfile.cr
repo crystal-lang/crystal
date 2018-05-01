@@ -29,7 +29,7 @@ require "c/stdlib"
 #
 # ```
 # tempfile = Tempfile.new("foo")
-# tempfile.unlink
+# tempfile.delete
 # ```
 #
 # The optional `extension` argument can be used to force the resulting filename
@@ -104,10 +104,5 @@ class Tempfile < File
   # Deletes this tempfile.
   def delete
     File.delete(@path)
-  end
-
-  # ditto
-  def unlink
-    delete
   end
 end
