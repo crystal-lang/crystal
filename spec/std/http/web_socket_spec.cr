@@ -374,6 +374,60 @@ describe HTTP::WebSocket do
     ws2.run
   end
 
+  it "handshake fails if server does not switch protocols" do
+    http_server = HTTP::Server.new do |context|
+      context.response.status_code = 200
+    end
+
+    address = http_server.bind_unused_port
+    spawn http_server.not_nil!.listen # TODO: Remove .not_nil! when #6037 is fixed
+
+    expect_raises(Socket::Error, "Handshake got denied. Status code was 200.") do
+      HTTP::WebSocket::Protocol.new(address.address, port: address.port, path: "/")
+    end
+  ensure
+    # http_server.try &.close # TODO: Uncomment when #5958 is fixed
+  end
+
+  describe "handshake fails if server does not verify Sec-WebSocket-Key" do
+    it "Sec-WebSocket-Accept missing" do
+      http_server = HTTP::Server.new do |context|
+        response = context.response
+        response.status_code = 101
+        response.headers["Upgrade"] = "websocket"
+        response.headers["Connection"] = "Upgrade"
+      end
+
+      address = http_server.bind_unused_port
+      spawn http_server.not_nil!.listen # TODO: Remove .not_nil! when #6037 is fixed
+
+      expect_raises(Socket::Error, "Handshake got denied. Server did not verify WebSocket challenge.") do
+        HTTP::WebSocket::Protocol.new(address.address, port: address.port, path: "/")
+      end
+    ensure
+      # http_server.try &.close # TODO: Uncomment when #5958 is fixed
+    end
+
+    it "Sec-WebSocket-Accept incorrect" do
+      http_server = HTTP::Server.new do |context|
+        response = context.response
+        response.status_code = 101
+        response.headers["Upgrade"] = "websocket"
+        response.headers["Connection"] = "Upgrade"
+        response.headers["Sec-WebSocket-Accept"] = "foobar"
+      end
+
+      address = http_server.bind_unused_port
+      spawn http_server.not_nil!.listen # TODO: Remove .not_nil! when #6037 is fixed
+
+      expect_raises(Socket::Error, "Handshake got denied. Server did not verify WebSocket challenge.") do
+        HTTP::WebSocket::Protocol.new(address.address, port: address.port, path: "/")
+      end
+    ensure
+      # http_server.try &.close # TODO: Uncomment when #5958 is fixed
+    end
+  end
+
   typeof(HTTP::WebSocket.new(URI.parse("ws://localhost")))
   typeof(HTTP::WebSocket.new("localhost", "/"))
   typeof(HTTP::WebSocket.new("ws://localhost"))
