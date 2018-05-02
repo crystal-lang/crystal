@@ -1244,6 +1244,9 @@ describe "Parser" do
 
   it_parses "<<-'HERE COMES HEREDOC'\n  hello \\n world\n  \#{1}\n  HERE COMES HEREDOC", "hello \\n world\n\#{1}".string_interpolation
 
+  it_parses "<<-EOF.x\n  foo\nEOF", Call.new("  foo".string_interpolation, "x")
+  it_parses "<<-'EOF'.x\n  foo\nEOF", Call.new("  foo".string_interpolation, "x")
+
   assert_syntax_error "<<-FOO\n1\nFOO.bar", "Unterminated heredoc: can't find \"FOO\" anywhere before the end of file"
   assert_syntax_error "<<-FOO\n1\nFOO + 2", "Unterminated heredoc: can't find \"FOO\" anywhere before the end of file"
 
