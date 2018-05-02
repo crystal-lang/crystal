@@ -302,11 +302,44 @@ def puts(*objects) : Nil
   STDOUT.puts *objects
 end
 
+# Inspects *object* to `STDOUT` followed
+# by a newline. Returns *object*.
+#
+# See also: `Object#inspect(io)`.
+def p(object)
+  object.inspect(STDOUT)
+  puts
+  object
+end
+
+# Inspects each object in *objects* to `STDOUT`, followed
+# by a newline. Returns *objects*.
+#
+# See also: `Object#inspect(io)`.
+def p(*objects)
+  objects.each do |obj|
+    p obj
+  end
+  objects
+end
+
+# Inspects *objects* to `STDOUT`, followed
+# by a newline. Returns *objects*.
+#
+# ```
+# p foo: 23, bar: 42 # => {foo: 23, bar: 42}
+# ```
+#
+# See `Object#inspect(io)`
+def p(**objects)
+  p(objects) unless objects.empty?
+end
+
 # Pretty prints *object* to `STDOUT` followed
 # by a newline. Returns *object*.
 #
 # See also: `Object#pretty_print(pp)`.
-def p(object)
+def pp(object)
   PrettyPrint.format(object, STDOUT, 79)
   puts
   object
@@ -316,14 +349,14 @@ end
 # by a newline. Returns *objects*.
 #
 # See also: `Object#pretty_print(pp)`.
-def p(*objects)
+def pp(*objects)
   objects.each do |obj|
-    p obj
+    pp obj
   end
   objects
 end
 
-# Pretty prints each object in *objects* to `STDOUT`, followed
+# Pretty prints *objects* to `STDOUT`, followed
 # by a newline. Returns *objects*.
 #
 # ```
@@ -331,8 +364,8 @@ end
 # ```
 #
 # See `Object#pretty_print(pp)`
-def p(**objects)
-  p(objects) unless objects.empty?
+def pp(**objects)
+  pp(objects) unless objects.empty?
 end
 
 # :nodoc:
