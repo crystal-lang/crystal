@@ -3672,7 +3672,7 @@ module Crystal
            :def, :macro, :require, :case, :select, :if, :unless, :include,
            :extend, :class, :struct, :module, :enum, :while, :until, :return,
            :next, :break, :lib, :fun, :alias, :pointerof, :sizeof,
-           :instance_sizeof, :typeof, :private, :protected, :asm,
+           :instance_sizeof, :typeof, :private, :protected, :asm, :out,
       # `end` is also invalid because it maybe terminate `def` block.
            :end
         true

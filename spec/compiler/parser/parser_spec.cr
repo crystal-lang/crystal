@@ -172,13 +172,13 @@ describe "Parser" do
   assert_syntax_error "def foo!=; end", "unexpected token: !="
   assert_syntax_error "def foo?=(x); end", "unexpected token: ?"
 
-  # #5895
+  # #5895 & #6042
   %w(
     begin nil true false yield with abstract
     def macro require case select if unless include
     extend class struct module enum while until return
     next break lib fun alias pointerof sizeof
-    instance_sizeof typeof private protected asm
+    instance_sizeof typeof private protected asm out
     end
   ).each do |kw|
     assert_syntax_error "def foo(#{kw}); end", "cannot use '#{kw}' as an argument name", 1, 9
