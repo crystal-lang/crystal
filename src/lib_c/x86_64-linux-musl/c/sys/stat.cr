@@ -44,6 +44,21 @@ lib LibC
     __unused : StaticArray(Long, 3)
   end
 
+  struct Statfs
+    type : Int64
+    bsize : Int64
+    blocks : UInt64
+    bfree : UInt64
+    bavail : UInt64
+    files : UInt64
+    ffree : UInt64
+    fsid : FsidT
+    namelen : Int64
+    frsize : Int64
+    flags : Int64
+    spare : StaticArray(Long, 4)
+  end
+
   fun chmod(x0 : Char*, x1 : ModeT) : Int
   fun fstat(x0 : Int, x1 : Stat*) : Int
   fun lstat(x0 : Char*, x1 : Stat*) : Int
@@ -51,5 +66,6 @@ lib LibC
   fun mkfifo(x0 : Char*, x1 : ModeT) : Int
   fun mknod(x0 : Char*, x1 : ModeT, x2 : DevT) : Int
   fun stat(x0 : Char*, x1 : Stat*) : Int
+  fun statfs(file : Char*, buf : Statfs*) : Int
   fun umask(x0 : ModeT) : ModeT
 end

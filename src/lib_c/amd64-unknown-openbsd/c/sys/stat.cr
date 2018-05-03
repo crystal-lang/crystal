@@ -45,6 +45,30 @@ lib LibC
     __st_birthtim : Timespec
   end
 
+  struct Statfs
+    f_flags : UInt32
+    f_bsize : UInt32
+    f_iosize : UInt32
+    f_blocks : UInt64
+    f_bfree : UInt64
+    f_bavail : Int64
+    f_files : UInt64
+    f_ffree : UInt64
+    f_favail : Int64
+    f_syncwrites : UInt64
+    f_syncreads : UInt64
+    f_asyncwrites : UInt64
+    f_asyncreads : UInt64
+    f_fsid : Fsid
+    f_namemax : UInt32
+    f_owner : UInt32
+    f_ctime : UInt64
+    f_fstypename : StaticArray(ShortShort, 16)
+    f_mntonname : StaticArray(ShortShort, 90)
+    f_mntfromname : StaticArray(ShortShort, 90)
+    f_mntfromspec : StaticArray(ShortShort, 90)
+  end
+
   fun chmod(x0 : Char*, x1 : ModeT) : Int
   fun fstat(x0 : Int, x1 : Stat*) : Int
   fun lstat(x0 : Char*, x1 : Stat*) : Int
@@ -52,5 +76,6 @@ lib LibC
   fun mkfifo(x0 : Char*, x1 : ModeT) : Int
   fun mknod(x0 : Char*, x1 : ModeT, x2 : DevT) : Int
   fun stat(x0 : Char*, x1 : Stat*) : Int
+  fun statfs(file : Char*, buf : Statfs*) : Int
   fun umask(x0 : ModeT) : ModeT
 end

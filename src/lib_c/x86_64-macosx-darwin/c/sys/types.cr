@@ -6,6 +6,7 @@ lib LibC
   alias BlksizeT = Int
   alias ClockT = ULong
   alias DevT = Int
+  alias FsidT = StaticArray(Int32, 2)
   alias GidT = UInt
   alias IdT = UInt
   alias InoT = UInt
