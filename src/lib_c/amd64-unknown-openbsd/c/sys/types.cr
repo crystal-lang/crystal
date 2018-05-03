@@ -7,6 +7,7 @@ lib LibC
   alias ClockT = LongLong
   alias ClockidT = Int
   alias DevT = Int
+  alias FsidT = StaticArray(Int32, 2)
   alias GidT = UInt
   alias IdT = UInt
   alias InoT = ULongLong

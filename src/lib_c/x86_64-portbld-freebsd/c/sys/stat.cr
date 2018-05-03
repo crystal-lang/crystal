@@ -55,7 +55,7 @@ lib LibC
     st_blocks : BlkcntT
     st_blksize : BlksizeT
     st_flags : FflagsT
-    {% if flag?("freebsd12.0") %}
+    {% if flag?(:"freebsd12.0") %}
       st_gen : ULong
       st_spare : StaticArray(ULong, 10)
     {% else %}
@@ -67,6 +67,31 @@ lib LibC
     {% end %}
   end
 
+  struct Statfs
+    version : UInt32
+    type : UInt32
+    flags : UInt64
+    bsize : UInt64
+    iosize : UInt64
+    blocks : UInt64
+    bfree : UInt64
+    bavail : Int64
+    files : UInt64
+    ffree : Int64
+    syncwrites : UInt64
+    asyncwrites : UInt64
+    syncreads : UInt64
+    asyncreads : UInt64
+    spare : StaticArray(LongLong, 10)
+    namemax : UInt32
+    owner : UInt32
+    fsid : FsidT
+    charspare : StaticArray(Int16, 80)
+    fstypename : StaticArray(Int16, 16)
+    mntfromname : StaticArray(Int16, 88)
+    mntonname : StaticArray(Int16, 88)
+  end
+
   fun chmod(x0 : Char*, x1 : ModeT) : Int
   fun fstat(x0 : Int, x1 : Stat*) : Int
   fun lstat(x0 : Char*, x1 : Stat*) : Int
@@ -74,5 +99,6 @@ lib LibC
   fun mkfifo(x0 : Char*, x1 : ModeT) : Int
   fun mknod(x0 : Char*, x1 : ModeT, x2 : DevT) : Int
   fun stat(x0 : Char*, x1 : Stat*) : Int
+  fun statfs(file : Char*, buf : Stat*) : Int
   fun umask(x0 : ModeT) : ModeT
 end

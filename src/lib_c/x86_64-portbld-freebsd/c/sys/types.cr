@@ -7,6 +7,7 @@ lib LibC
   alias ClockT = Int
   alias ClockidT = Int
   alias DevT = UInt
+  alias FsidT = StaticArray(Int32, 2)
   alias GidT = UInt
   alias IdT = Long
   {% if flag?(:"freebsd12.0") %}

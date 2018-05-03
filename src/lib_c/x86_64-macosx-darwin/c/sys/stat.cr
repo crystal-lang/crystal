@@ -46,6 +46,25 @@ lib LibC
     st_qspare : StaticArray(LongLong, 2)
   end
 
+  struct Statfs
+    bsize : UInt32
+    iosize : Int32
+    nlocks : UInt64
+    bfree : UInt64
+    bavail : UInt64
+    files : UInt64
+    ffree : UInt64
+    fsid : FsidT
+    owner : UInt32
+    type : UInt32
+    flags : UInt32
+    fssubtype : UInt32
+    fstypename : StaticArray(Int16, 16)
+    mntonname : StaticArray(Int16, 1024)
+    mntfromname : StaticArray(Int16, 1024)
+    reserved : StaticArray(Long, 8)
+  end
+
   fun chmod(x0 : Char*, x1 : ModeT) : Int
   fun fstat(x0 : Int, x1 : Stat*) : Int
   fun lstat(x0 : Char*, x1 : Stat*) : Int
@@ -53,5 +72,6 @@ lib LibC
   fun mkfifo(x0 : Char*, x1 : ModeT) : Int
   fun mknod(x0 : Char*, x1 : ModeT, x2 : DevT) : Int
   fun stat(x0 : Char*, x1 : Stat*) : Int
+  fun statfs(file : Char*, buf : Stat*) : Int
   fun umask(x0 : ModeT) : ModeT
 end

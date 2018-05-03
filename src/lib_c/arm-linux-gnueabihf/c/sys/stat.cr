@@ -46,6 +46,21 @@ lib LibC
     __glibc_reserved5 : ULong
   end
 
+  struct Statfs
+    type : Int
+    bsize : Int
+    blocks : UInt64
+    bfree : UInt64
+    bavail : ULong
+    files : ULong
+    ffree : ULong
+    fsid : FsidT
+    namelen : Int
+    frsize : Int
+    flags : Int
+    spare : StaticArray(Int, 4)
+  end
+
   fun chmod(file : Char*, mode : ModeT) : Int
   fun fstat(fd : Int, buf : Stat*) : Int
   fun lstat(file : Char*, buf : Stat*) : Int
@@ -53,5 +68,6 @@ lib LibC
   fun mkfifo(path : Char*, mode : ModeT) : Int
   fun mknod(path : Char*, mode : ModeT, dev : DevT) : Int
   fun stat(file : Char*, buf : Stat*) : Int
+  fun statfs(file : Char*, buf : Stat*) : Int
   fun umask(mask : ModeT) : ModeT
 end
