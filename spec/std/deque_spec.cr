@@ -611,7 +611,6 @@ describe "Deque" do
     it "works while modifying deque" do
       a = Deque{1, 2, 3}
       count = 0
-      it = a.each_index
       a.each_index.each do
         count += 1
         a.clear

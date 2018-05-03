@@ -122,7 +122,6 @@ describe "File" do
     end
 
     it "raises an error when a component of the path is a file" do
-      filename = "#{__DIR__}/data/non_existing_file.txt"
       ex = expect_raises(Errno, /Error determining size/) do
         File.empty?("#{__FILE__}/")
       end
@@ -462,7 +461,6 @@ describe "File" do
     end
 
     it "raises an error when a component of the path is a file" do
-      filename = "#{__DIR__}/data/non_existing_file.txt"
       ex = expect_raises(Errno, /Error determining size/) do
         File.size("#{__FILE__}/")
       end

@@ -595,7 +595,7 @@ describe UDPSocket do
 
     client.send("message less than buffer", server.local_address)
 
-    bytes_read, client_addr = server.receive(buffer.to_slice)
+    bytes_read, _ = server.receive(buffer.to_slice)
     message = String.new(buffer.to_slice[0, bytes_read])
     message.should eq("message less than buffer")
 

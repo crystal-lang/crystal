@@ -25,7 +25,7 @@ private def run_expand_tool(code)
   code = code.gsub('‸', "")
 
   if cursor_location
-    visitor, result = processed_expand_visitor(code, cursor_location)
+    _, result = processed_expand_visitor(code, cursor_location)
 
     yield result
   else

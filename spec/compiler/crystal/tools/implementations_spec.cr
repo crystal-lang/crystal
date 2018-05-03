@@ -28,7 +28,7 @@ private def assert_implementations(code)
   code = code.gsub('‸', "").gsub('༓', "")
 
   if cursor_location
-    visitor, result = processed_implementation_visitor(code, cursor_location)
+    _, result = processed_implementation_visitor(code, cursor_location)
 
     result_location = result.implementations.not_nil!.map { |e| Location.new(e.filename.not_nil!, e.line.not_nil!, e.column.not_nil!).to_s }.sort
 
@@ -173,7 +173,7 @@ describe "implementations" do
   end
 
   it "find full trace for macro expansions" do
-    visitor, result = processed_implementation_visitor(%(
+    _, result = processed_implementation_visitor(%(
       macro foo
         def bar
         end
@@ -211,7 +211,7 @@ describe "implementations" do
   end
 
   it "can display text output" do
-    visitor, result = processed_implementation_visitor(%(
+    _, result = processed_implementation_visitor(%(
       macro foo
         def bar
         end

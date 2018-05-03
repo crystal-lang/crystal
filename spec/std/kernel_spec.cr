@@ -175,7 +175,7 @@ describe "at_exit" do
   end
 
   it "errors when used in an at_exit handler" do
-    status, output, error = build_and_run <<-CODE
+    status, _, error = build_and_run <<-CODE
       at_exit do
         at_exit {}
       end

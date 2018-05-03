@@ -237,7 +237,6 @@ describe "Semantic: did you mean" do
   end
 
   it "suggests a better alternative to logical operators (#2715)" do
-    message = "undefined method 'and'"
     message = " (did you mean '&&'?)".colorize.yellow.bold.to_s
     assert_error %(
       def rand(x : Int32)

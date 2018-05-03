@@ -28,7 +28,7 @@ describe "concurrent" do
 
     it "re-raises errors from Fibers as ConcurrentExecutionException" do
       exception = expect_raises(ConcurrentExecutionException) do
-        a, b = parallel(raising_job, raising_job)
+        parallel(raising_job, raising_job)
       end
 
       exception.cause.should be_a(SomeParallelJobException)
