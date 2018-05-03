@@ -59,9 +59,9 @@ lib LibC
     type : UInt32
     flags : UInt32
     fssubtype : UInt32
-    fstypename : StaticArray(ShortShort, 16)
-    mntonname : StaticArray(ShortShort, 1024)
-    mntfromname : StaticArray(ShortShort, 1024)
+    fstypename : StaticArray(Int16, 16)
+    mntonname : StaticArray(Int16, 1024)
+    mntfromname : StaticArray(Int16, 1024)
     reserved : StaticArray(Long, 8)
   end
 

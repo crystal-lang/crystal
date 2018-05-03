@@ -63,10 +63,10 @@ lib LibC
     f_namemax : UInt32
     f_owner : UInt32
     f_ctime : UInt64
-    f_fstypename : StaticArray(ShortShort, 16)
-    f_mntonname : StaticArray(ShortShort, 90)
-    f_mntfromname : StaticArray(ShortShort, 90)
-    f_mntfromspec : StaticArray(ShortShort, 90)
+    f_fstypename : StaticArray(Int16, 16)
+    f_mntonname : StaticArray(Int16, 90)
+    f_mntfromname : StaticArray(Int16, 90)
+    f_mntfromspec : StaticArray(Int16, 90)
   end
 
   fun chmod(x0 : Char*, x1 : ModeT) : Int

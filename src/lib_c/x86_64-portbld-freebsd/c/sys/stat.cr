@@ -86,10 +86,10 @@ lib LibC
     namemax : UInt32
     owner : UInt32
     fsid : FsidT
-    charspare : StaticArray(ShortShort, 80)
-    fstypename : StaticArray(ShortShort, 16)
-    mntfromname : StaticArray(ShortShort, 88)
-    mntonname : StaticArray(ShortShort, 88)
+    charspare : StaticArray(Int16, 80)
+    fstypename : StaticArray(Int16, 16)
+    mntfromname : StaticArray(Int16, 88)
+    mntonname : StaticArray(Int16, 88)
   end
 
   fun chmod(x0 : Char*, x1 : ModeT) : Int
