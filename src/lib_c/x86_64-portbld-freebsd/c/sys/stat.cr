@@ -85,7 +85,7 @@ lib LibC
     spare : StaticArray(LongLong, 10)
     namemax : UInt32
     owner : UInt32
-    fsid : Fsid
+    fsid : FsidT
     charspare : StaticArray(ShortShort, 80)
     fstypename : StaticArray(ShortShort, 16)
     mntfromname : StaticArray(ShortShort, 88)

@@ -54,7 +54,7 @@ lib LibC
     bavail : UInt64
     files : UInt64
     ffree : UInt64
-    fsid : Fsid
+    fsid : FsidT
     owner : UInt32
     type : UInt32
     flags : UInt32

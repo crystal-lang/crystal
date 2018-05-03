@@ -59,7 +59,7 @@ lib LibC
     f_syncreads : UInt64
     f_asyncwrites : UInt64
     f_asyncreads : UInt64
-    f_fsid : Fsid
+    f_fsid : FsidT
     f_namemax : UInt32
     f_owner : UInt32
     f_ctime : UInt64
