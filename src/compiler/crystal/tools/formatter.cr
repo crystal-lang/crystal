@@ -184,7 +184,6 @@ module Crystal
       end
 
       old_indent = @indent
-      base_indent = old_indent
       next_needs_indent = false
 
       has_newline = false
@@ -200,7 +199,6 @@ module Crystal
           @indent += 2
           write_line unless wrote_newline
           next_token_skip_space_or_newline
-          base_indent = @indent
           next_needs_indent = true
           has_newline = true
         end
@@ -213,7 +211,6 @@ module Crystal
           next_token_skip_space_or_newline
         end
         has_begin = true
-        base_indent = @indent
         next_needs_indent = true
         has_newline = true
       end
@@ -536,7 +533,6 @@ module Crystal
       @last_is_heredoc = is_heredoc
 
       heredoc_line = @line
-      heredoc_end = @line
 
       node.expressions.each do |exp|
         if @token.type == :DELIMITER_END
@@ -1181,7 +1177,6 @@ module Crystal
 
       check_open_paren
 
-      paren_count = @paren_count
       column = @column
 
       node.types.each_with_index do |type, i|
@@ -1402,7 +1397,7 @@ module Crystal
         skip_space
         write_token " ", :":", " "
         skip_space_or_newline
-        accept node.return_type.not_nil!
+        accept return_type
       end
 
       if free_vars = node.free_vars
@@ -1841,7 +1836,6 @@ module Crystal
       end
       write "{% "
 
-      macro_state = @macro_state
       next_token_skip_space_or_newline
 
       write_keyword :for, " "
@@ -2122,7 +2116,6 @@ module Crystal
         end
 
         accept obj
-        obj_width = @column - @indent
 
         passed_backslash_newline = @token.passed_backslash_newline
 
@@ -2312,7 +2305,6 @@ module Crystal
         next_token
         if @token.type == :"("
           write "=("
-          has_parentheses = true
           slash_is_regex!
           next_token
           format_call_args(node, true)
@@ -2790,9 +2782,7 @@ module Crystal
             end
 
             next_token_skip_space_or_newline
-            has_comma = false
             if @token.type == :","
-              has_comma = true
               next_token_skip_space_or_newline
             end
 

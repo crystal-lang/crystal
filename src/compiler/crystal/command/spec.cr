@@ -71,7 +71,7 @@ class Crystal::Command
 
     output_filename = Crystal.tempfile "spec"
 
-    result = compiler.compile sources, output_filename
+    compiler.compile sources, output_filename
     execute output_filename, options, compiler
   end
 end

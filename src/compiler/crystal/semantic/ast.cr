@@ -4,7 +4,7 @@ module Crystal
   def self.check_type_allowed_in_generics(node, type, msg)
     return if type.allowed_in_generics?
 
-    type = type.union_types.find { |t| !t.allowed_in_generics? } if type.is_a?(UnionType)
+    # type = type.union_types.find { |t| !t.allowed_in_generics? } if type.is_a?(UnionType)
     node.raise "#{msg} yet, use a more specific type"
   end
 
@@ -340,7 +340,6 @@ module Crystal
         break unless obj
 
         yield a_def.args[i], i, obj, i
-        i += 1
       end
       nil
     end

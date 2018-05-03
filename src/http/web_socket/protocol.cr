@@ -136,7 +136,6 @@ class HTTP::WebSocket::Protocol
     @io.write mask_array.to_slice
 
     data.each_with_index do |byte, index|
-      mask = mask_array[index & 0b11] # x & 0b11 == x % 4
       @io.write_byte(byte ^ mask_array[index & 0b11])
     end
   end

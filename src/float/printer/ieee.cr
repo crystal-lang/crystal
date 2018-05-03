@@ -109,8 +109,6 @@ module Float::Printer::IEEE
     physical_significand_is_zero = (d64 & SIGNIFICAND_MASK_64) == 0
 
     lower_bound_closer = physical_significand_is_zero && (exponent(d64) != DENORMAL_EXPONENT_64)
-    calcualted_exp = exponent(d64)
-    calc_denormal = denormal?(d64)
     f, e = if lower_bound_closer
              {(w.frac << 2) - 1, w.exp - 2}
            else
@@ -129,8 +127,6 @@ module Float::Printer::IEEE
     physical_significand_is_zero = (d32 & SIGNIFICAND_MASK_32) == 0
 
     lower_bound_closer = physical_significand_is_zero && (exponent(d32) != DENORMAL_EXPONENT_32)
-    calcualted_exp = exponent(d32)
-    calc_denormal = denormal?(d32)
     f, e = if lower_bound_closer
              {(w.frac << 2) - 1, w.exp - 2}
            else

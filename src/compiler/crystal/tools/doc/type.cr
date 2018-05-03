@@ -638,7 +638,7 @@ class Crystal::Doc::Type
   end
 
   def type_to_html(type : Crystal::GenericInstanceType, io, text = nil, links = true)
-    has_link_in_type_vars = type.type_vars.any? { |(name, type_var)| type_has_link? type_var.as?(Var).try(&.type) || type_var }
+    has_link_in_type_vars = type.type_vars.any? { |(_, type_var)| type_has_link? type_var.as?(Var).try(&.type) || type_var }
     generic_type = @generator.type(type.generic_type)
     must_be_included = generic_type.must_be_included?
 
@@ -726,7 +726,7 @@ class Crystal::Doc::Type
 
   def type_has_link?(type : Crystal::GenericInstanceType)
     @generator.type(type.generic_type).must_be_included? ||
-      type.type_vars.any? { |(name, type_var)| type_has_link? type_var.as?(Var).try(&.type) || type_var }
+      type.type_vars.any? { |(_, type_var)| type_has_link? type_var.as?(Var).try(&.type) || type_var }
   end
 
   def type_has_link?(type : Crystal::Type)

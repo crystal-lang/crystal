@@ -102,8 +102,6 @@ struct Time::Span
     minsec = minutes * 60
     s = (hrssec + minsec + seconds).to_i64
 
-    result = 0_i64
-
     overflow = false
     # days is problematic because it can overflow but that overflow can be
     # "legal" (i.e. temporary) (e.g. if other parameters are negative) or

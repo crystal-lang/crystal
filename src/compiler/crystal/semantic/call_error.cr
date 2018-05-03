@@ -396,7 +396,7 @@ class Crystal::Call
   end
 
   def def_full_name(owner, a_def, arg_types = nil)
-    Call.def_full_name(owner, a_def, arg_types = nil)
+    Call.def_full_name(owner, a_def, arg_types)
   end
 
   def self.def_full_name(owner, a_def, arg_types = nil)
@@ -442,7 +442,7 @@ class Crystal::Call
           end
         end
       end
-      if arg_default = arg.default_value
+      if arg.default_value
         str << " = "
         str << arg.default_value
       end
@@ -466,8 +466,6 @@ class Crystal::Call
   end
 
   def raise_matches_not_found_for_virtual_metaclass_new(owner)
-    arg_types = args.map &.type
-
     owner.each_concrete_type do |concrete_type|
       defs = concrete_type.instance_type.lookup_defs_with_modules("initialize")
       defs = defs.select { |a_def| a_def.args.size != args.size }

@@ -19,35 +19,34 @@ class Crystal::Command
     includes = [] of String
     check = nil
 
-    option_parser =
-      OptionParser.parse(options) do |opts|
-        opts.banner = "Usage: crystal tool format [options] [file or directory]\n\nOptions:"
+    OptionParser.parse(options) do |opts|
+      opts.banner = "Usage: crystal tool format [options] [file or directory]\n\nOptions:"
 
-        opts.on("--check", "Checks that formatting code produces no changes") do |f|
-          check = [] of FormatResult
-        end
-
-        opts.on("-f text|json", "--format text|json", "Output format text (default) or json") do |f|
-          @format = f
-        end
-
-        opts.on("-i <path>", "--include <path>", "Include path") do |f|
-          includes << f
-        end
-
-        opts.on("-e <path>", "--exclude <path>", "Exclude path (default: lib)") do |f|
-          excludes << f
-        end
-
-        opts.on("-h", "--help", "Show this message") do
-          puts opts
-          exit
-        end
-
-        opts.on("--no-color", "Disable colored output") do
-          @color = false
-        end
+      opts.on("--check", "Checks that formatting code produces no changes") do |f|
+        check = [] of FormatResult
       end
+
+      opts.on("-f text|json", "--format text|json", "Output format text (default) or json") do |f|
+        @format = f
+      end
+
+      opts.on("-i <path>", "--include <path>", "Include path") do |f|
+        includes << f
+      end
+
+      opts.on("-e <path>", "--exclude <path>", "Exclude path (default: lib)") do |f|
+        excludes << f
+      end
+
+      opts.on("-h", "--help", "Show this message") do
+        puts opts
+        exit
+      end
+
+      opts.on("--no-color", "Disable colored output") do
+        @color = false
+      end
+    end
 
     files = options
     check_files = check

@@ -28,7 +28,6 @@ module Crystal
     end
 
     def define_method_from_method_missing(method_missing, signature, original_call)
-      name_node = StringLiteral.new(signature.name)
       args_nodes = [] of ASTNode
       named_args_nodes = nil
       args_nodes_names = Set(String).new

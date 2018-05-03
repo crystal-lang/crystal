@@ -466,7 +466,7 @@ class Socket < IO
 
   private def setsockopt_bool(optname, optval : Bool, level = LibC::SOL_SOCKET)
     v = optval ? 1 : 0
-    ret = setsockopt optname, v, level
+    setsockopt optname, v, level
     optval
   end
 

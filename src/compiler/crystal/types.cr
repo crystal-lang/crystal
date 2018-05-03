@@ -1628,7 +1628,7 @@ module Crystal
     def replace_type_parameters(instance)
       new_type_vars = [] of TypeVar
 
-      type_vars.each_with_index do |(name, node), index|
+      type_vars.each_with_index do |(_, node), index|
         if node.is_a?(Var)
           type = node.type
 

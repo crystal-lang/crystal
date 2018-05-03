@@ -84,7 +84,7 @@ module Crystal
             return make_relative_unless_absolute relative_filename_cr
           end
 
-          if slash_index = filename.index('/')
+          if filename.index('/')
             # If it's "foo/bar/baz", check if "foo/src/bar/baz.cr" exists (for a shard, non-namespaced structure)
             before_slash, after_slash = filename.split('/', 2)
             absolute_filename = make_relative_unless_absolute("#{relative_to}/#{before_slash}/src/#{after_slash}.cr")

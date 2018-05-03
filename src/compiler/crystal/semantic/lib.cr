@@ -87,7 +87,7 @@ class Crystal::Call
     # (and we checked that all args are covered), and we
     # remove our named args.
     sorted_named_args.sort_by! &.[0]
-    sorted_named_args.each do |(index, named_arg)|
+    sorted_named_args.each do |(_, named_arg)|
       self.args << named_arg.value
     end
     self.named_args = nil
