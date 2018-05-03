@@ -209,10 +209,6 @@ downcase_one_ranges, _ = downcase_ranges.partition { |r| r.delta == 1 }
 upcase_ranges = case_ranges entries, &.upcase
 upcase_ranges.select! { |r| r.delta != -1 }
 
-alternate_ranges(downcase_one_ranges)
-
-case_ranges entries, &.casefold
-
 all_strides = {} of String => Array(Stride)
 categories = %w(Lu Ll Lt Mn Mc Me Nd Nl No Zs Zl Zp Cc Cf Cs Co Cn)
 
