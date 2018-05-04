@@ -68,7 +68,6 @@ end
 def assert_normalize(from, to, flags = nil)
   program = Program.new
   program.flags = flags if flags
-  # normalizer = Normalizer.new(program)
   from_nodes = Parser.parse(from)
   to_nodes = program.normalize(from_nodes)
   to_nodes.to_s.strip.should eq(to.strip)
