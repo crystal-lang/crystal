@@ -191,6 +191,10 @@ module Crystal::Signal
     @@pipe = IO.pipe(read_blocking: false, write_blocking: true)
   end
 
+  def self.after_fork_before_exec
+    @@pipe.each(&.close)
+  end
+
   private def self.reader
     @@pipe[0]
   end
