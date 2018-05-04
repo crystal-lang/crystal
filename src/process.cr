@@ -121,7 +121,11 @@ class Process
     case pid
     when 0
       pid = nil
-      Process.after_fork_child_callbacks.each(&.call) if run_hooks
+      if run_hooks
+        Process.after_fork_child_callbacks.each(&.call)
+      else
+        Process.after_fork_before_exec_callbacks.each(&.call)
+      end
     when -1
       raise Errno.new("fork")
     end

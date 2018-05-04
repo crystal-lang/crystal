@@ -466,6 +466,13 @@ class Process
       ->Random::DEFAULT.new_seed,
     ] of -> Nil
   end
+
+  # Hooks that must always run between fork/exec.
+  def self.after_fork_before_exec_callbacks
+    @@after_fork_before_exec_callbacks ||= [
+      ->Crystal::Signal.after_fork_before_exec,
+    ] of -> Nil
+  end
 end
 
 {% unless flag?(:win32) %}
