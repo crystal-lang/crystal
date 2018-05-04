@@ -74,6 +74,22 @@ describe "Visibility modifiers" do
       "private method 'bar' called for Foo"
   end
 
+  it "allows invoking private method from the same class" do
+    assert_type(%(
+      class Foo
+        private def foo
+          1
+        end
+
+        def bar
+          self.foo
+        end
+      end
+
+      Foo.new.bar
+      )) { int32 }
+  end
+
   it "allows invoking protected method from the same class" do
     assert_type(%(
       class Foo
