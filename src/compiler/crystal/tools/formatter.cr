@@ -359,7 +359,7 @@ module Crystal
     end
 
     def needs_two_lines?(node, next_node)
-      return false if node.is_a?(Attribute) || node.is_a?(MacroIf)
+      return false if node.is_a?(Annotation) || node.is_a?(MacroIf)
       return false if abstract_def?(node) && abstract_def?(next_node)
 
       needs_two_lines?(node) || needs_two_lines?(next_node)
@@ -3086,6 +3086,32 @@ module Crystal
       false
     end
 
+    def visit(node : AnnotationDef)
+      write_keyword :annotation, " "
+
+      accept node.name
+
+      skip_space(@indent + 2)
+
+      if @token.type == :";"
+        skip_semicolon_or_space_or_newline
+        check_end
+        write "; end"
+        next_token
+        return false
+      else
+        skip_space_or_newline
+        check_end
+        write_line
+        write_indent
+        write "end"
+        next_token
+        return false
+      end
+
+      false
+    end
+
     def visit(node : ClassDef)
       write_keyword :abstract, " " if node.abstract?
       write_keyword (node.struct? ? :struct : :class), " "
@@ -3460,7 +3486,7 @@ module Crystal
       false
     end
 
-    def visit(node : Attribute)
+    def visit(node : Annotation)
       write_token :"@["
       skip_space_or_newline
 

@@ -244,6 +244,10 @@ module Crystal
       node
     end
 
+    def transform(node : AnnotationDef)
+      node
+    end
+
     def transform(node : While)
       node.cond = node.cond.transform(self)
       node.body = node.body.transform(self)
@@ -544,7 +548,7 @@ module Crystal
       node
     end
 
-    def transform(node : Attribute)
+    def transform(node : Annotation)
       node
     end
 

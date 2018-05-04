@@ -26,7 +26,7 @@
 #
 # ### Flags enum
 #
-# An enum can be marked with the `@[Flags]` attribute. This changes the default values:
+# An enum can be marked with the `FlagsAnnotation` annotation. This changes the default values:
 #
 # ```
 # @[Flags]

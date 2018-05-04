@@ -1749,6 +1749,27 @@ describe "Code gen: macro" do
       )).to_i.should eq(10)
   end
 
+  it "gets default value of instance variable of inherited type that also includes module" do
+    run(%(
+      module Moo
+        @moo = 10
+      end
+
+      class Foo
+        include Moo
+
+        def foo
+          {{ @type.instance_vars.first.default_value }}
+        end
+      end
+
+      class Bar < Foo
+      end
+
+      Bar.new.foo
+      )).to_i.should eq(10)
+  end
+
   it "determines if variable has default value" do
     run(%(
       class Foo

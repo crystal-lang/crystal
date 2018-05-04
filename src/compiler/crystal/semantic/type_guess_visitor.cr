@@ -397,14 +397,22 @@ module Crystal
     end
 
     def add_instance_var_type_info(vars, name, type : Type, node)
+      annotations = nil
+      process_annotations do |annotation_type, ann|
+        annotations ||= [] of {AnnotationType, Annotation}
+        annotations << {annotation_type, ann}
+      end
+
       info = vars[name]?
       unless info
         info = InstanceVarTypeInfo.new(node.location.not_nil!, type)
         info.outside_def = true if @outside_def
+        info.add_annotations(annotations) if annotations
         vars[name] = info
       else
         info.type = Type.merge!([info.type, type])
         info.outside_def = true if @outside_def
+        info.add_annotations(annotations) if annotations
         vars[name] = info
       end
     end

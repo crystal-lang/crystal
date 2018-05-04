@@ -124,16 +124,16 @@ module Crystal
     property? self_closured = false
     property? captured_block = false
 
-    # `true` if this def has the `@[NoInline]` attribute
+    # `true` if this def has the `@[NoInline]` annotation
     property? no_inline = false
 
-    # `true` if this def has the `@[AlwaysInline]` attribute
+    # `true` if this def has the `@[AlwaysInline]` annotation
     property? always_inline = false
 
-    # `true` if this def has the `@[ReturnsTwice]` attribute
+    # `true` if this def has the `@[ReturnsTwice]` annotation
     property? returns_twice = false
 
-    # `true` if this def has the `@[Naked]` attribute
+    # `true` if this def has the `@[Naked]` annotation
     property? naked = false
 
     # Is this a `new` method that was expanded from an initialize?
@@ -481,6 +481,9 @@ module Crystal
     # Is this variable "unsafe" (no need to check if it was initialized)?
     property? uninitialized = false
 
+    # Annotations of this instance var
+    property annotations : Hash(AnnotationType, Annotation)?
+
     def kind
       case name[0]
       when '@'
@@ -496,6 +499,17 @@ module Crystal
 
     def global?
       kind == :global
+    end
+
+    # Adds an annotation with the given type and value
+    def add_annotation(annotation_type : AnnotationType, value : Annotation)
+      annotations = @annotations ||= {} of AnnotationType => Annotation
+      annotations[annotation_type] = value
+    end
+
+    # Returns the annotation with the given type, if any, or nil otherwise
+    def annotation(annotation_type) : Annotation?
+      @annotations.try &.[annotation_type]
     end
   end
 
@@ -722,6 +736,9 @@ module Crystal
   class MetaMacroVar < ASTNode
     property name : String
     property default_value : ASTNode?
+
+    # The instance variable associated with this meta macro var
+    property! var : MetaTypeVar
 
     def initialize(@name, @type)
     end

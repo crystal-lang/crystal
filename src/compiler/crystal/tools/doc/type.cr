@@ -24,6 +24,8 @@ class Crystal::Doc::Type
       :enum
     when NoReturnType, VoidType
       :struct
+    when AnnotationType
+      :annotation
     else
       raise "Unhandled type in `kind`: #{@type}"
     end

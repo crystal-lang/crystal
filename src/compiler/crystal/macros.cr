@@ -799,6 +799,25 @@ module Crystal::Macros
     # can in turn be `nil`).
     def has_default_value? : BoolLiteral
     end
+
+    # Returns any `Annotation` with the given `type`
+    # attached to this variable.
+    def annotation(type : TypeNode) : Annotation
+    end
+  end
+
+  # An annotation on top of a type or variable.
+  class Annotation < ASTNode
+    # Returns the value of a positional argument,
+    # or NilLiteral if out of bounds.
+    def [](index : NumberLiteral) : ASTNode
+    end
+
+    # Returns the value of a named argument,
+    # or NilLiteral if the named argument isn't
+    # used in this attribute.
+    def [](name : SymbolLiteral) : ASTNode
+    end
   end
 
   # A local variable or block argument.
@@ -1557,6 +1576,10 @@ module Crystal::Macros
     def union? : BoolLiteral
     end
 
+    # Returns `true` if this type is nilable (if it has `Nil` amongst its types).
+    def nilable? : BoolLiteral
+    end
+
     # Returns the types comforming a union type, if this is a union type.
     # Gives a compile error otherwise.
     #
@@ -1626,6 +1649,11 @@ module Crystal::Macros
     # or `@[Packed]` (the name you pass to this method is `"Flags"` or `"Packed"`
     # in these cases).
     def has_attribute?(name : StringLiteral | SymbolLiteral) : BoolLiteral
+    end
+
+    # Returns any `Annotation` with the given `type`
+    # attached to this type.
+    def annotation(type : TypeNode) : Annotation
     end
 
     # Returns the number of elements in this tuple type or tuple metaclass type.

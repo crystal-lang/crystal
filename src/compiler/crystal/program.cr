@@ -211,6 +211,20 @@ module Crystal
       types["GC"] = gc = NonGenericModuleType.new self, self, "GC"
       gc.metaclass.as(ModuleType).add_def Def.new("add_finalizer", [Arg.new("object")], Nop.new)
 
+      # Built-in annotations
+      types["AlwaysInlineAnnotation"] = @always_inline_annotation = AnnotationType.new self, self, "AlwaysInlineAnnotation"
+      types["CallConventionAnnotation"] = @call_convention_annotation = AnnotationType.new self, self, "CallConventionAnnotation"
+      types["ExternAnnotation"] = @extern_annotation = AnnotationType.new self, self, "ExternAnnotation"
+      types["FlagsAnnotation"] = @flags_annotation = AnnotationType.new self, self, "FlagsAnnotation"
+      types["LinkAnnotation"] = @link_annotation = AnnotationType.new self, self, "LinkAnnotation"
+      types["NakedAnnotation"] = @naked_annotation = AnnotationType.new self, self, "NakedAnnotation"
+      types["NoInlineAnnotation"] = @no_inline_annotation = AnnotationType.new self, self, "NoInlineAnnotation"
+      types["PackedAnnotation"] = @packed_annotation = AnnotationType.new self, self, "PackedAnnotation"
+      types["PrimitiveAnnotation"] = @primitive_annotation = AnnotationType.new self, self, "PrimitiveAnnotation"
+      types["RaisesAnnotation"] = @raises_annotation = AnnotationType.new self, self, "RaisesAnnotation"
+      types["ReturnsTwiceAnnotation"] = @returns_twice_annotation = AnnotationType.new self, self, "ReturnsTwiceAnnotation"
+      types["ThreadLocalAnnotation"] = @thread_local_annotation = AnnotationType.new self, self, "ThreadLocalAnnotation"
+
       define_crystal_constants
     end
 
@@ -430,7 +444,11 @@ module Crystal
 
     {% for name in %w(object no_return value number reference void nil bool char int int8 int16 int32 int64 int128
                      uint8 uint16 uint32 uint64 uint128 float float32 float64 string symbol pointer array static_array
-                     exception tuple named_tuple proc union enum range regex crystal) %}
+                     exception tuple named_tuple proc union enum range regex crystal
+                     packed_annotation thread_local_annotation no_inline_annotation
+                     always_inline_annotation naked_annotation returns_twice_annotation
+                     raises_annotation primitive_annotation call_convention_annotation
+                     flags_annotation link_annotation extern_annotation) %}
       def {{name.id}}
         @{{name.id}}.not_nil!
       end

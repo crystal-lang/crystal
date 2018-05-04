@@ -864,7 +864,7 @@ module Crystal
       when :"->"
         parse_fun_literal
       when :"@["
-        parse_attribute
+        parse_annotation
       when :NUMBER
         @wants_regex = false
         node_and_next_token NumberLiteral.new(@token.value.to_s, @token.number_kind)
@@ -1058,6 +1058,12 @@ module Crystal
           check_type_declaration { parse_visibility_modifier Visibility::Protected }
         when :asm
           check_type_declaration { parse_asm }
+        when :annotation
+          check_type_declaration do
+            check_not_inside_def("can't define annotation inside def") do
+              parse_annotation_def
+            end
+          end
         else
           set_visibility parse_var_or_call
         end
@@ -1179,12 +1185,12 @@ module Crystal
       @def_nest > 0
     end
 
-    def parse_attribute
+    def parse_annotation
       doc = @token.doc
 
       next_token_skip_space
-      name = check_const
-      next_token_skip_space
+      name = parse_ident(allow_type_vars: false, parse_nilable: false).as(Path)
+      skip_space
 
       args = [] of ASTNode
       named_args = nil
@@ -1213,9 +1219,9 @@ module Crystal
       @wants_regex = false
       next_token_skip_space
 
-      attr = Attribute.new(name, args, named_args)
-      attr.doc = doc
-      attr
+      ann = Annotation.new(name, args, named_args)
+      ann.doc = doc
+      ann
     end
 
     def parse_begin
@@ -1595,6 +1601,33 @@ module Crystal
       module_def.doc = doc
       module_def.end_location = end_location
       module_def
+    end
+
+    def parse_annotation_def
+      @type_nest += 1
+
+      location = @token.location
+      doc = @token.doc
+
+      next_token_skip_space_or_newline
+
+      name_column_number = @token.column_number
+      name = parse_ident(allow_type_vars: false, parse_nilable: false).as(Path)
+
+      unless name.names.last.ends_with?("Annotation")
+        raise "annotation name must end with 'Annotation'", name.location.not_nil!
+      end
+
+      skip_statement_end
+
+      end_location = token_end_location
+      check_ident :end
+      next_token_skip_space
+
+      annotation_def = AnnotationDef.new name, name_column_number
+      annotation_def.doc = doc
+      annotation_def.end_location = end_location
+      annotation_def
     end
 
     def parse_parenthesized_expression
@@ -5027,7 +5060,7 @@ module Crystal
     def parse_lib_body_exp_without_location
       case @token.type
       when :"@["
-        parse_attribute
+        parse_annotation
       when :IDENT
         case @token.value
         when :alias

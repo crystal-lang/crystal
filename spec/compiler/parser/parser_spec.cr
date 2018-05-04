@@ -1125,15 +1125,16 @@ describe "Parser" do
 
   it_parses "a = 1; class Foo; @x = a; end", [Assign.new("a".var, 1.int32), ClassDef.new("Foo".path, Assign.new("@x".instance_var, "a".call))]
 
-  it_parses "@[Foo]", Attribute.new("Foo")
-  it_parses "@[Foo()]", Attribute.new("Foo")
-  it_parses "@[Foo(1)]", Attribute.new("Foo", [1.int32] of ASTNode)
-  it_parses "@[Foo(\"hello\")]", Attribute.new("Foo", ["hello".string] of ASTNode)
-  it_parses "@[Foo(1, foo: 2)]", Attribute.new("Foo", [1.int32] of ASTNode, [NamedArgument.new("foo", 2.int32)])
-  it_parses "@[Foo(1, foo: 2\n)]", Attribute.new("Foo", [1.int32] of ASTNode, [NamedArgument.new("foo", 2.int32)])
-  it_parses "@[Foo(\n1, foo: 2\n)]", Attribute.new("Foo", [1.int32] of ASTNode, [NamedArgument.new("foo", 2.int32)])
+  it_parses "@[Foo]", Annotation.new("Foo".path)
+  it_parses "@[Foo()]", Annotation.new("Foo".path)
+  it_parses "@[Foo(1)]", Annotation.new("Foo".path, [1.int32] of ASTNode)
+  it_parses "@[Foo(\"hello\")]", Annotation.new("Foo".path, ["hello".string] of ASTNode)
+  it_parses "@[Foo(1, foo: 2)]", Annotation.new("Foo".path, [1.int32] of ASTNode, [NamedArgument.new("foo", 2.int32)])
+  it_parses "@[Foo(1, foo: 2\n)]", Annotation.new("Foo".path, [1.int32] of ASTNode, [NamedArgument.new("foo", 2.int32)])
+  it_parses "@[Foo(\n1, foo: 2\n)]", Annotation.new("Foo".path, [1.int32] of ASTNode, [NamedArgument.new("foo", 2.int32)])
+  it_parses "@[Foo::Bar]", Annotation.new(Path.new(["Foo", "Bar"]))
 
-  it_parses "lib LibC\n@[Bar]; end", LibDef.new("LibC", Attribute.new("Bar"))
+  it_parses "lib LibC\n@[Bar]; end", LibDef.new("LibC", Annotation.new("Bar".path))
 
   it_parses "Foo(_)", Generic.new("Foo".path, [Underscore.new] of ASTNode)
 
@@ -1678,6 +1679,11 @@ describe "Parser" do
     assert_syntax_error "%Q(", "Unterminated string literal"
     assert_syntax_error "<<-HEREDOC", "Unexpected EOF on heredoc identifier"
     assert_syntax_error "<<-HEREDOC\n", "Unterminated heredoc"
+
+    it_parses "annotation FooAnnotation; end", AnnotationDef.new("FooAnnotation".path)
+    it_parses "annotation FooAnnotation\n\nend", AnnotationDef.new("FooAnnotation".path)
+    it_parses "annotation Foo::BarAnnotation\n\nend", AnnotationDef.new(Path.new(["Foo", "BarAnnotation"]))
+    assert_syntax_error "annotation Foo", "annotation name must end with 'Annotation'"
 
     it "gets corrects of ~" do
       node = Parser.parse("\n  ~1")

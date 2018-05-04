@@ -734,6 +734,10 @@ module Crystal
           else
             return check_ident_or_keyword(:as, start)
           end
+        when 'n'
+          if next_char == 'n' && next_char == 'o' && next_char == 't' && next_char == 'a' && next_char == 't' && next_char == 'i' && next_char == 'o' && next_char == 'n'
+            return check_ident_or_keyword(:annotation, start)
+          end
         end
         scan_ident(start)
       when 'b'

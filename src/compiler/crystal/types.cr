@@ -162,6 +162,10 @@ module Crystal
       self.is_a?(NilType)
     end
 
+    def nilable?
+      self.is_a?(NilType) || (self.is_a?(UnionType) && self.union_types.any?(&.nil_type?))
+    end
+
     def bool_type?
       self.is_a?(BoolType)
     end
@@ -282,10 +286,11 @@ module Crystal
       raise "BUG: #{self} doesn't implement add_instance_var_initializer"
     end
 
-    def declare_instance_var(name, type : Type)
+    def declare_instance_var(name, type : Type, annotations = nil)
       var = MetaTypeVar.new(name)
       var.owner = self
       var.type = type
+      var.annotations = annotations
       var.bind_to var
       var.freeze_type = type
       instance_vars[name] = var
@@ -595,6 +600,21 @@ module Crystal
       else
         devirtualize
       end
+    end
+
+    # Adds an annotation with the given type and value
+    def add_annotation(annotation_type : AnnotationType, value : Annotation)
+      annotations = @annotations ||= {} of AnnotationType => Annotation
+      annotations[annotation_type] = value
+    end
+
+    # Returns the annotation with the given type, if any, or nil otherwise
+    def annotation(annotation_type) : Annotation?
+      @annotations.try &.[annotation_type]
+    end
+
+    def get_instance_var_initializer(name)
+      nil
     end
 
     def inspect(io)
@@ -940,6 +960,20 @@ module Crystal
     def has_instance_var_initializer?(name)
       @instance_vars_initializers.try(&.any? { |init| init.name == name }) ||
         ancestors.any?(&.has_instance_var_initializer?(name))
+    end
+
+    def get_instance_var_initializer(name)
+      match = @instance_vars_initializers.try &.find do |init|
+        init.name == name
+      end
+      return match if match
+
+      ancestors.each do |ancestor|
+        match = ancestor.get_instance_var_initializer(name)
+        return match if match
+      end
+
+      nil
     end
   end
 
@@ -1294,7 +1328,7 @@ module Crystal
         else
           instance_var_type = ivar_type.replace_type_parameters(instance)
         end
-        instance.declare_instance_var(name, instance_var_type)
+        instance.declare_instance_var(name, instance_var_type, ivar.annotations)
       end
 
       run_instance_vars_initializers self, self, instance
@@ -2251,17 +2285,13 @@ module Crystal
 
   # A lib type, like `lib LibC`.
   class LibType < ModuleType
-    getter link_attributes : Array(LinkAttribute)?
+    getter link_annotations : Array(LinkAnnotation)?
     property? used = false
     property call_convention : LLVM::CallConvention?
 
-    def add_link_attributes(link_attributes)
-      if link_attributes
-        my_link_attributes = @link_attributes ||= [] of LinkAttribute
-        link_attributes.each do |attr|
-          my_link_attributes << attr unless my_link_attributes.includes?(attr)
-        end
-      end
+    def add_link_annotation(link_annotation : LinkAnnotation)
+      link_annotations = @link_annotations ||= [] of LinkAnnotation
+      link_annotations << link_annotation unless link_annotations.includes?(link_annotation)
     end
 
     def metaclass
@@ -2421,12 +2451,10 @@ module Crystal
     include ClassVarContainer
 
     getter base_type : IntegerType
-    getter? flags : Bool
+    property? flags = false
 
-    def initialize(program, namespace, name, @base_type, flags)
+    def initialize(program, namespace, name, @base_type)
       super(program, namespace, name)
-
-      @flags = !!flags
 
       add_def Def.new("value", [] of Arg, Primitive.new("enum_value", @base_type))
       metaclass.as(ModuleType).add_def Def.new("new", [Arg.new("value", type: @base_type)], Primitive.new("enum_new", self))
@@ -2453,6 +2481,12 @@ module Crystal
 
     def type_desc
       "enum"
+    end
+  end
+
+  class AnnotationType < NamedType
+    def type_desc
+      "annotation"
     end
   end
 

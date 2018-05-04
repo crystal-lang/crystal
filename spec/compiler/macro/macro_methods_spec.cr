@@ -1179,6 +1179,18 @@ describe "macro methods" do
         [TypeNode.new(program.reference)] of ASTNode
       end
     end
+
+    it "executes nilable? (false)" do
+      assert_macro("x", "{{x.nilable?}}", "false") do |program|
+        [TypeNode.new(program.string)] of ASTNode
+      end
+    end
+
+    it "executes nilable? (true)" do
+      assert_macro("x", "{{x.nilable?}}", "true") do |program|
+        [TypeNode.new(program.union_of(program.string, program.nil))] of ASTNode
+      end
+    end
   end
 
   describe "type declaration methods" do

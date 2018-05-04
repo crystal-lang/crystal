@@ -1069,6 +1069,20 @@ module Crystal
         interpret_argless_method(method, args) do
           BoolLiteral.new(!!default_value)
         end
+      when "annotation"
+        interpret_one_arg_method(method, args) do |arg|
+          unless arg.is_a?(TypeNode)
+            args[0].raise "argument to 'MetaVar#annotation' must be a TypeNode, not #{arg.class_desc}'"
+          end
+
+          type = arg.type
+          unless type.is_a?(AnnotationType)
+            args[0].raise "argument to 'MetaVar#annotation' must be an annotation type , not #{type} (#{type.type_desc})'"
+          end
+
+          value = self.var.annotation(type)
+          value || NilLiteral.new
+        end
       else
         super
       end
@@ -1407,6 +1421,8 @@ module Crystal
         interpret_argless_method(method, args) { BoolLiteral.new(type.abstract?) }
       when "union?"
         interpret_argless_method(method, args) { BoolLiteral.new(type.is_a?(UnionType)) }
+      when "nilable?"
+        interpret_argless_method(method, args) { BoolLiteral.new(type.nilable?) }
       when "union_types"
         interpret_argless_method(method, args) { TypeNode.union_types(type) }
       when "name"
@@ -1446,6 +1462,20 @@ module Crystal
         interpret_one_arg_method(method, args) do |arg|
           value = arg.to_string("argument to 'TypeNode#has_attribute?'")
           BoolLiteral.new(!!type.has_attribute?(value))
+        end
+      when "annotation"
+        interpret_one_arg_method(method, args) do |arg|
+          unless arg.is_a?(TypeNode)
+            args[0].raise "argument to 'TypeNode#annotation' must be a TypeNode, not #{arg.class_desc}'"
+          end
+
+          type = arg.type
+          unless type.is_a?(AnnotationType)
+            args[0].raise "argument to 'TypeNode#annotation' must be an annotation type , not #{type} (#{type.type_desc})'"
+          end
+
+          value = self.type.annotation(type)
+          value || NilLiteral.new
         end
       when "size"
         interpret_argless_method(method, args) do
@@ -1580,13 +1610,10 @@ module Crystal
 
     def self.instance_vars(type)
       if type.is_a?(InstanceVarContainer)
-        if type.is_a?(InstanceVarInitializerContainer)
-          initializers = type.instance_vars_initializers
-        end
-
         ArrayLiteral.map(type.all_instance_vars) do |name, ivar|
           meta_var = MetaMacroVar.new(name[1..-1], ivar.type)
-          meta_var.default_value = initializers.try &.find { |init| init.name == name }.try &.value
+          meta_var.var = ivar
+          meta_var.default_value = type.get_instance_var_initializer(name).try(&.value)
           meta_var
         end
       else
@@ -1953,6 +1980,30 @@ module Crystal
             NamedTupleLiteral.new(named_args.map { |arg| NamedTupleLiteral::Entry.new(arg.name, arg.value) })
           else
             NilLiteral.new
+          end
+        end
+      else
+        super
+      end
+    end
+  end
+
+  class Annotation
+    def interpret(method, args, block, interpreter)
+      case method
+      when "[]"
+        interpret_one_arg_method(method, args) do |arg|
+          case arg
+          when NumberLiteral
+            index = arg.to_number.to_i
+            self.args[index]? || NilLiteral.new
+          when SymbolLiteral
+            named_arg = self.named_args.try &.find do |named_arg|
+              named_arg.name == arg.value
+            end
+            named_arg.try(&.value) || NilLiteral.new
+          else
+            raise "argument to 'Annotation#[]' must be integer or symbol, not #{arg.class_desc}"
           end
         end
       else

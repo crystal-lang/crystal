@@ -1295,6 +1295,29 @@ module Crystal
     def_equals_and_hash @name, @body, @type_vars, @splat_index
   end
 
+  # Annotation definition:
+  #
+  #     'annotation' name
+  #     'end'
+  #
+  class AnnotationDef < ASTNode
+    property name : Path
+    property doc : String?
+    property name_column_number : Int32
+
+    def initialize(@name, @name_column_number = 0)
+    end
+
+    def accept_children(visitor)
+    end
+
+    def clone_without_location
+      AnnotationDef.new(@name, @name_column_number)
+    end
+
+    def_equals_and_hash @name
+  end
+
   # While expression.
   #
   #     'while' cond
@@ -1895,29 +1918,26 @@ module Crystal
     def_equals_and_hash expressions
   end
 
-  class Attribute < ASTNode
-    property name : String
+  class Annotation < ASTNode
+    property path : Path
     property args : Array(ASTNode)
     property named_args : Array(NamedArgument)?
     property doc : String?
 
-    def initialize(@name, @args = [] of ASTNode, @named_args = nil)
+    def initialize(@path, @args = [] of ASTNode, @named_args = nil)
     end
 
     def accept_children(visitor)
+      @path.accept visitor
       @args.each &.accept visitor
       @named_args.try &.each &.accept visitor
     end
 
     def clone_without_location
-      Attribute.new(name, @args.clone, @named_args.clone)
+      Annotation.new(@path.clone, @args.clone, @named_args.clone)
     end
 
-    def self.any?(attributes, name)
-      !!(attributes.try &.any? { |attr| attr.name == name })
-    end
-
-    def_equals_and_hash name, args, named_args
+    def_equals_and_hash path, args, named_args
   end
 
   # A macro expression,

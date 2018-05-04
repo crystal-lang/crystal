@@ -82,26 +82,6 @@ describe "Semantic: class var" do
       ") { int32 }
   end
 
-  it "says illegal attribute for class var" do
-    assert_error %(
-      class Foo
-        @[Foo]
-        @@foo
-      end
-      ),
-      "illegal attribute"
-  end
-
-  it "says illegal attribute for class var assignment" do
-    assert_error %(
-      class Foo
-        @[Foo]
-        @@foo = 1
-      end
-      ),
-      "illegal attribute"
-  end
-
   it "allows self.class as type var in class body (#537)" do
     assert_type(%(
       class Bar(T)
