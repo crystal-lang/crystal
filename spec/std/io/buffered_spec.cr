@@ -317,7 +317,9 @@ describe "IO::Buffered" do
     end
 
     it "works with IO#read (already buffered)" do
-      str = IO::Memory.new "#{"a" * IO::Buffered::BUFFER_SIZE}bcde"
+      str = IO::Memory.new
+      str << "a" * IO::Buffered::BUFFER_SIZE
+      str.pos = 0
 
       io = BufferedWrapper.new(str)
       io.sync?.should be_false
@@ -330,6 +332,9 @@ describe "IO::Buffered" do
 
       io.sync = true
       io.sync?.should be_true
+
+      str << "bcde"
+      str.pos -= 4
 
       byte = Bytes.new(1)
       io.read_fully(byte)
@@ -352,8 +357,10 @@ describe "IO::Buffered" do
       str.gets_to_end.should eq("bc")
     end
 
-    it "works with IO#read (already buffered)" do
-      str = IO::Memory.new "#{"a" * IO::Buffered::BUFFER_SIZE}bcde"
+    it "works with IO#read_byte (already buffered)" do
+      str = IO::Memory.new
+      str << "a" * IO::Buffered::BUFFER_SIZE
+      str.pos = 0
 
       io = BufferedWrapper.new(str)
       io.sync?.should be_false
@@ -364,6 +371,9 @@ describe "IO::Buffered" do
 
       io.sync = true
       io.sync?.should be_true
+
+      str << "bcde"
+      str.pos -= 4
 
       io.read_byte.should eq('b'.ord.to_u8)
 
