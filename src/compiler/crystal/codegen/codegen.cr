@@ -2069,7 +2069,15 @@ module Crystal
         end
       end
     else
-      name
+      String.build do |str|
+        name.each_char do |char|
+          if char == '/'
+            str << '.'
+          else
+            str << char
+          end
+        end
+      end
     end
   end
 
