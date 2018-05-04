@@ -2069,15 +2069,7 @@ module Crystal
         end
       end
     else
-      String.build do |str|
-        name.each_char do |char|
-          if char == '/'
-            str << '.'
-          else
-            str << char
-          end
-        end
-      end
+      name.gsub('/', '.')
     end
   end
 
