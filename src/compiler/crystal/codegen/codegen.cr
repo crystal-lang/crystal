@@ -2069,7 +2069,7 @@ module Crystal
         end
       end
     else
-      name
+      name.gsub('/', '.')
     end
   end
 
