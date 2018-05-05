@@ -445,7 +445,6 @@ def exit(status = 0) : NoReturn
   status = AtExitHandlers.run status
   STDOUT.flush
   STDERR.flush
-  Crystal.restore_blocking_state
   Process.exit(status)
 end
 

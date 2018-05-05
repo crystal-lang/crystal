@@ -217,8 +217,6 @@ module Crystal::Signal
   end
 
   private def self.fatal(message : String)
-    Crystal.restore_blocking_state
-
     STDERR.puts("FATAL: #{message}, exiting")
     STDERR.flush
     LibC._exit(1)
@@ -286,8 +284,6 @@ end
 
 # :nodoc:
 fun __crystal_sigfault_handler(sig : LibC::Int, addr : Void*)
-  Crystal.restore_blocking_state
-
   # Capture fault signals (SEGV, BUS) and finish the process printing a backtrace first
   LibC.dprintf 2, "Invalid memory access (signal %d) at address 0x%lx\n", sig, addr
   CallStack.print_backtrace
