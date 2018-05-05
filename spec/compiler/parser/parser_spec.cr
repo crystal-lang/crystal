@@ -1680,10 +1680,9 @@ describe "Parser" do
     assert_syntax_error "<<-HEREDOC", "Unexpected EOF on heredoc identifier"
     assert_syntax_error "<<-HEREDOC\n", "Unterminated heredoc"
 
-    it_parses "annotation FooAnnotation; end", AnnotationDef.new("FooAnnotation".path)
-    it_parses "annotation FooAnnotation\n\nend", AnnotationDef.new("FooAnnotation".path)
-    it_parses "annotation Foo::BarAnnotation\n\nend", AnnotationDef.new(Path.new(["Foo", "BarAnnotation"]))
-    assert_syntax_error "annotation Foo", "annotation name must end with 'Annotation'"
+    it_parses "annotation Foo; end", AnnotationDef.new("Foo".path)
+    it_parses "annotation Foo\n\nend", AnnotationDef.new("Foo".path)
+    it_parses "annotation Foo::Bar\n\nend", AnnotationDef.new(Path.new(["Foo", "Bar"]))
 
     it "gets corrects of ~" do
       node = Parser.parse("\n  ~1")

@@ -419,18 +419,27 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
   end
 
   def lookup_annotation(ann)
-    # For `@[Foo]` we actually search an annotation named `FooAnnotation`
-    path = ann.path.clone
-    path.names[-1] = "#{path.names.last}Annotation"
-
-    type = lookup_type(path)
+    # Since there's `Int::Primitive`, and now we'll have
+    # `::Primitive`, but there's no way to specify ::Primitive
+    # just yet in annotations, we temporarily hardcode
+    # that `Primitive` inside annotations means the top
+    # level primitive.
+    # We also have the same problem with File::Flags, which
+    # is an enum marked with Flags annotation.
+    if ann.path.single?("Primitive")
+      type = @program.primitive
+    elsif ann.path.single?("Flags")
+      type = @program.flags_annotation
+    else
+      type = lookup_type(ann.path)
+    end
 
     unless type
-      ann.raise "undefined annotation #{path}"
+      ann.raise "undefined annotation #{ann.path}"
     end
 
     unless type.is_a?(AnnotationType)
-      ann.raise "#{path} is not an annotation, it's a #{type.type_desc}"
+      ann.raise "#{ann.path} is not an annotation, it's a #{type.type_desc}"
     end
 
     type

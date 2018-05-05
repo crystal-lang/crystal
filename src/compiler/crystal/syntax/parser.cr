@@ -1614,10 +1614,6 @@ module Crystal
       name_column_number = @token.column_number
       name = parse_ident(allow_type_vars: false, parse_nilable: false).as(Path)
 
-      unless name.names.last.ends_with?("Annotation")
-        raise "annotation name must end with 'Annotation'", name.location.not_nil!
-      end
-
       skip_statement_end
 
       end_location = token_end_location

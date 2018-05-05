@@ -158,7 +158,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
     process_annotations(annotations) do |annotation_type, ann|
       if node.struct? && type.is_a?(NonGenericClassType)
         case annotation_type
-        when @program.extern_annotation
+        when @program.extern
           unless type.is_a?(NonGenericClassType)
             node.raise "can only use Extern annotation with non-generic structs"
           end
@@ -182,7 +182,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
           end
 
           type.extern = true
-        when @program.packed_annotation
+        when @program.packed
           type.packed = true
         end
       end
@@ -314,7 +314,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
     annotations = @annotations
 
     process_def_annotations(node) do |annotation_type, ann|
-      if annotation_type == @program.primitive_annotation
+      if annotation_type == @program.primitive
         process_primitive_annotation(node, ann)
       end
     end
@@ -443,9 +443,9 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
 
     process_annotations(annotations) do |annotation_type, ann|
       case annotation_type
-      when @program.link_annotation
+      when @program.link
         type.add_link_annotation(LinkAnnotation.from(ann))
-      when @program.call_convention_annotation
+      when @program.call_convention
         type.call_convention = parse_call_convention(ann, type.call_convention)
       end
       type.add_annotation(annotation_type, ann)
@@ -465,7 +465,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
 
     unless node.union?
       process_annotations do |ann|
-        packed = true if ann == @program.packed_annotation
+        packed = true if ann == @program.packed
       end
     end
 
@@ -805,7 +805,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
 
     call_convention = nil
     process_def_annotations(external) do |annotation_type, ann|
-      if annotation_type == @program.call_convention_annotation
+      if annotation_type == @program.call_convention
         call_convention = parse_call_convention(ann, call_convention)
       end
     end
@@ -904,10 +904,10 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
 
     process_annotations do |annotation_type, ann|
       case annotation_type
-      when @program.link_annotation
+      when @program.link
         link_annotations ||= [] of LinkAnnotation
         link_annotations << LinkAnnotation.from(ann)
-      when @program.call_convention_annotation
+      when @program.call_convention
         call_convention = parse_call_convention(ann, call_convention)
       end
     end
@@ -1011,15 +1011,15 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
   def process_def_annotations(node)
     process_annotations do |annotation_type, ann|
       case annotation_type
-      when @program.no_inline_annotation
+      when @program.no_inline
         node.no_inline = true
-      when @program.always_inline_annotation
+      when @program.always_inline
         node.always_inline = true
-      when @program.naked_annotation
+      when @program.naked
         node.naked = true
-      when @program.returns_twice_annotation
+      when @program.returns_twice
         node.returns_twice = true
-      when @program.raises_annotation
+      when @program.raises
         node.raises = true
       else
         yield annotation_type, ann
