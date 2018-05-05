@@ -84,7 +84,7 @@ prepare_build() {
 
   on_linux docker pull "jhass/crystal-build-$ARCH"
 
-  on_osx brew install crystal-lang pkg-config
+  on_osx brew install crystal-lang
 
   # Make sure binaries from llvm are available in PATH
   on_osx brew install jq
@@ -123,7 +123,6 @@ with_build_env() {
   on_osx sudo systemsetup -settimezone $TZ
   on_osx PATH="/usr/local/opt/llvm/bin:\$PATH" \
     CRYSTAL_CACHE_DIR="/tmp/crystal" \
-    PKG_CONFIG_PATH="$(brew --prefix)/opt/openssl/lib/pkgconfig:$PKG_CONFIG_PATH" \
     /bin/sh -c "'$command'"
 
 }

@@ -305,7 +305,7 @@ abstract class OpenSSL::SSL::Context
     LibSSL.ssl_ctx_set_verify(@handle, mode, nil)
   end
 
-  {% if LibSSL::OPENSSL_102 || LibSSL::LIBRESSL_250 %}
+  {% if LibSSL::OPENSSL_102 %}
 
   @alpn_protocol : Pointer(Void)?
 
@@ -337,10 +337,6 @@ abstract class OpenSSL::SSL::Context
     @alpn_protocol = alpn_protocol = Box.box(protocol)
     LibSSL.ssl_ctx_set_alpn_select_cb(@handle, alpn_cb, alpn_protocol)
   end
-
-  {% end %}
-
-  {% if LibSSL::OPENSSL_102 %}
 
   # Set this context verify param to the default one of the given name.
   #

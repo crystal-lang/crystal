@@ -1,23 +1,11 @@
 {% begin %}
   lib LibCrypto
-    # An extra zero is appended to the output of LIBRESSL_VERSION to make it 0 when LibreSSL does not exist on the system.
-    # Any comparisons to it should be affixed with an extra zero as well e.g. `(LIBRESSL_VERSION_NUMBER >= 0x2050500F0)`.
-    LIBRESSL_VERSION = {{ system("echo \"#include <openssl/opensslv.h>\nLIBRESSL_VERSION_NUMBER\" | " +
-                                 (env("CC") || "cc") + " " + `pkg-config --cflags --silence-errors libssl || true`.chomp.stringify + " -E - 2>&1 > /dev/null || echo ''").chomp.split('\n').last.split('L').first.id + "0" }}
-    OPENSSL_VERSION = {{ system("echo \"#include <openssl/opensslv.h>\nOPENSSL_VERSION_NUMBER\" | " +
-                                (env("CC") || "cc") + " " + `pkg-config --cflags --silence-errors libssl || true`.chomp.stringify + " -E - 2>&1 > /dev/null || echo ''").chomp.split('\n').last.split('L').first.id + "0" }}
+    OPENSSL_110 = {{ `command -v pkg-config > /dev/null && pkg-config --atleast-version=1.1.0 libcrypto || printf %s false`.stringify != "false" }}
+    OPENSSL_102 = {{ `command -v pkg-config > /dev/null && pkg-config --atleast-version=1.0.2 libcrypto || printf %s false`.stringify != "false" }}
   end
 {% end %}
 
-{% begin %}
-  lib LibCrypto
-    OPENSSL_110 = {{ (LibCrypto::LIBRESSL_VERSION == 0) && (LibCrypto::OPENSSL_VERSION >= 0x10100000) }}
-    OPENSSL_102 = {{ (LibCrypto::LIBRESSL_VERSION == 0) && (LibCrypto::OPENSSL_VERSION >= 0x10002000) }}
-    LIBRESSL_250 = {{ LibCrypto::LIBRESSL_VERSION >= 0x205000000 }}
-  end
-{% end %}
-
-@[Link(ldflags: "`command -v pkg-config > /dev/null && pkg-config --libs --silence-errors libcrypto || printf %s ' -lcrypto'`")]
+@[Link(ldflags: "`command -v pkg-config > /dev/null && pkg-config --libs --silence-errors libcrypto || printf %s '-lcrypto'`")]
 lib LibCrypto
   alias Char = LibC::Char
   alias Int = LibC::Int
