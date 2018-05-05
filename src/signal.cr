@@ -76,8 +76,11 @@ enum Signal : Int32
   # check child processes using `Process.exists?`. Trying to use waitpid with a
   # zero or negative value won't work.
   def trap(&handler : Signal ->) : Nil
-    if self == CHLD
+    case self
+    when CHLD
       Crystal::Signal.child_handler = handler
+    when ALRM
+      Crystal::Signal.alarm_handler = handler
     else
       Crystal::Signal.trap(self, handler)
     end
@@ -127,6 +130,7 @@ module Crystal::Signal
   @@pipe = IO.pipe(read_blocking: false, write_blocking: true)
   @@handlers = {} of ::Signal => Handler
   @@child_handler : Handler?
+  @@alarm_handler : Handler?
   @@mutex = Mutex.new
 
   def self.trap(signal, handler) : Nil
@@ -144,6 +148,14 @@ module Crystal::Signal
     @@child_handler = handler
   end
 
+  def self.alarm_handler=(handler : Handler) : Nil
+    @@alarm_handler = handler
+  end
+
+  def self.trigger_alarm_handler
+    writer.write_bytes(LibC::SIGALRM) if @@alarm_handler
+  end
+
   def self.reset(signal) : Nil
     set(signal, LibC::SIG_DFL)
   end
@@ -153,12 +165,15 @@ module Crystal::Signal
   end
 
   private def self.set(signal, handler)
-    if signal == ::Signal::CHLD
+    case signal
+    when ::Signal::CHLD
       # don't reset/ignore SIGCHLD, Process#wait requires it
       trap(signal, ->(signal : ::Signal) {
         Crystal::SignalChildHandler.call
         @@child_handler.try(&.call(signal))
       })
+    when ::Signal::ALRM
+      # don't reset/ignore SIGALRM, IO::StdFileDescriptor requires it
     else
       @@mutex.synchronize do
         @@handlers.delete(signal)
@@ -177,7 +192,9 @@ module Crystal::Signal
   end
 
   private def self.process(signal) : Nil
-    if handler = @@handlers[signal]?
+    if signal == LibC::SIGALRM
+      @@alarm_handler.try(&.call(signal))
+    elsif handler = @@handlers[signal]?
       handler.call(signal)
     else
       fatal("missing handler for #{signal}")
@@ -275,4 +292,8 @@ fun __crystal_sigfault_handler(sig : LibC::Int, addr : Void*)
   LibC.dprintf 2, "Invalid memory access (signal %d) at address 0x%lx\n", sig, addr
   CallStack.print_backtrace
   LibC._exit(sig)
+end
+
+fun __crystal_sigalarm_handler(sig : LibC::Int)
+  Crystal::Signal.trigger_alarm_handler
 end

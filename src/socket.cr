@@ -240,7 +240,7 @@ class Socket < IO
       if client_fd == -1
         if closed?
           return
-        elsif Errno.value == Errno::EAGAIN
+        elsif Errno.value == Errno::EAGAIN || Errno.value == Errno::EINTR
           wait_readable
         else
           raise Errno.new("accept")
@@ -328,7 +328,7 @@ class Socket < IO
     loop do
       bytes_read = LibC.recvfrom(fd, message.to_unsafe.as(Void*), message.size, 0, sockaddr, pointerof(addrlen))
       if bytes_read == -1
-        if Errno.value == Errno::EAGAIN
+        if Errno.value == Errno::EAGAIN || Errno.value == Errno::EINTR
           wait_readable
         else
           raise Errno.new("Error receiving datagram")

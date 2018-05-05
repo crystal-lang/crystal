@@ -23,6 +23,11 @@ lib LibC
     tv_nsec : Long
   end
 
+  struct Itimerspec
+    it_interval : Timespec
+    it_value : Timespec
+  end
+
   fun clock_gettime(clock_id : ClockidT, tp : Timespec*) : Int
   fun clock_settime(clock_id : ClockidT, tp : Timespec*) : Int
   fun gmtime_r(timer : TimeT*, tp : Tm*) : Tm*
@@ -30,6 +35,9 @@ lib LibC
   fun mktime(tp : Tm*) : TimeT
   fun tzset : Void
   fun timegm(tp : Tm*) : TimeT
+  fun timer_create(ClockidT, Void*, TimerT*) : Int
+  fun timer_delete(TimerT) : Int
+  fun timer_settime(TimerT, Int, Itimerspec*, Itimerspec*) : Int
 
   $daylight : Int
   $timezone : Long

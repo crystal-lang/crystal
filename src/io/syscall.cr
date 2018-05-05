@@ -49,7 +49,7 @@ module IO::Syscall
         return bytes_read
       end
 
-      if Errno.value == Errno::EAGAIN
+      if Errno.value == Errno::EAGAIN || Errno.value == Errno::EINTR
         wait_readable
       else
         raise Errno.new(errno_msg)
@@ -71,7 +71,7 @@ module IO::Syscall
           slice += bytes_written
           return if slice.size == 0
         else
-          if Errno.value == Errno::EAGAIN
+          if Errno.value == Errno::EAGAIN || Errno.value == Errno::EINTR
             wait_writable
           else
             raise Errno.new(errno_msg)
