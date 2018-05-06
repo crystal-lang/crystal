@@ -259,8 +259,14 @@ module Crystal::SignalChildHandler
       when 0
         return
       when -1
-        return if Errno.value == Errno::ECHILD
-        raise Errno.new("waitpid")
+        case Errno.value
+        when Errno::ECHILD
+          return
+        when Errno::EINTR
+          next
+        else
+          raise Errno.new("waitpid")
+        end
       end
 
       @@mutex.lock
