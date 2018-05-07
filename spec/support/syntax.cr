@@ -45,7 +45,7 @@ class Array
   end
 
   def path
-    Path.new self
+    Crystal::Path.new self
   end
 end
 
@@ -75,7 +75,7 @@ class String
   end
 
   def path(global = false)
-    Path.new self, global
+    Crystal::Path.new self, global
   end
 
   def instance_var
@@ -111,7 +111,7 @@ class String
   end
 
   def static_array_of(size : ASTNode)
-    Generic.new(Path.global("StaticArray"), [path, size] of ASTNode)
+    Generic.new(Crystal::Path.global("StaticArray"), [path, size] of ASTNode)
   end
 
   def macro_literal
@@ -121,7 +121,7 @@ end
 
 class Crystal::ASTNode
   def pointer_of
-    Generic.new(Path.global("Pointer"), [self] of ASTNode)
+    Generic.new(Crystal::Path.global("Pointer"), [self] of ASTNode)
   end
 
   def splat
