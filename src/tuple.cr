@@ -522,4 +522,20 @@ struct Tuple
       self[{{T.size - 1}}]
     {% end %}
   end
+
+  # Creates a `StaticArray` of `self`
+  #
+  # ```
+  # t = { 1, 2 }
+  # t.static_array # => StaticArray[1, 2]
+  # ```
+  def static_array
+    {% begin %}
+    array = uninitialized StaticArray(Union(*T), {{T.size}})
+    {% for i in 0...T.size %}
+      array.to_unsafe[{{i}}] = self[{{i}}]
+    {% end %}
+    array
+    {% end %}
+  end
 end
