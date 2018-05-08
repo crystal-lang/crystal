@@ -441,6 +441,18 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
     type
   end
 
+  def check_class_var_annotations
+    thread_local = false
+    process_annotations do |annotation_type, ann|
+      if annotation_type == @program.thread_local_annotation
+        thread_local = true
+      else
+        ann.raise "class variables can only be annotated with ThreadLocal"
+      end
+    end
+    thread_local
+  end
+
   def check_allowed_in_lib(node, type = node.type.instance_type)
     unless type.allowed_in_lib?
       msg = String.build do |msg|

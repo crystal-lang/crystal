@@ -415,10 +415,7 @@ module Crystal
           node.raise "declaring the type of a class variable must be done at the class level"
         end
 
-        thread_local = false
-        process_annotations do |ann|
-          thread_local = true if ann == @program.thread_local_annotation
-        end
+        thread_local = check_class_var_annotations
 
         class_var = lookup_class_var(var)
         var.var = class_var
@@ -428,11 +425,7 @@ module Crystal
           node.raise "declaring the type of a global variable must be done at the class level"
         end
 
-        thread_local = false
-        process_annotations do |ann|
-          thread_local = true if ann == @program.thread_local_annotation
-        end
-
+        thread_local = check_class_var_annotations
         if thread_local
           global_var = @program.global_vars[var.name]
           global_var.thread_local = true
@@ -517,10 +510,7 @@ module Crystal
           node.raise "can only declare instance variables of a non-generic class, not a #{type.type_desc} (#{type})"
         end
       when ClassVar
-        thread_local = false
-        process_annotations do |ann|
-          thread_local = true if ann == @program.thread_local_annotation
-        end
+        thread_local = check_class_var_annotations
 
         class_var = visit_class_var var
         class_var.thread_local = true if thread_local
@@ -687,10 +677,7 @@ module Crystal
     end
 
     def visit(node : ClassVar)
-      thread_local = false
-      process_annotations do |ann|
-        thread_local = true if ann == @program.thread_local_annotation
-      end
+      thread_local = check_class_var_annotations
 
       var = visit_class_var node
       var.thread_local = true if thread_local
@@ -884,10 +871,7 @@ module Crystal
     end
 
     def type_assign(target : Global, value, node)
-      thread_local = false
-      process_annotations do |ann|
-        thread_local = true if ann == @program.thread_local_annotation
-      end
+      thread_local = check_class_var_annotations
 
       value.accept self
 
@@ -910,10 +894,7 @@ module Crystal
     end
 
     def type_assign(target : ClassVar, value, node)
-      thread_local = false
-      process_annotations do |ann|
-        thread_local = true if ann == @program.thread_local_annotation
-      end
+      thread_local = check_class_var_annotations
 
       # Outside a def is already handled by ClassVarsInitializerVisitor
       # (@exp_nest is 1 if we are at the top level because it was incremented

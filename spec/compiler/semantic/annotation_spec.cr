@@ -304,4 +304,17 @@ describe "Semantic: annotation" do
       ),
       "Int32 is not an annotation, it's a struct"
   end
+
+  it "errors if using annotation other than ThreadLocal for class vars" do
+    assert_error %(
+      annotation Foo
+      end
+
+      class Moo
+        @[Foo]
+        @@x = 0
+      end
+      ),
+      "class variables can only be annotated with ThreadLocal"
+  end
 end
