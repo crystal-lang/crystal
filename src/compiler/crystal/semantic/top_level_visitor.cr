@@ -429,6 +429,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
     check_outside_exp node, "declare lib"
 
     annotations = @annotations
+    @annotations = nil
 
     scope = current_type_scope(node)
 
