@@ -417,7 +417,7 @@ module Crystal
 
         thread_local = false
         process_annotations do |ann|
-          thread_local = true if ann == @program.thread_local
+          thread_local = true if ann == @program.thread_local_annotation
         end
 
         class_var = lookup_class_var(var)
@@ -430,7 +430,7 @@ module Crystal
 
         thread_local = false
         process_annotations do |ann|
-          thread_local = true if ann == @program.thread_local
+          thread_local = true if ann == @program.thread_local_annotation
         end
 
         if thread_local
@@ -519,7 +519,7 @@ module Crystal
       when ClassVar
         thread_local = false
         process_annotations do |ann|
-          thread_local = true if ann == @program.thread_local
+          thread_local = true if ann == @program.thread_local_annotation
         end
 
         class_var = visit_class_var var
@@ -689,7 +689,7 @@ module Crystal
     def visit(node : ClassVar)
       thread_local = false
       process_annotations do |ann|
-        thread_local = true if ann == @program.thread_local
+        thread_local = true if ann == @program.thread_local_annotation
       end
 
       var = visit_class_var node
@@ -886,7 +886,7 @@ module Crystal
     def type_assign(target : Global, value, node)
       thread_local = false
       process_annotations do |ann|
-        thread_local = true if ann == @program.thread_local
+        thread_local = true if ann == @program.thread_local_annotation
       end
 
       value.accept self
@@ -912,7 +912,7 @@ module Crystal
     def type_assign(target : ClassVar, value, node)
       thread_local = false
       process_annotations do |ann|
-        thread_local = true if ann == @program.thread_local
+        thread_local = true if ann == @program.thread_local_annotation
       end
 
       # Outside a def is already handled by ClassVarsInitializerVisitor

@@ -427,7 +427,7 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
     # We also have the same problem with File::Flags, which
     # is an enum marked with Flags annotation.
     if ann.path.single?("Primitive")
-      type = @program.primitive
+      type = @program.primitive_annotation
     elsif ann.path.single?("Flags")
       type = @program.flags_annotation
     else

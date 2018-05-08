@@ -167,15 +167,15 @@ module Crystal
       nil
     end
 
-    private def add_link_annotations(types, attrs)
+    private def add_link_annotations(types, annotations)
       types.try &.each_value do |type|
         next if type.is_a?(AliasType) || type.is_a?(TypeDefType)
 
-        if type.is_a?(LibType) && type.used? && (link_attrs = type.link_annotations)
-          attrs.concat link_attrs
+        if type.is_a?(LibType) && type.used? && (links_annotations = type.link_annotations)
+          annotations.concat links_annotations
         end
 
-        add_link_annotations type.types?, attrs
+        add_link_annotations type.types?, annotations
       end
     end
   end

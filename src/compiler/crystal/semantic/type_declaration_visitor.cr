@@ -95,7 +95,7 @@ class Crystal::TypeDeclarationVisitor < Crystal::SemanticVisitor
   def visit(node : ExternalVar)
     thread_local = false
     process_annotations do |ann|
-      thread_local = true if ann == @program.thread_local
+      thread_local = true if ann == @program.thread_local_annotation
     end
 
     var_type = lookup_type(node.type_spec)
