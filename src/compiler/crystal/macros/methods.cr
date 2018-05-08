@@ -1252,6 +1252,10 @@ module Crystal
         interpret_argless_method(method, args) do
           visibility_to_symbol(@visibility)
         end
+      when "annotation"
+        fetch_annotation(self, method, args) do |type|
+          self.annotation(type)
+        end
       else
         super
       end

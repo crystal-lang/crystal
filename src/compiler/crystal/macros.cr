@@ -1054,6 +1054,11 @@ module Crystal::Macros
     # Returns the visibility of this def: `:public`, `:protected` or `:private`.
     def visibility : SymbolLiteral
     end
+
+    # Returns any `Annotation` with the given `type`
+    # attached to this method.
+    def annotation(type : TypeNode) : Annotation
+    end
   end
 
   # A macro definition.

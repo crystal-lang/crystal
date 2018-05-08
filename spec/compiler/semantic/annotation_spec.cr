@@ -318,8 +318,8 @@ describe "Semantic: annotation" do
       "class variables can only be annotated with ThreadLocal"
   end
 
-  it "errors if using invalid annotation on def" do
-    assert_error %(
+  it "adds annotation on def" do
+    assert_type(%(
       annotation Foo
       end
 
@@ -328,8 +328,13 @@ describe "Semantic: annotation" do
         def foo
         end
       end
-      ),
-      "methods can only be annotated with: NoInline, AlwaysInline, Naked, ReturnsTwice, Raises, Primitive"
+
+      {% if Moo.methods.first.annotation(Foo) %}
+        1
+      {% else %}
+        'a'
+      {% end %}
+      )) { int32 }
   end
 
   it "errors if using invalid annotation on fun" do

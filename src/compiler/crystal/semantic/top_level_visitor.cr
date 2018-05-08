@@ -319,9 +319,9 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
     process_def_annotations(node, annotations) do |annotation_type, ann|
       if annotation_type == @program.primitive_annotation
         process_primitive_annotation(node, ann)
-      else
-        ann.raise "methods can only be annotated with: NoInline, AlwaysInline, Naked, ReturnsTwice, Raises, Primitive"
       end
+
+      node.add_annotation(annotation_type, ann)
     end
 
     node.doc ||= annotations_doc(annotations)

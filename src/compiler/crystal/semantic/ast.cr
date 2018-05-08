@@ -139,6 +139,9 @@ module Crystal
     # Is this a `new` method that was expanded from an initialize?
     property? new = false
 
+    # Annotations on this def
+    property annotations : Hash(AnnotationType, Annotation)?
+
     @macro_owner : Type?
 
     def macro_owner=(@macro_owner)
@@ -166,6 +169,17 @@ module Crystal
           end
         end
       end
+    end
+
+    # Adds an annotation with the given type and value
+    def add_annotation(annotation_type : AnnotationType, value : Annotation)
+      annotations = @annotations ||= {} of AnnotationType => Annotation
+      annotations[annotation_type] = value
+    end
+
+    # Returns the annotation with the given type, if any, or nil otherwise
+    def annotation(annotation_type) : Annotation?
+      @annotations.try &.[annotation_type]
     end
 
     # Returns the minimum and maximum number of arguments that must
