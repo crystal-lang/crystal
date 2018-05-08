@@ -568,8 +568,8 @@ class Crystal::Call
     case match.def.visibility
     when .private?
       if obj = @obj
-        if obj.is_a?(Var) && obj.name == "self" && match.def.name.ends_with?('=')
-          # Special case: private setter can be called with self
+        if obj.is_a?(Var) && obj.name == "self"
+          # Special case: private method can be called with self
           return
         end
 
