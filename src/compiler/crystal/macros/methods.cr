@@ -1070,18 +1070,8 @@ module Crystal
           BoolLiteral.new(!!default_value)
         end
       when "annotation"
-        interpret_one_arg_method(method, args) do |arg|
-          unless arg.is_a?(TypeNode)
-            args[0].raise "argument to 'MetaVar#annotation' must be a TypeNode, not #{arg.class_desc}'"
-          end
-
-          type = arg.type
-          unless type.is_a?(AnnotationType)
-            args[0].raise "argument to 'MetaVar#annotation' must be an annotation type , not #{type} (#{type.type_desc})'"
-          end
-
-          value = self.var.annotation(type)
-          value || NilLiteral.new
+        fetch_annotation(self, method, args) do |type|
+          self.var.annotation(type)
         end
       else
         super
@@ -1464,18 +1454,8 @@ module Crystal
           BoolLiteral.new(!!type.has_attribute?(value))
         end
       when "annotation"
-        interpret_one_arg_method(method, args) do |arg|
-          unless arg.is_a?(TypeNode)
-            args[0].raise "argument to 'TypeNode#annotation' must be a TypeNode, not #{arg.class_desc}'"
-          end
-
-          type = arg.type
-          unless type.is_a?(AnnotationType)
-            args[0].raise "argument to 'TypeNode#annotation' must be an annotation type , not #{type} (#{type.type_desc})'"
-          end
-
-          value = self.type.annotation(type)
-          value || NilLiteral.new
+        fetch_annotation(self, method, args) do |type|
+          self.type.annotation(type)
         end
       when "size"
         interpret_argless_method(method, args) do
@@ -2259,4 +2239,20 @@ def filter(object, klass, block, interpreter, keep = true)
     block_result = interpreter.accept(block.body).truthy?
     keep ? block_result : !block_result
   end)
+end
+
+private def fetch_annotation(node, method, args)
+  node.interpret_one_arg_method(method, args) do |arg|
+    unless arg.is_a?(Crystal::TypeNode)
+      args[0].raise "argument to '#{node.class_desc}#annotation' must be a TypeNode, not #{arg.class_desc}'"
+    end
+
+    type = arg.type
+    unless type.is_a?(Crystal::AnnotationType)
+      args[0].raise "argument to '#{node.class_desc}#annotation' must be an annotation type , not #{type} (#{type.type_desc})'"
+    end
+
+    value = yield type
+    value || Crystal::NilLiteral.new
+  end
 end
