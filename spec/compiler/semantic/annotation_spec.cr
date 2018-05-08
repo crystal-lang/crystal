@@ -317,4 +317,30 @@ describe "Semantic: annotation" do
       ),
       "class variables can only be annotated with ThreadLocal"
   end
+
+  it "errors if using invalid annotation on def" do
+    assert_error %(
+      annotation Foo
+      end
+
+      class Moo
+        @[Foo]
+        def foo
+        end
+      end
+      ),
+      "methods can only be annotated with: NoInline, AlwaysInline, Naked, ReturnsTwice, Raises, Primitive"
+  end
+
+  it "errors if using invalid annotation on fun" do
+    assert_error %(
+      annotation Foo
+      end
+
+      @[Foo]
+      fun foo : Void
+      end
+      ),
+      "funs can only be annotated with: NoInline, AlwaysInline, Naked, ReturnsTwice, Raises, CallConvention"
+  end
 end
