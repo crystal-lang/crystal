@@ -137,6 +137,33 @@ module IO::Buffered
     nil
   end
 
+  # Buffered implementation of `IO#write(*slices)`.
+  # Ignores *flush_on_newline?*
+  def write(*slices : Bytes)
+    check_open
+
+    if sync?
+      return unbuffered_write(*slices)
+    end
+
+    count = slices.sum &.size
+
+    if count >= BUFFER_SIZE
+      flush
+      return unbuffered_write *slices
+    end
+
+    if count > BUFFER_SIZE - @out_count
+      flush
+    end
+
+    slices.each do |slice|
+      slice.copy_to(out_buffer + @out_count, slice.size)
+      @out_count += slice.size
+    end
+    nil
+  end
+
   # :nodoc:
   def write_byte(byte : UInt8)
     check_open

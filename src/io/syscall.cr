@@ -81,6 +81,34 @@ module IO::Syscall
     end
   end
 
+  def writev_syscall_helper(slices, errno_msg : String) : Nil
+    loop do
+      bytes_written = yield slices
+      if bytes_written != -1
+        slices.each_with_index do |slice, i|
+          if slice.size > bytes_written
+            slices[i] += bytes_written
+            break
+          else
+            bytes_written -= slice.size
+            slices[i] += slice.size
+          end
+        end
+        return if slices[-1].size == 0
+      else
+        if Errno.value == Errno::EAGAIN
+          wait_writable
+        else
+          raise Errno.new(errno_msg)
+        end
+      end
+    end
+  ensure
+    if (writers = @writers) && !writers.empty?
+      add_write_event
+    end
+  end
+
   # :nodoc:
   def resume_read(timed_out = false)
     @read_timed_out = timed_out
