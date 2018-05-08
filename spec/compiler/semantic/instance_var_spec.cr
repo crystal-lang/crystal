@@ -4464,6 +4464,35 @@ describe "Semantic: instance var" do
       ), inject_primitives: false) { types["Foo"] }
   end
 
+  it "is more permissive with macro def initialize, multiple" do
+    assert_type(%(
+      class Foo
+        @x : Int32
+
+        def initialize
+          {% begin %}
+            {% @type %}
+            @x = 1
+          {% end %}
+        end
+
+        def initialize(x)
+          {% begin %}
+            {% @type %}
+            @x = x
+          {% end %}
+        end
+
+        def x
+          @x
+        end
+      end
+
+      Foo.new
+      Foo.new(1).x
+      )) { int32 }
+  end
+
   it "errors with macro def but another def doesn't initialize all" do
     assert_error %(
       class Foo
