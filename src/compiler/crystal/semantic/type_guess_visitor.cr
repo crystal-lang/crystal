@@ -398,7 +398,7 @@ module Crystal
 
     def add_instance_var_type_info(vars, name, type : Type, node)
       annotations = nil
-      process_annotations do |annotation_type, ann|
+      process_annotations(@annotations) do |annotation_type, ann|
         annotations ||= [] of {AnnotationType, Annotation}
         annotations << {annotation_type, ann}
       end

@@ -412,7 +412,7 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
     node.raise "expanding macro", ex
   end
 
-  def process_annotations(annotations = @annotations)
+  def process_annotations(annotations)
     annotations.try &.each do |ann|
       yield lookup_annotation(ann), ann
     end
@@ -443,7 +443,7 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
 
   def check_class_var_annotations
     thread_local = false
-    process_annotations do |annotation_type, ann|
+    process_annotations(@annotations) do |annotation_type, ann|
       if annotation_type == @program.thread_local_annotation
         thread_local = true
       else
