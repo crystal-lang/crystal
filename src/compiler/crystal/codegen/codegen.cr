@@ -179,9 +179,11 @@ module Crystal
       @in_lib = false
       @strings = {} of StringKey => LLVM::Value
       @symbols = {} of String => Int32
+      @symbols_by_index = [] of String
       @symbol_table_values = [] of LLVM::Value
       program.symbols.each_with_index do |sym, index|
         @symbols[sym] = index
+        @symbols_by_index << sym
         @symbol_table_values << build_string_constant(sym, sym)
       end
 

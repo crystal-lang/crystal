@@ -77,21 +77,20 @@ module Crystal
     def_equals_and_hash type
   end
 
-  # Fictitious node to represent a type restriction
-  #
-  # It is used for type restrection of method arguments.
-  class TypeRestriction < ASTNode
-    getter obj
-    getter to
+  # Fictitious node to represent an assignment with a type restriction,
+  # created to match the assignment of a method argument's default value.
+  class AssignWithRestriction < ASTNode
+    property assign
+    property restriction
 
-    def initialize(@obj : ASTNode, @to : ASTNode)
+    def initialize(@assign : Assign, @restriction : ASTNode)
     end
 
     def clone_without_location
-      TypeRestriction.new @obj.clone, @to.clone
+      AssignWithRestriction.new @assign.clone, @restriction.clone
     end
 
-    def_equals_and_hash obj, to
+    def_equals_and_hash assign, restriction
   end
 
   class Arg
@@ -732,6 +731,22 @@ module Crystal
 
     def clone_without_location
       self
+    end
+  end
+
+  class NumberLiteral
+    def can_be_autocast_to?(other_type)
+      case {self.type, other_type}
+      when {IntegerType, IntegerType}
+        min, max = other_type.range
+        min <= integer_value <= max
+      when {IntegerType, FloatType}
+        true
+      when {FloatType, FloatType}
+        true
+      else
+        false
+      end
     end
   end
 end

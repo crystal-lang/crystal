@@ -17,6 +17,21 @@ module Crystal
       @type
     end
 
+    def type(*, with_literals = false)
+      type = self.type
+
+      if with_literals
+        case self
+        when NumberLiteral
+          return NumberLiteralType.new(type.program, self)
+        when SymbolLiteral
+          return SymbolLiteralType.new(type.program, self)
+        end
+      end
+
+      type
+    end
+
     def set_type(type : Type)
       type = type.remove_alias_if_simple
       if !type.no_return? && (freeze_type = @freeze_type) && !type.implements?(freeze_type)

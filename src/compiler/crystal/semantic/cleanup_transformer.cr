@@ -753,6 +753,10 @@ module Crystal
       node
     end
 
+    def transform(node : AssignWithRestriction)
+      transform(node.assign)
+    end
+
     @false_literal : BoolLiteral?
 
     def false_literal

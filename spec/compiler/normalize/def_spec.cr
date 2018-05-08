@@ -33,8 +33,11 @@ describe "Normalize: def" do
     a_def = parse("def foo(x, y : Int32 = 1, z : Int64 = 2i64); x + y + z; end").as(Def)
     actual = a_def.expand_default_arguments(Program.new, 1)
     expected = parse("def foo(x); y = 1; z = 2i64; x + y + z; end").as(Def)
-    expected.body.as(Expressions).expressions.insert 1, TypeRestriction.new Var.new("y"), Path.new(["Int32"])
-    expected.body.as(Expressions).expressions.insert 3, TypeRestriction.new Var.new("z"), Path.new(["Int64"])
+
+    exps = expected.body.as(Expressions).expressions
+    exps[0] = AssignWithRestriction.new(exps[0].as(Assign), Path.new("Int32"))
+    exps[1] = AssignWithRestriction.new(exps[1].as(Assign), Path.new("Int64"))
+
     actual.should eq(expected)
   end
 
@@ -42,7 +45,10 @@ describe "Normalize: def" do
     a_def = parse("def foo(x, y : Int32 = 1, z : Int64 = 2i64); x + y + z; end").as(Def)
     actual = a_def.expand_default_arguments(Program.new, 2)
     expected = parse("def foo(x, y : Int32); z = 2i64; x + y + z; end").as(Def)
-    expected.body.as(Expressions).expressions.insert 1, TypeRestriction.new Var.new("z"), Path.new(["Int64"])
+
+    exps = expected.body.as(Expressions).expressions
+    exps[0] = AssignWithRestriction.new(exps[0].as(Assign), Path.new("Int64"))
+
     actual.should eq(expected)
   end
 

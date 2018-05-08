@@ -173,12 +173,12 @@ describe "Semantic: def" do
 
   it "errors when default value is incompatible with type restriction" do
     assert_error "
-      def foo(x : Int64 = 1)
+      def foo(x : Int64 = 'a')
       end
 
       foo
       ",
-      "can't restrict Int32 to Int64"
+      "can't restrict Char to Int64"
   end
 
   it "types call with global scope" do
