@@ -2231,7 +2231,7 @@ private def empty_no_return_array
   Crystal::ArrayLiteral.new(of: Crystal::Path.global("NoReturn"))
 end
 
-def filter(object, klass, block, interpreter, keep = true)
+private def filter(object, klass, block, interpreter, keep = true)
   block_arg = block.args.first?
 
   klass.new(object.elements.select do |elem|
