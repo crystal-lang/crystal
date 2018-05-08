@@ -434,10 +434,6 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
       type = lookup_type(ann.path)
     end
 
-    unless type
-      ann.raise "undefined annotation #{ann.path}"
-    end
-
     unless type.is_a?(AnnotationType)
       ann.raise "#{ann.path} is not an annotation, it's a #{type.type_desc}"
     end

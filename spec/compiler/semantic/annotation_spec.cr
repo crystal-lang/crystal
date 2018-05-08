@@ -286,4 +286,22 @@ describe "Semantic: annotation" do
       Moo.new.foo
     )) { int32 }
   end
+
+  it "errors if annotation doesn't exist" do
+    assert_error %(
+      @[DoesntExist]
+      class Moo
+      end
+      ),
+      "undefined constant DoesntExist"
+  end
+
+  it "errors if annotation doesn't point to an annotation type" do
+    assert_error %(
+      @[Int32]
+      class Moo
+      end
+      ),
+      "Int32 is not an annotation, it's a struct"
+  end
 end
