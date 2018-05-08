@@ -483,15 +483,6 @@ class Deque(T)
     self
   end
 
-  # Returns an `Array` (shallow copy) that contains all the items of this deque.
-  def to_a
-    arr = Array(T).new(@size)
-    each do |x|
-      arr << x
-    end
-    arr
-  end
-
   def to_s(io : IO)
     inspect(io)
   end
