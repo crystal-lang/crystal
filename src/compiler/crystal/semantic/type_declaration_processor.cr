@@ -108,7 +108,7 @@ struct Crystal::TypeDeclarationProcessor
     # removed if an explicit type is found (in remove_error).
     @errors = {} of Type => Hash(String, Error)
 
-    # Types that have a single macro def initialize
+    # Types whose initialize methods are all macro defs
     @has_macro_def = Set(Type).new
 
     @type_decl_visitor = TypeDeclarationVisitor.new(@program, @explicit_instance_vars)
@@ -417,7 +417,7 @@ struct Crystal::TypeDeclarationProcessor
       infos = find_initialize_infos(owner)
 
       if infos
-        @has_macro_def << owner if infos.size == 1 && infos.first.def.macro_def?
+        @has_macro_def << owner if infos.all?(&.def.macro_def?)
         non_nilable = compute_non_nilable_instance_vars_multi(owner, infos)
       end
 
