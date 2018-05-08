@@ -27,7 +27,7 @@ module Crystal::System::FileDescriptor
   end
 
   private def unbuffered_write(*slices : Bytes)
-    writev_syscall_helper(slices.to_a, "Error writing file") do |slices|
+    writev_syscall_helper(slices.static_array, "Error writing file") do |slices|
       iovecs = slices.map do |slice|
         iovec = LibC::IoVec.new
         iovec.iov_base = slice.to_unsafe
