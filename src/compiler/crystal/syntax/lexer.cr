@@ -2283,15 +2283,22 @@ module Crystal
     def check_macro_opening_keyword(beginning_of_line)
       case char = current_char
       when 'a'
-        if next_char == 'b' && next_char == 's' && next_char == 't' && next_char == 'r' && next_char == 'a' && next_char == 'c' && next_char == 't' && next_char.whitespace?
-          case next_char
-          when 'd'
-            next_char == 'e' && next_char == 'f' && peek_not_ident_part_or_end_next_char && :abstract_def
-          when 'c'
-            next_char == 'l' && next_char == 'a' && next_char == 's' && next_char == 's' && peek_not_ident_part_or_end_next_char && :abstract_class
-          when 's'
-            next_char == 't' && next_char == 'r' && next_char == 'u' && next_char == 'c' && next_char == 't' && peek_not_ident_part_or_end_next_char && :abstract_struct
+        case next_char
+        when 'b'
+          if next_char == 's' && next_char == 't' && next_char == 'r' && next_char == 'a' && next_char == 'c' && next_char == 't' && next_char.whitespace?
+            case next_char
+            when 'd'
+              next_char == 'e' && next_char == 'f' && peek_not_ident_part_or_end_next_char && :abstract_def
+            when 'c'
+              next_char == 'l' && next_char == 'a' && next_char == 's' && next_char == 's' && peek_not_ident_part_or_end_next_char && :abstract_class
+            when 's'
+              next_char == 't' && next_char == 'r' && next_char == 'u' && next_char == 'c' && next_char == 't' && peek_not_ident_part_or_end_next_char && :abstract_struct
+            else
+              false
+            end
           end
+        when 'n'
+          next_char == 'n' && next_char == 'o' && next_char == 't' && next_char == 'a' && next_char == 't' && next_char == 'i' && next_char == 'o' && next_char == 'n' && peek_not_ident_part_or_end_next_char && :annotation
         end
       when 'b'
         next_char == 'e' && next_char == 'g' && next_char == 'i' && next_char == 'n' && peek_not_ident_part_or_end_next_char && :begin
