@@ -1069,6 +1069,10 @@ module Crystal
         interpret_argless_method(method, args) do
           BoolLiteral.new(!!default_value)
         end
+      when "annotation"
+        fetch_annotation(self, method, args) do |type|
+          self.var.annotation(type)
+        end
       else
         super
       end
@@ -1248,6 +1252,10 @@ module Crystal
         interpret_argless_method(method, args) do
           visibility_to_symbol(@visibility)
         end
+      when "annotation"
+        fetch_annotation(self, method, args) do |type|
+          self.annotation(type)
+        end
       else
         super
       end
@@ -1407,6 +1415,8 @@ module Crystal
         interpret_argless_method(method, args) { BoolLiteral.new(type.abstract?) }
       when "union?"
         interpret_argless_method(method, args) { BoolLiteral.new(type.is_a?(UnionType)) }
+      when "nilable?"
+        interpret_argless_method(method, args) { BoolLiteral.new(type.nilable?) }
       when "union_types"
         interpret_argless_method(method, args) { TypeNode.union_types(type) }
       when "name"
@@ -1446,6 +1456,10 @@ module Crystal
         interpret_one_arg_method(method, args) do |arg|
           value = arg.to_string("argument to 'TypeNode#has_attribute?'")
           BoolLiteral.new(!!type.has_attribute?(value))
+        end
+      when "annotation"
+        fetch_annotation(self, method, args) do |type|
+          self.type.annotation(type)
         end
       when "size"
         interpret_argless_method(method, args) do
@@ -1580,13 +1594,10 @@ module Crystal
 
     def self.instance_vars(type)
       if type.is_a?(InstanceVarContainer)
-        if type.is_a?(InstanceVarInitializerContainer)
-          initializers = type.instance_vars_initializers
-        end
-
         ArrayLiteral.map(type.all_instance_vars) do |name, ivar|
           meta_var = MetaMacroVar.new(name[1..-1], ivar.type)
-          meta_var.default_value = initializers.try &.find { |init| init.name == name }.try &.value
+          meta_var.var = ivar
+          meta_var.default_value = type.get_instance_var_initializer(name).try(&.value)
           meta_var
         end
       else
@@ -1960,6 +1971,30 @@ module Crystal
       end
     end
   end
+
+  class Annotation
+    def interpret(method, args, block, interpreter)
+      case method
+      when "[]"
+        interpret_one_arg_method(method, args) do |arg|
+          case arg
+          when NumberLiteral
+            index = arg.to_number.to_i
+            self.args[index]? || NilLiteral.new
+          when SymbolLiteral
+            named_arg = self.named_args.try &.find do |named_arg|
+              named_arg.name == arg.value
+            end
+            named_arg.try(&.value) || NilLiteral.new
+          else
+            raise "argument to 'Annotation#[]' must be integer or symbol, not #{arg.class_desc}"
+          end
+        end
+      else
+        super
+      end
+    end
+  end
 end
 
 private def intepret_array_or_tuple_method(object, klass, method, args, block, interpreter)
@@ -2200,7 +2235,7 @@ private def empty_no_return_array
   Crystal::ArrayLiteral.new(of: Crystal::Path.global("NoReturn"))
 end
 
-def filter(object, klass, block, interpreter, keep = true)
+private def filter(object, klass, block, interpreter, keep = true)
   block_arg = block.args.first?
 
   klass.new(object.elements.select do |elem|
@@ -2208,4 +2243,20 @@ def filter(object, klass, block, interpreter, keep = true)
     block_result = interpreter.accept(block.body).truthy?
     keep ? block_result : !block_result
   end)
+end
+
+private def fetch_annotation(node, method, args)
+  node.interpret_one_arg_method(method, args) do |arg|
+    unless arg.is_a?(Crystal::TypeNode)
+      args[0].raise "argument to '#{node.class_desc}#annotation' must be a TypeNode, not #{arg.class_desc}'"
+    end
+
+    type = arg.type
+    unless type.is_a?(Crystal::AnnotationType)
+      args[0].raise "argument to '#{node.class_desc}#annotation' must be an annotation type , not #{type} (#{type.type_desc})'"
+    end
+
+    value = yield type
+    value || Crystal::NilLiteral.new
+  end
 end

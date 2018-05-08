@@ -314,6 +314,16 @@ module Crystal
       false
     end
 
+    def visit(node : AnnotationDef)
+      @str << keyword("annotation")
+      @str << ' '
+      node.name.accept self
+      newline
+      append_indent
+      @str << keyword("end")
+      false
+    end
+
     def visit(node : Call)
       visit_call node
     end
@@ -1383,9 +1393,9 @@ module Crystal
       false
     end
 
-    def visit(node : Attribute)
+    def visit(node : Annotation)
       @str << "@["
-      @str << node.name
+      @str << node.path
       if !node.args.empty? || node.named_args
         @str << '('
         printed_arg = false

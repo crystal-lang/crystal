@@ -36,8 +36,8 @@ module Crystal
   #
   # Call resolution logic is in `Call#recalculate`, where method lookup is done.
   class MainVisitor < SemanticVisitor
-    ValidGlobalAttributes   = %w(ThreadLocal)
-    ValidClassVarAttributes = %w(ThreadLocal)
+    ValidGlobalAnnotations   = %w(ThreadLocal)
+    ValidClassVarAnnotations = %w(ThreadLocal)
 
     getter! typed_def
     property! untyped_def : Def
@@ -418,19 +418,18 @@ module Crystal
           node.raise "declaring the type of a class variable must be done at the class level"
         end
 
-        attributes = check_valid_attributes node, ValidClassVarAttributes, "class variable"
+        thread_local = check_class_var_annotations
+
         class_var = lookup_class_var(var)
         var.var = class_var
-        if Attribute.any?(attributes, "ThreadLocal")
-          class_var.thread_local = true
-        end
+        class_var.thread_local = true if thread_local
       when Global
         if @untyped_def
           node.raise "declaring the type of a global variable must be done at the class level"
         end
 
-        attributes = check_valid_attributes node, ValidGlobalAttributes, "global variable"
-        if Attribute.any?(attributes, "ThreadLocal")
+        thread_local = check_class_var_annotations
+        if thread_local
           global_var = @program.global_vars[var.name]
           global_var.thread_local = true
         end
@@ -514,10 +513,10 @@ module Crystal
           node.raise "can only declare instance variables of a non-generic class, not a #{type.type_desc} (#{type})"
         end
       when ClassVar
-        attributes = check_valid_attributes node, ValidGlobalAttributes, "global variable"
+        thread_local = check_class_var_annotations
 
         class_var = visit_class_var var
-        class_var.thread_local = true if Attribute.any?(attributes, "ThreadLocal")
+        class_var.thread_local = true if thread_local
       end
 
       node.type = @program.nil unless node.type?
@@ -681,10 +680,10 @@ module Crystal
     end
 
     def visit(node : ClassVar)
-      attributes = check_valid_attributes node, ValidGlobalAttributes, "global variable"
+      thread_local = check_class_var_annotations
 
       var = visit_class_var node
-      var.thread_local = true if Attribute.any?(attributes, "ThreadLocal")
+      var.thread_local = true if thread_local
 
       false
     end
@@ -899,7 +898,7 @@ module Crystal
     end
 
     def type_assign(target : Global, value, node)
-      attributes = check_valid_attributes target, ValidGlobalAttributes, "global variable"
+      thread_local = check_class_var_annotations
 
       value.accept self
 
@@ -912,7 +911,7 @@ module Crystal
         var.bind_to program.nil_var
       end
 
-      var.thread_local = true if Attribute.any?(attributes, "ThreadLocal")
+      var.thread_local = true if thread_local
       target.var = var
 
       target.bind_to var
@@ -922,21 +921,23 @@ module Crystal
     end
 
     def type_assign(target : ClassVar, value, node)
-      attributes = check_valid_attributes target, ValidClassVarAttributes, "class variable"
+      thread_local = check_class_var_annotations
 
       # Outside a def is already handled by ClassVarsInitializerVisitor
       # (@exp_nest is 1 if we are at the top level because it was incremented
       # by one since we are inside an Assign)
       if !@typed_def && (@exp_nest <= 1) && !inside_block?
         var = lookup_class_var(target)
-        check_class_var_is_thread_local(target, var, attributes)
+        target.var = var
+        var.thread_local = true if thread_local
         return
       end
 
       value.accept self
 
       var = lookup_class_var(target)
-      check_class_var_is_thread_local(target, var, attributes)
+      target.var = var
+      var.thread_local = true if thread_local
 
       if casted_value = check_automatic_cast(value, var.type, node)
         value = casted_value
@@ -946,11 +947,6 @@ module Crystal
 
       node.bind_to value
       var.bind_to value
-    end
-
-    def check_class_var_is_thread_local(target, var, attributes)
-      var.thread_local = true if Attribute.any?(attributes, "ThreadLocal")
-      target.var = var
     end
 
     def type_assign(target : Underscore, value, node)

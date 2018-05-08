@@ -344,7 +344,7 @@ module Crystal
       end
     end
 
-    def visit(node : Attribute)
+    def visit(node : Annotation)
       false
     end
 

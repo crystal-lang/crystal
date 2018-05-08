@@ -214,7 +214,7 @@ describe "Semantic: primitives" do
         end
       end
       ),
-      "expected Primitive attribute to have one argument"
+      "expected Primitive annotation to have one argument"
   end
 
   it "errors if @[Primitive] has non-symbol arg" do
