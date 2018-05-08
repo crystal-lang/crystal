@@ -554,6 +554,10 @@ module Crystal
       self
     end
 
+    def remove_literal
+      self
+    end
+
     def generic_nest
       0
     end
@@ -1176,6 +1180,29 @@ module Crystal
     def normal_rank
       (@rank - 1) / 2
     end
+
+    def range
+      case kind
+      when :i8
+        {Int8::MIN, Int8::MAX}
+      when :i16
+        {Int16::MIN, Int16::MAX}
+      when :i32
+        {Int32::MIN, Int32::MAX}
+      when :i64
+        {Int64::MIN, Int64::MAX}
+      when :u8
+        {UInt8::MIN, UInt8::MAX}
+      when :u16
+        {UInt16::MIN, UInt16::MAX}
+      when :u32
+        {UInt32::MIN, UInt32::MAX}
+      when :u64
+        {UInt64::MIN, UInt64::MAX}
+      else
+        raise "Bug: called 'range' for non-integer literal"
+      end
+    end
   end
 
   class FloatType < PrimitiveType
@@ -1204,6 +1231,45 @@ module Crystal
   end
 
   class VoidType < NamedType
+  end
+
+  # Type for a number literal: it has the specific type of the number literal
+  # but can also match other types (like ints and floats) if the literal
+  # fits in those types.
+  class NumberLiteralType < Type
+    getter literal : NumberLiteral
+    @matched_type : Type?
+
+    def initialize(program, @literal)
+      super(program)
+    end
+
+    def remove_literal
+      literal.type
+    end
+
+    def to_s_with_options(io : IO, skip_union_parens : Bool = false, generic_args : Bool = true, codegen = false)
+      io << @literal.type
+    end
+  end
+
+  # Type for a symbol literal: it has the specific type of the symbol literal (SymbolType)
+  # but can also match enums if their members match the symbol's name.
+  class SymbolLiteralType < Type
+    getter literal : SymbolLiteral
+    @matched_type : Type?
+
+    def initialize(program, @literal)
+      super(program)
+    end
+
+    def remove_literal
+      literal.type
+    end
+
+    def to_s_with_options(io : IO, skip_union_parens : Bool = false, generic_args : Bool = true, codegen = false)
+      io << @literal.type
+    end
   end
 
   # Any thing that can be passed as a generic type variable.
@@ -1360,6 +1426,15 @@ module Crystal
       value = initializer.value.clone
       value.accept visitor
       instance_var = instance.lookup_instance_var(initializer.name)
+
+      # Check if automatic cast can be done
+      if instance_var.type != value.type &&
+         (value.is_a?(NumberLiteral) || value.is_a?(SymbolLiteral))
+        if casted_value = MainVisitor.check_automatic_cast(value, instance_var.type)
+          value = casted_value
+        end
+      end
+
       instance_var.bind_to(value)
       instance.add_instance_var_initializer(initializer.name, value, meta_vars)
     end
@@ -2449,6 +2524,16 @@ module Crystal
 
     def lookup_new_in_ancestors?
       true
+    end
+
+    def find_member(name)
+      name = name.underscore
+      types.each do |member_name, member|
+        if name == member_name.underscore
+          return member.as(Const)
+        end
+      end
+      nil
     end
 
     def type_desc

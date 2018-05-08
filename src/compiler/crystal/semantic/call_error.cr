@@ -37,7 +37,7 @@ class Crystal::Path
 end
 
 class Crystal::Call
-  def raise_matches_not_found(owner, def_name, arg_types, named_args_types, matches = nil)
+  def raise_matches_not_found(owner, def_name, arg_types, named_args_types, matches = nil, with_literals = false)
     # Special case: Foo+:Class#new
     if owner.is_a?(VirtualMetaclassType) && def_name == "new"
       raise_matches_not_found_for_virtual_metaclass_new owner
@@ -210,6 +210,13 @@ class Crystal::Call
           end
         end
       end
+    end
+
+    # If we made a lookup without the special rule for literals,
+    # and we have literals in the call, try again with that special rule.
+    if with_literals == false && (args.any? { |arg| arg.is_a?(NumberLiteral) || arg.is_a?(SymbolLiteral) } ||
+       named_args.try &.any? { |arg| arg.value.is_a?(NumberLiteral) || arg.value.is_a?(SymbolLiteral) })
+      ::raise RetryLookupWithLiterals.new
     end
 
     if args.size == 1 && args.first.type.includes_type?(program.nil)

@@ -121,11 +121,13 @@ class Crystal::Def
           if default_value.is_a?(MagicConstant)
             expansion.args.push arg.clone
           else
-            new_body << Assign.new(Var.new(arg.name).at(arg), default_value).at(arg)
+            assign = Assign.new(Var.new(arg.name).at(arg), default_value).at(arg)
 
             if restriction = arg.restriction
-              new_body << TypeRestriction.new(Var.new(arg.name).at(arg), restriction).at(arg)
+              assign = AssignWithRestriction.new(assign, restriction)
             end
+
+            new_body << assign
           end
         end
       end

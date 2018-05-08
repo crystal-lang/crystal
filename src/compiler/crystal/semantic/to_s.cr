@@ -48,11 +48,13 @@ module Crystal
       false
     end
 
-    def visit(node : TypeRestriction)
+    def visit(node : AssignWithRestriction)
       @str << "# type restriction: "
-      node.obj.accept self
+      node.assign.target.accept self
       @str << " : "
-      node.to.accept self
+      node.restriction.accept self
+      @str << " = "
+      node.assign.value.accept self
       false
     end
 

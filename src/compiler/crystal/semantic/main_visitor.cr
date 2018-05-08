@@ -744,18 +744,39 @@ module Crystal
       false
     end
 
-    def type_assign(target : Var, value, node)
+    def type_assign(target : Var, value, node, restriction = nil)
       value.accept self
+
+      var_name = target.name
+      meta_var = (@meta_vars[var_name] ||= new_meta_var(var_name))
+
+      if freeze_type = meta_var.freeze_type
+        if casted_value = check_automatic_cast(value, freeze_type, node)
+          value = casted_value
+        end
+      end
+
+      # If this assign comes from a AssignWithRestriction node, check the restriction
+
+      if restriction && (value_type = value.type?)
+        if value_type.restrict(restriction, match_context.not_nil!)
+          # OK
+        else
+          # Check autocast too
+          restriction_type = scope.lookup_type(restriction, free_vars: free_vars)
+          if casted_value = check_automatic_cast(value, restriction_type, node)
+            value = casted_value
+          else
+            node.raise "can't restrict #{value.type} to #{restriction}"
+          end
+        end
+      end
 
       target.bind_to value
       node.bind_to value
 
-      var_name = target.name
-
       value_type_filters = @type_filters
       @type_filters = nil
-
-      meta_var = (@meta_vars[var_name] ||= new_meta_var(var_name))
 
       # Save variable assignment location for debugging output
       meta_var.location ||= target.location
@@ -820,6 +841,9 @@ module Crystal
       value.accept self
 
       var = lookup_instance_var target
+      if casted_value = check_automatic_cast(value, var.type, node)
+        value = casted_value
+      end
 
       target.bind_to var
       node.bind_to value
@@ -914,6 +938,10 @@ module Crystal
       var = lookup_class_var(target)
       check_class_var_is_thread_local(target, var, attributes)
 
+      if casted_value = check_automatic_cast(value, var.type, node)
+        value = casted_value
+      end
+
       target.bind_to var
 
       node.bind_to value
@@ -932,6 +960,34 @@ module Crystal
 
     def type_assign(target, value, node)
       raise "BUG: unknown assign target in MainVisitor: #{target}"
+    end
+
+    # See if we can automatically cast the value if the types don't exactly match
+    def check_automatic_cast(value, var_type, assign = nil)
+      MainVisitor.check_automatic_cast(value, var_type, assign)
+    end
+
+    def self.check_automatic_cast(value, var_type, assign = nil)
+      if value.is_a?(NumberLiteral) && value.type != var_type && (var_type.is_a?(IntegerType) || var_type.is_a?(FloatType))
+        if value.can_be_autocast_to?(var_type)
+          value.type = var_type
+          value.kind = var_type.kind
+          assign.value = value if assign
+          return value
+        end
+      elsif value.is_a?(SymbolLiteral) && var_type.is_a?(EnumType)
+        member = var_type.find_member(value.value)
+        if member
+          path = Path.new(member.name)
+          path.target_const = member
+          path.type = var_type
+          value = path
+          assign.value = value if assign
+          return value
+        end
+      end
+
+      nil
     end
 
     def visit(node : Yield)
@@ -2941,22 +2997,13 @@ module Crystal
       false
     end
 
-    def visit(node : TypeRestriction)
-      obj = node.obj
-      to = node.to
-
-      obj.accept self
-
-      unless context = match_context
-        node.raise "BUG: there is no match context"
-      end
-
-      if type = obj.type.restrict(to, context)
-        node.type = type
-      else
-        node.raise "can't restrict #{obj.type} to #{to}"
-      end
-
+    def visit(node : AssignWithRestriction)
+      type_assign(
+        node.assign.target.as(Var),
+        node.assign.value,
+        node.assign,
+        restriction: node.restriction)
+      node.bind_to(node.assign)
       false
     end
 

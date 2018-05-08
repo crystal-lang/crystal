@@ -352,4 +352,7 @@ lib LibLLVM
   fun create_builder_in_context = LLVMCreateBuilderInContext(c : ContextRef) : BuilderRef
 
   fun get_type_context = LLVMGetTypeContext(TypeRef) : ContextRef
+
+  fun const_int_get_sext_value = LLVMConstIntGetSExtValue(ValueRef) : Int64
+  fun const_int_get_zext_value = LLVMConstIntGetZExtValue(ValueRef) : UInt64
 end
