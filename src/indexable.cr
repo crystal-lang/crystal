@@ -281,6 +281,17 @@ module Indexable(T)
     self
   end
 
+  # Returns an `Array` with all the elements in the collection.
+  #
+  # ```
+  # {1, 2, 3}.to_a # => [1, 2, 3]
+  # ```
+  def to_a
+    ary = Array(T).new(size)
+    each { |e| ary << e }
+    ary
+  end
+
   # Returns `true` if `self` is empty, `false` otherwise.
   #
   # ```
