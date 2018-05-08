@@ -996,7 +996,7 @@ module Crystal
         node.raise "can't use `yield` outside a method"
       end
 
-      if ctx = @fun_literal_context
+      if @fun_literal_context
         node.raise <<-MSG
           can't use `yield` inside a proc literal or captured block
 
@@ -1949,8 +1949,8 @@ module Crystal
         when .and?
           @type_filters = TypeFilters.and(cond_type_filters, then_type_filters, else_type_filters)
         when .or?
-          @or_left_type_filters = or_left_type_filters = then_type_filters
-          @or_right_type_filters = or_right_type_filters = else_type_filters
+          @or_left_type_filters = then_type_filters
+          @or_right_type_filters = else_type_filters
           @type_filters = TypeFilters.or(cond_type_filters, then_type_filters, else_type_filters)
         end
       end

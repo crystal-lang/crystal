@@ -57,7 +57,7 @@ module Crystal::Playground
       compiler.color = false
       begin
         @logger.info "Instrumented code compilation started (session=#{@session_key}, tag=#{tag})."
-        result = compiler.compile sources, output_filename
+        compiler.compile sources, output_filename
       rescue ex
         @logger.info "Instrumented code compilation failed (session=#{@session_key}, tag=#{tag})."
 

@@ -425,7 +425,7 @@ class Crystal::CodeGenVisitor
     llvm_type = llvm_embedded_type(type.element_type)
 
     old_debug_location = @current_debug_location
-    if @debug.line_numbers? && (location = node.location)
+    if @debug.line_numbers? && node.location
       set_current_debug_location(node.location)
     end
 

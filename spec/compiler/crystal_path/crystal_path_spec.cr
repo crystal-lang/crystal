@@ -98,7 +98,7 @@ describe Crystal::CrystalPath do
 
   it "prints an explanatory message for non-relative requires" do
     crystal_path = Crystal::CrystalPath.new(__DIR__)
-    ex = expect_raises Exception, /If you're trying to require a shard/ do
+    expect_raises Exception, /If you're trying to require a shard/ do
       crystal_path.find "non_existent", relative_to: __DIR__
     end
   end

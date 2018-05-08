@@ -405,10 +405,8 @@ struct Slice(T)
     full_lines, leftover = size.divmod(16)
     if leftover == 0
       str_size = full_lines * 77 - 1
-      lines = full_lines
     else
       str_size = (full_lines + 1) * 77 - (16 - leftover) - 1
-      lines = full_lines + 1
     end
 
     String.new(str_size) do |buf|

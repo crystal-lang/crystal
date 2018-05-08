@@ -38,8 +38,6 @@ class Crystal::CodeGenVisitor
       func.varargs?
     )
 
-    p2 = new_fun.params.to_a
-
     func.params.to_a.each_with_index do |p1, index|
       attrs = new_fun.attributes(index + 1)
       new_fun.add_attribute(attrs, index + 1) unless attrs.value == 0
@@ -298,7 +296,6 @@ class Crystal::CodeGenVisitor
     when LLVM::ABI::ArgKind::Direct
       llvm_return_type = (ret_type.cast || ret_type.type)
     when LLVM::ABI::ArgKind::Indirect
-      sret = true
       offset += 1
       llvm_args_types.insert 0, ret_type.type.pointer
       llvm_return_type = llvm_context.void

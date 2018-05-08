@@ -223,6 +223,6 @@ module Math
     v |= v >> 4
     v |= v >> 8
     v |= v >> 16
-    v += 1
+    v + 1
   end
 end

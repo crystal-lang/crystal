@@ -48,7 +48,7 @@ module Crystal::System::File
       raise "Invalid access mode #{mode}"
     end
 
-    oflag = m | o
+    m | o
   end
 
   def self.mktemp(name, extension)

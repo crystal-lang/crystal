@@ -350,7 +350,7 @@ describe "Array" do
 
   it "does compact" do
     a = [1, nil, 2, nil, 3]
-    b = a.compact.should eq([1, 2, 3])
+    a.compact.should eq([1, 2, 3])
     a.should eq([1, nil, 2, nil, 3])
   end
 

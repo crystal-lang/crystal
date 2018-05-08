@@ -4154,7 +4154,7 @@ describe "Semantic: instance var" do
   end
 
   it "declares instance var of generic class" do
-    result = assert_type("
+    assert_type("
       class Foo(T)
         @x : T
 
@@ -4172,7 +4172,7 @@ describe "Semantic: instance var" do
   end
 
   it "declares instance var of generic class after reopen" do
-    result = assert_type("
+    assert_type("
       class Foo(T)
       end
 

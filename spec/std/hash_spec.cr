@@ -672,7 +672,6 @@ describe "Hash" do
 
     it "reduces the hash to the accumulated value of memo" do
       hash = {:a => 'b', :c => 'd', :e => 'f'}
-      result = nil
       result = hash.each_with_object({} of Char => Symbol) do |(k, v), memo|
         memo[v] = k
       end
@@ -756,7 +755,7 @@ describe "Hash" do
 
     it "reduces the hash to the accumulated value of memo" do
       hash = {:a => 'b', :c => 'd', :e => 'f'}
-      result = hash.reduce("") do |memo, (k, v)|
+      result = hash.reduce("") do |memo, (_, v)|
         memo + v
       end
       result.should eq("bdf")
@@ -769,7 +768,7 @@ describe "Hash" do
     it { {:a => 2, :b => 3}.reject([:b, :a]).should eq({} of Symbol => Int32) }
     it "does not change currrent hash" do
       h = {:a => 3, :b => 6, :c => 9}
-      h2 = h.reject(:b, :c)
+      h.reject(:b, :c)
       h.should eq({:a => 3, :b => 6, :c => 9})
     end
   end
@@ -792,7 +791,7 @@ describe "Hash" do
     it { {:a => 2, :b => 3}.select([:b, :a]).should eq({:a => 2, :b => 3}) }
     it "does not change currrent hash" do
       h = {:a => 3, :b => 6, :c => 9}
-      h2 = h.select(:b, :c)
+      h.select(:b, :c)
       h.should eq({:a => 3, :b => 6, :c => 9})
     end
   end

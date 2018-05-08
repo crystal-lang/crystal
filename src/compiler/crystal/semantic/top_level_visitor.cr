@@ -505,7 +505,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
 
     pushing_type(enum_type) do
       counter = is_flags ? 1 : 0
-      counter, all_value = visit_enum_members(node, node.members, counter, all_value,
+      _, all_value = visit_enum_members(node, node.members, counter, all_value,
         existed: existed,
         enum_type: enum_type,
         enum_base_type: enum_base_type,
@@ -561,7 +561,6 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
     when Expressions
       visit_enum_members(node, member.expressions, counter, all_value, **options)
     when Arg
-      existed = options[:existed]
       enum_type = options[:enum_type]
       base_type = options[:enum_base_type]
       is_flags = options[:is_flags]
@@ -704,7 +703,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
         node.raise "can only use 'private' for types"
       end
     when Assign
-      if (target = exp.target).is_a?(Path)
+      if exp.target.is_a?(Path)
         if node.modifier.private?
           return false
         else

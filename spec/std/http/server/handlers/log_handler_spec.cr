@@ -23,7 +23,6 @@ describe HTTP::LogHandler do
     response = HTTP::Server::Response.new(io)
     context = HTTP::Server::Context.new(request, response)
 
-    called = false
     log_io = IO::Memory.new
     handler = HTTP::LogHandler.new(log_io)
     handler.next = ->(ctx : HTTP::Server::Context) { raise "foo" }

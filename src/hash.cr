@@ -421,7 +421,7 @@ class Hash(K, V)
   # h.key_index("qux") # => nil
   # ```
   def key_index(key)
-    each_with_index do |(my_key, my_value), index|
+    each_with_index do |(my_key, _), index|
       return index if key == my_key
     end
     nil

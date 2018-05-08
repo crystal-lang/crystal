@@ -126,7 +126,7 @@ class Reference
       false
     else
       hash[key] = true
-      value = yield
+      yield
       hash.delete(key)
       true
     end

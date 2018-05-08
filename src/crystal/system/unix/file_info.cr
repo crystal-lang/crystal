@@ -35,7 +35,7 @@ struct Crystal::System::FileInfo < ::File::Info
     flags = ::File::Flags::None
     flags |= ::File::Flags::SetUser if @stat.st_mode.bits_set? LibC::S_ISUID
     flags |= ::File::Flags::SetGroup if @stat.st_mode.bits_set? LibC::S_ISGID
-    flags |= ::File::Flags::Sticky if @stat.st_mode.bits_set? LibC::S_ISVTX
+    flags | ::File::Flags::Sticky if @stat.st_mode.bits_set? LibC::S_ISVTX
   end
 
   def modification_time : ::Time
