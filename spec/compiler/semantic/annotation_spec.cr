@@ -238,4 +238,52 @@ describe "Semantic: annotation" do
       Moo.new(1).foo
     )) { int32 }
   end
+
+  it "overrides annotation value in type" do
+    assert_type(%(
+      annotation Foo
+      end
+
+      @[Foo(1)]
+      module Moo
+      end
+
+      @[Foo(2)]
+      module Moo
+      end
+
+      {% if Moo.annotation(Foo)[0] == 2 %}
+        1
+      {% else %}
+        'a'
+      {% end %}
+    )) { int32 }
+  end
+
+  it "overrides annotation in instance var" do
+    assert_type(%(
+      annotation Foo
+      end
+
+      class Moo
+        @[Foo(1)]
+        @x : Int32 = 1
+      end
+
+      class Moo
+        @[Foo(2)]
+        @x : Int32 = 1
+
+        def foo
+          {% if @type.instance_vars.first.annotation(Foo)[0] == 2 %}
+            1
+          {% else %}
+            'a'
+          {% end %}
+        end
+      end
+
+      Moo.new.foo
+    )) { int32 }
+  end
 end
