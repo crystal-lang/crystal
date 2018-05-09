@@ -3490,8 +3490,8 @@ module Crystal
       write_token :"@["
       skip_space_or_newline
 
-      write @token
-      next_token_skip_space
+      node.path.accept self
+      skip_space_or_newline
 
       if @token.type == :"("
         has_args = !node.args.empty? || node.named_args
