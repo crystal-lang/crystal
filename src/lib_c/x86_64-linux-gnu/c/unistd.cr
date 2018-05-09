@@ -9,6 +9,11 @@ lib LibC
   SC_CLK_TCK          =  2
   SC_NPROCESSORS_ONLN = 84
 
+  struct IoVec
+    iov_base : Void*
+    iov_len : SizeT
+  end
+
   fun chroot(path : Char*) : Int
   fun access(name : Char*, type : Int) : Int
   fun chdir(path : Char*) : Int
@@ -39,4 +44,5 @@ lib LibC
   fun sysconf(name : Int) : Long
   fun unlink(name : Char*) : Int
   fun write(fd : Int, buf : Void*, n : SizeT) : SSizeT
+  fun writev(x0 : Int, x1 : IoVec*, x2 : SizeT) : SSizeT
 end
