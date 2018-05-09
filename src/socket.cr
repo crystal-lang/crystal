@@ -538,6 +538,22 @@ class Socket < IO
     end
   end
 
+  private def unbuffered_write(*slices : Bytes)
+    writev_syscall_helper(slices.static_array, "Error writing file") do |slices|
+      iovecs = slices.map do |slice|
+        iovec = LibC::IoVec.new
+        iovec.iov_base = slice.to_unsafe
+        iovec.iov_len = slice.size
+        iovec
+      end
+      LibC.writev(@fd, iovecs, iovecs.size).tap do |return_code|
+        if return_code == -1 && Errno.value == Errno::EBADF
+          raise IO::Error.new "File not open for writing"
+        end
+      end
+    end
+  end
+
   private def add_read_event(timeout = @read_timeout)
     event = @read_event ||= Scheduler.create_fd_read_event(self)
     event.add timeout
