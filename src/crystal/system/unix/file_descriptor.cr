@@ -26,13 +26,10 @@ module Crystal::System::FileDescriptor
     end
   end
 
-  private def unbuffered_write(*slices : Bytes)
-    writev_syscall_helper(slices.static_array, "Error writing file") do |slices|
+  private def unbuffered_write(slices : Indexable(Bytes))
+    writev_syscall_helper(slices, "Error writing file") do |slices|
       iovecs = slices.map do |slice|
-        iovec = LibC::IoVec.new
-        iovec.iov_base = slice.to_unsafe
-        iovec.iov_len = slice.size
-        iovec
+        LibC::IoVec.new(iov_base: slice.to_unsafe, iov_len: slice.size)
       end
       LibC.writev(@fd, iovecs, iovecs.size).tap do |return_code|
         if return_code == -1 && Errno.value == Errno::EBADF

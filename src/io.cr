@@ -119,6 +119,14 @@ abstract class IO
     end
   end
 
+  # Writes multiple *slices* to this IO, serialized. May be overriden
+  # in included types, eg. with *writev* that will vectorize the writing.
+  def write(slices : Indexable(Bytes))
+    slices.each do |slice|
+      write(slice)
+    end
+  end
+
   # Closes this `IO`.
   #
   # `IO` defines this is a no-op method, but including types may override.

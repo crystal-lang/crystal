@@ -137,20 +137,26 @@ module IO::Buffered
     nil
   end
 
-  # Buffered implementation of `IO#write(*slices)`.
+  # Buffered implementation of `IO#write(slices)`.
   # Ignores *flush_on_newline?*
   def write(*slices : Bytes)
+    write(slices.static_array)
+  end
+
+  # Buffered implementation of `IO#write(slices)`.
+  # Ignores *flush_on_newline?*
+  def write(slices : Indexable(Bytes))
     check_open
 
     if sync?
-      return unbuffered_write(*slices)
+      return unbuffered_write slices
     end
 
     count = slices.sum &.size
 
     if count >= BUFFER_SIZE
       flush
-      return unbuffered_write *slices
+      return unbuffered_write slices
     end
 
     if count > BUFFER_SIZE - @out_count
