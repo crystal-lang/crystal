@@ -29,7 +29,7 @@
     var types = /^[A-Z_\u009F-\uFFFF][a-zA-Z0-9_\u009F-\uFFFF]*/;
     var keywords = wordRegExp([
       "abstract", "alias", "as", "asm", "begin", "break", "case", "class", "def", "do",
-      "else", "elsif", "end", "ensure", "enum", "extend", "for", "fun", "if", "ifdef",
+      "else", "elsif", "end", "ensure", "enum", "extend", "for", "fun", "if",
       "include", "instance_sizeof", "lib", "macro", "module", "next", "of", "out", "pointerof",
       "private", "protected", "rescue", "return", "require", "sizeof", "struct",
       "super", "then", "type", "typeof", "union", "unless", "until", "when", "while", "with",
@@ -40,8 +40,7 @@
       "def", "fun", "macro",
       "class", "module", "struct", "lib", "enum", "union",
       "if", "unless", "case", "while", "until", "begin", "then",
-      "do",
-      "for", "ifdef"
+      "do", "for"
     ];
     var indentKeywords = wordRegExp(indentKeywordsArray);
     var dedentKeywordsArray = [
