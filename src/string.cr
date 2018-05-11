@@ -3937,15 +3937,16 @@ class String
     while reader.has_next?
       current_char = reader.current_char
       case current_char
-      when '"'  then io << "\\\""
-      when '\\' then io << "\\\\"
-      when '\b' then io << "\\b"
-      when '\e' then io << "\\e"
-      when '\f' then io << "\\f"
-      when '\n' then io << "\\n"
-      when '\r' then io << "\\r"
-      when '\t' then io << "\\t"
-      when '\v' then io << "\\v"
+      when '"'     then io << "\\\""
+      when '\\'    then io << "\\\\"
+      when (7.chr) then io << "\\a" # TODO: use \a
+      when '\b'    then io << "\\b"
+      when '\e'    then io << "\\e"
+      when '\f'    then io << "\\f"
+      when '\n'    then io << "\\n"
+      when '\r'    then io << "\\r"
+      when '\t'    then io << "\\t"
+      when '\v'    then io << "\\v"
       when '#'
         current_char = reader.next_char
         if current_char == '{'

@@ -227,7 +227,7 @@ describe "Lexer string" do
 
     tester.string_should_start_correctly
     tester.next_token_should_be(:NEWLINE)
-    tester.next_string_token_should_be("abc")
+    tester.next_string_token_should_be("\abc")
     tester.string_should_have_an_interpolation_of("foo")
     tester.string_should_end_correctly
   end

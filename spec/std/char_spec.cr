@@ -133,6 +133,7 @@ describe "Char" do
   end
 
   it "escapes" do
+    7.chr.ord.should eq(7) # TODO: use \a
     '\b'.ord.should eq(8)
     '\t'.ord.should eq(9)
     '\n'.ord.should eq(10)
