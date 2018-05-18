@@ -12,7 +12,7 @@ class Zlib::Reader < IO
 
   # Creates a new reader from the given *io*.
   def initialize(@io : IO, @sync_close = false, dict : Bytes? = nil)
-    Zlib::Reader.read_header(io, dict)
+    Zlib::Reader.read_header(@io, dict)
     @flate_io = Flate::Reader.new(@io, dict: dict)
     @adler32 = Adler32.initial
     @end = false

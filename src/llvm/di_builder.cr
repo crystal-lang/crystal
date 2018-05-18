@@ -2,7 +2,7 @@ require "./lib_llvm"
 
 struct LLVM::DIBuilder
   def initialize(@llvm_module : Module)
-    @unwrap = LibLLVMExt.create_di_builder(llvm_module)
+    @unwrap = LibLLVMExt.create_di_builder(@llvm_module)
   end
 
   def create_compile_unit(lang, file, dir, producer, optimized, flags, runtime_version)

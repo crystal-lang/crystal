@@ -159,7 +159,7 @@ class Zip::File
 
     # :nodoc:
     def initialize(@io : IO)
-      super(at_central_directory_header: io)
+      super(at_central_directory_header: @io)
     end
 
     # Yields an `IO` to read this entry's contents.

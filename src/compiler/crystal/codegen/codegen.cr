@@ -152,7 +152,7 @@ module Crystal
       @llvm_typer = LLVMTyper.new(@program, @llvm_context)
       @main_llvm_typer = @llvm_typer
       @llvm_id = LLVMId.new(@program)
-      @main_ret_type = node.type? || @program.nil_type
+      @main_ret_type = @node.type? || @program.nil_type
       ret_type = @llvm_typer.llvm_return_type(@main_ret_type)
       @main = @llvm_mod.functions.add(MAIN_NAME, [llvm_context.int32, llvm_context.void_pointer.pointer], ret_type)
 
@@ -181,13 +181,13 @@ module Crystal
       @symbols = {} of String => Int32
       @symbols_by_index = [] of String
       @symbol_table_values = [] of LLVM::Value
-      program.symbols.each_with_index do |sym, index|
+      @program.symbols.each_with_index do |sym, index|
         @symbols[sym] = index
         @symbols_by_index << sym
         @symbol_table_values << build_string_constant(sym, sym)
       end
 
-      unless program.symbols.empty?
+      unless @program.symbols.empty?
         symbol_table = define_symbol_table @llvm_mod, @llvm_typer
         symbol_table.initializer = llvm_type(@program.string).const_array(@symbol_table_values)
       end

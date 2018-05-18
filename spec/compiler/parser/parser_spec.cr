@@ -237,13 +237,13 @@ describe "Parser" do
   it_parses "def foo; with a yield; end", Def.new("foo", body: Yield.new(scope: "a".call), yields: 1)
   it_parses "def foo; with a yield 1; end", Def.new("foo", body: Yield.new([1.int32] of ASTNode, "a".call), yields: 1)
   it_parses "def foo; a = 1; with a yield a; end", Def.new("foo", body: [Assign.new("a".var, 1.int32), Yield.new(["a".var] of ASTNode, "a".var)] of ASTNode, yields: 1)
-  it_parses "def foo(@var); end", Def.new("foo", [Arg.new("var")], [Assign.new("@var".instance_var, "var".var)] of ASTNode)
-  it_parses "def foo(@var); 1; end", Def.new("foo", [Arg.new("var")], [Assign.new("@var".instance_var, "var".var), 1.int32] of ASTNode)
-  it_parses "def foo(@var = 1); 1; end", Def.new("foo", [Arg.new("var", 1.int32)], [Assign.new("@var".instance_var, "var".var), 1.int32] of ASTNode)
-  it_parses "def foo(@@var); end", Def.new("foo", [Arg.new("var")], [Assign.new("@@var".class_var, "var".var)] of ASTNode)
-  it_parses "def foo(@@var); 1; end", Def.new("foo", [Arg.new("var")], [Assign.new("@@var".class_var, "var".var), 1.int32] of ASTNode)
-  it_parses "def foo(@@var = 1); 1; end", Def.new("foo", [Arg.new("var", 1.int32)], [Assign.new("@@var".class_var, "var".var), 1.int32] of ASTNode)
-  it_parses "def foo(&@block); end", Def.new("foo", body: Assign.new("@block".instance_var, "block".var), block_arg: Arg.new("block"), yields: 0)
+  it_parses "def foo(@var); end", Def.new("foo", [Arg.new("__arg0", external_name: "var")], [Assign.new("@var".instance_var, "__arg0".var)] of ASTNode)
+  it_parses "def foo(@var); 1; end", Def.new("foo", [Arg.new("__arg0", external_name: "var")], [Assign.new("@var".instance_var, "__arg0".var), 1.int32] of ASTNode)
+  it_parses "def foo(@var = 1); 1; end", Def.new("foo", [Arg.new("__arg0", external_name: "var", default_value: 1.int32)], [Assign.new("@var".instance_var, "__arg0".var), 1.int32] of ASTNode)
+  it_parses "def foo(@@var); end", Def.new("foo", [Arg.new("__arg0", external_name: "var")], [Assign.new("@@var".class_var, "__arg0".var)] of ASTNode)
+  it_parses "def foo(@@var); 1; end", Def.new("foo", [Arg.new("__arg0", external_name: "var")], [Assign.new("@@var".class_var, "__arg0".var), 1.int32] of ASTNode)
+  it_parses "def foo(@@var = 1); 1; end", Def.new("foo", [Arg.new("__arg0", external_name: "var", default_value: 1.int32)], [Assign.new("@@var".class_var, "__arg0".var), 1.int32] of ASTNode)
+  it_parses "def foo(&@block); end", Def.new("foo", body: Assign.new("@block".instance_var, "__arg0".var), block_arg: Arg.new("__arg0"), yields: 0)
 
   it_parses "def foo(\n&block\n); end", Def.new("foo", block_arg: Arg.new("block"), yields: 0)
   it_parses "def foo(&block \n: Int ->); end", Def.new("foo", block_arg: Arg.new("block", restriction: ProcNotation.new(["Int".path] of ASTNode)), yields: 1)
@@ -273,8 +273,8 @@ describe "Parser" do
   assert_syntax_error "def foo(**args, *x); end", "only block argument is allowed after double splat"
 
   it_parses "def foo(x y); y; end", Def.new("foo", args: [Arg.new("y", external_name: "x")], body: "y".var)
-  it_parses "def foo(x @var); end", Def.new("foo", [Arg.new("var", external_name: "x")], [Assign.new("@var".instance_var, "var".var)] of ASTNode)
-  it_parses "def foo(x @@var); end", Def.new("foo", [Arg.new("var", external_name: "x")], [Assign.new("@@var".class_var, "var".var)] of ASTNode)
+  it_parses "def foo(x @var); end", Def.new("foo", [Arg.new("__arg0", external_name: "x")], [Assign.new("@var".instance_var, "__arg0".var)] of ASTNode)
+  it_parses "def foo(x @@var); end", Def.new("foo", [Arg.new("__arg0", external_name: "x")], [Assign.new("@@var".class_var, "__arg0".var)] of ASTNode)
   assert_syntax_error "def foo(_ y); y; end"
 
   it_parses %(def foo("bar qux" y); y; end), Def.new("foo", args: [Arg.new("y", external_name: "bar qux")], body: "y".var)

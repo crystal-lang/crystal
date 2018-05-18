@@ -1733,7 +1733,8 @@ module Crystal
     property doc : String?
     property? varargs : Bool
 
-    def initialize(@name, @args = [] of Arg, @return_type = nil, @varargs = false, @body = nil, @real_name = name)
+    def initialize(@name, @args = [] of Arg, @return_type = nil, @varargs = false, @body = nil, real_name = nil)
+      @real_name = real_name || @name
     end
 
     def accept_children(visitor)

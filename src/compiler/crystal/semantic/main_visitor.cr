@@ -111,8 +111,9 @@ module Crystal
     # Type filters for `exp` in `!exp`, used after a `while`
     @before_not_type_filters : TypeFilters?
 
-    def initialize(program, vars = MetaVars.new, @typed_def = nil, meta_vars = nil)
+    def initialize(program, vars = MetaVars.new, typed_def = nil, meta_vars = nil)
       super(program, vars)
+      @typed_def = typed_def
       @while_stack = [] of While
       @needs_type_filters = 0
       @typeof_nest = 0

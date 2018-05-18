@@ -68,8 +68,8 @@ class Crystal::Type
       # If we are looking types inside a non-instantiated generic type,
       # for example Hash(K, V), we want to find K and V as type parameters
       # of that type.
-      if @find_root_generic_type_parameters && root.is_a?(GenericType)
-        free_vars ||= {} of String => TypeVar
+      if @find_root_generic_type_parameters && (root = @root).is_a?(GenericType)
+        free_vars = @free_vars ||= {} of String => TypeVar
         root.type_vars.each do |type_var|
           free_vars[type_var] ||= root.type_parameter(type_var)
         end

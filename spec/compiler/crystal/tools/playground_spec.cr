@@ -248,9 +248,9 @@ describe Playground::AgentInstrumentorTransformer do
     end
     ), <<-CR
     class Foo
-      def initialize(x, y)
-        @x = x
-        @y = y
+      def initialize(x __arg0, y __arg1)
+        @x = __arg0
+        @y = __arg1
         @z = _p.i(4) { @x + @y }.as(typeof(@x + @y))
       end
     end

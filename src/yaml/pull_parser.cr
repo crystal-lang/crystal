@@ -10,7 +10,8 @@
 class YAML::PullParser
   protected getter content
 
-  def initialize(@content : String | IO)
+  def initialize(content : String | IO)
+    @content = content
     @parser = Pointer(Void).malloc(LibYAML::PARSER_SIZE).as(LibYAML::Parser*)
     @event = LibYAML::Event.new
     @closed = false

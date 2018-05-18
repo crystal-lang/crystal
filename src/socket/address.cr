@@ -50,7 +50,8 @@ class Socket
     @addr6 : LibC::In6Addr?
     @addr4 : LibC::InAddr?
 
-    def initialize(@address : String, @port : Int32)
+    def initialize(address : String, @port : Int32)
+      @address = address
       if @addr6 = ip6?(address)
         @family = Family::INET6
         @size = sizeof(LibC::SockaddrIn6)
