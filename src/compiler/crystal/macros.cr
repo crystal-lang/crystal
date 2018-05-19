@@ -1126,7 +1126,7 @@ module Crystal::Macros
     end
 
     # Returns the expression that the modifier is applied to.
-    def exp : ASTNode
+    def exp : ASTNode | NilLiteral
     end
   end
 

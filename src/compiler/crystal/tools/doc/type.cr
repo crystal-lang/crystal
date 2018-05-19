@@ -161,7 +161,7 @@ class Crystal::Doc::Type
         defs = [] of Method
         @type.defs.try &.each do |def_name, defs_with_metadata|
           defs_with_metadata.each do |def_with_metadata|
-            case def_with_metadata.def.visibility
+            case def_with_metadata.def.visibility || Visibility::Public
             when .private?, .protected?
               next
             end
@@ -184,7 +184,7 @@ class Crystal::Doc::Type
       @type.metaclass.defs.try &.each_value do |defs_with_metadata|
         defs_with_metadata.each do |def_with_metadata|
           a_def = def_with_metadata.def
-          case a_def.visibility
+          case a_def.visibility || Visibility::Public
           when .private?, .protected?
             next
           end
@@ -220,7 +220,8 @@ class Crystal::Doc::Type
       macros = [] of Macro
       @type.metaclass.macros.try &.each_value do |the_macros|
         the_macros.each do |a_macro|
-          if a_macro.visibility.public? && @generator.must_include? a_macro
+          visibility = a_macro.visibility || Visibility::Public
+          if visibility.public? && @generator.must_include? a_macro
             macros << self.macro(a_macro)
           end
         end

@@ -396,4 +396,73 @@ describe "Semantic: private" do
       ),
       "private constant Foo::Bar referenced"
   end
+
+  it "applies bulk visibility" do
+    result = semantic(%(
+      class Foo
+        def foo
+        end
+
+        private
+
+        class Class
+        end
+
+        module Module
+        end
+
+        enum Enum
+          A
+        end
+
+        lib Lib
+        end
+
+        alias Alias = Int32
+
+        CONST = 1
+
+        def bar
+        end
+
+        def baz
+        end
+
+        macro some_macro
+        end
+
+        public
+
+        def qux
+        end
+
+        private
+
+        def another
+        end
+      end
+
+      def foo
+      end
+      ))
+
+    program = result.program
+    program.lookup_first_def("foo", false).not_nil!.visibility.should be_nil
+
+    foo = program.types["Foo"]
+    foo.lookup_first_def("foo", false).not_nil!.visibility.should be_nil
+    foo.lookup_first_def("bar", false).not_nil!.visibility.should eq(Visibility::Private)
+    foo.lookup_first_def("baz", false).not_nil!.visibility.should eq(Visibility::Private)
+    foo.lookup_first_def("qux", false).not_nil!.visibility.should eq(Visibility::Public)
+    foo.lookup_first_def("another", false).not_nil!.visibility.should eq(Visibility::Private)
+
+    foo.lookup_macro("some_macro", [] of ASTNode, nil).as(Macro).visibility.should eq(Visibility::Private)
+
+    foo.types["Class"].private?.should be_true
+    foo.types["Module"].private?.should be_true
+    foo.types["Enum"].private?.should be_true
+    foo.types["Lib"].private?.should be_true
+    foo.types["Alias"].private?.should be_true
+    foo.types["CONST"].private?.should be_true
+  end
 end

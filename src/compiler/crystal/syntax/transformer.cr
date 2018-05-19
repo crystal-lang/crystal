@@ -544,7 +544,9 @@ module Crystal
     end
 
     def transform(node : VisibilityModifier)
-      node.exp = node.exp.transform(self)
+      if exp = node.exp
+        node.exp = exp.transform(self)
+      end
       node
     end
 

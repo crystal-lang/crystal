@@ -2974,12 +2974,15 @@ module Crystal
 
     def visit(node : VisibilityModifier)
       exp = node.exp
-      exp.accept self
 
-      # Only check for calls that didn't resolve to a macro:
-      # all other cases are already covered in TopLevelVisitor
-      if exp.is_a?(Call) && !exp.expanded
-        node.raise "can't apply visibility modifier"
+      if exp
+        exp.accept self
+
+        # Only check for calls that didn't resolve to a macro:
+        # all other cases are already covered in TopLevelVisitor
+        if exp.is_a?(Call) && !exp.expanded
+          node.raise "can't apply visibility modifier"
+        end
       end
 
       node.type = @program.nil

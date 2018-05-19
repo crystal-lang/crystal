@@ -570,7 +570,7 @@ module Crystal
     end
 
     def check_private(node)
-      return nil unless node.visibility.private?
+      return nil unless node.visibility.try(&.private?)
 
       location = node.location
       return nil unless location

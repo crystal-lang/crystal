@@ -1180,6 +1180,12 @@ describe "Parser" do
   assert_syntax_error "foo **bar, out x", "out argument not allowed after double splat"
   assert_syntax_error "foo(**bar, out x)", "out argument not allowed after double splat"
 
+  it_parses "private", VisibilityModifier.new(Visibility::Private)
+  it_parses "protected", VisibilityModifier.new(Visibility::Protected)
+  it_parses "public", VisibilityModifier.new(Visibility::Public)
+
+  it_parses "private\n", VisibilityModifier.new(Visibility::Private)
+
   it_parses "private def foo; end", VisibilityModifier.new(Visibility::Private, Def.new("foo"))
   it_parses "protected def foo; end", VisibilityModifier.new(Visibility::Protected, Def.new("foo"))
 

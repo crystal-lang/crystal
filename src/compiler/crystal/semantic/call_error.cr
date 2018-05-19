@@ -492,7 +492,7 @@ class Crystal::Call
 
     macros = in_macro_target &.lookup_macros(def_name)
     return unless macros.is_a?(Array(Macro))
-    macros = macros.reject &.visibility.private?
+    macros = macros.reject &.visibility.try(&.private?)
 
     if macros.size == 1
       if msg = check_named_args_and_splats(macros.first, named_args)
@@ -572,7 +572,7 @@ class Crystal::Call
   end
 
   def check_visibility(match)
-    case match.def.visibility
+    case match.def.visibility || Visibility::Public
     when .private?
       if obj = @obj
         if obj.is_a?(Var) && obj.name == "self"

@@ -921,6 +921,10 @@ module Crystal
               return check_ident_or_keyword(:protected, start)
             end
           end
+        when 'u'
+          if next_char == 'b' && next_char == 'l' && next_char == 'i' && next_char == 'c'
+            return check_ident_or_keyword(:public, start)
+          end
         end
         scan_ident(start)
       when 'r'

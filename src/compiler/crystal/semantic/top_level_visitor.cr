@@ -88,7 +88,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
       type.struct = node.struct?
     end
 
-    type.private = true if node.visibility.private?
+    type.private = true if private_node?(node)
 
     node_superclass = node.superclass
     if node_superclass
@@ -231,7 +231,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
       scope.types[name] = type
     end
 
-    type.private = true if node.visibility.private?
+    type.private = true if private_node?(node)
 
     node.resolved_type = type
 
@@ -283,7 +283,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
     attach_doc alias_type, node
     current_type.types[node.name] = alias_type
 
-    alias_type.private = true if node.visibility.private?
+    alias_type.private = true if private_node?(node)
 
     node.resolved_type = alias_type
 
@@ -307,6 +307,8 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
       node.raise ex.message
     end
 
+    node.visibility ||= @visibility
+
     false
   end
 
@@ -324,6 +326,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
       node.add_annotation(annotation_type, ann)
     end
 
+    node.visibility ||= @visibility
     node.doc ||= annotations_doc(annotations)
     check_ditto node
 
@@ -445,7 +448,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
     end
     node.resolved_type = type
 
-    type.private = true if node.visibility.private?
+    type.private = true if private_node?(node)
 
     process_annotations(annotations) do |annotation_type, ann|
       case annotation_type
@@ -548,7 +551,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
     existed = !!enum_type
     enum_type ||= EnumType.new(@program, scope, name, enum_base_type)
 
-    enum_type.private = true if node.visibility.private?
+    enum_type.private = true if private_node?(node)
 
     process_annotations(annotations) do |annotation_type, ann|
       enum_type.flags = true if annotation_type == @program.flags_annotation
@@ -727,7 +730,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
     end
 
     const = Const.new(@program, scope, name, value)
-    const.private = true if target.visibility.private?
+    const.private = true if private_node?(target)
     attach_doc const, node
 
     scope.types[name] = const
@@ -749,40 +752,46 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
   end
 
   def visit(node : VisibilityModifier)
-    node.exp.visibility = node.modifier
-    node.exp.accept self
+    if exp = node.exp
+      exp.visibility = node.modifier
+      exp.accept self
 
-    # Can only apply visibility modifier to def, type, macro or a macro call
-    case exp = node.exp
-    when ClassDef, ModuleDef, EnumDef, Alias, LibDef
-      if node.modifier.private?
-        return false
-      else
-        node.raise "can only use 'private' for types"
-      end
-    when Assign
-      if (target = exp.target).is_a?(Path)
+      # Can only apply visibility modifier to def, type, macro or a macro call
+      case exp
+      when ClassDef, ModuleDef, EnumDef, Alias, LibDef
         if node.modifier.private?
           return false
         else
-          node.raise "can only use 'private' for constants"
+          node.raise "can only use 'private' for types"
         end
-      end
-    when Def
-      return false
-    when Macro
-      if node.modifier.private?
+      when Assign
+        if (target = exp.target).is_a?(Path)
+          if node.modifier.private?
+            return false
+          else
+            node.raise "can only use 'private' for constants"
+          end
+        end
+      when Def
         return false
-      else
-        node.raise "can only use 'private' for macros"
+      when Macro
+        if node.modifier.private?
+          return false
+        else
+          node.raise "can only use 'private' for macros"
+        end
+      when Call
+        # Don't give an error yet: wait to see if the
+        # call doesn't resolve to a method/macro
+        return false
       end
-    when Call
-      # Don't give an error yet: wait to see if the
-      # call doesn't resolve to a method/macro
-      return false
+
+      node.raise "can't apply visibility modifier"
+    else
+      @visibility = node.modifier
     end
 
-    node.raise "can't apply visibility modifier"
+    false
   end
 
   def visit(node : ProcLiteral)
@@ -1107,10 +1116,14 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
 
   def current_type_scope(node)
     scope = current_type
-    if scope.is_a?(Program) && node.visibility.private?
+    if scope.is_a?(Program) && node.visibility.try(&.private?)
       scope = program.check_private(node) || scope
     end
     scope
+  end
+
+  def private_node?(node)
+    (node.visibility || @visibility).try(&.private?)
   end
 
   # Turn all finished macros into expanded nodes, and

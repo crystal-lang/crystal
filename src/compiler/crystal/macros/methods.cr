@@ -1304,7 +1304,7 @@ module Crystal
     def interpret(method, args, block, interpreter)
       case method
       when "exp"
-        interpret_argless_method(method, args) { @exp }
+        interpret_argless_method(method, args) { @exp || NilLiteral.new }
       when "visibility"
         interpret_argless_method(method, args) do
           visibility_to_symbol(@modifier)
@@ -2210,7 +2210,7 @@ end
 
 private def visibility_to_symbol(visibility)
   visibility_name =
-    case visibility
+    case visibility || Crystal::Visibility::Public
     when .private?
       "private"
     when .protected?
