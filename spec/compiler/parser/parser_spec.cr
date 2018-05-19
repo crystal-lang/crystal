@@ -82,7 +82,8 @@ describe "Parser" do
   it_parses %(:"\\\\foo"), "\\foo".symbol
   it_parses %(:"\\\"foo"), "\"foo".symbol
   it_parses %(:"\\\"foo\\\""), "\"foo\"".symbol
-  it_parses %(:"\\a\\b\\n\\r\\t\\v\\f\\e"), "\a\b\n\r\t\v\f\e".symbol
+  # TODO: uncomment after 0.24.2
+  # it_parses %(:"\\a\\b\\n\\r\\t\\v\\f\\e"), "\a\b\n\r\t\v\f\e".symbol
   it_parses %(:"\\u{61}"), "a".symbol
 
   it_parses "[1, 2]", ([1.int32, 2.int32] of ASTNode).array
@@ -1178,6 +1179,12 @@ describe "Parser" do
 
   assert_syntax_error "foo **bar, out x", "out argument not allowed after double splat"
   assert_syntax_error "foo(**bar, out x)", "out argument not allowed after double splat"
+
+  it_parses "private", VisibilityModifier.new(Visibility::Private)
+  it_parses "protected", VisibilityModifier.new(Visibility::Protected)
+  it_parses "public", VisibilityModifier.new(Visibility::Public)
+
+  it_parses "private\n", VisibilityModifier.new(Visibility::Private)
 
   it_parses "private def foo; end", VisibilityModifier.new(Visibility::Private, Def.new("foo"))
   it_parses "protected def foo; end", VisibilityModifier.new(Visibility::Protected, Def.new("foo"))

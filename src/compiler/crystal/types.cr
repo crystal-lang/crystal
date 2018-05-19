@@ -759,7 +759,8 @@ module Crystal
     def add_def(a_def)
       a_def.owner = self
 
-      if a_def.visibility.public? && a_def.name == "initialize"
+      visibility = a_def.visibility || Visibility::Public
+      if visibility.public? && a_def.name == "initialize"
         a_def.visibility = Visibility::Protected
       end
 

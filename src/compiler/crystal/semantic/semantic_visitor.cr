@@ -16,6 +16,7 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
   @untyped_def : Def?
   @typed_def : Def?
   @block : Block?
+  @visibility : Visibility?
 
   def initialize(@program, @vars = MetaVars.new)
     @current_type = @program
@@ -263,7 +264,7 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
       macro_scope = macro_scope.remove_alias
 
       the_macro = macro_scope.metaclass.lookup_macro(node.name, node.args, node.named_args)
-      node.raise "private macro '#{node.name}' called for #{obj}" if the_macro.is_a?(Macro) && the_macro.visibility.private?
+      node.raise "private macro '#{node.name}' called for #{obj}" if the_macro.is_a?(Macro) && the_macro.visibility.try(&.private?)
     when Nil
       return false if node.name == "super" || node.name == "previous_def"
       the_macro = node.lookup_macro
@@ -503,8 +504,11 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
 
   def pushing_type(type : ModuleType)
     old_type = @current_type
+    old_visibility = @visibility
     @current_type = type
+    @visibility = nil
     yield
     @current_type = old_type
+    @visibility = old_visibility
   end
 end

@@ -145,7 +145,7 @@ describe "Lexer" do
                      :begin, :lib, :fun, :type, :struct, :union, :enum, :macro, :out, :require,
                      :case, :when, :select, :then, :of, :abstract, :rescue, :ensure, :is_a?, :alias,
                      :pointerof, :sizeof, :instance_sizeof, :as, :as?, :typeof, :for, :in,
-                     :with, :self, :super, :private, :protected, :asm, :uninitialized, :nil?,
+                     :with, :self, :super, :private, :protected, :public, :asm, :uninitialized, :nil?,
                      :annotation]
   it_lexes_idents ["ident", "something", "with_underscores", "with_1", "foo?", "bar!", "fooBar",
                    "❨╯°□°❩╯︵┻━┻"]

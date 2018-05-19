@@ -1072,8 +1072,10 @@ module Crystal
 
     def visit(node : VisibilityModifier)
       @str << node.modifier.to_s.downcase
-      @str << ' '
-      node.exp.accept self
+      if exp = node.exp
+        @str << ' '
+        exp.accept self
+      end
       false
     end
 

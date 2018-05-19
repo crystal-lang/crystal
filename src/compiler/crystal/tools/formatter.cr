@@ -3058,11 +3058,17 @@ module Crystal
     def visit(node : VisibilityModifier)
       case node.modifier
       when .private?
-        write_keyword :private, " "
+        write_keyword :private
       when .protected?
-        write_keyword :protected, " "
+        write_keyword :protected
       end
-      accept node.exp
+
+      skip_space
+
+      if exp = node.exp
+        write " "
+        accept exp
+      end
 
       false
     end

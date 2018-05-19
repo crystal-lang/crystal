@@ -1056,6 +1056,8 @@ module Crystal
           check_type_declaration { parse_visibility_modifier Visibility::Private }
         when :protected
           check_type_declaration { parse_visibility_modifier Visibility::Protected }
+        when :public
+          check_type_declaration { parse_visibility_modifier Visibility::Public }
         when :asm
           check_type_declaration { parse_asm }
         when :annotation
@@ -4823,11 +4825,16 @@ module Crystal
       location = @token.location
 
       next_token_skip_space
-      exp = parse_op_assign
+      case @token.type
+      when :NEWLINE, :EOF
+        # No exp
+      else
+        exp = parse_op_assign
+        exp.doc = doc
+      end
 
       modifier = VisibilityModifier.new(modifier, exp).at(location).at_end(exp)
       modifier.doc = doc
-      exp.doc = doc
       modifier
     end
 
