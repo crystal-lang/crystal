@@ -131,4 +131,5 @@ describe "ASTNode#to_s" do
   expect_to_s %q(%r{#{1}\/\0}), %q(/#{1}\/\0/)
   expect_to_s %q(`\n\0`), %q(`\n\u0000`)
   expect_to_s %q(`#{1}\n\0`), %q(`#{1}\n\u0000`)
+  expect_to_s "macro foo\n{% verbatim do %}1{% end %}\nend"
 end

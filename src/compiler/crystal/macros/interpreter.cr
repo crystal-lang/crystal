@@ -115,6 +115,18 @@ module Crystal
       @str << node.value
     end
 
+    def visit(node : MacroVerbatim)
+      exp = node.exp
+      if exp.is_a?(Expressions)
+        exp.expressions.each do |subexp|
+          subexp.to_s(@str)
+        end
+      else
+        exp.to_s(@str)
+      end
+      false
+    end
+
     def visit(node : Var)
       var = @vars[node.name]?
       if var

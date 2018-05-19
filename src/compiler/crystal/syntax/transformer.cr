@@ -560,6 +560,10 @@ module Crystal
       node
     end
 
+    def transform(node : MacroVerbatim)
+      node
+    end
+
     def transform(node : MacroIf)
       node
     end
