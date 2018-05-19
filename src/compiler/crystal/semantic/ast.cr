@@ -178,7 +178,7 @@ module Crystal
 
     # Returns the annotation with the given type, if any, or nil otherwise
     def annotation(annotation_type) : Annotation?
-      @annotations.try &.[annotation_type]
+      @annotations.try &.[annotation_type]?
     end
 
     # Returns the minimum and maximum number of arguments that must
@@ -522,7 +522,7 @@ module Crystal
 
     # Returns the annotation with the given type, if any, or nil otherwise
     def annotation(annotation_type) : Annotation?
-      @annotations.try &.[annotation_type]
+      @annotations.try &.[annotation_type]?
     end
   end
 
