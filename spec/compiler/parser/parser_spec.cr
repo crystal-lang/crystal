@@ -82,7 +82,8 @@ describe "Parser" do
   it_parses %(:"\\\\foo"), "\\foo".symbol
   it_parses %(:"\\\"foo"), "\"foo".symbol
   it_parses %(:"\\\"foo\\\""), "\"foo\"".symbol
-  it_parses %(:"\\a\\b\\n\\r\\t\\v\\f\\e"), "\a\b\n\r\t\v\f\e".symbol
+  # TODO: uncomment after 0.24.2
+  # it_parses %(:"\\a\\b\\n\\r\\t\\v\\f\\e"), "\a\b\n\r\t\v\f\e".symbol
   it_parses %(:"\\u{61}"), "a".symbol
 
   it_parses "[1, 2]", ([1.int32, 2.int32] of ASTNode).array
@@ -1560,7 +1561,9 @@ describe "Parser" do
 
   assert_syntax_error "def Foo(Int32).bar;end"
 
+  assert_syntax_error "[\n]", "for empty arrays use '[] of ElementType'"
   assert_syntax_error "[1 1]"
+  assert_syntax_error "{\n}", "for empty hashes use '{} of KeyType => ValueType'"
   assert_syntax_error "{1 => 2 3 => 4}"
   assert_syntax_error "{1 => 2, 3 => 4 5 => 6}"
   assert_syntax_error "{a: 1 b: 2}"

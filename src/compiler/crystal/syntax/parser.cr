@@ -2164,6 +2164,9 @@ module Crystal
     end
 
     def parse_array_literal
+      line = @line_number
+      column = @token.column_number
+
       slash_is_regex!
 
       exps = [] of ASTNode
@@ -2199,6 +2202,8 @@ module Crystal
         next_token_skip_space_or_newline
         of = parse_single_type
         end_location = of.end_location
+      elsif exps.size == 0
+        raise "for empty arrays use '[] of ElementType'", line, column
       end
 
       ArrayLiteral.new(exps, of).at_end(end_location)
