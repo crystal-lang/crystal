@@ -65,7 +65,14 @@ module JSON
   # If *strict* is `true`, unknown properties in the JSON
   # document will raise a parse exception. The default is `false`, so unknown properties
   # are silently ignored.
-  macro mapping(_properties_, strict = false)
+  #
+  # If *extra* is a String, unknown properties in the JSON
+  # document will be stored into field with this name.
+  macro mapping(_properties_, strict = false, extra = nil)
+    {% if extra && _properties_.keys.includes? extra.id %}
+      {{ raise "Name for extra property already in use: #{extra.id}" }}
+    {% end %}
+
     {% for key, value in _properties_ %}
       {% _properties_[key] = {type: value} unless value.is_a?(HashLiteral) || value.is_a?(NamedTupleLiteral) %}
     {% end %}
@@ -96,6 +103,14 @@ module JSON
           @{{value[:key_id]}}_present
         end
       {% end %}
+    {% end %}
+
+    {% if extra %}
+      @{{extra.id}} = Hash(String, ::JSON::Any).new
+
+      def {{extra.id}}
+        @{{extra.id}}
+      end
     {% end %}
 
     def initialize(%pull : ::JSON::PullParser)
@@ -145,6 +160,8 @@ module JSON
         else
           {% if strict %}
             raise ::JSON::MappingError.new("Unknown JSON attribute: #{key}", self.class, *%key_location)
+          {% elsif extra %}
+            @{{extra.id}}[key] = ::JSON::Any.new(%pull)
           {% else %}
             %pull.skip
           {% end %}
@@ -220,6 +237,12 @@ module JSON
           {% unless value[:emit_null] %}
             end
           {% end %}
+        {% end %}
+
+        {% if extra %}
+          @{{extra.id}}.each do |key, obj|
+            json.field(key) { obj.to_json(json) }
+          end
         {% end %}
       end
     end

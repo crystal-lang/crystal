@@ -30,6 +30,13 @@ private class JSONPersonEmittingNull
   })
 end
 
+private class JSONPersonWithExtra
+  JSON.mapping({
+    name: {type: String},
+    age:  {type: Int32, nilable: true},
+  }, extra: "other")
+end
+
 private class JSONWithBool
   JSON.mapping value: Bool
 end
@@ -276,6 +283,21 @@ describe "JSON mapping" do
         JSON
     end
     ex.location.should eq({3, 15})
+  end
+
+  it "should unpack extra fields" do
+    person = JSONPersonWithExtra.from_json(%({"name": "John", "age": 30, "extra1": 1, "extra2": [1,2,3]}))
+    person.name.should eq("John")
+    person.age.should eq(30)
+    person.other["extra1"].should eq 1
+    person.other["extra2"].should eq [1, 2, 3]
+  end
+
+  it "should pack extra fields" do
+    person = JSONPersonWithExtra.from_json(%({"name": "John", "age": 30, "extra1": 1, "extra2": [1,2,3]}))
+    person.other["extra3"] = JSON::Any.new("bla")
+    person.other.delete("extra1")
+    person.to_json.should eq "{\"name\":\"John\",\"age\":30,\"extra2\":[1,2,3],\"extra3\":\"bla\"}"
   end
 
   it "doesn't emit null by default when doing to_json" do
