@@ -64,22 +64,6 @@ describe "Dir" do
     end
   end
 
-  it "tests mkdir_p with a new path" do
-    path = "/tmp/crystal_mkdir_ptest_#{Process.pid}/"
-    Dir.mkdir_p(path)
-    Dir.exists?(path).should be_true
-    path = File.join({path, "a", "b", "c"})
-    Dir.mkdir_p(path)
-    Dir.exists?(path).should be_true
-  end
-
-  it "tests mkdir_p with an existing path" do
-    Dir.mkdir_p(__DIR__)
-    expect_raises Errno do
-      Dir.mkdir_p(__FILE__)
-    end
-  end
-
   it "tests rmdir with an nonexistent path" do
     expect_raises Errno do
       Dir.rmdir("/tmp/crystal_mkdir_test_#{Process.pid}/")
@@ -425,10 +409,6 @@ describe "Dir" do
 
     it_raises_on_null_byte "mkdir" do
       Dir.mkdir("foo\0bar")
-    end
-
-    it_raises_on_null_byte "mkdir_p" do
-      Dir.mkdir_p("foo\0bar")
     end
 
     it_raises_on_null_byte "rmdir" do

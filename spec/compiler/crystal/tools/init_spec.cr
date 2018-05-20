@@ -22,13 +22,11 @@ end
 # The directory and its content is deleted when the block return.
 private def within_temporary_directory
   tmp_path = "#{PROJECT_ROOT_DIR}/tmp/init_spec_tmp_dir-#{Process.pid}"
-  Dir.mkdir_p(tmp_path)
+  FileUtils.mkdir_p tmp_path
   begin
-    Dir.cd(tmp_path) do
-      yield
-    end
+    Dir.cd(tmp_path) { yield }
   ensure
-    FileUtils.rm_rf(tmp_path)
+    FileUtils.rm_rf tmp_path
   end
 end
 

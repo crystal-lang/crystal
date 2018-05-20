@@ -1,4 +1,5 @@
 require "html"
+require "file_utils"
 
 module Spec
   # :nodoc:
@@ -32,7 +33,7 @@ module Spec
     end
 
     def self.file(output_dir)
-      Dir.mkdir_p(output_dir)
+      FileUtils.mkdir_p(output_dir)
       output_file_path = File.join(output_dir, "output.xml")
       file = File.new(output_file_path, "w")
       JUnitFormatter.new(file)

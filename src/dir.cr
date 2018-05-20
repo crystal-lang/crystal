@@ -224,32 +224,6 @@ class Dir
     Crystal::System::Dir.create(path, mode)
   end
 
-  # Creates a new directory at the given path, including any non-existing
-  # intermediate directories. The linux-style permission mode can be specified,
-  # with a default of 777 (0o777).
-  def self.mkdir_p(path, mode = 0o777)
-    return 0 if Dir.exists?(path)
-
-    components = path.split(File::SEPARATOR)
-    case components.first
-    when ""
-      components.shift
-      subpath = "/"
-    when "."
-      subpath = components.shift
-    else
-      subpath = "."
-    end
-
-    components.each do |component|
-      subpath = File.join subpath, component
-
-      mkdir(subpath, mode) unless Dir.exists?(subpath)
-    end
-
-    0
-  end
-
   # Removes the directory at the given path.
   def self.rmdir(path)
     Crystal::System::Dir.delete(path)

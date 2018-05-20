@@ -37,7 +37,7 @@ class Crystal::Doc::Generator
   end
 
   def run
-    Dir.mkdir_p @output_dir
+    FileUtils.mkdir_p @output_dir
 
     types = collect_subtypes(@program)
 
@@ -82,8 +82,8 @@ class Crystal::Doc::Generator
   end
 
   def copy_files
-    Dir.mkdir_p File.join(@output_dir, "css")
-    Dir.mkdir_p File.join(@output_dir, "js")
+    FileUtils.mkdir_p File.join(@output_dir, "css")
+    FileUtils.mkdir_p File.join(@output_dir, "js")
 
     File.write File.join(@output_dir, "css", "style.css"), StyleTemplate.new
     File.write File.join(@output_dir, "js", "doc.js"), JsTypeTemplate.new
@@ -104,7 +104,7 @@ class Crystal::Doc::Generator
       subtypes = type.types
       if subtypes && !subtypes.empty?
         dirname = File.join(dir, type.name)
-        Dir.mkdir_p dirname
+        FileUtils.mkdir_p dirname
         generate_types_docs subtypes, dirname, all_types
       end
     end

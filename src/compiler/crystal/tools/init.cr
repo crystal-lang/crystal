@@ -184,7 +184,7 @@ module Crystal
       def render
         overwriting = File.exists?(full_path)
 
-        Dir.mkdir_p(File.dirname(full_path))
+        FileUtils.mkdir_p(File.dirname(full_path))
         File.write(full_path, to_s)
         puts log_message(overwriting) unless config.silent
       end
