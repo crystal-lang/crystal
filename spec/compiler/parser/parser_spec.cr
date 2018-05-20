@@ -807,6 +807,8 @@ describe "Parser" do
 
   it_parses "macro foo(\na = 0\n)\nend", Macro.new("foo", [Arg.new("a", default_value: 0.int32)], Expressions.new)
 
+  it_parses "macro foo;{% verbatim do %}1{% foo %}2{% end %};end", Macro.new("foo", [] of Arg, Expressions.from([MacroVerbatim.new(Expressions.from(["1".macro_literal, MacroExpression.new("foo".var, false), "2".macro_literal] of ASTNode)), ";".macro_literal] of ASTNode))
+
   assert_syntax_error "macro foo; {% foo = 1 }; end"
   assert_syntax_error "macro def foo : String; 1; end"
 

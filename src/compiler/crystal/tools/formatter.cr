@@ -1660,6 +1660,32 @@ module Crystal
       false
     end
 
+    def visit(node : MacroVerbatim)
+      check :MACRO_CONTROL_START
+      write "{%"
+      next_token_skip_space_or_newline
+      check_keyword :verbatim
+      write " verbatim"
+      next_token_skip_space
+      check_keyword :do
+      write " do"
+      next_token_skip_space
+      check :"%}"
+      write " %}"
+      next_macro_token
+      node.exp.accept self
+      check :MACRO_CONTROL_START
+      write "{%"
+      next_token_skip_space_or_newline
+      check_keyword :end
+      write " end"
+      next_token_skip_space
+      check :"%}"
+      write " %}"
+      next_macro_token
+      false
+    end
+
     def visit(node : MacroExpression)
       reset_macro_state
 

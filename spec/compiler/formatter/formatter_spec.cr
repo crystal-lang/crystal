@@ -1123,4 +1123,6 @@ describe Crystal::Formatter do
 
   assert_format "class X; annotation  FooAnnotation  ;  end ; end", "class X\n  annotation FooAnnotation; end\nend"
   assert_format "class X\n annotation  FooAnnotation  \n  end \n end", "class X\n  annotation FooAnnotation\n  end\nend"
+
+  assert_format "macro foo\n{% verbatim do %}1 + 2{% end %}\nend"
 end

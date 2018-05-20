@@ -1252,4 +1252,31 @@ describe "Semantic: macro" do
       {{ FOO["foo"] }}
     )) { nil_type }
   end
+
+  it "does macro verbatim inside macro" do
+    assert_type(%(
+      class Foo
+        macro inherited
+          {% verbatim do %}
+            def foo
+              {{ @type }}
+            end
+          {% end %}
+        end
+      end
+
+      class Bar < Foo
+      end
+
+      Bar.new.foo
+      )) { types["Bar"].metaclass }
+  end
+
+  it "does macro verbatim outside macro" do
+    assert_type(%(
+      {% verbatim do %}
+        1
+      {% end %}
+      )) { int32 }
+  end
 end

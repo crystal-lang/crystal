@@ -1990,6 +1990,12 @@ module Crystal
     def_equals_and_hash value
   end
 
+  class MacroVerbatim < UnaryExpression
+    def clone_without_location
+      MacroVerbatim.new(@exp.clone)
+    end
+  end
+
   # if inside a macro
   #
   #     {% 'if' cond %}

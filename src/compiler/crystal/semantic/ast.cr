@@ -597,7 +597,7 @@ module Crystal
   {% for name in %w(And Or
                    ArrayLiteral HashLiteral RegexLiteral RangeLiteral
                    Case StringInterpolation
-                   MacroExpression MacroIf MacroFor MultiAssign
+                   MacroExpression MacroIf MacroFor MacroVerbatim MultiAssign
                    SizeOf InstanceSizeOf Global Require Select) %}
     class {{name.id}}
       include ExpandableNode

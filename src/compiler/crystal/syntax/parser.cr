@@ -3090,6 +3090,23 @@ module Crystal
           return MacroIf.new(BoolLiteral.new(true), body).at_end(token_end_location)
         when :else, :elsif, :end
           return nil
+        when :verbatim
+          next_token_skip_space
+          unless @token.keyword?(:do)
+            unexpected_token(msg: "expecting 'do'")
+          end
+          next_token_skip_space
+          check :"%}"
+
+          macro_state.control_nest += 1
+          body, end_location = parse_macro_body(start_line, start_column, macro_state)
+          macro_state.control_nest -= 1
+
+          check_ident :end
+          next_token_skip_space
+          check :"%}"
+
+          return MacroVerbatim.new(body).at_end(token_end_location)
         end
       end
 

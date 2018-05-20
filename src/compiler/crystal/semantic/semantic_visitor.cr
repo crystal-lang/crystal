@@ -172,6 +172,16 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
     false
   end
 
+  def visit(node : MacroVerbatim)
+    expansion = MacroIf.new(BoolLiteral.new(true), node)
+    expand_inline_macro expansion
+
+    node.expanded = expansion
+    node.bind_to expansion
+
+    false
+  end
+
   def visit(node : ExternalVar | Path | Generic | ProcNotation | Union | Metaclass | Self | TypeOf)
     false
   end

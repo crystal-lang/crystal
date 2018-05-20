@@ -787,6 +787,13 @@ module Crystal
       false
     end
 
+    def visit(node : MacroVerbatim)
+      @str << "{% verbatim do %}"
+      node.exp.accept self
+      @str << "{% end %}"
+      false
+    end
+
     def visit(node : ExternalVar)
       @str << '$'
       @str << node.name

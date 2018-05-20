@@ -1024,6 +1024,11 @@ module Crystal
           end
         end
         scan_ident(start)
+      when 'v'
+        if next_char == 'e' && next_char == 'r' && next_char == 'b' && next_char == 'a' && next_char == 't' && next_char == 'i' && next_char == 'm'
+          return check_ident_or_keyword(:verbatim, start)
+        end
+        scan_ident(start)
       when 'w'
         case next_char
         when 'h'
