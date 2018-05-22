@@ -162,7 +162,7 @@ struct Time
     new(seconds: seconds, nanoseconds: nanoseconds, location: location)
   end
 
-  def self.new(year, month, day, hour = 0, minute = 0, second = 0, *, nanosecond = 0, location = Location.local)
+  def self.new(year : Int32, month : Int32, day : Int32, hour = 0, minute = 0, second = 0, *, nanosecond = 0, location = Location.local)
     unless 1 <= year <= 9999 &&
            1 <= month <= 12 &&
            1 <= day <= Time.days_in_month(year, month) &&
@@ -231,7 +231,7 @@ struct Time
   end
 
   # Returns a new `Time` instance at the specified time in UTC time zone.
-  def self.utc(year, month, day, hour = 0, minute = 0, second = 0, *, nanosecond = 0) : Time
+  def self.utc(year : Int32, month : Int32, day : Int32, hour = 0, minute = 0, second = 0, *, nanosecond = 0) : Time
     new(year, month, day, hour, minute, second, nanosecond: nanosecond, location: Location::UTC)
   end
 
