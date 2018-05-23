@@ -238,6 +238,10 @@ body {
   font-family: Consolas, 'Courier New', Courier, Monaco, monospace;
 }
 
+.entry-const code {
+  white-space: pre-wrap;
+}
+
 .entry-summary {
   padding-bottom: 4px;
 }
