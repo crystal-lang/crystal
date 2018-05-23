@@ -33,11 +33,10 @@ We want full OOP.
 
 Oh, and we don't want to write C code to make the code run faster.
 
-Status
+Project Status
 ------
 
-* The project is in alpha stage: we are still tweaking the language and standard library.
-* The compiler is written in Crystal.
+Crystal is still under heavy development. There can be breaking changes but we're trying to keep them as minimum as possible.
 
 Installing
 ----------
