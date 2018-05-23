@@ -1604,8 +1604,6 @@ module Crystal
     end
 
     def parse_annotation_def
-      @type_nest += 1
-
       location = @token.location
       doc = @token.doc
 
