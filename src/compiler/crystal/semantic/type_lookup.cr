@@ -345,8 +345,16 @@ class Crystal::Type
         node.raise "there's no self in this scope"
       end
 
-      if (self_type = @self_type).is_a?(GenericType)
-        params = self_type.type_vars.map { |type_var| self_type.type_parameter(type_var).as(TypeVar) }
+      if (self_type = @self_type).is_a?(GenericType) && (free_vars = @free_vars)
+        # Only instantiate self type with available free variables
+        params = self_type.type_vars.map do |type_var|
+          free_var = free_vars[type_var]?
+          if free_var
+            self_type.type_parameter(type_var).as(TypeVar)
+          else
+            return @self_type.virtual_type
+          end
+        end
         self_type.instantiate(params)
       else
         @self_type.virtual_type

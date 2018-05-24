@@ -4912,4 +4912,20 @@ describe "Semantic: instance var" do
       ),
       "Can't infer the type of instance variable '@x' of Foo"
   end
+
+  it "can't infer type of generic method that returns self (#5383)" do
+    assert_error %(
+      class Gen(T)
+        def self.new(&block : -> T) : self
+        end
+      end
+
+      class Foo
+        def initialize(x, y)
+          @x = Gen.new { 1 }
+        end
+      end
+      ),
+      "can't use Gen(T) as the type of instance variable @x of Foo, use a more specific type"
+  end
 end
