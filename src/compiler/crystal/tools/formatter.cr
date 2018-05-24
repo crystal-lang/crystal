@@ -488,6 +488,7 @@ module Crystal
         (heredoc_line...heredoc_end).each do |line|
           @no_rstrip_lines.add line
         end
+        write_line
       end
 
       if space_slash_newline?
@@ -615,6 +616,7 @@ module Crystal
         (heredoc_line...heredoc_end).each do |line|
           @no_rstrip_lines.add line
         end
+        write_line
       end
 
       format_regex_modifiers if is_regex
@@ -640,7 +642,6 @@ module Crystal
       @lexer.heredocs.reverse!
       while heredoc = @lexer.heredocs.pop?
         consume_heredoc(heredoc[0], heredoc[1].as(HeredocInfo))
-        write_line unless @lexer.heredocs.empty?
       end
       @consuming_heredocs = false
     end
@@ -968,7 +969,9 @@ module Crystal
         found_comment ||= skip_space_or_newline
         check suffix
 
-        if has_newlines
+        if @wrote_newline
+          write_indent
+        elsif has_newlines
           unless found_comment
             write ","
             write_line
@@ -1734,7 +1737,9 @@ module Crystal
       @macro_state = macro_state
 
       if node.output?
-        if has_space && !has_newline
+        if @wrote_newline
+          write_indent(old_column)
+        elsif has_space && !has_newline
           write " "
         elsif has_newline
           write_line
@@ -1746,7 +1751,9 @@ module Crystal
         write "}}"
       else
         check :"%}"
-        if has_newline
+        if @wrote_newline
+          write_indent(old_column)
+        elsif has_newline
           write_line
           write_indent(old_column)
         else
@@ -2398,7 +2405,7 @@ module Crystal
         end
         if has_parentheses && @token.type == :")"
           if ends_with_newline
-            write_line unless found_comment
+            write_line unless found_comment || @wrote_newline
             write_indent
           end
           write ")"
@@ -2474,7 +2481,6 @@ module Crystal
         next_needs_indent = false
         unless last?(i, args)
           if @last_is_heredoc && @token.type == :NEWLINE
-            write_line
             skip_space_or_newline
             write_indent
           else
@@ -2575,7 +2581,7 @@ module Crystal
         check :")"
 
         if ends_with_newline
-          write_line
+          write_line unless @wrote_newline
           write_indent(column)
         end
         write ")"
@@ -4356,7 +4362,7 @@ module Crystal
 
     def consume_newlines
       if @token.type == :NEWLINE
-        write_line
+        write_line unless @wrote_newline
         next_token_skip_space
 
         if @token.type == :NEWLINE

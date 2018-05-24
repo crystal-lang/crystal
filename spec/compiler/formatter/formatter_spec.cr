@@ -1125,4 +1125,17 @@ describe Crystal::Formatter do
   assert_format "class X\n annotation  FooAnnotation  \n  end \n end", "class X\n  annotation FooAnnotation\n  end\nend"
 
   assert_format "macro foo\n{% verbatim do %}1 + 2{% end %}\nend"
+
+  assert_format "{% foo <<-X\nbar\nX\n%}"
+  assert_format "foo do\n  {% foo <<-X\n  bar\n  X\n  %}\nend"
+  assert_format "{{ foo <<-X\nbar\nX\n}}"
+  assert_format "foo do\n  {{ foo <<-X\n  bar\n  X\n  }}\nend"
+  assert_format "[foo <<-X\nbar\nX\n]"
+  assert_format "foo do\n  [foo <<-X\n  bar\n  X\n  ]\nend"
+  assert_format "{1 => foo <<-X\nbar\nX\n}"
+  assert_format "foo do\n  {1 => foo <<-X\n  bar\n  X\n  }\nend"
+  assert_format "bar do\n  foo <<-X\n  bar\n  X\nend"
+  assert_format "foo do\n  bar do\n    foo <<-X\n    bar\n    X\n  end\nend"
+  assert_format "call(foo <<-X\nbar\nX\n)"
+  assert_format "bar do\n  call(foo <<-X\n  bar\n  X\n  )\nend"
 end
