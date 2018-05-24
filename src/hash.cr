@@ -58,7 +58,7 @@ class Hash(K, V)
   end
 
   # See also: `Hash#fetch`.
-  def [](key)
+  def [](key : K)
     fetch(key)
   end
 
@@ -73,7 +73,7 @@ class Hash(K, V)
   # h = Hash(String, String).new("bar")
   # h["foo"]? # => nil
   # ```
-  def []?(key)
+  def []?(key : K)
     fetch(key, nil)
   end
 
@@ -84,7 +84,7 @@ class Hash(K, V)
   # h.has_key?("foo") # => true
   # h.has_key?("bar") # => false
   # ```
-  def has_key?(key)
+  def has_key?(key : K)
     !!find_entry(key)
   end
 
@@ -95,7 +95,7 @@ class Hash(K, V)
   # h.has_value?("foo") # => false
   # h.has_value?("bar") # => true
   # ```
-  def has_value?(val)
+  def has_value?(val : V)
     each_value do |value|
       return true if value == val
     end
@@ -118,7 +118,7 @@ class Hash(K, V)
   # h = Hash(String, String).new
   # h["foo"] # raises KeyError
   # ```
-  def fetch(key)
+  def fetch(key : K)
     fetch(key) do
       if (block = @block) && key.is_a?(K)
         block.call(self, key.as(K))
@@ -136,7 +136,7 @@ class Hash(K, V)
   # h.fetch("foo", "foo") # => "bar"
   # h.fetch("bar", "foo") # => "foo"
   # ```
-  def fetch(key, default)
+  def fetch(key : K, default)
     fetch(key) { default }
   end
 
@@ -147,7 +147,7 @@ class Hash(K, V)
   # h.fetch("foo") { |key| key.upcase } # => "bar"
   # h.fetch("bar") { |key| key.upcase } # => "BAR"
   # ```
-  def fetch(key)
+  def fetch(key : K)
     entry = find_entry(key)
     entry ? entry.value : yield key
   end
@@ -170,7 +170,7 @@ class Hash(K, V)
   # hash.key_for("qux")    # => "baz"
   # hash.key_for("foobar") # raises KeyError (Missing hash key for value: foobar)
   # ```
-  def key_for(value)
+  def key_for(value : V)
     key_for(value) { raise KeyError.new "Missing hash key for value: #{value}" }
   end
 
@@ -182,7 +182,7 @@ class Hash(K, V)
   # hash.key_for?("qux")    # => "baz"
   # hash.key_for?("foobar") # => nil
   # ```
-  def key_for?(value)
+  def key_for?(value : V)
     key_for(value) { nil }
   end
 
@@ -193,7 +193,7 @@ class Hash(K, V)
   # hash.key_for("bar") { |value| value.upcase } # => "foo"
   # hash.key_for("qux") { |value| value.upcase } # => "QUX"
   # ```
-  def key_for(value)
+  def key_for(value : V)
     each do |k, v|
       return k if v == value
     end
@@ -207,7 +207,7 @@ class Hash(K, V)
   # h.delete("foo")     # => "bar"
   # h.fetch("foo", nil) # => nil
   # ```
-  def delete(key)
+  def delete(key : K)
     delete(key) { nil }
   end
 
@@ -219,7 +219,7 @@ class Hash(K, V)
   # h.fetch("foo", nil)                          # => nil
   # h.delete("baz") { |key| "#{key} not found" } # => "baz not found"
   # ```
-  def delete(key)
+  def delete(key : K)
     index = bucket_index(key)
     entry = @buckets[index]
 
@@ -420,7 +420,7 @@ class Hash(K, V)
   # h.key_index("foo") # => 0
   # h.key_index("qux") # => nil
   # ```
-  def key_index(key)
+  def key_index(key : K)
     each_with_index do |(my_key, my_value), index|
       return index if key == my_key
     end
