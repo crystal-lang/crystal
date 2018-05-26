@@ -691,12 +691,12 @@ class File < IO::FileDescriptor
         fd.flock_exclusive() do
           open(path, "r") { |src| IO.copy(src, fd) } if append
           yield(fd)
-          fd.flush()
+          fd.flush
           success_flag = true
         end
       end
     ensure
-      if ( success_flag )
+      if (success_flag)
         atomic_install(atomic_path, path)
       else
         delete(atomic_path)
@@ -726,7 +726,7 @@ class File < IO::FileDescriptor
 
   # :nodoc:
   protected def self.atomic_install(atomic_path : String, dest_path : String) : Nil
-    if ( info = info?(dest_path) )
+    if (info = info?(dest_path))
       chmod(atomic_path, info.permissions)
       chown(atomic_path, info.owner, info.group)
     end
@@ -737,8 +737,8 @@ class File < IO::FileDescriptor
   protected def self.new_atomic_path(path : String, length : Int::Unsigned = 16_u8, limit : Int::Unsigned = 8_u8) : String
     atomic_path = "#{path}.atomic_#{Random::Secure.urlsafe_base64(length)}"
 
-    while ( exists?(atomic_path) )
-      raise "Failed to generate temporary path." if ( limit <= 0 )
+    while (exists?(atomic_path))
+      raise "Failed to generate temporary path." if (limit <= 0)
       atomic_path = "#{path}.atomic_#{Random::Secure.urlsafe_base64(length)}"
       limit -= 1
     end
