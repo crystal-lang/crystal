@@ -326,7 +326,7 @@ describe "YAML serialization" do
         :null  => nil,
       }
 
-      expected = "---\nhello: World\ninteger: 2\nfloat: 3.5\nhash:\n  a: 1\n  b: 2\narray:\n- 1\n- 2\n- 3\nnull: \n"
+      expected = "---\nhello: World\ninteger: 2\nfloat: 3.5\nhash:\n  a: 1\n  b: 2\narray:\n- 1\n- 2\n- 3\nnull: ~\n"
 
       data.to_yaml.should eq(expected)
     end

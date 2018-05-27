@@ -76,7 +76,7 @@ end
 
 struct Nil
   def to_yaml(yaml : YAML::Nodes::Builder)
-    yaml.scalar ""
+    yaml.scalar "~"
   end
 end
 
