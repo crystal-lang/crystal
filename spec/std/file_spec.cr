@@ -687,6 +687,31 @@ describe "File" do
     end
   end
 
+  describe "atomic_write" do
+    it "writes atomically" do
+      filename = Tempfile.tempname
+      begin
+        File.atomic_write(filename) { |fd| fd << "hello" }
+        File.read(filename).should eq("hello")
+      ensure
+        File.delete(filename)
+      end
+    end
+
+    it "appends atomically" do
+      filename = Tempfile.tempname
+      begin
+        File.atomic_write(filename) { |fd| fd << "hello" }
+        File.read(filename).should eq("hello")
+
+        File.atomic_write(filename, append: true) { |fd| fd << " world" }
+        File.read(filename).should eq("hello world")
+      ensure
+        File.delete(filename)
+      end
+    end
+  end
+
   it "does to_s" do
     file = File.new(__FILE__)
     file.to_s.should eq("#<File:0x#{file.object_id.to_s(16)}>")
