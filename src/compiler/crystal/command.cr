@@ -410,7 +410,7 @@ class Crystal::Command
           # https://developer.apple.com/library/content/qa/qa1118/_index.html
           {% if flag?(:darwin) %}
             raise "macOS doesn't support static linking.\
-            For more informations: https://developer.apple.com/library/content/qa/qa1118/_index.html"
+            For more information: https://developer.apple.com/library/content/qa/qa1118/_index.html"
           {% else %}
             compiler.static = true
           {% end %}
