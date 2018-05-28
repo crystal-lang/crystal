@@ -452,6 +452,12 @@ module Crystal
       end
     end
 
+    # StaticArray can only be "returned" in lib externs,
+    # not in C functions, and there it must not be a pointer.
+    def llvm_c_return_type(type : StaticArrayInstanceType)
+      llvm_struct_type(type)
+    end
+
     def llvm_c_return_type(type : NilType)
       @llvm_context.void
     end
@@ -564,7 +570,7 @@ module Crystal
     end
 
     def size_t
-      if @program.has_flag?("x86_64") || @program.has_flag?("aarch64")
+      if @program.bits64?
         @llvm_context.int64
       else
         @llvm_context.int32

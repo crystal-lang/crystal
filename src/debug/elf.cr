@@ -104,12 +104,12 @@ module Debug
 
         def short
           String.build do |str|
-            str << "W" if write?
-            str << "A" if alloc?
-            str << "X" if execinstr?
-            str << "M" if merge?
-            str << "S" if strings?
-            str << "T" if tls?
+            str << 'W' if write?
+            str << 'A' if alloc?
+            str << 'X' if execinstr?
+            str << 'M' if merge?
+            str << 'S' if strings?
+            str << 'T' if tls?
           end
         end
       end

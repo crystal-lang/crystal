@@ -32,10 +32,16 @@ module ENV
   # Overwrites existing environment variable if already present.
   # Returns *value* if successful, otherwise raises an exception.
   # If *value* is `nil`, the environment variable is deleted.
+  #
+  # If *key* or *value* contains a null-byte an `ArgumentError` is raised.
   def self.[]=(key : String, value : String?)
+    raise ArgumentError.new("Key contains null byte") if key.byte_index(0)
+
     if value
+      raise ArgumentError.new("Value contains null byte") if value.byte_index(0)
+
       if LibC.setenv(key, value, 1) != 0
-        raise Errno.new("Error setting environment variable \"#{key}\"")
+        raise Errno.new("Error setting environment variable #{key.inspect}")
       end
     else
       LibC.unsetenv(key)
@@ -65,7 +71,7 @@ module ENV
 
   # Retrieves a value corresponding to a given *key*. Return the value of the block if
   # the *key* does not exist.
-  def self.fetch(key : String, &block : String -> String? | NoReturn)
+  def self.fetch(key : String, &block : String -> String?)
     value = LibC.getenv key
     return String.new(value) if value
     yield(key)
@@ -126,7 +132,7 @@ module ENV
 
   # Writes the contents of the environment to *io*.
   def self.inspect(io)
-    io << "{"
+    io << '{'
     found_one = false
     each do |key, value|
       io << ", " if found_one
@@ -135,7 +141,7 @@ module ENV
       value.inspect(io)
       found_one = true
     end
-    io << "}"
+    io << '}'
   end
 
   def self.pretty_print(pp)

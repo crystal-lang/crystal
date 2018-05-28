@@ -731,4 +731,41 @@ describe "Semantic: initialize" do
       ),
       "no argument named 'x'"
   end
+
+  it "doesn't type ivar as nilable if super call present and parent has already typed ivar (#4764)" do
+    assert_type(%(
+      class Foo
+        def initialize(@a = 1)
+        end
+      end
+
+      class Bar < Foo
+        def initialize
+          super
+        end
+        def initialize(@a)
+        end
+      end
+
+      Bar.new
+    )) { types["Bar"] }
+  end
+
+  it "doesn't type ivar having initializer as nilable even if it is used before assigned inside initialize (#5112)" do
+    assert_type(%(
+      class Foo
+        @x = 42
+
+        def initialize
+          @x = x
+        end
+
+        def x
+          @x
+        end
+      end
+
+      Foo.new.x
+      )) { int32 }
+  end
 end

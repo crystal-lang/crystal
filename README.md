@@ -1,6 +1,8 @@
 # Crystal
 
-[![Build Status](https://travis-ci.org/crystal-lang/crystal.svg)](https://travis-ci.org/crystal-lang/crystal)
+[![Travis CI Build Status](https://travis-ci.org/crystal-lang/crystal.svg)](https://travis-ci.org/crystal-lang/crystal)
+[![CircleCI Build Status](https://circleci.com/gh/crystal-lang/crystal/tree/master.svg?style=shield)](https://circleci.com/gh/crystal-lang/crystal)
+[![Join the chat at https://gitter.im/crystal-lang/crystal](https://badges.gitter.im/crystal-lang/crystal.svg)](https://gitter.im/crystal-lang/crystal)
 [![Bountysource](https://api.bountysource.com/badge/team?team_id=89730&style=raised)](https://www.bountysource.com/teams/crystal-lang/fundraisers/702-crystal-language)
 [![Code Triagers Badge](https://www.codetriage.com/crystal-lang/crystal/badges/users.svg)](https://www.codetriage.com/crystal-lang/crystal)
 
@@ -31,11 +33,10 @@ We want full OOP.
 
 Oh, and we don't want to write C code to make the code run faster.
 
-Status
+Project Status
 ------
 
-* The project is in alpha stage: we are still tweaking the language and standard library.
-* The compiler is written in Crystal.
+Crystal is still under heavy development. There can be breaking changes but we're trying to keep them as minimum as possible.
 
 Installing
 ----------

@@ -172,8 +172,8 @@ class Crystal::Doc::Method
 
   def arg_to_html(arg : Arg, io, links = true)
     if arg.external_name != arg.name
-      io << (arg.external_name.empty? ? "_" : arg.external_name)
-      io << " "
+      io << (arg.external_name.empty? ? '_' : arg.external_name)
+      io << ' '
     end
 
     io << arg.name
@@ -201,5 +201,21 @@ class Crystal::Doc::Method
 
   def has_args?
     !@def.args.empty? || @def.block_arg || @def.yields
+  end
+
+  def to_json(builder : JSON::Builder)
+    builder.object do
+      builder.field "id", id
+      builder.field "html_id", html_id
+      builder.field "name", name
+      builder.field "doc", doc
+      builder.field "summary", formatted_summary
+      builder.field "abstract", abstract?
+      builder.field "args", args
+      builder.field "args_string", args_to_s
+      builder.field "source_link", source_link
+      builder.field "source_link", source_link
+      builder.field "def", self.def
+    end
   end
 end

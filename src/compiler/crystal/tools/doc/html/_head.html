@@ -1,0 +1,18 @@
+<meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="generator" content="Crystal Docs <%= Crystal::VERSION %>">
+
+<%- if base_url = canonical_base_url -%>
+  <%- if path = type.try(&.path) -%>
+    <%- base_url = File.join(base_url, path) -%>
+  <%- end -%>
+  <link rel="canonical" href="<%= base_url %>">
+<% end -%>
+<%- base_path = type.try(&.path_to("")) -%>
+
+<link href="<%= base_path %>css/style.css" rel="stylesheet" type="text/css">
+
+<script type="text/javascript" src="<%= base_path %>js/doc.js"></script>
+<script type="text/javascript">
+  CrystalDoc.base_path = "<%= base_path %>";
+</script>

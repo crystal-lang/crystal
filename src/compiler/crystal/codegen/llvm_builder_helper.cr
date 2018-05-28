@@ -20,6 +20,10 @@ module Crystal
       llvm_context.int64.const_int(n)
     end
 
+    def int128(n)
+      llvm_context.int128.const_int(n)
+    end
+
     def int(n)
       int32(n)
     end

@@ -1,4 +1,4 @@
-require "secure_random"
+require "random/secure"
 require "openssl/hmac"
 require "base64"
 require "./access_token"
@@ -22,7 +22,7 @@ class OAuth2::AccessToken::Mac < OAuth2::AccessToken
 
   def authenticate(request : HTTP::Request, tls)
     ts = Time.now.epoch
-    nonce = "#{ts - @issued_at}:#{SecureRandom.hex}"
+    nonce = "#{ts - @issued_at}:#{Random::Secure.hex}"
     method = request.method
     uri = request.resource
     host, port = host_and_port request, tls

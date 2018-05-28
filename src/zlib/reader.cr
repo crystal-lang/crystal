@@ -3,9 +3,7 @@
 # Instances of this class wrap another IO object. When you read from this instance
 # instance, it reads data from the underlying IO, decompresses it, and returns
 # it to the caller.
-class Zlib::Reader
-  include IO
-
+class Zlib::Reader < IO
   # Whether to close the enclosed `IO` when closing this reader.
   property? sync_close = false
 

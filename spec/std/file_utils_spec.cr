@@ -1,9 +1,7 @@
 require "spec"
 require "file_utils"
 
-private class OneByOneIO
-  include IO
-
+private class OneByOneIO < IO
   @bytes : Bytes
 
   def initialize(string)
@@ -35,7 +33,7 @@ describe "FileUtils" do
     end
 
     it "raises" do
-      expect_raises do
+      expect_raises(Errno, "No such file or directory") do
         FileUtils.cd("/nope")
       end
     end
@@ -134,6 +132,23 @@ describe "FileUtils" do
         File.exists?(out_path).should be_true
         FileUtils.cmp(src_path, out_path).should be_true
       ensure
+        File.delete(out_path) if File.exists?(out_path)
+      end
+    end
+
+    it "copies permissions" do
+      src_path = File.join(__DIR__, "data/new_test_file.txt")
+      out_path = File.join(__DIR__, "data/test_file_cp.txt")
+      begin
+        File.write(src_path, "foo")
+        File.chmod(src_path, 0o700)
+
+        FileUtils.cp(src_path, out_path)
+
+        File.info(out_path).permissions.should eq(File::Permissions.new(0o700))
+        FileUtils.cmp(src_path, out_path).should be_true
+      ensure
+        File.delete(src_path) if File.exists?(out_path)
         File.delete(out_path) if File.exists?(out_path)
       end
     end
@@ -369,34 +384,47 @@ describe "FileUtils" do
   end
 
   it "tests mkdir with multiples existing paths" do
-    expect_raises Errno do
-      FileUtils.mkdir([__DIR__, __DIR__], 0o700)
-    end
-    expect_raises Errno do
-      FileUtils.mkdir(["/tmp/crystal_mkdir_test_#{Process.pid}/", __DIR__], 0o700)
+    path = "/tmp/crystal_mkdir_test_#{Process.pid}/"
+    begin
+      expect_raises Errno do
+        FileUtils.mkdir([__DIR__, __DIR__], 0o700)
+      end
+      expect_raises Errno do
+        FileUtils.mkdir([path, __DIR__], 0o700)
+      end
+    ensure
+      FileUtils.rmdir(path)
     end
   end
 
   it "tests mkdir_p with a new path" do
-    path = "/tmp/crystal_mkdir_ptest_#{Process.pid}/"
-    FileUtils.mkdir_p(path).should be_nil
-    Dir.exists?(path).should be_true
-    path = File.join({path, "a", "b", "c"})
-    FileUtils.mkdir_p(path).should be_nil
-    Dir.exists?(path).should be_true
+    path1 = "/tmp/crystal_mkdir_ptest_#{Process.pid}/"
+    begin
+      FileUtils.mkdir_p(path1).should be_nil
+      Dir.exists?(path1).should be_true
+      path2 = File.join({path1, "a", "b", "c"})
+      FileUtils.mkdir_p(path2).should be_nil
+      Dir.exists?(path2).should be_true
+    ensure
+      FileUtils.rm_rf(path1)
+    end
   end
 
   it "tests mkdir_p with multiples new path" do
     path1 = "/tmp/crystal_mkdir_ptest_#{Process.pid}/"
     path2 = "/tmp/crystal_mkdir_ptest_#{Process.pid + 1}"
-    FileUtils.mkdir_p([path1, path2]).should be_nil
-    Dir.exists?(path1).should be_true
-    Dir.exists?(path2).should be_true
-    path1 = File.join({path1, "a", "b", "c"})
-    path2 = File.join({path2, "a", "b", "c"})
-    FileUtils.mkdir_p([path1, path2]).should be_nil
-    Dir.exists?(path1).should be_true
-    Dir.exists?(path2).should be_true
+    begin
+      FileUtils.mkdir_p([path1, path2]).should be_nil
+      Dir.exists?(path1).should be_true
+      Dir.exists?(path2).should be_true
+      path3 = File.join({path1, "a", "b", "c"})
+      path4 = File.join({path2, "a", "b", "c"})
+      FileUtils.mkdir_p([path3, path4]).should be_nil
+      Dir.exists?(path3).should be_true
+      Dir.exists?(path4).should be_true
+    ensure
+      FileUtils.rm_rf([path1, path2])
+    end
   end
 
   it "tests mkdir_p with an existing path" do
@@ -467,6 +495,247 @@ describe "FileUtils" do
       File.write(path1, "")
       File.write(path2, "")
       FileUtils.rm([path1, path2, path2])
+    end
+  end
+
+  describe "ln" do
+    it "creates a hardlink" do
+      path1 = "/tmp/crystal_ln_test_#{Process.pid}"
+      path2 = "/tmp/crystal_ln_test_#{Process.pid + 1}"
+
+      begin
+        FileUtils.touch(path1)
+        FileUtils.ln(path1, path2)
+        File.exists?(path2).should be_true
+        File.symlink?(path2).should be_false
+      ensure
+        FileUtils.rm_rf([path1, path2])
+      end
+    end
+
+    it "creates a hardlink inside a destination dir" do
+      path1 = "/tmp/crystal_ln_test_#{Process.pid}"
+      path2 = "/tmp/crystal_ln_test_#{Process.pid + 1}/"
+      path3 = File.join(path2, File.basename(path1))
+
+      begin
+        FileUtils.touch(path1)
+        FileUtils.mkdir(path2)
+        FileUtils.ln(path1, path2)
+        File.exists?(path3).should be_true
+        File.symlink?(path3).should be_false
+      ensure
+        FileUtils.rm_rf([path1, path2])
+      end
+    end
+
+    it "creates multiple hardlinks inside a destination dir" do
+      paths = Array.new(3) { |i| "/tmp/crystal_ln_test_#{Process.pid + i}" }
+      dir_path = "/tmp/crystal_ln_test_#{Process.pid + 3}/"
+
+      begin
+        paths.each { |path| FileUtils.touch(path) }
+        FileUtils.mkdir(dir_path)
+        FileUtils.ln(paths, dir_path)
+
+        paths.each do |path|
+          link_path = File.join(dir_path, File.basename(path))
+          File.exists?(link_path).should be_true
+          File.symlink?(link_path).should be_false
+        end
+      ensure
+        FileUtils.rm_rf(paths)
+        FileUtils.rm_rf(dir_path)
+      end
+    end
+
+    it "fails with a nonexistent source" do
+      path1 = "/tmp/crystal_ln_test_#{Process.pid}"
+      path2 = "/tmp/crystal_ln_test_#{Process.pid + 1}"
+
+      ex = expect_raises Errno do
+        FileUtils.ln(path1, path2)
+      end
+
+      ex.errno.should eq(Errno::ENOENT)
+    end
+
+    it "fails with an extant destination" do
+      path1 = "/tmp/crystal_ln_test_#{Process.pid}"
+      path2 = "/tmp/crystal_ln_test_#{Process.pid + 1}"
+
+      begin
+        FileUtils.touch([path1, path2])
+
+        ex = expect_raises Errno do
+          FileUtils.ln(path1, path2)
+        end
+
+        ex.errno.should eq(Errno::EEXIST)
+      ensure
+        FileUtils.rm_rf([path1, path2])
+      end
+    end
+  end
+
+  describe "ln_s" do
+    it "creates a symlink" do
+      path1 = "/tmp/crystal_ln_s_test_#{Process.pid}"
+      path2 = "/tmp/crystal_ln_s_test_#{Process.pid + 1}"
+
+      begin
+        FileUtils.touch(path1)
+        FileUtils.ln_s(path1, path2)
+        File.exists?(path2).should be_true
+        File.symlink?(path2).should be_true
+      ensure
+        FileUtils.rm_rf([path1, path2])
+      end
+    end
+
+    it "creates a symlink inside a destination dir" do
+      path1 = "/tmp/crystal_ln_s_test_#{Process.pid}"
+      path2 = "/tmp/crystal_ln_s_test_#{Process.pid + 1}/"
+      path3 = File.join(path2, File.basename(path1))
+
+      begin
+        FileUtils.touch(path1)
+        FileUtils.mkdir(path2)
+        FileUtils.ln_s(path1, path2)
+        File.exists?(path3).should be_true
+        File.symlink?(path3).should be_true
+      ensure
+        FileUtils.rm_rf([path1, path2])
+      end
+    end
+
+    it "creates multiple symlinks inside a destination dir" do
+      paths = Array.new(3) { |i| "/tmp/crystal_ln_s_test_#{Process.pid + i}" }
+      dir_path = "/tmp/crystal_ln_s_test_#{Process.pid + 3}/"
+
+      begin
+        paths.each { |path| FileUtils.touch(path) }
+        FileUtils.mkdir(dir_path)
+        FileUtils.ln_s(paths, dir_path)
+
+        paths.each do |path|
+          link_path = File.join(dir_path, File.basename(path))
+          File.exists?(link_path).should be_true
+          File.symlink?(link_path).should be_true
+        end
+      ensure
+        FileUtils.rm_rf(paths)
+        FileUtils.rm_rf(dir_path)
+      end
+    end
+
+    it "works with a nonexistent source" do
+      path1 = "/tmp/crystal_ln_s_test_#{Process.pid}"
+      path2 = "/tmp/crystal_ln_s_test_#{Process.pid + 1}"
+
+      begin
+        FileUtils.ln_s(path1, path2)
+        File.exists?(path2).should be_false
+        File.symlink?(path2).should be_true
+
+        ex = expect_raises Errno do
+          File.real_path(path2)
+        end
+
+        ex.errno.should eq(Errno::ENOENT)
+      ensure
+        FileUtils.rm_rf(path2)
+      end
+    end
+
+    it "fails with an extant destination" do
+      path1 = "/tmp/crystal_ln_s_test_#{Process.pid}"
+      path2 = "/tmp/crystal_ln_s_test_#{Process.pid + 1}"
+
+      begin
+        FileUtils.touch([path1, path2])
+
+        ex = expect_raises Errno do
+          FileUtils.ln_s(path1, path2)
+        end
+
+        ex.errno.should eq(Errno::EEXIST)
+      ensure
+        FileUtils.rm_rf([path1, path2])
+      end
+    end
+  end
+
+  describe "ln_sf" do
+    it "overwrites a destination file" do
+      path1 = "/tmp/crystal_ln_sf_test_#{Process.pid}"
+      path2 = "/tmp/crystal_ln_sf_test_#{Process.pid + 1}"
+
+      begin
+        FileUtils.touch([path1, path2])
+        File.symlink?(path1).should be_false
+        File.symlink?(path2).should be_false
+
+        FileUtils.ln_sf(path1, path2)
+        File.symlink?(path1).should be_false
+        File.symlink?(path2).should be_true
+      ensure
+        FileUtils.rm_rf([path1, path2])
+      end
+    end
+
+    it "overwrites a destination file inside a dir" do
+      dir = "/tmp/crystal_ln_sf_test_#{Process.pid}/"
+      path1 = File.join(dir, "crystal_ln_sf_test_#{Process.pid + 1}")
+      path2 = "/tmp/crystal_ln_sf_test_#{Process.pid + 1}"
+
+      begin
+        FileUtils.mkdir(dir)
+        FileUtils.touch([path1, path2])
+        File.symlink?(path1).should be_false
+        File.symlink?(path2).should be_false
+
+        FileUtils.ln_sf(path2, dir)
+        File.symlink?(path1).should be_true
+        File.symlink?(path2).should be_false
+      ensure
+        FileUtils.rm_rf([dir, path2])
+      end
+    end
+
+    it "creates multiple symlinks in a destination dir, with overwrites" do
+      dir = "/tmp/crystal_ln_sf_test_#{Process.pid + 3}"
+      paths1 = Array.new(3) { |i| "crystal_ln_sf_test_#{Process.pid + i}" }
+      paths2 = paths1.map { |p| File.join("/tmp/", p) }
+      paths3 = paths1.map { |p| File.join(dir, p) }
+
+      begin
+        FileUtils.mkdir(dir)
+        FileUtils.touch(paths2 + paths3)
+        (paths2 + paths3).each { |p| File.symlink?(p).should be_false }
+
+        FileUtils.ln_sf(paths2, dir)
+        paths2.each { |p| File.symlink?(p).should be_false }
+        paths3.each { |p| File.symlink?(p).should be_true }
+      ensure
+        FileUtils.rm_rf(paths2)
+        FileUtils.rm_rf(dir)
+      end
+    end
+
+    it "creates a symlink even if there's nothing to overwrite" do
+      path1 = "/tmp/crystal_ln_sf_test_#{Process.pid}"
+      path2 = "/tmp/crystal_ln_sf_test_#{Process.pid + 1}"
+
+      begin
+        FileUtils.touch(path1)
+        File.exists?(path2).should be_false
+
+        FileUtils.ln_sf(path1, path2)
+        File.symlink?(path2).should be_true
+      ensure
+        FileUtils.rm_rf([path1, path2])
+      end
     end
   end
 end

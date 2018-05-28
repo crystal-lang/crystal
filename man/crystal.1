@@ -56,11 +56,11 @@ The optimizations are not turned on by default because the compile times are muc
 .Bl -tag -width "12345678" -compact
 .Pp
 .Sh OPTIONS
-The crystal command accepts the following options 
+The crystal command accepts the following options
 
 .Bl -tag -width "12345678" -compact
 .Pp
-.It 
+.It
 .Cm init
 TYPE
 NAME
@@ -137,20 +137,15 @@ Maximum number of threads to use for code generation. The default is 8 threads.
 Enable target triple; intended to use for cross-compilation. See llvm documentation for more information about target triple.
 .It Fl -verbose
 Display the commands executed by the system.
+.It Fl -stdin-filename Ar FILENAME
+Source file name to be read from STDIN.
 .El
 
 .Pp
 .It
-.Cm deps
-.Op options
-.Ar <command>
-.Pp
-Alias for shards, the dependency manager for Crystal language.
-.Pp
-.It
 .Cm docs
 .Pp
-Generate documentation from comments using a subset of markdown. The output is saved in html format on the created doc/ folder. More information about documentation conventions can be found at https://crystal-lang.org/docs/conventions/documenting_code.html.
+Generate documentation from comments using a subset of markdown. The output is saved in html format on the created docs/ folder. More information about documentation conventions can be found at https://crystal-lang.org/docs/conventions/documenting_code.html.
 .Pp
 .It Cm eval
 .Pp

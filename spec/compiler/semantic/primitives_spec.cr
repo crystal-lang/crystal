@@ -13,6 +13,14 @@ describe "Semantic: primitives" do
     assert_type("1_i64") { int64 }
   end
 
+  it "types a int128" do
+    assert_type("1_i128") { int128 }
+  end
+
+  it "types a uint128" do
+    assert_type("1_u128") { uint128 }
+  end
+
   it "types a float32" do
     assert_type("2.3_f32") { float32 }
   end
@@ -57,8 +65,16 @@ describe "Semantic: primitives" do
     assert_type("sizeof(Float64)") { int32 }
   end
 
+  it "types sizeof NoReturn (missing type) (#5717)" do
+    assert_type("x = nil; x ? sizeof(typeof(x)) : 1") { int32 }
+  end
+
   it "types instance_sizeof" do
     assert_type("instance_sizeof(Reference)") { int32 }
+  end
+
+  it "types instance_sizeof NoReturn (missing type) (#5717)" do
+    assert_type("x = nil; x ? instance_sizeof(typeof(x)) : 1") { int32 }
   end
 
   it "errors when comparing void (#225)" do
@@ -198,7 +214,7 @@ describe "Semantic: primitives" do
         end
       end
       ),
-      "expected Primitive attribute to have one argument"
+      "expected Primitive annotation to have one argument"
   end
 
   it "errors if @[Primitive] has non-symbol arg" do

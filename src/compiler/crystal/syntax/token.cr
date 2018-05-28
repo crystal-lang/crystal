@@ -18,15 +18,17 @@ module Crystal
     record MacroState,
       whitespace : Bool,
       nest : Int32,
+      control_nest : Int32,
       delimiter_state : DelimiterState?,
       beginning_of_line : Bool,
       yields : Bool,
       comment : Bool do
       def self.default
-        MacroState.new(true, 0, nil, true, false, false)
+        MacroState.new(true, 0, 0, nil, true, false, false)
       end
 
       setter whitespace
+      setter control_nest
     end
 
     record DelimiterState,
@@ -91,6 +93,10 @@ module Crystal
 
     def token?(token)
       @type == :TOKEN && @value == token
+    end
+
+    def keyword?
+      @type == :IDENT && @value.is_a?(Symbol)
     end
 
     def keyword?(keyword)

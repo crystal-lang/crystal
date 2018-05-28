@@ -285,15 +285,6 @@ describe "Semantic: lib" do
       )) { float64 }
   end
 
-  it "errors if applying wrong attribute" do
-    assert_error %(
-      @[Bar]
-      lib LibFoo
-      end
-      ),
-      "illegal attribute for lib, valid attributes are: Link"
-  end
-
   it "errors if missing link arguments" do
     assert_error %(
       @[Link]
@@ -438,7 +429,7 @@ describe "Semantic: lib" do
       LibSDL.init(0_u32)
       ))
     sdl = result.program.types["LibSDL"].as(LibType)
-    attrs = sdl.link_attributes.not_nil!
+    attrs = sdl.link_annotations.not_nil!
     attrs.size.should eq(2)
     attrs[0].lib.should eq("SDL")
     attrs[1].lib.should eq("SDLMain")
@@ -499,7 +490,7 @@ describe "Semantic: lib" do
       LibSDL.init(0_u32)
       ))
     sdl = result.program.types["LibSDL"].as(LibType)
-    attrs = sdl.link_attributes.not_nil!
+    attrs = sdl.link_annotations.not_nil!
     attrs.size.should eq(2)
     attrs[0].lib.should eq("SDL")
     attrs[1].lib.should eq("SDLMain")
@@ -519,7 +510,7 @@ describe "Semantic: lib" do
       LibSDL.init(0_u32)
       ))
     sdl = result.program.types["LibSDL"].as(LibType)
-    attrs = sdl.link_attributes.not_nil!
+    attrs = sdl.link_annotations.not_nil!
     attrs.size.should eq(1)
     attrs[0].lib.should eq("SDL")
   end
@@ -536,7 +527,7 @@ describe "Semantic: lib" do
       LibSDL.init
       ))
     sdl = result.program.types["LibSDL"].as(LibType)
-    attrs = sdl.link_attributes.not_nil!
+    attrs = sdl.link_annotations.not_nil!
     attrs.size.should eq(1)
     attrs[0].lib.should eq("SDL")
   end
@@ -905,7 +896,7 @@ describe "Semantic: lib" do
         fun foo : Int32
       end
       ),
-      "wrong number of arguments for attribute CallConvention (given 2, expected 1)"
+      "wrong number of arguments for annotation CallConvention (given 2, expected 1)"
   end
 
   it "errors if CallConvention argument is not a string" do

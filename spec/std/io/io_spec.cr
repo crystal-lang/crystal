@@ -1,13 +1,11 @@
 require "spec"
-require "big_int"
+require "big"
 require "base64"
 
 # This is a non-optimized version of IO::Memory so we can test
 # raw IO. Optimizations for specific IOs are tested separately
 # (for example in buffered_io_spec)
-private class SimpleIOMemory
-  include IO
-
+private class SimpleIOMemory < IO
   getter buffer : UInt8*
   getter bytesize : Int32
   @capacity : Int32
@@ -245,9 +243,9 @@ describe IO do
 
     it "gets with single byte string as delimiter" do
       io = SimpleIOMemory.new("hello\nworld\nbye")
-      io.gets("\n").should eq("hello\n")
-      io.gets("\n").should eq("world\n")
-      io.gets("\n").should eq("bye")
+      io.gets('\n').should eq("hello\n")
+      io.gets('\n').should eq("world\n")
+      io.gets('\n').should eq("bye")
     end
 
     it "does gets with limit" do

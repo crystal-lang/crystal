@@ -1,4 +1,4 @@
-module IO
+class IO
   # Has the `name` and the `invalid` option.
   struct EncodingOptions
     getter name : String
@@ -14,6 +14,8 @@ module IO
       end
     end
   end
+
+  {% skip_file if flag?(:win32) %}
 
   private class Encoder
     def initialize(@encoding_options : EncodingOptions)

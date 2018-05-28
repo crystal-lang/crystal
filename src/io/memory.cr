@@ -2,9 +2,7 @@
 #
 # The internal buffer can be resizeable and/or writeable depending
 # on how an `IO::Memory` is constructed.
-class IO::Memory
-  include IO
-
+class IO::Memory < IO
   # Returns the internal buffer as a `Pointer(UInt8)`.
   getter buffer : Pointer(UInt8)
 
@@ -101,7 +99,7 @@ class IO::Memory
     slice.copy_to(@buffer + @pos, count)
 
     if @pos > @bytesize
-      Intrinsics.memset((@buffer + @bytesize).as(Void*), 0_u8, (@pos - @bytesize).to_u32, 0_u32, false)
+      (@buffer + @bytesize).clear(@pos - @bytesize)
     end
 
     @pos += count
@@ -125,7 +123,7 @@ class IO::Memory
     (@buffer + @pos).value = byte
 
     if @pos > @bytesize
-      Intrinsics.memset((@buffer + @bytesize).as(Void*), 0_u8, (@pos - @bytesize).to_u32, 0_u32, false)
+      (@buffer + @bytesize).clear(@pos - @bytesize)
     end
 
     @pos += 1
@@ -288,11 +286,6 @@ class IO::Memory
     @bytesize
   end
 
-  # Same as `pos`.
-  def tell
-    @pos
-  end
-
   # Seeks to a given *offset* (in bytes) according to the *whence* argument.
   #
   # ```
@@ -327,7 +320,7 @@ class IO::Memory
   # io.pos     # => 2
   # ```
   def pos
-    tell
+    @pos
   end
 
   # Sets the current position (in bytes) of this `IO`.

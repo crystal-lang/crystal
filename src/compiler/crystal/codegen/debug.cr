@@ -39,7 +39,13 @@ module Crystal
     end
 
     def debug_type_cache
-      @debug_types ||= {} of Type => LibLLVMExt::Metadata?
+      # We must cache debug types per module so metadata of a type
+      # from one module isn't incorrectly used in another module.
+      debug_types_per_module =
+        @debug_types_per_module ||=
+          {} of LLVM::Module => Hash(Type, LibLLVMExt::Metadata?)
+
+      debug_types_per_module[@llvm_mod] ||= {} of Type => LibLLVMExt::Metadata?
     end
 
     def get_debug_type(type)

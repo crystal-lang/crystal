@@ -1,8 +1,6 @@
 require "spec"
 
-private class PartialReaderIO
-  include IO
-
+private class PartialReaderIO < IO
   @slice : Bytes
 
   def initialize(data : String)

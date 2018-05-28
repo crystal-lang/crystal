@@ -1,12 +1,10 @@
-# The `IO::Buffered` mixin enhances the `IO` module with input/output buffering.
+# The `IO::Buffered` mixin enhances an `IO` with input/output buffering.
 #
 # The buffering behaviour can be turned on/off with the `#sync=` method.
 #
 # Additionally, several methods, like `#gets`, are implemented in a more
 # efficient way.
 module IO::Buffered
-  include IO
-
   BUFFER_SIZE = 8192
 
   @in_buffer_rem = Bytes.empty
@@ -35,9 +33,16 @@ module IO::Buffered
   def read_byte : UInt8?
     check_open
 
-    fill_buffer if @in_buffer_rem.empty?
+    fill_buffer if !sync? && @in_buffer_rem.empty?
     if @in_buffer_rem.empty?
-      nil
+      return nil unless sync?
+
+      byte = uninitialized UInt8
+      if read(Slice.new(pointerof(byte), 1)) == 1
+        byte
+      else
+        nil
+      end
     else
       b = @in_buffer_rem[0]
       @in_buffer_rem += 1
@@ -56,7 +61,7 @@ module IO::Buffered
       # If we are asked to read more than half the buffer's size,
       # read directly into the slice, as it's not worth the extra
       # memory copy.
-      if count >= BUFFER_SIZE / 2
+      if sync? || count >= BUFFER_SIZE / 2
         return unbuffered_read(slice[0, count]).to_i
       else
         fill_buffer

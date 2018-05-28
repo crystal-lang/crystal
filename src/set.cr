@@ -276,6 +276,29 @@ struct Set(T)
     same?(other) || @hash == other.@hash
   end
 
+  # Same as `#includes?`.
+  #
+  # It is for convenience with using on `case` statement.
+  #
+  # ```
+  # red_like = Set{"red", "pink", "violet"}
+  # blue_like = Set{"blue", "azure", "violet"}
+  #
+  # case "violet"
+  # when red_like & blue_like
+  #   puts "red & blue like color!"
+  # when red_like
+  #   puts "red like color!"
+  # when blue_like
+  #   puts "blue like color!"
+  # end
+  # ```
+  #
+  # See also: `Object#===`.
+  def ===(object : T)
+    includes? object
+  end
+
   # Returns a new `Set` with all of the same elements.
   def dup
     Set.new(self)
@@ -308,9 +331,8 @@ struct Set(T)
     pp.list("Set{", self, "}")
   end
 
-  def hash
-    @hash.hash
-  end
+  # See `Object#hash(hasher)`
+  def_hash @hash
 
   # Returns `true` if the set and the given set have at least one element in
   # common.
@@ -331,7 +353,7 @@ struct Set(T)
   def to_s(io)
     io << "Set{"
     join ", ", io, &.inspect(io)
-    io << "}"
+    io << '}'
   end
 
   # Returns `true` if the set is a subset of the *other* set.

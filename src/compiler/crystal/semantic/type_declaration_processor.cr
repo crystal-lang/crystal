@@ -13,7 +13,8 @@ struct Crystal::TypeDeclarationProcessor
   record TypeDeclarationWithLocation,
     type : Type,
     location : Location,
-    uninitialized : Bool
+    uninitialized : Bool,
+    annotations : Array({AnnotationType, Annotation})?
 
   # This captures an initialize info: it's related Def,
   # and which instance variables are assigned. Useful
@@ -55,10 +56,16 @@ struct Crystal::TypeDeclarationProcessor
   class InstanceVarTypeInfo
     property type : Type
     property outside_def
+    property annotations : Array({AnnotationType, Annotation})?
     getter location
 
     def initialize(@location : Location, @type : Type)
       @outside_def = false
+    end
+
+    def add_annotations(anns : Array({AnnotationType, Annotation})?)
+      annotations = @annotations ||= [] of {AnnotationType, Annotation}
+      annotations.concat(anns)
     end
   end
 
@@ -108,7 +115,7 @@ struct Crystal::TypeDeclarationProcessor
     # removed if an explicit type is found (in remove_error).
     @errors = {} of Type => Hash(String, Error)
 
-    # Types that have a single macro def initialize
+    # Types whose initialize methods are all macro defs
     @has_macro_def = Set(Type).new
 
     @type_decl_visitor = TypeDeclarationVisitor.new(@program, @explicit_instance_vars)
@@ -135,7 +142,8 @@ struct Crystal::TypeDeclarationProcessor
     # Process class variables
     type_guess_visitor.class_vars.each do |owner, vars|
       vars.each do |name, info|
-        declare_meta_type_var(owner.class_vars, owner, name, info)
+        # No need to freeze its type because it is frozen by check_class_var_errors
+        declare_meta_type_var(owner.class_vars, owner, name, info, freeze_type: false)
       end
     end
 
@@ -155,7 +163,7 @@ struct Crystal::TypeDeclarationProcessor
     {node, self}
   end
 
-  private def declare_meta_type_var(vars, owner, name, type : Type, location : Location? = nil, instance_var = false)
+  private def declare_meta_type_var(vars, owner, name, type : Type, location : Location? = nil, instance_var = false, freeze_type = true, annotations = nil)
     if instance_var && location && !owner.allows_instance_vars?
       raise_cant_declare_instance_var(owner, location)
     end
@@ -174,24 +182,30 @@ struct Crystal::TypeDeclarationProcessor
     var.owner = owner
     var.type = type
     var.bind_to(var)
-    var.freeze_type = type
+    var.freeze_type = type if freeze_type
     var.location = location
+
+    annotations.try &.each do |annotation_type, ann|
+      var.add_annotation(annotation_type, ann)
+    end
+
     vars[name] = var
+
     var
   end
 
-  private def declare_meta_type_var(vars, owner, name, info : TypeGuessVisitor::TypeInfo)
+  private def declare_meta_type_var(vars, owner, name, info : TypeGuessVisitor::TypeInfo, freeze_type = true)
     type = info.type
     type = Type.merge!(type, @program.nil) unless info.outside_def
-    declare_meta_type_var(vars, owner, name, type)
+    declare_meta_type_var(vars, owner, name, type, freeze_type: freeze_type)
   end
 
-  private def declare_meta_type_var(vars, owner, name, info : TypeDeclarationWithLocation, instance_var = false, check_nilable = true)
+  private def declare_meta_type_var(vars, owner, name, info : TypeDeclarationWithLocation, instance_var = false, check_nilable = true, freeze_type = true)
     if instance_var && !owner.allows_instance_vars?
       raise_cant_declare_instance_var(owner, info.location)
     end
 
-    var = declare_meta_type_var(vars, owner, name, info.type.as(Type), info.location)
+    var = declare_meta_type_var(vars, owner, name, info.type.as(Type), info.location, freeze_type: freeze_type, annotations: info.annotations)
     var.location = info.location
 
     # Check if var is uninitialized
@@ -259,7 +273,7 @@ struct Crystal::TypeDeclarationProcessor
       if owner.is_a?(GenericType)
         owner.generic_types.each_value do |generic_type|
           new_type = type_decl.type.replace_type_parameters(generic_type)
-          new_type_decl = TypeDeclarationWithLocation.new(new_type, type_decl.location, type_decl.uninitialized)
+          new_type_decl = TypeDeclarationWithLocation.new(new_type, type_decl.location, type_decl.uninitialized, type_decl.annotations)
           declare_meta_type_var(generic_type.instance_vars, generic_type, name, new_type_decl, instance_var: true, check_nilable: false)
         end
       end
@@ -345,7 +359,7 @@ struct Crystal::TypeDeclarationProcessor
         raise_nil_instance_var owner, name, type_info.location
       end
 
-      declare_meta_type_var(owner.instance_vars, owner, name, type, type_info.location, instance_var: true)
+      declare_meta_type_var(owner.instance_vars, owner, name, type, type_info.location, instance_var: true, annotations: type_info.annotations)
     when NonGenericModuleType
       type = type_info.type
       if nilable_instance_var?(owner, name)
@@ -357,7 +371,7 @@ struct Crystal::TypeDeclarationProcessor
         return
       end
 
-      declare_meta_type_var(owner.instance_vars, owner, name, type, type_info.location, instance_var: true)
+      declare_meta_type_var(owner.instance_vars, owner, name, type, type_info.location, instance_var: true, annotations: type_info.annotations)
       remove_error owner, name
       owner.raw_including_types.try &.each do |including_type|
         process_owner_guessed_instance_var_declaration(including_type, name, type_info)
@@ -374,11 +388,11 @@ struct Crystal::TypeDeclarationProcessor
         raise_nil_instance_var owner, name, type_info.location
       end
 
-      declare_meta_type_var(owner.instance_vars, owner, name, type, type_info.location, instance_var: true)
+      declare_meta_type_var(owner.instance_vars, owner, name, type, type_info.location, instance_var: true, annotations: type_info.annotations)
 
       owner.generic_types.each_value do |generic_type|
         new_type = type.replace_type_parameters(generic_type)
-        declare_meta_type_var(generic_type.instance_vars, generic_type, name, new_type, type_info.location, instance_var: true)
+        declare_meta_type_var(generic_type.instance_vars, generic_type, name, new_type, type_info.location, instance_var: true, annotations: type_info.annotations)
       end
 
       remove_error owner, name
@@ -388,7 +402,7 @@ struct Crystal::TypeDeclarationProcessor
         type = Type.merge!([type, @program.nil])
       end
 
-      declare_meta_type_var(owner.instance_vars, owner, name, type, type_info.location, instance_var: true)
+      declare_meta_type_var(owner.instance_vars, owner, name, type, type_info.location, instance_var: true, annotations: type_info.annotations)
       remove_error owner, name
       owner.raw_including_types.try &.each do |including_type|
         process_owner_guessed_instance_var_declaration(including_type, name, type_info)
@@ -416,7 +430,7 @@ struct Crystal::TypeDeclarationProcessor
       infos = find_initialize_infos(owner)
 
       if infos
-        @has_macro_def << owner if infos.size == 1 && infos.first.def.macro_def?
+        @has_macro_def << owner if infos.all?(&.def.macro_def?)
         non_nilable = compute_non_nilable_instance_vars_multi(owner, infos)
       end
 
@@ -498,6 +512,10 @@ struct Crystal::TypeDeclarationProcessor
         # It's non-nilable if it's initialized outside
         next if initialized_outside?(owner, instance_var)
 
+        # If an initialize with an ivar calls super and an ancestor has already
+        # typed the instance var as non-nilable
+        next if info.def.calls_super? && ancestor_non_nilable.try(&.includes?(instance_var))
+
         unless info.try(&.instance_vars.try(&.includes?(instance_var)))
           all_assigned = false
           # Rememebr that this variable wasn't initialized here, and later error
@@ -519,6 +537,7 @@ struct Crystal::TypeDeclarationProcessor
     end
 
     owner.ancestors.any? do |ancestor|
+      ancestor = uninstantiate(ancestor)
       @instance_vars_outside[ancestor]?.try &.includes?(name)
     end
   end
@@ -642,21 +661,27 @@ struct Crystal::TypeDeclarationProcessor
             ancestor_class_var = ancestor.lookup_class_var?(name)
             next unless ancestor_class_var
 
+            if owner_class_var.type.implements?(ancestor_class_var.type)
+              owner_class_var.type = ancestor_class_var.type
+            end
+
             if owner_class_var.type != ancestor_class_var.type
               raise TypeException.new("class variable '#{name}' of #{owner} is already defined as #{ancestor_class_var.type} in #{ancestor}", info.location)
             end
           end
+
+          owner_class_var.freeze_type = owner_class_var.type
         end
       end
     end
   end
 
   private def raise_not_initialized_in_all_initialize(node : ASTNode, name, owner)
-    node.raise "instance variable '#{name}' of #{owner} was not initialized in all of the 'initialize' methods, rendering it nilable"
+    node.raise "instance variable '#{name}' of #{owner} was not initialized directly in all of the 'initialize' methods, rendering it nilable. Indirect initialization is not supported."
   end
 
   private def raise_not_initialized_in_all_initialize(location : Location, name, owner)
-    raise TypeException.new "instance variable '#{name}' of #{owner} was not initialized in all of the 'initialize' methods, rendering it nilable", location
+    raise TypeException.new "instance variable '#{name}' of #{owner} was not initialized directly in all of the 'initialize' methods, rendering it nilable. Indirect initialization is not supported.", location
   end
 
   private def raise_doesnt_explicitly_initializes(info, name, ivar)

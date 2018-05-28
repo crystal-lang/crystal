@@ -1,4 +1,4 @@
-{% skip_file() unless flag?(:linux) %}
+{% skip_file unless flag?(:linux) %}
 
 require "c/unistd"
 require "c/sys/syscall"
@@ -6,6 +6,7 @@ require "c/sys/syscall"
 module Crystal::System::Random
   @@initialized = false
   @@getrandom_available = false
+  @@urandom : ::File?
 
   private def self.init
     @@initialized = true
@@ -13,8 +14,12 @@ module Crystal::System::Random
     if sys_getrandom(Bytes.new(16)) >= 0
       @@getrandom_available = true
     else
-      @@urandom = urandom = File.open("/dev/urandom", "r")
+      urandom = ::File.open("/dev/urandom", "r")
+      return unless urandom.info.type.character_device?
+
+      urandom.close_on_exec = true
       urandom.sync = true # don't buffer bytes
+      @@urandom = urandom
     end
   end
 
@@ -37,7 +42,7 @@ module Crystal::System::Random
     if @@getrandom_available
       buf = uninitialized UInt8[1]
       getrandom(buf.to_slice)
-      buf.to_unsafe.as(UInt8*).value
+      buf.unsafe_as(UInt8)
     elsif urandom = @@urandom
       urandom.read_byte.not_nil!
     else

@@ -15,11 +15,9 @@
 struct Symbol
   include Comparable(Symbol)
 
-  # Generates an `Int32` hash value for this symbol.
-  #
-  # See also: `Object#hash`.
-  def hash : Int32
-    to_i
+  # See `Object#hash(hasher)`
+  def hash(hasher)
+    hasher.symbol(self)
   end
 
   # Compares symbol with other based on `String#<=>` method. Returns `-1`, `0`
@@ -37,7 +35,7 @@ struct Symbol
   # :crystal.inspect # => ":crystal"
   # ```
   def inspect(io : IO)
-    io << ":"
+    io << ':'
 
     value = to_s
     if Symbol.needs_quotes?(value)

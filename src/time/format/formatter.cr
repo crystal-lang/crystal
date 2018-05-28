@@ -92,11 +92,13 @@ struct Time::Format
     end
 
     def hour_12_zero_padded
-      pad2 (time.hour % 12), '0'
+      h = (time.hour % 12)
+      pad2 (h == 0 ? 12 : h), '0'
     end
 
     def hour_12_blank_padded
-      pad2 (time.hour % 12), ' '
+      h = (time.hour % 12)
+      pad2 (h == 0 ? 12 : h), ' '
     end
 
     def minute
@@ -109,6 +111,18 @@ struct Time::Format
 
     def milliseconds
       pad3 time.millisecond, '0'
+    end
+
+    def microseconds
+      pad6 time.nanosecond / 1000, '0'
+    end
+
+    def nanoseconds
+      pad9 time.nanosecond, '0'
+    end
+
+    def second_fraction
+      nanoseconds
     end
 
     def am_pm
@@ -133,51 +147,16 @@ struct Time::Format
       io << time.epoch
     end
 
-    def time_zone
-      case time.kind
-      when Time::Kind::Utc, Time::Kind::Unspecified
-        io << "+0000"
-      when Time::Kind::Local
-        negative, hours, minutes = local_time_zone_info
-        io << (negative ? "-" : "+")
-        io << "0" if hours < 10
-        io << hours
-        io << "0" if minutes < 10
-        io << minutes
-      end
+    def time_zone(with_seconds = false)
+      time.zone.format(io, with_colon: false, with_seconds: with_seconds)
     end
 
-    def time_zone_colon
-      case time.kind
-      when Time::Kind::Utc, Time::Kind::Unspecified
-        io << "+00:00"
-      when Time::Kind::Local
-        negative, hours, minutes = local_time_zone_info
-        io << (negative ? "-" : "+")
-        io << "0" if hours < 10
-        io << hours
-        io << ":"
-        io << "0" if minutes < 10
-        io << minutes
-      end
+    def time_zone_colon(with_seconds = false)
+      time.zone.format(io, with_colon: true, with_seconds: with_seconds)
     end
 
     def time_zone_colon_with_seconds
-      time_zone_colon
-      io << ":00"
-    end
-
-    def local_time_zone_info
-      minutes = Time.local_offset_in_minutes
-      if minutes < 0
-        minutes = -minutes
-        negative = true
-      else
-        negative = false
-      end
-      hours = minutes / 60
-      minutes = minutes % 60
-      {negative, hours, minutes}
+      time_zone_colon(with_seconds: true)
     end
 
     def char(char)
@@ -213,6 +192,19 @@ struct Time::Format
     def pad4(value, padding)
       io.write_byte padding.ord.to_u8 if value < 1000
       pad3 value, padding
+    end
+
+    def pad6(value, padding)
+      io.write_byte padding.ord.to_u8 if value < 100000
+      io.write_byte padding.ord.to_u8 if value < 10000
+      pad4 value, padding
+    end
+
+    def pad9(value, padding)
+      io.write_byte padding.ord.to_u8 if value < 100000000
+      io.write_byte padding.ord.to_u8 if value < 10000000
+      io.write_byte padding.ord.to_u8 if value < 1000000
+      pad6 value, padding
     end
   end
 end

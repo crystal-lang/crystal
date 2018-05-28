@@ -3,9 +3,7 @@
 # Instances of this class wrap another IO object. When you read from this instance
 # instance, it reads data from the underlying IO, decompresses it, and returns
 # it to the caller.
-class Flate::Reader
-  include IO
-
+class Flate::Reader < IO
   # If `#sync_close?` is `true`, closing this IO will close the underlying IO.
   property? sync_close : Bool
 
@@ -29,10 +27,10 @@ class Flate::Reader
     @end = false
   end
 
-  # Creates an instance of Flate::Reader, yields it to the given block, and closes
-  # it at its end.
-  def self.new(input : IO, sync_close : Bool = false, dict : Bytes? = nil)
-    reader = new input, sync_close: sync_close, dict: dict
+  # Creates a new reader from the given *io*, yields it to the given block,
+  # and closes it at its end.
+  def self.open(io : IO, sync_close : Bool = false, dict : Bytes? = nil)
+    reader = new(io, sync_close: sync_close, dict: dict)
     yield reader ensure reader.close
   end
 

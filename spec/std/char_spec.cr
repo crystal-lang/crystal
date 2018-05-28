@@ -133,6 +133,7 @@ describe "Char" do
   end
 
   it "escapes" do
+    7.chr.ord.should eq(7) # TODO: use \a
     '\b'.ord.should eq(8)
     '\t'.ord.should eq(9)
     '\n'.ord.should eq(10)
@@ -326,7 +327,7 @@ describe "Char" do
     it { 'a'.in_set?("ab", "ac", "ad").should be_true }
 
     it "rejects invalid ranges" do
-      expect_raises do
+      expect_raises(ArgumentError, "Invalid range c-a") do
         'a'.in_set?("c-a")
       end
     end

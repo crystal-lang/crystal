@@ -231,4 +231,8 @@ describe "Random::PCG32" do
     m1.jump(-10)
     m1.next_u.should eq m2.next_u
   end
+
+  it "can be initialized without explicit seed" do
+    Random::PCG32.new.should be_a Random::PCG32
+  end
 end

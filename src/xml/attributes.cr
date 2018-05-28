@@ -53,9 +53,9 @@ struct XML::Attributes
   end
 
   def to_s(io)
-    io << "["
+    io << '['
     join ", ", io, &.inspect(io)
-    io << "]"
+    io << ']'
   end
 
   def inspect(io)

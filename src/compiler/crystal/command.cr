@@ -18,7 +18,6 @@ class Crystal::Command
     Command:
         init                     generate a new project
         build                    build an executable
-        deps                     install project dependencies
         docs                     generate documentation
         env                      print Crystal environment information
         eval                     eval code from args or standard input
@@ -58,60 +57,52 @@ class Crystal::Command
 
   def run
     command = options.first?
-
-    if command
-      case
-      when "init".starts_with?(command)
-        options.shift
-        init
-      when "build".starts_with?(command), "compile".starts_with?(command)
-        if "compile".starts_with?(command)
-          STDERR.puts "Deprecation: The compile command was renamed to build and will be removed in a future version."
-        end
-        options.shift
-        build
-      when "play".starts_with?(command)
-        options.shift
-        playground
-      when "deps".starts_with?(command)
-        options.shift
-        deps
-      when "docs".starts_with?(command)
-        options.shift
-        docs
-      when command == "env"
-        options.shift
-        env
-      when command == "eval"
-        options.shift
-        eval
-      when "run".starts_with?(command)
-        options.shift
-        run_command(single_file: false)
-      when "spec/".starts_with?(command)
-        options.shift
-        spec
-      when "tool".starts_with?(command)
-        options.shift
-        tool
-      when "help".starts_with?(command), "--help" == command, "-h" == command
-        puts USAGE
-        exit
-      when "version".starts_with?(command), "--version" == command, "-v" == command
-        puts Crystal::Config.description
-        exit
-      else
-        if File.file?(command)
-          run_command(single_file: true)
-        else
-          error "unknown command: #{command}"
-        end
-      end
-    else
+    case
+    when !command
       puts USAGE
       exit
+    when "init".starts_with?(command)
+      options.shift
+      init
+    when "build".starts_with?(command)
+      options.shift
+      build
+    when "play".starts_with?(command)
+      options.shift
+      playground
+    when "deps".starts_with?(command)
+      STDERR.puts "Please use 'shards': 'crystal deps' has been removed"
+      exit 1
+    when "docs".starts_with?(command)
+      options.shift
+      docs
+    when command == "env"
+      options.shift
+      env
+    when command == "eval"
+      options.shift
+      eval
+    when "run".starts_with?(command)
+      options.shift
+      run_command(single_file: false)
+    when "spec/".starts_with?(command)
+      options.shift
+      spec
+    when "tool".starts_with?(command)
+      options.shift
+      tool
+    when "help".starts_with?(command), "--help" == command, "-h" == command
+      puts USAGE
+      exit
+    when "version".starts_with?(command), "--version" == command, "-v" == command
+      puts Crystal::Config.description
+      exit
+    when File.file?(command)
+      run_command(single_file: true)
+    else
+      error "unknown command: #{command}"
     end
-  rescue ex : Crystal::ToolException
+  rescue ex : Crystal::LocationlessException
     error ex.message
   rescue ex : Crystal::Exception
     ex.color = @color
@@ -134,35 +125,33 @@ class Crystal::Command
 
   private def tool
     tool = options.first?
-    if tool
-      case
-      when "context".starts_with?(tool)
-        options.shift
-        context
-      when "format".starts_with?(tool)
-        options.shift
-        format
-      when "expand".starts_with?(tool)
-        options.shift
-        expand
-      when "hierarchy".starts_with?(tool)
-        options.shift
-        hierarchy
-      when "implementations".starts_with?(tool)
-        options.shift
-        implementations
-      when "types".starts_with?(tool)
-        options.shift
-        types
-      when "--help" == tool, "-h" == tool
-        puts COMMANDS_USAGE
-        exit
-      else
-        error "unknown tool: #{tool}"
-      end
-    else
+    case
+    when !tool
       puts COMMANDS_USAGE
       exit
+    when "context".starts_with?(tool)
+      options.shift
+      context
+    when "format".starts_with?(tool)
+      options.shift
+      format
+    when "expand".starts_with?(tool)
+      options.shift
+      expand
+    when "hierarchy".starts_with?(tool)
+      options.shift
+      hierarchy
+    when "implementations".starts_with?(tool)
+      options.shift
+      implementations
+    when "types".starts_with?(tool)
+      options.shift
+      types
+    when "--help" == tool, "-h" == tool
+      puts COMMANDS_USAGE
+      exit
+    else
+      error "unknown tool: #{tool}"
     end
   end
 
@@ -192,7 +181,10 @@ class Crystal::Command
     output_filename = Crystal.tempfile(config.output_filename)
 
     result = config.compile output_filename
-    execute output_filename, config.arguments unless config.compiler.no_codegen?
+
+    unless config.compiler.no_codegen?
+      execute output_filename, config.arguments, config.compiler
+    end
   end
 
   private def types
@@ -211,19 +203,27 @@ class Crystal::Command
     {config, result}
   end
 
-  private def execute(output_filename, run_args)
+  private def execute(output_filename, run_args, compiler)
     time? = @time && !@progress_tracker.stats?
     status, elapsed_time = @progress_tracker.stage("Execute") do
       begin
-        start_time = Time.now
-        Process.run(output_filename, args: run_args, input: true, output: true, error: true) do |process|
-          # Ignore the signal so we don't exit the running process
-          # (the running process can still handle this signal)
-          Signal::INT.ignore # do
+        elapsed = Time.measure do
+          Process.run(output_filename, args: run_args, input: Process::Redirect::Inherit, output: Process::Redirect::Inherit, error: Process::Redirect::Inherit) do |process|
+            # Ignore the signal so we don't exit the running process
+            # (the running process can still handle this signal)
+            ::Signal::INT.ignore # do
+          end
         end
-        {$?, Time.now - start_time}
+        {$?, elapsed}
       ensure
         File.delete(output_filename) rescue nil
+
+        # Delete related dwarf generated by dsymutil, if any exists
+        {% if flag?(:darwin) %}
+          unless compiler.debug.none?
+            File.delete("#{output_filename}.dwarf") rescue nil
+          end
+        {% end %}
       end
     end
 
@@ -235,11 +235,11 @@ class Crystal::Command
       exit status.exit_code
     else
       case status.exit_signal
-      when Signal::KILL
+      when ::Signal::KILL
         STDERR.puts "Program was killed"
-      when Signal::SEGV
+      when ::Signal::SEGV
         STDERR.puts "Program exited because of a segmentation fault (11)"
-      when Signal::INT
+      when ::Signal::INT
         # OK, bubbled from the sub-program
       else
         STDERR.puts "Program received and didn't handle signal #{status.exit_signal} (#{status.exit_signal.value})"
@@ -275,6 +275,8 @@ class Crystal::Command
     compiler = Compiler.new
     compiler.progress_tracker = @progress_tracker
     link_flags = [] of String
+    filenames = [] of String
+    has_stdin_filename = false
     opt_filenames = nil
     opt_arguments = nil
     opt_output_filename = nil
@@ -295,9 +297,15 @@ class Crystal::Command
         opts.on("-d", "--debug", "Add full symbolic debug info") do
           compiler.debug = Crystal::Debug::All
         end
-        opts.on("", "--no-debug", "Skip any symbolic debug info") do
+        opts.on("--no-debug", "Skip any symbolic debug info") do
           compiler.debug = Crystal::Debug::None
         end
+        {% unless LibLLVM::IS_38 || LibLLVM::IS_39 %}
+        opts.on("--lto=FLAG", "Use ThinLTO --lto=thin") do |flag|
+          error "--lto=thin is the only lto supported option" unless flag == "thin"
+          compiler.thin_lto = true
+        end
+        {% end %}
       end
 
       opts.on("-D FLAG", "--define FLAG", "Define a compile-time flag") do |flag|
@@ -305,7 +313,7 @@ class Crystal::Command
       end
 
       unless no_codegen
-        opts.on("--emit [#{VALID_EMIT_VALUES.join("|")}]", "Comma separated list of types of output for the compiler to emit") do |emit_values|
+        opts.on("--emit [#{VALID_EMIT_VALUES.join('|')}]", "Comma separated list of types of output for the compiler to emit") do |emit_values|
           compiler.emit = validate_emit_values(emit_values.split(',').map(&.strip))
         end
       end
@@ -402,6 +410,14 @@ class Crystal::Command
         opts.on("--verbose", "Display executed commands") do
           compiler.verbose = true
         end
+        opts.on("--static", "Link statically") do
+          compiler.static = true
+        end
+      end
+
+      opts.on("--stdin-filename ", "Source file name to be read from STDIN") do |stdin_filename|
+        has_stdin_filename = true
+        filenames << stdin_filename
       end
 
       opts.unknown_args do |before, after|
@@ -410,10 +426,10 @@ class Crystal::Command
       end
     end
 
-    compiler.link_flags = link_flags.join(" ") unless link_flags.empty?
+    compiler.link_flags = link_flags.join(' ') unless link_flags.empty?
 
     output_filename = opt_output_filename
-    filenames = opt_filenames.not_nil!
+    filenames += opt_filenames.not_nil!
     arguments = opt_arguments.not_nil!
 
     if single_file && filenames.size > 1
@@ -426,7 +442,11 @@ class Crystal::Command
       exit 1
     end
 
-    sources = gather_sources(filenames)
+    sources = [] of Compiler::Source
+    if has_stdin_filename
+      sources << Compiler::Source.new(filenames.shift, STDIN.gets_to_end)
+    end
+    sources += gather_sources(filenames)
     first_filename = sources.first.filename
     first_file_ext = File.extname(first_filename)
     original_output_filename = File.basename(first_filename, first_file_ext)
@@ -441,6 +461,8 @@ class Crystal::Command
     if !["text", "json"].includes?(output_format)
       error "You have input an invalid format, only text and JSON are supported"
     end
+
+    error "maximum number of threads cannot be lower than 1" if compiler.n_threads < 1
 
     if !no_codegen && !run && Dir.exists?(output_filename)
       error "can't use `#{output_filename}` as output filename because it's a directory"
@@ -463,7 +485,7 @@ class Crystal::Command
     opts.on("-d", "--debug", "Add full symbolic debug info") do
       compiler.debug = Crystal::Debug::All
     end
-    opts.on("", "--no-debug", "Skip any symbolic debug info") do
+    opts.on("--no-debug", "Skip any symbolic debug info") do
       compiler.debug = Crystal::Debug::None
     end
     opts.on("-D FLAG", "--define FLAG", "Define a compile-time flag") do |flag|

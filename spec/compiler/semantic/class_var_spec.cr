@@ -82,26 +82,6 @@ describe "Semantic: class var" do
       ") { int32 }
   end
 
-  it "says illegal attribute for class var" do
-    assert_error %(
-      class Foo
-        @[Foo]
-        @@foo
-      end
-      ),
-      "illegal attribute"
-  end
-
-  it "says illegal attribute for class var assignment" do
-    assert_error %(
-      class Foo
-        @[Foo]
-        @@foo = 1
-      end
-      ),
-      "illegal attribute"
-  end
-
   it "allows self.class as type var in class body (#537)" do
     assert_type(%(
       class Bar(T)
@@ -496,5 +476,23 @@ describe "Semantic: class var" do
       end
       ),
       "class variable '@@foo' of Foo is not nilable (it's Int32) so it must have an initializer"
+  end
+
+  it "can assign to class variable if this type can be up-casted to ancestors class variable type (#4869)" do
+    assert_type(%(
+      class Foo
+        @@x : Int32?
+
+        def self.x
+          @@x
+        end
+      end
+
+      class Bar < Foo
+        @@x = 42
+      end
+
+      Bar.x
+      )) { nilable(int32) }
   end
 end

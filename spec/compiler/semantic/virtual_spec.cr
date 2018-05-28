@@ -37,7 +37,7 @@ describe "Semantic: virtual" do
       end
 
       a = Bar.new || Baz.new
-      ") { types["Foo"].virtual_type }
+      ") { union_of types["Bar"], types["Baz"] }
   end
 
   it "types class and two subclasses" do

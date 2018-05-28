@@ -76,7 +76,7 @@ class HTTP::Request
   end
 
   def to_io(io)
-    io << @method << " " << resource << " " << @version << "\r\n"
+    io << @method << ' ' << resource << ' ' << @version << "\r\n"
     cookies = @cookies
     headers = cookies ? cookies.add_request_headers(@headers) : @headers
     HTTP.serialize_headers_and_body(io, headers, nil, @body, @version)
@@ -99,7 +99,7 @@ class HTTP::Request
       return new method, resource, headers, body, http_version
     end
 
-    # Unexpected end of http request
+    # Malformed or unexpectedly ended http request
     BadRequest.new
   end
 

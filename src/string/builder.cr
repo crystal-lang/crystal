@@ -3,9 +3,7 @@ require "io"
 # Similar to `IO::Memory`, but optimized for building a single string.
 #
 # You should never have to deal with this class. Instead, use `String.build`.
-class String::Builder
-  include IO
-
+class String::Builder < IO
   getter bytesize : Int32
   getter capacity : Int32
   getter buffer : Pointer(UInt8)
@@ -49,6 +47,19 @@ class String::Builder
 
     slice.copy_to(@buffer + real_bytesize, count)
     @bytesize += count
+
+    nil
+  end
+
+  def write_byte(byte : UInt8)
+    new_bytesize = real_bytesize + 1
+    if new_bytesize > @capacity
+      resize_to_capacity(Math.pw2ceil(new_bytesize))
+    end
+
+    @buffer[real_bytesize] = byte
+
+    @bytesize += 1
 
     nil
   end

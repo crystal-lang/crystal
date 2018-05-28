@@ -227,4 +227,14 @@ describe "Code gen: lib" do
       LibFoo.foo(x)
       ))
   end
+
+  it "uses static array in lib extern (#5688)" do
+    codegen(%(
+      lib LibFoo
+        $x : Int32[10]
+      end
+
+      LibFoo.x
+      ))
+  end
 end

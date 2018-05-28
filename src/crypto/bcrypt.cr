@@ -1,9 +1,13 @@
-require "secure_random"
+require "random/secure"
 require "./subtle"
 
 # Pure Crystal implementation of the Bcrypt algorithm by Niels Provos and David
 # Mazières, as [presented at USENIX in
 # 1999](https://www.usenix.org/legacy/events/usenix99/provos/provos_html/index.html).
+#
+# The algorithm has a maximum password length limit of 71 characters (see
+# [this comment](https://security.stackexchange.com/questions/39849/does-bcrypt-have-a-maximum-password-length#answer-39851)
+# on stackoverflow).
 #
 # Refer to `Crypto::Bcrypt::Password` for a higher level interface.
 #
@@ -31,7 +35,7 @@ class Crypto::Bcrypt
 
   DEFAULT_COST   = 11
   COST_RANGE     = 4..31
-  PASSWORD_RANGE = 1..51
+  PASSWORD_RANGE = 1..72
   SALT_SIZE      = 16
 
   private BLOWFISH_ROUNDS = 16
@@ -46,7 +50,7 @@ class Crypto::Bcrypt
   def self.hash_secret(password, cost = DEFAULT_COST) : String
     # We make a clone here to we don't keep a mutable reference to the original string
     passwordb = password.to_unsafe.to_slice(password.bytesize + 1).clone # include leading 0
-    saltb = SecureRandom.random_bytes(SALT_SIZE)
+    saltb = Random::Secure.random_bytes(SALT_SIZE)
     new(passwordb, saltb, cost).to_s
   end
 

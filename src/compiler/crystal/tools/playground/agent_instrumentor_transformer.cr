@@ -96,16 +96,16 @@ module Crystal
 
     def transform(node : MultiAssign)
       node.values = if node.values.size == 1
-                      [instrument(node.values[0])]
+                      [instrument(node.values[0])] of ASTNode
                     else
                       rhs = TupleLiteral.new(node.values)
                       rhs.location = node.location
-                      [instrument(rhs)]
+                      [instrument(rhs)] of ASTNode
                     end
       node
     end
 
-    def transform(node : NilLiteral | NumberLiteral | StringLiteral | BoolLiteral | CharLiteral | SymbolLiteral | TupleLiteral | ArrayLiteral | StringInterpolation | RegexLiteral | Var | InstanceVar | ClassVar | Global | TypeOf | UnaryExpression | BinaryOp | IsA | ReadInstanceVar)
+    def transform(node : NilLiteral | NumberLiteral | StringLiteral | BoolLiteral | CharLiteral | SymbolLiteral | TupleLiteral | ArrayLiteral | HashLiteral | StringInterpolation | RegexLiteral | Var | InstanceVar | ClassVar | Global | TypeOf | UnaryExpression | BinaryOp | IsA | ReadInstanceVar)
       instrument(node)
     end
 

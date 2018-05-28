@@ -150,6 +150,8 @@ module Crystal
       types["UInt32"] = @uint32 = IntegerType.new self, self, "UInt32", int, 4, 6, :u32
       types["Int64"] = @int64 = IntegerType.new self, self, "Int64", int, 8, 7, :i64
       types["UInt64"] = @uint64 = IntegerType.new self, self, "UInt64", int, 8, 8, :u64
+      types["Int128"] = @int128 = IntegerType.new self, self, "Int128", int, 16, 9, :i128
+      types["UInt128"] = @uint128 = IntegerType.new self, self, "UInt128", int, 16, 10, :u128
 
       types["Float"] = float = @float = NonGenericClassType.new self, self, "Float", number
       abstract_value_type(float)
@@ -209,6 +211,20 @@ module Crystal
       types["GC"] = gc = NonGenericModuleType.new self, self, "GC"
       gc.metaclass.as(ModuleType).add_def Def.new("add_finalizer", [Arg.new("object")], Nop.new)
 
+      # Built-in annotations
+      types["AlwaysInline"] = @always_inline_annotation = AnnotationType.new self, self, "AlwaysInline"
+      types["CallConvention"] = @call_convention_annotation = AnnotationType.new self, self, "CallConvention"
+      types["Extern"] = @extern_annotation = AnnotationType.new self, self, "Extern"
+      types["Flags"] = @flags_annotation = AnnotationType.new self, self, "Flags"
+      types["Link"] = @link_annotation = AnnotationType.new self, self, "Link"
+      types["Naked"] = @naked_annotation = AnnotationType.new self, self, "Naked"
+      types["NoInline"] = @no_inline_annotation = AnnotationType.new self, self, "NoInline"
+      types["Packed"] = @packed_annotation = AnnotationType.new self, self, "Packed"
+      types["Primitive"] = @primitive_annotation = AnnotationType.new self, self, "Primitive"
+      types["Raises"] = @raises_annotation = AnnotationType.new self, self, "Raises"
+      types["ReturnsTwice"] = @returns_twice_annotation = AnnotationType.new self, self, "ReturnsTwice"
+      types["ThreadLocal"] = @thread_local_annotation = AnnotationType.new self, self, "ThreadLocal"
+
       define_crystal_constants
     end
 
@@ -258,7 +274,7 @@ module Crystal
 
     setter target_machine : LLVM::TargetMachine?
 
-    getter(target_machine) { TargetMachine.create(LLVM.default_target_triple) }
+    getter(target_machine) { TargetMachine.create(Crystal::Config.default_target_triple) }
 
     # Returns the `Type` for `Array(type)`
     def array_of(type)
@@ -426,9 +442,13 @@ module Crystal
       crystal_path.find filename, relative_to
     end
 
-    {% for name in %w(object no_return value number reference void nil bool char int int8 int16 int32 int64
-                     uint8 uint16 uint32 uint64 float float32 float64 string symbol pointer array static_array
-                     exception tuple named_tuple proc union enum range regex crystal) %}
+    {% for name in %w(object no_return value number reference void nil bool char int int8 int16 int32 int64 int128
+                     uint8 uint16 uint32 uint64 uint128 float float32 float64 string symbol pointer array static_array
+                     exception tuple named_tuple proc union enum range regex crystal
+                     packed_annotation thread_local_annotation no_inline_annotation
+                     always_inline_annotation naked_annotation returns_twice_annotation
+                     raises_annotation primitive_annotation call_convention_annotation
+                     flags_annotation link_annotation extern_annotation) %}
       def {{name.id}}
         @{{name.id}}.not_nil!
       end
@@ -446,17 +466,19 @@ module Crystal
 
     def type_from_literal_kind(kind)
       case kind
-      when :i8  then int8
-      when :i16 then int16
-      when :i32 then int32
-      when :i64 then int64
-      when :u8  then uint8
-      when :u16 then uint16
-      when :u32 then uint32
-      when :u64 then uint64
-      when :f32 then float32
-      when :f64 then float64
-      else           raise "Invalid node kind: #{kind}"
+      when :i8   then int8
+      when :i16  then int16
+      when :i32  then int32
+      when :i64  then int64
+      when :i128 then int128
+      when :u8   then uint8
+      when :u16  then uint16
+      when :u32  then uint32
+      when :u64  then uint64
+      when :u128 then uint128
+      when :f32  then float32
+      when :f64  then float64
+      else            raise "Invalid node kind: #{kind}"
       end
     end
 

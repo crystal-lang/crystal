@@ -97,7 +97,8 @@ struct XML::Node
   # Sets the Node's content to a Text node containing string.
   # The string gets XML escaped, not interpreted as markup.
   def content=(content)
-    LibXML.xmlNodeSetContent(self, content.to_s)
+    content = escape(content.to_s)
+    LibXML.xmlNodeSetContent(self, content)
   end
 
   # Gets the document for this Node as a `XML::Node`.
@@ -159,10 +160,8 @@ struct XML::Node
     type == XML::Type::DOCUMENT_FRAG_NODE
   end
 
-  # Returns this node's `#object_id` as the hash value.
-  def hash
-    object_id
-  end
+  # See `Object#hash(hasher)`
+  def_hash object_id
 
   # Returns the content for this Node.
   def inner_text
@@ -200,7 +199,7 @@ struct XML::Node
     object_id.to_s(16, io)
 
     if text?
-      io << " "
+      io << ' '
       content.inspect(io)
     else
       unless document?
@@ -226,7 +225,7 @@ struct XML::Node
       end
     end
 
-    io << ">"
+    io << '>'
     io
   end
 
@@ -275,7 +274,18 @@ struct XML::Node
     if document? || text? || cdata? || fragment?
       raise XML::Error.new("Can't set name of XML #{type}", 0)
     end
-    LibXML.xmlNodeSetName(self, name.to_s)
+
+    name = name.to_s
+
+    if name.includes? '\0'
+      raise XML::Error.new("Invalid node name: #{name.inspect} (contains null character)", 0)
+    end
+
+    if LibXML.xmlValidateNameValue(name) == 0
+      raise XML::Error.new("Invalid node name: #{name.inspect}", 0)
+    end
+
+    LibXML.xmlNodeSetName(self, name)
   end
 
   # Returns the namespace for this node or `nil` if not found.
@@ -492,7 +502,7 @@ struct XML::Node
   # doc.xpath_bool("count(//person) > 0") # => true
   # ```
   def xpath_bool(path, namespaces = nil, variables = nil)
-    xpath(path, namespaces).as(Bool)
+    xpath(path, namespaces, variables).as(Bool)
   end
 
   # Searches this node for XPath *path* and restricts the return type to `Float64`.
@@ -501,7 +511,7 @@ struct XML::Node
   # doc.xpath_float("count(//person)") # => 1.0
   # ```
   def xpath_float(path, namespaces = nil, variables = nil)
-    xpath(path, namespaces).as(Float64)
+    xpath(path, namespaces, variables).as(Float64)
   end
 
   # Searches this node for XPath *path* and restricts the return type to `NodeSet`.
@@ -512,7 +522,7 @@ struct XML::Node
   # nodes.map(&.name) # => ["person"]
   # ```
   def xpath_nodes(path, namespaces = nil, variables = nil)
-    xpath(path, namespaces).as(NodeSet)
+    xpath(path, namespaces, variables).as(NodeSet)
   end
 
   # Searches this node for XPath *path* for nodes and returns the first one.
@@ -523,7 +533,7 @@ struct XML::Node
   # doc.xpath_node("//invalid") # => nil
   # ```
   def xpath_node(path, namespaces = nil, variables = nil)
-    xpath_nodes(path, namespaces).first?
+    xpath_nodes(path, namespaces, variables).first?
   end
 
   # Searches this node for XPath *path* and restricts the return type to `String`.
@@ -532,7 +542,7 @@ struct XML::Node
   # doc.xpath_string("string(/persons/person[1])")
   # ```
   def xpath_string(path, namespaces = nil, variables = nil)
-    xpath(path, namespaces).as(String)
+    xpath(path, namespaces, variables).as(String)
   end
 
   # :nodoc:
@@ -545,5 +555,21 @@ struct XML::Node
   def errors
     ptr = @node.value._private
     ptr ? (ptr.as(Array(XML::Error))) : nil
+  end
+
+  private SUBSTITUTIONS = {
+    '>'  => "&gt;",
+    '<'  => "&lt;",
+    '"'  => "&quot;",
+    '\'' => "&apos;",
+    '&'  => "&amp;",
+  }
+
+  private def escape(string)
+    if string.includes? '\0'
+      raise XML::Error.new("Cannot escape string containing null character", 0)
+    end
+
+    string.gsub(SUBSTITUTIONS)
   end
 end

@@ -63,22 +63,24 @@ struct Struct
   # p1 == p2 # => true
   # p1 == p3 # => false
   # ```
-  def ==(other : self) : Bool
-    {% for ivar in @type.instance_vars %}
-      return false unless @{{ivar.id}} == other.@{{ivar.id}}
-    {% end %}
-    true
+  def ==(other) : Bool
+    # TODO: This is a workaround for https://github.com/crystal-lang/crystal/issues/5249
+    if other.is_a?(self)
+      {% for ivar in @type.instance_vars %}
+        return false unless @{{ivar.id}} == other.@{{ivar.id}}
+      {% end %}
+      return true
+    else
+      return false
+    end
   end
 
-  # Returns a hash value based on this struct's instance variables hash values.
-  #
-  # See also: `Object#hash`
-  def hash : Int32
-    hash = 0
+  # See `Object#hash(hasher)`
+  def hash(hasher)
     {% for ivar in @type.instance_vars %}
-      hash = 31 * hash + @{{ivar.id}}.hash.to_i32
+      hasher = @{{ivar.id}}.hash(hasher)
     {% end %}
-    hash
+    hasher
   end
 
   # Appends this struct's name and instance variables names and values
@@ -95,7 +97,7 @@ struct Struct
   # p1.inspect # "Point(@x=1, @y=2)"
   # ```
   def inspect(io : IO) : Nil
-    io << {{@type.name.id.stringify}} << "("
+    io << {{@type.name.id.stringify}} << '('
     {% for ivar, i in @type.instance_vars %}
       {% if i > 0 %}
         io << ", "
@@ -103,7 +105,7 @@ struct Struct
       io << "@{{ivar.id}}="
       @{{ivar.id}}.inspect(io)
     {% end %}
-    io << ")"
+    io << ')'
     nil
   end
 

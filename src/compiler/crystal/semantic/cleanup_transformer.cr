@@ -128,6 +128,10 @@ module Crystal
     end
 
     def transform(node : Expressions)
+      if exp = node.single_expression?
+        return exp.transform(self)
+      end
+
       exps = [] of ASTNode
 
       node.expressions.each_with_index do |exp, i|
@@ -144,6 +148,7 @@ module Crystal
     end
 
     def flatten_collect(exp, exps)
+      exp = exp.single_expression
       if exp.is_a?(Expressions)
         exp.expressions.each do |subexp|
           return true if flatten_collect(subexp, exps)
@@ -456,11 +461,7 @@ module Crystal
 
     def untyped_expression(node, msg = nil)
       ex_msg = String.build do |str|
-        str << "can't execute `"
-        str << node
-        str << "`"
-        str << " at "
-        str << node.location
+        str << "can't execute `" << node << "` at " << node.location
         if msg
           str << ": "
           str << msg
@@ -739,6 +740,21 @@ module Crystal
         node.extra = extra.transform(self)
       end
       node
+    end
+
+    def transform(node : TypeOf)
+      node = super
+
+      unless node.type?
+        node.unbind_from node.dependencies
+        node.bind_to node.expressions
+      end
+
+      node
+    end
+
+    def transform(node : AssignWithRestriction)
+      transform(node.assign)
     end
 
     @false_literal : BoolLiteral?

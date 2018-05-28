@@ -33,14 +33,27 @@ describe "Regex" do
 
   it "does inspect with slash" do
     %r(/).inspect.should eq("/\\//")
+    %r(\/).inspect.should eq("/\\//")
   end
 
   it "does to_s with slash" do
     %r(/).to_s.should eq("(?-imsx:\\/)")
+    %r(\/).to_s.should eq("(?-imsx:\\/)")
   end
 
   it "doesn't crash when PCRE tries to free some memory (#771)" do
     expect_raises(ArgumentError) { Regex.new("foo)") }
+  end
+
+  it "checks if Char need to be escaped" do
+    Regex.needs_escape?('*').should be_true
+    Regex.needs_escape?('|').should be_true
+    Regex.needs_escape?('@').should be_false
+  end
+
+  it "checks if String need to be escaped" do
+    Regex.needs_escape?("10$").should be_true
+    Regex.needs_escape?("foo").should be_false
   end
 
   it "escapes" do

@@ -50,6 +50,26 @@ describe "ENV" do
     [1, 2].each { |i| ENV.values.should contain("SOMEVALUE_#{i}") }
   end
 
+  describe "[]=" do
+    it "disallows NUL-bytes in key" do
+      expect_raises(ArgumentError, "Key contains null byte") do
+        ENV["FOO\0BAR"] = "something"
+      end
+    end
+
+    it "disallows NUL-bytes in key if value is nil" do
+      expect_raises(ArgumentError, "Key contains null byte") do
+        ENV["FOO\0BAR"] = nil
+      end
+    end
+
+    it "disallows NUL-bytes in value" do
+      expect_raises(ArgumentError, "Value contains null byte") do
+        ENV["FOO"] = "BAR\0BAZ"
+      end
+    end
+  end
+
   describe "fetch" do
     it "fetches with one argument" do
       ENV["1"] = "2"

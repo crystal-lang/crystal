@@ -307,15 +307,12 @@ struct Tuple
     size <=> other.size
   end
 
-  # Returns a hash value based on this tuple's length and contents.
-  #
-  # See also: `Object#hash`.
-  def hash
-    hash = 31 * size
+  # See `Object#hash(hasher)`
+  def hash(hasher)
     {% for i in 0...T.size %}
-      hash = 31 * hash + self[{{i}}].hash
+      hasher = self[{{i}}].hash(hasher)
     {% end %}
-    hash
+    hasher
   end
 
   # Returns a tuple containing cloned elements of this tuple using the `clone` method.
@@ -364,14 +361,14 @@ struct Tuple
     {{T.size}}
   end
 
-  # Returns the types of this tuple.
+  # Returns the types of this tuple type.
   #
   # ```
   # tuple = {1, "hello", 'x'}
-  # tuple.types # => Tuple(Int32, String, Char)
+  # tuple.class.types # => {Int32, String, Char}
   # ```
-  def types
-    T
+  def self.types
+    Tuple.new(*{{T}})
   end
 
   # Same as `to_s`.
@@ -386,9 +383,9 @@ struct Tuple
   # tuple.to_s # => "{1, \"hello\"}"
   # ```
   def to_s(io)
-    io << "{"
+    io << '{'
     join ", ", io, &.inspect(io)
-    io << "}"
+    io << '}'
   end
 
   def pretty_print(pp) : Nil
@@ -409,6 +406,22 @@ struct Tuple
         {% end %}
       )
    {% end %}
+  end
+
+  # Like `map`, but the block gets passed both the element and its index.
+  #
+  # ```
+  # tuple = {1, 2.5, "a"}
+  # tuple.map_with_index { |e, i| "tuple[#{i}]: #{e}" } # => {"tuple[0]: 1", "tuple[1]: 2.5", "tuple[2]: a"}
+  # ```
+  def map_with_index
+    {% begin %}
+      Tuple.new(
+        {% for i in 0...T.size %}
+          (yield self[{{i}}], {{i}}),
+        {% end %}
+      )
+    {% end %}
   end
 
   # Returns a new tuple where the elements are in reverse order.

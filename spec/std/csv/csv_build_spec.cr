@@ -40,6 +40,17 @@ describe CSV do
       string.should eq(%("hello,world"\n))
     end
 
+    it "builds with custom separator" do
+      string = CSV.build(separator: ';') do |csv|
+        csv.row do |row|
+          row << "one"
+          row << "two"
+          row << "thr;ee"
+        end
+      end
+      string.should eq(%(one;two;"thr;ee"\n))
+    end
+
     it "builds with quotes" do
       string = CSV.build do |csv|
         csv.row do |row|
@@ -47,6 +58,15 @@ describe CSV do
         end
       end
       string.should eq(%("he said ""no"""\n))
+    end
+
+    it "builds with custom quote character" do
+      string = CSV.build(quote_char: '\'') do |csv|
+        csv.row do |row|
+          row << %(he said 'no')
+        end
+      end
+      string.should eq(%('he said ''no'''\n))
     end
 
     it "builds row from enumerable" do

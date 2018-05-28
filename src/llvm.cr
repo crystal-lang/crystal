@@ -94,11 +94,5 @@ module LLVM
     string
   end
 
-  {% if LibLLVM::IS_35 %}
-    DEBUG_METADATA_VERSION = 1
-  {% elsif LibLLVM::IS_36 %}
-    DEBUG_METADATA_VERSION = 2
-  {% else %}
-    DEBUG_METADATA_VERSION = 3
-  {% end %}
+  DEBUG_METADATA_VERSION = 3
 end

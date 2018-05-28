@@ -56,8 +56,8 @@
 # 0xfe012d # == 16646445
 # ```
 struct Int
-  alias Signed = Int8 | Int16 | Int32 | Int64
-  alias Unsigned = UInt8 | UInt16 | UInt32 | UInt64
+  alias Signed = Int8 | Int16 | Int32 | Int64 | Int128
+  alias Unsigned = UInt8 | UInt16 | UInt32 | UInt64 | UInt128
   alias Primitive = Signed | Unsigned
 
   # Returns a `Char` that has the unicode codepoint of `self`.
@@ -135,7 +135,7 @@ struct Int
 
   private def check_div_argument(other)
     if other == 0
-      raise DivisionByZero.new
+      raise DivisionByZeroError.new
     end
 
     {% begin %}
@@ -156,7 +156,7 @@ struct Int
   # See `Int#/` for more details.
   def %(other : Int)
     if other == 0
-      raise DivisionByZero.new
+      raise DivisionByZeroError.new
     elsif (self ^ other) >= 0
       self.unsafe_mod(other)
     else
@@ -172,7 +172,7 @@ struct Int
   # See `Int#div` for more details.
   def remainder(other : Int)
     if other == 0
-      raise DivisionByZero.new
+      raise DivisionByZeroError.new
     else
       unsafe_mod other
     end
@@ -296,6 +296,17 @@ struct Int
     self >> bit & 1
   end
 
+  # Returns `true` if all bits in *mask* are set on `self`.
+  #
+  # ```
+  # 0b0110.bits_set?(0b0110) # => true
+  # 0b1101.bits_set?(0b0111) # => false
+  # 0b1101.bits_set?(0b1100) # => true
+  # ```
+  def bits_set?(mask)
+    (self & mask) == mask
+  end
+
   def gcd(other : Int)
     self == 0 ? other.abs : (other % self).gcd(self)
   end
@@ -316,8 +327,9 @@ struct Int
     !even?
   end
 
-  def hash
-    self
+  # See `Object#hash(hasher)`
+  def hash(hasher)
+    hasher.int(self)
   end
 
   def succ
@@ -429,8 +441,10 @@ struct Int
   end
 
   private def internal_to_s(base, upcase = false)
-    chars = uninitialized UInt8[65]
-    ptr_end = chars.to_unsafe + 64
+    # Given sizeof(self) <= 128 bits, we need at most 128 bytes for a base 2
+    # representation, plus one byte for the trailing 0.
+    chars = uninitialized UInt8[129]
+    ptr_end = chars.to_unsafe + 128
     ptr = ptr_end
     num = self
 
@@ -451,6 +465,25 @@ struct Int
 
     count = (ptr_end - ptr).to_i32
     yield ptr, count
+  end
+
+  def inspect(io)
+    type = case self
+           when Int8    then "_i8"
+           when Int16   then "_i16"
+           when Int32   then ""
+           when Int64   then "_i64"
+           when Int128  then "_i128"
+           when UInt8   then "_u8"
+           when UInt16  then "_u16"
+           when UInt32  then "_u32"
+           when UInt64  then "_u64"
+           when UInt128 then "_u128"
+           else              raise "BUG: impossible"
+           end
+
+    to_s(io)
+    io << type
   end
 
   # Writes this integer to the given *io* in the given *format*.
@@ -479,9 +512,9 @@ struct Int
     include Iterator(T)
 
     @n : T
-    @index : Int32
+    @index : T
 
-    def initialize(@n : T, @index = 0)
+    def initialize(@n : T, @index = T.zero)
     end
 
     def next
@@ -495,7 +528,7 @@ struct Int
     end
 
     def rewind
-      @index = 0
+      @index = T.zero
       self
     end
   end
@@ -643,6 +676,30 @@ struct Int64
   end
 end
 
+struct Int128
+  # TODO: eventually update to literals once UInt128 bit support is finished
+  MIN = new(1) << 127
+  MAX = ~MIN
+
+  # Returns an `Int128` by invoking `to_i128` on *value*.
+  def self.new(value)
+    value.to_i128
+  end
+
+  def -
+    # TODO: use 0_i128 - self
+    Int128.new(0) - self
+  end
+
+  def popcount
+    Intrinsics.popcount128(self)
+  end
+
+  def clone
+    self
+  end
+end
+
 struct UInt8
   MIN =   0_u8
   MAX = 255_u8
@@ -724,6 +781,29 @@ struct UInt64
 
   def popcount
     Intrinsics.popcount64(self)
+  end
+
+  def clone
+    self
+  end
+end
+
+struct UInt128
+  # TODO: eventually update to literals once UInt128 bit support is finished
+  MIN = new 0
+  MAX = ~MIN
+
+  # Returns an `UInt128` by invoking `to_u128` on *value*.
+  def self.new(value)
+    value.to_u128
+  end
+
+  def abs
+    self
+  end
+
+  def popcount
+    Intrinsics.popcount128(self)
   end
 
   def clone

@@ -30,15 +30,17 @@ module HTTP
     typeof(Client.new(URI.new))
     typeof(Client.new(URI.parse("http://www.example.com")))
 
-    {% for method in %w(get post put head delete patch) %}
+    {% for method in %w(get post put head delete patch options) %}
       typeof(Client.{{method.id}} "url")
       typeof(Client.new("host").{{method.id}}("uri"))
       typeof(Client.new("host").{{method.id}}("uri", headers: Headers {"Content-Type" => "text/plain"}))
       typeof(Client.new("host").{{method.id}}("uri", body: "body"))
     {% end %}
 
-    typeof(Client.post_form "url", {"a" => "b"})
-    typeof(Client.post_form("url", {"a" => "b"}) { })
+    typeof(Client.post "url", form: {"a" => "b"})
+    typeof(Client.post("url", form: {"a" => "b"}) { })
+    typeof(Client.put "url", form: {"a" => "b"})
+    typeof(Client.put("url", form: {"a" => "b"}) { })
     typeof(Client.new("host").basic_auth("username", "password"))
     typeof(Client.new("host").before_request { |req| })
     typeof(Client.new("host").close)
@@ -86,7 +88,7 @@ module HTTP
         end
       {% else %}
         it "raises when trying to activate TLS" do
-          expect_raises do
+          expect_raises(Exception, "TLS is disabled") do
             Client.new "example.org", 443, tls: true
           end
         end

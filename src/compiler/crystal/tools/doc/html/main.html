@@ -1,27 +1,15 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
+  <%= HeadTemplate.new(nil, canonical_base_url) %>
   <meta id="repository-name" content="<%= repository_name %>">
-  <link href="css/style.css" rel="stylesheet" type="text/css" />
-  <script type="text/javascript" src="js/doc.js"></script>
   <title>README - <%= repository_name %></title>
 </head>
 <body>
 
-<div id="types-list">
-  <div id="search-box">
-    <input type="search" id="search-input" placeholder="Search...">
-  </div>
+<%= SidebarTemplate.new(repository_name, types, nil) %>
 
-  <ul>
-    <li class="current"><a href="index.html">README</a></li>
-  </ul>
-
-  <%= ListItemsTemplate.new(types, nil) %>
-</div>
-
-<div id="main-content">
+<div class="main-content">
 <%= body %>
 </div>
 </body>

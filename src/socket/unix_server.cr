@@ -8,9 +8,15 @@ require "./unix_socket"
 # ```
 # require "socket"
 #
+# def handle_client(client)
+#   message = client.gets
+#   client.puts message
+# end
+#
 # server = UNIXServer.new("/tmp/myapp.sock")
-# message = server.gets
-# server.puts message
+# while client = server.accept?
+#   spawn handle_client(client)
+# end
 # ```
 class UNIXServer < UNIXSocket
   include Socket::Server
@@ -58,7 +64,7 @@ class UNIXServer < UNIXSocket
   # this method.
   def accept? : UNIXSocket?
     if client_fd = accept_impl
-      sock = UNIXSocket.new(client_fd, type)
+      sock = UNIXSocket.new(client_fd, type, @path)
       sock.sync = sync?
       sock
     end

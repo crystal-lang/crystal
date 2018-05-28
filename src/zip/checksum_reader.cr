@@ -2,9 +2,7 @@ module Zip
   # Computes a CRC32 while reading from an underlying IO,
   # optionally verifying the computed value against an
   # expected one.
-  private class ChecksumReader
-    include IO
-
+  private class ChecksumReader < IO
     getter crc32 = CRC32.initial
 
     def initialize(@io : IO, @filename : String, verify @expected_crc32 : UInt32? = nil)

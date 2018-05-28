@@ -1,6 +1,5 @@
 require "../abi"
 
-# Based on https://github.com/rust-lang/rust/blob/master/src/librustc_trans/trans/cabi_x86_64.rs
 class LLVM::ABI::X86_64 < LLVM::ABI
   def abi_info(atys : Array(Type), rty : Type, ret_def : Bool, context : Context)
     arg_tys = Array(LLVM::Type).new(atys.size)
@@ -297,7 +296,7 @@ class LLVM::ABI::X86_64 < LLVM::ABI
 
     def sse?
       case self
-      when SSEFs, SSEFv, SSEDs, SSEDs
+      when SSEFs, SSEFv, SSEDs
         true
       else
         false

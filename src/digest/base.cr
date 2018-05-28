@@ -12,7 +12,7 @@ abstract class Digest::Base
   # method available. Returns the resulting digest afterwards.
   #
   # ```
-  # digest = Digest::MD5.hexdigest do |ctx|
+  # digest = Digest::MD5.digest do |ctx|
   #   ctx.update "f"
   #   ctx.update "oo"
   # end

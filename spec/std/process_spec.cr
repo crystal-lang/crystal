@@ -2,6 +2,8 @@ require "spec"
 require "process"
 require "tempfile"
 
+require "../spec_helper"
+
 describe Process do
   it "runs true" do
     process = Process.new("true")
@@ -37,7 +39,7 @@ describe Process do
 
   it "redirects output to /dev/null" do
     # This doesn't test anything but no output should be seen while running tests
-    Process.run("/bin/ls", output: false).exit_code.should eq(0)
+    Process.run("/bin/ls", output: Process::Redirect::Close).exit_code.should eq(0)
   end
 
   it "gets output" do
@@ -81,9 +83,25 @@ describe Process do
     $?.exit_code.should eq(0)
   end
 
+  it "chroot raises when unprivileged" do
+    status, output = build_and_run <<-'CODE'
+      begin
+        Process.chroot("/usr")
+        puts "FAIL"
+      rescue ex : Errno
+        puts (ex.errno == Errno::EPERM) ? "Success" : "FAIL: #{ex.message}"
+      rescue ex
+        puts "FAIL: #{ex.message}"
+      end
+    CODE
+
+    status.success?.should be_true
+    output.should eq("Success\n")
+  end
+
   it "sets working directory" do
     parent = File.dirname(Dir.current)
-    value = Process.run("pwd", shell: true, chdir: parent, output: nil) do |proc|
+    value = Process.run("pwd", shell: true, chdir: parent, output: Process::Redirect::Pipe) do |proc|
       proc.output.gets_to_end
     end
     value.should eq "#{parent}\n"
@@ -96,19 +114,19 @@ describe Process do
   end
 
   it "looks up programs in the $PATH with a shell" do
-    proc = Process.run("uname", {"-a"}, shell: true, output: false)
+    proc = Process.run("uname", {"-a"}, shell: true, output: Process::Redirect::Close)
     proc.exit_code.should eq(0)
   end
 
   it "allows passing huge argument lists to a shell" do
-    proc = Process.new(%(echo "${@}"), {"a", "b"}, shell: true, output: nil)
+    proc = Process.new(%(echo "${@}"), {"a", "b"}, shell: true, output: Process::Redirect::Pipe)
     output = proc.output.gets_to_end
     proc.wait
     output.should eq "a b\n"
   end
 
   it "does not run shell code in the argument list" do
-    proc = Process.new("echo", {"`echo hi`"}, shell: true, output: nil)
+    proc = Process.new("echo", {"`echo hi`"}, shell: true, output: Process::Redirect::Pipe)
     output = proc.output.gets_to_end
     proc.wait
     output.should eq "`echo hi`\n"
@@ -174,7 +192,7 @@ describe Process do
   it "executes the new process with exec" do
     tmpfile = Tempfile.new("crystal-spec-exec")
     tmpfile.close
-    tmpfile.unlink
+    tmpfile.delete
     File.exists?(tmpfile.path).should be_false
 
     fork = Process.fork do
@@ -183,7 +201,9 @@ describe Process do
     fork.wait
 
     File.exists?(tmpfile.path).should be_true
-    tmpfile.unlink
+    tmpfile.delete
+  ensure
+    File.delete(tmpfile.path) if tmpfile && File.exists?(tmpfile.path)
   end
 
   it "checks for existence" do

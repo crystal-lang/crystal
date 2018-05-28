@@ -35,10 +35,10 @@ describe "Code gen: tuple" do
       ").to_i.should eq(2)
   end
 
-  it "accesses a tuple type and creates instance from it" do
+  it "accesses T and creates instance from it" do
     run("
       struct Tuple
-        def types
+        def type_args
           T
         end
       end
@@ -53,7 +53,7 @@ describe "Code gen: tuple" do
       end
 
       t = {Foo.new(1)}
-      f = t.types[0].new(2)
+      f = t.type_args[0].new(2)
       f.x
       ").to_i.should eq(2)
   end

@@ -135,7 +135,7 @@ describe "NamedTuple" do
 
   it "computes a hash value" do
     tup1 = {a: 1, b: 'a'}
-    tup1.hash.should_not eq(0)
+    tup1.hash.should eq(tup1.dup.hash)
 
     tup2 = {b: 'a', a: 1}
     tup2.hash.should eq(tup1.hash)
@@ -257,6 +257,16 @@ describe "NamedTuple" do
     tup1.should_not eq(tup3)
   end
 
+  it "compares with named tuple union (#5131)" do
+    tup1 = {a: 1, b: 'a'}
+    tup2 = {a: 1, c: 'b'}
+    u = tup1 || tup2
+    u.should eq(u)
+
+    v = tup2 || tup1
+    u.should_not eq(v)
+  end
+
   it "does to_h" do
     tup1 = {a: 1, b: "hello"}
     hash = tup1.to_h
@@ -295,5 +305,16 @@ describe "NamedTuple" do
   it "does values" do
     tup = {a: 1, b: 'a'}
     tup.values.should eq({1, 'a'})
+  end
+
+  it "merges with other named tuple" do
+    a = {one: 1, two: 2, three: 3, four: 4, five: 5, "im \"string": "works"}
+    b = {two: "Two", three: true, "new one": "ok"}
+    c = a.merge(b).merge(four: "Four").should eq({one: 1, two: "Two", three: true, four: "Four", five: 5, "new one": "ok", "im \"string": "works"})
+  end
+
+  it "does types" do
+    tuple = {a: 1, b: 'a', c: "hello"}
+    tuple.class.types.to_s.should eq("{a: Int32, b: Char, c: String}")
   end
 end

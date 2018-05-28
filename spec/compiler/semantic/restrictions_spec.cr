@@ -77,7 +77,8 @@ describe "Restrictions" do
   it "self always matches instance type in return type" do
     assert_type(%(
       class Foo
-        macro def self.foo : self
+        def self.foo : self
+          {{ @type }}
           Foo.new
         end
       end
@@ -85,16 +86,49 @@ describe "Restrictions" do
       )) { types["Foo"] }
   end
 
-  it "allows typeof as restriction" do
-    assert_type(%(
-      struct Int32
-        def self.foo(x : typeof(self))
-          x
-        end
+  it "errors if using typeof" do
+    assert_error %(
+      def foo(x : typeof(1))
       end
 
-      Int32.foo 1
-      )) { int32 }
+      foo(1)
+      ),
+      "can't use typeof in type restrictions"
+  end
+
+  it "errors if using typeof inside generic type" do
+    assert_error %(
+      class Gen(T)
+      end
+
+      def foo(x : Gen(typeof(1)))
+      end
+
+      foo(Gen(Int32).new)
+      ),
+      "can't use typeof in type restrictions"
+  end
+
+  it "errors if using typeof in block restriction" do
+    assert_error %(
+      def foo(&x : typeof(1) -> )
+        yield 1
+      end
+
+      foo {}
+      ),
+      "can't use 'typeof' here"
+  end
+
+  it "errors if using typeof in block restriction" do
+    assert_error %(
+      def foo(&x : -> typeof(1))
+        yield
+      end
+
+      foo {}
+      ),
+      "can't use typeof in type restriction"
   end
 
   it "passes #278" do
@@ -413,5 +447,17 @@ describe "Restrictions" do
       foo(1)
       ),
       "undefined constant T"
+  end
+
+  it "sets number as free variable (#2699)" do
+    assert_error %(
+      def foo(x : T[N], y : T[N]) forall T, N
+      end
+
+      x = uninitialized UInt8[10]
+      y = uninitialized UInt8[11]
+      foo(x, y)
+      ),
+      "no overload matches"
   end
 end

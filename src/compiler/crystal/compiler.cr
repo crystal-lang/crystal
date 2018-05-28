@@ -123,6 +123,12 @@ module Crystal
     # Whether to show error trace
     property? show_error_trace = false
 
+    # Whether to link statically
+    property? static = false
+
+    # Whether to use llvm ThinLTO for linking
+    property thin_lto = false
+
     # Compiles the given *source*, with *output_filename* as the name
     # of the generated executable.
     #
@@ -174,6 +180,7 @@ module Crystal
       program.target_machine = target_machine
       program.flags << "release" if release?
       program.flags << "debug" unless debug.none?
+      program.flags << "static" if static?
       program.flags.concat @flags
       program.wants_doc = wants_doc?
       program.color = color?
@@ -228,14 +235,10 @@ module Crystal
 
     private def codegen(program, node : ASTNode, sources, output_filename)
       llvm_modules = @progress_tracker.stage("Codegen (crystal)") do
-        program.codegen node, debug: debug, single_module: @single_module || @release || @cross_compile || @emit, expose_crystal_main: false
+        program.codegen node, debug: debug, single_module: @single_module || (!@thin_lto && @release) || @cross_compile || @emit
       end
 
-      if @cross_compile
-        output_dir = "."
-      else
-        output_dir = CacheDir.instance.directory_for(sources)
-      end
+      output_dir = CacheDir.instance.directory_for(sources)
 
       bc_flags_changed = bc_flags_changed? output_dir
       target_triple = target_machine.triple
@@ -250,6 +253,10 @@ module Crystal
         cross_compile program, units, output_filename
       else
         result = codegen program, units, output_filename, output_dir
+
+        {% if flag?(:darwin) %}
+          run_dsymutil(output_filename) unless debug.none?
+        {% end %}
       end
 
       CacheDir.instance.cleanup if @cleanup
@@ -257,19 +264,32 @@ module Crystal
       result
     end
 
+    private def run_dsymutil(filename)
+      dsymutil = Process.find_executable("dsymutil")
+      return unless dsymutil
+
+      @progress_tracker.stage("dsymutil") do
+        Process.run(dsymutil, ["--flat", filename])
+      end
+    end
+
     private def cross_compile(program, units, output_filename)
-      llvm_mod = units.first.llvm_mod
+      unit = units.first
+      llvm_mod = unit.llvm_mod
       object_name = "#{output_filename}.o"
 
       optimize llvm_mod if @release
-      llvm_mod.print_to_file object_name.gsub(/\.o/, ".ll") if dump_ll?
+
+      if emit = @emit
+        unit.emit(emit, emit_base_filename || output_filename)
+      end
 
       target_machine.emit_obj_to_file llvm_mod, object_name
 
-      stdout.puts linker_command(program, object_name, output_filename)
+      stdout.puts linker_command(program, object_name, output_filename, nil)
     end
 
-    private def linker_command(program : Program, object_name, output_filename)
+    private def linker_command(program : Program, object_name, output_filename, output_dir)
       if program.has_flag? "windows"
         if object_name
           object_name = %("#{object_name}")
@@ -283,13 +303,30 @@ module Crystal
 
         %(#{CL} #{object_name} "/Fe#{output_filename}" #{program.lib_flags} #{link_flags})
       else
+        if thin_lto
+          clang = ENV["CLANG"]? || "clang"
+          lto_cache_dir = "#{output_dir}/lto.cache"
+          Dir.mkdir_p(lto_cache_dir)
+          {% if flag?(:darwin) %}
+            cc = ENV["CC"]? || "#{clang} -flto=thin -Wl,-mllvm,-threads=#{n_threads},-cache_path_lto,#{lto_cache_dir},#{@release ? "-mllvm,-O2" : "-mllvm,-O0"}"
+          {% else %}
+            cc = ENV["CC"]? || "#{clang} -flto=thin -Wl,-plugin-opt,jobs=#{n_threads},-plugin-opt,cache-dir=#{lto_cache_dir} #{@release ? "-O2" : "-O0"}"
+          {% end %}
+        else
+          cc = CC
+        end
+
         if object_name
           object_name = %('#{object_name}')
         else
           object_name = %("${@}")
         end
 
-        %(#{CC} #{object_name} -o '#{output_filename}' #{@link_flags} -rdynamic #{program.lib_flags})
+        link_flags = @link_flags || ""
+        link_flags += " -rdynamic"
+        link_flags += " -static" if static?
+
+        %(#{cc} #{object_name} -o '#{output_filename}' #{link_flags} #{program.lib_flags})
       end
     end
 
@@ -324,7 +361,21 @@ module Crystal
 
       @progress_tracker.stage("Codegen (linking)") do
         Dir.cd(output_dir) do
-          system(linker_command(program, nil, output_filename), object_names)
+          linker_command = linker_command(program, nil, output_filename, output_dir)
+
+          process_wrapper(linker_command, object_names) do |command, args|
+            Process.run(command, args, shell: true,
+              input: Process::Redirect::Close, output: Process::Redirect::Inherit, error: Process::Redirect::Pipe) do |process|
+              process.error.each_line(chomp: false) do |line|
+                hint_string = colorize("(this usually means you need to install the development package for lib\\1)").yellow.bold
+                line = line.gsub(/cannot find -l(\w+)/, "cannot find -l\\1 #{hint_string}")
+                line = line.gsub(/unable to find library -l(\w+)/, "unable to find library -l\\1 #{hint_string}")
+                line = line.gsub(/library not found for -l(\w+)/, "library not found for -l\\1 #{hint_string}")
+                STDERR << line
+              end
+            end
+            $?
+          end
         end
       end
 
@@ -427,7 +478,7 @@ module Crystal
 
     protected def target_machine
       @target_machine ||= begin
-        triple = @target_triple || LLVM.default_target_triple
+        triple = @target_triple || Crystal::Config.default_target_triple
         TargetMachine.create(triple, @mcpu || "", @mattr || "", @release)
       end
     rescue ex : ArgumentError
@@ -439,9 +490,6 @@ module Crystal
 
     protected def optimize(llvm_mod)
       fun_pass_manager = llvm_mod.new_function_pass_manager
-      {% if LibLLVM::IS_35 || LibLLVM::IS_36 %}
-        fun_pass_manager.add_target_data target_machine.data_layout
-      {% end %}
       pass_manager_builder.populate fun_pass_manager
       fun_pass_manager.run llvm_mod
       module_pass_manager.run llvm_mod
@@ -452,9 +500,6 @@ module Crystal
     private def module_pass_manager
       @module_pass_manager ||= begin
         mod_pass_manager = LLVM::ModulePassManager.new
-        {% if LibLLVM::IS_35 || LibLLVM::IS_36 %}
-          mod_pass_manager.add_target_data target_machine.data_layout
-        {% end %}
         pass_manager_builder.populate mod_pass_manager
         mod_pass_manager
       end
@@ -476,12 +521,20 @@ module Crystal
     end
 
     private def system(command, args = nil)
+      process_wrapper(command, args) do
+        ::system(command, args)
+        $?
+      end
+    end
+
+    private def process_wrapper(command, args = nil)
       stdout.puts "#{command} #{args.join " "}" if verbose?
 
-      ::system(command, args)
-      unless $?.success?
-        msg = $?.normal_exit? ? "code: #{$?.exit_code}" : "signal: #{$?.exit_signal} (#{$?.exit_signal.value})"
-        code = $?.normal_exit? ? $?.exit_code : 1
+      status = yield command, args
+
+      unless status.success?
+        msg = status.normal_exit? ? "code: #{status.exit_code}" : "signal: #{status.exit_signal} (#{status.exit_signal.value})"
+        code = status.normal_exit? ? status.exit_code : 1
         error "execution of command failed with #{msg}: `#{command}`", exit_code: code
       end
     end
@@ -528,8 +581,29 @@ module Crystal
       end
 
       def compile
+        if compiler.thin_lto
+          compile_to_thin_lto
+        else
+          compile_to_object
+        end
+      end
+
+      private def compile_to_thin_lto
+        {% unless LibLLVM::IS_38 || LibLLVM::IS_39 %}
+          # Here too, we first compile to a temporary file and then rename it
+          llvm_mod.write_bitcode_with_summary_to_file(temporary_object_name)
+          File.rename(temporary_object_name, object_name)
+          @reused_previous_compilation = false
+          dump_llvm_ir
+        {% else %}
+          raise {{ "ThinLTO is not available in LLVM #{LibLLVM::VERSION}".stringify }}
+        {% end %}
+      end
+
+      private def compile_to_object
         bc_name = self.bc_name
         object_name = self.object_name
+        temporary_object_name = self.temporary_object_name
 
         # To compile a file we first generate a `.bc` file and then
         # create an object file from it. These `.bc` files are stored
@@ -541,67 +615,55 @@ module Crystal
         # `.bc` file is exactly the same as the old one. In that case
         # the `.o` file will also be the same, so we simply reuse the
         # old one. Generating an `.o` file is what takes most time.
+        #
+        # However, instead of directly generating the final `.o` file
+        # from the `.bc` file, we generate it to a termporary name (`.o.tmp`)
+        # and then we rename that file to `.o`. We do this because the compiler
+        # could be interrupted while the `.o` file is being generated, leading
+        # to a corrupted file that later would cause compilation issues.
+        # Moving a file is an atomic operation so no corrupted `.o` file should
+        # be generated.
 
         must_compile = true
         can_reuse_previous_compilation =
           !compiler.emit && !@bc_flags_changed && File.exists?(bc_name) && File.exists?(object_name)
 
-        {% if LibLLVM::IS_35 %}
-          # In LLVM 3.5 we can't write a bitcode to memory,
-          # so instead we write it to another file
-          bc_name_new = self.bc_name_new
-          llvm_mod.write_bitcode_to_file(bc_name_new)
+        memory_buffer = llvm_mod.write_bitcode_to_memory_buffer
 
-          if can_reuse_previous_compilation
-            if FileUtils.cmp(bc_name, bc_name_new)
-              # If the user cancelled a previous compilation it might be that
-              # the .o file is empty
-              if File.size(object_name) > 0
-                File.delete bc_name_new
-                must_compile = false
-              end
-            end
-          end
+        if can_reuse_previous_compilation
+          memory_io = IO::Memory.new(memory_buffer.to_slice)
+          changed = File.open(bc_name) { |bc_file| !FileUtils.cmp(bc_file, memory_io) }
 
-          if must_compile
-            # Create/overwrite the .bc file (for next compilations)
-            File.rename(bc_name_new, bc_name)
-            compiler.optimize llvm_mod if compiler.release?
-            compiler.target_machine.emit_obj_to_file llvm_mod, object_name
-          end
-        {% else %}
-          memory_buffer = llvm_mod.write_bitcode_to_memory_buffer
-
-          if can_reuse_previous_compilation
-            memory_io = IO::Memory.new(memory_buffer.to_slice)
-            changed = File.open(bc_name) { |bc_file| !FileUtils.cmp(bc_file, memory_io) }
-
-            # If the user cancelled a previous compilation
-            # it might be that the .o file is empty
-            if !changed && File.size(object_name) > 0
-              must_compile = false
-              memory_buffer.dispose
-              memory_buffer = nil
-            else
-              # We need to compile, so we'll write the memory buffer to file
-            end
-          end
-
-          # If there's a memory buffer, it means we must create a .o from it
-          if memory_buffer
-            # Create the .bc file (for next compilations)
-            File.write(bc_name, memory_buffer.to_slice)
+          # If the user cancelled a previous compilation
+          # it might be that the .o file is empty
+          if !changed && File.size(object_name) > 0
+            must_compile = false
             memory_buffer.dispose
+            memory_buffer = nil
+          else
+            # We need to compile, so we'll write the memory buffer to file
           end
-        {% end %}
+        end
+
+        # If there's a memory buffer, it means we must create a .o from it
+        if memory_buffer
+          # Create the .bc file (for next compilations)
+          File.write(bc_name, memory_buffer.to_slice)
+          memory_buffer.dispose
+        end
 
         if must_compile
           compiler.optimize llvm_mod if compiler.release?
-          compiler.target_machine.emit_obj_to_file llvm_mod, object_name
+          compiler.target_machine.emit_obj_to_file llvm_mod, temporary_object_name
+          File.rename(temporary_object_name, object_name)
         else
           @reused_previous_compilation = true
         end
 
+        dump_llvm_ir
+      end
+
+      private def dump_llvm_ir
         llvm_mod.print_to_file ll_name if compiler.dump_ll?
       end
 
@@ -630,6 +692,10 @@ module Crystal
 
       def object_filename
         "#{@name}.o"
+      end
+
+      def temporary_object_name
+        Crystal.relative_filename("#{@output_dir}/#{object_filename}.tmp")
       end
 
       def bc_name

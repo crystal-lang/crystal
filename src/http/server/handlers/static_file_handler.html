@@ -7,8 +7,7 @@
     <h2>Directory listing for <%= HTML.escape request_path %></h2>
     <hr/>
     <ul>
-      <% Dir.foreach(path) do |entry| %>
-        <% next if entry == "." || entry == ".." %>
+      <% Dir.each_child(path) do |entry| %>
         <li>
           <a href="<%= request_path == "/" ? "" : escaped_request_path %>/<%= URI.escape entry %>"><%= HTML.escape entry %></a>
         </li>

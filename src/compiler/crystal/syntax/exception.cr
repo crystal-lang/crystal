@@ -41,17 +41,17 @@ module Crystal
           if line
             io << "\n\n"
             io << replace_leading_tabs_with_spaces(line.chomp)
-            io << "\n"
+            io << '\n'
             (@column_number - 1).times do
-              io << " "
+              io << ' '
             end
             with_color.green.bold.surround(io) do
-              io << "^"
+              io << '^'
               if size = @size
                 io << ("~" * (size - 1))
               end
             end
-            io << "\n"
+            io << '\n'
           end
         end
       end

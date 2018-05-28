@@ -71,7 +71,7 @@ module Crystal
     end
   end
 
-  class ToolException < Exception
+  class LocationlessException < Exception
     def to_s_with_source(source, io)
       io << @message
     end

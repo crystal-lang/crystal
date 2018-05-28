@@ -14,7 +14,7 @@ class PrettyPrint
   # Creates a new pretty printer that will write to the given *output*
   # and be capped at *maxwidth*.
   def initialize(@output : IO, @maxwidth = 79, @newline = "\n", @indent = 0)
-    @output_width = 0
+    @output_width = @indent
     @buffer_width = 0
 
     # Buffer of object that can't yet be printed to
@@ -90,7 +90,7 @@ class PrettyPrint
     if group.break?
       flush
       @output << @newline
-      @indent.times { @output << " " }
+      @indent.times { @output << ' ' }
       @output_width = @indent
       @buffer_width = 0
     else
@@ -201,8 +201,8 @@ class PrettyPrint
       @width = 0
     end
 
-    def output(out, output_width)
-      @objs.each { |obj| out << obj }
+    def output(io, output_width)
+      @objs.each { |obj| io << obj }
       output_width + @width
     end
 
@@ -223,15 +223,15 @@ class PrettyPrint
       @group.breakables.push self
     end
 
-    def output(out, output_width)
+    def output(io, output_width)
       @group.breakables.shift
       if @group.break?
-        out << @pp.newline
-        @indent.times { out << " " }
+        io << @pp.newline
+        @indent.times { io << ' ' }
         @indent
       else
         @pp.group_queue.delete @group if @group.breakables.empty?
-        out << @obj
+        io << @obj
         output_width + @width
       end
     end
