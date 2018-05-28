@@ -184,6 +184,26 @@ describe "Float" do
     end
   end
 
+  describe "#inspect" do
+    it "does inspect for f64" do
+      3.2.inspect.should eq("3.2")
+    end
+
+    it "does inspect for f32" do
+      3.2_f32.inspect.should eq("3.2_f32")
+    end
+
+    it "does inspect for f64 with IO" do
+      str = String.build { |io| 3.2.inspect(io) }
+      str.should eq("3.2")
+    end
+
+    it "does inspect for f32" do
+      str = String.build { |io| 3.2_f32.inspect(io) }
+      str.should eq("3.2_f32")
+    end
+  end
+
   describe "hash" do
     it "does for Float32" do
       1.2_f32.hash.should_not eq(0)
@@ -240,14 +260,15 @@ describe "Float" do
     1.0_f32.clone.should eq(1.0_f32)
   end
 
-  it "constants have right decimal value" do
-    Float32::MIN.should eq -3.40282347e+38_f32
-    Float32::MAX.should eq 3.40282347e+38_f32
-    Float32::EPSILON.should eq 1.19209290e-07_f32
-    Float32::MIN_POSITIVE.should eq 1.17549435e-38_f32
-    Float64::MIN.should eq -1.7976931348623157e+308_f64
-    Float64::MAX.should eq 1.7976931348623157e+308_f64
-    Float64::EPSILON.should eq 2.2204460492503131e-16_f64
-    Float64::MIN_POSITIVE.should eq 2.2250738585072014e-308_f64
+  it "constants have right binary value" do
+    Float32::MIN.unsafe_as(UInt32).should eq 0xff7fffff_u32
+    Float32::MAX.unsafe_as(UInt32).should eq 0x7f7fffff_u32
+    Float32::EPSILON.unsafe_as(UInt32).should eq 0x34000000_u32
+    Float32::MIN_POSITIVE.unsafe_as(UInt32).should eq 0x00800000_u32
+
+    Float64::MIN.unsafe_as(UInt64).should eq 0xffefffffffffffff_u64
+    Float64::MAX.unsafe_as(UInt64).should eq 0x7fefffffffffffff_u64
+    Float64::EPSILON.unsafe_as(UInt64).should eq 0x3cb0000000000000_u64
+    Float64::MIN_POSITIVE.unsafe_as(UInt64).should eq 0x0010000000000000_u64
   end
 end

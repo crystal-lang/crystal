@@ -103,12 +103,12 @@ struct Float32
   NAN      = (0_f32 / 0_f32).as Float32
   INFINITY = (1_f32 / 0_f32).as Float32
   # Smallest finite value
-  MIN = 0xff7fffff_u32.unsafe_as(Float32) # -3.40282347e+38_f32
+  MIN = -3.40282347e+38_f32
   # Largest finite value
-  MAX = 0x7f7fffff_u32.unsafe_as(Float32) # 3.40282347e+38_f32
+  MAX = 3.40282347e+38_f32
   # The machine epsilon (difference between 1.0 and the next representable value)
   # value is
-  EPSILON = 0x34000000_u32.unsafe_as(Float32) # 1.19209290e-07_f32
+  EPSILON = 1.19209290e-07_f32
   # The number of decimal digits that can be represented without losing precision
   DIGITS = 15
   # The radix or integer base used by the internal representation
@@ -124,7 +124,7 @@ struct Float32
   # The maximum possible power of 10 exponent (such that 10**MAX_10_EXP is representable)
   MAX_10_EXP = 38
   # Smallest representable positive value
-  MIN_POSITIVE = 0x00800000_u32.unsafe_as(Float32) # 1.17549435e-38_f32
+  MIN_POSITIVE = 1.17549435e-38_f32
 
   # Returns a `Float32` by invoking `to_f32` on *value*.
   def self.new(value)
@@ -169,6 +169,11 @@ struct Float32
     Printer.print(self, io)
   end
 
+  def inspect(io)
+    to_s(io)
+    io << "_f32"
+  end
+
   def hash
     unsafe_as(Int32)
   end
@@ -183,11 +188,11 @@ struct Float64
   INFINITY = (1_f64 / 0_f64).as Float64
 
   # Smallest finite value
-  MIN = 0xffefffffffffffff_u64.unsafe_as(Float64) # -1.7976931348623157e+308_f64
+  MIN = -1.7976931348623157e+308_f64
   # Largest finite value
-  MAX = 0x7fefffffffffffff_u64.unsafe_as(Float64) # 1.7976931348623157e+308_f64
+  MAX = 1.7976931348623157e+308_f64
   # The machine epsilon (difference between 1.0 and the next representable value)
-  EPSILON = 0x3cb0000000000000_u64.unsafe_as(Float64) # 2.2204460492503131e-16_f64
+  EPSILON = 2.2204460492503131e-16_f64
   # The number of decimal digits that can be represented without losing precision
   DIGITS = 15
   # The radix or integer base used by the internal representation
@@ -203,7 +208,7 @@ struct Float64
   # The maximum possible power of 10 exponent (such that 10**MAX_10_EXP is representable)
   MAX_10_EXP = 308
   # Smallest representable positive value
-  MIN_POSITIVE = 0x0010000000000000_u64.unsafe_as(Float64) # 2.2250738585072014e-308_f64
+  MIN_POSITIVE = 2.2250738585072014e-308_f64
 
   # Returns a `Float64` by invoking `to_f64` on *value*.
   def Float64.new(value)
