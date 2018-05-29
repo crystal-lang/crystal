@@ -459,6 +459,18 @@ module Enumerable(T)
     self.select { |elem| pattern === elem }
   end
 
+  # Returns an `Array` with all the elements in the collection that
+  # instances of the `Class`.
+  #
+  # ```
+  # ["Alice", 2].grep(String) # => ["Alice"]
+  # ```
+  def grep(klass : T.class) forall T
+    ary = [] of T
+    each { |elem| ary << elem if elem.is_a?(T) }
+    ary
+  end
+
   # Returns a `Hash` whose keys are each different value that the passed block
   # returned when run for each element in the collection, and which values are
   # an `Array` of the elements for which the block returned that value.
