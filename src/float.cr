@@ -115,7 +115,7 @@ struct Float32
   # value is
   EPSILON = 1.19209290e-07_f32
   # The number of decimal digits that can be represented without losing precision
-  DIGITS = 15
+  DIGITS = 6
   # The radix or integer base used by the internal representation
   RADIX = 2
   # The number of digits that can be represented without losing precision (in base RADIX)
