@@ -453,6 +453,15 @@ describe "Enumerable" do
     it "returns empty array if nothing matches" do
       %w(Alice Bob Mallory).grep(/nothing/).should eq [] of String
     end
+
+    it "works with classes" do
+      ["Alice", 2, :Cipher, "Anna"].grep(String).should eq ["Alice", "Anna"]
+    end
+
+    it "returns an Array of specific type when works with classes" do
+      typeof(["Alice", 2, :Cipher, "Anna"].grep(String))
+        .should eq(Array(String))
+    end
   end
 
   describe "group_by" do
