@@ -112,7 +112,6 @@ struct Float32
   # Largest finite value
   MAX = 3.40282347e+38_f32
   # The machine epsilon (difference between 1.0 and the next representable value)
-  # value is
   EPSILON = 1.19209290e-07_f32
   # The number of decimal digits that can be represented without losing precision
   DIGITS = 6
