@@ -570,6 +570,8 @@ module Crystal
           case atomic
           when ClassDef, ModuleDef, EnumDef, FunDef, Def
             break
+          else
+            # skip
           end
 
           # Allow '.' after newline for chaining calls

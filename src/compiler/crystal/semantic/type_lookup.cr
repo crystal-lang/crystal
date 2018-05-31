@@ -272,6 +272,8 @@ class Crystal::Type
         case instance_type
         when GenericUnionType, PointerType, StaticArrayType, TupleType, ProcType
           check_type_allowed_in_generics(type_var, type, "can't use #{type} as a generic type argument")
+        else
+          # skip
         end
 
         type_vars << type.virtual_type
