@@ -28,10 +28,20 @@ class Crystal::Path
     end
 
     similar_name = type.lookup_similar_path(self)
+
     if similar_name
       self.raise("undefined constant #{self} #{type.program.colorize("(did you mean '#{similar_name}')").yellow.bold}")
     else
-      self.raise("undefined constant #{self}")
+      example_require = %(require "./#{self.to_s.underscore}")
+      colorized_require_example = type.program.colorize(example_require).yellow.bold
+      self.raise <<-ERROR
+      undefined constant #{type.program.colorize(self).bold.yellow}
+
+      Try this...
+
+        ▸ Require the file with #{type.program.colorize(self).bold}. For example: #{colorized_require_example}
+        ▸ If #{type.program.colorize(self).bold} is from a shard, make sure you required it.
+      ERROR
     end
   end
 end
