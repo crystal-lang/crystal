@@ -19,6 +19,7 @@ end
 describe "URI" do
   assert_uri("http://www.example.com", scheme: "http", host: "www.example.com")
   assert_uri("http://www.example.com:81", scheme: "http", host: "www.example.com", port: 81)
+  assert_uri("http://[::1]:81", scheme: "http", host: "[::1]", port: 81)
   assert_uri("http://www.example.com/foo", scheme: "http", host: "www.example.com", path: "/foo")
   assert_uri("http://www.example.com/foo?q=1", scheme: "http", host: "www.example.com", path: "/foo", query: "q=1")
   assert_uri("http://www.example.com?q=1", scheme: "http", host: "www.example.com", query: "q=1")
