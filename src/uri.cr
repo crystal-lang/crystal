@@ -119,6 +119,27 @@ class URI
   def initialize(@scheme = nil, @host = nil, @port = nil, @path = nil, @query = nil, @user = nil, @password = nil, @fragment = nil, @opaque = nil)
   end
 
+  # Returns the host part of the URI and unwrap brackets for IPv6 addresses.
+  #
+  # ```
+  # URI.parse("http://[::1]/bar").hostname # => "::1"
+  # URI.parse("http://[::1]/bar").host     # => "[::1]"
+  # ```
+  def hostname
+    host.try { |h| URI.hostname(h) }
+  end
+
+  # Returns the *host* without brackets for IPv6 addresses. See `URI#hostname`.
+  #
+  # ```
+  # URI.hostname("www.example.org") # => "www.example.org"
+  # URI.hostname("127.0.0.1")       # => "127.0.0.1"
+  # URI.hostname("[::1]")           # => "::1"
+  # ```
+  def self.hostname(host : String)
+    host[0] == '[' && host[-1] == ']' ? host[1..-2] : host
+  end
+
   # Returns the full path of this URI.
   #
   # ```

@@ -651,11 +651,7 @@ class HTTP::Client
     socket = @socket
     return socket if socket
 
-    # URI host may have ipv6 enclosed by brackets and is fine according to
-    # rfc3986. The host http header must contains the brackets, ie: the same
-    # value as returned by URI#host
-    ip_host = @host[0] == '[' && @host[-1] == ']' ? @host[1..-2] : @host
-    socket = TCPSocket.new ip_host, @port, @dns_timeout, @connect_timeout
+    socket = TCPSocket.new URI.hostname(@host), @port, @dns_timeout, @connect_timeout
     socket.read_timeout = @read_timeout if @read_timeout
     socket.sync = false
     @socket = socket

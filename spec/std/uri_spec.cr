@@ -33,6 +33,12 @@ describe "URI" do
   assert_uri("/foo?q=1", path: "/foo", query: "q=1")
   assert_uri("mailto:foo@example.org", scheme: "mailto", path: nil, opaque: "foo@example.org")
 
+  describe "hostname" do
+    it { URI.parse("http://www.example.com/foo").hostname.should eq("www.example.com") }
+    it { URI.parse("http://[::1]/foo").hostname.should eq("::1") }
+    it { URI.parse("/foo").hostname.should be_nil }
+  end
+
   describe "full_path" do
     it { URI.parse("http://www.example.com/foo").full_path.should eq("/foo") }
     it { URI.parse("http://www.example.com").full_path.should eq("/") }
