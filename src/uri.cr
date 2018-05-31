@@ -137,7 +137,7 @@ class URI
   # URI.hostname("[::1]")           # => "::1"
   # ```
   def self.hostname(host : String)
-    host[0] == '[' && host[-1] == ']' ? host[1..-2] : host
+    host.starts_with?('[') && host.ends_with?(']') ? host[1..-2] : host
   end
 
   # Returns the full path of this URI.
