@@ -67,7 +67,7 @@ jobs:
       - run: |
           git clone https://github.com/crystal-lang/distribution-scripts.git ~/distribution-scripts
           cd ~/distribution-scripts
-          git checkout 4d0e3169857ce40a84c2ba8269c56c3cb78f882e
+          git checkout 0a21a002309eb17c581394f03b3cf1f1eb8d4450
       # persist relevant information for build process
       - run: |
           cd ~/distribution-scripts
@@ -79,7 +79,7 @@ jobs:
 
           # Which previous version use
           export PREVIOUS_CRYSTAL_BASE_URL="https://github.com/crystal-lang/crystal/releases/download/0.24.2/crystal-0.24.2-1"
-          echo "export PREVIOUS_CRYSTAL_RELEASE_LINUX_TARGZ=${PREVIOUS_CRYSTAL_BASE_URL}-linux-x86_64.tar.gz" >> build.env
+          echo "export PREVIOUS_CRYSTAL_RELEASE_LINUX64_TARGZ=${PREVIOUS_CRYSTAL_BASE_URL}-linux-x86_64.tar.gz" >> build.env
           echo "export PREVIOUS_CRYSTAL_RELEASE_LINUX32_TARGZ=${PREVIOUS_CRYSTAL_BASE_URL}-linux-i686.tar.gz" >> build.env
           echo "export PREVIOUS_CRYSTAL_RELEASE_DARWIN_TARGZ=${PREVIOUS_CRYSTAL_BASE_URL}-darwin-x86_64.tar.gz" >> build.env
 
@@ -167,7 +167,7 @@ jobs:
           cd /tmp/workspace/distribution-scripts
           source build.env
           cd linux
-          make release=true
+          make all64 release=true
       - persist_to_workspace:
           root: /tmp/workspace/distribution-scripts/linux/
           paths:
