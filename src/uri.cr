@@ -129,13 +129,7 @@ class URI
     host.try { |h| URI.hostname(h) }
   end
 
-  # Returns the *host* without brackets for IPv6 addresses. See `URI#hostname`.
-  #
-  # ```
-  # URI.hostname("www.example.org") # => "www.example.org"
-  # URI.hostname("127.0.0.1")       # => "127.0.0.1"
-  # URI.hostname("[::1]")           # => "::1"
-  # ```
+  # :nodoc:
   def self.hostname(host : String)
     host.starts_with?('[') && host.ends_with?(']') ? host[1..-2] : host
   end
