@@ -77,7 +77,7 @@ class Crystal::Case
   #    - `true` means 'this case is exhaustive surely'.
   #    - `false` means 'it cannot check exhaustiveness of this case'.
   #
-  # And, it raises compilation error when the compuler found non-exhaustive pattern(s).
+  # And, it raises compilation error when the compiler found non-exhaustive pattern(s).
   def check_exhaustiveness
     case_cond = self.cond.not_nil!
 

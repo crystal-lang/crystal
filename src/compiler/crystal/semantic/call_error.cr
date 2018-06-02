@@ -574,7 +574,7 @@ class Crystal::Call
   def check_visibility(match)
     case match.def.visibility
     when .public?
-      # nothing
+      # public methods can always be invoked
     when .private?
       if obj = @obj
         if obj.is_a?(Var) && obj.name == "self"
