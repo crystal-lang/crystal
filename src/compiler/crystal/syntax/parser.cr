@@ -2485,7 +2485,7 @@ module Crystal
                   tuple_elements = [] of ASTNode
 
                   while true
-                    tuple_elements << parse_when_expression(cond)
+                    tuple_elements << parse_when_expression(cond, single: false)
                     skip_space
                     if @token.type == :","
                       next_token_skip_space_or_newline
@@ -2505,7 +2505,7 @@ module Crystal
                   check :"}"
                   next_token_skip_space
                 else
-                  exp = parse_when_expression(cond)
+                  exp = parse_when_expression(cond, single: true)
                   when_conds << exp
                   add_when_exp(when_exps, exp)
                   skip_space
@@ -2515,7 +2515,7 @@ module Crystal
               end
             else
               while true
-                exp = parse_when_expression(cond)
+                exp = parse_when_expression(cond, single: true)
                 when_conds << exp
                 add_when_exp(when_exps, exp)
                 skip_space
@@ -2609,7 +2609,7 @@ module Crystal
       false
     end
 
-    def parse_when_expression(cond)
+    def parse_when_expression(cond, single)
       if cond && @token.type == :"."
         next_token
         call = parse_var_or_call(force_call: true)
@@ -2623,6 +2623,8 @@ module Crystal
           raise "BUG: expected Call, RespondsTo, IsA, Cast or NilableCast"
         end
         call
+      elsif single && @token.type == :UNDERSCORE
+        raise "'when _' is not supported, use 'else' block instead"
       else
         parse_op_assign_no_control
       end
