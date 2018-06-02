@@ -1657,6 +1657,9 @@ describe "Parser" do
     assert_syntax_error %(case x; when 1..2; 2; when 1..2; end), "duplicate when 1..2 in case"
     assert_syntax_error %(case x; when /x/; 2; when /x/; end), "duplicate when /x/ in case"
     assert_syntax_error %(case x; when X; 2; when X; end), "duplicate when X in case"
+    assert_syntax_error "case x; when _; end", "'when _' is not supported, use 'else' block instead"
+    assert_syntax_error "case x; when 1; when _; end", "'when _' is not supported, use 'else' block instead"
+    assert_syntax_error "case x; when 1, _; end", "'when _' is not supported, use 'else' block instead"
 
     it_parses "%w{one  two}", (["one".string, "two".string] of ASTNode).array_of(Path.global("String"))
     it_parses "%w{one\ntwo}", (["one".string, "two".string] of ASTNode).array_of(Path.global("String"))

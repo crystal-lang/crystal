@@ -100,8 +100,4 @@ describe "Normalize: case" do
   it "normalizes case with multiple expressions and non-tuple" do
     assert_expand_second "x, y = 1, 2; case {x, y}; when 1; 4; end", "if 1 === ({x, y})\n  4\nend"
   end
-
-  it "normalizes case with single expressions with underscore" do
-    assert_expand_second "x = 1; case x; when _; 2; end", "if true\n  2\nend"
-  end
 end
