@@ -441,9 +441,7 @@ module Crystal
       puts
       puts "Macro runs:"
       program.compiled_macros_cache.each do |filename, compiled_macro_run|
-        print " - "
-        print filename
-        print ": "
+        print " - #{filename}: "
         if compiled_macro_run.reused
           print "reused previous compilation (#{compiled_macro_run.elapsed})"
         else
