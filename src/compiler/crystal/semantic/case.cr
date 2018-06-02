@@ -120,9 +120,6 @@ class Crystal::Case
 
     self.whens.each &.conds.each do |when_cond|
       case when_cond
-      when Underscore
-        # TODO: we really need this special case?
-        return true
       when TupleLiteral
         next unless when_cond.elements.size == case_tuple.elements.size
 

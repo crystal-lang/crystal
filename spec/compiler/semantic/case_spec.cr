@@ -58,19 +58,6 @@ describe "Semantic: case" do
       ) { nil_type }
   end
 
-  it "passes exhaustivness check if 'case' has 'when _' block" do
-    assert_type %(
-      require "prelude"
-
-      foo = true ? 42 : "foo"
-
-      case foo
-      when String
-      when _
-      end
-      ) { nil_type }
-  end
-
   it "passes exhaustiveness check if all values are exhausted" do
     assert_type %(
       require "prelude"
@@ -129,20 +116,6 @@ describe "Semantic: case" do
         :int32_string
       end
       ) { symbol }
-  end
-
-  it "passes tuple exhaustivness check if 'case' has 'when _' block" do
-    assert_type %(
-      require "prelude"
-
-      foo = true ? 42 : "foo"
-      bar = true ? 3.14 : :bar
-
-      case foo
-      when {String, Float64}
-      when _
-      end
-      ) { nil_type }
   end
 
   it "checks exhaustiveness after loop" do
