@@ -29,7 +29,7 @@ class Crystal::Doc::Macro
 
   def id
     String.build do |io|
-      io << to_s.gsub(/<.+?>/, "").gsub(' ', "")
+      io << to_s.gsub(/<.+?>/, "").delete(' ')
       io << "-macro"
     end
   end
@@ -39,7 +39,7 @@ class Crystal::Doc::Macro
   end
 
   def anchor
-    "#" + URI.escape(id)
+    '#' + URI.escape(id)
   end
 
   def prefix
