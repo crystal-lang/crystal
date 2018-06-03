@@ -22,7 +22,7 @@ private def run_expand_tool(code)
     end
   end
 
-  code = code.gsub('‸', "")
+  code = code.delete('‸')
 
   if cursor_location
     visitor, result = processed_expand_visitor(code, cursor_location)
