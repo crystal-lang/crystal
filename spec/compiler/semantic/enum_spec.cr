@@ -390,4 +390,24 @@ describe "Semantic: enum" do
       ),
       "can't declare type inside enum"
   end
+
+  it "errors on negative flag enum member" do
+    assert_error %(
+      @[Flags]
+      enum Foo
+        A = -1
+      end
+      ),
+      "flags enum member must be positive"
+  end
+
+  it "doesn't error on negative normal enum member" do
+    assert_type(%(
+      enum Foo
+        A = -1
+      end
+
+      Foo::A.value
+      )) { int32 }
+  end
 end

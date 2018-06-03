@@ -632,7 +632,11 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
       end
 
       if default_value = member.default_value
-        counter = interpret_enum_value(default_value, base_type)
+        enum_value = interpret_enum_value(default_value, base_type)
+        if is_flags && enum_value < 0
+          default_value.raise "flags enum member must be positive"
+        end
+        counter = enum_value
       end
 
       if default_value.is_a?(Crystal::NumberLiteral)
