@@ -260,6 +260,11 @@ module Crystal
       node
     end
 
+    def transform(node : OverflowCheckScope)
+      node.body = node.body.transform(self)
+      node
+    end
+
     def transform(node : Generic)
       node.name = node.name.transform(self)
       transform_many node.type_vars

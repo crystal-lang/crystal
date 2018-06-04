@@ -153,7 +153,7 @@ class Crystal::SpecRunOutput
   end
 end
 
-def run(code, filename = nil, inject_primitives = true, debug = Crystal::Debug::None, overflow_check = Crystal::OverflowCheck::Default)
+def run(code, filename = nil, inject_primitives = true, debug = Crystal::Debug::None, overflow_check = Crystal::DefaultOverflowCheckPolicy)
   code = inject_primitives(code) if inject_primitives
 
   # Code that requires the prelude doesn't run in LLVM's MCJIT

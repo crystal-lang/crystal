@@ -1526,6 +1526,30 @@ module Crystal
     def_equals_and_hash @body, @types, @name
   end
 
+  class OverflowCheckScope < ASTNode
+    enum Policy
+      Unchecked
+      Checked
+    end
+
+    property body : ASTNode
+    property policy : Policy
+
+    def initialize(@policy : Policy, body = nil)
+      @body = Expressions.from body
+    end
+
+    def accept_children(visitor)
+      @body.accept visitor
+    end
+
+    def clone_without_location
+      OverflowCheckScope.new(@policy, @body.clone)
+    end
+
+    def_equals_and_hash @policy, @body
+  end
+
   class ExceptionHandler < ASTNode
     property body : ASTNode
     property rescues : Array(Rescue)?

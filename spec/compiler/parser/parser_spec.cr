@@ -126,6 +126,9 @@ module Crystal
     it_parses "foo[1] /2", Call.new(Call.new("foo".call, "[]", 1.int32), "/", 2.int32)
     it_parses "[1] /2", Call.new(([1.int32] of ASTNode).array, "/", 2.int32)
 
+    it_parses "checked { 1 + 2 }", OverflowCheckScope.new(OverflowCheckScope::Policy::Checked, Expressions.from([Call.new(1.int32, "+", 2.int32)] of ASTNode))
+    it_parses "unchecked { 1 + 2 }", OverflowCheckScope.new(OverflowCheckScope::Policy::Unchecked, Expressions.from([Call.new(1.int32, "+", 2.int32)] of ASTNode))
+
     it_parses "!1", Not.new(1.int32)
     it_parses "- 1", Call.new(1.int32, "-")
     it_parses "+ 1", Call.new(1.int32, "+")
@@ -181,6 +184,7 @@ module Crystal
       extend class struct module enum while until return
       next break lib fun alias pointerof sizeof
       instance_sizeof typeof private protected asm out
+      checked unchecked
       end
     ).each do |kw|
       assert_syntax_error "def foo(#{kw}); end", "cannot use '#{kw}' as an argument name", 1, 9
@@ -1643,6 +1647,8 @@ module Crystal
       assert_end_location "extend Foo"
       assert_end_location "1.as(Int32)"
       assert_end_location "puts obj.foo"
+      assert_end_location "checked { 1 + 1 }"
+      assert_end_location "unchecked { 1 + 1 }"
 
       assert_syntax_error %({"a" : 1}), "space not allowed between named argument name and ':'"
       assert_syntax_error %({"a": 1, "b" : 2}), "space not allowed between named argument name and ':'"

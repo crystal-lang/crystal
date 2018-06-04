@@ -1087,6 +1087,20 @@ module Crystal
       false
     end
 
+    def visit(node : OverflowCheckScope)
+      case node.policy
+      when OverflowCheckScope::Policy::Unchecked
+        @str << "unchecked"
+      when OverflowCheckScope::Policy::Checked
+        @str << "checked"
+      end
+
+      @str << " {"
+      node.body.accept self
+      @str << '}'
+      false
+    end
+
     def to_s_binary(node, op)
       left_needs_parens = need_parens(node.left)
       in_parenthesis(left_needs_parens, node.left)

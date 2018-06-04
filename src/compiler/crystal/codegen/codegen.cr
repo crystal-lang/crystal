@@ -15,7 +15,7 @@ module Crystal
   GET_EXCEPTION_NAME = "__crystal_get_exception"
 
   class Program
-    def run(code, filename = nil, debug = Debug::Default, overflow_check = OverflowCheck::Default)
+    def run(code, filename = nil, debug = Debug::Default, overflow_check = DefaultOverflowCheckPolicy)
       parser = Parser.new(code)
       parser.filename = filename
       node = parser.parse
@@ -24,7 +24,7 @@ module Crystal
       evaluate node, debug: debug, overflow_check: overflow_check
     end
 
-    def evaluate(node, debug = Debug::Default, overflow_check = OverflowCheck::Default)
+    def evaluate(node, debug = Debug::Default, overflow_check = DefaultOverflowCheckPolicy)
       llvm_mod = codegen(node, single_module: true, debug: debug, overflow_check: overflow_check)[""].mod
       main = llvm_mod.functions[MAIN_NAME]
 
@@ -60,7 +60,7 @@ module Crystal
       end
     end
 
-    def codegen(node, single_module = false, debug = Debug::Default, overflow_check = OverflowCheck::Default)
+    def codegen(node, single_module = false, debug = Debug::Default, overflow_check = DefaultOverflowCheckPolicy)
       visitor = CodeGenVisitor.new self, node, single_module: single_module, debug: debug, overflow_check: overflow_check
       visitor.accept node
       visitor.process_finished_hooks
@@ -140,9 +140,9 @@ module Crystal
     @main_llvm_typer : LLVMTyper
     @main_module_info : ModuleInfo
     @main_builder : CrystalLLVMBuilder
-    @overflow_check : Crystal::OverflowCheck
+    @overflow_check : OverflowCheckScope::Policy
 
-    def initialize(@program : Program, @node : ASTNode, single_module = false, @debug = Debug::Default, @overflow_check = OverflowCheck::Default)
+    def initialize(@program : Program, @node : ASTNode, single_module = false, @debug = Debug::Default, @overflow_check = DefaultOverflowCheckPolicy)
       @single_module = !!single_module
       @abi = @program.target_machine.abi
       @llvm_context = LLVM::Context.new

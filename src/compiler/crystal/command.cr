@@ -302,10 +302,10 @@ class Crystal::Command
         end
         # TODO change deafult
         opts.on("--overflow-checked", "Perform integer overflow check") do
-          compiler.overflow_check = Crystal::OverflowCheck::Checked
+          compiler.overflow_check = Crystal::OverflowCheckScope::Policy::Checked
         end
         opts.on("--overflow-unchecked", "Skip integer overflow check (default)") do
-          compiler.overflow_check = Crystal::OverflowCheck::Unchecked
+          compiler.overflow_check = Crystal::OverflowCheckScope::Policy::Unchecked
         end
         {% unless LibLLVM::IS_38 || LibLLVM::IS_39 %}
         opts.on("--lto=FLAG", "Use ThinLTO --lto=thin") do |flag|
@@ -497,10 +497,10 @@ class Crystal::Command
     end
     # TODO change deafult
     opts.on("--overflow-checked", "Perform integer overflow check") do
-      compiler.overflow_check = Crystal::OverflowCheck::Checked
+      compiler.overflow_check = Crystal::OverflowCheckScope::Policy::Checked
     end
     opts.on("--overflow-unchecked", "Skip integer overflow check (default)") do
-      compiler.overflow_check = Crystal::OverflowCheck::Unchecked
+      compiler.overflow_check = Crystal::OverflowCheckScope::Policy::Unchecked
     end
     opts.on("-D FLAG", "--define FLAG", "Define a compile-time flag") do |flag|
       compiler.flags << flag

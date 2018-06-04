@@ -12,11 +12,8 @@ module Crystal
     Default     = LineNumbers
   end
 
-  enum OverflowCheck
-    Unchecked
-    Checked
-    Default   = Unchecked # TODO change
-  end
+  # TODO change to checked in future release
+  DefaultOverflowCheckPolicy = OverflowCheckScope::Policy::Unchecked
 
   # Main interface to the compiler.
   #
@@ -52,7 +49,7 @@ module Crystal
     property debug = Debug::Default
 
     # Defines the default overflow check policy
-    property overflow_check = OverflowCheck::Default
+    property overflow_check = DefaultOverflowCheckPolicy
 
     # If `true`, `.ll` files will be generated in the default cache
     # directory for each generated LLVM module.

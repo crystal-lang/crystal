@@ -762,6 +762,10 @@ module Crystal
           if next_char == 's' && next_char == 'e'
             return check_ident_or_keyword(:case, start)
           end
+        when 'h'
+          if next_char == 'e' && next_char == 'c' && next_char == 'k' && next_char == 'e' && next_char == 'd'
+            return check_ident_or_keyword(:checked, start)
+          end
         when 'l'
           if next_char == 'a' && next_char == 's' && next_char == 's'
             return check_ident_or_keyword(:class, start)
@@ -1002,6 +1006,10 @@ module Crystal
       when 'u'
         if next_char == 'n'
           case next_char
+          when 'c'
+            if next_char == 'h' && next_char == 'e' && next_char == 'c' && next_char == 'k' && next_char == 'e' && next_char == 'd'
+              return check_ident_or_keyword(:unchecked, start)
+            end
           when 'i'
             case next_char
             when 'o'

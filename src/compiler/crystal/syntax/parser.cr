@@ -1064,6 +1064,10 @@ module Crystal
               parse_annotation_def
             end
           end
+        when :unchecked
+          check_type_declaration { parse_unchecked }
+        when :checked
+          check_type_declaration { parse_checked }
         else
           set_visibility parse_var_or_call
         end
@@ -1347,6 +1351,31 @@ module Crystal
         end
       end
       types
+    end
+
+    def parse_checked
+      parse_overflow_check_scope OverflowCheckScope::Policy::Checked
+    end
+
+    def parse_unchecked
+      parse_overflow_check_scope OverflowCheckScope::Policy::Unchecked
+    end
+
+    def parse_overflow_check_scope(policy)
+      slash_is_regex!
+      next_token_skip_space_or_newline
+
+      check :"{"
+      next_token_skip_space_or_newline
+
+      body = parse_expressions
+      skip_statement_end
+
+      end_location = token_end_location
+      check :"}"
+      next_token_skip_space
+
+      OverflowCheckScope.new(policy, body).at_end(end_location)
     end
 
     def parse_while
@@ -3724,6 +3753,7 @@ module Crystal
            :extend, :class, :struct, :module, :enum, :while, :until, :return,
            :next, :break, :lib, :fun, :alias, :pointerof, :sizeof,
            :instance_sizeof, :typeof, :private, :protected, :asm, :out,
+           :checked, :unchecked,
       # `end` is also invalid because it maybe terminate `def` block.
            :end
         true
