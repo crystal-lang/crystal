@@ -38,6 +38,8 @@ Project Status
 
 Crystal is still under heavy development. There can be breaking changes but we're trying to keep them as minimum as possible.
 
+The development is possible thanks to the community's effort, [84codes](https://www.84codes.com/)' support, and every [BountySource supporter](https://crystal-lang.org/sponsors).
+
 Installing
 ----------
 
