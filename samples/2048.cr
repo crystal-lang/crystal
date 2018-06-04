@@ -117,7 +117,7 @@ class Drawer
   end
 
   def space_line
-    line "│", " ", "│", "│"
+    line '│', " ", '│', '│'
   end
 
   def content_line
@@ -127,15 +127,15 @@ class Drawer
   end
 
   def top_border
-    line "┌", "─", "┬", "┐"
+    line '┌', "─", '┬', '┐'
   end
 
   def mid_border
-    line "├", "─", "┼", "┤"
+    line '├', "─", '┼', '┤'
   end
 
   def bottom_border
-    line "└", "─", "┴", "┘"
+    line '└', "─", '┴', '┘'
   end
 
   def line(left, fill, inner, right)
