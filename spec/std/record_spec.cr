@@ -21,7 +21,7 @@ describe "record" do
     rec.x.should eq(1)
     rec.y.should be(ary)
 
-    copy = rec.copy(x: 5)
+    copy = rec.copy_with(x: 5)
     copy.x.should eq(5)
     copy.y.should be(rec.y)
 
@@ -36,7 +36,7 @@ describe "record" do
     rec.x.should eq(0)
     rec.y.should eq([2, 3])
 
-    copy = rec.copy(y: [7, 8])
+    copy = rec.copy_with(y: [7, 8])
     copy.x.should eq(rec.x)
     copy.y.should eq([7, 8])
 
@@ -51,7 +51,7 @@ describe "record" do
     rec.x.should eq(0)
     rec.y.should eq([2, 3])
 
-    copy = rec.copy(y: [7, 8])
+    copy = rec.copy_with(y: [7, 8])
     copy.x.should eq(rec.x)
     copy.y.should eq([7, 8])
 
