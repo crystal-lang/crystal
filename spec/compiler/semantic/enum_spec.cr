@@ -203,6 +203,7 @@ describe "Semantic: enum" do
       @[Flags]
       enum Foo
         None = 42
+        Dummy
       end
       ),
       "flags enum can't redefine None member to non-0"
@@ -211,6 +212,7 @@ describe "Semantic: enum" do
       @[Flags]
       enum Foo
         None    # 1
+        Dummy
       end
       ),
       "flags enum can't redefine None member to non-0"
@@ -221,6 +223,7 @@ describe "Semantic: enum" do
       @[Flags]
       enum Foo
         None = 0
+        Dummy
       end
 
       Foo::None.value
@@ -254,6 +257,7 @@ describe "Semantic: enum" do
         @[Flags]
         enum Foo
           None
+          Dummy
           All = 50
         end
       end
@@ -381,6 +385,14 @@ describe "Semantic: enum" do
   it "errors on enum without members (#3447)" do
     assert_error %(
       enum Foo
+      end
+      ),
+      "enum Foo must have at least one member"
+
+    assert_error %(
+      @[Flags]
+      enum Foo
+        None = 0
       end
       ),
       "enum Foo must have at least one member"
