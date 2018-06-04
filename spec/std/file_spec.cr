@@ -238,7 +238,7 @@ describe "File" do
   end
 
   describe "same?" do
-    it "compares following symlinks by default or requested" do
+    it "compares following symlinks only if requested" do
       file = "#{__DIR__}/data/test_file.txt"
       symlink = "#{__DIR__}/data/test_file_symlink.txt"
       other = "#{__DIR__}/data/test_file.ini"
@@ -246,7 +246,7 @@ describe "File" do
       begin
         File.symlink(file, symlink)
 
-        File.same?(file, symlink).should be_true
+        File.same?(file, symlink).should be_false
         File.same?(file, symlink, follow_symlinks: true).should be_true
         File.same?(file, symlink, follow_symlinks: false).should be_false
         File.same?(file, other).should be_false
@@ -263,7 +263,7 @@ describe "File" do
       begin
         File.symlink(in_path, out_path)
         File.symlink?(out_path).should be_true
-        File.same?(in_path, out_path).should be_true
+        File.same?(in_path, out_path, follow_symlinks: true).should be_true
       ensure
         File.delete(out_path) if File.exists?(out_path)
       end

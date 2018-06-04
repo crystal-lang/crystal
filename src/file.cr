@@ -84,7 +84,7 @@ class File < IO::FileDescriptor
 
   # Returns `true` if *path1* and *path2* represents the same file.
   # The comparison take symlinks in consideration if *follow_symlinks* is `true`.
-  def self.same?(path1 : String, path2 : String, follow_symlinks = true) : Bool
+  def self.same?(path1 : String, path2 : String, follow_symlinks = false) : Bool
     info(path1, follow_symlinks).same_file? info(path2, follow_symlinks)
   end
 
