@@ -126,12 +126,7 @@ class URI
   # URI.parse("http://[::1]/bar").host     # => "[::1]"
   # ```
   def hostname
-    host.try { |h| URI.hostname(h) }
-  end
-
-  # :nodoc:
-  def self.hostname(host : String)
-    host.starts_with?('[') && host.ends_with?(']') ? host[1..-2] : host
+    host.try { |host| host.starts_with?('[') && host.ends_with?(']') ? host[1..-2] : host }
   end
 
   # Returns the full path of this URI.
