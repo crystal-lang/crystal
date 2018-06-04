@@ -569,13 +569,13 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
         is_flags: enum_type.flags?)
     end
 
-    nb_members = enum_type.types.size
-    if nb_members > 0 && enum_type.flags?
+    num_members = enum_type.types.size
+    if num_members > 0 && enum_type.flags?
       # skip None & All, they doesn't count as members for @[Flags] enums
-      nb_members = enum_type.types.count { |(name, _)| !{"None", "All"}.includes?(name) }
+      num_members = enum_type.types.count { |(name, _)| !{"None", "All"}.includes?(name) }
     end
 
-    if nb_members == 0
+    if num_members == 0
       node.raise "enum #{node.name} must have at least one member"
     end
 
