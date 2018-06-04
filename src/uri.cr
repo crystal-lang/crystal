@@ -119,6 +119,16 @@ class URI
   def initialize(@scheme = nil, @host = nil, @port = nil, @path = nil, @query = nil, @user = nil, @password = nil, @fragment = nil, @opaque = nil)
   end
 
+  # Returns the host part of the URI and unwrap brackets for IPv6 addresses.
+  #
+  # ```
+  # URI.parse("http://[::1]/bar").hostname # => "::1"
+  # URI.parse("http://[::1]/bar").host     # => "[::1]"
+  # ```
+  def hostname
+    host.try { |host| host.starts_with?('[') && host.ends_with?(']') ? host[1..-2] : host }
+  end
+
   # Returns the full path of this URI.
   #
   # ```
