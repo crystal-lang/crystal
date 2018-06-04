@@ -82,6 +82,12 @@ class File < IO::FileDescriptor
     Crystal::System::File.exists?(path)
   end
 
+  # Returns `true` if *path1* and *path2* represents the same file.
+  # The comparison take symlinks in consideration if *follow_symlinks* is `true`.
+  def self.same?(path1 : String, path2 : String, follow_symlinks = false) : Bool
+    info(path1, follow_symlinks).same_file? info(path2, follow_symlinks)
+  end
+
   # Returns the size of *filename* bytes. Raises `Errno` if the file at *path*
   # does not exist.
   #

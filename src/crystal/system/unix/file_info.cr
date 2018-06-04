@@ -54,7 +54,7 @@ struct Crystal::System::FileInfo < ::File::Info
     @stat.st_gid.to_u32
   end
 
-  def ==(other : ::File::Info) : Bool
+  def same_file?(other : ::File::Info) : Bool
     @stat.st_dev == other.@stat.st_dev && @stat.st_ino == other.@stat.st_ino
   end
 end
