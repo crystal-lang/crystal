@@ -56,10 +56,13 @@ describe "Crystal::Hasher" do
       Int64::MAX.hash.should eq(Int64::MAX.hash)
     end
 
-    pending "128bit types should be hashed ok" do
-      1.to_i128.hash.should eq(1_i8.hash)
-      1.to_u128.hash.should eq(1_u8.hash)
-    end
+    # TODO: remove fencing when 128bits support is added to non-native platforms
+    {% if flag?(:bits64) %}
+      it "128bit types should be hashed ok" do
+        1.to_i128.hash.should eq(1_i8.hash)
+        1.to_u128.hash.should eq(1_u8.hash)
+      end
+    {% end %}
 
     it "#float should change state and differ" do
       hasher = TestHasher.for_test
