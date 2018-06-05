@@ -26,10 +26,14 @@ struct Time::Format
   end
 
   module Pattern
-    def rfc_2822(time_zone_gmt = false)
+    def rfc_2822(time_zone_gmt = false, two_digit_day = false)
       cfws?
       short_day_name_with_comma?
-      day_of_month
+      if two_digit_day
+        day_of_month_zero_padded
+      else
+        day_of_month
+      end
       cfws
       short_month_name
       cfws

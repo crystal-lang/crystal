@@ -40,12 +40,12 @@ describe HTTP do
   describe "generates HTTP date" do
     it "without time zone" do
       time = Time.utc(1994, 11, 6, 8, 49, 37, nanosecond: 0)
-      HTTP.format_time(time).should eq("Sun, 6 Nov 1994 08:49:37 GMT")
+      HTTP.format_time(time).should eq("Sun, 06 Nov 1994 08:49:37 GMT")
     end
 
     it "with local time zone" do
       time = Time.new(1994, 11, 6, 8, 49, 37, nanosecond: 0, location: Time::Location.load("Europe/Berlin"))
-      HTTP.format_time(time).should eq(time.to_utc.to_s("%a, %-d %b %Y %H:%M:%S GMT"))
+      HTTP.format_time(time).should eq(time.to_utc.to_s("%a, %d %b %Y %H:%M:%S GMT"))
     end
   end
 
