@@ -105,6 +105,13 @@ class Crystal::Command
   rescue ex : Crystal::LocationlessException
     error ex.message
   rescue ex : Crystal::Exception
+    # https://developer.apple.com/library/content/qa/qa1118/_index.html
+    {% if flag?(:darwin) %}
+      STDERR.puts <<-INFO
+      macOS doesn't support static linking.
+      For more information: https://developer.apple.com/library/content/qa/qa1118/_ind
+      INFO
+   {% end %}
     ex.color = @color
     if @config.try(&.output_format) == "json"
       STDERR.puts ex.to_json
@@ -407,15 +414,7 @@ class Crystal::Command
           compiler.verbose = true
         end
         opts.on("--static", "Link statically") do
-          # https://developer.apple.com/library/content/qa/qa1118/_index.html
-          {% if flag?(:darwin) %}
-            abort <<-E
-            macOS doesn't support static linking.
-            For more information: https://developer.apple.com/library/content/qa/qa1118/_index.html
-            E
-          {% else %}
-            compiler.static = true
-          {% end %}
+          compiler.static = true
         end
       end
 
