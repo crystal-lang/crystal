@@ -28,7 +28,7 @@ struct Time::Format
     # *time* is always converted to UTC.
     def self.format(time : Time, io : IO)
       formatter = Formatter.new(time.to_utc, io)
-      formatter.rfc_2822(time_zone_gmt: true)
+      formatter.rfc_2822(time_zone_gmt: true, two_digit_day: true)
       io
     end
 
