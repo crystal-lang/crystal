@@ -107,8 +107,28 @@ end
 struct Float32
   NAN      = (0_f32 / 0_f32).as Float32
   INFINITY = (1_f32 / 0_f32).as Float32
-  MIN      = (-INFINITY).as Float32
-  MAX      = INFINITY.as Float32
+  # Smallest finite value
+  MIN = -3.40282347e+38_f32
+  # Largest finite value
+  MAX = 3.40282347e+38_f32
+  # The machine epsilon (difference between 1.0 and the next representable value)
+  EPSILON = 1.19209290e-07_f32
+  # The number of decimal digits that can be represented without losing precision
+  DIGITS = 6
+  # The radix or integer base used by the internal representation
+  RADIX = 2
+  # The number of digits that can be represented without losing precision (in base RADIX)
+  MANT_DIGITS = 24
+  # The minimum possible normal power of 2 exponent
+  MIN_EXP = -125
+  # The maximum possible normal power of 2 exponent
+  MAX_EXP = 128
+  # The minimum possible power of 10 exponent (such that 10**MIN_10_EXP is representable)
+  MIN_10_EXP = -37
+  # The maximum possible power of 10 exponent (such that 10**MAX_10_EXP is representable)
+  MAX_10_EXP = 38
+  # Smallest representable positive value
+  MIN_POSITIVE = 1.17549435e-38_f32
 
   # Returns a `Float32` by invoking `to_f32` on *value*.
   def self.new(value)
@@ -170,8 +190,29 @@ end
 struct Float64
   NAN      = (0_f64 / 0_f64).as Float64
   INFINITY = (1_f64 / 0_f64).as Float64
-  MIN      = (-INFINITY).as Float64
-  MAX      = INFINITY.as Float64
+
+  # Smallest finite value
+  MIN = -1.7976931348623157e+308_f64
+  # Largest finite value
+  MAX = 1.7976931348623157e+308_f64
+  # The machine epsilon (difference between 1.0 and the next representable value)
+  EPSILON = 2.2204460492503131e-16_f64
+  # The number of decimal digits that can be represented without losing precision
+  DIGITS = 15
+  # The radix or integer base used by the internal representation
+  RADIX = 2
+  # The number of digits that can be represented without losing precision (in base RADIX)
+  MANT_DIGITS = 53
+  # The minimum possible normal power of 2 exponent
+  MIN_EXP = -1021
+  # The maximum possible normal power of 2 exponent
+  MAX_EXP = 1024
+  # The minimum possible power of 10 exponent (such that 10**MIN_10_EXP is representable)
+  MIN_10_EXP = -307
+  # The maximum possible power of 10 exponent (such that 10**MAX_10_EXP is representable)
+  MAX_10_EXP = 308
+  # Smallest representable positive value
+  MIN_POSITIVE = 2.2250738585072014e-308_f64
 
   # Returns a `Float64` by invoking `to_f64` on *value*.
   def Float64.new(value)
