@@ -254,11 +254,6 @@ module HTTP
     Time::Format::HTTP_DATE.format(time)
   end
 
-  # DEPRECATED: Use `HTTP.format_time` instead.
-  def self.rfc1123_time(time : Time) : String
-    format_time(time)
-  end
-
   # Dequotes an [RFC 2616](https://tools.ietf.org/html/rfc2616#page-17)
   # quoted-string.
   #
