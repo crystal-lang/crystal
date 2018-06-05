@@ -29,7 +29,8 @@ class Crystal::Doc::Macro
 
   def id
     String.build do |io|
-      io << to_s.gsub(/<.+?>/, "").delete(' ') << "-macro"
+      io << to_s.gsub(/<.+?>/, "").delete(' ')
+      io << "-macro"
     end
   end
 
