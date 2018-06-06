@@ -16,6 +16,8 @@ module HTTP
     Mandatory
   end
 
+  SUPPORTED_VERSIONS = {"HTTP/1.0", "HTTP/1.1"}
+
   # :nodoc:
   def self.parse_headers_and_body(io, body_type : BodyType = BodyType::OnDemand, decompress = true)
     headers = Headers.new

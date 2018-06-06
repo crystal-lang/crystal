@@ -178,6 +178,11 @@ module HTTP
       request.should be_a(Request::BadRequest)
     end
 
+    it "handles unsupported HTTP version" do
+      request = Request.from_io(IO::Memory.new("GET / HTTP/1.2\r\nContent-Length: 0\r\n\r\n"))
+      request.should be_a(Request::BadRequest)
+    end
+
     it "handles long request lines" do
       request = Request.from_io(IO::Memory.new("GET /#{"a" * 4096} HTTP/1.1\r\n\r\n"))
       request.should be_a(Request::BadRequest)
