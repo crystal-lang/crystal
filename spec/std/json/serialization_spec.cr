@@ -170,6 +170,8 @@ describe "JSON serialization" do
 
     it "deserializes Time" do
       Time.from_json(%("2016-11-16T09:55:48-03:00")).to_utc.should eq(Time.utc(2016, 11, 16, 12, 55, 48))
+      Time.from_json(%("2016-11-16T09:55:48-0300")).to_utc.should eq(Time.utc(2016, 11, 16, 12, 55, 48))
+      Time.from_json(%("20161116T095548-03:00")).to_utc.should eq(Time.utc(2016, 11, 16, 12, 55, 48))
     end
 
     describe "parse exceptions" do
