@@ -237,7 +237,7 @@ struct Time::Format
       @nanosecond = (decimals * 10 ** (precision_shift + nanoseconds_shift)).to_i
     end
 
-    def second_fraction?
+    def second_fraction?(fraction_digits = nil)
       if current_char == '.'
         next_char
         nanoseconds

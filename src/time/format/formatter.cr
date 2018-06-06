@@ -135,8 +135,8 @@ struct Time::Format
       nanoseconds
     end
 
-    def second_fraction?
-      unless time.nanosecond == 0
+    def second_fraction?(fraction_digits = nil)
+      unless time.nanosecond == 0 || fraction_digits == 0
         char '.'
         second_fraction
       end

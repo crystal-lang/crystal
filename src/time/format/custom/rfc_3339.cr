@@ -9,26 +9,26 @@ struct Time::Format
     end
 
     # Formats a `Time` into the given *io*.
-    def self.format(time : Time, io : IO)
+    def self.format(time : Time, io : IO, fraction_digits = nil)
       formatter = Formatter.new(time, io)
-      formatter.rfc_3339
+      formatter.rfc_3339(fraction_digits: fraction_digits)
       io
     end
 
     # Formats a `Time` into a `String`.
-    def self.format(time : Time)
+    def self.format(time : Time, fraction_digits = nil)
       String.build do |io|
-        format(time, io)
+        format(time, io, fraction_digits: fraction_digits)
       end
     end
   end
 
   module Pattern
-    def rfc_3339
+    def rfc_3339(fraction_digits = nil)
       year_month_day
       char 'T', 't', ' '
       twenty_four_hour_time_with_seconds
-      second_fraction?
+      second_fraction?(fraction_digits: fraction_digits)
       time_zone_z_or_offset(force_colon: true)
     end
   end

@@ -363,8 +363,14 @@ describe "JSON serialization" do
       {"foo" => {"bar" => 1}}.to_pretty_json(indent: " ").should eq(%({\n "foo": {\n  "bar": 1\n }\n}))
     end
 
-    it "does for time" do
-      Time.utc(2016, 11, 16, 12, 55, 48).to_json.should eq(%("2016-11-16T12:55:48Z"))
+    describe "Time" do
+      it "#to_json" do
+        Time.utc(2016, 11, 16, 12, 55, 48).to_json.should eq(%("2016-11-16T12:55:48Z"))
+      end
+
+      it "omit sub-second precision" do
+        Time.utc(2016, 11, 16, 12, 55, 48, nanosecond: 123456789).to_json.should eq(%("2016-11-16T12:55:48Z"))
+      end
     end
   end
 end

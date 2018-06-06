@@ -132,7 +132,7 @@ struct Time
   #
   # See `#from_json` for reference.
   def to_json(json : JSON::Builder)
-    json.string(Time::Format::RFC_3339.format(self))
+    json.string(Time::Format::RFC_3339.format(self, fraction_digits: 0))
   end
 end
 

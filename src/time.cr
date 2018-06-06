@@ -896,7 +896,7 @@ struct Time
   # This is similar to `.parse_rfc3339` but RFC 3339 defines a more strict format.
   # In ISO 8601 for examples, field delimiters (`-`, `:`) are optional.
   #
-  # Use `#to_rfc3339` to format a `Time` according to ISO 8601.
+  # Use `#to_rfc3339` to format a `Time` according to .
   def self.parse_iso8601(time : String)
     Format::ISO_8601_DATE_TIME.parse(time)
   end
