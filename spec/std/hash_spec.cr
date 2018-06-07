@@ -95,6 +95,15 @@ describe "Hash" do
       # a[2].should raise_exception
       a.should eq({1 => 2})
     end
+
+    it "gets with union key" do
+      a = {1 => 2, "hello" => 3, 4.2 => 4}
+      a[1].should eq(2)
+      a["hello"].should eq(3)
+
+      key = 1.as(Int32 | String)
+      a[key].should eq(2)
+    end
   end
 
   describe "[]=" do
