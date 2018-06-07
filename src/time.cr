@@ -988,6 +988,13 @@ struct Time
   def_at_beginning(hour) { Time.new(year, month, day, hour, location: location) }
   def_at_beginning(minute) { Time.new(year, month, day, hour, minute, location: location) }
 
+  # Returns a copy of this `Time` representing the beginning of the seconds.
+  #
+  # This essentially scaps off `nanoseconds`.
+  def at_beginning_of_second : Time
+    Time.new(seconds: total_seconds, nanoseconds: 0, location: location)
+  end
+
   # Returns a copy of this `Time` representing the beginning of the week.
   #
   # TODO: Ensure correctness in local time-line.
@@ -1045,6 +1052,11 @@ struct Time
   def_at_end(day) { Time.new(year, month, day, 23, 59, 59, nanosecond: 999_999_999, location: location) }
   def_at_end(hour) { Time.new(year, month, day, hour, 59, 59, nanosecond: 999_999_999, location: location) }
   def_at_end(minute) { Time.new(year, month, day, hour, minute, 59, nanosecond: 999_999_999, location: location) }
+
+  # Returns a copy of this `Time` representing the end of the second.
+  def at_end_of_second
+    Time.new(seconds: total_seconds, nanoseconds: 999_999_999, location: location)
+  end
 
   # Returns a copy of this `Time` representing midday (`12:00`) of the same day.
   def at_midday : Time

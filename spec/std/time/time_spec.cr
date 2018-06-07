@@ -845,6 +845,7 @@ describe Time do
     t1.at_beginning_of_day.should eq parse_time("2014-11-25 00:00:00.0")
     t1.at_beginning_of_hour.should eq parse_time("2014-11-25 10:00:00.0")
     t1.at_beginning_of_minute.should eq parse_time("2014-11-25 10:11:00.0")
+    t1.at_beginning_of_second.should eq parse_time("2014-11-25 10:11:12.0")
 
     t1.at_end_of_year.should eq parse_time("2014-12-31 23:59:59.999999999")
 
@@ -862,6 +863,7 @@ describe Time do
     t1.at_end_of_day.should eq parse_time("2014-11-25 23:59:59.999999999")
     t1.at_end_of_hour.should eq parse_time("2014-11-25 10:59:59.999999999")
     t1.at_end_of_minute.should eq parse_time("2014-11-25 10:11:59.999999999")
+    t1.at_end_of_second.should eq parse_time("2014-11-25 10:11:12.999999999")
 
     t1.at_midday.should eq parse_time("2014-11-25 12:00:00.0")
 
