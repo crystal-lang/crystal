@@ -193,9 +193,9 @@ describe "Semantic: enum" do
       end
       ))
     enum_type = result.program.types["Foo"].as(EnumType)
-    enum_type.types["OtherNone"].as(Const).value.should eq(NumberLiteral.new(0, :i32))
-    enum_type.types["Bar"].as(Const).value.should eq(NumberLiteral.new(1, :i32))
-    enum_type.types["Baz"].as(Const).value.should eq(NumberLiteral.new(2, :i32))
+    enum_type.types["OtherNone"].as(Const).value.should eq(NumberLiteral.new("0", :i32))
+    enum_type.types["Bar"].as(Const).value.should eq(NumberLiteral.new("1", :i32))
+    enum_type.types["Baz"].as(Const).value.should eq(NumberLiteral.new("2", :i32))
   end
 
   it "disallows None value when defined with @[Flags]" do

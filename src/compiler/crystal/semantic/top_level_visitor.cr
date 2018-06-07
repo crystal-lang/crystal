@@ -576,7 +576,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
     unless existed
       if enum_type.flags?
         unless enum_type.types["None"]?
-          none = NumberLiteral.new(0, enum_base_type.kind)
+          none = NumberLiteral.new("0", enum_base_type.kind)
           none.type = enum_type
           enum_type.add_constant Arg.new("None", default_value: none)
 
@@ -584,7 +584,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
         end
 
         unless enum_type.types["All"]?
-          all = NumberLiteral.new(all_value, enum_base_type.kind)
+          all = NumberLiteral.new(all_value.to_s, enum_base_type.kind)
           all.type = enum_type
           enum_type.add_constant Arg.new("All", default_value: all)
         end
@@ -643,7 +643,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
       end
 
       all_value |= counter
-      const_value = NumberLiteral.new(counter, base_type.kind)
+      const_value = NumberLiteral.new(counter.to_s, base_type.kind)
       member.default_value = const_value
       if enum_type.types.has_key?(member.name)
         member.raise "enum '#{enum_type}' already contains a member named '#{member.name}'"
