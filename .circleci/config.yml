@@ -67,7 +67,7 @@ jobs:
       - run: |
           git clone https://github.com/crystal-lang/distribution-scripts.git ~/distribution-scripts
           cd ~/distribution-scripts
-          git checkout a026d041d98bd3ceb84b8d70a37e662e6e6aa765
+          git checkout ad632438cd4458993e5c525be5063aa537b27585
       # persist relevant information for build process
       - run: |
           cd ~/distribution-scripts
@@ -79,7 +79,8 @@ jobs:
 
           # Which previous version use
           export PREVIOUS_CRYSTAL_BASE_URL="https://github.com/crystal-lang/crystal/releases/download/0.24.2/crystal-0.24.2-1"
-          echo "export PREVIOUS_CRYSTAL_RELEASE_LINUX_TARGZ=${PREVIOUS_CRYSTAL_BASE_URL}-linux-x86_64.tar.gz" >> build.env
+          echo "export PREVIOUS_CRYSTAL_RELEASE_LINUX64_TARGZ=${PREVIOUS_CRYSTAL_BASE_URL}-linux-x86_64.tar.gz" >> build.env
+          echo "export PREVIOUS_CRYSTAL_RELEASE_LINUX32_TARGZ=${PREVIOUS_CRYSTAL_BASE_URL}-linux-i686.tar.gz" >> build.env
           echo "export PREVIOUS_CRYSTAL_RELEASE_DARWIN_TARGZ=${PREVIOUS_CRYSTAL_BASE_URL}-darwin-x86_64.tar.gz" >> build.env
 
           cat build.env
@@ -166,7 +167,22 @@ jobs:
           cd /tmp/workspace/distribution-scripts
           source build.env
           cd linux
-          make release=true
+          make all64 release=true
+      - persist_to_workspace:
+          root: /tmp/workspace/distribution-scripts/linux/
+          paths:
+            - build
+
+  dist_linux32:
+    machine: true
+    steps:
+      - attach_workspace:
+          at: /tmp/workspace
+      - run: |
+          cd /tmp/workspace/distribution-scripts
+          source build.env
+          cd linux
+          make all32 release=true
       - persist_to_workspace:
           root: /tmp/workspace/distribution-scripts/linux/
           paths:
@@ -298,6 +314,10 @@ workflows:
           filters: *per_tag
           requires:
             - prepare_tagged
+      - dist_linux32:
+          filters: *per_tag
+          requires:
+            - prepare_tagged
       - dist_darwin:
           filters: *per_tag
           requires:
@@ -316,6 +336,7 @@ workflows:
           filters: *per_tag
           requires:
             - dist_linux
+            - dist_linux32
             - dist_darwin
             - dist_docker
             - dist_docs
@@ -343,6 +364,9 @@ workflows:
       - dist_linux:
           requires:
             - prepare_nightly
+      - dist_linux32:
+          requires:
+            - prepare_nightly
       - dist_darwin:
           requires:
             - prepare_nightly
@@ -358,6 +382,7 @@ workflows:
       - dist_artifacts:
           requires:
             - dist_linux
+            - dist_linux32
             - dist_darwin
             - dist_docker
             - dist_docs
@@ -388,6 +413,10 @@ workflows:
           filters: *maintenance
           requires:
             - prepare_maintenance
+      - dist_linux32:
+          filters: *maintenance
+          requires:
+            - prepare_maintenance
       - dist_darwin:
           filters: *maintenance
           requires:
@@ -408,6 +437,7 @@ workflows:
           filters: *maintenance
           requires:
             - dist_linux
+            - dist_linux32
             - dist_darwin
             - dist_docker
             - dist_docs
