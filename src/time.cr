@@ -986,7 +986,11 @@ struct Time
   def_at_beginning(month) { Time.new(year, month, 1, location: location) }
   def_at_beginning(day) { Time.new(year, month, day, location: location) }
   def_at_beginning(hour) { Time.new(year, month, day, hour, location: location) }
-  def_at_beginning(minute) { Time.new(year, month, day, hour, minute, location: location) }
+
+  # Returns a copy of this `Time` representing the beginning of the minute.
+  def at_beginning_of_minute : Time
+    Time.new(seconds: total_seconds - second, nanoseconds: 0, location: location)
+  end
 
   # Returns a copy of this `Time` representing the beginning of the seconds.
   #
@@ -1051,7 +1055,11 @@ struct Time
 
   def_at_end(day) { Time.new(year, month, day, 23, 59, 59, nanosecond: 999_999_999, location: location) }
   def_at_end(hour) { Time.new(year, month, day, hour, 59, 59, nanosecond: 999_999_999, location: location) }
-  def_at_end(minute) { Time.new(year, month, day, hour, minute, 59, nanosecond: 999_999_999, location: location) }
+
+  # Returns a copy of this `Time` representing the end of the minute.
+  def at_end_of_minute
+    Time.new(seconds: total_seconds - second + 59, nanoseconds: 999_999_999, location: location)
+  end
 
   # Returns a copy of this `Time` representing the end of the second.
   def at_end_of_second
