@@ -619,7 +619,7 @@ struct Time
   # The duration amounts to the actual time elapsed between both instances, on
   # the instant time-line.
   # The difference between local date-time representations may equal to a
-  # differnt duration, depending on time zone transitions.
+  # different duration, depending on time zone transitions.
   def -(other : Time) : Time::Span
     Span.new(
       seconds: total_seconds - other.total_seconds,
