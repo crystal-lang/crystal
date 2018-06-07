@@ -47,13 +47,15 @@
 # Point.new y: 2 # => #<Point(@x=0, @y=2)>
 # ```
 #
-# An example of creating a copy of a record with some properties changed:
+# This macro also provides a `copy_with` method which returns
+# a copy of the record with the provided properties altered.
 #
 # ```
 # record Point, x = 0, y = 0
 #
 # p = Point.new y: 2 # => #<Point(@x=0, @y=2)>
 # p.copy_with x: 3   # => #<Point(@x=3, @y=2)>
+# p                  # => #<Point(@x=0, @y=2)>
 # ```
 macro record(name, *properties)
   struct {{name.id}}
