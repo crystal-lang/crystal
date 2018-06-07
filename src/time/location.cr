@@ -1,35 +1,56 @@
 require "./location/loader"
 
-# `Location` represents a specific time zone.
+# `Location` maps time instants to the zone in use at that time.
+# It typically represents the collection of time offsets observed in
+# a certain geographical area.
 #
-# It can be either a time zone from the IANA Time Zone database,
-# a fixed offset, or `UTC`.
+# It contains a list of zone offsets and rules for transitioning between them.
 #
-# Creating a location from timezone data:
+# If a location has only one offset (such as `UTC`) it is considerd
+# *fixed*.
+#
+# A `Location` instance is usually retrieved by name using
+# `Time::Location.load`.
+# It loads the zone offsets and transitioning rules from the time zone database
+# provided by the operating system.
+#
 # ```
 # location = Time::Location.load("Europe/Berlin")
-# ```
-#
-# Initializing a `Time` instance with specified `Location`:
-#
-# ```
+# location # => #<Time::Location Europe/Berlin>
 # time = Time.new(2016, 2, 15, 21, 1, 10, location: location)
+# time # => 2016-02-15 21:01:10 +01:00 Europe/Berlin
 # ```
 #
-# Alternatively, you can switch the `Location` for any `Time` instance:
+# A custom time zone database can be configured through the environment variable
+# `ZONEINFO`. See `.load` for details.
+#
+# ### Fixed Offset
+#
+# A fixed offset location is created using `Time::Location.fixed`:
 #
 # ```
-# time.location.to_s # => "Europe/Berlin"
-# time = time.in(Time::Location.load("Asia/Jerusalem"))
-# time.location.to_s # => "Asia/Jerusalem"
+# location = Time::Location.fixed(3600)
+# location       # => #<Time::Location +01:00>
+# location.zones # => [#<Time::Location::Zone +01:00 (0s) STD>]
 # ```
 #
-# There are also a few special conversions:
+#
+# ### Local Time Zone
+#
+# The local time zone can be accessed as `Time::Location.local`.
+#
+# It is initially configured according to system environment settings,
+# but it's value can be changed:
+#
 # ```
-# time.to_utc   # == time.in(Location::UTC)
-# time.to_local # == time.in(Location.local)
+# location = Time::Location.local
+# Time::Location.local = Time::Location.load("America/New_York")
 # ```
 class Time::Location
+  # `InvalidLocationNameError` is raised if a location name cannot be found in
+  # the time zone database.
+  #
+  # See `Time::Location.load` for details.
   class InvalidLocationNameError < Exception
     getter name, source
 
@@ -40,25 +61,46 @@ class Time::Location
     end
   end
 
+  # `InvalidTimezoneOffsetError` is raised if `Time::Location::Zone.new`
+  # receives an invalid time zone offset.
   class InvalidTimezoneOffsetError < Exception
     def initialize(offset : Int)
       super "Invalid time zone offset: #{offset}"
     end
   end
 
+  # A `Zone` represents a time zone offset in effect in a specific `Location`.
+  #
+  # Some zones have a `name` or abbreviation (such as `PDT`, `CEST`).
+  # For an unnamed zone the formatted offset should be used as name.
   struct Zone
+    # This is the `UTC` time zone with offset `+00:00`.
+    #
+    # It is the only zone offset used in `Time::Location::UTC`.
     UTC = new "UTC", 0, false
 
+    # Returns the offset from UTC in seconds.
     getter offset : Int32
+
+    # Returns `true` if this zone offset is daylight savings time.
     getter? dst : Bool
 
+    # Creates a new `Zone` named *name* with *offset* from UTC in seconds.
+    # The parameter *dst* is used to declare this zone as daylight savings time.
+    #
+    # If `name` is `nil`, the formatted `offset` will be used as `name` (see
+    # `#format`).
+    #
+    # Raises `InvalidTimezoneOffsetError` if *seconds* is outside the supported
+    # value range `-86_400..86_400` seconds (`-24:00` to `+24:00`).
     def initialize(@name : String?, @offset : Int32, @dst : Bool)
-      # Maximium offets of IANA timezone database are -12:00 and +14:00.
+      # Maximium offsets of IANA time zone database are -12:00 and +14:00.
       # +/-24 hours allows a generous padding for unexpected offsets.
       # TODO: Maybe reduce to Int16 (+/- 18 hours).
       raise InvalidTimezoneOffsetError.new(offset) if offset >= SECONDS_PER_DAY || offset <= -SECONDS_PER_DAY
     end
 
+    # Returns the name of the zone.
     def name : String
       @name || format
     end
@@ -149,10 +191,18 @@ class Time::Location
   end
 
   # Describes the Coordinated Universal Time (UTC).
+  #
+  # The only time zone offset in this location is `Zone::UTC`.
   UTC = new "UTC", [Zone::UTC]
 
-  property name : String
-  property zones : Array(Zone)
+  # Returns the name of this location.
+  #
+  # It usually consists of a continent and city name separated by a slash, for
+  # example `Europe/Berlin`.
+  getter name : String
+
+  # Returns the array of time zone offsets (`Zone`) used in this time zone.
+  getter zones : Array(Zone)
 
   # Most lookups will be for the current time.
   # To avoid the binary search through tx, keep a
@@ -164,37 +214,67 @@ class Time::Location
   @cached_range : Tuple(Int64, Int64)
   @cached_zone : Zone
 
-  # Creates a `Location` instance named *name* with fixed *offset*.
-  def self.fixed(name : String, offset : Int32)
+  # Creates a `Location` instance named *name* with fixed *offset* in seconds
+  # from UTC.
+  def self.fixed(name : String, offset : Int32) : Location
     new name, [Zone.new(name, offset, false)]
   end
 
-  # Creates a `Location` instance with fixed *offset*.
+  # Creates a `Location` instance with fixed *offset* in seconds from UTC.
+  #
+  # The formatted *offset* is used as name.
   def self.fixed(offset : Int32)
     zone = Zone.new(nil, offset, false)
     new zone.name, [zone]
   end
 
-  # Returns the `Location` with the given name.
+  # Loads the `Location` with the given *name*.
   #
-  # This uses a list of paths to look for timezone data. Each path can
-  # either point to a directory or an uncompressed ZIP file.
-  # System-specific default paths are provided by the implementation.
+  # ```
+  # location = Time::Location.load("Europe/Berlin")
+  # ```
   #
-  # The first timezone data matching the given name that is successfully loaded
-  # and parsed is returned.
+  # *name* is understood to be a location name in the IANA Time
+  # Zone database, such as `"America/New_York"`. As special cases,
+  # `"UTC"` and empty string (`""`) return `Location::UTC`, and
+  # `"Local"` returns `Location.local`.
+  #
+  # The implementation uses a list of system-specifc paths to look for a time
+  # zone database.
+  # The first time zone database entry matching the given name that is
+  # successfully loaded and parsed is returned.
+  # Typical paths on Unix-based operating systems are `/usr/share/zoneinfo/`,
+  # `/usr/share/lib/zoneinfo/`, or `/usr/lib/locale/TZ/`.
+  #
+  # A time zone database may not be present on all systems, especially non-Unix
+  # systems. In this case, you may need to distribute a copy of the database
+  # with an application that depends on time zone data being available.
+  #
   # A custom lookup path can be set as environment variable `ZONEINFO`.
-  #
-  # Special names:
-  # * `"UTC"` and empty string `""` return `Location::UTC`
-  # * `"Local"` returns `Location.local`
-  #
-  # This method caches files based on the modification time, so subsequent loads
-  # of the same location name will return the same instance of `Location` unless
-  # the timezone database has been updated in between.
+  # The path can point to the root of a directory structure or an
+  # uncompressed ZIP file, each representing the time zone database using files
+  # and folders of the expected names.
   #
   # Example:
-  # `ZONEINFO=/path/to/zoneinfo.zip crystal eval 'pp Location.load("Custom/Location")'`
+  #
+  # ```
+  # # This tries to load the file `/usr/share/zoneinfo/Custom/Location`
+  # ENV["ZONEINFO"] = "/usr/share/zoneinfo/"
+  # Location.load("Custom/Location")
+  #
+  # # This tries to load the file `Custom/Location` in the uncompressed ZIP
+  # # file at `/path/to/zoneinfo.zip`
+  # ENV["ZONEINFO"] = "/path/to/zoneinfo.zip"
+  # Location.load("Custom/Location")
+  # ```
+  #
+  # If the location name cannot be found, `InvalidLocationNameError` is raised.
+  # If the loader encounters a format error in the time zone database,
+  # `InvalidTZDataError` is raised.
+  #
+  # Files are cached based on the modification time, so subsequent request for
+  # the same location name will most likely return the same instance of
+  # `Location`, unless the time zone database has been updated in between.
   def self.load(name : String) : Location
     case name
     when "", "UTC"
@@ -222,20 +302,35 @@ class Time::Location
     end
   end
 
-  # Returns the location representing the local time zone.
+  # Returns the `Location` representing the application's local time zone.
   #
-  # The value is loaded on first access based on the current application environment  (see `.load_local` for details).
+  # `Time` uses this property as default value for most method arguments
+  # expecting a `Location`.
+  #
+  # The initial value depends on the current application environment, see
+  # `.load_local` for details.
+  #
+  # The value can be changed to overwrite the system default:
+  #
+  # ```
+  # Time.now.location # => #<Time::Location America/New_York>
+  # Time::Location.local = Time::Location.load("Europe/Berlin")
+  # Time.now.location # => #<Time::Location Europe/Berlin>
+  # ```
   class_property(local : Location) { load_local }
 
-  # Loads the local location described by the current application environment.
+  # Loads the local time zone according to the current application environment.
   #
-  # It consults the environment variable `ENV["TZ"]` to find the time zone to use.
-  # * `"UTC"` and empty string `""` return `Location::UTC`
-  # * `"Foo/Bar"` tries to load the zoneinfo from known system locations - such as `/usr/share/zoneinfo/Foo/Bar`,
-  #   `/usr/share/lib/zoneinfo/Foo/Bar` or `/usr/lib/locale/TZ/Foo/Bar` on unix-based operating systems.
-  #   See `Location.load` for details.
-  # * If `ENV["TZ"]` is not set, the system's local timezone data will be used (`/etc/localtime` on unix-based systems).
-  # * If no time zone data could be found, `Location::UTC` is returned.
+  # The environment variable `ENV["TZ"]` is consulted for finding the time zone
+  # to use.
+  #
+  # * `"UTC"` and empty string (`""`) return `Location::UTC`
+  # * Any other value (such as `"Europe/Berlin"`) is tried to be resolved using
+  #   `Location.load`.
+  # * If `ENV["TZ"]` is not set, the system's local time zone data will be used
+  #   (`/etc/localtime` on unix-based systems).
+  # * If no time zone data could be found (i.e. the previous methods failed),
+  #   `Location::UTC` is returned.
   def self.load_local : Location
     case tz = ENV["TZ"]?
     when "", "UTC"
@@ -263,6 +358,7 @@ class Time::Location
     @transitions
   end
 
+  # Prints `name` to *io*.
   def to_s(io : IO)
     io << name
   end
@@ -273,14 +369,21 @@ class Time::Location
     io << '>'
   end
 
+  # Returns `true` if *other* is equal to `self`.
+  #
+  # Two `Location` instances are considered equal if they have the same name,
+  # offset zones and transition rules.
   def_equals_and_hash name, zones, transitions
 
-  # Returns the time zone in use at `time`.
+  # Returns the time zone offset observed at *time*.
   def lookup(time : Time) : Zone
     lookup(time.epoch)
   end
 
-  # Returns the time zone in use at `epoch` (time in seconds since UNIX epoch).
+  # Returns the time zone offset observed at *epoch*.
+  #
+  # *epoch* expresses the number of seconds since UNIX epoch
+  # (`1970-01-01 00:00:00 UTC`).
   def lookup(epoch : Int) : Zone
     unless @cached_range[0] <= epoch < @cached_range[1]
       @cached_zone, @cached_range = lookup_with_boundaries(epoch)
@@ -290,7 +393,7 @@ class Time::Location
   end
 
   # :nodoc:
-  def lookup_with_boundaries(epoch : Int)
+  def lookup_with_boundaries(epoch : Int) : {Zone, {Int64, Int64}}
     case
     when zones.empty?
       return Zone::UTC, {Int64::MIN, Int64::MAX}
@@ -323,7 +426,7 @@ class Time::Location
   # 3) Otherwise, use the first zone that is not daylight time, if
   #    there is one.
   # 4) Otherwise, use the first zone.
-  private def lookup_first_zone
+  private def lookup_first_zone : Zone
     unless transitions.any? { |tx| tx.index == 0 }
       return zones.first
     end
@@ -347,7 +450,7 @@ class Time::Location
     self == UTC
   end
 
-  # Returns `true` if this location equals to `Location.local`.
+  # Returns `true` if this location equals to `Time::Location.local`.
   def local? : Bool
     self == Location.local
   end

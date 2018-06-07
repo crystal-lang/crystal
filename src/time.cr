@@ -1,66 +1,207 @@
 require "crystal/system/time"
 
-# `Time` represents an instance in incremental time. Here are some examples:
+# `Time` represents a date-time instant in
+# [incremental time](https://www.w3.org/International/articles/definitions-time/#incremental_time)
+# observed in a specific time zone.
 #
-# ### Basic Usage
+# The calendaric calculations are based on the rules of the proleptic Gregorian
+# calendar as specified in [ISO 8601](http://xml.coverpages.org/ISO-FDIS-8601.pdf).
+# Leap seconds are ignored.
 #
-# ```
-# time = Time.new(2016, 2, 15, 10, 20, 30)
+# Internally, the time is stored as an `Int64` representing seconds from epoch
+# (`0001-01-01 00:00:00.0 UTC`) and an `Int32` representing
+# nanosecond-of-second with value range `0..999_999_999`.
 #
-# time.year    # => 2016
-# time.month   # => 2
-# time.day     # => 15
-# time.hour    # => 10
-# time.minute  # => 20
-# time.second  # => 30
-# time.monday? # => true
+# The supported date range is `0001-01-01 00:00:00.0` to
+# `9999-12-31 23:59:59.999_999_999` in any local time zone.
 #
-# # Creating a time instance with a date only in local timezone `Time::Location.local`.
-# # The examples show an offset of `+01:00` but that can vary depending on
-# Time.new(2016, 2, 15) # => 2016-02-15 00:00:00 +01:00
+# ### Telling the Time
 #
-# # Specifying a time
-# Time.new(2016, 2, 15, 10, 20, 30) # => 2016-02-15 10:20:30 +01:00
+# There are several methods to retrieve a `Time` instance representing the
+# current time:
 #
-# # Creating a time instance in UTC
-# Time.utc(2016, 2, 15, 10, 20, 30) # => 2016-02-15 10:20:30 UTC
-# ```
-#
-# ### Formatting Time
-#
-# The `to_s` method returns a `String` value in the assigned format.
-#
-# ```
-# time = Time.new(2015, 10, 12)
-# time.to_s("%Y-%m-%d") # => "2015-10-12"
+# ```crystal
+# Time.utc_now                                  # returns the current time in UTC
+# Time.now Time::Location.load("Europe/Berlin") # returns the current time in time zone Europe/Berlin
+# Time.now                                      # returns the current time in current time zone
 # ```
 #
-# See `Time::Format` for all the directives.
+# It is generally recommended to keep instances in UTC and only apply a
+# local time zone when formatting for user display, unless the domain logic
+# requires having a specific time zone (for example for calendaric operations).
 #
-# ### Calculation
+# ### Creating a Specific Instant
+#
+# `Time` instances representing a specific instant can be created by
+# `.utc` or `.new` with the date-time specified as individual arguments:
 #
 # ```
-# Time.new(2015, 10, 10) - 5.days # => 2015-10-05 00:00:00 +01:00
+# time = Time.utc(2016, 2, 15, 10, 20, 30)
+# time.to_s        # => 2016-02-15 10:20:30 UTC
+# time = Time.new(2016, 2, 15, 10, 20, 30, location: Time::Location.load("Europe/Berlin"))
+# time.to_s        # => 2016-02-15 10:20:30 +01:00 Europe/Berlin
+# The time-of-day can be omitted and defaults to midnight (start of day):
+# time = Time.utc(2016, 2, 15)
+# time.to_s        # => 2016-02-15 00:00:00 UTC
+# ```
 #
-# # Time calculation returns a Time::Span instance
-# span = Time.new(2015, 10, 10) - Time.new(2015, 9, 10)
+# ### Retrieving Time Information
+#
+# Each `Time` instance allows querying calendar data:
+#
+# ```
+# time = Time.utc(2016, 2, 15, 10, 20, 30)
+# time.year        # => 2016
+# time.month       # => 2
+# time.day         # => 15
+# time.hour        # => 10
+# time.minute      # => 20
+# time.second      # => 30
+# time.millisecond # => 0
+# time.nanosecond  # => 0
+# time.day_of_week # => Monday
+# time.day_of_year # => 46
+# time.monday?     # => true
+# time.time_of_day # => 15:10:30
+# ```
+#
+# ### Time Zones
+#
+# Each time is attached to a specific time zone, represented by a `Location`
+# (see `#location`).
+# `#zone` returns the time zone observed in this location at the current time
+# (i.e. the instant represented by this `Time`).
+# `#offset` returns the offset of the current zone in seconds.
+#
+# ```
+# time = Time.new(2018, 3, 8, 22, 5, 13, location: Time::Location.load("Europe/Berlin"))
+# time          # => 2018-03-08 22:05:13 +01:00 Europe/Berlin
+# time.location # => #<Time::Location Europe/Berlin>
+# time.zone     # => #<Time::Location::Zone CET +01:00 (3600s) STD>
+# time.offset   # => 3600
+# ```
+#
+# Using `.utc`, the location is `Time::Location::UTC`:
+#
+# ```
+# time = Time.utc(2018, 3, 8, 22, 5, 13)
+# time          # => 2016-02-15 10:20:30 UTC
+# time.location # => #<Time::Location UTC>
+# time.zone     # => #<Time::Location::Zone UTC +00:00 (0s) STD>
+# time.offset   # => 0
+# ```
+#
+# A `Time` instance can be transformed to a different time zone while retaining
+# the same instant using `#in`:
+#
+# ```
+# time_de = Time.new(2018, 3, 8, 22, 5, 13, location: Time::Location.load("Europe/Berlin"))
+# time_ar = time_de.in Time::Location.load("America/Buenos_Aires")
+# time_de # => 2018-03-08 22:05:13 +01:00 Europe/Berlin
+# time_ar # => 2018-03-08 18:05:13 -03:00 America/Buenos_Aires
+# ```
+#
+# Both `Time` instances show a different local date-time, but they represent
+# the same date-time in the instant time-line, therefore they are considered
+# equal:
+#
+# ```
+# time_de.to_utc     # => 2018-03-08 21:05:13 UTC
+# time_ar.to_utc     # => 2018-03-08 21:05:13 UTC
+# time_de == time_ar # => true
+# ```
+#
+# There are also two special methods for converting to UTC and local time zone:
+#
+# ```
+# time.to_utc   # equals time.in(Location::UTC)
+# time.to_local # equals time.in(Location.local)
+# ```
+#
+# ### Formatting and Parsing Time
+#
+# To make date-time instances exchangeable between different computer systems
+# or readable to humans, they are usually converted to and from a string
+# representation.
+#
+# The method `#to_s` formats the date-time according to a specified pattern.
+#
+# ```
+# time = Time.utc(2015, 10, 12, 10, 30, 00)
+# time.to_s("%Y-%m-%d %H:%m:%s %Z") # => "2015-10-12 10:30:00 +00:00"
+# ```
+#
+# Similarly, `Time.parse` is used to construct a `Time` instance from date-time
+# information in a string, according to a specified pattern:
+#
+# ```
+# Time.parse("2015-10-12 10:30:00 +00:00", "%Y-%m-%d %H:%m:%s %Z")
+# ```
+#
+# See `Time::Format` for all directives.
+#
+# ### Calculations
+#
+# ```
+# Time.utc(2015, 10, 10) - 5.days # => 2015-10-05 00:00:00 +00:00
+#
+# span = Time.utc(2015, 10, 10) - Time.utc(2015, 9, 10)
 # span.days          # => 30
 # span.total_hours   # => 720
 # span.total_minutes # => 43200
+# ```
 #
-# # Calculation between Time::Span instances
-# span_a = Time::Span.new(3, 0, 0)
-# span_b = Time::Span.new(2, 0, 0)
-# span = span_a - span_b
-# span       # => 01:00:00
-# span.class # => Time::Span
-# span.hours # => 1
+# ## Measuring Time
+#
+# The typical time representation provided by the operating system is based on
+# a "wall clock" which is subject to changes for clock synchronization.
+# This can result in discontinuous jumps in the time-line making it not
+# suitable for accurately measuring elapsed time.
+#
+# Instances of `Time` are focused on telling time – using a "wall clock".
+# When `Time.now` is called multiple times, the difference between the
+# returned instances is not guranteed to equal to the time elapsed between
+# making the calls; even the order of the returned `Time` instances might
+# not reflect invocation order.
+#
+# ```
+# t1 = Time.utc_now
+# # operation that takes 1 minute
+# t2 = Time.utc_now
+# t2 - t1 # => ?
+# ```
+#
+# The resulting `Time::Span` could be anything, even negative, if the
+# computer's wall clock has changed between both calls.
+#
+# As an alternative, the operating system also provides a monotonic clock.
+# It's time-line has no specfied starting point but is strictly linearly
+# increasing.
+#
+# This monotonic clock should always be used for measuring elapsed time.
+#
+# A reading from this clock can be taken using `.monotonic`:
+#
+# ```
+# t1 = Time.monotonic
+# # operation that takes 1 minute
+# t2 = Time.monotonic
+# t2 - t1 # => 1.minute (approximately)
+# ```
+#
+# The execution time of a block can be measured using `.measure`:
+#
+# ```
+# elapsed_time = Time.measure do
+#   # operation that takes 20 milliseconds
+# end
+# elapsed_time # => 20.milliseconds (approximately)
 # ```
 struct Time
   class FloatingTimeConversionError < Exception
   end
 
-  include Comparable(self)
+  include Comparable(Time)
 
   # :nodoc:
   DAYS_MONTH = {0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31}
@@ -110,7 +251,7 @@ struct Time
   # :nodoc:
   MAX_SECONDS = 315537897599_i64
 
-  # `DayOfWeek` represents the day.
+  # `DayOfWeek` represents a day-of-week in the Gregorian calendar.
   #
   # ```
   # time = Time.new(2016, 2, 15)
@@ -135,34 +276,113 @@ struct Time
 
   @seconds : Int64
   @nanoseconds : Int32
-  @location : Location
 
-  # Returns a clock from an unspecified starting point, but strictly linearly
-  # increasing. This clock should be independent from discontinuous jumps in the
-  # system time, such as leap seconds, time zone adjustments or manual changes
-  # to the computer's time.
+  # Returns `Location` representing the time-zone observed by this `Time`.
+  getter location : Location
+
+  # Returns a reading from the monotonic clock to measure elapsed time.
   #
-  # For example, the monotonic clock must always be used to measure an elapsed
-  # time.
+  # Values from the monotonic clock and wall clock are not comparable.
+  # This method does not return a `Time` instance but a `Time::Span` amounting
+  # to the number of nanoseconds elapsed since the unspecified starting point
+  # of the monotonic clock.
+  # The returned values are strictly linearly increasing.
+  #
+  # This clock should be independent from discontinuous jumps in the
+  # system time, such as leap seconds, time zone adjustments or manual changes
+  # to the computer's clock.
+  #
+  # Subtracting two results from this method equals to the time elapsed between
+  # both readings:
+  #
+  # ```
+  # start = Time.monotonic
+  # # operation that takes 20 milliseconds
+  # elapsed = Time.monotonic - start # => 20.milliseconds (approximately)
+  # # operation that takes 50 milliseconds
+  # elapsed_total = Time.monotonic - start # => 70.milliseconds (approximately)
+  # ```
+  #
+  # The execution time of a block can be measured using `.measure`.
   def self.monotonic : Time::Span
     seconds, nanoseconds = Crystal::System::Time.monotonic
     Time::Span.new(seconds: seconds, nanoseconds: nanoseconds)
   end
 
-  # Measures how long the block took to run. Relies on `monotonic` to not be
-  # affected by time fluctuations.
-  def self.measure : Time::Span
+  # Measures the execution time of *block*.
+  #
+  # The measurement relies on the monotonic clock and is not
+  # affected by fluctuations of the system clock (see `#monotonic`).
+  #
+  # ```
+  # elapsed_time = Time.measure do
+  #   # operation that takes 20 milliseconds
+  # end
+  # elapsed_time # => 20.milliseconds (approximately)
+  # ```
+  def self.measure(&block : ->) : Time::Span
     start = monotonic
     yield
     monotonic - start
   end
 
-  def self.new(location = Location.local)
+  # Creates a new `Time` instance representing the current time from the
+  # system clock observed in *location* (defaults to local time zone).
+  def self.new(location : Location = Location.local) : Time
     seconds, nanoseconds = Crystal::System::Time.compute_utc_seconds_and_nanoseconds
     new(seconds: seconds, nanoseconds: nanoseconds, location: location)
   end
 
-  def self.new(year : Int32, month : Int32, day : Int32, hour = 0, minute = 0, second = 0, *, nanosecond = 0, location = Location.local)
+  # Creates a new `Time` instance representing the current time from the
+  # system clock observed in *location* (defaults to local time zone).
+  def self.now(location : Location = Location.local) : Time
+    new(location)
+  end
+
+  # Creates a new `Time` instance representing the current time from the
+  # system clock in UTC.
+  def self.utc_now : Time
+    now(Location::UTC)
+  end
+
+  # Creates a new `Time` instance representing the given local date-time in
+  # *location* (defaults to local time zone).
+  #
+  # ```
+  # time = Time.new(2016, 2, 15, 10, 20, 30, location: Time::Location.load("Europe/Berlin"))
+  # time.to_s # => 2016-02-15 10:20:30 +01:00 Europe/Berlin
+  # ```
+  #
+  # Valid value ranges for the individual fields:
+  #
+  # * `year`: `1..9999`
+  # * `month`: `1..12`
+  # * `day`: `1` - `28`/`29`/`30`/`31` (depending on month and year)
+  # * `hour`: `0..23`
+  # * `minute`: `0..59`
+  # * `second`: `0..59`
+  # * `nanosecond`: `0..999_999_999`
+  #
+  # The time-of-day can be omitted and defaults to midnight (start of day):
+  #
+  # ```
+  # time = Time.new(2016, 2, 15)
+  # time.to_s # => 2016-02-15 00:00:00 +00:00 Local
+  # ```
+  #
+  # The local date-time representation is resolved to a single instant based on
+  # the offset observed in the *location* at this time.
+  #
+  # This process can sometimes be ambiguous, mostly due skipping or repeating
+  # times at time zone transitions. For example, in `America/New_York` the
+  # date-time `2011-03-13 02:15:00` never occured, there is a gap between time
+  # zones. In return, `2011-11-06 01:15:00` occured twice because of overlapping
+  # time zones.
+  #
+  # In such cases, the choice of time zone, and therefore the time, is not
+  # well-defined. This method returns a time that is correct in one of the two
+  # zones involved in the transition, but it does not guarantee which.
+  def self.new(year : Int32, month : Int32, day : Int32, hour : Int32 = 0, minute : Int32 = 0, second : Int32 = 0, *, nanosecond : Int32 = 0, location : Location = Location.local) : Time
     unless 1 <= year <= 9999 &&
            1 <= month <= 12 &&
            1 <= day <= Time.days_in_month(year, month) &&
@@ -187,15 +407,42 @@ struct Time
     new(seconds: seconds, nanoseconds: nanosecond.to_i, location: location)
   end
 
-  {% unless flag?(:win32) %}
-    # :nodoc:
-    def self.new(time : LibC::Timespec, location = Location.local)
-      seconds = UNIX_SECONDS + time.tv_sec
-      nanoseconds = time.tv_nsec.to_i
-      new(seconds: seconds, nanoseconds: nanoseconds, location: location)
-    end
-  {% end %}
+  # Creates a new `Time` instance representing the given date-time in UTC.
+  #
+  # ```
+  # time = Time.utc(2016, 2, 15, 10, 20, 30)
+  # time.to_s # => 2016-02-15 10:20:30 UTC
+  # ```
+  #
+  # Valid value ranges for the individual fields:
+  #
+  # * `year`: `1..9999`
+  # * `month`: `1..12`
+  # * `day`: `1` - `28`/`29`/`30`/`31` (depending on month and year)
+  # * `hour`: `0..23`
+  # * `minute`: `0..59`
+  # * `second`: `0..59`
+  # * `nanosecond`: `0..999_999_999`
+  #
+  # The time-of-day can be omitted and defaults to midnight (start of day):
+  #
+  # ```
+  # time = Time.utc(2016, 2, 15)
+  # time.to_s # => 2016-02-15 00:00:00 UTC
+  # ```
+  #
+  # Since UTC does not have any time zone transitions, each date-time is
+  # unambiguously resolved.
+  def self.utc(year : Int32, month : Int32, day : Int32, hour : Int32 = 0, minute : Int32 = 0, second : Int32 = 0, *, nanosecond : Int32 = 0) : Time
+    new(year, month, day, hour, minute, second, nanosecond: nanosecond, location: Location::UTC)
+  end
 
+  # Creates a new `Time` instance that corresponds to the number of *seconds*
+  # and *nanoseconds* elapsed from epoch (`0001-01-01 00:00:00.0 UTC`)
+  # observed in *location*.
+  #
+  # Valid range for *seconds* is `0..315_537_897_599`.
+  # For *nanoseconds* it is `0..999_999_999`.
   def initialize(*, @seconds : Int64, @nanoseconds : Int32, @location : Location)
     unless 0 <= offset_seconds <= MAX_SECONDS
       raise ArgumentError.new "Invalid time: seconds out of range"
@@ -206,8 +453,29 @@ struct Time
     end
   end
 
-  # Returns a new `Time` instance that corresponds to the number
-  # seconds elapsed since the unix epoch (00:00:00 UTC on 1 January 1970).
+  # Creates a new `Time` instance that corresponds to the number of *seconds*
+  # and *nanoseconds* elapsed from epoch (`0001-01-01 00:00:00.0 UTC`)
+  # in UTC.
+  #
+  # Valid range for *seconds* is `0..315_537_897_599`.
+  # For *nanoseconds* it is `0..999_999_999`.
+  def self.utc(*, seconds : Int64, nanoseconds : Int32) : Time
+    new(seconds: seconds, nanoseconds: nanoseconds, location: Location::UTC)
+  end
+
+  {% unless flag?(:win32) %}
+    # :nodoc:
+    def self.new(time : LibC::Timespec, location : Location = Location.local)
+      seconds = UNIX_SECONDS + time.tv_sec
+      nanoseconds = time.tv_nsec.to_i
+      new(seconds: seconds, nanoseconds: nanoseconds, location: location)
+    end
+  {% end %}
+
+  # Creates a new `Time` instance that corresponds to the number of
+  # *seconds* elapsed since the Unix epoch (`1970-01-01 00:00:00 UTC`).
+  #
+  # The time zone is always UTC.
   #
   # ```
   # Time.epoch(981173106) # => 2001-02-03 04:05:06 UTC
@@ -216,8 +484,10 @@ struct Time
     utc(seconds: UNIX_SECONDS + seconds, nanoseconds: 0)
   end
 
-  # Returns a new `Time` instance that corresponds to the number
-  # milliseconds elapsed since the unix epoch (00:00:00 UTC on 1 January 1970).
+  # Creates a new `Time` instance that corresponds to the number of
+  # *milliseconds* elapsed since the Unix epoch (`1970-01-01 00:00:00 UTC`).
+  #
+  # The time zone is always UTC.
   #
   # ```
   # time = Time.epoch_ms(981173106789) # => 2001-02-03 04:05:06.789 UTC
@@ -230,38 +500,58 @@ struct Time
     utc(seconds: seconds, nanoseconds: nanoseconds.to_i)
   end
 
-  # Returns a new `Time` instance at the specified time in UTC time zone.
-  def self.utc(year : Int32, month : Int32, day : Int32, hour = 0, minute = 0, second = 0, *, nanosecond = 0) : Time
-    new(year, month, day, hour, minute, second, nanosecond: nanosecond, location: Location::UTC)
-  end
-
-  # Returns a new `Time` instance at the specified time in UTC time zone.
-  def self.utc(*, seconds : Int64, nanoseconds : Int32) : Time
-    new(seconds: seconds, nanoseconds: nanoseconds, location: Location::UTC)
-  end
-
-  def clone : self
+  def clone : Time
     self
   end
 
-  # Returns a `Time` that is later than this `Time` by the `Time::Span` *span*.
+  # Returns a copy of this `Time` with *span* added.
+  #
+  # See `#add_span` for details.
   def +(span : Time::Span) : Time
     add_span span.to_i, span.nanoseconds
   end
 
-  # Returns a `Time` that is earlier than this `Time` by the `Time::Span` *span*.
+  # Returns a copy of this `Time` with *span* subtracted.
+  #
+  # See `#add_span` for details.
   def -(span : Time::Span) : Time
     add_span -span.to_i, -span.nanoseconds
   end
 
-  # Adds a number of months specified by *other*'s value.
-  def +(other : Time::MonthSpan) : Time
-    add_months other.value
+  # Returns a copy of this `Time` with *span* added.
+  #
+  # It adds the number of months with overflow increasing the year.
+  # If the resulting day-of-month would be invalid, it is adjusted to the last
+  # valid day of the moneth.
+  #
+  # For example, adding `1.month` to `2007-03-31` would result in the invalid
+  # date `2007-04-31` which will be adjusted to `2007-04-30`.
+  #
+  # This operates on the local time-line, such that the local date-time
+  # represenations of month and year are increased by the specified amount.
+  #
+  # If the resulting date-time is ambiguous due to time zone transitions,
+  # a correct time will be returned, but it does not guarantee which.
+  def +(span : Time::MonthSpan) : Time
+    add_months span.value
   end
 
-  # Subtracts a number of months specified by *other*'s value.
-  def -(other : Time::MonthSpan) : Time
-    add_months -other.value
+  # Returns a copy of this `Time` with *span* subtracted.
+  #
+  # It adds the number of months with overflow decreasing the year.
+  # If the resulting day-of-month would be invalid, it is adjusted to the last
+  # valid day of the moneth.
+  #
+  # For example, subtracting `1.month` from `2007-05-31` would result in the invalid
+  # date `2007-04-31` which will be adjusted to `2007-04-30`.
+  #
+  # This operates on the local time-line, such that the local date-time
+  # represenations of month and year are decreased by the specified amount.
+  #
+  # If the resulting date-time is ambiguous due to time zone transitions,
+  # a correct time will be returned, but it does not guarantee which.
+  def -(span : Time::MonthSpan) : Time
+    add_months -span.value
   end
 
   private def add_months(months)
@@ -286,9 +576,21 @@ struct Time
     temp + time_of_day
   end
 
-  # Returns a `Time` that is this number of *seconds* and *nanoseconds* later.
+  # Returns a copy of this `Time` with the number of *seconds* and
+  # *nanoseconds* added.
   #
-  # Negative values are subtracted, meaning an earlier point in time.
+  # Positive values result in a later time, negative values in an earlier time.
+  #
+  # This operates on the instant time-line, such that adding the eqivalent of
+  # one hour will always be a duration of one hour later.
+  # The local date-time representation may change by a different amount,
+  # depending on time zone transitions.
+  #
+  # Overflow in *nanoseconds* will be transferred to *seconds*.
+  #
+  # There is no explicit limit on the input values but the addition must result
+  # in a valid time between `0001-01-01 00:00:00.0` and
+  # `9999-12-31 23:59:59.999_999_999`. Otherwise `ArgumentError` is raised.
   def add_span(seconds : Int, nanoseconds : Int) : Time
     if seconds == 0 && nanoseconds == 0
       return self
@@ -310,9 +612,14 @@ struct Time
     Time.new(seconds: seconds, nanoseconds: nanoseconds.to_i, location: location)
   end
 
-  # Returns the amount of time between *other* and `self`.
+  # Returns a `Time::Span` amounting to the duration between *other* and `self`.
   #
-  # The amount can be negative if `self` is a `Time` that happens before *other*.
+  # The time span is negative if `self` is before *other*.
+  #
+  # The duration amounts to the actual time elapsed between both instances, on
+  # the instant time-line.
+  # The difference between local date-time representations may equal to a
+  # different duration, depending on time zone transitions.
   def -(other : Time) : Time::Span
     Span.new(
       seconds: total_seconds - other.total_seconds,
@@ -320,33 +627,26 @@ struct Time
     )
   end
 
-  # Returns the current time in the time zone currently observed in *location*,
-  # using local time zone by default.
-  def self.now(location = Location.local) : Time
-    new(location)
-  end
-
-  # Returns the current time in UTC time zone.
-  def self.utc_now : Time
-    now(Location::UTC)
-  end
-
-  # Returns a copy of `self` with time-of-day components (hour, minute, ...) set to zero.
+  # Returns a copy of `self` with time-of-day components (hour, minute, second,
+  # nanoseconds) set to zero.
+  #
+  # This equals `at_beginning_of_day` or
+  # `Time.new(year, month, day, 0, 0, 0, nanoseconds: 0, location: location)`.
   def date : Time
     Time.new(year, month, day, location: location)
   end
 
-  # Returns the year number (in the Common Era).
+  # Returns the year of the proleptic Georgian Calendar (`0..9999`).
   def year : Int32
     year_month_day_day_year[0]
   end
 
-  # Returns the month number of the year (`1..12`).
+  # Returns the month of the year (`1..12`).
   def month : Int32
     year_month_day_day_year[1]
   end
 
-  # Returns the day number of the month (`1..31`).
+  # Returns the day of the month (`1..31`).
   def day : Int32
     year_month_day_day_year[2]
   end
@@ -376,7 +676,13 @@ struct Time
     @nanoseconds
   end
 
-  # Returns how much time has passed since midnight of this day.
+  # Returns the duration between this `Time` and midnight of the same day.
+  #
+  # This is equivalent to creating a `Time::Span` from the time-of-day fields:
+  #
+  # ```
+  # time.time_of_day == Time::Span.new(time.hour, time.minute, time.second, time.nanosecond)
+  # ``
   def time_of_day : Time::Span
     Span.new(nanoseconds: NANOSECONDS_PER_SECOND * (offset_seconds % SECONDS_PER_DAY) + nanosecond)
   end
@@ -387,22 +693,20 @@ struct Time
     DayOfWeek.new value.to_i
   end
 
-  # Returns the day number of the year (`1..365`, or `1..366` on leap years).
+  # Returns the day of the year.
+  #
+  # The value range is `1..365` in normal yars and `1..366` in leap years.
   def day_of_year : Int32
     year_month_day_day_year[3]
   end
 
-  # Returns `Location` of the instance.
-  def location : Location
-    @location
-  end
-
-  # Returns the time zone in effect in `location` at this point in time.
-  def zone
+  # Returns the time zone in effect in `location` at this instant.
+  def zone : Time::Location::Zone
     location.lookup(self)
   end
 
-  # Returns the offset from UTC (in seconds) in `location` at this point in time.
+  # Returns the offset from UTC (in seconds) in effect in `location` at
+  # this instant.
   def offset : Int32
     zone.offset
   end
@@ -412,8 +716,8 @@ struct Time
     location.utc?
   end
 
-  # Returns `true` if this time's `#location` equals to the current
-  # local location as returned by `Location.local`.
+  # Returns `true` if `#location` equals to the local time zone
+  # (`Time::Location.local`).
   #
   # Since the system's settings may change during a programm's runtime,
   # the result may not be identical between different invocations.
@@ -421,19 +725,44 @@ struct Time
     location.local?
   end
 
-  def <=>(other : self)
+  # Compares this `Time` with *other*.
+  #
+  # The comparison is based on the instant time-line, even if the local
+  # date-time representation (wall clock) would compare differently.
+  #
+  # To ensure the comparison is also true for local wall clock, both date-times
+  # need to be transforemd to the same time zone.
+  def <=>(other : Time) : Int32
     cmp = total_seconds <=> other.total_seconds
     cmp = nanosecond <=> other.nanosecond if cmp == 0
     cmp
   end
 
-  def ==(other : self)
+  # Compares this `Time` with *other* for equality.
+  #
+  # Two instances are considered equal if they represent the same date-time in
+  # the instant time-line, even if they show a different local date-time.
+  #
+  # ```
+  # time_de = Time.new(2018, 3, 8, 22, 5, 13, location: Time::Location.load("Europe/Berlin"))
+  # time_ar = Time.new(2018, 3, 8, 18, 5, 13, location: Time::Location.load("America/Buenos_Aires"))
+  # time_de == time_ar # => true
+  #
+  # # both times represent the same instant:
+  # time_de.to_utc # => 2018-03-08 21:05:13 UTC
+  # time_ar.to_utc # => 2018-03-08 21:05:13 UTC
+  # ```
+  def ==(other : Time) : Bool
     total_seconds == other.total_seconds && nanosecond == other.nanosecond
   end
 
   def_hash total_seconds, nanosecond
 
-  # Returns how many days this *month* (`1..12`) of this *year* has (28, 29, 30 or 31).
+  # Returns the number of days in *month* (value range: `1..12`) taking account
+  # of the *year*.
+  #
+  # The returned value is either `28`, `29`, `30` or `31` depending on the
+  # month and whether *year* is leap.
   #
   # ```
   # Time.days_in_month(2016, 2) # => 29
@@ -452,7 +781,9 @@ struct Time
     days[month]
   end
 
-  # Returns number of days in *year*.
+  # Returns the number of days in *year*.
+  #
+  # A normal year has `365` days, a leap year `366` days.
   #
   # ```
   # Time.days_in_year(1990) # => 365
@@ -462,7 +793,8 @@ struct Time
     leap_year?(year) ? 366 : 365
   end
 
-  # Returns whether this *year* is leap (February has one more day).
+  # Returns `true` if *year* is a leap year in the proleptic Gregorian
+  # calendar.
   def self.leap_year?(year : Int) : Bool
     unless 1 <= year <= 9999
       raise ArgumentError.new "Invalid year"
@@ -516,7 +848,9 @@ struct Time
     end
   end
 
-  # Formats this time using the given format (see `Time::Format`).
+  # Formats this `Time` according to the pattern in *format*.
+  #
+  # See `Time::Format` for details.
   #
   # ```
   # time = Time.new(2016, 4, 5)
@@ -526,60 +860,72 @@ struct Time
     Format.new(format).format(self)
   end
 
-  # Formats this time using the given format (see `Time::Format`)
-  # into the given *io*.
+  # Formats this `Time` according to the pattern in *format* to the given *io*.
+  #
+  # See `Time::Format for details.
   def to_s(format : String, io : IO) : Nil
     Format.new(format).format(self, io)
   end
 
-  # Parses a Time in the given *time* string, using the given *pattern* (see
-  # `Time::Format`).
+  # Parses a `Time` from *time* string using the given *pattern*.
+  #
+  # See `Time::Format` for details.
   #
   # ```
   # Time.parse("2016-04-05", "%F") # => 2016-04-05 00:00:00 +01:00
   # ```
-  def self.parse(time : String, pattern : String, location = nil) : Time
+  def self.parse(time : String, pattern : String, location : Location? = nil) : Time
     Format.new(pattern, location).parse(time)
   end
 
-  # Returns the number of seconds since the Epoch for this time.
+  # Returns the number of seconds since the Unix epoch
+  # (`1970-01-01 00:00:00 UTC`).
   #
   # ```
-  # time = Time.parse("2016-01-12 03:04:05 UTC", "%F %T %z")
+  # time = Time.utc(2016, 1, 12, 3, 4, 5)
   # time.epoch # => 1452567845
   # ```
   def epoch : Int64
     (total_seconds - UNIX_SECONDS).to_i64
   end
 
-  # Returns the number of milliseconds since the Epoch for this time.
+  # Returns the number of milliseconds since the Unix epoch
+  # (`1970-01-01 00:00:00 UTC`).
   #
   # ```
-  # time = Time.parse("2016-01-12 03:04:05.678 UTC", "%F %T.%L %z")
+  # time = Time.utc(2016, 1, 12, 3, 4, 5, nanosecond: 678_000_000)
   # time.epoch_ms # => 1452567845678
   # ```
   def epoch_ms : Int64
     epoch * 1_000 + (nanosecond / NANOSECONDS_PER_MILLISECOND)
   end
 
-  # Returns the number of seconds since the Epoch for this time,
-  # as a `Float64`.
+  # Returns the number of seconds since the Unix epoch
+  # (`1970-01-01 00:00:00 UTC`) as `Float64` with nanosecond precision.
   #
   # ```
-  # time = Time.parse("2016-01-12 03:04:05.678 UTC", "%F %T.%L %z")
+  # time = Time.utc(2016, 1, 12, 3, 4, 5, nanosecond: 678_000_000)
   # time.epoch_f # => 1452567845.678
   # ```
   def epoch_f : Float64
     epoch.to_f + nanosecond.to_f / 1e9
   end
 
-  # Retuns this instance of time represented in `Location` *location*.
+  # Returns a copy of this `Time` representing the same instant observed in
+  # *location*.
+  #
+  # This method changes the time zone and retains the instant, which will
+  # usually result in a different representation of local date-time (unless
+  # both locations have the same offset).
+  #
+  # Ambiguous time zone transitions such as gaps and overlaps have no effect on
+  # the result because it retains the same instant.
   #
   # ```
-  # time = Time.new(2018, 1, 7, 15, 51, location: Time::Location.load("Europe/Berlin"))
-  # time # => 2018-01-07 15:51:00 +01:00 Europe/Berlin
-  # time = time.in(Time::Location.load("Australia/Sydney"))
-  # time # => 2018-01-08 01:51:00 +11:00 Australia/Sydney
+  # time_de = Time.new(2018, 3, 8, 22, 5, 13, location: Time::Location.load("Europe/Berlin"))
+  # time_ar = time_de.in Time::Location.load("America/Buenos_Aires")
+  # time_de # => 2018-03-08 22:05:13 +01:00 Europe/Berlin
+  # time_ar # => 2018-03-08 18:05:13 -03:00 America/Buenos_Aires
   # ```
   def in(location : Location) : Time
     return self if location == self.location
@@ -591,7 +937,10 @@ struct Time
     )
   end
 
-  # Returns a copy of this `Time` converted to UTC.
+  # Returns a copy of this `Time` representing the same instant in UTC
+  # (`Time::Location::UTC`).
+  #
+  # See `#in` for details.
   def to_utc : Time
     if utc?
       self
@@ -603,7 +952,10 @@ struct Time
     end
   end
 
-  # Returns a copy of this `Time` converted to the local time zone.
+  # Returns a copy of this `Time` representing the same instant in the local
+  # time zone (`Time::Location.local`).
+  #
+  # See `#in` for details.
   def to_local : Time
     if local?
       self
@@ -613,7 +965,7 @@ struct Time
   end
 
   private macro def_at_beginning(interval)
-    # Returns the time when the {{interval.id}} that contains `self` starts.
+    # Returns a copy of this `Time` representing the beginning of the {{interval.id}}.
     def at_beginning_of_{{interval.id}} : Time
       year, month, day, day_year = year_month_day_day_year
       {{yield}}
@@ -621,7 +973,7 @@ struct Time
   end
 
   private macro def_at_end(interval)
-    # Returns the time when the {{interval.id}} that includes `self` ends.
+    # Returns a copy of this `Time` representing the end of the {{interval.id}}.
     def at_end_of_{{interval.id}} : Time
       year, month, day, day_year = year_month_day_day_year
       {{yield}}
@@ -636,7 +988,9 @@ struct Time
   def_at_beginning(hour) { Time.new(year, month, day, hour, location: location) }
   def_at_beginning(minute) { Time.new(year, month, day, hour, minute, location: location) }
 
-  # Returns the time when the week that includes `self` starts.
+  # Returns a copy of this `Time` representing the beginning of the week.
+  #
+  # TODO: Ensure correctness in local time-line.
   def at_beginning_of_week : Time
     dow = day_of_week.value
     if dow == 0
@@ -648,7 +1002,7 @@ struct Time
 
   def_at_end(year) { Time.new(year, 12, 31, 23, 59, 59, nanosecond: 999_999_999, location: location) }
 
-  # Returns the time when the half-year that includes `self` ends.
+  # Returns a copy of this `Time` representing the end of the semester.
   def at_end_of_semester : Time
     year, month = year_month_day_day_year
     if month <= 6
@@ -659,7 +1013,7 @@ struct Time
     Time.new(year, month, day, 23, 59, 59, nanosecond: 999_999_999, location: location)
   end
 
-  # Returns the time when the quarter-year that includes `self` ends.
+  # Returns a copy of this `Time` representing the end of the quarter.
   def at_end_of_quarter : Time
     year, month = year_month_day_day_year
     if month <= 3
@@ -676,7 +1030,9 @@ struct Time
 
   def_at_end(month) { Time.new(year, month, Time.days_in_month(year, month), 23, 59, 59, nanosecond: 999_999_999, location: location) }
 
-  # Returns the time when the week that includes `self` ends.
+  # Returns a copy of this `Time` representing the end of the week.
+  #
+  # TODO: Ensure correctness in local time-line.
   def at_end_of_week : Time
     dow = day_of_week.value
     if dow == 0
@@ -690,14 +1046,16 @@ struct Time
   def_at_end(hour) { Time.new(year, month, day, hour, 59, 59, nanosecond: 999_999_999, location: location) }
   def_at_end(minute) { Time.new(year, month, day, hour, minute, 59, nanosecond: 999_999_999, location: location) }
 
-  # Returns the midday (12:00) of the day represented by `self`.
+  # Returns a copy of this `Time` representing midday (`12:00`) of the same day.
   def at_midday : Time
     year, month, day = year_month_day_day_year
     Time.new(year, month, day, 12, 0, 0, nanosecond: 0, location: location)
   end
 
   {% for name in DayOfWeek.constants %}
-    # Does `self` happen on {{name.id}}?
+    # Returns `true` if the day of week is {{name.id}}.
+    #
+    # See `#day_of_week` for details.
     def {{name.id.downcase}}? : Bool
       day_of_week.{{name.id.downcase}}?
     end
