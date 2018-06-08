@@ -284,6 +284,8 @@ struct Time::Format
             @reader.pos = pos
           end
         end
+      else
+        raise "Invalid timezone"
       end
     end
 

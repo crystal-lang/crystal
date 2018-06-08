@@ -4,7 +4,8 @@
 {% end %}
 
 module HTTP
-  private DATE_PATTERNS = {"%a, %d %b %Y %H:%M:%S %z", "%d %b %Y %H:%M:%S %z", "%A, %d-%b-%y %H:%M:%S %z", "%a %b %e %H:%M:%S %Y"}
+  private DATE_PATTERNS = {"%a, %d %b %Y %H:%M:%S %z", "%d %b %Y %H:%M:%S %z", "%A, %d-%b-%y %H:%M:%S %z", "%a %b %e %H:%M:%S %Y",
+                           "%a, %d %b %Y %H:%M:%S GMT", "%d %b %Y %H:%M:%S GMT", "%A, %d-%b-%y %H:%M:%S GMT", "%a %b %e %H:%M:%S %Y"}
 
   # :nodoc:
   MAX_HEADER_SIZE = 16_384
