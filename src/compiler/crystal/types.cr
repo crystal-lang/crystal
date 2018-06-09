@@ -986,7 +986,7 @@ module Crystal
     getter(instance_vars) { {} of String => MetaTypeVar }
   end
 
-  # A non generic module type, like IO.
+  # A non generic module type.
   class NonGenericModuleType < ModuleType
     include InstanceVarContainer
     include ClassVarContainer

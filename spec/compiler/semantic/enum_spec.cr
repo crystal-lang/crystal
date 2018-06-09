@@ -198,24 +198,46 @@ describe "Semantic: enum" do
     enum_type.types["Baz"].as(Const).value.should eq(NumberLiteral.new("2", :i32))
   end
 
-  it "disallows None value when defined with @[Flags]" do
+  it "disallows redefining None to non-0 for @[Flags] enum" do
     assert_error %(
       @[Flags]
       enum Foo
-        None
+        None = 42
+        Dummy
       end
       ),
-      "flags enum can't contain None or All members"
+      "flags enum can't redefine None member to non-0"
+
+    assert_error %(
+      @[Flags]
+      enum Foo
+        None    # 1
+        Dummy
+      end
+      ),
+      "flags enum can't redefine None member to non-0"
   end
 
-  it "disallows All value when defined with @[Flags]" do
+  it "allows redefining None to 0 for @[Flags] enum" do
+    assert_type(%(
+      @[Flags]
+      enum Foo
+        None = 0
+        Dummy
+      end
+
+      Foo::None.value
+      )) { int32 }
+  end
+
+  it "disallows All value for @[Flags] enum" do
     assert_error %(
       @[Flags]
       enum Foo
         All = 50
       end
       ),
-      "flags enum can't contain None or All members"
+      "flags enum can't redefine All member"
   end
 
   it "doesn't error when defining a non-flags enum with None or All" do
@@ -235,6 +257,7 @@ describe "Semantic: enum" do
         @[Flags]
         enum Foo
           None
+          Dummy
           All = 50
         end
       end
@@ -362,6 +385,14 @@ describe "Semantic: enum" do
   it "errors on enum without members (#3447)" do
     assert_error %(
       enum Foo
+      end
+      ),
+      "enum Foo must have at least one member"
+
+    assert_error %(
+      @[Flags]
+      enum Foo
+        None = 0
       end
       ),
       "enum Foo must have at least one member"
