@@ -23,6 +23,10 @@ struct Time::Format
       io << time.year / 100
     end
 
+    def full_or_short_year
+      year
+    end
+
     def month
       io << time.month
     end
@@ -79,6 +83,12 @@ struct Time::Format
       io << get_short_day_name.upcase
     end
 
+    def short_day_name_with_comma?
+      short_day_name
+      char ','
+      whitespace
+    end
+
     def day_of_year_zero_padded
       pad3 time.day_of_year, '0'
     end
@@ -125,6 +135,13 @@ struct Time::Format
       nanoseconds
     end
 
+    def second_fraction?(fraction_digits = nil)
+      unless time.nanosecond == 0 || fraction_digits == 0
+        char '.'
+        second_fraction
+      end
+    end
+
     def am_pm
       io << (time.hour < 12 ? "am" : "pm")
     end
@@ -148,19 +165,55 @@ struct Time::Format
     end
 
     def time_zone(with_seconds = false)
-      time.zone.format(io, with_colon: false, with_seconds: with_seconds)
+      time_zone_offset(allow_seconds: with_seconds)
+    end
+
+    def time_zone_z_or_offset(**options)
+      if time.utc?
+        io << 'Z'
+      else
+        time_zone_offset(**options)
+      end
+    end
+
+    def time_zone_offset(force_colon = false, allow_colon = true, allow_seconds = true)
+      time.zone.format(io, with_colon: force_colon, with_seconds: allow_seconds)
     end
 
     def time_zone_colon(with_seconds = false)
-      time.zone.format(io, with_colon: true, with_seconds: with_seconds)
+      time_zone_offset(force_colon: true, allow_seconds: with_seconds)
     end
 
     def time_zone_colon_with_seconds
       time_zone_colon(with_seconds: true)
     end
 
-    def char(char)
+    def time_zone_gmt
+      io << "GMT"
+    end
+
+    def time_zone_rfc2822
+      time_zone_offset(allow_colon: false, allow_seconds: false)
+    end
+
+    def time_zone_gmt_or_rfc2822(**options)
+      if time.utc? || time.location.name == "UT" || time.location.name == "GMT"
+        time_zone_gmt
+      else
+        time_zone_rfc2822
+      end
+    end
+
+    def char(char, *alternatives)
       io << char
+    end
+
+    def char?(char, *alternatives)
+      char(char, *alternatives)
+    end
+
+    def whitespace
+      io << ' '
     end
 
     def get_month_name

@@ -1,3 +1,6 @@
+require "./format/formatter"
+require "./format/parser"
+
 # Specifies the format to convert a `Time` to and from a `String`.
 #
 # The pattern of a format is a `String` with directives. Directives
@@ -27,14 +30,15 @@
 # * **%j**: day of year, zero padded (001, 002, ..., 365)
 # * **%k**: hour of the day, 24-hour clock, blank padded (" 0", " 1", ..., "24")
 # * **%l**: hour of the day, 12-hour clock, blank padded (" 0", " 1", ..., "12")
-# * **%3N**, **%L**: milliseconds, zero padded (000, 001, ..., 999)
-# * **%6N**: microseconds, zero padded (000000, 000001, ..., 999999)
-# * **%9N**: nanoseconds, zero padded (000000000, 000000001, ..., 999999999)
-# * **%N**: second fraction, zero padded. (Same as `%9N` but may consume more than 9 digits while parsing)
+# * **%L**: milliseconds, zero padded (000, 001, ..., 999)
 # * **%m**: month number, zero padded (01, 02, ..., 12)
 # * **%_m**: month number, blank padded (" 1", " 2", ..., "12")
 # * **%-m**: month number (1, 2, ..., 12)
 # * **%M**: minute, zero padded (00, 01, 02, ..., 59)
+# * **%3N**, **%L**: milliseconds, zero padded (000, 001, ..., 999)
+# * **%6N**: microseconds, zero padded (000000, 000001, ..., 999999)
+# * **%9N**: nanoseconds, zero padded (000000000, 000000001, ..., 999999999)
+# * **%N**: second fraction, zero padded. (Same as `%9N` but may consume more than 9 digits while parsing)
 # * **%p**: am-pm (lowercase)
 # * **%P**: AM-PM (uppercase)
 # * **%r**: 12-hour time (03:04:05 AM)
@@ -52,11 +56,11 @@
 # * **%:z**: time zone as hour and minute offset from UTC with a colon (+09:00)
 # * **%::z**: time zone as hour, minute and second offset from UTC with a colon (+09:00:00)
 struct Time::Format
-  # The ISO 8601 date format. This is just `"%F"`.
-  ISO_8601_DATE = new "%F"
+  # :nodoc:
+  MONTH_NAMES = %w(January February March April May June July August September October November December)
 
-  # The ISO 8601 datetime format. This is just `"%FT%X%z"`.
-  ISO_8601_DATE_TIME = new "%FT%X%z"
+  # :nodoc:
+  DAY_NAMES = %w(Sunday Monday Tuesday Wednesday Thursday Friday Saturday)
 
   # Error raised when an invalid pattern is used.
   class Error < ::Exception
@@ -91,3 +95,5 @@ struct Time::Format
     io
   end
 end
+
+require "./format/custom/*"

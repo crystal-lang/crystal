@@ -862,9 +862,69 @@ struct Time
 
   # Formats this `Time` according to the pattern in *format* to the given *io*.
   #
-  # See `Time::Format for details.
+  # See `Time::Format` for details.
   def to_s(format : String, io : IO) : Nil
     Format.new(format).format(self, io)
+  end
+
+  # Format this time using the format specified by [RFC 3339](https://tools.ietf.org/html/rfc3339) ([ISO 8601](http://xml.coverpages.org/ISO-FDIS-8601.pdf) profile).
+  #
+  # ```
+  # Time.new(2016, 2, 15).to_rfc3339 # => "2016-02-15T00:00:00+00:00"
+  # ```
+  #
+  # ISO 8601 allows some freedom over the syntax and RFC 3339 exercises that
+  # freedom to rigidly define a fixed format intended for use in internet
+  # protocols and standards.
+  def to_rfc3339
+    Format::RFC_3339.format(to_utc)
+  end
+
+  # Format this time using the format specified by [RFC 3339](https://tools.ietf.org/html/rfc3339) ([ISO 8601](http://xml.coverpages.org/ISO-FDIS-8601.pdf) profile).
+  # into the given *io*.
+  def to_rfc3339(io : IO)
+    Format::RFC_3339.format(to_utc, io)
+  end
+
+  # Parse time format specified by [RFC 3339](https://tools.ietf.org/html/rfc3339) ([ISO 8601](http://xml.coverpages.org/ISO-FDIS-8601.pdf) profile).
+  def self.parse_rfc3339(time : String)
+    Format::RFC_3339.parse(time)
+  end
+
+  # Parse datetime format specified by [ISO 8601](http://xml.coverpages.org/ISO-FDIS-8601.pdf).
+  #
+  # This is similar to `.parse_rfc3339` but RFC 3339 defines a more strict format.
+  # In ISO 8601 for examples, field delimiters (`-`, `:`) are optional.
+  #
+  # Use `#to_rfc3339` to format a `Time` according to .
+  def self.parse_iso8601(time : String)
+    Format::ISO_8601_DATE_TIME.parse(time)
+  end
+
+  # Format this time using the format specified by [RFC 2822](https://www.ietf.org/rfc/rfc2822.txt).
+  #
+  # ```
+  # Time.new(2016, 2, 15).to_rfc2822 # => "Mon, 15 Feb 2016 00:00:00 -0400"
+  # ```
+  #
+  # This is also compatible to [RFC 882](https://tools.ietf.org/html/rfc882) and [RFC 1123](https://tools.ietf.org/html/rfc1123#page-55).
+  def to_rfc2822
+    Format::RFC_2822.format(to_utc)
+  end
+
+  # Format this time using the format specified by [RFC 2822](https://www.ietf.org/rfc/rfc2822.txt)
+  # into the given *io*.
+  #
+  # This is also compatible to [RFC 882](https://tools.ietf.org/html/rfc882) and [RFC 1123](https://tools.ietf.org/html/rfc1123#page-55).
+  def to_rfc2822(io : IO)
+    Format::RFC_2822.format(to_utc, io)
+  end
+
+  # Parse time format specified by [RFC 2822](https://www.ietf.org/rfc/rfc2822.txt).
+  #
+  # This is also compatible to [RFC 882](https://tools.ietf.org/html/rfc882) and [RFC 1123](https://tools.ietf.org/html/rfc1123#page-55).
+  def self.parse_rfc2822(time : String)
+    Format::RFC_2822.parse(time)
   end
 
   # Parses a `Time` from *time* string using the given *pattern*.

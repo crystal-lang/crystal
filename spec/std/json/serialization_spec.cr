@@ -169,7 +169,9 @@ describe "JSON serialization" do
     end
 
     it "deserializes Time" do
+      Time.from_json(%("2016-11-16T09:55:48-03:00")).to_utc.should eq(Time.utc(2016, 11, 16, 12, 55, 48))
       Time.from_json(%("2016-11-16T09:55:48-0300")).to_utc.should eq(Time.utc(2016, 11, 16, 12, 55, 48))
+      Time.from_json(%("20161116T095548-03:00")).to_utc.should eq(Time.utc(2016, 11, 16, 12, 55, 48))
     end
 
     describe "parse exceptions" do
@@ -361,8 +363,14 @@ describe "JSON serialization" do
       {"foo" => {"bar" => 1}}.to_pretty_json(indent: " ").should eq(%({\n "foo": {\n  "bar": 1\n }\n}))
     end
 
-    it "does for time" do
-      Time.utc(2016, 11, 16, 12, 55, 48).to_json.should eq(%("2016-11-16T12:55:48+0000"))
+    describe "Time" do
+      it "#to_json" do
+        Time.utc(2016, 11, 16, 12, 55, 48).to_json.should eq(%("2016-11-16T12:55:48Z"))
+      end
+
+      it "omit sub-second precision" do
+        Time.utc(2016, 11, 16, 12, 55, 48, nanosecond: 123456789).to_json.should eq(%("2016-11-16T12:55:48Z"))
+      end
     end
   end
 end

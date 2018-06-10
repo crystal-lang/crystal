@@ -514,6 +514,14 @@ describe Time do
     end
   end
 
+  it "formats standard formats" do
+    time = Time.utc(2016, 2, 15)
+    time.to_rfc3339.should eq "2016-02-15T00:00:00Z"
+    Time.parse_rfc3339(time.to_rfc3339).should eq time
+    time.to_rfc2822.should eq "Mon, 15 Feb 2016 00:00:00 +0000"
+    Time.parse_rfc2822(time.to_rfc2822).should eq time
+  end
+
   it "parses empty" do
     t = Time.parse("", "", Time::Location.local)
     t.year.should eq(1)
@@ -629,6 +637,11 @@ describe Time do
 
     time = Time.parse("+04:12:39", "%::z")
     time.offset.should eq 4 * 3600 + 12 * 60 + 39
+    time.utc?.should be_false
+    time.location.fixed?.should be_true
+
+    time = Time.parse("-04:12:39", "%::z")
+    time.offset.should eq -1 * (4 * 3600 + 12 * 60 + 39)
     time.utc?.should be_false
     time.location.fixed?.should be_true
   end

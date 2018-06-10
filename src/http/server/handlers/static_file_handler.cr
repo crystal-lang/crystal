@@ -65,7 +65,7 @@ class HTTP::StaticFileHandler
       directory_listing(context.response, request_path, file_path)
     elsif is_file
       last_modified = File.info(file_path).modification_time
-      context.response.headers["Last-Modified"] = HTTP.rfc1123_date(last_modified)
+      context.response.headers["Last-Modified"] = HTTP.format_time(last_modified)
 
       if if_modified_since = context.request.headers["If-Modified-Since"]?
         header_time = HTTP.parse_time(if_modified_since)

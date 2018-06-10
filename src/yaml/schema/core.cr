@@ -335,6 +335,6 @@ module YAML::Schema::Core
     # Minimum length is that of YYYY-M-D
     return nil if string.size < 8
 
-    TimeParser.new(string).parse
+    Time::Format::YAML_DATE.parse?(string)
   end
 end

@@ -37,15 +37,15 @@ describe HTTP do
     parsed_time.to_utc.to_s.should eq("2011-09-10 02:36:00 UTC")
   end
 
-  describe "generates RFC 1123" do
+  describe "generates HTTP date" do
     it "without time zone" do
       time = Time.utc(1994, 11, 6, 8, 49, 37, nanosecond: 0)
-      HTTP.rfc1123_date(time).should eq("Sun, 06 Nov 1994 08:49:37 GMT")
+      HTTP.format_time(time).should eq("Sun, 06 Nov 1994 08:49:37 GMT")
     end
 
     it "with local time zone" do
       time = Time.new(1994, 11, 6, 8, 49, 37, nanosecond: 0, location: Time::Location.load("Europe/Berlin"))
-      HTTP.rfc1123_date(time).should eq(time.to_utc.to_s("%a, %d %b %Y %H:%M:%S GMT"))
+      HTTP.format_time(time).should eq(time.to_utc.to_s("%a, %d %b %Y %H:%M:%S GMT"))
     end
   end
 
