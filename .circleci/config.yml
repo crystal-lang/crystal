@@ -163,11 +163,13 @@ jobs:
     steps:
       - attach_workspace:
           at: /tmp/workspace
-      - run: |
-          cd /tmp/workspace/distribution-scripts
-          source build.env
-          cd linux
-          make all64 release=true
+      - run:
+          no_output_timeout: 20m
+          command: |
+            cd /tmp/workspace/distribution-scripts
+            source build.env
+            cd linux
+            make all64 release=true
       - persist_to_workspace:
           root: /tmp/workspace/distribution-scripts/linux/
           paths:
@@ -178,11 +180,13 @@ jobs:
     steps:
       - attach_workspace:
           at: /tmp/workspace
-      - run: |
-          cd /tmp/workspace/distribution-scripts
-          source build.env
-          cd linux
-          make all32 release=true
+      - run:
+          no_output_timeout: 20m
+          command: |
+            cd /tmp/workspace/distribution-scripts
+            source build.env
+            cd linux
+            make all32 release=true
       - persist_to_workspace:
           root: /tmp/workspace/distribution-scripts/linux/
           paths:
