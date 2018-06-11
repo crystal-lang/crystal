@@ -96,11 +96,16 @@ private class TestObject
   def setter4
     @setter4
   end
+
+  def []=(key, value)
+    {key, value}
+  end
 end
 
 private class DelegatedTestObject
   # TODO: Replace with `:property1=` when v > 0.24.2
   delegate "property1=", to: @test_object
+  delegate :[]=, to: @test_object
 
   def initialize(@test_object : TestObject)
   end
@@ -143,6 +148,12 @@ describe Object do
       delegated = DelegatedTestObject.new(test_object)
       delegated.property1 = 42
       test_object.property1.should eq 42
+    end
+
+    it "delegates []=" do
+      test_object = TestObject.new
+      delegated = DelegatedTestObject.new(test_object)
+      (delegated["foo"] = "bar").should eq({"foo", "bar"})
     end
   end
 
