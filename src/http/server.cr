@@ -38,7 +38,7 @@ require "./common"
 #   context.response.print "Hello world!"
 # end
 #
-# server.bind 8080
+# server.bind_tcp 8080
 # puts "Listening on http://127.0.0.1:8080"
 # server.listen
 # ```
@@ -53,7 +53,7 @@ require "./common"
 #   context.response.print "Hello world!"
 # end
 #
-# server.bind "0.0.0.0", 8080
+# server.bind_tcp "0.0.0.0", 8080
 # puts "Listening on http://0.0.0.0:8080"
 # server.listen
 # ```
@@ -72,7 +72,7 @@ require "./common"
 #   HTTP::StaticFileHandler.new("."),
 # ])
 #
-# server.bind "127.0.0.1", 8080
+# server.bind_tcp "127.0.0.1", 8080
 # server.listen
 # ```
 #
@@ -91,7 +91,7 @@ require "./common"
 #   context.response.print "Hello world!"
 # end
 #
-# server.bind "0.0.0.0", 8080
+# server.bind_tcp "0.0.0.0", 8080
 # server.listen
 # ```
 class HTTP::Server
@@ -131,6 +131,11 @@ class HTTP::Server
   # Creates a `TCPServer` listenting on `host:port` and adds it as a socket, returning the local address
   # and port the server listens on.
   #
+  # ```
+  # server = HTTP::Server.new { }
+  # server.bind_tcp("127.0.0.100", 8080) # => Socket::IPAddress.new("127.0.0.100", 8080)
+  # ```
+  #
   # If *reuse_port* is `true`, it enables the `SO_REUSEPORT` socket option,
   # which allows multiple processes to bind to the same port.
   def bind_tcp(host : String, port : Int32, reuse_port : Bool = false) : Socket::IPAddress
@@ -143,6 +148,11 @@ class HTTP::Server
 
   # Creates a `TCPServer` listenting on `127.0.0.1:port` and adds it as a socket,
   # returning the local address and port the server listens on.
+  #
+  # ```
+  # server = HTTP::Server.new { }
+  # server.bind_tcp(8080) # => Socket::IPAddress.new("127.0.0.1", 8080)
+  # ```
   #
   # If *reuse_port* is `true`, it enables the `SO_REUSEPORT` socket option,
   # which allows multiple processes to bind to the same port.
