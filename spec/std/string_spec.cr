@@ -1448,7 +1448,8 @@ describe "String" do
     "a".dump.should eq %("a")
     "\\".dump.should eq %("\\\\")
     "\"".dump.should eq %("\\\"")
-    # TODO: "\a".dump.should eq %("\\a")    "\b".dump.should eq %("\\b")
+    # TODO: "\a".dump.should eq %("\\a")
+    "\b".dump.should eq %("\\b")
     "\e".dump.should eq %("\\e")
     "\f".dump.should eq %("\\f")
     "\n".dump.should eq %("\\n")
@@ -1475,7 +1476,8 @@ describe "String" do
     "a".inspect.should eq %("a")
     "\\".inspect.should eq %("\\\\")
     "\"".inspect.should eq %("\\\"")
-    # TODO: "\a".inspect.should eq %("\\a")     "\b".inspect.should eq %("\\b")
+    # TODO: "\a".inspect.should eq %("\\a")
+    "\b".inspect.should eq %("\\b")
     "\e".inspect.should eq %("\\e")
     "\f".inspect.should eq %("\\f")
     "\n".inspect.should eq %("\\n")
@@ -1653,7 +1655,8 @@ describe "String" do
   end
 
   it "escapes chars" do
-    # TODO: "\a"[0].should eq('\a')     "\b"[0].should eq('\b')
+    # TODO: "\a"[0].should eq('\a')
+    "\b"[0].should eq('\b')
     "\t"[0].should eq('\t')
     "\n"[0].should eq('\n')
     "\v"[0].should eq('\v')
