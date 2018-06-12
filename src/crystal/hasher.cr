@@ -1,5 +1,3 @@
-require "random/secure"
-
 # :nodoc:
 struct Crystal::Hasher
   # Implementation of a Hasher to compute a fast and safe hash
@@ -82,7 +80,7 @@ struct Crystal::Hasher
   private HASH_INF_MINUS = (-314159_i64).unsafe_as(UInt64)
 
   @@seed = uninitialized UInt64[2]
-  Random::Secure.random_bytes(Slice.new(pointerof(@@seed).as(UInt8*), sizeof(typeof(@@seed))))
+  Crystal::System::Random.random_bytes(Slice.new(pointerof(@@seed).as(UInt8*), sizeof(typeof(@@seed))))
 
   def initialize(@a : UInt64 = @@seed[0], @b : UInt64 = @@seed[1])
   end
