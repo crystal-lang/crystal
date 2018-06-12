@@ -21,7 +21,7 @@ SPEC_TEMPFILE_CLEANUP = ENV["SPEC_TEMPFILE_CLEANUP"]? != "0"
 # If the environment variable `SPEC_TEMPFILE_CLEANUP` is set to `0`, no paths
 # will be cleaned up, enabling easier debugging.
 def with_tempfile(*paths, file = __FILE__)
-  calling_spec = File.basename(file).gsub("_spec.cr", "")
+  calling_spec = File.basename(file).rchop("_spec.cr")
   paths = paths.map { |path| File.join(SPEC_TEMPFILE_PATH, calling_spec, path) }
   FileUtils.mkdir_p(File.join(SPEC_TEMPFILE_PATH, calling_spec))
 
