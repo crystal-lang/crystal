@@ -118,7 +118,7 @@ class Crystal::CodeGenVisitor
     when ">=" then return codegen_binary_op_gte(t1, t2, p1, p2)
     end
 
-    p1, p2 = codegen_binary_extend_int(t1, t2, p1, p2)
+    tmax, p1, p2 = codegen_binary_extend_int(t1, t2, p1, p2)
 
     case op
     when "+"               then codegen_binary_op_add(t1, t2, p1, p2)
@@ -140,12 +140,15 @@ class Crystal::CodeGenVisitor
   def codegen_binary_extend_int(t1, t2, p1, p2)
     if t1.normal_rank == t2.normal_rank
       # Nothing to do
+      tmax = t1
     elsif t1.rank < t2.rank
       p1 = extend_int t1, t2, p1
+      tmax = t2
     else
       p2 = extend_int t2, t1, p2
+      tmax = t1
     end
-    {p1, p2}
+    {tmax, p1, p2}
   end
 
   # Ensures the result is returned in the type of the left hand side operand t1.
@@ -176,7 +179,7 @@ class Crystal::CodeGenVisitor
 
   def codegen_binary_op_lt(t1, t2, p1, p2)
     if t1.signed? == t2.signed?
-      p1, p2 = codegen_binary_extend_int(t1, t2, p1, p2)
+      _, p1, p2 = codegen_binary_extend_int(t1, t2, p1, p2)
       builder.icmp (t1.signed? ? LLVM::IntPredicate::SLT : LLVM::IntPredicate::ULT), p1, p2
     else
       if t1.signed? && t2.unsigned?
@@ -214,7 +217,7 @@ class Crystal::CodeGenVisitor
 
   def codegen_binary_op_lte(t1, t2, p1, p2)
     if t1.signed? == t2.signed?
-      p1, p2 = codegen_binary_extend_int(t1, t2, p1, p2)
+      _, p1, p2 = codegen_binary_extend_int(t1, t2, p1, p2)
       builder.icmp (t1.signed? ? LLVM::IntPredicate::SLE : LLVM::IntPredicate::ULE), p1, p2
     else
       if t1.signed? && t2.unsigned?
@@ -252,7 +255,7 @@ class Crystal::CodeGenVisitor
 
   def codegen_binary_op_gt(t1, t2, p1, p2)
     if t1.signed? == t2.signed?
-      p1, p2 = codegen_binary_extend_int(t1, t2, p1, p2)
+      _, p1, p2 = codegen_binary_extend_int(t1, t2, p1, p2)
       builder.icmp (t1.signed? ? LLVM::IntPredicate::SGT : LLVM::IntPredicate::UGT), p1, p2
     else
       if t1.signed? && t2.unsigned?
@@ -290,7 +293,7 @@ class Crystal::CodeGenVisitor
 
   def codegen_binary_op_gte(t1, t2, p1, p2)
     if t1.signed? == t2.signed?
-      p1, p2 = codegen_binary_extend_int(t1, t2, p1, p2)
+      _, p1, p2 = codegen_binary_extend_int(t1, t2, p1, p2)
       builder.icmp (t1.signed? ? LLVM::IntPredicate::SGE : LLVM::IntPredicate::UGE), p1, p2
     else
       if t1.signed? && t2.unsigned?
