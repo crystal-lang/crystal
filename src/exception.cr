@@ -129,6 +129,12 @@ class DivisionByZeroError < Exception
   end
 end
 
+class OverflowError < Exception
+  def initialize(message = "Overflow")
+    super(message)
+  end
+end
+
 # Raised when a method is not implemented.
 #
 # This can be used either to stub out method bodies, or when the method is not
