@@ -113,6 +113,9 @@ module Crystal
     # Set to a `ProgressTracker` object which tracks compilation progress.
     property progress_tracker = ProgressTracker.new
 
+    # Defines the default overflow check policy
+    property overflow_check = OverflowCheck::Default
+
     def initialize
       super(self, self, "main")
 

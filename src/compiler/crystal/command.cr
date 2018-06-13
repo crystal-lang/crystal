@@ -300,6 +300,13 @@ class Crystal::Command
         opts.on("--no-debug", "Skip any symbolic debug info") do
           compiler.debug = Crystal::Debug::None
         end
+        # TODO change deafult
+        opts.on("--overflow-checked", "Perform integer overflow check") do
+          compiler.overflow_check = Crystal::OverflowCheck::Checked
+        end
+        opts.on("--overflow-unchecked", "Skip integer overflow check (default)") do
+          compiler.overflow_check = Crystal::OverflowCheck::Unchecked
+        end
         {% unless LibLLVM::IS_38 || LibLLVM::IS_39 %}
         opts.on("--lto=FLAG", "Use ThinLTO --lto=thin") do |flag|
           error "--lto=thin is the only lto supported option" unless flag == "thin"
@@ -487,6 +494,13 @@ class Crystal::Command
     end
     opts.on("--no-debug", "Skip any symbolic debug info") do
       compiler.debug = Crystal::Debug::None
+    end
+    # TODO change deafult
+    opts.on("--overflow-checked", "Perform integer overflow check") do
+      compiler.overflow_check = Crystal::OverflowCheck::Checked
+    end
+    opts.on("--overflow-unchecked", "Skip integer overflow check (default)") do
+      compiler.overflow_check = Crystal::OverflowCheck::Unchecked
     end
     opts.on("-D FLAG", "--define FLAG", "Define a compile-time flag") do |flag|
       compiler.flags << flag

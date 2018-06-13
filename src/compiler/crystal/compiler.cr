@@ -12,6 +12,12 @@ module Crystal
     Default     = LineNumbers
   end
 
+  enum OverflowCheck
+    Unchecked
+    Checked
+    Default   = Unchecked # TODO change
+  end
+
   # Main interface to the compiler.
   #
   # A Compiler parses source code, type checks it and
@@ -44,6 +50,9 @@ module Crystal
     # If `true`, the executable will be generated with debug code
     # that can be understood by `gdb` and `lldb`.
     property debug = Debug::Default
+
+    # Defines the default overflow check policy
+    property overflow_check = OverflowCheck::Default
 
     # If `true`, `.ll` files will be generated in the default cache
     # directory for each generated LLVM module.
@@ -187,6 +196,7 @@ module Crystal
       program.stdout = stdout
       program.show_error_trace = show_error_trace?
       program.progress_tracker = @progress_tracker
+      program.overflow_check = @overflow_check
       program
     end
 
@@ -235,7 +245,10 @@ module Crystal
 
     private def codegen(program, node : ASTNode, sources, output_filename)
       llvm_modules = @progress_tracker.stage("Codegen (crystal)") do
-        program.codegen node, debug: debug, single_module: @single_module || (!@thin_lto && @release) || @cross_compile || @emit
+        program.codegen node,
+          debug: debug,
+          single_module: @single_module || (!@thin_lto && @release) || @cross_compile || @emit,
+          overflow_check: overflow_check
       end
 
       output_dir = CacheDir.instance.directory_for(sources)

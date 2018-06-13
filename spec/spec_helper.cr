@@ -153,7 +153,7 @@ class Crystal::SpecRunOutput
   end
 end
 
-def run(code, filename = nil, inject_primitives = true, debug = Crystal::Debug::None)
+def run(code, filename = nil, inject_primitives = true, debug = Crystal::Debug::None, overflow_check = Crystal::OverflowCheck::Default)
   code = inject_primitives(code) if inject_primitives
 
   # Code that requires the prelude doesn't run in LLVM's MCJIT
@@ -174,6 +174,7 @@ def run(code, filename = nil, inject_primitives = true, debug = Crystal::Debug::
 
     compiler = Compiler.new
     compiler.debug = debug
+    compiler.overflow_check = overflow_check
     compiler.compile Compiler::Source.new("spec", code), output_filename
 
     output = `#{output_filename}`
@@ -181,7 +182,7 @@ def run(code, filename = nil, inject_primitives = true, debug = Crystal::Debug::
 
     SpecRunOutput.new(output)
   else
-    Program.new.run(code, filename: filename, debug: debug)
+    Program.new.run(code, filename: filename, debug: debug, overflow_check: overflow_check)
   end
 end
 
