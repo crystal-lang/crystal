@@ -2631,6 +2631,7 @@ module Crystal
         write " {"
         next_token_skip_space
         body = format_block_args node.args, node
+        next_token_skip_space_or_newline if @token.type == :";"
         if @token.type == :NEWLINE
           format_nested body
           skip_space_or_newline
