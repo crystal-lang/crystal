@@ -16,7 +16,7 @@ class Crystal::CodeGenVisitor
   def codegen_primitive(call, node, target_def, call_args)
     @last = case node.name
             when "binary"
-              codegen_primitive_binary node, target_def, call_args
+              codegen_primitive_binary call.name_location, node, target_def, call_args
             when "cast"
               codegen_primitive_cast node, target_def, call_args
             when "allocate"
@@ -74,13 +74,13 @@ class Crystal::CodeGenVisitor
             end
   end
 
-  def codegen_primitive_binary(node, target_def, call_args)
+  def codegen_primitive_binary(location, node, target_def, call_args)
     p1, p2 = call_args
     t1, t2 = target_def.owner, target_def.args[0].type
-    codegen_binary_op target_def.name, t1, t2, p1, p2
+    codegen_binary_op location, target_def.name, t1, t2, p1, p2
   end
 
-  def codegen_binary_op(op, t1 : BoolType, t2 : BoolType, p1, p2)
+  def codegen_binary_op(location, op, t1 : BoolType, t2 : BoolType, p1, p2)
     case op
     when "==" then builder.icmp LLVM::IntPredicate::EQ, p1, p2
     when "!=" then builder.icmp LLVM::IntPredicate::NE, p1, p2
@@ -88,7 +88,7 @@ class Crystal::CodeGenVisitor
     end
   end
 
-  def codegen_binary_op(op, t1 : CharType, t2 : CharType, p1, p2)
+  def codegen_binary_op(location, op, t1 : CharType, t2 : CharType, p1, p2)
     case op
     when "==" then return builder.icmp LLVM::IntPredicate::EQ, p1, p2
     when "!=" then return builder.icmp LLVM::IntPredicate::NE, p1, p2
@@ -100,7 +100,7 @@ class Crystal::CodeGenVisitor
     end
   end
 
-  def codegen_binary_op(op, t1 : SymbolType, t2 : SymbolType, p1, p2)
+  def codegen_binary_op(location, op, t1 : SymbolType, t2 : SymbolType, p1, p2)
     case op
     when "==" then return builder.icmp LLVM::IntPredicate::EQ, p1, p2
     when "!=" then return builder.icmp LLVM::IntPredicate::NE, p1, p2
@@ -108,7 +108,7 @@ class Crystal::CodeGenVisitor
     end
   end
 
-  def codegen_binary_op(op, t1 : IntegerType, t2 : IntegerType, p1, p2)
+  def codegen_binary_op(location, op, t1 : IntegerType, t2 : IntegerType, p1, p2)
     # Comparisons are a bit trickier because we want to get comparisons
     # between signed and unsigned integers right.
     case op
@@ -326,17 +326,17 @@ class Crystal::CodeGenVisitor
     end
   end
 
-  def codegen_binary_op(op, t1 : IntegerType, t2 : FloatType, p1, p2)
+  def codegen_binary_op(location, op, t1 : IntegerType, t2 : FloatType, p1, p2)
     p1 = codegen_cast(t1, t2, p1)
-    codegen_binary_op(op, t2, t2, p1, p2)
+    codegen_binary_op(location, op, t2, t2, p1, p2)
   end
 
-  def codegen_binary_op(op, t1 : FloatType, t2 : IntegerType, p1, p2)
+  def codegen_binary_op(location, op, t1 : FloatType, t2 : IntegerType, p1, p2)
     p2 = codegen_cast(t2, t1, p2)
-    codegen_binary_op op, t1, t1, p1, p2
+    codegen_binary_op(location, op, t1, t1, p1, p2)
   end
 
-  def codegen_binary_op(op, t1 : FloatType, t2 : FloatType, p1, p2)
+  def codegen_binary_op(location, op, t1 : FloatType, t2 : FloatType, p1, p2)
     if t1.rank < t2.rank
       p1 = extend_float t2, p1
     elsif t1.rank > t2.rank
@@ -360,11 +360,11 @@ class Crystal::CodeGenVisitor
     @last
   end
 
-  def codegen_binary_op(op, t1 : TypeDefType, t2, p1, p2)
-    codegen_binary_op op, t1.remove_typedef, t2, p1, p2
+  def codegen_binary_op(location, op, t1 : TypeDefType, t2, p1, p2)
+    codegen_binary_op(location, op, t1.remove_typedef, t2, p1, p2)
   end
 
-  def codegen_binary_op(op, t1, t2, p1, p2)
+  def codegen_binary_op(location, op, t1, t2, p1, p2)
     raise "BUG: codegen_binary_op called with #{t1} #{op} #{t2}"
   end
 
