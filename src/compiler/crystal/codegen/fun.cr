@@ -63,6 +63,8 @@ class Crystal::CodeGenVisitor
 
     old_needs_value = @needs_value
 
+    old_overflow_check = @overflow_check
+
     with_cloned_context do |old_context|
       context.type = self_type
       context.vars = LLVMVars.new
@@ -76,6 +78,8 @@ class Crystal::CodeGenVisitor
       @ensure_exception_handlers = nil
       @rescue_block = nil
       @needs_value = true
+
+      @overflow_check = @main_overflow_check
 
       args = codegen_fun_signature(mangled_name, target_def, self_type, is_fun_literal, is_closure)
 
@@ -155,6 +159,8 @@ class Crystal::CodeGenVisitor
       @entry_block = old_entry_block
       @alloca_block = old_alloca_block
       @needs_value = old_needs_value
+
+      @overflow_check = old_overflow_check
 
       if @debug.line_numbers?
         # set_current_debug_location associates a scope from the current fun,

@@ -144,6 +144,7 @@ module Crystal
 
     def initialize(@program : Program, @node : ASTNode, single_module = false, @debug = Debug::Default, @overflow_check = DefaultOverflowCheckPolicy)
       @single_module = !!single_module
+      @main_overflow_check = @overflow_check
       @abi = @program.target_machine.abi
       @llvm_context = LLVM::Context.new
       # LLVM::Context.register(@llvm_context, "main")
@@ -1454,7 +1455,12 @@ module Crystal
           @needs_value = true
           set_ensure_exception_handler(block)
 
+          old_overflow_check = @overflow_check
+          @overflow_check = @caller_overflow_check.not_nil!
+
           accept block.body
+
+          @overflow_check = old_overflow_check
         end
 
         phi.add @last, block.body.type?, last: true

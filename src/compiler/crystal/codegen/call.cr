@@ -283,7 +283,12 @@ class Crystal::CodeGenVisitor
           context.return_phi = phi
 
           request_value do
+            @caller_overflow_check = @overflow_check
+            @overflow_check = @main_overflow_check
+
             accept target_def.body
+
+            @overflow_check = @caller_overflow_check.not_nil!
           end
 
           phi.add @last, target_def.body.type?, last: true
