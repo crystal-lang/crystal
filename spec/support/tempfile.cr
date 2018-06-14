@@ -1,7 +1,7 @@
 require "tempfile"
 require "file_utils"
 
-SPEC_TEMPFILE_PATH = File.join(Tempfile.dirname, "crystal-spec-#{Random.new.hex(8)}")
+SPEC_TEMPFILE_PATH = File.join(Tempfile.dirname, "cr-spec-#{Random.new.hex(4)}")
 
 SPEC_TEMPFILE_CLEANUP = ENV["SPEC_TEMPFILE_CLEANUP"]? != "0"
 
