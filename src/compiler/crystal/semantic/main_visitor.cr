@@ -3003,6 +3003,10 @@ module Crystal
       false
     end
 
+    def end_visit(node : OverflowCheckScope)
+      node.bind_to node.body
+    end
+
     # # Helpers
 
     def free_vars
