@@ -258,7 +258,7 @@ describe UNIXServer do
     end
 
     it "raises when server is closed" do
-      with_tempfile("unix_server-accept-closed.sock") do |path|
+      with_tempfile("unix_server-closed.sock") do |path|
         server = UNIXServer.new(path)
         exception = nil
 
