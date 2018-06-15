@@ -189,8 +189,8 @@ describe "File" do
       File.file?(datapath("test_file.txt")).should be_true
     end
 
-    it "gives false" do
-      File.file?(datapath("nonexistent_dir")).should be_false
+    it "gives false with dir" do
+      File.file?(datapath("dir")).should be_false
     end
 
     it "gives false when the file doesn't exist" do
@@ -578,7 +578,7 @@ describe "File" do
     it "converts a pathname to an absolute pathname, using ~ (home) as base (trailing /)" do
       prev_home = home
       begin
-        ENV["HOME"] = File.expand_path(datapath("", ""))
+        ENV["HOME"] = File.expand_path(datapath)
         File.expand_path("~/").should eq(home)
         File.expand_path("~/..badfilename").should eq(File.join(home, "..badfilename"))
         File.expand_path("..").should eq("/#{base.split('/')[0...-1].join('/')}".gsub(%r{\A//}, "/"))
