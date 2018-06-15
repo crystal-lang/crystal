@@ -278,88 +278,90 @@ module Debug
 
       # TODO: support LNE::DefineFile (manually register file, uncommon)
       private def read_statement_program(sequence)
-        registers = Register.new(sequence.default_is_stmt)
+        __next_unchecked {
+          registers = Register.new(sequence.default_is_stmt)
 
-        loop do
-          opcode = @io.read_byte.not_nil!
+          loop do
+            opcode = @io.read_byte.not_nil!
 
-          if opcode >= sequence.opcode_base
-            # special opcode
-            adjusted_opcode = opcode - sequence.opcode_base
-            operation_advance = adjusted_opcode / sequence.line_range
-            increment_address_and_op_index(operation_advance)
-
-            registers.line += sequence.line_base + (adjusted_opcode % sequence.line_range)
-            register_to_matrix(sequence, registers)
-            registers.reset
-          elsif opcode == 0
-            # extended opcode
-            len = DWARF.read_unsigned_leb128(@io) - 1 # -1 accounts for the opcode
-            extended_opcode = LNE.new(@io.read_byte.not_nil!)
-
-            case extended_opcode
-            when LNE::EndSequence
-              registers.end_sequence = true
-              register_to_matrix(sequence, registers)
-              if (@io.tell - @offset - sequence.offset) < sequence.total_length
-                registers = Register.new(sequence.default_is_stmt)
-              else
-                break
-              end
-            when LNE::SetAddress
-              case len
-              when 8 then registers.address = @io.read_bytes(UInt64)
-              when 4 then registers.address = @io.read_bytes(UInt32).to_u64
-              else        @io.skip(len)
-              end
-              registers.op_index = 0_u32
-            when LNE::SetDiscriminator
-              registers.discriminator = DWARF.read_unsigned_leb128(@io)
-            else
-              # skip unsupported opcode
-              @io.read_fully(Bytes.new(len))
-            end
-          else
-            # standard opcode
-            standard_opcode = LNS.new(opcode)
-
-            case standard_opcode
-            when LNS::Copy
-              register_to_matrix(sequence, registers)
-              registers.reset
-            when LNS::AdvancePc
-              operation_advance = DWARF.read_unsigned_leb128(@io)
-              increment_address_and_op_index(operation_advance)
-            when LNS::AdvanceLine
-              registers.line += DWARF.read_signed_leb128(@io)
-            when LNS::SetFile
-              registers.file = DWARF.read_unsigned_leb128(@io)
-            when LNS::SetColumn
-              registers.column = DWARF.read_unsigned_leb128(@io)
-            when LNS::NegateStmt
-              registers.is_stmt = !registers.is_stmt
-            when LNS::SetBasicBlock
-              registers.basic_block = true
-            when LNS::ConstAddPc
-              adjusted_opcode = 255 - sequence.opcode_base
+            if opcode >= sequence.opcode_base
+              # special opcode
+              adjusted_opcode = opcode - sequence.opcode_base
               operation_advance = adjusted_opcode / sequence.line_range
               increment_address_and_op_index(operation_advance)
-            when LNS::FixedAdvancePc
-              registers.address += @io.read_bytes(UInt16).not_nil!
-              registers.op_index = 0_u32
-            when LNS::SetPrologueEnd
-              registers.prologue_end = true
-            when LNS::SetEpiloqueBegin
-              registers.epilogue_begin = true
-            when LNS::SetIsa
-              registers.isa = DWARF.read_unsigned_leb128(@io)
+
+              registers.line += sequence.line_base + (adjusted_opcode % sequence.line_range)
+              register_to_matrix(sequence, registers)
+              registers.reset
+            elsif opcode == 0
+              # extended opcode
+              len = DWARF.read_unsigned_leb128(@io) - 1 # -1 accounts for the opcode
+              extended_opcode = LNE.new(@io.read_byte.not_nil!)
+
+              case extended_opcode
+              when LNE::EndSequence
+                registers.end_sequence = true
+                register_to_matrix(sequence, registers)
+                if (@io.tell - @offset - sequence.offset) < sequence.total_length
+                  registers = Register.new(sequence.default_is_stmt)
+                else
+                  break
+                end
+              when LNE::SetAddress
+                case len
+                when 8 then registers.address = @io.read_bytes(UInt64)
+                when 4 then registers.address = @io.read_bytes(UInt32).to_u64
+                else        @io.skip(len)
+                end
+                registers.op_index = 0_u32
+              when LNE::SetDiscriminator
+                registers.discriminator = DWARF.read_unsigned_leb128(@io)
+              else
+                # skip unsupported opcode
+                @io.read_fully(Bytes.new(len))
+              end
             else
-              # consume unknown opcode args
-              n_args = sequence.standard_opcode_lengths[opcode.to_i]
-              n_args.times { DWARF.read_unsigned_leb128(@io) }
+              # standard opcode
+              standard_opcode = LNS.new(opcode)
+
+              case standard_opcode
+              when LNS::Copy
+                register_to_matrix(sequence, registers)
+                registers.reset
+              when LNS::AdvancePc
+                operation_advance = DWARF.read_unsigned_leb128(@io)
+                increment_address_and_op_index(operation_advance)
+              when LNS::AdvanceLine
+                registers.line += DWARF.read_signed_leb128(@io)
+              when LNS::SetFile
+                registers.file = DWARF.read_unsigned_leb128(@io)
+              when LNS::SetColumn
+                registers.column = DWARF.read_unsigned_leb128(@io)
+              when LNS::NegateStmt
+                registers.is_stmt = !registers.is_stmt
+              when LNS::SetBasicBlock
+                registers.basic_block = true
+              when LNS::ConstAddPc
+                adjusted_opcode = 255 - sequence.opcode_base
+                operation_advance = adjusted_opcode / sequence.line_range
+                increment_address_and_op_index(operation_advance)
+              when LNS::FixedAdvancePc
+                registers.address += @io.read_bytes(UInt16).not_nil!
+                registers.op_index = 0_u32
+              when LNS::SetPrologueEnd
+                registers.prologue_end = true
+              when LNS::SetEpiloqueBegin
+                registers.epilogue_begin = true
+              when LNS::SetIsa
+                registers.isa = DWARF.read_unsigned_leb128(@io)
+              else
+                # consume unknown opcode args
+                n_args = sequence.standard_opcode_lengths[opcode.to_i]
+                n_args.times { DWARF.read_unsigned_leb128(@io) }
+              end
             end
           end
-        end
+        }
       end
 
       @current_sequence_matrix : Array(Row)?

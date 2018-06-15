@@ -38,23 +38,25 @@ module Debug
       end
 
       def each
-        end_offset = @offset + @unit_length
-        attributes = [] of {AT, FORM, Value}
+        __next_unchecked {
+          end_offset = @offset + @unit_length
+          attributes = [] of {AT, FORM, Value}
 
-        while @io.tell < end_offset
-          code = DWARF.read_unsigned_leb128(@io)
-          attributes.clear
+          while @io.tell < end_offset
+            code = DWARF.read_unsigned_leb128(@io)
+            attributes.clear
 
-          if abbrev = abbreviations[code - 1]? # abbreviations.find { |a| a.code == abbrev }
-            abbrev.attributes.each do |attr|
-              value = read_attribute_value(attr.form)
-              attributes << {attr.at, attr.form, value}
+            if abbrev = abbreviations[code - 1]? # abbreviations.find { |a| a.code == abbrev }
+              abbrev.attributes.each do |attr|
+                value = read_attribute_value(attr.form)
+                attributes << {attr.at, attr.form, value}
+              end
+              yield code, abbrev, attributes
+            else
+              yield code, nil, attributes
             end
-            yield code, abbrev, attributes
-          else
-            yield code, nil, attributes
           end
-        end
+        }
       end
 
       private def read_attribute_value(form)
