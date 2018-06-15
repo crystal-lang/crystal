@@ -194,8 +194,8 @@ class Array(T)
   # and *other*, excluding any duplicates. The order is preserved from `self`.
   #
   # ```
-  # [1, 1, 3, 5] & [1, 2, 3]               # => [ 1, 3 ]
-  # ['a', 'b', 'b', 'z'] & ['a', 'b', 'c'] # => [ 'a', 'b' ]
+  # [1, 1, 3, 5] & [1, 2, 3]               # => [1, 3]
+  # ['a', 'b', 'b', 'z'] & ['a', 'b', 'c'] # => ['a', 'b']
   # ```
   #
   # See also: `#uniq`.
@@ -223,7 +223,7 @@ class Array(T)
   # any duplicates, and preserving the order from `self`.
   #
   # ```
-  # ["a", "b", "c"] | ["c", "d", "a"] # => [ "a", "b", "c", "d" ]
+  # ["a", "b", "c"] | ["c", "d", "a"] # => ["a", "b", "c", "d"]
   # ```
   #
   # See also: `#uniq`.
@@ -253,8 +253,8 @@ class Array(T)
   # The type of the new array is the union of the types of both the original arrays.
   #
   # ```
-  # [1, 2] + ["a"]  # => [1,2,"a"] of (Int32 | String)
-  # [1, 2] + [2, 3] # => [1,2,2,3]
+  # [1, 2] + ["a"]  # => [1, 2, "a"] of (Int32 | String)
+  # [1, 2] + [2, 3] # => [1, 2, 2, 3]
   # ```
   def +(other : Array(U)) forall U
     new_size = size + other.size
@@ -283,7 +283,7 @@ class Array(T)
   # Repetition: Returns a new `Array` built by concatenating *times* copies of `self`.
   #
   # ```
-  # ["a", "b", "c"] * 2 # => [ "a", "b", "c", "a", "b", "c" ]
+  # ["a", "b", "c"] * 2 # => ["a", "b", "c", "a", "b", "c"]
   # ```
   def *(times : Int)
     ary = Array(T).new(size * times)
@@ -297,7 +297,7 @@ class Array(T)
   #
   # ```
   # a = [1, 2]
-  # a << 3 # => [1,2,3]
+  # a << 3 # => [1, 2, 3]
   # ```
   def <<(value : T)
     push(value)
@@ -311,7 +311,7 @@ class Array(T)
   # ```
   # ary = [1, 2, 3]
   # ary[0] = 5
-  # p ary # => [5,2,3]
+  # p ary # => [5, 2, 3]
   #
   # ary[3] = 5 # raises IndexError
   # ```
@@ -950,10 +950,10 @@ class Array(T)
   #
   # ```
   # a = [1, 2, 3]
-  # a.permutations    # => [[1,2,3],[1,3,2],[2,1,3],[2,3,1],[3,1,2],[3,2,1]]
-  # a.permutations(1) # => [[1],[2],[3]]
-  # a.permutations(2) # => [[1,2],[1,3],[2,1],[2,3],[3,1],[3,2]]
-  # a.permutations(3) # => [[1,2,3],[1,3,2],[2,1,3],[2,3,1],[3,1,2],[3,2,1]]
+  # a.permutations    # => [[1, 2, 3], [1, 3, 2], [2, 1, 3], [2, 3, 1], [3, 1, 2], [3, 2, 1]]
+  # a.permutations(1) # => [[1], [2], [3]]
+  # a.permutations(2) # => [[1, 2], [1, 3], [2, 1], [2, 3], [3, 1], [3, 2]]
+  # a.permutations(3) # => [[1, 2, 3], [1, 3, 2], [2, 1, 3], [2, 3, 1], [3, 1, 2], [3, 2, 1]]
   # a.permutations(0) # => [[]]
   # a.permutations(4) # => []
   # ```
