@@ -122,7 +122,7 @@ end
 private def it_lexes_symbols(symbols)
   symbols.each do |symbol|
     value = symbol[1, symbol.size - 1]
-    value = value[1, value.size - 2] if value.starts_with?("\"")
+    value = value[1, value.size - 2] if value.starts_with?('"')
     it_lexes symbol, :SYMBOL, value
   end
 end

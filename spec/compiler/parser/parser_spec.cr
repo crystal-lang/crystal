@@ -73,7 +73,7 @@ describe "Parser" do
    ":>=", ":!", ":!=", ":=~", ":!~", ":&", ":|", ":^", ":~", ":**", ":>>", ":<<", ":%", ":[]", ":[]?",
    ":[]=", ":<=>", ":==="].each do |symbol|
     value = symbol[1, symbol.size - 1]
-    value = value[1, value.size - 2] if value.starts_with?("\"")
+    value = value[1, value.size - 2] if value.starts_with?('"')
     it_parses symbol, value.symbol
   end
   it_parses ":foo", "foo".symbol
