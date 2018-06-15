@@ -650,6 +650,15 @@ describe Time do
     time.location.fixed?.should be_true
   end
 
+  it "raises when time zone missing" do
+    expect_raises(Time::Format::Error, "Invalid timezone") do
+      Time.parse("", "%z")
+    end
+    expect_raises(Time::Format::Error, "Invalid timezone") do
+      Time.parse("123456+01:00", "%3N%z")
+    end
+  end
+
   # TODO %Z
   # TODO %G
   # TODO %g
