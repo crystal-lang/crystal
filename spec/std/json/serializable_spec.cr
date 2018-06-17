@@ -1,5 +1,3 @@
-{% if Crystal::VERSION.includes?("0.24.2+") || Crystal::VERSION == "0.25.0" %}
-
 require "spec"
 require "json"
 require "big"
@@ -705,11 +703,11 @@ describe "JSON mapping" do
     end
 
     it "defines query getter with class restriction" do
-      \{% begin %}
-        \{% methods = JSONAttrWithQueryAttributes.methods \%}
-        \{{ methods.find(&.name.==("foo?")).return_type }}.should eq(Bool)
-        \{{ methods.find(&.name.==("bar?")).return_type }}.should eq(Bool)
-      \{% end \%}
+      {% begin %}
+        {% methods = JSONAttrWithQueryAttributes.methods %}
+        {{ methods.find(&.name.==("foo?")).return_type }}.should eq(Bool)
+        {{ methods.find(&.name.==("bar?")).return_type }}.should eq(Bool)
+      {% end %}
     end
 
     it "defines non-query setter and presence methods" do
@@ -788,5 +786,3 @@ describe "JSON mapping" do
     JSONAttrPersonWithYAMLInitializeHook.from_yaml(person.to_yaml).msg.should eq "Hello Vasya"
   end
 end
-
-{% end %}
