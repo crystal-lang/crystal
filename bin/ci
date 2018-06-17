@@ -82,8 +82,6 @@ build() {
 prepare_build() {
   on_linux verify_linux_environment
 
-  on_linux docker pull "jhass/crystal-build-$ARCH"
-
   on_osx brew install crystal-lang
 
   # Make sure binaries from llvm are available in PATH
