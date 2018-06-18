@@ -210,13 +210,23 @@ class Crystal::CodeGenVisitor
     codegen_trunc_binary_op_result(t1, t2, result)
   end
 
-  # Generates a call to llvm_fun(p1, p2)
+  # Generates a call to llvm_fun(p1, p2).
+  # t1, t2 are the original types of p1, p2.
+  # t is the super type of t1 and t2 where the operation is performed.
+  # llvm_fun returns {res, o_bit} where the o_bit signals overflow.
+  # The generated code also performs a range check and truncation of res
+  # in order to fit in the original type t1 if needed.
   #
   # ```
   # %res_with_overflow = call {T, i1} <llvm_fun>(T %p1, T %p2)
   # %res = extractvalue {T, i1} %res, 0
   # %o_bit = extractvalue {T, i1} %res, 1
+  # ;; if T != T1
+  # %out_of_range = %res < T1::MIN || %res > T1::MAX ;; compare T1.range and %res
+  # br i1 or(%o_bit, %out_of_range), label %overflow, label %normal
+  # ;; else
   # br i1 %o_bit, label %overflow, label %normal
+  # ;; end
   #
   # overflow:
   # ;; codegen: raise OverflowError.new with caller's location
@@ -235,12 +245,23 @@ class Crystal::CodeGenVisitor
     res = extract_value res_with_overflow, 0
     o_bit = extract_value res_with_overflow, 1
 
+    if t != t1
+      t1_min_value, t1_max_value = t1.range
+      # out_of_range = res < t1_min_value || res > t1_max_value
+      out_of_range = or(
+        codegen_binary_op_lt(t, t1, res, int(t1_min_value, t1)),
+        codegen_binary_op_gt(t, t1, res, int(t1_max_value, t1))
+      )
+
+      overflow = or(o_bit, out_of_range)
+    else
+      overflow = o_bit
+    end
+
     op_overflow = new_block "overflow"
     op_normal = new_block "normal"
 
-    # TODO raise overflow if outside of t1 type range interpreted as a t2
-
-    cond o_bit, op_overflow, op_normal
+    cond overflow, op_overflow, op_normal
     position_at_end op_overflow
 
     ex = Call.new(Path.global("OverflowError").at(location), "new").at(location)

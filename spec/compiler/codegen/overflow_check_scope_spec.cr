@@ -50,6 +50,25 @@ describe "Code gen: overflow check scope" do
           end
         )).to_i.should eq(1)
       end
+
+      it "wrap around if unchecked for {{type}} + Int64" do
+        unchecked_run(%(
+          require "prelude"
+          {{type}}::MAX + 1_i64 == {{type}}::MIN
+        )).to_b.should be_true
+      end
+
+      it "raises if checked for {{type}} + Int64" do
+        checked_run(%(
+          require "prelude"
+          begin
+            {{type}}::MAX + 1_i64
+            0
+          rescue OverflowError
+            1
+          end
+        )).to_i.should eq(1)
+      end
     {% end %}
   end
 
