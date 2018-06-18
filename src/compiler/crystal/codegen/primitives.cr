@@ -120,27 +120,21 @@ class Crystal::CodeGenVisitor
 
     p1, p2 = codegen_binary_extend_int(t1, t2, p1, p2)
 
-    result = case op
-             when "+"               then codegen_binary_op_add(p1, p2)
-             when "-"               then codegen_binary_op_sub(p1, p2)
-             when "*"               then codegen_binary_op_mul(p1, p2)
-             when "/", "unsafe_div" then t1.signed? ? builder.sdiv(p1, p2) : builder.udiv(p1, p2)
-             when "%", "unsafe_mod" then t1.signed? ? builder.srem(p1, p2) : builder.urem(p1, p2)
-             when "unsafe_shl"      then builder.shl(p1, p2)
-             when "unsafe_shr"      then t1.signed? ? builder.ashr(p1, p2) : builder.lshr(p1, p2)
-             when "|"               then or(p1, p2)
-             when "&"               then and(p1, p2)
-             when "^"               then builder.xor(p1, p2)
-             when "=="              then return builder.icmp LLVM::IntPredicate::EQ, p1, p2
-             when "!="              then return builder.icmp LLVM::IntPredicate::NE, p1, p2
-             else                        raise "BUG: trying to codegen #{t1} #{op} #{t2}"
-             end
-
-    if t1.normal_rank != t2.normal_rank && t1.rank < t2.rank
-      result = trunc result, llvm_type(t1)
+    case op
+    when "+"               then codegen_binary_op_add(t1, t2, p1, p2)
+    when "-"               then codegen_binary_op_sub(t1, t2, p1, p2)
+    when "*"               then codegen_binary_op_mul(t1, t2, p1, p2)
+    when "/", "unsafe_div" then codegen_trunc_binary_op_result(t1, t2, t1.signed? ? builder.sdiv(p1, p2) : builder.udiv(p1, p2))
+    when "%", "unsafe_mod" then codegen_trunc_binary_op_result(t1, t2, t1.signed? ? builder.srem(p1, p2) : builder.urem(p1, p2))
+    when "unsafe_shl"      then codegen_trunc_binary_op_result(t1, t2, builder.shl(p1, p2))
+    when "unsafe_shr"      then codegen_trunc_binary_op_result(t1, t2, t1.signed? ? builder.ashr(p1, p2) : builder.lshr(p1, p2))
+    when "|"               then codegen_trunc_binary_op_result(t1, t2, or(p1, p2))
+    when "&"               then codegen_trunc_binary_op_result(t1, t2, and(p1, p2))
+    when "^"               then codegen_trunc_binary_op_result(t1, t2, builder.xor(p1, p2))
+    when "=="              then builder.icmp(LLVM::IntPredicate::EQ, p1, p2)
+    when "!="              then builder.icmp(LLVM::IntPredicate::NE, p1, p2)
+    else                        raise "BUG: trying to codegen #{t1} #{op} #{t2}"
     end
-
-    result
   end
 
   def codegen_binary_extend_int(t1, t2, p1, p2)
@@ -154,16 +148,30 @@ class Crystal::CodeGenVisitor
     {p1, p2}
   end
 
-  def codegen_binary_op_add(p1, p2)
-    builder.add p1, p2
+  # Ensures the result is returned in the type of the left hand side operand t1.
+  # This is only needed if the operation was carried on in the realm of t2
+  # because it was of higher rank
+  def codegen_trunc_binary_op_result(t1, t2, result)
+    if t1.normal_rank != t2.normal_rank && t1.rank < t2.rank
+      result = trunc result, llvm_type(t1)
+    else
+      result
+    end
   end
 
-  def codegen_binary_op_sub(p1, p2)
-    builder.sub p1, p2
+  def codegen_binary_op_add(t1, t2, p1, p2)
+    result = builder.add p1, p2
+    codegen_trunc_binary_op_result(t1, t2, result)
   end
 
-  def codegen_binary_op_mul(p1, p2)
-    builder.mul p1, p2
+  def codegen_binary_op_sub(t1, t2, p1, p2)
+    result = builder.sub(p1, p2)
+    codegen_trunc_binary_op_result(t1, t2, result)
+  end
+
+  def codegen_binary_op_mul(t1, t2, p1, p2)
+    result = builder.mul(p1, p2)
+    codegen_trunc_binary_op_result(t1, t2, result)
   end
 
   def codegen_binary_op_lt(t1, t2, p1, p2)
