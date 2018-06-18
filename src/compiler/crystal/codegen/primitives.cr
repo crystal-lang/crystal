@@ -131,7 +131,7 @@ class Crystal::CodeGenVisitor
     case op
     when "+"               then codegen_binary_op_add(location, tmax, t1, t2, p1, p2)
     when "-"               then codegen_binary_op_sub(location, tmax, t1, t2, p1, p2)
-    when "*"               then codegen_binary_op_mul(t1, t2, p1, p2)
+    when "*"               then codegen_binary_op_mul(location, tmax, t1, t2, p1, p2)
     when "/", "unsafe_div" then codegen_trunc_binary_op_result(t1, t2, t1.signed? ? builder.sdiv(p1, p2) : builder.udiv(p1, p2))
     when "%", "unsafe_mod" then codegen_trunc_binary_op_result(t1, t2, t1.signed? ? builder.srem(p1, p2) : builder.urem(p1, p2))
     when "unsafe_shl"      then codegen_trunc_binary_op_result(t1, t2, builder.shl(p1, p2))
@@ -230,9 +230,34 @@ class Crystal::CodeGenVisitor
     end
   end
 
-  def codegen_binary_op_mul(t1, t2, p1, p2)
-    result = builder.mul(p1, p2)
-    codegen_trunc_binary_op_result(t1, t2, result)
+  def codegen_binary_op_mul(location, t : IntegerType, t1, t2, p1, p2)
+    if overflow_checked_scope?
+      llvm_fun = case t.kind
+                 when :i8
+                   binary_overflow_fun "llvm.smul.with.overflow.i8", llvm_context.int8
+                 when :i16
+                   binary_overflow_fun "llvm.smul.with.overflow.i16", llvm_context.int16
+                 when :i32
+                   binary_overflow_fun "llvm.smul.with.overflow.i32", llvm_context.int32
+                 when :i64
+                   binary_overflow_fun "llvm.smul.with.overflow.i64", llvm_context.int64
+                 when :u8
+                   binary_overflow_fun "llvm.umul.with.overflow.i8", llvm_context.int8
+                 when :u16
+                   binary_overflow_fun "llvm.umul.with.overflow.i16", llvm_context.int16
+                 when :u32
+                   binary_overflow_fun "llvm.umul.with.overflow.i32", llvm_context.int32
+                 when :u64
+                   binary_overflow_fun "llvm.umul.with.overflow.i64", llvm_context.int64
+                 else
+                   raise "unreachable"
+                 end
+
+      codegen_binary_overflow_check(location, llvm_fun, t, t1, t2, p1, p2)
+    else
+      result = builder.mul(p1, p2)
+      codegen_trunc_binary_op_result(t1, t2, result)
+    end
   end
 
   # Generates a call to llvm_fun(p1, p2).
