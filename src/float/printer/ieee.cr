@@ -148,7 +148,9 @@ module Float::Printer::IEEE
       exp = 1 - EXPONENT_BIAS_64
     else
       frac = (d64 & SIGNIFICAND_MASK_64) + HIDDEN_BIT_64
-      exp = (((d64 & EXPONENT_MASK_64) >> PHYSICAL_SIGNIFICAND_SIZE_64) - EXPONENT_BIAS_64).to_i
+      __next_unchecked {
+        exp = (((d64 & EXPONENT_MASK_64) >> PHYSICAL_SIGNIFICAND_SIZE_64) - EXPONENT_BIAS_64).to_i
+      }
     end
 
     {frac, exp}
@@ -162,7 +164,9 @@ module Float::Printer::IEEE
       exp = 1 - EXPONENT_BIAS_32
     else
       frac = (d32 & SIGNIFICAND_MASK_32) + HIDDEN_BIT_32
-      exp = (((d32 & EXPONENT_MASK_32) >> PHYSICAL_SIGNIFICAND_SIZE_32) - EXPONENT_BIAS_32).to_i
+      __next_unchecked {
+        exp = (((d32 & EXPONENT_MASK_32) >> PHYSICAL_SIGNIFICAND_SIZE_32) - EXPONENT_BIAS_32).to_i
+      }
     end
 
     {frac.to_u64, exp}
