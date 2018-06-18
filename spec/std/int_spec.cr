@@ -39,10 +39,52 @@ describe "Int" do
       x.should be_a(Int64)
     end
 
+    it "should overflow with larger integers" do
+      expect_raises(OverflowError) do
+        51_i64 ** 12
+      end
+    end
+
     describe "with float" do
       it { (2 ** 2.0).should be_close(4, 0.0001) }
       it { (2 ** 2.5_f32).should be_close(5.656854249492381, 0.0001) }
       it { (2 ** 2.5).should be_close(5.656854249492381, 0.0001) }
+    end
+  end
+
+  describe "unchecked_pow" do
+    it "with positive Int32" do
+      x = 2.unchecked_pow(2)
+      x.should eq(4)
+      x.should be_a(Int32)
+
+      x = 2.unchecked_pow(0)
+      x.should eq(1)
+      x.should be_a(Int32)
+    end
+
+    it "with positive UInt8" do
+      x = 2_u8.unchecked_pow(2)
+      x.should eq(4)
+      x.should be_a(UInt8)
+    end
+
+    it "raises with negative exponent" do
+      expect_raises(ArgumentError, "Cannot raise an integer to a negative integer power, use floats for that") do
+        2.unchecked_pow(-1)
+      end
+    end
+
+    it "should work with large integers" do
+      x = 51_i64.unchecked_pow(11)
+      x.should eq(6071163615208263051_i64)
+      x.should be_a(Int64)
+    end
+
+    it "should wrap with larger integers" do
+      x = 51_i64.unchecked_pow(12)
+      x.should eq(-3965304877440961871_i64)
+      x.should be_a(Int64)
     end
   end
 
