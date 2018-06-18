@@ -8,12 +8,14 @@ end
 
 class YAMLAttrEmptyClass
   include YAML::Serializable
+
   def initialize; end
 end
 
 class YAMLAttrEmptyClassWithUnmapped
   include YAML::Serializable
   include YAML::Serializable::Unmapped
+
   def initialize; end
 end
 

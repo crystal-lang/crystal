@@ -12,12 +12,14 @@ end
 
 class JSONAttrEmptyClass
   include JSON::Serializable
+
   def initialize; end
 end
 
 class JSONAttrEmptyClassWithUnmapped
   include JSON::Serializable
   include JSON::Serializable::Unmapped
+
   def initialize; end
 end
 
@@ -269,13 +271,20 @@ class JSONAttrModuleTest
   property foo = 15
 
   def initialize; end
-  def to_tuple; {@moo, @foo}; end
+
+  def to_tuple
+    {@moo, @foo}
+  end
 end
 
 class JSONAttrModuleTest2 < JSONAttrModuleTest
   property bar : Int32
+
   def initialize(@bar : Int32); end
-  def to_tuple; {@moo, @foo, @bar}; end
+
+  def to_tuple
+    {@moo, @foo, @bar}
+  end
 end
 
 struct JSONAttrPersonWithYAML
