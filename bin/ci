@@ -82,8 +82,6 @@ build() {
 prepare_build() {
   on_linux verify_linux_environment
 
-  on_linux docker pull "jhass/crystal-build-$ARCH"
-
   on_osx brew install crystal-lang
 
   # Make sure binaries from llvm are available in PATH
@@ -100,7 +98,7 @@ with_build_env() {
 
   on_linux verify_linux_environment
 
-  export DOCKER_TEST_PREFIX="crystallang/crystal:0.24.2"
+  export DOCKER_TEST_PREFIX="crystallang/crystal:0.25.0"
 
   case $ARCH in
     x86_64)
