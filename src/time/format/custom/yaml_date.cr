@@ -10,7 +10,6 @@ struct Time::Format
   # As an additional note, Ruby's Psych YAML parser also implements a
   # custom time parser, probably for this same reason.
   module YAML_DATE
-
     # Parses a string into a `Time`.
     def self.parse?(string) : Time?
       parser = Parser.new(string)
