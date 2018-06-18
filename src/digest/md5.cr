@@ -103,27 +103,35 @@ class Digest::MD5 < Digest::Base
   end
 
   def ff(a, b, c, d, x, s, ac)
-    a += f(b, c, d) + x + ac.to_u32
-    a = rotate_left a, s
-    a += b
+    __next_unchecked {
+      a += f(b, c, d) + x + ac.to_u32
+      a = rotate_left a, s
+      a += b
+    }
   end
 
   def gg(a, b, c, d, x, s, ac)
-    a += g(b, c, d) + x + ac.to_u32
-    a = rotate_left a, s
-    a += b
+    __next_unchecked {
+      a += g(b, c, d) + x + ac.to_u32
+      a = rotate_left a, s
+      a += b
+    }
   end
 
   def hh(a, b, c, d, x, s, ac)
-    a += h(b, c, d) + x + ac.to_u32
-    a = rotate_left a, s
-    a += b
+    __next_unchecked {
+      a += h(b, c, d) + x + ac.to_u32
+      a = rotate_left a, s
+      a += b
+    }
   end
 
   def ii(a, b, c, d, x, s, ac)
-    a += i(b, c, d) + x + ac.to_u32
-    a = rotate_left a, s
-    a += b
+    __next_unchecked {
+      a += i(b, c, d) + x + ac.to_u32
+      a = rotate_left a, s
+      a += b
+    }
   end
 
   def transform(in)
@@ -201,10 +209,12 @@ class Digest::MD5 < Digest::Base
     c = ii(c, d, a, b, in[2], S43, 718787259)   # 63
     b = ii(b, c, d, a, in[9], S44, 3951481745)  # 64
 
-    @buf[0] += a
-    @buf[1] += b
-    @buf[2] += c
-    @buf[3] += d
+    __next_unchecked {
+      @buf[0] += a
+      @buf[1] += b
+      @buf[2] += c
+      @buf[3] += d
+    }
   end
 
   def final
