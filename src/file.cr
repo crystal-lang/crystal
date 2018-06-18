@@ -284,7 +284,7 @@ class File < IO::FileDescriptor
 
     dot_index = filename.rindex('.')
 
-    if dot_index && dot_index != filename.size - 1 && dot_index - 1 > (filename.rindex(SEPARATOR) || 0)
+    if dot_index && dot_index != filename.size - 1 && dot_index > ((filename.rindex(SEPARATOR) || -1) + 1)
       filename[dot_index, filename.size - dot_index]
     else
       ""

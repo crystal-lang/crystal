@@ -316,6 +316,7 @@ describe "File" do
     File.extname("/foo.bar/baz").should eq("")
     File.extname("test.cr").should eq(".cr")
     File.extname("test.cr.cz").should eq(".cz")
+    File.extname("a.cr").should eq(".cr")
     File.extname(".test").should eq("")
     File.extname(".test.cr").should eq(".cr")
     File.extname(".test.cr.cz").should eq(".cz")
