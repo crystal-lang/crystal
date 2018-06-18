@@ -284,11 +284,29 @@ class File < IO::FileDescriptor
 
     dot_index = filename.rindex('.')
 
-    if dot_index && dot_index != filename.size - 1 && dot_index - 1 > (filename.rindex(SEPARATOR) || 0)
-      filename[dot_index, filename.size - dot_index]
-    else
-      ""
-    end
+    # If there's no dot, there's no extension
+    return "" unless dot_index
+
+    # If the last dot happens on the first char, there's no extension
+    # (that's the whole filename, like ".gitignore")
+    return "" if dot_index == 0
+
+    # If the dot is the last char, there's no extension (for example: "foo.")
+    return "" if dot_index == filename.size - 1
+
+    # Check if there's a file separator
+    separator_index = filename.rindex(SEPARATOR)
+
+    # If the last file separator happens after the last dot, there's no extension
+    # (for example: "foo.bar/baz")
+    return "" if separator_index && separator_index > dot_index
+
+    # If the last dot comes right after the last file separator. there's no extension
+    # (for example: "foo/.bar")
+    return "" if separator_index && dot_index == separator_index + 1
+
+    # Otherwise, there's an extension
+    filename[dot_index, filename.size - dot_index]
   end
 
   # Converts *path* to an absolute path. Relative paths are
