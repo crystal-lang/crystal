@@ -193,3 +193,12 @@ macro assert_responds_to(var, method)
     raise "Expected {{var}} to respond to :{{method}}, not #{ {{var}} }"
   end
 end
+
+# TODO remove in next release
+macro __next_unchecked
+  {% if Crystal::VERSION.includes?("0.25.0+") || compare_versions(Crystal::VERSION, "0.25.0") > 0 %}
+    unchecked { {{ yield }} }
+  {% else %}
+    {{ yield }}
+  {% end %}
+end
