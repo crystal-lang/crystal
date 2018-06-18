@@ -1,4 +1,8 @@
-require "./yaml/**/*"
+require "./yaml/*"
+require "./yaml/schema/*"
+require "./yaml/schema/core/*"
+require "./yaml/nodes/*"
+
 
 require "base64"
 
