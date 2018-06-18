@@ -320,6 +320,7 @@ describe "File" do
     File.extname(".test.cr").should eq(".cr")
     File.extname(".test.cr.cz").should eq(".cz")
     File.extname("test").should eq("")
+    File.extname("a.yml").should eq(".yml")
   end
 
   it "constructs a path from parts" do
