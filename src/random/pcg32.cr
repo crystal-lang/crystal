@@ -58,33 +58,40 @@ class Random::PCG32
     @state = 0_u64
     @inc = (initseq << 1) | 1
     next_u
-    @state += initstate
+    __next_unchecked {
+      @state += initstate
+    }
     next_u
   end
 
   def next_u
-    oldstate = @state
-    @state = oldstate * PCG_DEFAULT_MULTIPLIER_64 + @inc
-    xorshifted = UInt32.new(((oldstate >> 18) ^ oldstate) >> 27)
-    rot = UInt32.new(oldstate >> 59)
-    return UInt32.new((xorshifted >> rot) | (xorshifted << ((~rot + 1) & 31)))
+    __next_unchecked {
+      oldstate = @state
+      @state = oldstate * PCG_DEFAULT_MULTIPLIER_64 + @inc
+      xorshifted = UInt32.new(((oldstate >> 18) ^ oldstate) >> 27)
+      rot = UInt32.new(oldstate >> 59)
+      res = UInt32.new((xorshifted >> rot) | (xorshifted << ((~rot + 1) & 31)))
+      return res
+    }
   end
 
   def jump(delta)
-    deltau64 = UInt64.new(delta)
-    acc_mult = 1u64
-    acc_plus = 0u64
-    cur_plus = @inc
-    cur_mult = PCG_DEFAULT_MULTIPLIER_64
-    while (deltau64 > 0)
-      if deltau64 & 1 > 0
-        acc_mult *= cur_mult
-        acc_plus = acc_plus * cur_mult + cur_plus
+    __next_unchecked {
+      deltau64 = UInt64.new(delta)
+      acc_mult = 1u64
+      acc_plus = 0u64
+      cur_plus = @inc
+      cur_mult = PCG_DEFAULT_MULTIPLIER_64
+      while (deltau64 > 0)
+        if deltau64 & 1 > 0
+          acc_mult *= cur_mult
+          acc_plus = acc_plus * cur_mult + cur_plus
+        end
+        cur_plus = (cur_mult + 1) * cur_plus
+        cur_mult *= cur_mult
+        deltau64 /= 2
       end
-      cur_plus = (cur_mult + 1) * cur_plus
-      cur_mult *= cur_mult
-      deltau64 /= 2
-    end
-    @state = acc_mult * @state + acc_plus
+      @state = acc_mult * @state + acc_plus
+    }
   end
 end
