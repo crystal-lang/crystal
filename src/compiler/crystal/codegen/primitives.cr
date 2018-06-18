@@ -112,35 +112,35 @@ class Crystal::CodeGenVisitor
     # Comparisons are a bit trickier because we want to get comparisons
     # between signed and unsigned integers right.
     case op
-    when "<"  then return @last = codegen_binary_op_lt(t1, t2, p1, p2)
-    when "<=" then return @last = codegen_binary_op_lte(t1, t2, p1, p2)
-    when ">"  then return @last = codegen_binary_op_gt(t1, t2, p1, p2)
-    when ">=" then return @last = codegen_binary_op_gte(t1, t2, p1, p2)
+    when "<"  then return codegen_binary_op_lt(t1, t2, p1, p2)
+    when "<=" then return codegen_binary_op_lte(t1, t2, p1, p2)
+    when ">"  then return codegen_binary_op_gt(t1, t2, p1, p2)
+    when ">=" then return codegen_binary_op_gte(t1, t2, p1, p2)
     end
 
     p1, p2 = codegen_binary_extend_int(t1, t2, p1, p2)
 
-    @last = case op
-            when "+"               then builder.add p1, p2
-            when "-"               then builder.sub p1, p2
-            when "*"               then builder.mul p1, p2
-            when "/", "unsafe_div" then t1.signed? ? builder.sdiv(p1, p2) : builder.udiv(p1, p2)
-            when "%", "unsafe_mod" then t1.signed? ? builder.srem(p1, p2) : builder.urem(p1, p2)
-            when "unsafe_shl"      then builder.shl(p1, p2)
-            when "unsafe_shr"      then t1.signed? ? builder.ashr(p1, p2) : builder.lshr(p1, p2)
-            when "|"               then or(p1, p2)
-            when "&"               then and(p1, p2)
-            when "^"               then builder.xor(p1, p2)
-            when "=="              then return builder.icmp LLVM::IntPredicate::EQ, p1, p2
-            when "!="              then return builder.icmp LLVM::IntPredicate::NE, p1, p2
-            else                        raise "BUG: trying to codegen #{t1} #{op} #{t2}"
-            end
+    result = case op
+             when "+"               then builder.add p1, p2
+             when "-"               then builder.sub p1, p2
+             when "*"               then builder.mul p1, p2
+             when "/", "unsafe_div" then t1.signed? ? builder.sdiv(p1, p2) : builder.udiv(p1, p2)
+             when "%", "unsafe_mod" then t1.signed? ? builder.srem(p1, p2) : builder.urem(p1, p2)
+             when "unsafe_shl"      then builder.shl(p1, p2)
+             when "unsafe_shr"      then t1.signed? ? builder.ashr(p1, p2) : builder.lshr(p1, p2)
+             when "|"               then or(p1, p2)
+             when "&"               then and(p1, p2)
+             when "^"               then builder.xor(p1, p2)
+             when "=="              then return builder.icmp LLVM::IntPredicate::EQ, p1, p2
+             when "!="              then return builder.icmp LLVM::IntPredicate::NE, p1, p2
+             else                        raise "BUG: trying to codegen #{t1} #{op} #{t2}"
+             end
 
     if t1.normal_rank != t2.normal_rank && t1.rank < t2.rank
-      @last = trunc @last, llvm_type(t1)
+      result = trunc result, llvm_type(t1)
     end
 
-    @last
+    result
   end
 
   def codegen_binary_extend_int(t1, t2, p1, p2)
