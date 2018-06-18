@@ -127,15 +127,15 @@ require "crystal/system/time"
 # The method `#to_s` formats the date-time according to a specified pattern.
 #
 # ```
-# time = Time.utc(2015, 10, 12, 10, 30, 00)
-# time.to_s("%Y-%m-%d %H:%m:%s %Z") # => "2015-10-12 10:30:00 +00:00"
+# time = Time.utc(2015, 10, 12, 10, 30, 0)
+# time.to_s("%Y-%m-%d %H:%M:%S %:z") # => "2015-10-12 10:30:00 +00:00"
 # ```
 #
 # Similarly, `Time.parse` is used to construct a `Time` instance from date-time
 # information in a string, according to a specified pattern:
 #
 # ```
-# Time.parse("2015-10-12 10:30:00 +00:00", "%Y-%m-%d %H:%m:%s %Z")
+# Time.parse("2015-10-12 10:30:00 +00:00", "%Y-%m-%d %H:%M:%S %z")
 # ```
 #
 # See `Time::Format` for all directives.
