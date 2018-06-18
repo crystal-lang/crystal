@@ -5,7 +5,6 @@ ENV["CRYSTAL_PATH"] = "#{__DIR__}/../src"
 require "spec"
 require "../src/compiler/crystal/**"
 require "./support/syntax"
-require "./support/tempfile"
 
 class Crystal::Program
   def union_of(type1, type2, type3)
@@ -154,7 +153,7 @@ class Crystal::SpecRunOutput
   end
 end
 
-def run(code, filename = nil, inject_primitives = true, debug = Crystal::Debug::None, *, file = __FILE__)
+def run(code, filename = nil, inject_primitives = true, debug = Crystal::Debug::None)
   code = inject_primitives(code) if inject_primitives
 
   # Code that requires the prelude doesn't run in LLVM's MCJIT
@@ -171,47 +170,60 @@ def run(code, filename = nil, inject_primitives = true, debug = Crystal::Debug::
     ast.expressions[-1] = exps
     code = ast.to_s
 
-    with_tempfile("crystal-spec-output", file: file) do |output_filename|
-      compiler = Compiler.new
-      compiler.debug = debug
-      compiler.compile Compiler::Source.new("spec", code), output_filename
+    output_filename = Crystal.tempfile("crystal-spec-output")
 
-      output = `#{output_filename}`
+    compiler = Compiler.new
+    compiler.debug = debug
+    compiler.compile Compiler::Source.new("spec", code), output_filename
 
-      SpecRunOutput.new(output)
-    end
+    output = `#{output_filename}`
+    File.delete(output_filename)
+
+    SpecRunOutput.new(output)
   else
     Program.new.run(code, filename: filename, debug: debug)
   end
 end
 
-def build_and_run(code, *, file = __FILE__)
-  with_tempfile("build_and_run_code", "build_and_run_bin", file: file) do |code_path, binary_path|
-    # write code to the temp file
-    File.write(code_path, code)
+def build_and_run(code)
+  code_file = Tempfile.new("build_and_run_code")
+  code_file.close
 
-    `bin/crystal build #{code_path.inspect} -o #{binary_path.inspect}`
-    File.exists?(binary_path).should be_true
+  # write code to the temp file
+  File.write(code_file.path, code)
 
-    out_io, err_io = IO::Memory.new, IO::Memory.new
-    status = Process.run(binary_path, output: out_io, error: err_io)
+  binary_file = Tempfile.new("build_and_run_bin")
+  binary_file.close
 
-    {status, out_io.to_s, err_io.to_s}
-  end
+  `bin/crystal build #{code_file.path.inspect} -o #{binary_file.path.inspect}`
+  File.exists?(binary_file.path).should be_true
+
+  out_io, err_io = IO::Memory.new, IO::Memory.new
+  status = Process.run(binary_file.path, output: out_io, error: err_io)
+
+  {status, out_io.to_s, err_io.to_s}
+ensure
+  File.delete(code_file.path) if code_file
+  File.delete(binary_file.path) if binary_file
 end
 
-def test_c(c_code, crystal_code, *, file = __FILE__)
-  with_tempfile("abi.c", "abi.o", file: file) do |c_path, o_path|
-    File.write(c_path, c_code)
+def test_c(c_code, crystal_code)
+  c_filename = "#{__DIR__}/temp_abi.c"
+  o_filename = "#{__DIR__}/temp_abi.o"
+  begin
+    File.write(c_filename, c_code)
 
-    `#{Crystal::Compiler::CC} #{c_path} -c -o #{o_path}`.should be_truthy
+    `#{Crystal::Compiler::CC} #{c_filename} -c -o #{o_filename}`.should be_truthy
 
     yield run(%(
     require "prelude"
 
-    @[Link(ldflags: "#{o_path}")]
+    @[Link(ldflags: "#{o_filename}")]
     #{crystal_code}
     ))
+  ensure
+    File.delete(c_filename)
+    File.delete(o_filename)
   end
 end
 
