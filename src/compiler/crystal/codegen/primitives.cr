@@ -121,9 +121,9 @@ class Crystal::CodeGenVisitor
     p1, p2 = codegen_binary_extend_int(t1, t2, p1, p2)
 
     result = case op
-             when "+"               then builder.add p1, p2
-             when "-"               then builder.sub p1, p2
-             when "*"               then builder.mul p1, p2
+             when "+"               then codegen_binary_op_add(p1, p2)
+             when "-"               then codegen_binary_op_sub(p1, p2)
+             when "*"               then codegen_binary_op_mul(p1, p2)
              when "/", "unsafe_div" then t1.signed? ? builder.sdiv(p1, p2) : builder.udiv(p1, p2)
              when "%", "unsafe_mod" then t1.signed? ? builder.srem(p1, p2) : builder.urem(p1, p2)
              when "unsafe_shl"      then builder.shl(p1, p2)
@@ -152,6 +152,18 @@ class Crystal::CodeGenVisitor
       p2 = extend_int t2, t1, p2
     end
     {p1, p2}
+  end
+
+  def codegen_binary_op_add(p1, p2)
+    builder.add p1, p2
+  end
+
+  def codegen_binary_op_sub(p1, p2)
+    builder.sub p1, p2
+  end
+
+  def codegen_binary_op_mul(p1, p2)
+    builder.mul p1, p2
   end
 
   def codegen_binary_op_lt(t1, t2, p1, p2)
