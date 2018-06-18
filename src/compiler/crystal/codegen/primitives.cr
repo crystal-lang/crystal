@@ -13,6 +13,14 @@ class Crystal::CodeGenVisitor
             end
   end
 
+  def visit(node : OverflowCheckScope)
+    old_overflow_check = @overflow_check
+    @overflow_check = node.policy
+    accept node.body
+    @overflow_check = old_overflow_check
+    false
+  end
+
   def codegen_primitive(call, node, target_def, call_args)
     @last = case node.name
             when "binary"
@@ -121,7 +129,7 @@ class Crystal::CodeGenVisitor
     tmax, p1, p2 = codegen_binary_extend_int(t1, t2, p1, p2)
 
     case op
-    when "+"               then codegen_binary_op_add(t1, t2, p1, p2)
+    when "+"               then codegen_binary_op_add(location, tmax, t1, t2, p1, p2)
     when "-"               then codegen_binary_op_sub(t1, t2, p1, p2)
     when "*"               then codegen_binary_op_mul(t1, t2, p1, p2)
     when "/", "unsafe_div" then codegen_trunc_binary_op_result(t1, t2, t1.signed? ? builder.sdiv(p1, p2) : builder.udiv(p1, p2))
@@ -162,9 +170,34 @@ class Crystal::CodeGenVisitor
     end
   end
 
-  def codegen_binary_op_add(t1, t2, p1, p2)
-    result = builder.add p1, p2
-    codegen_trunc_binary_op_result(t1, t2, result)
+  def codegen_binary_op_add(location, t : IntegerType, t1, t2, p1, p2)
+    if overflow_checked_scope?
+      llvm_fun = case t.kind
+                 when :i8
+                   binary_overflow_fun "llvm.sadd.with.overflow.i8", llvm_context.int8
+                 when :i16
+                   binary_overflow_fun "llvm.sadd.with.overflow.i16", llvm_context.int16
+                 when :i32
+                   binary_overflow_fun "llvm.sadd.with.overflow.i32", llvm_context.int32
+                 when :i64
+                   binary_overflow_fun "llvm.sadd.with.overflow.i64", llvm_context.int64
+                 when :u8
+                   binary_overflow_fun "llvm.uadd.with.overflow.i8", llvm_context.int8
+                 when :u16
+                   binary_overflow_fun "llvm.uadd.with.overflow.i16", llvm_context.int16
+                 when :u32
+                   binary_overflow_fun "llvm.uadd.with.overflow.i32", llvm_context.int32
+                 when :u64
+                   binary_overflow_fun "llvm.uadd.with.overflow.i64", llvm_context.int64
+                 else
+                   raise "unreachable"
+                 end
+
+      codegen_binary_overflow_check(location, llvm_fun, t, t1, t2, p1, p2)
+    else
+      result = builder.add p1, p2
+      codegen_trunc_binary_op_result(t1, t2, result)
+    end
   end
 
   def codegen_binary_op_sub(t1, t2, p1, p2)
@@ -175,6 +208,60 @@ class Crystal::CodeGenVisitor
   def codegen_binary_op_mul(t1, t2, p1, p2)
     result = builder.mul(p1, p2)
     codegen_trunc_binary_op_result(t1, t2, result)
+  end
+
+  # Generates a call to llvm_fun(p1, p2)
+  #
+  # ```
+  # %res_with_overflow = call {T, i1} <llvm_fun>(T %p1, T %p2)
+  # %res = extractvalue {T, i1} %res, 0
+  # %o_bit = extractvalue {T, i1} %res, 1
+  # br i1 %o_bit, label %overflow, label %normal
+  #
+  # overflow:
+  # ;; codegen: raise OverflowError.new with caller's location
+  #
+  # normal:
+  # ;; if T != T1
+  # ;;   %res' is returned
+  # %res' = trunc T %res to T1
+  # ;; else
+  # ;;   %res is returned
+  # ;; end
+  # ```
+  private def codegen_binary_overflow_check(location, llvm_fun, t : IntegerType, t1, t2, p1, p2)
+    res_with_overflow = builder.call(llvm_fun, [p1, p2])
+
+    res = extract_value res_with_overflow, 0
+    o_bit = extract_value res_with_overflow, 1
+
+    op_overflow = new_block "overflow"
+    op_normal = new_block "normal"
+
+    # TODO raise overflow if outside of t1 type range interpreted as a t2
+
+    cond o_bit, op_overflow, op_normal
+    position_at_end op_overflow
+
+    ex = Call.new(Path.global("OverflowError").at(location), "new").at(location)
+    call = Call.global("raise", ex).at(location)
+    visitor = MainVisitor.new(@program)
+    @program.visit_main call, visitor: visitor
+    accept call
+
+    position_at_end op_normal
+
+    codegen_trunc_binary_op_result(t1, t2, res)
+  end
+
+  private def binary_overflow_fun(fun_name, llvm_operand_type)
+    llvm_mod.functions[fun_name]? ||
+      llvm_mod.functions.add(fun_name, [llvm_operand_type, llvm_operand_type],
+        llvm_context.struct([llvm_operand_type, llvm_context.int1]))
+  end
+
+  private def overflow_checked_scope?
+    @overflow_check == OverflowCheckScope::Policy::Checked
   end
 
   def codegen_binary_op_lt(t1, t2, p1, p2)

@@ -325,6 +325,7 @@ end
           {% if op != "/" %}
             # Returns the result of {{desc.id}} `self` and *other*.
             @[Primitive(:binary)]
+            @[Raises]
             def {{op.id}}(other : {{int2.id}}) : self
             end
           {% end %}
