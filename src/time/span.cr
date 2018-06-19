@@ -109,7 +109,7 @@ struct Time::Span
     # "legal" (i.e. temporary) (e.g. if other parameters are negative) or
     # illegal (e.g. sign change).
     if days > 0
-      sd = SECONDS_PER_DAY.to_i64 * days
+      sd = __next_unchecked { SECONDS_PER_DAY.to_i64 * days }
       if sd < days
         overflow = true
       elsif s < 0
@@ -123,7 +123,7 @@ struct Time::Span
         overflow = s < 0
       end
     elsif days < 0
-      sd = SECONDS_PER_DAY.to_i64 * days
+      sd = __next_unchecked { SECONDS_PER_DAY.to_i64 * days }
       if sd > days
         overflow = true
       elsif s <= 0
