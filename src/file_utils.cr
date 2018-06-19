@@ -275,10 +275,27 @@ module FileUtils
   # ```
   # FileUtils.mkdir_p("foo")
   # ```
-  #
-  # NOTE: Alias of `Dir.mkdir_p`
   def mkdir_p(path : String, mode = 0o777) : Nil
-    Dir.mkdir_p(path, mode)
+    return 0 if Dir.exists?(path)
+
+    components = path.split(File::SEPARATOR)
+    case components.first
+    when ""
+      components.shift
+      subpath = "/"
+    when "."
+      subpath = components.shift
+    else
+      subpath = "."
+    end
+
+    components.each do |component|
+      subpath = File.join subpath, component
+
+      Dir.mkdir(subpath, mode) unless Dir.exists?(subpath)
+    end
+
+    0
   end
 
   # Creates a new directory at the given *paths*, including any non-existing
@@ -290,7 +307,7 @@ module FileUtils
   # ```
   def mkdir_p(paths : Enumerable(String), mode = 0o777) : Nil
     paths.each do |path|
-      Dir.mkdir_p(path, mode)
+      mkdir_p(path, mode)
     end
   end
 

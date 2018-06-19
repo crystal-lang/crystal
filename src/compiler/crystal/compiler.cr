@@ -306,7 +306,7 @@ module Crystal
         if thin_lto
           clang = ENV["CLANG"]? || "clang"
           lto_cache_dir = "#{output_dir}/lto.cache"
-          Dir.mkdir_p(lto_cache_dir)
+          FileUtils.mkdir_p(lto_cache_dir)
           {% if flag?(:darwin) %}
             cc = ENV["CC"]? || "#{clang} -flto=thin -Wl,-mllvm,-threads=#{n_threads},-cache_path_lto,#{lto_cache_dir},#{@release ? "-mllvm,-O2" : "-mllvm,-O0"}"
           {% else %}

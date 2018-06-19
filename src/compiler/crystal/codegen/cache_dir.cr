@@ -36,7 +36,7 @@ module Crystal
         name = name[1..-1]
       end
       output_dir = File.join(dir, name)
-      Dir.mkdir_p(output_dir)
+      FileUtils.mkdir_p(output_dir)
       output_dir
     end
 
@@ -79,7 +79,7 @@ module Crystal
       # Return the first one for which we could create a directory
       candidates.each do |candidate|
         begin
-          Dir.mkdir_p(candidate)
+          FileUtils.mkdir_p(candidate)
           return @dir = candidate
         rescue Errno
           # Try next one
