@@ -3,11 +3,6 @@ require "./yaml/schema/*"
 require "./yaml/schema/core/*"
 require "./yaml/nodes/*"
 
-# TODO: remove conditions after 0.25
-{% if Crystal::VERSION.includes?("0.24.2+") || Crystal::VERSION == "0.25.0" %}
-  require "./yaml/next/serialization"
-{% end %}
-
 require "base64"
 
 # The YAML module provides serialization and deserialization of YAML

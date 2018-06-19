@@ -1,5 +1,3 @@
-{% if Crystal::VERSION.includes?("0.24.2+") || Crystal::VERSION == "0.25.0" %}
-
 require "spec"
 require "yaml"
 require "../../support/finalize"
@@ -10,12 +8,14 @@ end
 
 class YAMLAttrEmptyClass
   include YAML::Serializable
+
   def initialize; end
 end
 
 class YAMLAttrEmptyClassWithUnmapped
   include YAML::Serializable
   include YAML::Serializable::Unmapped
+
   def initialize; end
 end
 
@@ -730,11 +730,11 @@ describe "YAML::Serializable" do
     end
 
     it "defines query getter with class restriction" do
-      \{% begin \%}
-        \{% methods = YAMLAttrWithQueryAttributes.methods \%}
-        \{{ methods.find(&.name.==("foo?")).return_type }}.should eq(Bool)
-        \{{ methods.find(&.name.==("bar?")).return_type }}.should eq(Bool)
-      \{% end \%}
+      {% begin %}
+        {% methods = YAMLAttrWithQueryAttributes.methods %}
+        {{ methods.find(&.name.==("foo?")).return_type }}.should eq(Bool)
+        {{ methods.find(&.name.==("bar?")).return_type }}.should eq(Bool)
+      {% end %}
     end
 
     it "defines non-query setter and presence methods" do
@@ -772,5 +772,3 @@ describe "YAML::Serializable" do
     it { YAMLAttrModuleTest2.from_yaml(%({"bar": 30, "moo": 40})).to_tuple.should eq({40, 15, 30}) }
   end
 end
-
-{% end %}
