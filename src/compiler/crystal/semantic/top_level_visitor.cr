@@ -675,7 +675,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
           if counter == 0 # In case the member is set to 0
             1
           else
-            counter * 2
+            __next_unchecked { counter * 2 }
           end
         else
           counter + 1
