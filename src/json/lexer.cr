@@ -247,11 +247,13 @@ abstract class JSON::Lexer
       integer = (current_char - '0').to_i64
       char = next_char
       while '0' <= char <= '9'
-        append_number_char
-        integer *= 10
-        integer += char - '0'
-        digits += 1
-        char = next_char
+        __next_unchecked {
+          append_number_char
+          integer *= 10
+          integer += char - '0'
+          digits += 1
+          char = next_char
+        }
       end
 
       case char
@@ -279,12 +281,14 @@ abstract class JSON::Lexer
     end
 
     while '0' <= char <= '9'
-      append_number_char
-      integer *= 10
-      integer += char - '0'
-      divisor *= 10
-      digits += 1
-      char = next_char
+      __next_unchecked {
+        append_number_char
+        integer *= 10
+        integer += char - '0'
+        divisor *= 10
+        digits += 1
+        char = next_char
+      }
     end
     float = integer.to_f64 / divisor
 
