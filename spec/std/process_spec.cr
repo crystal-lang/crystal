@@ -1,7 +1,6 @@
 require "spec"
 require "process"
-require "tempfile"
-
+require "./spec_helper"
 require "../spec_helper"
 
 describe Process do
@@ -190,20 +189,16 @@ describe Process do
   end
 
   it "executes the new process with exec" do
-    tmpfile = Tempfile.new("crystal-spec-exec")
-    tmpfile.close
-    tmpfile.delete
-    File.exists?(tmpfile.path).should be_false
+    with_tempfile("crystal-spec-exec") do |path|
+      File.exists?(path).should be_false
 
-    fork = Process.fork do
-      Process.exec("/usr/bin/env", {"touch", tmpfile.path})
+      fork = Process.fork do
+        Process.exec("/usr/bin/env", {"touch", path})
+      end
+      fork.wait
+
+      File.exists?(path).should be_true
     end
-    fork.wait
-
-    File.exists?(tmpfile.path).should be_true
-    tmpfile.delete
-  ensure
-    File.delete(tmpfile.path) if tmpfile && File.exists?(tmpfile.path)
   end
 
   it "checks for existence" do

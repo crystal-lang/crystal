@@ -1,5 +1,4 @@
-require "spec"
-require "tempfile"
+require "./spec_helper"
 
 private def base
   Dir.current
@@ -30,13 +29,13 @@ end
 
 describe "File" do
   it "gets path" do
-    path = "#{__DIR__}/data/test_file.txt"
+    path = datapath("test_file.txt")
     file = File.new path
     file.path.should eq(path)
   end
 
   it "reads entire file" do
-    str = File.read "#{__DIR__}/data/test_file.txt"
+    str = File.read datapath("test_file.txt")
     str.should eq("Hello World\n" * 20)
   end
 
@@ -50,20 +49,20 @@ describe "File" do
   {% end %}
 
   it "reads lines from file" do
-    lines = File.read_lines "#{__DIR__}/data/test_file.txt"
+    lines = File.read_lines datapath("test_file.txt")
     lines.size.should eq(20)
     lines.first.should eq("Hello World")
   end
 
   it "reads lines from file with chomp = false" do
-    lines = File.read_lines "#{__DIR__}/data/test_file.txt", chomp: false
+    lines = File.read_lines datapath("test_file.txt"), chomp: false
     lines.size.should eq(20)
     lines.first.should eq("Hello World\n")
   end
 
   it "reads lines from file with each" do
     idx = 0
-    File.each_line("#{__DIR__}/data/test_file.txt") do |line|
+    File.each_line(datapath("test_file.txt")) do |line|
       if idx == 0
         line.should eq("Hello World")
       end
@@ -74,7 +73,7 @@ describe "File" do
 
   it "reads lines from file with each, chomp = false" do
     idx = 0
-    File.each_line("#{__DIR__}/data/test_file.txt", chomp: false) do |line|
+    File.each_line(datapath("test_file.txt"), chomp: false) do |line|
       if idx == 0
         line.should eq("Hello World\n")
       end
@@ -85,7 +84,7 @@ describe "File" do
 
   it "reads lines from file with each as iterator" do
     idx = 0
-    File.each_line("#{__DIR__}/data/test_file.txt").each do |line|
+    File.each_line(datapath("test_file.txt")).each do |line|
       if idx == 0
         line.should eq("Hello World")
       end
@@ -96,7 +95,7 @@ describe "File" do
 
   it "reads lines from file with each as iterator, chomp = false" do
     idx = 0
-    File.each_line("#{__DIR__}/data/test_file.txt", chomp: false).each do |line|
+    File.each_line(datapath("test_file.txt"), chomp: false).each do |line|
       if idx == 0
         line.should eq("Hello World\n")
       end
@@ -107,24 +106,23 @@ describe "File" do
 
   describe "empty?" do
     it "gives true when file is empty" do
-      File.empty?("#{__DIR__}/data/blank_test_file.txt").should be_true
+      File.empty?(datapath("blank_test_file.txt")).should be_true
     end
 
     it "gives false when file is not empty" do
-      File.empty?("#{__DIR__}/data/test_file.txt").should be_false
+      File.empty?(datapath("test_file.txt")).should be_false
     end
 
     it "raises an error when the file does not exist" do
-      filename = "#{__DIR__}/data/non_existing_file.txt"
+      filename = datapath("non_existing_file.txt")
       expect_raises(Errno, /Error determining size/) do
         File.empty?(filename)
       end
     end
 
     it "raises an error when a component of the path is a file" do
-      filename = "#{__DIR__}/data/non_existing_file.txt"
       ex = expect_raises(Errno, /Error determining size/) do
-        File.empty?("#{__FILE__}/")
+        File.empty?(datapath("test_file.txt", ""))
       end
       ex.errno.should eq(Errno::ENOTDIR)
     end
@@ -132,160 +130,151 @@ describe "File" do
 
   describe "exists?" do
     it "gives true" do
-      File.exists?("#{__DIR__}/data/test_file.txt").should be_true
+      File.exists?(datapath("test_file.txt")).should be_true
     end
 
     it "gives false" do
-      File.exists?("#{__DIR__}/data/non_existing_file.txt").should be_false
+      File.exists?(datapath("non_existing_file.txt")).should be_false
     end
 
     it "gives false when a component of the path is a file" do
-      File.exists?("#{__FILE__}/").should be_false
+      File.exists?(datapath("dir", "test_file.txt", "")).should be_false
     end
   end
 
   describe "executable?" do
     it "gives false" do
-      File.executable?("#{__DIR__}/data/test_file.txt").should be_false
+      File.executable?(datapath("test_file.txt")).should be_false
     end
 
     it "gives false when the file doesn't exist" do
-      File.executable?("#{__DIR__}/data/non_existing_file.txt").should be_false
+      File.executable?(datapath("non_existing_file.txt")).should be_false
     end
 
     it "gives false when a component of the path is a file" do
-      File.executable?("#{__FILE__}/").should be_false
+      File.executable?(datapath("dir", "test_file.txt", "")).should be_false
     end
   end
 
   describe "readable?" do
     it "gives true" do
-      File.readable?("#{__DIR__}/data/test_file.txt").should be_true
+      File.readable?(datapath("test_file.txt")).should be_true
     end
 
     it "gives false when the file doesn't exist" do
-      File.readable?("#{__DIR__}/data/non_existing_file.txt").should be_false
+      File.readable?(datapath("non_existing_file.txt")).should be_false
     end
 
     it "gives false when a component of the path is a file" do
-      File.readable?("#{__FILE__}/").should be_false
+      File.readable?(datapath("dir", "test_file.txt", "")).should be_false
     end
   end
 
   describe "writable?" do
     it "gives true" do
-      File.writable?("#{__DIR__}/data/test_file.txt").should be_true
+      File.writable?(datapath("test_file.txt")).should be_true
     end
 
     it "gives false when the file doesn't exist" do
-      File.writable?("#{__DIR__}/data/non_existing_file.txt").should be_false
+      File.writable?(datapath("non_existing_file.txt")).should be_false
     end
 
     it "gives false when a component of the path is a file" do
-      File.writable?("#{__FILE__}/").should be_false
+      File.writable?(datapath("dir", "test_file.txt", "")).should be_false
     end
   end
 
   describe "file?" do
     it "gives true" do
-      File.file?("#{__DIR__}/data/test_file.txt").should be_true
+      File.file?(datapath("test_file.txt")).should be_true
     end
 
-    it "gives false" do
-      File.file?("#{__DIR__}/data").should be_false
+    it "gives false with dir" do
+      File.file?(datapath("dir")).should be_false
     end
 
     it "gives false when the file doesn't exist" do
-      File.file?("#{__DIR__}/data/non_existing_file.txt").should be_false
+      File.file?(datapath("non_existing_file.txt")).should be_false
     end
 
     it "gives false when a component of the path is a file" do
-      File.file?("#{__FILE__}/").should be_false
+      File.file?(datapath("dir", "test_file.txt", "")).should be_false
     end
   end
 
   describe "directory?" do
     it "gives true" do
-      File.directory?("#{__DIR__}/data").should be_true
+      File.directory?(datapath).should be_true
     end
 
     it "gives false" do
-      File.directory?("#{__DIR__}/data/test_file.txt").should be_false
+      File.directory?(datapath("test_file.txt")).should be_false
     end
 
     it "gives false when the directory doesn't exist" do
-      File.directory?("#{__DIR__}/data/non_existing").should be_false
+      File.directory?(datapath("non_existing")).should be_false
     end
 
     it "gives false when a component of the path is a file" do
-      File.directory?("#{__FILE__}/").should be_false
+      File.directory?(datapath("dir", "test_file.txt", "")).should be_false
     end
   end
 
   describe "link" do
     it "creates a hard link" do
-      in_path = "#{__DIR__}/data/test_file.txt"
-      out_path = "#{__DIR__}/data/test_file_link.txt"
-      begin
+      with_tempfile("hard_link_source.txt", "hard_link_target.txt") do |in_path, out_path|
+        File.write(in_path, "")
         File.link(in_path, out_path)
         File.exists?(out_path).should be_true
         File.symlink?(out_path).should be_false
         File.same?(in_path, out_path).should be_true
-      ensure
-        File.delete(out_path) if File.exists?(out_path)
       end
     end
   end
 
   describe "same?" do
     it "compares following symlinks only if requested" do
-      file = "#{__DIR__}/data/test_file.txt"
-      symlink = "#{__DIR__}/data/test_file_symlink.txt"
-      other = "#{__DIR__}/data/test_file.ini"
+      file = File.expand_path(datapath("test_file.txt"))
+      other = File.expand_path(datapath("test_file.ini"))
 
-      begin
+      with_tempfile("test_file_symlink.txt") do |symlink|
         File.symlink(file, symlink)
 
         File.same?(file, symlink).should be_false
         File.same?(file, symlink, follow_symlinks: true).should be_true
         File.same?(file, symlink, follow_symlinks: false).should be_false
         File.same?(file, other).should be_false
-      ensure
-        File.delete(symlink) if File.exists?(symlink)
       end
     end
   end
 
   describe "symlink" do
     it "creates a symbolic link" do
-      in_path = "#{__DIR__}/data/test_file.txt"
-      out_path = "#{__DIR__}/data/test_file_symlink.txt"
-      begin
+      in_path = File.expand_path(datapath("test_file.txt"))
+      with_tempfile("test_file_link.txt") do |out_path|
         File.symlink(in_path, out_path)
         File.symlink?(out_path).should be_true
         File.same?(in_path, out_path, follow_symlinks: true).should be_true
-      ensure
-        File.delete(out_path) if File.exists?(out_path)
       end
     end
   end
 
   describe "symlink?" do
     it "gives true" do
-      File.symlink?("#{__DIR__}/data/symlink.txt").should be_true
+      File.symlink?(datapath("symlink.txt")).should be_true
     end
 
     it "gives false" do
-      File.symlink?("#{__DIR__}/data/test_file.txt").should be_false
-      File.symlink?("#{__DIR__}/data/unknown_file.txt").should be_false
+      File.symlink?(datapath("test_file.txt")).should be_false
+      File.symlink?(datapath("unknown_file.txt")).should be_false
     end
 
     it "gives false when the symlink doesn't exist" do
-      File.symlink?("#{__DIR__}/data/non_existing_file.txt").should be_false
+      File.symlink?(datapath("non_existing_file.txt")).should be_false
     end
 
     it "gives false when a component of the path is a file" do
-      File.symlink?("#{__FILE__}/").should be_false
+      File.symlink?(datapath("dir", "test_file.txt", "")).should be_false
     end
   end
 
@@ -344,7 +333,7 @@ describe "File" do
 
   describe "chmod" do
     it "changes file permissions" do
-      path = "#{__DIR__}/data/chmod.txt"
+      path = datapath("chmod.txt")
       begin
         File.write(path, "")
         File.chmod(path, 0o775)
@@ -355,7 +344,7 @@ describe "File" do
     end
 
     it "changes dir permissions" do
-      path = "#{__DIR__}/data/chmod"
+      path = datapath("chmod")
       begin
         Dir.mkdir(path, 0o775)
         File.chmod(path, 0o664)
@@ -366,7 +355,7 @@ describe "File" do
     end
 
     it "can take File::Permissions" do
-      path = "#{__DIR__}/data/chmod.txt"
+      path = datapath("chmod.txt")
       begin
         File.write(path, "")
         File.chmod(path, File::Permissions.flags(OwnerAll, GroupAll, OtherExecute, OtherRead))
@@ -377,33 +366,28 @@ describe "File" do
     end
 
     it "follows symlinks" do
-      path = "#{__DIR__}/data/chmod_destination.txt"
-      link = "#{__DIR__}/data/chmod.txt"
-      begin
-        File.write(path, "")
-        File.symlink(path, link)
-        File.chmod(link, 0o775)
-        File.info(link).permissions.should eq(File::Permissions.new(0o775))
-      ensure
-        File.delete(path) if File.exists?(path)
-        File.delete(link) if File.symlink?(link)
+      with_tempfile("chmod-destination.txt", "chmod-source.txt") do |source_path, target_path|
+        File.write(source_path, "")
+        File.symlink(source_path, target_path)
+        File.chmod(target_path, 0o775)
+        File.info(target_path).permissions.should eq(File::Permissions.new(0o775))
       end
     end
 
     it "raises when destination doesn't exist" do
       expect_raises(Errno) do
-        File.chmod("#{__DIR__}/data/unknown_chmod_path.txt", 0o664)
+        File.chmod(datapath("unknown_chmod_path.txt"), 0o664)
       end
     end
   end
 
   it "gets info for this file" do
-    info = File.info(__FILE__)
+    info = File.info(datapath("test_file.txt"))
     info.type.should eq(File::Type::File)
   end
 
   it "gets info for this directory" do
-    info = File.info(__DIR__)
+    info = File.info(datapath)
     info.type.should eq(File::Type::Directory)
   end
 
@@ -413,12 +397,12 @@ describe "File" do
   end
 
   it "gets info for a symlink" do
-    info = File.info("#{__DIR__}/data/symlink.txt", follow_symlinks: false)
+    info = File.info(datapath("symlink.txt"), follow_symlinks: false)
     info.type.should eq(File::Type::Symlink)
   end
 
   it "gets info for open file" do
-    File.open(__FILE__, "r") do |file|
+    File.open(datapath("test_file.txt"), "r") do |file|
       info = file.info
       info.type.should eq(File::Type::File)
     end
@@ -438,52 +422,49 @@ describe "File" do
   end
 
   it "gets info mtime for new file" do
-    tmp = Tempfile.new "tmp"
-    begin
-      tmp.info.modification_time.should be_close(Time.now, 5.seconds)
-      File.info(tmp.path).modification_time.should be_close(Time.now, 5.seconds)
-    ensure
-      tmp.delete
+    with_tempfile("mtime") do |path|
+      File.touch(path)
+      File.new(path).info.modification_time.should be_close(Time.now, 1.seconds)
+      File.info(path).modification_time.should be_close(Time.now, 1.seconds)
     end
   end
 
   describe "File::Info" do
     it "tests equal for the same file" do
-      File.info(__FILE__).should eq(File.info(__FILE__))
+      File.info(datapath("test_file.txt")).should eq(File.info(datapath("test_file.txt")))
     end
 
     it "tests equal for the same directory" do
-      File.info(__DIR__).should eq(File.info(__DIR__))
+      File.info(datapath("dir")).should eq(File.info(datapath("dir")))
     end
 
     it "tests unequal for different files" do
-      File.info(__FILE__).should_not eq(File.info("#{__DIR__}/data/test_file.txt"))
+      File.info(datapath("test_file.txt")).should_not eq(File.info(datapath("test_file.ini")))
     end
 
     it "tests unequal for file and directory" do
-      File.info(__DIR__).should_not eq(File.info("#{__DIR__}/data/test_file.txt"))
+      File.info(datapath("dir")).should_not eq(File.info(datapath("test_file.txt")))
     end
   end
 
   describe "size" do
-    it { File.size("#{__DIR__}/data/test_file.txt").should eq(240) }
+    it { File.size(datapath("test_file.txt")).should eq(240) }
     it do
-      File.open("#{__DIR__}/data/test_file.txt", "r") do |file|
+      File.open(datapath("test_file.txt"), "r") do |file|
         file.size.should eq(240)
       end
     end
 
     it "raises an error when the file does not exist" do
-      filename = "#{__DIR__}/data/non_existing_file.txt"
+      filename = datapath("non_existing_file.txt")
       expect_raises(Errno, /Error determining size/) do
         File.size(filename)
       end
     end
 
     it "raises an error when a component of the path is a file" do
-      filename = "#{__DIR__}/data/non_existing_file.txt"
       ex = expect_raises(Errno, /Error determining size/) do
-        File.size("#{__FILE__}/")
+        File.size(datapath("test_file.txt", ""))
       end
       ex.errno.should eq(Errno::ENOTDIR)
     end
@@ -491,37 +472,40 @@ describe "File" do
 
   describe "delete" do
     it "deletes a file" do
-      filename = "#{__DIR__}/data/temp1.txt"
-      File.open(filename, "w") { }
-      File.exists?(filename).should be_true
-      File.delete(filename)
-      File.exists?(filename).should be_false
+      with_tempfile("delete-file.txt") do |filename|
+        File.open(filename, "w") { }
+        File.exists?(filename).should be_true
+        File.delete(filename)
+        File.exists?(filename).should be_false
+      end
     end
 
     it "raises errno when file doesn't exist" do
-      filename = "#{__DIR__}/data/temp1.txt"
-      expect_raises Errno do
-        File.delete(filename)
+      with_tempfile("nonexistant_file.txt") do |path|
+        expect_raises Errno do
+          File.delete(path)
+        end
       end
     end
   end
 
   describe "rename" do
     it "renames a file" do
-      filename = "#{__DIR__}/data/temp1.txt"
-      filename2 = "#{__DIR__}/data/temp2.txt"
-      File.open(filename, "w") { |f| f.puts "hello" }
-      File.rename(filename, filename2)
-      File.exists?(filename).should be_false
-      File.exists?(filename2).should be_true
-      File.read(filename2).strip.should eq("hello")
-      File.delete(filename2)
+      with_tempfile("rename-source.txt", "rename-target.txt") do |source_path, target_path|
+        File.write(source_path, "hello")
+        File.rename(source_path, target_path)
+        File.exists?(source_path).should be_false
+        File.exists?(target_path).should be_true
+        File.read(target_path).strip.should eq("hello")
+        File.delete(target_path)
+      end
     end
 
     it "raises if old file doesn't exist" do
-      filename = "#{__DIR__}/data/temp1.txt"
-      expect_raises Errno do
-        File.rename(filename, "#{filename}.new")
+      with_tempfile("rename-fail-source.txt", "rename-fail-target.txt") do |source_path, target_path|
+        expect_raises Errno do
+          File.rename(source_path, target_path)
+        end
       end
     end
   end
@@ -594,7 +578,7 @@ describe "File" do
     it "converts a pathname to an absolute pathname, using ~ (home) as base (trailing /)" do
       prev_home = home
       begin
-        ENV["HOME"] = __DIR__ + "/"
+        ENV["HOME"] = File.expand_path(datapath)
         File.expand_path("~/").should eq(home)
         File.expand_path("~/..badfilename").should eq(File.join(home, "..badfilename"))
         File.expand_path("..").should eq("/#{base.split('/')[0...-1].join('/')}".gsub(%r{\A//}, "/"))
@@ -637,147 +621,138 @@ describe "File" do
     end
 
     it "expands paths of symlinks" do
-      symlink_path = "/tmp/test_file_symlink.txt"
-      file_path = "#{__DIR__}/data/test_file.txt"
-      begin
+      file_path = File.expand_path(datapath("test_file.txt"))
+      with_tempfile("symlink.txt") do |symlink_path|
         File.symlink(file_path, symlink_path)
         real_symlink_path = File.real_path(symlink_path)
         real_file_path = File.real_path(file_path)
         real_symlink_path.should eq(real_file_path)
-      ensure
-        File.delete(symlink_path) if File.exists?(symlink_path)
       end
     end
   end
 
   describe "write" do
     it "can write to a file" do
-      filename = "#{__DIR__}/data/temp_write.txt"
-      File.write(filename, "hello")
-      File.read(filename).should eq("hello")
-      File.delete(filename)
+      with_tempfile("write.txt") do |path|
+        File.write(path, "hello")
+        File.read(path).should eq("hello")
+      end
     end
 
     it "writes bytes" do
-      filename = "#{__DIR__}/data/temp_write.txt"
-      File.write(filename, "hello".to_slice)
-      File.read(filename).should eq("hello")
-      File.delete(filename)
+      with_tempfile("write-bytes.txt") do |path|
+        File.write(path, "hello".to_slice)
+        File.read(path).should eq("hello")
+      end
     end
 
     it "writes io" do
-      filename = "#{__DIR__}/data/temp_write.txt"
-      File.open("#{__DIR__}/data/test_file.txt") do |file|
-        File.write(filename, file)
+      with_tempfile("write-io.txt") do |path|
+        File.open(datapath("test_file.txt")) do |file|
+          File.write(path, file)
+        end
+        File.read(path).should eq(File.read(datapath("test_file.txt")))
       end
-      File.read(filename).should eq(File.read("#{__DIR__}/data/test_file.txt"))
-      File.delete(filename)
     end
 
     it "raises if trying to write to a file not opened for writing" do
-      filename = "#{__DIR__}/data/temp_write.txt"
-      File.write(filename, "hello")
-      expect_raises(IO::Error, "File not open for writing") do
-        File.open(filename) { |file| file << "hello" }
+      with_tempfile("write-fails.txt") do |path|
+        File.write(path, "hello")
+        expect_raises(IO::Error, "File not open for writing") do
+          File.open(path) { |file| file << "hello" }
+        end
       end
-      File.delete(filename)
     end
 
     it "can create a new file in append mode" do
-      filename = Tempfile.tempname
-      begin
-        File.write(filename, "hello", mode: "a")
-        File.read(filename).should eq("hello")
-      ensure
-        File.delete(filename)
+      with_tempfile("append-create.txt") do |path|
+        File.write(path, "hello", mode: "a")
+        File.read(path).should eq("hello")
       end
     end
 
     it "can append to an existing file" do
-      filename = Tempfile.tempname
-      begin
-        File.write(filename, "hello")
-        File.read(filename).should eq("hello")
-        File.write(filename, " world", mode: "a")
-        File.read(filename).should eq("hello world")
-      ensure
-        File.delete(filename)
+      with_tempfile("append-existing.txt") do |path|
+        File.write(path, "hello")
+        File.read(path).should eq("hello")
+        File.write(path, " world", mode: "a")
+        File.read(path).should eq("hello world")
       end
     end
   end
 
   it "does to_s" do
-    file = File.new(__FILE__)
+    file = File.new(datapath("test_file.txt"))
     file.to_s.should eq("#<File:0x#{file.object_id.to_s(16)}>")
-    File.new(__FILE__).inspect.should eq("#<File:#{__FILE__}>")
+    file.inspect.should eq("#<File:#{datapath("test_file.txt")}>")
   end
 
   describe "close" do
     it "is not closed when opening" do
-      file = File.new(__FILE__)
+      file = File.new(datapath("test_file.txt"))
       file.closed?.should be_false
     end
 
     it "is closed when closed" do
-      file = File.new(__FILE__)
+      file = File.new(datapath("test_file.txt"))
       file.close
       file.closed?.should be_true
     end
 
     it "should not raise when closing twice" do
-      file = File.new(__FILE__)
+      file = File.new(datapath("test_file.txt"))
       file.close
       file.close
     end
 
     it "does to_s when closed" do
-      file = File.new(__FILE__)
+      file = File.new(datapath("test_file.txt"))
       file.close
       file.to_s.should eq("#<File:0x#{file.object_id.to_s(16)}>")
-      file.inspect.should eq("#<File:#{__FILE__} (closed)>")
+      file.inspect.should eq("#<File:#{datapath("test_file.txt")} (closed)>")
     end
   end
 
   it "opens with perm (int)" do
-    filename = "#{__DIR__}/data/temp_write.txt"
-    perm = 0o600
-    File.open(filename, "w", perm) do |file|
-      file.info.permissions.should eq(File::Permissions.new(perm))
+    with_tempfile("write_with_perm-int.txt") do |path|
+      perm = 0o600
+      File.open(path, "w", perm) do |file|
+        file.info.permissions.should eq(File::Permissions.new(perm))
+      end
     end
-    File.delete filename
   end
 
   it "opens with perm (File::Permissions)" do
-    filename = "#{__DIR__}/data/temp_write.txt"
-    perm = File::Permissions.flags(OwnerRead, OwnerWrite)
-    File.open(filename, "w", perm) do |file|
-      file.info.permissions.should eq(perm)
+    with_tempfile("write_with_perm.txt") do |path|
+      perm = File::Permissions.flags(OwnerRead, OwnerWrite)
+      File.open(path, "w", perm) do |file|
+        file.info.permissions.should eq(perm)
+      end
     end
-    File.delete filename
   end
 
   it "clears the read buffer after a seek" do
-    file = File.new("#{__DIR__}/data/test_file.txt")
+    file = File.new(datapath("test_file.txt"))
     file.gets(5).should eq("Hello")
     file.seek(1)
     file.gets(4).should eq("ello")
   end
 
   it "seeks from the current position" do
-    file = File.new("#{__DIR__}/data/test_file.txt")
+    file = File.new(datapath("test_file.txt"))
     file.gets(5)
     file.seek(-4, IO::Seek::Current)
     file.tell.should eq(1)
   end
 
   it "raises if invoking seek with a closed file" do
-    file = File.new("#{__DIR__}/data/test_file.txt")
+    file = File.new(datapath("test_file.txt"))
     file.close
     expect_raises(IO::Error, "Closed stream") { file.seek(1) }
   end
 
   it "returns the current read position with tell" do
-    file = File.new("#{__DIR__}/data/test_file.txt")
+    file = File.new(datapath("test_file.txt"))
     file.tell.should eq(0)
     file.gets(5).should eq("Hello")
     file.tell.should eq(5)
@@ -786,7 +761,7 @@ describe "File" do
   end
 
   it "can navigate with pos" do
-    file = File.new("#{__DIR__}/data/test_file.txt")
+    file = File.new(datapath("test_file.txt"))
     file.pos = 3
     file.gets(2).should eq("lo")
     file.pos -= 4
@@ -794,13 +769,13 @@ describe "File" do
   end
 
   it "raises if invoking tell with a closed file" do
-    file = File.new("#{__DIR__}/data/test_file.txt")
+    file = File.new(datapath("test_file.txt"))
     file.close
     expect_raises(IO::Error, "Closed stream") { file.tell }
   end
 
   it "iterates with each_char" do
-    file = File.new("#{__DIR__}/data/test_file.txt")
+    file = File.new(datapath("test_file.txt"))
     i = 0
     file.each_char do |char|
       case i
@@ -814,7 +789,7 @@ describe "File" do
   end
 
   it "iterates with each_byte" do
-    file = File.new("#{__DIR__}/data/test_file.txt")
+    file = File.new(datapath("test_file.txt"))
     i = 0
     file.each_byte do |byte|
       case i
@@ -828,7 +803,7 @@ describe "File" do
   end
 
   it "rewinds" do
-    file = File.new("#{__DIR__}/data/test_file.txt")
+    file = File.new(datapath("test_file.txt"))
     content = file.gets_to_end
     content.size.should_not eq(0)
     file.rewind
@@ -837,47 +812,47 @@ describe "File" do
 
   describe "truncate" do
     it "truncates" do
-      filename = "#{__DIR__}/data/temp_write.txt"
-      File.write(filename, "0123456789")
-      File.open(filename, "r+") do |f|
-        f.gets_to_end.should eq("0123456789")
-        f.rewind
-        f.puts("333")
-        f.truncate(4)
-      end
+      with_tempfile("truncate.txt") do |path|
+        File.write(path, "0123456789")
+        File.open(path, "r+") do |f|
+          f.gets_to_end.should eq("0123456789")
+          f.rewind
+          f.puts("333")
+          f.truncate(4)
+        end
 
-      File.read(filename).should eq("333\n")
-      File.delete filename
+        File.read(path).should eq("333\n")
+      end
     end
 
     it "truncates completely when no size is passed" do
-      filename = "#{__DIR__}/data/temp_write.txt"
-      File.write(filename, "0123456789")
-      File.open(filename, "r+") do |f|
-        f.puts("333")
-        f.truncate
-      end
+      with_tempfile("truncate-no_size.txt") do |path|
+        File.write(path, "0123456789")
+        File.open(path, "r+") do |f|
+          f.puts("333")
+          f.truncate
+        end
 
-      File.read(filename).should eq("")
-      File.delete filename
+        File.read(path).should eq("")
+      end
     end
 
     it "requires a file opened for writing" do
-      filename = "#{__DIR__}/data/temp_write.txt"
-      File.write(filename, "0123456789")
-      File.open(filename, "r") do |f|
-        expect_raises(Errno) do
-          f.truncate(4)
+      with_tempfile("truncate-opened.txt") do |path|
+        File.write(path, "0123456789")
+        File.open(path, "r") do |f|
+          expect_raises(Errno) do
+            f.truncate(4)
+          end
         end
       end
-      File.delete filename
     end
   end
 
   describe "flock" do
     it "exlusively locks a file" do
-      File.open(__FILE__) do |file1|
-        File.open(__FILE__) do |file2|
+      File.open(datapath("test_file.txt")) do |file1|
+        File.open(datapath("test_file.txt")) do |file2|
           file1.flock_exclusive do
             # BUG: check for EWOULDBLOCK when exception filters are implemented
             expect_raises(Errno) do
@@ -889,8 +864,8 @@ describe "File" do
     end
 
     it "shared locks a file" do
-      File.open(__FILE__) do |file1|
-        File.open(__FILE__) do |file2|
+      File.open(datapath("test_file.txt")) do |file1|
+        File.open(datapath("test_file.txt")) do |file2|
           file1.flock_shared do
             file2.flock_shared(blocking: false) { }
           end
@@ -900,7 +875,7 @@ describe "File" do
   end
 
   it "reads at offset" do
-    filename = "#{__DIR__}/data/test_file.txt"
+    filename = datapath("test_file.txt")
     file = File.open(filename)
     file.read_at(6, 100) do |io|
       io.gets_to_end.should eq("World\nHello World\nHello World\nHello World\nHello World\nHello World\nHello World\nHello World\nHello Worl")
@@ -911,25 +886,24 @@ describe "File" do
   end
 
   it "raises when reading at offset outside of bounds" do
-    filename = "#{__DIR__}/data/temp_write.txt"
-    File.write(filename, "hello world")
+    with_tempfile("read-out_of_bounds") do |path|
+      File.write(path, "hello world")
 
-    begin
-      File.open(filename) do |io|
-        expect_raises(ArgumentError, "Negative bytesize") do
-          io.read_at(3, -1) { }
-        end
+      begin
+        File.open(path) do |io|
+          expect_raises(ArgumentError, "Negative bytesize") do
+            io.read_at(3, -1) { }
+          end
 
-        expect_raises(ArgumentError, "Offset out of bounds") do
-          io.read_at(12, 1) { }
-        end
+          expect_raises(ArgumentError, "Offset out of bounds") do
+            io.read_at(12, 1) { }
+          end
 
-        expect_raises(ArgumentError, "Bytesize out of bounds") do
-          io.read_at(6, 6) { }
+          expect_raises(ArgumentError, "Bytesize out of bounds") do
+            io.read_at(6, 6) { }
+          end
         end
       end
-    ensure
-      File.delete(filename)
     end
   end
 
@@ -1041,48 +1015,48 @@ describe "File" do
 
   describe "encoding" do
     it "writes with encoding" do
-      filename = "#{__DIR__}/data/temp_write.txt"
-      File.write(filename, "hello", encoding: "UCS-2LE")
-      File.read(filename).to_slice.should eq("hello".encode("UCS-2LE"))
-      File.delete(filename)
+      with_tempfile("encoding-write.txt") do |path|
+        File.write(path, "hello", encoding: "UCS-2LE")
+        File.read(path).to_slice.should eq("hello".encode("UCS-2LE"))
+      end
     end
 
     it "reads with encoding" do
-      filename = "#{__DIR__}/data/temp_write.txt"
-      File.write(filename, "hello", encoding: "UCS-2LE")
-      File.read(filename, encoding: "UCS-2LE").should eq("hello")
-      File.delete(filename)
+      with_tempfile("encoding-read.txt") do |path|
+        File.write(path, "hello", encoding: "UCS-2LE")
+        File.read(path, encoding: "UCS-2LE").should eq("hello")
+      end
     end
 
     it "opens with encoding" do
-      filename = "#{__DIR__}/data/temp_write.txt"
-      File.write(filename, "hello", encoding: "UCS-2LE")
-      File.open(filename, encoding: "UCS-2LE") do |file|
-        file.gets_to_end.should eq("hello")
+      with_tempfile("encoding-open.txt") do |path|
+        File.write(path, "hello", encoding: "UCS-2LE")
+        File.open(path, encoding: "UCS-2LE") do |file|
+          file.gets_to_end.should eq("hello")
+        end
       end
-      File.delete filename
     end
 
     it "does each line with encoding" do
-      filename = "#{__DIR__}/data/temp_write.txt"
-      File.write(filename, "hello", encoding: "UCS-2LE")
-      File.each_line(filename, encoding: "UCS-2LE") do |line|
-        line.should eq("hello")
+      with_tempfile("encoding-each_line.txt") do |path|
+        File.write(path, "hello", encoding: "UCS-2LE")
+        File.each_line(path, encoding: "UCS-2LE") do |line|
+          line.should eq("hello")
+        end
       end
-      File.delete filename
     end
 
     it "reads lines with encoding" do
-      filename = "#{__DIR__}/data/temp_write.txt"
-      File.write(filename, "hello", encoding: "UCS-2LE")
-      File.read_lines(filename, encoding: "UCS-2LE").should eq(["hello"])
-      File.delete filename
+      with_tempfile("encoding-read_lines.txt") do |path|
+        File.write(path, "hello", encoding: "UCS-2LE")
+        File.read_lines(path, encoding: "UCS-2LE").should eq(["hello"])
+      end
     end
   end
 
   describe "closed stream" do
     it "raises if writing on a closed stream" do
-      io = File.open(__FILE__, "r")
+      io = File.open(datapath("test_file.txt"), "r")
       io.close
 
       expect_raises(IO::Error, "Closed stream") { io.gets_to_end }
@@ -1097,18 +1071,17 @@ describe "File" do
 
   describe "utime" do
     it "sets times with utime" do
-      filename = "#{__DIR__}/data/temp_write.txt"
-      File.write(filename, "")
+      with_tempfile("utime-set.txt") do |path|
+        File.write(path, "")
 
-      atime = Time.utc(2000, 1, 2)
-      mtime = Time.utc(2000, 3, 4)
+        atime = Time.utc(2000, 1, 2)
+        mtime = Time.utc(2000, 3, 4)
 
-      File.utime(atime, mtime, filename)
+        File.utime(atime, mtime, path)
 
-      info = File.info(filename)
-      info.modification_time.should eq(mtime)
-
-      File.delete filename
+        info = File.info(path)
+        info.modification_time.should eq(mtime)
+      end
     end
 
     it "raises if file not found" do
@@ -1116,52 +1089,44 @@ describe "File" do
       mtime = Time.utc(2000, 3, 4)
 
       expect_raises Errno, "Error setting time to file" do
-        File.utime(atime, mtime, "#{__DIR__}/nonexistent_file")
+        File.utime(atime, mtime, datapath("nonexistent_file.txt"))
       end
     end
   end
 
   describe "touch" do
     it "creates file if it doesn't exists" do
-      filename = "#{__DIR__}/data/temp_touch.txt"
-      begin
-        File.exists?(filename).should be_false
-        File.touch(filename)
-        File.exists?(filename).should be_true
-      ensure
-        File.delete filename
+      with_tempfile("touch-create.txt") do |path|
+        File.exists?(path).should be_false
+        File.touch(path)
+        File.exists?(path).should be_true
       end
     end
 
     it "sets file times to given time" do
-      filename = "#{__DIR__}/data/temp_touch.txt"
       time = Time.utc(2000, 3, 4)
-      begin
-        File.touch(filename, time)
+      with_tempfile("touch-times.txt") do |path|
+        File.touch(path, time)
 
-        info = File.info(filename)
+        info = File.info(path)
         info.modification_time.should eq(time)
-      ensure
-        File.delete filename
       end
     end
 
     it "sets file times to Time.now if no time argument given" do
-      filename = "#{__DIR__}/data/temp_touch.txt"
-      time = Time.now
-      begin
-        File.touch(filename)
+      with_tempfile("touch-time_now.txt") do |path|
+        File.touch(path)
 
-        info = File.info(filename)
-        info.modification_time.should be_close(time, 1.second)
-      ensure
-        File.delete filename
+        info = File.info(path)
+        info.modification_time.should be_close(Time.now, 1.second)
       end
     end
 
     it "raises if path contains non-existent directory" do
-      expect_raises Errno, "Error opening file" do
-        File.touch("/tmp/non/existent/directory/test.tmp")
+      with_tempfile(File.join("nonexistant-dir", "touch.txt")) do |path|
+        expect_raises Errno, "Error opening file" do
+          File.touch(path)
+        end
       end
     end
 

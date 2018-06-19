@@ -1,11 +1,11 @@
-require "spec"
+require "../../../spec_helper"
 require "http/server"
 
 private def handle(request, fallthrough = true, directory_listing = true, ignore_body = false)
   io = IO::Memory.new
   response = HTTP::Server::Response.new(io)
   context = HTTP::Server::Context.new(request, response)
-  handler = HTTP::StaticFileHandler.new "#{__DIR__}/static", fallthrough, directory_listing
+  handler = HTTP::StaticFileHandler.new datapath("static_file_handler"), fallthrough, directory_listing
   handler.call context
   response.close
   io.rewind
@@ -13,12 +13,12 @@ private def handle(request, fallthrough = true, directory_listing = true, ignore
 end
 
 describe HTTP::StaticFileHandler do
-  file_text = File.read "#{__DIR__}/static/test.txt"
+  file_text = File.read datapath("static_file_handler", "test.txt")
 
   it "serves a file" do
     response = handle HTTP::Request.new("GET", "/test.txt"), ignore_body: false
     response.status_code.should eq(200)
-    response.body.should eq(File.read("#{__DIR__}/static/test.txt"))
+    response.body.should eq(File.read(datapath("static_file_handler", "test.txt")))
   end
 
   it "adds Etag header" do
@@ -28,7 +28,7 @@ describe HTTP::StaticFileHandler do
 
   it "adds Last-Modified header" do
     response = handle HTTP::Request.new("GET", "/test.txt")
-    response.headers["Last-Modified"].should eq(HTTP.format_time(File.info("#{__DIR__}/static/test.txt").modification_time))
+    response.headers["Last-Modified"].should eq(HTTP.format_time(File.info(datapath("static_file_handler", "test.txt")).modification_time))
   end
 
   context "with If-Modified-Since header" do
@@ -47,7 +47,7 @@ describe HTTP::StaticFileHandler do
 
     it "returns 304 Not Modified if file mtime is older" do
       headers = HTTP::Headers.new
-      headers["If-Modified-Since"] = HTTP.format_time(File.info("#{__DIR__}/static/test.txt").modification_time + 1.hour)
+      headers["If-Modified-Since"] = HTTP.format_time(File.info(datapath("static_file_handler", "test.txt")).modification_time + 1.hour)
       response = handle HTTP::Request.new("GET", "/test.txt", headers), ignore_body: true
 
       response.status_code.should eq(304)
@@ -55,11 +55,11 @@ describe HTTP::StaticFileHandler do
 
     it "serves file if file mtime is younger" do
       headers = HTTP::Headers.new
-      headers["If-Modified-Since"] = HTTP.format_time(File.info("#{__DIR__}/static/test.txt").modification_time - 1.hour)
+      headers["If-Modified-Since"] = HTTP.format_time(File.info(datapath("static_file_handler", "test.txt")).modification_time - 1.hour)
       response = handle HTTP::Request.new("GET", "/test.txt", headers), ignore_body: false
 
       response.status_code.should eq(200)
-      response.body.should eq(File.read("#{__DIR__}/static/test.txt"))
+      response.body.should eq(File.read(datapath("static_file_handler", "test.txt")))
     end
   end
 
@@ -79,7 +79,7 @@ describe HTTP::StaticFileHandler do
 
       response = handle HTTP::Request.new("GET", "/test.txt", headers), ignore_body: false
       response.status_code.should eq(200)
-      response.body.should eq(File.read("#{__DIR__}/static/test.txt"))
+      response.body.should eq(File.read(datapath("static_file_handler", "test.txt")))
     end
   end
 
@@ -88,7 +88,7 @@ describe HTTP::StaticFileHandler do
       initial_response = handle HTTP::Request.new("GET", "/test.txt")
 
       headers = HTTP::Headers.new
-      headers["If-Modified-Since"] = HTTP.format_time(File.info("#{__DIR__}/static/test.txt").modification_time - 1.hour)
+      headers["If-Modified-Since"] = HTTP.format_time(File.info(datapath("static_file_handler", "test.txt")).modification_time - 1.hour)
       headers["If-None-Match"] = initial_response.headers["Etag"]
       response = handle HTTP::Request.new("GET", "/test.txt", headers), ignore_body: true
 
@@ -104,7 +104,7 @@ describe HTTP::StaticFileHandler do
       response = handle HTTP::Request.new("GET", "/test.txt", headers), ignore_body: false
 
       response.status_code.should eq(200)
-      response.body.should eq(File.read("#{__DIR__}/static/test.txt"))
+      response.body.should eq(File.read(datapath("static_file_handler", "test.txt")))
     end
   end
 

@@ -1,4 +1,4 @@
-require "spec"
+require "./spec_helper"
 require "socket"
 
 describe Socket do
@@ -170,17 +170,22 @@ end
 
 describe Socket::UNIXAddress do
   it "transforms into a C struct and back" do
-    addr1 = Socket::UNIXAddress.new("/tmp/service.sock")
+    path = "unix_address.sock"
+
+    addr1 = Socket::UNIXAddress.new(path)
     addr2 = Socket::UNIXAddress.from(addr1.to_unsafe, addr1.size)
 
     addr2.family.should eq(addr1.family)
     addr2.path.should eq(addr1.path)
-    addr2.to_s.should eq("/tmp/service.sock")
+    addr2.to_s.should eq(path)
   end
 
   it "raises when path is too long" do
-    path = "/tmp/crystal-test-too-long-unix-socket-#{("a" * 2048)}.sock"
-    expect_raises(ArgumentError, "Path size exceeds the maximum size") { Socket::UNIXAddress.new(path) }
+    path = "unix_address-too-long-#{("a" * 2048)}.sock"
+
+    expect_raises(ArgumentError, "Path size exceeds the maximum size") do
+      Socket::UNIXAddress.new(path)
+    end
   end
 
   it "to_s" do
@@ -190,170 +195,173 @@ end
 
 describe UNIXServer do
   it "raises when path is too long" do
-    path = "/tmp/crystal-test-too-long-unix-socket-#{("a" * 2048)}.sock"
-    expect_raises(ArgumentError, "Path size exceeds the maximum size") { UNIXServer.new(path) }
-    File.exists?(path).should be_false
+    with_tempfile("unix_server-too_long-#{("a" * 2048)}.sock") do |path|
+      expect_raises(ArgumentError, "Path size exceeds the maximum size") { UNIXServer.new(path) }
+      File.exists?(path).should be_false
+    end
   end
 
   it "creates the socket file" do
-    path = "/tmp/crystal-test-unix-sock"
+    with_tempfile("unix_server.sock") do |path|
+      UNIXServer.open(path) do
+        File.exists?(path).should be_true
+      end
 
-    UNIXServer.open(path) do
-      File.exists?(path).should be_true
+      File.exists?(path).should be_false
     end
-
-    File.exists?(path).should be_false
   end
 
   it "deletes socket file on close" do
-    path = "/tmp/crystal-test-unix-sock"
-
-    begin
+    with_tempfile("unix_server-close.sock") do |path|
       server = UNIXServer.new(path)
       server.close
       File.exists?(path).should be_false
-    rescue
-      File.delete(path) if File.exists?(path)
     end
   end
 
   it "raises when socket file already exists" do
-    path = "/tmp/crystal-test-unix-sock"
-    server = UNIXServer.new(path)
+    with_tempfile("unix_server-twice.sock") do |path|
+      server = UNIXServer.new(path)
 
-    begin
-      expect_raises(Errno) { UNIXServer.new(path) }
-    ensure
-      server.close
+      begin
+        expect_raises(Errno) { UNIXServer.new(path) }
+      ensure
+        server.close
+      end
     end
   end
 
   it "won't delete existing file on bind failure" do
-    path = "/tmp/crystal-test-unix.sock"
+    with_tempfile("unix_server-existing.sock") do |path|
+      File.write(path, "")
+      File.exists?(path).should be_true
 
-    File.write(path, "")
-    File.exists?(path).should be_true
-
-    begin
       expect_raises Errno, /(already|Address) in use/ do
         UNIXServer.new(path)
       end
 
       File.exists?(path).should be_true
-    ensure
-      File.delete(path) if File.exists?(path)
     end
   end
 
   describe "accept" do
     it "returns the client UNIXSocket" do
-      UNIXServer.open("/tmp/crystal-test-unix-sock") do |server|
-        UNIXSocket.open("/tmp/crystal-test-unix-sock") do |_|
-          client = server.accept
-          client.should be_a(UNIXSocket)
-          client.close
+      with_tempfile("unix_server-accept.sock") do |path|
+        UNIXServer.open(path) do |server|
+          UNIXSocket.open(path) do |_|
+            client = server.accept
+            client.should be_a(UNIXSocket)
+            client.close
+          end
         end
       end
     end
 
     it "raises when server is closed" do
-      server = UNIXServer.new("/tmp/crystal-test-unix-sock")
-      exception = nil
+      with_tempfile("unix_server-closed.sock") do |path|
+        server = UNIXServer.new(path)
+        exception = nil
 
-      spawn do
-        begin
-          server.accept
-        rescue ex
-          exception = ex
+        spawn do
+          begin
+            server.accept
+          rescue ex
+            exception = ex
+          end
         end
-      end
 
-      server.close
-      until exception
-        Fiber.yield
-      end
+        server.close
+        until exception
+          Fiber.yield
+        end
 
-      exception.should be_a(IO::Error)
-      exception.try(&.message).should eq("Closed stream")
+        exception.should be_a(IO::Error)
+        exception.try(&.message).should eq("Closed stream")
+      end
     end
   end
 
   describe "accept?" do
     it "returns the client UNIXSocket" do
-      UNIXServer.open("/tmp/crystal-test-unix-sock") do |server|
-        UNIXSocket.open("/tmp/crystal-test-unix-sock") do |_|
-          client = server.accept?.not_nil!
-          client.should be_a(UNIXSocket)
-          client.close
+      with_tempfile("unix_server-accept_.sock") do |path|
+        UNIXServer.open(path) do |server|
+          UNIXSocket.open(path) do |_|
+            client = server.accept?.not_nil!
+            client.should be_a(UNIXSocket)
+            client.close
+          end
         end
       end
     end
 
     it "returns nil when server is closed" do
-      server = UNIXServer.new("/tmp/crystal-test-unix-sock")
-      ret = :initial
+      with_tempfile("unix_server-accept2.sock") do |path|
+        server = UNIXServer.new(path)
+        ret = :initial
 
-      spawn { ret = server.accept? }
-      server.close
+        spawn { ret = server.accept? }
+        server.close
 
-      while ret == :initial
-        Fiber.yield
+        while ret == :initial
+          Fiber.yield
+        end
+
+        ret.should be_nil
       end
-
-      ret.should be_nil
     end
   end
 end
 
 describe UNIXSocket do
   it "raises when path is too long" do
-    path = "/tmp/crystal-test-too-long-unix-socket-#{("a" * 2048)}.sock"
-    expect_raises(ArgumentError, "Path size exceeds the maximum size") { UNIXSocket.new(path) }
-    File.exists?(path).should be_false
+    with_tempfile("unix_socket-too_long-#{("a" * 2048)}.sock") do |path|
+      expect_raises(ArgumentError, "Path size exceeds the maximum size") { UNIXSocket.new(path) }
+      File.exists?(path).should be_false
+    end
   end
 
   it "sends and receives messages" do
-    path = "/tmp/crystal-test-unix-sock"
+    with_tempfile("unix_socket.sock") do |path|
+      UNIXServer.open(path) do |server|
+        server.local_address.family.should eq(Socket::Family::UNIX)
+        server.local_address.path.should eq(path)
 
-    UNIXServer.open(path) do |server|
-      server.local_address.family.should eq(Socket::Family::UNIX)
-      server.local_address.path.should eq(path)
+        UNIXSocket.open(path) do |client|
+          client.local_address.family.should eq(Socket::Family::UNIX)
+          client.local_address.path.should eq(path)
 
-      UNIXSocket.open(path) do |client|
-        client.local_address.family.should eq(Socket::Family::UNIX)
-        client.local_address.path.should eq(path)
+          server.accept do |sock|
+            sock.local_address.family.should eq(Socket::Family::UNIX)
+            sock.local_address.path.should eq(path)
 
-        server.accept do |sock|
-          sock.local_address.family.should eq(Socket::Family::UNIX)
-          sock.local_address.path.should eq(path)
+            sock.remote_address.family.should eq(Socket::Family::UNIX)
+            sock.remote_address.path.should eq(path)
 
-          sock.remote_address.family.should eq(Socket::Family::UNIX)
-          sock.remote_address.path.should eq(path)
-
-          client << "ping"
-          sock.gets(4).should eq("ping")
-          sock << "pong"
-          client.gets(4).should eq("pong")
+            client << "ping"
+            sock.gets(4).should eq("ping")
+            sock << "pong"
+            client.gets(4).should eq("pong")
+          end
         end
       end
     end
   end
 
   it "sync flag after accept" do
-    path = "/tmp/crystal-test-unix-sock"
-
-    UNIXServer.open(path) do |server|
-      UNIXSocket.open(path) do |client|
-        server.accept do |sock|
-          sock.sync?.should eq(server.sync?)
+    with_tempfile("unix_socket-accept.sock") do |path|
+      UNIXServer.open(path) do |server|
+        UNIXSocket.open(path) do |client|
+          server.accept do |sock|
+            sock.sync?.should eq(server.sync?)
+          end
         end
-      end
 
-      server.sync = !server.sync?
+        server.sync = !server.sync?
 
-      UNIXSocket.open(path) do |client|
-        server.accept do |sock|
-          sock.sync?.should eq(server.sync?)
+        UNIXSocket.open(path) do |client|
+          server.accept do |sock|
+            sock.sync?.should eq(server.sync?)
+          end
         end
       end
     end

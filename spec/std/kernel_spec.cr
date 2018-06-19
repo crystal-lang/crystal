@@ -1,6 +1,4 @@
 require "spec"
-require "tempfile"
-
 require "../../spec_helper"
 
 describe "exit" do
