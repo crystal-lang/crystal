@@ -45,72 +45,74 @@ class Digest::SHA1 < Digest::Base
   end
 
   def process_message_block
-    k = {0x5A827999_u32, 0x6ED9EBA1_u32, 0x8F1BBCDC_u32, 0xCA62C1D6_u32}
+    __next_unchecked {
+      k = {0x5A827999_u32, 0x6ED9EBA1_u32, 0x8F1BBCDC_u32, 0xCA62C1D6_u32}
 
-    w = uninitialized UInt32[80]
+      w = uninitialized UInt32[80]
 
-    {% for t in (0...16) %}
-      w[{{t}}] = @message_block[{{t}} * 4].to_u32 << 24
-      w[{{t}}] |= @message_block[{{t}} * 4 + 1].to_u32 << 16
-      w[{{t}}] |= @message_block[{{t}} * 4 + 2].to_u32 << 8
-      w[{{t}}] |= @message_block[{{t}} * 4 + 3].to_u32
-    {% end %}
+      {% for t in (0...16) %}
+        w[{{t}}] = @message_block[{{t}} * 4].to_u32 << 24
+        w[{{t}}] |= @message_block[{{t}} * 4 + 1].to_u32 << 16
+        w[{{t}}] |= @message_block[{{t}} * 4 + 2].to_u32 << 8
+        w[{{t}}] |= @message_block[{{t}} * 4 + 3].to_u32
+      {% end %}
 
-    {% for t in (16...80) %}
-      w[{{t}}] = circular_shift(1, w[{{t - 3}}] ^ w[{{t - 8}}] ^ w[{{t - 14}}] ^ w[{{t - 16}}])
-    {% end %}
+      {% for t in (16...80) %}
+        w[{{t}}] = circular_shift(1, w[{{t - 3}}] ^ w[{{t - 8}}] ^ w[{{t - 14}}] ^ w[{{t - 16}}])
+      {% end %}
 
-    a = @intermediate_hash[0]
-    b = @intermediate_hash[1]
-    c = @intermediate_hash[2]
-    d = @intermediate_hash[3]
-    e = @intermediate_hash[4]
+      a = @intermediate_hash[0]
+      b = @intermediate_hash[1]
+      c = @intermediate_hash[2]
+      d = @intermediate_hash[3]
+      e = @intermediate_hash[4]
 
-    {% for t in (0...20) %}
-      temp = circular_shift(5, a) +
-        ((b & c) | ((~b) & d)) + e + w[{{t}}] + k[0]
-      e = d
-      d = c
-      c = circular_shift(30, b)
-      b = a
-      a = temp
-    {% end %}
+      {% for t in (0...20) %}
+        temp = circular_shift(5, a) +
+          ((b & c) | ((~b) & d)) + e + w[{{t}}] + k[0]
+        e = d
+        d = c
+        c = circular_shift(30, b)
+        b = a
+        a = temp
+      {% end %}
 
-    {% for t in (20...40) %}
-      temp = circular_shift(5, a) + (b ^ c ^ d) + e + w[{{t}}] + k[1]
-      e = d
-      d = c
-      c = circular_shift(30, b)
-      b = a
-      a = temp
-    {% end %}
+      {% for t in (20...40) %}
+        temp = circular_shift(5, a) + (b ^ c ^ d) + e + w[{{t}}] + k[1]
+        e = d
+        d = c
+        c = circular_shift(30, b)
+        b = a
+        a = temp
+      {% end %}
 
-    {% for t in (40...60) %}
-      temp = circular_shift(5, a) +
-        ((b & c) | (b & d) | (c & d)) + e + w[{{t}}] + k[2]
-      e = d
-      d = c
-      c = circular_shift(30, b)
-      b = a
-      a = temp
-    {% end %}
+      {% for t in (40...60) %}
+        temp = circular_shift(5, a) +
+          ((b & c) | (b & d) | (c & d)) + e + w[{{t}}] + k[2]
+        e = d
+        d = c
+        c = circular_shift(30, b)
+        b = a
+        a = temp
+      {% end %}
 
-    {% for t in (60...80) %}
-      temp = circular_shift(5, a) + (b ^ c ^ d) + e + w[{{t}}] + k[3]
-      e = d
-      d = c
-      c = circular_shift(30, b)
-      b = a
-      a = temp
-    {% end %}
+      {% for t in (60...80) %}
+        temp = circular_shift(5, a) + (b ^ c ^ d) + e + w[{{t}}] + k[3]
+        e = d
+        d = c
+        c = circular_shift(30, b)
+        b = a
+        a = temp
+      {% end %}
 
-    @intermediate_hash[0] += a
-    @intermediate_hash[1] += b
-    @intermediate_hash[2] += c
-    @intermediate_hash[3] += d
-    @intermediate_hash[4] += e
+      @intermediate_hash[0] += a
+      @intermediate_hash[1] += b
+      @intermediate_hash[2] += c
+      @intermediate_hash[3] += d
+      @intermediate_hash[4] += e
 
-    @message_block_index = 0
+      @message_block_index = 0
+    }
   end
 
   def circular_shift(bits, word)
