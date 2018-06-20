@@ -5,7 +5,7 @@
 - **(breaking-change)** Drop `HTTP.rfc1123_date` in favor of `HTTP.format_time` and add time format implementations for ISO-8601, RFC-3339, and RFC-2822. ([#5123](https://github.com/crystal-lang/crystal/pull/5123), thanks @straight-shoota)
 - **(breaking-change)** `crystal deps` is removed, use `shards`. ([#5544](https://github.com/crystal-lang/crystal/pull/5544), thanks @asterite)
 - **(breaking-change)** `Hash#key` was renamed as `Hash#key_for`. ([#5444](https://github.com/crystal-lang/crystal/pull/5444), thanks @marksiemers)
-- **(breaking-change)** `JSON::Any` and `YAML::Any` have been re-implemented solving some inconsistencies and avoiding the usage of recursive aliases. ([#5183](https://github.com/crystal-lang/crystal/pull/5183), thanks @asterite)
+- **(breaking-change)** `JSON::Any` and `YAML::Any` have been re-implemented solving some inconsistencies and avoiding the usage of recursive aliases (`JSON::Type` and `YAML::Type` have been removed). ([#5183](https://github.com/crystal-lang/crystal/pull/5183), thanks @asterite)
 - **(breaking-change)** Multiple heredocs can be used as arguments and methods can be invoked writing them in the initial delimiter, also empty heredocs are now supported. ([#5578](https://github.com/crystal-lang/crystal/pull/5578), [#5602](https://github.com/crystal-lang/crystal/pull/5602), [#6048](https://github.com/crystal-lang/crystal/pull/6048), thanks @asterite and @MakeNowJust)
 - **(breaking-change)** Refactor signal handlers and avoid closing pipe at exit. ([#5730](https://github.com/crystal-lang/crystal/pull/5730), thanks @ysbaddaden)
 - **(breaking-change)** Improve behaviour of `File.join` with empty path component. ([#5915](https://github.com/crystal-lang/crystal/pull/5915), thanks @straight-shoota)
