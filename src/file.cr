@@ -299,11 +299,11 @@ class File < IO::FileDescriptor
     return "" unless reader.has_previous?
 
     # otherwise we are not at the beginning, and there is a previous char.
-    # if current is '/', then the patern is prefix/foo and has no extension
+    # if current is '/', then the pattern is prefix/foo and has no extension
     return "" if current_char == SEPARATOR
 
     # otherwise the current_char is '.'
-    # if previous is '/', then the patern is prefix/.foo  and has no extension
+    # if previous is '/', then the pattern is prefix/.foo  and has no extension
     return "" if reader.previous_char == SEPARATOR
 
     # So the current char is '.',
