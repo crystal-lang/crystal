@@ -16,12 +16,12 @@
 #     end
 #     yaml.scalar "bar"
 #     yaml.mapping do
-#       yaml.scalar "foo2"
-#       yaml.scalar "bar2"
+#       yaml.scalar "baz"
+#       yaml.scalar "qux"
 #     end
 #   end
 # end
-# string # => "---\nfoo:\n- 1\n- 2\nbar:\n  foo2: bar2"
+# string # => "---\nfoo:\n- 1\n- 2\nbar:\n  baz: qux\n"
 # ```
 class YAML::Builder
   @box : Void*
