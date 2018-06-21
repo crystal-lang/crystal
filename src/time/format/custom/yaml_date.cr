@@ -1,17 +1,15 @@
-# :nodoc:
 struct Time::Format
+  # Even though the standard library has Time parsers given a *fixed* format,
+  # the format in YAML, http://yaml.org/type/timestamp.html,
+  # can consist of just the date part, and following it any number of spaces,
+  # or 't', or 'T' can follow, with many optional components. So, we implement
+  # this in a more efficient way to avoid parsing the same string with many
+  # possible formats (there's also no way to specify any number of spaces
+  # with Time::Format, or an "or" like in a Regex).
+  #
+  # As an additional note, Ruby's Psych YAML parser also implements a
+  # custom time parser, probably for this same reason.
   module YAML_DATE
-    # Even though the standard library has Time parsers given a *fixed* format,
-    # the format in YAML, http://yaml.org/type/timestamp.html,
-    # can consist of just the date part, and following it any number of spaces,
-    # or 't', or 'T' can follow, with many optional components. So, we implement
-    # this in a more efficient way to avoid parsing the same string with many
-    # possible formats (there's also no way to specify any number of spaces
-    # with Time::Format, or an "or" like in a Regex).
-    #
-    # As an additional note, Ruby's Psych YAML parser also implements a
-    # custom time parser, probably for this same reason.
-
     # Parses a string into a `Time`.
     def self.parse?(string) : Time?
       parser = Parser.new(string)
