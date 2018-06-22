@@ -311,7 +311,7 @@ class File < IO::FileDescriptor
     # we are not at the beginning,
     # the previous char is not a '/',
     # and we have an extension
-    return filename.byte_slice(reader.pos + 1)
+    filename.byte_slice(reader.pos + 1)
   end
 
   # Converts *path* to an absolute path. Relative paths are
