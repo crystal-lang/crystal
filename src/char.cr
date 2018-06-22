@@ -527,6 +527,8 @@ struct Char
     case self
     when '\'' then "'\\''"
     when '\\' then "'\\\\'"
+    when '\a' then "'\\a'"
+    when '\b' then "'\\b'"
     when '\e' then "'\\e'"
     when '\f' then "'\\f'"
     when '\n' then "'\\n'"
