@@ -288,8 +288,9 @@ class File < IO::FileDescriptor
     return "" if reader.current_char == '.'
 
     # position the reader at the last . or SEPARATOR
-    while (current_char = reader.current_char) &&
-          (current_char != SEPARATOR && current_char != '.') &&
+    # that is not the first char
+    while reader.current_char != SEPARATOR &&
+          reader.current_char != '.' &&
           reader.has_previous?
       reader.previous_char
     end
@@ -300,7 +301,7 @@ class File < IO::FileDescriptor
 
     # otherwise we are not at the beginning, and there is a previous char.
     # if current is '/', then the pattern is prefix/foo and has no extension
-    return "" if current_char == SEPARATOR
+    return "" if reader.current_char == SEPARATOR
 
     # otherwise the current_char is '.'
     # if previous is '/', then the pattern is prefix/.foo  and has no extension
