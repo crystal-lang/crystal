@@ -312,6 +312,7 @@ describe "File" do
     File.extname(".test.cr.cz").should eq(".cz")
     File.extname("test").should eq("")
     File.extname("test.").should eq("")
+    File.extname("").should eq("")
   end
 
   it "constructs a path from parts" do

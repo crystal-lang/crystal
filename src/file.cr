@@ -283,6 +283,9 @@ class File < IO::FileDescriptor
     filename.check_no_null_byte
 
     bytes = filename.to_slice
+
+    return "" if bytes.empty?
+
     current = bytes.size - 1
 
     # if the pattern is foo. it has no extension
