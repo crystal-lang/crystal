@@ -46,7 +46,7 @@ struct LLVM::Target
     name.inspect(io)
     io << ", description="
     description.inspect(io)
-    io << ")"
+    io << ')'
   end
 
   def inspect(io)

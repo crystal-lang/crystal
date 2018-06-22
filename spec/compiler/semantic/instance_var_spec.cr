@@ -4429,6 +4429,21 @@ describe "Semantic: instance var" do
       ), inject_primitives: false) { types["Foo"] }
   end
 
+  it "is more permissive with macro def initialize, bug with named args" do
+    assert_error %(
+      class Foo
+        @x : Int32
+
+        def initialize(**args)
+          {% @type %}
+        end
+      end
+
+      Foo.new(x: 1)
+      ),
+      "instance variable '@x' of Foo was not initialized"
+  end
+
   it "is more permissive with macro def initialize, other initialize" do
     assert_type(%(
       class Foo
@@ -4447,6 +4462,35 @@ describe "Semantic: instance var" do
 
       Foo.new
       ), inject_primitives: false) { types["Foo"] }
+  end
+
+  it "is more permissive with macro def initialize, multiple" do
+    assert_type(%(
+      class Foo
+        @x : Int32
+
+        def initialize
+          {% begin %}
+            {% @type %}
+            @x = 1
+          {% end %}
+        end
+
+        def initialize(x)
+          {% begin %}
+            {% @type %}
+            @x = x
+          {% end %}
+        end
+
+        def x
+          @x
+        end
+      end
+
+      Foo.new
+      Foo.new(1).x
+      )) { int32 }
   end
 
   it "errors with macro def but another def doesn't initialize all" do
@@ -4817,5 +4861,71 @@ describe "Semantic: instance var" do
 
       Gen(Foo).new.x
       )) { types["Foo"] }
+  end
+
+  it "can type ivar from module included by generic class (#5281)" do
+    assert_type(%(
+      module Foo
+        def initialize(@x = "foo")
+        end
+      end
+
+      class Bar(T)
+        include Foo
+
+        @y = 42
+      end
+
+      class Baz < Bar(String); end
+
+      Baz.new
+      )) { types["Baz"] }
+  end
+
+  it "can type ivar from class inherited by generic class (#5281)" do
+    assert_type(%(
+      class Foo
+        def initialize(@x = "foo")
+        end
+      end
+
+      class Bar(T) < Foo
+        @y = 42
+      end
+
+      class Baz < Bar(String); end
+
+      Baz.new
+      )) { types["Baz"] }
+  end
+
+  it "cannot guess type from argument assigned in body" do
+    assert_error %(
+      class Foo
+        def initialize(x : String)
+          x = 1
+          @x = x
+        end
+      end
+
+      Foo.new "foo"
+      ),
+      "Can't infer the type of instance variable '@x' of Foo"
+  end
+
+  it "can't infer type of generic method that returns self (#5383)" do
+    assert_error %(
+      class Gen(T)
+        def self.new(&block : -> T) : self
+        end
+      end
+
+      class Foo
+        def initialize(x, y)
+          @x = Gen.new { 1 }
+        end
+      end
+      ),
+      "can't use Gen(T) as the type of instance variable @x of Foo, use a more specific type"
   end
 end

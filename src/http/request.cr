@@ -76,7 +76,7 @@ class HTTP::Request
   end
 
   def to_io(io)
-    io << @method << " " << resource << " " << @version << "\r\n"
+    io << @method << ' ' << resource << ' ' << @version << "\r\n"
     cookies = @cookies
     headers = cookies ? cookies.add_request_headers(@headers) : @headers
     HTTP.serialize_headers_and_body(io, headers, nil, @body, @version)
@@ -95,6 +95,9 @@ class HTTP::Request
     return BadRequest.new unless parts.size == 3
 
     method, resource, http_version = parts
+
+    return BadRequest.new unless HTTP::SUPPORTED_VERSIONS.includes?(http_version)
+
     HTTP.parse_headers_and_body(io) do |headers, body|
       return new method, resource, headers, body, http_version
     end

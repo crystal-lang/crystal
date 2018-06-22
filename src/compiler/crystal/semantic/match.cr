@@ -60,6 +60,7 @@ module Crystal
 
     def set_free_var(name, type)
       free_vars = @free_vars ||= {} of String => TypeVar
+      type = type.remove_literal if type.is_a?(Type)
       free_vars[name] = type
     end
 

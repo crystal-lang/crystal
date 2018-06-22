@@ -19,6 +19,11 @@
 #   parser.on("-u", "--upcase", "Upcases the salute") { upcase = true }
 #   parser.on("-t NAME", "--to=NAME", "Specifies the name to salute") { |name| destination = name }
 #   parser.on("-h", "--help", "Show this help") { puts parser }
+#   parser.invalid_option do |flag|
+#     STDERR.puts "ERROR: #{flag} is not a valid option."
+#     STDERR.puts parser
+#     exit(1)
+#   end
 # end
 #
 # destination = destination.upcase if upcase
@@ -161,9 +166,9 @@ class OptionParser
   def to_s(io : IO)
     if banner = @banner
       io << banner
-      io << "\n"
+      io << '\n'
     end
-    @flags.join "\n", io
+    @flags.join '\n', io
   end
 
   private def append_flag(flag, description)
@@ -250,7 +255,7 @@ class OptionParser
     end
 
     private def process_double_flag(flag, block, raise_if_missing = false)
-      while index = args_index { |arg| arg.split("=")[0] == flag }
+      while index = args_index { |arg| arg.split('=')[0] == flag }
         arg = @args[index]
         if arg.size == flag.size
           delete_arg_at_index(index)

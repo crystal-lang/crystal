@@ -21,6 +21,10 @@ describe "record" do
     rec.x.should eq(1)
     rec.y.should be(ary)
 
+    copy = rec.copy_with(x: 5)
+    copy.x.should eq(5)
+    copy.y.should be(rec.y)
+
     cloned = rec.clone
     cloned.x.should eq(1)
     cloned.y.should eq(ary)
@@ -32,6 +36,10 @@ describe "record" do
     rec.x.should eq(0)
     rec.y.should eq([2, 3])
 
+    copy = rec.copy_with(y: [7, 8])
+    copy.x.should eq(rec.x)
+    copy.y.should eq([7, 8])
+
     cloned = rec.clone
     cloned.x.should eq(0)
     cloned.y.should eq(rec.y)
@@ -42,6 +50,10 @@ describe "record" do
     rec = RecordSpec::Record3.new
     rec.x.should eq(0)
     rec.y.should eq([2, 3])
+
+    copy = rec.copy_with(y: [7, 8])
+    copy.x.should eq(rec.x)
+    copy.y.should eq([7, 8])
 
     cloned = rec.clone
     cloned.x.should eq(0)

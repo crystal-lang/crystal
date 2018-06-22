@@ -1,5 +1,18 @@
-require "spec"
+require "../../spec_helper"
 require "openssl"
+require "../../../support/finalize"
+
+class OpenSSL::SSL::Context
+  property key : Symbol?
+
+  def finalize
+    if key = self.key
+      State.inc(key)
+    end
+
+    previous_def
+  end
+end
 
 describe OpenSSL::SSL::Context do
   it "new for client" do
@@ -57,24 +70,24 @@ describe OpenSSL::SSL::Context do
 
   it "sets certificate chain" do
     context = OpenSSL::SSL::Context::Client.new
-    context.certificate_chain = File.join(__DIR__, "openssl.crt")
+    context.certificate_chain = datapath("openssl", "openssl.crt")
   end
 
   it "fails to set certificate chain" do
     context = OpenSSL::SSL::Context::Client.new
-    expect_raises(OpenSSL::Error) { context.certificate_chain = File.join(__DIR__, "unknown.crt") }
-    expect_raises(OpenSSL::Error) { context.certificate_chain = __FILE__ }
+    expect_raises(OpenSSL::Error) { context.certificate_chain = datapath("nonexistent.crt") }
+    expect_raises(OpenSSL::Error) { context.certificate_chain = datapath("test_file.txt") }
   end
 
   it "sets private key" do
     context = OpenSSL::SSL::Context::Client.new
-    context.private_key = File.join(__DIR__, "openssl.key")
+    context.private_key = datapath("openssl", "openssl.key")
   end
 
   it "fails to set private key" do
     context = OpenSSL::SSL::Context::Client.new
-    expect_raises(OpenSSL::Error) { context.private_key = File.join(__DIR__, "unknown.key") }
-    expect_raises(OpenSSL::Error) { context.private_key = __FILE__ }
+    expect_raises(OpenSSL::Error) { context.private_key = datapath("nonexistent.key") }
+    expect_raises(OpenSSL::Error) { context.private_key = datapath("test_file.txt") }
   end
 
   it "sets ciphers" do
@@ -94,10 +107,10 @@ describe OpenSSL::SSL::Context do
     default_options = context.options       # options we can't unset
 
     context.add_options(OpenSSL::SSL::Options::ALL)
-           .should eq(default_options | OpenSSL::SSL::Options::ALL)
+      .should eq(default_options | OpenSSL::SSL::Options::ALL)
 
     context.add_options(OpenSSL::SSL::Options.flags(NO_SSL_V2, NO_SSL_V3))
-           .should eq(OpenSSL::SSL::Options.flags(ALL, NO_SSL_V2, NO_SSL_V3))
+      .should eq(OpenSSL::SSL::Options.flags(ALL, NO_SSL_V2, NO_SSL_V3))
   end
 
   it "removes options" do
@@ -118,7 +131,7 @@ describe OpenSSL::SSL::Context do
     context = OpenSSL::SSL::Context::Client.insecure
     context.add_modes(OpenSSL::SSL::Modes::AUTO_RETRY).should eq(OpenSSL::SSL::Modes::AUTO_RETRY)
     context.add_modes(OpenSSL::SSL::Modes::RELEASE_BUFFERS)
-           .should eq(OpenSSL::SSL::Modes.flags(AUTO_RETRY, RELEASE_BUFFERS))
+      .should eq(OpenSSL::SSL::Modes.flags(AUTO_RETRY, RELEASE_BUFFERS))
   end
 
   it "removes modes" do
@@ -147,4 +160,12 @@ describe OpenSSL::SSL::Context do
     context.alpn_protocol = "h2"
   end
   {% end %}
+
+  it "calls #finalize on insecure client context" do
+    assert_finalizes(:insecure_client_ctx) { OpenSSL::SSL::Context::Client.insecure }
+  end
+
+  it "calls #finalize on insecure server context" do
+    assert_finalizes(:insecure_server_ctx) { OpenSSL::SSL::Context::Server.insecure }
+  end
 end

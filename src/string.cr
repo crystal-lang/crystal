@@ -1,5 +1,4 @@
 require "c/stdlib"
-require "c/stdio"
 require "c/string"
 
 # A `String` represents an immutable sequence of UTF-8 characters.
@@ -837,7 +836,7 @@ class String
     index += size if index < 0
 
     byte_index = char_index_to_byte_index(index)
-    if byte_index
+    if byte_index && byte_index < @bytesize
       reader = Char::Reader.new(self, pos: byte_index)
       return reader.current_char
     else
@@ -1592,7 +1591,7 @@ class String
     return delete(from) if to.empty?
 
     if from.bytesize == 1
-      return gsub(from.unsafe_byte_at(0).unsafe_chr, to)
+      return gsub(from.unsafe_byte_at(0).unsafe_chr, to[0])
     end
 
     multi = nil
@@ -1858,7 +1857,7 @@ class String
   end
 
   private def sub_index(index, replacement)
-    index += size + 1 if index < 0
+    index += size if index < 0
 
     byte_index = char_index_to_byte_index(index)
     raise IndexError.new unless byte_index
@@ -2027,12 +2026,12 @@ class String
 
   private def gsub_ascii_char(char, replacement)
     String.new(bytesize) do |buffer|
-      each_char_with_index do |my_char, i|
-        buffer[i] = if my_char == char
-                      replacement.ord.to_u8
-                    else
-                      unsafe_byte_at(i)
-                    end
+      to_slice.each_with_index do |byte, i|
+        if char.ord == byte
+          buffer[i] = replacement.ord.to_u8
+        else
+          buffer[i] = byte
+        end
       end
       {bytesize, bytesize}
     end
@@ -2739,16 +2738,17 @@ class String
   end
 
   # ditto
-  def rindex(search : Regex, offset = 0)
+  def rindex(search : Regex, offset = size - 1)
     offset += size if offset < 0
     return nil unless 0 <= offset <= size
 
     match_result = nil
-    self[0, self.size - offset].scan(search) do |match_data|
+    scan(search) do |match_data|
+      break if (index = match_data.begin) && index > offset
       match_result = match_data
     end
 
-    match_result.try &.begin(0)
+    match_result.try &.begin
   end
 
   # Searches separator or pattern (`Regex`) in the string, and returns
@@ -3829,58 +3829,107 @@ class String
     Array.new(bytesize) { |i| to_unsafe[i] }
   end
 
-  def inspect(io)
+  # Pretty prints `self` into the given printer.
+  def pretty_print(pp : PrettyPrint) : Nil
+    printed_bytesize = 0
+    pp.group do
+      split('\n') do |part|
+        printed_bytesize += part.bytesize
+        if printed_bytesize != bytesize
+          printed_bytesize += 1 # == "\n".bytesize
+          pp.text("\"")
+          pp.text(part.inspect_unquoted)
+          pp.text("\\n\"")
+          break if printed_bytesize == bytesize
+          pp.text(" +")
+          pp.breakable
+        else
+          pp.text(part.inspect)
+        end
+      end
+    end
+  end
+
+  # Returns a representation of `self` using character escapes for special characters and wrapped in quotes.
+  #
+  # ```
+  # "\u{1f48e} - à la carte\n".inspect # => %("\u{1F48E} - à la carte\\n")
+  # ```
+  def inspect : String
+    super
+  end
+
+  # Appends `self` to the given `IO` object using character escapes for special characters and wrapped in double quotes.
+  def inspect(io : IO) : Nil
     dump_or_inspect(io) do |char, error|
       inspect_char(char, error, io)
     end
   end
 
-  def pretty_print(pp)
-    pp.text(inspect)
-  end
-
-  def inspect_unquoted
+  # Returns a representation of `self` using character escapes for special characters but not wrapped in quotes.
+  #
+  # ```
+  # "\u{1f48e} - à la carte\n".inspect_unquoted # => %(\u{1F48E} - à la carte\\n)
+  # ```
+  def inspect_unquoted : String
     String.build do |io|
       inspect_unquoted(io)
     end
   end
 
-  def inspect_unquoted(io)
+  # Appends `self` to the given `IO` object using character escapes for special characters but not wrapped in quotes.
+  def inspect_unquoted(io : IO) : Nil
     dump_or_inspect_unquoted(io) do |char, error|
       inspect_char(char, error, io)
     end
   end
 
-  def dump
+  # Returns a representation of `self` using character escapes for special characters
+  # and and non-ascii characters (unicode codepoints > 128), wrapped in quotes.
+  #
+  # ```
+  # "\u{1f48e} - à la carte\n".dump # => %("\\u{1F48E} - \\u00E0 la carte\\n")
+  # ```
+  def dump : String
     String.build do |io|
       dump io
     end
   end
 
-  def dump(io)
+  # Appends `self` to the given `IO` object using character escapes for special characters
+  # and and non-ascii characters (unicode codepoints > 128), wrapped in quotes.
+  def dump(io : IO) : Nil
     dump_or_inspect(io) do |char, error|
       dump_char(char, error, io)
     end
   end
 
-  def dump_unquoted
+  # Returns a representation of `self` using character escapes for special characters
+  # and and non-ascii characters (unicode codepoints > 128), but not wrapped in quotes.
+  #
+  # ```
+  # "\u{1f48e} - à la carte\n".dump_unquoted # => %(\\u{1F48E} - \\u00E0 la carte\\n)
+  # ```
+  def dump_unquoted : String
     String.build do |io|
       dump_unquoted(io)
     end
   end
 
-  def dump_unquoted(io)
+  # Appends `self` to the given `IO` object using character escapes for special characters
+  # and and non-ascii characters (unicode codepoints > 128), but not wrapped in quotes.
+  def dump_unquoted(io : IO) : Nil
     dump_or_inspect_unquoted(io) do |char, error|
       dump_char(char, error, io)
     end
   end
 
   private def dump_or_inspect(io)
-    io << "\""
+    io << '"'
     dump_or_inspect_unquoted(io) do |char, error|
       yield char, error
     end
-    io << "\""
+    io << '"'
   end
 
   private def dump_or_inspect_unquoted(io)
@@ -3888,15 +3937,16 @@ class String
     while reader.has_next?
       current_char = reader.current_char
       case current_char
-      when '"'  then io << "\\\""
-      when '\\' then io << "\\\\"
-      when '\b' then io << "\\b"
-      when '\e' then io << "\\e"
-      when '\f' then io << "\\f"
-      when '\n' then io << "\\n"
-      when '\r' then io << "\\r"
-      when '\t' then io << "\\t"
-      when '\v' then io << "\\v"
+      when '"'     then io << "\\\""
+      when '\\'    then io << "\\\\"
+      when (7.chr) then io << "\\a" # TODO: use \a
+      when '\b'    then io << "\\b"
+      when '\e'    then io << "\\e"
+      when '\f'    then io << "\\f"
+      when '\n'    then io << "\\n"
+      when '\r'    then io << "\\r"
+      when '\t'    then io << "\\t"
+      when '\v'    then io << "\\v"
       when '#'
         current_char = reader.next_char
         if current_char == '{'
@@ -3927,7 +3977,7 @@ class String
   end
 
   private def dump_char(char, error, io)
-    dump_or_inspect_char(char, error, io) do
+    dump_or_inspect_char char, error, io do
       char.ascii_control? || char.ord >= 0x80
     end
   end
@@ -3942,19 +3992,20 @@ class String
     end
   end
 
-  private def dump_hex(error, io)
+  private def dump_hex(char, io)
     io << "\\x"
-    io << "0" if error < 16
-    error.to_s(16, io, upcase: true)
+    io << '0' if char < 0x0F
+    char.to_s(16, io, upcase: true)
   end
 
   private def dump_unicode(char, io)
     io << "\\u"
-    io << "0" if char.ord < 4096
-    io << "0" if char.ord < 256
-    io << "0" if char.ord < 16
-    char.ord.to_s(16, io)
-    io << ""
+    io << '{' if char.ord > 0xFFFF
+    io << '0' if char.ord < 0x1000
+    io << '0' if char.ord < 0x0100
+    io << '0' if char.ord < 0x0010
+    char.ord.to_s(16, io, upcase: true)
+    io << '}' if char.ord > 0xFFFF
   end
 
   def starts_with?(str : String)
@@ -3968,6 +4019,10 @@ class String
     end
 
     false
+  end
+
+  def starts_with?(re : Regex)
+    !!($~ = re.match_at_byte_index(self, 0, Regex::Options::ANCHORED))
   end
 
   def ends_with?(str : String)
@@ -3992,10 +4047,17 @@ class String
     true
   end
 
+  def ends_with?(re : Regex)
+    !!($~ = /#{re}\z/.match(self))
+  end
+
   # Interpolates *other* into the string using `Kernel#sprintf`.
   #
   # ```
-  # "Party like it's %d!!!" % 1999 # => "Party like it's 1999!!!"
+  # "I have %d apples" % 5                                             # => "I have 5 apples"
+  # "%s, %s, %s, D" % ['A', 'B', 'C']                                  # => "A, B, C, D"
+  # "sum: %{one} + %{two} = %{three}" % {one: 1, two: 2, three: 1 + 2} # => "sum: 1 + 2 = 3"
+  # "I have %<apples>s apples" % {apples: 4}                           # => "I have 4 apples"
   # ```
   def %(other)
     sprintf self, other
@@ -4273,5 +4335,4 @@ class String
   end
 end
 
-require "./string/formatter"
-require "./string/builder"
+require "./string/*"

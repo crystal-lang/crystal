@@ -297,4 +297,17 @@ describe "Semantic: alias" do
       ),
       "undefined constant T"
   end
+
+  it "doesn't crash by infinite recursion against type alias and generics (#5329)" do
+    assert_error %(
+      class Foo(T)
+        def initialize(@foo : T)
+        end
+      end
+
+      alias Bar = Foo(Bar | Int32)
+
+      Foo(Bar).new(Foo.new(1).as(Bar))
+    ), "can't cast Foo(Int32) to Bar"
+  end
 end

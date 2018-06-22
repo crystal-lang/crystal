@@ -28,6 +28,8 @@ struct BigInt < Int
   # BigInt.new("1234567890ABCDEF", base: 16)           # => 1311768467294899695
   # ```
   def initialize(str : String, base = 10)
+    # Strip leading '+' char to smooth out cases with strings like "+123"
+    str = str.lchop('+')
     err = LibGMP.init_set_str(out @mpz, str, base)
     if err == -1
       raise ArgumentError.new("Invalid BigInt: #{str}")
@@ -457,7 +459,7 @@ struct BigInt < Int
 
   private def check_division_by_zero(value)
     if value == 0
-      raise DivisionByZero.new
+      raise DivisionByZeroError.new
     end
   end
 
@@ -549,5 +551,23 @@ end
 module Math
   def sqrt(value : BigInt)
     sqrt(value.to_big_f)
+  end
+end
+
+# :nodoc:
+struct Crystal::Hasher
+  private HASH_MODULUS_INT_P = BigInt.new((1_u64 << HASH_BITS) - 1)
+  private HASH_MODULUS_INT_N = -BigInt.new((1_u64 << HASH_BITS) - 1)
+
+  def int(value : BigInt)
+    # it should calculate `remainder(HASH_MODULUS)`
+    if LibGMP::ULong == UInt64
+      v = LibGMP.tdiv_ui(value, HASH_MODULUS).to_i64
+      value < 0 ? -v : v
+    elsif value >= HASH_MODULUS_INT_P || value <= HASH_MODULUS_INT_N
+      value.unsafe_truncated_mod(HASH_MODULUS_INT_P).to_i64
+    else
+      value.to_i64
+    end
   end
 end

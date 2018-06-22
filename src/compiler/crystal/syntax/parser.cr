@@ -36,6 +36,8 @@ module Crystal
       @wants_doc = false
       @doc_enabled = false
       @no_type_declaration = 0
+      @consuming_heredocs = false
+      @inside_interpolation = false
 
       # This flags tells the parser where it has to consider a "do"
       # as belonging to the current parsed call. For example when writing
@@ -862,7 +864,7 @@ module Crystal
       when :"->"
         parse_fun_literal
       when :"@["
-        parse_attribute
+        parse_annotation
       when :NUMBER
         @wants_regex = false
         node_and_next_token NumberLiteral.new(@token.value.to_s, @token.number_kind)
@@ -918,6 +920,8 @@ module Crystal
       when :__DIR__
         node_and_next_token MagicConstant.expand_dir_node(@token.location)
       when :IDENT
+        # NOTE: Update `Parser#invalid_internal_name?` keyword list
+        # when adding or removing keyword to handle here.
         case @token.value
         when :begin
           check_type_declaration { parse_begin }
@@ -1054,6 +1058,12 @@ module Crystal
           check_type_declaration { parse_visibility_modifier Visibility::Protected }
         when :asm
           check_type_declaration { parse_asm }
+        when :annotation
+          check_type_declaration do
+            check_not_inside_def("can't define annotation inside def") do
+              parse_annotation_def
+            end
+          end
         else
           set_visibility parse_var_or_call
         end
@@ -1175,12 +1185,12 @@ module Crystal
       @def_nest > 0
     end
 
-    def parse_attribute
+    def parse_annotation
       doc = @token.doc
 
       next_token_skip_space
-      name = check_const
-      next_token_skip_space
+      name = parse_ident(allow_type_vars: false, parse_nilable: false).as(Path)
+      skip_space
 
       args = [] of ASTNode
       named_args = nil
@@ -1209,9 +1219,9 @@ module Crystal
       @wants_regex = false
       next_token_skip_space
 
-      attr = Attribute.new(name, args, named_args)
-      attr.doc = doc
-      attr
+      ann = Annotation.new(name, args, named_args)
+      ann.doc = doc
+      ann
     end
 
     def parse_begin
@@ -1220,7 +1230,7 @@ module Crystal
       exps = parse_expressions
       node, end_location = parse_exception_handler exps
       node.end_location = end_location
-      if !node.is_a?(ExceptionHandler) && !node.is_a?(Expressions)
+      if !node.is_a?(ExceptionHandler) && (!node.is_a?(Expressions) || node.keyword)
         node = Expressions.new([node]).at(node).at_end(node)
       end
       node.keyword = :begin if node.is_a?(Expressions)
@@ -1231,11 +1241,13 @@ module Crystal
       rescues = nil
       a_else = nil
       a_ensure = nil
+      begin_location = exp.location
 
       if @token.keyword?(:rescue)
         rescues = [] of Rescue
         found_catch_all = false
         while true
+          begin_location ||= @token.location
           location = @token.location
           a_rescue = parse_rescue
           if a_rescue.types
@@ -1258,12 +1270,14 @@ module Crystal
           raise "'else' is useless without 'rescue'", @token, 4
         end
 
+        begin_location ||= @token.location
         next_token_skip_statement_end
         a_else = parse_expressions
         skip_statement_end
       end
 
       if @token.keyword?(:ensure)
+        begin_location ||= @token.location
         next_token_skip_statement_end
         a_ensure = parse_expressions
         skip_statement_end
@@ -1276,7 +1290,7 @@ module Crystal
 
       if rescues || a_ensure
         ex = ExceptionHandler.new(exp, rescues, a_else, a_ensure).at(exp).at_end(end_location)
-        ex.at(exp.location || rescues.try(&.first?).try(&.location) || a_ensure.try(&.location))
+        ex.at(begin_location)
         ex.implicit = true if implicit
         {ex, end_location}
       else
@@ -1589,8 +1603,30 @@ module Crystal
       module_def
     end
 
+    def parse_annotation_def
+      location = @token.location
+      doc = @token.doc
+
+      next_token_skip_space_or_newline
+
+      name_column_number = @token.column_number
+      name = parse_ident(allow_type_vars: false, parse_nilable: false).as(Path)
+
+      skip_statement_end
+
+      end_location = token_end_location
+      check_ident :end
+      next_token_skip_space
+
+      annotation_def = AnnotationDef.new name, name_column_number
+      annotation_def.doc = doc
+      annotation_def.end_location = end_location
+      annotation_def
+    end
+
     def parse_parenthesized_expression
       location = @token.location
+      slash_is_regex!
       next_token_skip_space_or_newline
 
       if @token.type == :")"
@@ -1628,6 +1664,8 @@ module Crystal
     end
 
     def parse_fun_literal
+      location = @token.location
+
       next_token_skip_space_or_newline
 
       unless @token.type == :"{" || @token.type == :"(" || @token.keyword?(:do)
@@ -1673,7 +1711,8 @@ module Crystal
 
       pop_def
 
-      ProcLiteral.new(Def.new("->", args, body)).at_end(end_location)
+      a_def = Def.new("->", args, body).at(location).at_end(end_location)
+      ProcLiteral.new(a_def).at(location).at_end(end_location)
     end
 
     def check_not_pipe_before_proc_literal_body
@@ -1778,13 +1817,23 @@ module Crystal
 
     def parse_delimiter(want_skip_space = true)
       if @token.type == :STRING
-        return node_and_next_token StringLiteral.new(@token.value.to_s)
+        return node_and_next_token StringLiteral.new(@token.value.to_s).at(@token.location)
       end
 
       location = @token.location
       delimiter_state = @token.delimiter_state
 
       check :DELIMITER_START
+
+      if delimiter_state.kind == :heredoc
+        if @inside_interpolation
+          raise "heredoc cannot be used inside interpolation", location
+        end
+        node = StringInterpolation.new([] of ASTNode).at(location)
+        @heredocs << {delimiter_state, node}
+        next_token
+        return node
+      end
 
       next_string_token(delimiter_state)
       delimiter_state = @token.delimiter_state
@@ -1810,22 +1859,10 @@ module Crystal
       end
 
       if has_interpolation
-        if needs_heredoc_indent_removed?(delimiter_state)
-          pieces = remove_heredoc_indent(pieces, delimiter_state.heredoc_indent)
-        else
-          pieces = pieces.map do |piece|
-            value = piece.value
-            value.is_a?(String) ? StringLiteral.new(value) : value
-          end
-        end
+        pieces = combine_interpolation_pieces(pieces, delimiter_state)
         result = StringInterpolation.new(pieces).at(location)
       else
-        if needs_heredoc_indent_removed?(delimiter_state)
-          pieces = remove_heredoc_indent(pieces, delimiter_state.heredoc_indent)
-          string = pieces.join { |piece| piece.as(StringLiteral).value }
-        else
-          string = pieces.map(&.value).join
-        end
+        string = combine_pieces(pieces, delimiter_state)
         result = StringLiteral.new string
       end
 
@@ -1843,6 +1880,26 @@ module Crystal
       result.end_location = token_end_location
 
       result
+    end
+
+    private def combine_interpolation_pieces(pieces, delimiter_state)
+      if needs_heredoc_indent_removed?(delimiter_state)
+        remove_heredoc_indent(pieces, delimiter_state.heredoc_indent)
+      else
+        pieces.map do |piece|
+          value = piece.value
+          value.is_a?(String) ? StringLiteral.new(value) : value
+        end
+      end
+    end
+
+    private def combine_pieces(pieces, delimiter_state)
+      if needs_heredoc_indent_removed?(delimiter_state)
+        pieces = remove_heredoc_indent(pieces, delimiter_state.heredoc_indent)
+        pieces.join { |piece| piece.as(StringLiteral).value }
+      else
+        pieces.map(&.value).join
+      end
     end
 
     def consume_delimiter(pieces, delimiter_state, has_interpolation)
@@ -1877,6 +1934,8 @@ module Crystal
           line_number = @token.line_number
           delimiter_state = @token.delimiter_state
           next_token_skip_space_or_newline
+          old_inside_interpolation = @inside_interpolation
+          @inside_interpolation = true
           exp = preserve_stop_on_do { parse_expression }
 
           if exp.is_a?(StringLiteral)
@@ -1893,6 +1952,7 @@ module Crystal
 
           @token.delimiter_state = delimiter_state
           next_string_token(delimiter_state)
+          @inside_interpolation = old_inside_interpolation
           delimiter_state = @token.delimiter_state
         end
       end
@@ -1923,6 +1983,35 @@ module Crystal
       options
     end
 
+    def consume_heredocs
+      @consuming_heredocs = true
+      @heredocs.reverse!
+      while heredoc = @heredocs.pop?
+        consume_heredoc(heredoc[0], heredoc[1].as(StringInterpolation))
+      end
+      @consuming_heredocs = false
+    end
+
+    def consume_heredoc(delimiter_state, node)
+      next_string_token(delimiter_state)
+      delimiter_state = @token.delimiter_state
+
+      pieces = [] of Piece
+      has_interpolation = false
+
+      delimiter_state, has_interpolation, options, token_end_location = consume_delimiter pieces, delimiter_state, has_interpolation
+
+      if has_interpolation
+        pieces = combine_interpolation_pieces(pieces, delimiter_state)
+        node.expressions.concat(pieces)
+      else
+        string = combine_pieces(pieces, delimiter_state)
+        node.expressions.push(StringLiteral.new(string).at(node.location).at_end(token_end_location))
+      end
+
+      node.end_location = token_end_location
+    end
+
     def needs_heredoc_indent_removed?(delimiter_state)
       delimiter_state.kind == :heredoc && delimiter_state.heredoc_indent > 0
     end
@@ -1935,6 +2024,7 @@ module Crystal
       pieces.each_with_index do |piece, i|
         value = piece.value
         line_number = piece.line_number
+
         this_piece_is_in_new_line = line_number != previous_line_number
         next_piece_is_in_new_line = i == pieces.size - 1 || pieces[i + 1].line_number != line_number
         if value.is_a?(String)
@@ -1947,8 +2037,8 @@ module Crystal
               current_line.clear
               remove_indent = true
             end
-          elsif (slash_n = value.starts_with?("\n")) || value.starts_with?("\r\n")
-            current_line << (slash_n ? "\n" : "\r\n")
+          elsif (slash_n = value.starts_with?('\n')) || value.starts_with?("\r\n")
+            current_line << (slash_n ? '\n' : "\r\n")
             line = current_line.to_s
             line = remove_heredoc_from_line(line, indent, line_number - 1) if remove_indent
             add_heredoc_piece new_pieces, line
@@ -1962,7 +2052,7 @@ module Crystal
           if remove_indent
             line = current_line.to_s
             if (line.size < indent) || !line.each_char.first(indent).all?(&.ascii_whitespace?)
-              raise "heredoc line must have an indent greater or equal than #{indent}", line_number, 1
+              raise "heredoc line must have an indent greater than or equal to #{indent}", line_number, 1
             else
               line = line[indent..-1]
             end
@@ -2011,7 +2101,7 @@ module Crystal
           line[indent..-1]
         end
       else
-        raise "heredoc line must have an indent greater or equal than #{indent}", line_number, 1
+        raise "heredoc line must have an indent greater than or equal to #{indent}", line_number, 1
       end
     end
 
@@ -2050,7 +2140,7 @@ module Crystal
           next_token
           break
         else
-          raise "Unterminated #{elements_type} array literal"
+          raise "Unterminated #{elements_type.downcase} array literal"
         end
       end
 
@@ -2072,6 +2162,9 @@ module Crystal
     end
 
     def parse_array_literal
+      line = @line_number
+      column = @token.column_number
+
       slash_is_regex!
 
       exps = [] of ASTNode
@@ -2107,6 +2200,8 @@ module Crystal
         next_token_skip_space_or_newline
         of = parse_single_type
         end_location = of.end_location
+      elsif exps.size == 0
+        raise "for empty arrays use '[] of ElementType'", line, column
       end
 
       ArrayLiteral.new(exps, of).at_end(end_location)
@@ -2390,7 +2485,7 @@ module Crystal
                   tuple_elements = [] of ASTNode
 
                   while true
-                    tuple_elements << parse_when_expression(cond)
+                    tuple_elements << parse_when_expression(cond, single: false)
                     skip_space
                     if @token.type == :","
                       next_token_skip_space_or_newline
@@ -2410,7 +2505,7 @@ module Crystal
                   check :"}"
                   next_token_skip_space
                 else
-                  exp = parse_when_expression(cond)
+                  exp = parse_when_expression(cond, single: true)
                   when_conds << exp
                   add_when_exp(when_exps, exp)
                   skip_space
@@ -2420,7 +2515,7 @@ module Crystal
               end
             else
               while true
-                exp = parse_when_expression(cond)
+                exp = parse_when_expression(cond, single: true)
                 when_conds << exp
                 add_when_exp(when_exps, exp)
                 skip_space
@@ -2514,7 +2609,7 @@ module Crystal
       false
     end
 
-    def parse_when_expression(cond)
+    def parse_when_expression(cond, single)
       if cond && @token.type == :"."
         next_token
         call = parse_var_or_call(force_call: true)
@@ -2528,6 +2623,8 @@ module Crystal
           raise "BUG: expected Call, RespondsTo, IsA, Cast or NilableCast"
         end
         call
+      elsif single && @token.type == :UNDERSCORE
+        raise "'when _' is not supported, use 'else' block instead"
       else
         parse_op_assign_no_control
       end
@@ -2745,7 +2842,7 @@ module Crystal
           elsif @token.type == :","
             next_token_skip_space_or_newline
           else
-            skip_space
+            skip_space_or_newline
             if @token.type != :")"
               unexpected_token @token.to_s, "expected ',' or ')'"
             end
@@ -2809,6 +2906,7 @@ module Crystal
         when :MACRO_CONTROL_START
           macro_control = parse_macro_control(start_line, start_column, macro_state)
           if macro_control
+            check :"%}"
             pieces << macro_control
             skip_whitespace = check_macro_skip_whitespace
           else
@@ -2992,6 +3090,23 @@ module Crystal
           return MacroIf.new(BoolLiteral.new(true), body).at_end(token_end_location)
         when :else, :elsif, :end
           return nil
+        when :verbatim
+          next_token_skip_space
+          unless @token.keyword?(:do)
+            unexpected_token(msg: "expecting 'do'")
+          end
+          next_token_skip_space
+          check :"%}"
+
+          macro_state.control_nest += 1
+          body, end_location = parse_macro_body(start_line, start_column, macro_state)
+          macro_state.control_nest -= 1
+
+          check_ident :end
+          next_token_skip_space
+          check :"%}"
+
+          return MacroVerbatim.new(body).at_end(token_end_location)
         end
       end
 
@@ -3003,6 +3118,8 @@ module Crystal
     end
 
     def parse_macro_if(start_line, start_column, macro_state, check_end = true)
+      location = @token.location
+
       next_token_skip_space
 
       @in_macro_expression = true
@@ -3010,7 +3127,7 @@ module Crystal
       @in_macro_expression = false
 
       if @token.type != :"%}" && check_end
-        an_if = parse_if_after_condition cond, true
+        an_if = parse_if_after_condition cond, location, true
         return MacroExpression.new(an_if, output: false).at_end(token_end_location)
       end
 
@@ -3355,6 +3472,7 @@ module Crystal
       if @token.type == :"&"
         next_token_skip_space_or_newline
         block_arg = parse_block_arg(extra_assigns)
+        skip_space_or_newline
         if args.any?(&.name.==(block_arg.name)) || (found_double_splat && found_double_splat.name == block_arg.name)
           raise "duplicated argument name: #{block_arg.name}", block_arg.location.not_nil!
         end
@@ -3442,6 +3560,7 @@ module Crystal
         raise "splat argument can't have default value", @token if splat
         raise "double splat argument can't have default value", @token if double_splat
 
+        slash_is_regex!
         next_token_skip_space_or_newline
 
         case @token.type
@@ -3508,9 +3627,13 @@ module Crystal
     def parse_arg_name(location, extra_assigns, allow_external_name)
       do_next_token = true
       found_string_literal = false
+      invalid_internal_name = nil
 
       if allow_external_name && (@token.type == :IDENT || string_literal_start?)
         if @token.type == :IDENT
+          if @token.keyword? && invalid_internal_name?(@token.value)
+            invalid_internal_name = @token.dup
+          end
           external_name = @token.type == :IDENT ? @token.value.to_s : ""
           next_token
         else
@@ -3524,6 +3647,10 @@ module Crystal
 
       case @token.type
       when :IDENT
+        if @token.keyword? && invalid_internal_name?(@token.value)
+          raise "cannot use '#{@token}' as an argument name", @token
+        end
+
         arg_name = @token.value.to_s
         if arg_name == external_name
           raise "when specified, external name must be different than internal name", @token
@@ -3568,6 +3695,9 @@ module Crystal
           if found_string_literal
             raise "unexpected token: #{@token}, expected argument internal name"
           end
+          if invalid_internal_name
+            raise "cannot use '#{invalid_internal_name}' as an argument name", invalid_internal_name
+          end
           arg_name = external_name
         else
           raise "unexpected token: #{@token}"
@@ -3584,15 +3714,35 @@ module Crystal
       {arg_name, external_name, found_space, uses_arg}
     end
 
+    def invalid_internal_name?(keyword)
+      case keyword
+      # These names are handled as keyword by `Parser#parse_atomic_without_location`.
+      # We cannot assign value into them and never reference them,
+      # so they are invalid internal name.
+      when :begin, :nil, :true, :false, :yield, :with, :abstract,
+           :def, :macro, :require, :case, :select, :if, :unless, :include,
+           :extend, :class, :struct, :module, :enum, :while, :until, :return,
+           :next, :break, :lib, :fun, :alias, :pointerof, :sizeof,
+           :instance_sizeof, :typeof, :private, :protected, :asm, :out,
+      # `end` is also invalid because it maybe terminate `def` block.
+           :end
+        true
+      else
+        false
+      end
+    end
+
     def parse_if(check_end = true)
+      location = @token.location
+
       slash_is_regex!
       next_token_skip_space_or_newline
 
       cond = parse_op_assign_no_control allow_suffix: false
-      parse_if_after_condition cond, check_end
+      parse_if_after_condition cond, location, check_end
     end
 
-    def parse_if_after_condition(cond, check_end)
+    def parse_if_after_condition(cond, location, check_end)
       slash_is_regex!
       skip_statement_end
 
@@ -3616,7 +3766,7 @@ module Crystal
         next_token_skip_space
       end
 
-      If.new(cond, a_then, a_else).at_end(end_location)
+      If.new(cond, a_then, a_else).at(location).at_end(end_location)
     end
 
     def parse_unless
@@ -3743,7 +3893,10 @@ module Crystal
           Call.new(nil, name, (args || [] of ASTNode), block, block_arg, named_args, global, name_column_number, has_parentheses)
         else
           if args
-            if (!force_call && is_var) && args.size == 1 && (num = args[0]) && (num.is_a?(NumberLiteral) && num.has_sign?)
+            maybe_var = !force_call && is_var && !has_parentheses
+            if maybe_var && args.size == 0
+              Var.new(name)
+            elsif maybe_var && args.size == 1 && (num = args[0]) && (num.is_a?(NumberLiteral) && num.has_sign?)
               sign = num.value[0].to_s
               num.value = num.value.byte_slice(1)
               Call.new(Var.new(name), sign, args)
@@ -4364,9 +4517,8 @@ module Crystal
         skip_space_or_newline
 
         named_args << NamedArgument.new(name, type)
-        if @token.type == :","
-          next_token_skip_space_or_newline
-        end
+        break unless @token.type == :","
+        next_token_skip_space_or_newline
       end
 
       named_args
@@ -4926,7 +5078,7 @@ module Crystal
     def parse_lib_body_exp_without_location
       case @token.type
       when :"@["
-        parse_attribute
+        parse_annotation
       when :IDENT
         case @token.value
         when :alias
@@ -5529,5 +5681,19 @@ module Crystal
       @visibility = old_visibility
       value
     end
+
+    def next_token
+      token = super
+
+      if token.type == :NEWLINE && !@consuming_heredocs && !@heredocs.empty?
+        consume_heredocs
+      end
+
+      token
+    end
+  end
+
+  class StringInterpolation
+    include Lexer::HeredocItem
   end
 end

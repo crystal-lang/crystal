@@ -37,7 +37,29 @@ private struct LEBReader
   end
 end
 
-{% if flag?(:arm) %}
+{% if flag?(:win32) %}
+  require "callstack/lib_unwind"
+
+  # Raises the *exception*.
+  #
+  # This will set the exception's callstack if it hasn't been already.
+  # Re-raising a previously catched exception won't replace the callstack.
+  def raise(exception : Exception) : NoReturn
+    exception.inspect_with_backtrace(STDERR)
+    LibC.exit(1)
+  end
+
+  fun __crystal_personality(version : Int32, actions : LibUnwind::Action, exception_class : UInt64, exception_object : LibUnwind::Exception*, context : Void*) : LibUnwind::ReasonCode
+    LibUnwind::ReasonCode::NO_REASON
+  end
+
+  # :nodoc:
+  @[Raises]
+  fun __crystal_raise(unwind_ex : LibUnwind::Exception*) : NoReturn
+    LibC.printf("EXITING: __crystal_raise called")
+    LibC.exit(1)
+  end
+{% elsif flag?(:arm) %}
   # On ARM EHABI the personality routine is responsible for actually
   # unwinding a single stack frame before returning (ARM EHABI Sec. 6.1).
   private macro __crystal_continue_unwind
@@ -161,33 +183,37 @@ end
   end
 {% end %}
 
-# :nodoc:
-@[Raises]
-fun __crystal_raise(unwind_ex : LibUnwind::Exception*) : NoReturn
-  ret = LibUnwind.raise_exception(unwind_ex)
-  LibC.dprintf 2, "Failed to raise an exception: %s\n", ret.to_s
-  CallStack.print_backtrace
-  LibC.exit(ret)
-end
+{% unless flag?(:win32) %}
+  # :nodoc:
+  @[Raises]
+  fun __crystal_raise(unwind_ex : LibUnwind::Exception*) : NoReturn
+    ret = LibUnwind.raise_exception(unwind_ex)
+    LibC.dprintf 2, "Failed to raise an exception: %s\n", ret.to_s
+    CallStack.print_backtrace
+    LibC.exit(ret)
+  end
+{% end %}
 
 # :nodoc:
 fun __crystal_get_exception(unwind_ex : LibUnwind::Exception*) : UInt64
   unwind_ex.value.exception_object
 end
 
-# Raises the *exception*.
-#
-# This will set the exception's callstack if it hasn't been already.
-# Re-raising a previously catched exception won't replace the callstack.
-def raise(exception : Exception) : NoReturn
-  exception.callstack ||= CallStack.new
-  unwind_ex = Pointer(LibUnwind::Exception).malloc
-  unwind_ex.value.exception_class = LibC::SizeT.zero
-  unwind_ex.value.exception_cleanup = LibC::SizeT.zero
-  unwind_ex.value.exception_object = exception.object_id
-  unwind_ex.value.exception_type_id = exception.crystal_type_id
-  __crystal_raise(unwind_ex)
-end
+{% unless flag?(:win32) %}
+  # Raises the *exception*.
+  #
+  # This will set the exception's callstack if it hasn't been already.
+  # Re-raising a previously catched exception won't replace the callstack.
+  def raise(exception : Exception) : NoReturn
+    exception.callstack ||= CallStack.new
+    unwind_ex = Pointer(LibUnwind::Exception).malloc
+    unwind_ex.value.exception_class = LibC::SizeT.zero
+    unwind_ex.value.exception_cleanup = LibC::SizeT.zero
+    unwind_ex.value.exception_object = exception.object_id
+    unwind_ex.value.exception_type_id = exception.crystal_type_id
+    __crystal_raise(unwind_ex)
+  end
+{% end %}
 
 # Raises an Exception with the *message*.
 def raise(message : String) : NoReturn

@@ -109,23 +109,6 @@ module Math
     end
   {% end %}
 
-  # ## To be uncommented once LLVM is updated
-  # def div(value1 : Int32, value2 : Int32)
-  #   LibM.div_i32(value1, value2)
-  # end
-  #
-  # def div(value1 : Float32, value2 : Float32)
-  #   LibM.div_f32(value1, value2)
-  # end
-  #
-  # def div(value1 : Float64, value2 : Float64)
-  #   LibM.div_f64(value1, value2)
-  # end
-  #
-  # def div(value1, value2)
-  #   LibM.div(value1, value2)
-  # end
-
   # Returns the logarithm of *numeric* to the base *base*.
   def log(numeric, base)
     log(numeric) / log(base)
@@ -156,23 +139,6 @@ module Math
   def min(value1, value2)
     value1 <= value2 ? value1 : value2
   end
-
-  # ## To be uncommented once LLVM is updated
-  # def rem(value1 : Int32, value2 : Int32)
-  #   LibM.rem_i32(value1, value2)
-  # end
-
-  # def rem(value1 : Float32, value2 : Float32)
-  #   LibM.rem_f32(value1, value2)
-  # end
-
-  # def rem(value1 : Float64, value2 : Float64)
-  #   LibM.rem_f64(value1, value2)
-  # end
-
-  # def rem(value1, value2)
-  #   LibM.rem(value1, value2)
-  # end
 
   {% for name in %w(besselj bessely) %}
     # Calculates {{name.id}} with parameters *value1* and *value2*.

@@ -1,4 +1,8 @@
-require "./yaml/**"
+require "./yaml/*"
+require "./yaml/schema/*"
+require "./yaml/schema/core/*"
+require "./yaml/nodes/*"
+
 require "base64"
 
 # The YAML module provides serialization and deserialization of YAML
@@ -7,7 +11,7 @@ require "base64"
 #
 # ### Parsing with `#parse` and `#parse_all`
 #
-# `YAML#parse` will return an `Any`, which is a convenient wrapper around all possible
+# `YAML.parse` will return an `Any`, which is a convenient wrapper around all possible
 # YAML core types, making it easy to traverse a complex YAML structure but requires
 # some casts from time to time, mostly via some method invocations.
 #
@@ -23,6 +27,17 @@ require "base64"
 #                - fox
 #          END
 # data["foo"]["bar"]["baz"][1].as_s # => "fox"
+# ```
+#
+# `YAML.parse` can read from an `IO` directly (such as a file) which saves
+# allocating a string:
+#
+# ```
+# require "yaml"
+#
+# yaml = File.open("path/to/file.yml") do |file|
+#   YAML.parse(file)
+# end
 # ```
 #
 # ### Parsing with `from_yaml`
@@ -82,9 +97,6 @@ module YAML
       {line_number, column_number}
     end
   end
-
-  # All valid YAML core schema types.
-  alias Type = Nil | Bool | Int64 | Float64 | String | Time | Bytes | Array(Type) | Hash(Type, Type) | Set(Type)
 
   # Deserializes a YAML document according to the core schema.
   #

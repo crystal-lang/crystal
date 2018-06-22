@@ -31,7 +31,7 @@ private def it_parses_scalar_from_pull(string, expected, file = __FILE__, line =
   end
 end
 
-private def it_parses_scalar_from_pull(string, file = __FILE__, line = __LINE__, &block : YAML::Type ->)
+private def it_parses_scalar_from_pull(string, file = __FILE__, line = __LINE__, &block : YAML::Any::Type ->)
   it "parses #{string.inspect}", file, line do
     pull = YAML::PullParser.new(%(value: #{string}))
     pull.read_stream_start
@@ -39,7 +39,7 @@ private def it_parses_scalar_from_pull(string, file = __FILE__, line = __LINE__,
     pull.read_mapping_start
     pull.read_scalar # key
 
-    block.call(YAML::Schema::Core.parse_scalar(pull).as(YAML::Type))
+    block.call(YAML::Schema::Core.parse_scalar(pull).as(YAML::Any::Type))
   end
 end
 
@@ -94,38 +94,54 @@ describe YAML::Schema::Core do
   end
 
   # integer (base 10)
+  it_parses_scalar "0", 0
   it_parses_scalar "123", 123
   it_parses_scalar "+123", 123
   it_parses_scalar "-123", -123
 
   # integer (binary)
+  it_parses_scalar "0b0", 0
   it_parses_scalar "0b10110", 0b10110
 
   # integer (octal)
+  it_parses_scalar "00", 0
   it_parses_scalar "0123", 0o123
 
   # integer (hex)
+  it_parses_scalar "0x0", 0
   it_parses_scalar "0x123abc", 0x123abc
   it_parses_scalar "-0x123abc", -0x123abc
 
+  # float
+  it_parses_scalar "1.2", 1.2
+  it_parses_scalar "0.815", 0.815
+  it_parses_scalar "0.", 0.0
+  it_parses_scalar "-0.0", 0.0
+  it_parses_scalar "1_234.2", 1_234.2
+  it_parses_scalar "-2E+05", -2e05
+  it_parses_scalar "+12.3", 12.3
+  it_parses_scalar ".5", 0.5
+  it_parses_scalar "+.5", 0.5
+  it_parses_scalar "-.5", -0.5
+
   # time
-  it_parses_scalar "2002-12-14", Time.new(2002, 12, 14, kind: Time::Kind::Utc)
-  it_parses_scalar "2002-1-2", Time.new(2002, 1, 2, kind: Time::Kind::Utc)
-  it_parses_scalar "2002-1-2T10:11:12", Time.new(2002, 1, 2, 10, 11, 12, kind: Time::Kind::Utc)
-  it_parses_scalar "2002-1-2   10:11:12", Time.new(2002, 1, 2, 10, 11, 12, kind: Time::Kind::Utc)
-  it_parses_scalar "2002-1-2   1:11:12", Time.new(2002, 1, 2, 1, 11, 12, kind: Time::Kind::Utc)
-  it_parses_scalar "2002-1-2T10:11:12.3", Time.new(2002, 1, 2, 10, 11, 12, nanosecond: 300_000_000, kind: Time::Kind::Utc)
-  it_parses_scalar "2002-1-2T10:11:12.34", Time.new(2002, 1, 2, 10, 11, 12, nanosecond: 340_000_000, kind: Time::Kind::Utc)
-  it_parses_scalar "2002-1-2T10:11:12.345", Time.new(2002, 1, 2, 10, 11, 12, nanosecond: 345_000_000, kind: Time::Kind::Utc)
-  it_parses_scalar "2002-1-2T10:11:12.3456", Time.new(2002, 1, 2, 10, 11, 12, nanosecond: 345_600_000, kind: Time::Kind::Utc)
-  it_parses_scalar "2002-1-2T10:11:12Z", Time.new(2002, 1, 2, 10, 11, 12, kind: Time::Kind::Utc)
-  it_parses_scalar "2002-1-2T10:11:12 Z", Time.new(2002, 1, 2, 10, 11, 12, kind: Time::Kind::Utc)
-  it_parses_scalar "2002-1-2T10:11:12 +3", Time.new(2002, 1, 2, 7, 11, 12, kind: Time::Kind::Utc)
-  it_parses_scalar "2002-1-2T10:11:12 +03:00", Time.new(2002, 1, 2, 7, 11, 12, kind: Time::Kind::Utc)
-  it_parses_scalar "2002-1-2T10:11:12 -03:00", Time.new(2002, 1, 2, 13, 11, 12, kind: Time::Kind::Utc)
-  it_parses_scalar "2002-1-2T10:11:12 -03:31", Time.new(2002, 1, 2, 13, 42, 12, kind: Time::Kind::Utc)
-  it_parses_scalar "2002-1-2T10:11:12-03:31", Time.new(2002, 1, 2, 13, 42, 12, kind: Time::Kind::Utc)
-  it_parses_scalar "2002-1-2T10:11:12 +0300", Time.new(2002, 1, 2, 7, 11, 12, kind: Time::Kind::Utc)
+  it_parses_scalar "2002-12-14", Time.utc(2002, 12, 14)
+  it_parses_scalar "2002-1-2", Time.utc(2002, 1, 2)
+  it_parses_scalar "2002-1-2T10:11:12", Time.utc(2002, 1, 2, 10, 11, 12)
+  it_parses_scalar "2002-1-2   10:11:12", Time.utc(2002, 1, 2, 10, 11, 12)
+  it_parses_scalar "2002-1-2   1:11:12", Time.utc(2002, 1, 2, 1, 11, 12)
+  it_parses_scalar "2002-1-2T10:11:12.3", Time.utc(2002, 1, 2, 10, 11, 12, nanosecond: 300_000_000)
+  it_parses_scalar "2002-1-2T10:11:12.34", Time.utc(2002, 1, 2, 10, 11, 12, nanosecond: 340_000_000)
+  it_parses_scalar "2002-1-2T10:11:12.345", Time.utc(2002, 1, 2, 10, 11, 12, nanosecond: 345_000_000)
+  it_parses_scalar "2002-1-2T10:11:12.3456", Time.utc(2002, 1, 2, 10, 11, 12, nanosecond: 345_600_000)
+  it_parses_scalar "2002-1-2T10:11:12Z", Time.utc(2002, 1, 2, 10, 11, 12)
+  it_parses_scalar "2002-1-2T10:11:12 Z", Time.utc(2002, 1, 2, 10, 11, 12)
+  it_parses_scalar "2002-1-2T10:11:12 +3", Time.utc(2002, 1, 2, 7, 11, 12)
+  it_parses_scalar "2002-1-2T10:11:12 +03:00", Time.utc(2002, 1, 2, 7, 11, 12)
+  it_parses_scalar "2002-1-2T10:11:12 -03:00", Time.utc(2002, 1, 2, 13, 11, 12)
+  it_parses_scalar "2002-1-2T10:11:12 -03:31", Time.utc(2002, 1, 2, 13, 42, 12)
+  it_parses_scalar "2002-1-2T10:11:12-03:31", Time.utc(2002, 1, 2, 13, 42, 12)
+  it_parses_scalar "2002-1-2T10:11:12 +0300", Time.utc(2002, 1, 2, 7, 11, 12)
 
   # invalid time
   it_parses_string "2002-34-45"
@@ -176,7 +192,17 @@ describe YAML::Schema::Core do
 
   # !!float
   it_parses "!!float '1.2'", 1.2
+  it_parses "!!float '0.5'", 0.5
   it_parses "!!float '1_234.2'", 1_234.2
+
+  it_parses "!!float -1", -1.0
+  it_parses "!!float 0", 0.0
+  it_parses "!!float 2.3e4", 2.3e4
+
+  it "parses !!float .nan" do
+    YAML::Schema::Core.parse("!!float .nan").as_f.nan?.should be_true
+  end
+
   it_parses "!!float .inf", Float64::INFINITY
   it_raises_on_parse "!!float 'hello'", "Invalid float"
 
@@ -197,6 +223,6 @@ describe YAML::Schema::Core do
   it_raises_on_parse "!!str [1]", "Expected SCALAR"
 
   # # !!timestamp
-  it_parses "!!timestamp 2010-01-02", Time.new(2010, 1, 2, kind: Time::Kind::Utc)
+  it_parses "!!timestamp 2010-01-02", Time.utc(2010, 1, 2)
   it_raises_on_parse "!!timestamp foo", "Invalid timestamp"
 end

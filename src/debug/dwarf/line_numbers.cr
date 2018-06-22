@@ -75,11 +75,11 @@ module Debug
         # the decoded matrix) isn't meaningful.
         property end_sequence : Bool
 
-        # Indicates the the instruction is one where execution should be
+        # Indicates the instruction is one where execution should be
         # suspended (for an entry breakpoint).
         property prologue_end : Bool
 
-        # Indicates the the instruction is one where execution should be
+        # Indicates the instruction is one where execution should be
         # suspended (for an exit breakpoint).
         property epilogue_begin : Bool
 
@@ -153,6 +153,11 @@ module Debug
           @include_directories = [""]
           @file_names = [{"", 0, 0, 0}]
           @standard_opcode_lengths = [0_u8]
+        end
+
+        # Returns the unit length, adding the size of the `unit_length`.
+        def total_length
+          unit_length + sizeof(typeof(unit_length))
         end
       end
 
@@ -230,14 +235,14 @@ module Debug
           read_directory_table(sequence)
           read_filename_table(sequence)
 
-          if @io.tell - @offset < sequence.offset + sequence.unit_length
+          if @io.tell - @offset < sequence.offset + sequence.total_length
             read_statement_program(sequence)
           end
         end
       end
 
       private def read_opcodes(sequence)
-        1.upto(sequence.opcode_base - 1) do |i|
+        1.upto(sequence.opcode_base - 1) do
           sequence.standard_opcode_lengths << @io.read_byte.not_nil!
         end
       end
@@ -296,7 +301,7 @@ module Debug
             when LNE::EndSequence
               registers.end_sequence = true
               register_to_matrix(sequence, registers)
-              if (@io.tell - @offset - sequence.offset) < sequence.unit_length
+              if (@io.tell - @offset - sequence.offset) < sequence.total_length
                 registers = Register.new(sequence.default_is_stmt)
               else
                 break

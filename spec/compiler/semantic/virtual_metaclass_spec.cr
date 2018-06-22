@@ -35,7 +35,7 @@ describe "Semantic: virtual metaclass" do
 
   it "allows allocating virtual type when base class is abstract" do
     assert_type("
-      abstract class Foo
+      class Foo
       end
 
       class Bar < Foo
@@ -44,7 +44,7 @@ describe "Semantic: virtual metaclass" do
       class Baz < Foo
       end
 
-      bar = Bar.new || Baz.new
+      bar = Bar.new || Foo.new
       baz = bar.class.allocate
       ") { types["Foo"].virtual_type }
   end

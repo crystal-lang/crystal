@@ -70,6 +70,24 @@ describe "Semantic: hooks" do
       ") { int32 }
   end
 
+  it "does not invoke 'method_added' hook recusively" do
+    assert_type("
+      class Foo
+        macro method_added(d)
+          def {{d.name.id}}
+            1
+          end
+        end
+
+        def foo
+          nil
+        end
+      end
+
+      Foo.new.foo
+      ") { int32 }
+  end
+
   it "errors if wrong inherited args size" do
     assert_error %(
       class Foo

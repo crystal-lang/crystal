@@ -276,4 +276,12 @@ module Crystal
   class AliasType
     delegate cover, cover_size, to: aliased_type
   end
+
+  class NumberLiteralType
+    delegate cover, cover_size, to: (@matched_type || literal.type)
+  end
+
+  class SymbolLiteralType
+    delegate cover, cover_size, to: (@matched_type || literal.type)
+  end
 end

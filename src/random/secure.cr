@@ -45,7 +45,7 @@ module Random::Secure
         end
       else
         random_bytes(buf.to_slice)
-        buf.to_unsafe.as({{type}}*).value
+        buf.unsafe_as({{type}})
       end
     end
   {% end %}

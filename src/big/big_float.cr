@@ -13,7 +13,11 @@ struct BigFloat < Float
   end
 
   def initialize(str : String)
-    LibGMP.mpf_init_set_str(out @mpf, str, 10)
+    # Strip leading '+' char to smooth out cases with strings like "+123"
+    str = str.lchop('+')
+    if LibGMP.mpf_init_set_str(out @mpf, str, 10) == -1
+      raise ArgumentError.new("Invalid BigFloat: #{str.inspect}")
+    end
   end
 
   def initialize(num : BigInt)
@@ -125,7 +129,7 @@ struct BigFloat < Float
   end
 
   def /(other : Number)
-    raise DivisionByZero.new if other == 0
+    raise DivisionByZeroError.new if other == 0
     if other.is_a?(UInt8 | UInt16 | UInt32) || (LibGMP::ULong == UInt64 && other.is_a?(UInt64))
       BigFloat.new { |mpf| LibGMP.mpf_div_ui(mpf, self, other) }
     else
@@ -265,6 +269,10 @@ struct Number
     other * self
   end
 
+  def /(other : BigFloat)
+    to_big_f / other
+  end
+
   def to_big_f
     BigFloat.new(self)
   end
@@ -291,5 +299,24 @@ module Math
 
   def sqrt(value : BigFloat)
     BigFloat.new { |mpf| LibGMP.mpf_sqrt(mpf, value) }
+  end
+end
+
+# :nodoc:
+struct Crystal::Hasher
+  def float(value : BigFloat)
+    normalized_hash = float_normalize_wrap(value) do |value|
+      # more exact version of `Math.frexp`
+      LibGMP.mpf_get_d_2exp(out exp, value)
+      frac = BigFloat.new do |mpf|
+        if exp >= 0
+          LibGMP.mpf_div_2exp(mpf, value, exp)
+        else
+          LibGMP.mpf_mul_2exp(mpf, value, -exp)
+        end
+      end
+      float_normalize_reference(value, frac, exp)
+    end
+    permute(normalized_hash)
   end
 end

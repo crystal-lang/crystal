@@ -27,12 +27,14 @@ static ?=       ## Enable static linking
 O := .build
 SOURCES := $(shell find src -name '*.cr')
 SPEC_SOURCES := $(shell find spec -name '*.cr')
-FLAGS := $(if $(release),--release )$(if $(stats),--stats )$(if $(progress),--progress )$(if $(threads),--threads $(threads) )$(if $(debug),-d )$(if $(static),--static )
+override FLAGS += $(if $(release),--release )$(if $(stats),--stats )$(if $(progress),--progress )$(if $(threads),--threads $(threads) )$(if $(debug),-d )$(if $(static),--static )$(if $(LDFLAGS),--link-flags="$(LDFLAGS)" )
 SPEC_FLAGS := $(if $(verbose),-v )$(if $(junit_output),--junit_output $(junit_output) )
-EXPORTS := $(if $(release),,CRYSTAL_CONFIG_PATH=`pwd`/src)
-SHELL = bash
+EXPORTS := $(if $(release),,CRYSTAL_CONFIG_PATH="$(PWD)/src")
+SHELL = sh
 LLVM_CONFIG_FINDER := \
   [ -n "$(LLVM_CONFIG)" ] && command -v "$(LLVM_CONFIG)" || \
+  command -v llvm-config-5.0 || command -v llvm-config50 || \
+    (command -v llvm-config > /dev/null && (case "$(llvm-config --version)" in 5.0*) command -v llvm-config;; *) false;; esac)) || \
   command -v llvm-config-4.0 || command -v llvm-config40 || \
     (command -v llvm-config > /dev/null && (case "$(llvm-config --version)" in 4.0*) command -v llvm-config;; *) false;; esac)) || \
   command -v llvm-config-3.9 || command -v llvm-config39 || \
@@ -53,7 +55,7 @@ CXXFLAGS += $(if $(debug),-g -O0)
 ifeq (${LLVM_CONFIG},)
   $(error Could not locate llvm-config, make sure it is installed and in your PATH, or set LLVM_CONFIG)
 else
-  $(shell echo $(shell printf '\033[33m')Using $(LLVM_CONFIG) [version=$(shell $(LLVM_CONFIG) --version)]$(shell printf '\033[0m') >/dev/stderr)
+  $(shell echo $(shell printf '\033[33m')Using $(LLVM_CONFIG) [version=$(shell $(LLVM_CONFIG) --version)]$(shell printf '\033[0m') >&2)
 endif
 
 .PHONY: all
@@ -90,7 +92,7 @@ compiler_spec: $(O)/compiler_spec ## Run compiler specs
 
 .PHONY: docs
 docs: ## Generate standard library documentation
-	$(BUILD_PATH) ./bin/crystal docs src/docs_main.cr
+	$(BUILD_PATH) ./bin/crystal docs -b https://crystal-lang.org/api/latest src/docs_main.cr
 
 .PHONY: crystal
 crystal: $(O)/crystal ## Build the compiler
@@ -118,7 +120,7 @@ $(O)/crystal: $(DEPS) $(SOURCES)
 	$(BUILD_PATH) $(EXPORTS) ./bin/crystal build $(FLAGS) -o $@ src/compiler/crystal.cr -D without_openssl -D without_zlib
 
 $(LLVM_EXT_OBJ): $(LLVM_EXT_DIR)/llvm_ext.cc
-	$(CXX) -c $(CXXFLAGS) -o $@ $< `$(LLVM_CONFIG) --cxxflags`
+	$(CXX) -c $(CXXFLAGS) -o $@ $< $(shell $(LLVM_CONFIG) --cxxflags)
 
 $(LIB_CRYSTAL_TARGET): $(LIB_CRYSTAL_OBJS)
 	$(AR) -rcs $@ $^
@@ -131,4 +133,4 @@ clean: clean_crystal ## Clean up built directories and files
 .PHONY: clean_crystal
 clean_crystal: ## Clean up crystal built files
 	rm -rf $(O)
-	rm -rf ./doc
+	rm -rf ./docs

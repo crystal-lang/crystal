@@ -334,7 +334,7 @@ class Deque(T)
     executed = exec_recursive(:inspect) do
       io << "Deque{"
       join ", ", io, &.inspect(io)
-      io << "}"
+      io << '}'
     end
     io << "Deque{...}" unless executed
   end
@@ -416,6 +416,7 @@ class Deque(T)
   # * For positive *n*, equivalent to `n.times { push(shift) }`.
   # * For negative *n*, equivalent to `(-n).times { unshift(pop) }`.
   def rotate!(n : Int = 1)
+    return if @size <= 1
     if @size == @capacity
       @start = (@start + n) % @capacity
     else
@@ -480,15 +481,6 @@ class Deque(T)
   def swap(i, j)
     self[i], self[j] = self[j], self[i]
     self
-  end
-
-  # Returns an `Array` (shallow copy) that contains all the items of this deque.
-  def to_a
-    arr = Array(T).new(@size)
-    each do |x|
-      arr << x
-    end
-    arr
   end
 
   def to_s(io : IO)

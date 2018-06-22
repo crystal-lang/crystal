@@ -30,7 +30,7 @@ module HTTP
     typeof(Client.new(URI.new))
     typeof(Client.new(URI.parse("http://www.example.com")))
 
-    {% for method in %w(get post put head delete patch) %}
+    {% for method in %w(get post put head delete patch options) %}
       typeof(Client.{{method.id}} "url")
       typeof(Client.new("host").{{method.id}}("uri"))
       typeof(Client.new("host").{{method.id}}("uri", headers: Headers {"Content-Type" => "text/plain"}))
@@ -119,6 +119,16 @@ module HTTP
           typeof(client)
         end
       end
+    end
+
+    it "sends the host header ipv6 with brackets" do
+      server = HTTP::Server.new do |context|
+        context.response.print context.request.headers["Host"]
+      end
+      address = server.bind_unused_port "::1"
+      spawn { server.listen }
+
+      HTTP::Client.get("http://[::1]:#{address.port}/").body.should eq("[::1]:#{address.port}")
     end
 
     it "doesn't read the body if request was HEAD" do

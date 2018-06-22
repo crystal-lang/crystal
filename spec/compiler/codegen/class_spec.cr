@@ -504,7 +504,15 @@ describe "Code gen: class" do
 
   it "does to_s for virtual metaclass type (3)" do
     run(%(
-      require "prelude"
+      class Class
+        def name : String
+          {{ @type.name.stringify }}
+        end
+
+        def to_s
+          name
+        end
+      end
 
       class Foo; end
       class Bar < Foo; end

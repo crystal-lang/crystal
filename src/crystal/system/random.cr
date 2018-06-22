@@ -14,7 +14,10 @@ end
   require "./unix/getrandom"
 {% elsif flag?(:openbsd) %}
   require "./unix/arc4random"
-{% else %}
-  # TODO: restrict on flag?(:unix) after crystal > 0.22.0 is released
+{% elsif flag?(:unix) %}
   require "./unix/urandom"
+{% elsif flag?(:win32) %}
+  require "./win32/random"
+{% else %}
+  {% raise "No Crystal::System::Random implementation available" %}
 {% end %}

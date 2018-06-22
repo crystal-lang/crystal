@@ -554,7 +554,7 @@ describe "Code gen: macro" do
           @x = 1; @x = 1.1
         end
         def foo
-          {{ @type.instance_vars.first.type.union_types.map(&.name).sort }}.join("-")
+          {{ @type.instance_vars.first.type.union_types.map(&.name).sort }}.join('-')
         end
       end
       Foo.new.foo
@@ -599,7 +599,7 @@ describe "Code gen: macro" do
       require "prelude"
       class Foo(T, K)
         def self.foo : String
-          {{ @type.type_vars.map(&.stringify) }}.join("-")
+          {{ @type.type_vars.map(&.stringify) }}.join('-')
         end
       end
       Foo.foo
@@ -693,7 +693,7 @@ describe "Code gen: macro" do
       end
 
       names = {{ Foo.subclasses.map &.name }}
-      names.join("-")
+      names.join('-')
       )).to_string.should eq("Bar-Baz")
   end
 
@@ -711,7 +711,7 @@ describe "Code gen: macro" do
       end
 
       names = {{ Foo.all_subclasses.map &.name }}
-      names.join("-")
+      names.join('-')
       )).to_string.should eq("Bar-Baz")
   end
 
@@ -1711,5 +1711,106 @@ describe "Code gen: macro" do
 
       {{ Foo.union_types.size }}
       )).to_i.should eq(2)
+  end
+
+  it "gets default value of instance variable" do
+    run(%(
+      class Foo
+        @x = 1
+
+        def default
+          {{@type.instance_vars.first.default_value}}
+        end
+      end
+
+      Foo.new.default
+      )).to_i.should eq(1)
+  end
+
+  it "gets default value of instance variable of generic type" do
+    run(%(
+      require "prelude"
+
+      struct Int32
+        def self.foo
+          10
+        end
+      end
+
+      class Foo(T)
+        @x : T = T.foo
+
+        def default
+          {{@type.instance_vars.first.default_value}}
+        end
+      end
+
+      Foo(Int32).new.default
+      )).to_i.should eq(10)
+  end
+
+  it "gets default value of instance variable of inherited type that also includes module" do
+    run(%(
+      module Moo
+        @moo = 10
+      end
+
+      class Foo
+        include Moo
+
+        def foo
+          {{ @type.instance_vars.first.default_value }}
+        end
+      end
+
+      class Bar < Foo
+      end
+
+      Bar.new.foo
+      )).to_i.should eq(10)
+  end
+
+  it "determines if variable has default value" do
+    run(%(
+      class Foo
+        @x = 1
+        @y : Int32
+
+        def initialize(@y)
+        end
+
+        def defaults
+          {
+            {{ @type.instance_vars.find { |i| i.name == "x" }.has_default_value? }},
+            {{ @type.instance_vars.find { |i| i.name == "y" }.has_default_value? }},
+          }
+        end
+      end
+
+      x, y = Foo.new(2).defaults
+      a = 0
+      a += 1 if x
+      a += 2 if y
+      a
+    )).to_i.should eq(1)
+  end
+
+  it "expands macro with op assign inside assign (#5568)" do
+    run(%(
+      require "prelude"
+
+      macro expand
+        {{ yield }}
+      end
+
+      def foo
+        {:foo => 1}
+      end
+
+      expand do
+        x = foo[:foo] += 1
+        puts x
+      end
+    )).to_string.chomp.should eq("2")
   end
 end

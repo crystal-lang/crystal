@@ -178,7 +178,7 @@ describe "Semantic: class" do
       end
 
       a = Bar.new || Baz.new
-      ") { types["Foo"].virtual_type }
+      ") { union_of types["Bar"], types["Baz"] }
   end
 
   it "types class and subclass as one type" do
@@ -1060,5 +1060,19 @@ describe "Semantic: class" do
       Foo.bar
       ),
       "undefined method 'bar' for Foo:Class"
+  end
+
+  it "inherits self twice (#5495)" do
+    assert_type(%(
+      class Foo
+        class Bar < self
+        end
+
+        class Baz < self
+        end
+      end
+
+      { {{ Foo::Bar.superclass }}, {{ Foo::Baz.superclass }} }
+    )) { tuple_of [types["Foo"].metaclass, types["Foo"].metaclass] }
   end
 end

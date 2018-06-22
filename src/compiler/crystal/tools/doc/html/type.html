@@ -1,27 +1,15 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
+  <%= HeadTemplate.new(type, canonical_base_url) %>
   <meta id="repository-name" content="<%= type.repository_name %>">
-  <link href="<%= type.path_to "css/style.css" %>" rel="stylesheet" type="text/css" />
-  <script type="text/javascript" src="<%= type.path_to "js/doc.js" %>"></script>
   <title><%= type.full_name %> - <%= type.repository_name %></title>
 </head>
 <body>
 
-<div id="types-list">
-  <div id="search-box">
-    <input type="search" id="search-input" placeholder="Search...">
-  </div>
+<%= SidebarTemplate.new(type.repository_name, types, type) %>
 
-  <ul>
-    <li><a href="<%= type.path_to("index.html") %>">README</a></li>
-  </ul>
-
-  <%= ListItemsTemplate.new(types, type) %>
-</div>
-
-<div id="main-content">
+<div class="main-content">
 <h1 class="type-name">
 <% if type.program? %>
   <%= type.full_name %>
@@ -71,7 +59,7 @@
   <% end %>
   <dl>
     <% type.constants.each do |const| %>
-      <dt class="entry-const" id="<%= const.name %>">
+      <dt class="entry-const" id="<%= const.id %>">
         <strong><%= const.name %></strong> = <code><%= const.formatted_value %></code>
       </dt>
       <% if doc = const.formatted_doc %>

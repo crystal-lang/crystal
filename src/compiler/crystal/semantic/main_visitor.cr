@@ -36,8 +36,8 @@ module Crystal
   #
   # Call resolution logic is in `Call#recalculate`, where method lookup is done.
   class MainVisitor < SemanticVisitor
-    ValidGlobalAttributes   = %w(ThreadLocal)
-    ValidClassVarAttributes = %w(ThreadLocal)
+    ValidGlobalAnnotations   = %w(ThreadLocal)
+    ValidClassVarAnnotations = %w(ThreadLocal)
 
     getter! typed_def
     property! untyped_def : Def
@@ -116,7 +116,10 @@ module Crystal
       @while_stack = [] of While
       @needs_type_filters = 0
       @typeof_nest = 0
-      @is_initialize = !!(typed_def && typed_def.name == "initialize")
+      @is_initialize = !!(typed_def && (
+        typed_def.name == "initialize" ||
+        typed_def.name.starts_with?("initialize:") # Because of expanded methods from named args
+      ))
       @found_self_in_initialize_call = nil
       @used_ivars_in_calls_in_initialize = nil
       @in_is_a = false
@@ -415,19 +418,18 @@ module Crystal
           node.raise "declaring the type of a class variable must be done at the class level"
         end
 
-        attributes = check_valid_attributes node, ValidClassVarAttributes, "class variable"
+        thread_local = check_class_var_annotations
+
         class_var = lookup_class_var(var)
         var.var = class_var
-        if Attribute.any?(attributes, "ThreadLocal")
-          class_var.thread_local = true
-        end
+        class_var.thread_local = true if thread_local
       when Global
         if @untyped_def
           node.raise "declaring the type of a global variable must be done at the class level"
         end
 
-        attributes = check_valid_attributes node, ValidGlobalAttributes, "global variable"
-        if Attribute.any?(attributes, "ThreadLocal")
+        thread_local = check_class_var_annotations
+        if thread_local
           global_var = @program.global_vars[var.name]
           global_var.thread_local = true
         end
@@ -511,10 +513,10 @@ module Crystal
           node.raise "can only declare instance variables of a non-generic class, not a #{type.type_desc} (#{type})"
         end
       when ClassVar
-        attributes = check_valid_attributes node, ValidGlobalAttributes, "global variable"
+        thread_local = check_class_var_annotations
 
         class_var = visit_class_var var
-        class_var.thread_local = true if Attribute.any?(attributes, "ThreadLocal")
+        class_var.thread_local = true if thread_local
       end
 
       node.type = @program.nil unless node.type?
@@ -678,10 +680,10 @@ module Crystal
     end
 
     def visit(node : ClassVar)
-      attributes = check_valid_attributes node, ValidGlobalAttributes, "global variable"
+      thread_local = check_class_var_annotations
 
       var = visit_class_var node
-      var.thread_local = true if Attribute.any?(attributes, "ThreadLocal")
+      var.thread_local = true if thread_local
 
       false
     end
@@ -741,18 +743,39 @@ module Crystal
       false
     end
 
-    def type_assign(target : Var, value, node)
+    def type_assign(target : Var, value, node, restriction = nil)
       value.accept self
+
+      var_name = target.name
+      meta_var = (@meta_vars[var_name] ||= new_meta_var(var_name))
+
+      if freeze_type = meta_var.freeze_type
+        if casted_value = check_automatic_cast(value, freeze_type, node)
+          value = casted_value
+        end
+      end
+
+      # If this assign comes from a AssignWithRestriction node, check the restriction
+
+      if restriction && (value_type = value.type?)
+        if value_type.restrict(restriction, match_context.not_nil!)
+          # OK
+        else
+          # Check autocast too
+          restriction_type = scope.lookup_type(restriction, free_vars: free_vars)
+          if casted_value = check_automatic_cast(value, restriction_type, node)
+            value = casted_value
+          else
+            node.raise "can't restrict #{value.type} to #{restriction}"
+          end
+        end
+      end
 
       target.bind_to value
       node.bind_to value
 
-      var_name = target.name
-
       value_type_filters = @type_filters
       @type_filters = nil
-
-      meta_var = (@meta_vars[var_name] ||= new_meta_var(var_name))
 
       # Save variable assignment location for debugging output
       meta_var.location ||= target.location
@@ -817,6 +840,9 @@ module Crystal
       value.accept self
 
       var = lookup_instance_var target
+      if casted_value = check_automatic_cast(value, var.type, node)
+        value = casted_value
+      end
 
       target.bind_to var
       node.bind_to value
@@ -872,7 +898,7 @@ module Crystal
     end
 
     def type_assign(target : Global, value, node)
-      attributes = check_valid_attributes target, ValidGlobalAttributes, "global variable"
+      thread_local = check_class_var_annotations
 
       value.accept self
 
@@ -885,7 +911,7 @@ module Crystal
         var.bind_to program.nil_var
       end
 
-      var.thread_local = true if Attribute.any?(attributes, "ThreadLocal")
+      var.thread_local = true if thread_local
       target.var = var
 
       target.bind_to var
@@ -895,31 +921,32 @@ module Crystal
     end
 
     def type_assign(target : ClassVar, value, node)
-      attributes = check_valid_attributes target, ValidClassVarAttributes, "class variable"
+      thread_local = check_class_var_annotations
 
       # Outside a def is already handled by ClassVarsInitializerVisitor
       # (@exp_nest is 1 if we are at the top level because it was incremented
       # by one since we are inside an Assign)
       if !@typed_def && (@exp_nest <= 1) && !inside_block?
         var = lookup_class_var(target)
-        check_class_var_is_thread_local(target, var, attributes)
+        target.var = var
+        var.thread_local = true if thread_local
         return
       end
 
       value.accept self
 
       var = lookup_class_var(target)
-      check_class_var_is_thread_local(target, var, attributes)
+      target.var = var
+      var.thread_local = true if thread_local
+
+      if casted_value = check_automatic_cast(value, var.type, node)
+        value = casted_value
+      end
 
       target.bind_to var
 
       node.bind_to value
       var.bind_to value
-    end
-
-    def check_class_var_is_thread_local(target, var, attributes)
-      var.thread_local = true if Attribute.any?(attributes, "ThreadLocal")
-      target.var = var
     end
 
     def type_assign(target : Underscore, value, node)
@@ -929,6 +956,34 @@ module Crystal
 
     def type_assign(target, value, node)
       raise "BUG: unknown assign target in MainVisitor: #{target}"
+    end
+
+    # See if we can automatically cast the value if the types don't exactly match
+    def check_automatic_cast(value, var_type, assign = nil)
+      MainVisitor.check_automatic_cast(value, var_type, assign)
+    end
+
+    def self.check_automatic_cast(value, var_type, assign = nil)
+      if value.is_a?(NumberLiteral) && value.type != var_type && (var_type.is_a?(IntegerType) || var_type.is_a?(FloatType))
+        if value.can_be_autocast_to?(var_type)
+          value.type = var_type
+          value.kind = var_type.kind
+          assign.value = value if assign
+          return value
+        end
+      elsif value.is_a?(SymbolLiteral) && var_type.is_a?(EnumType)
+        member = var_type.find_member(value.value)
+        if member
+          path = Path.new(member.name)
+          path.target_const = member
+          path.type = var_type
+          value = path
+          assign.value = value if assign
+          return value
+        end
+      end
+
+      nil
     end
 
     def visit(node : Yield)
@@ -1507,8 +1562,8 @@ module Crystal
       expected_return_type = proc_type.return_type
       expected_return_type = @program.nil if expected_return_type.void?
 
-      proc_def = Def.new("->", proc_args, block.body)
-      proc_literal = ProcLiteral.new(proc_def).at(node.location)
+      proc_def = Def.new("->", proc_args, block.body).at(node)
+      proc_literal = ProcLiteral.new(proc_def).at(node)
       proc_literal.expected_return_type = expected_return_type
       proc_literal.force_nil = true if expected_return_type.nil_type?
       proc_literal.accept self
@@ -1536,11 +1591,11 @@ module Crystal
 
       new_call = Call.new(node.obj, "new").at(node.location)
 
-      new_assign = Assign.new(Var.new(temp_name), new_call)
+      new_assign = Assign.new(Var.new(temp_name).at(node), new_call).at(node)
       exps << new_assign
 
       named_args.each do |named_arg|
-        assign_call = Call.new(Var.new(temp_name), "#{named_arg.name}=", named_arg.value)
+        assign_call = Call.new(Var.new(temp_name).at(named_arg), "#{named_arg.name}=", named_arg.value).at(named_arg)
         if loc = named_arg.location
           assign_call.location = loc
           assign_call.name_column_number = loc.column_number
@@ -1548,9 +1603,9 @@ module Crystal
         exps << assign_call
       end
 
-      exps << Var.new(temp_name)
+      exps << Var.new(temp_name).at(node)
 
-      expanded = Expressions.new(exps)
+      expanded = Expressions.new(exps).at(node)
       expanded.accept self
 
       node.bind_to expanded
@@ -1742,7 +1797,7 @@ module Crystal
         target = exp.target
         return target if target.is_a?(Var)
       when Expressions
-        return unless exp = single_expression(exp)
+        return unless exp = exp.single_expression?
         return get_expression_var(exp)
       end
       nil
@@ -1850,13 +1905,13 @@ module Crystal
       # block is when the condition is a Var (in the else it must be
       # nil), IsA (in the else it's not that type), RespondsTo
       # (in the else it doesn't respond to that message) or Not.
-      case cond = single_expression(node.cond) || node.cond
+      case cond = node.cond.single_expression
       when Var, IsA, RespondsTo, Not
         filter_vars cond_type_filters, &.not
       when Or
         # Try to apply boolean logic: `!(a || b)` is `!a && !b`
-        cond_left = single_expression(cond.left) || cond.left
-        cond_right = single_expression(cond.right) || cond.right
+        cond_left = cond.left.single_expression
+        cond_right = cond.right.single_expression
 
         #  We can't deduce anything for sub && or || expressions
         or_left_type_filters = nil if cond_left.is_a?(And) || cond_left.is_a?(Or)
@@ -2026,7 +2081,7 @@ module Crystal
         node.body.accept self
       end
 
-      cond = single_expression(node.cond) || node.cond
+      cond = node.cond.single_expression
 
       endless_while = cond.true_literal?
       merge_while_vars cond, endless_while, before_cond_vars_copy, before_cond_vars, after_cond_vars, @vars, node.break_vars
@@ -2158,7 +2213,7 @@ module Crystal
       when Call
         return get_while_cond_assign_target(node.obj)
       when Expressions
-        return unless node = single_expression(node)
+        return unless node = node.single_expression?
         return get_while_cond_assign_target(node)
       end
 
@@ -2190,16 +2245,6 @@ module Crystal
         filtered_var.bind_to(existing_var.filtered_by(yield filter))
         @vars[name] = filtered_var
       end
-    end
-
-    def single_expression(node)
-      result = nil
-
-      while node.is_a?(Expressions) && node.expressions.size == 1
-        result = node = node[0]
-      end
-
-      result
     end
 
     def end_visit(node : Break)
@@ -2400,32 +2445,46 @@ module Crystal
     end
 
     def visit(node : PointerOf)
-      var = case node_exp = node.exp
-            when Var
-              meta_var = @meta_vars[node_exp.name]
-              meta_var.assigned_to = true
-              meta_var
-            when InstanceVar
-              lookup_instance_var node_exp
-            when ClassVar
-              visit_class_var node_exp
-            when Global
-              visit_global node_exp
-            when Path
-              node_exp.accept self
-              if const = node_exp.target_const
-                const.value
-              else
-                node_exp.raise "can't take address of #{node_exp}"
-              end
-            when ReadInstanceVar
-              visit_read_instance_var(node_exp)
-              node_exp
-            else
-              node_exp.raise "can't take address of #{node_exp}"
-            end
+      var = pointerof_var(node)
+      node.exp.raise "can't take address of #{node.exp}" unless var
       node.bind_to var
       true
+    end
+
+    def pointerof_var(node)
+      case exp = node.exp
+      when Var
+        meta_var = @meta_vars[exp.name]
+        meta_var.assigned_to = true
+        meta_var
+      when InstanceVar
+        lookup_instance_var exp
+      when ClassVar
+        visit_class_var exp
+      when Global
+        visit_global exp
+      when Path
+        exp.accept self
+        if const = exp.target_const
+          const.value
+        end
+      when ReadInstanceVar
+        visit_read_instance_var(exp)
+        exp
+      when Call
+        # Check lib external var
+        return unless exp.args.empty? && !exp.named_args && !exp.block && !exp.block_arg
+
+        obj = exp.obj
+        return unless obj
+
+        obj.accept(self)
+
+        obj_type = obj.type?
+        return unless obj_type.is_a?(LibType)
+
+        obj_type.lookup_var(exp.name)
+      end
     end
 
     def visit(node : TypeOf)
@@ -2457,19 +2516,18 @@ module Crystal
       @in_type_args -= 1
 
       type = node.exp.type?
-      unless type
-        raise "BUG: #{node} at #{node.location} should receive a type"
-      end
 
       # Try to resolve the sizeof right now to a number literal
       # (useful for sizeof inside as a generic type argument, but also
       # to make it easier for LLVM to optimize things)
-      if !node.exp.is_a?(TypeOf)
-        expanded = NumberLiteral.new(@program.size_of(type.sizeof_type))
+      if type && !node.exp.is_a?(TypeOf)
+        expanded = NumberLiteral.new(@program.size_of(type.sizeof_type).to_s, :i32)
         expanded.type = @program.int32
         node.expanded = expanded
       end
+
       node.type = @program.int32
+
       false
     end
 
@@ -2479,9 +2537,6 @@ module Crystal
       @in_type_args -= 1
 
       type = node.exp.type?
-      unless type
-        raise "BUG: #{node} at #{node.location} should receive a type"
-      end
 
       if type.is_a? GenericType
         node.raise "can't calculate instance_sizeof of generic class #{type} without specifying its type vars"
@@ -2490,12 +2545,14 @@ module Crystal
       # Try to resolve the instance_sizeof right now to a number literal
       # (useful for sizeof inside as a generic type argument, but also
       # to make it easier for LLVM to optimize things)
-      if type.instance_type.devirtualize.class? && !node.exp.is_a?(TypeOf)
-        expanded = NumberLiteral.new(@program.instance_size_of(type.sizeof_type))
+      if type && type.instance_type.devirtualize.class? && !node.exp.is_a?(TypeOf)
+        expanded = NumberLiteral.new(@program.instance_size_of(type.sizeof_type).to_s, :i32)
         expanded.type = @program.int32
         node.expanded = expanded
       end
+
       node.type = @program.int32
+
       false
     end
 
@@ -2791,19 +2848,16 @@ module Crystal
 
         case type
         when GenericClassType
-          type_name = type.name.split "::"
-
-          path = Path.global(type_name).at(node.location)
+          generic_type = TypeNode.new(type).at(node.location)
           type_of = TypeOf.new(node.elements).at(node.location)
-          generic = Generic.new(path, type_of).at(node.location)
+
+          generic = Generic.new(generic_type, type_of).at(node.location)
 
           node.name = generic
         when GenericClassInstanceType
           # Nothing
         else
-          type_name = type.to_s.split "::"
-          path = Path.global(type_name).at(node.location)
-          node.name = path
+          node.name = TypeNode.new(name.type).at(node.location)
         end
 
         expand_named(node)
@@ -2819,22 +2873,16 @@ module Crystal
 
         case type
         when GenericClassType
-          type_name = type.name.split "::"
-
-          path = Path.global(type_name).at(node.location)
+          generic_type = TypeNode.new(type).at(node.location)
           type_of_keys = TypeOf.new(node.entries.map { |x| x.key.as(ASTNode) }).at(node.location)
           type_of_values = TypeOf.new(node.entries.map { |x| x.value.as(ASTNode) }).at(node.location)
-          generic = Generic.new(path, [type_of_keys, type_of_values] of ASTNode).at(node.location)
+          generic = Generic.new(generic_type, [type_of_keys, type_of_values] of ASTNode).at(node.location)
 
           node.name = generic
         when GenericClassInstanceType
           # Nothing
         else
-          type_name = type.to_s.split "::"
-
-          path = Path.global(type_name).at(node.location)
-
-          node.name = path
+          node.name = TypeNode.new(name.type).at(node.location)
         end
 
         expand_named(node)
@@ -2945,22 +2993,13 @@ module Crystal
       false
     end
 
-    def visit(node : TypeRestriction)
-      obj = node.obj
-      to = node.to
-
-      obj.accept self
-
-      unless context = match_context
-        node.raise "BUG: there is no match context"
-      end
-
-      if type = obj.type.restrict(to, context)
-        node.type = type
-      else
-        node.raise "can't restrict #{obj.type} to #{to}"
-      end
-
+    def visit(node : AssignWithRestriction)
+      type_assign(
+        node.assign.target.as(Var),
+        node.assign.value,
+        node.assign,
+        restriction: node.restriction)
+      node.bind_to(node.assign)
       false
     end
 

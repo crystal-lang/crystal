@@ -34,7 +34,7 @@ describe JSON::Parser do
   it_parses "[0]", [0]
   it_parses " [ 0 ] ", [0]
 
-  it_parses "{}", {} of String => JSON::Type
+  it_parses "{}", {} of String => JSON::Any
   it_parses %({"foo": 1}), {"foo" => 1}
   it_parses %({"foo": 1, "bar": 1.5}), {"foo" => 1, "bar" => 1.5}
   it_parses %({"fo\\no": 1}), {"fo\no" => 1}
@@ -75,7 +75,7 @@ describe JSON::Parser do
   end
 
   it "returns raw" do
-    value = JSON.parse_raw("1")
+    value = JSON.parse("1").raw
     value.should eq(1)
     value.should be_a(Int64)
   end

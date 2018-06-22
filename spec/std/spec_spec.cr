@@ -9,7 +9,7 @@ private class SpecException < Exception
 end
 
 private class NilMimicker
-  def ==(nil : Nil)
+  def ==(a_nil : Nil)
     true
   end
 end

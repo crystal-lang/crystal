@@ -28,7 +28,7 @@ module ECR
   #   def to_s(io)
   #     io << "Hello "
   #     io << @name
-  #     io << "!"
+  #     io << '!'
   #   end
   # end
   # ```
@@ -64,7 +64,7 @@ module ECR
   # ```
   # io << "Hello "
   # io << name
-  # io << "!"
+  # io << '!'
   # ```
   macro embed(filename, io_name)
     \{{ run("ecr/process", {{filename}}, {{io_name.id.stringify}}) }}

@@ -150,9 +150,9 @@ class Object
   #
   # ```
   # (1..10).tap { |x| puts "original: #{x.inspect}" }
-  #        .to_a.tap { |x| puts "array: #{x.inspect}" }
-  #             .select { |x| x % 2 == 0 }.tap { |x| puts "evens: #{x.inspect}" }
-  #                                       .map { |x| x*x }.tap { |x| puts "squares: #{x.inspect}" }
+  #   .to_a.tap { |x| puts "array: #{x.inspect}" }
+  #   .select { |x| x % 2 == 0 }.tap { |x| puts "evens: #{x.inspect}" }
+  #   .map { |x| x*x }.tap { |x| puts "squares: #{x.inspect}" }
   # ```
   def tap
     yield self
@@ -978,10 +978,6 @@ class Object
     #   def {{method_prefix}}happy?
     #     {{var_prefix}}happy
     #   end
-    #
-    #   def {{method_prefix}}happy
-    #     {{var_prefix}}happy.not_nil!
-    #   end
     # end
     # ```
     #
@@ -1076,6 +1072,7 @@ class Object
   #   delegate downcase, to: @string
   #   delegate gsub, to: @string
   #   delegate empty?, capitalize, to: @string
+  #   delegate :[], to: @string
   # end
   #
   # wrapper = StringWrapper.new "HELLO"
@@ -1086,15 +1083,21 @@ class Object
   # ```
   macro delegate(*methods, to object)
     {% for method in methods %}
-      def {{method.id}}(*args, **options)
-        {{object.id}}.{{method.id}}(*args, **options)
-      end
-
-      def {{method.id}}(*args, **options)
-        {{object.id}}.{{method.id}}(*args, **options) do |*yield_args|
-          yield *yield_args
+      {% if method.id.ends_with?('=') && method.id != "[]=" %}
+        def {{method.id}}(arg)
+          {{object.id}}.{{method.id}} arg
         end
-      end
+      {% else %}
+        def {{method.id}}(*args, **options)
+          {{object.id}}.{{method.id}}(*args, **options)
+        end
+
+        def {{method.id}}(*args, **options)
+          {{object.id}}.{{method.id}}(*args, **options) do |*yield_args|
+            yield *yield_args
+          end
+        end
+      {% end %}
     {% end %}
   end
 
@@ -1186,6 +1189,7 @@ class Object
     def clone
       clone = \{{@type}}.allocate
       clone.initialize_copy(self)
+      GC.add_finalizer(clone) if clone.responds_to?(:finalize)
       clone
     end
 

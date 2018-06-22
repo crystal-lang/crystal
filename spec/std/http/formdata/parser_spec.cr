@@ -23,7 +23,7 @@ describe HTTP::FormData::Parser do
       -----------------------------735323031399963166993862150--
       FORMDATA
 
-    parser = HTTP::FormData::Parser.new IO::Memory.new(formdata.gsub("\n", "\r\n")), "---------------------------735323031399963166993862150"
+    parser = HTTP::FormData::Parser.new IO::Memory.new(formdata.gsub('\n', "\r\n")), "---------------------------735323031399963166993862150"
 
     runs = 0
     while parser.has_next?

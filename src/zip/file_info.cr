@@ -3,7 +3,7 @@ module Zip::FileInfo
   SIGNATURE                 = 0x04034b50
   DATA_DESCRIPTOR_SIGNATURE = 0x08074b50
 
-  DEFLATE_END_SIGNATURE = Bytes[80, 75, 7, 8]
+  DEFLATE_END_SIGNATURE = Bytes[80, 75, 7, 8, read_only: true]
 
   property version : UInt16 = Zip::VERSION
   property general_purpose_bit_flag = 0_u16

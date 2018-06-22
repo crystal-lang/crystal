@@ -1,20 +1,19 @@
-require "c/fcntl"
 require "c/stdio"
-require "c/sys/select"
-require "c/sys/wait"
 require "c/errno"
-require "c/unistd"
+{% unless flag?(:win32) %}
+  require "c/unistd"
+{% end %}
 
 # The `IO` class is the basis for all input and output in Crystal.
 #
 # This class is inherited by types like `File`, `Socket` and `IO::Memory` and
-# provide many useful methods for reading to and writing from an IO, like `print`, `puts`,
+# provides many useful methods for reading from and writing to an IO, like `print`, `puts`,
 # `gets` and `printf`.
 #
 # The only requirement for a type including the `IO` module is to define
 # these two methods:
 #
-# * `read(slice : Bytes)`: read at most *slice.size* bytes into *slice* and return the number of bytes read
+# * `read(slice : Bytes)`: read at most *slice.size* bytes from IO into *slice* and return the number of bytes read
 # * `write(slice : Bytes)`: write the whole *slice* into the IO
 #
 # For example, this is a simple `IO` on top of a `Bytes`:
@@ -74,6 +73,10 @@ abstract class IO
     End = 2
   end
 
+  @encoding : EncodingOptions?
+  @encoder : Encoder?
+  @decoder : Decoder?
+
   # Raised when an `IO` operation times out.
   #
   # ```
@@ -131,52 +134,54 @@ abstract class IO
   def flush
   end
 
-  # Creates a pair of pipe endpoints (connected to each other)
-  # and returns them as a two-element `Tuple`.
-  #
-  # ```
-  # reader, writer = IO.pipe
-  # writer.puts "hello"
-  # writer.puts "world"
-  # reader.gets # => "hello"
-  # reader.gets # => "world"
-  # ```
-  def self.pipe(read_blocking = false, write_blocking = false)
-    pipe_fds = uninitialized StaticArray(LibC::Int, 2)
-    if LibC.pipe(pipe_fds) != 0
-      raise Errno.new("Could not create pipe")
+  {% unless flag?(:win32) %}
+    # Creates a pair of pipe endpoints (connected to each other)
+    # and returns them as a two-element `Tuple`.
+    #
+    # ```
+    # reader, writer = IO.pipe
+    # writer.puts "hello"
+    # writer.puts "world"
+    # reader.gets # => "hello"
+    # reader.gets # => "world"
+    # ```
+    def self.pipe(read_blocking = false, write_blocking = false) : {IO::FileDescriptor, IO::FileDescriptor}
+      pipe_fds = uninitialized StaticArray(LibC::Int, 2)
+      if LibC.pipe(pipe_fds) != 0
+        raise Errno.new("Could not create pipe")
+      end
+
+      r = IO::FileDescriptor.new(pipe_fds[0], read_blocking)
+      w = IO::FileDescriptor.new(pipe_fds[1], write_blocking)
+      r.close_on_exec = true
+      w.close_on_exec = true
+      w.sync = true
+
+      {r, w}
     end
 
-    r = IO::FileDescriptor.new(pipe_fds[0], read_blocking)
-    w = IO::FileDescriptor.new(pipe_fds[1], write_blocking)
-    r.close_on_exec = true
-    w.close_on_exec = true
-    w.sync = true
-
-    {r, w}
-  end
-
-  # Creates a pair of pipe endpoints (connected to each other) and passes them
-  # to the given block. Both endpoints are closed after the block.
-  #
-  # ```
-  # IO.pipe do |reader, writer|
-  #   writer.puts "hello"
-  #   writer.puts "world"
-  #   reader.gets # => "hello"
-  #   reader.gets # => "world"
-  # end
-  # ```
-  def self.pipe(read_blocking = false, write_blocking = false)
-    r, w = IO.pipe(read_blocking, write_blocking)
-    begin
-      yield r, w
-    ensure
-      w.flush
-      r.close
-      w.close
+    # Creates a pair of pipe endpoints (connected to each other) and passes them
+    # to the given block. Both endpoints are closed after the block.
+    #
+    # ```
+    # IO.pipe do |reader, writer|
+    #   writer.puts "hello"
+    #   writer.puts "world"
+    #   reader.gets # => "hello"
+    #   reader.gets # => "world"
+    # end
+    # ```
+    def self.pipe(read_blocking = false, write_blocking = false)
+      r, w = IO.pipe(read_blocking, write_blocking)
+      begin
+        yield r, w
+      ensure
+        w.flush
+        r.close
+        w.close
+      end
     end
-  end
+  {% end %}
 
   # Writes the given object into this `IO`.
   # This ends up calling `to_s(io)` on the object.
@@ -276,6 +281,8 @@ abstract class IO
     nil
   end
 
+  # Writes a formatted string to this IO.
+  # For details on the format string, see `Kernel::sprintf`.
   def printf(format_string, *args) : Nil
     printf format_string, args
   end
@@ -679,7 +686,7 @@ abstract class IO
       return string
     end
 
-    # We didn't find the delimiter, so we append to a String::Builde
+    # We didn't find the delimiter, so we append to a String::Builder
     # until we find it or we reach the limit, appending what we have
     # in the peek buffer and peeking again.
     String.build do |buffer|
@@ -1110,7 +1117,7 @@ abstract class IO
   # The `IO` class raises on this method, but some subclasses, notable
   # `File` and `IO::Memory` implement it.
   #
-  # Mutliple sections can be read concurrently.
+  # Multiple sections can be read concurrently.
   def read_at(offset, bytesize, &block)
     raise Error.new "Unable to read_at"
   end

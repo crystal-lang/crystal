@@ -100,19 +100,19 @@ module Crystal::Macros
 
   # Skips the rest of the file from which it is executed.
   # Typical usage is to skip files that have platform specific code,
-  # without having to surround the most relevant code in `{%...%}` macro blocks.
+  # without having to surround the most relevant code in `{% if flag?(...) %} ... {% end %}` macro blocks.
   #
   # Example:
   #
   # ```
   # # sth_for_osx.cr
-  # {% skip unless flag?(:darwin) %}
+  # {% skip_file unless flag?(:darwin) %}
   #
   # # Class FooForMac will only be defined if we're compiling on OS X
   # class FooForMac
   # end
   # ```
-  def skip : Nop
+  def skip_file : Nop
   end
 
   # This is the base class of all AST nodes. This methods are
@@ -542,6 +542,10 @@ module Crystal::Macros
     def splat(trailing_string : StringLiteral = nil) : MacroId
     end
 
+    # Similar to `Array#clear`
+    def clear : ArrayLiteral
+    end
+
     # Similar to `Array#empty?`
     def empty? : BoolLiteral
     end
@@ -582,6 +586,10 @@ module Crystal::Macros
     def reject(&block) : ArrayLiteral
     end
 
+    # Similar to `Enumerable#reduce`
+    def reduce(&block) : ASTNode
+    end
+
     # Similar to `Array#shuffle`
     def shuffle : ArrayLiteral
     end
@@ -600,6 +608,18 @@ module Crystal::Macros
 
     # Similar to `Array#[]=`.
     def []=(index : NumberLiteral, value : ASTNode)
+    end
+
+    # Similar to `Array#unshift`.
+    def unshift : ArrayLiteral
+    end
+
+    # Similar to `Array#push`.
+    def push(value : ASTNode) : ArrayLiteral
+    end
+
+    # Similar to `Array#<<`.
+    def <<(value : ASTNode) : ArrayLiteral
     end
 
     # Similar to `Array#+`.
@@ -621,6 +641,10 @@ module Crystal::Macros
 
   # A hash literal.
   class HashLiteral < ASTNode
+    # Similar to `Hash#clear`
+    def clear : HashLiteral
+    end
+
     # Similar to `Hash#empty?`
     def empty? : BoolLiteral
     end
@@ -712,7 +736,7 @@ module Crystal::Macros
     def double_splat(trailing_string : StringLiteral = nil) : MacroId
     end
 
-    # Similar to `NamedTuple#[]`
+    # Similar to `NamedTuple#[]` but returns `NilLiteral` if *key* is undefined.
     def [](key : ASTNode) : ASTNode
     end
 
@@ -773,6 +797,38 @@ module Crystal::Macros
 
     # Returns the type of this variable, if known, or `nil`.
     def type : TypeNode | NilLiteral
+    end
+
+    # Returns the default value of this variable.
+    # Note that if the variable doesn't have a default value,
+    # or the default value is `nil`, a `NilLiteral` will be
+    # returned. To distinguish between these cases, use
+    # `has_default_value?`.
+    def default_value : ASTNode
+    end
+
+    # Returns whether this variable has a default value (which.
+    # can in turn be `nil`).
+    def has_default_value? : BoolLiteral
+    end
+
+    # Returns any `Annotation` with the given `type`
+    # attached to this variable.
+    def annotation(type : TypeNode) : Annotation
+    end
+  end
+
+  # An annotation on top of a type or variable.
+  class Annotation < ASTNode
+    # Returns the value of a positional argument,
+    # or NilLiteral if out of bounds.
+    def [](index : NumberLiteral) : ASTNode
+    end
+
+    # Returns the value of a named argument,
+    # or NilLiteral if the named argument isn't
+    # used in this attribute.
+    def [](name : SymbolLiteral) : ASTNode
     end
   end
 
@@ -961,8 +1017,16 @@ module Crystal::Macros
     end
   end
 
-  # class ProcNotation < ASTNode
-  # end
+  # The type of a proc or block argument, like `String -> Int32`.
+  class ProcNotation < ASTNode
+    # Returns the argument types, or an empty list if no arguments.
+    def inputs : ArrayLiteral(ASTNode)
+    end
+
+    # Returns the output type, or nil if there is no return type.
+    def output : ASTNode | NilLiteral
+    end
+  end
 
   # A method definition.
   class Def < ASTNode
@@ -1001,6 +1065,11 @@ module Crystal::Macros
 
     # Returns the visibility of this def: `:public`, `:protected` or `:private`.
     def visibility : SymbolLiteral
+    end
+
+    # Returns any `Annotation` with the given `type`
+    # attached to this method.
+    def annotation(type : TypeNode) : Annotation
     end
   end
 
@@ -1232,11 +1301,36 @@ module Crystal::Macros
   # class ExceptionHandler < ASTNode
   # end
 
-  # class ProcLiteral < ASTNode
-  # end
+  # A proc method, written like:
+  # ```
+  # ->(arg : String) {
+  #   puts arg
+  # }
+  # ```
+  class ProcLiteral < ASTNode
+    # Returns the arguments of this proc.
+    def args : ArrayLiteral(Arg)
+    end
 
-  # class ProcPointer < ASTNode
-  # end
+    # Returns the body of this proc.
+    def body : ASTNode
+    end
+  end
+
+  # A proc pointer, like `->my_var.some_method(String)`
+  class ProcPointer < ASTNode
+    # Returns the types of the arguments of the proc.
+    def args : ArrayLiteral(ASTNode)
+    end
+
+    # Returns the receiver of the proc, or nil if the proc is not attached to an object.
+    def obj : ASTNode | NilLiteral
+    end
+
+    # Returns the name of the method this proc points to.
+    def name : MacroId
+    end
+  end
 
   # A type union, like `(Int32 | String)`.
   class Union < ASTNode
@@ -1365,7 +1459,7 @@ module Crystal::Macros
   # for the string's content. Similarly, invoking ID on a `SymbolLiteral`, `Call`, `Var` and `Path`
   # return MacroIds for the node's content.
   #
-  # This allows you to treat strings, symbols, variables and calls unifomly. For example:
+  # This allows you to treat strings, symbols, variables and calls uniformly. For example:
   #
   # ```text
   # macro getter(name)
@@ -1499,6 +1593,10 @@ module Crystal::Macros
     def union? : BoolLiteral
     end
 
+    # Returns `true` if this type is nilable (if it has `Nil` amongst its types).
+    def nilable? : BoolLiteral
+    end
+
     # Returns the types comforming a union type, if this is a union type.
     # Gives a compile error otherwise.
     #
@@ -1568,6 +1666,11 @@ module Crystal::Macros
     # or `@[Packed]` (the name you pass to this method is `"Flags"` or `"Packed"`
     # in these cases).
     def has_attribute?(name : StringLiteral | SymbolLiteral) : BoolLiteral
+    end
+
+    # Returns any `Annotation` with the given `type`
+    # attached to this type.
+    def annotation(type : TypeNode) : Annotation
     end
 
     # Returns the number of elements in this tuple type or tuple metaclass type.

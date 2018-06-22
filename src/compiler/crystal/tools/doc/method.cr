@@ -172,8 +172,8 @@ class Crystal::Doc::Method
 
   def arg_to_html(arg : Arg, io, links = true)
     if arg.external_name != arg.name
-      io << (arg.external_name.empty? ? "_" : arg.external_name)
-      io << " "
+      io << (arg.external_name.empty? ? '_' : arg.external_name)
+      io << ' '
     end
 
     io << arg.name

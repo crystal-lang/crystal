@@ -224,7 +224,7 @@ struct BigRational < Number
   end
 
   private def check_division_by_zero(value)
-    raise DivisionByZero.new if value == 0
+    raise DivisionByZeroError.new if value == 0
   end
 end
 
@@ -273,5 +273,23 @@ end
 module Math
   def sqrt(value : BigRational)
     sqrt(value.to_big_f)
+  end
+end
+
+# :nodoc:
+struct Crystal::Hasher
+  private HASH_MODULUS_RAT_P = BigRational.new((1_u64 << HASH_BITS) - 1)
+  private HASH_MODULUS_RAT_N = -BigRational.new((1_u64 << HASH_BITS) - 1)
+
+  def float(value : BigRational)
+    rem = value
+    if value >= HASH_MODULUS_RAT_P || value <= HASH_MODULUS_RAT_N
+      num = value.numerator
+      denom = value.denominator
+      div = num.tdiv(denom)
+      floor = div.tdiv(HASH_MODULUS)
+      rem -= floor * HASH_MODULUS
+    end
+    rem.to_big_f.hash
   end
 end

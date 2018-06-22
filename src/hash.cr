@@ -162,38 +162,38 @@ class Hash(K, V)
     indexes.map { |index| self[index] }
   end
 
-  # Returns the first key with the given *value*, else raises `KeyError`.
+  # Returns a key with the given *value*, else raises `KeyError`.
   #
   # ```
   # hash = {"foo" => "bar", "baz" => "qux"}
-  # hash.key("bar")    # => "foo"
-  # hash.key("qux")    # => "baz"
-  # hash.key("foobar") # raises KeyError (Missing hash key for value: foobar)
+  # hash.key_for("bar")    # => "foo"
+  # hash.key_for("qux")    # => "baz"
+  # hash.key_for("foobar") # raises KeyError (Missing hash key for value: foobar)
   # ```
-  def key(value)
-    key(value) { raise KeyError.new "Missing hash key for value: #{value}" }
+  def key_for(value)
+    key_for(value) { raise KeyError.new "Missing hash key for value: #{value}" }
   end
 
-  # Returns the first key with the given *value*, else `nil`.
+  # Returns a key with the given *value*, else `nil`.
   #
   # ```
   # hash = {"foo" => "bar", "baz" => "qux"}
-  # hash.key?("bar")    # => "foo"
-  # hash.key?("qux")    # => "baz"
-  # hash.key?("foobar") # => nil
+  # hash.key_for?("bar")    # => "foo"
+  # hash.key_for?("qux")    # => "baz"
+  # hash.key_for?("foobar") # => nil
   # ```
-  def key?(value)
-    key(value) { nil }
+  def key_for?(value)
+    key_for(value) { nil }
   end
 
-  # Returns the first key with the given *value*, else yields *value* with the given block.
+  # Returns a key with the given *value*, else yields *value* with the given block.
   #
   # ```
   # hash = {"foo" => "bar"}
-  # hash.key("bar") { |value| value.upcase } # => "foo"
-  # hash.key("qux") { |value| value.upcase } # => "QUX"
+  # hash.key_for("bar") { |value| value.upcase } # => "foo"
+  # hash.key_for("qux") { |value| value.upcase } # => "QUX"
   # ```
-  def key(value)
+  def key_for(value)
     each do |k, v|
       return k if v == value
     end
@@ -612,8 +612,8 @@ class Hash(K, V)
   # Returns the first key if it exists, or returns `nil`.
   #
   # ```
-  # hash = {"foo" => "bar"}
-  # hash.first_key? # => "foo"
+  # hash = {"foo1" => "bar1", "foz2" => "baz2"}
+  # hash.first_key? # => "foo1"
   # hash.clear
   # hash.first_key? # => nil
   # ```
@@ -626,9 +626,50 @@ class Hash(K, V)
     @first.not_nil!.value
   end
 
-  # Similar to `#first_key?`, but returns its value.
+  # Returns the first value if it exists, or returns `nil`.
+  #
+  # ```
+  # hash = {"foo1" => "bar1", "foz2" => "baz2"}
+  # hash.first_value? # => "bar1"
+  # hash.clear
+  # hash.first_value? # => nil
+  # ```
   def first_value?
     @first.try &.value
+  end
+
+  # Returns the last key in the hash.
+  def last_key
+    @last.not_nil!.key
+  end
+
+  # Returns the last key if it exists, or returns `nil`.
+  #
+  # ```
+  # hash = {"foo1" => "bar1", "foz2" => "baz2"}
+  # hash.last_key? # => "foz2"
+  # hash.clear
+  # hash.last_key? # => nil
+  # ```
+  def last_key?
+    @last.try &.key
+  end
+
+  # Returns the last value in the hash.
+  def last_value
+    @last.not_nil!.value
+  end
+
+  # Returns the last value if it exists, or returns `nil`.
+  #
+  # ```
+  # hash = {"foo1" => "bar1", "foz2" => "baz2"}
+  # hash.last_value? # => "baz2"
+  # hash.clear
+  # hash.last_value? # => nil
+  # ```
+  def last_value?
+    @last.try &.value
   end
 
   # Deletes and returns the first key-value pair in the hash,
@@ -769,7 +810,7 @@ class Hash(K, V)
   # ```
   def to_s(io : IO)
     executed = exec_recursive(:to_s) do
-      io << "{"
+      io << '{'
       found_one = false
       each do |key, value|
         io << ", " if found_one
@@ -778,7 +819,7 @@ class Hash(K, V)
         value.inspect(io)
         found_one = true
       end
-      io << "}"
+      io << '}'
     end
     io << "{...}" unless executed
   end

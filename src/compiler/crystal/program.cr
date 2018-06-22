@@ -211,6 +211,20 @@ module Crystal
       types["GC"] = gc = NonGenericModuleType.new self, self, "GC"
       gc.metaclass.as(ModuleType).add_def Def.new("add_finalizer", [Arg.new("object")], Nop.new)
 
+      # Built-in annotations
+      types["AlwaysInline"] = @always_inline_annotation = AnnotationType.new self, self, "AlwaysInline"
+      types["CallConvention"] = @call_convention_annotation = AnnotationType.new self, self, "CallConvention"
+      types["Extern"] = @extern_annotation = AnnotationType.new self, self, "Extern"
+      types["Flags"] = @flags_annotation = AnnotationType.new self, self, "Flags"
+      types["Link"] = @link_annotation = AnnotationType.new self, self, "Link"
+      types["Naked"] = @naked_annotation = AnnotationType.new self, self, "Naked"
+      types["NoInline"] = @no_inline_annotation = AnnotationType.new self, self, "NoInline"
+      types["Packed"] = @packed_annotation = AnnotationType.new self, self, "Packed"
+      types["Primitive"] = @primitive_annotation = AnnotationType.new self, self, "Primitive"
+      types["Raises"] = @raises_annotation = AnnotationType.new self, self, "Raises"
+      types["ReturnsTwice"] = @returns_twice_annotation = AnnotationType.new self, self, "ReturnsTwice"
+      types["ThreadLocal"] = @thread_local_annotation = AnnotationType.new self, self, "ThreadLocal"
+
       define_crystal_constants
     end
 
@@ -430,7 +444,11 @@ module Crystal
 
     {% for name in %w(object no_return value number reference void nil bool char int int8 int16 int32 int64 int128
                      uint8 uint16 uint32 uint64 uint128 float float32 float64 string symbol pointer array static_array
-                     exception tuple named_tuple proc union enum range regex crystal) %}
+                     exception tuple named_tuple proc union enum range regex crystal
+                     packed_annotation thread_local_annotation no_inline_annotation
+                     always_inline_annotation naked_annotation returns_twice_annotation
+                     raises_annotation primitive_annotation call_convention_annotation
+                     flags_annotation link_annotation extern_annotation) %}
       def {{name.id}}
         @{{name.id}}.not_nil!
       end
