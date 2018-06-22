@@ -3,6 +3,10 @@ require "http/params"
 
 module HTTP
   describe Params do
+    describe ".new" do
+      Params.new.should eq(Params.parse(""))
+    end
+
     describe ".parse" do
       {
         {"", {} of String => Array(String)},
@@ -248,6 +252,14 @@ module HTTP
         expect_raises KeyError do
           params.fetch("foo")
         end
+      end
+    end
+
+    describe "#empty?" do
+      it "test empty?" do
+        Params.parse("foo=bar&foo=baz&baz=qux").empty?.should be_false
+        Params.parse("").empty?.should be_true
+        Params.new.empty?.should be_true
       end
     end
   end

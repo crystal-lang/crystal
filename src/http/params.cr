@@ -124,6 +124,11 @@ module HTTP
 
     protected getter raw_params
 
+    # Returns an empty `HTTP::Params`.
+    def initialize
+      @raw_params = {} of String => Array(String)
+    end
+
     def initialize(@raw_params : Hash(String, Array(String)))
     end
 
@@ -163,6 +168,14 @@ module HTTP
     # params.has_key?("garbage") # => false
     # ```
     delegate has_key?, to: raw_params
+
+    # Return `true` if params is empty.
+    #
+    # ```
+    # Params.new.empty?                              # => true
+    # Params.parse("foo=bar&foo=baz&qux=zoo").empty? # => false
+    # ```
+    delegate empty?, to: raw_params
 
     # Sets first *value* for specified param *name*.
     #
