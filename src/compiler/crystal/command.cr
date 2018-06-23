@@ -108,8 +108,8 @@ class Crystal::Command
     # https://developer.apple.com/library/content/qa/qa1118/_index.html
     {% if flag?(:darwin) %}
       STDERR.puts <<-INFO
-      macOS doesn't support static linking.
-      For more information: https://developer.apple.com/library/content/qa/qa1118/_ind
+      macOS doesn't officially support static linking.
+      For more information: https://developer.apple.com/library/content/qa/qa1118/_index.html
       INFO
    {% end %}
     ex.color = @color
