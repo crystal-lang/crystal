@@ -260,6 +260,16 @@ struct YAML::Any
   def to_yaml(io)
     raw.to_yaml(io)
   end
+
+  # Returns a new YAML::Any instance with the `raw` value `dup`ed.
+  def dup
+    Any.new(raw.dup)
+  end
+
+  # Returns a new YAML::Any instance with the `raw` value `clone`ed.
+  def clone
+    Any.new(raw.clone)
+  end
 end
 
 class Object
