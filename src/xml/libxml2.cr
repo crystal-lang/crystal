@@ -112,6 +112,7 @@ lib LibXML
   fun xmlTextReaderReadInnerXml(reader : XMLTextReader) : UInt8*
   fun xmlTextReaderReadOuterXml(reader : XMLTextReader) : UInt8*
   fun xmlTextReaderExpand(reader : XMLTextReader) : Node*
+  fun xmlTextReaderCurrentNode(reader : XMLTextReader) : Node*
 
   fun xmlTextReaderSetErrorHandler(reader : XMLTextReader, f : TextReaderErrorFunc) : Void
 

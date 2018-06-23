@@ -30,7 +30,21 @@ struct XML::Reader
   end
 
   def next_sibling
-    LibXML.xmlTextReaderNextSibling(@reader) == 1
+    result = LibXML.xmlTextReaderNextSibling(@reader)
+    # Work around libxml2 with incomplete xmlTextReaderNextSibling()
+    # see: https://gitlab.gnome.org/GNOME/libxml2/issues/7
+    if result == -1
+      node = LibXML.xmlTextReaderCurrentNode(@reader)
+      if node.null?
+        LibXML.xmlTextReaderRead(@reader) == 1
+      elsif !node.value.next.null?
+        LibXML.xmlTextReaderNext(@reader) == 1
+      else
+        false
+      end
+    else
+      result == 1
+    end
   end
 
   def node_type
