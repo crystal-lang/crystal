@@ -249,6 +249,17 @@ struct JSON::Any
   def to_json(json : JSON::Builder)
     raw.to_json(json)
   end
+
+  # Returns a new JSON::Any instance with the `raw` value `dup`ed.
+  #
+  # ```
+  # any = JSON.parse("[1, 2, 3]")
+  # any2 = any.dup
+  # any.as_a.same?(any2.as_a) # => false
+  # ```
+  def dup
+    Any.new(raw.dup)
+  end
 end
 
 class Object
