@@ -1,6 +1,7 @@
 require "./libxml2"
 
 struct XML::Reader
+  # Creates a new reader from a string.
   def initialize(str : String)
     input = LibXML.xmlParserInputBufferCreateStatic(str, str.bytesize, 1)
     @reader = LibXML.xmlNewTextReader(input, "")
@@ -11,6 +12,7 @@ struct XML::Reader
     end
   end
 
+  # Creates a new reader from an IO.
   def initialize(io : IO)
     input = LibXML.xmlParserInputBufferCreateIO(
       ->(context, buffer, length) { Box(IO).unbox(context).read(Slice.new(buffer, length)).to_i },
@@ -21,14 +23,17 @@ struct XML::Reader
     @reader = LibXML.xmlNewTextReader(input, "")
   end
 
+  # Moves the reader to the next node.
   def read
     LibXML.xmlTextReaderRead(@reader) == 1
   end
 
+  # Moves the reader to the next node while skipping subtrees.
   def next
     LibXML.xmlTextReaderNext(@reader) == 1
   end
 
+  # Moves the reader to the next sibling node while skipping subtrees.
   def next_sibling
     result = LibXML.xmlTextReaderNextSibling(@reader)
     # Work around libxml2 with incomplete xmlTextReaderNextSibling()
@@ -47,72 +52,89 @@ struct XML::Reader
     end
   end
 
+  # Returns the `XML::Type` of the node.
   def node_type
     LibXML.xmlTextReaderNodeType(@reader)
   end
 
+  # Returns the name of the node.
   def name
     value = LibXML.xmlTextReaderConstName(@reader)
     String.new(value) if value
   end
 
+  # Checks if the node is an empty element.
   def empty_element?
     LibXML.xmlTextReaderIsEmptyElement(@reader) == 1
   end
 
+  # Checks if the node has any attributes.
   def has_attributes?
     LibXML.xmlTextReaderHasAttributes(@reader) == 1
   end
 
+  # Returns attribute count of the node.
   def attributes_count
     LibXML.xmlTextReaderAttributeCount(@reader)
   end
 
+  # Moves to the first `XML::Type::ATTRIBUTE_NODE` of the node.
   def move_to_first_attribute
     LibXML.xmlTextReaderMoveToFirstAttribute(@reader) == 1
   end
 
+  # Moves to the next `XML::Type::ATTRIBUTE_NODE` of the node.
   def move_to_next_attribute
     LibXML.xmlTextReaderMoveToNextAttribute(@reader) == 1
   end
 
+  # Moves to the `XML::Type::ATTRIBUTE_NODE` with the specified name.
   def move_to_attribute(name)
     LibXML.xmlTextReaderMoveToAttribute(@reader, name.to_s) == 1
   end
 
+  # Returns the text value of the attribute with the specified name.
   def attribute(name)
     value = LibXML.xmlTextReaderGetAttribute(@reader, name.to_s)
     String.new(value) if value
   end
 
+  # Moves from the `XML::Type::ATTRIBUTE_NODE` to its containing `XML::Type::ELEMENT_NODE`.
   def move_to_element
     LibXML.xmlTextReaderMoveToElement(@reader) == 1
   end
 
+  # Returns the current nesting depth of the reader.
   def depth
     LibXML.xmlTextReaderDepth(@reader)
   end
 
+  # Returns the node's XML content including subtrees.
   def read_inner_xml
     xml = LibXML.xmlTextReaderReadInnerXml(@reader)
     String.new(xml) if xml
   end
 
+  # Returns the XML for the node and its content including subtrees.
   def read_outer_xml
     xml = LibXML.xmlTextReaderReadOuterXml(@reader)
     String.new(xml) if xml
   end
 
+  # Expand the node to a `XML::Node` that can be searched with XPath etc.
+  # The returned `XML::Node` is only valid until the next call to `#read`.
   def expand
     xml = LibXML.xmlTextReaderExpand(@reader)
     XML::Node.new(xml) if xml
   end
 
+  # Returns the text content of the node.
   def value
     value = LibXML.xmlTextReaderConstValue(@reader)
     String.new(value) if value
   end
 
+  # Returns a reference to the underlying `LibXML::XMLTextReader`.
   def to_unsafe
     @reader
   end
