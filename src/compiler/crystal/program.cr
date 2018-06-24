@@ -224,6 +224,7 @@ module Crystal
       types["Raises"] = @raises_annotation = AnnotationType.new self, self, "Raises"
       types["ReturnsTwice"] = @returns_twice_annotation = AnnotationType.new self, self, "ReturnsTwice"
       types["ThreadLocal"] = @thread_local_annotation = AnnotationType.new self, self, "ThreadLocal"
+      types["Property"] = AnnotationType.new self, self, "Property"
 
       define_crystal_constants
     end

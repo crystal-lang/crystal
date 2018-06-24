@@ -318,6 +318,32 @@ struct JSONAttrPersonWithYAMLInitializeHook
   end
 end
 
+struct JSONAttrPersonWithYAMLPropertyIgnore
+  include JSON::Serializable
+  include YAML::Serializable
+
+  property name : String
+
+  @[Property(ignore: true)]
+  property age : Int32?
+
+  def initialize(@name : String, @age : Int32? = nil)
+  end
+end
+
+struct JSONAttrPersonWithYAMLWithUnmapped
+  include JSON::Serializable
+  include JSON::Serializable::Unmapped
+  include YAML::Serializable
+  include YAML::Serializable::Unmapped
+
+  property name : String
+  property age : Int32?
+
+  def initialize(@name : String, @age : Int32? = nil)
+  end
+end
+
 describe "JSON mapping" do
   it "works with record" do
     JSONAttrPoint.new(1, 2).to_json.should eq "{\"x\":1,\"y\":2}"
@@ -793,5 +819,26 @@ describe "JSON mapping" do
 
     JSONAttrPersonWithYAMLInitializeHook.from_json(person.to_json).msg.should eq "Hello Vasya"
     JSONAttrPersonWithYAMLInitializeHook.from_yaml(person.to_yaml).msg.should eq "Hello Vasya"
+  end
+
+  it "works together with yaml property ignore" do
+    person = JSONAttrPersonWithYAMLPropertyIgnore.new("Vasya", 30)
+    person.to_json.should eq "{\"name\":\"Vasya\"}"
+    person.to_yaml.should eq "---\nname: Vasya\n"
+
+    JSONAttrPersonWithYAMLPropertyIgnore.from_json(person.to_json).should eq JSONAttrPersonWithYAMLPropertyIgnore.new("Vasya")
+    JSONAttrPersonWithYAMLPropertyIgnore.from_yaml(person.to_yaml).should eq JSONAttrPersonWithYAMLPropertyIgnore.new("Vasya")
+  end
+
+  it "works together with yaml unmapped" do
+    js = "{\"name\":\"Vasya\",\"age\":30,\"a\":1}"
+    person = JSONAttrPersonWithYAMLWithUnmapped.from_json(js)
+    person.to_json.should eq js
+    person.to_yaml.should eq "---\nname: Vasya\nage: 30\n"
+
+    yaml = "---\nname: Vasya\nage: 30\nb: 2\n"
+    person = JSONAttrPersonWithYAMLWithUnmapped.from_yaml(yaml)
+    person.to_yaml.should eq yaml
+    person.to_json.should eq "{\"name\":\"Vasya\",\"age\":30}"
   end
 end

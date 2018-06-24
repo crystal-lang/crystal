@@ -137,7 +137,8 @@ module JSON
         {% properties = {} of Nil => Nil %}
         {% for ivar in @type.instance_vars %}
           {% ann = ivar.annotation(::JSON::Field) %}
-          {% unless ann && ann[:ignore] %}
+          {% ann2 = ivar.annotation(::Property) %}
+          {% unless (ann && ann[:ignore]) || (ann2 && ann2[:ignore]) %}
             {%
               properties[ivar.id] = {
                 type:        ivar.type,
@@ -249,7 +250,8 @@ module JSON
         {% properties = {} of Nil => Nil %}
         {% for ivar in @type.instance_vars %}
           {% ann = ivar.annotation(::JSON::Field) %}
-          {% unless ann && ann[:ignore] %}
+          {% ann2 = ivar.annotation(::Property) %}
+          {% unless (ann && ann[:ignore]) || (ann2 && ann2[:ignore]) %}
             {%
               properties[ivar.id] = {
                 type:      ivar.type,
@@ -317,7 +319,7 @@ module JSON
     end
 
     module Unmapped
-      @[JSON::Field(ignore: true)]
+      @[::Property(ignore: true)]
       property json_unmapped = Hash(String, JSON::Any).new
 
       protected def on_unknown_json_attribute(pull, key, key_location)
