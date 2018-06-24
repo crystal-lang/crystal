@@ -52,7 +52,8 @@ struct XML::Reader
   end
 
   def name
-    String.new(LibXML.xmlTextReaderConstName(@reader))
+    value = LibXML.xmlTextReaderConstName(@reader)
+    String.new(value) if value
   end
 
   def empty_element?
@@ -108,7 +109,8 @@ struct XML::Reader
   end
 
   def value
-    String.new(LibXML.xmlTextReaderConstValue(@reader))
+    value = LibXML.xmlTextReaderConstValue(@reader)
+    String.new(value) if value
   end
 
   def to_unsafe
