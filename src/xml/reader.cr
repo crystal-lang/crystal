@@ -89,13 +89,13 @@ struct XML::Reader
   end
 
   # Moves to the `XML::Type::ATTRIBUTE_NODE` with the specified name.
-  def move_to_attribute(name)
-    LibXML.xmlTextReaderMoveToAttribute(@reader, name.to_s) == 1
+  def move_to_attribute(name : String)
+    LibXML.xmlTextReaderMoveToAttribute(@reader, name) == 1
   end
 
   # Returns the text value of the attribute with the specified name.
-  def attribute(name)
-    value = LibXML.xmlTextReaderGetAttribute(@reader, name.to_s)
+  def attribute(name : String)
+    value = LibXML.xmlTextReaderGetAttribute(@reader, name)
     String.new(value) if value
   end
 
