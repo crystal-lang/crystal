@@ -183,7 +183,23 @@ Set the canonical base URL.
 .Cm env
 .Op variables
 .Pp
-Print Crystal-specific environment information. By default it prints information as a shell script. If one or more variable names are given as arguments, it prints only the value of each named variable on its own line.
+Print Crystal-specific environment variables in a format compatible with shell scripts. If one or more variable names are given as arguments, it prints only the value of each named variable on its own line.
+.Pp
+Available variables:
+.Bl -tag -width "12345678" -compact
+.Pp
+.It
+.It Sy CRYSTAL_CACHE_DIR
+Contains path where Crystal caches partial compilation results for faster subsequent builds. This path is also used to temporarily store executables when Crystal programs are run with `crystal run` rather than `crystal build`.
+.Pp
+.It
+.It Sy CRYSTAL_PATH
+Contains paths where Crystal searches for required files.
+.Pp
+.It
+.It Sy CRYSTAL_VERSION
+Contains Crystal version.
+.El
 .Pp
 .It
 .Cm eval
