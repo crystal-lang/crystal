@@ -171,7 +171,7 @@ module XML
     describe "#name" do
       it "reads node name" do
         reader = Reader.new("<root/>")
-        reader.name.should be_nil
+        reader.name.should eq("")
         reader.read
         reader.name.should eq("root")
       end
@@ -350,7 +350,7 @@ module XML
     describe "#read_inner_xml" do
       it "reads the contents of the node including child nodes and markup" do
         reader = Reader.new("<root>\n<child/>\n</root>\n")
-        reader.read_inner_xml.should be_nil
+        reader.read_inner_xml.should eq("")
         reader.read # <root>
         reader.read_inner_xml.should eq("\n<child/>\n")
         reader.read # \n
@@ -368,7 +368,7 @@ module XML
     describe "#read_outer_xml" do
       it "reads the xml of the node including child nodes and markup" do
         reader = Reader.new("<root>\n<child/>\n</root>\n")
-        reader.read_outer_xml.should be_nil
+        reader.read_outer_xml.should eq("")
         reader.read # <root>
         reader.read_outer_xml.should eq("<root>\n<child/>\n</root>")
         reader.read # \n
@@ -411,9 +411,9 @@ module XML
     describe "#value" do
       it "reads node text value" do
         reader = Reader.new(%{<root id="1">hello<!-- world --></root>})
-        reader.value.should be_nil
+        reader.value.should eq("")
         reader.read # <root>
-        reader.value.should be_nil
+        reader.value.should eq("")
         reader.read # hello
         reader.value.should eq("hello")
         reader.read # <!-- world -->

@@ -60,7 +60,7 @@ struct XML::Reader
   # Returns the name of the node.
   def name
     value = LibXML.xmlTextReaderConstName(@reader)
-    String.new(value) if value
+    value ? String.new(value) : ""
   end
 
   # Checks if the node is an empty element.
@@ -112,13 +112,13 @@ struct XML::Reader
   # Returns the node's XML content including subtrees.
   def read_inner_xml
     xml = LibXML.xmlTextReaderReadInnerXml(@reader)
-    String.new(xml) if xml
+    xml ? String.new(xml) : ""
   end
 
   # Returns the XML for the node and its content including subtrees.
   def read_outer_xml
     xml = LibXML.xmlTextReaderReadOuterXml(@reader)
-    String.new(xml) if xml
+    xml ? String.new(xml) : ""
   end
 
   # Expand the node to a `XML::Node` that can be searched with XPath etc.
@@ -131,7 +131,7 @@ struct XML::Reader
   # Returns the text content of the node.
   def value
     value = LibXML.xmlTextReaderConstValue(@reader)
-    String.new(value) if value
+    value ? String.new(value) : ""
   end
 
   # Returns a reference to the underlying `LibXML::XMLTextReader`.
