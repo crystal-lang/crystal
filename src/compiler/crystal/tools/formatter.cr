@@ -623,7 +623,7 @@ module Crystal
       next_token
 
       @string_continuation = old_string_continuation
-      @indent = old_indent
+      @indent = old_indent unless is_heredoc
 
       false
     end
@@ -828,17 +828,23 @@ module Crystal
           accept element
         end
 
+        has_heredoc_in_line = !@lexer.heredocs.empty?
+
         last = last?(i, elements)
 
-        found_comment = skip_space(offset, write_comma: last && has_newlines)
+        found_comment = skip_space(offset, write_comma: (last || has_heredoc_in_line) && has_newlines)
 
         if @token.type == :","
-          write "," unless last || found_comment
+          if !found_comment && (!last || has_heredoc_in_line)
+            write ","
+            wrote_comma = true
+          end
+
           slash_is_regex!
           next_token
           found_comment = skip_space(offset, write_comma: last && has_newlines)
           if @token.type == :NEWLINE
-            if last && !found_comment
+            if last && !found_comment && !wrote_comma
               write ","
               found_comment = true
             end
