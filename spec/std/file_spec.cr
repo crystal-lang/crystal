@@ -297,18 +297,22 @@ describe "File" do
   end
 
   it "gets extname" do
+    File.extname("/foo/bar/a.cr").should eq(".cr")
     File.extname("/foo/bar/baz.cr").should eq(".cr")
     File.extname("/foo/bar/baz.cr.cz").should eq(".cz")
     File.extname("/foo/bar/.profile").should eq("")
     File.extname("/foo/bar/.profile.sh").should eq(".sh")
     File.extname("/foo/bar/foo.").should eq("")
     File.extname("/foo.bar/baz").should eq("")
+    File.extname("a.cr").should eq(".cr")
     File.extname("test.cr").should eq(".cr")
     File.extname("test.cr.cz").should eq(".cz")
     File.extname(".test").should eq("")
     File.extname(".test.cr").should eq(".cr")
     File.extname(".test.cr.cz").should eq(".cz")
     File.extname("test").should eq("")
+    File.extname("test.").should eq("")
+    File.extname("").should eq("")
   end
 
   it "constructs a path from parts" do

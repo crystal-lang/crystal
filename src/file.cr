@@ -282,13 +282,40 @@ class File < IO::FileDescriptor
   def self.extname(filename) : String
     filename.check_no_null_byte
 
-    dot_index = filename.rindex('.')
+    bytes = filename.to_slice
 
-    if dot_index && dot_index != filename.size - 1 && dot_index - 1 > (filename.rindex(SEPARATOR) || 0)
-      filename[dot_index, filename.size - dot_index]
-    else
-      ""
+    return "" if bytes.empty?
+
+    current = bytes.size - 1
+
+    # if the pattern is foo. it has no extension
+    return "" if bytes[current] == '.'.ord
+
+    # position the reader at the last . or SEPARATOR
+    # that is not the first char
+    while bytes[current] != SEPARATOR.ord &&
+          bytes[current] != '.'.ord &&
+          current > 0
+      current -= 1
     end
+
+    # if we are the beginning of the string there is no extension
+    # /foo or .foo have no extension
+    return "" unless current > 0
+
+    # otherwise we are not at the beginning, and there is a previous char.
+    # if current is '/', then the pattern is prefix/foo and has no extension
+    return "" if bytes[current] == SEPARATOR.ord
+
+    # otherwise the current_char is '.'
+    # if previous is '/', then the pattern is prefix/.foo  and has no extension
+    return "" if bytes[current - 1] == SEPARATOR.ord
+
+    # So the current char is '.',
+    # we are not at the beginning,
+    # the previous char is not a '/',
+    # and we have an extension
+    String.new(bytes[current, bytes.size - current])
   end
 
   # Converts *path* to an absolute path. Relative paths are
