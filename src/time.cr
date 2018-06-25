@@ -932,7 +932,7 @@ struct Time
   # See `Time::Format` for details.
   #
   # ```
-  # Time.parse("2016-04-05", "%F") # => 2016-04-05 00:00:00 +01:00
+  # Time.parse("2016-04-05", "%F", Time::Location.load("Asia/Shanghai")) # => 2016-04-05 00:00:00.0 +08:00 Asia/Shanghai
   # ```
   def self.parse(time : String, pattern : String, location : Location? = nil) : Time
     Format.new(pattern, location).parse(time)
