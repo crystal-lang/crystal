@@ -914,7 +914,7 @@ describe "Block inference" do
       )) { types["Moo"].types["Bar"] }
   end
 
-  it "passes &->f" do
+  it "passes &(->f)" do
     assert_type(%(
       def foo
       end
@@ -924,7 +924,7 @@ describe "Block inference" do
         1
       end
 
-      bar &->foo
+      bar &(->foo)
       )) { int32 }
   end
 
