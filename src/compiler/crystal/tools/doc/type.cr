@@ -5,7 +5,8 @@ class Crystal::Doc::Type
 
   getter type : Crystal::Type
 
-  def initialize(@generator : Generator, @type : Crystal::Type)
+  def initialize(@generator : Generator, type : Crystal::Type)
+    @type = type.devirtualize
   end
 
   def kind
