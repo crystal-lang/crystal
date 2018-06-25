@@ -93,9 +93,16 @@ struct XML::Reader
     LibXML.xmlTextReaderMoveToAttribute(@reader, name) == 1
   end
 
-  # Returns the text value of the attribute with the specified name.
-  def attribute(name : String)
-    value = LibXML.xmlTextReaderGetAttribute(@reader, name)
+  # Gets the attribute content for the *attribute* given by name.
+  # Raises `KeyError` if attribute is not found.
+  def [](attribute : String) : String
+    self[attribute]? || raise(KeyError.new("Missing attribute: #{attribute}"))
+  end
+
+  # Gets the attribute content for the *attribute* given by name.
+  # Returns `nil` if attribute is not found.
+  def []?(attribute : String) : String?
+    value = LibXML.xmlTextReaderGetAttribute(@reader, attribute)
     String.new(value) if value
   end
 

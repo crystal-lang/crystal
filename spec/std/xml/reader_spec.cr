@@ -46,7 +46,7 @@ module XML
         reader.read.should be_true
         reader.node_type.should eq(XML::Type::ELEMENT_NODE)
         reader.name.should eq("person")
-        reader.attribute("id").should eq("1")
+        reader["id"].should eq("1")
         reader.read.should be_true
         reader.node_type.should eq(XML::Type::DTD_NODE)
         reader.name.should eq("#text")
@@ -72,7 +72,7 @@ module XML
         reader.read.should be_true
         reader.node_type.should eq(XML::Type::ELEMENT_NODE)
         reader.name.should eq("person")
-        reader.attribute("id").should eq("2")
+        reader["id"].should eq("2")
         reader.read.should be_true
         reader.node_type.should eq(XML::Type::DTD_NODE)
         reader.name.should eq("#text")
@@ -117,14 +117,14 @@ module XML
         reader.next.should be_true
         reader.node_type.should eq(XML::Type::ELEMENT_DECL)
         reader.name.should eq("person")
-        reader.attribute("id").should eq("1")
+        reader["id"].should eq("1")
         reader.next.should be_true
         reader.node_type.should eq(XML::Type::DTD_NODE)
         reader.name.should eq("#text")
         reader.next.should be_true
         reader.node_type.should eq(XML::Type::ELEMENT_NODE)
         reader.name.should eq("person")
-        reader.attribute("id").should eq("2")
+        reader["id"].should eq("2")
         reader.next.should be_true
         reader.node_type.should eq(XML::Type::DTD_NODE)
         reader.name.should eq("#text")
@@ -144,14 +144,14 @@ module XML
         reader.next_sibling.should be_true
         reader.node_type.should eq(XML::Type::ELEMENT_NODE)
         reader.name.should eq("person")
-        reader.attribute("id").should eq("1")
+        reader["id"].should eq("1")
         reader.next_sibling.should be_true
         reader.node_type.should eq(XML::Type::DTD_NODE)
         reader.name.should eq("#text")
         reader.next_sibling.should be_true
         reader.node_type.should eq(XML::Type::ELEMENT_NODE)
         reader.name.should eq("person")
-        reader.attribute("id").should eq("2")
+        reader["id"].should eq("2")
         reader.next_sibling.should be_true
         reader.node_type.should eq(XML::Type::DTD_NODE)
         reader.name.should eq("#text")
@@ -289,22 +289,41 @@ module XML
       end
     end
 
-    describe "#attribute" do
+    describe "#[]" do
       it "reads node attributes" do
         reader = Reader.new("<root/>")
-        reader.attribute("id").should be_nil
+        expect_raises(KeyError) { reader["id"] }
         reader.read
-        reader.attribute("id").should be_nil
+        expect_raises(KeyError) { reader["id"] }
         reader = Reader.new(%{<root id="1"/>})
         reader.read
-        reader.attribute("id").should eq("1")
+        reader["id"].should eq("1")
         reader = Reader.new(%{<root id="1"><child/></root>})
         reader.read # <root id="1">
-        reader.attribute("id").should eq("1")
+        reader["id"].should eq("1")
         reader.read # <child/>
-        reader.attribute("id").should be_nil
+        expect_raises(KeyError) { reader["id"] }
         reader.read # </root>
-        reader.attribute("id").should eq("1")
+        reader["id"].should eq("1")
+      end
+    end
+
+    describe "#[]?" do
+      it "reads node attributes" do
+        reader = Reader.new("<root/>")
+        reader["id"]?.should be_nil
+        reader.read
+        reader["id"]?.should be_nil
+        reader = Reader.new(%{<root id="1"/>})
+        reader.read
+        reader["id"]?.should eq("1")
+        reader = Reader.new(%{<root id="1"><child/></root>})
+        reader.read # <root id="1">
+        reader["id"]?.should eq("1")
+        reader.read # <child/>
+        reader["id"]?.should be_nil
+        reader.read # </root>
+        reader["id"]?.should eq("1")
       end
     end
 
