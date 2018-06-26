@@ -221,7 +221,7 @@ describe Time::Span do
     ratio = 20.minutes / 15.seconds
     ratio.should eq(80.0)
 
-    ratio2 = 45.seconds / 1.minute
+    ratio2 = 45.seconds / 1.minutes
     ratio2.should eq(0.75)
   end
 
@@ -251,7 +251,7 @@ describe Time::Span do
   end
 
   it "should sum" do
-    [1.second, 5.seconds].sum.should eq(6.seconds)
+    [1.seconds, 5.seconds].sum.should eq(6.seconds)
   end
 
   it "test zero?" do

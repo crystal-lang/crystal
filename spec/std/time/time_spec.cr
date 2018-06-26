@@ -103,7 +103,7 @@ describe Time do
     # NOTE: On some systems, the sleep may not always wait for 1ms and the fiber
     #       be resumed early. We thus merely test that the method returns a
     #       positive time span.
-    elapsed = Time.measure { sleep 1.millisecond }
+    elapsed = Time.measure { sleep 1.milliseconds }
     elapsed.should be >= 0.seconds
   end
 
@@ -225,28 +225,25 @@ describe Time do
 
   it "add months" do
     t = Time.utc 2014, 10, 30, 21, 18, 13
-    t2 = t + 1.month
-    t2.to_s.should eq("2014-11-30 21:18:13 UTC")
-
     t2 = t + 1.months
     t2.to_s.should eq("2014-11-30 21:18:13 UTC")
 
     t = Time.utc 2014, 10, 31, 21, 18, 13
-    t2 = t + 1.month
+    t2 = t + 1.months
     t2.to_s.should eq("2014-11-30 21:18:13 UTC")
 
     t = Time.utc 2014, 10, 31, 21, 18, 13
-    t2 = t - 1.month
+    t2 = t - 1.months
     t2.to_s.should eq("2014-09-30 21:18:13 UTC")
 
     t = Time.utc 2014, 10, 31, 21, 18, 13
-    t2 = t + 6.month
+    t2 = t + 6.months
     t2.to_s.should eq("2015-04-30 21:18:13 UTC")
   end
 
   it "add years" do
     t = Time.utc 2014, 10, 30, 21, 18, 13
-    t2 = t + 1.year
+    t2 = t + 1.years
     t2.to_s.should eq("2015-10-30 21:18:13 UTC")
 
     t = Time.utc 2014, 10, 30, 21, 18, 13
@@ -335,8 +332,8 @@ describe Time do
   end
 
   it "current time is similar in differnt locations" do
-    (Time.now - Time.utc_now).should be_close(0.seconds, 1.second)
-    (Time.now - Time.now(Time::Location.fixed(1234))).should be_close(0.seconds, 1.second)
+    (Time.now - Time.utc_now).should be_close(0.seconds, 1.seconds)
+    (Time.now - Time.now(Time::Location.fixed(1234))).should be_close(0.seconds, 1.seconds)
   end
 
   describe "#to_s" do
@@ -898,15 +895,10 @@ describe Time do
 
   it "does time span units" do
     1.nanoseconds.should eq(Time::Span.new(nanoseconds: 1))
-    1.millisecond.should eq(1_000_000.nanoseconds)
     1.milliseconds.should eq(1_000_000.nanoseconds)
-    1.second.should eq(1000.milliseconds)
     1.seconds.should eq(1000.milliseconds)
-    1.minute.should eq(60.seconds)
     1.minutes.should eq(60.seconds)
-    1.hour.should eq(60.minutes)
     1.hours.should eq(60.minutes)
-    1.week.should eq(7.days)
     2.weeks.should eq(14.days)
   end
 
@@ -1028,10 +1020,10 @@ describe Time do
   end
 
   typeof(Time.now.year)
-  typeof(1.minute.from_now.year)
-  typeof(1.minute.ago.year)
-  typeof(1.month.from_now.year)
-  typeof(1.month.ago.year)
+  typeof(1.minutes.from_now.year)
+  typeof(1.minutes.ago.year)
+  typeof(1.months.from_now.year)
+  typeof(1.months.ago.year)
   typeof(Time.now.to_utc)
   typeof(Time.now.to_local)
 end

@@ -47,7 +47,7 @@ describe HTTP::StaticFileHandler do
 
     it "returns 304 Not Modified if file mtime is older" do
       headers = HTTP::Headers.new
-      headers["If-Modified-Since"] = HTTP.format_time(File.info(datapath("static_file_handler", "test.txt")).modification_time + 1.hour)
+      headers["If-Modified-Since"] = HTTP.format_time(File.info(datapath("static_file_handler", "test.txt")).modification_time + 1.hours)
       response = handle HTTP::Request.new("GET", "/test.txt", headers), ignore_body: true
 
       response.status_code.should eq(304)
@@ -55,7 +55,7 @@ describe HTTP::StaticFileHandler do
 
     it "serves file if file mtime is younger" do
       headers = HTTP::Headers.new
-      headers["If-Modified-Since"] = HTTP.format_time(File.info(datapath("static_file_handler", "test.txt")).modification_time - 1.hour)
+      headers["If-Modified-Since"] = HTTP.format_time(File.info(datapath("static_file_handler", "test.txt")).modification_time - 1.hours)
       response = handle HTTP::Request.new("GET", "/test.txt", headers), ignore_body: false
 
       response.status_code.should eq(200)
@@ -88,7 +88,7 @@ describe HTTP::StaticFileHandler do
       initial_response = handle HTTP::Request.new("GET", "/test.txt")
 
       headers = HTTP::Headers.new
-      headers["If-Modified-Since"] = HTTP.format_time(File.info(datapath("static_file_handler", "test.txt")).modification_time - 1.hour)
+      headers["If-Modified-Since"] = HTTP.format_time(File.info(datapath("static_file_handler", "test.txt")).modification_time - 1.hours)
       headers["If-None-Match"] = initial_response.headers["Etag"]
       response = handle HTTP::Request.new("GET", "/test.txt", headers), ignore_body: true
 

@@ -160,7 +160,7 @@ module HTTP
     it "tests read_timeout" do
       TestServer.open("localhost", 0, 0) do |server|
         client = Client.new("localhost", server.local_address.port)
-        client.read_timeout = 1.second
+        client.read_timeout = 1.seconds
         client.get("/")
       end
 
