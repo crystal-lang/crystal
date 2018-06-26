@@ -1147,4 +1147,7 @@ describe Crystal::Formatter do
   assert_format "Hash{\n  foo => <<-EOF,\n  foo\n  EOF\n  bar => <<-BAR,\n  bar\n  BAR\n}"
   assert_format "Hash{\n  foo => <<-EOF\n  foo\n  EOF\n}"
   assert_format "{\n  <<-KEY => 1,\n  key\n  KEY\n}"
+
+  assert_format "begin 0[1] rescue 2 end"
+  assert_format "begin\n 0[1] rescue 2 end", "begin 0[1] rescue 2 end"
 end

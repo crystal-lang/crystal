@@ -3691,6 +3691,25 @@ module Crystal
         column = @implicit_exception_handler_indent
       else
         if node.suffix
+          inline = false
+
+          # This is the case of:
+          #
+          #     begin exp rescue exp end
+          #
+          # It's parsed as:
+          #
+          #     begin (exp rescue exp) end
+          #
+          # So it's a suffix rescue inside a begin/end, but the Parser
+          # returns it as an ExceptionHandler node.
+          if @token.keyword?(:begin)
+            inline = true
+            write_keyword :begin
+            skip_space_or_newline
+            write " "
+          end
+
           accept node.body
           passed_backslash_newline = @token.passed_backslash_newline
           skip_space
@@ -3708,6 +3727,13 @@ module Crystal
           else
             raise "expected 'rescue' or 'ensure'"
           end
+
+          if inline
+            skip_space_or_newline
+            write " "
+            write_keyword :end
+          end
+
           return false
         end
       end
