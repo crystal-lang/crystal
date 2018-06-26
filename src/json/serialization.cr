@@ -122,6 +122,8 @@ module JSON
         instance
       end
 
+      extend ::JSON::Serializable::ClassMethods
+
       # When the type is inherited, carry over the `new`
       # so it can compete with other possible intializes
 
@@ -132,6 +134,7 @@ module JSON
       end
     end
 
+    # :nodoc:
     def initialize(pull : ::JSON::PullParser, dummy : Nil)
       {% begin %}
         {% properties = {} of Nil => Nil %}
@@ -241,6 +244,35 @@ module JSON
     protected def on_to_json(json : ::JSON::Builder)
     end
 
+    # Returns a JSON representation of this object.
+    def to_json : String
+      String.build do |str|
+        to_json str
+      end
+    end
+
+    # Appends a JSON representation of this object to the given IO.
+    def to_json(io : IO) : Nil
+      JSON.build(io) do |json|
+        to_json(json)
+      end
+    end
+
+    # Returns a pretty JSON representation of this object.
+    def to_pretty_json(indent : String = "  ") : String
+      String.build do |str|
+        to_pretty_json str, indent: indent
+      end
+    end
+
+    # Appends a pretty JSON representation of this object to the given IO.
+    def to_pretty_json(io : IO, indent : String = "  ") : Nil
+      JSON.build(io, indent: indent) do |json|
+        to_json(json)
+      end
+    end
+
+    # Appends a JSON representation of this object to the given json builde.
     def to_json(json : ::JSON::Builder)
       {% begin %}
         {% options = @type.annotation(::JSON::Serializable::Options) %}
@@ -331,6 +363,40 @@ module JSON
       protected def on_to_json(json)
         json_unmapped.each do |key, value|
           json.field(key) { value.to_json(json) }
+        end
+      end
+    end
+
+    # This module is automatically extended when including `JSON::Serializable`,
+    # defining the `from_json` class methods.
+    module ClassMethods
+      # Deserializes the given JSON in *string_or_io* into
+      # an instance of `self`. This simply creates a `parser = JSON::PullParser`
+      # and invokes `new(parser)`: classes that want to provide JSON
+      # deserialization must provide an `def initialize(parser : JSON::PullParser)`
+      # method.
+      #
+      # ```
+      # Int32.from_json("1")                # => 1
+      # Array(Int32).from_json("[1, 2, 3]") # => [1, 2, 3]
+      # ```
+      def from_json(string_or_io) : self
+        parser = JSON::PullParser.new(string_or_io)
+        new parser
+      end
+
+      # Deserializes the given JSON in *string_or_io* into
+      # an instance of `self`, assuming the JSON consists
+      # of an JSON object with key *root*, and whose value is
+      # the value to deserialize.
+      #
+      # ```
+      # Int32.from_json(%({"main": 1}), root: "main") # => 1
+      # ```
+      def from_json(string_or_io, root : String) : self
+        parser = JSON::PullParser.new(string_or_io)
+        parser.on_key!(root) do
+          new parser
         end
       end
     end
