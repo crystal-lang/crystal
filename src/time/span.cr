@@ -182,6 +182,11 @@ struct Time::Span
     nanoseconds / NANOSECONDS_PER_MILLISECOND
   end
 
+  # Returns the number of microseconds of the second (`0..999999`) in this time span.
+  def microseconds : Int32
+    nanoseconds / NANOSECONDS_PER_MICROSECOND
+  end
+
   # Returns the number of nanoseconds of the second (`0..999_999_999`)
   # in this time span.
   def nanoseconds : Int32
@@ -449,6 +454,11 @@ struct Int
     Time::Span.new 0, 0, 0, 0, (self.to_i64 * Time::NANOSECONDS_PER_MILLISECOND)
   end
 
+  # Returns a `Time::Span` of `self` microseconds.
+  def microseconds : Time::Span
+    Time::Span.new 0, 0, 0, 0, (self.to_i64 * Time::NANOSECONDS_PER_MICROSECOND)
+  end
+
   # :nodoc:
   def nanosecond : Time::Span
     nanoseconds
@@ -493,6 +503,11 @@ struct Float
   # Returns a `Time::Span` of `self` milliseconds.
   def milliseconds : Time::Span
     (self / 1_000).seconds
+  end
+
+  # Returns a `Time::Span` of `self` microseconds.
+  def microseconds : Time::Span
+    (self / 1_000_000).seconds
   end
 
   # Returns a `Time::Span` of `self` nanoseconds.

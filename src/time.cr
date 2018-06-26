@@ -225,6 +225,9 @@ struct Time
   NANOSECONDS_PER_MILLISECOND = 1_000_000_i64
 
   # :nodoc:
+  NANOSECONDS_PER_MICROSECOND = 1_000_i64
+
+  # :nodoc:
   NANOSECONDS_PER_SECOND = 1_000_000_000_i64
 
   # :nodoc:
