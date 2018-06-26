@@ -107,6 +107,8 @@ abstract class OpenSSL::SSL::Socket < IO
   def unbuffered_write(slice : Bytes)
     check_open
 
+    return if slice.empty?
+
     count = slice.size
     bytes = LibSSL.ssl_write(@ssl, slice.pointer(count), count)
     unless bytes > 0

@@ -63,6 +63,8 @@ class HTTP::Server
 
     # See `IO#write(slice)`.
     def write(slice : Bytes)
+      return if slice.empty?
+
       @output.write(slice)
     end
 
@@ -159,6 +161,8 @@ class HTTP::Server
       end
 
       private def unbuffered_write(slice : Bytes)
+        return if slice.empty?
+
         unless response.wrote_headers?
           if response.version != "HTTP/1.0" && !response.headers.has_key?("Content-Length")
             response.headers["Transfer-Encoding"] = "chunked"
