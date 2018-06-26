@@ -1,66 +1,56 @@
-class Object
-  def to_json
-    String.build do |str|
-      to_json str
-    end
-  end
-
-  def to_json(io : IO)
-    JSON.build(io) do |json|
-      to_json(json)
-    end
-  end
-
-  def to_pretty_json(indent : String = "  ")
-    String.build do |str|
-      to_pretty_json str, indent: indent
-    end
-  end
-
-  def to_pretty_json(io : IO, indent : String = "  ")
-    JSON.build(io, indent: indent) do |json|
-      to_json(json)
-    end
-  end
-end
+require "./serialization"
 
 struct Nil
+  include JSON::Serializable
+
   def to_json(json : JSON::Builder)
     json.null
   end
 end
 
 struct Bool
+  include JSON::Serializable
+
   def to_json(json : JSON::Builder)
     json.bool(self)
   end
 end
 
 struct Int
+  include JSON::Serializable
+
   def to_json(json : JSON::Builder)
     json.number(self)
   end
 end
 
 struct Float
+  include JSON::Serializable
+
   def to_json(json : JSON::Builder)
     json.number(self)
   end
 end
 
 class String
+  include JSON::Serializable
+
   def to_json(json : JSON::Builder)
     json.string(self)
   end
 end
 
 struct Symbol
+  include JSON::Serializable
+
   def to_json(json : JSON::Builder)
     json.string(to_s)
   end
 end
 
 class Array
+  include JSON::Serializable
+
   def to_json(json : JSON::Builder)
     json.array do
       each &.to_json(json)
@@ -69,6 +59,8 @@ class Array
 end
 
 struct Set
+  include JSON::Serializable
+
   def to_json(json : JSON::Builder)
     json.array do
       each &.to_json(json)
@@ -77,6 +69,8 @@ struct Set
 end
 
 class Hash
+  include JSON::Serializable
+
   def to_json(json : JSON::Builder)
     json.object do
       each do |key, value|
@@ -89,6 +83,8 @@ class Hash
 end
 
 struct Tuple
+  include JSON::Serializable
+
   def to_json(json : JSON::Builder)
     json.array do
       {% for i in 0...T.size %}
@@ -99,6 +95,8 @@ struct Tuple
 end
 
 struct NamedTuple
+  include JSON::Serializable
+
   def to_json(json : JSON::Builder)
     json.object do
       {% for key in T.keys %}
@@ -111,18 +109,24 @@ struct NamedTuple
 end
 
 struct Time::Format
+  include JSON::Serializable
+
   def to_json(value : Time, json : JSON::Builder)
     format(value).to_json(json)
   end
 end
 
 struct Enum
+  include JSON::Serializable
+
   def to_json(json : JSON::Builder)
     json.number(value)
   end
 end
 
 struct Time
+  include JSON::Serializable
+
   # Emits a string formated according to [RFC 3339](https://tools.ietf.org/html/rfc3339)
   # ([ISO 8601](http://xml.coverpages.org/ISO-FDIS-8601.pdf) profile).
   #
