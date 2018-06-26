@@ -1122,7 +1122,7 @@ describe "File" do
         File.touch(path)
 
         info = File.info(path)
-        info.modification_time.should be_close(Time.now, 1.second)
+        info.modification_time.should be_close(Time.now, 1.seconds)
       end
     end
 

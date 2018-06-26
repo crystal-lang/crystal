@@ -111,7 +111,7 @@ class HTTP::StaticFileHandler
       # An exact comparison might be slightly off, so we add 1s padding.
       # Static files should generally not be modified in subsecond intervals, so this is perfectly safe.
       # This might be replaced by a more sophisticated time comparison when it becomes available.
-      !!(header_time && last_modified <= header_time + 1.second)
+      !!(header_time && last_modified <= header_time + 1.seconds)
     else
       false
     end

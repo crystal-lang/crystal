@@ -1644,7 +1644,7 @@ describe "String" do
     ("%A" % 12345678.45).should eq("0X1.78C29CE666666P+23")
     ("%100.50g" % 123.45).should eq("                                                  123.4500000000000028421709430404007434844970703125")
 
-    span = 1.second
+    span = 1.seconds
     ("%s" % span).should eq(span.to_s)
 
     ("%.2f" % 2.536_f32).should eq("2.54")

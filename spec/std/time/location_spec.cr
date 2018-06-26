@@ -235,7 +235,7 @@ class Time::Location
           location = Location.load("Europe/Berlin")
           time = Time.utc(2017, 10, 29, 1, 0, 0)
 
-          summer = location.lookup(time - 1.second)
+          summer = location.lookup(time - 1.seconds)
           summer.name.should eq "CEST"
           summer.offset.should eq 2 * SECONDS_PER_HOUR
           summer.dst?.should be_true
@@ -245,7 +245,7 @@ class Time::Location
           winter.offset.should eq 1 * SECONDS_PER_HOUR
           winter.dst?.should be_false
 
-          last_ns = location.lookup(time - 1.nanosecond)
+          last_ns = location.lookup(time - 1.nanoseconds)
           last_ns.name.should eq "CEST"
           last_ns.offset.should eq 2 * SECONDS_PER_HOUR
           last_ns.dst?.should be_true
