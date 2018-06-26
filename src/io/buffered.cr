@@ -113,6 +113,8 @@ module IO::Buffered
   def write(slice : Bytes)
     check_open
 
+    return if slice.empty?
+
     count = slice.size
 
     if sync?
