@@ -522,6 +522,10 @@ struct Int
   end
 
   # Returns a `BigInt` representing this integer.
+  # ```
+  # require "big"
+  # 123.to_big_i
+  # ```
   def to_big_i : BigInt
     BigInt.new(self)
   end
@@ -535,6 +539,10 @@ struct Float
   end
 
   # Returns a `BigInt` representing this float (rounded using `floor`).
+  # ```
+  # require "big"
+  # 1212341515125412412412421.0.to_big_i
+  # ```
   def to_big_i : BigInt
     BigInt.new(self)
   end
@@ -544,12 +552,22 @@ class String
   # Returns a `BigInt` from this string, in the given *base*.
   #
   # Raises `ArgumentError` if this string doesn't denote a valid integer.
+  # ```
+  # require "big"
+  # "3a060dbf8d1a5ac3e67bc8f18843fc48".to_big_i(16)
+  # ```
   def to_big_i(base = 10) : BigInt
     BigInt.new(self, base)
   end
 end
 
 module Math
+  # Returns the sqrt of a `BigInt`.
+  #
+  # ```
+  # require "big"
+  # Math.sqrt((1000_000_000_0000.to_big_i*1000_000_000_00000.to_big_i))
+  # ```
   def sqrt(value : BigInt)
     sqrt(value.to_big_f)
   end

@@ -426,6 +426,10 @@ struct Int
   include Comparable(BigDecimal)
 
   # Converts `self` to `BigDecimal`.
+  # ```
+  # require "big"
+  # 1212341515125412412412421.to_big_d
+  # ```
   def to_big_d
     BigDecimal.new(self)
   end
@@ -462,6 +466,10 @@ struct Float
   #
   # NOTE: Floats are fundamentally less precise than BigDecimals,
   # which makes conversion to them risky.
+  # ```
+  # require "big"
+  # 1212341515125412412412421.0.to_big_d
+  # ```
   def to_big_d
     BigDecimal.new(self)
   end
@@ -482,6 +490,10 @@ end
 
 class String
   # Converts `self` to `BigDecimal`.
+  # ```
+  # require "big"
+  # "1212341515125412412412421".to_big_d
+  # ```
   def to_big_d
     BigDecimal.new(self)
   end

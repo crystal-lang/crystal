@@ -234,6 +234,10 @@ struct Int
   include Comparable(BigRational)
 
   # Returns a `BigRational` representing this integer.
+  # ```
+  # require "big"
+  # 123.to_big_r
+  # ```
   def to_big_r
     BigRational.new(self, 1)
   end
@@ -263,6 +267,10 @@ struct Float
   include Comparable(BigRational)
 
   # Returns a `BigRational` representing this float.
+  # ```
+  # require "big"
+  # 123.0.to_big_r
+  # ```
   def to_big_r
     BigRational.new(self)
   end
@@ -273,6 +281,11 @@ struct Float
 end
 
 module Math
+  # Returns the sqrt of a `BigRational`.
+  # ```
+  # require "big"
+  # Math.sqrt((1000_000_000_0000.to_big_r*1000_000_000_00000.to_big_r))
+  # ```
   def sqrt(value : BigRational)
     sqrt(value.to_big_f)
   end
