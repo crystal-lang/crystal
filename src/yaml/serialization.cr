@@ -143,7 +143,8 @@ module YAML
         {% properties = {} of Nil => Nil %}
         {% for ivar in @type.instance_vars %}
           {% ann = ivar.annotation(::YAML::Field) %}
-          {% unless ann && ann[:ignore] %}
+          {% ann2 = ivar.annotation(::Property) %}
+          {% unless (ann && ann[:ignore]) || (ann2 && ann2[:ignore]) %}
             {%
               properties[ivar.id] = {
                 type:        ivar.type,
@@ -253,7 +254,8 @@ module YAML
         {% properties = {} of Nil => Nil %}
         {% for ivar in @type.instance_vars %}
           {% ann = ivar.annotation(::YAML::Field) %}
-          {% unless ann && ann[:ignore] %}
+          {% ann2 = ivar.annotation(::Property) %}
+          {% unless (ann && ann[:ignore]) || (ann2 && ann2[:ignore]) %}
             {%
               properties[ivar.id] = {
                 type:      ivar.type,
@@ -301,7 +303,7 @@ module YAML
     end
 
     module Unmapped
-      @[YAML::Field(ignore: true)]
+      @[::Property(ignore: true)]
       property yaml_unmapped = Hash(String, YAML::Any).new
 
       protected def on_unknown_yaml_attribute(ctx, key, key_node, value_node)
