@@ -273,7 +273,7 @@ describe "Code gen: named tuple" do
       if v.is_a?(Float64)
         10
       else
-        v[0].to_i + v[1].to_i
+        v[0].to_i &+ v[1].to_i
       end
       )).to_i.should eq(42)
   end

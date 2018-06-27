@@ -317,8 +317,8 @@ describe "Code gen: enum" do
       end
 
       x = 0
-      x += 1 if Foo::None.none?
-      x += 2 if Foo::A.none?
+      x &+= 1 if Foo::None.none?
+      x &+= 2 if Foo::A.none?
       x
       )).to_i.should eq(1)
   end

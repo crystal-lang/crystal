@@ -73,7 +73,7 @@ describe "Code gen: tuple" do
       end
 
       p = foo({1, 2})
-      p.value[0] + p.value[1]
+      p.value[0] &+ p.value[1]
       ").to_i.should eq(3)
   end
 
@@ -290,7 +290,7 @@ describe "Code gen: tuple" do
       if v.is_a?(Float64)
         10
       else
-        v[0].to_i + v[1].to_i
+        v[0].to_i &+ v[1].to_i
       end
       )).to_i.should eq(42)
   end
