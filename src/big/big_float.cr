@@ -1,4 +1,5 @@
 require "c/string"
+require "big"
 
 # A `BigFloat` can represent arbitrarily large floats.
 #

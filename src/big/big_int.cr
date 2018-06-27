@@ -1,4 +1,5 @@
 require "c/string"
+require "big"
 
 # A `BigInt` can represent arbitrarily large integers.
 #
