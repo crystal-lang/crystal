@@ -395,7 +395,7 @@ class Crystal::Command
         opts.on("--single-module", "Generate a single LLVM module") do
           compiler.single_module = true
         end
-        opts.on("--threads ", "Maximum number of threads to use") do |n_threads|
+        opts.on("--threads NUM", "Maximum number of threads to use") do |n_threads|
           compiler.n_threads = n_threads.to_i
         end
         unless run
