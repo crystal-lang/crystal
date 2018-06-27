@@ -388,6 +388,6 @@ class Crystal::Doc::Generator
 
       locations << RelativeLocation.new(filename, location.line_number, url)
     end
-    locations
+    locations.uniq { |location| location.filename }
   end
 end

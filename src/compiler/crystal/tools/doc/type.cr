@@ -790,7 +790,7 @@ class Crystal::Doc::Type
           ancestors.each &.to_json_simple(builder)
         end
       end
-      builder.field "locations", locations.uniq! { |location| location.filename }
+      builder.field "locations", locations
       builder.field "repository_name", repository_name
       builder.field "program", program?
       builder.field "enum", enum?
