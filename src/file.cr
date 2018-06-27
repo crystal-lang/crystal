@@ -263,10 +263,10 @@ class File < IO::FileDescriptor
   #
   # ```
   # File.chmod("foo", 0o755)
-  # File.info("foo").permissions # => 0o755
+  # File.info("foo").permissions.value # => 0o755
   #
   # File.chmod("foo", 0o700)
-  # File.info("foo").permissions # => 0o700
+  # File.info("foo").permissions.value # => 0o700
   # ```
   def self.chmod(path, permissions : Int | Permissions)
     Crystal::System::File.chmod(path, permissions)

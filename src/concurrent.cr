@@ -164,9 +164,9 @@ end
 #     concurrent_job("easy")
 #   )
 #
-# puts a # => "concurrency"
-# puts b # => "is"
-# puts c # => "easy"
+# a # => "concurrency"
+# b # => "is"
+# c # => "easy"
 # ```
 #
 # Due to the concurrent nature of this macro, it is highly recommended

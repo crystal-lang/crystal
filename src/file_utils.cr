@@ -102,7 +102,7 @@ module FileUtils
   # ```
   # File.chmod("afile", 0o600)
   # FileUtils.cp("afile", "afile_copy")
-  # File.info("afile_copy").permissions # => 0o600
+  # File.info("afile_copy").permissions.value # => 0o600
   # ```
   def cp(src_path : String, dest : String)
     File.open(src_path) do |s|
