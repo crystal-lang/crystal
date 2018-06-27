@@ -50,6 +50,8 @@ class HTTP::WebSocket::Protocol
     end
 
     def write(slice : Bytes)
+      return if slice.empty?
+
       count = Math.min(@buffer.size - @pos, slice.size)
       (@buffer + @pos).copy_from(slice.pointer(count), count)
       @pos += count

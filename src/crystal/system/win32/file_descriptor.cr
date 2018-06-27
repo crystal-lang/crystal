@@ -13,14 +13,13 @@ module Crystal::System::FileDescriptor
   end
 
   private def unbuffered_write(slice : Bytes)
-    loop do
+    until slice.empty?
       bytes_written = LibC._write(@fd, slice, slice.size)
       if bytes_written == -1
         raise Errno.new("Error writing file")
       end
 
       slice += bytes_written
-      return if slice.size == 0
     end
   end
 

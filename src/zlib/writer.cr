@@ -47,6 +47,8 @@ class Zlib::Writer < IO
   def write(slice : Bytes) : Nil
     check_open
 
+    return if slice.empty?
+
     write_header unless @wrote_header
 
     @flate_io.write(slice)
