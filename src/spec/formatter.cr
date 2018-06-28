@@ -18,6 +18,9 @@ module Spec
 
     def finish
     end
+
+    def print_results(elapsed_time : Time::Span, aborted : Bool)
+    end
   end
 
   # :nodoc:
@@ -28,6 +31,10 @@ module Spec
 
     def finish
       @io.puts
+    end
+
+    def print_results(elapsed_time : Time::Span, aborted : Bool)
+      Spec::RootContext.print_results(elapsed_time, aborted)
     end
   end
 
@@ -80,6 +87,10 @@ module Spec
       @io << '\r'
       print_indent
       @io.puts Spec.color(@last_description, result.kind)
+    end
+
+    def print_results(elapsed_time : Time::Span, aborted : Bool)
+      Spec::RootContext.print_results(elapsed_time, aborted)
     end
   end
 
