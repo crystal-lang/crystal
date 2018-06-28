@@ -11,6 +11,16 @@ end
 
 alias YamlRec = Int32 | Array(YamlRec) | Hash(YamlRec, YamlRec)
 
+private def assert_yaml_document(actual, expected)
+  # Starting from libyaml 0.2.1, documents don't end with "...\n"
+  # anymore, so we account for both cases (before and after that version)
+  if expected.ends_with?("...\n") && !actual.ends_with?("...\n")
+    expected = expected.rchop("...\n")
+  end
+
+  actual.should eq(expected)
+end
+
 describe "YAML serialization" do
   describe "from_yaml" do
     it "does Nil#from_yaml" do
@@ -296,17 +306,17 @@ describe "YAML serialization" do
 
     it "does for utc time" do
       time = Time.utc(2010, 11, 12, 1, 2, 3)
-      time.to_yaml.should eq("--- 2010-11-12 01:02:03\n...\n")
+      assert_yaml_document(time.to_yaml, "--- 2010-11-12 01:02:03\n...\n")
     end
 
     it "does for time at date" do
       time = Time.utc(2010, 11, 12)
-      time.to_yaml.should eq("--- 2010-11-12\n...\n")
+      assert_yaml_document(time.to_yaml, "--- 2010-11-12\n...\n")
     end
 
     it "does for utc time with nanoseconds" do
       time = Time.utc(2010, 11, 12, 1, 2, 3, nanosecond: 456_000_000)
-      time.to_yaml.should eq("--- 2010-11-12 01:02:03.456000000\n...\n")
+      assert_yaml_document(time.to_yaml, "--- 2010-11-12 01:02:03.456000000\n...\n")
     end
 
     it "does for bytes" do

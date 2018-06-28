@@ -5,6 +5,13 @@ private def assert_built(expected)
   string = YAML.build do |yaml|
     with yaml yield yaml
   end
+
+  # Starting from libyaml 0.2.1, documents don't end with "...\n"
+  # anymore, so we account for both cases (before and after that version)
+  if expected.ends_with?("...\n") && !string.ends_with?("...\n")
+    expected = expected.rchop("...\n")
+  end
+
   string.should eq(expected)
 end
 
