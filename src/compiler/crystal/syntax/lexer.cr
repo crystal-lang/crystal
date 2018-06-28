@@ -2130,6 +2130,9 @@ module Crystal
         if char == 'q' && (peek = peek_next_char) && {'(', '<', '[', '{'}.includes?(peek)
           next_char
           delimiter_state = Token::DelimiterState.new(:string, char, closing_char, 1)
+        elsif char == 'r' && (peek = peek_next_char) && {'(', '<', '[', '{'}.includes?(peek)
+          next_char
+          delimiter_state = Token::DelimiterState.new(:regex, char, closing_char, 1)
         else
           start = current_pos
           while ident_part?(char)

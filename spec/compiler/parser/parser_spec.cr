@@ -1380,6 +1380,11 @@ module Crystal
 
     it_parses "foo.Bar", Call.new("foo".call, "Bar")
 
+    it_parses "{% begin %}%r(\\A){% end %}", MacroIf.new(true.bool, MacroLiteral.new("%r(\\A)"))
+    it_parses "{% begin %}%r[\\A]{% end %}", MacroIf.new(true.bool, MacroLiteral.new("%r[\\A]"))
+    it_parses "{% begin %}%r<\\A>{% end %}", MacroIf.new(true.bool, MacroLiteral.new("%r<\\A>"))
+    it_parses "{% begin %}%r{\\A}{% end %}", MacroIf.new(true.bool, Expressions.new([MacroLiteral.new("%r"), MacroLiteral.new("{\\A}")] of ASTNode))
+
     assert_syntax_error "return do\nend", "unexpected token: do"
 
     %w(def macro class struct module fun alias abstract include extend lib).each do |keyword|
