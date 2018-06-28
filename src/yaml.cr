@@ -157,4 +157,10 @@ module YAML
   def self.dump(object, io : IO)
     object.to_yaml(io)
   end
+
+  # Returns the used version of `libyaml`.
+  def self.libyaml_version : {Int32, Int32, Int32}
+    LibYAML.yaml_get_version(out major, out minor, out patch)
+    {major, minor, patch}
+  end
 end

@@ -1,7 +1,17 @@
 require "spec"
 require "yaml"
 
-private def assert_built(expected)
+private def assert_built(expected, expect_document_end = false)
+  # libyaml 0.2.1 removed the errorneously written document end marker (`...`) after some scalars in root context (see https://github.com/yaml/libyaml/pull/18).
+  # Earlier libyaml releases still write the document end marker and this is hard to fix on Crystal's side.
+  # So we just ignore it and adopt the specs accordingly to coincide with the used libyaml version.
+  if expect_document_end
+    major, minor, _ = YAML.libyaml_version
+    if major == 0 && minor < 2
+      expected += "...\n"
+    end
+  end
+
   string = YAML.build do |yaml|
     with yaml yield yaml
   end
@@ -10,7 +20,7 @@ end
 
 describe YAML::Builder do
   it "writes scalar" do
-    assert_built("--- 1\n...\n") do
+    assert_built("--- 1\n", expect_document_end: true) do
       scalar(1)
     end
   end
@@ -22,13 +32,13 @@ describe YAML::Builder do
   end
 
   it "writes scalar with tag" do
-    assert_built(%(--- !foo 1\n...\n)) do
+    assert_built(%(--- !foo 1\n), expect_document_end: true) do
       scalar(1, tag: "!foo")
     end
   end
 
   it "writes scalar with anchor" do
-    assert_built(%(--- &foo 1\n...\n)) do
+    assert_built(%(--- &foo 1\n), expect_document_end: true) do
       scalar(1, anchor: "foo")
     end
   end
