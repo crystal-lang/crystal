@@ -3,12 +3,8 @@ require "html"
 module Spec
   # :nodoc:
   class JUnitFormatter < Formatter
-    @output : IO
     @results = [] of Spec::Result
     @summary = {} of Symbol => Int32
-
-    def initialize(@output)
-    end
 
     def report(result)
       current = @summary[result.kind]? || 0
@@ -17,7 +13,7 @@ module Spec
     end
 
     def finish
-      io = @output
+      io = @io
       io.puts %(<?xml version="1.0"?>)
       io << %(<testsuite tests=") << @results.size
       io << %(" errors=") << (@summary[:error]? || 0)
