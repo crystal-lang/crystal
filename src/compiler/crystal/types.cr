@@ -655,7 +655,8 @@ module Crystal
     # Adds a location to this type.
     def add_location(location : Location)
       locations = @locations ||= [] of Location
-      locations << location # unless locations.any? { |loc| loc.filename == location.filename && loc.line_number == location.line_number }
+      # The `unless` prevents that identical links are being generated in the "Defined in:" section in the docs
+      locations << location unless locations.any? { |loc| loc.filename == location.filename && loc.line_number == location.line_number }
     end
 
     getter(types) { {} of String => NamedType }
