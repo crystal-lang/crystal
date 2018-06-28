@@ -1380,10 +1380,11 @@ module Crystal
 
     it_parses "foo.Bar", Call.new("foo".call, "Bar")
 
-    it_parses "{% begin %}%r(\\A){% end %}", MacroIf.new(true.bool, MacroLiteral.new("%r(\\A)"))
-    it_parses "{% begin %}%r[\\A]{% end %}", MacroIf.new(true.bool, MacroLiteral.new("%r[\\A]"))
-    it_parses "{% begin %}%r<\\A>{% end %}", MacroIf.new(true.bool, MacroLiteral.new("%r<\\A>"))
-    it_parses "{% begin %}%r{\\A}{% end %}", MacroIf.new(true.bool, Expressions.new([MacroLiteral.new("%r"), MacroLiteral.new("{\\A}")] of ASTNode))
+    [{'(', ')'}, {'[', ']'}, {'<', '>'}, {'{', '}'}, {'|', '|'}].each do |open, close|
+      it_parses "{% begin %}%r#{open}\\A#{close}{% end %}", MacroIf.new(true.bool, MacroLiteral.new("%r#{open}\\A#{close}"))
+      it_parses "{% begin %}%#{open} %s #{close}{% end %}", MacroIf.new(true.bool, MacroLiteral.new("%#{open} %s #{close}"))
+      it_parses "{% begin %}%q#{open} %s #{close}{% end %}", MacroIf.new(true.bool, MacroLiteral.new("%q#{open} %s #{close}"))
+    end
 
     assert_syntax_error "return do\nend", "unexpected token: do"
 
