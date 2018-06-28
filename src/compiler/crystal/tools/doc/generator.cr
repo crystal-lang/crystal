@@ -360,13 +360,15 @@ class Crystal::Doc::Generator
     filename[@base_dir.size..-1]
   end
 
-  record RelativeLocation, filename : String, line_number : Int32, url : String?, duplicate : Bool do
+  record RelativeLocation, filename : String, line_number : Int32, url : String?, show_line_number : Bool do
+    setter show_line_number
+
     def to_json(builder : JSON::Builder)
       builder.object do
         builder.field "filename", filename
         builder.field "line_number", line_number
         builder.field "url", url
-        builder.field "duplicate", duplicate
+        builder.field "show_line_number", show_line_number
       end
     end
   end
@@ -387,9 +389,16 @@ class Crystal::Doc::Generator
       filename = filename[1..-1] if filename.starts_with? File::SEPARATOR
       filename = filename[4..-1] if filename.starts_with? SRC_SEP
 
-      duplicate = locations.any? { |location| location.filename == filename }
+      show_line_number = locations.any? do |location|
+        if location.filename == filename
+          location.show_line_number = true
+          true
+        else
+          false
+        end
+      end
 
-      locations << RelativeLocation.new(filename, location.line_number, url, duplicate)
+      locations << RelativeLocation.new(filename, location.line_number, url, show_line_number)
     end
     locations
   end

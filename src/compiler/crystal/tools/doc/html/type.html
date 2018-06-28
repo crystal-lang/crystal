@@ -47,8 +47,8 @@
     <% else %>
       <%= location.filename %>
     <% end %>
-    <% if location.duplicate %>
-      (line <%= location.line_number %>)
+    <% if location.show_line_number %>
+      :<%= location.line_number %>
     <% end %>
     <br/>
   <% end %>
