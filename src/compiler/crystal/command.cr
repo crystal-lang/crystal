@@ -408,12 +408,12 @@ class Crystal::Command
         end
         opts.on("--static", "Link statically") do
           compiler.static = true
-          # https://developer.apple.com/library/content/qa/qa1118/_index.html                                           
-          {% if flag?(:darwin) %}                                                                                       
-            STDERR.puts <<-INFO                                                                                         
-            macOS doesn't officially support static linking.                                                            
-            For more information: https://developer.apple.com/library/content/qa/qa1118/_index.html                     
-            INFO                                                                                                        
+          # https://developer.apple.com/library/content/qa/qa1118/_index.html
+          {% if flag?(:darwin) %}
+            STDERR.puts <<-INFO
+            macOS doesn't officially support static linking.
+            For more information: https://developer.apple.com/library/content/qa/qa1118/_index.html
+            INFO
           {% end %}
         end
       end
