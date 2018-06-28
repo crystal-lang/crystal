@@ -99,6 +99,9 @@ OptionParser.parse! do |opts|
   opts.on("-v", "--verbose", "verbose output") do
     Spec.override_default_formatter(Spec::VerboseFormatter.new)
   end
+  opts.on("--tap", "Generate TAP output (Test Anything Protocol)") do
+    Spec.override_default_formatter(Spec::TAPFormatter.new)
+  end
   opts.on("--no-color", "Disable colored output") do
     Spec.use_colors = false
   end
