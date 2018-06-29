@@ -95,6 +95,8 @@ lib LibXML
   fun xmlNewTextReader(input : InputBuffer, uri : UInt8*) : XMLTextReader
 
   fun xmlTextReaderRead(reader : XMLTextReader) : Int
+  fun xmlTextReaderNext(reader : XMLTextReader) : Int
+  fun xmlTextReaderNextSibling(reader : XMLTextReader) : Int
   fun xmlTextReaderNodeType(reader : XMLTextReader) : XML::Type
   fun xmlTextReaderConstName(reader : XMLTextReader) : UInt8*
   fun xmlTextReaderIsEmptyElement(reader : XMLTextReader) : Int
@@ -103,6 +105,14 @@ lib LibXML
   fun xmlTextReaderAttributeCount(reader : XMLTextReader) : Int
   fun xmlTextReaderMoveToFirstAttribute(reader : XMLTextReader) : Int
   fun xmlTextReaderMoveToNextAttribute(reader : XMLTextReader) : Int
+  fun xmlTextReaderMoveToAttribute(reader : XMLTextReader, name : UInt8*) : Int
+  fun xmlTextReaderGetAttribute(reader : XMLTextReader, name : UInt8*) : UInt8*
+  fun xmlTextReaderMoveToElement(reader : XMLTextReader) : Int
+  fun xmlTextReaderDepth(reader : XMLTextReader) : Int
+  fun xmlTextReaderReadInnerXml(reader : XMLTextReader) : UInt8*
+  fun xmlTextReaderReadOuterXml(reader : XMLTextReader) : UInt8*
+  fun xmlTextReaderExpand(reader : XMLTextReader) : Node*
+  fun xmlTextReaderCurrentNode(reader : XMLTextReader) : Node*
 
   fun xmlTextReaderSetErrorHandler(reader : XMLTextReader, f : TextReaderErrorFunc) : Void
 
