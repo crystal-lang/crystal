@@ -148,7 +148,7 @@ module HTTP
     # params["non_existent_param"] # KeyError
     # ```
     def [](name)
-      raw_params[name].first
+      fetch(name) { raise KeyError.new "Missing param name: #{name.inspect}" }
     end
 
     # Returns first value or `nil` for specified param *name*.
@@ -158,7 +158,7 @@ module HTTP
     # params["non_existent_param"]? # nil
     # ```
     def []?(name)
-      fetch(name) { nil }
+      fetch(name, nil)
     end
 
     # Returns `true` if param with provided name exists.
@@ -197,16 +197,6 @@ module HTTP
       raw_params.fetch(name) { [] of String }
     end
 
-    # Returns first value for specified param *name*.
-    #
-    # ```
-    # params.fetch("email")              # => "john@example.org"
-    # params.fetch("non_existent_param") # KeyError
-    # ```
-    def fetch(name)
-      raw_params.fetch(name).first
-    end
-
     # Returns first value for specified param *name*. Fallbacks to provided
     # *default* value when there is no such param.
     #
@@ -215,8 +205,7 @@ module HTTP
     # params.fetch("non_existent_param", "default value") # => "default value"
     # ```
     def fetch(name, default)
-      return default unless has_key?(name)
-      fetch(name)
+      fetch(name) { default }
     end
 
     # Returns first value for specified param *name*. Fallbacks to return value
@@ -227,8 +216,8 @@ module HTTP
     # params.fetch("non_existent_param") { "default computed value" } # => "default computed value"
     # ```
     def fetch(name)
-      return yield unless has_key?(name)
-      fetch(name)
+      return yield name unless has_key?(name)
+      raw_params[name].first
     end
 
     # Appends new value for specified param *name*.

@@ -308,7 +308,7 @@ struct String::Formatter(A)
   end
 
   private def current_arg
-    @args.at(@arg_index) { raise ArgumentError.new("Too few arguments") }
+    @args.fetch(@arg_index) { raise ArgumentError.new("Too few arguments") }
   end
 
   def next_arg

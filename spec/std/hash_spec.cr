@@ -151,12 +151,6 @@ describe "Hash" do
   end
 
   describe "fetch" do
-    it "fetches with one argument" do
-      a = {1 => 2}
-      a.fetch(1).should eq(2)
-      a.should eq({1 => 2})
-    end
-
     it "fetches with default value" do
       a = {1 => 2}
       a.fetch(1, 3).should eq(2)
@@ -169,13 +163,6 @@ describe "Hash" do
       a.fetch(1) { |k| k * 3 }.should eq(2)
       a.fetch(2) { |k| k * 3 }.should eq(6)
       a.should eq({1 => 2})
-    end
-
-    it "fetches and raises" do
-      a = {1 => 2}
-      expect_raises KeyError, "Missing hash key: 2" do
-        a.fetch(2)
-      end
     end
   end
 

@@ -57,9 +57,30 @@ class Hash(K, V)
     value
   end
 
-  # See also: `Hash#fetch`.
+  # Returns the value for the key given by *key*.
+  # If not found, returns the default value given by `Hash.new`, otherwise raises `KeyError`.
+  #
+  # ```
+  # h = {"foo" => "bar"}
+  # h["foo"] # => "bar"
+  #
+  # h = Hash(String, String).new("bar")
+  # h["foo"] # => "bar"
+  #
+  # h = Hash(String, String).new { "bar" }
+  # h["foo"] # => "bar"
+  #
+  # h = Hash(String, String).new
+  # h["foo"] # raises KeyError
+  # ```
   def [](key)
-    fetch(key)
+    fetch(key) do
+      if (block = @block) && key.is_a?(K)
+        block.call(self, key.as(K))
+      else
+        raise KeyError.new "Missing hash key: #{key.inspect}"
+      end
+    end
   end
 
   # Returns the value for the key given by *key*.
@@ -141,32 +162,6 @@ class Hash(K, V)
     false
   end
 
-  # Returns the value for the key given by *key*.
-  # If not found, returns the default value given by `Hash.new`, otherwise raises `KeyError`.
-  #
-  # ```
-  # h = {"foo" => "bar"}
-  # h["foo"] # => "bar"
-  #
-  # h = Hash(String, String).new("bar")
-  # h["foo"] # => "bar"
-  #
-  # h = Hash(String, String).new { "bar" }
-  # h["foo"] # => "bar"
-  #
-  # h = Hash(String, String).new
-  # h["foo"] # raises KeyError
-  # ```
-  def fetch(key)
-    fetch(key) do
-      if (block = @block) && key.is_a?(K)
-        block.call(self, key.as(K))
-      else
-        raise KeyError.new "Missing hash key: #{key.inspect}"
-      end
-    end
-  end
-
   # Returns the value for the key given by *key*, or when not found the value given by *default*.
   # This ignores the default value set by `Hash.new`.
   #
@@ -183,7 +178,8 @@ class Hash(K, V)
   #
   # ```
   # h = {"foo" => "bar"}
-  # h.fetch("foo") { |key| key.upcase } # => "bar"
+  # h.fetch("foo") { "default value" }  # => "bar"
+  # h.fetch("bar") { "default value" }  # => "default value"
   # h.fetch("bar") { |key| key.upcase } # => "BAR"
   # ```
   def fetch(key)

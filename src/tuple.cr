@@ -122,7 +122,7 @@ struct Tuple
     {% end %}
   end
 
-  def unsafe_at(index : Int)
+  def unsafe_fetch(index : Int)
     self[index]
   end
 

@@ -204,7 +204,7 @@ struct Slice(T)
   end
 
   @[AlwaysInline]
-  def unsafe_at(index : Int)
+  def unsafe_fetch(index : Int)
     @pointer[index]
   end
 
