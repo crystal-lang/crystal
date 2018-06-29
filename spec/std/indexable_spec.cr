@@ -114,4 +114,41 @@ describe Indexable do
     return_value.should eq(indexable)
     last_element.should eq(3)
   end
+
+  describe "fetch" do
+    it "fetches with one argument" do
+      indexable = SafeIndexable.new(3)
+      a = indexable.to_a
+
+      indexable.fetch(2).should eq(2)
+      a.should eq([0, 1, 2])
+    end
+
+    it "fetches with default value" do
+      indexable = SafeIndexable.new(3)
+      a = indexable.to_a
+
+      indexable.fetch(2, 4).should eq(2)
+      indexable.fetch(3, 4).should eq(4)
+      a.should eq([0, 1, 2])
+    end
+
+    it "fetches with block" do
+      indexable = SafeIndexable.new(3)
+      a = indexable.to_a
+
+      indexable.fetch(2) { |k| k * 3 }.should eq(2)
+      indexable.fetch(3) { |k| k * 3 }.should eq(9)
+      a.should eq([0, 1, 2])
+    end
+
+    it "fetches and raises" do
+      indexable = SafeIndexable.new(3)
+      a = indexable.to_a
+
+      expect_raises IndexError, "Index out of bounds" do
+        a.fetch(3)
+      end
+    end
+  end
 end

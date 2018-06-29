@@ -26,16 +26,16 @@ module Indexable(T)
   abstract def unsafe_at(index : Int)
 
   # Returns the element at the given *index*, if in bounds,
-  # otherwise executes the given block and returns its value.
+  # otherwise executes the given block with the index and returns its value.
   #
   # ```
-  # a = [:foo, :bar]
-  # a.at(0) { :baz } # => :foo
-  # a.at(2) { :baz } # => :baz
+  # a = [1, 2]
+  # a.at(1) { |index| index * 3 } # => 6
+  # a.at(3) { |index| index * 3 } # => 9
   # ```
   def at(index : Int)
     index = check_index_out_of_bounds(index) do
-      return yield
+      return yield index
     end
     unsafe_at(index)
   end
@@ -44,8 +44,8 @@ module Indexable(T)
   # otherwise raises `IndexError`.
   #
   # ```
-  # a = [:foo, :bar]
-  # a.at(0) # => :foo
+  # a = [1, 2]
+  # a.at(1) # => 2
   # a.at(2) # raises IndexError
   # ```
   @[AlwaysInline]
@@ -91,6 +91,39 @@ module Indexable(T)
   @[AlwaysInline]
   def []?(index : Int)
     at(index) { nil }
+  end
+
+  # Returns the value at the index given by *index*.
+  # If not found, raises `IndexError`.
+  #
+  # ```
+  # ary = [1, 2]
+  # ary[1] # => 2
+  # ```
+  def fetch(index)
+    at(index)
+  end
+
+  # Returns the value at the index given by *index*, or when not found the value given by *default*.
+  #
+  # ```
+  # ary = [1, 2]
+  # ary.fetch(1, 3) # => 2
+  # ary.fetch(2, 3) # => 3
+  # ```
+  def fetch(index, default)
+    fetch(index) { default }
+  end
+
+  # Returns the value at the index given by *index*, or when not found calls the given block with the index.
+  #
+  # ```
+  # ary = [1, 2]
+  # ary.fetch(1) { |index| index * 3 } # => 6
+  # ary.fetch(3) { |index| index * 3 } # => 9
+  # ```
+  def fetch(index)
+    at(index) { |index| yield index }
   end
 
   # By using binary search, returns the first element
