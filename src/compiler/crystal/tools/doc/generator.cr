@@ -368,7 +368,6 @@ class Crystal::Doc::Generator
         builder.field "filename", filename
         builder.field "line_number", line_number
         builder.field "url", url
-        builder.field "show_line_number", show_line_number
       end
     end
   end
