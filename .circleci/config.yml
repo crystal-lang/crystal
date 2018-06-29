@@ -11,54 +11,6 @@ defaults:
 version: 2
 
 jobs:
-  test_linux:
-    machine: true
-    environment:
-      <<: *env
-      TRAVIS_OS_NAME: linux
-      ARCH: x86_64
-      ARCH_CMD: linux64
-    steps:
-      - checkout
-      - run: bin/ci prepare_system
-      - run: bin/ci prepare_build
-      - run: bin/ci build
-      - persist_to_workspace:
-          root: .
-          paths:
-            - docs
-
-  test_linux32:
-    machine: true
-    environment:
-      <<: *env
-      TRAVIS_OS_NAME: linux
-      ARCH: i386
-      ARCH_CMD: linux32
-    steps: *ci_steps
-
-  test_darwin:
-    macos:
-      xcode: "9.0"
-    environment:
-      <<: *env
-      TRAVIS_OS_NAME: osx
-    steps: *ci_steps
-
-  sync_docs_s3:
-    machine: true
-    steps:
-      - attach_workspace:
-          at: /tmp/workspace
-      - run: |
-          echo $CIRCLE_SHA1 > /tmp/workspace/docs/revision.txt
-      - run: |
-          docker run -v /tmp/workspace/docs:/docs \
-            -e AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID} \
-            -e AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY} \
-            mesosphere/aws-cli \
-            s3 sync /docs/ s3://crystal-api/api/master --delete
-
   prepare_common:
     docker:
       - image: docker:stable-git
@@ -67,7 +19,7 @@ jobs:
       - run: |
           git clone https://github.com/crystal-lang/distribution-scripts.git ~/distribution-scripts
           cd ~/distribution-scripts
-          git checkout ad632438cd4458993e5c525be5063aa537b27585
+          git checkout bc0463580468c117e12cb7ea2bb0b6cad80f922e
       # persist relevant information for build process
       - run: |
           cd ~/distribution-scripts
@@ -75,7 +27,9 @@ jobs:
           echo "export DOCKER_REPOSITORY=crystallang/crystal" >> build.env
 
           # What to build
-          echo "export CRYSTAL_SHA1=$CIRCLE_SHA1" >> build.env
+          echo "export CRYSTAL_SHA1=7fb783f7afec0a199d6f22ef78aae0f45517068a" >> build.env
+          echo "export CRYSTAL_VERSION=0.25.0" >> build.env
+          echo "export PACKAGE_ITERATION=2" >> build.env
 
           # Which previous version use
           export PREVIOUS_CRYSTAL_BASE_URL="https://github.com/crystal-lang/crystal/releases/download/0.24.2/crystal-0.24.2-1"
@@ -88,105 +42,6 @@ jobs:
           root: ../
           paths:
             - distribution-scripts
-
-  # prepare build for tagged releases
-  prepare_tagged:
-    docker:
-      - image: docker:stable-git
-    steps:
-      - attach_workspace:
-          at: /tmp/workspace
-      - run: |
-          cd /tmp/workspace/distribution-scripts
-
-          # How to brand it
-          echo "export CRYSTAL_VERSION=$CIRCLE_TAG" >> build.env
-          echo "export DOCKER_TAG=$CIRCLE_TAG" >> build.env
-
-          cat build.env
-      - persist_to_workspace:
-          root: /tmp/workspace
-          paths:
-            - distribution-scripts
-
-  # prepare build for nightly releases
-  prepare_nightly:
-    docker:
-      - image: docker:stable-git
-    steps:
-      - attach_workspace:
-          at: /tmp/workspace
-      - run: |
-          cd /tmp/workspace/distribution-scripts
-
-          # How to brand it
-          export VERSION=nightly-$(date '+%Y%m%d')
-          echo "export CRYSTAL_VERSION=$VERSION" >> build.env
-          echo "export DOCKER_TAG=nightly" >> build.env
-
-          # Build from working directory (needed for omnibus and when version does not match branch/tag)
-          echo "export FORCE_GIT_TAGGED=0" >> build.env
-
-          cat build.env
-      - persist_to_workspace:
-          root: /tmp/workspace
-          paths:
-            - distribution-scripts
-
-  # prepare build for manual triggered releases like ci branches, maintenance releases, etc.
-  prepare_maintenance:
-    docker:
-      - image: docker:stable-git
-    steps:
-      - attach_workspace:
-          at: /tmp/workspace
-      - run: |
-          cd /tmp/workspace/distribution-scripts
-
-          # How to brand it
-          export VERSION=${CIRCLE_BRANCH/release\//}
-          export VERSION=${VERSION/\//-}-dev
-          echo "export CRYSTAL_VERSION=$VERSION" >> build.env
-          echo "export DOCKER_TAG=$VERSION" >> build.env
-
-          # Build from working directory (needed for omnibus and when version does not match branch/tag)
-          echo "export FORCE_GIT_TAGGED=0" >> build.env
-
-          cat build.env
-      - persist_to_workspace:
-          root: /tmp/workspace
-          paths:
-            - distribution-scripts
-
-  dist_linux:
-    machine: true
-    steps:
-      - attach_workspace:
-          at: /tmp/workspace
-      - run: |
-          cd /tmp/workspace/distribution-scripts
-          source build.env
-          cd linux
-          make all64 release=true
-      - persist_to_workspace:
-          root: /tmp/workspace/distribution-scripts/linux/
-          paths:
-            - build
-
-  dist_linux32:
-    machine: true
-    steps:
-      - attach_workspace:
-          at: /tmp/workspace
-      - run: |
-          cd /tmp/workspace/distribution-scripts
-          source build.env
-          cd linux
-          make all32 release=true
-      - persist_to_workspace:
-          root: /tmp/workspace/distribution-scripts/linux/
-          paths:
-            - build
 
   dist_darwin:
     macos:
@@ -219,51 +74,6 @@ jobs:
           paths:
             - build
 
-  dist_docker:
-    machine: true
-    steps:
-      - attach_workspace:
-          at: /tmp/workspace
-      - run: |
-          cd /tmp/workspace/distribution-scripts
-          source build.env
-          cd docker
-          make CRYSTAL_DEB=/tmp/workspace/build/crystal_${CRYSTAL_VERSION}-1_amd64.deb
-      - persist_to_workspace:
-          root: /tmp/workspace/distribution-scripts/docker/
-          paths:
-            - build
-
-  publish_docker:
-    machine: true
-    steps:
-      - attach_workspace:
-          at: /tmp/workspace
-      - run: |
-          cd /tmp/workspace/distribution-scripts
-          source ./build.env
-          gunzip -c /tmp/workspace/build/docker-${CRYSTAL_VERSION}.tar.gz | docker image load
-          gunzip -c /tmp/workspace/build/docker-${CRYSTAL_VERSION}-build.tar.gz | docker image load
-          docker login -u ${DOCKER_USER} -p ${DOCKER_PASS}
-          docker push ${DOCKER_REPOSITORY}:${DOCKER_TAG}
-          docker push ${DOCKER_REPOSITORY}:${DOCKER_TAG}-build
-
-  dist_docs:
-    machine: true
-    steps:
-      - attach_workspace:
-          at: /tmp/workspace
-      - run: |
-          cd /tmp/workspace/distribution-scripts
-          source build.env
-          cd docs
-          gunzip -c /tmp/workspace/build/docker-${CRYSTAL_VERSION}-build.tar.gz | docker image load
-          make CRYSTAL_DOCKER_IMAGE=${DOCKER_REPOSITORY}:${DOCKER_TAG}-build
-      - persist_to_workspace:
-          root: /tmp/workspace/distribution-scripts/docs/
-          paths:
-            - build
-
   dist_artifacts:
     docker:
       - image: buildpack-deps:xenial
@@ -276,169 +86,13 @@ jobs:
 
 workflows:
   version: 2
-  test_all_platforms:
+  manual_osx_build:
     jobs:
-      - test_linux
-      - test_linux32
-      - test_darwin
-      - sync_docs_s3:
-          filters:
-            branches:
-              only:
-                - master
-          requires:
-            - test_linux
-  tagged_release:
-    jobs:
-      - test_linux:
-          filters: &per_tag
-            branches:
-              ignore: /.*/
-            tags:
-              only: /.*/
-      - test_linux32:
-          filters: *per_tag
-      - test_darwin:
-          filters: *per_tag
-      - prepare_common:
-          filters: *per_tag
-          requires:
-            - test_linux
-            - test_linux32
-            - test_darwin
-      - prepare_tagged:
-          filters: *per_tag
-          requires:
-            - prepare_common
-      - dist_linux:
-          filters: *per_tag
-          requires:
-            - prepare_tagged
-      - dist_linux32:
-          filters: *per_tag
-          requires:
-            - prepare_tagged
-      - dist_darwin:
-          filters: *per_tag
-          requires:
-            - prepare_tagged
-      - dist_docker:
-          filters: *per_tag
-          requires:
-            - dist_linux
-      # Tagged release do not publish docker images since they are unsigned
-      # publish_docker:
-      - dist_docs:
-          filters: *per_tag
-          requires:
-            - dist_docker
-      - dist_artifacts:
-          filters: *per_tag
-          requires:
-            - dist_linux
-            - dist_linux32
-            - dist_darwin
-            - dist_docker
-            - dist_docs
-
-  nightly_release:
-    triggers:
-      - schedule:
-          cron: "0 0 * * *"
-          filters:
-            branches:
-              only:
-                - master
-    jobs:
-      - test_linux
-      - test_linux32
-      - test_darwin
-      - prepare_common:
-          requires:
-            - test_linux
-            - test_linux32
-            - test_darwin
-      - prepare_nightly:
-          requires:
-            - prepare_common
-      - dist_linux:
-          requires:
-            - prepare_nightly
-      - dist_linux32:
-          requires:
-            - prepare_nightly
+      - prepare_common
       - dist_darwin:
           requires:
-            - prepare_nightly
-      - dist_docker:
-          requires:
-            - dist_linux
-      - publish_docker:
-          requires:
-            - dist_docker
-      - dist_docs:
-          requires:
-            - dist_docker
-      - dist_artifacts:
-          requires:
-            - dist_linux
-            - dist_linux32
-            - dist_darwin
-            - dist_docker
-            - dist_docs
-
-  maintenance_release:
-    jobs:
-      - test_linux:
-          filters: &maintenance
-            branches:
-              only:
-                - /release\/.+/
-                - /.*\bci\b.*/
-      - test_linux32:
-          filters: *maintenance
-      - test_darwin:
-          filters: *maintenance
-      - prepare_common:
-          filters: *maintenance
-          requires:
-            - test_linux
-            - test_linux32
-            - test_darwin
-      - prepare_maintenance:
-          filters: *maintenance
-          requires:
             - prepare_common
-      - dist_linux:
-          filters: *maintenance
-          requires:
-            - prepare_maintenance
-      - dist_linux32:
-          filters: *maintenance
-          requires:
-            - prepare_maintenance
-      - dist_darwin:
-          filters: *maintenance
-          requires:
-            - prepare_maintenance
-      - dist_docker:
-          filters: *maintenance
-          requires:
-            - dist_linux
-      - publish_docker:
-          filters: *maintenance
-          requires:
-            - dist_docker
-      - dist_docs:
-          filters: *maintenance
-          requires:
-            - dist_docker
       - dist_artifacts:
-          filters: *maintenance
           requires:
-            - dist_linux
-            - dist_linux32
             - dist_darwin
-            - dist_docker
-            - dist_docs
 
