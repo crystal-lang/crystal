@@ -1054,4 +1054,13 @@ describe "Semantic: generic class" do
       ),
       "undefined constant "
   end
+
+  it "doesn't find unbound type parameter in main code inside generic type (#6168)" do
+    assert_error %(
+      class Foo(T)
+        Foo(T)
+      end
+      ),
+      "undefined constant T"
+  end
 end
