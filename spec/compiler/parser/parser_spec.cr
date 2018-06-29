@@ -1380,6 +1380,12 @@ module Crystal
 
     it_parses "foo.Bar", Call.new("foo".call, "Bar")
 
+    [{'(', ')'}, {'[', ']'}, {'<', '>'}, {'{', '}'}, {'|', '|'}].each do |open, close|
+      it_parses "{% begin %}%r#{open}\\A#{close}{% end %}", MacroIf.new(true.bool, MacroLiteral.new("%r#{open}\\A#{close}"))
+      it_parses "{% begin %}%#{open} %s #{close}{% end %}", MacroIf.new(true.bool, MacroLiteral.new("%#{open} %s #{close}"))
+      it_parses "{% begin %}%q#{open} %s #{close}{% end %}", MacroIf.new(true.bool, MacroLiteral.new("%q#{open} %s #{close}"))
+    end
+
     assert_syntax_error "return do\nend", "unexpected token: do"
 
     %w(def macro class struct module fun alias abstract include extend lib).each do |keyword|

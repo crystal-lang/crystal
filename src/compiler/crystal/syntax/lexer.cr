@@ -2127,9 +2127,14 @@ module Crystal
 
       if !delimiter_state && current_char == '%' && ident_start?(peek_next_char)
         char = next_char
-        if char == 'q' && (peek = peek_next_char) && {'(', '<', '[', '{'}.includes?(peek)
+        if char == 'q' && (peek = peek_next_char) && {'(', '<', '[', '{', '|'}.includes?(peek)
           next_char
           delimiter_state = Token::DelimiterState.new(:string, char, closing_char, 1)
+          next_char
+        elsif char == 'r' && (peek = peek_next_char) && {'(', '<', '[', '{', '|'}.includes?(peek)
+          next_char
+          delimiter_state = Token::DelimiterState.new(:regex, char, closing_char, 1)
+          next_char
         else
           start = current_pos
           while ident_part?(char)
@@ -2196,7 +2201,7 @@ module Crystal
           whitespace = false
         when '%'
           case char = peek_next_char
-          when '(', '[', '<', '{'
+          when '(', '[', '<', '{', '|'
             next_char
             delimiter_state = Token::DelimiterState.new(:string, char, closing_char, 1)
           else
