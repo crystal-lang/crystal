@@ -2094,6 +2094,22 @@ module Crystal
         node.body.accept self
       end
 
+      # After while's body, bind variables *before* the condition to the
+      # ones after the body, because the loop will repeat.
+      #
+      # For example:
+      #
+      #    x = exp
+      #    # x starts with the type of exp
+      #    while x = x.method
+      #      # but after the loop, the x above (in x.method)
+      #      # should now also get the type of x.method, recursively
+      #    end
+      before_cond_vars.each do |name, before_cond_var|
+        var = @vars[name]?
+        before_cond_var.bind_to(var) if var && !var.same?(before_cond_var)
+      end
+
       cond = node.cond.single_expression
 
       endless_while = cond.true_literal?
