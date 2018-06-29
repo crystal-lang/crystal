@@ -11,6 +11,18 @@ end
 
 alias YamlRec = Int32 | Array(YamlRec) | Hash(YamlRec, YamlRec)
 
+# libyaml 0.2.1 removed the errorneously written document end marker (`...`) after some scalars in root context (see https://github.com/yaml/libyaml/pull/18).
+# Earlier libyaml releases still write the document end marker and this is hard to fix on Crystal's side.
+# So we just ignore it and adopt the specs accordingly to coincide with the used libyaml version.
+private def assert_yaml_document_end(actual, expected)
+  major, minor, _ = YAML.libyaml_version
+  if major == 0 && minor < 2
+    expected += "...\n"
+  end
+
+  actual.should eq(expected)
+end
+
 describe "YAML serialization" do
   describe "from_yaml" do
     it "does Nil#from_yaml" do
@@ -296,17 +308,17 @@ describe "YAML serialization" do
 
     it "does for utc time" do
       time = Time.utc(2010, 11, 12, 1, 2, 3)
-      time.to_yaml.should eq("--- 2010-11-12 01:02:03\n...\n")
+      assert_yaml_document_end(time.to_yaml, "--- 2010-11-12 01:02:03\n")
     end
 
     it "does for time at date" do
       time = Time.utc(2010, 11, 12)
-      time.to_yaml.should eq("--- 2010-11-12\n...\n")
+      assert_yaml_document_end(time.to_yaml, "--- 2010-11-12\n")
     end
 
     it "does for utc time with nanoseconds" do
       time = Time.utc(2010, 11, 12, 1, 2, 3, nanosecond: 456_000_000)
-      time.to_yaml.should eq("--- 2010-11-12 01:02:03.456000000\n...\n")
+      assert_yaml_document_end(time.to_yaml, "--- 2010-11-12 01:02:03.456000000\n")
     end
 
     it "does for bytes" do
