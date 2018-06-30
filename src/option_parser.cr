@@ -35,7 +35,11 @@ class OptionParser
 
   class InvalidOption < Exception
     def initialize(option)
-      super("Invalid option: #{option}")
+      super("Invalid option: #{option} #{
+        type.program.colorize(
+          "(did you mean 'crystal foo.cr -- #{option}')"
+        ).yellow.bold
+      }")
     end
   end
 
