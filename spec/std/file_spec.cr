@@ -82,28 +82,6 @@ describe "File" do
     idx.should eq(20)
   end
 
-  it "reads lines from file with each as iterator" do
-    idx = 0
-    File.each_line(datapath("test_file.txt")).each do |line|
-      if idx == 0
-        line.should eq("Hello World")
-      end
-      idx += 1
-    end
-    idx.should eq(20)
-  end
-
-  it "reads lines from file with each as iterator, chomp = false" do
-    idx = 0
-    File.each_line(datapath("test_file.txt"), chomp: false).each do |line|
-      if idx == 0
-        line.should eq("Hello World\n")
-      end
-      idx += 1
-    end
-    idx.should eq(20)
-  end
-
   describe "empty?" do
     it "gives true when file is empty" do
       File.empty?(datapath("blank_test_file.txt")).should be_true

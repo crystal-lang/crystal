@@ -656,11 +656,6 @@ class File < IO::FileDescriptor
     end
   end
 
-  # Returns an `Iterator` for each line in *filename*.
-  def self.each_line(filename, encoding = nil, invalid = nil, chomp = true)
-    open(filename, "r", encoding: encoding, invalid: invalid).each_line(chomp: chomp)
-  end
-
   # Returns all lines in *filename* as an array of strings.
   #
   # ```
