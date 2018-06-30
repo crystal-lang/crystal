@@ -308,4 +308,13 @@ describe "Semantic: cast" do
       1.as(Int)
       )) { int32 }
   end
+
+  it "errors when casting to uninstantiated generic type (#5927)" do
+    assert_error %(
+      require "prelude"
+
+      1.as(Array).sample(10)
+      ),
+      "can't cast Int32 to Array(T)"
+  end
 end

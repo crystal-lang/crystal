@@ -322,9 +322,13 @@ module Crystal
 
       # If we don't have a matching type, leave it as the to_type:
       # later (in cleanup) we will check again.
-      filtered_type ||= to_type
-
-      self.type = filtered_type.virtual_type
+      # However, if it's an uninstantiated generic type, don't use that type.
+      if to_type.is_a?(GenericType)
+        self.type = to_type.program.no_return
+      else
+        filtered_type ||= to_type
+        self.type = filtered_type.virtual_type
+      end
     end
   end
 
