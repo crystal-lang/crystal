@@ -196,24 +196,4 @@ describe HTTP::Headers do
     headers.add?("foobar", invalid_value).should be_false
     headers.add?("foobar", [invalid_value]).should be_false
   end
-
-  describe "#if_none_match" do
-    it "reads single value" do
-      HTTP::Headers{"If-None-Match" => %(W/"1234567")}.if_none_match.should eq [%(W/"1234567")]
-      HTTP::Headers{"If-None-Match" => %("1234567")}.if_none_match.should eq [%("1234567")]
-    end
-
-    it "reads *" do
-      HTTP::Headers{"If-None-Match" => "*"}.if_none_match.should eq ["*"]
-    end
-
-    it "reads multiple values" do
-      HTTP::Headers{"If-None-Match" => %(,W/"1234567",)}.if_none_match.should eq [%(W/"1234567")]
-      HTTP::Headers{"If-None-Match" => %(, , W/"1234567" , ,)}.if_none_match.should eq [%(W/"1234567")]
-      HTTP::Headers{"If-None-Match" => %(W/"1234567",W/"12345678")}.if_none_match.should eq [%(W/"1234567"), %(W/"12345678")]
-      HTTP::Headers{"If-None-Match" => %(W/"1234567" , W/"12345678")}.if_none_match.should eq [%(W/"1234567"), %(W/"12345678")]
-      HTTP::Headers{"If-None-Match" => %(W/"1234567","12345678")}.if_none_match.should eq [%(W/"1234567"), %("12345678")]
-      HTTP::Headers{"If-None-Match" => %(W/"1234567" , "12345678")}.if_none_match.should eq [%(W/"1234567"), %("12345678")]
-    end
-  end
 end
