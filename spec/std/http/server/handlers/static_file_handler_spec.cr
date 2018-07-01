@@ -95,7 +95,7 @@ describe HTTP::StaticFileHandler do
 
       response = handle HTTP::Request.new("GET", "/test.txt", headers), ignore_body: false
       response.status_code.should eq(200)
-      response.body.should eq(File.read("#{__DIR__}/static/test.txt"))
+      response.body.should eq(File.read(datapath("static_file_handler", "test.txt")))
     end
 
     it "serves file if header does not contain valid etag" do
@@ -104,7 +104,7 @@ describe HTTP::StaticFileHandler do
 
       response = handle HTTP::Request.new("GET", "/test.txt", headers), ignore_body: false
       response.status_code.should eq(200)
-      response.body.should eq(File.read("#{__DIR__}/static/test.txt"))
+      response.body.should eq(File.read(datapath("static_file_handler", "test.txt")))
     end
   end
 
@@ -124,7 +124,7 @@ describe HTTP::StaticFileHandler do
 
       response = handle HTTP::Request.new("GET", "/test.txt", headers), ignore_body: false
       response.status_code.should eq(200)
-      response.body.should eq(File.read("#{__DIR__}/static/test.txt"))
+      response.body.should eq(File.read(datapath("static_file_handler", "test.txt")))
     end
   end
 
