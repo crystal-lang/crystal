@@ -38,18 +38,6 @@ private def normalize_permissions(permissions, *, directory)
   {% end %}
 end
 
-private def to_windows_path(path)
-  {% if flag?(:win32) %}
-    if path.starts_with? '/'
-      File.real_path(path)
-    else
-      path.gsub('/', '\\')
-    end
-  {% else %}
-    path
-  {% end %}
-end
-
 describe "File" do
   it "gets path" do
     path = datapath("test_file.txt")
@@ -126,9 +114,7 @@ describe "File" do
       ex = expect_raises(Errno, /Error determining size/) do
         File.empty?(datapath("test_file.txt", ""))
       end
-      {% unless flag?(:win32) %}
-        ex.errno.should eq(Errno::ENOTDIR)
-      {% end %}
+      ex.errno.should eq(Errno::ENOTDIR)
     end
   end
 
@@ -239,11 +225,11 @@ describe "File" do
 
   describe "same?" do
     it "compares following symlinks only if requested" do
-      file = File.real_path(datapath("test_file.txt"))
-      other = File.real_path(datapath("test_file.ini"))
+      file = datapath("test_file.txt")
+      other = datapath("test_file.ini")
 
       with_tempfile("test_file_symlink.txt") do |symlink|
-        File.symlink(to_windows_path(file), symlink)
+        File.symlink(File.real_path(file), symlink)
 
         File.same?(file, symlink).should be_false
         File.same?(file, symlink, follow_symlinks: true).should be_true
@@ -255,9 +241,9 @@ describe "File" do
 
   describe "symlink" do
     it "creates a symbolic link" do
-      in_path = File.real_path(datapath("test_file.txt"))
+      in_path = datapath("test_file.txt")
       with_tempfile("test_file_link.txt") do |out_path|
-        File.symlink(to_windows_path(in_path), out_path)
+        File.symlink(File.real_path(in_path), out_path)
         File.symlink?(out_path).should be_true
         File.same?(in_path, out_path, follow_symlinks: true).should be_true
       end
@@ -382,7 +368,7 @@ describe "File" do
       with_tempfile("chmod-destination.txt", "chmod-source.txt") do |source_path, target_path|
         File.write(source_path, "")
 
-        File.symlink(to_windows_path(source_path), target_path)
+        File.symlink(File.real_path(source_path), target_path)
         File.symlink?(target_path).should be_true
 
         File.chmod(target_path, 0o444)
@@ -486,9 +472,7 @@ describe "File" do
       ex = expect_raises(Errno, /Error determining size/) do
         File.size(datapath("test_file.txt", ""))
       end
-      {% unless flag?(:win32) %}
-        ex.errno.should eq(Errno::ENOTDIR)
-      {% end %}
+      ex.errno.should eq(Errno::ENOTDIR)
     end
   end
 
@@ -591,7 +575,7 @@ describe "File" do
     pending_win32 "converts a pathname to an absolute pathname, using ~ (home) as base" do
       File.expand_path("~/").should eq(home)
       File.expand_path("~/..badfilename").should eq(File.join(home, "..badfilename"))
-      File.expand_path("..").should eq("/#{base.split('/')[0...-1].join('/')}".gsub(/\A\/\//, "/"))
+      File.expand_path("..").should eq("/#{base.split('/')[0...-1].join('/')}".gsub(%r{\A//}, "/"))
       File.expand_path("~/a", "~/b").should eq(File.join(home, "a"))
       File.expand_path("~").should eq(home)
       File.expand_path("~", "/tmp/gumby/ddd").should eq(home)
@@ -599,6 +583,7 @@ describe "File" do
     end
 
     # TODO: these specs don't compile on windows because ENV isn't ported
+    # TODO: remove /\A\/\// hack after this is removed from macros
     {% unless flag?(:win32) %}
       it "converts a pathname to an absolute pathname, using ~ (home) as base (trailing /)" do
         prev_home = home
@@ -636,8 +621,8 @@ describe "File" do
 
   describe "real_path" do
     it "expands paths for normal files" do
-      File.real_path("/usr/share").should eq(to_windows_path("/usr/share"))
-      File.real_path("/usr/share/..").should eq(to_windows_path("/usr"))
+      File.real_path("/usr/share").should eq(File.real_path("/usr/share"))
+      File.real_path("/usr/share/..").should eq(File.real_path("/usr"))
     end
 
     it "raises Errno if file doesn't exist" do
@@ -885,6 +870,7 @@ describe "File" do
     end
   end
 
+  # TODO: implement flock on windows
   describe "flock" do
     pending_win32 "exlusively locks a file" do
       File.open(datapath("test_file.txt")) do |file1|

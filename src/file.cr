@@ -10,6 +10,17 @@ class File < IO::FileDescriptor
   # :nodoc:
   DEFAULT_CREATE_PERMISSIONS = File::Permissions.new(0o644)
 
+  # The name of the null device on the host platform. /dev/null on UNIX and NUL
+  # on win32.
+  #
+  # When this device is opened using `File.open`, read operations will always
+  # return EOF, and any data written will be immediately discarded.
+  #
+  # ```
+  # File.open(File::DEVNULL) do |file|
+  #   file.puts "this is discarded"
+  # end
+  # ```
   {% if flag?(:win32) %}
     DEVNULL = "NUL"
   {% else %}

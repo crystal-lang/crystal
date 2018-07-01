@@ -47,9 +47,7 @@ describe "Dir" do
       ex = expect_raises(Errno, /Error determining size of/) do
         Dir.empty?(datapath("dir", "f1.txt", "/"))
       end
-      {% unless flag?(:win32) %}
-        ex.errno.should eq(Errno::ENOTDIR)
-      {% end %}
+      ex.errno.should eq(Errno::ENOTDIR)
     end
   end
 
@@ -233,7 +231,7 @@ describe "Dir" do
 
     it "tests with relative path (starts with ..)" do
       Dir.cd(datapath) do
-        base_path = "../../../spec/std/data/dir"
+        base_path = "../data/dir"
         Dir["#{base_path}/*/"].sort.should eq [
           File.join(base_path, "dots", ""),
           File.join(base_path, "subdir", ""),
