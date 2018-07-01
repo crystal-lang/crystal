@@ -1038,6 +1038,7 @@ describe Crystal::Formatter do
   assert_format "{ {% for x in 1..2 %}3{% end %}, nil }"
   assert_format "{ %() }"
   assert_format "{ %w() }"
+  assert_format "{ {1}.foo, 2 }"
 
   assert_format "String?"
   assert_format "String???"

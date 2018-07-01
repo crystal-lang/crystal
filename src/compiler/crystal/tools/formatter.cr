@@ -809,15 +809,9 @@ module Crystal
         end
 
         # This is to prevent writing `{{` and `{%`
-        if prefix == :"{" && i == 0 && !wrote_newline && (
-             current_element.is_a?(TupleLiteral) ||
-             current_element.is_a?(NamedTupleLiteral) ||
-             current_element.is_a?(HashLiteral) ||
-             current_element.is_a?(MacroExpression) ||
-             current_element.is_a?(MacroIf) ||
-             current_element.is_a?(MacroFor) ||
-             @token.raw.starts_with?('%')
-           )
+        if prefix == :"{" && i == 0 && !wrote_newline &&
+           (@token.type == :"{" || @token.type == :"{{" || @token.type == :"{%" ||
+           @token.type == :"%" || @token.raw.starts_with?("%"))
           write " "
           write_space_at_end = true
         end
