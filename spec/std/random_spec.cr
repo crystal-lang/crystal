@@ -260,4 +260,10 @@ describe "Random" do
       hex.should eq("9fd857f462831002ffffffffffffffff0000000000000000e88d3a30db4e730021b8a5e33b020000362f518e0700000062da")
     end
   end
+
+  describe "uuid" do
+    it "generates a v4 UUID" do
+      Random.new.uuid.should match(/[[:xdigit:]]{8}-[[:xdigit:]]{4}-4[[:xdigit:]]{3}-[ab89][[:xdigit:]]{3}-[[:xdigit:]]{12}/)
+    end
+  end
 end

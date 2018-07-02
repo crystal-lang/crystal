@@ -372,6 +372,24 @@ module Random
     random_bytes(n).hexstring
   end
 
+  # Generates a version 4 (random) UUID.
+  #
+  # ```
+  # Random::Secure.uuid # => "e8450590-0d53-4452-a882-217fd8a31e4c"
+  # ```
+  def uuid
+    io = IO::Memory.new(random_bytes(16))
+
+    fields = [UInt32, UInt16, UInt16, UInt16, UInt16, UInt32].map do |field|
+      field.from_io(io, IO::ByteFormat::LittleEndian)
+    end
+
+    fields[2] = (fields[2] & 0x0fff) | 0x4000
+    fields[3] = (fields[3] & 0x3fff) | 0x8000
+
+    "%08x-%04x-%04x-%04x-%04x%08x" % fields
+  end
+
   # See `#rand`.
   def self.rand : Float64
     DEFAULT.rand
