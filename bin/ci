@@ -82,11 +82,11 @@ build() {
 prepare_build() {
   on_linux verify_linux_environment
 
-  on_osx brew install crystal-lang
+  on_osx brew install crystal
 
   # Make sure binaries from llvm are available in PATH
   on_osx brew install jq
-  on_osx OSX_LLVM_PACKAGE=`brew info --json=v1 crystal-lang | jq '.[].dependencies | .[] | select(startswith("llvm"))'`
+  on_osx OSX_LLVM_PACKAGE=`brew info --json=v1 crystal | jq '.[].dependencies | .[] | select(startswith("llvm"))'`
   on_osx brew link --force $OSX_LLVM_PACKAGE
 }
 
@@ -98,7 +98,7 @@ with_build_env() {
 
   on_linux verify_linux_environment
 
-  export DOCKER_TEST_PREFIX="crystallang/crystal:0.25.0"
+  export DOCKER_TEST_PREFIX="crystallang/crystal:0.25.1"
 
   case $ARCH in
     x86_64)
