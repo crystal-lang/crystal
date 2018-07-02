@@ -5,9 +5,9 @@ module Crystal
   struct ExpandResult
     include JSON::Serializable
 
-    getter status : String
-    getter message : String
-    getter expansions : Array(Expansion)?
+    property status : String
+    property message : String
+    property expansions : Array(Expansion)?
 
     def initialize(@status, @message)
     end
@@ -38,9 +38,9 @@ module Crystal
       include JSON::Serializable
       alias MacroImplementation = {name: String, implementation: ImplementationTrace}
 
-      getter original_source : String
-      getter expanded_sources : Array(String)
-      getter expanded_macros : Array(Array(MacroImplementation))
+      property original_source : String
+      property expanded_sources : Array(String)
+      property expanded_macros : Array(Array(MacroImplementation))
 
       def initialize(@original_source, @expanded_sources, @expanded_macros)
       end
