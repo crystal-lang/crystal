@@ -89,6 +89,22 @@ def Array.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node)
   end
 end
 
+def Set.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node)
+  ctx.read_alias(node, self) do |obj|
+    return obj
+  end
+
+  unless node.is_a?(YAML::Nodes::Sequence)
+    node.raise "Expected sequence, not #{node.class}"
+  end
+
+  set = new
+  node.each do |value|
+    set << T.new(ctx, value)
+  end
+  set
+end
+
 def Hash.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node)
   ctx.read_alias(node, self) do |obj|
     return obj
