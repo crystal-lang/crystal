@@ -75,13 +75,10 @@ abstract class OpenSSL::SSL::Context
     # context.add_options(OpenSSL::SSL::Options::NO_SSL_V2 | OpenSSL::SSL::Options::NO_SSL_V3)
     # ```
 
-    # declare type of @hostname
-    @hostname : String
+    @hostname : String = ""
 
     def initialize(method : LibSSL::SSLMethod = Context.default_method)
       super(method)
-
-      @hostname = ""
 
       self.verify_mode = OpenSSL::SSL::VerifyMode::PEER
       {% if LibSSL::OPENSSL_102 %}
