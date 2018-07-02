@@ -215,7 +215,7 @@ describe "OptionParser" do
   end
 
   it "raises on invalid option" do
-    suggestion = "(did you mean 'crystal foo.cr -- -j'?)".colorize.yellow.bold.to_s
+    suggestion = "(did you mean 'crystal foo.cr -- -j'?)".colorize.yellow.bold
     expect_raises OptionParser::InvalidOption, "Invalid option: -j #{suggestion}" do
       OptionParser.parse(["-f", "-j"]) do |opts|
         opts.on("-f", "some flag") { }
