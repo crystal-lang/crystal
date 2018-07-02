@@ -94,15 +94,24 @@ def Set.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node)
     return obj
   end
 
+  ary = new
+
+  ctx.record_anchor(node, ary)
+
+  new(ctx, node) do |element|
+    ary << element
+  end
+  ary
+end
+
+def Set.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node)
   unless node.is_a?(YAML::Nodes::Sequence)
     node.raise "Expected sequence, not #{node.class}"
   end
 
-  set = new
   node.each do |value|
-    set << T.new(ctx, value)
+    yield T.new(ctx, value)
   end
-  set
 end
 
 def Hash.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node)
