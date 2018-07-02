@@ -873,7 +873,7 @@ struct Time
   # Format this time using the format specified by [RFC 3339](https://tools.ietf.org/html/rfc3339) ([ISO 8601](http://xml.coverpages.org/ISO-FDIS-8601.pdf) profile).
   #
   # ```
-  # Time.new(2016, 2, 15).to_rfc3339 # => "2016-02-15T00:00:00Z"
+  # Time.utc(2016, 2, 15).to_rfc3339 # => "2016-02-15T00:00:00Z"
   # ```
   #
   # ISO 8601 allows some freedom over the syntax and RFC 3339 exercises that
@@ -907,7 +907,7 @@ struct Time
   # Format this time using the format specified by [RFC 2822](https://www.ietf.org/rfc/rfc2822.txt).
   #
   # ```
-  # Time.new(2016, 2, 15).to_rfc2822 # => "Mon, 15 Feb 2016 00:00:00 +0000"
+  # Time.utc(2016, 2, 15).to_rfc2822 # => "Mon, 15 Feb 2016 00:00:00 +0000"
   # ```
   #
   # This is also compatible to [RFC 882](https://tools.ietf.org/html/rfc882) and [RFC 1123](https://tools.ietf.org/html/rfc1123#page-55).
