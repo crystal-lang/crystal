@@ -10,6 +10,10 @@ end
 
 describe "URI" do
   describe ".parse" do
+    # scheme
+    assert_uri("http:", scheme: "http")
+    it { URI.parse("HttP:").should eq(URI.new(scheme: "http")) }
+
     # host
     assert_uri("http://www.example.com", scheme: "http", host: "www.example.com")
     assert_uri("http://www.foo-bar.example.com", scheme: "http", host: "www.foo-bar.example.com")

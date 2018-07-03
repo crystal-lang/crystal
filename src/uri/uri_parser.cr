@@ -41,7 +41,7 @@ class URI
         if alpha? || numeric? || c === '-' || c === '.' || c === '+'
           @ptr += 1
         elsif c === ':'
-          @uri.scheme = from_input(start)
+          @uri.scheme = from_input(start).downcase
           if @input[@ptr + 1] === '/'
             @ptr += 2
             return parse_path_or_authority
