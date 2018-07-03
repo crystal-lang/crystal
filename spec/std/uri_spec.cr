@@ -1,18 +1,9 @@
 require "spec"
 require "uri"
 
-private def assert_uri(string, scheme = nil, host = nil, port = nil, path = "", query = nil, user = nil, password = nil, fragment = nil, opaque = nil)
-  it "parse #{string}" do
-    uri = URI.parse(string)
-    uri.scheme.should eq(scheme)
-    uri.host.should eq(host)
-    uri.port.should eq(port)
-    uri.path.should eq(path)
-    uri.query.should eq(query)
-    uri.user.should eq(user)
-    uri.password.should eq(password)
-    uri.fragment.should eq(fragment)
-    uri.opaque.should eq(opaque)
+private def assert_uri(string, file = __FILE__, line = __LINE__, **args)
+  it "`#{string}`", file, line do
+    URI.parse(string).should eq URI.new(**args)
   end
 end
 
@@ -50,18 +41,18 @@ describe "URI" do
   end
 
   describe "hostname" do
-    it { URI.parse("http://www.example.com/foo").hostname.should eq("www.example.com") }
-    it { URI.parse("http://[::1]/foo").hostname.should eq("::1") }
-    it { URI.parse("/foo").hostname.should be_nil }
+    it { URI.new("http", "www.example.com", path: "/foo").hostname.should eq("www.example.com") }
+    it { URI.new("http", "[::1]", path: "foo").hostname.should eq("::1") }
+    it { URI.new(path: "/foo").hostname.should be_nil }
   end
 
   describe "full_path" do
-    it { URI.parse("http://www.example.com/foo").full_path.should eq("/foo") }
-    it { URI.parse("http://www.example.com").full_path.should eq("/") }
-    it { URI.parse("http://www.example.com/foo?q=1").full_path.should eq("/foo?q=1") }
-    it { URI.parse("http://www.example.com/?q=1").full_path.should eq("/?q=1") }
-    it { URI.parse("http://www.example.com?q=1").full_path.should eq("/?q=1") }
-    it { URI.parse("http://test.dev/a%3Ab").full_path.should eq("/a%3Ab") }
+    it { URI.new(path: "/foo").full_path.should eq("/foo") }
+    it { URI.new.full_path.should eq("/") }
+    it { URI.new(path: "/foo", query: "q=1").full_path.should eq("/foo?q=1") }
+    it { URI.new(path: "/", query: "q=1").full_path.should eq("/?q=1") }
+    it { URI.new(query: "q=1").full_path.should eq("/?q=1") }
+    it { URI.new(path: "/a%3Ab").full_path.should eq("/a%3Ab") }
 
     it "does not add '?' to the end if the query params are empty" do
       uri = URI.parse("http://www.example.com/foo")
@@ -128,25 +119,17 @@ describe "URI" do
   describe "to_s" do
     it { URI.new("http", "www.example.com").to_s.should eq("http://www.example.com") }
     it { URI.new("http", "www.example.com", 80).to_s.should eq("http://www.example.com") }
-    it do
-      u = URI.new("http", "www.example.com")
-      u.user = "alice"
-      u.to_s.should eq("http://alice@www.example.com")
-      u.password = "s3cr3t"
-      u.to_s.should eq("http://alice:s3cr3t@www.example.com")
-    end
-    it do
-      u = URI.new("http", "www.example.com")
-      u.user = ":D"
-      u.to_s.should eq("http://%3AD@www.example.com")
-      u.password = "@_@"
-      u.to_s.should eq("http://%3AD:%40_%40@www.example.com")
-    end
+    it { URI.new("http", "www.example.com", user: "alice").to_s.should eq("http://alice@www.example.com") }
+    it { URI.new("http", "www.example.com", user: "alice", password: "s3cr3t").to_s.should eq("http://alice:s3cr3t@www.example.com") }
+    it { URI.new("http", "www.example.com", user: ":D").to_s.should eq("http://%3AD@www.example.com") }
+    it { URI.new("http", "www.example.com", user: ":D", password: "@_@").to_s.should eq("http://%3AD:%40_%40@www.example.com") }
     it { URI.new("http", "www.example.com", user: "@al:ce", password: "s/cr3t").to_s.should eq("http://%40al%3Ace:s%2Fcr3t@www.example.com") }
     it { URI.new("http", "www.example.com", fragment: "top").to_s.should eq("http://www.example.com#top") }
     it { URI.new("http", "www.example.com", 80, "/hello").to_s.should eq("http://www.example.com/hello") }
     it { URI.new("http", "www.example.com", 80, "/hello", "a=1").to_s.should eq("http://www.example.com/hello?a=1") }
     it { URI.new("mailto", opaque: "foo@example.com").to_s.should eq("mailto:foo@example.com") }
+    it { URI.new("file", opaque: "/foo.html").to_s.should eq("file:/foo.html") }
+    it { URI.new("file", opaque: "foo.html").to_s.should eq("file:foo.html") }
 
     it "removes default port" do
       URI.new("http", "www.example.com", 80).to_s.should eq("http://www.example.com")
