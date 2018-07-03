@@ -224,6 +224,9 @@ describe "URI" do
     it { URI.new("mailto", path: "foo@example.com").to_s.should eq("mailto:foo@example.com") }
     it { URI.new("file", path: "/foo.html").to_s.should eq("file:/foo.html") }
     it { URI.new("file", path: "foo.html").to_s.should eq("file:foo.html") }
+    it { URI.new("file", host: "host", path: "foo.html").to_s.should eq("file://host/foo.html") }
+    it { URI.new(path: "//foo").to_s.should eq("/.//foo") }
+    it { URI.new(host: "host", path: "//foo").to_s.should eq("//host//foo") }
 
     it "preserves non-default port" do
       URI.new("http", "www.example.com", 1234).to_s.should eq("http://www.example.com:1234")

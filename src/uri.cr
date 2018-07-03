@@ -177,7 +177,9 @@ class URI
       io << scheme
       io << ':'
     end
-    io << "//" if @user || host || port
+
+    authority = @user || @host || @port
+    io << "//" if authority
     if user = @user
       userinfo(user, io)
       io << '@'
@@ -190,7 +192,16 @@ class URI
     if port = @port
       io << ':' << port
     end
+
+    if authority
+      if !@path.empty? && !@path.starts_with?('/')
+        io << '/'
+      end
+    elsif @path.starts_with?("//")
+      io << "/."
+    end
     io << @path
+
     if query
       io << '?'
       io << query
