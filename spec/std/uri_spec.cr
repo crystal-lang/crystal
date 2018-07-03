@@ -17,21 +17,37 @@ private def assert_uri(string, scheme = nil, host = nil, port = nil, path = "", 
 end
 
 describe "URI" do
-  assert_uri("http://www.example.com", scheme: "http", host: "www.example.com")
-  assert_uri("http://www.example.com:81", scheme: "http", host: "www.example.com", port: 81)
-  assert_uri("http://[::1]:81", scheme: "http", host: "[::1]", port: 81)
-  assert_uri("http://www.example.com/foo", scheme: "http", host: "www.example.com", path: "/foo")
-  assert_uri("http://www.example.com/foo?q=1", scheme: "http", host: "www.example.com", path: "/foo", query: "q=1")
-  assert_uri("http://www.example.com?q=1", scheme: "http", host: "www.example.com", query: "q=1")
-  assert_uri("https://www.example.com", scheme: "https", host: "www.example.com")
-  assert_uri("https://alice:pa55w0rd@www.example.com", scheme: "https", host: "www.example.com", user: "alice", password: "pa55w0rd")
-  assert_uri("https://alice@www.example.com", scheme: "https", host: "www.example.com", user: "alice", password: nil)
-  assert_uri("https://%3AD:%40_%40@www.example.com", scheme: "https", host: "www.example.com", user: ":D", password: "@_@")
-  assert_uri("https://www.example.com/#top", scheme: "https", host: "www.example.com", path: "/", fragment: "top")
-  assert_uri("http://www.foo-bar.example.com", scheme: "http", host: "www.foo-bar.example.com")
-  assert_uri("/foo", path: "/foo")
-  assert_uri("/foo?q=1", path: "/foo", query: "q=1")
-  assert_uri("mailto:foo@example.org", scheme: "mailto", opaque: "foo@example.org")
+  describe ".parse" do
+    assert_uri("http://www.example.com", scheme: "http", host: "www.example.com")
+    assert_uri("http://www.example.com:81", scheme: "http", host: "www.example.com", port: 81)
+    assert_uri("http://[::1]:81", scheme: "http", host: "[::1]", port: 81)
+    assert_uri("http://www.example.com/foo", scheme: "http", host: "www.example.com", path: "/foo")
+    assert_uri("http://www.example.com/foo?q=1", scheme: "http", host: "www.example.com", path: "/foo", query: "q=1")
+    assert_uri("http://www.example.com?q=1", scheme: "http", host: "www.example.com", query: "q=1")
+    assert_uri("https://www.example.com", scheme: "https", host: "www.example.com")
+    assert_uri("https://alice:pa55w0rd@www.example.com", scheme: "https", host: "www.example.com", user: "alice", password: "pa55w0rd")
+    assert_uri("https://alice@www.example.com", scheme: "https", host: "www.example.com", user: "alice", password: nil)
+    assert_uri("https://%3AD:%40_%40@www.example.com", scheme: "https", host: "www.example.com", user: ":D", password: "@_@")
+    assert_uri("https://www.example.com/#top", scheme: "https", host: "www.example.com", path: "/", fragment: "top")
+    assert_uri("http://www.foo-bar.example.com", scheme: "http", host: "www.foo-bar.example.com")
+    assert_uri("/foo", path: "/foo")
+    assert_uri("/foo?q=1", path: "/foo", query: "q=1")
+    assert_uri("mailto:foo@example.org", scheme: "mailto", opaque: "foo@example.org")
+
+    assert_uri("http://user:pass@bitfission.com:8080/path?a=b#frag",
+      scheme: "http", user: "user", password: "pass", host: "bitfission.com", port: 8080, path: "/path", query: "a=b", fragment: "frag")
+    assert_uri("//user:pass@bitfission.com:8080/path?a=b#frag",
+      user: "user", password: "pass", host: "bitfission.com", port: 8080, path: "/path", query: "a=b", fragment: "frag")
+    assert_uri("/path?a=b#frag", path: "/path", query: "a=b", fragment: "frag")
+    assert_uri("mailto:user@example.com", scheme: "mailto", opaque: "user@example.com")
+    assert_uri("file://localhost/etc/fstab", scheme: "file", host: "localhost", path: "/etc/fstab")
+    assert_uri("file:///etc/fstab", scheme: "file", path: "/etc/fstab")
+    assert_uri("test:/test", scheme: "test", path: "/test")
+
+    context "bad urls" do
+      it { expect_raises(URI::Error) { URI.parse("http://some.com:8f80/path") } }
+    end
+  end
 
   describe "hostname" do
     it { URI.parse("http://www.example.com/foo").hostname.should eq("www.example.com") }
