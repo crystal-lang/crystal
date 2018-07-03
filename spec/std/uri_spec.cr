@@ -33,6 +33,9 @@ describe "URI" do
     assert_uri("http://[::1]:81/", scheme: "http", host: "[::1]", port: 81, path: "/")
     assert_uri("http://192.0.2.16:81/", scheme: "http", host: "192.0.2.16", port: 81, path: "/")
 
+    # port
+    it { URI.parse("http://192.168.0.2:/foo").should eq URI.new(scheme: "http", host: "192.168.0.2", path: "/foo") }
+
     # path
     assert_uri("http://www.example.com/foo", scheme: "http", host: "www.example.com", path: "/foo")
     assert_uri("http:.", scheme: "http", path: ".")

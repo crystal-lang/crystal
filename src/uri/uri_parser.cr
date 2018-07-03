@@ -140,8 +140,10 @@ class URI
         if numeric?
           @ptr += 1
         elsif end_of_host?
-          @uri.port = (start...@ptr).reduce(0) do |memo, i|
-            (memo * 10) + (@input[i] - '0'.ord)
+          unless start == @ptr
+            @uri.port = (start...@ptr).reduce(0) do |memo, i|
+              (memo * 10) + (@input[i] - '0'.ord)
+            end
           end
           return parse_path
         else
