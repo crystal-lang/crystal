@@ -1,3 +1,5 @@
+require "uri/punycode"
+
 abstract class OpenSSL::SSL::Context
   # :nodoc:
   def self.default_method
@@ -72,6 +74,9 @@ abstract class OpenSSL::SSL::Context
     # context = OpenSSL::SSL::Context::Client.new
     # context.add_options(OpenSSL::SSL::Options::NO_SSL_V2 | OpenSSL::SSL::Options::NO_SSL_V3)
     # ```
+
+    @hostname : String?
+
     def initialize(method : LibSSL::SSLMethod = Context.default_method)
       super(method)
 
@@ -95,6 +100,9 @@ abstract class OpenSSL::SSL::Context
     #
     # Required for OpenSSL <= 1.0.1 only.
     protected def set_cert_verify_callback(hostname : String)
+      # Sanitize the hostname with PunyCode
+      hostname = URI::Punycode.to_ascii hostname
+
       # Keep a reference so the GC doesn't collect it after sending it to C land
       @hostname = hostname
       LibSSL.ssl_ctx_set_cert_verify_callback(@handle, ->(x509_ctx, arg) {
