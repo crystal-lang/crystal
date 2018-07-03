@@ -42,6 +42,7 @@ describe "URI" do
     assert_uri("http:..", scheme: "http", path: "..")
     assert_uri("http://host/!$&'()*+,;=:@[hello]", scheme: "http", host: "host", path: "/!$&'()*+,;=:@[hello]")
     assert_uri("http://example.com//foo", scheme: "http", host: "example.com", path: "//foo")
+    assert_uri("///foo", host: "", path: "/foo")
 
     pending "path with escape" do
       assert_uri("http://www.example.com/file%20one%26two", scheme: "http", host: "example.com", path: "/file one&two", raw_path: "/file%20one%26two")

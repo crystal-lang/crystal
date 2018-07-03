@@ -170,6 +170,7 @@ class URI
     def parse_relative_slash
       if @input[@ptr + 1] === '/'
         @ptr += 1
+        @uri.host ||= ""
         parse_authority
       else
         parse_path
