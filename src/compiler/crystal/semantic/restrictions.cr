@@ -953,6 +953,9 @@ module Crystal
     end
 
     def restrict(other : VirtualMetaclassType, context)
+      # A module class can't be restricted into a class
+      return nil if instance_type.module?
+
       restricted = instance_type.restrict(other.instance_type.base_type, context)
       restricted ? self : nil
     end
