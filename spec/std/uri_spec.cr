@@ -4,36 +4,106 @@ require "uri"
 private def assert_uri(string, file = __FILE__, line = __LINE__, **args)
   it "`#{string}`", file, line do
     URI.parse(string).should eq URI.new(**args)
+    URI.parse(string).to_s.should eq string
   end
 end
 
 describe "URI" do
   describe ".parse" do
+    # host
     assert_uri("http://www.example.com", scheme: "http", host: "www.example.com")
+    assert_uri("http://www.foo-bar.example.com", scheme: "http", host: "www.foo-bar.example.com")
     assert_uri("http://www.example.com:81", scheme: "http", host: "www.example.com", port: 81)
     assert_uri("http://[::1]:81", scheme: "http", host: "[::1]", port: 81)
+    assert_uri("http://192.0.2.16:81", scheme: "http", host: "192.0.2.16", port: 81)
+
+    # host with trailing slash
+    assert_uri("http://www.example.com/", scheme: "http", host: "www.example.com", path: "/")
+    assert_uri("http://www.example.com:81/", scheme: "http", host: "www.example.com", port: 81, path: "/")
+    assert_uri("http://[::1]:81/", scheme: "http", host: "[::1]", port: 81, path: "/")
+    assert_uri("http://192.0.2.16:81/", scheme: "http", host: "192.0.2.16", port: 81, path: "/")
+
+    # path
     assert_uri("http://www.example.com/foo", scheme: "http", host: "www.example.com", path: "/foo")
+    assert_uri("http:.", scheme: "http", path: ".")
+    assert_uri("http:..", scheme: "http", path: "..")
+    assert_uri("http://host/!$&'()*+,;=:@[hello]", scheme: "http", host: "host", path: "/!$&'()*+,;=:@[hello]")
+    assert_uri("http://example.com//foo", scheme: "http", host: "example.com", path: "//foo")
+
+    pending "path with escape" do
+      assert_uri("http://www.example.com/file%20one%26two", scheme: "http", host: "example.com", path: "/file one&two", raw_path: "/file%20one%26two")
+    end
+
+    # query
     assert_uri("http://www.example.com/foo?q=1", scheme: "http", host: "www.example.com", path: "/foo", query: "q=1")
     assert_uri("http://www.example.com/foo?", scheme: "http", host: "www.example.com", path: "/foo", query: "")
-    assert_uri("http://www.example.com?q=1", scheme: "http", host: "www.example.com", query: "q=1")
-    assert_uri("https://www.example.com", scheme: "https", host: "www.example.com")
+    assert_uri("?q=1", query: "q=1")
+    assert_uri("?q=1?", query: "q=1?")
+    assert_uri("?a+b=c%2Bd", query: "a+b=c%2Bd")
+    assert_uri("?query=http://example.com", query: "query=http://example.com")
+
+    # userinfo
     assert_uri("https://alice:pa55w0rd@www.example.com", scheme: "https", host: "www.example.com", user: "alice", password: "pa55w0rd")
     assert_uri("https://alice@www.example.com", scheme: "https", host: "www.example.com", user: "alice", password: nil)
+    assert_uri("https://alice:@www.example.com", scheme: "https", host: "www.example.com", user: "alice", password: "")
     assert_uri("https://%3AD:%40_%40@www.example.com", scheme: "https", host: "www.example.com", user: ":D", password: "@_@")
+
+    pending "unescaped @ in user/password should not confuse host" do
+      assert_uri("http://j@ne:password@example.com", scheme: "http", host: "example.com", user: "j@ne", password: "password")
+      assert_uri("http://jane:p@ssword@example.com", scheme: "http", host: "example.com", user: "jane", password: "p@ssword")
+    end
+
+    # fragment
     assert_uri("https://www.example.com/#top", scheme: "https", host: "www.example.com", path: "/", fragment: "top")
-    assert_uri("http://www.foo-bar.example.com", scheme: "http", host: "www.foo-bar.example.com")
+
+    # relative URL
     assert_uri("/foo", path: "/foo")
     assert_uri("/foo?q=1", path: "/foo", query: "q=1")
-    assert_uri("mailto:foo@example.org", scheme: "mailto", path: "foo@example.org")
+    assert_uri("//foo", host: "foo")
+    assert_uri("//user@foo/path?q=b", host: "foo", user: "user", path: "/path", query: "q=b")
 
+    # various schemes
+    assert_uri("mailto:foo@example.org", scheme: "mailto", path: "foo@example.org")
+    assert_uri("news:comp.infosystems.www.servers.unix", scheme: "news", path: "comp.infosystems.www.servers.unix")
+    assert_uri("tel:+1-816-555-1212", scheme: "tel", path: "+1-816-555-1212")
+    assert_uri("urn:oasis:names:specification:docbook:dtd:xml:4.1.2", scheme: "urn", path: "oasis:names:specification:docbook:dtd:xml:4.1.2")
+    assert_uri("telnet://192.0.2.16:80/", scheme: "telnet", host: "192.0.2.16", port: 80, path: "/")
+    assert_uri("ldap://[2001:db8::7]/c=GB?objectClass?one", scheme: "ldap", host: "[2001:db8::7]", path: "/c=GB", query: "objectClass?one")
+    assert_uri("magnet:?xt=urn:btih:c12fe1c06bba254a9dc9f519b335aa7c1367a88a&dn", scheme: "magnet", query: "xt=urn:btih:c12fe1c06bba254a9dc9f519b335aa7c1367a88a&dn")
+
+    # opaque
+    assert_uri("http:example.com/?q=foo", scheme: "http", path: "example.com/", query: "q=foo")
+
+    # no hierarchical part
+    assert_uri("http:", scheme: "http")
+    assert_uri("http:?", scheme: "http", query: "")
+    assert_uri("http:?#", scheme: "http", query: "", fragment: "")
+    assert_uri("http:#", scheme: "http", fragment: "")
+    assert_uri("http://", scheme: "http", host: "")
+    assert_uri("http://?", scheme: "http", host: "", query: "")
+    assert_uri("http://?#", scheme: "http", host: "", query: "", fragment: "")
+    assert_uri("http://#", scheme: "http", host: "", fragment: "")
+
+    # empty host, but port
+    assert_uri("http://:8000", scheme: "http", host: "", port: 8000)
+    assert_uri("http://:8000/foo", scheme: "http", host: "", port: 8000, path: "/foo")
+
+    # empty host, but user
+    assert_uri("http://user@", scheme: "http", host: "", user: "user")
+    assert_uri("http://user@/foo", scheme: "http", host: "", user: "user", path: "/foo")
+
+    # path with illegal characters
+    assert_uri("foo/another@url/[]and{}", path: "foo/another@url/[]and{}")
+
+    # complex examples
     assert_uri("http://user:pass@bitfission.com:8080/path?a=b#frag",
       scheme: "http", user: "user", password: "pass", host: "bitfission.com", port: 8080, path: "/path", query: "a=b", fragment: "frag")
     assert_uri("//user:pass@bitfission.com:8080/path?a=b#frag",
       user: "user", password: "pass", host: "bitfission.com", port: 8080, path: "/path", query: "a=b", fragment: "frag")
     assert_uri("/path?a=b#frag", path: "/path", query: "a=b", fragment: "frag")
-    assert_uri("mailto:user@example.com", scheme: "mailto", path: "user@example.com")
     assert_uri("file://localhost/etc/fstab", scheme: "file", host: "localhost", path: "/etc/fstab")
     assert_uri("file:///etc/fstab", scheme: "file", host: "", path: "/etc/fstab")
+    assert_uri("file:///C:/FooBar/Baz.txt", scheme: "file", host: "", path: "/C:/FooBar/Baz.txt")
     assert_uri("test:/test", scheme: "test", path: "/test")
 
     context "bad urls" do
