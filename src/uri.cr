@@ -144,6 +144,16 @@ class URI
     end
   end
 
+  # Returns `true` if URI has a *scheme* specified.
+  def absolute?
+    @scheme ? true : false
+  end
+
+  # Returns `true` if URI does not have a *scheme* specified.
+  def relative?
+    !absolute?
+  end
+
   def to_s(io : IO)
     if scheme
       io << scheme
