@@ -182,8 +182,10 @@ class URI
       userinfo(user, io)
       io << '@'
     end
-    if host
-      io << host
+    if host = @host
+      URI.escape(host, io) do |byte|
+        URI.unreserved?(byte) || URI.reserved?(byte)
+      end
     end
     if port = @port
       io << ':' << port

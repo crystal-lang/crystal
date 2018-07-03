@@ -120,11 +120,11 @@ class URI
       return parse_path if c === '/'
       loop do
         if c === ':' && !bracket_flag
-          @uri.host = from_input(start)
+          @uri.host = URI.unescape(from_input(start))
           @ptr += 1
           return parse_port
         elsif end_of_host?
-          @uri.host = from_input(start)
+          @uri.host = URI.unescape(from_input(start))
           return parse_path
         else
           bracket_flag = true if c === '['

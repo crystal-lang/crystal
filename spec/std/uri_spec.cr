@@ -20,6 +20,12 @@ describe "URI" do
     assert_uri("http://www.example.com:81", scheme: "http", host: "www.example.com", port: 81)
     assert_uri("http://[::1]:81", scheme: "http", host: "[::1]", port: 81)
     assert_uri("http://192.0.2.16:81", scheme: "http", host: "192.0.2.16", port: 81)
+    it { URI.parse("http://[fe80::1%en0]:8080/").should eq(URI.new(scheme: "http", host: "[fe80::1%en0]", port: 8080, path: "/")) }
+    assert_uri("http://[fe80::1%25en0]:8080/", scheme: "http", host: "[fe80::1%en0]", port: 8080, path: "/")
+    assert_uri("mysql://a,b,c/bar", scheme: "mysql", host: "a,b,c", path: "/bar")
+    assert_uri("scheme://!$&'()*+,;=hello!:12/path", scheme: "scheme", host: "!$&'()*+,;=hello!", port: 12, path: "/path")
+    it { URI.parse("http://hello.世界.com").should eq(URI.new(scheme: "http", host: "hello.世界.com")) }
+    assert_uri("tcp://[2020::2020:20:2020:2020%25Windows%20Loves%20Spaces]:2020", scheme: "tcp", host: "[2020::2020:20:2020:2020%Windows Loves Spaces]", port: 2020)
 
     # host with trailing slash
     assert_uri("http://www.example.com/", scheme: "http", host: "www.example.com", path: "/")
