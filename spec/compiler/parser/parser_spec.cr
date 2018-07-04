@@ -174,6 +174,9 @@ module Crystal
     assert_syntax_error "def foo!=; end", "unexpected token: !="
     assert_syntax_error "def foo?=(x); end", "unexpected token: ?"
 
+    # 5856
+    assert_syntax_error "def foo=(a,b); end", "setter method 'foo=' cannot receive more than one argument"
+
     # #5895 & #6042
     %w(
       begin nil true false yield with abstract
