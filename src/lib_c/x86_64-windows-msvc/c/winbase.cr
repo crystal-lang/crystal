@@ -85,4 +85,9 @@ lib LibC
   INVALID_HANDLE_VALUE = HANDLE.new(-1)
 
   fun CloseHandle(hObject : HANDLE) : BOOL
+
+  fun GetEnvironmentVariableW(lpName : LPCWSTR, lpBuffer : LPWSTR, nSize : DWORD) : DWORD
+  fun GetEnvironmentStringsW : LPWCH
+  fun FreeEnvironmentStringsW(lpszEnvironmentBlock : LPWCH) : BOOL
+  fun SetEnvironmentVariableW(lpName : LPCWSTR, lpValue : LPCWSTR) : BOOL
 end
