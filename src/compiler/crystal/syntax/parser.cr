@@ -3301,6 +3301,7 @@ module Crystal
       found_default_value = false
       found_splat = false
       found_double_splat = nil
+      found_block = false
 
       index = 0
       splat_index = nil
@@ -3332,6 +3333,7 @@ module Crystal
           if block_arg = extras.block_arg
             compute_block_arg_yields block_arg
             check :")"
+            found_block = true
             break
           elsif @token.type == :","
             next_token_skip_space_or_newline
@@ -3344,10 +3346,12 @@ module Crystal
           index += 1
         end
 
-        has_many_args = args.size > 1 || found_splat || found_double_splat
-
-        if name.ends_with?('=') && !name.ends_with?("[]=") && has_many_args
-          raise "setter method '#{name}' cannot receive more than one argument"
+        if name.ends_with?('=') && !name.ends_with?("[]=")
+          if args.size > 1 || found_splat || found_double_splat
+            raise "setter method '#{name}' cannot receive more than one argument"
+          elsif found_block
+            raise "setter method '#{name}' cannot receive a block"
+          end
         end
 
         if splat_index == args.size - 1 && args.last.name.empty?
