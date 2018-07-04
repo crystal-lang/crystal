@@ -537,7 +537,7 @@ module Crystal
     def parse_prefix
       column_number = @token.column_number
       case token_type = @token.type
-      when :"!", :"+", :"-", :"~", :"&-"
+      when :"!", :"+", :"-", :"~", :"&+", :"&-"
         location = @token.location
         next_token_skip_space_or_newline
         check_void_expression_keyword

@@ -254,6 +254,7 @@ describe "Lexer" do
   it_lexes "!@foo", :"!"
   it_lexes "+@foo", :"+"
   it_lexes "-@foo", :"-"
+  it_lexes "&+@foo", :"&+"
   it_lexes "&-@foo", :"&-"
   it_lexes_const "Foo"
   it_lexes_instance_var "@foo"
