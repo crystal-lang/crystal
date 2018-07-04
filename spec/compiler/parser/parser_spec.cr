@@ -1085,6 +1085,8 @@ module Crystal
     it_parses "->foo=", ProcPointer.new(nil, "foo=")
     it_parses "foo = 1; ->foo.foo=", [Assign.new("foo".var, 1.int32), ProcPointer.new("foo".var, "foo=")]
 
+    it_parses "foo &->bar", Call.new(nil, "foo", block_arg: ProcPointer.new(nil, "bar"))
+
     it_parses "foo.bar = {} of Int32 => Int32", Call.new("foo".call, "bar=", HashLiteral.new(of: HashLiteral::Entry.new("Int32".path, "Int32".path)))
 
     it_parses "alias Foo = Bar", Alias.new("Foo", "Bar".path)

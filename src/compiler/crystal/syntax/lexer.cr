@@ -596,11 +596,18 @@ module Crystal
             @token.type = :"&+"
           end
         when '-'
-          case next_char
-          when '='
-            next_char :"&-="
+          # Check if '>' comes after '&-', making it '&->'.
+          # We want to parse that like '&(->...)',
+          # so we only return '&' for now.
+          if peek_next_char == '>'
+            @token.type = :"&"
           else
-            @token.type = :"&-"
+            case next_char
+            when '='
+              next_char :"&-="
+            else
+              @token.type = :"&-"
+            end
           end
         when '*'
           case next_char
