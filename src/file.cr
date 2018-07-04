@@ -1,16 +1,16 @@
 require "crystal/system/file"
 
 class File < IO::FileDescriptor
-  # The file/directory separator character. `'/'` in Unix, `'\\'` in Windows.
+  # The file/directory separator character. `'/'` on all platforms.
   SEPARATOR = '/'
 
-  # The file/directory separator string. `"/"` in Unix, `"\\"` in Windows.
+  # The file/directory separator string. `"/"` on all platforms.
   SEPARATOR_STRING = "/"
 
   # :nodoc:
   DEFAULT_CREATE_PERMISSIONS = File::Permissions.new(0o644)
 
-  # The name of the null device on the host platform. /dev/null on UNIX and NUL
+  # The name of the null device on the host platform. `/dev/null` on UNIX and `NUL`
   # on win32.
   #
   # When this device is opened using `File.open`, read operations will always
