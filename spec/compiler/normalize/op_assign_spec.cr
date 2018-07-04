@@ -2,7 +2,7 @@ require "../../spec_helper"
 
 describe "Normalize: op assign" do
   ["+", "-", "*", "&+", "&-", "&*"].each do |op|
-    it "normalizes var +=" do
+    it "normalizes var #{op}=" do
       assert_normalize "a = 1; a #{op}= 2", "a = 1\na = a #{op} 2"
     end
   end
