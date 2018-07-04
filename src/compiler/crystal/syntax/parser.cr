@@ -3231,7 +3231,6 @@ module Crystal
 
       receiver = nil
       @yields = nil
-      is_setter = false
       name_line_number = @token.line_number
       name_column_number = @token.column_number
       receiver_location = @token.location
@@ -3246,7 +3245,6 @@ module Crystal
         next_token
         if @token.type == :"="
           name = "#{name}="
-          is_setter = true
           next_token_skip_space
         else
           skip_space
@@ -3279,7 +3277,6 @@ module Crystal
           next_token
           if @token.type == :"="
             name = "#{name}="
-            is_setter = true
             next_token_skip_space
           else
             skip_space
@@ -3347,7 +3344,9 @@ module Crystal
           index += 1
         end
 
-        if is_setter && args.size > 1
+        has_many_args = args.size > 1 || found_splat || found_double_splat
+
+        if name.ends_with?('=') && !name.ends_with?("[]=") && has_many_args
           raise "setter method '#{name}' cannot receive more than one argument"
         end
 

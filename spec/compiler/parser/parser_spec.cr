@@ -176,6 +176,9 @@ module Crystal
 
     # 5856
     assert_syntax_error "def foo=(a,b); end", "setter method 'foo=' cannot receive more than one argument"
+    assert_syntax_error "def foo=(a = 1, b = 2); end", "setter method 'foo=' cannot receive more than one argument"
+    assert_syntax_error "def foo=(*args); end", "setter method 'foo=' cannot receive more than one argument"
+    assert_syntax_error "def foo=(**kwargs); end", "setter method 'foo=' cannot receive more than one argument"
 
     # #5895 & #6042
     %w(
