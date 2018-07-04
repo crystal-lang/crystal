@@ -721,9 +721,11 @@ class File < IO::FileDescriptor
   def self.join(parts : Array | Tuple) : String
     String.build do |str|
       first = true
+      parts_last_index = parts.size - 1
       parts.each_with_index do |part, index|
         part.check_no_null_byte
-        next if part.empty? && index != parts.size - 1
+        next if part.empty? && index != parts_last_index
+        next if !first && index != parts_last_index && part == SEPARATOR_STRING
 
         str << SEPARATOR unless first
 
@@ -735,7 +737,7 @@ class File < IO::FileDescriptor
           byte_count -= 1
         end
 
-        if index != parts.size - 1 && part.ends_with?(SEPARATOR)
+        if index != parts_last_index && part.ends_with?(SEPARATOR)
           byte_count -= 1
         end
 
