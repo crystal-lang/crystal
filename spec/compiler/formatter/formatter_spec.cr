@@ -296,6 +296,7 @@ describe Crystal::Formatter do
   assert_format "with foo yield bar"
 
   assert_format "1   +   2", "1 + 2"
+  assert_format "1   &+   2", "1 &+ 2"
   assert_format "1   >   2", "1 > 2"
   assert_format "1   *   2", "1 * 2"
   assert_format "1*2", "1*2"
@@ -312,14 +313,22 @@ describe Crystal::Formatter do
   assert_format "- 1", "-1"
   assert_format "~ 1", "~1"
   assert_format "+ 1", "+1"
+  assert_format "&- 1", "&-1"
+  assert_format "&+ 1", "&+1"
   assert_format "a-1", "a - 1"
   assert_format "a+1", "a + 1"
+  assert_format "a&-1", "a &- 1"
+  assert_format "a&+1", "a &+ 1"
   assert_format "1 + \n2", "1 +\n  2"
   assert_format "1 +  # foo\n2", "1 + # foo\n  2"
   assert_format "a = 1 +  #    foo\n2", "a = 1 + #    foo\n    2"
   assert_format "1+2*3", "1 + 2*3"
+  assert_format "1&+2&*3", "1 &+ 2 &* 3"
 
   assert_format "foo(1 + \n2)", "foo(1 +\n    2)"
+  assert_format "foo(1 &+ \n2)", "foo(1 &+\n    2)"
+
+  assert_format "foo(1 &- 2)"
 
   assert_format "foo[]", "foo[]"
   assert_format "foo[ 1 , 2 ]", "foo[1, 2]"
@@ -650,7 +659,8 @@ describe Crystal::Formatter do
   assert_format "->( x , y )   { x }", "->(x, y) { x }"
   assert_format "->( x : Int32 , y )   { x }", "->(x : Int32, y) { x }"
 
-  {:+, :-, :*, :/, :^, :>>, :<<, :|, :&}.each do |sym|
+  # TODO remove quotes after 0.26.0
+  {:+, :-, :*, :/, :^, :>>, :<<, :|, :&, :"&+", :"&-", :"&*", :"&**"}.each do |sym|
     assert_format ":#{sym}"
   end
   assert_format ":\"foo bar\""
