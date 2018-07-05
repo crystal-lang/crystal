@@ -95,4 +95,22 @@ describe "ENV" do
       end
     end
   end
+
+  it "handles unicode" do
+    ENV["TEST_UNICODE_1"] = "bar\u{d7ff}\u{10000}"
+    ENV["TEST_UNICODE_2"] = "\u{1234}"
+    ENV["TEST_UNICODE_1"].should eq "bar\u{d7ff}\u{10000}"
+    ENV["TEST_UNICODE_2"].should eq "\u{1234}"
+
+    values = {} of String => String
+    ENV.each do |key, value|
+      if key.starts_with?("TEST_UNICODE_")
+        values[key] = value
+      end
+    end
+    values.should eq({
+      "TEST_UNICODE_1" => "bar\u{d7ff}\u{10000}",
+      "TEST_UNICODE_2" => "\u{1234}",
+    })
+  end
 end

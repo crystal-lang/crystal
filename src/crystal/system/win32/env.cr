@@ -54,13 +54,11 @@ module Crystal::System::Env
 
     begin
       while !pointer.value.zero?
-        string = String.from_utf16(pointer)
+        string, pointer = String.from_utf16(pointer)
         key_value = string.split('=', 2)
         key = key_value[0]
         value = key_value[1]? || ""
         yield key, value
-
-        pointer += string.bytesize + 1
       end
     ensure
       LibC.FreeEnvironmentStringsW(orig_pointer)
