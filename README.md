@@ -3,7 +3,7 @@
 [![Travis CI Build Status](https://travis-ci.org/crystal-lang/crystal.svg)](https://travis-ci.org/crystal-lang/crystal)
 [![CircleCI Build Status](https://circleci.com/gh/crystal-lang/crystal/tree/master.svg?style=shield)](https://circleci.com/gh/crystal-lang/crystal)
 [![Join the chat at https://gitter.im/crystal-lang/crystal](https://badges.gitter.im/crystal-lang/crystal.svg)](https://gitter.im/crystal-lang/crystal)
-[![Bountysource](https://api.bountysource.com/badge/team?team_id=89730&style=raised)](https://www.bountysource.com/teams/crystal-lang/fundraisers/702-crystal-language)
+[![Bountysource](https://api.bountysource.com/badge/team?team_id=89730&style=raised)](https://salt.bountysource.com/teams/crystal-lang)
 [![Code Triagers Badge](https://www.codetriage.com/crystal-lang/crystal/badges/users.svg)](https://www.codetriage.com/crystal-lang/crystal)
 
 ---
