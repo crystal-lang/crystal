@@ -1,22 +1,31 @@
 require "crystal/system/file"
 
 class File < IO::FileDescriptor
-  # The file/directory separator character. `'/'` in Unix, `'\\'` in Windows.
-  SEPARATOR = {% if flag?(:windows) %}
-    '\\'
-  {% else %}
-    '/'
-  {% end %}
+  # The file/directory separator character. `'/'` on all platforms.
+  SEPARATOR = '/'
 
-  # The file/directory separator string. `"/"` in Unix, `"\\"` in Windows.
-  SEPARATOR_STRING = {% if flag?(:windows) %}
-    "\\"
-  {% else %}
-    "/"
-  {% end %}
+  # The file/directory separator string. `"/"` on all platforms.
+  SEPARATOR_STRING = "/"
 
   # :nodoc:
   DEFAULT_CREATE_PERMISSIONS = File::Permissions.new(0o644)
+
+  # The name of the null device on the host platform. `/dev/null` on UNIX and `NUL`
+  # on win32.
+  #
+  # When this device is opened using `File.open`, read operations will always
+  # return EOF, and any data written will be immediately discarded.
+  #
+  # ```
+  # File.open(File::DEVNULL) do |file|
+  #   file.puts "this is discarded"
+  # end
+  # ```
+  {% if flag?(:win32) %}
+    DEVNULL = "NUL"
+  {% else %}
+    DEVNULL = "/dev/null"
+  {% end %}
 
   include Crystal::System::File
 
@@ -360,9 +369,7 @@ class File < IO::FileDescriptor
     end
 
     String.build do |str|
-      {% if !flag?(:windows) %}
-        str << SEPARATOR_STRING
-      {% end %}
+      str << SEPARATOR_STRING
       items.join SEPARATOR_STRING, str
     end
   end

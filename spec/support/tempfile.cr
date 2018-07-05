@@ -1,7 +1,11 @@
 require "tempfile"
 require "file_utils"
 
-SPEC_TEMPFILE_PATH = File.join(Tempfile.dirname, "cr-spec-#{Random.new.hex(4)}")
+{% if flag?(:win32) %}
+  SPEC_TEMPFILE_PATH = File.join(Tempfile.dirname, "cr-spec-#{Random.new.hex(4)}").gsub("C:\\", '/').gsub('\\', '/')
+{% else %}
+  SPEC_TEMPFILE_PATH = File.join(Tempfile.dirname, "cr-spec-#{Random.new.hex(4)}")
+{% end %}
 
 SPEC_TEMPFILE_CLEANUP = ENV["SPEC_TEMPFILE_CLEANUP"]? != "0"
 

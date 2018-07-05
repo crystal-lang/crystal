@@ -27,11 +27,23 @@ private def it_raises_on_null_byte(operation, &block)
   end
 end
 
+private def normalize_permissions(permissions, *, directory)
+  {% if flag?(:win32) %}
+    normalized_permissions = 0o444
+    normalized_permissions |= 0o222 if permissions.bits_set?(0o200)
+    normalized_permissions |= 0o111 if directory
+    File::Permissions.new(normalized_permissions)
+  {% else %}
+    File::Permissions.new(permissions)
+  {% end %}
+end
+
 describe "File" do
   it "gets path" do
     path = datapath("test_file.txt")
-    file = File.new path
-    file.path.should eq(path)
+    File.open(path) do |file|
+      file.path.should eq(path)
+    end
   end
 
   it "reads entire file" do
@@ -120,16 +132,17 @@ describe "File" do
     end
   end
 
+  # TODO: implement this for win32
   describe "executable?" do
-    it "gives false" do
+    pending_win32 "gives false" do
       File.executable?(datapath("test_file.txt")).should be_false
     end
 
-    it "gives false when the file doesn't exist" do
+    pending_win32 "gives false when the file doesn't exist" do
       File.executable?(datapath("non_existing_file.txt")).should be_false
     end
 
-    it "gives false when a component of the path is a file" do
+    pending_win32 "gives false when a component of the path is a file" do
       File.executable?(datapath("dir", "test_file.txt", "")).should be_false
     end
   end
@@ -212,11 +225,11 @@ describe "File" do
 
   describe "same?" do
     it "compares following symlinks only if requested" do
-      file = File.expand_path(datapath("test_file.txt"))
-      other = File.expand_path(datapath("test_file.ini"))
+      file = datapath("test_file.txt")
+      other = datapath("test_file.ini")
 
       with_tempfile("test_file_symlink.txt") do |symlink|
-        File.symlink(file, symlink)
+        File.symlink(File.real_path(file), symlink)
 
         File.same?(file, symlink).should be_false
         File.same?(file, symlink, follow_symlinks: true).should be_true
@@ -228,9 +241,9 @@ describe "File" do
 
   describe "symlink" do
     it "creates a symbolic link" do
-      in_path = File.expand_path(datapath("test_file.txt"))
+      in_path = datapath("test_file.txt")
       with_tempfile("test_file_link.txt") do |out_path|
-        File.symlink(in_path, out_path)
+        File.symlink(File.real_path(in_path), out_path)
         File.symlink?(out_path).should be_true
         File.same?(in_path, out_path, follow_symlinks: true).should be_true
       end
@@ -322,7 +335,7 @@ describe "File" do
       begin
         File.write(path, "")
         File.chmod(path, 0o775)
-        File.info(path).permissions.should eq(File::Permissions.new(0o775))
+        File.info(path).permissions.should eq(normalize_permissions(0o775, directory: false))
       ensure
         File.delete(path) if File.exists?(path)
       end
@@ -333,7 +346,7 @@ describe "File" do
       begin
         Dir.mkdir(path, 0o775)
         File.chmod(path, 0o664)
-        File.info(path).permissions.should eq(File::Permissions.new(0o664))
+        File.info(path).permissions.should eq(normalize_permissions(0o664, directory: true))
       ensure
         Dir.rmdir(path) if Dir.exists?(path)
       end
@@ -344,18 +357,23 @@ describe "File" do
       begin
         File.write(path, "")
         File.chmod(path, File::Permissions.flags(OwnerAll, GroupAll, OtherExecute, OtherRead))
-        File.info(path).permissions.should eq(File::Permissions.new(0o775))
+        File.info(path).permissions.should eq(normalize_permissions(0o775, directory: false))
       ensure
         File.delete(path) if File.exists?(path)
       end
     end
 
-    it "follows symlinks" do
+    # See TODO in win32 Crystal::System::File.chmod
+    pending_win32 "follows symlinks" do
       with_tempfile("chmod-destination.txt", "chmod-source.txt") do |source_path, target_path|
         File.write(source_path, "")
-        File.symlink(source_path, target_path)
-        File.chmod(target_path, 0o775)
-        File.info(target_path).permissions.should eq(File::Permissions.new(0o775))
+
+        File.symlink(File.real_path(source_path), target_path)
+        File.symlink?(target_path).should be_true
+
+        File.chmod(target_path, 0o444)
+
+        File.info(target_path).permissions.should eq(normalize_permissions(0o444, directory: false))
       end
     end
 
@@ -376,8 +394,9 @@ describe "File" do
     info.type.should eq(File::Type::Directory)
   end
 
-  it "gets info for a character device" do
-    info = File.info("/dev/null")
+  # TODO: support stating nul on windows
+  pending_win32 "gets info for a character device" do
+    info = File.info(File::DEVNULL)
     info.type.should eq(File::Type::CharacterDevice)
   end
 
@@ -409,7 +428,9 @@ describe "File" do
   it "gets info mtime for new file" do
     with_tempfile("mtime") do |path|
       File.touch(path)
-      File.new(path).info.modification_time.should be_close(Time.now, 1.seconds)
+      File.open(path) do |file|
+        file.info.modification_time.should be_close(Time.now, 1.seconds)
+      end
       File.info(path).modification_time.should be_close(Time.now, 1.seconds)
     end
   end
@@ -495,45 +516,46 @@ describe "File" do
     end
   end
 
+  # TODO: expand_path is horribly broken on win32
   describe "expand_path" do
-    it "converts a pathname to an absolute pathname" do
+    pending_win32 "converts a pathname to an absolute pathname" do
       File.expand_path("").should eq(base)
       File.expand_path("a").should eq(File.join([base, "a"]))
       File.expand_path("a", nil).should eq(File.join([base, "a"]))
     end
 
-    it "converts a pathname to an absolute pathname, Ruby-Talk:18512" do
+    pending_win32 "converts a pathname to an absolute pathname, Ruby-Talk:18512" do
       File.expand_path(".a").should eq(File.join([base, ".a"]))
       File.expand_path("..a").should eq(File.join([base, "..a"]))
       File.expand_path("a../b").should eq(File.join([base, "a../b"]))
     end
 
-    it "keeps trailing dots on absolute pathname" do
+    pending_win32 "keeps trailing dots on absolute pathname" do
       File.expand_path("a.").should eq(File.join([base, "a."]))
       File.expand_path("a..").should eq(File.join([base, "a.."]))
     end
 
-    it "converts a pathname to an absolute pathname, using a complete path" do
+    pending_win32 "converts a pathname to an absolute pathname, using a complete path" do
       File.expand_path("", "#{tmpdir}").should eq("#{tmpdir}")
       File.expand_path("a", "#{tmpdir}").should eq("#{tmpdir}/a")
       File.expand_path("../a", "#{tmpdir}/xxx").should eq("#{tmpdir}/a")
       File.expand_path(".", "#{rootdir}").should eq("#{rootdir}")
     end
 
-    it "expands a path with multi-byte characters" do
+    pending_win32 "expands a path with multi-byte characters" do
       File.expand_path("Ångström").should eq("#{base}/Ångström")
     end
 
-    it "expands /./dir to /dir" do
+    pending_win32 "expands /./dir to /dir" do
       File.expand_path("/./dir").should eq("/dir")
     end
 
-    it "replaces multiple / with a single /" do
+    pending_win32 "replaces multiple / with a single /" do
       File.expand_path("////some/path").should eq("/some/path")
       File.expand_path("/some////path").should eq("/some/path")
     end
 
-    it "expand path with" do
+    pending_win32 "expand path with" do
       File.expand_path("../../bin", "/tmp/x").should eq("/bin")
       File.expand_path("../../bin", "/tmp").should eq("/bin")
       File.expand_path("../../bin", "/").should eq("/bin")
@@ -541,7 +563,7 @@ describe "File" do
       File.expand_path("../bin", "x/../tmp").should eq(File.join([base, "bin"]))
     end
 
-    it "expand_path for commoms unix path  give a full path" do
+    pending_win32 "expand_path for commoms unix path  give a full path" do
       File.expand_path("/tmp/").should eq("/tmp")
       File.expand_path("/tmp/../../../tmp").should eq("/tmp")
       File.expand_path("").should eq(base)
@@ -550,7 +572,7 @@ describe "File" do
       File.expand_path(base).should eq(base)
     end
 
-    it "converts a pathname to an absolute pathname, using ~ (home) as base" do
+    pending_win32 "converts a pathname to an absolute pathname, using ~ (home) as base" do
       File.expand_path("~/").should eq(home)
       File.expand_path("~/..badfilename").should eq(File.join(home, "..badfilename"))
       File.expand_path("..").should eq("/#{base.split('/')[0...-1].join('/')}".gsub(%r{\A//}, "/"))
@@ -560,43 +582,47 @@ describe "File" do
       File.expand_path("~/a", "/tmp/gumby/ddd").should eq(File.join([home, "a"]))
     end
 
-    it "converts a pathname to an absolute pathname, using ~ (home) as base (trailing /)" do
-      prev_home = home
-      begin
-        ENV["HOME"] = File.expand_path(datapath)
-        File.expand_path("~/").should eq(home)
-        File.expand_path("~/..badfilename").should eq(File.join(home, "..badfilename"))
-        File.expand_path("..").should eq("/#{base.split('/')[0...-1].join('/')}".gsub(%r{\A//}, "/"))
-        File.expand_path("~/a", "~/b").should eq(File.join(home, "a"))
-        File.expand_path("~").should eq(home)
-        File.expand_path("~", "/tmp/gumby/ddd").should eq(home)
-        File.expand_path("~/a", "/tmp/gumby/ddd").should eq(File.join([home, "a"]))
-      ensure
-        ENV["HOME"] = prev_home
+    # TODO: these specs don't compile on windows because ENV isn't ported
+    # TODO: remove /\A\/\// hack after this is removed from macros
+    {% unless flag?(:win32) %}
+      it "converts a pathname to an absolute pathname, using ~ (home) as base (trailing /)" do
+        prev_home = home
+        begin
+          ENV["HOME"] = File.expand_path(datapath)
+          File.expand_path("~/").should eq(home)
+          File.expand_path("~/..badfilename").should eq(File.join(home, "..badfilename"))
+          File.expand_path("..").should eq("/#{base.split('/')[0...-1].join('/')}".gsub(/\A\/\//, "/"))
+          File.expand_path("~/a", "~/b").should eq(File.join(home, "a"))
+          File.expand_path("~").should eq(home)
+          File.expand_path("~", "/tmp/gumby/ddd").should eq(home)
+          File.expand_path("~/a", "/tmp/gumby/ddd").should eq(File.join([home, "a"]))
+        ensure
+          ENV["HOME"] = prev_home
+        end
       end
-    end
 
-    it "converts a pathname to an absolute pathname, using ~ (home) as base (HOME=/)" do
-      prev_home = home
-      begin
-        ENV["HOME"] = "/"
-        File.expand_path("~/").should eq(home)
-        File.expand_path("~/..badfilename").should eq(File.join(home, "..badfilename"))
-        File.expand_path("..").should eq("/#{base.split('/')[0...-1].join('/')}".gsub(%r{\A//}, "/"))
-        File.expand_path("~/a", "~/b").should eq(File.join(home, "a"))
-        File.expand_path("~").should eq(home)
-        File.expand_path("~", "/tmp/gumby/ddd").should eq(home)
-        File.expand_path("~/a", "/tmp/gumby/ddd").should eq(File.join([home, "a"]))
-      ensure
-        ENV["HOME"] = prev_home
+      it "converts a pathname to an absolute pathname, using ~ (home) as base (HOME=/)" do
+        prev_home = home
+        begin
+          ENV["HOME"] = "/"
+          File.expand_path("~/").should eq(home)
+          File.expand_path("~/..badfilename").should eq(File.join(home, "..badfilename"))
+          File.expand_path("..").should eq("/#{base.split('/')[0...-1].join('/')}".gsub(/\A\/\//, "/"))
+          File.expand_path("~/a", "~/b").should eq(File.join(home, "a"))
+          File.expand_path("~").should eq(home)
+          File.expand_path("~", "/tmp/gumby/ddd").should eq(home)
+          File.expand_path("~/a", "/tmp/gumby/ddd").should eq(File.join([home, "a"]))
+        ensure
+          ENV["HOME"] = prev_home
+        end
       end
-    end
+    {% end %}
   end
 
   describe "real_path" do
     it "expands paths for normal files" do
-      File.real_path("/usr/share").should eq("/usr/share")
-      File.real_path("/usr/share/..").should eq("/usr")
+      File.real_path("/usr/share").should eq(File.real_path("/usr/share"))
+      File.real_path("/usr/share/..").should eq(File.real_path("/usr"))
     end
 
     it "raises Errno if file doesn't exist" do
@@ -605,7 +631,8 @@ describe "File" do
       end
     end
 
-    it "expands paths of symlinks" do
+    # TODO: see Crystal::System::File.real_path TODO
+    pending_win32 "expands paths of symlinks" do
       file_path = File.expand_path(datapath("test_file.txt"))
       with_tempfile("symlink.txt") do |symlink_path|
         File.symlink(file_path, symlink_path)
@@ -666,16 +693,18 @@ describe "File" do
     end
   end
 
-  it "does to_s" do
-    file = File.new(datapath("test_file.txt"))
-    file.to_s.should eq("#<File:0x#{file.object_id.to_s(16)}>")
-    file.inspect.should eq("#<File:#{datapath("test_file.txt")}>")
+  it "does to_s and inspect" do
+    File.open(datapath("test_file.txt")) do |file|
+      file.to_s.should eq("#<File:0x#{file.object_id.to_s(16)}>")
+      file.inspect.should eq("#<File:#{datapath("test_file.txt")}>")
+    end
   end
 
   describe "close" do
     it "is not closed when opening" do
-      file = File.new(datapath("test_file.txt"))
-      file.closed?.should be_false
+      File.open(datapath("test_file.txt")) do |file|
+        file.closed?.should be_false
+      end
     end
 
     it "is closed when closed" do
@@ -702,7 +731,7 @@ describe "File" do
     with_tempfile("write_with_perm-int.txt") do |path|
       perm = 0o600
       File.open(path, "w", perm) do |file|
-        file.info.permissions.should eq(File::Permissions.new(perm))
+        file.info.permissions.should eq(normalize_permissions(perm, directory: false))
       end
     end
   end
@@ -711,23 +740,25 @@ describe "File" do
     with_tempfile("write_with_perm.txt") do |path|
       perm = File::Permissions.flags(OwnerRead, OwnerWrite)
       File.open(path, "w", perm) do |file|
-        file.info.permissions.should eq(perm)
+        file.info.permissions.should eq(normalize_permissions(perm.value, directory: false))
       end
     end
   end
 
   it "clears the read buffer after a seek" do
-    file = File.new(datapath("test_file.txt"))
-    file.gets(5).should eq("Hello")
-    file.seek(1)
-    file.gets(4).should eq("ello")
+    File.open(datapath("test_file.txt")) do |file|
+      file.gets(5).should eq("Hello")
+      file.seek(1)
+      file.gets(4).should eq("ello")
+    end
   end
 
   it "seeks from the current position" do
-    file = File.new(datapath("test_file.txt"))
-    file.gets(5)
-    file.seek(-4, IO::Seek::Current)
-    file.tell.should eq(1)
+    File.open(datapath("test_file.txt")) do |file|
+      file.gets(5)
+      file.seek(-4, IO::Seek::Current)
+      file.tell.should eq(1)
+    end
   end
 
   it "raises if invoking seek with a closed file" do
@@ -737,20 +768,22 @@ describe "File" do
   end
 
   it "returns the current read position with tell" do
-    file = File.new(datapath("test_file.txt"))
-    file.tell.should eq(0)
-    file.gets(5).should eq("Hello")
-    file.tell.should eq(5)
-    file.sync = true
-    file.tell.should eq(5)
+    File.open(datapath("test_file.txt")) do |file|
+      file.tell.should eq(0)
+      file.gets(5).should eq("Hello")
+      file.tell.should eq(5)
+      file.sync = true
+      file.tell.should eq(5)
+    end
   end
 
   it "can navigate with pos" do
-    file = File.new(datapath("test_file.txt"))
-    file.pos = 3
-    file.gets(2).should eq("lo")
-    file.pos -= 4
-    file.gets(4).should eq("ello")
+    File.open(datapath("test_file.txt")) do |file|
+      file.pos = 3
+      file.gets(2).should eq("lo")
+      file.pos -= 4
+      file.gets(4).should eq("ello")
+    end
   end
 
   it "raises if invoking tell with a closed file" do
@@ -760,39 +793,42 @@ describe "File" do
   end
 
   it "iterates with each_char" do
-    file = File.new(datapath("test_file.txt"))
-    i = 0
-    file.each_char do |char|
-      case i
-      when 0 then char.should eq('H')
-      when 1 then char.should eq('e')
-      else
-        break
+    File.open(datapath("test_file.txt")) do |file|
+      i = 0
+      file.each_char do |char|
+        case i
+        when 0 then char.should eq('H')
+        when 1 then char.should eq('e')
+        else
+          break
+        end
+        i += 1
       end
-      i += 1
     end
   end
 
   it "iterates with each_byte" do
-    file = File.new(datapath("test_file.txt"))
-    i = 0
-    file.each_byte do |byte|
-      case i
-      when 0 then byte.should eq('H'.ord)
-      when 1 then byte.should eq('e'.ord)
-      else
-        break
+    File.open(datapath("test_file.txt")) do |file|
+      i = 0
+      file.each_byte do |byte|
+        case i
+        when 0 then byte.should eq('H'.ord)
+        when 1 then byte.should eq('e'.ord)
+        else
+          break
+        end
+        i += 1
       end
-      i += 1
     end
   end
 
   it "rewinds" do
-    file = File.new(datapath("test_file.txt"))
-    content = file.gets_to_end
-    content.size.should_not eq(0)
-    file.rewind
-    file.gets_to_end.should eq(content)
+    File.open(datapath("test_file.txt")) do |file|
+      content = file.gets_to_end
+      content.size.should_not eq(0)
+      file.rewind
+      file.gets_to_end.should eq(content)
+    end
   end
 
   describe "truncate" do
@@ -834,8 +870,9 @@ describe "File" do
     end
   end
 
+  # TODO: implement flock on windows
   describe "flock" do
-    it "exlusively locks a file" do
+    pending_win32 "exlusively locks a file" do
       File.open(datapath("test_file.txt")) do |file1|
         File.open(datapath("test_file.txt")) do |file2|
           file1.flock_exclusive do
@@ -848,7 +885,7 @@ describe "File" do
       end
     end
 
-    it "shared locks a file" do
+    pending_win32 "shared locks a file" do
       File.open(datapath("test_file.txt")) do |file1|
         File.open(datapath("test_file.txt")) do |file2|
           file1.flock_shared do
@@ -861,12 +898,13 @@ describe "File" do
 
   it "reads at offset" do
     filename = datapath("test_file.txt")
-    file = File.open(filename)
-    file.read_at(6, 100) do |io|
-      io.gets_to_end.should eq("World\nHello World\nHello World\nHello World\nHello World\nHello World\nHello World\nHello World\nHello Worl")
-    end
-    file.read_at(0, 240) do |io|
-      io.gets_to_end.should eq(File.read(filename))
+    File.open(filename) do |file|
+      file.read_at(6, 100) do |io|
+        io.gets_to_end.should eq("World\nHello World\nHello World\nHello World\nHello World\nHello World\nHello World\nHello World\nHello Worl")
+      end
+      file.read_at(0, 240) do |io|
+        io.gets_to_end.should eq(File.read(filename))
+      end
     end
   end
 
@@ -998,46 +1036,49 @@ describe "File" do
     end
   end
 
-  describe "encoding" do
-    it "writes with encoding" do
-      with_tempfile("encoding-write.txt") do |path|
-        File.write(path, "hello", encoding: "UCS-2LE")
-        File.read(path).to_slice.should eq("hello".encode("UCS-2LE"))
+  # TODO: these specs don't compile on win32 because iconv isn't implemented
+  {% unless flag?(:win32) %}
+    describe "encoding" do
+      it "writes with encoding" do
+        with_tempfile("encoding-write.txt") do |path|
+          File.write(path, "hello", encoding: "UCS-2LE")
+          File.read(path).to_slice.should eq("hello".encode("UCS-2LE"))
+        end
       end
-    end
 
-    it "reads with encoding" do
-      with_tempfile("encoding-read.txt") do |path|
-        File.write(path, "hello", encoding: "UCS-2LE")
-        File.read(path, encoding: "UCS-2LE").should eq("hello")
+      it "reads with encoding" do
+        with_tempfile("encoding-read.txt") do |path|
+          File.write(path, "hello", encoding: "UCS-2LE")
+          File.read(path, encoding: "UCS-2LE").should eq("hello")
+        end
       end
-    end
 
-    it "opens with encoding" do
-      with_tempfile("encoding-open.txt") do |path|
-        File.write(path, "hello", encoding: "UCS-2LE")
-        File.open(path, encoding: "UCS-2LE") do |file|
-          file.gets_to_end.should eq("hello")
+      it "opens with encoding" do
+        with_tempfile("encoding-open.txt") do |path|
+          File.write(path, "hello", encoding: "UCS-2LE")
+          File.open(path, encoding: "UCS-2LE") do |file|
+            file.gets_to_end.should eq("hello")
+          end
+        end
+      end
+
+      it "does each line with encoding" do
+        with_tempfile("encoding-each_line.txt") do |path|
+          File.write(path, "hello", encoding: "UCS-2LE")
+          File.each_line(path, encoding: "UCS-2LE") do |line|
+            line.should eq("hello")
+          end
+        end
+      end
+
+      it "reads lines with encoding" do
+        with_tempfile("encoding-read_lines.txt") do |path|
+          File.write(path, "hello", encoding: "UCS-2LE")
+          File.read_lines(path, encoding: "UCS-2LE").should eq(["hello"])
         end
       end
     end
-
-    it "does each line with encoding" do
-      with_tempfile("encoding-each_line.txt") do |path|
-        File.write(path, "hello", encoding: "UCS-2LE")
-        File.each_line(path, encoding: "UCS-2LE") do |line|
-          line.should eq("hello")
-        end
-      end
-    end
-
-    it "reads lines with encoding" do
-      with_tempfile("encoding-read_lines.txt") do |path|
-        File.write(path, "hello", encoding: "UCS-2LE")
-        File.read_lines(path, encoding: "UCS-2LE").should eq(["hello"])
-      end
-    end
-  end
+  {% end %}
 
   describe "closed stream" do
     it "raises if writing on a closed stream" do
