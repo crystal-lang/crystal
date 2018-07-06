@@ -4928,4 +4928,118 @@ describe "Semantic: instance var" do
       ),
       "can't use Gen(T) as the type of instance variable @x of Foo, use a more specific type"
   end
+
+  it "guesses virtual array type (1) (#5342)" do
+    assert_type(%(
+      require "prelude"
+
+      class First(T) < Array(T)
+      end
+
+      class Second
+        @ary = [[1]]
+
+        def ary
+          @ary
+        end
+      end
+
+      Second.new.ary
+      )) { array_of(array_of(int32).virtual_type).virtual_type }
+  end
+
+  it "guesses virtual array type (2) (#5342)" do
+    assert_type(%(
+      require "prelude"
+
+      class First(T) < Array(T)
+      end
+
+      class Second
+        @ary = Array { Array { 1 } }
+
+        def ary
+          @ary
+        end
+      end
+
+      Second.new.ary
+      )) { array_of(array_of(int32).virtual_type).virtual_type }
+  end
+
+  it "guesses virtual array type (3) (#5342)" do
+    assert_type(%(
+      require "prelude"
+
+      class First(T) < Array(T)
+      end
+
+      class Second
+        @ary = [] of Array(Int32)
+
+        def ary
+          @ary
+        end
+      end
+
+      Second.new.ary
+      )) { array_of(array_of(int32).virtual_type).virtual_type }
+  end
+
+  it "guesses virtual hash type (1) (#5342)" do
+    assert_type(%(
+      require "prelude"
+
+      class First(K, V) < Hash(K, V)
+      end
+
+      class Second
+        @hash = { {1 => 2} => 3}
+
+        def hash
+          @hash
+        end
+      end
+
+      Second.new.hash
+      )) { hash_of(hash_of(int32, int32).virtual_type, int32).virtual_type }
+  end
+
+  it "guesses virtual hash type (2) (#5342)" do
+    assert_type(%(
+      require "prelude"
+
+      class First(K, V) < Hash(K, V)
+      end
+
+      class Second
+        @hash = Hash { Hash { 1 => 2 } => 3 }
+
+        def hash
+          @hash
+        end
+      end
+
+      Second.new.hash
+      )) { hash_of(hash_of(int32, int32).virtual_type, int32).virtual_type }
+  end
+
+  it "guesses virtual array type (3) (#5342)" do
+    assert_type(%(
+      require "prelude"
+
+      class First(K, V) < Hash(K, V)
+      end
+
+      class Second
+        @hash = {} of Hash(Int32, Int32) => Int32
+
+        def hash
+          @hash
+        end
+      end
+
+      Second.new.hash
+      )) { hash_of(hash_of(int32, int32).virtual_type, int32).virtual_type }
+  end
 end
