@@ -451,7 +451,7 @@ module Crystal
         if type.is_a?(GenericClassType)
           element_types = guess_array_literal_element_types(node)
           if element_types
-            return type.instantiate([Type.merge!(element_types)] of TypeVar)
+            return type.instantiate([Type.merge!(element_types)] of TypeVar).virtual_type
           end
         else
           return check_allowed_in_generics(node, type)
@@ -459,12 +459,12 @@ module Crystal
       elsif node_of = node.of
         type = lookup_type?(node_of)
         if type
-          return program.array_of(type.virtual_type)
+          return program.array_of(type.virtual_type).virtual_type
         end
       else
         element_types = guess_array_literal_element_types(node)
         if element_types
-          return program.array_of(Type.merge!(element_types))
+          return program.array_of(Type.merge!(element_types)).virtual_type
         end
       end
 
@@ -489,7 +489,7 @@ module Crystal
         if type.is_a?(GenericClassType)
           key_types, value_types = guess_hash_literal_key_value_types(node)
           if key_types && value_types
-            return type.instantiate([Type.merge!(key_types), Type.merge!(value_types)] of TypeVar)
+            return type.instantiate([Type.merge!(key_types), Type.merge!(value_types)] of TypeVar).virtual_type
           end
         else
           return check_allowed_in_generics(node, type)
@@ -501,11 +501,11 @@ module Crystal
         value_type = lookup_type?(node_of.value)
         return nil unless value_type
 
-        return program.hash_of(key_type.virtual_type, value_type.virtual_type)
+        return program.hash_of(key_type.virtual_type, value_type.virtual_type).virtual_type
       else
         key_types, value_types = guess_hash_literal_key_value_types(node)
         if key_types && value_types
-          return program.hash_of(Type.merge!(key_types), Type.merge!(value_types))
+          return program.hash_of(Type.merge!(key_types), Type.merge!(value_types)).virtual_type
         end
       end
 
