@@ -86,6 +86,7 @@ module Crystal
     # ```
     property last_block_kind : Symbol?
     property? inside_ensure : Bool = false
+    property? inside_constant = false
 
     @unreachable = false
     @is_initialize = false
@@ -193,6 +194,7 @@ module Crystal
           const_def = Def.new("const", [] of Arg)
           type_visitor = MainVisitor.new(@program, meta_vars, const_def)
           type_visitor.current_type = type.namespace
+          type_visitor.inside_constant = true
           type.value.accept type_visitor
 
           type.vars = const_def.vars
@@ -1725,6 +1727,10 @@ module Crystal
     def visit(node : Return)
       if inside_ensure?
         node.raise "can't return from ensure"
+      end
+
+      if inside_constant?
+        node.raise "can't return from constant"
       end
 
       typed_def = @typed_def || node.raise("can't return from top level")
