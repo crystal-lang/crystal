@@ -287,7 +287,14 @@ module Crystal
         line = @line_number
         column = @column_number
         char = next_char
-        if !@slash_is_regex && char == '='
+        if !@slash_is_regex && char == '/'
+          case next_char
+          when '='
+            next_char :"//="
+          else
+            @token.type = :"//"
+          end
+        elsif !@slash_is_regex && char == '='
           next_char :"/="
         elsif @slash_is_regex
           @token.type = :DELIMITER_START
@@ -412,7 +419,12 @@ module Crystal
             symbol "*"
           end
         when '/'
-          next_char_and_symbol "/"
+          case next_char
+          when '/'
+            next_char_and_symbol "//"
+          else
+            symbol "/"
+          end
         when '='
           case next_char
           when '='
