@@ -1,10 +1,12 @@
 require "./libxml2"
+require "./parser_options"
 
 struct XML::Reader
   # Creates a new reader from a string.
-  def initialize(str : String)
-    input = LibXML.xmlParserInputBufferCreateStatic(str, str.bytesize, 1)
-    @reader = LibXML.xmlNewTextReader(input, "")
+  #
+  # See `XML::ParserOptions.default` for default options.
+  def initialize(str : String, options : XML::ParserOptions = XML::ParserOptions.default)
+    @reader = LibXML.xmlReaderForMemory(str, str.bytesize, nil, nil, options)
     LibXML.xmlTextReaderSetErrorHandler @reader, ->(arg, msg, severity, locator) do
       msg_str = String.new(msg).chomp
       line_number = LibXML.xmlTextReaderLocatorLineNumber(locator)
@@ -13,14 +15,17 @@ struct XML::Reader
   end
 
   # Creates a new reader from an IO.
-  def initialize(io : IO)
-    input = LibXML.xmlParserInputBufferCreateIO(
+  #
+  # See `XML::ParserOptions.default` for default options.
+  def initialize(io : IO, options : XML::ParserOptions = XML::ParserOptions.default)
+    @reader = LibXML.xmlReaderForIO(
       ->(context, buffer, length) { Box(IO).unbox(context).read(Slice.new(buffer, length)).to_i },
       ->(context) { Box(IO).unbox(context).close; 0 },
       Box(IO).box(io),
-      1
+      nil,
+      nil,
+      options
     )
-    @reader = LibXML.xmlNewTextReader(input, "")
   end
 
   # Moves the reader to the next node.
