@@ -150,4 +150,22 @@ describe "Code gen: debug" do
       end
       ), debug: Crystal::Debug::All)
   end
+
+  it "doesn't emit incorrect debug info for closured self" do
+    codegen(%(
+      def foo(&block : Int32 ->)
+        block.call(1)
+      end
+
+      class Foo
+        def bar
+          foo do
+            self
+          end
+        end
+      end
+
+      Foo.new.bar
+      ), debug: Crystal::Debug::All)
+  end
 end
