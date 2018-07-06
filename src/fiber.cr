@@ -90,9 +90,13 @@ class Fiber
   end
 
   protected def self.allocate_stack
+    flags = LibC::MAP_PRIVATE | LibC::MAP_ANON
+    {% if flag?(:openbsd) && !flag?(:"openbsd6.2") %}
+      flags |= LibC::MAP_STACK
+    {% end %}
     @@stack_pool.pop? || LibC.mmap(nil, Fiber::STACK_SIZE,
       LibC::PROT_READ | LibC::PROT_WRITE,
-      LibC::MAP_PRIVATE | LibC::MAP_ANON,
+      flags,
       -1, 0
     ).tap do |pointer|
       raise Errno.new("Cannot allocate new fiber stack") if pointer == LibC::MAP_FAILED

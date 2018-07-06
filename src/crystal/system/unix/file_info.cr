@@ -36,6 +36,7 @@ struct Crystal::System::FileInfo < ::File::Info
     flags |= ::File::Flags::SetUser if @stat.st_mode.bits_set? LibC::S_ISUID
     flags |= ::File::Flags::SetGroup if @stat.st_mode.bits_set? LibC::S_ISGID
     flags |= ::File::Flags::Sticky if @stat.st_mode.bits_set? LibC::S_ISVTX
+    flags
   end
 
   def modification_time : ::Time
@@ -54,7 +55,7 @@ struct Crystal::System::FileInfo < ::File::Info
     @stat.st_gid.to_u32
   end
 
-  def ==(other : ::File::Info) : Bool
+  def same_file?(other : ::File::Info) : Bool
     @stat.st_dev == other.@stat.st_dev && @stat.st_ino == other.@stat.st_ino
   end
 end

@@ -12,45 +12,6 @@ module Crystal::System::File
     fd
   end
 
-  private def self.open_flag(mode)
-    if mode.size == 0
-      raise "Invalid access mode #{mode}"
-    end
-
-    m = 0
-    o = 0
-    case mode[0]
-    when 'r'
-      m = LibC::O_RDONLY
-    when 'w'
-      m = LibC::O_WRONLY
-      o = LibC::O_CREAT | LibC::O_TRUNC
-    when 'a'
-      m = LibC::O_WRONLY
-      o = LibC::O_CREAT | LibC::O_APPEND
-    else
-      raise "Invalid access mode #{mode}"
-    end
-
-    case mode.size
-    when 1
-      # Nothing
-    when 2
-      case mode[1]
-      when '+'
-        m = LibC::O_RDWR
-      when 'b'
-        # Nothing
-      else
-        raise "Invalid access mode #{mode}"
-      end
-    else
-      raise "Invalid access mode #{mode}"
-    end
-
-    oflag = m | o
-  end
-
   def self.mktemp(name, extension)
     tmpdir = tempdir + ::File::SEPARATOR
     path = "#{tmpdir}#{name}.XXXXXX#{extension}"

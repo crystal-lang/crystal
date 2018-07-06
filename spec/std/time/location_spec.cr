@@ -68,7 +68,7 @@ class Time::Location
 
       context "with ZONEINFO" do
         it "loads from custom directory" do
-          with_zoneinfo(File.join(__DIR__, "..", "data", "zoneinfo")) do
+          with_zoneinfo(datapath("zoneinfo")) do
             location = Location.load("Foo/Bar")
             location.name.should eq "Foo/Bar"
           end
@@ -91,7 +91,7 @@ class Time::Location
         end
 
         it "does not fall back to default sources" do
-          with_zoneinfo(File.join(__DIR__, "..", "data", "zoneinfo")) do
+          with_zoneinfo(datapath("zoneinfo")) do
             expect_raises(InvalidLocationNameError) do
               Location.load("Europe/Berlin")
             end
@@ -112,7 +112,7 @@ class Time::Location
         end
 
         it "loads new data if file was changed" do
-          zoneinfo_path = File.join(__DIR__, "..", "data", "zoneinfo")
+          zoneinfo_path = datapath("zoneinfo")
           with_zoneinfo(zoneinfo_path) do
             location1 = Location.load("Foo/Bar")
             File.touch(File.join(zoneinfo_path, "Foo/Bar"))

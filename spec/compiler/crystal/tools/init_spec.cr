@@ -5,8 +5,6 @@ require "ini"
 require "spec"
 require "yaml"
 
-PROJECT_ROOT_DIR = "#{__DIR__}/../../../.."
-
 private def exec_init(project_name, project_dir = nil, type = "lib", force = false, skip_existing = false)
   args = [type, project_name]
   args << project_dir if project_dir
@@ -21,14 +19,11 @@ end
 # Creates a temporary directory, cd to it and run the block inside it.
 # The directory and its content is deleted when the block return.
 private def within_temporary_directory
-  tmp_path = "#{PROJECT_ROOT_DIR}/tmp/init_spec_tmp_dir-#{Process.pid}"
-  Dir.mkdir_p(tmp_path)
-  begin
+  with_tempfile "init_spec_tmp" do |tmp_path|
+    Dir.mkdir_p(tmp_path)
     Dir.cd(tmp_path) do
       yield
     end
-  ensure
-    FileUtils.rm_rf(tmp_path)
   end
 end
 
@@ -149,18 +144,11 @@ dependencies:
       end
 
       describe_file "example/src/example.cr" do |example|
-        example.should eq(%{require "./example/*"
-
-# TODO: Write documentation for `Example`
+        example.should eq(%{# TODO: Write documentation for `Example`
 module Example
-  # TODO: Put your code here
-end
-})
-      end
-
-      describe_file "example/src/example/version.cr" do |version|
-        version.should eq(%{module Example
   VERSION = "0.1.0"
+
+  # TODO: Put your code here
 end
 })
       end

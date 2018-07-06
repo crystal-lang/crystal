@@ -34,7 +34,7 @@ require "./formdata/**"
 #   context.response << file.path
 # end
 #
-# server.bind 8085
+# server.bind_tcp 8085
 # server.listen
 # ```
 #

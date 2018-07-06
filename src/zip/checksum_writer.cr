@@ -14,6 +14,8 @@ module Zip
     end
 
     def write(slice : Bytes)
+      return if slice.empty?
+
       @count += slice.size
       @crc32 = CRC32.update(slice, @crc32) if @compute_crc32
       io.write(slice)

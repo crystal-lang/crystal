@@ -1,4 +1,4 @@
-require "spec"
+require "../spec_helper"
 
 class Time::Location
   def __cached_range
@@ -31,7 +31,7 @@ def with_env(name, value)
   end
 end
 
-ZONEINFO_ZIP = File.join(__DIR__, "..", "data", "zoneinfo.zip")
+ZONEINFO_ZIP = datapath("zoneinfo.zip")
 
 def with_zoneinfo(path = ZONEINFO_ZIP)
   with_env("ZONEINFO", path) do

@@ -611,7 +611,7 @@ module Crystal
           when '\''
             @token.value = '\''
           when 'a'
-            @token.value = 7.chr # TODO: use \a
+            @token.value = '\a'
           when 'b'
             @token.value = '\b'
           when 'e'
@@ -1022,6 +1022,11 @@ module Crystal
               return check_ident_or_keyword(:until, start)
             end
           end
+        end
+        scan_ident(start)
+      when 'v'
+        if next_char == 'e' && next_char == 'r' && next_char == 'b' && next_char == 'a' && next_char == 't' && next_char == 'i' && next_char == 'm'
+          return check_ident_or_keyword(:verbatim, start)
         end
         scan_ident(start)
       when 'w'
@@ -1436,7 +1441,11 @@ module Crystal
     end
 
     def deduce_integer_kind(string_value, num_size, negative, start)
-      check_value_fits_in_uint64 string_value, num_size, start
+      if negative
+        check_negative_value_fits_in_int64 string_value, num_size, start
+      else
+        check_value_fits_in_uint64 string_value, num_size, start
+      end
 
       if num_size >= 10
         int_value = absolute_integer_value(string_value, negative)
@@ -1463,17 +1472,17 @@ module Crystal
       end
     end
 
-    def check_value_fits_in_uint64(string_value, num_size, start)
-      if num_size > 20
-        raise_value_doesnt_fit_in_uint64 string_value, start
+    def check_negative_value_fits_in_int64(string_value, num_size, start)
+      if num_size > 19
+        raise_value_doesnt_fit_in "Int64", string_value, start
       end
 
-      if num_size == 20
-        i = 0
-        "18446744073709551615".each_byte do |byte|
+      if num_size == 19
+        i = 1 # skip '-'
+        "9223372036854775808".each_byte do |byte|
           string_byte = string_value.byte_at(i)
           if string_byte > byte
-            raise_value_doesnt_fit_in_uint64 string_value, start
+            raise_value_doesnt_fit_in "Int64", string_value, start
           elsif string_byte < byte
             break
           end
@@ -1482,8 +1491,27 @@ module Crystal
       end
     end
 
-    def raise_value_doesnt_fit_in_uint64(string_value, start)
-      raise "#{string_value} doesn't fit in an UInt64", @token, (current_pos - start)
+    def check_value_fits_in_uint64(string_value, num_size, start)
+      if num_size > 20
+        raise_value_doesnt_fit_in "UInt64", string_value, start
+      end
+
+      if num_size == 20
+        i = 0
+        "18446744073709551615".each_byte do |byte|
+          string_byte = string_value.byte_at(i)
+          if string_byte > byte
+            raise_value_doesnt_fit_in "UInt64", string_value, start
+          elsif string_byte < byte
+            break
+          end
+          i += 1
+        end
+      end
+    end
+
+    def raise_value_doesnt_fit_in(type, string_value, start)
+      raise "#{string_value} doesn't fit in an #{type}", @token, (current_pos - start)
     end
 
     def scan_zero_number(start, negative = false)
@@ -2099,9 +2127,14 @@ module Crystal
 
       if !delimiter_state && current_char == '%' && ident_start?(peek_next_char)
         char = next_char
-        if char == 'q' && (peek = peek_next_char) && {'(', '<', '[', '{'}.includes?(peek)
+        if char == 'q' && (peek = peek_next_char) && {'(', '<', '[', '{', '|'}.includes?(peek)
           next_char
           delimiter_state = Token::DelimiterState.new(:string, char, closing_char, 1)
+          next_char
+        elsif char == 'r' && (peek = peek_next_char) && {'(', '<', '[', '{', '|'}.includes?(peek)
+          next_char
+          delimiter_state = Token::DelimiterState.new(:regex, char, closing_char, 1)
+          next_char
         else
           start = current_pos
           while ident_part?(char)
@@ -2168,7 +2201,7 @@ module Crystal
           whitespace = false
         when '%'
           case char = peek_next_char
-          when '(', '[', '<', '{'
+          when '(', '[', '<', '{', '|'
             next_char
             delimiter_state = Token::DelimiterState.new(:string, char, closing_char, 1)
           else

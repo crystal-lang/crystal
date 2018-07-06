@@ -614,7 +614,7 @@ module Crystal
 
     # Returns the annotation with the given type, if any, or nil otherwise
     def annotation(annotation_type) : Annotation?
-      @annotations.try &.[annotation_type]
+      @annotations.try &.[annotation_type]?
     end
 
     def get_instance_var_initializer(name)
@@ -986,7 +986,7 @@ module Crystal
     getter(instance_vars) { {} of String => MetaTypeVar }
   end
 
-  # A non generic module type, like IO.
+  # A non generic module type.
   class NonGenericModuleType < ModuleType
     include InstanceVarContainer
     include ClassVarContainer

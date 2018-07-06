@@ -1,22 +1,31 @@
 require "crystal/system/file"
 
 class File < IO::FileDescriptor
-  # The file/directory separator character. `'/'` in Unix, `'\\'` in Windows.
-  SEPARATOR = {% if flag?(:windows) %}
-    '\\'
-  {% else %}
-    '/'
-  {% end %}
+  # The file/directory separator character. `'/'` on all platforms.
+  SEPARATOR = '/'
 
-  # The file/directory separator string. `"/"` in Unix, `"\\"` in Windows.
-  SEPARATOR_STRING = {% if flag?(:windows) %}
-    "\\"
-  {% else %}
-    "/"
-  {% end %}
+  # The file/directory separator string. `"/"` on all platforms.
+  SEPARATOR_STRING = "/"
 
   # :nodoc:
   DEFAULT_CREATE_PERMISSIONS = File::Permissions.new(0o644)
+
+  # The name of the null device on the host platform. `/dev/null` on UNIX and `NUL`
+  # on win32.
+  #
+  # When this device is opened using `File.open`, read operations will always
+  # return EOF, and any data written will be immediately discarded.
+  #
+  # ```
+  # File.open(File::DEVNULL) do |file|
+  #   file.puts "this is discarded"
+  # end
+  # ```
+  {% if flag?(:win32) %}
+    DEVNULL = "NUL"
+  {% else %}
+    DEVNULL = "/dev/null"
+  {% end %}
 
   include Crystal::System::File
 
@@ -80,6 +89,12 @@ class File < IO::FileDescriptor
   # ```
   def self.exists?(path) : Bool
     Crystal::System::File.exists?(path)
+  end
+
+  # Returns `true` if *path1* and *path2* represents the same file.
+  # The comparison take symlinks in consideration if *follow_symlinks* is `true`.
+  def self.same?(path1 : String, path2 : String, follow_symlinks = false) : Bool
+    info(path1, follow_symlinks).same_file? info(path2, follow_symlinks)
   end
 
   # Returns the size of *filename* bytes. Raises `Errno` if the file at *path*
@@ -276,13 +291,40 @@ class File < IO::FileDescriptor
   def self.extname(filename) : String
     filename.check_no_null_byte
 
-    dot_index = filename.rindex('.')
+    bytes = filename.to_slice
 
-    if dot_index && dot_index != filename.size - 1 && dot_index - 1 > (filename.rindex(SEPARATOR) || 0)
-      filename[dot_index, filename.size - dot_index]
-    else
-      ""
+    return "" if bytes.empty?
+
+    current = bytes.size - 1
+
+    # if the pattern is foo. it has no extension
+    return "" if bytes[current] == '.'.ord
+
+    # position the reader at the last . or SEPARATOR
+    # that is not the first char
+    while bytes[current] != SEPARATOR.ord &&
+          bytes[current] != '.'.ord &&
+          current > 0
+      current -= 1
     end
+
+    # if we are the beginning of the string there is no extension
+    # /foo or .foo have no extension
+    return "" unless current > 0
+
+    # otherwise we are not at the beginning, and there is a previous char.
+    # if current is '/', then the pattern is prefix/foo and has no extension
+    return "" if bytes[current] == SEPARATOR.ord
+
+    # otherwise the current_char is '.'
+    # if previous is '/', then the pattern is prefix/.foo  and has no extension
+    return "" if bytes[current - 1] == SEPARATOR.ord
+
+    # So the current char is '.',
+    # we are not at the beginning,
+    # the previous char is not a '/',
+    # and we have an extension
+    String.new(bytes[current, bytes.size - current])
   end
 
   # Converts *path* to an absolute path. Relative paths are
@@ -327,9 +369,7 @@ class File < IO::FileDescriptor
     end
 
     String.build do |str|
-      {% if !flag?(:windows) %}
-        str << SEPARATOR_STRING
-      {% end %}
+      str << SEPARATOR_STRING
       items.join SEPARATOR_STRING, str
     end
   end
@@ -623,11 +663,6 @@ class File < IO::FileDescriptor
     end
   end
 
-  # Returns an `Iterator` for each line in *filename*.
-  def self.each_line(filename, encoding = nil, invalid = nil, chomp = true)
-    open(filename, "r", encoding: encoding, invalid: invalid).each_line(chomp: chomp)
-  end
-
   # Returns all lines in *filename* as an array of strings.
   #
   # ```
@@ -693,9 +728,11 @@ class File < IO::FileDescriptor
   def self.join(parts : Array | Tuple) : String
     String.build do |str|
       first = true
+      parts_last_index = parts.size - 1
       parts.each_with_index do |part, index|
         part.check_no_null_byte
-        next if part.empty? && index != parts.size - 1
+        next if part.empty? && index != parts_last_index
+        next if !first && index != parts_last_index && part == SEPARATOR_STRING
 
         str << SEPARATOR unless first
 
@@ -707,7 +744,7 @@ class File < IO::FileDescriptor
           byte_count -= 1
         end
 
-        if index != parts.size - 1 && part.ends_with?(SEPARATOR)
+        if index != parts_last_index && part.ends_with?(SEPARATOR)
           byte_count -= 1
         end
 

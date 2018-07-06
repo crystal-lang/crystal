@@ -70,7 +70,12 @@ class Tempfile < File
   def self.tempname(extension = nil)
     time = Time.now.to_s("%Y%m%d")
     rand = Random.rand(0x100000000).to_s(36)
-    File.join(dirname, "#{time}-#{Process.pid}-#{rand}#{extension}")
+    {% if flag?(:win32) %}
+      # TODO: Remove this once Process is implemented
+      File.join(dirname, "#{time}-#{rand}#{extension}")
+    {% else %}
+      File.join(dirname, "#{time}-#{Process.pid}-#{rand}#{extension}")
+    {% end %}
   end
 
   # Creates a file with *filename* and *extension*, and yields it to the given

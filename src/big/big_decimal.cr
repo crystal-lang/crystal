@@ -1,3 +1,5 @@
+require "big"
+
 # A `BigDecimal` represents arbitrary precision decimals.
 #
 # It is internally represented by a pair of `BigInt` and `UInt64`: value and scale.

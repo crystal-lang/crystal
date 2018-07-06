@@ -3,6 +3,20 @@ struct Time::Format
   struct Parser
     include Pattern
 
+    # :nodoc:
+    RFC_2822_LOCATIONS = {
+      "UT"  => Location::UTC,
+      "GMT" => Location::UTC,
+      "EST" => Location.fixed("EST", -5 * 3600),
+      "EDT" => Location.fixed("EDT", -4 * 3600),
+      "CST" => Location.fixed("CST", -6 * 3600),
+      "CDT" => Location.fixed("CDT", -5 * 3600),
+      "MST" => Location.fixed("MST", -7 * 3600),
+      "MDT" => Location.fixed("MDT", -6 * 3600),
+      "PST" => Location.fixed("PST", -8 * 3600),
+      "PDT" => Location.fixed("PDT", -7 * 3600),
+    }
+
     @epoch : Int64?
     @location : Location?
 
@@ -16,6 +30,7 @@ struct Time::Format
       @second = 0
       @nanosecond = 0
       @pm = false
+      @nanosecond_offset = 0_i64
     end
 
     def time(location : Location? = nil)
@@ -27,10 +42,13 @@ struct Time::Format
 
       location = @location || location
       if location.nil?
-        raise "Time format did not include time zone and no default location provided"
+        raise "Time format did not include time zone and no default location provided", pos: false
       end
 
-      Time.new @year, @month, @day, @hour, @minute, @second, nanosecond: @nanosecond, location: location
+      time = Time.new @year, @month, @day, @hour, @minute, @second, nanosecond: @nanosecond, location: location
+      time = time.add_span 0, @nanosecond_offset
+
+      time
     end
 
     def year
@@ -50,6 +68,17 @@ struct Time::Format
 
     def year_divided_by_100
       @year = consume_number(2) * 100
+    end
+
+    def full_or_short_year
+      @year = case year = consume_number(4)
+              when 0..49
+                year + 2000
+              when 50..999
+                year + 1900
+              else
+                year
+              end
     end
 
     def month
@@ -84,7 +113,18 @@ struct Time::Format
     end
 
     def short_month_name
-      month_name
+      string = consume_string
+      if string.size != 3
+        raise "Invalid month"
+      end
+
+      string = string.capitalize
+      index = MONTH_NAMES.index &.starts_with?(string)
+      if index
+        @month = 1 + index
+      else
+        raise "Invalid month"
+      end
     end
 
     def short_month_name_upcase
@@ -126,6 +166,14 @@ struct Time::Format
 
     def short_day_name_upcase
       day_name
+    end
+
+    def short_day_name_with_comma?
+      return unless current_char.ascii_letter?
+
+      short_day_name
+      char ','
+      whitespace
     end
 
     def day_of_year_zero_padded
@@ -189,6 +237,13 @@ struct Time::Format
       @nanosecond = (decimals * 10 ** (precision_shift + nanoseconds_shift)).to_i
     end
 
+    def second_fraction?(fraction_digits = nil)
+      if current_char == '.'
+        next_char
+        nanoseconds
+      end
+    end
+
     def am_pm
       string = consume_string
       case string.downcase
@@ -229,8 +284,7 @@ struct Time::Format
     def time_zone(with_seconds = false)
       case char = current_char
       when 'Z'
-        @location = Location::UTC
-        next_char
+        time_zone_z
       when 'U'
         if next_char == 'T' && next_char == 'C'
           @location = Location::UTC
@@ -239,52 +293,101 @@ struct Time::Format
           raise "Invalid timezone"
         end
       when '-', '+'
-        sign = char == '-' ? -1 : 1
+        time_zone_offset
+      else
+        raise "Invalid timezone"
+      end
+    end
+
+    def time_zone_z_or_offset(**options)
+      case char = current_char
+      when 'Z', 'z'
+        time_zone_z
+      when '-', '+'
+        time_zone_offset(**options)
+      else
+        raise "Invalid timezone"
+      end
+    end
+
+    def time_zone_z
+      raise "Invalid timezone" unless {'Z', 'z'}.includes? current_char
+
+      @location = Location::UTC
+      next_char
+    end
+
+    def time_zone_offset(force_colon = false, allow_colon = true, allow_seconds = true, force_zero_padding = true, force_minutes = true)
+      case current_char
+      when '-'
+        sign = -1
+      when '+'
+        sign = 1
+      else
+        raise "Invalid timezone"
+      end
+
+      char = next_char
+      raise "Invalid timezone" unless char.ascii_number?
+      hours = char.to_i
+
+      char = next_char
+      if char.ascii_number?
+        hours = hours * 10 + char.to_i
 
         char = next_char
-        raise "Invalid timezone" unless char.ascii_number?
-        hours = char.to_i
+      elsif force_zero_padding
+        raise "Invalid timezone"
+      end
 
+      if char == ':'
+        raise "Invalid timezone" unless allow_colon
         char = next_char
-        raise "Invalid timezone" unless char.ascii_number?
-        hours = 10 * hours + char.to_i
+      elsif force_colon
+        raise "Invalid timezone"
+      end
 
-        char = next_char
-        char = next_char if char == ':'
-        raise "Invalid timezone" unless char.ascii_number?
+      if char.ascii_number?
         minutes = char.to_i
 
         char = next_char
-        raise "Invalid timezone" unless char.ascii_number?
-        minutes = 10 * minutes + char.to_i
+        if char.ascii_number?
+          minutes = minutes * 10 + char.to_i
 
-        if with_seconds
           char = next_char
-          char = next_char if char == ':'
+        elsif force_zero_padding
+          raise "Invalid timezone"
+        end
+      elsif force_minutes
+        raise "Invalid timezone"
+      else
+        minutes = 0
+      end
+
+      seconds = 0
+      if @reader.has_next? && allow_seconds
+        pos = @reader.pos
+        if char == ':'
+          char = next_char
           raise "Invalid timezone" unless char.ascii_number?
+        elsif force_colon && char.ascii_number?
+          raise "Invalid timezone"
+        end
+
+        if char.ascii_number?
           seconds = char.to_i
 
           char = next_char
           raise "Invalid timezone" unless char.ascii_number?
-          seconds = 10 * seconds + char.to_i
+          seconds = seconds * 10 + char.to_i
+
+          next_char
         else
-          seconds = 0
-        end
-
-        @location = Location.fixed(sign * (3600 * hours + 60 * minutes + seconds))
-        char = next_char
-
-        if @reader.has_next?
-          pos = @reader.pos
-          if char == ':' && next_char.ascii_number? && @reader.has_next? && next_char.ascii_number?
-            next_char
-          elsif char.ascii_number? && next_char.ascii_number?
-            next_char
-          else
-            @reader.pos = pos
-          end
+          @reader.pos = pos
         end
       end
+
+      @location = Location.fixed(sign * (3600 * hours + 60 * minutes + seconds))
     end
 
     def time_zone_colon
@@ -295,11 +398,38 @@ struct Time::Format
       time_zone(with_seconds: true)
     end
 
-    def char(char)
-      if current_char == char
-        next_char
+    def time_zone_gmt
+      consume_string == "GMT" || raise "Invalid timezone"
+      @location = Location::UTC
+    end
+
+    def time_zone_rfc2822
+      case char = current_char
+      when '-', '+'
+        time_zone_offset(allow_colon: false)
       else
-        raise "Unexpected char: #{char.inspect} (#{@reader.pos})"
+        zone = consume_string
+
+        @location = RFC_2822_LOCATIONS.fetch(zone, Location::UTC)
+      end
+    end
+
+    def time_zone_gmt_or_rfc2822(**options)
+      time_zone_rfc2822
+    end
+
+    def char?(char, *alternatives)
+      if current_char == char || alternatives.includes?(current_char)
+        next_char
+        true
+      else
+        false
+      end
+    end
+
+    def char(char, *alternatives)
+      unless char?(char, *alternatives)
+        raise "Unexpected char: #{current_char.inspect}"
       end
     end
 
@@ -307,7 +437,15 @@ struct Time::Format
       consume_number_i64(max_digits).to_i
     end
 
+    def consume_number?(max_digits)
+      consume_number_i64?(max_digits).try(&.to_i)
+    end
+
     def consume_number_i64(max_digits)
+      consume_number_i64?(max_digits) || raise "Invalid number"
+    end
+
+    def consume_number_i64?(max_digits)
       n = 0_i64
       char = current_char
 
@@ -315,7 +453,7 @@ struct Time::Format
         n = (char - '0').to_i64
         char = next_char
       else
-        raise "Expecting number"
+        return nil
       end
 
       max_digits -= 1
@@ -350,6 +488,19 @@ struct Time::Format
       next_char if current_char.ascii_whitespace?
     end
 
+    def skip_spaces
+      while current_char.ascii_whitespace?
+        next_char
+      end
+    end
+
+    def whitespace
+      unless current_char.ascii_whitespace?
+        ::raise "Unexpected char: #{current_char.inspect}"
+      end
+      next_char
+    end
+
     def current_char
       @reader.current_char
     end
@@ -358,8 +509,14 @@ struct Time::Format
       @reader.next_char
     end
 
-    def raise(message)
-      ::raise Error.new(message)
+    def raise(message, pos = @reader.pos)
+      string = @reader.string
+      if pos.is_a?(Int)
+        string = "#{string.byte_slice(0, pos)}>>#{string.byte_slice(pos, string.bytesize - pos)}"
+        ::raise Error.new("#{message} at #{@reader.pos}: #{string.inspect}")
+      else
+        ::raise Error.new("#{message}: #{string.inspect}")
+      end
     end
   end
 end

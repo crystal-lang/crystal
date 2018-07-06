@@ -170,7 +170,20 @@ module Crystal
     end
 
     def visit(node : Path)
-      type = (@path_lookup || @scope || @current_type).lookup_type_var(node, free_vars: free_vars)
+      lookup_scope = @path_lookup || @scope || @current_type
+
+      # If the lookup scope is a generic type, like Foo(T), we don't
+      # want to find T in main code. For example:
+      #
+      # class Foo(T)
+      #   Bar(T) # This T is unbound and it shouldn't be found in the lookup
+      # end
+      find_root_generic_type_parameters = !lookup_scope.is_a?(GenericType)
+
+      type = lookup_scope.lookup_type_var(node,
+        free_vars: free_vars,
+        find_root_generic_type_parameters: find_root_generic_type_parameters)
+
       case type
       when Const
         if !type.value.type? && !type.visited?
@@ -2081,6 +2094,22 @@ module Crystal
         node.body.accept self
       end
 
+      # After while's body, bind variables *before* the condition to the
+      # ones after the body, because the loop will repeat.
+      #
+      # For example:
+      #
+      #    x = exp
+      #    # x starts with the type of exp
+      #    while x = x.method
+      #      # but after the loop, the x above (in x.method)
+      #      # should now also get the type of x.method, recursively
+      #    end
+      before_cond_vars.each do |name, before_cond_var|
+        var = @vars[name]?
+        before_cond_var.bind_to(var) if var && !var.same?(before_cond_var)
+      end
+
       cond = node.cond.single_expression
 
       endless_while = cond.true_literal?
@@ -2521,7 +2550,7 @@ module Crystal
       # (useful for sizeof inside as a generic type argument, but also
       # to make it easier for LLVM to optimize things)
       if type && !node.exp.is_a?(TypeOf)
-        expanded = NumberLiteral.new(@program.size_of(type.sizeof_type))
+        expanded = NumberLiteral.new(@program.size_of(type.sizeof_type).to_s, :i32)
         expanded.type = @program.int32
         node.expanded = expanded
       end
@@ -2546,7 +2575,7 @@ module Crystal
       # (useful for sizeof inside as a generic type argument, but also
       # to make it easier for LLVM to optimize things)
       if type && type.instance_type.devirtualize.class? && !node.exp.is_a?(TypeOf)
-        expanded = NumberLiteral.new(@program.instance_size_of(type.sizeof_type))
+        expanded = NumberLiteral.new(@program.instance_size_of(type.sizeof_type).to_s, :i32)
         expanded.type = @program.int32
         node.expanded = expanded
       end

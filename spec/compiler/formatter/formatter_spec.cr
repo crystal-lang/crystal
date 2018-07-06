@@ -267,6 +267,8 @@ describe Crystal::Formatter do
   assert_format "foo(\n  1,\n  a: 1,\n  b: 2,\n)"
   assert_format "foo(1, ) { }", "foo(1) { }"
   assert_format "foo(1, ) do\nend", "foo(1) do\nend"
+  assert_format "foo {;1}", "foo { 1 }"
+  assert_format "foo {;;1}", "foo { 1 }"
 
   assert_format "foo.bar\n.baz", "foo.bar\n  .baz"
   assert_format "foo.bar.baz\n.qux", "foo.bar.baz\n  .qux"
@@ -1036,6 +1038,7 @@ describe Crystal::Formatter do
   assert_format "{ {% for x in 1..2 %}3{% end %}, nil }"
   assert_format "{ %() }"
   assert_format "{ %w() }"
+  assert_format "{ {1}.foo, 2 }"
 
   assert_format "String?"
   assert_format "String???"
@@ -1123,4 +1126,29 @@ describe Crystal::Formatter do
 
   assert_format "class X; annotation  FooAnnotation  ;  end ; end", "class X\n  annotation FooAnnotation; end\nend"
   assert_format "class X\n annotation  FooAnnotation  \n  end \n end", "class X\n  annotation FooAnnotation\n  end\nend"
+
+  assert_format "macro foo\n{% verbatim do %}1 + 2{% end %}\nend"
+
+  assert_format "{% foo <<-X\nbar\nX\n%}"
+  assert_format "foo do\n  {% foo <<-X\n  bar\n  X\n  %}\nend"
+  assert_format "{{ foo <<-X\nbar\nX\n}}"
+  assert_format "foo do\n  {{ foo <<-X\n  bar\n  X\n  }}\nend"
+  assert_format "[foo <<-X\nbar\nX\n]"
+  assert_format "foo do\n  [foo <<-X\n  bar\n  X\n  ]\nend"
+  assert_format "{1 => foo <<-X\nbar\nX\n}"
+  assert_format "foo do\n  {1 => foo <<-X\n  bar\n  X\n  }\nend"
+  assert_format "bar do\n  foo <<-X\n  bar\n  X\nend"
+  assert_format "foo do\n  bar do\n    foo <<-X\n    bar\n    X\n  end\nend"
+  assert_format "call(foo <<-X\nbar\nX\n)"
+  assert_format "bar do\n  call(foo <<-X\n  bar\n  X\n  )\nend"
+
+  assert_format "[\n  <<-EOF,\n  foo\n  EOF\n]"
+  assert_format "[\n  <<-EOF,\n  foo\n  EOF\n  <<-BAR,\n  bar\n  BAR\n]"
+  assert_format "Hash{\n  foo => <<-EOF,\n  foo\n  EOF\n}"
+  assert_format "Hash{\n  foo => <<-EOF,\n  foo\n  EOF\n  bar => <<-BAR,\n  bar\n  BAR\n}"
+  assert_format "Hash{\n  foo => <<-EOF\n  foo\n  EOF\n}"
+  assert_format "{\n  <<-KEY => 1,\n  key\n  KEY\n}"
+
+  assert_format "begin 0[1] rescue 2 end"
+  assert_format "begin\n 0[1] rescue 2 end", "begin 0[1] rescue 2 end"
 end

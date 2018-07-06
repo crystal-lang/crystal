@@ -1,4 +1,8 @@
-require "./yaml/**"
+require "./yaml/*"
+require "./yaml/schema/*"
+require "./yaml/schema/core/*"
+require "./yaml/nodes/*"
+
 require "base64"
 
 # The YAML module provides serialization and deserialization of YAML
@@ -152,5 +156,11 @@ module YAML
   # Serializes an object to YAML, writing it to *io*.
   def self.dump(object, io : IO)
     object.to_yaml(io)
+  end
+
+  # Returns the used version of `libyaml`.
+  def self.libyaml_version : {Int32, Int32, Int32}
+    LibYAML.yaml_get_version(out major, out minor, out patch)
+    {major, minor, patch}
   end
 end

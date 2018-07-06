@@ -488,6 +488,7 @@ module Crystal
         (heredoc_line...heredoc_end).each do |line|
           @no_rstrip_lines.add line
         end
+        write_line
       end
 
       if space_slash_newline?
@@ -615,13 +616,14 @@ module Crystal
         (heredoc_line...heredoc_end).each do |line|
           @no_rstrip_lines.add line
         end
+        write_line
       end
 
       format_regex_modifiers if is_regex
       next_token
 
       @string_continuation = old_string_continuation
-      @indent = old_indent
+      @indent = old_indent unless is_heredoc
 
       false
     end
@@ -640,7 +642,6 @@ module Crystal
       @lexer.heredocs.reverse!
       while heredoc = @lexer.heredocs.pop?
         consume_heredoc(heredoc[0], heredoc[1].as(HeredocInfo))
-        write_line unless @lexer.heredocs.empty?
       end
       @consuming_heredocs = false
     end
@@ -808,15 +809,9 @@ module Crystal
         end
 
         # This is to prevent writing `{{` and `{%`
-        if prefix == :"{" && i == 0 && !wrote_newline && (
-             current_element.is_a?(TupleLiteral) ||
-             current_element.is_a?(NamedTupleLiteral) ||
-             current_element.is_a?(HashLiteral) ||
-             current_element.is_a?(MacroExpression) ||
-             current_element.is_a?(MacroIf) ||
-             current_element.is_a?(MacroFor) ||
-             @token.raw.starts_with?('%')
-           )
+        if prefix == :"{" && i == 0 && !wrote_newline &&
+           (@token.type == :"{" || @token.type == :"{{" || @token.type == :"{%" ||
+           @token.type == :"%" || @token.raw.starts_with?("%"))
           write " "
           write_space_at_end = true
         end
@@ -827,17 +822,23 @@ module Crystal
           accept element
         end
 
+        has_heredoc_in_line = !@lexer.heredocs.empty?
+
         last = last?(i, elements)
 
-        found_comment = skip_space(offset, write_comma: last && has_newlines)
+        found_comment = skip_space(offset, write_comma: (last || has_heredoc_in_line) && has_newlines)
 
         if @token.type == :","
-          write "," unless last || found_comment
+          if !found_comment && (!last || has_heredoc_in_line)
+            write ","
+            wrote_comma = true
+          end
+
           slash_is_regex!
           next_token
           found_comment = skip_space(offset, write_comma: last && has_newlines)
           if @token.type == :NEWLINE
-            if last && !found_comment
+            if last && !found_comment && !wrote_comma
               write ","
               found_comment = true
             end
@@ -968,7 +969,9 @@ module Crystal
         found_comment ||= skip_space_or_newline
         check suffix
 
-        if has_newlines
+        if @wrote_newline
+          write_indent
+        elsif has_newlines
           unless found_comment
             write ","
             write_line
@@ -1660,6 +1663,32 @@ module Crystal
       false
     end
 
+    def visit(node : MacroVerbatim)
+      check :MACRO_CONTROL_START
+      write "{%"
+      next_token_skip_space_or_newline
+      check_keyword :verbatim
+      write " verbatim"
+      next_token_skip_space
+      check_keyword :do
+      write " do"
+      next_token_skip_space
+      check :"%}"
+      write " %}"
+      next_macro_token
+      node.exp.accept self
+      check :MACRO_CONTROL_START
+      write "{%"
+      next_token_skip_space_or_newline
+      check_keyword :end
+      write " end"
+      next_token_skip_space
+      check :"%}"
+      write " %}"
+      next_macro_token
+      false
+    end
+
     def visit(node : MacroExpression)
       reset_macro_state
 
@@ -1708,7 +1737,9 @@ module Crystal
       @macro_state = macro_state
 
       if node.output?
-        if has_space && !has_newline
+        if @wrote_newline
+          write_indent(old_column)
+        elsif has_space && !has_newline
           write " "
         elsif has_newline
           write_line
@@ -1720,7 +1751,9 @@ module Crystal
         write "}}"
       else
         check :"%}"
-        if has_newline
+        if @wrote_newline
+          write_indent(old_column)
+        elsif has_newline
           write_line
           write_indent(old_column)
         else
@@ -2372,7 +2405,7 @@ module Crystal
         end
         if has_parentheses && @token.type == :")"
           if ends_with_newline
-            write_line unless found_comment
+            write_line unless found_comment || @wrote_newline
             write_indent
           end
           write ")"
@@ -2448,7 +2481,6 @@ module Crystal
         next_needs_indent = false
         unless last?(i, args)
           if @last_is_heredoc && @token.type == :NEWLINE
-            write_line
             skip_space_or_newline
             write_indent
           else
@@ -2549,7 +2581,7 @@ module Crystal
         check :")"
 
         if ends_with_newline
-          write_line
+          write_line unless @wrote_newline
           write_indent(column)
         end
         write ")"
@@ -2599,6 +2631,7 @@ module Crystal
         write " {"
         next_token_skip_space
         body = format_block_args node.args, node
+        next_token_skip_space_or_newline if @token.type == :";"
         if @token.type == :NEWLINE
           format_nested body
           skip_space_or_newline
@@ -3652,6 +3685,25 @@ module Crystal
         column = @implicit_exception_handler_indent
       else
         if node.suffix
+          inline = false
+
+          # This is the case of:
+          #
+          #     begin exp rescue exp end
+          #
+          # It's parsed as:
+          #
+          #     begin (exp rescue exp) end
+          #
+          # So it's a suffix rescue inside a begin/end, but the Parser
+          # returns it as an ExceptionHandler node.
+          if @token.keyword?(:begin)
+            inline = true
+            write_keyword :begin
+            skip_space_or_newline
+            write " "
+          end
+
           accept node.body
           passed_backslash_newline = @token.passed_backslash_newline
           skip_space
@@ -3669,6 +3721,13 @@ module Crystal
           else
             raise "expected 'rescue' or 'ensure'"
           end
+
+          if inline
+            skip_space_or_newline
+            write " "
+            write_keyword :end
+          end
+
           return false
         end
       end
@@ -4330,7 +4389,7 @@ module Crystal
 
     def consume_newlines
       if @token.type == :NEWLINE
-        write_line
+        write_line unless @wrote_newline
         next_token_skip_space
 
         if @token.type == :NEWLINE

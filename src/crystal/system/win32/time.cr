@@ -18,12 +18,21 @@ module Crystal::System::Time
     # TODO: Needs a check if `GetSystemTimePreciseAsFileTime` is actually available (only >= Windows 8)
     # and use `GetSystemTimeAsFileTime` as fallback.
     LibC.GetSystemTimePreciseAsFileTime(out filetime)
+    filetime_to_seconds_and_nanoseconds(filetime)
+  end
+
+  def self.filetime_to_seconds_and_nanoseconds(filetime) : {Int64, Int32}
     since_epoch = (filetime.dwHighDateTime.to_u64 << 32) | filetime.dwLowDateTime.to_u64
 
     seconds = (since_epoch / FILETIME_TICKS_PER_SECOND).to_i64 + WINDOWS_EPOCH_IN_SECONDS
     nanoseconds = since_epoch.remainder(FILETIME_TICKS_PER_SECOND).to_i32 * NANOSECONDS_PER_FILETIME_TICK
 
     {seconds, nanoseconds}
+  end
+
+  def self.from_filetime(filetime) : ::Time
+    seconds, nanoseconds = filetime_to_seconds_and_nanoseconds(filetime)
+    ::Time.utc(seconds: seconds, nanoseconds: nanoseconds)
   end
 
   @@performance_frequency : Int64 = begin
@@ -104,7 +113,7 @@ module Crystal::System::Time
     # wHour, wMinute and wSecond are absolute time
     day = 1
 
-    time = ::Time.utc(year, systemtime.wMonth, day, systemtime.wHour, systemtime.wMinute, systemtime.wSecond)
+    time = ::Time.utc(year, systemtime.wMonth.to_i32, day, systemtime.wHour.to_i32, systemtime.wMinute.to_i32, systemtime.wSecond.to_i32)
     i = systemtime.wDayOfWeek.to_i32 - time.day_of_week.to_i32
 
     if i < 0

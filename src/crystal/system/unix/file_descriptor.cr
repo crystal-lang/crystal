@@ -140,4 +140,29 @@ module Crystal::System::FileDescriptor
 
     reschedule_waiting
   end
+
+  def self.pipe(read_blocking, write_blocking)
+    pipe_fds = uninitialized StaticArray(LibC::Int, 2)
+    if LibC.pipe(pipe_fds) != 0
+      raise Errno.new("Could not create pipe")
+    end
+
+    r = IO::FileDescriptor.new(pipe_fds[0], read_blocking)
+    w = IO::FileDescriptor.new(pipe_fds[1], write_blocking)
+    r.close_on_exec = true
+    w.close_on_exec = true
+    w.sync = true
+
+    {r, w}
+  end
+
+  def self.pread(fd, buffer, offset)
+    bytes_read = LibC.pread(fd, buffer, buffer.size, offset)
+
+    if bytes_read == -1
+      raise Errno.new "Error reading file"
+    end
+
+    bytes_read
+  end
 end

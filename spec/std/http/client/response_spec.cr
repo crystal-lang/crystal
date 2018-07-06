@@ -133,6 +133,41 @@ class HTTP::Client
       request.should eq(nil)
     end
 
+    describe "handle invalid IO" do
+      it "missing HTTP header" do
+        expect_raises(Exception, "Invalid HTTP response") do
+          Response.from_io?(IO::Memory.new("<html>\n</html>"))
+        end
+      end
+
+      it "unsupported version" do
+        expect_raises(Exception, "Unsupported HTTP version: HTML/1.0") do
+          Response.from_io?(IO::Memory.new("HTML/1.0 200 OK\n\nNot an HTTP response"))
+        end
+      end
+
+      it "missing status" do
+        expect_raises(Exception, "Invalid HTTP response") do
+          Response.from_io?(IO::Memory.new("HTTTP/1.0\n\nNot an HTTP response"))
+        end
+      end
+
+      it "invalid status" do
+        expect_raises(Exception, "Invalid HTTP status code: OK") do
+          Response.from_io?(IO::Memory.new("HTTP/1.0 OK\n\nNot an HTTP response"))
+        end
+        expect_raises(Exception, "Invalid HTTP status code: 1000") do
+          Response.from_io?(IO::Memory.new("HTTP/1.0 1000\n\nNot an HTTP response"))
+        end
+        expect_raises(Exception, "Invalid HTTP status code: -5") do
+          Response.from_io?(IO::Memory.new("HTTP/1.0 -5\n\nNot an HTTP response"))
+        end
+        expect_raises(Exception, "Invalid HTTP status code: 42") do
+          Response.from_io?(IO::Memory.new("HTTP/1.0 42\n\nNot an HTTP response"))
+        end
+      end
+    end
+
     it "doesn't sets content length for 1xx, 204 or 304" do
       [100, 101, 204, 304].each do |status|
         response = Response.new(status)

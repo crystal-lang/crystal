@@ -1604,8 +1604,6 @@ module Crystal
     end
 
     def parse_annotation_def
-      @type_nest += 1
-
       location = @token.location
       doc = @token.doc
 
@@ -2164,6 +2162,9 @@ module Crystal
     end
 
     def parse_array_literal
+      line = @line_number
+      column = @token.column_number
+
       slash_is_regex!
 
       exps = [] of ASTNode
@@ -2199,6 +2200,8 @@ module Crystal
         next_token_skip_space_or_newline
         of = parse_single_type
         end_location = of.end_location
+      elsif exps.size == 0
+        raise "for empty arrays use '[] of ElementType'", line, column
       end
 
       ArrayLiteral.new(exps, of).at_end(end_location)
@@ -2482,7 +2485,7 @@ module Crystal
                   tuple_elements = [] of ASTNode
 
                   while true
-                    tuple_elements << parse_when_expression(cond)
+                    tuple_elements << parse_when_expression(cond, single: false)
                     skip_space
                     if @token.type == :","
                       next_token_skip_space_or_newline
@@ -2502,7 +2505,7 @@ module Crystal
                   check :"}"
                   next_token_skip_space
                 else
-                  exp = parse_when_expression(cond)
+                  exp = parse_when_expression(cond, single: true)
                   when_conds << exp
                   add_when_exp(when_exps, exp)
                   skip_space
@@ -2512,7 +2515,7 @@ module Crystal
               end
             else
               while true
-                exp = parse_when_expression(cond)
+                exp = parse_when_expression(cond, single: true)
                 when_conds << exp
                 add_when_exp(when_exps, exp)
                 skip_space
@@ -2606,7 +2609,7 @@ module Crystal
       false
     end
 
-    def parse_when_expression(cond)
+    def parse_when_expression(cond, single)
       if cond && @token.type == :"."
         next_token
         call = parse_var_or_call(force_call: true)
@@ -2620,6 +2623,8 @@ module Crystal
           raise "BUG: expected Call, RespondsTo, IsA, Cast or NilableCast"
         end
         call
+      elsif single && @token.type == :UNDERSCORE
+        raise "'when _' is not supported, use 'else' block instead"
       else
         parse_op_assign_no_control
       end
@@ -3085,6 +3090,23 @@ module Crystal
           return MacroIf.new(BoolLiteral.new(true), body).at_end(token_end_location)
         when :else, :elsif, :end
           return nil
+        when :verbatim
+          next_token_skip_space
+          unless @token.keyword?(:do)
+            unexpected_token(msg: "expecting 'do'")
+          end
+          next_token_skip_space
+          check :"%}"
+
+          macro_state.control_nest += 1
+          body, end_location = parse_macro_body(start_line, start_column, macro_state)
+          macro_state.control_nest -= 1
+
+          check_ident :end
+          next_token_skip_space
+          check :"%}"
+
+          return MacroVerbatim.new(body).at_end(token_end_location)
         end
       end
 

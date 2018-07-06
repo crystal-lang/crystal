@@ -1083,7 +1083,7 @@ class Object
   # ```
   macro delegate(*methods, to object)
     {% for method in methods %}
-      {% if method.id.ends_with?('=') %}
+      {% if method.id.ends_with?('=') && method.id != "[]=" %}
         def {{method.id}}(arg)
           {{object.id}}.{{method.id}} arg
         end

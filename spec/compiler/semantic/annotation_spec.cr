@@ -28,6 +28,26 @@ describe "Semantic: annotation" do
     )) { char }
   end
 
+  it "can't find annotation in module, when other annotations are present" do
+    assert_type(%(
+      annotation Foo
+      end
+
+      annotation Bar
+      end
+
+      @[Bar]
+      module Moo
+      end
+
+      {% if Moo.annotation(Foo) %}
+        1
+      {% else %}
+        'a'
+      {% end %}
+    )) { char }
+  end
+
   it "finds annotation in module" do
     assert_type(%(
       annotation Foo
@@ -155,6 +175,31 @@ describe "Semantic: annotation" do
       end
 
       class Moo
+        @x : Int32 = 1
+
+        def foo
+          {% if @type.instance_vars.first.annotation(Foo) %}
+            1
+          {% else %}
+            'a'
+          {% end %}
+        end
+      end
+
+      Moo.new.foo
+    )) { char }
+  end
+
+  it "can't find annotation in instance var, when other annotations are present" do
+    assert_type(%(
+      annotation Foo
+      end
+
+      annotation Bar
+      end
+
+      class Moo
+        @[Bar]
         @x : Int32 = 1
 
         def foo
@@ -335,6 +380,46 @@ describe "Semantic: annotation" do
         'a'
       {% end %}
       )) { int32 }
+  end
+
+  it "can't find annotation on def" do
+    assert_type(%(
+      annotation Foo
+      end
+
+      class Moo
+        def foo
+        end
+      end
+
+      {% if Moo.methods.first.annotation(Foo) %}
+        1
+      {% else %}
+        'a'
+      {% end %}
+      )) { char }
+  end
+
+  it "can't find annotation on def, when other annotations are present" do
+    assert_type(%(
+      annotation Foo
+      end
+
+      annotation Bar
+      end
+
+      class Moo
+        @[Bar]
+        def foo
+        end
+      end
+
+      {% if Moo.methods.first.annotation(Foo) %}
+        1
+      {% else %}
+        'a'
+      {% end %}
+      )) { char }
   end
 
   it "errors if using invalid annotation on fun" do

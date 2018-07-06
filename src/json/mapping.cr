@@ -108,7 +108,7 @@ module JSON
       begin
         %pull.read_begin_object
       rescue exc : ::JSON::ParseException
-        raise ::JSON::MappingError.new(self.class, *%location, cause: exc)
+        raise ::JSON::MappingError.new(exc.message, self.class.to_s, nil, *%location, exc)
       end
       while %pull.kind != :end_object
         %key_location = %pull.location
@@ -139,12 +139,12 @@ module JSON
 
               {% if value[:nilable] || value[:default] != nil %} } {% end %}
             rescue exc : ::JSON::ParseException
-              raise ::JSON::MappingError.new(self.class, {{value[:key] || value[:key_id].stringify}}, *%key_location, cause: exc)
+              raise ::JSON::MappingError.new(exc.message, self.class.to_s, {{value[:key] || value[:key_id].stringify}}, *%key_location, exc)
             end
         {% end %}
         else
           {% if strict %}
-            raise ::JSON::MappingError.new("Unknown JSON attribute: #{key}", self.class, *%key_location)
+            raise ::JSON::MappingError.new("Unknown JSON attribute: #{key}", self.class.to_s, nil, *%key_location, nil)
           {% else %}
             %pull.skip
           {% end %}
@@ -155,7 +155,7 @@ module JSON
       {% for key, value in _properties_ %}
         {% unless value[:nilable] || value[:default] != nil %}
           if %var{key.id}.nil? && !%found{key.id} && !::Union({{value[:type]}}).nilable?
-            raise ::JSON::MappingError.new("Missing JSON attribute: {{(value[:key] || value[:key_id]).id}}", self.class, *%location)
+            raise ::JSON::MappingError.new("Missing JSON attribute: {{(value[:key] || value[:key_id]).id}}", self.class.to_s, nil, *%location, nil)
           end
         {% end %}
 
@@ -235,19 +235,7 @@ module JSON
     getter klass : String
     getter attribute : String?
 
-    def self.new(klass : Class, line_number, column_number, *, cause : JSON::ParseException)
-      new(cause.message, klass, nil, line_number, column_number, cause: cause)
-    end
-
-    def self.new(klass : Class, attribute, line_number, column_number, *, cause : JSON::ParseException)
-      new(cause.message, klass, attribute, line_number, column_number, cause: cause)
-    end
-
-    def self.new(message : String?, klass : String | Class, line_number : Int32, column_number : Int32, cause = nil)
-      new(message, klass, nil, line_number, column_number, cause)
-    end
-
-    def initialize(message : String?, klass : String | Class, @attribute : String?, line_number : Int32, column_number : Int32, cause = nil)
+    def initialize(message : String?, @klass : String, @attribute : String?, line_number : Int32, column_number : Int32, cause)
       message = String.build do |io|
         io << message
         io << "\n  parsing "
@@ -260,7 +248,6 @@ module JSON
       if cause
         @line_number, @column_number = cause.location
       end
-      @klass = klass.to_s
     end
   end
 end

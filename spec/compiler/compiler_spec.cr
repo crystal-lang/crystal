@@ -1,32 +1,26 @@
 require "../spec_helper"
-require "tempfile"
+require "./spec_helper"
 
 describe "Compiler" do
   it "compiles a file" do
-    tempfile = Tempfile.new "compiler_spec_output"
-    tempfile.close
+    with_tempfile "compiler_spec_output" do |path|
+      Crystal::Command.run ["build", compiler_datapath("compiler_sample"), "-o", path]
 
-    Crystal::Command.run ["build", "#{__DIR__}/data/compiler_sample", "-o", tempfile.path]
+      File.exists?(path).should be_true
 
-    File.exists?(tempfile.path).should be_true
-
-    `#{tempfile.path}`.should eq("Hello!")
-  ensure
-    File.delete(tempfile.path) if tempfile
+      `#{path}`.should eq("Hello!")
+    end
   end
 
   it "runs subcommand in preference to a filename " do
-    Dir.cd "#{__DIR__}/data/" do
-      tempfile = Tempfile.new "compiler_spec_output"
-      tempfile.close
+    Dir.cd compiler_datapath do
+      with_tempfile "compiler_spec_output" do |path|
+        Crystal::Command.run ["build", "compiler_sample", "-o", path]
 
-      Crystal::Command.run ["build", "#{__DIR__}/data/compiler_sample", "-o", tempfile.path]
+        File.exists?(path).should be_true
 
-      File.exists?(tempfile.path).should be_true
-
-      `#{tempfile.path}`.should eq("Hello!")
-    ensure
-      File.delete(tempfile.path) if tempfile
+        `#{path}`.should eq("Hello!")
+      end
     end
   end
 end

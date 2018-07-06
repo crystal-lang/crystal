@@ -146,7 +146,7 @@ describe "Lexer" do
                      :case, :when, :select, :then, :of, :abstract, :rescue, :ensure, :is_a?, :alias,
                      :pointerof, :sizeof, :instance_sizeof, :as, :as?, :typeof, :for, :in,
                      :with, :self, :super, :private, :protected, :asm, :uninitialized, :nil?,
-                     :annotation]
+                     :annotation, :verbatim]
   it_lexes_idents ["ident", "something", "with_underscores", "with_1", "foo?", "bar!", "fooBar",
                    "❨╯°□°❩╯︵┻━┻"]
   it_lexes_idents ["def?", "if?", "else?", "elsif?", "end?", "true?", "false?", "class?", "while?",
@@ -216,11 +216,11 @@ describe "Lexer" do
   it_lexes_f64 [["0.5", "0.5"], ["+0.5", "+0.5"], ["-0.5", "-0.5"]]
   it_lexes_i64 [["0o123_i64", "83"], ["0x1_i64", "1"], ["0b1_i64", "1"]]
 
-  it_lexes_i64 ["2147483648", "-2147483649", "-9223372036854775808"]
+  it_lexes_i64 ["2147483648", "-2147483649"]
   it_lexes_i64 [["2147483648.foo", "2147483648"]]
-  it_lexes_u64 ["9223372036854775808", "-9223372036854775809"]
-  it_lexes_u64 ["18446744073709551615", "18446744073709551615", "14146167139683460000"]
+  it_lexes_u64 ["18446744073709551615", "14146167139683460000", "9223372036854775808"]
   it_lexes_i64 [["0x3fffffffffffffff", "4611686018427387903"]]
+  it_lexes_i64 ["-9223372036854775808", "9223372036854775807"]
   it_lexes_u64 [["0xffffffffffffffff", "18446744073709551615"]]
 
   it_lexes_number :i32, ["+0", "+0"]
@@ -231,8 +231,8 @@ describe "Lexer" do
   it_lexes_number :i8, ["0i8", "0"]
 
   it_lexes_char "'a'", 'a'
-  it_lexes_char "'\\a'", 7.chr
-  it_lexes_char "'\\b'", 8.chr
+  it_lexes_char "'\\a'", '\a'
+  it_lexes_char "'\\b'", '\b'
   it_lexes_char "'\\n'", '\n'
   it_lexes_char "'\\t'", '\t'
   it_lexes_char "'\\v'", '\v'
@@ -287,6 +287,9 @@ describe "Lexer" do
   assert_syntax_error "18446744073709551616_u64", "18446744073709551616 doesn't fit in an UInt64"
   assert_syntax_error "-1_u64", "Invalid negative value -1 for UInt64"
 
+  assert_syntax_error "-9999999999999999999", "-9999999999999999999 doesn't fit in an Int64"
+  assert_syntax_error "-99999999999999999999", "-99999999999999999999 doesn't fit in an Int64"
+  assert_syntax_error "-9223372036854775809", "-9223372036854775809 doesn't fit in an Int64"
   assert_syntax_error "18446744073709551616", "18446744073709551616 doesn't fit in an UInt64"
 
   assert_syntax_error "0xFF_i8", "255 doesn't fit in an Int8"

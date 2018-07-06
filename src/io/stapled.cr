@@ -68,6 +68,8 @@ class IO::Stapled < IO
   def write(slice : Bytes) : Nil
     check_open
 
+    return if slice.empty?
+
     @writer.write(slice)
   end
 

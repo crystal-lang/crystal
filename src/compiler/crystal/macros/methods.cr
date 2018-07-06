@@ -699,7 +699,7 @@ module Crystal
         end
 
         if value
-          NumberLiteral.new(value)
+          NumberLiteral.new(value.to_s, :i32)
         else
           raise "StringLiteral#to_i: #{@value} is not an integer"
         end

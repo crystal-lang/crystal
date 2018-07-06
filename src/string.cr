@@ -3937,16 +3937,16 @@ class String
     while reader.has_next?
       current_char = reader.current_char
       case current_char
-      when '"'     then io << "\\\""
-      when '\\'    then io << "\\\\"
-      when (7.chr) then io << "\\a" # TODO: use \a
-      when '\b'    then io << "\\b"
-      when '\e'    then io << "\\e"
-      when '\f'    then io << "\\f"
-      when '\n'    then io << "\\n"
-      when '\r'    then io << "\\r"
-      when '\t'    then io << "\\t"
-      when '\v'    then io << "\\v"
+      when '"'  then io << "\\\""
+      when '\\' then io << "\\\\"
+      when '\a' then io << "\\a"
+      when '\b' then io << "\\b"
+      when '\e' then io << "\\e"
+      when '\f' then io << "\\f"
+      when '\n' then io << "\\n"
+      when '\r' then io << "\\r"
+      when '\t' then io << "\\t"
+      when '\v' then io << "\\v"
       when '#'
         current_char = reader.next_char
         if current_char == '{'
@@ -4054,7 +4054,10 @@ class String
   # Interpolates *other* into the string using `Kernel#sprintf`.
   #
   # ```
-  # "Party like it's %d!!!" % 1999 # => "Party like it's 1999!!!"
+  # "I have %d apples" % 5                                             # => "I have 5 apples"
+  # "%s, %s, %s, D" % ['A', 'B', 'C']                                  # => "A, B, C, D"
+  # "sum: %{one} + %{two} = %{three}" % {one: 1, two: 2, three: 1 + 2} # => "sum: 1 + 2 = 3"
+  # "I have %<apples>s apples" % {apples: 4}                           # => "I have 4 apples"
   # ```
   def %(other)
     sprintf self, other

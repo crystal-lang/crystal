@@ -226,7 +226,7 @@ class Crystal::Call
     end
 
     @uses_with_scope = true
-    instantiate matches, owner, self_type: nil
+    instantiate matches, owner, self_type: nil, with_literals: with_literals
   end
 
   def lookup_matches_in_type(owner, arg_types, named_args_types, self_type, def_name, search_in_parents, search_in_toplevel = true, with_literals = false)
@@ -280,7 +280,7 @@ class Crystal::Call
       attach_subclass_observer instance_type.base_type
     end
 
-    instantiate matches, owner, self_type
+    instantiate matches, owner, self_type, with_literals
   end
 
   def lookup_matches_checking_expansion(owner, signature, search_in_parents = true, with_literals = false)
@@ -331,7 +331,9 @@ class Crystal::Call
     end
   end
 
-  def instantiate(matches, owner, self_type)
+  def instantiate(matches, owner, self_type, with_literals)
+    matches.each &.remove_literals if with_literals
+
     block = @block
 
     typed_defs = Array(Def).new(matches.size)
@@ -472,7 +474,6 @@ class Crystal::Call
       in_bounds = (0 <= index < instance_type.size)
       if nilable || in_bounds
         indexer_def = yield instance_type, (in_bounds ? index : -1)
-        arg_types.map!(&.remove_literal)
         indexer_match = Match.new(indexer_def, arg_types, MatchContext.new(owner, owner))
         return Matches.new([indexer_match] of Match, true)
       elsif instance_type.size == 0
@@ -496,7 +497,6 @@ class Crystal::Call
       index = instance_type.name_index(name)
       if index || nilable
         indexer_def = yield instance_type, (index || -1)
-        arg_types.map!(&.remove_literal)
         indexer_match = Match.new(indexer_def, arg_types, MatchContext.new(owner, owner))
         return Matches.new([indexer_match] of Match, true)
       else
@@ -627,7 +627,6 @@ class Crystal::Call
 
     signature = CallSignature.new(previous.name, arg_types, block, named_args_types)
     context = MatchContext.new(scope, scope, def_free_vars: previous.free_vars)
-    arg_types.map!(&.remove_literal)
     match = Match.new(previous, arg_types, context, named_args_types)
     matches = Matches.new([match] of Match, true)
 
@@ -639,7 +638,7 @@ class Crystal::Call
       parent_visitor.check_self_closured
     end
 
-    typed_defs = instantiate matches, scope, self_type: nil
+    typed_defs = instantiate matches, scope, self_type: nil, with_literals: with_literals
     typed_defs.each do |typed_def|
       typed_def.next = parent_visitor.typed_def
     end

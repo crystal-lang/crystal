@@ -264,7 +264,7 @@ struct Char
     ascii? ? ascii_whitespace? : Unicode.whitespace?(self)
   end
 
-  # Returns `true` if this char is an ASCII hex digit ('0' to '9', 'a' to 'z', 'A' to 'Z').
+  # Returns `true` if this char is an ASCII hex digit ('0' to '9', 'a' to 'f', 'A' to 'F').
   #
   # ```
   # '5'.hex? # => true
@@ -527,6 +527,8 @@ struct Char
     case self
     when '\'' then "'\\''"
     when '\\' then "'\\\\'"
+    when '\a' then "'\\a'"
+    when '\b' then "'\\b'"
     when '\e' then "'\\e'"
     when '\f' then "'\\f'"
     when '\n' then "'\\n'"

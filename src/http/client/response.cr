@@ -120,8 +120,17 @@ class HTTP::Client::Response
     return yield nil unless line
 
     pieces = line.split(3)
+    raise "Invalid HTTP response" if pieces.size < 2
+
     http_version = pieces[0]
-    status_code = pieces[1].to_i
+    raise "Unsupported HTTP version: #{http_version}" unless HTTP::SUPPORTED_VERSIONS.includes?(http_version)
+
+    status_code = pieces[1].to_i?
+
+    unless status_code && 100 <= status_code < 1000
+      raise "Invalid HTTP status code: #{pieces[1]}"
+    end
+
     status_message = pieces[2]? ? pieces[2].chomp : ""
 
     body_type = HTTP::BodyType::OnDemand

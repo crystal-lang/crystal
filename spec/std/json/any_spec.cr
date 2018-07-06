@@ -105,4 +105,16 @@ describe JSON::Any do
     (/o+/ === JSON.parse(%("foo"))).should be_truthy
     $~[0].should eq("oo")
   end
+
+  it "dups" do
+    any = JSON.parse("[1, 2, 3]")
+    any2 = any.dup
+    any2.as_a.should_not be(any.as_a)
+  end
+
+  it "clones" do
+    any = JSON.parse("[[1], 2, 3]")
+    any2 = any.clone
+    any2.as_a[0].as_a.should_not be(any.as_a[0].as_a)
+  end
 end

@@ -99,11 +99,11 @@ class File
     # The group ID that the file belongs to.
     abstract def group : UInt32
 
-    # Two `File::Info`s are equal if and only if they are of the same file.
+    # Returns true if this `Info` and *other* are of the same file.
     #
     # On unix, this compares device and inode fields, and will compare equal for
     # hard linked files.
-    abstract def ==(other : File::Info)
+    abstract def same_file?(other : File::Info) : Bool
 
     # Returns true if this `Info` represents a standard file. Shortcut for
     # `type.file?`.

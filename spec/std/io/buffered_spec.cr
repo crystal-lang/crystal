@@ -284,19 +284,103 @@ describe "IO::Buffered" do
     str.to_s.should eq("abcd")
   end
 
-  it "syncs" do
-    str = IO::Memory.new
+  describe "sync" do
+    it "syncs (write)" do
+      str = IO::Memory.new
 
-    io = BufferedWrapper.new(str)
-    io.sync?.should be_false
+      io = BufferedWrapper.new(str)
+      io.sync?.should be_false
 
-    io.sync = true
-    io.sync?.should be_true
+      io.sync = true
+      io.sync?.should be_true
 
-    io.write_byte 1_u8
+      io.write_byte 1_u8
 
-    str.rewind
-    str.read_byte.should eq(1_u8)
+      str.rewind
+      str.read_byte.should eq(1_u8)
+    end
+  end
+
+  describe "read_buffering" do
+    it "works with IO#read" do
+      str = IO::Memory.new "abc"
+
+      io = BufferedWrapper.new(str)
+      io.read_buffering?.should be_true
+
+      io.read_buffering = false
+      io.read_buffering?.should be_false
+
+      byte = Bytes.new(1)
+      io.read_fully(byte)
+      byte[0].should eq('a'.ord.to_u8)
+
+      str.gets_to_end.should eq("bc")
+    end
+
+    it "works with IO#read (already buffered)" do
+      str = IO::Memory.new
+      str << "a" * IO::Buffered::BUFFER_SIZE
+      str.pos = 0
+
+      io = BufferedWrapper.new(str)
+      io.read_buffering?.should be_true
+
+      IO::Buffered::BUFFER_SIZE.times do
+        byte = Bytes.new(1)
+        io.read_fully(byte)
+        byte[0].should eq('a'.ord.to_u8)
+      end
+
+      io.read_buffering = false
+      io.read_buffering?.should be_false
+
+      str << "bcde"
+      str.pos -= 4
+
+      byte = Bytes.new(1)
+      io.read_fully(byte)
+      byte[0].should eq('b'.ord.to_u8)
+
+      str.gets_to_end.should eq("cde")
+    end
+
+    it "works with IO#read_byte" do
+      str = IO::Memory.new "abc"
+
+      io = BufferedWrapper.new(str)
+      io.read_buffering?.should be_true
+
+      io.read_buffering = false
+      io.read_buffering?.should be_false
+
+      io.read_byte.should eq('a'.ord.to_u8)
+
+      str.gets_to_end.should eq("bc")
+    end
+
+    it "works with IO#read_byte (already buffered)" do
+      str = IO::Memory.new
+      str << "a" * IO::Buffered::BUFFER_SIZE
+      str.pos = 0
+
+      io = BufferedWrapper.new(str)
+      io.read_buffering?.should be_true
+
+      IO::Buffered::BUFFER_SIZE.times do
+        io.read_byte.should eq('a'.ord.to_u8)
+      end
+
+      io.read_buffering = false
+      io.read_buffering?.should be_false
+
+      str << "bcde"
+      str.pos -= 4
+
+      io.read_byte.should eq('b'.ord.to_u8)
+
+      str.gets_to_end.should eq("cde")
+    end
   end
 
   it "shouldn't call unbuffered read if reading to an empty slice" do

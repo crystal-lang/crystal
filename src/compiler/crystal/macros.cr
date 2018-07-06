@@ -610,6 +610,18 @@ module Crystal::Macros
     def []=(index : NumberLiteral, value : ASTNode)
     end
 
+    # Similar to `Array#unshift`.
+    def unshift : ArrayLiteral
+    end
+
+    # Similar to `Array#push`.
+    def push(value : ASTNode) : ArrayLiteral
+    end
+
+    # Similar to `Array#<<`.
+    def <<(value : ASTNode) : ArrayLiteral
+    end
+
     # Similar to `Array#+`.
     def +(other : ArrayLiteral) : ArrayLiteral
     end
