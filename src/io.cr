@@ -1023,7 +1023,10 @@ abstract class IO
   # String operations (`gets`, `gets_to_end`, `read_char`, `<<`, `print`, `puts`
   # `printf`) will use this encoding.
   def set_encoding(encoding : String, invalid : Symbol? = nil)
-    if (encoding == "UTF-8") && (invalid != :skip)
+    if invalid != :skip && (
+         encoding.compare("UTF-8", case_insensitive: true) == 0 ||
+         encoding.compare("UTF8", case_insensitive: true) == 0
+       )
       @encoding = nil
     else
       @encoding = EncodingOptions.new(encoding, invalid)
