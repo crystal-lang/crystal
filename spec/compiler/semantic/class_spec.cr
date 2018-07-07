@@ -178,7 +178,7 @@ describe "Semantic: class" do
       end
 
       a = Bar.new || Baz.new
-      ") { union_of types["Bar"], types["Baz"] }
+      ") { types["Foo"].virtual_type }
   end
 
   it "types class and subclass as one type" do
