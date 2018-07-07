@@ -266,6 +266,12 @@ class HTTP::Client
       response.charset.should eq("UTF-8")
     end
 
+    it "returns content type and charset, removes quotes" do
+      response = Response.new(200, "", headers: HTTP::Headers{"Content-Type" => %(text/plain ; charset="UTF-8")})
+      response.content_type.should eq("text/plain")
+      response.charset.should eq("UTF-8")
+    end
+
     it "returns content type and no charset, other parameter (#2520)" do
       response = Response.new(200, "", headers: HTTP::Headers{"Content-Type" => "text/plain ; colenc=U"})
       response.content_type.should eq("text/plain")
