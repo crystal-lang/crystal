@@ -121,7 +121,9 @@ class Crystal::CodeGenVisitor
             args_offset = !is_fun_literal && self_type.passed_as_self? ? 2 : 1
             location = target_def.location
             context.vars.each do |name, var|
-              if name == "self"
+              # Self always comes as the first parameter, unless it's a closure:
+              # then it will be fetched from the closure data.
+              if name == "self" && !is_closure
                 declare_parameter(name, var.type, 1, var.pointer, location)
               elsif arg_no = args.index { |arg| arg.name == name }
                 declare_parameter(name, var.type, arg_no + args_offset, var.pointer, location)
