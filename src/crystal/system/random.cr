@@ -12,7 +12,7 @@ end
 
 {% if flag?(:linux) %}
   require "./unix/getrandom"
-{% elsif flag?(:openbsd) %}
+{% elsif flag?(:openbsd) || flag?(:darwin) %}
   require "./unix/arc4random"
 {% elsif flag?(:unix) %}
   require "./unix/urandom"
