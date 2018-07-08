@@ -86,8 +86,8 @@ lib LibC
 
   fun CloseHandle(hObject : HANDLE) : BOOL
 
-  fun GetEnvironmentVariableW(lpName : LPCWSTR, lpBuffer : LPWSTR, nSize : DWORD) : DWORD
+  fun GetEnvironmentVariableW(lpName : LPWSTR, lpBuffer : LPWSTR, nSize : DWORD) : DWORD
   fun GetEnvironmentStringsW : LPWCH
   fun FreeEnvironmentStringsW(lpszEnvironmentBlock : LPWCH) : BOOL
-  fun SetEnvironmentVariableW(lpName : LPCWSTR, lpValue : LPCWSTR) : BOOL
+  fun SetEnvironmentVariableW(lpName : LPWSTR, lpValue : LPWSTR) : BOOL
 end

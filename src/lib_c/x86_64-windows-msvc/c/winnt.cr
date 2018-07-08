@@ -6,7 +6,6 @@ lib LibC
   alias WCHAR = UInt16
   alias LPSTR = CHAR*
   alias LPWSTR = WCHAR*
-  alias LPCWSTR = WCHAR*
   alias LPWCH = WCHAR*
 
   alias HANDLE = Void*
