@@ -214,6 +214,10 @@ module Crystal
       self
     end
 
+    # Returns the type that owns class vars for a type.
+    #
+    # This method returns self, but subclasses might override.
+    # For example, a metaclass's class_var_owner is the instance type.
     def class_var_owner
       self
     end
@@ -1725,7 +1729,7 @@ module Crystal
     end
 
     def class_var_owner
-      generic_type
+      generic_type.class_var_owner
     end
 
     def parents
@@ -2613,7 +2617,7 @@ module Crystal
       type_var?, to: instance_type
 
     def class_var_owner
-      instance_type
+      instance_type.class_var_owner
     end
 
     def virtual_type
@@ -2676,7 +2680,7 @@ module Crystal
     delegate type_vars, abstract?, generic_nest, lookup_new_in_ancestors?, to: instance_type
 
     def class_var_owner
-      instance_type
+      instance_type.class_var_owner
     end
 
     def filter_by_responds_to(name)
@@ -2715,7 +2719,7 @@ module Crystal
     delegate type_vars, generic_nest, lookup_new_in_ancestors?, to: instance_type
 
     def class_var_owner
-      instance_type
+      instance_type.class_var_owner
     end
 
     def to_s_with_options(io : IO, skip_union_parens : Bool = false, generic_args : Bool = true, codegen = false)

@@ -495,4 +495,19 @@ describe "Semantic: class var" do
       Bar.x
       )) { nilable(int32) }
   end
+
+  it "can access constant from generic metaclass (#3719)" do
+    assert_type(%(
+      class Foo(T)
+        @@x = 0
+
+        def self.inc
+          @@x += 1
+          @@x
+        end
+      end
+
+      Foo(Int32).inc
+      )) { int32 }
+  end
 end
