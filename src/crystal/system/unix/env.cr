@@ -3,8 +3,8 @@ require "c/stdlib"
 module Crystal::System::Env
   # Sets an environment variable.
   def self.set(key : String, value : String) : Nil
-    raise ArgumentError.new("Key contains null byte") if key.byte_index(0)
-    raise ArgumentError.new("Value contains null byte") if value.byte_index(0)
+    key.check_no_null_byte("key")
+    value.check_no_null_byte("value")
 
     if LibC.setenv(key, value, 1) != 0
       raise Errno.new("setenv")
@@ -13,7 +13,7 @@ module Crystal::System::Env
 
   # Unsets an environment variable.
   def self.set(key : String, value : Nil) : Nil
-    raise ArgumentError.new("Key contains null byte") if key.byte_index(0)
+    key.check_no_null_byte("key")
 
     if LibC.unsetenv(key) != 0
       raise Errno.new("unsetenv")
@@ -22,7 +22,7 @@ module Crystal::System::Env
 
   # Gets an environment variable.
   def self.get(key : String) : String?
-    raise ArgumentError.new("Key contains null byte") if key.byte_index(0)
+    key.check_no_null_byte("key")
 
     if value = LibC.getenv(key)
       String.new(value)
@@ -31,7 +31,7 @@ module Crystal::System::Env
 
   # Returns `true` if environment variable is set.
   def self.has_key?(key : String) : Bool
-    raise ArgumentError.new("Key contains null byte") if key.byte_index(0)
+    key.check_no_null_byte("key")
 
     !!LibC.getenv(key)
   end
