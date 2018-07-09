@@ -458,7 +458,21 @@ module Crystal
             symbol ">"
           end
         when '&'
-          next_char_and_symbol "&"
+          case next_char
+          when '+'
+            next_char_and_symbol "&+"
+          when '-'
+            next_char_and_symbol "&-"
+          when '*'
+            case next_char
+            when '*'
+              next_char_and_symbol "&**"
+            else
+              symbol "&*"
+            end
+          else
+            symbol "&"
+          end
         when '|'
           next_char_and_symbol "|"
         when '^'
@@ -574,6 +588,36 @@ module Crystal
           end
         when '='
           next_char :"&="
+        when '+'
+          case next_char
+          when '='
+            next_char :"&+="
+          else
+            @token.type = :"&+"
+          end
+        when '-'
+          # Check if '>' comes after '&-', making it '&->'.
+          # We want to parse that like '&(->...)',
+          # so we only return '&' for now.
+          if peek_next_char == '>'
+            @token.type = :"&"
+          else
+            case next_char
+            when '='
+              next_char :"&-="
+            else
+              @token.type = :"&-"
+            end
+          end
+        when '*'
+          case next_char
+          when '*'
+            next_char :"&**"
+          when '='
+            next_char :"&*="
+          else
+            @token.type = :"&*"
+          end
         else
           @token.type = :"&"
         end

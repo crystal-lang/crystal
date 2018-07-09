@@ -2145,7 +2145,7 @@ module Crystal
       write_token :"::" if node.global?
 
       if obj
-        {:"!", :"+", :"-", :"~"}.each do |op|
+        {:"!", :"+", :"-", :"~", :"&+", :"&-"}.each do |op|
           if node.name == op.to_s && @token.type == op && node.args.empty?
             write op
             next_token_skip_space_or_newline
