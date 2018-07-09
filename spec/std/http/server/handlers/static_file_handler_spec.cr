@@ -81,6 +81,51 @@ describe HTTP::StaticFileHandler do
       response.status_code.should eq(200)
       response.body.should eq(File.read(datapath("static_file_handler", "test.txt")))
     end
+
+    it "returns 304 Not Modified if header is *" do
+      headers = HTTP::Headers.new
+      headers["If-None-Match"] = "*"
+      response = handle HTTP::Request.new("GET", "/test.txt", headers), ignore_body: true
+      response.status_code.should eq(304)
+    end
+
+    it "serves file if header is empty" do
+      headers = HTTP::Headers.new
+      headers["If-None-Match"] = ""
+
+      response = handle HTTP::Request.new("GET", "/test.txt", headers), ignore_body: false
+      response.status_code.should eq(200)
+      response.body.should eq(File.read(datapath("static_file_handler", "test.txt")))
+    end
+
+    it "serves file if header does not contain valid etag" do
+      headers = HTTP::Headers.new
+      headers["If-None-Match"] = ", foo"
+
+      response = handle HTTP::Request.new("GET", "/test.txt", headers), ignore_body: false
+      response.status_code.should eq(200)
+      response.body.should eq(File.read(datapath("static_file_handler", "test.txt")))
+    end
+  end
+
+  context "with multiple If-None-Match header" do
+    it "returns 304 Not Modified if at least one header matches etag" do
+      initial_response = handle HTTP::Request.new("GET", "/test.txt")
+
+      headers = HTTP::Headers.new
+      headers["If-None-Match"] = %(,, ,W/"1234567"   , , #{initial_response.headers["Etag"]},"12345678",%)
+      response = handle HTTP::Request.new("GET", "/test.txt", headers), ignore_body: true
+      response.status_code.should eq(304)
+    end
+
+    it "serves file if no header matches etag" do
+      headers = HTTP::Headers.new
+      headers["If-None-Match"] = "some random etag, 1234567"
+
+      response = handle HTTP::Request.new("GET", "/test.txt", headers), ignore_body: false
+      response.status_code.should eq(200)
+      response.body.should eq(File.read(datapath("static_file_handler", "test.txt")))
+    end
   end
 
   context "with both If-None-Match and If-Modified-Since headers" do

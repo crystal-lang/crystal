@@ -103,8 +103,9 @@ class HTTP::StaticFileHandler
   private def cache_request?(context : HTTP::Server::Context, last_modified : Time) : Bool
     # According to RFC 7232:
     # A recipient must ignore If-Modified-Since if the request contains an If-None-Match header field
-    if if_none_match = context.request.headers["If-None-Match"]?
-      if_none_match == context.response.headers["Etag"]
+    if if_none_match = context.request.if_none_match
+      match = {"*", context.response.headers["Etag"]}
+      if_none_match.any? { |etag| match.includes?(etag) }
     elsif if_modified_since = context.request.headers["If-Modified-Since"]?
       header_time = HTTP.parse_time(if_modified_since)
       # File mtime probably has a higher resolution than the header value.
