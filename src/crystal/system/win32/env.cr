@@ -4,8 +4,8 @@ require "c/winbase"
 module Crystal::System::Env
   # Sets an environment variable or unsets it if *value* is `nil`.
   def self.set(key : String, value : String) : Nil
-    raise ArgumentError.new("Key contains null byte") if key.byte_index(0)
-    raise ArgumentError.new("Value contains null byte") if value.byte_index(0)
+    key.check_no_null_byte("key")
+    value.check_no_null_byte("value")
 
     if LibC.SetEnvironmentVariableW(key.to_utf16, value.to_utf16) == 0
       raise WinError.new("SetEnvironmentVariableW")
@@ -14,7 +14,7 @@ module Crystal::System::Env
 
   # Unsets an environment variable.
   def self.set(key : String, value : Nil) : Nil
-    raise ArgumentError.new("Key contains null byte") if key.byte_index(0)
+    key.check_no_null_byte("key")
 
     if LibC.SetEnvironmentVariableW(key.to_utf16, nil) == 0
       raise WinError.new("SetEnvironmentVariableW")
@@ -23,7 +23,7 @@ module Crystal::System::Env
 
   # Gets an environment variable.
   def self.get(key : String) : String?
-    raise ArgumentError.new("Key contains null byte") if key.byte_index(0)
+    key.check_no_null_byte("key")
 
     System.retry_wstr_buffer do |buffer, small_buf|
       length = LibC.GetEnvironmentVariableW(key.to_utf16, buffer, buffer.size)
@@ -41,7 +41,7 @@ module Crystal::System::Env
 
   # Returns `true` if environment variable is set.
   def self.has_key?(key : String) : Bool
-    raise ArgumentError.new("Key contains null byte") if key.byte_index(0)
+    key.check_no_null_byte("key")
 
     buffer = uninitialized UInt16[1]
     LibC.GetEnvironmentVariableW(key.to_utf16, buffer, buffer.size) != 0
