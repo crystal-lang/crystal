@@ -214,6 +214,12 @@ module HTTP
           key = piece[0...eq_index].strip
           if key == "charset"
             value = piece[eq_index + 1..-1].strip
+
+            # For the case of a quoted charset like charset="utf-8"
+            if value.starts_with?('"') && value.ends_with?('"')
+              value = value[1...-1].strip
+            end
+
             return ComputedContentTypeHeader.new(content_type, value)
           end
         end
