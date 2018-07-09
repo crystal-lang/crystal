@@ -1459,9 +1459,13 @@ describe "Code gen: macro" do
         {% begin %}
           @x = 1
         {% end %}
+
+        def _x
+          @x
+        end
       end
 
-      Foo.new.@x
+      Foo.new._x
       ), inject_primitives: false).to_i.should eq(1)
   end
 

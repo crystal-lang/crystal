@@ -1043,6 +1043,11 @@ abstract class IO
     @encoding.try(&.name) || "UTF-8"
   end
 
+  # :nodoc:
+  def has_non_utf8_encoding?
+    !!@encoding
+  end
+
   # Seeks to a given *offset* (in bytes) according to the *whence* argument.
   #
   # The `IO` class raises on this method, but some subclasses, notable

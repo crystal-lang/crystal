@@ -288,8 +288,14 @@ describe "Code gen: struct" do
         end
       end
 
+      struct LibFoo::Foo
+        def _x
+          @x
+        end
+      end
+
       f = LibFoo::Foo.new x: 123
-      f.@x
+      f._x
       )).to_i.should eq(123)
   end
 

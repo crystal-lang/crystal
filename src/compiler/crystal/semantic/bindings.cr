@@ -557,8 +557,17 @@ module Crystal
       obj_type = obj.type?
       return unless obj_type
 
-      var = visitor.lookup_instance_var(self, obj_type)
-      self.type = var.type
+      owner_type = obj_type.instance_type.devirtualize
+      scope_type = (visitor.scope? || visitor.current_type).instance_type.devirtualize
+
+      if scope_type.has_protected_acces_to?(owner_type, allow_same_namespace: false)
+        var = visitor.lookup_instance_var(self, obj_type)
+        self.type = var.type
+      elsif scope_type.is_a?(Program)
+        raise "can't access #{owner_type}.#{name} from the top-level"
+      else
+        raise "can't access #{owner_type}.#{name} from unrelated type #{scope_type}"
+      end
     end
   end
 

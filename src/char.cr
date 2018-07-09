@@ -770,7 +770,7 @@ struct Char
       byte = ord.to_u8
 
       # Optimization: writing a slice is much slower than writing a byte
-      if io.@encoding
+      if io.has_non_utf8_encoding?
         io.write_utf8 Slice.new(pointerof(byte), 1)
       else
         io.write_byte byte
