@@ -1,4 +1,5 @@
 require "spec"
+require "./spec_helper"
 
 describe "ENV" do
   it "gets non existent key raises" do
@@ -22,6 +23,12 @@ describe "ENV" do
     ENV["FOO"]?.should_not be_nil
     ENV["FOO"] = nil
     ENV["FOO"]?.should be_nil
+  end
+
+  pending_win32 "sets to empty string" do
+    (ENV["FOO_EMPTY"] = "").should eq ""
+    pp! ENV.keys
+    ENV["FOO_EMPTY"]?.should eq ""
   end
 
   it "does has_key?" do
