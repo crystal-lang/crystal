@@ -2946,9 +2946,12 @@ class String
   # ```
   # "Team".includes?('i')            # => false
   # "Dysfunctional".includes?("fun") # => true
+  #
+  # "Member".includes?('a', 'm')     # => false
+  # "Crystal".includes?('y', 'l')    # => true
   # ```
-  def includes?(search : Char | String)
-    !!index(search)
+  def includes?(*search : Char | String)
+    search.all? { |el| !!index(el) }
   end
 
   # Makes an array by splitting the string on any amount of ASCII whitespace
