@@ -840,12 +840,17 @@ describe "String" do
     describe "by char" do
       it { "foo".includes?('o').should be_true }
       it { "foo".includes?('g').should be_false }
+      it { "foo".includes?('f', 'o').should be_true }
+      it { "foo".includes?('f', 'g').should be_false }
     end
 
     describe "by string" do
       it { "foo bar".includes?("o b").should be_true }
+      it { "foo bar".includes?("o b", "ar").should be_true }
       it { "foo".includes?("fg").should be_false }
       it { "foo".includes?("").should be_true }
+      it { "foo".includes?("fo", "o").should be_true }
+      it { "foo".includes?("fo", "g").should be_false }
     end
   end
 
@@ -1020,10 +1025,10 @@ describe "String" do
   end
 
   it "reverses taking grapheme clusters into account" do
-    reversed = "noël".reverse
-    reversed.bytesize.should eq("noël".bytesize)
-    reversed.size.should eq("noël".size)
-    reversed.should eq("lëon")
+    reversed = "noël".reverse
+    reversed.bytesize.should eq("noël".bytesize)
+    reversed.size.should eq("noël".size)
+    reversed.should eq("lëon")
   end
 
   describe "sub" do
