@@ -334,12 +334,17 @@ class Time::Location
   def self.load_local : Location
     case tz = ENV["TZ"]?
     when "", "UTC"
-      UTC
+      return UTC
     when Nil
       if localtime = Crystal::System::Time.load_localtime
         return localtime
       end
     else
+      if zoneinfo = ENV["ZONEINFO"]?
+        if location = load_from_dir_or_zip(tz, zoneinfo)
+          return location
+        end
+      end
       if location = load?(tz, Crystal::System::Time.zone_sources)
         return location
       end

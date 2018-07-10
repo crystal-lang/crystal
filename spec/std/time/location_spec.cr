@@ -184,6 +184,11 @@ class Time::Location
             Location.load_local.name.should eq "Europe/Berlin"
           end
         end
+        with_zoneinfo(datapath("zoneinfo")) do
+          with_env("TZ", "Foo/Bar") do
+            Location.load_local.name.should eq "Foo/Bar"
+          end
+        end
       end
 
       pending_win32 "with empty TZ" do
