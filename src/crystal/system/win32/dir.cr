@@ -25,7 +25,7 @@ module Crystal::System::Dir
       handle = LibC.FindFirstFileW(dir.query, out data)
       if handle != LibC::INVALID_HANDLE_VALUE
         dir.handle = handle
-        return String.from_utf16(data.cFileName.to_unsafe)
+        return String.from_utf16(data.cFileName.to_unsafe)[0]
       else
         error = LibC.GetLastError
         if error == WinError::ERROR_FILE_NOT_FOUND
@@ -37,7 +37,7 @@ module Crystal::System::Dir
     else
       # Use FindNextFile
       if LibC.FindNextFileW(dir.handle, out data_) != 0
-        return String.from_utf16(data_.cFileName.to_unsafe)
+        return String.from_utf16(data_.cFileName.to_unsafe)[0]
       else
         error = LibC.GetLastError
         if error == WinError::ERROR_NO_MORE_FILES
