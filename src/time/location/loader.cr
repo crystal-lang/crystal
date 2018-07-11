@@ -34,7 +34,7 @@ class Time::Location
         end
       end
     else
-      path = File.expand_path(name, source)
+      path = File.join(source, name)
       open_file_cached(name, path) do |file|
         read_zoneinfo(name, file)
       end
@@ -65,7 +65,7 @@ class Time::Location
       if source.ends_with?(".zip")
         return source if File.exists?(source)
       else
-        path = File.expand_path(name, source)
+        path = File.join(source, name)
         return source if File.exists?(path)
       end
     end
