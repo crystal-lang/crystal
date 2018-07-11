@@ -373,6 +373,18 @@ module Crystal
     #     end
     def expand(node : Case)
       node_cond = node.cond
+
+      if node.whens.empty?
+        expressions = [] of ASTNode
+        if node_cond
+          expressions << node_cond
+        end
+        if node_else = node.else
+          expressions << node_else
+        end
+        return Expressions.new(expressions).at(node)
+      end
+
       if node_cond
         if node_cond.is_a?(TupleLiteral)
           conds = node_cond.elements
