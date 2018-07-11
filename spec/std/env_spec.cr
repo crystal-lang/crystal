@@ -25,9 +25,8 @@ describe "ENV" do
     ENV["FOO"]?.should be_nil
   end
 
-  pending_win32 "sets to empty string" do
+  it "sets to empty string" do
     (ENV["FOO_EMPTY"] = "").should eq ""
-    pp! ENV.keys
     ENV["FOO_EMPTY"]?.should eq ""
   end
 

@@ -26,15 +26,25 @@ module Crystal::System::Env
     key.check_no_null_byte("key")
 
     System.retry_wstr_buffer do |buffer, small_buf|
+      # `GetEnvironmentVariableW` doesn't set last error on success but we need
+      # a success message in order to identify if length == 0 means not found or
+      # the value is an empty string.
+      LibC.SetLastError(WinError::ERROR_SUCCESS)
       length = LibC.GetEnvironmentVariableW(key.to_utf16, buffer, buffer.size)
+
       if 0 < length < buffer.size
         return String.from_utf16(buffer[0, length])
       elsif small_buf && length > 0
         next length
-      elsif length == 0 && LibC.GetLastError == WinError::ERROR_ENVVAR_NOT_FOUND
-        return
       else
-        raise WinError.new("GetEnvironmentVariableW")
+        case last_error = LibC.GetLastError
+        when WinError::ERROR_SUCCESS
+          return ""
+        when WinError::ERROR_ENVVAR_NOT_FOUND
+          return
+        else
+          raise WinError.new("GetEnvironmentVariableW", last_error)
+        end
       end
     end
   end

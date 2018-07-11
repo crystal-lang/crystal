@@ -4,6 +4,7 @@ require "c/int_safe"
 
 lib LibC
   fun GetLastError : DWORD
+  fun SetLastError(dwErrCode : DWORD)
 
   FORMAT_MESSAGE_ALLOCATE_BUFFER = 0x00000100_u32
   FORMAT_MESSAGE_IGNORE_INSERTS  = 0x00000200_u32
