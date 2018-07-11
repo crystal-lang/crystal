@@ -29,9 +29,7 @@ class Time::Location
             location.local?.should be_true
           end
 
-          {% unless flag?(:win32) %}
-          Location.load?("Europe/Berlin", Crystal::System::Time.zone_sources).should eq location
-          {% end %}
+          Location.load("Europe/Berlin", {ZONEINFO_ZIP}).should eq location
         end
       end
 
@@ -165,7 +163,9 @@ class Time::Location
     end
 
     it ".local" do
-      Location.local.should eq Location.load_local
+      with_zoneinfo do
+        Location.local.should eq Location.load_local
+      end
 
       Location.local = Location::UTC
       Location.local.should be Location::UTC
@@ -191,7 +191,7 @@ class Time::Location
         end
       end
 
-      pending_win32 "with empty TZ" do
+      it "with empty TZ" do
         with_zoneinfo do
           with_env("TZ", "") do
             Location.load_local.utc?.should be_true
