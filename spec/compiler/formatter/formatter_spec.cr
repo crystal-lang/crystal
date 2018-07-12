@@ -494,6 +494,12 @@ describe Crystal::Formatter do
   assert_format "case 1\nwhen 1, # 1\n     2, # 2\n     3  # 3\n  1\nend"
   assert_format "a = case 1\n    when 1, # 1\n         2, # 2\n         3  # 3\n      1\n    end"
   assert_format "a = 1\ncase\nwhen 2\nelse\n  a /= 3\nend"
+  assert_format "case 1\nend"
+  assert_format "case 1\nelse\n  2\nend"
+  assert_format "case\nend"
+  assert_format "case 1\nend"
+  assert_format "case\nend"
+  assert_format "case\nelse\n  1\nend"
 
   assert_format "select   \n when  foo \n 2 \n end", "select\nwhen foo\n  2\nend"
   assert_format "select   \n when  foo \n 2 \n when bar \n 3 \n end", "select\nwhen foo\n  2\nwhen bar\n  3\nend"

@@ -2454,7 +2454,11 @@ module Crystal
     def parse_case
       slash_is_regex!
       next_token_skip_space_or_newline
-      unless @token.keyword?(:when)
+      while @token.type == :";"
+        next_token_skip_space
+      end
+
+      unless @token.keyword? && {:when, :else, :end}.includes?(@token.value)
         cond = parse_op_assign_no_control
         skip_statement_end
       end
@@ -2527,9 +2531,6 @@ module Crystal
             skip_space_or_newline
             whens << When.new(when_conds, when_body).at(location)
           when :else
-            if whens.size == 0
-              unexpected_token @token.to_s, "expecting when"
-            end
             next_token_skip_statement_end
             a_else = parse_expressions
             skip_statement_end
@@ -2537,9 +2538,6 @@ module Crystal
             next_token
             break
           when :end
-            if whens.empty?
-              unexpected_token @token.to_s, "expecting when or else"
-            end
             next_token
             break
           else

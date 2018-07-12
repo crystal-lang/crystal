@@ -100,4 +100,20 @@ describe "Normalize: case" do
   it "normalizes case with multiple expressions and non-tuple" do
     assert_expand_second "x, y = 1, 2; case {x, y}; when 1; 4; end", "if 1 === {x, y}\n  4\nend"
   end
+
+  it "normalizes case without when and else" do
+    assert_expand "case x; end", "x"
+  end
+
+  it "normalizes case without when but else" do
+    assert_expand "case x; else; y; end", "x\ny"
+  end
+
+  it "normalizes case without cond, when and else" do
+    assert_expand "case; end", ""
+  end
+
+  it "normalizes case without cond, when but else" do
+    assert_expand "case; else; y; end", "y"
+  end
 end
