@@ -3346,11 +3346,11 @@ module Crystal
           index += 1
         end
 
-        if name.ends_with?('=') && !name.ends_with?("[]=")
-          if args.size > 1 || found_splat || found_double_splat
-            raise "setter method '#{name}' cannot receive more than one argument"
+        if name.ends_with?('=')
+          if name != "[]=" && (args.size > 1 || found_splat || found_double_splat)
+            raise "setter method '#{name}' cannot have more than one argument"
           elsif found_block
-            raise "setter method '#{name}' cannot receive a block"
+            raise "setter method '#{name}' cannot have a block"
           end
         end
 
