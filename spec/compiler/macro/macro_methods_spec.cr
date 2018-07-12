@@ -1686,5 +1686,52 @@ module Crystal
     it "compares versions" do
       assert_macro "", %({{compare_versions("1.10.3", "1.2.3")}}), [] of ASTNode, %(1)
     end
+
+    describe "printing" do
+      it "puts" do
+        String.build do |io|
+          assert_macro "foo", %({% puts foo %}), "" do |program|
+            program.stdout = io
+            ["bar".string] of ASTNode
+          end
+        end.should eq %("bar"\n)
+      end
+
+      it "p" do
+        String.build do |io|
+          assert_macro "foo", %({% p foo %}), "" do |program|
+            program.stdout = io
+            ["bar".string] of ASTNode
+          end
+        end.should eq %("bar"\n)
+      end
+
+      it "p!" do
+        String.build do |io|
+          assert_macro "foo", "{% p! foo %}", "" do |program|
+            program.stdout = io
+            ["bar".string] of ASTNode
+          end
+        end.should eq %(foo # => "bar"\n)
+      end
+
+      it "pp" do
+        String.build do |io|
+          assert_macro "foo", "{% pp foo %}", "" do |program|
+            program.stdout = io
+            ["bar".string] of ASTNode
+          end
+        end.should eq %("bar"\n)
+      end
+
+      it "pp!" do
+        String.build do |io|
+          assert_macro "foo", "{% pp! foo %}", "" do |program|
+            program.stdout = io
+            ["bar".string] of ASTNode
+          end
+        end.should eq %(foo # => "bar"\n)
+      end
+    end
   end
 end
