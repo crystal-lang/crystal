@@ -20,13 +20,13 @@ lib LibLLVMExt
     scope_line : UInt, flags : LLVM::DIFlags, is_optimized : Bool, func : LibLLVM::ValueRef
   ) : Metadata
 
-  fun di_builder_create_file = LLVMDIBuilderCreateFile(builder : DIBuilder, file : Char*, dir : Char*) : Metadata
-  fun di_builder_create_compile_unit = LLVMDIBuilderCreateCompileUnit(builder : DIBuilder,
-                                                                      lang : UInt, file : Char*,
-                                                                      dir : Char*,
-                                                                      producer : Char*,
-                                                                      optimized : Int, flags : Char*,
-                                                                      runtime_version : UInt) : Metadata
+  fun di_builder_create_file = LLVMDIBuilderCreateFile2(builder : DIBuilder, file : Char*, dir : Char*) : Metadata
+  fun di_builder_create_compile_unit = LLVMDIBuilderCreateCompileUnit2(builder : DIBuilder,
+                                                                       lang : UInt, file : Char*,
+                                                                       dir : Char*,
+                                                                       producer : Char*,
+                                                                       optimized : Int, flags : Char*,
+                                                                       runtime_version : UInt) : Metadata
   fun di_builder_create_lexical_block = LLVMDIBuilderCreateLexicalBlock(builder : DIBuilder,
                                                                         scope : Metadata,
                                                                         file : Metadata,
