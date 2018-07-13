@@ -1167,4 +1167,6 @@ describe Crystal::Formatter do
 
   assert_format "begin 0[1] rescue 2 end"
   assert_format "begin\n 0[1] rescue 2 end", "begin 0[1] rescue 2 end"
+
+  assert_format "{%\n  if 1\n    2\n  end\n%}"
 end
