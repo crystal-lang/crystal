@@ -177,7 +177,7 @@ module Crystal
         # Check if the argument has to be passed as a named argument
         if splat_index && i > splat_index
           named_args ||= [] of NamedArgument
-          named_args << NamedArgument.new(arg.name, Var.new(arg.name).at(self)).at(self)
+          named_args << NamedArgument.new(arg.external_name, Var.new(arg.name).at(self)).at(self)
         else
           new_var = Var.new(arg.name).at(self)
           new_var = Splat.new(new_var).at(self) if i == splat_index
@@ -266,7 +266,11 @@ module Crystal
           named_args.each do |named_arg|
             str << ':'
             str << named_arg
-            def_args << Arg.new(named_arg)
+
+            # When **opts is expanded for named arguments, we must use internal
+            # names that won't clash with local variables defined in the method.
+            temp_name = instance_type.program.new_temp_var_name
+            def_args << Arg.new(temp_name, external_name: named_arg)
             i += 1
           end
         end
