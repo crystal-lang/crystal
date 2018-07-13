@@ -33,6 +33,8 @@ EXPORTS := $(if $(release),,CRYSTAL_CONFIG_PATH="$(PWD)/src")
 SHELL = sh
 LLVM_CONFIG_FINDER := \
   [ -n "$(LLVM_CONFIG)" ] && command -v "$(LLVM_CONFIG)" || \
+  command -v llvm-config-6.0 || command -v llvm-config60 || \
+    (command -v llvm-config > /dev/null && (case "$(llvm-config --version)" in 6.0*) command -v llvm-config;; *) false;; esac)) || \
   command -v llvm-config-5.0 || command -v llvm-config50 || \
     (command -v llvm-config > /dev/null && (case "$(llvm-config --version)" in 5.0*) command -v llvm-config;; *) false;; esac)) || \
   command -v llvm-config-4.0 || command -v llvm-config40 || \
