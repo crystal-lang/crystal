@@ -3014,6 +3014,7 @@ module Crystal
 
       macro_control = parse_macro_control(@line_number, @column_number)
       if macro_control
+        skip_space_or_newline
         check :"%}"
         next_token_skip_space
         macro_control
