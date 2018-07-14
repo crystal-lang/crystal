@@ -877,7 +877,7 @@ abstract class IO
   # `from_io(io : IO, format : IO::ByteFormat = IO::ByteFormat::SystemEndian)`
   # method can be read in this way.
   #
-  # See `Int.from_io` and `Float.from_io`.
+  # See `Int#from_io` and `Float#from_io`.
   #
   # ```
   # io = IO::Memory.new
