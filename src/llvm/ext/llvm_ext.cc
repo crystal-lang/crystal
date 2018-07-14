@@ -60,7 +60,7 @@ LLVMDIBuilderRef LLVMNewDIBuilder(LLVMModuleRef mref) {
   return wrap(new DIBuilder(*m));
 }
 
-#if LLVM_VERSION_LE(5, 9)
+#if LLVM_VERSION_LE(5, 0)
 void LLVMDIBuilderFinalize(LLVMDIBuilderRef dref) { unwrap(dref)->finalize(); }
 #endif
 
