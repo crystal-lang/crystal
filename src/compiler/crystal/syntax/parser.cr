@@ -29,7 +29,7 @@ module Crystal
       @def_nest = 0
       @type_nest = 0
       @call_args_nest = 0
-      @block_arg_count = 0
+      @temp_arg_count = 0
       @in_macro_expression = false
       @stop_on_yield = 0
       @inside_c_struct = false
@@ -1386,9 +1386,7 @@ module Crystal
       next_token_skip_space
 
       if @token.type == :"."
-        block_arg_name = "__arg#{@block_arg_count}"
-        @block_arg_count += 1
-
+        block_arg_name = temp_arg_name
         obj = Var.new(block_arg_name)
 
         @wants_regex = false
@@ -3663,6 +3661,20 @@ module Crystal
           raise "when specified, external name must be different than internal name", @token
         end
 
+        # If it's something like @select, we can't transform it to:
+        #
+        #     @select = select
+        #
+        # because if someone uses `to_s` later it will produce invalid code.
+        # So we do something like:
+        #
+        # def method(select __arg0)
+        #   @select = __arg0
+        # end
+        if !external_name && invalid_internal_name?(arg_name)
+          arg_name, external_name = temp_arg_name, arg_name
+        end
+
         ivar = InstanceVar.new(@token.value.to_s).at(location)
         var = Var.new(arg_name).at(location)
         assign = Assign.new(ivar, var).at(location)
@@ -3677,6 +3689,11 @@ module Crystal
         arg_name = @token.value.to_s[2..-1]
         if arg_name == external_name
           raise "when specified, external name must be different than internal name", @token
+        end
+
+        # Same case as :INSTANCE_VAR for things like @select
+        if !external_name && invalid_internal_name?(arg_name)
+          arg_name, external_name = temp_arg_name, arg_name
         end
 
         cvar = ClassVar.new(@token.value.to_s).at(location)
@@ -3715,17 +3732,34 @@ module Crystal
 
     def invalid_internal_name?(keyword)
       case keyword
-      # These names are handled as keyword by `Parser#parse_atomic_without_location`.
-      # We cannot assign value into them and never reference them,
-      # so they are invalid internal name.
-      when :begin, :nil, :true, :false, :yield, :with, :abstract,
-           :def, :macro, :require, :case, :select, :if, :unless, :include,
-           :extend, :class, :struct, :module, :enum, :while, :until, :return,
-           :next, :break, :lib, :fun, :alias, :pointerof, :sizeof,
-           :instance_sizeof, :typeof, :private, :protected, :asm, :out,
-      # `end` is also invalid because it maybe terminate `def` block.
-           :end
-        true
+      when Symbol
+        case keyword
+        # These names are handled as keyword by `Parser#parse_atomic_without_location`.
+        # We cannot assign value into them and never reference them,
+        # so they are invalid internal name.
+        when :begin, :nil, :true, :false, :yield, :with, :abstract,
+             :def, :macro, :require, :case, :select, :if, :unless, :include,
+             :extend, :class, :struct, :module, :enum, :while, :until, :return,
+             :next, :break, :lib, :fun, :alias, :pointerof, :sizeof,
+             :instance_sizeof, :typeof, :private, :protected, :asm, :out,
+        # `end` is also invalid because it maybe terminate `def` block.
+             :end
+          true
+        else
+          false
+        end
+      when String
+        case keyword
+        when "begin", "nil", "true", "false", "yield", "with", "abstract",
+             "def", "macro", "require", "case", "select", "if", "unless", "include",
+             "extend", "class", "struct", "module", "enum", "while", "until", "return",
+             "next", "break", "lib", "fun", "alias", "pointerof", "sizeof",
+             "instance_sizeof", "typeof", "private", "protected", "asm", "out",
+             "end"
+          true
+        else
+          false
+        end
       else
         false
       end
@@ -3996,8 +4030,7 @@ module Crystal
           when :UNDERSCORE
             arg_name = "_"
           when :"("
-            block_arg_name = "__arg#{@block_arg_count}"
-            @block_arg_count += 1
+            block_arg_name = temp_arg_name
 
             next_token_skip_space_or_newline
 
@@ -5689,6 +5722,12 @@ module Crystal
       end
 
       token
+    end
+
+    def temp_arg_name
+      arg_name = "__arg#{@temp_arg_count}"
+      @temp_arg_count += 1
+      arg_name
     end
   end
 

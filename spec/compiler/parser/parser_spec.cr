@@ -176,7 +176,7 @@ module Crystal
     assert_syntax_error "def foo!=; end", "unexpected token: !="
     assert_syntax_error "def foo?=(x); end", "unexpected token: ?"
 
-    # #5895 & #6042
+    # #5895, #6042, #5997
     %w(
       begin nil true false yield with abstract
       def macro require case select if unless include
@@ -188,6 +188,8 @@ module Crystal
       assert_syntax_error "def foo(#{kw}); end", "cannot use '#{kw}' as an argument name", 1, 9
       assert_syntax_error "def foo(foo #{kw}); end", "cannot use '#{kw}' as an argument name", 1, 13
       it_parses "def foo(#{kw} foo); end", Def.new("foo", [Arg.new("foo", external_name: kw.to_s)])
+      it_parses "def foo(@#{kw}); end", Def.new("foo", [Arg.new("__arg0", external_name: kw.to_s)], [Assign.new("@#{kw}".instance_var, "__arg0".var)] of ASTNode)
+      it_parses "def foo(@@#{kw}); end", Def.new("foo", [Arg.new("__arg0", external_name: kw.to_s)], [Assign.new("@@#{kw}".class_var, "__arg0".var)] of ASTNode)
     end
 
     it_parses "def self.foo\n1\nend", Def.new("foo", body: 1.int32, receiver: "self".var)

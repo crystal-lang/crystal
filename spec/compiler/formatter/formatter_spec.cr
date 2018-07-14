@@ -170,6 +170,8 @@ describe Crystal::Formatter do
   assert_format "def   foo (  @x, @y)  \n  end", "def foo(@x, @y)\nend"
   assert_format "def   foo (  @@x)  \n  end", "def foo(@@x)\nend"
   assert_format "def   foo (  &@block)  \n  end", "def foo(&@block)\nend"
+  assert_format "def   foo (  @select)  \n  end", "def foo(@select)\nend"
+  assert_format "def   foo (  @@select)  \n  end", "def foo(@@select)\nend"
   assert_format "def foo(a, &@b)\nend"
   assert_format "def   foo (  x  =   1 )  \n  end", "def foo(x = 1)\nend"
   assert_format "def   foo (  x  :  Int32 )  \n  end", "def foo(x : Int32)\nend"

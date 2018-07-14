@@ -1966,7 +1966,9 @@ module Crystal
         end
       end
 
-      if node.external_name != node.name
+      at_skip = at_skip?
+
+      if !at_skip && node.external_name != node.name
         if node.external_name.empty?
           write "_"
         elsif @token.type == :DELIMITER_START
