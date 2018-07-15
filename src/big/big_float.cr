@@ -280,6 +280,12 @@ struct Number
 end
 
 class String
+  # Converts `self` to a `BigFloat`.
+  #
+  # ```
+  # require "big"
+  # "1234.0".to_big_f
+  # ```
   def to_big_f
     BigFloat.new(self)
   end
@@ -298,6 +304,12 @@ module Math
     {frac, exp}
   end
 
+  # Returns the sqrt of a `BigFloat`.
+  #
+  # ```
+  # require "big"
+  # Math.sqrt((1000_000_000_0000.to_big_f*1000_000_000_00000.to_big_f))
+  # ```
   def sqrt(value : BigFloat)
     BigFloat.new { |mpf| LibGMP.mpf_sqrt(mpf, value) }
   end
