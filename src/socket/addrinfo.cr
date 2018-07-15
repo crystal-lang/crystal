@@ -141,7 +141,7 @@ class Socket
     #
     # Example:
     # ```
-    # addrinfos = Socket::Addrinfo.tcp("example.org", 53)
+    # addrinfos = Socket::Addrinfo.udp("example.org", 53)
     # ```
     def self.udp(domain, service, family = Family::UNSPEC, timeout = nil) : Array(Addrinfo)
       resolve(domain, service, family, Type::DGRAM, Protocol::UDP)
