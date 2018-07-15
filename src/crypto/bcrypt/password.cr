@@ -58,7 +58,7 @@ class Crypto::Bcrypt::Password
   # password == "wrong secret" # => false
   # password == "super secret" # => true
   # ```
-  def ==(password)
+  def ==(password : String) : Bool
     hashed_password = Bcrypt.new(password, salt, cost)
     Crypto::Subtle.constant_time_compare(@raw_hash, hashed_password)
   end

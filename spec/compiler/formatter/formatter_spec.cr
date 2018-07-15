@@ -170,6 +170,8 @@ describe Crystal::Formatter do
   assert_format "def   foo (  @x, @y)  \n  end", "def foo(@x, @y)\nend"
   assert_format "def   foo (  @@x)  \n  end", "def foo(@@x)\nend"
   assert_format "def   foo (  &@block)  \n  end", "def foo(&@block)\nend"
+  assert_format "def   foo (  @select)  \n  end", "def foo(@select)\nend"
+  assert_format "def   foo (  @@select)  \n  end", "def foo(@@select)\nend"
   assert_format "def foo(a, &@b)\nend"
   assert_format "def   foo (  x  =   1 )  \n  end", "def foo(x = 1)\nend"
   assert_format "def   foo (  x  :  Int32 )  \n  end", "def foo(x : Int32)\nend"
@@ -296,6 +298,7 @@ describe Crystal::Formatter do
   assert_format "with foo yield bar"
 
   assert_format "1   +   2", "1 + 2"
+  assert_format "1   &+   2", "1 &+ 2"
   assert_format "1   >   2", "1 > 2"
   assert_format "1   *   2", "1 * 2"
   assert_format "1*2", "1*2"
@@ -312,14 +315,22 @@ describe Crystal::Formatter do
   assert_format "- 1", "-1"
   assert_format "~ 1", "~1"
   assert_format "+ 1", "+1"
+  assert_format "&- 1", "&-1"
+  assert_format "&+ 1", "&+1"
   assert_format "a-1", "a - 1"
   assert_format "a+1", "a + 1"
+  assert_format "a&-1", "a &- 1"
+  assert_format "a&+1", "a &+ 1"
   assert_format "1 + \n2", "1 +\n  2"
   assert_format "1 +  # foo\n2", "1 + # foo\n  2"
   assert_format "a = 1 +  #    foo\n2", "a = 1 + #    foo\n    2"
   assert_format "1+2*3", "1 + 2*3"
+  assert_format "1&+2&*3", "1 &+ 2 &* 3"
 
   assert_format "foo(1 + \n2)", "foo(1 +\n    2)"
+  assert_format "foo(1 &+ \n2)", "foo(1 &+\n    2)"
+
+  assert_format "foo(1 &- 2)"
 
   assert_format "foo[]", "foo[]"
   assert_format "foo[ 1 , 2 ]", "foo[1, 2]"
@@ -485,6 +496,12 @@ describe Crystal::Formatter do
   assert_format "case 1\nwhen 1, # 1\n     2, # 2\n     3  # 3\n  1\nend"
   assert_format "a = case 1\n    when 1, # 1\n         2, # 2\n         3  # 3\n      1\n    end"
   assert_format "a = 1\ncase\nwhen 2\nelse\n  a /= 3\nend"
+  assert_format "case 1\nend"
+  assert_format "case 1\nelse\n  2\nend"
+  assert_format "case\nend"
+  assert_format "case 1\nend"
+  assert_format "case\nend"
+  assert_format "case\nelse\n  1\nend"
 
   assert_format "select   \n when  foo \n 2 \n end", "select\nwhen foo\n  2\nend"
   assert_format "select   \n when  foo \n 2 \n when bar \n 3 \n end", "select\nwhen foo\n  2\nwhen bar\n  3\nend"
@@ -650,7 +667,8 @@ describe Crystal::Formatter do
   assert_format "->( x , y )   { x }", "->(x, y) { x }"
   assert_format "->( x : Int32 , y )   { x }", "->(x : Int32, y) { x }"
 
-  {:+, :-, :*, :/, :^, :>>, :<<, :|, :&}.each do |sym|
+  # TODO remove quotes after 0.26.0
+  {:+, :-, :*, :/, :^, :>>, :<<, :|, :&, :"&+", :"&-", :"&*", :"&**"}.each do |sym|
     assert_format ":#{sym}"
   end
   assert_format ":\"foo bar\""
@@ -1151,4 +1169,6 @@ describe Crystal::Formatter do
 
   assert_format "begin 0[1] rescue 2 end"
   assert_format "begin\n 0[1] rescue 2 end", "begin 0[1] rescue 2 end"
+
+  assert_format "{%\n  if 1\n    2\n  end\n%}"
 end

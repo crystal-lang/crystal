@@ -18,19 +18,46 @@ end
 module XML
   describe Reader do
     describe ".new" do
-      it "can be initialized from a string" do
-        reader = Reader.new(xml)
-        reader.should be_a(XML::Reader)
-        reader.read.should be_true
-        reader.name.should eq("people")
+      context "with default parser options" do
+        it "can be initialized from a string" do
+          reader = Reader.new(xml)
+          reader.should be_a(XML::Reader)
+          reader.read.should be_true
+          reader.name.should eq("people")
+          reader.read.should be_true
+          reader.name.should eq("#text")
+        end
+
+        it "can be initialized from an io" do
+          io = IO::Memory.new(xml)
+          reader = Reader.new(io)
+          reader.should be_a(XML::Reader)
+          reader.read.should be_true
+          reader.name.should eq("people")
+          reader.read.should be_true
+          reader.name.should eq("#text")
+        end
       end
 
-      it "can be initialize from an io" do
-        io = IO::Memory.new(xml)
-        reader = Reader.new(io)
-        reader.should be_a(XML::Reader)
-        reader.read.should be_true
-        reader.name.should eq("people")
+      context "with custom parser options" do
+        it "can be initialized from a string" do
+          reader = Reader.new(xml, XML::ParserOptions::NOBLANKS)
+          reader.should be_a(XML::Reader)
+          reader.read.should be_true
+          reader.name.should eq("people")
+          reader.read.should be_true
+          reader.name.should eq("person")
+        end
+
+        it "can be initialized from an io" do
+          io = IO::Memory.new(xml)
+          reader = Reader.new(io, XML::ParserOptions::NOBLANKS)
+          reader.should be_a(XML::Reader)
+          reader.read.should be_true
+          reader.name.should eq("people")
+          reader.read.should be_true
+          reader.name.should eq("person")
+        end
       end
     end
 
@@ -95,6 +122,51 @@ module XML
         reader.read.should be_true
         reader.node_type.should eq(XML::Type::DTD_NODE)
         reader.name.should eq("#text")
+        reader.read.should be_true
+        reader.node_type.should eq(XML::Type::ELEMENT_DECL)
+        reader.name.should eq("people")
+        reader.read.should be_false
+      end
+
+      it "reads all non-blank nodes with NOBLANKS option" do
+        reader = Reader.new(xml, XML::ParserOptions::NOBLANKS)
+        reader.read.should be_true
+        reader.node_type.should eq(XML::Type::ELEMENT_NODE)
+        reader.name.should eq("people")
+        reader.read.should be_true
+        reader.node_type.should eq(XML::Type::ELEMENT_NODE)
+        reader.name.should eq("person")
+        reader["id"].should eq("1")
+        reader.read.should be_true
+        reader.node_type.should eq(XML::Type::ELEMENT_NODE)
+        reader.name.should eq("name")
+        reader.read.should be_true
+        reader.node_type.should eq(XML::Type::TEXT_NODE)
+        reader.name.should eq("#text")
+        reader.value.should eq("John")
+        reader.read.should be_true
+        reader.node_type.should eq(XML::Type::ELEMENT_DECL)
+        reader.name.should eq("name")
+        reader.read.should be_true
+        reader.node_type.should eq(XML::Type::ELEMENT_DECL)
+        reader.name.should eq("person")
+        reader.read.should be_true
+        reader.node_type.should eq(XML::Type::ELEMENT_NODE)
+        reader.name.should eq("person")
+        reader["id"].should eq("2")
+        reader.read.should be_true
+        reader.node_type.should eq(XML::Type::ELEMENT_NODE)
+        reader.name.should eq("name")
+        reader.read.should be_true
+        reader.node_type.should eq(XML::Type::TEXT_NODE)
+        reader.name.should eq("#text")
+        reader.value.should eq("Peter")
+        reader.read.should be_true
+        reader.node_type.should eq(XML::Type::ELEMENT_DECL)
+        reader.name.should eq("name")
+        reader.read.should be_true
+        reader.node_type.should eq(XML::Type::ELEMENT_DECL)
+        reader.name.should eq("person")
         reader.read.should be_true
         reader.node_type.should eq(XML::Type::ELEMENT_DECL)
         reader.name.should eq("people")

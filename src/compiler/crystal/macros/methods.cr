@@ -20,10 +20,10 @@ module Crystal
         interpret_env(node)
       when "flag?"
         interpret_flag?(node)
-      when "puts", "p"
+      when "puts", "p", "pp"
         interpret_puts(node)
-      when "pp"
-        interpret_pp(node)
+      when "p!", "pp!"
+        interpret_pp!(node)
       when "skip_file"
         interpret_skip_file(node)
       when "system", "`"
@@ -122,7 +122,7 @@ module Crystal
       @last = Nop.new
     end
 
-    def interpret_pp(node)
+    def interpret_pp!(node)
       strings = [] of {String, String}
 
       node.args.each do |arg|

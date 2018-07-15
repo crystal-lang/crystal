@@ -600,7 +600,7 @@ describe "Code gen: proc" do
       )).to_i.should eq(1)
   end
 
-  it "passes proc as &-> to method that yields" do
+  it "passes proc as &->expr to method that yields" do
     run(%(
       def foo
         yield

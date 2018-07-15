@@ -1966,7 +1966,9 @@ module Crystal
         end
       end
 
-      if node.external_name != node.name
+      at_skip = at_skip?
+
+      if !at_skip && node.external_name != node.name
         if node.external_name.empty?
           write "_"
         elsif @token.type == :DELIMITER_START
@@ -2145,7 +2147,7 @@ module Crystal
       write_token :"::" if node.global?
 
       if obj
-        {:"!", :"+", :"-", :"~"}.each do |op|
+        {:"!", :"+", :"-", :"~", :"&+", :"&-"}.each do |op|
           if node.name == op.to_s && @token.type == op && node.args.empty?
             write op
             next_token_skip_space_or_newline

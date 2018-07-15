@@ -5,7 +5,7 @@ private def regex(string, options = Regex::Options::None)
 end
 
 private def it_parses(string, expected_node, file = __FILE__, line = __LINE__)
-  it "parses #{string}", file, line do
+  it "parses #{string.dump}", file, line do
     parser = Parser.new(string)
     parser.filename = "/foo/bar/baz.cr"
     node = parser.parse
@@ -132,6 +132,8 @@ module Crystal
     it_parses "~ 1", Call.new(1.int32, "~")
     it_parses "1 && 2", And.new(1.int32, 2.int32)
     it_parses "1 || 2", Or.new(1.int32, 2.int32)
+    it_parses "&- 1", Call.new(1.int32, "&-")
+    it_parses "&+ 1", Call.new(1.int32, "&+")
 
     it_parses "1 <=> 2", Call.new(1.int32, "<=>", 2.int32)
     it_parses "1 !~ 2", Call.new(1.int32, "!~", 2.int32)
@@ -182,7 +184,7 @@ module Crystal
     assert_syntax_error "def foo=(&block); end", "setter method 'foo=' cannot have a block"
     assert_syntax_error "def []=(&block); end", "setter method '[]=' cannot have a block"
 
-    # #5895 & #6042
+    # #5895, #6042, #5997
     %w(
       begin nil true false yield with abstract
       def macro require case select if unless include
@@ -194,6 +196,8 @@ module Crystal
       assert_syntax_error "def foo(#{kw}); end", "cannot use '#{kw}' as an argument name", 1, 9
       assert_syntax_error "def foo(foo #{kw}); end", "cannot use '#{kw}' as an argument name", 1, 13
       it_parses "def foo(#{kw} foo); end", Def.new("foo", [Arg.new("foo", external_name: kw.to_s)])
+      it_parses "def foo(@#{kw}); end", Def.new("foo", [Arg.new("__arg0", external_name: kw.to_s)], [Assign.new("@#{kw}".instance_var, "__arg0".var)] of ASTNode)
+      it_parses "def foo(@@#{kw}); end", Def.new("foo", [Arg.new("__arg0", external_name: kw.to_s)], [Assign.new("@@#{kw}".class_var, "__arg0".var)] of ASTNode)
     end
 
     it_parses "def self.foo\n1\nend", Def.new("foo", body: 1.int32, receiver: "self".var)
@@ -427,7 +431,7 @@ module Crystal
     it_parses "f.x = Foo.new", Call.new("f".call, "x=", [Call.new("Foo".path, "new")] of ASTNode)
     it_parses "f.x = - 1", Call.new("f".call, "x=", [Call.new(1.int32, "-")] of ASTNode)
 
-    ["+", "-", "*", "/", "%", "|", "&", "^", "**", "<<", ">>"].each do |op|
+    ["+", "-", "*", "/", "%", "|", "&", "^", "**", "<<", ">>", "&+", "&-", "&*"].each do |op|
       it_parses "f.x #{op}= 2", OpAssign.new(Call.new("f".call, "x"), op, 2.int32)
     end
 
@@ -438,9 +442,10 @@ module Crystal
     it_parses "def %(); end;", Def.new("%")
     it_parses "def /(); end;", Def.new("/")
 
-    ["<<", "<", "<=", "==", ">>", ">", ">=", "+", "-", "*", "/", "%", "|", "&", "^", "**", "===", "=~", "!~"].each do |op|
+    ["<<", "<", "<=", "==", ">>", ">", ">=", "+", "-", "*", "/", "%", "|", "&", "^", "**", "===", "=~", "!~", "&+", "&-", "&*", "&**"].each do |op|
       it_parses "1 #{op} 2", Call.new(1.int32, op, 2.int32)
       it_parses "n #{op} 2", Call.new("n".call, op, 2.int32)
+      it_parses "def #{op}(); end", Def.new(op)
     end
 
     ["bar", "+", "-", "*", "/", "<", "<=", "==", ">", ">=", "%", "|", "&", "^", "**", "===", "=~", "!~"].each do |name|
@@ -449,7 +454,7 @@ module Crystal
       it_parses "foo.#{name}(1, 2)", Call.new("foo".call, name, 1.int32, 2.int32)
     end
 
-    ["+", "-", "*", "/", "%", "|", "&", "^", "**", "<<", ">>"].each do |op|
+    ["+", "-", "*", "/", "%", "|", "&", "^", "**", "<<", ">>", "&+", "&-", "&*"].each do |op|
       it_parses "a = 1; a #{op}= 1", [Assign.new("a".var, 1.int32), OpAssign.new("a".var, op, 1.int32)]
       it_parses "a = 1; a #{op}=\n1", [Assign.new("a".var, 1.int32), OpAssign.new("a".var, op, 1.int32)]
       it_parses "a.b #{op}=\n1", OpAssign.new(Call.new("a".call, "b"), op, 1.int32)
@@ -650,7 +655,8 @@ module Crystal
       assert_syntax_error "#{keyword} ? 1 : 2", "void value expression"
       assert_syntax_error "+#{keyword}", "void value expression"
 
-      ["<<", "<", "<=", "==", ">>", ">", ">=", "+", "-", "*", "/", "%", "|", "&", "^", "**", "==="].each do |op|
+      ["<<", "<", "<=", "==", ">>", ">", ">=", "+", "-", "*", "/", "%", "|",
+       "&", "^", "**", "===", "&+", "&-", "&*", "&**"].each do |op|
         assert_syntax_error "#{keyword} #{op} 1", "void value expression"
       end
 
@@ -783,6 +789,7 @@ module Crystal
     it_parses "{%\na = 1\n%}", MacroExpression.new(Assign.new("a".var, 1.int32), output: false)
     it_parses "{% a = 1 if 2 %}", MacroExpression.new(If.new(2.int32, Assign.new("a".var, 1.int32)), output: false)
     it_parses "{% if 1; 2; end %}", MacroExpression.new(If.new(1.int32, 2.int32), output: false)
+    it_parses "{%\nif 1; 2; end\n%}", MacroExpression.new(If.new(1.int32, 2.int32), output: false)
     it_parses "{% unless 1; 2; end %}", MacroExpression.new(If.new(1.int32, Nop.new, 2.int32), output: false)
     it_parses "{%\n1\n2\n3\n%}", MacroExpression.new(Expressions.new([1.int32, 2.int32, 3.int32] of ASTNode), output: false)
 
@@ -988,8 +995,14 @@ module Crystal
     it_parses "case a\nwhen b\n1 / 2\nelse\n1 / 2\nend", Case.new("a".call, [When.new(["b".call] of ASTNode, Call.new(1.int32, "/", 2.int32))], Call.new(1.int32, "/", 2.int32))
     it_parses "case a\nwhen b\n/ /\n\nelse\n/ /\nend", Case.new("a".call, [When.new(["b".call] of ASTNode, RegexLiteral.new(StringLiteral.new(" ")))], RegexLiteral.new(StringLiteral.new(" ")))
     assert_syntax_error "case {1, 2}; when {3}; 4; end", "wrong number of tuple elements (given 1, expected 2)", 1, 19
-    assert_syntax_error "case 1; end", "unexpected token: end (expecting when or else)", 1, 9
+    it_parses "case 1; end", [Case.new(1.int32, [] of When)]
+    it_parses "case foo; end", [Case.new("foo".call, [] of When)]
+    it_parses "case\nend", [Case.new(nil, [] of When)]
+    it_parses "case;end", [Case.new(nil, [] of When)]
+    it_parses "case 1\nelse\n2\nend", [Case.new(1.int32, [] of When, 2.int32)]
     it_parses "a = 1\ncase 1\nwhen a then 1\nend", [Assign.new("a".var, 1.int32), Case.new(1.int32, [When.new(["a".var] of ASTNode, 1.int32)])] of ASTNode
+    it_parses "case\nwhen true\n1\nend", [Case.new(nil, [When.new([true.bool] of ASTNode, 1.int32)] of When)]
+    it_parses "case;when true;1;end", [Case.new(nil, [When.new([true.bool] of ASTNode, 1.int32)] of When)]
 
     it_parses "select\nwhen foo\n2\nend", Select.new([Select::When.new("foo".call, 2.int32)])
     it_parses "select\nwhen foo\n2\nwhen bar\n4\nend", Select.new([Select::When.new("foo".call, 2.int32), Select::When.new("bar".call, 4.int32)])
@@ -1089,6 +1102,8 @@ module Crystal
     it_parses "[] of ->\n", ArrayLiteral.new(of: ProcNotation.new)
     it_parses "->foo=", ProcPointer.new(nil, "foo=")
     it_parses "foo = 1; ->foo.foo=", [Assign.new("foo".var, 1.int32), ProcPointer.new("foo".var, "foo=")]
+
+    it_parses "foo &->bar", Call.new(nil, "foo", block_arg: ProcPointer.new(nil, "bar"))
 
     it_parses "foo.bar = {} of Int32 => Int32", Call.new("foo".call, "bar=", HashLiteral.new(of: HashLiteral::Entry.new("Int32".path, "Int32".path)))
 
@@ -1449,7 +1464,6 @@ module Crystal
 
     assert_syntax_error "Set {1, 2, 3} of Int32"
     assert_syntax_error "Hash {foo: 1} of Int32 => Int32"
-    assert_syntax_error "case foo; end"
     assert_syntax_error "enum Foo < UInt16; end"
     assert_syntax_error "foo(1 2)"
     assert_syntax_error %(foo("bar" "baz"))

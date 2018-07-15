@@ -220,6 +220,8 @@ class Dir
 
   # Creates a new directory at the given path. The linux-style permission mode
   # can be specified, with a default of 777 (0o777).
+  #
+  # NOTE: *mode* is ignored on windows.
   def self.mkdir(path, mode = 0o777)
     Crystal::System::Dir.create(path, mode)
   end

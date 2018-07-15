@@ -29,7 +29,7 @@ module Crystal
       @def_nest = 0
       @type_nest = 0
       @call_args_nest = 0
-      @block_arg_count = 0
+      @temp_arg_count = 0
       @in_macro_expression = false
       @stop_on_yield = 0
       @inside_c_struct = false
@@ -380,7 +380,7 @@ module Crystal
             atomic.doc = doc
             atomic
           end
-        when :"+=", :"-=", :"*=", :"/=", :"%=", :"|=", :"&=", :"^=", :"**=", :"<<=", :">>=", :"||=", :"&&="
+        when :"+=", :"-=", :"*=", :"/=", :"%=", :"|=", :"&=", :"^=", :"**=", :"<<=", :">>=", :"||=", :"&&=", :"&+=", :"&-=", :"&*="
           unexpected_token unless allow_ops
 
           break unless can_be_assigned?(atomic)
@@ -502,7 +502,7 @@ module Crystal
         case @token.type
         when :SPACE
           next_token
-        when :"+", :"-"
+        when :"+", :"-", :"&+", :"&-"
           check_void_value left, location
 
           method = @token.type.to_s
@@ -531,13 +531,13 @@ module Crystal
       end
     end
 
-    parse_operator :mul_or_div, :pow, "Call.new left, method, [right] of ASTNode, name_column_number: method_column_number", ":\"*\", :\"/\", :\"%\""
-    parse_operator :pow, :prefix, "Call.new left, method, [right] of ASTNode, name_column_number: method_column_number", ":\"**\""
+    parse_operator :mul_or_div, :pow, "Call.new left, method, [right] of ASTNode, name_column_number: method_column_number", %(:"*", :"/", :"%", :"&*")
+    parse_operator :pow, :prefix, "Call.new left, method, [right] of ASTNode, name_column_number: method_column_number", %(:"**", :"&**")
 
     def parse_prefix
       column_number = @token.column_number
       case token_type = @token.type
-      when :"!", :"+", :"-", :"~"
+      when :"!", :"+", :"-", :"~", :"&+", :"&-"
         location = @token.location
         next_token_skip_space_or_newline
         check_void_expression_keyword
@@ -552,7 +552,7 @@ module Crystal
       end
     end
 
-    AtomicWithMethodCheck = [:IDENT, :CONST, :"+", :"-", :"*", :"/", :"%", :"|", :"&", :"^", :"**", :"<<", :"<", :"<=", :"==", :"!=", :"=~", :"!~", :">>", :">", :">=", :"<=>", :"===", :"[]", :"[]=", :"[]?", :"["]
+    AtomicWithMethodCheck = [:IDENT, :CONST, :"+", :"-", :"*", :"/", :"%", :"|", :"&", :"^", :"**", :"<<", :"<", :"<=", :"==", :"!=", :"=~", :"!~", :">>", :">", :">=", :"<=>", :"===", :"[]", :"[]=", :"[]?", :"[", :"&+", :"&-", :"&*", :"&**"]
 
     def parse_atomic_with_method
       location = @token.location
@@ -666,7 +666,7 @@ module Crystal
 
               atomic = Call.new(atomic, "#{name}=", [arg] of ASTNode, name_column_number: name_column_number).at(location)
               next
-            when :"+=", :"-=", :"*=", :"/=", :"%=", :"|=", :"&=", :"^=", :"**=", :"<<=", :">>=", :"||=", :"&&="
+            when :"+=", :"-=", :"*=", :"/=", :"%=", :"|=", :"&=", :"^=", :"**=", :"<<=", :">>=", :"||=", :"&&=", :"&+=", :"&-=", :"&*="
               method = @token.type.to_s.byte_slice(0, @token.type.to_s.size - 1)
               next_token_skip_space_or_newline
               value = parse_op_assign
@@ -1386,9 +1386,7 @@ module Crystal
       next_token_skip_space
 
       if @token.type == :"."
-        block_arg_name = "__arg#{@block_arg_count}"
-        @block_arg_count += 1
-
+        block_arg_name = temp_arg_name
         obj = Var.new(block_arg_name)
 
         @wants_regex = false
@@ -2454,7 +2452,11 @@ module Crystal
     def parse_case
       slash_is_regex!
       next_token_skip_space_or_newline
-      unless @token.keyword?(:when)
+      while @token.type == :";"
+        next_token_skip_space
+      end
+
+      unless @token.keyword? && {:when, :else, :end}.includes?(@token.value)
         cond = parse_op_assign_no_control
         skip_statement_end
       end
@@ -2527,9 +2529,6 @@ module Crystal
             skip_space_or_newline
             whens << When.new(when_conds, when_body).at(location)
           when :else
-            if whens.size == 0
-              unexpected_token @token.to_s, "expecting when"
-            end
             next_token_skip_statement_end
             a_else = parse_expressions
             skip_statement_end
@@ -2537,9 +2536,6 @@ module Crystal
             next_token
             break
           when :end
-            if whens.empty?
-              unexpected_token @token.to_s, "expecting when or else"
-            end
             next_token
             break
           else
@@ -3016,6 +3012,7 @@ module Crystal
 
       macro_control = parse_macro_control(@line_number, @column_number)
       if macro_control
+        skip_space_or_newline
         check :"%}"
         next_token_skip_space
         macro_control
@@ -3197,8 +3194,8 @@ module Crystal
       exp
     end
 
-    DefOrMacroCheck1 = [:IDENT, :CONST, :"<<", :"<", :"<=", :"==", :"===", :"!=", :"=~", :"!~", :">>", :">", :">=", :"+", :"-", :"*", :"/", :"!", :"~", :"%", :"&", :"|", :"^", :"**", :"[]", :"[]=", :"<=>", :"[]?"]
-    DefOrMacroCheck2 = [:"<<", :"<", :"<=", :"==", :"===", :"!=", :"=~", :"!~", :">>", :">", :">=", :"+", :"-", :"*", :"/", :"!", :"~", :"%", :"&", :"|", :"^", :"**", :"[]", :"[]?", :"[]=", :"<=>"]
+    DefOrMacroCheck1 = [:IDENT, :CONST, :"<<", :"<", :"<=", :"==", :"===", :"!=", :"=~", :"!~", :">>", :">", :">=", :"+", :"-", :"*", :"/", :"!", :"~", :"%", :"&", :"|", :"^", :"**", :"[]", :"[]=", :"<=>", :"[]?", :"&+", :"&-", :"&*", :"&**"]
+    DefOrMacroCheck2 = [:"<<", :"<", :"<=", :"==", :"===", :"!=", :"=~", :"!~", :">>", :">", :">=", :"+", :"-", :"*", :"/", :"!", :"~", :"%", :"&", :"|", :"^", :"**", :"[]", :"[]?", :"[]=", :"<=>", :"&+", :"&-", :"&*", :"&**"]
 
     def parse_def_helper(is_abstract = false)
       push_def
@@ -3674,6 +3671,20 @@ module Crystal
           raise "when specified, external name must be different than internal name", @token
         end
 
+        # If it's something like @select, we can't transform it to:
+        #
+        #     @select = select
+        #
+        # because if someone uses `to_s` later it will produce invalid code.
+        # So we do something like:
+        #
+        # def method(select __arg0)
+        #   @select = __arg0
+        # end
+        if !external_name && invalid_internal_name?(arg_name)
+          arg_name, external_name = temp_arg_name, arg_name
+        end
+
         ivar = InstanceVar.new(@token.value.to_s).at(location)
         var = Var.new(arg_name).at(location)
         assign = Assign.new(ivar, var).at(location)
@@ -3688,6 +3699,11 @@ module Crystal
         arg_name = @token.value.to_s[2..-1]
         if arg_name == external_name
           raise "when specified, external name must be different than internal name", @token
+        end
+
+        # Same case as :INSTANCE_VAR for things like @select
+        if !external_name && invalid_internal_name?(arg_name)
+          arg_name, external_name = temp_arg_name, arg_name
         end
 
         cvar = ClassVar.new(@token.value.to_s).at(location)
@@ -3726,17 +3742,34 @@ module Crystal
 
     def invalid_internal_name?(keyword)
       case keyword
-      # These names are handled as keyword by `Parser#parse_atomic_without_location`.
-      # We cannot assign value into them and never reference them,
-      # so they are invalid internal name.
-      when :begin, :nil, :true, :false, :yield, :with, :abstract,
-           :def, :macro, :require, :case, :select, :if, :unless, :include,
-           :extend, :class, :struct, :module, :enum, :while, :until, :return,
-           :next, :break, :lib, :fun, :alias, :pointerof, :sizeof,
-           :instance_sizeof, :typeof, :private, :protected, :asm, :out,
-      # `end` is also invalid because it maybe terminate `def` block.
-           :end
-        true
+      when Symbol
+        case keyword
+        # These names are handled as keyword by `Parser#parse_atomic_without_location`.
+        # We cannot assign value into them and never reference them,
+        # so they are invalid internal name.
+        when :begin, :nil, :true, :false, :yield, :with, :abstract,
+             :def, :macro, :require, :case, :select, :if, :unless, :include,
+             :extend, :class, :struct, :module, :enum, :while, :until, :return,
+             :next, :break, :lib, :fun, :alias, :pointerof, :sizeof,
+             :instance_sizeof, :typeof, :private, :protected, :asm, :out,
+        # `end` is also invalid because it maybe terminate `def` block.
+             :end
+          true
+        else
+          false
+        end
+      when String
+        case keyword
+        when "begin", "nil", "true", "false", "yield", "with", "abstract",
+             "def", "macro", "require", "case", "select", "if", "unless", "include",
+             "extend", "class", "struct", "module", "enum", "while", "until", "return",
+             "next", "break", "lib", "fun", "alias", "pointerof", "sizeof",
+             "instance_sizeof", "typeof", "private", "protected", "asm", "out",
+             "end"
+          true
+        else
+          false
+        end
       else
         false
       end
@@ -4007,8 +4040,7 @@ module Crystal
           when :UNDERSCORE
             arg_name = "_"
           when :"("
-            block_arg_name = "__arg#{@block_arg_count}"
-            @block_arg_count += 1
+            block_arg_name = temp_arg_name
 
             next_token_skip_space_or_newline
 
@@ -5700,6 +5732,12 @@ module Crystal
       end
 
       token
+    end
+
+    def temp_arg_name
+      arg_name = "__arg#{@temp_arg_count}"
+      @temp_arg_count += 1
+      arg_name
     end
   end
 

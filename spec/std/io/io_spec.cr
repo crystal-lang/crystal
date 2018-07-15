@@ -689,6 +689,18 @@ describe IO do
         end
       end
 
+      it "sets encoding to utf-8 and stays as UTF-8" do
+        io = SimpleIOMemory.new(Base64.decode_string("ey8qx+Tl8fwg7+Dw4Ozl8vD7IOLo5+jy4CovfQ=="))
+        io.set_encoding("utf-8")
+        io.encoding.should eq("UTF-8")
+      end
+
+      it "sets encoding to utf8 and stays as UTF-8" do
+        io = SimpleIOMemory.new(Base64.decode_string("ey8qx+Tl8fwg7+Dw4Ozl8vD7IOLo5+jy4CovfQ=="))
+        io.set_encoding("utf8")
+        io.encoding.should eq("UTF-8")
+      end
+
       it "does skips when converting to UTF-8" do
         io = SimpleIOMemory.new(Base64.decode_string("ey8qx+Tl8fwg7+Dw4Ozl8vD7IOLo5+jy4CovfQ=="))
         io.set_encoding("UTF-8", invalid: :skip)
