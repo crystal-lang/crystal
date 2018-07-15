@@ -360,8 +360,12 @@ class Crystal::Doc::Generator
     filename[@base_dir.size..-1]
   end
 
-  record RelativeLocation, filename : String, line_number : Int32, url : String?, show_line_number : Bool do
+  class RelativeLocation
     setter show_line_number
+    getter filename, line_number, url, show_line_number
+
+    def initialize(@filename : String, @line_number : Int32, @url : String?, @show_line_number : Bool)
+    end
 
     def to_json(builder : JSON::Builder)
       builder.object do
@@ -371,6 +375,7 @@ class Crystal::Doc::Generator
       end
     end
   end
+
   SRC_SEP = "src#{File::SEPARATOR}"
 
   def relative_locations(type)
