@@ -22,6 +22,10 @@ class Fiber
   protected property next_fiber : Fiber?
   protected property prev_fiber : Fiber?
   property name : String?
+  getter? alive
+  @alive = true
+  @must_die = false
+  @@fibers_that_must_die = 0
 
   def initialize(@name : String? = nil, &@proc : ->)
     @stack = Fiber.allocate_stack
@@ -116,6 +120,28 @@ class Fiber
     end
   end
 
+  def self.remove_dead
+    return if @@fibers_that_must_die == 0
+
+    fiber = @@first_fiber
+    while fiber
+      if fiber.@must_die
+        fiber.die
+        @@fibers_that_must_die -= 1
+      end
+      fiber = fiber.next_fiber
+    end
+  end
+
+  def on_finish(&@on_finish)
+    self
+  end
+
+  def kill
+    @must_die = true
+    @@fibers_that_must_die += 1
+  end
+
   def run
     @proc.call
   rescue ex
@@ -127,6 +153,17 @@ class Fiber
     ex.inspect_with_backtrace STDERR
     STDERR.flush
   ensure
+    die
+
+    if on_finish = @on_finish
+      on_finish.call
+    else
+      Scheduler.reschedule
+    end
+  end
+
+  def die
+    @alive = false
     @@stack_pool << @stack
 
     # Remove the current fiber from the linked list
@@ -144,8 +181,6 @@ class Fiber
 
     # Delete the resume event if it was used by `yield` or `sleep`
     @resume_event.try &.free
-
-    Scheduler.reschedule
   end
 
   @[NoInline]

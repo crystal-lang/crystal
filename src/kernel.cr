@@ -473,6 +473,7 @@ end
   spawn do
     loop do
       sleep 5
+      Fiber.remove_dead
       Fiber.stack_pool_collect
     end
   end
