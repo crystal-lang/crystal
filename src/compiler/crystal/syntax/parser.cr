@@ -687,6 +687,10 @@ module Crystal
 
             block = parse_block(block, stop_on_do: @stop_on_do)
             if block || block_arg
+              if name == "[]="
+                raise "setter method '[]=' cannot be called with a block"
+              end
+
               atomic = Call.new atomic, name, (args || [] of ASTNode), block, block_arg, named_args, name_column_number: name_column_number
             else
               atomic = args ? (Call.new atomic, name, args, named_args: named_args, name_column_number: name_column_number) : (Call.new atomic, name, name_column_number: name_column_number)
