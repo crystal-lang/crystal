@@ -3355,8 +3355,10 @@ module Crystal
 
       skip_space_write_line
 
+      align_number = node.whens.all? { |a_when| a_when.conds.size === 1 && a_when.conds.first.is_a?(NumberLiteral) }
+
       node.whens.each_with_index do |a_when, i|
-        format_when(node, a_when, last?(i, node.whens))
+        format_when(node, a_when, last?(i, node.whens), align_number)
         skip_space_or_newline(@indent + 2)
       end
 
@@ -3391,7 +3393,7 @@ module Crystal
       false
     end
 
-    def format_when(case_node, node, is_last)
+    def format_when(case_node, node, is_last, align_number)
       skip_space_or_newline
 
       slash_is_regex!
@@ -3441,8 +3443,7 @@ module Crystal
           when_column_end = @column
           accept node.body
           if @line == when_start_line
-            number = node.conds.size == 1 && node.conds.first.is_a?(NumberLiteral)
-            @when_infos << AlignInfo.new(case_node.object_id, @line, when_start_column, when_column_middle, when_column_end, number)
+            @when_infos << AlignInfo.new(case_node.object_id, @line, when_start_column, when_column_middle, when_column_end, align_number)
           end
           found_comment = skip_space
           write_line unless found_comment
