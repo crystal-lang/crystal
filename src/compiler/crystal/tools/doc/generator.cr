@@ -361,8 +361,8 @@ class Crystal::Doc::Generator
   end
 
   class RelativeLocation
-    setter show_line_number
-    getter filename, line_number, url, show_line_number
+    property show_line_number
+    getter filename, line_number, url
 
     def initialize(@filename : String, @line_number : Int32, @url : String?, @show_line_number : Bool)
     end
