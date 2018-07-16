@@ -899,6 +899,7 @@ describe Crystal::Formatter do
   assert_format "return 1\n# end"
   assert_format "case\n# hello\nwhen 1\n  2\nend"
   assert_format "case 1\nwhen 2 # a\n  # b\nend"
+  assert_format "case 1\nelse # foo\n  # bar\nend"
 
   assert_format "{} of A => B\n{} of Foo => Bar"
 

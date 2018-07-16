@@ -3367,7 +3367,7 @@ module Crystal
       if a_else = node.else
         write_indent
         write_keyword :else
-        found_comment = skip_space
+        found_comment = skip_space(@indent + 2)
         if @token.type == :NEWLINE || found_comment
           write_line unless found_comment
           format_nested(a_else)
