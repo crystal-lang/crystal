@@ -1993,10 +1993,40 @@ class String
   # "hello".gsub { |char| char + 1 } # => "ifmmp"
   # "hello".gsub { "hi" }            # => "hihihihihi"
   # ```
-  def gsub(&block : Char -> _)
+  def gsub(io : IO, *, ascii_only : Bool = false, &block : Char -> _)
+    if ascii_only || ascii_only?
+      # If the caller only replaces only ascii chars, non ascii chars are still yielded.
+      to_slice.gsub(io) do |byte|
+        yield (byte < 0x80 ? byte.unsafe_chr : Char::REPLACEMENT)
+      end
+    else
+      reader = Char::Reader.new(self)
+      current_chunk_start = 0
+      while reader.has_next?
+        char = reader.current_char
+        if result = yield char
+          io.write Slice.new(to_unsafe + current_chunk_start, reader.pos - current_chunk_start, read_only: true)
+          if result.is_a?(Tuple)
+            result.each { |part| io << part }
+          else
+            io << result
+          end
+          reader.next_char
+          current_chunk_start = reader.pos
+        else
+          reader.next_char
+        end
+      end
+      unless reader.pos == current_chunk_start
+        io.write Slice.new(to_unsafe + current_chunk_start, reader.pos - current_chunk_start, read_only: true)
+      end
+    end
+  end
+
+  def gsub(*, ascii_only : Bool = false, &block : Char -> _)
     String.build(bytesize) do |buffer|
-      each_char do |my_char|
-        buffer << yield my_char
+      gsub(buffer, ascii_only: ascii_only) do |char|
+        yield char
       end
     end
   end
@@ -2009,32 +2039,7 @@ class String
   # "hello world".gsub('o', 'a') # => "hella warld"
   # ```
   def gsub(char : Char, replacement)
-    if replacement.is_a?(String) && replacement.bytesize == 1
-      return gsub(char, replacement.unsafe_byte_at(0).unsafe_chr)
-    end
-
-    if includes?(char)
-      if replacement.is_a?(Char) && char.ascii? && replacement.ascii?
-        return gsub_ascii_char(char, replacement)
-      end
-
-      gsub { |my_char| char == my_char ? replacement : my_char }
-    else
-      self
-    end
-  end
-
-  private def gsub_ascii_char(char, replacement)
-    String.new(bytesize) do |buffer|
-      to_slice.each_with_index do |byte, i|
-        if char.ord == byte
-          buffer[i] = replacement.ord.to_u8
-        else
-          buffer[i] = byte
-        end
-      end
-      {bytesize, bytesize}
-    end
+    gsub { |my_char| next replacement if char == my_char }
   end
 
   # Returns a `String` where all occurrences of the given *pattern* are replaced
@@ -2169,7 +2174,7 @@ class String
   # ```
   def gsub(hash : Hash(Char, _))
     gsub do |char|
-      hash[char]? || char
+      hash[char]?
     end
   end
 
@@ -2181,7 +2186,7 @@ class String
   # ```
   def gsub(tuple : NamedTuple)
     gsub do |char|
-      tuple[char.to_s]? || char
+      tuple[char.to_s]?
     end
   end
 

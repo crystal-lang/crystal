@@ -354,6 +354,26 @@ struct Slice(T)
     source.move_to(self)
   end
 
+  def gsub(buffer, &block : T -> _)
+    current_chunk_start = 0
+    each_index do |pos|
+      item = unsafe_at(pos)
+      if result = yield item
+        buffer.write Slice.new(to_unsafe + current_chunk_start, pos - current_chunk_start)
+        current_chunk_start = pos + 1
+
+        if result.is_a?(Tuple)
+          result.each { |part| buffer << part }
+        else
+          buffer << result
+        end
+      end
+    end
+    unless current_chunk_start == size
+      buffer.write Slice.new(to_unsafe + current_chunk_start, size - current_chunk_start)
+    end
+  end
+
   def inspect(io)
     to_s(io)
   end
