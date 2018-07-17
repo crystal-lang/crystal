@@ -33,8 +33,8 @@ module HTML
   # io.to_s                          # => "Crystal &amp; You"
   # ```
   def self.escape(string : String, io : IO) : Nil
-    string.each_char do |char|
-      io << SUBSTITUTIONS.fetch(char, char)
+    string.gsub(io) do |char|
+      next SUBSTITUTIONS[char]?
     end
   end
 

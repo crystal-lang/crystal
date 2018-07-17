@@ -98,51 +98,45 @@ class JSON::Builder
     scalar(string: true) do
       io << '"'
 
-      start_pos = 0
-      reader = Char::Reader.new(string)
+      utf_char = nil
+      string.gsub(io, ascii_only: true) do |char|
+        write_utf_char(utf_char) if utf_char
+        utf_char = nil
 
-      while reader.has_next?
-        case char = reader.current_char
+        case char
         when '\\'
-          escape = "\\\\"
+          next "\\\\"
         when '"'
-          escape = "\\\""
+          next "\\\""
         when '\b'
-          escape = "\\b"
+          next "\\b"
         when '\f'
-          escape = "\\f"
+          next "\\f"
         when '\n'
-          escape = "\\n"
+          next "\\n"
         when '\r'
-          escape = "\\r"
+          next "\\r"
         when '\t'
-          escape = "\\t"
+          next "\\t"
         when .ascii_control?
-          io.write string.to_slice[start_pos, reader.pos - start_pos]
-          io << "\\u"
-          ord = char.ord
-          io << '0' if ord < 0x1000
-          io << '0' if ord < 0x100
-          io << '0' if ord < 0x10
-          ord.to_s(16, io)
-          reader.next_char
-          start_pos = reader.pos
-          next
+          utf_char = char.ord
+          next "\\u"
         else
-          reader.next_char
           next
         end
-
-        io.write string.to_slice[start_pos, reader.pos - start_pos]
-        io << escape
-        reader.next_char
-        start_pos = reader.pos
       end
 
-      io.write string.to_slice[start_pos, reader.pos - start_pos]
+      write_utf_char(utf_char) if utf_char
 
       io << '"'
     end
+  end
+
+  private def write_utf_char(char)
+    io << '0' if char < 0x1000
+    io << '0' if char < 0x100
+    io << '0' if char < 0x10
+    char.to_s(16, io)
   end
 
   # Writes a raw value, considered a scalar, directly into

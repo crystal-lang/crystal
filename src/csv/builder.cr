@@ -73,12 +73,10 @@ class CSV::Builder
   def quote_cell(value)
     append_cell do
       @io << @quote_char
-      value.each_byte do |byte|
-        case byte
+      value.gsub(@io, ascii_only: true) do |char|
+        case char
         when @quote_char
-          @io << @quote_char << @quote_char
-        else
-          @io.write_byte byte
+          next @quote_char, @quote_char
         end
       end
       @io << @quote_char

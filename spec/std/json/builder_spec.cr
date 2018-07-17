@@ -61,9 +61,15 @@ describe JSON::Builder do
     end
   end
 
-  it "writes string with controls and slashes " do
-    assert_built("\" \\\" \\\\ \\b \\f \\n \\r \\t \\u0019 \"") do
-      string(" \" \\ \b \f \n \r \t \u{19} ")
+  it "writes string with controls and slashes" do
+    assert_built(%(" \\\" \\\\ \\b \\f \\n \\r \\t \\u0019")) do |json|
+      string(" \" \\ \b \f \n \r \t \u{19}")
+    end
+  end
+
+  it "writes string with utf-8" do
+    assert_built(%("\u{1F609}")) do |json|
+      string("\u{1F609}")
     end
   end
 

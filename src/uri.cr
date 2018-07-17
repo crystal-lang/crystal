@@ -283,17 +283,26 @@ class URI
   #
   # This method requires block.
   def self.escape(string : String, io : IO, space_to_plus = false, &block)
-    string.each_byte do |byte|
-      char = byte.unsafe_chr
-      if char == ' ' && space_to_plus
-        io.write_byte '+'.ord.to_u8
-      elsif char.ascii? && yield(byte) && (!space_to_plus || char != '+')
-        io.write_byte byte
-      else
-        io.write_byte '%'.ord.to_u8
-        io.write_byte '0'.ord.to_u8 if byte < 16
-        byte.to_s(16, io, upcase: true)
+    escape_char = nil
+    string.gsub(io) do |char|
+      if escape_char
+        io << '0' if escape_char < 16
+        escape_char.to_s(16, io, upcase: true)
       end
+      escape_char = nil
+
+      if char == ' ' && space_to_plus
+        next '+'
+      elsif char.ascii? && yield(char.ord) && (!space_to_plus || char != '+')
+        next
+      else
+        escape_char = char.ord
+        next '%'
+      end
+    end
+    if escape_char
+      io << '0' if escape_char < 16
+      escape_char.to_s(16, io, upcase: true)
     end
     io
   end

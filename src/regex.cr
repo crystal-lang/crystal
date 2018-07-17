@@ -302,18 +302,13 @@ class Regex
   # /#{string}/                     # => /\*\?\{\}\./
   # ```
   def self.escape(str) : String
-    String.build do |result|
-      str.each_byte do |byte|
-        {% begin %}
-          case byte.unsafe_chr
-          when {{*SPECIAL_CHARACTERS}}
-            result << '\\'
-            result.write_byte byte
-          else
-            result.write_byte byte
-          end
-        {% end %}
-      end
+    str.gsub(ascii_only: true) do |char|
+      {% begin %}
+        case char
+        when {{*SPECIAL_CHARACTERS}}
+          next '\\', char
+        end
+      {% end %}
     end
   end
 
@@ -550,18 +545,19 @@ class Regex
 
   # :nodoc:
   def self.append_source(source, io) : Nil
-    reader = Char::Reader.new(source)
-    while reader.has_next?
-      case char = reader.current_char
-      when '\\'
-        io << '\\'
-        io << reader.next_char
-      when '/'
-        io << "\\/"
-      else
-        io << char
+    escaped = false
+    source.gsub(io) do |char|
+      if escaped
+        escaped = false
+        next char
       end
-      reader.next_char
+      case char
+      when '\\'
+        escaped = true
+        next '\\'
+      when '/'
+        next "\\/"
+      end
     end
   end
 
