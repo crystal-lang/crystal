@@ -103,8 +103,7 @@ private class TestObject
 end
 
 private class DelegatedTestObject
-  # TODO: Replace with `:property1=` when v > 0.24.2
-  delegate "property1=", to: @test_object
+  delegate :property1=, to: @test_object
   delegate :[]=, to: @test_object
 
   def initialize(@test_object : TestObject)
