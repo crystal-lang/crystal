@@ -1,4 +1,37 @@
 # A fixed-size, stack allocated array.
+#
+# `StaticArray` is a generic type with type argument `T` specifying the type of
+# its elements and `N` the fixed size. For example `StaticArray(Int32, 3)`
+# is a static array of `Int32` with three elements.
+#
+# Instantiations of this static array type:
+#
+# ```
+# StaticArray(Int32, 3).new(42)           # => StaticArray[42, 42, 42]
+# StaticArray(Int32, 3).new { |i| i * 2 } # => StaticArray[0, 2, 4]
+# StaticArray[0, 8, 15]                   # => StaticArray[0, 8, 15]
+# ```
+#
+# This type can also be expressed as `Int32[3]` (only in type grammar). A typical use
+# case is in combination with `uninitialized`:
+#
+# ```
+# ints = unininitialized Int32[3]
+# ints[0] = 0
+# ints[1] = 8
+# ints[3] = 15
+# ```
+#
+# For number types there is also `Number.static_array` which can be used to initialize
+# a static array:
+#
+# ```
+# Int32.static_array(0, 8, 15) # => StaticArray[0, 8, 15]
+# ```
+#
+# The generic argument type `N` is a special case in the type grammar as it
+# doesn't specify a type but a size. Its value can be an `Int32` literal or
+# constant.
 struct StaticArray(T, N)
   include Indexable(T)
 
