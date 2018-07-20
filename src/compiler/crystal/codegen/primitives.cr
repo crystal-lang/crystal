@@ -69,6 +69,8 @@ class Crystal::CodeGenVisitor
               codegen_primitive_load_atomic call, node, target_def, call_args
             when "store_atomic"
               codegen_primitive_store_atomic call, node, target_def, call_args
+            when "throw_info"
+              cast_to void_ptr_throwinfo, @program.pointer_of(@program.void)
             else
               raise "BUG: unhandled primitive in codegen: #{node.name}"
             end
@@ -911,5 +913,85 @@ class Crystal::CodeGenVisitor
     end
 
     node.value
+  end
+
+  def void_ptr_type_descriptor
+    void_ptr_type_descriptor_name = "\u{1}??_R0PEAX@8"
+
+    @llvm_mod.globals[void_ptr_type_descriptor_name]? || begin
+      base_type_descriptor = external_constant(llvm_context.void_pointer, "\u{1}??_7type_info@@6B@")
+
+      # .PEAX is void*
+      void_ptr_type_descriptor = @llvm_mod.globals.add(
+        llvm_context.struct([
+          llvm_context.void_pointer.pointer,
+          llvm_context.void_pointer,
+          llvm_context.int8.array(6),
+        ]), void_ptr_type_descriptor_name)
+      void_ptr_type_descriptor.initializer = llvm_context.const_struct [
+        base_type_descriptor,
+        llvm_context.void_pointer.null,
+        llvm_context.const_string(".PEAX"),
+      ]
+
+      void_ptr_type_descriptor
+    end
+  end
+
+  def void_ptr_throwinfo
+    void_ptr_throwinfo_name = "_TI1PEAX"
+
+    @llvm_mod.globals[void_ptr_throwinfo_name]? || begin
+      catchable_type = llvm_context.struct([llvm_context.int32, llvm_context.int32, llvm_context.int32, llvm_context.int32, llvm_context.int32, llvm_context.int32, llvm_context.int32])
+      void_ptr_catchable_type = @llvm_mod.globals.add(
+        catchable_type, "_CT??_R0PEAX@88")
+      void_ptr_catchable_type.initializer = llvm_context.const_struct [
+        int32(1),
+        sub_image_base(void_ptr_type_descriptor),
+        int32(0),
+        int32(-1),
+        int32(0),
+        int32(8),
+        int32(0),
+      ]
+
+      catchable_type_array = llvm_context.struct([llvm_context.int32, llvm_context.int32.array(1)])
+      catchable_void_ptr = @llvm_mod.globals.add(
+        catchable_type_array, "_CTA1PEAX")
+      catchable_void_ptr.initializer = llvm_context.const_struct [
+        int32(1),
+        llvm_context.int32.const_array([sub_image_base(void_ptr_catchable_type)]),
+      ]
+
+      eh_throwinfo = llvm_context.struct([llvm_context.int32, llvm_context.int32, llvm_context.int32, llvm_context.int32])
+      void_ptr_throwinfo = @llvm_mod.globals.add(
+        eh_throwinfo, void_ptr_throwinfo_name)
+      void_ptr_throwinfo.initializer = llvm_context.const_struct [
+        int32(0),
+        int32(0),
+        int32(0),
+        sub_image_base(catchable_void_ptr),
+      ]
+
+      void_ptr_throwinfo
+    end
+  end
+
+  def external_constant(type, name)
+    @llvm_mod.globals[name]? || begin
+      c = @llvm_mod.globals.add(type, name)
+      c.global_constant = true
+      c
+    end
+  end
+
+  def sub_image_base(value)
+    image_base = external_constant(llvm_context.int8, "__ImageBase")
+
+    @builder.trunc(
+      @builder.sub(
+        @builder.ptr2int(value, llvm_context.int64),
+        @builder.ptr2int(image_base, llvm_context.int64)),
+      llvm_context.int32)
   end
 end

@@ -459,7 +459,7 @@ class Crystal::CodeGenVisitor
 
     if raises && (rescue_block = @rescue_block)
       invoke_out_block = new_block "invoke_out"
-      @last = builder.invoke func, call_args, invoke_out_block, rescue_block
+      @last = invoke func, call_args, invoke_out_block, rescue_block
       position_at_end invoke_out_block
     else
       @last = call func, call_args

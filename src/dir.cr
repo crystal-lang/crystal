@@ -210,12 +210,12 @@ class Dir
   # Dir.empty?("bar") # => false
   # ```
   def self.empty?(path) : Bool
-    raise Errno.new("Error determining size of '#{path}'") unless exists?(path)
-
     each_child(path) do |f|
       return false
     end
     true
+  rescue ex : Errno
+    raise Errno.new("Error determining size of '#{path}'", ex.errno)
   end
 
   # Creates a new directory at the given path. The linux-style permission mode
