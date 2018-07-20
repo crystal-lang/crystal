@@ -73,7 +73,7 @@ describe "Code gen: sizeof" do
   end
 
   it "gives error if using instance_sizeof on a generic type without type vars" do
-    assert_error "instance_sizeof(Array)", "can't calculate instance_sizeof of generic class"
+    assert_error "instance_sizeof(Array)", "can't take instance_sizeof uninstantiated generic type Array(T)"
   end
 
   it "gets instance_sizeof a generic type with type vars" do

@@ -2577,8 +2577,8 @@ module Crystal
 
       type = node.exp.type?
 
-      if type.is_a? GenericType
-        node.raise "can't calculate instance_sizeof of generic class #{type} without specifying its type vars"
+      if type.is_a?(GenericType)
+        node.exp.raise "can't take instance_sizeof uninstantiated generic type #{type}"
       end
 
       # Try to resolve the instance_sizeof right now to a number literal
