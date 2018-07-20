@@ -103,7 +103,7 @@ class Crystal::InstanceVarsInitializerVisitor < Crystal::SemanticVisitor
       end
 
       ivar_visitor = MainVisitor.new(program, meta_vars: i.meta_vars)
-      ivar_visitor.scope = scope
+      ivar_visitor.scope = scope.metaclass
       value.accept ivar_visitor
     end
   end
