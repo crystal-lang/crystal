@@ -19,8 +19,8 @@ private def home
   home.chomp('/')
 end
 
-private def it_raises_on_null_byte(operation, &block)
-  it "errors on #{operation}" do
+private def it_raises_on_null_byte(operation, file = __FILE__, line = __LINE__, end_line = __END_LINE__, &block)
+  it "errors on #{operation}", file, line, end_line do
     expect_raises(ArgumentError, "String contains null byte") do
       block.call
     end
@@ -110,7 +110,8 @@ describe "File" do
       end
     end
 
-    it "raises an error when a component of the path is a file" do
+    # TODO: do we even want this?
+    pending_win32 "raises an error when a component of the path is a file" do
       ex = expect_raises(Errno, /Error determining size/) do
         File.empty?(datapath("test_file.txt", ""))
       end
@@ -468,7 +469,8 @@ describe "File" do
       end
     end
 
-    it "raises an error when a component of the path is a file" do
+    # TODO: do we even want this?
+    pending_win32 "raises an error when a component of the path is a file" do
       ex = expect_raises(Errno, /Error determining size/) do
         File.size(datapath("test_file.txt", ""))
       end
@@ -617,8 +619,13 @@ describe "File" do
 
   describe "real_path" do
     it "expands paths for normal files" do
-      File.real_path("/usr/share").should eq(File.real_path("/usr/share"))
-      File.real_path("/usr/share/..").should eq(File.real_path("/usr"))
+      {% if flag?(:win32) %}
+        File.real_path("C:\\Windows").should eq(File.real_path("C:\\Windows"))
+        File.real_path("C:\\Windows\\..").should eq(File.real_path("C:\\"))
+      {% else %}
+        File.real_path("/usr/share").should eq(File.real_path("/usr/share"))
+        File.real_path("/usr/share/..").should eq(File.real_path("/usr"))
+      {% end %}
     end
 
     it "raises Errno if file doesn't exist" do
@@ -967,8 +974,10 @@ describe "File" do
       File.writable?("foo\0bar")
     end
 
-    it_raises_on_null_byte "executable?" do
-      File.executable?("foo\0bar")
+    pending_win32 "errors on executable?" do
+      expect_raises(ArgumentError, "String contains null byte") do
+        File.executable?("foo\0bar")
+      end
     end
 
     it_raises_on_null_byte "file?" do
@@ -1110,7 +1119,7 @@ describe "File" do
       atime = Time.utc(2000, 1, 2)
       mtime = Time.utc(2000, 3, 4)
 
-      expect_raises Errno, "Error setting time to file" do
+      expect_raises Errno, "Error setting time on file" do
         File.utime(atime, mtime, datapath("nonexistent_file.txt"))
       end
     end
@@ -1152,7 +1161,8 @@ describe "File" do
       end
     end
 
-    it "raises if file cannot be accessed" do
+    # TODO: there is no file which is reliably unwritable on windows
+    pending_win32 "raises if file cannot be accessed" do
       expect_raises Errno, "Operation not permitted" do
         File.touch("/bin/ls")
       end

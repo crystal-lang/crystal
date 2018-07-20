@@ -15,7 +15,11 @@ module Crystal::System::FileDescriptor
     until slice.empty?
       bytes_written = LibC._write(@fd, slice, slice.size)
       if bytes_written == -1
-        raise Errno.new("Error writing file")
+        if Errno.value == Errno::EBADF
+          raise IO::Error.new "File not open for writing"
+        else
+          raise Errno.new("Error writing file")
+        end
       end
 
       slice += bytes_written
