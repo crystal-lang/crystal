@@ -129,6 +129,34 @@ module HTTP
       spawn { server.listen }
 
       HTTP::Client.get("http://[::1]:#{address.port}/").body.should eq("[::1]:#{address.port}")
+
+      server.close
+    end
+
+    it "sends a 'connection: close' header on one-shot request" do
+      server = HTTP::Server.new do |context|
+        context.response.print context.request.headers["connection"]
+      end
+      address = server.bind_unused_port "::1"
+      spawn { server.listen }
+
+      HTTP::Client.get("http://[::1]:#{address.port}/").body.should eq("close")
+
+      server.close
+    end
+
+    it "sends a 'connection: close' header on one-shot request with block" do
+      server = HTTP::Server.new do |context|
+        context.response.print context.request.headers["connection"]
+      end
+      address = server.bind_unused_port "::1"
+      spawn { server.listen }
+
+      HTTP::Client.get("http://[::1]:#{address.port}/") do |response|
+        response.body_io.gets_to_end
+      end.should eq("close")
+
+      server.close
     end
 
     it "doesn't read the body if request was HEAD" do

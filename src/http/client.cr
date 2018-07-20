@@ -575,6 +575,13 @@ class HTTP::Client
     {% end %}
   end
 
+  # For one-shot headers we don't want keep-alive (might delay closing the response)
+  private def self.default_one_shot_headers(headers)
+    headers ||= HTTP::Headers.new
+    headers["Connection"] ||= "close"
+    headers
+  end
+
   private def run_before_request_callbacks(request)
     @before_request.try &.each &.call(request)
   end
@@ -614,6 +621,7 @@ class HTTP::Client
   # response.body # => "..."
   # ```
   def self.exec(method, url : String | URI, headers : HTTP::Headers? = nil, body : BodyType = nil, tls = nil) : HTTP::Client::Response
+    headers = default_one_shot_headers(headers)
     exec(url, tls) do |client, path|
       client.exec method, path, headers, body
     end
@@ -628,6 +636,7 @@ class HTTP::Client
   # end
   # ```
   def self.exec(method, url : String | URI, headers : HTTP::Headers? = nil, body : BodyType = nil, tls = nil)
+    headers = default_one_shot_headers(headers)
     exec(url, tls) do |client, path|
       client.exec(method, path, headers, body) do |response|
         yield response
