@@ -522,6 +522,7 @@ module Crystal
 
     it_parses "Foo({x: X})", Generic.new("Foo".path, [Generic.new(Path.global("NamedTuple"), [] of ASTNode, named_args: [NamedArgument.new("x", "X".path)])] of ASTNode)
     it_parses "Foo({x: X, y: Y})", Generic.new("Foo".path, [Generic.new(Path.global("NamedTuple"), [] of ASTNode, named_args: [NamedArgument.new("x", "X".path), NamedArgument.new("y", "Y".path)])] of ASTNode)
+    it_parses "Foo(T, {x: X})", Generic.new("Foo".path, ["T".path, Generic.new(Path.global("NamedTuple"), [] of ASTNode, named_args: [NamedArgument.new("x", "X".path)])] of ASTNode)
     assert_syntax_error "Foo({x: X, x: Y})", "duplicated key: x"
 
     it_parses %(Foo({"foo bar": X})), Generic.new("Foo".path, [Generic.new(Path.global("NamedTuple"), [] of ASTNode, named_args: [NamedArgument.new("foo bar", "X".path)])] of ASTNode)

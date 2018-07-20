@@ -4557,7 +4557,7 @@ module Crystal
     end
 
     def parse_types(allow_primitives = false, allow_splat = false)
-      type = parse_type(allow_primitives: allow_primitives, allow_splat: allow_splat)
+      type = parse_type(allow_primitives: allow_primitives, allow_splat: allow_splat, inside_paren: true)
       case type
       when Array
         type
@@ -4581,7 +4581,7 @@ module Crystal
       end
     end
 
-    def parse_type(allow_primitives, allow_commas = true, allow_splat = false)
+    def parse_type(allow_primitives, allow_commas = true, allow_splat = false, inside_paren = false)
       location = @token.location
 
       if @token.type == :"->"
@@ -4589,7 +4589,11 @@ module Crystal
       else
         input_types = parse_type_union(allow_primitives, allow_splat)
         input_types = [input_types] unless input_types.is_a?(Array)
-        while allow_commas && @token.type == :"," && ((allow_primitives && next_comes_type_or_int) || (!allow_primitives && next_comes_type))
+        while allow_commas && @token.type == :"," && (
+                (allow_primitives && next_comes_type_or_int) ||
+                (!allow_primitives && next_comes_type) ||
+                (inside_paren && next_comes_curly)
+              )
           next_token_skip_space_or_newline
           if @token.type == :"->"
             next_types = parse_type(false)
@@ -4854,6 +4858,21 @@ module Crystal
         @token.copy_from(@temp_token)
         self.current_pos, @line_number, @column_number = old_pos, old_line, old_column
       end
+    end
+
+    def next_comes_curly
+      old_pos, old_line, old_column = current_pos, @line_number, @column_number
+
+      @temp_token.copy_from(@token)
+
+      next_token_skip_space_or_newline
+
+      curly = @token.type == :"{"
+
+      @token.copy_from(@temp_token)
+      self.current_pos, @line_number, @column_number = old_pos, old_line, old_column
+
+      curly
     end
 
     def make_pointer_type(node)
