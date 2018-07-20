@@ -195,6 +195,10 @@ module Crystal
         unless const.value.type?
           node.raise "can't infer type of constant #{const} (maybe the constant refers to itself?)"
         end
+
+        if const.value.type.no_return?
+          node.raise "constant #{const} has illegal type NoReturn"
+        end
       end
 
       node.value = node.value.transform self
