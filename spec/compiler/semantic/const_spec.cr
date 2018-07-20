@@ -373,4 +373,17 @@ describe "Semantic: const" do
       ),
       "can't return from constant"
   end
+
+  it "errors if constant has NoReturn type (#6139)" do
+    assert_error %(
+      lib LibFoo
+        fun foo : NoReturn
+      end
+
+      FOO = LibFoo.foo
+
+      FOO
+      ),
+      "constant FOO has illegal type NoReturn"
+  end
 end
