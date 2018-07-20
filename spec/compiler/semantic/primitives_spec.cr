@@ -77,6 +77,10 @@ describe "Semantic: primitives" do
     assert_type("x = nil; x ? instance_sizeof(typeof(x)) : 1") { int32 }
   end
 
+  it "errors on sizeof uninstantiated generic type (#6415)" do
+    assert_error "sizeof(Array)", "can't take sizeof uninstantiated generic type Array(T)"
+  end
+
   it "errors when comparing void (#225)" do
     assert_error %(
       lib LibFoo

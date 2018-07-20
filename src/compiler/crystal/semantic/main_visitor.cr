@@ -2552,6 +2552,10 @@ module Crystal
 
       type = node.exp.type?
 
+      if type.is_a?(GenericType)
+        node.exp.raise "can't take sizeof uninstantiated generic type #{type}"
+      end
+
       # Try to resolve the sizeof right now to a number literal
       # (useful for sizeof inside as a generic type argument, but also
       # to make it easier for LLVM to optimize things)
