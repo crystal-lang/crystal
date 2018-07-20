@@ -129,6 +129,8 @@ module HTTP
       spawn { server.listen }
 
       HTTP::Client.get("http://[::1]:#{address.port}/").body.should eq("[::1]:#{address.port}")
+
+      server.close
     end
 
     it "doesn't read the body if request was HEAD" do
