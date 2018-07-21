@@ -26,11 +26,8 @@ describe JSON::Any do
 
     it "gets float" do
       JSON.parse("123.45").as_f.should eq(123.45)
-      JSON.parse("123.45").as_f32.should eq(123.45_f32)
       JSON.parse("123.45").as_f?.should eq(123.45)
-      JSON.parse("123.45").as_f32?.should eq(123.45_f32)
       JSON.parse("true").as_f?.should be_nil
-      JSON.parse("true").as_f32?.should be_nil
     end
 
     it "gets string" do

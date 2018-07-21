@@ -1,3 +1,5 @@
+require "../any"
+
 # `JSON::Any` is a convenient wrapper around all possible JSON types (`JSON::Any::Type`)
 # and can be used for traversing dynamic or unknown JSON structures.
 #
@@ -13,7 +15,7 @@
 # a type check against the raw underlying value. This means that invoking `#as_s`
 # when the underlying value is not a String will raise: the value won't automatically
 # be converted (parsed) to a `String`.
-struct JSON::Any
+struct JSON::Any < ::Any
   # All possible JSON types.
   alias Type = Nil | Bool | Int64 | Float64 | String | Array(Any) | Hash(String, Any)
 
@@ -52,19 +54,6 @@ struct JSON::Any
 
   # Creates a `JSON::Any` that wraps the given value.
   def initialize(@raw : Type)
-  end
-
-  # Assumes the underlying value is an `Array` or `Hash` and returns its size.
-  # Raises if the underlying value is not an `Array` or `Hash`.
-  def size : Int
-    case object = @raw
-    when Array
-      object.size
-    when Hash
-      object.size
-    else
-      raise "Expected Array or Hash for #size, not #{object.class}"
-    end
   end
 
   # Assumes the underlying value is an `Array` and returns the element
@@ -115,84 +104,6 @@ struct JSON::Any
     end
   end
 
-  # Checks that the underlying value is `Nil`, and returns `nil`.
-  # Raises otherwise.
-  def as_nil : Nil
-    @raw.as(Nil)
-  end
-
-  # Checks that the underlying value is `Bool`, and returns its value.
-  # Raises otherwise.
-  def as_bool : Bool
-    @raw.as(Bool)
-  end
-
-  # Checks that the underlying value is `Bool`, and returns its value.
-  # Returns `nil` otherwise.
-  def as_bool? : Bool?
-    as_bool if @raw.is_a?(Bool)
-  end
-
-  # Checks that the underlying value is `Int`, and returns its value as an `Int32`.
-  # Raises otherwise.
-  def as_i : Int32
-    @raw.as(Int).to_i
-  end
-
-  # Checks that the underlying value is `Int`, and returns its value as an `Int32`.
-  # Returns `nil` otherwise.
-  def as_i? : Int32?
-    as_i if @raw.is_a?(Int)
-  end
-
-  # Checks that the underlying value is `Int`, and returns its value as an `Int64`.
-  # Raises otherwise.
-  def as_i64 : Int64
-    @raw.as(Int).to_i64
-  end
-
-  # Checks that the underlying value is `Int`, and returns its value as an `Int64`.
-  # Returns `nil` otherwise.
-  def as_i64? : Int64?
-    as_i64 if @raw.is_a?(Int64)
-  end
-
-  # Checks that the underlying value is `Float`, and returns its value as an `Float64`.
-  # Raises otherwise.
-  def as_f : Float64
-    @raw.as(Float).to_f
-  end
-
-  # Checks that the underlying value is `Float`, and returns its value as an `Float64`.
-  # Returns `nil` otherwise.
-  def as_f? : Float64?
-    as_f if @raw.is_a?(Float64)
-  end
-
-  # Checks that the underlying value is `Float`, and returns its value as an `Float32`.
-  # Raises otherwise.
-  def as_f32 : Float32
-    @raw.as(Float).to_f32
-  end
-
-  # Checks that the underlying value is `Float`, and returns its value as an `Float32`.
-  # Returns `nil` otherwise.
-  def as_f32? : Float32?
-    as_f32 if (@raw.is_a?(Float32) || @raw.is_a?(Float64))
-  end
-
-  # Checks that the underlying value is `String`, and returns its value.
-  # Raises otherwise.
-  def as_s : String
-    @raw.as(String)
-  end
-
-  # Checks that the underlying value is `String`, and returns its value.
-  # Returns `nil` otherwise.
-  def as_s? : String?
-    as_s if @raw.is_a?(String)
-  end
-
   # Checks that the underlying value is `Array`, and returns its value.
   # Raises otherwise.
   def as_a : Array(Any)
@@ -202,7 +113,7 @@ struct JSON::Any
   # Checks that the underlying value is `Array`, and returns its value.
   # Returns `nil` otherwise.
   def as_a? : Array(Any)?
-    as_a if @raw.is_a?(Array)
+    @raw.as?(Array)
   end
 
   # Checks that the underlying value is `Hash`, and returns its value.
@@ -214,87 +125,23 @@ struct JSON::Any
   # Checks that the underlying value is `Hash`, and returns its value.
   # Returns `nil` otherwise.
   def as_h? : Hash(String, Any)?
-    as_h if @raw.is_a?(Hash)
+    @raw.as?(Hash)
   end
-
-  # :nodoc:
-  def inspect(io)
-    @raw.inspect(io)
-  end
-
-  # :nodoc:
-  def to_s(io)
-    @raw.to_s(io)
-  end
-
-  # :nodoc:
-  def pretty_print(pp)
-    @raw.pretty_print(pp)
-  end
-
-  # Returns `true` if both `self` and *other*'s raw object are equal.
-  def ==(other : JSON::Any)
-    raw == other.raw
-  end
-
-  # Returns `true` if the raw object is equal to *other*.
-  def ==(other)
-    raw == other
-  end
-
-  # See `Object#hash(hasher)`
-  def_hash raw
 
   # :nodoc:
   def to_json(json : JSON::Builder)
     raw.to_json(json)
   end
 
-  # Returns a new JSON::Any instance with the `raw` value `dup`ed.
+  # Returns a new Any instance with the `raw` value `dup`ed.
   def dup
     Any.new(raw.dup)
   end
 
-  # Returns a new JSON::Any instance with the `raw` value `clone`ed.
+  # Returns a new Any instance with the `raw` value `clone`ed.
   def clone
     Any.new(raw.clone)
   end
 end
 
-class Object
-  def ===(other : JSON::Any)
-    self === other.raw
-  end
-end
-
-struct Value
-  def ==(other : JSON::Any)
-    self == other.raw
-  end
-end
-
-class Reference
-  def ==(other : JSON::Any)
-    self == other.raw
-  end
-end
-
-class Array
-  def ==(other : JSON::Any)
-    self == other.raw
-  end
-end
-
-class Hash
-  def ==(other : JSON::Any)
-    self == other.raw
-  end
-end
-
-class Regex
-  def ===(other : JSON::Any)
-    value = self === other.raw
-    $~ = $~
-    value
-  end
-end
+any_classes "JSON"
