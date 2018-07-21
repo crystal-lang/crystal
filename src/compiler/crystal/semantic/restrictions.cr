@@ -81,13 +81,21 @@ module Crystal
       self_splat_index = self.def.splat_index
       other_splat_index = other.def.splat_index
 
+      self_splat_arg_name_empty = self_splat_index ? self.def.args[self_splat_index].name.empty? : false
+      other_splat_arg_name_empty = other_splat_index ? other.def.args[other_splat_index].name.empty? : false
+
+      # A splat is something like `*arg`, but not just `*`
+      # (which just signals start of required named arguments)
+      self_splats = self_splat_index && !self_splat_arg_name_empty
+      other_splats = other_splat_index && !other_splat_arg_name_empty
+
       # If I splat but the other doesn't, I come later
-      if self_splat_index && !other_splat_index
+      if self_splats && !other_splats
         return false
       end
 
       # If the other splats but I don't, I come first
-      if other_splat_index && !self_splat_index
+      if other_splats && !self_splats
         return true
       end
 
@@ -162,8 +170,13 @@ module Crystal
         return true
       end
 
-      # If one has required named args and the other doesn't, none is stricter than the other
-      if (self_named_args || other_named_args)
+      # If I have required named args and the other doesn't, I come first
+      if self_named_args && !other_named_args
+        return true
+      end
+
+      # Other side
+      if other_named_args && !self_named_args
         return false
       end
 
