@@ -1,8 +1,4 @@
-require "./yaml/*"
-require "./yaml/schema/*"
-require "./yaml/schema/core/*"
-require "./yaml/nodes/*"
-
+require "./yaml/**"
 require "base64"
 
 # The YAML module provides serialization and deserialization of YAML

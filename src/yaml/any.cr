@@ -1,3 +1,5 @@
+require "../any"
+
 # `YAML::Any` is a convenient wrapper around all possible YAML core types
 # (`YAML::Any::Type`) and can be used for traversing dynamic or
 # unknown YAML structures.
@@ -23,7 +25,7 @@
 # a type check against the raw underlying value. This means that invoking `#as_s`
 # when the underlying value is not a `String` will raise: the value won't automatically
 # be converted (parsed) to a `String`.
-struct YAML::Any
+struct YAML::Any < ::Any
   # All valid YAML core schema types.
   alias Type = Nil | Bool | Int64 | Float64 | String | Time | Bytes | Array(Any) | Hash(Any, Any) | Set(Any)
 
@@ -74,20 +76,6 @@ struct YAML::Any
   def initialize(@raw : Type)
   end
 
-  # Assumes the underlying value is an `Array` or `Hash` and returns its size.
-  #
-  # Raises if the underlying value is not an `Array` or `Hash`.
-  def size : Int
-    case object = @raw
-    when Array
-      object.size
-    when Hash
-      object.size
-    else
-      raise "Expected Array or Hash for #size, not #{object.class}"
-    end
-  end
-
   # Assumes the underlying value is an `Array` or `Hash`
   # and returns the element at the given *index_or_key*.
   #
@@ -126,60 +114,6 @@ struct YAML::Any
     end
   end
 
-  # Checks that the underlying value is `Nil`, and returns `nil`.
-  # Raises otherwise.
-  def as_nil : Nil
-    @raw.as(Nil)
-  end
-
-  # Checks that the underlying value is `String`, and returns its value.
-  # Raises otherwise.
-  def as_s : String
-    @raw.as(String)
-  end
-
-  # Checks that the underlying value is `String`, and returns its value.
-  # Returns `nil` otherwise.
-  def as_s? : String?
-    @raw.as?(String)
-  end
-
-  # Checks that the underlying value is `Int64`, and returns its value.
-  # Raises otherwise.
-  def as_i64 : Int64
-    @raw.as(Int64)
-  end
-
-  # Checks that the underlying value is `Int64`, and returns its value.
-  # Returns `nil` otherwise.
-  def as_i64? : Int64?
-    @raw.as?(Int64)
-  end
-
-  # Checks that the underlying value is `Int64`, and returns its value as `Int32`.
-  # Raises otherwise.
-  def as_i : Int32
-    @raw.as(Int64).to_i
-  end
-
-  # Checks that the underlying value is `Int64`, and returns its value as `Int32`.
-  # Returns `nil` otherwise.
-  def as_i? : Int32?
-    @raw.as?(Int64).try &.to_i
-  end
-
-  # Checks that the underlying value is `Float64`, and returns its value.
-  # Raises otherwise.
-  def as_f : Float64
-    @raw.as(Float64)
-  end
-
-  # Checks that the underlying value is `Float64`, and returns its value.
-  # Returns `nil` otherwise.
-  def as_f? : Float64?
-    @raw.as?(Float64)
-  end
-
   # Checks that the underlying value is `Time`, and returns its value.
   # Raises otherwise.
   def as_time : Time
@@ -216,96 +150,20 @@ struct YAML::Any
     @raw.as?(Hash)
   end
 
-  # Checks that the underlying value is `Bytes`, and returns its value.
-  # Raises otherwise.
-  def as_bytes : Bytes
-    @raw.as(Bytes)
-  end
-
-  # Checks that the underlying value is `Bytes`, and returns its value.
-  # Returns `nil` otherwise.
-  def as_bytes? : Bytes?
-    @raw.as?(Bytes)
-  end
-
-  # :nodoc:
-  def inspect(io)
-    @raw.inspect(io)
-  end
-
-  # :nodoc:
-  def to_s(io)
-    @raw.to_s(io)
-  end
-
-  # :nodoc:
-  def pretty_print(pp)
-    @raw.pretty_print(pp)
-  end
-
-  # Returns `true` if both `self` and *other*'s raw object are equal.
-  def ==(other : YAML::Any)
-    raw == other.raw
-  end
-
-  # Returns `true` if the raw object is equal to *other*.
-  def ==(other)
-    raw == other
-  end
-
-  # See `Object#hash(hasher)`
-  def_hash raw
-
   # :nodoc:
   def to_yaml(io)
     raw.to_yaml(io)
   end
 
-  # Returns a new YAML::Any instance with the `raw` value `dup`ed.
+  # Returns a new Any instance with the `raw` value `dup`ed.
   def dup
     Any.new(raw.dup)
   end
 
-  # Returns a new YAML::Any instance with the `raw` value `clone`ed.
+  # Returns a new Any instance with the `raw` value `clone`ed.
   def clone
     Any.new(raw.clone)
   end
 end
 
-class Object
-  def ===(other : YAML::Any)
-    self === other.raw
-  end
-end
-
-struct Value
-  def ==(other : YAML::Any)
-    self == other.raw
-  end
-end
-
-class Reference
-  def ==(other : YAML::Any)
-    self == other.raw
-  end
-end
-
-class Array
-  def ==(other : YAML::Any)
-    self == other.raw
-  end
-end
-
-class Hash
-  def ==(other : YAML::Any)
-    self == other.raw
-  end
-end
-
-class Regex
-  def ===(other : YAML::Any)
-    value = self === other.raw
-    $~ = $~
-    value
-  end
-end
+any_classes "YAML"
