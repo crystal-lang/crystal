@@ -54,7 +54,7 @@
 # "foo".colorize(:red).toggle(false).toggle(true) # => "foo" in red
 # ```
 #
-# The color `:default` will just leave the object as it is (But it's an `Colorize::Object(String)` then).
+# The color `:default` will just leave the object as it is (but it's an `Colorize::Object(String)` then).
 # That's handy in for example conditions:
 # ```
 # "foo".colorize(some_bool ? :green : :default)
