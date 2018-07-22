@@ -25,6 +25,16 @@
 # "foo".colorize.on_green
 # ```
 #
+# You can also pass an RGB color to `colorize`:
+# ```
+# "foo".colorize(Colorize::ColorRGB.new(0, 255, 255)) # => "foo" in aqua
+# ```
+#
+# Or an 8-bit color:
+# ```
+# "foo".colorize(Colorize::Color256.new(208)) # "foo" in orange
+# ```
+#
 # It's also possible to change the text decoration:
 # ```
 # "foo".colorize.mode(:underline)
@@ -40,14 +50,13 @@
 # With the `toggle` method you can temporarily disable adding the escape codes.
 # Settings of the instance are preserved however and can be turned back on later:
 # ```
-# "foo".colorize(:red).toggle(false)
-# # => "foo" without color
-# "foo".colorize(:red).toggle(false).toggle(true)
-# # => "foo" in red
+# "foo".colorize(:red).toggle(false) # => "foo" without color
+# "foo".colorize(:red).toggle(false).toggle(true) # => "foo" in red
 # ```
 #
 # Available colors are:
 # ```
+# :default
 # :black
 # :red
 # :green
@@ -201,7 +210,7 @@ struct Colorize::Object(T)
   private MODE_REVERSE_FLAG   = 16
   private MODE_HIDDEN_FLAG    = 32
 
-  private COLORS = %w(black red green yellow blue magenta cyan light_gray dark_gray light_red light_green light_yellow light_blue light_magenta light_cyan white)
+  private COLORS = %w(default black red green yellow blue magenta cyan light_gray dark_gray light_red light_green light_yellow light_blue light_magenta light_cyan white)
   private MODES  = %w(bold bright dim underline blink reverse hidden)
 
   @fore : Color
