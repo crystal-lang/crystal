@@ -4,10 +4,11 @@
   STDERR = (IO::FileDescriptor.new(2)).tap { |f| f.flush_on_newline = true }
 {% else %}
   require "c/unistd"
+  require "crystal/system/std_file_descriptor"
 
-  STDIN  = IO::StdFileDescriptor.new(0, blocking: LibC.isatty(0) == 0)
-  STDOUT = (IO::StdFileDescriptor.new(1, blocking: LibC.isatty(1) == 0)).tap { |f| f.flush_on_newline = true }
-  STDERR = (IO::StdFileDescriptor.new(2, blocking: LibC.isatty(2) == 0)).tap { |f| f.flush_on_newline = true }
+  STDIN  = Crystal::System::StdFileDescriptor.new(0, blocking: LibC.isatty(0) == 0)
+  STDOUT = (Crystal::System::StdFileDescriptor.new(1, blocking: LibC.isatty(1) == 0)).tap { |f| f.flush_on_newline = true }
+  STDERR = (Crystal::System::StdFileDescriptor.new(2, blocking: LibC.isatty(2) == 0)).tap { |f| f.flush_on_newline = true }
 {% end %}
 
 PROGRAM_NAME = String.new(ARGV_UNSAFE.value)
