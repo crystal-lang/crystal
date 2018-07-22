@@ -270,7 +270,11 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
   def visit(node : Alias)
     check_outside_exp node, "declare alias"
 
-    existing_type = current_type.types[node.name]?
+    scope = current_type
+    if scope.is_a?(Program)
+      scope = program.check_private(node) || scope
+    end
+
     if existing_type
       if existing_type.is_a?(AliasType)
         node.raise "alias #{node.name} is already defined"
@@ -279,9 +283,9 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
       end
     end
 
-    alias_type = AliasType.new(@program, current_type, node.name, node.value)
+    alias_type = AliasType.new(@program, scope, name, node.value)
     attach_doc alias_type, node
-    current_type.types[node.name] = alias_type
+    scope.types[name] = alias_type
 
     alias_type.private = true if node.visibility.private?
 

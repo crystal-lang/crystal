@@ -201,6 +201,23 @@ describe "Semantic: private" do
     end
   end
 
+  it "doesn't find private alias in another file" do
+    expect_raises Crystal::TypeException, "undefined constant Foo" do
+      compiler = Compiler.new
+      sources = [
+        Compiler::Source.new("foo.cr", %(
+                                          private alias Foo = Int32
+                                        )),
+        Compiler::Source.new("bar.cr", %(
+                                          Foo
+                                        )),
+      ]
+      compiler.no_codegen = true
+      compiler.prelude = "empty"
+      compiler.compile sources, "output"
+    end
+  end
+
   it "finds private type in same file" do
     compiler = Compiler.new
     sources = [
