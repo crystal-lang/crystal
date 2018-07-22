@@ -32,7 +32,7 @@
 #
 # Or an 8-bit color:
 # ```
-# "foo".colorize(Colorize::Color256.new(208)) # "foo" in orange
+# "foo".colorize(Colorize::Color256.new(208)) # => "foo" in orange
 # ```
 #
 # It's also possible to change the text decoration:
