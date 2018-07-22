@@ -50,7 +50,7 @@
 # With the `toggle` method you can temporarily disable adding the escape codes.
 # Settings of the instance are preserved however and can be turned back on later:
 # ```
-# "foo".colorize(:red).toggle(false) # => "foo" without color
+# "foo".colorize(:red).toggle(false)              # => "foo" without color
 # "foo".colorize(:red).toggle(false).toggle(true) # => "foo" in red
 # ```
 #
