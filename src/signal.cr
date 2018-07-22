@@ -171,6 +171,9 @@ module Crystal::Signal
     spawn do
       loop do
         value = reader.read_bytes(Int32)
+      rescue Errno
+        next
+      else
         process(::Signal.new(value))
       end
     end
@@ -188,6 +191,8 @@ module Crystal::Signal
   end
 
   def self.after_fork
+    @@pipe.each(&.close)
+  ensure
     @@pipe = IO.pipe(read_blocking: false, write_blocking: true)
   end
 
