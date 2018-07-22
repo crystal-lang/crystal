@@ -42,7 +42,7 @@ class JSON::Lexer::StringBased < JSON::Lexer
   private def consume_string_slow_path(start_pos)
     consume_string_with_buffer do
       @buffer.write slice_range(start_pos + 1, current_pos)
-      @buffer << consume_string_escape_sequence
+      consume_string_escape_sequence
     end
   end
 

@@ -130,7 +130,7 @@ abstract class JSON::Lexer
       when '\0'
         raise "Unterminated string"
       when '\\'
-        consume_string_escape_sequence
+        consume_string_escape_sequence(skip: true)
       when '"'
         next_char
         break
@@ -154,7 +154,7 @@ abstract class JSON::Lexer
       when '\0'
         raise "Unterminated string"
       when '\\'
-        @buffer << consume_string_escape_sequence
+        consume_string_escape_sequence
       when '"'
         next_char
         break
@@ -173,20 +173,20 @@ abstract class JSON::Lexer
     end
   end
 
-  private def consume_string_escape_sequence
+  private def consume_string_escape_sequence(skip = false)
     case char = next_char
     when '\\', '"', '/'
-      char
+      @buffer << char if !skip
     when 'b'
-      '\b'
+      @buffer << '\b' if !skip
     when 'f'
-      '\f'
+      @buffer << '\f' if !skip
     when 'n'
-      '\n'
+      @buffer << '\n' if !skip
     when 'r'
-      '\r'
+      @buffer << '\r' if !skip
     when 't'
-      '\t'
+      @buffer << '\t' if !skip
     when 'u'
       hexnum1 = read_hex_number
       if hexnum1 > 0xD800 && hexnum1 < 0xDBFF
@@ -194,9 +194,11 @@ abstract class JSON::Lexer
           raise "Unterminated UTF-16 sequence"
         end
         hexnum2 = read_hex_number
-        (0x10000 | (hexnum1 & 0x3FF) << 10 | (hexnum2 & 0x3FF)).chr
+        @buffer << (0x10000 | (hexnum1 & 0x3FF) << 10 | (hexnum2 & 0x3FF)).chr if !skip
+      elsif hexnum1 > 127 && hexnum1 < 256
+        @buffer.write_byte hexnum1.to_u8
       else
-        hexnum1.chr
+        @buffer << hexnum1.chr if !skip
       end
     else
       raise "Unknown escape char: #{char}"
