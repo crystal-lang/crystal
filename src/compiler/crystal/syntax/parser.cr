@@ -5298,8 +5298,9 @@ module Crystal
       doc = @token.doc
 
       next_token_skip_space_or_newline
-      name = check_const
-      next_token_skip_space_or_newline
+
+      name = parse_ident(allow_type_vars: false).as(Path)
+      skip_space
       check :"="
       next_token_skip_space_or_newline
 

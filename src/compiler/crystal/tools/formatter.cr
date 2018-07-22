@@ -3813,7 +3813,13 @@ module Crystal
     def format_alias_or_typedef(node, keyword, value)
       write_keyword keyword, " "
 
-      write node.name
+      name = node.name
+      if name.is_a?(Path)
+        accept name
+      else
+        write name
+      end
+
       next_token_skip_space_or_newline
 
       write_token " ", :"=", " "

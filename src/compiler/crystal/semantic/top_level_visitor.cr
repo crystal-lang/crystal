@@ -270,10 +270,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
   def visit(node : Alias)
     check_outside_exp node, "declare alias"
 
-    scope = current_type
-    if scope.is_a?(Program)
-      scope = program.check_private(node) || scope
-    end
+    scope, name, existing_type = lookup_type_def(node)
 
     if existing_type
       if existing_type.is_a?(AliasType)

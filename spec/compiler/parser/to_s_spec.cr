@@ -116,6 +116,7 @@ describe "ASTNode#to_s" do
   expect_to_s %(lib Foo\n  FOO = 0\nend)
   expect_to_s %(enum Foo\n  A = 0\n  B\nend)
   expect_to_s %(alias Foo = Void)
+  expect_to_s %(alias Foo::Bar = Void)
   expect_to_s %(type(Foo = Void))
   expect_to_s %(return true ? 1 : 2)
   expect_to_s %(1 <= 2 <= 3)
