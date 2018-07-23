@@ -298,7 +298,7 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
     generated_nodes = expand_macro(the_macro, node) do
       old_args = node.args
       node.args = args
-      expanded = @program.expand_macro the_macro, node, expansion_scope, @path_lookup, @untyped_def
+      expanded = @program.expand_macro the_macro, node, expansion_scope, expansion_scope, @untyped_def
       node.args = old_args
       expanded
     end
