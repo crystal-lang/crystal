@@ -1389,7 +1389,7 @@ module Crystal
     def visit(node : Alias)
       @str << keyword("alias")
       @str << ' '
-      @str << node.name
+      node.name.accept self
       @str << " = "
       node.value.accept self
       false

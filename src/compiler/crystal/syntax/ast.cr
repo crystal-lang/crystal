@@ -1849,12 +1849,12 @@ module Crystal
   end
 
   class Alias < ASTNode
-    property name : String
+    property name : Path
     property value : ASTNode
     property doc : String?
     property visibility = Visibility::Public
 
-    def initialize(@name : String, @value : ASTNode)
+    def initialize(@name : Path, @value : ASTNode)
     end
 
     def accept_children(visitor)
@@ -1862,7 +1862,7 @@ module Crystal
     end
 
     def clone_without_location
-      Alias.new(@name, @value.clone)
+      Alias.new(@name.clone, @value.clone)
     end
 
     def_equals_and_hash @name, @value

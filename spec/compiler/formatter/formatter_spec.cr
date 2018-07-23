@@ -610,6 +610,7 @@ describe Crystal::Formatter do
   assert_format "class Foo\nend\nclass Bar\nend", "class Foo\nend\n\nclass Bar\nend"
 
   assert_format "alias  Foo  =   Bar", "alias Foo = Bar"
+  assert_format "alias  Foo::Bar  =   Baz", "alias Foo::Bar = Baz"
   assert_format "alias A = (B)"
   assert_format "alias A = (B) -> C"
 
