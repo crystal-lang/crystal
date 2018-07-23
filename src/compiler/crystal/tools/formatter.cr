@@ -33,8 +33,9 @@ module Crystal
       property start_line : Int32
       property end_line : Int32
       property needs_newline : Bool
+      property needs_format : Bool
 
-      def initialize(@start_line : Int32, @kind : Symbol)
+      def initialize(@start_line : Int32, @kind : Symbol, @needs_format : Bool)
         @end_line = @start_line
         @needs_newline = true
       end
@@ -4378,12 +4379,18 @@ module Crystal
           current_doc_comment = @current_doc_comment
 
           if after_comment_value.starts_with?("```")
-            if current_doc_comment
+            # Determine code fence language (what comes after "```")
+            language = after_comment_value.lchop("```").strip
+
+            if current_doc_comment && language.empty?
+              # A code fence ends when nothing comes after "```"
               current_doc_comment.end_line = @line - 1
-              @doc_comments << current_doc_comment
+              @doc_comments << current_doc_comment if current_doc_comment.needs_format
               @current_doc_comment = nil
             else
-              @current_doc_comment = CommentInfo.new(@line + 1, :backticks)
+              # We only format crystal code (empty by default means crystal)
+              needs_format = language.empty? || language == "crystal"
+              @current_doc_comment = CommentInfo.new(@line + 1, :backticks, needs_format)
             end
           end
         end
