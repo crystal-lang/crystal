@@ -100,6 +100,7 @@ describe Time::Span do
     t1.minutes.should eq(3)
     t1.seconds.should eq(4)
     t1.milliseconds.should eq(5)
+    t1.microseconds.should eq(5_000)
     t1.nanoseconds.should eq(5_000_000)
 
     t2.days.should eq(-1)
@@ -107,6 +108,7 @@ describe Time::Span do
     t2.minutes.should eq(-3)
     t2.seconds.should eq(-4)
     t2.milliseconds.should eq(-5)
+    t2.microseconds.should eq(-5_000)
     t2.nanoseconds.should eq(-5_000_000)
   end
 
@@ -154,6 +156,8 @@ describe Time::Span do
 
   it "test int extension methods" do
     1_000_000.days.to_s.should eq("1000000.00:00:00")
+    12.microseconds.to_s.should eq("00:00:00.000012000")
+    -12.microseconds.to_s.should eq("-00:00:00.000012000")
   end
 
   it "test float extension methods" do
@@ -166,6 +170,8 @@ describe Time::Span do
     0.5.milliseconds.to_s.should eq("00:00:00.000500000")
     -2.5.milliseconds.to_s.should eq("-00:00:00.002500000")
     2.5.milliseconds.to_s.should eq("00:00:00.002500000")
+    -2.5.microseconds.to_s.should eq("-00:00:00.000002500")
+    2.5.microseconds.to_s.should eq("00:00:00.000002500")
     0.0005.seconds.to_s.should eq("00:00:00.000500000")
 
     1_000_000.5.days.to_s.should eq("1000000.12:00:00")
@@ -198,8 +204,10 @@ describe Time::Span do
   it "test multiply" do
     t1 = Time::Span.new 5, 4, 3, 2, 1_000_000
     t2 = t1 * 61
+    t3 = t1 * 0.5
 
     t2.should eq(Time::Span.new 315, 7, 5, 2, 61_000_000)
+    t3.should eq(Time::Span.new 2, 14, 1, 31, 500_000)
 
     # TODO check overflow
   end
@@ -207,8 +215,10 @@ describe Time::Span do
   it "test divide" do
     t1 = Time::Span.new 3, 3, 3, 3, 3_000_000
     t2 = t1 / 2
+    t3 = t1 / 1.5
 
     t2.should eq(Time::Span.new(1, 13, 31, 31, 501_000_000) + Time::Span.new(nanoseconds: 500_000))
+    t3.should eq(Time::Span.new 2, 2, 2, 2, 2_000_000)
 
     # TODO check overflow
   end

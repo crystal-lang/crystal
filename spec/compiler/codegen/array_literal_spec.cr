@@ -130,4 +130,50 @@ describe "Code gen: array literal spec" do
       custom.value
       )).to_i.should eq(6)
   end
+
+  it "creates custom non-generic array in module" do
+    run(%(
+      module Moo
+        class Custom
+          def initialize
+            @value = 0
+          end
+
+          def <<(element)
+            @value += element
+          end
+
+          def value
+            @value
+          end
+        end
+      end
+
+      custom = Moo::Custom {1, 2, 3}
+      custom.value
+      )).to_i.should eq(6)
+  end
+
+  it "creates custom generic array in module (#5684)" do
+    run(%(
+      module Moo
+        class Custom(T)
+          def initialize
+            @value = 0
+          end
+
+          def <<(element : T)
+            @value += element
+          end
+
+          def value
+            @value
+          end
+        end
+      end
+
+      custom = Moo::Custom {1, 2, 3}
+      custom.value
+      )).to_i.should eq(6)
+  end
 end

@@ -52,6 +52,7 @@ module Spec
 
   # :nodoc:
   def self.abort!
+    @@aborted = true
     exit
   end
 
@@ -169,8 +170,8 @@ module Spec
     start_time = Time.monotonic
     at_exit do
       elapsed_time = Time.monotonic - start_time
-      Spec::RootContext.print_results(elapsed_time)
-      exit 1 unless Spec::RootContext.succeeded
+      Spec::RootContext.print_results(elapsed_time, @@aborted)
+      exit 1 unless Spec::RootContext.succeeded && !@@aborted
     end
   end
 end

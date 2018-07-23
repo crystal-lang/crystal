@@ -128,24 +128,6 @@ describe YAML::Any do
     end
   end
 
-  describe "each" do
-    it "of array" do
-      elems = [] of String
-      YAML.parse("- foo\n- bar\n").each do |any|
-        elems << any.as_s
-      end
-      elems.should eq(%w(foo bar))
-    end
-
-    it "of hash" do
-      elems = [] of String
-      YAML.parse("foo: bar").each do |key, value|
-        elems << key.to_s << value.to_s
-      end
-      elems.should eq(%w(foo bar))
-    end
-  end
-
   it "traverses big structure" do
     obj = YAML.parse("--- \nfoo: \n  bar: \n    baz: \n      - qux\n      - fox")
     obj["foo"]["bar"]["baz"][1].as_s.should eq("fox")
@@ -174,9 +156,21 @@ describe YAML::Any do
 
   it "is enumerable" do
     nums = YAML.parse("[1, 2, 3]")
-    nums.each_with_index do |x, i|
+    nums.as_a.each_with_index do |x, i|
       x.should be_a(YAML::Any)
       x.raw.should eq(i + 1)
     end
+  end
+
+  it "dups" do
+    any = YAML.parse("[1, 2, 3]")
+    any2 = any.dup
+    any2.as_a.should_not be(any.as_a)
+  end
+
+  it "clones" do
+    any = YAML.parse("[[1], 2, 3]")
+    any2 = any.clone
+    any2.as_a[0].as_a.should_not be(any.as_a[0].as_a)
   end
 end

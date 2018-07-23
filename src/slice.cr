@@ -212,13 +212,17 @@ struct Slice(T)
   def reverse!
     check_writable
 
-    i = 0
-    j = size - 1
-    while i < j
-      @pointer.swap i, j
-      i += 1
-      j -= 1
+    return self if size <= 1
+
+    p = @pointer
+    q = @pointer + size - 1
+
+    while p < q
+      p.value, q.value = q.value, p.value
+      p += 1
+      q -= 1
     end
+
     self
   end
 
@@ -474,16 +478,14 @@ struct Slice(T)
 
   def to_s(io)
     if T == UInt8
-      io << "Bytes"
-      io << "["
+      io << "Bytes["
       # Inspect using to_s because we know this is a UInt8.
       join ", ", io, &.to_s(io)
-      io << "]"
+      io << ']'
     else
-      io << "Slice"
-      io << "["
+      io << "Slice["
       join ", ", io, &.inspect(io)
-      io << "]"
+      io << ']'
     end
   end
 

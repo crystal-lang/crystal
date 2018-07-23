@@ -86,24 +86,6 @@ describe JSON::Any do
     end
   end
 
-  describe "each" do
-    it "of array" do
-      elems = [] of Int32
-      JSON.parse("[1, 2, 3]").each do |any|
-        elems << any.as_i
-      end
-      elems.should eq([1, 2, 3])
-    end
-
-    it "of hash" do
-      elems = [] of String
-      JSON.parse(%({"foo": "bar"})).each do |key, value|
-        elems << key.to_s << value.to_s
-      end
-      elems.should eq(%w(foo bar))
-    end
-  end
-
   it "traverses big structure" do
     obj = JSON.parse(%({"foo": [1, {"bar": [2, 3]}]}))
     obj["foo"][1]["bar"][1].as_i.should eq(3)
@@ -124,11 +106,15 @@ describe JSON::Any do
     $~[0].should eq("oo")
   end
 
-  it "is enumerable" do
-    nums = JSON.parse("[1, 2, 3]")
-    nums.each_with_index do |x, i|
-      x.should be_a(JSON::Any)
-      x.raw.should eq(i + 1)
-    end
+  it "dups" do
+    any = JSON.parse("[1, 2, 3]")
+    any2 = any.dup
+    any2.as_a.should_not be(any.as_a)
+  end
+
+  it "clones" do
+    any = JSON.parse("[[1], 2, 3]")
+    any2 = any.clone
+    any2.as_a[0].as_a.should_not be(any.as_a[0].as_a)
   end
 end

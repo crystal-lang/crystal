@@ -20,7 +20,7 @@ describe "Float" do
 
   describe "modulo" do
     it "raises when mods by zero" do
-      expect_raises(DivisionByZero) { 1.2.modulo 0.0 }
+      expect_raises(DivisionByZeroError) { 1.2.modulo 0.0 }
     end
 
     it { (13.0.modulo 4.0).should eq(1.0) }
@@ -35,7 +35,7 @@ describe "Float" do
 
   describe "remainder" do
     it "raises when mods by zero" do
-      expect_raises(DivisionByZero) { 1.2.remainder 0.0 }
+      expect_raises(DivisionByZeroError) { 1.2.remainder 0.0 }
     end
 
     it { (13.0.remainder 4.0).should eq(1.0) }
@@ -258,5 +258,17 @@ describe "Float" do
   it "clones" do
     1.0.clone.should eq(1.0)
     1.0_f32.clone.should eq(1.0_f32)
+  end
+
+  it "constants have right binary value" do
+    Float32::MIN.unsafe_as(UInt32).should eq 0xff7fffff_u32
+    Float32::MAX.unsafe_as(UInt32).should eq 0x7f7fffff_u32
+    Float32::EPSILON.unsafe_as(UInt32).should eq 0x34000000_u32
+    Float32::MIN_POSITIVE.unsafe_as(UInt32).should eq 0x00800000_u32
+
+    Float64::MIN.unsafe_as(UInt64).should eq 0xffefffffffffffff_u64
+    Float64::MAX.unsafe_as(UInt64).should eq 0x7fefffffffffffff_u64
+    Float64::EPSILON.unsafe_as(UInt64).should eq 0x3cb0000000000000_u64
+    Float64::MIN_POSITIVE.unsafe_as(UInt64).should eq 0x0010000000000000_u64
   end
 end

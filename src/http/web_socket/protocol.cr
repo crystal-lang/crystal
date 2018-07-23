@@ -26,7 +26,7 @@ class HTTP::WebSocket::Protocol
   end
 
   MASK_BIT = 128_u8
-  VERSION  =     13
+  VERSION  = "13"
 
   record PacketInfo,
     opcode : Opcode,
@@ -50,6 +50,8 @@ class HTTP::WebSocket::Protocol
     end
 
     def write(slice : Bytes)
+      return if slice.empty?
+
       count = Math.min(@buffer.size - @pos, slice.size)
       (@buffer + @pos).copy_from(slice.pointer(count), count)
       @pos += count
@@ -245,31 +247,42 @@ class HTTP::WebSocket::Protocol
     port = port || (tls ? 443 : 80)
 
     socket = TCPSocket.new(host, port)
-
-    {% if !flag?(:without_openssl) %}
-      if tls
-        if tls.is_a?(Bool) # true, but we want to get rid of the union
-          context = OpenSSL::SSL::Context::Client.new
-        else
-          context = tls
+    begin
+      {% if !flag?(:without_openssl) %}
+        if tls
+          if tls.is_a?(Bool) # true, but we want to get rid of the union
+            context = OpenSSL::SSL::Context::Client.new
+          else
+            context = tls
+          end
+          socket = OpenSSL::SSL::Socket::Client.new(socket, context: context, sync_close: true, hostname: host)
         end
-        socket = OpenSSL::SSL::Socket::Client.new(socket, context: context, sync_close: true)
+      {% end %}
+
+      random_key = Base64.strict_encode(StaticArray(UInt8, 16).new { rand(256).to_u8 })
+
+      headers["Host"] = "#{host}:#{port}"
+      headers["Connection"] = "Upgrade"
+      headers["Upgrade"] = "websocket"
+      headers["Sec-WebSocket-Version"] = VERSION
+      headers["Sec-WebSocket-Key"] = random_key
+
+      path = "/" if path.empty?
+      handshake = HTTP::Request.new("GET", path, headers)
+      handshake.to_io(socket)
+      socket.flush
+      handshake_response = HTTP::Client::Response.from_io(socket)
+      unless handshake_response.status_code == 101
+        raise Socket::Error.new("Handshake got denied. Status code was #{handshake_response.status_code}.")
       end
-    {% end %}
 
-    headers["Host"] = "#{host}:#{port}"
-    headers["Connection"] = "Upgrade"
-    headers["Upgrade"] = "websocket"
-    headers["Sec-WebSocket-Version"] = VERSION.to_s
-    headers["Sec-WebSocket-Key"] = Base64.strict_encode(StaticArray(UInt8, 16).new { rand(256).to_u8 })
-
-    path = "/" if path.empty?
-    handshake = HTTP::Request.new("GET", path, headers)
-    handshake.to_io(socket)
-    socket.flush
-    handshake_response = HTTP::Client::Response.from_io(socket)
-    unless handshake_response.status_code == 101
-      raise Socket::Error.new("Handshake got denied. Status code was #{handshake_response.status_code}")
+      challenge_response = Protocol.key_challenge(random_key)
+      unless handshake_response.headers["Sec-WebSocket-Accept"]? == challenge_response
+        raise Socket::Error.new("Handshake got denied. Server did not verify WebSocket challenge.")
+      end
+    rescue exc
+      socket.close
+      raise exc
     end
 
     new(socket, masked: true)
@@ -284,5 +297,13 @@ class HTTP::WebSocket::Protocol
     end
 
     raise ArgumentError.new("No host or path specified which are required.")
+  end
+
+  def self.key_challenge(key)
+    {% if flag?(:without_openssl) %}
+      Digest::SHA1.base64digest("#{key}258EAFA5-E914-47DA-95CA-C5AB0DC85B11")
+    {% else %}
+      Base64.strict_encode(OpenSSL::SHA1.hash("#{key}258EAFA5-E914-47DA-95CA-C5AB0DC85B11"))
+    {% end %}
   end
 end

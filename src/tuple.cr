@@ -383,9 +383,9 @@ struct Tuple
   # tuple.to_s # => "{1, \"hello\"}"
   # ```
   def to_s(io)
-    io << "{"
+    io << '{'
     join ", ", io, &.inspect(io)
-    io << "}"
+    io << '}'
   end
 
   def pretty_print(pp) : Nil

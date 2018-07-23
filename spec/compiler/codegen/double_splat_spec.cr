@@ -124,4 +124,18 @@ describe "Codegen: double splat" do
       Global.x
       )).to_i.should eq(1)
   end
+
+  it "removes literal types in all matches (#6239)" do
+    run(%(
+      def foo(y : Float64)
+        y.to_i
+      end
+
+      def bar(x : Float64, **args)
+        foo(**args)
+      end
+
+      bar(x: 1, y: 2.0)
+      )).to_i.should eq(2)
+  end
 end

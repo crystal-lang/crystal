@@ -1,3 +1,5 @@
+{% skip_file if flag?(:win32) %}
+
 module IO::Syscall
   @read_timed_out = false
   @write_timed_out = false
@@ -60,22 +62,26 @@ module IO::Syscall
   end
 
   def write_syscall_helper(slice : Bytes, errno_msg : String) : Nil
-    loop do
-      bytes_written = yield slice
-      if bytes_written != -1
-        slice += bytes_written
-        return if slice.size == 0
-      else
-        if Errno.value == Errno::EAGAIN
-          wait_writable
+    return if slice.empty?
+
+    begin
+      loop do
+        bytes_written = yield slice
+        if bytes_written != -1
+          slice += bytes_written
+          return if slice.size == 0
         else
-          raise Errno.new(errno_msg)
+          if Errno.value == Errno::EAGAIN
+            wait_writable
+          else
+            raise Errno.new(errno_msg)
+          end
         end
       end
-    end
-  ensure
-    if (writers = @writers) && !writers.empty?
-      add_write_event
+    ensure
+      if (writers = @writers) && !writers.empty?
+        add_write_event
+      end
     end
   end
 

@@ -165,6 +165,51 @@ module Indexable(T)
     ItemIterator(self, T).new(self)
   end
 
+  # Calls the given block once for `count` number of elements in `self`
+  # starting from index `start`, passing each element as a parameter.
+  #
+  # Negative indices count backward from the end of the array. (-1 is the
+  # last element).
+  #
+  # Raises `IndexError` if the starting index is out of range.
+  # Raises `ArgumentError` if `count` is a negative number.
+  #
+  # ```
+  # array = ["a", "b", "c", "d", "e"]
+  # array.each(start: 1, count: 3) { |x| print x, " -- " }
+  # ```
+  #
+  # produces:
+  #
+  # ```text
+  # b -- c -- d --
+  # ```
+  def each(*, start : Int, count : Int)
+    each_index(start: start, count: count) do |i|
+      yield unsafe_at(i)
+    end
+  end
+
+  # Calls the given block once for all elements at indices within the given
+  # `range`, passing each element as a parameter.
+  #
+  # Raises `IndexError` if the starting index is out of range.
+  #
+  # ```
+  # array = ["a", "b", "c", "d", "e"]
+  # array.each(within: 1..3) { |x| print x, " -- " }
+  # ```
+  #
+  # produces:
+  #
+  # ```text
+  # b -- c -- d --
+  # ```
+  def each(*, within range : Range(Int, Int))
+    start, count = Indexable.range_to_index_and_count(range, size)
+    each(start: start, count: count) { |element| yield element }
+  end
+
   # Calls the given block once for each index in `self`, passing that
   # index as a parameter.
   #
@@ -199,6 +244,52 @@ module Indexable(T)
   # changes, the returned values of the iterator will change as well.
   def each_index
     IndexIterator.new(self)
+  end
+
+  # Calls the given block once for `count` number of indices in `self`
+  # starting from index `start`, passing each index as a parameter.
+  #
+  # Negative indices count backward from the end of the array. (-1 is the
+  # last element).
+  #
+  # Raises `IndexError` if the starting index is out of range.
+  # Raises `ArgumentError` if `count` is a negative number.
+  #
+  # ```
+  # array = ["a", "b", "c", "d", "e"]
+  # array.each_index(start: -3, count: 2) { |x| print x, " -- " }
+  # ```
+  #
+  # produces:
+  #
+  # ```text
+  # 2 -- 3 --
+  # ```
+  def each_index(*, start : Int, count : Int)
+    raise ArgumentError.new "negative count: #{count}" if count < 0
+
+    start += size if start < 0
+    raise IndexError.new unless 0 <= start <= size
+
+    i = start
+    # `count` and size comparison must be done every iteration because
+    # `self` can mutate in the block.
+    while i < Math.min(start + count, size)
+      yield i
+      i += 1
+    end
+    self
+  end
+
+  # Returns an `Array` with all the elements in the collection.
+  #
+  # ```
+  # {1, 2, 3}.to_a # => [1, 2, 3]
+  # ```
+  def to_a
+    ary = Array(T).new(size)
+    each { |e| ary << e }
+    ary
   end
 
   # Returns `true` if `self` is empty, `false` otherwise.
@@ -412,25 +503,85 @@ module Indexable(T)
     indexes.map { |index| self[index] }
   end
 
-  def zip(other : Indexable)
+  # Calls the given block for each index in `self`, passing in the elements
+  # `{self[i], other[i]}` for each index.
+  #
+  # Raises an `IndexError` if `other` is shorter than `self`.
+  #
+  # ```
+  # a = [1, 2, 3]
+  # b = ["a", "b", "c"]
+  #
+  # a.zip(b) { |x, y| puts "#{x} -- #{y}" }
+  # ```
+  #
+  # The above produces:
+  #
+  # ```text
+  # 1 --- a
+  # 2 --- b
+  # 3 --- c
+  # ```
+  def zip(other : Indexable(U), &block : T, U ->) forall U
     each_with_index do |elem, i|
       yield elem, other[i]
     end
   end
 
-  def zip(other : Indexable(U)) forall U
+  # Returns an `Array` of tuples populated with the *i*th indexed element from
+  # `self` followed by the *i*th indexed element from `other`.
+  #
+  # Raises an `IndexError` if `other` is shorter than `self`.
+  #
+  # ```
+  # a = [1, 2, 3]
+  # b = ["a", "b", "c"]
+  #
+  # a.zip(b) # => [{1, "a"}, {2, "b"}, {3, "c"}]
+  # ```
+  def zip(other : Indexable(U)) : Array({T, U}) forall U
     pairs = Array({T, U}).new(size)
     zip(other) { |x, y| pairs << {x, y} }
     pairs
   end
 
-  def zip?(other : Indexable)
+  # Calls the given block for each index in `self`, passing in the elements
+  # `{self[i], other[i]}` for each index.
+  #
+  # If `other` is shorter than `self`, missing values are filled up with `nil`.
+  #
+  # ```
+  # a = [1, 2, 3]
+  # b = ["a", "b"]
+  #
+  # a.zip?(b) { |x, y| puts "#{x} -- #{y}" }
+  # ```
+  #
+  # The above produces:
+  #
+  # ```text
+  # 1 --- a
+  # 2 --- b
+  # 3 ---
+  # ```
+  def zip?(other : Indexable(U), &block : T, U? ->) forall U
     each_with_index do |elem, i|
       yield elem, other[i]?
     end
   end
 
-  def zip?(other : Indexable(U)) forall U
+  # Returns an `Array` of tuples populated with the *i*th indexed element from
+  # `self` followed by the *i*th indexed element from `other`.
+  #
+  # If `other` is shorter than `self`, missing values are filled up with `nil`.
+  #
+  # ```
+  # a = [1, 2, 3]
+  # b = ["a", "b"]
+  #
+  # a.zip?(b) # => [{1, "a"}, {2, "b"}, {3, nil}]
+  # ```
+  def zip?(other : Indexable(U)) : Array({T, U?}) forall U
     pairs = Array({T, U?}).new(size)
     zip?(other) { |x, y| pairs << {x, y} }
     pairs

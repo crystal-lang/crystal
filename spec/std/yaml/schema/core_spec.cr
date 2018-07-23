@@ -31,7 +31,7 @@ private def it_parses_scalar_from_pull(string, expected, file = __FILE__, line =
   end
 end
 
-private def it_parses_scalar_from_pull(string, file = __FILE__, line = __LINE__, &block : YAML::Type ->)
+private def it_parses_scalar_from_pull(string, file = __FILE__, line = __LINE__, &block : YAML::Any::Type ->)
   it "parses #{string.inspect}", file, line do
     pull = YAML::PullParser.new(%(value: #{string}))
     pull.read_stream_start
@@ -39,7 +39,7 @@ private def it_parses_scalar_from_pull(string, file = __FILE__, line = __LINE__,
     pull.read_mapping_start
     pull.read_scalar # key
 
-    block.call(YAML::Schema::Core.parse_scalar(pull).as(YAML::Type))
+    block.call(YAML::Schema::Core.parse_scalar(pull).as(YAML::Any::Type))
   end
 end
 
@@ -94,19 +94,35 @@ describe YAML::Schema::Core do
   end
 
   # integer (base 10)
+  it_parses_scalar "0", 0
   it_parses_scalar "123", 123
   it_parses_scalar "+123", 123
   it_parses_scalar "-123", -123
 
   # integer (binary)
+  it_parses_scalar "0b0", 0
   it_parses_scalar "0b10110", 0b10110
 
   # integer (octal)
+  it_parses_scalar "00", 0
   it_parses_scalar "0123", 0o123
 
   # integer (hex)
+  it_parses_scalar "0x0", 0
   it_parses_scalar "0x123abc", 0x123abc
   it_parses_scalar "-0x123abc", -0x123abc
+
+  # float
+  it_parses_scalar "1.2", 1.2
+  it_parses_scalar "0.815", 0.815
+  it_parses_scalar "0.", 0.0
+  it_parses_scalar "-0.0", 0.0
+  it_parses_scalar "1_234.2", 1_234.2
+  it_parses_scalar "-2E+05", -2e05
+  it_parses_scalar "+12.3", 12.3
+  it_parses_scalar ".5", 0.5
+  it_parses_scalar "+.5", 0.5
+  it_parses_scalar "-.5", -0.5
 
   # time
   it_parses_scalar "2002-12-14", Time.utc(2002, 12, 14)
@@ -176,7 +192,17 @@ describe YAML::Schema::Core do
 
   # !!float
   it_parses "!!float '1.2'", 1.2
+  it_parses "!!float '0.5'", 0.5
   it_parses "!!float '1_234.2'", 1_234.2
+
+  it_parses "!!float -1", -1.0
+  it_parses "!!float 0", 0.0
+  it_parses "!!float 2.3e4", 2.3e4
+
+  it "parses !!float .nan" do
+    YAML::Schema::Core.parse("!!float .nan").as_f.nan?.should be_true
+  end
+
   it_parses "!!float .inf", Float64::INFINITY
   it_raises_on_parse "!!float 'hello'", "Invalid float"
 

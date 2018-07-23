@@ -1259,4 +1259,26 @@ describe "Semantic: module" do
       ),
       "can't declare instance variables in Bar:Class"
   end
+
+  it "can't pass module class to virtual metaclass (#6113)" do
+    assert_error %(
+      module Moo
+      end
+
+      class Foo
+      end
+
+      class Bar < Foo
+        include Moo
+      end
+
+      class Gen(T)
+        def self.foo(x : T)
+        end
+      end
+
+      Gen(Foo.class).foo(Moo)
+      ),
+      "no overload matches"
+  end
 end

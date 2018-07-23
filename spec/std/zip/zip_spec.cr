@@ -1,4 +1,4 @@
-require "spec"
+require "../spec_helper"
 require "zip"
 
 describe Zip do
@@ -169,7 +169,7 @@ describe Zip do
 
   it "writes file" do
     io = IO::Memory.new
-    filename = "#{__DIR__}/../data/test_file.txt"
+    filename = datapath("test_file.txt")
 
     Zip::Writer.open(io) do |zip|
       file = File.open(filename)

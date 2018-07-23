@@ -37,7 +37,7 @@ class Crystal::Path
 end
 
 class Crystal::Call
-  def raise_matches_not_found(owner, def_name, arg_types, named_args_types, matches = nil)
+  def raise_matches_not_found(owner, def_name, arg_types, named_args_types, matches = nil, with_literals = false)
     # Special case: Foo+:Class#new
     if owner.is_a?(VirtualMetaclassType) && def_name == "new"
       raise_matches_not_found_for_virtual_metaclass_new owner
@@ -185,7 +185,7 @@ class Crystal::Call
             all_arguments_sizes.join ", ", str
           end
 
-          str << "+" if min_splat != Int32::MAX
+          str << '+' if min_splat != Int32::MAX
           str << ")\n"
         end
         str << "Overloads are:"
@@ -212,6 +212,13 @@ class Crystal::Call
       end
     end
 
+    # If we made a lookup without the special rule for literals,
+    # and we have literals in the call, try again with that special rule.
+    if with_literals == false && (args.any? { |arg| arg.is_a?(NumberLiteral) || arg.is_a?(SymbolLiteral) } ||
+       named_args.try &.any? { |arg| arg.value.is_a?(NumberLiteral) || arg.value.is_a?(SymbolLiteral) })
+      ::raise RetryLookupWithLiterals.new
+    end
+
     if args.size == 1 && args.first.type.includes_type?(program.nil)
       owner_trace = args.first.find_owner_trace(program, program.nil)
     end
@@ -223,8 +230,8 @@ class Crystal::Call
         msg << "no overload matches '#{full_name(owner, def_name)}'"
         unless args.empty?
           msg << " with type"
-          msg << "s" if arg_types.size > 1 || named_args_types
-          msg << " "
+          msg << 's' if arg_types.size > 1 || named_args_types
+          msg << ' '
           arg_types.join(", ", msg)
         end
 
@@ -237,7 +244,7 @@ class Crystal::Call
           end
         end
 
-        msg << "\n"
+        msg << '\n'
 
         defs.each do |a_def|
           arg_names.try &.push a_def.args.map(&.name)
@@ -270,7 +277,7 @@ class Crystal::Call
               end
               msg << "\n - #{full_name(owner, def_name)}(#{signature_args}"
               msg << ", &block" if block
-              msg << ")"
+              msg << ')'
             end
           end
         end
@@ -416,8 +423,8 @@ class Crystal::Call
       str << '*' if a_def.splat_index == i
 
       if arg.external_name != arg.name
-        str << (arg.external_name.empty? ? "_" : arg.external_name)
-        str << " "
+        str << (arg.external_name.empty? ? '_' : arg.external_name)
+        str << ' '
       end
 
       str << arg.name
@@ -457,12 +464,12 @@ class Crystal::Call
 
     if block_arg = a_def.block_arg
       str << ", " if printed
-      str << "&" << block_arg.name
+      str << '&' << block_arg.name
     elsif a_def.yields
       str << ", " if printed
       str << "&block"
     end
-    str << ")"
+    str << ')'
   end
 
   def raise_matches_not_found_for_virtual_metaclass_new(owner)
@@ -548,14 +555,14 @@ class Crystal::Call
         msg = String.build do |str|
           str << "no argument named '"
           str << named_arg.name
-          str << "'"
+          str << '\''
           if similar_name
             str << colorize(" (did you mean '#{similar_name}'?)").yellow.bold
           end
 
           defs = owner.lookup_defs(a_def.name)
 
-          str << "\n"
+          str << '\n'
           str << "Matches are:"
           append_matches defs, arg_types, str, matched_def: a_def, argument_name: named_arg.name
         end
@@ -568,8 +575,8 @@ class Crystal::Call
     case match.def.visibility
     when .private?
       if obj = @obj
-        if obj.is_a?(Var) && obj.name == "self" && match.def.name.ends_with?('=')
-          # Special case: private setter can be called with self
+        if obj.is_a?(Var) && obj.name == "self"
+          # Special case: private method can be called with self
           return
         end
 

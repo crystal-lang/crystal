@@ -1,3 +1,5 @@
+require "uri/punycode"
+
 abstract class OpenSSL::SSL::Context
   # :nodoc:
   def self.default_method
@@ -72,12 +74,15 @@ abstract class OpenSSL::SSL::Context
     # context = OpenSSL::SSL::Context::Client.new
     # context.add_options(OpenSSL::SSL::Options::NO_SSL_V2 | OpenSSL::SSL::Options::NO_SSL_V3)
     # ```
+
+    @hostname : String?
+
     def initialize(method : LibSSL::SSLMethod = Context.default_method)
       super(method)
 
       self.verify_mode = OpenSSL::SSL::VerifyMode::PEER
       {% if LibSSL::OPENSSL_102 %}
-      self.default_verify_param = "ssl_client"
+      self.default_verify_param = "ssl_server"
       {% end %}
     end
 
@@ -95,6 +100,9 @@ abstract class OpenSSL::SSL::Context
     #
     # Required for OpenSSL <= 1.0.1 only.
     protected def set_cert_verify_callback(hostname : String)
+      # Sanitize the hostname with PunyCode
+      hostname = URI::Punycode.to_ascii hostname
+
       # Keep a reference so the GC doesn't collect it after sending it to C land
       @hostname = hostname
       LibSSL.ssl_ctx_set_cert_verify_callback(@handle, ->(x509_ctx, arg) {
@@ -130,8 +138,10 @@ abstract class OpenSSL::SSL::Context
 
       add_options(OpenSSL::SSL::Options::CIPHER_SERVER_PREFERENCE)
       {% if LibSSL::OPENSSL_102 %}
-      self.default_verify_param = "ssl_server"
+      self.default_verify_param = "ssl_client"
       {% end %}
+
+      set_tmp_ecdh_key(curve: LibCrypto::NID_X9_62_prime256v1)
     end
 
     # Returns a new TLS server context with only the given method set.
@@ -161,8 +171,6 @@ abstract class OpenSSL::SSL::Context
     add_modes(OpenSSL::SSL::Modes.flags(AUTO_RETRY, RELEASE_BUFFERS))
 
     self.ciphers = CIPHERS
-
-    set_tmp_ecdh_key(curve: LibCrypto::NID_X9_62_prime256v1)
   end
 
   # Overriding initialize or new in the child classes as public methods,
@@ -178,6 +186,7 @@ abstract class OpenSSL::SSL::Context
   protected def self.insecure(method : LibSSL::SSLMethod)
     obj = allocate
     obj._initialize_insecure(method)
+    GC.add_finalizer(obj)
     obj
   end
 

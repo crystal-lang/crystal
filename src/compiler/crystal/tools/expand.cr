@@ -20,17 +20,17 @@ module Crystal
         io.puts expansion.original_source.lines(chomp: false).join "   "
         io.puts
         expansion.expanded_sources.zip(expansion.expanded_macros)
-                                  .each_with_index do |(expanded_source, expanded_macro), j|
-          expanded_macro.each do |a_macro|
-            name = a_macro[:name]
-            impl = a_macro[:implementation]
-            io.puts "# expand macro '#{name}' (#{impl.filename}:#{impl.line}:#{impl.column})"
-            # TODO: When `impl.expands` is not `nil`, how shows this?
+          .each_with_index do |(expanded_source, expanded_macro), j|
+            expanded_macro.each do |a_macro|
+              name = a_macro[:name]
+              impl = a_macro[:implementation]
+              io.puts "# expand macro '#{name}' (#{impl.filename}:#{impl.line}:#{impl.column})"
+              # TODO: When `impl.expands` is not `nil`, how shows this?
+            end
+            io << "~> "
+            io.puts expanded_source.lines(chomp: false).join "   "
+            io.puts
           end
-          io << "~> "
-          io.puts expanded_source.lines(chomp: false).join "   "
-          io.puts
-        end
       end
     end
 
@@ -58,18 +58,18 @@ module Crystal
         while transformer.expanded?
           expanded_sources << ast_to_s expanded_node
           expanded_macros << transformer.macro_calls
-                                        .compact_map do |call|
-            if (a_macro = call.expanded_macro) && (location = a_macro.location)
-              name = a_macro.name
-              # Fix name like `mapping` to `JSON.mapping`
-              name = "#{call.obj}.#{name}" if call.obj.is_a?(Path)
+            .compact_map do |call|
+              if (a_macro = call.expanded_macro) && (location = a_macro.location)
+                name = a_macro.name
+                # Fix name like `mapping` to `JSON.mapping`
+                name = "#{call.obj}.#{name}" if call.obj.is_a?(Path)
 
-              implementation = ImplementationTrace.build location
-              MacroImplementation.new(
-                name: name,
-                implementation: implementation)
+                implementation = ImplementationTrace.build location
+                MacroImplementation.new(
+                  name: name,
+                  implementation: implementation)
+              end
             end
-          end
 
           transformer.expanded = false
           transformer.macro_calls.clear

@@ -95,7 +95,7 @@ class Crystal::Program
 
     out_io = IO::Memory.new
     err_io = IO::Memory.new
-    Process.run(compiled_file, args: args, shell: true, output: out_io, error: err_io)
+    Process.run(compiled_file, args: args, output: out_io, error: err_io)
     MacroRunResult.new(out_io.to_s, err_io.to_s, $?)
   end
 
@@ -158,7 +158,7 @@ class Crystal::Program
     # Together with their timestamp
     # (this is the list of all effective files that were required)
     requires_with_timestamps = result.program.requires.map do |required_file|
-      epoch = File.stat(required_file).mtime.epoch
+      epoch = File.info(required_file).modification_time.epoch
       RequireWithTimestamp.new(required_file, epoch)
     end
 
@@ -203,7 +203,7 @@ class Crystal::Program
     end
 
     new_requires_with_timestamps = required_files.map do |required_file|
-      epoch = File.stat(required_file).mtime.epoch
+      epoch = File.info(required_file).modification_time.epoch
       RequireWithTimestamp.new(required_file, epoch)
     end
 

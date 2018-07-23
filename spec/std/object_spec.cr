@@ -1,4 +1,5 @@
 require "spec"
+require "../support/finalize"
 
 private class StringWrapper
   delegate downcase, to: @string
@@ -95,6 +96,30 @@ private class TestObject
   def setter4
     @setter4
   end
+
+  def []=(key, value)
+    {key, value}
+  end
+end
+
+private class DelegatedTestObject
+  delegate :property1=, to: @test_object
+  delegate :[]=, to: @test_object
+
+  def initialize(@test_object : TestObject)
+  end
+end
+
+private class TestObjectWithFinalize
+  property key : Symbol?
+
+  def finalize
+    if key = self.key
+      State.inc(key)
+    end
+  end
+
+  def_clone
 end
 
 describe Object do
@@ -115,6 +140,19 @@ describe Object do
         matches << match[0]
       end
       matches.should eq(["l", "l"])
+    end
+
+    it "delegates setter" do
+      test_object = TestObject.new
+      delegated = DelegatedTestObject.new(test_object)
+      delegated.property1 = 42
+      test_object.property1.should eq 42
+    end
+
+    it "delegates []=" do
+      test_object = TestObject.new
+      delegated = DelegatedTestObject.new(test_object)
+      (delegated["foo"] = "bar").should eq({"foo", "bar"})
     end
   end
 
@@ -336,5 +374,10 @@ describe Object do
 
   it "#unsafe_as" do
     0x12345678.unsafe_as(Tuple(UInt8, UInt8, UInt8, UInt8)).should eq({0x78, 0x56, 0x34, 0x12})
+  end
+
+  it "calls #finalize on #clone'd objects" do
+    obj = TestObjectWithFinalize.new
+    assert_finalizes(:clone) { obj.clone }
   end
 end

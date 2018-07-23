@@ -105,7 +105,7 @@ macro spawn(call, *, name = nil)
       {% end %}
       ) {
       spawn(name: {{name}}) do
-        {{call.name}}(
+        {% if call.receiver %}{{ call.receiver }}.{% end %}{{call.name}}(
           {% for arg, i in call.args %}
             __arg{{i}},
           {% end %}
@@ -128,21 +128,77 @@ macro spawn(call, *, name = nil)
   {% end %}
 end
 
+# Wraps around exceptions re-raised from concurrent calls.
+# The original exception can be accessed via `#cause`.
+class ConcurrentExecutionException < Exception
+end
+
+# Runs the commands passed as arguments concurrently (in Fibers) and waits
+# for them to finish.
+#
+# ```
+# def say(word)
+#   puts word
+# end
+#
+# # Will print out the three words concurrently
+# parallel(
+#   say("concurrency"),
+#   say("is"),
+#   say("easy")
+# )
+# ```
+#
+# Can also be used to conveniently collect the return values of the
+# concurrent operations.
+#
+# ```
+# def concurrent_job(word)
+#   word
+# end
+#
+# a, b, c =
+#   parallel(
+#     concurrent_job("concurrency"),
+#     concurrent_job("is"),
+#     concurrent_job("easy")
+#   )
+#
+# puts a # => "concurrency"
+# puts b # => "is"
+# puts c # => "easy"
+# ```
+#
+# Due to the concurrent nature of this macro, it is highly recommended
+# to handle any exceptions within the concurrent calls. Unhandled
+# exceptions raised within the concurrent operations will be re-raised
+# inside the parent fiber as `ConcurrentExecutionException`, with the
+# `cause` attribute set to the original exception.
 macro parallel(*jobs)
-  %channel = Channel(Nil).new
+  %channel = Channel(Exception | Nil).new
 
   {% for job, i in jobs %}
     %ret{i} = uninitialized typeof({{job}})
     spawn do
       begin
         %ret{i} = {{job}}
-      ensure
+      rescue e : Exception
+        %channel.send e
+      else
         %channel.send nil
       end
     end
   {% end %}
 
-  {{ jobs.size }}.times { %channel.receive }
+  {{ jobs.size }}.times do
+    %value = %channel.receive
+    if %value.is_a?(Exception)
+      raise ConcurrentExecutionException.new(
+        "An unhandled error occured inside a `parallel` call",
+        cause: %value
+      )
+    end
+  end
 
   {
     {% for job, i in jobs %}

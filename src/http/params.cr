@@ -79,7 +79,7 @@ module HTTP
     # Returns the given key value pairs as a url-encoded HTTP form/query.
     #
     # ```
-    # HTTP::Params.encode({"foo" => "bar", "baz" => "qux"}) # => foo=bar&baz=qux
+    # HTTP::Params.encode({"foo" => "bar", "baz" => "qux"}) # => "foo=bar&baz=qux"
     # ```
     def self.encode(hash : Hash(String, String))
       build do |builder|
@@ -92,7 +92,7 @@ module HTTP
     # Returns the given key value pairs as a url-encoded HTTP form/query.
     #
     # ```
-    # HTTP::Params.encode({foo: "bar", baz: "qux"}) # => foo=bar&baz=qux
+    # HTTP::Params.encode({foo: "bar", baz: "qux"}) # => "foo=bar&baz=qux"
     # ```
     def self.encode(named_tuple : NamedTuple)
       build do |builder|
@@ -123,6 +123,11 @@ module HTTP
     end
 
     protected getter raw_params
+
+    # Returns an empty `HTTP::Params`.
+    def initialize
+      @raw_params = {} of String => Array(String)
+    end
 
     def initialize(@raw_params : Hash(String, Array(String)))
     end
@@ -163,6 +168,14 @@ module HTTP
     # params.has_key?("garbage") # => false
     # ```
     delegate has_key?, to: raw_params
+
+    # Return `true` if params is empty.
+    #
+    # ```
+    # Params.new.empty?                              # => true
+    # Params.parse("foo=bar&foo=baz&qux=zoo").empty? # => false
+    # ```
+    delegate empty?, to: raw_params
 
     # Sets first *value* for specified param *name*.
     #

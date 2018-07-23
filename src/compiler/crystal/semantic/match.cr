@@ -60,6 +60,7 @@ module Crystal
 
     def set_free_var(name, type)
       free_vars = @free_vars ||= {} of String => TypeVar
+      type = type.remove_literal if type.is_a?(Type)
       free_vars[name] = type
     end
 
@@ -115,6 +116,11 @@ module Crystal
     getter context : MatchContext
 
     def initialize(@def, @arg_types, @context, @named_arg_types = nil)
+    end
+
+    def remove_literals
+      @arg_types.map!(&.remove_literal)
+      @named_arg_types.try &.map! { |arg| NamedArgumentType.new(arg.name, arg.type.remove_literal) }
     end
   end
 

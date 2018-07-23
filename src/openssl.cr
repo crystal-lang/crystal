@@ -10,7 +10,7 @@ require "./openssl/lib_ssl"
 # Recommended ciphers can be taken from:
 # - [OWASP Wiki](https://www.owasp.org/index.php/Transport_Layer_Protection_Cheat_Sheet#Rule_-_Only_Support_Strong_Cryptographic_Ciphers)
 # - [Cipherli.st](https://cipherli.st/)
-# - Full list is available at [OpenSSL Wiki](https://wiki.openssl.org/index.php/Manual:Ciphers%281%29#CIPHER_STRINGS)
+# - A full list is available at the [OpenSSL Docs](https://www.openssl.org/docs/man1.1.0/apps/ciphers.html#CIPHER-STRINGS)
 #
 # Do note that:
 # - Crystal does its best to provide sane configuration defaults (see [Mozilla-Intermediate](https://wiki.mozilla.org/Security/Server_Side_TLS#Intermediate_compatibility_.28default.29)).

@@ -293,7 +293,7 @@ class Crystal::CodeGenVisitor
   end
 
   def codegen_call_with_block_as_fun_literal(node, fun_literal, self_type, call_args)
-    fun_literal.accept self
+    accept fun_literal
     call_args.push @last
 
     target_def = node.target_def

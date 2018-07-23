@@ -48,6 +48,8 @@ class Flate::Writer < IO
   def write(slice : Bytes)
     check_open
 
+    return if slice.empty?
+
     @stream.avail_in = slice.size
     @stream.next_in = slice
     consume_output LibZ::Flush::NO_FLUSH

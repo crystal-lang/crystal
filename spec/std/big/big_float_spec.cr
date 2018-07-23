@@ -11,6 +11,14 @@ describe "BigFloat" do
     it "new(String)" do
       bigfloat_of_integer_value.to_s.should eq(string_of_integer_value)
       bigfloat_of_float_value.to_s.should eq(string_of_float_value)
+      BigFloat.new("+#{string_of_integer_value}").to_s.should eq(string_of_integer_value)
+      BigFloat.new("-#{string_of_integer_value}").to_s.should eq("-#{string_of_integer_value}")
+    end
+
+    it "raises an ArgumentError unless string denotes valid float" do
+      expect_raises(ArgumentError) { BigFloat.new("abc") }
+      expect_raises(ArgumentError) { BigFloat.new("+") }
+      expect_raises(ArgumentError) { BigFloat.new("") }
     end
 
     it "new(BigInt)" do
@@ -95,7 +103,7 @@ describe "BigFloat" do
     it { ("0.04".to_big_f / "89.0001".to_big_f).to_s.should eq("0.000449437697261014313467") }
     it { ("-5.5".to_big_f / "5.5".to_big_f).to_s.should eq("-1") }
     it { ("5.5".to_big_f / "-5.5".to_big_f).to_s.should eq("-1") }
-    expect_raises(DivisionByZero) { 0.1.to_big_f / 0 }
+    expect_raises(DivisionByZeroError) { 0.1.to_big_f / 0 }
     it { ("5.5".to_big_f / 16_u64).to_s.should eq("0.34375") }
     it { ("5.5".to_big_f / 16_u8).to_s.should eq("0.34375") }
   end

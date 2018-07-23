@@ -264,7 +264,7 @@ struct Char
     ascii? ? ascii_whitespace? : Unicode.whitespace?(self)
   end
 
-  # Returns `true` if this char is an ASCII hex digit ('0' to '9', 'a' to 'z', 'A' to 'Z').
+  # Returns `true` if this char is an ASCII hex digit ('0' to '9', 'a' to 'f', 'A' to 'F').
   #
   # ```
   # '5'.hex? # => true
@@ -288,7 +288,7 @@ struct Char
   #
   # The backslash character \ can be used to escape ^ or - and
   # is otherwise ignored unless it appears at the end of a range
-  # or the end of a a set.
+  # or set.
   #
   # ```
   # 'l'.in_set? "lo"          # => true
@@ -479,7 +479,7 @@ struct Char
       if ascii_control?
         io << "\\u{"
         ord.to_s(16, io)
-        io << "}"
+        io << '}'
       else
         to_s(io)
       end
@@ -507,7 +507,7 @@ struct Char
       if ascii_control? || ord >= 0x80
         io << "\\u{"
         ord.to_s(16, io)
-        io << "}"
+        io << '}'
       else
         to_s(io)
       end
@@ -527,6 +527,8 @@ struct Char
     case self
     when '\'' then "'\\''"
     when '\\' then "'\\\\'"
+    when '\a' then "'\\a'"
+    when '\b' then "'\\b'"
     when '\e' then "'\\e'"
     when '\f' then "'\\f'"
     when '\n' then "'\\n'"

@@ -326,7 +326,7 @@ class HTTP::Client
     before_request << callback
   end
 
-  {% for method in %w(get post put head delete patch) %}
+  {% for method in %w(get post put head delete patch options) %}
     # Executes a {{method.id.upcase}} request.
     # The response will have its body as a `String`, accessed via `HTTP::Client::Response#body`.
     #
@@ -478,7 +478,6 @@ class HTTP::Client
   # response.body # => "..."
   # ```
   def exec(request : HTTP::Request) : HTTP::Client::Response
-    execute_callbacks(request)
     exec_internal(request)
   end
 
@@ -496,9 +495,7 @@ class HTTP::Client
   end
 
   private def exec_internal_single(request)
-    decompress = set_defaults request
-    request.to_io(socket)
-    socket.flush
+    decompress = send_request(request)
     HTTP::Client::Response.from_io?(socket, ignore_body: request.ignore_body?, decompress: decompress)
   end
 
@@ -517,7 +514,6 @@ class HTTP::Client
   # end
   # ```
   def exec(request : HTTP::Request, &block)
-    execute_callbacks(request)
     exec_internal(request) do |response|
       yield response
     end
@@ -544,9 +540,7 @@ class HTTP::Client
   end
 
   private def exec_internal_single(request)
-    decompress = set_defaults request
-    request.to_io(socket)
-    socket.flush
+    decompress = send_request(request)
     HTTP::Client::Response.from_io?(socket, ignore_body: request.ignore_body?, decompress: decompress) do |response|
       yield response
     end
@@ -557,6 +551,14 @@ class HTTP::Client
     response.body_io?.try &.close
     close unless response.keep_alive?
     value
+  end
+
+  private def send_request(request)
+    decompress = set_defaults request
+    run_before_request_callbacks(request)
+    request.to_io(socket)
+    socket.flush
+    decompress
   end
 
   private def set_defaults(request)
@@ -571,6 +573,17 @@ class HTTP::Client
         false
       end
     {% end %}
+  end
+
+  # For one-shot headers we don't want keep-alive (might delay closing the response)
+  private def self.default_one_shot_headers(headers)
+    headers ||= HTTP::Headers.new
+    headers["Connection"] ||= "close"
+    headers
+  end
+
+  private def run_before_request_callbacks(request)
+    @before_request.try &.each &.call(request)
   end
 
   # Executes a request.
@@ -608,6 +621,7 @@ class HTTP::Client
   # response.body # => "..."
   # ```
   def self.exec(method, url : String | URI, headers : HTTP::Headers? = nil, body : BodyType = nil, tls = nil) : HTTP::Client::Response
+    headers = default_one_shot_headers(headers)
     exec(url, tls) do |client, path|
       client.exec method, path, headers, body
     end
@@ -622,6 +636,7 @@ class HTTP::Client
   # end
   # ```
   def self.exec(method, url : String | URI, headers : HTTP::Headers? = nil, body : BodyType = nil, tls = nil)
+    headers = default_one_shot_headers(headers)
     exec(url, tls) do |client, path|
       client.exec(method, path, headers, body) do |response|
         yield response
@@ -641,15 +656,12 @@ class HTTP::Client
     end
   end
 
-  private def execute_callbacks(request)
-    @before_request.try &.each &.call(request)
-  end
-
   private def socket
     socket = @socket
     return socket if socket
 
-    socket = TCPSocket.new @host, @port, @dns_timeout, @connect_timeout
+    hostname = @host.starts_with?('[') && @host.ends_with?(']') ? @host[1..-2] : @host
+    socket = TCPSocket.new hostname, @port, @dns_timeout, @connect_timeout
     socket.read_timeout = @read_timeout if @read_timeout
     socket.sync = false
     @socket = socket

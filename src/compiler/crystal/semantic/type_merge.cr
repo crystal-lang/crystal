@@ -239,12 +239,14 @@ module Crystal
 
   class GenericClassInstanceMetaclassType
     def common_ancestor(other : MetaclassType | VirtualMetaclassType | GenericClassInstanceMetaclassType)
-      if instance_type.module? || other.instance_type.module?
-        nil
-      else
-        common = instance_type.common_ancestor(other.instance_type)
-        common.try &.metaclass
-      end
+      # Modules are never unified
+      return nil if instance_type.module? || other.instance_type.module?
+
+      # Tuple instances might be unified, but never tuple metaclasses
+      return nil if instance_type.is_a?(TupleInstanceType) || other.instance_type.is_a?(TupleInstanceType)
+
+      common = instance_type.common_ancestor(other.instance_type)
+      common.try &.metaclass
     end
   end
 

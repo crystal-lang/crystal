@@ -289,4 +289,15 @@ describe "Semantic: tuples" do
       ),
       "tuple too big"
   end
+
+  it "doesn't unify tuple metaclasses (#5384)" do
+    assert_type(%(
+      Tuple(Int32) || Tuple(String)
+      )) {
+      union_of(
+        tuple_of([int32] of Type).metaclass,
+        tuple_of([string] of Type).metaclass,
+      )
+    }
+  end
 end

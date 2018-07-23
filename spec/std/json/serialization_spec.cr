@@ -2,6 +2,8 @@ require "spec"
 require "json"
 require "big"
 require "big/json"
+require "uuid"
+require "uuid/json"
 
 enum JSONSpecEnum
   Zero
@@ -91,6 +93,36 @@ describe "JSON serialization" do
       big.should eq(BigFloat.new("1234"))
     end
 
+    it "does for UUID (hyphenated)" do
+      uuid = UUID.from_json("\"ee843b26-56d8-472b-b343-0b94ed9077ff\"")
+      uuid.should be_a(UUID)
+      uuid.should eq(UUID.new("ee843b26-56d8-472b-b343-0b94ed9077ff"))
+    end
+
+    it "does for UUID (hex)" do
+      uuid = UUID.from_json("\"ee843b2656d8472bb3430b94ed9077ff\"")
+      uuid.should be_a(UUID)
+      uuid.should eq(UUID.new("ee843b26-56d8-472b-b343-0b94ed9077ff"))
+    end
+
+    it "does for UUID (urn)" do
+      uuid = UUID.from_json("\"urn:uuid:ee843b26-56d8-472b-b343-0b94ed9077ff\"")
+      uuid.should be_a(UUID)
+      uuid.should eq(UUID.new("ee843b26-56d8-472b-b343-0b94ed9077ff"))
+    end
+
+    it "does for BigDecimal from int" do
+      big = BigDecimal.from_json("1234")
+      big.should be_a(BigDecimal)
+      big.should eq(BigDecimal.new("1234"))
+    end
+
+    it "does for BigDecimal from float" do
+      big = BigDecimal.from_json("1234.05")
+      big.should be_a(BigDecimal)
+      big.should eq(BigDecimal.new("1234.05"))
+    end
+
     it "does for Enum with number" do
       JSONSpecEnum.from_json("1").should eq(JSONSpecEnum::One)
 
@@ -137,7 +169,9 @@ describe "JSON serialization" do
     end
 
     it "deserializes Time" do
+      Time.from_json(%("2016-11-16T09:55:48-03:00")).to_utc.should eq(Time.utc(2016, 11, 16, 12, 55, 48))
       Time.from_json(%("2016-11-16T09:55:48-0300")).to_utc.should eq(Time.utc(2016, 11, 16, 12, 55, 48))
+      Time.from_json(%("20161116T095548-03:00")).to_utc.should eq(Time.utc(2016, 11, 16, 12, 55, 48))
     end
 
     describe "parse exceptions" do
@@ -215,6 +249,19 @@ describe "JSON serialization" do
       "\u{19}".to_json.should eq("\"\\u0019\"")
     end
 
+    it "does for String with control codes in a few places" do
+      "\fab".to_json.should eq(%q("\fab"))
+      "ab\f".to_json.should eq(%q("ab\f"))
+      "ab\fcd".to_json.should eq(%q("ab\fcd"))
+      "ab\fcd\f".to_json.should eq(%q("ab\fcd\f"))
+      "ab\fcd\fe".to_json.should eq(%q("ab\fcd\fe"))
+      "\u{19}ab".to_json.should eq(%q("\u0019ab"))
+      "ab\u{19}".to_json.should eq(%q("ab\u0019"))
+      "ab\u{19}cd".to_json.should eq(%q("ab\u0019cd"))
+      "ab\u{19}cd\u{19}".to_json.should eq(%q("ab\u0019cd\u0019"))
+      "ab\u{19}cd\u{19}e".to_json.should eq(%q("ab\u0019cd\u0019e"))
+    end
+
     it "does for Array" do
       [1, 2, 3].to_json.should eq("[1,2,3]")
     end
@@ -255,6 +302,11 @@ describe "JSON serialization" do
     it "does for BigFloat" do
       big = BigFloat.new("1234.567891011121314")
       big.to_json.should eq("1234.567891011121314")
+    end
+
+    it "does for UUID" do
+      uuid = UUID.new("ee843b26-56d8-472b-b343-0b94ed9077ff")
+      uuid.to_json.should eq("\"ee843b26-56d8-472b-b343-0b94ed9077ff\"")
     end
   end
 
@@ -311,8 +363,14 @@ describe "JSON serialization" do
       {"foo" => {"bar" => 1}}.to_pretty_json(indent: " ").should eq(%({\n "foo": {\n  "bar": 1\n }\n}))
     end
 
-    it "does for time" do
-      Time.utc(2016, 11, 16, 12, 55, 48).to_json.should eq(%("2016-11-16T12:55:48+0000"))
+    describe "Time" do
+      it "#to_json" do
+        Time.utc(2016, 11, 16, 12, 55, 48).to_json.should eq(%("2016-11-16T12:55:48Z"))
+      end
+
+      it "omit sub-second precision" do
+        Time.utc(2016, 11, 16, 12, 55, 48, nanosecond: 123456789).to_json.should eq(%("2016-11-16T12:55:48Z"))
+      end
     end
   end
 end

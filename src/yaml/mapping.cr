@@ -67,31 +67,35 @@ module YAML
   # it and initializes this type's instance variables.
   #
   # This macro also declares instance variables of the types given in the mapping.
-  macro mapping(properties, strict = false)
-    {% for key, value in properties %}
-      {% properties[key] = {type: value} unless value.is_a?(HashLiteral) || value.is_a?(NamedTupleLiteral) %}
+  macro mapping(_properties_, strict = false)
+    {% for key, value in _properties_ %}
+      {% _properties_[key] = {type: value} unless value.is_a?(HashLiteral) || value.is_a?(NamedTupleLiteral) %}
     {% end %}
 
-    {% for key, value in properties %}
-      @{{key.id}} : {{value[:type]}} {{ (value[:nilable] ? "?" : "").id }}
+    {% for key, value in _properties_ %}
+      {% _properties_[key][:key_id] = key.id.gsub(/\?$/, "") %}
+    {% end %}
+
+    {% for key, value in _properties_ %}
+      @{{value[:key_id]}} : {{value[:type]}} {{ (value[:nilable] ? "?" : "").id }}
 
       {% if value[:setter] == nil ? true : value[:setter] %}
-        def {{key.id}}=(_{{key.id}} : {{value[:type]}} {{ (value[:nilable] ? "?" : "").id }})
-          @{{key.id}} = _{{key.id}}
+        def {{value[:key_id]}}=(_{{value[:key_id]}} : {{value[:type]}} {{ (value[:nilable] ? "?" : "").id }})
+          @{{value[:key_id]}} = _{{value[:key_id]}}
         end
       {% end %}
 
       {% if value[:getter] == nil ? true : value[:getter] %}
         def {{key.id}}
-          @{{key.id}}
+          @{{value[:key_id]}}
         end
       {% end %}
 
       {% if value[:presence] %}
-        @{{key.id}}_present : Bool = false
+        @{{value[:key_id]}}_present : Bool = false
 
-        def {{key.id}}_present?
-          @{{key.id}}_present
+        def {{value[:key_id]}}_present?
+          @{{value[:key_id]}}_present
         end
       {% end %}
     {% end %}
@@ -106,6 +110,7 @@ module YAML
       ctx.record_anchor(node, instance)
 
       instance.initialize(ctx, node, nil)
+      GC.add_finalizer(instance) if instance.responds_to?(:finalize)
       instance
     end
 
@@ -116,7 +121,7 @@ module YAML
     # FIXME: remove the dummy argument if we ever fix this.
 
     def initialize(ctx : YAML::ParseContext, node : ::YAML::Nodes::Node, _dummy : Nil)
-      {% for key, value in properties %}
+      {% for key, value in _properties_ %}
         %var{key.id} = nil
         %found{key.id} = false
       {% end %}
@@ -131,8 +136,8 @@ module YAML
           key = key_node.value
 
           case key
-          {% for key, value in properties %}
-            when {{value[:key] || key.id.stringify}}
+          {% for key, value in _properties_ %}
+            when {{value[:key] || value[:key_id].stringify}}
               %found{key.id} = true
 
               %var{key.id} =
@@ -164,49 +169,45 @@ module YAML
         node.raise "Expected mapping, not #{node.class}"
       end
 
-      {% for key, value in properties %}
+      {% for key, value in _properties_ %}
         {% unless value[:nilable] || value[:default] != nil %}
           if %var{key.id}.nil? && !%found{key.id} && !::Union({{value[:type]}}).nilable?
-            node.raise "Missing yaml attribute: {{(value[:key] || key).id}}"
+            node.raise "Missing yaml attribute: {{(value[:key] || value[:key_id]).id}}"
           end
         {% end %}
-      {% end %}
 
-      {% for key, value in properties %}
         {% if value[:nilable] %}
           {% if value[:default] != nil %}
-            @{{key.id}} = %found{key.id} ? %var{key.id} : {{value[:default]}}
+            @{{value[:key_id]}} = %found{key.id} ? %var{key.id} : {{value[:default]}}
           {% else %}
-            @{{key.id}} = %var{key.id}
+            @{{value[:key_id]}} = %var{key.id}
           {% end %}
         {% elsif value[:default] != nil %}
-          @{{key.id}} = %var{key.id}.nil? ? {{value[:default]}} : %var{key.id}
+          @{{value[:key_id]}} = %var{key.id}.nil? ? {{value[:default]}} : %var{key.id}
         {% else %}
-          @{{key.id}} = %var{key.id}.as({{value[:type]}})
+          @{{value[:key_id]}} = %var{key.id}.as({{value[:type]}})
         {% end %}
-      {% end %}
 
-      {% for key, value in properties %}
         {% if value[:presence] %}
-          @{{key.id}}_present = %found{key.id}
+          @{{value[:key_id]}}_present = %found{key.id}
         {% end %}
       {% end %}
     end
 
     def to_yaml(%yaml : ::YAML::Nodes::Builder)
       %yaml.mapping(reference: self) do
-        {% for key, value in properties %}
-          _{{key.id}} = @{{key.id}}
+        {% for key, value in _properties_ %}
+          _{{value[:key_id]}} = @{{value[:key_id]}}
 
-          unless _{{key.id}}.nil?
+          unless _{{value[:key_id]}}.nil?
             # Key
-            {{value[:key] || key.id.stringify}}.to_yaml(%yaml)
+            {{value[:key] || value[:key_id].stringify}}.to_yaml(%yaml)
 
             # Value
             {% if value[:converter] %}
-              {{ value[:converter] }}.to_yaml(_{{key.id}}, %yaml)
+              {{ value[:converter] }}.to_yaml(_{{value[:key_id]}}, %yaml)
             {% else %}
-              _{{key.id}}.to_yaml(%yaml)
+              _{{value[:key_id]}}.to_yaml(%yaml)
             {% end %}
           end
         {% end %}
@@ -216,7 +217,7 @@ module YAML
 
   # This is a convenience method to allow invoking `YAML.mapping`
   # with named arguments instead of with a hash/named-tuple literal.
-  macro mapping(**properties)
-    ::YAML.mapping({{properties}})
+  macro mapping(**_properties_)
+    ::YAML.mapping({{_properties_}})
   end
 end

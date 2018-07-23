@@ -1,9 +1,4 @@
-require "spec"
-
-private def assert_dir_glob(expected_result, *patterns)
-  result = Dir[*patterns]
-  result.sort.should eq(expected_result.sort)
-end
+require "./spec_helper"
 
 private def it_raises_on_null_byte(operation, &block)
   it "errors on #{operation}" do
@@ -15,192 +10,307 @@ end
 
 describe "Dir" do
   it "tests exists? on existing directory" do
-    Dir.exists?(File.join([__DIR__, "../"])).should be_true
+    Dir.exists?(datapath).should be_true
   end
 
   it "tests exists? on existing file" do
-    Dir.exists?(__FILE__).should be_false
+    Dir.exists?(datapath("dir", "f1.txt")).should be_false
   end
 
   it "tests exists? on nonexistent directory" do
-    Dir.exists?(File.join([__DIR__, "/foo/bar/"])).should be_false
+    Dir.exists?(datapath("foo", "bar")).should be_false
   end
 
   it "tests exists? on a directory path to a file" do
-    Dir.exists?("#{__FILE__}/").should be_false
+    Dir.exists?(datapath("dir", "f1.txt", "/")).should be_false
   end
 
   describe "empty?" do
     it "tests empty? on a full directory" do
-      Dir.empty?(File.join([__DIR__, "../"])).should be_false
+      Dir.empty?(datapath).should be_false
     end
 
     it "tests empty? on an empty directory" do
-      path = "/tmp/crystal_empty_test_#{Process.pid}/"
-      Dir.mkdir(path, 0o700).should eq(0)
-      Dir.empty?(path).should be_true
+      with_tempfile "empty_directory" do |path|
+        Dir.mkdir(path, 0o700)
+        Dir.empty?(path).should be_true
+      end
     end
 
     it "tests empty? on nonexistent directory" do
-      expect_raises Errno do
-        Dir.empty?(File.join([__DIR__, "/foo/bar/"]))
+      expect_raises(Errno, /Error determining size of/) do
+        Dir.empty?(datapath("foo", "bar"))
       end
+    end
+
+    it "tests empty? on a directory path to a file" do
+      ex = expect_raises(Errno, /Error determining size of/) do
+        Dir.empty?(datapath("dir", "f1.txt", "/"))
+      end
+      ex.errno.should eq(Errno::ENOTDIR)
     end
   end
 
   it "tests mkdir and rmdir with a new path" do
-    path = "/tmp/crystal_mkdir_test_#{Process.pid}/"
-    Dir.mkdir(path, 0o700).should eq(0)
-    Dir.exists?(path).should be_true
-    Dir.rmdir(path).should eq(0)
-    Dir.exists?(path).should be_false
+    with_tempfile("mkdir") do |path|
+      Dir.mkdir(path, 0o700)
+      Dir.exists?(path).should be_true
+      Dir.rmdir(path)
+      Dir.exists?(path).should be_false
+    end
   end
 
   it "tests mkdir with an existing path" do
     expect_raises Errno do
-      Dir.mkdir(__DIR__, 0o700)
+      Dir.mkdir(datapath, 0o700)
     end
   end
 
   it "tests mkdir_p with a new path" do
-    path = "/tmp/crystal_mkdir_ptest_#{Process.pid}/"
-    Dir.mkdir_p(path).should eq(0)
-    Dir.exists?(path).should be_true
-    path = File.join({path, "a", "b", "c"})
-    Dir.mkdir_p(path).should eq(0)
-    Dir.exists?(path).should be_true
+    with_tempfile("mkdir_p") do |path|
+      Dir.mkdir_p(path)
+      Dir.exists?(path).should be_true
+      path = File.join(path, "a", "b", "c")
+      Dir.mkdir_p(path)
+      Dir.exists?(path).should be_true
+    end
   end
 
   it "tests mkdir_p with an existing path" do
-    Dir.mkdir_p(__DIR__).should eq(0)
+    Dir.mkdir_p(datapath)
     expect_raises Errno do
-      Dir.mkdir_p(__FILE__)
+      Dir.mkdir_p(datapath("dir", "f1.txt"))
     end
   end
 
   it "tests rmdir with an nonexistent path" do
-    expect_raises Errno do
-      Dir.rmdir("/tmp/crystal_mkdir_test_#{Process.pid}/")
+    with_tempfile("nonexistant") do |path|
+      expect_raises Errno do
+        Dir.rmdir(path)
+      end
     end
   end
 
   it "tests rmdir with a path that cannot be removed" do
     expect_raises Errno do
-      Dir.rmdir(__DIR__)
+      Dir.rmdir(datapath)
     end
   end
 
   describe "glob" do
     it "tests glob with a single pattern" do
-      assert_dir_glob [
-        "#{__DIR__}/data/dir/f1.txt",
-        "#{__DIR__}/data/dir/f2.txt",
-        "#{__DIR__}/data/dir/g2.txt",
-      ], "#{__DIR__}/data/dir/*.txt"
+      Dir["#{datapath}/dir/*.txt"].sort.should eq [
+        datapath("dir", "f1.txt"),
+        datapath("dir", "f2.txt"),
+        datapath("dir", "g2.txt"),
+      ].sort
     end
 
     it "tests glob with multiple patterns" do
-      assert_dir_glob [
-        "#{__DIR__}/data/dir/f1.txt",
-        "#{__DIR__}/data/dir/f2.txt",
-        "#{__DIR__}/data/dir/g2.txt",
-        "#{__DIR__}/data/dir/subdir/f1.txt",
-      ], "#{__DIR__}/data/dir/*.txt", "#{__DIR__}/data/dir/subdir/*.txt"
+      Dir["#{datapath}/dir/*.txt", "#{datapath}/dir/subdir/*.txt"].sort.should eq [
+        datapath("dir", "f1.txt"),
+        datapath("dir", "f2.txt"),
+        datapath("dir", "g2.txt"),
+        datapath("dir", "subdir", "f1.txt"),
+      ].sort
     end
 
     it "tests glob with a single pattern with block" do
       result = [] of String
-      Dir.glob("#{__DIR__}/data/dir/*.txt") do |filename|
+      Dir.glob("#{datapath}/dir/*.txt") do |filename|
         result << filename
       end
       result.sort.should eq([
-        "#{__DIR__}/data/dir/f1.txt",
-        "#{__DIR__}/data/dir/f2.txt",
-        "#{__DIR__}/data/dir/g2.txt",
+        datapath("dir", "f1.txt"),
+        datapath("dir", "f2.txt"),
+        datapath("dir", "g2.txt"),
       ].sort)
     end
 
     it "tests a recursive glob" do
-      assert_dir_glob [
-        "#{__DIR__}/data/dir/f1.txt",
-        "#{__DIR__}/data/dir/f2.txt",
-        "#{__DIR__}/data/dir/g2.txt",
-        "#{__DIR__}/data/dir/subdir/f1.txt",
-        "#{__DIR__}/data/dir/subdir/subdir2/f2.txt",
-      ], "#{__DIR__}/data/dir/**/*.txt"
+      Dir["#{datapath}/dir/**/*.txt"].sort.should eq [
+        datapath("dir", "f1.txt"),
+        datapath("dir", "f2.txt"),
+        datapath("dir", "g2.txt"),
+        datapath("dir", "subdir", "f1.txt"),
+        datapath("dir", "subdir", "subdir2", "f2.txt"),
+      ].sort
     end
 
     it "tests a recursive glob with '?'" do
-      assert_dir_glob [
-        "#{__DIR__}/data/dir/f1.txt",
-        "#{__DIR__}/data/dir/f2.txt",
-        "#{__DIR__}/data/dir/f3.txx",
-      ], "#{__DIR__}/data/dir/f?.tx?"
+      Dir["#{datapath}/dir/f?.tx?"].sort.should eq [
+        datapath("dir", "f1.txt"),
+        datapath("dir", "f2.txt"),
+        datapath("dir", "f3.txx"),
+      ].sort
     end
 
     it "tests a recursive glob with alternation" do
-      assert_dir_glob [
-        "#{__DIR__}/data/dir/f1.txt",
-        "#{__DIR__}/data/dir/f2.txt",
-        "#{__DIR__}/data/dir/g2.txt",
-        "#{__DIR__}/data/dir/subdir/f1.txt",
-      ], "#{__DIR__}/data/{dir,dir/subdir}/*.txt"
+      Dir["#{datapath}/{dir,dir/subdir}/*.txt"].sort.should eq [
+        datapath("dir", "f1.txt"),
+        datapath("dir", "f2.txt"),
+        datapath("dir", "g2.txt"),
+        datapath("dir", "subdir", "f1.txt"),
+      ].sort
     end
 
     it "tests a glob with recursion inside alternation" do
-      assert_dir_glob [
-        "#{__DIR__}/data/dir/f1.txt",
-        "#{__DIR__}/data/dir/f2.txt",
-        "#{__DIR__}/data/dir/f3.txx",
-        "#{__DIR__}/data/dir/g2.txt",
-        "#{__DIR__}/data/dir/subdir/f1.txt",
-        "#{__DIR__}/data/dir/subdir/subdir2/f2.txt",
-      ], "#{__DIR__}/data/dir/{**/*.txt,**/*.txx}"
+      Dir["#{datapath}/dir/{**/*.txt,**/*.txx}"].sort.should eq [
+        datapath("dir", "f1.txt"),
+        datapath("dir", "f2.txt"),
+        datapath("dir", "f3.txx"),
+        datapath("dir", "g2.txt"),
+        datapath("dir", "subdir", "f1.txt"),
+        datapath("dir", "subdir", "subdir2", "f2.txt"),
+      ].sort
     end
 
     it "tests a recursive glob with nested alternations" do
-      assert_dir_glob [
-        "#{__DIR__}/data/dir/f1.txt",
-        "#{__DIR__}/data/dir/f2.txt",
-        "#{__DIR__}/data/dir/g2.txt",
-      ], "#{__DIR__}/data/dir/{?1.*,{f,g}2.txt}"
+      Dir["#{datapath}/dir/{?1.*,{f,g}2.txt}"].sort.should eq [
+        datapath("dir", "f1.txt"),
+        datapath("dir", "f2.txt"),
+        datapath("dir", "g2.txt"),
+      ].sort
     end
 
     it "tests with *" do
-      assert_dir_glob [
-        "#{__DIR__}/data/dir/f1.txt",
-        "#{__DIR__}/data/dir/f2.txt",
-        "#{__DIR__}/data/dir/f3.txx",
-        "#{__DIR__}/data/dir/g2.txt",
-        "#{__DIR__}/data/dir/subdir",
-        "#{__DIR__}/data/dir/subdir2",
-      ], "#{__DIR__}/data/dir/*"
+      Dir["#{datapath}/dir/*"].sort.should eq [
+        datapath("dir", "dots"),
+        datapath("dir", "f1.txt"),
+        datapath("dir", "f2.txt"),
+        datapath("dir", "f3.txx"),
+        datapath("dir", "g2.txt"),
+        datapath("dir", "subdir"),
+        datapath("dir", "subdir2"),
+      ].sort
     end
 
     it "tests with ** (same as *)" do
-      assert_dir_glob [
-        "#{__DIR__}/data/dir/f1.txt",
-        "#{__DIR__}/data/dir/f2.txt",
-        "#{__DIR__}/data/dir/f3.txx",
-        "#{__DIR__}/data/dir/g2.txt",
-        "#{__DIR__}/data/dir/subdir",
-        "#{__DIR__}/data/dir/subdir2",
-      ], "#{__DIR__}/data/dir/**"
+      Dir["#{datapath}/dir/**"].sort.should eq [
+        datapath("dir", "dots"),
+        datapath("dir", "f1.txt"),
+        datapath("dir", "f2.txt"),
+        datapath("dir", "f3.txx"),
+        datapath("dir", "g2.txt"),
+        datapath("dir", "subdir"),
+        datapath("dir", "subdir2"),
+      ].sort
     end
 
     it "tests with */" do
-      assert_dir_glob [
-        "#{__DIR__}/data/dir/subdir/",
-        "#{__DIR__}/data/dir/subdir2/",
-      ], "#{__DIR__}/data/dir/*/"
+      Dir["#{datapath}/dir/*/"].sort.should eq [
+        datapath("dir", "dots", ""),
+        datapath("dir", "subdir", ""),
+        datapath("dir", "subdir2", ""),
+      ].sort
     end
 
     it "tests glob with a single pattern with extra slashes" do
-      assert_dir_glob [
-        "#{__DIR__}/data/dir/f1.txt",
-        "#{__DIR__}/data/dir/f2.txt",
-        "#{__DIR__}/data/dir/g2.txt",
-      ], "#{__DIR__}////data////dir////*.txt"
+      Dir["spec/std////data////dir////*.txt"].sort.should eq [
+        datapath("dir", "f1.txt"),
+        datapath("dir", "f2.txt"),
+        datapath("dir", "g2.txt"),
+      ].sort
+    end
+
+    it "tests with relative path" do
+      Dir["#{datapath}/dir/*/"].sort.should eq [
+        datapath("dir", "dots", ""),
+        datapath("dir", "subdir", ""),
+        datapath("dir", "subdir2", ""),
+      ].sort
+    end
+
+    it "tests with relative path (starts with .)" do
+      Dir["./#{datapath}/dir/*/"].sort.should eq [
+        File.join(".", "spec", "std", "data", "dir", "dots", ""),
+        File.join(".", "spec", "std", "data", "dir", "subdir", ""),
+        File.join(".", "spec", "std", "data", "dir", "subdir2", ""),
+      ].sort
+    end
+
+    it "tests with relative path (starts with ..)" do
+      Dir.cd(datapath) do
+        base_path = "../data/dir"
+        Dir["#{base_path}/*/"].sort.should eq [
+          File.join(base_path, "dots", ""),
+          File.join(base_path, "subdir", ""),
+          File.join(base_path, "subdir2", ""),
+        ].sort
+      end
+    end
+
+    # TODO: This spec is broken on win32 because of `raise` weirdness on windows
+    pending_win32 "tests with relative path starting recursive" do
+      Dir["**/dir/*/"].sort.should eq [
+        datapath("dir", "dots", ""),
+        datapath("dir", "subdir", ""),
+        datapath("dir", "subdir2", ""),
+      ].sort
+    end
+
+    it "matches symlinks" do
+      link = datapath("f1_link.txt")
+      non_link = datapath("non_link.txt")
+
+      File.symlink(datapath("dir", "f1.txt"), link)
+      File.symlink(datapath("dir", "nonexisting"), non_link)
+
+      begin
+        Dir["#{datapath}/*_link.txt"].sort.should eq [
+          datapath("f1_link.txt"),
+          datapath("non_link.txt"),
+        ].sort
+      ensure
+        File.delete link
+        File.delete non_link
+      end
+    end
+
+    it "empty pattern" do
+      Dir[""].should eq [] of String
+    end
+
+    pending_win32 "root pattern" do
+      Dir["/"].should eq ["/"]
+    end
+
+    it "pattern ending with .." do
+      Dir["#{datapath}/dir/.."].sort.should eq [
+        datapath("dir", ".."),
+      ]
+    end
+
+    it "pattern ending with */.." do
+      Dir["#{datapath}/dir/*/.."].sort.should eq [
+        datapath("dir", "dots", ".."),
+        datapath("dir", "subdir", ".."),
+        datapath("dir", "subdir2", ".."),
+      ]
+    end
+
+    it "pattern ending with ." do
+      Dir["#{datapath}/dir/."].sort.should eq [
+        datapath("dir", "."),
+      ]
+    end
+
+    it "pattern ending with */." do
+      Dir["#{datapath}/dir/*/."].sort.should eq [
+        datapath("dir", "dots", "."),
+        datapath("dir", "subdir", "."),
+        datapath("dir", "subdir2", "."),
+      ]
+    end
+
+    context "match_hidden: true" do
+      it "matches hidden files" do
+        Dir.glob("#{datapath}/dir/dots/**/*", match_hidden: true).sort.should eq [
+          datapath("dir", "dots", ".dot.hidden"),
+          datapath("dir", "dots", ".hidden"),
+          datapath("dir", "dots", ".hidden", "f1.txt"),
+        ].sort
+      end
     end
   end
 
@@ -233,70 +343,70 @@ describe "Dir" do
   it "opens with new" do
     filenames = [] of String
 
-    dir = Dir.new(__DIR__)
-    dir.each_entry do |filename|
+    dir = Dir.new(datapath("dir"))
+    dir.each do |filename|
       filenames << filename
     end.should be_nil
     dir.close
 
-    filenames.includes?("dir_spec.cr").should be_true
+    filenames.includes?("f1.txt").should be_true
   end
 
   it "opens with open" do
     filenames = [] of String
 
-    Dir.open(__DIR__) do |dir|
-      dir.each_entry do |filename|
+    Dir.open(datapath("dir")) do |dir|
+      dir.each do |filename|
         filenames << filename
       end.should be_nil
     end
 
-    filenames.includes?("dir_spec.cr").should be_true
+    filenames.includes?("f1.txt").should be_true
   end
 
   it "lists entries" do
-    filenames = Dir.entries(__DIR__)
+    filenames = Dir.entries(datapath("dir"))
     filenames.includes?(".").should be_true
     filenames.includes?("..").should be_true
-    filenames.includes?("dir_spec.cr").should be_true
+    filenames.includes?("f1.txt").should be_true
   end
 
   it "lists children" do
-    Dir.children(__DIR__).should eq(Dir.entries(__DIR__) - %w(. ..))
+    Dir.children(datapath("dir")).should eq(Dir.entries(datapath("dir")) - %w(. ..))
   end
 
   it "does to_s" do
-    Dir.new(__DIR__).to_s.should eq("#<Dir:#{__DIR__}>")
+    Dir.new(datapath("dir")).to_s.should eq("#<Dir:#{datapath("dir")}>")
   end
 
   it "gets dir iterator" do
     filenames = [] of String
 
-    iter = Dir.new(__DIR__).each_entry
+    iter = Dir.new(datapath("dir")).each
     iter.each do |filename|
       filenames << filename
     end
 
     filenames.includes?(".").should be_true
     filenames.includes?("..").should be_true
-    filenames.includes?("dir_spec.cr").should be_true
+    filenames.includes?("f1.txt").should be_true
   end
 
   it "gets child iterator" do
     filenames = [] of String
 
-    iter = Dir.new(__DIR__).each_child
+    iter = Dir.new(datapath("dir")).each_child
     iter.each do |filename|
       filenames << filename
     end
 
     filenames.includes?(".").should be_false
     filenames.includes?("..").should be_false
-    filenames.includes?("dir_spec.cr").should be_true
+    filenames.includes?("f1.txt").should be_true
   end
 
   it "double close doesn't error" do
-    dir = Dir.open(__DIR__) do |dir|
+    dir = Dir.open(datapath("dir")) do |dir|
       dir.close
       dir.close
     end

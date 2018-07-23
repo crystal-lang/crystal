@@ -4429,6 +4429,21 @@ describe "Semantic: instance var" do
       ), inject_primitives: false) { types["Foo"] }
   end
 
+  it "is more permissive with macro def initialize, bug with named args" do
+    assert_error %(
+      class Foo
+        @x : Int32
+
+        def initialize(**args)
+          {% @type %}
+        end
+      end
+
+      Foo.new(x: 1)
+      ),
+      "instance variable '@x' of Foo was not initialized"
+  end
+
   it "is more permissive with macro def initialize, other initialize" do
     assert_type(%(
       class Foo
@@ -4447,6 +4462,35 @@ describe "Semantic: instance var" do
 
       Foo.new
       ), inject_primitives: false) { types["Foo"] }
+  end
+
+  it "is more permissive with macro def initialize, multiple" do
+    assert_type(%(
+      class Foo
+        @x : Int32
+
+        def initialize
+          {% begin %}
+            {% @type %}
+            @x = 1
+          {% end %}
+        end
+
+        def initialize(x)
+          {% begin %}
+            {% @type %}
+            @x = x
+          {% end %}
+        end
+
+        def x
+          @x
+        end
+      end
+
+      Foo.new
+      Foo.new(1).x
+      )) { int32 }
   end
 
   it "errors with macro def but another def doesn't initialize all" do
@@ -4853,5 +4897,149 @@ describe "Semantic: instance var" do
 
       Baz.new
       )) { types["Baz"] }
+  end
+
+  it "cannot guess type from argument assigned in body" do
+    assert_error %(
+      class Foo
+        def initialize(x : String)
+          x = 1
+          @x = x
+        end
+      end
+
+      Foo.new "foo"
+      ),
+      "Can't infer the type of instance variable '@x' of Foo"
+  end
+
+  it "can't infer type of generic method that returns self (#5383)" do
+    assert_error %(
+      class Gen(T)
+        def self.new(&block : -> T) : self
+        end
+      end
+
+      class Foo
+        def initialize(x, y)
+          @x = Gen.new { 1 }
+        end
+      end
+      ),
+      "can't use Gen(T) as the type of instance variable @x of Foo, use a more specific type"
+  end
+
+  it "guesses virtual array type (1) (#5342)" do
+    assert_type(%(
+      require "prelude"
+
+      class First(T) < Array(T)
+      end
+
+      class Second
+        @ary = [[1]]
+
+        def ary
+          @ary
+        end
+      end
+
+      Second.new.ary
+      )) { array_of(array_of(int32).virtual_type).virtual_type }
+  end
+
+  it "guesses virtual array type (2) (#5342)" do
+    assert_type(%(
+      require "prelude"
+
+      class First(T) < Array(T)
+      end
+
+      class Second
+        @ary = Array { Array { 1 } }
+
+        def ary
+          @ary
+        end
+      end
+
+      Second.new.ary
+      )) { array_of(array_of(int32).virtual_type).virtual_type }
+  end
+
+  it "guesses virtual array type (3) (#5342)" do
+    assert_type(%(
+      require "prelude"
+
+      class First(T) < Array(T)
+      end
+
+      class Second
+        @ary = [] of Array(Int32)
+
+        def ary
+          @ary
+        end
+      end
+
+      Second.new.ary
+      )) { array_of(array_of(int32).virtual_type).virtual_type }
+  end
+
+  it "guesses virtual hash type (1) (#5342)" do
+    assert_type(%(
+      require "prelude"
+
+      class First(K, V) < Hash(K, V)
+      end
+
+      class Second
+        @hash = { {1 => 2} => 3}
+
+        def hash
+          @hash
+        end
+      end
+
+      Second.new.hash
+      )) { hash_of(hash_of(int32, int32).virtual_type, int32).virtual_type }
+  end
+
+  it "guesses virtual hash type (2) (#5342)" do
+    assert_type(%(
+      require "prelude"
+
+      class First(K, V) < Hash(K, V)
+      end
+
+      class Second
+        @hash = Hash { Hash { 1 => 2 } => 3 }
+
+        def hash
+          @hash
+        end
+      end
+
+      Second.new.hash
+      )) { hash_of(hash_of(int32, int32).virtual_type, int32).virtual_type }
+  end
+
+  it "guesses virtual array type (3) (#5342)" do
+    assert_type(%(
+      require "prelude"
+
+      class First(K, V) < Hash(K, V)
+      end
+
+      class Second
+        @hash = {} of Hash(Int32, Int32) => Int32
+
+        def hash
+          @hash
+        end
+      end
+
+      Second.new.hash
+      )) { hash_of(hash_of(int32, int32).virtual_type, int32).virtual_type }
   end
 end

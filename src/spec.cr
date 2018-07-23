@@ -50,7 +50,7 @@ require "./spec/dsl"
 # By convention, specs live in the `spec` directory of a project. You can compile
 # and run the specs of a project by running `crystal spec`.
 #
-# ```shell
+# ```console
 # # Run  all specs in files matching spec/**/*_spec.cr
 # crystal spec
 #

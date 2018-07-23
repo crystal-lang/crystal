@@ -2,6 +2,10 @@
 lib LibLLVM
   LLVM_CONFIG = {{
                   `[ -n "$LLVM_CONFIG" ] && command -v "$LLVM_CONFIG" || \
+                   command -v llvm-config-6.0 || command -v llvm-config60 || \
+                   (command -v llvm-config > /dev/null && (case "$(llvm-config --version)" in 6.0*) command -v llvm-config;; *) false;; esac)) || \
+                   command -v llvm-config-5.0 || command -v llvm-config50 || \
+                   (command -v llvm-config > /dev/null && (case "$(llvm-config --version)" in 5.0*) command -v llvm-config;; *) false;; esac)) || \
                    command -v llvm-config-4.0 || command -v llvm-config40 || \
                    (command -v llvm-config > /dev/null && (case "$(llvm-config --version)" in 4.0*) command -v llvm-config;; *) false;; esac)) || \
                    command -v llvm-config-3.9 || command -v llvm-config39 || \
@@ -29,6 +33,7 @@ end
 
 {% begin %}
   lib LibLLVM
+    IS_60 = {{LibLLVM::VERSION.starts_with?("6.0")}}
     IS_50 = {{LibLLVM::VERSION.starts_with?("5.0")}}
     IS_40 = {{LibLLVM::VERSION.starts_with?("4.0")}}
     IS_39 = {{LibLLVM::VERSION.starts_with?("3.9")}}
@@ -350,4 +355,7 @@ lib LibLLVM
   fun create_builder_in_context = LLVMCreateBuilderInContext(c : ContextRef) : BuilderRef
 
   fun get_type_context = LLVMGetTypeContext(TypeRef) : ContextRef
+
+  fun const_int_get_sext_value = LLVMConstIntGetSExtValue(ValueRef) : Int64
+  fun const_int_get_zext_value = LLVMConstIntGetZExtValue(ValueRef) : UInt64
 end

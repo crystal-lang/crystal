@@ -4,9 +4,8 @@ require "random/pcg32"
 # `Random` provides an interface for random values generation, using a pseudo random number generator (PRNG).
 #
 # ```
-# Random.new_seed # => 112705036
-# Random.rand     # => 0.167595
-# Random.rand(5)  # => 2
+# Random.rand    # => 0.167595
+# Random.rand(5) # => 2
 # ```
 #
 # The above methods delegate to a `Random` instance.

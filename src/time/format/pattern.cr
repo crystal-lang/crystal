@@ -1,9 +1,6 @@
 struct Time::Format
   # :nodoc:
   module Pattern
-    MONTH_NAMES = %w(January February March April May June July August September October November December)
-    DAY_NAMES   = %w(Sunday Monday Tuesday Wednesday Thursday Friday Saturday)
-
     def visit(pattern)
       reader = Char::Reader.new(pattern)
       while reader.has_next?
@@ -36,7 +33,7 @@ struct Time::Format
         when 'e'
           day_of_month_blank_padded
         when 'F'
-          iso_8601_date
+          year_month_day
         when 'H'
           hour_24_zero_padded
         when 'I'
@@ -49,12 +46,12 @@ struct Time::Format
           hour_12_blank_padded
         when 'L'
           milliseconds
-        when 'N'
-          nanoseconds
         when 'm'
           month_zero_padded
         when 'M'
           minute
+        when 'N'
+          second_fraction
         when 'p'
           am_pm
         when 'P'
@@ -133,6 +130,23 @@ struct Time::Format
             char ':'
             reader = check_char reader, char
           end
+        when '3', '6', '9'
+          digit_char = char
+          case char = reader.next_char
+          when 'N'
+            case digit_char
+            when '3'
+              milliseconds
+            when '6'
+              microseconds
+            when '9'
+              nanoseconds
+            end
+          else
+            char '%'
+            char digit_char
+            reader = check_char reader, char
+          end
         when '%'
           char '%'
         else
@@ -165,7 +179,7 @@ struct Time::Format
       year_modulo_100
     end
 
-    def iso_8601_date
+    def year_month_day
       year
       char '-'
       month_zero_padded

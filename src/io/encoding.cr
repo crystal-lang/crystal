@@ -15,6 +15,8 @@ class IO
     end
   end
 
+  {% skip_file if flag?(:win32) %}
+
   private class Encoder
     def initialize(@encoding_options : EncodingOptions)
       @iconv = Iconv.new("UTF-8", encoding_options.name, encoding_options.invalid)

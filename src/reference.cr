@@ -46,6 +46,7 @@ class Reference
     {% else %}
       dup = self.class.allocate
       dup.as(Void*).copy_from(self.as(Void*), instance_sizeof(self))
+      GC.add_finalizer(dup) if dup.responds_to?(:finalize)
       dup
     {% end %}
   end
@@ -62,7 +63,7 @@ class Reference
     executed = exec_recursive(:inspect) do
       {% for ivar, i in @type.instance_vars %}
         {% if i > 0 %}
-          io << ","
+          io << ','
         {% end %}
         io << " @{{ivar.id}}="
         @{{ivar.id}}.inspect io
@@ -71,7 +72,7 @@ class Reference
     unless executed
       io << " ..."
     end
-    io << ">"
+    io << '>'
     nil
   end
 
@@ -107,7 +108,7 @@ class Reference
   def to_s(io : IO) : Nil
     io << "#<" << self.class.name << ":0x"
     object_id.to_s(16, io)
-    io << ">"
+    io << '>'
     nil
   end
 

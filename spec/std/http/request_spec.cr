@@ -178,6 +178,11 @@ module HTTP
       request.should be_a(Request::BadRequest)
     end
 
+    it "handles unsupported HTTP version" do
+      request = Request.from_io(IO::Memory.new("GET / HTTP/1.2\r\nContent-Length: 0\r\n\r\n"))
+      request.should be_a(Request::BadRequest)
+    end
+
     it "handles long request lines" do
       request = Request.from_io(IO::Memory.new("GET /#{"a" * 4096} HTTP/1.1\r\n\r\n"))
       request.should be_a(Request::BadRequest)
@@ -373,6 +378,46 @@ module HTTP
         REQ
       expect_raises(ArgumentError) do
         HTTP::Request.from_io(io)
+      end
+    end
+
+    describe "#if_none_match" do
+      it "reads single value" do
+        HTTP::Request.new("GET", "/", HTTP::Headers{"If-None-Match" => %(W/"1234567")}).if_none_match.should eq [%(W/"1234567")]
+        HTTP::Request.new("GET", "/", HTTP::Headers{"If-None-Match" => %("1234567")}).if_none_match.should eq [%("1234567")]
+      end
+
+      it "reads *" do
+        HTTP::Request.new("GET", "/", HTTP::Headers{"If-None-Match" => "*"}).if_none_match.should eq ["*"]
+      end
+
+      it "reads multiple values" do
+        HTTP::Request.new("GET", "/", HTTP::Headers{"If-None-Match" => %(,W/"1234567",)}).if_none_match.should eq [%(W/"1234567")]
+        HTTP::Request.new("GET", "/", HTTP::Headers{"If-None-Match" => %(, , W/"1234567" , ,)}).if_none_match.should eq [%(W/"1234567")]
+        HTTP::Request.new("GET", "/", HTTP::Headers{"If-None-Match" => %(W/"1234567",W/"12345678")}).if_none_match.should eq [%(W/"1234567"), %(W/"12345678")]
+        HTTP::Request.new("GET", "/", HTTP::Headers{"If-None-Match" => %(W/"1234567" , W/"12345678")}).if_none_match.should eq [%(W/"1234567"), %(W/"12345678")]
+        HTTP::Request.new("GET", "/", HTTP::Headers{"If-None-Match" => %(W/"1234567","12345678")}).if_none_match.should eq [%(W/"1234567"), %("12345678")]
+        HTTP::Request.new("GET", "/", HTTP::Headers{"If-None-Match" => %(W/"1234567" , "12345678")}).if_none_match.should eq [%(W/"1234567"), %("12345678")]
+      end
+    end
+
+    describe "#if_match" do
+      it "reads single value" do
+        HTTP::Request.new("GET", "/", HTTP::Headers{"If-Match" => %(W/"1234567")}).if_match.should eq [%(W/"1234567")]
+        HTTP::Request.new("GET", "/", HTTP::Headers{"If-Match" => %("1234567")}).if_match.should eq [%("1234567")]
+      end
+
+      it "reads *" do
+        HTTP::Request.new("GET", "/", HTTP::Headers{"If-Match" => "*"}).if_match.should eq ["*"]
+      end
+
+      it "reads multiple values" do
+        HTTP::Request.new("GET", "/", HTTP::Headers{"If-Match" => %(,W/"1234567",)}).if_match.should eq [%(W/"1234567")]
+        HTTP::Request.new("GET", "/", HTTP::Headers{"If-Match" => %(, , W/"1234567" , ,)}).if_match.should eq [%(W/"1234567")]
+        HTTP::Request.new("GET", "/", HTTP::Headers{"If-Match" => %(W/"1234567",W/"12345678")}).if_match.should eq [%(W/"1234567"), %(W/"12345678")]
+        HTTP::Request.new("GET", "/", HTTP::Headers{"If-Match" => %(W/"1234567" , W/"12345678")}).if_match.should eq [%(W/"1234567"), %(W/"12345678")]
+        HTTP::Request.new("GET", "/", HTTP::Headers{"If-Match" => %(W/"1234567","12345678")}).if_match.should eq [%(W/"1234567"), %("12345678")]
+        HTTP::Request.new("GET", "/", HTTP::Headers{"If-Match" => %(W/"1234567" , "12345678")}).if_match.should eq [%(W/"1234567"), %("12345678")]
       end
     end
   end

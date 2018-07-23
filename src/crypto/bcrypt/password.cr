@@ -39,7 +39,7 @@ class Crypto::Bcrypt::Password
   # password.digest  # => "8/Po4wTL0fhdDNdAdjcKN/Fup8tGCya"
   # ```
   def initialize(@raw_hash : String)
-    parts = @raw_hash.split("$")
+    parts = @raw_hash.split('$')
 
     @version = parts[1]
     @cost = parts[2].to_i
@@ -58,7 +58,7 @@ class Crypto::Bcrypt::Password
   # password == "wrong secret" # => false
   # password == "super secret" # => true
   # ```
-  def ==(password)
+  def ==(password : String) : Bool
     hashed_password = Bcrypt.new(password, salt, cost)
     Crypto::Subtle.constant_time_compare(@raw_hash, hashed_password)
   end

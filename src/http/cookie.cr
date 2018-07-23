@@ -31,7 +31,7 @@ module HTTP
         header << "#{URI.escape @name}=#{URI.escape value}"
         header << "; domain=#{domain}" if domain
         header << "; path=#{path}" if path
-        header << "; expires=#{HTTP.rfc1123_date(expires)}" if expires
+        header << "; expires=#{HTTP.format_time(expires)}" if expires
         header << "; Secure" if @secure
         header << "; HttpOnly" if @http_only
         header << "; #{@extension}" if @extension
@@ -81,7 +81,7 @@ module HTTP
       end
 
       CookieString    = /(?:^|; )#{Regex::CookiePair}/
-      SetCookieString = /^#{Regex::CookiePair}(?:; #{Regex::CookieAV})*$/
+      SetCookieString = /^#{Regex::CookiePair}(?:;\s*#{Regex::CookieAV})*$/
 
       def parse_cookies(header)
         header.scan(CookieString).each do |pair|

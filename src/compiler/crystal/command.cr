@@ -18,7 +18,6 @@ class Crystal::Command
     Command:
         init                     generate a new project
         build                    build an executable
-        deps                     install project dependencies
         docs                     generate documentation
         env                      print Crystal environment information
         eval                     eval code from args or standard input
@@ -72,8 +71,8 @@ class Crystal::Command
       options.shift
       playground
     when "deps".starts_with?(command)
-      options.shift
-      deps
+      STDERR.puts "Please use 'shards': 'crystal deps' has been removed"
+      exit 1
     when "docs".starts_with?(command)
       options.shift
       docs
@@ -116,11 +115,7 @@ class Crystal::Command
   rescue ex : OptionParser::Exception
     error ex.message
   rescue ex
-    STDERR.puts ex
-    ex.backtrace.each do |frame|
-      STDERR.puts frame
-    end
-    STDERR.puts
+    ex.inspect_with_backtrace STDERR
     error "you've found a bug in the Crystal compiler. Please open an issue, including source code that will allow us to reproduce the bug: https://github.com/crystal-lang/crystal/issues"
   end
 
@@ -212,7 +207,7 @@ class Crystal::Command
           Process.run(output_filename, args: run_args, input: Process::Redirect::Inherit, output: Process::Redirect::Inherit, error: Process::Redirect::Inherit) do |process|
             # Ignore the signal so we don't exit the running process
             # (the running process can still handle this signal)
-            Signal::INT.ignore # do
+            ::Signal::INT.ignore # do
           end
         end
         {$?, elapsed}
@@ -236,11 +231,11 @@ class Crystal::Command
       exit status.exit_code
     else
       case status.exit_signal
-      when Signal::KILL
+      when ::Signal::KILL
         STDERR.puts "Program was killed"
-      when Signal::SEGV
+      when ::Signal::SEGV
         STDERR.puts "Program exited because of a segmentation fault (11)"
-      when Signal::INT
+      when ::Signal::INT
         # OK, bubbled from the sub-program
       else
         STDERR.puts "Program received and didn't handle signal #{status.exit_signal} (#{status.exit_signal.value})"
@@ -314,7 +309,7 @@ class Crystal::Command
       end
 
       unless no_codegen
-        opts.on("--emit [#{VALID_EMIT_VALUES.join("|")}]", "Comma separated list of types of output for the compiler to emit") do |emit_values|
+        opts.on("--emit [#{VALID_EMIT_VALUES.join('|')}]", "Comma separated list of types of output for the compiler to emit") do |emit_values|
           compiler.emit = validate_emit_values(emit_values.split(',').map(&.strip))
         end
       end
@@ -400,7 +395,7 @@ class Crystal::Command
         opts.on("--single-module", "Generate a single LLVM module") do
           compiler.single_module = true
         end
-        opts.on("--threads ", "Maximum number of threads to use") do |n_threads|
+        opts.on("--threads NUM", "Maximum number of threads to use") do |n_threads|
           compiler.n_threads = n_threads.to_i
         end
         unless run
@@ -427,7 +422,7 @@ class Crystal::Command
       end
     end
 
-    compiler.link_flags = link_flags.join(" ") unless link_flags.empty?
+    compiler.link_flags = link_flags.join(' ') unless link_flags.empty?
 
     output_filename = opt_output_filename
     filenames += opt_filenames.not_nil!
@@ -462,6 +457,8 @@ class Crystal::Command
     if !["text", "json"].includes?(output_format)
       error "You have input an invalid format, only text and JSON are supported"
     end
+
+    error "maximum number of threads cannot be lower than 1" if compiler.n_threads < 1
 
     if !no_codegen && !run && Dir.exists?(output_filename)
       error "can't use `#{output_filename}` as output filename because it's a directory"

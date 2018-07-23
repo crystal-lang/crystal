@@ -9,6 +9,7 @@ lib LibC
   SC_CLK_TCK          =  3
   SC_NPROCESSORS_ONLN = 58
 
+  fun chroot(dirname : Char*) : Int
   fun access(x0 : Char*, x1 : Int) : Int
   fun chdir(x0 : Char*) : Int
   fun chown(x0 : Char*, x1 : UidT, x2 : GidT) : Int

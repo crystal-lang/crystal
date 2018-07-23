@@ -71,7 +71,7 @@ module ENV
 
   # Retrieves a value corresponding to a given *key*. Return the value of the block if
   # the *key* does not exist.
-  def self.fetch(key : String, &block : String -> String? | NoReturn)
+  def self.fetch(key : String, &block : String -> String?)
     value = LibC.getenv key
     return String.new(value) if value
     yield(key)
@@ -132,7 +132,7 @@ module ENV
 
   # Writes the contents of the environment to *io*.
   def self.inspect(io)
-    io << "{"
+    io << '{'
     found_one = false
     each do |key, value|
       io << ", " if found_one
@@ -141,7 +141,7 @@ module ENV
       value.inspect(io)
       found_one = true
     end
-    io << "}"
+    io << '}'
   end
 
   def self.pretty_print(pp)

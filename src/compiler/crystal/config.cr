@@ -46,7 +46,7 @@ module Crystal
 
       # On release: 0.0.0-0-gabcd123
       # Ahead of last release: 0.0.0-42-gabcd123
-      tag, commits, sha = git_version.split("-")
+      tag, commits, sha = git_version.split('-')
       sha = sha[1..-1]                                # Strip g
       tag = "#{tag}+#{commits}" unless commits == "0" # Reappend commits since release unless we hit it exactly
 

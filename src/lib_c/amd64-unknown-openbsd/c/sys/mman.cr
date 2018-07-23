@@ -11,11 +11,12 @@ lib LibC
   MAP_ANON              = 0x1000
   MAP_ANONYMOUS         = LibC::MAP_ANON
   MAP_FAILED            = Pointer(Void).new(-1)
-  POSIX_MADV_DONTNEED   = 4
-  POSIX_MADV_NORMAL     = 0
-  POSIX_MADV_RANDOM     = 1
-  POSIX_MADV_SEQUENTIAL = 2
-  POSIX_MADV_WILLNEED   = 3
+  MAP_STACK             = 0x4000
+  POSIX_MADV_DONTNEED   =      4
+  POSIX_MADV_NORMAL     =      0
+  POSIX_MADV_RANDOM     =      1
+  POSIX_MADV_SEQUENTIAL =      2
+  POSIX_MADV_WILLNEED   =      3
   MADV_DONTNEED         = LibC::POSIX_MADV_DONTNEED
   MADV_NORMAL           = LibC::POSIX_MADV_NORMAL
   MADV_RANDOM           = LibC::POSIX_MADV_RANDOM

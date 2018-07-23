@@ -52,13 +52,13 @@ class Crystal::Type
 
   # Similar to `lookup_type`, but the result might also be an ASTNode, for example when
   # looking `N` relative to a StaticArray.
-  def lookup_type_var(node : Path, free_vars : Hash(String, TypeVar)? = nil) : Type | ASTNode
-    TypeLookup.new(self, self.instance_type, true, false, false, free_vars).lookup_type_var(node).not_nil!
+  def lookup_type_var(node : Path, free_vars : Hash(String, TypeVar)? = nil, find_root_generic_type_parameters = true) : Type | ASTNode
+    TypeLookup.new(self, self.instance_type, true, false, false, free_vars, find_root_generic_type_parameters).lookup_type_var(node).not_nil!
   end
 
   # Similar to `lookup_type_var`, but might return `nil`.
-  def lookup_type_var?(node : Path, free_vars : Hash(String, TypeVar)? = nil, raise = false) : Type | ASTNode | Nil
-    TypeLookup.new(self, self.instance_type, raise, false, false, free_vars).lookup_type_var?(node)
+  def lookup_type_var?(node : Path, free_vars : Hash(String, TypeVar)? = nil, raise = false, find_root_generic_type_parameters = true) : Type | ASTNode | Nil
+    TypeLookup.new(self, self.instance_type, raise, false, false, free_vars, find_root_generic_type_parameters).lookup_type_var?(node)
   end
 
   private struct TypeLookup
@@ -249,7 +249,7 @@ class Crystal::Type
         end
 
         # Check the case of T resolving to a number
-        if type_var.is_a?(Path) && type_var.names.size == 1
+        if type_var.is_a?(Path)
           type = @root.lookup_path(type_var)
           case type
           when Const
@@ -345,8 +345,16 @@ class Crystal::Type
         node.raise "there's no self in this scope"
       end
 
-      if (self_type = @self_type).is_a?(GenericType)
-        params = self_type.type_vars.map { |type_var| self_type.type_parameter(type_var).as(TypeVar) }
+      if (self_type = @self_type).is_a?(GenericType) && (free_vars = @free_vars)
+        # Only instantiate self type with available free variables
+        params = self_type.type_vars.map do |type_var|
+          free_var = free_vars[type_var]?
+          if free_var
+            self_type.type_parameter(type_var).as(TypeVar)
+          else
+            return @self_type.virtual_type
+          end
+        end
         self_type.instantiate(params)
       else
         @self_type.virtual_type

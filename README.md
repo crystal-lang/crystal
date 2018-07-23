@@ -2,12 +2,13 @@
 
 [![Travis CI Build Status](https://travis-ci.org/crystal-lang/crystal.svg)](https://travis-ci.org/crystal-lang/crystal)
 [![CircleCI Build Status](https://circleci.com/gh/crystal-lang/crystal/tree/master.svg?style=shield)](https://circleci.com/gh/crystal-lang/crystal)
-[![Bountysource](https://api.bountysource.com/badge/team?team_id=89730&style=raised)](https://www.bountysource.com/teams/crystal-lang/fundraisers/702-crystal-language)
+[![Join the chat at https://gitter.im/crystal-lang/crystal](https://badges.gitter.im/crystal-lang/crystal.svg)](https://gitter.im/crystal-lang/crystal)
+[![Bountysource](https://api.bountysource.com/badge/team?team_id=89730&style=raised)](https://salt.bountysource.com/teams/crystal-lang)
 [![Code Triagers Badge](https://www.codetriage.com/crystal-lang/crystal/badges/users.svg)](https://www.codetriage.com/crystal-lang/crystal)
 
 ---
 
-[![born-and-raised](https://cloud.githubusercontent.com/assets/209371/13291809/022e2360-daf8-11e5-8be7-d02c1c8b38fb.png)](http://manas.com.ar/)
+[![born-and-raised](https://cloud.githubusercontent.com/assets/209371/13291809/022e2360-daf8-11e5-8be7-d02c1c8b38fb.png)](https://manas.tech/)
 
 Crystal is a programming language with the following goals:
 
@@ -32,11 +33,12 @@ We want full OOP.
 
 Oh, and we don't want to write C code to make the code run faster.
 
-Status
+Project Status
 ------
 
-* The project is in alpha stage: we are still tweaking the language and standard library.
-* The compiler is written in Crystal.
+Crystal is still under heavy development. There can be breaking changes but we're trying to keep them as minimum as possible.
+
+The development is possible thanks to the community's effort, [84codes](https://www.84codes.com/)' support, and every [BountySource supporter](https://crystal-lang.org/sponsors).
 
 Installing
 ----------
