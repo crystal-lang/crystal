@@ -141,13 +141,13 @@ module Crystal::System::Time
 
   # Normalizes the names of the standard and dst zones.
   private def self.normalize_zone_names(info : LibC::TIME_ZONE_INFORMATION) : Tuple(String, String)
-    stdname = String.from_utf16(info.standardName.to_unsafe)
+    stdname = String.from_utf16(info.standardName.to_slice)
 
     if normalized_names = WINDOWS_ZONE_NAMES[stdname]?
       return normalized_names
     end
 
-    dstname = String.from_utf16(info.daylightName.to_unsafe)
+    dstname = String.from_utf16(info.daylightName.to_slice)
 
     if english_name = translate_zone_name(stdname, dstname)
       if normalized_names = WINDOWS_ZONE_NAMES[english_name]?

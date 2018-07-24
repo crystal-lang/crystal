@@ -1,4 +1,5 @@
 require "spec"
+require "./spec_helper"
 
 describe "ENV" do
   it "gets non existent key raises" do
@@ -22,6 +23,11 @@ describe "ENV" do
     ENV["FOO"]?.should_not be_nil
     ENV["FOO"] = nil
     ENV["FOO"]?.should be_nil
+  end
+
+  it "sets to empty string" do
+    (ENV["FOO_EMPTY"] = "").should eq ""
+    ENV["FOO_EMPTY"]?.should eq ""
   end
 
   it "does has_key?" do
@@ -52,19 +58,19 @@ describe "ENV" do
 
   describe "[]=" do
     it "disallows NUL-bytes in key" do
-      expect_raises(ArgumentError, "Key contains null byte") do
+      expect_raises(ArgumentError, "String `key` contains null byte") do
         ENV["FOO\0BAR"] = "something"
       end
     end
 
     it "disallows NUL-bytes in key if value is nil" do
-      expect_raises(ArgumentError, "Key contains null byte") do
+      expect_raises(ArgumentError, "String `key` contains null byte") do
         ENV["FOO\0BAR"] = nil
       end
     end
 
     it "disallows NUL-bytes in value" do
-      expect_raises(ArgumentError, "Value contains null byte") do
+      expect_raises(ArgumentError, "String `value` contains null byte") do
         ENV["FOO"] = "BAR\0BAZ"
       end
     end
@@ -94,5 +100,23 @@ describe "ENV" do
         ENV.fetch("2")
       end
     end
+  end
+
+  it "handles unicode" do
+    ENV["TEST_UNICODE_1"] = "bar\u{d7ff}\u{10000}"
+    ENV["TEST_UNICODE_2"] = "\u{1234}"
+    ENV["TEST_UNICODE_1"].should eq "bar\u{d7ff}\u{10000}"
+    ENV["TEST_UNICODE_2"].should eq "\u{1234}"
+
+    values = {} of String => String
+    ENV.each do |key, value|
+      if key.starts_with?("TEST_UNICODE_")
+        values[key] = value
+      end
+    end
+    values.should eq({
+      "TEST_UNICODE_1" => "bar\u{d7ff}\u{10000}",
+      "TEST_UNICODE_2" => "\u{1234}",
+    })
   end
 end

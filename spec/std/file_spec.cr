@@ -582,41 +582,37 @@ describe "File" do
       File.expand_path("~/a", "/tmp/gumby/ddd").should eq(File.join([home, "a"]))
     end
 
-    # TODO: these specs don't compile on windows because ENV isn't ported
-    # TODO: remove /\A\/\// hack after this is removed from macros
-    {% unless flag?(:win32) %}
-      it "converts a pathname to an absolute pathname, using ~ (home) as base (trailing /)" do
-        prev_home = home
-        begin
-          ENV["HOME"] = File.expand_path(datapath)
-          File.expand_path("~/").should eq(home)
-          File.expand_path("~/..badfilename").should eq(File.join(home, "..badfilename"))
-          File.expand_path("..").should eq("/#{base.split('/')[0...-1].join('/')}".gsub(/\A\/\//, "/"))
-          File.expand_path("~/a", "~/b").should eq(File.join(home, "a"))
-          File.expand_path("~").should eq(home)
-          File.expand_path("~", "/tmp/gumby/ddd").should eq(home)
-          File.expand_path("~/a", "/tmp/gumby/ddd").should eq(File.join([home, "a"]))
-        ensure
-          ENV["HOME"] = prev_home
-        end
+    pending_win32 "converts a pathname to an absolute pathname, using ~ (home) as base (trailing /)" do
+      prev_home = home
+      begin
+        ENV["HOME"] = File.expand_path(datapath)
+        File.expand_path("~/").should eq(home)
+        File.expand_path("~/..badfilename").should eq(File.join(home, "..badfilename"))
+        File.expand_path("..").should eq("/#{base.split('/')[0...-1].join('/')}".gsub(%r{\A//}, "/"))
+        File.expand_path("~/a", "~/b").should eq(File.join(home, "a"))
+        File.expand_path("~").should eq(home)
+        File.expand_path("~", "/tmp/gumby/ddd").should eq(home)
+        File.expand_path("~/a", "/tmp/gumby/ddd").should eq(File.join([home, "a"]))
+      ensure
+        ENV["HOME"] = prev_home
       end
+    end
 
-      it "converts a pathname to an absolute pathname, using ~ (home) as base (HOME=/)" do
-        prev_home = home
-        begin
-          ENV["HOME"] = "/"
-          File.expand_path("~/").should eq(home)
-          File.expand_path("~/..badfilename").should eq(File.join(home, "..badfilename"))
-          File.expand_path("..").should eq("/#{base.split('/')[0...-1].join('/')}".gsub(/\A\/\//, "/"))
-          File.expand_path("~/a", "~/b").should eq(File.join(home, "a"))
-          File.expand_path("~").should eq(home)
-          File.expand_path("~", "/tmp/gumby/ddd").should eq(home)
-          File.expand_path("~/a", "/tmp/gumby/ddd").should eq(File.join([home, "a"]))
-        ensure
-          ENV["HOME"] = prev_home
-        end
+    pending_win32 "converts a pathname to an absolute pathname, using ~ (home) as base (HOME=/)" do
+      prev_home = home
+      begin
+        ENV["HOME"] = "/"
+        File.expand_path("~/").should eq(home)
+        File.expand_path("~/..badfilename").should eq(File.join(home, "..badfilename"))
+        File.expand_path("..").should eq("/#{base.split('/')[0...-1].join('/')}".gsub(%r{\A//}, "/"))
+        File.expand_path("~/a", "~/b").should eq(File.join(home, "a"))
+        File.expand_path("~").should eq(home)
+        File.expand_path("~", "/tmp/gumby/ddd").should eq(home)
+        File.expand_path("~/a", "/tmp/gumby/ddd").should eq(File.join([home, "a"]))
+      ensure
+        ENV["HOME"] = prev_home
       end
-    {% end %}
+    end
   end
 
   describe "real_path" do

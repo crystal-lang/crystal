@@ -4244,8 +4244,11 @@ class String
   # Raises an `ArgumentError` if `self` has null bytes. Returns `self` otherwise.
   #
   # This method should sometimes be called before passing a `String` to a C function.
-  def check_no_null_byte
-    raise ArgumentError.new("String contains null byte") if byte_index(0)
+  def check_no_null_byte(name = nil)
+    if byte_index(0)
+      name = "`#{name}` " if name
+      raise ArgumentError.new("String #{name}contains null byte")
+    end
     self
   end
 

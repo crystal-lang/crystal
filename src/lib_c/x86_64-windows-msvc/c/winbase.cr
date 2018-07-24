@@ -4,6 +4,7 @@ require "c/int_safe"
 
 lib LibC
   fun GetLastError : DWORD
+  fun SetLastError(dwErrCode : DWORD)
 
   FORMAT_MESSAGE_ALLOCATE_BUFFER = 0x00000100_u32
   FORMAT_MESSAGE_IGNORE_INSERTS  = 0x00000200_u32
@@ -85,4 +86,9 @@ lib LibC
   INVALID_HANDLE_VALUE = HANDLE.new(-1)
 
   fun CloseHandle(hObject : HANDLE) : BOOL
+
+  fun GetEnvironmentVariableW(lpName : LPWSTR, lpBuffer : LPWSTR, nSize : DWORD) : DWORD
+  fun GetEnvironmentStringsW : LPWCH
+  fun FreeEnvironmentStringsW(lpszEnvironmentBlock : LPWCH) : BOOL
+  fun SetEnvironmentVariableW(lpName : LPWSTR, lpValue : LPWSTR) : BOOL
 end
