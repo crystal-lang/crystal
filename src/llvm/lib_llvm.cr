@@ -226,6 +226,7 @@ lib LibLLVM
   fun set_thread_local = LLVMSetThreadLocal(global_var : ValueRef, is_thread_local : Int32)
   fun is_thread_local = LLVMIsThreadLocal(global_var : ValueRef) : Int32
   fun set_value_name = LLVMSetValueName(val : ValueRef, name : UInt8*)
+  fun set_personality_fn = LLVMSetPersonalityFn(fn : ValueRef, personality_fn : ValueRef)
   fun size_of = LLVMSizeOf(ty : TypeRef) : ValueRef
   fun size_of_type_in_bits = LLVMSizeOfTypeInBits(ref : TargetDataRef, ty : TypeRef) : UInt64
   fun struct_create_named = LLVMStructCreateNamed(c : ContextRef, name : UInt8*) : TypeRef

@@ -457,12 +457,18 @@ class Crystal::CodeGenVisitor
   def codegen_call_or_invoke(node, target_def, self_type, func, call_args, raises, type, is_closure = false, fun_type = nil)
     set_current_debug_location node if @debug.line_numbers?
 
+    funclet = if (catch_pad = @catch_pad)
+                builder.build_operand_bundle_def("funclet", [catch_pad])
+              else
+                LLVM::OperandBundleDef.null
+              end
+
     if raises && (rescue_block = @rescue_block)
       invoke_out_block = new_block "invoke_out"
-      @last = builder.invoke func, call_args, invoke_out_block, rescue_block
+      @last = builder.invoke func, call_args, invoke_out_block, rescue_block, bundle: funclet
       position_at_end invoke_out_block
     else
-      @last = call func, call_args
+      @last = call func, call_args, bundle: funclet
     end
 
     if target_def.is_a?(External) && (call_convention = target_def.call_convention)

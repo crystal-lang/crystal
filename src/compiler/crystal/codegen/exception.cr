@@ -4,6 +4,134 @@ class Crystal::CodeGenVisitor
   @node_ensure_exception_handlers = {} of UInt64 => Handler
 
   def visit(node : ExceptionHandler)
+    if @program.has_flag?("windows")
+      windows_runtime_exception_handling(node)
+    else
+      landing_pad(node)
+    end
+  end
+
+  private def windows_runtime_exception_handling(node : ExceptionHandler)
+    context.fun.personality_function = @llvm_mod.functions[@personality_name]
+
+    # http://llvm.org/docs/ExceptionHandling.html#overview
+    rescue_block = new_block "rescue"
+
+    node_rescues = node.rescues
+    node_ensure = node.ensure
+    node_else = node.else
+    rescue_ensure_block = nil
+
+    Phi.open(self, node, @needs_value) do |phi|
+      phi.force_exit_block = !!node_ensure
+
+      # 1)
+      old_rescue_block = @rescue_block
+      @rescue_block = rescue_block
+      accept node.body
+      @rescue_block = old_rescue_block
+
+      # 2)
+      # If there's an else, we take the value from it.
+      # Otherwise, the value is taken from the body.
+      if node_else
+        accept node_else
+        phi.add @last, node_else.type?
+      else
+        phi.add @last, node.body.type?
+      end
+
+      position_at_end rescue_block
+
+      catch_body = new_block "catch.body"
+      # if @catch_pad is not nil then this rescue block is inner
+      # http://llvm.org/docs/ExceptionHandling.html#funclet-parent-tokens
+      if c = @catch_pad
+        cs = builder.catch_switch(c, old_rescue_block || LLVM::BasicBlock.null, 1)
+      else
+        cs = builder.catch_switch(nil, old_rescue_block || LLVM::BasicBlock.null, 1)
+      end
+      builder.add_handler cs, catch_body
+      position_at_end catch_body
+
+      image_base = external_constant(llvm_context.int8, "__ImageBase")
+      base_type_descriptor = external_constant(llvm_context.void_pointer, "\u{1}??_7type_info@@6B@")
+
+      # .PEAX is void*
+      void_ptr_type_descriptor = @llvm_mod.globals.add(
+        llvm_context.struct([
+          llvm_context.void_pointer.pointer,
+          llvm_context.void_pointer,
+          llvm_context.int8.array(6),
+        ]), "\u{1}??_R0PEAX@8")
+      void_ptr_type_descriptor.initializer = llvm_context.const_struct [
+        base_type_descriptor,
+        llvm_context.void_pointer.null,
+        llvm_context.const_string(".PEAX"),
+      ]
+
+      catchable_type = llvm_context.struct([llvm_context.int32, llvm_context.int32, llvm_context.int32, llvm_context.int32, llvm_context.int32, llvm_context.int32, llvm_context.int32])
+      void_ptr_catchable_type = @llvm_mod.globals.add(
+        catchable_type, "_CT??_R0PEAX@88")
+      void_ptr_catchable_type.initializer = llvm_context.const_struct [
+        int32(1),
+        sub_image_base(void_ptr_type_descriptor),
+        int32(0),
+        int32(-1),
+        int32(0),
+        int32(8),
+        int32(0),
+      ]
+
+      catchable_type_array = llvm_context.struct([llvm_context.int32, llvm_context.int32.array(1)])
+      catchable_void_ptr = @llvm_mod.globals.add(
+        catchable_type_array, "_CTA1PEAX")
+      catchable_void_ptr.initializer = llvm_context.const_struct [
+        int32(1),
+        llvm_context.int32.const_array([sub_image_base(void_ptr_catchable_type)]),
+      ]
+
+      eh_throwinfo = llvm_context.struct([llvm_context.int32, llvm_context.int32, llvm_context.int32, llvm_context.int32])
+      void_ptr_throwinfo = @llvm_mod.globals.add(
+        eh_throwinfo, "_TI1PEAX")
+      void_ptr_throwinfo.initializer = llvm_context.const_struct [
+        int32(0),
+        int32(0),
+        int32(0),
+        sub_image_base(catchable_void_ptr),
+      ]
+
+      if node_rescues
+        # 3)
+        # Make sure the rescue knows about the current ensure
+        # and the previous catch block
+        old_rescue_block = @rescue_block
+        @rescue_block = rescue_ensure_block || @rescue_block
+
+        a_rescue = node_rescues[0]
+        var = context.vars[a_rescue.name]
+        old_catch_pad = @catch_pad
+        @catch_pad = catch_pad = builder.catch_pad cs, [void_ptr_type_descriptor, int32(0), var.pointer]
+        caught = new_block "caught"
+        accept a_rescue.body
+        builder.build_catch_ret catch_pad, caught
+        @catch_pad = old_catch_pad
+
+        position_at_end caught
+
+        phi.add @last, a_rescue.body.type?
+      end
+    end
+
+    old_last = @last
+    builder_end = @builder.end
+
+    @last = old_last
+
+    false
+  end
+
+  private def landing_pad(node : ExceptionHandler)
     rescue_block = new_block "rescue"
 
     node_rescues = node.rescues
@@ -99,7 +227,7 @@ class Crystal::CodeGenVisitor
 
       position_at_end rescue_block
       lp_ret_type = llvm_typer.landing_pad_type
-      lp = builder.landing_pad lp_ret_type, main_fun(PERSONALITY_NAME), [] of LLVM::Value
+      lp = builder.landing_pad lp_ret_type, main_fun(self.personality_name), [] of LLVM::Value
       unwind_ex_obj = extract_value lp, 0
       ex_type_id = extract_value lp, 1
 
@@ -177,7 +305,7 @@ class Crystal::CodeGenVisitor
       old_block = insert_block
       position_at_end rescue_ensure_block
       lp_ret_type = llvm_typer.landing_pad_type
-      lp = builder.landing_pad lp_ret_type, main_fun(PERSONALITY_NAME), [] of LLVM::Value
+      lp = builder.landing_pad lp_ret_type, main_fun(self.personality_name), [] of LLVM::Value
       unwind_ex_obj = extract_value lp, 0
 
       accept node_ensure
@@ -214,5 +342,23 @@ class Crystal::CodeGenVisitor
     if eh = @ensure_exception_handlers.try &.last?
       @node_ensure_exception_handlers[node.object_id] = eh
     end
+  end
+
+  def external_constant(type, name)
+    @llvm_mod.globals[name]? || begin
+      c = @llvm_mod.globals.add(type, name)
+      c.global_constant = true
+      c
+    end
+  end
+
+  def sub_image_base(value)
+    image_base = external_constant(llvm_context.int8, "__ImageBase")
+
+    @builder.trunc(
+      @builder.sub(
+        @builder.ptr2int(value, llvm_context.int64),
+        @builder.ptr2int(image_base, llvm_context.int64)),
+      llvm_context.int32)
   end
 end

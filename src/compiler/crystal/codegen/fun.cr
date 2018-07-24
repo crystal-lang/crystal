@@ -54,6 +54,7 @@ class Crystal::CodeGenVisitor
     old_alloca_block = @alloca_block
     old_ensure_exception_handlers = @ensure_exception_handlers
     old_rescue_block = @rescue_block
+    old_catch_pad = @catch_pad
     old_llvm_mod = @llvm_mod
     old_llvm_context = @llvm_context
     old_llvm_typer = @llvm_typer
@@ -75,6 +76,7 @@ class Crystal::CodeGenVisitor
 
       @ensure_exception_handlers = nil
       @rescue_block = nil
+      @catch_pad = nil
       @needs_value = true
 
       args = codegen_fun_signature(mangled_name, target_def, self_type, is_fun_literal, is_closure)
@@ -154,6 +156,7 @@ class Crystal::CodeGenVisitor
 
       @ensure_exception_handlers = old_ensure_exception_handlers
       @rescue_block = old_rescue_block
+      @catch_pad = old_catch_pad
       @entry_block = old_entry_block
       @alloca_block = old_alloca_block
       @needs_value = old_needs_value

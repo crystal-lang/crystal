@@ -5,6 +5,9 @@ require "../syntax/transformer"
 module Crystal
   class Program
     def normalize(node, inside_exp = false)
+      if self.flags.includes?("windows")
+        node = node.transform SimpleRescues.new
+      end
       node.transform Normalizer.new(self)
     end
   end
