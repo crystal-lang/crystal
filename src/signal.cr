@@ -190,10 +190,21 @@ module Crystal::Signal
     fatal("uncaught exception while processing handler for #{signal}")
   end
 
+  # Replaces the signal pipe so the child process won't share the file
+  # descriptors of the parent process and send it received signals.
   def self.after_fork
     @@pipe.each(&.close)
   ensure
     @@pipe = IO.pipe(read_blocking: false, write_blocking: true)
+  end
+
+  # Resets signal handlers to `SIG_DFL`. This avoids the child to receive
+  # signals that would be sent to the parent process through the signal
+  # pipe.
+  #
+  # We reset all signals since accessing `@@handlers` isn't thread safe.
+  def self.after_fork_before_exec
+    ::Signal.each { |sig| LibC.signal(sig, LibC::SIG_DFL) }
   end
 
   private def self.reader

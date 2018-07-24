@@ -117,14 +117,36 @@ class Process
   # *run_hooks* should ALWAYS be `true` unless `exec` is used immediately after fork.
   # Channels, `IO` and other will not work reliably if *run_hooks* is `false`.
   protected def self.fork_internal(run_hooks : Bool = true)
-    pid = LibC.fork
-    case pid
+    newmask = uninitialized LibC::SigsetT
+    oldmask = uninitialized LibC::SigsetT
+
+    LibC.sigfillset(pointerof(newmask))
+    ret = LibC.pthread_sigmask(LibC::SIG_SETMASK, pointerof(newmask), pointerof(oldmask))
+    raise Errno.new("Failed to disable signals") unless ret == 0
+
+    case pid = LibC.fork
     when 0
+      # child:
       pid = nil
-      Process.after_fork_child_callbacks.each(&.call) if run_hooks
+      if run_hooks
+        Process.after_fork_child_callbacks.each(&.call)
+        LibC.pthread_sigmask(LibC::SIG_SETMASK, pointerof(oldmask), nil)
+      else
+        # reset signal handlers, then sigmask (inherited on exec):
+        Crystal::Signal.after_fork_before_exec
+        LibC.sigemptyset(pointerof(newmask))
+        LibC.pthread_sigmask(LibC::SIG_SETMASK, pointerof(newmask), nil)
+      end
     when -1
-      raise Errno.new("fork")
+      # error:
+      errno = Errno.value
+      LibC.pthread_sigmask(LibC::SIG_SETMASK, pointerof(oldmask), nil)
+      raise Errno.new("fork", errno)
+    else
+      # parent:
+      LibC.pthread_sigmask(LibC::SIG_SETMASK, pointerof(oldmask), nil)
     end
+
     pid
   end
 
