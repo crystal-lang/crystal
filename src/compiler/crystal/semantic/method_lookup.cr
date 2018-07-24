@@ -351,7 +351,7 @@ module Crystal
         # Check matches but without parents: only included modules
         subtype_matches = subtype_lookup.lookup_matches_with_modules(signature, subtype_virtual_lookup, subtype_virtual_lookup)
 
-        # For Foo+:Class#new we need to check that this subtype doesn't define
+        # For Foo+.class#new we need to check that this subtype doesn't define
         # an incompatible initialize: if so, we return empty matches, because
         # all subtypes must have an initialize with the same number of arguments.
         if is_new && subtype_matches.empty?

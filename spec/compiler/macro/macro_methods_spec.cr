@@ -1120,7 +1120,7 @@ module Crystal
       end
 
       it "executes class" do
-        assert_macro("x", "{{x.class.name}}", "String:Class") do |program|
+        assert_macro("x", "{{x.class.name}}", "String.class") do |program|
           [TypeNode.new(program.string)] of ASTNode
         end
       end

@@ -1257,7 +1257,7 @@ describe "Semantic: module" do
         extend Foo
       end
       ),
-      "can't declare instance variables in Bar:Class"
+      "can't declare instance variables in Bar.class"
   end
 
   it "can't pass module class to virtual metaclass (#6113)" do
