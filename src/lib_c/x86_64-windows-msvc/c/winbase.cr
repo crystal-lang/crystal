@@ -13,9 +13,8 @@ lib LibC
   FORMAT_MESSAGE_FROM_SYSTEM     = 0x00001000_u32
   FORMAT_MESSAGE_ARGUMENT_ARRAY  = 0x00002000_u32
 
-  # TODO: Use LPWSTR
-  fun FormatMessageA(dwFlags : DWORD, lpSource : Void*, dwMessageId : DWORD, dwLanguageId : DWORD,
-                     lpBuffer : LPSTR, nSize : DWORD, arguments : Void*) : DWORD
+  fun FormatMessageW(dwFlags : DWORD, lpSource : Void*, dwMessageId : DWORD, dwLanguageId : DWORD,
+                     lpBuffer : LPWSTR, nSize : DWORD, arguments : Void*) : DWORD
 
   struct FILETIME
     dwLowDateTime : DWORD
