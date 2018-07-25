@@ -273,7 +273,7 @@ module Random
     rand_range(range)
   end
 
-  # Returns a random `Float64` in the given *range*.
+  # Returns a random `Float` in the given *range*.
   #
   # ```
   # Random.new.rand(6.2..21.768) # => 15.2989
