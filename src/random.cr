@@ -278,7 +278,7 @@ module Random
   # ```
   # Random.new.rand(6.2..21.768) # => 15.2989
   # ```
-  def rand(range : Range(Float, Float)) : Float64
+  def rand(range : Range(Float, Float)) : Float
     span = range.end - range.begin
     if range.excludes_end?
       unless range.begin < range.end

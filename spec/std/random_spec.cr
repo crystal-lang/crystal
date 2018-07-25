@@ -91,12 +91,21 @@ describe "Random" do
     x = rand(1.8..3.2)
     x.should be >= 1.8
     x.should be <= 3.2
+
+    rand(1.0_f32..1.0_f32).should eq(1.0_f32)
+    x = rand(1.8_f32..3.2_f32)
+    x.should be >= 1.8_f32
+    x.should be <= 3.2_f32
   end
 
   it "does with exclusive range of floats" do
     x = rand(1.8...3.3)
     x.should be >= 1.8
     x.should be < 3.3
+
+    x = rand(1.8_f32...3.3_f32)
+    x.should be >= 1.8_f32
+    x.should be < 3.3_f32
   end
 
   it "raises on invalid range" do
