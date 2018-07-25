@@ -769,8 +769,7 @@ module Crystal
       # Check for exp.as(typeof(something))
       #
       # In this case we can use the same rules for `something`.
-      # This is specially useful for the playground and other tools
-      # that will rewrite code.
+      # This is specially useful for tools that will rewrite code.
       if to.is_a?(TypeOf) && to.expressions.size == 1
         exp = to.expressions.first
         return guess_type(exp)

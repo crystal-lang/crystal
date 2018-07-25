@@ -21,7 +21,6 @@ class Crystal::Command
         docs                     generate documentation
         env                      print Crystal environment information
         eval                     eval code from args or standard input
-        play                     starts crystal playground server
         run (default)            build and run program
         spec                     build and run specs (in spec directory)
         tool                     run a tool
@@ -67,9 +66,6 @@ class Crystal::Command
     when "build".starts_with?(command)
       options.shift
       build
-    when "play".starts_with?(command)
-      options.shift
-      playground
     when "deps".starts_with?(command)
       STDERR.puts "Please use 'shards': 'crystal deps' has been removed"
       exit 1
