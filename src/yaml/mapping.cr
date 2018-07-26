@@ -100,7 +100,7 @@ module YAML
       {% end %}
     {% end %}
 
-    def self.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node)
+    def self.new(*, ctx : YAML::ParseContext, node : YAML::Nodes::Node)
       ctx.read_alias(node, \{{@type}}) do |obj|
         return obj
       end
@@ -109,18 +109,12 @@ module YAML
 
       ctx.record_anchor(node, instance)
 
-      instance.initialize(ctx, node, nil)
+      instance.initialize(ctx: ctx, node: node)
       GC.add_finalizer(instance) if instance.responds_to?(:finalize)
       instance
     end
 
-    # `new` and `initialize` with just `pull` as an argument collide
-    # and the compiler just sees the last one. This is why we add a
-    # dummy argument.
-    #
-    # FIXME: remove the dummy argument if we ever fix this.
-
-    def initialize(ctx : YAML::ParseContext, node : ::YAML::Nodes::Node, _dummy : Nil)
+    def initialize(*, ctx : YAML::ParseContext, node : ::YAML::Nodes::Node)
       {% for key, value in _properties_ %}
         %var{key.id} = nil
         %found{key.id} = false
@@ -146,9 +140,9 @@ module YAML
                 {% if value[:converter] %}
                   {{value[:converter]}}.from_yaml(ctx, value_node)
                 {% elsif value[:type].is_a?(Path) || value[:type].is_a?(Generic) %}
-                  {{value[:type]}}.new(ctx, value_node)
+                  {{value[:type]}}.new(ctx: ctx, node: value_node)
                 {% else %}
-                  ::Union({{value[:type]}}).new(ctx, value_node)
+                  ::Union({{value[:type]}}).new(ctx: ctx, node: value_node)
                 {% end %}
 
                 {% if value[:nilable] || value[:default] != nil %} } {% end %}

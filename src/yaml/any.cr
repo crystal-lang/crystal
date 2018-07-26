@@ -27,7 +27,7 @@ struct YAML::Any
   # All valid YAML core schema types.
   alias Type = Nil | Bool | Int64 | Float64 | String | Time | Bytes | Array(Any) | Hash(Any, Any) | Set(Any)
 
-  def self.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node)
+  def self.new(*, ctx : YAML::ParseContext, node : YAML::Nodes::Node)
     anchors = {} of String => Any
     convert(node, anchors)
   end
