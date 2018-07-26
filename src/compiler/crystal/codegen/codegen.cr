@@ -815,7 +815,9 @@ module Crystal
     end
 
     def visit(node : Not)
-      accept node.exp
+      request_value do
+        accept node.exp
+      end
       @last = codegen_cond node.exp.type.remove_indirection
       @last = not @last
       false
