@@ -1,4 +1,4 @@
-# Copied with little modification from: https://benchmarksgame-team.pages.debian.net/benchmarksgame/program/nbody-yarv-2.html
+# Copied with little modifications from: https://benchmarksgame-team.pages.debian.net/benchmarksgame/program/nbody-yarv-2.html
 
 SOLAR_MASS    = 4 * Math::PI**2
 DAYS_PER_YEAR = 365.24
