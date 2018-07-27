@@ -351,7 +351,7 @@ class IO::Memory < IO
   def truncate : Nil
     check_open
     check_resizeable
-    @bytesize = @pos if @bytesize != @pos
+    @bytesize = @pos
   end
 
   # Yields an `IO::Memory` to read a section of this `IO`'s buffer.
