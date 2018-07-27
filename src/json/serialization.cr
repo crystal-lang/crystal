@@ -132,7 +132,7 @@ module JSON
       end
     end
 
-    def initialize(*, pull : ::JSON::PullParser)
+    def initialize(pull : ::JSON::PullParser)
       {% begin %}
         {% properties = {} of Nil => Nil %}
         {% for ivar in @type.instance_vars %}

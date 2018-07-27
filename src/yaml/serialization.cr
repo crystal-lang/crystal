@@ -138,7 +138,7 @@ module YAML
       end
     end
 
-    def initialize(*, ctx : YAML::ParseContext, node : ::YAML::Nodes::Node)
+    def initialize(ctx : YAML::ParseContext, node : ::YAML::Nodes::Node)
       {% begin %}
         {% properties = {} of Nil => Nil %}
         {% for ivar in @type.instance_vars %}
