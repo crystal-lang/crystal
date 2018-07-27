@@ -104,11 +104,11 @@ lut = %w(. - + * X M)
 w = 20 * 4
 h = 10 * 4
 
-SCENE = {
+SCENE = [
   Sphere.new(Vector.new(-1.0, 0.0, 3.0), 0.3, RED),
   Sphere.new(Vector.new(0.0, 0.0, 3.0), 0.8, GREEN),
   Sphere.new(Vector.new(1.0, 0.0, 3.0), 0.4, BLUE),
-}
+]
 
 (0...h).each do |j|
   puts "--"

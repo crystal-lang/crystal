@@ -71,7 +71,7 @@ struct Noise2DContext
   end
 end
 
-SYMBOLS = {' ', '░', '▒', '▓', '█', '█'}
+SYMBOLS = [' ', '░', '▒', '▓', '█', '█']
 pixels = Array.new(256) { Array.new(256, 0.0) }
 
 n2d = Noise2DContext.new
