@@ -7,7 +7,7 @@
 # obj["access"][1]["speed"].as_s # => "slow"
 # ```
 #
-# Note that methods used to traverse a JSON structure, `#[]`, `#[]?` and `#each`,
+# Note that methods used to traverse a JSON structure, `#[]` and `#[]?`,
 # always return a `JSON::Any` to allow further traversal. To convert them to `String`,
 # `Int32`, etc., use the `as_` methods, such as `#as_s`, `#as_i`, which perform
 # a type check against the raw underlying value. This means that invoking `#as_s`
