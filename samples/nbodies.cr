@@ -1,5 +1,3 @@
-# Copied with little modifications from: http://benchmarksgame.alioth.debian.org/u32/program.php?test=nbody&lang=yarv&id=2
-
 SOLAR_MASS    = 4 * Math::PI**2
 DAYS_PER_YEAR = 365.24
 
@@ -78,7 +76,7 @@ def offset_momentum(bodies)
   b.vz = -pz / SOLAR_MASS
 end
 
-BODIES = [
+BODIES = {
   # sun
   Planet.new(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0),
 
@@ -121,11 +119,10 @@ BODIES = [
     1.62824170038242295e-03,
     -9.51592254519715870e-05,
     5.15138902046611451e-05),
-]
+}
 
 if ARGV.size != 1
-  puts "Usage: nbody n"
-  exit 1
+  abort "Usage: nbody n"
 end
 
 n = ARGV[0].to_i

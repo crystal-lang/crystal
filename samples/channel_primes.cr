@@ -1,5 +1,3 @@
-# Ported from Go sample from this page: http://dancallahan.info/journal/go-concurrency/#How+do+channels+and+goroutines+work+together?
-
 def generate(chan)
   i = 2
   loop do

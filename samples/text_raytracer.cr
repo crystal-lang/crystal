@@ -1,4 +1,4 @@
-# Ported from Rust from https://gist.github.com/joshmarinacci/c84d0979e100d107f685 http://joshondesign.com/2014/09/17/rustlang
+# Ported from Rust from https://gist.github.com/joshmarinacci/c84d0979e100d107f685
 
 record Vector, x : Float64, y : Float64, z : Float64 do
   def scale(s)
@@ -104,11 +104,11 @@ lut = %w(. - + * X M)
 w = 20 * 4
 h = 10 * 4
 
-scene = [
+SCENE = {
   Sphere.new(Vector.new(-1.0, 0.0, 3.0), 0.3, RED),
   Sphere.new(Vector.new(0.0, 0.0, 3.0), 0.8, GREEN),
   Sphere.new(Vector.new(1.0, 0.0, 3.0), 0.4, BLUE),
-]
+}
 
 (0...h).each do |j|
   puts "--"
@@ -122,7 +122,7 @@ scene = [
 
     hit = nil
 
-    scene.each do |obj|
+    SCENE.each do |obj|
       ret = intersect_sphere(ray, obj.center, obj.radius)
       if ret
         hit = Hit.new obj, ret
@@ -132,7 +132,7 @@ scene = [
     if hit
       pixel = lut[shade_pixel(ray, hit.obj, hit.value)]
     else
-      pixel = " "
+      pixel = ' '
     end
 
     print pixel

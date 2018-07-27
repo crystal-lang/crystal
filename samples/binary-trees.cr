@@ -1,5 +1,3 @@
-# Copied with little modifications from: http://benchmarksgame.alioth.debian.org/u64q/benchmark.php?test=binarytrees&lang=yarv&id=1&data=u64q
-
 class Node
   def initialize(@a : Node?, @b : Int32, @c : Node?)
   end

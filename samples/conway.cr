@@ -80,7 +80,7 @@ end
 
 PAUSE_MILLIS  =  20
 DEFAULT_COUNT = 300
-INITIAL_MAP   = [
+INITIAL_MAP   = {
   "                        1           ",
   "                      1 1           ",
   "            11      11            11",
@@ -90,7 +90,7 @@ INITIAL_MAP   = [
   "          1     1       1           ",
   "           1   1                    ",
   "            11                      ",
-]
+}
 
 map = ConwayMap.new INITIAL_MAP
 
