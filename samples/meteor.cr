@@ -8,7 +8,7 @@ class MyIterator(T)
   end
 
   def each
-    loop do
+    while true
       yield @data
       @data = @block.call(@data)
     end
