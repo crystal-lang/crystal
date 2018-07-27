@@ -123,7 +123,7 @@ module YAML
 
         ctx.record_anchor(node, instance)
 
-        instance.initialize(ctx, node, nil)
+        instance.initialize(ctx: ctx, node: node)
         GC.add_finalizer(instance) if instance.responds_to?(:finalize)
         instance
       end
@@ -138,7 +138,7 @@ module YAML
       end
     end
 
-    def initialize(ctx : YAML::ParseContext, node : ::YAML::Nodes::Node, dummy : Nil)
+    def initialize(*, ctx : YAML::ParseContext, node : ::YAML::Nodes::Node)
       {% begin %}
         {% properties = {} of Nil => Nil %}
         {% for ivar in @type.instance_vars %}
