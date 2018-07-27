@@ -342,7 +342,8 @@ class IO::Memory < IO
   # Note: this does nothing if the current position is at the end.
   #
   # ```
-  # io = IO::Memory.new "hello world"
+  # io = IO::Memory.new
+  # io << "hello world"
   # io.seek(-6, Seek::Current)
   # io.truncate
   # io.pos = 0
