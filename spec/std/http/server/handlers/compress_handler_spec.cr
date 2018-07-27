@@ -9,7 +9,7 @@ describe HTTP::CompressHandler do
     context = HTTP::Server::Context.new(request, response)
 
     handler = HTTP::CompressHandler.new
-    handler.next = HTTP::Handler::Proc.new do |ctx|
+    handler.next = HTTP::Handler::HandlerProc.new do |ctx|
       ctx.response.print "Hello"
     end
     handler.call(context)
@@ -28,7 +28,7 @@ describe HTTP::CompressHandler do
     context = HTTP::Server::Context.new(request, response)
 
     handler = HTTP::CompressHandler.new
-    handler.next = HTTP::Handler::Proc.new do |ctx|
+    handler.next = HTTP::Handler::HandlerProc.new do |ctx|
       ctx.response.print "Hello"
     end
     handler.call(context)
@@ -56,7 +56,7 @@ describe HTTP::CompressHandler do
     context = HTTP::Server::Context.new(request, response)
 
     handler = HTTP::CompressHandler.new
-    handler.next = HTTP::Handler::Proc.new do |ctx|
+    handler.next = HTTP::Handler::HandlerProc.new do |ctx|
       ctx.response.print "Hello"
     end
     handler.call(context)

@@ -1,11 +1,11 @@
 require "../server"
 
 class HTTP::Server::RequestProcessor
-  def initialize(&@handler : HTTP::Handler::Proc)
+  def initialize(&@handler : HTTP::Handler::HandlerProc)
     @wants_close = false
   end
 
-  def initialize(@handler : HTTP::Handler | HTTP::Handler::Proc)
+  def initialize(@handler : HTTP::Handler | HTTP::Handler::HandlerProc)
     @wants_close = false
   end
 

@@ -10,7 +10,7 @@ describe HTTP::WebSocketHandler do
 
     invoked = false
     handler = HTTP::WebSocketHandler.new { invoked = true }
-    handler.next = HTTP::Handler::Proc.new &.response.print("Hello")
+    handler.next = HTTP::Handler::HandlerProc.new &.response.print("Hello")
     handler.call context
 
     response.close
@@ -33,7 +33,7 @@ describe HTTP::WebSocketHandler do
 
     invoked = false
     handler = HTTP::WebSocketHandler.new { invoked = true }
-    handler.next = HTTP::Handler::Proc.new &.response.print("Hello")
+    handler.next = HTTP::Handler::HandlerProc.new &.response.print("Hello")
     handler.call context
 
     response.close
@@ -55,7 +55,7 @@ describe HTTP::WebSocketHandler do
       context = HTTP::Server::Context.new(request, response)
 
       handler = HTTP::WebSocketHandler.new { }
-      handler.next = HTTP::Handler::Proc.new &.response.print("Hello")
+      handler.next = HTTP::Handler::HandlerProc.new &.response.print("Hello")
 
       begin
         handler.call context
@@ -82,7 +82,7 @@ describe HTTP::WebSocketHandler do
     context = HTTP::Server::Context.new(request, response)
 
     handler = HTTP::WebSocketHandler.new { }
-    handler.next = HTTP::Handler::Proc.new &.response.print("Hello")
+    handler.next = HTTP::Handler::HandlerProc.new &.response.print("Hello")
 
     begin
       handler.call context
