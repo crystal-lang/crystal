@@ -227,8 +227,11 @@ describe IO::Memory do
   end
 
   it "can seek and truncate" do
-    io = IO::Memory.new "hello world"
-    io.seek(-6, Seek::Current)
+    string = "hello world"
+    io = IO::Memory.new(string.size)
+    io << string
+    io.seek(-6, IO::Seek::Current)
+    io.truncate
     io.pos = 0
     io.gets.should eq("hello")
     io << " friend"
