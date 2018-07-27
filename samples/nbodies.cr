@@ -124,7 +124,7 @@ BODIES = [
 ]
 
 if ARGV.size != 1
-  abort "Usage: nbody n"
+  abort "Usage: nbodies n"
 end
 
 n = ARGV[0].to_i
