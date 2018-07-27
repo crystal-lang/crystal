@@ -1,3 +1,5 @@
+# Copied with little modification from: https://benchmarksgame-team.pages.debian.net/benchmarksgame/program/fannkuchredux-yarv-1.html
+
 def fannkuch(n)
   sign, maxflips, sum = 1, 0, 0
 
