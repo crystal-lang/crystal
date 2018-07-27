@@ -230,10 +230,10 @@ describe IO::Memory do
     io = IO::Memory.new "hello world"
     io.seek(-6, Seek::Current)
     io.pos = 0
-    io.gets().should eq("hello")
+    io.gets.should eq("hello")
     io << " friend"
     io.pos = 0
-    io.gets().should eq("hello friend")
+    io.gets.should eq("hello friend")
   end
 
   it "clears" do
