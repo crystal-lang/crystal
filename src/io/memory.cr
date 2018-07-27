@@ -339,7 +339,7 @@ class IO::Memory < IO
   # Sets the current bytesize to be equal to the current position
   # effectively truncating the contents at the current position.
   #
-  # Note this does nothing if the curront position is at the end.
+  # Note: this does nothing if the current position is at the end.
   #
   # ```
   # io = IO::Memory.new "hello world"
