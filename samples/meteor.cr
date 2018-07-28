@@ -1,3 +1,5 @@
+# Translated from: https://gitlab.redox-os.org/redox-os/rust/blob/a59de37e99060162a2674e3ff45409ac73595c0e/src/test/bench/shootout-meteor.rs
+
 alias Masks = Array(Array(Array(UInt64)))
 alias Point = Tuple(Int32, Int32)
 
