@@ -100,7 +100,7 @@ class Crystal::Program
   end
 
   record RequireWithTimestamp, filename : String, epoch : Int64 do
-    JSON.mapping(filename: String, epoch: Int64)
+    include JSON::Serializable
   end
 
   def macro_compile(filename)

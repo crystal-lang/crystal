@@ -427,7 +427,7 @@ module Crystal
     end
 
     record RecordedRequire, filename : String, relative_to : String? do
-      JSON.mapping(filename: String, relative_to: String?)
+      include JSON::Serializable
     end
     property recorded_requires = [] of RecordedRequire
 

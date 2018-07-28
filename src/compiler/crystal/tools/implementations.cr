@@ -5,11 +5,10 @@ require "json"
 
 module Crystal
   class ImplementationResult
-    JSON.mapping({
-      status:          {type: String},
-      message:         {type: String},
-      implementations: {type: Array(ImplementationTrace), nilable: true},
-    })
+    include JSON::Serializable
+    property status : String
+    property message : String
+    property implementations : Array(ImplementationTrace)?
 
     def initialize(@status, @message)
     end
@@ -33,13 +32,13 @@ module Crystal
   # It keeps track of macro expansion in a human friendly way and
   # pointing to the exact line an expansion and method definition occurs.
   class ImplementationTrace
-    JSON.mapping({
-      line:     {type: Int32},
-      column:   {type: Int32},
-      filename: {type: String},
-      macro:    {type: String, nilable: true},
-      expands:  {type: ImplementationTrace, nilable: true},
-    })
+    include JSON::Serializable
+
+    property line : Int32
+    property column : Int32
+    property filename : String
+    property macro : String?
+    property expands : ImplementationTrace?
 
     def initialize(loc : Location)
       f = loc.filename

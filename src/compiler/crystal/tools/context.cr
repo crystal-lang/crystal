@@ -32,11 +32,11 @@ module Crystal
   end
 
   class ContextResult
-    JSON.mapping({
-      status:   {type: String},
-      message:  {type: String},
-      contexts: {type: Array(HashStringType), nilable: true},
-    })
+    include JSON::Serializable
+
+    property status : String
+    property message : String
+    property contexts : Array(HashStringType)?
 
     def initialize(@status, @message)
     end
