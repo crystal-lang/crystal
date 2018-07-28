@@ -14,6 +14,12 @@ end
 
 private alias RecursiveType = String | Int32 | Array(RecursiveType) | Hash(Symbol, RecursiveType)
 
+class Hash
+  def _buckets_size
+    @buckets_size
+  end
+end
+
 describe "Hash" do
   describe "empty" do
     it "size should be zero" do
@@ -816,18 +822,18 @@ describe "Hash" do
 
   it "creates with initial capacity" do
     hash = Hash(Int32, Int32).new(initial_capacity: 1234)
-    hash.@buckets_size.should eq(1234)
+    hash._buckets_size.should eq(1234)
   end
 
   it "creates with initial capacity and default value" do
     hash = Hash(Int32, Int32).new(default_value: 3, initial_capacity: 1234)
     hash[1].should eq(3)
-    hash.@buckets_size.should eq(1234)
+    hash._buckets_size.should eq(1234)
   end
 
   it "creates with initial capacity and block" do
     hash = Hash(Int32, Int32).new(initial_capacity: 1234) { |h, k| h[k] = 3 }
     hash[1].should eq(3)
-    hash.@buckets_size.should eq(1234)
+    hash._buckets_size.should eq(1234)
   end
 end

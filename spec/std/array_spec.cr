@@ -10,6 +10,12 @@ private class BadSortingClass
   end
 end
 
+class Array
+  def _capacity
+    @capacity
+  end
+end
+
 describe "Array" do
   describe "new" do
     it "creates with default value" do
@@ -383,11 +389,11 @@ describe "Array" do
     it "concats enumerable to empty array (#2047)" do
       a = [] of Int32
       a.concat(1..1)
-      a.@capacity.should eq(3)
+      a._capacity.should eq(3)
 
       a = [] of Int32
       a.concat(1..4)
-      a.@capacity.should eq(6)
+      a._capacity.should eq(6)
     end
 
     it "concats a union of arrays" do

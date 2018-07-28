@@ -58,6 +58,12 @@ private class TestObject
   property(property11) { 11 }
   property property12 : Int32 { 10 + 2 }
 
+  {% for i in 1..10 %}
+    def _getter{{i}}
+      @getter{{i}}
+    end
+  {% end %}
+
   def initialize
     @getter1 = 1
     @getter2 = 2
@@ -160,28 +166,28 @@ describe Object do
     it "uses simple getter" do
       obj = TestObject.new
       obj.getter1.should eq(1)
-      typeof(obj.@getter1).should eq(Int32)
+      typeof(obj._getter1).should eq(Int32)
       typeof(obj.getter1).should eq(Int32)
     end
 
     it "uses getter with type declaration" do
       obj = TestObject.new
       obj.getter2.should eq(2)
-      typeof(obj.@getter2).should eq(Int32)
+      typeof(obj._getter2).should eq(Int32)
       typeof(obj.getter2).should eq(Int32)
     end
 
     it "uses getter with type declaration and default value" do
       obj = TestObject.new
       obj.getter3.should eq(3)
-      typeof(obj.@getter3).should eq(Int32)
+      typeof(obj._getter3).should eq(Int32)
       typeof(obj.getter3).should eq(Int32)
     end
 
     it "uses getter with assignment" do
       obj = TestObject.new
       obj.getter4.should eq(4)
-      typeof(obj.@getter4).should eq(Int32)
+      typeof(obj._getter4).should eq(Int32)
       typeof(obj.getter4).should eq(Int32)
     end
 
@@ -205,7 +211,7 @@ describe Object do
       end
       obj.getter5 = 5
       obj.getter5.should eq(5)
-      typeof(obj.@getter5).should eq(Int32 | Nil)
+      typeof(obj._getter5).should eq(Int32 | Nil)
       typeof(obj.getter5).should eq(Int32)
     end
 
@@ -216,7 +222,7 @@ describe Object do
       end
       obj.getter6 = 6
       obj.getter6.should eq(6)
-      typeof(obj.@getter6).should eq(Int32 | Nil)
+      typeof(obj._getter6).should eq(Int32 | Nil)
       typeof(obj.getter6).should eq(Int32)
     end
   end
@@ -225,28 +231,28 @@ describe Object do
     it "uses getter?" do
       obj = TestObject.new
       obj.getter7?.should be_true
-      typeof(obj.@getter7).should eq(Bool)
+      typeof(obj._getter7).should eq(Bool)
       typeof(obj.getter7?).should eq(Bool)
     end
 
     it "uses getter? with type declaration" do
       obj = TestObject.new
       obj.getter8?.should be_true
-      typeof(obj.@getter8).should eq(Bool)
+      typeof(obj._getter8).should eq(Bool)
       typeof(obj.getter8?).should eq(Bool)
     end
 
     it "uses getter? with type declaration and default value" do
       obj = TestObject.new
       obj.getter9?.should be_true
-      typeof(obj.@getter9).should eq(Bool)
+      typeof(obj._getter9).should eq(Bool)
       typeof(obj.getter9?).should eq(Bool)
     end
 
     it "uses getter? with default value" do
       obj = TestObject.new
       obj.getter10?.should be_true
-      typeof(obj.@getter10).should eq(Bool)
+      typeof(obj._getter10).should eq(Bool)
       typeof(obj.getter10?).should eq(Bool)
     end
   end
