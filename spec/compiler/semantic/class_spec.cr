@@ -481,15 +481,47 @@ describe "Semantic: class" do
     assert_error "Number.allocate", "can't instantiate abstract struct Number"
   end
 
-  it "errors if reading ivar from non-ivar container" do
-    assert_error %(
-      struct Int32
-        def foo
-          1.@y
+  it "reads an object instance var" do
+    assert_type(%(
+      class Foo
+        def initialize(@x : Int32)
         end
       end
 
-      1.foo
+      foo = Foo.new(1)
+      foo.@x
+      )) { int32 }
+  end
+
+  it "reads a virtual type instance var" do
+    assert_type(%(
+      class Foo
+        def initialize(@x : Int32)
+        end
+      end
+
+      class Bar < Foo
+      end
+
+      foo = Foo.new(1) || Bar.new(2)
+      foo.@x
+      )) { int32 }
+  end
+
+  it "errors if reading non-existent ivar" do
+    assert_error %(
+      class Foo
+      end
+
+      foo = Foo.new
+      foo.@y
+      ),
+      "Can't infer the type of instance variable '@y' of Foo"
+  end
+
+  it "errors if reading ivar from non-ivar container" do
+    assert_error %(
+      1.@y
       ),
       "can't use instance variables inside primitive types (at Int32)"
   end
@@ -924,14 +956,10 @@ describe "Semantic: class" do
         def foo
           @foo
         end
-
-        def self.read(foo)
-          foo.@foo
-        end
       end
 
       f = Foo.new
-      Foo.read(f)
+      f.@foo
       ),
       "Can't infer the type of instance variable '@foo' of Foo"
   end

@@ -293,14 +293,10 @@ describe "Code gen: class" do
       class Foo
         def initialize(@x : Int32)
         end
-
-        def self.read(foo)
-          foo.@x
-        end
       end
 
       foo = Foo.new(1)
-      Foo.read(foo)
+      foo.@x
       )).to_i.should eq(1)
   end
 
@@ -309,17 +305,13 @@ describe "Code gen: class" do
       class Foo
         def initialize(@x : Int32)
         end
-
-        def self.read(foo)
-          foo.@x
-        end
       end
 
       class Bar < Foo
       end
 
       foo = Foo.new(1) || Bar.new(2)
-      Foo.read(foo)
+      foo.@x
       )).to_i.should eq(1)
   end
 

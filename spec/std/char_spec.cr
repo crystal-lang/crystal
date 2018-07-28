@@ -1,12 +1,6 @@
 require "spec"
 require "unicode"
 
-class String
-  def _length
-    @length
-  end
-end
-
 describe "Char" do
   describe "upcase" do
     it { 'a'.upcase.should eq('A') }
@@ -268,13 +262,13 @@ describe "Char" do
     it "does for both ascii" do
       str = 'f' + "oo"
       str.bytesize.should eq(3)
-      str._length.should eq(3)
+      str.@length.should eq(3)
       str.should eq("foo")
     end
 
     it "does for both unicode" do
       str = '青' + "旅路"
-      str._length.should eq(3)
+      str.@length.should eq(3)
       str.should eq("青旅路")
     end
   end

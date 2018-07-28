@@ -300,52 +300,6 @@ module Crystal
       instance_vars[name] = var
     end
 
-    # Determines if `self` can access *type* assuming it's a `protected` access.
-    # If `allow_same_namespace` is true (the default), `protected` also means
-    # the types are in the same namespace. Otherwise, it means they are just
-    # in the same type hierarchy.
-    def has_protected_acces_to?(type, allow_same_namespace = true)
-      owner = self
-
-      # Allow two different generic instantiations
-      # of the same type to have protected access
-      type = type.generic_type.as(Type) if type.is_a?(GenericInstanceType)
-      owner = owner.generic_type.as(Type) if owner.is_a?(GenericInstanceType)
-
-      self.implements?(type) ||
-        type.implements?(self) ||
-        (allow_same_namespace && same_namespace?(type))
-    end
-
-    # Returns true if `self` and *other* are in the same namespace.
-    def same_namespace?(other)
-      top_namespace(self) == top_namespace(other) ||
-        parents.try &.any? { |parent| parent.same_namespace?(other) }
-    end
-
-    private def top_namespace(type)
-      type = type.generic_type if type.is_a?(GenericInstanceType)
-
-      namespace = case type
-                  when NamedType
-                    type.namespace
-                  when GenericClassInstanceType
-                    type.namespace
-                  else
-                    nil
-                  end
-      case namespace
-      when Program
-        type
-      when GenericInstanceType
-        top_namespace(namespace.generic_type)
-      when NamedType
-        top_namespace(namespace)
-      else
-        type
-      end
-    end
-
     def types
       raise "BUG: #{self} has no types"
     end

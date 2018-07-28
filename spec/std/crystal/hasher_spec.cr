@@ -14,16 +14,6 @@ enum TestHasherEnum
   B
 end
 
-struct Crystal::Hasher
-  def _a
-    @a
-  end
-
-  def _b
-    @b
-  end
-end
-
 alias TestHasher = Crystal::Hasher
 
 describe "Crystal::Hasher" do
@@ -233,11 +223,11 @@ describe "Crystal::Hasher" do
     it "should not expose internal data" do
       hasher = TestHasher.new(1_u64, 2_u64)
       hasher.to_s.should_not contain('1')
-      hasher.to_s.should_not contain(hasher._a.to_s)
-      hasher.to_s.should_not contain(hasher._a.to_s(16))
+      hasher.to_s.should_not contain(hasher.@a.to_s)
+      hasher.to_s.should_not contain(hasher.@a.to_s(16))
       hasher.to_s.should_not contain('2')
-      hasher.to_s.should_not contain(hasher._b.to_s)
-      hasher.to_s.should_not contain(hasher._b.to_s(16))
+      hasher.to_s.should_not contain(hasher.@b.to_s)
+      hasher.to_s.should_not contain(hasher.@b.to_s(16))
     end
   end
 
@@ -245,11 +235,11 @@ describe "Crystal::Hasher" do
     it "should not expose internal data" do
       hasher = TestHasher.new(1_u64, 2_u64)
       hasher.inspect.should_not contain('1')
-      hasher.inspect.should_not contain(hasher._a.to_s)
-      hasher.inspect.should_not contain(hasher._a.to_s(16))
+      hasher.inspect.should_not contain(hasher.@a.to_s)
+      hasher.inspect.should_not contain(hasher.@a.to_s(16))
       hasher.inspect.should_not contain('2')
-      hasher.inspect.should_not contain(hasher._b.to_s)
-      hasher.inspect.should_not contain(hasher._b.to_s(16))
+      hasher.inspect.should_not contain(hasher.@b.to_s)
+      hasher.inspect.should_not contain(hasher.@b.to_s(16))
     end
   end
 

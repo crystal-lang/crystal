@@ -727,13 +727,9 @@ describe "Code gen: proc" do
         def self.foo
           42
         end
-
-        def _f
-          @f
-        end
       end
 
-      Foo.new._f.call
+      Foo.new.@f.call
       )).to_i.should eq(42)
   end
 

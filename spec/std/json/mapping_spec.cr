@@ -184,14 +184,6 @@ private class JSONWithOverwritingQueryAttributes
     foo?: Bool,
     bar?: {type: Bool, default: false, presence: true, key: "is_bar"},
   })
-
-  def _foo
-    @foo
-  end
-
-  def _bar
-    @bar
-  end
 end
 
 describe "JSON mapping" do
@@ -589,8 +581,8 @@ describe "JSON mapping" do
 
     it "overwrites non-query attributes" do
       json = JSONWithOverwritingQueryAttributes.from_json(%({"foo": true}))
-      typeof(json._foo).should eq(Bool)
-      typeof(json._bar).should eq(Bool)
+      typeof(json.@foo).should eq(Bool)
+      typeof(json.@bar).should eq(Bool)
     end
   end
 

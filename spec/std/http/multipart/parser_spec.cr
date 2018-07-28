@@ -12,12 +12,6 @@ private def parse(delim, data, *, gsub = true)
   parsed
 end
 
-class HTTP::Multipart::Parser
-  def _state
-    @state
-  end
-end
-
 describe HTTP::Multipart::Parser do
   it "parses basic multipart messages" do
     data = parse "AaB03x", <<-MULTIPART
@@ -150,7 +144,7 @@ describe HTTP::Multipart::Parser do
       end
     end
 
-    parser._state.should eq(:FINISHED)
+    parser.@state.should eq(:FINISHED)
     ios.each { |io| io.closed?.should eq(true) }
   end
 end
