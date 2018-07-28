@@ -157,7 +157,12 @@ struct Atomic(T)
   # atomic.get      # => 10
   # ```
   def swap(value : T)
-    Ops.atomicrmw(:xchg, pointerof(@value), value, :sequentially_consistent, false)
+    {% if T.union? && T.union_types.all? { |t| t == Nil || t < Reference } || T < Reference %}
+      address = Ops.atomicrmw(:xchg, pointerof(@value).as(LibC::SizeT*), LibC::SizeT.new(value.as(T).object_id), :sequentially_consistent, false)
+      Pointer(T).new(address).as(T)
+    {% else %}
+      Ops.atomicrmw(:xchg, pointerof(@value), value, :sequentially_consistent, false)
+    {% end %}
   end
 
   # Atomically sets this atomic's value to *value*. Returns the **new** value.
