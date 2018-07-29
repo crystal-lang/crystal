@@ -182,7 +182,7 @@ class Dir
         when ConstantEntry
           return if sequence[pos + 1]?.is_a?(RecursiveDirectories)
           full = join(path, cmd.path)
-          yield full if File.exists?(full)
+          yield full if File.exists?(full) || File.symlink?(full)
         when ConstantDirectory
           path_stack << {next_pos, join(path, cmd.path)}
           # Don't check if full exists. It just costs us time

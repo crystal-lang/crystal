@@ -261,6 +261,7 @@ describe "Dir" do
           datapath("f1_link.txt"),
           datapath("non_link.txt"),
         ].sort
+        Dir["#{datapath}/non_link.txt"].should eq [datapath("non_link.txt")]
       ensure
         File.delete link
         File.delete non_link
