@@ -95,8 +95,8 @@ class Process
   end
 
   # :nodoc:
-  protected def self.fork_internal(run_hooks : Bool = true, &block)
-    pid = self.fork_internal(run_hooks)
+  protected def self.fork_internal(will_exec : Bool = false, &block)
+    pid = self.fork_internal(will_exec)
 
     unless pid
       begin
@@ -114,9 +114,8 @@ class Process
     pid
   end
 
-  # *run_hooks* should ALWAYS be `true` unless `exec` is used immediately after fork.
-  # Channels, `IO` and other will not work reliably if *run_hooks* is `false`.
-  protected def self.fork_internal(run_hooks : Bool = true)
+  #
+  protected def self.fork_internal(will_exec : Bool = false)
     newmask = uninitialized LibC::SigsetT
     oldmask = uninitialized LibC::SigsetT
 
@@ -128,14 +127,14 @@ class Process
     when 0
       # child:
       pid = nil
-      if run_hooks
-        Process.after_fork_child_callbacks.each(&.call)
-        LibC.pthread_sigmask(LibC::SIG_SETMASK, pointerof(oldmask), nil)
-      else
+      if will_exec
         # reset signal handlers, then sigmask (inherited on exec):
         Crystal::Signal.after_fork_before_exec
         LibC.sigemptyset(pointerof(newmask))
         LibC.pthread_sigmask(LibC::SIG_SETMASK, pointerof(newmask), nil)
+      else
+        Process.after_fork_child_callbacks.each(&.call)
+        LibC.pthread_sigmask(LibC::SIG_SETMASK, pointerof(oldmask), nil)
       end
     when -1
       # error:
@@ -266,7 +265,7 @@ class Process
 
     reader_pipe, writer_pipe = IO.pipe
 
-    @pid = Process.fork_internal(run_hooks: false) do
+    @pid = Process.fork_internal(will_exec: true) do
       begin
         reader_pipe.close
         writer_pipe.close_on_exec = true
