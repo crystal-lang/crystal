@@ -1031,7 +1031,7 @@ describe "Semantic: class" do
 
       Foo.bar
       ),
-      "undefined method 'bar' for Foo:Class"
+      "undefined method 'bar' for Foo.class"
   end
 
   it "inherits self twice (#5495)" do

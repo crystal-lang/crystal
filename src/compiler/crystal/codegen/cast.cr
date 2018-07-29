@@ -219,7 +219,7 @@ class Crystal::CodeGenVisitor
   end
 
   def assign_distinct(target_pointer, target_type : VirtualMetaclassType, value_type : UnionType, value)
-    # Can happen when assigning Foo+:Class <- Bar:Class | Baz:Class with Bar < Foo and Baz < Foo
+    # Can happen when assigning Foo+.class <- Bar.class | Baz.class with Bar < Foo and Baz < Foo
     casted_value = cast_to_pointer(union_value(value), target_type)
     store load(casted_value), target_pointer
   end

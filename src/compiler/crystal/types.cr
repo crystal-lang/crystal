@@ -2628,9 +2628,9 @@ module Crystal
 
   # A metaclass type, that results from invoking `.class` on a type.
   #
-  # For example `String:Class` is the metaclass of `String`, and it's
+  # For example `String.class` is the metaclass of `String`, and it's
   # the type of `String` (the type of `"foo"` is `String`, the type of
-  # `String` is `String:Class`).
+  # `String` is `String.class`).
   #
   # This metaclass represents only the metaclass of non-generic types.
   class MetaclassType < ClassType
@@ -2650,7 +2650,7 @@ module Crystal
         if instance_type.module?
           name = "#{@instance_type}:Module"
         else
-          name = "#{@instance_type}:Class"
+          name = "#{@instance_type}.class"
         end
       end
       super(program, program, name, super_class)
@@ -2691,7 +2691,7 @@ module Crystal
     end
   end
 
-  # The metaclass of a generic class instance type, like `Array(String):Class`
+  # The metaclass of a generic class instance type, like `Array(String).class`
   class GenericClassInstanceMetaclassType < Type
     include DefInstanceContainer
 
@@ -2740,11 +2740,11 @@ module Crystal
 
     def to_s_with_options(io : IO, skip_union_parens : Bool = false, generic_args : Bool = true, codegen = false)
       instance_type.to_s(io)
-      io << ":Class"
+      io << ".class"
     end
   end
 
-  # The metaclass of a generic module instance type, like `Enumerable(Int32):Class`
+  # The metaclass of a generic module instance type, like `Enumerable(Int32).class`
   class GenericModuleInstanceMetaclassType < Type
     include DefInstanceContainer
 
@@ -2771,7 +2771,7 @@ module Crystal
 
     def to_s_with_options(io : IO, skip_union_parens : Bool = false, generic_args : Bool = true, codegen = false)
       instance_type.to_s(io)
-      io << ":Class"
+      io << ".class"
     end
   end
 
@@ -3168,7 +3168,7 @@ module Crystal
       instance_type.leaf?
     end
 
-    # Given `Foo+:Class` returns `Foo` (not `Foo:Class`)
+    # Given `Foo+.class` returns `Foo` (not `Foo.class`)
     delegate base_type, to: instance_type
 
     delegate lookup_first_def, to: instance_type.metaclass
@@ -3203,7 +3203,7 @@ module Crystal
 
     def to_s_with_options(io : IO, skip_union_parens : Bool = false, generic_args : Bool = true, codegen = false)
       instance_type.to_s_with_options(io, codegen: codegen)
-      io << ":Class"
+      io << ".class"
     end
   end
 end
