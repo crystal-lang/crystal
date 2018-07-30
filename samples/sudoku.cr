@@ -124,7 +124,7 @@ def sd_solve(mr, mc, s)
   ret
 end
 
-SUDOKU = <<-SUDOKU
+sudoku = <<-SUDOKU
 ..............3.85..1.2.......5.7.....4...1...9.......5......73..2.1........4...9 # near worst case for brute-force solver (wiki)
 .......12........3..23..4....18....5.6..7.8.......9.....85.....9...4.5..47...6... # gsf's sudoku q1 (Platinum Blonde)
 .2..5.7..4..1....68....3...2....8..3.4..2.5.....6...1...2.9.....9......57.4...9.. # (Cheese)
@@ -148,7 +148,7 @@ SUDOKU
 
 def solve_all(sudoku)
   mr, mc = sd_genmat()
-  SUDOKU.split('\n').map do |line|
+  sudoku.split('\n').map do |line|
     if line.size >= 81
       ret = sd_solve(mr, mc, line)
       ret.map { |s2| s2.join }
@@ -157,6 +157,6 @@ def solve_all(sudoku)
 end
 
 10.times do |i|
-  res = solve_all(SUDOKU)
+  res = solve_all(sudoku)
   res.each { |str| puts str[0] } if i == 0
 end
