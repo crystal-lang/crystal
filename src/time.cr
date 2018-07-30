@@ -935,14 +935,29 @@ struct Time
   # See `Time::Format` for details.
   #
   # ```
-  # Time.parse("2016-04-05", "%F", Time::Location::UTC) # => 2016-04-05 00:00:00 +00:00
+  # Time.parse("2016-04-05", "%F", Time::Location.load("Europe/Berlin")) # => 2016-04-05 00:00:00.0 +02:00 Europe/Berlin
   # ```
   #
   # If there is no time zone information in the formatted time, *location* will
   # be assumed. When *location* is `nil`, in such a case the parser will raise
   # `Time::Format::Error`.
-  def self.parse(time : String, pattern : String, location : Location?) : Time
+  def self.parse(time : String, pattern : String, location : Location) : Time
     Format.new(pattern, location).parse(time)
+  end
+
+  # Parses a `Time` from *time* string using the given *pattern*.
+  #
+  # See `Time::Format` for details.
+  #
+  # ```
+  # Time.parse!("2016-04-05 +00:00", "%F %:z") # => 2016-04-05 00:00:00.0 +00:00
+  # Time.parse!("2016-04-05", "%F")            # raises Time::Format::Error
+  # ```
+  #
+  # If there is no time zone information in the formatted time, the parser will raise
+  # `Time::Format::Error`.
+  def self.parse!(time : String, pattern : String) : Time
+    Format.new(pattern, nil).parse(time)
   end
 
   # Parses a `Time` from *time* string using the given *pattern* and
@@ -951,7 +966,7 @@ struct Time
   # See `Time::Format` for details.
   #
   # ```
-  # Time.parse_utc("2016-04-05", "%F") # => 2016-04-05 00:00:00 +00:00
+  # Time.parse_utc("2016-04-05", "%F") # => 2016-04-05 00:00:00.0 +00:00
   # ```
   #
   # `Time::Location::UTC` will only be used as `location` if the formatted time
@@ -967,7 +982,7 @@ struct Time
   # See `Time::Format` for details.
   #
   # ```
-  # Time.parse_utc("2016-04-05", "%F") # => 2016-04-05 00:00:00 +00:00
+  # Time.parse_utc("2016-04-05", "%F") # => 2016-04-05 00:00:00.0 +00:00
   # ```
   #
   # `Time::Location.local` will only be used as `location` if the formatted time
