@@ -71,7 +71,7 @@ struct Noise2DContext
   end
 end
 
-SYMBOLS = [' ', '░', '▒', '▓', '█', '█']
+symbols = [' ', '░', '▒', '▓', '█', '█']
 pixels = Array.new(256) { Array.new(256, 0.0) }
 
 n2d = Noise2DContext.new
@@ -88,7 +88,7 @@ end
 256.times do |y|
   256.times do |x|
     v = pixels[y][x]
-    print(SYMBOLS[(v / 0.2).to_i])
+    print(symbols[(v / 0.2).to_i])
   end
   puts
 end

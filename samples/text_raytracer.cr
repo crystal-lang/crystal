@@ -104,7 +104,7 @@ lut = %w(. - + * X M)
 w = 20 * 4
 h = 10 * 4
 
-SCENE = [
+scene = [
   Sphere.new(Vector.new(-1.0, 0.0, 3.0), 0.3, RED),
   Sphere.new(Vector.new(0.0, 0.0, 3.0), 0.8, GREEN),
   Sphere.new(Vector.new(1.0, 0.0, 3.0), 0.4, BLUE),
@@ -122,7 +122,7 @@ SCENE = [
 
     hit = nil
 
-    SCENE.each do |obj|
+    scene.each do |obj|
       ret = intersect_sphere(ray, obj.center, obj.radius)
       if ret
         hit = Hit.new obj, ret
