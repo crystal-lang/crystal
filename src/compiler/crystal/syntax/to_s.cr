@@ -985,14 +985,20 @@ module Crystal
     end
 
     def visit(node : RegexLiteral)
-      @str << '/'
-      case exp = node.value
-      when StringLiteral
-        Regex.append_source exp.value, @str
-      when StringInterpolation
-        visit_interpolation(exp) { |s| Regex.append_source s, @str }
+      if (exp = node.value).is_a?(StringLiteral) && exp.value.empty?
+        # // is not always an empty regex, sometimes is an operator
+        # so it's safer to emit empty regex as %r()
+        @str << "%r()"
+      else
+        @str << '/'
+        case exp = node.value
+        when StringLiteral
+          Regex.append_source exp.value, @str
+        when StringInterpolation
+          visit_interpolation(exp) { |s| Regex.append_source s, @str }
+        end
+        @str << '/'
       end
-      @str << '/'
       @str << 'i' if node.options.includes? Regex::Options::IGNORE_CASE
       @str << 'm' if node.options.includes? Regex::Options::MULTILINE
       @str << 'x' if node.options.includes? Regex::Options::EXTENDED

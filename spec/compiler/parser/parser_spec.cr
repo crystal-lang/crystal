@@ -422,7 +422,7 @@ module Crystal
     it_parses "f.x = Foo.new", Call.new("f".call, "x=", [Call.new("Foo".path, "new")] of ASTNode)
     it_parses "f.x = - 1", Call.new("f".call, "x=", [Call.new(1.int32, "-")] of ASTNode)
 
-    ["+", "-", "*", "/", "%", "|", "&", "^", "**", "<<", ">>", "&+", "&-", "&*"].each do |op|
+    ["+", "-", "*", "/", "//", "%", "|", "&", "^", "**", "<<", ">>", "&+", "&-", "&*"].each do |op|
       it_parses "f.x #{op}= 2", OpAssign.new(Call.new("f".call, "x"), op, 2.int32)
     end
 
@@ -433,7 +433,7 @@ module Crystal
     it_parses "def %(); end;", Def.new("%")
     it_parses "def /(); end;", Def.new("/")
 
-    ["<<", "<", "<=", "==", ">>", ">", ">=", "+", "-", "*", "/", "%", "|", "&", "^", "**", "===", "=~", "!~", "&+", "&-", "&*", "&**"].each do |op|
+    ["<<", "<", "<=", "==", ">>", ">", ">=", "+", "-", "*", "/", "//", "%", "|", "&", "^", "**", "===", "=~", "!~", "&+", "&-", "&*", "&**"].each do |op|
       it_parses "1 #{op} 2", Call.new(1.int32, op, 2.int32)
       it_parses "n #{op} 2", Call.new("n".call, op, 2.int32)
       it_parses "def #{op}(); end", Def.new(op)
@@ -445,7 +445,7 @@ module Crystal
       it_parses "foo.#{name}(1, 2)", Call.new("foo".call, name, 1.int32, 2.int32)
     end
 
-    ["+", "-", "*", "/", "%", "|", "&", "^", "**", "<<", ">>", "&+", "&-", "&*"].each do |op|
+    ["+", "-", "*", "/", "//", "%", "|", "&", "^", "**", "<<", ">>", "&+", "&-", "&*"].each do |op|
       it_parses "a = 1; a #{op}= 1", [Assign.new("a".var, 1.int32), OpAssign.new("a".var, op, 1.int32)]
       it_parses "a = 1; a #{op}=\n1", [Assign.new("a".var, 1.int32), OpAssign.new("a".var, op, 1.int32)]
       it_parses "a.b #{op}=\n1", OpAssign.new(Call.new("a".call, "b"), op, 1.int32)
@@ -647,7 +647,7 @@ module Crystal
       assert_syntax_error "#{keyword} ? 1 : 2", "void value expression"
       assert_syntax_error "+#{keyword}", "void value expression"
 
-      ["<<", "<", "<=", "==", ">>", ">", ">=", "+", "-", "*", "/", "%", "|",
+      ["<<", "<", "<=", "==", ">>", ">", ">=", "+", "-", "*", "/", "//", "%", "|",
        "&", "^", "**", "===", "&+", "&-", "&*", "&**"].each do |op|
         assert_syntax_error "#{keyword} #{op} 1", "void value expression"
       end
@@ -784,6 +784,9 @@ module Crystal
     it_parses "{%\nif 1; 2; end\n%}", MacroExpression.new(If.new(1.int32, 2.int32), output: false)
     it_parses "{% unless 1; 2; end %}", MacroExpression.new(If.new(1.int32, Nop.new, 2.int32), output: false)
     it_parses "{%\n1\n2\n3\n%}", MacroExpression.new(Expressions.new([1.int32, 2.int32, 3.int32] of ASTNode), output: false)
+
+    it_parses "{{ 1 // 2 }}", MacroExpression.new(Expressions.from([Call.new(1.int32, "//", 2.int32)] of ASTNode))
+    it_parses "{{ //.options }}", MacroExpression.new(Expressions.from([Call.new(RegexLiteral.new(StringLiteral.new("")), "options")] of ASTNode))
 
     it_parses "[] of Int", ([] of ASTNode).array_of("Int".path)
     it_parses "[1, 2] of Int", ([1.int32, 2.int32] of ASTNode).array_of("Int".path)
