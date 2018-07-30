@@ -3,13 +3,13 @@ require "../../../src/openssl"
 
 describe OpenSSL::Digest do
   [
-    {"SHA1", "0beec7b5ea3f0fdbc95d0dd47f3c5bc275da8a33"},
-    {"SHA256", "2c26b46b68ffc68ff99b453c1d30413413422d706483bfa0f98a5e886266e7ae"},
-    {"SHA512", "f7fbba6e0636f890e56fbbf3283e524c6fa3204ae298382d624741d0dc6638326e282c41be5e4254d8820772c5518a2c5a8c0c7f7eda19594a7eb539453e1ed7"},
+    {"SHA1", "dcf4a1e3542b1a40a4ac2a3f7c92ffdb2d19812f"},
+    {"SHA256", "df81eea14671ce970fb1052e9f5dd6dbda652ed37423ed3624120ec1534784a7"},
+    {"SHA512", "082907b85fe25c33bba4765185b52993a493cfd24454edf4b977ccd9301a890659c52592456cbd8aeb5215055d9dd4a7d50a4db9961715fb764fb6c393a83192"},
   ].each do |(algorithm, expected)|
     it "should be able to calculate #{algorithm}" do
       digest = OpenSSL::Digest.new(algorithm)
-      digest << "foo"
+      digest << "fooø"
       digest.hexdigest.should eq(expected)
     end
   end
