@@ -992,7 +992,7 @@ module Crystal
       if !meta_vars && !self.is_a?(GenericType)
         meta_vars = MetaVars.new
         visitor = MainVisitor.new(program, vars: meta_vars, meta_vars: meta_vars)
-        visitor.scope = self
+        visitor.scope = self.metaclass
         value = value.clone
         value.accept visitor
       end
@@ -1507,7 +1507,7 @@ module Crystal
     def run_instance_var_initializer(initializer, instance : GenericClassInstanceType | NonGenericClassType)
       meta_vars = MetaVars.new
       visitor = MainVisitor.new(program, vars: meta_vars, meta_vars: meta_vars)
-      visitor.scope = instance
+      visitor.scope = instance.metaclass
       value = initializer.value.clone
       value.accept visitor
       instance_var = instance.lookup_instance_var(initializer.name)

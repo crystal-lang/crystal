@@ -724,7 +724,7 @@ describe "Code gen: proc" do
       class Foo
         @f : -> Int32 = ->foo
 
-        def foo
+        def self.foo
           42
         end
 

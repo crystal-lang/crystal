@@ -5066,4 +5066,71 @@ describe "Semantic: instance var" do
       Second.new.hash
       )) { hash_of(hash_of(int32, int32).virtual_type, int32).virtual_type }
   end
+
+  it "doesn't solve instance var initializer in instance context (1) (#5876)" do
+    assert_error %(
+      class Foo
+        @x : Int32 = bar
+
+        def bar
+          1
+        end
+      end
+
+      Foo.new
+      ),
+      "undefined local variable or method 'bar'"
+  end
+
+  it "doesn't solve instance var initializer in instance context (2) (#5876)" do
+    assert_error %(
+      class Foo(T)
+        @x : T = bar
+
+        def bar
+          1
+        end
+      end
+
+      Foo(Int32).new
+      ),
+      "undefined local variable or method 'bar'"
+  end
+
+  it "doesn't solve instance var initializer in instance context (3) (#5876)" do
+    assert_error %(
+      module Moo(T)
+        @x : T = bar
+
+        def bar
+          1
+        end
+      end
+
+      class Foo
+        include Moo(Int32)
+      end
+
+      Foo.new
+      ),
+      "undefined local variable or method 'bar'"
+  end
+
+  it "solves instance var initializer in metaclass context (#5876)" do
+    assert_type(%(
+      class Foo
+        @x : Int32 = bar
+
+        def self.bar
+          1
+        end
+
+        def x
+          @x
+        end
+      end
+
+      Foo.new.x
+      )) { int32 }
+  end
 end

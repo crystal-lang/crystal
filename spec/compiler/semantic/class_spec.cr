@@ -822,7 +822,7 @@ describe "Semantic: class" do
   it "doesn't crash on instance variable assigned a proc, and never instantiated (#923)" do
     assert_type(%(
       class Klass
-        def f(arg)
+        def self.f(arg)
         end
 
         @a  : Proc(String, Nil) = ->f(String)
