@@ -226,17 +226,18 @@ describe IO::Memory do
     io.gets(1).should eq("d")
   end
 
-  it "can seek and truncate" do
-    string = "hello world"
-    io = IO::Memory.new(string.size)
-    io << string
-    io.seek(-6, IO::Seek::Current)
-    io.truncate
-    io.pos = 0
-    io.gets.should eq("hello")
-    io << " friend"
-    io.pos = 0
-    io.gets.should eq("hello friend")
+  it "can truncate to size" do
+    io = IO::Memory.new
+    io << "hello world"
+    io.truncate(5)
+    io.to_s.should eq("hello")
+  end
+
+  it "can truncate from end" do
+    io = IO::Memory.new
+    io << "hello world"
+    io.truncate(-6)
+    io.to_s.should eq("hello")
   end
 
   it "clears" do

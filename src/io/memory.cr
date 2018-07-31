@@ -336,23 +336,20 @@ class IO::Memory < IO
     @pos = value.to_i
   end
 
-  # Sets the current bytesize to be equal to the current position
-  # effectively truncating the contents at the current position.
+  # Truncates the memory to the specified *size*.
   #
-  # Note: this does nothing if the current position is at the end.
-  #
-  # ```
-  # io = IO::Memory.new
-  # io << "hello world"
-  # io.seek(-6, Seek::Current)
-  # io.truncate
-  # io.pos = 0
-  # io.gets # => "hello"
-  # ```
-  def truncate : Nil
+  # Note: a negative value truncates from the end of the `IO::Memory`.
+  def truncate(size = 0) : Nil
     check_open
     check_resizeable
-    @bytesize = @pos
+
+    size = size.to_i
+
+    if (size < 0)
+      @bytesize += size
+    else
+      @bytesize = size
+    end
   end
 
   # Yields an `IO::Memory` to read a section of this `IO`'s buffer.
