@@ -344,9 +344,9 @@ class IO::Memory < IO
     check_resizeable
 
     size = size.to_i
-    raise ArgumentError.new("size out of bounds") if ( size.abs > @bytesize )
+    raise ArgumentError.new("size out of bounds") if size.abs > @bytesize
 
-    if (size < 0)
+    if size < 0
       @bytesize += size
     else
       @bytesize = size
