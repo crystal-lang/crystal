@@ -338,7 +338,7 @@ class IO::Memory < IO
 
   # Truncates the memory to the specified *size*.
   #
-  # Note: a negative value truncates from the end of the `IO::Memory`.
+  # NOTE: a negative value truncates from the end of the `IO::Memory`.
   def truncate(size = 0) : Nil
     check_open
     check_resizeable
