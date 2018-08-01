@@ -34,12 +34,24 @@ module Crystal::Macros
   def flag?(name) : BoolLiteral
   end
 
-  # Prints an AST node at compile-time. Useful for debugging macros.
-  def puts(expression) : Nop
+  # Prints AST nodes at compile-time. Useful for debugging macros.
+  def puts(*expressions) : Nop
   end
 
   # Same as `puts`.
-  def p(expression) : Nop
+  def p(*expressions) : Nop
+  end
+
+  # Same as `puts`.
+  def pp(*expressions) : Nop
+  end
+
+  # Prints macro expressions together with their values at compile-time. Useful for debugging macros.
+  def p!(*expressions) : Nop
+  end
+
+  # Same as `p!`
+  def pp!(*expressions) : Nop
   end
 
   # Executes a system command and returns the output as a `MacroId`.
