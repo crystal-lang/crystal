@@ -7,11 +7,11 @@ def Time.expect_invalid
 end
 
 private def parse_time(format, string)
-  Time.parse(format, string, Time::Location::UTC)
+  Time.parse_utc(format, string)
 end
 
 private def parse_time(string)
-  Time.parse(string, "%F %T.%N", Time::Location::UTC)
+  Time.parse_utc(string, "%F %T.%N")
 end
 
 describe Time do
@@ -540,10 +540,10 @@ describe Time do
 
   it "parse fails without time zone" do
     expect_raises(Time::Format::Error, "no default location provided") do
-      Time.parse("2017-12-01 20:15:13", "%F %T")
+      Time.parse!("2017-12-01 20:15:13", "%F %T")
     end
     Time.parse("2017-12-01 20:15:13", "%F %T", Time::Location.local).to_s("%F %T").should eq "2017-12-01 20:15:13"
-    Time.parse("2017-12-01 20:15:13 +01:00", "%F %T %:z").to_s("%F %T %:z").should eq "2017-12-01 20:15:13 +01:00"
+    Time.parse!("2017-12-01 20:15:13 +01:00", "%F %T %:z").to_s("%F %T %:z").should eq "2017-12-01 20:15:13 +01:00"
   end
 
   it "parses" do
@@ -605,46 +605,46 @@ describe Time do
     patterns = {"%z", "%:z", "%::z"}
 
     {"+0000", "+00:00", "+00:00:00"}.zip(patterns) do |string, pattern|
-      time = Time.parse(string, pattern)
+      time = Time.parse!(string, pattern)
       time.offset.should eq 0
       time.utc?.should be_false
       time.location.fixed?.should be_true
     end
 
     {"-0000", "-00:00", "-00:00:00"}.zip(patterns) do |string, pattern|
-      time = Time.parse(string, pattern)
+      time = Time.parse!(string, pattern)
       time.offset.should eq 0
       time.utc?.should be_false
       time.location.fixed?.should be_true
     end
 
     {"-0200", "-02:00", "-02:00:00"}.zip(patterns) do |string, pattern|
-      time = Time.parse(string, pattern)
+      time = Time.parse!(string, pattern)
       time.offset.should eq -2 * 3600
       time.utc?.should be_false
       time.location.fixed?.should be_true
     end
 
     {"Z", "Z", "Z"}.zip(patterns) do |string, pattern|
-      time = Time.parse(string, pattern)
+      time = Time.parse!(string, pattern)
       time.offset.should eq 0
       time.utc?.should be_true
       time.location.fixed?.should be_true
     end
 
     {"UTC", "UTC", "UTC"}.zip(patterns) do |string, pattern|
-      time = Time.parse(string, pattern)
+      time = Time.parse!(string, pattern)
       time.offset.should eq 0
       time.utc?.should be_true
       time.location.fixed?.should be_true
     end
 
-    time = Time.parse("+04:12:39", "%::z")
+    time = Time.parse!("+04:12:39", "%::z")
     time.offset.should eq 4 * 3600 + 12 * 60 + 39
     time.utc?.should be_false
     time.location.fixed?.should be_true
 
-    time = Time.parse("-04:12:39", "%::z")
+    time = Time.parse!("-04:12:39", "%::z")
     time.offset.should eq -1 * (4 * 3600 + 12 * 60 + 39)
     time.utc?.should be_false
     time.location.fixed?.should be_true
@@ -652,10 +652,10 @@ describe Time do
 
   it "raises when time zone missing" do
     expect_raises(Time::Format::Error, "Invalid timezone") do
-      Time.parse("", "%z")
+      Time.parse!("", "%z")
     end
     expect_raises(Time::Format::Error, "Invalid timezone") do
-      Time.parse("123456+01:00", "%3N%z")
+      Time.parse!("123456+01:00", "%3N%z")
     end
   end
 
@@ -672,19 +672,19 @@ describe Time do
   # TODO %v
 
   it do
-    time = Time.parse("2014-10-31 10:11:12 Z hi", "%F %T %z hi")
+    time = Time.parse!("2014-10-31 10:11:12 Z hi", "%F %T %z hi")
     time.utc?.should be_true
     time.to_utc.to_s.should eq("2014-10-31 10:11:12 UTC")
   end
 
   it do
-    time = Time.parse("2014-10-31 10:11:12 UTC hi", "%F %T %z hi")
+    time = Time.parse!("2014-10-31 10:11:12 UTC hi", "%F %T %z hi")
     time.utc?.should be_true
     time.to_utc.to_s.should eq("2014-10-31 10:11:12 UTC")
   end
 
   it do
-    time = Time.parse("2014-10-31 10:11:12 -06:00 hi", "%F %T %z hi")
+    time = Time.parse!("2014-10-31 10:11:12 -06:00 hi", "%F %T %z hi")
     time.utc?.should be_false
     time.location.fixed?.should be_true
     time.offset.should eq -6 * 3600
@@ -692,7 +692,7 @@ describe Time do
   end
 
   it do
-    time = Time.parse("2014-10-31 10:11:12 +05:00 hi", "%F %T %z hi")
+    time = Time.parse!("2014-10-31 10:11:12 +05:00 hi", "%F %T %z hi")
     time.utc?.should be_false
     time.location.fixed?.should be_true
     time.offset.should eq 5 * 3600
@@ -700,7 +700,7 @@ describe Time do
   end
 
   it do
-    time = Time.parse("2014-10-31 10:11:12 -06:00:00 hi", "%F %T %z hi")
+    time = Time.parse!("2014-10-31 10:11:12 -06:00:00 hi", "%F %T %z hi")
     time.utc?.should be_false
     time.location.fixed?.should be_true
     time.offset.should eq -6 * 3600
@@ -708,7 +708,7 @@ describe Time do
   end
 
   it do
-    time = Time.parse("2014-10-31 10:11:12 -060000 hi", "%F %T %z hi")
+    time = Time.parse!("2014-10-31 10:11:12 -060000 hi", "%F %T %z hi")
     time.utc?.should be_false
     time.location.fixed?.should be_true
     time.offset.should eq -6 * 3600
@@ -716,41 +716,41 @@ describe Time do
   end
 
   it "parses centiseconds" do
-    time = Time.parse("2016-09-09T17:03:28.45+01:00", "%FT%T.%L%z").to_utc
+    time = Time.parse!("2016-09-09T17:03:28.45+01:00", "%FT%T.%L%z").to_utc
     time.to_s.should eq("2016-09-09 16:03:28 UTC")
     time.millisecond.should eq(450)
     time.nanosecond.should eq(450000000)
   end
 
   it "parses milliseconds with %L" do
-    time = Time.parse("2016-09-09T17:03:28.456+01:00", "%FT%T.%L%z").to_utc
+    time = Time.parse!("2016-09-09T17:03:28.456+01:00", "%FT%T.%L%z").to_utc
     time.to_s.should eq("2016-09-09 16:03:28 UTC")
     time.millisecond.should eq(456)
     time.nanosecond.should eq(456000000)
   end
 
   it "parses milliseconds with %3N" do
-    time = Time.parse("2016-09-09T17:03:28.456+01:00", "%FT%T.%3N%z").to_utc
+    time = Time.parse!("2016-09-09T17:03:28.456+01:00", "%FT%T.%3N%z").to_utc
     time.to_s.should eq("2016-09-09 16:03:28 UTC")
     time.millisecond.should eq(456)
     time.nanosecond.should eq(456000000)
   end
 
   it "parses microseconds with %6N" do
-    time = Time.parse("2016-09-09T17:03:28.456789+01:00", "%FT%T.%6N%z").to_utc
+    time = Time.parse!("2016-09-09T17:03:28.456789+01:00", "%FT%T.%6N%z").to_utc
     time.to_s.should eq("2016-09-09 16:03:28 UTC")
     time.millisecond.should eq(456)
     time.nanosecond.should eq(456789000)
   end
 
   it "parses nanoseconds" do
-    time = Time.parse("2016-09-09T17:03:28.456789123+01:00", "%FT%T.%N%z").to_utc
+    time = Time.parse!("2016-09-09T17:03:28.456789123+01:00", "%FT%T.%N%z").to_utc
     time.to_s.should eq("2016-09-09 16:03:28 UTC")
     time.nanosecond.should eq(456789123)
   end
 
   it "parses nanoseconds with %9N" do
-    time = Time.parse("2016-09-09T17:03:28.456789123+01:00", "%FT%T.%9N%z").to_utc
+    time = Time.parse!("2016-09-09T17:03:28.456789123+01:00", "%FT%T.%9N%z").to_utc
     time.to_s.should eq("2016-09-09 16:03:28 UTC")
     time.nanosecond.should eq(456789123)
   end
@@ -765,7 +765,7 @@ describe Time do
     time = Time.parse("2016-09-09T17:03:28.456789123990", "%FT%T.%9N", Time::Location::UTC)
     time.nanosecond.should eq(456789123)
 
-    time = Time.parse("2016-09-09T17:03:28.456789123999999+01:00", "%FT%T.%N%z")
+    time = Time.parse!("2016-09-09T17:03:28.456789123999999+01:00", "%FT%T.%N%z")
     time.to_s.should eq("2016-09-09 17:03:28 +01:00")
     time.nanosecond.should eq(456789123)
 
@@ -775,13 +775,13 @@ describe Time do
   end
 
   it "parses if some decimals are missing" do
-    time = Time.parse("2016-09-09T17:03:28.45+01:00", "%FT%T.%3N%z").to_utc
+    time = Time.parse!("2016-09-09T17:03:28.45+01:00", "%FT%T.%3N%z").to_utc
     time.nanosecond.should eq(450000000)
 
-    time = Time.parse("2016-09-09T17:03:28.45678+01:00", "%FT%T.%6N%z").to_utc
+    time = Time.parse!("2016-09-09T17:03:28.45678+01:00", "%FT%T.%6N%z").to_utc
     time.nanosecond.should eq(456780000)
 
-    time = Time.parse("2016-09-09T17:03:28.4567891+01:00", "%FT%T.%9N%z").to_utc
+    time = Time.parse!("2016-09-09T17:03:28.4567891+01:00", "%FT%T.%9N%z").to_utc
     time.nanosecond.should eq(456789100)
   end
 
