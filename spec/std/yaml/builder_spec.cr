@@ -126,4 +126,34 @@ describe YAML::Builder do
       end
     end
   end
+
+  it "errors on max nesting (sequence)" do
+    io = IO::Memory.new
+    builder = YAML::Builder.new(io)
+    builder.max_nesting = 3
+    builder.start_stream
+    builder.start_document
+    3.times do
+      builder.start_sequence
+    end
+
+    expect_raises(YAML::Error, "Nesting of 4 is too deep") do
+      builder.start_sequence
+    end
+  end
+
+  it "errors on max nesting (mapping)" do
+    io = IO::Memory.new
+    builder = YAML::Builder.new(io)
+    builder.max_nesting = 3
+    builder.start_stream
+    builder.start_document
+    3.times do
+      builder.start_mapping
+    end
+
+    expect_raises(YAML::Error, "Nesting of 4 is too deep") do
+      builder.start_mapping
+    end
+  end
 end
