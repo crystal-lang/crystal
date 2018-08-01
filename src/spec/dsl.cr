@@ -170,7 +170,7 @@ module Spec
     start_time = Time.monotonic
     at_exit do
       elapsed_time = Time.monotonic - start_time
-      Spec::RootContext.print_results(elapsed_time, @@aborted)
+      Spec::RootContext.finish(elapsed_time, @@aborted)
       exit 1 unless Spec::RootContext.succeeded && !@@aborted
     end
   end

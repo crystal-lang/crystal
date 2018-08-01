@@ -50,9 +50,16 @@ module Spec
       @@instance.succeeded
     end
 
-    def print_results(elapsed_time, aborted = false)
-      Spec.formatters.each(&.finish)
+    def self.finish(elapsed_time, aborted = false)
+      @@instance.finish(elapsed_time, aborted)
+    end
 
+    def finish(elapsed_time, aborted = false)
+      Spec.formatters.each(&.finish)
+      Spec.formatters.each(&.print_results(elapsed_time, aborted))
+    end
+
+    def print_results(elapsed_time, aborted = false)
       pendings = @results[:pending]
       unless pendings.empty?
         puts
