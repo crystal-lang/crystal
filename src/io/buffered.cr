@@ -1,6 +1,7 @@
 # The `IO::Buffered` mixin enhances an `IO` with input/output buffering.
 #
-# The buffering behaviour can be turned on/off with the `#sync=` method.
+# The buffering behaviour can be turned on/off with the `#sync=` and
+# `#read_buffering=` methods.
 #
 # Additionally, several methods, like `#gets`, are implemented in a more
 # efficient way.
