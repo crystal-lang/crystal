@@ -101,12 +101,35 @@ enum Signal : Int32
     Crystal::Signal.ignore(self)
   end
 
+  {% if flag?(:darwin) || flag?(:openbsd) %}
+    @@sigset = LibC::SigsetT.new(0)
+  {% else %}
+    @@sigset = LibC::SigsetT.new
+  {% end %}
+
+  # :nodoc:
+  def set_add : Nil
+    LibC.sigaddset(pointerof(@@sigset), self)
+  end
+
+  # :nodoc:
+  def set_del : Nil
+    LibC.sigdelset(pointerof(@@sigset), self)
+  end
+
+  # :nodoc:
+  def set? : Bool
+    LibC.sigismember(pointerof(@@sigset), self) == 1
+  end
+
   @@setup_default_handlers = Atomic(Int32).new(0)
 
   # :nodoc:
   def self.setup_default_handlers
     _, success = @@setup_default_handlers.compare_and_set(0, 1)
     return unless success
+
+    LibC.sigemptyset(pointerof(@@sigset))
 
     Crystal::Signal.start_loop
     Signal::PIPE.ignore
@@ -132,8 +155,9 @@ module Crystal::Signal
   def self.trap(signal, handler) : Nil
     @@mutex.synchronize do
       unless @@handlers[signal]?
+        signal.set_add
         LibC.signal(signal.value, ->(value : Int32) {
-          writer.write_bytes(value)
+          writer.write_bytes(value) unless writer.closed?
         })
       end
       @@handlers[signal] = handler
@@ -162,7 +186,8 @@ module Crystal::Signal
     else
       @@mutex.synchronize do
         @@handlers.delete(signal)
-        LibC.signal(signal.value, handler)
+        LibC.signal(signal, handler)
+        signal.set_del
       end
     end
   end
@@ -202,9 +227,20 @@ module Crystal::Signal
   # signals that would be sent to the parent process through the signal
   # pipe.
   #
-  # We reset all signals since accessing `@@handlers` isn't thread safe.
+  # We keep a signal set to because accessing @@handlers ins't thread safe —a
+  # thread could be mutating the hash while another one forked. This allows to
+  # only reset a few signals (fast) rather than all (very slow).
+  #
+  # We eventually close the pipe anyway to avoid a potential race where a sigset
+  # wouldn't exactly reflect actual signal state. This avoids sending a children
+  # signal to the parent. Exec will reset the signals properly for the
+  # sub-process.
   def self.after_fork_before_exec
-    ::Signal.each { |sig| LibC.signal(sig, LibC::SIG_DFL) }
+    ::Signal.each do |signal|
+      LibC.signal(signal, LibC::SIG_DFL) if signal.set?
+    end
+  ensure
+    @@pipe.each(&.close)
   end
 
   private def self.reader

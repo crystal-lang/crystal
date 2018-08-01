@@ -47,4 +47,7 @@ lib LibC
   fun signal(x0 : Int, x1 : Int -> Void) : Int -> Void
   fun sigemptyset(SigsetT*) : Int
   fun sigfillset(SigsetT*) : Int
+  fun sigaddset(SigsetT*, Int) : Int
+  fun sigdelset(SigsetT*, Int) : Int
+  fun sigismember(SigsetT*, Int) : Int
 end
