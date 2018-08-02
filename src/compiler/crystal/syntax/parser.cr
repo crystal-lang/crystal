@@ -2773,19 +2773,14 @@ module Crystal
 
       next_token
 
-      case current_char
-      when '%'
-        next_char
-        @token.type = :"%"
-        @token.column_number += 1
-      when '/'
-        next_char
-        @token.type = :"/"
-        @token.column_number += 1
-      else
-        skip_space_or_newline
-        check DefOrMacroCheck1
-      end
+      # Force lexer return if possible a def or macro name
+      # cases like: def `, def /, def //
+      # that in regular statements states for delimiters
+      # here must be treated as method names.
+      @wants_def_or_macro_name = true
+      skip_space_or_newline
+      check DefOrMacroCheck1
+      @wants_def_or_macro_name = false
 
       push_def
 
@@ -3197,7 +3192,7 @@ module Crystal
       exp
     end
 
-    DefOrMacroCheck1 = [:IDENT, :CONST,
+    DefOrMacroCheck1 = [:IDENT, :CONST, :"`",
                         :"<<", :"<", :"<=", :"==", :"===", :"!=", :"=~", :"!~", :">>", :">", :">=", :"+", :"-", :"*", :"/", :"//", :"!", :"~", :"%", :"&", :"|", :"^", :"**", :"[]", :"[]?", :"[]=", :"<=>", :"&+", :"&-", :"&*", :"&**"]
     DefOrMacroCheck2 = [:"<<", :"<", :"<=", :"==", :"===", :"!=", :"=~", :"!~", :">>", :">", :">=", :"+", :"-", :"*", :"/", :"//", :"!", :"~", :"%", :"&", :"|", :"^", :"**", :"[]", :"[]?", :"[]=", :"<=>", :"&+", :"&-", :"&*", :"&**"]
 
@@ -3212,29 +3207,14 @@ module Crystal
 
       next_token
 
-      case current_char
-      when '%'
-        next_char
-        @token.type = :"%"
-        @token.column_number += 1
-      when '/'
-        case next_char
-        when '/'
-          next_char
-          @token.type = :"//"
-          @token.column_number += 2
-        else
-          @token.type = :"/"
-          @token.column_number += 1
-        end
-      when '`'
-        next_char
-        @token.type = :"`"
-        @token.column_number += 1
-      else
-        skip_space_or_newline
-        check DefOrMacroCheck1
-      end
+      # Force lexer return if possible a def or macro name
+      # cases like: def `, def /, def //
+      # that in regular statements states for delimiters
+      # here must be treated as method names.
+      @wants_def_or_macro_name = true
+      skip_space_or_newline
+      check DefOrMacroCheck1
+      @wants_def_or_macro_name = false
 
       receiver = nil
       @yields = nil

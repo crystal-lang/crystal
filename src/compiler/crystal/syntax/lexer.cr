@@ -37,6 +37,7 @@ module Crystal
       @count_whitespace = false
       @slash_is_regex = true
       @wants_raw = false
+      @wants_def_or_macro_name = false
       @string_pool = string_pool || StringPool.new
 
       # When lexing macro tokens, when we encounter `#{` inside
@@ -287,7 +288,7 @@ module Crystal
         line = @line_number
         column = @column_number
         char = next_char
-        if !@slash_is_regex && char == '/'
+        if (@wants_def_or_macro_name || !@slash_is_regex) && char == '/'
           case next_char
           when '='
             next_char :"//="
@@ -296,6 +297,8 @@ module Crystal
           end
         elsif !@slash_is_regex && char == '='
           next_char :"/="
+        elsif @wants_def_or_macro_name
+          @token.type = :"/"
         elsif @slash_is_regex
           @token.type = :DELIMITER_START
           @token.delimiter_state = Token::DelimiterState.new(:regex, '/', '/')
@@ -310,65 +313,69 @@ module Crystal
           @token.type = :"/"
         end
       when '%'
-        case next_char
-        when '='
-          next_char :"%="
-        when '(', '[', '{', '<', '|'
-          delimited_pair :string, current_char, closing_char, start
-        when 'i'
-          case peek_next_char
-          when '(', '{', '[', '<', '|'
-            start_char = next_char
-            next_char :SYMBOL_ARRAY_START
-            @token.raw = "%i#{start_char}" if @wants_raw
-            @token.delimiter_state = Token::DelimiterState.new(:symbol_array, start_char, closing_char(start_char))
-          else
-            @token.type = :"%"
-          end
-        when 'q'
-          case peek_next_char
-          when '(', '{', '[', '<', '|'
-            next_char
-            delimited_pair :string, current_char, closing_char, start, allow_escapes: false
-          else
-            @token.type = :"%"
-          end
-        when 'Q'
-          case peek_next_char
-          when '(', '{', '[', '<', '|'
-            next_char
-            delimited_pair :string, current_char, closing_char, start
-          else
-            @token.type = :"%"
-          end
-        when 'r'
-          case next_char
-          when '(', '[', '{', '<', '|'
-            delimited_pair :regex, current_char, closing_char, start
-          else
-            raise "unknown %r char"
-          end
-        when 'x'
-          case next_char
-          when '(', '[', '{', '<', '|'
-            delimited_pair :command, current_char, closing_char, start
-          else
-            raise "unknown %x char"
-          end
-        when 'w'
-          case peek_next_char
-          when '(', '{', '[', '<', '|'
-            start_char = next_char
-            next_char :STRING_ARRAY_START
-            @token.raw = "%w#{start_char}" if @wants_raw
-            @token.delimiter_state = Token::DelimiterState.new(:string_array, start_char, closing_char(start_char))
-          else
-            @token.type = :"%"
-          end
-        when '}'
-          next_char :"%}"
+        if @wants_def_or_macro_name
+          next_char :"%"
         else
-          @token.type = :"%"
+          case next_char
+          when '='
+            next_char :"%="
+          when '(', '[', '{', '<', '|'
+            delimited_pair :string, current_char, closing_char, start
+          when 'i'
+            case peek_next_char
+            when '(', '{', '[', '<', '|'
+              start_char = next_char
+              next_char :SYMBOL_ARRAY_START
+              @token.raw = "%i#{start_char}" if @wants_raw
+              @token.delimiter_state = Token::DelimiterState.new(:symbol_array, start_char, closing_char(start_char))
+            else
+              @token.type = :"%"
+            end
+          when 'q'
+            case peek_next_char
+            when '(', '{', '[', '<', '|'
+              next_char
+              delimited_pair :string, current_char, closing_char, start, allow_escapes: false
+            else
+              @token.type = :"%"
+            end
+          when 'Q'
+            case peek_next_char
+            when '(', '{', '[', '<', '|'
+              next_char
+              delimited_pair :string, current_char, closing_char, start
+            else
+              @token.type = :"%"
+            end
+          when 'r'
+            case next_char
+            when '(', '[', '{', '<', '|'
+              delimited_pair :regex, current_char, closing_char, start
+            else
+              raise "unknown %r char"
+            end
+          when 'x'
+            case next_char
+            when '(', '[', '{', '<', '|'
+              delimited_pair :command, current_char, closing_char, start
+            else
+              raise "unknown %x char"
+            end
+          when 'w'
+            case peek_next_char
+            when '(', '{', '[', '<', '|'
+              start_char = next_char
+              next_char :STRING_ARRAY_START
+              @token.raw = "%w#{start_char}" if @wants_raw
+              @token.delimiter_state = Token::DelimiterState.new(:string_array, start_char, closing_char(start_char))
+            else
+              @token.type = :"%"
+            end
+          when '}'
+            next_char :"%}"
+          else
+            @token.type = :"%"
+          end
         end
       when '(' then next_char :"("
       when ')' then next_char :")"
@@ -706,10 +713,14 @@ module Crystal
         set_token_raw_from_start(start)
       when '"', '`'
         delimiter = current_char
-        next_char
-        @token.type = :DELIMITER_START
-        @token.delimiter_state = Token::DelimiterState.new(delimiter == '`' ? :command : :string, delimiter, delimiter)
-        set_token_raw_from_start(start)
+        if delimiter == '`' && @wants_def_or_macro_name
+          next_char :"`"
+        else
+          next_char
+          @token.type = :DELIMITER_START
+          @token.delimiter_state = Token::DelimiterState.new(delimiter == '`' ? :command : :string, delimiter, delimiter)
+          set_token_raw_from_start(start)
+        end
       when '0'
         scan_zero_number(start)
       when '1', '2', '3', '4', '5', '6', '7', '8', '9'

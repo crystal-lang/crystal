@@ -437,6 +437,7 @@ module Crystal
       it_parses "1 #{op} 2", Call.new(1.int32, op, 2.int32)
       it_parses "n #{op} 2", Call.new("n".call, op, 2.int32)
       it_parses "def #{op}(); end", Def.new(op)
+      it_parses "macro #{op};end", Macro.new(op, [] of Arg, Expressions.new)
     end
 
     ["bar", "+", "-", "*", "/", "<", "<=", "==", ">", ">=", "%", "|", "&", "^", "**", "===", "=~", "!~"].each do |name|
@@ -797,8 +798,6 @@ module Crystal
 
     it_parses "macro foo;end", Macro.new("foo", [] of Arg, Expressions.new)
     it_parses "macro [];end", Macro.new("[]", [] of Arg, Expressions.new)
-    it_parses "macro %();end", Macro.new("%", [] of Arg, Expressions.new)
-    it_parses "macro /();end", Macro.new("/", [] of Arg, Expressions.new)
     it_parses %(macro foo; 1 + 2; end), Macro.new("foo", [] of Arg, Expressions.from([" 1 + 2; ".macro_literal] of ASTNode))
     it_parses %(macro foo(x); 1 + 2; end), Macro.new("foo", ([Arg.new("x")]), Expressions.from([" 1 + 2; ".macro_literal] of ASTNode))
     it_parses %(macro foo(x)\n 1 + 2; end), Macro.new("foo", ([Arg.new("x")]), Expressions.from([" 1 + 2; ".macro_literal] of ASTNode))
