@@ -42,6 +42,7 @@ class HTTP::Server
 
     # :nodoc:
     def reset
+      # This method is called by RequestProcessor to avoid allocating a new instance for each iteration.
       @headers.clear
       @cookies = nil
       @status_code = 200
@@ -104,6 +105,11 @@ class HTTP::Server
       @output.close
     end
 
+    # Returns `true` if this response has been closed.
+    def closed?
+      @output.closed?
+    end
+
     # Generates an error response using *message* and *code*.
     #
     # Calls `reset` and then writes the given message.
@@ -154,6 +160,7 @@ class HTTP::Server
         @sync = false
         @flush_on_newline = false
         @chunked = false
+        @closed = false
       end
 
       private def unbuffered_read(slice : Bytes)
@@ -182,6 +189,10 @@ class HTTP::Server
         end
       end
 
+      def closed?
+        @closed
+      end
+
       def close
         unless response.wrote_headers?
           response.content_length = @out_count
@@ -204,6 +215,7 @@ class HTTP::Server
 
       private def unbuffered_close
         @io << "0\r\n\r\n" if @chunked
+        @closed = true
       end
 
       private def unbuffered_rewind
