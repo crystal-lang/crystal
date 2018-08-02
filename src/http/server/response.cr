@@ -42,6 +42,7 @@ class HTTP::Server
 
     # :nodoc:
     def reset
+      # This method is called by RequestProcessor to avoid allocating a new instance for each iteration.
       @headers.clear
       @cookies = nil
       @status_code = 200
