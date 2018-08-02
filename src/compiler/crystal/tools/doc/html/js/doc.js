@@ -24,6 +24,16 @@ document.addEventListener('DOMContentLoaded', function() {
   var searchInput = document.querySelector('.search-input');
   var parents = document.querySelectorAll('.types-list li.parent');
 
+  var scrollSidebarToOpenType = function(){
+    var openTypes = typesList.querySelectorAll('.current');
+    if (openTypes.length > 0) {
+      var lastOpenType = openTypes[openTypes.length - 1];
+      lastOpenType.scrollIntoView();
+    }
+  }
+
+  scrollSidebarToOpenType();
+
   var setPersistentSearchQuery = function(value){
     sessionStorage.setItem(repositoryName + '::search-input:value', value);
   }
