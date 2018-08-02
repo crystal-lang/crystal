@@ -59,6 +59,9 @@ module HTTP
         io = IO::Memory.new
         response = Response.new(io)
         response.close
+        response.closed?.should be_true
+        io.closed?.should be_false
+        expect_raises(IO::Error, "Closed stream") { response << "foo" }
         io.to_s.should eq("HTTP/1.1 200 OK\r\nContent-Length: 0\r\n\r\n")
       end
 
