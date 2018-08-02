@@ -615,21 +615,6 @@ class Hash(K, V)
     end
   end
 
-  # Destructively transforms all keys using a block. Same as transform_keys but modifies in place.
-  # The block cannot change a type of keys.
-  #
-  # ```
-  # hash = {"a" => 1, "b" => 2, "c" => 3}
-  # hash.transform_key! { |key| key.succ }
-  # hash # => {"b" => 1, "c" => 2, "d" => 3}
-  def transform_keys!(&block : K -> K)
-    current = @first
-    while current
-      current.key = yield(current.key)
-      current = current.fore
-    end
-  end
-
   # Destructively transforms all values using a block. Same as transform_values but modifies in place.
   # The block cannot change a type of values.
   #
@@ -984,7 +969,7 @@ class Hash(K, V)
   end
 
   private class Entry(K, V)
-    property key : K
+    getter key : K
     property value : V
 
     # Next in the linked list of each bucket

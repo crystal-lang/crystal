@@ -512,13 +512,6 @@ describe "Hash" do
     h2.empty?.should be_true
   end
 
-  it "transform keys in place" do
-    h = {"a" => 1, "b" => 2, "c" => 3}
-
-    h.transform_keys!(&.succ)
-    h.should eq({"b" => 1, "c" => 2, "d" => 3})
-  end
-
   it "transform values in place" do
     h = {:a => 1, :b => 2, :c => 3}
 
