@@ -29,13 +29,17 @@
 # destination = destination.upcase if upcase
 # puts "Hello #{destination}!"
 # ```
+
+require "colorize"
+
 class OptionParser
   class Exception < ::Exception
   end
 
   class InvalidOption < Exception
     def initialize(option)
-      super("Invalid option: #{option}")
+      suggestion = "(did you mean 'crystal foo.cr -- #{option}')".colorize.yellow.bold
+      super("Invalid option: #{option} #{suggestion}")
     end
   end
 
