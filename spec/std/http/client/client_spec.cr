@@ -22,6 +22,12 @@ private class TestServer < TCPServer
   end
 end
 
+private class TestClient < HTTP::Client
+  def set_defaults(request)
+    super
+  end
+end
+
 module HTTP
   describe Client do
     typeof(Client.new("host"))
@@ -206,6 +212,19 @@ module HTTP
         client = Client.new("localhost", server.local_address.port)
         client.connect_timeout = 0.5
         client.get("/")
+      end
+    end
+
+    describe "#set_defaults" do
+      it "sets default Host header" do
+        client = TestClient.new "www.example.com"
+        request = HTTP::Request.new("GET", "/")
+        client.set_defaults(request)
+        request.host.should eq "www.example.com"
+
+        request = HTTP::Request.new("GET", "/", HTTP::Headers{"Host" => "other.example.com"})
+        client.set_defaults(request)
+        request.host.should eq "other.example.com"
       end
     end
   end

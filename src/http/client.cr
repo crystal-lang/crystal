@@ -562,6 +562,7 @@ class HTTP::Client
   end
 
   private def set_defaults(request)
+    request.headers["Host"] ||= host_header
     request.headers["User-Agent"] ||= "Crystal"
     {% if flag?(:without_zlib) %}
       false
@@ -651,9 +652,7 @@ class HTTP::Client
   end
 
   private def new_request(method, path, headers, body : BodyType)
-    HTTP::Request.new(method, path, headers, body).tap do |request|
-      request.headers["Host"] ||= host_header
-    end
+    HTTP::Request.new(method, path, headers, body)
   end
 
   private def socket
