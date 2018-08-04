@@ -260,12 +260,12 @@ class Time::Location
   # ```
   # # This tries to load the file `/usr/share/zoneinfo/Custom/Location`
   # ENV["ZONEINFO"] = "/usr/share/zoneinfo/"
-  # Location.load("Custom/Location")
+  # Time::Location.load("Custom/Location")
   #
   # # This tries to load the file `Custom/Location` in the uncompressed ZIP
   # # file at `/path/to/zoneinfo.zip`
   # ENV["ZONEINFO"] = "/path/to/zoneinfo.zip"
-  # Location.load("Custom/Location")
+  # Time::Location.load("Custom/Location")
   # ```
   #
   # If the location name cannot be found, `InvalidLocationNameError` is raised.

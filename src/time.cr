@@ -59,10 +59,10 @@ require "crystal/system/time"
 # time.second      # => 30
 # time.millisecond # => 0
 # time.nanosecond  # => 0
-# time.day_of_week # => Monday
+# time.day_of_week # => Time::DayOfWeek::Monday
 # time.day_of_year # => 46
 # time.monday?     # => true
-# time.time_of_day # => 15:10:30
+# time.time_of_day # => 10:20:30
 # ```
 #
 # ### Time Zones
@@ -85,7 +85,7 @@ require "crystal/system/time"
 #
 # ```
 # time = Time.utc(2018, 3, 8, 22, 5, 13)
-# time          # => 2016-02-15 10:20:30 UTC
+# time          # => 2018-03-08 22:05:13.0 UTC
 # time.location # => #<Time::Location UTC>
 # time.zone     # => #<Time::Location::Zone UTC +00:00 (0s) STD>
 # time.offset   # => 0
@@ -353,7 +353,7 @@ struct Time
   #
   # ```
   # time = Time.new(2016, 2, 15, 10, 20, 30, location: Time::Location.load("Europe/Berlin"))
-  # time.to_s # => 2016-02-15 10:20:30 +01:00 Europe/Berlin
+  # time.inspect # => "2016-02-15 10:20:30.0 +01:00 Europe/Berlin"
   # ```
   #
   # Valid value ranges for the individual fields:
@@ -370,7 +370,7 @@ struct Time
   #
   # ```
   # time = Time.new(2016, 2, 15)
-  # time.to_s # => 2016-02-15 00:00:00 +00:00 Local
+  # time.to_s # => "2016-02-15 00:00:00 +00:00"
   # ```
   #
   # The local date-time representation is resolved to a single instant based on
@@ -414,7 +414,7 @@ struct Time
   #
   # ```
   # time = Time.utc(2016, 2, 15, 10, 20, 30)
-  # time.to_s # => 2016-02-15 10:20:30 UTC
+  # time.to_s # => "2016-02-15 10:20:30 UTC"
   # ```
   #
   # Valid value ranges for the individual fields:
@@ -431,7 +431,7 @@ struct Time
   #
   # ```
   # time = Time.utc(2016, 2, 15)
-  # time.to_s # => 2016-02-15 00:00:00 UTC
+  # time.to_s # => "2016-02-15 00:00:00 UTC"
   # ```
   #
   # Since UTC does not have any time zone transitions, each date-time is
@@ -685,7 +685,7 @@ struct Time
   #
   # ```
   # time.time_of_day == Time::Span.new(time.hour, time.minute, time.second, time.nanosecond)
-  # ``
+  # ```
   def time_of_day : Time::Span
     Span.new(nanoseconds: NANOSECONDS_PER_SECOND * (offset_seconds % SECONDS_PER_DAY) + nanosecond)
   end
@@ -873,7 +873,7 @@ struct Time
   # Format this time using the format specified by [RFC 3339](https://tools.ietf.org/html/rfc3339) ([ISO 8601](http://xml.coverpages.org/ISO-FDIS-8601.pdf) profile).
   #
   # ```
-  # Time.new(2016, 2, 15).to_rfc3339 # => "2016-02-15T00:00:00+00:00"
+  # Time.utc(2016, 2, 15).to_rfc3339 # => "2016-02-15T00:00:00Z"
   # ```
   #
   # ISO 8601 allows some freedom over the syntax and RFC 3339 exercises that
@@ -907,7 +907,7 @@ struct Time
   # Format this time using the format specified by [RFC 2822](https://www.ietf.org/rfc/rfc2822.txt).
   #
   # ```
-  # Time.new(2016, 2, 15).to_rfc2822 # => "Mon, 15 Feb 2016 00:00:00 -0400"
+  # Time.utc(2016, 2, 15).to_rfc2822 # => "Mon, 15 Feb 2016 00:00:00 +0000"
   # ```
   #
   # This is also compatible to [RFC 882](https://tools.ietf.org/html/rfc882) and [RFC 1123](https://tools.ietf.org/html/rfc1123#page-55).

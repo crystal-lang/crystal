@@ -27,7 +27,7 @@ module JSON
   #
   # houses = Array(House).from_json(%([{"address": "Crystal Road 1234", "location": {"lat": 12.3, "lng": 34.5}}]))
   # houses.size    # => 1
-  # houses.to_json # => [{"address":"Crystal Road 1234","location":{"lat":12.3,"lng":34.5}}]
+  # houses.to_json # => %([{"address":"Crystal Road 1234","location":{"lat":12.3,"lng":34.5}}])
   # ```
   #
   # ### Usage

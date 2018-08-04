@@ -252,7 +252,7 @@ module HTTP
   # timezone `GMT` (interpreted as `UTC`).
   #
   # ```
-  # HTTP.format_time(Time.new(2016, 2, 15)) # => "Sun, 14 Feb 2016 21:00:00 GMT"
+  # HTTP.format_time(Time.utc(2016, 2, 15)) # => "Mon, 15 Feb 2016 00:00:00 GMT"
   # ```
   #
   # Uses `Time::Format::HTTP_DATE` as formatter.
