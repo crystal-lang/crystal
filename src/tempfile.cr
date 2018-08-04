@@ -1,4 +1,5 @@
 require "c/stdlib"
+require "file_utils"
 
 # The `Tempfile` class is for managing temporary files.
 # Every tempfile is operated as a `File`, including
@@ -76,6 +77,36 @@ class Tempfile < File
     {% else %}
       File.join(dirname, "#{time}-#{Process.pid}-#{rand}#{extension}")
     {% end %}
+  end
+
+  # Yields a fully-qualified path to a temporary file to the given block and
+  # ensures the path is removed at exit if it exists.
+  #
+  # This method is useful to ensure a temporary path is cleaned up after it has
+  # been used. The path will be removed whether it is a file or directory.
+  #
+  # The optional `extension` argument can be used to make the resulting
+  # filename to end with the given extension.
+  #
+  # The file will not actually be created by this method.
+  #
+  # ```
+  # Tempfile.tempname("txt") do |temp|
+  #   File.write(temp, "foo")
+  #   File.read(temp) # => "foo"
+  # end
+  #
+  # Tempfile.tempname do |temp|
+  #   `git clone https://github.com/crystal-lang/crystal.git #{temp}`
+  # end
+  # ```
+  def self.tempname(extension = nil)
+    path = tempname(extension)
+    yield path
+  ensure
+    if path && File.exists?(path)
+      FileUtils.rm_r(path)
+    end
   end
 
   # Creates a file with *filename* and *extension*, and yields it to the given

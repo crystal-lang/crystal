@@ -1,8 +1,9 @@
 require "spec"
 require "tempfile"
+require "file_utils"
 
 describe Tempfile do
-  describe "tempname" do
+  describe ".tempname" do
     it "creates a path without creating the file" do
       path = Tempfile.tempname
 
@@ -13,6 +14,45 @@ describe Tempfile do
       path = Tempfile.tempname ".sock"
 
       File.extname(path).should eq(".sock")
+    end
+  end
+
+  describe ".tempname (yield)" do
+    it "uses extension argument" do
+      Tempfile.tempname(".xml") do |path|
+        File.extname(path).should eq ".xml"
+      end
+    end
+
+    it "works if path is not used" do
+      temp_path = nil
+      Tempfile.tempname do |path|
+        File.exists?(path).should be_false
+        temp_path = path
+      end
+      File.exists?(temp_path.not_nil!).should be_false
+    end
+
+    it "ensures file is removed" do
+      temp_path = nil
+      Tempfile.tempname do |path|
+        File.exists?(path).should be_false
+        File.touch(path)
+        temp_path = path
+        File.exists?(path).should be_true
+      end
+      File.exists?(temp_path.not_nil!).should be_false
+    end
+
+    it "ensures dir is removed" do
+      temp_path = nil
+      Tempfile.tempname do |path|
+        File.exists?(path).should be_false
+        FileUtils.mkdir(path)
+        temp_path = path
+        File.exists?(path).should be_true
+      end
+      File.exists?(temp_path.not_nil!).should be_false
     end
   end
 
