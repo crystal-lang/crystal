@@ -380,7 +380,8 @@ module Crystal
             atomic.doc = doc
             atomic
           end
-        when :"+=", :"-=", :"*=", :"/=", :"%=", :"|=", :"&=", :"^=", :"**=", :"<<=", :">>=", :"||=", :"&&=", :"&+=", :"&-=", :"&*="
+        when :"+=", :"-=", :"*=", :"/=", :"//=", :"%=", :"|=", :"&=", :"^=", :"**=", :"<<=", :">>=",
+             :"||=", :"&&=", :"&+=", :"&-=", :"&*="
           unexpected_token unless allow_ops
 
           break unless can_be_assigned?(atomic)
@@ -531,7 +532,7 @@ module Crystal
       end
     end
 
-    parse_operator :mul_or_div, :pow, "Call.new left, method, [right] of ASTNode, name_column_number: method_column_number", %(:"*", :"/", :"%", :"&*")
+    parse_operator :mul_or_div, :pow, "Call.new left, method, [right] of ASTNode, name_column_number: method_column_number", %(:"*", :"/", :"//", :"%", :"&*")
     parse_operator :pow, :prefix, "Call.new left, method, [right] of ASTNode, name_column_number: method_column_number", %(:"**", :"&**")
 
     def parse_prefix
@@ -552,7 +553,7 @@ module Crystal
       end
     end
 
-    AtomicWithMethodCheck = [:IDENT, :CONST, :"+", :"-", :"*", :"/", :"%", :"|", :"&", :"^", :"**", :"<<", :"<", :"<=", :"==", :"!=", :"=~", :"!~", :">>", :">", :">=", :"<=>", :"===", :"[]", :"[]=", :"[]?", :"[", :"&+", :"&-", :"&*", :"&**"]
+    AtomicWithMethodCheck = [:IDENT, :CONST, :"+", :"-", :"*", :"/", :"//", :"%", :"|", :"&", :"^", :"**", :"<<", :"<", :"<=", :"==", :"!=", :"=~", :"!~", :">>", :">", :">=", :"<=>", :"===", :"[]", :"[]=", :"[]?", :"[", :"&+", :"&-", :"&*", :"&**"]
 
     def parse_atomic_with_method
       location = @token.location
@@ -666,7 +667,7 @@ module Crystal
 
               atomic = Call.new(atomic, "#{name}=", [arg] of ASTNode, name_column_number: name_column_number).at(location)
               next
-            when :"+=", :"-=", :"*=", :"/=", :"%=", :"|=", :"&=", :"^=", :"**=", :"<<=", :">>=", :"||=", :"&&=", :"&+=", :"&-=", :"&*="
+            when :"+=", :"-=", :"*=", :"/=", :"//=", :"%=", :"|=", :"&=", :"^=", :"**=", :"<<=", :">>=", :"||=", :"&&=", :"&+=", :"&-=", :"&*="
               method = @token.type.to_s.byte_slice(0, @token.type.to_s.size - 1)
               next_token_skip_space_or_newline
               value = parse_op_assign
@@ -2772,19 +2773,14 @@ module Crystal
 
       next_token
 
-      case current_char
-      when '%'
-        next_char
-        @token.type = :"%"
-        @token.column_number += 1
-      when '/'
-        next_char
-        @token.type = :"/"
-        @token.column_number += 1
-      else
-        skip_space_or_newline
-        check DefOrMacroCheck1
-      end
+      # Force lexer return if possible a def or macro name
+      # cases like: def `, def /, def //
+      # that in regular statements states for delimiters
+      # here must be treated as method names.
+      @wants_def_or_macro_name = true
+      skip_space_or_newline
+      check DefOrMacroCheck1
+      @wants_def_or_macro_name = false
 
       push_def
 
@@ -2880,6 +2876,7 @@ module Crystal
 
     def parse_macro_body(start_line, start_column, macro_state = Token::MacroState.default)
       skip_whitespace = check_macro_skip_whitespace
+      slash_is_regex!
 
       pieces = [] of ASTNode
 
@@ -2975,6 +2972,7 @@ module Crystal
     def parse_percent_macro_expression
       raise "can't nest macro expressions", @token if @in_macro_expression
 
+      slash_is_regex!
       location = @token.location
       macro_exp = parse_macro_expression
       check_macro_expression_end
@@ -3194,8 +3192,9 @@ module Crystal
       exp
     end
 
-    DefOrMacroCheck1 = [:IDENT, :CONST, :"<<", :"<", :"<=", :"==", :"===", :"!=", :"=~", :"!~", :">>", :">", :">=", :"+", :"-", :"*", :"/", :"!", :"~", :"%", :"&", :"|", :"^", :"**", :"[]", :"[]=", :"<=>", :"[]?", :"&+", :"&-", :"&*", :"&**"]
-    DefOrMacroCheck2 = [:"<<", :"<", :"<=", :"==", :"===", :"!=", :"=~", :"!~", :">>", :">", :">=", :"+", :"-", :"*", :"/", :"!", :"~", :"%", :"&", :"|", :"^", :"**", :"[]", :"[]?", :"[]=", :"<=>", :"&+", :"&-", :"&*", :"&**"]
+    DefOrMacroCheck1 = [:IDENT, :CONST, :"`",
+                        :"<<", :"<", :"<=", :"==", :"===", :"!=", :"=~", :"!~", :">>", :">", :">=", :"+", :"-", :"*", :"/", :"//", :"!", :"~", :"%", :"&", :"|", :"^", :"**", :"[]", :"[]?", :"[]=", :"<=>", :"&+", :"&-", :"&*", :"&**"]
+    DefOrMacroCheck2 = [:"<<", :"<", :"<=", :"==", :"===", :"!=", :"=~", :"!~", :">>", :">", :">=", :"+", :"-", :"*", :"/", :"//", :"!", :"~", :"%", :"&", :"|", :"^", :"**", :"[]", :"[]?", :"[]=", :"<=>", :"&+", :"&-", :"&*", :"&**"]
 
     def parse_def_helper(is_abstract = false)
       push_def
@@ -3208,23 +3207,14 @@ module Crystal
 
       next_token
 
-      case current_char
-      when '%'
-        next_char
-        @token.type = :"%"
-        @token.column_number += 1
-      when '/'
-        next_char
-        @token.type = :"/"
-        @token.column_number += 1
-      when '`'
-        next_char
-        @token.type = :"`"
-        @token.column_number += 1
-      else
-        skip_space_or_newline
-        check DefOrMacroCheck1
-      end
+      # Force lexer return if possible a def or macro name
+      # cases like: def `, def /, def //
+      # that in regular statements states for delimiters
+      # here must be treated as method names.
+      @wants_def_or_macro_name = true
+      skip_space_or_newline
+      check DefOrMacroCheck1
+      @wants_def_or_macro_name = false
 
       receiver = nil
       @yields = nil

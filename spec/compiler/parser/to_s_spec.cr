@@ -37,7 +37,10 @@ describe "ASTNode#to_s" do
   expect_to_s "@foo.bar"
   expect_to_s %(:foo)
   expect_to_s %(:"{")
+  expect_to_s %(%r())
+  expect_to_s %(%r()imx)
   expect_to_s %(/hello world/)
+  expect_to_s %(/hello world/imx)
   expect_to_s %(/\\s/)
   expect_to_s %(/\\?/)
   expect_to_s %(/\\(group\\)/)

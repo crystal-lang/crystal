@@ -1,8 +1,11 @@
 require "../../support/syntax"
 
-private def it_lexes(string, type)
+private def it_lexes(string, type, *, slash_is_regex : Bool? = nil)
   it "lexes #{string.inspect}" do
     lexer = Lexer.new string
+    unless (v = slash_is_regex).nil?
+      lexer.slash_is_regex = v
+    end
     token = lexer.next_token
     token.type.should eq(type)
   end
@@ -99,7 +102,7 @@ end
 
 private def it_lexes_operators(ops)
   ops.each do |op|
-    it_lexes op.to_s, op
+    it_lexes op.to_s, op, slash_is_regex: false
   end
 end
 
@@ -244,9 +247,9 @@ describe "Lexer" do
   it_lexes_char "'\\\\'", '\\'
   assert_syntax_error "'", "unterminated char literal"
   assert_syntax_error "'\\", "unterminated char literal"
-  it_lexes_operators [:"=", :"<", :"<=", :">", :">=", :"+", :"-", :"*", :"(", :")",
+  it_lexes_operators [:"=", :"<", :"<=", :">", :">=", :"+", :"-", :"*", :"/", :"//", :"(", :")",
                       :"==", :"!=", :"=~", :"!", :",", :".", :"..", :"...", :"&&", :"||",
-                      :"|", :"{", :"}", :"?", :":", :"+=", :"-=", :"*=", :"%=", :"&=",
+                      :"|", :"{", :"}", :"?", :":", :"+=", :"-=", :"*=", :"/=", :"%=", :"//=", :"&=",
                       :"|=", :"^=", :"**=", :"<<", :">>", :"%", :"&", :"|", :"^", :"**", :"<<=",
                       :">>=", :"~", :"[]", :"[]=", :"[", :"]", :"::", :"<=>", :"=>", :"||=",
                       :"&&=", :"===", :";", :"->", :"[]?", :"{%", :"{{", :"%}", :"@[", :"!~",
@@ -260,7 +263,7 @@ describe "Lexer" do
   it_lexes_instance_var "@foo"
   it_lexes_class_var "@@foo"
   it_lexes_globals ["$foo", "$FOO", "$_foo", "$foo123"]
-  it_lexes_symbols [":foo", ":foo!", ":foo?", ":foo=", ":\"foo\"", ":かたな", ":+", ":-", ":*", ":/",
+  it_lexes_symbols [":foo", ":foo!", ":foo?", ":foo=", ":\"foo\"", ":かたな", ":+", ":-", ":*", ":/", "://",
                     ":==", ":<", ":<=", ":>", ":>=", ":!", ":!=", ":=~", ":!~", ":&", ":|",
                     ":^", ":~", ":**", ":>>", ":<<", ":%", ":[]", ":[]?", ":[]=", ":<=>", ":===",
                     ":&+", ":&-", ":&*", ":&**"]
@@ -495,13 +498,6 @@ describe "Lexer" do
     token = lexer.next_token
     token.type.should eq(:SYMBOL)
     token.value.should eq ("a")
-  end
-
-  it "lexes /=" do
-    lexer = Lexer.new("/=")
-    lexer.slash_is_regex = false
-    token = lexer.next_token
-    token.type.should eq(:"/=")
   end
 
   it "lexes != after identifier (#4815)" do
