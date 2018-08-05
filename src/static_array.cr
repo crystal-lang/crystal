@@ -16,7 +16,7 @@
 # case is in combination with `uninitialized`:
 #
 # ```
-# ints = unininitialized Int32[3]
+# ints = uninitialized Int32[3]
 # ints[0] = 0
 # ints[1] = 8
 # ints[3] = 15
