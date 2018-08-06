@@ -35,6 +35,32 @@ class Dir
     end
   end
 
+  # Returns the tmp dir for system.
+  #
+  # ```
+  # Dir.tempdir # => "/tmp"
+  # ```
+  def self.tempdir : String
+    Crystal::System::File.tempdir
+  end
+
+  # Returns a fully-qualified path to a temporary directory without actually
+  # creating the directory.
+  #
+  # ```
+  # Dir.tempname # => "/tmp/20171206-1234-449386"
+  # ```
+  def self.tempname
+    time = Time.now.to_s("%Y%m%d")
+    rand = Random.rand(0x100000000).to_s(36)
+    {% if flag?(:win32) %}
+      # TODO: Remove this once Process is implemented
+      File.join(dirname, "#{time}-#{rand}")
+    {% else %}
+      File.join(dirname, "#{time}-#{Process.pid}-#{rand}")
+    {% end %}
+  end
+
   # Calls the block once for each entry in this directory,
   # passing the filename of each entry as a parameter to the block.
   #

@@ -437,4 +437,22 @@ describe "Dir" do
       Dir.rmdir("foo\0bar")
     end
   end
+
+  describe "tempdir" do
+    it "returns default directory for tempfiles" do
+      old_tmpdir = ENV["TMPDIR"]?
+      ENV.delete("TMPDIR")
+      Dir.tempdir.should eq("/tmp")
+    ensure
+      ENV["TMPDIR"] = old_tmpdir if old_tmpdir
+    end
+
+    it "returns configure directory for tempfiles" do
+      old_tmpdir = ENV["TMPDIR"]?
+      ENV["TMPDIR"] = "/my/tmp"
+      Dir.tempdir.should eq("/my/tmp")
+    ensure
+      ENV["TMPDIR"] = old_tmpdir if old_tmpdir
+    end
+  end
 end
