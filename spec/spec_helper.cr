@@ -186,13 +186,13 @@ def run(code, filename = nil, inject_primitives = true, debug = Crystal::Debug::
 end
 
 def build_and_run(code)
-  code_file = Tempfile.new("build_and_run_code")
+  code_file = File.tempfile("build_and_run_code")
   code_file.close
 
   # write code to the temp file
   File.write(code_file.path, code)
 
-  binary_file = Tempfile.new("build_and_run_bin")
+  binary_file = File.tempfile("build_and_run_bin")
   binary_file.close
 
   `bin/crystal build #{code_file.path.inspect} -o #{binary_file.path.inspect}`

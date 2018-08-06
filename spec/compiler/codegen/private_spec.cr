@@ -1,5 +1,4 @@
 require "../../spec_helper"
-require "tempfile"
 
 describe "Codegen: private" do
   it "codegens private def in same file" do
@@ -15,7 +14,7 @@ describe "Codegen: private" do
     ]
     compiler.prelude = "empty"
 
-    tempfile = Tempfile.new("crystal-spec-output")
+    tempfile = File.tempfile("crystal-spec-output")
     output_filename = tempfile.path
     tempfile.close
 
@@ -42,7 +41,7 @@ describe "Codegen: private" do
     ]
     compiler.prelude = "empty"
 
-    tempfile = Tempfile.new("crystal-spec-output")
+    tempfile = File.tempfile("crystal-spec-output")
     output_filename = tempfile.path
     tempfile.close
 
