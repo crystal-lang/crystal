@@ -11,7 +11,6 @@ module Crystal
   MALLOC_NAME        = "__crystal_malloc64"
   MALLOC_ATOMIC_NAME = "__crystal_malloc_atomic64"
   REALLOC_NAME       = "__crystal_realloc64"
-  PERSONALITY_NAME   = "__crystal_personality"
   GET_EXCEPTION_NAME = "__crystal_get_exception"
 
   class Program
@@ -97,6 +96,7 @@ module Crystal
     getter llvm_typer : LLVMTyper
     getter alloca_block : LLVM::BasicBlock
     getter entry_block : LLVM::BasicBlock
+    getter personality_name : String
     property last : LLVM::Value
 
     class LLVMVar
@@ -129,6 +129,7 @@ module Crystal
     @argv : LLVM::Value
     @empty_md_list : LLVM::Value
     @rescue_block : LLVM::BasicBlock?
+    @catch_pad : LLVM::Value?
     @malloc_fun : LLVM::Function?
     @malloc_atomic_fun : LLVM::Function?
     @c_malloc_fun : LLVM::Function?
@@ -155,6 +156,15 @@ module Crystal
       @main_ret_type = node.type? || @program.nil_type
       ret_type = @llvm_typer.llvm_return_type(@main_ret_type)
       @main = @llvm_mod.functions.add(MAIN_NAME, [llvm_context.int32, llvm_context.void_pointer.pointer], ret_type)
+
+      if @program.has_flag? "windows"
+        @personality_name = "__CxxFrameHandler3"
+
+        personality_function = @llvm_mod.functions.add(@personality_name, [] of LLVM::Type, llvm_context.int32, true)
+        @main.personality_function = personality_function
+      else
+        @personality_name = "__crystal_personality"
+      end
 
       emit_main_def_debug_metadata(@main, "??") unless @debug.none?
 
@@ -282,7 +292,7 @@ module Crystal
 
       def visit(node : FunDef)
         case node.name
-        when MALLOC_NAME, MALLOC_ATOMIC_NAME, REALLOC_NAME, RAISE_NAME, PERSONALITY_NAME, GET_EXCEPTION_NAME
+        when MALLOC_NAME, MALLOC_ATOMIC_NAME, REALLOC_NAME, RAISE_NAME, @codegen.personality_name, GET_EXCEPTION_NAME
           @codegen.accept node
         end
         false
@@ -613,6 +623,12 @@ module Crystal
 
       if return_phi = context.return_phi
         return_phi.add @last, node_type
+      elsif catch_pad = @catch_pad
+        ret_block = new_block "catchret_ret"
+        builder.build_catch_ret catch_pad, ret_block
+
+        position_at_end ret_block
+        codegen_return node_type
       else
         codegen_return node_type
       end
@@ -1520,6 +1536,7 @@ module Crystal
       old_fun = context.fun
       old_ensure_exception_handlers = @ensure_exception_handlers
       old_rescue_block = @rescue_block
+      old_catch_pad = @catch_pad
       old_entry_block = @entry_block
       old_alloca_block = @alloca_block
       old_needs_value = @needs_value
@@ -1530,6 +1547,7 @@ module Crystal
 
       @ensure_exception_handlers = nil
       @rescue_block = nil
+      @catch_pad = nil
 
       block_value = yield
 
@@ -1541,6 +1559,7 @@ module Crystal
       @llvm_typer = old_llvm_typer
       @ensure_exception_handlers = old_ensure_exception_handlers
       @rescue_block = old_rescue_block
+      @catch_pad = old_catch_pad
       @entry_block = old_entry_block
       @alloca_block = old_alloca_block
       @needs_value = old_needs_value

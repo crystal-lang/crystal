@@ -43,7 +43,8 @@ describe "Dir" do
       end
     end
 
-    it "tests empty? on a directory path to a file" do
+    # TODO: do we even want this?
+    pending_win32 "tests empty? on a directory path to a file" do
       ex = expect_raises(Errno, /Error determining size of/) do
         Dir.empty?(datapath("dir", "f1.txt", "/"))
       end
