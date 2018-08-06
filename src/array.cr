@@ -567,7 +567,7 @@ class Array(T)
     end
 
     (@buffer + @size).copy_from(other.to_unsafe, other_size)
-    @size += other_size
+    @size = new_size
 
     self
   end
