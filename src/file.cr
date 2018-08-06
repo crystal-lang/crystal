@@ -454,9 +454,9 @@ class File < IO::FileDescriptor
     rand = Random.rand(0x100000000).to_s(36)
     {% if flag?(:win32) %}
       # TODO: Remove this once Process is implemented
-      File.join(dirname, "#{time}-#{rand}#{extension}")
+      File.join(Dir.tempdir, "#{time}-#{rand}#{extension}")
     {% else %}
-      File.join(dirname, "#{time}-#{Process.pid}-#{rand}#{extension}")
+      File.join(Dir.tempdir, "#{time}-#{Process.pid}-#{rand}#{extension}")
     {% end %}
   end
 

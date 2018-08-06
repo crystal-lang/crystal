@@ -1,6 +1,7 @@
 require "spec"
 require "http/server"
 require "http/client/response"
+require "../../../support/ssl"
 
 private class RaiseErrno < IO
   def initialize(@value : Int32)

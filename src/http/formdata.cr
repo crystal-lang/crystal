@@ -10,7 +10,6 @@ require "./formdata/**"
 #
 # ```
 # require "http"
-# require "tempfile"
 #
 # server = HTTP::Server.new do |context|
 #   name = nil
@@ -20,7 +19,7 @@ require "./formdata/**"
 #     when "name"
 #       name = part.body.gets_to_end
 #     when "file"
-#       file = Tempfile.open("upload") do |file|
+#       file = File.tempfile("upload") do |file|
 #         IO.copy(part.body, file)
 #       end
 #     end
