@@ -21,7 +21,7 @@ require "c/string"
 # x # => 2
 # ```
 #
-# Note that a pointer is *falsey* if it's null (if it's address is zero).
+# Note that a pointer is *falsey* if it's null (if its address is zero).
 #
 # When calling a C function that expects a pointer you can also pass `nil` instead of using
 # `Pointer.null` to construct a null pointer.
