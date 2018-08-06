@@ -26,15 +26,6 @@ require "comparable"
 # '\v' # vertical tab
 # ```
 #
-# You can use a backslash followed by at most three digits to denote a code point written in octal:
-#
-# ```
-# '\101' # == 'A'
-# '\123' # == 'S'
-# '\12'  # == '\n'
-# '\1'   # code point 1
-# ```
-#
 # You can use a backslash followed by an *u* and four hexadecimal characters to denote a unicode codepoint written:
 #
 # ```
@@ -58,7 +49,7 @@ struct Char
   # The maximum valid codepoint for a character.
   MAX_CODEPOINT = 0x10ffff
 
-  # The replacement character, used on invalid utf-8 byte sequences
+  # The replacement character, used on invalid UTF-8 byte sequences.
   REPLACEMENT = '\ufffd'
 
   # Returns the difference of the codepoint values of this char and *other*.
@@ -564,13 +555,13 @@ struct Char
   # in *base*, `nil` otherwise.
   #
   # ```
-  # '1'.to_i     # => 1
-  # '8'.to_i     # => 8
-  # 'c'.to_i     # raises ArgumentError
-  # '1'.to_i(16) # => 1
-  # 'a'.to_i(16) # => 10
-  # 'f'.to_i(16) # => 15
-  # 'z'.to_i(16) # raises ArgumentError
+  # '1'.to_i?     # => 1
+  # '8'.to_i?     # => 8
+  # 'c'.to_i?     # => nil
+  # '1'.to_i?(16) # => 1
+  # 'a'.to_i?(16) # => 10
+  # 'f'.to_i?(16) # => 15
+  # 'z'.to_i?(16) # => nil
   # ```
   def to_i?(base : Int = 10) : Int32?
     raise ArgumentError.new "Invalid base #{base}, expected 2 to 36" unless 2 <= base <= 36
@@ -614,9 +605,9 @@ struct Char
   # raises otherwise.
   #
   # ```
-  # '1'.to_i # => 1.0
-  # '8'.to_i # => 8.0
-  # 'c'.to_i # raises ArgumentError
+  # '1'.to_f # => 1.0
+  # '8'.to_f # => 8.0
+  # 'c'.to_f # raises ArgumentError
   # ```
   def to_f
     to_f64
@@ -626,9 +617,9 @@ struct Char
   # `nil` otherwise.
   #
   # ```
-  # '1'.to_i # => 1.0
-  # '8'.to_i # => 8.0
-  # 'c'.to_i # raises ArgumentError
+  # '1'.to_f? # => 1.0
+  # '8'.to_f? # => 8.0
+  # 'c'.to_f? # => nil
   # ```
   def to_f?
     to_f64?
