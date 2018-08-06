@@ -888,13 +888,9 @@ describe "Semantic: instance var" do
         def x
           @x ||= 1
         end
-
-        def _x
-          @x
-        end
       end
 
-      Foo.new._x
+      Foo.new.@x
       )) { nilable int32 }
   end
 
@@ -904,13 +900,9 @@ describe "Semantic: instance var" do
         def x
           x = @x ||= 1
         end
-
-        def _x
-          @x
-        end
       end
 
-      Foo.new._x
+      Foo.new.@x
       )) { nilable int32 }
   end
 
@@ -4705,13 +4697,9 @@ describe "Semantic: instance var" do
             @never_nil = 2
           end
         end
-
-        def _never_nil
-          @never_nil
-        end
       end
 
-      Foo.new._never_nil
+      Foo.new.@never_nil
       )) { int32 }
   end
 
@@ -4726,10 +4714,6 @@ describe "Semantic: instance var" do
             @never_nil = 2
           end
         end
-
-        def _never_nil
-          @never_nil
-        end
       end
 
       class Bar
@@ -4740,13 +4724,9 @@ describe "Semantic: instance var" do
             @never_nil = 2
           end
         end
-
-        def _never_nil
-          @never_nil
-        end
       end
 
-      {Foo.new._never_nil, Bar.new._never_nil}
+      {Foo.new.@never_nil, Bar.new.@never_nil}
     )) { tuple_of([int32, int32]) }
   end
 
@@ -4860,13 +4840,9 @@ describe "Semantic: instance var" do
 
       class Foo
         @foo = Gen(Int32 | A).new
-
-        def _foo
-          @foo
-        end
       end
 
-      Foo.new._foo
+      Foo.new.@foo
     )) { generic_class "Gen", union_of(int32, types["A"]) }
   end
 

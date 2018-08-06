@@ -356,14 +356,10 @@ describe "Code gen: pointer" do
         def x
           @x
         end
-
-        def self.ptr(foo)
-          pointerof(foo.@x)
-        end
       end
 
       foo = Foo.new
-      Foo.ptr(foo).value = 123
+      pointerof(foo.@x).value = 123
       foo.x
       )).to_i.should eq(123)
   end

@@ -303,14 +303,8 @@ describe "Semantic: struct" do
         end
       end
 
-      struct LibFoo::Foo
-        def self.read(foo)
-          foo.@x
-        end
-      end
-
       f = LibFoo::Foo.new x: 123
-      LibFoo::Foo.read(f)
+      f.@x
       )) { int32 }
   end
 

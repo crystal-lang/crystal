@@ -145,14 +145,6 @@ private class YAMLWithOverwritingQueryAttributes
     foo?: Bool,
     bar?: {type: Bool, default: false, presence: true, key: "is_bar"},
   })
-
-  def _foo
-    @foo
-  end
-
-  def _bar
-    @bar
-  end
 end
 
 private class YAMLWithFinalize
@@ -530,8 +522,8 @@ describe "YAML mapping" do
 
     it "overwrites non-query attributes" do
       yaml = YAMLWithOverwritingQueryAttributes.from_yaml(%({"foo": true}))
-      typeof(yaml._foo).should eq(Bool)
-      typeof(yaml._bar).should eq(Bool)
+      typeof(yaml.@foo).should eq(Bool)
+      typeof(yaml.@bar).should eq(Bool)
     end
   end
 

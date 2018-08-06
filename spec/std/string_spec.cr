@@ -1,11 +1,5 @@
 require "spec"
 
-class String
-  def _length
-    @length
-  end
-end
-
 describe "String" do
   describe "[]" do
     it "gets with positive index" do
@@ -1523,13 +1517,13 @@ describe "String" do
     it "does for both ascii" do
       str = "foo" + "bar"
       str.bytesize.should eq(6)
-      str._length.should eq(6)
+      str.@length.should eq(6)
       str.should eq("foobar")
     end
 
     it "does for both unicode" do
       str = "青い" + "旅路"
-      str._length.should eq(4)
+      str.@length.should eq(4)
       str.should eq("青い旅路")
     end
 

@@ -414,10 +414,6 @@ describe "Code gen: struct" do
         def initialize
           @x = 21
         end
-
-        def self.access(foo)
-          foo.@x
-        end
       end
 
       struct Bar < Foo
@@ -429,7 +425,7 @@ describe "Code gen: struct" do
       struct Baz < Foo
       end
 
-      Foo.access(Bar.new.as(Foo))
+      Bar.new.as(Foo).@x
       )).to_i.should eq(42)
   end
 

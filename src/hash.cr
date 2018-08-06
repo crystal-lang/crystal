@@ -923,11 +923,6 @@ class Hash(K, V)
     raise "Hash table too big"
   end
 
-  # Needed for BaseIterator#rewind
-  protected def __first
-    @first
-  end
-
   private class Entry(K, V)
     getter key : K
     property value : V
@@ -960,7 +955,7 @@ class Hash(K, V)
     end
 
     def rewind
-      @current = @hash.__first
+      @current = @hash.@first
     end
   end
 
