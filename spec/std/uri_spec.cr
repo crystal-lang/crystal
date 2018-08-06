@@ -54,6 +54,19 @@ describe "URI" do
     end
   end
 
+  describe "#absolute?" do
+    it { URI.parse("http://www.example.com/foo").absolute?.should be_true }
+    it { URI.parse("http://www.example.com").absolute?.should be_true }
+    it { URI.parse("http://127.0.0.1").absolute?.should be_true }
+    it { URI.parse("http://[::1]/").absolute?.should be_true }
+    it { URI.parse("/foo").absolute?.should be_false }
+    it { URI.parse("foo").absolute?.should be_false }
+  end
+
+  describe "#relative?" do
+    it { URI.parse("/foo").relative?.should be_true }
+  end
+
   describe "normalize" do
     it "removes dot notation from path" do
       cases = {
