@@ -60,7 +60,7 @@ module YAML
   # * **ignore**: if `true` skip this field in seriazation and deserialization (by default false)
   # * **key**: the value of the key in the yaml object (by default the name of the instance variable)
   # * **converter**: specify an alternate type for parsing and generation. The converter must define `from_yaml(YAML::PullParser)` and `to_yaml(value, YAML::Builder)` as class methods. Examples of converters are `Time::Format` and `Time::EpochConverter` for `Time`.
-  # * **presense**: if `true`, a `@{{key}}_present` instance variable will be generated when the key was present (even if it has a `null` value), `false` by default
+  # * **presence**: if `true`, a `@{{key}}_present` instance variable will be generated when the key was present (even if it has a `null` value), `false` by default
   # * **emit_null**: if `true`, emits a `null` value for nilable property (by default nulls are not emitted)
   #
   # Deserialization also respects default values of variables:
