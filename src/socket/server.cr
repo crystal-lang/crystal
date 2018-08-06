@@ -1,5 +1,15 @@
 class Socket
   module Server
+    # Accepts an incoming connection and returns the client socket.
+    #
+    # If the server is closed after invoking this method, an `IO::Error` (closed stream) exception must be raised.
+    abstract def accept : Socket
+
+    # Accepts an incoming connection and returns the client socket.
+    #
+    # Returns `nil` if the server is closed after invoking this method.
+    abstract def accept? : Socket?
+
     # Accepts an incoming connection and yields the client socket to the block.
     # Eventually closes the connection when the block returns.
     #
