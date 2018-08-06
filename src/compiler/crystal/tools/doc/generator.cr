@@ -393,6 +393,9 @@ class Crystal::Doc::Generator
       filename = filename[1..-1] if filename.starts_with? File::SEPARATOR
       filename = filename[4..-1] if filename.starts_with? SRC_SEP
 
+      # Prevent identical link generation in the "Defined in:" section in the docs because of macros
+      next if locations.any? { |loc| loc.filename == filename && loc.line_number == location.line_number }
+
       show_line_number = locations.any? do |location|
         if location.filename == filename
           location.show_line_number = true
