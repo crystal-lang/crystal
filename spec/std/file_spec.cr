@@ -1076,6 +1076,93 @@ describe "File" do
     end
   {% end %}
 
+  describe "tempname" do
+    it "creates a path without creating the file" do
+      path = File.tempname
+
+      File.exists?(path).should be_false
+    end
+
+    it "has the given extension" do
+      path = File.tempname ".sock"
+
+      File.extname(path).should eq(".sock")
+    end
+  end
+
+  describe "tempfile" do
+    it "creates and writes" do
+      tempfile = File.tempfile "foo"
+      tempfile.print "Hello!"
+      tempfile.close
+
+      File.exists?(tempfile.path).should be_true
+      File.read(tempfile.path).should eq("Hello!")
+    ensure
+      File.delete(tempfile.path) if tempfile
+    end
+
+    it "has given extension if passed to constructor" do
+      tempfile = File.tempfile "foo", ".pdf"
+      File.extname(tempfile.path).should eq(".pdf")
+    end
+
+    it "creates and deletes" do
+      tempfile = File.tempfile "foo"
+      tempfile.close
+      tempfile.delete
+
+      File.exists?(tempfile.path).should be_false
+    ensure
+      File.delete(tempfile.path) if tempfile && File.exists?(tempfile.path)
+    end
+
+    it "doesn't delete on open with block" do
+      tempfile = File.tempfile("foo") do |f|
+        f.print "Hello!"
+      end
+      File.exists?(tempfile.path).should be_true
+    ensure
+      File.delete(tempfile.path) if tempfile
+    end
+
+    it "has given extension if passed to open" do
+      tempfile = File.tempfile("foo", ".pdf") { |f| }
+      File.extname(tempfile.path).should eq(".pdf")
+    ensure
+      File.delete(tempfile.path) if tempfile
+    end
+
+    it "creates and writes with TMPDIR environment variable" do
+      old_tmpdir = ENV["TMPDIR"]?
+      ENV["TMPDIR"] = "/tmp"
+
+      tempfile = File.tempfile "foo"
+      tempfile.print "Hello!"
+      tempfile.close
+
+      File.exists?(tempfile.path).should be_true
+      File.read(tempfile.path).should eq("Hello!")
+    ensure
+      ENV["TMPDIR"] = old_tmpdir if old_tmpdir
+      File.delete(tempfile.path) if tempfile
+    end
+
+    it "is seekable" do
+      tempfile = File.tempfile "foo"
+      tempfile.puts "Hello!"
+      tempfile.seek(0, IO::Seek::Set)
+      tempfile.tell.should eq(0)
+      tempfile.pos.should eq(0)
+      tempfile.gets(chomp: false).should eq("Hello!\n")
+      tempfile.pos = 0
+      tempfile.gets(chomp: false).should eq("Hello!\n")
+      tempfile.close
+    ensure
+      File.delete(tempfile.path) if tempfile
+    end
+  end
+
   describe "closed stream" do
     it "raises if writing on a closed stream" do
       io = File.open(datapath("test_file.txt"), "r")
@@ -1271,6 +1358,8 @@ describe "File" do
       File.match?("ab{{c,d}ef,}", "abcef").should be_true
       File.match?("ab{{c,d}ef,}", "abdef").should be_true
     end
+
+
   end
 
   describe File::Permissions do
