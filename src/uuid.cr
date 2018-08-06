@@ -1,20 +1,33 @@
 # Represents a UUID (Universally Unique IDentifier).
 struct UUID
-  enum Variant # variants with 16 bytes.
-    Unknown    # Unknown (ie. custom, your own).
-    NCS        # Reserved by the NCS for backward compatibility.
-    RFC4122    # Reserved for RFC4122 Specification (default).
-    Microsoft  # Reserved by Microsoft for backward compatibility.
-    Future     # Reserved for future expansion.
+  # Variants with 16 bytes.
+  enum Variant
+    # Unknown (i.e. custom, your own).
+    Unknown
+    # Reserved by the NCS for backward compatibility.
+    NCS
+    # Reserved for RFC4122 Specification (default).
+    RFC4122
+    # Reserved by Microsoft for backward compatibility.
+    Microsoft
+    # Reserved for future expansion.
+    Future
   end
 
-  enum Version  # RFC4122 UUID versions.
-    Unknown = 0 # Unknown version.
-    V1      = 1 # date-time and MAC address.
-    V2      = 2 # DCE security.
-    V3      = 3 # MD5 hash and namespace.
-    V4      = 4 # random.
-    V5      = 5 # SHA1 hash and namespace.
+  # RFC4122 UUID versions.
+  enum Version
+    # Unknown version.
+    Unknown = 0
+    # Date-time and MAC address.
+    V1 = 1
+    # DCE security.
+    V2 = 2
+    # MD5 hash and namespace.
+    V3 = 3
+    # Random.
+    V4 = 4
+    # SHA1 hash and namespace.
+    V5 = 5
   end
 
   protected getter bytes : StaticArray(UInt8, 16)
