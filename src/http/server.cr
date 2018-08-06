@@ -104,13 +104,13 @@ class HTTP::Server
   getter? listening : Bool = false
 
   # Creates a new HTTP server with the given block as handler.
-  def self.new(&handler : HTTP::Handler::Proc) : self
+  def self.new(&handler : HTTP::Handler::HandlerProc) : self
     new(handler)
   end
 
   # Creates a new HTTP server with a handler chain constructed from the *handlers*
   # array and the given block.
-  def self.new(handlers : Array(HTTP::Handler), &handler : HTTP::Handler::Proc) : self
+  def self.new(handlers : Array(HTTP::Handler), &handler : HTTP::Handler::HandlerProc) : self
     new(HTTP::Server.build_middleware(handlers, handler))
   end
 
@@ -120,7 +120,7 @@ class HTTP::Server
   end
 
   # Creates a new HTTP server with the given *handler*.
-  def initialize(handler : HTTP::Handler | HTTP::Handler::Proc)
+  def initialize(handler : HTTP::Handler | HTTP::Handler::HandlerProc)
     @processor = RequestProcessor.new(handler)
   end
 

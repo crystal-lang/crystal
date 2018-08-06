@@ -15,7 +15,7 @@
 # end
 # ```
 module HTTP::Handler
-  property next : Handler | Proc | Nil
+  property next : Handler | HandlerProc | Nil
 
   abstract def call(context : HTTP::Server::Context)
 
@@ -29,7 +29,7 @@ module HTTP::Handler
     end
   end
 
-  alias Proc = HTTP::Server::Context ->
+  alias HandlerProc = HTTP::Server::Context ->
 end
 
 require "./handlers/*"
