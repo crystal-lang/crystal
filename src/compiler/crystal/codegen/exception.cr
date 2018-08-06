@@ -4,6 +4,62 @@ class Crystal::CodeGenVisitor
   @node_ensure_exception_handlers = {} of UInt64 => Handler
 
   def visit(node : ExceptionHandler)
+    # In this codegen, we assume that LLVM only provides us with a basic try/catch abstraction with no
+    # type restrictions on the exception caught. The basic strategy is to codegen this
+    #
+    # ```cr
+    # begin
+    #   body
+    # else
+    #   else_body
+    # rescue ex : Ex1
+    #   rescue_1_body
+    # rescue ex : Ex2
+    #   rescue_2_body
+    # rescue ex
+    #   rescue_3_body
+    # ensure
+    #   ensure_body
+    # end
+    # ```
+    #
+    # Into something like (assuming goto is implemented in crystal):
+    #
+    # ```cr
+    # begin
+    #   body
+    # rescue ex
+    #   begin
+    #     if ex.is_a? Ex1
+    #       rescue_1_body
+    #     elsif ex.is_a? Ex2
+    #       rescue_2_body
+    #     else
+    #       if rescue_3_body
+    #         rescue_3_body
+    #       else
+    #         # If no handlers match and there is no generic handler, re-raise
+    #         ensure_body
+    #         raise ex
+    #       end
+    #     end
+    #
+    #     # Skip else_body if we ran an exception handler
+    #     goto exit
+    #   rescue ex2
+    #    ensure_body
+    #    raise ex2
+    #   end
+    # end
+    #
+    # else_body
+    #
+    # exit:
+    # ensure_body
+    # ```
+    #
+    # Note we codegen the ensure body three times! In practice this isn't a big deal, since ensure bodies are typically small.
+
     windows = @program.has_flag? "windows"
 
     context.fun.personality_function = @llvm_mod.functions[@personality_name] if windows
