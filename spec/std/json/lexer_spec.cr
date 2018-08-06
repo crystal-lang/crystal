@@ -90,6 +90,7 @@ describe JSON::Lexer do
   it_lexes_string "\"hello\\tworld\"", "hello\tworld"
   it_lexes_string "\"\\u201chello world\\u201d\"", "“hello world”"
   it_lexes_string "\"\\uD834\\uDD1E\"", "𝄞"
+  it_lexes_string "\"\\u00c3\\u0096\"", "Ö"
   it_lexes_int "0", 0
   it_lexes_int "1", 1
   it_lexes_int "1234", 1234
