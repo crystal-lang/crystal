@@ -105,7 +105,7 @@ module ENV
   # ```
   def self.each
     Crystal::System::Env.each do |key, value|
-      yield key, value
+      yield({key, value})
     end
   end
 
