@@ -1,3 +1,6 @@
+require "socket"
+require "uri"
+
 class Socket
   abstract struct Address
     getter family : Family
@@ -16,6 +19,31 @@ class Socket
       else
         raise "Unsupported family type: #{family} (#{family.value})"
       end
+    end
+
+    # Parses a `Socket::Address` from an URI.
+    #
+    # Supported formats:
+    # * `ip://<host>:<port>`
+    # * `tcp://<host>:<port>`
+    # * `udp://<host>:<port>`
+    # * `unix://<path>`
+    #
+    # See `IPAddress.parse` and `UNIXAddress.parse` for details.
+    def self.parse(uri : URI)
+      case uri.scheme
+      when "ip", "tcp", "udp"
+        IPAddress.parse uri
+      when "unix"
+        UNIXAddress.parse uri
+      else
+        raise Socket::Error.new "Unsupported address type: #{uri.scheme}"
+      end
+    end
+
+    # :ditto:
+    def self.parse(uri : String)
+      parse URI.parse(uri)
     end
 
     def initialize(@family : Family, @size : Int32)
@@ -73,6 +101,36 @@ class Socket
       else
         raise "Unsupported family type: #{family} (#{family.value})"
       end
+    end
+
+    # Parses a `Socket::IPAddress` from an URI.
+    #
+    # It expects the URI to include `<scheme>://<host>:<port>` where `scheme` as
+    # well as any additional URI components (such as `path` or `query`) are ignored.
+    #
+    # `host` must be an IP address (v4 or v6), otherwise `Socket::Error` will be
+    # raised. Domain names will not be resolved.
+    #
+    # ```
+    # Socket::IPAddress.parse("tcp://127.0.0.1:8080") # => Socket::IPAddress.new("127.0.0.1", 8080)
+    # Socket::IPAddress.parse("udp://[::1]:8080")     # => Socket::IPAddress.new("::1", 8080)
+    # ```
+    def self.parse(uri : URI) : IPAddress
+      host = uri.host || raise Socket::Error.new("Invalid IP address: missing host")
+
+      port = uri.port || raise Socket::Error.new("Invalid IP address: missing port")
+
+      # remove ipv6 brackets
+      if host.starts_with?('[') && host.ends_with?(']')
+        host = host.byte_slice(1, host.bytesize - 2)
+      end
+
+      new(host, port)
+    end
+
+    # :ditto:
+    def self.parse(uri : String)
+      parse URI.parse(uri)
     end
 
     protected def initialize(sockaddr : LibC::SockaddrIn6*, @size)
@@ -200,6 +258,43 @@ class Socket
     # Creates an `UNIXSocket` from the internal OS representation.
     def self.from(sockaddr : LibC::Sockaddr*, addrlen) : UNIXAddress
       new(sockaddr.as(LibC::SockaddrUn*), addrlen.to_i)
+    end
+
+    # Parses a `Socket::UNIXAddress` from an URI.
+    #
+    # It expects the URI to include `<scheme>://<path>` where `scheme` as well
+    # as any additional URI components (such as `fragment` or `query`) are ignored.
+    #
+    # If `host` is not empty, it will be prepended to `path` to form a relative
+    # path.
+    #
+    # ```
+    # Socket::UNIXAddress.parse("unix:///foo.sock") # => Socket::UNIXAddress.new("/foo.sock")
+    # Socket::UNIXAddress.parse("unix://foo.sock")  # => Socket::UNIXAddress.new("foo.sock")
+    # ```
+    def self.parse(uri : URI) : UNIXAddress
+      unix_path = String.build do |io|
+        io << uri.host
+        if port = uri.port
+          io << ':' << port
+        end
+        if (path = uri.path) && !path.empty?
+          io << path
+        end
+      end
+
+      raise Socket::Error.new("Invalid UNIX address: missing path") if unix_path.empty?
+
+      {% if flag?(:unix) %}
+        UNIXAddress.new(unix_path)
+      {% else %}
+        raise NotImplementedError.new("UNIX address not available")
+      {% end %}
+    end
+
+    # :ditto:
+    def self.parse(uri : String)
+      parse URI.parse(uri)
     end
 
     protected def initialize(sockaddr : LibC::SockaddrUn*, size)
