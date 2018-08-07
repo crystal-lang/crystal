@@ -48,6 +48,11 @@ module Crystal::System::Dir
     path
   end
 
+  def self.tempdir
+    tmpdir = ENV["TMPDIR"]? || "/tmp"
+    tmpdir.rchop(::File::SEPARATOR)
+  end
+
   def self.create(path : String, mode : Int32) : Nil
     if LibC.mkdir(path.check_no_null_byte, mode) == -1
       raise Errno.new("Unable to create directory '#{path}'")

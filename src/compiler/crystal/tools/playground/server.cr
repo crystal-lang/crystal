@@ -1,5 +1,4 @@
 require "http/server"
-require "tempfile"
 require "logger"
 require "ecr/macros"
 require "markdown"

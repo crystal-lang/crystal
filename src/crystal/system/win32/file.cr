@@ -25,8 +25,8 @@ module Crystal::System::File
     fd
   end
 
-  def self.mktemp(name : String, extension : String?) : {LibC::Int, String}
-    path = "#{tempdir}\\#{name}.#{::Random::Secure.hex}#{extension}"
+  def self.mktemp(prefix : String, suffix : String?, dir : String) : {LibC::Int, String}
+    path = "#{tempdir}\\#{prefix}.#{::Random::Secure.hex}#{suffix}"
 
     fd = LibC._wopen(to_windows_path(path), LibC::O_RDWR | LibC::O_CREAT | LibC::O_EXCL | LibC::O_BINARY, ::File::DEFAULT_CREATE_PERMISSIONS)
     if fd == -1
@@ -34,21 +34,6 @@ module Crystal::System::File
     end
 
     {fd, path}
-  end
-
-  def self.tempdir : String
-    tmpdir = System.retry_wstr_buffer do |buffer, small_buf|
-      len = LibC.GetTempPathW(buffer.size, buffer)
-      if 0 < len < buffer.size
-        break String.from_utf16(buffer[0, len])
-      elsif small_buf && len > 0
-        next len
-      else
-        raise WinError.new("Error while getting current directory")
-      end
-    end
-
-    tmpdir.rchop("\\")
   end
 
   NOT_FOUND_ERRORS = {
