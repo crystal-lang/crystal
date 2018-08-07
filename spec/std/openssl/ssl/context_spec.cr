@@ -168,4 +168,53 @@ describe OpenSSL::SSL::Context do
   it "calls #finalize on insecure server context" do
     assert_finalizes(:insecure_server_ctx) { OpenSSL::SSL::Context::Server.insecure }
   end
+
+  describe ".from_hash" do
+    it "builds" do
+      private_key = datapath("openssl", "openssl.key")
+      certificate = datapath("openssl", "openssl.crt")
+
+      context = OpenSSL::SSL::Context::Client.from_hash({"key" => private_key, "cert" => certificate, "verify_mode" => "none"})
+      context.verify_mode.should eq OpenSSL::SSL::VerifyMode::NONE
+
+      context = OpenSSL::SSL::Context::Server.from_hash({"key" => private_key, "cert" => certificate})
+      context.verify_mode.should eq OpenSSL::SSL::VerifyMode::NONE
+
+      context = OpenSSL::SSL::Context::Client.from_hash({"key" => private_key, "cert" => certificate, "ca" => certificate})
+      context.verify_mode.should eq OpenSSL::SSL::VerifyMode::PEER
+
+      context = OpenSSL::SSL::Context::Client.from_hash({"key" => private_key, "cert" => certificate, "ca" => File.dirname(certificate)})
+      context.verify_mode.should eq OpenSSL::SSL::VerifyMode::PEER
+    end
+
+    it "errors" do
+      private_key = datapath("openssl", "openssl.key")
+      certificate = datapath("openssl", "openssl.crt")
+
+      expect_raises(ArgumentError, "missing private key") do
+        OpenSSL::SSL::Context::Client.from_hash({} of String => String)
+      end
+      expect_raises(OpenSSL::Error, "SSL_CTX_use_PrivateKey_file: error:02001002:system library:fopen:No such file or directory") do
+        OpenSSL::SSL::Context::Client.from_hash({"key" => "foo"})
+      end
+      expect_raises(ArgumentError, "missing certificate") do
+        OpenSSL::SSL::Context::Client.from_hash({"key" => private_key})
+      end
+      expect_raises(OpenSSL::Error, "SSL_CTX_use_certificate_chain_file: error:02001002:system library:fopen:No such file or directory") do
+        OpenSSL::SSL::Context::Client.from_hash({"key" => private_key, "cert" => "foo"})
+      end
+      expect_raises(ArgumentError, "Invalid SSL context: missing CA certificate") do
+        OpenSSL::SSL::Context::Client.from_hash({"key" => private_key, "cert" => certificate})
+      end
+      expect_raises(ArgumentError, %(Invalid SSL context: unknown verify mode "foo")) do
+        OpenSSL::SSL::Context::Client.from_hash({"key" => private_key, "cert" => certificate, "verify_mode" => "foo"})
+      end
+      expect_raises(ArgumentError, "Invalid SSL context: missing CA certificate") do
+        OpenSSL::SSL::Context::Client.from_hash({"key" => private_key, "cert" => certificate, "verify_mode" => "peer"})
+      end
+      expect_raises(OpenSSL::Error, "SSL_CTX_load_verify_locations: error:02001002:system library:fopen:No such file or directory") do
+        OpenSSL::SSL::Context::Client.from_hash({"key" => private_key, "cert" => certificate, "ca" => "foo"})
+      end
+    end
+  end
 end
