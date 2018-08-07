@@ -142,4 +142,11 @@ describe "ENV" do
     ENV.delete("TEST_UNICODE_1")
     ENV.delete("TEST_UNICODE_2")
   end
+
+  it "#to_h" do
+    ENV["FOO"] = "foo"
+    ENV.to_h["FOO"].should eq "foo"
+  ensure
+    ENV.delete("FOO")
+  end
 end
