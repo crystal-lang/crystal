@@ -1063,4 +1063,17 @@ describe "Semantic: generic class" do
       ),
       "undefined constant T"
   end
+
+  it "can use type var that resolves to number in restriction (#6502)" do
+    assert_type(%(
+      class Foo(N)
+        def foo : Foo(N)
+          self
+        end
+      end
+
+      f = Foo(1).new
+      f.foo
+      )) { generic_class "Foo", 1.int32 }
+  end
 end

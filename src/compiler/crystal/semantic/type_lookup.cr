@@ -261,9 +261,9 @@ class Crystal::Type
               type_var.raise "expanding constant value for a number value", inner: ex
             end
             next
-            # when ASTNode
-            #   type_vars << type
-            #   next
+          when ASTNode
+            type_vars << type
+            next
           end
         end
 
