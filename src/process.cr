@@ -183,7 +183,9 @@ class Process
   def self.exec(command : String, args = nil, env : Env = nil, clear_env : Bool = false, shell : Bool = false,
                 input : Stdio = Redirect::Inherit, output : Stdio = Redirect::Inherit, error : Stdio = Redirect::Inherit, chdir : String? = nil)
     command, argv = prepare_argv(command, args, shell)
-    exec_internal(command, argv, env, clear_env, input, output, error, chdir)
+    unless exec_internal(command, argv, env, clear_env, input, output, error, chdir)
+      raise Errno.new("execvp")
+    end
   end
 
   getter pid : Int32
@@ -240,25 +242,25 @@ class Process
       end
     end
 
-    parent_sock, child_sock = IO.pipe
+    reader_pipe, writer_pipe = IO.pipe
 
     @pid = Process.fork_internal(run_hooks: false) do
       begin
-        parent_sock.close
-        child_sock.close_on_exec = true
-        Process.exec_internal(
-          command,
-          argv,
-          env,
-          clear_env,
-          fork_input || input,
-          fork_output || output,
-          fork_error || error,
-          chdir
-        )
-      rescue ex : Errno
-        value = ex.errno
-        child_sock.write(Bytes.new(pointerof(value).as(UInt8*), 4))
+        reader_pipe.close
+        writer_pipe.close_on_exec = true
+        unless Process.exec_internal(
+                 command,
+                 argv,
+                 env,
+                 clear_env,
+                 fork_input || input,
+                 fork_output || output,
+                 fork_error || error,
+                 chdir
+               )
+          writer_pipe.write_bytes(Errno.value)
+          writer_pipe.close
+        end
       rescue ex
         ex.inspect_with_backtrace STDERR
       ensure
@@ -266,13 +268,14 @@ class Process
       end
     end
 
-    child_sock.close
-    slice = Bytes.new(4)
-    if parent_sock.read(slice) == 4
-      parent_sock.close
-      Errno.value = slice.pointer(4).as(Int32*).value
-      raise Errno.new("execvp")
+    writer_pipe.close
+    bytes = uninitialized UInt8[4]
+    if reader_pipe.read(bytes.to_slice) == 4
+      reader_pipe.close
+      errno = IO::ByteFormat::SystemEndian.decode(Int32, bytes.to_slice)
+      raise Errno.new("execvp", errno)
     end
+    reader_pipe.close
 
     @waitpid = Crystal::SignalChildHandler.wait(pid)
 
@@ -403,9 +406,7 @@ class Process
 
     Dir.cd(chdir) if chdir
 
-    if LibC.execvp(command, argv) == -1
-      raise Errno.new("execvp")
-    end
+    LibC.execvp(command, argv) != -1
   end
 
   private def self.reopen_io(src_io, dst_io, mode)
