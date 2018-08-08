@@ -688,6 +688,10 @@ module Crystal
 
             block = parse_block(block, stop_on_do: @stop_on_do)
             if block || block_arg
+              if name == "[]="
+                raise "setter method '[]=' cannot be called with a block"
+              end
+
               atomic = Call.new atomic, name, (args || [] of ASTNode), block, block_arg, named_args, name_column_number: name_column_number
             else
               atomic = args ? (Call.new atomic, name, args, named_args: named_args, name_column_number: name_column_number) : (Call.new atomic, name, name_column_number: name_column_number)
@@ -3288,6 +3292,7 @@ module Crystal
       found_default_value = false
       found_splat = false
       found_double_splat = nil
+      found_block = false
 
       index = 0
       splat_index = nil
@@ -3319,6 +3324,7 @@ module Crystal
           if block_arg = extras.block_arg
             compute_block_arg_yields block_arg
             check :")"
+            found_block = true
             break
           elsif @token.type == :","
             next_token_skip_space_or_newline
@@ -3329,6 +3335,14 @@ module Crystal
             end
           end
           index += 1
+        end
+
+        if name.ends_with?('=')
+          if name != "[]=" && (args.size > 1 || found_splat || found_double_splat)
+            raise "setter method '#{name}' cannot have more than one argument"
+          elsif found_block
+            raise "setter method '#{name}' cannot have a block"
+          end
         end
 
         if splat_index == args.size - 1 && args.last.name.empty?

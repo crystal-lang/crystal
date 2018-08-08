@@ -1092,11 +1092,13 @@ class Object
           {{object.id}}.{{method.id}}(*args, **options)
         end
 
-        def {{method.id}}(*args, **options)
-          {{object.id}}.{{method.id}}(*args, **options) do |*yield_args|
-            yield *yield_args
+        {% if method.id != "[]=" %}
+          def {{method.id}}(*args, **options)
+            {{object.id}}.{{method.id}}(*args, **options) do |*yield_args|
+              yield *yield_args
+            end
           end
-        end
+        {% end %}
       {% end %}
     {% end %}
   end

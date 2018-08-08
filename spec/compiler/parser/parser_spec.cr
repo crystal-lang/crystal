@@ -175,6 +175,16 @@ module Crystal
     assert_syntax_error "def foo!=; end", "unexpected token: !="
     assert_syntax_error "def foo?=(x); end", "unexpected token: ?"
 
+    # #5856
+    assert_syntax_error "def foo=(a,b); end", "setter method 'foo=' cannot have more than one argument"
+    assert_syntax_error "def foo=(a = 1, b = 2); end", "setter method 'foo=' cannot have more than one argument"
+    assert_syntax_error "def foo=(*args); end", "setter method 'foo=' cannot have more than one argument"
+    assert_syntax_error "def foo=(**kwargs); end", "setter method 'foo=' cannot have more than one argument"
+    assert_syntax_error "def foo=(&block); end", "setter method 'foo=' cannot have a block"
+    assert_syntax_error "def []=(&block); end", "setter method '[]=' cannot have a block"
+    assert_syntax_error "f.[]= do |a| end", "setter method '[]=' cannot be called with a block"
+    assert_syntax_error "f.[]= { |bar| }", "setter method '[]=' cannot be called with a block"
+
     # #5895, #6042, #5997
     %w(
       begin nil true false yield with abstract
