@@ -298,6 +298,86 @@ module HTTP
         end
         server.close unless server.closed?
       end
+
+      describe "with URI" do
+        it "accepts URI" do
+          server = Server.new { }
+
+          begin
+            address = server.bind URI.parse("tcp://127.0.0.1:8081")
+            address.should eq Socket::IPAddress.new("127.0.0.1", 8081)
+          ensure
+            server.close
+          end
+        end
+
+        it "accepts String" do
+          server = Server.new { }
+
+          begin
+            address = server.bind "tcp://127.0.0.1:8081"
+            address.should eq Socket::IPAddress.new("127.0.0.1", 8081)
+          ensure
+            server.close
+          end
+        end
+
+        it "parses TCP" do
+          server = Server.new { }
+
+          begin
+            address = server.bind "tcp://127.0.0.1:8081"
+            address.should eq Socket::IPAddress.new("127.0.0.1", 8081)
+          ensure
+            server.close
+          end
+        end
+
+        it "parses SSL" do
+          server = Server.new { }
+
+          private_key = datapath("openssl", "openssl.key")
+          certificate = datapath("openssl", "openssl.crt")
+
+          begin
+            expect_raises(ArgumentError, "missing CA certificate") do
+              server.bind "ssl://127.0.0.1:8081?key=#{private_key}&cert=#{certificate}&verify_mode=force-peer"
+            end
+
+            address = server.bind "ssl://127.0.0.1:8081?key=#{private_key}&cert=#{certificate}&ca=#{certificate}"
+            address.should eq Socket::IPAddress.new("127.0.0.1", 8081)
+          ensure
+            server.close
+          end
+        end
+
+        it "fails SSL with invalid params" do
+          server = Server.new { }
+
+          private_key = datapath("openssl", "openssl.key")
+          certificate = datapath("openssl", "openssl.crt")
+
+          begin
+            expect_raises(ArgumentError, "missing private key") { server.bind "ssl://127.0.0.1:8081" }
+            expect_raises(OpenSSL::Error, "No such file or directory") { server.bind "ssl://127.0.0.1:8081?key=foo.key" }
+            expect_raises(ArgumentError, "missing certificate") { server.bind "ssl://127.0.0.1:8081?key=#{private_key}" }
+          ensure
+            server.close
+          end
+        end
+
+        it "fails with unknown scheme" do
+          server = Server.new { }
+
+          begin
+            expect_raises(ArgumentError, "Unsupported socket type: udp") do
+              server.bind "udp://127.0.0.1:8081"
+            end
+          ensure
+            server.close
+          end
+        end
+      end
     end
 
     describe "#bind_ssl" do
