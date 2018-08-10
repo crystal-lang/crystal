@@ -42,8 +42,6 @@ class Crystal::Command
         --help, -h               show this help
     USAGE
 
-  VALID_EMIT_VALUES = %w(asm llvm-bc llvm-ir obj)
-
   def self.run(options = ARGV)
     new(options).run
   end
@@ -309,7 +307,10 @@ class Crystal::Command
       end
 
       unless no_codegen
-        opts.on("--emit [#{VALID_EMIT_VALUES.join('|')}]", "Comma separated list of types of output for the compiler to emit") do |emit_values|
+        valid_emit_values = {{ Compiler::EmitKinds.constants.map(&.stringify).reject { |m| %w(none all).includes?(m.downcase) } }}
+        valid_emit_values.map! { |v| v.tr("_", "-").downcase }
+
+        opts.on("--emit [#{valid_emit_values.join('|')}]", "Comma separated list of types of output for the compiler to emit") do |emit_values|
           compiler.emit = validate_emit_values(emit_values.split(',').map(&.strip))
         end
       end
@@ -514,12 +515,15 @@ class Crystal::Command
   end
 
   private def validate_emit_values(values)
+    emit_kinds = Compiler::EmitKinds::None
     values.each do |value|
-      unless VALID_EMIT_VALUES.includes?(value)
+      if kind = Compiler::EmitKinds.parse?(value.tr("-", "_"))
+        emit_kinds |= kind
+      else
         error "invalid emit value '#{value}'"
       end
     end
-    values
+    emit_kinds
   end
 
   private def error(msg, exit_code = 1)
