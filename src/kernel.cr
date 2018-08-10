@@ -4,6 +4,7 @@
   STDERR = IO::FileDescriptor.new(2).tap { |f| f.flush_on_newline = true }
 {% else %}
   require "c/unistd"
+  require "io/std_file_descriptor"
 
   STDIN  = IO::StdFileDescriptor.new(0)
   STDOUT = IO::StdFileDescriptor.new(1).tap { |f| f.flush_on_newline = true }
