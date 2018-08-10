@@ -9,7 +9,7 @@ class IO::StdFileDescriptor < IO::FileDescriptor
     # We need to reopen it to use O_NONBLOCK without causing other programs to break
     if tty?
       # Figure out the terminal TTY name
-      path = UInt8[256]
+      path = uninitialized UInt8[256]
 
       # XXX: Need to error somehow, if this doesn't return 0
       LibC.ttyname_r(@fd, path, 256)
