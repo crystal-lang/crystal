@@ -99,9 +99,9 @@ module Crystal
     property? wants_doc = false
 
     @[Flags]
-    enum EmitKinds
-      Asm
-      Obj
+    enum EmitTarget
+      ASM
+      OBJ
       LLVM_BC
       LLVM_IR
     end
@@ -112,7 +112,7 @@ module Crystal
     # * llvm-bc: LLVM bitcode
     # * llvm-ir: LLVM IR
     # * obj: object file
-    property emit : EmitKinds?
+    property emit : EmitTarget?
 
     # Base filename to use for `emit` output.
     property emit_base_filename : String?
@@ -675,18 +675,18 @@ module Crystal
         llvm_mod.print_to_file ll_name if compiler.dump_ll?
       end
 
-      def emit(emit_kinds : EmitKinds, output_filename)
-        emit_kinds.each do |kind|
-          case kind
-          when .asm?
-            compiler.target_machine.emit_asm_to_file llvm_mod, "#{output_filename}.s"
-          when .llvm_bc?
-            FileUtils.cp(bc_name, "#{output_filename}.bc")
-          when .llvm_ir?
-            llvm_mod.print_to_file "#{output_filename}.ll"
-          when .obj?
-            FileUtils.cp(object_name, "#{output_filename}.o")
-          end
+      def emit(emit_target : EmitTarget, output_filename)
+        if emit_target.asm?
+          compiler.target_machine.emit_asm_to_file llvm_mod, "#{output_filename}.s"
+        end
+        if emit_target.llvm_bc?
+          FileUtils.cp(bc_name, "#{output_filename}.bc")
+        end
+        if emit_target.llvm_ir?
+          llvm_mod.print_to_file "#{output_filename}.ll"
+        end
+        if emit_target.obj?
+          FileUtils.cp(object_name, "#{output_filename}.o")
         end
       end
 

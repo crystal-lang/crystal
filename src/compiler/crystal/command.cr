@@ -307,7 +307,7 @@ class Crystal::Command
       end
 
       unless no_codegen
-        valid_emit_values = {{ Compiler::EmitKinds.constants.map(&.stringify).reject { |m| %w(none all).includes?(m.downcase) } }}
+        valid_emit_values = Compiler::EmitTarget.names
         valid_emit_values.map! { |v| v.tr("_", "-").downcase }
 
         opts.on("--emit [#{valid_emit_values.join('|')}]", "Comma separated list of types of output for the compiler to emit") do |emit_values|
@@ -515,15 +515,15 @@ class Crystal::Command
   end
 
   private def validate_emit_values(values)
-    emit_kinds = Compiler::EmitKinds::None
+    emit_targets = Compiler::EmitTarget::None
     values.each do |value|
-      if kind = Compiler::EmitKinds.parse?(value.tr("-", "_"))
-        emit_kinds |= kind
+      if target = Compiler::EmitTarget.parse?(value.tr("-", "_"))
+        emit_targets |= target
       else
         error "invalid emit value '#{value}'"
       end
     end
-    emit_kinds
+    emit_targets
   end
 
   private def error(msg, exit_code = 1)
