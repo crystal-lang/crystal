@@ -237,12 +237,10 @@ describe IO::Memory do
     io = IO::Memory.new
     io << "hello world"
 
-    expect_raises(ArgumentError, "size out of bounds") { io.truncate(12) }
-    expect_raises(ArgumentError, "size out of bounds") { io.truncate(13) }
-    expect_raises(ArgumentError, "size out of bounds") { io.truncate(Int32::MAX) }
+    io.truncate(12)
+    io.truncate(13)
 
-    io.truncate(11)
-    io.to_s.should eq("hello world")
+    io.to_s.should eq("hello world\u0000\u0000")
     io.truncate(0)
     io.to_s.should eq("")
   end
