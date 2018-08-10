@@ -168,7 +168,7 @@ module Debug
       ei_version = @io.read_byte.not_nil!
       raise Error.new("Unsupported version number") unless ei_version == 1
 
-      ei_osabi = OSABI.from_value(@io.read_byte)
+      ei_osabi = OSABI.from_value(@io.read_byte.not_nil!)
       ei_abiversion = @io.read_byte.not_nil!
 
       # padding (unused)
