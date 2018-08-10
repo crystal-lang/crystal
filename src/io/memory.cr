@@ -93,7 +93,7 @@ class IO::Memory < IO
     new_bytesize = @pos + count
     if new_bytesize > @capacity
       check_resizeable
-      resize_to_capacity(Math.pw2ceil(new_bytesize))
+      resize_to_fit(new_bytesize)
     end
 
     slice.copy_to(@buffer + @pos, count)
@@ -117,7 +117,7 @@ class IO::Memory < IO
     new_bytesize = @pos + 1
     if new_bytesize > @capacity
       check_resizeable
-      resize_to_capacity(Math.pw2ceil(new_bytesize))
+      resize_to_fit(new_bytesize)
     end
 
     (@buffer + @pos).value = byte
@@ -449,6 +449,10 @@ class IO::Memory < IO
 
   private def check_needs_resize
     resize_to_capacity(@capacity * 2) if @bytesize == @capacity
+  end
+
+  private def resize_to_fit(size)
+    resize_to_capacity(Math.pw2ceil(size))
   end
 
   private def resize_to_capacity(capacity)
