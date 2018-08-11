@@ -434,15 +434,15 @@ class IO::Memory < IO
   end
 
   private def resize_to_fit(size : Int32) : Nil
-    return if ( size <= capacity )
+    return if size <= capacity
 
     capacity = @capacity * GROWTH_FACTOR
-    while ( size > capacity )
+    while size > capacity
       capacity *= GROWTH_FACTOR
     end
 
-    return resize_to_capacity(capacity.to_i)
-   end
+    resize_to_capacity(capacity.to_i)
+  end
 
   private def resize_to_capacity(capacity : Int32) : Nil
     @capacity = capacity
