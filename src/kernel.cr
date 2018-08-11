@@ -4,11 +4,10 @@
   STDERR = IO::FileDescriptor.new(2).tap { |f| f.flush_on_newline = true }
 {% else %}
   require "c/unistd"
-  require "io/std_file_descriptor"
 
-  STDIN  = IO::StdFileDescriptor.new(0)
-  STDOUT = IO::StdFileDescriptor.new(1).tap { |f| f.flush_on_newline = true }
-  STDERR = IO::StdFileDescriptor.new(2).tap { |f| f.flush_on_newline = true }
+  STDIN  = IO::FileDescriptor.from_stdio(0)
+  STDOUT = IO::FileDescriptor.from_stdio(1).tap { |f| f.flush_on_newline = true }
+  STDERR = IO::FileDescriptor.from_stdio(2).tap { |f| f.flush_on_newline = true }
 {% end %}
 
 PROGRAM_NAME = String.new(ARGV_UNSAFE.value)
