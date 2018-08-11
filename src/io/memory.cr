@@ -3,11 +3,14 @@
 # The internal buffer can be resizeable and/or writeable depending
 # on how an `IO::Memory` is constructed.
 class IO::Memory < IO
+  GROWTH_FACTOR = 1.4
+
   # Returns the internal buffer as a `Pointer(UInt8)`.
   getter buffer : Pointer(UInt8)
 
   # Same as `size`.
   getter bytesize : Int32
+  getter capacity : Int32
 
   @capacity : Int32
 
@@ -82,7 +85,7 @@ class IO::Memory < IO
 
   # See `IO#write(slice)`. Raises if this `IO::Memory` is non-writeable,
   # or if it's non-resizeable and a resize is needed.
-  def write(slice : Bytes)
+  def write(slice : Bytes) : Nil
     check_writeable
     check_open
 
@@ -93,7 +96,7 @@ class IO::Memory < IO
     new_bytesize = @pos + count
     if new_bytesize > @capacity
       check_resizeable
-      resize_to_capacity(Math.pw2ceil(new_bytesize))
+      resize_to_fit(new_bytesize)
     end
 
     slice.copy_to(@buffer + @pos, count)
@@ -104,20 +107,18 @@ class IO::Memory < IO
 
     @pos += count
     @bytesize = @pos if @pos > @bytesize
-
-    nil
   end
 
   # See `IO#write_byte`. Raises if this `IO::Memory` is non-writeable,
   # or if it's non-resizeable and a resize is needed.
-  def write_byte(byte : UInt8)
+  def write_byte(byte : UInt8) : Nil
     check_writeable
     check_open
 
     new_bytesize = @pos + 1
     if new_bytesize > @capacity
       check_resizeable
-      resize_to_capacity(Math.pw2ceil(new_bytesize))
+      resize_to_fit(new_bytesize)
     end
 
     (@buffer + @pos).value = byte
@@ -128,8 +129,6 @@ class IO::Memory < IO
 
     @pos += 1
     @bytesize = @pos if @pos > @bytesize
-
-    nil
   end
 
   # :nodoc:
@@ -418,23 +417,34 @@ class IO::Memory < IO
     io.write(to_slice)
   end
 
-  private def check_writeable
+  private def check_writeable : Nil
     unless @writeable
       raise IO::Error.new "Read-only stream"
     end
   end
 
-  private def check_resizeable
+  private def check_resizeable : Nil
     unless @resizeable
       raise IO::Error.new "Non-resizeable stream"
     end
   end
 
-  private def check_needs_resize
-    resize_to_capacity(@capacity * 2) if @bytesize == @capacity
+  private def check_needs_resize : Nil
+    resize_to_capacity(@capacity * GROWTH_FACTOR) if @bytesize == @capacity
   end
 
-  private def resize_to_capacity(capacity)
+  private def resize_to_fit(size : Int32) : Nil
+    return if ( size <= capacity )
+
+    capacity = @capacity * GROWTH_FACTOR
+    while ( size > capacity )
+      capacity *= GROWTH_FACTOR
+    end
+
+    return resize_to_capacity(capacity.to_i)
+   end
+
+  private def resize_to_capacity(capacity : Int32) : Nil
     @capacity = capacity
     @buffer = @buffer.realloc(@capacity)
   end
