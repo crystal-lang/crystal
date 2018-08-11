@@ -5079,7 +5079,7 @@ module Crystal
       call_args = preserve_stop_on_do { parse_call_args allow_curly: true, control: true }
       args = call_args.args if call_args
 
-      if args
+      if args && !args.empty?
         if args.size == 1
           node = klass.new(args.first)
         else

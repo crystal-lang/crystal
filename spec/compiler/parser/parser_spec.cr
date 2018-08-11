@@ -667,6 +667,8 @@ module Crystal
       assert_syntax_error "case 1; when #{keyword}; end; end", "void value expression"
     end
 
+    assert_syntax_error "break when true"
+
     it_parses "yield", Yield.new
     it_parses "yield;", Yield.new
     it_parses "yield 1", Yield.new([1.int32] of ASTNode)
