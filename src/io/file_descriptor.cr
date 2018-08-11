@@ -18,6 +18,7 @@ class IO::FileDescriptor < IO
     end
   end
 
+  # :nodoc:
   def self.from_stdio(fd)
     # XXX: This is -supposed- to work, but something (libevent?) is changing the FD before here.
     # strace confirms it.
