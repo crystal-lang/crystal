@@ -1,4 +1,4 @@
-require "spec"
+require "../../spec_helper"
 require "http/server"
 require "http/client/response"
 require "tempfile"
@@ -50,6 +50,12 @@ private def unix_request(path)
     request.to_io(io)
 
     HTTP::Client::Response.from_io(io).body
+  end
+end
+
+private def unused_port
+  TCPServer.open(0) do |server|
+    server.local_address.port
   end
 end
 
@@ -304,8 +310,9 @@ module HTTP
           server = Server.new { }
 
           begin
-            address = server.bind URI.parse("tcp://127.0.0.1:8081")
-            address.should eq Socket::IPAddress.new("127.0.0.1", 8081)
+            port = unused_port
+            address = server.bind URI.parse("tcp://127.0.0.1:#{port}")
+            address.should eq Socket::IPAddress.new("127.0.0.1", port)
           ensure
             server.close
           end
@@ -315,8 +322,9 @@ module HTTP
           server = Server.new { }
 
           begin
-            address = server.bind "tcp://127.0.0.1:8081"
-            address.should eq Socket::IPAddress.new("127.0.0.1", 8081)
+            port = unused_port
+            address = server.bind "tcp://127.0.0.1:#{port}"
+            address.should eq Socket::IPAddress.new("127.0.0.1", port)
           ensure
             server.close
           end
@@ -326,8 +334,9 @@ module HTTP
           server = Server.new { }
 
           begin
-            address = server.bind "tcp://127.0.0.1:8081"
-            address.should eq Socket::IPAddress.new("127.0.0.1", 8081)
+            port = unused_port
+            address = server.bind "tcp://127.0.0.1:#{port}"
+            address.should eq Socket::IPAddress.new("127.0.0.1", port)
           ensure
             server.close
           end
@@ -340,12 +349,13 @@ module HTTP
           certificate = datapath("openssl", "openssl.crt")
 
           begin
+            port = unused_port
             expect_raises(ArgumentError, "missing CA certificate") do
-              server.bind "ssl://127.0.0.1:8081?key=#{private_key}&cert=#{certificate}&verify_mode=force-peer"
+              server.bind "ssl://127.0.0.1:#{port}?key=#{private_key}&cert=#{certificate}&verify_mode=force-peer"
             end
 
-            address = server.bind "ssl://127.0.0.1:8081?key=#{private_key}&cert=#{certificate}&ca=#{certificate}"
-            address.should eq Socket::IPAddress.new("127.0.0.1", 8081)
+            address = server.bind "ssl://127.0.0.1:#{port}?key=#{private_key}&cert=#{certificate}&ca=#{certificate}"
+            address.should eq Socket::IPAddress.new("127.0.0.1", port)
           ensure
             server.close
           end
