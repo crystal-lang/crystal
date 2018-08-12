@@ -265,7 +265,10 @@ class HTTP::Server
   #
   # ```
   # server = HTTP::Server.new { }
-  # server.bind("tcp://localhost:8080") # => Socket::IPAddress.new("localhost, 8080")
+  # server.bind("tcp://localhost:80")  # => Socket::IPAddress.new("127.0.0.1", 8080)
+  # server.bind("unix:///tmp/server.sock")  # => Socket::UNIXAddress.new("/tmp/server.sock")
+  # server.bind("tls://127.0.0.1:443?key=private.key&cert=certificate.cert&ca=ca.crt)  # => Socket::IPAddress.new("127.0.0.1", 443)
+  # ```
   def bind(uri : String) : Socket::Address
     bind(URI.parse(uri))
   end
@@ -277,12 +280,12 @@ class HTTP::Server
       bind_tcp(Socket::IPAddress.parse(uri))
     when "unix"
       bind_unix(Socket::UNIXAddress.parse(uri))
-    when "ssl"
+    when "tls", "ssl"
       address = Socket::IPAddress.parse(uri)
       {% unless flag?(:without_openssl) %}
         context = OpenSSL::SSL::Context::Server.from_hash(HTTP::Params.parse(uri.query || ""))
 
-        bind_ssl(address, context)
+        bind_tls(address, context)
       {% else %}
         raise ArgumentError.new "Unsupported socket type: ssl (program was compiled without openssl support)"
       {% end %}

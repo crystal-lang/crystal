@@ -351,9 +351,13 @@ module HTTP
           begin
             port = unused_port
             expect_raises(ArgumentError, "missing CA certificate") do
-              server.bind "ssl://127.0.0.1:#{port}?key=#{private_key}&cert=#{certificate}&verify_mode=force-peer"
+              server.bind "tls://127.0.0.1:#{port}?key=#{private_key}&cert=#{certificate}&verify_mode=force-peer"
             end
 
+            address = server.bind "tls://127.0.0.1:#{port}?key=#{private_key}&cert=#{certificate}&ca=#{certificate}"
+            address.should eq Socket::IPAddress.new("127.0.0.1", port)
+
+            port = unused_port
             address = server.bind "ssl://127.0.0.1:#{port}?key=#{private_key}&cert=#{certificate}&ca=#{certificate}"
             address.should eq Socket::IPAddress.new("127.0.0.1", port)
           ensure
@@ -368,9 +372,9 @@ module HTTP
           certificate = datapath("openssl", "openssl.crt")
 
           begin
-            expect_raises(ArgumentError, "missing private key") { server.bind "ssl://127.0.0.1:8081" }
-            expect_raises(OpenSSL::Error, "No such file or directory") { server.bind "ssl://127.0.0.1:8081?key=foo.key" }
-            expect_raises(ArgumentError, "missing certificate") { server.bind "ssl://127.0.0.1:8081?key=#{private_key}" }
+            expect_raises(ArgumentError, "missing private key") { server.bind "tls://127.0.0.1:8081" }
+            expect_raises(OpenSSL::Error, "No such file or directory") { server.bind "tls://127.0.0.1:8081?key=foo.key" }
+            expect_raises(ArgumentError, "missing certificate") { server.bind "tls://127.0.0.1:8081?key=#{private_key}" }
           ensure
             server.close
           end
