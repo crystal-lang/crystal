@@ -98,13 +98,21 @@ module Crystal
     # and can later be used to generate API docs.
     property? wants_doc = false
 
-    # Can be set to an array of strings to emit other files other
+    @[Flags]
+    enum EmitTarget
+      ASM
+      OBJ
+      LLVM_BC
+      LLVM_IR
+    end
+
+    # Can be set to a set of flags to emit other files other
     # than the executable file:
     # * asm: assembly files
     # * llvm-bc: LLVM bitcode
     # * llvm-ir: LLVM IR
     # * obj: object file
-    property emit : Array(String)?
+    property emit : EmitTarget?
 
     # Base filename to use for `emit` output.
     property emit_base_filename : String?
@@ -667,21 +675,17 @@ module Crystal
         llvm_mod.print_to_file ll_name if compiler.dump_ll?
       end
 
-      def emit(values : Array, output_filename)
-        values.each do |value|
-          emit value, output_filename
-        end
-      end
-
-      def emit(value : String, output_filename)
-        case value
-        when "asm"
+      def emit(emit_target : EmitTarget, output_filename)
+        if emit_target.asm?
           compiler.target_machine.emit_asm_to_file llvm_mod, "#{output_filename}.s"
-        when "llvm-bc"
+        end
+        if emit_target.llvm_bc?
           FileUtils.cp(bc_name, "#{output_filename}.bc")
-        when "llvm-ir"
+        end
+        if emit_target.llvm_ir?
           llvm_mod.print_to_file "#{output_filename}.ll"
-        when "obj"
+        end
+        if emit_target.obj?
           FileUtils.cp(object_name, "#{output_filename}.o")
         end
       end
