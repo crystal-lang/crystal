@@ -4,10 +4,11 @@
   STDERR = (IO::FileDescriptor.new(2)).tap { |f| f.flush_on_newline = true }
 {% else %}
   require "c/unistd"
+  require "crystal/system/std_file_descriptor"
 
-  STDIN  = IO::FileDescriptor.new(0, blocking: LibC.isatty(0) == 0)
-  STDOUT = (IO::FileDescriptor.new(1, blocking: LibC.isatty(1) == 0)).tap { |f| f.flush_on_newline = true }
-  STDERR = (IO::FileDescriptor.new(2, blocking: LibC.isatty(2) == 0)).tap { |f| f.flush_on_newline = true }
+  STDIN  = Crystal::System::StdFileDescriptor.new(0, blocking: LibC.isatty(0) == 0)
+  STDOUT = (Crystal::System::StdFileDescriptor.new(1, blocking: LibC.isatty(1) == 0)).tap { |f| f.flush_on_newline = true }
+  STDERR = (Crystal::System::StdFileDescriptor.new(2, blocking: LibC.isatty(2) == 0)).tap { |f| f.flush_on_newline = true }
 {% end %}
 
 PROGRAM_NAME = String.new(ARGV_UNSAFE.value)
@@ -445,7 +446,6 @@ def exit(status = 0) : NoReturn
   status = AtExitHandlers.run status
   STDOUT.flush
   STDERR.flush
-  Crystal.restore_blocking_state
   Process.exit(status)
 end
 
@@ -479,4 +479,5 @@ end
 
   Signal.setup_default_handlers
   LibExt.setup_sigfault_handler
+  LibExt.setup_alarm_handler
 {% end %}

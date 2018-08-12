@@ -130,7 +130,7 @@ class Socket < IO
       case Errno.value
       when Errno::EISCONN
         return
-      when Errno::EINPROGRESS, Errno::EALREADY
+      when Errno::EINPROGRESS, Errno::EALREADY, Errno::EINTR
         wait_writable(timeout: timeout) do |error|
           return yield IO::Timeout.new("connect timed out")
         end
@@ -240,7 +240,7 @@ class Socket < IO
       if client_fd == -1
         if closed?
           return
-        elsif Errno.value == Errno::EAGAIN
+        elsif Errno.value == Errno::EAGAIN || Errno.value == Errno::EINTR
           wait_readable
         else
           raise Errno.new("accept")
@@ -264,9 +264,18 @@ class Socket < IO
   # ```
   def send(message)
     slice = message.to_slice
-    bytes_sent = LibC.send(fd, slice.to_unsafe.as(Void*), slice.size, 0)
-    raise Errno.new("Error sending datagram") if bytes_sent == -1
-    bytes_sent
+    loop do
+      bytes_sent = LibC.send(fd, slice.to_unsafe.as(Void*), slice.size, 0)
+      if bytes_sent == -1
+        if Errno.value == Errno::EAGAIN || Errno.value == Errno::EINTR
+          wait_writable
+        else
+          raise Errno.new("Error sending datagram")
+        end
+      else
+        return bytes_sent
+      end
+    end
   ensure
     # see IO::FileDescriptor#unbuffered_write
     if (writers = @writers) && !writers.empty?
@@ -284,9 +293,18 @@ class Socket < IO
   # ```
   def send(message, to addr : Address)
     slice = message.to_slice
-    bytes_sent = LibC.sendto(fd, slice.to_unsafe.as(Void*), slice.size, 0, addr, addr.size)
-    raise Errno.new("Error sending datagram to #{addr}") if bytes_sent == -1
-    bytes_sent
+    loop do
+      bytes_sent = LibC.sendto(fd, slice.to_unsafe.as(Void*), slice.size, 0, addr, addr.size)
+      if bytes_sent == -1
+        if Errno.value == Errno::EAGAIN || Errno.value == Errno::EINTR
+          wait_writable
+        else
+          raise Errno.new("Error sending datagram to #{addr}")
+        end
+      else
+        return bytes_sent
+      end
+    end
   end
 
   # Receives a text message from the previously bound address.
@@ -328,7 +346,7 @@ class Socket < IO
     loop do
       bytes_read = LibC.recvfrom(fd, message.to_unsafe.as(Void*), message.size, 0, sockaddr, pointerof(addrlen))
       if bytes_read == -1
-        if Errno.value == Errno::EAGAIN
+        if Errno.value == Errno::EAGAIN || Errno.value == Errno::EINTR
           wait_readable
         else
           raise Errno.new("Error receiving datagram")

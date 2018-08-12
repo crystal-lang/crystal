@@ -5,11 +5,16 @@ module Crystal::System::File
   def self.open(filename, mode, perm)
     oflag = open_flag(mode) | LibC::O_CLOEXEC
 
-    fd = LibC.open(filename.check_no_null_byte, oflag, perm)
-    if fd < 0
-      raise Errno.new("Error opening file '#{filename}' with mode '#{mode}'")
+    loop do
+      fd = LibC.open(filename.check_no_null_byte, oflag, perm)
+      if fd == -1
+        unless Errno.value == Errno::EINTR
+          raise Errno.new("Error opening file '#{filename}' with mode '#{mode}'")
+        end
+      else
+        return fd
+      end
     end
-    fd
   end
 
   def self.mktemp(name, extension)
@@ -157,10 +162,12 @@ module Crystal::System::File
   private def flock(op : LibC::FlockOp, blocking : Bool = true)
     op |= LibC::FlockOp::NB unless blocking
 
-    if LibC.flock(@fd, op) != 0
-      raise Errno.new("flock")
+    loop do
+      if LibC.flock(@fd, op) == -1
+        raise Errno.new("flock") unless Errno.value == Errno::EINTR
+      else
+        return
+      end
     end
-
-    nil
   end
 end

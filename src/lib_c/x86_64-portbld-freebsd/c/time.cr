@@ -23,6 +23,13 @@ lib LibC
     tv_nsec : Long
   end
 
+  struct Itimerspec
+    it_interval : Timespec
+    it_value : Timespec
+  end
+
+  alias Sigevent = Void
+
   fun clock_gettime(x0 : ClockidT, x1 : Timespec*) : Int
   fun clock_settime(x0 : ClockidT, x1 : Timespec*) : Int
   fun gmtime_r(x0 : TimeT*, x1 : Tm*) : Tm*
@@ -30,6 +37,9 @@ lib LibC
   fun mktime(x0 : Tm*) : TimeT
   fun tzset : Void
   fun timegm(x0 : Tm*) : TimeT
+  fun timer_create(ClockidT, Sigevent*, TimerT*) : Int
+  fun timer_delete(TimerT) : Int
+  fun timer_settime(TimerT, Itimerspec*, Itimerspec*) : Int
 
   fun timezone(x0 : Int, x1 : Int) : Char*
   $tzname : Char**

@@ -146,7 +146,7 @@ abstract class OpenSSL::SSL::Socket < IO
             # OpenSSL claimed an underlying syscall failed, but that didn't set any error state,
             # assume we're done
             break
-          when Errno::EAGAIN
+          when Errno::EAGAIN, Errno::EINTR
             # Ignore/retry, shutdown did not complete yet
           when Errno::EINPROGRESS
             # Ignore/retry, another operation not complete yet

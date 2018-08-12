@@ -31,5 +31,6 @@ lib LibC
   alias SSizeT = Long
   alias SusecondsT = Long
   alias TimeT = Long
+  alias TimerT = Void*
   alias UidT = UInt
 end
