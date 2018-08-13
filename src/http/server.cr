@@ -218,9 +218,9 @@ class HTTP::Server
     # context = OpenSSL::SSL::Context::Server.new
     # context.certificate_chain = "openssl.crt"
     # context.private_key = "openssl.key"
-    # server.bind_ssl "127.0.0.1", 8080, context
+    # server.bind_tls "127.0.0.1", 8080, context
     # ```
-    def bind_ssl(host : String, port : Int32, context : OpenSSL::SSL::Context::Server, reuse_port : Bool = false) : Socket::IPAddress
+    def bind_tls(host : String, port : Int32, context : OpenSSL::SSL::Context::Server, reuse_port : Bool = false) : Socket::IPAddress
       tcp_server = TCPServer.new(host, port, reuse_port)
       server = OpenSSL::SSL::Server.new(tcp_server, context)
 
@@ -238,10 +238,10 @@ class HTTP::Server
     # context = OpenSSL::SSL::Context::Server.new
     # context.certificate_chain = "openssl.crt"
     # context.private_key = "openssl.key"
-    # address = server.bind_ssl "127.0.0.1", context
+    # address = server.bind_tls "127.0.0.1", context
     # ```
-    def bind_ssl(host : String, context : OpenSSL::SSL::Context::Server) : Socket::IPAddress
-      bind_ssl(host, 0, context)
+    def bind_tls(host : String, context : OpenSSL::SSL::Context::Server) : Socket::IPAddress
+      bind_tls(host, 0, context)
     end
 
     # Creates an `OpenSSL::SSL::Server` and adds it as a socket.
@@ -253,10 +253,10 @@ class HTTP::Server
     # context = OpenSSL::SSL::Context::Server.new
     # context.certificate_chain = "openssl.crt"
     # context.private_key = "openssl.key"
-    # address = server.bind_ssl Socket::IPAddress.new("127.0.0.1", 8000), context
+    # address = server.bind_tls Socket::IPAddress.new("127.0.0.1", 8000), context
     # ```
-    def bind_ssl(address : Socket::IPAddress, context : OpenSSL::SSL::Context::Server) : Socket::IPAddress
-      bind_ssl(address.address, address.port, context)
+    def bind_tls(address : Socket::IPAddress, context : OpenSSL::SSL::Context::Server) : Socket::IPAddress
+      bind_tls(address.address, address.port, context)
     end
   {% end %}
 

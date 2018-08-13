@@ -394,7 +394,7 @@ module HTTP
       end
     end
 
-    describe "#bind_ssl" do
+    describe "#bind_tls" do
       it "binds SSL server context" do
         server = Server.new do |context|
           context.response.puts "Test Server (#{context.request.headers["Host"]?})"
@@ -405,7 +405,7 @@ module HTTP
 
         socket = OpenSSL::SSL::Server.new(TCPServer.new("127.0.0.1", 0), server_context)
         server.bind socket
-        ip_address1 = server.bind_ssl "127.0.0.1", 0, server_context
+        ip_address1 = server.bind_tls "127.0.0.1", 0, server_context
         ip_address2 = socket.local_address
 
         spawn server.listen
