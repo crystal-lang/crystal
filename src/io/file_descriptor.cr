@@ -20,11 +20,6 @@ class IO::FileDescriptor < IO
 
   # :nodoc:
   def self.from_stdio(fd)
-    # XXX: This is -supposed- to work, but something (libevent?) is changing the FD before here.
-    # strace confirms it.
-    closed = LibC.fcntl(fd, LibC::F_GETFD) < 0
-    return new(fd, blocking: true).tap(&.close) if closed
-
     # If we have a TTY for stdin/out/err, it is a shared terminal.
     # We need to reopen it to use O_NONBLOCK without causing other programs to break
 
