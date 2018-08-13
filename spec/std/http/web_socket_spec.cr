@@ -355,7 +355,7 @@ describe HTTP::WebSocket do
 
       http_server = http_ref = HTTP::Server.new([ws_handler])
 
-      address = http_server.bind_ssl("127.0.0.1", context: server_context)
+      address = http_server.bind_tls("127.0.0.1", context: server_context)
       address_chan.send(address)
       http_server.listen
     end

@@ -351,9 +351,13 @@ module HTTP
           begin
             port = unused_port
             expect_raises(ArgumentError, "missing CA certificate") do
-              server.bind "ssl://127.0.0.1:#{port}?key=#{private_key}&cert=#{certificate}&verify_mode=force-peer"
+              server.bind "tls://127.0.0.1:#{port}?key=#{private_key}&cert=#{certificate}&verify_mode=force-peer"
             end
 
+            address = server.bind "tls://127.0.0.1:#{port}?key=#{private_key}&cert=#{certificate}&ca=#{certificate}"
+            address.should eq Socket::IPAddress.new("127.0.0.1", port)
+
+            port = unused_port
             address = server.bind "ssl://127.0.0.1:#{port}?key=#{private_key}&cert=#{certificate}&ca=#{certificate}"
             address.should eq Socket::IPAddress.new("127.0.0.1", port)
           ensure
@@ -368,9 +372,9 @@ module HTTP
           certificate = datapath("openssl", "openssl.crt")
 
           begin
-            expect_raises(ArgumentError, "missing private key") { server.bind "ssl://127.0.0.1:8081" }
-            expect_raises(OpenSSL::Error, "No such file or directory") { server.bind "ssl://127.0.0.1:8081?key=foo.key" }
-            expect_raises(ArgumentError, "missing certificate") { server.bind "ssl://127.0.0.1:8081?key=#{private_key}" }
+            expect_raises(ArgumentError, "missing private key") { server.bind "tls://127.0.0.1:8081" }
+            expect_raises(OpenSSL::Error, "No such file or directory") { server.bind "tls://127.0.0.1:8081?key=foo.key" }
+            expect_raises(ArgumentError, "missing certificate") { server.bind "tls://127.0.0.1:8081?key=#{private_key}" }
           ensure
             server.close
           end
@@ -390,7 +394,7 @@ module HTTP
       end
     end
 
-    describe "#bind_ssl" do
+    describe "#bind_tls" do
       it "binds SSL server context" do
         server = Server.new do |context|
           context.response.puts "Test Server (#{context.request.headers["Host"]?})"
@@ -401,7 +405,7 @@ module HTTP
 
         socket = OpenSSL::SSL::Server.new(TCPServer.new("127.0.0.1", 0), server_context)
         server.bind socket
-        ip_address1 = server.bind_ssl "127.0.0.1", 0, server_context
+        ip_address1 = server.bind_tls "127.0.0.1", 0, server_context
         ip_address2 = socket.local_address
 
         spawn server.listen

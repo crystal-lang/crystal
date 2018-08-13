@@ -218,9 +218,9 @@ class HTTP::Server
     # context = OpenSSL::SSL::Context::Server.new
     # context.certificate_chain = "openssl.crt"
     # context.private_key = "openssl.key"
-    # server.bind_ssl "127.0.0.1", 8080, context
+    # server.bind_tls "127.0.0.1", 8080, context
     # ```
-    def bind_ssl(host : String, port : Int32, context : OpenSSL::SSL::Context::Server, reuse_port : Bool = false) : Socket::IPAddress
+    def bind_tls(host : String, port : Int32, context : OpenSSL::SSL::Context::Server, reuse_port : Bool = false) : Socket::IPAddress
       tcp_server = TCPServer.new(host, port, reuse_port)
       server = OpenSSL::SSL::Server.new(tcp_server, context)
 
@@ -238,10 +238,10 @@ class HTTP::Server
     # context = OpenSSL::SSL::Context::Server.new
     # context.certificate_chain = "openssl.crt"
     # context.private_key = "openssl.key"
-    # address = server.bind_ssl "127.0.0.1", context
+    # address = server.bind_tls "127.0.0.1", context
     # ```
-    def bind_ssl(host : String, context : OpenSSL::SSL::Context::Server) : Socket::IPAddress
-      bind_ssl(host, 0, context)
+    def bind_tls(host : String, context : OpenSSL::SSL::Context::Server) : Socket::IPAddress
+      bind_tls(host, 0, context)
     end
 
     # Creates an `OpenSSL::SSL::Server` and adds it as a socket.
@@ -253,10 +253,10 @@ class HTTP::Server
     # context = OpenSSL::SSL::Context::Server.new
     # context.certificate_chain = "openssl.crt"
     # context.private_key = "openssl.key"
-    # address = server.bind_ssl Socket::IPAddress.new("127.0.0.1", 8000), context
+    # address = server.bind_tls Socket::IPAddress.new("127.0.0.1", 8000), context
     # ```
-    def bind_ssl(address : Socket::IPAddress, context : OpenSSL::SSL::Context::Server) : Socket::IPAddress
-      bind_ssl(address.address, address.port, context)
+    def bind_tls(address : Socket::IPAddress, context : OpenSSL::SSL::Context::Server) : Socket::IPAddress
+      bind_tls(address.address, address.port, context)
     end
   {% end %}
 
@@ -265,7 +265,10 @@ class HTTP::Server
   #
   # ```
   # server = HTTP::Server.new { }
-  # server.bind("tcp://localhost:8080") # => Socket::IPAddress.new("localhost, 8080")
+  # server.bind("tcp://localhost:80")  # => Socket::IPAddress.new("127.0.0.1", 8080)
+  # server.bind("unix:///tmp/server.sock")  # => Socket::UNIXAddress.new("/tmp/server.sock")
+  # server.bind("tls://127.0.0.1:443?key=private.key&cert=certificate.cert&ca=ca.crt)  # => Socket::IPAddress.new("127.0.0.1", 443)
+  # ```
   def bind(uri : String) : Socket::Address
     bind(URI.parse(uri))
   end
@@ -277,12 +280,12 @@ class HTTP::Server
       bind_tcp(Socket::IPAddress.parse(uri))
     when "unix"
       bind_unix(Socket::UNIXAddress.parse(uri))
-    when "ssl"
+    when "tls", "ssl"
       address = Socket::IPAddress.parse(uri)
       {% unless flag?(:without_openssl) %}
         context = OpenSSL::SSL::Context::Server.from_hash(HTTP::Params.parse(uri.query || ""))
 
-        bind_ssl(address, context)
+        bind_tls(address, context)
       {% else %}
         raise ArgumentError.new "Unsupported socket type: ssl (program was compiled without openssl support)"
       {% end %}
