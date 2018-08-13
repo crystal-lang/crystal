@@ -2404,7 +2404,17 @@ module Crystal
         skip_space
         if has_parentheses && @token.type == :","
           next_token_skip_space
+          if @token.type == :NEWLINE
+            has_block_newline = true
+            block_indent += 2
+            next_token_skip_space_or_newline
+          end
           write "," if @token.type != :")" # foo(1, &.foo) case
+          if has_block_newline
+            write_line
+            write_indent(block_indent)
+            needs_space = false
+          end
         end
         if has_parentheses && @token.type == :")"
           if ends_with_newline
