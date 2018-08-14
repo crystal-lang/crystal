@@ -2403,17 +2403,19 @@ module Crystal
         block_indent = @multiline_call_indent || @indent
         skip_space
         if has_parentheses && @token.type == :","
-          next_token_skip_space
-          if @token.type == :NEWLINE
-            has_block_newline = true
-            block_indent += 2
-            next_token_skip_space_or_newline
-          end
-          write "," if @token.type != :")" # foo(1, &.foo) case
-          if has_block_newline
-            write_line
-            write_indent(block_indent)
+          next_token
+          wrote_newline = skip_space(block_indent, write_comma: true)
+          if wrote_newline || @token.type == :NEWLINE
+            unless wrote_newline
+              next_token_skip_space_or_newline
+              write "," if @token.type != :")"
+              write_line
+            end
             needs_space = false
+            block_indent += 2
+            write_indent(block_indent)
+          else
+            write "," if @token.type != :")" # foo(1, &.foo) case
           end
         end
         if has_parentheses && @token.type == :")"
