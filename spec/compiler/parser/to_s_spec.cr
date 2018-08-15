@@ -145,4 +145,8 @@ describe "ASTNode#to_s" do
   expect_to_s Assign.new("x".var, Expressions.new([1.int32, 2.int32] of ASTNode)), "x = (1\n2\n)"
   expect_to_s "foo.*"
   expect_to_s "foo.%"
+  expect_to_s "&+1"
+  expect_to_s "&-1"
+  expect_to_s "1.&*"
+  expect_to_s "1.&**"
 end

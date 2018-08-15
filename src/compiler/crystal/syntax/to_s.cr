@@ -362,7 +362,7 @@ module Crystal
         @str << ' '
         node.args.last.accept self
       elsif node_obj && !letter_or_underscore?(node.name) && node.args.size == 0
-        if node.name == "+" || node.name == "-" || node.name == "~"
+        if node.name == "+" || node.name == "-" || node.name == "~" || node.name == "&+" || node.name == "&-"
           @str << decorate_call(node, node.name)
           in_parenthesis(need_parens, node_obj)
         else
