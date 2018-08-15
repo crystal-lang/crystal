@@ -122,6 +122,16 @@ private class TestObjectWithFinalize
   def_clone
 end
 
+private class HashedTestObject
+  property a : Int32
+  property b : Int32
+
+  def initialize(@a, @b)
+  end
+
+  def_hash :a, :b
+end
+
 describe Object do
   describe "delegate" do
     it "delegates" do
@@ -379,5 +389,15 @@ describe Object do
   it "calls #finalize on #clone'd objects" do
     obj = TestObjectWithFinalize.new
     assert_finalizes(:clone) { obj.clone }
+  end
+
+  describe "def_hash" do
+    it "should return same hash for equal property values" do
+      HashedTestObject.new(1, 2).hash.should eq HashedTestObject.new(1, 2).hash
+    end
+
+    it "shouldn't return same hash for different property values" do
+      HashedTestObject.new(1, 2).hash.should_not eq HashedTestObject.new(3, 4).hash
+    end
   end
 end
