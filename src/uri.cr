@@ -120,21 +120,9 @@ class URI
   # Sets the fragment component of the URI.
   setter fragment : String?
 
-  # Returns the opaque component of the URI.
-  #
-  # ```
-  # require "uri"
-  #
-  # URI.parse("mailto:alice@example.com").opaque # => "alice@example.com"
-  # ```
-  getter opaque : String?
+  def_equals_and_hash scheme, host, port, path, query, user, password, fragment
 
-  # Sets the opaque component of the URI.
-  setter opaque : String?
-
-  def_equals_and_hash scheme, host, port, path, query, user, password, fragment, opaque
-
-  def initialize(@scheme = nil, @host = nil, @port = nil, @path = "", @query = nil, @user = nil, @password = nil, @fragment = nil, @opaque = nil)
+  def initialize(@scheme = nil, @host = nil, @port = nil, @path = "", @query = nil, @user = nil, @password = nil, @fragment = nil)
   end
 
   # Returns the host part of the URI and unwrap brackets for IPv6 addresses.
@@ -176,16 +164,20 @@ class URI
     !absolute?
   end
 
+  # Returns `true` if this URI is opaque.
+  #
+  # A URI is considered opaque if it has a `scheme` but no hierachical part,
+  # i.e. no `host` and the first character of `path` is not a slash (`/`).
+  def opaque? : Bool
+    !@scheme.nil? && @host.nil? && !@path.starts_with?('/')
+  end
+
   def to_s(io : IO) : Nil
     if scheme
       io << scheme
       io << ':'
-      io << "//" unless opaque
     end
-    if opaque
-      io << opaque
-      return
-    end
+    io << "//" if @user || host || port
     if user = @user
       userinfo(user, io)
       io << '@'

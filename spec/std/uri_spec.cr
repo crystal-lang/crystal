@@ -24,16 +24,16 @@ describe "URI" do
     assert_uri("http://www.foo-bar.example.com", scheme: "http", host: "www.foo-bar.example.com")
     assert_uri("/foo", path: "/foo")
     assert_uri("/foo?q=1", path: "/foo", query: "q=1")
-    assert_uri("mailto:foo@example.org", scheme: "mailto", opaque: "foo@example.org")
+    assert_uri("mailto:foo@example.org", scheme: "mailto", path: "foo@example.org")
 
     assert_uri("http://user:pass@bitfission.com:8080/path?a=b#frag",
       scheme: "http", user: "user", password: "pass", host: "bitfission.com", port: 8080, path: "/path", query: "a=b", fragment: "frag")
     assert_uri("//user:pass@bitfission.com:8080/path?a=b#frag",
       user: "user", password: "pass", host: "bitfission.com", port: 8080, path: "/path", query: "a=b", fragment: "frag")
     assert_uri("/path?a=b#frag", path: "/path", query: "a=b", fragment: "frag")
-    assert_uri("mailto:user@example.com", scheme: "mailto", opaque: "user@example.com")
+    assert_uri("mailto:user@example.com", scheme: "mailto", path: "user@example.com")
     assert_uri("file://localhost/etc/fstab", scheme: "file", host: "localhost", path: "/etc/fstab")
-    assert_uri("file:///etc/fstab", scheme: "file", path: "/etc/fstab")
+    assert_uri("file:///etc/fstab", scheme: "file", host: "", path: "/etc/fstab")
     assert_uri("test:/test", scheme: "test", path: "/test")
 
     context "bad urls" do
@@ -137,9 +137,9 @@ describe "URI" do
     it { URI.new("http", "www.example.com", fragment: "top").to_s.should eq("http://www.example.com#top") }
     it { URI.new("http", "www.example.com", 80, "/hello").to_s.should eq("http://www.example.com:80/hello") }
     it { URI.new("http", "www.example.com", 80, "/hello", "a=1").to_s.should eq("http://www.example.com:80/hello?a=1") }
-    it { URI.new("mailto", opaque: "foo@example.com").to_s.should eq("mailto:foo@example.com") }
-    it { URI.new("file", opaque: "/foo.html").to_s.should eq("file:/foo.html") }
-    it { URI.new("file", opaque: "foo.html").to_s.should eq("file:foo.html") }
+    it { URI.new("mailto", path: "foo@example.com").to_s.should eq("mailto:foo@example.com") }
+    it { URI.new("file", path: "/foo.html").to_s.should eq("file:/foo.html") }
+    it { URI.new("file", path: "foo.html").to_s.should eq("file:foo.html") }
 
     it "preserves non-default port" do
       URI.new("http", "www.example.com", 1234).to_s.should eq("http://www.example.com:1234")
@@ -156,8 +156,17 @@ describe "URI" do
     end
 
     it "preserves port for nil scheme" do
-      URI.new(nil, "www.example.com", 1234).to_s.should eq("www.example.com:1234")
+      URI.new(nil, "www.example.com", 1234).to_s.should eq("//www.example.com:1234")
     end
+  end
+
+  it "#opaque?" do
+    URI.new.opaque?.should be_false
+    URI.new("foo").opaque?.should be_true
+    URI.new("foo", "example.com").opaque?.should be_false
+    URI.new("foo", "").opaque?.should be_false
+    URI.new("foo", path: "foo").opaque?.should be_true
+    URI.new("foo", path: "/foo").opaque?.should be_false
   end
 
   describe ".default_port" do

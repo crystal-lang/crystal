@@ -46,9 +46,8 @@ class URI
             @ptr += 2
             return parse_path_or_authority
           else
-            # greatly deviates from spec as described, but is correct behavior
-            @uri.opaque = String.new(@input + @ptr + 1)
-            return nil
+            @ptr += 1
+            return parse_path
           end
         else
           @ptr = 0
@@ -59,6 +58,7 @@ class URI
 
     def parse_path_or_authority
       if c === '/'
+        @uri.host = ""
         parse_authority
       else
         @ptr -= 1
