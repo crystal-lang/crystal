@@ -129,6 +129,7 @@ module Crystal
     it_parses "- 1", Call.new(1.int32, "-")
     it_parses "+ 1", Call.new(1.int32, "+")
     it_parses "~ 1", Call.new(1.int32, "~")
+    it_parses "1.~", Call.new(1.int32, "~")
     it_parses "1 && 2", And.new(1.int32, 2.int32)
     it_parses "1 || 2", Or.new(1.int32, 2.int32)
     it_parses "&- 1", Call.new(1.int32, "&-")
