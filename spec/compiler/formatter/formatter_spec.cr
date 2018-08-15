@@ -245,6 +245,8 @@ describe Crystal::Formatter do
   assert_format "foo(&.bar)"
   assert_format "foo.bar(&.baz)"
   assert_format "foo(1, &.bar)"
+  assert_format "foo(1,\n  &.bar)"
+  assert_format "foo(1, # foo\n  &.bar)"
   assert_format "::foo(1, 2)"
   assert_format "args.any? &.name.baz"
   assert_format "foo(\n  1, 2)", "foo(\n  1, 2)"
