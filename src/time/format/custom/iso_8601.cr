@@ -52,19 +52,11 @@ struct Time::Format
         else
           # ordinal date
           day_of_the_year = @month * 10 + current_char.to_i
-          @month = 0
           next_char
-          days_per_month = Time.leap_year?(@year) ? Time::DAYS_MONTH_LEAP : Time::DAYS_MONTH
 
-          days_per_month.each_with_index do |days, month|
-            if day_of_the_year > days
-              day_of_the_year -= days
-            else
-              @day = day_of_the_year
-              @month = month
-              break
-            end
-          end
+          date = Time.utc(@year, 1, 1) + (day_of_the_year - 1).days
+          @month = date.month
+          @day = date.day
         end
       end
     end
