@@ -389,7 +389,15 @@ struct Time::Span
   end
 
   def zero? : Bool
-    to_i == 0 && nanoseconds == 0
+    self == ZERO
+  end
+
+  def positive? : Bool
+    self > ZERO
+  end
+
+  def negative? : Bool
+    self < ZERO
   end
 end
 

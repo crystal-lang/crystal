@@ -180,4 +180,11 @@ describe "Complex" do
     Complex.new(1.2, 0).zero?.should eq false
     Complex.new(1.2, 3.4).zero?.should eq false
   end
+
+  it "test positive?" do
+    Complex.new(0, 0).zero?.should eq true
+    Complex.new(0, 3.4).zero?.should eq false
+    Complex.new(1.2, 0).zero?.should eq false
+    Complex.new(1.2, 3.4).zero?.should eq false
+  end
 end
