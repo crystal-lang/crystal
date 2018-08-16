@@ -40,7 +40,7 @@ struct Time::Span
   # *Heavily* inspired by Mono's Time::Span class:
   # https://github.com/mono/mono/blob/master/mcs/class/corlib/System/Time::Span.cs
 
-  include Comparable(self)
+  include Comparable(Time::Span)
 
   MAX  = new seconds: Int64::MAX, nanoseconds: 999_999_999
   MIN  = new seconds: Int64::MIN, nanoseconds: -999_999_999

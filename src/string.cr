@@ -136,7 +136,7 @@ class String
   # :nodoc:
   HEADER_SIZE = sizeof({Int32, Int32, Int32})
 
-  include Comparable(self)
+  include Comparable(String)
 
   macro inherited
     {{ raise "Cannot inherit from String" }}
