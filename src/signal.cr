@@ -1,5 +1,6 @@
 require "c/signal"
 require "c/stdio"
+require "c/sys/resource"
 require "c/sys/wait"
 require "c/unistd"
 
@@ -269,10 +270,26 @@ end
 
 # :nodoc:
 fun __crystal_sigfault_handler(sig : LibC::Int, addr : Void*)
+  # Capture fault signals (SEGV, BUS) and finish the process printing a backtrace first
   Crystal.restore_blocking_state
 
-  # Capture fault signals (SEGV, BUS) and finish the process printing a backtrace first
-  LibC.dprintf 2, "Invalid memory access (signal %d) at address 0x%lx\n", sig, addr
+  stack = Fiber.current.@stack
+
+  unless stack
+    # main fiber (main thread stack):
+    stack_size = 0
+    if LibC.getrlimit(LibC::RLIMIT_STACK, out rlim) == 0
+      stack_size = rlim.rlim_cur
+    end
+    stack = Pointer(Void).new(Fiber.current.@stack_bottom.address - stack_size)
+  end
+
+  if stack <= addr < Fiber.current.@stack_top
+    LibC.dprintf 2, "Stack overflow: infinite or too deep recursion (invalid memory access at address 0x%lx)\n", addr, stack
+  else
+    LibC.dprintf 2, "Invalid memory access (signal %d) at address 0x%lx\n", sig, addr
+  end
+
   CallStack.print_backtrace
   LibC._exit(sig)
 end
