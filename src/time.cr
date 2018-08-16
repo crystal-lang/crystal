@@ -727,6 +727,62 @@ struct Time
     @nanoseconds
   end
 
+  # Returns the ISO calendar year and week in which this instance occurs.
+  #
+  # The ISO calendar year to which the week belongs is not always in the same
+  # as the year of the regular calendar date. The first three days of January
+  # sometimes belong to week 52 (or 53) of the previous year;
+  # equally the last three days of December sometimes are already in week 1
+  # of the following year.
+  #
+  # For that reason, this method returns a tuple `year, week` consisting of the
+  # calendar year to which the calendar week belongs and the ordinal number of
+  # the week within that year.
+  #
+  # Together with `#day_of_week` this represents a specific day as commercial or
+  # week date format `year, week, day_of_week` in the same way as the typical
+  # format `year, month, day`.
+  def calendar_week : {Int32, Int32}
+    year, month, day, day_year = year_month_day_day_year
+
+    day_of_week = self.day_of_week
+
+    # The week number can be calculated as number of Mondays in the year up to
+    # the ordinal date.
+    # The addition by +10 consists of +7 to start the week numbering with 1
+    # instead of 0 and +3 because the first week has already started in the
+    # previous year and the first Monday is actually in week 2.
+    week_number = (day_year - day_of_week.to_i + 10) / 7
+
+    if week_number == 0
+      # Week number 0 means the date belongs to the last week of the previous year.
+      year -= 1
+
+      # The week number depends on whether the previous year has 52 or 53 weeks
+      # which can be determined by the day of week of January 1.
+      # The year has 53 weeks if Januar 1 is on a Friday or the year was a leap
+      # year and January 1 is on a Saturday.
+      jan1_day_of_week = DayOfWeek.from_value((day_of_week.to_i - day_year + 1) % 7)
+
+      if jan1_day_of_week == DayOfWeek::Friday || (jan1_day_of_week == DayOfWeek::Saturday && Time.leap_year?(year))
+        week_number = 53
+      else
+        week_number = 52
+      end
+    elsif week_number == 53
+      # Week number 53 is actually week number 1 of the following year, if
+      # December 31 is on a Monday, Tuesday or Wednesday.
+      dec31_day_of_week = (day_of_week.to_i + 31 - day) % 7
+
+      if dec31_day_of_week <= DayOfWeek::Wednesday.to_i
+        year += 1
+        week_number = 1
+      end
+    end
+
+    {year, week_number}
+  end
+
   # Returns the duration between this `Time` and midnight of the same day.
   #
   # This is equivalent to creating a `Time::Span` from the time-of-day fields:
