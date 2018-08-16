@@ -368,7 +368,7 @@ module Crystal
         in_parenthesis(need_parens, node_obj)
 
         arg = node.args[0]
-        if node.name == "~"
+        if node.name == "~" # it is `foo.~(bar)` case.
           @str << '.'
           @str << node.name
           @str << '('
