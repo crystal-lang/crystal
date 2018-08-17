@@ -218,8 +218,6 @@ module Crystal
         # It's different if from a virtual type we do `v.class.new`
         # because the class could be any in the hierarchy.
         node.type = check_type_in_type_args(type.remove_alias_if_simple).devirtualize
-      when Self
-        node.type = check_type_in_type_args(the_self(node).remove_alias_if_simple)
       when ASTNode
         type.accept self unless type.type?
         node.syntax_replacement = type
