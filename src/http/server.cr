@@ -260,6 +260,7 @@ class HTTP::Server
     end
 
     # DEPRECATED: Use `#bind_tls`.
+    # TODO: remove in 0.27.0
     def bind_ssl(*args)
       bind_tls(*args)
     end
