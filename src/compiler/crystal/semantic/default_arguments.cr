@@ -155,7 +155,7 @@ class Crystal::Def
         named_tuple_entries = [] of NamedTupleLiteral::Entry
         named_args.try &.each_with_index do |named_arg, i|
           # Don't put here regular arguments
-          next if args.any? &.name.==(named_arg)
+          next if args.any? &.external_name.==(named_arg)
 
           temp_name = named_args_temp_names.not_nil![i]
           named_tuple_entries << NamedTupleLiteral::Entry.new(named_arg, Var.new(temp_name))
