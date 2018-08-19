@@ -145,7 +145,7 @@ class URI
   # uri = URI.parse "http://foo.com/posts?id=30&limit=5#time=1305298413"
   # uri.full_path # => "/posts?id=30&limit=5"
   # ```
-  def full_path
+  def full_path : String
     String.build do |str|
       str << (@path.empty? ? '/' : @path)
       if (query = @query) && !query.empty?
@@ -155,12 +155,12 @@ class URI
   end
 
   # Returns `true` if URI has a *scheme* specified.
-  def absolute?
+  def absolute? : Bool
     @scheme ? true : false
   end
 
   # Returns `true` if URI does not have a *scheme* specified.
-  def relative?
+  def relative? : Bool
     !absolute?
   end
 
@@ -213,14 +213,14 @@ class URI
   end
 
   # Returns normalized URI.
-  def normalize
+  def normalize : self
     uri = dup
     uri.normalize!
     uri
   end
 
   # Destructive normalize.
-  def normalize!
+  def normalize! : Nil
     @path = remove_dot_segments(path)
     @port = nil if default_port?
   end
