@@ -542,7 +542,7 @@ module Crystal
 
       node.expressions.each do |exp|
         if @token.type == :DELIMITER_END
-          # Heredoc cannot contain string continutation,
+          # Heredoc cannot contain string continuation,
           # so we are done.
           break if is_heredoc
 
