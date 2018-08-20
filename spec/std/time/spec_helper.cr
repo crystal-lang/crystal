@@ -1,14 +1,6 @@
 require "../spec_helper"
 
 class Time::Location
-  def __cached_range
-    @cached_range
-  end
-
-  def __cached_zone
-    @cached_zone
-  end
-
   def __cached_zone=(zone)
     @cached_zone = zone
   end
