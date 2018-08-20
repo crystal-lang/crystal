@@ -1,70 +1,74 @@
 require "./spec_helper"
 
 describe Time do
-  it "initialize" do
-    t1 = Time.new 2002, 2, 25
-    t1.year.should eq(2002)
-    t1.month.should eq(2)
-    t1.day.should eq(25)
-    t1.local?.should be_true
+  describe ".new" do
+    it "initializes" do
+      t1 = Time.new 2002, 2, 25
+      t1.year.should eq(2002)
+      t1.month.should eq(2)
+      t1.day.should eq(25)
+      t1.local?.should be_true
 
-    t2 = Time.new 2002, 2, 25, 15, 25, 13, nanosecond: 8
-    t2.year.should eq(2002)
-    t2.month.should eq(2)
-    t2.day.should eq(25)
-    t2.hour.should eq(15)
-    t2.minute.should eq(25)
-    t2.second.should eq(13)
-    t2.nanosecond.should eq(8)
-    t2.local?.should be_true
-  end
-
-  it "initialize max" do
-    time = Time.new(9999, 12, 31, 23, 59, 59, nanosecond: 999_999_999)
-    time.year.should eq(9999)
-    time.month.should eq(12)
-    time.day.should eq(31)
-    time.hour.should eq(23)
-    time.minute.should eq(59)
-    time.second.should eq(59)
-    time.nanosecond.should eq(999_999_999)
-  end
-
-  it "fail initialize with negative nanosecond" do
-    expect_raises ArgumentError, "Invalid time" do do
-      Time.new(9999, 12, 31, 23, 59, 59, nanosecond: -1)
+      t2 = Time.new 2002, 2, 25, 15, 25, 13, nanosecond: 8
+      t2.year.should eq(2002)
+      t2.month.should eq(2)
+      t2.day.should eq(25)
+      t2.hour.should eq(15)
+      t2.minute.should eq(25)
+      t2.second.should eq(13)
+      t2.nanosecond.should eq(8)
+      t2.local?.should be_true
     end
-  end
 
-  it "fail initialize with 1_000_000_000 nanoseconds" do
-    expect_raises ArgumentError, "Invalid time" do do
-      Time.new(9999, 12, 31, 23, 59, 59, nanosecond: 1_000_000_000)
+    it "initializes max value" do
+      time = Time.new(9999, 12, 31, 23, 59, 59, nanosecond: 999_999_999)
+      time.year.should eq(9999)
+      time.month.should eq(12)
+      time.day.should eq(31)
+      time.hour.should eq(23)
+      time.minute.should eq(59)
+      time.second.should eq(59)
+      time.nanosecond.should eq(999_999_999)
     end
-  end
 
-  it "#initialize checks boundary at time min" do
-    {-5 * 3600, -1, 0, 1, 5 * 3600}.each do |offset|
-      seconds = -offset.to_i64
-      Time.new(seconds: seconds + 1, nanoseconds: 0, location: Time::Location.fixed(offset))
-      Time.new(seconds: seconds, nanoseconds: 0, location: Time::Location.fixed(offset))
-      expect_raises ArgumentError, "Invalid time" do do
-        Time.new(seconds: seconds - 1, nanoseconds: 0, location: Time::Location.fixed(offset))
+    it "fails with negative nanosecond" do
+      expect_raises ArgumentError, "Invalid time" do
+        Time.new(9999, 12, 31, 23, 59, 59, nanosecond: -1)
+      end
+    end
+
+    it "fails with too big nanoseconds" do
+      expect_raises ArgumentError, "Invalid time" do
+        Time.new(9999, 12, 31, 23, 59, 59, nanosecond: 1_000_000_000)
+      end
+    end
+
+    it "checks boundary at time min" do
+      {-5 * 3600, -1, 0, 1, 5 * 3600}.each do |offset|
+        seconds = -offset.to_i64
+        location = Time::Location.fixed(offset)
+        Time.new(seconds: seconds + 1, nanoseconds: 0, location: location)
+        Time.new(seconds: seconds, nanoseconds: 0, location: location)
+        expect_raises ArgumentError, "Invalid time" do
+          Time.new(seconds: seconds - 1, nanoseconds: 0, location: location)
+        end
+      end
+    end
+
+    it "checks boundary at time max" do
+      {-5 * 3600, -1, 0, 1, 5 * 3600}.each do |offset|
+        seconds = Time::MAX_SECONDS - offset.to_i64
+        location = Time::Location.fixed(offset)
+        Time.new(seconds: seconds - 1, nanoseconds: 0, location: location)
+        Time.new(seconds: seconds, nanoseconds: 0, location: location)
+        expect_raises ArgumentError, "Invalid time" do
+          Time.new(seconds: seconds + 1, nanoseconds: 0, location: location)
+        end
       end
     end
   end
 
-  it "#initialize checks boundary at time max" do
-    {-5 * 3600, -1, 0, 1, 5 * 3600}.each do |offset|
-      seconds = Time::MAX_SECONDS - offset.to_i64
-      Time.new(seconds: seconds - 1, nanoseconds: 0, location: Time::Location.fixed(offset))
-      Time.new(seconds: seconds, nanoseconds: 0, location: Time::Location.fixed(offset))
-      expect_raises ArgumentError, "Invalid time" do do
-        Time.new(seconds: seconds + 1, nanoseconds: 0, location: Time::Location.fixed(offset))
-      end
-    end
-  end
-
-  it "initialize with .epoch" do
+  it ".epoch" do
     seconds = 1439404155
     time = Time.epoch(seconds)
     time.should eq(Time.utc(2015, 8, 12, 18, 29, 15))
@@ -72,7 +76,7 @@ describe Time do
     time.utc?.should be_true
   end
 
-  it "initialize with .epoch_ms" do
+  it ".epoch_ms" do
     milliseconds = 1439404155000
     time = Time.epoch_ms(milliseconds)
     time.should eq(Time.utc(2015, 8, 12, 18, 29, 15))
@@ -80,20 +84,31 @@ describe Time do
     time.utc?.should be_true
   end
 
-  it "returns always increasing monotonic clock" do
-    clock = Time.monotonic
-    Time.monotonic.should be >= clock
+  describe ".now" do
+    it "current time is similar in differnt locations" do
+      (Time.now - Time.utc_now).should be_close(0.seconds, 1.second)
+      (Time.now - Time.now(Time::Location.fixed(1234))).should be_close(0.seconds, 1.second)
+    end
   end
 
-  it "measures elapsed time" do
-    # NOTE: On some systems, the sleep may not always wait for 1ms and the fiber
-    #       be resumed early. We thus merely test that the method returns a
-    #       positive time span.
-    elapsed = Time.measure { sleep 1.millisecond }
-    elapsed.should be >= 0.seconds
+  describe ".monotonic" do
+    it "returns always increasing monotonic clock" do
+      clock = Time.monotonic
+      Time.monotonic.should be >= clock
+    end
   end
 
-  it "clones" do
+  describe ".measure" do
+    it "measures elapsed time" do
+      # NOTE: On some systems, the sleep may not always wait for 1ms and the fiber
+      #       be resumed early. We thus merely test that the method returns a
+      #       positive time span.
+      elapsed = Time.measure { sleep 1.millisecond }
+      elapsed.should be >= 0.seconds
+    end
+  end
+
+  it "#clone" do
     time = Time.now
     (time == time.clone).should be_true
   end
@@ -249,50 +264,94 @@ describe Time do
       time = time + 15_623_487.nanoseconds
       time.should eq Time.utc(1996, 6, 13, 7, 25, 13, nanosecond: 15_623_487)
     end
+
+    it "preserves location when adding" do
+      time = Time.utc_now
+      time.utc?.should be_true
+
+      (time + 5.minutes).utc?.should be_true
+
+      time = Time.now
+      (time + 5.minutes).location.should eq time.location
+    end
   end
 
-  it "gets time of day" do
+  it "#time_of_day" do
     t = Time.new 2014, 10, 30, 21, 18, 13
     t.time_of_day.should eq(Time::Span.new(21, 18, 13))
   end
 
-  it "gets day of week" do
+  it "#day_of_week" do
     t = Time.new 2014, 10, 30, 21, 18, 13
     t.day_of_week.should eq(Time::DayOfWeek::Thursday)
   end
 
-  it "gets day of year" do
+  it "answers day name predicates" do
+    7.times do |i|
+      time = Time.new(2015, 2, 15 + i)
+      time.sunday?.should eq(i == 0)
+      time.monday?.should eq(i == 1)
+      time.tuesday?.should eq(i == 2)
+      time.wednesday?.should eq(i == 3)
+      time.thursday?.should eq(i == 4)
+      time.friday?.should eq(i == 5)
+      time.saturday?.should eq(i == 6)
+    end
+  end
+
+  it "#day_of_year" do
     t = Time.new 2014, 10, 30, 21, 18, 13
     t.day_of_year.should eq(303)
   end
 
-  it "compares" do
-    t1 = Time.new 2014, 10, 30, 21, 18, 13
-    t2 = Time.new 2014, 10, 30, 21, 18, 14
+  describe "#<=>" do
+    it "compares" do
+      t1 = Time.new 2014, 10, 30, 21, 18, 13
+      t2 = Time.new 2014, 10, 30, 21, 18, 14
 
-    (t1 <=> t2).should eq(-1)
-    (t1 == t2).should be_false
-    (t1 < t2).should be_true
+      (t1 <=> t2).should eq(-1)
+      (t1 == t2).should be_false
+      (t1 < t2).should be_true
+    end
+
+    it "compares different locations" do
+      time = Time.now
+      (time.to_utc <=> time).should eq(0)
+    end
   end
 
-  it "gets unix epoch seconds" do
-    t1 = Time.utc 2014, 10, 30, 21, 18, 13, nanosecond: 0
-    t1.epoch.should eq(1414703893)
-    t1.epoch_f.should be_close(1414703893, 1e-01)
-  end
+  describe "#epoch" do
+    it "gets unix epoch seconds" do
+      t1 = Time.utc 2014, 10, 30, 21, 18, 13, nanosecond: 0
+      t1.epoch.should eq(1414703893)
+      t1.epoch_f.should be_close(1414703893, 1e-01)
+    end
 
-  it "gets unix epoch seconds at GMT" do
-    t1 = Time.now
-    t1.epoch.should eq(t1.to_utc.epoch)
-    t1.epoch_f.should be_close(t1.to_utc.epoch_f, 1e-01)
-  end
-
-  it "current time is similar in differnt locations" do
-    (Time.now - Time.utc_now).should be_close(0.seconds, 1.second)
-    (Time.now - Time.now(Time::Location.fixed(1234))).should be_close(0.seconds, 1.second)
+    it "gets unix epoch seconds at GMT" do
+      t1 = Time.now
+      t1.epoch.should eq(t1.to_utc.epoch)
+      t1.epoch_f.should be_close(t1.to_utc.epoch_f, 1e-01)
+    end
   end
 
   describe "#to_s" do
+    it "prints string" do
+      with_zoneinfo do
+        time = Time.new(2017, 11, 25, 22, 6, 17, location: Time::Location::UTC)
+        time.to_s.should eq "2017-11-25 22:06:17 UTC"
+
+        time = Time.new(2017, 11, 25, 22, 6, 17, location: Time::Location.fixed(-7200))
+        time.to_s.should eq "2017-11-25 22:06:17 -02:00"
+
+        time = Time.new(2017, 11, 25, 22, 6, 17, location: Time::Location.fixed(-7259))
+        time.to_s.should eq "2017-11-25 22:06:17 -02:00:59"
+
+        location = Time::Location.load("Europe/Berlin")
+        time = Time.new(2017, 11, 25, 22, 6, 17, location: location)
+        time.to_s.should eq "2017-11-25 22:06:17 +01:00"
+      end
+    end
+
     it "prints date-time fields" do
       Time.utc(2014, 1, 30, 21, 18, 13).to_s.should eq("2014-01-30 21:18:13 UTC")
       Time.utc(2014, 10, 1, 21, 18, 13).to_s.should eq("2014-10-01 21:18:13 UTC")
@@ -353,7 +412,7 @@ describe Time do
     Time.new(2014, 1, 2, 3, 4, 5, nanosecond: 123_456_789, location: location).inspect.should eq "2014-01-02 03:04:05.123456789 +01:00:01"
   end
 
-  it "at" do
+  it "at methods" do
     t1 = Time.utc 2014, 11, 25, 10, 11, 12, nanosecond: 13
     t2 = Time.utc 2014, 6, 25, 10, 11, 12, nanosecond: 13
 
@@ -415,34 +474,6 @@ describe Time do
     t2.at_end_of_semester.should eq Time.utc(2014, 6, 30, 23, 59, 59, nanosecond: 999_999_999)
   end
 
-  it "preserves location when adding" do
-    time = Time.utc_now
-    time.utc?.should be_true
-
-    (time + 5.minutes).utc?.should be_true
-
-    time = Time.now
-    (time + 5.minutes).location.should eq time.location
-  end
-
-  it "asks for day name" do
-    7.times do |i|
-      time = Time.new(2015, 2, 15 + i)
-      time.sunday?.should eq(i == 0)
-      time.monday?.should eq(i == 1)
-      time.tuesday?.should eq(i == 2)
-      time.wednesday?.should eq(i == 3)
-      time.thursday?.should eq(i == 4)
-      time.friday?.should eq(i == 5)
-      time.saturday?.should eq(i == 6)
-    end
-  end
-
-  it "compares different locations" do
-    time = Time.now
-    (time.to_utc <=> time).should eq(0)
-  end
-
   it "does diff of utc vs local time" do
     local = Time.now
     utc = local.to_utc
@@ -463,24 +494,7 @@ describe Time do
     end
   end
 
-  it "#to_s" do
-    with_zoneinfo do
-      time = Time.new(2017, 11, 25, 22, 6, 17, location: Time::Location::UTC)
-      time.to_s.should eq "2017-11-25 22:06:17 UTC"
-
-      time = Time.new(2017, 11, 25, 22, 6, 17, location: Time::Location.fixed(-7200))
-      time.to_s.should eq "2017-11-25 22:06:17 -02:00"
-
-      time = Time.new(2017, 11, 25, 22, 6, 17, location: Time::Location.fixed(-7259))
-      time.to_s.should eq "2017-11-25 22:06:17 -02:00:59"
-
-      location = Time::Location.load("Europe/Berlin")
-      time = Time.new(2017, 11, 25, 22, 6, 17, location: location)
-      time.to_s.should eq "2017-11-25 22:06:17 +01:00"
-    end
-  end
-
-  describe "days in month" do
+  describe ".days_in_month" do
     it "returns days for valid month and year" do
       Time.days_in_month(2016, 2).should eq(29)
       Time.days_in_month(1990, 4).should eq(30)
@@ -499,7 +513,7 @@ describe Time do
     end
   end
 
-  it "days in year with year" do
+  it ".days_in_year" do
     Time.days_in_year(2005).should eq(365)
     Time.days_in_year(2004).should eq(366)
     Time.days_in_year(2000).should eq(366)
