@@ -456,9 +456,6 @@ module Crystal
         end
 
         TypeNode.new(matched_type)
-      when Self
-        target = @scope == @program.class_type ? @scope : @scope.instance_type
-        TypeNode.new(target)
       when ASTNode
         matched_type
       else

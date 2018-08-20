@@ -237,6 +237,11 @@ struct Enum
     value <=> other.value
   end
 
+  # :nodoc:
+  def ==(other)
+    false
+  end
+
   # Returns `true` if this enum member's value includes *other*. This
   # performs a logical "and" between this enum member's value and *other*'s,
   # so instead of writing:

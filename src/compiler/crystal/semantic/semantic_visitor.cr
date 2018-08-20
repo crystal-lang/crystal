@@ -238,13 +238,11 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
 
   def lookup_type(node : ASTNode,
                   free_vars = nil,
-                  lazy_self = false,
                   find_root_generic_type_parameters = true)
     current_type.lookup_type(
       node,
       free_vars: free_vars,
       allow_typeof: false,
-      lazy_self: lazy_self,
       find_root_generic_type_parameters: find_root_generic_type_parameters
     )
   end
