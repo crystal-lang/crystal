@@ -496,6 +496,51 @@ describe Time do
     end
   end
 
+  describe "#to_local_in" do
+    it "keeps wall clock" do
+      location = Time::Location.fixed(3600)
+      location2 = Time::Location.fixed(12345)
+      time1 = Time.now(location)
+      time1.location.should eq(location)
+
+      time2 = time1.to_local_in(location2)
+      time2.location.should eq(location2)
+      time2.year.should eq time1.year
+      time2.month.should eq time1.month
+      time2.day.should eq time1.day
+      time2.hour.should eq time1.hour
+      time2.minute.should eq time1.minute
+      time2.second.should eq time1.second
+      time2.nanosecond.should eq time1.nanosecond
+    end
+
+    it "is the difference of offsets apart" do
+      location = Time::Location.fixed(3600)
+      location2 = Time::Location.fixed(12345)
+      time1 = Time.now(location)
+      time2 = time1.to_local_in(location2)
+
+      (time2 - time1).should eq (time1.offset - time2.offset).seconds
+    end
+  end
+
+  it "#to_s" do
+    with_zoneinfo do
+      time = Time.new(2017, 11, 25, 22, 6, 17, location: Time::Location::UTC)
+      time.to_s.should eq "2017-11-25 22:06:17 UTC"
+
+      time = Time.new(2017, 11, 25, 22, 6, 17, location: Time::Location.fixed(-7200))
+      time.to_s.should eq "2017-11-25 22:06:17 -02:00"
+
+      time = Time.new(2017, 11, 25, 22, 6, 17, location: Time::Location.fixed(-7259))
+      time.to_s.should eq "2017-11-25 22:06:17 -02:00:59"
+
+      location = Time::Location.load("Europe/Berlin")
+      time = Time.new(2017, 11, 25, 22, 6, 17, location: location)
+      time.to_s.should eq "2017-11-25 22:06:17 +01:00"
+    end
+  end
+
   describe ".days_in_month" do
     it "returns days for valid month and year" do
       Time.days_in_month(2016, 2).should eq(29)
