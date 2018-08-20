@@ -1,11 +1,5 @@
 require "./spec_helper"
 
-def Time.expect_invalid
-  expect_raises ArgumentError, "Invalid time" do
-    yield
-  end
-end
-
 describe Time do
   it "initialize" do
     t1 = Time.new 2002, 2, 25
@@ -37,13 +31,13 @@ describe Time do
   end
 
   it "fail initialize with negative nanosecond" do
-    Time.expect_invalid do
+    expect_raises ArgumentError, "Invalid time" do do
       Time.new(9999, 12, 31, 23, 59, 59, nanosecond: -1)
     end
   end
 
   it "fail initialize with 1_000_000_000 nanoseconds" do
-    Time.expect_invalid do
+    expect_raises ArgumentError, "Invalid time" do do
       Time.new(9999, 12, 31, 23, 59, 59, nanosecond: 1_000_000_000)
     end
   end
@@ -53,7 +47,7 @@ describe Time do
       seconds = -offset.to_i64
       Time.new(seconds: seconds + 1, nanoseconds: 0, location: Time::Location.fixed(offset))
       Time.new(seconds: seconds, nanoseconds: 0, location: Time::Location.fixed(offset))
-      Time.expect_invalid do
+      expect_raises ArgumentError, "Invalid time" do do
         Time.new(seconds: seconds - 1, nanoseconds: 0, location: Time::Location.fixed(offset))
       end
     end
@@ -64,7 +58,7 @@ describe Time do
       seconds = Time::MAX_SECONDS - offset.to_i64
       Time.new(seconds: seconds - 1, nanoseconds: 0, location: Time::Location.fixed(offset))
       Time.new(seconds: seconds, nanoseconds: 0, location: Time::Location.fixed(offset))
-      Time.expect_invalid do
+      expect_raises ArgumentError, "Invalid time" do do
         Time.new(seconds: seconds + 1, nanoseconds: 0, location: Time::Location.fixed(offset))
       end
     end
