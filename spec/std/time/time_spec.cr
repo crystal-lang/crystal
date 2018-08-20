@@ -421,20 +421,6 @@ describe Time do
     t2.at_end_of_semester.should eq Time.utc(2014, 6, 30, 23, 59, 59, nanosecond: 999_999_999)
   end
 
-  it "does time span units" do
-    1.nanoseconds.should eq(Time::Span.new(nanoseconds: 1))
-    1.millisecond.should eq(1_000_000.nanoseconds)
-    1.milliseconds.should eq(1_000_000.nanoseconds)
-    1.second.should eq(1000.milliseconds)
-    1.seconds.should eq(1000.milliseconds)
-    1.minute.should eq(60.seconds)
-    1.minutes.should eq(60.seconds)
-    1.hour.should eq(60.minutes)
-    1.hours.should eq(60.minutes)
-    1.week.should eq(7.days)
-    2.weeks.should eq(14.days)
-  end
-
   it "preserves location when adding" do
     time = Time.utc_now
     time.utc?.should be_true
