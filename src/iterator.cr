@@ -200,6 +200,56 @@ module Iterator(T)
     end
   end
 
+  # Like `#chain` but could chains multiple iterators.
+  # In case number of iterators cannot be determined or depends on input,
+  # such as chaining an array of iterator.
+  # `#chain(other)` concact two iterator in linear,
+  # but in this case, `#chain(other)` with a loop cannot be expanded in linear,
+  # and compiler will traps in recursive expansion.
+  # This method uses a loop to iterate all of them, to avoid the recursive.
+  #
+  # ```
+  # array_of_iters = [[1],[2,3],[4,5,6]]
+  # iter = Iterator(Int32).chain array_of_iters
+  # iter.next # => 1
+  # iter.next # => 2
+  # iter.next # => 3
+  # iter.next # => 4
+  # ```
+  def self.chain(iters : Iterator(Iter)) forall Iter
+    ChainsAll(Iter, T).new iters
+  end
+  # the same as `.chain(Iterator(Iter))`
+  def self.chain(iters : Iterable(Iter)) forall Iter
+    chain iters.each
+  end
+
+  private class ChainsAll(Iter, T)
+    include Iterator(T)
+    @iterators : Iterator(Iter)
+    @current : Iterator(T) | Stop
+    def initialize(@iterators)
+      @current = @iterators.next
+    end
+    def rewind
+      @iterators.rewind
+      @iterators.each &.rewind
+      @iterators.rewind
+      @current = @iterators.next
+      self
+    end
+    def next : T | Stop
+      return Stop::INSTANCE if (c = @current).is_a? Stop
+      ret = c.next
+      while ret.is_a? Stop
+        c = @current = @iterators.next
+        return Stop::INSTANCE if c.is_a? Stop
+        ret = c.next
+      end
+      ret
+    end
+  end
+
   # Return an iterator that applies the given function to the element and then
   # returns it unless it is `nil`. If the returned value would be `nil` it instead
   # returns the next non `nil` value.

@@ -59,6 +59,55 @@ describe Iterator do
       iter.rewind
       iter.to_a.should eq([1, 2, 'a', 'b'])
     end
+    describe "chain indeterminate number of iterators" do
+        it "chains all together" do
+            n = 10 + rand 10
+            arrs = [] of Array(Int32)
+            n.times {|a| arrs << [a, a*a, a+3] }
+            iter = Iterator(Int32).chain arrs.map(&.each)
+            n.times { |a|
+                iter.next.should eq a
+                iter.next.should eq a*a
+                iter.next.should eq a+3
+            }
+        end
+        it "chains empty" do
+            arrs = [] of Array(Int32)
+            iter = Iterator(Int32).chain arrs.map(&.each)
+            iter.next.should be_a Iterator::Stop
+        end
+        it "chains array of empty" do
+            n = 10 + rand 10
+            arrs = [] of Array(Int32)
+            n.times {|a| arrs << (a % 3 == 0 ? [] of Int32 : [a, a*a, a+3]) }
+            iter = Iterator(Int32).chain arrs.map(&.each)
+            n.times { |a|
+                next if a % 3 == 0
+                iter.next.should eq a
+                iter.next.should eq a*a
+                iter.next.should eq a+3
+            }
+        end
+        it "rewinds" do
+            n = 10 + rand 10
+            arrs = [] of Array(Int32)
+            n.times {|a| arrs << (a % 3 == 0 ? [] of Int32 : [a, a*a, a+3]) }
+            iter = Iterator(Int32).chain arrs.map(&.each)
+            n.times { |a|
+                next if a % 3 == 0
+                iter.next.should eq a
+                iter.next.should eq a*a
+                iter.next.should eq a+3
+            }
+            iter.rewind
+            n.times { |a|
+                next if a % 3 == 0
+                iter.next.should eq a
+                iter.next.should eq a*a
+                iter.next.should eq a+3
+            }
+        end
+    end
   end
 
   describe "compact_map" do
