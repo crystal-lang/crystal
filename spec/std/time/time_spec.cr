@@ -112,190 +112,157 @@ describe Time do
     (time == time.clone).should be_true
   end
 
-  it "add" do
-    t1 = Time.utc(2002, 2, 25, 15, 25, 13)
-    span = Time::Span.new 3, 54, 1
-    t2 = t1 + span
+  describe "#add_span" do
+    it "adds hours, minutes, seconds" do
+      t1 = Time.utc(2002, 2, 25, 15, 25, 13)
+      t2 = t1 + Time::Span.new 3, 54, 1
 
-    t2.day.should eq(25)
-    t2.hour.should eq(19)
-    t2.minute.should eq(19)
-    t2.second.should eq(14)
-
-    t1.day.should eq(25)
-    t1.hour.should eq(15)
-    t1.minute.should eq(25)
-    t1.second.should eq(13)
-
-    t2.location.should eq t1.location
-  end
-
-  it "add out of range 1" do
-    t1 = Time.utc(9980, 2, 25, 15, 25, 13)
-
-    expect_raises ArgumentError do
-      t1 + Time::Span.new(nanoseconds: Int64::MAX)
+      t2.should eq Time.utc(2002, 2, 25, 19, 19, 14)
     end
-  end
 
-  it "add out of range 2" do
-    t1 = Time.utc(1, 2, 25, 15, 25, 13)
+    it "raises out of range min" do
+      t1 = Time.utc(9980, 2, 25, 15, 25, 13)
 
-    expect_raises ArgumentError do
-      t1 + Time::Span.new(nanoseconds: Int64::MIN)
-    end
-  end
-
-  it "#add_span checks boundary at time min" do
-    {5 * 3600, 1, 0, -1, -5 * 3600}.each do |offset|
-      location = Time::Location.fixed(offset)
-
-      time = Time.new(1, 1, 1, location: location)
-      time.add_span(0, 1).should eq Time.new(1, 1, 1, nanosecond: 1, location: location)
-      time.add_span(0, 0).should eq time
-      expect_raises(ArgumentError) do
-        time.add_span(0, -1)
+      expect_raises ArgumentError do
+        t1 + Time::Span.new(nanoseconds: Int64::MAX)
       end
     end
-  end
 
-  it "#add_span checks boundary at time max" do
-    {5 * 3600, 1, 0, -1, -5 * 3600}.each do |offset|
-      location = Time::Location.fixed(offset)
+    it "raises out of range max" do
+      t1 = Time.utc(1, 2, 25, 15, 25, 13)
 
-      time = Time.new(9999, 12, 31, 23, 59, 59, nanosecond: 999_999_999, location: location)
-      time.add_span(0, -1).should eq Time.new(9999, 12, 31, 23, 59, 59, nanosecond: 999_999_998, location: location)
-      time.add_span(0, 0).should eq time
-      expect_raises(ArgumentError) do
-        time.add_span(0, 1)
+      expect_raises ArgumentError do
+        t1 + Time::Span.new(nanoseconds: Int64::MIN)
       end
     end
-  end
 
-  it "adds zero span" do
-    time = Time.now
-    time.add_span(0, 0).should eq time
-  end
+    it "checks boundary at time min" do
+      {5 * 3600, 1, 0, -1, -5 * 3600}.each do |offset|
+        location = Time::Location.fixed(offset)
 
-  it "add days" do
-    t1 = Time.utc(2002, 2, 25, 15, 25, 13)
-    t1 = t1 + 3.days
-
-    t1.day.should eq(28)
-    t1.hour.should eq(15)
-    t1.minute.should eq(25)
-    t1.second.should eq(13)
-
-    t1 = t1 + 1.9.days
-    t1.day.should eq(2)
-    t1.hour.should eq(13)
-    t1.minute.should eq(1)
-    t1.second.should eq(13)
-
-    t1 = t1 + 0.2.days
-    t1.day.should eq(2)
-    t1.hour.should eq(17)
-    t1.minute.should eq(49)
-    t1.second.should eq(13)
-  end
-
-  pending "add days over dst" do
-    with_zoneinfo do
-      location = Time::Location.load("Europe/Berlin")
-      reference = Time.new(2017, 10, 28, 13, 37, location: location)
-      next_day = Time.new(2017, 10, 29, 13, 37, location: location)
-
-      (reference + 1.day).should eq next_day
+        time = Time.new(1, 1, 1, location: location)
+        time.add_span(0, 1).should eq Time.new(1, 1, 1, nanosecond: 1, location: location)
+        time.add_span(0, 0).should eq time
+        expect_raises(ArgumentError) do
+          time.add_span(0, -1)
+        end
+      end
     end
-  end
 
-  it "add days out of range 1" do
-    t1 = Time.utc(2002, 2, 25, 15, 25, 13)
-    expect_raises ArgumentError do
-      t1 + 10000000.days
+    it "checks boundary at time max" do
+      {5 * 3600, 1, 0, -1, -5 * 3600}.each do |offset|
+        location = Time::Location.fixed(offset)
+
+        time = Time.new(9999, 12, 31, 23, 59, 59, nanosecond: 999_999_999, location: location)
+        time.add_span(0, -1).should eq Time.new(9999, 12, 31, 23, 59, 59, nanosecond: 999_999_998, location: location)
+        time.add_span(0, 0).should eq time
+        expect_raises(ArgumentError) do
+          time.add_span(0, 1)
+        end
+      end
     end
-  end
 
-  it "add days out of range 2" do
-    t1 = Time.utc(2002, 2, 25, 15, 25, 13)
-    expect_raises ArgumentError do
-      t1 - 10000000.days
+    it "adds zero span" do
+      time = Time.now
+      time.add_span(0, 0).should eq time
     end
-  end
 
-  it "add months" do
-    t = Time.utc 2014, 10, 30, 21, 18, 13
-    t2 = t + 1.month
-    t2.to_s.should eq("2014-11-30 21:18:13 UTC")
+    describe "adds days" do
+      it "simple" do
+        time = Time.utc(2002, 2, 25, 15, 25, 13)
+        time = time + 3.days
 
-    t2 = t + 1.months
-    t2.to_s.should eq("2014-11-30 21:18:13 UTC")
+        time.should eq Time.utc(2002, 2, 28, 15, 25, 13)
 
-    t = Time.utc 2014, 10, 31, 21, 18, 13
-    t2 = t + 1.month
-    t2.to_s.should eq("2014-11-30 21:18:13 UTC")
+        time = time + 1.9.days
+        time.should eq Time.utc(2002, 3, 2, 13, 1, 13)
 
-    t = Time.utc 2014, 10, 31, 21, 18, 13
-    t2 = t - 1.month
-    t2.to_s.should eq("2014-09-30 21:18:13 UTC")
+        time = time + 0.2.days
+        time.should eq Time.utc(2002, 3, 2, 17, 49, 13)
+      end
 
-    t = Time.utc 2014, 10, 31, 21, 18, 13
-    t2 = t + 6.month
-    t2.to_s.should eq("2015-04-30 21:18:13 UTC")
-  end
+      pending "over dst" do
+        with_zoneinfo do
+          location = Time::Location.load("Europe/Berlin")
+          reference = Time.new(2017, 10, 28, 13, 37, location: location)
+          next_day = Time.new(2017, 10, 29, 13, 37, location: location)
 
-  it "add years" do
-    t = Time.utc 2014, 10, 30, 21, 18, 13
-    t2 = t + 1.year
-    t2.to_s.should eq("2015-10-30 21:18:13 UTC")
+          (reference + 1.day).should eq next_day
+        end
+      end
 
-    t = Time.utc 2014, 10, 30, 21, 18, 13
-    t2 = t - 2.years
-    t2.to_s.should eq("2012-10-30 21:18:13 UTC")
-  end
+      it "out of range max" do
+        time = Time.utc(2002, 2, 25, 15, 25, 13)
+        expect_raises ArgumentError do
+          time + 10000000.days
+        end
+      end
 
-  it "add hours" do
-    t1 = Time.utc(2002, 2, 25, 15, 25, 13)
-    t1 = t1 + 10.hours
+      it "out of range min" do
+        time = Time.utc(2002, 2, 25, 15, 25, 13)
+        expect_raises ArgumentError do
+          time - 10000000.days
+        end
+      end
+    end
 
-    t1.day.should eq(26)
-    t1.hour.should eq(1)
-    t1.minute.should eq(25)
-    t1.second.should eq(13)
+    it "adds months" do
+      t = Time.utc 2014, 10, 30, 21, 18, 13
 
-    t1 = t1 - 3.7.hours
-    t1.day.should eq(25)
-    t1.hour.should eq(21)
-    t1.minute.should eq(43)
-    t1.second.should eq(13)
+      t2 = t + 1.month
+      t2.should eq Time.utc(2014, 11, 30, 21, 18, 13)
 
-    t1 = t1 + 3.732.hours
-    t1.day.should eq(26)
-    t1.hour.should eq(1)
-    t1.minute.should eq(27)
-    t1.second.should eq(8)
-  end
+      t2 = t + 1.months
+      t2.should eq Time.utc(2014, 11, 30, 21, 18, 13)
 
-  it "add milliseconds" do
-    t1 = Time.utc(2002, 2, 25, 15, 25, 13)
-    t1 = t1 + 1e10.milliseconds
+      t = Time.utc 2014, 10, 31, 21, 18, 13
+      t2 = t + 1.month
+      t2.should eq Time.utc(2014, 11, 30, 21, 18, 13)
 
-    t1.day.should eq(21)
-    t1.hour.should eq(9)
-    t1.minute.should eq(11)
-    t1.second.should eq(53)
+      t = Time.utc 2014, 10, 31, 21, 18, 13
+      t2 = t - 1.month
+      t2.should eq Time.utc(2014, 9, 30, 21, 18, 13)
 
-    t1 = t1 - 19e10.milliseconds
-    t1.day.should eq(13)
-    t1.hour.should eq(7)
-    t1.minute.should eq(25)
-    t1.second.should eq(13)
+      t = Time.utc 2014, 10, 31, 21, 18, 13
+      t2 = t + 6.month
+      t2.should eq Time.utc(2015, 4, 30, 21, 18, 13)
+    end
 
-    t1 = t1 + 15.623.milliseconds
-    t1.day.should eq(13)
-    t1.hour.should eq(7)
-    t1.minute.should eq(25)
-    t1.second.should eq(13)
+    it "adds years" do
+      t = Time.utc 2014, 10, 30, 21, 18, 13
+
+      t2 = t + 1.year
+      t2.should eq Time.utc(2015, 10, 30, 21, 18, 13)
+
+      t = Time.utc 2014, 10, 30, 21, 18, 13
+      t2 = t - 2.years
+      t2.should eq Time.utc(2012, 10, 30, 21, 18, 13)
+    end
+
+    it "adds hours" do
+      time = Time.utc(2002, 2, 25, 15, 25, 13)
+
+      time = time + 10.hours
+      time.should eq Time.utc(2002, 2, 26, 1, 25, 13)
+
+      time = time - 3.7.hours
+      time.should eq Time.utc(2002, 2, 25, 21, 43, 13)
+
+      time = time + 3.732.hours
+      time.should eq Time.utc(2002, 2, 26, 1, 27, 8, nanosecond: 200_000_000)
+    end
+
+    it "adds nanoseconds" do
+      time = Time.utc(2002, 2, 25, 15, 25, 13)
+      time = time + 1e16.nanoseconds
+      time.should eq Time.utc(2002, 6, 21, 9, 11, 53)
+
+      time = time - 19e16.nanoseconds
+      time.should eq Time.utc(1996, 6, 13, 7, 25, 13)
+
+      time = time + 15_623_487.nanoseconds
+      time.should eq Time.utc(1996, 6, 13, 7, 25, 13, nanosecond: 15_623_487)
+    end
   end
 
   it "gets time of day" do
