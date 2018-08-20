@@ -6,14 +6,6 @@ def Time.expect_invalid
   end
 end
 
-private def parse_time(format, string)
-  Time.parse_utc(format, string)
-end
-
-private def parse_time(string)
-  Time.parse_utc(string, "%F %T.%N")
-end
-
 describe Time do
   it "initialize" do
     t1 = Time.new 2002, 2, 25
@@ -371,62 +363,62 @@ describe Time do
     t1 = Time.utc 2014, 11, 25, 10, 11, 12, nanosecond: 13
     t2 = Time.utc 2014, 6, 25, 10, 11, 12, nanosecond: 13
 
-    t1.at_beginning_of_year.should eq parse_time("2014-01-01 00:00:00.0")
+    t1.at_beginning_of_year.should eq Time.utc(2014, 1, 1)
 
     1.upto(3) do |i|
-      Time.utc(2014, i, 10).at_beginning_of_quarter.should eq parse_time("2014-01-01 00:00:00.0")
-      Time.utc(2014, i, 10).at_end_of_quarter.should eq parse_time("2014-03-31 23:59:59.999999999")
+      Time.utc(2014, i, 10).at_beginning_of_quarter.should eq Time.utc(2014, 1, 1)
+      Time.utc(2014, i, 10).at_end_of_quarter.should eq Time.utc(2014, 3, 31, 23, 59, 59, nanosecond: 999_999_999)
     end
     4.upto(6) do |i|
-      Time.utc(2014, i, 10).at_beginning_of_quarter.should eq parse_time("2014-04-01 00:00:00.0")
-      Time.utc(2014, i, 10).at_end_of_quarter.should eq parse_time("2014-06-30 23:59:59.999999999")
+      Time.utc(2014, i, 10).at_beginning_of_quarter.should eq Time.utc(2014, 4, 1)
+      Time.utc(2014, i, 10).at_end_of_quarter.should eq Time.utc(2014, 6, 30, 23, 59, 59, nanosecond: 999_999_999)
     end
     7.upto(9) do |i|
-      Time.utc(2014, i, 10).at_beginning_of_quarter.should eq parse_time("2014-07-01 00:00:00.0")
-      Time.utc(2014, i, 10).at_end_of_quarter.should eq parse_time("2014-09-30 23:59:59.999999999")
+      Time.utc(2014, i, 10).at_beginning_of_quarter.should eq Time.utc(2014, 7, 1)
+      Time.utc(2014, i, 10).at_end_of_quarter.should eq Time.utc(2014, 9, 30, 23, 59, 59, nanosecond: 999_999_999)
     end
     10.upto(12) do |i|
-      Time.utc(2014, i, 10).at_beginning_of_quarter.should eq parse_time("2014-10-01 00:00:00.0")
-      Time.utc(2014, i, 10).at_end_of_quarter.should eq parse_time("2014-12-31 23:59:59.999999999")
+      Time.utc(2014, i, 10).at_beginning_of_quarter.should eq Time.utc(2014, 10, 1)
+      Time.utc(2014, i, 10).at_end_of_quarter.should eq Time.utc(2014, 12, 31, 23, 59, 59, nanosecond: 999_999_999)
     end
 
-    t1.at_beginning_of_quarter.should eq parse_time("2014-10-01 00:00:00.0")
-    t1.at_beginning_of_month.should eq parse_time("2014-11-01 00:00:00.0")
+    t1.at_beginning_of_quarter.should eq Time.utc(2014, 10, 1)
+    t1.at_beginning_of_month.should eq Time.utc(2014, 11, 1)
 
     3.upto(9) do |i|
-      Time.utc(2014, 11, i).at_beginning_of_week.should eq parse_time("2014-11-03 00:00:00.0")
+      Time.utc(2014, 11, i).at_beginning_of_week.should eq Time.utc(2014, 11, 3)
     end
 
-    t1.at_beginning_of_day.should eq parse_time("2014-11-25 00:00:00.0")
-    t1.at_beginning_of_hour.should eq parse_time("2014-11-25 10:00:00.0")
-    t1.at_beginning_of_minute.should eq parse_time("2014-11-25 10:11:00.0")
-    t1.at_beginning_of_second.should eq parse_time("2014-11-25 10:11:12.0")
+    t1.at_beginning_of_day.should eq Time.utc(2014, 11, 25)
+    t1.at_beginning_of_hour.should eq Time.utc(2014, 11, 25, 10)
+    t1.at_beginning_of_minute.should eq Time.utc(2014, 11, 25, 10, 11)
+    t1.at_beginning_of_second.should eq Time.utc(2014, 11, 25, 10, 11, 12)
 
-    t1.at_end_of_year.should eq parse_time("2014-12-31 23:59:59.999999999")
+    t1.at_end_of_year.should eq Time.utc(2014, 12, 31, 23, 59, 59, nanosecond: 999_999_999)
 
-    t1.at_end_of_quarter.should eq parse_time("2014-12-31 23:59:59.999999999")
-    t2.at_end_of_quarter.should eq parse_time("2014-06-30 23:59:59.999999999")
+    t1.at_end_of_quarter.should eq Time.utc(2014, 12, 31, 23, 59, 59, nanosecond: 999_999_999)
+    t2.at_end_of_quarter.should eq Time.utc(2014, 6, 30, 23, 59, 59, nanosecond: 999_999_999)
 
-    t1.at_end_of_month.should eq parse_time("2014-11-30 23:59:59.999999999")
-    t1.at_end_of_week.should eq parse_time("2014-11-30 23:59:59.999999999")
+    t1.at_end_of_month.should eq Time.utc(2014, 11, 30, 23, 59, 59, nanosecond: 999_999_999)
+    t1.at_end_of_week.should eq Time.utc(2014, 11, 30, 23, 59, 59, nanosecond: 999_999_999)
 
-    Time.utc(2014, 11, 2).at_end_of_week.should eq parse_time("2014-11-02 23:59:59.999999999")
+    Time.utc(2014, 11, 2).at_end_of_week.should eq Time.utc(2014, 11, 2, 23, 59, 59, nanosecond: 999_999_999)
     3.upto(9) do |i|
-      Time.utc(2014, 11, i).at_end_of_week.should eq parse_time("2014-11-09 23:59:59.999999999")
+      Time.utc(2014, 11, i).at_end_of_week.should eq Time.utc(2014, 11, 9, 23, 59, 59, nanosecond: 999_999_999)
     end
 
-    t1.at_end_of_day.should eq parse_time("2014-11-25 23:59:59.999999999")
-    t1.at_end_of_hour.should eq parse_time("2014-11-25 10:59:59.999999999")
-    t1.at_end_of_minute.should eq parse_time("2014-11-25 10:11:59.999999999")
-    t1.at_end_of_second.should eq parse_time("2014-11-25 10:11:12.999999999")
+    t1.at_end_of_day.should eq Time.utc(2014, 11, 25, 23, 59, 59, nanosecond: 999_999_999)
+    t1.at_end_of_hour.should eq Time.utc(2014, 11, 25, 10, 59, 59, nanosecond: 999_999_999)
+    t1.at_end_of_minute.should eq Time.utc(2014, 11, 25, 10, 11, 59, nanosecond: 999_999_999)
+    t1.at_end_of_second.should eq Time.utc(2014, 11, 25, 10, 11, 12, nanosecond: 999_999_999)
 
-    t1.at_midday.should eq parse_time("2014-11-25 12:00:00.0")
+    t1.at_midday.should eq Time.utc(2014, 11, 25, 12)
 
-    t1.at_beginning_of_semester.should eq parse_time("2014-07-01 00:00:00.0")
-    t2.at_beginning_of_semester.should eq parse_time("2014-01-01 00:00:00.0")
+    t1.at_beginning_of_semester.should eq Time.utc(2014, 7, 1)
+    t2.at_beginning_of_semester.should eq Time.utc(2014, 1, 1)
 
-    t1.at_end_of_semester.should eq parse_time("2014-12-31 23:59:59.999999999")
-    t2.at_end_of_semester.should eq parse_time("2014-06-30 23:59:59.999999999")
+    t1.at_end_of_semester.should eq Time.utc(2014, 12, 31, 23, 59, 59, nanosecond: 999_999_999)
+    t2.at_end_of_semester.should eq Time.utc(2014, 6, 30, 23, 59, 59, nanosecond: 999_999_999)
   end
 
   it "does time span units" do
