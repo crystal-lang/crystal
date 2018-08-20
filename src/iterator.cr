@@ -209,7 +209,7 @@ module Iterator(T)
   # This method uses a loop to iterate all of them, to avoid the recursive.
   #
   # ```
-  # array_of_iters = [[1],[2,3],[4,5,6]]
+  # array_of_iters = [[1], [2, 3], [4, 5, 6]]
   # iter = Iterator(Int32).chain array_of_iters
   # iter.next # => 1
   # iter.next # => 2
@@ -219,6 +219,7 @@ module Iterator(T)
   def self.chain(iters : Iterator(Iter)) forall Iter
     ChainsAll(Iter, T).new iters
   end
+
   # the same as `.chain(Iterator(Iter))`
   def self.chain(iters : Iterable(Iter)) forall Iter
     chain iters.each
@@ -228,9 +229,11 @@ module Iterator(T)
     include Iterator(T)
     @iterators : Iterator(Iter)
     @current : Iterator(T) | Stop
+
     def initialize(@iterators)
       @current = @iterators.next
     end
+
     def rewind
       @iterators.rewind
       @iterators.each &.rewind
@@ -238,6 +241,7 @@ module Iterator(T)
       @current = @iterators.next
       self
     end
+
     def next : T | Stop
       return Stop::INSTANCE if (c = @current).is_a? Stop
       ret = c.next
