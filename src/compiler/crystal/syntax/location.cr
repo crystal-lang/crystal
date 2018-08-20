@@ -2,7 +2,7 @@ require "../../../partial_comparable"
 
 # A location of an `ASTnode`, including its filename, line number and column number.
 class Crystal::Location
-  include PartialComparable(self)
+  include PartialComparable(Crystal::Location)
 
   getter line_number
   getter column_number

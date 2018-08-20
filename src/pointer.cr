@@ -52,7 +52,7 @@ struct Pointer(T)
     end
   end
 
-  include Comparable(self)
+  include Comparable(Pointer(T))
 
   # Returns `true` if this pointer's address is zero.
   #

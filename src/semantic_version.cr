@@ -1,7 +1,7 @@
 # Conforms to Semantic Versioning 2.0.0
 # See http://semver.org/ for more information.
 class SemanticVersion
-  include Comparable(self)
+  include Comparable(SemanticVersion)
 
   getter major : Int32
   getter minor : Int32
