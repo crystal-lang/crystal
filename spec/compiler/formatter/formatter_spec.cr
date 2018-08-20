@@ -385,6 +385,11 @@ describe Crystal::Formatter do
   assert_format %("\#{\n  foo = 1\n}")
   assert_format %("\#{\n  foo = 1}"), %("\#{\n  foo = 1\n}")
   assert_format %("\#{ # foo\n  foo = 1\n}")
+  assert_format %("\#{"foo"}")
+  assert_format %("\#{"\#{foo}"}")
+  assert_format %("foo\#{"bar"} Baz \#{"qux"} ")
+  assert_format %("1\#{"4\#{"\#{"2"}"}3"}3\#{__DIR__}4\#{5}6")
+  assert_format %("1\#{"\#{"2"}"}3\#{"4"}5")
 
   assert_format "%w(one   two  three)", "%w(one two three)"
   assert_format "%i(one   two  three)", "%i(one two three)"

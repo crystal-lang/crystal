@@ -468,8 +468,8 @@ module Crystal
           # This is the case of #{__DIR__}
           write "\#{"
           next_token_skip_space_or_newline
-          write @token.type
-          next_token_skip_space_or_newline
+          indent(@column, node)
+          skip_space_or_newline
           check :"}"
           write "}"
           next_string_token
@@ -564,10 +564,10 @@ module Crystal
         if exp.is_a?(StringLiteral)
           # It might be #{__DIR__}, for example
           if @token.type == :INTERPOLATION_START
-            next_token_skip_space_or_newline
             write "\#{"
-            write @token.type
             next_token_skip_space_or_newline
+            indent(@column, exp)
+            skip_space_or_newline
             check :"}"
             write "}"
           else
