@@ -542,9 +542,9 @@ module Crystal
 
       node.expressions.each do |exp|
         if @token.type == :DELIMITER_END
-          # If the delimiter ends with '\n' it's something like "\n  HEREDOC",
-          # so we are done
-          break if @token.raw.starts_with?('\n')
+          # Heredoc cannot contain string continuation,
+          # so we are done.
+          break if is_heredoc
 
           # This is for " ... " \
           #     " ... "
