@@ -3,7 +3,7 @@
 # The internal buffer can be resizeable and/or writeable depending
 # on how an `IO::Memory` is constructed.
 class IO::Memory < IO
-  GROWTH_FACTOR = 1.30568
+  GROWTH_FACTOR = 1.618033987
 
   # Returns the internal buffer as a `Pointer(UInt8)`.
   getter buffer : Pointer(UInt8)
