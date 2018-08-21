@@ -558,16 +558,16 @@ struct Time
 
   # Returns a copy of this `Time` with *span* added.
   #
-  # See `#add_span` for details.
+  # See `#shift` for details.
   def +(span : Time::Span) : Time
-    add_span span.to_i, span.nanoseconds
+    shift span.to_i, span.nanoseconds
   end
 
   # Returns a copy of this `Time` with *span* subtracted.
   #
-  # See `#add_span` for details.
+  # See `#shift` for details.
   def -(span : Time::Span) : Time
-    add_span -span.to_i, -span.nanoseconds
+    shift -span.to_i, -span.nanoseconds
   end
 
   # Returns a copy of this `Time` with *span* added.
@@ -643,7 +643,7 @@ struct Time
   # There is no explicit limit on the input values but the addition must result
   # in a valid time between `0001-01-01 00:00:00.0` and
   # `9999-12-31 23:59:59.999_999_999`. Otherwise `ArgumentError` is raised.
-  def add_span(seconds : Int, nanoseconds : Int) : Time
+  def shift(seconds : Int, nanoseconds : Int) : Time
     if seconds == 0 && nanoseconds == 0
       return self
     end

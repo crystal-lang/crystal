@@ -215,7 +215,7 @@ describe Time do
     (time == time.clone).should be_true
   end
 
-  describe "#add_span" do
+  describe "#shift" do
     it "adds hours, minutes, seconds" do
       t1 = Time.utc(2002, 2, 25, 15, 25, 13)
       t2 = t1 + Time::Span.new 3, 54, 1
@@ -244,10 +244,10 @@ describe Time do
         location = Time::Location.fixed(offset)
 
         time = Time.new(1, 1, 1, location: location)
-        time.add_span(0, 1).should eq Time.new(1, 1, 1, nanosecond: 1, location: location)
-        time.add_span(0, 0).should eq time
+        time.shift(0, 1).should eq Time.new(1, 1, 1, nanosecond: 1, location: location)
+        time.shift(0, 0).should eq time
         expect_raises(ArgumentError) do
-          time.add_span(0, -1)
+          time.shift(0, -1)
         end
       end
     end
@@ -257,17 +257,17 @@ describe Time do
         location = Time::Location.fixed(offset)
 
         time = Time.new(9999, 12, 31, 23, 59, 59, nanosecond: 999_999_999, location: location)
-        time.add_span(0, -1).should eq Time.new(9999, 12, 31, 23, 59, 59, nanosecond: 999_999_998, location: location)
-        time.add_span(0, 0).should eq time
+        time.shift(0, -1).should eq Time.new(9999, 12, 31, 23, 59, 59, nanosecond: 999_999_998, location: location)
+        time.shift(0, 0).should eq time
         expect_raises(ArgumentError) do
-          time.add_span(0, 1)
+          time.shift(0, 1)
         end
       end
     end
 
     it "adds zero span" do
       time = Time.now
-      time.add_span(0, 0).should eq time
+      time.shift(0, 0).should eq time
     end
 
     describe "adds days" do
