@@ -1000,10 +1000,6 @@ struct Time
       raise ArgumentError.new "Invalid month"
     end
 
-    unless 1 <= year <= 9999
-      raise ArgumentError.new "Invalid year"
-    end
-
     days = leap_year?(year) ? DAYS_MONTH_LEAP : DAYS_MONTH
     days[month]
   end
