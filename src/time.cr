@@ -1413,17 +1413,25 @@ struct Time
     end
   {% end %}
 
-  protected def self.absolute_days(year, month, day)
-    days = leap_year?(year) ? DAYS_MONTH_LEAP : DAYS_MONTH
+  # Returns the number of days from `0001-01-01` to the date indicated
+  # by *year*, *month*, *day* in the proleptic Gregorian calendar.
+  #
+  # The valid range for *year* is `1..9999` and for *month* `1..12`. The value
+  # of *day*  is not validated and can exceed the number of days in the specified
+  # month or even a year.
+  protected def self.absolute_days(year, month, day) : Int32
+    days_per_month = leap_year?(year) ? DAYS_MONTH_LEAP : DAYS_MONTH
 
-    temp = 0
-    m = 1
-    while m < month
-      temp += days[m]
-      m += 1
+    days_in_year = day - 1
+    month_index = 1
+    while month_index < month
+      days_in_year += days_per_month[month_index]
+      month_index += 1
     end
 
-    (day - 1) + temp + (365*(year - 1)) + ((year - 1)/4) - ((year - 1)/100) + ((year - 1)/400)
+    year -= 1
+
+    year * 365 + year / 4 - year / 100 + year / 400 + days_in_year
   end
 
   protected def total_seconds
