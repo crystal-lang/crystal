@@ -1321,4 +1321,16 @@ describe "Semantic: macro" do
       {% end %}
       )) { int32 }
   end
+
+  it "evaluates yield expression (#2924)" do
+    assert_type(%(
+      macro a(b)
+        {{yield b}}
+      end
+
+      a("foo") do |c|
+        {{c}}
+      end
+      )) { string }
+  end
 end
