@@ -12,7 +12,20 @@ class Crystal::Command
   private def spec
     compiler = Compiler.new
     OptionParser.parse(options) do |opts|
-      opts.banner = "Usage: crystal spec [options] [files]\n\nOptions:"
+      opts.banner = <<-'BANNER'
+      Usage: crystal spec [options] [files]
+
+      Options:
+          -e, --example STRING             Run examples whose full nested names include STRING
+          -l, --line LINE                  Run examples whose line matches LINE
+          -p, --profile                    Print the 10 slowest specs
+          --fail-fast                      Abort the run on first failure
+          --location file:line             Run example at line 'line' in file 'file', multiple allowed
+          --junit_output OUTPUT_DIR        Generate JUnit XML output
+          -v, --verbose                    Verbose output
+          --tap                            Generate TAP output (Test Anything Protocol)
+      BANNER
+
       setup_simple_compiler_options compiler, opts
     end
 
