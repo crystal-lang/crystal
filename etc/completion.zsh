@@ -135,6 +135,14 @@ _crystal-run() {
 _crystal-spec() {
   _arguments \
     $programfile \
+    '(-e --example)'{-e=,--example=}'[Run examples whose full nested names include STRING]:' \
+    '(-l --line)'{-l=,--line=}'[Run examples whose line matches LINE]:' \
+    '(-p --profile)'{-p,--profile}'[Print the 10 slowest specs]' \
+    '(--fail-fast)--fail-fast[Abort the run on first failure]' \
+    '(--location)--location[Run example at line "line" in file "file", multiple allowed]' \
+    '(--junit_output)--junit_output[Generate JUnit XML output]' \
+    '(-v --verbose)'{-v,--verbose}'[Verbose output]' \
+    '(--tap)--tap[Generate TAP output (Test Anything Protocol)]' \
     $help_args \
     $no_color_args \
     $exec_args \
