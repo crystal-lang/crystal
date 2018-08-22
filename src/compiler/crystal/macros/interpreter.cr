@@ -388,7 +388,7 @@ module Crystal
           block_vars = {} of String => ASTNode
           node.exps.each_with_index do |exp, i|
             if block_arg = block.args[i]?
-              block_vars[block_arg.name] = exp.clone
+              block_vars[block_arg.name] = accept exp.clone
             end
           end
           @last = replace_block_vars block.body.clone, block_vars
