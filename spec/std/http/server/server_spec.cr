@@ -59,6 +59,11 @@ private def unused_port
   end
 end
 
+private class SilentErrorHTTPServer < HTTP::Server
+  private def handle_exception(e)
+  end
+end
+
 module HTTP
   class Server
     describe Response do
@@ -504,6 +509,39 @@ module HTTP
         end
       end
     {% end %}
+
+    it "handles exception during SSL handshake (#6577)" do
+      server = SilentErrorHTTPServer.new do |context|
+        context.response.print "ok"
+        context.response.close
+      end
+
+      server_context, client_context = ssl_context_pair
+      address = server.bind_tls "localhost", server_context
+
+      server_done = false
+      spawn do
+        server.listen
+        server_done = true
+      end
+
+      3.times do
+        # Perform multiple wrong calls together and check
+        # that the server is still able to respond.
+        3.times do
+          empty_context = OpenSSL::SSL::Context::Client.new
+          socket = TCPSocket.new(address.address, address.port)
+          expect_raises(OpenSSL::SSL::Error) do
+            OpenSSL::SSL::Socket::Client.new(socket, empty_context)
+          end
+        end
+        HTTP::Client.get("https://#{address}/", tls: client_context).body.should eq "ok"
+      end
+
+      Fiber.yield
+
+      server_done.should be_false
+    end
   end
 
   describe HTTP::Server::RequestProcessor do
