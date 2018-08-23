@@ -510,6 +510,13 @@ describe Crystal::Formatter do
   assert_format "case\nend"
   assert_format "case\nelse\n  1\nend"
 
+  assert_format <<-CODE
+    case 0
+    when 0 then 1; 2
+    # Comments
+    end
+    CODE
+
   assert_format "select   \n when  foo \n 2 \n end", "select\nwhen foo\n  2\nend"
   assert_format "select   \n when  foo \n 2 \n when bar \n 3 \n end", "select\nwhen foo\n  2\nwhen bar\n  3\nend"
   assert_format "select   \n when  foo  then  2 \n end", "select\nwhen foo then 2\nend"
