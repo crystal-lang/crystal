@@ -120,11 +120,11 @@ class Fiber
     @proc.call
   rescue ex
     if name = @name
-      STDERR.puts "Unhandled exception in spawn(name: #{name}):"
+      STDERR.print "Unhandled exception in spawn(name: #{name}): "
     else
-      STDERR.puts "Unhandled exception in spawn:"
+      STDERR.print "Unhandled exception in spawn: "
     end
-    ex.inspect_with_backtrace STDERR
+    ex.inspect_with_backtrace(STDERR)
     STDERR.flush
   ensure
     @@stack_pool << @stack
