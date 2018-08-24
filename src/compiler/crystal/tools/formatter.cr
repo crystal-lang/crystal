@@ -3455,11 +3455,12 @@ module Crystal
           write " "
           when_column_end = @column
           accept node.body
+          wrote_newline = @wrote_newline
           if @line == when_start_line
             @when_infos << AlignInfo.new(case_node.object_id, @line, when_start_column, when_column_middle, when_column_end, align_number)
           end
           found_comment = skip_space
-          write_line unless found_comment
+          write_line unless found_comment || wrote_newline
         end
       else
         format_nested(node.body, @indent)
