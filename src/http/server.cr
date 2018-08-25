@@ -355,7 +355,18 @@ class HTTP::Server
     @sockets.each do |socket|
       spawn do
         until closed?
-          spawn handle_client(socket.accept? || break)
+          io = begin
+            socket.accept?
+          rescue e
+            handle_exception(e)
+            nil
+          end
+
+          if io
+            # a non nillable version of the closured io
+            _io = io
+            spawn handle_client(_io)
+          end
         end
       ensure
         done.send nil
@@ -389,6 +400,11 @@ class HTTP::Server
     end
 
     @processor.process(io, io)
+  end
+
+  private def handle_exception(e : Exception)
+    e.inspect_with_backtrace STDERR
+    STDERR.flush
   end
 
   # Builds all handlers as the middleware for `HTTP::Server`.
