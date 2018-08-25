@@ -123,7 +123,7 @@ module Crystal::System::File
     timevals[1] = to_timeval(mtime)
     ret = LibC.utimes(filename, timevals)
     if ret != 0
-      raise Errno.new("Error setting time to file '#{filename}'")
+      raise Errno.new("Error setting time on file '#{filename}'")
     end
   end
 
