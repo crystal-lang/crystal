@@ -832,6 +832,8 @@ module Crystal
 
     it_parses "macro foo;{% verbatim do %}1{% foo %}2{% end %};end", Macro.new("foo", [] of Arg, Expressions.from([MacroVerbatim.new(Expressions.from(["1".macro_literal, MacroExpression.new("foo".var, false), "2".macro_literal] of ASTNode)), ";".macro_literal] of ASTNode))
 
+    it_parses "macro foo\n{%\nif 1\n2\nelse\n3\nend\n%}end", Macro.new("foo", body: MacroExpression.new(If.new(1.int32, 2.int32, 3.int32), output: false))
+
     assert_syntax_error "macro foo; {% foo = 1 }; end"
     assert_syntax_error "macro def foo : String; 1; end"
 
