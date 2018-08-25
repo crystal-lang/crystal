@@ -1,4 +1,5 @@
 require "spec"
+require "../support/pretty_print"
 
 describe "String" do
   describe "[]" do
@@ -1501,10 +1502,12 @@ describe "String" do
   end
 
   it "does pretty_inspect" do
-    "a".pretty_inspect.should eq(%("a"))
-    "hello\nworld".pretty_inspect.should eq(%("hello\\n" + "world"))
-    "hello\nworld".pretty_inspect(width: 9).should eq(%("hello\\n" +\n"world"))
-    "hello\nworld\n".pretty_inspect(width: 9).should eq(%("hello\\n" +\n"world\\n"))
+    PrettyPrint.with_color(false) do
+      "a".pretty_inspect.should eq(%("a"))
+      "hello\nworld".pretty_inspect.should eq(%("hello\\n" + "world"))
+      "hello\nworld".pretty_inspect(width: 9).should eq(%("hello\\n" +\n"world"))
+      "hello\nworld\n".pretty_inspect(width: 9).should eq(%("hello\\n" +\n"world\\n"))
+    end
   end
 
   it "does *" do

@@ -444,6 +444,10 @@ class Regex
     io << 'x' if options.extended?
   end
 
+  def pretty_print(pp : PrettyPrint) : Nil
+    pp.color inspect, :regex
+  end
+
   # Match at character index. Matches a regular expression against `String`
   # *str*. Starts at the character index given by *pos* if given, otherwise at
   # the start of *str*. Returns a `Regex::MatchData` if *str* matched, otherwise

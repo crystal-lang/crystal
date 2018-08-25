@@ -165,7 +165,18 @@ class IO::FileDescriptor < IO
   end
 
   def pretty_print(pp)
-    pp.text inspect
+    pp.text "#<"
+    pp.color "IO::FileDescriptor", :class_name
+    pp.text ":"
+    if closed?
+      pp.color "(closed)", :name
+    else
+      pp.text " "
+      pp.color "fd", :name
+      pp.text "="
+      pp.color @fd, :number
+    end
+    pp.text ">"
   end
 
   private def unbuffered_rewind

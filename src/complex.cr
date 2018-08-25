@@ -59,6 +59,14 @@ struct Complex
     io << ')'
   end
 
+  def pretty_print(pp : PrettyPrint) : Nil
+    pp.group(1, "(", ")") do
+      @real.pretty_print pp
+      pp.text @imag >= 0 ? " + " : " - "
+      pp.color "#{@imag.abs}i", :number
+    end
+  end
+
   # Returns the absolute value of this complex number in a
   # number form, using the Pythagorean theorem.
   #

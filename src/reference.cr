@@ -80,9 +80,11 @@ class Reference
     {% if @type.overrides?(Reference, "inspect") %}
       pp.text inspect
     {% else %}
-      prefix = "#<#{{{@type.name.id.stringify}}}:0x#{object_id.to_s(16)}"
       executed = exec_recursive(:pretty_print) do
-        pp.surround(prefix, ">", left_break: nil, right_break: nil) do
+        pp.surround("#<", ">", left_break: nil, right_break: nil) do
+          pp.color {{@type.name.id.stringify}}, :class_name
+          pp.text ":"
+          pp.color "0x#{object_id.to_s(16)}", :number
           {% for ivar, i in @type.instance_vars.map(&.name).sort %}
             {% if i == 0 %}
               pp.breakable
@@ -90,7 +92,8 @@ class Reference
               pp.comma
             {% end %}
             pp.group do
-              pp.text "@{{ivar.id}}="
+              pp.color "@{{ivar.id}}", :name
+              pp.text "="
               pp.nest do
                 pp.breakable ""
                 @{{ivar.id}}.pretty_print(pp)
@@ -100,7 +103,7 @@ class Reference
         end
       end
       unless executed
-        pp.text "#{prefix} ...>"
+        pp.text "#<#{{{@type.name.id.stringify}}}:0x#{object_id.to_s(16)} ...>"
       end
     {% end %}
   end

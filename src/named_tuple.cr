@@ -305,9 +305,9 @@ struct NamedTuple
         pp.group do
           key = {{key.stringify}}
           if Symbol.needs_quotes?(key)
-            pp.text key.inspect
+            pp.color key.inspect, Colorize::ColorANSI::Magenta
           else
-            pp.text key
+            pp.color key, Colorize::ColorANSI::Magenta
           end
           pp.text ": "
           pp.nest do

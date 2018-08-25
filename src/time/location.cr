@@ -122,6 +122,19 @@ class Time::Location
       io << ')'
     end
 
+    def pretty_print(pp : PrettyPrint) : Nil
+      pp.color "Time::Location::Zone", :class_name
+      pp.text "("
+      unless @name.nil?
+        pp.color @name, :string
+        pp.text " "
+      end
+      pp.color format, :number
+      pp.text " "
+      pp.color (dst? ? "DST" : "STD"), :name
+      pp.text ")"
+    end
+
     # Prints `#offset` to *io* in the format `+HH:mm:ss`.
     # When *with_colon* is `false`, the format is `+HHmmss`.
     #

@@ -835,6 +835,10 @@ struct Time
     io
   end
 
+  def pretty_print(pp : PrettyPrint) : Nil
+    pp.color inspect, :number
+  end
+
   # Prints this `Time` to *io*.
   #
   # The local date-time is formatted as date string `YYYY-MM-DD HH:mm:ss +ZZ:ZZ:ZZ`.
