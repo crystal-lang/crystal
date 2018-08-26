@@ -253,4 +253,78 @@ describe Process do
       Process.find_executable("some_very_unlikely_file_to_exist").should be_nil
     end
   end
+
+  describe "users and groups" do
+    it "has a user" do
+      user = Process.user
+      user.should be_a(System::User)
+      user.uid.to_s.should eq(`id -ur`.strip)
+    end
+
+    it "has a group" do
+      group = Process.group
+      group.should be_a(System::Group)
+      group.gid.to_s.should eq(`id -gr`.strip)
+    end
+
+    it "has an effective user" do
+      user = Process.effective_user
+      user.should be_a(System::User)
+      user.uid.to_s.should eq(`id -u`.strip)
+    end
+
+    it "has an effective group" do
+      group = Process.effective_group
+      group.should be_a(System::Group)
+      group.gid.to_s.should eq(`id -g`.strip)
+    end
+
+    {% if flag?(:openbsd) || flag?(:freebsd) || flag?(:linux) %}
+      it "has a saved user" do
+        user = Process.saved_user
+        user.should be_a(System::User)
+      end
+
+      it "has a saved group" do
+        group = Process.saved_group
+        group.should be_a(System::Group)
+      end
+    {% end %}
+
+    it "setting user by user name raises when unprivileged" do
+      expect_raise_in_process(Errno, "setuid: Operation not permitted") {
+        Process.user = System::User.get("root")
+      }
+    end
+
+    it "setting user by uid aises when unprivileged" do
+      expect_raise_in_process(Errno, "setuid: Operation not permitted") {
+        Process.user = System::User.get(0)
+      }
+    end
+
+    it "setting group by group name raises when unprivileged" do
+      expect_raise_in_process(Errno, "setgid: Operation not permitted") {
+        Process.group = System::Group.get("daemon")
+      }
+    end
+
+    it "setting group by gid raises when unprivileged" do
+      expect_raise_in_process(Errno, "setgid: Operation not permitted") {
+        Process.group = System::Group.get(1)
+      }
+    end
+
+    it "setting user and group by user/group name raises when unprivileged" do
+      expect_raise_in_process(Errno, "setgid: Operation not permitted") {
+        Process.become(System::User.get("root"), System::Group.get("daemon"))
+      }
+    end
+
+    it "setting user and group by uid/gid raises when unprivileged" do
+      expect_raise_in_process(Errno, "setgid: Operation not permitted") {
+        Process.become(System::User.get(0), System::Group.get(1))
+      }
+    end
+  end
 end
