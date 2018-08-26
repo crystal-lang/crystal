@@ -422,7 +422,11 @@ module Crystal
       when "<="
         bool_bin_op(method, args) { |me, other| me <= other }
       when "<=>"
-        num_bin_op(method, args) { |me, other| me <=> other }
+        num_bin_op(method, args) do |me, other|
+          v = me <=> other
+          return NilLiteral.new if v.nil?
+          v
+        end
       when "+"
         if args.empty?
           self

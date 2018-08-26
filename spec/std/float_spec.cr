@@ -291,4 +291,54 @@ describe "Float" do
     Float64::EPSILON.unsafe_as(UInt64).should eq 0x3cb0000000000000_u64
     Float64::MIN_POSITIVE.unsafe_as(UInt64).should eq 0x0010000000000000_u64
   end
+
+  it "returns nil in <=> for NaN values (Float32)" do
+    nan = Float32::NAN
+
+    (1_f32 <=> nan).should be_nil
+    (1_f64 <=> nan).should be_nil
+
+    (1_u8 <=> nan).should be_nil
+    (1_u16 <=> nan).should be_nil
+    (1_u32 <=> nan).should be_nil
+    (1_u64 <=> nan).should be_nil
+    (1_i8 <=> nan).should be_nil
+    (1_i16 <=> nan).should be_nil
+    (1_i32 <=> nan).should be_nil
+    (1_i64 <=> nan).should be_nil
+
+    (nan <=> 1_u8).should be_nil
+    (nan <=> 1_u16).should be_nil
+    (nan <=> 1_u32).should be_nil
+    (nan <=> 1_u64).should be_nil
+    (nan <=> 1_i8).should be_nil
+    (nan <=> 1_i16).should be_nil
+    (nan <=> 1_i32).should be_nil
+    (nan <=> 1_i64).should be_nil
+  end
+
+  it "returns nil in <=> for NaN values (Float64)" do
+    nan = Float64::NAN
+
+    (1_f32 <=> nan).should be_nil
+    (1_f64 <=> nan).should be_nil
+
+    (1_u8 <=> nan).should be_nil
+    (1_u16 <=> nan).should be_nil
+    (1_u32 <=> nan).should be_nil
+    (1_u64 <=> nan).should be_nil
+    (1_i8 <=> nan).should be_nil
+    (1_i16 <=> nan).should be_nil
+    (1_i32 <=> nan).should be_nil
+    (1_i64 <=> nan).should be_nil
+
+    (nan <=> 1_u8).should be_nil
+    (nan <=> 1_u16).should be_nil
+    (nan <=> 1_u32).should be_nil
+    (nan <=> 1_u64).should be_nil
+    (nan <=> 1_i8).should be_nil
+    (nan <=> 1_i16).should be_nil
+    (nan <=> 1_i32).should be_nil
+    (nan <=> 1_i64).should be_nil
+  end
 end
