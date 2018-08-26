@@ -74,4 +74,5 @@ lib LibZ
   fun inflate(stream : ZStream*, flush : Flush) : Error
   fun inflateEnd(stream : ZStream*) : Error
   fun inflateSetDictionary(stream : ZStream*, dictionary : UInt8*, len : UInt) : Error
+  fun zError(error : Error) : UInt8*
 end

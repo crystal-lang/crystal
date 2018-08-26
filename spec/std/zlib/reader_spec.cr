@@ -71,7 +71,7 @@ module Zlib
 
       reader = Reader.new(io)
 
-      expect_raises(Flate::Error) do
+      expect_raises(Flate::Error, "flate: buffer error") do
         reader.gets_to_end
       end
     end
