@@ -1,9 +1,9 @@
 def Object.from_yaml(string_or_io : String | IO) : self
-  new(YAML::ParseContext.new, parse_yaml(string_or_io))
+  new(ctx: YAML::ParseContext.new, node: parse_yaml(string_or_io))
 end
 
 def Array.from_yaml(string_or_io : String | IO)
-  new(YAML::ParseContext.new, parse_yaml(string_or_io)) do |element|
+  new(ctx: YAML::ParseContext.new, node: parse_yaml(string_or_io)) do |element|
     yield element
   end
 end
@@ -38,33 +38,33 @@ private def parse_scalar(ctx, node, type : T.class) forall T
   end
 end
 
-def Nil.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node)
+def Nil.new(*, ctx : YAML::ParseContext, node : YAML::Nodes::Node)
   parse_scalar(ctx, node, self)
 end
 
-def Bool.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node)
+def Bool.new(*, ctx : YAML::ParseContext, node : YAML::Nodes::Node)
   parse_scalar(ctx, node, self)
 end
 
 {% for type in %w(Int8 Int16 Int32 Int64 UInt8 UInt16 UInt32 UInt64) %}
-  def {{type.id}}.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node)
+  def {{type.id}}.new(*, ctx : YAML::ParseContext, node : YAML::Nodes::Node)
     {{type.id}}.new parse_scalar(ctx, node, Int64)
   end
 {% end %}
 
-def String.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node)
+def String.new(*, ctx : YAML::ParseContext, node : YAML::Nodes::Node)
   parse_scalar(ctx, node, self)
 end
 
-def Float32.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node)
+def Float32.new(*, ctx : YAML::ParseContext, node : YAML::Nodes::Node)
   parse_scalar(ctx, node, Float64).to_f32
 end
 
-def Float64.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node)
+def Float64.new(*, ctx : YAML::ParseContext, node : YAML::Nodes::Node)
   parse_scalar(ctx, node, self)
 end
 
-def Array.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node)
+def Array.new(*, ctx : YAML::ParseContext, node : YAML::Nodes::Node)
   ctx.read_alias(node, self) do |obj|
     return obj
   end
@@ -73,23 +73,23 @@ def Array.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node)
 
   ctx.record_anchor(node, ary)
 
-  new(ctx, node) do |element|
+  new(ctx: ctx, node: node) do |element|
     ary << element
   end
   ary
 end
 
-def Array.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node)
+def Array.new(*, ctx : YAML::ParseContext, node : YAML::Nodes::Node)
   unless node.is_a?(YAML::Nodes::Sequence)
     node.raise "Expected sequence, not #{node.class}"
   end
 
   node.each do |value|
-    yield T.new(ctx, value)
+    yield T.new(ctx: ctx, node: value)
   end
 end
 
-def Hash.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node)
+def Hash.new(*, ctx : YAML::ParseContext, node : YAML::Nodes::Node)
   ctx.read_alias(node, self) do |obj|
     return obj
   end
@@ -98,23 +98,23 @@ def Hash.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node)
 
   ctx.record_anchor(node, hash)
 
-  new(ctx, node) do |key, value|
+  new(ctx: ctx, node: node) do |key, value|
     hash[key] = value
   end
   hash
 end
 
-def Hash.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node)
+def Hash.new(*, ctx : YAML::ParseContext, node : YAML::Nodes::Node)
   unless node.is_a?(YAML::Nodes::Mapping)
     node.raise "Expected mapping, not #{node.class}"
   end
 
   YAML::Schema::Core.each(node) do |key, value|
-    yield K.new(ctx, key), V.new(ctx, value)
+    yield K.new(ctx: ctx, node: key), V.new(ctx: ctx, node: value)
   end
 end
 
-def Tuple.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node)
+def Tuple.new(*, ctx : YAML::ParseContext, node : YAML::Nodes::Node)
   unless node.is_a?(YAML::Nodes::Sequence)
     node.raise "Expected sequence, not #{node.class}"
   end
@@ -126,13 +126,13 @@ def Tuple.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node)
   {% begin %}
     Tuple.new(
       {% for i in 0...T.size %}
-        (self[{{i}}].new(ctx, node.nodes[{{i}}])),
+        (self[{{i}}].new(ctx: ctx, node: node.nodes[{{i}}])),
       {% end %}
     )
  {% end %}
 end
 
-def NamedTuple.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node)
+def NamedTuple.new(*, ctx : YAML::ParseContext, node : YAML::Nodes::Node)
   unless node.is_a?(YAML::Nodes::Mapping)
     node.raise "Expected mapping, not #{node.class}"
   end
@@ -143,11 +143,11 @@ def NamedTuple.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node)
     {% end %}
 
     YAML::Schema::Core.each(node) do |key, value|
-      key = String.new(ctx, key)
+      key = String.new(ctx: ctx, node: key)
       case key
         {% for key, type in T %}
           when {{key.stringify}}
-            %var{key.id} = {{type}}.new(ctx, value)
+            %var{key.id} = {{type}}.new(ctx: ctx, node: value)
         {% end %}
       end
     end
@@ -166,7 +166,7 @@ def NamedTuple.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node)
   {% end %}
 end
 
-def Enum.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node)
+def Enum.new(*, ctx : YAML::ParseContext, node : YAML::Nodes::Node)
   unless node.is_a?(YAML::Nodes::Scalar)
     node.raise "Expected scalar, not #{node.class}"
   end
@@ -179,7 +179,7 @@ def Enum.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node)
   end
 end
 
-def Union.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node)
+def Union.new(*, ctx : YAML::ParseContext, node : YAML::Nodes::Node)
   if node.is_a?(YAML::Nodes::Alias)
     {% for type in T %}
       {% if type < ::Reference %}
@@ -194,7 +194,7 @@ def Union.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node)
 
   {% for type in T %}
     begin
-      return {{type}}.new(ctx, node)
+      return {{type}}.new(ctx: ctx, node: node)
     rescue YAML::ParseException
       # Ignore
     end
@@ -203,7 +203,7 @@ def Union.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node)
   node.raise "Couldn't parse #{self}"
 end
 
-def Time.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node)
+def Time.new(*, ctx : YAML::ParseContext, node : YAML::Nodes::Node)
   parse_scalar(ctx, node, Time)
 end
 
@@ -238,7 +238,7 @@ module Time::EpochMillisConverter
 end
 
 struct Slice
-  def self.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node)
+  def self.new(*, ctx : YAML::ParseContext, node : YAML::Nodes::Node)
     {% if T != UInt8 %}
       {% raise "Can only deserialize Slice(UInt8), not #{@type}}" %}
     {% end %}

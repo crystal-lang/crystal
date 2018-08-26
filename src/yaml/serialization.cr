@@ -114,7 +114,7 @@ module YAML
       # Define a `new` directly in the included type,
       # so it overloads well with other possible initializes
 
-      def self.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node)
+      def self.new(*, ctx : YAML::ParseContext, node : YAML::Nodes::Node)
         ctx.read_alias(node, \{{@type}}) do |obj|
           return obj
         end
@@ -123,7 +123,7 @@ module YAML
 
         ctx.record_anchor(node, instance)
 
-        instance.initialize(ctx, node, nil)
+        instance.initialize(ctx: ctx, node: node)
         GC.add_finalizer(instance) if instance.responds_to?(:finalize)
         instance
       end
@@ -132,13 +132,13 @@ module YAML
       # so it can compete with other possible intializes
 
       macro inherited
-        def self.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node)
+        def self.new(*, ctx : YAML::ParseContext, node : YAML::Nodes::Node)
           super
         end
       end
     end
 
-    def initialize(ctx : YAML::ParseContext, node : ::YAML::Nodes::Node, dummy : Nil)
+    def initialize(*, ctx : YAML::ParseContext, node : ::YAML::Nodes::Node)
       {% begin %}
         {% properties = {} of Nil => Nil %}
         {% for ivar in @type.instance_vars %}
@@ -184,9 +184,9 @@ module YAML
                       {% if value[:converter] %}
                         {{value[:converter]}}.from_yaml(ctx, value_node)
                       {% elsif value[:type].is_a?(Path) || value[:type].is_a?(Generic) %}
-                        {{value[:type]}}.new(ctx, value_node)
+                        {{value[:type]}}.new(ctx: ctx, node: value_node)
                       {% else %}
-                        ::Union({{value[:type]}}).new(ctx, value_node)
+                        ::Union({{value[:type]}}).new(ctx: ctx, node: value_node)
                       {% end %}
 
                     {% if value[:nilable] || value[:has_default] %} } {% end %}
@@ -305,7 +305,7 @@ module YAML
       property yaml_unmapped = Hash(String, YAML::Any).new
 
       protected def on_unknown_yaml_attribute(ctx, key, key_node, value_node)
-        yaml_unmapped[key] = YAML::Any.new(ctx, value_node)
+        yaml_unmapped[key] = YAML::Any.new(ctx: ctx, node: value_node)
       end
 
       protected def on_to_yaml(yaml)
