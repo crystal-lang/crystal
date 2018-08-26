@@ -2,11 +2,13 @@ require "./sys/types"
 require "./stdint"
 
 lib LibC
-  F_OK       =    0
-  R_OK       = 0x04
-  W_OK       = 0x02
-  X_OK       = 0x01
-  SC_CLK_TCK =    3
+  F_OK                =    0
+  R_OK                = 0x04
+  W_OK                = 0x02
+  X_OK                = 0x01
+  SC_CLK_TCK          =    3
+  SC_GETGR_R_SIZE_MAX =  100
+  SC_GETPW_R_SIZE_MAX =  101
 
   fun chroot(dirname : Char*) : Int
   fun access(x0 : Char*, x1 : Int) : Int
@@ -39,4 +41,12 @@ lib LibC
   fun sysconf(x0 : Int) : Long
   fun unlink(x0 : Char*) : Int
   fun write(x0 : Int, x1 : Void*, x2 : SizeT) : SSizeT
+  fun getuid : UidT
+  fun geteuid : UidT
+  fun getresuid(ruid : UidT*, euid : UidT*, suid : UidT*) : Int
+  fun setuid(uid : UidT) : Int
+  fun getgid : GidT
+  fun getegid : GidT
+  fun getresgid(rgid : GidT*, egid : GidT*, sgid : GidT*) : Int
+  fun setgid(gid : GidT) : Int
 end

@@ -7,6 +7,8 @@ lib LibC
   W_OK                =  2
   X_OK                =  1
   SC_CLK_TCK          =  2
+  SC_GETGR_R_SIZE_MAX = 69
+  SC_GETPW_R_SIZE_MAX = 70
   SC_NPROCESSORS_ONLN = 84
 
   fun chroot(path : Char*) : Int
@@ -40,4 +42,12 @@ lib LibC
   fun sysconf(x0 : Int) : Long
   fun unlink(x0 : Char*) : Int
   fun write(x0 : Int, x1 : Void*, x2 : SizeT) : SSizeT
+  fun getuid : UidT
+  fun geteuid : UidT
+  fun getresuid(ruid : UidT*, euid : UidT*, suid : UidT*) : Int
+  fun setuid(uid : UidT) : Int
+  fun getgid : GidT
+  fun getegid : GidT
+  fun getresgid(rgid : GidT*, egid : GidT*, sgid : GidT*) : Int
+  fun setgid(gid : GidT) : Int
 end
