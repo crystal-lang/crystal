@@ -1,5 +1,8 @@
 require "crystal/system/file"
 
+require "system/user"
+require "system/group"
+
 class File < IO::FileDescriptor
   # The file/directory separator character. `'/'` on all platforms.
   SEPARATOR = '/'
@@ -237,11 +240,14 @@ class File < IO::FileDescriptor
     basename(path).chomp(suffix)
   end
 
+  private alias UserRep = System::User | String | UInt32 | Int32
+  private alias GroupRep = System::Group | String | UInt32 | Int32
+
   # Changes the owner of the specified file.
   #
   # ```
-  # File.chown("/foo/bar/baz.cr", 1001, 100)
-  # File.chown("/foo/bar", gid: 100)
+  # File.chown("/foo/bar/baz.cr", "alice", "admin")
+  # File.chown("/foo/bar", group: "admin")
   # ```
   #
   # Unless *follow_symlinks* is set to `true`, then the owner symlink itself will
@@ -249,11 +255,19 @@ class File < IO::FileDescriptor
   # changed. For example, assuming symlinks as `foo -> bar -> baz`:
   #
   # ```
-  # File.chown("foo", gid: 100)                        # changes foo's gid
-  # File.chown("foo", gid: 100, follow_symlinks: true) # changes baz's gid
+  # File.chown("foo", group: "admin")                        # changes foo's group to "admin"
+  # File.chown("baz", group: "admin", follow_symlinks: true) # changes baz's group to "admin"
   # ```
-  def self.chown(path, uid : Int = -1, gid : Int = -1, follow_symlinks = false)
-    Crystal::System::File.chown(path, uid, gid, follow_symlinks)
+  #
+  # Raises on error.
+  def self.chown(path : String, owner : UserRep? = nil, group : GroupRep? = nil, follow_symlinks : Bool = false) : Nil
+    Crystal::System::File.chown(path, System::User.raw_uid?(owner) || -1, System::Group.raw_gid?(group) || -1, follow_symlinks)
+  end
+
+  # Same as `chown()` but instead returns a `Bool` indicating success.
+  # ```
+  def self.chown?(path : String, owner : UserRep? = nil, group : GroupRep? = nil, follow_symlinks : Bool = false) : Bool
+    Crystal::System::File.chown?(path, System::User.raw_uid?(owner) || -1, System::Group.raw_gid?(group) || -1, follow_symlinks)
   end
 
   # Changes the permissions of the specified file.
@@ -821,6 +835,14 @@ class File < IO::FileDescriptor
     io << " (closed)" if closed?
     io << '>'
     io
+  end
+
+  def owner=(owner : String | Int)
+    File.chown(@path, owner: owner)
+  end
+
+  def group=(group : String)
+    File.chown(@path, group: group)
   end
 
   # TODO: use fcntl/lockf instead of flock (which doesn't lock over NFS)

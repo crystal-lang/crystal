@@ -325,8 +325,34 @@ describe "File" do
 
   it "chown" do
     # changing owners requires special privileges, so we test that method calls do compile
+    typeof(File.chown("/tmp/test", owner: 1001))
+    typeof(File.chown("/tmp/test", group: 1001))
+    typeof(File.chown("/tmp/test", owner: 1001, group: 100, follow_symlinks: true))
+
+    typeof(File.chown?("/tmp/test", owner: 1001))
+    typeof(File.chown?("/tmp/test", group: 1001))
+    typeof(File.chown?("/tmp/test", owner: 1001, group: 100, follow_symlinks: true))
+
+    typeof(File.chown("/tmp/test", owner: "root"))
+    typeof(File.chown("/tmp/test", group: "daemon"))
+    typeof(File.chown("/tmp/test", owner: "root", group: "daemon", follow_symlinks: true))
+
+    typeof(File.chown?("/tmp/test", owner: "root"))
+    typeof(File.chown?("/tmp/test", group: "daemon"))
+    typeof(File.chown?("/tmp/test", owner: "root", group: "daemon", follow_symlinks: true))
+
+    user = System::User.get("root")
+    group = System::Group.get("daemon")
+
+    typeof(File.chown("/tmp/test", owner: user))
+    typeof(File.chown("/tmp/test", group: group))
+    typeof(File.chown("/tmp/test", owner: user, group: group, follow_symlinks: true))
+
+    typeof(File.chown?("/tmp/test", owner: user))
+    typeof(File.chown?("/tmp/test", group: group))
+    typeof(File.chown?("/tmp/test", owner: user, group: group, follow_symlinks: true))
+
     typeof(File.chown("/tmp/test"))
-    typeof(File.chown("/tmp/test", uid: 1001, gid: 100, follow_symlinks: true))
   end
 
   describe "chmod" do

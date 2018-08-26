@@ -70,13 +70,19 @@ module Crystal::System::File
     LibC.access(path.check_no_null_byte, flag) == 0
   end
 
-  def self.chown(path, uid : Int, gid : Int, follow_symlinks)
+  def self.chown(path : String, uid : Int, gid : Int, follow_symlinks : Bool)
+    return if chown?(path, uid, gid, follow_symlinks)
+    raise Errno.new("Error changing owner/group of #{path.inspect}")
+  end
+
+  def self.chown?(path : String, uid : Int, gid : Int, follow_symlinks : Bool) : Bool
+    return true if uid == -1 && gid == -1
     ret = if !follow_symlinks && ::File.symlink?(path)
             LibC.lchown(path, uid, gid)
           else
             LibC.chown(path, uid, gid)
           end
-    raise Errno.new("Error changing owner of '#{path}'") if ret == -1
+    ret == 0
   end
 
   def self.chmod(path, mode)
