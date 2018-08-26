@@ -58,6 +58,38 @@ describe "Slice" do
     expect_raises(IndexError) { slice[3, -1] }
   end
 
+  it "does accept null terminated pointer" do
+    slice_0 = "abc".to_unsafe
+    slice_1 = "def".to_unsafe
+    slice_2 = "ghi".to_unsafe
+    slice_3 = "jkl".to_unsafe
+
+    ptr = Pointer(Pointer(UInt8)).malloc(5)
+    ptr[0] = slice_0
+    ptr[1] = slice_1
+    ptr[2] = slice_2
+    ptr[3] = slice_3
+    ptr[4] = Pointer(UInt8).null
+
+    slice = Slice.new(ptr, limit: 8, read_only: true)
+    slice.size.should eq(4)
+    slice[0].should eq(slice_0)
+    slice[1].should eq(slice_1)
+    slice[2].should eq(slice_2)
+    slice[3].should eq(slice_3)
+
+    slice = Slice.new(ptr, limit: 4, read_only: true)
+    slice.size.should eq(4)
+    slice[0].should eq(slice_0)
+    slice[1].should eq(slice_1)
+    slice[2].should eq(slice_2)
+    slice[3].should eq(slice_3)
+
+    expect_raises(Slice::MissingTerminatorError) { Slice.new(ptr, limit: 3, read_only: true) }
+    expect_raises(Slice::MissingTerminatorError) { Slice.new(ptr, limit: 2, read_only: true) }
+    expect_raises(Slice::MissingTerminatorError) { Slice.new(ptr, limit: 1, read_only: true) }
+  end
+
   it "does empty?" do
     Slice.new(0, 0).empty?.should be_true
     Slice.new(1, 0).empty?.should be_false
