@@ -1,7 +1,7 @@
-# The [RFC 2822](https://tools.ietf.org/html/rfc2822) datetime format.
-#
-# This is also compatible to [RFC 882](https://tools.ietf.org/html/rfc882) and [RFC 1123](https://tools.ietf.org/html/rfc1123#page-55).
 struct Time::Format
+  # The [RFC 2822](https://tools.ietf.org/html/rfc2822) datetime format.
+  #
+  # This is also compatible to [RFC 882](https://tools.ietf.org/html/rfc882) and [RFC 1123](https://tools.ietf.org/html/rfc1123#page-55).
   module RFC_2822
     # Parses a string into a `Time`.
     def self.parse(string, kind = Time::Location::UTC) : Time
