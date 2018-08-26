@@ -1536,7 +1536,7 @@ class Array(T)
   end
 
   # Returns a new array with all elements sorted based on the return value of
-  # their comparison method `#<=>`
+  # their comparison methods `#<` and `#<=`.
   #
   # ```
   # a = [3, 1, 2]
@@ -1566,7 +1566,7 @@ class Array(T)
   end
 
   # Modifies `self` by sorting all elements based on the return value of their
-  # comparison method `#<=>`
+  # comparison methods `#<` and `#<=`.
   #
   # ```
   # a = [3, 1, 2]
@@ -1597,7 +1597,7 @@ class Array(T)
   end
 
   # Returns a new array with all elements sorted. The given block is called for
-  # each element, then the comparison method #<=> is called on the object
+  # each element, then the comparison method `#<=>` is called on the object
   # returned from the block to determine sort order.
   #
   # ```
@@ -1611,7 +1611,7 @@ class Array(T)
   end
 
   # Modifies `self` by sorting all elements. The given block is called for
-  # each element, then the comparison method #<=> is called on the object
+  # each element, then the comparison method `#<=>` is called on the object
   # returned from the block to determine sort order.
   #
   # ```
