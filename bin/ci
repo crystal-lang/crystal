@@ -112,6 +112,8 @@ with_build_env() {
   on_linux docker run \
     --rm -t \
     -u $(id -u) \
+    -v /etc/passwd:/etc/passwd \
+    -v /etc/group:/etc/group \
     -v $PWD:/mnt \
     -w /mnt \
     -e CRYSTAL_CACHE_DIR="/tmp/crystal" \
