@@ -73,12 +73,5 @@ lib LibZ
   fun inflateInit2 = inflateInit2_(stream : ZStream*, window_bits : Int32, version : UInt8*, stream_size : Int32) : Error
   fun inflate(stream : ZStream*, flush : Flush) : Error
   fun inflateEnd(stream : ZStream*) : Error
-  fun inflateReset(stream : ZStream*) : Int32
   fun inflateSetDictionary(stream : ZStream*, dictionary : UInt8*, len : UInt) : Error
-
-  alias InFunc = Void*, UInt8** -> UInt
-  alias OutFunc = Void*, UInt8*, UInt -> Int
-
-  fun inflateBackInit = inflateBackInit_(stream : ZStream*, window_bits : Int, window : UInt8*, version : UInt8*, stream_size : Int) : Int
-  fun inflateBack(stream : ZStream*, in : InFunc, in_desc : Void*, out : OutFunc, out_desc : Void*) : Int
 end
