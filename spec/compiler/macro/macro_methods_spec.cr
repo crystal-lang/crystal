@@ -1304,6 +1304,11 @@ module Crystal
         assert_macro "x", %({{x.block_arg}}), [Def.new("some_def")] of ASTNode, ""
       end
 
+      it "executes accepts_block?" do
+        assert_macro "x", %({{x.accepts_block?}}), [Def.new("some_def", ["x".arg, "y".arg], yields: 1)] of ASTNode, "true"
+        assert_macro "x", %({{x.accepts_block?}}), [Def.new("some_def")] of ASTNode, "false"
+      end
+
       it "executes return_type" do
         assert_macro "x", %({{x.return_type}}), [Def.new("some_def", ["x".arg, "y".arg], return_type: "b".arg)] of ASTNode, "b"
         assert_macro "x", %({{x.return_type}}), [Def.new("some_def")] of ASTNode, ""
