@@ -99,8 +99,11 @@ class Flate::Reader < IO
         end
 
         raise Flate::Error.new(ret, @stream)
-      when LibZ::Error::DATA_ERROR,
-           LibZ::Error::MEM_ERROR
+      when LibZ::Error::ERRNO,
+           LibZ::Error::DATA_ERROR,
+           LibZ::Error::MEM_ERROR,
+           LibZ::Error::BUF_ERROR,
+           LibZ::Error::VERSION_ERROR
         raise Flate::Error.new(ret, @stream)
       when LibZ::Error::STREAM_END
         @end = true
