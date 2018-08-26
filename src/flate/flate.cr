@@ -22,9 +22,12 @@ module Flate
 
   class Error < Exception
     def initialize(ret, stream)
-      if msg = stream.msg
+      msg = stream.msg
+      msg = LibZ.zError(ret) if msg.null?
+
+      if msg
         error_msg = String.new(msg)
-        super("flate: #{error_msg} #{ret}")
+        super("flate: #{error_msg}")
       else
         super("flate: #{ret}")
       end
