@@ -207,6 +207,30 @@ ensure
   File.delete(binary_file.path) if binary_file
 end
 
+def expect_raise_in_process(klass : T.class, message = nil, file = __FILE__, line = __LINE__, &block) forall T
+  reader, writer = IO.pipe
+  proc = Process.fork {
+    begin
+      yield
+    rescue ex : T
+      writer.puts("Raises")
+      writer.puts(ex.message)
+      writer.close
+      next
+    end
+
+    writer.puts("Failed")
+    writer.close
+  }
+
+  proc.wait
+  reader.gets.should eq("Raises")
+  reader.gets.should eq(message) if message
+ensure
+  reader.close if reader && !reader.closed?
+  writer.close if writer && !writer.closed?
+end
+
 def test_c(c_code, crystal_code)
   c_filename = "#{__DIR__}/temp_abi.c"
   o_filename = "#{__DIR__}/temp_abi.o"
