@@ -61,15 +61,9 @@ describe Iterator do
     end
     describe "chain indeterminate number of iterators" do
       it "chains all together" do
-        n = 10 + rand 10
-        arrs = [] of Array(Int32)
-        n.times { |a| arrs << [a, a*a, a + 3] }
-        iter = Iterator(Int32).chain arrs.map(&.each)
-        n.times { |a|
-          iter.next.should eq a
-          iter.next.should eq a*a
-          iter.next.should eq a + 3
-        }
+        iters = [[0], [1], [2, 3], [4, 5, 6]].each.map &.each
+        iter = Iterator(Int32).chain iters
+        7.times { |i| iter.next.should eq i }
       end
       it "chains empty" do
         arrs = [] of Array(Int32)
@@ -77,35 +71,16 @@ describe Iterator do
         iter.next.should be_a Iterator::Stop
       end
       it "chains array of empty" do
-        n = 10 + rand 10
-        arrs = [] of Array(Int32)
-        n.times { |a| arrs << (a % 3 == 0 ? [] of Int32 : [a, a*a, a + 3]) }
-        iter = Iterator(Int32).chain arrs.map(&.each)
-        n.times { |a|
-          next if a % 3 == 0
-          iter.next.should eq a
-          iter.next.should eq a*a
-          iter.next.should eq a + 3
-        }
+        iters = [[0], [1], ([] of Int32), [2, 3], ([] of Int32), [4, 5, 6]].each.map &.each
+        iter = Iterator(Int32).chain iters
+        7.times { |i| iter.next.should eq i }
       end
       it "rewinds" do
-        n = 10 + rand 10
-        arrs = [] of Array(Int32)
-        n.times { |a| arrs << (a % 3 == 0 ? [] of Int32 : [a, a*a, a + 3]) }
-        iter = Iterator(Int32).chain arrs.map(&.each)
-        n.times { |a|
-          next if a % 3 == 0
-          iter.next.should eq a
-          iter.next.should eq a*a
-          iter.next.should eq a + 3
-        }
+        iters = [[0], [1], ([] of Int32), [2, 3], ([] of Int32), [4, 5, 6]].each.map &.each
+        iter = Iterator(Int32).chain iters
+        7.times { |i| iter.next.should eq i }
         iter.rewind
-        n.times { |a|
-          next if a % 3 == 0
-          iter.next.should eq a
-          iter.next.should eq a*a
-          iter.next.should eq a + 3
-        }
+        7.times { |i| iter.next.should eq i }
       end
     end
   end

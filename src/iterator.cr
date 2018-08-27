@@ -160,6 +160,11 @@ module Iterator(T)
 
   # Returns an iterator that returns elements from the original iterator until
   # it is exhausted and then returns the elements of the second iterator.
+  # Compared to `.chain`, it has better performance when the quantity of
+  # iterators to chain is small (usually less than 4).
+  # One could also face a problem trying to chain several iterators in loop(like `Enumerable#reduce`),
+  # and if you encounter a type error or the compiler traps in a long time of type inference,
+  # please try `.chain`.
   #
   # ```
   # iter = (1..2).each.chain(('a'..'b').each)
@@ -200,13 +205,11 @@ module Iterator(T)
     end
   end
 
-  # Like `#chain` but could chains multiple iterators.
-  # In case number of iterators cannot be determined or depends on input,
-  # such as chaining an array of iterator.
-  # `#chain(other)` concact two iterator in linear,
-  # but in this case, `#chain(other)` with a loop cannot be expanded in linear,
-  # and compiler will traps in recursive expansion.
-  # This method uses a loop to iterate all of them, to avoid the recursive.
+  # The same as `#chain`, but have better performance when the quantity of
+  # iterators to chain is large(usually greater than 4) or undetermined.
+  # It uses lesser type specification for more freedom to avoid the failure (at a cost of performance),
+  # and a loop rather than recursive calling to achieve better performance for numbers of iterators
+  # (but when the quantity is small, it's not really efficiency).
   #
   # ```
   # array_of_iters = [[1], [2, 3], [4, 5, 6]]
