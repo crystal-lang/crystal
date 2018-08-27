@@ -117,7 +117,7 @@ module JSON
 
       def self.new(pull : ::JSON::PullParser)
         instance = allocate
-        instance.initialize(pull, nil)
+        instance.initialize(__pull_for_json_serializable: pull)
         GC.add_finalizer(instance) if instance.responds_to?(:finalize)
         instance
       end
@@ -132,7 +132,7 @@ module JSON
       end
     end
 
-    def initialize(pull : ::JSON::PullParser, dummy : Nil)
+    def initialize(*, __pull_for_json_serializable pull : ::JSON::PullParser)
       {% begin %}
         {% properties = {} of Nil => Nil %}
         {% for ivar in @type.instance_vars %}
