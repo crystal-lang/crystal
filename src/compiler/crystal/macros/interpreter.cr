@@ -404,6 +404,11 @@ module Crystal
       false
     end
 
+    def visit(node : Generic)
+      @last = resolve(node)
+      false
+    end
+
     def resolve(node : Path)
       resolve?(node) || node.raise_undefined_constant(@path_lookup)
     end
@@ -461,6 +466,17 @@ module Crystal
       else
         node.raise "can't interpret #{node}"
       end
+    end
+
+    def resolve(node : Generic)
+      type = @path_lookup.lookup_type(node, self_type: @scope, free_vars: @free_vars)
+      TypeNode.new(type)
+    end
+
+    def resolve?(node : Generic)
+      resolve(node)
+    rescue Crystal::Exception
+      nil
     end
 
     def visit(node : Splat)

@@ -1968,6 +1968,10 @@ module Crystal
             NilLiteral.new
           end
         end
+      when "resolve"
+        interpret_argless_method(method, args) { interpreter.resolve(self) }
+      when "resolve?"
+        interpret_argless_method(method, args) { interpreter.resolve?(self) || NilLiteral.new }
       else
         super
       end

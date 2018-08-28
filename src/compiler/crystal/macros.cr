@@ -1283,6 +1283,16 @@ module Crystal::Macros
     # Returns the named arguments of this instantiation, if any.
     def named_args : NamedTupleLiteral | NilLiteral
     end
+
+    # Resolves this generic to a `TypeNode` if it denotes a type,
+    # or otherwise gives a compile-time error.
+    def resolve : ASTNode
+    end
+
+    # Resolves this path to a `TypeNode` if it denotes a type,
+    # or otherwise returns a `NilLiteral`.
+    def resolve? : ASTNode | NilLiteral
+    end
   end
 
   # A type declaration like `x : Int32`
