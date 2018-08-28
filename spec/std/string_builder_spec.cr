@@ -34,4 +34,12 @@ describe String::Builder do
     end
     s.should eq("")
   end
+
+  describe "#chomp!" do
+    it "returns self" do
+      str = String::Builder.new
+      str << "a,b,c,"
+      str.chomp!(44).to_s.should eq("a,b,c")
+    end
+  end
 end
