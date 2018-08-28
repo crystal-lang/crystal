@@ -479,14 +479,11 @@ struct Slice(T)
   def to_s(io)
     if T == UInt8
       io << "Bytes["
-      # Inspect using to_s because we know this is a UInt8.
-      join ", ", io, &.to_s(io)
-      io << ']'
     else
       io << "Slice["
-      join ", ", io, &.inspect(io)
-      io << ']'
     end
+    join ", ", io, &.inspect(io)
+    io << ']'
   end
 
   def pretty_print(pp) : Nil

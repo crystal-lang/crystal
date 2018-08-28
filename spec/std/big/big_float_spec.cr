@@ -169,7 +169,7 @@ describe "BigFloat" do
   end
 
   describe "#inspect" do
-    it { "2.3".to_big_f.inspect.should eq("2.3_big_f") }
+    it { "2.3".to_big_f.inspect.should eq("2.3") }
   end
 
   it "#hash" do

@@ -342,7 +342,6 @@ struct BigInt < Int
 
   def inspect(io)
     to_s io
-    io << "_big_i"
   end
 
   # TODO: improve this

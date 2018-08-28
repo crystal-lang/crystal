@@ -259,7 +259,7 @@ describe "BigInt" do
   end
 
   describe "#inspect" do
-    it { "2".to_big_i.inspect.should eq("2_big_i") }
+    it { "2".to_big_i.inspect.should eq("2") }
   end
 
   it "does gcd and lcm" do

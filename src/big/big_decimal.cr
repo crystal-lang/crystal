@@ -297,7 +297,6 @@ struct BigDecimal < Number
 
   def inspect(io)
     to_s(io)
-    io << "_big_d"
   end
 
   def to_big_d

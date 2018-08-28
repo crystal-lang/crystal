@@ -299,6 +299,10 @@ describe BigDecimal do
     BigDecimal.new(100, 4).to_s.should eq "0.01"
   end
 
+  it "#inspect" do
+    BigDecimal.new(1, 2).inspect.should eq "0.01"
+  end
+
   it "converts to other number types" do
     bd1 = BigDecimal.new(123, 5)
     bd2 = BigDecimal.new(-123, 5)
