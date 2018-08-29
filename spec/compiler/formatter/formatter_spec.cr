@@ -1002,8 +1002,8 @@ describe Crystal::Formatter do
   assert_format "foo &.nil?()"
   assert_format "foo &.bar.nil?()"
 
-  assert_format "foo(<<-X\na\nX\n, 1)"
-  assert_format "def bar\n  foo(<<-X\n  a\n  X\n  , 1)\nend"
+  assert_format "foo(<<-X,\na\nX\n  1)"
+  assert_format "def bar\n  foo(<<-X,\n  a\n  X\n    1)\nend"
   assert_format %(run("a", 1))
 
   assert_format "foo.bar # comment\n  .baz"
@@ -1097,8 +1097,7 @@ describe Crystal::Formatter do
   assert_format "def foo(a,\n        &block)\nend"
   assert_format "def foo(\n  a,\n  &block\n)\nend"
   assert_format "def foo(a,\n        *b)\nend"
-  assert_format "def foo(a\n,        *b)\nend", "def foo(a,\n        *b)\nend"
-  assert_format "def foo(a # comment\n,        *b)\nend", "def foo(a, # comment\n        *b)\nend"
+  assert_format "def foo(a, # comment\n        *b)\nend", "def foo(a, # comment\n        *b)\nend"
   assert_format "def foo(a,\n        **b)\nend"
   assert_format "def foo(\n  **a\n)\n  1\nend"
   assert_format "def foo(**a,)\n  1\nend", "def foo(**a)\n  1\nend"

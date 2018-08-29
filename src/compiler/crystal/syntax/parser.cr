@@ -1558,9 +1558,12 @@ module Crystal
 
           type_vars.push type_var_name
 
-          next_token_skip_space_or_newline
+          next_token_skip_space
           if @token.type == :","
             next_token_skip_space_or_newline
+          else
+            skip_space_or_newline
+            check :")"
           end
 
           index += 1
@@ -2179,11 +2182,6 @@ module Crystal
           exps << parse_op_assign_no_control
           end_location = token_end_location
           skip_space
-          if @token.type == :NEWLINE
-            skip_space_or_newline
-            check :"]"
-            break
-          end
 
           if @token.type == :","
             slash_is_regex!
@@ -2301,11 +2299,6 @@ module Crystal
             next_token_skip_space_or_newline
             entries << HashLiteral::Entry.new(key, parse_op_assign)
             skip_space
-            if @token.type == :NEWLINE
-              next_token_skip_space_or_newline
-              check :"}"
-              break
-            end
             if @token.type == :","
               slash_is_regex!
               next_token_skip_space_or_newline
@@ -2339,7 +2332,7 @@ module Crystal
         exps << first_exp
         while @token.type != :"}"
           exps << parse_op_assign_no_control
-          skip_space_or_newline
+          skip_space
           if @token.type == :","
             next_token_skip_space_or_newline
           else
@@ -2839,9 +2832,7 @@ module Crystal
             next_token_skip_space_or_newline
           else
             skip_space_or_newline
-            if @token.type != :")"
-              unexpected_token @token.to_s, "expected ',' or ')'"
-            end
+            check :")"
           end
           index += 1
         end
@@ -3331,9 +3322,7 @@ module Crystal
             next_token_skip_space_or_newline
           else
             skip_space_or_newline
-            if @token.type != :")"
-              unexpected_token @token.to_s, "expected ',' or ')'"
-            end
+            check :")"
           end
           index += 1
         end
@@ -3730,7 +3719,7 @@ module Crystal
         found_space = @token.type == :SPACE || @token.type == :NEWLINE
       end
 
-      skip_space_or_newline
+      skip_space
 
       {arg_name, external_name, found_space, uses_arg}
     end
@@ -4166,11 +4155,12 @@ module Crystal
               end
             end
 
-            skip_space_or_newline
+            skip_space
             if @token.type == :","
               slash_is_regex!
               next_token_skip_space_or_newline
             else
+              skip_space_or_newline
               check :")"
               break
             end
@@ -4344,12 +4334,15 @@ module Crystal
         end
 
         named_args << NamedArgument.new(name, value).at(location)
-        skip_space_or_newline if allow_newline
+        skip_space
         if @token.type == :","
           next_token_skip_space_or_newline
           if @token.type == :")" || @token.type == :"&" || @token.type == :"]"
             break
           end
+        elsif @token.type == :NEWLINE && allow_newline
+          skip_space_or_newline
+          break
         else
           break
         end
@@ -4551,11 +4544,17 @@ module Crystal
         next_token_skip_space_or_newline
 
         type = parse_single_type(allow_commas: false)
-        skip_space_or_newline
+        skip_space
 
         named_args << NamedArgument.new(name, type)
-        break unless @token.type == :","
-        next_token_skip_space_or_newline
+
+        if @token.type == :","
+          next_token_skip_space_or_newline
+        else
+          skip_space_or_newline
+          check end_token
+          break
+        end
       end
 
       named_args

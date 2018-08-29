@@ -166,7 +166,6 @@ module Crystal
     it_parses "def foo(\nvar); end", Def.new("foo", ["var".arg])
     it_parses "def foo(\nvar\n); end", Def.new("foo", ["var".arg])
     it_parses "def foo(var1, var2); end", Def.new("foo", ["var1".arg, "var2".arg])
-    it_parses "def foo(\nvar1\n,\nvar2\n)\n end", Def.new("foo", ["var1".arg, "var2".arg])
     it_parses "def foo; 1; 2; end", Def.new("foo", body: [1.int32, 2.int32] of ASTNode)
     it_parses "def foo=(value); end", Def.new("foo=", ["value".arg])
     it_parses "def foo(n); foo(n -1); end", Def.new("foo", ["n".arg], "foo".call(Call.new("n".var, "-", 1.int32)))
@@ -262,7 +261,6 @@ module Crystal
     it_parses "def foo(&@block); end", Def.new("foo", body: Assign.new("@block".instance_var, "block".var), block_arg: Arg.new("block"), yields: 0)
 
     it_parses "def foo(\n&block\n); end", Def.new("foo", block_arg: Arg.new("block"), yields: 0)
-    it_parses "def foo(&block \n: Int ->); end", Def.new("foo", block_arg: Arg.new("block", restriction: ProcNotation.new(["Int".path] of ASTNode)), yields: 1)
     it_parses "def foo(&block :\n Int ->); end", Def.new("foo", block_arg: Arg.new("block", restriction: ProcNotation.new(["Int".path] of ASTNode)), yields: 1)
     it_parses "def foo(&block : Int ->\n); end", Def.new("foo", block_arg: Arg.new("block", restriction: ProcNotation.new(["Int".path] of ASTNode)), yields: 1)
 
@@ -1726,6 +1724,18 @@ module Crystal
       assert_syntax_error "%Q(", "Unterminated string literal"
       assert_syntax_error "<<-HEREDOC", "Unexpected EOF on heredoc identifier"
       assert_syntax_error "<<-HEREDOC\n", "Unterminated heredoc"
+
+      assert_syntax_error "[1\n,2]", "expecting token ']', not ','"
+      assert_syntax_error "{1\n,2}", "expecting token '}', not ','"
+      assert_syntax_error "{1, 2\n,3}", "expecting token '}', not ','"
+      assert_syntax_error "{1 => 2\n,3 => 4}", "expecting token '}', not ','"
+      assert_syntax_error "foo(1\n,2)", "expecting token ')', not ','"
+      assert_syntax_error "foo(a: 1\n,b: 2)", "expecting token ')', not ','"
+      assert_syntax_error "def foo(x\n,y); 1; end", "expecting token ')', not ','"
+      assert_syntax_error "macro foo(x\n,y); 1; end", "expecting token ')', not ','"
+      assert_syntax_error "class Foo(X\n,Y); 1; end", "expecting token ')', not ','"
+      assert_syntax_error "Foo(X\n,Y)", "expecting token ')', not ','"
+      assert_syntax_error "Foo(x: X\n,y: Y)", "expecting token ')', not ','"
 
       it_parses "annotation Foo; end", AnnotationDef.new("Foo".path)
       it_parses "annotation Foo\n\nend", AnnotationDef.new("Foo".path)
