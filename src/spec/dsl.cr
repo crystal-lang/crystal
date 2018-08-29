@@ -1,6 +1,5 @@
 require "colorize"
 require "option_parser"
-require "signal"
 
 module Spec
   private COLORS = {

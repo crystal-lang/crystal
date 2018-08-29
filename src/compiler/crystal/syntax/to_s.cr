@@ -367,12 +367,19 @@ module Crystal
       elsif node_obj && !letter_or_underscore?(node.name) && node.args.size == 1
         in_parenthesis(need_parens, node_obj)
 
-        @str << ' '
-        @str << decorate_call(node, node.name)
-        @str << ' '
-
         arg = node.args[0]
-        in_parenthesis(need_parens(arg), arg)
+        if node.name == "~" # it is `foo.~(bar)` case.
+          @str << '.'
+          @str << node.name
+          @str << '('
+          arg.accept self
+          @str << ')'
+        else
+          @str << ' '
+          @str << decorate_call(node, node.name)
+          @str << ' '
+          in_parenthesis(need_parens(arg), arg)
+        end
       else
         if node_obj
           in_parenthesis(need_parens, node_obj)

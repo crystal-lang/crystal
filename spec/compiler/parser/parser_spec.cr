@@ -129,6 +129,7 @@ module Crystal
     it_parses "- 1", Call.new(1.int32, "-")
     it_parses "+ 1", Call.new(1.int32, "+")
     it_parses "~ 1", Call.new(1.int32, "~")
+    it_parses "1.~", Call.new(1.int32, "~")
     it_parses "1 && 2", And.new(1.int32, 2.int32)
     it_parses "1 || 2", Or.new(1.int32, 2.int32)
     it_parses "&- 1", Call.new(1.int32, "&-")
@@ -830,6 +831,8 @@ module Crystal
     it_parses "macro foo(\na = 0\n)\nend", Macro.new("foo", [Arg.new("a", default_value: 0.int32)], Expressions.new)
 
     it_parses "macro foo;{% verbatim do %}1{% foo %}2{% end %};end", Macro.new("foo", [] of Arg, Expressions.from([MacroVerbatim.new(Expressions.from(["1".macro_literal, MacroExpression.new("foo".var, false), "2".macro_literal] of ASTNode)), ";".macro_literal] of ASTNode))
+
+    it_parses "macro foo\n{%\nif 1\n2\nelse\n3\nend\n%}end", Macro.new("foo", body: MacroExpression.new(If.new(1.int32, 2.int32, 3.int32), output: false))
 
     assert_syntax_error "macro foo; {% foo = 1 }; end"
     assert_syntax_error "macro def foo : String; 1; end"

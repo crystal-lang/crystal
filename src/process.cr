@@ -391,9 +391,10 @@ class Process
 
   # :nodoc:
   protected def self.exec_internal(command : String, argv, env, clear_env, input, output, error, chdir)
-    reopen_io(input, STDIN, "r")
-    reopen_io(output, STDOUT, "w")
-    reopen_io(error, STDERR, "w")
+    # Reopen handles if the child is being redirected
+    reopen_io(input, IO::FileDescriptor.new(0, blocking: true), "r")
+    reopen_io(output, IO::FileDescriptor.new(1, blocking: true), "w")
+    reopen_io(error, IO::FileDescriptor.new(2, blocking: true), "w")
 
     ENV.clear if clear_env
     env.try &.each do |key, val|

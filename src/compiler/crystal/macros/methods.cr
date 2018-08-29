@@ -1242,6 +1242,8 @@ module Crystal
         interpret_argless_method(method, args) { @double_splat || Nop.new }
       when "block_arg"
         interpret_argless_method(method, args) { @block_arg || Nop.new }
+      when "accepts_block?"
+        interpret_argless_method(method, args) { BoolLiteral.new(@yields != nil) }
       when "return_type"
         interpret_argless_method(method, args) { @return_type || Nop.new }
       when "body"

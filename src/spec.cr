@@ -118,6 +118,9 @@ if ENV["SPEC_VERBOSE"]? == "1"
   Spec.override_default_formatter(Spec::VerboseFormatter.new)
 end
 
-Signal::INT.trap { Spec.abort! }
+{% unless flag?(:win32) %}
+  # TODO(windows): re-enable this once Signal is ported
+  Signal::INT.trap { Spec.abort! }
+{% end %}
 
 Spec.run
