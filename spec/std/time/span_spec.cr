@@ -278,4 +278,16 @@ describe Time::Span do
     1.week.should eq(7.days)
     2.weeks.should eq(14.days)
   end
+
+  it "test positive?" do
+    Time::Span.new(nanoseconds: 123456789).positive?.should eq true
+    Time::Span.new(nanoseconds: 0).positive?.should eq false
+    Time::Span.new(nanoseconds: -123456789).positive?.should eq false
+  end
+
+  it "test negative?" do
+    Time::Span.new(nanoseconds: 123456789).negative?.should eq false
+    Time::Span.new(nanoseconds: 0).negative?.should eq false
+    Time::Span.new(nanoseconds: -123456789).negative?.should eq true
+  end
 end
