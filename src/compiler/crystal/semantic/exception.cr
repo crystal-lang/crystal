@@ -53,7 +53,11 @@ module Crystal
 
     protected def self.wrap_macro_expression(ex, location)
       filename = location.filename
-      if filename.is_a?(VirtualFile) && (expanded_location = filename.expanded_location)
+      # Don't wrap in "expanding macro" if the error came from a macro {% raise ... %}
+      # and immediately after that there's a macro expansion (one doesn't
+      # want to show expanded macro code that's related to a macro `raise`,
+      # but instead make the error look as if it was produced by the method call).
+      if !ex.is_a?(MacroRaiseException) && filename.is_a?(VirtualFile) && (expanded_location = filename.expanded_location)
         ex = TypeException.new "expanding macro", expanded_location.line_number, expanded_location.column_number, expanded_location.filename, 0, ex
       end
       ex

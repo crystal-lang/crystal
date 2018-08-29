@@ -1355,4 +1355,22 @@ describe "Semantic: macro" do
       Foo(Int32).foo
       )) { array_of(int32).metaclass }
   end
+
+  it "executes raise inside method defined by macro" do
+    ex = assert_error %(
+      macro foo
+        def bar
+          \\{{ raise "OH NO" }}
+        end
+      end
+
+      class Foo
+        foo
+      end
+
+      Foo.new.bar
+      ), "OH NO"
+
+    ex.to_s.should_not contain("expanding macro")
+  end
 end
