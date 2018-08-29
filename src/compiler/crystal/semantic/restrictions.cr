@@ -1124,12 +1124,12 @@ module Crystal
   class NumberLiteralType
     def restrict(other, context)
       if other.is_a?(IntegerType) || other.is_a?(FloatType)
-        if literal.can_be_autocast_to?(other)
-          if @matched_type && @matched_type != other
-            literal.raise "ambiguous call matches both #{@matched_type} and #{other}"
-          end
-
-          @matched_type = other
+        # Check for an exact match, which can't produce an ambiguous call
+        if literal.type == other
+          set_exact_match(other)
+          other
+        elsif !exact_match? && literal.can_be_autocast_to?(other)
+          add_match(other)
           other
         else
           literal.type.restrict(other, context)
@@ -1138,7 +1138,7 @@ module Crystal
         type = super(other, context) ||
                literal.type.restrict(other, context)
         if type == self
-          type = @matched_type || literal.type
+          type = @match || literal.type
         end
         type
       end
@@ -1147,13 +1147,13 @@ module Crystal
 
   class SymbolLiteralType
     def restrict(other, context)
-      if other.is_a?(EnumType)
-        if other.find_member(literal.value)
-          if @matched_type && @matched_type != other
-            literal.raise "ambiguous call matches both #{@matched_type} and #{other}"
-          end
-
-          @matched_type = other
+      case other
+      when SymbolType
+        set_exact_match(other)
+        other
+      when EnumType
+        if !exact_match? && other.find_member(literal.value)
+          add_match(other)
           other
         else
           literal.type.restrict(other, context)
@@ -1162,7 +1162,7 @@ module Crystal
         type = super(other, context) ||
                literal.type.restrict(other, context)
         if type == self
-          type = @matched_type || literal.type
+          type = @match || literal.type
         end
         type
       end
