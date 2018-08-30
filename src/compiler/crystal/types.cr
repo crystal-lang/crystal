@@ -671,6 +671,13 @@ module Crystal
       nil
     end
 
+    # Checks whether an exception needs to be raised because of a restriction
+    # failure. Only overwriten by literal types (NumberLiteralType and
+    # SymbolLiteralType) when they produce an ambiguous call.
+    def check_restriction_exception
+      nil
+    end
+
     def inspect(io)
       to_s(io)
     end
@@ -1317,19 +1324,55 @@ module Crystal
   class VoidType < NamedType
   end
 
-  # Type for a number literal: it has the specific type of the number literal
-  # but can also match other types (like ints and floats) if the literal
-  # fits in those types.
-  class NumberLiteralType < Type
-    getter literal : NumberLiteral
-    @matched_type : Type?
+  abstract class LiteralType < Type
+    # The most exact match type, or the first match otherwise
+    @match : Type?
 
-    def initialize(program, @literal)
-      super(program)
+    # All matches. It's nil if `@match` is an exact match.
+    @all_matches : Set(Type)?
+
+    def set_exact_match(type)
+      @match = type
+      @all_matches = nil
+    end
+
+    def add_match(type)
+      if match = @match
+        all_matches = @all_matches
+        if all_matches.nil?
+          all_matches = @all_matches = Set(Type).new
+          all_matches << match
+        end
+        all_matches << type
+      else
+        @match = type
+      end
+    end
+
+    def exact_match?
+      literal.type == @match
     end
 
     def remove_literal
       literal.type
+    end
+
+    def check_restriction_exception
+      if all_matches = @all_matches
+        literal.raise "ambiguous call, implicit cast of #{literal} matches all of #{all_matches.join(", ")}"
+      end
+    end
+  end
+
+  # Type for a number literal: it has the specific type of the number literal
+  # but can also match other types (like ints and floats) if the literal
+  # fits in those types.
+  class NumberLiteralType < LiteralType
+    # The literal associated with this type
+    getter literal : NumberLiteral
+
+    def initialize(program, @literal)
+      super(program)
     end
 
     def to_s_with_options(io : IO, skip_union_parens : Bool = false, generic_args : Bool = true, codegen = false)
@@ -1339,16 +1382,12 @@ module Crystal
 
   # Type for a symbol literal: it has the specific type of the symbol literal (SymbolType)
   # but can also match enums if their members match the symbol's name.
-  class SymbolLiteralType < Type
+  class SymbolLiteralType < LiteralType
+    # The literal associated with this type
     getter literal : SymbolLiteral
-    @matched_type : Type?
 
     def initialize(program, @literal)
       super(program)
-    end
-
-    def remove_literal
-      literal.type
     end
 
     def to_s_with_options(io : IO, skip_union_parens : Bool = false, generic_args : Bool = true, codegen = false)
