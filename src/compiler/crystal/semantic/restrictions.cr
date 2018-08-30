@@ -355,7 +355,16 @@ module Crystal
     end
 
     def restrict(other : UnionType, context)
-      restricted = other.union_types.any? { |union_type| restrict(union_type, context) }
+      restricted = nil
+
+      other.union_types.each do |union_type|
+        # Apply the restriction logic on each union type, even if we already
+        # have a match, so that we can detect ambiguous calls between of
+        # literal types against aliases that resolve to union types.
+        restriction = restrict(union_type, context)
+        restricted ||= restriction
+      end
+
       restricted ? self : nil
     end
 

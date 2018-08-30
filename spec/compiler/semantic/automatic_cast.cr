@@ -138,6 +138,19 @@ describe "Semantic: automatic cast" do
       "ambiguous call, implicit cast of 1 matches all of Int8, UInt8"
   end
 
+  it "says ambiguous call for integer on alias (#6620)" do
+    assert_error %(
+      alias A = Int8 | UInt8
+
+      def foo(x : A)
+        x
+      end
+
+      foo(1)
+      ),
+      "ambiguous call, implicit cast of 1 matches all of Int8, UInt8"
+  end
+
   it "casts symbol literal to enum" do
     assert_type(%(
       enum Foo
