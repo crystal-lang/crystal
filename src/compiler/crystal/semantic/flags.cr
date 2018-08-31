@@ -29,6 +29,7 @@ class Crystal::Program
     set = flags_name.map(&.downcase).to_set
     set.add "darwin" if set.any?(&.starts_with?("macosx")) || set.any?(&.starts_with?("darwin"))
     set.add "freebsd" if set.any?(&.starts_with?("freebsd"))
+    set.add "freebsd11" if set.any?(&.starts_with?("freebsd11"))
     set.add "openbsd" if set.any?(&.starts_with?("openbsd"))
     set.add "unix" if set.any? { |flag| %w(cygnus darwin freebsd linux openbsd).includes?(flag) }
     set.add "win32" if set.any?(&.starts_with?("windows")) && set.any? { |flag| %w(gnu msvc).includes?(flag) }
