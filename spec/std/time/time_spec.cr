@@ -403,9 +403,11 @@ describe Time do
     Time.utc(2014, 1, 2, 3, 4, 5).inspect.should eq "2014-01-02 03:04:05.0 UTC"
     Time.utc(2014, 1, 2, 3, 4, 5, nanosecond: 123_456_789).inspect.should eq "2014-01-02 03:04:05.123456789 UTC"
 
-    location = Time::Location.load("Europe/Berlin")
-    Time.new(2014, 1, 2, 3, 4, 5, location: location).inspect.should eq "2014-01-02 03:04:05.0 +01:00 Europe/Berlin"
-    Time.new(2014, 1, 2, 3, 4, 5, nanosecond: 123_456_789, location: location).inspect.should eq "2014-01-02 03:04:05.123456789 +01:00 Europe/Berlin"
+    with_zoneinfo do
+      location = Time::Location.load("Europe/Berlin")
+      Time.new(2014, 1, 2, 3, 4, 5, location: location).inspect.should eq "2014-01-02 03:04:05.0 +01:00 Europe/Berlin"
+      Time.new(2014, 1, 2, 3, 4, 5, nanosecond: 123_456_789, location: location).inspect.should eq "2014-01-02 03:04:05.123456789 +01:00 Europe/Berlin"
+    end
 
     location = Time::Location.fixed(3601)
     Time.new(2014, 1, 2, 3, 4, 5, location: location).inspect.should eq "2014-01-02 03:04:05.0 +01:00:01"

@@ -4,31 +4,33 @@ class Time::Location
   describe Time::Location do
     describe ".load" do
       it "loads Europe/Berlin" do
-        location = Location.load("Europe/Berlin")
+        with_zoneinfo do
+          location = Location.load("Europe/Berlin")
 
-        location.name.should eq "Europe/Berlin"
-        standard_time = location.lookup(Time.new(2017, 11, 22))
-        standard_time.name.should eq "CET"
-        standard_time.offset.should eq 3600
-        standard_time.dst?.should be_false
+          location.name.should eq "Europe/Berlin"
+          standard_time = location.lookup(Time.new(2017, 11, 22))
+          standard_time.name.should eq "CET"
+          standard_time.offset.should eq 3600
+          standard_time.dst?.should be_false
 
-        summer_time = location.lookup(Time.new(2017, 10, 22))
-        summer_time.name.should eq "CEST"
-        summer_time.offset.should eq 7200
-        summer_time.dst?.should be_true
+          summer_time = location.lookup(Time.new(2017, 10, 22))
+          summer_time.name.should eq "CEST"
+          summer_time.offset.should eq 7200
+          summer_time.dst?.should be_true
 
-        location.utc?.should be_false
-        location.fixed?.should be_false
+          location.utc?.should be_false
+          location.fixed?.should be_false
 
-        with_env("TZ", nil) do
-          location.local?.should be_false
+          with_env("TZ", nil) do
+            location.local?.should be_false
+          end
+
+          with_env("TZ", "Europe/Berlin") do
+            location.local?.should be_true
+          end
+
+          Location.load("Europe/Berlin", {ZONEINFO_ZIP}).should eq location
         end
-
-        with_env("TZ", "Europe/Berlin") do
-          location.local?.should be_true
-        end
-
-        Location.load?("Europe/Berlin", Crystal::System::Time.zone_sources).should eq location
       end
 
       it "invalid timezone identifier" do
@@ -40,28 +42,34 @@ class Time::Location
       end
 
       it "treats UTC as special case" do
-        Location.load("UTC").should eq Location::UTC
-        Location.load("").should eq Location::UTC
+        with_zoneinfo do
+          Location.load("UTC").should eq Location::UTC
+          Location.load("").should eq Location::UTC
 
-        # Etc/UTC could be pointing to anything
-        Location.load("Etc/UTC").should_not eq Location::UTC
+          # Etc/UTC could be pointing to anything
+          Location.load("Etc/UTC").should_not eq Location::UTC
+        end
       end
 
       describe "validating name" do
         it "absolute path" do
-          expect_raises(InvalidLocationNameError) do
-            Location.load("/America/New_York")
-          end
-          expect_raises(InvalidLocationNameError) do
-            Location.load("\\Zulu")
+          with_zoneinfo do
+            expect_raises(InvalidLocationNameError) do
+              Location.load("/America/New_York")
+            end
+            expect_raises(InvalidLocationNameError) do
+              Location.load("\\Zulu")
+            end
           end
         end
         it "dot dot" do
-          expect_raises(InvalidLocationNameError) do
-            Location.load("../zoneinfo/America/New_York")
-          end
-          expect_raises(InvalidLocationNameError) do
-            Location.load("a..")
+          with_zoneinfo do
+            expect_raises(InvalidLocationNameError) do
+              Location.load("../zoneinfo/America/New_York")
+            end
+            expect_raises(InvalidLocationNameError) do
+              Location.load("a..")
+            end
           end
         end
       end
@@ -155,23 +163,40 @@ class Time::Location
     end
 
     it ".local" do
-      Location.local.should eq Location.load_local
+      with_zoneinfo do
+        Location.local.should eq Location.load_local
+      end
 
       Location.local = Location::UTC
       Location.local.should be Location::UTC
     end
 
-    it ".load_local" do
-      with_env("TZ", nil) do
-        Location.load_local.name.should eq "Local"
-      end
-      with_zoneinfo do
-        with_env("TZ", "Europe/Berlin") do
-          Location.load_local.name.should eq "Europe/Berlin"
+    describe ".load_local" do
+      it "with unset TZ" do
+        with_env("TZ", nil) do
+          Location.load_local.name.should eq "Local"
         end
       end
-      with_env("TZ", "") do
-        Location.load_local.utc?.should be_true
+
+      it "with TZ" do
+        with_zoneinfo do
+          with_env("TZ", "Europe/Berlin") do
+            Location.load_local.name.should eq "Europe/Berlin"
+          end
+        end
+        with_zoneinfo(datapath("zoneinfo")) do
+          with_env("TZ", "Foo/Bar") do
+            Location.load_local.name.should eq "Foo/Bar"
+          end
+        end
+      end
+
+      it "with empty TZ" do
+        with_zoneinfo do
+          with_env("TZ", "") do
+            Location.load_local.utc?.should be_true
+          end
+        end
       end
     end
 
