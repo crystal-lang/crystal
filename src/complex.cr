@@ -12,7 +12,7 @@
 # 1.to_c # => 1.0 + 0.0i
 # 1.i    # => 0.0 + 1.0i
 # ```
-struct Complex < Number
+struct Complex
   # Returns the real part.
   getter real : Float64
 
