@@ -441,14 +441,14 @@ struct NamedTuple
   # tuple.to_h # => {:name => "Crystal", :year => 2011}
   # ```
   def to_h
-    {% if T.size == 0 %}
-      {% raise "Can't convert an empty NamedTuple to a Hash" %}
-    {% else %}
-      {
-        {% for key in T %}
-          {{key.symbolize}} => self[{{key.symbolize}}],
-        {% end %}
-      }
+    raise "Can't convert an empty NamedTuple to a Hash" if empty?
+
+    {% if T.size > 0 %}
+    {
+      {% for key in T %}
+        {{key.symbolize}} => self[{{key.symbolize}}],
+      {% end %}
+    }
     {% end %}
   end
 

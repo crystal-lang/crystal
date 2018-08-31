@@ -223,6 +223,7 @@ describe "NamedTuple" do
 
   it "does empty" do
     {a: 1}.empty?.should be_false
+    NamedTuple.new.empty?.should be_true
   end
 
   it "does to_a" do
@@ -271,6 +272,10 @@ describe "NamedTuple" do
     tup1 = {a: 1, b: "hello"}
     hash = tup1.to_h
     hash.should eq({:a => 1, :b => "hello"})
+
+    expect_raises Exception, "Can't convert an empty NamedTuple to a Hash" do
+      NamedTuple.new.to_h
+    end
   end
 
   it "does to_s" do
