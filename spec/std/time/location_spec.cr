@@ -294,15 +294,15 @@ class Time::Location
         with_zoneinfo do
           location = Time::Location.load("Europe/Berlin")
 
-          location.__cached_range.should eq({Int64::MIN, Int64::MIN})
-          location.__cached_zone.should eq Zone.new("LMT", 3208, false)
+          location.@cached_range.should eq({Int64::MIN, Int64::MIN})
+          location.@cached_zone.should eq Zone.new("LMT", 3208, false)
 
           expected_zone = Zone.new("CET", 3600, false)
 
           location.lookup(Time.utc(2017, 11, 23, 22, 6, 12)).should eq expected_zone
 
-          location.__cached_range.should eq({1509238800_i64, 1521939600_i64})
-          location.__cached_zone.should eq expected_zone
+          location.@cached_range.should eq({1509238800_i64, 1521939600_i64})
+          location.@cached_zone.should eq expected_zone
         end
       end
 

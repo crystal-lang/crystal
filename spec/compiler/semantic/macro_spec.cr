@@ -1321,4 +1321,38 @@ describe "Semantic: macro" do
       {% end %}
       )) { int32 }
   end
+
+  it "evaluates yield expression (#2924)" do
+    assert_type(%(
+      macro a(b)
+        {{yield b}}
+      end
+
+      a("foo") do |c|
+        {{c}}
+      end
+      )) { string }
+  end
+
+  it "finds generic in macro code" do
+    assert_type(%(
+      {% begin %}
+        {{ Array(String) }}
+      {% end %}
+      )) { array_of(string).metaclass }
+  end
+
+  it "finds generic in macro code using free var" do
+    assert_type(%(
+      class Foo(T)
+        def self.foo
+          {% begin %}
+            {{ Array(T) }}
+          {% end %}
+        end
+      end
+
+      Foo(Int32).foo
+      )) { array_of(int32).metaclass }
+  end
 end

@@ -20,9 +20,7 @@ class Flate::Reader < IO
     @stream.zalloc = LibZ::AllocFunc.new { |opaque, items, size| GC.malloc(items * size) }
     @stream.zfree = LibZ::FreeFunc.new { |opaque, address| GC.free(address) }
     ret = LibZ.inflateInit2(pointerof(@stream), -LibZ::MAX_BITS, LibZ.zlibVersion, sizeof(LibZ::ZStream))
-    if ret != LibZ::Error::OK
-      raise Flate::Error.new(ret, @stream)
-    end
+    raise Flate::Error.new(ret, @stream) unless ret.ok?
 
     @end = false
   end
@@ -92,17 +90,20 @@ class Flate::Reader < IO
       end
 
       case ret
-      when LibZ::Error::NEED_DICT
+      when .need_dict?
         if dict = @dict
           ret = LibZ.inflateSetDictionary(pointerof(@stream), dict, dict.size)
-          next if ret == LibZ::Error::OK
+          next if ret.ok?
         end
 
         raise Flate::Error.new(ret, @stream)
-      when LibZ::Error::DATA_ERROR,
-           LibZ::Error::MEM_ERROR
+      when .errno?,
+           .data_error?,
+           .mem_error?,
+           .buf_error?,
+           .version_error?
         raise Flate::Error.new(ret, @stream)
-      when LibZ::Error::STREAM_END
+      when .stream_end?
         @end = true
         return read_bytes
       else
@@ -123,7 +124,8 @@ class Flate::Reader < IO
     return if @closed
     @closed = true
 
-    LibZ.inflateEnd(pointerof(@stream))
+    ret = LibZ.inflateEnd(pointerof(@stream))
+    raise Flate::Error.new(ret, @stream) unless ret.ok?
 
     @io.close if @sync_close
   end

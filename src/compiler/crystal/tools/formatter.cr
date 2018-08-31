@@ -468,8 +468,8 @@ module Crystal
           # This is the case of #{__DIR__}
           write "\#{"
           next_token_skip_space_or_newline
-          write @token.type
-          next_token_skip_space_or_newline
+          indent(@column, node)
+          skip_space_or_newline
           check :"}"
           write "}"
           next_string_token
@@ -542,9 +542,9 @@ module Crystal
 
       node.expressions.each do |exp|
         if @token.type == :DELIMITER_END
-          # If the delimiter ends with '\n' it's something like "\n  HEREDOC",
-          # so we are done
-          break if @token.raw.starts_with?('\n')
+          # Heredoc cannot contain string continuation,
+          # so we are done.
+          break if is_heredoc
 
           # This is for " ... " \
           #     " ... "
@@ -564,10 +564,10 @@ module Crystal
         if exp.is_a?(StringLiteral)
           # It might be #{__DIR__}, for example
           if @token.type == :INTERPOLATION_START
-            next_token_skip_space_or_newline
             write "\#{"
-            write @token.type
             next_token_skip_space_or_newline
+            indent(@column, exp)
+            skip_space_or_newline
             check :"}"
             write "}"
           else
@@ -3455,11 +3455,12 @@ module Crystal
           write " "
           when_column_end = @column
           accept node.body
+          wrote_newline = @wrote_newline
           if @line == when_start_line
             @when_infos << AlignInfo.new(case_node.object_id, @line, when_start_column, when_column_middle, when_column_end, align_number)
           end
           found_comment = skip_space
-          write_line unless found_comment
+          write_line unless found_comment || wrote_newline
         end
       else
         format_nested(node.body, @indent)

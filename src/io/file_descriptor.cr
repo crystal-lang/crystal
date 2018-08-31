@@ -18,6 +18,23 @@ class IO::FileDescriptor < IO
     end
   end
 
+  # :nodoc:
+  def self.from_stdio(fd)
+    # If we have a TTY for stdin/out/err, it is a shared terminal.
+    # We need to reopen it to use O_NONBLOCK without causing other programs to break
+
+    # Figure out the terminal TTY name. If ttyname fails we have a non-tty, or something strange.
+    path = uninitialized UInt8[256]
+    if LibC.ttyname_r(fd, path, 256) == 0
+      # Open a fresh handle to the TTY
+      fd = LibC.open(path, LibC::O_RDWR)
+
+      new(fd).tap(&.close_on_exec = true)
+    else
+      new(fd, blocking: true)
+    end
+  end
+
   def blocking
     system_blocking?
   end

@@ -385,6 +385,11 @@ describe Crystal::Formatter do
   assert_format %("\#{\n  foo = 1\n}")
   assert_format %("\#{\n  foo = 1}"), %("\#{\n  foo = 1\n}")
   assert_format %("\#{ # foo\n  foo = 1\n}")
+  assert_format %("\#{"foo"}")
+  assert_format %("\#{"\#{foo}"}")
+  assert_format %("foo\#{"bar"} Baz \#{"qux"} ")
+  assert_format %("1\#{"4\#{"\#{"2"}"}3"}3\#{__DIR__}4\#{5}6")
+  assert_format %("1\#{"\#{"2"}"}3\#{"4"}5")
 
   assert_format "%w(one   two  three)", "%w(one two three)"
   assert_format "%i(one   two  three)", "%i(one two three)"
@@ -504,6 +509,13 @@ describe Crystal::Formatter do
   assert_format "case 1\nend"
   assert_format "case\nend"
   assert_format "case\nelse\n  1\nend"
+
+  assert_format <<-CODE
+    case 0
+    when 0 then 1; 2
+    # Comments
+    end
+    CODE
 
   assert_format "select   \n when  foo \n 2 \n end", "select\nwhen foo\n  2\nend"
   assert_format "select   \n when  foo \n 2 \n when bar \n 3 \n end", "select\nwhen foo\n  2\nwhen bar\n  3\nend"
@@ -922,6 +934,8 @@ describe Crystal::Formatter do
   assert_format "x, y = <<-FOO, <<-BAR\n  hello\n  FOO\n  world\n  BAR"
   assert_format "x, y, z = <<-FOO, <<-BAR, <<-BAZ\n  hello\n  FOO\n  world\n  BAR\n  qux\nBAZ"
 
+  assert_format "<<-FOO\nFOO"
+
   assert_format "#!shebang\n1 + 2"
 
   assert_format "   {{\n1 + 2 }}", "{{\n  1 + 2\n}}"
@@ -988,8 +1002,8 @@ describe Crystal::Formatter do
   assert_format "foo &.nil?()"
   assert_format "foo &.bar.nil?()"
 
-  assert_format "foo(<<-X\na\nX\n, 1)"
-  assert_format "def bar\n  foo(<<-X\n  a\n  X\n  , 1)\nend"
+  assert_format "foo(<<-X,\na\nX\n  1)"
+  assert_format "def bar\n  foo(<<-X,\n  a\n  X\n    1)\nend"
   assert_format %(run("a", 1))
 
   assert_format "foo.bar # comment\n  .baz"
@@ -1083,8 +1097,7 @@ describe Crystal::Formatter do
   assert_format "def foo(a,\n        &block)\nend"
   assert_format "def foo(\n  a,\n  &block\n)\nend"
   assert_format "def foo(a,\n        *b)\nend"
-  assert_format "def foo(a\n,        *b)\nend", "def foo(a,\n        *b)\nend"
-  assert_format "def foo(a # comment\n,        *b)\nend", "def foo(a, # comment\n        *b)\nend"
+  assert_format "def foo(a, # comment\n        *b)\nend", "def foo(a, # comment\n        *b)\nend"
   assert_format "def foo(a,\n        **b)\nend"
   assert_format "def foo(\n  **a\n)\n  1\nend"
   assert_format "def foo(**a,)\n  1\nend", "def foo(**a)\n  1\nend"

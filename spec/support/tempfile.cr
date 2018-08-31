@@ -1,10 +1,9 @@
-require "tempfile"
 require "file_utils"
 
 {% if flag?(:win32) %}
-  SPEC_TEMPFILE_PATH = File.join(Tempfile.dirname, "cr-spec-#{Random.new.hex(4)}").gsub("C:\\", '/').gsub('\\', '/')
+  SPEC_TEMPFILE_PATH = File.join(Dir.tempdir, "cr-spec-#{Random.new.hex(4)}").gsub("C:\\", '/').gsub('\\', '/')
 {% else %}
-  SPEC_TEMPFILE_PATH = File.join(Tempfile.dirname, "cr-spec-#{Random.new.hex(4)}")
+  SPEC_TEMPFILE_PATH = File.join(Dir.tempdir, "cr-spec-#{Random.new.hex(4)}")
 {% end %}
 
 SPEC_TEMPFILE_CLEANUP = ENV["SPEC_TEMPFILE_CLEANUP"]? != "0"
@@ -17,7 +16,7 @@ SPEC_TEMPFILE_CLEANUP = ENV["SPEC_TEMPFILE_CLEANUP"]? != "0"
 # The constructed path is yielded to the block and cleaned up afterwards.
 #
 # Paths should still be uniquely chosen inside a spec file. This helper
-# ensures they're placed in the temporary location (`Tempfile.dirname`),
+# ensures they're placed in the temporary location (`Dir.tempdir`),
 # avoids name clashes between parallel spec runs and cleans up afterwards.
 #
 # The unique directory for the spec run is removed `at_exit`.

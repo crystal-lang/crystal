@@ -258,6 +258,12 @@ class HTTP::Server
     def bind_tls(address : Socket::IPAddress, context : OpenSSL::SSL::Context::Server) : Socket::IPAddress
       bind_tls(address.address, address.port, context)
     end
+
+    # DEPRECATED: Use `#bind_tls`.
+    # TODO: remove in 0.27.0
+    def bind_ssl(*args)
+      bind_tls(*args)
+    end
   {% end %}
 
   # Parses a socket configuration from *uri* and adds it to this server.
@@ -287,7 +293,7 @@ class HTTP::Server
 
         bind_tls(address, context)
       {% else %}
-        raise ArgumentError.new "Unsupported socket type: ssl (program was compiled without openssl support)"
+        raise ArgumentError.new "Unsupported socket type: #{uri.scheme} (program was compiled without openssl support)"
       {% end %}
     else
       raise ArgumentError.new "Unsupported socket type: #{uri.scheme}"
@@ -349,7 +355,18 @@ class HTTP::Server
     @sockets.each do |socket|
       spawn do
         until closed?
-          spawn handle_client(socket.accept? || break)
+          io = begin
+            socket.accept?
+          rescue e
+            handle_exception(e)
+            nil
+          end
+
+          if io
+            # a non nillable version of the closured io
+            _io = io
+            spawn handle_client(_io)
+          end
         end
       ensure
         done.send nil
@@ -383,6 +400,11 @@ class HTTP::Server
     end
 
     @processor.process(io, io)
+  end
+
+  private def handle_exception(e : Exception)
+    e.inspect_with_backtrace STDERR
+    STDERR.flush
   end
 
   # Builds all handlers as the middleware for `HTTP::Server`.

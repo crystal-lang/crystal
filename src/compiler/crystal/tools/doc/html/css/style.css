@@ -235,7 +235,7 @@ body {
 }
 
 .entry-const {
-  font-family: Consolas, 'Courier New', Courier, Monaco, monospace;
+  font-family: Menlo, Monaco, Consolas, 'Courier New', Courier, monospace;
 }
 
 .entry-const code {
@@ -257,7 +257,7 @@ body {
   border: 1px solid #f0f0f0;
   text-decoration: none;
   border-radius: 3px;
-  font-family: Consolas, 'Courier New', Courier, Monaco, monospace;
+  font-family: Menlo, Monaco, Consolas, 'Courier New', Courier, monospace;
   transition: background .15s, border-color .15s;
 }
 
@@ -293,7 +293,7 @@ body {
   background-color: #f8f8f8;
   color: #47266E;
   border: 1px solid #f0f0f0;
-  font-family: Consolas, 'Courier New', Courier, Monaco, monospace;
+  font-family: Menlo, Monaco, Consolas, 'Courier New', Courier, monospace;
   transition: .2s ease-in-out;
 }
 
@@ -366,7 +366,7 @@ pre {
 }
 
 code {
-  font-family: Consolas, 'Courier New', Courier, Monaco, monospace;
+  font-family: Menlo, Monaco, Consolas, 'Courier New', Courier, monospace;
 }
 
 :not(pre) > code {

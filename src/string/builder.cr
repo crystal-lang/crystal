@@ -84,6 +84,7 @@ class String::Builder < IO
         back(1)
       end
     end
+    self
   end
 
   # Moves the write pointer, and the resulting string bytesize,

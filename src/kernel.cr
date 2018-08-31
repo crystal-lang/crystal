@@ -1,13 +1,13 @@
 {% if flag?(:win32) %}
   STDIN  = IO::FileDescriptor.new(0)
-  STDOUT = (IO::FileDescriptor.new(1)).tap { |f| f.flush_on_newline = true }
-  STDERR = (IO::FileDescriptor.new(2)).tap { |f| f.flush_on_newline = true }
+  STDOUT = IO::FileDescriptor.new(1).tap { |f| f.flush_on_newline = true }
+  STDERR = IO::FileDescriptor.new(2).tap { |f| f.flush_on_newline = true }
 {% else %}
   require "c/unistd"
 
-  STDIN  = IO::FileDescriptor.new(0, blocking: LibC.isatty(0) == 0)
-  STDOUT = (IO::FileDescriptor.new(1, blocking: LibC.isatty(1) == 0)).tap { |f| f.flush_on_newline = true }
-  STDERR = (IO::FileDescriptor.new(2, blocking: LibC.isatty(2) == 0)).tap { |f| f.flush_on_newline = true }
+  STDIN  = IO::FileDescriptor.from_stdio(0)
+  STDOUT = IO::FileDescriptor.from_stdio(1).tap { |f| f.flush_on_newline = true }
+  STDERR = IO::FileDescriptor.from_stdio(2).tap { |f| f.flush_on_newline = true }
 {% end %}
 
 PROGRAM_NAME = String.new(ARGV_UNSAFE.value)
@@ -445,7 +445,6 @@ def exit(status = 0) : NoReturn
   status = AtExitHandlers.run status
   STDOUT.flush
   STDERR.flush
-  Crystal.restore_blocking_state
   Process.exit(status)
 end
 
