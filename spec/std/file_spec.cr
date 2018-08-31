@@ -1041,6 +1041,22 @@ describe "File" do
     end
   end
 
+  describe "#delete" do
+    it "deletes" do
+      path = datapath("file-to-be-deleted")
+      File.touch(path)
+
+      file = File.new path
+      file.close
+
+      File.exists?(path).should be_true
+      file.delete
+      File.exists?(path).should be_false
+    ensure
+      File.delete(path) if path && File.exists?(path)
+    end
+  end
+
   # TODO: these specs don't compile on win32 because iconv isn't implemented
   {% unless flag?(:win32) %}
     describe "encoding" do

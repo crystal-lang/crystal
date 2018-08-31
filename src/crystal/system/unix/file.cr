@@ -12,23 +12,18 @@ module Crystal::System::File
     fd
   end
 
-  def self.mktemp(name, extension)
-    tmpdir = tempdir + ::File::SEPARATOR
-    path = "#{tmpdir}#{name}.XXXXXX#{extension}"
+  def self.mktemp(prefix, suffix, dir) : {LibC::Int, String}
+    dir = dir + ::File::SEPARATOR
+    path = "#{dir}#{prefix}.XXXXXX#{suffix}"
 
-    if extension
-      fd = LibC.mkstemps(path, extension.bytesize)
+    if suffix
+      fd = LibC.mkstemps(path, suffix.bytesize)
     else
       fd = LibC.mkstemp(path)
     end
 
-    raise Errno.new("mkstemp") if fd == -1
+    raise Errno.new("mkstemp: #{path.inspect}") if fd == -1
     {fd, path}
-  end
-
-  def self.tempdir
-    tmpdir = ENV["TMPDIR"]? || "/tmp"
-    tmpdir.rchop(::File::SEPARATOR)
   end
 
   def self.info?(path : String, follow_symlinks : Bool) : ::File::Info?

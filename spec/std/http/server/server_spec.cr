@@ -1,7 +1,6 @@
 require "../../spec_helper"
 require "http/server"
 require "http/client/response"
-require "tempfile"
 require "../../../support/ssl"
 
 private class RaiseErrno < IO
@@ -477,8 +476,8 @@ module HTTP
     {% if flag?(:unix) %}
       describe "#bind_unix" do
         it "binds to different unix sockets" do
-          path1 = Tempfile.tempname
-          path2 = Tempfile.tempname
+          path1 = File.tempname
+          path2 = File.tempname
 
           begin
             server = Server.new do |context|
