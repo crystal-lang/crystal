@@ -362,8 +362,15 @@ module Crystal
         @str << ' '
         node.args.last.accept self
       elsif node_obj && !letter_or_underscore?(node.name) && node.args.size == 0
-        @str << decorate_call(node, node.name)
-        in_parenthesis(need_parens, node_obj)
+        if node.name == "+" || node.name == "-" || node.name == "~" || node.name == "&+" || node.name == "&-"
+          @str << decorate_call(node, node.name)
+          in_parenthesis(need_parens, node_obj)
+        else
+          # It is for something like `foo.%` and `foo.*`.
+          in_parenthesis(need_parens, node_obj)
+          @str << '.'
+          @str << node.name
+        end
       elsif node_obj && !letter_or_underscore?(node.name) && node.args.size == 1
         in_parenthesis(need_parens, node_obj)
 
