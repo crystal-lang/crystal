@@ -4,20 +4,24 @@ require "../syntax/transformer"
 
 module Crystal
   class Program
-    def normalize(node, inside_exp = false)
-      node.transform Normalizer.new(self)
+    def normalize(node, inside_exp = false, current_def = nil)
+      normalizer = Normalizer.new(self)
+      normalizer.current_def = current_def
+      node.transform(normalizer)
     end
   end
 
   class Normalizer < Transformer
     getter program : Program
 
-    @dead_code : Bool
-    @current_def : Def?
+    # The current method where we are normalizing.
+    # This is used to expand argless `super` and `previous_def`
+    # to their version with arguments copied from the current method.
+    property current_def : Def?
+
+    @dead_code = false
 
     def initialize(@program)
-      @dead_code = false
-      @current_def = nil
     end
 
     def before_transform(node)

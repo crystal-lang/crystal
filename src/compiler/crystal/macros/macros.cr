@@ -49,8 +49,8 @@ class Crystal::Program
     interpreter.to_s
   end
 
-  def parse_macro_source(generated_source, the_macro, node, vars, inside_def = false, inside_type = false, inside_exp = false, mode : MacroExpansionMode = MacroExpansionMode::Normal)
-    parse_macro_source(generated_source, the_macro, node, vars, inside_def, inside_type, inside_exp) do |parser|
+  def parse_macro_source(generated_source, the_macro, node, vars, current_def = nil, inside_type = false, inside_exp = false, mode : MacroExpansionMode = MacroExpansionMode::Normal)
+    parse_macro_source(generated_source, the_macro, node, vars, current_def, inside_type, inside_exp) do |parser|
       case mode
       when .lib?
         parser.parse_lib_body
@@ -64,16 +64,16 @@ class Crystal::Program
     end
   end
 
-  def parse_macro_source(generated_source, the_macro, node, vars, inside_def = false, inside_type = false, inside_exp = false)
+  def parse_macro_source(generated_source, the_macro, node, vars, current_def = nil, inside_type = false, inside_exp = false)
     begin
       parser = Parser.new(generated_source, @program.string_pool, [vars.dup])
       parser.filename = VirtualFile.new(the_macro, generated_source, node.location)
       parser.visibility = node.visibility
-      parser.def_nest = 1 if inside_def
+      parser.def_nest = 1 if current_def
       parser.type_nest = 1 if inside_type
       parser.wants_doc = @program.wants_doc?
       generated_node = yield parser
-      normalize(generated_node, inside_exp: inside_exp)
+      normalize(generated_node, inside_exp: inside_exp, current_def: current_def)
     rescue ex : Crystal::SyntaxException
       expanded_source = String.build do |str|
         str << ("=" * 80) << '\n'

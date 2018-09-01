@@ -382,4 +382,28 @@ describe "Semantic: super" do
       ),
       "no overload matches 'bar'"
   end
+
+  it "invokes super inside macro (#6636)" do
+    assert_type(%(
+      class Foo
+        def foo
+          1
+        end
+
+        def foo(x)
+          'a'
+        end
+      end
+
+      class Bar < Foo
+        def foo(x)
+          {% begin %}
+            super
+          {% end %}
+        end
+      end
+
+      Bar.new.foo(3)
+      )) { char }
+  end
 end
