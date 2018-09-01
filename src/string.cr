@@ -4168,7 +4168,8 @@ class String
     return 4
   end
 
-  protected def size_known?
+  # :nodoc:
+  def size_known?
     @bytesize == 0 || @length > 0
   end
 

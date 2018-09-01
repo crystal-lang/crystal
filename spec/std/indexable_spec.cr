@@ -14,6 +14,34 @@ private class SafeIndexable
   end
 end
 
+private class SafeStringIndexable
+  include Indexable(String)
+
+  property size
+
+  def initialize(@size : Int32)
+  end
+
+  def unsafe_at(i)
+    raise IndexError.new unless 0 <= i < size
+    i.to_s
+  end
+end
+
+private class SafeMixedIndexable
+  include Indexable(String | Int32)
+
+  property size
+
+  def initialize(@size : Int32)
+  end
+
+  def unsafe_at(i)
+    raise IndexError.new unless 0 <= i < size
+    i.to_s
+  end
+end
+
 describe Indexable do
   it "does index with big negative offset" do
     indexable = SafeIndexable.new(3)
@@ -113,5 +141,29 @@ describe Indexable do
 
     return_value.should eq(indexable)
     last_element.should eq(3)
+  end
+
+  it "joins strings (empty case)" do
+    indexable = SafeStringIndexable.new(0)
+    indexable.join.should eq("")
+    indexable.join(", ").should eq("")
+  end
+
+  it "joins strings (non-empty case)" do
+    indexable = SafeStringIndexable.new(12)
+    indexable.join(", ").should eq("0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11")
+    indexable.join(98).should eq("098198298398498598698798898998109811")
+  end
+
+  it "joins non-strings" do
+    indexable = SafeIndexable.new(12)
+    indexable.join(", ").should eq("0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11")
+    indexable.join(98).should eq("098198298398498598698798898998109811")
+  end
+
+  it "joins when T has String" do
+    indexable = SafeMixedIndexable.new(12)
+    indexable.join(", ").should eq("0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11")
+    indexable.join(98).should eq("098198298398498598698798898998109811")
   end
 end
