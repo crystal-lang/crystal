@@ -226,7 +226,7 @@ module Iterator(T)
   private class ChainsAll(Iter, T)
     include Iterator(T)
     @iterators : Iterator(Iter)
-    @current : Iterator(T) | Stop
+    @current : Iter | Stop
 
     def initialize(@iterators)
       @current = @iterators.next
