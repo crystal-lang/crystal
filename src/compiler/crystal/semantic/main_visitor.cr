@@ -1741,7 +1741,8 @@ module Crystal
 
       node.target = typed_def
 
-      typed_def.bind_to(node.exp || program.nil_var)
+      typed_def.bind_to(node_exp_or_nil_literal(node))
+
       @unreachable = true
 
       node.type = @program.no_return
@@ -2288,7 +2289,7 @@ module Crystal
       if block = @block
         node.target = block.call.not_nil!
 
-        block.break.bind_to(node.exp || program.nil_var)
+        block.break.bind_to(node_exp_or_nil_literal(node))
 
         bind_vars @vars, block.after_vars, block.args
       elsif target_while = @while_stack.last?
@@ -2317,7 +2318,7 @@ module Crystal
       if block = @block
         node.target = block
 
-        block.bind_to(node.exp || program.nil_var)
+        block.bind_to(node_exp_or_nil_literal(node))
 
         bind_vars @vars, block.vars
         bind_vars @vars, block.after_vars, block.args
@@ -2329,7 +2330,7 @@ module Crystal
         typed_def = @typed_def
         if typed_def && typed_def.captured_block?
           node.target = typed_def
-          typed_def.bind_to(node.exp || program.nil_var)
+          typed_def.bind_to(node_exp_or_nil_literal(node))
         else
           node.raise "Invalid next"
         end
@@ -3271,6 +3272,24 @@ module Crystal
         node.raise "there's no self in this scope"
       end
       the_self
+    end
+
+    # Returns node.exp if it's not nil. Otherwise,
+    # creates a NilLiteral node that has the same location
+    # as `node`, and returns that.
+    # We use this NilLiteral when the user writes
+    # `return`, `next` or `break` without arguments,
+    # so that in the error trace we can show it right
+    # (those expressions have a NoReturn type so we can't
+    # directly bind to them).
+    def node_exp_or_nil_literal(node)
+      exp = node.exp
+      return exp if exp
+
+      nil_exp = NilLiteral.new
+      nil_exp.location = node.location
+      nil_exp.type = @program.nil
+      nil_exp
     end
 
     def visit(node : When | Unless | Until | MacroLiteral | OpAssign)
