@@ -5,17 +5,49 @@ module Spec
     end
 
     def match(actual_value)
-      actual_value == @expected_value
+      expected_value = @expected_value
+
+      # For the case of comparing strings we want to make sure that two strings
+      # are equal if their content is equal, but also their bytesize and size
+      # should be equal. Otherwise, an incorrect bytesize or size was used
+      # when creating them.
+      if actual_value.is_a?(String) && expected_value.is_a?(String)
+        actual_value == expected_value &&
+          actual_value.bytesize == expected_value.bytesize &&
+          actual_value.size == expected_value.size
+      else
+        actual_value == @expected_value
+      end
     end
 
     def failure_message(actual_value)
-      expected = @expected_value.inspect
-      got = actual_value.inspect
-      if expected == got
-        expected += " : #{@expected_value.class}"
-        got += " : #{actual_value.class}"
+      expected_value = @expected_value
+
+      # Check for the case of string equality when the content match
+      # but not the bytesize or size.
+      if actual_value.is_a?(String) &&
+         expected_value.is_a?(String) &&
+         actual_value == expected_value
+        if actual_value.bytesize != expected_value.bytesize
+          return <<-MSG
+            Expected bytesize: #{expected_value.bytesize}
+                 got bytesize: #{actual_value.bytesize}
+            MSG
+        end
+
+        return <<-MSG
+          Expected size: #{expected_value.size}
+               got size: #{actual_value.size}
+          MSG
+      else
+        expected = expected_value.inspect
+        got = actual_value.inspect
+        if expected == got
+          expected += " : #{@expected_value.class}"
+          got += " : #{actual_value.class}"
+        end
+        "Expected: #{expected}\n     got: #{got}"
       end
-      "Expected: #{expected}\n     got: #{got}"
     end
 
     def negative_failure_message(actual_value)
