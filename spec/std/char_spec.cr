@@ -261,14 +261,13 @@ describe "Char" do
   describe "+" do
     it "does for both ascii" do
       str = 'f' + "oo"
-      str.bytesize.should eq(3)
-      str.@length.should eq(3)
+      str.@length.should eq(3) # Check that it was precomputed
       str.should eq("foo")
     end
 
     it "does for both unicode" do
       str = '青' + "旅路"
-      str.@length.should eq(3)
+      str.@length.should eq(3) # Check that it was precomputed
       str.should eq("青旅路")
     end
   end
