@@ -289,10 +289,10 @@ module Indexable(T)
     return "" if empty?
 
     {% if T == String %}
-      _join_strings(separator)
+      join_strings(separator)
     {% elsif String < T %}
       if all?(&.is_a?(String))
-        _join_strings(separator)
+        join_strings(separator)
       else
         super(separator)
       end
@@ -301,7 +301,7 @@ module Indexable(T)
     {% end %}
   end
 
-  private def _join_strings(separator)
+  private def join_strings(separator)
     separator = separator.to_s
 
     # The total bytesize of the string to return is:
