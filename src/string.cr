@@ -2033,7 +2033,7 @@ class String
           buffer[i] = byte
         end
       end
-      {bytesize, bytesize}
+      {bytesize, @length}
     end
   end
 
