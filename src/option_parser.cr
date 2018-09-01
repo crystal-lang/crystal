@@ -62,7 +62,7 @@ class OptionParser
   # Creates a new parser, with its configuration specified in the block,
   # and uses it to parse the arguments passed to the program.
   def self.parse! : self
-    parse(ARGV) { |parser| yield parser }
+    parse(ARGV.dup) { |parser| yield parser }
   end
 
   protected property flags : Array(String)
@@ -187,7 +187,7 @@ class OptionParser
   # Parses the passed the arguments passed to the program,
   # running the handlers associated to each option.
   def parse!
-    parse ARGV
+    parse ARGV.dup
   end
 
   private def check_starts_with_dash(arg, name, allow_empty = false)
