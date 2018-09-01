@@ -2033,7 +2033,7 @@ class String
           buffer[i] = byte
         end
       end
-      {bytesize, bytesize}
+      {bytesize, @length}
     end
   end
 
@@ -4168,7 +4168,8 @@ class String
     return 4
   end
 
-  protected def size_known?
+  # :nodoc:
+  def size_known?
     @bytesize == 0 || @length > 0
   end
 
