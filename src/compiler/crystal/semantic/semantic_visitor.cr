@@ -324,7 +324,7 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
              end
 
     generated_nodes = @program.parse_macro_source(expanded_macro, the_macro, node, Set.new(@vars.keys),
-      inside_def: !!@typed_def,
+      current_def: @typed_def,
       inside_type: !current_type.is_a?(Program),
       inside_exp: @exp_nest > 0,
       mode: mode,
