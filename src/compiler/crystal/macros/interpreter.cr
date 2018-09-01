@@ -388,7 +388,7 @@ module Crystal
           block_vars = {} of String => ASTNode
           node.exps.each_with_index do |exp, i|
             if block_arg = block.args[i]?
-              block_vars[block_arg.name] = exp.clone
+              block_vars[block_arg.name] = accept exp.clone
             end
           end
           @last = replace_block_vars block.body.clone, block_vars
@@ -400,6 +400,11 @@ module Crystal
     end
 
     def visit(node : Path)
+      @last = resolve(node)
+      false
+    end
+
+    def visit(node : Generic)
       @last = resolve(node)
       false
     end
@@ -456,14 +461,22 @@ module Crystal
         end
 
         TypeNode.new(matched_type)
-      when Self
-        target = @scope == @program.class_type ? @scope : @scope.instance_type
-        TypeNode.new(target)
       when ASTNode
         matched_type
       else
         node.raise "can't interpret #{node}"
       end
+    end
+
+    def resolve(node : Generic)
+      type = @path_lookup.lookup_type(node, self_type: @scope, free_vars: @free_vars)
+      TypeNode.new(type)
+    end
+
+    def resolve?(node : Generic)
+      resolve(node)
+    rescue Crystal::Exception
+      nil
     end
 
     def visit(node : Splat)

@@ -1,5 +1,48 @@
 require "crystal/system/file"
 
+# A `File` instance represents a file entry in the local file system and allows using it as an `IO`.
+#
+# ```
+# file = File.new("path/to/file")
+# content = file.gets_to_end
+# file.close
+#
+# # Implicit close with `open`
+# content = File.open("path/to/file") do |file|
+#   file.gets_to_end
+# end
+#
+# # Shortcut:
+# content = File.read("path/to/file")
+# ```
+#
+# ## Temporary Files
+#
+# Every tempfile is operated as a `File`, including initializing, reading and writing.
+#
+# ```
+# tempfile = File.tempfile("foo")
+#
+# File.size(tempfile.path)                   # => 6
+# File.info(tempfile.path).modification_time # => 2015-10-20 13:11:12 UTC
+# File.exists?(tempfile.path)                # => true
+# File.read_lines(tempfile.path)             # => ["foobar"]
+# ```
+#
+# Files created from `tempfile` are stored in a directory that handles
+# temporary files (`Dir.tempdir`):
+#
+# ```
+# File.tempfile("foo").path # => "/tmp/foo.ulBCPS"
+# ```
+#
+# It is encouraged to delete a tempfile after using it, which
+# ensures they are not left behind in your filesystem until garbage collected.
+#
+# ```
+# tempfile = File.tempfile("foo")
+# tempfile.delete
+# ```
 class File < IO::FileDescriptor
   # The file/directory separator character. `'/'` on all platforms.
   SEPARATOR = '/'
@@ -859,6 +902,11 @@ class File < IO::FileDescriptor
   # Remove an existing advisory lock held by this process.
   def flock_unlock
     system_flock_unlock
+  end
+
+  # Deletes this file.
+  def delete
+    File.delete(@path)
   end
 end
 

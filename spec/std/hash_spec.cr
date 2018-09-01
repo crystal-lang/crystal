@@ -460,6 +460,59 @@ describe "Hash" do
     h1.should eq({:a => 1, :b => 2, :c => 3})
   end
 
+  it "transforms keys" do
+    h1 = {1 => :a, 2 => :b, 3 => :c}
+
+    h2 = h1.transform_keys { |x| x + 1 }
+    h2.should eq({2 => :a, 3 => :b, 4 => :c})
+  end
+
+  it "transforms keys with type casting" do
+    h1 = {:a => 1, :b => 2, :c => 3}
+
+    h2 = h1.transform_keys { |x| x.to_s.upcase }
+    h2.should be_a(Hash(String, Int32))
+    h2.should eq({"A" => 1, "B" => 2, "C" => 3})
+  end
+
+  it "returns empty hash when transforming keys of an empty hash" do
+    h1 = {} of Int32 => Symbol
+
+    h2 = h1.transform_keys { |x| x + 1 }
+    h2.should be_a(Hash(Int32, Symbol))
+    h2.empty?.should be_true
+  end
+
+  it "transforms values" do
+    h1 = {:a => 1, :b => 2, :c => 3}
+
+    h2 = h1.transform_values { |x| x + 1 }
+    h2.should eq({:a => 2, :b => 3, :c => 4})
+  end
+
+  it "transforms values with type casting values" do
+    h1 = {:a => 1, :b => 2, :c => 3}
+
+    h2 = h1.transform_values { |x| x.to_s }
+    h2.should be_a(Hash(Symbol, String))
+    h2.should eq({:a => "1", :b => "2", :c => "3"})
+  end
+
+  it "returns empty hash when transforming values of an empty hash" do
+    h1 = {} of Symbol => Int32
+
+    h2 = h1.transform_values { |x| x + 1 }
+    h2.should be_a(Hash(Symbol, Int32))
+    h2.empty?.should be_true
+  end
+
+  it "transform values in place" do
+    h = {:a => 1, :b => 2, :c => 3}
+
+    h.transform_values!(&.+(1))
+    h.should eq({:a => 2, :b => 3, :c => 4})
+  end
+
   it "zips" do
     ary1 = [1, 2, 3]
     ary2 = ['a', 'b', 'c']

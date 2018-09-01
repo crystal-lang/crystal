@@ -944,7 +944,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
   def include_in(current_type, node, kind)
     node_name = node.name
 
-    type = lookup_type(node_name, lazy_self: true)
+    type = lookup_type(node_name)
     case type
     when GenericModuleType
       node.raise "wrong number of type vars for #{type} (given 0, expected #{type.type_vars.size})"

@@ -163,7 +163,8 @@ class Crystal::Doc::Generator
   end
 
   def nodoc?(str : String?)
-    str == ":nodoc:" || str == "nodoc"
+    return false unless str
+    str.starts_with?(":nodoc:") || str.starts_with?("nodoc")
   end
 
   def nodoc?(obj)

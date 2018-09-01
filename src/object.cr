@@ -1117,7 +1117,7 @@ class Object
   macro def_hash(*fields)
     def hash(hasher)
       {% for field in fields %}
-        hasher = {{field}}.hash(hasher)
+        hasher = {{field.id}}.hash(hasher)
       {% end %}
       hasher
     end

@@ -27,6 +27,7 @@ module Spec
   class DotFormatter < Formatter
     def report(result)
       @io << Spec.color(LETTERS[result.kind], result.kind)
+      @io.flush
     end
 
     def finish

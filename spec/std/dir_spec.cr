@@ -342,6 +342,24 @@ describe "Dir" do
     end
   end
 
+  describe ".tempdir" do
+    it "returns default directory for tempfiles" do
+      old_tmpdir = ENV["TMPDIR"]?
+      ENV.delete("TMPDIR")
+      Dir.tempdir.should eq("/tmp")
+    ensure
+      ENV["TMPDIR"] = old_tmpdir
+    end
+
+    it "returns configure directory for tempfiles" do
+      old_tmpdir = ENV["TMPDIR"]?
+      ENV["TMPDIR"] = "/my/tmp"
+      Dir.tempdir.should eq("/my/tmp")
+    ensure
+      ENV["TMPDIR"] = old_tmpdir
+    end
+  end
+
   it "opens with new" do
     filenames = [] of String
 

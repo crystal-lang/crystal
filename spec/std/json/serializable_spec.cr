@@ -35,6 +35,16 @@ class JSONAttrPerson
   end
 end
 
+struct JSONAttrPersonWithTwoFieldInInitialize
+  include JSON::Serializable
+
+  property name : String
+  property age : Int32
+
+  def initialize(@name, @age)
+  end
+end
+
 class StrictJSONAttrPerson
   include JSON::Serializable
   include JSON::Serializable::Strict
@@ -352,6 +362,12 @@ describe "JSON mapping" do
   it "parses array of people" do
     people = Array(JSONAttrPerson).from_json(%([{"name": "John"}, {"name": "Doe"}]))
     people.size.should eq(2)
+  end
+
+  it "works with class with two fields" do
+    person1 = JSONAttrPersonWithTwoFieldInInitialize.from_json(%({"name": "John", "age": 30}))
+    person2 = JSONAttrPersonWithTwoFieldInInitialize.new("John", 30)
+    person1.should eq person2
   end
 
   it "does to_json" do

@@ -236,6 +236,21 @@ module Spec
     end
   end
 
+  # :nodoc:
+  struct BeEmptyExpectation
+    def match(actual_value)
+      actual_value.empty?
+    end
+
+    def failure_message(actual_value)
+      "Expected: #{actual_value.inspect} to be empty"
+    end
+
+    def negative_failure_message(actual_value)
+      "Expected: #{actual_value.inspect} not to be empty"
+    end
+  end
+
   # This module defines a number of methods to create expectations, which are
   # automatically included into the top level namespace.
   #
@@ -312,6 +327,11 @@ module Spec
     # Works on `String`.
     def end_with(expected)
       Spec::EndWithExpectation.new(expected)
+    end
+
+    # Creates an `Expectation` that  passes if actual is empty (`.empty?`).
+    def be_empty
+      Spec::BeEmptyExpectation.new
     end
 
     # Creates an `Expectation` that passes if actual is of type *type* (`is_a?`).

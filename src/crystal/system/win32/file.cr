@@ -25,8 +25,8 @@ module Crystal::System::File
     fd
   end
 
-  def self.mktemp(name : String, extension : String?) : {LibC::Int, String}
-    path = "#{tempdir}\\#{name}.#{::Random::Secure.hex}#{extension}"
+  def self.mktemp(prefix : String, suffix : String?, dir : String) : {LibC::Int, String}
+    path = "#{tempdir}\\#{prefix}.#{::Random::Secure.hex}#{suffix}"
 
     fd = LibC._wopen(to_windows_path(path), LibC::O_RDWR | LibC::O_CREAT | LibC::O_EXCL | LibC::O_BINARY, ::File::DEFAULT_CREATE_PERMISSIONS)
     if fd == -1
@@ -34,21 +34,6 @@ module Crystal::System::File
     end
 
     {fd, path}
-  end
-
-  def self.tempdir : String
-    tmpdir = System.retry_wstr_buffer do |buffer, small_buf|
-      len = LibC.GetTempPathW(buffer.size, buffer)
-      if 0 < len < buffer.size
-        break String.from_utf16(buffer[0, len])
-      elsif small_buf && len > 0
-        next len
-      else
-        raise WinError.new("Error while getting current directory")
-      end
-    end
-
-    tmpdir.rchop("\\")
   end
 
   NOT_FOUND_ERRORS = {
@@ -176,16 +161,22 @@ module Crystal::System::File
     # TODO: read links using https://msdn.microsoft.com/en-us/library/windows/desktop/aa364571(v=vs.85).aspx
     win_path = to_windows_path(path)
 
-    System.retry_wstr_buffer do |buffer, small_buf|
+    real_path = System.retry_wstr_buffer do |buffer, small_buf|
       len = LibC.GetFullPathNameW(win_path, buffer.size, buffer, nil)
       if 0 < len < buffer.size
-        return String.from_utf16(buffer[0, len])
+        break String.from_utf16(buffer[0, len])
       elsif small_buf && len > 0
         next len
       else
         raise WinError.new("Error resolving real path of #{path.inspect}")
       end
     end
+
+    unless exists? real_path
+      raise Errno.new("Error resolving real path of #{path.inspect}", Errno::ENOTDIR)
+    end
+
+    real_path
   end
 
   def self.link(old_path : String, new_path : String) : Nil

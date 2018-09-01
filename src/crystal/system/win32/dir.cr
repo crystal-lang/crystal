@@ -84,6 +84,21 @@ module Crystal::System::Dir
     path
   end
 
+  def self.tempdir : String
+    tmpdir = System.retry_wstr_buffer do |buffer, small_buf|
+      len = LibC.GetTempPathW(buffer.size, buffer)
+      if 0 < len < buffer.size
+        break String.from_utf16(buffer[0, len])
+      elsif small_buf && len > 0
+        next len
+      else
+        raise WinError.new("Error while getting current directory")
+      end
+    end
+
+    tmpdir.rchop("\\")
+  end
+
   def self.create(path : String, mode : Int32) : Nil
     if LibC._wmkdir(to_windows_path(path)) == -1
       raise Errno.new("Unable to create directory '#{path}'")

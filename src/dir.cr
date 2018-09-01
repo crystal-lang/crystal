@@ -159,6 +159,15 @@ class Dir
     end
   end
 
+  # Returns the tmp dir used for tempfile.
+  #
+  # ```
+  # Dir.tempdir # => "/tmp"
+  # ```
+  def self.tempdir : String
+    Crystal::System::Dir.tempdir
+  end
+
   # See `#each`.
   def self.each(dirname)
     Dir.open(dirname) do |dir|

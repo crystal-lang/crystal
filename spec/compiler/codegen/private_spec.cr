@@ -1,5 +1,4 @@
 require "../../spec_helper"
-require "tempfile"
 
 describe "Codegen: private" do
   it "codegens private def in same file" do
@@ -15,13 +14,11 @@ describe "Codegen: private" do
     ]
     compiler.prelude = "empty"
 
-    tempfile = Tempfile.new("crystal-spec-output")
-    output_filename = tempfile.path
-    tempfile.close
+    output_filename = File.tempname("crystal-spec-output")
 
     compiler.compile sources, output_filename
   ensure
-    File.delete(tempfile.path) if tempfile
+    File.delete(output_filename) if output_filename
   end
 
   it "codegens overloaded private def in same file" do
@@ -42,13 +39,11 @@ describe "Codegen: private" do
     ]
     compiler.prelude = "empty"
 
-    tempfile = Tempfile.new("crystal-spec-output")
-    output_filename = tempfile.path
-    tempfile.close
+    output_filename = File.tempname("crystal-spec-output")
 
     compiler.compile sources, output_filename
   ensure
-    File.delete(tempfile.path) if tempfile
+    File.delete(output_filename) if output_filename
   end
 
   it "doesn't include filename for private types" do

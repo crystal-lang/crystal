@@ -1,7 +1,6 @@
 require "../../spec_helper"
 require "http/server"
 require "http/client/response"
-require "tempfile"
 require "../../../support/ssl"
 
 private class RaiseErrno < IO
@@ -56,6 +55,11 @@ end
 private def unused_port
   TCPServer.open(0) do |server|
     server.local_address.port
+  end
+end
+
+private class SilentErrorHTTPServer < HTTP::Server
+  private def handle_exception(e)
   end
 end
 
@@ -418,6 +422,30 @@ module HTTP
       end
     end
 
+    describe "#bind_ssl" do
+      it "binds SSL server context" do
+        server = Server.new do |context|
+          context.response.puts "Test Server (#{context.request.headers["Host"]?})"
+          context.response.close
+        end
+
+        server_context, client_context = ssl_context_pair
+
+        socket = OpenSSL::SSL::Server.new(TCPServer.new("127.0.0.1", 0), server_context)
+        server.bind socket
+        ip_address1 = server.bind_ssl "127.0.0.1", 0, server_context
+        ip_address2 = socket.local_address
+
+        spawn server.listen
+        Fiber.yield
+
+        HTTP::Client.get("https://#{ip_address1}", tls: client_context).body.should eq "Test Server (#{ip_address1})\n"
+        HTTP::Client.get("https://#{ip_address2}", tls: client_context).body.should eq "Test Server (#{ip_address2})\n"
+
+        server.close
+      end
+    end
+
     describe "#listen" do
       it "fails after listen" do
         server = Server.new { }
@@ -448,8 +476,8 @@ module HTTP
     {% if flag?(:unix) %}
       describe "#bind_unix" do
         it "binds to different unix sockets" do
-          path1 = Tempfile.tempname
-          path2 = Tempfile.tempname
+          path1 = File.tempname
+          path2 = File.tempname
 
           begin
             server = Server.new do |context|
@@ -480,6 +508,39 @@ module HTTP
         end
       end
     {% end %}
+
+    it "handles exception during SSL handshake (#6577)" do
+      server = SilentErrorHTTPServer.new do |context|
+        context.response.print "ok"
+        context.response.close
+      end
+
+      server_context, client_context = ssl_context_pair
+      address = server.bind_tls "localhost", server_context
+
+      server_done = false
+      spawn do
+        server.listen
+        server_done = true
+      end
+
+      3.times do
+        # Perform multiple wrong calls together and check
+        # that the server is still able to respond.
+        3.times do
+          empty_context = OpenSSL::SSL::Context::Client.new
+          socket = TCPSocket.new(address.address, address.port)
+          expect_raises(OpenSSL::SSL::Error) do
+            OpenSSL::SSL::Socket::Client.new(socket, empty_context)
+          end
+        end
+        HTTP::Client.get("https://#{address}/", tls: client_context).body.should eq "ok"
+      end
+
+      Fiber.yield
+
+      server_done.should be_false
+    end
   end
 
   describe HTTP::Server::RequestProcessor do

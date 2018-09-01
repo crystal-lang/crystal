@@ -264,4 +264,18 @@ describe Time::Span do
     Time::Span.new(nanoseconds: 0).zero?.should eq true
     Time::Span.new(nanoseconds: 123456789).zero?.should eq false
   end
+
+  it "converts units" do
+    1.nanoseconds.should eq(Time::Span.new(nanoseconds: 1))
+    1.millisecond.should eq(1_000_000.nanoseconds)
+    1.milliseconds.should eq(1_000_000.nanoseconds)
+    1.second.should eq(1000.milliseconds)
+    1.seconds.should eq(1000.milliseconds)
+    1.minute.should eq(60.seconds)
+    1.minutes.should eq(60.seconds)
+    1.hour.should eq(60.minutes)
+    1.hours.should eq(60.minutes)
+    1.week.should eq(7.days)
+    2.weeks.should eq(14.days)
+  end
 end
