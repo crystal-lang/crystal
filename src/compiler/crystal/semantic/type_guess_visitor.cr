@@ -804,7 +804,7 @@ module Crystal
         # If the argument has a restriction, guess the type from it
         if restriction = arg.restriction
           # It is for something like `def foo(*@foo : *T)`.
-          if @splat == arg
+          if @splat.same?(arg)
             # If restriction is not splat (like `*foo : T`),
             # we cannot guess the type.
             # (We can also guess `Indexable(T)`, but it is not perfact.)
@@ -813,7 +813,7 @@ module Crystal
             return unless restriction.is_a?(Splat)
             restriction = restriction.exp
             # It is for something like `def foo(**@foo : **T)`.
-          elsif @double_splat == arg
+          elsif @double_splat.same?(arg)
             return unless restriction.is_a?(DoubleSplat)
             restriction = restriction.exp
           end
