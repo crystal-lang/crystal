@@ -4899,6 +4899,98 @@ describe "Semantic: instance var" do
       )) { types["Baz"] }
   end
 
+  it "can guess the type from splat argument with splated type" do
+    assert_type(%(
+      class Foo
+        def initialize(*@foo : *{Int32})
+        end
+
+        def foo
+          @foo
+        end
+      end
+
+      Foo.new(1).foo
+    )) { tuple_of([int32]) }
+  end
+
+  it "can guess the type from splat argument with splated type variable" do
+    assert_type(%(
+      class Foo(T)
+        def initialize(*@foo : *T)
+        end
+
+        def foo
+          @foo
+        end
+      end
+
+      Foo.new(1, 2).foo
+    )) { tuple_of([int32, int32]) }
+  end
+
+  it "cannot guess the type from splat argument with not splated type" do
+    assert_error %(
+      class Foo
+        def initialize(*@foo : Int32)
+        end
+
+        def foo
+          @foo
+        end
+      end
+
+      Foo.new(1).foo
+    ),
+      "Can't infer the type of instance variable '@foo' of Foo"
+  end
+
+  it "can guess the type from double-splat argument with double-splated type" do
+    assert_type(%(
+      class Foo
+        def initialize(**@foo : **{foo: Int32})
+        end
+
+        def foo
+          @foo
+        end
+      end
+
+      Foo.new(foo: 1).foo
+    )) { named_tuple_of({"foo": int32}) }
+  end
+
+  it "can guess the type from double-splat argument with double-splated type variable" do
+    assert_type(%(
+      class Foo(T)
+        def initialize(**@foo : **T)
+        end
+
+        def foo
+          @foo
+        end
+      end
+
+      Foo.new(foo: 1, bar: 2).foo
+    )) { named_tuple_of({"foo": int32, "bar": int32}) }
+  end
+
+  it "cannot guess the type from double-splat argument with not double-splated type" do
+    assert_error %(
+      class Foo
+        def initialize(**@foo : Int32)
+        end
+
+        def foo
+          @foo
+        end
+      end
+
+      Foo.new(foo: 1).foo
+    ),
+      "Can't infer the type of instance variable '@foo' of Foo"
+  end
+
   it "cannot guess type from argument assigned in body" do
     assert_error %(
       class Foo

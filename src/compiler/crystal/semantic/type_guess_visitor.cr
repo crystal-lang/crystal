@@ -25,6 +25,9 @@ module Crystal
 
     @args : Array(Arg)?
     @block_arg : Arg?
+    @splat_index : Int32?
+    @double_splat : Arg?
+    @splat : Arg?
 
     @args_hash_initialized = true
     @args_hash = {} of String => Arg
@@ -800,6 +803,20 @@ module Crystal
       if arg = args_hash[node.name]?
         # If the argument has a restriction, guess the type from it
         if restriction = arg.restriction
+          # It is for something like `def foo(*@foo : *T)`.
+          if @splat.same?(arg)
+            # If restriction is not splat (like `*foo : T`),
+            # we cannot guess the type.
+            # (We can also guess `Indexable(T)`, but it is not perfact.)
+            # And this early return is no problem because splat argument
+            # cannot have a default value.
+            return unless restriction.is_a?(Splat)
+            restriction = restriction.exp
+            # It is for something like `def foo(**@foo : **T)`.
+          elsif @double_splat.same?(arg)
+            return unless restriction.is_a?(DoubleSplat)
+            restriction = restriction.exp
+          end
           type = lookup_type?(restriction)
           return type if type
         end
@@ -1096,6 +1113,8 @@ module Crystal
       @found_self = false
       @args = node.args
       @block_arg = node.block_arg
+      @double_splat = node.double_splat
+      @splat_index = node.splat_index
       @args_hash_initialized = false
 
       if !node.receiver && node.name == "initialize" && !current_type.is_a?(Program)
@@ -1115,6 +1134,9 @@ module Crystal
       @initialize_info = nil
       @block_arg = nil
       @args = nil
+      @double_splat = nil
+      @splat_index = nil
+      @splat = nil
       @args_hash.clear
       @args_hash_initialized = true
       @outside_def = true
@@ -1170,7 +1192,12 @@ module Crystal
 
     def args_hash
       unless @args_hash_initialized
-        @args.try &.each do |arg|
+        @args.try &.each_with_index do |arg, i|
+          @splat = arg if @splat_index == i
+          @args_hash[arg.name] = arg
+        end
+
+        @double_splat.try do |arg|
           @args_hash[arg.name] = arg
         end
 
