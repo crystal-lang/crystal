@@ -559,7 +559,7 @@ describe "Code gen: def" do
       ))
   end
 
-  it "codegens yield with destructing tuple having unrachable element" do
+  it "codegens yield with destructing tuple having unreachable element" do
     codegen(%(
       def foo
         yield({1, while true; end})
