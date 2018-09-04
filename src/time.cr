@@ -741,13 +741,10 @@ struct Time
     )
   end
 
-  # Returns a copy of `self` with time-of-day components (hour, minute, second,
-  # nanoseconds) set to zero.
-  #
-  # This equals `at_beginning_of_day` or
-  # `Time.local(year, month, day, 0, 0, 0, nanoseconds: 0, location: location)`.
-  def date : Time
-    Time.local(year, month, day, location: location)
+  # Returns a `Tuple` with `year`, `month` and `day`.
+  def date : Tuple(Int32, Int32, Int32)
+    year, month, day, _ = year_month_day_day_year
+    {year, month, day}
   end
 
   # Returns the year of the proleptic Georgian Calendar (`0..9999`).

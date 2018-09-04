@@ -106,12 +106,17 @@ describe Time do
   describe ".local" do
     it "initializes" do
       t1 = Time.local 2002, 2, 25
+      t1.date.should eq({2002, 2, 25})
       t1.year.should eq(2002)
       t1.month.should eq(2)
       t1.day.should eq(25)
+      t1.hour.should eq(0)
+      t1.minute.should eq(0)
+      t1.second.should eq(0)
       t1.local?.should be_true
 
       t2 = Time.local 2002, 2, 25, 15, 25, 13, nanosecond: 8
+      t2.date.should eq({2002, 2, 25})
       t2.year.should eq(2002)
       t2.month.should eq(2)
       t2.day.should eq(25)
