@@ -27,12 +27,12 @@ class IO::FileDescriptor < IO
     path = uninitialized UInt8[256]
     if LibC.ttyname_r(fd, path, 256) == 0
       # Open a fresh handle to the TTY
-      fd = LibC.open(path, LibC::O_RDWR)
-
-      new(fd).tap(&.close_on_exec = true)
-    else
-      new(fd, blocking: true)
+      if (clone_fd = LibC.open(path, LibC::O_RDWR)) >= 0
+        return new(clone_fd).tap(&.close_on_exec = true)
+      end
     end
+    # Fallback to blocking IO.
+    new(fd, blocking: true)
   end
 
   def blocking
