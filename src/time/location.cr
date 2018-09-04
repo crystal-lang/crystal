@@ -385,28 +385,28 @@ class Time::Location
     lookup(time.to_unix)
   end
 
-  # Returns the time zone offset observed at *epoch*.
+  # Returns the time zone offset observed at *unix_seconds*.
   #
-  # *epoch* expresses the number of seconds since UNIX epoch
+  # *unix_seconds* expresses the number of seconds since UNIX epoch
   # (`1970-01-01 00:00:00 UTC`).
-  def lookup(epoch : Int) : Zone
-    unless @cached_range[0] <= epoch < @cached_range[1]
-      @cached_zone, @cached_range = lookup_with_boundaries(epoch)
+  def lookup(unix_seconds : Int) : Zone
+    unless @cached_range[0] <= unix_seconds < @cached_range[1]
+      @cached_zone, @cached_range = lookup_with_boundaries(unix_seconds)
     end
 
     @cached_zone
   end
 
   # :nodoc:
-  def lookup_with_boundaries(epoch : Int) : {Zone, {Int64, Int64}}
+  def lookup_with_boundaries(unix_seconds : Int) : {Zone, {Int64, Int64}}
     case
     when zones.empty?
       return Zone::UTC, {Int64::MIN, Int64::MAX}
-    when transitions.empty? || epoch < transitions.first.when
+    when transitions.empty? || unix_seconds < transitions.first.when
       return lookup_first_zone, {Int64::MIN, transitions[0]?.try(&.when) || Int64::MAX}
     else
       tx_index = transitions.bsearch_index do |transition|
-        transition.when > epoch
+        transition.when > unix_seconds
       end || transitions.size
 
       tx_index -= 1 unless tx_index == 0
