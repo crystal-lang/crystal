@@ -626,7 +626,7 @@ class File < IO::FileDescriptor
   # Opens the file named by *filename*. If a file is being created, its initial
   # permissions may be set using the *perm* parameter.
   #
-  # See `#new` for what *mode* can be.
+  # See `self.new` for what *mode* can be.
   def self.open(filename, mode = "r", perm = DEFAULT_CREATE_PERMISSIONS, encoding = nil, invalid = nil) : self
     new filename, mode, perm, encoding, invalid
   end
@@ -635,7 +635,7 @@ class File < IO::FileDescriptor
   # permissions may be set using the *perm* parameter. Then given block will be passed the opened
   # file as an argument, the file will be automatically closed when the block returns.
   #
-  # See `#new` for what *mode* can be.
+  # See `self.new` for what *mode* can be.
   def self.open(filename, mode = "r", perm = DEFAULT_CREATE_PERMISSIONS, encoding = nil, invalid = nil)
     file = new filename, mode, perm, encoding, invalid
     begin
@@ -720,7 +720,7 @@ class File < IO::FileDescriptor
   # Otherwise, the string representation of *content* will be written
   # (the result of invoking `to_s` on *content*).
   #
-  # See `#new` for what *mode* can be.
+  # See `self.new` for what *mode* can be.
   def self.write(filename, content, perm = DEFAULT_CREATE_PERMISSIONS, encoding = nil, invalid = nil, mode = "w")
     open(filename, mode, perm, encoding: encoding, invalid: invalid) do |file|
       case content
