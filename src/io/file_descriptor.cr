@@ -13,7 +13,7 @@ class IO::FileDescriptor < IO
   def initialize(@fd, blocking = false)
     @closed =
       {% unless flag?(:win32) %}
-        fcntl(LibC::F_GETFD) < 0
+        !fcntl(LibC::F_GETFD) rescue true
       {% else %}
         false
       {% end %}
