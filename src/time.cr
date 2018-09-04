@@ -485,9 +485,9 @@ struct Time
   # The time zone is always UTC.
   #
   # ```
-  # Time.epoch(981173106) # => 2001-02-03 04:05:06 UTC
+  # Time.unix(981173106) # => 2001-02-03 04:05:06 UTC
   # ```
-  def self.epoch(seconds : Int) : Time
+  def self.unix(seconds : Int) : Time
     utc(seconds: UNIX_SECONDS + seconds, nanoseconds: 0)
   end
 
@@ -497,10 +497,10 @@ struct Time
   # The time zone is always UTC.
   #
   # ```
-  # time = Time.epoch_ms(981173106789) # => 2001-02-03 04:05:06.789 UTC
-  # time.millisecond                   # => 789
+  # time = Time.unix_ms(981173106789) # => 2001-02-03 04:05:06.789 UTC
+  # time.millisecond                  # => 789
   # ```
-  def self.epoch_ms(milliseconds : Int) : Time
+  def self.unix_ms(milliseconds : Int) : Time
     milliseconds = milliseconds.to_i64
     seconds = UNIX_SECONDS + (milliseconds / 1_000)
     nanoseconds = (milliseconds % 1000) * NANOSECONDS_PER_MILLISECOND

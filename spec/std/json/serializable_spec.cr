@@ -627,7 +627,7 @@ describe "JSON mapping" do
     string = %({"value":1459859781})
     json = JSONAttrWithTimeEpoch.from_json(string)
     json.value.should be_a(Time)
-    json.value.should eq(Time.epoch(1459859781))
+    json.value.should eq(Time.unix(1459859781))
     json.to_json.should eq(string)
   end
 
@@ -635,7 +635,7 @@ describe "JSON mapping" do
     string = %({"value":1459860483856})
     json = JSONAttrWithTimeEpochMillis.from_json(string)
     json.value.should be_a(Time)
-    json.value.should eq(Time.epoch_ms(1459860483856))
+    json.value.should eq(Time.unix_ms(1459860483856))
     json.to_json.should eq(string)
   end
 

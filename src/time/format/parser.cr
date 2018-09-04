@@ -37,7 +37,7 @@ struct Time::Format
       @hour += 12 if @pm
 
       if epoch = @epoch
-        return Time.epoch(epoch)
+        return Time.unix(epoch)
       end
 
       location = @location || location

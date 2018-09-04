@@ -68,17 +68,17 @@ describe Time do
     end
   end
 
-  it ".epoch" do
+  it ".unix" do
     seconds = 1439404155
-    time = Time.epoch(seconds)
+    time = Time.unix(seconds)
     time.should eq(Time.utc(2015, 8, 12, 18, 29, 15))
     time.epoch.should eq(seconds)
     time.utc?.should be_true
   end
 
-  it ".epoch_ms" do
+  it ".unix_ms" do
     milliseconds = 1439404155000
-    time = Time.epoch_ms(milliseconds)
+    time = Time.unix_ms(milliseconds)
     time.should eq(Time.utc(2015, 8, 12, 18, 29, 15))
     time.epoch_ms.should eq(milliseconds)
     time.utc?.should be_true

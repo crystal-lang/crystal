@@ -107,7 +107,7 @@ module Crystal
     private def cleanup_dirs(entries)
       entries
         .select { |dir| Dir.exists?(dir) }
-        .sort_by! { |dir| File.info?(dir).try(&.modification_time) || Time.epoch(0) }
+        .sort_by! { |dir| File.info?(dir).try(&.modification_time) || Time.unix(0) }
         .reverse!
         .skip(10)
         .each { |name| `rm -rf "#{name}"` rescue nil }

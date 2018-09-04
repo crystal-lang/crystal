@@ -469,7 +469,7 @@ describe "YAML mapping" do
     string = %({"value":1459859781})
     yaml = YAMLWithTimeEpoch.from_yaml(string)
     yaml.value.should be_a(Time)
-    yaml.value.should eq(Time.epoch(1459859781))
+    yaml.value.should eq(Time.unix(1459859781))
     yaml.to_yaml.should eq("---\nvalue: 1459859781\n")
   end
 
@@ -477,7 +477,7 @@ describe "YAML mapping" do
     string = %({"value":1459860483856})
     yaml = YAMLWithTimeEpochMillis.from_yaml(string)
     yaml.value.should be_a(Time)
-    yaml.value.should eq(Time.epoch_ms(1459860483856))
+    yaml.value.should eq(Time.unix_ms(1459860483856))
     yaml.to_yaml.should eq("---\nvalue: 1459860483856\n")
   end
 
