@@ -415,20 +415,21 @@ class Process
     when IO::FileDescriptor
       src_io.blocking = true
       dst_io.reopen(src_io)
-      dst_io.close_on_exec = false
     when Redirect::Inherit
-      if LibC.fcntl(dst_io.fd, LibC::F_GETFD) >= 0
-        dst_io.blocking = true
-        dst_io.close_on_exec = false
-      end
+      return if dst_io.closed?
+      dst_io.blocking = true
     when Redirect::Close
-      File.open("/dev/null", mode) do |file|
-        dst_io.reopen(file)
-        dst_io.close_on_exec = false
+      # Set the FD to devnull.
+      void = File.open(File::DEVNULL, mode)
+      if void.fd != dst_io.fd
+        dst_io.reopen(void)
+        void.close
       end
     else
       raise "BUG: unknown object type #{src_io}"
     end
+
+    dst_io.close_on_exec = false
   end
 
   private def close_io(io)

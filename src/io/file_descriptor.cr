@@ -11,7 +11,12 @@ class IO::FileDescriptor < IO
   getter fd
 
   def initialize(@fd, blocking = false)
-    @closed = false
+    @closed =
+      {% unless flag?(:win32) %}
+        fcntl(LibC::F_GETFD) < 0
+      {% else %}
+        false
+      {% end %}
 
     unless blocking || {{flag?(:win32)}}
       self.blocking = false
