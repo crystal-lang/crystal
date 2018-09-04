@@ -1208,11 +1208,14 @@ struct Time
     (day - 1) + temp + (365*(year - 1)) + ((year - 1)/4) - ((year - 1)/100) + ((year - 1)/400)
   end
 
-  protected def total_seconds
+  # Returns the total number of seconds elapsed since epoch (`0001-01-01 00:00:00`).
+  def total_seconds
     @seconds
   end
 
-  protected def offset_seconds
+  # Returns the total number of seconds elapsed since epoch (`0001-01-01 00:00:00`)
+  # plus the offset observed in `#location` at that instant.
+  private def offset_seconds
     @seconds + offset
   end
 

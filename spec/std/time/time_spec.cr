@@ -21,7 +21,7 @@ describe Time do
     end
 
     it "initializes max value" do
-      time = Time.new(9999, 12, 31, 23, 59, 59, nanosecond: 999_999_999)
+      time = Time.new(9999, 12, 31, 23, 59, 59, nanosecond: 999_999_999, location: Time::Location::UTC)
       time.year.should eq(9999)
       time.month.should eq(12)
       time.day.should eq(31)
@@ -29,6 +29,7 @@ describe Time do
       time.minute.should eq(59)
       time.second.should eq(59)
       time.nanosecond.should eq(999_999_999)
+      time.total_seconds.should eq Time::MAX_SECONDS
     end
 
     it "fails with negative nanosecond" do
@@ -331,6 +332,17 @@ describe Time do
       t1 = Time.now
       t1.epoch.should eq(t1.to_utc.epoch)
       t1.epoch_f.should be_close(t1.to_utc.epoch_f, 1e-01)
+    end
+  end
+
+  it "#total_seconds" do
+    Time.utc(1, 1, 1).total_seconds.should eq 0
+
+    now = Time.utc_now
+    Time.utc(seconds: now.total_seconds, nanoseconds: now.nanosecond).should eq now
+
+    expect_raises(ArgumentError, "Invalid time") do
+      Time.utc(seconds: Int64::MAX, nanoseconds: 999_999_999)
     end
   end
 
