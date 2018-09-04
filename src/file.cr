@@ -36,6 +36,27 @@ class File < IO::FileDescriptor
     super(fd, blocking)
   end
 
+  # Opens the file named by *filename*.
+  #
+  # *mode* must be one of the following file open modes:
+  # ```text
+  # Mode | Description
+  # -----+------------------------------------------------------
+  # r    | Read-only, starts at the beginning of the file.
+  # r+   | Read-write, starts at the beginning of the file.
+  # w    | Write-only, truncates existing file to zero length or
+  #      | creates a new file if the file doesn't exists.
+  # w+   | Read-write, truncates existing file to zero length or
+  #      | creates a new file if the file doesn't exists.
+  # a    | Write-only, starts at the end of the file,
+  #      | creates a new file if the file doesn't exists.
+  # a+   | Read-write, starts at the end of the file,
+  #      | creates a new file if the file doesn't exists.
+  # rb   | Same as the 'r' mode but in binary file mode.
+  # wb   | Same as the 'w' mode but in binary file mode.
+  # ab   | Same as the 'a' mode but in binary file mode.
+  # ```
+  # In binary file mode, line endings are not converted to CRLF on Windows.
   def self.new(filename : String, mode = "r", perm = DEFAULT_CREATE_PERMISSIONS, encoding = nil, invalid = nil)
     fd = Crystal::System::File.open(filename, mode, perm)
     new(filename, fd, blocking: true, encoding: encoding, invalid: invalid)
@@ -604,6 +625,8 @@ class File < IO::FileDescriptor
 
   # Opens the file named by *filename*. If a file is being created, its initial
   # permissions may be set using the *perm* parameter.
+  #
+  # See `#new` for what *mode* can be.
   def self.open(filename, mode = "r", perm = DEFAULT_CREATE_PERMISSIONS, encoding = nil, invalid = nil) : self
     new filename, mode, perm, encoding, invalid
   end
@@ -611,6 +634,8 @@ class File < IO::FileDescriptor
   # Opens the file named by *filename*. If a file is being created, its initial
   # permissions may be set using the *perm* parameter. Then given block will be passed the opened
   # file as an argument, the file will be automatically closed when the block returns.
+  #
+  # See `#new` for what *mode* can be.
   def self.open(filename, mode = "r", perm = DEFAULT_CREATE_PERMISSIONS, encoding = nil, invalid = nil)
     file = new filename, mode, perm, encoding, invalid
     begin
@@ -694,6 +719,8 @@ class File < IO::FileDescriptor
   # If it's an `IO`, all bytes from the `IO` will be written.
   # Otherwise, the string representation of *content* will be written
   # (the result of invoking `to_s` on *content*).
+  #
+  # See `#new` for what *mode* can be.
   def self.write(filename, content, perm = DEFAULT_CREATE_PERMISSIONS, encoding = nil, invalid = nil, mode = "w")
     open(filename, mode, perm, encoding: encoding, invalid: invalid) do |file|
       case content
