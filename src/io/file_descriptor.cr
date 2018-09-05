@@ -154,7 +154,8 @@ class IO::FileDescriptor < IO
 
   def reopen(other : IO::FileDescriptor)
     system_reopen(other)
-
+    # You shouldn't be able to reopen a closed FD
+    @closed = false
     other
   end
 
