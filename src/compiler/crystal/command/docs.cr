@@ -11,6 +11,8 @@ class Crystal::Command
     output_directory = File.join(".", "docs")
     canonical_base_url = nil
 
+    compiler = Compiler.new
+
     OptionParser.parse(options) do |opts|
       opts.banner = <<-'BANNER'
         Usage: crystal docs [options]
@@ -34,6 +36,10 @@ class Crystal::Command
 
       opts.on("--canonical-base-url=URL", "-b URL", "Set the canonical base url") do |value|
         canonical_base_url = value
+      end
+
+      opts.on("-D FLAG", "--define FLAG", "Define a compile-time flag") do |flag|
+        compiler.flags << flag
       end
 
       opts.on("-h", "--help", "Show this message") do
