@@ -1665,7 +1665,14 @@ module Crystal
     end
 
     def visit(node : MacroVerbatim)
-      check :MACRO_CONTROL_START
+      reset_macro_state
+
+      # `{% verbatim %}`
+      if inside_macro?
+        check :MACRO_CONTROL_START
+      else
+        check :"{%"
+      end
       write "{%"
       next_token_skip_space_or_newline
       check_keyword :verbatim
@@ -1676,8 +1683,14 @@ module Crystal
       next_token_skip_space
       check :"%}"
       write " %}"
+
+      @macro_state.control_nest += 1
+      check_macro_whitespace
       next_macro_token
-      node.exp.accept self
+      inside_macro { no_indent node.exp }
+      @macro_state.control_nest -= 1
+
+      # `{% end %}`
       check :MACRO_CONTROL_START
       write "{%"
       next_token_skip_space_or_newline
@@ -1686,7 +1699,14 @@ module Crystal
       next_token_skip_space
       check :"%}"
       write " %}"
-      next_macro_token
+
+      if inside_macro?
+        check_macro_whitespace
+        next_macro_token
+      else
+        next_token
+      end
+
       false
     end
 
