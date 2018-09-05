@@ -748,7 +748,9 @@ module Crystal
     def visit(node : MacroExpression)
       @str << (node.output? ? "{{" : "{% ")
       @str << ' ' if node.output?
-      node.exp.accept self
+      outside_macro do
+        node.exp.accept self
+      end
       @str << ' ' if node.output?
       @str << (node.output? ? "}}" : " %}")
       false
@@ -1539,6 +1541,13 @@ module Crystal
       @inside_macro += 1
       yield
       @inside_macro -= 1
+    end
+
+    def outside_macro
+      old_inside_macro = @inside_macro
+      @inside_macro = 0
+      yield
+      @inside_macro = old_inside_macro
     end
 
     def to_s
