@@ -1355,4 +1355,18 @@ describe "Semantic: macro" do
       Foo(Int32).foo
       )) { array_of(int32).metaclass }
   end
+
+  it "expands multiline macro expression in verbatim (#6643)" do
+    assert_type(%(
+      {% verbatim do %}
+        {{
+          if true
+            1
+            "2"
+            3
+          end
+        }}
+      {% end %}
+    )) { int32 }
+  end
 end
