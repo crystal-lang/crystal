@@ -386,7 +386,7 @@ describe HTTP::WebSocket do
       HTTP::WebSocket::Protocol.new(address.address, port: address.port, path: "/")
     end
   ensure
-    # http_server.try &.close # TODO: Uncomment when #5958 is fixed
+    http_server.try &.close
   end
 
   describe "handshake fails if server does not verify Sec-WebSocket-Key" do
@@ -405,7 +405,7 @@ describe HTTP::WebSocket do
         HTTP::WebSocket::Protocol.new(address.address, port: address.port, path: "/")
       end
     ensure
-      # http_server.try &.close # TODO: Uncomment when #5958 is fixed
+      http_server.try &.close
     end
 
     it "Sec-WebSocket-Accept incorrect" do
@@ -424,7 +424,7 @@ describe HTTP::WebSocket do
         HTTP::WebSocket::Protocol.new(address.address, port: address.port, path: "/")
       end
     ensure
-      # http_server.try &.close # TODO: Uncomment when #5958 is fixed
+      http_server.try &.close
     end
   end
 
