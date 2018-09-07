@@ -4932,7 +4932,7 @@ module Crystal
           next_token_skip_space_or_newline
 
           if @token.type == :DELIMITER_START
-            output = parse_asm_operand
+            outputs = parse_asm_operands
           end
 
           if @token.type == :":"
@@ -4946,16 +4946,25 @@ module Crystal
 
         if @token.type == :"::"
           next_token_skip_space_or_newline
-          volatile, alignstack, intel = parse_asm_options
+
+          if @token.type == :DELIMITER_START
+            volatile, alignstack, intel = parse_asm_options
+          end
         else
           if @token.type == :":"
             next_token_skip_space_or_newline
-            clobbers = parse_asm_clobbers
+
+            if @token.type == :DELIMITER_START
+              clobbers = parse_asm_clobbers
+            end
           end
 
           if @token.type == :":"
             next_token_skip_space_or_newline
-            volatile, alignstack, intel = parse_asm_options
+
+            if @token.type == :DELIMITER_START
+              volatile, alignstack, intel = parse_asm_options
+            end
           end
         end
 
@@ -4964,7 +4973,7 @@ module Crystal
 
       next_token_skip_space
 
-      Asm.new(text, output, inputs, clobbers, volatile, alignstack, intel)
+      Asm.new(text, outputs, inputs, clobbers, volatile, alignstack, intel)
     end
 
     def parse_asm_operands

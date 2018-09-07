@@ -581,7 +581,7 @@ module Crystal
     end
 
     def transform(node : Asm)
-      node.output = node.output.try &.transform(self)
+      node.outputs.try &.each &.transform(self)
       node.inputs.try &.each &.transform(self)
       node
     end

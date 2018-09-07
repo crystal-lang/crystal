@@ -151,4 +151,10 @@ describe "ASTNode#to_s" do
   expect_to_s "1.&**"
   expect_to_s "1.~(2)"
   expect_to_s %({% for foo in bar %}\n  {{ if true\n  foo\n  bar\nend }}\n{% end %})
+  expect_to_s %(asm("nop" ::::))
+  expect_to_s %(asm("nop" : "a"(1), "b"(2) : "c"(3), "d"(4) : "e", "f" : "volatile", "alignstack", "intel"))
+  expect_to_s %(asm("nop" :: "c"(3), "d"(4) ::))
+  expect_to_s %(asm("nop" :::: "volatile"))
+  expect_to_s %(asm("nop" :: "a"(1) :: "volatile"))
+  expect_to_s %(asm("nop" ::: "e" : "volatile"))
 end
