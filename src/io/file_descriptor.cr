@@ -11,12 +11,7 @@ class IO::FileDescriptor < IO
   getter fd
 
   def initialize(@fd, blocking = false)
-    @closed =
-      {% unless flag?(:win32) %}
-        !fcntl(LibC::F_GETFD) rescue true
-      {% else %}
-        false
-      {% end %}
+    @closed = system_closed?
 
     unless blocking || {{flag?(:win32)}}
       self.blocking = false
@@ -154,8 +149,7 @@ class IO::FileDescriptor < IO
 
   def reopen(other : IO::FileDescriptor)
     system_reopen(other)
-    # You shouldn't be able to reopen a closed FD
-    @closed = false
+
     other
   end
 
