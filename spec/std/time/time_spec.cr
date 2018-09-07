@@ -383,9 +383,17 @@ describe Time do
     t.time_of_day.should eq(Time::Span.new(21, 18, 13))
   end
 
-  it "#day_of_week" do
-    t = Time.new 2014, 10, 30, 21, 18, 13
-    t.day_of_week.should eq(Time::DayOfWeek::Thursday)
+  describe "#day_of_week" do
+    it "gets day of week" do
+      t = Time.new 2014, 10, 30, 21, 18, 13
+      t.day_of_week.should eq(Time::DayOfWeek::Thursday)
+    end
+
+    CALENDAR_WEEK_TEST_DATA.each do |date, week_date|
+      it "#{date.join('-')} is #{week_date[2]}" do
+        Time.utc(*date).day_of_week.should eq Time::DayOfWeek.from_value(week_date[2])
+      end
+    end
   end
 
   it "answers day name predicates" do
