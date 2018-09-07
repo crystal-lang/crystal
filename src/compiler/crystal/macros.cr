@@ -1250,6 +1250,46 @@ module Crystal::Macros
 
   # A class definition.
   class ClassDef < ASTNode
+    # Returns the path to this class definition.
+    def name : Path
+    end
+
+    # Returns the body of this class definition.
+    def body : ASTNode
+    end
+
+    # Returns superclass of this class definition.
+    def superclass : ASTNode | NilLiteral
+    end
+
+    # Returns the type variables of the generic type. If the type is not
+    # generic, `nil` is returned.
+    def type_vars : ArrayLiteral(StringLiteral) | NilLiteral
+    end
+
+    # Returns the column number where this class definition begins.
+    def name_column_number : NumberLiteral
+    end
+
+    # Returns doc string attached to this class definition.
+    def doc : StringLiteral
+    end
+
+    # Returns the index of the argument with a *splat, if any.
+    def splat_index : NumberLiteral | NilLiteral
+    end
+
+    # Returns `true` if this class definition is abstract.
+    def abstract? : BoolLiteral
+    end
+
+    # Returns `true` if this is a struct definition.
+    def struct? : BoolLiteral
+    end
+
+    # Returns the visibility of this class definition: `:public` or `:private`.
+    def visibility : SymbolLiteral
+    end
   end
 
   # A module definition.
