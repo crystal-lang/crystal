@@ -742,6 +742,7 @@ struct Time
   # Together with `#day_of_week` this represents a specific day as commercial or
   # week date format `year, week, day_of_week` in the same way as the typical
   # format `year, month, day`.
+  # `.week_date` creates a `Time` instance from a week date.
   def calendar_week : {Int32, Int32}
     year, month, day, day_year = year_month_day_day_year
 
@@ -781,6 +782,56 @@ struct Time
     end
 
     {year, week_number}
+  end
+
+  # Creates an instance specified by a commercial week date consisting of ISO
+  # calendar *year* and *week* and a *day_of_week`.
+  #
+  # This equates to the results from `#calendar_week` and `#day_of_week`.
+  #
+  # Valid value ranges for the individual fields:
+  #
+  # * `year`: `1..9999`
+  # * `week`: `1..53`
+  # * `day_of_week`: `1..7`
+  def self.week_date(year : Int32, week : Int32, day_of_week : Int32 | DayOfWeek, hour : Int32 = 0, minute : Int32 = 0, second : Int32 = 0, *, nanosecond : Int32 = 0, location : Location = Location.local) : self
+    # For this calculation we need to know the weekday of Januar 4.
+    # The number of the day plus a fixed offset of 4 gives a correction valud
+    # for this year.
+    jan4_day_of_week = Time.utc(year, 1, 4).day_of_week
+    correction = jan4_day_of_week.to_i + 4
+
+    # The number of weeks multiplied by 7 plus the day of week and the calculated
+    # correction value results in the ordinal day of the year.
+    ordinal = week * 7 + day_of_week.to_i - correction
+
+    # Adjust the year if the year of the week date does not correspond with the calendar year around New Years.
+
+    if ordinal < 1
+      # If the ordinal day is zero or negative, the date belongs to the previous
+      # calendar year.
+      year -= 1
+      ordinal += Time.days_in_year(year)
+    elsif ordinal > (days_in_year = Time.days_in_year(year))
+      # If the ordinal day is greater than the number of days in the year, the date
+      # belongs to the next year.
+      ordinal -= days_in_year
+      year += 1
+    end
+
+    # The ordinal day together with the year fully specifies the date.
+    # A new instance for January 1 plus the ordinal days results in the correct date.
+    # This calculation needs to be in UTC to avoid issues with changes in
+    # the time zone offset (such as daylight savings time).
+    # TODO: Use #shift or #to_local_in instead
+    time = Time.utc(year, 1, 1, hour, minute, second, nanosecond: nanosecond) + ordinal.days
+
+    # If the location is UTC, we're done
+    return time if location.utc?
+
+    # otherwise, transfer to the specified location without changing the time of day.
+    time = time.in(location: location)
+    time - time.offset.seconds
   end
 
   # Returns the duration between this `Time` and midnight of the same day.

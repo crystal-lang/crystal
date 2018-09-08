@@ -736,6 +736,35 @@ describe Time do
     end
   end
 
+  describe ".week_date" do
+    describe "verify test data" do
+      with_zoneinfo do
+        location = Time::Location.load("Europe/Berlin")
+
+        CALENDAR_WEEK_TEST_DATA.each do |date, week_date|
+          it "W#{week_date.join('-')} eq #{date.join('-')}" do
+            Time.week_date(*week_date, location: Time::Location::UTC).should eq(Time.utc(*date))
+            Time.week_date(week_date[0], week_date[1], Time::DayOfWeek.from_value(week_date[2]), location: Time::Location::UTC).should eq(Time.utc(*date))
+            Time.week_date(*week_date).should eq(Time.new(*date))
+            Time.week_date(*week_date, location: location).should eq(Time.new(*date, location: location))
+          end
+        end
+      end
+    end
+
+    it "accepts time arguments" do
+      with_zoneinfo do
+        location = Time::Location.load("Europe/Berlin")
+        Time.week_date(*CALENDAR_WEEK_TEST_DATA[0][1], 11, 57, 32, nanosecond: 123_567, location: location).should eq(
+          Time.new(*CALENDAR_WEEK_TEST_DATA[0][0], 11, 57, 32, nanosecond: 123_567, location: location))
+
+        location = Time::Location.load("America/Buenos_Aires")
+        Time.week_date(*CALENDAR_WEEK_TEST_DATA[0][1], 11, 57, 32, nanosecond: 123_567, location: location).should eq(
+          Time.new(*CALENDAR_WEEK_TEST_DATA[0][0], 11, 57, 32, nanosecond: 123_567, location: location))
+      end
+    end
+  end
+
   typeof(Time.now.year)
   typeof(1.minute.from_now.year)
   typeof(1.minute.ago.year)
