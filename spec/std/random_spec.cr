@@ -53,7 +53,7 @@ describe "Random" do
 
   it "limited large BigInt" do
     max = "1234567890123456789012345".to_big_i
-    x = rand("1234567890123456789012345".to_big_i)
+    x = rand(max)
     x.should be >= 0
     x.should be < max
   end
