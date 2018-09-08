@@ -307,7 +307,7 @@ struct Enum
     {% end %}
   end
 
-  # Returns the number of unique enum members.
+  # Returns the number of enum members for normal enum, or the number of flags for flags enum.
   #
   # ```
   # Color.size  # => 3
