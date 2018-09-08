@@ -1455,24 +1455,29 @@ module Crystal
     end
 
     def visit(node : Asm)
+      @str << "asm("
       node.text.inspect(@str)
       @str << " :"
-      if output = node.output
+      if outputs = node.outputs
         @str << ' '
-        output.accept self
+        outputs.join(", ", @str, &.accept self)
         @str << ' '
       end
       @str << ':'
       if inputs = node.inputs
         @str << ' '
         inputs.join(", ", @str, &.accept self)
+        @str << ' '
       end
+      @str << ":"
       if clobbers = node.clobbers
-        @str << " : "
+        @str << ' '
         clobbers.join(", ", @str, &.inspect @str)
+        @str << ' '
       end
+      @str << ":"
       if node.volatile? || node.alignstack? || node.intel?
-        @str << " : "
+        @str << ' '
         comma = false
         if node.volatile?
           @str << %("volatile")
@@ -1489,6 +1494,7 @@ module Crystal
           comma = true
         end
       end
+      @str << ')'
       false
     end
 

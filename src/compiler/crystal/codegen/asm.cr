@@ -4,10 +4,22 @@ class Crystal::CodeGenVisitor
   def visit(node : Asm)
     constraints = IO::Memory.new
 
-    if ptrof = node.ptrof
-      output = node.output.not_nil!
-      output_type = llvm_type(ptrof.type.as(PointerInstanceType).element_type)
-      constraints << output.constraint
+    if outputs = node.outputs
+      ptrofs = node.output_ptrofs.not_nil!
+
+      output_types = [] of LLVM::Type
+      outputs.each_with_index do |output, i|
+        constraints << ',' if i > 0
+        constraints << output.constraint
+
+        output_types << llvm_type(ptrofs[i].type.as(PointerInstanceType).element_type)
+      end
+
+      if output_types.size > 1
+        output_type = @llvm_context.struct(output_types)
+      else
+        output_type = output_types[0]
+      end
     else
       output_type = llvm_context.void
     end
@@ -44,9 +56,16 @@ class Crystal::CodeGenVisitor
     value = fun_type.const_inline_asm(node.text, constraints, node.volatile?, node.alignstack?)
     asm_value = call value, input_values
 
-    if ptrof
-      accept ptrof
-      store asm_value, @last
+    if ptrofs = node.output_ptrofs
+      if ptrofs.size > 1
+        ptrofs.each_with_index do |ptrof, i|
+          accept ptrof
+          store extract_value(asm_value, i), @last
+        end
+      else
+        accept ptrofs[0]
+        store asm_value, @last
+      end
     end
 
     @last = llvm_nil

@@ -679,7 +679,7 @@ module Crystal
   end
 
   class Asm
-    property ptrof : PointerOf?
+    property output_ptrofs : Array(PointerOf)?
   end
 
   # Fictitious node that means "all these nodes come from this file"

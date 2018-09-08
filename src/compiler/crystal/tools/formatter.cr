@@ -4047,7 +4047,7 @@ module Crystal
       skip_space
 
       if @token.type == :NEWLINE
-        if node.output || node.inputs
+        if node.outputs || node.inputs
           consume_newlines
           column += 4
           write_indent(column)
@@ -4061,28 +4061,16 @@ module Crystal
         write " ::"
         next_token_skip_space_or_newline
       elsif @token.type == :":"
-        space_after_output = true
-
         write " :"
         next_token_skip_space_or_newline
 
-        if output = node.output
-          write " "
-          accept output
-          skip_space
-          if @token.type == :NEWLINE
-            if node.inputs
-              consume_newlines
-              write_indent(colon_column)
-              space_after_output = false
-            else
-              skip_space_or_newline
-            end
+        if outputs = node.outputs
+          visit_asm_parts outputs, colon_column, write_colon: false do |output|
+            accept output
           end
         end
 
         if @token.type == :":"
-          write " " if output && space_after_output
           write ":"
           next_token_skip_space_or_newline
         end
