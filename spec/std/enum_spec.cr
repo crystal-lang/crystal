@@ -14,7 +14,7 @@ end
 enum SpecNonUniqueEnum
   One      = 1
   Two      = 2
-  OneAgain = 1
+  OneAgain = One
 end
 
 @[Flags]
@@ -111,8 +111,8 @@ describe Enum do
       SpecEnumFlags.size.should eq 3
     end
 
-    it "gives number of unique enum values" do
-      SpecNonUniqueEnum.size.should eq 2
+    it "gives number of enum members" do
+      SpecNonUniqueEnum.size.should eq 3
     end
 
     it "gives number of unique enum flags" do
