@@ -4919,57 +4919,38 @@ module Crystal
       alignstack = false
       intel = false
 
-      unless @token.type == :")"
+      part_index = 0
+      until @token.type == :")"
         if @token.type == :"::"
-          # No output operands
           next_token_skip_space_or_newline
-
-          if @token.type == :DELIMITER_START
-            inputs = parse_asm_operands
-          end
-        else
-          check :":"
+          part_index += 2
+        elsif @token.type == :":"
           next_token_skip_space_or_newline
+          part_index += 1
+        end
 
+        case part_index
+        when 1
           if @token.type == :DELIMITER_START
             outputs = parse_asm_operands
           end
-
-          if @token.type == :":"
-            next_token_skip_space_or_newline
-
-            if @token.type == :DELIMITER_START
-              inputs = parse_asm_operands
-            end
+        when 2
+          if @token.type == :DELIMITER_START
+            inputs = parse_asm_operands
           end
-        end
-
-        if @token.type == :"::"
-          next_token_skip_space_or_newline
-
+        when 3
+          if @token.type == :DELIMITER_START
+            clobbers = parse_asm_clobbers
+          end
+        when 4
           if @token.type == :DELIMITER_START
             volatile, alignstack, intel = parse_asm_options
           end
-        else
-          if @token.type == :":"
-            next_token_skip_space_or_newline
-
-            if @token.type == :DELIMITER_START
-              clobbers = parse_asm_clobbers
-            end
-          end
-
-          if @token.type == :":"
-            next_token_skip_space_or_newline
-
-            if @token.type == :DELIMITER_START
-              volatile, alignstack, intel = parse_asm_options
-            end
-          end
+        else break
         end
-
-        check :")"
       end
+
+      check :")"
 
       next_token_skip_space
 
