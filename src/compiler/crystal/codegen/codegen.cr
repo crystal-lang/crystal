@@ -623,12 +623,6 @@ module Crystal
 
       if return_phi = context.return_phi
         return_phi.add @last, node_type
-      elsif catch_pad = @catch_pad
-        ret_block = new_block "catchret_ret"
-        builder.build_catch_ret catch_pad, ret_block
-
-        position_at_end ret_block
-        codegen_return node_type
       else
         codegen_return node_type
       end
