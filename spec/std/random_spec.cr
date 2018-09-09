@@ -143,10 +143,10 @@ describe "Random" do
     expect_raises ArgumentError, "Invalid range for rand: 1..0" do
       rand(1..0)
     end
-    expect_raises ArgumentError, "Invalid range for rand: 1_big_i...1_big_i" do
+    expect_raises ArgumentError, "Invalid range for rand: #{1.to_big_i...1.to_big_i}" do
       rand(1.to_big_i...1.to_big_i)
     end
-    expect_raises ArgumentError, "Invalid range for rand: 1_big_i..0_big_i" do
+    expect_raises ArgumentError, "Invalid range for rand: #{1.to_big_i..0.to_big_i}" do
       rand(1.to_big_i..0.to_big_i)
     end
     expect_raises ArgumentError, "Invalid range for rand: 1.0...1.0" do
