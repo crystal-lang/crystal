@@ -118,6 +118,8 @@ class Crystal::CodeGenVisitor
     when "<=" then return codegen_binary_op_lte(t1, t2, p1, p2)
     when ">"  then return codegen_binary_op_gt(t1, t2, p1, p2)
     when ">=" then return codegen_binary_op_gte(t1, t2, p1, p2)
+    when "==" then return codegen_binary_op_eq(t1, t2, p1, p2)
+    when "!=" then return codegen_binary_op_ne(t1, t2, p1, p2)
     end
 
     p1, p2 = codegen_binary_extend_int(t1, t2, p1, p2)
@@ -133,8 +135,6 @@ class Crystal::CodeGenVisitor
     when "|"               then codegen_trunc_binary_op_result(t1, t2, or(p1, p2))
     when "&"               then codegen_trunc_binary_op_result(t1, t2, and(p1, p2))
     when "^"               then codegen_trunc_binary_op_result(t1, t2, builder.xor(p1, p2))
-    when "=="              then builder.icmp(LLVM::IntPredicate::EQ, p1, p2)
-    when "!="              then builder.icmp(LLVM::IntPredicate::NE, p1, p2)
     else                        raise "BUG: trying to codegen #{t1} #{op} #{t2}"
     end
   end
@@ -160,6 +160,26 @@ class Crystal::CodeGenVisitor
       result
     end
   end
+
+  # The below methods (lt, lte, gt, gte, eq, ne) perform
+  # comparisons on two integers x and y,
+  # where t1, t2 are their types and p1, p2 are their values.
+  #
+  # In LLVM, Int32 and UInt32 are represented as the same type
+  # (i32) and although integer operations have a sign
+  # (SGE, UGE, signed/unsigned greater than or equal)
+  # when we have one signed integer and one unsigned integer
+  # we can't choose a signedness for the operation. In that
+  # case we need to perform some additional checks.
+  #
+  # Equality and inequality operations for integers in LLVM don't have
+  # signedness, they just compare bit patterns. But for example
+  # the Int32 with value -1 and the UInt32 with value
+  # 4294967295 have the same bit pattern, and yet they are not
+  # equal, so again we must perform some additional checks
+  # (mainly, if the signed value is negative then there's
+  # no way they are equal, and for positive values we can
+  # perform the usual bit equality).
 
   def codegen_binary_op_lt(t1, t2, p1, p2)
     if t1.signed? == t2.signed?
@@ -310,6 +330,46 @@ class Crystal::CodeGenVisitor
           )
         end
       end
+    end
+  end
+
+  def codegen_binary_op_eq(t1, t2, p1, p2)
+    p1, p2 = codegen_binary_extend_int(t1, t2, p1, p2)
+
+    if t1.signed? == t2.signed?
+      builder.icmp(LLVM::IntPredicate::EQ, p1, p2)
+    elsif t1.signed? && t2.unsigned?
+      # x >= 0 && x == y
+      and(
+        builder.icmp(LLVM::IntPredicate::SGE, p1, p1.type.const_int(0)),
+        builder.icmp(LLVM::IntPredicate::EQ, p1, p2)
+      )
+    else # t1.unsigned? && t2.signed?
+      # y >= 0 && x == y
+      and(
+        builder.icmp(LLVM::IntPredicate::SGE, p2, p2.type.const_int(0)),
+        builder.icmp(LLVM::IntPredicate::EQ, p1, p2)
+      )
+    end
+  end
+
+  def codegen_binary_op_ne(t1, t2, p1, p2)
+    p1, p2 = codegen_binary_extend_int(t1, t2, p1, p2)
+
+    if t1.signed? == t2.signed?
+      builder.icmp(LLVM::IntPredicate::NE, p1, p2)
+    elsif t1.signed? && t2.unsigned?
+      # x < 0 || x != y
+      or(
+        builder.icmp(LLVM::IntPredicate::SLT, p1, p1.type.const_int(0)),
+        builder.icmp(LLVM::IntPredicate::NE, p1, p2)
+      )
+    else # t1.unsigned? && t2.signed?
+      # y < 0 || x != y
+      or(
+        builder.icmp(LLVM::IntPredicate::SLT, p2, p2.type.const_int(0)),
+        builder.icmp(LLVM::IntPredicate::NE, p1, p2)
+      )
     end
   end
 
