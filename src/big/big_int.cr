@@ -577,8 +577,6 @@ end
 module Random
   private def rand_int(max : BigInt) : BigInt
     # This is a copy of the algorithm in random.cr but with fewer special cases.
-    return max if max.zero?
-
     unless max > 0
       raise ArgumentError.new "Invalid bound for rand: #{max}"
     end

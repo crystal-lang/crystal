@@ -47,8 +47,6 @@ describe "Random" do
     x = rand(2.to_big_i)
     x.should be >= 0
     x.should be < 2
-
-    rand(0.to_big_i).should eq(0.to_big_i)
   end
 
   it "limited large BigInt" do
