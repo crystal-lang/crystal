@@ -215,7 +215,7 @@ module Iterator(T)
   # iter.next # => 4
   # ```
   def self.chain(iters : Iterator(Iter)) forall Iter
-    ChainsAll(Iter, T).new iters
+    ChainsAll(Iter, typeof(iters.first.first)).new iters
   end
 
   # the same as `.chain(Iterator(Iter))`
