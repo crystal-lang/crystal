@@ -704,8 +704,6 @@ class File < IO::FileDescriptor
 
   # Write the given *content* to *filename*.
   #
-  # The *mode* parameter can be used to change the file's `open` mode, e.g. to `"a"` for appending.
-  #
   # By default, an existing file will be overwritten.
   #
   # *filename* will be created if it does not already exist.
