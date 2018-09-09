@@ -246,48 +246,6 @@ module Random
     {% end %}
   {% end %}
 
-  private def rand_int(max : BigInt) : BigInt
-    # This follows the same algorithm as above but with much fewer special cases.
-    return max if max.zero?
-
-    unless max > 0
-      raise ArgumentError.new "Invalid bound for rand: #{max}"
-    end
-
-    rand_max = BigInt.new(1) << (sizeof(typeof(next_u))*8)
-    needed_parts = 1
-    while rand_max < max && rand_max > 0
-      rand_max <<= sizeof(typeof(next_u))*8
-      needed_parts += 1
-    end
-
-    limit = rand_max / max * max
-
-    loop do
-      result = BigInt.new(next_u)
-      (needed_parts - 1).times do
-        result <<= sizeof(typeof(next_u))*8
-        result |= BigInt.new(next_u)
-      end
-
-      # For a uniform distribution we may need to throw away some numbers.
-      if result < limit
-        return result % max
-      end
-    end
-  end
-
-  private def rand_range(range : Range(BigInt, BigInt)) : BigInt
-    span = range.end - range.begin
-    unless range.excludes_end?
-      span += 1
-    end
-    unless span > 0
-      raise ArgumentError.new "Invalid range for rand: #{range}"
-    end
-    range.begin + rand_int(span)
-  end
-
   # Returns a random `Float64` which is greater than or equal to `0`
   # and less than *max*.
   #
