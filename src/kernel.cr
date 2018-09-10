@@ -403,6 +403,7 @@ module AtExitHandlers
 
       STDERR.print "Unhandled exception: "
       ex.inspect_with_backtrace(STDERR)
+      STDERR.flush
     end
 
     status
