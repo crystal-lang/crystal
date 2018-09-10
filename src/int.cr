@@ -353,9 +353,11 @@ struct Int
   end
 
   def upto(to, &block : self ->) : Nil
+    return unless self <= to
     x = self
-    while x <= to
+    while true
       yield x
+      return if x == to
       x += 1
     end
   end
@@ -365,9 +367,11 @@ struct Int
   end
 
   def downto(to, &block : self ->) : Nil
+    return unless self >= to
     x = self
-    while x >= to
+    while true
       yield x
+      return if x == to
       x -= 1
     end
   end
@@ -539,23 +543,24 @@ struct Int
     @from : T
     @to : N
     @current : T
+    @done : Bool
 
     def initialize(@from : T, @to : N)
       @current = @from
+      @done = !(@from <= @to)
     end
 
     def next
-      if @current > @to
-        stop
-      else
-        value = @current
-        @current += 1
-        value
-      end
+      return stop if @done
+      value = @current
+      @done = @current == @to
+      @current += 1 unless @done
+      value
     end
 
     def rewind
       @current = @from
+      @done = !(@from <= @to)
       self
     end
   end
@@ -566,23 +571,24 @@ struct Int
     @from : T
     @to : N
     @current : T
+    @done : Bool
 
     def initialize(@from : T, @to : N)
       @current = @from
+      @done = !(@from >= @to)
     end
 
     def next
-      if @current < @to
-        stop
-      else
-        value = @current
-        @current -= 1
-        value
-      end
+      return stop if @done
+      value = @current
+      @done = @current == @to
+      @current -= 1 unless @done
+      value
     end
 
     def rewind
       @current = @from
+      @done = !(@from >= @to)
       self
     end
   end
