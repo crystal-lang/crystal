@@ -36,8 +36,6 @@ describe "Random" do
     5.times do
       rand(Int64::MAX).should be >= 0
     end
-
-    rand(0).should eq 0
   end
 
   it "float number" do
@@ -52,17 +50,19 @@ describe "Random" do
     x.should be < 3.5
   end
 
-  it "float number 0.0" do
-    rand(0.0).should eq 0.0
-  end
-
   it "raises on invalid number" do
+    expect_raises ArgumentError, "Invalid bound for rand: 0" do
+      rand(0)
+    end
     expect_raises ArgumentError, "Invalid bound for rand: -1" do
       rand(-1)
     end
   end
 
   it "raises on invalid float number" do
+    expect_raises ArgumentError, "Invalid bound for rand: 0.0" do
+      rand(0.0)
+    end
     expect_raises ArgumentError, "Invalid bound for rand: -1.0" do
       rand(-1.0)
     end
