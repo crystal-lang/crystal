@@ -100,14 +100,6 @@ describe "Int" do
     end
   end
 
-  describe "lcm" do
-    it { 2.lcm(2).should eq(2) }
-    it { 3.lcm(-7).should eq(21) }
-    it { 4.lcm(6).should eq(12) }
-    it { 0.lcm(2).should eq(0) }
-    it { 2.lcm(0).should eq(0) }
-  end
-
   describe "to_s in base" do
     it { 12.to_s(2).should eq("1100") }
     it { -12.to_s(2).should eq("-1100") }

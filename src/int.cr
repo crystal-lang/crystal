@@ -307,14 +307,6 @@ struct Int
     (self & mask) == mask
   end
 
-  def gcd(other : Int)
-    self == 0 ? other.abs : (other % self).gcd(self)
-  end
-
-  def lcm(other : Int)
-    (self * other).abs / gcd(other)
-  end
-
   def divisible_by?(num)
     self % num == 0
   end

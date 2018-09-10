@@ -328,9 +328,9 @@ struct BigInt < Int
     BigInt.new { |mpz| LibGMP.gcd(mpz, self, other) }
   end
 
-  def gcd(other : Int) : Int
+  def gcd(other : Int) : BigInt
     result = LibGMP.gcd_ui(nil, self, other.abs.to_u64)
-    result == 0 ? self : result
+    result == 0 ? self : result.to_big_i
   end
 
   def lcm(other : BigInt) : BigInt
@@ -514,7 +514,11 @@ struct Int
     to_big_i % other
   end
 
-  def gcm(other : BigInt) : Int
+  def gcd(other : BigInt) : BigInt
+    other.gcd(self)
+  end
+
+  def gcm(other : BigInt) : BigInt
     other.gcm(self)
   end
 
