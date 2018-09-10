@@ -118,6 +118,10 @@ require "crystal/system/time"
 # time.to_local # equals time.in(Location.local)
 # ```
 #
+# `#to_local_in` allows changing the time zone while keeping
+# the same local date-time (wall clock) which results in a different instant
+# on the time line.
+#
 # ### Formatting and Parsing Time
 #
 # To make date-time instances exchangeable between different computer systems
@@ -501,6 +505,28 @@ struct Time
     seconds = UNIX_SECONDS + (milliseconds / 1_000)
     nanoseconds = (milliseconds % 1000) * NANOSECONDS_PER_MILLISECOND
     utc(seconds: seconds, nanoseconds: nanoseconds.to_i)
+  end
+
+  # Creates a new `Time` instance with the same local date-time representation
+  # (wall clock) in a different *location*.
+  #
+  # Unlike `#in`, which always preserves the same instant in time, `#to_local_in`
+  # adjusts the instant such that it results in the same local date-time
+  # representation. Both instants are apart from each other by the difference in
+  # zone offsets.
+  #
+  # ```
+  # new_year = Time.utc(2019, 1, 1, 0, 0, 0)
+  # tokyo = new_year.to_local_in(Time::Location.load("Asia/Tokyo"))
+  # new_york = new_year.to_local_in(Time::Location.load("America/New_York"))
+  # tokyo.to_s    # => 2019-01-01 00:00:00.0 +09:00 Asia/Tokyo
+  # new_york.to_s # => 2019-01-01 00:00:00.0 -05:00 America/New_York
+  # ```
+  def to_local_in(location : Location)
+    local_seconds = offset_seconds
+    local_seconds -= Time.zone_offset_at(local_seconds, location)
+
+    Time.new(seconds: local_seconds, nanoseconds: nanosecond, location: location)
   end
 
   def clone : Time
@@ -1041,6 +1067,10 @@ struct Time
   # time_de # => 2018-03-08 22:05:13 +01:00 Europe/Berlin
   # time_ar # => 2018-03-08 18:05:13 -03:00 America/Buenos_Aires
   # ```
+  #
+  # In contrast, `#to_local_in` changes to a different location while
+  # preserving the same wall time, which results in different instants on the
+  # time line.
   def in(location : Location) : Time
     return self if location == self.location
 
