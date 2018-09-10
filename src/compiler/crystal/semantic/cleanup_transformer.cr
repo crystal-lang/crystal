@@ -730,6 +730,28 @@ module Crystal
     def transform(node : TupleLiteral)
       super
       node.update
+
+      no_return_index = node.elements.index &.no_returns?
+      if no_return_index
+        exps = Expressions.new(node.elements[0, no_return_index + 1])
+        exps.bind_to(exps.expressions.last)
+        return exps
+      end
+
+      node
+    end
+
+    def transform(node : NamedTupleLiteral)
+      super
+      node.update
+
+      no_return_index = node.entries.index &.value.no_returns?
+      if no_return_index
+        exps = Expressions.new(node.entries[0, no_return_index + 1].map &.value)
+        exps.bind_to(exps.expressions.last)
+        return exps
+      end
+
       node
     end
 
