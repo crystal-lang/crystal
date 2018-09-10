@@ -59,6 +59,52 @@ describe Iterator do
       iter.rewind
       iter.to_a.should eq([1, 2, 'a', 'b'])
     end
+
+    describe "chain indeterminate number of iterators" do
+      it "chains all together" do
+        iters = [[0], [1], [2, 3], [4, 5, 6]].each.map &.each
+        iter = Iterator.chain iters
+        7.times { |i| iter.next.should eq i }
+        iter.next.should be_a Iterator::Stop
+      end
+
+      it "chains empty" do
+        arrs = [] of Array(Int32)
+        iter = Iterator.chain arrs.map(&.each)
+        iter.next.should be_a Iterator::Stop
+      end
+
+      it "chains array of empty" do
+        iters = [[0], [1], ([] of Int32), [2, 3], ([] of Int32), [4, 5, 6]].each.map &.each
+        iter = Iterator.chain iters
+        7.times { |i| iter.next.should eq i }
+        iter.next.should be_a Iterator::Stop
+      end
+
+      it "rewinds" do
+        iters = [[0], [1], ([] of Int32), [2, 3], ([] of Int32), [4, 5, 6]].each.map &.each
+        iter = Iterator.chain iters
+        7.times { |i| iter.next.should eq i }
+        iter.next.should be_a Iterator::Stop
+        iter.rewind
+        7.times { |i| iter.next.should eq i }
+        iter.next.should be_a Iterator::Stop
+      end
+
+      it "chains iterators of different type" do
+        iters = [[1, 2], ["string"], ["and number", 3], [] of String,
+                 ["or float", 4.0_f64]].each.map &.each
+        iter = Iterator.chain iters
+        iter.next.should eq 1
+        iter.next.should eq 2
+        iter.next.should eq "string"
+        iter.next.should eq "and number"
+        iter.next.should eq 3
+        iter.next.should eq "or float"
+        iter.next.should eq 4.0_f64
+        iter.next.should be_a Iterator::Stop
+      end
+    end
   end
 
   describe "compact_map" do
