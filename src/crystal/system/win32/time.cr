@@ -114,7 +114,7 @@ module Crystal::System::Time
     day = 1
 
     time = ::Time.utc(year, systemtime.wMonth.to_i32, day, systemtime.wHour.to_i32, systemtime.wMinute.to_i32, systemtime.wSecond.to_i32)
-    i = systemtime.wDayOfWeek.to_i32 - time.day_of_week.to_i32
+    i = systemtime.wDayOfWeek.to_i32 - (time.day_of_week.to_i32 % 7)
 
     if i < 0
       i += 7
