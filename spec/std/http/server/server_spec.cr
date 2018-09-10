@@ -541,6 +541,41 @@ module HTTP
 
       server_done.should be_false
     end
+
+    describe "#close" do
+      it "closes gracefully" do
+        server = Server.new do |context|
+          context.response.flush
+          context.response.puts "foo"
+          context.response.flush
+
+          Fiber.yield
+
+          context.response.puts "bar"
+        end
+
+        address = server.bind_unused_port
+        spawn server.listen
+
+        TCPSocket.open(address.address, address.port) do |socket|
+          socket << "GET / HTTP/1.1\r\n\r\n"
+
+          while true
+            line = socket.gets || break
+            break if line.empty?
+          end
+
+          socket = HTTP::ChunkedContent.new(socket)
+
+          socket.gets.should eq "foo"
+
+          server.close
+
+          socket.closed?.should be_false
+          socket.gets.should eq "bar"
+        end
+      end
+    end
   end
 
   describe HTTP::Server::RequestProcessor do
