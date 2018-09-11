@@ -196,12 +196,16 @@ class Socket
         address == other.address
     end
 
-    def to_s(io)
+    def inspect(io)
       if family == Family::INET6
         io << '[' << address << ']' << ':' << port
       else
         io << address << ':' << port
       end
+    end
+
+    def pretty_print(pp)
+      pp.text inspect
     end
 
     def to_unsafe : LibC::Sockaddr*
