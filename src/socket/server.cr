@@ -6,7 +6,8 @@ class Socket
     # require "socket"
     #
     # server = TCPServer.new(2202)
-    # while socket = server.accept
+    # while true
+    #   socket = server.accept
     #   socket.puts Time.utc_now
     #   socket.close
     # end
@@ -23,7 +24,7 @@ class Socket
     # require "socket"
     #
     # server = TCPServer.new(2202)
-    # while socket = server.accept
+    # while socket = server.accept?
     #   socket.puts Time.utc_now
     #   socket.close
     # end
