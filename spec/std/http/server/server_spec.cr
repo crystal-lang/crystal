@@ -422,30 +422,6 @@ module HTTP
       end
     end
 
-    describe "#bind_ssl" do
-      it "binds SSL server context" do
-        server = Server.new do |context|
-          context.response.puts "Test Server (#{context.request.headers["Host"]?})"
-          context.response.close
-        end
-
-        server_context, client_context = ssl_context_pair
-
-        socket = OpenSSL::SSL::Server.new(TCPServer.new("127.0.0.1", 0), server_context)
-        server.bind socket
-        ip_address1 = server.bind_ssl "127.0.0.1", 0, server_context
-        ip_address2 = socket.local_address
-
-        spawn server.listen
-        Fiber.yield
-
-        HTTP::Client.get("https://#{ip_address1}", tls: client_context).body.should eq "Test Server (#{ip_address1})\n"
-        HTTP::Client.get("https://#{ip_address2}", tls: client_context).body.should eq "Test Server (#{ip_address2})\n"
-
-        server.close
-      end
-    end
-
     describe "#listen" do
       it "fails after listen" do
         server = Server.new { }
