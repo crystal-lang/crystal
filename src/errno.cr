@@ -221,7 +221,7 @@ class Errno < Exception
   end
 
   # Returns the message denoted by *errno*.
-  def self.message(errno = Errno.value)
+  def message(errno = Errno.value)
     String.new(LibC.strerror(errno))
   end
 
