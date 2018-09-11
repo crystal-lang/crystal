@@ -437,10 +437,14 @@ class Process
       src_io.blocking = true
       dst_io.reopen(src_io)
     when Redirect::Inherit
+      return if dst_io.closed?
       dst_io.blocking = true
     when Redirect::Close
-      File.open("/dev/null", mode) do |file|
-        dst_io.reopen(file)
+      # Set the FD to devnull.
+      void = File.open(File::DEVNULL, mode)
+      if void.fd != dst_io.fd
+        dst_io.reopen(void)
+        void.close
       end
     else
       raise "BUG: unknown object type #{src_io}"

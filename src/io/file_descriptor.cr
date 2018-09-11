@@ -11,7 +11,7 @@ class IO::FileDescriptor < IO
   getter fd
 
   def initialize(@fd, blocking = false)
-    @closed = false
+    @closed = system_closed?
 
     unless blocking || {{flag?(:win32)}}
       self.blocking = false
