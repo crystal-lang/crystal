@@ -391,7 +391,7 @@ class Socket < IO
   end
 
   def reuse_port?
-    0 != getsockopt(LibC::SO_REUSEPORT, 0) do |errno|
+    ret = getsockopt(LibC::SO_REUSEPORT, 0) do |errno|
       # If SO_REUSEPORT is not supported, the return value should be `false`
       if errno.errno == Errno::ENOPROTOOPT
         return false
@@ -399,6 +399,7 @@ class Socket < IO
         raise errno
       end
     end
+    ret != 0
   end
 
   def reuse_port=(val : Bool)
