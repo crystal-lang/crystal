@@ -192,6 +192,21 @@ describe Registry::Key do
         end
       end
     end
+
+    it "loads timezone name" do
+      LibC.GetDynamicTimeZoneInformation(out dtz_info).should_not eq(0)
+
+      key_name = String.from_utf16(dtz_info.timeZoneKeyName.to_unsafe)[0]
+
+      Registry::LOCAL_MACHINE.open("SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Time Zones\\#{key_name}", Registry::SAM::READ) do |key|
+        key.get_mui("MUI_Std").should eq(String.from_utf16(dtz_info.standardName.to_unsafe)[0])
+        key.get_mui?("MUI_Std").should eq(String.from_utf16(dtz_info.standardName.to_unsafe)[0])
+        if dtz_info.dynamicDaylightTimeDisabled == 0
+          key.get_mui("MUI_Dlt").should eq(String.from_utf16(dtz_info.daylightName.to_unsafe)[0])
+          key.get_mui?("MUI_Dlt").should eq(String.from_utf16(dtz_info.daylightName.to_unsafe)[0])
+        end
+      end
+    end
   end
 
   it "#get_string" do
