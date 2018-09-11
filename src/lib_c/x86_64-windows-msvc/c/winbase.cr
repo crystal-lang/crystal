@@ -90,4 +90,5 @@ lib LibC
   fun GetEnvironmentStringsW : LPWCH
   fun FreeEnvironmentStringsW(lpszEnvironmentBlock : LPWCH) : BOOL
   fun SetEnvironmentVariableW(lpName : LPWSTR, lpValue : LPWSTR) : BOOL
+  fun ExpandEnvironmentStringsW(lpSrc : LPWSTR, lpDst : LPWSTR, nSize : DWORD) : DWORD
 end
