@@ -1,4 +1,5 @@
 require "spec"
+require "socket"
 
 def unused_local_port
   TCPServer.open("::", 0) do |server|
