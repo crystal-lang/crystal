@@ -808,7 +808,9 @@ module Crystal
 
     def visit(node : MacroVerbatim)
       @str << "{% verbatim do %}"
-      node.exp.accept self
+      inside_macro do
+        node.exp.accept self
+      end
       @str << "{% end %}"
       false
     end
