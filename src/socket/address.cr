@@ -196,12 +196,18 @@ class Socket
         address == other.address
     end
 
-    def inspect(io)
+    def to_s(io)
       if family == Family::INET6
         io << '[' << address << ']' << ':' << port
       else
         io << address << ':' << port
       end
+    end
+
+    def inspect(io)
+      io << "Socket::IPAddress("
+      to_s(io)
+      io << ")"
     end
 
     def pretty_print(pp)
