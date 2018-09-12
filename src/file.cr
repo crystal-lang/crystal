@@ -64,11 +64,11 @@ class File < IO::FileDescriptor
   #   file.puts "this is discarded"
   # end
   # ```
-  {% if flag?(:win32) %}
-    DEVNULL = "NUL"
-  {% else %}
-    DEVNULL = "/dev/null"
-  {% end %}
+  DEVNULL = {% if flag?(:win32) %}
+              "NUL"
+            {% else %}
+              "/dev/null"
+            {% end %}
 
   include Crystal::System::File
 

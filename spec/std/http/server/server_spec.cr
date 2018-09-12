@@ -422,30 +422,6 @@ module HTTP
       end
     end
 
-    describe "#bind_ssl" do
-      it "binds SSL server context" do
-        server = Server.new do |context|
-          context.response.puts "Test Server (#{context.request.headers["Host"]?})"
-          context.response.close
-        end
-
-        server_context, client_context = ssl_context_pair
-
-        socket = OpenSSL::SSL::Server.new(TCPServer.new("127.0.0.1", 0), server_context)
-        server.bind socket
-        ip_address1 = server.bind_ssl "127.0.0.1", 0, server_context
-        ip_address2 = socket.local_address
-
-        spawn server.listen
-        Fiber.yield
-
-        HTTP::Client.get("https://#{ip_address1}", tls: client_context).body.should eq "Test Server (#{ip_address1})\n"
-        HTTP::Client.get("https://#{ip_address2}", tls: client_context).body.should eq "Test Server (#{ip_address2})\n"
-
-        server.close
-      end
-    end
-
     describe "#listen" do
       it "fails after listen" do
         server = Server.new { }
@@ -540,6 +516,41 @@ module HTTP
       Fiber.yield
 
       server_done.should be_false
+    end
+
+    describe "#close" do
+      it "closes gracefully" do
+        server = Server.new do |context|
+          context.response.flush
+          context.response.puts "foo"
+          context.response.flush
+
+          Fiber.yield
+
+          context.response.puts "bar"
+        end
+
+        address = server.bind_unused_port
+        spawn server.listen
+
+        TCPSocket.open(address.address, address.port) do |socket|
+          socket << "GET / HTTP/1.1\r\n\r\n"
+
+          while true
+            line = socket.gets || break
+            break if line.empty?
+          end
+
+          socket = HTTP::ChunkedContent.new(socket)
+
+          socket.gets.should eq "foo"
+
+          server.close
+
+          socket.closed?.should be_false
+          socket.gets.should eq "bar"
+        end
+      end
     end
   end
 

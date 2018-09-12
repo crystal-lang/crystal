@@ -31,7 +31,7 @@ class IO
         outbuf_ptr = outbuf.to_unsafe
         outbytesleft = LibC::SizeT.new(outbuf.size)
         err = @iconv.convert(pointerof(inbuf_ptr), pointerof(inbytesleft), pointerof(outbuf_ptr), pointerof(outbytesleft))
-        if err == -1
+        if err == Iconv::ERROR
           @iconv.handle_invalid(pointerof(inbuf_ptr), pointerof(inbytesleft))
         end
         io.write(outbuf.to_slice[0, outbuf.size - outbytesleft])
@@ -95,7 +95,7 @@ class IO
         @out_slice = @out_buffer[0, OUT_BUFFER_SIZE - out_buffer_left]
 
         # Check for errors
-        if result == -1
+        if result == Iconv::ERROR
           case Errno.value
           when Errno::EILSEQ
             # For an illegal sequence we just skip one byte and we'll continue next

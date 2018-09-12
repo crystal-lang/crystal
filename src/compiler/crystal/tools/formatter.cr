@@ -1665,7 +1665,14 @@ module Crystal
     end
 
     def visit(node : MacroVerbatim)
-      check :MACRO_CONTROL_START
+      reset_macro_state
+
+      # `{% verbatim %}`
+      if inside_macro?
+        check :MACRO_CONTROL_START
+      else
+        check :"{%"
+      end
       write "{%"
       next_token_skip_space_or_newline
       check_keyword :verbatim
@@ -1676,8 +1683,14 @@ module Crystal
       next_token_skip_space
       check :"%}"
       write " %}"
+
+      @macro_state.control_nest += 1
+      check_macro_whitespace
       next_macro_token
-      node.exp.accept self
+      inside_macro { no_indent node.exp }
+      @macro_state.control_nest -= 1
+
+      # `{% end %}`
       check :MACRO_CONTROL_START
       write "{%"
       next_token_skip_space_or_newline
@@ -1686,7 +1699,14 @@ module Crystal
       next_token_skip_space
       check :"%}"
       write " %}"
-      next_macro_token
+
+      if inside_macro?
+        check_macro_whitespace
+        next_macro_token
+      else
+        next_token
+      end
+
       false
     end
 
@@ -4027,7 +4047,7 @@ module Crystal
       skip_space
 
       if @token.type == :NEWLINE
-        if node.output || node.inputs
+        if node.outputs || node.inputs
           consume_newlines
           column += 4
           write_indent(column)
@@ -4036,57 +4056,63 @@ module Crystal
 
       skip_space_or_newline
 
-      colon_column = @column + 1
-      if @token.type == :"::"
-        write " ::"
-        next_token_skip_space_or_newline
-      elsif @token.type == :":"
-        space_after_output = true
+      if node.volatile? || node.alignstack? || node.intel?
+        expected_parts = 4
+      elsif node.clobbers
+        expected_parts = 3
+      elsif node.inputs
+        expected_parts = 2
+      elsif node.outputs
+        expected_parts = 1
+      else
+        expected_parts = 0
+      end
 
-        write " :"
-        next_token_skip_space_or_newline
+      write " " if expected_parts > 0
+      colon_column = @column
 
-        if output = node.output
-          write " "
-          accept output
-          skip_space
-          if @token.type == :NEWLINE
-            if node.inputs
-              consume_newlines
-              write_indent(colon_column)
-              space_after_output = false
-            else
-              skip_space_or_newline
+      part_index = 0
+      while part_index < expected_parts
+        if @token.type == :"::"
+          write_token :"::"
+          part_index += 2
+        elsif @token.type == :":"
+          write_token :":"
+          part_index += 1
+        end
+        skip_space_or_newline
+
+        case part_index
+        when 1
+          if outputs = node.outputs
+            visit_asm_parts outputs, colon_column do |output|
+              accept output
             end
           end
-        end
-
-        if @token.type == :":"
-          write " " if output && space_after_output
-          write ":"
-          next_token_skip_space_or_newline
+        when 2
+          if inputs = node.inputs
+            visit_asm_parts inputs, colon_column do |input|
+              accept input
+            end
+          end
+        when 3
+          if clobbers = node.clobbers
+            visit_asm_parts clobbers, colon_column do |clobber|
+              accept StringLiteral.new(clobber)
+            end
+          end
+        when 4
+          parts = [node.volatile?, node.alignstack?, node.intel?].select(&.itself)
+          visit_asm_parts parts, colon_column do
+            accept StringLiteral.new("")
+          end
+        else break
         end
       end
 
-      if inputs = node.inputs
-        visit_asm_parts inputs, colon_column, write_colon: false do |input|
-          accept input
-        end
-      end
-
-      if clobbers = node.clobbers
-        visit_asm_parts clobbers, colon_column, write_colon: true do |clobber|
-          accept StringLiteral.new(clobber)
-        end
-      end
-
-      if @token.type == :"::" || @token.type == :":"
-        write_token @token.type
-        skip_space_or_newline
-        parts = [node.volatile?, node.alignstack?, node.intel?].select(&.itself)
-        visit_asm_parts parts, colon_column, write_colon: false do
-          accept StringLiteral.new("")
-        end
+      # Mop up any trailing unused : or ::, don't write them since they should be removed
+      while {:":", :"::"}.includes? @token.type
+        next_token_skip_space_or_newline
       end
 
       skip_space_or_newline
@@ -4114,11 +4140,7 @@ module Crystal
       false
     end
 
-    def visit_asm_parts(parts, colon_column, write_colon) : Nil
-      if write_colon
-        write_token :":"
-        skip_space_or_newline
-      end
+    def visit_asm_parts(parts, colon_column) : Nil
       write " "
       column = @column
 

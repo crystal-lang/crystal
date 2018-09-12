@@ -52,6 +52,10 @@ module Crystal::System::FileDescriptor
     arg
   end
 
+  private def system_closed?
+    LibC.fcntl(@fd, LibC::F_GETFL) == -1
+  end
+
   def self.fcntl(fd, cmd, arg = 0)
     r = LibC.fcntl(fd, cmd, arg)
     raise Errno.new("fcntl() failed") if r == -1
@@ -101,6 +105,9 @@ module Crystal::System::FileDescriptor
         self.close_on_exec = true
       end
     {% end %}
+
+    # Mark the handle open, since we had to have dup'd a live handle.
+    @closed = false
 
     # We are now pointing to a new file descriptor, we need to re-register
     # events with libevent and enqueue readers and writers again.

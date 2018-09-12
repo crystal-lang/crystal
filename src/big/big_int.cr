@@ -1,5 +1,6 @@
 require "c/string"
 require "big"
+require "random"
 
 # A `BigInt` can represent arbitrarily large integers.
 #
@@ -570,6 +571,48 @@ module Math
   # ```
   def sqrt(value : BigInt)
     sqrt(value.to_big_f)
+  end
+end
+
+module Random
+  private def rand_int(max : BigInt) : BigInt
+    # This is a copy of the algorithm in random.cr but with fewer special cases.
+    unless max > 0
+      raise ArgumentError.new "Invalid bound for rand: #{max}"
+    end
+
+    rand_max = BigInt.new(1) << (sizeof(typeof(next_u))*8)
+    needed_parts = 1
+    while rand_max < max && rand_max > 0
+      rand_max <<= sizeof(typeof(next_u))*8
+      needed_parts += 1
+    end
+
+    limit = rand_max / max * max
+
+    loop do
+      result = BigInt.new(next_u)
+      (needed_parts - 1).times do
+        result <<= sizeof(typeof(next_u))*8
+        result |= BigInt.new(next_u)
+      end
+
+      # For a uniform distribution we may need to throw away some numbers.
+      if result < limit
+        return result % max
+      end
+    end
+  end
+
+  private def rand_range(range : Range(BigInt, BigInt)) : BigInt
+    span = range.end - range.begin
+    unless range.excludes_end?
+      span += 1
+    end
+    unless span > 0
+      raise ArgumentError.new "Invalid range for rand: #{range}"
+    end
+    range.begin + rand_int(span)
   end
 end
 

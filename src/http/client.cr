@@ -13,6 +13,19 @@
 # response.body.lines.first # => "<!doctype html>"
 # ```
 #
+# ### Parameters
+#
+# Parameters can be added to any request with the `HTTP::Params#encode` method, which
+# converts a `Hash` or `NamedTuple` to a URL encoded HTTP query.
+#
+# ```
+# require "http/client"
+#
+# params = HTTP::Params.encode({"author" => "John Doe", "offset" => "20"}) # => author=John+Doe&offset=20
+# response = HTTP::Client.get "http://www.example.com?" + params
+# response.status_code # => 200
+# ```
+#
 # ### Streaming
 #
 # With a block, an `HTTP::Client::Response` body is returned and the response's body

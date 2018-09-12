@@ -442,7 +442,7 @@ struct NamedTuple
   # ```
   def to_h
     {% if T.size == 0 %}
-      {% raise "Can't convert an empty NamedTuple to a Hash" %}
+      {} of NoReturn => NoReturn
     {% else %}
       {
         {% for key in T %}

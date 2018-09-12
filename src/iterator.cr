@@ -160,6 +160,9 @@ module Iterator(T)
 
   # Returns an iterator that returns elements from the original iterator until
   # it is exhausted and then returns the elements of the second iterator.
+  # Compared to `.chain(Iterator(Iter))`, it has better performance when the quantity of
+  # iterators to chain is small (usually less than 4).
+  # This method also cannot chain iterators in a loop, for that see `.chain(Iterator(Iter))`.
   #
   # ```
   # iter = (1..2).each.chain(('a'..'b').each)
@@ -197,6 +200,55 @@ module Iterator(T)
       @iterator1.rewind
       @iterator2.rewind
       @iterator1_consumed = false
+    end
+  end
+
+  # The same as `#chain`, but have better performance when the quantity of
+  # iterators to chain is large (usually greater than 4) or undetermined.
+  #
+  # ```
+  # array_of_iters = [[1], [2, 3], [4, 5, 6]]
+  # iter = Iterator(Int32).chain array_of_iters
+  # iter.next # => 1
+  # iter.next # => 2
+  # iter.next # => 3
+  # iter.next # => 4
+  # ```
+  def self.chain(iters : Iterator(Iter)) forall Iter
+    ChainsAll(Iter, typeof(iters.first.first)).new iters
+  end
+
+  # the same as `.chain(Iterator(Iter))`
+  def self.chain(iters : Iterable(Iter)) forall Iter
+    chain iters.each
+  end
+
+  private class ChainsAll(Iter, T)
+    include Iterator(T)
+    @iterators : Iterator(Iter)
+    @current : Iter | Stop
+
+    def initialize(@iterators)
+      @current = @iterators.next
+    end
+
+    def rewind
+      @iterators.rewind
+      @iterators.each &.rewind
+      @iterators.rewind
+      @current = @iterators.next
+      self
+    end
+
+    def next : T | Stop
+      return Stop::INSTANCE if (c = @current).is_a? Stop
+      ret = c.next
+      while ret.is_a? Stop
+        c = @current = @iterators.next
+        return Stop::INSTANCE if c.is_a? Stop
+        ret = c.next
+      end
+      ret
     end
   end
 

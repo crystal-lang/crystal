@@ -42,6 +42,10 @@ module Crystal::System::FileDescriptor
     raise NotImplementedError.new("Crystal::System::FileDescriptor#system_close_on_exec=") if close_on_exec
   end
 
+  private def system_closed?
+    false
+  end
+
   private def windows_handle
     ret = LibC._get_osfhandle(@fd)
     raise Errno.new("_get_osfhandle") if ret == -1
@@ -104,6 +108,9 @@ module Crystal::System::FileDescriptor
         self.close_on_exec = true
       end
     {% end %}
+
+    # Mark the handle open, since we had to have dup'd a live handle.
+    @closed = false
   end
 
   private def system_close

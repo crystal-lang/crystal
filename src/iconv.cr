@@ -4,6 +4,8 @@ require "c/iconv"
 struct Iconv
   @skip_invalid : Bool
 
+  ERROR = LibC::SizeT::MAX # (size_t)(-1)
+
   def initialize(from : String, to : String, invalid : Symbol? = nil)
     original_from, original_to = from, to
 

@@ -159,7 +159,8 @@ class Crystal::CodeGenVisitor
         # Here we set up the rescue block for that purpose.
         if node_ensure
           rescue_ensure_block = new_block "rescue_ensure"
-          @rescue_block = rescue_ensure_block
+        else
+          rescue_ensure_block = @rescue_block
         end
 
         node_rescues.each do |a_rescue|
@@ -182,6 +183,21 @@ class Crystal::CodeGenVisitor
           # If the rescue restriction matches, codegen the rescue block.
           position_at_end this_rescue_block
 
+          # On windows, we are "inside" the catchpad block. It's difficult to track when to catchret when
+          # codegenning the entire rescue body, so we catchret early and execute the rescue bodies "outside" the
+          # rescue block.
+          if catch_pad = @catch_pad
+            catch_ret_target_block = new_block "this_rescue_target"
+            builder.build_catch_ret catch_pad, catch_ret_target_block
+            position_at_end catch_ret_target_block
+          end
+
+          saved_catch_pad = @catch_pad
+          @catch_pad = old_catch_pad
+
+          # We are generating code for rescues, so set up the rescue block.
+          @rescue_block = rescue_ensure_block
+
           with_cloned_context do
             if a_rescue_name = a_rescue.name
               context.vars = context.vars.dup
@@ -193,23 +209,16 @@ class Crystal::CodeGenVisitor
             end
 
             accept a_rescue.body
-
-            if windows
-              # On windows, we are "inside" the catchpad block, so we need to perform a
-              # catchret after the rescue is complete.
-              rescue_end_block = new_block "rescue_end"
-              builder.build_catch_ret @catch_pad.not_nil!, rescue_end_block
-              position_at_end rescue_end_block
-            end
           end
           phi.add @last, a_rescue.body.type?
+
+          @rescue_block = old_rescue_block
 
           # If the rescue restriction doesn't match, program flow falls through to the next
           # iteration of the loop, i.e. the next rescue block (or ensure block if this is the last iteration)
           position_at_end next_rescue_block
+          @catch_pad = saved_catch_pad
         end
-
-        @rescue_block = old_rescue_block
       end
 
       # Codegen the ensure block. We are currently inside the last `next_rescue_block`,
@@ -219,6 +228,9 @@ class Crystal::CodeGenVisitor
       # or it would execute twice (and segfault).
       ensure_exception_handlers.pop
 
+      # We codegen the ensure block, unlike the rescue blocks, inside the catchpad block.
+      # This means we can re-raise efficiently, and is safe, since ensures cannot use return, next,
+      # break or any other construct to jump outside of the ensure block.
       accept node_ensure if node_ensure
 
       # ensure finished, re-raise the current exception.
@@ -233,7 +245,7 @@ class Crystal::CodeGenVisitor
         # This code is simpler because we never need to extract the exception type
         if windows
           rescue_ensure_body = new_block "rescue_ensure_body"
-          catch_switch = builder.catch_switch(@catch_pad || LLVM::Value.null, @rescue_block || LLVM::BasicBlock.null, 1)
+          catch_switch = builder.catch_switch(old_catch_pad || LLVM::Value.null, @rescue_block || LLVM::BasicBlock.null, 1)
           builder.add_handler catch_switch, rescue_ensure_body
 
           position_at_end rescue_ensure_body

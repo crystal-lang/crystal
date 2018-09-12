@@ -223,6 +223,7 @@ describe "NamedTuple" do
 
   it "does empty" do
     {a: 1}.empty?.should be_false
+    NamedTuple.new.empty?.should be_true
   end
 
   it "does to_a" do
@@ -310,7 +311,7 @@ describe "NamedTuple" do
   it "merges with other named tuple" do
     a = {one: 1, two: 2, three: 3, four: 4, five: 5, "im \"string": "works"}
     b = {two: "Two", three: true, "new one": "ok"}
-    c = a.merge(b).merge(four: "Four").should eq({one: 1, two: "Two", three: true, four: "Four", five: 5, "new one": "ok", "im \"string": "works"})
+    a.merge(b).merge(four: "Four").merge(NamedTuple.new).should eq({one: 1, two: "Two", three: true, four: "Four", five: 5, "new one": "ok", "im \"string": "works"})
   end
 
   it "does types" do
