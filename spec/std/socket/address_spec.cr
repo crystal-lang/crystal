@@ -1,5 +1,5 @@
 require "spec"
-require "socket/address"
+require "socket"
 
 describe Socket::Address do
   describe ".parse" do
@@ -159,5 +159,68 @@ describe Socket::UNIXAddress do
         Socket::UNIXAddress.parse "unix://?foo=bar"
       end
     end
+  end
+end
+
+describe Socket do
+  # Tests from libc-test:
+  # http://repo.or.cz/libc-test.git/blob/master:/src/functional/inet_pton.c
+  it ".ip?" do
+    # dotted-decimal notation
+    Socket.ip?("0.0.0.0").should be_true
+    Socket.ip?("127.0.0.1").should be_true
+    Socket.ip?("10.0.128.31").should be_true
+    Socket.ip?("255.255.255.255").should be_true
+
+    # numbers-and-dots notation, but not dotted-decimal
+    # Socket.ip?("1.2.03.4").should be_false # fails on darwin
+    Socket.ip?("1.2.0x33.4").should be_false
+    Socket.ip?("1.2.0XAB.4").should be_false
+    Socket.ip?("1.2.0xabcd").should be_false
+    Socket.ip?("1.0xabcdef").should be_false
+    Socket.ip?("00377.0x0ff.65534").should be_false
+
+    # invalid
+    Socket.ip?(".1.2.3").should be_false
+    Socket.ip?("1..2.3").should be_false
+    Socket.ip?("1.2.3.").should be_false
+    Socket.ip?("1.2.3.4.5").should be_false
+    Socket.ip?("1.2.3.a").should be_false
+    Socket.ip?("1.256.2.3").should be_false
+    Socket.ip?("1.2.4294967296.3").should be_false
+    Socket.ip?("1.2.-4294967295.3").should be_false
+    Socket.ip?("1.2. 3.4").should be_false
+
+    # ipv6
+    Socket.ip?(":").should be_false
+    Socket.ip?("::").should be_true
+    Socket.ip?("::1").should be_true
+    Socket.ip?(":::").should be_false
+    Socket.ip?(":192.168.1.1").should be_false
+    Socket.ip?("::192.168.1.1").should be_true
+    Socket.ip?("0:0:0:0:0:0:192.168.1.1").should be_true
+    Socket.ip?("0:0::0:0:0:192.168.1.1").should be_true
+    # Socket.ip?("::012.34.56.78").should be_false # fails on darwin
+    Socket.ip?(":ffff:192.168.1.1").should be_false
+    Socket.ip?("::ffff:192.168.1.1").should be_true
+    Socket.ip?(".192.168.1.1").should be_false
+    Socket.ip?(":.192.168.1.1").should be_false
+    Socket.ip?("a:0b:00c:000d:E:F::").should be_true
+    # Socket.ip?("a:0b:00c:000d:0000e:f::").should be_false # fails on GNU libc
+    Socket.ip?("1:2:3:4:5:6::").should be_true
+    Socket.ip?("1:2:3:4:5:6:7::").should be_true
+    Socket.ip?("1:2:3:4:5:6:7:8::").should be_false
+    Socket.ip?("1:2:3:4:5:6:7::9").should be_false
+    Socket.ip?("::1:2:3:4:5:6").should be_true
+    Socket.ip?("::1:2:3:4:5:6:7").should be_true
+    Socket.ip?("::1:2:3:4:5:6:7:8").should be_false
+    Socket.ip?("a:b::c:d:e:f").should be_true
+    Socket.ip?("ffff:c0a8:5e4").should be_false
+    Socket.ip?(":ffff:c0a8:5e4").should be_false
+    Socket.ip?("0:0:0:0:0:ffff:c0a8:5e4").should be_true
+    Socket.ip?("0:0:0:0:ffff:c0a8:5e4").should be_false
+    Socket.ip?("0::ffff:c0a8:5e4").should be_true
+    Socket.ip?("::0::ffff:c0a8:5e4").should be_false
+    Socket.ip?("c0a8").should be_false
   end
 end
