@@ -26,4 +26,20 @@ describe Socket do
     client.type.should eq(Socket::Type::STREAM)
     client.protocol.should eq(Socket::Protocol::TCP)
   end
+
+  describe "#bind" do
+    each_ip_family do |family, _, any_address|
+      it "binds to port" do
+        socket = TCPSocket.new family
+        socket.bind(any_address, 0)
+        socket.listen
+
+        address = socket.local_address.as(Socket::IPAddress)
+        address.address.should eq(any_address)
+        address.port.should be > 0
+      ensure
+        socket.try &.close
+      end
+    end
+  end
 end
