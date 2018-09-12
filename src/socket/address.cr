@@ -204,6 +204,16 @@ class Socket
       end
     end
 
+    def inspect(io)
+      io << "Socket::IPAddress("
+      to_s(io)
+      io << ")"
+    end
+
+    def pretty_print(pp)
+      pp.text inspect
+    end
+
     def to_unsafe : LibC::Sockaddr*
       case family
       when Family::INET6
