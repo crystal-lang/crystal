@@ -3,6 +3,10 @@ class Class
     to_s(io)
   end
 
+  def pretty_print(pp : PrettyPrint) : Nil
+    pp.color to_s, :class_name
+  end
+
   # See `Object#hash(hasher)`
   def hash(hasher)
     hasher.class(self)

@@ -255,6 +255,10 @@ struct Number
     self == 0
   end
 
+  def pretty_print(pp : PrettyPrint) : Nil
+    pp.color inspect, :number
+  end
+
   private class StepIterator(T, L, B)
     include Iterator(T)
 

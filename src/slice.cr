@@ -490,8 +490,9 @@ struct Slice(T)
   end
 
   def pretty_print(pp) : Nil
-    prefix = T == UInt8 ? "Bytes[" : "Slice["
-    pp.list(prefix, self, "]")
+    name = T == UInt8 ? "Bytes" : "Slice"
+    pp.color name, :class_name
+    pp.list("[", self, "]")
   end
 
   def to_a

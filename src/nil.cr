@@ -92,6 +92,10 @@ struct Nil
     io << "nil"
   end
 
+  def pretty_print(pp : PrettyPrint) : Nil
+    pp.color "nil", :nil
+  end
+
   # Doesn't yield to the block.
   #
   # See also: `Object#try`.

@@ -3837,14 +3837,14 @@ class String
         printed_bytesize += part.bytesize
         if printed_bytesize != bytesize
           printed_bytesize += 1 # == "\n".bytesize
-          pp.text("\"")
-          pp.text(part.inspect_unquoted)
-          pp.text("\\n\"")
+          pp.color "\"", :string
+          pp.color part.inspect_unquoted, :string
+          pp.color "\\n\"", :string
           break if printed_bytesize == bytesize
           pp.text(" +")
           pp.breakable
         else
-          pp.text(part.inspect)
+          pp.color part.inspect, :string
         end
       end
     end

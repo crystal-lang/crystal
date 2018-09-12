@@ -1,5 +1,6 @@
 require "spec"
 require "../support/finalize"
+require "../support/pretty_print"
 
 private module ReferenceSpec
   class TestClass
@@ -118,8 +119,10 @@ describe "Reference" do
   end
 
   it "pretty_print" do
-    ReferenceSpec::TestClassBase.new.pretty_inspect.should match(/\A#<ReferenceSpec::TestClassBase:0x[0-9a-f]+>\Z/)
-    ReferenceSpec::TestClass.new(42, "foo").pretty_inspect.should match(/\A#<ReferenceSpec::TestClass:0x[0-9a-f]+ @x=42, @y="foo">\Z/)
+    PrettyPrint.with_color(false) do
+      ReferenceSpec::TestClassBase.new.pretty_inspect.should match(/\A#<ReferenceSpec::TestClassBase:0x[0-9a-f]+>\Z/)
+      ReferenceSpec::TestClass.new(42, "foo").pretty_inspect.should match(/\A#<ReferenceSpec::TestClass:0x[0-9a-f]+ @x=42, @y="foo">\Z/)
+    end
   end
 
   it "calls #finalize on #dup'ed objects" do

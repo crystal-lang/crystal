@@ -866,6 +866,15 @@ class File < IO::FileDescriptor
     io
   end
 
+  def pretty_print(pp : PrettyPrint) : Nil
+    pp.text "#<"
+    pp.color "File", :class_name
+    pp.text ":"
+    pp.color @path, :string
+    pp.color " (closed)", :name if closed?
+    pp.text ">"
+  end
+
   # TODO: use fcntl/lockf instead of flock (which doesn't lock over NFS)
   # TODO: always use non-blocking locks, yield fiber until resource becomes available
 

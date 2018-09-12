@@ -328,7 +328,8 @@ struct Set(T)
   end
 
   def pretty_print(pp) : Nil
-    pp.list("Set{", self, "}")
+    pp.color "Set", :class_name
+    pp.list("{", self, "}")
   end
 
   # See `Object#hash(hasher)`

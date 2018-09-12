@@ -1,4 +1,5 @@
 require "spec"
+require "../support/pretty_print"
 
 describe "Regex::MatchData" do
   it "does inspect" do
@@ -14,18 +15,20 @@ describe "Regex::MatchData" do
   end
 
   it "does pretty_print" do
-    /f(o)(x)?/.match("the fo").pretty_inspect.should eq(%(Regex::MatchData("fo" 1:"o" 2:nil)))
+    PrettyPrint.with_color(false) do
+      /f(o)(x)?/.match("the fo").pretty_inspect.should eq(%(Regex::MatchData("fo" 1:"o" 2:nil)))
 
-    expected = <<-REGEX
-      Regex::MatchData("foooo"
-       first:"f"
-       second:"oooo"
-       third:"ooo"
-       fourth:"oo"
-       fifth:"o")
-      REGEX
+      expected = <<-REGEX
+        Regex::MatchData("foooo"
+         first:"f"
+         second:"oooo"
+         third:"ooo"
+         fourth:"oo"
+         fifth:"o")
+        REGEX
 
-    /(?<first>f)(?<second>o(?<third>o(?<fourth>o(?<fifth>o))))/.match("fooooo").pretty_inspect.should eq(expected)
+      /(?<first>f)(?<second>o(?<third>o(?<fourth>o(?<fifth>o))))/.match("fooooo").pretty_inspect.should eq(expected)
+    end
   end
 
   it "does size" do

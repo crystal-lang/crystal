@@ -477,6 +477,10 @@ struct Char
     end
   end
 
+  def pretty_print(pp : PrettyPrint) : Nil
+    pp.color inspect, :char
+  end
+
   # Appends this char as a string that contains a char literal to the given `IO`.
   #
   # See also: `#inspect`.

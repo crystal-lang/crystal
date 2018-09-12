@@ -274,8 +274,10 @@ class Dir
     to_s(io)
   end
 
-  def pretty_print(pp)
-    pp.text inspect
+  def pretty_print(pp) : Nil
+    pp.text "#<"
+    pp.color "Dir", :class_name
+    pp.text ":#{@path}>"
   end
 
   private struct EntryIterator

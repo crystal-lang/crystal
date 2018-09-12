@@ -266,11 +266,12 @@ struct StaticArray(T, N)
   end
 
   def pretty_print(pp)
+    pp.color "StaticArray", :class_name
     # Don't pass `self` here because we'll pass `self` by
     # value and for big static arrays that seems to make
     # LLVM really slow.
     # TODO: investigate why, maybe report a bug to LLVM?
-    pp.list("StaticArray[", to_slice, "]")
+    pp.list("[", to_slice, "]")
   end
 
   # Returns a new `StaticArray` where each element is cloned from elements in `self`.

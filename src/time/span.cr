@@ -384,6 +384,10 @@ struct Time::Span
     end
   end
 
+  def pretty_print(pp : PrettyPrint) : Nil
+    pp.color inspect, :number
+  end
+
   def self.zero : Time::Span
     ZERO
   end

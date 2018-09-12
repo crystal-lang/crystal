@@ -45,6 +45,10 @@ struct Symbol
     end
   end
 
+  def pretty_print(pp : PrettyPrint) : Nil
+    pp.color inspect, :symbol
+  end
+
   # Appends the symbol's name to the passed `IO`.
   #
   # ```

@@ -61,6 +61,10 @@ struct Bool
     io << to_s
   end
 
+  def pretty_print(pp : PrettyPrint) : Nil
+    pp.color to_s, :bool
+  end
+
   def clone
     self
   end

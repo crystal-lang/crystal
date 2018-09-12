@@ -7,6 +7,24 @@
 # * [Christian Lindig, Strictly Pretty, March 2000](http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.34.2200)
 # * [Philip Wadler, A prettier printer, March 1998](http://homepages.inf.ed.ac.uk/wadler/topics/language-design.html#prettier)
 class PrettyPrint
+  class_property? color_enabled : Bool = STDOUT.tty? && STDERR.tty?
+
+  alias Palette = Hash(Symbol, {fore: Colorize::Color?, back: Colorize::Color?})
+
+  class_property palette : Palette do
+    Palette.new.tap do |palette|
+      palette[:string] = {fore: Colorize::ColorANSI::Green, back: nil}
+      palette[:symbol] = {fore: Colorize::ColorANSI::Green, back: nil}
+      palette[:number] = {fore: Colorize::ColorANSI::Yellow, back: nil}
+      palette[:char] = {fore: Colorize::ColorANSI::Yellow, back: nil}
+      palette[:bool] = {fore: Colorize::ColorANSI::Yellow, back: nil}
+      palette[:nil] = {fore: Colorize::ColorANSI::DarkGray, back: nil}
+      palette[:regex] = {fore: Colorize::ColorANSI::Red, back: nil}
+      palette[:class_name] = {fore: Colorize::ColorANSI::Cyan, back: nil}
+      palette[:name] = {fore: Colorize::ColorANSI::Magenta, back: nil}
+    end
+  end
+
   protected getter group_queue
   protected getter newline
   protected getter indent
@@ -64,10 +82,37 @@ class PrettyPrint
 
   # Appends a text element.
   def text(obj)
-    obj = obj.to_s
-    width = obj.size
+    txt = obj.to_s
+    width = txt.size
     return if width == 0
 
+    obj = Colorize::Object.new(txt)
+    add_text obj, width
+  end
+
+  # Append a text element with fore- and background color.
+  def color(
+    obj,
+    fore : Colorize::Color? = nil,
+    back : Colorize::Color? = nil
+    # TODO: support `mode` argument
+  )
+    txt = obj.to_s
+    width = txt.size
+    return if width == 0
+
+    obj = Colorize::Object.new(txt).toggle(PrettyPrint.color_enabled?)
+    obj = obj.fore fore if fore
+    obj = obj.back back if back
+    add_text obj, width
+  end
+
+  # Append a text element with palette color.
+  def color(obj, name : Symbol)
+    color obj, **PrettyPrint.palette[name]
+  end
+
+  private def add_text(obj, width)
     if @buffer.empty?
       @output << obj
       @output_width += width
@@ -197,7 +242,7 @@ class PrettyPrint
     getter width
 
     def initialize
-      @objs = [] of String
+      @objs = [] of Colorize::Object(String)
       @width = 0
     end
 
@@ -207,7 +252,7 @@ class PrettyPrint
     end
 
     def add(obj, width)
-      @objs << obj.to_s
+      @objs << obj
       @width += width
     end
   end
