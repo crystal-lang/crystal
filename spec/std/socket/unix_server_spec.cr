@@ -41,7 +41,7 @@ describe UNIXServer do
   end
 
   it "won't delete existing file on bind failure" do
-    with_tempfile("unix_server-existing.sock") do |path|
+    with_tempfile("unix_server-exist.sock") do |path|
       File.write(path, "")
       File.exists?(path).should be_true
 
