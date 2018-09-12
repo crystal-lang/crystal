@@ -204,6 +204,9 @@ class Errno < Exception
   # Returns the numeric value of errno.
   getter errno : Int32
 
+  # Returns the message of errno.
+  getter errno_message : String
+
   # Creates a new `Errno` with the given message. The message will
   # have concatenated the errno message denoted by *errno*.
   #
@@ -217,12 +220,8 @@ class Errno < Exception
   # ```
   def initialize(message, errno = Errno.value)
     @errno = errno
-    super "#{message}: #{Errno.message(errno)}"
-  end
-
-  # Returns the errno message denoted by *errno*.
-  def self.message(errno)
-    String.new(LibC.strerror(errno))
+    @errno_message = String.new(LibC.strerror(@errno))
+    super "#{message}: #{@errno_message}"
   end
 
   # Returns the value of libc's errno.
