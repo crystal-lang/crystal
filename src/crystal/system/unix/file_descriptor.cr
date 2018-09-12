@@ -85,19 +85,19 @@ module Crystal::System::FileDescriptor
   end
 
   private def system_tty?
-    LibC.isatty(fd) == 1
+    LibC.isatty(@fd) == 1
   end
 
   private def system_reopen(other : IO::FileDescriptor)
     {% if LibC.methods.includes? "dup3".id %}
       # dup doesn't copy the CLOEXEC flag, so copy it manually using dup3
       flags = other.close_on_exec? ? LibC::O_CLOEXEC : 0
-      if LibC.dup3(other.fd, self.fd, flags) == -1
+      if LibC.dup3(other.@fd, @fd, flags) == -1
         raise Errno.new("Could not reopen file descriptor")
       end
     {% else %}
       # dup doesn't copy the CLOEXEC flag, copy it manually to the new
-      if LibC.dup2(other.fd, self.fd) == -1
+      if LibC.dup2(other.@fd, @fd) == -1
         raise Errno.new("Could not reopen file descriptor")
       end
 
