@@ -391,7 +391,15 @@ class Socket < IO
   end
 
   def reuse_port?
-    getsockopt_bool LibC::SO_REUSEPORT
+    ret = getsockopt(LibC::SO_REUSEPORT, 0) do |errno|
+      # If SO_REUSEPORT is not supported, the return value should be `false`
+      if errno.errno == Errno::ENOPROTOOPT
+        return false
+      else
+        raise errno
+      end
+    end
+    ret != 0
   end
 
   def reuse_port=(val : Bool)
@@ -445,9 +453,13 @@ class Socket < IO
 
   # Returns the modified *optval*.
   def getsockopt(optname, optval, level = LibC::SOL_SOCKET)
+    getsockopt(optname, optval, level) { |errno| raise errno }
+  end
+
+  protected def getsockopt(optname, optval, level = LibC::SOL_SOCKET)
     optsize = LibC::SocklenT.new(sizeof(typeof(optval)))
     ret = LibC.getsockopt(fd, level, optname, (pointerof(optval).as(Void*)), pointerof(optsize))
-    raise Errno.new("getsockopt") if ret == -1
+    yield Errno.new("getsockopt") if ret == -1
     optval
   end
 
