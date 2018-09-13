@@ -202,16 +202,24 @@ class Socket
     # In the IPv4 family, loopback addresses are all addresses in the subnet
     # `127.0.0.0/24`. In IPv6 `::1` is the loopback address.
     def loopback? : Bool
-      if family == Family::INET
-        @addr4.not_nil!.s_addr & 0x00000000ff_u32 == 0x0000007f_u32
+      if addr = @addr4
+        addr.s_addr & 0x00000000ff_u32 == 0x0000007f_u32
+      elsif addr = @addr6
+        addr.__in6_u.__u6_addr8 == StaticArray[0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 1_u8]
       else
-        @address == LOOPBACK6
+        raise "unreachable!"
       end
     end
 
     # Returns `true` if this IP is an unspecified address, either the IPv4 address `0.0.0.0` or the IPv6 address `::`.
     def unspecified? : Bool
-      @address == UNSPECIFIED6 || @address == UNSPECIFIED
+      if addr = @addr4
+        addr.s_addr == 0_u32
+      elsif addr = @addr6
+        addr.__in6_u.__u6_addr8 == StaticArray[0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8]
+      else
+        raise "unreachable!"
+      end
     end
 
     def ==(other : IPAddress)

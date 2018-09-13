@@ -104,6 +104,7 @@ describe Socket::IPAddress do
     Socket::IPAddress.new("128.0.0.1", 0).loopback?.should be_false
     Socket::IPAddress.new("0.0.0.0", 0).loopback?.should be_false
     Socket::IPAddress.new("::1", 0).loopback?.should be_true
+    Socket::IPAddress.new("0000:0000:0000:0000:0000:0000:0000:0001", 0).loopback?.should be_true
     Socket::IPAddress.new("::2", 0).loopback?.should be_false
     Socket::IPAddress.new(Socket::IPAddress::LOOPBACK, 0).loopback?.should be_true
     Socket::IPAddress.new(Socket::IPAddress::LOOPBACK6, 0).loopback?.should be_true
@@ -112,6 +113,8 @@ describe Socket::IPAddress do
   it "#unspecified?" do
     Socket::IPAddress.new("0.0.0.0", 0).unspecified?.should be_true
     Socket::IPAddress.new("127.0.0.1", 0).unspecified?.should be_false
+    Socket::IPAddress.new("::", 0).unspecified?.should be_true
+    Socket::IPAddress.new("0000:0000:0000:0000:0000:0000:0000:0000", 0).unspecified?.should be_true
     Socket::IPAddress.new(Socket::IPAddress::UNSPECIFIED, 0).unspecified?.should be_true
     Socket::IPAddress.new(Socket::IPAddress::UNSPECIFIED6, 0).unspecified?.should be_true
   end
