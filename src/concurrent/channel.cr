@@ -57,19 +57,19 @@ abstract class Channel(T)
     pp.text inspect
   end
 
-  def wait_for_receive
+  protected def wait_for_receive
     @receivers << Fiber.current
   end
 
-  def unwait_for_receive
+  protected def unwait_for_receive
     @receivers.delete Fiber.current
   end
 
-  def wait_for_send
+  protected def wait_for_send
     @senders << Fiber.current
   end
 
-  def unwait_for_send
+  protected def unwait_for_send
     @senders.delete Fiber.current
   end
 
@@ -117,14 +117,17 @@ abstract class Channel(T)
     end
   end
 
+  # :nodoc:
   def send_select_action(value : T)
     SendAction.new(self, value)
   end
 
+  # :nodoc:
   def receive_select_action
     ReceiveAction.new(self)
   end
 
+  # :nodoc:
   struct ReceiveAction(C)
     include SelectAction
 
@@ -148,6 +151,7 @@ abstract class Channel(T)
     end
   end
 
+  # :nodoc:
   struct SendAction(C, T)
     include SelectAction
 
