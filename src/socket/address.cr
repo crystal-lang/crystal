@@ -6,7 +6,7 @@ class Socket
     getter family : Family
     getter size : Int32
 
-    # Returns either an `IPAddress` or `UNIXAddres` from the internal OS
+    # Returns either an `IPAddress` or `UNIXAddress` from the internal OS
     # representation. Only INET, INET6 and UNIX families are supported.
     def self.from(sockaddr : LibC::Sockaddr*, addrlen) : Address
       case family = Family.new(sockaddr.value.sa_family)
@@ -239,6 +239,13 @@ class Socket
       sockaddr.value.sin_port = LibC.htons(port)
       sockaddr.value.sin_addr = @addr4.not_nil!
       sockaddr.as(LibC::Sockaddr*)
+    end
+
+    # Returns `true` if *address* represents a valid IPv4 or IPv6 address.
+    def self.ip?(address : String)
+      addr = LibC::In6Addr.new
+      ptr = pointerof(addr).as(Void*)
+      LibC.inet_pton(LibC::AF_INET, address, ptr) > 0 || LibC.inet_pton(LibC::AF_INET6, address, ptr) > 0
     end
   end
 
