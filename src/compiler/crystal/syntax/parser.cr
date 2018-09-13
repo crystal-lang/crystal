@@ -5548,6 +5548,8 @@ module Crystal
           members << parse_percent_macro_expression
         when :"{%"
           members << parse_percent_macro_control
+        when :"@["
+          members << parse_annotation
         when :";", :NEWLINE
           skip_statement_end
         else

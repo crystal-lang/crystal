@@ -1316,6 +1316,8 @@ module Crystal
 
     it_parses "enum Foo; macro foo;end; end", EnumDef.new("Foo".path, [Macro.new("foo", [] of Arg, Expressions.new)] of ASTNode)
 
+    it_parses "enum Foo; @[Bar]; end", EnumDef.new("Foo".path, [Annotation.new("Bar".path)] of ASTNode)
+
     it_parses "1.[](2)", Call.new(1.int32, "[]", 2.int32)
     it_parses "1.[]?(2)", Call.new(1.int32, "[]?", 2.int32)
     it_parses "1.[]=(2, 3)", Call.new(1.int32, "[]=", 2.int32, 3.int32)
