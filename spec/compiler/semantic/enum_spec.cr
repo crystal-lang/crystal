@@ -421,4 +421,19 @@ describe "Semantic: enum" do
       ),
       "can't declare type inside enum"
   end
+
+  it "attaches annotation to enum method (#6690)" do
+    result = semantic(%(
+      enum Foo
+        X
+
+        @[AlwaysInline]
+        def bar
+        end
+      end
+      ))
+
+    method = result.program.types["Foo"].lookup_first_def("bar", block: false).not_nil!
+    method.always_inline?.should be_true
+  end
 end
