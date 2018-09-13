@@ -1,5 +1,5 @@
 require "spec"
-require "socket"
+require "socket/address"
 
 describe Socket::Address do
   describe ".parse" do

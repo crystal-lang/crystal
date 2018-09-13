@@ -1,4 +1,5 @@
 require "uri/punycode"
+require "./address"
 
 class Socket
   # Domain name resolver.
