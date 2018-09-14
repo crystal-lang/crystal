@@ -465,7 +465,7 @@ class Process
       ->Crystal::SignalChildHandler.after_fork,
 
       # reinit event loop:
-      ->Scheduler.after_fork,
+      ->EventLoop.after_fork,
 
       # more clean ups (may depend on event loop):
       ->Random::DEFAULT.new_seed,

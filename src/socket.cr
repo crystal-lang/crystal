@@ -551,13 +551,13 @@ class Socket < IO
   end
 
   private def add_read_event(timeout = @read_timeout)
-    event = @read_event ||= Scheduler.create_fd_read_event(self)
+    event = @read_event ||= EventLoop.create_fd_read_event(self)
     event.add timeout
     nil
   end
 
   private def add_write_event(timeout = @write_timeout)
-    event = @write_event ||= Scheduler.create_fd_write_event(self)
+    event = @write_event ||= EventLoop.create_fd_write_event(self)
     event.add timeout
     nil
   end

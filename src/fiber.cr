@@ -270,7 +270,7 @@ class Fiber
   end
 
   def sleep(time : Time::Span)
-    event = @resume_event ||= Scheduler.create_resume_event(self)
+    event = @resume_event ||= EventLoop.create_resume_event(self)
     event.add(time)
     Scheduler.reschedule
   end
