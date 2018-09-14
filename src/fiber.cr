@@ -145,7 +145,7 @@ class Fiber
     # Delete the resume event if it was used by `yield` or `sleep`
     @resume_event.try &.free
 
-    Scheduler.reschedule
+    Crystal::Scheduler.reschedule
   end
 
   @[NoInline]
@@ -270,9 +270,9 @@ class Fiber
   end
 
   def sleep(time : Time::Span)
-    event = @resume_event ||= EventLoop.create_resume_event(self)
+    event = @resume_event ||= Crystal::EventLoop.create_resume_event(self)
     event.add(time)
-    Scheduler.reschedule
+    Crystal::Scheduler.reschedule
   end
 
   def sleep(time : Number)

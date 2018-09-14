@@ -111,7 +111,7 @@ module IO::Syscall
     readers = (@readers ||= Deque(Fiber).new)
     readers << Fiber.current
     add_read_event(timeout)
-    Scheduler.reschedule
+    Crystal::Scheduler.reschedule
 
     if @read_timed_out
       @read_timed_out = false
@@ -131,7 +131,7 @@ module IO::Syscall
     writers = (@writers ||= Deque(Fiber).new)
     writers << Fiber.current
     add_write_event(timeout)
-    Scheduler.reschedule
+    Crystal::Scheduler.reschedule
 
     if @write_timed_out
       @write_timed_out = false
@@ -145,12 +145,12 @@ module IO::Syscall
 
   private def reschedule_waiting
     if readers = @readers
-      Scheduler.enqueue readers
+      Crystal::Scheduler.enqueue readers
       readers.clear
     end
 
     if writers = @writers
-      Scheduler.enqueue writers
+      Crystal::Scheduler.enqueue writers
       writers.clear
     end
   end

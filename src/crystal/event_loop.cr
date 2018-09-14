@@ -1,6 +1,6 @@
 require "event"
 
-module EventLoop
+module Crystal::EventLoop
   @@eb = Event::Base.new
   @@dns_base : Event::DnsBase?
 
