@@ -119,7 +119,7 @@ class CSV
   #   csv.row "three"
   # end
   # result # => "one,two\nthree\n"
-  # result = CSV.build(quoting: :ALL) do |csv|
+  # result = CSV.build(quoting: CSV::Builder::Quoting::ALL) do |csv|
   #   csv.row "one", "two"
   #   csv.row "three"
   # end
@@ -127,7 +127,7 @@ class CSV
   # ```
   #
   # See: `CSV::Builder::Quoting`
-  def self.build(separator : Char = DEFAULT_SEPARATOR, quote_char : Char = DEFAULT_QUOTE_CHAR, quoting : Builder::Quoting = :RFC) : String
+  def self.build(separator : Char = DEFAULT_SEPARATOR, quote_char : Char = DEFAULT_QUOTE_CHAR, quoting : Builder::Quoting = Builder::Quoting::RFC) : String
     String.build do |io|
       build(io, separator, quote_char, quoting) { |builder| yield builder }
     end
@@ -145,7 +145,7 @@ class CSV
   # end
   # io.to_s # => "HEADER\none,two\nthree\n"
   # ```
-  def self.build(io : IO, separator : Char = DEFAULT_SEPARATOR, quote_char : Char = DEFAULT_QUOTE_CHAR, quoting : Builder::Quoting = :RFC)
+  def self.build(io : IO, separator : Char = DEFAULT_SEPARATOR, quote_char : Char = DEFAULT_QUOTE_CHAR, quoting : Builder::Quoting = Builder::Quoting::RFC)
     builder = Builder.new(io, separator, quote_char, quoting)
     yield builder
   end
