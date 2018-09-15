@@ -127,17 +127,17 @@ describe CSV do
     end
 
     it "builds with quoting" do
-      string = CSV.build(quoting: CSV::Builder::Quoting::NONE) do |csv|
+      string = CSV.build(quoting: :NONE) do |csv|
         csv.row 1, "doesn't", " , ", %(he said "no")
       end
       string.should eq(%(1,doesn't, , ,he said "no"\n))
 
-      string = CSV.build(quoting: CSV::Builder::Quoting::RFC) do |csv|
+      string = CSV.build(quoting: :RFC) do |csv|
         csv.row 1, "doesn't", " , ", %(he said "no")
       end
       string.should eq(%(1,doesn't," , ","he said ""no"""\n))
 
-      string = CSV.build(quoting: CSV::Builder::Quoting::ALL) do |csv|
+      string = CSV.build(quoting: :ALL) do |csv|
         csv.row 1, "doesn't", " , ", %(he said "no")
       end
       string.should eq(%("1","doesn't"," , ","he said ""no"""\n))

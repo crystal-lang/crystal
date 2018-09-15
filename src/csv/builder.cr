@@ -36,13 +36,18 @@ require "csv"
 # ```
 class CSV::Builder
   enum Quoting
-    NONE # No quotes
-    RFC  # Quotes according to RFC 4180 (default)
-    ALL  # Always quote
+    # No quotes
+    NONE
+
+    # Quotes according to RFC 4180 (default)
+    RFC
+
+    # Always quote
+    ALL
   end
 
   # Creates a builder that will write to the given `IO`.
-  def initialize(@io : IO, @separator : Char = DEFAULT_SEPARATOR, @quote_char : Char = DEFAULT_QUOTE_CHAR, @quoting : Quoting = Quoting::RFC)
+  def initialize(@io : IO, @separator : Char = DEFAULT_SEPARATOR, @quote_char : Char = DEFAULT_QUOTE_CHAR, @quoting : Quoting = :RFC)
     @first_cell_in_row = true
   end
 
@@ -102,7 +107,7 @@ class CSV::Builder
     @builder : Builder
 
     # :nodoc:
-    def initialize(@builder, @separator : Char = DEFAULT_SEPARATOR, @quote_char : Char = DEFAULT_QUOTE_CHAR, @quoting : Quoting = Quoting::RFC)
+    def initialize(@builder, @separator : Char = DEFAULT_SEPARATOR, @quote_char : Char = DEFAULT_QUOTE_CHAR, @quoting : Quoting = :RFC)
     end
 
     # Appends the given value to this row.
