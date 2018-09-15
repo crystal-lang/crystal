@@ -73,7 +73,7 @@ end
 # The syntax for a format specifier is:
 #
 # ```text
-# %[flags][width][.precision]type
+# %[flags][width][.precision][type]
 # ```
 #
 # A format specifier consists of a percent sign, followed by optional flags,
@@ -87,70 +87,67 @@ end
 # The field type characters are:
 #
 # ```text
-#     Field |  Integer Format
-#     ------+--------------------------------------------------------------
-#       b   | Formats argument as a binary number.
-#       d   | Formats argument as a decimal number.
-#       i   | Same as d.
-#       o   | Formats argument as an octal number.
-#       x   | Formats argument as a hexadecimal number using lowercase letters.
-#       X   | Same as x, but uses uppercase letters.
+# Field | Integer Format
+# ------+------------------------------------------------------------------
+#   b   | Formats argument as a binary number.
+#   d   | Formats argument as a decimal number.
+#   i   | Same as d.
+#   o   | Formats argument as an octal number.
+#   x   | Formats argument as a hexadecimal number using lowercase letters.
+#   X   | Same as x, but uses uppercase letters.
 #
-#     Field |  Float Format
-#     ------+--------------------------------------------------------------
-#       e   | Formats floating point argument into exponential notation
-#           | with one digit before the decimal point as [-]d.dddddde[+-]dd.
-#           | The precision specifies the number of digits after the decimal
-#           | point (defaulting to six).
-#       E   | Equivalent to e, but uses an uppercase E to indicate
-#           | the exponent.
-#       f   | Formats floating point argument as [-]ddd.dddddd,
-#           | where the precision specifies the number of digits after
-#           | the decimal point.
-#       g   | Formats a floating point number using exponential form
-#           | if the exponent is less than -4 or greater than or
-#           | equal to the precision, or in dd.dddd form otherwise.
-#           | The precision specifies the number of significant digits.
-#       G   | Equivalent to g, but use an uppercase E in exponent form.
-#       a   | Formats floating point argument as [-]0xh.hhhhp[+-]dd,
-#           | which is consisted from optional sign, "0x", fraction part
-#           | as hexadecimal, "p", and exponential part as decimal.
-#       A   | Equivalent to a, but use uppercase X and P.
+# Field | Float Format
+# ------+---------------------------------------------------------------
+#   e   | Formats floating point argument into exponential notation
+#       | with one digit before the decimal point as [-]d.dddddde[+-]dd.
+#       | The precision specifies the number of digits after the decimal
+#       | point (defaulting to six).
+#   E   | Equivalent to e, but uses an uppercase E to indicate
+#       | the exponent.
+#   f   | Formats floating point argument as [-]ddd.dddddd,
+#       | where the precision specifies the number of digits after
+#       | the decimal point.
+#   g   | Formats a floating point number using exponential form
+#       | if the exponent is less than -4 or greater than or
+#       | equal to the precision, or in dd.dddd form otherwise.
+#       | The precision specifies the number of significant digits.
+#   G   | Equivalent to g, but use an uppercase E in exponent form.
+#   a   | Formats floating point argument as [-]0xh.hhhhp[+-]dd,
+#       | which is consisted from optional sign, "0x", fraction part
+#       | as hexadecimal, "p", and exponential part as decimal.
+#   A   | Equivalent to a, but use uppercase X and P.
 #
-#     Field |  Other Format
-#     ------+--------------------------------------------------------------
-#       c   | Argument is the numeric code for a single character or
-#           | a single character string itself.
-#       s   | Argument is a string to be substituted.  If the format
-#           | sequence contains a precision, at most that many characters
-#           | will be copied.
-#       %   | A percent sign itself will be displayed.  No argument taken.
-#
+# Field | Other Format
+# ------+------------------------------------------------------------
+#   c   | Argument is a single character itself.
+#   s   | Argument is a string to be substituted. If the format
+#       | sequence contains a precision, at most that many characters
+#       | will be copied.
+#   %   | A percent sign itself will be displayed. No argument taken.
 # ```
 # The flags modifies the behavior of the formats.
 # The flag characters are:
 # ```text
-#
-#   Flag     | Applies to    | Meaning
-#   ---------+---------------+-----------------------------------------
-#   space    | bdiouxX       | Add a leading space character to
-#            | aAeEfgG       | non-negative numbers.
-#            | (numeric fmt) | For o, x, X, b, use
-#            |               | a minus sign with absolute value for
-#            |               | negative values.
-#   ---------+---------------+-----------------------------------------
-#   +        | bdiouxX       | Add a leading plus sign to non-negative
-#            | aAeEfgG       | numbers.
-#            | (numeric fmt) | For o, x, X, b, use
-#            |               | a minus sign with absolute value for
-#            |               | negative values.
-#   ---------+---------------+-----------------------------------------
-#   -        | all           | Left-justify the result of this conversion.
-#   ---------+---------------+-----------------------------------------
-#   0 (zero) | bdiouxX       | Pad with zeros, not spaces.
-#            | aAeEfgG       | For o, x, X, b, radix-1
-#            | (numeric fmt) | is used for negative numbers formatted as
-#            |               | complements.
+# Flag     | Applies to    | Meaning
+# ---------+---------------+--------------------------------------------
+# space    | bdiouxX       | Add a leading space character to
+#          | aAeEfgG       | non-negative numbers.
+#          | (numeric fmt) | For o, x, X, b, use
+#          |               | a minus sign with absolute value for
+#          |               | negative values.
+# ---------+---------------+--------------------------------------------
+# +        | bdiouxX       | Add a leading plus sign to non-negative
+#          | aAeEfgG       | numbers.
+#          | (numeric fmt) | For o, x, X, b, use
+#          |               | a minus sign with absolute value for
+#          |               | negative values.
+# ---------+---------------+--------------------------------------------
+# -        | all           | Left-justify the result of this conversion.
+# ---------+---------------+--------------------------------------------
+# 0 (zero) | bdiouxX       | Pad with zeros, not spaces.
+#          | aAeEfgG       | For o, x, X, b, radix-1
+#          | (numeric fmt) | is used for negative numbers formatted as
+#          |               | complements.
 # ```
 #
 # Examples of flags:

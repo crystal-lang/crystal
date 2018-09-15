@@ -92,8 +92,6 @@ struct String::Formatter(A)
       case current_char
       when ' '
         flags.space = true
-      when '#'
-        flags.sharp = true
       when '+'
         flags.plus = true
       when '-'
@@ -110,7 +108,7 @@ struct String::Formatter(A)
 
   private def consume_width(flags)
     case current_char
-    when '1'..'9'
+    when '0'..'9'
       num, size = consume_number
       flags.width = num
       flags.width_size = size
@@ -125,7 +123,7 @@ struct String::Formatter(A)
   private def consume_precision(flags)
     if current_char == '.'
       case next_char
-      when '1'..'9'
+      when '0'..'9'
         num, size = consume_number
         flags.precision = num
         flags.precision_size = size
@@ -172,6 +170,8 @@ struct String::Formatter(A)
 
   private def consume_type(flags, arg = nil, arg_specified = false)
     case char = current_char
+    when 'c'
+      char flags, arg, arg_specified
     when 's'
       string flags, arg, arg_specified
     when 'b'
@@ -195,6 +195,14 @@ struct String::Formatter(A)
     else
       raise ArgumentError.new("Malformed format string - %#{char.inspect}")
     end
+  end
+
+  def char(flags, arg, arg_specified)
+    arg = next_arg unless arg_specified
+
+    pad 1, flags if flags.left_padding?
+    @io << arg
+    pad 1, flags if flags.right_padding?
   end
 
   def string(flags, arg, arg_specified)
@@ -241,7 +249,7 @@ struct String::Formatter(A)
     end
   end
 
-  # We don't actually format the float ourselves, we delegate to sprintf
+  # We don't actually format the float ourselves, we delegate to snprintf
   def float(flags, arg, arg_specified)
     arg = next_arg unless arg_specified
 
@@ -352,12 +360,12 @@ struct String::Formatter(A)
   end
 
   struct Flags
-    property space : Bool, sharp : Bool, plus : Bool, minus : Bool, zero : Bool, base : Int32
+    property space : Bool, plus : Bool, minus : Bool, zero : Bool, base : Int32
     property width : Int32, width_size : Int32
     property type : Char, precision : Int32?, precision_size : Int32
 
     def initialize
-      @space = @sharp = @plus = @minus = @zero = false
+      @space = @plus = @minus = @zero = false
       @width = 0
       @width_size = 0
       @base = 10
