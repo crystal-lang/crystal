@@ -117,6 +117,9 @@ describe "Spec matchers" do
 end
 
 describe "Spec" do
+  it "should treat it calls without blocks as pending"
+  pending "should allow pending calls without blocks"
+
   describe "use_colors?" do
     it "returns if output is colored or not" do
       saved = Spec.use_colors?

@@ -56,6 +56,14 @@ module Spec::Methods
     end
   end
 
+  # Defines a yet-to-be-implemented pending test case
+  #
+  # For complete clarity, you should stick with `#pending`
+  # to make your intentions completely clear.
+  def it(description = "assert", file = __FILE__, line = __LINE__, end_line = __END_LINE__)
+    pending description, file, line, end_line
+  end
+
   # Defines a pending test case.
   #
   # *&block* is never evaluated.
@@ -73,6 +81,11 @@ module Spec::Methods
     Spec.formatters.each(&.before_example(description))
 
     Spec::RootContext.report(:pending, description, file, line)
+  end
+
+  # Define a yet-to-be-implemented pending test case
+  def pending(description = "assert", file = __FILE__, line = __LINE__, end_line = __END_LINE__)
+    pending(description, file, line, end_line) { }
   end
 
   # DEPRECATED: Use `#it`
