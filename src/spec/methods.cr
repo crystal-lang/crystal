@@ -56,14 +56,6 @@ module Spec::Methods
     end
   end
 
-  # Defines a yet-to-be-implemented pending test case
-  #
-  # For complete clarity, you should stick with `#pending`
-  # to make your intentions completely clear.
-  def it(description = "assert", file = __FILE__, line = __LINE__, end_line = __END_LINE__)
-    pending description, file, line, end_line
-  end
-
   # Defines a pending test case.
   #
   # *&block* is never evaluated.
