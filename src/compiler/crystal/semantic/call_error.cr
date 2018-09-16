@@ -39,7 +39,7 @@ end
 class Crystal::Call
   def raise_matches_not_found(owner, def_name, arg_types, named_args_types, matches = nil, with_literals = false)
     if def_name == "allocate" && owner.is_a?(ModuleType) && owner.is_a?(MetaclassType)
-      raise "Cannot instantiate #{owner}"
+      raise "cannot instantiate #{owner}"
     end
 
     # Special case: Foo+.class#new
