@@ -43,15 +43,19 @@ describe UDPSocket do
     end
   end
 
-  it "sends broadcast message" do
-    port = unused_local_port
+  {% if flag?(:linux) %}
+    it "sends broadcast message" do
+      port = unused_local_port
 
-    client = UDPSocket.new(Socket::Family::INET)
-    client.bind("localhost", 0)
-    client.broadcast = true
-    client.broadcast?.should be_true
-    client.connect("255.255.255.255", port)
-    client.send("broadcast").should eq(9)
-    client.close
-  end
+      client = UDPSocket.new(Socket::Family::INET)
+      client.bind("localhost", 0)
+      client.broadcast = true
+      client.broadcast?.should be_true
+      client.connect("255.255.255.255", port)
+      client.send("broadcast").should eq(9)
+      client.close
+    end
+  {% else %}
+    pending "sends broadcast message"
+  {% end %}
 end

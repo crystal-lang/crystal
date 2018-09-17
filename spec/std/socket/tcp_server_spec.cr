@@ -91,10 +91,14 @@ describe TCPServer do
     end
   end
 
-  it "settings" do
-    TCPServer.open("::", unused_local_port) do |server|
-      (server.recv_buffer_size = 42).should eq 42
-      server.recv_buffer_size.should eq 42
+  {% if flag?(:linux) %}
+    pending "settings"
+  {% else %}
+    it "settings" do
+      TCPServer.open("::", unused_local_port) do |server|
+        (server.recv_buffer_size = 42).should eq 42
+        server.recv_buffer_size.should eq 42
+      end
     end
-  end
+  {% end %}
 end
