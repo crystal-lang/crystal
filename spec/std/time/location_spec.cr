@@ -174,7 +174,10 @@ class Time::Location
     describe ".load_local" do
       it "with unset TZ" do
         with_env("TZ", nil) do
-          Location.load_local.name.should eq "Local"
+          # This should generally be `Local`, but if `/etc/localtime` doesn't exist,
+          # `Crystal::System::Time.load_localtime` can't resolve a local time zone,
+          # making the return value default to `UTC`.
+          {"Local", "UTC"}.should contain Location.load_local.name
         end
       end
 
