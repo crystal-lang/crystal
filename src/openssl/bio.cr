@@ -25,10 +25,27 @@ struct OpenSSL::BIO
       len
     end
 
+    bwrite_ex = LibCrypto::BioMethodWrite.new do |bio, data, len, writep|
+      count = len > Int32::MAX ? Int32::MAX : len.to_i
+      io = Box(IO).unbox(BIO.get_data(bio))
+      io.write Slice.new(data, count)
+      writep.value = LibC::SizeT.new(count)
+      1
+    end
+
     bread = LibCrypto::BioMethodReadOld.new do |bio, buffer, len|
       io = Box(IO).unbox(BIO.get_data(bio))
       io.flush
       io.read(Slice.new(buffer, len)).to_i
+    end
+
+    bread_ex = LibCrypto::BioMethodWrite.new do |bio, buffer, len, readp|
+      count = len > Int32::MAX ? Int32::MAX : len.to_i
+      io = Box(IO).unbox(BIO.get_data(bio))
+      io.flush
+      ret = io.read Slice.new(buffer, count)
+      readp.value = LibC::SizeT.new(ret)
+      1
     end
 
     ctrl = LibCrypto::BioMethodCtrl.new do |bio, cmd, num, ptr|
@@ -67,8 +84,15 @@ struct OpenSSL::BIO
 
     {% if LibCrypto::OPENSSL_110 %}
       biom = LibCrypto.BIO_meth_new(Int32::MAX, "Crystal BIO")
-      LibCrypto.BIO_meth_set_write(biom, bwrite)
-      LibCrypto.BIO_meth_set_read(biom, bread)
+
+      {% if LibCrypto::OPENSSL_111 %}
+        LibCrypto.BIO_meth_set_write_ex(biom, bwrite_ex)
+        LibCrypto.BIO_meth_set_read_ex(biom, bread_ex)
+      {% else %}
+        LibCrypto.BIO_meth_set_write(biom, bwrite)
+        LibCrypto.BIO_meth_set_read(biom, bread)
+      {% end %}
+
       LibCrypto.BIO_meth_set_ctrl(biom, ctrl)
       LibCrypto.BIO_meth_set_create(biom, create)
       LibCrypto.BIO_meth_set_destroy(biom, destroy)
