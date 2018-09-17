@@ -1,5 +1,6 @@
 {% begin %}
   lib LibCrypto
+    OPENSSL_111 = {{ `command -v pkg-config > /dev/null && pkg-config --atleast-version=1.1.1 libcrypto || printf %s false`.stringify != "false" }}
     OPENSSL_110 = {{ `command -v pkg-config > /dev/null && pkg-config --atleast-version=1.1.0 libcrypto || printf %s false`.stringify != "false" }}
     OPENSSL_102 = {{ `command -v pkg-config > /dev/null && pkg-config --atleast-version=1.0.2 libcrypto || printf %s false`.stringify != "false" }}
   end
@@ -45,8 +46,10 @@ lib LibCrypto
   CTRL_POP   =  7
   CTRL_FLUSH = 11
 
-  alias BioMethodWrite = (Bio*, Char*, Int) -> Int
-  alias BioMethodRead = (Bio*, Char*, Int) -> Int
+  alias BioMethodWrite = (Bio*, Char*, SizeT, SizeT*) -> Int
+  alias BioMethodWriteOld = (Bio*, Char*, Int) -> Int
+  alias BioMethodRead = (Bio*, Char*, SizeT, SizeT*) -> Int
+  alias BioMethodReadOld = (Bio*, Char*, Int) -> Int
   alias BioMethodPuts = (Bio*, Char*) -> Int
   alias BioMethodGets = (Bio*, Char*, Int) -> Int
   alias BioMethodCtrl = (Bio*, Int, Long, Void*) -> Long
@@ -54,21 +57,45 @@ lib LibCrypto
   alias BioMethodDestroy = Bio* -> Int
   alias BioMethodCallbackCtrl = (Bio*, Int, Void*) -> Long
 
-  struct BioMethod
-    type_id : Int
-    name : Char*
-    bwrite : BioMethodWrite
-    bread : BioMethodRead
-    bputs : BioMethodPuts
-    bgets : BioMethodGets
-    ctrl : BioMethodCtrl
-    create : BioMethodCreate
-    destroy : BioMethodDestroy
-    callback_ctrl : BioMethodCallbackCtrl
-  end
+  {% if LibCrypto::OPENSSL_110 %}
+    type BioMethod = Void
+  {% else %}
+    struct BioMethod
+      type_id : Int
+      name : Char*
+      bwrite : BioMethodWriteOld
+      bread : BioMethodReadOld
+      bputs : BioMethodPuts
+      bgets : BioMethodGets
+      ctrl : BioMethodCtrl
+      create : BioMethodCreate
+      destroy : BioMethodDestroy
+      callback_ctrl : BioMethodCallbackCtrl
+    end
+  {% end %}
 
-  fun bio_new = BIO_new(method : BioMethod*) : Bio*
-  fun bio_free = BIO_free(bio : Bio*) : Int
+  fun BIO_new(BioMethod*) : Bio*
+  fun BIO_free(Bio*) : Int
+  fun BIO_set_data(Bio*, Void*)
+  fun BIO_get_data(Bio*) : Void*
+  fun BIO_set_init(Bio*, Int)
+  fun BIO_set_shutdown(Bio*, Int)
+
+  {% if LibCrypto::OPENSSL_110 %}
+    fun BIO_meth_new(Int, Char*) : BioMethod*
+    fun BIO_meth_set_read(BioMethod*, BioMethodReadOld)
+    fun BIO_meth_set_write(BioMethod*, BioMethodWriteOld)
+    fun BIO_meth_set_puts(BioMethod*, BioMethodPuts)
+    fun BIO_meth_set_gets(BioMethod*, BioMethodGets)
+    fun BIO_meth_set_ctrl(BioMethod*, BioMethodCtrl)
+    fun BIO_meth_set_create(BioMethod*, BioMethodCreate)
+    fun BIO_meth_set_destroy(BioMethod*, BioMethodDestroy)
+    fun BIO_meth_set_callback_ctrl(BioMethod*, BioMethodCallbackCtrl)
+  {% end %}
+  {% if LibCrypto::OPENSSL_111 %}
+    fun BIO_meth_set_read_ex(BioMethod*, BioMethodRead)
+    fun BIO_meth_set_write_ex(BioMethod*, BioMethodWrite)
+  {% end %}
 
   fun sha1 = SHA1(data : Char*, length : SizeT, md : Char*) : Char*
 
