@@ -75,6 +75,11 @@ module Spec::Methods
     Spec::RootContext.report(:pending, description, file, line)
   end
 
+  # Define a yet-to-be-implemented pending test case
+  def pending(description = "assert", file = __FILE__, line = __LINE__, end_line = __END_LINE__)
+    pending(description, file, line, end_line) { }
+  end
+
   # DEPRECATED: Use `#it`
   def assert(file = __FILE__, line = __LINE__, end_line = __END_LINE__, &block)
     {{ raise "'assert' was removed: use 'it' instead".id }}
