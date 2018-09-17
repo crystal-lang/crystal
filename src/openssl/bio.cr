@@ -2,21 +2,37 @@ require "./lib_crypto"
 
 # :nodoc:
 struct OpenSSL::BIO
+  def self.get_data(bio) : Void*
+    {% if LibCrypto::OPENSSL_110 %}
+      LibCrypto.BIO_get_data(bio)
+    {% else %}
+      bio.value.ptr
+    {% end %}
+  end
+
+  def self.set_data(bio, data : Void*)
+    {% if LibCrypto::OPENSSL_110 %}
+      LibCrypto.BIO_set_data(bio, data)
+    {% else %}
+      bio.value.ptr = data
+    {% end %}
+  end
+
   CRYSTAL_BIO = begin
     bwrite = LibCrypto::BioMethodWriteOld.new do |bio, data, len|
-      io = Box(IO).unbox(bio.value.ptr)
+      io = Box(IO).unbox(BIO.get_data(bio))
       io.write Slice.new(data, len)
       len
     end
 
     bread = LibCrypto::BioMethodReadOld.new do |bio, buffer, len|
-      io = Box(IO).unbox(bio.value.ptr)
+      io = Box(IO).unbox(BIO.get_data(bio))
       io.flush
       io.read(Slice.new(buffer, len)).to_i
     end
 
     ctrl = LibCrypto::BioMethodCtrl.new do |bio, cmd, num, ptr|
-      io = Box(IO).unbox(bio.value.ptr)
+      io = Box(IO).unbox(BIO.get_data(bio))
 
       val = case cmd
             when LibCrypto::CTRL_FLUSH
@@ -32,13 +48,20 @@ struct OpenSSL::BIO
     end
 
     create = LibCrypto::BioMethodCreate.new do |bio|
-      bio.value.shutdown = 1
-      bio.value.init = 1
-      bio.value.num = -1
+      {% if LibCrypto::OPENSSL_110 %}
+        LibCrypto.BIO_set_shutdown(bio, 1)
+        LibCrypto.BIO_set_init(bio, 1)
+        # bio.value.num = -1
+      {% else %}
+        bio.value.shutdown = 1
+        bio.value.init = 1
+        bio.value.num = -1
+      {% end %}
+      1
     end
 
     destroy = LibCrypto::BioMethodDestroy.new do |bio|
-      bio.value.ptr = Pointer(Void).null
+      BIO.set_data(bio, Pointer(Void).null)
       1
     end
 
@@ -64,17 +87,16 @@ struct OpenSSL::BIO
   end
 
   @boxed_io : Void*
-  @bio : LibCrypto::Bio*
 
   def initialize(@io : IO)
-    @bio = LibCrypto.bio_new(CRYSTAL_BIO)
+    @bio = LibCrypto.BIO_new(CRYSTAL_BIO)
 
     # We need to store a reference to the box because it's
     # stored in `@bio.value.ptr`, but that lives in C-land,
     # not in Crystal-land.
     @boxed_io = Box(IO).box(io)
 
-    @bio.value.ptr = @boxed_io
+    BIO.set_data(@bio, @boxed_io)
   end
 
   getter io

@@ -74,8 +74,12 @@ lib LibCrypto
     end
   {% end %}
 
-  fun bio_new = BIO_new(method : BioMethod*) : Bio*
-  fun bio_free = BIO_free(bio : Bio*) : Int
+  fun BIO_new(BioMethod*) : Bio*
+  fun BIO_free(Bio*) : Int
+  fun BIO_set_data(Bio*, Void*)
+  fun BIO_get_data(Bio*) : Void*
+  fun BIO_set_init(Bio*, Int)
+  fun BIO_set_shutdown(Bio*, Int)
 
   {% if LibCrypto::OPENSSL_110 %}
     fun BIO_meth_new(Int, Char*) : BioMethod*
