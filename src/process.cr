@@ -193,8 +193,8 @@ class Process
   # * `IO`: use the given `IO`
   def self.exec(command : String, args = nil, env : Env = nil, clear_env : Bool = false, shell : Bool = false,
                 input : Stdio = Redirect::Inherit, output : Stdio = Redirect::Inherit, error : Stdio = Redirect::Inherit, chdir : String? = nil)
-    command, argv = prepare_argv(command, args, shell)
-    unless exec_internal(command, argv, env, clear_env, input, output, error, chdir)
+    command, args = prepare_args(command, args, shell)
+    unless exec_internal(command, args, env, clear_env, input, output, error, chdir)
       raise Errno.new("execvp")
     end
   end
@@ -219,7 +219,7 @@ class Process
   # By default the process is configured without input, output or error.
   def initialize(command : String, args = nil, env : Env = nil, clear_env : Bool = false, shell : Bool = false,
                  input : Stdio = Redirect::Close, output : Stdio = Redirect::Close, error : Stdio = Redirect::Close, chdir : String? = nil)
-    command, argv = Process.prepare_argv(command, args, shell)
+    command, args = Process.prepare_args(command, args, shell)
 
     @wait_count = 0
 
@@ -263,7 +263,7 @@ class Process
         writer_pipe.close_on_exec = true
         unless Process.exec_internal(
                  command,
-                 argv,
+                 args,
                  env,
                  clear_env,
                  fork_input || input,
@@ -342,7 +342,7 @@ class Process
   end
 
   # :nodoc:
-  protected def self.prepare_argv(command, args, shell)
+  protected def self.prepare_args(command, args, shell)
     if shell
       command = %(#{command} "${@}") unless command.includes?(' ')
       shell_args = ["-c", command, "--"]
@@ -363,13 +363,7 @@ class Process
       args = shell_args
     end
 
-    argv = [command.to_unsafe]
-    args.try &.each do |arg|
-      argv << arg.to_unsafe
-    end
-    argv << Pointer(UInt8).null
-
-    {command, argv}
+    {command, args}
   end
 
   private def channel
@@ -404,7 +398,7 @@ class Process
   end
 
   # :nodoc:
-  protected def self.exec_internal(command : String, argv, env, clear_env, input, output, error, chdir)
+  protected def self.exec_internal(command : String, args, env, clear_env, input, output, error, chdir)
     # Reopen handles if the child is being redirected
     reopen_io(input, IO::FileDescriptor.new(0, blocking: true), "r")
     reopen_io(output, IO::FileDescriptor.new(1, blocking: true), "w")
@@ -420,6 +414,12 @@ class Process
     end
 
     Dir.cd(chdir) if chdir
+
+    argv = [command.check_no_null_byte.to_unsafe]
+    args.try &.each do |arg|
+      argv << arg.check_no_null_byte.to_unsafe
+    end
+    argv << Pointer(UInt8).null
 
     LibC.execvp(command, argv) != -1
   end
