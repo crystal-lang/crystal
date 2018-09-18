@@ -194,9 +194,7 @@ class Process
   def self.exec(command : String, args = nil, env : Env = nil, clear_env : Bool = false, shell : Bool = false,
                 input : Stdio = Redirect::Inherit, output : Stdio = Redirect::Inherit, error : Stdio = Redirect::Inherit, chdir : String? = nil)
     command, args = prepare_args(command, args, shell)
-    unless exec_internal(command, args, env, clear_env, input, output, error, chdir)
-      raise Errno.new("execvp")
-    end
+    exec_internal(command, args, env, clear_env, input, output, error, chdir)
   end
 
   getter pid : Int32
@@ -261,19 +259,21 @@ class Process
       begin
         reader_pipe.close
         writer_pipe.close_on_exec = true
-        unless Process.exec_internal(
-                 command,
-                 args,
-                 env,
-                 clear_env,
-                 fork_input || input,
-                 fork_output || output,
-                 fork_error || error,
-                 chdir
-               )
-          writer_pipe.write_bytes(Errno.value)
-          writer_pipe.close
-        end
+        Process.exec_internal(
+          command,
+          args,
+          env,
+          clear_env,
+          fork_input || input,
+          fork_output || output,
+          fork_error || error,
+          chdir
+        )
+      rescue ex : Errno
+        writer_pipe.write_bytes(ex.errno)
+        writer_pipe.write_bytes(ex.message.try(&.bytesize) || 0)
+        writer_pipe << ex.message
+        writer_pipe.close
       rescue ex
         ex.inspect_with_backtrace STDERR
         STDERR.flush
@@ -285,9 +285,13 @@ class Process
     writer_pipe.close
     bytes = uninitialized UInt8[4]
     if reader_pipe.read(bytes.to_slice) == 4
-      reader_pipe.close
       errno = IO::ByteFormat::SystemEndian.decode(Int32, bytes.to_slice)
-      raise Errno.new("execvp", errno)
+      message_size = reader_pipe.read_bytes(Int32)
+      if message_size > 0
+        message = String.build(message_size) { |io| IO.copy(reader_pipe, io, message_size) }
+      end
+      reader_pipe.close
+      raise Errno.new(message, errno)
     end
     reader_pipe.close
 
@@ -421,7 +425,8 @@ class Process
     end
     argv << Pointer(UInt8).null
 
-    LibC.execvp(command, argv) != -1
+    LibC.execvp(command, argv)
+    raise Errno.new("execvp")
   end
 
   private def self.reopen_io(src_io, dst_io, mode)
