@@ -186,12 +186,7 @@ class Process
     end
   end
 
-  # Replaces the current process with a new one.
-  #
-  # The possible values for *input*, *output* and *error* are:
-  # * `false`: no `IO` (`/dev/null`)
-  # * `true`: inherit from parent
-  # * `IO`: use the given `IO`
+  # Replaces the current process with a new one. This function never returns.
   def self.exec(command : String, args = nil, env : Env = nil, clear_env : Bool = false, shell : Bool = false,
                 input : ExecStdio = Redirect::Inherit, output : ExecStdio = Redirect::Inherit, error : ExecStdio = Redirect::Inherit, chdir : String? = nil)
     command, args = prepare_args(command, args, shell)
