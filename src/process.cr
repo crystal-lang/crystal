@@ -76,29 +76,10 @@ class Process
 
   # Runs the given block inside a new process and
   # returns a `Process` representing the new child process.
-  def self.fork
-    pid = fork_internal do
-      with self yield self
-    end
-    new pid
-  end
-
-  # Duplicates the current process.
-  # Returns a `Process` representing the new child process in the current process
-  # and `nil` inside the new child process.
-  def self.fork : self?
-    if pid = fork_internal
+  def self.fork : Process
+    if pid = fork_internal(will_exec: false)
       new pid
     else
-      nil
-    end
-  end
-
-  # :nodoc:
-  protected def self.fork_internal(will_exec : Bool = false, &block)
-    pid = self.fork_internal(will_exec)
-
-    unless pid
       begin
         yield
         LibC._exit 0
@@ -110,12 +91,21 @@ class Process
         LibC._exit 254 # not reached
       end
     end
-
-    pid
   end
 
-  #
-  protected def self.fork_internal(will_exec : Bool = false)
+  # Duplicates the current process.
+  # Returns a `Process` representing the new child process in the current process
+  # and `nil` inside the new child process.
+  def self.fork : Process?
+    if pid = fork_internal(will_exec: false)
+      new pid
+    else
+      nil
+    end
+  end
+
+  # :nodoc:
+  protected def self.fork_internal(*, will_exec : Bool)
     newmask = uninitialized LibC::SigsetT
     oldmask = uninitialized LibC::SigsetT
 
@@ -265,7 +255,9 @@ class Process
 
     reader_pipe, writer_pipe = IO.pipe
 
-    @pid = Process.fork_internal(will_exec: true) do
+    if pid = Process.fork_internal(will_exec: true)
+      @pid = pid
+    else
       begin
         reader_pipe.close
         writer_pipe.close_on_exec = true
@@ -284,6 +276,7 @@ class Process
         end
       rescue ex
         ex.inspect_with_backtrace STDERR
+        STDERR.flush
       ensure
         LibC._exit 127
       end
