@@ -228,7 +228,7 @@ struct XML::Builder
 
   # Emits a namespace.
   def namespace(prefix, uri)
-    attribute prefix, "xmlns", nil, uri
+    attribute "xmlns", prefix, nil, uri
   end
 
   # Forces content written to this writer to be flushed to
