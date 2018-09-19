@@ -29,7 +29,9 @@ SOURCES := $(shell find src -name '*.cr')
 SPEC_SOURCES := $(shell find spec -name '*.cr')
 override FLAGS += $(if $(release),--release )$(if $(stats),--stats )$(if $(progress),--progress )$(if $(threads),--threads $(threads) )$(if $(debug),-d )$(if $(static),--static )$(if $(LDFLAGS),--link-flags="$(LDFLAGS)" )
 SPEC_FLAGS := $(if $(verbose),-v )$(if $(junit_output),--junit_output $(junit_output) )
-EXPORTS := $(if $(release),,CRYSTAL_CONFIG_PATH="$(PWD)/src")
+CRYSTAL_CONFIG_VERSION ?= $(shell grep -oEi '(^|\n)\#\s+([0-9]+\.[0-9]+\.[0-9]\w*)' --max-count=1 CHANGELOG.md | awk '{print $$2}')-dev
+CRYSTAL_CONFIG_COMMIT ?= $(shell git rev-parse --short HEAD 2> /dev/null)
+EXPORTS := $(if $(release),,CRYSTAL_CONFIG_PATH="$(PWD)/src") CRYSTAL_CONFIG_VERSION=$(CRYSTAL_CONFIG_VERSION) CRYSTAL_CONFIG_COMMIT=$(CRYSTAL_CONFIG_COMMIT)
 SHELL = sh
 LLVM_CONFIG_FINDER := \
   [ -n "$(LLVM_CONFIG)" ] && command -v "$(LLVM_CONFIG)" || \
@@ -58,6 +60,13 @@ ifeq (${LLVM_CONFIG},)
   $(error Could not locate llvm-config, make sure it is installed and in your PATH, or set LLVM_CONFIG)
 else
   $(shell echo $(shell printf '\033[33m')Using $(LLVM_CONFIG) [version=$(shell $(LLVM_CONFIG) --version)]$(shell printf '\033[0m') >&2)
+endif
+
+ifeq (${CRYSTAL_CONFIG_VERSION},)
+  $(error Missing version information, could not read from CHANGELOG.md. Please provide a valid CRYSTAL_CONFIG_VERSION setting)
+endif
+ifeq (${CRYSTAL_CONFIG_VERSION},-dev)
+  $(error Missing version information, could not read from CHANGELOG.md. Please provide a valid CRYSTAL_CONFIG_VERSION setting)
 endif
 
 .PHONY: all
