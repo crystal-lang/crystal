@@ -116,6 +116,7 @@ struct BigInt < Int
   end
 
   # a.add(b), a += b, avoiding allocations by mutating a
+  #
   # ```
   # a = 100.to_big_i
   # a.add(10) => # a = 110
@@ -140,6 +141,7 @@ struct BigInt < Int
   # a.add(b,c), a = b+c avoiding allocations by mutating a. This is a nice way
   # to "reuse" `BigInt` variables and avoid new allocations. Beware that
   # the value of "a" will be overwritten with the result of b*c
+  #
   # ```
   # a = 0.to_big_i
   # a.add(10_to_big_i, 5.to_big_i) => # a = 15
@@ -206,6 +208,7 @@ struct BigInt < Int
   end
 
   # a.sub(b) a -= b avoiding allocations by mutating a
+  #
   # ```
   # a = 100.to_big_i
   # a.sub(10) => # a = 90
@@ -230,6 +233,7 @@ struct BigInt < Int
   # a.sub(b,c), a = b-c avoiding allocations by mutating a. This is a nice way
   # to "reuse" `BigInt` variables and avoid new allocations. Beware that
   # the value of "a" will be overwritten with the result of b*c
+  #
   # ```
   # a = 0.to_big_i
   # a.sub(10_to_big_i, 5.to_big_i) => # a = 5
@@ -300,6 +304,7 @@ struct BigInt < Int
   end
 
   # a.mul(b) a*b avoiding allocations by mutating a
+  #
   # ```
   # a = 100.to_big_i
   # a.mul(10_to_big_i) => # a = 1000
@@ -324,6 +329,7 @@ struct BigInt < Int
   # a.mul(b,c), a = b*c, avoiding allocations by mutating a. This is a nice way
   # to "reuse" `BigInt` variables and avoid new allocations. Beware that
   # the value of "a" will be overwritten with the result of b*c
+  #
   # ```
   # a = 0.to_big_i
   # a.mul(10_to_big_i, 5) => # a = 50
@@ -367,6 +373,7 @@ struct BigInt < Int
   end
 
   # a -= b*c avoiding allocations by mutating a
+  #
   # ```
   # a = 100.to_big_i
   # a.submul(10_to_big_i, 5) => # a = 50
@@ -398,6 +405,7 @@ struct BigInt < Int
   end
 
   # a += b*c avoiding allocations by mutating a
+  #
   # ```
   # a = 10.to_big_i
   # a.addmul(10_to_big_i, 5) => #a = 60
