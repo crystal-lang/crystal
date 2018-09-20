@@ -314,7 +314,7 @@ struct BigInt < Int
     self
   end
 
-  # ditto
+  #ditto
   def mul(other : LibGMP::IntPrimitiveUnsigned) : self
     LibGMP.mul_ui(self, self, other)
     self

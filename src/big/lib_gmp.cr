@@ -61,6 +61,10 @@ lib LibGMP
   fun submul = __gmpz_submul(rop : MPZ*, op1 : MPZ*, op2 : MPZ*)
   fun addmul = __gmpz_addmul(rop : MPZ*, op1 : MPZ*, op2 : MPZ*)
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> fff2addaa999c6e1cac6d97d95460c0fde37cb74
   fun fdiv_q = __gmpz_fdiv_q(rop : MPZ*, op1 : MPZ*, op2 : MPZ*)
   fun fdiv_q_ui = __gmpz_fdiv_q_ui(rop : MPZ*, op1 : MPZ*, op2 : ULong)
 
