@@ -169,7 +169,15 @@ describe "BigInt" do
     i = 0.to_big_i
     i.mul(2.to_big_i, 3.to_big_i).should eq(6.to_big_i)
     i = 0.to_big_i
+    i.mul(2, 3).should eq(6.to_big_i)
+    i = 0.to_big_i
+    i.mul(2, -3).should eq(-6.to_big_i)
+    i = 0.to_big_i
     i.mul(2.to_big_i, 3).should eq(6.to_big_i)
+    i = 0.to_big_i
+    i.mul(2.to_big_i, 3u8).should eq(6.to_big_i)
+    i = 0.to_big_i
+    i.mul(2_u8, 3.to_big_i).should eq(6.to_big_i)
     i = 0.to_big_i
     i.mul(2, 3.to_big_i).should eq(6.to_big_i)
     i = 0.to_big_i
