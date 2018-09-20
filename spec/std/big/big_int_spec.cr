@@ -131,6 +131,10 @@ describe "BigInt" do
     i.sub(5, 3.to_big_i).should eq 2.to_big_i
     i = 0.to_big_i
     i.sub(5, -3.to_big_i).should eq 8.to_big_i
+    i = 0.to_big_i
+    i.sub(-5, 3.to_big_i).should eq -8.to_big_i
+    i = 0.to_big_i
+    i.sub(Int64::MAX, Int64::MAX.to_big_i + 5).should eq -5.to_big_i
     i = Int64::MAX.to_big_i
     i.sub(5).should eq(Int64::MAX - 5)
     i = 5.to_big_i

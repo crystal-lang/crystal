@@ -262,7 +262,7 @@ struct BigInt < Int
     elsif op2 <= LibGMP::ULong::MAX
       LibGMP.sub_ui(self, op1.to_big_i, op2)
     else
-      sub(op1, op2.to_big_i)
+      sub(op1.to_big_i, op2)
     end
     self
   end
