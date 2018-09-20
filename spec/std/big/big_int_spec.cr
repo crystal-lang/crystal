@@ -254,19 +254,11 @@ describe "BigInt" do
   end
 
   it "tdivs mutably" do
-<<<<<<< HEAD
     i = 0.to_big_i
     i.tdiv(5.to_big_i, 3).should eq(1)
     i.tdiv(-5.to_big_i, 3).should eq(-1)
     i.tdiv(5.to_big_i, -3).should eq(-1)
     i.tdiv(-5.to_big_i, -3).should eq(1)
-=======
-  i = 0.to_big_i
-  i.tdiv(5.to_big_i, 3).should eq(1)
-  i.tdiv(-5.to_big_i, 3).should eq(-1)
-  i.tdiv(5.to_big_i, -3).should eq(-1)
-  i.tdiv(-5.to_big_i, -3).should eq(1)
->>>>>>> fff2addaa999c6e1cac6d97d95460c0fde37cb74
   end
 
   it "does modulo" do
