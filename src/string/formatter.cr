@@ -92,6 +92,8 @@ struct String::Formatter(A)
       case current_char
       when ' '
         flags.space = true
+      when '#'
+        flags.sharp = true
       when '+'
         flags.plus = true
       when '-'
@@ -283,6 +285,7 @@ struct String::Formatter(A)
 
     io = IO::Memory.new(Bytes.new(format_buf, capacity))
     io << '%'
+    io << '#' if flags.sharp
     io << '+' if flags.plus
     io << '-' if flags.minus
     io << '0' if flags.zero
@@ -360,12 +363,12 @@ struct String::Formatter(A)
   end
 
   struct Flags
-    property space : Bool, plus : Bool, minus : Bool, zero : Bool, base : Int32
+    property space : Bool, sharp : Bool, plus : Bool, minus : Bool, zero : Bool, base : Int32
     property width : Int32, width_size : Int32
     property type : Char, precision : Int32?, precision_size : Int32
 
     def initialize
-      @space = @plus = @minus = @zero = false
+      @space = @sharp = @plus = @minus = @zero = false
       @width = 0
       @width_size = 0
       @base = 10
