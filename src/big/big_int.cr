@@ -116,15 +116,16 @@ struct BigInt < Int
   end
 
   # a.add(b), a += b, avoiding allocations by mutating a
-  #
-  #    a = 100.to_big_i
-  #    a.add(10) => # a = 110
+  # ```
+  # a = 100.to_big_i
+  # a.add(10) => # a = 110
+  # ```
   def add(other : BigInt) : self
     LibGMP.add(self, self, other)
     self
   end
 
-  # a.add(b), a += b, avoiding allocations by mutating a
+  # ditto
   def add(other : Int) : self
     if other < 0
       sub(other.abs)
@@ -139,20 +140,19 @@ struct BigInt < Int
   # a.add(b,c), a = b+c avoiding allocations by mutating a. This is a nice way
   # to "reuse" `BigInt` variables and avoid new allocations. Beware that
   # the value of "a" will be overwritten with the result of b*c
+  # ```
+  # a = 0.to_big_i
+  # a.add(10_to_big_i, 5.to_big_i) => # a = 15
   #
-  #    a = 0.to_big_i
-  #    a.add(10_to_big_i, 5.to_big_i) => # a = 15
-  #
-  #    a = 100.to_big_i
-  #    a.add(10.to_big_i, 5.to_big_i) => # a = 15
+  # a = 100.to_big_i
+  # a.add(10.to_big_i, 5.to_big_i) => # a = 15
+  # ```
   def add(op1 : BigInt, op2 : BigInt) : self
     LibGMP.add(self, op1, op2)
     self
   end
 
-  # a.add(b,c), a = b+c avoiding allocations by mutating a. This is a nice way
-  # to "reuse" `BigInt` variables and avoid new allocations. Beware that
-  # the value of "a" will be overwritten with the result of b*c
+  # ditto
   def add(op1 : BigInt, op2 : Int) : self
     if op2 < 0
       sub(op1, op2.abs)
@@ -172,7 +172,7 @@ struct BigInt < Int
     elsif op1 <= LibGMP::ULong::MAX
       LibGMP.add_ui(self, op2, op1)
     else
-      add(op1.to_big_i, op2)
+      add(op1, op2)
     end
     self
   end
@@ -206,9 +206,10 @@ struct BigInt < Int
   end
 
   # a.sub(b) a -= b avoiding allocations by mutating a
-  #
-  #    a = 100.to_big_i
-  #    a.sub(10) => # a = 90
+  # ```
+  # a = 100.to_big_i
+  # a.sub(10) => # a = 90
+  # ```
   def sub(other : Int) : self
     if other < 0
       add(other.abs)
@@ -220,7 +221,7 @@ struct BigInt < Int
     self
   end
 
-  # a.sub(b) a -= b avoiding allocations by mutating a
+  # ditto
   def sub(other : BigInt) : self
     LibGMP.sub(self, self, other)
     self
@@ -229,20 +230,19 @@ struct BigInt < Int
   # a.sub(b,c), a = b-c avoiding allocations by mutating a. This is a nice way
   # to "reuse" `BigInt` variables and avoid new allocations. Beware that
   # the value of "a" will be overwritten with the result of b*c
+  # ```
+  # a = 0.to_big_i
+  # a.sub(10_to_big_i, 5.to_big_i) => # a = 5
   #
-  #    a = 0.to_big_i
-  #    a.sub(10_to_big_i, 5.to_big_i) => # a = 5
-  #
-  #    a = 100.to_big_i
-  #    a.sub(10.to_big_i, 5.to_big_i) => # a = 5
+  # a = 100.to_big_i
+  # a.sub(10.to_big_i, 5.to_big_i) => # a = 5
+  # ```
   def sub(op1 : BigInt, op2 : BigInt) : self
     LibGMP.sub(self, op1, op2)
     self
   end
 
-  # a.sub(b,c), a = b-c avoiding allocations by mutating a. This is a nice way
-  # to "reuse" `BigInt` variables and avoid new allocations. Beware that
-  # the value of "a" will be overwritten with the result of b*c
+  # ditto
   def sub(op1 : BigInt, op2 : Int) : self
     if op2 < 0
       add(op1, op2.abs)
@@ -300,15 +300,16 @@ struct BigInt < Int
   end
 
   # a.mul(b) a*b avoiding allocations by mutating a
-  #
-  #    a = 100.to_big_i
-  #    a.mul(10_to_big_i) => # a = 1000
+  # ```
+  # a = 100.to_big_i
+  # a.mul(10_to_big_i) => # a = 1000
+  # ```
   def mul(other : BigInt) : self
     LibGMP.mul(self, self, other)
     self
   end
 
-  # a.mul(b) a*b avoiding allocations by mutating a
+  # ditto
   def mul(other : LibGMP::IntPrimitiveSigned) : self
     LibGMP.mul_si(self, self, other)
     self
@@ -323,20 +324,19 @@ struct BigInt < Int
   # a.mul(b,c), a = b*c, avoiding allocations by mutating a. This is a nice way
   # to "reuse" `BigInt` variables and avoid new allocations. Beware that
   # the value of "a" will be overwritten with the result of b*c
+  # ```
+  # a = 0.to_big_i
+  # a.mul(10_to_big_i, 5) => # a = 50
   #
-  #    a = 0.to_big_i
-  #    a.mul(10_to_big_i, 5) => # a = 50
-  #
-  #    a = 100.to_big_i
-  #    a.mul(10.to_big_i, 5.to_big_i) => # a = 50
+  # a = 100.to_big_i
+  # a.mul(10.to_big_i, 5.to_big_i) => # a = 50
+  # ```
   def mul(op1 : BigInt, op2 : BigInt) : self
     LibGMP.mul(self, op1, op2)
     self
   end
 
-  # a.mul(b,c) avoiding allocations by mutating a. This is a nice way
-  # to "reuse" `BigInt` variables and avoid new allocations. Beware that
-  # the value of "a" will be overwritten with the result of b*c
+  # ditto
   def mul(op1 : BigInt, op2 : LibGMP::IntPrimitiveSigned) : self
     LibGMP.mul_si(self, op1, op2)
     self
@@ -367,9 +367,10 @@ struct BigInt < Int
   end
 
   # a -= b*c avoiding allocations by mutating a
-  #
-  #    a = 100.to_big_i
-  #    a.submul(10_to_big_i, 5) => # a = 50
+  # ```
+  # a = 100.to_big_i
+  # a.submul(10_to_big_i, 5) => # a = 50
+  # ```
   def submul(op1 : BigInt, op2 : Int) : self
     if op2 < 0
       LibGMP.addmul(self, op1, op2.abs.to_big_i)
@@ -379,7 +380,7 @@ struct BigInt < Int
     self
   end
 
-  # a -= b*c avoiding allocations by mutating a
+  # ditto
   def submul(op1 : BigInt, op2 : BigInt) : self
     if op2 < 0
       LibGMP.abs(op2, op2)
@@ -397,9 +398,10 @@ struct BigInt < Int
   end
 
   # a += b*c avoiding allocations by mutating a
-  #
-  #    a = 10.to_big_i
-  #    a.addmul(10_to_big_i, 5) => #a = 60
+  # ```
+  # a = 10.to_big_i
+  # a.addmul(10_to_big_i, 5) => #a = 60
+  # ```
   def addmul(op1 : BigInt, op2 : Int) : self
     if op2 < 0
       LibGMP.submul(self, op1, op2.abs.to_big_i)
@@ -409,7 +411,7 @@ struct BigInt < Int
     self
   end
 
-  # a += b*c avoiding allocations by mutating a
+  # ditto
   def addmul(op1 : BigInt, op2 : BigInt) : self
     if op2 < 0
       LibGMP.abs(op2, op2)
