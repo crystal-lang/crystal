@@ -73,7 +73,7 @@ end
 # The syntax for a format specifier is:
 #
 # ```text
-# %[flags][width][.precision][type]
+# %[flags][width][.precision]type
 # ```
 #
 # A format specifier consists of a percent sign, followed by optional flags,
