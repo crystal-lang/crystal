@@ -121,20 +121,22 @@ describe "BigInt" do
   end
 
   it "subs mutably" do
-    a = 5.to_big_i
-    a.sub(2.to_big_i).should eq 3.to_big_i
-    b = 0.to_big_i
-    b.sub(5.to_big_i, 3.to_big_i).should eq 2.to_big_i
-    c = 0.to_big_i
-    c.sub(5.to_big_i, 3).should eq 2.to_big_i
-    d = 0.to_big_i
-    d.sub(5, 3.to_big_i).should eq 2.to_big_i
-    e = Int64::MAX.to_big_i
-    e.sub(5).should eq(Int64::MAX - 5)
-    f = 5.to_big_i
-    f.sub(Int64::MAX).should eq(-(Int64::MAX - 5))
-    g = 0.to_big_i
-    g.sub(Int64::MAX, Int64::MAX).should eq(0)
+    i = 5.to_big_i
+    i.sub(2.to_big_i).should eq 3.to_big_i
+    i = 0.to_big_i
+    i.sub(5.to_big_i, 3.to_big_i).should eq 2.to_big_i
+    i = 0.to_big_i
+    i.sub(5.to_big_i, 3).should eq 2.to_big_i
+    i = 0.to_big_i
+    i.sub(5, 3.to_big_i).should eq 2.to_big_i
+    i = 0.to_big_i
+    i.sub(5, -3.to_big_i).should eq 8.to_big_i
+    i = Int64::MAX.to_big_i
+    i.sub(5).should eq(Int64::MAX - 5)
+    i = 5.to_big_i
+    i.sub(Int64::MAX).should eq(-(Int64::MAX - 5))
+    i = 0.to_big_i
+    i.sub(Int64::MAX, Int64::MAX).should eq(0)
   end
 
   it "negates" do

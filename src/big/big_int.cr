@@ -172,7 +172,7 @@ struct BigInt < Int
     elsif op1 <= LibGMP::ULong::MAX
       LibGMP.add_ui(self, op2, op1)
     else
-      add(op1, op2.to_big_i)
+      add(op1.to_big_i, op2)
     end
     self
   end
