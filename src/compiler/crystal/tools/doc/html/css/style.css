@@ -553,15 +553,6 @@ span.flag.purple {
 .js-modal-visible .modal-background {
   display: flex;
 }
-.types-list,
-.main-content {
-  filter: blur(0);
-  transition: filter 200ms;
-}
-.js-modal-visible .types-list,
-.js-modal-visible .main-content {
-  filter: blur(2px);
-}
 .modal-background {
   position: absolute;
   display: none;
