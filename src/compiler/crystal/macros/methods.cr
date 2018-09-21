@@ -10,7 +10,7 @@ module Crystal
     end
 
     def interpret_top_level_call?(node)
-      # Please order method names in lexicographical order, because OCD
+      # Please order method names in lexicographical order
       case node.name
       when "compare_versions"
         interpret_compare_versions(node)
