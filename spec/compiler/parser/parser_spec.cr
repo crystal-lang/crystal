@@ -844,8 +844,8 @@ module Crystal
     it_parses "def foo : Int32\n1\nend", Def.new("foo", body: 1.int32, return_type: "Int32".path)
     it_parses "def foo(x) : Int32\n1\nend", Def.new("foo", args: ["x".arg], body: 1.int32, return_type: "Int32".path)
 
-    it_parses "abstract def foo : Int32", Def.new("foo", return_type: "Int32".path, abstract: true)
-    it_parses "abstract def foo(x) : Int32", Def.new("foo", args: ["x".arg], return_type: "Int32".path, abstract: true)
+    assert_syntax_error "abstract def foo : Int32"
+    assert_syntax_error "abstract def foo(x) : Int32"
 
     it_parses "{% for x in y %}body{% end %}", MacroFor.new(["x".var], "y".var, "body".macro_literal)
     it_parses "{% if x %}body{% end %}", MacroIf.new("x".var, "body".macro_literal)
@@ -1665,7 +1665,6 @@ module Crystal
       assert_end_location "def foo; 1; end"
       assert_end_location "def foo; rescue ex; end"
       assert_end_location "abstract def foo"
-      assert_end_location "abstract def foo : Int32"
       assert_end_location "begin; 1; end"
       assert_end_location "class Foo; end"
       assert_end_location "struct Foo; end"

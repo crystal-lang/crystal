@@ -62,11 +62,11 @@ module Random
     PCG32.new
   end
 
-  # Generates a random unsigned integer.
+  # Generates a random unsigned integer (`UInt`).
   #
   # The integers must be uniformly distributed between `0` and
   # the maximal value for the chosen type.
-  abstract def next_u : UInt
+  abstract def next_u
 
   # Generates a random `Bool`.
   #

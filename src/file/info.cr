@@ -78,32 +78,32 @@ class File
   # A `File::Info` contains metadata regarding a file. It is returned by
   # `File.info`, and `File#info`.
   abstract struct Info
-    # Size of the file, in bytes.
-    abstract def size : UInt64
+    # Size (`UInt64`) of the file, in bytes.
+    abstract def size
 
-    # The permissions of the file.
-    abstract def permissions : Permissions
+    # The `Permissions` of the file.
+    abstract def permissions
 
-    # The type of the file.
-    abstract def type : Type
+    # The `Type` of the file.
+    abstract def type
 
-    # The special flags this file has set.
-    abstract def flags : Flags
+    # The special `Flags` this file has set.
+    abstract def flags
 
-    # The last time this file was modified.
-    abstract def modification_time : Time
+    # The last `Time` this file was modified.
+    abstract def modification_time
 
-    # The user ID of the file's owner.
-    abstract def owner : UInt32
+    # The user ID (`UInt32`) of the file's owner.
+    abstract def owner
 
-    # The group ID that the file belongs to.
-    abstract def group : UInt32
+    # The group ID (`UInt32`) that the file belongs to.
+    abstract def group
 
     # Returns true if this `Info` and *other* are of the same file.
     #
     # On unix, this compares device and inode fields, and will compare equal for
     # hard linked files.
-    abstract def same_file?(other : File::Info) : Bool
+    abstract def same_file?(other : File::Info)
 
     # Returns true if this `Info` represents a standard file. Shortcut for
     # `type.file?`.

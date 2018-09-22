@@ -49,7 +49,8 @@ class Socket
     def initialize(@family : Family, @size : Int32)
     end
 
-    abstract def to_unsafe : LibC::Sockaddr*
+    # The underlying OS representation, a `Pointer(LibC::Sockaddr)`.
+    abstract def to_unsafe
 
     def ==(other)
       false

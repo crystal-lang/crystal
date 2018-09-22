@@ -3366,6 +3366,9 @@ module Crystal
       end
 
       if @token.type == :":"
+        if is_abstract
+          raise "abstract methods cannot specify a return type"
+        end
         next_token_skip_space
         return_type = parse_single_type
         end_location = return_type.end_location

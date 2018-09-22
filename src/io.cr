@@ -109,7 +109,7 @@ abstract class IO
   # io.write(slice)
   # io.to_s # => "abcd"
   # ```
-  abstract def write(slice : Bytes) : Nil
+  abstract def write(slice : Bytes)
 
   # Closes this `IO`.
   #
