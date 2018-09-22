@@ -119,6 +119,45 @@ struct NamedTuple
     fetch(key, nil)
   end
 
+  # Traverses the depth of a structure and returns the value.
+  # Returns `nil` if not found.
+  #
+  # ```
+  # h = {a: {b: [10, 20, 30]}}
+  # h.dig? "a", "b"                # => [10, 20, 30]
+  # h.dig? "a", "b", "c", "d", "e" # => nil
+  # ```
+  def dig?(key : Symbol | String, *subkeys)
+    if (value = self[key]?) && value.responds_to?(:dig?)
+      value.dig?(*subkeys)
+    end
+  end
+
+  # :nodoc:
+  def dig?(key : Symbol | String)
+    self[key]?
+  end
+
+  # Traverses the depth of a structure and returns the value, otherwise
+  # raises `KeyError`.
+  #
+  # ```
+  # h = {a: {b: [10, 20, 30]}}
+  # h.dig "a", "b"                # => [10, 20, 30]
+  # h.dig "a", "b", "c", "d", "e" # raises KeyError
+  # ```
+  def dig(key : Symbol | String, *subkeys)
+    if (value = self[key]) && value.responds_to?(:dig)
+      return value.dig(*subkeys)
+    end
+    raise KeyError.new "NamedTuple value not diggable for key: #{key.inspect}"
+  end
+
+  # :nodoc:
+  def dig(key : Symbol | String)
+    self[key]
+  end
+
   # Returns the value for the given *key*, if there's such key, otherwise returns *default_value*.
   #
   # ```
