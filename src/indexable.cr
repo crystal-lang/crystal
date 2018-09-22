@@ -93,6 +93,45 @@ module Indexable(T)
     at(index) { nil }
   end
 
+  # Traverses the depth of a structure and returns the value.
+  # Returns `nil` if not found.
+  #
+  # ```
+  # ary = [{1, 2, 3, {4, 5, 6}}]
+  # ary.dig?(0, 3, 2) # => 6
+  # ary.dig?(0, 3, 3) # => nil
+  # ```
+  def dig?(index : Int, *subindexes)
+    if (value = self[index]?) && value.responds_to?(:dig?)
+      value.dig?(*subindexes)
+    end
+  end
+
+  # :nodoc:
+  def dig?(index : Int)
+    self[index]?
+  end
+
+  # Traverses the depth of a structure and returns the value, otherwise
+  # raises `IndexError`.
+  #
+  # ```
+  # ary = [{1, 2, 3, {4, 5, 6}}]
+  # ary.dig(0, 3, 2) # => 6
+  # ary.dig(0, 3, 3) # raises IndexError
+  # ```
+  def dig(index : Int, *subindexes)
+    if (value = self[index]) && value.responds_to?(:dig)
+      return value.dig(*subindexes)
+    end
+    raise IndexError.new "Indexable value not diggable for index: #{index.inspect}"
+  end
+
+  # :nodoc:
+  def dig(index : Int)
+    self[index]
+  end
+
   # By using binary search, returns the first element
   # for which the passed block returns `true`.
   #

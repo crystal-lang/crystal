@@ -133,6 +133,47 @@ describe "NamedTuple" do
     typeof(val).should eq(Int32 | Char | Nil)
   end
 
+  describe "dig?" do
+    it "gets the value at given path given splat" do
+      h = {a: {b: {c: [10, 20]}}, x: {a: "b"}}
+
+      h.dig?(:a, :b, :c).should eq([10, 20])
+      h.dig?("x", "a").should eq("b")
+    end
+
+    it "returns nil if not found" do
+      h = {a: {b: {c: 300}}, x: {a: "b"}}
+
+      h.dig?("a", "b", "c", "d", "e").should be_nil
+      h.dig?("z").should be_nil
+      h.dig?("").should be_nil
+    end
+  end
+
+  describe "dig" do
+    it "gets the value at given path given splat" do
+      h = {a: {b: {c: [10, 20]}}, x: {a: "b", c: nil}}
+
+      h.dig(:a, :b, :c).should eq([10, 20])
+      h.dig("x", "a").should eq("b")
+      h.dig("x", "c").should eq(nil)
+    end
+
+    it "raises KeyError if not found" do
+      h = {a: {b: {c: 300}}, x: {a: "b"}}
+
+      expect_raises KeyError, %(NamedTuple value not diggable for key: "c") do
+        h.dig("a", "b", "c", "d", "e")
+      end
+      expect_raises KeyError, %(Missing named tuple key: "z") do
+        h.dig("z")
+      end
+      expect_raises KeyError, %(Missing named tuple key: "") do
+        h.dig("")
+      end
+    end
+  end
+
   it "computes a hash value" do
     tup1 = {a: 1, b: 'a'}
     tup1.hash.should eq(tup1.dup.hash)

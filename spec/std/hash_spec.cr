@@ -105,6 +105,51 @@ describe "Hash" do
     end
   end
 
+  describe "dig?" do
+    it "gets the value at given path given splat" do
+      ary = [1, 2, 3]
+      h = {"a" => {"b" => {"c" => [10, 20]}}, ary => {"a" => "b"}}
+
+      h.dig?("a", "b", "c").should eq([10, 20])
+      h.dig?(ary, "a").should eq("b")
+    end
+
+    it "returns nil if not found" do
+      ary = [1, 2, 3]
+      h = {"a" => {"b" => {"c" => 300}}, ary => {"a" => "b"}}
+
+      h.dig?("a", "b", "c", "d", "e").should be_nil
+      h.dig?("z").should be_nil
+      h.dig?("").should be_nil
+    end
+  end
+
+  describe "dig" do
+    it "gets the value at given path given splat" do
+      ary = [1, 2, 3]
+      h = {"a" => {"b" => {"c" => [10, 20]}}, ary => {"a" => "b", "c" => nil}}
+
+      h.dig("a", "b", "c").should eq([10, 20])
+      h.dig(ary, "a").should eq("b")
+      h.dig(ary, "c").should eq(nil)
+    end
+
+    it "raises KeyError if not found" do
+      ary = [1, 2, 3]
+      h = {"a" => {"b" => {"c" => 300}}, ary => {"a" => "b"}}
+
+      expect_raises KeyError, %(Hash value not diggable for key: "c") do
+        h.dig("a", "b", "c", "d", "e")
+      end
+      expect_raises KeyError, %(Missing hash key: "z") do
+        h.dig("z")
+      end
+      expect_raises KeyError, %(Missing hash key: "") do
+        h.dig("")
+      end
+    end
+  end
+
   describe "fetch" do
     it "fetches with one argument" do
       a = {1 => 2}

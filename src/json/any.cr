@@ -115,6 +115,32 @@ struct JSON::Any
     end
   end
 
+  # Traverses the depth of a structure and returns the value.
+  # Returns `nil` if not found.
+  def dig?(key : String | Int, *subkeys)
+    if (value = self[key]?) && value.responds_to?(:dig?)
+      value.dig?(*subkeys)
+    end
+  end
+
+  # :nodoc:
+  def dig?(key : String | Int)
+    self[key]?
+  end
+
+  # Traverses the depth of a structure and returns the value, otherwise raises.
+  def dig(key : String | Int, *subkeys)
+    if (value = self[key]) && value.responds_to?(:dig)
+      return value.dig(*subkeys)
+    end
+    raise "JSON::Any value not diggable for key: #{key.inspect}"
+  end
+
+  # :nodoc:
+  def dig(key : String | Int)
+    self[key]
+  end
+
   # Checks that the underlying value is `Nil`, and returns `nil`.
   # Raises otherwise.
   def as_nil : Nil

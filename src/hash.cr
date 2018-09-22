@@ -77,6 +77,45 @@ class Hash(K, V)
     fetch(key, nil)
   end
 
+  # Traverses the depth of a structure and returns the value.
+  # Returns `nil` if not found.
+  #
+  # ```
+  # h = {"a" => {"b" => [10, 20, 30]}}
+  # h.dig? "a", "b"                # => [10, 20, 30]
+  # h.dig? "a", "b", "c", "d", "e" # => nil
+  # ```
+  def dig?(key : K, *subkeys)
+    if (value = self[key]?) && value.responds_to?(:dig?)
+      value.dig?(*subkeys)
+    end
+  end
+
+  # :nodoc:
+  def dig?(key : K)
+    self[key]?
+  end
+
+  # Traverses the depth of a structure and returns the value, otherwise
+  # raises `KeyError`.
+  #
+  # ```
+  # h = {"a" => {"b" => [10, 20, 30]}}
+  # h.dig "a", "b"                # => [10, 20, 30]
+  # h.dig "a", "b", "c", "d", "e" # raises KeyError
+  # ```
+  def dig(key : K, *subkeys)
+    if (value = self[key]) && value.responds_to?(:dig)
+      return value.dig(*subkeys)
+    end
+    raise KeyError.new "Hash value not diggable for key: #{key.inspect}"
+  end
+
+  # :nodoc:
+  def dig(key : K)
+    self[key]
+  end
+
   # Returns `true` when key given by *key* exists, otherwise `false`.
   #
   # ```
