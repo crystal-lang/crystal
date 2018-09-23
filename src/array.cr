@@ -190,7 +190,7 @@ class Array(T)
     size <=> other.size
   end
 
-  # Set intersection: returns a new `Array` containing elements common to `self`
+  # Sets intersection: returns a new `Array` containing elements common to `self`
   # and *other*, excluding any duplicates. The order is preserved from `self`.
   #
   # ```
@@ -219,7 +219,7 @@ class Array(T)
     end
   end
 
-  # Set union: returns a new `Array` by joining `self` with *other*, excluding
+  # Sets union: returns a new `Array` by joining `self` with *other*, excluding
   # any duplicates, and preserving the order from `self`.
   #
   # ```

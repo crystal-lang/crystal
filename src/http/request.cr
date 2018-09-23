@@ -129,7 +129,7 @@ class HTTP::Request
     value
   end
 
-  # Return request host from headers.
+  # Returns request host from headers.
   def host
     host = @headers["Host"]?
     return unless host
@@ -137,7 +137,7 @@ class HTTP::Request
     index ? host[0...index] : host
   end
 
-  # Return request host with port from headers.
+  # Returns request host with port from headers.
   def host_with_port
     @headers["Host"]?
   end

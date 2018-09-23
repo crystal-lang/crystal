@@ -83,7 +83,7 @@ module Crystal
     # one LLVM module is created for each type in a program.
     property? single_module = false
 
-    # Set to a `ProgressTracker` object which tracks compilation progress.
+    # Sets to a `ProgressTracker` object which tracks compilation progress.
     property progress_tracker = ProgressTracker.new
 
     # Target triple to use in the compilation.

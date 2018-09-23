@@ -20,7 +20,7 @@ module IO::Syscall
     @read_timeout = timeout
   end
 
-  # Set the number of seconds to wait when reading before raising an `IO::Timeout`.
+  # Sets the number of seconds to wait when reading before raising an `IO::Timeout`.
   def read_timeout=(read_timeout : Number) : Number
     self.read_timeout = read_timeout.seconds
     read_timeout
@@ -36,7 +36,7 @@ module IO::Syscall
     @write_timeout = timeout
   end
 
-  # Set the number of seconds to wait when writing before raising an `IO::Timeout`.
+  # Sets the number of seconds to wait when writing before raising an `IO::Timeout`.
   def write_timeout=(write_timeout : Number) : Number
     self.write_timeout = write_timeout.seconds
     write_timeout

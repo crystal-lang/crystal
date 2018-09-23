@@ -228,7 +228,7 @@ class HTTP::Client
     end
   end
 
-  # Set the number of seconds to wait when reading before raising an `IO::Timeout`.
+  # Sets the number of seconds to wait when reading before raising an `IO::Timeout`.
   #
   # ```
   # client = HTTP::Client.new("example.org")
@@ -243,7 +243,7 @@ class HTTP::Client
     @read_timeout = read_timeout.to_f
   end
 
-  # Set the read timeout with a `Time::Span`, to wait when reading before raising an `IO::Timeout`.
+  # Sets the read timeout with a `Time::Span`, to wait when reading before raising an `IO::Timeout`.
   #
   # ```
   # client = HTTP::Client.new("example.org")
@@ -258,7 +258,7 @@ class HTTP::Client
     self.read_timeout = read_timeout.total_seconds
   end
 
-  # Set the number of seconds to wait when connecting, before raising an `IO::Timeout`.
+  # Sets the number of seconds to wait when connecting, before raising an `IO::Timeout`.
   #
   # ```
   # client = HTTP::Client.new("example.org")
@@ -273,7 +273,7 @@ class HTTP::Client
     @connect_timeout = connect_timeout.to_f
   end
 
-  # Set the open timeout with a `Time::Span` to wait when connecting, before raising an `IO::Timeout`.
+  # Sets the open timeout with a `Time::Span` to wait when connecting, before raising an `IO::Timeout`.
   #
   # ```
   # client = HTTP::Client.new("example.org")
@@ -290,7 +290,7 @@ class HTTP::Client
 
   # **This method has no effect right now**
   #
-  # Set the number of seconds to wait when resolving a name, before raising an `IO::Timeout`.
+  # Sets the number of seconds to wait when resolving a name, before raising an `IO::Timeout`.
   #
   # ```
   # client = HTTP::Client.new("example.org")
@@ -307,7 +307,7 @@ class HTTP::Client
 
   # **This method has no effect right now**
   #
-  # Set the number of seconds to wait when resolving a name with a `Time::Span`, before raising an `IO::Timeout`.
+  # Sets the number of seconds to wait when resolving a name with a `Time::Span`, before raising an `IO::Timeout`.
   #
   # ```
   # client = HTTP::Client.new("example.org")
