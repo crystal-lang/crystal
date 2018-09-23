@@ -54,7 +54,7 @@ module Crystal
     end
 
     def self.date
-      {{ `date "+%Y-%m-%d"`.stringify.chomp }}
+      {{ env("CRYSTAL_CONFIG_BUILD_DATE") || `date "+%Y-%m-%d"`.stringify.chomp }}
     end
 
     def self.default_target_triple
