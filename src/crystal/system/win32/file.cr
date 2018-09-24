@@ -229,4 +229,15 @@ module Crystal::System::File
   private def self.to_windows_path(path : String) : LibC::LPWSTR
     path.check_no_null_byte.to_utf16.to_unsafe
   end
+
+  private def fsync : Nil
+    flush
+    if LibC.fflush(@fd) != 0
+      raise Errno.new("fsync")
+    end
+  end
+
+  private def fdatasync : Nil
+    fsync
+  end
 end
