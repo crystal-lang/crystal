@@ -35,7 +35,7 @@ module YAML::Schema::FailSafe
     end
 
     def cast_document(doc)
-      doc.first? || Any.new(nil)
+      doc[0]? || Any.new(nil)
     end
 
     def new_sequence
