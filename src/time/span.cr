@@ -394,19 +394,14 @@ struct Time::Span
 end
 
 struct Int
-  # :nodoc:
-  def week : Time::Span
-    weeks
-  end
-
   # Returns a `Time::Span` of `self` weeks.
   def weeks : Time::Span
     Time::Span.new 7 * self, 0, 0, 0
   end
 
-  # :nodoc:
-  def day : Time::Span
-    days
+  # ditto
+  def week : Time::Span
+    weeks
   end
 
   # Returns a `Time::Span` of `self` days.
@@ -414,9 +409,9 @@ struct Int
     Time::Span.new self, 0, 0, 0
   end
 
-  # :nodoc:
-  def hour : Time::Span
-    hours
+  # ditto
+  def day : Time::Span
+    days
   end
 
   # Returns a `Time::Span` of `self` hours.
@@ -424,9 +419,9 @@ struct Int
     Time::Span.new self, 0, 0
   end
 
-  # :nodoc:
-  def minute : Time::Span
-    minutes
+  # ditto
+  def hour : Time::Span
+    hours
   end
 
   # Returns a `Time::Span` of `self` minutes.
@@ -434,9 +429,9 @@ struct Int
     Time::Span.new 0, self, 0
   end
 
-  # :nodoc:
-  def second : Time::Span
-    seconds
+  # ditto
+  def minute : Time::Span
+    minutes
   end
 
   # Returns a `Time::Span` of `self` seconds.
@@ -444,9 +439,9 @@ struct Int
     Time::Span.new 0, 0, self
   end
 
-  # :nodoc:
-  def millisecond : Time::Span
-    milliseconds
+  # ditto
+  def second : Time::Span
+    seconds
   end
 
   # Returns a `Time::Span` of `self` milliseconds.
@@ -454,19 +449,29 @@ struct Int
     Time::Span.new 0, 0, 0, 0, (self.to_i64 * Time::NANOSECONDS_PER_MILLISECOND)
   end
 
+  # ditto
+  def millisecond : Time::Span
+    milliseconds
+  end
+
   # Returns a `Time::Span` of `self` microseconds.
   def microseconds : Time::Span
     Time::Span.new 0, 0, 0, 0, (self.to_i64 * Time::NANOSECONDS_PER_MICROSECOND)
   end
 
-  # :nodoc:
-  def nanosecond : Time::Span
-    nanoseconds
+  # ditto
+  def microsecond : Time::Span
+    microseconds
   end
 
   # Returns a `Time::Span` of `self` nanoseconds.
   def nanoseconds : Time::Span
     Time::Span.new(nanoseconds: self.to_i64)
+  end
+
+  # ditto
+  def nanosecond : Time::Span
+    nanoseconds
   end
 end
 
@@ -552,23 +557,23 @@ struct Time::MonthSpan
 end
 
 struct Int
-  # :nodoc:
-  def month : Time::MonthSpan
-    months
-  end
-
   # Returns a `Time::MonthSpan` of `self` months.
   def months : Time::MonthSpan
     Time::MonthSpan.new(self)
   end
 
-  # :nodoc:
-  def year : Time::MonthSpan
-    years
+  # ditto
+  def month : Time::MonthSpan
+    months
   end
 
   # Returns a `Time::MonthSpan` of `self` years.
   def years : Time::MonthSpan
     Time::MonthSpan.new(self * 12)
+  end
+
+  # ditto
+  def year : Time::MonthSpan
+    years
   end
 end
