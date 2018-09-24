@@ -162,7 +162,7 @@ Other useful flags to `git commit` are `--fixup` and `--squash`, combined with `
 are then automatically reordered and marked with `fix` or `squash` respectively.
 
 Once you have a clean history, you can update an existing pull request simply by force pushing to the branch you opened it from. Force pushing is necessary
-since a rebase rewrites history, effectively creating new commits with the same changes. However, never do that in the main integration branches (`master`) of
+since a rebase rewrites history, effectively creating new commits with the same changes. However, never do that in the main integration branches (`main`) of
 your own projects; a not so clean history is to prefer once a commit landed there. Assuming `origin` is your fork on Github, simply:
 
 ```sh

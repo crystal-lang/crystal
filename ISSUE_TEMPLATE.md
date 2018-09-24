@@ -7,7 +7,7 @@ Make sure to review these points before submitting issues - thank you!
 - Don't **only** use `play.crystal-lang.org` or `carc.in`: code might be lost and the issue will remain incomplete. Write code in the issue itself.
 - Reduce code, if possible, to the minimum size that reproduces the bug.
 - If all of the above is impossible due to a large project, create a branch that reproduces the bug and point us to it.
-- Include Crystal compiler version (`crystal -v`) and OS. If possible, try to see if the bug still reproduces on master.
+- Include Crystal compiler version (`crystal -v`) and OS. If possible, try to see if the bug still reproduces on the main branch.
 
 # Submitting questions
 
