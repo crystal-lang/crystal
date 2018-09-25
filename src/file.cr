@@ -830,7 +830,12 @@ class File < IO::FileDescriptor
   def size
     info.size
   end
-
+  
+  # Checks whether end of file is reached.
+  def eof?
+    pos >= info.size
+  end
+  
   # Truncates the file to the specified *size*. Requires that the current file is opened
   # for writing.
   def truncate(size = 0) : Nil
