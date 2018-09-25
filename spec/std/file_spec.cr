@@ -873,6 +873,18 @@ describe "File" do
     end
   end
 
+  describe "fsync" do
+    it "syncs OS file buffer to disk" do
+      with_tempfile("fsync.txt") do |path|
+        File.open(path, "a") do |f|
+          f.puts("333")
+          f.fsync
+          File.read(path).should eq("333\n")
+        end
+      end
+    end
+  end
+
   # TODO: implement flock on windows
   describe "flock" do
     pending_win32 "exlusively locks a file" do
