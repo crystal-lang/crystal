@@ -314,7 +314,7 @@ LLVMMetadataRef LLVMTemporaryMDNode2(LLVMContextRef C, LLVMMetadataRef *MDs,
                   .release());
 }
 
-void LLVMMetadataReplaceAllUsesWith(LLVMMetadataRef MD, LLVMMetadataRef New) {
+void LLVMMetadataReplaceAllUsesWith2(LLVMMetadataRef MD, LLVMMetadataRef New) {
   auto *Node = unwrap<MDNode>(MD);
   Node->replaceAllUsesWith(unwrap<MDNode>(New));
   MDNode::deleteTemporary(Node);
