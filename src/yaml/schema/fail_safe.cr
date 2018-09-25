@@ -8,7 +8,7 @@ module YAML::Schema::FailSafe
   end
 
   # Deserializes multiple YAML documents.
-  def self.parse_all(data : String | IO) : Any
+  def self.parse_all(data : String | IO) : Array(Any)
     Parser.new data, &.parse_all
   end
 
@@ -35,7 +35,7 @@ module YAML::Schema::FailSafe
     end
 
     def cast_document(doc)
-      doc.first? || Any.new(nil)
+      doc[0]? || Any.new(nil)
     end
 
     def new_sequence
