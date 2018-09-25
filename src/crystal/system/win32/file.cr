@@ -231,13 +231,10 @@ module Crystal::System::File
   end
 
   private def fsync : Nil
-    flush
-    if LibC.fflush(@fd) != 0
-      raise Errno.new("fsync")
-    end
+    raise NotImplementedError.new("File#fsync")
   end
 
   private def fdatasync : Nil
-    fsync
+    raise NotImplementedError.new("File#fdatasync")
   end
 end

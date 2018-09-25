@@ -15,5 +15,4 @@ lib LibC
   fun _chsize(fd : Int, size : Long) : Int
   fun _get_osfhandle(fd : Int) : IntPtrT
   fun _pipe(pfds : Int*, psize : UInt, textmode : Int) : Int
-  fun fflush(fd : Int) : Int
 end
