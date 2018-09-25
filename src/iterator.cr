@@ -252,7 +252,7 @@ module Iterator(T)
     end
   end
 
-  # Return an iterator that applies the given function to the element and then
+  # Returns an iterator that applies the given function to the element and then
   # returns it unless it is `nil`. If the returned value would be `nil` it instead
   # returns the next non `nil` value.
   #

@@ -169,7 +169,7 @@ module HTTP
     # ```
     delegate has_key?, to: raw_params
 
-    # Return `true` if params is empty.
+    # Returns `true` if params is empty.
     #
     # ```
     # Params.new.empty?                              # => true

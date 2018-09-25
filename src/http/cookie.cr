@@ -160,7 +160,7 @@ module HTTP
       @cookies = {} of String => Cookie
     end
 
-    # Set a new cookie in the collection with a string value.
+    # Sets a new cookie in the collection with a string value.
     # This creates a never expiring, insecure, not HTTP only cookie with
     # no explicit domain restriction and the path `/`.
     #
@@ -172,7 +172,7 @@ module HTTP
       self[key] = Cookie.new(key, value)
     end
 
-    # Set a new cookie in the collection to the given `HTTP::Cookie`
+    # Sets a new cookie in the collection to the given `HTTP::Cookie`
     # instance. The name attribute must match the given *key*, else
     # `ArgumentError` is raised.
     #

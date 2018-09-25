@@ -826,7 +826,7 @@ class File < IO::FileDescriptor
     utime time, time, filename
   end
 
-  # Return the size in bytes of the currently opened file.
+  # Returns the size in bytes of the currently opened file.
   def size
     info.size
   end

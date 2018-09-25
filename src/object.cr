@@ -177,7 +177,7 @@ class Object
     self
   end
 
-  # Return `self`.
+  # Returns `self`.
   #
   # ```
   # str = "hello"

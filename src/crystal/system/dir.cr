@@ -3,7 +3,7 @@ module Crystal::System::Dir
   # Returns a new handle to an iterator of entries inside *path*.
   # def self.open(path : String) : Handle
 
-  # Return the next directory entry in the iterator represented by *handle*, or
+  # Returns the next directory entry in the iterator represented by *handle*, or
   # `nil` if iteration is complete.
   # def self.next(handle : Handle) : String?
 

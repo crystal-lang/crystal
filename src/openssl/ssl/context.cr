@@ -386,7 +386,7 @@ abstract class OpenSSL::SSL::Context
     LibSSL.ssl_ctx_set_alpn_select_cb(@handle, alpn_cb, alpn_protocol)
   end
 
-  # Set this context verify param to the default one of the given name.
+  # Sets this context verify param to the default one of the given name.
   #
   # Depending on the OpenSSL version, the available defaults are
   # `default`, `pkcs7`, `smime_sign`, `ssl_client` and `ssl_server`.
