@@ -515,11 +515,11 @@ Playground.Session = function(options) {
         dom.append("<br>");
       }
       var str = lines[i];
-      var firstNonWhite = 0;
-      while (str[firstNonWhite] == ' ') {
-        firstNonWhite++;
+      var firstNonWhitespace = 0;
+      while (str[firstNonWhitespace] == ' ') {
+        firstNonWhitespace++;
       }
-      var rendered = "\u00a0".repeat(firstNonWhite) + str.substring(firstNonWhite);
+      var rendered = "\u00a0".repeat(firstNonWhitespace) + str.substring(firstNonWhitespace);
       dom.append(document.createTextNode(rendered));
     }
 
