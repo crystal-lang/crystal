@@ -169,7 +169,7 @@ module Crystal::System::File
   def fdatasync : Nil
     flush
     if LibC.fdatasync(fd) != 0
-      raise Errno.new("fsync")
+      raise Errno.new("fdatasync")
     end
   end
 end
