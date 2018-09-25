@@ -110,7 +110,7 @@ module Crystal
     # The main filename of this program
     property filename : String?
 
-    # Sets to a `ProgressTracker` object which tracks compilation progress.
+    # Set to a `ProgressTracker` object which tracks compilation progress.
     property progress_tracker = ProgressTracker.new
 
     def initialize
