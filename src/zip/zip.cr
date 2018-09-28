@@ -10,7 +10,7 @@ require "./*"
 # Two types are provided to read from zip files:
 # * `Zip::File`: can read zip entries from a `File` or from an `IO::Memory`
 # and provides random read access to its entries.
-# * `Zip::Reader`: can only read zip entries sequentially from any `IO.
+# * `Zip::Reader`: can only read zip entries sequentially from any `IO`.
 #
 # `Zip::File` is the preferred method to read zip files if you
 # can provide a `File`, because it's a bit more flexible and provides

@@ -25,7 +25,7 @@ module Zip
     end
 
     def write(slice : Bytes)
-      raise IO::Error.new "Can't read from Zip::Reader or Zip::File entry"
+      raise IO::Error.new "Can't write to Zip::Reader or Zip::File entry"
     end
   end
 end
