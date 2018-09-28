@@ -348,7 +348,6 @@ class URI
   end
 
   # :nodoc:
-  # Unescapes one character. Private API
   def self.unescape_one(string, bytesize, i, byte, char, io, plus_to_space = false)
     if plus_to_space && char == '+'
       io.write_byte ' '.ord.to_u8
