@@ -1388,13 +1388,9 @@ module Crystal
         write_token :"."
       end
 
-      if @lexer.current_char == '%'
-        @token.type = :"%"
-        @token.column_number += 1
-        @lexer.next_char
-      end
-
+      @lexer.wants_def_or_macro_name = true
       skip_space_or_newline
+      @lexer.wants_def_or_macro_name = false
 
       write node.name
       next_token_skip_space
