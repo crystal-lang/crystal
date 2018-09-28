@@ -120,6 +120,24 @@ describe "Float" do
     it { -1.4.divmod(-0.3)[1].should be_close(-0.2, 0.00001) }
   end
 
+  describe "floor division //" do
+    it "preserves type of lhs" do
+      (7.0 // 2).should be_a(Float64)
+      (7.0 // 2i32).should be_a(Float64)
+      (7.0 // 2.0).should be_a(Float64)
+      (7.0_f32 // 2.0_f64).should be_a(Float32)
+      (7.0_f32 // 2.0_f32).should be_a(Float32)
+    end
+
+    it "applies floor" do
+      (7.0 // 2.0).should eq(3)
+      (-7.0 // 2.0).should eq(-4)
+
+      (6.0 // 2.0).should eq(3)
+      (-6.0 // 2.0).should eq(-3)
+    end
+  end
+
   describe "to_s" do
     it "does to_s for f64" do
       12.34.to_s.should eq("12.34")
