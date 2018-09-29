@@ -327,6 +327,12 @@ end
             @[Primitive(:binary)]
             def {{op.id}}(other : {{int2.id}}) : self
             end
+
+            # Returns the result of {{desc.id}} `self` and *other*.
+            # In case of overflow a wrapping is performed.
+            @[Primitive(:binary)]
+            def &{{op.id}}(other : {{int2.id}}) : self
+            end
           {% end %}
         {% end %}
 
