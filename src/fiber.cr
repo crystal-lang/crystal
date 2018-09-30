@@ -56,6 +56,11 @@ class Fiber
   protected property prev_fiber : Fiber?
   property name : String?
 
+  # :nodoc:
+  def self.inactive(fiber : Fiber)
+    @@fibers.delete(fiber)
+  end
+
   def initialize(@name : String? = nil, &@proc : ->)
     @stack = Fiber.allocate_stack
     @stack_bottom = @stack + STACK_SIZE
@@ -155,32 +160,21 @@ class Fiber
     Crystal::Scheduler.reschedule
   end
 
+  def self.current
+    Crystal::Scheduler.current_fiber
+  end
+
   def resume : Nil
-    current, Thread.current.current_fiber = Thread.current.current_fiber, self
-    GC.stack_bottom = @stack_bottom
-    Fiber.swapcontext(pointerof(current.@stack_top), @stack_top)
+    Crystal::Scheduler.resume(self)
   end
 
-  def sleep(time : Time::Span)
-    event = @resume_event ||= Crystal::EventLoop.create_resume_event(self)
-    event.add(time)
-    Crystal::Scheduler.reschedule
-  end
-
-  def sleep(time : Number)
-    sleep(time.seconds)
-  end
-
-  def yield
-    sleep(0)
-  end
-
-  def self.sleep(time)
-    Fiber.current.sleep(time)
+  # :nodoc:
+  def resume_event
+    @resume_event ||= Crystal::EventLoop.create_resume_event(self)
   end
 
   def self.yield
-    Fiber.current.yield
+    Crystal::Scheduler.yield
   end
 
   def to_s(io)
@@ -201,24 +195,11 @@ class Fiber
     GC.push_stack @stack_top, @stack_bottom
   end
 
-  @@root = new
-
-  # :nodoc:
-  def self.root : self
-    @@root
-  end
-
-  Thread.current.current_fiber = root
-
-  def self.current : self
-    Thread.current.current_fiber
-  end
-
   # This will push all fibers stacks whenever the GC wants to collect some memory
   GC.before_collect do
     fiber = @@first_fiber
     while fiber
-      fiber.push_gc_roots unless fiber == Thread.current.current_fiber
+      fiber.push_gc_roots unless fiber == Fiber.current
       fiber = fiber.next_fiber
     end
   end

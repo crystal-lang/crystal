@@ -12,12 +12,10 @@ class Thread
   @th : LibC::PthreadT
   @exception : Exception?
   @detached = false
-
-  property current_fiber
+  @main_fiber : Fiber?
 
   # Starts a new system thread.
   def initialize(&@func : ->)
-    @current_fiber = uninitialized Fiber
     @th = uninitialized LibC::PthreadT
 
     ret = GC.pthread_create(pointerof(@th), Pointer(LibC::PthreadAttrT).null, ->(data : Void*) {
@@ -35,9 +33,10 @@ class Thread
   # Used once to initialize the thread object representing the main thread of
   # the process (that already exists).
   def initialize
-    @current_fiber = uninitialized Fiber
     @func = ->{}
     @th = LibC.pthread_self
+    @main_fiber = Fiber.new
+
     @@threads << self
   end
 
@@ -101,14 +100,26 @@ class Thread
   # TODO: consider moving to `kernel.cr` or `crystal/main.cr`
   self.current = new
 
+  # Returns the Fiber representing the thread's main stack.
+  def main_fiber
+    @main_fiber.not_nil!
+  end
+
+  def scheduler
+    @scheduler ||= Crystal::Scheduler.new(main_fiber)
+  end
+
   protected def start
     Thread.current = self
+    @main_fiber = fiber = Fiber.new
+
     begin
       @func.call
     rescue ex
       @exception = ex
     ensure
       @@threads.delete(self)
+      Fiber.inactive(fiber)
     end
   end
 end
