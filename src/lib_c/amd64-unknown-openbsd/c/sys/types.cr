@@ -17,6 +17,7 @@ lib LibC
   type PthreadAttrT = Void*
   type PthreadCondT = Void*
   type PthreadCondattrT = Void*
+  type PthreadKeyT = Int
   type PthreadMutexT = Void*
   type PthreadMutexattrT = Void*
   type PthreadT = Void*
