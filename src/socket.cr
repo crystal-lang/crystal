@@ -39,8 +39,8 @@ class Socket < IO
 
   getter fd : Int32
 
-  @read_event : Event::Event?
-  @write_event : Event::Event?
+  @read_event : Crystal::Event?
+  @write_event : Crystal::Event?
 
   @closed : Bool
 

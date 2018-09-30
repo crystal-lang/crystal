@@ -1,8 +1,8 @@
-require "event"
+require "./event"
 
 module Crystal::EventLoop
-  @@eb = Event::Base.new
-  @@dns_base : Event::DnsBase?
+  @@eb = Crystal::Event::Base.new
+  @@dns_base : Crystal::Event::DnsBase?
 
   def self.after_fork
     @@eb.reinit

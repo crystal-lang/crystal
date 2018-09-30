@@ -1,39 +1,36 @@
-require "./event/*"
+require "./lib_event2"
 
 # :nodoc:
-module Event
+struct Crystal::Event
   VERSION = String.new(LibEvent2.event_get_version)
 
   def self.callback(&block : Int32, LibEvent2::EventFlags, Void* ->)
     block
   end
 
-  # :nodoc:
-  struct Event
-    def initialize(@event : LibEvent2::Event)
-      @freed = false
-    end
+  def initialize(@event : LibEvent2::Event)
+    @freed = false
+  end
 
-    def add(timeout : LibC::Timeval? = nil)
-      if timeout
-        timeout_copy = timeout
-        LibEvent2.event_add(@event, pointerof(timeout_copy))
-      else
-        LibEvent2.event_add(@event, nil)
-      end
+  def add(timeout : LibC::Timeval? = nil)
+    if timeout
+      timeout_copy = timeout
+      LibEvent2.event_add(@event, pointerof(timeout_copy))
+    else
+      LibEvent2.event_add(@event, nil)
     end
+  end
 
-    def add(timeout : Time::Span)
-      add LibC::Timeval.new(
-        tv_sec: timeout.total_seconds.to_i,
-        tv_usec: timeout.nanoseconds / 1_000
-      )
-    end
+  def add(timeout : Time::Span)
+    add LibC::Timeval.new(
+      tv_sec: timeout.total_seconds.to_i,
+      tv_usec: timeout.nanoseconds / 1_000
+    )
+  end
 
-    def free
-      LibEvent2.event_free(@event) unless @freed
-      @freed = true
-    end
+  def free
+    LibEvent2.event_free(@event) unless @freed
+    @freed = true
   end
 
   # :nodoc:

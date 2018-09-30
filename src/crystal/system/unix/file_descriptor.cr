@@ -6,8 +6,8 @@ module Crystal::System::FileDescriptor
 
   @fd : Int32
 
-  @read_event : Event::Event?
-  @write_event : Event::Event?
+  @read_event : Crystal::Event?
+  @write_event : Crystal::Event?
 
   private def unbuffered_read(slice : Bytes)
     read_syscall_helper(slice, "Error reading file") do
