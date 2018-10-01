@@ -6,13 +6,19 @@ class Thread
   # Don't use this class, it is used internally by the event scheduler.
   # Use spawn and channels instead.
 
-  # all thread objects, so the GC can see them (it may not scan thread locals)
-  @@threads = Set(Thread).new
+  # all thread objects, so the GC can see them (it doesn't scan thread locals)
+  @@threads = Thread::LinkedList(Thread).new
 
   @th : LibC::PthreadT
   @exception : Exception?
   @detached = false
   @main_fiber : Fiber?
+
+  # :nodoc:
+  property next : Thread?
+
+  # :nodoc:
+  property previous : Thread?
 
   # Starts a new system thread.
   def initialize(&@func : ->)
@@ -24,7 +30,7 @@ class Thread
     }, self.as(Void*))
 
     if ret == 0
-      @@threads << self
+      @@threads.push(self)
     else
       raise Errno.new("pthread_create")
     end
@@ -37,7 +43,7 @@ class Thread
     @th = LibC.pthread_self
     @main_fiber = Fiber.new
 
-    @@threads << self
+    @@threads.push(self)
   end
 
   def finalize
@@ -105,6 +111,7 @@ class Thread
     @main_fiber.not_nil!
   end
 
+  # :nodoc:
   def scheduler
     @scheduler ||= Crystal::Scheduler.new(main_fiber)
   end

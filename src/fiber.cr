@@ -1,4 +1,5 @@
 require "c/sys/mman"
+require "thread/linked_list"
 
 # Load the arch-specific methods to create a context and to swap from one
 # context to another one. There are two methods: `Fiber#makecontext` and
@@ -43,8 +44,7 @@ end
 class Fiber
   STACK_SIZE = 8 * 1024 * 1024
 
-  @@first_fiber : Fiber? = nil
-  @@last_fiber : Fiber? = nil
+  @@fibers = Thread::LinkedList(Fiber).new
   @@stack_pool = [] of Void*
 
   @stack : Void*
@@ -52,9 +52,13 @@ class Fiber
   @stack_top = Pointer(Void).null
   protected property stack_top : Void*
   protected property stack_bottom : Void*
-  protected property next_fiber : Fiber?
-  protected property prev_fiber : Fiber?
   property name : String?
+
+  # :nodoc:
+  property next : Fiber?
+
+  # :nodoc:
+  property previous : Fiber?
 
   # :nodoc:
   def self.inactive(fiber : Fiber)
@@ -76,13 +80,7 @@ class Fiber
 
     makecontext(stack_ptr, fiber_main)
 
-    @prev_fiber = nil
-    if last_fiber = @@last_fiber
-      @prev_fiber = last_fiber
-      last_fiber.next_fiber = @@last_fiber = self
-    else
-      @@first_fiber = @@last_fiber = self
-    end
+    @@fibers.push(self)
   end
 
   # :nodoc:
@@ -93,7 +91,7 @@ class Fiber
     @stack_bottom = GC.stack_bottom
     @name = "main"
 
-    @@first_fiber = @@last_fiber = self
+    @@fibers.push(self)
   end
 
   protected def self.allocate_stack
@@ -142,17 +140,7 @@ class Fiber
     @@stack_pool << @stack
 
     # Remove the current fiber from the linked list
-    if prev_fiber = @prev_fiber
-      prev_fiber.next_fiber = @next_fiber
-    else
-      @@first_fiber = @next_fiber
-    end
-
-    if next_fiber = @next_fiber
-      next_fiber.prev_fiber = @prev_fiber
-    else
-      @@last_fiber = @prev_fiber
-    end
+    @@fibers.delete(self)
 
     # Delete the resume event if it was used by `yield` or `sleep`
     @resume_event.try &.free
@@ -195,12 +183,12 @@ class Fiber
     GC.push_stack @stack_top, @stack_bottom
   end
 
-  # This will push all fibers stacks whenever the GC wants to collect some memory
+  # pushes the stack of pending fibers when the GC wants to collect memory:
   GC.before_collect do
-    fiber = @@first_fiber
-    while fiber
-      fiber.push_gc_roots unless fiber == Fiber.current
-      fiber = fiber.next_fiber
+    current = Fiber.current
+
+    @@fibers.unsafe_each do |fiber|
+      fiber.push_gc_roots unless fiber == current
     end
   end
 end
