@@ -230,11 +230,7 @@ module Crystal::System::File
     path.check_no_null_byte.to_utf16.to_unsafe
   end
 
-  private def fsync : Nil
+  private def system_fsync(flush_metadata = true) : Nil
     raise NotImplementedError.new("File#fsync")
-  end
-
-  private def fdatasync : Nil
-    raise NotImplementedError.new("File#fdatasync")
   end
 end
