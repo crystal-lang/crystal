@@ -1,178 +1,109 @@
-# The `Logger` class provides a simple but sophisticated logging utility that you can use to output messages.
+require "./logger/*"
+
+# The `Logger` class provides a logging utility that you can (and should) use
+# to output messages.
 #
-# The messages have associated levels, such as `INFO` or `ERROR` that indicate their importance.
-# You can then give the `Logger` a level, and only messages at that level of higher will be printed.
+# The logging system consists of three parts: a `Logger`, which is associated
+# with a single component of your program (usually a class or module), a
+# `Handler`, which receives messages from `Logger` and filters them based on
+# severity level, and one or more `Adapter` objects, which output log messages
+# in some way, such as by writing them to an `IO` or sending them to a
+# database.
 #
-# For instance, in a production system, you may have your `Logger` set to `INFO` or even `WARN`.
-# When you are developing the system, however, you probably want to know about the program’s internal state,
-# and would set the `Logger` to `DEBUG`.
+# Each message has an associated level, such as `INFO` or `ERROR`, that
+# indicates its importance. You can assign different severity thresholds to
+# different components of your program, and the `Handler` will ignore messages
+# that do not meet the respective threshold.
 #
-# If logging to multiple locations is required, an `IO::MultiWriter` can be
-# used.
+# The bulk of the logging functionality is contained in the `Handler` class.
+# `Logger` itself mostly delegates methods to a handler, supplying its
+# component name.
 #
-# ### Example
-#
+# Crystal provides a default `Handler` whose adapter writes to `STDERR`, so if
+# all you want is some console output getting started is easy:
 # ```
 # require "logger"
 #
-# log = Logger.new(STDOUT)
-# log.level = Logger::WARN
+# module MyProgram
+#   @@logger = Logger.new(name)
 #
-# # or
-# log = Logger.new(STDOUT, level: Logger::WARN)
+#   class Config
+#     @@logger = Logger.new(name)
 #
-# log.debug("Created logger")
-# log.info("Program started")
-# log.warn("Nothing to do!")
-#
-# begin
-#   File.each_line("/foo/bar.log") do |line|
-#     unless line =~ /^(\w+) = (.*)$/
-#       log.error("Line in wrong format: #{line}")
+#     def initialize
+#       @@logger.debug "Finding config..." # Not printed; default level is INFO
+#       @@logger.error "No config found!"
 #     end
 #   end
-# rescue err
-#   log.fatal("Caught exception; exiting")
-#   log.fatal(err)
+#
+#   def self.main
+#     @@logger.info "Initializing..."
+#     Config.new
+#   end
 # end
+#
+# MyProgram.main
+#
+# # Produces:
+# # I, [2018-04-04 13:14:58 -07:00 #14093]  INFO -- program / MyProgram: Initializing...
+# # E, [2018-04-04 13:14:58 -07:00 #14093] ERROR -- program / MyProgram::Config: No config found!
 # ```
 class Logger
-  property level : Severity
-  property progname : String
+  # The `Handler` instance that will filter messages by level and pass them to
+  # its adapters.
+  getter handler
+  # The component string that will be passed to `handler`.
+  getter component
 
-  # Customizable `Proc` (with a reasonable default)
-  # which the `Logger` uses to format and print its entries.
-  #
-  # Use this setter to provide a custom formatter.
-  # The `Logger` will invoke it with the following arguments:
-  #  - severity: a `Logger::Severity`
-  #  - datetime: `Time`, the entry's timestamp
-  #  - progname: `String`, the program name, if set when the logger was built
-  #  - message: `String`, the body of a message
-  #  - io: `IO`, the Logger's stream, to which you must write the final output
-  #
-  # Example:
-  #
-  # ```
-  # require "logger"
-  #
-  # logger = Logger.new(STDOUT)
-  # logger.progname = "YodaBot"
-  #
-  # logger.formatter = Logger::Formatter.new do |severity, datetime, progname, message, io|
-  #   label = severity.unknown? ? "ANY" : severity.to_s
-  #   io << label[0] << ", [" << datetime << " #" << Process.pid << "] "
-  #   io << label.rjust(5) << " -- " << progname << ": " << message
-  # end
-  #
-  # logger.warn("Fear leads to anger. Anger leads to hate. Hate leads to suffering.")
-  #
-  # # Prints to the console:
-  # # "W, [2017-05-06 18:00:41 -0300 #11927]  WARN --
-  # #  YodaBot: Fear leads to anger. Anger leads to hate. Hate leads to suffering."
-  # ```
-  property formatter
-
-  # A logger severity level.
-  enum Severity
-    # Low-level information for developers
-    DEBUG
-
-    # Generic (useful) information about system operation
-    INFO
-
-    # A warning
-    WARN
-
-    # A handleable error condition
-    ERROR
-
-    # An unhandleable error that results in a program crash
-    FATAL
-
-    UNKNOWN
+  # Creates a new logger for the given component and log handler.
+  def initialize(@component : String, @handler = Logger.default_handler)
   end
 
-  alias Formatter = Severity, Time, String, String, IO ->
-
-  private DEFAULT_FORMATTER = Formatter.new do |severity, datetime, progname, message, io|
-    label = severity.unknown? ? "ANY" : severity.to_s
-    io << label[0] << ", [" << datetime << " #" << Process.pid << "] "
-    io << label.rjust(5) << " -- " << progname << ": " << message
-  end
-
-  # :nodoc:
-  record Message,
-    severity : Severity,
-    datetime : Time,
-    progname : String,
-    message : String
-
-  # Creates a new logger that will log to the given *io*.
-  # If *io* is `nil` then all log calls will be silently ignored.
-  def initialize(@io : IO?, @level = Severity::INFO, @formatter = DEFAULT_FORMATTER, @progname = "")
-    @closed = false
-    @mutex = Mutex.new
-  end
-
-  # Calls the *close* method on the object passed to `initialize`.
-  def close
-    return if @closed
-    return unless io = @io
-    @closed = true
-
-    @mutex.synchronize do
-      io.close
-    end
+  # Creates a new logger for the root component.
+  def self.new(handler = Logger.default_handler)
+    new("", handler)
   end
 
   {% for name in Severity.constants %}
-    {{name.id}} = Severity::{{name.id}}
-
-    # Returns `true` if the logger's current severity is lower or equal to `{{name.id}}`.
-    def {{name.id.downcase}}?
-      level <= Severity::{{name.id}}
+    # Returns `true` if a message with severity `{{name.id}}` will be logged
+    # at the current level.
+    def {{ name.id.downcase }}?
+      level! <= {{ name.id }}
     end
 
-    # Logs *message* if the logger's current severity is lower or equal to `{{name.id}}`.
-    # *progname* overrides a default progname set in this logger.
-    def {{name.id.downcase}}(message, progname = nil)
-      log(Severity::{{name.id}}, message, progname)
-    end
+    {% unless name.stringify == "SILENT" %}
+      # Sends *message* with severity `{{name.id}}` to the handler.
+      def {{ name.id.downcase }}(message)
+        @handler.log({{ name.id }}, message, @component)
+      end
 
-    # Logs the message as returned from the given block if the logger's current severity
-    # is lower or equal to `{{name.id}}`. The block is not run if the severity is higher.
-    # *progname* overrides a default progname set in this logger.
-    def {{name.id.downcase}}(progname = nil)
-      log(Severity::{{name.id}}, progname) { yield }
-    end
+      # Forwards the block to the handler with severity `{{name.id}}`. If this
+      # meets or exceeds this logger's level, the handler will evaluate the
+      # block and log the result. This is preferable to passing the message
+      # directly when building the message adds significant overhead.
+      def {{ name.id.downcase }}
+        @handler.log({{ name.id }}, @component) { yield }
+      end
+    {% end %}
   {% end %}
 
-  # Logs *message* if *severity* is higher or equal with the logger's current
-  # severity. *progname* overrides a default progname set in this logger.
-  def log(severity, message, progname = nil)
-    return if severity < level || !@io
-    write(severity, Time.now, progname || @progname, message)
+  # Delegates to `Handler#level?`, passing `component`.
+  def level?
+    @handler.level?(@component)
   end
 
-  # Logs the message as returned from the given block if *severity*
-  # is higher or equal with the loggers current severity. The block is not run
-  # if *severity* is lower. *progname* overrides a default progname set in this logger.
-  def log(severity, progname = nil)
-    return if severity < level || !@io
-    write(severity, Time.now, progname || @progname, yield)
+  # Delegates to `Handler#level!`, passing `component`.
+  def level!
+    @handler.level!(@component)
   end
 
-  private def write(severity, datetime, progname, message)
-    io = @io
-    return unless io
+  # Delegates to `Handler#set_level`, passing `component`.
+  def level=(severity : Severity)
+    @handler.set_level(@component, severity)
+  end
 
-    progname_to_s = progname.to_s
-    message_to_s = message.to_s
-    @mutex.synchronize do
-      formatter.call(severity, datetime, progname_to_s, message_to_s, io)
-      io.puts
-      io.flush
-    end
+  # Delegates to `Handler#unset_level`, passing `component`.
+  def level=(severity : Nil)
+    @handler.unset_level(@component)
   end
 end
