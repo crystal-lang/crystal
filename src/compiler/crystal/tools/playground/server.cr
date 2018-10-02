@@ -8,16 +8,18 @@ module Crystal::Playground
   class Session
     getter tag : Int32
 
-    def initialize(@ws : HTTP::WebSocket, @session_key : Int32, @port : Int32, @logger : Logger)
+    @@logger = Logger.get(self)
+
+    def initialize(@ws : HTTP::WebSocket, @session_key : Int32, @port : Int32)
       @running_process_filename = ""
       @tag = 0
     end
 
-    def self.instrument_and_prelude(session_key, port, tag, source, logger)
+    def self.instrument_and_prelude(session_key, port, tag, source)
       ast = Parser.new(source).parse
 
       instrumented = Playground::AgentInstrumentorTransformer.transform(ast).to_s
-      logger.info "Code instrumentation (session=#{session_key}, tag=#{tag}).\n#{instrumented}"
+      @@logger.info "Code instrumentation (session=#{session_key}, tag=#{tag}).\n#{instrumented}"
 
       prelude = %(
         require "compiler/crystal/tools/playground/agent"
@@ -42,11 +44,11 @@ module Crystal::Playground
     end
 
     def run(source, tag)
-      @logger.info "Request to run code (session=#{@session_key}, tag=#{tag}).\n#{source}"
+      @@logger.info "Request to run code (session=#{@session_key}, tag=#{tag}).\n#{source}"
 
       @tag = tag
       begin
-        sources = self.class.instrument_and_prelude(@session_key, @port, tag, source, @logger)
+        sources = self.class.instrument_and_prelude(@session_key, @port, tag, source)
       rescue ex : Crystal::Exception
         send_exception ex, tag
         return
@@ -56,22 +58,22 @@ module Crystal::Playground
       compiler = Compiler.new
       compiler.color = false
       begin
-        @logger.info "Instrumented code compilation started (session=#{@session_key}, tag=#{tag})."
+        @@logger.info "Instrumented code compilation started (session=#{@session_key}, tag=#{tag})."
         result = compiler.compile sources, output_filename
       rescue ex
-        @logger.info "Instrumented code compilation failed (session=#{@session_key}, tag=#{tag})."
+        @@logger.info "Instrumented code compilation failed (session=#{@session_key}, tag=#{tag})."
 
         # due to instrumentation, we compile the original program
         begin
-          @logger.info "Original code compilation started (session=#{@session_key}, tag=#{tag})."
+          @@logger.info "Original code compilation started (session=#{@session_key}, tag=#{tag})."
           compiler.compile Compiler::Source.new("play", source), output_filename
         rescue ex
-          @logger.info "Original code compilation failed (session=#{@session_key}, tag=#{tag})."
+          @@logger.info "Original code compilation failed (session=#{@session_key}, tag=#{tag})."
           send_exception ex, tag
           return # if we don't exit here we've found a bug
         end
 
-        @logger.error "Instrumention bug found (session=#{@session_key}, tag=#{tag})."
+        @@logger.error "Instrumention bug found (session=#{@session_key}, tag=#{tag})."
         send_with_json_builder do |json|
           json.field "type", "bug"
           json.field "tag", tag
@@ -93,7 +95,7 @@ module Crystal::Playground
     end
 
     def format(source, tag)
-      @logger.info "Request to format code (session=#{@session_key}, tag=#{tag}).\n#{source}"
+      @@logger.info "Request to format code (session=#{@session_key}, tag=#{tag}).\n#{source}"
 
       @tag = tag
 
@@ -119,7 +121,7 @@ module Crystal::Playground
       begin
         @ws.send(message)
       rescue ex : IO::Error
-        @logger.warn "Unable to send message (session=#{@session_key})."
+        @@logger.warn "Unable to send message (session=#{@session_key})."
       end
     end
 
@@ -158,7 +160,7 @@ module Crystal::Playground
 
     private def stop_process
       if process = @process
-        @logger.info "Code execution killed (session=#{@session_key}, filename=#{@running_process_filename})."
+        @@logger.info "Code execution killed (session=#{@session_key}, filename=#{@running_process_filename})."
         @process = nil
         File.delete @running_process_filename rescue nil
         process.kill rescue nil
@@ -168,13 +170,13 @@ module Crystal::Playground
     private def execute(tag, output_filename)
       stop_process
 
-      @logger.info "Code execution started (session=#{@session_key}, tag=#{tag}, filename=#{output_filename})."
+      @@logger.info "Code execution started (session=#{@session_key}, tag=#{tag}, filename=#{output_filename})."
       process = @process = Process.new(output_filename, args: [] of String, input: Process::Redirect::Pipe, output: Process::Redirect::Pipe, error: Process::Redirect::Pipe)
       @running_process_filename = output_filename
 
       spawn do
         status = process.wait
-        @logger.info "Code execution ended (session=#{@session_key}, tag=#{tag}, filename=#{output_filename})."
+        @@logger.info "Code execution ended (session=#{@session_key}, tag=#{tag}, filename=#{output_filename})."
         exit_status = status.normal_exit? ? status.exit_code : status.exit_signal.value
 
         send_with_json_builder do |json|
@@ -450,17 +452,16 @@ module Crystal::Playground
     @sessions = {} of Int32 => Session
     @sessions_key = 0
 
+    @@logger = Logger.get(self)
+
     property host : String?
     property port
-    property logger
     property source : Compiler::Source?
 
     def initialize
       @host = nil
       @port = 8080
       @verbose = false
-      @logger = Logger.new(STDOUT)
-      @logger.level = Logger::Severity::WARN
     end
 
     def start
@@ -472,7 +473,7 @@ module Crystal::Playground
         match_data = context.request.path.not_nil!.match(/\/(\d+)\/(\d+)$/).not_nil!
         session_key = match_data[1]?.try(&.to_i)
         tag = match_data[2]?.try(&.to_i)
-        @logger.info "#{context.request.path} WebSocket connected (session=#{session_key}, tag=#{tag})"
+        @@logger.info "#{context.request.path} WebSocket connected (session=#{session_key}, tag=#{tag})"
 
         session = @sessions[session_key]
 
@@ -488,12 +489,12 @@ module Crystal::Playground
       client_ws = PathWebSocketHandler.new "/client" do |ws, context|
         origin = context.request.headers["Origin"]
         if !accept_request?(origin)
-          @logger.warn "Invalid Request Origin: #{origin}"
+          @@logger.warn "Invalid Request Origin: #{origin}"
           ws.close "Invalid Request Origin"
         else
           @sessions_key += 1
-          @sessions[@sessions_key] = session = Session.new(ws, @sessions_key, @port, @logger)
-          @logger.info "/client WebSocket connected as session=#{@sessions_key}"
+          @sessions[@sessions_key] = session = Session.new(ws, @sessions_key, @port)
+          @@logger.info "/client WebSocket connected as session=#{@sessions_key}"
 
           ws.on_message do |message|
             json = JSON.parse(message)
