@@ -1197,6 +1197,32 @@ describe "File" do
     end
   end
 
+  it "#close_on_exec?" do
+    File.open(datapath("test_file.txt")) do |file|
+      file.close_on_exec?.should be_true
+      file.close_on_exec = false
+      file.close_on_exec?.should be_false
+      file.close_on_exec = true
+      file.close_on_exec?.should be_true
+    end
+  end
+
+  it "#blocking?" do
+    File.open(datapath("test_file.txt")) do |file|
+      file.blocking.should be_true
+      file.blocking = false
+      file.blocking.should be_false
+      file.blocking = true
+      file.blocking.should be_true
+    end
+  end
+
+  it "#tty?" do
+    File.open(datapath("test_file.txt")) do |file|
+      file.tty?.should be_false
+    end
+  end
+
   describe ".match?" do
     it "matches basics" do
       File.match?("abc", "abc").should be_true
