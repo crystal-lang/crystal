@@ -26,4 +26,30 @@ describe Socket do
     client.type.should eq(Socket::Type::STREAM)
     client.protocol.should eq(Socket::Protocol::TCP)
   end
+
+  it "#close_on_exec?" do
+    socket = Socket.tcp(Socket::Family::INET)
+    socket.close_on_exec?.should be_false
+    socket.close_on_exec = true
+    socket.close_on_exec?.should be_true
+    socket.close_on_exec = false
+    socket.close_on_exec?.should be_false
+  ensure
+    socket.try &.close
+  end
+
+  it "#blocking?" do
+    socket = Socket.tcp(Socket::Family::INET)
+    socket.blocking.should be_false
+    socket.blocking = true
+    socket.blocking.should be_true
+    socket.blocking = false
+    socket.blocking.should be_false
+  ensure
+    socket.try &.close
+  end
+
+  it "#tty?" do
+    Socket.tcp(Socket::Family::INET).tty?.should be_false
+  end
 end
