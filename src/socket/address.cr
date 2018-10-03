@@ -205,7 +205,7 @@ class Socket
       if addr = @addr4
         addr.s_addr & 0x00000000ff_u32 == 0x0000007f_u32
       elsif addr = @addr6
-        addr.__in6_u.__u6_addr8 == StaticArray[0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 1_u8]
+        ipv6_addr8(addr) == StaticArray[0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 1_u8]
       else
         raise "unreachable!"
       end
@@ -216,10 +216,22 @@ class Socket
       if addr = @addr4
         addr.s_addr == 0_u32
       elsif addr = @addr6
-        addr.__in6_u.__u6_addr8 == StaticArray[0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8]
+        ipv6_addr8(addr) == StaticArray[0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8]
       else
         raise "unreachable!"
       end
+    end
+
+    private def ipv6_addr8(addr : LibC::In6Addr)
+      {% if flag?(:darwin) || flag?(:openbsd) || flag?(:freebsd) %}
+        addr.__u6_addr.__u6_addr8
+      {% elsif flag?(:linux) && flag?(:musl) %}
+        addr.__in6_union.__s6_addr
+      {% elsif flag?(:linux) %}
+        addr.__in6_u.__u6_addr8
+      {% else %}
+        {% raise "Unsupported platform" %}
+      {% end %}
     end
 
     def ==(other : IPAddress)
