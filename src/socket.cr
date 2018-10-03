@@ -7,7 +7,7 @@ require "c/sys/un"
 
 class Socket < IO
   include IO::Buffered
-  include IO::Syscall
+  include Crystal::System::FileDescriptor
 
   class Error < Exception
   end
@@ -38,9 +38,6 @@ class Socket < IO
   SOMAXCONN = 128
 
   getter fd : Int32
-
-  @read_event : Event::Event?
-  @write_event : Event::Event?
 
   @closed : Bool
 
@@ -490,37 +487,23 @@ class Socket < IO
   end
 
   def blocking
-    fcntl(LibC::F_GETFL) & LibC::O_NONBLOCK == 0
+    system_blocking?
   end
 
   def blocking=(value)
-    flags = fcntl(LibC::F_GETFL)
-    if value
-      flags &= ~LibC::O_NONBLOCK
-    else
-      flags |= LibC::O_NONBLOCK
-    end
-    fcntl(LibC::F_SETFL, flags)
+    self.system_blocking = value
   end
 
   def close_on_exec?
-    flags = fcntl(LibC::F_GETFD)
-    (flags & LibC::FD_CLOEXEC) == LibC::FD_CLOEXEC
+    system_close_on_exec?
   end
 
   def close_on_exec=(arg : Bool)
-    fcntl(LibC::F_SETFD, arg ? LibC::FD_CLOEXEC : 0)
-    arg
-  end
-
-  def self.fcntl(fd, cmd, arg = 0)
-    r = LibC.fcntl fd, cmd, arg
-    raise Errno.new("fcntl() failed") if r == -1
-    r
+    self.system_close_on_exec = arg
   end
 
   def fcntl(cmd, arg = 0)
-    self.class.fcntl @fd, cmd, arg
+    Crystal::System::FileDescriptor.fcntl @fd, cmd, arg
   end
 
   def finalize
@@ -534,7 +517,7 @@ class Socket < IO
   end
 
   def tty?
-    LibC.isatty(fd) == 1
+    system_tty?
   end
 
   private def unbuffered_read(slice : Bytes)
@@ -550,18 +533,6 @@ class Socket < IO
     end
   end
 
-  private def add_read_event(timeout = @read_timeout)
-    event = @read_event ||= Scheduler.create_fd_read_event(self)
-    event.add timeout
-    nil
-  end
-
-  private def add_write_event(timeout = @write_timeout)
-    event = @write_event ||= Scheduler.create_fd_write_event(self)
-    event.add timeout
-    nil
-  end
-
   private def unbuffered_rewind
     raise IO::Error.new("Can't rewind")
   end
@@ -569,26 +540,8 @@ class Socket < IO
   private def unbuffered_close
     return if @closed
 
-    err = nil
-    if LibC.close(@fd) != 0
-      case Errno.value
-      when Errno::EINTR, Errno::EINPROGRESS
-        # ignore
-      else
-        err = Errno.new("Error closing socket")
-      end
-    end
-
     @closed = true
-
-    @read_event.try &.free
-    @read_event = nil
-    @write_event.try &.free
-    @write_event = nil
-
-    reschedule_waiting
-
-    raise err if err
+    system_close("Error closing socket")
   end
 
   private def unbuffered_flush

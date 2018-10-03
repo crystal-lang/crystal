@@ -130,13 +130,13 @@ module Crystal::System::FileDescriptor
     event.add timeout
   end
 
-  private def system_close
+  private def system_close(error = "Error closing file")
     if LibC.close(@fd) != 0
       case Errno.value
       when Errno::EINTR, Errno::EINPROGRESS
         # ignore
       else
-        raise Errno.new("Error closing file")
+        raise Errno.new(error)
       end
     end
   ensure
