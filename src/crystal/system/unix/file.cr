@@ -158,4 +158,16 @@ module Crystal::System::File
 
     nil
   end
+
+  private def system_fsync(flush_metadata = true) : Nil
+    if flush_metadata
+      if LibC.fsync(fd) != 0
+        raise Errno.new("fsync")
+      end
+    else
+      if LibC.fdatasync(fd) != 0
+        raise Errno.new("fdatasync")
+      end
+    end
+  end
 end

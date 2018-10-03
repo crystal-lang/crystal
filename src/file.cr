@@ -838,6 +838,19 @@ class File < IO::FileDescriptor
     system_truncate(size)
   end
 
+  # Flushes all data written to this File to the disk device so that
+  # all changed information can be retrieved even if the system
+  # crashes or is rebooted. The call blocks until the device reports that
+  # the transfer has completed.
+  # To reduce disk activity the *flush_metadata* parameter can be set to false,
+  # then the syscall *fdatasync* will be used and only data required for
+  # subsequent data retrieval is flushed. Metadata such as modified time and
+  # access time is not written.
+  def fsync(flush_metadata = true) : Nil
+    flush
+    system_fsync(flush_metadata)
+  end
+
   # Yields an `IO` to read a section inside this file.
   # Multiple sections can be read concurrently.
   def read_at(offset, bytesize, &block)

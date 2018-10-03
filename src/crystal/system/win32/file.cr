@@ -229,4 +229,8 @@ module Crystal::System::File
   private def self.to_windows_path(path : String) : LibC::LPWSTR
     path.check_no_null_byte.to_utf16.to_unsafe
   end
+
+  private def system_fsync(flush_metadata = true) : Nil
+    raise NotImplementedError.new("File#fsync")
+  end
 end
