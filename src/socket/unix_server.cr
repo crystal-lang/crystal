@@ -1,4 +1,5 @@
 require "./unix_socket"
+require "./server"
 
 # A local interprocess communication server socket.
 #

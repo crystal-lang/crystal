@@ -1,4 +1,5 @@
 require "./tcp_socket"
+require "./server"
 
 # A Transmission Control Protocol (TCP/IP) server.
 #
