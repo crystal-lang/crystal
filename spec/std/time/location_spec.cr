@@ -252,7 +252,7 @@ class Time::Location
       it "looks up" do
         with_zoneinfo do
           location = Location.load("Europe/Berlin")
-          zone, range = location.lookup_with_boundaries(Time.utc(2017, 11, 23, 22, 6, 12).epoch)
+          zone, range = location.lookup_with_boundaries(Time.utc(2017, 11, 23, 22, 6, 12).to_unix)
           zone.should eq Zone.new("CET", 3600, false)
           range.should eq({1509238800_i64, 1521939600_i64})
         end

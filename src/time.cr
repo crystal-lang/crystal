@@ -485,9 +485,9 @@ struct Time
   # The time zone is always UTC.
   #
   # ```
-  # Time.epoch(981173106) # => 2001-02-03 04:05:06 UTC
+  # Time.unix(981173106) # => 2001-02-03 04:05:06 UTC
   # ```
-  def self.epoch(seconds : Int) : Time
+  def self.unix(seconds : Int) : Time
     utc(seconds: UNIX_SECONDS + seconds, nanoseconds: 0)
   end
 
@@ -497,10 +497,10 @@ struct Time
   # The time zone is always UTC.
   #
   # ```
-  # time = Time.epoch_ms(981173106789) # => 2001-02-03 04:05:06.789 UTC
-  # time.millisecond                   # => 789
+  # time = Time.unix_ms(981173106789) # => 2001-02-03 04:05:06.789 UTC
+  # time.millisecond                  # => 789
   # ```
-  def self.epoch_ms(milliseconds : Int) : Time
+  def self.unix_ms(milliseconds : Int) : Time
     milliseconds = milliseconds.to_i64
     seconds = UNIX_SECONDS + (milliseconds / 1_000)
     nanoseconds = (milliseconds % 1000) * NANOSECONDS_PER_MILLISECOND
@@ -1023,9 +1023,9 @@ struct Time
   #
   # ```
   # time = Time.utc(2016, 1, 12, 3, 4, 5)
-  # time.epoch # => 1452567845
+  # time.to_unix # => 1452567845
   # ```
-  def epoch : Int64
+  def to_unix : Int64
     (total_seconds - UNIX_SECONDS).to_i64
   end
 
@@ -1034,10 +1034,10 @@ struct Time
   #
   # ```
   # time = Time.utc(2016, 1, 12, 3, 4, 5, nanosecond: 678_000_000)
-  # time.epoch_ms # => 1452567845678
+  # time.to_unix_ms # => 1452567845678
   # ```
-  def epoch_ms : Int64
-    epoch * 1_000 + (nanosecond / NANOSECONDS_PER_MILLISECOND)
+  def to_unix_ms : Int64
+    to_unix * 1_000 + (nanosecond / NANOSECONDS_PER_MILLISECOND)
   end
 
   # Returns the number of seconds since the Unix epoch
@@ -1045,10 +1045,10 @@ struct Time
   #
   # ```
   # time = Time.utc(2016, 1, 12, 3, 4, 5, nanosecond: 678_000_000)
-  # time.epoch_f # => 1452567845.678
+  # time.to_unix_f # => 1452567845.678
   # ```
-  def epoch_f : Float64
-    epoch.to_f + nanosecond.to_f / 1e9
+  def to_unix_f : Float64
+    to_unix.to_f + nanosecond.to_f / 1e9
   end
 
   # Returns a copy of this `Time` representing the same instant observed in

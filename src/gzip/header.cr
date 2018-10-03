@@ -35,7 +35,7 @@ class Gzip::Header
     flg = Flg.new(header[3])
 
     seconds = IO::ByteFormat::LittleEndian.decode(Int32, header.to_slice[4, 4])
-    @modification_time = Time.epoch(seconds).to_local
+    @modification_time = Time.unix(seconds).to_local
 
     xfl = header[8]
     @os = header[9]
@@ -77,7 +77,7 @@ class Gzip::Header
     io.write_byte flg.value
 
     # time
-    io.write_bytes(modification_time.epoch.to_u32, IO::ByteFormat::LittleEndian)
+    io.write_bytes(modification_time.to_unix.to_u32, IO::ByteFormat::LittleEndian)
 
     # xfl
     io.write_byte 0_u8

@@ -200,8 +200,8 @@ module Crystal::System::File
 
   def self.utime(access_time : ::Time, modification_time : ::Time, path : String) : Nil
     times = LibC::Utimbuf64.new
-    times.actime = access_time.epoch
-    times.modtime = modification_time.epoch
+    times.actime = access_time.to_unix
+    times.modtime = modification_time.to_unix
 
     if LibC._wutime64(to_windows_path(path), pointerof(times)) != 0
       raise Errno.new("Error setting time on file #{path.inspect}")

@@ -251,13 +251,13 @@ end
 
 module Time::EpochConverter
   def self.from_json(value : JSON::PullParser) : Time
-    Time.epoch(value.read_int)
+    Time.unix(value.read_int)
   end
 end
 
 module Time::EpochMillisConverter
   def self.from_json(value : JSON::PullParser) : Time
-    Time.epoch_ms(value.read_int)
+    Time.unix_ms(value.read_int)
   end
 end
 

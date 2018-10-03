@@ -136,7 +136,7 @@ module Crystal::System::Time
 
     time += (day - 1).days
 
-    time.epoch
+    time.to_unix
   end
 
   # Normalizes the names of the standard and dst zones.

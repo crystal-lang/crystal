@@ -223,7 +223,7 @@ module Time::EpochConverter
       node.raise "Expected scalar, not #{node.class}"
     end
 
-    Time.epoch(node.value.to_i)
+    Time.unix(node.value.to_i)
   end
 end
 
@@ -233,7 +233,7 @@ module Time::EpochMillisConverter
       node.raise "Expected scalar, not #{node.class}"
     end
 
-    Time.epoch_ms(node.value.to_i64)
+    Time.unix_ms(node.value.to_i64)
   end
 end
 

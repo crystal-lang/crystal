@@ -49,7 +49,7 @@ module OAuth
   end
 
   private def self.oauth_header(client, request, token, token_secret, consumer_key, consumer_secret, extra_params)
-    ts = Time.now.epoch.to_s
+    ts = Time.utc_now.to_unix.to_s
     nonce = Random::Secure.hex
 
     signature = Signature.new consumer_key, consumer_secret, token, token_secret, extra_params

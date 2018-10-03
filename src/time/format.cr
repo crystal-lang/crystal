@@ -43,7 +43,7 @@ require "./format/parser"
 # * **%P**: AM-PM (uppercase)
 # * **%r**: 12-hour time (03:04:05 AM)
 # * **%R**: 24-hour time (13:04)
-# * **%s**: seconds since unix epoch (see `Time.epoch`)
+# * **%s**: seconds since unix epoch (see `Time#to_unix`)
 # * **%S**: seconds, zero padded (00, 01, ..., 59)
 # * **%T**: 24-hour time (13:04:05)
 # * **%u**: day of week (Monday is 1, 1..7)
