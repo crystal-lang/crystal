@@ -17,7 +17,7 @@ struct Time::Format
       "PDT" => Location.fixed("PDT", -7 * 3600),
     }
 
-    @epoch : Int64?
+    @unix_seconds : Int64?
     @location : Location?
 
     def initialize(string)
@@ -36,8 +36,8 @@ struct Time::Format
     def time(location : Location? = nil)
       @hour += 12 if @pm
 
-      if epoch = @epoch
-        return Time.unix(epoch)
+      if unix_seconds = @unix_seconds
+        return Time.unix(unix_seconds)
       end
 
       location = @location || location
@@ -268,17 +268,17 @@ struct Time::Format
       consume_number(1)
     end
 
-    def epoch
-      epoch_negative = false
+    def unix_seconds
+      negative = false
       case current_char
       when '-'
-        epoch_negative = true
+        negative = true
         next_char
       when '+'
         next_char
       end
 
-      @epoch = consume_number_i64(19) * (epoch_negative ? -1 : 1)
+      @unix_seconds = consume_number_i64(19) * (negative ? -1 : 1)
     end
 
     def time_zone(with_seconds = false)

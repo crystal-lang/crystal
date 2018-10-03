@@ -160,7 +160,7 @@ struct Time::Format
       io << time.day_of_week.value
     end
 
-    def epoch
+    def unix_seconds
       io << time.to_unix
     end
 
