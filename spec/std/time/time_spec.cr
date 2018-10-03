@@ -72,7 +72,7 @@ describe Time do
     seconds = 1439404155
     time = Time.unix(seconds)
     time.should eq(Time.utc(2015, 8, 12, 18, 29, 15))
-    time.epoch.should eq(seconds)
+    time.to_unix.should eq(seconds)
     time.utc?.should be_true
   end
 
@@ -80,7 +80,7 @@ describe Time do
     milliseconds = 1439404155000
     time = Time.unix_ms(milliseconds)
     time.should eq(Time.utc(2015, 8, 12, 18, 29, 15))
-    time.epoch_ms.should eq(milliseconds)
+    time.to_unix_ms.should eq(milliseconds)
     time.utc?.should be_true
   end
 
@@ -320,17 +320,17 @@ describe Time do
     end
   end
 
-  describe "#epoch" do
-    it "gets unix epoch seconds" do
+  describe "#to_unix" do
+    it "gets unix seconds" do
       t1 = Time.utc 2014, 10, 30, 21, 18, 13, nanosecond: 0
-      t1.epoch.should eq(1414703893)
-      t1.epoch_f.should be_close(1414703893, 1e-01)
+      t1.to_unix.should eq(1414703893)
+      t1.to_unix_f.should be_close(1414703893, 1e-01)
     end
 
-    it "gets unix epoch seconds at GMT" do
+    it "gets unix seconds at GMT" do
       t1 = Time.now
-      t1.epoch.should eq(t1.to_utc.epoch)
-      t1.epoch_f.should be_close(t1.to_utc.epoch_f, 1e-01)
+      t1.to_unix.should eq(t1.to_utc.to_unix)
+      t1.to_unix_f.should be_close(t1.to_utc.to_unix_f, 1e-01)
     end
   end
 

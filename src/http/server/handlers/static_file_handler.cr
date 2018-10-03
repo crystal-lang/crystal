@@ -119,7 +119,7 @@ class HTTP::StaticFileHandler
   end
 
   private def etag(modification_time)
-    %{W/"#{modification_time.epoch}"}
+    %{W/"#{modification_time.to_unix}"}
   end
 
   private def modification_time(file_path)

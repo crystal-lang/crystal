@@ -12,7 +12,7 @@ class OAuth2::AccessToken::Mac < OAuth2::AccessToken
   property mac_key : String
   property issued_at : Int64
 
-  def initialize(access_token, expires_in, @mac_algorithm, @mac_key, refresh_token = nil, scope = nil, @issued_at = Time.now.epoch, extra = nil)
+  def initialize(access_token, expires_in, @mac_algorithm, @mac_key, refresh_token = nil, scope = nil, @issued_at = Time.utc_now.to_unix, extra = nil)
     super(access_token, expires_in, refresh_token, scope, extra)
   end
 
@@ -21,7 +21,7 @@ class OAuth2::AccessToken::Mac < OAuth2::AccessToken
   end
 
   def authenticate(request : HTTP::Request, tls)
-    ts = Time.now.epoch
+    ts = Time.utc_now.to_unix
     nonce = "#{ts - @issued_at}:#{Random::Secure.hex}"
     method = request.method
     uri = request.resource

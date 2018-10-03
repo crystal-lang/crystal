@@ -77,7 +77,7 @@ class Gzip::Header
     io.write_byte flg.value
 
     # time
-    io.write_bytes(modification_time.epoch.to_u32, IO::ByteFormat::LittleEndian)
+    io.write_bytes(modification_time.to_unix.to_u32, IO::ByteFormat::LittleEndian)
 
     # xfl
     io.write_byte 0_u8

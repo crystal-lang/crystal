@@ -1023,9 +1023,9 @@ struct Time
   #
   # ```
   # time = Time.utc(2016, 1, 12, 3, 4, 5)
-  # time.epoch # => 1452567845
+  # time.to_unix # => 1452567845
   # ```
-  def epoch : Int64
+  def to_unix : Int64
     (total_seconds - UNIX_SECONDS).to_i64
   end
 
@@ -1034,10 +1034,10 @@ struct Time
   #
   # ```
   # time = Time.utc(2016, 1, 12, 3, 4, 5, nanosecond: 678_000_000)
-  # time.epoch_ms # => 1452567845678
+  # time.to_unix_ms # => 1452567845678
   # ```
-  def epoch_ms : Int64
-    epoch * 1_000 + (nanosecond / NANOSECONDS_PER_MILLISECOND)
+  def to_unix_ms : Int64
+    to_unix * 1_000 + (nanosecond / NANOSECONDS_PER_MILLISECOND)
   end
 
   # Returns the number of seconds since the Unix epoch
@@ -1045,10 +1045,10 @@ struct Time
   #
   # ```
   # time = Time.utc(2016, 1, 12, 3, 4, 5, nanosecond: 678_000_000)
-  # time.epoch_f # => 1452567845.678
+  # time.to_unix_f # => 1452567845.678
   # ```
-  def epoch_f : Float64
-    epoch.to_f + nanosecond.to_f / 1e9
+  def to_unix_f : Float64
+    to_unix.to_f + nanosecond.to_f / 1e9
   end
 
   # Returns a copy of this `Time` representing the same instant observed in

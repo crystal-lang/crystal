@@ -179,7 +179,7 @@ class Time::Location
     def inspect(io : IO)
       io << "Time::Location::ZoneTransition("
       io << '#' << index << ' '
-      Time.unix_seconds(self.when).to_s("%F %T", io)
+      Time.unix(self.when).to_s("%F %T", io)
       if standard?
         io << " STD"
       else
@@ -382,7 +382,7 @@ class Time::Location
 
   # Returns the time zone offset observed at *time*.
   def lookup(time : Time) : Zone
-    lookup(time.epoch)
+    lookup(time.to_unix)
   end
 
   # Returns the time zone offset observed at *epoch*.

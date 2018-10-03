@@ -161,7 +161,7 @@ struct Time::Format
     end
 
     def epoch
-      io << time.epoch
+      io << time.to_unix
     end
 
     def time_zone(with_seconds = false)

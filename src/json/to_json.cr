@@ -138,7 +138,7 @@ end
 
 # Converter to be used with `JSON.mapping` and `YAML.mapping`
 # to serialize a `Time` instance as the number of seconds
-# since the unix epoch. See `Time.epoch`.
+# since the unix epoch. See `Time#to_unix`.
 #
 # ```
 # require "json"
@@ -155,13 +155,13 @@ end
 # ```
 module Time::EpochConverter
   def self.to_json(value : Time, json : JSON::Builder)
-    json.number(value.epoch)
+    json.number(value.to_unix)
   end
 end
 
 # Converter to be used with `JSON.mapping` and `YAML.mapping`
 # to serialize a `Time` instance as the number of milliseconds
-# since the unix epoch. See `Time.epoch_ms`.
+# since the unix epoch. See `Time#to_unix_ms`.
 #
 # ```
 # require "json"
@@ -178,7 +178,7 @@ end
 # ```
 module Time::EpochMillisConverter
   def self.to_json(value : Time, json : JSON::Builder)
-    json.number(value.epoch_ms)
+    json.number(value.to_unix_ms)
   end
 end
 
