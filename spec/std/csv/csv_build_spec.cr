@@ -125,5 +125,22 @@ describe CSV do
       end
       string.should eq(%(" , "," , "\n))
     end
+
+    it "builds with quoting" do
+      string = CSV.build(quoting: CSV::Builder::Quoting::NONE) do |csv|
+        csv.row 1, "doesn't", " , ", %(he said "no")
+      end
+      string.should eq(%(1,doesn't, , ,he said "no"\n))
+
+      string = CSV.build(quoting: CSV::Builder::Quoting::RFC) do |csv|
+        csv.row 1, "doesn't", " , ", %(he said "no")
+      end
+      string.should eq(%(1,doesn't," , ","he said ""no"""\n))
+
+      string = CSV.build(quoting: CSV::Builder::Quoting::ALL) do |csv|
+        csv.row 1, "doesn't", " , ", %(he said "no")
+      end
+      string.should eq(%("1","doesn't"," , ","he said ""no"""\n))
+    end
   end
 end
