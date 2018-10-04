@@ -1,5 +1,3 @@
-require "./ip_socket"
-
 # A Transmission Control Protocol (TCP/IP) socket.
 #
 # Usage example:
@@ -48,6 +46,27 @@ class TCPSocket < IPSocket
   # Returns the value of the block.
   def self.open(host, port)
     sock = new(host, port)
+    begin
+      yield sock
+    ensure
+      sock.close
+    end
+  end
+
+  def self.new(host, port, local_address : String, local_port : Int32, dns_timeout = nil, connect_timeout = nil)
+    Addrinfo.tcp(host, port, timeout: dns_timeout) do |addrinfo|
+      socket = new(addrinfo.family, addrinfo.type, addrinfo.protocol)
+      socket.bind(local_address, local_port)
+      socket.connect(addrinfo, timeout: connect_timeout) do |error|
+        socket.close
+        error
+      end
+      return socket
+    end
+  end
+
+  def self.open(host, port, local_address : String, local_port : Int32)
+    sock = new(host, port, local_address, local_port)
     begin
       yield sock
     ensure

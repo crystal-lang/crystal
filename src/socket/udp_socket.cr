@@ -57,6 +57,20 @@ class UDPSocket < IPSocket
     super(family, Type::DGRAM, Protocol::UDP)
   end
 
+  def self.new(host, port = 0)
+    Addrinfo.tcp(host, port) do |addrinfo|
+      socket = new(addrinfo.family)
+      socket.bind addrinfo
+      return socket
+    end
+  end
+
+  def self.new(address : Socket::IPAddress)
+    socket = new(address.family)
+    socket.bind address
+    socket
+  end
+
   # Receives a text message from the previously bound address.
   #
   # ```

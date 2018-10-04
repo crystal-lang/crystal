@@ -24,6 +24,48 @@ describe TCPSocket do
         end
       end
 
+      it "connects to server using a local address" do
+        port = unused_local_port
+        local_port = unused_local_port
+
+        TCPServer.open(address, port) do |server|
+          TCPSocket.open(address, port, address, local_port) do |client|
+            sock = server.accept
+
+            sock.local_address.address.should eq(address)
+            sock.local_address.port.should eq(port)
+            sock.remote_address.address.should eq(address)
+            sock.remote_address.port.should eq(local_port)
+
+            client.remote_address.address.should eq(address)
+            client.remote_address.port.should eq(port)
+            client.remote_address.family.should eq(family)
+            client.local_address.address.should eq(address)
+            client.local_address.port.should eq(local_port)
+            client.local_address.family.should eq(family)
+          end
+        end
+      end
+
+      it "connects to server using a local address with port 0" do
+        port = unused_local_port
+
+        TCPServer.open(address, port) do |server|
+          TCPSocket.open(address, port, address, 0) do |client|
+            sock = server.accept
+
+            sock.local_address.address.should eq(address)
+            sock.local_address.port.should eq(port)
+            sock.remote_address.address.should eq(address)
+
+            client.remote_address.address.should eq(address)
+            client.remote_address.port.should eq(port)
+            client.local_address.address.should eq(address)
+            client.local_address.port.should eq(sock.remote_address.port)
+          end
+        end
+      end
+
       it "raises when connection is refused" do
         port = unused_local_port
 
