@@ -3,22 +3,20 @@ require "openssl"
 require "http/client"
 require "http/server"
 
-private class TestServer < TCPServer
-  def self.open(host, port, read_time = 0)
-    server = new(host, port)
-    begin
-      spawn do
-        io = server.accept
-        sleep read_time
-        response = HTTP::Client::Response.new(200, headers: HTTP::Headers{"Content-Type" => "text/plain"}, body: "OK")
-        response.to_io(io)
-        io.flush
-      end
-
-      yield server
-    ensure
-      server.close
+private def test_server(host, port, read_time = 0)
+  server = TCPServer.new(host, port)
+  begin
+    spawn do
+      io = server.accept
+      sleep read_time
+      response = HTTP::Client::Response.new(200, headers: HTTP::Headers{"Content-Type" => "text/plain"}, body: "OK")
+      response.to_io(io)
+      io.flush
     end
+
+    yield server
+  ensure
+    server.close
   end
 end
 
@@ -166,12 +164,12 @@ module HTTP
     end
 
     it "doesn't read the body if request was HEAD" do
-      resp_get = TestServer.open("localhost", 0, 0) do |server|
+      resp_get = test_server("localhost", 0, 0) do |server|
         client = Client.new("localhost", server.local_address.port)
         break client.get("/")
       end
 
-      TestServer.open("localhost", 0, 0) do |server|
+      test_server("localhost", 0, 0) do |server|
         client = Client.new("localhost", server.local_address.port)
         resp_head = client.head("/")
         resp_head.headers.should eq(resp_get.headers)
@@ -192,13 +190,13 @@ module HTTP
     end
 
     it "tests read_timeout" do
-      TestServer.open("localhost", 0, 0) do |server|
+      test_server("localhost", 0, 0) do |server|
         client = Client.new("localhost", server.local_address.port)
         client.read_timeout = 1.second
         client.get("/")
       end
 
-      TestServer.open("localhost", 0, 0.5) do |server|
+      test_server("localhost", 0, 0.5) do |server|
         client = Client.new("localhost", server.local_address.port)
         expect_raises(IO::Timeout, "Read timed out") do
           client.read_timeout = 0.001
@@ -208,7 +206,7 @@ module HTTP
     end
 
     it "tests connect_timeout" do
-      TestServer.open("localhost", 0, 0) do |server|
+      test_server("localhost", 0, 0) do |server|
         client = Client.new("localhost", server.local_address.port)
         client.connect_timeout = 0.5
         client.get("/")
