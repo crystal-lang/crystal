@@ -308,6 +308,8 @@ lib LibXML
 
   fun xmlSetProp(node : Node*, name : UInt8*, value : UInt8*) : Attr*
 
+  fun xmlUnsetProp(node : Node*, name : UInt8*) : Int
+
   fun xmlValidateNameValue(value : UInt8*) : Int
 end
 
