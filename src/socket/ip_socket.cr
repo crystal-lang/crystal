@@ -1,5 +1,13 @@
 class IPSocket < Socket
+  # Returns the `IPAddress` for the local end of the IP socket or `nil` if it
+  # is not connected.
+  def local_address?
+    local_address unless closed?
+  end
+
   # Returns the `IPAddress` for the local end of the IP socket.
+  #
+  # Raises if the socket is not connected.
   def local_address
     sockaddr6 = uninitialized LibC::SockaddrIn6
     sockaddr = pointerof(sockaddr6).as(LibC::Sockaddr*)
@@ -12,7 +20,15 @@ class IPSocket < Socket
     IPAddress.from(sockaddr, addrlen)
   end
 
+  # Returns the `IPAddress` for the remote end of the IP socket or `nil` if it
+  # is not connected.
+  def remote_address?
+    remote_address unless closed?
+  end
+
   # Returns the `IPAddress` for the remote end of the IP socket.
+  #
+  # Raises if the socket is not connected.
   def remote_address
     sockaddr6 = uninitialized LibC::SockaddrIn6
     sockaddr = pointerof(sockaddr6).as(LibC::Sockaddr*)

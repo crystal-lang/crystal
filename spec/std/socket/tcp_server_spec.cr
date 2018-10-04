@@ -14,6 +14,7 @@ describe TCPServer do
 
         local_address = Socket::IPAddress.new(address, port)
         server.local_address.should eq local_address
+        server.local_address?.should eq local_address
 
         server.closed?.should be_false
 
@@ -23,6 +24,7 @@ describe TCPServer do
         expect_raises(Errno, "getsockname: Bad file descriptor") do
           server.local_address
         end
+        server.local_address?.should be_nil
       end
 
       it "binds to port 0" do
