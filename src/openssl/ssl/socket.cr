@@ -15,7 +15,7 @@ abstract class OpenSSL::SSL::Socket < IO
         {% if LibSSL::OPENSSL_102 %}
           param = LibSSL.ssl_get0_param(@ssl)
 
-          if ::Socket.ip?(hostname)
+          if ::Socket::IPAddress.ip?(hostname)
             unless LibCrypto.x509_verify_param_set1_ip_asc(param, hostname) == 1
               raise OpenSSL::Error.new("X509_VERIFY_PARAM_set1_ip_asc")
             end
