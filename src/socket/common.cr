@@ -1,4 +1,4 @@
-class Socket < IO
+module Socket
   class Error < Exception
   end
 

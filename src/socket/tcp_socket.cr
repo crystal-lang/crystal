@@ -11,8 +11,8 @@
 # ```
 class TCPSocket < IPSocket
   # Creates a new `TCPSocket`, waiting to be connected.
-  def self.new(family : Family = Family::INET)
-    super(family, Type::STREAM, Protocol::TCP)
+  def self.new(family : Socket::Family = Socket::Family::INET)
+    super(family, Socket::Type::STREAM, Socket::Protocol::TCP)
   end
 
   # Creates a new TCP connection to a remote TCP server.
@@ -23,7 +23,7 @@ class TCPSocket < IPSocket
   #
   # Note that `dns_timeout` is currently ignored.
   def initialize(host, port, dns_timeout = nil, connect_timeout = nil)
-    Addrinfo.tcp(host, port, timeout: dns_timeout) do |addrinfo|
+    Socket::Addrinfo.tcp(host, port, timeout: dns_timeout) do |addrinfo|
       super(addrinfo.family, addrinfo.type, addrinfo.protocol)
       connect(addrinfo, timeout: connect_timeout) do |error|
         close
@@ -32,11 +32,11 @@ class TCPSocket < IPSocket
     end
   end
 
-  protected def initialize(family : Family, type : Type, protocol : Protocol)
+  protected def initialize(family : Socket::Family, type : Socket::Type, protocol : Socket::Protocol)
     super family, type, protocol
   end
 
-  protected def initialize(fd : Int32, family : Family, type : Type, protocol : Protocol)
+  protected def initialize(fd : Int32, family : Socket::Family, type : Socket::Type, protocol : Socket::Protocol)
     super fd, family, type, protocol
   end
 
@@ -54,7 +54,7 @@ class TCPSocket < IPSocket
   end
 
   def self.new(host, port, local_address : String, local_port : Int32, dns_timeout = nil, connect_timeout = nil)
-    Addrinfo.tcp(host, port, timeout: dns_timeout) do |addrinfo|
+    Socket::Addrinfo.tcp(host, port, timeout: dns_timeout) do |addrinfo|
       socket = new(addrinfo.family, addrinfo.type, addrinfo.protocol)
       socket.bind(local_address, local_port)
       socket.connect(addrinfo, timeout: connect_timeout) do |error|
@@ -76,12 +76,12 @@ class TCPSocket < IPSocket
 
   # Returns `true` if the Nable algorithm is disabled.
   def tcp_nodelay?
-    getsockopt_bool LibC::TCP_NODELAY, level: Protocol::TCP
+    getsockopt_bool LibC::TCP_NODELAY, level: Socket::Protocol::TCP
   end
 
   # Disable the Nagle algorithm when set to `true`, otherwise enables it.
   def tcp_nodelay=(val : Bool)
-    setsockopt_bool LibC::TCP_NODELAY, val, level: Protocol::TCP
+    setsockopt_bool LibC::TCP_NODELAY, val, level: Socket::Protocol::TCP
   end
 
   {% unless flag?(:openbsd) %}
@@ -92,7 +92,7 @@ class TCPSocket < IPSocket
       {% else %}
         LibC::TCP_KEEPIDLE
       {% end %}
-      getsockopt optname, 0, level: Protocol::TCP
+      getsockopt optname, 0, level: Socket::Protocol::TCP
     end
 
     def tcp_keepalive_idle=(val : Int)
@@ -101,27 +101,27 @@ class TCPSocket < IPSocket
       {% else %}
         LibC::TCP_KEEPIDLE
       {% end %}
-      setsockopt optname, val, level: Protocol::TCP
+      setsockopt optname, val, level: Socket::Protocol::TCP
       val
     end
 
     # The amount of time in seconds between keepalive probes.
     def tcp_keepalive_interval
-      getsockopt LibC::TCP_KEEPINTVL, 0, level: Protocol::TCP
+      getsockopt LibC::TCP_KEEPINTVL, 0, level: Socket::Protocol::TCP
     end
 
     def tcp_keepalive_interval=(val : Int)
-      setsockopt LibC::TCP_KEEPINTVL, val, level: Protocol::TCP
+      setsockopt LibC::TCP_KEEPINTVL, val, level: Socket::Protocol::TCP
       val
     end
 
     # The number of probes sent, without response before dropping the connection.
     def tcp_keepalive_count
-      getsockopt LibC::TCP_KEEPCNT, 0, level: Protocol::TCP
+      getsockopt LibC::TCP_KEEPCNT, 0, level: Socket::Protocol::TCP
     end
 
     def tcp_keepalive_count=(val : Int)
-      setsockopt LibC::TCP_KEEPCNT, val, level: Protocol::TCP
+      setsockopt LibC::TCP_KEEPCNT, val, level: Socket::Protocol::TCP
       val
     end
   {% end %}

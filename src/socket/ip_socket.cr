@@ -1,4 +1,4 @@
-class IPSocket < Socket
+class IPSocket < Socket::Raw
   # Returns the `IPAddress` for the local end of the IP socket or `nil` if it
   # is not connected.
   def local_address?
@@ -17,7 +17,7 @@ class IPSocket < Socket
       raise Errno.new("getsockname")
     end
 
-    IPAddress.from(sockaddr, addrlen)
+    Socket::IPAddress.from(sockaddr, addrlen)
   end
 
   # Returns the `IPAddress` for the remote end of the IP socket or `nil` if it
@@ -38,6 +38,6 @@ class IPSocket < Socket
       raise Errno.new("getpeername")
     end
 
-    IPAddress.from(sockaddr, addrlen)
+    Socket::IPAddress.from(sockaddr, addrlen)
   end
 end

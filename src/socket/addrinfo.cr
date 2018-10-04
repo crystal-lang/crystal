@@ -1,7 +1,7 @@
 require "uri/punycode"
 require "./address"
 
-class Socket
+module Socket
   # Domain name resolver.
   struct Addrinfo
     getter family : Family

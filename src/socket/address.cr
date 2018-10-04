@@ -6,7 +6,7 @@ require "c/netinet/tcp"
 require "c/sys/un"
 require "./common"
 
-class Socket
+module Socket
   abstract struct Address
     getter family : Family
     getter size : Int32

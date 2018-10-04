@@ -53,12 +53,12 @@ require "./ip_socket"
 # end
 # ```
 class UDPSocket < IPSocket
-  def initialize(family : Family = Family::INET)
-    super(family, Type::DGRAM, Protocol::UDP)
+  def initialize(family : Socket::Family = Socket::Family::INET)
+    super(family, Socket::Type::DGRAM, Socket::Protocol::UDP)
   end
 
   def self.new(host, port = 0)
-    Addrinfo.tcp(host, port) do |addrinfo|
+    Socket::Addrinfo.tcp(host, port) do |addrinfo|
       socket = new(addrinfo.family)
       socket.bind addrinfo
       return socket
@@ -79,11 +79,11 @@ class UDPSocket < IPSocket
   #
   # message, client_addr = server.receive
   # ```
-  def receive(max_message_size = 512) : {String, IPAddress}
+  def receive(max_message_size = 512) : {String, Socket::IPAddress}
     address = nil
     message = String.new(max_message_size) do |buffer|
       bytes_read, sockaddr, addrlen = recvfrom(Slice.new(buffer, max_message_size))
-      address = IPAddress.from(sockaddr, addrlen)
+      address = Socket::IPAddress.from(sockaddr, addrlen)
       {bytes_read, 0}
     end
     {message, address.not_nil!}
@@ -98,8 +98,8 @@ class UDPSocket < IPSocket
   # message = Bytes.new(32)
   # bytes_read, client_addr = server.receive(message)
   # ```
-  def receive(message : Bytes) : {Int32, IPAddress}
+  def receive(message : Bytes) : {Int32, Socket::IPAddress}
     bytes_read, sockaddr, addrlen = recvfrom(message)
-    {bytes_read, IPAddress.from(sockaddr, addrlen)}
+    {bytes_read, Socket::IPAddress.from(sockaddr, addrlen)}
   end
 end

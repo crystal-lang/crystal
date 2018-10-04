@@ -1,20 +1,20 @@
 require "./spec_helper"
 
-describe Socket do
+describe Socket::Raw do
   describe ".unix" do
     it "creates a unix socket" do
-      sock = Socket.unix
-      sock.should be_a(Socket)
+      sock = Socket::Raw.unix
+      sock.should be_a(Socket::Raw)
       sock.family.should eq(Socket::Family::UNIX)
       sock.type.should eq(Socket::Type::STREAM)
 
-      sock = Socket.unix(Socket::Type::DGRAM)
+      sock = Socket::Raw.unix(Socket::Type::DGRAM)
       sock.type.should eq(Socket::Type::DGRAM)
     end
   end
 
   it ".accept" do
-    server = Socket.new(Socket::Family::INET, Socket::Type::STREAM, Socket::Protocol::TCP)
+    server = Socket::Raw.new(Socket::Family::INET, Socket::Type::STREAM, Socket::Protocol::TCP)
     port = unused_local_port
     server.bind("0.0.0.0", port)
     server.listen
@@ -29,7 +29,7 @@ describe Socket do
 
   it "sends messages" do
     port = unused_local_port
-    server = Socket.tcp(Socket::Family::INET6)
+    server = Socket::Raw.tcp(Socket::Family::INET6)
     server.bind("::1", port)
     server.listen
     address = Socket::IPAddress.new("::1", port)
@@ -40,7 +40,7 @@ describe Socket do
     ensure
       client.try &.close
     end
-    socket = Socket.tcp(Socket::Family::INET6)
+    socket = Socket::Raw.tcp(Socket::Family::INET6)
     socket.connect(address)
     socket.puts "foo"
     socket.gets.should eq "bar"

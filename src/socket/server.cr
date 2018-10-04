@@ -1,4 +1,4 @@
-class Socket
+module Socket
   module Server
     # Accepts an incoming connection and returns the client socket.
     #

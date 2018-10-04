@@ -25,13 +25,13 @@ class TCPServer < TCPSocket
   include Socket::Server
 
   # Creates a new `TCPServer`, waiting to be bound.
-  def self.new(family : Family = Family::INET)
+  def self.new(family : Socket::Family = Socket::Family::INET)
     super(family)
   end
 
   # Binds a socket to the *host* and *port* combination.
-  def initialize(host : String, port : Int, backlog : Int = SOMAXCONN, dns_timeout = nil, reuse_port : Bool = false)
-    Addrinfo.tcp(host, port, timeout: dns_timeout) do |addrinfo|
+  def initialize(host : String, port : Int, backlog : Int = Socket::SOMAXCONN, dns_timeout = nil, reuse_port : Bool = false)
+    Socket::Addrinfo.tcp(host, port, timeout: dns_timeout) do |addrinfo|
       super(addrinfo.family, addrinfo.type, addrinfo.protocol)
 
       self.reuse_address = true
@@ -50,7 +50,7 @@ class TCPServer < TCPSocket
   end
 
   # Creates a new TCP server, listening on all local interfaces (`::`).
-  def self.new(port : Int, backlog = SOMAXCONN, reuse_port = false)
+  def self.new(port : Int, backlog = Socket::SOMAXCONN, reuse_port = false)
     new("::", port, backlog, reuse_port: reuse_port)
   end
 
@@ -58,7 +58,7 @@ class TCPServer < TCPSocket
   # server socket when the block returns.
   #
   # Returns the value of the block.
-  def self.open(host, port, backlog = SOMAXCONN, reuse_port = false)
+  def self.open(host, port, backlog = Socket::SOMAXCONN, reuse_port = false)
     server = new(host, port, backlog, reuse_port: reuse_port)
     begin
       yield server
@@ -71,7 +71,7 @@ class TCPServer < TCPSocket
   # block. Eventually closes the server socket when the block returns.
   #
   # Returns the value of the block.
-  def self.open(port : Int, backlog = SOMAXCONN, reuse_port = false)
+  def self.open(port : Int, backlog = Socket::SOMAXCONN, reuse_port = false)
     server = new(port, backlog, reuse_port: reuse_port)
     begin
       yield server
