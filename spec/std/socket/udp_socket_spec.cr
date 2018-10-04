@@ -3,6 +3,17 @@ require "socket"
 
 describe UDPSocket do
   each_ip_family do |family, address|
+    it "#bind" do
+      port = unused_local_port
+      socket = UDPSocket.new(family)
+      socket.bind(address, port)
+      socket.local_address.should eq(Socket::IPAddress.new(address, port))
+      socket.close
+      socket = UDPSocket.new(family)
+      socket.bind(address, 0)
+      socket.local_address.address.should eq address
+    end
+
     it "sends and receives messages" do
       port = unused_local_port
 

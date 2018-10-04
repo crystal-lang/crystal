@@ -12,9 +12,8 @@ describe TCPServer do
         server.reuse_port?.should be_false
         server.reuse_address?.should be_true
 
-        server.local_address.should eq Socket::IPAddress.new(address, port)
-        server.local_address.port.should eq(port)
-        server.local_address.address.should eq(address)
+        local_address = Socket::IPAddress.new(address, port)
+        server.local_address.should eq local_address
 
         server.closed?.should be_false
 
@@ -87,6 +86,13 @@ describe TCPServer do
         expect_raises(Socket::Error, "No address") do
           TCPServer.new("doesnotexist.example.org.", 0)
         end
+      end
+    end
+
+    it "binds to all interfaces" do
+      port = unused_local_port
+      TCPServer.open(port) do |server|
+        server.local_address.port.should eq port
       end
     end
   end

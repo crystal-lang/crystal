@@ -27,6 +27,28 @@ describe Socket do
     client.protocol.should eq(Socket::Protocol::TCP)
   end
 
+  it "sends messages" do
+    port = unused_local_port
+    server = Socket.tcp(Socket::Family::INET6)
+    server.bind("::1", port)
+    server.listen
+    address = Socket::IPAddress.new("::1", port)
+    spawn do
+      client = server.not_nil!.accept
+      client.gets.should eq "foo"
+      client.puts "bar"
+    ensure
+      client.try &.close
+    end
+    socket = Socket.tcp(Socket::Family::INET6)
+    socket.connect(address)
+    socket.puts "foo"
+    socket.gets.should eq "bar"
+  ensure
+    socket.try &.close
+    server.try &.close
+  end
+
   describe "#bind" do
     each_ip_family do |family, _, any_address|
       it "binds to port" do
