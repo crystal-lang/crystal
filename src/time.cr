@@ -252,17 +252,13 @@ struct Time
   # :nodoc:
   DAYS_PER_4_YEARS = 365*4 + 1
 
-  # :nodoc:
-  # TODO: remove after 0.27.0, and replace the value of UNIX_EPOCH by "Time.utc 1970, 1, 1"
-  UNIX_SECONDS = SECONDS_PER_DAY.to_i64 * (1969*365 + 1969/4 - 1969/100 + 1969/400)
-
   # This constant is defined to be "1970-01-01 00:00:00 UTC" on all systems with respect to the system clock.
   # Can be used to create a `Time::Span` that represents an unix epoch time duration.
   #
   # ```
   # Time.utc_now - Time::UNIX_EPOCH
   # ```
-  UNIX_EPOCH = utc(seconds: UNIX_SECONDS, nanoseconds: 0)
+  UNIX_EPOCH = utc(seconds: SECONDS_PER_DAY.to_i64 * (1969*365 + 1969/4 - 1969/100 + 1969/400), nanoseconds: 0)
 
   # :nodoc:
   MAX_SECONDS = 315537897599_i64
