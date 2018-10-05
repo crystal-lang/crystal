@@ -253,7 +253,16 @@ struct Time
   DAYS_PER_4_YEARS = 365*4 + 1
 
   # :nodoc:
+  # TODO: remove after 0.27.0, and replace the value of UNIX_EPOCH by "Time.utc 1970, 1, 1"
   UNIX_SECONDS = SECONDS_PER_DAY.to_i64 * (1969*365 + 1969/4 - 1969/100 + 1969/400)
+
+  # This constant is defined to be "1970-01-01 00:00:00 UTC" on all systems with respect to the system clock.
+  # Can be used to create a `Time::Span` that represents an unix epoch time duration.
+  #
+  # ```
+  # Time.utc_now - Time::UNIX_EPOCH
+  # ```
+  UNIX_EPOCH = utc(seconds: UNIX_SECONDS, nanoseconds: 0)
 
   # :nodoc:
   MAX_SECONDS = 315537897599_i64
@@ -473,7 +482,7 @@ struct Time
   {% unless flag?(:win32) %}
     # :nodoc:
     def self.new(time : LibC::Timespec, location : Location = Location.local)
-      seconds = UNIX_SECONDS + time.tv_sec
+      seconds = UNIX_EPOCH.total_seconds + time.tv_sec
       nanoseconds = time.tv_nsec.to_i
       new(seconds: seconds, nanoseconds: nanoseconds, location: location)
     end
@@ -488,7 +497,7 @@ struct Time
   # Time.unix(981173106) # => 2001-02-03 04:05:06 UTC
   # ```
   def self.unix(seconds : Int) : Time
-    utc(seconds: UNIX_SECONDS + seconds, nanoseconds: 0)
+    utc(seconds: UNIX_EPOCH.total_seconds + seconds, nanoseconds: 0)
   end
 
   # Creates a new `Time` instance that corresponds to the number of
@@ -502,7 +511,7 @@ struct Time
   # ```
   def self.unix_ms(milliseconds : Int) : Time
     milliseconds = milliseconds.to_i64
-    seconds = UNIX_SECONDS + (milliseconds / 1_000)
+    seconds = UNIX_EPOCH.total_seconds + (milliseconds / 1_000)
     nanoseconds = (milliseconds % 1000) * NANOSECONDS_PER_MILLISECOND
     utc(seconds: seconds, nanoseconds: nanoseconds.to_i)
   end
@@ -1026,7 +1035,7 @@ struct Time
   # time.to_unix # => 1452567845
   # ```
   def to_unix : Int64
-    (total_seconds - UNIX_SECONDS).to_i64
+    (total_seconds - UNIX_EPOCH.total_seconds).to_i64
   end
 
   # Returns the number of milliseconds since the Unix epoch
@@ -1291,7 +1300,7 @@ struct Time
   end
 
   protected def self.zone_offset_at(seconds, location)
-    unix = seconds - UNIX_SECONDS
+    unix = seconds - UNIX_EPOCH.total_seconds
     zone, range = location.lookup_with_boundaries(unix)
 
     if zone.offset != 0
