@@ -359,4 +359,17 @@ describe XML do
     root["bar"] = 1
     root["bar"].should eq("1")
   end
+
+  it "deletes an attribute" do
+    doc = XML.parse(%{<foo bar="baz"></foo>})
+    root = doc.root.not_nil!
+
+    res = root.delete("bar")
+    root["bar"]?.should be_nil
+    root.to_s.should eq(%{<foo/>})
+    res.should eq "baz"
+
+    res = root.delete("biz")
+    res.should be_nil
+  end
 end
