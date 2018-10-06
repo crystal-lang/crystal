@@ -27,6 +27,7 @@ module HTTP
 
       if line.empty?
         body = nil
+
         if body_type.prohibited?
           body = nil
         elsif content_length = content_length(headers)
@@ -38,6 +39,10 @@ module HTTP
           body = ChunkedContent.new(io)
         elsif body_type.mandatory?
           body = UnknownLengthContent.new(io)
+        end
+
+        if body.is_a?(Content) && expect_continue?(headers)
+          body.expects_continue = true
         end
 
         if decompress && body
@@ -192,6 +197,10 @@ module HTTP
     else
       true
     end
+  end
+
+  def self.expect_continue?(headers)
+    headers["Expect"]?.try(&.downcase) == "100-continue"
   end
 
   record ComputedContentTypeHeader,
