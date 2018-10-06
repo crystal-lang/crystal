@@ -414,7 +414,7 @@ struct Time
               second
 
     # Normalize internal representation to UTC
-    seconds = seconds - zone_offset_at(seconds, location) if location.name != "UTC"
+    seconds = seconds - zone_offset_at(seconds, location) if !location.utc?
 
     new(seconds: seconds, nanoseconds: nanosecond.to_i, location: location)
   end
