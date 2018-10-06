@@ -253,7 +253,7 @@ struct Time
   DAYS_PER_4_YEARS = 365*4 + 1
 
   # This constant is defined to be "1970-01-01 00:00:00 UTC".
-  # Can be used to create a `Time::Span` that represents an unix epoch time duration.
+  # Can be used to create a `Time::Span` that represents an Unix Epoch time duration.
   #
   # ```
   # Time.utc_now - Time::UNIX_EPOCH
