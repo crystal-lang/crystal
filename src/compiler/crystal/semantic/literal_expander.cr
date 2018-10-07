@@ -376,12 +376,16 @@ module Crystal
 
       if node.whens.empty?
         expressions = [] of ASTNode
+
+        node_else = node.else
         if node_cond
           expressions << node_cond
+          expressions << NilLiteral.new unless node_else
         end
-        if node_else = node.else
+        if node_else
           expressions << node_else
         end
+
         return Expressions.new(expressions).at(node)
       end
 

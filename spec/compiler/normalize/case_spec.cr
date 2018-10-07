@@ -102,7 +102,7 @@ describe "Normalize: case" do
   end
 
   it "normalizes case without when and else" do
-    assert_expand "case x; end", "x"
+    assert_expand "case x; end", "x\nnil"
   end
 
   it "normalizes case without when but else" do
