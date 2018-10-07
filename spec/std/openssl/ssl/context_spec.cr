@@ -53,7 +53,7 @@ describe OpenSSL::SSL::Context do
     context.should be_a(OpenSSL::SSL::Context::Client)
     context.verify_mode.should eq(OpenSSL::SSL::VerifyMode::NONE)
     context.options.no_ssl_v3?.should_not be_true
-    {% if LibSSL::OPENSSL_111 %}
+    {% if LibSSL::OPENSSL_VERSION >= 0x10101000 %}
     context.modes.should eq(OpenSSL::SSL::Modes::AUTO_RETRY)
     {% else %}
     context.modes.should eq(OpenSSL::SSL::Modes::None)
@@ -67,7 +67,7 @@ describe OpenSSL::SSL::Context do
     context.should be_a(OpenSSL::SSL::Context::Server)
     context.verify_mode.should eq(OpenSSL::SSL::VerifyMode::NONE)
     context.options.no_ssl_v3?.should_not be_true
-    {% if LibSSL::OPENSSL_111 %}
+    {% if LibSSL::OPENSSL_VERSION >= 0x10101000 %}
     context.modes.should eq(OpenSSL::SSL::Modes::AUTO_RETRY)
     {% else %}
     context.modes.should eq(OpenSSL::SSL::Modes::None)
@@ -162,7 +162,7 @@ describe OpenSSL::SSL::Context do
     context.verify_mode.should eq(OpenSSL::SSL::VerifyMode::PEER)
   end
 
-  {% if LibSSL::OPENSSL_102 %}
+  {% if LibSSL::OPENSSL_VERSION >= 0x10002000 %}
   it "alpn_protocol=" do
     context = OpenSSL::SSL::Context::Client.insecure
     context.alpn_protocol = "h2"

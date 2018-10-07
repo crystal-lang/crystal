@@ -3,7 +3,7 @@ require "uri/punycode"
 abstract class OpenSSL::SSL::Context
   # :nodoc:
   def self.default_method
-    {% if LibSSL::OPENSSL_110 %}
+    {% if LibSSL::OPENSSL_VERSION >= 0x10100000 %}
       LibSSL.tls_method
     {% else %}
       LibSSL.sslv23_method
@@ -81,7 +81,7 @@ abstract class OpenSSL::SSL::Context
       super(method)
 
       self.verify_mode = OpenSSL::SSL::VerifyMode::PEER
-      {% if LibSSL::OPENSSL_102 %}
+      {% if LibSSL::OPENSSL_VERSION >= 0x10002000 %}
       self.default_verify_param = "ssl_server"
       {% end %}
     end
@@ -157,7 +157,7 @@ abstract class OpenSSL::SSL::Context
       super(method)
 
       add_options(OpenSSL::SSL::Options::CIPHER_SERVER_PREFERENCE)
-      {% if LibSSL::OPENSSL_102 %}
+      {% if LibSSL::OPENSSL_VERSION >= 0x10002000 %}
       self.default_verify_param = "ssl_client"
       {% end %}
 
@@ -301,7 +301,7 @@ abstract class OpenSSL::SSL::Context
 
   # Returns the current options set on the TLS context.
   def options
-    opts = {% if LibSSL::OPENSSL_110 %}
+    opts = {% if LibSSL::OPENSSL_VERSION >= 0x10100000 %}
       LibSSL.ssl_ctx_get_options(@handle)
     {% else %}
       LibSSL.ssl_ctx_ctrl(@handle, LibSSL::SSL_CTRL_OPTIONS, 0, nil)
@@ -320,7 +320,7 @@ abstract class OpenSSL::SSL::Context
   # )
   # ```
   def add_options(options : OpenSSL::SSL::Options)
-    opts = {% if LibSSL::OPENSSL_110 %}
+    opts = {% if LibSSL::OPENSSL_VERSION >= 0x10100000 %}
       LibSSL.ssl_ctx_set_options(@handle, options)
     {% else %}
       LibSSL.ssl_ctx_ctrl(@handle, LibSSL::SSL_CTRL_OPTIONS, options, nil)
@@ -335,7 +335,7 @@ abstract class OpenSSL::SSL::Context
   # context.remove_options(OpenSSL::SSL::Options::NO_SSL_V3)
   # ```
   def remove_options(options : OpenSSL::SSL::Options)
-    opts = {% if LibSSL::OPENSSL_110 %}
+    opts = {% if LibSSL::OPENSSL_VERSION >= 0x10100000 %}
       LibSSL.ssl_ctx_clear_options(@handle, options)
     {% else %}
       LibSSL.ssl_ctx_ctrl(@handle, LibSSL::SSL_CTRL_CLEAR_OPTIONS, options, nil)
@@ -353,7 +353,7 @@ abstract class OpenSSL::SSL::Context
     LibSSL.ssl_ctx_set_verify(@handle, mode, nil)
   end
 
-  {% if LibSSL::OPENSSL_102 %}
+  {% if LibSSL::OPENSSL_VERSION >= 0x10002000 %}
 
   @alpn_protocol : Pointer(Void)?
 

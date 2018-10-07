@@ -90,7 +90,7 @@ module OpenSSL
     alias Options = LibSSL::Options
     alias VerifyMode = LibSSL::VerifyMode
     alias ErrorType = LibSSL::SSLError
-    {% if LibSSL::OPENSSL_102 %}
+    {% if LibSSL::OPENSSL_VERSION >= 0x10002000 %}
     alias X509VerifyFlags = LibCrypto::X509VerifyFlags
     {% end %}
 
