@@ -2,16 +2,17 @@ require "./lib_crypto"
 
 {% begin %}
   lib LibSSL
-    {% from_libressl = (`command -v pkg-config > /dev/null || printf %s false` != "false") &&
+    {% from_libressl = (`hash pkg-config 2> /dev/null || printf %s false` != "false") &&
                        (`test -f $(pkg-config --silence-errors --variable=includedir libssl)/openssl/opensslv.h || printf %s false` != "false") &&
-                       (`printf %s "#include <openssl/opensslv.h>\nLIBRESSL_VERSION_NUMBER" | #{(env("CC") || "cc").id} #{`pkg-config --cflags --silence-errors libssl || true`.chomp}  -E -`.chomp.split('\n').last == "LIBRESSL_VERSION_NUMBER") %}
+                       (`printf "#include <openssl/opensslv.h>\nLIBRESSL_VERSION_NUMBER" | ${CC:-cc} $(pkg-config --cflags --silence-errors libssl || true) -E -`.chomp.split('\n').last != "LIBRESSL_VERSION_NUMBER") %}
+    {% ssl_version = `hash pkg-config 2> /dev/null && pkg-config --silence-errors --modversion libssl || printf %s 0.0.0`.split.last.gsub(/[^0-9.]/, "") %}
 
     {% if from_libressl %}
-      LIBRESSL_VERSION = {{ `command -v pkg-config > /dev/null && pkg-config --silence-errors --modversion libssl || printf %s 0.0.0`.split.last.gsub(/[^0-9.]/, "") }}
+      LIBRESSL_VERSION = {{ ssl_version }}
       OPENSSL_VERSION = "0.0.0"
     {% else %}
       LIBRESSL_VERSION = "0.0.0"
-      OPENSSL_VERSION = {{ `command -v pkg-config > /dev/null && pkg-config --silence-errors --modversion libssl || printf %s 0.0.0`.split.last.gsub(/[^0-9.]/, "") }}
+      OPENSSL_VERSION = {{ ssl_version }}
     {% end %}
   end
 {% end %}
