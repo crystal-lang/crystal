@@ -6,8 +6,8 @@ module Crystal::System::FileDescriptor
 
   @fd : Int32
 
-  @read_event : Event::Event?
-  @write_event : Event::Event?
+  @read_event : Crystal::Event?
+  @write_event : Crystal::Event?
 
   private def unbuffered_read(slice : Bytes)
     read_syscall_helper(slice, "Error reading file") do
@@ -121,12 +121,12 @@ module Crystal::System::FileDescriptor
   end
 
   private def add_read_event(timeout = @read_timeout) : Nil
-    event = @read_event ||= Scheduler.create_fd_read_event(self)
+    event = @read_event ||= Crystal::EventLoop.create_fd_read_event(self)
     event.add timeout
   end
 
   private def add_write_event(timeout = @write_timeout) : Nil
-    event = @write_event ||= Scheduler.create_fd_write_event(self)
+    event = @write_event ||= Crystal::EventLoop.create_fd_write_event(self)
     event.add timeout
   end
 
