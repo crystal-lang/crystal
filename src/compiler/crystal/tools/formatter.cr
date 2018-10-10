@@ -2181,9 +2181,10 @@ module Crystal
         if @token.type == :SPACE
           needs_space = true
         else
-          needs_space = node.name != "*" && node.name != "/" && node.name != "**"
+          needs_space = node.name != "*" && node.name != "/" && node.name != "**" && node.name != "//"
         end
 
+        slash_is_not_regex!
         skip_space
 
         @multiline_call_indent = nil unless obj.is_a?(Call)
@@ -2633,6 +2634,9 @@ module Crystal
       format_named_argument_name(node.name)
       skip_space_or_newline
       write_token :":", " "
+
+      slash_is_regex!
+
       skip_space_or_newline
       accept node.value
 
@@ -4323,7 +4327,11 @@ module Crystal
     end
 
     def slash_is_regex!
-      @lexer.slash_is_regex = true
+      @lexer.slash_is_regex!
+    end
+
+    def slash_is_not_regex!
+      @lexer.slash_is_not_regex!
     end
 
     def skip_space_write_line
