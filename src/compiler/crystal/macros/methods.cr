@@ -622,8 +622,8 @@ module Crystal
         end
       when "gsub"
         interpret_two_args_method(method, args) do |first, second|
-          raise "first arguent to StringLiteral#gsub must be a regex, not #{first.class_desc}" unless first.is_a?(RegexLiteral)
-          raise "second arguent to StringLiteral#gsub must be a string, not #{second.class_desc}" unless second.is_a?(StringLiteral)
+          raise "first argument to StringLiteral#gsub must be a regex, not #{first.class_desc}" unless first.is_a?(RegexLiteral)
+          raise "second argument to StringLiteral#gsub must be a string, not #{second.class_desc}" unless second.is_a?(StringLiteral)
 
           regex_value = first.value
           if regex_value.is_a?(StringLiteral)
@@ -705,8 +705,9 @@ module Crystal
         end
       when "tr"
         interpret_two_args_method(method, args) do |first, second|
-          raise "first arguent to StringLiteral#tr must be a string, not #{first.class_desc}" unless first.is_a?(StringLiteral)
-          raise "second arguent to StringLiteral#tr must be a string, not #{second.class_desc}" unless second.is_a?(StringLiteral)
+          raise "first argument to StringLiteral#tr must be a string, not #{first.class_desc}" unless first.is_a?(StringLiteral)
+          raise "second argument to StringLiteral#tr must be a string, not #{second.class_desc}" unless second.is_a?(StringLiteral)
+
           StringLiteral.new(@value.tr(first.value, second.value))
         end
       when "underscore"
