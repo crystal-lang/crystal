@@ -151,13 +151,11 @@ struct Time::Format
     end
 
     def day_of_week_monday_1_7
-      v = time.day_of_week.value
-      v = 7 if v == 0
-      io << v
+      io << time.day_of_week.value
     end
 
     def day_of_week_sunday_0_6
-      io << time.day_of_week.value
+      io << time.day_of_week.value % 7
     end
 
     def unix_seconds
@@ -225,7 +223,7 @@ struct Time::Format
     end
 
     def get_day_name
-      DAY_NAMES[time.day_of_week.value]
+      DAY_NAMES[time.day_of_week.value % 7]
     end
 
     def get_short_day_name

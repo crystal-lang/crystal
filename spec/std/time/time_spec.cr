@@ -593,6 +593,39 @@ describe Time do
     end
   end
 
+  describe Time::DayOfWeek do
+    it "#value" do
+      Time::DayOfWeek::Monday.value.should eq 1
+      Time::DayOfWeek::Tuesday.value.should eq 2
+      Time::DayOfWeek::Wednesday.value.should eq 3
+      Time::DayOfWeek::Thursday.value.should eq 4
+      Time::DayOfWeek::Friday.value.should eq 5
+      Time::DayOfWeek::Saturday.value.should eq 6
+      Time::DayOfWeek::Sunday.value.should eq 7
+    end
+
+    it ".from_value" do
+      Time::DayOfWeek.from_value(1).should eq Time::DayOfWeek::Monday
+      Time::DayOfWeek.from_value(2).should eq Time::DayOfWeek::Tuesday
+      Time::DayOfWeek.from_value(3).should eq Time::DayOfWeek::Wednesday
+      Time::DayOfWeek.from_value(4).should eq Time::DayOfWeek::Thursday
+      Time::DayOfWeek.from_value(5).should eq Time::DayOfWeek::Friday
+      Time::DayOfWeek.from_value(6).should eq Time::DayOfWeek::Saturday
+      Time::DayOfWeek.from_value(7).should eq Time::DayOfWeek::Sunday
+
+      # Special case: Identify 0 as Sunday
+      Time::DayOfWeek.from_value(0).should eq Time::DayOfWeek::Sunday
+
+      expect_raises(Exception, "Unknown enum Time::DayOfWeek value: 8") do
+        Time::DayOfWeek.from_value(8)
+      end
+    end
+
+    it ".new does not identify 0 as Sunday" do
+      Time::DayOfWeek.new(0).should_not eq Time::DayOfWeek::Sunday
+    end
+  end
+
   typeof(Time.now.year)
   typeof(1.minute.from_now.year)
   typeof(1.minute.ago.year)

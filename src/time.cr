@@ -65,6 +65,15 @@ require "crystal/system/time"
 # time.time_of_day # => 10:20:30
 # ```
 #
+# For querying if a time is at a specific day of week, `Time` offers named
+# predicate methods, delegating to `#day_of_week`:
+#
+# ```
+# time.monday? # => true
+# # ...
+# time.sunday? # => false
+# ```
+#
 # ### Time Zones
 #
 # Each time is attached to a specific time zone, represented by a `Location`
@@ -263,27 +272,35 @@ struct Time
   # :nodoc:
   MAX_SECONDS = 315537897599_i64
 
-  # `DayOfWeek` represents a day-of-week in the Gregorian calendar.
+  # `DayOfWeek` represents a day of the week in the Gregorian calendar.
   #
   # ```
   # time = Time.new(2016, 2, 15)
   # time.day_of_week # => Time::DayOfWeek::Monday
   # ```
   #
-  # Alternatively, you can use question methods:
+  # Each member is identified by its ordinal number starting from `Monday = 1`
+  # according to [ISO 8601](http://xml.coverpages.org/ISO-FDIS-8601.pdf).
   #
-  # ```
-  # time.friday? # => false
-  # time.monday? # => true
-  # ```
+  # `#value` returns this ordinal number. It can easily be converted to the also
+  # common numbering based on `Sunday = 0` using `value % 7`.
   enum DayOfWeek
-    Sunday
-    Monday
-    Tuesday
-    Wednesday
-    Thursday
-    Friday
-    Saturday
+    Monday    = 1
+    Tuesday   = 2
+    Wednesday = 3
+    Thursday  = 4
+    Friday    = 5
+    Saturday  = 6
+    Sunday    = 7
+
+    # Returns the day of week that has the given value, or raises if no such member exists.
+    #
+    # This method also accepts `0` to identify `Sunday` in order to be compliant
+    # with the `Sunday = 0` numbering. All other days are equal in both formats.
+    def self.from_value(value : Int32) : self
+      value = 7 if value == 0
+      super(value)
+    end
   end
 
   @seconds : Int64
@@ -721,10 +738,10 @@ struct Time
     Span.new(nanoseconds: NANOSECONDS_PER_SECOND * (offset_seconds % SECONDS_PER_DAY) + nanosecond)
   end
 
-  # Returns the day of the week (`Sunday..Saturday`).
+  # Returns the day of the week (`Monday..Sunday`).
   def day_of_week : Time::DayOfWeek
-    value = ((offset_seconds / SECONDS_PER_DAY) + 1) % 7
-    DayOfWeek.new value.to_i
+    days = offset_seconds / SECONDS_PER_DAY
+    DayOfWeek.new days.to_i % 7 + 1
   end
 
   # Returns the day of the year.
@@ -1152,12 +1169,7 @@ struct Time
   #
   # TODO: Ensure correctness in local time-line.
   def at_beginning_of_week : Time
-    dow = day_of_week.value
-    if dow == 0
-      (self - 6.days).at_beginning_of_day
-    else
-      (self - (dow - 1).days).at_beginning_of_day
-    end
+    (self - (day_of_week.value - 1).days).at_beginning_of_day
   end
 
   def_at_end(year) { Time.new(year, 12, 31, 23, 59, 59, nanosecond: 999_999_999, location: location) }
@@ -1194,12 +1206,7 @@ struct Time
   #
   # TODO: Ensure correctness in local time-line.
   def at_end_of_week : Time
-    dow = day_of_week.value
-    if dow == 0
-      at_end_of_day
-    else
-      (self + (7 - dow).days).at_end_of_day
-    end
+    (self + (7 - day_of_week.value).days).at_end_of_day
   end
 
   def_at_end(day) { Time.new(year, month, day, 23, 59, 59, nanosecond: 999_999_999, location: location) }

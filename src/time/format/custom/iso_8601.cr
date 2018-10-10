@@ -26,7 +26,7 @@ struct Time::Format
         day_of_week = consume_number(1)
 
         first_day_of_year = Time.utc(@year, 1, 1)
-        week_day = first_day_of_year.day_of_week.value
+        week_day = first_day_of_year.day_of_week.value % 7
 
         if week_day < 5
           first_day_in_weeks_of_year = first_day_of_year - (week_day % 7 - 1).days
