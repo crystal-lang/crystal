@@ -34,7 +34,7 @@ We want full OOP.
 Oh, and we don't want to write C code to make the code run faster.
 
 Project Status
-------
+--------------
 
 Crystal is still under heavy development. There can be breaking changes but we're trying to keep them as minimum as possible.
 
@@ -51,7 +51,7 @@ Try it online
 [play.crystal-lang.org](https://play.crystal-lang.org/)
 
 Documentation
-----------
+-------------
 
 * [Official docs](http://crystal-lang.org/docs)
 * [Standard library API](https://crystal-lang.org/api)
@@ -63,12 +63,12 @@ Community
 Questions or suggestions? Ask in our [Google Group](https://groups.google.com/forum/?fromgroups#!forum/crystal-lang), join our IRC channel [#crystal-lang](http://webchat.freenode.net/?channels=#crystal-lang) at chat.freenode.net, ask on our [Gitter channel](https://gitter.im/crystal-lang/crystal) or ask on Stack Overflow under the [crystal-lang](http://stackoverflow.com/questions/tagged/crystal-lang) tag.
 
 Contributing
----------
+------------
 
 Read the general [Contributing guide](https://github.com/crystal-lang/crystal/blob/master/CONTRIBUTING.md), and then:
 
-1. Fork it ( https://github.com/crystal-lang/crystal/fork )
-2. Create your feature branch (git checkout -b my-new-feature)
-3. Commit your changes (git commit -am 'Add some feature')
-4. Push to the branch (git push origin my-new-feature)
+1. Fork it (<https://github.com/crystal-lang/crystal/fork>)
+2. Create your feature branch (`git checkout -b my-new-feature`)
+3. Commit your changes (`git commit -am 'Add some feature'`)
+4. Push to the branch (`git push origin my-new-feature`)
 5. Create a new Pull Request
