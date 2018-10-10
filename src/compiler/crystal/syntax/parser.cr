@@ -4325,6 +4325,7 @@ module Crystal
         end
 
         check :":"
+        slash_is_regex!
         next_token_skip_space_or_newline
 
         if @token.keyword?(:out)

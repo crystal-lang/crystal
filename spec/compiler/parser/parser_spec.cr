@@ -445,6 +445,10 @@ module Crystal
     ["<<", "<", "<=", "==", ">>", ">", ">=", "+", "-", "*", "/", "//", "%", "|", "&", "^", "**", "===", "=~", "!~", "&+", "&-", "&*", "&**"].each do |op|
       it_parses "1 #{op} 2", Call.new(1.int32, op, 2.int32)
       it_parses "n #{op} 2", Call.new("n".call, op, 2.int32)
+      it_parses "foo(n #{op} 2)", Call.new(nil, "foo", Call.new("n".call, op, 2.int32))
+      it_parses "foo(0, n #{op} 2)", Call.new(nil, "foo", 0.int32, Call.new("n".call, op, 2.int32))
+      it_parses "foo(a: n #{op} 2)", Call.new(nil, "foo", [] of ASTNode, named_args: [NamedArgument.new("a", Call.new("n".call, op, 2.int32))])
+      it_parses "foo(z: 0, a: n #{op} 2)", Call.new(nil, "foo", [] of ASTNode, named_args: [NamedArgument.new("z", 0.int32), NamedArgument.new("a", Call.new("n".call, op, 2.int32))])
       it_parses "def #{op}(); end", Def.new(op)
       it_parses "macro #{op};end", Macro.new(op, [] of Arg, Expressions.new)
     end
@@ -942,6 +946,9 @@ module Crystal
 
     it_parses "foo /a/", Call.new(nil, "foo", regex("a"))
     it_parses "foo(/a/)", Call.new(nil, "foo", regex("a"))
+    it_parses "foo(//)", Call.new(nil, "foo", regex(""))
+    it_parses "foo(regex: //)", Call.new(nil, "foo", [] of ASTNode, named_args: [NamedArgument.new("regex", regex(""))])
+
     it_parses "foo(/ /)", Call.new(nil, "foo", regex(" "))
     it_parses "foo(/ /, / /)", Call.new(nil, "foo", [regex(" "), regex(" ")] of ASTNode)
     it_parses "foo a, / /", Call.new(nil, "foo", ["a".call, regex(" ")] of ASTNode)
