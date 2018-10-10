@@ -13,6 +13,7 @@ class Hash(K, V)
   @last : Entry(K, V)?
   @block : (self, K -> V)?
 
+  # :nodoc:
   def initialize(block : (Hash(K, V), K -> V)? = nil, initial_capacity = nil)
     initial_capacity ||= 11
     initial_capacity = 11 if initial_capacity < 11
@@ -23,10 +24,36 @@ class Hash(K, V)
     @block = block
   end
 
+  # Creates a new empty `Hash` of *initial_capacity* with a *block* that handles missing keys.
+  #
+  # The *initial_capacity* is useful to avoid unnecessary reallocations
+  # of the internal buffer in case of growth. If you have an estimate
+  # of the maximum number of elements a hash will hold, the hash should
+  # be initialized with that capacity for improved performance.
+  #
+  # NOTE: *initial_capacity* defaults to 11 and an input of < 11 is ignored.
+  # NOTE: `#size` does not reflect capacity as in `Array`.
+  #
+  # ```
+  # new_hash = Hash(Int32, String).new(5) do |hash, key|
+  #  hash[key-1] ? hash[key-1] : 0
+  # end
+  # new_hash.size # => 0
+  # new_hash[0] = "zero"
+  # new_hash[2] = "two"
+  # new_hash[1] # => "zero"
+  # new_hash[3] # => "two"
+  # ```
   def self.new(initial_capacity = nil, &block : (Hash(K, V), K -> V))
     new block, initial_capacity: initial_capacity
   end
 
+  # Creates a new empty `Hash` where the *default_value* is returned if key is missing.
+  #
+  # ```
+  # new_hash = Hash(Int32, String).new("not found")
+  # new_hash[0] # => "not found"
+  # ```
   def self.new(default_value : V, initial_capacity = nil)
     new(initial_capacity: initial_capacity) { default_value }
   end
