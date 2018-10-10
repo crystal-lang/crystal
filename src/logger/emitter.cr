@@ -25,7 +25,7 @@ class Logger
   class Forwarder
     include Emitter
 
-    getter dest : Base
+    getter dest : Logger
 
     def initialize(@dest)
     end

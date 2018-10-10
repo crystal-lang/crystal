@@ -7,32 +7,29 @@ class Logger
   alias FilterType = Filter | Severity | (Entry -> Bool)
   alias EmitterType = Emitter | (Entry -> Nil)
 
-  module Base
-    abstract def component : String
-    abstract def filter : FilterType?
-    abstract def emitters : Array(EmitterType)
+  property component : String
+  property filter : FilterType?
+  property emitters : Array(EmitterType)
 
-    def log(entry : Entry)
-      case ff = filter
-      when Filter, Proc(Entry, Bool)
-        return unless ff.call(entry)
-      when Severity
-        return unless entry.severity >= ff
-      end
-      emitters.each &.call(entry)
+  def log(entry : Entry)
+    case ff = filter
+    when Filter, Proc(Entry, Bool)
+      return unless ff.call(entry)
+    when Severity
+      return unless entry.severity >= ff
     end
-
-    {% for level in Severity.constants %}
-      def {{ level.downcase.id }}(message, *, time = Time.now, line_number = __LINE__, filename = __FILE__)
-        log Entry.new(message, Severity::{{ level }}, component, time, line_number, filename)
-      end
-    {% end %}
+    emitters.each &.call(entry)
   end
 
-  include Base
-  getter component : String
-  getter filter : FilterType?
-  getter emitters : Array(EmitterType)
+  {% for level in Severity.constants %}
+    def {{ level.downcase.id }}(message, *, time = Time.now, line_number = __LINE__, filename = __FILE__)
+      log Entry.new(message, Severity::{{ level }}, component, time, line_number, filename)
+    end
+  {% end %}
+
+  def get(component) : Logger
+    Logger.new(component.to_s, nil, Forwarder.new(self))
+  end
 
   def initialize(@component, @filter, @emitters)
   end
@@ -41,13 +38,10 @@ class Logger
     new(component, filter, [emitter] of EmitterType)
   end
 
-  extend Base
-  class_property component = ""
-  class_property filter : FilterType?
-  class_property emitters : Array(EmitterType) = [IOEmitter.new] of EmitterType
+  ROOT = new("", nil, IOEmitter.new)
 
-  def self.get(component)
-    Logger.new(component.to_s, nil, Forwarder.new(self))
+  def self.get(component) : Logger
+    ROOT.get component
   end
 
   {% for level in Severity.constants %}
