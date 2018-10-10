@@ -35,14 +35,13 @@ class Hash(K, V)
   # NOTE: `#size` does not reflect capacity as in `Array`.
   #
   # ```
-  # new_hash = Hash(Int32, String).new(5) do |hash, key|
-  #  hash[key-1] ? hash[key-1] : 0
+  # new_hash = Hash(String, Int32).new(50) do |hash, key|
+  #   key.size
   # end
   # new_hash.size # => 0
-  # new_hash[0] = "zero"
-  # new_hash[2] = "two"
-  # new_hash[1] # => "zero"
-  # new_hash[3] # => "two"
+  # new_hash["zero"] = 0
+  # new_hash["two"] = 2
+  # new_hash["four"] # => 4
   # ```
   def self.new(initial_capacity = nil, &block : (Hash(K, V), K -> V))
     new block, initial_capacity: initial_capacity
@@ -51,8 +50,9 @@ class Hash(K, V)
   # Creates a new empty `Hash` where the *default_value* is returned if key is missing.
   #
   # ```
-  # new_hash = Hash(Int32, String).new("not found")
-  # new_hash[0] # => "not found"
+  # inventory = Hash(String, Int32).new(0)
+  # inventory["socks"] = 3
+  # inventory["pickles"] # => 0
   # ```
   def self.new(default_value : V, initial_capacity = nil)
     new(initial_capacity: initial_capacity) { default_value }
