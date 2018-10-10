@@ -23,10 +23,6 @@ class Logger
     end
 
     {% for level in Severity.constants %}
-      def {{ level.downcase.id }}(*, time = Time.now, line_number = __LINE__, filename = __FILE__, &message : -> String)
-        log Entry.new(message, Severity::{{ level }}, component, time, line_number, filename)
-      end
-
       def {{ level.downcase.id }}(message, *, time = Time.now, line_number = __LINE__, filename = __FILE__)
         log Entry.new(message, Severity::{{ level }}, component, time, line_number, filename)
       end
