@@ -46,6 +46,22 @@ class Logger
     ROOT.get component
   end
 
+  def self.root_filter
+    ROOT.filter
+  end
+
+  def self.root_filter=(value)
+    ROOT.filter = value
+  end
+
+  def self.root_emitters
+    ROOT.emitters
+  end
+
+  def self.root_emitters=(value)
+    ROOT.emitters = value
+  end
+
   {% for level in Severity.constants %}
     {{ level }} = Severity::{{ level }}
   {% end %}
