@@ -22,9 +22,11 @@ class Logger
   end
 
   {% for level in Severity.constants %}
-    def {{ level.downcase.id }}(message, *, time = Time.now, line_number = __LINE__, filename = __FILE__)
-      log Entry.new(message, Severity::{{ level }}, component, time, line_number, filename)
-    end
+    {% unless level == "SILENT" %}
+      def {{ level.downcase.id }}(message, *, time = Time.now, line_number = __LINE__, filename = __FILE__)
+        log Entry.new(message, Severity::{{ level }}, component, time, line_number, filename)
+      end
+    {% end %}
   {% end %}
 
   def get(component) : Logger

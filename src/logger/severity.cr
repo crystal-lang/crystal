@@ -11,6 +11,7 @@ class Logger
     ERROR
     # An unhandleable error that results in a program crash
     FATAL
-    UNKNOWN
+    # A level that should never be used in messages but may be useful for setting thresholds
+    SILENT
   end
 end
