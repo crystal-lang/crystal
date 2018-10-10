@@ -110,7 +110,7 @@ struct String::Formatter(A)
 
   private def consume_width(flags)
     case current_char
-    when '0'..'9'
+    when '1'..'9'
       num, size = consume_number
       flags.width = num
       flags.width_size = size
@@ -125,7 +125,7 @@ struct String::Formatter(A)
   private def consume_precision(flags)
     if current_char == '.'
       case next_char
-      when '0'..'9'
+      when '1'..'9'
         num, size = consume_number
         flags.precision = num
         flags.precision_size = size
