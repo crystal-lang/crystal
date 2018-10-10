@@ -1,63 +1,109 @@
-require "spec"
-require "socket"
+require "./spec_helper"
 
 describe TCPSocket do
-  it "creates a raw socket" do
-    sock = TCPSocket.new
-    sock.family.should eq(Socket::Family::INET)
+  describe "#connect" do
+    each_ip_family do |family, address|
+      it "connects to server" do
+        port = unused_local_port
 
-    sock = TCPSocket.new(Socket::Family::INET6)
-    sock.family.should eq(Socket::Family::INET6)
+        TCPServer.open(address, port) do |server|
+          TCPSocket.open(address, port) do |client|
+            client.local_address.address.should eq address
+
+            sock = server.accept
+
+            sock.closed?.should be_false
+            client.closed?.should be_false
+
+            sock.local_address.port.should eq(port)
+            sock.local_address.address.should eq(address)
+
+            client.remote_address.port.should eq(port)
+            sock.remote_address.address.should eq address
+          end
+        end
+      end
+
+      it "raises when connection is refused" do
+        port = unused_local_port
+
+        expect_raises(Errno, "Error connecting to '#{address}:#{port}': Connection refused") do
+          TCPSocket.new(address, port)
+        end
+      end
+
+      it "raises when port is negative" do
+        expect_raises(Socket::Error, linux? ? "getaddrinfo: Servname not supported for ai_socktype" : "No address found for #{address}:-12 over TCP") do
+          TCPSocket.new(address, -12)
+        end
+      end
+
+      it "raises when port is zero" do
+        expect_raises(Errno, linux? ? "Error connecting to '#{address}:0': Connection refused" : "connect: Can't assign requested address") do
+          TCPSocket.new(address, 0)
+        end
+      end
+    end
+
+    describe "address resolution" do
+      it "connects to localhost" do
+        port = unused_local_port
+
+        TCPServer.open("localhost", port) do |server|
+          TCPSocket.open("localhost", port) do |client|
+            sock = server.accept
+          end
+        end
+      end
+
+      it "raises when host doesn't exist" do
+        expect_raises(Socket::Error, "No address") do
+          TCPSocket.new("doesnotexist.example.org.", 12345)
+        end
+      end
+
+      it "raises (rather than segfault on darwin) when host doesn't exist and port is 0" do
+        expect_raises(Socket::Error, "No address") do
+          TCPSocket.new("doesnotexist.example.org.", 0)
+        end
+      end
+    end
+
+    it "fails to connect IPv6 to IPv4 server" do
+      port = unused_local_port
+
+      TCPServer.open("0.0.0.0", port) do |server|
+        expect_raises(Errno, "Error connecting to '::1:#{port}': Connection refused") do
+          TCPSocket.new("::1", port)
+        end
+      end
+    end
   end
 
-  it "sends and receives messages" do
-    port = TCPServer.open("::", 0) do |server|
-      server.local_address.port
-    end
-    port.should be > 0
+  it "sync from server" do
+    port = unused_local_port
 
     TCPServer.open("::", port) do |server|
-      server.local_address.family.should eq(Socket::Family::INET6)
-      server.local_address.port.should eq(port)
-      server.local_address.address.should eq("::")
-
-      # test protocol specific socket options
-      server.reuse_address?.should be_true # defaults to true
-      (server.reuse_address = false).should be_false
-      server.reuse_address?.should be_false
-      (server.reuse_address = true).should be_true
-      server.reuse_address?.should be_true
-
-      {% unless flag?(:openbsd) %}
-      (server.keepalive = false).should be_false
-      server.keepalive?.should be_false
-      (server.keepalive = true).should be_true
-      server.keepalive?.should be_true
-      {% end %}
-
-      (server.linger = nil).should be_nil
-      server.linger.should be_nil
-      (server.linger = 42).should eq 42
-      server.linger.should eq 42
-
-      TCPSocket.open("localhost", server.local_address.port) do |client|
-        # The commented lines are actually dependent on the system configuration,
-        # so for now we keep it commented. Once we can force the family
-        # we can uncomment them.
-
-        # client.local_address.family.should eq(Socket::Family::INET)
-        # client.local_address.address.should eq("127.0.0.1")
-
+      TCPSocket.open("localhost", port) do |client|
         sock = server.accept
         sock.sync?.should eq(server.sync?)
+      end
 
-        # sock.local_address.family.should eq(Socket::Family::INET6)
-        # sock.local_address.port.should eq(12345)
-        # sock.local_address.address.should eq("::ffff:127.0.0.1")
+      # test sync flag propagation after accept
+      server.sync = !server.sync?
 
-        # sock.remote_address.family.should eq(Socket::Family::INET6)
-        # sock.remote_address.address.should eq("::ffff:127.0.0.1")
+      TCPSocket.open("localhost", port) do |client|
+        sock = server.accept
+        sock.sync?.should eq(server.sync?)
+      end
+    end
+  end
 
+  it "settings" do
+    port = unused_local_port
+
+    TCPServer.open("::", port) do |server|
+      TCPSocket.open("localhost", port) do |client|
         # test protocol specific socket options
         (client.tcp_nodelay = true).should be_true
         client.tcp_nodelay?.should be_true
@@ -72,19 +118,6 @@ describe TCPSocket do
         (client.tcp_keepalive_count = 42).should eq 42
         client.tcp_keepalive_count.should eq 42
         {% end %}
-
-        client << "ping"
-        sock.gets(4).should eq("ping")
-        sock << "pong"
-        client.gets(4).should eq("pong")
-      end
-
-      # test sync flag propagation after accept
-      server.sync = !server.sync?
-
-      TCPSocket.open("localhost", server.local_address.port) do |client|
-        sock = server.accept
-        sock.sync?.should eq(server.sync?)
       end
     end
   end
@@ -99,15 +132,18 @@ describe TCPSocket do
     end
   end
 
-  it "fails when host doesn't exist" do
-    expect_raises(Socket::Error, /No address/i) do
-      TCPSocket.new("doesnotexist.example.org.", 12345)
-    end
-  end
+  it "sends and receives messages" do
+    port = unused_local_port
 
-  it "fails (rather than segfault on darwin) when host doesn't exist and port is 0" do
-    expect_raises(Socket::Error, /No address/i) do
-      TCPSocket.new("doesnotexist.example.org.", 0)
+    TCPServer.open("::", port) do |server|
+      TCPSocket.open("localhost", port) do |client|
+        sock = server.accept
+
+        client << "ping"
+        sock.gets(4).should eq("ping")
+        sock << "pong"
+        client.gets(4).should eq("pong")
+      end
     end
   end
 end
