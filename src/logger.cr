@@ -10,7 +10,7 @@ class Logger
   module Base
     abstract def component : String
     abstract def filter : FilterType?
-    abstract def emitter : EmitterType?
+    abstract def emitters : Array(EmitterType)
 
     def log(entry : Entry)
       case ff = filter
@@ -19,7 +19,7 @@ class Logger
       when Severity
         return unless entry.severity >= ff
       end
-      emitter.try &.call(entry)
+      emitters.each &.call(entry)
     end
 
     {% for level in Severity.constants %}
@@ -32,15 +32,19 @@ class Logger
   include Base
   getter component : String
   getter filter : FilterType?
-  getter emitter : EmitterType?
+  getter emitters : Array(EmitterType)
 
-  def initialize(@component, @filter, @emitter)
+  def initialize(@component, @filter, @emitters)
+  end
+
+  def self.new(component, filter, emitter : EmitterType)
+    new(component, filter, [emitter] of EmitterType)
   end
 
   extend Base
   class_property component = ""
   class_property filter : FilterType?
-  class_property emitter : EmitterType? = IOEmitter.new
+  class_property emitters : Array(EmitterType) = [IOEmitter.new] of EmitterType
 
   def self.get(component)
     Logger.new(component.to_s, nil, Forwarder.new(self))
