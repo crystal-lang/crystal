@@ -1,128 +1,179 @@
+require "socket"
+require "./delegates"
+
 # A Transmission Control Protocol (TCP/IP) socket.
 #
 # Usage example:
 # ```
 # require "socket"
 #
-# client = TCPSocket.new("localhost", 1234)
-# client << "message\n"
-# response = client.gets
-# client.close
+# TCPSocket.open("localhost", 1234) do |socket|
+#   socket.puts "hello!"
+#   puts client.gets
+# end
 # ```
-class TCPSocket < IPSocket
-  # Creates a new `TCPSocket`, waiting to be connected.
-  def self.new(family : Socket::Family = Socket::Family::INET)
-    super(family, Socket::Type::STREAM, Socket::Protocol::TCP)
+class TCPSocket < IO
+  DEFAULT_DNS_TIMEOUT     = 10.seconds
+  DEFAULT_CONNECT_TIMEOUT = 15.seconds
+
+  # Returns the raw socket wrapped by this TCP socket.
+  getter raw : Socket::Raw
+
+  # Create a `TCPSocket` from a raw socket.
+  def initialize(@raw : Socket::Raw)
   end
 
-  # Creates a new TCP connection to a remote TCP server.
+  # Creates a new TCP connection to a remote socket.
   #
-  # You may limit the DNS resolution time with `dns_timeout` and limit the
-  # connection time to the remote server with `connect_timeout`. Both values
-  # must be in seconds (integers or floats).
+  # *dns_timeout* limits the time for DNS request (if *host* is a hostname and needs
+  # to be resolved). *connect_timeout* limits the time to connect to the remote
+  # socket. Both values can be a `Time::Span` or a number representing seconds.
   #
-  # Note that `dns_timeout` is currently ignored.
-  def initialize(host, port, dns_timeout = nil, connect_timeout = nil)
+  # NOTE: `dns_timeout` is currently ignored.
+  def self.new(host : String, port : Int32, *,
+               dns_timeout : Time::Span | Number? = DEFAULT_DNS_TIMEOUT,
+               connect_timeout : Time::Span | Number? = DEFAULT_CONNECT_TIMEOUT) : TCPSocket
     Socket::Addrinfo.tcp(host, port, timeout: dns_timeout) do |addrinfo|
-      super(addrinfo.family, addrinfo.type, addrinfo.protocol)
-      connect(addrinfo, timeout: connect_timeout) do |error|
-        close
-        error
+      raw = Socket::Raw.new(addrinfo.family, Socket::Type::STREAM, Socket::Protocol::TCP)
+
+      if errno = raw.connect(addrinfo, connect_timeout: connect_timeout) { |errno| errno }
+        raw.close
+        next errno
       end
+
+      new(raw)
     end
   end
 
-  protected def initialize(family : Socket::Family, type : Socket::Type, protocol : Socket::Protocol)
-    super family, type, protocol
+  # Creates a new TCP connection to a remote socket.
+  #
+  # *connect_timeout* limits the time to connect to the remote
+  # socket. Both values can be a `Time::Span` or a number representing seconds.
+  #
+  # *local_address* specifies the local socket used to connect to the remote
+  # socket.
+  #
+  # NOTE: `dns_timeout` is currently ignored.
+  def self.new(address : Socket::IPAddress, local_address : Socket::IPAddress? = nil, *,
+               connect_timeout : Time::Span | Number? = DEFAULT_CONNECT_TIMEOUT) : TCPSocket
+    raw = Socket::Raw.new(addrinfo.family, Socket::Type::STREAM, Socket::Protocol::TCP)
+
+    if local_address
+      raw.bind(local_address)
+    end
+
+    raw.connect(address, connect_timeout: connect_timeout)
+
+    new(raw)
   end
 
-  protected def initialize(fd : Int32, family : Socket::Family, type : Socket::Type, protocol : Socket::Protocol)
-    super fd, family, type, protocol
+  # Creates a new TCP connection to a remote socket from a specified local socket.
+  #
+  # *dns_timeout* limits the time for DNS request (if *host* is a hostname and needs
+  # to be resolved). *connect_timeout* limits the time to connect to the remote
+  # socket. Both values can be a `Time::Span` or a number representing seconds.
+  #
+  # NOTE: `dns_timeout` is currently ignored.
+  #
+  # *local_address* and *local_port* specify the local socket used to connect to
+  # the remote socket.
+  def self.new(host : String, port : Int32, local_address : String, local_port : Int32, *,
+               dns_timeout : Time::Span | Number? = DEFAULT_DNS_TIMEOUT,
+               connect_timeout : Time::Span | Number? = DEFAULT_CONNECT_TIMEOUT) : TCPSocket
+    Socket::Addrinfo.tcp(host, port, timeout: dns_timeout) do |addrinfo|
+      raw = Socket::Raw.new(addrinfo.family, Socket::Type::STREAM, Socket::Protocol::TCP)
+
+      raw.bind(local_address, local_port)
+
+      if errno = raw.connect(addrinfo, connect_timeout: connect_timeout) { |errno| errno }
+        raw.close
+        next errno
+      end
+
+      new(raw)
+    end
   end
 
-  # Opens a TCP socket to a remote TCP server, yields it to the block, then
-  # eventually closes the socket when the block returns.
+  # Opens a TCP socket to a remote TCP server, yields it to the block.
+  # Eventually closes the socket when the block returns.
+  #
+  # See `.new` for details about the arguments.
   #
   # Returns the value of the block.
-  def self.open(host, port)
-    sock = new(host, port)
+  def self.open(host : String, port : Int32, *,
+                dns_timeout : Time::Span | Number? = DEFAULT_DNS_TIMEOUT,
+                connect_timeout : Time::Span | Number? = DEFAULT_CONNECT_TIMEOUT)
+    socket = new(host, port, dns_timeout: dns_timeout, connect_timeout: connect_timeout)
+
     begin
-      yield sock
+      yield socket
     ensure
-      sock.close
+      socket.close
     end
   end
 
-  def self.new(host, port, local_address : String, local_port : Int32, dns_timeout = nil, connect_timeout = nil)
-    Socket::Addrinfo.tcp(host, port, timeout: dns_timeout) do |addrinfo|
-      socket = new(addrinfo.family, addrinfo.type, addrinfo.protocol)
-      socket.bind(local_address, local_port)
-      socket.connect(addrinfo, timeout: connect_timeout) do |error|
-        socket.close
-        error
-      end
-      return socket
-    end
-  end
+  # Opens a TCP socket to a remote TCP server, yields it to the block.
+  # Eventually closes the socket when the block returns.
+  #
+  # See `.new` for details about the arguments.
+  #
+  # Returns the value of the block.
+  def self.open(host : String, port : Int32, local_address : String, local_port : Int32, *,
+                dns_timeout : Time::Span | Number? = DEFAULT_DNS_TIMEOUT,
+                connect_timeout : Time::Span | Number? = DEFAULT_CONNECT_TIMEOUT)
+    socket = new(host, port, local_address, local_port, dns_timeout: dns_timeout, connect_timeout: connect_timeout)
 
-  def self.open(host, port, local_address : String, local_port : Int32)
-    sock = new(host, port, local_address, local_port)
     begin
-      yield sock
+      yield socket
     ensure
-      sock.close
+      socket.close
     end
   end
 
-  # Returns `true` if the Nable algorithm is disabled.
-  def tcp_nodelay?
-    getsockopt_bool LibC::TCP_NODELAY, level: Socket::Protocol::TCP
+  # Opens a TCP socket to a remote TCP server, yields it to the block.
+  # Eventually closes the socket when the block returns.
+  #
+  # See `.new` for details about the arguments.
+  #
+  # Returns the value of the block.
+  def self.open(address : Socket::IPAddress, local_address : Socket::IPAddress? = nil, *,
+                connect_timeout : Time::Span | Number? = DEFAULT_CONNECT_TIMEOUT)
+    socket = new(address, local_address, connect_timeout: connect_timeout)
+
+    begin
+      yield socket
+    ensure
+      socket.close
+    end
   end
 
-  # Disable the Nagle algorithm when set to `true`, otherwise enables it.
-  def tcp_nodelay=(val : Bool)
-    setsockopt_bool LibC::TCP_NODELAY, val, level: Socket::Protocol::TCP
+  Socket.delegate_close
+  Socket.delegate_io_methods
+  Socket.delegate_tcp_options
+
+  # Returns the `IPAddress` for the local end of the IP socket, or `nil` if the
+  # socket is closed.
+  def local_address? : Socket::IPAddress?
+    local_address unless closed?
   end
 
-  {% unless flag?(:openbsd) %}
-    # The amount of time in seconds the connection must be idle before sending keepalive probes.
-    def tcp_keepalive_idle
-      optname = {% if flag?(:darwin) %}
-        LibC::TCP_KEEPALIVE
-      {% else %}
-        LibC::TCP_KEEPIDLE
-      {% end %}
-      getsockopt optname, 0, level: Socket::Protocol::TCP
-    end
+  # Returns the `IPAddress` for the local end of the IP socket.
+  #
+  # Raises `Socket::Error` if the socket is closed.
+  def local_address : Socket::IPAddress
+    @raw.local_address(Socket::IPAddress)
+  end
 
-    def tcp_keepalive_idle=(val : Int)
-      optname = {% if flag?(:darwin) %}
-        LibC::TCP_KEEPALIVE
-      {% else %}
-        LibC::TCP_KEEPIDLE
-      {% end %}
-      setsockopt optname, val, level: Socket::Protocol::TCP
-      val
-    end
+  # Returns the `IPAddress` for the remote end of the IP socket, or `nil` if the
+  # socket is closed.
+  def remote_address? : Socket::IPAddress?
+    remote_address unless closed?
+  end
 
-    # The amount of time in seconds between keepalive probes.
-    def tcp_keepalive_interval
-      getsockopt LibC::TCP_KEEPINTVL, 0, level: Socket::Protocol::TCP
-    end
-
-    def tcp_keepalive_interval=(val : Int)
-      setsockopt LibC::TCP_KEEPINTVL, val, level: Socket::Protocol::TCP
-      val
-    end
-
-    # The number of probes sent, without response before dropping the connection.
-    def tcp_keepalive_count
-      getsockopt LibC::TCP_KEEPCNT, 0, level: Socket::Protocol::TCP
-    end
-
-    def tcp_keepalive_count=(val : Int)
-      setsockopt LibC::TCP_KEEPCNT, val, level: Socket::Protocol::TCP
-      val
-    end
-  {% end %}
+  # Returns the `IPAddress` for the remote end of the IP socket.
+  #
+  # Raises `Socket::Error` if the socket is closed.
+  def remote_address : Socket::IPAddress
+    @raw.remote_address(Socket::IPAddress)
+  end
 end

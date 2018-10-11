@@ -1,5 +1,4 @@
 require "./spec_helper"
-require "socket"
 
 describe UDPSocket do
   each_ip_family do |family, address|

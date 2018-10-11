@@ -18,7 +18,6 @@ module Socket
 end
 
 require "./socket/raw"
-require "./socket/ip_socket"
 require "./socket/server"
 require "./socket/tcp_socket"
 require "./socket/tcp_server"

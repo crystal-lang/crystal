@@ -1,83 +1,151 @@
 require "./unix_socket"
 require "./server"
 
-# A local interprocess communication server socket.
+# A local interprocess communication (UNIX socket) server socket.
 #
 # Only available on UNIX and UNIX-like operating systems.
 #
-# Example usage:
+# Usage example:
 # ```
-# require "socket"
+# require "socket/unix_server"
 #
 # def handle_client(client)
 #   message = client.gets
 #   client.puts message
 # end
 #
-# server = UNIXServer.new("/tmp/myapp.sock")
-# while client = server.accept?
-#   spawn handle_client(client)
+# UNIXServer.open("/tmp/myapp.sock") do |server|
+#   while client = server.accept?
+#     spawn handle_client(client)
+#   end
 # end
 # ```
-class UNIXServer < UNIXSocket
+struct UNIXServer
   include Socket::Server
 
-  # Creates a named UNIX socket, listening on a filesystem pathname.
+  # Returns the raw socket wrapped by this UNIX server.
+  getter raw : Socket::Raw
+
+  @address : Socket::UNIXAddress?
+
+  # Creates a `UNIXServer` from a raw socket.
+  def initialize(@raw : Socket::Raw, @address : Socket::UNIXAddress)
+  end
+
+  # Creates a named UNIX socket listening on a filesystem pathname.
   #
   # Always deletes any existing filesystam pathname first, in order to cleanup
   # any leftover socket file.
   #
-  # The server is of stream type by default, but this can be changed for
-  # another type. For example datagram messages:
   # ```
-  # UNIXServer.new("/tmp/dgram.sock", Socket::Type::DGRAM)
+  # UNIXServer.new("/tmp/dgram.sock")
   # ```
-  def initialize(@path : String, type : Socket::Type = Socket::Type::STREAM, backlog : Int = 128)
-    super(Socket::Family::UNIX, type)
-
-    bind(Socket::UNIXAddress.new(path)) do |error|
-      close(delete: false)
-      raise error
-    end
-
-    listen(backlog) do |error|
-      close
-      raise error
-    end
+  def self.new(path : String, *, mode : File::Permissions? = nil, backlog : Int32 = 128) : UNIXServer
+    new(Socket::UNIXAddress.new(path), mode: mode, backlog: backlog)
   end
 
-  # Creates a new UNIX server and yields it to the block. Eventually closes the
-  # server socket when the block returns.
+  # Creates a named UNIX socket listening on *address*.
+  #
+  # Always deletes any existing filesystam pathname first, in order to cleanup
+  # any leftover socket file.
+  #
+  # ```
+  # UNIXServer.new(Socket::UNIXAddress.new("/tmp/dgram.sock"))
+  # ```
+  def self.new(address : Socket::UNIXAddress, *, mode : File::Permissions? = nil, backlog = 128) : UNIXServer
+    base = Socket::Raw.new(Socket::Family::UNIX, Socket::Type::STREAM, Socket::Protocol::IP)
+    base.bind(address)
+    base.listen(backlog: backlog)
+
+    if mode
+      File.chmod(address.path, mode)
+    end
+
+    new(base, address)
+  end
+
+  # Creates a named UNIX socket listening on *path* and yields it to the block.
+  # Eventually closes the server socket when the block returns.
   #
   # Returns the value of the block.
-  def self.open(path, type : Socket::Type = Socket::Type::STREAM, backlog = 128)
-    server = new(path, type, backlog)
+  def self.open(address : String | Socket::UNIXAddress, *, mode : File::Permissions? = nil, backlog = 128)
+    socket = new(address, mode: mode, backlog: backlog)
+
     begin
-      yield server
+      yield socket
     ensure
-      server.close
+      socket.close
     end
   end
+
+  Socket.delegate_close
+  Socket.delegate_sync
 
   # Accepts an incoming connection.
   #
-  # Returns the client socket or `nil` if the server is closed after invoking
+  # Returns the client `UNIXSocket` or `nil` if the server is closed after invoking
   # this method.
+  #
+  # ```
+  # require "socket/unix_server"
+  #
+  # UNIXServer.open("path/to_my_socket") do |server|
+  #   loop do
+  #     if socket = server.accept?
+  #       # handle the client in a fiber
+  #       spawn handle_connection(socket)
+  #     else
+  #       # another fiber closed the server
+  #       break
+  #     end
+  #   end
+  # end
+  # ```
   def accept? : UNIXSocket?
-    if client_fd = accept_impl
-      sock = UNIXSocket.new(client_fd, type, @path)
-      sock.sync = sync?
-      sock
+    if client = @raw.accept?
+      UNIXSocket.new(client, local_address)
     end
   end
 
+  # Accepts an incoming connection and returns the client `UNIXSocket`.
+  #
+  # ```
+  # require "socket/unix_server"
+  #
+  # UNIXServer.open("path/to_my_socket") do |server|
+  #   loop do
+  #     socket = server.accept
+  #     # handle the client in a fiber
+  #     spawn handle_connection(socket)
+  #   end
+  # end
+  # ```
+  #
+  # Raises if the server is closed after invoking this method.
+  def accept : UNIXSocket
+    UNIXSocket.new @raw.accept, local_address
+  end
+
   # Closes the socket, then deletes the filesystem pathname if it exists.
-  def close(delete = true)
-    super()
+  def close
+    @raw.close
   ensure
-    if delete && (path = @path)
+    if address = @address
+      path = address.path
       File.delete(path) if File.exists?(path)
-      @path = nil
+      @address = nil
     end
+  end
+
+  # Returns the `Socket::UNIXAddress` this server listens on, or `nil` if the socket is closed.
+  def local_address? : Socket::UNIXAddress?
+    @address unless closed?
+  end
+
+  # Returns the `Socket::UNIXAddress` this server listens on.
+  #
+  # Raises `Socket::Error` if the socket is closed.
+  def local_address : Socket::UNIXAddress
+    local_address? || raise Socket::Error.new("Unix socket not connected")
   end
 end

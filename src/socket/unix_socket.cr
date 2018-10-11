@@ -1,49 +1,59 @@
-# A local interprocess communication clientsocket.
+require "./delegates"
+
+# A local interprocess communication (UNIX socket) client socket.
 #
 # Only available on UNIX and UNIX-like operating systems.
 #
-# Example usage:
+# Usage example:
 # ```
 # require "socket"
 #
-# sock = UNIXSocket.new("/tmp/myapp.sock")
-# sock.puts "message"
-# response = sock.gets
-# sock.close
+# UNIXSocket.open("/tmp/myapp.sock") do |socket|
+#   socket.puts "message"
+#   response = socket.gets
+# end
 # ```
-class UNIXSocket < Socket::Raw
-  getter path : String?
+class UNIXSocket < IO
+  # Returns the raw socket wrapped by this UNIX socket.
+  getter raw : Socket::Raw
+
+  # Creates a `UNIXServer` from a raw socket.
+  def initialize(@raw : Socket::Raw, @address : Socket::UNIXAddress)
+  end
 
   # Connects a named UNIX socket, bound to a filesystem pathname.
-  def initialize(@path : String, type : Socket::Type = Socket::Type::STREAM)
-    super(Socket::Family::UNIX, type, Socket::Protocol::IP)
-
-    connect(Socket::UNIXAddress.new(path)) do |error|
-      close
+  def self.new(address : Socket::UNIXAddress) : UNIXSocket
+    base = Socket::Raw.new(Socket::Family::UNIX, Socket::Type::STREAM, Socket::Protocol::IP)
+    base.connect(address) do |error|
+      base.close
       raise error
     end
+    new base, address
   end
 
-  protected def initialize(family : Socket::Family, type : Socket::Type)
-    super family, type, Socket::Protocol::IP
+  # Connects a named UNIX socket, bound to a filesystem pathname.
+  def self.new(path : String) : UNIXSocket
+    new(Socket::UNIXAddress.new(path))
   end
 
-  protected def initialize(fd : Int32, type : Socket::Type, @path : String? = nil)
-    super fd, Socket::Family::UNIX, type, Socket::Protocol::IP
-  end
-
-  # Opens an UNIX socket to a filesystem pathname, yields it to the block, then
-  # eventually closes the socket when the block returns.
+  # Connects a named UNIX socket, bound to a filesystem pathname and yields it to the block.
   #
-  # Returns the value of the block.
-  def self.open(path, type : Socket::Type = Socket::Type::STREAM)
-    sock = new(path, type)
+  # The socket is closed after the block returns.
+  #
+  # Returns the return value of the block.
+  def self.open(path : Socket::UNIXAddress | String, &block : UNIXSocket ->)
+    socket = new(path)
+
     begin
-      yield sock
+      yield socket
     ensure
-      sock.close
+      socket.close
     end
   end
+
+  Socket.delegate_close
+  Socket.delegate_io_methods
+  Socket.delegate_buffer_sizes
 
   # Returns a pair of unamed UNIX sockets.
   #
@@ -58,11 +68,13 @@ class UNIXSocket < Socket::Raw
   #
   # left.puts "message"
   # left.gets # => "message"
+  # left.close
+  # right.close
   # ```
-  def self.pair(type : Socket::Type = Socket::Type::STREAM)
+  def self.pair : {UNIXSocket, UNIXSocket}
     fds = uninitialized Int32[2]
 
-    socktype = type.value
+    socktype = Socket::Type::STREAM.value
     {% if LibC.has_constant?(:SOCK_CLOEXEC) %}
       socktype |= LibC::SOCK_CLOEXEC
     {% end %}
@@ -71,15 +83,32 @@ class UNIXSocket < Socket::Raw
       raise Errno.new("socketpair:")
     end
 
-    {UNIXSocket.new(fds[0], type), UNIXSocket.new(fds[1], type)}
+    {
+      new(Socket::Raw.new(fds[0], Socket::Family::UNIX, Socket::Type::STREAM, Socket::Protocol::IP), Socket::UNIXAddress.new("")),
+      new(Socket::Raw.new(fds[1], Socket::Family::UNIX, Socket::Type::STREAM, Socket::Protocol::IP), Socket::UNIXAddress.new("")),
+    }
   end
 
   # Creates a pair of unamed UNIX sockets (see `pair`) and yields them to the
-  # block. Eventually closes both sockets when the block returns.
+  # block.
+  # Eventually closes both sockets when the block returns.
   #
   # Returns the value of the block.
-  def self.pair(type : Socket::Type = Socket::Type::STREAM)
-    left, right = pair(type)
+  #
+  # ```
+  # UNIXSocket.pair do |left, right|
+  #   spawn do
+  #     # echo server
+  #     message = right.gets
+  #     right.puts message
+  #   end
+  #
+  #   left.puts "message"
+  #   left.gets # => "message"
+  # end
+  # ```
+  def self.pair(&block : UNIXSocket, UNIXSocket ->)
+    left, right = pair
     begin
       yield left, right
     ensure
@@ -88,16 +117,29 @@ class UNIXSocket < Socket::Raw
     end
   end
 
-  def local_address
-    Socket::UNIXAddress.new(path.to_s)
+  # Returns the `UNIXAddress` for the local end of the UNIX socket, or `nil` if
+  # the socket is closed.
+  def local_address? : Socket::UNIXAddress?
+    local_address unless closed?
   end
 
-  def remote_address
-    Socket::UNIXAddress.new(path.to_s)
+  # Returns the `UNIXAddress` for the local end of the UNIX socket.
+  #
+  # Raises `Socket::Error` if the socket is closed.
+  def local_address : Socket::UNIXAddress
+    @address
   end
 
-  def receive
-    bytes_read, sockaddr, addrlen = recvfrom
-    {bytes_read, Socket::UNIXAddress.from(sockaddr, addrlen)}
+  # Returns the `UNIXAddress` for the remote end of the UNIX socket, or `nil` if
+  # the socket is closed.
+  def remote_address? : Socket::UNIXAddress?
+    remote_address unless closed?
+  end
+
+  # Returns the `UNIXAddress` for the remote end of the UNIX socket.
+  #
+  # Raises `Socket::Error` if the socket is closed.
+  def remote_address : Socket::UNIXAddress
+    @address
   end
 end

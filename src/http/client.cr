@@ -673,7 +673,7 @@ class HTTP::Client
     return socket if socket
 
     hostname = @host.starts_with?('[') && @host.ends_with?(']') ? @host[1..-2] : @host
-    socket = TCPSocket.new hostname, @port, @dns_timeout, @connect_timeout
+    socket = TCPSocket.new hostname, @port, dns_timeout: @dns_timeout, connect_timeout: @connect_timeout
     socket.read_timeout = @read_timeout if @read_timeout
     socket.sync = false
     @socket = socket

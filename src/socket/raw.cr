@@ -14,6 +14,8 @@ class Socket::Raw < IO
   include IO::Buffered
   include IO::Syscall
 
+  # The raw file-descriptor. It is defined to be an `Int32`, but its actual size is
+  # platform-specific.
   getter fd : Int32
 
   @read_event : Crystal::Event?
@@ -25,25 +27,33 @@ class Socket::Raw < IO
   getter type : Type
   getter protocol : Protocol
 
-  # Creates a TCP socket. Consider using `TCPSocket` or `TCPServer` unless you
-  # need full control over the socket.
-  def self.tcp(family : Family, blocking = false)
-    new(family, Type::STREAM, Protocol::TCP, blocking)
+  # Creates a new raw socket for TCP protocol.
+  #
+  # Consider using `TCPSocket` or `TCPServer` instead.
+  def self.tcp(family : Family, *,
+               blocking : Bool = false)
+    new(family, Type::STREAM, Protocol::TCP, blocking: blocking)
   end
 
-  # Creates an UDP socket. Consider using `UDPSocket` unless you need full
-  # control over the socket.
-  def self.udp(family : Family, blocking = false)
-    new(family, Type::DGRAM, Protocol::UDP, blocking)
+  # Creates a new raw socket for UDP protocol.
+  #
+  # Consider using `UDPSocket` instead.
+  def self.udp(family : Family, *,
+               blocking : Bool = false)
+    new(family, Type::DGRAM, Protocol::UDP, blocking: blocking)
   end
 
-  # Creates an UNIX socket. Consider using `UNIXSocket` or `UNIXServer` unless
-  # you need full control over the socket.
-  def self.unix(type : Type = Type::STREAM, blocking = false)
+  # Creates a new raw socket for UNIX sockets.
+  #
+  # Consider using `UNIXSocket` or `UNIXServer` instead.
+  def self.unix(type : Type = Type::STREAM, *,
+                blocking : Bool = false)
     new(Family::UNIX, type, blocking: blocking)
   end
 
-  def initialize(@family, @type, @protocol = Protocol::IP, blocking = false)
+  # Creates a new raw socket.
+  def initialize(@family : Family, @type : Type, @protocol : Protocol = Protocol::IP, *,
+                 blocking : Bool = false)
     @closed = false
     fd = LibC.socket(family, type, protocol)
     raise Errno.new("failed to create socket:") if fd == -1
@@ -56,7 +66,8 @@ class Socket::Raw < IO
     end
   end
 
-  protected def initialize(@fd : Int32, @family, @type, @protocol = Protocol::IP, blocking = false)
+  protected def initialize(@fd : Int32, @family, @type, @protocol = Protocol::IP, *,
+                           blocking : Bool = false)
     @closed = false
     init_close_on_exec(@fd)
 
@@ -74,41 +85,53 @@ class Socket::Raw < IO
     {% end %}
   end
 
-  # Connects the socket to a remote host:port.
+  # Connects the socket to a IP socket address specified by *host* and *port*.
   #
   # ```
   # sock = Socket::Raw.tcp(Socket::Family::INET)
   # sock.connect "crystal-lang.org", 80
   # ```
-  def connect(host : String, port : Int, connect_timeout = nil)
-    Addrinfo.resolve(host, port, @family, @type, @protocol) do |addrinfo|
-      connect(addrinfo, timeout: connect_timeout) { |error| error }
+  #
+  # This method involves address resolution, provided by `Addrinfo.resolve`.
+  #
+  # Raises `Socket::Error` if the address cannot be resolved or connection fails.
+  def connect(host : String, port : Int, *,
+              dns_timeout = nil, connect_timeout = nil)
+    Addrinfo.resolve(host, port, @family, @type, @protocol, dns_timeout) do |addrinfo|
+      connect(addrinfo, connect_timeout: connect_timeout) { |error| error }
     end
   end
 
-  # Connects the socket to a remote address. Raises if the connection failed.
+  # Connects the socket to a socket address specified by *address*.
   #
   # ```
   # sock = Socket::Raw.unix
   # sock.connect Socket::UNIXAddress.new("/tmp/service.sock")
   # ```
-  def connect(addr, timeout = nil) : Nil
-    connect(addr, timeout) { |error| raise error }
+  #
+  # Raises `Socket::Error` if the connection fails.
+  def connect(address : Address | Addrinfo, *,
+              connect_timeout = nil) : Nil
+    connect(address, connect_timeout: connect_timeout) { |error| raise error }
   end
 
-  # Tries to connect to a remote address. Yields an `IO::Timeout` or an
-  # `Errno` error if the connection failed.
-  def connect(addr, timeout = nil)
-    timeout = timeout.seconds unless timeout.is_a? Time::Span | Nil
+  # Connects the socket to a socket address specified by *address*.
+  #
+  # In case the connection failed, it yields an `IO::Timeout` or `Errno` error.
+  def connect(address : Address | Addrinfo, *,
+              connect_timeout = nil, &block : IO::Timeout | Errno ->)
     loop do
-      if LibC.connect(fd, addr, addr.size) == 0
+      if LibC.connect(fd, address, address.size) == 0
         return
       end
+
       case Errno.value
       when Errno::EISCONN
         return
       when Errno::EINPROGRESS, Errno::EALREADY
-        wait_writable(timeout: timeout) do |error|
+        connect_timeout = connect_timeout.seconds unless connect_timeout.is_a? Time::Span | Nil
+
+        wait_writable(timeout: connect_timeout) do |error|
           return yield IO::Timeout.new("connect timed out")
         end
       else
@@ -117,12 +140,16 @@ class Socket::Raw < IO
     end
   end
 
-  # Binds the socket to a local address.
+  # Binds the socket to a local IP socket address specified by *host* and *port*.
   #
   # ```
   # sock = Socket::Raw.tcp(Socket::Family::INET)
   # sock.bind "localhost", 1234
   # ```
+  #
+  # This method involves address resolution, provided by `Addrinfo.resolve`.
+  #
+  # Raises `Socket::Error` if the address cannot be resolved or binding fails.
   def bind(host : String, port : Int)
     Addrinfo.resolve(host, port, @family, @type, @protocol) do |addrinfo|
       bind(addrinfo) { |errno| errno }
@@ -135,10 +162,11 @@ class Socket::Raw < IO
   # sock = Socket::Raw.tcp(Socket::Family::INET6)
   # sock.bind 1234
   # ```
+  #
+  # Raises `Socket::Error` if the address cannot be resolved or binding fails.
   def bind(port : Int)
-    Addrinfo.resolve("::", port, @family, @type, @protocol) do |addrinfo|
-      bind(addrinfo) { |errno| errno }
-    end
+    address = IPAddress.new(IPAddress::ANY, port)
+    bind(address) { |errno| errno }
   end
 
   # Binds the socket to a local address.
@@ -147,26 +175,32 @@ class Socket::Raw < IO
   # sock = Socket::Raw.udp(Socket::Family::INET)
   # sock.bind Socket::IPAddress.new("192.168.1.25", 80)
   # ```
-  def bind(addr)
+  #
+  # Raises `Errno` if the binding fails.
+  def bind(addr : Address | Addrinfo)
     bind(addr) { |errno| raise errno }
   end
 
   # Tries to bind the socket to a local address.
-  # Yields an `Errno` if the binding failed.
-  def bind(addr)
+  #
+  # Yields an `Errno` error if the binding fails.
+  def bind(addr : Address | Addrinfo)
     unless LibC.bind(fd, addr, addr.size) == 0
       yield Errno.new("bind")
     end
   end
 
   # Tells the previously bound socket to listen for incoming connections.
-  def listen(backlog : Int = SOMAXCONN)
-    listen(backlog) { |errno| raise errno }
+  #
+  # Raises `Errno` if listening fails.
+  def listen(*, backlog : Int32 = SOMAXCONN)
+    listen(backlog: backlog) { |errno| raise errno }
   end
 
   # Tries to listen for connections on the previously bound socket.
-  # Yields an `Errno` on failure.
-  def listen(backlog : Int = SOMAXCONN)
+  #
+  # Yields an `Errno` error if listening fails.
+  def listen(*, backlog : Int32 = SOMAXCONN)
     unless LibC.listen(fd, backlog) == 0
       yield Errno.new("listen")
     end
@@ -205,7 +239,7 @@ class Socket::Raw < IO
   # ```
   def accept?
     if client_fd = accept_impl
-      sock = Socket::Raw.new(client_fd, family, type, protocol, blocking)
+      sock = Socket::Raw.new(client_fd, family, type, protocol, blocking: blocking)
       sock.sync = sync?
       sock
     end
@@ -259,7 +293,7 @@ class Socket::Raw < IO
   # sock.connect("example.com", 2000)
   # sock.send("text query", to: server)
   # ```
-  def send(message, to addr : Address)
+  def send(message, *, to addr : Address)
     slice = message.to_slice
     bytes_sent = LibC.sendto(fd, slice.to_unsafe.as(Void*), slice.size, 0, addr, addr.size)
     raise Errno.new("Error sending datagram to #{addr}") if bytes_sent == -1
@@ -274,7 +308,7 @@ class Socket::Raw < IO
   #
   # message, client_addr = server.receive
   # ```
-  def receive(max_message_size = 512) : {String, Address}
+  def receive(*, max_message_size = 512) : {String, Address}
     address = nil
     message = String.new(max_message_size) do |buffer|
       bytes_read, sockaddr, addrlen = recvfrom(Slice.new(buffer, max_message_size))
@@ -298,7 +332,8 @@ class Socket::Raw < IO
     {bytes_read, Address.from(sockaddr, addrlen)}
   end
 
-  protected def recvfrom(message)
+  # :nodoc:
+  def recvfrom(message)
     sockaddr = Pointer(LibC::SockaddrStorage).malloc.as(LibC::Sockaddr*)
     addrlen = LibC::SocklenT.new(sizeof(LibC::SockaddrStorage))
 
@@ -335,6 +370,42 @@ class Socket::Raw < IO
     if LibC.shutdown(@fd, how) != 0
       raise Errno.new("shutdown #{how}")
     end
+  end
+
+  # Returns the `Address` for the local end of the socket.
+  def local_address : Address
+    local_address(Address)
+  end
+
+  # Returns the `Address` for the remote end of the socket.
+  def remote_address : Address
+    remote_address(Address)
+  end
+
+  # :nodoc:
+  def local_address(address_type : Address.class)
+    sockaddr_max = uninitialized LibC::SockaddrUn
+    sockaddr = pointerof(sockaddr_max).as(LibC::Sockaddr*)
+    orig_addrlen = addrlen = LibC::SocklenT.new(sizeof(LibC::SockaddrUn))
+
+    if LibC.getsockname(@fd, sockaddr, pointerof(addrlen)) != 0
+      raise Errno.new("getsockname")
+    end
+
+    address_type.from sockaddr, addrlen
+  end
+
+  # :nodoc:
+  def remote_address(address_type : Address.class)
+    sockaddr6 = uninitialized LibC::SockaddrUn
+    sockaddr = pointerof(sockaddr6).as(LibC::Sockaddr*)
+    addrlen = LibC::SocklenT.new(sizeof(LibC::SockaddrUn))
+
+    if LibC.getpeername(@fd, sockaddr, pointerof(addrlen)) != 0
+      raise Errno.new("getpeername")
+    end
+
+    address_type.from sockaddr, addrlen
   end
 
   def inspect(io)
@@ -448,12 +519,12 @@ class Socket::Raw < IO
     ret
   end
 
-  private def getsockopt_bool(optname, level = LibC::SOL_SOCKET)
+  def getsockopt_bool(optname, level = LibC::SOL_SOCKET)
     ret = getsockopt optname, 0, level
     ret != 0
   end
 
-  private def setsockopt_bool(optname, optval : Bool, level = LibC::SOL_SOCKET)
+  def setsockopt_bool(optname, optval : Bool, level = LibC::SOL_SOCKET)
     v = optval ? 1 : 0
     ret = setsockopt optname, v, level
     optval
@@ -482,6 +553,61 @@ class Socket::Raw < IO
     fcntl(LibC::F_SETFD, arg ? LibC::FD_CLOEXEC : 0)
     arg
   end
+
+  # Returns `true` if the Nable algorithm is disabled.
+  def tcp_nodelay?
+    getsockopt_bool LibC::TCP_NODELAY, level: Protocol::TCP
+  end
+
+  # Disable the Nagle algorithm when set to `true`, otherwise enables it.
+  def tcp_nodelay=(val : Bool)
+    setsockopt_bool LibC::TCP_NODELAY, val, level: Protocol::TCP
+  end
+
+  {% unless flag?(:openbsd) %}
+    # Returns the amount of time (in seconds) the connection must be idle before sending keepalive probes.
+    def tcp_keepalive_idle
+      optname = {% if flag?(:darwin) %}
+        LibC::TCP_KEEPALIVE
+      {% else %}
+        LibC::TCP_KEEPIDLE
+      {% end %}
+      getsockopt optname, 0, level: Protocol::TCP
+    end
+
+    # Sets the amount of time (in seconds) the connection must be idle before sending keepalive probes.
+    def tcp_keepalive_idle=(val : Int)
+      optname = {% if flag?(:darwin) %}
+        LibC::TCP_KEEPALIVE
+      {% else %}
+        LibC::TCP_KEEPIDLE
+      {% end %}
+      setsockopt optname, val, level: Protocol::TCP
+      val
+    end
+
+    # Returns the amount of time (in seconds) between keepalive probes.
+    def tcp_keepalive_interval
+      getsockopt LibC::TCP_KEEPINTVL, 0, level: Protocol::TCP
+    end
+
+    # Sets the amount of time (in seconds) between keepalive probes.
+    def tcp_keepalive_interval=(val : Int)
+      setsockopt LibC::TCP_KEEPINTVL, val, level: Protocol::TCP
+      val
+    end
+
+    # Returns the number of probes sent, without response before dropping the connection.
+    def tcp_keepalive_count
+      getsockopt LibC::TCP_KEEPCNT, 0, level: Protocol::TCP
+    end
+
+    # Sets the number of probes sent, without response before dropping the connection.
+    def tcp_keepalive_count=(val : Int)
+      setsockopt LibC::TCP_KEEPCNT, val, level: Protocol::TCP
+      val
+    end
+  {% end %}
 
   def self.fcntl(fd, cmd, arg = 0)
     r = LibC.fcntl fd, cmd, arg

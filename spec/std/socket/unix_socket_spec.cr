@@ -17,6 +17,8 @@ describe UNIXSocket do
         server.local_address.path.should eq(path)
 
         UNIXSocket.open(path) do |client|
+          client.remote_address.family.should eq(Socket::Family::UNIX)
+          client.remote_address.path.should eq(path)
           client.local_address.family.should eq(Socket::Family::UNIX)
           client.local_address.path.should eq(path)
 

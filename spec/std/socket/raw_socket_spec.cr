@@ -28,11 +28,10 @@ describe Socket::Raw do
   end
 
   it "sends messages" do
-    port = unused_local_port
     server = Socket::Raw.tcp(Socket::Family::INET6)
-    server.bind("::1", port)
+    server.bind("::1", 0)
     server.listen
-    address = Socket::IPAddress.new("::1", port)
+    address = server.local_address(Socket::IPAddress)
     spawn do
       client = server.not_nil!.accept
       client.gets.should eq "foo"
@@ -52,7 +51,7 @@ describe Socket::Raw do
   describe "#bind" do
     each_ip_family do |family, _, any_address|
       it "binds to port" do
-        socket = TCPSocket.new family
+        socket = Socket::Raw.new family, Socket::Type::STREAM
         socket.bind(any_address, 0)
         socket.listen
 
