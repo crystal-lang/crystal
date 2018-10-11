@@ -130,11 +130,13 @@ describe "Float" do
     end
 
     it "applies floor" do
-      (7.0 // 2.0).should eq(3)
-      (-7.0 // 2.0).should eq(-4)
+      (7.0 // 2.0).should eq(3.0)
+      (-7.0 // 2.0).should eq(-4.0)
 
-      (6.0 // 2.0).should eq(3)
-      (-6.0 // 2.0).should eq(-3)
+      (6.0 // 2.0).should eq(3.0)
+      (-6.0 // 2.0).should eq(-3.0)
+
+      (30.3 // 3.9).should eq(7.0)
     end
   end
 
