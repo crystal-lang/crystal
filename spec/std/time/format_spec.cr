@@ -99,9 +99,27 @@ describe Time::Format do
       t3.to_s("%u").to_s.should eq("7")
       t3.to_s("%w").to_s.should eq("0")
 
-      # TODO %G
-      # TODO %g
-      # TODO %V
+      Time.utc(1985, 4, 12).to_s("%G-W%V-%u").should eq "1985-W15-5"
+      Time.utc(2005, 1, 1).to_s("%G-W%V-%u").should eq "2004-W53-6"
+      Time.utc(2005, 1, 2).to_s("%G-W%V-%u").should eq "2004-W53-7"
+      Time.utc(2005, 12, 31).to_s("%G-W%V-%u").should eq "2005-W52-6"
+      Time.utc(2006, 1, 1).to_s("%G-W%V-%u").should eq "2005-W52-7"
+      Time.utc(2006, 1, 2).to_s("%G-W%V-%u").should eq "2006-W01-1"
+      Time.utc(2006, 12, 31).to_s("%G-W%V-%u").should eq "2006-W52-7"
+      Time.utc(2007, 1, 1).to_s("%G-W%V-%u").should eq "2007-W01-1"
+      Time.utc(2007, 12, 30).to_s("%G-W%V-%u").should eq "2007-W52-7"
+      Time.utc(2007, 12, 31).to_s("%G-W%V-%u").should eq "2008-W01-1"
+      Time.utc(2008, 1, 1).to_s("%G-W%V-%u").should eq "2008-W01-2"
+      Time.utc(2008, 12, 28).to_s("%G-W%V-%u").should eq "2008-W52-7"
+      Time.utc(2008, 12, 29).to_s("%G-W%V-%u").should eq "2009-W01-1"
+      Time.utc(2008, 12, 30).to_s("%G-W%V-%u").should eq "2009-W01-2"
+      Time.utc(2008, 12, 31).to_s("%G-W%V-%u").should eq "2009-W01-3"
+      Time.utc(2009, 1, 1).to_s("%G-W%V-%u").should eq "2009-W01-4"
+      Time.utc(2009, 12, 31).to_s("%G-W%V-%u").should eq "2009-W53-4"
+      Time.utc(2010, 1, 1).to_s("%G-W%V-%u").should eq "2009-W53-5"
+      Time.utc(2010, 1, 2).to_s("%G-W%V-%u").should eq "2009-W53-6"
+      Time.utc(2010, 1, 3).to_s("%G-W%V-%u").should eq "2009-W53-7"
+      Time.utc(1985, 4, 12).to_s("%g-W%V-%u").should eq "85-W15-5"
       # TODO %U
       # TODO %W
       # TODO %s
@@ -208,6 +226,27 @@ describe Time::Format do
     parse_time("今は Friday, October 31, 2014", "今は %A, %B %d, %Y").to_s.should eq("2014-10-31 00:00:00 UTC")
     parse_time("epoch: 1459864667", "epoch: %s").to_unix.should eq(1459864667)
     parse_time("epoch: -1459864667", "epoch: %s").to_unix.should eq(-1459864667)
+
+    parse_time("1985-W15-5", "%G-W%V-%u").should eq(Time.utc(1985, 4, 12))
+    parse_time("2004-W53-6", "%G-W%V-%u").should eq(Time.utc(2005, 1, 1))
+    parse_time("2004-W53-7", "%G-W%V-%u").should eq(Time.utc(2005, 1, 2))
+    parse_time("2005-W52-6", "%G-W%V-%u").should eq(Time.utc(2005, 12, 31))
+    parse_time("2005-W52-7", "%G-W%V-%u").should eq(Time.utc(2006, 1, 1))
+    parse_time("2006-W01-1", "%G-W%V-%u").should eq(Time.utc(2006, 1, 2))
+    parse_time("2006-W52-7", "%G-W%V-%u").should eq(Time.utc(2006, 12, 31))
+    parse_time("2007-W01-1", "%G-W%V-%u").should eq(Time.utc(2007, 1, 1))
+    parse_time("2007-W52-7", "%G-W%V-%u").should eq(Time.utc(2007, 12, 30))
+    parse_time("2008-W01-1", "%G-W%V-%u").should eq(Time.utc(2007, 12, 31))
+    parse_time("2008-W01-2", "%G-W%V-%u").should eq(Time.utc(2008, 1, 1))
+    parse_time("2008-W52-7", "%G-W%V-%u").should eq(Time.utc(2008, 12, 28))
+    parse_time("2009-W01-1", "%G-W%V-%u").should eq(Time.utc(2008, 12, 29))
+    parse_time("2009-W01-2", "%G-W%V-%u").should eq(Time.utc(2008, 12, 30))
+    parse_time("2009-W01-3", "%G-W%V-%u").should eq(Time.utc(2008, 12, 31))
+    parse_time("2009-W01-4", "%G-W%V-%u").should eq(Time.utc(2009, 1, 1))
+    parse_time("2009-W53-4", "%G-W%V-%u").should eq(Time.utc(2009, 12, 31))
+    parse_time("2009-W53-5", "%G-W%V-%u").should eq(Time.utc(2010, 1, 1))
+    parse_time("2009-W53-6", "%G-W%V-%u").should eq(Time.utc(2010, 1, 2))
+    parse_time("2009-W53-7", "%G-W%V-%u").should eq(Time.utc(2010, 1, 3))
   end
 
   it "parses timezone" do
