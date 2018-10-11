@@ -9,6 +9,7 @@ module Crystal
     property? count_whitespace : Bool
     property? wants_raw : Bool
     property? slash_is_regex : Bool
+    property? wants_def_or_macro_name : Bool
     getter reader : Char::Reader
     getter token : Token
     property line_number : Int32
