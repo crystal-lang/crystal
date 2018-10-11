@@ -361,6 +361,28 @@ describe "Int" do
     (-6 / -2).should eq(3)
   end
 
+  describe "floor division //" do
+    it "preserves type of lhs" do
+      {% for type in [UInt8, UInt16, UInt32, UInt64, Int8, Int16, Int32, Int64] %}
+        ({{type}}.new(7) // 2).should be_a({{type}})
+        ({{type}}.new(7) // 2.0).should be_a({{type}})
+        ({{type}}.new(7) // 2.0_f32).should be_a({{type}})
+      {% end %}
+    end
+
+    it "divides negative numbers" do
+      (7 // 2).should eq(3)
+      (-7 // 2).should eq(-4)
+      (7 // -2).should eq(-4)
+      (-7 // -2).should eq(3)
+
+      (6 // 2).should eq(3)
+      (-6 // 2).should eq(-3)
+      (6 // -2).should eq(-3)
+      (-6 // -2).should eq(3)
+    end
+  end
+
   it "tdivs" do
     5.tdiv(3).should eq(1)
     -5.tdiv(3).should eq(-1)
@@ -383,6 +405,11 @@ describe "Int" do
     (4 / 2).should eq(2)
   end
 
+  it "raises when divides by zero" do
+    expect_raises(DivisionByZeroError) { 1 // 0 }
+    (4 // 2).should eq(2)
+  end
+
   it "raises when divides Int::MIN by -1" do
     expect_raises(ArgumentError) { Int8::MIN / -1 }
     expect_raises(ArgumentError) { Int16::MIN / -1 }
@@ -390,6 +417,15 @@ describe "Int" do
     expect_raises(ArgumentError) { Int64::MIN / -1 }
 
     (UInt8::MIN / -1).should eq(0)
+  end
+
+  it "raises when divides Int::MIN by -1" do
+    expect_raises(ArgumentError) { Int8::MIN // -1 }
+    expect_raises(ArgumentError) { Int16::MIN // -1 }
+    expect_raises(ArgumentError) { Int32::MIN // -1 }
+    expect_raises(ArgumentError) { Int64::MIN // -1 }
+
+    (UInt8::MIN // -1).should eq(0)
   end
 
   it "raises when mods by zero" do

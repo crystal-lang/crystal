@@ -41,6 +41,10 @@ struct Float
     self.class.zero - self
   end
 
+  def //(other)
+    (self / other).floor
+  end
+
   def %(other)
     modulo(other)
   end
