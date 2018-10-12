@@ -19,6 +19,9 @@ struct Time::Format
 
     @unix_seconds : Int64?
     @location : Location?
+    @calendar_week_week : Int32?
+    @calendar_week_year : Int32?
+    @day_of_week : Time::DayOfWeek?
 
     def initialize(string)
       @reader = Char::Reader.new(string)
@@ -45,7 +48,13 @@ struct Time::Format
         raise "Time format did not include time zone and no default location provided", pos: false
       end
 
-      time = Time.new @year, @month, @day, @hour, @minute, @second, nanosecond: @nanosecond, location: location
+      if (calendar_week_week = @calendar_week_week) && (calendar_week_year = @calendar_week_year) && (day_of_week = @day_of_week)
+        # If all components of a week date are available, they are used to create a Time instance
+        time = Time.week_date calendar_week_year, calendar_week_week, day_of_week, @hour, @minute, @second, nanosecond: @nanosecond, location: location
+      else
+        time = Time.new @year, @month, @day, @hour, @minute, @second, nanosecond: @nanosecond, location: location
+      end
+
       time = time.add_span 0, @nanosecond_offset
 
       time
@@ -79,6 +88,14 @@ struct Time::Format
               else
                 year
               end
+    end
+
+    def calendar_week_year
+      @calendar_week_year = consume_number(4)
+    end
+
+    def calendar_week_year_modulo100
+      @calendar_week_year = consume_number(2)
     end
 
     def month
@@ -129,6 +146,10 @@ struct Time::Format
 
     def short_month_name_upcase
       month_name
+    end
+
+    def calendar_week_week
+      @calendar_week_week = consume_number(2)
     end
 
     def day_of_month
@@ -261,11 +282,11 @@ struct Time::Format
     end
 
     def day_of_week_monday_1_7
-      consume_number(1)
+      @day_of_week = Time::DayOfWeek.from_value(consume_number(1))
     end
 
     def day_of_week_sunday_0_6
-      consume_number(1)
+      @day_of_week = Time::DayOfWeek.from_value(consume_number(1))
     end
 
     def unix_seconds

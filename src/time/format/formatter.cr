@@ -27,6 +27,14 @@ struct Time::Format
       year
     end
 
+    def calendar_week_year
+      pad4(time.calendar_week[0], '0')
+    end
+
+    def calendar_week_year_modulo100
+      pad2(time.calendar_week[0] % 100, '0')
+    end
+
     def month
       io << time.month
     end
@@ -53,6 +61,10 @@ struct Time::Format
 
     def short_month_name_upcase
       io << get_short_month_name.upcase
+    end
+
+    def calendar_week_week
+      pad2(time.calendar_week[1], '0')
     end
 
     def day_of_month
