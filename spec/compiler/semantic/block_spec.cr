@@ -978,6 +978,36 @@ describe "Block inference" do
       "recursive block expansion"
   end
 
+  it "errors on recursive yield with non ProcNotation restriction (#6896)" do
+    assert_error %(
+      def foo(&block : -> Int32)
+        yield
+
+        foo do
+          1
+        end
+      end
+
+      foo { 1 }
+      ),
+      "recursive block expansion"
+  end
+
+  it "errors on recursive yield with ProcNotation restriction" do
+    assert_error %(
+      def foo(&block : -> Int32)
+        yield
+
+        foo do
+          1
+        end
+      end
+
+      foo { 1 }
+      ),
+      "recursive block expansion"
+  end
+
   it "binds to proc, not only to its body (#1796)" do
     assert_type(%(
       def yielder(&block : Int32 -> U) forall U
