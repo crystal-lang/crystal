@@ -741,6 +741,12 @@ module Crystal
         return exps
       end
 
+      # `node.program` is assigned by `MainVisitor` usually, however
+      # it may not be assigned in some edge-case (e.g. this `node` is placed
+      # at not invoked block.). This assignment is for it.
+      node.program = @program
+      node.update
+
       node
     end
 
@@ -757,6 +763,9 @@ module Crystal
         exps.bind_to(exps.expressions.last)
         return exps
       end
+
+      node.program = @program
+      node.update
 
       node
     end
