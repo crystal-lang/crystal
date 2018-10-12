@@ -234,10 +234,13 @@ struct Colorize::Object(T)
   {% end %}
 
   def fore(color : Symbol)
-    {% for name in COLORS %}
-      if color == :{{name.id}}
+    {% begin %}
+      case color
+      {% for name in COLORS %}
+      when :{{name.id}}
         @fore = ColorANSI::{{name.camelcase.id}}
         return self
+      {% end %}
       end
     {% end %}
 
@@ -249,10 +252,13 @@ struct Colorize::Object(T)
   end
 
   def back(color : Symbol)
-    {% for name in COLORS %}
-      if color == :{{name.id}}
+    {% begin %}
+      case color
+      {% for name in COLORS %}
+      when :{{name.id}}
         @back = ColorANSI::{{name.camelcase.id}}
         return self
+      {% end %}
       end
     {% end %}
 
@@ -264,10 +270,13 @@ struct Colorize::Object(T)
   end
 
   def mode(mode : Symbol)
-    {% for name in MODES %}
-      if mode == :{{name.id}}
+    {% begin %}
+      case mode
+      {% for name in MODES %}
+      when :{{name.id}}
         @mode |= MODE_{{name.upcase.id}}_FLAG
         return self
+      {% end %}
       end
     {% end %}
 
