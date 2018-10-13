@@ -729,7 +729,10 @@ module Crystal
 
     def transform(node : TupleLiteral)
       super
-      node.update
+
+      unless node.elements.all? &.type?
+        return untyped_expression node
+      end
 
       no_return_index = node.elements.index &.no_returns?
       if no_return_index
@@ -738,12 +741,21 @@ module Crystal
         return exps
       end
 
+      # `node.program` is assigned by `MainVisitor` usually, however
+      # it may not be assigned in some edge-case (e.g. this `node` is placed
+      # at not invoked block.). This assignment is for it.
+      node.program = @program
+      node.update
+
       node
     end
 
     def transform(node : NamedTupleLiteral)
       super
-      node.update
+
+      unless node.entries.all? &.value.type?
+        return untyped_expression node
+      end
 
       no_return_index = node.entries.index &.value.no_returns?
       if no_return_index
@@ -751,6 +763,9 @@ module Crystal
         exps.bind_to(exps.expressions.last)
         return exps
       end
+
+      node.program = @program
+      node.update
 
       node
     end

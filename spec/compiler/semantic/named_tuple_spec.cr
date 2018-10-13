@@ -302,4 +302,23 @@ describe "Semantic: named tuples" do
       meta
     end
   end
+
+  it "doesn't crash on named tuple in not executed block (#6718)" do
+    assert_type(%(
+      require "prelude"
+
+      def pending(&block)
+      end
+
+      def untyped(x = nil)
+      end
+
+      # To reproduce this bug, it is needed to the expression that is
+      # not typed on main phase but is typed on cleanup phase.
+      # `untyped(untyped)` is just one.
+      pending do
+        {s: untyped(untyped)}
+      end
+    )) { nil_type }
+  end
 end
