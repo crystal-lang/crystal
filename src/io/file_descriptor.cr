@@ -147,6 +147,7 @@ class IO::FileDescriptor < IO
   end
 
   def reopen(other : IO::FileDescriptor)
+    return other if self.fd == other.fd
     system_reopen(other)
 
     other

@@ -76,29 +76,10 @@ class Process
 
   # Runs the given block inside a new process and
   # returns a `Process` representing the new child process.
-  def self.fork
-    pid = fork_internal do
-      with self yield self
-    end
-    new pid
-  end
-
-  # Duplicates the current process.
-  # Returns a `Process` representing the new child process in the current process
-  # and `nil` inside the new child process.
-  def self.fork : self?
-    if pid = fork_internal
+  def self.fork : Process
+    if pid = fork_internal(will_exec: false)
       new pid
     else
-      nil
-    end
-  end
-
-  # :nodoc:
-  protected def self.fork_internal(will_exec : Bool = false, &block)
-    pid = self.fork_internal(will_exec)
-
-    unless pid
       begin
         yield
         LibC._exit 0
@@ -110,12 +91,21 @@ class Process
         LibC._exit 254 # not reached
       end
     end
-
-    pid
   end
 
-  #
-  protected def self.fork_internal(will_exec : Bool = false)
+  # Duplicates the current process.
+  # Returns a `Process` representing the new child process in the current process
+  # and `nil` inside the new child process.
+  def self.fork : Process?
+    if pid = fork_internal(will_exec: false)
+      new pid
+    else
+      nil
+    end
+  end
+
+  # :nodoc:
+  protected def self.fork_internal(*, will_exec : Bool)
     newmask = uninitialized LibC::SigsetT
     oldmask = uninitialized LibC::SigsetT
 
@@ -164,6 +154,7 @@ class Process
 
   # The standard `IO` configuration of a process.
   alias Stdio = Redirect | IO
+  alias ExecStdio = Redirect | IO::FileDescriptor
   alias Env = Nil | Hash(String, Nil) | Hash(String, String?) | Hash(String, String)
 
   # Executes a process and waits for it to complete.
@@ -195,17 +186,34 @@ class Process
     end
   end
 
-  # Replaces the current process with a new one.
-  #
-  # The possible values for *input*, *output* and *error* are:
-  # * `false`: no `IO` (`/dev/null`)
-  # * `true`: inherit from parent
-  # * `IO`: use the given `IO`
+  # Replaces the current process with a new one. This function never returns.
   def self.exec(command : String, args = nil, env : Env = nil, clear_env : Bool = false, shell : Bool = false,
-                input : Stdio = Redirect::Inherit, output : Stdio = Redirect::Inherit, error : Stdio = Redirect::Inherit, chdir : String? = nil)
-    command, argv = prepare_argv(command, args, shell)
-    unless exec_internal(command, argv, env, clear_env, input, output, error, chdir)
-      raise Errno.new("execvp")
+                input : ExecStdio = Redirect::Inherit, output : ExecStdio = Redirect::Inherit, error : ExecStdio = Redirect::Inherit, chdir : String? = nil)
+    command, args = prepare_args(command, args, shell)
+
+    input = exec_stdio_to_fd(input, for: STDIN)
+    output = exec_stdio_to_fd(output, for: STDOUT)
+    error = exec_stdio_to_fd(error, for: STDERR)
+
+    exec_internal(command, args, env, clear_env, input, output, error, chdir)
+  end
+
+  private def self.exec_stdio_to_fd(stdio : ExecStdio, for dst_io : IO::FileDescriptor) : IO::FileDescriptor
+    case stdio
+    when IO::FileDescriptor
+      stdio
+    when Redirect::Pipe
+      raise "Cannot use Process::Redirect::Pipe for Process.exec"
+    when Redirect::Inherit
+      dst_io
+    when Redirect::Close
+      if dst_io == STDIN
+        File.open(File::DEVNULL, "r")
+      else
+        File.open(File::DEVNULL, "w")
+      end
+    else
+      raise "BUG: impossible type in ExecStdio #{stdio.class}"
     end
   end
 
@@ -221,6 +229,7 @@ class Process
   getter! error : IO::FileDescriptor
 
   @waitpid : Channel::Buffered(Int32)
+  @wait_count = 0
 
   # Creates a process, executes it, but doesn't wait for it to complete.
   #
@@ -229,61 +238,29 @@ class Process
   # By default the process is configured without input, output or error.
   def initialize(command : String, args = nil, env : Env = nil, clear_env : Bool = false, shell : Bool = false,
                  input : Stdio = Redirect::Close, output : Stdio = Redirect::Close, error : Stdio = Redirect::Close, chdir : String? = nil)
-    command, argv = Process.prepare_argv(command, args, shell)
+    command, args = Process.prepare_args(command, args, shell)
 
-    @wait_count = 0
-
-    if needs_pipe?(input)
-      fork_input, process_input = IO.pipe(read_blocking: true)
-      if input.is_a?(IO)
-        @wait_count += 1
-        spawn { copy_io(input, process_input, channel, close_dst: true) }
-      else
-        @input = process_input
-      end
-    end
-
-    if needs_pipe?(output)
-      process_output, fork_output = IO.pipe(write_blocking: true)
-      if output.is_a?(IO)
-        @wait_count += 1
-        spawn { copy_io(process_output, output, channel, close_src: true) }
-      else
-        @output = process_output
-      end
-    end
-
-    if needs_pipe?(error)
-      process_error, fork_error = IO.pipe(write_blocking: true)
-      if error.is_a?(IO)
-        @wait_count += 1
-        spawn { copy_io(process_error, error, channel, close_src: true) }
-      else
-        @error = process_error
-      end
-    end
+    fork_input = stdio_to_fd(input, for: STDIN)
+    fork_output = stdio_to_fd(output, for: STDOUT)
+    fork_error = stdio_to_fd(error, for: STDERR)
 
     reader_pipe, writer_pipe = IO.pipe
 
-    @pid = Process.fork_internal(will_exec: true) do
+    if pid = Process.fork_internal(will_exec: true)
+      @pid = pid
+    else
       begin
         reader_pipe.close
         writer_pipe.close_on_exec = true
-        unless Process.exec_internal(
-                 command,
-                 argv,
-                 env,
-                 clear_env,
-                 fork_input || input,
-                 fork_output || output,
-                 fork_error || error,
-                 chdir
-               )
-          writer_pipe.write_bytes(Errno.value)
-          writer_pipe.close
-        end
+        Process.exec_internal(command, args, env, clear_env, fork_input, fork_output, fork_error, chdir)
+      rescue ex : Errno
+        writer_pipe.write_bytes(ex.errno)
+        writer_pipe.write_bytes(ex.message.try(&.bytesize) || 0)
+        writer_pipe << ex.message
+        writer_pipe.close
       rescue ex
         ex.inspect_with_backtrace STDERR
+        STDERR.flush
       ensure
         LibC._exit 127
       end
@@ -292,17 +269,65 @@ class Process
     writer_pipe.close
     bytes = uninitialized UInt8[4]
     if reader_pipe.read(bytes.to_slice) == 4
-      reader_pipe.close
       errno = IO::ByteFormat::SystemEndian.decode(Int32, bytes.to_slice)
-      raise Errno.new("execvp", errno)
+      message_size = reader_pipe.read_bytes(Int32)
+      if message_size > 0
+        message = String.build(message_size) { |io| IO.copy(reader_pipe, io, message_size) }
+      end
+      reader_pipe.close
+      raise Errno.new(message, errno)
     end
     reader_pipe.close
 
     @waitpid = Crystal::SignalChildHandler.wait(pid)
 
-    fork_input.try &.close
-    fork_output.try &.close
-    fork_error.try &.close
+    fork_input.close unless fork_input == input || fork_input == STDIN
+    fork_output.close unless fork_output == output || fork_output == STDOUT
+    fork_error.close unless fork_error == error || fork_error == STDERR
+  end
+
+  private def stdio_to_fd(stdio : Stdio, for dst_io : IO::FileDescriptor) : IO::FileDescriptor
+    case stdio
+    when IO::FileDescriptor
+      stdio
+    when IO
+      if dst_io == STDIN
+        fork_io, process_io = IO.pipe(read_blocking: true)
+
+        @wait_count += 1
+        spawn { copy_io(stdio, process_io, channel, close_dst: true) }
+      else
+        process_io, fork_io = IO.pipe(write_blocking: true)
+
+        @wait_count += 1
+        spawn { copy_io(process_io, stdio, channel, close_src: true) }
+      end
+
+      fork_io
+    when Redirect::Pipe
+      case dst_io
+      when STDIN
+        fork_io, @input = IO.pipe(read_blocking: true)
+      when STDOUT
+        @output, fork_io = IO.pipe(write_blocking: true)
+      when STDERR
+        @error, fork_io = IO.pipe(write_blocking: true)
+      else
+        raise "BUG: unknown destination io #{dst_io}"
+      end
+
+      fork_io
+    when Redirect::Inherit
+      dst_io
+    when Redirect::Close
+      if dst_io == STDIN
+        File.open(File::DEVNULL, "r")
+      else
+        File.open(File::DEVNULL, "w")
+      end
+    else
+      raise "BUG: impossible type in stdio #{stdio.class}"
+    end
   end
 
   private def initialize(@pid)
@@ -349,7 +374,7 @@ class Process
   end
 
   # :nodoc:
-  protected def self.prepare_argv(command, args, shell)
+  protected def self.prepare_args(command, args, shell)
     if shell
       command = %(#{command} "${@}") unless command.includes?(' ')
       shell_args = ["-c", command, "--"]
@@ -370,13 +395,7 @@ class Process
       args = shell_args
     end
 
-    argv = [command.to_unsafe]
-    args.try &.each do |arg|
-      argv << arg.to_unsafe
-    end
-    argv << Pointer(UInt8).null
-
-    {command, argv}
+    {command, args}
   end
 
   private def channel
@@ -410,12 +429,15 @@ class Process
     end
   end
 
+  ORIGINAL_STDIN  = IO::FileDescriptor.new(0, blocking: true)
+  ORIGINAL_STDOUT = IO::FileDescriptor.new(1, blocking: true).tap { |f| f.flush_on_newline = true }
+  ORIGINAL_STDERR = IO::FileDescriptor.new(2, blocking: true).tap { |f| f.flush_on_newline = true }
+
   # :nodoc:
-  protected def self.exec_internal(command : String, argv, env, clear_env, input, output, error, chdir)
-    # Reopen handles if the child is being redirected
-    reopen_io(input, IO::FileDescriptor.new(0, blocking: true), "r")
-    reopen_io(output, IO::FileDescriptor.new(1, blocking: true), "w")
-    reopen_io(error, IO::FileDescriptor.new(2, blocking: true), "w")
+  protected def self.exec_internal(command, args, env, clear_env, input, output, error, chdir) : NoReturn
+    reopen_io(input, ORIGINAL_STDIN)
+    reopen_io(output, ORIGINAL_STDOUT)
+    reopen_io(error, ORIGINAL_STDERR)
 
     ENV.clear if clear_env
     env.try &.each do |key, val|
@@ -428,29 +450,31 @@ class Process
 
     Dir.cd(chdir) if chdir
 
-    LibC.execvp(command, argv) != -1
+    argv = [command.check_no_null_byte.to_unsafe]
+    args.try &.each do |arg|
+      argv << arg.check_no_null_byte.to_unsafe
+    end
+    argv << Pointer(UInt8).null
+
+    LibC.execvp(command, argv)
+    raise Errno.new("execvp")
   end
 
-  private def self.reopen_io(src_io, dst_io, mode)
-    case src_io
-    when IO::FileDescriptor
-      src_io.blocking = true
-      dst_io.reopen(src_io)
-    when Redirect::Inherit
-      return if dst_io.closed?
-      dst_io.blocking = true
-    when Redirect::Close
-      # Set the FD to devnull.
-      void = File.open(File::DEVNULL, mode)
-      if void.fd != dst_io.fd
-        dst_io.reopen(void)
-        void.close
-      end
-    else
-      raise "BUG: unknown object type #{src_io}"
-    end
+  private def self.reopen_io(src_io : IO::FileDescriptor, dst_io : IO::FileDescriptor)
+    src_io = to_real_fd(src_io)
 
+    dst_io.reopen(src_io)
+    dst_io.blocking = true
     dst_io.close_on_exec = false
+  end
+
+  private def self.to_real_fd(fd : IO::FileDescriptor)
+    case fd
+    when STDIN  then ORIGINAL_STDIN
+    when STDOUT then ORIGINAL_STDOUT
+    when STDERR then ORIGINAL_STDERR
+    else             fd
+    end
   end
 
   private def close_io(io)
