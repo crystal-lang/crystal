@@ -14,4 +14,12 @@ describe Thread do
       thread.join
     end
   end
+
+  it "returns current thread object" do
+    current = nil
+    thread = Thread.new { current = Thread.current }
+    thread.join
+    current.should be(thread)
+    current.should_not be(Thread.current)
+  end
 end
