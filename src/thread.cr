@@ -1,4 +1,5 @@
 require "c/pthread"
+require "c/sched"
 require "./thread/*"
 
 # :nodoc:
@@ -105,6 +106,11 @@ class Thread
   #
   # TODO: consider moving to `kernel.cr` or `crystal/main.cr`
   self.current = new
+
+  def self.yield
+    ret = LibC.sched_yield
+    raise Errno.new("sched_yield") unless ret == 0
+  end
 
   # Returns the Fiber representing the thread's main stack.
   def main_fiber
