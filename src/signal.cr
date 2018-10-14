@@ -320,7 +320,18 @@ end
 # :nodoc:
 fun __crystal_sigfault_handler(sig : LibC::Int, addr : Void*)
   # Capture fault signals (SEGV, BUS) and finish the process printing a backtrace first
-  LibC.dprintf 2, "Invalid memory access (signal %d) at address 0x%lx\n", sig, addr
+
+  # Determine if the SEGV was inside or 'near' the top of the stack
+  # to check for potential stack overflow. 'Near' is a small
+  # amount larger than a typical stack frame, 4096 bytes here.
+  stack_top = Pointer(Void).new(Fiber.current.@stack.address - 4096)
+
+  if stack_top <= addr < Fiber.current.@stack_bottom
+    LibC.dprintf 2, "Stack overflow (e.g., infinite or very deep recursion)\n"
+  else
+    LibC.dprintf 2, "Invalid memory access (signal %d) at address 0x%lx\n", sig, addr
+  end
+
   CallStack.print_backtrace
   LibC._exit(sig)
 end

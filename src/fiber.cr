@@ -1,4 +1,7 @@
 require "c/sys/mman"
+{% unless flag?(:win32) %}
+require "c/sys/resource"
+{% end %}
 require "thread/linked_list"
 
 # Load the arch-specific methods to create a context and to swap from one
@@ -86,10 +89,25 @@ class Fiber
   # :nodoc:
   def initialize
     @proc = Proc(Void).new { }
-    @stack = Pointer(Void).null
     @stack_top = _fiber_get_stack_top
     @stack_bottom = GC.stack_bottom
     @name = "main"
+
+    # Determine location of the top of the stack.
+    # The technique here works only for the main stack on a POSIX platform.
+    # TODO: implement for Windows with GetCurrentThreadStackLimits
+    # TODO: implement for pthreads using
+    #    linux-glibc/musl: pthread_getattr_np
+    #              macosx: pthread_get_stackaddr_np, pthread_get_stacksize_np
+    #             freebsd: pthread_attr_get_np
+    #             openbsd: pthread_stackseg_np
+    @stack = Pointer(Void).null
+    {% unless flag?(:win32) %}
+      if LibC.getrlimit(LibC::RLIMIT_STACK, out rlim) == 0
+        stack_size = rlim.rlim_cur
+        @stack = Pointer(Void).new(@stack_bottom.address - stack_size)
+      end
+    {% end %}
 
     @@fibers.push(self)
   end
