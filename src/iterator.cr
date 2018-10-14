@@ -1223,6 +1223,11 @@ module Iterator(T)
   # #    [false, [5, 3, 5]]
   # ```
   #
+  # The following key values have special meaning:
+  #
+  # * `Enumerable::Chunk::Drop` specifies that the elements should be dropped
+  # * `Enumerable::Chunk::Alone` specifies that the element should be chunked by itself
+  #
   # By default, a new array is created and yielded for each chunk when invoking `next`.
   # * If *reuse* is given, the array can be reused
   # * If *reuse* is an `Array`, this array will be reused
