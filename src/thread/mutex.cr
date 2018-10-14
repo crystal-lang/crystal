@@ -5,8 +5,14 @@ class Thread
   # :nodoc:
   class Mutex
     def initialize
-      ret = LibC.pthread_mutex_init(out @mutex, nil)
+      attributes = uninitialized LibC::PthreadMutexattrT
+      LibC.pthread_mutexattr_init(pointerof(attributes))
+      LibC.pthread_mutexattr_settype(pointerof(attributes), LibC::PTHREAD_MUTEX_ERRORCHECK)
+
+      ret = LibC.pthread_mutex_init(out @mutex, pointerof(attributes))
       raise Errno.new("pthread_mutex_init", ret) unless ret == 0
+
+      LibC.pthread_mutexattr_destroy(pointerof(attributes))
     end
 
     def lock

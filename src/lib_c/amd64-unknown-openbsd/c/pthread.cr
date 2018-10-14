@@ -2,6 +2,8 @@ require "./sys/types"
 
 @[Link("pthread")]
 lib LibC
+  PTHREAD_MUTEX_ERRORCHECK = 1
+
   fun pthread_cond_broadcast(x0 : PthreadCondT*) : Int
   fun pthread_cond_destroy(x0 : PthreadCondT*) : Int
   fun pthread_cond_init(x0 : PthreadCondT*, x1 : PthreadCondattrT*) : Int
@@ -14,6 +16,9 @@ lib LibC
   fun pthread_join(x0 : PthreadT, x1 : Void**) : Int
   alias PthreadKeyDestructor = (Void*) ->
   fun pthread_key_create(PthreadKeyT*, PthreadKeyDestructor) : Int
+  fun pthread_mutexattr_destroy(x0 : PthreadMutexattrT*) : Int
+  fun pthread_mutexattr_init(x0 : PthreadMutexattrT*) : Int
+  fun pthread_mutexattr_settype(x0 : PthreadMutexattrT*, x1 : Int) : Int
   fun pthread_mutex_destroy(x0 : PthreadMutexT*) : Int
   fun pthread_mutex_init(x0 : PthreadMutexT*, x1 : PthreadMutexattrT*) : Int
   fun pthread_mutex_lock(x0 : PthreadMutexT*) : Int
