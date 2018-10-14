@@ -92,11 +92,6 @@ module Enumerable(T)
   # ary # => [{false, [3, 1]}, {true, [4]}, {false, [1, 5, 9]}, {true, [2, 6]}, {false, [5, 3, 5]}]
   # ```
   #
-  # The following key values have special meaning:
-  #
-  # * `Enumerable::Chunk::Drop` specifies that the elements should be dropped
-  # * `Enumerable::Chunk::Alone` specifies that the element should be chunked by itself
-  #
   # See also: `Iterator#chunk`.
   def chunks(&block : T -> U) forall U
     res = [] of Tuple(U, Array(T))
