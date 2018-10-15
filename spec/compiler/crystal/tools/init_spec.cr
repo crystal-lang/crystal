@@ -94,8 +94,7 @@ module Crystal
         readme.should contain("# example")
 
         readme.should contain(%{1. Run `shards init`})
-        readme.should contain(%{2. Add this to your application's `shard.yml`:})
-
+        readme.should contain(%{2. Add the dependency to your `shard.yml`:})
         readme.should contain(%{```yaml
 dependencies:
   example:
@@ -115,8 +114,7 @@ dependencies:
         readme.should contain(%{TODO: Write a description here})
 
         readme.should_not contain(%{1. Run `shards init`})
-        readme.should_not contain(%{2. Add this to your application's `shard.yml`:})
-
+        readme.should_not contain(%{2. Add the dependency to your `shard.yml`:})
         readme.should_not contain(%{```yaml
 dependencies:
   example:
