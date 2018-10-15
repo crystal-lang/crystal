@@ -59,37 +59,60 @@ module Socket
   macro delegate_tcp_options
     Socket.delegate_inet_methods
 
+    # Returns `true` if the Nable algorithm is disabled.
     def tcp_nodelay? : Bool
-      @raw.tcp_nodelay?
+      @raw.getsockopt_bool LibC::TCP_NODELAY, level: Socket::Protocol::TCP
     end
 
+    # Disable the Nagle algorithm when set to `true`, otherwise enables it.
     def tcp_nodelay=(value : Bool) : Bool
-      @raw.tcp_nodelay = value
+      @raw.setsockopt_bool LibC::TCP_NODELAY, value, level: Socket:: Protocol::TCP
     end
 
-    def tcp_keepalive_idle : Int32
-      @raw.tcp_keepalive_idle
-    end
+    {% unless flag?(:openbsd) %}
+      # Returns the amount of time (in seconds) the connection must be idle before sending keepalive probes.
+      def tcp_keepalive_idle : Int32
+        optname = {% if flag?(:darwin) %}
+          LibC::TCP_KEEPALIVE
+        {% else %}
+          LibC::TCP_KEEPIDLE
+        {% end %}
+        @raw.getsockopt optname, 0, level: Socket::Protocol::TCP
+      end
 
-    def tcp_keepalive_idle=(value : Int32) : Int32
-      @raw.tcp_keepalive_idle = value
-    end
+      # Sets the amount of time (in seconds) the connection must be idle before sending keepalive probes.
+      def tcp_keepalive_idle=(value : Int32) : Int32
+        optname = {% if flag?(:darwin) %}
+          LibC::TCP_KEEPALIVE
+        {% else %}
+          LibC::TCP_KEEPIDLE
+        {% end %}
+        @raw.setsockopt optname, value, level: Socket::Protocol::TCP
+        value
+      end
 
-    def tcp_keepalive_count : Int32
-      @raw.tcp_keepalive_count
-    end
+      # Returns the amount of time (in seconds) between keepalive probes.
+      def tcp_keepalive_interval : Int32
+        @raw.getsockopt LibC::TCP_KEEPINTVL, 0, level: Socket::Protocol::TCP
+      end
 
-    def tcp_keepalive_count=(value : Int32) : Int32
-      @raw.tcp_keepalive_count = value
-    end
+      # Sets the amount of time (in seconds) between keepalive probes.
+      def tcp_keepalive_interval=(value : Int32) : Int32
+        @raw.setsockopt LibC::TCP_KEEPINTVL, value, level: Socket::Protocol::TCP
+        value
+      end
 
-    def tcp_keepalive_interval : Int32
-      @raw.tcp_keepalive_interval
-    end
+      # Returns the number of probes sent, without response before dropping the connection.
+      def tcp_keepalive_count : Int32
+        @raw.getsockopt LibC::TCP_KEEPCNT, 0, level: Socket::Protocol::TCP
+      end
 
-    def tcp_keepalive_interval=(value : Int32) : Int32
-      @raw.tcp_keepalive_interval = value
-    end
+      # Sets the number of probes sent, without response before dropping the connection.
+      def tcp_keepalive_count=(value : Int32) : Int32
+        @raw.setsockopt LibC::TCP_KEEPCNT, value, level: Socket::Protocol::TCP
+        value
+      end
+    {% end %}
   end
 
   # :nodoc:
@@ -106,11 +129,11 @@ module Socket
   # :nodoc:
   macro delegate_inet_methods
     def keepalive? : Bool
-      @raw.keepalive?
+      @raw.getsockopt_bool LibC::SO_KEEPALIVE
     end
 
     def keepalive=(value : Bool) : Bool
-      @raw.keepalive = value
+      @raw.setsockopt_bool LibC::SO_KEEPALIVE, value
     end
   end
 
@@ -118,22 +141,24 @@ module Socket
   macro delegate_buffer_sizes
     # Returns the send buffer size for this socket.
     def send_buffer_size : Int32
-      @raw.send_buffer_size
+      @raw.getsockopt LibC::SO_SNDBUF, 0
     end
 
     # Sets the send buffer size for this socket.
     def send_buffer_size=(value : Int32) : Int32
-      @raw.send_buffer_size = value
+      @raw.setsockopt LibC::SO_SNDBUF, value
+      value
     end
 
     # Returns the receive buffer size for this socket.
     def recv_buffer_size : Int32
-      @raw.recv_buffer_size
+      @raw.getsockopt LibC::SO_RCVBUF, 0
     end
 
     # Sets the receive buffer size for this socket.
     def recv_buffer_size=(value : Int32) : Int32
-      @raw.recv_buffer_size = value
+      @raw.setsockopt LibC::SO_RCVBUF, value
+      value
     end
   end
 end

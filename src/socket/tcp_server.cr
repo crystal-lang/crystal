@@ -43,8 +43,8 @@ struct TCPServer
     Socket::Addrinfo.tcp(host, port, timeout: dns_timeout) do |addrinfo|
       raw = Socket::Raw.new(addrinfo.family, addrinfo.type, addrinfo.protocol)
 
-      raw.reuse_address = reuse_address
-      raw.reuse_port = true if reuse_port
+      raw.setsockopt_bool LibC::SO_REUSEADDR, reuse_address
+      raw.setsockopt_bool LibC::SO_REUSEPORT, true if reuse_port
 
       if errno = raw.bind(addrinfo) { |errno| errno }
         raw.close
@@ -66,8 +66,8 @@ struct TCPServer
                reuse_port : Bool = false, reuse_address : Bool = true) : TCPServer
     raw = Socket::Raw.new(address.family, Socket::Type::STREAM, Socket::Protocol::TCP)
 
-    raw.reuse_address = reuse_address
-    raw.reuse_port = true if reuse_port
+    raw.setsockopt_bool LibC::SO_REUSEADDR, reuse_address
+    raw.setsockopt_bool LibC::SO_REUSEPORT, true if reuse_port
 
     raw.bind(address)
     raw.listen(backlog: backlog)
@@ -144,12 +144,20 @@ struct TCPServer
 
   # Returns `true` if this socket has been configured to reuse the port (see `SO_REUSEPORT`).
   def reuse_port? : Bool
-    @raw.reuse_port?
+    ret = @raw.getsockopt(LibC::SO_REUSEPORT, 0) do |errno|
+      # If SO_REUSEPORT is not supported, the return value should be `false`
+      if errno.errno == Errno::ENOPROTOOPT
+        return false
+      else
+        raise errno
+      end
+    end
+    ret != 0
   end
 
   # Returns `true` if this socket has been configured to reuse the address (see `SO_REUSEADDR`).
   def reuse_address? : Bool
-    @raw.reuse_address?
+    @raw.getsockopt_bool LibC::SO_REUSEADDR
   end
 
   # Accepts an incoming connection.

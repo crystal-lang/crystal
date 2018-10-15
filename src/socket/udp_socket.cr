@@ -133,12 +133,20 @@ struct UDPSocket
 
   # Returns `true` if this socket has been configured to reuse the port (see `SO_REUSEPORT`).
   def reuse_port? : Bool
-    @raw.reuse_port?
+    ret = @raw.getsockopt(LibC::SO_REUSEPORT, 0) do |errno|
+      # If SO_REUSEPORT is not supported, the return value should be `false`
+      if errno.errno == Errno::ENOPROTOOPT
+        return false
+      else
+        raise errno
+      end
+    end
+    ret != 0
   end
 
   # Returns `true` if this socket has been configured to reuse the address (see `SO_REUSEADDR`).
   def reuse_address? : Bool
-    @raw.reuse_address?
+    @raw.getsockopt_bool LibC::SO_REUSEADDR
   end
 
   # Binds this socket to local *address* and *port*.
@@ -214,12 +222,13 @@ struct UDPSocket
     @raw.send(message, to: addr)
   end
 
-  def broadcast=(value : Bool)
-    @raw.broadcast = value
+  def broadcast? : Bool
+    @raw.getsockopt_bool LibC::SO_BROADCAST
   end
 
-  def broadcast? : Bool
-    @raw.broadcast?
+  def broadcast=(val : Bool) : Bool
+    @raw.setsockopt_bool LibC::SO_BROADCAST, val
+    val
   end
 
   # Returns the `IPAddress` for the local end of the IP socket or `nil` if the
