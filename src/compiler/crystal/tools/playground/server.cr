@@ -528,17 +528,12 @@ module Crystal::Playground
 
       server = HTTP::Server.new handlers
 
-      host = @host
-      if host
-        address = server.bind_tcp host, @port
-      else
-        address = server.bind_tcp @port
-      end
+      address = server.bind_tcp @host || Socket::IPAddress::LOOPBACK, @port
       @port = address.port
 
       puts "Listening on http://#{address}"
-      if host == "0.0.0.0"
-        puts "WARNING running playground with 0.0.0.0 is unsecure."
+      if address.unspecified?
+        puts "WARNING running playground on #{address.address} is insecure."
       end
 
       begin

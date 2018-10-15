@@ -72,6 +72,13 @@ class Socket
   # resolve an IP, or don't know whether a `String` constains an IP or a domain
   # name, you should use `Addrinfo.resolve` instead.
   struct IPAddress < Address
+    UNSPECIFIED  = "0.0.0.0"
+    UNSPECIFIED6 = "::"
+    LOOPBACK     = "127.0.0.1"
+    LOOPBACK6    = "::1"
+    BROADCAST    = "255.255.255.255"
+    BROADCAST6   = "ff0X::1"
+
     getter port : Int32
 
     @address : String?
@@ -188,6 +195,43 @@ class Socket
         end
         {LibC.strlen(buffer), 0}
       end
+    end
+
+    # Returns `true` if this IP is a loopback address.
+    #
+    # In the IPv4 family, loopback addresses are all addresses in the subnet
+    # `127.0.0.0/24`. In IPv6 `::1` is the loopback address.
+    def loopback? : Bool
+      if addr = @addr4
+        addr.s_addr & 0x00000000ff_u32 == 0x0000007f_u32
+      elsif addr = @addr6
+        ipv6_addr8(addr) == StaticArray[0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 1_u8]
+      else
+        raise "unreachable!"
+      end
+    end
+
+    # Returns `true` if this IP is an unspecified address, either the IPv4 address `0.0.0.0` or the IPv6 address `::`.
+    def unspecified? : Bool
+      if addr = @addr4
+        addr.s_addr == 0_u32
+      elsif addr = @addr6
+        ipv6_addr8(addr) == StaticArray[0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8]
+      else
+        raise "unreachable!"
+      end
+    end
+
+    private def ipv6_addr8(addr : LibC::In6Addr)
+      {% if flag?(:darwin) || flag?(:openbsd) || flag?(:freebsd) %}
+        addr.__u6_addr.__u6_addr8
+      {% elsif flag?(:linux) && flag?(:musl) %}
+        addr.__in6_union.__s6_addr
+      {% elsif flag?(:linux) %}
+        addr.__in6_u.__u6_addr8
+      {% else %}
+        {% raise "Unsupported platform" %}
+      {% end %}
     end
 
     def ==(other : IPAddress)
