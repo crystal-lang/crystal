@@ -221,7 +221,7 @@ class HTTP::Server
     # server.bind_tls "127.0.0.1", 8080, context
     # ```
     def bind_tls(host : String, port : Int32, context : OpenSSL::SSL::Context::Server, reuse_port : Bool = false) : Socket::IPAddress
-      tcp_server = TCPServer.new(host, port, reuse_port)
+      tcp_server = TCPServer.new(host, port, reuse_port: reuse_port)
       server = OpenSSL::SSL::Server.new(tcp_server, context)
 
       bind(server)

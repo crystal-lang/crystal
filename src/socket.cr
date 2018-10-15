@@ -183,13 +183,13 @@ class Socket < IO
   end
 
   # Tells the previously bound socket to listen for incoming connections.
-  def listen(backlog = SOMAXCONN)
+  def listen(backlog : Int = SOMAXCONN)
     listen(backlog) { |errno| raise errno }
   end
 
   # Tries to listen for connections on the previously bound socket.
   # Yields an `Errno` on failure.
-  def listen(backlog = SOMAXCONN)
+  def listen(backlog : Int = SOMAXCONN)
     unless LibC.listen(fd, backlog) == 0
       yield Errno.new("listen")
     end

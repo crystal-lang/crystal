@@ -31,7 +31,7 @@ class UNIXServer < UNIXSocket
   # ```
   # UNIXServer.new("/tmp/dgram.sock", Socket::Type::DGRAM)
   # ```
-  def initialize(@path : String, type : Type = Type::STREAM, backlog = 128)
+  def initialize(@path : String, type : Type = Type::STREAM, backlog : Int = 128)
     super(Family::UNIX, type)
 
     bind(UNIXAddress.new(path)) do |error|
