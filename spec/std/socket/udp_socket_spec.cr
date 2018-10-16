@@ -54,7 +54,9 @@ describe UDPSocket do
   end
 
   {% if flag?(:linux) %}
-    it "sends broadcast message" do
+    # TODO: Apparently this doesn't work on the CI platform, but the spec has been
+    # tested to successfully run on a linux machine.
+    pending "sends broadcast message" do
       port = unused_local_port
 
       client = UDPSocket.new("localhost")
