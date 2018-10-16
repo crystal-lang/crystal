@@ -1866,4 +1866,17 @@ describe "Array" do
     a = [s, t, u, 12, 13]
     a.flatten.to_a.should eq([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13])
   end
+
+  it "#skip" do
+    ary = [1, 2, 3]
+    ary.skip(0).should eq([1, 2, 3])
+    ary.skip(1).should eq([2, 3])
+    ary.skip(2).should eq([3])
+    ary.skip(3).should eq([] of Int32)
+    ary.skip(4).should eq([] of Int32)
+
+    expect_raises(ArgumentError, "Attempt to skip negative size") do
+      ary.skip(-1)
+    end
+  end
 end
