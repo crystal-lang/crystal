@@ -946,6 +946,24 @@ class Array(T)
     self
   end
 
+  # Returns an `Array` with the first *count* elements removed
+  # from the original array.
+  #
+  # If *count* is bigger than the number of elements in the array, returns an empty array.
+  #
+  # ```
+  # [1, 2, 3, 4, 5, 6].skip(3) # => [4, 5, 6]
+  # ```
+  def skip(count : Int) : Array(T)
+    raise ArgumentError.new("Attempt to skip negative size") if count < 0
+
+    new_size = Math.max(size - count, 0)
+    Array(T).build(new_size) do |buffer|
+      buffer.copy_from(to_unsafe + count, new_size)
+      new_size
+    end
+  end
+
   # Returns an `Array` with all possible permutations of *size*.
   #
   # ```
