@@ -1,4 +1,5 @@
 require "./event_loop"
+require "./scheduler/runnables"
 require "fiber"
 require "thread"
 
@@ -45,15 +46,17 @@ class Crystal::Scheduler
   # :nodoc:
   def initialize(@main : Fiber)
     @current = @main
-    @runnables = Deque(Fiber).new
+    @runnables = Runnables.new
   end
 
   protected def enqueue(fiber : Fiber) : Nil
-    @runnables << fiber
+    @runnables.push(fiber)
   end
 
   protected def enqueue(fibers : Enumerable(Fiber)) : Nil
-    @runnables.concat fibers
+    fibers.each do |fiber|
+      @runnables.push(fiber)
+    end
   end
 
   protected def resume(fiber : Fiber) : Nil
@@ -81,8 +84,8 @@ class Crystal::Scheduler
   end
 
   protected def reschedule : Nil
-    if runnable = @runnables.shift?
-      runnable.resume
+    if fiber = @runnables.pop?
+      resume(fiber)
     else
       Crystal::EventLoop.resume
     end
@@ -95,10 +98,5 @@ class Crystal::Scheduler
 
   protected def yield : Nil
     sleep(0.seconds)
-  end
-
-  protected def yield(fiber : Fiber) : Nil
-    @current.resume_event.add(0.seconds)
-    resume(fiber)
   end
 end
