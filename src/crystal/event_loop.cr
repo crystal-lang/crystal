@@ -13,7 +13,7 @@ module Crystal::EventLoop
   end
 
   private def self.loop_fiber
-    @@loop_fiber ||= Fiber.new { @@eb.run_loop }
+    @@loop_fiber ||= Fiber.new { @@eb.loop }
   end
 
   def self.create_resume_event(fiber)
