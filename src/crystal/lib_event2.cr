@@ -5,15 +5,18 @@ require "c/netdb"
 {% end %}
 
 {% if flag?(:openbsd) %}
-@[Link("event_core")]
-@[Link("event_extra")]
+  @[Link("event_core")]
+  @[Link("event_extra")]
 {% else %}
-@[Link("event")]
+  @[Link("event")]
+{% end %}
+{% unless flag?(:win32) %}
+  @[Link("event_pthreads")]
 {% end %}
 lib LibEvent2
   alias Int = LibC::Int
 
-  {% if flag?(:windows) %}
+  {% if flag?(:win32) %}
     # TODO
   {% else %}
     alias EvutilSocketT = Int
@@ -65,4 +68,10 @@ lib LibEvent2
   fun evdns_getaddrinfo(base : DnsBase, nodename : UInt8*, servname : UInt8*, hints : LibC::Addrinfo*, cb : DnsGetAddrinfoCallback, arg : Void*) : DnsGetAddrinfoRequest
   fun evdns_getaddrinfo_cancel(DnsGetAddrinfoRequest)
   fun evutil_freeaddrinfo(ai : LibC::Addrinfo*)
+
+  {% if flag?(:win32) %}
+    fun evthread_use_windows_threads : Int
+  {% else %}
+    fun evthread_use_pthreads : Int
+  {% end %}
 end
