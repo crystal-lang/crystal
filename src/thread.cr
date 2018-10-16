@@ -1,4 +1,5 @@
 require "c/pthread"
+require "c/sched"
 require "./thread/*"
 
 # :nodoc:
@@ -32,7 +33,7 @@ class Thread
     if ret == 0
       @@threads.push(self)
     else
-      raise Errno.new("pthread_create")
+      raise Errno.new("pthread_create", ret)
     end
   end
 
@@ -67,7 +68,7 @@ class Thread
 
     @@current_key = begin
       ret = LibC.pthread_key_create(out current_key, nil)
-      raise Errno.new("pthread_key_create") unless ret == 0
+      raise Errno.new("pthread_key_create", ret) unless ret == 0
       current_key
     end
 
@@ -83,7 +84,7 @@ class Thread
     # Associates the Thread object to the running system thread.
     protected def self.current=(thread : Thread) : Thread
       ret = LibC.pthread_setspecific(@@current_key, thread.as(Void*))
-      raise Errno.new("pthread_setspecific") unless ret == 0
+      raise Errno.new("pthread_setspecific", ret) unless ret == 0
       thread
     end
   {% else %}
@@ -105,6 +106,11 @@ class Thread
   #
   # TODO: consider moving to `kernel.cr` or `crystal/main.cr`
   self.current = new
+
+  def self.yield
+    ret = LibC.sched_yield
+    raise Errno.new("sched_yield") unless ret == 0
+  end
 
   # Returns the Fiber representing the thread's main stack.
   def main_fiber
