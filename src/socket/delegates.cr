@@ -6,16 +6,6 @@ module Socket
       @raw.close
     end
 
-    # Closes this socket for reading.
-    def close_read : Nil
-      @raw.close_read
-    end
-
-    # Closes this socket for writing.
-    def close_write : Nil
-      @raw.close_write
-    end
-
     # Returns `true` if this socket is closed.
     def closed? : Bool
       @raw.closed?
@@ -25,6 +15,16 @@ module Socket
   # :nodoc:
   macro delegate_io_methods
     Socket.delegate_sync
+
+    # Closes this socket for reading.
+    def close_read : Nil
+      @raw.close_read
+    end
+
+    # Closes this socket for writing.
+    def close_write : Nil
+      @raw.close_write
+    end
 
     # Returns the read timeout for this socket.
     def read_timeout : Time::Span?

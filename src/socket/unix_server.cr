@@ -79,7 +79,20 @@ struct UNIXServer
   end
 
   Socket.delegate_close
-  Socket.delegate_sync
+
+  # Returns the sync flag on this socket.
+  #
+  # All `UNIXSocket`s accepted by this server will have the same sync flag.
+  def sync? : Bool
+    @raw.sync?
+  end
+
+  # Sets the sync flag on this socket.
+  #
+  # All `UNIXSocket`s accepted by this server will have the same sync flag.
+  def sync=(value : Bool) : Bool
+    @raw.sync = value
+  end
 
   # Accepts an incoming connection.
   #

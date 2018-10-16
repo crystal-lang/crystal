@@ -129,9 +129,22 @@ struct TCPServer
   end
 
   Socket.delegate_close
-  Socket.delegate_sync
   Socket.delegate_tcp_options
   Socket.delegate_buffer_sizes
+
+  # Returns the sync flag on this socket.
+  #
+  # All `TCPSocket`s accepted by this server will have the same sync flag.
+  def sync? : Bool
+    @raw.sync?
+  end
+
+  # Sets the sync flag on this socket.
+  #
+  # All `TCPSocket`s accepted by this server will have the same sync flag.
+  def sync=(value : Bool) : Bool
+    @raw.sync = value
+  end
 
   # Returns `true` if this socket has been configured to reuse the port (see `SO_REUSEPORT`).
   def reuse_port? : Bool
