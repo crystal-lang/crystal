@@ -26,7 +26,7 @@ struct UNIXServer
   # Returns the raw socket wrapped by this UNIX server.
   getter raw : Socket::Raw
 
-  @address : Socket::UNIXAddress?
+  @address : Socket::UNIXAddress
 
   # Creates a `UNIXServer` from a raw socket.
   def initialize(@raw : Socket::Raw, @address : Socket::UNIXAddress)
@@ -103,7 +103,9 @@ struct UNIXServer
   # ```
   def accept? : UNIXSocket?
     if client = @raw.accept?
-      UNIXSocket.new(client, local_address)
+      # Don't use `#local_address` here because it should also use valid address if
+      # the socket has been closed in between.
+      UNIXSocket.new(client, @address)
     end
   end
 
@@ -130,11 +132,8 @@ struct UNIXServer
   def close
     @raw.close
   ensure
-    if address = @address
-      path = address.path
-      File.delete(path) if File.exists?(path)
-      @address = nil
-    end
+    path = @address.path
+    File.delete(path) if File.exists?(path)
   end
 
   # Returns the `Socket::UNIXAddress` this server listens on, or `nil` if the socket is closed.
