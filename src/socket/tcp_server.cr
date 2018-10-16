@@ -131,16 +131,7 @@ struct TCPServer
   Socket.delegate_close
   Socket.delegate_sync
   Socket.delegate_tcp_options
-
-  # Returns the receive buffer size for this socket.
-  def recv_buffer_size : Int32
-    @raw.recv_buffer_size
-  end
-
-  # Sets the receive buffer size for this socket.
-  def recv_buffer_size=(value : Int32) : Nil
-    @raw.recv_buffer_size = value
-  end
+  Socket.delegate_buffer_sizes
 
   # Returns `true` if this socket has been configured to reuse the port (see `SO_REUSEPORT`).
   def reuse_port? : Bool

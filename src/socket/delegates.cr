@@ -53,6 +53,22 @@ module Socket
     def write(slice : Bytes) : Nil
       @raw.write(slice)
     end
+
+    def flush
+      @raw.flush
+    end
+
+    def peek
+      @raw.peek
+    end
+
+    def read_buffering=(read_buffering)
+      @raw.read_buffering
+    end
+
+    def read_buffering?
+      @raw.read_buffering?
+    end
   end
 
   # :nodoc:
