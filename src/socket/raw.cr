@@ -27,30 +27,6 @@ class Socket::Raw < IO
   getter type : Type
   getter protocol : Protocol
 
-  # Creates a new raw socket for TCP protocol.
-  #
-  # Consider using `TCPSocket` or `TCPServer` instead.
-  def self.tcp(family : Family, *,
-               blocking : Bool = false)
-    new(family, Type::STREAM, Protocol::TCP, blocking: blocking)
-  end
-
-  # Creates a new raw socket for UDP protocol.
-  #
-  # Consider using `UDPSocket` instead.
-  def self.udp(family : Family, *,
-               blocking : Bool = false)
-    new(family, Type::DGRAM, Protocol::UDP, blocking: blocking)
-  end
-
-  # Creates a new raw socket for UNIX sockets.
-  #
-  # Consider using `UNIXSocket` or `UNIXServer` instead.
-  def self.unix(type : Type = Type::STREAM, *,
-                blocking : Bool = false)
-    new(Family::UNIX, type, blocking: blocking)
-  end
-
   # Creates a new raw socket.
   def initialize(@family : Family, @type : Type, @protocol : Protocol = Protocol::IP, *,
                  blocking : Bool = false)
