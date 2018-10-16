@@ -57,7 +57,7 @@ module JSON
   # ```
   #
   # `JSON::Field` properties:
-  # * **ignore**: if `true` skip this field in seriazation and deserialization (by default false)
+  # * **ignore**: if `true` skip this field in serialization and deserialization (by default false)
   # * **key**: the value of the key in the json object (by default the name of the instance variable)
   # * **root**: assume the value is inside a JSON object with a given key (see `Object.from_json(string_or_io, root)`)
   # * **converter**: specify an alternate type for parsing and generation. The converter must define `from_json(JSON::PullParser)` and `to_json(value, JSON::Builder)` as class methods. Examples of converters are `Time::Format` and `Time::EpochConverter` for `Time`.
@@ -82,7 +82,7 @@ module JSON
   # are silently ignored.
   # If the `JSON::Serializable::Unmapped` module is included, unknown properties in the JSON
   # document will be stored in a `Hash(String, JSON::Any)`. On serialization, any keys inside json_unmapped
-  # will be serialized appended to the current json object.
+  # will be serialized and appended to the current json object.
   # ```
   # struct A
   #   include JSON::Serializable
