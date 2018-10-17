@@ -1,4 +1,8 @@
-{% if flag?(:openbsd) %}
+# libunwind prevents END_OF_STACK errors, but the backtrace is empty
+# https://github.com/crystal-lang/crystal/issues/4276#issuecomment-313678321
+{% if flag?(:musl) && flag?(:static) %}
+  @[Link("unwind")]
+{% elsif flag?(:openbsd) %}
   @[Link("c++abi")]
 {% end %}
 lib LibUnwind
