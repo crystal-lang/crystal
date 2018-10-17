@@ -3,6 +3,18 @@ require "http/server"
 require "http/client/response"
 require "../../../support/ssl"
 
+private def wait_for(timeout = 5.seconds)
+  now = Time.monotonic
+
+  until yield
+    Fiber.yield
+
+    if (Time.monotonic - now) > timeout
+      raise "server failed to start within 5 seconds"
+    end
+  end
+end
+
 private class RaiseErrno < IO
   def initialize(@value : Int32)
   end
@@ -268,8 +280,6 @@ module HTTP
 
       spawn { server.listen }
 
-      Fiber.yield
-
       HTTP::Client.get("http://#{address2}/").body.should eq "Test Server (#{address2})"
       HTTP::Client.get("http://#{address1}/").body.should eq "Test Server (#{address1})"
       HTTP::Client.get("http://#{address1}/").body.should eq "Test Server (#{address1})"
@@ -290,7 +300,7 @@ module HTTP
         server = Server.new { }
         server.bind_unused_port
         spawn { server.listen }
-        Fiber.yield
+        wait_for { server.listening? }
         expect_raises(Exception, "Can't add socket to running server") do
           server.bind_unused_port
         end
@@ -301,7 +311,7 @@ module HTTP
         server = Server.new { }
         server.bind_unused_port
         spawn { server.listen }
-        Fiber.yield
+        wait_for { server.listening? }
         server.close
         expect_raises(Exception, "Can't add socket to closed server") do
           server.bind_unused_port
@@ -413,7 +423,6 @@ module HTTP
         ip_address2 = socket.local_address
 
         spawn server.listen
-        Fiber.yield
 
         HTTP::Client.get("https://#{ip_address1}", tls: client_context).body.should eq "Test Server (#{ip_address1})\n"
         HTTP::Client.get("https://#{ip_address2}", tls: client_context).body.should eq "Test Server (#{ip_address2})\n"
@@ -427,8 +436,7 @@ module HTTP
         server = Server.new { }
         server.bind_unused_port
         spawn { server.listen }
-        Fiber.yield
-        server.listening?.should be_true
+        wait_for { server.listening? }
         expect_raises(Exception, "Can't start running server") do
           server.listen
         end
@@ -439,8 +447,7 @@ module HTTP
         server = Server.new { }
         server.bind_unused_port
         spawn { server.listen }
-        Fiber.yield
-        server.listening?.should be_true
+        wait_for { server.listening? }
         server.close
         server.listening?.should be_false
         expect_raises(Exception, "Can't re-start closed server") do
@@ -467,8 +474,7 @@ module HTTP
             socket2 = server.bind_unix path2
 
             spawn server.listen
-
-            Fiber.yield
+            wait_for { server.listening? }
 
             unix_request(path1).should eq "Test Server (#{path1})"
             unix_request(path2).should eq "Test Server (#{path2})"
@@ -497,6 +503,7 @@ module HTTP
       server_done = false
       spawn do
         server.listen
+      ensure
         server_done = true
       end
 
@@ -513,8 +520,6 @@ module HTTP
         HTTP::Client.get("https://#{address}/", tls: client_context).body.should eq "ok"
       end
 
-      Fiber.yield
-
       server_done.should be_false
     end
 
@@ -524,8 +529,6 @@ module HTTP
           context.response.flush
           context.response.puts "foo"
           context.response.flush
-
-          Fiber.yield
 
           context.response.puts "bar"
         end
