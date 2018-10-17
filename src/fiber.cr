@@ -174,6 +174,59 @@ class Fiber
     Crystal::Scheduler.resume(self)
   end
 
+  @cancel_request : CancelRequestException? = nil
+
+  # Stops this fiber from executing again and unwinds its stack.
+  #
+  # This method requests the fiber to raise a `CancelledException` the next time
+  # it is resumed and enqueues it in the scheduler. The unwinding will only take
+  # place the next time the scheduler reschedules.
+  #
+  # Immediately raises `CancelledException` if this is the current fiber.
+  def cancel
+    if Fiber.current == self
+      # In case the current fiber is to be canceled, just raise the exception directly.
+      raise CancelledException.new self
+    end
+
+    # Register a cancel request, it will be evaluated on next resume.
+    @cancel_request ||= CancelRequestException.new(CallStack.new)
+
+    # Trigger scheduling
+    @resume_event.try &.delete
+    Crystal::Scheduler.enqueue(self)
+  end
+
+  # A `CancelRequestException` holds the callstack of `CancelledException` where
+  # `Fiber#cancel` was called.
+  class CancelRequestException < Exception
+    getter fiber : Fiber
+
+    def initialize(@callstack : CallStack, message : String = "Fiber cancel request")
+      super(message)
+      @fiber = Fiber.current
+    end
+  end
+
+  # A `CancelledException` is raised when a fiber is resumed after it was cancelled.
+  # It unwinds the fiber's stack and should typically not be rescued.
+  #
+  # See `Fiber#cancel` for details.
+  #
+  # `cause` points to the fiber and callstack where the cancel request originated.
+  # If it is `nil`, the fiber was cancelled while executing.
+  class CancelledException < Exception
+    getter fiber : Fiber
+
+    def initialize(@fiber : Fiber, cause : CancelRequestException? = nil)
+      super("Fiber cancelled: #{fiber}", cause)
+    end
+
+    def cause : CancelRequestException?
+      @cause.as(CancelRequestException?)
+    end
+  end
+
   # :nodoc:
   def resume_event
     @resume_event ||= Crystal::EventLoop.create_resume_event(self)

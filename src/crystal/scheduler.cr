@@ -60,6 +60,14 @@ class Crystal::Scheduler
     current, @current = @current, fiber
     GC.stack_bottom = fiber.@stack_bottom
     Fiber.swapcontext(pointerof(current.@stack_top), fiber.@stack_top)
+
+    # The stack has changed but `fiber` still references the old fiber, that's
+    # why we acquire the actual current fiber.
+    current_fiber = self.class.current_fiber
+
+    if cancel_request = current_fiber.@cancel_request
+      raise Fiber::CancelledException.new current_fiber, cancel_request
+    end
   end
 
   protected def reschedule : Nil

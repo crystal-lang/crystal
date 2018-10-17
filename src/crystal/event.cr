@@ -28,6 +28,10 @@ struct Crystal::Event
     )
   end
 
+  def delete
+    LibEvent2.event_del(@event)
+  end
+
   def free
     LibEvent2.event_free(@event) unless @freed
     @freed = true
