@@ -1,5 +1,10 @@
 require "spec"
 
+private def yield_to(fiber)
+  Crystal::Scheduler.enqueue(Fiber.current)
+  Crystal::Scheduler.resume(fiber)
+end
+
 describe "select" do
   it "select many receviers" do
     ch1 = Channel(Int32).new
@@ -70,6 +75,7 @@ describe "select" do
   it "select should work with send which started before receive, fixed #3862" do
     ch1 = Channel(Int32).new
     ch2 = Channel(Int32).new
+    main = Fiber.current
 
     spawn do
       select
@@ -87,10 +93,11 @@ describe "select" do
       when b = ch2.receive
         x = b
       end
+    ensure
+      yield_to(main)
     end
 
-    Fiber.yield
-
+    sleep
     x.should eq 1
   end
 end

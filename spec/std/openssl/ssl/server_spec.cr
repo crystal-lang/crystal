@@ -64,13 +64,14 @@ describe OpenSSL::SSL::Server do
           client.should be_a(OpenSSL::SSL::Socket::Server)
           client = client.not_nil!
           client.gets.should eq "Hello, SSL!"
+          client.puts "Hello back, SSL!"
           client.close
         end
 
-        Fiber.yield
-
         OpenSSL::SSL::Socket::Client.open(TCPSocket.new(tcp_server.local_address.address, tcp_server.local_address.port), client_context) do |socket|
           socket.puts "Hello, SSL!"
+          socket.flush
+          socket.gets.should eq "Hello back, SSL!"
         end
       end
     end
