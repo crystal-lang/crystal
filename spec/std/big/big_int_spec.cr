@@ -89,6 +89,25 @@ describe "BigInt" do
     (2 + 1.to_big_i).should eq(3.to_big_i)
   end
 
+  it "adds mutably" do
+    a = 1.to_big_i
+    a.add(2.to_big_i).should eq 3.to_big_i
+    b = 1.to_big_i
+    b.add(2.to_big_i, 3.to_big_i).should eq 5.to_big_i
+    c = 1.to_big_i
+    c.add(2.to_big_i, 3).should eq 5.to_big_i
+    d = 1.to_big_i
+    d.add(2, 3.to_big_i).should eq 5.to_big_i
+    e = 5.to_big_i
+    e.add(Int64::MAX).should be > Int64::MAX.to_big_i
+    f = 5.to_big_i
+    f.add(Int64::MAX).should eq(Int64::MAX.to_big_i + 5)
+    g = 0.to_big_i
+    g.add(Int64::MAX, Int64::MAX).should be > Int64::MAX.to_big_i
+    h = 0.to_big_i
+    h.add(Int64::MAX, Int64::MAX).should eq(Int64::MAX.to_big_i + Int64::MAX.to_big_i)
+  end
+
   it "subs" do
     (5.to_big_i - 2.to_big_i).should eq(3.to_big_i)
     (5.to_big_i - 2).should eq(3.to_big_i)
@@ -99,6 +118,29 @@ describe "BigInt" do
 
     (5 - 1.to_big_i).should eq(4.to_big_i)
     (-5 - 1.to_big_i).should eq(-6.to_big_i)
+  end
+
+  it "subs mutably" do
+    i = 5.to_big_i
+    i.sub(2.to_big_i).should eq 3.to_big_i
+    i = 0.to_big_i
+    i.sub(5.to_big_i, 3.to_big_i).should eq 2.to_big_i
+    i = 0.to_big_i
+    i.sub(5.to_big_i, 3).should eq 2.to_big_i
+    i = 0.to_big_i
+    i.sub(5, 3.to_big_i).should eq 2.to_big_i
+    i = 0.to_big_i
+    i.sub(5, -3.to_big_i).should eq 8.to_big_i
+    i = 0.to_big_i
+    i.sub(-5, 3.to_big_i).should eq -8.to_big_i
+    i = 0.to_big_i
+    i.sub(Int64::MAX, Int64::MAX.to_big_i + 5).should eq -5.to_big_i
+    i = Int64::MAX.to_big_i
+    i.sub(5).should eq(Int64::MAX - 5)
+    i = 5.to_big_i
+    i.sub(Int64::MAX).should eq(-(Int64::MAX - 5))
+    i = 0.to_big_i
+    i.sub(Int64::MAX, Int64::MAX).should eq(0)
   end
 
   it "negates" do
@@ -112,6 +154,84 @@ describe "BigInt" do
     (3 * 2.to_big_i).should eq(6.to_big_i)
     (3_u8 * 2.to_big_i).should eq(6.to_big_i)
     (2.to_big_i * Int64::MAX).should eq(2.to_big_i * Int64::MAX.to_big_i)
+  end
+
+  it "multiplies mutably" do
+    i = 2.to_big_i
+    i.mul(3).should eq(6.to_big_i)
+    i = 2.to_big_i
+    i.mul(-3).should eq(-6.to_big_i)
+    i = 2.to_big_i
+    i.mul(3_u8).should eq(6.to_big_i)
+    i = 0.to_big_i
+    i.mul(3).should eq(0.to_big_i)
+
+    i = 0.to_big_i
+    i.mul(2.to_big_i, 3.to_big_i).should eq(6.to_big_i)
+    i = 0.to_big_i
+    i.mul(2, 3).should eq(6.to_big_i)
+    i = 0.to_big_i
+    i.mul(2, -3).should eq(-6.to_big_i)
+    i = 0.to_big_i
+    i.mul(2.to_big_i, 3).should eq(6.to_big_i)
+    i = 0.to_big_i
+    i.mul(2.to_big_i, 3u8).should eq(6.to_big_i)
+    i = 0.to_big_i
+    i.mul(2_u8, 3.to_big_i).should eq(6.to_big_i)
+    i = 0.to_big_i
+    i.mul(2, 3.to_big_i).should eq(6.to_big_i)
+    i = 0.to_big_i
+    i.mul(2.to_big_i, -3).should eq(-6.to_big_i)
+    i = 0.to_big_i
+    i.mul(2.to_big_i, Int64::MAX).should eq(2.to_big_i * Int64::MAX.to_big_i)
+    i = 0.to_big_i
+    i.mul(Int64::MAX, Int64::MAX).should eq(Int64::MAX.to_big_i * Int64::MAX.to_big_i)
+    i = 0.to_big_i
+    i.mul(3.to_big_i, 0).should eq(0.to_big_i)
+    i = 0.to_big_i
+    i.mul(0.to_big_i, 3).should eq(0.to_big_i)
+  end
+
+  it "submuls mutably" do
+    i = 100.to_big_i
+    i.submul(10.to_big_i, 10.to_big_i).should eq(0.to_big_i)
+    i = 100.to_big_i
+    i.submul(100.to_big_i, 2.to_big_i).should eq(-100.to_big_i)
+    i = 100.to_big_i
+    i.submul(100.to_big_i, -2.to_big_i).should eq(300.to_big_i)
+    i = 100.to_big_i
+    i.submul(-100.to_big_i, 2.to_big_i).should eq(300.to_big_i)
+    i = 100.to_big_i
+    i.submul(-100.to_big_i, -2.to_big_i).should eq(-100.to_big_i)
+    i = 100.to_big_i
+    i.submul(25.to_big_i, 2).should eq(50.to_big_i)
+    i = 0.to_big_i
+    i.submul(2.to_big_i, Int64::MAX).should eq(-Int64::MAX.to_big_i * 2)
+    i = 100.to_big_i
+    i.submul(25.to_big_i, 2_u8).should eq(50.to_big_i)
+    i = 100.to_big_i
+    i.submul(25.to_big_i, -2).should eq(150.to_big_i)
+  end
+
+  it "addmuls mutably" do
+    i = 100.to_big_i
+    i.addmul(10.to_big_i, 10.to_big_i).should eq(200.to_big_i)
+    i = 100.to_big_i
+    i.addmul(100.to_big_i, 2.to_big_i).should eq(300.to_big_i)
+    i = 100.to_big_i
+    i.addmul(100.to_big_i, -2.to_big_i).should eq(-100.to_big_i)
+    i = 100.to_big_i
+    i.addmul(-100.to_big_i, 2.to_big_i).should eq(-100.to_big_i)
+    i = 100.to_big_i
+    i.addmul(-100.to_big_i, -2.to_big_i).should eq(300.to_big_i)
+    i = 100.to_big_i
+    i.addmul(25.to_big_i, 2).should eq(150.to_big_i)
+    i = 0.to_big_i
+    i.addmul(2.to_big_i, Int64::MAX).should eq(Int64::MAX.to_big_i * 2)
+    i = 100.to_big_i
+    i.addmul(25.to_big_i, 2_u8).should eq(150.to_big_i)
+    i = 100.to_big_i
+    i.addmul(25.to_big_i, -2).should eq(50.to_big_i)
   end
 
   it "gets absolute value" do
@@ -145,6 +265,14 @@ describe "BigInt" do
     -5.to_big_i.tdiv(3).should eq(-1)
     5.to_big_i.tdiv(-3).should eq(-1)
     -5.to_big_i.tdiv(-3).should eq(1)
+  end
+
+  it "tdivs mutably" do
+    i = 0.to_big_i
+    i.tdiv(5.to_big_i, 3).should eq(1)
+    i.tdiv(-5.to_big_i, 3).should eq(-1)
+    i.tdiv(5.to_big_i, -3).should eq(-1)
+    i.tdiv(-5.to_big_i, -3).should eq(1)
   end
 
   it "does modulo" do
