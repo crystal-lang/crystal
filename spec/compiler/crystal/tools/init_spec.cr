@@ -118,7 +118,7 @@ dependencies:
   example:
     github: jsmith/example
 ```})
-        readme.should_not contain(%{2. Run `shards`})
+        readme.should_not contain(%{2. Run `shards install`})
         readme.should contain(%{TODO: Write installation instructions here})
         readme.should_not contain(%{require "example"})
         readme.should contain(%{1. Fork it (<https://github.com/jsmith/example_app/fork>)})
