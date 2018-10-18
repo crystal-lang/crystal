@@ -141,7 +141,7 @@ class Flate::Reader < IO
   end
 
   def unbuffered_rewind
-    raise IO::Error.new "Closed stream" if closed?
+    check_open
 
     @io.rewind
 
