@@ -125,4 +125,22 @@ describe "UUID" do
     expect_raises(ArgumentError) { UUID.new "2b1bfW06368947e59ac07c3ffdaf514c" }
     expect_raises(ArgumentError) { UUID.new "xyz:uuid:1ed1ee2f-ef9a-4f9c-9615-ab14d8ef2892" }
   end
+
+  describe "v4?" do
+    it "returns true if UUID is v4, false otherwise" do
+      uuid = UUID.random
+      uuid.v4?.should eq(true)
+      uuid = UUID.new("00000000-0000-0000-0000-000000000000", version: UUID::Version::V5)
+      uuid.v4?.should eq(false)
+    end
+  end
+
+  describe "v4!" do
+    it "returns true if UUID is v4, raises otherwise" do
+      uuid = UUID.random
+      uuid.v4!.should eq(true)
+      uuid = UUID.new("00000000-0000-0000-0000-000000000000", version: UUID::Version::V5)
+      expect_raises(UUID::Error) { uuid.v4! }
+    end
+  end
 end
