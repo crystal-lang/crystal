@@ -568,7 +568,7 @@ describe "Semantic: macro" do
 
   it "allows declaring class with macro expression" do
     assert_type(%(
-      {{ `echo "class Foo; end"` }}
+      {{ "class Foo; end".id }}
 
       Foo.new
       )) { types["Foo"] }
