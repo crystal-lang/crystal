@@ -1,39 +1,7 @@
 require "c/sys/mman"
 require "thread/linked_list"
+require "./fiber/context"
 require "./fiber/stack_pool"
-
-# Load the arch-specific methods to create a context and to swap from one
-# context to another one. There are two methods: `Fiber#makecontext` and
-# `Fiber.swapcontext`.
-#
-# - `Fiber.swapcontext(current_stack_ptr : Void**, dest_stack_ptr : Void*)
-#
-#   A fiber context switch in Crystal is achieved by calling a symbol (which
-#   must never be inlined) that will push the callee-saved registers (sometimes
-#   FPU registers and others) on the stack, saving the current stack pointer at
-#   location pointed by `current_stack_ptr` (the current fiber is now paused)
-#   then loading the `dest_stack_ptr` pointer into the stack pointer register
-#   and popping previously saved registers from the stack. Upon return from the
-#   symbol the new fiber is resumed since we returned/jumped to the calling
-#   symbol.
-#
-#   Details are arch-specific. For example:
-#   - which registers must be saved, the callee-saved are sometimes enough (X86)
-#     but some archs need to save the FPU register too (ARMHF);
-#   - a simple return may be enough (X86), but sometimes an explicit jump is
-#     required to not confuse the stack unwinder (ARM);
-#   - and more.
-#
-#   For the initial resume, the register holding the first parameter must be set
-#   (see makecontext below) and thus must also be saved/restored.
-#
-# - `Fiber#makecontext(stack_ptr : Void*, fiber_main : Fiber ->)`
-#
-#   `makecontext` is responsible to reserve and initialize space on the stack
-#   for the initial context and save the initial `@stack_top` pointer. The first
-#   time a fiber is resumed, the `fiber_main` proc must be called, passing
-#   `self` as its first argument.
-require "./fiber/*"
 
 # :nodoc:
 @[NoInline]
@@ -48,12 +16,12 @@ class Fiber
   # :nodoc:
   class_getter stack_pool = StackPool.new
 
+  @context : Context
   @stack : Void*
   @resume_event : Crystal::Event?
-  @stack_top = Pointer(Void).null
-  protected property stack_top : Void*
   protected property stack_bottom : Void*
   property name : String?
+  @alive = true
 
   # :nodoc:
   property next : Fiber?
@@ -67,6 +35,7 @@ class Fiber
   end
 
   def initialize(@name : String? = nil, &@proc : ->)
+    @context = Context.new
     @stack, @stack_bottom = Fiber.stack_pool.checkout
 
     fiber_main = ->(f : Fiber) { f.run }
@@ -86,7 +55,7 @@ class Fiber
   # :nodoc:
   def initialize(@stack : Void*)
     @proc = Proc(Void).new { }
-    @stack_top = _fiber_get_stack_top
+    @context = Context.new(_fiber_get_stack_top)
     @stack_bottom = GC.stack_bottom
     @name = "main"
 
@@ -113,11 +82,30 @@ class Fiber
     # Delete the resume event if it was used by `yield` or `sleep`
     @resume_event.try &.free
 
+    @alive = false
     Crystal::Scheduler.reschedule
   end
 
   def self.current
     Crystal::Scheduler.current_fiber
+  end
+
+  # The fiber's proc is currently running or didn't fully save its context. The
+  # fiber can't be resumed.
+  def running?
+    @context.resumable == 0
+  end
+
+  # The fiber's proc is currently not running and fully save its context. The
+  # fiber can be resumed safely.
+  def resumable?
+    @context.resumable == 1
+  end
+
+  # The fiber's proc has terminated, and the fiber is now considered dead. The
+  # fiber is impossible to resume, ever.
+  def dead?
+    @alive == false
   end
 
   def resume : Nil
@@ -148,7 +136,7 @@ class Fiber
 
   protected def push_gc_roots
     # Push the used section of the stack
-    GC.push_stack @stack_top, @stack_bottom
+    GC.push_stack @context.stack_top, @stack_bottom
   end
 
   # pushes the stack of pending fibers when the GC wants to collect memory:

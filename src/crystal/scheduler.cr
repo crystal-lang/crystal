@@ -57,9 +57,24 @@ class Crystal::Scheduler
   end
 
   protected def resume(fiber : Fiber) : Nil
+    validate_resumable(fiber)
     current, @current = @current, fiber
     GC.stack_bottom = fiber.@stack_bottom
-    Fiber.swapcontext(pointerof(current.@stack_top), fiber.@stack_top)
+    Fiber.swapcontext(pointerof(current.@context), pointerof(fiber.@context))
+  end
+
+  private def validate_resumable(fiber)
+    return if fiber.resumable?
+
+    if fiber.dead?
+      LibC.dprintf 2, "\nFATAL: tried to resume a dead fiber: #{fiber}\n"
+    else
+      LibC.dprintf 2, "\nFATAL: can't resume a running fiber: #{fiber}\n"
+    end
+
+    caller.each { |line| LibC.dprintf(2, "  from #{line}\n") }
+
+    exit 1
   end
 
   protected def reschedule : Nil
