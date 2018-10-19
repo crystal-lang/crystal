@@ -57,9 +57,27 @@ class Crystal::Scheduler
   end
 
   protected def resume(fiber : Fiber) : Nil
+    spin_until_resumable(fiber)
     current, @current = @current, fiber
     GC.stack_bottom = fiber.@stack_bottom
-    Fiber.swapcontext(pointerof(current.@stack_top), fiber.@stack_top)
+    Fiber.swapcontext(pointerof(current.@context), pointerof(fiber.@context))
+  end
+
+  private def spin_until_resumable(fiber)
+    # 1. 1st attempt will always succeed with a single thread (unless the fiber
+    #    is dead):
+    until fiber.resumable?
+      # 2. constant-time busy-loop, to avoid an expensive thread context switch:
+      #    relies on a magic number, but anything higher don't seem to improve
+      #    performance (on x86_64 at least):
+      99.times do
+        return if fiber.resumable?
+        raise Fiber::DeadFiberError.new("tried to resume a dead fiber", fiber) if fiber.dead?
+      end
+
+      # 3. give up, yield CPU time to another thread (avoid contention):
+      Thread.yield
+    end
   end
 
   protected def reschedule : Nil
