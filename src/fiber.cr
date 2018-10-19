@@ -3,7 +3,8 @@ require "c/sys/mman"
 require "c/sys/resource"
 {% end %}
 require "thread/linked_list"
-require "./fiber/context"
+require "fiber/context"
+require "fiber/stack_pool"
 
 # :nodoc:
 @[NoInline]
@@ -24,7 +25,6 @@ class Fiber
   STACK_SIZE = 8 * 1024 * 1024
 
   @@fibers = Thread::LinkedList(Fiber).new
-  @@stack_pool = [] of Void*
 
   @context : Context
   @stack : Void*
@@ -89,7 +89,7 @@ class Fiber
   end
 
   protected def self.allocate_stack
-    if pointer = @@stack_pool.pop?
+    if pointer = stack_pool.pop?
       return pointer
     end
 
@@ -110,16 +110,6 @@ class Fiber
   end
 
   # :nodoc:
-  def self.stack_pool_collect
-    return if @@stack_pool.size == 0
-    free_count = @@stack_pool.size > 1 ? @@stack_pool.size / 2 : 1
-    free_count.times do
-      stack = @@stack_pool.pop
-      LibC.munmap(stack, Fiber::STACK_SIZE)
-    end
-  end
-
-  # :nodoc:
   def run
     @proc.call
   rescue ex
@@ -131,7 +121,7 @@ class Fiber
     ex.inspect_with_backtrace(STDERR)
     STDERR.flush
   ensure
-    @@stack_pool << @stack
+    Fiber.stack_pool << @stack
 
     # Remove the current fiber from the linked list
     @@fibers.delete(self)

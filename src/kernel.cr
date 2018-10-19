@@ -475,7 +475,7 @@ end
   spawn do
     loop do
       sleep 5
-      Fiber.stack_pool_collect
+      Fiber.stack_pool.collect
     end
   end
 
