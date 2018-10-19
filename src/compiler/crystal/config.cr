@@ -38,19 +38,35 @@ module Crystal
 
       # Failed git and no explicit version set: ""
       # We inherit the version of the compiler building us for now.
-      return { {{Crystal::VERSION}}, nil } if git_version.empty?
+      return {next_patch({{Crystal::VERSION}}), nil} if git_version.empty?
 
       # Shallow clone with no tag in reach: abcd123
       # We assume being compiled with the latest released compiler
-      return {"#{{{Crystal::VERSION}}}+?", git_version} unless git_version.includes? '-'
+      return {"#{next_patch({{Crystal::VERSION}})}-c?", git_version} unless git_version.includes? '-'
 
       # On release: 0.0.0-0-gabcd123
       # Ahead of last release: 0.0.0-42-gabcd123
       tag, commits, sha = git_version.split('-')
-      sha = sha[1..-1]                                # Strip g
-      tag = "#{tag}+#{commits}" unless commits == "0" # Reappend commits since release unless we hit it exactly
+      sha = sha[1..-1] # Strip g
+      # Increase patch and reappend count of commits since release unless we hit it exactly
+      tag = "#{next_patch(tag)}-c#{commits}" unless commits == "0"
 
+      # If the build is dont on exact tag, use the tag as version as is
       {tag, sha}
+    end
+
+    private def self.next_patch(version : String) : String
+      m = version.match /^(\d+)\.(\d+)\.(\d+)(-([\w\.]+))?(\+(\w+))??$/
+      if m
+        major = m[1].to_i
+        minor = m[2].to_i
+        patch = m[3].to_i
+        "#{major}.#{minor}.#{patch + 1}"
+      else
+        # if the version does not match a semver let it go through
+        # might happen if the tag is not a M.m.p
+        version
+      end
     end
 
     def self.date
