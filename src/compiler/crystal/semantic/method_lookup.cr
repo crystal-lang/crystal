@@ -296,7 +296,7 @@ module Crystal
         end
       end
 
-      # If there's a restriction on a double splat, zero matching named arguments don't matc
+      # If there's a restriction on a double splat, zero matching named arguments don't match
       if double_splat && double_splat_restriction &&
          !double_splat_restriction.is_a?(DoubleSplat) && !found_unmatched_named_arg
         return nil

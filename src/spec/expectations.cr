@@ -343,25 +343,25 @@ module Spec
       Spec::MatchExpectation.new(value)
     end
 
-    # Creates an `Expectation` that  passes if actual includes *expected* (`.includes?`).
+    # Creates an `Expectation` that passes if actual includes *expected* (`.includes?`).
     # Works on collections and `String`.
     def contain(expected)
       Spec::ContainExpectation.new(expected)
     end
 
-    # Creates an `Expectation` that  passes if actual starts with *expected* (`.starts_with?`).
+    # Creates an `Expectation` that passes if actual starts with *expected* (`.starts_with?`).
     # Works on `String`.
     def start_with(expected)
       Spec::StartWithExpectation.new(expected)
     end
 
-    # Creates an `Expectation` that  passes if actual ends with *expected* (`.ends_with?`).
+    # Creates an `Expectation` that passes if actual ends with *expected* (`.ends_with?`).
     # Works on `String`.
     def end_with(expected)
       Spec::EndWithExpectation.new(expected)
     end
 
-    # Creates an `Expectation` that  passes if actual is empty (`.empty?`).
+    # Creates an `Expectation` that passes if actual is empty (`.empty?`).
     def be_empty
       Spec::BeEmptyExpectation.new
     end

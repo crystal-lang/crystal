@@ -205,7 +205,7 @@ struct Tuple
   end
 
   # Returns `true` if this tuple has the same size as the other tuple
-  # and their elements are equal to each other when  compared with `==`.
+  # and their elements are equal to each other when compared with `==`.
   #
   # ```
   # t1 = {1, "hello"}

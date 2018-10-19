@@ -188,7 +188,7 @@ require "crystal/system/time"
 # computer's wall clock has changed between both calls.
 #
 # As an alternative, the operating system also provides a monotonic clock.
-# It's time-line has no specfied starting point but is strictly linearly
+# Its time-line has no specfied starting point but is strictly linearly
 # increasing.
 #
 # This monotonic clock should always be used for measuring elapsed time.
