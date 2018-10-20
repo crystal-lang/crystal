@@ -14,6 +14,11 @@ class Crystal::Scheduler
     Thread.current.scheduler.@current
   end
 
+  def self.current_stack : Thread::Stack
+    thread = Thread.current
+    thread.scheduler.@current.try(&.stack) || thread.stack
+  end
+
   def self.enqueue(fiber : Fiber) : Nil
     Thread.current.scheduler.enqueue(fiber)
   end
