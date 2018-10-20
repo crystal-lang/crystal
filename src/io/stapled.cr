@@ -22,21 +22,21 @@ class IO::Stapled < IO
   def initialize(@reader : IO, @writer : IO, @sync_close : Bool = false)
   end
 
-  # Reads a single byte from `reader`.
+  # Reads a single byte from *reader*.
   def read_byte : UInt8?
     check_open
 
     @reader.read_byte
   end
 
-  # Reads a slice from `reader`.
+  # Reads a slice from *reader*.
   def read(slice : Bytes)
     check_open
 
     @reader.read(slice)
   end
 
-  # Gets a string from `reader`.
+  # Gets a string from *reader*.
   def gets(delimiter : Char, limit : Int, chomp = false) : String?
     check_open
 
@@ -50,21 +50,21 @@ class IO::Stapled < IO
     @reader.peek
   end
 
-  # Skips `reader`.
+  # Skips *reader*.
   def skip(bytes_count : Int) : Nil
     check_open
 
     @reader.skip(bytes_count)
   end
 
-  # Writes a byte to `writer`.
+  # Writes a byte to *writer*.
   def write_byte(byte : UInt8) : Nil
     check_open
 
     @writer.write_byte(byte)
   end
 
-  # Writes a slice to `writer`.
+  # Writes a slice to *writer*.
   def write(slice : Bytes) : Nil
     check_open
 
@@ -73,7 +73,7 @@ class IO::Stapled < IO
     @writer.write(slice)
   end
 
-  # Flushes `writer`.
+  # Flushes *writer*.
   def flush : self
     check_open
 
