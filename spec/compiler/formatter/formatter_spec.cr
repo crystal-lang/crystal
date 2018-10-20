@@ -698,10 +698,10 @@ describe Crystal::Formatter do
   assert_format "->( x , y )   { x }", "->(x, y) { x }"
   assert_format "->( x : Int32 , y )   { x }", "->(x : Int32, y) { x }"
 
-  # TODO remove quotes after 0.26.0
-  {:+, :-, :*, :/, :^, :>>, :<<, :|, :&, :"&+", :"&-", :"&*", :"&**"}.each do |sym|
+  {:+, :-, :*, :/, :^, :>>, :<<, :|, :&, :&+, :&-, :&*, :&**}.each do |sym|
     assert_format ":#{sym}"
   end
+
   assert_format ":\"foo bar\""
 
   assert_format %("foo" \\\n "bar"), %("foo" \\\n"bar")
