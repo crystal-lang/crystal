@@ -1,6 +1,6 @@
 require "./entry"
 
-class Logger
+struct Logger
   module Filter
     abstract def call(entry : Entry) : Bool
   end

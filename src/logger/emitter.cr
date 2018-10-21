@@ -1,6 +1,6 @@
 require "./entry"
 
-class Logger
+struct Logger
   module Emitter
     abstract def call(entry : Entry) : Nil
   end
@@ -19,19 +19,6 @@ class Logger
 
     def call(entry : Entry) : Nil
       @formatter.call(@io, entry)
-    end
-  end
-
-  class Forwarder
-    include Emitter
-
-    getter dest : Logger
-
-    def initialize(@dest)
-    end
-
-    def call(entry : Entry)
-      dest.log(entry)
     end
   end
 end

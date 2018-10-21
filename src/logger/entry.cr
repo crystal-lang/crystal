@@ -1,6 +1,6 @@
 require "./severity"
 
-class Logger
+struct Logger
   struct Entry
     getter message : String
     getter severity : Severity

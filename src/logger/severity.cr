@@ -1,4 +1,4 @@
-class Logger
+struct Logger
   # A logger severity level.
   enum Severity
     # Low-level information for developers
