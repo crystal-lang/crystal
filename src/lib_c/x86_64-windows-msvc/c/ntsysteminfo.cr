@@ -3,16 +3,13 @@ require "c/win_def"
 require "c/int_safe"
 
 lib LibC
-
-  #GetSystemInfo - https://docs.microsoft.com/en-us/windows/desktop/api/sysinfoapi/nf-sysinfoapi-getsysteminfo
-  
   fun NTGetSystemInfo = GetSystemInfo(system_info : SystemInfo*)
-  
-  PROCESSOR_ARCHITECTURE_AMD64 = 9
-  PROCESSOR_ARCHITECTURE_ARM = 5
-  PROCESSOR_ARCHITECTURE_ARM64 = 12
-  PROCESSOR_ARCHITECTURE_IA64 = 6
-  PROCESSOR_ARCHITECTURE_INTEL = 0
+
+  PROCESSOR_ARCHITECTURE_AMD64   =      9
+  PROCESSOR_ARCHITECTURE_ARM     =      5
+  PROCESSOR_ARCHITECTURE_ARM64   =     12
+  PROCESSOR_ARCHITECTURE_IA64    =      6
+  PROCESSOR_ARCHITECTURE_INTEL   =      0
   PROCESSOR_ARCHITECTURE_UNKNOWN = 0xffff
 
   struct ProcessorInfo
@@ -36,15 +33,11 @@ lib LibC
     dwAllocationGranularity : DWORD
     wProcessorLevel : WORD
     wProcessorRevision : WORD
-
   end
 
-
-  #GetComputerNameExA - https://docs.microsoft.com/en-us/windows/desktop/api/sysinfoapi/nf-sysinfoapi-getcomputernameexa
-
   fun NTGetComputerNameExA = GetComputerNameExA(computer_name_format : ComputerNameFormat,
-                                              machine_name : CHAR[NT_COMPUTER_NAME_SIZE]*,
-                                              machine_name_size_ptr : DWORD_PTR) : BOOLEAN
+                                                machine_name : CHAR[NT_COMPUTER_NAME_SIZE]*,
+                                                machine_name_size_ptr : DWORD_PTR) : BOOLEAN
 
   NT_COMPUTER_NAME_SIZE = 256
 
@@ -58,5 +51,4 @@ lib LibC
     ComputerNamePhysicalDomain
     ComputerNamePhysicalDnsFullyQualified
   end
-
 end
