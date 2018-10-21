@@ -1,18 +1,39 @@
 {% if flag?(:win32) %}
+  # The standard input file descriptor.
   STDIN  = IO::FileDescriptor.new(0)
+  # The standard output file descriptor. Gets flushed when a newline is written.
   STDOUT = IO::FileDescriptor.new(1).tap { |f| f.flush_on_newline = true }
+  # The standard error file descriptor. Gets flushed when a newline is written.
   STDERR = IO::FileDescriptor.new(2).tap { |f| f.flush_on_newline = true }
 {% else %}
   require "c/unistd"
 
+  # The standard input file descriptor.
   STDIN  = IO::FileDescriptor.from_stdio(0)
+  # The standard output file descriptor. Gets flushed when a newline is written.
   STDOUT = IO::FileDescriptor.from_stdio(1).tap { |f| f.flush_on_newline = true }
+  # The standard error file descriptor. Gets flushed when a newline is written.
   STDERR = IO::FileDescriptor.from_stdio(2).tap { |f| f.flush_on_newline = true }
 {% end %}
 
+# Path to the current temporary program.
 PROGRAM_NAME = String.new(ARGV_UNSAFE.value)
-ARGV         = Array.new(ARGC_UNSAFE - 1) { |i| String.new(ARGV_UNSAFE[1 + i]) }
-ARGF         = IO::ARGF.new(ARGV, STDIN)
+# The count of arguments passed to the program.
+ARGC = ARGC_UNSAFE - 1
+# The arguments passed to the program.
+ARGV = Array.new(ARGC) { |i| String.new(ARGV_UNSAFE[1 + i]) }
+# An `IO` which reads from `ARGV` if `ARGV` is specified.
+#
+# A file to read from: (`file`)
+# ```text
+# 123
+# ```
+#
+# ```
+# # Argument passed to the program: "file"
+# ARGF.gets_to_end # => "123"
+# ```
+ARGF = IO::ARGF.new(ARGV, STDIN)
 
 # Repeatedly executes the block.
 #
