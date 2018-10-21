@@ -16,7 +16,7 @@
   STDERR = IO::FileDescriptor.from_stdio(2).tap { |f| f.flush_on_newline = true }
 {% end %}
 
-# Path to the current temporary program.
+# Path to the current program.
 PROGRAM_NAME = String.new(ARGV_UNSAFE.value)
 
 # The arguments passed to the program.
