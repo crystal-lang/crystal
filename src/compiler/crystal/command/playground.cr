@@ -20,7 +20,7 @@ class Crystal::Command
       end
 
       opts.on("-v", "--verbose", "Display detailed information of executed code") do
-        Logger.filter = Logger::DEBUG
+        Logger.default_dispatcher.filter = Logger::DEBUG
       end
 
       opts.on("-h", "--help", "Show this message") do
