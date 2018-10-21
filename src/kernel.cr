@@ -18,11 +18,11 @@
 
 # Path to the current temporary program.
 PROGRAM_NAME = String.new(ARGV_UNSAFE.value)
-# The count of arguments passed to the program.
-ARGC = ARGC_UNSAFE - 1
+
 # The arguments passed to the program.
-ARGV = Array.new(ARGC) { |i| String.new(ARGV_UNSAFE[1 + i]) }
-# An `IO` which reads from `ARGV` if `ARGV` is specified.
+ARGV = Array.new(ARGC_UNSAFE - 1) { |i| String.new(ARGV_UNSAFE[1 + i]) }
+
+# An `IO` which reads from `ARGV` if arguments are specified.
 #
 # A file to read from: (`file`)
 # ```text
