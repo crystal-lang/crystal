@@ -175,20 +175,23 @@ describe Time do
     end
   end
 
-  it ".unix" do
-    seconds = 1439404155
-    time = Time.unix(seconds)
-    time.should eq(Time.utc(2015, 8, 12, 18, 29, 15))
-    time.to_unix.should eq(seconds)
-    time.utc?.should be_true
+  describe ".unix" do
+    it "with seconds" do
+      Time.unix(1439404155).should eq Time.utc(2015, 8, 12, 18, 29, 15)
+    end
+
+    it "with nanoseconds" do
+      Time.unix(1439404155, 123_345_789).should eq Time.utc(2015, 8, 12, 18, 29, 15, nanosecond: 123_345_789)
+    end
+
+    it "with result from #to_unix" do
+      now = Time.utc_now
+      Time.unix(now.to_unix, now.nanosecond).should eq now
+    end
   end
 
   it ".unix_ms" do
-    milliseconds = 1439404155000
-    time = Time.unix_ms(milliseconds)
-    time.should eq(Time.utc(2015, 8, 12, 18, 29, 15))
-    time.to_unix_ms.should eq(milliseconds)
-    time.utc?.should be_true
+    Time.unix_ms(1439404155123).should eq(Time.utc(2015, 8, 12, 18, 29, 15, nanosecond: 123_000_000))
   end
 
   describe ".local without arguments" do

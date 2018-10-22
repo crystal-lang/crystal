@@ -514,8 +514,8 @@ struct Time
   # ```
   # Time.unix(981173106) # => 2001-02-03 04:05:06 UTC
   # ```
-  def self.unix(seconds : Int) : Time
-    utc(seconds: UNIX_EPOCH.total_seconds + seconds, nanoseconds: 0)
+  def self.unix(seconds : Int, nanoseconds : Int32 = 0) : Time
+    utc(seconds: UNIX_EPOCH.total_seconds + seconds, nanoseconds: nanoseconds)
   end
 
   # Creates a new `Time` instance that corresponds to the number of
@@ -529,9 +529,10 @@ struct Time
   # ```
   def self.unix_ms(milliseconds : Int) : Time
     milliseconds = milliseconds.to_i64
-    seconds = UNIX_EPOCH.total_seconds + (milliseconds // 1_000)
+    seconds = milliseconds // 1_000
     nanoseconds = (milliseconds % 1000) * NANOSECONDS_PER_MILLISECOND
-    utc(seconds: seconds, nanoseconds: nanoseconds.to_i)
+
+    unix(seconds: seconds, nanoseconds: nanoseconds.to_i)
   end
 
   # Creates a new `Time` instance representing the current time from the
