@@ -35,12 +35,9 @@ module Crystal
                        {% else %}
                        {{ `cat #{__DIR__}/../../../VERSION`.stringify.chomp }}
                        {% end %}
-      git_describe = {{ `(git describe --tags --long --always 2>/dev/null) || true`.stringify.chomp }}
 
-      # git_describe: 0.0.0-42-gabcd123, 0.0.0-rc1-42-gabcd123
-      # sha: strip g from the last part if possible
-      last_dash = git_describe.rindex('-')
-      sha = last_dash ? git_describe[last_dash + 2..-1] : nil
+      sha = {{ `(git rev-parse --short HEAD 2> /dev/null) || true`.stringify.chomp }}
+      sha = nil if sha.empty?
 
       {config_version, sha}
     end
