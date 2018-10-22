@@ -71,7 +71,7 @@ struct Crystal::System::FileInfo < ::File::Info
   end
 
   def modification_time : ::Time
-    Time.from_filetime(@file_attributes.ftLastWriteTime)
+    ::Time.new(@file_attributes.ftLastWriteTime)
   end
 
   def owner : UInt32

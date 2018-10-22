@@ -30,11 +30,6 @@ module Crystal::System::Time
     {seconds, nanoseconds}
   end
 
-  def self.from_filetime(filetime) : ::Time
-    seconds, nanoseconds = filetime_to_seconds_and_nanoseconds(filetime)
-    ::Time.utc(seconds: seconds, nanoseconds: nanoseconds)
-  end
-
   @@performance_frequency : Int64 = begin
     ret = LibC.QueryPerformanceFrequency(out frequency)
     if ret == 0

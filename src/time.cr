@@ -492,8 +492,15 @@ struct Time
     new(seconds: seconds, nanoseconds: nanoseconds, location: Location::UTC)
   end
 
-  {% unless flag?(:win32) %}
-    # :nodoc:
+  {% if flag?(:win32) %}
+    # Creates a new `Time` instance from a `LibC::FILETIME`.
+    def self.new(filetime : LibC::FILETIME, location : Location = Location.local) : Time
+      seconds, nanoseconds = Crystal::System::Time.filetime_to_seconds_and_nanoseconds(filetime)
+
+      new(seconds: seconds, nanoseconds: nanoseconds, location: location)
+    end
+  {% else %}
+    # Creates a new `Time` instance from a `LibC::Timespec`.
     def self.new(time : LibC::Timespec, location : Location = Location.local)
       seconds = UNIX_EPOCH.total_seconds + time.tv_sec
       nanoseconds = time.tv_nsec.to_i
