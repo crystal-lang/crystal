@@ -471,13 +471,14 @@ struct Time
     local(year, month, day, hour, minute, second, nanosecond: nanosecond, location: Location::UTC)
   end
 
+  # :nodoc:
   # Creates a new `Time` instance that corresponds to the number of *seconds*
   # and *nanoseconds* elapsed from epoch (`0001-01-01 00:00:00.0 UTC`)
   # observed in *location*.
   #
   # Valid range for *seconds* is `0..315_537_897_599`.
   # For *nanoseconds* it is `0..999_999_999`.
-  def initialize(*, @seconds : Int64, @nanoseconds : Int32, @location : Location)
+  protected def initialize(*, @seconds : Int64, @nanoseconds : Int32, @location : Location)
     unless 0 <= offset_seconds <= MAX_SECONDS
       raise ArgumentError.new "Invalid time: seconds out of range"
     end
@@ -487,13 +488,14 @@ struct Time
     end
   end
 
+  # :nodoc:
   # Creates a new `Time` instance that corresponds to the number of *seconds*
   # and *nanoseconds* elapsed from epoch (`0001-01-01 00:00:00.0 UTC`)
   # in UTC.
   #
   # Valid range for *seconds* is `0..315_537_897_599`.
   # For *nanoseconds* it is `0..999_999_999`.
-  def self.utc(*, seconds : Int64, nanoseconds : Int32) : Time
+  protected def self.utc(*, seconds : Int64, nanoseconds : Int32) : Time
     new(seconds: seconds, nanoseconds: nanoseconds, location: Location::UTC)
   end
 
@@ -1445,10 +1447,12 @@ struct Time
     year * 365 + year // 4 - year // 100 + year // 400 + days_in_year
   end
 
+  # :nodoc:
   protected def total_seconds
     @seconds
   end
 
+  # :nodoc:
   protected def offset_seconds
     @seconds + offset
   end
