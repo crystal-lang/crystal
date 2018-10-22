@@ -6,7 +6,7 @@ class IO::FileDescriptor < IO
   include Crystal::System::FileDescriptor
   include IO::Buffered
 
-  # The raw file-descriptor. It is defined to be an `Int`, but it's size is
+  # The raw file-descriptor. It is defined to be an `Int`, but its size is
   # platform-specific.
   getter fd
 

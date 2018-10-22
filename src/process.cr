@@ -485,7 +485,7 @@ class Process
   # process.
   #
   # Security: `chroot` on its own is not an effective means of mitigation. At minimum
-  # the process needs to also drop privilages as soon as feasible after the `chroot`.
+  # the process needs to also drop privileges as soon as feasible after the `chroot`.
   # Changes to the directory hierarchy or file descriptors passed via `recvmsg(2)` from
   # outside the `chroot` jail may allow a restricted process to escape, even if it is
   # unprivileged.

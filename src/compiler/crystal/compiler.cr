@@ -625,7 +625,7 @@ module Crystal
         # old one. Generating an `.o` file is what takes most time.
         #
         # However, instead of directly generating the final `.o` file
-        # from the `.bc` file, we generate it to a termporary name (`.o.tmp`)
+        # from the `.bc` file, we generate it to a temporary name (`.o.tmp`)
         # and then we rename that file to `.o`. We do this because the compiler
         # could be interrupted while the `.o` file is being generated, leading
         # to a corrupted file that later would cause compilation issues.

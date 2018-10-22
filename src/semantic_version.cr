@@ -97,7 +97,7 @@ class SemanticVersion
       end
 
       identifiers.each_with_index do |item, i|
-        return 1 if i >= other.identifiers.size # larger = higher precedenc
+        return 1 if i >= other.identifiers.size # larger = higher precedence
 
         oitem = other.identifiers[i]
         r = compare item, oitem

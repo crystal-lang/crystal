@@ -18,9 +18,9 @@ class Socket
     #   because different servers may handle the `mail` or `http` services for
     #   example.
     # - *family* is optional and defaults to `Family::UNSPEC`
-    # - *type* is the intented socket type (e.g. `Type::STREAM`) and must be
+    # - *type* is the intended socket type (e.g. `Type::STREAM`) and must be
     #   specified.
-    # - *protocol* is the intented socket protocol (e.g. `Protocol::TCP`) and
+    # - *protocol* is the intended socket protocol (e.g. `Protocol::TCP`) and
     #   should be specified.
     #
     # Example:

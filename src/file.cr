@@ -360,7 +360,7 @@ class File < IO::FileDescriptor
     return "" if bytes[current] == SEPARATOR.ord
 
     # otherwise the current_char is '.'
-    # if previous is '/', then the pattern is prefix/.foo  and has no extension
+    # if previous is '/', then the pattern is prefix/.foo and has no extension
     return "" if bytes[current - 1] == SEPARATOR.ord
 
     # So the current char is '.',

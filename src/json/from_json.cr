@@ -234,7 +234,7 @@ end
 # or other variations of [ISO 8601](http://xml.coverpages.org/ISO-FDIS-8601.pdf).
 #
 # The JSON format itself does not specify a time data type, this method just
-# assumes that a string holding a ISO 8601 time format can be # interpreted as a
+# assumes that a string holding a ISO 8601 time format can be interpreted as a
 # time value.
 #
 # See `#to_json` for reference.

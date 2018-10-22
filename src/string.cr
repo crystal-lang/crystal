@@ -3491,7 +3491,7 @@ class String
         {@bytesize, @length}
       end
     else
-      # Iterate grpahemes to reverse the string,
+      # Iterate graphemes to reverse the string,
       # so combining characters are placed correctly
       String.new(bytesize) do |buffer|
         buffer += bytesize
