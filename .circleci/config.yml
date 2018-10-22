@@ -5,6 +5,7 @@ defaults:
   steps: &ci_steps
     - checkout
     - run: bin/ci prepare_system
+    - run: echo 'export CURRENT_TAG="$CIRCLE_TAG"' >> $BASH_ENV
     - run: bin/ci prepare_build
     - run: bin/ci build
 
@@ -21,6 +22,7 @@ jobs:
     steps:
       - checkout
       - run: bin/ci prepare_system
+      - run: echo 'export CURRENT_TAG="$CIRCLE_TAG"' >> $BASH_ENV
       - run: bin/ci prepare_build
       - run: bin/ci build
       - persist_to_workspace:

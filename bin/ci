@@ -88,6 +88,18 @@ prepare_build() {
   on_osx brew install jq
   on_osx OSX_LLVM_PACKAGE=`brew info --json=v1 crystal | jq '.[].dependencies | .[] | select(startswith("llvm"))'`
   on_osx brew link --force $OSX_LLVM_PACKAGE
+
+  on_tag verify_version
+}
+
+verify_version() {
+  # If building a tag, check it matches with file
+  FILE_VERSION=`cat VERSION`
+
+  if [ "$FILE_VERSION" != "$CURRENT_TAG" ]
+  then
+    fail "VERSION ($FILE_VERSION) does not match GIT TAG ($CURRENT_TAG)"
+  fi
 }
 
 with_build_env() {
