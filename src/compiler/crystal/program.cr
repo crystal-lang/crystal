@@ -243,9 +243,7 @@ module Crystal
 
     # Defines a predefined constant in the Crystal module, such as BUILD_DATE and VERSION.
     private def define_crystal_constants
-      version, sha = Crystal::Config.version_and_sha
-
-      if sha
+      if sha = Crystal::Config.sha
         define_crystal_string_constant "BUILD_COMMIT", sha
       else
         define_crystal_nil_constant "BUILD_COMMIT"
@@ -256,7 +254,7 @@ module Crystal
       define_crystal_string_constant "DEFAULT_PATH", Crystal::Config.path
       define_crystal_string_constant "DESCRIPTION", Crystal::Config.description
       define_crystal_string_constant "PATH", Crystal::CrystalPath.default_path
-      define_crystal_string_constant "VERSION", version
+      define_crystal_string_constant "VERSION", Crystal::Config.version
       define_crystal_string_constant "LLVM_VERSION", Crystal::Config.llvm_version
     end
 

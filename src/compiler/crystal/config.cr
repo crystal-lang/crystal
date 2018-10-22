@@ -5,7 +5,11 @@ module Crystal
     end
 
     def self.version
-      version_and_sha.first
+      {% if flag?(:windows) %}
+        {{ `type #{__DIR__}/../../../VERSION`.stringify.chomp }}
+      {% else %}
+        {{ `cat #{__DIR__}/../../../VERSION`.stringify.chomp }}
+      {% end %}
     end
 
     def self.llvm_version
@@ -13,7 +17,6 @@ module Crystal
     end
 
     def self.description
-      version, sha = version_and_sha
       formatted_sha = "[#{sha}] " if sha
       <<-DOC
         Crystal #{version} #{formatted_sha}(#{date})
@@ -23,23 +26,11 @@ module Crystal
         DOC
     end
 
-    @@version_and_sha : {String, String?}?
-
-    def self.version_and_sha
-      @@version_and_sha ||= compute_version_and_sha
-    end
-
-    private def self.compute_version_and_sha
-      config_version = {% if flag?(:windows) %}
-                       {{ `type #{__DIR__}/../../../VERSION`.stringify.chomp }}
-                       {% else %}
-                       {{ `cat #{__DIR__}/../../../VERSION`.stringify.chomp }}
-                       {% end %}
-
+    def self.sha
       sha = {{ `(git rev-parse --short HEAD 2> /dev/null) || true`.stringify.chomp }}
       sha = nil if sha.empty?
 
-      {config_version, sha}
+      sha
     end
 
     def self.date
