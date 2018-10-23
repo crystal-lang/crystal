@@ -399,7 +399,20 @@ class Crystal::Doc::Type
   end
 
   def doc
-    @type.doc
+    if inherit_docs?
+      superclass.doc
+    else
+      @type.doc
+    end
+  end
+
+  def inherit_docs?(str : String?)
+    return false unless str
+    str.startswith?(":inherit:") || str.starts_with?("inherit")
+  end
+
+  def inherit_docs?
+    inherit_docs? @type.doc.try &.strip
   end
 
   def lookup_path(path_or_names : Path | Array(String))
