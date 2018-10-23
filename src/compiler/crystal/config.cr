@@ -27,7 +27,7 @@ module Crystal
     end
 
     def self.sha
-      sha = {{ `(git rev-parse --short HEAD 2> /dev/null) || true`.stringify.chomp }}
+      sha = {{ env("CRYSTAL_CONFIG_SHA") || "" }}
       sha = nil if sha.empty?
 
       sha
