@@ -17,7 +17,7 @@ module Crystal
     end
 
     def self.description
-      formatted_sha = "[#{sha}] " if sha
+      formatted_sha = "[#{build_commit}] " if build_commit
       <<-DOC
         Crystal #{version} #{formatted_sha}(#{date})
 
@@ -26,8 +26,8 @@ module Crystal
         DOC
     end
 
-    def self.sha
-      sha = {{ env("CRYSTAL_CONFIG_SHA") || "" }}
+    def self.build_commit
+      sha = {{ env("CRYSTAL_CONFIG_BUILD_COMMIT") || "" }}
       sha = nil if sha.empty?
 
       sha
