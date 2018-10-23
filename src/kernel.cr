@@ -1,30 +1,49 @@
 {% if flag?(:win32) %}
-  # The standard input file descriptor.
+  # The standard input file descriptor. Contains data piped to the program.
   STDIN  = IO::FileDescriptor.new(0)
+
   # The standard output file descriptor. Gets flushed when a newline is written.
+  #
+  # Typically used to output data and information.
   STDOUT = IO::FileDescriptor.new(1).tap { |f| f.flush_on_newline = true }
+
   # The standard error file descriptor. Gets flushed when a newline is written.
+  #
+  # Typically used to output error messages and diagnostics.
   STDERR = IO::FileDescriptor.new(2).tap { |f| f.flush_on_newline = true }
 {% else %}
   require "c/unistd"
 
-  # The standard input file descriptor.
+  # The standard input file descriptor. Contains data piped to the program.
   STDIN  = IO::FileDescriptor.from_stdio(0)
+
   # The standard output file descriptor. Gets flushed when a newline is written.
+  #
+  # Typically used to output data and information.
   STDOUT = IO::FileDescriptor.from_stdio(1).tap { |f| f.flush_on_newline = true }
+
   # The standard error file descriptor. Gets flushed when a newline is written.
+  #
+  # Typically used to output error messages and diagnostics.
   STDERR = IO::FileDescriptor.from_stdio(2).tap { |f| f.flush_on_newline = true }
 {% end %}
 
-# The name of the current program.
+# The name, the program was called with.
 PROGRAM_NAME = String.new(ARGV_UNSAFE.value)
 
-# The arguments passed to the program.
+# An array of arguments passed to the program.
 ARGV = Array.new(ARGC_UNSAFE - 1) { |i| String.new(ARGV_UNSAFE[1 + i]) }
 
-# An `IO` which reads from `ARGV` if arguments are specified.
+# An `IO` for reading files from `ARGV`.
 #
-# A file to read from: (`file`)
+# `ARGF` assumes that `ARGV` contains only filenames.
+#
+# After a file from `ARGV` has been read, it's removed from `ARGV`.
+#
+# Example:
+#
+# A file to read from: (called `file`)
+#
 # ```text
 # 123
 # ```
@@ -32,6 +51,28 @@ ARGV = Array.new(ARGC_UNSAFE - 1) { |i| String.new(ARGV_UNSAFE[1 + i]) }
 # ```
 # # Argument passed to the program: "file"
 # ARGF.gets_to_end # => "123"
+# ARGV # => []
+# ```
+#
+# You can manipulate `ARGV` yourself to control what `ARGF` operates on.
+# If you remove a file from `ARGV`, it is ignored by `ARGF`; if you add files to `ARGV`, `ARGF` will read from it.
+#
+# ```
+# ARGV.replace ["file1"]
+# ARGF.gets_to_end # => The content of file1
+# ARGV # => []
+# ARGV << "file2"
+# ARGF.gets_to_end # => The content of file2
+# ```
+#
+# If `ARGV` is empty, `ARGF` reads from `STDIN` instead:
+#
+# ```
+# echo "hello" | crystal eval "print ARGF.gets_to_end"
+# ```
+# prints:
+# ```text
+# hello
 # ```
 ARGF = IO::ARGF.new(ARGV, STDIN)
 
@@ -64,7 +105,7 @@ def read_line(*args, **options)
   STDIN.read_line(*args, **options)
 end
 
-# Prints objects to STDOUT and then invokes `STDOUT.flush`.
+# Prints objects to `STDOUT` and then invokes `STDOUT.flush`.
 #
 # See also: `IO#print`.
 def print(*objects : _) : Nil
