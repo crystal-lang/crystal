@@ -10,7 +10,15 @@ class Crystal::Doc::Constant
   end
 
   def doc
-    @const.doc
+    if inherit_docs?(@const.doc.try &.split)
+      @type.constants.find { |cnst| cnst === @const }.try &.doc
+    else  
+      @const.doc
+    end
+  end
+  
+  def inherit_docs?(str : String)
+    str.starts_with?(":inherit:") || str.starts_with?("inherit")
   end
 
   def name
