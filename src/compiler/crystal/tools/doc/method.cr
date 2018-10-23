@@ -20,7 +20,15 @@ class Crystal::Doc::Method
   end
 
   def doc
-    @def.doc
+    if inherit_docs? @def.doc
+      (@type.superclass.lookup_method(name) || @type.superclass.lookup_class_method(name)).doc
+    else
+      @def.doc
+    end
+  end
+    
+  def inherit_docs?(str : String)
+    str.starts_with?(":inherit:") || str.starts_with?("inherit")
   end
 
   def source_link
