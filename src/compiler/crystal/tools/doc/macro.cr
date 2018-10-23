@@ -20,7 +20,15 @@ class Crystal::Doc::Macro
   end
 
   def doc
-    @macro.doc
+    if inherit_docs?(@macro.doc.try &.strip)
+      @type.lookup_macro(name).doc
+    else
+      @macro.doc
+    end
+  end
+    
+  def inherit_docs?(str : String)
+    str.starts_with?(":inherit:") || str.starts_with?("inherit")
   end
 
   def source_link
