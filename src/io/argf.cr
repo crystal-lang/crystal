@@ -3,6 +3,8 @@ class IO::ARGF < IO
   @path : String?
   @current_io : IO?
 
+  property argv : Array(String)
+
   def initialize(@argv : Array(String), @stdin : IO)
     @path = nil
     @current_io = nil
