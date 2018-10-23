@@ -28,7 +28,7 @@ class Crystal::Doc::Generator
     },
   }
 
-  def initialize(@program : Program, @included_dirs : Array(String), @output_dir : String, @canonical_base_url : String?)
+  def initialize(@program : Program, @included_dirs : Array(String), @output_dir : String, @output_format : String, sss @canonical_base_url : String?)
     @base_dir = Dir.current.chomp
     @types = {} of Crystal::Type => Doc::Type
     @repo_name = ""
@@ -46,14 +46,35 @@ class Crystal::Doc::Generator
       types.insert 0, program_type
     end
 
-    generate_docs program_type, types
+    if @output_format == "json"
+      generate_docs_json program_type, types
+    else
+      generate_docs_html program_type, types
+    end
   end
 
   def program_type
     type(@program)
   end
 
-  def generate_docs(program_type, types)
+  def generate_docs_json(program_type, types)
+    if File.file?("README.md")
+      filename = "README.md"
+    elsif File.file?("Readme.md")
+      filename = "Readme.md"
+    end
+
+    if filename
+      raw_body = File.read(filename)
+    else
+      raw_body = ""
+    end
+
+    json = Main.new(raw_body, Type.new(self, @program), repository_name)
+    puts json
+  end
+
+  def generate_docs_html(program_type, types)
     copy_files
     generate_types_docs types, @output_dir, types
     generate_readme program_type, types
