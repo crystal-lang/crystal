@@ -72,6 +72,9 @@ class Crystal::Program
     @progress_tracker.stage("Semantic (abstract def check)") do
       AbstractDefChecker.new(self).run
     end
+    @progress_tracker.stage("Semantic (override check)") do
+      OverrideChecker.new(self).run
+    end
     {node, processor}
   end
 end

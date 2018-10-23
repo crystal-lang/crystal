@@ -842,9 +842,26 @@ module Crystal
       end
 
       # item has a new signature, less strict than the existing defs with same name.
+      raise_if_redefines(item)
       list << item
 
       nil
+    end
+
+    private def raise_if_redefines(def_with_metadata)
+      a_def = def_with_metadata.def
+
+      if a_def.redefines?
+        msg = "method has Redefine annotation but doesn't redefine"
+
+        if @defs.not_nil![a_def.name].empty?
+          msg += " (no such method)"
+        else
+          msg += " (type restrictions don't match)"
+        end
+
+        a_def.raise(msg)
+      end
     end
 
     def add_macro(a_macro)

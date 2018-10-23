@@ -135,6 +135,12 @@ module Crystal
     # `true` if this def has the `@[Naked]` annotation
     property? naked = false
 
+    # `true` if this def has the `@[Redefine]` annotation
+    property? redefines = false
+
+    # `true` if this def has the `@[Override]` annotation
+    property? overrides = false
+
     # Is this a `new` method that was expanded from an initialize?
     property? new = false
 

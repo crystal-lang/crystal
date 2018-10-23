@@ -1045,6 +1045,10 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
         node.returns_twice = true
       when @program.raises_annotation
         node.raises = true
+      when @program.redefine_annotation
+        node.redefines = true
+      when @program.override_annotation
+        node.overrides = true
       else
         yield annotation_type, ann
       end
