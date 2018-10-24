@@ -23,7 +23,7 @@ class Crystal::Command
       opts.on("--output=DIR", "-o DIR", "Set the output directory (default: #{output_directory})") do |value|
         output_directory = value
       end
-      opts.on("-f FORMAT", "--format=FORMAT", "Set the output format [json, html] (default: #{output_format})") do |value|
+      opts.on("--format=FORMAT", "-f FORMAT", "Set the output format [#{VALID_OUTPUT_FORMATS.join(", ")}] (default: #{output_format})") do |value|
         if !VALID_OUTPUT_FORMATS.includes? value
           STDERR.puts "Invalid format '#{value}'"
           puts opts

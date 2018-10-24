@@ -57,30 +57,7 @@ class Crystal::Doc::Generator
     type(@program)
   end
 
-  def generate_docs_json(program_type, types)
-    if File.file?("README.md")
-      filename = "README.md"
-    elsif File.file?("Readme.md")
-      filename = "Readme.md"
-    end
-
-    if filename
-      raw_body = File.read(filename)
-    else
-      raw_body = ""
-    end
-
-    json = Main.new(raw_body, Type.new(self, @program), repository_name)
-    puts json
-  end
-
-  def generate_docs_html(program_type, types)
-    copy_files
-    generate_types_docs types, @output_dir, types
-    generate_readme program_type, types
-  end
-
-  def generate_readme(program_type, types)
+  def read_readme
     if File.file?("README.md")
       filename = "README.md"
     elsif File.file?("Readme.md")
@@ -94,6 +71,25 @@ class Crystal::Doc::Generator
       raw_body = ""
       body = ""
     end
+
+    {raw_body, body}
+  end
+
+  def generate_docs_json(program_type, types)
+    raw_body, body = read_readme
+
+    json = Main.new(raw_body, Type.new(self, @program), repository_name)
+    puts json
+  end
+
+  def generate_docs_html(program_type, types)
+    copy_files
+    generate_types_docs types, @output_dir, types
+    generate_readme program_type, types
+  end
+
+  def generate_readme(program_type, types)
+    raw_body, body = read_readme
 
     File.write File.join(@output_dir, "index.html"), MainTemplate.new(body, types, repository_name, @canonical_base_url)
 
