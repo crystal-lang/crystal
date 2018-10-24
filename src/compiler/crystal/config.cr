@@ -5,7 +5,11 @@ module Crystal
     end
 
     def self.version
-      version_and_sha.first
+      {% if flag?(:windows) %}
+        {{ `type #{__DIR__}/../../../VERSION`.stringify.chomp }}
+      {% else %}
+        {{ `cat #{__DIR__}/../../../VERSION`.stringify.chomp }}
+      {% end %}
     end
 
     def self.llvm_version
@@ -13,8 +17,7 @@ module Crystal
     end
 
     def self.description
-      version, sha = version_and_sha
-      formatted_sha = "[#{sha}] " if sha
+      formatted_sha = "[#{build_commit}] " if build_commit
       <<-DOC
         Crystal #{version} #{formatted_sha}(#{date})
 
@@ -23,34 +26,11 @@ module Crystal
         DOC
     end
 
-    @@version_and_sha : {String, String?}?
+    def self.build_commit
+      sha = {{ env("CRYSTAL_CONFIG_BUILD_COMMIT") || "" }}
+      sha = nil if sha.empty?
 
-    def self.version_and_sha
-      @@version_and_sha ||= compute_version_and_sha
-    end
-
-    private def self.compute_version_and_sha
-      # Set explicitly: 0.0.0, ci, HEAD, whatever
-      config_version = {{env("CRYSTAL_CONFIG_VERSION")}}
-      return {config_version, nil} if config_version
-
-      git_version = {{`(git describe --tags --long --always 2>/dev/null) || true`.stringify.chomp}}
-
-      # Failed git and no explicit version set: ""
-      # We inherit the version of the compiler building us for now.
-      return { {{Crystal::VERSION}}, nil } if git_version.empty?
-
-      # Shallow clone with no tag in reach: abcd123
-      # We assume being compiled with the latest released compiler
-      return {"#{{{Crystal::VERSION}}}+?", git_version} unless git_version.includes? '-'
-
-      # On release: 0.0.0-0-gabcd123
-      # Ahead of last release: 0.0.0-42-gabcd123
-      tag, commits, sha = git_version.split('-')
-      sha = sha[1..-1]                                # Strip g
-      tag = "#{tag}+#{commits}" unless commits == "0" # Reappend commits since release unless we hit it exactly
-
-      {tag, sha}
+      sha
     end
 
     def self.date

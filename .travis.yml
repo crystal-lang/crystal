@@ -23,6 +23,7 @@ before_install:
   - bin/ci prepare_system
 
 install:
+  - export CURRENT_TAG=$TRAVIS_TAG
   - bin/ci prepare_build
 
 script:
