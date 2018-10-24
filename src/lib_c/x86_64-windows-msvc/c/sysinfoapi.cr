@@ -3,7 +3,7 @@ require "c/win_def"
 require "c/int_safe"
 
 lib LibC
-  fun NTGetSystemInfo = GetSystemInfo(system_info : SystemInfo*)
+  fun GetNativeSystemInfo = GetNativeSystemInfo(system_info : SYSTEM_INFO*)
 
   PROCESSOR_ARCHITECTURE_AMD64   =      9
   PROCESSOR_ARCHITECTURE_ARM     =      5
@@ -12,18 +12,18 @@ lib LibC
   PROCESSOR_ARCHITECTURE_INTEL   =      0
   PROCESSOR_ARCHITECTURE_UNKNOWN = 0xffff
 
-  struct ProcessorInfo
+  struct PROCESSOR_INFO
     wProcessorArchitecture : WORD
     wReserved : WORD
   end
 
-  union OEMProcessorInfo
+  union OEM_PROCESSOR_INFO
     dwOemId : DWORD
-    processorInfo : ProcessorInfo
+    processorInfo : PROCESSOR_INFO
   end
 
-  struct SystemInfo
-    oemProcessorInfo : OEMProcessorInfo
+  struct SYSTEM_INFO
+    oemProcessorInfo : OEM_PROCESSOR_INFO
     dwPageSize : DWORD
     lpMinimumApplicationAddress : LPVOID
     lpMaximumApplicationAddress : LPVOID
@@ -35,13 +35,13 @@ lib LibC
     wProcessorRevision : WORD
   end
 
-  fun NTGetComputerNameExA = GetComputerNameExA(computer_name_format : ComputerNameFormat,
-                                                machine_name : CHAR[NT_COMPUTER_NAME_SIZE]*,
-                                                machine_name_size_ptr : DWORD_PTR) : BOOLEAN
+  fun GetComputerNameExW = GetComputerNameExW(computer_name_format : COMPUTER_NAME_FORMAT,
+                                              machine_name : WCHAR[MAX_COMPUTER_NAME_SIZE]*,
+                                              machine_name_size_ptr : DWORD_PTR) : BOOLEAN
 
-  NT_COMPUTER_NAME_SIZE = 256
+  MAX_COMPUTER_NAME_SIZE = 255
 
-  enum ComputerNameFormat
+  enum COMPUTER_NAME_FORMAT
     ComputerNameNetBIOS
     ComputerNameDnsHostname
     ComputerNameDnsDomain

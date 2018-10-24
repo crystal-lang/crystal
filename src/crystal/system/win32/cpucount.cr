@@ -1,8 +1,8 @@
-require "c/ntsysteminfo"
+require "c/sysinfoapi"
 
 module Crystal::System
   def self.cpu_count
-    LibC.NTGetSystemInfo(out system_info)
+    LibC.GetNativeSystemInfo(out system_info)
     system_info.dwNumberOfProcessors
   end
 end
