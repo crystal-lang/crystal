@@ -28,7 +28,7 @@ class Crystal::Doc::Generator
     },
   }
 
-  def initialize(@program : Program, @included_dirs : Array(String), @output_dir : String, @output_format : String, sss @canonical_base_url : String?)
+  def initialize(@program : Program, @included_dirs : Array(String), @output_dir : String, @output_format : String, @canonical_base_url : String?)
     @base_dir = Dir.current.chomp
     @types = {} of Crystal::Type => Doc::Type
     @repo_name = ""
