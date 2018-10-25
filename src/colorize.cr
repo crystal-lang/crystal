@@ -174,42 +174,24 @@ module Colorize
 
     def self.from_lscolors?(color : String) : Color?
       case color
-      when "a"
-        Black
-      when "b"
-        Red
-      when "c"
-        Green
-      when "d"
-        Yellow
-      when "e"
-        Blue
-      when "f"
-        Magenta
-      when "g"
-        Cyan
-      when "h"
-        LightGray
-      when "A"
-        DarkGray
-      when "B"
-        LightRed
-      when "C"
-        LightGreen
-      when "D"
-        LightYellow
-      when "E"
-        LightBlue
-      when "F"
-        LightMagenta
-      when "G"
-        LightCyan
-      when "H"
-        White
-      when "x"
-        Default
-      else
-        nil
+      when "a" then Black
+      when "b" then Red
+      when "c" then Green
+      when "d" then Yellow
+      when "e" then Blue
+      when "f" then Magenta
+      when "g" then Cyan
+      when "h" then LightGray
+      when "A" then DarkGray
+      when "B" then LightRed
+      when "C" then LightGreen
+      when "D" then LightYellow
+      when "E" then LightBlue
+      when "F" then LightMagenta
+      when "G" then LightCyan
+      when "H" then White
+      when "x" then Default
+      else          nil
       end
     end
   end
