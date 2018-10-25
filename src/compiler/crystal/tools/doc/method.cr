@@ -19,8 +19,88 @@ class Crystal::Doc::Method
     @def.args
   end
 
+  private record DocInfo, doc : String?, copied_from : Type?
+
+  private getter(doc_info : DocInfo) do
+    compute_doc_info
+  end
+
+  # Returns this method's docs ready to be shown (before formatting)
+  # in the UI. This includes copiying docs from previous def or
+  # ancestors and replacing `:inherit:` with the ancestor docs.
+  # This docs not include the "Description copied from ..." banner
+  # in case it's needed.
   def doc
-    @def.doc
+    doc_info.doc
+  end
+
+  # Returns the type this method's docs are copied from, but
+  # only if this method has no docs at all. In this case
+  # the docs will be copied from this type and a
+  # "Description copied from ..." will be added before the docs.
+  def doc_copied_from : Type?
+    doc_info.copied_from
+  end
+
+  private def compute_doc_info : DocInfo?
+    def_doc = @def.doc
+    if def_doc
+      has_inherit = def_doc =~ /^\s*:inherit:\s*$/m
+      if has_inherit
+        ancestor_info = self.ancestor_doc_info
+        if ancestor_info
+          def_doc = def_doc.gsub(/^[ \t]*:inherit:[ \t]*$/m, ancestor_info.doc.not_nil!)
+          return DocInfo.new(def_doc, nil)
+        end
+
+        # TODO: warn about `:inherit:` not finding an ancestor
+      end
+
+      return DocInfo.new(def_doc, nil)
+    end
+
+    previous_docs = previous_def_docs(@def)
+    if previous_docs
+      return DocInfo.new(def_doc, nil)
+    end
+
+    ancestor_info = self.ancestor_doc_info
+    return ancestor_info if ancestor_info
+
+    DocInfo.new(nil, nil)
+  end
+
+  private def previous_def_docs(a_def)
+    while previous = a_def.previous
+      a_def = previous.def
+      doc = a_def.doc
+      return doc if doc
+    end
+
+    nil
+  end
+
+  private def ancestor_doc_info
+    def_with_metadata = DefWithMetadata.new(@def)
+
+    # Check ancestors
+    type.type.ancestors.each do |ancestor|
+      other_defs_with_metadata = ancestor.defs.try &.[@def.name]?
+      other_defs_with_metadata.try &.each do |other_def_with_metadata|
+        # If we find an ancestor method with the same signature
+        if def_with_metadata.restriction_of?(other_def_with_metadata, type.type) &&
+           other_def_with_metadata.restriction_of?(def_with_metadata, ancestor)
+          other_def = other_def_with_metadata.def
+          doc = other_def.doc
+          return DocInfo.new(doc, @generator.type(ancestor)) if doc
+
+          doc = previous_def_docs(other_def)
+          return DocInfo.new(doc, nil) if doc
+        end
+      end
+    end
+
+    nil
   end
 
   def source_link
