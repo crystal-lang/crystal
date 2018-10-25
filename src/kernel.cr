@@ -2,14 +2,18 @@
   # The standard input file descriptor. Contains data piped to the program.
   STDIN  = IO::FileDescriptor.new(0)
 
-  # The standard output file descriptor. Gets flushed when a newline is written.
+  # The standard output file descriptor.
   #
   # Typically used to output data and information.
+  #
+  # NOTE: Gets flushed when a newline is written.
   STDOUT = IO::FileDescriptor.new(1).tap { |f| f.flush_on_newline = true }
 
-  # The standard error file descriptor. Gets flushed when a newline is written.
+  # The standard error file descriptor.
   #
   # Typically used to output error messages and diagnostics.
+  #
+  # NOTE: Gets flushed when a newline is written.
   STDERR = IO::FileDescriptor.new(2).tap { |f| f.flush_on_newline = true }
 {% else %}
   require "c/unistd"
@@ -17,14 +21,18 @@
   # The standard input file descriptor. Contains data piped to the program.
   STDIN  = IO::FileDescriptor.from_stdio(0)
 
-  # The standard output file descriptor. Gets flushed when a newline is written.
+  # The standard output file descriptor.
   #
   # Typically used to output data and information.
+  #
+  # NOTE: Gets flushed when a newline is written.
   STDOUT = IO::FileDescriptor.from_stdio(1).tap { |f| f.flush_on_newline = true }
 
-  # The standard error file descriptor. Gets flushed when a newline is written.
+  # The standard error file descriptor.
   #
   # Typically used to output error messages and diagnostics.
+  #
+  # NOTE: Gets flushed when a newline is written.
   STDERR = IO::FileDescriptor.from_stdio(2).tap { |f| f.flush_on_newline = true }
 {% end %}
 
