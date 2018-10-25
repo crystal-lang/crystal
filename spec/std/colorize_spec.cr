@@ -209,8 +209,8 @@ describe "colorize" do
     Colorize::ColorANSI.from_lscolors("H").should eq(Colorize::ColorANSI::White)
     Colorize::ColorANSI.from_lscolors("x").should eq(Colorize::ColorANSI::Default)
 
-    expect_raises(Exception, "Nil assertion failed") do
-      Colorize::ColorANSI.from_lscolors("").should eq(nil)
+    expect_raises(Colorize::LSColorNotFoundException, "\"\" in an invalid LSCOLOR") do
+      Colorize::ColorANSI.from_lscolors("")
     end
 
     Colorize::ColorANSI.from_lscolors?("a").should eq(Colorize::ColorANSI::Black)

@@ -141,6 +141,8 @@ end
 module Colorize
   alias Color = ColorANSI | Color256 | ColorRGB
 
+  class LSColorNotFoundException < Exception; end
+
   enum ColorANSI
     Default      = 39
     Black        = 30
@@ -168,11 +170,13 @@ module Colorize
       (to_i + 10).to_s io
     end
 
-    def self.from_lscolors(color : String) : Color
-      from_lscolors?(color).not_nil!
+    def self.from_lscolors?(color : String) : Color?
+      from_lscolors(color)
+    rescue e : LSColorNotFoundException
+      nil
     end
 
-    def self.from_lscolors?(color : String) : Color?
+    def self.from_lscolors(color : String) : Color
       case color
       when "a" then Black
       when "b" then Red
@@ -191,6 +195,7 @@ module Colorize
       when "G" then LightCyan
       when "H" then White
       when "x" then Default
+      else          raise LSColorNotFoundException.new("\"#{color}\" in an invalid LSCOLOR")
       end
     end
   end
