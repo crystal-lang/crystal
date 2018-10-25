@@ -65,20 +65,17 @@ class Crystal::Doc::Generator
     end
 
     if filename
-      raw_body = File.read(filename)
-      body = doc(program_type, raw_body)
+      content = File.read(filename)
     else
-      raw_body = ""
-      body = ""
+      content = ""
     end
 
-    {raw_body, body}
+    content
   end
 
   def generate_docs_json(program_type, types)
-    raw_body, body = read_readme
-
-    json = Main.new(raw_body, Type.new(self, @program), repository_name)
+    readme = read_readme
+    json = Main.new(readme, Type.new(self, @program), repository_name)
     puts json
   end
 
@@ -89,7 +86,8 @@ class Crystal::Doc::Generator
   end
 
   def generate_readme(program_type, types)
-    raw_body, body = read_readme
+    raw_body = read_readme
+    body = doc(program_type, raw_body)
 
     File.write File.join(@output_dir, "index.html"), MainTemplate.new(body, types, repository_name, @canonical_base_url)
 
