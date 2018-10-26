@@ -171,12 +171,6 @@ module Colorize
     end
 
     def self.from_lscolors?(color : String) : Color?
-      from_lscolors(color)
-    rescue e : LSColorNotFoundException
-      nil
-    end
-
-    def self.from_lscolors(color : String) : Color
       case color
       when "a" then Black
       when "b" then Red
@@ -195,7 +189,6 @@ module Colorize
       when "G" then LightCyan
       when "H" then White
       when "x" then Default
-      else          raise LSColorNotFoundException.new("\"#{color}\" in an invalid LSCOLOR")
       end
     end
   end

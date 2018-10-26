@@ -191,28 +191,6 @@ describe "colorize" do
   end
 
   it "converts from LSCOLORS" do
-    Colorize::ColorANSI.from_lscolors("a").should eq(Colorize::ColorANSI::Black)
-    Colorize::ColorANSI.from_lscolors("b").should eq(Colorize::ColorANSI::Red)
-    Colorize::ColorANSI.from_lscolors("c").should eq(Colorize::ColorANSI::Green)
-    Colorize::ColorANSI.from_lscolors("d").should eq(Colorize::ColorANSI::Yellow)
-    Colorize::ColorANSI.from_lscolors("e").should eq(Colorize::ColorANSI::Blue)
-    Colorize::ColorANSI.from_lscolors("f").should eq(Colorize::ColorANSI::Magenta)
-    Colorize::ColorANSI.from_lscolors("g").should eq(Colorize::ColorANSI::Cyan)
-    Colorize::ColorANSI.from_lscolors("h").should eq(Colorize::ColorANSI::LightGray)
-    Colorize::ColorANSI.from_lscolors("A").should eq(Colorize::ColorANSI::DarkGray)
-    Colorize::ColorANSI.from_lscolors("B").should eq(Colorize::ColorANSI::LightRed)
-    Colorize::ColorANSI.from_lscolors("C").should eq(Colorize::ColorANSI::LightGreen)
-    Colorize::ColorANSI.from_lscolors("D").should eq(Colorize::ColorANSI::LightYellow)
-    Colorize::ColorANSI.from_lscolors("E").should eq(Colorize::ColorANSI::LightBlue)
-    Colorize::ColorANSI.from_lscolors("F").should eq(Colorize::ColorANSI::LightMagenta)
-    Colorize::ColorANSI.from_lscolors("G").should eq(Colorize::ColorANSI::LightCyan)
-    Colorize::ColorANSI.from_lscolors("H").should eq(Colorize::ColorANSI::White)
-    Colorize::ColorANSI.from_lscolors("x").should eq(Colorize::ColorANSI::Default)
-
-    expect_raises(Colorize::LSColorNotFoundException, "\"\" in an invalid LSCOLOR") do
-      Colorize::ColorANSI.from_lscolors("")
-    end
-
     Colorize::ColorANSI.from_lscolors?("a").should eq(Colorize::ColorANSI::Black)
     Colorize::ColorANSI.from_lscolors?("b").should eq(Colorize::ColorANSI::Red)
     Colorize::ColorANSI.from_lscolors?("c").should eq(Colorize::ColorANSI::Green)
