@@ -141,8 +141,6 @@ end
 module Colorize
   alias Color = ColorANSI | Color256 | ColorRGB
 
-  class LSColorNotFoundException < Exception; end
-
   enum ColorANSI
     Default      = 39
     Black        = 30
