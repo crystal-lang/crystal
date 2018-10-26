@@ -224,7 +224,7 @@ end
 describe "seg fault" do
   it "reports SIGSEGV" do
     status, _, error = build_and_run <<-'CODE'
-      puts Pointer(Int64).new(0x00FEDCBA).value
+      puts Pointer(Int64).null.value
     CODE
 
     status.success?.should be_false
