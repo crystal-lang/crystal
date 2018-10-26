@@ -187,6 +187,7 @@ module Colorize
       when "G" then LightCyan
       when "H" then White
       when "x" then Default
+      else          nil
       end
     end
   end
