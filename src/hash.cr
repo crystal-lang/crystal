@@ -13,35 +13,24 @@ class Hash(K, V)
   @last : Entry(K, V)?
   @block : (self, K -> V)?
 
-  # :nodoc:
-  def initialize(block : (Hash(K, V), K -> V)? = nil, initial_capacity = nil)
-    initial_capacity ||= 11
-    initial_capacity = 11 if initial_capacity < 11
-    initial_capacity = initial_capacity.to_i
-    @buckets = Pointer(Entry(K, V)?).malloc(initial_capacity)
-    @buckets_size = initial_capacity
-    @size = 0
-    @block = block
-  end
-
-  # Creates a new empty `Hash` of *initial_capacity* with a *block* that handles missing keys.
+  # Creates a new empty `Hash` with a *block* that handles missing keys.
   #
   # The *initial_capacity* is useful to avoid unnecessary reallocations
-  # of the internal buffer in case of growth. If you have an estimate
-  # of the maximum number of elements a hash will hold, the hash should
-  # be initialized with that capacity for improved performance.
-  #
-  # NOTE: *initial_capacity* defaults to 11 and an input of < 11 is ignored.
-  # NOTE: `#size` does not reflect capacity as in `Array`.
+  # of the internal buffer in case of growth. If the maximum number of elements
+  # a hash will hold is known, the hash should be initialized with that
+  # capacity for improved performance. Otherwise, the default is 11 and inputs
+  # less than 11 are ignored.
   #
   # ```
-  # new_hash = Hash(String, Int32).new(50) do |hash, key|
-  #   key.size
+  # hash = Hash(String, Int32).new do |hash, key|
+  #   hash[key] = key.size
   # end
-  # new_hash.size # => 0
-  # new_hash["zero"] = 0
-  # new_hash["two"] = 2
-  # new_hash["four"] # => 4
+  #
+  # hash.size   # => 0
+  # hash["foo"] # => 3
+  # hash.size   # => 1
+  # hash["bar"] = 10
+  # hash["bar"] # => 10
   # ```
   def self.new(initial_capacity = nil, &block : (Hash(K, V), K -> V))
     new block, initial_capacity: initial_capacity
@@ -54,8 +43,31 @@ class Hash(K, V)
   # inventory["socks"] = 3
   # inventory["pickles"] # => 0
   # ```
+  #
+  # NOTE: The default value is passed by reference:
+  # ```
+  # arr = [1, 2, 3]
+  # hash = Hash(String, Array(Int32)).new(arr)
+  # hash["3"][1] = 4
+  # arr # => [1, 4, 3]
+  # ```
   def self.new(default_value : V, initial_capacity = nil)
     new(initial_capacity: initial_capacity) { default_value }
+  end
+
+  # Creates a new empty `Hash` with the block passed as an argument.
+  #
+  # ```
+  # hash = Hash.new(block, initial_capacity: initial_capacity)
+  # ```
+  def initialize(block : (Hash(K, V), K -> V)? = nil, initial_capacity = nil)
+    initial_capacity ||= 11
+    initial_capacity = 11 if initial_capacity < 11
+    initial_capacity = initial_capacity.to_i
+    @buckets = Pointer(Entry(K, V)?).malloc(initial_capacity)
+    @buckets_size = initial_capacity
+    @size = 0
+    @block = block
   end
 
   # Sets the value of *key* to the given *value*.
