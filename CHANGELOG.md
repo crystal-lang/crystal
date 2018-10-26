@@ -30,7 +30,7 @@
 - Fixed `Int#downto` with unsigned int. ([#6678](https://github.com/crystal-lang/crystal/pull/6678), thanks @gmarcais)
 - Add wrapping arithmetics operators `&+` `&-` `&*`. ([#6890](https://github.com/crystal-lang/crystal/pull/6890), thanks @bcardiff)
 - Add floor divisions operator `Int#//` and `Float#//`. ([#6891](https://github.com/crystal-lang/crystal/pull/6891), thanks @bcardiff)
-- Add random support for BigInt. ([#6687](https://github.com/crystal-lang/crystal/pull/6687), thanks @oprypin)
+- Add random support for `BigInt`. ([#6687](https://github.com/crystal-lang/crystal/pull/6687), thanks @oprypin)
 - Add docs related to `Float::Printer::*`. ([#5438](https://github.com/crystal-lang/crystal/pull/5438), thanks @Sija)
 
 ### Text
@@ -55,13 +55,13 @@
 - Fixed docs for `JSON::Serializable`. ([#6950](https://github.com/crystal-lang/crystal/pull/6950), thanks @Heaven31415)
 - Add `XML::Attributes#delete`. ([#6910](https://github.com/crystal-lang/crystal/pull/6910), thanks @joenas)
 - Add ability to quote values always in `CSV.build`. ([#6723](https://github.com/crystal-lang/crystal/pull/6723), thanks @maiha)
-- Refactor how empty properties are handled. ([#6539](https://github.com/crystal-lang/crystal/pull/6539), thanks @r00ster91)
+- Refactor how empty properties are handled in `JSON::Serializable` and `YAML::Serializable`. ([#6539](https://github.com/crystal-lang/crystal/pull/6539), thanks @r00ster91)
 
 ### Time
 
-- **(breaking-change)** Rename `Time#epoch` to `Time#to_unix`. Also `epoch_ms` to `unix_ms` ([#6662](https://github.com/crystal-lang/crystal/pull/6662), thanks @straight-shoota)
+- **(breaking-change)** Rename `Time#epoch` to `Time#to_unix`. Also `#epoch_ms` to `#unix_ms`, and `#epoch_f` to `#to_unix_f`. ([#6662](https://github.com/crystal-lang/crystal/pull/6662), thanks @straight-shoota)
 - Fixed spec for `Time::Location.load_local` with `TZ=nil`. ([#6740](https://github.com/crystal-lang/crystal/pull/6740), thanks @straight-shoota)
-- Add support for ISO calendar week to Time. ([#6681](https://github.com/crystal-lang/crystal/pull/6681), thanks @straight-shoota)
+- Add support for ISO calendar week to `Time`. ([#6681](https://github.com/crystal-lang/crystal/pull/6681), thanks @straight-shoota)
 - Add `Time::Format` support for `%G`, `%g`, `%V`. ([#6681](https://github.com/crystal-lang/crystal/pull/6681), thanks @straight-shoota)
 - Add `Time::Location` loader support for Windows. ([#6363](https://github.com/crystal-lang/crystal/pull/6363), thanks @straight-shoota)
 - Add `Time#to_local_in` to change time zone while keeping wall clock. ([#6572](https://github.com/crystal-lang/crystal/pull/6572), thanks @straight-shoota)
@@ -72,9 +72,10 @@
 
 ### Files
 
-- **(breaking-change)** Remove `Tempfile`. Use `File.tempname` ([#6485](https://github.com/crystal-lang/crystal/pull/6485), thanks @straight-shoota)
+- **(breaking-change)** Remove `Tempfile`. Use `File.tempfile` or `File.tempname`. ([#6485](https://github.com/crystal-lang/crystal/pull/6485), thanks @straight-shoota)
 - Fixed missing closed status check of FDs when creating a subprocess. ([#6641](https://github.com/crystal-lang/crystal/pull/6641), thanks @Timbus)
 - Fixed `ChecksumReader.write` error message. ([#6889](https://github.com/crystal-lang/crystal/pull/6889), thanks @r00ster91)
+- Add `File#delete`, `Dir#tempdir` and improve `File` docs. ([#6485](https://github.com/crystal-lang/crystal/pull/6485), thanks @straight-shoota)
 - Add `File#fsync` to flush all data written into the file to the disk device. ([#6793](https://github.com/crystal-lang/crystal/pull/6793), thanks @carlhoerberg)
 - Add `DEVNULL` to docs. ([#6642](https://github.com/crystal-lang/crystal/pull/6642), thanks @r00ster91)
 - Improve performance of `Zlib::Reader`, `Gzip::Reader` and `Flate::Reader` by including `IO::Buffered`. ([#6916](https://github.com/crystal-lang/crystal/pull/6916), thanks @asterite)
@@ -117,7 +118,7 @@
 
 - Allow `pending` to be used without blocks. ([#6732](https://github.com/crystal-lang/crystal/pull/6732), thanks @tswicegood)
 - Add `be_empty` expectation. ([#6614](https://github.com/crystal-lang/crystal/pull/6614), thanks @mamantoha)
-- Add specs to expectations methods. ([#6512](https://github.com/crystal-lang/crystal/pull/6512), thanks @rodrigopinto)
+- Add specs for expectations methods. ([#6512](https://github.com/crystal-lang/crystal/pull/6512), thanks @rodrigopinto)
 
 ## Compiler
 
@@ -130,7 +131,7 @@
 - Fixed empty case statement normalization. ([#6915](https://github.com/crystal-lang/crystal/pull/6915), thanks @straight-shoota)
 - Fixed codegen of tuple elements with unreachable elements. ([#6659](https://github.com/crystal-lang/crystal/pull/6659), thanks @MakeNowJust)
 - Fixed parsing of `//` corner cases. ([#6927](https://github.com/crystal-lang/crystal/pull/6927), thanks @bcardiff)
-- Fixed recursive block expansion check for non ProcNotation restriction. ([#6932](https://github.com/crystal-lang/crystal/pull/6932), thanks @MakeNowJust)
+- Fixed recursive block expansion check for non `ProcNotation` restriction. ([#6932](https://github.com/crystal-lang/crystal/pull/6932), thanks @MakeNowJust)
 - Fixed corner case of expressions not typed on main phase but typed on cleanup phase. ([#6720](https://github.com/crystal-lang/crystal/pull/6720), thanks @MakeNowJust)
 - Improve error traces regarding `return`, `next` and `break`. ([#6633](https://github.com/crystal-lang/crystal/pull/6633), thanks @asterite)
 - Add resolve generics typenodes in macros. ([#6617](https://github.com/crystal-lang/crystal/pull/6617), thanks @asterite)
@@ -151,7 +152,7 @@
 ### Doc generator
 
 - Add support for comments after `:nodoc:` marker. ([#6627](https://github.com/crystal-lang/crystal/pull/6627), thanks @Sija)
-- Remove some transitions in generated pages. ([#6764](https://github.com/crystal-lang/crystal/pull/6764), thanks @girng)
+- Fixed browser performance issue with blur filter. ([#6764](https://github.com/crystal-lang/crystal/pull/6764), thanks @girng)
 - Accessibility improvement in search field. ([#6926](https://github.com/crystal-lang/crystal/pull/6926), thanks @jodylecompte)
 
 ## Others
