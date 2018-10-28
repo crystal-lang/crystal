@@ -1,14 +1,31 @@
 # Conforms to Semantic Versioning 2.0.0
-# See http://semver.org/ for more information.
+# See [https://semver.org/](https://semver.org/) for more information.
 class SemanticVersion
   include Comparable(self)
 
+  # The major version of this semantic version
   getter major : Int32
+
+  # The minor version of this semantic version
   getter minor : Int32
+
+  # The patch version of this semantic version
   getter patch : Int32
+
+  # The build number of this semantic version
   getter build : String?
+
+  # The pre-release metadata of this semantic version
   getter prerelease : Prerelease
 
+  # Parses a `SemanticVersion` from the given semantic version string
+  #
+  # ```
+  # require "semantic_version"
+  #
+  # semver = SemanticVersion.parse("2.61.4")
+  # semver # => #<SemanticVersion:0x55b3667c9e70 @major=2, @minor=61, @patch=4, ... >
+  # ```
   def self.parse(str : String) : self
     m = str.match /^(\d+)\.(\d+)\.(\d+)(-([\w\.]+))?(\+(\w+))??$/
     if m
@@ -23,6 +40,7 @@ class SemanticVersion
     end
   end
 
+  # Create a new `SemanticVersion` instance with the given major, minor, and patch versions
   def initialize(@major : Int, @minor : Int, @patch : Int, prerelease : String | Prerelease | Nil = nil, @build : String? = nil)
     @prerelease = case prerelease
                   when Prerelease
@@ -36,7 +54,13 @@ class SemanticVersion
                   end
   end
 
-  def to_s(io : IO)
+  # Returns the string representation of this semantic version
+  #
+  # ```
+  # semver = SemanticVersion.parse("0.27.1")
+  # semver.to_s # => "0.27.1"
+  # ```
+  def to_s(io : IO) : String
     io << major << '.' << minor << '.' << patch
     unless prerelease.identifiers.empty?
       io << '-'
@@ -47,13 +71,14 @@ class SemanticVersion
     end
   end
 
+  # :nodoc:
   def <=>(other : self) : Int32
     r = major <=> other.major
-    return r if r != 0
+    return r unless r.zero?
     r = minor <=> other.minor
-    return r if r != 0
+    return r unless r.zero?
     r = patch <=> other.patch
-    return r if r != 0
+    return r unless r.zero?
 
     pre1 = prerelease
     pre2 = other.prerelease
@@ -61,7 +86,16 @@ class SemanticVersion
     prerelease <=> other.prerelease
   end
 
+  # Contains additional pre-release metadata related to this semantic version
   struct Prerelease
+    # Parses a `Prerelease` from the given pre-release metadata string
+    #
+    # ```
+    # require "semantic_version"
+    #
+    # prerelease = SemanticVersion::Prerelease.parse("rc.1.3")
+    # prerelease # => SemanticVersion::Prerelease(@identifiers=["rc", 1, 3])
+    # ```
     def self.parse(str : String) : self
       identifiers = [] of String | Int32
       str.split('.').each do |val|
@@ -74,15 +108,26 @@ class SemanticVersion
       Prerelease.new identifiers
     end
 
+    # Array of identifiers that make up the pre-release metadata
     getter identifiers : Array(String | Int32)
 
+    # Create a new `Prerelease` instance with supplied array of identifiers
     def initialize(@identifiers : Array(String | Int32) = [] of String | Int32)
     end
 
-    def to_s(io : IO)
+    # Returns the string representation of this semantic version's pre-release metadata
+    #
+    # ```
+    # require "semantic_version"
+    #
+    # semver = SemanticVersion.parse("0.27.1-rc.1")
+    # semver.prerelease.to_s # => "rc.1"
+    # ```
+    def to_s(io : IO) : String
       identifiers.join(".", io)
     end
 
+    # :nodoc:
     def <=>(other : self) : Int32
       if identifiers.empty?
         if other.identifiers.empty?
