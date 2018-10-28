@@ -60,7 +60,7 @@ class SemanticVersion
   # semver = SemanticVersion.parse("0.27.1")
   # semver.to_s # => "0.27.1"
   # ```
-  def to_s(io : IO) : String
+  def to_s(io : IO)
     io << major << '.' << minor << '.' << patch
     unless prerelease.identifiers.empty?
       io << '-'
@@ -123,7 +123,7 @@ class SemanticVersion
     # semver = SemanticVersion.parse("0.27.1-rc.1")
     # semver.prerelease.to_s # => "rc.1"
     # ```
-    def to_s(io : IO) : String
+    def to_s(io : IO)
       identifiers.join(".", io)
     end
 
