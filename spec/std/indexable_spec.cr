@@ -8,7 +8,7 @@ private class SafeIndexable
   def initialize(@size : Int32)
   end
 
-  def unsafe_at(i)
+  def unsafe_fetch(i)
     raise IndexError.new unless 0 <= i < size
     i
   end
@@ -22,7 +22,7 @@ private class SafeStringIndexable
   def initialize(@size : Int32)
   end
 
-  def unsafe_at(i)
+  def unsafe_fetch(i)
     raise IndexError.new unless 0 <= i < size
     i.to_s
   end
@@ -36,7 +36,7 @@ private class SafeMixedIndexable
   def initialize(@size : Int32)
   end
 
-  def unsafe_at(i)
+  def unsafe_fetch(i)
     raise IndexError.new unless 0 <= i < size
     i.to_s
   end
@@ -50,7 +50,7 @@ private class SafeRecursiveIndexable
   def initialize(@size : Int32)
   end
 
-  def unsafe_at(i)
+  def unsafe_fetch(i)
     raise IndexError.new unless 0 <= i < size
     if (i % 2) == 0
       SafeRecursiveIndexable.new(i)
@@ -212,6 +212,26 @@ describe Indexable do
       expect_raises IndexError, %(Indexable value not diggable for index: 3) do
         indexable.dig(3, 7)
       end
+    end
+  end
+
+  describe "fetch" do
+    it "fetches with default value" do
+      indexable = SafeIndexable.new(3)
+      a = indexable.to_a
+
+      indexable.fetch(2, 4).should eq(2)
+      indexable.fetch(3, 4).should eq(4)
+      a.should eq([0, 1, 2])
+    end
+
+    it "fetches with block" do
+      indexable = SafeIndexable.new(3)
+      a = indexable.to_a
+
+      indexable.fetch(2) { |k| k * 3 }.should eq(2)
+      indexable.fetch(3) { |k| k * 3 }.should eq(9)
+      a.should eq([0, 1, 2])
     end
   end
 end

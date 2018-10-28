@@ -23,34 +23,34 @@ module Indexable(T)
   # This method should only be directly invoked if you are absolutely
   # sure the index is in bounds, to avoid a bounds check for a small boost
   # of performance.
-  abstract def unsafe_at(index : Int)
+  abstract def unsafe_fetch(index : Int)
 
   # Returns the element at the given *index*, if in bounds,
-  # otherwise executes the given block and returns its value.
+  # otherwise executes the given block with the index and returns its value.
   #
   # ```
   # a = [:foo, :bar]
-  # a.at(0) { :baz } # => :foo
-  # a.at(2) { :baz } # => :baz
+  # a.fetch(0) { :default_value }    # => :foo
+  # a.fetch(2) { :default_value }    # => :default_value
+  # a.fetch(2) { |index| index * 3 } # => 6
   # ```
-  def at(index : Int)
+  def fetch(index : Int)
     index = check_index_out_of_bounds(index) do
-      return yield
+      return yield index
     end
-    unsafe_at(index)
+    unsafe_fetch(index)
   end
 
-  # Returns the element at the given *index*, if in bounds,
-  # otherwise raises `IndexError`.
+  # Returns the value at the index given by *index*, or when not found the value given by *default*.
   #
   # ```
   # a = [:foo, :bar]
-  # a.at(0) # => :foo
-  # a.at(2) # raises IndexError
+  # a.fetch(0, :default_value) # => :foo
+  # a.fetch(2, :default_value) # => :default_value
   # ```
   @[AlwaysInline]
-  def at(index : Int)
-    at(index) { raise IndexError.new }
+  def fetch(index, default)
+    fetch(index) { default }
   end
 
   # Returns the element at the given *index*.
@@ -70,7 +70,7 @@ module Indexable(T)
   # ```
   @[AlwaysInline]
   def [](index : Int)
-    at(index)
+    fetch(index) { raise IndexError.new }
   end
 
   # Returns the element at the given *index*.
@@ -90,7 +90,7 @@ module Indexable(T)
   # ```
   @[AlwaysInline]
   def []?(index : Int)
-    at(index) { nil }
+    fetch(index, nil)
   end
 
   # Traverses the depth of a structure and returns the value.
@@ -148,7 +148,7 @@ module Indexable(T)
   # [2, 5, 7, 10].bsearch { |x| x > 10 } # => nil
   # ```
   def bsearch
-    bsearch_index { |value| yield value }.try { |index| unsafe_at(index) }
+    bsearch_index { |value| yield value }.try { |index| unsafe_fetch(index) }
   end
 
   # By using binary search, returns the index of the first element
@@ -167,7 +167,7 @@ module Indexable(T)
   # [2, 5, 7, 10].bsearch_index { |x, i| x > 10 } # => nil
   # ```
   def bsearch_index
-    (0...size).bsearch { |index| yield unsafe_at(index), index }
+    (0...size).bsearch { |index| yield unsafe_fetch(index), index }
   end
 
   # Calls the given block once for each element in `self`, passing that
@@ -185,7 +185,7 @@ module Indexable(T)
   # ```
   def each
     each_index do |i|
-      yield unsafe_at(i)
+      yield unsafe_fetch(i)
     end
   end
 
@@ -225,7 +225,7 @@ module Indexable(T)
   # ```
   def each(*, start : Int, count : Int)
     each_index(start: start, count: count) do |i|
-      yield unsafe_at(i)
+      yield unsafe_fetch(i)
     end
   end
 
@@ -408,7 +408,7 @@ module Indexable(T)
   def equals?(other : Indexable)
     return false if size != other.size
     each_with_index do |item, i|
-      return false unless yield(item, other.unsafe_at(i))
+      return false unless yield(item, other.unsafe_fetch(i))
     end
     true
   end
@@ -451,7 +451,7 @@ module Indexable(T)
   # ([] of Int32).first { 4 } # => 4
   # ```
   def first
-    size == 0 ? yield : unsafe_at(0)
+    size == 0 ? yield : unsafe_fetch(0)
   end
 
   # Returns the first element of `self` if it's not empty, or `nil`.
@@ -495,7 +495,7 @@ module Indexable(T)
     return nil if offset < 0
 
     offset.upto(size - 1) do |i|
-      if yield unsafe_at(i)
+      if yield unsafe_fetch(i)
         return i
       end
     end
@@ -519,7 +519,7 @@ module Indexable(T)
   # ([] of Int32).last { 4 } # => 4
   # ```
   def last
-    size == 0 ? yield : unsafe_at(size - 1)
+    size == 0 ? yield : unsafe_fetch(size - 1)
   end
 
   # Returns the last element of `self` if it's not empty, or `nil`.
@@ -535,7 +535,7 @@ module Indexable(T)
   # Same as `#each`, but works in reverse.
   def reverse_each(&block) : Nil
     (size - 1).downto(0) do |i|
-      yield unsafe_at(i)
+      yield unsafe_fetch(i)
     end
   end
 
@@ -574,7 +574,7 @@ module Indexable(T)
     return nil if offset >= size
 
     offset.downto(0) do |i|
-      if yield unsafe_at(i)
+      if yield unsafe_fetch(i)
         return i
       end
     end
@@ -592,7 +592,7 @@ module Indexable(T)
   # ```
   def sample(random = Random::DEFAULT)
     raise IndexError.new if size == 0
-    unsafe_at(random.rand(size))
+    unsafe_fetch(random.rand(size))
   end
 
   # Returns a `Tuple` populated with the elements at the given indexes.

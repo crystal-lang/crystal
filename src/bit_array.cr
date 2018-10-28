@@ -44,7 +44,7 @@ struct BitArray
     false
   end
 
-  def unsafe_at(index : Int)
+  def unsafe_fetch(index : Int)
     bit_index, sub_index = index.divmod(32)
     (@bits[bit_index] & (1 << sub_index)) > 0
   end

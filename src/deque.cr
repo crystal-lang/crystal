@@ -148,7 +148,7 @@ class Deque(T)
     @buffer[index] = value
   end
 
-  def unsafe_at(index : Int)
+  def unsafe_fetch(index : Int)
     index += @start
     index -= @capacity if index >= @capacity
     @buffer[index]

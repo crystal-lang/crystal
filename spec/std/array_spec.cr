@@ -202,10 +202,6 @@ describe "Array" do
       [1, 2, 3][3]?.should be_nil
     end
 
-    it "same access by at" do
-      [1, 2, 3][1].should eq([1, 2, 3].at(1))
-    end
-
     it "doesn't exceed limits" do
       [1][0..3].should eq([1])
     end

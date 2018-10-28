@@ -496,7 +496,7 @@ class Array(T)
   end
 
   @[AlwaysInline]
-  def unsafe_at(index : Int)
+  def unsafe_fetch(index : Int)
     @buffer[index]
   end
 
@@ -1712,15 +1712,15 @@ class Array(T)
   def transpose
     return Array(Array(typeof(first.first))).new if empty?
 
-    len = at(0).size
+    len = self[0].size
     (1...@size).each do |i|
-      l = at(i).size
+      l = self[i].size
       raise IndexError.new if len != l
     end
 
     Array(Array(typeof(first.first))).new(len) do |i|
       Array(typeof(first.first)).new(@size) do |j|
-        at(j).at(i)
+        self[j][i]
       end
     end
   end
