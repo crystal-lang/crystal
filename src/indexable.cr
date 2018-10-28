@@ -48,6 +48,7 @@ module Indexable(T)
   # a.fetch(0, :default_value) # => :foo
   # a.fetch(2, :default_value) # => :default_value
   # ```
+  @[AlwaysInline]
   def fetch(index, default)
     fetch(index) { default }
   end
