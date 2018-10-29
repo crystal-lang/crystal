@@ -1,4 +1,5 @@
 # Conforms to Semantic Versioning 2.0.0
+#
 # See [https://semver.org/](https://semver.org/) for more information.
 class SemanticVersion
   include Comparable(self)
@@ -12,7 +13,7 @@ class SemanticVersion
   # The patch version of this semantic version
   getter patch : Int32
 
-  # The build number of this semantic version
+  # The build metadata of this semantic version
   getter build : String?
 
   # The pre-release metadata of this semantic version
@@ -26,6 +27,8 @@ class SemanticVersion
   # semver = SemanticVersion.parse("2.61.4")
   # semver # => #<SemanticVersion:0x55b3667c9e70 @major=2, @minor=61, @patch=4, ... >
   # ```
+  #
+  # Raises `ArgumentError` if *str* is not a semantic version.
   def self.parse(str : String) : self
     m = str.match /^(\d+)\.(\d+)\.(\d+)(-([\w\.]+))?(\+(\w+))??$/
     if m
@@ -40,7 +43,10 @@ class SemanticVersion
     end
   end
 
-  # Create a new `SemanticVersion` instance with the given major, minor, and patch versions
+  # Creates a new `SemanticVersion` instance with the given major, minor, and patch versions
+  # and optionally build and pre-release metadata
+  #
+  # Raises `ArgumentError` if *prerelease* is invalid pre-release metadata.
   def initialize(@major : Int, @minor : Int, @patch : Int, prerelease : String | Prerelease | Nil = nil, @build : String? = nil)
     @prerelease = case prerelease
                   when Prerelease
@@ -57,6 +63,8 @@ class SemanticVersion
   # Returns the string representation of this semantic version
   #
   # ```
+  # require "semantic_version"
+  #
   # semver = SemanticVersion.parse("0.27.1")
   # semver.to_s # => "0.27.1"
   # ```
@@ -71,7 +79,18 @@ class SemanticVersion
     end
   end
 
-  # :nodoc:
+  # The comparison operator
+  #
+  # ```
+  # require "semantic_version"
+  #
+  # semver1 = SemanticVersion.new(1, 0, 0)
+  # semver2 = SemanticVersion.new(2, 0, 0)
+  #
+  # semver1 <=> semver2 # => -1
+  # semver2 <=> semver2 # => 0
+  # semver2 <=> semver1 # => 1
+  # ```
   def <=>(other : self) : Int32
     r = major <=> other.major
     return r unless r.zero?
@@ -111,7 +130,7 @@ class SemanticVersion
     # Array of identifiers that make up the pre-release metadata
     getter identifiers : Array(String | Int32)
 
-    # Create a new `Prerelease` instance with supplied array of identifiers
+    # Creates a new `Prerelease` instance with supplied array of identifiers
     def initialize(@identifiers : Array(String | Int32) = [] of String | Int32)
     end
 
@@ -127,7 +146,18 @@ class SemanticVersion
       identifiers.join(".", io)
     end
 
-    # :nodoc:
+    # The comparison operator
+    #
+    # ```
+    # require "semantic_version"
+    #
+    # prerelease1 = SemanticVersion::Prerelease.new(["rc", 1])
+    # prerelease2 = SemanticVersion::Prerelease.new(["rc", 1, 2])
+    #
+    # prerelease1 <=> prerelease2 # => -1
+    # prerelease1 <=> prerelease1 # => 0
+    # prerelease2 <=> prerelease1 # => 1
+    # ```
     def <=>(other : self) : Int32
       if identifiers.empty?
         if other.identifiers.empty?
