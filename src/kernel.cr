@@ -59,7 +59,7 @@ ARGV = Array.new(ARGC_UNSAFE - 1) { |i| String.new(ARGV_UNSAFE[1 + i]) }
 # ```
 # # Argument passed to the program: "file"
 # ARGF.gets_to_end # => "123"
-# ARGV # => []
+# ARGV             # => []
 # ```
 #
 # You can manipulate `ARGV` yourself to control what `ARGF` operates on.
@@ -68,7 +68,7 @@ ARGV = Array.new(ARGC_UNSAFE - 1) { |i| String.new(ARGV_UNSAFE[1 + i]) }
 # ```
 # ARGV.replace ["file1"]
 # ARGF.gets_to_end # => The content of file1
-# ARGV # => []
+# ARGV             # => []
 # ARGV << "file2"
 # ARGF.gets_to_end # => The content of file2
 # ```
