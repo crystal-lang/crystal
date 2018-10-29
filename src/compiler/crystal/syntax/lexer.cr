@@ -26,6 +26,33 @@ module Crystal
     # Heredocs pushed when found. Should be processed when encountering a newline
     getter heredocs = [] of {Token::DelimiterState, HeredocItem}
 
+    property invisible_loc_pragmas : Hash(Int32, Array(LocPragma))? = nil
+
+    alias LocPragma = LocStackPragma | LocSetPragma
+
+    enum LocStackPragma
+      Pop
+      Push
+
+      def run_pragma(lexer)
+        case self
+        when Pop
+          lexer.pop_location
+        when Push
+          lexer.push_location
+        end
+      end
+    end
+
+    record LocSetPragma,
+      filename : String,
+      line_number : Int32,
+      column_number : Int32 do
+      def run_pragma(lexer)
+        lexer.set_location filename, line_number, column_number
+      end
+    end
+
     def initialize(string, string_pool : StringPool? = nil)
       @reader = Char::Reader.new(string)
       @token = Token.new
@@ -90,6 +117,9 @@ module Crystal
       end
 
       start = current_pos
+      if pragmas = invisible_loc_pragmas.try &.[start]?
+        pragmas.each &.run_pragma self
+      end
 
       reset_regex_flags = true
 
@@ -2713,9 +2743,7 @@ module Crystal
           next_char
         end
 
-        @token.filename = @filename = filename
-        @token.line_number = @line_number = line_number
-        @token.column_number = @column_number = column_number
+        set_location filename, line_number, column_number
       when 'p'
         # skip 'p'
         next_char_no_column_increment
@@ -2754,6 +2782,12 @@ module Crystal
       else
         raise %(expected #<loc:push>, #<loc:pop> or #<loc:"...">)
       end
+    end
+
+    def set_location(filename, line_number, column_number)
+      @token.filename = @filename = filename
+      @token.line_number = @line_number = line_number
+      @token.column_number = @column_number = column_number
     end
 
     def pop_location

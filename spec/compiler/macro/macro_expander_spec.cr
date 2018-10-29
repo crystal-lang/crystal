@@ -156,4 +156,18 @@ describe "MacroExpander" do
   it "can't use `yield` outside a macro" do
     assert_error %({{yield}}), "can't use `{{yield}}` outside a macro"
   end
+
+  it "outputs invisible location pragmas" do
+    node = 42.int32
+    node.location = Location.new "foo.cr", 10, 20
+    assert_macro "node", %({{node}}), [node] of ASTNode, "42", {
+      0 => [
+        Lexer::LocStackPragma::Push,
+        Lexer::LocSetPragma.new("foo.cr", 10, 20),
+      ] of Lexer::LocPragma,
+      2 => [
+        Lexer::LocStackPragma::Pop,
+      ] of Lexer::LocPragma,
+    }
+  end
 end

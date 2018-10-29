@@ -296,8 +296,9 @@ module Crystal
 
   class SkipMacroException < ::Exception
     getter expanded_before_skip : String
+    getter invisible_loc_pragmas : Hash(Int32, Array(Lexer::LocPragma))
 
-    def initialize(@expanded_before_skip)
+    def initialize(@expanded_before_skip, @invisible_loc_pragmas)
       super()
     end
   end
