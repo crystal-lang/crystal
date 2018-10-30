@@ -16,7 +16,7 @@ class SemanticVersion
   # The build metadata of this semantic version
   getter build : String?
 
-  # The pre-release metadata of this semantic version
+  # The pre-release version of this semantic version
   getter prerelease : Prerelease
 
   # Parses a `SemanticVersion` from the given semantic version string
