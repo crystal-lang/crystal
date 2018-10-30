@@ -1,18 +1,88 @@
 {% if flag?(:win32) %}
+  # The standard input file descriptor. Contains data piped to the program.
   STDIN  = IO::FileDescriptor.new(0)
+
+  # The standard output file descriptor.
+  #
+  # Typically used to output data and information.
+  #
+  # NOTE: Gets flushed when a newline is written.
   STDOUT = IO::FileDescriptor.new(1).tap { |f| f.flush_on_newline = true }
+
+  # The standard error file descriptor.
+  #
+  # Typically used to output error messages and diagnostics.
+  #
+  # NOTE: Gets flushed when a newline is written.
   STDERR = IO::FileDescriptor.new(2).tap { |f| f.flush_on_newline = true }
 {% else %}
   require "c/unistd"
 
+  # The standard input file descriptor. Contains data piped to the program.
   STDIN  = IO::FileDescriptor.from_stdio(0)
+
+  # The standard output file descriptor.
+  #
+  # Typically used to output data and information.
+  #
+  # NOTE: Gets flushed when a newline is written.
   STDOUT = IO::FileDescriptor.from_stdio(1).tap { |f| f.flush_on_newline = true }
+
+  # The standard error file descriptor.
+  #
+  # Typically used to output error messages and diagnostics.
+  #
+  # NOTE: Gets flushed when a newline is written.
   STDERR = IO::FileDescriptor.from_stdio(2).tap { |f| f.flush_on_newline = true }
 {% end %}
 
+# The name, the program was called with.
 PROGRAM_NAME = String.new(ARGV_UNSAFE.value)
-ARGV         = Array.new(ARGC_UNSAFE - 1) { |i| String.new(ARGV_UNSAFE[1 + i]) }
-ARGF         = IO::ARGF.new(ARGV, STDIN)
+
+# An array of arguments passed to the program.
+ARGV = Array.new(ARGC_UNSAFE - 1) { |i| String.new(ARGV_UNSAFE[1 + i]) }
+
+# An `IO` for reading files from `ARGV`.
+#
+# Usage example:
+#
+# `program.cr`:
+# ```
+# puts ARGF.gets_to_end
+# ```
+#
+# A file to read from: (`file`)
+# ```text
+# 123
+# ```
+#
+# ```text
+# $ crystal build program.cr
+# $ ./program file
+# 123
+# $ ./program file file
+# 123123
+# $ # If ARGV is empty, ARGF reads from STDIN instead:
+# $ echo "hello" | ./program
+# hello
+# $ ./program unknown
+# Unhandled exception: Error opening file 'unknown' with mode 'r': No such file or directory (Errno)
+# ...
+# ```
+#
+# After a file from `ARGV` has been read, it's removed from `ARGV`.
+#
+# You can manipulate `ARGV` yourself to control what `ARGF` operates on.
+# If you remove a file from `ARGV`, it is ignored by `ARGF`; if you add files to `ARGV`, `ARGF` will read from it.
+#
+# ```
+# ARGV.replace ["file1"]
+# ARGF.gets_to_end # => Content of file1
+# ARGV             # => []
+# ARGV << "file2"
+# ARGF.gets_to_end # => Content of file2
+# ```
+ARGF = IO::ARGF.new(ARGV, STDIN)
 
 # Repeatedly executes the block.
 #
@@ -43,7 +113,7 @@ def read_line(*args, **options)
   STDIN.read_line(*args, **options)
 end
 
-# Prints objects to STDOUT and then invokes `STDOUT.flush`.
+# Prints objects to `STDOUT` and then invokes `STDOUT.flush`.
 #
 # See also: `IO#print`.
 def print(*objects : _) : Nil
