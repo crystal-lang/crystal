@@ -104,7 +104,7 @@ dependencies:
         readme.should_not contain(%{TODO: Write installation instructions here})
         readme.should contain(%{require "example"})
         readme.should contain(%{1. Fork it (<https://github.com/jsmith/example/fork>)})
-        readme.should contain(%{[jsmith](https://github.com/jsmith) John Smith - creator, maintainer})
+        readme.should contain(%{[John Smith](https://github.com/jsmith) - creator and maintainer})
       end
 
       describe_file "example_app/README.md" do |readme|
@@ -122,7 +122,7 @@ dependencies:
         readme.should contain(%{TODO: Write installation instructions here})
         readme.should_not contain(%{require "example"})
         readme.should contain(%{1. Fork it (<https://github.com/jsmith/example_app/fork>)})
-        readme.should contain(%{[jsmith](https://github.com/jsmith) John Smith - creator, maintainer})
+        readme.should contain(%{[John Smith](https://github.com/jsmith) - creator and maintainer})
       end
 
       describe_file "example/shard.yml" do |shard_yml|
