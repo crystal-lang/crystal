@@ -44,9 +44,9 @@ class SemanticVersion
   end
 
   # Creates a new `SemanticVersion` instance with the given major, minor, and patch versions
-  # and optionally build and pre-release metadata
+  # and optionally build and pre-release version
   #
-  # Raises `ArgumentError` if *prerelease* is invalid pre-release metadata.
+  # Raises `ArgumentError` if *prerelease* is invalid pre-release version
   def initialize(@major : Int, @minor : Int, @patch : Int, prerelease : String | Prerelease | Nil = nil, @build : String? = nil)
     @prerelease = case prerelease
                   when Prerelease
@@ -105,9 +105,9 @@ class SemanticVersion
     prerelease <=> other.prerelease
   end
 
-  # Contains additional pre-release metadata related to this semantic version
+  # Contains the pre-release version related to this semantic version
   struct Prerelease
-    # Parses a `Prerelease` from the given pre-release metadata string
+    # Parses a `Prerelease` from the given pre-release version string
     #
     # ```
     # require "semantic_version"
