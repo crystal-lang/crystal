@@ -44,43 +44,43 @@ ARGV = Array.new(ARGC_UNSAFE - 1) { |i| String.new(ARGV_UNSAFE[1 + i]) }
 
 # An `IO` for reading files from `ARGV`.
 #
-# `ARGF` assumes that `ARGV` contains only filenames.
+# Usage example:
 #
-# After a file from `ARGV` has been read, it's removed from `ARGV`.
+# `program.cr`:
+# ```
+# puts ARGF.gets_to_end
+# ```
 #
-# Example:
-#
-# A file to read from: (called `file`)
-#
+# A file to read from: (`file`)
 # ```text
 # 123
 # ```
 #
+# ```text
+# $ crystal build program.cr
+# $ ./program file
+# 123
+# $ ./program file file
+# 123123
+# $ # If ARGV is empty, ARGF reads from STDIN instead:
+# $ echo "hello" | ./program
+# hello
+# $ ./program unknown
+# Unhandled exception: Error opening file 'unknown' with mode 'r': No such file or directory (Errno)
+# ...
 # ```
-# # Argument passed to the program: "file"
-# ARGF.gets_to_end # => "123"
-# ARGV             # => []
-# ```
+#
+# After a file from `ARGV` has been read, it's removed from `ARGV`.
 #
 # You can manipulate `ARGV` yourself to control what `ARGF` operates on.
 # If you remove a file from `ARGV`, it is ignored by `ARGF`; if you add files to `ARGV`, `ARGF` will read from it.
 #
 # ```
 # ARGV.replace ["file1"]
-# ARGF.gets_to_end # => The content of file1
+# ARGF.gets_to_end # => Content of file1
 # ARGV             # => []
 # ARGV << "file2"
-# ARGF.gets_to_end # => The content of file2
-# ```
-#
-# If `ARGV` is empty, `ARGF` reads from `STDIN` instead:
-#
-# ```
-# echo "hello" | crystal eval "print ARGF.gets_to_end"
-# ```
-# prints:
-# ```text
-# hello
+# ARGF.gets_to_end # => Content of file2
 # ```
 ARGF = IO::ARGF.new(ARGV, STDIN)
 
