@@ -9,16 +9,16 @@ lib LibC
   alias DevT = UInt
   alias GidT = UInt
   alias IdT = Long
-  {% if flag?(:"freebsd12.0") %}
-    alias InoT = ULong
-  {% else %}
+  {% if flag?(:freebsd11) %}
     alias InoT = UInt
+  {% else %}
+    alias InoT = ULong
   {% end %}
   alias ModeT = UShort
-  {% if flag?(:"freebsd12.0") %}
-    alias NlinkT = ULong
-  {% else %}
+  {% if flag?(:freebsd11) %}
     alias NlinkT = UShort
+  {% else %}
+    alias NlinkT = ULong
   {% end %}
   alias OffT = Long
   alias PidT = Int
