@@ -624,3 +624,17 @@ span.flag.purple {
   margin-left: -100px;
   margin-right: 12px;
 }
+.alert {
+  padding: 0.5rem;
+  margin: 0.5rem;
+  background-color: hsl(270, 25%, 80%);
+  border: 1px solid hsl(270, 25%, 60%);
+  border-radius: 5px;
+  color: hsl(270, 25%, 20%);
+}
+.alert:hover {
+  background-color: hsl(270, 25%, 85%);
+}
+.alert:active {
+  background-color: hsl(270, 25%, 75%);
+}
