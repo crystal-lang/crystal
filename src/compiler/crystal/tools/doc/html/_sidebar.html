@@ -1,7 +1,7 @@
 <div class="sidebar">
   <div class="sidebar-header">
 
-    <a id="outdated-alert" href="/api/latest/">
+    <a id="outdated-alert" href="/api/latest/<%= current_type.try(&.path)%>">
       <noscript>
         <div class="alert">
           This documentation may be out of date. Click here to visit the latest version.

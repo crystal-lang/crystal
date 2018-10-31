@@ -5,10 +5,10 @@ function apiFromURL(url) {
 
 document.addEventListener('DOMContentLoaded', function() {
   var xhr = new XMLHttpRequest()
-  xhr.open('GET', 'https://crystal-lang.org/api/latest/');
+  xhr.open('GET', '/api/latest/');
   xhr.onload = function(x) {
-    var myVersion = apiFromURL(x.target.responseURL)
-    var latestVersion = apiFromURL(window.location.href)
+    var myVersion = apiFromURL(window.location.href)
+    var latestVersion = apiFromURL(x.target.responseURL)
     iAmOutdated = myVersion < latestVersion
     if (iAmOutdated) {
       var alertBox = document.getElementById("outdated-alert")
