@@ -87,6 +87,8 @@ class Crystal::Doc::Generator
 
     File.write File.join(@output_dir, "css", "style.css"), StyleTemplate.new
     File.write File.join(@output_dir, "js", "doc.js"), JsTypeTemplate.new
+
+    File.write File.join(@output_dir, "js", "version-checker.js"), JsVersionCheckerTemplate.new
   end
 
   def generate_types_docs(types, dir, all_types)

@@ -53,6 +53,10 @@ module Crystal::Doc
     ECR.def_to_s "#{__DIR__}/html/js/_usage-modal.js"
   end
 
+  struct JsVersionCheckerTemplate
+    ECR.def_to_s "#{__DIR__}/html/js/version-checker.js"
+  end
+
   struct StyleTemplate
     ECR.def_to_s "#{__DIR__}/html/css/style.css"
   end
