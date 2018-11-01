@@ -3,7 +3,6 @@
 ## Language changes
 
 - **(breaking-change)** Disallow comma after newline in argument list. ([#6514](https://github.com/crystal-lang/crystal/pull/6514), thanks @asterite)
-- Add type restrictions syntax for splat arguments. ([#6648](https://github.com/crystal-lang/crystal/pull/6648), thanks @MakeNowJust)
 
 ### Macros
 
@@ -125,6 +124,7 @@
 - Fixed don't "ambiguous match" if there's an exact match. ([#6618](https://github.com/crystal-lang/crystal/pull/6618), thanks @asterite)
 - Fixed allow annotations inside enums. ([#6713](https://github.com/crystal-lang/crystal/pull/6713), thanks @asterite)
 - Fixed `super` inside macros will honor arguments. ([#6638](https://github.com/crystal-lang/crystal/pull/6638), thanks @asterite)
+- Fixed guessed ivar type from splat arguments. ([#6648](https://github.com/crystal-lang/crystal/pull/6648), thanks @MakeNowJust)
 - Fixed `ASTNode#to_s` of non-unary operator call without argument. ([#6538](https://github.com/crystal-lang/crystal/pull/6538), thanks @MakeNowJust)
 - Fixed `ASTNode#to_s` for multiline macro expression. ([#6666](https://github.com/crystal-lang/crystal/pull/6666), thanks @MakeNowJust)
 - Fixed `ASTNode#to_s` for `{% verbatim do %} ... {% end %}`. ([#6665](https://github.com/crystal-lang/crystal/pull/6665), thanks @MakeNowJust)
