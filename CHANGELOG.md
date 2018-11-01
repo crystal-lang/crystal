@@ -42,7 +42,7 @@
 
 ### Collections
 
-- **(breaking-change)** Replace `Indexable#at` with `#fetch`. ([#6296](https://github.com/crystal-lang/crystal/pull/6296), thanks @AlexWayfer)
+- **(breaking-change)** Replace `Indexable#at` with `#fetch`. Remove `Hash#fetch(key)` as alias of `Hash#[]`. ([#6296](https://github.com/crystal-lang/crystal/pull/6296), thanks @AlexWayfer)
 - Add `Hash/Indexable#dig/dig?`. ([#6719](https://github.com/crystal-lang/crystal/pull/6719), thanks @Sija)
 - Add `Iterator.chain` to chain array of iterators. ([#6570](https://github.com/crystal-lang/crystal/pull/6570), thanks @xqyww123)
 - Add `NamedTuple#to_h` over empty tuples. ([#6628](https://github.com/crystal-lang/crystal/pull/6628), thanks @icyleaf)
@@ -121,7 +121,7 @@
 
 - Allow `pending` to be used without blocks. ([#6732](https://github.com/crystal-lang/crystal/pull/6732), thanks @tswicegood)
 - Add `be_empty` expectation. ([#6614](https://github.com/crystal-lang/crystal/pull/6614), thanks @mamantoha)
-- Add specs for expectations methods. ([#6512](https://github.com/crystal-lang/crystal/pull/6512), thanks @rodrigopinto)
+- Add specs for expectation methods. ([#6512](https://github.com/crystal-lang/crystal/pull/6512), thanks @rodrigopinto)
 
 ## Compiler
 
