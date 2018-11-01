@@ -443,14 +443,30 @@ abstract class IO
   # io.read_string(6) # raises IO::EOFError
   # ```
   def read_string(bytesize : Int) : String
+    read_string?(bytesize) || raise IO::EOFError.new
+  end
+
+  # Reads an UTF-8 encoded string of exactly *bytesize* bytes.
+  # Returns `nil` if there are not enough bytes to build
+  # the string.
+  #
+  # ```
+  # io = IO::Memory.new("hello world")
+  # io.read_string?(5) # => "hello"
+  # io.read_string?(1) # => " "
+  # io.read_strin?g(6) # => nil
+  # ```
+  def read_string?(bytesize : Int) : String?
     String.new(bytesize) do |ptr|
       if decoder = decoder()
         read = decoder.read_utf8(self, Slice.new(ptr, bytesize))
         if read != bytesize
-          raise IO::EOFError.new
+          return
         end
       else
-        read_fully(Slice.new(ptr, bytesize))
+        unless read_fully?(Slice.new(ptr, bytesize))
+          return
+        end
       end
       {bytesize, 0}
     end
