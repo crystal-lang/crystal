@@ -554,7 +554,7 @@ span.flag.purple {
   display: flex;
 }
 .main-content {
-  filter: blur(0);
+  position: relative;
 }
 .modal-background {
   position: absolute;
