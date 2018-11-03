@@ -2,7 +2,7 @@ module Crystal
   class MacroInterpreter < Visitor
     getter last : ASTNode
     property free_vars : Hash(String, TypeVar)?
-    property invisible_loc_pragmas : Hash(Int32, Array(Lexer::LocPragma))
+    property macro_expansion_pragmas : Hash(Int32, Array(Lexer::LocPragma))? = nil
 
     def self.new(program, scope : Type, path_lookup : Type, a_macro : Macro, call, a_def : Def? = nil, in_macro = false)
       vars = {} of String => ASTNode
@@ -79,7 +79,6 @@ module Crystal
                    @vars = {} of String => ASTNode, @block : Block? = nil, @def : Def? = nil,
                    @in_macro = false)
       @str = IO::Memory.new(512) # Can't be String::Builder because of `{{debug}}`
-      @invisible_loc_pragmas = {} of Int32 => Array(Lexer::LocPragma)
       @last = Nop.new
     end
 
@@ -103,11 +102,12 @@ module Crystal
       if node.output?
         is_yield = node.exp.is_a?(Yield) && !@last.is_a?(Nop)
         if (loc = @last.location) && loc.filename.is_a?(String) || is_yield
-          (@invisible_loc_pragmas[@str.pos.to_i32] ||= [] of Lexer::LocPragma) << Lexer::LocStackPragma::Push
+          macro_expansion_pragmas = @macro_expansion_pragmas ||= {} of Int32 => Array(Lexer::LocPragma)
+          (macro_expansion_pragmas[@str.pos.to_i32] ||= [] of Lexer::LocPragma) << Lexer::LocPushPragma.new
           @str << "begin " if is_yield
-          @last.to_s(@str, emit_loc_pragma: @invisible_loc_pragmas, emit_doc: true)
+          @last.to_s(@str, macro_expansion_pragmas: macro_expansion_pragmas, emit_doc: true)
           @str << " end" if is_yield
-          (@invisible_loc_pragmas[@str.pos.to_i32] ||= [] of Lexer::LocPragma) << Lexer::LocStackPragma::Pop
+          (macro_expansion_pragmas[@str.pos.to_i32] ||= [] of Lexer::LocPragma) << Lexer::LocPopPragma.new
         else
           @last.to_s(@str)
         end

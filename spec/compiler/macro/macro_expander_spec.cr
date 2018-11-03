@@ -162,11 +162,11 @@ describe "MacroExpander" do
     node.location = Location.new "foo.cr", 10, 20
     assert_macro "node", %({{node}}), [node] of ASTNode, "42", {
       0 => [
-        Lexer::LocStackPragma::Push,
+        Lexer::LocPushPragma.new,
         Lexer::LocSetPragma.new("foo.cr", 10, 20),
       ] of Lexer::LocPragma,
       2 => [
-        Lexer::LocStackPragma::Pop,
+        Lexer::LocPopPragma.new,
       ] of Lexer::LocPragma,
     }
   end

@@ -26,23 +26,9 @@ module Crystal
     # Heredocs pushed when found. Should be processed when encountering a newline
     getter heredocs = [] of {Token::DelimiterState, HeredocItem}
 
-    property invisible_loc_pragmas : Hash(Int32, Array(LocPragma))? = nil
+    property macro_expansion_pragmas : Hash(Int32, Array(LocPragma))? = nil
 
-    alias LocPragma = LocStackPragma | LocSetPragma
-
-    enum LocStackPragma
-      Pop
-      Push
-
-      def run_pragma(lexer)
-        case self
-        when Pop
-          lexer.pop_location
-        when Push
-          lexer.push_location
-        end
-      end
-    end
+    alias LocPragma = LocSetPragma | LocPushPragma | LocPopPragma
 
     record LocSetPragma,
       filename : String,
@@ -50,6 +36,18 @@ module Crystal
       column_number : Int32 do
       def run_pragma(lexer)
         lexer.set_location filename, line_number, column_number
+      end
+    end
+
+    record LocPushPragma do
+      def run_pragma(lexer)
+        lexer.push_location
+      end
+    end
+
+    record LocPopPragma do
+      def run_pragma(lexer)
+        lexer.pop_location
       end
     end
 
@@ -117,7 +115,9 @@ module Crystal
       end
 
       start = current_pos
-      if pragmas = invisible_loc_pragmas.try &.[start]?
+
+      # Fix location by `macro_expansion_pragmas`.
+      if pragmas = macro_expansion_pragmas.try &.[start]?
         pragmas.each &.run_pragma self
       end
 

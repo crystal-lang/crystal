@@ -139,7 +139,7 @@ module Crystal
     end
 
     def interpret_skip_file(node)
-      raise SkipMacroException.new(@str.to_s, invisible_loc_pragmas)
+      raise SkipMacroException.new(@str.to_s, macro_expansion_pragmas)
     end
 
     def interpret_system(node)
