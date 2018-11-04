@@ -145,16 +145,17 @@ module Crystal
     end
 
     def interpret_read_file(node)
-      if node.args.size == 1
-        node.args[0].accept self
-        filename = @last.to_macro_id
-        if File.exists?(filename)
-          @last = StringLiteral.new(File.read(filename))
-        else
-          @last = NilLiteral.new
-        end
-      else
+      unless node.args.size == 1
         node.wrong_number_of_arguments "macro call 'read_file'", node.args.size, 1
+      end
+
+      node.args[0].accept self
+      filename = @last.to_macro_id
+      filename = find_file(filename) { }
+      if filename
+        @last = StringLiteral.new(File.read(filename))
+      else
+        @last = NilLiteral.new
       end
     end
 
@@ -179,44 +180,48 @@ module Crystal
       macro_raise(node, node.args, self)
     end
 
-    def interpret_run(node)
-      if node.args.size == 0
-        node.wrong_number_of_arguments "macro call 'run'", 0, "1+"
-      end
-
-      node.args.first.accept self
-      filename = @last.to_macro_id
-      original_filename = filename
-
+    private def find_file(filename)
       # Support absolute paths
-      if filename.starts_with?("/")
-        filename = "#{filename}.cr" unless filename.ends_with?(".cr")
-
+      if filename.starts_with?('/')
         if File.exists?(filename)
           unless File.file?(filename)
-            node.raise "error executing macro run: '#{filename}' is not a file"
+            return yield Exception.new "#{filename.inspect} is not a file"
           end
         else
-          node.raise "error executing macro run: can't find file '#{filename}'"
+          return yield Exception.new "can't find file #{filename.inspect}"
         end
       else
         begin
           relative_to = @location.try &.original_filename
           found_filenames = @program.find_in_path(filename, relative_to)
         rescue ex
-          node.raise "error executing macro run: #{ex.message}"
+          return yield ex
         end
 
         unless found_filenames
-          node.raise "error executing macro run: can't find file '#{filename}'"
+          return yield Exception.new "can't find file #{filename.inspect}"
         end
 
         if found_filenames.size > 1
-          node.raise "error executing macro run: '#{filename}' is a directory"
+          return yield Exception.new "#{filename.inspect} is a directory"
         end
 
         filename = found_filenames.first
       end
+      filename
+    end
+
+    def interpret_run(node)
+      if node.args.size == 0
+        node.wrong_number_of_arguments "macro call 'run'", 0, "1+"
+      end
+
+      node.args.first.accept self
+      original_filename = @last.to_macro_id
+
+      filename = original_filename
+      filename = "#{filename}.cr" unless filename.ends_with?(".cr")
+      filename = find_file(filename) { |ex| node.raise "error executing macro 'run': #{ex.message}" }
 
       run_args = [] of String
       node.args.each_with_index do |arg, i|
