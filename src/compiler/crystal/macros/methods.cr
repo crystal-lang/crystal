@@ -185,30 +185,25 @@ module Crystal
       if filename.starts_with?('/')
         if File.exists?(filename)
           unless File.file?(filename)
-            yield "#{filename.inspect} is not a file"
-            return
+            return yield "#{filename.inspect} is not a file"
           end
         else
-          yield "can't find file #{filename.inspect}"
-          return
+          return yield "can't find file #{filename.inspect}"
         end
       else
         begin
           relative_to = @location.try &.original_filename
           found_filenames = @program.find_in_path(filename, relative_to)
         rescue ex
-          yield ex.message
-          return
+          return yield ex.message
         end
 
         unless found_filenames
-          yield "can't find file #{filename.inspect}"
-          return
+          return yield "can't find file #{filename.inspect}"
         end
 
         if found_filenames.size > 1
-          yield "#{filename.inspect} is a directory"
-          return
+          return yield "#{filename.inspect} is a directory"
         end
 
         filename = found_filenames.first
