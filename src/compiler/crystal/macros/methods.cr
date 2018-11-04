@@ -185,25 +185,30 @@ module Crystal
       if filename.starts_with?('/')
         if File.exists?(filename)
           unless File.file?(filename)
-            return yield Exception.new "#{filename.inspect} is not a file"
+            yield "#{filename.inspect} is not a file"
+            return
           end
         else
-          return yield Exception.new "can't find file #{filename.inspect}"
+          yield "can't find file #{filename.inspect}"
+          return
         end
       else
         begin
           relative_to = @location.try &.original_filename
           found_filenames = @program.find_in_path(filename, relative_to)
         rescue ex
-          return yield ex
+          yield ex.message
+          return
         end
 
         unless found_filenames
-          return yield Exception.new "can't find file #{filename.inspect}"
+          yield "can't find file #{filename.inspect}"
+          return
         end
 
         if found_filenames.size > 1
-          return yield Exception.new "#{filename.inspect} is a directory"
+          yield "#{filename.inspect} is a directory"
+          return
         end
 
         filename = found_filenames.first
@@ -221,7 +226,9 @@ module Crystal
 
       filename = original_filename
       filename = "#{filename}.cr" unless filename.ends_with?(".cr")
-      filename = find_file(filename) { |ex| node.raise "error executing macro 'run': #{ex.message}" }
+      filename = find_file(filename) { |error_message|
+        node.raise "error executing macro 'run': #{error_message}"
+      }
 
       run_args = [] of String
       node.args.each_with_index do |arg, i|
