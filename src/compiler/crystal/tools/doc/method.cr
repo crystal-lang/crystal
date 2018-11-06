@@ -214,7 +214,6 @@ class Crystal::Doc::Method
       builder.field "args", args
       builder.field "args_string", args_to_s
       builder.field "source_link", source_link
-      builder.field "source_link", source_link
       builder.field "def", self.def
     end
   end
