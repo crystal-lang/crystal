@@ -75,7 +75,7 @@ module Spec::Methods
     Spec::RootContext.report(:pending, description, file, line)
   end
 
-  # Define a yet-to-be-implemented pending test case
+  # Defines a yet-to-be-implemented pending test case
   def pending(description = "assert", file = __FILE__, line = __LINE__, end_line = __END_LINE__)
     pending(description, file, line, end_line) { }
   end

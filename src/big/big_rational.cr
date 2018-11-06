@@ -24,7 +24,7 @@ struct BigRational < Number
   private MANTISSA_BITS  = 53
   private MANTISSA_SHIFT = (1_i64 << MANTISSA_BITS).to_f64
 
-  # Create a new `BigRational`.
+  # Creates a new `BigRational`.
   #
   # If *denominator* is 0, this will raise an exception.
   def initialize(numerator : Int, denominator : Int)

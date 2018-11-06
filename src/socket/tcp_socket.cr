@@ -60,7 +60,7 @@ class TCPSocket < IPSocket
     getsockopt_bool LibC::TCP_NODELAY, level: Protocol::TCP
   end
 
-  # Disable the Nagle algorithm when set to `true`, otherwise enables it.
+  # Disables the Nagle algorithm when set to `true`, otherwise enables it.
   def tcp_nodelay=(val : Bool)
     setsockopt_bool LibC::TCP_NODELAY, val, level: Protocol::TCP
   end

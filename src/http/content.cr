@@ -123,7 +123,7 @@ module HTTP
       end
     end
 
-    # Check if the last read consumed a chunk and we
+    # Checks if the last read consumed a chunk and we
     # need to start consuming the next one.
     private def next_chunk
       return if @chunk_remaining > 0 || @received_final_chunk
