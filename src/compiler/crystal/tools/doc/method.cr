@@ -200,7 +200,7 @@ class Crystal::Doc::Method
   end
 
   def has_args?
-    !@def.args.empty? || @def.block_arg || @def.yields
+    !@def.args.empty? || @def.double_splat || @def.block_arg || @def.yields
   end
 
   def to_json(builder : JSON::Builder)
