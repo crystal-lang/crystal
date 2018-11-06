@@ -64,7 +64,7 @@ class Crystal::Doc::Macro
   end
 
   def args_to_s(io)
-    return if @macro.args.empty?
+    return unless has_args?
 
     printed = false
     io << '('
@@ -80,9 +80,20 @@ class Crystal::Doc::Macro
       io << ", " if printed
       io << "**"
       io << double_splat
+      printed = true
+    end
+
+    if block_arg = @macro.block_arg
+      io << ", " if printed
+      io << '&'
+      io << block_arg
     end
 
     io << ')'
+  end
+
+  def has_args?
+    !@macro.args.empty? || @macro.double_splat || @macro.block_arg
   end
 
   def args_to_html
