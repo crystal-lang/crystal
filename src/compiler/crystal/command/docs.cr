@@ -54,6 +54,7 @@ class Crystal::Command
     included_dirs << File.expand_path("./src")
 
     compiler = Compiler.new
+    compiler.flags << "docs"
     compiler.wants_doc = true
     result = compiler.top_level_semantic sources
 
