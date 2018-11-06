@@ -42,6 +42,31 @@ class Crystal::Command
         compiler.flags << flag
       end
 
+      opts.on("--error-trace", "Show full error trace") do
+        compiler.show_error_trace = true
+      end
+
+      opts.on("--no-color", "Disable colored output") do
+        @color = false
+        compiler.color = false
+      end
+
+      opts.on("--prelude ", "Use given file as prelude") do |prelude|
+        compiler.prelude = prelude
+      end
+
+      opts.on("-s", "--stats", "Enable statistics output") do
+        @progress_tracker.stats = true
+      end
+
+      opts.on("-p", "--progress", "Enable progress output") do
+        @progress_tracker.progress = true
+      end
+
+      opts.on("-t", "--time", "Enable execution time output") do
+        @time = true
+      end
+
       opts.on("-h", "--help", "Show this message") do
         puts opts
         exit
