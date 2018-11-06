@@ -4,6 +4,37 @@ require "semantic_version"
 
 module Crystal
   class MacroInterpreter
+    private def find_file(filename)
+      # Support absolute paths
+      if filename.starts_with?('/')
+        if File.exists?(filename)
+          unless File.file?(filename)
+            return yield "#{filename.inspect} is not a file"
+          end
+        else
+          return yield "can't find file #{filename.inspect}"
+        end
+      else
+        begin
+          relative_to = @location.try &.original_filename
+          found_filenames = @program.find_in_path(filename, relative_to)
+        rescue ex
+          return yield ex.message
+        end
+
+        unless found_filenames
+          return yield "can't find file #{filename.inspect}"
+        end
+
+        if found_filenames.size > 1
+          return yield "#{filename.inspect} is a directory"
+        end
+
+        filename = found_filenames.first
+      end
+      filename
+    end
+
     def interpret_top_level_call(node)
       interpret_top_level_call?(node) ||
         node.raise("undefined macro method: '#{node.name}'")
@@ -180,37 +211,6 @@ module Crystal
       macro_raise(node, node.args, self)
     end
 
-    private def find_file(filename)
-      # Support absolute paths
-      if filename.starts_with?('/')
-        if File.exists?(filename)
-          unless File.file?(filename)
-            return yield "#{filename.inspect} is not a file"
-          end
-        else
-          return yield "can't find file #{filename.inspect}"
-        end
-      else
-        begin
-          relative_to = @location.try &.original_filename
-          found_filenames = @program.find_in_path(filename, relative_to)
-        rescue ex
-          return yield ex.message
-        end
-
-        unless found_filenames
-          return yield "can't find file #{filename.inspect}"
-        end
-
-        if found_filenames.size > 1
-          return yield "#{filename.inspect} is a directory"
-        end
-
-        filename = found_filenames.first
-      end
-      filename
-    end
-
     def interpret_run(node)
       if node.args.size == 0
         node.wrong_number_of_arguments "macro call 'run'", 0, "1+"
@@ -221,9 +221,9 @@ module Crystal
 
       filename = original_filename
       filename = "#{filename}.cr" unless filename.ends_with?(".cr")
-      filename = find_file(filename) { |error_message|
+      filename = find_file(filename) do |error_message|
         node.raise "error executing macro 'run': #{error_message}"
-      }
+      end
 
       run_args = [] of String
       node.args.each_with_index do |arg, i|
