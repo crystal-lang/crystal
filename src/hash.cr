@@ -16,22 +16,18 @@ class Hash(K, V)
   # Creates a new empty `Hash` with a *block* for handling missing keys.
   #
   # ```
-  # def foo(&block : (Hash(String, Int32), String -> Int32))
-  #   hash = Hash(String, Int32).new(block)
-  #   hash.size   # => 0
-  #   hash["foo"] # => 3
-  #   hash.size   # => 1
-  #   hash["bar"] = 10
-  #   hash["bar"] # => 10
-  # end
+  # proc = ->(hash : Hash(String, Int32), key : String) { hash[key] = key.size }
+  # hash = Hash(String, Int32).new(proc)
   #
-  # foo do |hash, key|
-  #   hash[key] = key.size
-  # end
+  # hash.size   # => 0
+  # hash["foo"] # => 3
+  # hash.size   # => 1
+  # hash["bar"] = 10
+  # hash["bar"] # => 10
   # ```
   #
   # The *initial_capacity* is useful to avoid unnecessary reallocations
-  # of the internal buffer in case of growth. If the maximum number of elements
+  # of the internal buffer in case of growth. If the number of elements
   # a hash will hold is known, the hash should be initialized with that
   # capacity for improved performance. Otherwise, the default is 11 and inputs
   # less than 11 are ignored.
@@ -60,7 +56,7 @@ class Hash(K, V)
   # ```
   #
   # The *initial_capacity* is useful to avoid unnecessary reallocations
-  # of the internal buffer in case of growth. If the maximum number of elements
+  # of the internal buffer in case of growth. If the number of elements
   # a hash will hold is known, the hash should be initialized with that
   # capacity for improved performance. Otherwise, the default is 11 and inputs
   # less than 11 are ignored.
@@ -83,6 +79,12 @@ class Hash(K, V)
   # hash["3"][1] = 4
   # arr # => [1, 4, 3]
   # ```
+  #
+  # The *initial_capacity* is useful to avoid unnecessary reallocations
+  # of the internal buffer in case of growth. If the number of elements
+  # a hash will hold is known, the hash should be initialized with that
+  # capacity for improved performance. Otherwise, the default is 11 and inputs
+  # less than 11 are ignored.
   def self.new(default_value : V, initial_capacity = nil)
     new(initial_capacity: initial_capacity) { default_value }
   end
