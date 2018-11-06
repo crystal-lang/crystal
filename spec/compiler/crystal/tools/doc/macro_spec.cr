@@ -7,7 +7,7 @@ describe Doc::Macro do
       generator = Doc::Generator.new program, ["."], ".", nil
       doc_type = Doc::Type.new generator, program
 
-      a_macro = Macro.new "foo", [Arg.new("foo"), Arg.new("bar")]
+      a_macro = Macro.new "foo", ["foo".arg, "bar".arg]
       doc_macro = Doc::Macro.new generator, doc_type, a_macro
       doc_macro.args_to_s.should eq("(foo, bar)")
     end
@@ -17,7 +17,7 @@ describe Doc::Macro do
       generator = Doc::Generator.new program, ["."], ".", nil
       doc_type = Doc::Type.new generator, program
 
-      a_macro = Macro.new "foo", [Arg.new("foo")], splat_index: 0
+      a_macro = Macro.new "foo", ["foo".arg], splat_index: 0
       doc_macro = Doc::Macro.new generator, doc_type, a_macro
       doc_macro.args_to_s.should eq("(*foo)")
     end
@@ -27,7 +27,7 @@ describe Doc::Macro do
       generator = Doc::Generator.new program, ["."], ".", nil
       doc_type = Doc::Type.new generator, program
 
-      a_macro = Macro.new "foo", [Arg.new("foo"), Arg.new("bar")], splat_index: 1
+      a_macro = Macro.new "foo", ["foo".arg, "bar".arg], splat_index: 1
       doc_macro = Doc::Macro.new generator, doc_type, a_macro
       doc_macro.args_to_s.should eq("(foo, *bar)")
     end
@@ -37,7 +37,7 @@ describe Doc::Macro do
       generator = Doc::Generator.new program, ["."], ".", nil
       doc_type = Doc::Type.new generator, program
 
-      a_macro = Macro.new "foo", double_splat: Arg.new("foo")
+      a_macro = Macro.new "foo", double_splat: "foo".arg
       doc_macro = Doc::Macro.new generator, doc_type, a_macro
       doc_macro.args_to_s.should eq("(**foo)")
     end
@@ -47,7 +47,7 @@ describe Doc::Macro do
       generator = Doc::Generator.new program, ["."], ".", nil
       doc_type = Doc::Type.new generator, program
 
-      a_macro = Macro.new "foo", double_splat: Arg.new("foo")
+      a_macro = Macro.new "foo", double_splat: "foo".arg
       doc_macro = Doc::Macro.new generator, doc_type, a_macro
       doc_macro.args_to_s.should eq("(**foo)")
     end
@@ -57,7 +57,7 @@ describe Doc::Macro do
       generator = Doc::Generator.new program, ["."], ".", nil
       doc_type = Doc::Type.new generator, program
 
-      a_macro = Macro.new "foo", [Arg.new("foo")], double_splat: Arg.new("bar")
+      a_macro = Macro.new "foo", ["foo".arg], double_splat: "bar".arg
       doc_macro = Doc::Macro.new generator, doc_type, a_macro
       doc_macro.args_to_s.should eq("(foo, **bar)")
     end
@@ -67,7 +67,7 @@ describe Doc::Macro do
       generator = Doc::Generator.new program, ["."], ".", nil
       doc_type = Doc::Type.new generator, program
 
-      a_macro = Macro.new "foo", block_arg: Arg.new("foo")
+      a_macro = Macro.new "foo", block_arg: "foo".arg
       doc_macro = Doc::Macro.new generator, doc_type, a_macro
       doc_macro.args_to_s.should eq("(&foo)")
     end
@@ -77,7 +77,7 @@ describe Doc::Macro do
       generator = Doc::Generator.new program, ["."], ".", nil
       doc_type = Doc::Type.new generator, program
 
-      a_macro = Macro.new "foo", [Arg.new("foo")], block_arg: Arg.new("bar")
+      a_macro = Macro.new "foo", ["foo".arg], block_arg: "bar".arg
       doc_macro = Doc::Macro.new generator, doc_type, a_macro
       doc_macro.args_to_s.should eq("(foo, &bar)")
     end
