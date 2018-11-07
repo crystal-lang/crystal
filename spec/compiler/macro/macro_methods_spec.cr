@@ -1759,16 +1759,32 @@ module Crystal
   end
 
   describe "read_file" do
-    it "reads file (exists)" do
-      run(%q<
-        {{read_file("#{__DIR__}/../data/build")}}
-        >, filename = __FILE__).to_string.should eq(File.read("#{__DIR__}/../data/build"))
+    context "with absolute path" do
+      it "reads file (exists)" do
+        run(%q<
+          {{read_file("#{__DIR__}/../data/build")}}
+          >, filename = __FILE__).to_string.should eq(File.read("#{__DIR__}/../data/build"))
+      end
+
+      it "reads file (doesn't exists)" do
+        run(%q<
+          {{read_file("#{__DIR__}/../data/build_foo")}} ? 10 : 20
+          >, filename = __FILE__).to_i.should eq(20)
+      end
     end
 
-    it "reads file (doesn't exists)" do
-      run(%q<
-        {{read_file("#{__DIR__}/../data/build_foo")}} ? 10 : 20
-        >, filename = __FILE__).to_i.should eq(20)
+    context "with relative path" do
+      it "reads file (exists)" do
+        run(%q<
+          {{read_file("spec/compiler/data/build")}}
+          >, filename = __FILE__).to_string.should eq(File.read("spec/compiler/data/build"))
+      end
+
+      it "reads file (doesn't exists)" do
+        run(%q<
+          {{read_file("spec/compiler/data/build_foo")}} ? 10 : 20
+          >, filename = __FILE__).to_i.should eq(20)
+      end
     end
   end
 end

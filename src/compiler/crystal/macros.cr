@@ -75,6 +75,8 @@ module Crystal::Macros
   # ```
   # read_file("#{__DIR__}/some_file.txt")
   # ```
+  #
+  # NOTE: Relative paths are resolved to the current working directory.
   def read_file(filename) : StringLiteral | NilLiteral
   end
 
