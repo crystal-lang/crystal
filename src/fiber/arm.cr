@@ -31,7 +31,7 @@ class Fiber
         vstmdb sp!, {d8-d15}
         str    sp, [$0]
 
-        ldr    sp, $1
+        mov    sp, $1
         vldmia sp!, {d8-d15}
         ldmia  sp!, {r0, r4-r11, lr}
 
@@ -45,7 +45,7 @@ class Fiber
         stmdb  sp!, {r0, r4-r11, lr}
         str    sp, [$0]
 
-        ldr    sp, [$1]
+        mov    sp, $1
         ldmia  sp!, {r0, r4-r11, lr}
 
         mov    r1, lr
