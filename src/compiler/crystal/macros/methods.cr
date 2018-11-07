@@ -144,20 +144,6 @@ module Crystal
       raise SkipMacroException.new(@str.to_s)
     end
 
-    def interpret_read_file(node)
-      unless node.args.size == 1
-        node.wrong_number_of_arguments "macro call 'read_file'", node.args.size, 1
-      end
-
-      node.args[0].accept self
-      filename = @last.to_macro_id
-      if File.file?(filename)
-        @last = StringLiteral.new(File.read(filename))
-      else
-        @last = NilLiteral.new
-      end
-    end
-
     def interpret_system(node)
       cmd = node.args.map do |arg|
         arg.accept self
@@ -177,6 +163,20 @@ module Crystal
 
     def interpret_raise(node)
       macro_raise(node, node.args, self)
+    end
+
+    def interpret_read_file(node)
+      unless node.args.size == 1
+        node.wrong_number_of_arguments "macro call 'read_file'", node.args.size, 1
+      end
+
+      node.args[0].accept self
+      filename = @last.to_macro_id
+      if File.file?(filename)
+        @last = StringLiteral.new(File.read(filename))
+      else
+        @last = NilLiteral.new
+      end
     end
 
     def interpret_run(node)
