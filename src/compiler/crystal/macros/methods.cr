@@ -5,6 +5,8 @@ require "semantic_version"
 module Crystal
   class MacroInterpreter
     private def find_file(filename)
+      filename = "#{filename}.cr" unless filename.ends_with?(".cr")
+
       # Support absolute paths
       if filename.starts_with?('/')
         if File.exists?(filename)
@@ -219,7 +221,6 @@ module Crystal
       original_filename = @last.to_macro_id
 
       filename = original_filename
-      filename = "#{filename}.cr" unless filename.ends_with?(".cr")
       filename = find_file(filename) do |error_message|
         node.raise "error executing macro 'run': #{error_message}"
       end
