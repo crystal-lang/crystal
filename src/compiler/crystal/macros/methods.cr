@@ -182,7 +182,7 @@ module Crystal
 
       node.args[0].accept self
       filename = @last.to_macro_id
-      if File.exists?(filename)
+      if File.file?(filename)
         @last = StringLiteral.new(File.read(filename))
       else
         @last = NilLiteral.new
