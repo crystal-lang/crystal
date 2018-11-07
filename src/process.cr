@@ -217,7 +217,7 @@ class Process
     end
   end
 
-  getter pid : Int32
+  getter pid : LibC::PidT
 
   # A pipe to this process's input. Raises if a pipe wasn't asked when creating the process.
   getter! input : IO::FileDescriptor
@@ -330,7 +330,7 @@ class Process
     end
   end
 
-  private def initialize(@pid : Int32)
+  private def initialize(@pid : LibC::PidT)
     @waitpid = Crystal::SignalChildHandler.wait(pid)
     @wait_count = 0
   end
