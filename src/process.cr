@@ -330,7 +330,7 @@ class Process
     end
   end
 
-  private def initialize(@pid)
+  private def initialize(@pid : Int32)
     @waitpid = Crystal::SignalChildHandler.wait(pid)
     @wait_count = 0
   end
