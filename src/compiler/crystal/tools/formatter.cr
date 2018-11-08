@@ -820,7 +820,7 @@ module Crystal
         if next_needs_indent
           write_indent(offset, element)
         else
-          accept element
+          indent(offset, element)
         end
 
         has_heredoc_in_line = !@lexer.heredocs.empty?

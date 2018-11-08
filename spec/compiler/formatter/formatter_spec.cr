@@ -70,6 +70,8 @@ describe Crystal::Formatter do
   assert_format "[1,\n2,\n3]", "[1,\n 2,\n 3]"
   assert_format "[1,\n2,\n3\n]", "[1,\n 2,\n 3,\n]"
   assert_format "[\n1,\n2,\n3]", "[\n  1,\n  2,\n  3,\n]"
+  assert_format "[\n  [\n    1,\n  ], [\n    2,\n  ], [\n    3,\n  ],\n]"
+  assert_format "[\n  {\n    1 => 2,\n  }, {\n    3 => 4,\n  }, {\n    5 => 6,\n  },\n]"
   assert_format "if 1\n[   1  ,    2  ,    3  ]\nend", "if 1\n  [1, 2, 3]\nend"
   assert_format "    [   1,   \n   2   ,   \n   3   ]   ", "[1,\n 2,\n 3]"
   assert_format "Set { 1 , 2 }", "Set{1, 2}"
