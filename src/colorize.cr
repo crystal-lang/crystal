@@ -106,7 +106,7 @@ module Colorize
   # ```
   class_property? enabled : Bool = true
 
-  # Make `Colorize.enabled` `true` if and only if both of `STDOUT.tty?` and `STDERR.tty?` are `true`.
+  # Makes `Colorize.enabled` `true` if and only if both of `STDOUT.tty?` and `STDERR.tty?` are `true`.
   def self.on_tty_only!
     self.enabled = STDOUT.tty? && STDERR.tty?
   end

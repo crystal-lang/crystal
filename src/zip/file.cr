@@ -81,7 +81,7 @@ class Zip::File
     end
   end
 
-  # Try to find the directory end offset (by searching its signature)
+  # Tries to find the directory end offset (by searching its signature)
   # in the last 64, 1024 and 65K bytes (in that order)
   private def find_directory_end_offset
     find_directory_end_offset(64) ||

@@ -133,7 +133,7 @@ struct XML::Reader
     xml ? String.new(xml) : ""
   end
 
-  # Expand the node to a `XML::Node` that can be searched with XPath etc.
+  # Expands the node to a `XML::Node` that can be searched with XPath etc.
   # The returned `XML::Node` is only valid until the next call to `#read`.
   def expand
     xml = LibXML.xmlTextReaderExpand(@reader)

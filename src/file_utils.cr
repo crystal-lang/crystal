@@ -386,7 +386,7 @@ module FileUtils
 
   # Deletes a file or directory *path*.
   # If *path* is a directory, this method removes all its contents recursively.
-  # Ignore all errors.
+  # Ignores all errors.
   #
   # ```
   # FileUtils.rm_rf("dir")
@@ -402,7 +402,7 @@ module FileUtils
 
   # Deletes a list of files or directories *paths*.
   # If one path is a directory, this method removes all its contents recursively.
-  # Ignore all errors.
+  # Ignores all errors.
   #
   # ```
   # FileUtils.rm_rf(["dir", "file.cr", "non_existent_file"])

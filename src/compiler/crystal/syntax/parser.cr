@@ -2547,7 +2547,7 @@ module Crystal
       Case.new(cond, whens, a_else)
     end
 
-    # Add an expression to all when expressions and error on duplicates
+    # Adds an expression to all when expressions and error on duplicates
     def add_when_exp(when_exps, exp)
       return unless when_exp_constant?(exp)
 

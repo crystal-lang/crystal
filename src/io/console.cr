@@ -3,7 +3,7 @@
 require "termios"
 
 class IO::FileDescriptor < IO
-  # Turn off character echoing for the duration of the given block.
+  # Turns off character echoing for the duration of the given block.
   # This will prevent displaying back to the user what they enter on the terminal.
   # Only call this when this IO is a TTY, such as a not redirected stdin.
   #
@@ -19,7 +19,7 @@ class IO::FileDescriptor < IO
     end
   end
 
-  # Turn off character echoing for this IO.
+  # Turns off character echoing for this IO.
   # This will prevent displaying back to the user what they enter on the terminal.
   # Only call this when this IO is a TTY, such as a not redirected stdin.
   def noecho!
@@ -34,7 +34,7 @@ class IO::FileDescriptor < IO
     LibC.tcsetattr(fd, Termios::LineControl::TCSANOW, pointerof(mode))
   end
 
-  # Enable character processing for the duration of the given block.
+  # Enables character processing for the duration of the given block.
   # The so called cooked mode is the standard behavior of a terminal,
   # doing line wise editing by the terminal and only sending the input to
   # the program on a newline.
@@ -46,7 +46,7 @@ class IO::FileDescriptor < IO
     end
   end
 
-  # Enable character processing for this IO.
+  # Enables character processing for this IO.
   # The so called cooked mode is the standard behavior of a terminal,
   # doing line wise editing by the terminal and only sending the input to
   # the program on a newline.
@@ -74,7 +74,7 @@ class IO::FileDescriptor < IO
     LibC.tcsetattr(fd, Termios::LineControl::TCSANOW, pointerof(mode))
   end
 
-  # Enable raw mode for the duration of the given block.
+  # Enables raw mode for the duration of the given block.
   # In raw mode every keypress is directly sent to the program, no interpretation
   # is done by the terminal.
   # Only call this when this IO is a TTY, such as a not redirected stdin.
@@ -85,7 +85,7 @@ class IO::FileDescriptor < IO
     end
   end
 
-  # Enable raw mode for this IO.
+  # Enables raw mode for this IO.
   # In raw mode every keypress is directly sent to the program, no interpretation
   # is done by the terminal.
   # Only call this when this IO is a TTY, such as a not redirected stdin.

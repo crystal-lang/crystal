@@ -130,7 +130,7 @@ module HTTP
   class Cookies
     include Enumerable(Cookie)
 
-    # Create a new instance by parsing the `Cookie` and `Set-Cookie`
+    # Creates a new instance by parsing the `Cookie` and `Set-Cookie`
     # headers in the given `HTTP::Headers`.
     #
     # See `HTTP::Request#cookies` and `HTTP::Client::Response#cookies`.
@@ -155,7 +155,7 @@ module HTTP
       self
     end
 
-    # Create a new empty instance.
+    # Creates a new empty instance.
     def initialize
       @cookies = {} of String => Cookie
     end
@@ -188,7 +188,7 @@ module HTTP
       @cookies[key] = value
     end
 
-    # Get the current `HTTP::Cookie` for the given *key*.
+    # Gets the current `HTTP::Cookie` for the given *key*.
     #
     # ```
     # request.cookies["foo"].value # => "bar"
@@ -197,7 +197,7 @@ module HTTP
       @cookies[key]
     end
 
-    # Get the current `HTTP::Cookie` for the given *key* or `nil` if none is set.
+    # Gets the current `HTTP::Cookie` for the given *key* or `nil` if none is set.
     #
     # ```
     # request = HTTP::Request.new "GET", "/"
@@ -218,7 +218,7 @@ module HTTP
       @cookies.has_key?(key)
     end
 
-    # Add the given *cookie* to this collection, overrides an existing cookie
+    # Adds the given *cookie* to this collection, overrides an existing cookie
     # with the same name if present.
     #
     # ```

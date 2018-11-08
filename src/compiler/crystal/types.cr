@@ -583,7 +583,7 @@ module Crystal
       raise "BUG: #{self} doesn't implement add_subclass"
     end
 
-    # Replace type parameetrs in this type with the type parameters
+    # Replaces type parameetrs in this type with the type parameters
     # of the given *instance* type.
     def replace_type_parameters(instance) : Type
       self

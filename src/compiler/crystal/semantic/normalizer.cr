@@ -186,7 +186,7 @@ module Crystal
       While.new(not_exp, node.body).at(node)
     end
 
-    # Check if the right hand side is dead code
+    # Checks if the right hand side is dead code
     def transform(node : Assign)
       super
 

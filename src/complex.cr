@@ -36,7 +36,7 @@ struct Complex
     false
   end
 
-  # Write this complex object to an *io*.
+  # Writes this complex object to an *io*.
   #
   # ```
   # Complex.new(42, 2).to_s # => "42.0 + 2.0i"
@@ -48,7 +48,7 @@ struct Complex
     io << 'i'
   end
 
-  # Write this complex object to an *io*, surrounded by parentheses.
+  # Writes this complex object to an *io*, surrounded by parentheses.
   #
   # ```
   # Complex.new(42, 2).inspect # => "(42.0 + 2.0i)"

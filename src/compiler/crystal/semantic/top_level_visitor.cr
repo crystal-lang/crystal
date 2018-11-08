@@ -1124,8 +1124,8 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
     scope
   end
 
-  # Turn all finished macros into expanded nodes, and
-  # add them to the program
+  # Turns all finished macros into expanded nodes, and
+  # adds them to the program
   def process_finished_hooks
     @finished_hooks.each do |hook|
       self.current_type = hook.scope
