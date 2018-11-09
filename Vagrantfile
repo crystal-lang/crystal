@@ -37,26 +37,30 @@ def clone_crystal_from_vagrant(config)
   )
 end
 
+# *llvm* values: 6.0, 7, (empty), Hash with {url:, path:}
+def install_llvm(dist, llvm)
+  llvm ||= "6.0"
+
+  if llvm.is_a?(Hash)
+    %(
+      curl -s #{llvm[:url]} | tar xz -C /opt
+      echo 'export PATH="$PATH:/opt/#{llvm[:path]}/bin"' >> /etc/profile.d/crystal.sh
+    )
+  else
+    llvm_suffix = llvm != "" ? "-#{llvm}" : ""
+
+    %(
+      add-apt-repository "deb http://apt.llvm.org/#{dist}/ llvm-toolchain-#{dist}#{llvm_suffix} main"
+      curl -sSL https://apt.llvm.org/llvm-snapshot.gpg.key | apt-key add -
+      apt-get update
+      apt-get install -y llvm#{llvm_suffix}-dev
+    )
+  end
+end
+
 # define a ubuntu box with the given *name*
 # *llvm* values: 6.0, 7, (empty), Hash with {url:, path:}
-def define_ubuntu(config, name:, dist:, bits:, llvm: "6.0")
-  install_llvm =
-    if llvm.is_a?(Hash)
-      %(
-        curl -s #{llvm[:url]} | tar xz -C /opt
-        echo 'export PATH="$PATH:/opt/#{llvm[:path]}/bin"' >> /etc/profile.d/crystal.sh
-      )
-    else
-      llvm_suffix = llvm != "" ? "-#{llvm}" : ""
-
-      %(
-        add-apt-repository "deb http://apt.llvm.org/#{dist}/ llvm-toolchain-#{dist}#{llvm_suffix} main"
-        curl -sSL https://apt.llvm.org/llvm-snapshot.gpg.key | apt-key add -
-        apt-get update
-        apt-get install -y llvm#{llvm_suffix}-dev
-      )
-    end
-
+def define_ubuntu(config, name:, dist:, bits:, llvm: nil)
   install_cxx =
     if dist == "precise"
       # llvm 3.9 requires g++ 4.7 or greater and is not the one shipped in precise
@@ -91,9 +95,43 @@ def define_ubuntu(config, name:, dist:, bits:, llvm: "6.0")
       apt-get install -y libxml2-dev libyaml-dev libreadline-dev libgmp3-dev libssl-dev
       apt-get install -y
 
-      #{install_llvm}
+      #{install_llvm(dist, llvm)}
 
       #{install_cxx}
+
+      #{register_crystal_key}
+
+      curl -s https://dist.crystal-lang.org/apt/setup.sh | sh
+      apt-get install -y crystal
+
+      echo 'export LIBRARY_PATH="/usr/lib/crystal/lib/"' >> /etc/profile.d/crystal.sh
+    )
+
+    clone_crystal_from_vagrant(c)
+  end
+end
+
+# define a ubuntu box with the given *name*
+# *llvm* values: 6.0, 7, (empty), Hash with {url:, path:}
+def define_debian(config, name:, dist:, bits:, llvm: nil)
+  register_crystal_key =
+    if dist == "stretch"
+      %(
+        apt-key adv --keyserver keys.gnupg.net --recv-keys 09617FD37CC06B54
+      )
+    end
+
+  config.vm.define(name) do |c|
+    c.vm.box = "debian/#{dist}#{bits}"
+
+    c.vm.provision :shell, inline: %(
+      echo '' > /etc/profile.d/crystal.sh
+
+      apt-get install -y software-properties-common apt-transport-https dirmngr curl build-essential git
+      apt-get install -y libxml2-dev libyaml-dev libreadline-dev libgmp3-dev libssl-dev
+      apt-get install -y
+
+      #{install_llvm(dist, llvm)}
 
       #{register_crystal_key}
 
@@ -117,24 +155,8 @@ Vagrant.configure("2") do |config|
   define_ubuntu config, name: 'precise64', dist: 'precise', bits: 64, llvm: { url: "http://crystal-lang.s3.amazonaws.com/llvm/llvm-3.9.1-1-linux-x86_64.tar.gz", path: "llvm-3.9.1-1" }
   define_ubuntu config, name: 'precise32', dist: 'precise', bits: 32, llvm: { url: "http://crystal-lang.s3.amazonaws.com/llvm/llvm-3.9.1-1-linux-i686.tar.gz", path: "llvm-3.9.1-1" }
 
-  [[:jessie, '3.5'], [:stretch, '3.9']].product([32, 64]).each do |(dist, ver), bits|
-    box_name = "#{dist}#{bits}"
-
-    config.vm.define(box_name) do |c|
-      c.vm.box = "debian/#{box_name}"
-
-      c.vm.provision :shell, inline: %(
-        apt-get -y install apt-transport-https dirmngr
-        apt-key adv --keyserver keys.gnupg.net --recv-keys 09617FD37CC06B54
-        echo 'deb https://dist.crystal-lang.org/apt crystal main' > /etc/apt/sources.list.d/crystal.list
-        apt-get update
-        apt-get -y install crystal curl git libgmp3-dev zlib1g-dev libedit-dev libxml2-dev libssl-dev libyaml-dev libreadline-dev g++ llvm-#{ver} llvm-#{ver}-dev
-        echo 'export LIBRARY_PATH="/opt/crystal/embedded/lib"' > /etc/profile.d/crystal.sh
-      )
-
-      clone_crystal_from_vagrant.call(c)
-    end
-  end
+  define_debian config, name: 'stretch64', dist: 'stretch', bits: 64
+  define_debian config, name: 'jessie64', dist: 'jessie', bits: 64
 
   config.vm.define "freebsd" do |c|
     c.ssh.shell = "csh"
