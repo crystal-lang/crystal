@@ -52,7 +52,7 @@ describe Doc::Macro do
       doc_macro.args_to_s.should eq("(**foo)")
     end
 
-    it "show simple arg and double splat arg" do
+    it "shows simple arg and double splat arg" do
       program = Program.new
       generator = Doc::Generator.new program, ["."], ".", nil
       doc_type = Doc::Type.new generator, program
@@ -62,7 +62,7 @@ describe Doc::Macro do
       doc_macro.args_to_s.should eq("(foo, **bar)")
     end
 
-    it "show block arg" do
+    it "shows block arg" do
       program = Program.new
       generator = Doc::Generator.new program, ["."], ".", nil
       doc_type = Doc::Type.new generator, program
@@ -72,7 +72,7 @@ describe Doc::Macro do
       doc_macro.args_to_s.should eq("(&foo)")
     end
 
-    it "show simple arg and block arg" do
+    it "shows simple arg and block arg" do
       program = Program.new
       generator = Doc::Generator.new program, ["."], ".", nil
       doc_type = Doc::Type.new generator, program
