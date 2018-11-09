@@ -45,8 +45,10 @@ describe "JSON serialization" do
       Hash(String, Int32).from_json(%({"foo": 1, "bar": 2})).should eq({"foo" => 1, "bar" => 2})
     end
 
-    it "does Hash(String, Int32)#from_json and skips null" do
-      Hash(String, Int32).from_json(%({"foo": 1, "bar": 2, "baz": null})).should eq({"foo" => 1, "bar" => 2})
+    it "raises an error Hash(String, Int32)#from_json with null value" do
+      expect_raises(JSON::ParseException, "Expected int but was null") do
+        Hash(String, Int32).from_json(%({"foo": 1, "bar": 2, "baz": null}))
+      end
     end
 
     it "does for Array(Int32) from IO" do
