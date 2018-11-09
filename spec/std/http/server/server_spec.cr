@@ -285,6 +285,66 @@ module HTTP
       HTTP::Client.get("http://#{address1}/").body.should eq "Test Server (#{address1})"
     end
 
+    it "handles Expect: 100-continue correctly when body is read" do
+      server = Server.new do |context|
+        context.response << context.request.body.not_nil!.gets_to_end
+      end
+
+      address = server.bind_unused_port
+      spawn server.listen
+
+      wait_for { server.listening? }
+
+      TCPSocket.open(address.address, address.port) do |socket|
+        socket << requestize(<<-REQUEST
+          POST / HTTP/1.1
+          Expect: 100-continue
+          Content-Length: 5
+
+          REQUEST
+        )
+        socket << "\r\n"
+        socket.flush
+
+        response = Client::Response.from_io(socket)
+        response.status_code.should eq(100)
+
+        socket << "hello"
+        socket.flush
+
+        response = Client::Response.from_io(socket)
+        response.status_code.should eq(200)
+        response.body.should eq("hello")
+      end
+    end
+
+    it "handles Expect: 100-continue correctly when body isn't read" do
+      server = Server.new do |context|
+        context.response.respond_with_error("I don't want your body", 400)
+      end
+
+      address = server.bind_unused_port
+      spawn server.listen
+
+      wait_for { server.listening? }
+
+      TCPSocket.open(address.address, address.port) do |socket|
+        socket << requestize(<<-REQUEST
+          POST / HTTP/1.1
+          Expect: 100-continue
+          Content-Length: 5
+
+          REQUEST
+        )
+        socket << "\r\n"
+        socket.flush
+
+        response = Client::Response.from_io(socket)
+        response.status_code.should eq(400)
+        response.body.should eq("400 I don't want your body\n")
+      end
+    end
+
     it "lists addresses" do
       server = Server.new { }
 
