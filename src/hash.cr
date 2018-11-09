@@ -13,6 +13,24 @@ class Hash(K, V)
   @last : Entry(K, V)?
   @block : (self, K -> V)?
 
+  # Creates a new empty `Hash` with a *block* for handling missing keys.
+  #
+  # ```
+  # proc = ->(hash : Hash(String, Int32), key : String) { hash[key] = key.size }
+  # hash = Hash(String, Int32).new(proc)
+  #
+  # hash.size   # => 0
+  # hash["foo"] # => 3
+  # hash.size   # => 1
+  # hash["bar"] = 10
+  # hash["bar"] # => 10
+  # ```
+  #
+  # The *initial_capacity* is useful to avoid unnecessary reallocations
+  # of the internal buffer in case of growth. If the number of elements
+  # a hash will hold is known, the hash should be initialized with that
+  # capacity for improved performance. Otherwise, the default is 11 and inputs
+  # less than 11 are ignored.
   def initialize(block : (Hash(K, V), K -> V)? = nil, initial_capacity = nil)
     initial_capacity ||= 11
     initial_capacity = 11 if initial_capacity < 11
@@ -23,10 +41,50 @@ class Hash(K, V)
     @block = block
   end
 
+  # Creates a new empty `Hash` with a *block* that handles missing keys.
+  #
+  # ```
+  # hash = Hash(String, Int32).new do |hash, key|
+  #   hash[key] = key.size
+  # end
+  #
+  # hash.size   # => 0
+  # hash["foo"] # => 3
+  # hash.size   # => 1
+  # hash["bar"] = 10
+  # hash["bar"] # => 10
+  # ```
+  #
+  # The *initial_capacity* is useful to avoid unnecessary reallocations
+  # of the internal buffer in case of growth. If the number of elements
+  # a hash will hold is known, the hash should be initialized with that
+  # capacity for improved performance. Otherwise, the default is 11 and inputs
+  # less than 11 are ignored.
   def self.new(initial_capacity = nil, &block : (Hash(K, V), K -> V))
     new block, initial_capacity: initial_capacity
   end
 
+  # Creates a new empty `Hash` where the *default_value* is returned if a key is missing.
+  #
+  # ```
+  # inventory = Hash(String, Int32).new(0)
+  # inventory["socks"] = 3
+  # inventory["pickles"] # => 0
+  # ```
+  #
+  # NOTE: The default value is passed by reference:
+  # ```
+  # arr = [1, 2, 3]
+  # hash = Hash(String, Array(Int32)).new(arr)
+  # hash["3"][1] = 4
+  # arr # => [1, 4, 3]
+  # ```
+  #
+  # The *initial_capacity* is useful to avoid unnecessary reallocations
+  # of the internal buffer in case of growth. If the number of elements
+  # a hash will hold is known, the hash should be initialized with that
+  # capacity for improved performance. Otherwise, the default is 11 and inputs
+  # less than 11 are ignored.
   def self.new(default_value : V, initial_capacity = nil)
     new(initial_capacity: initial_capacity) { default_value }
   end
