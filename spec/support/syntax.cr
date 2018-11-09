@@ -54,8 +54,8 @@ class String
     Var.new self
   end
 
-  def arg(default_value = nil, restriction = nil)
-    Arg.new self, default_value: default_value, restriction: restriction
+  def arg(default_value = nil, restriction = nil, external_name = nil)
+    Arg.new self, default_value: default_value, restriction: restriction, external_name: external_name
   end
 
   def call
