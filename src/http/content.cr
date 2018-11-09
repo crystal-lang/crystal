@@ -10,7 +10,6 @@ module HTTP
 
     def close
       @expects_continue = false
-      skip_to_end
       super
     end
 

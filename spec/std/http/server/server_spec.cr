@@ -639,42 +639,249 @@ module HTTP
       ))
     end
 
-    it "skips body between requests" do
-      processor = HTTP::Server::RequestProcessor.new do |context|
-        context.response.content_type = "text/plain"
-        context.response.puts "Hello world\r"
+    describe "reads consecutive requests" do
+      it "when body is consumed" do
+        processor = HTTP::Server::RequestProcessor.new do |context|
+          context.response.content_type = "text/plain"
+          context.response << context.request.body.not_nil!.gets(chomp: true)
+          context.response << "\r\n"
+        end
+
+        input = IO::Memory.new(requestize(<<-REQUEST
+          POST / HTTP/1.1
+          Content-Length: 7
+
+          hello
+          POST / HTTP/1.1
+          Content-Length: 7
+
+          hello
+          REQUEST
+        ))
+        output = IO::Memory.new
+        processor.process(input, output)
+        output.rewind
+        output.gets_to_end.should eq(requestize(<<-RESPONSE
+          HTTP/1.1 200 OK
+          Connection: keep-alive
+          Content-Type: text/plain
+          Content-Length: 7
+
+          hello
+          HTTP/1.1 200 OK
+          Connection: keep-alive
+          Content-Type: text/plain
+          Content-Length: 7
+
+          hello
+
+          RESPONSE
+        ))
       end
 
-      input = IO::Memory.new(requestize(<<-REQUEST
-        POST / HTTP/1.1
-        Content-Length: 7
+      it "with empty body" do
+        processor = HTTP::Server::RequestProcessor.new do |context|
+          context.response.content_type = "text/plain"
+          context.response.puts "Hello world\r"
+        end
 
-        hello
-        POST / HTTP/1.1
-        Content-Length: 7
+        input = IO::Memory.new(requestize(<<-REQUEST
+          POST / HTTP/1.1
 
-        hello
-        REQUEST
-      ))
-      output = IO::Memory.new
-      processor.process(input, output)
-      output.rewind
-      output.gets_to_end.should eq(requestize(<<-RESPONSE
-        HTTP/1.1 200 OK
-        Connection: keep-alive
-        Content-Type: text/plain
-        Content-Length: 13
+          POST / HTTP/1.1
+          Content-Length: 7
 
-        Hello world
-        HTTP/1.1 200 OK
-        Connection: keep-alive
-        Content-Type: text/plain
-        Content-Length: 13
+          hello
+          REQUEST
+        ))
+        output = IO::Memory.new
+        processor.process(input, output)
+        output.rewind
+        output.gets_to_end.should eq(requestize(<<-RESPONSE
+          HTTP/1.1 200 OK
+          Connection: keep-alive
+          Content-Type: text/plain
+          Content-Length: 13
 
-        Hello world
+          Hello world
+          HTTP/1.1 200 OK
+          Connection: keep-alive
+          Content-Type: text/plain
+          Content-Length: 13
 
-        RESPONSE
-      ))
+          Hello world
+
+          RESPONSE
+        ))
+      end
+
+      it "skips body with known length" do
+        processor = HTTP::Server::RequestProcessor.new do |context|
+          context.response.content_type = "text/plain"
+          context.response.puts "Hello world\r"
+        end
+
+        input = IO::Memory.new(requestize(<<-REQUEST
+          POST / HTTP/1.1
+          Content-Length: 7
+
+          hello
+          POST / HTTP/1.1
+          Content-Length: 7
+
+          hello
+          REQUEST
+        ))
+        output = IO::Memory.new
+        processor.process(input, output)
+        output.rewind
+        output.gets_to_end.should eq(requestize(<<-RESPONSE
+          HTTP/1.1 200 OK
+          Connection: keep-alive
+          Content-Type: text/plain
+          Content-Length: 13
+
+          Hello world
+          HTTP/1.1 200 OK
+          Connection: keep-alive
+          Content-Type: text/plain
+          Content-Length: 13
+
+          Hello world
+
+          RESPONSE
+        ))
+      end
+
+      it "fail if body is not consumed" do
+        processor = HTTP::Server::RequestProcessor.new do |context|
+          context.response.content_type = "text/plain"
+          context.response.puts "Hello world\r"
+        end
+
+        input = IO::Memory.new(requestize(<<-REQUEST
+          POST / HTTP/1.1
+
+          hello
+          POST / HTTP/1.1
+          Content-Length: 7
+
+          hello
+          REQUEST
+        ))
+        output = IO::Memory.new
+        processor.process(input, output)
+        output.rewind
+        output.gets_to_end.should eq(requestize(<<-RESPONSE
+          HTTP/1.1 200 OK
+          Connection: keep-alive
+          Content-Type: text/plain
+          Content-Length: 13
+
+          Hello world
+          HTTP/1.1 400 Bad Request
+          Content-Type: text/plain
+          Transfer-Encoding: chunked
+
+          10
+          400 Bad Request\\n
+          0
+
+
+          RESPONSE
+        ).gsub("\\n", "\n"))
+      end
+
+      it "closes connection when Connection: close" do
+        processor = HTTP::Server::RequestProcessor.new do |context|
+          context.response.headers["Connection"] = "close"
+        end
+
+        input = IO::Memory.new(requestize(<<-REQUEST
+          POST / HTTP/1.1
+          Content-Length: 7
+
+          hello
+          POST / HTTP/1.1
+          Content-Length: 7
+
+          hello
+          REQUEST
+        ))
+        output = IO::Memory.new
+        processor.process(input, output)
+        output.rewind
+        output.gets_to_end.should eq(requestize(<<-RESPONSE
+          HTTP/1.1 200 OK
+          Connection: close
+          Content-Length: 0
+
+
+          RESPONSE
+        ))
+      end
+
+      it "closes connection when request body is not entirely consumed" do
+        processor = HTTP::Server::RequestProcessor.new do |context|
+        end
+
+        input = IO::Memory.new(requestize(<<-REQUEST
+          POST / HTTP/1.1
+          Content-Length: 16387
+
+          #{"0" * 16_384}1
+          POST / HTTP/1.1
+          Content-Length: 7
+
+          hello
+          REQUEST
+        ))
+        output = IO::Memory.new
+        processor.process(input, output)
+        output.rewind
+        output.gets_to_end.should eq(requestize(<<-RESPONSE
+          HTTP/1.1 200 OK
+          Connection: keep-alive
+          Content-Length: 0
+
+
+          RESPONSE
+        ))
+      end
+
+      it "continues when request body is entirely consumed" do
+        processor = HTTP::Server::RequestProcessor.new do |context|
+          io = context.request.body.not_nil!
+          io.gets_to_end
+        end
+
+        input = IO::Memory.new(requestize(<<-REQUEST
+          POST / HTTP/1.1
+          Content-Length: 16387
+
+          #{"0" * 16_384}1
+          POST / HTTP/1.1
+          Content-Length: 7
+
+          hello
+          REQUEST
+        ))
+        output = IO::Memory.new
+        processor.process(input, output)
+        output.rewind
+        output.gets_to_end.should eq(requestize(<<-RESPONSE
+          HTTP/1.1 200 OK
+          Connection: keep-alive
+          Content-Length: 0
+
+          HTTP/1.1 200 OK
+          Connection: keep-alive
+          Content-Length: 0
+
+
+          RESPONSE
+        ))
+      end
     end
 
     it "handles Errno" do
