@@ -25,9 +25,11 @@
 # * bionic64 std_spec fails #6577
 # * xenial32 FLAGS=--no-debug is unable to run compiler_spec.
 # * trusty64 FLAGS=--no-debug is unable to build the compiler.
-# * precise32 is unable to build std_spec due to outdated libxml2. ~> 2.9.0 is required
-# * precise32 will fail running std_spec related to reuse_port & ipv6
+# * precise32 is unable to build std_spec due to outdated libxml2. ~> 2.9.0 is required.
+# * precise32 will fail running std_spec related to reuse_port & ipv6.
 # * freebsd needs post install manual scripts in order to install crystal.
+# * alpine provisionning is failing due to openssl libressl issues.
+# * there is no crystal pre built package for alpine32
 #
 
 def clone_crystal_from_vagrant(config)
@@ -187,6 +189,39 @@ def define_freebsd(config, name:, box:)
   end
 end
 
+def define_alpine(config, name:, bits:)
+  config.vm.define name do |c|
+    c.vm.box = "alpine/alpine#{bits}"
+
+    if bits == 32
+      config.vm.provider "virtualbox" do |vb|
+        vb.memory = 4*1024
+      end
+    end
+
+    c.vm.provision :shell, inline: %(
+      apk add --no-cache \
+        git gcc g++ make automake libtool autoconf bash coreutils \
+        zlib-dev yaml-dev pcre-dev libxml2-dev readline-dev openssl-dev \
+        llvm4-dev llvm4-static \
+        crystal shards
+    )
+
+    c.vm.post_up_message = <<-MSG
+    Before building crystal will need to select set LLVM_CONFIG
+
+    $ export LLVM_CONFIG=llvm4-config
+
+    if profision failed, you might need to clone /vagrant manually
+
+    $ git clone /vagrant crystal
+
+    MSG
+
+    clone_crystal_from_vagrant(c)
+  end
+end
+
 Vagrant.configure("2") do |config|
   define_ubuntu config, name: 'bionic64', dist: 'bionic', bits: 64
   define_ubuntu config, name: 'xenial64', dist: 'xenial', bits: 64
@@ -202,6 +237,8 @@ Vagrant.configure("2") do |config|
 
   define_freebsd config, name: 'freebsd11', box: '11.2-STABLE'
 
+  define_alpine config, name: 'alpine64', bits: 64
+  define_alpine config, name: 'alpine32', bits: 32
 
   config.vm.provider "virtualbox" do |vb|
     vb.memory = 6*1024
