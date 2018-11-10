@@ -27,6 +27,8 @@
 # * trusty64 FLAGS=--no-debug is unable to build the compiler.
 # * precise32 is unable to build std_spec due to outdated libxml2. ~> 2.9.0 is required
 # * precise32 will fail running std_spec related to reuse_port & ipv6
+# * freebsd needs post install manual scripts in order to install crystal.
+#
 
 def clone_crystal_from_vagrant(config)
   # use ~/crystal directory instead of /vagrant
@@ -145,6 +147,46 @@ def define_debian(config, name:, dist:, bits:, llvm: nil)
   end
 end
 
+def define_freebsd(config, name:, box:)
+  config.vm.define name do |c|
+    c.ssh.shell = "sh"
+    c.vm.box = "freebsd/FreeBSD-#{box}"
+
+    c.vm.hostname = name
+    c.vm.base_mac = "6658695E16F0"
+
+    c.vm.network "private_network", type: "dhcp"
+    c.vm.synced_folder ".", "/vagrant", type: "nfs"
+
+    c.vm.provision :shell, inline: %(
+      pkg install -y git gmake pkgconf
+      pkg install -y libyaml gmp libunwind libevent pcre boehm-gc-threaded
+      pkg install -y llvm60
+    )
+
+    c.vm.post_up_message = <<-MSG
+
+    To install crystal from sources:
+
+    $ sudo portsnap fetch extract
+    $ sudo make -C/usr/ports/lang/crystal/ reinstall clean BATCH=yes
+    $ sudo make -C/usr/ports/devel/shards/ reinstall clean BATCH=yes
+
+    To install pre-built crystal:
+
+    $ sudo pkg install -y crystal shards
+
+    Compile crystal with:
+
+    $ cd ~/crystal
+    $ gmake crystal
+
+    MSG
+
+    clone_crystal_from_vagrant(c)
+  end
+end
+
 Vagrant.configure("2") do |config|
   define_ubuntu config, name: 'bionic64', dist: 'bionic', bits: 64
   define_ubuntu config, name: 'xenial64', dist: 'xenial', bits: 64
@@ -158,24 +200,8 @@ Vagrant.configure("2") do |config|
   define_debian config, name: 'stretch64', dist: 'stretch', bits: 64
   define_debian config, name: 'jessie64', dist: 'jessie', bits: 64
 
-  config.vm.define "freebsd" do |c|
-    c.ssh.shell = "csh"
-    c.vm.box = "freebsd/FreeBSD-10.2-RELEASE"
+  define_freebsd config, name: 'freebsd11', box: '11.2-STABLE'
 
-    c.vm.network "private_network", type: "dhcp"
-    c.vm.synced_folder ".", "/vagrant", type: "nfs"
-
-    # to build boehm-gc from git repository:
-    #c.vm.provision :shell, inline: %(
-    #  pkg install -y libtool automake autoconf libatomic_ops
-    #)
-
-    c.vm.provision :shell, inline: %(
-      pkg install -y git gmake pkgconf pcre libunwind clang36 libyaml gmp libevent2
-    )
-
-    clone_crystal_from_vagrant(c)
-  end
 
   config.vm.provider "virtualbox" do |vb|
     vb.memory = 6*1024
