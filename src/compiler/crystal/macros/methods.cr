@@ -220,8 +220,7 @@ module Crystal
       node.args.first.accept self
       original_filename = @last.to_macro_id
 
-      filename = original_filename
-      filename = find_source_file(filename) do |error_message|
+      filename = find_source_file(original_filename) do |error_message|
         node.raise "error executing macro 'run': #{error_message}"
       end
 
