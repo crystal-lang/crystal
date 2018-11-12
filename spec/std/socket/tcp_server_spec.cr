@@ -33,7 +33,7 @@ describe TCPServer do
       end
 
       it "raises when port is negative" do
-        expect_raises(Socket::Error, linux? ? "getaddrinfo: Servname not supported for ai_socktype" : "No address found for #{address}:-12 over TCP") do
+        expect_raises(Socket::Error, linux? ? (musl? ? "getaddrinfo: Unrecognized service" : "getaddrinfo: Servname not supported for ai_socktype") : "No address found for #{address}:-12 over TCP") do
           TCPServer.new(address, -12)
         end
       end

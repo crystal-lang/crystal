@@ -20,3 +20,7 @@ end
 def linux?
   {{ flag?(:linux) }}
 end
+
+def musl?
+  {{ flag?(:musl) }}
+end
