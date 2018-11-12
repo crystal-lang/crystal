@@ -42,6 +42,33 @@ GITHUB_URL = "https://github.com/crystal-lang/crystal/releases/download/0.27.0/c
 CRYSTAL_LINUX64_TARGZ = "#{GITHUB_URL}-linux-x86_64.tar.gz"
 CRYSTAL_LINUX32_TARGZ = "#{GITHUB_URL}-linux-i686.tar.gz"
 
+Vagrant.configure("2") do |config|
+  define_ubuntu config, name: 'bionic64', dist: 'bionic', bits: 64
+  define_ubuntu config, name: 'xenial64', dist: 'xenial', bits: 64
+  define_ubuntu config, name: 'xenial32', dist: 'xenial', bits: 32
+  # llvm packages > 3.8 are not available for precise/trusty. Using pre built packages
+  define_ubuntu config, name: 'trusty64', dist: 'trusty', bits: 64, llvm: { url: "http://crystal-lang.s3.amazonaws.com/llvm/llvm-3.9.1-1-linux-x86_64.tar.gz", path: "llvm-3.9.1-1" }
+  define_ubuntu config, name: 'trusty32', dist: 'trusty', bits: 32, llvm: { url: "http://crystal-lang.s3.amazonaws.com/llvm/llvm-3.9.1-1-linux-i686.tar.gz", path: "llvm-3.9.1-1" }
+  define_ubuntu config, name: 'precise64', dist: 'precise', bits: 64, llvm: { url: "http://crystal-lang.s3.amazonaws.com/llvm/llvm-3.9.1-1-linux-x86_64.tar.gz", path: "llvm-3.9.1-1" }
+  define_ubuntu config, name: 'precise32', dist: 'precise', bits: 32, llvm: { url: "http://crystal-lang.s3.amazonaws.com/llvm/llvm-3.9.1-1-linux-i686.tar.gz", path: "llvm-3.9.1-1" }
+
+  define_debian config, name: 'stretch64', dist: 'stretch', bits: 64
+  define_debian config, name: 'jessie64', dist: 'jessie', bits: 64
+
+  define_freebsd config, name: 'freebsd11', box: '11.2-STABLE', github_targz: false
+
+  define_alpine config, name: 'alpine64', bits: 64, github_targz: false
+  define_alpine config, name: 'alpine32', bits: 32, github_targz: false
+
+  config.vm.provider "virtualbox" do |vb|
+    vb.memory = 6*1024
+    vb.cpus = 2
+
+    # Keep time synced with host
+    # vb.customize [ "guestproperty", "set", :id, "/VirtualBox/GuestAdd/VBoxService/--timesync-set-threshold", 10000 ]
+  end
+end
+
 def clone_crystal_from_vagrant(config)
   # use ~/crystal directory instead of /vagrant
   # to have a clean copy of working directory
@@ -273,29 +300,3 @@ def define_alpine(config, name:, bits:, github_targz: INSTALL_GITHUB_TARGZ)
   end
 end
 
-Vagrant.configure("2") do |config|
-  define_ubuntu config, name: 'bionic64', dist: 'bionic', bits: 64
-  define_ubuntu config, name: 'xenial64', dist: 'xenial', bits: 64
-  define_ubuntu config, name: 'xenial32', dist: 'xenial', bits: 32
-  # llvm packages > 3.8 are not available for precise/trusty. Using pre built packages
-  define_ubuntu config, name: 'trusty64', dist: 'trusty', bits: 64, llvm: { url: "http://crystal-lang.s3.amazonaws.com/llvm/llvm-3.9.1-1-linux-x86_64.tar.gz", path: "llvm-3.9.1-1" }
-  define_ubuntu config, name: 'trusty32', dist: 'trusty', bits: 32, llvm: { url: "http://crystal-lang.s3.amazonaws.com/llvm/llvm-3.9.1-1-linux-i686.tar.gz", path: "llvm-3.9.1-1" }
-  define_ubuntu config, name: 'precise64', dist: 'precise', bits: 64, llvm: { url: "http://crystal-lang.s3.amazonaws.com/llvm/llvm-3.9.1-1-linux-x86_64.tar.gz", path: "llvm-3.9.1-1" }
-  define_ubuntu config, name: 'precise32', dist: 'precise', bits: 32, llvm: { url: "http://crystal-lang.s3.amazonaws.com/llvm/llvm-3.9.1-1-linux-i686.tar.gz", path: "llvm-3.9.1-1" }
-
-  define_debian config, name: 'stretch64', dist: 'stretch', bits: 64
-  define_debian config, name: 'jessie64', dist: 'jessie', bits: 64
-
-  define_freebsd config, name: 'freebsd11', box: '11.2-STABLE', github_targz: false
-
-  define_alpine config, name: 'alpine64', bits: 64, github_targz: false
-  define_alpine config, name: 'alpine32', bits: 32, github_targz: false
-
-  config.vm.provider "virtualbox" do |vb|
-    vb.memory = 6*1024
-    vb.cpus = 2
-
-    # Keep time synced with host
-    # vb.customize [ "guestproperty", "set", :id, "/VirtualBox/GuestAdd/VBoxService/--timesync-set-threshold", 10000 ]
-  end
-end
