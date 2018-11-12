@@ -71,5 +71,45 @@ describe Doc::Method do
       doc_method = Doc::Method.new generator, doc_type, a_def, false
       doc_method.args_to_s.should eq("(foo) : Foo")
     end
+
+    it "shows external name of arg" do
+      program = Program.new
+      generator = Doc::Generator.new program, ["."], ".", nil
+      doc_type = Doc::Type.new generator, program
+
+      a_def = Def.new "foo", ["foo".arg(external_name: "bar")]
+      doc_method = Doc::Method.new generator, doc_type, a_def, false
+      doc_method.args_to_s.should eq("(bar foo)")
+    end
+
+    it "shows external name of arg with quotes and escaping" do
+      program = Program.new
+      generator = Doc::Generator.new program, ["."], ".", nil
+      doc_type = Doc::Type.new generator, program
+
+      a_def = Def.new "foo", ["foo".arg(external_name: "<<-< uouo fish life")]
+      doc_method = Doc::Method.new generator, doc_type, a_def, false
+      doc_method.args_to_s.should eq("(&quot;&lt;&lt;-&lt; uouo fish life&quot; foo)")
+    end
+
+    it "shows typeof restriction of arg with highlighting" do
+      program = Program.new
+      generator = Doc::Generator.new program, ["."], ".", nil
+      doc_type = Doc::Type.new generator, program
+
+      a_def = Def.new "foo", ["foo".arg(restriction: TypeOf.new([1.int32] of ASTNode))]
+      doc_method = Doc::Method.new generator, doc_type, a_def, false
+      doc_method.args_to_s.should eq(%((foo : <span class="k">typeof</span>(<span class="n">1</span>))))
+    end
+
+    it "shows default value of arg with highlighting" do
+      program = Program.new
+      generator = Doc::Generator.new program, ["."], ".", nil
+      doc_type = Doc::Type.new generator, program
+
+      a_def = Def.new "foo", ["foo".arg(default_value: 1.int32)]
+      doc_method = Doc::Method.new generator, doc_type, a_def, false
+      doc_method.args_to_s.should eq(%((foo = <span class="n">1</span>)))
+    end
   end
 end

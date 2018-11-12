@@ -52,7 +52,7 @@ describe Doc::Macro do
       doc_macro.args_to_s.should eq("(**foo)")
     end
 
-    it "show simple arg and double splat arg" do
+    it "shows simple arg and double splat arg" do
       program = Program.new
       generator = Doc::Generator.new program, ["."], ".", nil
       doc_type = Doc::Type.new generator, program
@@ -62,7 +62,7 @@ describe Doc::Macro do
       doc_macro.args_to_s.should eq("(foo, **bar)")
     end
 
-    it "show block arg" do
+    it "shows block arg" do
       program = Program.new
       generator = Doc::Generator.new program, ["."], ".", nil
       doc_type = Doc::Type.new generator, program
@@ -72,7 +72,7 @@ describe Doc::Macro do
       doc_macro.args_to_s.should eq("(&foo)")
     end
 
-    it "show simple arg and block arg" do
+    it "shows simple arg and block arg" do
       program = Program.new
       generator = Doc::Generator.new program, ["."], ".", nil
       doc_type = Doc::Type.new generator, program
@@ -80,6 +80,36 @@ describe Doc::Macro do
       a_macro = Macro.new "foo", ["foo".arg], block_arg: "bar".arg
       doc_macro = Doc::Macro.new generator, doc_type, a_macro
       doc_macro.args_to_s.should eq("(foo, &bar)")
+    end
+
+    it "shows external name of arg" do
+      program = Program.new
+      generator = Doc::Generator.new program, ["."], ".", nil
+      doc_type = Doc::Type.new generator, program
+
+      a_macro = Macro.new "foo", ["foo".arg(external_name: "bar")]
+      doc_macro = Doc::Macro.new generator, doc_type, a_macro
+      doc_macro.args_to_s.should eq("(bar foo)")
+    end
+
+    it "shows external name of arg with quotes and escaping" do
+      program = Program.new
+      generator = Doc::Generator.new program, ["."], ".", nil
+      doc_type = Doc::Type.new generator, program
+
+      a_macro = Macro.new "foo", ["foo".arg(external_name: "<<-< uouo fish life")]
+      doc_macro = Doc::Macro.new generator, doc_type, a_macro
+      doc_macro.args_to_s.should eq("(&quot;&lt;&lt;-&lt; uouo fish life&quot; foo)")
+    end
+
+    it "shows default value with highlighting" do
+      program = Program.new
+      generator = Doc::Generator.new program, ["."], ".", nil
+      doc_type = Doc::Type.new generator, program
+
+      a_macro = Macro.new "foo", ["foo".arg(default_value: 1.int32)]
+      doc_macro = Doc::Macro.new generator, doc_type, a_macro
+      doc_macro.args_to_s.should eq(%((foo = <span class="n">1</span>)))
     end
   end
 end
