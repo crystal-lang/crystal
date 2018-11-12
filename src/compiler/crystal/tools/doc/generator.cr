@@ -42,7 +42,7 @@ class Crystal::Doc::Generator
     types = collect_subtypes(@program)
 
     program_type = type(@program)
-    if program_type.class_methods.any? { |method| must_include? method }
+    if must_include_toplevel? program_type
       types.insert 0, program_type
     end
 
@@ -137,7 +137,7 @@ class Crystal::Doc::Generator
     must_include? a_def.location
   end
 
-  def must_include?(a_macro : Macro)
+  def must_include?(a_macro : Doc::Macro)
     must_include? a_macro.macro
   end
 
@@ -145,6 +145,16 @@ class Crystal::Doc::Generator
     return false if nodoc?(a_macro)
 
     must_include? a_macro.location
+  end
+
+  def must_include?(constant : Constant)
+    must_include? constant.const
+  end
+
+  def must_include?(const : Crystal::Const)
+    return false if nodoc?(const)
+
+    const.locations.try &.any? { |location| must_include? location }
   end
 
   def must_include?(location : Crystal::Location)
@@ -160,6 +170,15 @@ class Crystal::Doc::Generator
 
   def must_include?(a_nil : Nil)
     false
+  end
+
+  def must_include_toplevel?(program_type : Type)
+    toplevel_items = [] of Method | Macro | Constant
+    toplevel_items.concat program_type.class_methods
+    toplevel_items.concat program_type.macros
+    toplevel_items.concat program_type.constants
+
+    toplevel_items.any? { |item| must_include? item }
   end
 
   def nodoc?(str : String?)
