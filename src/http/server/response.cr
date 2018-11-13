@@ -14,7 +14,7 @@ class HTTP::Server
   # This is useful to implement protocol upgrades, such as websockets.
   class Response < IO
     # The response headers (`HTTP::Headers`). These must be set before writing to the response.
-    getter headers : HTTP::Headers
+    property headers : HTTP::Headers
 
     # The version of the HTTP::Request that created this response.
     getter version : String
@@ -54,12 +54,12 @@ class HTTP::Server
 
     # Convenience method to set the `Content-Type` header.
     def content_type=(content_type : String)
-      headers["Content-Type"] = content_type
+      @headers["Content-Type"] = content_type
     end
 
     # Convenience method to set the `Content-Length` header.
     def content_length=(content_length : Int)
-      headers["Content-Length"] = content_length.to_s
+      @headers["Content-Length"] = content_length.to_s
     end
 
     # See `IO#write(slice)`.
@@ -124,7 +124,7 @@ class HTTP::Server
     protected def write_headers
       status_message = HTTP.default_status_message_for(@status_code)
       @io << @version << ' ' << @status_code << ' ' << status_message << "\r\n"
-      headers.each do |name, values|
+      @headers.each do |name, values|
         values.each do |value|
           @io << name << ": " << value << "\r\n"
         end
