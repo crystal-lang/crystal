@@ -19,7 +19,7 @@ module Crystal
       if location
         column_number = node.name_column_number
         name_size = node.name_size
-        if column_number == 0
+        if column_number == 0 || (end_location = node.end_location) && end_location.filename != location.filename
           name_size = 0
           column_number = location.column_number
         end
