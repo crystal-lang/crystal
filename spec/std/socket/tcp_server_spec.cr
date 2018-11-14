@@ -33,9 +33,10 @@ describe TCPServer do
       end
 
       it "raises when port is negative" do
-        expect_raises(Socket::Error, linux? ? "getaddrinfo: Servname not supported for ai_socktype" : "No address found for #{address}:-12 over TCP") do
+        error = expect_raises(Socket::Addrinfo::Error) do
           TCPServer.new(address, -12)
         end
+        error.error_code.should eq({% if flag?(:linux) %}LibC::EAI_SERVICE{% else %}LibC::EAI_NONAME{% end %})
       end
 
       describe "reuse_port" do
