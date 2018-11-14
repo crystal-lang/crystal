@@ -2,11 +2,11 @@ require "random/secure"
 require "./multipart/*"
 require "mime/media_type"
 
-# The `HTTP::Multipart` module contains utilities for parsing MIME multipart
+# The `MIME::Multipart` module contains utilities for parsing MIME multipart
 # messages, which contain multiple body parts, each containing a header section
 # and binary body. The `multipart/form-data` content-type has a separate set of
-# utilities in the `HTTP::FormData` module.
-module HTTP::Multipart
+# utilities in the `MIME::FormData` module.
+module MIME::Multipart
   # Parses a MIME multipart message, yielding `HTTP::Headers` and an `IO` for
   # each body part.
   #
@@ -15,7 +15,7 @@ module HTTP::Multipart
   #
   # ```
   # multipart = "--aA40\r\nContent-Type: text/plain\r\n\r\nbody\r\n--aA40--"
-  # HTTP::Multipart.parse(IO::Memory.new(multipart), "aA40") do |headers, io|
+  # MIME::Multipart.parse(IO::Memory.new(multipart), "aA40") do |headers, io|
   #   headers["Content-Type"] # => "text/plain"
   #   io.gets_to_end          # => "body"
   # end
@@ -33,7 +33,7 @@ module HTTP::Multipart
   # `nil` is the boundary was not found.
   #
   # ```
-  # HTTP::Multipart.parse_boundary("multipart/mixed; boundary=\"abcde\"") # => "abcde"
+  # MIME::Multipart.parse_boundary("multipart/mixed; boundary=\"abcde\"") # => "abcde"
   # ```
   def self.parse_boundary(content_type)
     type = MIME::MediaType.parse?(content_type)
@@ -58,7 +58,7 @@ module HTTP::Multipart
   # body = "--aA40\r\nContent-Type: text/plain\r\n\r\nbody\r\n--aA40--"
   # request = HTTP::Request.new("POST", "/", headers, body)
   #
-  # HTTP::Multipart.parse(request) do |headers, io|
+  # MIME::Multipart.parse(request) do |headers, io|
   #   headers["Content-Type"] # => "text/plain"
   #   io.gets_to_end          # => "body"
   # end
@@ -93,7 +93,7 @@ module HTTP::Multipart
   # Returns a unique string suitable for use as a multipart boundary.
   #
   # ```
-  # HTTP::Multipart.generate_boundary # => "---------------------------dQu6bXHYb4m5zrRC3xPTGwV"
+  # MIME::Multipart.generate_boundary # => "---------------------------dQu6bXHYb4m5zrRC3xPTGwV"
   # ```
   def self.generate_boundary
     "--------------------------#{Random::Secure.urlsafe_base64(18)}"

@@ -1,9 +1,9 @@
 require "spec"
-require "http"
+require "mime"
 
 private def parse(delim, data, *, gsub = true)
   data_io = IO::Memory.new(gsub ? data.gsub('\n', "\r\n") : data)
-  parser = HTTP::Multipart::Parser.new(data_io, delim)
+  parser = MIME::Multipart::Parser.new(data_io, delim)
 
   parsed = [] of {headers: HTTP::Headers, body: String}
   while parser.has_next?
@@ -12,7 +12,7 @@ private def parse(delim, data, *, gsub = true)
   parsed
 end
 
-describe HTTP::Multipart::Parser do
+describe MIME::Multipart::Parser do
   it "parses basic multipart messages" do
     data = parse "AaB03x", <<-MULTIPART
       --AaB03x
@@ -60,19 +60,19 @@ describe HTTP::Multipart::Parser do
   end
 
   it "handles invalid multipart data" do
-    expect_raises(HTTP::Multipart::Error, "EOF reading delimiter") do
+    expect_raises(MIME::Multipart::Error, "EOF reading delimiter") do
       parse "AaB03x", "--AaB03x", gsub: false
     end
 
-    expect_raises(HTTP::Multipart::Error, "EOF reading delimiter") do
+    expect_raises(MIME::Multipart::Error, "EOF reading delimiter") do
       parse "AaB03x", "--AaB03x\r\n\r\n--AaB03x", gsub: false
     end
 
-    expect_raises(HTTP::Multipart::Error, "EOF reading delimiter padding") do
+    expect_raises(MIME::Multipart::Error, "EOF reading delimiter padding") do
       parse "AaB03x", "--AaB03x ", gsub: false
     end
 
-    expect_raises(HTTP::Multipart::Error, "padding contained non-whitespace character") do
+    expect_raises(MIME::Multipart::Error, "padding contained non-whitespace character") do
       parse "AaB03x", "--AaB03x foo \r\n\r\n--AaB03x--", gsub: false
     end
   end
@@ -89,26 +89,26 @@ describe HTTP::Multipart::Parser do
       Foo
       --AaB03x--
       MULTIPART
-    parser = HTTP::Multipart::Parser.new(IO::Memory.new(input.gsub('\n', "\r\n")), "AaB03x")
+    parser = MIME::Multipart::Parser.new(IO::Memory.new(input.gsub('\n', "\r\n")), "AaB03x")
 
     parser.next { }
     parser.has_next?.should eq(false)
 
-    expect_raises(HTTP::Multipart::Error, "Multipart parser already finished parsing") do
+    expect_raises(MIME::Multipart::Error, "Multipart parser already finished parsing") do
       parser.next { }
     end
   end
 
   it "raises calling #next after errored" do
-    parser = HTTP::Multipart::Parser.new(IO::Memory.new("--AaB03x--"), "AaB03x")
+    parser = MIME::Multipart::Parser.new(IO::Memory.new("--AaB03x--"), "AaB03x")
 
-    expect_raises(HTTP::Multipart::Error, "no parts") do
+    expect_raises(MIME::Multipart::Error, "no parts") do
       parser.next { }
     end
 
     parser.has_next?.should eq(false)
 
-    expect_raises(HTTP::Multipart::Error, "Multipart parser is in an errored state") do
+    expect_raises(MIME::Multipart::Error, "Multipart parser is in an errored state") do
       parser.next { }
     end
   end
@@ -126,7 +126,7 @@ describe HTTP::Multipart::Parser do
       --b--
       MULTIPART
 
-    parser = HTTP::Multipart::Parser.new(IO::Memory.new(input.gsub('\n', "\r\n")), "b")
+    parser = MIME::Multipart::Parser.new(IO::Memory.new(input.gsub('\n', "\r\n")), "b")
 
     ios = [] of IO
 
