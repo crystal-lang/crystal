@@ -1,4 +1,5 @@
 require "../spec_helper"
+require "../../support/errno"
 
 describe File do
   describe ".tempname" do
@@ -83,7 +84,7 @@ describe File do
     end
 
     it "fails in unwritable folder" do
-      expect_raises(Errno, /mkstemp: ".*\/non-existing-folder\/.*": No such file or directory/) do
+      expect_raises_errno(LibC::ENOENT, "mkstemp: '#{datapath("non-existing-folder")}/") do
         File.tempfile dir: datapath("non-existing-folder")
       end
     end

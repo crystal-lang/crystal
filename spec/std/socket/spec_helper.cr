@@ -16,7 +16,3 @@ def each_ip_family(&block : Socket::Family, String, String ->)
     block.call Socket::Family::INET6, "::1", "::"
   end
 end
-
-def linux?
-  {{ flag?(:linux) }}
-end
