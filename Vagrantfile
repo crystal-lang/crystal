@@ -54,9 +54,9 @@ Vagrant.configure("2") do |config|
   define_debian config, name: 'stretch64', dist: 'stretch', bits: 64
   define_debian config, name: 'jessie64', dist: 'jessie', bits: 64
 
-  define_freebsd config, name: 'freebsd11', box: '11.2-STABLE', github_targz: false
+  define_freebsd config, name: 'freebsd11', box: '11.2-STABLE'
 
-  define_alpine config, name: 'alpine64', bits: 64, github_targz: false
+  define_alpine config, name: 'alpine64', bits: 64
 
   config.vm.provider "virtualbox" do |vb|
     vb.memory = 6*1024
@@ -108,6 +108,8 @@ end
 # instructions to install crystal binary on all platforms
 def install_crystal(c, family, dist:, bits:, github_targz:)
   if github_targz
+    fail "github .tar.gz installation method for #{family} is not supported" unless family == "ubuntu" || family == "debian"
+
     targz_url = bits == 64 ? CRYSTAL_LINUX64_TARGZ : CRYSTAL_LINUX32_TARGZ
 
     c.vm.provision :shell, inline: %(
@@ -247,7 +249,7 @@ def define_debian(config, name:, dist:, bits:, llvm: nil, github_targz: INSTALL_
   end
 end
 
-def define_freebsd(config, name:, box:, github_targz: INSTALL_GITHUB_TARGZ)
+def define_freebsd(config, name:, box:)
   config.vm.define name do |c|
     c.ssh.shell = "sh"
     c.vm.box = "freebsd/FreeBSD-#{box}"
@@ -268,13 +270,13 @@ def define_freebsd(config, name:, box:, github_targz: INSTALL_GITHUB_TARGZ)
       pkg install -y llvm60
     )
 
-    install_crystal(c, "freebsd", dist: nil, bits: 64, github_targz: github_targz)
+    install_crystal(c, "freebsd", dist: nil, bits: 64, github_targz: false)
 
     clone_crystal_from_vagrant(c)
   end
 end
 
-def define_alpine(config, name:, bits:, github_targz: INSTALL_GITHUB_TARGZ)
+def define_alpine(config, name:, bits:)
   config.vm.define name do |c|
     c.vm.box = "alpine/alpine#{bits}"
 
@@ -292,7 +294,7 @@ def define_alpine(config, name:, bits:, github_targz: INSTALL_GITHUB_TARGZ)
         llvm4-dev llvm4-static || echo "WARNING: apk failed (ignored)"
     )
 
-    install_crystal(c, "alpine", dist: nil, bits: bits, github_targz: github_targz)
+    install_crystal(c, "alpine", dist: nil, bits: bits, github_targz: false)
 
     clone_crystal_from_vagrant(c)
   end
