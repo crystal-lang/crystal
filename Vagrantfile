@@ -36,7 +36,7 @@
 # * alpine is unable to to use the github .tar.gz compiler
 #
 
-INSTALL_GITHUB_TARGZ = true
+INSTALL_GITHUB_TARGZ = false
 GITHUB_URL = "https://github.com/crystal-lang/crystal/releases/download/0.27.0/crystal-0.27.0-1"
 CRYSTAL_LINUX64_TARGZ = "#{GITHUB_URL}-linux-x86_64.tar.gz"
 CRYSTAL_LINUX32_TARGZ = "#{GITHUB_URL}-linux-i686.tar.gz"
