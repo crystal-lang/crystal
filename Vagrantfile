@@ -34,7 +34,6 @@
 # * freebsd needs post install manual scripts in order to install crystal.
 # * alpine provisionning is failing due to openssl libressl issues.
 # * alpine is unable to to use the github .tar.gz compiler
-# * there is no crystal pre built package for alpine32
 #
 
 INSTALL_GITHUB_TARGZ = true
@@ -58,7 +57,6 @@ Vagrant.configure("2") do |config|
   define_freebsd config, name: 'freebsd11', box: '11.2-STABLE', github_targz: false
 
   define_alpine config, name: 'alpine64', bits: 64, github_targz: false
-  define_alpine config, name: 'alpine32', bits: 32, github_targz: false
 
   config.vm.provider "virtualbox" do |vb|
     vb.memory = 6*1024
