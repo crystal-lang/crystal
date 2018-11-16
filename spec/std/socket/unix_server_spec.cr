@@ -39,7 +39,7 @@ describe UNIXServer do
         server = UNIXServer.new(path)
 
         begin
-          expect_raises_errno(LibC::EADDRINUSE, "bind: ") do
+          expect_raises_errno(Errno::EADDRINUSE, "bind: ") do
             UNIXServer.new(path)
           end
         ensure
@@ -53,7 +53,7 @@ describe UNIXServer do
         File.write(path, "")
         File.exists?(path).should be_true
 
-        expect_raises_errno(LibC::EADDRINUSE, "bind: ") do
+        expect_raises_errno(Errno::EADDRINUSE, "bind: ") do
           UNIXServer.new(path)
         end
 

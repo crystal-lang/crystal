@@ -39,14 +39,14 @@ describe "Dir" do
     end
 
     it "tests empty? on nonexistent directory" do
-      expect_raises_errno(LibC::ENOENT, "Error determining size of '#{datapath("foo", "bar")}'") do
+      expect_raises_errno(Errno::ENOENT, "Error determining size of '#{datapath("foo", "bar")}'") do
         Dir.empty?(datapath("foo", "bar"))
       end
     end
 
     # TODO: do we even want this?
     pending_win32 "tests empty? on a directory path to a file" do
-      expect_raises_errno(LibC::ENOTDIR, "Error determining size of '#{datapath("dir", "f1.txt", "/")}'") do
+      expect_raises_errno(Errno::ENOTDIR, "Error determining size of '#{datapath("dir", "f1.txt", "/")}'") do
         Dir.empty?(datapath("dir", "f1.txt", "/"))
       end
     end
@@ -62,7 +62,7 @@ describe "Dir" do
   end
 
   it "tests mkdir with an existing path" do
-    expect_raises_errno(LibC::EEXIST, "Unable to create directory '#{datapath}'") do
+    expect_raises_errno(Errno::EEXIST, "Unable to create directory '#{datapath}'") do
       Dir.mkdir(datapath, 0o700)
     end
   end
@@ -80,21 +80,21 @@ describe "Dir" do
   it "tests mkdir_p with an existing path" do
     Dir.mkdir_p(datapath)
     # FIXME: Refactor Dir#mkdir_p to remove leading `./` in error message
-    expect_raises_errno(LibC::EEXIST, "Unable to create directory './#{datapath("dir", "f1.txt")}'") do
+    expect_raises_errno(Errno::EEXIST, "Unable to create directory './#{datapath("dir", "f1.txt")}'") do
       Dir.mkdir_p(datapath("dir", "f1.txt"))
     end
   end
 
   it "tests rmdir with an nonexistent path" do
     with_tempfile("nonexistant") do |path|
-      expect_raises_errno(LibC::ENOENT, "Unable to remove directory '#{path}'") do
+      expect_raises_errno(Errno::ENOENT, "Unable to remove directory '#{path}'") do
         Dir.rmdir(path)
       end
     end
   end
 
   it "tests rmdir with a path that cannot be removed" do
-    expect_raises_errno(LibC::ENOTEMPTY, "Unable to remove directory '#{datapath}'") do
+    expect_raises_errno(Errno::ENOTEMPTY, "Unable to remove directory '#{datapath}'") do
       Dir.rmdir(datapath)
     end
   end
@@ -327,7 +327,7 @@ describe "Dir" do
     end
 
     it "raises" do
-      expect_raises_errno(LibC::ENOENT, "Error while changing directory to '/nope'") do
+      expect_raises_errno(Errno::ENOENT, "Error while changing directory to '/nope'") do
         Dir.cd("/nope")
       end
     end

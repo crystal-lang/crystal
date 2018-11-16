@@ -17,7 +17,7 @@ describe Process do
 
   it "raises if command could not be executed" do
     # FIXME: Oddly doubled error message
-    expect_raises_errno(LibC::ENOENT, "execvp: No such file or directory: No such file or directory") do
+    expect_raises_errno(Errno::ENOENT, "execvp: No such file or directory: No such file or directory") do
       Process.new("foobarbaz")
     end
   end

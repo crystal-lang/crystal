@@ -84,7 +84,7 @@ describe File do
     end
 
     it "fails in unwritable folder" do
-      expect_raises_errno(LibC::ENOENT, "mkstemp: '#{datapath("non-existing-folder")}/") do
+      expect_raises_errno(Errno::ENOENT, "mkstemp: '#{datapath("non-existing-folder")}/") do
         File.tempfile dir: datapath("non-existing-folder")
       end
     end

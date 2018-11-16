@@ -20,7 +20,7 @@ describe TCPServer do
         server.close
 
         server.closed?.should be_true
-        expect_raises_errno(LibC::EBADF, "getsockname: ") do
+        expect_raises_errno(Errno::EBADF, "getsockname: ") do
           server.local_address
         end
       end
@@ -42,7 +42,7 @@ describe TCPServer do
       describe "reuse_port" do
         it "raises when port is in use" do
           TCPServer.open(address, 0) do |server|
-            expect_raises_errno(LibC::EADDRINUSE, "bind: ") do
+            expect_raises_errno(Errno::EADDRINUSE, "bind: ") do
               TCPServer.open(address, server.local_address.port) { }
             end
           end
@@ -50,7 +50,7 @@ describe TCPServer do
 
         it "raises when not binding with reuse_port" do
           TCPServer.open(address, 0, reuse_port: true) do |server|
-            expect_raises_errno(LibC::EADDRINUSE, {% if flag?(:linux) %}"listen: "{% else %}"bind: "{% end %}) do
+            expect_raises_errno(Errno::EADDRINUSE, {% if flag?(:linux) %}"listen: "{% else %}"bind: "{% end %}) do
               TCPServer.open(address, server.local_address.port) { }
             end
           end
@@ -58,7 +58,7 @@ describe TCPServer do
 
         it "raises when port is not ready to be reused" do
           TCPServer.open(address, 0) do |server|
-            expect_raises_errno(LibC::EADDRINUSE, "bind: ") do
+            expect_raises_errno(Errno::EADDRINUSE, "bind: ") do
               TCPServer.open(address, server.local_address.port, reuse_port: true) { }
             end
           end
