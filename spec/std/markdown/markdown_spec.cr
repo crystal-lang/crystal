@@ -125,4 +125,9 @@ describe Markdown do
   assert_render "hello < world", "<p>hello &lt; world</p>"
 
   assert_render "Hello __[World](http://example.com)__!", %(<p>Hello <strong><a href="http://example.com">World</a></strong>!</p>)
+
+  # Markdown inside inline code should not be parsed (#7065)
+  assert_render "`[]()`", %(<p><code>[]()</code></p>)
+  assert_render "`*foo*`", %(<p><code>*foo*</code></p>)
+  assert_render "`_foo_`", %(<p><code>_foo_</code></p>)
 end
