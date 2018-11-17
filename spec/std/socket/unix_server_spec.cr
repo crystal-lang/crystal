@@ -1,5 +1,6 @@
 require "spec"
 require "socket"
+require "../../support/errno"
 require "../../support/tempfile"
 
 describe UNIXServer do
@@ -38,7 +39,9 @@ describe UNIXServer do
         server = UNIXServer.new(path)
 
         begin
-          expect_raises(Errno) { UNIXServer.new(path) }
+          expect_raises_errno(Errno::EADDRINUSE, "bind: ") do
+            UNIXServer.new(path)
+          end
         ensure
           server.close
         end
@@ -50,7 +53,7 @@ describe UNIXServer do
         File.write(path, "")
         File.exists?(path).should be_true
 
-        expect_raises Errno, /(already|Address) in use/ do
+        expect_raises_errno(Errno::EADDRINUSE, "bind: ") do
           UNIXServer.new(path)
         end
 

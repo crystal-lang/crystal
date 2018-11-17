@@ -77,6 +77,18 @@ class Socket
       end
     end
 
+    class Error < Socket::Error
+      getter error_code : Int32
+
+      def self.new(error_code)
+        new error_code, "getaddrinfo: #{String.new(LibC.gai_strerror(error_code))}"
+      end
+
+      def initialize(@error_code, message)
+        super(message)
+      end
+    end
+
     private def self.getaddrinfo(domain, service, family, type, protocol, timeout)
       # RFC 3986 says:
       # > When a non-ASCII registered name represents an internationalized domain name
@@ -107,9 +119,9 @@ class Socket
       when 0
         # success
       when LibC::EAI_NONAME
-        raise Socket::Error.new("No address found for #{domain}:#{service} over #{protocol}")
+        raise Error.new(LibC::EAI_NONAME, "No address found for #{domain}:#{service} over #{protocol}")
       else
-        raise Socket::Error.new("getaddrinfo: #{String.new(LibC.gai_strerror(ret))}")
+        raise Error.new(ret)
       end
 
       begin
