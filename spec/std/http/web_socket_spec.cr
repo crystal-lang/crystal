@@ -1,6 +1,7 @@
-require "spec"
+require "../spec_helper"
 require "http/web_socket"
 require "random/secure"
+require "../../../support/ssl"
 
 private def assert_text_packet(packet, size, final = false)
   assert_packet packet, HTTP::WebSocket::Protocol::Opcode::TEXT, size, final: final
@@ -129,7 +130,7 @@ describe HTTP::WebSocket do
     end
 
     it "read long packet" do
-      data = File.read("#{__DIR__}/../data/websocket_longpacket.bin")
+      data = File.read(datapath("websocket_longpacket.bin"))
       io = IO::Memory.new(data)
       ws = HTTP::WebSocket::Protocol.new(io)
 
@@ -295,7 +296,7 @@ describe HTTP::WebSocket do
   end
 
   it "negotiates over HTTP correctly" do
-    port_chan = Channel(Int32).new
+    address_chan = Channel(Socket::IPAddress).new
 
     spawn do
       http_ref = nil
@@ -313,15 +314,15 @@ describe HTTP::WebSocket do
         end
       end
 
-      http_server = http_ref = HTTP::Server.new(0, [ws_handler])
-      http_server.bind
-      port_chan.send(http_server.port)
+      http_server = http_ref = HTTP::Server.new([ws_handler])
+      address = http_server.bind_unused_port
+      address_chan.send(address)
       http_server.listen
     end
 
-    listen_port = port_chan.receive
+    listen_address = address_chan.receive
 
-    ws2 = HTTP::WebSocket.new("ws://127.0.0.1:#{listen_port}/foo/bar?query=arg&yes=please")
+    ws2 = HTTP::WebSocket.new("ws://#{listen_address}/foo/bar?query=arg&yes=please")
 
     random = Random::Secure.hex
     ws2.on_message do |str|
@@ -334,7 +335,9 @@ describe HTTP::WebSocket do
   end
 
   it "negotiates over HTTPS correctly" do
-    port_chan = Channel(Int32).new
+    address_chan = Channel(Socket::IPAddress).new
+
+    server_context, client_context = ssl_context_pair
 
     spawn do
       http_ref = nil
@@ -350,19 +353,16 @@ describe HTTP::WebSocket do
         end
       end
 
-      http_server = http_ref = HTTP::Server.new(0, [ws_handler])
-      tls = http_server.tls = OpenSSL::SSL::Context::Server.new
-      tls.certificate_chain = File.join(__DIR__, "../openssl/ssl/openssl.crt")
-      tls.private_key = File.join(__DIR__, "../openssl/ssl/openssl.key")
-      http_server.bind
-      port_chan.send(http_server.port)
+      http_server = http_ref = HTTP::Server.new([ws_handler])
+
+      address = http_server.bind_tls("127.0.0.1", context: server_context)
+      address_chan.send(address)
       http_server.listen
     end
 
-    listen_port = port_chan.receive
+    listen_address = address_chan.receive
 
-    client_context = OpenSSL::SSL::Context::Client.insecure
-    ws2 = HTTP::WebSocket.new("127.0.0.1", port: listen_port, path: "/", tls: client_context)
+    ws2 = HTTP::WebSocket.new(listen_address.address, port: listen_address.port, path: "/", tls: client_context)
 
     random = Random::Secure.hex
     ws2.on_message do |str|
@@ -372,6 +372,60 @@ describe HTTP::WebSocket do
     ws2.send(random)
 
     ws2.run
+  end
+
+  it "handshake fails if server does not switch protocols" do
+    http_server = HTTP::Server.new do |context|
+      context.response.status_code = 200
+    end
+
+    address = http_server.bind_unused_port
+    spawn http_server.not_nil!.listen # TODO: Remove .not_nil! when #6037 is fixed
+
+    expect_raises(Socket::Error, "Handshake got denied. Status code was 200.") do
+      HTTP::WebSocket::Protocol.new(address.address, port: address.port, path: "/")
+    end
+  ensure
+    # http_server.try &.close # TODO: Uncomment when #5958 is fixed
+  end
+
+  describe "handshake fails if server does not verify Sec-WebSocket-Key" do
+    it "Sec-WebSocket-Accept missing" do
+      http_server = HTTP::Server.new do |context|
+        response = context.response
+        response.status_code = 101
+        response.headers["Upgrade"] = "websocket"
+        response.headers["Connection"] = "Upgrade"
+      end
+
+      address = http_server.bind_unused_port
+      spawn http_server.not_nil!.listen # TODO: Remove .not_nil! when #6037 is fixed
+
+      expect_raises(Socket::Error, "Handshake got denied. Server did not verify WebSocket challenge.") do
+        HTTP::WebSocket::Protocol.new(address.address, port: address.port, path: "/")
+      end
+    ensure
+      # http_server.try &.close # TODO: Uncomment when #5958 is fixed
+    end
+
+    it "Sec-WebSocket-Accept incorrect" do
+      http_server = HTTP::Server.new do |context|
+        response = context.response
+        response.status_code = 101
+        response.headers["Upgrade"] = "websocket"
+        response.headers["Connection"] = "Upgrade"
+        response.headers["Sec-WebSocket-Accept"] = "foobar"
+      end
+
+      address = http_server.bind_unused_port
+      spawn http_server.not_nil!.listen # TODO: Remove .not_nil! when #6037 is fixed
+
+      expect_raises(Socket::Error, "Handshake got denied. Server did not verify WebSocket challenge.") do
+        HTTP::WebSocket::Protocol.new(address.address, port: address.port, path: "/")
+      end
+    ensure
+      # http_server.try &.close # TODO: Uncomment when #5958 is fixed
+    end
   end
 
   typeof(HTTP::WebSocket.new(URI.parse("ws://localhost")))

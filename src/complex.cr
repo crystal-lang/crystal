@@ -36,7 +36,7 @@ struct Complex
     false
   end
 
-  # Write this complex object to an *io*.
+  # Writes this complex object to an *io*.
   #
   # ```
   # Complex.new(42, 2).to_s # => "42.0 + 2.0i"
@@ -45,10 +45,10 @@ struct Complex
     io << @real
     io << (@imag >= 0 ? " + " : " - ")
     io << @imag.abs
-    io << "i"
+    io << 'i'
   end
 
-  # Write this complex object to an *io*, surrounded by parentheses.
+  # Writes this complex object to an *io*, surrounded by parentheses.
   #
   # ```
   # Complex.new(42, 2).inspect # => "(42.0 + 2.0i)"
@@ -63,8 +63,8 @@ struct Complex
   # number form, using the Pythagorean theorem.
   #
   # ```
-  # Complex.new(42, 2).abs  # => 42.047592083257278
-  # Complex.new(-42, 2).abs # => 42.047592083257278
+  # Complex.new(42, 2).abs  # => 42.04759208325728
+  # Complex.new(-42, 2).abs # => 42.04759208325728
   # ```
   def abs
     Math.hypot(@real, @imag)

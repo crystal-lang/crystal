@@ -119,6 +119,16 @@ class URI
   def initialize(@scheme = nil, @host = nil, @port = nil, @path = nil, @query = nil, @user = nil, @password = nil, @fragment = nil, @opaque = nil)
   end
 
+  # Returns the host part of the URI and unwrap brackets for IPv6 addresses.
+  #
+  # ```
+  # URI.parse("http://[::1]/bar").hostname # => "::1"
+  # URI.parse("http://[::1]/bar").host     # => "[::1]"
+  # ```
+  def hostname
+    host.try { |host| host.starts_with?('[') && host.ends_with?(']') ? host[1..-2] : host }
+  end
+
   # Returns the full path of this URI.
   #
   # ```
@@ -127,11 +137,21 @@ class URI
   # ```
   def full_path
     String.build do |str|
-      str << (@path.try { |p| !p.empty? } ? @path : "/")
+      str << (@path.try { |p| !p.empty? } ? @path : '/')
       if (query = @query) && !query.empty?
-        str << "?" << query
+        str << '?' << query
       end
     end
+  end
+
+  # Returns `true` if URI has a *scheme* specified.
+  def absolute?
+    @scheme ? true : false
+  end
+
+  # Returns `true` if URI does not have a *scheme* specified.
+  def relative?
+    !absolute?
   end
 
   def to_s(io : IO)

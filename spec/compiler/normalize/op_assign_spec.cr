@@ -1,8 +1,10 @@
 require "../../spec_helper"
 
 describe "Normalize: op assign" do
-  it "normalizes var +=" do
-    assert_normalize "a = 1; a += 2", "a = 1\na = a + 2"
+  ["+", "-", "*", "&+", "&-", "&*"].each do |op|
+    it "normalizes var #{op}=" do
+      assert_normalize "a = 1; a #{op}= 2", "a = 1\na = a #{op} 2"
+    end
   end
 
   it "normalizes var ||=" do

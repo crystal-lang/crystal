@@ -1,14 +1,18 @@
 require "spec"
 require "flate"
 
+private def new_sample_io
+  io = IO::Memory.new
+  "cbc9cc4b350402ae1c20c30808b800".scan(/../).each do |match|
+    io.write_byte match[0].to_u8(16)
+  end
+  io.rewind
+end
+
 module Flate
   describe Reader do
     it "should read byte by byte (#4192)" do
-      io = IO::Memory.new
-      "cbc9cc4b350402ae1c20c30808b800".scan(/../).each do |match|
-        io.write_byte match[0].to_u8(16)
-      end
-      io.rewind
+      io = new_sample_io
 
       reader = Reader.new(io)
 
@@ -19,6 +23,15 @@ module Flate
       end
 
       str.should eq("line1111\nline2222\n")
+    end
+
+    it "should rewind" do
+      io = new_sample_io
+
+      reader = Reader.new(io)
+      reader.gets.should eq("line1111")
+      reader.rewind
+      reader.gets_to_end.should eq("line1111\nline2222\n")
     end
 
     describe ".open" do

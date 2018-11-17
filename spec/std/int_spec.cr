@@ -361,6 +361,28 @@ describe "Int" do
     (-6 / -2).should eq(3)
   end
 
+  describe "floor division //" do
+    it "preserves type of lhs" do
+      {% for type in [UInt8, UInt16, UInt32, UInt64, Int8, Int16, Int32, Int64] %}
+        ({{type}}.new(7) // 2).should be_a({{type}})
+        ({{type}}.new(7) // 2.0).should be_a({{type}})
+        ({{type}}.new(7) // 2.0_f32).should be_a({{type}})
+      {% end %}
+    end
+
+    it "divides negative numbers" do
+      (7 // 2).should eq(3)
+      (-7 // 2).should eq(-4)
+      (7 // -2).should eq(-4)
+      (-7 // -2).should eq(3)
+
+      (6 // 2).should eq(3)
+      (-6 // 2).should eq(-3)
+      (6 // -2).should eq(-3)
+      (-6 // -2).should eq(3)
+    end
+  end
+
   it "tdivs" do
     5.tdiv(3).should eq(1)
     -5.tdiv(3).should eq(-1)
@@ -383,6 +405,11 @@ describe "Int" do
     (4 / 2).should eq(2)
   end
 
+  it "raises when divides by zero" do
+    expect_raises(DivisionByZeroError) { 1 // 0 }
+    (4 // 2).should eq(2)
+  end
+
   it "raises when divides Int::MIN by -1" do
     expect_raises(ArgumentError) { Int8::MIN / -1 }
     expect_raises(ArgumentError) { Int16::MIN / -1 }
@@ -390,6 +417,15 @@ describe "Int" do
     expect_raises(ArgumentError) { Int64::MIN / -1 }
 
     (UInt8::MIN / -1).should eq(0)
+  end
+
+  it "raises when divides Int::MIN by -1" do
+    expect_raises(ArgumentError) { Int8::MIN // -1 }
+    expect_raises(ArgumentError) { Int16::MIN // -1 }
+    expect_raises(ArgumentError) { Int32::MIN // -1 }
+    expect_raises(ArgumentError) { Int64::MIN // -1 }
+
+    (UInt8::MIN // -1).should eq(0)
   end
 
   it "raises when mods by zero" do
@@ -454,6 +490,17 @@ describe "Int" do
     sum.should eq(6)
   end
 
+  it "does upto max" do
+    i = sum = 0
+    (Int32::MAX - 3).upto(Int32::MAX) do |n|
+      i += 1
+      sum += Int32::MAX - n
+      n.should be >= (Int32::MAX - 3)
+    end.should be_nil
+    i.should eq(4)
+    sum.should eq(6)
+  end
+
   it "gets upto iterator" do
     iter = 1.upto(3)
     iter.next.should eq(1)
@@ -463,6 +510,26 @@ describe "Int" do
 
     iter.rewind
     iter.next.should eq(1)
+  end
+
+  it "gets upto iterator max" do
+    iter = (Int32::MAX - 3).upto(Int32::MAX)
+    iter.next.should eq(Int32::MAX - 3)
+    iter.next.should eq(Int32::MAX - 2)
+    iter.next.should eq(Int32::MAX - 1)
+    iter.next.should eq(Int32::MAX)
+    iter.next.should be_a(Iterator::Stop)
+
+    iter.rewind
+    iter.next.should eq(Int32::MAX - 3)
+  end
+
+  it "upto iterator ups and downs" do
+    0.upto(3).to_a.should eq([0, 1, 2, 3])
+    3.upto(0).to_a.should eq([] of Int32)
+    res = [Int32::MAX - 3, Int32::MAX - 2, Int32::MAX - 1, Int32::MAX]
+    (Int32::MAX - 3).upto(Int32::MAX).to_a.should eq(res)
+    Int32::MAX.upto(0).to_a.should eq([] of Int32)
   end
 
   it "does downto" do
@@ -475,11 +542,54 @@ describe "Int" do
     sum.should eq(6)
   end
 
+  it "does downto min" do
+    i = sum = 0
+    (Int32::MIN + 3).downto(Int32::MIN) do |n|
+      i += 1
+      sum += n - Int32::MIN
+      n.should be <= Int32::MIN + 3
+    end
+    i.should eq(4)
+    sum.should eq(6)
+  end
+
+  it "does downto min unsigned" do
+    i = sum = 0
+    3_u16.downto(0) do |n|
+      i += 1
+      sum += n
+      n.should be <= 3_u16
+    end
+    i.should eq(4)
+    sum.should eq(6)
+  end
+
   it "gets downto iterator" do
     iter = 3.downto(1)
     iter.next.should eq(3)
     iter.next.should eq(2)
     iter.next.should eq(1)
+    iter.next.should be_a(Iterator::Stop)
+
+    iter.rewind
+    iter.next.should eq(3)
+  end
+
+  it "downto iterator ups and downs" do
+    3.downto(0).to_a.should eq([3, 2, 1, 0])
+    3_u16.downto(0).to_a.should eq([3_u16, 2_u16, 1_u16, 0_u16])
+    3.downto(4).to_a.should eq([] of Int32)
+    3_u16.downto(4_u16).to_a.should eq([] of UInt16)
+    res = [Int32::MIN + 3, Int32::MIN + 2, Int32::MIN + 1, Int32::MIN]
+    (Int32::MIN + 3).downto(Int32::MIN).to_a.should eq(res)
+  end
+
+  it "gets downto iterator unsigned" do
+    iter = 3_u16.downto(0)
+    iter.next.should eq(3)
+    iter.next.should eq(2)
+    iter.next.should eq(1)
+    iter.next.should eq(0)
     iter.next.should be_a(Iterator::Stop)
 
     iter.rewind
@@ -536,6 +646,18 @@ describe "Int" do
       end
     end
   end
+
+  {% if compare_versions(Crystal::VERSION, "0.26.1") > 0 %}
+    it "compares equality and inequality of signed vs. unsigned integers" do
+      x = -1
+      y = x.unsafe_as(UInt32)
+
+      (x == y).should be_false
+      (y == x).should be_false
+      (x != y).should be_true
+      (y != x).should be_true
+    end
+  {% end %}
 
   it "clones" do
     [1_u8, 2_u16, 3_u32, 4_u64, 5_i8, 6_i16, 7_i32, 8_i64].each do |value|

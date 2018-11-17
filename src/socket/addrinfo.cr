@@ -1,3 +1,5 @@
+require "uri/punycode"
+
 class Socket
   # Domain name resolver.
   struct Addrinfo
@@ -16,9 +18,9 @@ class Socket
     #   because different servers may handle the `mail` or `http` services for
     #   example.
     # - *family* is optional and defaults to `Family::UNSPEC`
-    # - *type* is the intented socket type (e.g. `Type::STREAM`) and must be
+    # - *type* is the intended socket type (e.g. `Type::STREAM`) and must be
     #   specified.
-    # - *protocol* is the intented socket protocol (e.g. `Protocol::TCP`) and
+    # - *protocol* is the intended socket protocol (e.g. `Protocol::TCP`) and
     #   should be specified.
     #
     # Example:
@@ -76,6 +78,12 @@ class Socket
     end
 
     private def self.getaddrinfo(domain, service, family, type, protocol, timeout)
+      # RFC 3986 says:
+      # > When a non-ASCII registered name represents an internationalized domain name
+      # > intended for resolution via the DNS, the name must be transformed to the IDNA
+      # > encoding [RFC3490] prior to name lookup.
+      domain = URI::Punycode.to_ascii domain
+
       hints = LibC::Addrinfo.new
       hints.ai_family = (family || Family::UNSPEC).to_i32
       hints.ai_socktype = type
@@ -133,7 +141,7 @@ class Socket
     #
     # Example:
     # ```
-    # addrinfos = Socket::Addrinfo.tcp("example.org", 53)
+    # addrinfos = Socket::Addrinfo.udp("example.org", 53)
     # ```
     def self.udp(domain, service, family = Family::UNSPEC, timeout = nil) : Array(Addrinfo)
       resolve(domain, service, family, Type::DGRAM, Protocol::UDP)

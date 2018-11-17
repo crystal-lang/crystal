@@ -58,9 +58,9 @@ describe "Semantic: uninitialized" do
   it "errors if declares var and then assigns other type" do
     assert_error %(
       x = uninitialized Int32
-      x = 1_i64
+      x = 'a'
       ),
-      "type must be Int32, not (Int32 | Int64)"
+      "type must be Int32, not (Char | Int32)"
   end
 
   it "errors if declaring variable multiple times with different types (#917)" do

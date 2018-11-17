@@ -27,6 +27,8 @@
 # string # => "abc"
 # ```
 class Gzip::Reader < IO
+  include IO::Buffered
+
   # Whether to close the enclosed `IO` when closing this reader.
   property? sync_close = false
 
@@ -73,7 +75,7 @@ class Gzip::Reader < IO
   end
 
   # See `IO#read`.
-  def read(slice : Bytes)
+  def unbuffered_read(slice : Bytes)
     check_open
 
     return 0 if slice.empty?
@@ -121,16 +123,31 @@ class Gzip::Reader < IO
   end
 
   # Always raises `IO::Error` because this is a read-only `IO`.
-  def write(slice : Bytes) : Nil
+  def unbuffered_write(slice : Bytes) : Nil
     raise IO::Error.new("Can't write to Gzip::Reader")
   end
 
+  def unbuffered_flush
+    raise IO::Error.new "Can't flush Gzip::Reader"
+  end
+
   # Closes this reader.
-  def close
+  def unbuffered_close
     return if @closed
     @closed = true
 
     @flate_io.try &.close
     @io.close if @sync_close
+  end
+
+  def unbuffered_rewind
+    check_open
+
+    @io.rewind
+
+    @header = nil
+    @flate_io = nil
+
+    initialize(@io, @sync_close)
   end
 end

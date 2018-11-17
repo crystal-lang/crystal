@@ -192,6 +192,15 @@ require "./regex/*"
 # `Hash` of `String` => `Int32`, and therefore requires named capture groups to have
 # unique names within a single `Regex`.
 class Regex
+  # List of metacharacters that need to be escaped.
+  #
+  # See `Regex.needs_escape?` and `Regex.escape`.
+  SPECIAL_CHARACTERS = {
+    ' ', '.', '\\', '+', '*', '?', '[',
+    '^', ']', '$', '(', ')', '{', '}',
+    '=', '!', '<', '>', '|', ':', '-',
+  }
+
   @[Flags]
   enum Options
     IGNORE_CASE = 1
@@ -214,15 +223,15 @@ class Regex
     DUPNAMES = 0x00080000
   end
 
-  # Return a `Regex::Options` representing the optional flags applied to this `Regex`.
+  # Returns a `Regex::Options` representing the optional flags applied to this `Regex`.
   #
   # ```
   # /ab+c/ix.options      # => Regex::Options::IGNORE_CASE | Regex::Options::EXTENDED
-  # /ab+c/ix.options.to_s # => "IGNORE_CASE, EXTENDED"
+  # /ab+c/ix.options.to_s # => "IGNORE_CASE | EXTENDED"
   # ```
   getter options : Options
 
-  # Return the original `String` representation of the `Regex` pattern.
+  # Returns the original `String` representation of the `Regex` pattern.
   #
   # ```
   # /ab+c/x.source # => "ab+c"
@@ -265,6 +274,27 @@ class Regex
     end
   end
 
+  # Returns `true` if *char* need to be escaped, `false` otherwise.
+  #
+  # ```
+  # Regex.needs_escape?('*') # => true
+  # Regex.needs_escape?('@') # => false
+  # ```
+  def self.needs_escape?(char : Char) : Bool
+    SPECIAL_CHARACTERS.includes?(char)
+  end
+
+  # Returns `true` if *str* need to be escaped, `false` otherwise.
+  #
+  # ```
+  # Regex.needs_escape?("10$") # => true
+  # Regex.needs_escape?("foo") # => false
+  # ```
+  def self.needs_escape?(str : String) : Bool
+    str.each_char { |char| return true if SPECIAL_CHARACTERS.includes?(char) }
+    false
+  end
+
   # Returns a `String` constructed by escaping any metacharacters in *str*.
   #
   # ```
@@ -274,15 +304,15 @@ class Regex
   def self.escape(str) : String
     String.build do |result|
       str.each_byte do |byte|
-        case byte.unsafe_chr
-        when ' ', '.', '\\', '+', '*', '?', '[',
-             '^', ']', '$', '(', ')', '{', '}',
-             '=', '!', '<', '>', '|', ':', '-'
-          result << '\\'
-          result.write_byte byte
-        else
-          result.write_byte byte
-        end
+        {% begin %}
+          case byte.unsafe_chr
+          when {{*SPECIAL_CHARACTERS}}
+            result << '\\'
+            result.write_byte byte
+          else
+            result.write_byte byte
+          end
+        {% end %}
       end
     end
   end
@@ -301,7 +331,7 @@ class Regex
   # re.match("sledding") # => #<Regex::MatchData "sledding">
   # ```
   def self.union(patterns : Enumerable(Regex | String)) : self
-    new patterns.map { |pattern| union_part pattern }.join("|")
+    new patterns.map { |pattern| union_part pattern }.join('|')
   end
 
   # Union. Returns a `Regex` that matches any of *patterns*.
@@ -406,12 +436,12 @@ class Regex
   # /ab+c/ix.inspect # => "/ab+c/ix"
   # ```
   def inspect(io : IO)
-    io << "/"
-    append_source(io)
-    io << "/"
-    io << "i" if options.ignore_case?
-    io << "m" if options.multiline?
-    io << "x" if options.extended?
+    io << '/'
+    Regex.append_source(source, io)
+    io << '/'
+    io << 'i' if options.ignore_case?
+    io << 'm' if options.multiline?
+    io << 'x' if options.extended?
   end
 
   # Match at character index. Matches a regular expression against `String`
@@ -504,27 +534,34 @@ class Regex
   # ```
   def to_s(io : IO)
     io << "(?"
-    io << "i" if options.ignore_case?
+    io << 'i' if options.ignore_case?
     io << "ms" if options.multiline?
-    io << "x" if options.extended?
+    io << 'x' if options.extended?
 
-    io << "-"
-    io << "i" unless options.ignore_case?
+    io << '-'
+    io << 'i' unless options.ignore_case?
     io << "ms" unless options.multiline?
-    io << "x" unless options.extended?
+    io << 'x' unless options.extended?
 
-    io << ":"
-    append_source(io)
-    io << ")"
+    io << ':'
+    Regex.append_source(source, io)
+    io << ')'
   end
 
-  private def append_source(io)
-    source.each_char do |char|
-      if char == '/'
+  # :nodoc:
+  def self.append_source(source, io) : Nil
+    reader = Char::Reader.new(source)
+    while reader.has_next?
+      case char = reader.current_char
+      when '\\'
+        io << '\\'
+        io << reader.next_char
+      when '/'
         io << "\\/"
       else
         io << char
       end
+      reader.next_char
     end
   end
 

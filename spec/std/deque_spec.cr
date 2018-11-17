@@ -176,10 +176,6 @@ describe "Deque" do
       Deque{1, 2, 3}[2]?.should eq(3)
       Deque{1, 2, 3}[3]?.should be_nil
     end
-
-    it "same access by at" do
-      Deque{1, 2, 3}[1].should eq(Deque{1, 2, 3}.at(1))
-    end
   end
 
   describe "[]=" do

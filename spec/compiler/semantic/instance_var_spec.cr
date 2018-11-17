@@ -4429,6 +4429,21 @@ describe "Semantic: instance var" do
       ), inject_primitives: false) { types["Foo"] }
   end
 
+  it "is more permissive with macro def initialize, bug with named args" do
+    assert_error %(
+      class Foo
+        @x : Int32
+
+        def initialize(**args)
+          {% @type %}
+        end
+      end
+
+      Foo.new(x: 1)
+      ),
+      "instance variable '@x' of Foo was not initialized"
+  end
+
   it "is more permissive with macro def initialize, other initialize" do
     assert_type(%(
       class Foo
@@ -4447,6 +4462,35 @@ describe "Semantic: instance var" do
 
       Foo.new
       ), inject_primitives: false) { types["Foo"] }
+  end
+
+  it "is more permissive with macro def initialize, multiple" do
+    assert_type(%(
+      class Foo
+        @x : Int32
+
+        def initialize
+          {% begin %}
+            {% @type %}
+            @x = 1
+          {% end %}
+        end
+
+        def initialize(x)
+          {% begin %}
+            {% @type %}
+            @x = x
+          {% end %}
+        end
+
+        def x
+          @x
+        end
+      end
+
+      Foo.new
+      Foo.new(1).x
+      )) { int32 }
   end
 
   it "errors with macro def but another def doesn't initialize all" do
@@ -4853,5 +4897,308 @@ describe "Semantic: instance var" do
 
       Baz.new
       )) { types["Baz"] }
+  end
+
+  it "can guess the type from splat argument with splated type" do
+    assert_type(%(
+      class Foo
+        def initialize(*@foo : *{Int32})
+        end
+
+        def foo
+          @foo
+        end
+      end
+
+      Foo.new(1).foo
+    )) { tuple_of([int32]) }
+  end
+
+  it "can guess the type from splat argument with splated type variable" do
+    assert_type(%(
+      class Foo(T)
+        def initialize(*@foo : *T)
+        end
+
+        def foo
+          @foo
+        end
+      end
+
+      Foo.new(1, 2).foo
+    )) { tuple_of([int32, int32]) }
+  end
+
+  it "cannot guess the type from splat argument with not splated type" do
+    assert_error %(
+      class Foo
+        def initialize(*@foo : Int32)
+        end
+
+        def foo
+          @foo
+        end
+      end
+
+      Foo.new(1).foo
+    ),
+      "Can't infer the type of instance variable '@foo' of Foo"
+  end
+
+  it "can guess the type from double-splat argument with double-splated type" do
+    assert_type(%(
+      class Foo
+        def initialize(**@foo : **{foo: Int32})
+        end
+
+        def foo
+          @foo
+        end
+      end
+
+      Foo.new(foo: 1).foo
+    )) { named_tuple_of({"foo": int32}) }
+  end
+
+  it "can guess the type from double-splat argument with double-splated type variable" do
+    assert_type(%(
+      class Foo(T)
+        def initialize(**@foo : **T)
+        end
+
+        def foo
+          @foo
+        end
+      end
+
+      Foo.new(foo: 1, bar: 2).foo
+    )) { named_tuple_of({"foo": int32, "bar": int32}) }
+  end
+
+  it "cannot guess the type from double-splat argument with not double-splated type" do
+    assert_error %(
+      class Foo
+        def initialize(**@foo : Int32)
+        end
+
+        def foo
+          @foo
+        end
+      end
+
+      Foo.new(foo: 1).foo
+    ),
+      "Can't infer the type of instance variable '@foo' of Foo"
+  end
+
+  it "cannot guess type from argument assigned in body" do
+    assert_error %(
+      class Foo
+        def initialize(x : String)
+          x = 1
+          @x = x
+        end
+      end
+
+      Foo.new "foo"
+      ),
+      "Can't infer the type of instance variable '@x' of Foo"
+  end
+
+  it "can't infer type of generic method that returns self (#5383)" do
+    assert_error %(
+      class Gen(T)
+        def self.new(&block : -> T) : self
+        end
+      end
+
+      class Foo
+        def initialize(x, y)
+          @x = Gen.new { 1 }
+        end
+      end
+      ),
+      "can't use Gen(T) as the type of instance variable @x of Foo, use a more specific type"
+  end
+
+  it "guesses virtual array type (1) (#5342)" do
+    assert_type(%(
+      require "prelude"
+
+      class First(T) < Array(T)
+      end
+
+      class Second
+        @ary = [[1]]
+
+        def ary
+          @ary
+        end
+      end
+
+      Second.new.ary
+      )) { array_of(array_of(int32).virtual_type).virtual_type }
+  end
+
+  it "guesses virtual array type (2) (#5342)" do
+    assert_type(%(
+      require "prelude"
+
+      class First(T) < Array(T)
+      end
+
+      class Second
+        @ary = Array { Array { 1 } }
+
+        def ary
+          @ary
+        end
+      end
+
+      Second.new.ary
+      )) { array_of(array_of(int32).virtual_type).virtual_type }
+  end
+
+  it "guesses virtual array type (3) (#5342)" do
+    assert_type(%(
+      require "prelude"
+
+      class First(T) < Array(T)
+      end
+
+      class Second
+        @ary = [] of Array(Int32)
+
+        def ary
+          @ary
+        end
+      end
+
+      Second.new.ary
+      )) { array_of(array_of(int32).virtual_type).virtual_type }
+  end
+
+  it "guesses virtual hash type (1) (#5342)" do
+    assert_type(%(
+      require "prelude"
+
+      class First(K, V) < Hash(K, V)
+      end
+
+      class Second
+        @hash = { {1 => 2} => 3}
+
+        def hash
+          @hash
+        end
+      end
+
+      Second.new.hash
+      )) { hash_of(hash_of(int32, int32).virtual_type, int32).virtual_type }
+  end
+
+  it "guesses virtual hash type (2) (#5342)" do
+    assert_type(%(
+      require "prelude"
+
+      class First(K, V) < Hash(K, V)
+      end
+
+      class Second
+        @hash = Hash { Hash { 1 => 2 } => 3 }
+
+        def hash
+          @hash
+        end
+      end
+
+      Second.new.hash
+      )) { hash_of(hash_of(int32, int32).virtual_type, int32).virtual_type }
+  end
+
+  it "guesses virtual array type (3) (#5342)" do
+    assert_type(%(
+      require "prelude"
+
+      class First(K, V) < Hash(K, V)
+      end
+
+      class Second
+        @hash = {} of Hash(Int32, Int32) => Int32
+
+        def hash
+          @hash
+        end
+      end
+
+      Second.new.hash
+      )) { hash_of(hash_of(int32, int32).virtual_type, int32).virtual_type }
+  end
+
+  it "doesn't solve instance var initializer in instance context (1) (#5876)" do
+    assert_error %(
+      class Foo
+        @x : Int32 = bar
+
+        def bar
+          1
+        end
+      end
+
+      Foo.new
+      ),
+      "undefined local variable or method 'bar'"
+  end
+
+  it "doesn't solve instance var initializer in instance context (2) (#5876)" do
+    assert_error %(
+      class Foo(T)
+        @x : T = bar
+
+        def bar
+          1
+        end
+      end
+
+      Foo(Int32).new
+      ),
+      "undefined local variable or method 'bar'"
+  end
+
+  it "doesn't solve instance var initializer in instance context (3) (#5876)" do
+    assert_error %(
+      module Moo(T)
+        @x : T = bar
+
+        def bar
+          1
+        end
+      end
+
+      class Foo
+        include Moo(Int32)
+      end
+
+      Foo.new
+      ),
+      "undefined local variable or method 'bar'"
+  end
+
+  it "solves instance var initializer in metaclass context (#5876)" do
+    assert_type(%(
+      class Foo
+        @x : Int32 = bar
+
+        def self.bar
+          1
+        end
+
+        def x
+          @x
+        end
+      end
+
+      Foo.new.x
+      )) { int32 }
   end
 end

@@ -96,7 +96,7 @@ describe BigRational do
     e = a
     g = br(12, 3)
 
-    # sanity check things aren't swapped
+    # verify things aren't swapped
     [l, e, g].each { |o| (a <=> o).should eq(a.to_f <=> o.to_f) }
 
     test_comp(a, l, e, g)

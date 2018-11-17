@@ -7,7 +7,7 @@ module Crystal
       @finished_hooks << FinishedHook.new(scope, a_macro, node)
     end
 
-    # Visit all finished hooks with the given visitor
+    # Visits all finished hooks with the given visitor
     def process_finished_hooks(visitor)
       @finished_hooks.each do |hook|
         if visitor.is_a?(SemanticVisitor)

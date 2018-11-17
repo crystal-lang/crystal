@@ -19,7 +19,7 @@ class Mutex
     else
       queue = @queue ||= Deque(Fiber).new
       queue << current_fiber
-      Scheduler.reschedule
+      Crystal::Scheduler.reschedule
     end
 
     nil
@@ -37,7 +37,7 @@ class Mutex
 
     if fiber = @queue.try &.shift?
       @mutex_fiber = fiber
-      Scheduler.enqueue fiber
+      Crystal::Scheduler.enqueue fiber
     else
       @mutex_fiber = nil
     end

@@ -244,6 +244,10 @@ module Crystal
       node
     end
 
+    def transform(node : AnnotationDef)
+      node
+    end
+
     def transform(node : While)
       node.cond = node.cond.transform(self)
       node.body = node.body.transform(self)
@@ -257,7 +261,7 @@ module Crystal
     end
 
     def transform(node : Generic)
-      node.name = node.name.transform(self).as(Path)
+      node.name = node.name.transform(self)
       transform_many node.type_vars
       node
     end
@@ -544,7 +548,7 @@ module Crystal
       node
     end
 
-    def transform(node : Attribute)
+    def transform(node : Annotation)
       node
     end
 
@@ -553,6 +557,10 @@ module Crystal
     end
 
     def transform(node : MacroLiteral)
+      node
+    end
+
+    def transform(node : MacroVerbatim)
       node
     end
 
@@ -573,7 +581,7 @@ module Crystal
     end
 
     def transform(node : Asm)
-      node.output = node.output.try &.transform(self)
+      node.outputs.try &.each &.transform(self)
       node.inputs.try &.each &.transform(self)
       node
     end

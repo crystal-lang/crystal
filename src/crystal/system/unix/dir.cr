@@ -48,16 +48,9 @@ module Crystal::System::Dir
     path
   end
 
-  def self.exists?(path : String) : Bool
-    if LibC.stat(path.check_no_null_byte, out stat) != 0
-      if Errno.value == Errno::ENOENT || Errno.value == Errno::ENOTDIR
-        return false
-      else
-        raise Errno.new("stat")
-      end
-    end
-
-    (stat.st_mode & LibC::S_IFMT) == LibC::S_IFDIR
+  def self.tempdir
+    tmpdir = ENV["TMPDIR"]? || "/tmp"
+    tmpdir.rchop(::File::SEPARATOR)
   end
 
   def self.create(path : String, mode : Int32) : Nil

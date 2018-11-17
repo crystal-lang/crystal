@@ -50,7 +50,7 @@ require "./spec/dsl"
 # By convention, specs live in the `spec` directory of a project. You can compile
 # and run the specs of a project by running `crystal spec`.
 #
-# ```shell
+# ```console
 # # Run  all specs in files matching spec/**/*_spec.cr
 # crystal spec
 #
@@ -99,6 +99,9 @@ OptionParser.parse! do |opts|
   opts.on("-v", "--verbose", "verbose output") do
     Spec.override_default_formatter(Spec::VerboseFormatter.new)
   end
+  opts.on("--tap", "Generate TAP output (Test Anything Protocol)") do
+    Spec.override_default_formatter(Spec::TAPFormatter.new)
+  end
   opts.on("--no-color", "Disable colored output") do
     Spec.use_colors = false
   end
@@ -115,6 +118,9 @@ if ENV["SPEC_VERBOSE"]? == "1"
   Spec.override_default_formatter(Spec::VerboseFormatter.new)
 end
 
-Signal::INT.trap { Spec.abort! }
+{% unless flag?(:win32) %}
+  # TODO(windows): re-enable this once Signal is ported
+  Signal::INT.trap { Spec.abort! }
+{% end %}
 
 Spec.run

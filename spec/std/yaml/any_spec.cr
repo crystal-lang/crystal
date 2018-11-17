@@ -128,21 +128,43 @@ describe YAML::Any do
     end
   end
 
-  describe "each" do
-    it "of array" do
-      elems = [] of String
-      YAML.parse("- foo\n- bar\n").each do |any|
-        elems << any.as_s
-      end
-      elems.should eq(%w(foo bar))
+  describe "#dig?" do
+    it "gets the value at given path given splat" do
+      obj = YAML.parse("--- \nfoo: \n  bar: \n    baz: \n      - qux\n      - fox")
+
+      obj.dig?("foo", "bar", "baz").should eq(%w(qux fox))
+      obj.dig?("foo", "bar", "baz", 1).should eq("fox")
     end
 
-    it "of hash" do
-      elems = [] of String
-      YAML.parse("foo: bar").each do |key, value|
-        elems << key.to_s << value.to_s
+    it "returns nil if not found" do
+      obj = YAML.parse("--- \nfoo: \n  bar: \n    baz: \n      - qux\n      - fox")
+
+      obj.dig?("foo", 10).should be_nil
+      obj.dig?("bar", "baz").should be_nil
+      obj.dig?("").should be_nil
+    end
+  end
+
+  describe "dig" do
+    it "gets the value at given path given splat" do
+      obj = YAML.parse("--- \nfoo: \n  bar: \n    baz: \n      - qux\n      - fox")
+
+      obj.dig("foo", "bar", "baz").should eq(%w(qux fox))
+      obj.dig("foo", "bar", "baz", 1).should eq("fox")
+    end
+
+    it "raises if not found" do
+      obj = YAML.parse("--- \nfoo: \n  bar: \n    baz: \n      - qux\n      - fox")
+
+      expect_raises KeyError, %(Missing hash key: 1) do
+        obj.dig("foo", 1, "bar", "baz")
       end
-      elems.should eq(%w(foo bar))
+      expect_raises KeyError, %(Missing hash key: "bar") do
+        obj.dig("bar", "baz")
+      end
+      expect_raises KeyError, %(Missing hash key: "") do
+        obj.dig("")
+      end
     end
   end
 
@@ -174,9 +196,21 @@ describe YAML::Any do
 
   it "is enumerable" do
     nums = YAML.parse("[1, 2, 3]")
-    nums.each_with_index do |x, i|
+    nums.as_a.each_with_index do |x, i|
       x.should be_a(YAML::Any)
       x.raw.should eq(i + 1)
     end
+  end
+
+  it "dups" do
+    any = YAML.parse("[1, 2, 3]")
+    any2 = any.dup
+    any2.as_a.should_not be(any.as_a)
+  end
+
+  it "clones" do
+    any = YAML.parse("[[1], 2, 3]")
+    any2 = any.clone
+    any2.as_a[0].as_a.should_not be(any.as_a[0].as_a)
   end
 end

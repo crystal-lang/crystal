@@ -48,5 +48,16 @@ describe "Crypto::Bcrypt::Password" do
     it "verifies password is correct" do
       (password == "secret").should be_true
     end
+
+    it "works with Password" do
+      (password == password).should be_true
+
+      other_password = Crypto::Bcrypt::Password.create("wrong", 4)
+      (password == other_password).should be_false
+    end
+
+    it "works with other types" do
+      (password == 0.815).should be_false
+    end
   end
 end

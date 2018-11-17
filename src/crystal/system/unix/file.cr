@@ -12,83 +12,36 @@ module Crystal::System::File
     fd
   end
 
-  private def self.open_flag(mode)
-    if mode.size == 0
-      raise "Invalid access mode #{mode}"
-    end
+  def self.mktemp(prefix, suffix, dir) : {LibC::Int, String}
+    dir = dir + ::File::SEPARATOR
+    path = "#{dir}#{prefix}.XXXXXX#{suffix}"
 
-    m = 0
-    o = 0
-    case mode[0]
-    when 'r'
-      m = LibC::O_RDONLY
-    when 'w'
-      m = LibC::O_WRONLY
-      o = LibC::O_CREAT | LibC::O_TRUNC
-    when 'a'
-      m = LibC::O_WRONLY
-      o = LibC::O_CREAT | LibC::O_APPEND
-    else
-      raise "Invalid access mode #{mode}"
-    end
-
-    case mode.size
-    when 1
-      # Nothing
-    when 2
-      case mode[1]
-      when '+'
-        m = LibC::O_RDWR
-      when 'b'
-        # Nothing
-      else
-        raise "Invalid access mode #{mode}"
-      end
-    else
-      raise "Invalid access mode #{mode}"
-    end
-
-    oflag = m | o
-  end
-
-  def self.mktemp(name, extension)
-    tmpdir = tempdir + ::File::SEPARATOR
-    path = "#{tmpdir}#{name}.XXXXXX#{extension}"
-
-    if extension
-      fd = LibC.mkstemps(path, extension.bytesize)
+    if suffix
+      fd = LibC.mkstemps(path, suffix.bytesize)
     else
       fd = LibC.mkstemp(path)
     end
 
-    raise Errno.new("mkstemp") if fd == -1
+    raise Errno.new("mkstemp: #{path.inspect}") if fd == -1
     {fd, path}
   end
 
-  def self.tempdir
-    tmpdir = ENV["TMPDIR"]? || "/tmp"
-    tmpdir.rchop(::File::SEPARATOR)
-  end
-
-  def self.stat(path)
-    if LibC.stat(path.check_no_null_byte, out stat) != 0
-      raise Errno.new("Unable to get stat for '#{path}'")
+  def self.info?(path : String, follow_symlinks : Bool) : ::File::Info?
+    stat = uninitialized LibC::Stat
+    if follow_symlinks
+      ret = LibC.stat(path.check_no_null_byte, pointerof(stat))
+    else
+      ret = LibC.lstat(path.check_no_null_byte, pointerof(stat))
     end
-    ::File::Stat.new(stat)
-  end
 
-  def self.lstat(path)
-    if LibC.lstat(path.check_no_null_byte, out stat) != 0
-      raise Errno.new("Unable to get lstat for '#{path}'")
-    end
-    ::File::Stat.new(stat)
-  end
-
-  def self.empty?(path)
-    begin
-      stat(path).size == 0
-    rescue Errno
-      raise Errno.new("Error determining size of '#{path}'")
+    if ret == 0
+      FileInfo.new(stat)
+    else
+      if {Errno::ENOENT, Errno::ENOTDIR}.includes? Errno.value
+        return nil
+      else
+        raise Errno.new("Unable to get info for '#{path}'")
+      end
     end
   end
 
@@ -112,19 +65,8 @@ module Crystal::System::File
     LibC.access(path.check_no_null_byte, flag) == 0
   end
 
-  def self.file?(path) : Bool
-    if LibC.stat(path.check_no_null_byte, out stat) != 0
-      if Errno.value == Errno::ENOENT
-        return false
-      else
-        raise Errno.new("stat")
-      end
-    end
-    ::File::Stat.new(stat).file?
-  end
-
   def self.chown(path, uid : Int, gid : Int, follow_symlinks)
-    ret = if !follow_symlinks && symlink?(path)
+    ret = if !follow_symlinks && ::File.symlink?(path)
             LibC.lchown(path, uid, gid)
           else
             LibC.chown(path, uid, gid)
@@ -132,7 +74,7 @@ module Crystal::System::File
     raise Errno.new("Error changing owner of '#{path}'") if ret == -1
   end
 
-  def self.chmod(path, mode : Int)
+  def self.chmod(path, mode)
     if LibC.chmod(path, mode) == -1
       raise Errno.new("Error changing permissions of '#{path}'")
     end
@@ -163,17 +105,6 @@ module Crystal::System::File
     ret
   end
 
-  def self.symlink?(path)
-    if LibC.lstat(path.check_no_null_byte, out stat) != 0
-      if Errno.value == Errno::ENOENT
-        return false
-      else
-        raise Errno.new("stat")
-      end
-    end
-    (stat.st_mode & LibC::S_IFMT) == LibC::S_IFLNK
-  end
-
   def self.rename(old_filename, new_filename)
     code = LibC.rename(old_filename.check_no_null_byte, new_filename.check_no_null_byte)
     if code != 0
@@ -187,13 +118,13 @@ module Crystal::System::File
     timevals[1] = to_timeval(mtime)
     ret = LibC.utimes(filename, timevals)
     if ret != 0
-      raise Errno.new("Error setting time to file '#{filename}'")
+      raise Errno.new("Error setting time on file '#{filename}'")
     end
   end
 
   private def self.to_timeval(time : ::Time)
     t = uninitialized LibC::Timeval
-    t.tv_sec = typeof(t.tv_sec).new(time.to_local.epoch)
+    t.tv_sec = typeof(t.tv_sec).new(time.to_unix)
     t.tv_usec = typeof(t.tv_usec).new(0)
     t
   end
@@ -226,5 +157,17 @@ module Crystal::System::File
     end
 
     nil
+  end
+
+  private def system_fsync(flush_metadata = true) : Nil
+    if flush_metadata
+      if LibC.fsync(fd) != 0
+        raise Errno.new("fsync")
+      end
+    else
+      if LibC.fdatasync(fd) != 0
+        raise Errno.new("fdatasync")
+      end
+    end
   end
 end

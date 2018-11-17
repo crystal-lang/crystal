@@ -18,6 +18,7 @@ void setup_sigfault_handler() {
   altstack.ss_flags = 0;
   sigaltstack(&altstack, NULL);
 
+  sigemptyset(&action.sa_mask);
   action.sa_flags = SA_ONSTACK | SA_SIGINFO;
   action.sa_sigaction = &sigfault_handler;
 

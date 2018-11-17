@@ -8,6 +8,13 @@ describe "Semantic: alias" do
       ") { types["Int32"].metaclass }
   end
 
+  it "declares alias inside type" do
+    assert_type("
+      alias Foo::Bar = Int32
+      Foo::Bar
+      ") { types["Int32"].metaclass }
+  end
+
   it "works with alias type as restriction" do
     assert_type("
       alias Alias = Int32

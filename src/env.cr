@@ -1,4 +1,4 @@
-require "c/stdlib"
+require "crystal/system/env"
 
 # `ENV` is a hash-like accessor for environment variables.
 #
@@ -35,24 +35,15 @@ module ENV
   #
   # If *key* or *value* contains a null-byte an `ArgumentError` is raised.
   def self.[]=(key : String, value : String?)
-    raise ArgumentError.new("Key contains null byte") if key.byte_index(0)
+    Crystal::System::Env.set(key, value)
 
-    if value
-      raise ArgumentError.new("Value contains null byte") if value.byte_index(0)
-
-      if LibC.setenv(key, value, 1) != 0
-        raise Errno.new("Error setting environment variable #{key.inspect}")
-      end
-    else
-      LibC.unsetenv(key)
-    end
     value
   end
 
   # Returns `true` if the environment variable named *key* exists and `false`
   # if it doesn't.
   def self.has_key?(key : String) : Bool
-    !!LibC.getenv(key)
+    Crystal::System::Env.has_key?(key)
   end
 
   # Retrieves a value corresponding to the given *key*. Raises a `KeyError` exception if the
@@ -71,10 +62,12 @@ module ENV
 
   # Retrieves a value corresponding to a given *key*. Return the value of the block if
   # the *key* does not exist.
-  def self.fetch(key : String, &block : String -> String? | NoReturn)
-    value = LibC.getenv key
-    return String.new(value) if value
-    yield(key)
+  def self.fetch(key : String, &block : String -> String?)
+    if value = Crystal::System::Env.get(key)
+      return value
+    else
+      yield key
+    end
   end
 
   # Returns an array of all the environment variable names.
@@ -95,7 +88,7 @@ module ENV
   # the environment variable existed, otherwise returns `nil`.
   def self.delete(key : String) : String?
     if value = self[key]?
-      LibC.unsetenv(key)
+      Crystal::System::Env.set(key, nil)
       value
     else
       nil
@@ -111,18 +104,8 @@ module ENV
   # end
   # ```
   def self.each
-    environ_ptr = LibC.environ
-    while environ_ptr
-      environ_value = environ_ptr.value
-      if environ_value
-        key_value = String.new(environ_value).split('=', 2)
-        key = key_value[0]
-        value = key_value[1]? || ""
-        yield({key, value})
-        environ_ptr += 1
-      else
-        break
-      end
+    Crystal::System::Env.each do |key, value|
+      yield({key, value})
     end
   end
 
@@ -132,7 +115,7 @@ module ENV
 
   # Writes the contents of the environment to *io*.
   def self.inspect(io)
-    io << "{"
+    io << '{'
     found_one = false
     each do |key, value|
       io << ", " if found_one
@@ -141,7 +124,7 @@ module ENV
       value.inspect(io)
       found_one = true
     end
-    io << "}"
+    io << '}'
   end
 
   def self.pretty_print(pp)

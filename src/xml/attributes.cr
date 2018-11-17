@@ -42,6 +42,12 @@ struct XML::Attributes
     value
   end
 
+  def delete(name : String)
+    value = self[name]?.try &.content
+    res = LibXML.xmlUnsetProp(@node, name)
+    value if res == 0
+  end
+
   def each : Nil
     return unless @node.element?
 
@@ -53,9 +59,9 @@ struct XML::Attributes
   end
 
   def to_s(io)
-    io << "["
+    io << '['
     join ", ", io, &.inspect(io)
-    io << "]"
+    io << ']'
   end
 
   def inspect(io)

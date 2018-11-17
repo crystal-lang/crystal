@@ -1,11 +1,21 @@
 {% begin %}
   lib LibCrypto
-    OPENSSL_110 = {{ `command -v pkg-config > /dev/null && pkg-config --atleast-version=1.1.0 libcrypto || printf %s false`.stringify != "false" }}
-    OPENSSL_102 = {{ `command -v pkg-config > /dev/null && pkg-config --atleast-version=1.0.2 libcrypto || printf %s false`.stringify != "false" }}
+    {% from_libressl = (`hash pkg-config 2> /dev/null || printf %s false` != "false") &&
+                       (`test -f $(pkg-config --silence-errors --variable=includedir libcrypto)/openssl/opensslv.h || printf %s false` != "false") &&
+                       (`printf "#include <openssl/opensslv.h>\nLIBRESSL_VERSION_NUMBER" | ${CC:-cc} $(pkg-config --cflags --silence-errors libcrypto || true) -E -`.chomp.split('\n').last != "LIBRESSL_VERSION_NUMBER") %}
+    {% ssl_version = `hash pkg-config 2> /dev/null && pkg-config --silence-errors --modversion libcrypto || printf %s 0.0.0`.split.last.gsub(/[^0-9.]/, "") %}
+
+    {% if from_libressl %}
+      LIBRESSL_VERSION = {{ ssl_version }}
+      OPENSSL_VERSION = "0.0.0"
+    {% else %}
+      LIBRESSL_VERSION = "0.0.0"
+      OPENSSL_VERSION = {{ ssl_version }}
+    {% end %}
   end
 {% end %}
 
-@[Link(ldflags: "`command -v pkg-config > /dev/null && pkg-config --libs libcrypto || printf %s '-lcrypto'`")]
+@[Link(ldflags: "`command -v pkg-config > /dev/null && pkg-config --libs --silence-errors libcrypto || printf %s '-lcrypto'`")]
 lib LibCrypto
   alias Char = LibC::Char
   alias Int = LibC::Int
@@ -45,8 +55,10 @@ lib LibCrypto
   CTRL_POP   =  7
   CTRL_FLUSH = 11
 
-  alias BioMethodWrite = (Bio*, Char*, Int) -> Int
-  alias BioMethodRead = (Bio*, Char*, Int) -> Int
+  alias BioMethodWrite = (Bio*, Char*, SizeT, SizeT*) -> Int
+  alias BioMethodWriteOld = (Bio*, Char*, Int) -> Int
+  alias BioMethodRead = (Bio*, Char*, SizeT, SizeT*) -> Int
+  alias BioMethodReadOld = (Bio*, Char*, Int) -> Int
   alias BioMethodPuts = (Bio*, Char*) -> Int
   alias BioMethodGets = (Bio*, Char*, Int) -> Int
   alias BioMethodCtrl = (Bio*, Int, Long, Void*) -> Long
@@ -54,21 +66,45 @@ lib LibCrypto
   alias BioMethodDestroy = Bio* -> Int
   alias BioMethodCallbackCtrl = (Bio*, Int, Void*) -> Long
 
-  struct BioMethod
-    type_id : Int
-    name : Char*
-    bwrite : BioMethodWrite
-    bread : BioMethodRead
-    bputs : BioMethodPuts
-    bgets : BioMethodGets
-    ctrl : BioMethodCtrl
-    create : BioMethodCreate
-    destroy : BioMethodDestroy
-    callback_ctrl : BioMethodCallbackCtrl
-  end
+  {% if compare_versions(LibCrypto::OPENSSL_VERSION, "1.1.0") >= 0 %}
+    type BioMethod = Void
+  {% else %}
+    struct BioMethod
+      type_id : Int
+      name : Char*
+      bwrite : BioMethodWriteOld
+      bread : BioMethodReadOld
+      bputs : BioMethodPuts
+      bgets : BioMethodGets
+      ctrl : BioMethodCtrl
+      create : BioMethodCreate
+      destroy : BioMethodDestroy
+      callback_ctrl : BioMethodCallbackCtrl
+    end
+  {% end %}
 
-  fun bio_new = BIO_new(method : BioMethod*) : Bio*
-  fun bio_free = BIO_free(bio : Bio*) : Int
+  fun BIO_new(BioMethod*) : Bio*
+  fun BIO_free(Bio*) : Int
+  fun BIO_set_data(Bio*, Void*)
+  fun BIO_get_data(Bio*) : Void*
+  fun BIO_set_init(Bio*, Int)
+  fun BIO_set_shutdown(Bio*, Int)
+
+  {% if compare_versions(LibCrypto::OPENSSL_VERSION, "1.1.0") >= 0 %}
+    fun BIO_meth_new(Int, Char*) : BioMethod*
+    fun BIO_meth_set_read(BioMethod*, BioMethodReadOld)
+    fun BIO_meth_set_write(BioMethod*, BioMethodWriteOld)
+    fun BIO_meth_set_puts(BioMethod*, BioMethodPuts)
+    fun BIO_meth_set_gets(BioMethod*, BioMethodGets)
+    fun BIO_meth_set_ctrl(BioMethod*, BioMethodCtrl)
+    fun BIO_meth_set_create(BioMethod*, BioMethodCreate)
+    fun BIO_meth_set_destroy(BioMethod*, BioMethodDestroy)
+    fun BIO_meth_set_callback_ctrl(BioMethod*, BioMethodCallbackCtrl)
+  {% end %}
+  {% if compare_versions(LibCrypto::OPENSSL_VERSION, "1.1.1") >= 0 %}
+    fun BIO_meth_set_read_ex(BioMethod*, BioMethodRead)
+    fun BIO_meth_set_write_ex(BioMethod*, BioMethodWrite)
+  {% end %}
 
   fun sha1 = SHA1(data : Char*, length : SizeT, md : Char*) : Char*
 
@@ -138,7 +174,7 @@ lib LibCrypto
   fun evp_md_block_size = EVP_MD_block_size(md : EVP_MD) : LibC::Int
   fun evp_digestfinal_ex = EVP_DigestFinal_ex(ctx : EVP_MD_CTX, md : UInt8*, size : UInt32*) : Int32
 
-  {% if OPENSSL_110 %}
+  {% if compare_versions(OPENSSL_VERSION, "1.1.0") >= 0 %}
     fun evp_md_ctx_new = EVP_MD_CTX_new : EVP_MD_CTX
     fun evp_md_ctx_free = EVP_MD_CTX_free(ctx : EVP_MD_CTX)
   {% else %}
@@ -206,7 +242,7 @@ lib LibCrypto
   NID_commonName       = 13
   NID_subject_alt_name = 85
 
-  {% if OPENSSL_110 %}
+  {% if compare_versions(OPENSSL_VERSION, "1.1.0") >= 0 %}
     fun sk_free = OPENSSL_sk_free(st : Void*)
     fun sk_num = OPENSSL_sk_num(x0 : Void*) : Int
     fun sk_pop_free = OPENSSL_sk_pop_free(st : Void*, callback : (Void*) ->)
@@ -251,12 +287,12 @@ lib LibCrypto
   fun x509v3_ext_nconf_nid = X509V3_EXT_nconf_nid(conf : Void*, ctx : Void*, ext_nid : Int, value : Char*) : X509_EXTENSION
   fun x509v3_ext_print = X509V3_EXT_print(out : Bio*, ext : X509_EXTENSION, flag : Int, indent : Int) : Int
 
-  {% unless OPENSSL_110 %}
+  {% unless compare_versions(OPENSSL_VERSION, "1.1.0") >= 0 %}
     fun err_load_crypto_strings = ERR_load_crypto_strings
     fun openssl_add_all_algorithms = OPENSSL_add_all_algorithms_noconf
   {% end %}
 
-  {% if OPENSSL_102 %}
+  {% if compare_versions(OPENSSL_VERSION, "1.0.2") >= 0 %}
     type X509VerifyParam = Void*
 
     @[Flags]

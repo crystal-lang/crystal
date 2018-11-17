@@ -63,12 +63,12 @@ struct HTTP::Headers
   end
 
   def [](key)
-    fetch wrap(key)
+    values = @hash[wrap(key)]
+    concat values
   end
 
   def []?(key)
-    values = @hash[wrap(key)]?
-    values ? concat(values) : nil
+    fetch(key, nil)
   end
 
   # Returns if among the headers for *key* there is some that contains *word* as a value.
@@ -123,11 +123,6 @@ struct HTTP::Headers
     value.each { |val| return false unless valid_value?(val) }
     unsafe_add(key, value)
     true
-  end
-
-  def fetch(key)
-    values = @hash.fetch wrap(key)
-    concat values
   end
 
   def fetch(key, default)
@@ -227,7 +222,7 @@ struct HTTP::Headers
         values.inspect(io)
       end
     end
-    io << "}"
+    io << '}'
   end
 
   def inspect(io : IO)

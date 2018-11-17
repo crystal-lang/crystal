@@ -153,7 +153,7 @@ class Drawer
   end
 
   def cell_line(fill, cell)
-    content = @current_row.at(cell) { "empty" }
+    content = @current_row.fetch(cell) { "empty" }
     tile_value = (content == "empty" ? 0 : (content.to_i? || 0)).to_i
     content = "" if !@content_line || content == "empty"
 

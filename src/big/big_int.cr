@@ -1,4 +1,6 @@
 require "c/string"
+require "big"
+require "random"
 
 # A `BigInt` can represent arbitrarily large integers.
 #
@@ -28,6 +30,8 @@ struct BigInt < Int
   # BigInt.new("1234567890ABCDEF", base: 16)           # => 1311768467294899695
   # ```
   def initialize(str : String, base = 10)
+    # Strip leading '+' char to smooth out cases with strings like "+123"
+    str = str.lchop('+')
     err = LibGMP.init_set_str(out @mpz, str, base)
     if err == -1
       raise ArgumentError.new("Invalid BigInt: #{str}")
@@ -519,6 +523,10 @@ struct Int
   end
 
   # Returns a `BigInt` representing this integer.
+  # ```
+  # require "big"
+  # 123.to_big_i
+  # ```
   def to_big_i : BigInt
     BigInt.new(self)
   end
@@ -532,6 +540,10 @@ struct Float
   end
 
   # Returns a `BigInt` representing this float (rounded using `floor`).
+  # ```
+  # require "big"
+  # 1212341515125412412412421.0.to_big_i
+  # ```
   def to_big_i : BigInt
     BigInt.new(self)
   end
@@ -541,14 +553,66 @@ class String
   # Returns a `BigInt` from this string, in the given *base*.
   #
   # Raises `ArgumentError` if this string doesn't denote a valid integer.
+  # ```
+  # require "big"
+  # "3a060dbf8d1a5ac3e67bc8f18843fc48".to_big_i(16)
+  # ```
   def to_big_i(base = 10) : BigInt
     BigInt.new(self, base)
   end
 end
 
 module Math
+  # Returns the sqrt of a `BigInt`.
+  #
+  # ```
+  # require "big"
+  # Math.sqrt((1000_000_000_0000.to_big_i*1000_000_000_00000.to_big_i))
+  # ```
   def sqrt(value : BigInt)
     sqrt(value.to_big_f)
+  end
+end
+
+module Random
+  private def rand_int(max : BigInt) : BigInt
+    # This is a copy of the algorithm in random.cr but with fewer special cases.
+    unless max > 0
+      raise ArgumentError.new "Invalid bound for rand: #{max}"
+    end
+
+    rand_max = BigInt.new(1) << (sizeof(typeof(next_u))*8)
+    needed_parts = 1
+    while rand_max < max && rand_max > 0
+      rand_max <<= sizeof(typeof(next_u))*8
+      needed_parts += 1
+    end
+
+    limit = rand_max / max * max
+
+    loop do
+      result = BigInt.new(next_u)
+      (needed_parts - 1).times do
+        result <<= sizeof(typeof(next_u))*8
+        result |= BigInt.new(next_u)
+      end
+
+      # For a uniform distribution we may need to throw away some numbers.
+      if result < limit
+        return result % max
+      end
+    end
+  end
+
+  private def rand_range(range : Range(BigInt, BigInt)) : BigInt
+    span = range.end - range.begin
+    unless range.excludes_end?
+      span += 1
+    end
+    unless span > 0
+      raise ArgumentError.new "Invalid range for rand: #{range}"
+    end
+    range.begin + rand_int(span)
   end
 end
 

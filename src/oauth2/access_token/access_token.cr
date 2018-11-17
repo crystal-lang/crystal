@@ -35,7 +35,7 @@ abstract class OAuth2::AccessToken
     when "bearer"
       Bearer.new(access_token, expires_in, refresh_token, scope, extra)
     when "mac"
-      Mac.new(access_token, expires_in, mac_algorithm.not_nil!, mac_key.not_nil!, refresh_token, scope, Time.now.epoch, extra)
+      Mac.new(access_token, expires_in, mac_algorithm.not_nil!, mac_key.not_nil!, refresh_token, scope, Time.utc_now.to_unix, extra)
     else
       raise "Unknown token_type in access token json: #{token_type}"
     end

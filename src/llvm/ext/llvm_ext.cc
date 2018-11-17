@@ -20,6 +20,10 @@ using namespace llvm;
 #define LLVM_VERSION_LE(major, minor) \
   (LLVM_VERSION_MAJOR < (major) || LLVM_VERSION_MAJOR == (major) && LLVM_VERSION_MINOR <= (minor))
 
+#if LLVM_VERSION_GE(6, 0)
+#include <llvm-c/DebugInfo.h>
+#endif
+
 #if LLVM_VERSION_GE(4, 0)
 #include <llvm/Bitcode/BitcodeWriter.h>
 #include <llvm/Analysis/ModuleSummaryAnalysis.h>
@@ -56,14 +60,16 @@ LLVMDIBuilderRef LLVMNewDIBuilder(LLVMModuleRef mref) {
   return wrap(new DIBuilder(*m));
 }
 
+#if LLVM_VERSION_LE(5, 0)
 void LLVMDIBuilderFinalize(LLVMDIBuilderRef dref) { unwrap(dref)->finalize(); }
+#endif
 
-LLVMMetadataRef LLVMDIBuilderCreateFile(DIBuilderRef Dref, const char *File,
+LLVMMetadataRef LLVMDIBuilderCreateFile2(DIBuilderRef Dref, const char *File,
                                         const char *Dir) {
   return wrap(Dref->createFile(File, Dir));
 }
 
-LLVMMetadataRef LLVMDIBuilderCreateCompileUnit(DIBuilderRef Dref, unsigned Lang,
+LLVMMetadataRef LLVMDIBuilderCreateCompileUnit2(DIBuilderRef Dref, unsigned Lang,
                                                const char *File,
                                                const char *Dir,
                                                const char *Producer,

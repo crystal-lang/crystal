@@ -83,7 +83,7 @@ describe "Code gen: alias" do
         alias Foo = Moo
       end
       ))
-    result.program.link_attributes
+    result.program.link_annotations
   end
 
   it "doesn't crash on cast to as recursive alias (#639)" do

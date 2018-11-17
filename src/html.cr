@@ -1,6 +1,8 @@
 require "./html/entities"
 
 # Provides HTML escaping and unescaping methods.
+#
+# For HTML *parsing* see module XML, especially `XML.parse_html`.
 module HTML
   private SUBSTITUTIONS = {
     '&'  => "&amp;",

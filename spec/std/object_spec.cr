@@ -96,6 +96,18 @@ private class TestObject
   def setter4
     @setter4
   end
+
+  def []=(key, value)
+    {key, value}
+  end
+end
+
+private class DelegatedTestObject
+  delegate :property1=, to: @test_object
+  delegate :[]=, to: @test_object
+
+  def initialize(@test_object : TestObject)
+  end
 end
 
 private class TestObjectWithFinalize
@@ -108,6 +120,16 @@ private class TestObjectWithFinalize
   end
 
   def_clone
+end
+
+private class HashedTestObject
+  property a : Int32
+  property b : Int32
+
+  def initialize(@a, @b)
+  end
+
+  def_hash :a, :b
 end
 
 describe Object do
@@ -128,6 +150,19 @@ describe Object do
         matches << match[0]
       end
       matches.should eq(["l", "l"])
+    end
+
+    it "delegates setter" do
+      test_object = TestObject.new
+      delegated = DelegatedTestObject.new(test_object)
+      delegated.property1 = 42
+      test_object.property1.should eq 42
+    end
+
+    it "delegates []=" do
+      test_object = TestObject.new
+      delegated = DelegatedTestObject.new(test_object)
+      (delegated["foo"] = "bar").should eq({"foo", "bar"})
     end
   end
 
@@ -354,5 +389,15 @@ describe Object do
   it "calls #finalize on #clone'd objects" do
     obj = TestObjectWithFinalize.new
     assert_finalizes(:clone) { obj.clone }
+  end
+
+  describe "def_hash" do
+    it "should return same hash for equal property values" do
+      HashedTestObject.new(1, 2).hash.should eq HashedTestObject.new(1, 2).hash
+    end
+
+    it "shouldn't return same hash for different property values" do
+      HashedTestObject.new(1, 2).hash.should_not eq HashedTestObject.new(3, 4).hash
+    end
   end
 end

@@ -122,7 +122,7 @@ struct Tuple
     {% end %}
   end
 
-  def unsafe_at(index : Int)
+  def unsafe_fetch(index : Int)
     self[index]
   end
 
@@ -205,7 +205,7 @@ struct Tuple
   end
 
   # Returns `true` if this tuple has the same size as the other tuple
-  # and their elements are equal to each other when  compared with `==`.
+  # and their elements are equal to each other when compared with `==`.
   #
   # ```
   # t1 = {1, "hello"}
@@ -383,9 +383,9 @@ struct Tuple
   # tuple.to_s # => "{1, \"hello\"}"
   # ```
   def to_s(io)
-    io << "{"
+    io << '{'
     join ", ", io, &.inspect(io)
-    io << "}"
+    io << '}'
   end
 
   def pretty_print(pp) : Nil

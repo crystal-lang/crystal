@@ -198,7 +198,7 @@ module Crystal
       end
 
       def module_name
-        config.name.split("-").map(&.camelcase).join("::")
+        config.name.split('-').map(&.camelcase).join("::")
       end
 
       abstract def full_path
@@ -274,7 +274,6 @@ module Crystal
     template ShardView, "shard.yml.ecr", "shard.yml"
 
     template SrcExampleView, "example.cr.ecr", "src/#{config.name}.cr"
-    template SrcVersionView, "version.cr.ecr", "src/#{config.name}/version.cr"
 
     template SpecHelperView, "spec_helper.cr.ecr", "spec/spec_helper.cr"
     template SpecExampleView, "example_spec.cr.ecr", "spec/#{config.name}_spec.cr"

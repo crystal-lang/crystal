@@ -77,19 +77,28 @@ Creates a library skeleton
 Creates an application skeleton
 .El
 
-This initializes the lib/app project folder as a git repository, with a license file, a readme file, a .travis.yml file for Travis CI integration, a shard.yml for use with shards (the Crystal dependency manager), a .gitignore file, and src and spec folders.
+This initializes the lib/app project folder as a git repository, with a license file, a README file, a .travis.yml file for Travis CI integration, a shard.yml for use with shards (the Crystal dependency manager), a .gitignore file, and src and spec folders.
 .Bd -literal -offset
-NAME - name of project to be generated, eg: example
+NAME - name of project to be generated, e.g.: example
 .Pp
 DIR  - directory where project will be generated, default: NAME
 .Ed
+.Pp
+Options:
+.Bl -tag -width "12345678" -compact
+.Pp
+.It Fl f, Fl -force
+Force overwrite existing files.
+.It Fl s, Fl -skip-existing
+Skip existing files.
+.El
 
 .Pp
 .It
 .Cm build
 .Op options
-programfile
---
+.Op programfile
+.Op --
 .Op arguments
 .Pp
 Compile program.
@@ -100,21 +109,29 @@ Options:
 .It Fl -cross-compile
 Generate an object file for cross compilation and prints the command to build the executable.
 The object file should be copied to the target system and the printed command should be executed there. This flag mainly exists for porting the compiler to new platforms, where possible run the compiler on the target platform directly.
-.It Fl -d, Fl -debug
+.It Fl d, Fl -debug
 Generate the output with symbolic debug symbols.
 These are read when debugging the built program with tools like lldb, gdb, valgrind etc. and provide mappings to the original source code for those tools.
+.It Fl -no-debug
+Generate the output without any symbolic debug symbols.
+.It Fl -lto Ar FLAG
+Use ThinLTO --lto=thin.
 .It Fl D Ar FLAG, Fl -define Ar FLAG
 Define a compile-time flag. This is useful to conditionally define types, methods, or commands based on flags available at compile time. The default flags are from the target triple given with --target-triple or the hosts default, if none is given.
 .It Fl -emit Op asm|llvm-bc|llvm-ir|obj
 Comma separated list of types of output for the compiler to emit. You can use this to see the generated LLVM IR, LLVM bitcode, assembly, and object files.
 .It Fl f Ar text|json, Fl -format Ar text|json
 Format of output. Defaults to text. The json format can be used to get a more parser-friendly output.
+.It Fl -error-trace
+Show full error trace.
 .It Fl -ll
 Dump LLVM assembly file to output directory.
-.It Fl -link-flags FLAGS
+.It Fl -link-flags Ar FLAGS
 Pass additional flags to the linker. Though you can specify those flags on the source code, this is useful for passing environment specific information directly to the linker, like non-standard library paths or names. For more information on specifying linker flags on source, you can read the "C bindings" section of the documentation available on the official web site.
-.It Fl -mcpu CPU
-Specify the name of the processor. This will pass a -mcpu flag to LLVM, and is only intended to be used for cross-compilation.
+.It Fl -mcpu Ar CPU
+Specify a specific CPU to generate code for. This will pass a -mcpu flag to LLVM, and is only intended to be used for cross-compilation. For a list of available CPUs, invoke "llvm-as < /dev/null | llc -march=xyz -mcpu=help".
+.It Fl -mattr Ar CPU
+Override or control specific attributes of the target, such as whether SIMD operations are enabled or not. The default set of attributes is set by the current CPU. This will pass a -mattr flag to LLVM, and is only intended to be used for cross-compilation. For a list of available attributes, invoke "llvm-as < /dev/null | llc -march=xyz -mattr=help".
 .It Fl -no-color
 Disable colored output.
 .It Fl -no-codegen
@@ -128,15 +145,21 @@ Turn on optimizations for the generated code, which are disabled by default.
 .It Fl -error-trace
 Show full stack trace. Disabled by default, as the full trace usually makes error messages less readable and not always deliver relevant information.
 .It Fl s, -stats
-Print runtime statistics about the different compiler stages for the current build. Output time and used memory for each compiler process.
+Print statistics about the different compiler stages for the current build. Output time and used memory for each compiler process.
+.It Fl p, -progress
+Print statistics about the progress for the current build.
+.It Fl t, -time
+Print statistics about the execution time.
 .It Fl -single-module
 Generate a single LLVM module.
-.It Fl -threads
+.It Fl -threads Ar NUM
 Maximum number of threads to use for code generation. The default is 8 threads.
 .It Fl -target Ar TRIPLE
 Enable target triple; intended to use for cross-compilation. See llvm documentation for more information about target triple.
 .It Fl -verbose
 Display the commands executed by the system.
+.It Fl -static
+Create a statically linked executable.
 .It Fl -stdin-filename Ar FILENAME
 Source file name to be read from STDIN.
 .El
@@ -147,35 +170,93 @@ Source file name to be read from STDIN.
 .Pp
 Generate documentation from comments using a subset of markdown. The output is saved in html format on the created docs/ folder. More information about documentation conventions can be found at https://crystal-lang.org/docs/conventions/documenting_code.html.
 .Pp
-.It Cm eval
+Options:
+.Bl -tag -width "12345678" -compact
+.Pp
+.It Fl o Ar DIR, Fl -output Ar DIR
+Set the output directory (default: ./docs).
+.It Fl b Ar URL, Fl -canonical-base-url Ar URL
+Set the canonical base URL.
+.El
+.Pp
+.It
+.Cm env
+.Op variables
+.Pp
+Print Crystal-specific environment variables in a format compatible with shell scripts. If one or more variable names are given as arguments, it prints only the value of each named variable on its own line.
+.Pp
+Variables:
+.Bl -tag -width "12345678" -compact
+.Pp
+.It
+.It Sy CRYSTAL_CACHE_DIR
+Please see
+.Sm "ENVIRONMENT VARIABLES".
+.Pp
+.It
+.It Sy CRYSTAL_PATH
+Please see
+.Sm "ENVIRONMENT VARIABLES".
+.Pp
+.It
+.It Sy CRYSTAL_VERSION
+Contains Crystal version.
+.El
+.Pp
+.It
+.Cm eval
+.Op options
+.Op source
 .Pp
 Evaluate code from arguments or, if no arguments are passed, from the standard input. Useful for experiments.
-It accepts the flags --stats, --release, and --help, as the build command does.
+.Pp
+Options:
+.Bl -tag -width "12345678" -compact
+.Pp
+.It Fl d, Fl -debug
+Generate the output with symbolic debug symbols.
+These are read when debugging the built program with tools like lldb, gdb, valgrind etc. and provide mappings to the original source code for those tools.
+.It Fl -no-debug
+Generate the output without any symbolic debug symbols.
+.It Fl D Ar FLAG, Fl -define Ar FLAG
+Define a compile-time flag. This is useful to conditionally define types, methods, or commands based on flags available at compile time. The default flags are from the target triple given with --target-triple or the hosts default, if none is given.
+.It Fl -error-trace
+Show full error trace.
+.It Fl -release
+Turn on optimizations for the generated code, which are disabled by default.
+.It Fl s, -stats
+Print statistics about the different compiler stages for the current build. Output time and used memory for each compiler process.
+.It Fl p, -progress
+Print statistics about the progress for the current build.
+.It Fl t, -time
+Print statistics about the execution time.
+.It Fl -no-color
+Disable colored output.
+.El
 .Pp
 .It
 .Cm play
 .Op options
+.Op file
 .Pp
 Starts the crystal playground server on port 8080, by default.
 .Pp
 Options:
 .Bl -tag -width "12345678" -compact
 .Pp
-.It Fl p Fl -port
+.It Fl p Ar PORT, Fl -port Ar PORT
 Run the playground on the specified port. Default is 8080.
-.It Fl b Ar HOST Fl -binding Ar HOST
+.It Fl b Ar HOST, Fl -binding Ar HOST
 Bind the playground to the specified IP.
-.It Fl v Fl -verbose
+.It Fl v, Fl -verbose
 Display detailed information of the executed code.
-.It Fl h Fl -help
-Show a help message about play command options.
 .El
 .Pp
 .It
 .Cm run
 .Op options
-programfile
---
+.Op programfile
+.Op --
 .Op arguments
 .Pp
 The default command. Compile and run program.
@@ -185,15 +266,41 @@ Same as the build options.
 .Pp
 .It
 .Cm spec
+.Op options
+.Op files
 .Pp
 Compile and run specs (in spec directory).
+.Pp
+Options:
+.Bl -tag -width "12345678" -compact
+.Pp
+.It Fl d, Fl -debug
+Generate the output with symbolic debug symbols.
+These are read when debugging the built program with tools like lldb, gdb, valgrind etc. and provide mappings to the original source code for those tools.
+.It Fl -no-debug
+Generate the output without any symbolic debug symbols.
+.It Fl D Ar FLAG, Fl -define Ar FLAG
+Define a compile-time flag. This is useful to conditionally define types, methods, or commands based on flags available at compile time. The default flags are from the target triple given with --target-triple or the hosts default, if none is given.
+.It Fl -error-trace
+Show full error trace.
+.It Fl -release
+Turn on optimizations for the generated code, which are disabled by default.
+.It Fl s, -stats
+Print statistics about the different compiler stages for the current build. Output time and used memory for each compiler process.
+.It Fl p, -progress
+Print statistics about the progress for the current build.
+.It Fl t, -time
+Print statistics about the execution time.
+.It Fl -no-color
+Disable colored output.
+.El
 .Pp
 .It
 .Cm tool
 .Op tool
 .Op switches
-programfile
---
+.Op programfile
+.Op --
 .Op arguments
 .Pp
 Run a tool. The available tools are: context, format, hierarchy, implementations, and types.
@@ -220,9 +327,25 @@ to specify the cursor position. The format for the cursor position is file:line:
 Show type of main variables of file.
 .El
 .Pp
+.It Cm help, Fl -help, h
+.Pp
+Show help. Option --help or -h can also be added to each command for command-specific help.
+.Pp
 .It Cm version, Fl -version, v
 .Pp
 Show version.
+.El
+.
+.Sh ENVIRONMENT VARIABLES
+.Bl -tag -width "12345678" -compact
+.Pp
+.It
+.It Sy CRYSTAL_CACHE_DIR
+Defines path where Crystal caches partial compilation results for faster subsequent builds. This path is also used to temporarily store executables when Crystal programs are run with 'crystal run' rather than 'crystal build'.
+.Pp
+.It
+.It Sy CRYSTAL_PATH
+Defines paths where Crystal searches for required files.
 .El
 .Sh SEE ALSO
 .Fn shards 1

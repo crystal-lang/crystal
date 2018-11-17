@@ -26,9 +26,9 @@ describe Mutex do
     mutex = Mutex.new
 
     a = 1
-    two = true
-    three = true
-    four = true
+    two = false
+    three = false
+    four = false
     ch = Channel(Nil).new
 
     spawn do

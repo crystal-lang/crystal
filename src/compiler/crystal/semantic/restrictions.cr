@@ -66,6 +66,8 @@ module Crystal
 
   struct DefWithMetadata
     def restriction_of?(other : DefWithMetadata, owner)
+      # This is how multiple defs are sorted by 'restrictions' (?)
+
       # If one yields and the other doesn't, none is stricter than the other
       return false unless yields == other.yields
 
@@ -193,12 +195,38 @@ module Crystal
 
   class Macro
     def overrides?(other : Macro)
-      # For now we consider that a macro overrides another macro
-      # if it has the same number of arguments, splat index and
-      # named arguments.
-      args.size == other.args.size &&
-        splat_index == other.splat_index &&
-        !!double_splat == !!other.double_splat
+      # If they have different number of arguments, splat index or presence of
+      # double splat, no override.
+      if args.size != other.args.size ||
+         splat_index != other.splat_index ||
+         !!double_splat != !!other.double_splat
+        return false
+      end
+
+      self_named_args = self.required_named_arguments
+      other_named_args = other.required_named_arguments
+
+      # If both don't have named arguments, override.
+      return true if !self_named_args && !other_named_args
+
+      # If one has required named args and the other doesn't, no override.
+      return false unless self_named_args && other_named_args
+
+      self_names = self_named_args.map(&.external_name)
+      other_names = other_named_args.map(&.external_name)
+
+      # If different named arguments names, no override.
+      return false unless self_names == other_names
+
+      true
+    end
+
+    def required_named_arguments
+      if (splat_index = self.splat_index) && splat_index != args.size - 1
+        args[splat_index + 1..-1].select { |arg| !arg.default_value }.sort_by &.external_name
+      else
+        nil
+      end
     end
   end
 
@@ -323,12 +351,20 @@ module Crystal
     end
 
     def restrict(other : TypeOf, context)
-      lookup_type = self.lookup_type(other, self_type: context.instantiated_type.instance_type)
-      restrict lookup_type, context
+      other.raise "can't use typeof in type restrictions"
     end
 
     def restrict(other : UnionType, context)
-      restricted = other.union_types.any? { |union_type| restrict(union_type, context) }
+      restricted = nil
+
+      other.union_types.each do |union_type|
+        # Apply the restriction logic on each union type, even if we already
+        # have a match, so that we can detect ambiguous calls between of
+        # literal types against aliases that resolve to union types.
+        restriction = restrict(union_type, context)
+        restricted ||= restriction
+      end
+
       restricted ? self : nil
     end
 
@@ -395,7 +431,7 @@ module Crystal
 
     def restrict(other : Generic, context)
       # Special case: consider `Union(X, Y, ...)` the same as `X | Y | ...`
-      generic_type = context.defining_type.lookup_path other.name
+      generic_type = get_generic_type(other, context)
       if generic_type.is_a?(GenericUnionType)
         return restrict(Union.new(other.type_vars), context)
       end
@@ -545,7 +581,7 @@ module Crystal
     end
 
     def restrict(other : Generic, context)
-      generic_type = context.defining_type.lookup_path other.name
+      generic_type = get_generic_type(other, context)
       generic_type = generic_type.remove_alias if generic_type.is_a? AliasType
       return super unless generic_type == self.generic_type
 
@@ -683,7 +719,7 @@ module Crystal
     end
 
     def restrict(other : Generic, context)
-      generic_type = context.defining_type.lookup_path other.name
+      generic_type = get_generic_type(other, context)
       return super unless generic_type == self.generic_type
 
       generic_type = generic_type.as(TupleType)
@@ -743,7 +779,7 @@ module Crystal
     end
 
     def restrict(other : Generic, context)
-      generic_type = context.defining_type.lookup_path other.name
+      generic_type = get_generic_type(other, context)
       return super unless generic_type == self.generic_type
 
       other_named_args = other.named_args
@@ -926,6 +962,9 @@ module Crystal
     end
 
     def restrict(other : VirtualMetaclassType, context)
+      # A module class can't be restricted into a class
+      return nil if instance_type.module?
+
       restricted = instance_type.restrict(other.instance_type.base_type, context)
       restricted ? self : nil
     end
@@ -1023,7 +1062,7 @@ module Crystal
     end
 
     def restrict(other : Generic, context)
-      generic_type = context.defining_type.lookup_path other.name
+      generic_type = get_generic_type(other, context)
       return super unless generic_type.is_a?(ProcType)
 
       # Consider the case of a splat in the type vars
@@ -1089,5 +1128,62 @@ module Crystal
 
       true
     end
+  end
+
+  class NumberLiteralType
+    def restrict(other, context)
+      if other.is_a?(IntegerType) || other.is_a?(FloatType)
+        # Check for an exact match, which can't produce an ambiguous call
+        if literal.type == other
+          set_exact_match(other)
+          other
+        elsif !exact_match? && literal.can_be_autocast_to?(other)
+          add_match(other)
+          other
+        else
+          literal.type.restrict(other, context)
+        end
+      else
+        type = super(other, context) ||
+               literal.type.restrict(other, context)
+        if type == self
+          type = @match || literal.type
+        end
+        type
+      end
+    end
+  end
+
+  class SymbolLiteralType
+    def restrict(other, context)
+      case other
+      when SymbolType
+        set_exact_match(other)
+        other
+      when EnumType
+        if !exact_match? && other.find_member(literal.value)
+          add_match(other)
+          other
+        else
+          literal.type.restrict(other, context)
+        end
+      else
+        type = super(other, context) ||
+               literal.type.restrict(other, context)
+        if type == self
+          type = @match || literal.type
+        end
+        type
+      end
+    end
+  end
+end
+
+private def get_generic_type(node, context)
+  name = node.name
+  if name.is_a?(Crystal::Path)
+    context.defining_type.lookup_path name
+  else
+    name.type
   end
 end

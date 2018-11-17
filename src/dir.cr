@@ -43,7 +43,7 @@ class Dir
   # File.write("testdir/config.h", "")
   #
   # d = Dir.new("testdir")
-  # d.each_entry { |x| puts "Got #{x}" }
+  # d.each { |x| puts "Got #{x}" }
   # ```
   #
   # produces:
@@ -53,20 +53,20 @@ class Dir
   # Got ..
   # Got config.h
   # ```
-  def each_entry : Nil
+  def each : Nil
     while entry = read
       yield entry
     end
   end
 
-  def each_entry
+  def each
     EntryIterator.new(self)
   end
 
   # Returns an array containing all of the filenames in the given directory.
   def entries : Array(String)
     entries = [] of String
-    each_entry do |filename|
+    each do |filename|
       entries << filename
     end
     entries
@@ -80,7 +80,7 @@ class Dir
   # File.write("testdir/config.h", "")
   #
   # d = Dir.new("testdir")
-  # d.each_entry { |x| puts "Got #{x}" }
+  # d.each_child { |x| puts "Got #{x}" }
   # ```
   #
   # produces:
@@ -159,10 +159,19 @@ class Dir
     end
   end
 
-  # See `#each_entry`.
-  def self.each_entry(dirname)
+  # Returns the tmp dir used for tempfile.
+  #
+  # ```
+  # Dir.tempdir # => "/tmp"
+  # ```
+  def self.tempdir : String
+    Crystal::System::Dir.tempdir
+  end
+
+  # See `#each`.
+  def self.each(dirname)
     Dir.open(dirname) do |dir|
-      dir.each_entry do |filename|
+      dir.each do |filename|
         yield filename
       end
     end
@@ -193,7 +202,11 @@ class Dir
 
   # Returns `true` if the given path exists and is a directory
   def self.exists?(path) : Bool
-    Crystal::System::Dir.exists? path
+    if info = File.info?(path)
+      info.type.directory?
+    else
+      false
+    end
   end
 
   # Returns `true` if the directory at *path* is empty, otherwise returns `false`.
@@ -206,16 +219,18 @@ class Dir
   # Dir.empty?("bar") # => false
   # ```
   def self.empty?(path) : Bool
-    raise Errno.new("Error determining size of '#{path}'") unless exists?(path)
-
     each_child(path) do |f|
       return false
     end
     true
+  rescue ex : Errno
+    raise Errno.new("Error determining size of '#{path}'", ex.errno)
   end
 
   # Creates a new directory at the given path. The linux-style permission mode
   # can be specified, with a default of 777 (0o777).
+  #
+  # NOTE: *mode* is ignored on windows.
   def self.mkdir(path, mode = 0o777)
     Crystal::System::Dir.create(path, mode)
   end
@@ -227,7 +242,11 @@ class Dir
     return 0 if Dir.exists?(path)
 
     components = path.split(File::SEPARATOR)
-    if components.first == "." || components.first == ""
+    case components.first
+    when ""
+      components.shift
+      subpath = "/"
+    when "."
       subpath = components.shift
     else
       subpath = "."
@@ -248,7 +267,7 @@ class Dir
   end
 
   def to_s(io)
-    io << "#<Dir:" << @path << ">"
+    io << "#<Dir:" << @path << '>'
   end
 
   def inspect(io)

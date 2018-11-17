@@ -1,4 +1,4 @@
-require "spec"
+require "../spec_helper"
 require "zip"
 
 describe Zip do
@@ -36,7 +36,7 @@ describe Zip do
   end
 
   it "reads file from file system" do
-    filename = "#{__DIR__}/../data/file.zip"
+    filename = datapath("file.zip")
 
     begin
       File.open(filename, "w") do |file|
@@ -106,7 +106,7 @@ describe Zip do
   end
 
   it "reads zip file with different extra in local file header and central directory header" do
-    Zip::File.open("#{__DIR__}/../data/test.zip") do |zip|
+    Zip::File.open(datapath("test.zip")) do |zip|
       zip.entries.size.should eq(2)
       zip["one.txt"].open(&.gets_to_end).should eq("One")
       zip["two.txt"].open(&.gets_to_end).should eq("Two")

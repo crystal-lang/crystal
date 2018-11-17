@@ -1,4 +1,5 @@
 require "c/pthread"
+require "c/sched"
 require "./thread/*"
 
 # :nodoc:
@@ -6,41 +7,53 @@ class Thread
   # Don't use this class, it is used internally by the event scheduler.
   # Use spawn and channels instead.
 
-  @th : LibC::PthreadT?
+  # all thread objects, so the GC can see them (it doesn't scan thread locals)
+  @@threads = Thread::LinkedList(Thread).new
+
+  @th : LibC::PthreadT
   @exception : Exception?
   @detached = false
+  @main_fiber : Fiber?
 
-  property current_fiber
+  # :nodoc:
+  property next : Thread?
 
+  # :nodoc:
+  property previous : Thread?
+
+  # Starts a new system thread.
   def initialize(&@func : ->)
-    @current_fiber = uninitialized Fiber
-    @@threads << self
-    @th = th = uninitialized LibC::PthreadT
+    @th = uninitialized LibC::PthreadT
 
-    ret = GC.pthread_create(pointerof(th), Pointer(LibC::PthreadAttrT).null, ->(data : Void*) {
+    ret = GC.pthread_create(pointerof(@th), Pointer(LibC::PthreadAttrT).null, ->(data : Void*) {
       (data.as(Thread)).start
       Pointer(Void).null
     }, self.as(Void*))
-    @th = th
 
-    if ret != 0
-      raise Errno.new("pthread_create")
+    if ret == 0
+      @@threads.push(self)
+    else
+      raise Errno.new("pthread_create", ret)
     end
   end
 
+  # Used once to initialize the thread object representing the main thread of
+  # the process (that already exists).
   def initialize
-    @current_fiber = uninitialized Fiber
     @func = ->{}
-    @@threads << self
     @th = LibC.pthread_self
+    @main_fiber = Fiber.new
+
+    @@threads.push(self)
   end
 
   def finalize
-    GC.pthread_detach(@th.not_nil!) unless @detached
+    GC.pthread_detach(@th) unless @detached
   end
 
+  # Suspends the current thread until this thread terminates.
   def join
-    GC.pthread_join(@th.not_nil!)
+    GC.pthread_join(@th)
     @detached = true
 
     if exception = @exception
@@ -48,51 +61,78 @@ class Thread
     end
   end
 
-  # All threads, so the GC can see them (GC doesn't scan thread locals)
-  # and we can find the current thread on platforms that don't support
-  # thread local storage (eg: OpenBSD)
-  @@threads = Set(Thread).new
+  {% if flag?(:android) || flag?(:openbsd) %}
+    # no thread local storage (TLS) for OpenBSD or Android,
+    # we use pthread's specific storage (TSS) instead:
+    @@current_key : LibC::PthreadKeyT
 
-  {% if flag?(:openbsd) %}
-    @@main = new
-
-    def self.current : Thread
-      if LibC.pthread_main_np == 1
-        return @@main
-      end
-
-      current_thread_id = LibC.pthread_self
-
-      current_thread = @@threads.find do |thread|
-        LibC.pthread_equal(thread.id, current_thread_id) != 0
-      end
-
-      raise "Error: failed to find current thread" unless current_thread
-      current_thread
+    @@current_key = begin
+      ret = LibC.pthread_key_create(out current_key, nil)
+      raise Errno.new("pthread_key_create", ret) unless ret == 0
+      current_key
     end
 
-    protected def id
-      @th.not_nil!
+    # Returns the Thread object associated to the running system thread.
+    def self.current : Thread
+      if ptr = LibC.pthread_getspecific(@@current_key)
+        ptr.as(Thread)
+      else
+        raise "BUG: Thread.current returned NULL"
+      end
+    end
+
+    # Associates the Thread object to the running system thread.
+    protected def self.current=(thread : Thread) : Thread
+      ret = LibC.pthread_setspecific(@@current_key, thread.as(Void*))
+      raise Errno.new("pthread_setspecific", ret) unless ret == 0
+      thread
     end
   {% else %}
     @[ThreadLocal]
-    @@current = new
+    @@current : Thread?
 
-    def self.current
-      @@current
+    # Returns the Thread object associated to the running system thread.
+    def self.current : Thread
+      @@current || raise "BUG: Thread.current returned NULL"
+    end
+
+    # Associates the Thread object to the running system thread.
+    protected def self.current=(@@current : Thread) : Thread
     end
   {% end %}
 
+  # Create the thread object for the current thread (aka the main thread of the
+  # process).
+  #
+  # TODO: consider moving to `kernel.cr` or `crystal/main.cr`
+  self.current = new
+
+  def self.yield
+    ret = LibC.sched_yield
+    raise Errno.new("sched_yield") unless ret == 0
+  end
+
+  # Returns the Fiber representing the thread's main stack.
+  def main_fiber
+    @main_fiber.not_nil!
+  end
+
+  # :nodoc:
+  def scheduler
+    @scheduler ||= Crystal::Scheduler.new(main_fiber)
+  end
+
   protected def start
-    {% unless flag?(:openbsd) %}
-    @@current = self
-    {% end %}
+    Thread.current = self
+    @main_fiber = fiber = Fiber.new
+
     begin
       @func.call
     rescue ex
       @exception = ex
     ensure
       @@threads.delete(self)
+      Fiber.inactive(fiber)
     end
   end
 end

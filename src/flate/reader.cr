@@ -4,11 +4,16 @@
 # instance, it reads data from the underlying IO, decompresses it, and returns
 # it to the caller.
 class Flate::Reader < IO
+  include IO::Buffered
+
   # If `#sync_close?` is `true`, closing this IO will close the underlying IO.
   property? sync_close : Bool
 
   # Returns `true` if this reader is closed.
   getter? closed = false
+
+  # Dictionary passed in the constructor
+  getter dict : Bytes?
 
   # Peeked bytes from the underlying IO
   @peek : Bytes?
@@ -20,10 +25,9 @@ class Flate::Reader < IO
     @stream.zalloc = LibZ::AllocFunc.new { |opaque, items, size| GC.malloc(items * size) }
     @stream.zfree = LibZ::FreeFunc.new { |opaque, address| GC.free(address) }
     ret = LibZ.inflateInit2(pointerof(@stream), -LibZ::MAX_BITS, LibZ.zlibVersion, sizeof(LibZ::ZStream))
-    if ret != LibZ::Error::OK
-      raise Flate::Error.new(ret, @stream)
-    end
+    raise Flate::Error.new(ret, @stream) unless ret.ok?
 
+    @peek = nil
     @end = false
   end
 
@@ -48,12 +52,12 @@ class Flate::Reader < IO
   end
 
   # Always raises `IO::Error` because this is a read-only `IO`.
-  def write(slice : Bytes)
+  def unbuffered_write(slice : Bytes)
     raise IO::Error.new "Can't write to Flate::Reader"
   end
 
   # See `IO#read`.
-  def read(slice : Bytes)
+  def unbuffered_read(slice : Bytes)
     check_open
 
     return 0 if slice.empty?
@@ -92,17 +96,20 @@ class Flate::Reader < IO
       end
 
       case ret
-      when LibZ::Error::NEED_DICT
+      when .need_dict?
         if dict = @dict
           ret = LibZ.inflateSetDictionary(pointerof(@stream), dict, dict.size)
-          next if ret == LibZ::Error::OK
+          next if ret.ok?
         end
 
         raise Flate::Error.new(ret, @stream)
-      when LibZ::Error::DATA_ERROR,
-           LibZ::Error::MEM_ERROR
+      when .errno?,
+           .data_error?,
+           .mem_error?,
+           .buf_error?,
+           .version_error?
         raise Flate::Error.new(ret, @stream)
-      when LibZ::Error::STREAM_END
+      when .stream_end?
         @end = true
         return read_bytes
       else
@@ -118,14 +125,27 @@ class Flate::Reader < IO
     end
   end
 
+  def unbuffered_flush
+    raise IO::Error.new "Can't flush Flate::Reader"
+  end
+
   # Closes this reader.
-  def close
+  def unbuffered_close
     return if @closed
     @closed = true
 
-    LibZ.inflateEnd(pointerof(@stream))
+    ret = LibZ.inflateEnd(pointerof(@stream))
+    raise Flate::Error.new(ret, @stream) unless ret.ok?
 
     @io.close if @sync_close
+  end
+
+  def unbuffered_rewind
+    check_open
+
+    @io.rewind
+
+    initialize(@io, @sync_close, @dict)
   end
 
   # :nodoc:

@@ -25,6 +25,12 @@ module Crystal
 
     @args : Array(Arg)?
     @block_arg : Arg?
+    @splat_index : Int32?
+    @double_splat : Arg?
+    @splat : Arg?
+
+    @args_hash_initialized = true
+    @args_hash = {} of String => Arg
 
     # Before checking types, we set this to nil.
     # Afterwards, this is non-nil if an error was found
@@ -75,12 +81,8 @@ module Crystal
       # Check for an argument that mathces this var, and see
       # if it has a default value. If so, we do a `self` check
       # to make sure `self` isn't used
-      if args = @args
-        # Find an argument with the same name as this variable
-        arg = args.find { |arg| arg.name == node.name }
-        if arg && (default_value = arg.default_value)
-          check_has_self(default_value)
-        end
+      if (arg = args_hash[node.name]?) && (default_value = arg.default_value)
+        check_has_self(default_value)
       end
 
       check_var_is_self(node)
@@ -113,11 +115,21 @@ module Crystal
     end
 
     def visit(node : Assign)
+      # Invalidate the argument after assigned
+      if (target = node.target).is_a?(Var)
+        args_hash.delete target.name
+      end
+
       process_assign(node)
       false
     end
 
     def visit(node : MultiAssign)
+      # Invalidate the argument after assigned
+      node.targets.each do |target|
+        args_hash.delete target.name if target.is_a?(Var)
+      end
+
       process_multi_assign(node)
       false
     end
@@ -388,14 +400,22 @@ module Crystal
     end
 
     def add_instance_var_type_info(vars, name, type : Type, node)
+      annotations = nil
+      process_annotations(@annotations) do |annotation_type, ann|
+        annotations ||= [] of {AnnotationType, Annotation}
+        annotations << {annotation_type, ann}
+      end
+
       info = vars[name]?
       unless info
         info = InstanceVarTypeInfo.new(node.location.not_nil!, type)
         info.outside_def = true if @outside_def
+        info.add_annotations(annotations) if annotations
         vars[name] = info
       else
         info.type = Type.merge!([info.type, type])
         info.outside_def = true if @outside_def
+        info.add_annotations(annotations) if annotations
         vars[name] = info
       end
     end
@@ -434,7 +454,7 @@ module Crystal
         if type.is_a?(GenericClassType)
           element_types = guess_array_literal_element_types(node)
           if element_types
-            return type.instantiate([Type.merge!(element_types)] of TypeVar)
+            return type.instantiate([Type.merge!(element_types)] of TypeVar).virtual_type
           end
         else
           return check_allowed_in_generics(node, type)
@@ -442,12 +462,12 @@ module Crystal
       elsif node_of = node.of
         type = lookup_type?(node_of)
         if type
-          return program.array_of(type.virtual_type)
+          return program.array_of(type.virtual_type).virtual_type
         end
       else
         element_types = guess_array_literal_element_types(node)
         if element_types
-          return program.array_of(Type.merge!(element_types))
+          return program.array_of(Type.merge!(element_types)).virtual_type
         end
       end
 
@@ -472,7 +492,7 @@ module Crystal
         if type.is_a?(GenericClassType)
           key_types, value_types = guess_hash_literal_key_value_types(node)
           if key_types && value_types
-            return type.instantiate([Type.merge!(key_types), Type.merge!(value_types)] of TypeVar)
+            return type.instantiate([Type.merge!(key_types), Type.merge!(value_types)] of TypeVar).virtual_type
           end
         else
           return check_allowed_in_generics(node, type)
@@ -484,11 +504,11 @@ module Crystal
         value_type = lookup_type?(node_of.value)
         return nil unless value_type
 
-        return program.hash_of(key_type.virtual_type, value_type.virtual_type)
+        return program.hash_of(key_type.virtual_type, value_type.virtual_type).virtual_type
       else
         key_types, value_types = guess_hash_literal_key_value_types(node)
         if key_types && value_types
-          return program.hash_of(Type.merge!(key_types), Type.merge!(value_types))
+          return program.hash_of(Type.merge!(key_types), Type.merge!(value_types)).virtual_type
         end
       end
 
@@ -597,7 +617,8 @@ module Crystal
       end
 
       # If it's Pointer(T).malloc or Pointer(T).null, guess it to Pointer(T)
-      if obj.is_a?(Generic) && obj.name.single?("Pointer") &&
+      if obj.is_a?(Generic) &&
+         (name = obj.name).is_a?(Path) && name.single?("Pointer") &&
          (node.name == "malloc" || node.name == "null")
         type = lookup_type?(obj)
         return type if type.is_a?(PointerInstanceType)
@@ -779,31 +800,35 @@ module Crystal
         end
       end
 
-      if args = @args
-        # Find an argument with the same name as this variable
-        arg = args.find { |arg| arg.name == node.name }
-        if arg
-          # If the argument has a restriction, guess the type from it
-          if restriction = arg.restriction
-            type = lookup_type?(restriction)
-            return type if type
+      if arg = args_hash[node.name]?
+        # If the argument has a restriction, guess the type from it
+        if restriction = arg.restriction
+          # It is for something like `def foo(*@foo : *T)`.
+          if @splat.same?(arg)
+            # If restriction is not splat (like `*foo : T`),
+            # we cannot guess the type.
+            # (We can also guess `Indexable(T)`, but it is not perfact.)
+            # And this early return is no problem because splat argument
+            # cannot have a default value.
+            return unless restriction.is_a?(Splat)
+            restriction = restriction.exp
+            # It is for something like `def foo(**@foo : **T)`.
+          elsif @double_splat.same?(arg)
+            return unless restriction.is_a?(DoubleSplat)
+            restriction = restriction.exp
           end
-
-          # If the argument has a default value, guess the type from it
-          if default_value = arg.default_value
-            return guess_type(default_value)
-          end
-        end
-      end
-
-      # Try to guess type from a block argument with the same name
-      if (block_arg = @block_arg) && block_arg.name == node.name
-        restriction = block_arg.restriction
-        if restriction
           type = lookup_type?(restriction)
           return type if type
-        else
-          # If there's no restriction it means it's a `-> Void` proc
+        end
+
+        # If the argument has a default value, guess the type from it
+        if default_value = arg.default_value
+          return guess_type(default_value)
+        end
+
+        # If the node points block args and there's no restriction,
+        # it means it's a `-> Void` proc
+        if (block_arg = @block_arg) && block_arg.name == node.name
           return @program.proc_of([@program.void] of Type)
         end
       end
@@ -1088,6 +1113,9 @@ module Crystal
       @found_self = false
       @args = node.args
       @block_arg = node.block_arg
+      @double_splat = node.double_splat
+      @splat_index = node.splat_index
+      @args_hash_initialized = false
 
       if !node.receiver && node.name == "initialize" && !current_type.is_a?(Program)
         initialize_info = @initialize_info = InitializeInfo.new(node)
@@ -1106,6 +1134,11 @@ module Crystal
       @initialize_info = nil
       @block_arg = nil
       @args = nil
+      @double_splat = nil
+      @splat_index = nil
+      @splat = nil
+      @args_hash.clear
+      @args_hash_initialized = true
       @outside_def = true
 
       false
@@ -1115,8 +1148,11 @@ module Crystal
       if body = node.body
         @outside_def = false
         @args = node.args
+        @args_hash_initialized = false
         body.accept self
         @args = nil
+        @args_hash.clear
+        @args_hash_initialized = true
         @outside_def = true
       end
 
@@ -1152,6 +1188,27 @@ module Crystal
 
     def current_type
       @type_override || @current_type
+    end
+
+    def args_hash
+      unless @args_hash_initialized
+        @args.try &.each_with_index do |arg, i|
+          @splat = arg if @splat_index == i
+          @args_hash[arg.name] = arg
+        end
+
+        @double_splat.try do |arg|
+          @args_hash[arg.name] = arg
+        end
+
+        @block_arg.try do |arg|
+          @args_hash[arg.name] = arg
+        end
+
+        @args_hash_initialized = true
+      end
+
+      @args_hash
     end
   end
 

@@ -1,34 +1,15 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
+  <%= HeadTemplate.new(type, canonical_base_url) %>
   <meta id="repository-name" content="<%= type.repository_name %>">
-  <link href="<%= type.path_to "css/style.css" %>" rel="stylesheet" type="text/css" />
-  <script type="text/javascript" src="<%= type.path_to "js/doc.js" %>"></script>
   <title><%= type.full_name %> - <%= type.repository_name %></title>
-  <script type="text/javascript">
-    CrystalDoc.base_path = "<%= type.path_to "" %>";
-  </script>
 </head>
 <body>
 
-<div id="types-list">
-  <div id="search-box">
-    <input type="search" id="search-input" placeholder="Search..." spellcheck="false">
-  </div>
+<%= SidebarTemplate.new(type.repository_name, types, type) %>
 
-  <a href="<%= type.path_to("index.html") %>">README</a>
-
-  <div class="search-results" class="hidden">
-    <ul class="search-list"></ul>
-  </div>
-
-  <div class="types-list">
-    <%= ListItemsTemplate.new(types, type) %>
-  </div>
-</div>
-
-<div id="main-content">
+<div class="main-content">
 <h1 class="type-name">
 <% if type.program? %>
   <%= type.full_name %>
@@ -62,9 +43,11 @@
   <h2>Defined in:</h2>
   <% locations.each do |location| %>
     <% if url = location.url %>
-      <a href="<%= url %>#L<%= location.line_number %>" target="_blank"><%= location.filename %></a>
+      <a href="<%= url %>#L<%= location.line_number %>" target="_blank">
+        <%= location.filename %><% if location.show_line_number %>:<%= location.line_number %><% end %>
+      </a>
     <% else %>
-      <%= location.filename %>
+      <%= location.filename %><% if location.show_line_number %>:<%= location.line_number %><% end %>
     <% end %>
     <br/>
   <% end %>
@@ -78,7 +61,7 @@
   <% end %>
   <dl>
     <% type.constants.each do |const| %>
-      <dt class="entry-const" id="<%= const.name %>">
+      <dt class="entry-const" id="<%= const.id %>">
         <strong><%= const.name %></strong> = <code><%= const.formatted_value %></code>
       </dt>
       <% if doc = const.formatted_doc %>

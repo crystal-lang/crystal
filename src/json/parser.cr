@@ -9,7 +9,7 @@ class JSON::Parser
     next_token
   end
 
-  def parse : Type
+  def parse : Any
     json = parse_value
     check :EOF
     json
@@ -41,7 +41,7 @@ class JSON::Parser
   private def parse_array
     next_token
 
-    ary = [] of Type
+    ary = [] of Any
 
     nest do
       if token.type != :"]"
@@ -63,13 +63,13 @@ class JSON::Parser
 
     next_token
 
-    ary
+    Any.new(ary)
   end
 
   private def parse_object
     next_token_expect_object_key
 
-    object = {} of String => Type
+    object = {} of String => Any
 
     nest do
       if token.type != :"}"
@@ -101,7 +101,7 @@ class JSON::Parser
 
     next_token
 
-    object
+    Any.new(object)
   end
 
   private delegate token, to: @lexer
@@ -110,7 +110,7 @@ class JSON::Parser
 
   private def value_and_next_token(value)
     next_token
-    value
+    Any.new(value)
   end
 
   private def check(token_type)

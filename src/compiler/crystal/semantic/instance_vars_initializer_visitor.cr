@@ -70,6 +70,8 @@ class Crystal::InstanceVarsInitializerVisitor < Crystal::SemanticVisitor
   end
 
   def finish
+    scope_initializers = [] of InstanceVarInitializerContainer::InstanceVarInitializer?
+
     # First declare them, so when we type all of them we will have
     # the info of which instance vars have initializers (so they are not nil)
     initializers.each do |i|
@@ -78,18 +80,31 @@ class Crystal::InstanceVarsInitializerVisitor < Crystal::SemanticVisitor
         program.undefined_instance_variable(i.target, scope, nil)
       end
 
-      scope.add_instance_var_initializer(i.target.name, i.value, scope.is_a?(GenericType) ? nil : i.meta_vars)
+      scope_initializers <<
+        scope.add_instance_var_initializer(i.target.name, i.value, scope.is_a?(GenericType) ? nil : i.meta_vars)
     end
 
     # Now type them
-    initializers.each do |i|
+    initializers.each_with_index do |i, index|
       scope = i.scope
+      value = i.value
 
-      unless scope.is_a?(GenericType)
-        ivar_visitor = MainVisitor.new(program, meta_vars: i.meta_vars)
-        ivar_visitor.scope = scope
-        i.value.accept ivar_visitor
+      next if scope.is_a?(GenericType)
+
+      # Check if we can autocast
+      if (value.is_a?(NumberLiteral) || value.is_a?(SymbolLiteral)) &&
+         (scope_initializer = scope_initializers[index])
+        cloned_value = value.clone
+        cloned_value.accept MainVisitor.new(program)
+        if casted_value = MainVisitor.check_automatic_cast(cloned_value, scope.lookup_instance_var(i.target.name).type)
+          scope_initializer.value = casted_value
+          next
+        end
       end
+
+      ivar_visitor = MainVisitor.new(program, meta_vars: i.meta_vars)
+      ivar_visitor.scope = scope.metaclass
+      value.accept ivar_visitor
     end
   end
 end

@@ -6,7 +6,7 @@ class JSON::Lexer::StringBased < JSON::Lexer
     @number_start = 0
   end
 
-  # Consume a string by remembering the start position of it and then
+  # Consumes a string by remembering the start position of it and then
   # doing a substring of the original string.
   # If we find an escape sequence (\) we can't do that anymore so we
   # go through a slow path where we accumulate everything in a buffer

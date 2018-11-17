@@ -1,4 +1,4 @@
-require "spec"
+require "../spec_helper"
 require "openssl/cipher"
 
 describe OpenSSL::Cipher do
@@ -9,7 +9,7 @@ describe OpenSSL::Cipher do
     key = "\0" * 16
     iv = "\0" * 16
     data = "DATA" * 5
-    ciphertext = File.read(File.join(__DIR__ + "/cipher_spec.ciphertext"))
+    ciphertext = File.read(datapath("cipher_spec.ciphertext"))
 
     c1.name.should eq(c2.name)
 

@@ -61,14 +61,6 @@ describe "Semantic: primitives" do
     assert_type("1 + 2") { int32 }
   end
 
-  it "types sizeof" do
-    assert_type("sizeof(Float64)") { int32 }
-  end
-
-  it "types instance_sizeof" do
-    assert_type("instance_sizeof(Reference)") { int32 }
-  end
-
   it "errors when comparing void (#225)" do
     assert_error %(
       lib LibFoo
@@ -206,7 +198,7 @@ describe "Semantic: primitives" do
         end
       end
       ),
-      "expected Primitive attribute to have one argument"
+      "expected Primitive annotation to have one argument"
   end
 
   it "errors if @[Primitive] has non-symbol arg" do

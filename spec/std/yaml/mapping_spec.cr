@@ -269,8 +269,8 @@ describe "YAML mapping" do
   it "parses yaml with Time::Format converter" do
     yaml = YAMLWithTime.from_yaml("---\nvalue: 2014-10-31 23:37:16\n")
     yaml.value.should be_a(Time)
-    yaml.value.to_s.should eq("2014-10-31 23:37:16")
-    yaml.value.should eq(Time.new(2014, 10, 31, 23, 37, 16))
+    yaml.value.to_s.should eq("2014-10-31 23:37:16 UTC")
+    yaml.value.should eq(Time.utc(2014, 10, 31, 23, 37, 16))
     yaml.to_yaml.should eq("---\nvalue: 2014-10-31 23:37:16\n")
   end
 
@@ -469,7 +469,7 @@ describe "YAML mapping" do
     string = %({"value":1459859781})
     yaml = YAMLWithTimeEpoch.from_yaml(string)
     yaml.value.should be_a(Time)
-    yaml.value.should eq(Time.epoch(1459859781))
+    yaml.value.should eq(Time.unix(1459859781))
     yaml.to_yaml.should eq("---\nvalue: 1459859781\n")
   end
 
@@ -477,7 +477,7 @@ describe "YAML mapping" do
     string = %({"value":1459860483856})
     yaml = YAMLWithTimeEpochMillis.from_yaml(string)
     yaml.value.should be_a(Time)
-    yaml.value.should eq(Time.epoch_ms(1459860483856))
+    yaml.value.should eq(Time.unix_ms(1459860483856))
     yaml.to_yaml.should eq("---\nvalue: 1459860483856\n")
   end
 

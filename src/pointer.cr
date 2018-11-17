@@ -21,7 +21,7 @@ require "c/string"
 # x # => 2
 # ```
 #
-# Note that a pointer is *falsey* if it's null (if it's address is zero).
+# Note that a pointer is *falsey* if it's null (if its address is zero).
 #
 # When calling a C function that expects a pointer you can also pass `nil` instead of using
 # `Pointer.null` to construct a null pointer.
@@ -92,7 +92,10 @@ struct Pointer(T)
   # ptr2.address # => 1230
   # ```
   def -(other : Int)
-    self + (-other)
+    # TODO: If throwing on overflow for integer conversion is implemented,
+    # then (here and in `Pointer#-`) for a `UInt64` argument the call to
+    # `to_i64` should become `as_unsafe`.
+    self + (-other.to_i64)
   end
 
   # Returns -1, 0 or 1 if this pointer's address is less, equal or greater than *other*'s address,
@@ -320,7 +323,7 @@ struct Pointer(T)
   def to_s(io : IO)
     io << "Pointer("
     io << T.to_s
-    io << ")"
+    io << ')'
     if address == 0
       io << ".null"
     else

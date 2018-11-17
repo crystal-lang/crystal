@@ -100,10 +100,11 @@ struct Nil
   end
 
   # Raises an exception.
+  # Reports the file and line at which the `not_nil!` assertion is called.
   #
   # See also: `Object#not_nil!`.
-  def not_nil!
-    raise "Nil assertion failed"
+  def not_nil!(caller_file = __FILE__, caller_line = __LINE__)
+    raise "Nil assertion failed at #{caller_file}:#{caller_line}"
   end
 
   def clone

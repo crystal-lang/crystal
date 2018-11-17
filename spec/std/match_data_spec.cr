@@ -2,28 +2,27 @@ require "spec"
 
 describe "Regex::MatchData" do
   it "does inspect" do
-    /f(o)(x)/.match("the fox").inspect.should eq(%(#<Regex::MatchData "fox" 1:"o" 2:"x">))
-    /f(o)(x)?/.match("the fort").inspect.should eq(%(#<Regex::MatchData "fo" 1:"o" 2:nil>))
-    /fox/.match("the fox").inspect.should eq(%(#<Regex::MatchData "fox">))
+    /f(o)(x)/.match("the fox").inspect.should eq(%(Regex::MatchData("fox" 1:"o" 2:"x")))
+    /f(o)(x)?/.match("the fort").inspect.should eq(%(Regex::MatchData("fo" 1:"o" 2:nil)))
+    /fox/.match("the fox").inspect.should eq(%(Regex::MatchData("fox")))
   end
 
   it "does to_s" do
-    /f(o)(x)/.match("the fox").to_s.should eq(%(#<Regex::MatchData "fox" 1:"o" 2:"x">))
-    /f(?<lettero>o)(?<letterx>x)/.match("the fox").to_s.should eq(%(#<Regex::MatchData "fox" lettero:"o" letterx:"x">))
-    /fox/.match("the fox").to_s.should eq(%(#<Regex::MatchData "fox">))
+    /f(o)(x)/.match("the fox").to_s.should eq(%(Regex::MatchData("fox" 1:"o" 2:"x")))
+    /f(?<lettero>o)(?<letterx>x)/.match("the fox").to_s.should eq(%(Regex::MatchData("fox" lettero:"o" letterx:"x")))
+    /fox/.match("the fox").to_s.should eq(%(Regex::MatchData("fox")))
   end
 
   it "does pretty_print" do
-    /f(o)(x)?/.match("the fo").pretty_inspect.should eq(%(#<Regex::MatchData "fo" 1:"o" 2:nil>))
+    /f(o)(x)?/.match("the fo").pretty_inspect.should eq(%(Regex::MatchData("fo" 1:"o" 2:nil)))
 
     expected = <<-REGEX
-      #<Regex::MatchData
-       "foooo"
+      Regex::MatchData("foooo"
        first:"f"
        second:"oooo"
        third:"ooo"
        fourth:"oo"
-       fifth:"o">
+       fifth:"o")
       REGEX
 
     /(?<first>f)(?<second>o(?<third>o(?<fourth>o(?<fifth>o))))/.match("fooooo").pretty_inspect.should eq(expected)
@@ -49,8 +48,7 @@ describe "Regex::MatchData" do
     end
 
     it "captures duplicated named group" do
-      # TODO: replace with regexp literal after next version release
-      re = Regex.new "(?:(?<g1>foo)|(?<g1>bar))*"
+      re = /(?:(?<g1>foo)|(?<g1>bar))*/
 
       ("foo" =~ re).should eq(0)
       $~["g1"].should eq("foo")
@@ -116,8 +114,7 @@ describe "Regex::MatchData" do
     end
 
     it "captures duplicated named group" do
-      # TODO: replace with regexp literal after next version release
-      re = Regex.new "(?:(?<g1>foo)|(?<g1>bar))*"
+      re = /(?:(?<g1>foo)|(?<g1>bar))*/
 
       ("foo" =~ re).should eq(0)
       $~["g1"]?.should eq("foo")
@@ -203,8 +200,7 @@ describe "Regex::MatchData" do
     end
 
     it "gets a hash of named captures with duplicated name" do
-      # TODO: replace with regexp literal after next version release
-      "Crystal".match(Regex.new "(?<name>Cr)y(?<name>s)").not_nil!.named_captures.should eq({"name" => "s"})
+      "Crystal".match(/(?<name>Cr)y(?<name>s)/).not_nil!.named_captures.should eq({"name" => "s"})
     end
   end
 
@@ -252,8 +248,7 @@ describe "Regex::MatchData" do
     end
 
     it "converts into a hash with duplicated names" do
-      # TODO: replace with regexp literal after next version release
-      "Crystal".match(Regex.new "(Cr)(?<name>s)?(yst)?(?<name>al)?").not_nil!.to_h.should eq({
+      "Crystal".match(/(Cr)(?<name>s)?(yst)?(?<name>al)?/).not_nil!.to_h.should eq({
              0 => "Crystal",
              1 => "Cr",
         "name" => "al",

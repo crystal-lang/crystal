@@ -293,7 +293,7 @@ class Crystal::CodeGenVisitor
   end
 
   def codegen_call_with_block_as_fun_literal(node, fun_literal, self_type, call_args)
-    fun_literal.accept self
+    accept fun_literal
     call_args.push @last
 
     target_def = node.target_def
@@ -459,7 +459,7 @@ class Crystal::CodeGenVisitor
 
     if raises && (rescue_block = @rescue_block)
       invoke_out_block = new_block "invoke_out"
-      @last = builder.invoke func, call_args, invoke_out_block, rescue_block
+      @last = invoke func, call_args, invoke_out_block, rescue_block
       position_at_end invoke_out_block
     else
       @last = call func, call_args

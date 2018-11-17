@@ -31,7 +31,7 @@ class UNIXServer < UNIXSocket
   # ```
   # UNIXServer.new("/tmp/dgram.sock", Socket::Type::DGRAM)
   # ```
-  def initialize(@path : String, type : Type = Type::STREAM, backlog = 128)
+  def initialize(@path : String, type : Type = Type::STREAM, backlog : Int = 128)
     super(Family::UNIX, type)
 
     bind(UNIXAddress.new(path)) do |error|
@@ -64,7 +64,7 @@ class UNIXServer < UNIXSocket
   # this method.
   def accept? : UNIXSocket?
     if client_fd = accept_impl
-      sock = UNIXSocket.new(client_fd, type)
+      sock = UNIXSocket.new(client_fd, type, @path)
       sock.sync = sync?
       sock
     end

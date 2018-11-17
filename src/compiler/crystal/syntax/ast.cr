@@ -170,7 +170,7 @@ module Crystal
     end
 
     def clone_without_location
-      Expressions.new(@expressions.clone)
+      Expressions.new(@expressions.clone).tap &.keyword = keyword
     end
 
     def_equals_and_hash expressions
@@ -214,12 +214,27 @@ module Crystal
     def initialize(@value : String, @kind = :i32)
     end
 
-    def initialize(value : Number, @kind = :i32)
-      @value = value.to_s
+    def self.new(value : Number)
+      new(value.to_s, kind_from_number(value))
     end
 
     def has_sign?
       @value[0] == '+' || @value[0] == '-'
+    end
+
+    def integer_value
+      case kind
+      when :i8  then value.to_i8
+      when :i16 then value.to_i16
+      when :i32 then value.to_i32
+      when :i64 then value.to_i64
+      when :u8  then value.to_u8
+      when :u16 then value.to_u16
+      when :u32 then value.to_u32
+      when :u64 then value.to_u64
+      else
+        raise "Bug: called 'integer_value' for non-integer literal"
+      end
     end
 
     def clone_without_location
@@ -228,6 +243,24 @@ module Crystal
 
     def_equals value.to_f64, kind
     def_hash value, kind
+
+    def self.kind_from_number(number : Number)
+      case number
+      when Int8    then :i8
+      when Int16   then :i16
+      when Int32   then :i32
+      when Int64   then :i64
+      when Int128  then :i128
+      when UInt8   then :u8
+      when UInt16  then :u16
+      when UInt32  then :u32
+      when UInt64  then :u64
+      when UInt128 then :u128
+      when Float32 then :f32
+      when Float64 then :f64
+      else              raise "Unsupported Number type for NumberLiteral: #{number.class}"
+      end
+    end
   end
 
   # A char literal.
@@ -302,8 +335,8 @@ module Crystal
     def initialize(@elements = [] of ASTNode, @of = nil, @name = nil)
     end
 
-    def self.map(values)
-      new(values.map { |value| (yield value).as(ASTNode) })
+    def self.map(values, of = nil)
+      new(values.map { |value| (yield value).as(ASTNode) }, of: of)
     end
 
     def accept_children(visitor)
@@ -911,10 +944,6 @@ module Crystal
   #     'def' [ receiver '.' ] name '(' [ arg [ ',' arg ]* ] ')'
   #       body
   #     'end'
-  #   |
-  #     'def' [ receiver '.' ] name arg [ ',' arg ]*
-  #       body
-  #     'end'
   #
   class Def < ASTNode
     property free_vars : Array(String)?
@@ -1146,6 +1175,7 @@ module Crystal
     end
 
     def accept_children(visitor)
+      @cond.try &.accept visitor
       @whens.each &.accept visitor
       @else.try &.accept visitor
     end
@@ -1298,6 +1328,29 @@ module Crystal
     def_equals_and_hash @name, @body, @type_vars, @splat_index
   end
 
+  # Annotation definition:
+  #
+  #     'annotation' name
+  #     'end'
+  #
+  class AnnotationDef < ASTNode
+    property name : Path
+    property doc : String?
+    property name_column_number : Int32
+
+    def initialize(@name, @name_column_number = 0)
+    end
+
+    def accept_children(visitor)
+    end
+
+    def clone_without_location
+      AnnotationDef.new(@name, @name_column_number)
+    end
+
+    def_equals_and_hash @name
+  end
+
   # While expression.
   #
   #     'while' cond
@@ -1351,7 +1404,9 @@ module Crystal
   end
 
   class Generic < ASTNode
-    property name : Path
+    # Usually a Path, but can also be a TypeNode in the case of a
+    # custom array/hash-like literal.
+    property name : ASTNode
     property type_vars : Array(ASTNode)
     property named_args : Array(NamedArgument)?
 
@@ -1794,12 +1849,12 @@ module Crystal
   end
 
   class Alias < ASTNode
-    property name : String
+    property name : Path
     property value : ASTNode
     property doc : String?
     property visibility = Visibility::Public
 
-    def initialize(@name : String, @value : ASTNode)
+    def initialize(@name : Path, @value : ASTNode)
     end
 
     def accept_children(visitor)
@@ -1807,7 +1862,7 @@ module Crystal
     end
 
     def clone_without_location
-      Alias.new(@name, @value.clone)
+      Alias.new(@name.clone, @value.clone)
     end
 
     def_equals_and_hash @name, @value
@@ -1896,29 +1951,26 @@ module Crystal
     def_equals_and_hash expressions
   end
 
-  class Attribute < ASTNode
-    property name : String
+  class Annotation < ASTNode
+    property path : Path
     property args : Array(ASTNode)
     property named_args : Array(NamedArgument)?
     property doc : String?
 
-    def initialize(@name, @args = [] of ASTNode, @named_args = nil)
+    def initialize(@path, @args = [] of ASTNode, @named_args = nil)
     end
 
     def accept_children(visitor)
+      @path.accept visitor
       @args.each &.accept visitor
       @named_args.try &.each &.accept visitor
     end
 
     def clone_without_location
-      Attribute.new(name, @args.clone, @named_args.clone)
+      Annotation.new(@path.clone, @args.clone, @named_args.clone)
     end
 
-    def self.any?(attributes, name)
-      !!(attributes.try &.any? { |attr| attr.name == name })
-    end
-
-    def_equals_and_hash name, args, named_args
+    def_equals_and_hash path, args, named_args
   end
 
   # A macro expression,
@@ -1954,6 +2006,12 @@ module Crystal
     end
 
     def_equals_and_hash value
+  end
+
+  class MacroVerbatim < UnaryExpression
+    def clone_without_location
+      MacroVerbatim.new(@exp.clone)
+    end
   end
 
   # if inside a macro
@@ -2110,26 +2168,26 @@ module Crystal
 
   class Asm < ASTNode
     property text : String
-    property output : AsmOperand?
+    property outputs : Array(AsmOperand)?
     property inputs : Array(AsmOperand)?
     property clobbers : Array(String)?
     property? volatile : Bool
     property? alignstack : Bool
     property? intel : Bool
 
-    def initialize(@text, @output = nil, @inputs = nil, @clobbers = nil, @volatile = false, @alignstack = false, @intel = false)
+    def initialize(@text, @outputs = nil, @inputs = nil, @clobbers = nil, @volatile = false, @alignstack = false, @intel = false)
     end
 
     def accept_children(visitor)
-      @output.try &.accept visitor
+      @outputs.try &.each &.accept visitor
       @inputs.try &.each &.accept visitor
     end
 
     def clone_without_location
-      Asm.new(@text, @output.clone, @inputs.clone, @clobbers, @volatile, @alignstack, @intel)
+      Asm.new(@text, @outputs.clone, @inputs.clone, @clobbers, @volatile, @alignstack, @intel)
     end
 
-    def_equals_and_hash text, output, inputs, clobbers, volatile?, alignstack?, intel?
+    def_equals_and_hash text, outputs, inputs, clobbers, volatile?, alignstack?, intel?
   end
 
   class AsmOperand < ASTNode

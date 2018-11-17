@@ -14,8 +14,8 @@ lib LibC
   {% elsif flag?(:openbsd) %}
     fun __error = __errno : Int*
   {% elsif flag?(:win32) %}
-    fun _get_errno(value : Int*) : Int
-    fun _set_errno(value : Int) : Int
+    fun _get_errno(value : Int*) : ErrnoT
+    fun _set_errno(value : Int) : ErrnoT
   {% end %}
 end
 

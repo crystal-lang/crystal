@@ -98,13 +98,21 @@ module Crystal
     # and can later be used to generate API docs.
     property? wants_doc = false
 
-    # Can be set to an array of strings to emit other files other
+    @[Flags]
+    enum EmitTarget
+      ASM
+      OBJ
+      LLVM_BC
+      LLVM_IR
+    end
+
+    # Can be set to a set of flags to emit other files other
     # than the executable file:
     # * asm: assembly files
     # * llvm-bc: LLVM bitcode
     # * llvm-ir: LLVM IR
     # * obj: object file
-    property emit : Array(String)?
+    property emit : EmitTarget?
 
     # Base filename to use for `emit` output.
     property emit_base_filename : String?
@@ -368,9 +376,9 @@ module Crystal
               input: Process::Redirect::Close, output: Process::Redirect::Inherit, error: Process::Redirect::Pipe) do |process|
               process.error.each_line(chomp: false) do |line|
                 hint_string = colorize("(this usually means you need to install the development package for lib\\1)").yellow.bold
-                line = line.gsub(/cannot find -l(\w+)/, "cannot find -l\\1 #{hint_string}")
-                line = line.gsub(/unable to find library -l(\w+)/, "unable to find library -l\\1 #{hint_string}")
-                line = line.gsub(/library not found for -l(\w+)/, "library not found for -l\\1 #{hint_string}")
+                line = line.gsub(/cannot find -l(\S+)\b/, "cannot find -l\\1 #{hint_string}")
+                line = line.gsub(/unable to find library -l(\S+)\b/, "unable to find library -l\\1 #{hint_string}")
+                line = line.gsub(/library not found for -l(\S+)\b/, "library not found for -l\\1 #{hint_string}")
                 STDERR << line
               end
             end
@@ -590,7 +598,9 @@ module Crystal
 
       private def compile_to_thin_lto
         {% unless LibLLVM::IS_38 || LibLLVM::IS_39 %}
-          llvm_mod.write_bitcode_with_summary_to_file(object_name)
+          # Here too, we first compile to a temporary file and then rename it
+          llvm_mod.write_bitcode_with_summary_to_file(temporary_object_name)
+          File.rename(temporary_object_name, object_name)
           @reused_previous_compilation = false
           dump_llvm_ir
         {% else %}
@@ -601,6 +611,7 @@ module Crystal
       private def compile_to_object
         bc_name = self.bc_name
         object_name = self.object_name
+        temporary_object_name = self.temporary_object_name
 
         # To compile a file we first generate a `.bc` file and then
         # create an object file from it. These `.bc` files are stored
@@ -612,6 +623,14 @@ module Crystal
         # `.bc` file is exactly the same as the old one. In that case
         # the `.o` file will also be the same, so we simply reuse the
         # old one. Generating an `.o` file is what takes most time.
+        #
+        # However, instead of directly generating the final `.o` file
+        # from the `.bc` file, we generate it to a temporary name (`.o.tmp`)
+        # and then we rename that file to `.o`. We do this because the compiler
+        # could be interrupted while the `.o` file is being generated, leading
+        # to a corrupted file that later would cause compilation issues.
+        # Moving a file is an atomic operation so no corrupted `.o` file should
+        # be generated.
 
         must_compile = true
         can_reuse_previous_compilation =
@@ -643,7 +662,8 @@ module Crystal
 
         if must_compile
           compiler.optimize llvm_mod if compiler.release?
-          compiler.target_machine.emit_obj_to_file llvm_mod, object_name
+          compiler.target_machine.emit_obj_to_file llvm_mod, temporary_object_name
+          File.rename(temporary_object_name, object_name)
         else
           @reused_previous_compilation = true
         end
@@ -655,21 +675,17 @@ module Crystal
         llvm_mod.print_to_file ll_name if compiler.dump_ll?
       end
 
-      def emit(values : Array, output_filename)
-        values.each do |value|
-          emit value, output_filename
-        end
-      end
-
-      def emit(value : String, output_filename)
-        case value
-        when "asm"
+      def emit(emit_target : EmitTarget, output_filename)
+        if emit_target.asm?
           compiler.target_machine.emit_asm_to_file llvm_mod, "#{output_filename}.s"
-        when "llvm-bc"
+        end
+        if emit_target.llvm_bc?
           FileUtils.cp(bc_name, "#{output_filename}.bc")
-        when "llvm-ir"
+        end
+        if emit_target.llvm_ir?
           llvm_mod.print_to_file "#{output_filename}.ll"
-        when "obj"
+        end
+        if emit_target.obj?
           FileUtils.cp(object_name, "#{output_filename}.o")
         end
       end
@@ -680,6 +696,10 @@ module Crystal
 
       def object_filename
         "#{@name}.o"
+      end
+
+      def temporary_object_name
+        Crystal.relative_filename("#{@output_dir}/#{object_filename}.tmp")
       end
 
       def bc_name

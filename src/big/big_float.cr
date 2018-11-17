@@ -1,4 +1,5 @@
 require "c/string"
+require "big"
 
 # A `BigFloat` can represent arbitrarily large floats.
 #
@@ -13,7 +14,11 @@ struct BigFloat < Float
   end
 
   def initialize(str : String)
-    LibGMP.mpf_init_set_str(out @mpf, str, 10)
+    # Strip leading '+' char to smooth out cases with strings like "+123"
+    str = str.lchop('+')
+    if LibGMP.mpf_init_set_str(out @mpf, str, 10) == -1
+      raise ArgumentError.new("Invalid BigFloat: #{str.inspect}")
+    end
   end
 
   def initialize(num : BigInt)
@@ -275,6 +280,12 @@ struct Number
 end
 
 class String
+  # Converts `self` to a `BigFloat`.
+  #
+  # ```
+  # require "big"
+  # "1234.0".to_big_f
+  # ```
   def to_big_f
     BigFloat.new(self)
   end
@@ -293,6 +304,12 @@ module Math
     {frac, exp}
   end
 
+  # Returns the sqrt of a `BigFloat`.
+  #
+  # ```
+  # require "big"
+  # Math.sqrt((1000_000_000_0000.to_big_f*1000_000_000_00000.to_big_f))
+  # ```
   def sqrt(value : BigFloat)
     BigFloat.new { |mpf| LibGMP.mpf_sqrt(mpf, value) }
   end

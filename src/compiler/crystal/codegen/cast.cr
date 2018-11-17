@@ -218,6 +218,12 @@ class Crystal::CodeGenVisitor
     store value, target_pointer
   end
 
+  def assign_distinct(target_pointer, target_type : VirtualMetaclassType, value_type : UnionType, value)
+    # Can happen when assigning Foo+.class <- Bar.class | Baz.class with Bar < Foo and Baz < Foo
+    casted_value = cast_to_pointer(union_value(value), target_type)
+    store load(casted_value), target_pointer
+  end
+
   def assign_distinct(target_pointer, target_type : NilableProcType, value_type : NilType, value)
     nilable_fun = make_nilable_fun target_type
     store nilable_fun, target_pointer
@@ -486,6 +492,39 @@ class Crystal::CodeGenVisitor
       store downcasted_value, aggregate_index(target_pointer, target_index)
     end
     target_pointer
+  end
+
+  # This is the case of the automatic cast between integer types
+  def downcast_distinct(value, to_type : IntegerType, from_type : IntegerType)
+    codegen_cast(from_type, to_type, value)
+  end
+
+  # This is the case of the automatic cast between integer type and float type
+  def downcast_distinct(value, to_type : FloatType, from_type : IntegerType)
+    codegen_cast(from_type, to_type, value)
+  end
+
+  # This is the case of the automatic cast between float types
+  def downcast_distinct(value, to_type : FloatType, from_type : FloatType)
+    codegen_cast(from_type, to_type, value)
+  end
+
+  # This is the case of the automatic cast between symbol and enum
+  def downcast_distinct(value, to_type : EnumType, from_type : SymbolType)
+    # value has the value of the symbol inside the symbol table,
+    # so we first get which symbol name that is, and then match
+    # it to one of the enum members
+    index = value.const_int_get_sext_value
+    symbol = @symbols_by_index[index].underscore
+
+    to_type.types.each do |name, value|
+      if name.underscore == symbol
+        accept(value.as(Const).value)
+        return @last
+      end
+    end
+
+    raise "Bug: expected to find enum member of #{to_type} matching symbol #{symbol}"
   end
 
   def downcast_distinct(value, to_type : Type, from_type : Type)
