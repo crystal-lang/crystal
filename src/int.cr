@@ -807,7 +807,6 @@ struct UInt64
 end
 
 struct UInt128
-  # TODO: eventually update to literals once UInt128 bit support is finished
   MIN = 0_u128
   MAX = ~MIN
 

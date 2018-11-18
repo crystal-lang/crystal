@@ -459,7 +459,7 @@ class String
 
   # Same as `#to_i` but returns an `UInt64` or the block's value.
   def to_u64(base : Int = 10, whitespace = true, underscore = false, prefix = false, strict = true, &block)
-    gen_to_ u64
+    gen_to_ u64, 18446744073709551615_u64
   end
 
   ### to_i128/to_u128
@@ -491,7 +491,7 @@ class String
 
   # Same as `#to_i` but returns an `UInt128` or the block's value.
   def to_u128(base : Int = 10, whitespace = true, underscore = false, prefix = false, strict = true, &block)
-    gen_to_ u128
+    gen_to_ u128, ((1<<127)-1).to_u128
   end
 
   # :nodoc:
