@@ -462,7 +462,7 @@ class String
     gen_to_ u64, 18446744073709551615_u64
   end
 
-  ### to_i128/to_u128
+  # ## to_i128/to_u128
 
   # Same as `#to_i` but returns an `Int128`.
   def to_i128(base : Int = 10, whitespace = true, underscore = false, prefix = false, strict = true) : Int128
@@ -476,7 +476,7 @@ class String
 
   # Same as `#to_i` but returns an `Int128` or the block's value.
   def to_i128(base : Int = 10, whitespace = true, underscore = false, prefix = false, strict = true, &block)
-    gen_to_ i128, ((1<<127)-1).to_u128, (1<<127).to_u128
+    gen_to_ i128, ((1 << 127) - 1).to_u128, (1 << 127).to_u128
   end
 
   # Same as `#to_i` but returns an `UInt128`.
@@ -491,7 +491,7 @@ class String
 
   # Same as `#to_i` but returns an `UInt128` or the block's value.
   def to_u128(base : Int = 10, whitespace = true, underscore = false, prefix = false, strict = true, &block)
-    gen_to_ u128, ((1<<127)-1).to_u128
+    gen_to_ u128, ((1 << 127) - 1).to_u128
   end
 
   # :nodoc:
