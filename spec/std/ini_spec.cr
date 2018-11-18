@@ -1,4 +1,4 @@
-require "spec"
+require "./spec_helper"
 require "ini"
 
 describe "INI" do
@@ -35,7 +35,7 @@ describe "INI" do
 
     it "ignores whitespaces" do
       INI.parse("   key   =   value  ").should eq({"" => {"key" => "value"}})
-      INI.parse("  [foo]").should eq({} of String => Hash(String, String))
+      INI.parse("  [foo]").should eq({"foo" => Hash(String, String).new})
     end
 
     it "ignores comments" do
@@ -50,12 +50,12 @@ describe "INI" do
       INI.parse("[foo]\na=1\n[foo]\nb=2").should eq({"foo" => {"a" => "1", "b" => "2"}})
     end
 
-    it "ignores an empty section" do
-      INI.parse("[section]").should eq({} of String => Hash(String, String))
+    it "parses empty section" do
+      INI.parse("[section]").should eq({"section" => Hash(String, String).new})
     end
 
     it "parses a file" do
-      INI.parse(File.read "#{__DIR__}/data/test_file.ini").should eq({
+      INI.parse(File.read datapath("test_file.ini")).should eq({
         "general" => {
           "log_level" => "D",
         },
@@ -83,7 +83,7 @@ describe "INI" do
         "section2" => {
           "x.y.z" => "coco lala",
         },
-      }, true).should eq(File.read "#{__DIR__}/data/test_file.ini")
+      }, true).should eq(File.read datapath("test_file.ini"))
     end
     it "build from a NamedTuple" do
       INI.build({
@@ -97,7 +97,7 @@ describe "INI" do
         "section2": {
           "x.y.z": "coco lala",
         },
-      }, true).should eq(File.read "#{__DIR__}/data/test_file.ini")
+      }, true).should eq(File.read datapath("test_file.ini"))
     end
     it "build with no spaces around `=`" do
       INI.build({"foo" => {"a" => "1"}}, false).should eq("[foo]\na=1\n\n")

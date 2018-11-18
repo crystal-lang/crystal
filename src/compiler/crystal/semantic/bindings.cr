@@ -17,6 +17,21 @@ module Crystal
       @type
     end
 
+    def type(*, with_literals = false)
+      type = self.type
+
+      if with_literals
+        case self
+        when NumberLiteral
+          return NumberLiteralType.new(type.program, self)
+        when SymbolLiteral
+          return SymbolLiteralType.new(type.program, self)
+        end
+      end
+
+      type
+    end
+
     def set_type(type : Type)
       type = type.remove_alias_if_simple
       if !type.no_return? && (freeze_type = @freeze_type) && !type.implements?(freeze_type)
@@ -459,7 +474,7 @@ module Crystal
                 if visitor
                   numeric_value = visitor.interpret_enum_value(value)
                   numeric_type = node_type.program.int?(numeric_value) || raise "BUG: expected integer type, not #{numeric_value.class}"
-                  type_var = NumberLiteral.new(numeric_value, numeric_type.kind)
+                  type_var = NumberLiteral.new(numeric_value.to_s, numeric_type.kind)
                   type_var.set_type_from(numeric_type, from)
                 else
                   node.raise "can't use constant #{node} (value = #{value}) as generic type argument, it must be a numeric constant"
@@ -504,7 +519,7 @@ module Crystal
       end
 
       if types.size > 300
-        raise "tuple too big: Tuple(#{types[0...10].join(",")}, ...)"
+        raise "tuple too big: Tuple(#{types[0...10].join(',')}, ...)"
       end
 
       self.type = tuple_type

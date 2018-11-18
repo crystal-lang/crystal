@@ -96,11 +96,11 @@ module Crystal
 
     def transform(node : MultiAssign)
       node.values = if node.values.size == 1
-                      [instrument(node.values[0])]
+                      [instrument(node.values[0])] of ASTNode
                     else
                       rhs = TupleLiteral.new(node.values)
                       rhs.location = node.location
-                      [instrument(rhs)]
+                      [instrument(rhs)] of ASTNode
                     end
       node
     end

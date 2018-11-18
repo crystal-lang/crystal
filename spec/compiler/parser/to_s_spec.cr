@@ -3,10 +3,23 @@ require "../../support/syntax"
 private def expect_to_s(original, expected = original, emit_doc = false, file = __FILE__, line = __LINE__)
   it "does to_s of #{original.inspect}", file, line do
     str = IO::Memory.new expected.bytesize
-    parser = Parser.new original
-    parser.wants_doc = emit_doc
-    parser.parse.to_s(str, emit_doc: emit_doc)
-    str.to_s.should eq(expected), file, line
+
+    source = original
+    if source.is_a?(String)
+      parser = Parser.new source
+      parser.wants_doc = emit_doc
+      node = parser.parse
+      node.to_s(str, emit_doc: emit_doc)
+      str.to_s.should eq(expected), file, line
+
+      # Check keeping information for `to_s` on clone
+      cloned = node.clone
+      str.clear
+      cloned.to_s(str, emit_doc: emit_doc)
+      str.to_s.should eq(expected), file, line
+    else
+      source.to_s.should eq(expected), file, line
+    end
   end
 end
 
@@ -24,7 +37,10 @@ describe "ASTNode#to_s" do
   expect_to_s "@foo.bar"
   expect_to_s %(:foo)
   expect_to_s %(:"{")
+  expect_to_s %(%r())
+  expect_to_s %(%r()imx)
   expect_to_s %(/hello world/)
+  expect_to_s %(/hello world/imx)
   expect_to_s %(/\\s/)
   expect_to_s %(/\\?/)
   expect_to_s %(/\\(group\\)/)
@@ -103,6 +119,7 @@ describe "ASTNode#to_s" do
   expect_to_s %(lib Foo\n  FOO = 0\nend)
   expect_to_s %(enum Foo\n  A = 0\n  B\nend)
   expect_to_s %(alias Foo = Void)
+  expect_to_s %(alias Foo::Bar = Void)
   expect_to_s %(type(Foo = Void))
   expect_to_s %(return true ? 1 : 2)
   expect_to_s %(1 <= 2 <= 3)
@@ -117,4 +134,28 @@ describe "ASTNode#to_s" do
   expect_to_s %(foo(1, (2 + 3), bar: (4 + 5)))
   expect_to_s %(if (1 + 2\n3)\n  4\nend)
   expect_to_s "%x(whoami)", "`whoami`"
+  expect_to_s %(begin\n  ()\nend)
+  expect_to_s %q("\e\0\""), %q("\e\u0000\"")
+  expect_to_s %q("#{1}\0"), %q("#{1}\u0000")
+  expect_to_s %q(%r{\/\0}), %q(/\/\0/)
+  expect_to_s %q(%r{#{1}\/\0}), %q(/#{1}\/\0/)
+  expect_to_s %q(`\n\0`), %q(`\n\u0000`)
+  expect_to_s %q(`#{1}\n\0`), %q(`#{1}\n\u0000`)
+  expect_to_s "macro foo\n{% verbatim do %}1{% end %}\nend"
+  expect_to_s Assign.new("x".var, Expressions.new([1.int32, 2.int32] of ASTNode)), "x = (1\n2\n)"
+  expect_to_s "foo.*"
+  expect_to_s "foo.%"
+  expect_to_s "&+1"
+  expect_to_s "&-1"
+  expect_to_s "1.&*"
+  expect_to_s "1.&**"
+  expect_to_s "1.~(2)"
+  expect_to_s %({% verbatim do %}\n  1{{ 2 }}\n  3{{ 4 }}\n{% end %})
+  expect_to_s %({% for foo in bar %}\n  {{ if true\n  foo\n  bar\nend }}\n{% end %})
+  expect_to_s %(asm("nop" ::::))
+  expect_to_s %(asm("nop" : "a"(1), "b"(2) : "c"(3), "d"(4) : "e", "f" : "volatile", "alignstack", "intel"))
+  expect_to_s %(asm("nop" :: "c"(3), "d"(4) ::))
+  expect_to_s %(asm("nop" :::: "volatile"))
+  expect_to_s %(asm("nop" :: "a"(1) :: "volatile"))
+  expect_to_s %(asm("nop" ::: "e" : "volatile"))
 end

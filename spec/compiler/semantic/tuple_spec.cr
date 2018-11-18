@@ -289,4 +289,34 @@ describe "Semantic: tuples" do
       ),
       "tuple too big"
   end
+
+  it "doesn't unify tuple metaclasses (#5384)" do
+    assert_type(%(
+      Tuple(Int32) || Tuple(String)
+      )) {
+      union_of(
+        tuple_of([int32] of Type).metaclass,
+        tuple_of([string] of Type).metaclass,
+      )
+    }
+  end
+
+  it "doesn't crash on tuple in not executed block (#6718)" do
+    assert_type(%(
+      require "prelude"
+
+      def pending(&block)
+      end
+
+      def untyped(x = nil)
+      end
+
+      # To reproduce this bug, it is needed to the expression that is
+      # not typed on main phase but is typed on cleanup phase.
+      # `untyped(untyped)` is just one.
+      pending do
+        {untyped(untyped)}
+      end
+    )) { nil_type }
+  end
 end

@@ -2,8 +2,10 @@ require "../types"
 
 module Crystal
   record NamedArgumentType, name : String, type : Type do
-    def self.from_args(named_args : Array(NamedArgument)?)
-      named_args.try &.map { |named_arg| new(named_arg.name, named_arg.value.type) }
+    def self.from_args(named_args : Array(NamedArgument)?, with_literals = false)
+      named_args.try &.map do |named_arg|
+        new(named_arg.name, named_arg.value.type(with_literals: with_literals))
+      end
     end
   end
 
@@ -294,7 +296,7 @@ module Crystal
         end
       end
 
-      # If there's a restriction on a double splat, zero matching named arguments don't matc
+      # If there's a restriction on a double splat, zero matching named arguments don't match
       if double_splat && double_splat_restriction &&
          !double_splat_restriction.is_a?(DoubleSplat) && !found_unmatched_named_arg
         return nil
@@ -349,7 +351,7 @@ module Crystal
         # Check matches but without parents: only included modules
         subtype_matches = subtype_lookup.lookup_matches_with_modules(signature, subtype_virtual_lookup, subtype_virtual_lookup)
 
-        # For Foo+:Class#new we need to check that this subtype doesn't define
+        # For Foo+.class#new we need to check that this subtype doesn't define
         # an incompatible initialize: if so, we return empty matches, because
         # all subtypes must have an initialize with the same number of arguments.
         if is_new && subtype_matches.empty?

@@ -169,4 +169,32 @@ describe "Semantic: while" do
       a
       )) { nilable int32 }
   end
+
+  it "rebinds condition variable after while body (#6158)" do
+    assert_type(%(
+      class Foo
+        @parent : self?
+
+        def parent
+          @parent
+        end
+      end
+
+      class Bar
+        def initialize(@parent : Foo)
+        end
+
+        def parent
+          @parent
+        end
+      end
+
+      a = Foo.new
+      b = Bar.new(a)
+      while b = b.parent
+        break if 1 == 1
+      end
+      b
+      )) { nilable types["Foo"] }
+  end
 end

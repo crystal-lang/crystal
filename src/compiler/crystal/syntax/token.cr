@@ -95,6 +95,10 @@ module Crystal
       @type == :TOKEN && @value == token
     end
 
+    def keyword?
+      @type == :IDENT && @value.is_a?(Symbol)
+    end
+
     def keyword?(keyword)
       @type == :IDENT && @value == keyword
     end

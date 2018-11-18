@@ -120,7 +120,7 @@ module Crystal
     def llvm_name(io)
       if extern?
         io << (extern_union? ? "union" : "struct")
-        io << "."
+        io << '.'
       end
       to_s_with_options io, codegen: true
     end

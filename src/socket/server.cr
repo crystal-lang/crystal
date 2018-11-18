@@ -1,5 +1,36 @@
 class Socket
   module Server
+    # Accepts an incoming connection and returns the client socket.
+    #
+    # ```
+    # require "socket"
+    #
+    # server = TCPServer.new(2202)
+    # while true
+    #   socket = server.accept
+    #   socket.puts Time.utc_now
+    #   socket.close
+    # end
+    # ```
+    #
+    # If the server is closed after invoking this method, an `IO::Error` (closed stream) exception must be raised.
+    abstract def accept : Socket
+
+    # Accepts an incoming connection and returns the client socket.
+    #
+    # Returns `nil` if the server is closed after invoking this method.
+    #
+    # ```
+    # require "socket"
+    #
+    # server = TCPServer.new(2202)
+    # while socket = server.accept?
+    #   socket.puts Time.utc_now
+    #   socket.close
+    # end
+    # ```
+    abstract def accept? : Socket?
+
     # Accepts an incoming connection and yields the client socket to the block.
     # Eventually closes the connection when the block returns.
     #

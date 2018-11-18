@@ -22,8 +22,6 @@ require "./type_guess_visitor"
 # declared all types so now we can search them and always find
 # them, not needing any kind of forward referencing.
 class Crystal::TypeDeclarationVisitor < Crystal::SemanticVisitor
-  ValidExternalVarAttributes = %w(ThreadLocal)
-
   alias TypeDeclarationWithLocation = TypeDeclarationProcessor::TypeDeclarationWithLocation
 
   getter class_vars
@@ -76,7 +74,7 @@ class Crystal::TypeDeclarationVisitor < Crystal::SemanticVisitor
   def visit(node : LibDef)
     pushing_type(node.resolved_type) do
       @in_lib = true
-      @attributes = nil
+      @annotations = nil
       node.body.accept self
       @in_lib = false
     end
@@ -95,11 +93,10 @@ class Crystal::TypeDeclarationVisitor < Crystal::SemanticVisitor
   end
 
   def visit(node : ExternalVar)
-    attributes = check_valid_attributes node, ValidExternalVarAttributes, "external var"
+    thread_local = check_class_var_annotations
 
     var_type = lookup_type(node.type_spec)
     var_type = check_allowed_in_lib node.type_spec, var_type
-    thread_local = Attribute.any?(attributes, "ThreadLocal")
 
     type = current_type.as(LibType)
     type.add_var node.name, var_type, (node.real_name || node.name), thread_local
@@ -227,10 +224,17 @@ class Crystal::TypeDeclarationVisitor < Crystal::SemanticVisitor
   end
 
   def declare_instance_var(owner, node, var)
+    annotations = nil
+    process_annotations(@annotations) do |annotation_type, ann|
+      annotations ||= [] of {AnnotationType, Annotation}
+      annotations << {annotation_type, ann}
+    end
+
     var_type = lookup_type(node.declared_type)
     var_type = check_declare_var_type(node, var_type, "an instance variable")
     owner_vars = @instance_vars[owner] ||= {} of String => TypeDeclarationWithLocation
-    type_decl = TypeDeclarationWithLocation.new(var_type.virtual_type, node.location.not_nil!, false)
+    type_decl = TypeDeclarationWithLocation.new(var_type.virtual_type, node.location.not_nil!,
+      false, annotations)
     owner_vars[var.name] = type_decl
   end
 
@@ -239,7 +243,7 @@ class Crystal::TypeDeclarationVisitor < Crystal::SemanticVisitor
     var_type = lookup_type(node.declared_type)
     var_type = check_declare_var_type(node, var_type, "a class variable")
     owner_vars = @class_vars[owner] ||= {} of String => TypeDeclarationWithLocation
-    owner_vars[var.name] = TypeDeclarationWithLocation.new(var_type.virtual_type, node.location.not_nil!, uninitialized)
+    owner_vars[var.name] = TypeDeclarationWithLocation.new(var_type.virtual_type, node.location.not_nil!, uninitialized, nil)
   end
 
   def visit(node : UninitializedVar)

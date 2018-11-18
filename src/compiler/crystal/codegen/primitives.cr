@@ -69,6 +69,8 @@ class Crystal::CodeGenVisitor
               codegen_primitive_load_atomic call, node, target_def, call_args
             when "store_atomic"
               codegen_primitive_store_atomic call, node, target_def, call_args
+            when "throw_info"
+              cast_to void_ptr_throwinfo, @program.pointer_of(@program.void)
             else
               raise "BUG: unhandled primitive in codegen: #{node.name}"
             end
@@ -112,35 +114,29 @@ class Crystal::CodeGenVisitor
     # Comparisons are a bit trickier because we want to get comparisons
     # between signed and unsigned integers right.
     case op
-    when "<"  then return @last = codegen_binary_op_lt(t1, t2, p1, p2)
-    when "<=" then return @last = codegen_binary_op_lte(t1, t2, p1, p2)
-    when ">"  then return @last = codegen_binary_op_gt(t1, t2, p1, p2)
-    when ">=" then return @last = codegen_binary_op_gte(t1, t2, p1, p2)
+    when "<"  then return codegen_binary_op_lt(t1, t2, p1, p2)
+    when "<=" then return codegen_binary_op_lte(t1, t2, p1, p2)
+    when ">"  then return codegen_binary_op_gt(t1, t2, p1, p2)
+    when ">=" then return codegen_binary_op_gte(t1, t2, p1, p2)
+    when "==" then return codegen_binary_op_eq(t1, t2, p1, p2)
+    when "!=" then return codegen_binary_op_ne(t1, t2, p1, p2)
     end
 
     p1, p2 = codegen_binary_extend_int(t1, t2, p1, p2)
 
-    @last = case op
-            when "+"               then builder.add p1, p2
-            when "-"               then builder.sub p1, p2
-            when "*"               then builder.mul p1, p2
-            when "/", "unsafe_div" then t1.signed? ? builder.sdiv(p1, p2) : builder.udiv(p1, p2)
-            when "%", "unsafe_mod" then t1.signed? ? builder.srem(p1, p2) : builder.urem(p1, p2)
-            when "unsafe_shl"      then builder.shl(p1, p2)
-            when "unsafe_shr"      then t1.signed? ? builder.ashr(p1, p2) : builder.lshr(p1, p2)
-            when "|"               then or(p1, p2)
-            when "&"               then and(p1, p2)
-            when "^"               then builder.xor(p1, p2)
-            when "=="              then return builder.icmp LLVM::IntPredicate::EQ, p1, p2
-            when "!="              then return builder.icmp LLVM::IntPredicate::NE, p1, p2
-            else                        raise "BUG: trying to codegen #{t1} #{op} #{t2}"
-            end
-
-    if t1.normal_rank != t2.normal_rank && t1.rank < t2.rank
-      @last = trunc @last, llvm_type(t1)
+    case op
+    when "+", "&+"         then codegen_trunc_binary_op_result(t1, t2, builder.add(p1, p2))
+    when "-", "&-"         then codegen_trunc_binary_op_result(t1, t2, builder.sub(p1, p2))
+    when "*", "&*"         then codegen_trunc_binary_op_result(t1, t2, builder.mul(p1, p2))
+    when "/", "unsafe_div" then codegen_trunc_binary_op_result(t1, t2, t1.signed? ? builder.sdiv(p1, p2) : builder.udiv(p1, p2))
+    when "%", "unsafe_mod" then codegen_trunc_binary_op_result(t1, t2, t1.signed? ? builder.srem(p1, p2) : builder.urem(p1, p2))
+    when "unsafe_shl"      then codegen_trunc_binary_op_result(t1, t2, builder.shl(p1, p2))
+    when "unsafe_shr"      then codegen_trunc_binary_op_result(t1, t2, t1.signed? ? builder.ashr(p1, p2) : builder.lshr(p1, p2))
+    when "|"               then codegen_trunc_binary_op_result(t1, t2, or(p1, p2))
+    when "&"               then codegen_trunc_binary_op_result(t1, t2, and(p1, p2))
+    when "^"               then codegen_trunc_binary_op_result(t1, t2, builder.xor(p1, p2))
+    else                        raise "BUG: trying to codegen #{t1} #{op} #{t2}"
     end
-
-    @last
   end
 
   def codegen_binary_extend_int(t1, t2, p1, p2)
@@ -153,6 +149,37 @@ class Crystal::CodeGenVisitor
     end
     {p1, p2}
   end
+
+  # Ensures the result is returned in the type of the left hand side operand t1.
+  # This is only needed if the operation was carried in the realm of t2
+  # because it was of higher rank
+  def codegen_trunc_binary_op_result(t1, t2, result)
+    if t1.normal_rank != t2.normal_rank && t1.rank < t2.rank
+      result = trunc result, llvm_type(t1)
+    else
+      result
+    end
+  end
+
+  # The below methods (lt, lte, gt, gte, eq, ne) perform
+  # comparisons on two integers x and y,
+  # where t1, t2 are their types and p1, p2 are their values.
+  #
+  # In LLVM, Int32 and UInt32 are represented as the same type
+  # (i32) and although integer operations have a sign
+  # (SGE, UGE, signed/unsigned greater than or equal)
+  # when we have one signed integer and one unsigned integer
+  # we can't choose a signedness for the operation. In that
+  # case we need to perform some additional checks.
+  #
+  # Equality and inequality operations for integers in LLVM don't have
+  # signedness, they just compare bit patterns. But for example
+  # the Int32 with value -1 and the UInt32 with value
+  # 4294967295 have the same bit pattern, and yet they are not
+  # equal, so again we must perform some additional checks
+  # (mainly, if the signed value is negative then there's
+  # no way they are equal, and for positive values we can
+  # perform the usual bit equality).
 
   def codegen_binary_op_lt(t1, t2, p1, p2)
     if t1.signed? == t2.signed?
@@ -303,6 +330,46 @@ class Crystal::CodeGenVisitor
           )
         end
       end
+    end
+  end
+
+  def codegen_binary_op_eq(t1, t2, p1, p2)
+    p1, p2 = codegen_binary_extend_int(t1, t2, p1, p2)
+
+    if t1.signed? == t2.signed?
+      builder.icmp(LLVM::IntPredicate::EQ, p1, p2)
+    elsif t1.signed? && t2.unsigned?
+      # x >= 0 && x == y
+      and(
+        builder.icmp(LLVM::IntPredicate::SGE, p1, p1.type.const_int(0)),
+        builder.icmp(LLVM::IntPredicate::EQ, p1, p2)
+      )
+    else # t1.unsigned? && t2.signed?
+      # y >= 0 && x == y
+      and(
+        builder.icmp(LLVM::IntPredicate::SGE, p2, p2.type.const_int(0)),
+        builder.icmp(LLVM::IntPredicate::EQ, p1, p2)
+      )
+    end
+  end
+
+  def codegen_binary_op_ne(t1, t2, p1, p2)
+    p1, p2 = codegen_binary_extend_int(t1, t2, p1, p2)
+
+    if t1.signed? == t2.signed?
+      builder.icmp(LLVM::IntPredicate::NE, p1, p2)
+    elsif t1.signed? && t2.unsigned?
+      # x < 0 || x != y
+      or(
+        builder.icmp(LLVM::IntPredicate::SLT, p1, p1.type.const_int(0)),
+        builder.icmp(LLVM::IntPredicate::NE, p1, p2)
+      )
+    else # t1.unsigned? && t2.signed?
+      # y < 0 || x != y
+      or(
+        builder.icmp(LLVM::IntPredicate::SLT, p2, p2.type.const_int(0)),
+        builder.icmp(LLVM::IntPredicate::NE, p1, p2)
+      )
     end
   end
 
@@ -504,7 +571,7 @@ class Crystal::CodeGenVisitor
     if (extra = node.extra)
       existing_value = context.vars["value"]?
       context.vars["value"] = LLVMVar.new(call_arg, node.type, true)
-      request_value { extra.accept self }
+      request_value { accept extra }
       call_arg = @last
       context.vars["value"] = existing_value if existing_value
     end
@@ -906,5 +973,85 @@ class Crystal::CodeGenVisitor
     end
 
     node.value
+  end
+
+  def void_ptr_type_descriptor
+    void_ptr_type_descriptor_name = "\u{1}??_R0PEAX@8"
+
+    @llvm_mod.globals[void_ptr_type_descriptor_name]? || begin
+      base_type_descriptor = external_constant(llvm_context.void_pointer, "\u{1}??_7type_info@@6B@")
+
+      # .PEAX is void*
+      void_ptr_type_descriptor = @llvm_mod.globals.add(
+        llvm_context.struct([
+          llvm_context.void_pointer.pointer,
+          llvm_context.void_pointer,
+          llvm_context.int8.array(6),
+        ]), void_ptr_type_descriptor_name)
+      void_ptr_type_descriptor.initializer = llvm_context.const_struct [
+        base_type_descriptor,
+        llvm_context.void_pointer.null,
+        llvm_context.const_string(".PEAX"),
+      ]
+
+      void_ptr_type_descriptor
+    end
+  end
+
+  def void_ptr_throwinfo
+    void_ptr_throwinfo_name = "_TI1PEAX"
+
+    @llvm_mod.globals[void_ptr_throwinfo_name]? || begin
+      catchable_type = llvm_context.struct([llvm_context.int32, llvm_context.int32, llvm_context.int32, llvm_context.int32, llvm_context.int32, llvm_context.int32, llvm_context.int32])
+      void_ptr_catchable_type = @llvm_mod.globals.add(
+        catchable_type, "_CT??_R0PEAX@88")
+      void_ptr_catchable_type.initializer = llvm_context.const_struct [
+        int32(1),
+        sub_image_base(void_ptr_type_descriptor),
+        int32(0),
+        int32(-1),
+        int32(0),
+        int32(8),
+        int32(0),
+      ]
+
+      catchable_type_array = llvm_context.struct([llvm_context.int32, llvm_context.int32.array(1)])
+      catchable_void_ptr = @llvm_mod.globals.add(
+        catchable_type_array, "_CTA1PEAX")
+      catchable_void_ptr.initializer = llvm_context.const_struct [
+        int32(1),
+        llvm_context.int32.const_array([sub_image_base(void_ptr_catchable_type)]),
+      ]
+
+      eh_throwinfo = llvm_context.struct([llvm_context.int32, llvm_context.int32, llvm_context.int32, llvm_context.int32])
+      void_ptr_throwinfo = @llvm_mod.globals.add(
+        eh_throwinfo, void_ptr_throwinfo_name)
+      void_ptr_throwinfo.initializer = llvm_context.const_struct [
+        int32(0),
+        int32(0),
+        int32(0),
+        sub_image_base(catchable_void_ptr),
+      ]
+
+      void_ptr_throwinfo
+    end
+  end
+
+  def external_constant(type, name)
+    @llvm_mod.globals[name]? || begin
+      c = @llvm_mod.globals.add(type, name)
+      c.global_constant = true
+      c
+    end
+  end
+
+  def sub_image_base(value)
+    image_base = external_constant(llvm_context.int8, "__ImageBase")
+
+    @builder.trunc(
+      @builder.sub(
+        @builder.ptr2int(value, llvm_context.int64),
+        @builder.ptr2int(image_base, llvm_context.int64)),
+      llvm_context.int32)
   end
 end

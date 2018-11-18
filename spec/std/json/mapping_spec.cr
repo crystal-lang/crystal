@@ -1,5 +1,7 @@
 require "spec"
 require "json"
+require "uuid"
+require "uuid/json"
 require "big/json"
 
 private class JSONPerson
@@ -30,6 +32,10 @@ end
 
 private class JSONWithBool
   JSON.mapping value: Bool
+end
+
+private class JSONWithUUID
+  JSON.mapping value: UUID
 end
 
 private class JSONWithBigDecimal
@@ -215,7 +221,11 @@ describe "JSON mapping" do
   end
 
   it "parses strict person with unknown attributes" do
-    ex = expect_raises JSON::ParseException, "Unknown json attribute: foo" do
+    error_message = <<-'MSG'
+      Unknown JSON attribute: foo
+        parsing StrictJSONPerson
+      MSG
+    ex = expect_raises JSON::MappingError, error_message do
       StrictJSONPerson.from_json <<-JSON
         {
           "name": "John",
@@ -228,10 +238,44 @@ describe "JSON mapping" do
   end
 
   it "raises if non-nilable attribute is nil" do
-    ex = expect_raises JSON::ParseException, "Missing json attribute: name" do
+    error_message = <<-'MSG'
+      Missing JSON attribute: name
+        parsing JSONPerson at 1:1
+      MSG
+    ex = expect_raises JSON::MappingError, error_message do
       JSONPerson.from_json(%({"age": 30}))
     end
     ex.location.should eq({1, 1})
+  end
+
+  it "raises if not an object" do
+    error_message = <<-'MSG'
+      Expected begin_object but was string at 1:1
+        parsing StrictJSONPerson at 0:0
+      MSG
+    ex = expect_raises JSON::MappingError, error_message do
+      StrictJSONPerson.from_json <<-JSON
+        "foo"
+        JSON
+    end
+    ex.location.should eq({1, 1})
+  end
+
+  it "raises if data type does not match" do
+    error_message = <<-'MSG'
+      Expected int but was string at 3:15
+        parsing StrictJSONPerson#age at 3:3
+      MSG
+    ex = expect_raises JSON::MappingError, error_message do
+      StrictJSONPerson.from_json <<-JSON
+        {
+          "name": "John",
+          "age": "foo",
+          "foo": "bar"
+        }
+        JSON
+    end
+    ex.location.should eq({3, 15})
   end
 
   it "doesn't emit null by default when doing to_json" do
@@ -249,10 +293,16 @@ describe "JSON mapping" do
     json.value.should be_false
   end
 
+  it "parses UUID" do
+    uuid = JSONWithUUID.from_json(%({"value": "ba714f86-cac6-42c7-8956-bcf5105e1b81"}))
+    uuid.should be_a(JSONWithUUID)
+    uuid.value.should eq(UUID.new("ba714f86-cac6-42c7-8956-bcf5105e1b81"))
+  end
+
   it "parses json with Time::Format converter" do
     json = JSONWithTime.from_json(%({"value": "2014-10-31 23:37:16"}))
     json.value.should be_a(Time)
-    json.value.to_s.should eq("2014-10-31 23:37:16")
+    json.value.to_s.should eq("2014-10-31 23:37:16 UTC")
     json.to_json.should eq(%({"value":"2014-10-31 23:37:16"}))
   end
 
@@ -395,7 +445,7 @@ describe "JSON mapping" do
     string = %({"value":1459859781})
     json = JSONWithTimeEpoch.from_json(string)
     json.value.should be_a(Time)
-    json.value.should eq(Time.epoch(1459859781))
+    json.value.should eq(Time.unix(1459859781))
     json.to_json.should eq(string)
   end
 
@@ -403,7 +453,7 @@ describe "JSON mapping" do
     string = %({"value":1459860483856})
     json = JSONWithTimeEpochMillis.from_json(string)
     json.value.should be_a(Time)
-    json.value.should eq(Time.epoch_ms(1459860483856))
+    json.value.should eq(Time.unix_ms(1459860483856))
     json.to_json.should eq(string)
   end
 
@@ -495,6 +545,14 @@ describe "JSON mapping" do
       json.bar?.should be_false
     end
 
+    it "defines query getter with class restriction" do
+      {% begin %}
+        {% methods = JSONWithQueryAttributes.methods %}
+        {{ methods.find(&.name.==("foo?")).return_type }}.should eq(Bool)
+        {{ methods.find(&.name.==("bar?")).return_type }}.should eq(Bool)
+      {% end %}
+    end
+
     it "defines non-query setter and presence methods" do
       json = JSONWithQueryAttributes.from_json(%({"foo": false}))
       json.bar_present?.should be_false
@@ -511,7 +569,11 @@ describe "JSON mapping" do
     end
 
     it "raises if non-nilable attribute is nil" do
-      ex = expect_raises JSON::ParseException, "Missing json attribute: foo" do
+      error_message = <<-'MSG'
+        Missing JSON attribute: foo
+          parsing JSONWithQueryAttributes at 1:1
+        MSG
+      ex = expect_raises JSON::MappingError, error_message do
         JSONWithQueryAttributes.from_json(%({"is_bar": true}))
       end
       ex.location.should eq({1, 1})

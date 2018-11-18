@@ -778,7 +778,7 @@ describe "Enumerable" do
       [1, 2, 3].skip_while { true }.should eq [] of Int32
     end
 
-    it "returns the full Array if the the first check is false" do
+    it "returns the full Array if the first check is false" do
       [5, 0, 1, 2, 3].skip_while { |x| x < 4 }.should eq [5, 0, 1, 2, 3]
     end
 

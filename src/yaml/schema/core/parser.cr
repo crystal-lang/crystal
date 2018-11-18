@@ -1,6 +1,6 @@
 # :nodoc:
 class YAML::Schema::Core::Parser < YAML::Parser
-  @anchors = {} of String => Type
+  @anchors = {} of String => Any
 
   def put_anchor(anchor, value)
     @anchors[anchor] = value
@@ -17,56 +17,70 @@ class YAML::Schema::Core::Parser < YAML::Parser
   end
 
   def new_document
-    [] of Type
+    Any.new([] of Any)
   end
 
   def cast_document(document)
-    document.first?
+    document.as_a.first? || Any.new(nil)
   end
 
   def new_sequence
-    [] of Type
+    Any.new([] of Any)
   end
 
   def new_mapping
-    {} of Type => Type
+    Any.new({} of Any => Any)
   end
 
   def new_scalar
-    Core.parse_scalar(@pull_parser)
+    Any.new(Core.parse_scalar(@pull_parser))
   end
 
-  def cast_value(value)
-    YAML::Any.new(value)
+  def add_to_documents(documents, document)
+    documents << document
+  end
+
+  def add_to_document(document, node)
+    document.as_a << node
+  end
+
+  def add_to_sequence(sequence, node)
+    sequence.as_a << node
+  end
+
+  def add_to_mapping(mapping, key, value)
+    mapping.as_h[key] = value
   end
 
   protected def parse_mapping
     mapping = anchor new_mapping
+    raw_mapping = mapping.as_h
 
     parse_mapping(mapping) do
       tag = @pull_parser.tag
       key = parse_node
+      raw_key = key.raw
 
       location = @pull_parser.location
       value = parse_node
 
-      if key == "<<" && tag != "tag:yaml.org,2002:str"
-        case value
+      if raw_key == "<<" && tag != "tag:yaml.org,2002:str"
+        case raw = value.raw
         when Hash
-          mapping.merge!(value)
+          mapping.as_h.merge!(raw)
         when Array
-          if value.all? &.is_a?(Hash)
-            value.each do |elem|
-              mapping.merge!(elem.as(Hash))
+          if raw.all? &.as_h?
+            raw.each do |elem|
+              raw_mapping.merge!(elem.as_h)
             end
           else
-            mapping[key] = value
+            raw_mapping[key] = value
           end
         else
-          mapping[key] = value
+          raw_mapping[key] = value
         end
       else
-        mapping[key] = value
+        raw_mapping[key] = value
       end
     end
 
@@ -80,7 +94,7 @@ class YAML::Schema::Core::Parser < YAML::Parser
 
     Core.process_scalar_tag(@pull_parser, tag) do |value|
       @pull_parser.read_next
-      yield value
+      yield Any.new(value)
     end
   end
 
@@ -103,25 +117,25 @@ class YAML::Schema::Core::Parser < YAML::Parser
   private def parse_pairs
     @pull_parser.expect_kind EventKind::SEQUENCE_START
 
-    pairs = [] of Type
+    pairs = [] of Any
 
     parse_sequence(pairs) do
       @pull_parser.expect_kind EventKind::MAPPING_START
       @pull_parser.read_next
 
-      pairs << {parse_node => parse_node} of Type => Type
+      pairs << Any.new({parse_node => parse_node} of Any => Any)
 
       @pull_parser.expect_kind EventKind::MAPPING_END
       @pull_parser.read_next
     end
 
-    pairs
+    Any.new(pairs)
   end
 
   private def parse_set
     @pull_parser.expect_kind EventKind::MAPPING_START
 
-    set = Set(Type).new
+    set = Set(Any).new
 
     parse_mapping(set) do
       set << parse_node
@@ -129,6 +143,6 @@ class YAML::Schema::Core::Parser < YAML::Parser
       parse_node # discard value
     end
 
-    set
+    Any.new(set)
   end
 end

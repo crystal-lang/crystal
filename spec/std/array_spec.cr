@@ -202,10 +202,6 @@ describe "Array" do
       [1, 2, 3][3]?.should be_nil
     end
 
-    it "same access by at" do
-      [1, 2, 3][1].should eq([1, 2, 3].at(1))
-    end
-
     it "doesn't exceed limits" do
       [1][0..3].should eq([1])
     end
@@ -1865,5 +1861,18 @@ describe "Array" do
     u = [9, [10, 11].each]
     a = [s, t, u, 12, 13]
     a.flatten.to_a.should eq([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13])
+  end
+
+  it "#skip" do
+    ary = [1, 2, 3]
+    ary.skip(0).should eq([1, 2, 3])
+    ary.skip(1).should eq([2, 3])
+    ary.skip(2).should eq([3])
+    ary.skip(3).should eq([] of Int32)
+    ary.skip(4).should eq([] of Int32)
+
+    expect_raises(ArgumentError, "Attempt to skip negative size") do
+      ary.skip(-1)
+    end
   end
 end

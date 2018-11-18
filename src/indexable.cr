@@ -23,34 +23,34 @@ module Indexable(T)
   # This method should only be directly invoked if you are absolutely
   # sure the index is in bounds, to avoid a bounds check for a small boost
   # of performance.
-  abstract def unsafe_at(index : Int)
+  abstract def unsafe_fetch(index : Int)
 
   # Returns the element at the given *index*, if in bounds,
-  # otherwise executes the given block and returns its value.
+  # otherwise executes the given block with the index and returns its value.
   #
   # ```
   # a = [:foo, :bar]
-  # a.at(0) { :baz } # => :foo
-  # a.at(2) { :baz } # => :baz
+  # a.fetch(0) { :default_value }    # => :foo
+  # a.fetch(2) { :default_value }    # => :default_value
+  # a.fetch(2) { |index| index * 3 } # => 6
   # ```
-  def at(index : Int)
+  def fetch(index : Int)
     index = check_index_out_of_bounds(index) do
-      return yield
+      return yield index
     end
-    unsafe_at(index)
+    unsafe_fetch(index)
   end
 
-  # Returns the element at the given *index*, if in bounds,
-  # otherwise raises `IndexError`.
+  # Returns the value at the index given by *index*, or when not found the value given by *default*.
   #
   # ```
   # a = [:foo, :bar]
-  # a.at(0) # => :foo
-  # a.at(2) # raises IndexError
+  # a.fetch(0, :default_value) # => :foo
+  # a.fetch(2, :default_value) # => :default_value
   # ```
   @[AlwaysInline]
-  def at(index : Int)
-    at(index) { raise IndexError.new }
+  def fetch(index, default)
+    fetch(index) { default }
   end
 
   # Returns the element at the given *index*.
@@ -70,7 +70,7 @@ module Indexable(T)
   # ```
   @[AlwaysInline]
   def [](index : Int)
-    at(index)
+    fetch(index) { raise IndexError.new }
   end
 
   # Returns the element at the given *index*.
@@ -90,7 +90,46 @@ module Indexable(T)
   # ```
   @[AlwaysInline]
   def []?(index : Int)
-    at(index) { nil }
+    fetch(index, nil)
+  end
+
+  # Traverses the depth of a structure and returns the value.
+  # Returns `nil` if not found.
+  #
+  # ```
+  # ary = [{1, 2, 3, {4, 5, 6}}]
+  # ary.dig?(0, 3, 2) # => 6
+  # ary.dig?(0, 3, 3) # => nil
+  # ```
+  def dig?(index : Int, *subindexes)
+    if (value = self[index]?) && value.responds_to?(:dig?)
+      value.dig?(*subindexes)
+    end
+  end
+
+  # :nodoc:
+  def dig?(index : Int)
+    self[index]?
+  end
+
+  # Traverses the depth of a structure and returns the value, otherwise
+  # raises `IndexError`.
+  #
+  # ```
+  # ary = [{1, 2, 3, {4, 5, 6}}]
+  # ary.dig(0, 3, 2) # => 6
+  # ary.dig(0, 3, 3) # raises IndexError
+  # ```
+  def dig(index : Int, *subindexes)
+    if (value = self[index]) && value.responds_to?(:dig)
+      return value.dig(*subindexes)
+    end
+    raise IndexError.new "Indexable value not diggable for index: #{index.inspect}"
+  end
+
+  # :nodoc:
+  def dig(index : Int)
+    self[index]
   end
 
   # By using binary search, returns the first element
@@ -109,7 +148,7 @@ module Indexable(T)
   # [2, 5, 7, 10].bsearch { |x| x > 10 } # => nil
   # ```
   def bsearch
-    bsearch_index { |value| yield value }.try { |index| unsafe_at(index) }
+    bsearch_index { |value| yield value }.try { |index| unsafe_fetch(index) }
   end
 
   # By using binary search, returns the index of the first element
@@ -128,7 +167,7 @@ module Indexable(T)
   # [2, 5, 7, 10].bsearch_index { |x, i| x > 10 } # => nil
   # ```
   def bsearch_index
-    (0...size).bsearch { |index| yield unsafe_at(index), index }
+    (0...size).bsearch { |index| yield unsafe_fetch(index), index }
   end
 
   # Calls the given block once for each element in `self`, passing that
@@ -146,7 +185,7 @@ module Indexable(T)
   # ```
   def each
     each_index do |i|
-      yield unsafe_at(i)
+      yield unsafe_fetch(i)
     end
   end
 
@@ -163,6 +202,51 @@ module Indexable(T)
   # changes, the returned values of the iterator change as well.
   def each
     ItemIterator(self, T).new(self)
+  end
+
+  # Calls the given block once for `count` number of elements in `self`
+  # starting from index `start`, passing each element as a parameter.
+  #
+  # Negative indices count backward from the end of the array. (-1 is the
+  # last element).
+  #
+  # Raises `IndexError` if the starting index is out of range.
+  # Raises `ArgumentError` if `count` is a negative number.
+  #
+  # ```
+  # array = ["a", "b", "c", "d", "e"]
+  # array.each(start: 1, count: 3) { |x| print x, " -- " }
+  # ```
+  #
+  # produces:
+  #
+  # ```text
+  # b -- c -- d --
+  # ```
+  def each(*, start : Int, count : Int)
+    each_index(start: start, count: count) do |i|
+      yield unsafe_fetch(i)
+    end
+  end
+
+  # Calls the given block once for all elements at indices within the given
+  # `range`, passing each element as a parameter.
+  #
+  # Raises `IndexError` if the starting index is out of range.
+  #
+  # ```
+  # array = ["a", "b", "c", "d", "e"]
+  # array.each(within: 1..3) { |x| print x, " -- " }
+  # ```
+  #
+  # produces:
+  #
+  # ```text
+  # b -- c -- d --
+  # ```
+  def each(*, within range : Range(Int, Int))
+    start, count = Indexable.range_to_index_and_count(range, size)
+    each(start: start, count: count) { |element| yield element }
   end
 
   # Calls the given block once for each index in `self`, passing that
@@ -201,6 +285,115 @@ module Indexable(T)
     IndexIterator.new(self)
   end
 
+  # Calls the given block once for `count` number of indices in `self`
+  # starting from index `start`, passing each index as a parameter.
+  #
+  # Negative indices count backward from the end of the array. (-1 is the
+  # last element).
+  #
+  # Raises `IndexError` if the starting index is out of range.
+  # Raises `ArgumentError` if `count` is a negative number.
+  #
+  # ```
+  # array = ["a", "b", "c", "d", "e"]
+  # array.each_index(start: -3, count: 2) { |x| print x, " -- " }
+  # ```
+  #
+  # produces:
+  #
+  # ```text
+  # 2 -- 3 --
+  # ```
+  def each_index(*, start : Int, count : Int)
+    raise ArgumentError.new "negative count: #{count}" if count < 0
+
+    start += size if start < 0
+    raise IndexError.new unless 0 <= start <= size
+
+    i = start
+    # `count` and size comparison must be done every iteration because
+    # `self` can mutate in the block.
+    while i < Math.min(start + count, size)
+      yield i
+      i += 1
+    end
+    self
+  end
+
+  # Optimized version of `Enumerable#join` that performs better when
+  # all of the elements in this indexable are strings: the total string
+  # bytesize to return can be computed before creating the final string,
+  # which performs better because there's no need to do reallocations.
+  def join(separator = "")
+    return "" if empty?
+
+    {% if T == String %}
+      join_strings(separator)
+    {% elsif String < T %}
+      if all?(&.is_a?(String))
+        join_strings(separator)
+      else
+        super(separator)
+      end
+    {% else %}
+      super(separator)
+    {% end %}
+  end
+
+  private def join_strings(separator)
+    separator = separator.to_s
+
+    # The total bytesize of the string to return is:
+    length =
+      ((self.size - 1) * separator.bytesize) + # the bytesize of all separators
+        self.sum(&.to_s.bytesize)              # the bytesize of all the elements
+
+    String.new(length) do |buffer|
+      # Also compute the UTF-8 size if we can
+      size = 0
+      size_known = true
+
+      each_with_index do |elem, i|
+        # elem is guaranteed to be a String, but the compiler doesn't know this
+        # if we enter via the all?(&.is_a?(String)) branch.
+        elem = elem.to_s
+
+        # Copy separator to buffer
+        if i != 0
+          buffer.copy_from(separator.to_unsafe, separator.bytesize)
+          buffer += separator.bytesize
+        end
+
+        # Copy element to buffer
+        buffer.copy_from(elem.to_unsafe, elem.bytesize)
+        buffer += elem.bytesize
+
+        # Check whether we'll know the final UTF-8 size
+        if elem.size_known?
+          size += elem.size
+        else
+          size_known = false
+        end
+      end
+
+      # Add size of all separators
+      size += (self.size - 1) * separator.size if size_known
+
+      {length, size_known ? size : 0}
+    end
+  end
+
+  # Returns an `Array` with all the elements in the collection.
+  #
+  # ```
+  # {1, 2, 3}.to_a # => [1, 2, 3]
+  # ```
+  def to_a
+    ary = Array(T).new(size)
+    each { |e| ary << e }
+    ary
+  end
+
   # Returns `true` if `self` is empty, `false` otherwise.
   #
   # ```
@@ -215,7 +408,7 @@ module Indexable(T)
   def equals?(other : Indexable)
     return false if size != other.size
     each_with_index do |item, i|
-      return false unless yield(item, other.unsafe_at(i))
+      return false unless yield(item, other.unsafe_fetch(i))
     end
     true
   end
@@ -258,7 +451,7 @@ module Indexable(T)
   # ([] of Int32).first { 4 } # => 4
   # ```
   def first
-    size == 0 ? yield : unsafe_at(0)
+    size == 0 ? yield : unsafe_fetch(0)
   end
 
   # Returns the first element of `self` if it's not empty, or `nil`.
@@ -302,7 +495,7 @@ module Indexable(T)
     return nil if offset < 0
 
     offset.upto(size - 1) do |i|
-      if yield unsafe_at(i)
+      if yield unsafe_fetch(i)
         return i
       end
     end
@@ -326,7 +519,7 @@ module Indexable(T)
   # ([] of Int32).last { 4 } # => 4
   # ```
   def last
-    size == 0 ? yield : unsafe_at(size - 1)
+    size == 0 ? yield : unsafe_fetch(size - 1)
   end
 
   # Returns the last element of `self` if it's not empty, or `nil`.
@@ -342,7 +535,7 @@ module Indexable(T)
   # Same as `#each`, but works in reverse.
   def reverse_each(&block) : Nil
     (size - 1).downto(0) do |i|
-      yield unsafe_at(i)
+      yield unsafe_fetch(i)
     end
   end
 
@@ -381,7 +574,7 @@ module Indexable(T)
     return nil if offset >= size
 
     offset.downto(0) do |i|
-      if yield unsafe_at(i)
+      if yield unsafe_fetch(i)
         return i
       end
     end
@@ -399,7 +592,7 @@ module Indexable(T)
   # ```
   def sample(random = Random::DEFAULT)
     raise IndexError.new if size == 0
-    unsafe_at(random.rand(size))
+    unsafe_fetch(random.rand(size))
   end
 
   # Returns a `Tuple` populated with the elements at the given indexes.
@@ -412,25 +605,85 @@ module Indexable(T)
     indexes.map { |index| self[index] }
   end
 
-  def zip(other : Indexable)
+  # Calls the given block for each index in `self`, passing in the elements
+  # `{self[i], other[i]}` for each index.
+  #
+  # Raises an `IndexError` if `other` is shorter than `self`.
+  #
+  # ```
+  # a = [1, 2, 3]
+  # b = ["a", "b", "c"]
+  #
+  # a.zip(b) { |x, y| puts "#{x} -- #{y}" }
+  # ```
+  #
+  # The above produces:
+  #
+  # ```text
+  # 1 --- a
+  # 2 --- b
+  # 3 --- c
+  # ```
+  def zip(other : Indexable(U), &block : T, U ->) forall U
     each_with_index do |elem, i|
       yield elem, other[i]
     end
   end
 
-  def zip(other : Indexable(U)) forall U
+  # Returns an `Array` of tuples populated with the *i*th indexed element from
+  # `self` followed by the *i*th indexed element from `other`.
+  #
+  # Raises an `IndexError` if `other` is shorter than `self`.
+  #
+  # ```
+  # a = [1, 2, 3]
+  # b = ["a", "b", "c"]
+  #
+  # a.zip(b) # => [{1, "a"}, {2, "b"}, {3, "c"}]
+  # ```
+  def zip(other : Indexable(U)) : Array({T, U}) forall U
     pairs = Array({T, U}).new(size)
     zip(other) { |x, y| pairs << {x, y} }
     pairs
   end
 
-  def zip?(other : Indexable)
+  # Calls the given block for each index in `self`, passing in the elements
+  # `{self[i], other[i]}` for each index.
+  #
+  # If `other` is shorter than `self`, missing values are filled up with `nil`.
+  #
+  # ```
+  # a = [1, 2, 3]
+  # b = ["a", "b"]
+  #
+  # a.zip?(b) { |x, y| puts "#{x} -- #{y}" }
+  # ```
+  #
+  # The above produces:
+  #
+  # ```text
+  # 1 --- a
+  # 2 --- b
+  # 3 ---
+  # ```
+  def zip?(other : Indexable(U), &block : T, U? ->) forall U
     each_with_index do |elem, i|
       yield elem, other[i]?
     end
   end
 
-  def zip?(other : Indexable(U)) forall U
+  # Returns an `Array` of tuples populated with the *i*th indexed element from
+  # `self` followed by the *i*th indexed element from `other`.
+  #
+  # If `other` is shorter than `self`, missing values are filled up with `nil`.
+  #
+  # ```
+  # a = [1, 2, 3]
+  # b = ["a", "b"]
+  #
+  # a.zip?(b) # => [{1, "a"}, {2, "b"}, {3, nil}]
+  # ```
+  def zip?(other : Indexable(U)) : Array({T, U?}) forall U
     pairs = Array({T, U?}).new(size)
     zip?(other) { |x, y| pairs << {x, y} }
     pairs

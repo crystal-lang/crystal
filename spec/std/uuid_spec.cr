@@ -9,6 +9,11 @@ describe "UUID" do
       subject.version.should eq UUID::Version::V4
     end
 
+    it "does inspect" do
+      subject = UUID.random
+      subject.inspect.should eq "UUID(#{subject})"
+    end
+
     it "works with variant" do
       subject = UUID.random(variant: UUID::Variant::NCS)
       subject.variant.should eq UUID::Variant::NCS
@@ -119,5 +124,23 @@ describe "UUID" do
     expect_raises(ArgumentError) { UUID.new "cda08c86-6413-474f-8822-a6646e0fb19G" }
     expect_raises(ArgumentError) { UUID.new "2b1bfW06368947e59ac07c3ffdaf514c" }
     expect_raises(ArgumentError) { UUID.new "xyz:uuid:1ed1ee2f-ef9a-4f9c-9615-ab14d8ef2892" }
+  end
+
+  describe "v4?" do
+    it "returns true if UUID is v4, false otherwise" do
+      uuid = UUID.random
+      uuid.v4?.should eq(true)
+      uuid = UUID.new("00000000-0000-0000-0000-000000000000", version: UUID::Version::V5)
+      uuid.v4?.should eq(false)
+    end
+  end
+
+  describe "v4!" do
+    it "returns true if UUID is v4, raises otherwise" do
+      uuid = UUID.random
+      uuid.v4!.should eq(true)
+      uuid = UUID.new("00000000-0000-0000-0000-000000000000", version: UUID::Version::V5)
+      expect_raises(UUID::Error) { uuid.v4! }
+    end
   end
 end

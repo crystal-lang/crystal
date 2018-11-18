@@ -39,6 +39,8 @@ class String::Builder < IO
   end
 
   def write(slice : Bytes)
+    return if slice.empty?
+
     count = slice.size
     new_bytesize = real_bytesize + count
     if new_bytesize > @capacity
@@ -82,6 +84,7 @@ class String::Builder < IO
         back(1)
       end
     end
+    self
   end
 
   # Moves the write pointer, and the resulting string bytesize,

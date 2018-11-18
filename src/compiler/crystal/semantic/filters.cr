@@ -68,7 +68,7 @@ module Crystal
     def to_s(io)
       io << "F("
       @type.to_s(io)
-      io << ")"
+      io << ')'
     end
   end
 
@@ -88,7 +88,7 @@ module Crystal
     end
 
     def to_s(io)
-      io << "(" << @filter1 << " && " << @filter2 << ")"
+      io << '(' << @filter1 << " && " << @filter2 << ')'
     end
   end
 
@@ -112,7 +112,7 @@ module Crystal
     end
 
     def to_s(io)
-      io << "(" << @filter1 << " || " << @filter2 << ")"
+      io << '(' << @filter1 << " || " << @filter2 << ')'
     end
   end
 
@@ -203,7 +203,7 @@ module Crystal
     end
 
     def to_s(io)
-      io << "!"
+      io << '!'
       @filter.to_s(io)
     end
   end
@@ -217,7 +217,7 @@ module Crystal
     end
 
     def to_s(io)
-      io << "responds_to?(" << @name << ")"
+      io << "responds_to?(" << @name << ')'
     end
   end
 

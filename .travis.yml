@@ -9,10 +9,13 @@ services:
 matrix:
   fast_finish: true
   include:
-    - env: ARCH=i386 ARCH_CMD=linux32 ARCH_LIBRARY_PATH=/opt/crystal/embedded/lib/
+    - env: ARCH=i386 ARCH_CMD=linux32
       os: linux
-    - env: ARCH=x86_64 ARCH_CMD=linux64 DEPLOY=true
+    - env: ARCH=x86_64 ARCH_CMD=linux64
       os: linux
+
+git:
+  depth: false
 
 before_install:
   - echo '{"ipv6":true, "fixed-cidr-v6":"2001:db8:1::/64"}' | sudo tee /etc/docker/daemon.json
@@ -20,18 +23,17 @@ before_install:
   - bin/ci prepare_system
 
 install:
-  - bin/ci prepare_build
+  - export CURRENT_TAG=$TRAVIS_TAG
+  - travis_retry bin/ci prepare_build
 
 script:
-  - bin/ci build
-
-after_success:
-  - bin/ci deploy
+  - travis_retry bin/ci build
 
 branches:
   only:
     - master
     - /\Arelease\/.+\z/
+    - /.*\bci\b.*/
 
 env:
   global:

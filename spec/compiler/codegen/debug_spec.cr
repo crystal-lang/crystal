@@ -128,4 +128,44 @@ describe "Code gen: debug" do
       A
       ), debug: Crystal::Debug::All)
   end
+
+  it "has debug info in closure inside if (#5593)" do
+    codegen(%(
+      require "prelude"
+
+      def foo
+        if true && true
+          yield 1
+        end
+      end
+
+      def bar(&block)
+        block
+      end
+
+      foo do |i|
+        bar do
+          i
+        end
+      end
+      ), debug: Crystal::Debug::All)
+  end
+
+  it "doesn't emit incorrect debug info for closured self" do
+    codegen(%(
+      def foo(&block : Int32 ->)
+        block.call(1)
+      end
+
+      class Foo
+        def bar
+          foo do
+            self
+          end
+        end
+      end
+
+      Foo.new.bar
+      ), debug: Crystal::Debug::All)
+  end
 end

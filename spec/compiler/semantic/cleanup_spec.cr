@@ -16,6 +16,14 @@ describe "cleanup" do
       ), "expression has no effect"
   end
 
+  it "strip tuple elements after unreachable element" do
+    assert_after_cleanup "{1, while true; end, 2}", "1\nwhile true\nend"
+  end
+
+  it "strip named-tuple elements after unreachable element" do
+    assert_after_cleanup "{foo: 1, bar: while true; end, baz: 2}", "1\nwhile true\nend"
+  end
+
   # it "errors comparison of unsigned integer with zero or negative literal" do
   #   error = "comparison of unsigned integer with zero or negative literal will always be false"
   #   assert_error "1_u32 < 0", error

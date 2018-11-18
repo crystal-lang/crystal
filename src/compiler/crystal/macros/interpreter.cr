@@ -51,7 +51,7 @@ module Crystal
         next if vars.has_key?(macro_arg.name)
 
         default_value = default_value.expand_node(call.location, call.end_location) if default_value.is_a?(MagicConstant)
-        vars[macro_arg.name] = default_value
+        vars[macro_arg.name] = default_value.clone
       end
 
       # The named arguments
@@ -77,7 +77,7 @@ module Crystal
                    @scope : Type, @path_lookup : Type, @location : Location?,
                    @vars = {} of String => ASTNode, @block : Block? = nil, @def : Def? = nil,
                    @in_macro = false)
-      @str = IO::Memory.new(512) # Can't be String::Builder because of `{{debug()}}
+      @str = IO::Memory.new(512) # Can't be String::Builder because of `{{debug}}`
       @last = Nop.new
     end
 
@@ -115,6 +115,18 @@ module Crystal
       @str << node.value
     end
 
+    def visit(node : MacroVerbatim)
+      exp = node.exp
+      if exp.is_a?(Expressions)
+        exp.expressions.each do |subexp|
+          subexp.to_s(@str)
+        end
+      else
+        exp.to_s(@str)
+      end
+      false
+    end
+
     def visit(node : Var)
       var = @vars[node.name]?
       if var
@@ -149,7 +161,7 @@ module Crystal
             @last.to_s(str)
           end
         end
-      end)
+      end).at(node)
       false
     end
 
@@ -349,6 +361,8 @@ module Crystal
 
         begin
           @last = receiver.interpret(node.name, args, node.block, self)
+        rescue ex : MacroRaiseException
+          raise ex
         rescue ex : Crystal::Exception
           node.raise ex.message, inner: ex
         rescue ex
@@ -374,7 +388,7 @@ module Crystal
           block_vars = {} of String => ASTNode
           node.exps.each_with_index do |exp, i|
             if block_arg = block.args[i]?
-              block_vars[block_arg.name] = exp.clone
+              block_vars[block_arg.name] = accept exp.clone
             end
           end
           @last = replace_block_vars block.body.clone, block_vars
@@ -386,6 +400,11 @@ module Crystal
     end
 
     def visit(node : Path)
+      @last = resolve(node)
+      false
+    end
+
+    def visit(node : Generic)
       @last = resolve(node)
       false
     end
@@ -442,14 +461,22 @@ module Crystal
         end
 
         TypeNode.new(matched_type)
-      when Self
-        target = @scope == @program.class_type ? @scope : @scope.instance_type
-        TypeNode.new(target)
       when ASTNode
         matched_type
       else
         node.raise "can't interpret #{node}"
       end
+    end
+
+    def resolve(node : Generic)
+      type = @path_lookup.lookup_type(node, self_type: @scope, free_vars: @free_vars)
+      TypeNode.new(type)
+    end
+
+    def resolve?(node : Generic)
+      resolve(node)
+    rescue Crystal::Exception
+      nil
     end
 
     def visit(node : Splat)

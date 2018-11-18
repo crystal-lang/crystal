@@ -1,5 +1,5 @@
 module Crystal
-  struct LinkAttribute
+  struct LinkAnnotation
     getter lib : String?
     getter ldflags : String?
     getter framework : String?
@@ -11,17 +11,12 @@ module Crystal
       @static
     end
 
-    def self.from(attr : ASTNode)
-      name = attr.name
-      args = attr.args
-      named_args = attr.named_args
-
-      if name != "Link"
-        attr.raise "illegal attribute for lib, valid attributes are: Link"
-      end
+    def self.from(ann : Annotation)
+      args = ann.args
+      named_args = ann.named_args
 
       if args.empty? && !named_args
-        attr.raise "missing link arguments: must at least specify a library name"
+        ann.raise "missing link arguments: must at least specify a library name"
       end
 
       lib_name = nil
@@ -45,7 +40,7 @@ module Crystal
           arg.raise "'framework' link argument must be a String" unless arg.is_a?(StringLiteral)
           lib_framework = arg.value
         else
-          attr.wrong_number_of "link arguments", args.size, "1..4"
+          ann.wrong_number_of "link arguments", args.size, "1..4"
         end
 
         count += 1
@@ -87,13 +82,13 @@ module Crystal
 
     private def lib_flags_windows
       String.build do |flags|
-        link_attributes.reverse_each do |attr|
-          if ldflags = attr.ldflags
-            flags << " " << ldflags
+        link_annotations.reverse_each do |ann|
+          if ldflags = ann.ldflags
+            flags << ' ' << ldflags
           end
 
-          if libname = attr.lib
-            flags << " " << libname << ".lib"
+          if libname = ann.lib
+            flags << ' ' << libname << ".lib"
           end
         end
       end
@@ -104,28 +99,28 @@ module Crystal
       has_pkg_config = nil
 
       String.build do |flags|
-        link_attributes.reverse_each do |attr|
-          if ldflags = attr.ldflags
-            flags << " " << ldflags
+        link_annotations.reverse_each do |ann|
+          if ldflags = ann.ldflags
+            flags << ' ' << ldflags
           end
 
-          if libname = attr.lib
+          if libname = ann.lib
             if has_pkg_config.nil?
               has_pkg_config = Process.run("which", {"pkg-config"}, output: Process::Redirect::Close).success?
             end
 
-            static = has_flag?("static") || attr.static?
+            static = has_flag?("static") || ann.static?
 
             if has_pkg_config && (libflags = pkg_config_flags(libname, static, library_path))
-              flags << " " << libflags
+              flags << ' ' << libflags
             elsif static && (static_lib = find_static_lib(libname, library_path))
-              flags << " " << static_lib
+              flags << ' ' << static_lib
             else
               flags << " -l" << libname
             end
           end
 
-          if framework = attr.framework
+          if framework = ann.framework
             flags << " -framework " << framework
           end
         end
@@ -138,10 +133,10 @@ module Crystal
       end
     end
 
-    def link_attributes
-      attrs = [] of LinkAttribute
-      add_link_attributes @types, attrs
-      attrs
+    def link_annotations
+      annotations = [] of LinkAnnotation
+      add_link_annotations @types, annotations
+      annotations
     end
 
     private def pkg_config_flags(libname, static, library_path)
@@ -157,7 +152,7 @@ module Crystal
               flags << cfg
             end
           end
-          flags.join " "
+          flags.join ' '
         else
           `pkg-config #{libname} --libs`.chomp
         end
@@ -172,15 +167,15 @@ module Crystal
       nil
     end
 
-    private def add_link_attributes(types, attrs)
+    private def add_link_annotations(types, annotations)
       types.try &.each_value do |type|
         next if type.is_a?(AliasType) || type.is_a?(TypeDefType)
 
-        if type.is_a?(LibType) && type.used? && (link_attrs = type.link_attributes)
-          attrs.concat link_attrs
+        if type.is_a?(LibType) && type.used? && (link_annotations = type.link_annotations)
+          annotations.concat link_annotations
         end
 
-        add_link_attributes type.types?, attrs
+        add_link_annotations type.types?, annotations
       end
     end
   end

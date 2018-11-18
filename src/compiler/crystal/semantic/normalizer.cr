@@ -4,20 +4,24 @@ require "../syntax/transformer"
 
 module Crystal
   class Program
-    def normalize(node, inside_exp = false)
-      node.transform Normalizer.new(self)
+    def normalize(node, inside_exp = false, current_def = nil)
+      normalizer = Normalizer.new(self)
+      normalizer.current_def = current_def
+      node.transform(normalizer)
     end
   end
 
   class Normalizer < Transformer
     getter program : Program
 
-    @dead_code : Bool
-    @current_def : Def?
+    # The current method where we are normalizing.
+    # This is used to expand argless `super` and `previous_def`
+    # to their version with arguments copied from the current method.
+    property current_def : Def?
+
+    @dead_code = false
 
     def initialize(@program)
-      @dead_code = false
-      @current_def = nil
     end
 
     def before_transform(node)
@@ -82,11 +86,11 @@ module Crystal
           right = Call.new(middle.clone, node.name, node.args).at(middle)
         else
           temp_var = program.new_temp_var
-          temp_assign = Assign.new(temp_var.clone, middle)
+          temp_assign = Assign.new(temp_var.clone, middle).at(middle)
           left = Call.new(obj.obj, obj.name, temp_assign).at(obj.obj)
           right = Call.new(temp_var.clone, node.name, node.args).at(node)
         end
-        node = And.new(left, right)
+        node = And.new(left, right).at(left)
         node = node.transform self
       else
         node = super
@@ -182,7 +186,7 @@ module Crystal
       While.new(not_exp, node.body).at(node)
     end
 
-    # Check if the right hand side is dead code
+    # Checks if the right hand side is dead code
     def transform(node : Assign)
       super
 
@@ -260,7 +264,7 @@ module Crystal
 
       # (1); (4)
       if assign
-        Expressions.new([assign, call]).at(node)
+        Expressions.new([assign, call] of ASTNode).at(node)
       else
         call
       end
@@ -374,6 +378,17 @@ module Crystal
         # a = (1)
         Assign.new(target.clone, call).at(node)
       end
+    end
+
+    def transform(node : StringInterpolation)
+      # If the interpolation has just one string literal inside it,
+      # return that instead of an interpolation
+      if node.expressions.size == 1
+        first = node.expressions.first
+        return first if first.is_a?(StringLiteral)
+      end
+
+      super
     end
   end
 end

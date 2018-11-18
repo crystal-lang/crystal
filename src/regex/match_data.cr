@@ -54,7 +54,7 @@ class Regex
       group_size + 1
     end
 
-    # Return the position of the first character of the *n*th match.
+    # Returns the position of the first character of the *n*th match.
     #
     # When *n* is `0` or not given, uses the match of the entire `Regex`.
     # Otherwise, uses the match of the *n*th capture group.
@@ -68,7 +68,7 @@ class Regex
       @string.byte_index_to_char_index byte_begin(n)
     end
 
-    # Return the position of the next character after the match.
+    # Returns the position of the next character after the match.
     #
     # When *n* is `0` or not given, uses the match of the entire `Regex`.
     # Otherwise, uses the match of the *n*th capture group.
@@ -82,7 +82,7 @@ class Regex
       @string.byte_index_to_char_index byte_end(n)
     end
 
-    # Return the position of the first byte of the *n*th match.
+    # Returns the position of the first byte of the *n*th match.
     #
     # When *n* is `0` or not given, uses the match of the entire `Regex`.
     # Otherwise, uses the match of the *n*th capture group.
@@ -98,7 +98,7 @@ class Regex
       @ovector[n * 2]
     end
 
-    # Return the position of the next byte after the match.
+    # Returns the position of the next byte after the match.
     #
     # When *n* is `0` or not given, uses the match of the entire `Regex`.
     # Otherwise, uses the match of the *n*th capture group.
@@ -162,7 +162,7 @@ class Regex
     # matched capture group.
     #
     # ```
-    # "Crystal".match(/(?<ok>Cr)|(?<ok>al)/).not_nil!["ok"]? # => "al"
+    # "Crystal".match(/(?<ok>Cr).*(?<ok>al)/).not_nil!["ok"]? # => "al"
     # ```
     def []?(group_name : String)
       max_start = -1
@@ -189,7 +189,7 @@ class Regex
     # matched capture group.
     #
     # ```
-    # "Crystal".match(/(?<ok>Cr)|(?<ok>al)/).not_nil!["ok"] # => "al"
+    # "Crystal".match(/(?<ok>Cr).*(?<ok>al)/).not_nil!["ok"] # => "al"
     # ```
     def [](group_name : String)
       match = self[group_name]?
@@ -332,21 +332,20 @@ class Regex
     def to_s(io : IO)
       name_table = @regex.name_table
 
-      io << "#<Regex::MatchData"
+      io << "Regex::MatchData("
       size.times do |i|
-        io << " "
-        io << name_table.fetch(i, i) << ":" if i > 0
+        io << ' ' << name_table.fetch(i, i) << ':' if i > 0
         self[i]?.inspect(io)
       end
-      io << ">"
+      io << ')'
     end
 
     def pretty_print(pp) : Nil
       name_table = @regex.name_table
 
-      pp.surround("#<Regex::MatchData", ">", left_break: nil, right_break: nil) do
+      pp.surround("Regex::MatchData(", ")", left_break: nil, right_break: nil) do
         size.times do |i|
-          pp.breakable
+          pp.breakable if i > 0
           pp.group do
             if i == 0
               self[i].pretty_print pp

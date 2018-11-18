@@ -11,7 +11,6 @@ module Crystal
   MALLOC_NAME        = "__crystal_malloc64"
   MALLOC_ATOMIC_NAME = "__crystal_malloc_atomic64"
   REALLOC_NAME       = "__crystal_realloc64"
-  PERSONALITY_NAME   = "__crystal_personality"
   GET_EXCEPTION_NAME = "__crystal_get_exception"
 
   class Program
@@ -62,7 +61,7 @@ module Crystal
 
     def codegen(node, single_module = false, debug = Debug::Default)
       visitor = CodeGenVisitor.new self, node, single_module: single_module, debug: debug
-      node.accept visitor
+      visitor.accept node
       visitor.process_finished_hooks
       visitor.finish
 
@@ -97,6 +96,7 @@ module Crystal
     getter llvm_typer : LLVMTyper
     getter alloca_block : LLVM::BasicBlock
     getter entry_block : LLVM::BasicBlock
+    getter personality_name : String
     property last : LLVM::Value
 
     class LLVMVar
@@ -129,6 +129,7 @@ module Crystal
     @argv : LLVM::Value
     @empty_md_list : LLVM::Value
     @rescue_block : LLVM::BasicBlock?
+    @catch_pad : LLVM::Value?
     @malloc_fun : LLVM::Function?
     @malloc_atomic_fun : LLVM::Function?
     @c_malloc_fun : LLVM::Function?
@@ -156,6 +157,15 @@ module Crystal
       ret_type = @llvm_typer.llvm_return_type(@main_ret_type)
       @main = @llvm_mod.functions.add(MAIN_NAME, [llvm_context.int32, llvm_context.void_pointer.pointer], ret_type)
 
+      if @program.has_flag? "windows"
+        @personality_name = "__CxxFrameHandler3"
+
+        personality_function = @llvm_mod.functions.add(@personality_name, [] of LLVM::Type, llvm_context.int32, true)
+        @main.personality_function = personality_function
+      else
+        @personality_name = "__crystal_personality"
+      end
+
       emit_main_def_debug_metadata(@main, "??") unless @debug.none?
 
       @context = Context.new @main, @program
@@ -179,9 +189,11 @@ module Crystal
       @in_lib = false
       @strings = {} of StringKey => LLVM::Value
       @symbols = {} of String => Int32
+      @symbols_by_index = [] of String
       @symbol_table_values = [] of LLVM::Value
       program.symbols.each_with_index do |sym, index|
         @symbols[sym] = index
+        @symbols_by_index << sym
         @symbol_table_values << build_string_constant(sym, sym)
       end
 
@@ -280,7 +292,7 @@ module Crystal
 
       def visit(node : FunDef)
         case node.name
-        when MALLOC_NAME, MALLOC_ATOMIC_NAME, REALLOC_NAME, RAISE_NAME, PERSONALITY_NAME, GET_EXCEPTION_NAME
+        when MALLOC_NAME, MALLOC_ATOMIC_NAME, REALLOC_NAME, RAISE_NAME, @codegen.personality_name, GET_EXCEPTION_NAME
           @codegen.accept node
         end
         false
@@ -342,7 +354,7 @@ module Crystal
       end
     end
 
-    def visit(node : Attribute)
+    def visit(node : Annotation)
       false
     end
 
@@ -381,7 +393,7 @@ module Crystal
 
           emit_vars_debug_info(vars) if @debug.variables?
         end
-        node.node.accept self
+        accept node.node
         @last = llvm_nil
       end
 
@@ -450,7 +462,7 @@ module Crystal
         type = node.type.as(TupleInstanceType)
         @last = allocate_tuple(type) do |tuple_type, i|
           exp = node.elements[i]
-          exp.accept self
+          accept exp
           {exp.type, @last}
         end
       end
@@ -462,7 +474,7 @@ module Crystal
         type = node.type.as(NamedTupleInstanceType)
         struct_type = alloca llvm_type(type)
         node.entries.each do |entry|
-          entry.value.accept self
+          accept entry.value
           index = type.name_index(entry.key).not_nil!
           assign aggregate_index(struct_type, index), type.entries[index].type, entry.value.type, @last
         end
@@ -490,7 +502,7 @@ module Crystal
                 const = node_exp.target_const.not_nil!
                 read_const_pointer(const)
               when ReadInstanceVar
-                node_exp.obj.accept self
+                accept node_exp.obj
                 instance_var_ptr (node_exp.obj.type), node_exp.name, @last
               when Call
                 # lib external var
@@ -637,7 +649,9 @@ module Crystal
     end
 
     def visit(node : ClassDef)
-      node.hook_expansions.try &.each &.accept self
+      node.hook_expansions.try &.each do |hook|
+        accept hook
+      end
       accept node.body
       @last = llvm_nil
       false
@@ -651,7 +665,7 @@ module Crystal
 
     def visit(node : LibDef)
       @in_lib = true
-      node.body.accept self
+      accept node.body
       @in_lib = false
       @last = llvm_nil
       false
@@ -665,7 +679,7 @@ module Crystal
     def visit(node : EnumDef)
       node.members.each do |member|
         if member.is_a?(Assign)
-          member.accept self
+          accept member
         end
       end
 
@@ -704,14 +718,18 @@ module Crystal
     end
 
     def visit(node : Include)
-      node.hook_expansions.try &.each &.accept self
+      node.hook_expansions.try &.each do |hook|
+        accept hook
+      end
 
       @last = llvm_nil
       false
     end
 
     def visit(node : Extend)
-      node.hook_expansions.try &.each &.accept self
+      node.hook_expansions.try &.each do |hook|
+        accept hook
+      end
 
       @last = llvm_nil
       false
@@ -719,8 +737,8 @@ module Crystal
 
     def visit(node : If)
       if node.truthy?
-        node.cond.accept self
-        node.then.accept self
+        accept node.cond
+        accept node.then
         if @needs_value && (node_type = node.type?) && (then_type = node.then.type?)
           @last = upcast(@last, node_type, then_type)
         end
@@ -728,8 +746,8 @@ module Crystal
       end
 
       if node.falsey?
-        node.cond.accept self
-        node.else.accept self
+        accept node.cond
+        accept node.else
         if @needs_value && (node_type = node.type?) && (else_type = node.else.type?)
           @last = upcast(@last, node_type, else_type)
         end
@@ -807,7 +825,9 @@ module Crystal
     end
 
     def visit(node : Not)
-      accept node.exp
+      request_value do
+        accept node.exp
+      end
       @last = codegen_cond node.exp.type.remove_indirection
       @last = not @last
       false
@@ -1306,7 +1326,9 @@ module Crystal
     end
 
     def visit(node : Def)
-      node.hook_expansions.try &.each &.accept self
+      node.hook_expansions.try &.each do |hook|
+        accept hook
+      end
 
       @last = llvm_nil
       false
@@ -1508,6 +1530,7 @@ module Crystal
       old_fun = context.fun
       old_ensure_exception_handlers = @ensure_exception_handlers
       old_rescue_block = @rescue_block
+      old_catch_pad = @catch_pad
       old_entry_block = @entry_block
       old_alloca_block = @alloca_block
       old_needs_value = @needs_value
@@ -1518,6 +1541,7 @@ module Crystal
 
       @ensure_exception_handlers = nil
       @rescue_block = nil
+      @catch_pad = nil
 
       block_value = yield
 
@@ -1529,6 +1553,7 @@ module Crystal
       @llvm_typer = old_llvm_typer
       @ensure_exception_handlers = old_ensure_exception_handlers
       @rescue_block = old_rescue_block
+      @catch_pad = old_catch_pad
       @entry_block = old_entry_block
       @alloca_block = old_alloca_block
       @needs_value = old_needs_value
@@ -1821,12 +1846,11 @@ module Crystal
         with_cloned_context do
           # Instance var initializers must run with "self"
           # properly set up to the type being allocated
-          context.type = real_type
+          context.type = real_type.metaclass
           context.vars = LLVMVars.new
-          context.vars["self"] = LLVMVar.new(type_ptr, real_type)
           alloca_vars init.meta_vars
 
-          init.value.accept self
+          accept init.value
 
           ivar_ptr = instance_var_ptr real_type, init.name, type_ptr
           assign ivar_ptr, ivar.type, init.value.type, @last

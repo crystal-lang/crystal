@@ -27,7 +27,7 @@ module ECR
           str << buffer_name
           str << " << "
           string.inspect(str)
-          str << "\n"
+          str << '\n'
         when :OUTPUT
           string = token.value
           line_number = token.line_number
@@ -37,12 +37,12 @@ module ECR
 
           supress_trailing_whitespace(token, supress_trailing)
 
-          str << "("
+          str << '('
           append_loc(str, filename, line_number, column_number)
           str << string
           str << ").to_s "
           str << buffer_name
-          str << "\n"
+          str << '\n'
         when :CONTROL
           string = token.value
           line_number = token.line_number
@@ -53,9 +53,9 @@ module ECR
           supress_trailing_whitespace(token, supress_trailing)
 
           append_loc(str, filename, line_number, column_number)
-          str << " " unless string.starts_with?(' ')
+          str << ' ' unless string.starts_with?(' ')
           str << string
-          str << "\n"
+          str << '\n'
         when :EOF
           break
         end
@@ -95,8 +95,8 @@ module ECR
     str << filename
     str << %(",)
     str << line_number
-    str << %(,)
+    str << ','
     str << column_number
-    str << %(>)
+    str << '>'
   end
 end

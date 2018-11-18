@@ -120,6 +120,26 @@ describe "Float" do
     it { -1.4.divmod(-0.3)[1].should be_close(-0.2, 0.00001) }
   end
 
+  describe "floor division //" do
+    it "preserves type of lhs" do
+      (7.0 // 2).should be_a(Float64)
+      (7.0 // 2i32).should be_a(Float64)
+      (7.0 // 2.0).should be_a(Float64)
+      (7.0_f32 // 2.0_f64).should be_a(Float32)
+      (7.0_f32 // 2.0_f32).should be_a(Float32)
+    end
+
+    it "applies floor" do
+      (7.0 // 2.0).should eq(3.0)
+      (-7.0 // 2.0).should eq(-4.0)
+
+      (6.0 // 2.0).should eq(3.0)
+      (-6.0 // 2.0).should eq(-3.0)
+
+      (30.3 // 3.9).should eq(7.0)
+    end
+  end
+
   describe "to_s" do
     it "does to_s for f64" do
       12.34.to_s.should eq("12.34")
@@ -258,5 +278,17 @@ describe "Float" do
   it "clones" do
     1.0.clone.should eq(1.0)
     1.0_f32.clone.should eq(1.0_f32)
+  end
+
+  it "constants have right binary value" do
+    Float32::MIN.unsafe_as(UInt32).should eq 0xff7fffff_u32
+    Float32::MAX.unsafe_as(UInt32).should eq 0x7f7fffff_u32
+    Float32::EPSILON.unsafe_as(UInt32).should eq 0x34000000_u32
+    Float32::MIN_POSITIVE.unsafe_as(UInt32).should eq 0x00800000_u32
+
+    Float64::MIN.unsafe_as(UInt64).should eq 0xffefffffffffffff_u64
+    Float64::MAX.unsafe_as(UInt64).should eq 0x7fefffffffffffff_u64
+    Float64::EPSILON.unsafe_as(UInt64).should eq 0x3cb0000000000000_u64
+    Float64::MIN_POSITIVE.unsafe_as(UInt64).should eq 0x0010000000000000_u64
   end
 end

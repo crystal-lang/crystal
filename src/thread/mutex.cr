@@ -5,27 +5,35 @@ class Thread
   # :nodoc:
   class Mutex
     def initialize
-      if LibC.pthread_mutex_init(out @mutex, nil) != 0
-        raise Errno.new("pthread_mutex_init")
-      end
+      attributes = uninitialized LibC::PthreadMutexattrT
+      LibC.pthread_mutexattr_init(pointerof(attributes))
+      LibC.pthread_mutexattr_settype(pointerof(attributes), LibC::PTHREAD_MUTEX_ERRORCHECK)
+
+      ret = LibC.pthread_mutex_init(out @mutex, pointerof(attributes))
+      raise Errno.new("pthread_mutex_init", ret) unless ret == 0
+
+      LibC.pthread_mutexattr_destroy(pointerof(attributes))
     end
 
     def lock
-      if LibC.pthread_mutex_lock(self) != 0
-        raise Errno.new("pthread_mutex_lock")
-      end
+      ret = LibC.pthread_mutex_lock(self)
+      raise Errno.new("pthread_mutex_lock", ret) unless ret == 0
     end
 
     def try_lock
-      if LibC.pthread_mutex_trylock(self) != 0
-        raise Errno.new("pthread_mutex_trylock")
+      case ret = LibC.pthread_mutex_trylock(self)
+      when 0
+        true
+      when Errno::EBUSY
+        false
+      else
+        raise Errno.new("pthread_mutex_trylock", ret)
       end
     end
 
     def unlock
-      if LibC.pthread_mutex_unlock(self) != 0
-        raise Errno.new("pthread_mutex_unlock")
-      end
+      ret = LibC.pthread_mutex_unlock(self)
+      raise Errno.new("pthread_mutex_unlock", ret) unless ret == 0
     end
 
     def synchronize
@@ -36,9 +44,8 @@ class Thread
     end
 
     def finalize
-      if LibC.pthread_mutex_destroy(self) != 0
-        raise Errno.new("pthread_mutex_destroy")
-      end
+      ret = LibC.pthread_mutex_destroy(self)
+      raise Errno.new("pthread_mutex_destroy", ret) unless ret == 0
     end
 
     def to_unsafe

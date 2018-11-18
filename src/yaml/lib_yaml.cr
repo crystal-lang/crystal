@@ -143,4 +143,6 @@ lib LibYAML
   fun yaml_emitter_emit(emitter : Emitter*, event : Event*) : Int
   fun yaml_emitter_delete(emitter : Emitter*)
   fun yaml_emitter_flush(emitter : Emitter*) : Int
+
+  fun yaml_get_version(major : LibC::Int*, minor : LibC::Int*, patch : LibC::Int*)
 end

@@ -40,17 +40,26 @@ end
 {% if flag?(:win32) %}
   require "callstack/lib_unwind"
 
+  lib LibC
+    fun _CxxThrowException(ex : Void*, throw_info : Void*) : NoReturn
+  end
+
+  @[Primitive(:throw_info)]
+  def throw_info : Void*
+  end
+
   # Raises the *exception*.
   #
   # This will set the exception's callstack if it hasn't been already.
   # Re-raising a previously catched exception won't replace the callstack.
   def raise(exception : Exception) : NoReturn
-    exception.inspect_with_backtrace(STDERR)
-    LibC.exit(1)
-  end
+    {% if flag?(:debug_raise) %}
+      STDERR.puts
+      STDERR.puts "Attempting to raise: "
+      exception.inspect_with_backtrace(STDERR)
+    {% end %}
 
-  fun __crystal_personality(version : Int32, actions : LibUnwind::Action, exception_class : UInt64, exception_object : LibUnwind::Exception*, context : Void*) : LibUnwind::ReasonCode
-    LibUnwind::ReasonCode::NO_REASON
+    LibC._CxxThrowException(pointerof(exception).as(Void*), throw_info)
   end
 
   # :nodoc:
@@ -192,19 +201,23 @@ end
     CallStack.print_backtrace
     LibC.exit(ret)
   end
-{% end %}
 
-# :nodoc:
-fun __crystal_get_exception(unwind_ex : LibUnwind::Exception*) : UInt64
-  unwind_ex.value.exception_object
-end
+  # :nodoc:
+  fun __crystal_get_exception(unwind_ex : LibUnwind::Exception*) : UInt64
+    unwind_ex.value.exception_object
+  end
 
-{% unless flag?(:win32) %}
   # Raises the *exception*.
   #
   # This will set the exception's callstack if it hasn't been already.
   # Re-raising a previously catched exception won't replace the callstack.
   def raise(exception : Exception) : NoReturn
+    {% if flag?(:debug_raise) %}
+      STDERR.puts
+      STDERR.puts "Attempting to raise: "
+      exception.inspect_with_backtrace(STDERR)
+    {% end %}
+
     exception.callstack ||= CallStack.new
     unwind_ex = Pointer(LibUnwind::Exception).malloc
     unwind_ex.value.exception_class = LibC::SizeT.zero

@@ -27,7 +27,7 @@ module Benchmark
         @items = [] of Entry
       end
 
-      # Add code to be benchmarked
+      # Adds code to be benchmarked
       def report(label = "", &action)
         item = Entry.new(label, action)
         @items << item

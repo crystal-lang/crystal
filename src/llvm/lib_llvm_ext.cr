@@ -20,13 +20,13 @@ lib LibLLVMExt
     scope_line : UInt, flags : LLVM::DIFlags, is_optimized : Bool, func : LibLLVM::ValueRef
   ) : Metadata
 
-  fun di_builder_create_file = LLVMDIBuilderCreateFile(builder : DIBuilder, file : Char*, dir : Char*) : Metadata
-  fun di_builder_create_compile_unit = LLVMDIBuilderCreateCompileUnit(builder : DIBuilder,
-                                                                      lang : UInt, file : Char*,
-                                                                      dir : Char*,
-                                                                      producer : Char*,
-                                                                      optimized : Int, flags : Char*,
-                                                                      runtime_version : UInt) : Metadata
+  fun di_builder_create_file = LLVMDIBuilderCreateFile2(builder : DIBuilder, file : Char*, dir : Char*) : Metadata
+  fun di_builder_create_compile_unit = LLVMDIBuilderCreateCompileUnit2(builder : DIBuilder,
+                                                                       lang : UInt, file : Char*,
+                                                                       dir : Char*,
+                                                                       producer : Char*,
+                                                                       optimized : Int, flags : Char*,
+                                                                       runtime_version : UInt) : Metadata
   fun di_builder_create_lexical_block = LLVMDIBuilderCreateLexicalBlock(builder : DIBuilder,
                                                                         scope : Metadata,
                                                                         file : Metadata,
@@ -99,26 +99,24 @@ lib LibLLVMExt
   fun build_cmpxchg = LLVMExtBuildCmpxchg(builder : LibLLVM::BuilderRef, pointer : LibLLVM::ValueRef, cmp : LibLLVM::ValueRef, new : LibLLVM::ValueRef, success_ordering : LLVM::AtomicOrdering, failure_ordering : LLVM::AtomicOrdering) : LibLLVM::ValueRef
   fun set_ordering = LLVMExtSetOrdering(value : LibLLVM::ValueRef, ordering : LLVM::AtomicOrdering)
 
-  {% if LibLLVM::IS_38 || LibLLVM::IS_39 %}
-    fun build_catch_pad = LLVMExtBuildCatchPad(builder : LibLLVM::BuilderRef,
-                                               parent_pad : LibLLVM::ValueRef,
-                                               arg_count : LibC::UInt,
-                                               args : LibLLVM::ValueRef*,
-                                               name : LibC::Char*) : LibLLVM::ValueRef
+  fun build_catch_pad = LLVMExtBuildCatchPad(builder : LibLLVM::BuilderRef,
+                                             parent_pad : LibLLVM::ValueRef,
+                                             arg_count : LibC::UInt,
+                                             args : LibLLVM::ValueRef*,
+                                             name : LibC::Char*) : LibLLVM::ValueRef
 
-    fun build_catch_ret = LLVMExtBuildCatchRet(builder : LibLLVM::BuilderRef,
-                                               pad : LibLLVM::ValueRef,
-                                               basic_block : LibLLVM::BasicBlockRef) : LibLLVM::ValueRef
+  fun build_catch_ret = LLVMExtBuildCatchRet(builder : LibLLVM::BuilderRef,
+                                             pad : LibLLVM::ValueRef,
+                                             basic_block : LibLLVM::BasicBlockRef) : LibLLVM::ValueRef
 
-    fun build_catch_switch = LLVMExtBuildCatchSwitch(builder : LibLLVM::BuilderRef,
-                                                     parent_pad : LibLLVM::ValueRef,
-                                                     basic_block : LibLLVM::BasicBlockRef,
-                                                     num_handlers : LibC::UInt,
-                                                     name : LibC::Char*) : LibLLVM::ValueRef
+  fun build_catch_switch = LLVMExtBuildCatchSwitch(builder : LibLLVM::BuilderRef,
+                                                   parent_pad : LibLLVM::ValueRef,
+                                                   basic_block : LibLLVM::BasicBlockRef,
+                                                   num_handlers : LibC::UInt,
+                                                   name : LibC::Char*) : LibLLVM::ValueRef
 
-    fun add_handler = LLVMExtAddHandler(catch_switch_ref : LibLLVM::ValueRef,
-                                        handler : LibLLVM::BasicBlockRef) : Void
-  {% end %}
+  fun add_handler = LLVMExtAddHandler(catch_switch_ref : LibLLVM::ValueRef,
+                                      handler : LibLLVM::BasicBlockRef) : Void
 
   fun build_operand_bundle_def = LLVMExtBuildOperandBundleDef(name : LibC::Char*,
                                                               input : LibLLVM::ValueRef*,

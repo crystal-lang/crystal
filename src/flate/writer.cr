@@ -25,9 +25,7 @@ class Flate::Writer < IO
     @closed = false
     ret = LibZ.deflateInit2(pointerof(@stream), level, LibZ::Z_DEFLATED, -LibZ::MAX_BITS, LibZ::DEF_MEM_LEVEL,
       strategy.value, LibZ.zlibVersion, sizeof(LibZ::ZStream))
-    if ret != LibZ::Error::OK
-      raise Flate::Error.new(ret, @stream)
-    end
+    raise Flate::Error.new(ret, @stream) unless ret.ok?
   end
 
   # Creates a new writer for the given *io*, yields it to the given block,
@@ -47,6 +45,8 @@ class Flate::Writer < IO
   # See `IO#write`.
   def write(slice : Bytes)
     check_open
+
+    return if slice.empty?
 
     @stream.avail_in = slice.size
     @stream.next_in = slice
@@ -68,7 +68,9 @@ class Flate::Writer < IO
     @stream.avail_in = 0
     @stream.next_in = Pointer(UInt8).null
     consume_output LibZ::Flush::FINISH
-    LibZ.deflateEnd(pointerof(@stream))
+
+    ret = LibZ.deflateEnd(pointerof(@stream))
+    raise Flate::Error.new(ret, @stream) unless ret.ok?
 
     @output.close if @sync_close
   end

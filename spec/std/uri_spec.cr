@@ -19,6 +19,7 @@ end
 describe "URI" do
   assert_uri("http://www.example.com", scheme: "http", host: "www.example.com")
   assert_uri("http://www.example.com:81", scheme: "http", host: "www.example.com", port: 81)
+  assert_uri("http://[::1]:81", scheme: "http", host: "[::1]", port: 81)
   assert_uri("http://www.example.com/foo", scheme: "http", host: "www.example.com", path: "/foo")
   assert_uri("http://www.example.com/foo?q=1", scheme: "http", host: "www.example.com", path: "/foo", query: "q=1")
   assert_uri("http://www.example.com?q=1", scheme: "http", host: "www.example.com", query: "q=1")
@@ -31,6 +32,12 @@ describe "URI" do
   assert_uri("/foo", path: "/foo")
   assert_uri("/foo?q=1", path: "/foo", query: "q=1")
   assert_uri("mailto:foo@example.org", scheme: "mailto", path: nil, opaque: "foo@example.org")
+
+  describe "hostname" do
+    it { URI.parse("http://www.example.com/foo").hostname.should eq("www.example.com") }
+    it { URI.parse("http://[::1]/foo").hostname.should eq("::1") }
+    it { URI.parse("/foo").hostname.should be_nil }
+  end
 
   describe "full_path" do
     it { URI.parse("http://www.example.com/foo").full_path.should eq("/foo") }
@@ -45,6 +52,19 @@ describe "URI" do
       uri.query = ""
       uri.full_path.should eq("/foo")
     end
+  end
+
+  describe "#absolute?" do
+    it { URI.parse("http://www.example.com/foo").absolute?.should be_true }
+    it { URI.parse("http://www.example.com").absolute?.should be_true }
+    it { URI.parse("http://127.0.0.1").absolute?.should be_true }
+    it { URI.parse("http://[::1]/").absolute?.should be_true }
+    it { URI.parse("/foo").absolute?.should be_false }
+    it { URI.parse("foo").absolute?.should be_false }
+  end
+
+  describe "#relative?" do
+    it { URI.parse("/foo").relative?.should be_true }
   end
 
   describe "normalize" do

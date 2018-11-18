@@ -35,7 +35,7 @@ describe HTTP::FormData::Builder do
       --fixed-boundary--
       MULTIPART
 
-    generated.should eq(expected.gsub("\n", "\r\n"))
+    generated.should eq(expected.gsub('\n', "\r\n"))
   end
 
   describe "#field" do
@@ -54,7 +54,7 @@ describe HTTP::FormData::Builder do
         --fixed-boundary--
         MULTIPART
 
-      generated.should eq(expected.gsub("\n", "\r\n"))
+      generated.should eq(expected.gsub('\n', "\r\n"))
     end
   end
 

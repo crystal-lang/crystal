@@ -27,7 +27,7 @@ describe "ECR" do
       %(__str__ << " "),
       %(__str__ << "<% \\"string\\" %>"),
     ]
-    program.should eq(pieces.join("\n") + "\n")
+    program.should eq(pieces.join('\n') + '\n')
   end
 
   it "does ECR.def_to_s" do
@@ -63,5 +63,9 @@ describe "ECR" do
     io = IO::Memory.new
     ECR.embed "#{__DIR__}/../data/test_template6.ecr", io
     io.to_s.should eq("string with -%")
+  end
+
+  it ".render" do
+    ECR.render("#{__DIR__}/../data/test_template2.ecr").should eq("123")
   end
 end

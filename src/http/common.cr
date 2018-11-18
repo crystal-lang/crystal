@@ -4,7 +4,8 @@
 {% end %}
 
 module HTTP
-  private DATE_PATTERNS = {"%a, %d %b %Y %H:%M:%S %z", "%d %b %Y %H:%M:%S %z", "%A, %d-%b-%y %H:%M:%S %z", "%a %b %e %H:%M:%S %Y"}
+  # :nodoc:
+  MAX_HEADER_SIZE = 16_384
 
   # :nodoc:
   enum BodyType
@@ -13,17 +14,20 @@ module HTTP
     Mandatory
   end
 
+  SUPPORTED_VERSIONS = {"HTTP/1.0", "HTTP/1.1"}
+
   # :nodoc:
   def self.parse_headers_and_body(io, body_type : BodyType = BodyType::OnDemand, decompress = true)
     headers = Headers.new
 
     headers_size = 0
-    while line = io.gets(16_384, chomp: true)
+    while line = io.gets(MAX_HEADER_SIZE, chomp: true)
       headers_size += line.bytesize
-      break if headers_size > 16_384
+      break if headers_size > MAX_HEADER_SIZE
 
       if line.empty?
         body = nil
+
         if body_type.prohibited?
           body = nil
         elsif content_length = content_length(headers)
@@ -35,6 +39,10 @@ module HTTP
           body = ChunkedContent.new(io)
         elsif body_type.mandatory?
           body = UnknownLengthContent.new(io)
+        end
+
+        if body.is_a?(Content) && expect_continue?(headers)
+          body.expects_continue = true
         end
 
         if decompress && body
@@ -191,6 +199,10 @@ module HTTP
     end
   end
 
+  def self.expect_continue?(headers)
+    headers["Expect"]?.try(&.downcase) == "100-continue"
+  end
+
   record ComputedContentTypeHeader,
     content_type : String?,
     charset : String?
@@ -211,6 +223,12 @@ module HTTP
           key = piece[0...eq_index].strip
           if key == "charset"
             value = piece[eq_index + 1..-1].strip
+
+            # For the case of a quoted charset like charset="utf-8"
+            if value.starts_with?('"') && value.ends_with?('"')
+              value = value[1...-1].strip
+            end
+
             return ComputedContentTypeHeader.new(content_type, value)
           end
         end
@@ -222,25 +240,33 @@ module HTTP
     ComputedContentTypeHeader.new(content_type.strip, nil)
   end
 
-  def self.parse_time(time_str : String) : Time?
-    DATE_PATTERNS.each do |pattern|
-      begin
-        return Time.parse(time_str, pattern, kind: Time::Kind::Utc)
-      rescue Time::Format::Error
-      end
-    end
-
-    nil
-  end
-
-  # Format a Time object as a String using the format specified by [RFC 1123](https://tools.ietf.org/html/rfc1123#page-55).
+  # Parse a time string using the formats specified by [RFC 2616](https://tools.ietf.org/html/rfc2616#section-3.3.1)
   #
   # ```
-  # HTTP.rfc1123_date(Time.new(2016, 2, 15)) # => "Sun, 14 Feb 2016 21:00:00 GMT"
+  # HTTP.parse_time("Sun, 14 Feb 2016 21:00:00 GMT")  # => "2016-02-14 21:00:00 UTC"
+  # HTTP.parse_time("Sunday, 14-Feb-16 21:00:00 GMT") # => "2016-02-14 21:00:00 UTC"
+  # HTTP.parse_time("Sun Feb 14 21:00:00 2016")       # => "2016-02-14 21:00:00 UTC"
   # ```
-  def self.rfc1123_date(time : Time) : String
-    # TODO: GMT should come from the Time classes instead
-    time.to_utc.to_s("%a, %d %b %Y %H:%M:%S GMT")
+  #
+  # Uses `Time::Format::HTTP_DATE` as parser.
+  def self.parse_time(time_str : String) : Time?
+    Time::Format::HTTP_DATE.parse(time_str)
+  rescue Time::Format::Error
+  end
+
+  # Format a `Time` object as a `String` using the format specified as `sane-cookie-date`
+  # by [RFC 6265](https://tools.ietf.org/html/rfc6265#section-4.1.1) which is
+  # according to [RFC 2616](https://tools.ietf.org/html/rfc2616#section-3.3.1) a
+  # [RFC 1123](https://tools.ietf.org/html/rfc1123#page-55) format with explicit
+  # timezone `GMT` (interpreted as `UTC`).
+  #
+  # ```
+  # HTTP.format_time(Time.utc(2016, 2, 15)) # => "Mon, 15 Feb 2016 00:00:00 GMT"
+  # ```
+  #
+  # Uses `Time::Format::HTTP_DATE` as formatter.
+  def self.format_time(time : Time) : String
+    Time::Format::HTTP_DATE.format(time)
   end
 
   # Dequotes an [RFC 2616](https://tools.ietf.org/html/rfc2616#page-17)
@@ -275,6 +301,7 @@ module HTTP
   # string = %q("foo\ bar")
   # io = IO::Memory.new
   # HTTP.quote_string(string, io)
+  # io.rewind
   # io.gets_to_end # => %q(\"foo\\\ bar\")
   # ```
   def self.quote_string(string, io)

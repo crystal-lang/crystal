@@ -14,10 +14,7 @@ class File::PReader < IO
     count = slice.size
     count = Math.min(count, @bytesize - @pos)
 
-    bytes_read = LibC.pread(@fd, slice.pointer(count).as(Void*), count, @offset + @pos)
-    if bytes_read == -1
-      raise Errno.new "Error reading file"
-    end
+    bytes_read = Crystal::System::FileDescriptor.pread(@fd, slice[0, count], @offset + @pos)
 
     @pos += bytes_read
 

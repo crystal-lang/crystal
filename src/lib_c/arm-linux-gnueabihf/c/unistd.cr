@@ -9,6 +9,7 @@ lib LibC
   SC_CLK_TCK          =  2
   SC_NPROCESSORS_ONLN = 58
 
+  fun chroot(path : Char*) : Int
   fun access(name : Char*, type : Int) : Int
   fun chdir(path : Char*) : Int
   fun chown(file : Char*, owner : UidT, group : GidT) : Int
@@ -16,8 +17,10 @@ lib LibC
   fun dup2(fd : Int, fd2 : Int) : Int
   fun _exit(status : Int) : NoReturn
   fun execvp(file : Char*, argv : Char**) : Int
+  fun fdatasync(fd : Int) : Int
   @[ReturnsTwice]
   fun fork : PidT
+  fun fsync(fd : Int) : Int
   fun ftruncate(fd : Int, length : OffT) : Int
   fun getcwd(buf : Char*, size : SizeT) : Char*
   fun gethostname(name : Char*, len : SizeT) : Int
@@ -25,6 +28,7 @@ lib LibC
   fun getpid : PidT
   fun getppid : PidT
   fun isatty(fd : Int) : Int
+  fun ttyname_r(fd : Int, buf : Char*, buffersize : SizeT) : Int
   fun lchown(file : Char*, owner : UidT, group : GidT) : Int
   fun link(from : Char*, to : Char*) : Int
   fun lockf(fd : Int, cmd : Int, len : OffT) : Int

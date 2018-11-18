@@ -76,7 +76,35 @@ module Crystal
       builder.inbounds_gep ptr, index0, index1, name
     end
 
-    delegate ptr2int, int2ptr, and, or, not, call, bit_cast,
+    def call(func, name : String = "")
+      call(func, [] of LLVM::Value, name)
+    end
+
+    def call(func, arg : LLVM::Value, name : String = "")
+      call(func, [arg], name)
+    end
+
+    def call(func, args : Array(LLVM::Value), name : String = "")
+      if catch_pad = @catch_pad
+        funclet = builder.build_operand_bundle_def("funclet", [catch_pad])
+      else
+        funclet = LLVM::OperandBundleDef.null
+      end
+
+      builder.call(func, args, bundle: funclet, name: name)
+    end
+
+    def invoke(func, args : Array(LLVM::Value), a_then, a_catch, name : String = "")
+      if catch_pad = @catch_pad
+        funclet = builder.build_operand_bundle_def("funclet", [catch_pad])
+      else
+        funclet = LLVM::OperandBundleDef.null
+      end
+
+      builder.invoke(func, args, a_then, a_catch, bundle: funclet, name: name)
+    end
+
+    delegate ptr2int, int2ptr, and, or, not, bit_cast,
       trunc, load, store, br, insert_block, position_at_end, unreachable,
       cond, phi, extract_value, to: builder
 

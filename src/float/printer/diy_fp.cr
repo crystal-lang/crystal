@@ -1,4 +1,5 @@
 # DiyFP is ported from the C++ "double-conversions" library.
+#
 # The following is their license:
 #   Copyright 2010 the V8 project authors. All rights reserved.
 #   Redistribution and use in source and binary forms, with or without
@@ -30,15 +31,18 @@
 require "./ieee"
 
 # This "Do It Yourself Floating Point" struct implements a floating-point number
-# with a `UIht64` significand and an `Int32` exponent. Normalized DiyFP numbers will
+# with a `UInt64` significand and an `Int32` exponent. Normalized `DiyFP` numbers will
 # have the most significant bit of the significand set.
 # Multiplication and Subtraction do not normalize their results.
-# DiyFP is not designed to contain special Floats (NaN and Infinity).
+#
+# NOTE: `DiyFP` is not designed to contain special Floats (*NaN* and *Infinity*).
 struct Float::Printer::DiyFP
   SIGNIFICAND_SIZE = 64
-  # Also known as the significand
+
+  # Also known as the significand.
   property frac : UInt64
-  # exponent
+
+  # Exponent.
   property exp : Int32
 
   def initialize(@frac, @exp)
@@ -52,26 +56,26 @@ struct Float::Printer::DiyFP
     new frac.to_u64, exp
   end
 
-  # Returns a new `DiyFP` caculated as self - *other*.
+  # Returns a new `DiyFP` caculated as `self - other`.
   #
-  # The exponents of both numbers must be the same and the frac of self must be
-  # greater than the other.
+  # The exponents of both numbers must be the same and the `frac` of `self`
+  # must be greater than the *other*.
   #
-  # This result is not normalized.
+  # NOTE: This result is not normalized.
   def -(other : DiyFP)
     self.class.new(frac - other.frac, exp)
   end
 
   MASK32 = 0xFFFFFFFF_u32
 
-  # Returns a new `DiyFP` caculated as self * *other*.
+  # Returns a new `DiyFP` caculated as `self * other`.
   #
   # Simply "emulates" a 128 bit multiplication.
   # However: the resulting number only contains 64 bits. The least
   # significant 64 bits are only used for rounding the most significant 64
   # bits.
   #
-  # This result is not normalized.
+  # NOTE: This result is not normalized.
   def *(other : DiyFP)
     a = frac >> 32
     b = frac & MASK32
@@ -119,7 +123,7 @@ struct Float::Printer::DiyFP
     new(frac, exp)
   end
 
-  # Normalize such that the most signficiant bit of frac is set
+  # Normalize such that the most signficiant bit of `frac` is set.
   def self.from_f_normalized(v : Float64 | Float32)
     pre_normalized = from_f(v)
     f = pre_normalized.frac

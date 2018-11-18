@@ -1054,4 +1054,26 @@ describe "Semantic: generic class" do
       ),
       "undefined constant "
   end
+
+  it "doesn't find unbound type parameter in main code inside generic type (#6168)" do
+    assert_error %(
+      class Foo(T)
+        Foo(T)
+      end
+      ),
+      "undefined constant T"
+  end
+
+  it "can use type var that resolves to number in restriction (#6502)" do
+    assert_type(%(
+      class Foo(N)
+        def foo : Foo(N)
+          self
+        end
+      end
+
+      f = Foo(1).new
+      f.foo
+      )) { generic_class "Foo", 1.int32 }
+  end
 end

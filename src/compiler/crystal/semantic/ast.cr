@@ -77,21 +77,20 @@ module Crystal
     def_equals_and_hash type
   end
 
-  # Fictitious node to represent a type restriction
-  #
-  # It is used for type restrection of method arguments.
-  class TypeRestriction < ASTNode
-    getter obj
-    getter to
+  # Fictitious node to represent an assignment with a type restriction,
+  # created to match the assignment of a method argument's default value.
+  class AssignWithRestriction < ASTNode
+    property assign
+    property restriction
 
-    def initialize(@obj : ASTNode, @to : ASTNode)
+    def initialize(@assign : Assign, @restriction : ASTNode)
     end
 
     def clone_without_location
-      TypeRestriction.new @obj.clone, @to.clone
+      AssignWithRestriction.new @assign.clone, @restriction.clone
     end
 
-    def_equals_and_hash obj, to
+    def_equals_and_hash assign, restriction
   end
 
   class Arg
@@ -124,20 +123,23 @@ module Crystal
     property? self_closured = false
     property? captured_block = false
 
-    # `true` if this def has the `@[NoInline]` attribute
+    # `true` if this def has the `@[NoInline]` annotation
     property? no_inline = false
 
-    # `true` if this def has the `@[AlwaysInline]` attribute
+    # `true` if this def has the `@[AlwaysInline]` annotation
     property? always_inline = false
 
-    # `true` if this def has the `@[ReturnsTwice]` attribute
+    # `true` if this def has the `@[ReturnsTwice]` annotation
     property? returns_twice = false
 
-    # `true` if this def has the `@[Naked]` attribute
+    # `true` if this def has the `@[Naked]` annotation
     property? naked = false
 
     # Is this a `new` method that was expanded from an initialize?
     property? new = false
+
+    # Annotations on this def
+    property annotations : Hash(AnnotationType, Annotation)?
 
     @macro_owner : Type?
 
@@ -168,6 +170,17 @@ module Crystal
       end
     end
 
+    # Adds an annotation with the given type and value
+    def add_annotation(annotation_type : AnnotationType, value : Annotation)
+      annotations = @annotations ||= {} of AnnotationType => Annotation
+      annotations[annotation_type] = value
+    end
+
+    # Returns the annotation with the given type, if any, or nil otherwise
+    def annotation(annotation_type) : Annotation?
+      @annotations.try &.[annotation_type]?
+    end
+
     # Returns the minimum and maximum number of arguments that must
     # be passed to this method.
     def min_max_args_sizes
@@ -195,6 +208,7 @@ module Crystal
       a_def.always_inline = always_inline?
       a_def.returns_twice = returns_twice?
       a_def.naked = naked?
+      a_def.new = new?
       a_def
     end
 
@@ -480,6 +494,9 @@ module Crystal
     # Is this variable "unsafe" (no need to check if it was initialized)?
     property? uninitialized = false
 
+    # Annotations of this instance var
+    property annotations : Hash(AnnotationType, Annotation)?
+
     def kind
       case name[0]
       when '@'
@@ -495,6 +512,17 @@ module Crystal
 
     def global?
       kind == :global
+    end
+
+    # Adds an annotation with the given type and value
+    def add_annotation(annotation_type : AnnotationType, value : Annotation)
+      annotations = @annotations ||= {} of AnnotationType => Annotation
+      annotations[annotation_type] = value
+    end
+
+    # Returns the annotation with the given type, if any, or nil otherwise
+    def annotation(annotation_type) : Annotation?
+      @annotations.try &.[annotation_type]?
     end
   end
 
@@ -569,7 +597,7 @@ module Crystal
   {% for name in %w(And Or
                    ArrayLiteral HashLiteral RegexLiteral RangeLiteral
                    Case StringInterpolation
-                   MacroExpression MacroIf MacroFor MultiAssign
+                   MacroExpression MacroIf MacroFor MacroVerbatim MultiAssign
                    SizeOf InstanceSizeOf Global Require Select) %}
     class {{name.id}}
       include ExpandableNode
@@ -651,7 +679,7 @@ module Crystal
   end
 
   class Asm
-    property ptrof : PointerOf?
+    property output_ptrofs : Array(PointerOf)?
   end
 
   # Fictitious node that means "all these nodes come from this file"
@@ -715,5 +743,41 @@ module Crystal
     end
 
     def_equals_and_hash value
+  end
+
+  # Ficticious node representing a variable in macros
+  class MetaMacroVar < ASTNode
+    property name : String
+    property default_value : ASTNode?
+
+    # The instance variable associated with this meta macro var
+    property! var : MetaTypeVar
+
+    def initialize(@name, @type)
+    end
+
+    def class_desc
+      "MetaVar"
+    end
+
+    def clone_without_location
+      self
+    end
+  end
+
+  class NumberLiteral
+    def can_be_autocast_to?(other_type)
+      case {self.type, other_type}
+      when {IntegerType, IntegerType}
+        min, max = other_type.range
+        min <= integer_value <= max
+      when {IntegerType, FloatType}
+        true
+      when {FloatType, FloatType}
+        true
+      else
+        false
+      end
+    end
   end
 end

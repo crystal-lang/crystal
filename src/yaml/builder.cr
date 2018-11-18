@@ -14,12 +14,22 @@
 #       yaml.scalar 1
 #       yaml.scalar 2
 #     end
+#     yaml.scalar "bar"
+#     yaml.mapping do
+#       yaml.scalar "baz"
+#       yaml.scalar "qux"
+#     end
 #   end
 # end
-# string # => "---\nfoo:\n- 1\n- 2\n"
+# string # => "---\nfoo:\n- 1\n- 2\nbar:\n  baz: qux\n"
 # ```
 class YAML::Builder
   @box : Void*
+
+  # By default the maximum nesting of sequences/amppings is 99. Nesting more
+  # than this will result in a YAML::Error. Changing the value of this property
+  # allows more/less nesting.
+  property max_nesting = 99
 
   # Creates a `YAML::Builder` that will write to the given `IO`.
   def initialize(@io : IO)
@@ -27,6 +37,7 @@ class YAML::Builder
     @emitter = Pointer(Void).malloc(LibYAML::EMITTER_SIZE).as(LibYAML::Emitter*)
     @event = LibYAML::Event.new
     @closed = false
+    @nesting = 0
     LibYAML.yaml_emitter_initialize(@emitter)
     LibYAML.yaml_emitter_set_output(@emitter, ->(data, buffer, size) {
       data_io = Box(IO).unbox(data)
@@ -85,11 +96,13 @@ class YAML::Builder
   def start_sequence(anchor : String? = nil, tag : String? = nil, style : YAML::SequenceStyle = YAML::SequenceStyle::ANY)
     implicit = tag ? 0 : 1
     emit sequence_start, get_anchor(anchor), string_to_unsafe(tag), implicit, style
+    increase_nesting
   end
 
   # Ends a sequence.
   def end_sequence
     emit sequence_end
+    decrease_nesting
   end
 
   # Starts a sequence, invokes the block, and the ends it.
@@ -102,11 +115,13 @@ class YAML::Builder
   def start_mapping(anchor : String? = nil, tag : String? = nil, style : YAML::MappingStyle = YAML::MappingStyle::ANY)
     implicit = tag ? 0 : 1
     emit mapping_start, get_anchor(anchor), string_to_unsafe(tag), implicit, style
+    increase_nesting
   end
 
   # Ends a mapping.
   def end_mapping
     emit mapping_end
+    decrease_nesting
   end
 
   # Starts a mapping, invokes the block, and then ends it.
@@ -154,6 +169,17 @@ class YAML::Builder
     if ret != 1
       raise YAML::Error.new("Error emitting #{event_name}")
     end
+  end
+
+  private def increase_nesting
+    @nesting += 1
+    if @nesting > @max_nesting
+      raise YAML::Error.new("Nesting of #{@nesting} is too deep")
+    end
+  end
+
+  private def decrease_nesting
+    @nesting -= 1
   end
 end
 

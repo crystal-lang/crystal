@@ -3,8 +3,7 @@ require "../../spec_helper"
 describe "Semantic: const" do
   it "types a constant" do
     input = parse("CONST = 1").as(Assign)
-    result = semantic input
-    mod = result.program
+    semantic input
     input.target.type?.should be_nil # Don't type value until needed
   end
 
@@ -14,6 +13,73 @@ describe "Semantic: const" do
 
   it "types a nested constant" do
     assert_type("class Foo; A = 1; end; Foo::A") { int32 }
+  end
+
+  it "types a constant using Path" do
+    assert_type(%(
+      Foo::Bar = 1
+
+      Foo::Bar
+      )) { int32 }
+  end
+
+  it "types a nested constant using Path" do
+    assert_type(%(
+      class Foo
+        Bar::Baz = 1
+      end
+
+      Foo::Bar::Baz
+      )) { int32 }
+  end
+
+  it "creates container module if not exist when using Path" do
+    assert_type(%(
+      Foo::Bar = 1
+      Foo
+    )) do
+      foo = types["Foo"]
+      foo.module?.should be_true
+      foo.metaclass
+    end
+  end
+
+  it "keeps type of container when using Path" do
+    assert_type(%(
+      class Foo
+      end
+
+      Foo::Const = 1
+      Foo
+    )) do
+      foo = types["Foo"]
+      foo.class?.should be_true
+      foo.metaclass
+    end
+
+    assert_type(%(
+      struct Foo
+      end
+
+      Foo::Const = 1
+      Foo
+    )) do
+      foo = types["Foo"]
+      foo.struct?.should be_true
+      foo.metaclass
+    end
+
+    assert_type(%(
+      module Foo
+      end
+
+      Foo::Const = 1
+      Foo
+    )) do
+      foo = types["Foo"]
+      foo.module?.should be_true
+      foo.metaclass
+    end
   end
 
   it "types a constant inside a def" do
@@ -293,5 +359,31 @@ describe "Semantic: const" do
       foo(1)
       ),
       "A is not a type, it's a constant"
+  end
+
+  it "errors if using return inside constant value (#5391)" do
+    assert_error %(
+      class Foo
+        A = begin
+          return if 1 == 2
+        end
+      end
+
+      Foo::A
+      ),
+      "can't return from constant"
+  end
+
+  it "errors if constant has NoReturn type (#6139)" do
+    assert_error %(
+      lib LibFoo
+        fun foo : NoReturn
+      end
+
+      FOO = LibFoo.foo
+
+      FOO
+      ),
+      "constant FOO has illegal type NoReturn"
   end
 end

@@ -28,7 +28,7 @@ class Crystal::Doc::Generator
     },
   }
 
-  def initialize(@program : Program, @included_dirs : Array(String), @output_dir : String)
+  def initialize(@program : Program, @included_dirs : Array(String), @output_dir : String, @canonical_base_url : String?)
     @base_dir = Dir.current.chomp
     @types = {} of Crystal::Type => Doc::Type
     @repo_name = ""
@@ -42,7 +42,7 @@ class Crystal::Doc::Generator
     types = collect_subtypes(@program)
 
     program_type = type(@program)
-    if program_type.class_methods.any? { |method| must_include? method }
+    if must_include_toplevel? program_type
       types.insert 0, program_type
     end
 
@@ -74,7 +74,7 @@ class Crystal::Doc::Generator
       body = ""
     end
 
-    File.write File.join(@output_dir, "index.html"), MainTemplate.new(body, types, repository_name)
+    File.write File.join(@output_dir, "index.html"), MainTemplate.new(body, types, repository_name, @canonical_base_url)
 
     main_index = Main.new(raw_body, Type.new(self, @program), repository_name)
     File.write File.join(@output_dir, "index.json"), main_index
@@ -97,7 +97,7 @@ class Crystal::Doc::Generator
         filename = File.join(dir, "#{type.name}.html")
       end
 
-      File.write filename, TypeTemplate.new(type, all_types)
+      File.write filename, TypeTemplate.new(type, all_types, @canonical_base_url)
 
       next if type.program?
 
@@ -137,7 +137,7 @@ class Crystal::Doc::Generator
     must_include? a_def.location
   end
 
-  def must_include?(a_macro : Macro)
+  def must_include?(a_macro : Doc::Macro)
     must_include? a_macro.macro
   end
 
@@ -145,6 +145,16 @@ class Crystal::Doc::Generator
     return false if nodoc?(a_macro)
 
     must_include? a_macro.location
+  end
+
+  def must_include?(constant : Constant)
+    must_include? constant.const
+  end
+
+  def must_include?(const : Crystal::Const)
+    return false if nodoc?(const)
+
+    const.locations.try &.any? { |location| must_include? location }
   end
 
   def must_include?(location : Crystal::Location)
@@ -158,12 +168,22 @@ class Crystal::Doc::Generator
     end
   end
 
-  def must_include?(nil : Nil)
+  def must_include?(a_nil : Nil)
     false
   end
 
+  def must_include_toplevel?(program_type : Type)
+    toplevel_items = [] of Method | Macro | Constant
+    toplevel_items.concat program_type.class_methods
+    toplevel_items.concat program_type.macros
+    toplevel_items.concat program_type.constants
+
+    toplevel_items.any? { |item| must_include? item }
+  end
+
   def nodoc?(str : String?)
-    str == ":nodoc:" || str == "nodoc"
+    return false unless str
+    str.starts_with?(":nodoc:") || str.starts_with?("nodoc")
   end
 
   def nodoc?(obj)
@@ -300,6 +320,10 @@ class Crystal::Doc::Generator
   end
 
   def compute_repository
+    # check whether inside git work-tree
+    `git rev-parse --is-inside-work-tree >/dev/null 2>&1`
+    return unless $?.success?
+
     remotes = `git remote -v`
     return unless $?.success?
 
@@ -356,7 +380,13 @@ class Crystal::Doc::Generator
     filename[@base_dir.size..-1]
   end
 
-  record RelativeLocation, filename : String, line_number : Int32, url : String? do
+  class RelativeLocation
+    property show_line_number
+    getter filename, line_number, url
+
+    def initialize(@filename : String, @line_number : Int32, @url : String?, @show_line_number : Bool)
+    end
+
     def to_json(builder : JSON::Builder)
       builder.object do
         builder.field "filename", filename
@@ -365,6 +395,7 @@ class Crystal::Doc::Generator
       end
     end
   end
+
   SRC_SEP = "src#{File::SEPARATOR}"
 
   def relative_locations(type)
@@ -382,7 +413,19 @@ class Crystal::Doc::Generator
       filename = filename[1..-1] if filename.starts_with? File::SEPARATOR
       filename = filename[4..-1] if filename.starts_with? SRC_SEP
 
-      locations << RelativeLocation.new(filename, location.line_number, url)
+      # Prevent identical link generation in the "Defined in:" section in the docs because of macros
+      next if locations.any? { |loc| loc.filename == filename && loc.line_number == location.line_number }
+
+      show_line_number = locations.any? do |location|
+        if location.filename == filename
+          location.show_line_number = true
+          true
+        else
+          false
+        end
+      end
+
+      locations << RelativeLocation.new(filename, location.line_number, url, show_line_number)
     end
     locations
   end

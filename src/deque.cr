@@ -148,7 +148,7 @@ class Deque(T)
     @buffer[index] = value
   end
 
-  def unsafe_at(index : Int)
+  def unsafe_fetch(index : Int)
     index += @start
     index -= @capacity if index >= @capacity
     @buffer[index]
@@ -201,7 +201,7 @@ class Deque(T)
     found
   end
 
-  # Delete the item that is present at the *index*. Items to the right
+  # Deletes the item that is present at the *index*. Items to the right
   # of this one will have their indices decremented.
   # Raises `IndexError` if trying to delete an element outside the deque's range.
   #
@@ -334,7 +334,7 @@ class Deque(T)
     executed = exec_recursive(:inspect) do
       io << "Deque{"
       join ", ", io, &.inspect(io)
-      io << "}"
+      io << '}'
     end
     io << "Deque{...}" unless executed
   end
@@ -481,15 +481,6 @@ class Deque(T)
   def swap(i, j)
     self[i], self[j] = self[j], self[i]
     self
-  end
-
-  # Returns an `Array` (shallow copy) that contains all the items of this deque.
-  def to_a
-    arr = Array(T).new(@size)
-    each do |x|
-      arr << x
-    end
-    arr
   end
 
   def to_s(io : IO)

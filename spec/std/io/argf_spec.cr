@@ -1,4 +1,4 @@
-require "spec"
+require "../spec_helper"
 
 describe IO::ARGF do
   it "reads from STDIN if ARGV isn't specified" do
@@ -12,8 +12,8 @@ describe IO::ARGF do
   end
 
   it "reads from ARGV if specified" do
-    path1 = "#{__DIR__}/../data/argf_test_file_1.txt"
-    path2 = "#{__DIR__}/../data/argf_test_file_2.txt"
+    path1 = datapath("argf_test_file_1.txt")
+    path2 = datapath("argf_test_file_2.txt")
     stdin = IO::Memory.new("")
     argv = [path1, path2]
 
@@ -60,8 +60,8 @@ describe IO::ARGF do
     end
 
     it "reads from ARGV if specified" do
-      path1 = "#{__DIR__}/../data/argf_test_file_1.txt"
-      path2 = "#{__DIR__}/../data/argf_test_file_2.txt"
+      path1 = datapath("argf_test_file_1.txt")
+      path2 = datapath("argf_test_file_2.txt")
       stdin = IO::Memory.new("")
       argv = [path1, path2]
 
@@ -94,8 +94,8 @@ describe IO::ARGF do
     end
 
     it "peeks from ARGV if specified" do
-      path1 = "#{__DIR__}/../data/argf_test_file_1.txt"
-      path2 = "#{__DIR__}/../data/argf_test_file_2.txt"
+      path1 = datapath("argf_test_file_1.txt")
+      path2 = datapath("argf_test_file_2.txt")
       stdin = IO::Memory.new("")
       argv = [path1, path2]
 

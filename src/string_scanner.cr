@@ -85,7 +85,7 @@ class StringScanner
   # s.scan(/\w+/)   # => "test"
   # s.scan(/\w+/)   # => nil
   # s.scan(/\s\w+/) # => " string"
-  # s.scan(/.*/)    # => nil
+  # s.scan(/.*/)    # => ""
   # ```
   def scan(pattern)
     match(pattern, advance: true, options: Regex::Options::ANCHORED)
@@ -271,7 +271,7 @@ class StringScanner
   def inspect(io : IO)
     io << "#<StringScanner "
     offset = offset()
-    io << offset << "/" << @str.size
+    io << offset << '/' << @str.size
     start = Math.min(Math.max(offset - 2, 0), Math.max(0, @str.size - 5))
     io << " \"" << @str[start, 5] << "\" >"
   end
