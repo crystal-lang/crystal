@@ -462,8 +462,6 @@ class String
     gen_to_ u64, 18446744073709551615_u64
   end
 
-  # ## to_i128/to_u128
-
   # Same as `#to_i` but returns an `Int128`.
   def to_i128(base : Int = 10, whitespace = true, underscore = false, prefix = false, strict = true) : Int128
     to_i128(base, whitespace, underscore, prefix, strict) { raise ArgumentError.new("Invalid Int128: #{self}") }
