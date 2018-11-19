@@ -1766,10 +1766,12 @@ module Crystal
           >, filename = __FILE__).to_string.should eq(File.read("#{__DIR__}/../data/build"))
       end
 
-      it "reads file (doesn't exists)" do
-        run(%q<
-          {{read_file("#{__DIR__}/../data/build_foo")}} ? 10 : 20
-          >, filename = __FILE__).to_i.should eq(20)
+      it "reads file (doesn't exist)" do
+        expect_raises(Errno, "No such file or directory") do
+          run(%q<
+            {{read_file("#{__DIR__}/../data/build_foo")}}
+            >, filename = __FILE__)
+        end
       end
     end
 
@@ -1780,9 +1782,29 @@ module Crystal
           >, filename = __FILE__).to_string.should eq(File.read("spec/compiler/data/build"))
       end
 
-      it "reads file (doesn't exists)" do
+      it "reads file (doesn't exist)" do
+        expect_raises(Errno, "No such file or directory") do
+          run(%q<
+          {{read_file("spec/compiler/data/build_foo")}}
+          >, filename = __FILE__)
+        end
+      end
+    end
+  end
+
+  describe "read_file?" do
+    context "with absolute path" do
+      it "reads file (doesn't exist)" do
         run(%q<
-          {{read_file("spec/compiler/data/build_foo")}} ? 10 : 20
+          {{read_file?("#{__DIR__}/../data/build_foo")}} ? 10 : 20
+          >, filename = __FILE__).to_i.should eq(20)
+      end
+    end
+
+    context "with relative path" do
+      it "reads file (doesn't exist)" do
+        run(%q<
+          {{read_file?("spec/compiler/data/build_foo")}} ? 10 : 20
           >, filename = __FILE__).to_i.should eq(20)
       end
     end
