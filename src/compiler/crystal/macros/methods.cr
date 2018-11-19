@@ -210,8 +210,8 @@ module Crystal
 
       begin
         @last = StringLiteral.new(File.read(filename))
-      rescue e
-        node.raise e.to_s unless nilable
+      rescue ex
+        node.raise ex.to_s unless nilable
         @last = NilLiteral.new
       end
     end
