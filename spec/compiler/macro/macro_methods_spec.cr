@@ -1767,7 +1767,7 @@ module Crystal
       end
 
       it "reads file (doesn't exist)" do
-        expect_raises(Errno, "No such file or directory") do
+        expect_raises(Crystal::TypeException, "No such file or directory") do
           run(%q<
             {{read_file("#{__DIR__}/../data/build_foo")}}
             >, filename = __FILE__)
@@ -1783,7 +1783,7 @@ module Crystal
       end
 
       it "reads file (doesn't exist)" do
-        expect_raises(Errno, "No such file or directory") do
+        expect_raises(Crystal::TypeException, "No such file or directory") do
           run(%q<
           {{read_file("spec/compiler/data/build_foo")}}
           >, filename = __FILE__)
