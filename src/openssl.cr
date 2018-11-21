@@ -67,14 +67,14 @@ module OpenSSL
   class Error < Exception
     getter! code : LibCrypto::ULong
 
-    def initialize(message = nil, fetched = false)
+    def initialize(message = nil, fetched = false, cause : Exception? = nil)
       @code ||= LibCrypto::ULong.new(0)
 
       if fetched
-        super(message)
+        super(message, cause: cause)
       else
         @code, error = fetch_error_details
-        super(message ? "#{message}: #{error}" : error)
+        super(message ? "#{message}: #{error}" : error, cause: cause)
       end
     end
 
@@ -110,7 +110,8 @@ module OpenSSL
             when 0
               message = "Unexpected EOF"
             when -1
-              raise Errno.new(func || "OpenSSL")
+              cause = Errno.new(func || "OpenSSL")
+              message = "I/O error"
             else
               message = "Unknown error"
             end
@@ -121,7 +122,7 @@ module OpenSSL
           message = @error.to_s
         end
 
-        super(func ? "#{func}: #{message}" : message, true)
+        super(func ? "#{func}: #{message}" : message, true, cause: cause)
       end
     end
   end
