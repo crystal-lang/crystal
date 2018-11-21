@@ -1107,12 +1107,12 @@ module Crystal
       if first_name == "Tuple" && @token.value != "Tuple"
         write_token :"{"
         found_comment = skip_space_or_newline
-        wrote_space_at_end = false
+        write_space_at_end = false
         node.type_vars.each_with_index do |type_var, i|
           # This is to prevent writing `{{` and `{%`
           if i == 0 && !found_comment && (@token.type == :"{" || @token.type == :"{{" || @token.type == :"{%" || @token.type == :"%" || @token.raw.starts_with?("%"))
             write " "
-            wrote_space_at_end = true
+            write_space_at_end = true
           end
           accept type_var
           skip_space_or_newline
@@ -1121,7 +1121,7 @@ module Crystal
             next_token_skip_space_or_newline
           end
           # Write space at end when write space for preventing writing `{{` and `{%` at first.
-          write " " if last?(i, node.type_vars) && wrote_space_at_end
+          write " " if last?(i, node.type_vars) && write_space_at_end
         end
         write_token :"}"
         return false
