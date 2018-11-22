@@ -134,7 +134,8 @@ class Crystal::CodeGenVisitor
     tmax, p1, p2 = codegen_binary_extend_int(t1, t2, p1, p2)
 
     case op
-    when "+", "&+"         then codegen_trunc_binary_op_result(t1, t2, builder.add(p1, p2))
+    when "+"               then codegen_binary_op_add(tmax, t1, t2, p1, p2)
+    when "&+"              then codegen_trunc_binary_op_result(t1, t2, builder.add(p1, p2))
     when "-", "&-"         then codegen_trunc_binary_op_result(t1, t2, builder.sub(p1, p2))
     when "*", "&*"         then codegen_trunc_binary_op_result(t1, t2, builder.mul(p1, p2))
     when "/", "unsafe_div" then codegen_trunc_binary_op_result(t1, t2, t1.signed? ? builder.sdiv(p1, p2) : builder.udiv(p1, p2))
@@ -171,6 +172,120 @@ class Crystal::CodeGenVisitor
     else
       result
     end
+  end
+
+  def codegen_binary_op_add(t : IntegerType, t1, t2, p1, p2)
+    # TODO remove on 0.28
+    return codegen_trunc_binary_op_result(t1, t2, builder.add(p1, p2)) unless @program.has_flag?("preview_overflow")
+
+    llvm_fun = case t.kind
+               when :i8
+                 binary_overflow_fun "llvm.sadd.with.overflow.i8", llvm_context.int8
+               when :i16
+                 binary_overflow_fun "llvm.sadd.with.overflow.i16", llvm_context.int16
+               when :i32
+                 binary_overflow_fun "llvm.sadd.with.overflow.i32", llvm_context.int32
+               when :i64
+                 binary_overflow_fun "llvm.sadd.with.overflow.i64", llvm_context.int64
+               when :i128
+                 binary_overflow_fun "llvm.sadd.with.overflow.i128", llvm_context.int128
+               when :u8
+                 binary_overflow_fun "llvm.uadd.with.overflow.i8", llvm_context.int8
+               when :u16
+                 binary_overflow_fun "llvm.uadd.with.overflow.i16", llvm_context.int16
+               when :u32
+                 binary_overflow_fun "llvm.uadd.with.overflow.i32", llvm_context.int32
+               when :u64
+                 binary_overflow_fun "llvm.uadd.with.overflow.i64", llvm_context.int64
+               when :u128
+                 binary_overflow_fun "llvm.uadd.with.overflow.i128", llvm_context.int128
+               else
+                 raise "unreachable"
+               end
+
+    codegen_binary_overflow_check(llvm_fun, t, t1, t2, p1, p2)
+  end
+
+  # Generates a call to llvm_fun(p1, p2).
+  # t1, t2 are the original types of p1, p2.
+  # t is the super type of t1 and t2 where the operation is performed.
+  # llvm_fun returns {res, o_bit} where the o_bit signals overflow.
+  # The generated code also performs a range check and truncation of res
+  # in order to fit in the original type t1 if needed.
+  #
+  # ```
+  # %res_with_overflow = call {T, i1} <llvm_fun>(T %p1, T %p2)
+  # %res = extractvalue {T, i1} %res, 0
+  # %o_bit = extractvalue {T, i1} %res, 1
+  # ;; if T != T1
+  # %out_of_range = %res < T1::MIN || %res > T1::MAX ;; compare T1.range and %res
+  # br i1 or(%o_bit, %out_of_range), label %overflow, label %normal
+  # ;; else
+  # br i1 %o_bit, label %overflow, label %normal
+  # ;; end
+  #
+  # overflow:
+  # ;; codegen: raise OverflowError.new with caller's location
+  #
+  # normal:
+  # ;; if T != T1
+  # ;;   %res' is returned
+  # %res' = trunc T %res to T1
+  # ;; else
+  # ;;   %res is returned
+  # ;; end
+  # ```
+  private def codegen_binary_overflow_check(llvm_fun, t : IntegerType, t1, t2, p1, p2)
+    res_with_overflow = builder.call(llvm_fun, [p1, p2])
+
+    res = extract_value res_with_overflow, 0
+    o_bit = extract_value res_with_overflow, 1
+
+    if t != t1
+      overflow = or(o_bit, codegen_out_of_range(t1, t, res))
+    else
+      overflow = o_bit
+    end
+
+    codegen_raise_overflow_cond overflow
+    codegen_trunc_binary_op_result(t1, t2, res)
+  end
+
+  private def codegen_out_of_range(target_type : IntegerType, arg_type : IntegerType, arg)
+    min_value, max_value = target_type.range
+    # arg < min_value || arg > max_value
+    or(
+      codegen_binary_op_lt(arg_type, target_type, arg, int(min_value, target_type)),
+      codegen_binary_op_gt(arg_type, target_type, arg, int(max_value, target_type))
+    )
+  end
+
+  private def codegen_raise_overflow
+    location = @call_location.not_nil!
+    set_current_debug_location(location) if @debug.line_numbers?
+    ex = Call.new(Path.global("OverflowError").at(location), "new").at(location)
+    call = Call.global("raise", ex).at(location)
+    visitor = MainVisitor.new(@program)
+    @program.visit_main call, visitor: visitor
+    accept call
+  end
+
+  private def codegen_raise_overflow_cond(overflow_condition)
+    op_overflow = new_block "overflow"
+    op_normal = new_block "normal"
+
+    cond overflow_condition, op_overflow, op_normal
+
+    position_at_end op_overflow
+    codegen_raise_overflow
+
+    position_at_end op_normal
+  end
+
+  private def binary_overflow_fun(fun_name, llvm_operand_type)
+    llvm_mod.functions[fun_name]? ||
+      llvm_mod.functions.add(fun_name, [llvm_operand_type, llvm_operand_type],
+        llvm_context.struct([llvm_operand_type, llvm_context.int1]))
   end
 
   # The below methods (lt, lte, gt, gte, eq, ne) perform

@@ -61,4 +61,32 @@ describe "Code gen: arithmetics primitives" do
       end
     {% end %}
   end
+
+  describe "+ addition" do
+    {% for type in SupportedInts %}
+      it "raises overflow for {{type}}" do
+        run(%(
+          require "prelude"
+          begin
+            {{type}}::MAX + {{type}}.new(1)
+            0
+          rescue OverflowError
+            1
+          end
+        ), flags: ["preview_overflow"]).to_i.should eq(1)
+      end
+
+      it "raises overflow for {{type}} + Int64" do
+        run(%(
+          require "prelude"
+          begin
+            {{type}}::MAX + 1_i64
+            0
+          rescue OverflowError
+            1
+          end
+        ), flags: ["preview_overflow"]).to_i.should eq(1)
+      end
+    {% end %}
+  end
 end
