@@ -274,8 +274,33 @@ struct Int
     k = self
     while exponent > 0
       result *= k if exponent & 0b1 != 0
-      k *= k
       exponent = exponent.unsafe_shr(1)
+      k *= k if exponent > 0
+    end
+    result
+  end
+
+  # Returns the value of raising `self` to the power of *exponent*.
+  #
+  # Raises `ArgumentError` if *exponent* is negative: if this is needed,
+  # either use a float base or a float exponent.
+  #
+  # ```
+  # 2 &** 3  # => 8
+  # 2 &** 0  # => 1
+  # 2 &** -1 # ArgumentError
+  # ```
+  def &**(exponent : Int) : self
+    if exponent < 0
+      raise ArgumentError.new "Cannot raise an integer to a negative integer power, use floats for that"
+    end
+
+    result = self.class.new(1)
+    k = self
+    while exponent > 0
+      result &*= k if exponent & 0b1 != 0
+      exponent = exponent.unsafe_shr(1)
+      k &*= k if exponent > 0
     end
     result
   end
