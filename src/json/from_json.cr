@@ -66,9 +66,9 @@ def Bool.new(pull : JSON::PullParser)
   pull.read_bool
 end
 
-{% for type in %w(Int8 Int16 Int32 Int64 UInt8 UInt16 UInt32 UInt64) %}
-  def {{type.id}}.new(pull : JSON::PullParser)
-    {{type.id}}.new(pull.read_int)
+{% for type in Int::Primitive.union_types %}
+  def {{type}}.new(pull : JSON::PullParser)
+    {{type}}.new(pull.read_int)
   end
 {% end %}
 
