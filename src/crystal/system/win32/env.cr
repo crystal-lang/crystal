@@ -74,4 +74,27 @@ module Crystal::System::Env
       LibC.FreeEnvironmentStringsW(orig_pointer)
     end
   end
+
+  # Expands environment variables in a string.
+  # Used by Registry.
+  def self.expand(string : String) : String
+    string.check_no_null_byte
+
+    String.from_utf16(expand(string.to_utf16))
+  end
+
+  # Expands environment variables in a string.
+  # Used by Registry.
+  def self.expand(string : Slice(UInt16) | Pointer(UInt16)) : Slice(UInt16)
+    Crystal::System.retry_wstr_buffer do |buffer, small_buf|
+      length = LibC.ExpandEnvironmentStringsW(string, buffer, buffer.size)
+      if 0 < length <= buffer.size
+        return buffer[0, length].clone
+      elsif small_buf && length > 0
+        next length
+      else
+        raise WinError.new("ExpandEnvironmentStringsW")
+      end
+    end
+  end
 end

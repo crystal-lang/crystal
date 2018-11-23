@@ -1,5 +1,6 @@
 require "c/winbase"
 require "winerror"
+require "registry"
 require "./zone_names"
 
 module Crystal::System::Time
@@ -21,7 +22,7 @@ module Crystal::System::Time
     filetime_to_seconds_and_nanoseconds(filetime)
   end
 
-  def self.filetime_to_seconds_and_nanoseconds(filetime) : {Int64, Int32}
+  def self.filetime_to_seconds_and_nanoseconds(filetime : LibC::FILETIME) : {Int64, Int32}
     since_epoch = (filetime.dwHighDateTime.to_u64 << 32) | filetime.dwLowDateTime.to_u64
 
     seconds = (since_epoch / FILETIME_TICKS_PER_SECOND).to_i64 + WINDOWS_EPOCH_IN_SECONDS
@@ -163,7 +164,22 @@ module Crystal::System::Time
   # Searches the registry for an English name of a time zone named *stdname* or *dstname*
   # and returns the English name.
   private def self.translate_zone_name(stdname, dstname)
-    # TODO: Needs implementation once there is access to the registry.
-    nil
+    Registry::LOCAL_MACHINE.open("SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Time Zones", :read) do |key|
+      key.each_key do |sub_name|
+        key.open(sub_name, :read) do |sub_key|
+          # TODO: Only use MUI string if available (desktop apps for Windows Vista, Windows Server 2008 and upwards)
+          if std = sub_key.get_mui?("MUI_Std")
+            dlt = sub_key.get_mui?("MUI_Dlt")
+          else
+            std = sub_key.get_string?("Std").try &.strip
+            dlt = sub_key.get_string?("Dlt").try &.strip
+          end
+
+          if std == stdname || dlt == dstname
+            return sub_name
+          end
+        end
+      end
+    end
   end
 end
