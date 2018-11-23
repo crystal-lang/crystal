@@ -28,10 +28,12 @@ struct BigInt < Int
   # ```
   # BigInt.new("123456789123456789123456789123456789") # => 123456789123456789123456789123456789
   # BigInt.new("1234567890ABCDEF", base: 16)           # => 1311768467294899695
+  # BigInt.new("1234_5678_90AB_CDEF", base: 16)        # => 1311768467294899695
   # ```
   def initialize(str : String, base = 10)
     # Strip leading '+' char to smooth out cases with strings like "+123"
     str = str.lchop('+')
+    str = str.delete('_')
     err = LibGMP.init_set_str(out @mpz, str, base)
     if err == -1
       raise ArgumentError.new("Invalid BigInt: #{str}")
