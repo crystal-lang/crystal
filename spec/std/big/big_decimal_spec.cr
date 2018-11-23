@@ -21,6 +21,9 @@ describe BigDecimal do
     BigDecimal.new("42.0123")
       .should eq(BigDecimal.new(BigInt.new(420123), 4))
 
+    BigDecimal.new("42_42_42_24.0123_456_789")
+      .should eq(BigDecimal.new(BigInt.new(424242240123456789), 10))
+
     BigDecimal.new("0.0")
       .should eq(BigDecimal.new(BigInt.new(0)))
 
