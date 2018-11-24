@@ -2216,6 +2216,24 @@ private def intepret_array_or_tuple_method(object, klass, method, args, block, i
     else
       object.wrong_number_of_arguments "#{klass}#unshift", args.size, 1
     end
+  when "shift"
+    object.interpret_one_arg_method(method, args) do |arg|
+      case arg
+      when Crystal::NumberLiteral
+        klass.new(object.elements.shift(arg.to_number.to_i))
+      else
+        arg.raise "argument to shift must be a number, not #{arg.class_desc}:\n\n#{arg}"
+      end
+    end
+  when "pop"
+    object.interpret_one_arg_method(method, args) do |arg|
+      case arg
+      when Crystal::NumberLiteral
+        klass.new(object.elements.pop(arg.to_number.to_i))
+      else
+        arg.raise "argument to pop must be a number, not #{arg.class_desc}:\n\n#{arg}"
+      end
+    end
   when "push", "<<"
     case args.size
     when 1

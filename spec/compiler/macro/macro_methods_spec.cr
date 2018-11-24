@@ -661,8 +661,48 @@ module Crystal
         assert_macro "", %({% x = [1]; x.unshift(2); %}{{x}}), [] of ASTNode, %([2, 1])
       end
 
+      it "executes shift without a parameter" do
+        expect_raises(Crystal::TypeException, "Error in line 1: wrong number of arguments for shift (given 0, expected 1)") do
+          assert_macro "", %({% x = [1,2,3].shift %}{{x}}), [] of ASTNode, %([1])
+        end
+      end
+
+      it "executes shift invalid parameter type" do
+        expect_raises(Crystal::TypeException, "Error in line 1: argument to shift must be a number, not StringLiteral") do
+          assert_macro "", %({% x = [1,2,3].shift("foo") %}{{x}}), [] of ASTNode, %([2,3])
+        end
+      end
+
+      it "executes shift with a parameter" do
+        assert_macro "", %({% x = [1,2,3].shift(2) %}{{x}}), [] of ASTNode, %([1, 2])
+      end
+
+      it "executes shift with a parameter larger than the array" do
+        assert_macro "", %({% x = [1,2,3].shift(4) %}{{x}}), [] of ASTNode, %([1, 2, 3])
+      end
+
       it "executes push" do
         assert_macro "", %({% x = [1]; x.push(2); x << 3 %}{{x}}), [] of ASTNode, %([1, 2, 3])
+      end
+
+      it "executes pop without a parameter" do
+        expect_raises(Crystal::TypeException, "Error in line 1: wrong number of arguments for pop (given 0, expected 1)") do
+          assert_macro "", %({% x = [1,2,3].pop %}{{x}}), [] of ASTNode, %([3])
+        end
+      end
+
+      it "executes pop invalid parameter type" do
+        expect_raises(Crystal::TypeException, "Error in line 1: argument to pop must be a number, not BoolLiteral") do
+          assert_macro "", %({% x = [1,2,3].pop(true) %}{{x}}), [] of ASTNode, %([2,3])
+        end
+      end
+
+      it "executes pop with a parameter" do
+        assert_macro "", %({% x = [1,2,3].pop(2) %}{{x}}), [] of ASTNode, %([2, 3])
+      end
+
+      it "executes pop with a parameter larger than the array" do
+        assert_macro "", %({% x = [1,2,3].pop(4) %}{{x}}), [] of ASTNode, %([1, 2, 3])
       end
 
       it "executes includes?" do
