@@ -485,6 +485,7 @@ describe Crystal::Formatter do
   assert_format "x  :   (A -> B)", "x : (A -> B)"
   assert_format "x  :   (A -> B)?", "x : (A -> B)?"
   assert_format "x  :   {A, B}", "x : {A, B}"
+  assert_format "x : { {A, B}, {C, D} }"
   assert_format "class Foo\n@x  : Int32\nend", "class Foo\n  @x : Int32\nend"
   assert_format "class Foo\n@x  :  Int32\nend", "class Foo\n  @x : Int32\nend"
   assert_format "class Foo\nx = 1\nend", "class Foo\n  x = 1\nend"
