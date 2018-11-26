@@ -22,6 +22,7 @@ describe "BigInt" do
 
   it "creates from string" do
     BigInt.new("12345678").to_s.should eq("12345678")
+    BigInt.new("123_456_78").to_s.should eq("12345678")
     BigInt.new("+12345678").to_s.should eq("12345678")
     BigInt.new("-12345678").to_s.should eq("-12345678")
   end

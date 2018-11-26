@@ -13,6 +13,7 @@ describe "BigFloat" do
       bigfloat_of_float_value.to_s.should eq(string_of_float_value)
       BigFloat.new("+#{string_of_integer_value}").to_s.should eq(string_of_integer_value)
       BigFloat.new("-#{string_of_integer_value}").to_s.should eq("-#{string_of_integer_value}")
+      BigFloat.new("123_456_789.123_456_789").to_s.should eq("123456789.123456789")
     end
 
     it "raises an ArgumentError unless string denotes valid float" do
