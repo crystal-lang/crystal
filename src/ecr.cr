@@ -36,7 +36,7 @@
 #   ECR.def_to_s "greeter.ecr"
 # end
 #
-# Greeter.new("John").to_s # => Greetings, John!
+# Greeter.new("John").to_s # => "Greetings, John!\n"
 # ```
 #
 # Using logical statements:
@@ -54,13 +54,14 @@
 # require "ecr"
 #
 # class Greeter
-#   def initialize(@name : String)
+#   def initialize(@name : String | Nil)
 #   end
 #
 #   ECR.def_to_s "greeter.ecr"
 # end
 #
-# Greeter.new(nil).to_s # => Greetings!
+# Greeter.new(nil).to_s # => "Greetings!\n"
+# Greeter.new("Jill").to_s # => "Greetings, Jill!\n"
 # ```
 #
 # Using loops:
@@ -85,10 +86,7 @@
 #   ECR.def_to_s "greeter.ecr"
 # end
 #
-# Greeter.new("John", "Zoe", "Ben").to_s
-# # => Hi, John!
-# # => Hi, Zoe!
-# # => Hi, Ben!
+# Greeter.new("John", "Zoe", "Ben").to_s # => "Hi, John!\nHi, Zoe!\nHi, Ben!\n"
 # ```
 #
 # Comments and Escapes:
@@ -102,8 +100,7 @@
 # ```
 # require "ecr"
 # foo = 2
-# string = ECR.render("demo.ecr")
-# string.inspect # => "A valid ECR tag looks like this: <%= foo %>\n"
+# ECR.render("demo.ecr") # => "A valid ECR tag looks like this: <%= foo %>\n"
 # ```
 #
 # Likewise, other Crystal logic can be implemented in ECR text.
