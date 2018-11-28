@@ -95,6 +95,7 @@ module MIME
     ".svg"  => "image/svg+xml",
     ".txt"  => "text/plain; charset=utf-8",
     ".xml"  => "text/xml; charset=utf-8",
+    ".wasm" => "application/wasm",
   }
 
   # Initializes the MIME database.
