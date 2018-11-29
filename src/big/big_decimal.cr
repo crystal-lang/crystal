@@ -264,6 +264,28 @@ struct BigDecimal < Number
     end
   end
 
+  # Executes the provided block, preserving the rounding mode; *mode* argument
+  # is set as `BigDecimal.rounding_mode` inside the block.
+  #
+  # ```
+  # BigDecimal.rounding_mode = :to_zero
+  #
+  # # *mode* argument is set as `BigDecimal.rounding_mode` inside the block
+  # BigDecimal.with_rounding_mode(:ties_away) do
+  #   BigDecimal.rounding_mode # => Number::RoundingMode::TIES_AWAY
+  # end
+  #
+  # BigDecimal.rounding_mode # => Number::RoundingMode::TO_ZERO
+  # ```
+  #
+  # NOTE: Uses `save_rounding_mode` internally.
+  def self.with_rounding_mode(mode : RoundingMode?)
+    save_rounding_mode do
+      @@rounding_mode = mode
+      yield
+    end
+  end
+
   # Rounds to the nearest integer (by default), returning the result as a `BigDecimal`.
   #
   # ```

@@ -271,6 +271,20 @@ describe BigDecimal do
     end
   end
 
+  describe ".with_rounding_mode" do
+    it "sets given mode as .rounding_mode within yielded block" do
+      begin
+        BigDecimal.rounding_mode = :to_zero
+        BigDecimal.with_rounding_mode(:ties_even) do
+          BigDecimal.rounding_mode.should eq(Number::RoundingMode::TIES_EVEN)
+        end
+        BigDecimal.rounding_mode.should eq(Number::RoundingMode::TO_ZERO)
+      ensure
+        BigDecimal.rounding_mode = nil
+      end
+    end
+  end
+
   it "performs arithmetic with other number types" do
     (1.to_big_d + 2).should eq(BigDecimal.new("3.0"))
     (2 + 1.to_big_d).should eq(BigDecimal.new("3.0"))
