@@ -76,9 +76,9 @@ struct Complex
     to_i64.to_i32
   end
 
-  # See `#to_i64`.
+  # See `#to_i32`.
   def to_i
-    to_i64
+    to_i32
   end
 
   # Writes this complex object to an *io*.
