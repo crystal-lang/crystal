@@ -287,7 +287,7 @@ describe "Semantic: tuples" do
         pos += {0, 0}
       end
       ),
-      "tuple too big"
+      "tuple size cannot be greater than 300"
   end
 
   it "doesn't unify tuple metaclasses (#5384)" do

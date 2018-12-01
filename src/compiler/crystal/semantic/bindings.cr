@@ -519,7 +519,7 @@ module Crystal
       end
 
       if types.size > 300
-        raise "tuple too big: Tuple(#{types[0...10].join(',')}, ...)"
+        raise "tuple size cannot be greater than 300 (size is #{types.size})"
       end
 
       self.type = tuple_type
@@ -543,7 +543,7 @@ module Crystal
       end
 
       if entries.size > 300
-        raise "named tuple too big: #{named_tuple_type}"
+        raise "named tuple size cannot be greater than 300 (size is #{entries.size})"
       end
 
       self.type = named_tuple_type
