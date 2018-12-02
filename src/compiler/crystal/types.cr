@@ -1306,6 +1306,17 @@ module Crystal
     def kind
       @bytes == 4 ? :f32 : :f64
     end
+
+    def range
+      case kind
+      when :f32
+        {Float32::MIN, Float32::MAX}
+      when :f64
+        {Float64::MIN, Float64::MAX}
+      else
+        raise "Bug: called 'range' for non-float literal"
+      end
+    end
   end
 
   class SymbolType < PrimitiveType
