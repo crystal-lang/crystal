@@ -23,7 +23,7 @@ describe Doc::Type do
     alias_type = program.types["Alias"]
     alias_type.add_location(Location.new("./foo.cr", 1, 1))
 
-    generator = Doc::Generator.new program, ["."], ".", nil
+    generator = Doc::Generator.new program, ["."], ".", "html", nil
 
     doc_alias_type = generator.type(alias_type)
     doc_alias_type.types.size.should eq(0)
