@@ -134,10 +134,6 @@ struct LLVM::Type
     end
   end
 
-  def const_int_of_string(string) : Value
-    Value.new LibLLVM.const_int_of_string(self, string, 10)
-  end
-
   def const_float(value : Float32) : Value
     Value.new LibLLVM.const_real(self, value)
   end
