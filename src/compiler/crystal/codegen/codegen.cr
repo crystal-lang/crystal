@@ -439,9 +439,9 @@ module Crystal
       when :u128
         @last = int128(node.value.to_u128)
       when :f32
-        @last = llvm_context.float.const_float(node.value)
+        @last = float32(node.value)
       when :f64
-        @last = llvm_context.double.const_double(node.value)
+        @last = float64(node.value)
       else
         node.raise "Bug: unhandled number kind: #{node.kind}"
       end

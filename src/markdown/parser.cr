@@ -305,7 +305,6 @@ class Markdown::Parser
     two_stars = false
     one_underscore = false
     two_underscores = false
-    one_backtick = false
     in_link = false
     last_is_space = true
 
@@ -358,15 +357,15 @@ class Markdown::Parser
           one_underscore = !one_underscore
         end
       when '`'
-        if one_backtick || has_closing?('`', 1, str, (pos + 1), bytesize)
+        if has_closing?('`', 1, str, (pos + 1), bytesize)
           @renderer.text line.byte_slice(cursor, pos - cursor)
           cursor = pos + 1
-          if one_backtick
-            @renderer.end_inline_code
-          else
-            @renderer.begin_inline_code
-          end
-          one_backtick = !one_backtick
+          @renderer.begin_inline_code
+          idx = (str + pos + 1).to_slice(bytesize).index('`'.ord).not_nil!
+          @renderer.text line.byte_slice(cursor, idx)
+          pos = pos + 1 + idx
+          @renderer.end_inline_code
+          cursor = pos + 1
         end
       when '!'
         if pos + 1 < bytesize && str[pos + 1] === '['

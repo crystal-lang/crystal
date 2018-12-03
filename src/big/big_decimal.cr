@@ -63,6 +63,8 @@ struct BigDecimal < Number
   def initialize(str : String)
     # Strip leading '+' char to smooth out cases with strings like "+123"
     str = str.lchop('+')
+    # Strip '_' to make it compatible with int literals like "1_000_000"
+    str = str.delete('_')
 
     raise InvalidBigDecimalException.new(str, "Zero size") if str.bytesize == 0
 

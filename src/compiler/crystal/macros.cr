@@ -67,8 +67,10 @@ module Crystal::Macros
   def raise(message) : NoReturn
   end
 
-  # Reads a file: if it exists, returns a `StringLiteral` with its contents;
-  # otherwise `nil` is returned.
+  # Reads a file and returns a `StringLiteral` with its contents.
+  #
+  # Gives a compile-time error if the file doesn't exist or if
+  # reading the file fails.
   #
   # To read a file relative to where the macro is defined, use:
   #
@@ -77,7 +79,12 @@ module Crystal::Macros
   # ```
   #
   # NOTE: Relative paths are resolved to the current working directory.
-  def read_file(filename) : StringLiteral | NilLiteral
+  def read_file(filename) : StringLiteral
+  end
+
+  # Same as `read_file`, except that `nil` is returned on any I/O failure
+  # instead of issuing a compile-time failure.
+  def read_file?(filename) : StringLiteral | NilLiteral
   end
 
   # Compiles and execute a Crystal program and returns its output
@@ -636,7 +643,7 @@ module Crystal::Macros
     end
 
     # Similar to `Array#unshift`.
-    def unshift : ArrayLiteral
+    def unshift(value : ASTNode) : ArrayLiteral
     end
 
     # Similar to `Array#push`.
