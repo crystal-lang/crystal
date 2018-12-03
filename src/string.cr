@@ -474,7 +474,7 @@ class String
 
   # Same as `#to_i` but returns an `Int128` or the block's value.
   def to_i128(base : Int = 10, whitespace = true, underscore = false, prefix = false, strict = true, &block)
-    gen_to_ i128, ((1 << 127) - 1).to_u128, (1 << 127).to_u128
+    gen_to_128 i128, ((1 << 127) - 1).to_u128, (1 << 127).to_u128
   end
 
   # Same as `#to_i` but returns an `UInt128`.
@@ -489,7 +489,7 @@ class String
 
   # Same as `#to_i` but returns an `UInt128` or the block's value.
   def to_u128(base : Int = 10, whitespace = true, underscore = false, prefix = false, strict = true, &block)
-    gen_to_ u128, ((1 << 127) - 1).to_u128
+    gen_to_128 u128, ((1 << 127) - 1).to_u128
   end
 
   # :nodoc:
@@ -515,12 +515,139 @@ class String
   end
 
   # :nodoc:
+  record ToU64Info,
+    value : UInt64,
+    negative : Bool,
+    invalid : Bool
+
+  private macro gen_to_(method, max_positive = nil, max_negative = nil)
+    info = to_u64_info(base, whitespace, underscore, prefix, strict)
+    return yield if info.invalid
+
+    if info.negative
+      {% if max_negative %}
+        return yield if info.value > {{max_negative}}
+        -info.value.to_{{method}}
+      {% else %}
+        return yield
+      {% end %}
+    else
+      {% if max_positive %}
+        return yield if info.value > {{max_positive}}
+      {% end %}
+      info.value.to_{{method}}
+    end
+  end
+
+  private def to_u64_info(base, whitespace, underscore, prefix, strict)
+    raise ArgumentError.new("Invalid base #{base}") unless 2 <= base <= 36 || base == 62
+
+    ptr = to_unsafe
+
+    # Skip leading whitespace
+    if whitespace
+      while ptr.value.unsafe_chr.ascii_whitespace?
+        ptr += 1
+      end
+    end
+
+    negative = false
+    found_digit = false
+    mul_overflow = ~0_u64 / base
+
+    # Check + and -
+    case ptr.value.unsafe_chr
+    when '+'
+      ptr += 1
+    when '-'
+      negative = true
+      ptr += 1
+    end
+
+    # Check leading zero
+    if ptr.value.unsafe_chr == '0'
+      ptr += 1
+
+      if prefix
+        case ptr.value.unsafe_chr
+        when 'b'
+          base = 2
+          ptr += 1
+        when 'x'
+          base = 16
+          ptr += 1
+        else
+          base = 8
+        end
+        found_digit = false
+      else
+        found_digit = true
+      end
+    end
+
+    value = 0_u64
+    last_is_underscore = true
+    invalid = false
+
+    digits = (base == 62 ? CHAR_TO_DIGIT62 : CHAR_TO_DIGIT).to_unsafe
+    while ptr.value != 0
+      if ptr.value.unsafe_chr == '_' && underscore
+        break if last_is_underscore
+        last_is_underscore = true
+        ptr += 1
+        next
+      end
+
+      last_is_underscore = false
+      digit = digits[ptr.value]
+      if digit == -1 || digit >= base
+        break
+      end
+
+      if value > mul_overflow
+        invalid = true
+        break
+      end
+
+      value *= base
+
+      old = value
+      value += digit
+      if value < old
+        invalid = true
+        break
+      end
+
+      found_digit = true
+      ptr += 1
+    end
+
+    if found_digit
+      unless ptr.value == 0
+        if whitespace
+          while ptr.value.unsafe_chr.ascii_whitespace?
+            ptr += 1
+          end
+        end
+
+        if strict && ptr.value != 0
+          invalid = true
+        end
+      end
+    else
+      invalid = true
+    end
+
+    ToU64Info.new value, negative, invalid
+  end
+
+  # :nodoc:
   record ToU128Info,
     value : UInt128,
     negative : Bool,
     invalid : Bool
 
-  private macro gen_to_(method, max_positive = nil, max_negative = nil)
+  private macro gen_to_128(method, max_positive = nil, max_negative = nil)
     info = to_u128_info(base, whitespace, underscore, prefix, strict)
     return yield if info.invalid
 
