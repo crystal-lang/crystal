@@ -1298,9 +1298,8 @@ module Enumerable(T)
   # ```
   # (1..3).to_h { |i| {i, i ** 2} } # => {1 => 1, 2 => 4, 3 => 9}
   # ```
-  def to_h(&block : T -> U) forall U
-    first_pair = yield first
-    each_with_object(Hash(typeof(first_pair[0]), typeof(first_pair[1])).new) do |item, hash|
+  def to_h(&block : T -> Tuple(K, V)) forall K, V
+    each_with_object({} of K => V) do |item, hash|
       item_pair = yield item
       hash[item_pair[0]] = item_pair[1]
     end
