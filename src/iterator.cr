@@ -1290,4 +1290,91 @@ module Iterator(T)
       self
     end
   end
+
+  # Returns an iterator for each chunked elements where the ends
+  # of chunks are defined by the block, when the block's value
+  # is _truthy_. Thus, the enumerable is sliced just **after** each
+  # time the block returns a _truthy_ value.
+  #
+  # For example, to get chunks that end at each uppercase letter:
+  #
+  # ```
+  # ary = ['a', 'b', 'C', 'd', 'E', 'F', 'g', 'h']
+  # iter = ary.slice_after(&.uppercase?)
+  # iter.next # => ['a', 'b', 'C']
+  # iter.next # => ['d', 'E']
+  # iter.next # => ['F']
+  # iter.next # => ['g', 'h']
+  # iter.next # => Iterator::Stop
+  # ```
+  #
+  # By default, a new array is created and yielded for each slice when invoking `next`.
+  # * If *reuse* is `false`, the method will create a new array for each chunk
+  # * If *reuse* is `true`, the method will create a new array and reuse it.
+  # * If *reuse* is an `Array`, that array will be reused
+  #
+  # This can be used to prevent many memory allocations when each slice of
+  # interest is to be used in a read-only fashion.
+  def slice_after(reuse : Bool | Array(T) = false, &block : T -> B) forall B
+    SliceAfter(typeof(self), T, B).new(self, block, reuse)
+  end
+
+  # :nodoc:
+  class SliceAfter(I, T, B)
+    include Iterator(Array(T))
+
+    def initialize(@iterator : I, @block : T -> B, reuse)
+      @end = false
+      @clear_on_next = false
+
+      if reuse
+        if reuse.is_a?(Array)
+          @values = reuse
+        else
+          @values = [] of T
+        end
+        @reuse = true
+      else
+        @values = [] of T
+        @reuse = false
+      end
+    end
+
+    def next
+      return stop if @end
+
+      if @clear_on_next
+        @values.clear
+        @clear_on_next = false
+      end
+
+      while true
+        value = @iterator.next
+
+        if value.is_a?(Stop)
+          @end = true
+          if @values.empty?
+            return stop
+          else
+            return @reuse ? @values : @values.dup
+          end
+        end
+
+        @values << value
+
+        if @block.call(value)
+          @clear_on_next = true
+          return @reuse ? @values : @values.dup
+        end
+      end
+    end
+
+    def rewind
+      @iterator.rewind
+      @values.clear
+      @end = false
+      @clear_on_next = false
+      self
+    end
+  end
 end

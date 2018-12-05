@@ -45,4 +45,9 @@ module Iterable(T)
   def each_with_object(obj)
     each.with_object(obj)
   end
+
+  # Same as `each.slice_after(reuse, &block)`.
+  def slice_after(reuse : Bool | Array(T) = false, &block : T -> B) forall B
+    each.slice_after(reuse, &block)
+  end
 end

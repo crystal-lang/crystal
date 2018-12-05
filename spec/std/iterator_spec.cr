@@ -758,4 +758,72 @@ describe Iterator do
       iter.rewind.to_a.should eq([1, 2, 2, 3, 3])
     end
   end
+
+  describe "#slice_after" do
+    it "slices after" do
+      ary = [1, 3, 5, 8, 10, 11, 13, 15, 16, 17]
+      iter = ary.slice_after(&.even?)
+      iter.next.should eq([1, 3, 5, 8])
+      iter.next.should eq([10])
+      iter.next.should eq([11, 13, 15, 16])
+      iter.next.should eq([17])
+      iter.next.should be_a(Iterator::Stop)
+    end
+
+    it "slices after: #to_a" do
+      ary = [1, 3, 5, 8, 10, 11, 13, 15, 16, 17]
+      ary.slice_after(&.even?).to_a.should eq([
+        [1, 3, 5, 8],
+        [10],
+        [11, 13, 15, 16],
+        [17],
+      ])
+    end
+
+    it "slices after: #rewind" do
+      ary = [1, 3, 5, 8, 10, 11, 13, 15, 16, 17]
+      iter = ary.slice_after(&.even?)
+      iter.next.should eq([1, 3, 5, 8])
+      iter.next.should eq([10])
+
+      iter.rewind
+      iter.next.should eq([1, 3, 5, 8])
+    end
+
+    it "slices after with reuse = true" do
+      ary = [1, 3, 5, 8, 10, 11, 13, 15, 16, 17]
+      iter = ary.slice_after(reuse: true, &.even?)
+      a = iter.next
+      a.should eq([1, 3, 5, 8])
+
+      b = iter.next
+      b.should eq([10])
+
+      a.should be(b)
+    end
+
+    it "slices after with reuse = array" do
+      reuse = [] of Int32
+      ary = [1, 3, 5, 8, 10, 11, 13, 15, 16, 17]
+      iter = ary.slice_after(reuse: reuse, &.even?)
+      a = iter.next
+      a.should eq([1, 3, 5, 8])
+
+      b = iter.next
+      b.should eq([10])
+
+      a.should be(b)
+      a.should be(reuse)
+    end
+
+    it "slices after: non-bool block" do
+      ary = [1, nil, nil, 2, 3, nil]
+      iter = ary.slice_after(&.itself)
+      iter.next.should eq([1])
+      iter.next.should eq([nil, nil, 2])
+      iter.next.should eq([3])
+      iter.next.should eq([nil])
+      iter.next.should be_a(Iterator::Stop)
+    end
+  end
 end
