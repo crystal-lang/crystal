@@ -1712,11 +1712,13 @@ module Crystal
         ] of ASTNode, %(42)
       end
 
-      it "executes [] with other ASTNode, but returns NilLiteral" do
-        assert_macro "x, y", %({{x[y]}}), [
-          Annotation.new(Path.new("Foo"), [] of ASTNode),
-          3.14.float64,
-        ] of ASTNode, %(nil)
+      it "executes [] with other ASTNode, but raises an error" do
+        expect_raises(Crystal::TypeException, "argument to [] must be a number, symbol or string, not BoolLiteral") do
+          assert_macro "x, y", %({{x[y]}}), [
+            Annotation.new(Path.new("Foo"), [] of ASTNode),
+            true.bool,
+          ] of ASTNode, %(nil)
+        end
       end
     end
 

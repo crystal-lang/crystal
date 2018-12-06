@@ -2018,7 +2018,7 @@ module Crystal
           when StringLiteral then name = arg.value
           when MacroId       then name = arg.value
           else
-            return NilLiteral.new
+            arg.raise "argument to [] must be a number, symbol or string, not #{arg.class_desc}:\n\n#{arg}"
           end
 
           named_arg = self.named_args.try &.find do |named_arg|
