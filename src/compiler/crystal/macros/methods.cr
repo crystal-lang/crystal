@@ -2013,15 +2013,18 @@ module Crystal
           case arg
           when NumberLiteral
             index = arg.to_number.to_i
-            self.args[index]? || NilLiteral.new
-          when SymbolLiteral
-            named_arg = self.named_args.try &.find do |named_arg|
-              named_arg.name == arg.value
-            end
-            named_arg.try(&.value) || NilLiteral.new
+            return self.args[index]? || NilLiteral.new
+          when SymbolLiteral then name = arg.value
+          when StringLiteral then name = arg.value
+          when MacroId       then name = arg.value
           else
-            raise "argument to 'Annotation#[]' must be integer or symbol, not #{arg.class_desc}"
+            return NilLiteral.new
           end
+
+          named_arg = self.named_args.try &.find do |named_arg|
+            named_arg.name == name
+          end
+          named_arg.try(&.value) || NilLiteral.new
         end
       else
         super

@@ -1683,6 +1683,43 @@ module Crystal
       end
     end
 
+    describe "annotation methods" do
+      it "executes [] with NumberLiteral" do
+        assert_macro "x, y", %({{x[y]}}), [
+          Annotation.new(Path.new("Foo"), [42.int32] of ASTNode),
+          0.int32,
+        ] of ASTNode, %(42)
+      end
+
+      it "executes [] with SymbolLiteral" do
+        assert_macro "x, y", %({{x[y]}}), [
+          Annotation.new(Path.new("Foo"), [] of ASTNode, [NamedArgument.new("foo", 42.int32)]),
+          "foo".symbol,
+        ] of ASTNode, %(42)
+      end
+
+      it "executes [] with StringLiteral" do
+        assert_macro "x, y", %({{x[y]}}), [
+          Annotation.new(Path.new("Foo"), [] of ASTNode, [NamedArgument.new("foo", 42.int32)]),
+          "foo".string,
+        ] of ASTNode, %(42)
+      end
+
+      it "executes [] with MacroId" do
+        assert_macro "x, y", %({{x[y]}}), [
+          Annotation.new(Path.new("Foo"), [] of ASTNode, [NamedArgument.new("foo", 42.int32)]),
+          MacroId.new("foo"),
+        ] of ASTNode, %(42)
+      end
+
+      it "executes [] with other ASTNode, but returns NilLiteral" do
+        assert_macro "x, y", %({{x[y]}}), [
+          Annotation.new(Path.new("Foo"), [] of ASTNode),
+          3.14.float64,
+        ] of ASTNode, %(nil)
+      end
+    end
+
     describe "env" do
       it "has key" do
         ENV["FOO"] = "foo"
