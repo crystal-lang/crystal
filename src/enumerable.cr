@@ -1292,16 +1292,15 @@ module Enumerable(T)
     end
   end
 
-  # Creates a `Hash` out of an returned from a *block* Enumerable, where each
-  # element is a 2 element structure (for instance a `Tuple` or an `Array`).
+  # Creates a `Hash` out of `Tuple` pairs (key, value) returned from the *block*.
   #
   # ```
   # (1..3).to_h { |i| {i, i ** 2} } # => {1 => 1, 2 => 4, 3 => 9}
   # ```
   def to_h(&block : T -> Tuple(K, V)) forall K, V
     each_with_object({} of K => V) do |item, hash|
-      item_pair = yield item
-      hash[item_pair[0]] = item_pair[1]
+      key, value = yield item
+      hash[key] = value
     end
   end
 end
