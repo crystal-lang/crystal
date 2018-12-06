@@ -1291,15 +1291,14 @@ module Iterator(T)
     end
   end
 
-  # Returns an iterator for each chunked elements where the ends
-  # of chunks are defined by the block, when the block's value
-  # is _truthy_. Thus, the enumerable is sliced just **after** each
-  # time the block returns a _truthy_ value.
+  # Returns an iterator over chunks of elements, where each
+  # chunk ends right **after** the given block's value is _truthy_.
   #
   # For example, to get chunks that end at each uppercase letter:
   #
   # ```
   # ary = ['a', 'b', 'C', 'd', 'E', 'F', 'g', 'h']
+  # #                   ^         ^    ^
   # iter = ary.slice_after(&.uppercase?)
   # iter.next # => ['a', 'b', 'C']
   # iter.next # => ['d', 'E']
@@ -1374,6 +1373,98 @@ module Iterator(T)
       @values.clear
       @end = false
       @clear_on_next = false
+      self
+    end
+  end
+
+  # Returns an iterator over chunks of elements, where each
+  # chunk ends right **before** the given block's value is _truthy_.
+  #
+  # For example, to get chunks that end just before each uppercase letter:
+  #
+  # ```
+  # ary = ['a', 'b', 'C', 'd', 'E', 'F', 'g', 'h']
+  # #              ^         ^    ^
+  # iter = ary.slice_before(&.uppercase?)
+  # iter.next # => ['a', 'b']
+  # iter.next # => ['C', 'd']
+  # iter.next # => ['E']
+  # iter.next # => ['F', 'g', 'h']
+  # iter.next # => Iterator::Stop
+  # ```
+  #
+  # By default, a new array is created and yielded for each slice when invoking `next`.
+  # * If *reuse* is `false`, the method will create a new array for each chunk
+  # * If *reuse* is `true`, the method will create a new array and reuse it.
+  # * If *reuse* is an `Array`, that array will be reused
+  #
+  # This can be used to prevent many memory allocations when each slice of
+  # interest is to be used in a read-only fashion.
+  def slice_before(reuse : Bool | Array(T) = false, &block : T -> B) forall B
+    SliceBefore(typeof(self), T, B).new(self, block, reuse)
+  end
+
+  # :nodoc:
+  class SliceBefore(I, T, B)
+    include Iterator(Array(T))
+
+    @has_value_to_add = false
+    @value_to_add : T?
+
+    def initialize(@iterator : I, @block : T -> B, reuse)
+      @end = false
+
+      if reuse
+        if reuse.is_a?(Array)
+          @values = reuse
+        else
+          @values = [] of T
+        end
+        @reuse = true
+      else
+        @values = [] of T
+        @reuse = false
+      end
+    end
+
+    def next
+      return stop if @end
+
+      if @has_value_to_add
+        @has_value_to_add = false
+        @values.clear
+        @values << @value_to_add.as(T)
+        @value_to_add = nil
+      end
+
+      while true
+        value = @iterator.next
+
+        if value.is_a?(Stop)
+          @end = true
+          if @values.empty?
+            return stop
+          else
+            return @reuse ? @values : @values.dup
+          end
+        end
+
+        if !@values.empty? && @block.call(value)
+          @has_value_to_add = true
+          @value_to_add = value
+          return @reuse ? @values : @values.dup
+        end
+
+        @values << value
+      end
+    end
+
+    def rewind
+      @iterator.rewind
+      @values.clear
+      @end = false
+      @has_value_to_add = false
+      @value_to_add = nil
       self
     end
   end
