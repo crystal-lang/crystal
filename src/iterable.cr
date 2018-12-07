@@ -50,4 +50,9 @@ module Iterable(T)
   def slice_after(reuse : Bool | Array(T) = false, &block : T -> B) forall B
     each.slice_after(reuse, &block)
   end
+
+  # Same as `each.slice_before(reuse, &block)`.
+  def slice_before(reuse : Bool | Array(T) = false, &block : T -> B) forall B
+    each.slice_before(reuse, &block)
+  end
 end
