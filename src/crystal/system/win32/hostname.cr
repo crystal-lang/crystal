@@ -2,11 +2,15 @@ require "c/sysinfoapi"
 
 module Crystal::System
   def self.hostname
-    name_size = LibC::MAX_COMPUTER_NAME_SIZE.to_u32
-    unless LibC.GetComputerNameExW(LibC::COMPUTER_NAME_FORMAT::ComputerNameDnsHostname, out machine_name, pointerof(name_size))
-      raise WinError.new("Failed to get machine hostname")
+    retry_wstr_buffer do |buffer, small_buf|
+      name_size = buffer.size.to_u
+      if LibC.GetComputerNameExW(LibC::COMPUTER_NAME_FORMAT::ComputerNameDnsHostname, buffer, pointerof(name_size)) != 0
+        break String.from_utf16(buffer[0, name_size])
+      elsif small_buf && name_size > 0
+        next name_size
+      else
+        raise WinError.new("GetComputerNameExW")
+      end
     end
-    actual_name = Slice.new(machine_name.to_unsafe, name_size)
-    String.from_utf16(actual_name)
   end
 end

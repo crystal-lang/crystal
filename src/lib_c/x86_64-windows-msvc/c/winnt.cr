@@ -8,7 +8,6 @@ lib LibC
   alias LPWSTR = WCHAR*
   alias LPWCH = WCHAR*
 
-  alias LPVOID = Void*
   alias HANDLE = Void*
 
   INVALID_FILE_ATTRIBUTES      = DWORD.new(-1)
