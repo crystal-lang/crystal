@@ -55,4 +55,14 @@ module Iterable(T)
   def slice_before(reuse : Bool | Array(T) = false, &block : T -> B) forall B
     each.slice_before(reuse, &block)
   end
+
+  # Same as `each.slice_when(reuse, &block)`.
+  def slice_when(reuse : Bool | Array(T) = false, &block : T, T -> B) forall B
+    each.slice_when(reuse, &block)
+  end
+
+  # Same as `each.chunk_while(reuse, &block)`.
+  def chunk_while(reuse : Bool | Array(T) = false, &block : T, T -> B) forall B
+    each.chunk_while(reuse, &block)
+  end
 end

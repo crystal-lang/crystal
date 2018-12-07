@@ -1468,4 +1468,137 @@ module Iterator(T)
       self
     end
   end
+
+  # Returns an iterator for each chunked elements where the ends
+  # of chunks are defined by the block, when the block's value
+  # over a pair of elements is _truthy_.
+  #
+  # For example, one-by-one increasing subsequences can be chunked as follows:
+  #
+  # ```
+  # ary = [1, 2, 4, 9, 10, 11, 12, 15, 16, 19, 20, 21]
+  # iter = ary.slice_when { |i, j| i + 1 != j }
+  # iter.next # => [1, 2]
+  # iter.next # => [4]
+  # iter.next # => [9, 10, 11, 12]
+  # iter.next # => [15, 16]
+  # iter.next # => [19, 20, 21]
+  # iter.next # => Iterator::Stop
+  # ```
+  #
+  # By default, a new array is created and yielded for each slice when invoking `next`.
+  # * If *reuse* is `false`, the method will create a new array for each chunk
+  # * If *reuse* is `true`, the method will create a new array and reuse it.
+  # * If *reuse* is an `Array`, that array will be reused
+  #
+  # This can be used to prevent many memory allocations when each slice of
+  # interest is to be used in a read-only fashion.
+  #
+  # See also `#chunk_while`, which works similary but the block's condition is inverted.
+  def slice_when(reuse : Bool | Array(T) = false, &block : T, T -> B) forall B
+    SliceWhen(typeof(self), T, B).new(self, block, reuse)
+  end
+
+  # Returns an iterator for each chunked elements where elements
+  # are kept in a given chunk as long as the block's value over
+  # a pair of elements is _truthy_.
+  #
+  # For example, one-by-one increasing subsequences can be chunked as follows:
+  #
+  # ```
+  # ary = [1, 2, 4, 9, 10, 11, 12, 15, 16, 19, 20, 21]
+  # iter = ary.chunk_while { |i, j| i + 1 == j }
+  # iter.next # => [1, 2]
+  # iter.next # => [4]
+  # iter.next # => [9, 10, 11, 12]
+  # iter.next # => [15, 16]
+  # iter.next # => [19, 20, 21]
+  # iter.next # => Iterator::Stop
+  # ```
+  #
+  # By default, a new array is created and yielded for each slice when invoking `next`.
+  # * If *reuse* is `false`, the method will create a new array for each chunk
+  # * If *reuse* is `true`, the method will create a new array and reuse it.
+  # * If *reuse* is an `Array`, that array will be reused
+  #
+  # This can be used to prevent many memory allocations when each slice of
+  # interest is to be used in a read-only fashion.
+  #
+  # See also `#slice_when`, which works similary but the block's condition is inverted.
+  def chunk_while(reuse : Bool | Array(T) = false, &block : T, T -> B) forall B
+    SliceWhen(typeof(self), T, B).new(self, block, reuse, negate: true)
+  end
+
+  # :nodoc:
+  class SliceWhen(I, T, B)
+    include Iterator(Array(T))
+
+    @has_previous_value = false
+    @previous_value : T?
+
+    def initialize(@iterator : I, @block : T, T -> B, reuse, @negate = false)
+      @end = false
+
+      if reuse
+        if reuse.is_a?(Array)
+          @values = reuse
+        else
+          @values = [] of T
+        end
+        @reuse = true
+      else
+        @values = [] of T
+        @reuse = false
+      end
+    end
+
+    def next
+      return stop if @end
+
+      if @has_previous_value
+        v1 = @previous_value.as(T)
+        @has_previous_value = false
+        @previous_value = nil
+        @values.clear
+      else
+        v1 = @iterator.next
+        return end_value if v1.is_a?(Stop)
+      end
+
+      while true
+        @values << v1
+
+        v2 = @iterator.next
+        return end_value if v2.is_a?(Stop)
+
+        cond = @block.call(v1, v2)
+        cond = !cond if @negate
+        if cond
+          @has_previous_value = true
+          @previous_value = v2
+          return @reuse ? @values : @values.dup
+        end
+
+        v1 = v2
+      end
+    end
+
+    private def end_value
+      @end = true
+      if @values.empty?
+        stop
+      else
+        @reuse ? @values : @values.dup
+      end
+    end
+
+    def rewind
+      @iterator.rewind
+      @values.clear
+      @end = false
+      @has_previous_value = false
+      @previous_value = nil
+      self
+    end
+  end
 end
