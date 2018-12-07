@@ -872,5 +872,9 @@ describe "Enumerable" do
     it "for array" do
       [[:a, :b], [:c, :d]].to_h.should eq({:a => :b, :c => :d})
     end
+
+    it "with block" do
+      (1..3).to_h { |i| {i, i ** 2} }.should eq({1 => 1, 2 => 4, 3 => 9})
+    end
   end
 end
