@@ -29,8 +29,8 @@ lib LibC
   end
 
   fun GetComputerNameExW(computer_name_format : COMPUTER_NAME_FORMAT,
-                                              machine_name : LPWSTR,
-                                              machine_name_size : DWORD*) : BOOLEAN
+                         machine_name : LPWSTR,
+                         machine_name_size : DWORD*) : BOOLEAN
 
   enum COMPUTER_NAME_FORMAT
     ComputerNameNetBIOS
