@@ -811,6 +811,12 @@ module Crystal
         assert_macro "", %({{{a: 1}["b"]}}), [] of ASTNode, "nil"
       end
 
+      it "executes [] with invalid key type" do
+        expect_raises(Crystal::TypeException, "argument to [] must be a symbol or string, not BoolLiteral") do
+          assert_macro "", %({{{a: 1}[true]}}), [] of ASTNode, ""
+        end
+      end
+
       it "executes keys" do
         assert_macro "", %({{{a: 1, b: 2}.keys}}), [] of ASTNode, "[a, b]"
       end
