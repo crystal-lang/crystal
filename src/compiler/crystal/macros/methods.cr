@@ -937,7 +937,7 @@ module Crystal
           when StringLiteral
             key = key.value
           else
-            return NilLiteral.new
+            raise "argument to [] must be a symbol or string, not #{key.class_desc}:\n\n#{key}"
           end
 
           entry = entries.find &.key.==(key)
