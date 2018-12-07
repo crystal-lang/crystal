@@ -860,7 +860,7 @@ module Crystal::Macros
     # Returns the value of a named argument,
     # or NilLiteral if the named argument isn't
     # used in this attribute.
-    def [](name : SymbolLiteral) : ASTNode
+    def [](name : SymbolLiteral | StringLiteral | MacroId) : ASTNode
     end
   end
 
