@@ -3,7 +3,7 @@ require "c/win_def"
 require "c/int_safe"
 
 lib LibC
-  fun GetNativeSystemInfo = GetNativeSystemInfo(system_info : SYSTEM_INFO*)
+  fun GetNativeSystemInfo(system_info : SYSTEM_INFO*)
 
   struct PROCESSOR_INFO
     wProcessorArchitecture : WORD
@@ -28,7 +28,7 @@ lib LibC
     wProcessorRevision : WORD
   end
 
-  fun GetComputerNameExW = GetComputerNameExW(computer_name_format : COMPUTER_NAME_FORMAT,
+  fun GetComputerNameExW(computer_name_format : COMPUTER_NAME_FORMAT,
                                               machine_name : LPWSTR,
                                               machine_name_size : DWORD*) : BOOLEAN
 
