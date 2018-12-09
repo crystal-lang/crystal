@@ -733,6 +733,9 @@ describe "Enumerable" do
     it { [1, 2, 2, 3].one? { |x| x == 1 }.should eq(true) }
     it { [1, 2, 2, 3].one? { |x| x == 2 }.should eq(false) }
     it { [1, 2, 2, 3].one? { |x| x == 0 }.should eq(false) }
+    it { [1, 2, false].one?.should be_false }
+    it { [1, false, false].one?.should be_true }
+    it { [false].one?.should be_false }
   end
 
   describe "partition" do
