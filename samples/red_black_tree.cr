@@ -384,26 +384,24 @@ class RedBlackTreeRunner
 end
 
 def bench(name, n = 1)
+  start = Time.monotonic
+  print "#{name}: "
   res = nil
-  elapsed = Time.measure do
-    print "#{name}: "
-    res = nil
-    n.times do
-      res = yield
-    end
+  n.times do
+    res = yield
   end
-  puts "#{elapsed}, res: #{res}"
+
+  puts "#{Time.monotonic - start}, res: #{res}"
 end
 
-elapsed = Time.measure do
-  b = RedBlackTreeRunner.new 100_000
-  bench("delete", 10) { b.run_delete }
-  bench("add", 10) { b.run_add }
-  bench("search", 10) { b.run_search }
-  bench("walk", 100) { b.run_inorder_walk }
-  bench("reverse_walk", 100) { b.run_reverse_inorder_walk }
-  bench("min", 100) { b.run_min }
-  bench("max", 100) { b.run_max }
-end
+start = Time.monotonic
+b = RedBlackTreeRunner.new 100_000
+bench("delete", 10) { b.run_delete }
+bench("add", 10) { b.run_add }
+bench("search", 10) { b.run_search }
+bench("walk", 100) { b.run_inorder_walk }
+bench("reverse_walk", 100) { b.run_reverse_inorder_walk }
+bench("min", 100) { b.run_min }
+bench("max", 100) { b.run_max }
 
-puts "summary time: #{elapsed}"
+puts "summary time: #{Time.monotonic - start}"
