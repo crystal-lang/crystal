@@ -6,9 +6,12 @@ module Crystal::System
   # Returns the number of logical processors available to the system.
   #
   # def self.cpu_count
+  # Returns the short user name of the currently logged in user.
+  # def self.login
 end
 
 require "./system/unix/hostname"
+require "./system/unix/login"
 
 {% if flag?(:freebsd) || flag?(:openbsd) %}
   require "./system/unix/sysctl_cpucount"

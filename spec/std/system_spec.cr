@@ -18,4 +18,13 @@ describe System do
       cpu_count.should eq(shell_cpus)
     end
   end
+
+  describe "login" do
+    it "returns current session login" do
+      shell_login = `logname`.strip
+      shell_login = nil unless $?.success?
+      login = System.login
+      login.should eq(shell_login)
+    end
+  end
 end

@@ -22,4 +22,16 @@ module System
   def self.cpu_count
     Crystal::System.cpu_count
   end
+
+  # Returns the short user name of the currently logged in user or `nil` if it
+  # can't be determined. Note that this information is not secure, as the user
+  # currently logged in on the controlling terminal of our program need not be
+  # the user who started it.
+  #
+  # ```
+  # System.login # => "myloginusername"
+  # ```
+  def self.login
+    Crystal::System.login
+  end
 end
