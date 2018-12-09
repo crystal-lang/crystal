@@ -476,6 +476,11 @@ struct Int
 end
 
 struct Float
+  # Returns a `Time::Span` of `self` weeks.
+  def weeks : Time::Span
+    (self * 7).days
+  end
+
   # Returns a `Time::Span` of `self` days.
   def days : Time::Span
     (self * 24).hours
