@@ -1010,6 +1010,19 @@ module Enumerable(T)
     c == 1
   end
 
+  # Returns `true` if only one element in this enumerable
+  # is _truthy_.
+  #
+  # ```
+  # [1, false, false].one? # => true
+  # [1, false, 3].one?     # => false
+  # [1].one?               # => true
+  # [false].one?           # => false
+  # ```
+  def one?
+    one? &.itself
+  end
+
   # Returns a `Tuple` with two arrays. The first one contains the elements
   # in the collection for which the passed block returned `true`,
   # and the second one those for which it returned `false`.
