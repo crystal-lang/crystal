@@ -1,5 +1,4 @@
 require "crystal/system/mime"
-require "./mime/**"
 
 # This module implements a global MIME registry.
 #

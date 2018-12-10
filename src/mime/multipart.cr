@@ -5,7 +5,7 @@ require "mime/media_type"
 # The `MIME::Multipart` module contains utilities for parsing MIME multipart
 # messages, which contain multiple body parts, each containing a header section
 # and binary body. The `multipart/form-data` content-type has a separate set of
-# utilities in the `MIME::FormData` module.
+# utilities in the `HTTP::FormData` module.
 module MIME::Multipart
   # Parses a MIME multipart message, yielding `HTTP::Headers` and an `IO` for
   # each body part.

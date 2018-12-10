@@ -1,5 +1,5 @@
 require "spec"
-require "mime"
+require "mime/multipart"
 
 describe MIME::Multipart::Builder do
   it "generates valid multipart messages" do

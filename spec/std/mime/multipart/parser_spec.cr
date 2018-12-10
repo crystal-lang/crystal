@@ -1,5 +1,5 @@
 require "spec"
-require "mime"
+require "mime/multipart"
 
 private def parse(delim, data, *, gsub = true)
   data_io = IO::Memory.new(gsub ? data.gsub('\n', "\r\n") : data)

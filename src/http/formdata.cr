@@ -1,4 +1,5 @@
 require "./formdata/**"
+require "mime/multipart"
 
 # Contains utilities for parsing `multipart/form-data` messages, which are
 # commonly used for encoding HTML form data.

@@ -1,5 +1,5 @@
 require "spec"
-require "mime"
+require "mime/multipart"
 
 describe MIME::Multipart do
   describe ".parse" do
