@@ -56,8 +56,6 @@ class Crystal::Command
       file = files.first
       if file == "-"
         return format_stdin(check_files)
-      elsif File.file?(file)
-        return format_single(file, check_files)
       end
     end
 
@@ -124,33 +122,6 @@ class Crystal::Command
       exit 1
     rescue ex
       couldnt_format "STDIN", ex
-      STDERR.puts
-      exit 1
-    end
-  end
-
-  private def format_single(filename, check_files)
-    source = File.read(filename)
-
-    begin
-      result = Crystal.format(source, filename: filename)
-      exit(result == source ? 0 : 1) if check_files
-
-      File.write(filename, result)
-    rescue ex : InvalidByteSequenceError
-      STDERR.print "Error: ".colorize.toggle(@color).red.bold
-      STDERR.print "file '#{Crystal.relative_filename(filename)}' is not a valid Crystal source file: ".colorize.toggle(@color).bold
-      STDERR.puts ex.message
-      exit 1
-    rescue ex : Crystal::SyntaxException
-      if @format == "json"
-        STDERR.puts ex.to_json
-      else
-        STDERR.puts ex
-      end
-      exit 1
-    rescue ex
-      couldnt_format "'#{filename}'", ex
       STDERR.puts
       exit 1
     end
