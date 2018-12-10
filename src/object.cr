@@ -143,6 +143,29 @@ class Object
     end
   end
 
+  # Yields `self` to the block, and returns its output.
+  #
+  # Overall, `then` improves readability of the code by promoting chaining
+  # over nested function calls.
+  #
+  # ```
+  # "Hello".then { |str| str + " World" } # => "Hello World"
+  # # vs
+  # "Hello".tap { |str| str + " World" } # => "Hello"
+  #
+  # (1..100).each do |i|
+  #   case i
+  #   when .then { |i| i >= 10 && i <= 30 }
+  #     # ...
+  #   when .then { |i| (i % 2) == 0 && i != 50 }
+  #     # ...
+  #   end
+  # end
+  # ```
+  def then
+    yield self
+  end
+
   # Yields `self` to the block, and then returns `self`.
   #
   # The primary purpose of this method is to "tap into" a method chain,

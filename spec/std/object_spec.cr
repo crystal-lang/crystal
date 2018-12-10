@@ -133,6 +133,17 @@ private class HashedTestObject
 end
 
 describe Object do
+  describe "then" do
+    it "returns output of given block" do
+      "Hello".then { "World" }.should eq("World")
+      "Hello".then(&.upcase).should eq("HELLO")
+    end
+
+    it "works on nils" do
+      nil.then { |x| x.should be_nil; true }.should be_true
+    end
+  end
+
   describe "delegate" do
     it "delegates" do
       wrapper = StringWrapper.new("HellO")
