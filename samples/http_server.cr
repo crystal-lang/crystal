@@ -6,5 +6,6 @@ server = HTTP::Server.new do |context|
   context.response.print "Hello world!"
 end
 
-puts "Listening on http://127.0.0.1:8080"
-server.listen(8080)
+address = server.bind_tcp 8080
+puts "Listening on http://#{address}"
+server.listen
