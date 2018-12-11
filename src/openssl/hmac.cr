@@ -13,8 +13,6 @@ class OpenSSL::HMAC
   # Returns the HMAC digest of *data* using the secret *key*.
   #
   # It may contain non-ASCII bytes, including NUL bytes.
-  #
-  # *algorithm* is of type `OpenSSL::Algorithm`.
   def self.digest(algorithm : OpenSSL::Algorithm, key, data) : Bytes
     evp = algorithm.to_evp
     key_slice = key.to_slice
