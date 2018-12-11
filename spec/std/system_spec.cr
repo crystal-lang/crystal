@@ -13,6 +13,7 @@ describe System do
 
   describe "cpu_count" do
     it "returns current CPU count" do
+      shell_cpus = 0
       {% if flag?(:win32) %}
         shell_cpus = ENV["NUMBER_OF_PROCESSORS"].to_i
       {% elsif flag?(:unix) %}
