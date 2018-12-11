@@ -139,9 +139,19 @@ describe "Array" do
       [1, 2, 3][2..-2].should eq([] of Int32)
     end
 
+    it "gets on range without end" do
+      [1, 2, 3][1..nil].should eq([2, 3])
+    end
+
     it "raises on index out of bounds with range" do
       expect_raises IndexError do
         [1, 2, 3][4..6]
+      end
+    end
+
+    it "raises on index out of bounds with range without end" do
+      expect_raises IndexError do
+        [1, 2, 3][4..nil]
       end
     end
 
@@ -271,6 +281,10 @@ describe "Array" do
       a = [1, 2, 3, 4, 5]
       a[1...1] = 6
       a.should eq([1, 6, 2, 3, 4, 5])
+
+      a = [1, 2, 3, 4, 5]
+      a[2..nil] = 6
+      a.should eq([1, 2, 6])
     end
 
     it "replaces a subrange with an array" do
@@ -297,6 +311,10 @@ describe "Array" do
       a = [1, 2, 3, 4, 5]
       a[1..3] = [6, 7, 8]
       a.should eq([1, 6, 7, 8, 5])
+
+      a = [1, 2, 3, 4, 5]
+      a[2..nil] = [6, 7]
+      a.should eq([1, 2, 6, 7])
     end
   end
 
@@ -443,6 +461,10 @@ describe "Array" do
       a = [1, 2, 3, 4, 5, 6, 7]
       a.delete_at(1..2)
       a.should eq([1, 4, 5, 6, 7])
+
+      a = [1, 2, 3, 4, 5, 6, 7]
+      a.delete_at(3..nil)
+      a.should eq([1, 2, 3])
     end
 
     it "deletes with index and count" do
@@ -572,6 +594,12 @@ describe "Array" do
       a = ['a', 'b', 'c']
       expected = ['x', 'x', 'c']
       a.fill('x', -3..1).should eq(expected)
+    end
+
+    it "replaces only values in range without end" do
+      a = ['a', 'b', 'c']
+      expected = ['a', 'x', 'x']
+      a.fill('x', 1..nil).should eq(expected)
     end
 
     it "works with a block" do

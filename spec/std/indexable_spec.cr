@@ -161,6 +161,18 @@ describe Indexable do
     last_element.should eq(3)
   end
 
+  it "iterates within a range of indices, no end" do
+    indexable = SafeIndexable.new(5)
+    last_element = nil
+
+    return_value = indexable.each(within: 2..nil) do |elem|
+      last_element = elem
+    end
+
+    return_value.should eq(indexable)
+    last_element.should eq(4)
+  end
+
   it "joins strings (empty case)" do
     indexable = SafeStringIndexable.new(0)
     indexable.join.should eq("")

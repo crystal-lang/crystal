@@ -1227,8 +1227,10 @@ module Crystal
         @str << ".."
       end
 
-      need_parens = need_parens(node.to)
-      in_parenthesis(need_parens, node.to)
+      unless node.to.nop?
+        need_parens = need_parens(node.to)
+        in_parenthesis(need_parens, node.to)
+      end
 
       false
     end

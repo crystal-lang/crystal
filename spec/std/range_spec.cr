@@ -56,6 +56,7 @@ describe "Range" do
   it "does to_s" do
     (1...5).to_s.should eq("1...5")
     (1..5).to_s.should eq("1..5")
+    (1..nil).to_s.should eq("1..")
   end
 
   it "does inspect" do
@@ -188,6 +189,16 @@ describe "Range" do
       range.each { any = true }
       any.should eq(false)
     end
+
+    it "endless" do
+      range = (3..nil)
+      ary = [] of Int32
+      range.each do |x|
+        ary << x
+        break if ary.size == 5
+      end
+      ary.should eq([3, 4, 5, 6, 7])
+    end
   end
 
   describe "reverse_each" do
@@ -210,6 +221,13 @@ describe "Range" do
       any = false
       range.reverse_each { any = true }
       any.should eq(false)
+    end
+
+    it "raises on endless range" do
+      range = (3..(true ? nil : 1))
+      expect_raises(ArgumentError, "Can't reverse_each endless range") do
+        range.reverse_each { }
+      end
     end
   end
 
@@ -235,6 +253,17 @@ describe "Range" do
 
       iter.rewind
       iter.next.should eq(1)
+    end
+
+    it "does with endless range" do
+      r = (3..nil)
+      iter = r.each
+      iter.next.should eq(3)
+      iter.next.should eq(4)
+
+      iter.rewind
+      iter.next.should eq(3)
+      iter.next.should eq(4)
     end
 
     it "cycles" do
@@ -301,6 +330,42 @@ describe "Range" do
     it "is not empty with ... and begin.succ == end" do
       (1...2).reverse_each.to_a.should eq([1])
     end
+
+    it "raises on endless range" do
+      expect_raises(ArgumentError, "Can't reverse_each endless range") do
+        (1..(true ? nil : 1)).reverse_each
+      end
+    end
+  end
+
+  describe "step" do
+    it "does with inclusive range" do
+      a = 1..5
+      elems = [] of Int32
+      iter = a.step(2) do |x|
+        elems << x
+      end
+      elems.should eq([1, 3, 5])
+    end
+
+    it "does with exclusive range" do
+      a = 1...5
+      elems = [] of Int32
+      iter = a.step(2) do |x|
+        elems << x
+      end
+      elems.should eq([1, 3])
+    end
+
+    it "does with endless range" do
+      a = (1...nil)
+      elems = [] of Int32
+      iter = a.step(2) do |x|
+        elems << x
+        break if elems.size == 5
+      end
+      elems.should eq([1, 3, 5, 7, 9])
+    end
   end
 
   describe "step iterator" do
@@ -354,6 +419,17 @@ describe "Range" do
     it "is not empty with ... and begin.succ == end" do
       (1...2).step(1).to_a.should eq([1])
     end
+
+    it "does with endless range" do
+      a = (1...nil)
+      iter = a.step(2)
+      iter.next.should eq(1)
+      iter.next.should eq(3)
+
+      iter.rewind
+      iter.next.should eq(1)
+      iter.next.should eq(3)
+    end
   end
 
   describe "map" do
@@ -386,5 +462,27 @@ describe "Range" do
     clone.should eq(range)
     clone.begin.should_not be(range.begin)
     clone.end.should_not be(range.end)
+  end
+
+  describe "===" do
+    it "inclusive" do
+      ((1..2) === 0).should be_false
+      ((1..2) === 1).should be_true
+      ((1..2) === 2).should be_true
+      ((1..2) === 3).should be_false
+    end
+
+    it "exclusive" do
+      ((1...2) === 0).should be_false
+      ((1...2) === 1).should be_true
+      ((1...2) === 2).should be_false
+    end
+
+    it "endless" do
+      ((1...nil) === 0).should be_false
+      ((1...nil) === 1).should be_true
+      ((1...nil) === 2).should be_true
+      ((1..nil) === 2).should be_true
+    end
   end
 end

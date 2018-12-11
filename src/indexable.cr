@@ -244,7 +244,7 @@ module Indexable(T)
   # ```text
   # b -- c -- d --
   # ```
-  def each(*, within range : Range(Int, Int))
+  def each(*, within range : Range)
     start, count = Indexable.range_to_index_and_count(range, size)
     each(start: start, count: count) { |element| yield element }
   end
@@ -709,9 +709,13 @@ module Indexable(T)
     raise IndexError.new if start_index < 0
 
     end_index = range.end
-    end_index += collection_size if end_index < 0
-    end_index -= 1 if range.excludes_end?
-    count = end_index - start_index + 1
+    if end_index.nil?
+      count = collection_size - start_index
+    else
+      end_index += collection_size if end_index < 0
+      end_index -= 1 if range.excludes_end?
+      count = end_index - start_index + 1
+    end
     count = 0 if count < 0
 
     {start_index, count}

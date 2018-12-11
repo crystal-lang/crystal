@@ -122,6 +122,11 @@ describe "Number" do
       500.clamp(10, 100).should eq(100)
 
       50.clamp(10..100).should eq(50)
+
+      50.clamp(10..nil).should eq(50)
+      50.clamp(10...nil).should eq(50)
+      5.clamp(10..nil).should eq(10)
+      5.clamp(10...nil).should eq(10)
     end
 
     it "clamps floats" do

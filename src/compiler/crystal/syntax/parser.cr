@@ -457,7 +457,16 @@ module Crystal
       check_void_value exp, location
       next_token_skip_space_or_newline
       check_void_expression_keyword
-      right = parse_or
+      right = if end_token? ||
+                 @token.type == :")" ||
+                 @token.type == :"," ||
+                 @token.type == :";"
+                 @token.type == :";" ||
+                 @token.type == :"=>"
+                Nop.new
+              else
+                parse_or
+              end
       RangeLiteral.new(exp, right, exclusive).at(location).at_end(right)
     end
 
