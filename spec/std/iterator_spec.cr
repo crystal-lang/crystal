@@ -303,6 +303,19 @@ describe Iterator do
       iter.rewind
       iter.next.should eq(1)
     end
+
+    it "does with pattern" do
+      iter = (1..5).each.reject(2..4)
+      iter.next.should eq(1)
+      iter.next.should eq(5)
+      iter.next.should be_a(Iterator::Stop)
+    end
+
+    it "does with type" do
+      ary = [1, false, 3, true].each.reject(Bool).to_a
+      ary.should eq([1, 3])
+      ary.should be_a(Array(Int32))
+    end
   end
 
   describe "select" do
@@ -314,6 +327,20 @@ describe Iterator do
 
       iter.rewind
       iter.next.should eq(2)
+    end
+
+    it "does with pattern" do
+      iter = (1..10).each.select(3..5)
+      iter.next.should eq(3)
+      iter.next.should eq(4)
+      iter.next.should eq(5)
+      iter.next.should be_a(Iterator::Stop)
+    end
+
+    it "does with type" do
+      ary = [1, nil, 3, false].each.select(Int32).to_a
+      ary.should eq([1, 3])
+      ary.should be_a(Array(Int32))
     end
   end
 
@@ -825,6 +852,28 @@ describe Iterator do
       iter.next.should eq([nil])
       iter.next.should be_a(Iterator::Stop)
     end
+
+    it "slices after pattern" do
+      ary = ["foo", "bar", "baz\n", "qux", "other\n", "end"]
+      iter = ary.slice_after(/\n/)
+      iter.next.should eq(["foo", "bar", "baz\n"])
+      iter.next.should eq(["qux", "other\n"])
+      iter.next.should eq(["end"])
+      iter.next.should be_a(Iterator::Stop)
+    end
+
+    it "slices after pattern with reuse = true" do
+      ary = ["foo", "bar", "baz\n", "qux", "other\n", "end"]
+      iter = ary.slice_after(/\n/, reuse: true)
+
+      a = iter.next
+      a.should eq(["foo", "bar", "baz\n"])
+
+      b = iter.next
+      b.should eq(["qux", "other\n"])
+
+      a.should be(b)
+    end
   end
 
   describe "#slice_before" do
@@ -907,6 +956,28 @@ describe Iterator do
       iter.next.should eq([1, nil, nil])
       iter.next.should eq([2])
       iter.next.should eq([3, nil])
+    end
+
+    it "slices before pattern" do
+      ary = ["foo", "bar", "baz\n", "qux", "other\n", "end"]
+      iter = ary.slice_before(/\n/)
+      iter.next.should eq(["foo", "bar"])
+      iter.next.should eq(["baz\n", "qux"])
+      iter.next.should eq(["other\n", "end"])
+      iter.next.should be_a(Iterator::Stop)
+    end
+
+    it "slices before pattern with reuse = true" do
+      ary = ["foo", "bar", "baz\n", "qux", "other\n", "end"]
+      iter = ary.slice_before(/\n/, reuse: true)
+
+      a = iter.next
+      a.should eq(["foo", "bar"])
+
+      b = iter.next
+      b.should eq(["baz\n", "qux"])
+
+      a.should be(b)
     end
   end
 
