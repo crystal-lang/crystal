@@ -1,6 +1,4 @@
 require "spec"
-require "tempfile"
-
 require "../../spec_helper"
 
 describe "exit" do
@@ -220,5 +218,52 @@ describe "at_exit" do
                            Kaboom!
                            Unhandled exception: Kaboom!
                            OUTPUT
+  end
+end
+
+describe "seg fault" do
+  it "reports SIGSEGV" do
+    status, _, error = build_and_run <<-'CODE'
+      puts Pointer(Int64).null.value
+    CODE
+
+    status.success?.should be_false
+    error.should contain("Invalid memory access")
+    error.should_not contain("Stack overflow")
+  end
+
+  it "detects stack overflow on the main stack" do
+    # This spec can take some time under FreeBSD where
+    # the default stack size is 0.5G.  Setting a
+    # smaller stack size with `ulimit -s 8192`
+    # will address this.
+    status, _, error = build_and_run <<-'CODE'
+      def foo
+        y = StaticArray(Int8,512).new(0)
+        foo
+      end
+      foo
+    CODE
+
+    status.success?.should be_false
+    error.should contain("Stack overflow")
+  end
+
+  it "detects stack overflow on a fiber stack" do
+    status, _, error = build_and_run <<-'CODE'
+      def foo
+        y = StaticArray(Int8,512).new(0)
+        foo
+      end
+
+      spawn do
+        foo
+      end
+
+      sleep 60.seconds
+    CODE
+
+    status.success?.should be_false
+    error.should contain("Stack overflow")
   end
 end

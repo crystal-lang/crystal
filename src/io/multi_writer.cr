@@ -32,6 +32,8 @@ class IO::MultiWriter < IO
   def write(slice : Bytes)
     check_open
 
+    return if slice.empty?
+
     @writers.each { |writer| writer.write(slice) }
   end
 

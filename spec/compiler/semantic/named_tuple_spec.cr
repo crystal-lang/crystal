@@ -286,15 +286,6 @@ describe "Semantic: named tuples" do
       )) { named_tuple_of({"x": types["Foo"].virtual_type!, "y": types["Foo"].virtual_type!}) }
   end
 
-  it "does not compile to_h of empty tuples" do
-    # TODO change the location of this spec upon #2391
-    assert_error %(
-      require "prelude"
-      NamedTuple.new.to_h
-      ),
-      "Can't convert an empty NamedTuple to a Hash"
-  end
-
   it "types T as a tuple of metaclasses" do
     assert_type("
       struct NamedTuple
@@ -310,5 +301,35 @@ describe "Semantic: named tuples" do
       meta.metaclass?.should be_true
       meta
     end
+  end
+
+  it "doesn't crash on named tuple in not executed block (#6718)" do
+    assert_type(%(
+      require "prelude"
+
+      def pending(&block)
+      end
+
+      def untyped(x = nil)
+      end
+
+      # To reproduce this bug, it is needed to the expression that is
+      # not typed on main phase but is typed on cleanup phase.
+      # `untyped(untyped)` is just one.
+      pending do
+        {s: untyped(untyped)}
+      end
+    )) { nil_type }
+  end
+
+  it "doesn't crash on named tuple type recursion (#7162)" do
+    assert_type(%(
+      def call(*args)
+        call({a: 1})
+        1
+      end
+
+      call("")
+      )) { int32 }
   end
 end

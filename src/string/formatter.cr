@@ -172,6 +172,8 @@ struct String::Formatter(A)
 
   private def consume_type(flags, arg = nil, arg_specified = false)
     case char = current_char
+    when 'c'
+      char flags, arg, arg_specified
     when 's'
       string flags, arg, arg_specified
     when 'b'
@@ -195,6 +197,14 @@ struct String::Formatter(A)
     else
       raise ArgumentError.new("Malformed format string - %#{char.inspect}")
     end
+  end
+
+  def char(flags, arg, arg_specified)
+    arg = next_arg unless arg_specified
+
+    pad 1, flags if flags.left_padding?
+    @io << arg
+    pad 1, flags if flags.right_padding?
   end
 
   def string(flags, arg, arg_specified)
@@ -241,7 +251,7 @@ struct String::Formatter(A)
     end
   end
 
-  # We don't actually format the float ourselves, we delegate to sprintf
+  # We don't actually format the float ourselves, we delegate to snprintf
   def float(flags, arg, arg_specified)
     arg = next_arg unless arg_specified
 
@@ -275,6 +285,7 @@ struct String::Formatter(A)
 
     io = IO::Memory.new(Bytes.new(format_buf, capacity))
     io << '%'
+    io << '#' if flags.sharp
     io << '+' if flags.plus
     io << '-' if flags.minus
     io << '0' if flags.zero
@@ -308,7 +319,7 @@ struct String::Formatter(A)
   end
 
   private def current_arg
-    @args.at(@arg_index) { raise ArgumentError.new("Too few arguments") }
+    @args.fetch(@arg_index) { raise ArgumentError.new("Too few arguments") }
   end
 
   def next_arg

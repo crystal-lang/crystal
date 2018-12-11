@@ -11,6 +11,17 @@ describe "Code gen: asm" do
         )).to_i.should eq(1234)
     end
 
+    it "codegens with two outputs" do
+      run(%(
+        dst1 = uninitialized Int32
+        dst2 = uninitialized Int32
+        asm("
+          mov $$0x1234, $0
+          mov $$0x5678, $1" : "=r"(dst1), "=r"(dst2))
+        (dst1.unsafe_shl(16)) | dst2
+        )).to_i.should eq(0x12345678)
+    end
+
     it "codegens with one input" do
       run(%(
         src = 1234

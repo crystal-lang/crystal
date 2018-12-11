@@ -34,10 +34,20 @@ lib LibC
   SIGINFO   = 29
   SIGWINCH  = 28
 
+  SIG_SETMASK = 3
+
   alias SighandlerT = Int ->
+  alias SigsetT = UInt32
+
   SIG_DFL = SighandlerT.new(Pointer(Void).new(0_u64), Pointer(Void).null)
   SIG_IGN = SighandlerT.new(Pointer(Void).new(1_u64), Pointer(Void).null)
 
   fun kill(x0 : PidT, x1 : Int) : Int
+  fun pthread_sigmask(Int, SigsetT*, SigsetT*) : Int
   fun signal(x0 : Int, x1 : Int -> Void) : Int -> Void
+  fun sigemptyset(SigsetT*) : Int
+  fun sigfillset(SigsetT*) : Int
+  fun sigaddset(SigsetT*, Int) : Int
+  fun sigdelset(SigsetT*, Int) : Int
+  fun sigismember(SigsetT*, Int) : Int
 end

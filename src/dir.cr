@@ -159,6 +159,15 @@ class Dir
     end
   end
 
+  # Returns the tmp dir used for tempfile.
+  #
+  # ```
+  # Dir.tempdir # => "/tmp"
+  # ```
+  def self.tempdir : String
+    Crystal::System::Dir.tempdir
+  end
+
   # See `#each`.
   def self.each(dirname)
     Dir.open(dirname) do |dir|
@@ -210,16 +219,18 @@ class Dir
   # Dir.empty?("bar") # => false
   # ```
   def self.empty?(path) : Bool
-    raise Errno.new("Error determining size of '#{path}'") unless exists?(path)
-
     each_child(path) do |f|
       return false
     end
     true
+  rescue ex : Errno
+    raise Errno.new("Error determining size of '#{path}'", ex.errno)
   end
 
   # Creates a new directory at the given path. The linux-style permission mode
   # can be specified, with a default of 777 (0o777).
+  #
+  # NOTE: *mode* is ignored on windows.
   def self.mkdir(path, mode = 0o777)
     Crystal::System::Dir.create(path, mode)
   end

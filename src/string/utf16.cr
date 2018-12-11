@@ -53,15 +53,7 @@ class String
   # slice = Slice[104_u16, 105_u16, 32_u16, 55296_u16, 56485_u16]
   # String.from_utf16(slice) # => "hi 𐂥"
   # ```
-  #
-  # If *slice* is a pointer, the string ends when a zero value is found.
-  #
-  # ```
-  # slice = Slice[104_u16, 105_u16, 0_u16, 55296_u16, 56485_u16]
-  # String.from_utf16(slice)           # => "hi\0000𐂥"
-  # String.from_utf16(slice.to_unsafe) # => "hi"
-  # ```
-  def self.from_utf16(slice : Slice(UInt16) | Pointer(UInt16)) : String
+  def self.from_utf16(slice : Slice(UInt16)) : String
     bytesize = 0
     size = 0
 
@@ -79,6 +71,41 @@ class String
       end
       {bytesize, size}
     end
+  end
+
+  # Decodes the given *slice* UTF-16 sequence into a String and returns the
+  # pointer after reading. The string ends when a zero value is found.
+  #
+  # ```
+  # slice = Slice[104_u16, 105_u16, 0_u16, 55296_u16, 56485_u16, 0_u16]
+  # String.from_utf16(slice) # => "hi\0000𐂥"
+  # pointer = slice.to_unsafe
+  # string, pointer = String.from_utf16(pointer) # => "hi"
+  # string, pointer = String.from_utf16(pointer) # => "𐂥"
+  # ```
+  #
+  # Invalid values are encoded using the unicode replacement char with
+  # codepoint `0xfffd`.
+  def self.from_utf16(pointer : Pointer(UInt16)) : {String, Pointer(UInt16)}
+    bytesize = 0
+    size = 0
+
+    each_utf16_char(pointer) do |char|
+      bytesize += char.bytesize
+      size += 1
+    end
+
+    string = String.new(bytesize) do |buffer|
+      pointer = each_utf16_char(pointer) do |char|
+        char.each_byte do |byte|
+          buffer.value = byte
+          buffer += 1
+        end
+      end
+      {bytesize, size}
+    end
+
+    {string, pointer + 1}
   end
 
   # Yields each decoded char in the given slice.
@@ -107,7 +134,7 @@ class String
   end
 
   # Yields each decoded char in the given pointer, stopping at the first null byte.
-  private def self.each_utf16_char(pointer : Pointer(UInt16))
+  private def self.each_utf16_char(pointer : Pointer(UInt16)) : Pointer(UInt16)
     loop do
       byte = pointer.value.to_i
       break if byte == 0
@@ -129,5 +156,7 @@ class String
 
       pointer = pointer + 1
     end
+
+    pointer
   end
 end

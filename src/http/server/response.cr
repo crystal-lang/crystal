@@ -42,6 +42,7 @@ class HTTP::Server
 
     # :nodoc:
     def reset
+      # This method is called by RequestProcessor to avoid allocating a new instance for each iteration.
       @headers.clear
       @cookies = nil
       @status_code = 200
@@ -63,6 +64,8 @@ class HTTP::Server
 
     # See `IO#write(slice)`.
     def write(slice : Bytes)
+      return if slice.empty?
+
       @output.write(slice)
     end
 
@@ -100,6 +103,11 @@ class HTTP::Server
     # This method must be implemented if wrapping the response output.
     def close
       @output.close
+    end
+
+    # Returns `true` if this response has been closed.
+    def closed?
+      @output.closed?
     end
 
     # Generates an error response using *message* and *code*.
@@ -152,6 +160,7 @@ class HTTP::Server
         @sync = false
         @flush_on_newline = false
         @chunked = false
+        @closed = false
       end
 
       private def unbuffered_read(slice : Bytes)
@@ -159,6 +168,8 @@ class HTTP::Server
       end
 
       private def unbuffered_write(slice : Bytes)
+        return if slice.empty?
+
         unless response.wrote_headers?
           if response.version != "HTTP/1.0" && !response.headers.has_key?("Content-Length")
             response.headers["Transfer-Encoding"] = "chunked"
@@ -176,6 +187,10 @@ class HTTP::Server
         else
           @io.write(slice)
         end
+      end
+
+      def closed?
+        @closed
       end
 
       def close
@@ -200,6 +215,7 @@ class HTTP::Server
 
       private def unbuffered_close
         @io << "0\r\n\r\n" if @chunked
+        @closed = true
       end
 
       private def unbuffered_rewind

@@ -5,13 +5,15 @@ TODO: Write a description here
 ## Installation
 
 <%- if config.skeleton_type == "lib" -%>
-Add this to your application's `shard.yml`:
+1. Add the dependency to your `shard.yml`:
 
-```yaml
-dependencies:
-  <%= config.name %>:
-    github: <%= config.github_name %>/<%= config.name %>
-```
+   ```yaml
+   dependencies:
+     <%= config.name %>:
+       github: <%= config.github_name %>/<%= config.name %>
+   ```
+
+2. Run `shards install`
 <%- else -%>
 TODO: Write installation instructions here
 <%- end -%>
@@ -40,4 +42,4 @@ TODO: Write development instructions here
 
 ## Contributors
 
-- [<%= config.github_name %>](https://github.com/<%= config.github_name %>) <%= config.author %> - creator, maintainer
+- [<%= config.author %>](https://github.com/<%= config.github_name %>) - creator and maintainer

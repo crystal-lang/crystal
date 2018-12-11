@@ -62,7 +62,7 @@ $(function(){
 
   $("#saveAsGist").click(function(e) {
     if (Playground.settings.getGithubToken() == '') {
-      window.open('/settings.html');
+      window.open('/settings');
       return;
     }
 

@@ -16,6 +16,11 @@ class JSON::Builder
 
   @indent : String?
 
+  # By default the maximum nesting of arrays/objects is 99. Nesting more
+  # than this will result in a JSON::Error. Changing the value of this property
+  # allows more/less nesting.
+  property max_nesting = 99
+
   # Creates a `JSON::Builder` that will write to the given `IO`.
   def initialize(@io : IO)
     @state = [StartState.new] of State
@@ -158,7 +163,7 @@ class JSON::Builder
   # Writes the start of an array.
   def start_array
     start_scalar
-    @current_indent += 1
+    increase_indent
     @state.push ArrayState.new(empty: true)
     @io << '['
   end
@@ -173,7 +178,7 @@ class JSON::Builder
     end
     write_indent state
     @io << ']'
-    @current_indent -= 1
+    decrease_indent
     end_scalar
   end
 
@@ -187,7 +192,7 @@ class JSON::Builder
   # Writes the start of an object.
   def start_object
     start_scalar
-    @current_indent += 1
+    increase_indent
     @state.push ObjectState.new(empty: true, name: true)
     @io << '{'
   end
@@ -205,7 +210,7 @@ class JSON::Builder
     end
     write_indent state
     @io << '}'
-    @current_indent -= 1
+    decrease_indent
     end_scalar
   end
 
@@ -347,6 +352,17 @@ class JSON::Builder
     times.times do
       @io << indent
     end
+  end
+
+  private def increase_indent
+    @current_indent += 1
+    if @current_indent > @max_nesting
+      raise JSON::Error.new("Nesting of #{@current_indent} is too deep")
+    end
+  end
+
+  private def decrease_indent
+    @current_indent -= 1
   end
 end
 

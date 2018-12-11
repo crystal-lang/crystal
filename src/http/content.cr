@@ -3,15 +3,49 @@ require "http/common"
 module HTTP
   # :nodoc:
   module Content
+    CONTINUE = "HTTP/1.1 100 Continue\r\n\r\n"
+
+    @continue_sent = false
+    setter expects_continue : Bool = false
+
     def close
+      @expects_continue = false
       skip_to_end
       super
+    end
+
+    protected def ensure_send_continue
+      return unless @expects_continue
+      return if @continue_sent
+      @io << CONTINUE
+      @io.flush
+      @continue_sent = true
     end
   end
 
   # :nodoc:
   class FixedLengthContent < IO::Sized
     include Content
+
+    def read(slice : Bytes)
+      ensure_send_continue
+      super
+    end
+
+    def read_byte
+      ensure_send_continue
+      super
+    end
+
+    def peek
+      ensure_send_continue
+      super
+    end
+
+    def skip(bytes_count)
+      ensure_send_continue
+      super
+    end
 
     def write(slice : Bytes)
       raise IO::Error.new "Can't write to FixedLengthContent"
@@ -26,18 +60,22 @@ module HTTP
     end
 
     def read(slice : Bytes)
+      ensure_send_continue
       @io.read(slice)
     end
 
     def read_byte
+      ensure_send_continue
       @io.read_byte
     end
 
     def peek
+      ensure_send_continue
       @io.peek
     end
 
     def skip(bytes_count)
+      ensure_send_continue
       @io.skip(bytes_count)
     end
 
@@ -66,6 +104,7 @@ module HTTP
     end
 
     def read(slice : Bytes)
+      ensure_send_continue
       count = slice.size
       return 0 if count == 0
 
@@ -87,6 +126,7 @@ module HTTP
     end
 
     def read_byte
+      ensure_send_continue
       next_chunk
       return super if @received_final_chunk
 
@@ -100,6 +140,7 @@ module HTTP
     end
 
     def peek
+      ensure_send_continue
       next_chunk
       return Bytes.empty if @received_final_chunk
 
@@ -115,6 +156,7 @@ module HTTP
     end
 
     def skip(bytes_count)
+      ensure_send_continue
       if bytes_count <= @chunk_remaining
         @io.skip(bytes_count)
         @chunk_remaining -= bytes_count
@@ -123,7 +165,7 @@ module HTTP
       end
     end
 
-    # Check if the last read consumed a chunk and we
+    # Checks if the last read consumed a chunk and we
     # need to start consuming the next one.
     private def next_chunk
       return if @chunk_remaining > 0 || @received_final_chunk

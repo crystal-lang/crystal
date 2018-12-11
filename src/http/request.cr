@@ -129,7 +129,7 @@ class HTTP::Request
     value
   end
 
-  # Return request host from headers.
+  # Returns request host from headers.
   def host
     host = @headers["Host"]?
     return unless host
@@ -137,7 +137,7 @@ class HTTP::Request
     index ? host[0...index] : host
   end
 
-  # Return request host with port from headers.
+  # Returns request host with port from headers.
   def host_with_port
     @headers["Host"]?
   end
@@ -158,5 +158,80 @@ class HTTP::Request
   private def update_uri
     return unless @query_params
     uri.query = query_params.to_s
+  end
+
+  def if_match : Array(String)?
+    parse_etags("If-Match")
+  end
+
+  def if_none_match : Array(String)?
+    parse_etags("If-None-Match")
+  end
+
+  private def parse_etags(header_name)
+    header = headers[header_name]?
+
+    return unless header
+    return ["*"] if header == "*"
+
+    etags = [] of String
+    reader = Char::Reader.new(header)
+
+    require_comma = false
+    while reader.has_next?
+      case char = reader.current_char
+      when ' ', '\t'
+        reader.next_char
+      when ','
+        reader.next_char
+        require_comma = false
+      when '"', 'W'
+        if require_comma
+          # return what we've got on error
+          return etags
+        end
+
+        reader, etag = consume_etag(reader)
+        if etag
+          etags << etag
+          require_comma = true
+        else
+          # return what we've got on error
+          return etags
+        end
+      else
+        # return what we've got on error
+        return etags
+      end
+    end
+
+    etags
+  end
+
+  private def consume_etag(reader)
+    start = reader.pos
+
+    if reader.current_char == 'W'
+      reader.next_char
+      return reader, nil if reader.current_char != '/' || !reader.has_next?
+      reader.next_char
+    end
+
+    return reader, nil if reader.current_char != '"'
+    reader.next_char
+
+    while reader.has_next?
+      case char = reader.current_char
+      when '!', '\u{23}'..'\u{7E}', '\u{80}'..'\u{FF}'
+        reader.next_char
+      when '"'
+        reader.next_char
+        return reader, reader.string.byte_slice(start, reader.pos - start)
+      else
+        return reader, nil
+      end
+    end
+
+    return reader, nil
   end
 end

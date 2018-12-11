@@ -34,13 +34,12 @@ describe Concurrent::Future do
 
   describe "future" do
     it "computes a value" do
-      chan = Channel(Int32).new(1)
+      chan = Channel::Unbuffered(Int32).new
 
       f = future { chan.receive }
       f.running?.should be_true
 
       chan.send 42
-      Fiber.yield
       f.completed?.should be_true
 
       f.get.should eq(42)
@@ -59,10 +58,16 @@ describe Concurrent::Future do
     end
 
     it "raises" do
-      f = future { raise IndexError.new("test error") }
+      # we rely on the channel to sync fibers:
+      chan = Channel::Unbuffered(Int32).new
+
+      f = future do
+        chan.receive
+        raise IndexError.new("test error")
+      end
       f.running?.should be_true
 
-      Fiber.yield
+      chan.send(0)
       f.completed?.should be_true
 
       expect_raises(IndexError) { f.get }

@@ -218,6 +218,12 @@ class Crystal::CodeGenVisitor
     store value, target_pointer
   end
 
+  def assign_distinct(target_pointer, target_type : VirtualMetaclassType, value_type : UnionType, value)
+    # Can happen when assigning Foo+.class <- Bar.class | Baz.class with Bar < Foo and Baz < Foo
+    casted_value = cast_to_pointer(union_value(value), target_type)
+    store load(casted_value), target_pointer
+  end
+
   def assign_distinct(target_pointer, target_type : NilableProcType, value_type : NilType, value)
     nilable_fun = make_nilable_fun target_type
     store nilable_fun, target_pointer
@@ -538,11 +544,6 @@ class Crystal::CodeGenVisitor
   end
 
   def upcast_distinct(value, to_type : MetaclassType | GenericClassInstanceMetaclassType | GenericModuleInstanceMetaclassType | VirtualMetaclassType, from_type)
-    # Special case: union of metaclasses is still represented as a union
-    if from_type.is_a?(MixedUnionType)
-      return load(union_type_id(value))
-    end
-
     value
   end
 

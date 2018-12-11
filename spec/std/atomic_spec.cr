@@ -169,4 +169,20 @@ describe Atomic do
     atomic.swap(2).should eq(1)
     atomic.get.should eq(2)
   end
+
+  it "#swap with Reference type" do
+    atomic = Atomic.new("hello")
+    atomic.swap("world").should eq("hello")
+    atomic.get.should eq("world")
+  end
+
+  it "#swap with nil" do
+    atomic = Atomic(String?).new(nil)
+
+    atomic.swap("not nil").should eq(nil)
+    atomic.get.should eq("not nil")
+
+    atomic.swap(nil).should eq("not nil")
+    atomic.get.should eq(nil)
+  end
 end

@@ -133,7 +133,7 @@ describe "Char" do
   end
 
   it "escapes" do
-    7.chr.ord.should eq(7) # TODO: use \a
+    '\a'.ord.should eq(7)
     '\b'.ord.should eq(8)
     '\t'.ord.should eq(9)
     '\n'.ord.should eq(10)
@@ -261,14 +261,13 @@ describe "Char" do
   describe "+" do
     it "does for both ascii" do
       str = 'f' + "oo"
-      str.bytesize.should eq(3)
-      str.@length.should eq(3)
+      str.@length.should eq(3) # Check that it was precomputed
       str.should eq("foo")
     end
 
     it "does for both unicode" do
       str = '青' + "旅路"
-      str.@length.should eq(3)
+      str.@length.should eq(3) # Check that it was precomputed
       str.should eq("青旅路")
     end
   end

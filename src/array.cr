@@ -496,7 +496,7 @@ class Array(T)
   end
 
   @[AlwaysInline]
-  def unsafe_at(index : Int)
+  def unsafe_fetch(index : Int)
     @buffer[index]
   end
 
@@ -567,7 +567,7 @@ class Array(T)
     end
 
     (@buffer + @size).copy_from(other.to_unsafe, other_size)
-    @size += other_size
+    @size = new_size
 
     self
   end
@@ -944,6 +944,24 @@ class Array(T)
   def map_with_index!(&block : (T, Int32) -> T)
     to_unsafe.map_with_index!(size) { |e, i| yield e, i }
     self
+  end
+
+  # Returns an `Array` with the first *count* elements removed
+  # from the original array.
+  #
+  # If *count* is bigger than the number of elements in the array, returns an empty array.
+  #
+  # ```
+  # [1, 2, 3, 4, 5, 6].skip(3) # => [4, 5, 6]
+  # ```
+  def skip(count : Int) : Array(T)
+    raise ArgumentError.new("Attempt to skip negative size") if count < 0
+
+    new_size = Math.max(size - count, 0)
+    Array(T).build(new_size) do |buffer|
+      buffer.copy_from(to_unsafe + count, new_size)
+      new_size
+    end
   end
 
   # Returns an `Array` with all possible permutations of *size*.
@@ -1694,15 +1712,15 @@ class Array(T)
   def transpose
     return Array(Array(typeof(first.first))).new if empty?
 
-    len = at(0).size
+    len = self[0].size
     (1...@size).each do |i|
-      l = at(i).size
+      l = self[i].size
       raise IndexError.new if len != l
     end
 
     Array(Array(typeof(first.first))).new(len) do |i|
       Array(typeof(first.first)).new(@size) do |j|
-        at(j).at(i)
+        self[j][i]
       end
     end
   end

@@ -223,7 +223,7 @@ class Regex
     DUPNAMES = 0x00080000
   end
 
-  # Return a `Regex::Options` representing the optional flags applied to this `Regex`.
+  # Returns a `Regex::Options` representing the optional flags applied to this `Regex`.
   #
   # ```
   # /ab+c/ix.options      # => Regex::Options::IGNORE_CASE | Regex::Options::EXTENDED
@@ -231,7 +231,7 @@ class Regex
   # ```
   getter options : Options
 
-  # Return the original `String` representation of the `Regex` pattern.
+  # Returns the original `String` representation of the `Regex` pattern.
   #
   # ```
   # /ab+c/x.source # => "ab+c"

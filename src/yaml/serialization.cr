@@ -60,7 +60,7 @@ module YAML
   # * **ignore**: if `true` skip this field in seriazation and deserialization (by default false)
   # * **key**: the value of the key in the yaml object (by default the name of the instance variable)
   # * **converter**: specify an alternate type for parsing and generation. The converter must define `from_yaml(YAML::PullParser)` and `to_yaml(value, YAML::Builder)` as class methods. Examples of converters are `Time::Format` and `Time::EpochConverter` for `Time`.
-  # * **presense**: if `true`, a `@{{key}}_present` instance variable will be generated when the key was present (even if it has a `null` value), `false` by default
+  # * **presence**: if `true`, a `@{{key}}_present` instance variable will be generated when the key was present (even if it has a `null` value), `false` by default
   # * **emit_null**: if `true`, emits a `null` value for nilable property (by default nulls are not emitted)
   #
   # Deserialization also respects default values of variables:
@@ -123,7 +123,7 @@ module YAML
 
         ctx.record_anchor(node, instance)
 
-        instance.initialize(ctx, node, nil)
+        instance.initialize(__context_for_yaml_serializable: ctx, __node_for_yaml_serializable: node)
         GC.add_finalizer(instance) if instance.responds_to?(:finalize)
         instance
       end
@@ -138,7 +138,7 @@ module YAML
       end
     end
 
-    def initialize(ctx : YAML::ParseContext, node : ::YAML::Nodes::Node, dummy : Nil)
+    def initialize(*, __context_for_yaml_serializable ctx : YAML::ParseContext, __node_for_yaml_serializable node : ::YAML::Nodes::Node)
       {% begin %}
         {% properties = {} of Nil => Nil %}
         {% for ivar in @type.instance_vars %}
@@ -172,32 +172,28 @@ module YAML
 
             key = key_node.value
 
-            {% if properties.size > 0 %}
-              case key
-              {% for name, value in properties %}
-                when {{value[:key]}}
-                  %found{name} = true
-                  begin
-                    %var{name} =
-                      {% if value[:nilable] || value[:has_default] %} YAML::Schema::Core.parse_null_or(value_node) { {% end %}
+            case key
+            {% for name, value in properties %}
+              when {{value[:key]}}
+                %found{name} = true
+                begin
+                  %var{name} =
+                    {% if value[:nilable] || value[:has_default] %} YAML::Schema::Core.parse_null_or(value_node) { {% end %}
 
-                      {% if value[:converter] %}
-                        {{value[:converter]}}.from_yaml(ctx, value_node)
-                      {% elsif value[:type].is_a?(Path) || value[:type].is_a?(Generic) %}
-                        {{value[:type]}}.new(ctx, value_node)
-                      {% else %}
-                        ::Union({{value[:type]}}).new(ctx, value_node)
-                      {% end %}
+                    {% if value[:converter] %}
+                      {{value[:converter]}}.from_yaml(ctx, value_node)
+                    {% elsif value[:type].is_a?(Path) || value[:type].is_a?(Generic) %}
+                      {{value[:type]}}.new(ctx, value_node)
+                    {% else %}
+                      ::Union({{value[:type]}}).new(ctx, value_node)
+                    {% end %}
 
-                    {% if value[:nilable] || value[:has_default] %} } {% end %}
-                  end
-              {% end %}
-              else
-                on_unknown_yaml_attribute(ctx, key, key_node, value_node)
-              end
-            {% else %}
-              on_unknown_yaml_attribute(ctx, key, key_node, value_node)
+                  {% if value[:nilable] || value[:has_default] %} } {% end %}
+                end
             {% end %}
+            else
+              on_unknown_yaml_attribute(ctx, key, key_node, value_node)
+            end
           end
         when YAML::Nodes::Scalar
           if node.value.empty? && node.style.plain? && !node.tag

@@ -34,12 +34,24 @@ module Crystal::Macros
   def flag?(name) : BoolLiteral
   end
 
-  # Prints an AST node at compile-time. Useful for debugging macros.
-  def puts(expression) : Nop
+  # Prints AST nodes at compile-time. Useful for debugging macros.
+  def puts(*expressions) : Nop
   end
 
   # Same as `puts`.
-  def p(expression) : Nop
+  def p(*expressions) : Nop
+  end
+
+  # Same as `puts`.
+  def pp(*expressions) : Nop
+  end
+
+  # Prints macro expressions together with their values at compile-time. Useful for debugging macros.
+  def p!(*expressions) : Nop
+  end
+
+  # Same as `p!`
+  def pp!(*expressions) : Nop
   end
 
   # Executes a system command and returns the output as a `MacroId`.
@@ -53,6 +65,26 @@ module Crystal::Macros
 
   # Gives a compile-time error with the given *message*.
   def raise(message) : NoReturn
+  end
+
+  # Reads a file and returns a `StringLiteral` with its contents.
+  #
+  # Gives a compile-time error if the file doesn't exist or if
+  # reading the file fails.
+  #
+  # To read a file relative to where the macro is defined, use:
+  #
+  # ```
+  # read_file("#{__DIR__}/some_file.txt")
+  # ```
+  #
+  # NOTE: Relative paths are resolved to the current working directory.
+  def read_file(filename) : StringLiteral
+  end
+
+  # Same as `read_file`, except that `nil` is returned on any I/O failure
+  # instead of issuing a compile-time failure.
+  def read_file?(filename) : StringLiteral | NilLiteral
   end
 
   # Compiles and execute a Crystal program and returns its output
@@ -610,6 +642,18 @@ module Crystal::Macros
     def []=(index : NumberLiteral, value : ASTNode)
     end
 
+    # Similar to `Array#unshift`.
+    def unshift(value : ASTNode) : ArrayLiteral
+    end
+
+    # Similar to `Array#push`.
+    def push(value : ASTNode) : ArrayLiteral
+    end
+
+    # Similar to `Array#<<`.
+    def <<(value : ASTNode) : ArrayLiteral
+    end
+
     # Similar to `Array#+`.
     def +(other : ArrayLiteral) : ArrayLiteral
     end
@@ -725,11 +769,11 @@ module Crystal::Macros
     end
 
     # Similar to `NamedTuple#[]` but returns `NilLiteral` if *key* is undefined.
-    def [](key : ASTNode) : ASTNode
+    def [](key : SymbolLiteral | StringLiteral | MacroId) : ASTNode
     end
 
     # Adds or replaces a key.
-    def []=(key : ASTNode) : ASTNode
+    def []=(key : SymbolLiteral | StringLiteral | MacroId) : ASTNode
     end
   end
 
@@ -816,7 +860,7 @@ module Crystal::Macros
     # Returns the value of a named argument,
     # or NilLiteral if the named argument isn't
     # used in this attribute.
-    def [](name : SymbolLiteral) : ASTNode
+    def [](name : SymbolLiteral | StringLiteral | MacroId) : ASTNode
     end
   end
 
@@ -1038,6 +1082,10 @@ module Crystal::Macros
     def block_arg : Arg | Nop
     end
 
+    # Returns `true` if this method can be called with a block, `false` otherwise.
+    def accepts_block? : BoolLiteral
+    end
+
     # Returns the return type of the method, if specified.
     def return_type : ASTNode | Nop
     end
@@ -1254,6 +1302,16 @@ module Crystal::Macros
 
     # Returns the named arguments of this instantiation, if any.
     def named_args : NamedTupleLiteral | NilLiteral
+    end
+
+    # Resolves this generic to a `TypeNode` if it denotes a type,
+    # or otherwise gives a compile-time error.
+    def resolve : ASTNode
+    end
+
+    # Resolves this path to a `TypeNode` if it denotes a type,
+    # or otherwise returns a `NilLiteral`.
+    def resolve? : ASTNode | NilLiteral
     end
   end
 

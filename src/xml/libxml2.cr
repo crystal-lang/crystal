@@ -94,7 +94,12 @@ lib LibXML
   fun xmlParserInputBufferCreateIO(ioread : (Void*, UInt8*, Int) -> Int, ioclose : Void* -> Int, ioctx : Void*, enc : Int) : InputBuffer
   fun xmlNewTextReader(input : InputBuffer, uri : UInt8*) : XMLTextReader
 
+  fun xmlReaderForMemory(buffer : UInt8*, size : Int, url : UInt8*, encoding : UInt8*, options : XML::ParserOptions) : XMLTextReader
+  fun xmlReaderForIO(ioread : (Void*, UInt8*, Int) -> Int, ioclose : Void* -> Int, ioctx : Void*, url : UInt8*, encoding : UInt8*, options : XML::ParserOptions) : XMLTextReader
+
   fun xmlTextReaderRead(reader : XMLTextReader) : Int
+  fun xmlTextReaderNext(reader : XMLTextReader) : Int
+  fun xmlTextReaderNextSibling(reader : XMLTextReader) : Int
   fun xmlTextReaderNodeType(reader : XMLTextReader) : XML::Type
   fun xmlTextReaderConstName(reader : XMLTextReader) : UInt8*
   fun xmlTextReaderIsEmptyElement(reader : XMLTextReader) : Int
@@ -103,6 +108,14 @@ lib LibXML
   fun xmlTextReaderAttributeCount(reader : XMLTextReader) : Int
   fun xmlTextReaderMoveToFirstAttribute(reader : XMLTextReader) : Int
   fun xmlTextReaderMoveToNextAttribute(reader : XMLTextReader) : Int
+  fun xmlTextReaderMoveToAttribute(reader : XMLTextReader, name : UInt8*) : Int
+  fun xmlTextReaderGetAttribute(reader : XMLTextReader, name : UInt8*) : UInt8*
+  fun xmlTextReaderMoveToElement(reader : XMLTextReader) : Int
+  fun xmlTextReaderDepth(reader : XMLTextReader) : Int
+  fun xmlTextReaderReadInnerXml(reader : XMLTextReader) : UInt8*
+  fun xmlTextReaderReadOuterXml(reader : XMLTextReader) : UInt8*
+  fun xmlTextReaderExpand(reader : XMLTextReader) : Node*
+  fun xmlTextReaderCurrentNode(reader : XMLTextReader) : Node*
 
   fun xmlTextReaderSetErrorHandler(reader : XMLTextReader, f : TextReaderErrorFunc) : Void
 
@@ -294,6 +307,8 @@ lib LibXML
   fun xmlGetNsList(doc : Doc*, node : Node*) : NS**
 
   fun xmlSetProp(node : Node*, name : UInt8*, value : UInt8*) : Attr*
+
+  fun xmlUnsetProp(node : Node*, name : UInt8*) : Int
 
   fun xmlValidateNameValue(value : UInt8*) : Int
 end

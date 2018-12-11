@@ -7,16 +7,17 @@ module Crystal
       to_s(io)
     end
 
-    def to_s(io, emit_loc_pragma = false, emit_doc = false)
-      visitor = ToSVisitor.new(io, emit_loc_pragma: emit_loc_pragma, emit_doc: emit_doc)
+    def to_s(io, macro_expansion_pragmas = nil, emit_doc = false)
+      visitor = ToSVisitor.new(io, macro_expansion_pragmas: macro_expansion_pragmas, emit_doc: emit_doc)
       self.accept visitor
     end
   end
 
   class ToSVisitor < Visitor
     @str : IO
+    @macro_expansion_pragmas : Hash(Int32, Array(Lexer::LocPragma))?
 
-    def initialize(@str = IO::Memory.new, @emit_loc_pragma = false, @emit_doc = false)
+    def initialize(@str = IO::Memory.new, @macro_expansion_pragmas = nil, @emit_doc = false)
       @indent = 0
       @inside_macro = 0
       @inside_lib = false
@@ -32,14 +33,9 @@ module Crystal
         @str.puts
       end
 
-      if @emit_loc_pragma && (loc = node.location) && loc.filename.is_a?(String)
-        @str << "#<loc:"
-        loc.filename.inspect(@str)
-        @str << ','
-        @str << loc.line_number
-        @str << ','
-        @str << loc.column_number
-        @str << '>'
+      if (macro_expansion_pragmas = @macro_expansion_pragmas) && (loc = node.location) && (filename = loc.filename).is_a?(String)
+        pragmas = macro_expansion_pragmas[@str.pos.to_i32] ||= [] of Lexer::LocPragma
+        pragmas << Lexer::LocSetPragma.new(filename, loc.line_number, loc.column_number)
       end
 
       true
@@ -362,17 +358,31 @@ module Crystal
         @str << ' '
         node.args.last.accept self
       elsif node_obj && !letter_or_underscore?(node.name) && node.args.size == 0
-        @str << decorate_call(node, node.name)
-        in_parenthesis(need_parens, node_obj)
+        if node.name == "+" || node.name == "-" || node.name == "~" || node.name == "&+" || node.name == "&-"
+          @str << decorate_call(node, node.name)
+          in_parenthesis(need_parens, node_obj)
+        else
+          # It is for something like `foo.%` and `foo.*`.
+          in_parenthesis(need_parens, node_obj)
+          @str << '.'
+          @str << node.name
+        end
       elsif node_obj && !letter_or_underscore?(node.name) && node.args.size == 1
         in_parenthesis(need_parens, node_obj)
 
-        @str << ' '
-        @str << decorate_call(node, node.name)
-        @str << ' '
-
         arg = node.args[0]
-        in_parenthesis(need_parens(arg), arg)
+        if node.name == "~" # it is `foo.~(bar)` case.
+          @str << '.'
+          @str << node.name
+          @str << '('
+          arg.accept self
+          @str << ')'
+        else
+          @str << ' '
+          @str << decorate_call(node, node.name)
+          @str << ' '
+          in_parenthesis(need_parens(arg), arg)
+        end
       else
         if node_obj
           in_parenthesis(need_parens, node_obj)
@@ -734,7 +744,9 @@ module Crystal
     def visit(node : MacroExpression)
       @str << (node.output? ? "{{" : "{% ")
       @str << ' ' if node.output?
-      node.exp.accept self
+      outside_macro do
+        node.exp.accept self
+      end
       @str << ' ' if node.output?
       @str << (node.output? ? "}}" : " %}")
       false
@@ -792,7 +804,9 @@ module Crystal
 
     def visit(node : MacroVerbatim)
       @str << "{% verbatim do %}"
-      node.exp.accept self
+      inside_macro do
+        node.exp.accept self
+      end
       @str << "{% end %}"
       false
     end
@@ -985,14 +999,20 @@ module Crystal
     end
 
     def visit(node : RegexLiteral)
-      @str << '/'
-      case exp = node.value
-      when StringLiteral
-        Regex.append_source exp.value, @str
-      when StringInterpolation
-        visit_interpolation(exp) { |s| Regex.append_source s, @str }
+      if (exp = node.value).is_a?(StringLiteral) && exp.value.empty?
+        # // is not always an empty regex, sometimes is an operator
+        # so it's safer to emit empty regex as %r()
+        @str << "%r()"
+      else
+        @str << '/'
+        case exp = node.value
+        when StringLiteral
+          Regex.append_source exp.value, @str
+        when StringInterpolation
+          visit_interpolation(exp) { |s| Regex.append_source s, @str }
+        end
+        @str << '/'
       end
-      @str << '/'
       @str << 'i' if node.options.includes? Regex::Options::IGNORE_CASE
       @str << 'm' if node.options.includes? Regex::Options::MULTILINE
       @str << 'x' if node.options.includes? Regex::Options::EXTENDED
@@ -1389,7 +1409,7 @@ module Crystal
     def visit(node : Alias)
       @str << keyword("alias")
       @str << ' '
-      @str << node.name
+      node.name.accept self
       @str << " = "
       node.value.accept self
       false
@@ -1433,24 +1453,29 @@ module Crystal
     end
 
     def visit(node : Asm)
+      @str << "asm("
       node.text.inspect(@str)
       @str << " :"
-      if output = node.output
+      if outputs = node.outputs
         @str << ' '
-        output.accept self
+        outputs.join(", ", @str, &.accept self)
         @str << ' '
       end
       @str << ':'
       if inputs = node.inputs
         @str << ' '
         inputs.join(", ", @str, &.accept self)
+        @str << ' '
       end
+      @str << ":"
       if clobbers = node.clobbers
-        @str << " : "
+        @str << ' '
         clobbers.join(", ", @str, &.inspect @str)
+        @str << ' '
       end
+      @str << ":"
       if node.volatile? || node.alignstack? || node.intel?
-        @str << " : "
+        @str << ' '
         comma = false
         if node.volatile?
           @str << %("volatile")
@@ -1467,6 +1492,7 @@ module Crystal
           comma = true
         end
       end
+      @str << ')'
       false
     end
 
@@ -1519,6 +1545,13 @@ module Crystal
       @inside_macro += 1
       yield
       @inside_macro -= 1
+    end
+
+    def outside_macro
+      old_inside_macro = @inside_macro
+      @inside_macro = 0
+      yield
+      @inside_macro = old_inside_macro
     end
 
     def to_s

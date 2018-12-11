@@ -1,6 +1,7 @@
-require "spec"
+require "../spec_helper"
 require "http/web_socket"
 require "random/secure"
+require "../../../support/ssl"
 
 private def assert_text_packet(packet, size, final = false)
   assert_packet packet, HTTP::WebSocket::Protocol::Opcode::TEXT, size, final: final
@@ -129,7 +130,7 @@ describe HTTP::WebSocket do
     end
 
     it "read long packet" do
-      data = File.read("#{__DIR__}/../data/websocket_longpacket.bin")
+      data = File.read(datapath("websocket_longpacket.bin"))
       io = IO::Memory.new(data)
       ws = HTTP::WebSocket::Protocol.new(io)
 
@@ -336,6 +337,8 @@ describe HTTP::WebSocket do
   it "negotiates over HTTPS correctly" do
     address_chan = Channel(Socket::IPAddress).new
 
+    server_context, client_context = ssl_context_pair
+
     spawn do
       http_ref = nil
       ws_handler = HTTP::WebSocketHandler.new do |ws, ctx|
@@ -351,17 +354,14 @@ describe HTTP::WebSocket do
       end
 
       http_server = http_ref = HTTP::Server.new([ws_handler])
-      tls = http_server.tls = OpenSSL::SSL::Context::Server.new
-      tls.certificate_chain = File.join(__DIR__, "../openssl/ssl/openssl.crt")
-      tls.private_key = File.join(__DIR__, "../openssl/ssl/openssl.key")
-      address = http_server.bind_unused_port
+
+      address = http_server.bind_tls("127.0.0.1", context: server_context)
       address_chan.send(address)
       http_server.listen
     end
 
     listen_address = address_chan.receive
 
-    client_context = OpenSSL::SSL::Context::Client.insecure
     ws2 = HTTP::WebSocket.new(listen_address.address, port: listen_address.port, path: "/", tls: client_context)
 
     random = Random::Secure.hex

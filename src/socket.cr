@@ -39,8 +39,8 @@ class Socket < IO
 
   getter fd : Int32
 
-  @read_event : Event::Event?
-  @write_event : Event::Event?
+  @read_event : Crystal::Event?
+  @write_event : Crystal::Event?
 
   @closed : Bool
 
@@ -89,7 +89,7 @@ class Socket < IO
     end
   end
 
-  # Force opened sockets to be closed on `exec(2)`. Only for platforms that don't
+  # Forces opened sockets to be closed on `exec(2)`. Only for platforms that don't
   # support `SOCK_CLOEXEC` (e.g., Darwin).
   protected def init_close_on_exec(fd : Int32)
     {% unless LibC.has_constant?(:SOCK_CLOEXEC) %}
@@ -183,13 +183,13 @@ class Socket < IO
   end
 
   # Tells the previously bound socket to listen for incoming connections.
-  def listen(backlog = SOMAXCONN)
+  def listen(backlog : Int = SOMAXCONN)
     listen(backlog) { |errno| raise errno }
   end
 
   # Tries to listen for connections on the previously bound socket.
   # Yields an `Errno` on failure.
-  def listen(backlog = SOMAXCONN)
+  def listen(backlog : Int = SOMAXCONN)
     unless LibC.listen(fd, backlog) == 0
       yield Errno.new("listen")
     end
@@ -228,7 +228,7 @@ class Socket < IO
   # ```
   def accept?
     if client_fd = accept_impl
-      sock = Socket.new(client_fd)
+      sock = Socket.new(client_fd, family, type, protocol, blocking)
       sock.sync = sync?
       sock
     end
@@ -391,7 +391,15 @@ class Socket < IO
   end
 
   def reuse_port?
-    getsockopt_bool LibC::SO_REUSEPORT
+    ret = getsockopt(LibC::SO_REUSEPORT, 0) do |errno|
+      # If SO_REUSEPORT is not supported, the return value should be `false`
+      if errno.errno == Errno::ENOPROTOOPT
+        return false
+      else
+        raise errno
+      end
+    end
+    ret != 0
   end
 
   def reuse_port=(val : Bool)
@@ -445,9 +453,13 @@ class Socket < IO
 
   # Returns the modified *optval*.
   def getsockopt(optname, optval, level = LibC::SOL_SOCKET)
+    getsockopt(optname, optval, level) { |errno| raise errno }
+  end
+
+  protected def getsockopt(optname, optval, level = LibC::SOL_SOCKET)
     optsize = LibC::SocklenT.new(sizeof(typeof(optval)))
     ret = LibC.getsockopt(fd, level, optname, (pointerof(optval).as(Void*)), pointerof(optsize))
-    raise Errno.new("getsockopt") if ret == -1
+    yield Errno.new("getsockopt") if ret == -1
     optval
   end
 
@@ -539,13 +551,13 @@ class Socket < IO
   end
 
   private def add_read_event(timeout = @read_timeout)
-    event = @read_event ||= Scheduler.create_fd_read_event(self)
+    event = @read_event ||= Crystal::EventLoop.create_fd_read_event(self)
     event.add timeout
     nil
   end
 
   private def add_write_event(timeout = @write_timeout)
-    event = @write_event ||= Scheduler.create_fd_write_event(self)
+    event = @write_event ||= Crystal::EventLoop.create_fd_write_event(self)
     event.add timeout
     nil
   end

@@ -34,6 +34,10 @@ struct Time::Format
           day_of_month_blank_padded
         when 'F'
           year_month_day
+        when 'g'
+          calendar_week_year_modulo100
+        when 'G'
+          calendar_week_year
         when 'H'
           hour_24_zero_padded
         when 'I'
@@ -61,13 +65,15 @@ struct Time::Format
         when 'R'
           twenty_four_hour_time
         when 's'
-          epoch
+          unix_seconds
         when 'S'
           second
         when 'T', 'X'
           twenty_four_hour_time_with_seconds
         when 'u'
           day_of_week_monday_1_7
+        when 'V'
+          calendar_week_week
         when 'w'
           day_of_week_sunday_0_6
         when 'y'

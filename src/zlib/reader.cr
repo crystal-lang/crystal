@@ -4,6 +4,8 @@
 # instance, it reads data from the underlying IO, decompresses it, and returns
 # it to the caller.
 class Zlib::Reader < IO
+  include IO::Buffered
+
   # Whether to close the enclosed `IO` when closing this reader.
   property? sync_close = false
 
@@ -56,7 +58,7 @@ class Zlib::Reader < IO
   end
 
   # See `IO#read`.
-  def read(slice : Bytes)
+  def unbuffered_read(slice : Bytes)
     check_open
 
     return 0 if slice.empty?
@@ -79,16 +81,28 @@ class Zlib::Reader < IO
   end
 
   # Always raises `IO::Error` because this is a read-only `IO`.
-  def write(slice : Bytes)
+  def unbuffered_write(slice : Bytes)
     raise IO::Error.new "Can't write to Zlib::Reader"
   end
 
-  def close
+  def unbuffered_flush
+    raise IO::Error.new "Can't flush Zlib::Reader"
+  end
+
+  def unbuffered_close
     return if @closed
     @closed = true
 
     @flate_io.close
     @io.close if @sync_close
+  end
+
+  def unbuffered_rewind
+    check_open
+
+    @io.rewind
+
+    initialize(@io, @sync_close, @flate_io.dict)
   end
 
   protected def self.invalid_header

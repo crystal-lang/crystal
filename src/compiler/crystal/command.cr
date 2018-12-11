@@ -42,8 +42,6 @@ class Crystal::Command
         --help, -h               show this help
     USAGE
 
-  VALID_EMIT_VALUES = %w(asm llvm-bc llvm-ir obj)
-
   def self.run(options = ARGV)
     new(options).run
   end
@@ -115,11 +113,7 @@ class Crystal::Command
   rescue ex : OptionParser::Exception
     error ex.message
   rescue ex
-    STDERR.puts ex
-    ex.backtrace.each do |frame|
-      STDERR.puts frame
-    end
-    STDERR.puts
+    ex.inspect_with_backtrace STDERR
     error "you've found a bug in the Crystal compiler. Please open an issue, including source code that will allow us to reproduce the bug: https://github.com/crystal-lang/crystal/issues"
   end
 
@@ -313,7 +307,10 @@ class Crystal::Command
       end
 
       unless no_codegen
-        opts.on("--emit [#{VALID_EMIT_VALUES.join('|')}]", "Comma separated list of types of output for the compiler to emit") do |emit_values|
+        valid_emit_values = Compiler::EmitTarget.names
+        valid_emit_values.map! { |v| v.gsub('_', '-').downcase }
+
+        opts.on("--emit [#{valid_emit_values.join('|')}]", "Comma separated list of types of output for the compiler to emit") do |emit_values|
           compiler.emit = validate_emit_values(emit_values.split(',').map(&.strip))
         end
       end
@@ -399,7 +396,7 @@ class Crystal::Command
         opts.on("--single-module", "Generate a single LLVM module") do
           compiler.single_module = true
         end
-        opts.on("--threads ", "Maximum number of threads to use") do |n_threads|
+        opts.on("--threads NUM", "Maximum number of threads to use") do |n_threads|
           compiler.n_threads = n_threads.to_i
         end
         unless run
@@ -518,12 +515,15 @@ class Crystal::Command
   end
 
   private def validate_emit_values(values)
+    emit_targets = Compiler::EmitTarget::None
     values.each do |value|
-      unless VALID_EMIT_VALUES.includes?(value)
+      if target = Compiler::EmitTarget.parse?(value.gsub('-', '_'))
+        emit_targets |= target
+      else
         error "invalid emit value '#{value}'"
       end
     end
-    values
+    emit_targets
   end
 
   private def error(msg, exit_code = 1)

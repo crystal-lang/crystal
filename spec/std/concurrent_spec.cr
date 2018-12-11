@@ -4,8 +4,9 @@ private def method_with_named_args(chan, x = 1, y = 2)
   chan.send(x + y)
 end
 
-private def method_named(expected_named)
+private def method_named(expected_named, chan)
   Fiber.current.name.should eq(expected_named)
+  chan.close
 end
 
 class SomeParallelJobException < Exception
@@ -57,15 +58,18 @@ describe "concurrent" do
     end
 
     it "spawns named" do
+      chan = Channel::Unbuffered(Nil).new
       spawn(name: "sub") do
         Fiber.current.name.should eq("sub")
+        chan.close
       end
-      Fiber.yield
+      chan.receive?
     end
 
     it "spawns named with macro" do
-      spawn method_named("foo"), name: "foo"
-      Fiber.yield
+      chan = Channel::Unbuffered(Nil).new
+      spawn method_named("foo", chan), name: "foo"
+      chan.receive?
     end
   end
 

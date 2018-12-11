@@ -37,12 +37,12 @@ require "crystal/system/time"
 #
 # ```
 # time = Time.utc(2016, 2, 15, 10, 20, 30)
-# time.to_s        # => 2016-02-15 10:20:30 UTC
+# time.to_s # => 2016-02-15 10:20:30 UTC
 # time = Time.new(2016, 2, 15, 10, 20, 30, location: Time::Location.load("Europe/Berlin"))
-# time.to_s        # => 2016-02-15 10:20:30 +01:00 Europe/Berlin
-# The time-of-day can be omitted and defaults to midnight (start of day):
+# time.to_s # => 2016-02-15 10:20:30 +01:00 Europe/Berlin
+# # The time-of-day can be omitted and defaults to midnight (start of day):
 # time = Time.utc(2016, 2, 15)
-# time.to_s        # => 2016-02-15 00:00:00 UTC
+# time.to_s # => 2016-02-15 00:00:00 UTC
 # ```
 #
 # ### Retrieving Time Information
@@ -59,10 +59,19 @@ require "crystal/system/time"
 # time.second      # => 30
 # time.millisecond # => 0
 # time.nanosecond  # => 0
-# time.day_of_week # => Monday
+# time.day_of_week # => Time::DayOfWeek::Monday
 # time.day_of_year # => 46
 # time.monday?     # => true
-# time.time_of_day # => 15:10:30
+# time.time_of_day # => 10:20:30
+# ```
+#
+# For querying if a time is at a specific day of week, `Time` offers named
+# predicate methods, delegating to `#day_of_week`:
+#
+# ```
+# time.monday? # => true
+# # ...
+# time.sunday? # => false
 # ```
 #
 # ### Time Zones
@@ -85,7 +94,7 @@ require "crystal/system/time"
 #
 # ```
 # time = Time.utc(2018, 3, 8, 22, 5, 13)
-# time          # => 2016-02-15 10:20:30 UTC
+# time          # => 2018-03-08 22:05:13.0 UTC
 # time.location # => #<Time::Location UTC>
 # time.zone     # => #<Time::Location::Zone UTC +00:00 (0s) STD>
 # time.offset   # => 0
@@ -118,6 +127,10 @@ require "crystal/system/time"
 # time.to_local # equals time.in(Location.local)
 # ```
 #
+# `#to_local_in` allows changing the time zone while keeping
+# the same local date-time (wall clock) which results in a different instant
+# on the time line.
+#
 # ### Formatting and Parsing Time
 #
 # To make date-time instances exchangeable between different computer systems
@@ -131,11 +144,12 @@ require "crystal/system/time"
 # time.to_s("%Y-%m-%d %H:%M:%S %:z") # => "2015-10-12 10:30:00 +00:00"
 # ```
 #
-# Similarly, `Time.parse` is used to construct a `Time` instance from date-time
+# Similarly, `Time.parse` and `Time.parse!` are used to construct a `Time` instance from date-time
 # information in a string, according to a specified pattern:
 #
 # ```
-# Time.parse("2015-10-12 10:30:00 +00:00", "%Y-%m-%d %H:%M:%S %z")
+# Time.parse("2015-10-12 10:30:00 +00:00", "%Y-%m-%d %H:%M:%S %z", Time::Location::UTC)
+# Time.parse!("2015-10-12 10:30:00 +00:00", "%Y-%m-%d %H:%M:%S %z")
 # ```
 #
 # See `Time::Format` for all directives.
@@ -175,7 +189,7 @@ require "crystal/system/time"
 # computer's wall clock has changed between both calls.
 #
 # As an alternative, the operating system also provides a monotonic clock.
-# It's time-line has no specfied starting point but is strictly linearly
+# Its time-line has no specfied starting point but is strictly linearly
 # increasing.
 #
 # This monotonic clock should always be used for measuring elapsed time.
@@ -225,6 +239,9 @@ struct Time
   NANOSECONDS_PER_MILLISECOND = 1_000_000_i64
 
   # :nodoc:
+  NANOSECONDS_PER_MICROSECOND = 1_000_i64
+
+  # :nodoc:
   NANOSECONDS_PER_SECOND = 1_000_000_000_i64
 
   # :nodoc:
@@ -245,33 +262,46 @@ struct Time
   # :nodoc:
   DAYS_PER_4_YEARS = 365*4 + 1
 
-  # :nodoc:
-  UNIX_SECONDS = SECONDS_PER_DAY.to_i64 * (1969*365 + 1969/4 - 1969/100 + 1969/400)
+  # This constant is defined to be "1970-01-01 00:00:00 UTC".
+  # Can be used to create a `Time::Span` that represents an Unix Epoch time duration.
+  #
+  # ```
+  # Time.utc_now - Time::UNIX_EPOCH
+  # ```
+  UNIX_EPOCH = utc(1970, 1, 1)
 
   # :nodoc:
   MAX_SECONDS = 315537897599_i64
 
-  # `DayOfWeek` represents a day-of-week in the Gregorian calendar.
+  # `DayOfWeek` represents a day of the week in the Gregorian calendar.
   #
   # ```
   # time = Time.new(2016, 2, 15)
   # time.day_of_week # => Time::DayOfWeek::Monday
   # ```
   #
-  # Alternatively, you can use question methods:
+  # Each member is identified by its ordinal number starting from `Monday = 1`
+  # according to [ISO 8601](http://xml.coverpages.org/ISO-FDIS-8601.pdf).
   #
-  # ```
-  # time.friday? # => false
-  # time.monday? # => true
-  # ```
+  # `#value` returns this ordinal number. It can easily be converted to the also
+  # common numbering based on `Sunday = 0` using `value % 7`.
   enum DayOfWeek
-    Sunday
-    Monday
-    Tuesday
-    Wednesday
-    Thursday
-    Friday
-    Saturday
+    Monday    = 1
+    Tuesday   = 2
+    Wednesday = 3
+    Thursday  = 4
+    Friday    = 5
+    Saturday  = 6
+    Sunday    = 7
+
+    # Returns the day of week that has the given value, or raises if no such member exists.
+    #
+    # This method also accepts `0` to identify `Sunday` in order to be compliant
+    # with the `Sunday = 0` numbering. All other days are equal in both formats.
+    def self.from_value(value : Int32) : self
+      value = 7 if value == 0
+      super(value)
+    end
   end
 
   @seconds : Int64
@@ -350,7 +380,7 @@ struct Time
   #
   # ```
   # time = Time.new(2016, 2, 15, 10, 20, 30, location: Time::Location.load("Europe/Berlin"))
-  # time.to_s # => 2016-02-15 10:20:30 +01:00 Europe/Berlin
+  # time.inspect # => "2016-02-15 10:20:30.0 +01:00 Europe/Berlin"
   # ```
   #
   # Valid value ranges for the individual fields:
@@ -367,7 +397,7 @@ struct Time
   #
   # ```
   # time = Time.new(2016, 2, 15)
-  # time.to_s # => 2016-02-15 00:00:00 +00:00 Local
+  # time.to_s # => "2016-02-15 00:00:00 +00:00"
   # ```
   #
   # The local date-time representation is resolved to a single instant based on
@@ -402,7 +432,7 @@ struct Time
               second
 
     # Normalize internal representation to UTC
-    seconds = seconds - zone_offset_at(seconds, location)
+    seconds = seconds - zone_offset_at(seconds, location) if !location.utc?
 
     new(seconds: seconds, nanoseconds: nanosecond.to_i, location: location)
   end
@@ -411,7 +441,7 @@ struct Time
   #
   # ```
   # time = Time.utc(2016, 2, 15, 10, 20, 30)
-  # time.to_s # => 2016-02-15 10:20:30 UTC
+  # time.to_s # => "2016-02-15 10:20:30 UTC"
   # ```
   #
   # Valid value ranges for the individual fields:
@@ -428,7 +458,7 @@ struct Time
   #
   # ```
   # time = Time.utc(2016, 2, 15)
-  # time.to_s # => 2016-02-15 00:00:00 UTC
+  # time.to_s # => "2016-02-15 00:00:00 UTC"
   # ```
   #
   # Since UTC does not have any time zone transitions, each date-time is
@@ -466,7 +496,7 @@ struct Time
   {% unless flag?(:win32) %}
     # :nodoc:
     def self.new(time : LibC::Timespec, location : Location = Location.local)
-      seconds = UNIX_SECONDS + time.tv_sec
+      seconds = UNIX_EPOCH.total_seconds + time.tv_sec
       nanoseconds = time.tv_nsec.to_i
       new(seconds: seconds, nanoseconds: nanoseconds, location: location)
     end
@@ -478,10 +508,10 @@ struct Time
   # The time zone is always UTC.
   #
   # ```
-  # Time.epoch(981173106) # => 2001-02-03 04:05:06 UTC
+  # Time.unix(981173106) # => 2001-02-03 04:05:06 UTC
   # ```
-  def self.epoch(seconds : Int) : Time
-    utc(seconds: UNIX_SECONDS + seconds, nanoseconds: 0)
+  def self.unix(seconds : Int) : Time
+    utc(seconds: UNIX_EPOCH.total_seconds + seconds, nanoseconds: 0)
   end
 
   # Creates a new `Time` instance that corresponds to the number of
@@ -490,14 +520,36 @@ struct Time
   # The time zone is always UTC.
   #
   # ```
-  # time = Time.epoch_ms(981173106789) # => 2001-02-03 04:05:06.789 UTC
-  # time.millisecond                   # => 789
+  # time = Time.unix_ms(981173106789) # => 2001-02-03 04:05:06.789 UTC
+  # time.millisecond                  # => 789
   # ```
-  def self.epoch_ms(milliseconds : Int) : Time
+  def self.unix_ms(milliseconds : Int) : Time
     milliseconds = milliseconds.to_i64
-    seconds = UNIX_SECONDS + (milliseconds / 1_000)
+    seconds = UNIX_EPOCH.total_seconds + (milliseconds / 1_000)
     nanoseconds = (milliseconds % 1000) * NANOSECONDS_PER_MILLISECOND
     utc(seconds: seconds, nanoseconds: nanoseconds.to_i)
+  end
+
+  # Creates a new `Time` instance with the same local date-time representation
+  # (wall clock) in a different *location*.
+  #
+  # Unlike `#in`, which always preserves the same instant in time, `#to_local_in`
+  # adjusts the instant such that it results in the same local date-time
+  # representation. Both instants are apart from each other by the difference in
+  # zone offsets.
+  #
+  # ```
+  # new_year = Time.utc(2019, 1, 1, 0, 0, 0)
+  # tokyo = new_year.to_local_in(Time::Location.load("Asia/Tokyo"))
+  # new_york = new_year.to_local_in(Time::Location.load("America/New_York"))
+  # tokyo.to_s    # => 2019-01-01 00:00:00.0 +09:00 Asia/Tokyo
+  # new_york.to_s # => 2019-01-01 00:00:00.0 -05:00 America/New_York
+  # ```
+  def to_local_in(location : Location)
+    local_seconds = offset_seconds
+    local_seconds -= Time.zone_offset_at(local_seconds, location)
+
+    Time.new(seconds: local_seconds, nanoseconds: nanosecond, location: location)
   end
 
   def clone : Time
@@ -676,21 +728,128 @@ struct Time
     @nanoseconds
   end
 
+  # Returns the ISO calendar year and week in which this instance occurs.
+  #
+  # The ISO calendar year to which the week belongs is not always in the same
+  # as the year of the regular calendar date. The first three days of January
+  # sometimes belong to week 52 (or 53) of the previous year;
+  # equally the last three days of December sometimes are already in week 1
+  # of the following year.
+  #
+  # For that reason, this method returns a tuple `year, week` consisting of the
+  # calendar year to which the calendar week belongs and the ordinal number of
+  # the week within that year.
+  #
+  # Together with `#day_of_week` this represents a specific day as commercial or
+  # week date format `year, week, day_of_week` in the same way as the typical
+  # format `year, month, day`.
+  # `.week_date` creates a `Time` instance from a week date.
+  def calendar_week : {Int32, Int32}
+    year, month, day, day_year = year_month_day_day_year
+
+    day_of_week = self.day_of_week
+
+    # The week number can be calculated as number of Mondays in the year up to
+    # the ordinal date.
+    # The addition by +10 consists of +7 to start the week numbering with 1
+    # instead of 0 and +3 because the first week has already started in the
+    # previous year and the first Monday is actually in week 2.
+    week_number = (day_year - day_of_week.to_i + 10) / 7
+
+    if week_number == 0
+      # Week number 0 means the date belongs to the last week of the previous year.
+      year -= 1
+
+      # The week number depends on whether the previous year has 52 or 53 weeks
+      # which can be determined by the day of week of January 1.
+      # The year has 53 weeks if Januar 1 is on a Friday or the year was a leap
+      # year and January 1 is on a Saturday.
+      jan1_day_of_week = DayOfWeek.from_value((day_of_week.to_i - day_year + 1) % 7)
+
+      if jan1_day_of_week == DayOfWeek::Friday || (jan1_day_of_week == DayOfWeek::Saturday && Time.leap_year?(year))
+        week_number = 53
+      else
+        week_number = 52
+      end
+    elsif week_number == 53
+      # Week number 53 is actually week number 1 of the following year, if
+      # December 31 is on a Monday, Tuesday or Wednesday.
+      dec31_day_of_week = (day_of_week.to_i + 31 - day) % 7
+
+      if dec31_day_of_week <= DayOfWeek::Wednesday.to_i
+        year += 1
+        week_number = 1
+      end
+    end
+
+    {year, week_number}
+  end
+
+  # Creates an instance specified by a commercial week date consisting of ISO
+  # calendar *year* and *week* and a *day_of_week`.
+  #
+  # This equates to the results from `#calendar_week` and `#day_of_week`.
+  #
+  # Valid value ranges for the individual fields:
+  #
+  # * `year`: `1..9999`
+  # * `week`: `1..53`
+  # * `day_of_week`: `1..7`
+  def self.week_date(year : Int32, week : Int32, day_of_week : Int32 | DayOfWeek, hour : Int32 = 0, minute : Int32 = 0, second : Int32 = 0, *, nanosecond : Int32 = 0, location : Location = Location.local) : self
+    # For this calculation we need to know the weekday of Januar 4.
+    # The number of the day plus a fixed offset of 4 gives a correction valud
+    # for this year.
+    jan4_day_of_week = Time.utc(year, 1, 4).day_of_week
+    correction = jan4_day_of_week.to_i + 4
+
+    # The number of weeks multiplied by 7 plus the day of week and the calculated
+    # correction value results in the ordinal day of the year.
+    ordinal = week * 7 + day_of_week.to_i - correction
+
+    # Adjust the year if the year of the week date does not correspond with the calendar year around New Years.
+
+    if ordinal < 1
+      # If the ordinal day is zero or negative, the date belongs to the previous
+      # calendar year.
+      year -= 1
+      ordinal += Time.days_in_year(year)
+    elsif ordinal > (days_in_year = Time.days_in_year(year))
+      # If the ordinal day is greater than the number of days in the year, the date
+      # belongs to the next year.
+      ordinal -= days_in_year
+      year += 1
+    end
+
+    # The ordinal day together with the year fully specifies the date.
+    # A new instance for January 1 plus the ordinal days results in the correct date.
+    # This calculation needs to be in UTC to avoid issues with changes in
+    # the time zone offset (such as daylight savings time).
+    # TODO: Use #shift or #to_local_in instead
+    time = Time.utc(year, 1, 1, hour, minute, second, nanosecond: nanosecond) + ordinal.days
+
+    # If the location is UTC, we're done
+    return time if location.utc?
+
+    # otherwise, transfer to the specified location without changing the time of day.
+    time = time.in(location: location)
+    time - time.offset.seconds
+  end
+
   # Returns the duration between this `Time` and midnight of the same day.
   #
   # This is equivalent to creating a `Time::Span` from the time-of-day fields:
   #
   # ```
   # time.time_of_day == Time::Span.new(time.hour, time.minute, time.second, time.nanosecond)
-  # ``
+  # ```
   def time_of_day : Time::Span
     Span.new(nanoseconds: NANOSECONDS_PER_SECOND * (offset_seconds % SECONDS_PER_DAY) + nanosecond)
   end
 
-  # Returns the day of the week (`Sunday..Saturday`).
+  # Returns the day of the week (`Monday..Sunday`).
   def day_of_week : Time::DayOfWeek
-    value = ((offset_seconds / SECONDS_PER_DAY) + 1) % 7
-    DayOfWeek.new value.to_i
+    days = offset_seconds / SECONDS_PER_DAY
+    DayOfWeek.new days.to_i % 7 + 1
   end
 
   # Returns the day of the year.
@@ -870,7 +1029,7 @@ struct Time
   # Format this time using the format specified by [RFC 3339](https://tools.ietf.org/html/rfc3339) ([ISO 8601](http://xml.coverpages.org/ISO-FDIS-8601.pdf) profile).
   #
   # ```
-  # Time.new(2016, 2, 15).to_rfc3339 # => "2016-02-15T00:00:00+00:00"
+  # Time.utc(2016, 2, 15).to_rfc3339 # => "2016-02-15T00:00:00Z"
   # ```
   #
   # ISO 8601 allows some freedom over the syntax and RFC 3339 exercises that
@@ -904,7 +1063,7 @@ struct Time
   # Format this time using the format specified by [RFC 2822](https://www.ietf.org/rfc/rfc2822.txt).
   #
   # ```
-  # Time.new(2016, 2, 15).to_rfc2822 # => "Mon, 15 Feb 2016 00:00:00 -0400"
+  # Time.utc(2016, 2, 15).to_rfc2822 # => "Mon, 15 Feb 2016 00:00:00 +0000"
   # ```
   #
   # This is also compatible to [RFC 882](https://tools.ietf.org/html/rfc882) and [RFC 1123](https://tools.ietf.org/html/rfc1123#page-55).
@@ -932,10 +1091,61 @@ struct Time
   # See `Time::Format` for details.
   #
   # ```
-  # Time.parse("2016-04-05", "%F") # => 2016-04-05 00:00:00 +01:00
+  # Time.parse("2016-04-05", "%F", Time::Location.load("Europe/Berlin")) # => 2016-04-05 00:00:00.0 +02:00 Europe/Berlin
   # ```
-  def self.parse(time : String, pattern : String, location : Location? = nil) : Time
+  #
+  # If there is no time zone information in the formatted time, *location* will
+  # be assumed. When *location* is `nil`, in such a case the parser will raise
+  # `Time::Format::Error`.
+  def self.parse(time : String, pattern : String, location : Location) : Time
     Format.new(pattern, location).parse(time)
+  end
+
+  # Parses a `Time` from *time* string using the given *pattern*.
+  #
+  # See `Time::Format` for details.
+  #
+  # ```
+  # Time.parse!("2016-04-05 +00:00", "%F %:z") # => 2016-04-05 00:00:00.0 +00:00
+  # Time.parse!("2016-04-05", "%F")            # raises Time::Format::Error
+  # ```
+  #
+  # If there is no time zone information in the formatted time, the parser will raise
+  # `Time::Format::Error`.
+  def self.parse!(time : String, pattern : String) : Time
+    Format.new(pattern, nil).parse(time)
+  end
+
+  # Parses a `Time` from *time* string using the given *pattern* and
+  # `Time::Location::UTC` as default location.
+  #
+  # See `Time::Format` for details.
+  #
+  # ```
+  # Time.parse_utc("2016-04-05", "%F") # => 2016-04-05 00:00:00.0 +00:00
+  # ```
+  #
+  # `Time::Location::UTC` will only be used as `location` if the formatted time
+  # does not contain any time zone information. The return value can't be
+  # assumed to be a UTC time (this can be achieved by calling `#to_utc`).
+  def self.parse_utc(time : String, pattern : String) : Time
+    parse(time, pattern, Location::UTC)
+  end
+
+  # Parses a `Time` from *time* string using the given *pattern* and
+  # `Time::Location.local` asdefault location
+  #
+  # See `Time::Format` for details.
+  #
+  # ```
+  # Time.parse_utc("2016-04-05", "%F") # => 2016-04-05 00:00:00.0 +00:00
+  # ```
+  #
+  # `Time::Location.local` will only be used as `location` if the formatted time
+  # does not contain any time zone information. The return value can't be
+  # assumed to be a UTC time (this can be achieved by calling `#to_local`).
+  def self.parse_local(time : String, pattern : String) : Time
+    parse(time, pattern, Location.local)
   end
 
   # Returns the number of seconds since the Unix epoch
@@ -943,10 +1153,10 @@ struct Time
   #
   # ```
   # time = Time.utc(2016, 1, 12, 3, 4, 5)
-  # time.epoch # => 1452567845
+  # time.to_unix # => 1452567845
   # ```
-  def epoch : Int64
-    (total_seconds - UNIX_SECONDS).to_i64
+  def to_unix : Int64
+    (total_seconds - UNIX_EPOCH.total_seconds).to_i64
   end
 
   # Returns the number of milliseconds since the Unix epoch
@@ -954,10 +1164,10 @@ struct Time
   #
   # ```
   # time = Time.utc(2016, 1, 12, 3, 4, 5, nanosecond: 678_000_000)
-  # time.epoch_ms # => 1452567845678
+  # time.to_unix_ms # => 1452567845678
   # ```
-  def epoch_ms : Int64
-    epoch * 1_000 + (nanosecond / NANOSECONDS_PER_MILLISECOND)
+  def to_unix_ms : Int64
+    to_unix * 1_000 + (nanosecond / NANOSECONDS_PER_MILLISECOND)
   end
 
   # Returns the number of seconds since the Unix epoch
@@ -965,10 +1175,10 @@ struct Time
   #
   # ```
   # time = Time.utc(2016, 1, 12, 3, 4, 5, nanosecond: 678_000_000)
-  # time.epoch_f # => 1452567845.678
+  # time.to_unix_f # => 1452567845.678
   # ```
-  def epoch_f : Float64
-    epoch.to_f + nanosecond.to_f / 1e9
+  def to_unix_f : Float64
+    to_unix.to_f + nanosecond.to_f / 1e9
   end
 
   # Returns a copy of this `Time` representing the same instant observed in
@@ -987,6 +1197,10 @@ struct Time
   # time_de # => 2018-03-08 22:05:13 +01:00 Europe/Berlin
   # time_ar # => 2018-03-08 18:05:13 -03:00 America/Buenos_Aires
   # ```
+  #
+  # In contrast, `#to_local_in` changes to a different location while
+  # preserving the same wall time, which results in different instants on the
+  # time line.
   def in(location : Location) : Time
     return self if location == self.location
 
@@ -1063,12 +1277,7 @@ struct Time
   #
   # TODO: Ensure correctness in local time-line.
   def at_beginning_of_week : Time
-    dow = day_of_week.value
-    if dow == 0
-      (self - 6.days).at_beginning_of_day
-    else
-      (self - (dow - 1).days).at_beginning_of_day
-    end
+    (self - (day_of_week.value - 1).days).at_beginning_of_day
   end
 
   def_at_end(year) { Time.new(year, 12, 31, 23, 59, 59, nanosecond: 999_999_999, location: location) }
@@ -1105,12 +1314,7 @@ struct Time
   #
   # TODO: Ensure correctness in local time-line.
   def at_end_of_week : Time
-    dow = day_of_week.value
-    if dow == 0
-      at_end_of_day
-    else
-      (self + (7 - dow).days).at_end_of_day
-    end
+    (self + (7 - day_of_week.value).days).at_end_of_day
   end
 
   def_at_end(day) { Time.new(year, month, day, 23, 59, 59, nanosecond: 999_999_999, location: location) }
@@ -1207,7 +1411,7 @@ struct Time
   end
 
   protected def self.zone_offset_at(seconds, location)
-    unix = seconds - UNIX_SECONDS
+    unix = seconds - UNIX_EPOCH.total_seconds
     zone, range = location.lookup_with_boundaries(unix)
 
     if zone.offset != 0

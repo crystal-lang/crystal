@@ -41,8 +41,14 @@ module Crystal
       value
     end
 
-    def printf(format, args = [] of LLVM::Value)
-      call @printf, [global_string_pointer(format)] + args
+    def printf(format, args = [] of LLVM::Value, catch_pad = nil)
+      if catch_pad
+        funclet = build_operand_bundle_def("funclet", [catch_pad])
+      else
+        funclet = LLVM::OperandBundleDef.null
+      end
+
+      call @printf, [global_string_pointer(format)] + args, bundle: funclet
     end
 
     def position_at_end(block)
@@ -52,6 +58,10 @@ module Crystal
 
     def insert_block
       @builder.insert_block
+    end
+
+    def build_operand_bundle_def(name, values : Array(LLVM::Value))
+      @builder.build_operand_bundle_def(name, values)
     end
 
     def to_unsafe

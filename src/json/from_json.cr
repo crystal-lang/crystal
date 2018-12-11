@@ -123,11 +123,7 @@ end
 def Hash.new(pull : JSON::PullParser)
   hash = new
   pull.read_object do |key|
-    if pull.kind == :null
-      pull.read_next
-    else
-      hash[key] = V.new(pull)
-    end
+    hash[key] = V.new(pull)
   end
   hash
 end
@@ -234,7 +230,7 @@ end
 # or other variations of [ISO 8601](http://xml.coverpages.org/ISO-FDIS-8601.pdf).
 #
 # The JSON format itself does not specify a time data type, this method just
-# assumes that a string holding a ISO 8601 time format can be # interpreted as a
+# assumes that a string holding a ISO 8601 time format can be interpreted as a
 # time value.
 #
 # See `#to_json` for reference.
@@ -251,13 +247,13 @@ end
 
 module Time::EpochConverter
   def self.from_json(value : JSON::PullParser) : Time
-    Time.epoch(value.read_int)
+    Time.unix(value.read_int)
   end
 end
 
 module Time::EpochMillisConverter
   def self.from_json(value : JSON::PullParser) : Time
-    Time.epoch_ms(value.read_int)
+    Time.unix_ms(value.read_int)
   end
 end
 

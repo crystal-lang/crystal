@@ -1,11 +1,12 @@
-{% if !flag?(:without_openssl) %}
-  require "openssl"
-{% end %}
 require "socket"
+require "uri"
 require "./server/context"
 require "./server/handler"
 require "./server/response"
 require "./common"
+{% unless flag?(:without_openssl) %}
+  require "openssl"
+{% end %}
 
 # An HTTP server.
 #
@@ -95,10 +96,6 @@ require "./common"
 # server.listen
 # ```
 class HTTP::Server
-  {% if !flag?(:without_openssl) %}
-    property tls : OpenSSL::SSL::Context::Server?
-  {% end %}
-
   @sockets = [] of Socket::Server
 
   # Returns `true` if this server is closed.
@@ -108,13 +105,13 @@ class HTTP::Server
   getter? listening : Bool = false
 
   # Creates a new HTTP server with the given block as handler.
-  def self.new(&handler : HTTP::Handler::Proc) : self
+  def self.new(&handler : HTTP::Handler::HandlerProc) : self
     new(handler)
   end
 
   # Creates a new HTTP server with a handler chain constructed from the *handlers*
   # array and the given block.
-  def self.new(handlers : Array(HTTP::Handler), &handler : HTTP::Handler::Proc) : self
+  def self.new(handlers : Array(HTTP::Handler), &handler : HTTP::Handler::HandlerProc) : self
     new(HTTP::Server.build_middleware(handlers, handler))
   end
 
@@ -124,7 +121,7 @@ class HTTP::Server
   end
 
   # Creates a new HTTP server with the given *handler*.
-  def initialize(handler : HTTP::Handler | HTTP::Handler::Proc)
+  def initialize(handler : HTTP::Handler | HTTP::Handler::HandlerProc)
     @processor = RequestProcessor.new(handler)
   end
 
@@ -157,7 +154,22 @@ class HTTP::Server
   # If *reuse_port* is `true`, it enables the `SO_REUSEPORT` socket option,
   # which allows multiple processes to bind to the same port.
   def bind_tcp(port : Int32, reuse_port : Bool = false) : Socket::IPAddress
-    bind_tcp "127.0.0.1", port, reuse_port
+    bind_tcp Socket::IPAddress::LOOPBACK, port, reuse_port
+  end
+
+  # Creates a `TCPServer` listenting on *address* and adds it as a socket, returning the local address
+  # and port the server listens on.
+  #
+  # ```
+  # server = HTTP::Server.new { }
+  # server.bind_tcp(Socket::IPAddress.new("127.0.0.100", 8080)) # => Socket::IPAddress.new("127.0.0.100", 8080)
+  # server.bind_tcp(Socket::IPAddress.new("127.0.0.100", 0))    # => Socket::IPAddress.new("127.0.0.100", 35487)
+  # ```
+  #
+  # If *reuse_port* is `true`, it enables the `SO_REUSEPORT` socket option,
+  # which allows multiple processes to bind to the same port.
+  def bind_tcp(address : Socket::IPAddress, reuse_port : Bool = false) : Socket::IPAddress
+    bind_tcp(address.address, address.port, reuse_port: reuse_port)
   end
 
   # Creates a `TCPServer` listening on an unused port and adds it as a socket.
@@ -168,7 +180,7 @@ class HTTP::Server
   # server = HTTP::Server.new { }
   # server.bind_unused_port # => Socket::IPAddress.new("127.0.0.1", 12345)
   # ```
-  def bind_unused_port(host : String = "127.0.0.1", reuse_port : Bool = false) : Socket::IPAddress
+  def bind_unused_port(host : String = Socket::IPAddress::LOOPBACK, reuse_port : Bool = false) : Socket::IPAddress
     bind_tcp host, 0, reuse_port
   end
 
@@ -184,6 +196,102 @@ class HTTP::Server
     bind(server)
 
     server.local_address
+  end
+
+  # Creates a `UNIXServer` bound to *address* and adds it as a socket.
+  #
+  # ```
+  # server = HTTP::Server.new { }
+  # server.bind_unix(Socket::UNIXAddress.new("/tmp/my-socket.sock"))
+  # ```
+  def bind_unix(address : Socket::UNIXAddress) : Socket::UNIXAddress
+    bind_unix(address.path)
+  end
+
+  {% unless flag?(:without_openssl) %}
+    # Creates an `OpenSSL::SSL::Server` and adds it as a socket.
+    #
+    # The SSL server wraps a `TCPServer` listenting on `host:port`.
+    #
+    # ```
+    # server = HTTP::Server.new { }
+    # context = OpenSSL::SSL::Context::Server.new
+    # context.certificate_chain = "openssl.crt"
+    # context.private_key = "openssl.key"
+    # server.bind_tls "127.0.0.1", 8080, context
+    # ```
+    def bind_tls(host : String, port : Int32, context : OpenSSL::SSL::Context::Server, reuse_port : Bool = false) : Socket::IPAddress
+      tcp_server = TCPServer.new(host, port, reuse_port: reuse_port)
+      server = OpenSSL::SSL::Server.new(tcp_server, context)
+
+      bind(server)
+
+      tcp_server.local_address
+    end
+
+    # Creates an `OpenSSL::SSL::Server` and adds it as a socket.
+    #
+    # The SSL server wraps a `TCPServer` listenting on an unused port on *host*.
+    #
+    # ```
+    # server = HTTP::Server.new { }
+    # context = OpenSSL::SSL::Context::Server.new
+    # context.certificate_chain = "openssl.crt"
+    # context.private_key = "openssl.key"
+    # address = server.bind_tls "127.0.0.1", context
+    # ```
+    def bind_tls(host : String, context : OpenSSL::SSL::Context::Server) : Socket::IPAddress
+      bind_tls(host, 0, context)
+    end
+
+    # Creates an `OpenSSL::SSL::Server` and adds it as a socket.
+    #
+    # The SSL server wraps a `TCPServer` listenting on an unused port on *host*.
+    #
+    # ```
+    # server = HTTP::Server.new { }
+    # context = OpenSSL::SSL::Context::Server.new
+    # context.certificate_chain = "openssl.crt"
+    # context.private_key = "openssl.key"
+    # address = server.bind_tls Socket::IPAddress.new("127.0.0.1", 8000), context
+    # ```
+    def bind_tls(address : Socket::IPAddress, context : OpenSSL::SSL::Context::Server) : Socket::IPAddress
+      bind_tls(address.address, address.port, context)
+    end
+  {% end %}
+
+  # Parses a socket configuration from *uri* and adds it to this server.
+  # Returns the effective address it is bound to.
+  #
+  # ```
+  # server = HTTP::Server.new { }
+  # server.bind("tcp://localhost:80")  # => Socket::IPAddress.new("127.0.0.1", 8080)
+  # server.bind("unix:///tmp/server.sock")  # => Socket::UNIXAddress.new("/tmp/server.sock")
+  # server.bind("tls://127.0.0.1:443?key=private.key&cert=certificate.cert&ca=ca.crt)  # => Socket::IPAddress.new("127.0.0.1", 443)
+  # ```
+  def bind(uri : String) : Socket::Address
+    bind(URI.parse(uri))
+  end
+
+  # :ditto:
+  def bind(uri : URI) : Socket::Address
+    case uri.scheme
+    when "tcp"
+      bind_tcp(Socket::IPAddress.parse(uri))
+    when "unix"
+      bind_unix(Socket::UNIXAddress.parse(uri))
+    when "tls", "ssl"
+      address = Socket::IPAddress.parse(uri)
+      {% unless flag?(:without_openssl) %}
+        context = OpenSSL::SSL::Context::Server.from_hash(HTTP::Params.parse(uri.query || ""))
+
+        bind_tls(address, context)
+      {% else %}
+        raise ArgumentError.new "Unsupported socket type: #{uri.scheme} (program was compiled without openssl support)"
+      {% end %}
+    else
+      raise ArgumentError.new "Unsupported socket type: #{uri.scheme}"
+    end
   end
 
   # Adds a `Socket::Server` *socket* to this server.
@@ -241,7 +349,18 @@ class HTTP::Server
     @sockets.each do |socket|
       spawn do
         until closed?
-          spawn handle_client(socket.accept? || break)
+          io = begin
+            socket.accept?
+          rescue e
+            handle_exception(e)
+            nil
+          end
+
+          if io
+            # a non nillable version of the closured io
+            _io = io
+            spawn handle_client(_io)
+          end
         end
       ensure
         done.send nil
@@ -270,15 +389,16 @@ class HTTP::Server
   end
 
   private def handle_client(io : IO)
-    io.sync = false
-
-    {% if !flag?(:without_openssl) %}
-      if tls = @tls
-        io = OpenSSL::SSL::Socket::Server.new(io, tls, sync_close: true)
-      end
-    {% end %}
+    if io.is_a?(IO::Buffered)
+      io.sync = false
+    end
 
     @processor.process(io, io)
+  end
+
+  private def handle_exception(e : Exception)
+    e.inspect_with_backtrace STDERR
+    STDERR.flush
   end
 
   # Builds all handlers as the middleware for `HTTP::Server`.

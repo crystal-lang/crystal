@@ -17,8 +17,10 @@ lib LibC
   fun dup2(x0 : Int, x1 : Int) : Int
   fun _exit(x0 : Int) : NoReturn
   fun execvp(x0 : Char*, x1 : Char**) : Int
+  fun fdatasync(x0 : Int) : Int
   @[ReturnsTwice]
   fun fork : PidT
+  fun fsync(x0 : Int) : Int
   fun ftruncate(x0 : Int, x1 : OffT) : Int
   fun getcwd(x0 : Char*, x1 : SizeT) : Char*
   fun gethostname(x0 : Char*, x1 : SizeT) : Int
@@ -26,6 +28,7 @@ lib LibC
   fun getpid : PidT
   fun getppid : PidT
   fun isatty(x0 : Int) : Int
+  fun ttyname_r(fd : Int, buf : Char*, buffersize : SizeT) : Int
   fun lchown(x0 : Char*, x1 : UidT, x2 : GidT) : Int
   fun link(x0 : Char*, x1 : Char*) : Int
   fun lockf(x0 : Int, x1 : Int, x2 : OffT) : Int

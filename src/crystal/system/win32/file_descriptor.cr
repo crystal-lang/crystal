@@ -1,4 +1,3 @@
-require "file/stat"
 require "c/io"
 
 module Crystal::System::FileDescriptor
@@ -13,14 +12,17 @@ module Crystal::System::FileDescriptor
   end
 
   private def unbuffered_write(slice : Bytes)
-    loop do
+    until slice.empty?
       bytes_written = LibC._write(@fd, slice, slice.size)
       if bytes_written == -1
-        raise Errno.new("Error writing file")
+        if Errno.value == Errno::EBADF
+          raise IO::Error.new "File not open for writing"
+        else
+          raise Errno.new("Error writing file")
+        end
       end
 
       slice += bytes_written
-      return if slice.size == 0
     end
   end
 
@@ -40,11 +42,35 @@ module Crystal::System::FileDescriptor
     raise NotImplementedError.new("Crystal::System::FileDescriptor#system_close_on_exec=") if close_on_exec
   end
 
-  private def system_stat
-    if LibC._fstat64(@fd, out stat) != 0
-      raise Errno.new("Unable to get stat")
+  private def system_closed?
+    false
+  end
+
+  private def windows_handle
+    ret = LibC._get_osfhandle(@fd)
+    raise Errno.new("_get_osfhandle") if ret == -1
+    LibC::HANDLE.new(ret)
+  end
+
+  private def system_info
+    handle = windows_handle
+
+    file_type = LibC.GetFileType(handle)
+
+    if file_type == LibC::FILE_TYPE_UNKNOWN
+      error = LibC.GetLastError
+      raise WinError.new("GetFileType", error) unless error == WinError::ERROR_SUCCESS
     end
-    ::File::Stat.new(stat)
+
+    if file_type == LibC::FILE_TYPE_DISK
+      if LibC.GetFileInformationByHandle(handle, out file_info) == 0
+        raise WinError.new("GetFileInformationByHandle")
+      end
+
+      FileInfo.new(file_info, file_type)
+    else
+      FileInfo.new(file_type)
+    end
   end
 
   private def system_seek(offset, whence : IO::Seek) : Nil
@@ -82,6 +108,9 @@ module Crystal::System::FileDescriptor
         self.close_on_exec = true
       end
     {% end %}
+
+    # Mark the handle open, since we had to have dup'd a live handle.
+    @closed = false
   end
 
   private def system_close
@@ -94,5 +123,35 @@ module Crystal::System::FileDescriptor
         raise Errno.new("Error closing file")
       end
     end
+  end
+
+  def self.pipe(read_blocking, write_blocking)
+    pipe_fds = uninitialized StaticArray(LibC::Int, 2)
+    if LibC._pipe(pipe_fds, 8192, LibC::O_BINARY) != 0
+      raise Errno.new("Could not create pipe")
+    end
+
+    r = IO::FileDescriptor.new(pipe_fds[0], read_blocking)
+    w = IO::FileDescriptor.new(pipe_fds[1], write_blocking)
+    w.sync = true
+
+    {r, w}
+  end
+
+  def self.pread(fd, buffer, offset)
+    handle = LibC._get_osfhandle(fd)
+    raise Errno.new("_get_osfhandle") if handle == -1
+    handle = LibC::HANDLE.new(handle)
+
+    overlapped = LibC::OVERLAPPED.new
+    overlapped.union.offset.offset = LibC::DWORD.new(offset)
+    overlapped.union.offset.offsetHigh = LibC::DWORD.new(offset >> 32)
+    if LibC.ReadFile(handle, buffer, buffer.size, out bytes_read, pointerof(overlapped)) == 0
+      error = LibC.GetLastError
+      return 0 if error == WinError::ERROR_HANDLE_EOF
+      raise WinError.new("ReadFile", error)
+    end
+
+    bytes_read
   end
 end

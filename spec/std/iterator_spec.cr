@@ -59,6 +59,52 @@ describe Iterator do
       iter.rewind
       iter.to_a.should eq([1, 2, 'a', 'b'])
     end
+
+    describe "chain indeterminate number of iterators" do
+      it "chains all together" do
+        iters = [[0], [1], [2, 3], [4, 5, 6]].each.map &.each
+        iter = Iterator.chain iters
+        7.times { |i| iter.next.should eq i }
+        iter.next.should be_a Iterator::Stop
+      end
+
+      it "chains empty" do
+        arrs = [] of Array(Int32)
+        iter = Iterator.chain arrs.map(&.each)
+        iter.next.should be_a Iterator::Stop
+      end
+
+      it "chains array of empty" do
+        iters = [[0], [1], ([] of Int32), [2, 3], ([] of Int32), [4, 5, 6]].each.map &.each
+        iter = Iterator.chain iters
+        7.times { |i| iter.next.should eq i }
+        iter.next.should be_a Iterator::Stop
+      end
+
+      it "rewinds" do
+        iters = [[0], [1], ([] of Int32), [2, 3], ([] of Int32), [4, 5, 6]].each.map &.each
+        iter = Iterator.chain iters
+        7.times { |i| iter.next.should eq i }
+        iter.next.should be_a Iterator::Stop
+        iter.rewind
+        7.times { |i| iter.next.should eq i }
+        iter.next.should be_a Iterator::Stop
+      end
+
+      it "chains iterators of different type" do
+        iters = [[1, 2], ["string"], ["and number", 3], [] of String,
+                 ["or float", 4.0_f64]].each.map &.each
+        iter = Iterator.chain iters
+        iter.next.should eq 1
+        iter.next.should eq 2
+        iter.next.should eq "string"
+        iter.next.should eq "and number"
+        iter.next.should eq 3
+        iter.next.should eq "or float"
+        iter.next.should eq 4.0_f64
+        iter.next.should be_a Iterator::Stop
+      end
+    end
   end
 
   describe "compact_map" do
@@ -710,6 +756,252 @@ describe Iterator do
       iter.next.should eq(3)
 
       iter.rewind.to_a.should eq([1, 2, 2, 3, 3])
+    end
+  end
+
+  describe "#slice_after" do
+    it "slices after" do
+      ary = [1, 3, 5, 8, 10, 11, 13, 15, 16, 17]
+      iter = ary.slice_after(&.even?)
+      iter.next.should eq([1, 3, 5, 8])
+      iter.next.should eq([10])
+      iter.next.should eq([11, 13, 15, 16])
+      iter.next.should eq([17])
+      iter.next.should be_a(Iterator::Stop)
+    end
+
+    it "slices after: #to_a" do
+      ary = [1, 3, 5, 8, 10, 11, 13, 15, 16, 17]
+      ary.slice_after(&.even?).to_a.should eq([
+        [1, 3, 5, 8],
+        [10],
+        [11, 13, 15, 16],
+        [17],
+      ])
+    end
+
+    it "slices after: #rewind" do
+      ary = [1, 3, 5, 8, 10, 11, 13, 15, 16, 17]
+      iter = ary.slice_after(&.even?)
+      iter.next.should eq([1, 3, 5, 8])
+      iter.next.should eq([10])
+
+      iter.rewind
+      iter.next.should eq([1, 3, 5, 8])
+    end
+
+    it "slices after with reuse = true" do
+      ary = [1, 3, 5, 8, 10, 11, 13, 15, 16, 17]
+      iter = ary.slice_after(reuse: true, &.even?)
+      a = iter.next
+      a.should eq([1, 3, 5, 8])
+
+      b = iter.next
+      b.should eq([10])
+
+      a.should be(b)
+    end
+
+    it "slices after with reuse = array" do
+      reuse = [] of Int32
+      ary = [1, 3, 5, 8, 10, 11, 13, 15, 16, 17]
+      iter = ary.slice_after(reuse: reuse, &.even?)
+      a = iter.next
+      a.should eq([1, 3, 5, 8])
+
+      b = iter.next
+      b.should eq([10])
+
+      a.should be(b)
+      a.should be(reuse)
+    end
+
+    it "slices after: non-bool block" do
+      ary = [1, nil, nil, 2, 3, nil]
+      iter = ary.slice_after(&.itself)
+      iter.next.should eq([1])
+      iter.next.should eq([nil, nil, 2])
+      iter.next.should eq([3])
+      iter.next.should eq([nil])
+      iter.next.should be_a(Iterator::Stop)
+    end
+  end
+
+  describe "#slice_before" do
+    it "slices before" do
+      ary = [1, 3, 5, 8, 10, 11, 13, 15, 16, 17]
+      iter = ary.slice_before(&.even?)
+      iter.next.should eq([1, 3, 5])
+      iter.next.should eq([8])
+      iter.next.should eq([10, 11, 13, 15])
+      iter.next.should eq([16, 17])
+      iter.next.should be_a(Iterator::Stop)
+    end
+
+    it "slices before: first element matches" do
+      ary = [2, 3, 4]
+      iter = ary.slice_before(&.even?)
+      iter.next.should eq([2, 3])
+      iter.next.should eq([4])
+      iter.next.should be_a(Iterator::Stop)
+    end
+
+    it "slices before nil" do
+      ary = [1, 2, nil, 3, nil]
+      iter = ary.slice_before(&.nil?)
+      iter.next.should eq([1, 2])
+      iter.next.should eq([nil, 3])
+      iter.next.should eq([nil])
+      iter.next.should be_a(Iterator::Stop)
+    end
+
+    it "slices before: #to_a" do
+      ary = [1, 3, 5, 8, 10, 11, 13, 15, 16, 17]
+      ary.slice_before(&.even?).to_a.should eq([
+        [1, 3, 5],
+        [8],
+        [10, 11, 13, 15],
+        [16, 17],
+      ])
+    end
+
+    it "slices before: #rewind" do
+      ary = [1, 3, 5, 8, 10, 11, 13, 15, 16, 17]
+      iter = ary.slice_before(&.even?)
+      iter.next.should eq([1, 3, 5])
+      iter.next.should eq([8])
+
+      iter.rewind
+      iter.next.should eq([1, 3, 5])
+    end
+
+    it "slices before with reuse = true" do
+      ary = [1, 3, 5, 8, 10, 11, 13, 15, 16, 17]
+      iter = ary.slice_before(reuse: true, &.even?)
+      a = iter.next
+      a.should eq([1, 3, 5])
+
+      b = iter.next
+      b.should eq([8])
+
+      a.should be(b)
+    end
+
+    it "slices before with reuse = array" do
+      reuse = [] of Int32
+      ary = [1, 3, 5, 8, 10, 11, 13, 15, 16, 17]
+      iter = ary.slice_before(reuse: reuse, &.even?)
+      a = iter.next
+      a.should eq([1, 3, 5])
+
+      b = iter.next
+      b.should eq([8])
+
+      a.should be(b)
+      a.should be(reuse)
+    end
+
+    it "slices before: non-bool block" do
+      ary = [1, nil, nil, 2, 3, nil]
+      iter = ary.slice_before(&.itself)
+      iter.next.should eq([1, nil, nil])
+      iter.next.should eq([2])
+      iter.next.should eq([3, nil])
+    end
+  end
+
+  describe "#slice_when" do
+    it "slices when" do
+      ary = [1, 1, 1, 2, 2, 3, 4, 4]
+      iter = ary.slice_when { |x, y| x != y }
+      iter.next.should eq([1, 1, 1])
+      iter.next.should eq([2, 2])
+      iter.next.should eq([3])
+      iter.next.should eq([4, 4])
+      iter.next.should be_a(Iterator::Stop)
+    end
+
+    it "slices when: single value" do
+      ary = [1]
+      iter = ary.slice_when { |x, y| x != y }
+      iter.next.should eq([1])
+      iter.next.should be_a(Iterator::Stop)
+    end
+
+    it "slices when: two values" do
+      ary = [1, 2]
+      iter = ary.slice_when { |x, y| x != y }
+      iter.next.should eq([1])
+      iter.next.should eq([2])
+      iter.next.should be_a(Iterator::Stop)
+    end
+
+    it "slices when: #to_a" do
+      ary = [1, 1, 1, 2, 2, 3, 4, 4]
+      ary.slice_when { |x, y| x != y }.to_a.should eq([
+        [1, 1, 1],
+        [2, 2],
+        [3],
+        [4, 4],
+      ])
+    end
+
+    it "slices when: #rewind" do
+      ary = [1, 1, 1, 2, 2, 3, 4, 4]
+      iter = ary.slice_when { |x, y| x != y }
+      iter.next.should eq([1, 1, 1])
+      iter.next.should eq([2, 2])
+
+      iter.rewind
+      iter.next.should eq([1, 1, 1])
+    end
+
+    it "slices when with reuse = true" do
+      ary = [1, 1, 1, 2, 2, 3, 4, 4]
+      iter = ary.slice_when(reuse: true) { |x, y| x != y }
+      a = iter.next
+      a.should eq([1, 1, 1])
+
+      b = iter.next
+      b.should eq([2, 2])
+
+      a.should be(b)
+    end
+
+    it "slices when with reuse = array" do
+      reuse = [] of Int32
+      ary = [1, 1, 1, 2, 2, 3, 4, 4]
+      iter = ary.slice_when(reuse) { |x, y| x != y }
+      a = iter.next
+      a.should eq([1, 1, 1])
+
+      b = iter.next
+      b.should eq([2, 2])
+
+      a.should be(b)
+      a.should be(reuse)
+    end
+
+    it "slices when: non-bool block" do
+      ary = [1, 2, nil, 3, nil, nil, 4]
+      ary.slice_when { |x, y| y }.to_a.should eq([
+        [1],
+        [2, nil],
+        [3, nil, nil],
+        [4],
+      ])
+    end
+  end
+
+  describe "#chunk_while" do
+    it "chunks while" do
+      ary = [1, 1, 1, 2, 2, 3, 4, 4]
+      iter = ary.chunk_while { |x, y| x == y }
+      iter.next.should eq([1, 1, 1])
+      iter.next.should eq([2, 2])
+      iter.next.should eq([3])
+      iter.next.should eq([4, 4])
+      iter.next.should be_a(Iterator::Stop)
     end
   end
 end

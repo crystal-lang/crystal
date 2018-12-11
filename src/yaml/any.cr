@@ -126,6 +126,32 @@ struct YAML::Any
     end
   end
 
+  # Traverses the depth of a structure and returns the value.
+  # Returns `nil` if not found.
+  def dig?(index_or_key, *subkeys)
+    if (value = self[index_or_key]?) && value.responds_to?(:dig?)
+      value.dig?(*subkeys)
+    end
+  end
+
+  # :nodoc:
+  def dig?(index_or_key)
+    self[index_or_key]?
+  end
+
+  # Traverses the depth of a structure and returns the value, otherwise raises.
+  def dig(index_or_key, *subkeys)
+    if (value = self[index_or_key]) && value.responds_to?(:dig)
+      return value.dig(*subkeys)
+    end
+    raise "YAML::Any value not diggable for key: #{index_or_key.inspect}"
+  end
+
+  # :nodoc:
+  def dig(index_or_key)
+    self[index_or_key]
+  end
+
   # Checks that the underlying value is `Nil`, and returns `nil`.
   # Raises otherwise.
   def as_nil : Nil
@@ -259,6 +285,16 @@ struct YAML::Any
   # :nodoc:
   def to_yaml(io)
     raw.to_yaml(io)
+  end
+
+  # Returns a new YAML::Any instance with the `raw` value `dup`ed.
+  def dup
+    Any.new(raw.dup)
+  end
+
+  # Returns a new YAML::Any instance with the `raw` value `clone`ed.
+  def clone
+    Any.new(raw.clone)
   end
 end
 

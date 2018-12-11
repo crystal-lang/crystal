@@ -11,7 +11,7 @@ module Crystal::System::Random
     return unless urandom.info.type.character_device?
 
     urandom.close_on_exec = true
-    urandom.sync = true # don't buffer bytes
+    urandom.read_buffering = false
     @@urandom = urandom
   end
 

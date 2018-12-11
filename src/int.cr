@@ -98,13 +98,25 @@ struct Int
   # Raises if *other* is zero, or if *other* is -1 and
   # `self` is signed and is the minimum value for that
   # integer type.
-  def /(other : Int)
+  def //(other : Int)
     check_div_argument other
 
     div = unsafe_div other
     mod = unsafe_mod other
     div -= 1 if other > 0 ? mod < 0 : mod > 0
     div
+  end
+
+  # Divides `self` by *other* as floating point numbers and
+  # applies the floor function to that result.
+  #
+  # The result will be of the same type as `self`.
+  def //(other : Float)
+    self.class.new(to_f // other)
+  end
+
+  def /(other : Int)
+    self // other
   end
 
   # Divides `self` by *other* using truncated division.
@@ -353,9 +365,11 @@ struct Int
   end
 
   def upto(to, &block : self ->) : Nil
+    return unless self <= to
     x = self
-    while x <= to
+    while true
       yield x
+      return if x == to
       x += 1
     end
   end
@@ -365,9 +379,11 @@ struct Int
   end
 
   def downto(to, &block : self ->) : Nil
+    return unless self >= to
     x = self
-    while x >= to
+    while true
       yield x
+      return if x == to
       x -= 1
     end
   end
@@ -539,23 +555,24 @@ struct Int
     @from : T
     @to : N
     @current : T
+    @done : Bool
 
     def initialize(@from : T, @to : N)
       @current = @from
+      @done = !(@from <= @to)
     end
 
     def next
-      if @current > @to
-        stop
-      else
-        value = @current
-        @current += 1
-        value
-      end
+      return stop if @done
+      value = @current
+      @done = @current == @to
+      @current += 1 unless @done
+      value
     end
 
     def rewind
       @current = @from
+      @done = !(@from <= @to)
       self
     end
   end
@@ -566,23 +583,24 @@ struct Int
     @from : T
     @to : N
     @current : T
+    @done : Bool
 
     def initialize(@from : T, @to : N)
       @current = @from
+      @done = !(@from >= @to)
     end
 
     def next
-      if @current < @to
-        stop
-      else
-        value = @current
-        @current -= 1
-        value
-      end
+      return stop if @done
+      value = @current
+      @done = @current == @to
+      @current -= 1 unless @done
+      value
     end
 
     def rewind
       @current = @from
+      @done = !(@from >= @to)
       self
     end
   end

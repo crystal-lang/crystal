@@ -68,18 +68,25 @@ class Crystal::Def
     end
 
     if named_args
+      # When **opts is expanded for named arguments, we must use internal
+      # names that won't clash with local variables defined in the method.
+      named_args_temp_names = Array(String).new(named_args.size)
+
       new_name = String.build do |str|
         str << name
         named_args.each do |named_arg|
           str << ':'
           str << named_arg
 
+          temp_name = program.new_temp_var_name
+          named_args_temp_names << temp_name
+
           # If a named argument matches an argument's external name, use the internal name
           matching_arg = args.find { |arg| arg.external_name == named_arg }
           if matching_arg
             new_args << Arg.new(matching_arg.name, external_name: named_arg)
           else
-            new_args << Arg.new(named_arg)
+            new_args << Arg.new(temp_name, external_name: named_arg)
           end
         end
       end
@@ -146,11 +153,12 @@ class Crystal::Def
       # Double splat argument
       if double_splat
         named_tuple_entries = [] of NamedTupleLiteral::Entry
-        named_args.try &.each do |named_arg|
+        named_args.try &.each_with_index do |named_arg, i|
           # Don't put here regular arguments
-          next if args.any? &.name.==(named_arg)
+          next if args.any? &.external_name.==(named_arg)
 
-          named_tuple_entries << NamedTupleLiteral::Entry.new(named_arg, Var.new(named_arg))
+          temp_name = named_args_temp_names.not_nil![i]
+          named_tuple_entries << NamedTupleLiteral::Entry.new(named_arg, Var.new(temp_name))
         end
         named_tuple = NamedTupleLiteral.new(named_tuple_entries).at(double_splat)
         new_body << Assign.new(Var.new(double_splat.name).at(double_splat), named_tuple).at(double_splat)

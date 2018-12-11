@@ -8,9 +8,9 @@ class WinError < Errno
   end
 
   def initialize(message, code)
-    buffer = uninitialized UInt8[256]
-    size = LibC.FormatMessageA(LibC::FORMAT_MESSAGE_FROM_SYSTEM, nil, code, 0, buffer, buffer.size, nil)
-    details = String.new(buffer.to_unsafe, size).strip
+    buffer = uninitialized UInt16[256]
+    size = LibC.FormatMessageW(LibC::FORMAT_MESSAGE_FROM_SYSTEM, nil, code, 0, buffer, buffer.size, nil)
+    details = String.from_utf16(buffer.to_slice[0, size]).strip
     super("#{message}: [WinError #{code}, #{details}]", winerror_to_errno(code))
   end
 

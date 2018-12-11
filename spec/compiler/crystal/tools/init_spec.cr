@@ -5,8 +5,6 @@ require "ini"
 require "spec"
 require "yaml"
 
-PROJECT_ROOT_DIR = "#{__DIR__}/../../../.."
-
 private def exec_init(project_name, project_dir = nil, type = "lib", force = false, skip_existing = false)
   args = [type, project_name]
   args << project_dir if project_dir
@@ -21,14 +19,11 @@ end
 # Creates a temporary directory, cd to it and run the block inside it.
 # The directory and its content is deleted when the block return.
 private def within_temporary_directory
-  tmp_path = "#{PROJECT_ROOT_DIR}/tmp/init_spec_tmp_dir-#{Process.pid}"
-  Dir.mkdir_p(tmp_path)
-  begin
+  with_tempfile "init_spec_tmp" do |tmp_path|
+    Dir.mkdir_p(tmp_path)
     Dir.cd(tmp_path) do
       yield
     end
-  ensure
-    FileUtils.rm_rf(tmp_path)
   end
 end
 
@@ -98,33 +93,46 @@ module Crystal
       describe_file "example/README.md" do |readme|
         readme.should contain("# example")
 
-        readme.should contain(%{```yaml
-dependencies:
-  example:
-    github: jsmith/example
-```})
+        readme.should contain(%{1. Add the dependency to your `shard.yml`:})
+        readme.should contain(<<-EOF
 
+           ```yaml
+           dependencies:
+             example:
+               github: jsmith/example
+           ```
+
+        EOF
+        )
+        readme.should contain(%{2. Run `shards install`})
         readme.should contain(%{TODO: Write a description here})
         readme.should_not contain(%{TODO: Write installation instructions here})
         readme.should contain(%{require "example"})
         readme.should contain(%{1. Fork it (<https://github.com/jsmith/example/fork>)})
-        readme.should contain(%{[jsmith](https://github.com/jsmith) John Smith - creator, maintainer})
+        readme.should contain(%{[John Smith](https://github.com/jsmith) - creator and maintainer})
       end
 
       describe_file "example_app/README.md" do |readme|
         readme.should contain("# example")
 
-        readme.should_not contain(%{```yaml
-dependencies:
-  example:
-    github: jsmith/example
-```})
-
         readme.should contain(%{TODO: Write a description here})
+
+        readme.should_not contain(%{1. Add the dependency to your `shard.yml`:})
+        readme.should_not contain(<<-EOF
+
+           ```yaml
+           dependencies:
+             example:
+               github: jsmith/example
+           ```
+
+        EOF
+        )
+        readme.should_not contain(%{2. Run `shards install`})
         readme.should contain(%{TODO: Write installation instructions here})
         readme.should_not contain(%{require "example"})
         readme.should contain(%{1. Fork it (<https://github.com/jsmith/example_app/fork>)})
-        readme.should contain(%{[jsmith](https://github.com/jsmith) John Smith - creator, maintainer})
+        readme.should contain(%{[John Smith](https://github.com/jsmith) - creator and maintainer})
       end
 
       describe_file "example/shard.yml" do |shard_yml|
@@ -149,39 +157,41 @@ dependencies:
       end
 
       describe_file "example/src/example.cr" do |example|
-        example.should eq(%{require "./example/*"
+        example.should eq(<<-EOF
+        # TODO: Write documentation for `Example`
+        module Example
+          VERSION = "0.1.0"
 
-# TODO: Write documentation for `Example`
-module Example
-  # TODO: Put your code here
-end
-})
-      end
+          # TODO: Put your code here
+        end
 
-      describe_file "example/src/example/version.cr" do |version|
-        version.should eq(%{module Example
-  VERSION = "0.1.0"
-end
-})
+        EOF
+        )
       end
 
       describe_file "example/spec/spec_helper.cr" do |example|
-        example.should eq(%{require "spec"
-require "../src/example"
-})
+        example.should eq(<<-EOF
+        require "spec"
+        require "../src/example"
+
+        EOF
+        )
       end
 
       describe_file "example/spec/example_spec.cr" do |example|
-        example.should eq(%{require "./spec_helper"
+        example.should eq(<<-EOF
+        require "./spec_helper"
 
-describe Example do
-  # TODO: Write tests
+        describe Example do
+          # TODO: Write tests
 
-  it "works" do
-    false.should eq(true)
-  end
-end
-})
+          it "works" do
+            false.should eq(true)
+          end
+        end
+
+        EOF
+        )
       end
 
       describe_file "example/.git/config" { }

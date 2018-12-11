@@ -116,10 +116,6 @@ module Random
     {% utype = "UInt#{size}".id %}
     {% for type in ["Int#{size}".id, utype] %}
       private def rand_int(max : {{type}}) : {{type}}
-        if max == 0
-          return {{type}}.new(0)
-        end
-
         unless max > 0
           raise ArgumentError.new "Invalid bound for rand: #{max}"
         end
@@ -254,7 +250,7 @@ module Random
   # Random.new.rand(10.725) # => 7.70147
   # ```
   def rand(max : Float) : Float64
-    unless max >= 0
+    unless max > 0
       raise ArgumentError.new "Invalid bound for rand: #{max}"
     end
     max_prec = 1u64 << 53 # Float64, excluding mantissa, has 2^53 values
@@ -273,12 +269,12 @@ module Random
     rand_range(range)
   end
 
-  # Returns a random `Float64` in the given *range*.
+  # Returns a random `Float` in the given *range*.
   #
   # ```
   # Random.new.rand(6.2..21.768) # => 15.2989
   # ```
-  def rand(range : Range(Float, Float)) : Float64
+  def rand(range : Range(Float, Float)) : Float
     span = range.end - range.begin
     if range.excludes_end?
       unless range.begin < range.end

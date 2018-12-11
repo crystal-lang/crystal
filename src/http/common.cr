@@ -27,6 +27,7 @@ module HTTP
 
       if line.empty?
         body = nil
+
         if body_type.prohibited?
           body = nil
         elsif content_length = content_length(headers)
@@ -38,6 +39,10 @@ module HTTP
           body = ChunkedContent.new(io)
         elsif body_type.mandatory?
           body = UnknownLengthContent.new(io)
+        end
+
+        if body.is_a?(Content) && expect_continue?(headers)
+          body.expects_continue = true
         end
 
         if decompress && body
@@ -194,6 +199,10 @@ module HTTP
     end
   end
 
+  def self.expect_continue?(headers)
+    headers["Expect"]?.try(&.downcase) == "100-continue"
+  end
+
   record ComputedContentTypeHeader,
     content_type : String?,
     charset : String?
@@ -214,6 +223,12 @@ module HTTP
           key = piece[0...eq_index].strip
           if key == "charset"
             value = piece[eq_index + 1..-1].strip
+
+            # For the case of a quoted charset like charset="utf-8"
+            if value.starts_with?('"') && value.ends_with?('"')
+              value = value[1...-1].strip
+            end
+
             return ComputedContentTypeHeader.new(content_type, value)
           end
         end
@@ -246,7 +261,7 @@ module HTTP
   # timezone `GMT` (interpreted as `UTC`).
   #
   # ```
-  # HTTP.format_time(Time.new(2016, 2, 15)) # => "Sun, 14 Feb 2016 21:00:00 GMT"
+  # HTTP.format_time(Time.utc(2016, 2, 15)) # => "Mon, 15 Feb 2016 00:00:00 GMT"
   # ```
   #
   # Uses `Time::Format::HTTP_DATE` as formatter.

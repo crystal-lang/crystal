@@ -5,7 +5,8 @@ class Crystal::Doc::Type
 
   getter type : Crystal::Type
 
-  def initialize(@generator : Generator, @type : Crystal::Type)
+  def initialize(@generator : Generator, type : Crystal::Type)
+    @type = type.devirtualize
   end
 
   def kind
@@ -575,7 +576,7 @@ class Crystal::Doc::Type
   end
 
   def node_to_html(node, io, links = true)
-    io << node
+    io << Highlighter.highlight(node.to_s)
   end
 
   def type_to_html(type)

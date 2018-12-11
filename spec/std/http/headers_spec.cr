@@ -43,11 +43,6 @@ describe HTTP::Headers do
     headers["foo"]?.should eq("bar")
   end
 
-  it "fetches" do
-    headers = HTTP::Headers{"Foo" => "bar"}
-    headers.fetch("foo").should eq("bar")
-  end
-
   it "fetches with default value" do
     headers = HTTP::Headers.new
     headers.fetch("foo", "baz").should eq("baz")

@@ -125,5 +125,39 @@ describe CSV do
       end
       string.should eq(%(" , "," , "\n))
     end
+
+    it "builds with quoting" do
+      string = CSV.build(quoting: CSV::Builder::Quoting::NONE) do |csv|
+        csv.row 1, "doesn't", " , ", %(he said "no")
+      end
+      string.should eq(%(1,doesn't, , ,he said "no"\n))
+
+      string = CSV.build(quoting: CSV::Builder::Quoting::RFC) do |csv|
+        csv.row 1, "doesn't", " , ", %(he said "no")
+      end
+      string.should eq(%(1,doesn't," , ","he said ""no"""\n))
+
+      string = CSV.build(quoting: CSV::Builder::Quoting::ALL) do |csv|
+        csv.row 1, "doesn't", " , ", %(he said "no")
+      end
+      string.should eq(%("1","doesn't"," , ","he said ""no"""\n))
+    end
+
+    it "builds with inside quoted chars and symbols" do
+      string = CSV.build(quoting: CSV::Builder::Quoting::NONE) do |csv|
+        csv.row 'c', '\'', '"', :sym, :"s'm", :"s\"m"
+      end
+      string.should eq(%(c,',",sym,s'm,s"m\n))
+
+      string = CSV.build(quoting: CSV::Builder::Quoting::RFC) do |csv|
+        csv.row 'c', '\'', '"', :sym, :"s'm", :"s\"m"
+      end
+      string.should eq(%(c,',"""",sym,s'm,"s""m"\n))
+
+      string = CSV.build(quoting: CSV::Builder::Quoting::ALL) do |csv|
+        csv.row 'c', '\'', '"', :sym, :"s'm", :"s\"m"
+      end
+      string.should eq(%("c","'","""","sym","s'm","s""m"\n))
+    end
   end
 end

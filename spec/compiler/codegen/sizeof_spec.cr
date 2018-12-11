@@ -68,14 +68,6 @@ describe "Code gen: sizeof" do
       ").to_i.should eq(16)
   end
 
-  it "gives error if using instance_sizeof on something that's not a class" do
-    assert_error "instance_sizeof(Int32)", "Int32 is not a class, it's a struct"
-  end
-
-  it "gives error if using instance_sizeof on a generic type without type vars" do
-    assert_error "instance_sizeof(Array)", "can't calculate instance_sizeof of generic class"
-  end
-
   it "gets instance_sizeof a generic type with type vars" do
     run(%(
       class Foo(T)

@@ -41,28 +41,28 @@ class Crystal::Type
   # ```
   #
   # If `self` is `Foo` and `Bar(Baz)` is given, the result will be `Foo::Bar(Baz)`.
-  def lookup_type(node : ASTNode, self_type = self.instance_type, allow_typeof = true, lazy_self = false, free_vars : Hash(String, TypeVar)? = nil, find_root_generic_type_parameters = true) : Type
-    TypeLookup.new(self, self_type, true, allow_typeof, lazy_self, free_vars, find_root_generic_type_parameters).lookup(node).not_nil!
+  def lookup_type(node : ASTNode, self_type = self.instance_type, allow_typeof = true, free_vars : Hash(String, TypeVar)? = nil, find_root_generic_type_parameters = true) : Type
+    TypeLookup.new(self, self_type, true, allow_typeof, free_vars, find_root_generic_type_parameters).lookup(node).not_nil!
   end
 
   # Similar to `lookup_type`, but returns `nil` if a type can't be found.
-  def lookup_type?(node : ASTNode, self_type = self.instance_type, allow_typeof = true, lazy_self = false, free_vars : Hash(String, TypeVar)? = nil, find_root_generic_type_parameters = true) : Type?
-    TypeLookup.new(self, self_type, false, allow_typeof, lazy_self, free_vars, find_root_generic_type_parameters).lookup(node)
+  def lookup_type?(node : ASTNode, self_type = self.instance_type, allow_typeof = true, free_vars : Hash(String, TypeVar)? = nil, find_root_generic_type_parameters = true) : Type?
+    TypeLookup.new(self, self_type, false, allow_typeof, free_vars, find_root_generic_type_parameters).lookup(node)
   end
 
   # Similar to `lookup_type`, but the result might also be an ASTNode, for example when
   # looking `N` relative to a StaticArray.
-  def lookup_type_var(node : Path, free_vars : Hash(String, TypeVar)? = nil) : Type | ASTNode
-    TypeLookup.new(self, self.instance_type, true, false, false, free_vars).lookup_type_var(node).not_nil!
+  def lookup_type_var(node : Path, free_vars : Hash(String, TypeVar)? = nil, find_root_generic_type_parameters = true) : Type | ASTNode
+    TypeLookup.new(self, self.instance_type, true, false, free_vars, find_root_generic_type_parameters).lookup_type_var(node).not_nil!
   end
 
   # Similar to `lookup_type_var`, but might return `nil`.
-  def lookup_type_var?(node : Path, free_vars : Hash(String, TypeVar)? = nil, raise = false) : Type | ASTNode | Nil
-    TypeLookup.new(self, self.instance_type, raise, false, false, free_vars).lookup_type_var?(node)
+  def lookup_type_var?(node : Path, free_vars : Hash(String, TypeVar)? = nil, raise = false, find_root_generic_type_parameters = true) : Type | ASTNode | Nil
+    TypeLookup.new(self, self.instance_type, raise, false, free_vars, find_root_generic_type_parameters).lookup_type_var?(node)
   end
 
   private struct TypeLookup
-    def initialize(@root : Type, @self_type : Type, @raise : Bool, @allow_typeof : Bool, @lazy_self : Bool, @free_vars : Hash(String, TypeVar)? = nil, @find_root_generic_type_parameters = true)
+    def initialize(@root : Type, @self_type : Type, @raise : Bool, @allow_typeof : Bool, @free_vars : Hash(String, TypeVar)? = nil, @find_root_generic_type_parameters = true)
       @in_generic_args = 0
 
       # If we are looking types inside a non-instantiated generic type,
@@ -91,8 +91,6 @@ class Crystal::Type
         end
       when Type
         return type_var
-      when Self
-        return lookup(type_var)
       end
 
       if @raise
@@ -220,11 +218,6 @@ class Crystal::Type
       type_vars = Array(TypeVar).new(node.type_vars.size + 1)
       node.type_vars.each do |type_var|
         case type_var
-        when Self
-          if @lazy_self
-            type_vars << type_var
-            next
-          end
         when NumberLiteral
           type_vars << type_var
           next
@@ -261,9 +254,9 @@ class Crystal::Type
               type_var.raise "expanding constant value for a number value", inner: ex
             end
             next
-            # when ASTNode
-            #   type_vars << type
-            #   next
+          when ASTNode
+            type_vars << type
+            next
           end
         end
 

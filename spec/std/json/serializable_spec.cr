@@ -35,6 +35,16 @@ class JSONAttrPerson
   end
 end
 
+struct JSONAttrPersonWithTwoFieldInInitialize
+  include JSON::Serializable
+
+  property name : String
+  property age : Int32
+
+  def initialize(@name, @age)
+  end
+end
+
 class StrictJSONAttrPerson
   include JSON::Serializable
   include JSON::Serializable::Strict
@@ -354,6 +364,12 @@ describe "JSON mapping" do
     people.size.should eq(2)
   end
 
+  it "works with class with two fields" do
+    person1 = JSONAttrPersonWithTwoFieldInInitialize.from_json(%({"name": "John", "age": 30}))
+    person2 = JSONAttrPersonWithTwoFieldInInitialize.new("John", 30)
+    person1.should eq person2
+  end
+
   it "does to_json" do
     person = JSONAttrPerson.from_json(%({"name": "John", "age": 30}))
     person2 = JSONAttrPerson.from_json(person.to_json)
@@ -611,7 +627,7 @@ describe "JSON mapping" do
     string = %({"value":1459859781})
     json = JSONAttrWithTimeEpoch.from_json(string)
     json.value.should be_a(Time)
-    json.value.should eq(Time.epoch(1459859781))
+    json.value.should eq(Time.unix(1459859781))
     json.to_json.should eq(string)
   end
 
@@ -619,7 +635,7 @@ describe "JSON mapping" do
     string = %({"value":1459860483856})
     json = JSONAttrWithTimeEpochMillis.from_json(string)
     json.value.should be_a(Time)
-    json.value.should eq(Time.epoch_ms(1459860483856))
+    json.value.should eq(Time.unix_ms(1459860483856))
     json.to_json.should eq(string)
   end
 

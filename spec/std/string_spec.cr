@@ -996,56 +996,37 @@ describe "String" do
     it { "hello world\\r\\n".delete("X-\\w").should eq("hello orldrn") }
 
     it "deletes one char" do
-      deleted = "foobar".delete('o')
-      deleted.bytesize.should eq(4)
-      deleted.should eq("fbar")
-
-      deleted = "foobar".delete('x')
-      deleted.bytesize.should eq(6)
-      deleted.should eq("foobar")
+      "foobar".delete('o').should eq("fbar")
+      "foobar".delete('x').should eq("foobar")
     end
   end
 
   it "reverses string" do
-    reversed = "foobar".reverse
-    reversed.bytesize.should eq(6)
-    reversed.should eq("raboof")
+    "foobar".reverse.should eq("raboof")
   end
 
   it "reverses utf-8 string" do
-    reversed = "こんいちは".reverse
-    reversed.bytesize.should eq(15)
-    reversed.size.should eq(5)
-    reversed.should eq("はちいんこ")
+    "こんいちは".reverse.should eq("はちいんこ")
   end
 
   it "reverses taking grapheme clusters into account" do
-    reversed = "noël".reverse
-    reversed.bytesize.should eq("noël".bytesize)
-    reversed.size.should eq("noël".size)
-    reversed.should eq("lëon")
+    "noël".reverse.should eq("lëon")
   end
 
   describe "sub" do
     it "subs char with char" do
-      replaced = "foobar".sub('o', 'e')
-      replaced.bytesize.should eq(6)
-      replaced.should eq("feobar")
+      "foobar".sub('o', 'e').should eq("feobar")
     end
 
     it "subs char with string" do
-      replaced = "foobar".sub('o', "ex")
-      replaced.bytesize.should eq(7)
-      replaced.should eq("fexobar")
+      "foobar".sub('o', "ex").should eq("fexobar")
     end
 
     it "subs char with string" do
       replaced = "foobar".sub do |char|
         char.should eq 'f'
         "some"
-      end
-      replaced.bytesize.should eq(9)
-      replaced.should eq("someoobar")
+      end.should eq("someoobar")
 
       empty = ""
       empty.sub { 'f' }.should be(empty)
@@ -1184,17 +1165,11 @@ describe "String" do
     end
 
     it "subs at index with char" do
-      string = "hello".sub(1, 'a')
-      string.should eq("hallo")
-      string.bytesize.should eq(5)
-      string.size.should eq(5)
+      "hello".sub(1, 'a').should eq("hallo")
     end
 
     it "subs at index with char, non-ascii" do
-      string = "あいうえお".sub(2, 'の')
-      string.should eq("あいのえお")
-      string.size.should eq(5)
-      string.bytesize.should eq("あいのえお".bytesize)
+      "あいうえお".sub(2, 'の').should eq("あいのえお")
     end
 
     it "subs at negative index with char" do
@@ -1205,66 +1180,41 @@ describe "String" do
     end
 
     it "subs at index with string" do
-      string = "hello".sub(1, "eee")
-      string.should eq("heeello")
-      string.bytesize.should eq(7)
-      string.size.should eq(7)
+      "hello".sub(1, "eee").should eq("heeello")
     end
 
     it "subs at negative index with string" do
-      string = "hello".sub(-1, "ooo")
-      string.should eq("hellooo")
-      string.bytesize.should eq(7)
-      string.size.should eq(7)
+      "hello".sub(-1, "ooo").should eq("hellooo")
     end
 
     it "subs at index with string, non-ascii" do
-      string = "あいうえお".sub(2, "けくこ")
-      string.should eq("あいけくこえお")
-      string.bytesize.should eq("あいけくこえお".bytesize)
-      string.size.should eq(7)
+      "あいうえお".sub(2, "けくこ").should eq("あいけくこえお")
     end
 
     it "subs range with char" do
-      string = "hello".sub(1..2, 'a')
-      string.should eq("halo")
-      string.bytesize.should eq(4)
-      string.size.should eq(4)
+      "hello".sub(1..2, 'a').should eq("halo")
     end
 
     it "subs range with char, non-ascii" do
-      string = "あいうえお".sub(1..2, 'け')
-      string.should eq("あけえお")
-      string.size.should eq(4)
-      string.bytesize.should eq("あけえお".bytesize)
+      "あいうえお".sub(1..2, 'け').should eq("あけえお")
     end
 
     it "subs range with string" do
-      string = "hello".sub(1..2, "eee")
-      string.should eq("heeelo")
-      string.size.should eq(6)
-      string.bytesize.should eq(6)
+      "hello".sub(1..2, "eee").should eq("heeelo")
     end
 
     it "subs range with string, non-ascii" do
-      string = "あいうえお".sub(1..2, "けくこ")
-      string.should eq("あけくこえお")
-      string.size.should eq(6)
-      string.bytesize.should eq("あけくこえお".bytesize)
+      "あいうえお".sub(1..2, "けくこ").should eq("あけくこえお")
     end
   end
 
   describe "gsub" do
     it "gsubs char with char" do
-      replaced = "foobar".gsub('o', 'e')
-      replaced.bytesize.should eq(6)
-      replaced.should eq("feebar")
+      "foobar".gsub('o', 'e').should eq("feebar")
     end
 
     it "gsubs char with string" do
-      replaced = "foobar".gsub('o', "ex")
-      replaced.bytesize.should eq(8)
-      replaced.should eq("fexexbar")
+      "foobar".gsub('o', "ex").should eq("fexexbar")
     end
 
     it "gsubs char with string (nop)" do
@@ -1289,7 +1239,6 @@ describe "String" do
           char
         end
       end
-      replaced.bytesize.should eq(18)
       replaced.should eq("somethingthingbexr")
     end
 
@@ -1448,7 +1397,7 @@ describe "String" do
     "a".dump.should eq %("a")
     "\\".dump.should eq %("\\\\")
     "\"".dump.should eq %("\\\"")
-    # TODO: "\a".dump.should eq %("\\a")
+    "\a".dump.should eq %("\\a")
     "\b".dump.should eq %("\\b")
     "\e".dump.should eq %("\\e")
     "\f".dump.should eq %("\\f")
@@ -1476,7 +1425,7 @@ describe "String" do
     "a".inspect.should eq %("a")
     "\\".inspect.should eq %("\\\\")
     "\"".inspect.should eq %("\\\"")
-    # TODO: "\a".inspect.should eq %("\\a")
+    "\a".inspect.should eq %("\\a")
     "\b".inspect.should eq %("\\b")
     "\e".inspect.should eq %("\\e")
     "\f".inspect.should eq %("\\f")
@@ -1508,22 +1457,19 @@ describe "String" do
   end
 
   it "does *" do
-    str = "foo" * 10
-    str.bytesize.should eq(30)
-    str.should eq("foofoofoofoofoofoofoofoofoofoo")
+    ("foo" * 10).should eq("foofoofoofoofoofoofoofoofoofoo")
   end
 
   describe "+" do
     it "does for both ascii" do
       str = "foo" + "bar"
-      str.bytesize.should eq(6)
-      str.@length.should eq(6)
+      str.@length.should eq(6) # Check that it was pre-computed
       str.should eq("foobar")
     end
 
     it "does for both unicode" do
       str = "青い" + "旅路"
-      str.@length.should eq(4)
+      str.@length.should eq(4) # Check that it was pre-computed
       str.should eq("青い旅路")
     end
 
@@ -1531,16 +1477,12 @@ describe "String" do
       str = "foo"
       str2 = str + '/'
       str2.should eq("foo/")
-      str2.bytesize.should eq(4)
-      str2.size.should eq(4)
     end
 
     it "does with unicode char" do
       str = "fooba"
       str2 = str + 'る'
       str2.should eq("foobaる")
-      str2.bytesize.should eq(8)
-      str2.size.should eq(6)
     end
 
     it "does when right is empty" do
@@ -1655,7 +1597,7 @@ describe "String" do
   end
 
   it "escapes chars" do
-    # TODO: "\a"[0].should eq('\a')
+    "\a"[0].should eq('\a')
     "\b"[0].should eq('\b')
     "\t"[0].should eq('\t')
     "\n"[0].should eq('\n')

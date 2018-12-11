@@ -360,4 +360,30 @@ describe "Semantic: const" do
       ),
       "A is not a type, it's a constant"
   end
+
+  it "errors if using return inside constant value (#5391)" do
+    assert_error %(
+      class Foo
+        A = begin
+          return if 1 == 2
+        end
+      end
+
+      Foo::A
+      ),
+      "can't return from constant"
+  end
+
+  it "errors if constant has NoReturn type (#6139)" do
+    assert_error %(
+      lib LibFoo
+        fun foo : NoReturn
+      end
+
+      FOO = LibFoo.foo
+
+      FOO
+      ),
+      "constant FOO has illegal type NoReturn"
+  end
 end

@@ -43,6 +43,8 @@ module OpenSSL
     end
 
     def write(slice : Bytes)
+      return if slice.empty?
+
       if @mode.write?
         digest_algorithm.update(slice)
       end

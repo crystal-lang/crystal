@@ -120,19 +120,6 @@ module Crystal
     end
 
     def type_combine(types)
-      # Modules and types at a higher level in the hierarchy are the ones
-      # that will "delete" deeper types and combine them into virtual
-      # types (or just modules), so we put them in the front for the algorithm.
-      types.sort! do |t1, t2|
-        if t1.module?
-          -1
-        elsif t2.module?
-          1
-        else
-          t1.depth <=> t2.depth
-        end
-      end
-
       all_types = [types.shift] of Type
 
       types.each do |t2|
@@ -252,12 +239,14 @@ module Crystal
 
   class GenericClassInstanceMetaclassType
     def common_ancestor(other : MetaclassType | VirtualMetaclassType | GenericClassInstanceMetaclassType)
-      if instance_type.module? || other.instance_type.module?
-        nil
-      else
-        common = instance_type.common_ancestor(other.instance_type)
-        common.try &.metaclass
-      end
+      # Modules are never unified
+      return nil if instance_type.module? || other.instance_type.module?
+
+      # Tuple instances might be unified, but never tuple metaclasses
+      return nil if instance_type.is_a?(TupleInstanceType) || other.instance_type.is_a?(TupleInstanceType)
+
+      common = instance_type.common_ancestor(other.instance_type)
+      common.try &.metaclass
     end
   end
 
@@ -344,10 +333,14 @@ private def class_common_ancestor(t1, t2)
     return t1
   end
 
-  # If one type is deeper than the other, check if going up we find
-  # the one in the top, and if so we combine them.
-  # But if they are at the same depth we don't go up.
-  if t1.depth > t2.depth
+  if t1.depth == t2.depth
+    t1_superclass = t1.superclass
+    t2_superclass = t2.superclass
+
+    if t1_superclass && t2_superclass
+      return t1_superclass.common_ancestor(t2_superclass)
+    end
+  elsif t1.depth > t2.depth
     t1_superclass = t1.superclass
     if t1_superclass
       return t1_superclass.common_ancestor(t2)

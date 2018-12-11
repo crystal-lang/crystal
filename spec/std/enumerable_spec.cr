@@ -733,6 +733,9 @@ describe "Enumerable" do
     it { [1, 2, 2, 3].one? { |x| x == 1 }.should eq(true) }
     it { [1, 2, 2, 3].one? { |x| x == 2 }.should eq(false) }
     it { [1, 2, 2, 3].one? { |x| x == 0 }.should eq(false) }
+    it { [1, 2, false].one?.should be_false }
+    it { [1, false, false].one?.should be_true }
+    it { [false].one?.should be_false }
   end
 
   describe "partition" do
@@ -871,6 +874,10 @@ describe "Enumerable" do
 
     it "for array" do
       [[:a, :b], [:c, :d]].to_h.should eq({:a => :b, :c => :d})
+    end
+
+    it "with block" do
+      (1..3).to_h { |i| {i, i ** 2} }.should eq({1 => 1, 2 => 4, 3 => 9})
     end
   end
 end

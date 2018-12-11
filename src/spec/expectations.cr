@@ -5,17 +5,49 @@ module Spec
     end
 
     def match(actual_value)
-      actual_value == @expected_value
+      expected_value = @expected_value
+
+      # For the case of comparing strings we want to make sure that two strings
+      # are equal if their content is equal, but also their bytesize and size
+      # should be equal. Otherwise, an incorrect bytesize or size was used
+      # when creating them.
+      if actual_value.is_a?(String) && expected_value.is_a?(String)
+        actual_value == expected_value &&
+          actual_value.bytesize == expected_value.bytesize &&
+          actual_value.size == expected_value.size
+      else
+        actual_value == @expected_value
+      end
     end
 
     def failure_message(actual_value)
-      expected = @expected_value.inspect
-      got = actual_value.inspect
-      if expected == got
-        expected += " : #{@expected_value.class}"
-        got += " : #{actual_value.class}"
+      expected_value = @expected_value
+
+      # Check for the case of string equality when the content match
+      # but not the bytesize or size.
+      if actual_value.is_a?(String) &&
+         expected_value.is_a?(String) &&
+         actual_value == expected_value
+        if actual_value.bytesize != expected_value.bytesize
+          return <<-MSG
+            Expected bytesize: #{expected_value.bytesize}
+                 got bytesize: #{actual_value.bytesize}
+            MSG
+        end
+
+        return <<-MSG
+          Expected size: #{expected_value.size}
+               got size: #{actual_value.size}
+          MSG
+      else
+        expected = expected_value.inspect
+        got = actual_value.inspect
+        if expected == got
+          expected += " : #{@expected_value.class}"
+          got += " : #{actual_value.class}"
+        end
+        "Expected: #{expected}\n     got: #{got}"
       end
-      "Expected: #{expected}\n     got: #{got}"
     end
 
     def negative_failure_message(actual_value)
@@ -236,6 +268,21 @@ module Spec
     end
   end
 
+  # :nodoc:
+  struct BeEmptyExpectation
+    def match(actual_value)
+      actual_value.empty?
+    end
+
+    def failure_message(actual_value)
+      "Expected: #{actual_value.inspect} to be empty"
+    end
+
+    def negative_failure_message(actual_value)
+      "Expected: #{actual_value.inspect} not to be empty"
+    end
+  end
+
   # This module defines a number of methods to create expectations, which are
   # automatically included into the top level namespace.
   #
@@ -296,22 +343,27 @@ module Spec
       Spec::MatchExpectation.new(value)
     end
 
-    # Creates an `Expectation` that  passes if actual includes *expected* (`.includes?`).
+    # Creates an `Expectation` that passes if actual includes *expected* (`.includes?`).
     # Works on collections and `String`.
     def contain(expected)
       Spec::ContainExpectation.new(expected)
     end
 
-    # Creates an `Expectation` that  passes if actual starts with *expected* (`.starts_with?`).
+    # Creates an `Expectation` that passes if actual starts with *expected* (`.starts_with?`).
     # Works on `String`.
     def start_with(expected)
       Spec::StartWithExpectation.new(expected)
     end
 
-    # Creates an `Expectation` that  passes if actual ends with *expected* (`.ends_with?`).
+    # Creates an `Expectation` that passes if actual ends with *expected* (`.ends_with?`).
     # Works on `String`.
     def end_with(expected)
       Spec::EndWithExpectation.new(expected)
+    end
+
+    # Creates an `Expectation` that passes if actual is empty (`.empty?`).
+    def be_empty
+      Spec::BeEmptyExpectation.new
     end
 
     # Creates an `Expectation` that passes if actual is of type *type* (`is_a?`).

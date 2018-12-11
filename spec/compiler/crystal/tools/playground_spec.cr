@@ -317,7 +317,7 @@ describe Playground::AgentInstrumentorTransformer do
   end
 
   it "do not instrument top level macro calls" do
-    assert_agent(<<-CR
+    assert_agent(<<-FROM, <<-TO
     macro bar
       def foo
         4
@@ -325,8 +325,7 @@ describe Playground::AgentInstrumentorTransformer do
     end
     bar
     foo
-    CR
-    , <<-CR
+    FROM
     macro bar
       def foo
         4
@@ -334,12 +333,12 @@ describe Playground::AgentInstrumentorTransformer do
     end
     bar
     _p.i(7) { foo }
-    CR
+    TO
     )
   end
 
   it "do not instrument class/module declared macro" do
-    assert_agent(<<-CR
+    assert_agent(<<-FROM, <<-TO
     module Bar
       macro bar
         4
@@ -353,8 +352,7 @@ describe Playground::AgentInstrumentorTransformer do
         8
       end
     end
-    CR
-    , <<-CR
+    FROM
     module Bar
       macro bar
         4
@@ -368,7 +366,7 @@ describe Playground::AgentInstrumentorTransformer do
         _p.i(11) { 8 }
       end
     end
-    CR
+    TO
     )
   end
 

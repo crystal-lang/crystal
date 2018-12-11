@@ -70,6 +70,8 @@ describe Crystal::Formatter do
   assert_format "[1,\n2,\n3]", "[1,\n 2,\n 3]"
   assert_format "[1,\n2,\n3\n]", "[1,\n 2,\n 3,\n]"
   assert_format "[\n1,\n2,\n3]", "[\n  1,\n  2,\n  3,\n]"
+  assert_format "[\n  [\n    1,\n  ], [\n    2,\n  ], [\n    3,\n  ],\n]"
+  assert_format "[\n  {\n    1 => 2,\n  }, {\n    3 => 4,\n  }, {\n    5 => 6,\n  },\n]"
   assert_format "if 1\n[   1  ,    2  ,    3  ]\nend", "if 1\n  [1, 2, 3]\nend"
   assert_format "    [   1,   \n   2   ,   \n   3   ]   ", "[1,\n 2,\n 3]"
   assert_format "Set { 1 , 2 }", "Set{1, 2}"
@@ -170,6 +172,8 @@ describe Crystal::Formatter do
   assert_format "def   foo (  @x, @y)  \n  end", "def foo(@x, @y)\nend"
   assert_format "def   foo (  @@x)  \n  end", "def foo(@@x)\nend"
   assert_format "def   foo (  &@block)  \n  end", "def foo(&@block)\nend"
+  assert_format "def   foo (  @select)  \n  end", "def foo(@select)\nend"
+  assert_format "def   foo (  @@select)  \n  end", "def foo(@@select)\nend"
   assert_format "def foo(a, &@b)\nend"
   assert_format "def   foo (  x  =   1 )  \n  end", "def foo(x = 1)\nend"
   assert_format "def   foo (  x  :  Int32 )  \n  end", "def foo(x : Int32)\nend"
@@ -190,9 +194,22 @@ describe Crystal::Formatter do
   assert_format "def   foo  :  Int32 \n  end", "def foo : Int32\nend"
   assert_format "def   foo ( x )  :  Int32 \n  end", "def foo(x) : Int32\nend"
   assert_format "def %(x)\n  1\nend"
+  assert_format "def //(x)\n  1\nend"
   assert_format "def `(x)\n  1\nend"
   assert_format "def /(x)\n  1\nend"
   assert_format "def foo(x : X)  forall   X ,   Y; end", "def foo(x : X) forall X, Y; end"
+  assert_format "def foo(x)\n  self // x\nend"
+  assert_format "def foo(x)\n  case self // x\n  when 2\n    3\n  end\nend"
+  assert_format "def foo(x)\n  case 1\n  when self // 2\n    3\n  end\nend"
+  assert_format "def foo(x)\n  case //\n  when //\n    3\n  end\nend"
+  assert_format "foo self // 1"
+  assert_format "foo(self // 1)"
+  assert_format "foo x, self // 1"
+  assert_format "{x => self // 1}"
+  assert_format "foo(//, //)"
+  assert_format "foo(a: 1 // 2)"
+  assert_format "foo(a: //)"
+  assert_format "foo(a: //, b: //)"
 
   assert_format "def foo(a : T) forall T \n  #\nend", "def foo(a : T) forall T\n  #\nend"
   assert_format "def foo(a : T, b : U) forall T, U\n  #\nend", "def foo(a : T, b : U) forall T, U\n  #\nend"
@@ -243,6 +260,8 @@ describe Crystal::Formatter do
   assert_format "foo(&.bar)"
   assert_format "foo.bar(&.baz)"
   assert_format "foo(1, &.bar)"
+  assert_format "foo(1,\n  &.bar)"
+  assert_format "foo(1, # foo\n  &.bar)"
   assert_format "::foo(1, 2)"
   assert_format "args.any? &.name.baz"
   assert_format "foo(\n  1, 2)", "foo(\n  1, 2)"
@@ -296,6 +315,7 @@ describe Crystal::Formatter do
   assert_format "with foo yield bar"
 
   assert_format "1   +   2", "1 + 2"
+  assert_format "1   &+   2", "1 &+ 2"
   assert_format "1   >   2", "1 > 2"
   assert_format "1   *   2", "1 * 2"
   assert_format "1*2", "1*2"
@@ -303,6 +323,9 @@ describe Crystal::Formatter do
   assert_format "1 / 2", "1 / 2"
   assert_format "10/a", "10/a"
   assert_format "10 / a", "10 / a"
+  assert_format "1 // 2", "1 // 2"
+  assert_format "10//a", "10//a"
+  assert_format "10 // a", "10 // a"
   assert_format "10**a", "10**a"
   assert_format "10 ** a", "10 ** a"
   assert_format %(" " * 2)
@@ -312,14 +335,22 @@ describe Crystal::Formatter do
   assert_format "- 1", "-1"
   assert_format "~ 1", "~1"
   assert_format "+ 1", "+1"
+  assert_format "&- 1", "&-1"
+  assert_format "&+ 1", "&+1"
   assert_format "a-1", "a - 1"
   assert_format "a+1", "a + 1"
+  assert_format "a&-1", "a &- 1"
+  assert_format "a&+1", "a &+ 1"
   assert_format "1 + \n2", "1 +\n  2"
   assert_format "1 +  # foo\n2", "1 + # foo\n  2"
   assert_format "a = 1 +  #    foo\n2", "a = 1 + #    foo\n    2"
   assert_format "1+2*3", "1 + 2*3"
+  assert_format "1&+2&*3", "1 &+ 2 &* 3"
 
   assert_format "foo(1 + \n2)", "foo(1 +\n    2)"
+  assert_format "foo(1 &+ \n2)", "foo(1 &+\n    2)"
+
+  assert_format "foo(1 &- 2)"
 
   assert_format "foo[]", "foo[]"
   assert_format "foo[ 1 , 2 ]", "foo[1, 2]"
@@ -372,6 +403,11 @@ describe Crystal::Formatter do
   assert_format %("\#{\n  foo = 1\n}")
   assert_format %("\#{\n  foo = 1}"), %("\#{\n  foo = 1\n}")
   assert_format %("\#{ # foo\n  foo = 1\n}")
+  assert_format %("\#{"foo"}")
+  assert_format %("\#{"\#{foo}"}")
+  assert_format %("foo\#{"bar"} Baz \#{"qux"} ")
+  assert_format %("1\#{"4\#{"\#{"2"}"}3"}3\#{__DIR__}4\#{5}6")
+  assert_format %("1\#{"\#{"2"}"}3\#{"4"}5")
 
   assert_format "%w(one   two  three)", "%w(one two three)"
   assert_format "%i(one   two  three)", "%i(one two three)"
@@ -449,6 +485,7 @@ describe Crystal::Formatter do
   assert_format "x  :   (A -> B)", "x : (A -> B)"
   assert_format "x  :   (A -> B)?", "x : (A -> B)?"
   assert_format "x  :   {A, B}", "x : {A, B}"
+  assert_format "x : { {A, B}, {C, D} }"
   assert_format "class Foo\n@x  : Int32\nend", "class Foo\n  @x : Int32\nend"
   assert_format "class Foo\n@x  :  Int32\nend", "class Foo\n  @x : Int32\nend"
   assert_format "class Foo\nx = 1\nend", "class Foo\n  x = 1\nend"
@@ -485,6 +522,19 @@ describe Crystal::Formatter do
   assert_format "case 1\nwhen 1, # 1\n     2, # 2\n     3  # 3\n  1\nend"
   assert_format "a = case 1\n    when 1, # 1\n         2, # 2\n         3  # 3\n      1\n    end"
   assert_format "a = 1\ncase\nwhen 2\nelse\n  a /= 3\nend"
+  assert_format "case 1\nend"
+  assert_format "case 1\nelse\n  2\nend"
+  assert_format "case\nend"
+  assert_format "case 1\nend"
+  assert_format "case\nend"
+  assert_format "case\nelse\n  1\nend"
+
+  assert_format <<-CODE
+    case 0
+    when 0 then 1; 2
+    # Comments
+    end
+    CODE
 
   assert_format "select   \n when  foo \n 2 \n end", "select\nwhen foo\n  2\nend"
   assert_format "select   \n when  foo \n 2 \n when bar \n 3 \n end", "select\nwhen foo\n  2\nwhen bar\n  3\nend"
@@ -593,6 +643,7 @@ describe Crystal::Formatter do
   assert_format "class Foo\nend\nclass Bar\nend", "class Foo\nend\n\nclass Bar\nend"
 
   assert_format "alias  Foo  =   Bar", "alias Foo = Bar"
+  assert_format "alias  Foo::Bar  =   Baz", "alias Foo::Bar = Baz"
   assert_format "alias A = (B)"
   assert_format "alias A = (B) -> C"
 
@@ -650,7 +701,8 @@ describe Crystal::Formatter do
   assert_format "->( x , y )   { x }", "->(x, y) { x }"
   assert_format "->( x : Int32 , y )   { x }", "->(x : Int32, y) { x }"
 
-  {:+, :-, :*, :/, :^, :>>, :<<, :|, :&}.each do |sym|
+  # TODO remove quotes after 0.26.0
+  {:+, :-, :*, :/, :^, :>>, :<<, :|, :&, :"&+", :"&-", :"&*", :"&**"}.each do |sym|
     assert_format ":#{sym}"
   end
   assert_format ":\"foo bar\""
@@ -661,15 +713,18 @@ describe Crystal::Formatter do
 
   assert_format %(asm("nop"))
   assert_format %(asm(\n"nop"\n)), %(asm(\n  "nop"\n))
-  assert_format %(asm("nop" : : )), %(asm("nop" ::))
-  assert_format %(asm("nop" :: )), %(asm("nop" ::))
+  assert_format %(asm("nop" : : )), %(asm("nop"))
+  assert_format %(asm("nop" :: )), %(asm("nop"))
   assert_format %(asm("nop" :: "r"(0))), %(asm("nop" :: "r"(0)))
   assert_format %(asm("nop" : "a"(0) )), %(asm("nop" : "a"(0)))
+  assert_format %(asm("nop" : "a"(0), "b"(1) )), %(asm("nop" : "a"(0), "b"(1)))
   assert_format %(asm("nop" : "a"(0) : "b"(1) )), %(asm("nop" : "a"(0) : "b"(1)))
   assert_format %(asm("nop" : "a"(0) : "b"(1), "c"(2) )), %(asm("nop" : "a"(0) : "b"(1), "c"(2)))
   assert_format %(asm("nop" : "a"(0)\n: "b"(1), "c"(2) )), %(asm("nop" : "a"(0)\n          : "b"(1), "c"(2)))
+  assert_format %(asm("nop" : "a"(0), "b"(1)\n: "c"(2), "d"(3) )), %(asm("nop" : "a"(0), "b"(1)\n          : "c"(2), "d"(3)))
+  assert_format %(asm("nop" : "a"(0),\n"b"(1)\n: "c"(2), "d"(3) )), %(asm("nop" : "a"(0),\n            "b"(1)\n          : "c"(2), "d"(3)))
   assert_format %(asm("nop" : "a"(0)\n: "b"(1),\n"c"(2) )), %(asm("nop" : "a"(0)\n          : "b"(1),\n            "c"(2)))
-  assert_format %(asm(\n"nop" : "a"(0) )), %(asm(\n  "nop" : "a"(0)\n))
+  assert_format %(asm(\n"nop" : "a"(0), "b"(1) )), %(asm(\n  "nop" : "a"(0), "b"(1)\n))
   assert_format %(asm("nop"\n: "a"(0) )), %(asm("nop"\n        : "a"(0)))
   assert_format %(asm("nop" ::: "eax" )), %(asm("nop" ::: "eax"))
   assert_format %(asm("nop" ::: "eax" ,  "ebx" )), %(asm("nop" ::: "eax", "ebx"))
@@ -677,10 +732,16 @@ describe Crystal::Formatter do
   assert_format %(asm("nop" :::: "volatile"  , "alignstack"  ,  "intel"   )), %(asm("nop" :::: "volatile", "alignstack", "intel"))
   assert_format %(asm("nop" ::: "eax" ,  "ebx" :   "volatile"  ,  "alignstack" )), %(asm("nop" ::: "eax", "ebx" : "volatile", "alignstack"))
   assert_format %(asm("a" : "b"(c) : "d"(e) :: "volatile"))
+  assert_format %(asm("a" : "b"(1), "c"(2) : "d"(3) : : "volatile")), %(asm("a" : "b"(1), "c"(2) : "d"(3) :: "volatile"))
+
   assert_format %(asm("a" : "b"(c)\n)), %(asm("a" : "b"(c)))
   assert_format %(asm("a" :: "d"(e)\n)), %(asm("a" :: "d"(e)))
   assert_format %(asm("a" ::: "f"\n)), %(asm("a" ::: "f"))
   assert_format %(asm("a" :::: "volatile"\n)), %(asm("a" :::: "volatile"))
+  assert_format %(asm("a" : : : : "volatile")), %(asm("a" :::: "volatile"))
+  assert_format %(asm("a" :: : : "volatile")), %(asm("a" :::: "volatile"))
+  assert_format %(asm("a" : :: : "volatile")), %(asm("a" :::: "volatile"))
+  assert_format %(asm("a" : : :: "volatile")), %(asm("a" :::: "volatile"))
   assert_format %(asm("a" : "b"(c) : "d"(e)\n        : "f"))
   assert_format %(asm("a" : "b"(c) : "d"(e)\n        : "f",\n          "g"))
   assert_format %(asm("a" ::: "a"\n        : "volatile",\n          "intel"))
@@ -828,7 +889,8 @@ describe Crystal::Formatter do
   assert_format "case 1\nwhen \"foo\"     ; 3\nwhen \"lalalala\"; 4\nelse             5\nend"
   assert_format "case 1\nwhen \"foo\"      then 3\nwhen \"lalalala\" then 4\nelse                 5\nend"
   assert_format "case 1        # foo\nwhen 2 then 3 # bar\nwhen 4 then 5 # baz\nelse        6 # zzz\nend"
-  assert_format "case 1\nwhen     8 then 1\nwhen    16 then 2\nwhen   256 then 3\nwhen 'a'   then 5\nwhen \"foo\" then 6\nelse            4\nend"
+  assert_format "case 1\nwhen 8     then 1\nwhen 16    then 2\nwhen 256   then 3\nwhen 'a'   then 5\nwhen \"foo\" then 6\nelse            4\nend"
+  assert_format "case 1\nwhen 1      then 1\nwhen 123    then 2\nwhen 1..123 then 3\nelse             4\nend"
   assert_format "macro bar\n  1\nend\n\ncase 1\nwhen  2 then 3\nwhen 45 then 6\nend"
   assert_format "{\n         1 => 2,\n        10 => 30,\n        30 => 40,\n  \"foobar\" => 50,\n  \"coco\"   => 60,\n}"
   assert_format "{1 => 2, 3 => 4}\n{5234234 => 234098234, 7 => 8}"
@@ -880,6 +942,7 @@ describe Crystal::Formatter do
   assert_format "return 1\n# end"
   assert_format "case\n# hello\nwhen 1\n  2\nend"
   assert_format "case 1\nwhen 2 # a\n  # b\nend"
+  assert_format "case 1\nelse # foo\n  # bar\nend"
 
   assert_format "{} of A => B\n{} of Foo => Bar"
 
@@ -898,6 +961,8 @@ describe Crystal::Formatter do
 
   assert_format "x, y = <<-FOO, <<-BAR\n  hello\n  FOO\n  world\n  BAR"
   assert_format "x, y, z = <<-FOO, <<-BAR, <<-BAZ\n  hello\n  FOO\n  world\n  BAR\n  qux\nBAZ"
+
+  assert_format "<<-FOO\nFOO"
 
   assert_format "#!shebang\n1 + 2"
 
@@ -965,8 +1030,8 @@ describe Crystal::Formatter do
   assert_format "foo &.nil?()"
   assert_format "foo &.bar.nil?()"
 
-  assert_format "foo(<<-X\na\nX\n, 1)"
-  assert_format "def bar\n  foo(<<-X\n  a\n  X\n  , 1)\nend"
+  assert_format "foo(<<-X,\na\nX\n  1)"
+  assert_format "def bar\n  foo(<<-X,\n  a\n  X\n    1)\nend"
   assert_format %(run("a", 1))
 
   assert_format "foo.bar # comment\n  .baz"
@@ -1038,6 +1103,7 @@ describe Crystal::Formatter do
   assert_format "{ {% for x in 1..2 %}3{% end %}, nil }"
   assert_format "{ %() }"
   assert_format "{ %w() }"
+  assert_format "{ {1}.foo, 2 }"
 
   assert_format "String?"
   assert_format "String???"
@@ -1059,8 +1125,7 @@ describe Crystal::Formatter do
   assert_format "def foo(a,\n        &block)\nend"
   assert_format "def foo(\n  a,\n  &block\n)\nend"
   assert_format "def foo(a,\n        *b)\nend"
-  assert_format "def foo(a\n,        *b)\nend", "def foo(a,\n        *b)\nend"
-  assert_format "def foo(a # comment\n,        *b)\nend", "def foo(a, # comment\n        *b)\nend"
+  assert_format "def foo(a, # comment\n        *b)\nend", "def foo(a, # comment\n        *b)\nend"
   assert_format "def foo(a,\n        **b)\nend"
   assert_format "def foo(\n  **a\n)\n  1\nend"
   assert_format "def foo(**a,)\n  1\nend", "def foo(**a)\n  1\nend"
@@ -1127,6 +1192,8 @@ describe Crystal::Formatter do
   assert_format "class X\n annotation  FooAnnotation  \n  end \n end", "class X\n  annotation FooAnnotation\n  end\nend"
 
   assert_format "macro foo\n{% verbatim do %}1 + 2{% end %}\nend"
+  assert_format "{% verbatim do %}{{1}} + {{2}}{% end %}"
+  assert_format "foo({% verbatim do %}{{1}} + {{2}}{% end %})"
 
   assert_format "{% foo <<-X\nbar\nX\n%}"
   assert_format "foo do\n  {% foo <<-X\n  bar\n  X\n  %}\nend"
@@ -1140,4 +1207,32 @@ describe Crystal::Formatter do
   assert_format "foo do\n  bar do\n    foo <<-X\n    bar\n    X\n  end\nend"
   assert_format "call(foo <<-X\nbar\nX\n)"
   assert_format "bar do\n  call(foo <<-X\n  bar\n  X\n  )\nend"
+
+  assert_format "[\n  <<-EOF,\n  foo\n  EOF\n]"
+  assert_format "[\n  <<-EOF,\n  foo\n  EOF\n  <<-BAR,\n  bar\n  BAR\n]"
+  assert_format "Hash{\n  foo => <<-EOF,\n  foo\n  EOF\n}"
+  assert_format "Hash{\n  foo => <<-EOF,\n  foo\n  EOF\n  bar => <<-BAR,\n  bar\n  BAR\n}"
+  assert_format "Hash{\n  foo => <<-EOF\n  foo\n  EOF\n}"
+  assert_format "{\n  <<-KEY => 1,\n  key\n  KEY\n}"
+
+  assert_format "begin 0[1] rescue 2 end"
+  assert_format "begin\n 0[1] rescue 2 end", "begin 0[1] rescue 2 end"
+
+  assert_format "{%\n  if 1\n    2\n  end\n%}"
+
+  assert_format <<-CODE
+    # ```text
+    #  1  +  2
+    # ```
+    CODE
+
+  assert_format <<-CODE
+    # ```text
+    # 1 + 2
+    # ```
+    #
+    # ```
+    # 3 + 4
+    # ```
+    CODE
 end

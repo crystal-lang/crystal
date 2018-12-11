@@ -1,20 +1,20 @@
 require "./rfc_2822"
 
-# Parse a time string using the formats specified by [RFC 2616](https://tools.ietf.org/html/rfc2616#section-3.3.1).
-#
-# Supported formats:
-# * [RFC 1123](https://tools.ietf.org/html/rfc1123#page-55)
-# * [RFC 850](https://tools.ietf.org/html/rfc850#section-2.1.4)
-# * [asctime](http://en.cppreference.com/w/c/chrono/asctime)
-#
-# ```
-# Time::Format::HTTP_DATE.parse("Sun, 14 Feb 2016 21:00:00 GMT")  # => 2016-02-14 21:00:00 UTC
-# Time::Format::HTTP_DATE.parse("Sunday, 14-Feb-16 21:00:00 GMT") # => 2016-02-14 21:00:00 UTC
-# Time::Format::HTTP_DATE.parse("Sun Feb 14 21:00:00 2016")       # => 2016-02-14 21:00:00 UTC
-#
-# Time::Format::HTTP_DATE.format(Time.new(2016, 2, 15)) # => "Sun, 14 Feb 2016 21:00:00 GMT"
-# ```
 struct Time::Format
+  # Parse a time string using the formats specified by [RFC 2616](https://tools.ietf.org/html/rfc2616#section-3.3.1).
+  #
+  # Supported formats:
+  # * [RFC 1123](https://tools.ietf.org/html/rfc1123#page-55)
+  # * [RFC 850](https://tools.ietf.org/html/rfc850#section-2.1.4)
+  # * [asctime](http://en.cppreference.com/w/c/chrono/asctime)
+  #
+  # ```
+  # Time::Format::HTTP_DATE.parse("Sun, 14 Feb 2016 21:00:00 GMT")  # => 2016-02-14 21:00:00 UTC
+  # Time::Format::HTTP_DATE.parse("Sunday, 14-Feb-16 21:00:00 GMT") # => 2016-02-14 21:00:00 UTC
+  # Time::Format::HTTP_DATE.parse("Sun Feb 14 21:00:00 2016")       # => 2016-02-14 21:00:00 UTC
+  #
+  # Time::Format::HTTP_DATE.format(Time.utc(2016, 2, 15)) # => "Mon, 15 Feb 2016 00:00:00 GMT"
+  # ```
   module HTTP_DATE
     # Parses a string into a `Time`.
     def self.parse(string, location = Time::Location::UTC) : Time

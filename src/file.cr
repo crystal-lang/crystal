@@ -1,22 +1,74 @@
 require "crystal/system/file"
 
+# A `File` instance represents a file entry in the local file system and allows using it as an `IO`.
+#
+# ```
+# file = File.new("path/to/file")
+# content = file.gets_to_end
+# file.close
+#
+# # Implicit close with `open`
+# content = File.open("path/to/file") do |file|
+#   file.gets_to_end
+# end
+#
+# # Shortcut:
+# content = File.read("path/to/file")
+# ```
+#
+# ## Temporary Files
+#
+# Every tempfile is operated as a `File`, including initializing, reading and writing.
+#
+# ```
+# tempfile = File.tempfile("foo")
+#
+# File.size(tempfile.path)                   # => 6
+# File.info(tempfile.path).modification_time # => 2015-10-20 13:11:12 UTC
+# File.exists?(tempfile.path)                # => true
+# File.read_lines(tempfile.path)             # => ["foobar"]
+# ```
+#
+# Files created from `tempfile` are stored in a directory that handles
+# temporary files (`Dir.tempdir`):
+#
+# ```
+# File.tempfile("foo").path # => "/tmp/foo.ulBCPS"
+# ```
+#
+# It is encouraged to delete a tempfile after using it, which
+# ensures they are not left behind in your filesystem until garbage collected.
+#
+# ```
+# tempfile = File.tempfile("foo")
+# tempfile.delete
+# ```
 class File < IO::FileDescriptor
-  # The file/directory separator character. `'/'` in Unix, `'\\'` in Windows.
-  SEPARATOR = {% if flag?(:windows) %}
-    '\\'
-  {% else %}
-    '/'
-  {% end %}
+  # The file/directory separator character. `'/'` on all platforms.
+  SEPARATOR = '/'
 
-  # The file/directory separator string. `"/"` in Unix, `"\\"` in Windows.
-  SEPARATOR_STRING = {% if flag?(:windows) %}
-    "\\"
-  {% else %}
-    "/"
-  {% end %}
+  # The file/directory separator string. `"/"` on all platforms.
+  SEPARATOR_STRING = "/"
 
   # :nodoc:
   DEFAULT_CREATE_PERMISSIONS = File::Permissions.new(0o644)
+
+  # The name of the null device on the host platform. `/dev/null` on UNIX and `NUL`
+  # on win32.
+  #
+  # When this device is opened using `File.open`, read operations will always
+  # return EOF, and any data written will be immediately discarded.
+  #
+  # ```
+  # File.open(File::DEVNULL) do |file|
+  #   file.puts "this is discarded"
+  # end
+  # ```
+  DEVNULL = {% if flag?(:win32) %}
+              "NUL"
+            {% else %}
+              "/dev/null"
+            {% end %}
 
   include Crystal::System::File
 
@@ -67,7 +119,7 @@ class File < IO::FileDescriptor
   # File.info("bar", follow_symlinks: false).type.symlink? # => true
   # ```
   def self.info(path, follow_symlinks = true) : Info
-    info?(path, follow_symlinks) || raise Errno.new("Unable to get info for #{path.inspect}")
+    info?(path, follow_symlinks) || raise Errno.new("Unable to get info for '#{path.inspect_unquoted}'")
   end
 
   # Returns `true` if *path* exists else returns `false`
@@ -99,7 +151,7 @@ class File < IO::FileDescriptor
   def self.size(filename) : UInt64
     info(filename).size
   rescue ex : Errno
-    raise Errno.new("Error determining size of #{filename.inspect}", ex.errno)
+    raise Errno.new("Error determining size of '#{filename.inspect_unquoted}'", ex.errno)
   end
 
   # Returns `true` if the file at *path* is empty, otherwise returns `false`.
@@ -254,16 +306,16 @@ class File < IO::FileDescriptor
   #
   # ```
   # File.chmod("foo", 0o755)
-  # File.info("foo").permissions # => 0o755
+  # File.info("foo").permissions.value # => 0o755
   #
   # File.chmod("foo", 0o700)
-  # File.info("foo").permissions # => 0o700
+  # File.info("foo").permissions.value # => 0o700
   # ```
   def self.chmod(path, permissions : Int | Permissions)
     Crystal::System::File.chmod(path, permissions)
   end
 
-  # Delete the file at *path*. Deleting non-existent file will raise an exception.
+  # Deletes the file at *path*. Deleting non-existent file will raise an exception.
   #
   # ```
   # File.write("foo", "")
@@ -282,13 +334,40 @@ class File < IO::FileDescriptor
   def self.extname(filename) : String
     filename.check_no_null_byte
 
-    dot_index = filename.rindex('.')
+    bytes = filename.to_slice
 
-    if dot_index && dot_index != filename.size - 1 && dot_index - 1 > (filename.rindex(SEPARATOR) || 0)
-      filename[dot_index, filename.size - dot_index]
-    else
-      ""
+    return "" if bytes.empty?
+
+    current = bytes.size - 1
+
+    # if the pattern is foo. it has no extension
+    return "" if bytes[current] == '.'.ord
+
+    # position the reader at the last . or SEPARATOR
+    # that is not the first char
+    while bytes[current] != SEPARATOR.ord &&
+          bytes[current] != '.'.ord &&
+          current > 0
+      current -= 1
     end
+
+    # if we are the beginning of the string there is no extension
+    # /foo or .foo have no extension
+    return "" unless current > 0
+
+    # otherwise we are not at the beginning, and there is a previous char.
+    # if current is '/', then the pattern is prefix/foo and has no extension
+    return "" if bytes[current] == SEPARATOR.ord
+
+    # otherwise the current_char is '.'
+    # if previous is '/', then the pattern is prefix/.foo and has no extension
+    return "" if bytes[current - 1] == SEPARATOR.ord
+
+    # So the current char is '.',
+    # we are not at the beginning,
+    # the previous char is not a '/',
+    # and we have an extension
+    String.new(bytes[current, bytes.size - current])
   end
 
   # Converts *path* to an absolute path. Relative paths are
@@ -333,9 +412,7 @@ class File < IO::FileDescriptor
     end
 
     String.build do |str|
-      {% if !flag?(:windows) %}
-        str << SEPARATOR_STRING
-      {% end %}
+      str << SEPARATOR_STRING
       items.join SEPARATOR_STRING, str
     end
   end
@@ -629,11 +706,6 @@ class File < IO::FileDescriptor
     end
   end
 
-  # Returns an `Iterator` for each line in *filename*.
-  def self.each_line(filename, encoding = nil, invalid = nil, chomp = true)
-    open(filename, "r", encoding: encoding, invalid: invalid).each_line(chomp: chomp)
-  end
-
   # Returns all lines in *filename* as an array of strings.
   #
   # ```
@@ -648,7 +720,7 @@ class File < IO::FileDescriptor
     lines
   end
 
-  # Write the given *content* to *filename*.
+  # Writes the given *content* to *filename*.
   #
   # The *mode* parameter can be used to change the file's `open` mode, e.g. to `"a"` for appending.
   #
@@ -699,9 +771,11 @@ class File < IO::FileDescriptor
   def self.join(parts : Array | Tuple) : String
     String.build do |str|
       first = true
+      parts_last_index = parts.size - 1
       parts.each_with_index do |part, index|
         part.check_no_null_byte
-        next if part.empty? && index != parts.size - 1
+        next if part.empty? && index != parts_last_index
+        next if !first && index != parts_last_index && part == SEPARATOR_STRING
 
         str << SEPARATOR unless first
 
@@ -713,7 +787,7 @@ class File < IO::FileDescriptor
           byte_count -= 1
         end
 
-        if index != parts.size - 1 && part.ends_with?(SEPARATOR)
+        if index != parts_last_index && part.ends_with?(SEPARATOR)
           byte_count -= 1
         end
 
@@ -747,12 +821,12 @@ class File < IO::FileDescriptor
   # in the *filename* parameter to the value given in *time*.
   #
   # If the file does not exist, it will be created.
-  def self.touch(filename : String, time : Time = Time.now)
+  def self.touch(filename : String, time : Time = Time.utc_now)
     open(filename, "a") { } unless exists?(filename)
     utime time, time, filename
   end
 
-  # Return the size in bytes of the currently opened file.
+  # Returns the size in bytes of the currently opened file.
   def size
     info.size
   end
@@ -762,6 +836,19 @@ class File < IO::FileDescriptor
   def truncate(size = 0) : Nil
     flush
     system_truncate(size)
+  end
+
+  # Flushes all data written to this File to the disk device so that
+  # all changed information can be retrieved even if the system
+  # crashes or is rebooted. The call blocks until the device reports that
+  # the transfer has completed.
+  # To reduce disk activity the *flush_metadata* parameter can be set to false,
+  # then the syscall *fdatasync* will be used and only data required for
+  # subsequent data retrieval is flushed. Metadata such as modified time and
+  # access time is not written.
+  def fsync(flush_metadata = true) : Nil
+    flush
+    system_fsync(flush_metadata)
   end
 
   # Yields an `IO` to read a section inside this file.
@@ -804,7 +891,7 @@ class File < IO::FileDescriptor
     end
   end
 
-  # Place a shared advisory lock. More than one process may hold a shared lock for a given file at a given time.
+  # Places a shared advisory lock. More than one process may hold a shared lock for a given file at a given time.
   # `Errno::EWOULDBLOCK` is raised if *blocking* is set to `false` and an existing exclusive lock is set.
   def flock_shared(blocking = true)
     system_flock_shared(blocking)
@@ -819,15 +906,20 @@ class File < IO::FileDescriptor
     end
   end
 
-  # Place an exclusive advisory lock. Only one process may hold an exclusive lock for a given file at a given time.
+  # Places an exclusive advisory lock. Only one process may hold an exclusive lock for a given file at a given time.
   # `Errno::EWOULDBLOCK` is raised if *blocking* is set to `false` and any existing lock is set.
   def flock_exclusive(blocking = true)
     system_flock_exclusive(blocking)
   end
 
-  # Remove an existing advisory lock held by this process.
+  # Removes an existing advisory lock held by this process.
   def flock_unlock
     system_flock_unlock
+  end
+
+  # Deletes this file.
+  def delete
+    File.delete(@path)
   end
 end
 

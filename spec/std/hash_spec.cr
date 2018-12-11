@@ -105,13 +105,52 @@ describe "Hash" do
     end
   end
 
-  describe "fetch" do
-    it "fetches with one argument" do
-      a = {1 => 2}
-      a.fetch(1).should eq(2)
-      a.should eq({1 => 2})
+  describe "dig?" do
+    it "gets the value at given path given splat" do
+      ary = [1, 2, 3]
+      h = {"a" => {"b" => {"c" => [10, 20]}}, ary => {"a" => "b"}}
+
+      h.dig?("a", "b", "c").should eq([10, 20])
+      h.dig?(ary, "a").should eq("b")
     end
 
+    it "returns nil if not found" do
+      ary = [1, 2, 3]
+      h = {"a" => {"b" => {"c" => 300}}, ary => {"a" => "b"}}
+
+      h.dig?("a", "b", "c", "d", "e").should be_nil
+      h.dig?("z").should be_nil
+      h.dig?("").should be_nil
+    end
+  end
+
+  describe "dig" do
+    it "gets the value at given path given splat" do
+      ary = [1, 2, 3]
+      h = {"a" => {"b" => {"c" => [10, 20]}}, ary => {"a" => "b", "c" => nil}}
+
+      h.dig("a", "b", "c").should eq([10, 20])
+      h.dig(ary, "a").should eq("b")
+      h.dig(ary, "c").should eq(nil)
+    end
+
+    it "raises KeyError if not found" do
+      ary = [1, 2, 3]
+      h = {"a" => {"b" => {"c" => 300}}, ary => {"a" => "b"}}
+
+      expect_raises KeyError, %(Hash value not diggable for key: "c") do
+        h.dig("a", "b", "c", "d", "e")
+      end
+      expect_raises KeyError, %(Missing hash key: "z") do
+        h.dig("z")
+      end
+      expect_raises KeyError, %(Missing hash key: "") do
+        h.dig("")
+      end
+    end
+  end
+
+  describe "fetch" do
     it "fetches with default value" do
       a = {1 => 2}
       a.fetch(1, 3).should eq(2)
@@ -124,13 +163,6 @@ describe "Hash" do
       a.fetch(1) { |k| k * 3 }.should eq(2)
       a.fetch(2) { |k| k * 3 }.should eq(6)
       a.should eq({1 => 2})
-    end
-
-    it "fetches and raises" do
-      a = {1 => 2}
-      expect_raises KeyError, "Missing hash key: 2" do
-        a.fetch(2)
-      end
     end
   end
 
@@ -458,6 +490,59 @@ describe "Hash" do
     h2 = h1.compact!
     h2.should be_nil
     h1.should eq({:a => 1, :b => 2, :c => 3})
+  end
+
+  it "transforms keys" do
+    h1 = {1 => :a, 2 => :b, 3 => :c}
+
+    h2 = h1.transform_keys { |x| x + 1 }
+    h2.should eq({2 => :a, 3 => :b, 4 => :c})
+  end
+
+  it "transforms keys with type casting" do
+    h1 = {:a => 1, :b => 2, :c => 3}
+
+    h2 = h1.transform_keys { |x| x.to_s.upcase }
+    h2.should be_a(Hash(String, Int32))
+    h2.should eq({"A" => 1, "B" => 2, "C" => 3})
+  end
+
+  it "returns empty hash when transforming keys of an empty hash" do
+    h1 = {} of Int32 => Symbol
+
+    h2 = h1.transform_keys { |x| x + 1 }
+    h2.should be_a(Hash(Int32, Symbol))
+    h2.empty?.should be_true
+  end
+
+  it "transforms values" do
+    h1 = {:a => 1, :b => 2, :c => 3}
+
+    h2 = h1.transform_values { |x| x + 1 }
+    h2.should eq({:a => 2, :b => 3, :c => 4})
+  end
+
+  it "transforms values with type casting values" do
+    h1 = {:a => 1, :b => 2, :c => 3}
+
+    h2 = h1.transform_values { |x| x.to_s }
+    h2.should be_a(Hash(Symbol, String))
+    h2.should eq({:a => "1", :b => "2", :c => "3"})
+  end
+
+  it "returns empty hash when transforming values of an empty hash" do
+    h1 = {} of Symbol => Int32
+
+    h2 = h1.transform_values { |x| x + 1 }
+    h2.should be_a(Hash(Symbol, Int32))
+    h2.empty?.should be_true
+  end
+
+  it "transform values in place" do
+    h = {:a => 1, :b => 2, :c => 3}
+
+    h.transform_values!(&.+(1))
+    h.should eq({:a => 2, :b => 3, :c => 4})
   end
 
   it "zips" do

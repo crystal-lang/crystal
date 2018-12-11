@@ -118,9 +118,13 @@ describe "Semantic: automatic cast" do
         x
       end
 
+      def foo(x : Int16)
+        x
+      end
+
       foo(1)
       ),
-      "ambiguous"
+      "ambiguous call, implicit cast of 1 matches all of Int8, UInt8, Int16"
   end
 
   it "says ambiguous call for integer (2)" do
@@ -131,7 +135,20 @@ describe "Semantic: automatic cast" do
 
       foo(1)
       ),
-      "ambiguous"
+      "ambiguous call, implicit cast of 1 matches all of Int8, UInt8"
+  end
+
+  it "says ambiguous call for integer on alias (#6620)" do
+    assert_error %(
+      alias A = Int8 | UInt8
+
+      def foo(x : A)
+        x
+      end
+
+      foo(1)
+      ),
+      "ambiguous call, implicit cast of 1 matches all of Int8, UInt8"
   end
 
   it "casts symbol literal to enum" do
@@ -208,7 +225,7 @@ describe "Semantic: automatic cast" do
 
       foo(:one)
       ),
-      "ambiguous"
+      "ambiguous call, implicit cast of :one matches all of Foo, Foo2"
   end
 
   it "casts Int32 to Int64 in ivar assignment" do
@@ -366,5 +383,47 @@ describe "Semantic: automatic cast" do
 
       Foo(Int64).new.x
       )) { int64 }
+  end
+
+  it "doesn't say 'ambiguous call' when there's an exact match for integer (#6601)" do
+    assert_error %(
+      class Zed
+        def +(other : Char)
+        end
+      end
+
+      a = 1 || Zed.new
+      a + 2
+      ),
+      "no overload matches"
+  end
+
+  it "doesn't say 'ambiguous call' when there's an exact match for symbol (#6601)" do
+    assert_error %(
+      enum Color1
+        Red
+      end
+
+      enum Color2
+        Red
+      end
+
+      struct Int
+        def +(x : Color1)
+        end
+
+        def +(x : Color2)
+        end
+      end
+
+      class Zed
+        def +(other : Char)
+        end
+      end
+
+      a = 1 || Zed.new
+      a + :red
+      ),
+      "no overload matches"
   end
 end

@@ -12,7 +12,7 @@ require "c/string"
 struct Slice(T)
   include Indexable(T)
 
-  # Create a new `Slice` with the given *args*. The type of the
+  # Creates a new `Slice` with the given *args*. The type of the
   # slice will be the union of the type of the given *args*.
   #
   # The slice is allocated on the heap.
@@ -204,7 +204,7 @@ struct Slice(T)
   end
 
   @[AlwaysInline]
-  def unsafe_at(index : Int)
+  def unsafe_fetch(index : Int)
     @pointer[index]
   end
 

@@ -178,7 +178,7 @@ describe "Semantic: class" do
       end
 
       a = Bar.new || Baz.new
-      ") { union_of types["Bar"], types["Baz"] }
+      ") { types["Foo"].virtual_type }
   end
 
   it "types class and subclass as one type" do
@@ -854,7 +854,7 @@ describe "Semantic: class" do
   it "doesn't crash on instance variable assigned a proc, and never instantiated (#923)" do
     assert_type(%(
       class Klass
-        def f(arg)
+        def self.f(arg)
         end
 
         @a  : Proc(String, Nil) = ->f(String)
@@ -1059,7 +1059,7 @@ describe "Semantic: class" do
 
       Foo.bar
       ),
-      "undefined method 'bar' for Foo:Class"
+      "undefined method 'bar' for Foo.class"
   end
 
   it "inherits self twice (#5495)" do

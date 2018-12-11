@@ -1,90 +1,89 @@
 require "spec"
 
-# These specs are marked as pending until we add
-# support for parallelism, where we'll see if we
-# need condition variables.
-#
-# Also: review these specs!
 describe Thread::ConditionVariable do
-  pending "signals" do
+  it "signals" do
     mutex = Thread::Mutex.new
     cond = Thread::ConditionVariable.new
-    pcond = Thread::ConditionVariable.new
-    waiting = 0
-    signaled = 0
 
-    threads = 3.times.map do
+    mutex.synchronize do
       Thread.new do
-        mutex.synchronize do
-          waiting += 1
-          # TODO: why is this needed? Bug?
-          pcond.signal
-          cond.wait mutex
-        end
+        mutex.synchronize { cond.signal }
       end
-    end.to_a
 
-    while signaled < 3
-      mutex.synchronize do
-        if waiting > 0
-          waiting -= 1
-          signaled += 1
-          cond.signal
-        end
-      end
+      cond.wait(mutex)
     end
-    threads.map &.join
   end
 
-  pending "broadcasts" do
+  it "signals & broadcasts" do
     mutex = Thread::Mutex.new
-    cond = Thread::ConditionVariable.new
-    pcond = Thread::ConditionVariable.new
-    waiting = 0
-    signaled = false
-
-    threads = 3.times.map do
-      Thread.new do
-        mutex.synchronize do
-          waiting += 1
-          pcond.signal
-          cond.wait mutex
-        end
-      end
-    end.to_a
-
-    until signaled
-      mutex.synchronize do
-        if waiting >= 3
-          cond.broadcast
-          signaled = true
-        else
-          pcond.wait mutex
-        end
-      end
-    end
-
-    threads.map &.join
-  end
-
-  pending "waits and send signal" do
-    a = 0
     cv1 = Thread::ConditionVariable.new
     cv2 = Thread::ConditionVariable.new
-    m = Thread::Mutex.new
+    waiting = 0
 
-    thread = Thread.new do
-      3.times do
-        m.synchronize { cv1.wait(m); a += 1; cv2.signal }
+    5.times do
+      Thread.new do
+        mutex.synchronize do
+          waiting += 1
+          cv1.wait(mutex)
+
+          waiting -= 1
+          cv2.signal
+        end
       end
     end
 
-    a.should eq(0)
-    3.times do |i|
-      m.synchronize { cv1.signal; cv2.wait(m) }
-      a.should eq(i + 1)
+    # wait for all threads to have acquired the mutex and be waiting on the
+    # condition variable, otherwise the main thread could acquire the lock
+    # first, and signal into the void.
+    #
+    # since increments to waiting are synchronized, at least 4 threads are
+    # guaranteed to be waiting when waiting is 5, which is enough for futher
+    # tests to never hangup.
+    until waiting == 5
+      Thread.yield
     end
 
-    thread.join
+    # wakes up at least 1 thread:
+    mutex.synchronize do
+      cv1.signal
+      cv2.wait(mutex)
+    end
+    waiting.should be < 5
+
+    # wakes up all waiting threads:
+    mutex.synchronize do
+      cv1.broadcast
+
+      until waiting == 0
+        cv2.wait(mutex, 1.second) { raise "unexpected wait timeout" }
+      end
+    end
+  end
+
+  it "timeouts" do
+    timedout = false
+    mutex = Thread::Mutex.new
+    cond = Thread::ConditionVariable.new
+
+    mutex.synchronize do
+      cond.wait(mutex, 1.microsecond) { timedout = true }
+    end
+    timedout.should be_true
+  end
+
+  it "resumes before timeout" do
+    timedout = false
+    mutex = Thread::Mutex.new
+    cond = Thread::ConditionVariable.new
+
+    mutex.synchronize do
+      Thread.new do
+        mutex.synchronize { cond.signal }
+      end
+
+      cond.wait(mutex, 1.second) { timedout = true }
+    end
+
+    timedout.should be_false
   end
 end

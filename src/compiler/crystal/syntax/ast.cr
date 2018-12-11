@@ -1849,12 +1849,12 @@ module Crystal
   end
 
   class Alias < ASTNode
-    property name : String
+    property name : Path
     property value : ASTNode
     property doc : String?
     property visibility = Visibility::Public
 
-    def initialize(@name : String, @value : ASTNode)
+    def initialize(@name : Path, @value : ASTNode)
     end
 
     def accept_children(visitor)
@@ -1862,7 +1862,7 @@ module Crystal
     end
 
     def clone_without_location
-      Alias.new(@name, @value.clone)
+      Alias.new(@name.clone, @value.clone)
     end
 
     def_equals_and_hash @name, @value
@@ -2168,26 +2168,26 @@ module Crystal
 
   class Asm < ASTNode
     property text : String
-    property output : AsmOperand?
+    property outputs : Array(AsmOperand)?
     property inputs : Array(AsmOperand)?
     property clobbers : Array(String)?
     property? volatile : Bool
     property? alignstack : Bool
     property? intel : Bool
 
-    def initialize(@text, @output = nil, @inputs = nil, @clobbers = nil, @volatile = false, @alignstack = false, @intel = false)
+    def initialize(@text, @outputs = nil, @inputs = nil, @clobbers = nil, @volatile = false, @alignstack = false, @intel = false)
     end
 
     def accept_children(visitor)
-      @output.try &.accept visitor
+      @outputs.try &.each &.accept visitor
       @inputs.try &.each &.accept visitor
     end
 
     def clone_without_location
-      Asm.new(@text, @output.clone, @inputs.clone, @clobbers, @volatile, @alignstack, @intel)
+      Asm.new(@text, @outputs.clone, @inputs.clone, @clobbers, @volatile, @alignstack, @intel)
     end
 
-    def_equals_and_hash text, output, inputs, clobbers, volatile?, alignstack?, intel?
+    def_equals_and_hash text, outputs, inputs, clobbers, volatile?, alignstack?, intel?
   end
 
   class AsmOperand < ASTNode

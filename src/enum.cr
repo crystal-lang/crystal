@@ -237,6 +237,11 @@ struct Enum
     value <=> other.value
   end
 
+  # :nodoc:
+  def ==(other)
+    false
+  end
+
   # Returns `true` if this enum member's value includes *other*. This
   # performs a logical "and" between this enum member's value and *other*'s,
   # so instead of writing:
@@ -385,7 +390,7 @@ struct Enum
   # Color.parse("BLUE")   # => Color::Blue
   # Color.parse("Yellow") # raises ArgumentError
   # ```
-  def self.parse(string) : self
+  def self.parse(string : String) : self
     parse?(string) || raise ArgumentError.new("Unknown enum #{self} value: #{string}")
   end
 
@@ -401,7 +406,7 @@ struct Enum
   # Color.parse?("BLUE")   # => Color::Blue
   # Color.parse?("Yellow") # => nil
   # ```
-  def self.parse?(string) : self?
+  def self.parse?(string : String) : self?
     {% begin %}
       case string.camelcase.downcase
       {% for member in @type.constants %}

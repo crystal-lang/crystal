@@ -68,6 +68,8 @@ class Gzip::Writer < IO
   def write(slice : Bytes) : Nil
     check_open
 
+    return if slice.empty?
+
     flate_io = write_header
     flate_io.write(slice)
 

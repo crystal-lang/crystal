@@ -7,7 +7,7 @@ require "csv"
 #
 # result = CSV.build do |csv|
 #   # A row can be written by specifying several values
-#   csv.row "Hello", 1, 'a', "String with \"quotes\""
+#   csv.row "Hello", 1, 'a', "String with \"quotes\"", '"', :sym
 #
 #   # Or an enumerable
 #   csv.row [1, 2, 3]
@@ -30,20 +30,31 @@ require "csv"
 # Output:
 #
 # ```text
-# Hello,1,a,"String with ""quotes"""
+# Hello,1,a,"String with ""quotes""","""",sym
 # 1,2,3
 # 4,5,6,7,8
 # ```
 class CSV::Builder
+  enum Quoting
+    # No quotes
+    NONE
+
+    # Quotes according to RFC 4180 (default)
+    RFC
+
+    # Always quote
+    ALL
+  end
+
   # Creates a builder that will write to the given `IO`.
-  def initialize(@io : IO, @separator : Char = DEFAULT_SEPARATOR, @quote_char : Char = DEFAULT_QUOTE_CHAR)
+  def initialize(@io : IO, @separator : Char = DEFAULT_SEPARATOR, @quote_char : Char = DEFAULT_QUOTE_CHAR, @quoting : Quoting = Quoting::RFC)
     @first_cell_in_row = true
   end
 
   # Yields a `CSV::Row` to append a row. A newline is appended
   # to `IO` after the block exits.
   def row
-    yield Row.new(self, @separator, @quote_char)
+    yield Row.new(self, @separator, @quote_char, @quoting)
     @io << '\n'
     @first_cell_in_row = true
   end
@@ -70,7 +81,7 @@ class CSV::Builder
   end
 
   # :nodoc:
-  def quote_cell(value)
+  def quote_cell(value : String)
     append_cell do
       @io << @quote_char
       value.each_byte do |byte|
@@ -96,7 +107,7 @@ class CSV::Builder
     @builder : Builder
 
     # :nodoc:
-    def initialize(@builder, @separator : Char = DEFAULT_SEPARATOR, @quote_char : Char = DEFAULT_QUOTE_CHAR)
+    def initialize(@builder, @separator : Char = DEFAULT_SEPARATOR, @quote_char : Char = DEFAULT_QUOTE_CHAR, @quoting : Quoting = Quoting::RFC)
     end
 
     # Appends the given value to this row.
@@ -109,8 +120,17 @@ class CSV::Builder
     end
 
     # ditto
-    def <<(value : Nil | Bool | Char | Number | Symbol)
-      @builder.cell { |io| io << value }
+    def <<(value : Nil | Bool | Number)
+      case @quoting
+      when .all?
+        @builder.cell { |io|
+          io << @quote_char
+          io << value
+          io << @quote_char
+        }
+      else
+        @builder.cell { |io| io << value }
+      end
     end
 
     # ditto
@@ -135,14 +155,19 @@ class CSV::Builder
       self << nil
     end
 
-    private def needs_quotes?(value)
-      value.each_byte do |byte|
-        case byte.unsafe_chr
-        when @separator, @quote_char, '\n'
-          return true
+    private def needs_quotes?(value : String)
+      case @quoting
+      when .rfc?
+        value.each_byte do |byte|
+          case byte.unsafe_chr
+          when @separator, @quote_char, '\n'
+            return true
+          end
         end
+      when .all?
+        return true
       end
-      false
+      return false
     end
   end
 end

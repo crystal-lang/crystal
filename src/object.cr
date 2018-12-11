@@ -177,7 +177,7 @@ class Object
     self
   end
 
-  # Return `self`.
+  # Returns `self`.
   #
   # ```
   # str = "hello"
@@ -972,10 +972,10 @@ class Object
     # class Person
     #   {{var_prefix}}happy : Bool
     #
-    #   def {{method_prefix}}happy=({{var_prefix}}happy)
+    #   def {{method_prefix}}happy=({{var_prefix}}happy : Bool)
     #   end
     #
-    #   def {{method_prefix}}happy?
+    #   def {{method_prefix}}happy? : Bool
     #     {{var_prefix}}happy
     #   end
     # end
@@ -1092,11 +1092,13 @@ class Object
           {{object.id}}.{{method.id}}(*args, **options)
         end
 
-        def {{method.id}}(*args, **options)
-          {{object.id}}.{{method.id}}(*args, **options) do |*yield_args|
-            yield *yield_args
+        {% if method.id != "[]=" %}
+          def {{method.id}}(*args, **options)
+            {{object.id}}.{{method.id}}(*args, **options) do |*yield_args|
+              yield *yield_args
+            end
           end
-        end
+        {% end %}
       {% end %}
     {% end %}
   end
@@ -1115,7 +1117,7 @@ class Object
   macro def_hash(*fields)
     def hash(hasher)
       {% for field in fields %}
-        hasher = {{field}}.hash(hasher)
+        hasher = {{field.id}}.hash(hasher)
       {% end %}
       hasher
     end

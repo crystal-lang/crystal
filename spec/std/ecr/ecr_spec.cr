@@ -64,4 +64,8 @@ describe "ECR" do
     ECR.embed "#{__DIR__}/../data/test_template6.ecr", io
     io.to_s.should eq("string with -%")
   end
+
+  it ".render" do
+    ECR.render("#{__DIR__}/../data/test_template2.ecr").should eq("123")
+  end
 end

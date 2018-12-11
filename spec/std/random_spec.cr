@@ -1,3 +1,4 @@
+require "big"
 require "spec"
 
 private class TestRNG(T)
@@ -36,8 +37,21 @@ describe "Random" do
     5.times do
       rand(Int64::MAX).should be >= 0
     end
+  end
 
-    rand(0).should eq 0
+  it "limited BigInt" do
+    rand(1.to_big_i).should eq(0.to_big_i)
+
+    x = rand(2.to_big_i)
+    x.should be >= 0
+    x.should be < 2
+  end
+
+  it "limited large BigInt" do
+    max = "1234567890123456789012345".to_big_i
+    x = rand(max)
+    x.should be >= 0
+    x.should be < max
   end
 
   it "float number" do
@@ -52,17 +66,19 @@ describe "Random" do
     x.should be < 3.5
   end
 
-  it "float number 0.0" do
-    rand(0.0).should eq 0.0
-  end
-
   it "raises on invalid number" do
+    expect_raises ArgumentError, "Invalid bound for rand: 0" do
+      rand(0)
+    end
     expect_raises ArgumentError, "Invalid bound for rand: -1" do
       rand(-1)
     end
   end
 
   it "raises on invalid float number" do
+    expect_raises ArgumentError, "Invalid bound for rand: 0.0" do
+      rand(0.0)
+    end
     expect_raises ArgumentError, "Invalid bound for rand: -1.0" do
       rand(-1.0)
     end
@@ -86,17 +102,36 @@ describe "Random" do
     end
   end
 
+  it "does with BigInt range" do
+    [1.to_big_i...2.to_big_i,
+     -"1234567890123456789012345".to_big_i...7.to_big_i,
+     -7.to_big_i..."1234567890123456789012345".to_big_i].each do |range|
+      x = rand(range)
+      x.should be >= range.begin
+      x.should be < range.end
+    end
+  end
+
   it "does with inclusive range of floats" do
     rand(1.0..1.0).should eq(1.0)
     x = rand(1.8..3.2)
     x.should be >= 1.8
     x.should be <= 3.2
+
+    rand(1.0_f32..1.0_f32).should eq(1.0_f32)
+    x = rand(1.8_f32..3.2_f32)
+    x.should be >= 1.8_f32
+    x.should be <= 3.2_f32
   end
 
   it "does with exclusive range of floats" do
     x = rand(1.8...3.3)
     x.should be >= 1.8
     x.should be < 3.3
+
+    x = rand(1.8_f32...3.3_f32)
+    x.should be >= 1.8_f32
+    x.should be < 3.3_f32
   end
 
   it "raises on invalid range" do
@@ -105,6 +140,12 @@ describe "Random" do
     end
     expect_raises ArgumentError, "Invalid range for rand: 1..0" do
       rand(1..0)
+    end
+    expect_raises ArgumentError, "Invalid range for rand: #{1.to_big_i...1.to_big_i}" do
+      rand(1.to_big_i...1.to_big_i)
+    end
+    expect_raises ArgumentError, "Invalid range for rand: #{1.to_big_i..0.to_big_i}" do
+      rand(1.to_big_i..0.to_big_i)
     end
     expect_raises ArgumentError, "Invalid range for rand: 1.0...1.0" do
       rand(1.0...1.0)

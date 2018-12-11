@@ -86,6 +86,7 @@ module Crystal
     # ```
     property last_block_kind : Symbol?
     property? inside_ensure : Bool = false
+    property? inside_constant = false
 
     @unreachable = false
     @is_initialize = false
@@ -170,7 +171,20 @@ module Crystal
     end
 
     def visit(node : Path)
-      type = (@path_lookup || @scope || @current_type).lookup_type_var(node, free_vars: free_vars)
+      lookup_scope = @path_lookup || @scope || @current_type
+
+      # If the lookup scope is a generic type, like Foo(T), we don't
+      # want to find T in main code. For example:
+      #
+      # class Foo(T)
+      #   Bar(T) # This T is unbound and it shouldn't be found in the lookup
+      # end
+      find_root_generic_type_parameters = !lookup_scope.is_a?(GenericType)
+
+      type = lookup_scope.lookup_type_var(node,
+        free_vars: free_vars,
+        find_root_generic_type_parameters: find_root_generic_type_parameters)
+
       case type
       when Const
         if !type.value.type? && !type.visited?
@@ -180,6 +194,7 @@ module Crystal
           const_def = Def.new("const", [] of Arg)
           type_visitor = MainVisitor.new(@program, meta_vars, const_def)
           type_visitor.current_type = type.namespace
+          type_visitor.inside_constant = true
           type.value.accept type_visitor
 
           type.vars = const_def.vars
@@ -203,8 +218,6 @@ module Crystal
         # It's different if from a virtual type we do `v.class.new`
         # because the class could be any in the hierarchy.
         node.type = check_type_in_type_args(type.remove_alias_if_simple).devirtualize
-      when Self
-        node.type = check_type_in_type_args(the_self(node).remove_alias_if_simple)
       when ASTNode
         type.accept self unless type.type?
         node.syntax_replacement = type
@@ -1438,7 +1451,7 @@ module Crystal
       end
     end
 
-    # Check if it's a call to self. In that case, all instance variables
+    # Checks if it's a call to self. In that case, all instance variables
     # not mentioned so far will be considered nil.
     def check_call_in_initialize(node)
       return unless @is_initialize
@@ -1518,7 +1531,7 @@ module Crystal
       yield method_arg_type
     end
 
-    # Check if it's ProcType#new
+    # Checks if it's ProcType#new
     def check_special_new_call(node, obj_type)
       return false unless obj_type
       return false unless obj_type.metaclass?
@@ -1714,6 +1727,10 @@ module Crystal
         node.raise "can't return from ensure"
       end
 
+      if inside_constant?
+        node.raise "can't return from constant"
+      end
+
       typed_def = @typed_def || node.raise("can't return from top level")
 
       if typed_def.captured_block?
@@ -1724,7 +1741,8 @@ module Crystal
 
       node.target = typed_def
 
-      typed_def.bind_to(node.exp || program.nil_var)
+      typed_def.bind_to(node_exp_or_nil_literal(node))
+
       @unreachable = true
 
       node.type = @program.no_return
@@ -2081,6 +2099,22 @@ module Crystal
         node.body.accept self
       end
 
+      # After while's body, bind variables *before* the condition to the
+      # ones after the body, because the loop will repeat.
+      #
+      # For example:
+      #
+      #    x = exp
+      #    # x starts with the type of exp
+      #    while x = x.method
+      #      # but after the loop, the x above (in x.method)
+      #      # should now also get the type of x.method, recursively
+      #    end
+      before_cond_vars.each do |name, before_cond_var|
+        var = @vars[name]?
+        before_cond_var.bind_to(var) if var && !var.same?(before_cond_var)
+      end
+
       cond = node.cond.single_expression
 
       endless_while = cond.true_literal?
@@ -2255,7 +2289,7 @@ module Crystal
       if block = @block
         node.target = block.call.not_nil!
 
-        block.break.bind_to(node.exp || program.nil_var)
+        block.break.bind_to(node_exp_or_nil_literal(node))
 
         bind_vars @vars, block.after_vars, block.args
       elsif target_while = @while_stack.last?
@@ -2284,7 +2318,7 @@ module Crystal
       if block = @block
         node.target = block
 
-        block.bind_to(node.exp || program.nil_var)
+        block.bind_to(node_exp_or_nil_literal(node))
 
         bind_vars @vars, block.vars
         bind_vars @vars, block.after_vars, block.args
@@ -2296,7 +2330,7 @@ module Crystal
         typed_def = @typed_def
         if typed_def && typed_def.captured_block?
           node.target = typed_def
-          typed_def.bind_to(node.exp || program.nil_var)
+          typed_def.bind_to(node_exp_or_nil_literal(node))
         else
           node.raise "Invalid next"
         end
@@ -2347,6 +2381,8 @@ module Crystal
         # Nothing to do
       when "enum_new"
         # Nothing to do
+      when "throw_info"
+        node.type = program.pointer_of(program.void)
       else
         node.raise "BUG: unhandled primitive in MainVisitor: #{node.name}"
       end
@@ -2517,6 +2553,10 @@ module Crystal
 
       type = node.exp.type?
 
+      if type.is_a?(GenericType)
+        node.exp.raise "can't take sizeof uninstantiated generic type #{type}"
+      end
+
       # Try to resolve the sizeof right now to a number literal
       # (useful for sizeof inside as a generic type argument, but also
       # to make it easier for LLVM to optimize things)
@@ -2538,8 +2578,8 @@ module Crystal
 
       type = node.exp.type?
 
-      if type.is_a? GenericType
-        node.raise "can't calculate instance_sizeof of generic class #{type} without specifying its type vars"
+      if type.is_a?(GenericType)
+        node.exp.raise "can't take instance_sizeof uninstantiated generic type #{type}"
       end
 
       # Try to resolve the instance_sizeof right now to a number literal
@@ -2792,10 +2832,12 @@ module Crystal
     end
 
     def visit(node : Asm)
-      if output = node.output
-        ptrof = PointerOf.new(output.exp).at(output.exp)
-        ptrof.accept self
-        node.ptrof = ptrof
+      if outputs = node.outputs
+        node.output_ptrofs = outputs.map do |output|
+          ptrof = PointerOf.new(output.exp).at(output.exp)
+          ptrof.accept self
+          ptrof
+        end
       end
 
       if inputs = node.inputs
@@ -3232,6 +3274,24 @@ module Crystal
         node.raise "there's no self in this scope"
       end
       the_self
+    end
+
+    # Returns node.exp if it's not nil. Otherwise,
+    # creates a NilLiteral node that has the same location
+    # as `node`, and returns that.
+    # We use this NilLiteral when the user writes
+    # `return`, `next` or `break` without arguments,
+    # so that in the error trace we can show it right
+    # (those expressions have a NoReturn type so we can't
+    # directly bind to them).
+    def node_exp_or_nil_literal(node)
+      exp = node.exp
+      return exp if exp
+
+      nil_exp = NilLiteral.new
+      nil_exp.location = node.location
+      nil_exp.type = @program.nil
+      nil_exp
     end
 
     def visit(node : When | Unless | Until | MacroLiteral | OpAssign)

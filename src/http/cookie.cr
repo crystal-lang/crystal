@@ -44,7 +44,7 @@ module HTTP
 
     def expired?
       if e = expires
-        e < Time.now
+        e < Time.utc_now
       else
         false
       end
@@ -100,7 +100,7 @@ module HTTP
         return unless match
 
         expires = if max_age = match["max_age"]?
-                    Time.now + max_age.to_i.seconds
+                    Time.utc_now + max_age.to_i.seconds
                   else
                     parse_time(match["expires"]?)
                   end
@@ -130,7 +130,7 @@ module HTTP
   class Cookies
     include Enumerable(Cookie)
 
-    # Create a new instance by parsing the `Cookie` and `Set-Cookie`
+    # Creates a new instance by parsing the `Cookie` and `Set-Cookie`
     # headers in the given `HTTP::Headers`.
     #
     # See `HTTP::Request#cookies` and `HTTP::Client::Response#cookies`.
@@ -155,12 +155,12 @@ module HTTP
       self
     end
 
-    # Create a new empty instance.
+    # Creates a new empty instance.
     def initialize
       @cookies = {} of String => Cookie
     end
 
-    # Set a new cookie in the collection with a string value.
+    # Sets a new cookie in the collection with a string value.
     # This creates a never expiring, insecure, not HTTP only cookie with
     # no explicit domain restriction and the path `/`.
     #
@@ -172,7 +172,7 @@ module HTTP
       self[key] = Cookie.new(key, value)
     end
 
-    # Set a new cookie in the collection to the given `HTTP::Cookie`
+    # Sets a new cookie in the collection to the given `HTTP::Cookie`
     # instance. The name attribute must match the given *key*, else
     # `ArgumentError` is raised.
     #
@@ -188,7 +188,7 @@ module HTTP
       @cookies[key] = value
     end
 
-    # Get the current `HTTP::Cookie` for the given *key*.
+    # Gets the current `HTTP::Cookie` for the given *key*.
     #
     # ```
     # request.cookies["foo"].value # => "bar"
@@ -197,7 +197,7 @@ module HTTP
       @cookies[key]
     end
 
-    # Get the current `HTTP::Cookie` for the given *key* or `nil` if none is set.
+    # Gets the current `HTTP::Cookie` for the given *key* or `nil` if none is set.
     #
     # ```
     # request = HTTP::Request.new "GET", "/"
@@ -218,7 +218,7 @@ module HTTP
       @cookies.has_key?(key)
     end
 
-    # Add the given *cookie* to this collection, overrides an existing cookie
+    # Adds the given *cookie* to this collection, overrides an existing cookie
     # with the same name if present.
     #
     # ```

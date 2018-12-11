@@ -1,6 +1,7 @@
 # The `IO::Buffered` mixin enhances an `IO` with input/output buffering.
 #
-# The buffering behaviour can be turned on/off with the `#sync=` method.
+# The buffering behaviour can be turned on/off with the `#sync=` and
+# `#read_buffering=` methods.
 #
 # Additionally, several methods, like `#gets`, are implemented in a more
 # efficient way.
@@ -10,6 +11,7 @@ module IO::Buffered
   @in_buffer_rem = Bytes.empty
   @out_count = 0
   @sync = false
+  @read_buffering = true
   @flush_on_newline = false
 
   # Reads at most *slice.size* bytes from the wrapped `IO` into *slice*.
@@ -33,9 +35,9 @@ module IO::Buffered
   def read_byte : UInt8?
     check_open
 
-    fill_buffer if !sync? && @in_buffer_rem.empty?
+    fill_buffer if read_buffering? && @in_buffer_rem.empty?
     if @in_buffer_rem.empty?
-      return nil unless sync?
+      return nil if read_buffering?
 
       byte = uninitialized UInt8
       if read(Slice.new(pointerof(byte), 1)) == 1
@@ -61,7 +63,7 @@ module IO::Buffered
       # If we are asked to read more than half the buffer's size,
       # read directly into the slice, as it's not worth the extra
       # memory copy.
-      if sync? || count >= BUFFER_SIZE / 2
+      if !read_buffering? || count >= BUFFER_SIZE / 2
         return unbuffered_read(slice[0, count]).to_i
       else
         fill_buffer
@@ -112,6 +114,8 @@ module IO::Buffered
   # Buffered implementation of `IO#write(slice)`.
   def write(slice : Bytes)
     check_open
+
+    return if slice.empty?
 
     count = slice.size
 
@@ -173,7 +177,7 @@ module IO::Buffered
     @flush_on_newline
   end
 
-  # Turns on/off `IO` buffering. When *sync* is set to `true`, no buffering
+  # Turns on/off `IO` **write** buffering. When *sync* is set to `true`, no buffering
   # will be done (that is, writing to this `IO` is immediately synced to the
   # underlying `IO`).
   def sync=(sync)
@@ -181,9 +185,19 @@ module IO::Buffered
     @sync = !!sync
   end
 
-  # Determines if this `IO` does buffering. If `true`, no buffering is done.
+  # Determines if this `IO` does write buffering. If `true`, no buffering is done.
   def sync?
     @sync
+  end
+
+  # Turns on/off `IO` **read** buffering.
+  def read_buffering=(read_buffering)
+    @read_buffering = !!read_buffering
+  end
+
+  # Determines whether this `IO` buffers reads.
+  def read_buffering?
+    @read_buffering
   end
 
   # Flushes any buffered data and the underlying `IO`. Returns `self`.

@@ -100,6 +100,7 @@ describe Time::Span do
     t1.minutes.should eq(3)
     t1.seconds.should eq(4)
     t1.milliseconds.should eq(5)
+    t1.microseconds.should eq(5_000)
     t1.nanoseconds.should eq(5_000_000)
 
     t2.days.should eq(-1)
@@ -107,6 +108,7 @@ describe Time::Span do
     t2.minutes.should eq(-3)
     t2.seconds.should eq(-4)
     t2.milliseconds.should eq(-5)
+    t2.microseconds.should eq(-5_000)
     t2.nanoseconds.should eq(-5_000_000)
   end
 
@@ -154,6 +156,8 @@ describe Time::Span do
 
   it "test int extension methods" do
     1_000_000.days.to_s.should eq("1000000.00:00:00")
+    12.microseconds.to_s.should eq("00:00:00.000012000")
+    -12.microseconds.to_s.should eq("-00:00:00.000012000")
   end
 
   it "test float extension methods" do
@@ -166,6 +170,8 @@ describe Time::Span do
     0.5.milliseconds.to_s.should eq("00:00:00.000500000")
     -2.5.milliseconds.to_s.should eq("-00:00:00.002500000")
     2.5.milliseconds.to_s.should eq("00:00:00.002500000")
+    -2.5.microseconds.to_s.should eq("-00:00:00.000002500")
+    2.5.microseconds.to_s.should eq("00:00:00.000002500")
     0.0005.seconds.to_s.should eq("00:00:00.000500000")
 
     1_000_000.5.days.to_s.should eq("1000000.12:00:00")
@@ -257,5 +263,19 @@ describe Time::Span do
   it "test zero?" do
     Time::Span.new(nanoseconds: 0).zero?.should eq true
     Time::Span.new(nanoseconds: 123456789).zero?.should eq false
+  end
+
+  it "converts units" do
+    1.nanoseconds.should eq(Time::Span.new(nanoseconds: 1))
+    1.millisecond.should eq(1_000_000.nanoseconds)
+    1.milliseconds.should eq(1_000_000.nanoseconds)
+    1.second.should eq(1000.milliseconds)
+    1.seconds.should eq(1000.milliseconds)
+    1.minute.should eq(60.seconds)
+    1.minutes.should eq(60.seconds)
+    1.hour.should eq(60.minutes)
+    1.hours.should eq(60.minutes)
+    1.week.should eq(7.days)
+    2.weeks.should eq(14.days)
   end
 end

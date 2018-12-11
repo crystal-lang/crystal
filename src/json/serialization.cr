@@ -32,7 +32,7 @@ module JSON
   #
   # houses = Array(House).from_json(%([{"address": "Crystal Road 1234", "location": {"lat": 12.3, "lng": 34.5}}]))
   # houses.size    # => 1
-  # houses.to_json # => [{"address":"Crystal Road 1234","location":{"lat":12.3,"lng":34.5}}]
+  # houses.to_json # => %([{"address":"Crystal Road 1234","location":{"lat":12.3,"lng":34.5}}])
   # ```
   #
   # ### Usage
@@ -57,11 +57,11 @@ module JSON
   # ```
   #
   # `JSON::Field` properties:
-  # * **ignore**: if `true` skip this field in seriazation and deserialization (by default false)
+  # * **ignore**: if `true` skip this field in serialization and deserialization (by default false)
   # * **key**: the value of the key in the json object (by default the name of the instance variable)
   # * **root**: assume the value is inside a JSON object with a given key (see `Object.from_json(string_or_io, root)`)
   # * **converter**: specify an alternate type for parsing and generation. The converter must define `from_json(JSON::PullParser)` and `to_json(value, JSON::Builder)` as class methods. Examples of converters are `Time::Format` and `Time::EpochConverter` for `Time`.
-  # * **presense**: if `true`, a `@{{key}}_present` instance variable will be generated when the key was present (even if it has a `null` value), `false` by default
+  # * **presence**: if `true`, a `@{{key}}_present` instance variable will be generated when the key was present (even if it has a `null` value), `false` by default
   # * **emit_null**: if `true`, emits a `null` value for nilable property (by default nulls are not emitted)
   #
   # Deserialization also respects default values of variables:
@@ -82,7 +82,7 @@ module JSON
   # are silently ignored.
   # If the `JSON::Serializable::Unmapped` module is included, unknown properties in the JSON
   # document will be stored in a `Hash(String, JSON::Any)`. On serialization, any keys inside json_unmapped
-  # will be serialized appended to the current json object.
+  # will be serialized and appended to the current json object.
   # ```
   # struct A
   #   include JSON::Serializable
@@ -117,7 +117,7 @@ module JSON
 
       def self.new(pull : ::JSON::PullParser)
         instance = allocate
-        instance.initialize(pull, nil)
+        instance.initialize(__pull_for_json_serializable: pull)
         GC.add_finalizer(instance) if instance.responds_to?(:finalize)
         instance
       end
@@ -132,7 +132,7 @@ module JSON
       end
     end
 
-    def initialize(pull : ::JSON::PullParser, dummy : Nil)
+    def initialize(*, __pull_for_json_serializable pull : ::JSON::PullParser)
       {% begin %}
         {% properties = {} of Nil => Nil %}
         {% for ivar in @type.instance_vars %}
@@ -167,40 +167,36 @@ module JSON
         while pull.kind != :end_object
           %key_location = pull.location
           key = pull.read_object_key
-          {% if properties.size > 0 %}
           case key
-            {% for name, value in properties %}
-              when {{value[:key]}}
-                %found{name} = true
-                begin
-                  %var{name} =
-                    {% if value[:nilable] || value[:has_default] %} pull.read_null_or { {% end %}
+          {% for name, value in properties %}
+            when {{value[:key]}}
+              %found{name} = true
+              begin
+                %var{name} =
+                  {% if value[:nilable] || value[:has_default] %} pull.read_null_or { {% end %}
 
-                    {% if value[:root] %}
-                      pull.on_key!({{value[:root]}}) do
-                    {% end %}
+                  {% if value[:root] %}
+                    pull.on_key!({{value[:root]}}) do
+                  {% end %}
 
-                    {% if value[:converter] %}
-                      {{value[:converter]}}.from_json(pull)
-                    {% else %}
-                      ::Union({{value[:type]}}).new(pull)
-                    {% end %}
+                  {% if value[:converter] %}
+                    {{value[:converter]}}.from_json(pull)
+                  {% else %}
+                    ::Union({{value[:type]}}).new(pull)
+                  {% end %}
 
-                    {% if value[:root] %}
-                      end
-                    {% end %}
+                  {% if value[:root] %}
+                    end
+                  {% end %}
 
-                  {% if value[:nilable] || value[:has_default] %} } {% end %}
-                rescue exc : ::JSON::ParseException
-                  raise ::JSON::MappingError.new(exc.message, self.class.to_s, {{value[:key]}}, *%key_location, exc)
-                end
-            {% end %}
-            else
-              on_unknown_json_attribute(pull, key, %key_location)
-            end
-          {% else %}
-            on_unknown_json_attribute(pull, key, %key_location)
+                {% if value[:nilable] || value[:has_default] %} } {% end %}
+              rescue exc : ::JSON::ParseException
+                raise ::JSON::MappingError.new(exc.message, self.class.to_s, {{value[:key]}}, *%key_location, exc)
+              end
           {% end %}
+          else
+            on_unknown_json_attribute(pull, key, %key_location)
+          end
         end
         pull.read_next
 

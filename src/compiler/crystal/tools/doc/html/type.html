@@ -43,9 +43,11 @@
   <h2>Defined in:</h2>
   <% locations.each do |location| %>
     <% if url = location.url %>
-      <a href="<%= url %>#L<%= location.line_number %>" target="_blank"><%= location.filename %></a>
+      <a href="<%= url %>#L<%= location.line_number %>" target="_blank">
+        <%= location.filename %><% if location.show_line_number %>:<%= location.line_number %><% end %>
+      </a>
     <% else %>
-      <%= location.filename %>
+      <%= location.filename %><% if location.show_line_number %>:<%= location.line_number %><% end %>
     <% end %>
     <br/>
   <% end %>
@@ -59,7 +61,7 @@
   <% end %>
   <dl>
     <% type.constants.each do |const| %>
-      <dt class="entry-const" id="<%= const.name %>">
+      <dt class="entry-const" id="<%= const.id %>">
         <strong><%= const.name %></strong> = <code><%= const.formatted_value %></code>
       </dt>
       <% if doc = const.formatted_doc %>

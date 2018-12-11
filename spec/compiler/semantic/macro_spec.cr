@@ -1238,6 +1238,48 @@ describe "Semantic: macro" do
     )) { int32 }
   end
 
+  it "can lookup type parameter when macro is called inside class (#5343)" do
+    assert_type(%(
+      class Foo(T)
+        macro foo
+          {{T}}
+        end
+      end
+
+      alias FooInt32 = Foo(Int32)
+
+      class Bar
+        def self.foo
+          FooInt32.foo
+        end
+      end
+
+      Bar.foo
+    )) { int32.metaclass }
+  end
+
+  it "cannot lookup type defined in caller class" do
+    assert_error %(
+      class Foo
+        macro foo
+          {{Baz}}
+        end
+      end
+
+      class Bar
+        def self.foo
+          Foo.foo
+        end
+
+        class Baz
+        end
+      end
+
+      Bar.foo
+      ),
+      "undefined constant Baz"
+  end
+
   it "clones default value before expanding" do
     assert_type(%(
       FOO = {} of String => String?
@@ -1278,5 +1320,53 @@ describe "Semantic: macro" do
         1
       {% end %}
       )) { int32 }
+  end
+
+  it "evaluates yield expression (#2924)" do
+    assert_type(%(
+      macro a(b)
+        {{yield b}}
+      end
+
+      a("foo") do |c|
+        {{c}}
+      end
+      )) { string }
+  end
+
+  it "finds generic in macro code" do
+    assert_type(%(
+      {% begin %}
+        {{ Array(String) }}
+      {% end %}
+      )) { array_of(string).metaclass }
+  end
+
+  it "finds generic in macro code using free var" do
+    assert_type(%(
+      class Foo(T)
+        def self.foo
+          {% begin %}
+            {{ Array(T) }}
+          {% end %}
+        end
+      end
+
+      Foo(Int32).foo
+      )) { array_of(int32).metaclass }
+  end
+
+  it "expands multiline macro expression in verbatim (#6643)" do
+    assert_type(%(
+      {% verbatim do %}
+        {{
+          if true
+            1
+            "2"
+            3
+          end
+        }}
+      {% end %}
+    )) { int32 }
   end
 end

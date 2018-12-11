@@ -25,18 +25,7 @@ struct Time::Format
 
         day_of_week = consume_number(1)
 
-        first_day_of_year = Time.utc(@year, 1, 1)
-        week_day = first_day_of_year.day_of_week.value
-
-        if week_day < 5
-          first_day_in_weeks_of_year = first_day_of_year - (week_day % 7 - 1).days
-        else
-          first_day_in_weeks_of_year = first_day_of_year + ((week_day - 4) % 7).days
-        end
-
-        days_in_year = (week - 1) * 7 + day_of_week - 1
-
-        date = first_day_in_weeks_of_year + days_in_year.days
+        date = Time.week_date(@year, week, day_of_week, location: Time::Location::UTC)
 
         @year = date.year
         @month = date.month

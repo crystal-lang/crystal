@@ -1,6 +1,7 @@
 require "ecr/macros"
 require "html"
 require "uri"
+require "mime"
 
 # A simple handler that lists directories and serves files under a given public directory.
 class HTTP::StaticFileHandler
@@ -72,7 +73,7 @@ class HTTP::StaticFileHandler
         return
       end
 
-      context.response.content_type = mime_type(file_path)
+      context.response.content_type = MIME.from_filename(file_path, "application/octet-stream")
       context.response.content_length = File.size(file_path)
       File.open(file_path) do |file|
         IO.copy(file, context.response)
@@ -103,8 +104,9 @@ class HTTP::StaticFileHandler
   private def cache_request?(context : HTTP::Server::Context, last_modified : Time) : Bool
     # According to RFC 7232:
     # A recipient must ignore If-Modified-Since if the request contains an If-None-Match header field
-    if if_none_match = context.request.headers["If-None-Match"]?
-      if_none_match == context.response.headers["Etag"]
+    if if_none_match = context.request.if_none_match
+      match = {"*", context.response.headers["Etag"]}
+      if_none_match.any? { |etag| match.includes?(etag) }
     elsif if_modified_since = context.request.headers["If-Modified-Since"]?
       header_time = HTTP.parse_time(if_modified_since)
       # File mtime probably has a higher resolution than the header value.
@@ -118,22 +120,11 @@ class HTTP::StaticFileHandler
   end
 
   private def etag(modification_time)
-    %{W/"#{modification_time.epoch}"}
+    %{W/"#{modification_time.to_unix}"}
   end
 
   private def modification_time(file_path)
     File.info(file_path).modification_time
-  end
-
-  private def mime_type(path)
-    case File.extname(path)
-    when ".txt"          then "text/plain"
-    when ".htm", ".html" then "text/html"
-    when ".css"          then "text/css"
-    when ".js"           then "application/javascript"
-    when ".svg"          then "image/svg+xml"
-    else                      "application/octet-stream"
-    end
   end
 
   record DirectoryListing, request_path : String, path : String do
@@ -141,7 +132,7 @@ class HTTP::StaticFileHandler
 
     def escaped_request_path
       @escaped_request_path ||= begin
-        esc_path = URI.escape(request_path) { |b| URI.unreserved?(b) || b != '/' }
+        esc_path = URI.escape(request_path) { |byte| URI.unreserved?(byte) || byte.chr == '/' }
         esc_path = esc_path.chomp('/')
         esc_path
       end

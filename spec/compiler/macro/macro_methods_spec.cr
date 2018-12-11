@@ -811,6 +811,12 @@ module Crystal
         assert_macro "", %({{{a: 1}["b"]}}), [] of ASTNode, "nil"
       end
 
+      it "executes [] with invalid key type" do
+        expect_raises(Crystal::TypeException, "argument to [] must be a symbol or string, not BoolLiteral") do
+          assert_macro "", %({{{a: 1}[true]}}), [] of ASTNode, ""
+        end
+      end
+
       it "executes keys" do
         assert_macro "", %({{{a: 1, b: 2}.keys}}), [] of ASTNode, "[a, b]"
       end
@@ -1120,7 +1126,7 @@ module Crystal
       end
 
       it "executes class" do
-        assert_macro("x", "{{x.class.name}}", "String:Class") do |program|
+        assert_macro("x", "{{x.class.name}}", "String.class") do |program|
           [TypeNode.new(program.string)] of ASTNode
         end
       end
@@ -1302,6 +1308,11 @@ module Crystal
       it "executes block_arg" do
         assert_macro "x", %({{x.block_arg}}), [Def.new("some_def", ["x".arg, "y".arg], block_arg: "b".arg)] of ASTNode, "b"
         assert_macro "x", %({{x.block_arg}}), [Def.new("some_def")] of ASTNode, ""
+      end
+
+      it "executes accepts_block?" do
+        assert_macro "x", %({{x.accepts_block?}}), [Def.new("some_def", ["x".arg, "y".arg], yields: 1)] of ASTNode, "true"
+        assert_macro "x", %({{x.accepts_block?}}), [Def.new("some_def")] of ASTNode, "false"
       end
 
       it "executes return_type" do
@@ -1613,6 +1624,24 @@ module Crystal
       it "executes named_args" do
         assert_macro "x", %({{x.named_args}}), [Generic.new("Foo".path, [] of ASTNode, named_args: [NamedArgument.new("x", "U".path), NamedArgument.new("y", "V".path)])] of ASTNode, "{x: U, y: V}"
       end
+
+      it "executes resolve" do
+        assert_macro "x", %({{x.resolve}}), [Generic.new("Array".path, ["String".path] of ASTNode)] of ASTNode, %(Array(String))
+
+        expect_raises(Crystal::TypeException, "undefined constant Foo") do
+          assert_macro "x", %({{x.resolve}}), [Generic.new("Foo".path, ["String".path] of ASTNode)] of ASTNode, %(Foo(String))
+        end
+
+        expect_raises(Crystal::TypeException, "undefined constant Foo") do
+          assert_macro "x", %({{x.resolve}}), [Generic.new("Array".path, ["Foo".path] of ASTNode)] of ASTNode, %(Array(foo))
+        end
+      end
+
+      it "executes resolve?" do
+        assert_macro "x", %({{x.resolve?}}), [Generic.new("Array".path, ["String".path] of ASTNode)] of ASTNode, %(Array(String))
+        assert_macro "x", %({{x.resolve?}}), [Generic.new("Foo".path, ["String".path] of ASTNode)] of ASTNode, %(nil)
+        assert_macro "x", %({{x.resolve?}}), [Generic.new("Array".path, ["Foo".path] of ASTNode)] of ASTNode, %(nil)
+      end
     end
 
     describe "union methods" do
@@ -1660,6 +1689,45 @@ module Crystal
       end
     end
 
+    describe "annotation methods" do
+      it "executes [] with NumberLiteral" do
+        assert_macro "x, y", %({{x[y]}}), [
+          Annotation.new(Path.new("Foo"), [42.int32] of ASTNode),
+          0.int32,
+        ] of ASTNode, %(42)
+      end
+
+      it "executes [] with SymbolLiteral" do
+        assert_macro "x, y", %({{x[y]}}), [
+          Annotation.new(Path.new("Foo"), [] of ASTNode, [NamedArgument.new("foo", 42.int32)]),
+          "foo".symbol,
+        ] of ASTNode, %(42)
+      end
+
+      it "executes [] with StringLiteral" do
+        assert_macro "x, y", %({{x[y]}}), [
+          Annotation.new(Path.new("Foo"), [] of ASTNode, [NamedArgument.new("foo", 42.int32)]),
+          "foo".string,
+        ] of ASTNode, %(42)
+      end
+
+      it "executes [] with MacroId" do
+        assert_macro "x, y", %({{x[y]}}), [
+          Annotation.new(Path.new("Foo"), [] of ASTNode, [NamedArgument.new("foo", 42.int32)]),
+          MacroId.new("foo"),
+        ] of ASTNode, %(42)
+      end
+
+      it "executes [] with other ASTNode, but raises an error" do
+        expect_raises(Crystal::TypeException, "argument to [] must be a number, symbol or string, not BoolLiteral") do
+          assert_macro "x, y", %({{x[y]}}), [
+            Annotation.new(Path.new("Foo"), [] of ASTNode),
+            true.bool,
+          ] of ASTNode, %(nil)
+        end
+      end
+    end
+
     describe "env" do
       it "has key" do
         ENV["FOO"] = "foo"
@@ -1685,6 +1753,105 @@ module Crystal
 
     it "compares versions" do
       assert_macro "", %({{compare_versions("1.10.3", "1.2.3")}}), [] of ASTNode, %(1)
+    end
+
+    describe "printing" do
+      it "puts" do
+        String.build do |io|
+          assert_macro "foo", %({% puts foo %}), "" do |program|
+            program.stdout = io
+            ["bar".string] of ASTNode
+          end
+        end.should eq %("bar"\n)
+      end
+
+      it "p" do
+        String.build do |io|
+          assert_macro "foo", %({% p foo %}), "" do |program|
+            program.stdout = io
+            ["bar".string] of ASTNode
+          end
+        end.should eq %("bar"\n)
+      end
+
+      it "p!" do
+        String.build do |io|
+          assert_macro "foo", "{% p! foo %}", "" do |program|
+            program.stdout = io
+            ["bar".string] of ASTNode
+          end
+        end.should eq %(foo # => "bar"\n)
+      end
+
+      it "pp" do
+        String.build do |io|
+          assert_macro "foo", "{% pp foo %}", "" do |program|
+            program.stdout = io
+            ["bar".string] of ASTNode
+          end
+        end.should eq %("bar"\n)
+      end
+
+      it "pp!" do
+        String.build do |io|
+          assert_macro "foo", "{% pp! foo %}", "" do |program|
+            program.stdout = io
+            ["bar".string] of ASTNode
+          end
+        end.should eq %(foo # => "bar"\n)
+      end
+    end
+  end
+
+  describe "read_file" do
+    context "with absolute path" do
+      it "reads file (exists)" do
+        run(%q<
+          {{read_file("#{__DIR__}/../data/build")}}
+          >, filename = __FILE__).to_string.should eq(File.read("#{__DIR__}/../data/build"))
+      end
+
+      it "reads file (doesn't exist)" do
+        expect_raises(Crystal::TypeException, "No such file or directory") do
+          run(%q<
+            {{read_file("#{__DIR__}/../data/build_foo")}}
+            >, filename = __FILE__)
+        end
+      end
+    end
+
+    context "with relative path" do
+      it "reads file (exists)" do
+        run(%q<
+          {{read_file("spec/compiler/data/build")}}
+          >, filename = __FILE__).to_string.should eq(File.read("spec/compiler/data/build"))
+      end
+
+      it "reads file (doesn't exist)" do
+        expect_raises(Crystal::TypeException, "No such file or directory") do
+          run(%q<
+          {{read_file("spec/compiler/data/build_foo")}}
+          >, filename = __FILE__)
+        end
+      end
+    end
+  end
+
+  describe "read_file?" do
+    context "with absolute path" do
+      it "reads file (doesn't exist)" do
+        run(%q<
+          {{read_file?("#{__DIR__}/../data/build_foo")}} ? 10 : 20
+          >, filename = __FILE__).to_i.should eq(20)
+      end
+    end
+
+    context "with relative path" do
+      it "reads file (doesn't exist)" do
+        run(%q<
+          {{read_file?("spec/compiler/data/build_foo")}} ? 10 : 20
+          >, filename = __FILE__).to_i.should eq(20)
+      end
     end
   end
 end

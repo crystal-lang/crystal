@@ -77,7 +77,7 @@ class Zip::Writer
   # * If the STORED compression method is used, its crc32, compressed
   # size and uncompressed size **must** be set and be correct with
   # respect to the data that will be written to the yielded `IO`.
-  # * If the DEFLATED compression method is used, crc32, compresed
+  # * If the DEFLATED compression method is used, crc32, compressed
   # size and uncompressed size will be computed from the data
   # written to the yielded IO.
   #

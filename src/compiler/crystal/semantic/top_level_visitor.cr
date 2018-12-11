@@ -270,7 +270,8 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
   def visit(node : Alias)
     check_outside_exp node, "declare alias"
 
-    existing_type = current_type.types[node.name]?
+    scope, name, existing_type = lookup_type_def(node)
+
     if existing_type
       if existing_type.is_a?(AliasType)
         node.raise "alias #{node.name} is already defined"
@@ -279,9 +280,9 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
       end
     end
 
-    alias_type = AliasType.new(@program, current_type, node.name, node.value)
+    alias_type = AliasType.new(@program, scope, name, node.value)
     attach_doc alias_type, node
-    current_type.types[node.name] = alias_type
+    scope.types[name] = alias_type
 
     alias_type.private = true if node.visibility.private?
 
@@ -943,7 +944,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
   def include_in(current_type, node, kind)
     node_name = node.name
 
-    type = lookup_type(node_name, lazy_self: true)
+    type = lookup_type(node_name)
     case type
     when GenericModuleType
       node.raise "wrong number of type vars for #{type} (given 0, expected #{type.type_vars.size})"
@@ -1123,8 +1124,8 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
     scope
   end
 
-  # Turn all finished macros into expanded nodes, and
-  # add them to the program
+  # Turns all finished macros into expanded nodes, and
+  # adds them to the program
   def process_finished_hooks
     @finished_hooks.each do |hook|
       self.current_type = hook.scope

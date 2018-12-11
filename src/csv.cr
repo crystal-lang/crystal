@@ -111,16 +111,25 @@ class CSV
 
   # Builds a CSV. This yields a `CSV::Builder` to the given block.
   #
+  # Takes optional *quoting* argument to define quote behavior.
+  #
   # ```
   # result = CSV.build do |csv|
   #   csv.row "one", "two"
   #   csv.row "three"
   # end
   # result # => "one,two\nthree\n"
+  # result = CSV.build(quoting: CSV::Builder::Quoting::ALL) do |csv|
+  #   csv.row "one", "two"
+  #   csv.row "three"
+  # end
+  # result # => "\"one\",\"two\"\n\"three\"\n"
   # ```
-  def self.build(separator : Char = DEFAULT_SEPARATOR, quote_char : Char = DEFAULT_QUOTE_CHAR) : String
+  #
+  # See: `CSV::Builder::Quoting`
+  def self.build(separator : Char = DEFAULT_SEPARATOR, quote_char : Char = DEFAULT_QUOTE_CHAR, quoting : Builder::Quoting = Builder::Quoting::RFC) : String
     String.build do |io|
-      build(io, separator, quote_char) { |builder| yield builder }
+      build(io, separator, quote_char, quoting) { |builder| yield builder }
     end
   end
 
@@ -136,8 +145,8 @@ class CSV
   # end
   # io.to_s # => "HEADER\none,two\nthree\n"
   # ```
-  def self.build(io : IO, separator : Char = DEFAULT_SEPARATOR, quote_char : Char = DEFAULT_QUOTE_CHAR)
-    builder = Builder.new(io, separator, quote_char)
+  def self.build(io : IO, separator : Char = DEFAULT_SEPARATOR, quote_char : Char = DEFAULT_QUOTE_CHAR, quoting : Builder::Quoting = Builder::Quoting::RFC)
+    builder = Builder.new(io, separator, quote_char, quoting)
     yield builder
   end
 

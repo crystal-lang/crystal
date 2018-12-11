@@ -38,7 +38,7 @@ end
 
 class Crystal::Call
   def raise_matches_not_found(owner, def_name, arg_types, named_args_types, matches = nil, with_literals = false)
-    # Special case: Foo+:Class#new
+    # Special case: Foo+.class#new
     if owner.is_a?(VirtualMetaclassType) && def_name == "new"
       raise_matches_not_found_for_virtual_metaclass_new owner
     end
@@ -591,41 +591,9 @@ class Crystal::Call
       scope_type = scope.instance_type
       owner_type = match.def.owner.instance_type
 
-      # OK if in the same hierarchy,
-      # either because scope_type < owner_type
-      return if scope_type.implements?(owner_type)
-
-      # or because owner_type < scope_type
-      return if owner_type.implements?(scope_type)
-
-      # OK if both types are in the same namespace
-      return if in_same_namespace?(scope_type, owner_type)
-
-      raise "protected method '#{match.def.name}' called for #{match.def.owner}"
-    end
-  end
-
-  def in_same_namespace?(scope, target)
-    top_namespace(scope) == top_namespace(target) ||
-      scope.parents.try &.any? { |parent| in_same_namespace?(parent, target) }
-  end
-
-  def top_namespace(type)
-    namespace = case type
-                when NamedType
-                  type.namespace
-                when GenericClassInstanceType
-                  type.namespace
-                else
-                  nil
-                end
-    case namespace
-    when Program
-      type
-    when NamedType, GenericClassInstanceType
-      top_namespace(namespace)
-    else
-      type
+      unless scope_type.has_protected_acces_to?(owner_type)
+        raise "protected method '#{match.def.name}' called for #{match.def.owner}"
+      end
     end
   end
 

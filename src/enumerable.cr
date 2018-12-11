@@ -1010,6 +1010,19 @@ module Enumerable(T)
     c == 1
   end
 
+  # Returns `true` if only one element in this enumerable
+  # is _truthy_.
+  #
+  # ```
+  # [1, false, false].one? # => true
+  # [1, false, 3].one?     # => false
+  # [1].one?               # => true
+  # [false].one?           # => false
+  # ```
+  def one?
+    one? &.itself
+  end
+
   # Returns a `Tuple` with two arrays. The first one contains the elements
   # in the collection for which the passed block returned `true`,
   # and the second one those for which it returned `false`.
@@ -1289,6 +1302,18 @@ module Enumerable(T)
   def to_h
     each_with_object(Hash(typeof(first[0]), typeof(first[1])).new) do |item, hash|
       hash[item[0]] = item[1]
+    end
+  end
+
+  # Creates a `Hash` out of `Tuple` pairs (key, value) returned from the *block*.
+  #
+  # ```
+  # (1..3).to_h { |i| {i, i ** 2} } # => {1 => 1, 2 => 4, 3 => 9}
+  # ```
+  def to_h(&block : T -> Tuple(K, V)) forall K, V
+    each_with_object({} of K => V) do |item, hash|
+      key, value = yield item
+      hash[key] = value
     end
   end
 end

@@ -17,8 +17,11 @@ struct Time::Format
       "PDT" => Location.fixed("PDT", -7 * 3600),
     }
 
-    @epoch : Int64?
+    @unix_seconds : Int64?
     @location : Location?
+    @calendar_week_week : Int32?
+    @calendar_week_year : Int32?
+    @day_of_week : Time::DayOfWeek?
 
     def initialize(string)
       @reader = Char::Reader.new(string)
@@ -36,8 +39,8 @@ struct Time::Format
     def time(location : Location? = nil)
       @hour += 12 if @pm
 
-      if epoch = @epoch
-        return Time.epoch(epoch)
+      if unix_seconds = @unix_seconds
+        return Time.unix(unix_seconds)
       end
 
       location = @location || location
@@ -45,7 +48,13 @@ struct Time::Format
         raise "Time format did not include time zone and no default location provided", pos: false
       end
 
-      time = Time.new @year, @month, @day, @hour, @minute, @second, nanosecond: @nanosecond, location: location
+      if (calendar_week_week = @calendar_week_week) && (calendar_week_year = @calendar_week_year) && (day_of_week = @day_of_week)
+        # If all components of a week date are available, they are used to create a Time instance
+        time = Time.week_date calendar_week_year, calendar_week_week, day_of_week, @hour, @minute, @second, nanosecond: @nanosecond, location: location
+      else
+        time = Time.new @year, @month, @day, @hour, @minute, @second, nanosecond: @nanosecond, location: location
+      end
+
       time = time.add_span 0, @nanosecond_offset
 
       time
@@ -79,6 +88,14 @@ struct Time::Format
               else
                 year
               end
+    end
+
+    def calendar_week_year
+      @calendar_week_year = consume_number(4)
+    end
+
+    def calendar_week_year_modulo100
+      @calendar_week_year = consume_number(2)
     end
 
     def month
@@ -129,6 +146,10 @@ struct Time::Format
 
     def short_month_name_upcase
       month_name
+    end
+
+    def calendar_week_week
+      @calendar_week_week = consume_number(2)
     end
 
     def day_of_month
@@ -261,24 +282,24 @@ struct Time::Format
     end
 
     def day_of_week_monday_1_7
-      consume_number(1)
+      @day_of_week = Time::DayOfWeek.from_value(consume_number(1))
     end
 
     def day_of_week_sunday_0_6
-      consume_number(1)
+      @day_of_week = Time::DayOfWeek.from_value(consume_number(1))
     end
 
-    def epoch
-      epoch_negative = false
+    def unix_seconds
+      negative = false
       case current_char
       when '-'
-        epoch_negative = true
+        negative = true
         next_char
       when '+'
         next_char
       end
 
-      @epoch = consume_number_i64(19) * (epoch_negative ? -1 : 1)
+      @unix_seconds = consume_number_i64(19) * (negative ? -1 : 1)
     end
 
     def time_zone(with_seconds = false)

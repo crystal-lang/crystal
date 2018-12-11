@@ -1,25 +1,19 @@
-require "event"
+require "./event"
 
-# :nodoc:
-class Scheduler
-  @@runnables = Deque(Fiber).new
-  @@eb = Event::Base.new
-
-  def self.reschedule
-    if runnable = @@runnables.shift?
-      runnable.resume
-    else
-      loop_fiber.resume
-    end
-    nil
-  end
-
-  def self.loop_fiber
-    @@loop_fiber ||= Fiber.new { @@eb.run_loop }
-  end
+module Crystal::EventLoop
+  @@eb = Crystal::Event::Base.new
+  @@dns_base : Crystal::Event::DnsBase?
 
   def self.after_fork
     @@eb.reinit
+  end
+
+  def self.resume
+    loop_fiber.resume
+  end
+
+  private def self.loop_fiber
+    @@loop_fiber ||= Fiber.new { @@eb.run_loop }
   end
 
   def self.create_resume_event(fiber)
@@ -84,32 +78,11 @@ class Scheduler
     event
   end
 
-  def self.create_signal_event(signal : Signal, chan)
-    flags = LibEvent2::EventFlags::Signal | LibEvent2::EventFlags::Persist
-    event = @@eb.new_event(Int32.new(signal.to_i), flags, chan) do |s, flags, data|
-      ch = data.as(Channel::Buffered(Signal))
-      sig = Signal.new(s)
-      ch.send sig
-    end
-    event.add
-    event
-  end
-
-  @@dns_base : Event::DnsBase?
-
   private def self.dns_base
     @@dns_base ||= @@eb.new_dns_base
   end
 
   def self.create_dns_request(nodename, servname, hints, data, &callback : LibEvent2::DnsGetAddrinfoCallback)
     dns_base.getaddrinfo(nodename, servname, hints, data, &callback)
-  end
-
-  def self.enqueue(fiber : Fiber)
-    @@runnables << fiber
-  end
-
-  def self.enqueue(fibers : Enumerable(Fiber))
-    @@runnables.concat fibers
   end
 end

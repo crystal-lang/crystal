@@ -37,7 +37,10 @@ describe "ASTNode#to_s" do
   expect_to_s "@foo.bar"
   expect_to_s %(:foo)
   expect_to_s %(:"{")
+  expect_to_s %(%r())
+  expect_to_s %(%r()imx)
   expect_to_s %(/hello world/)
+  expect_to_s %(/hello world/imx)
   expect_to_s %(/\\s/)
   expect_to_s %(/\\?/)
   expect_to_s %(/\\(group\\)/)
@@ -116,6 +119,7 @@ describe "ASTNode#to_s" do
   expect_to_s %(lib Foo\n  FOO = 0\nend)
   expect_to_s %(enum Foo\n  A = 0\n  B\nend)
   expect_to_s %(alias Foo = Void)
+  expect_to_s %(alias Foo::Bar = Void)
   expect_to_s %(type(Foo = Void))
   expect_to_s %(return true ? 1 : 2)
   expect_to_s %(1 <= 2 <= 3)
@@ -139,4 +143,19 @@ describe "ASTNode#to_s" do
   expect_to_s %q(`#{1}\n\0`), %q(`#{1}\n\u0000`)
   expect_to_s "macro foo\n{% verbatim do %}1{% end %}\nend"
   expect_to_s Assign.new("x".var, Expressions.new([1.int32, 2.int32] of ASTNode)), "x = (1\n2\n)"
+  expect_to_s "foo.*"
+  expect_to_s "foo.%"
+  expect_to_s "&+1"
+  expect_to_s "&-1"
+  expect_to_s "1.&*"
+  expect_to_s "1.&**"
+  expect_to_s "1.~(2)"
+  expect_to_s %({% verbatim do %}\n  1{{ 2 }}\n  3{{ 4 }}\n{% end %})
+  expect_to_s %({% for foo in bar %}\n  {{ if true\n  foo\n  bar\nend }}\n{% end %})
+  expect_to_s %(asm("nop" ::::))
+  expect_to_s %(asm("nop" : "a"(1), "b"(2) : "c"(3), "d"(4) : "e", "f" : "volatile", "alignstack", "intel"))
+  expect_to_s %(asm("nop" :: "c"(3), "d"(4) ::))
+  expect_to_s %(asm("nop" :::: "volatile"))
+  expect_to_s %(asm("nop" :: "a"(1) :: "volatile"))
+  expect_to_s %(asm("nop" ::: "e" : "volatile"))
 end

@@ -1,6 +1,9 @@
 module Spec
   # :nodoc:
   abstract class Formatter
+    def initialize(@io : IO = STDOUT)
+    end
+
     def push(context)
     end
 
@@ -15,16 +18,24 @@ module Spec
 
     def finish
     end
+
+    def print_results(elapsed_time : Time::Span, aborted : Bool)
+    end
   end
 
   # :nodoc:
   class DotFormatter < Formatter
     def report(result)
-      print Spec.color(LETTERS[result.kind], result.kind)
+      @io << Spec.color(LETTERS[result.kind], result.kind)
+      @io.flush
     end
 
     def finish
-      puts
+      @io.puts
+    end
+
+    def print_results(elapsed_time : Time::Span, aborted : Bool)
+      Spec::RootContext.print_results(elapsed_time, aborted)
     end
   end
 
@@ -35,20 +46,18 @@ module Spec
         @printed = false
       end
 
-      def print
+      def print(io)
         return if @printed
         @printed = true
 
-        VerboseFormatter.print_indent(@indent)
-        puts @description
+        VerboseFormatter.print_indent(io, @indent)
+        io.puts @description
       end
     end
 
-    def initialize
-      @indent = 0
-      @last_description = ""
-      @items = [] of Item
-    end
+    @indent = 0
+    @last_description = ""
+    @items = [] of Item
 
     def push(context)
       @items << Item.new(@indent, context.description)
@@ -61,24 +70,28 @@ module Spec
     end
 
     def print_indent
-      self.class.print_indent(@indent)
+      self.class.print_indent(@io, @indent)
     end
 
-    def self.print_indent(indent)
-      indent.times { print "  " }
+    def self.print_indent(io, indent)
+      indent.times { io << "  " }
     end
 
     def before_example(description)
-      @items.each &.print
+      @items.each &.print(@io)
       print_indent
-      print description
+      @io << description
       @last_description = description
     end
 
     def report(result)
-      print '\r'
+      @io << '\r'
       print_indent
-      puts Spec.color(@last_description, result.kind)
+      @io.puts Spec.color(@last_description, result.kind)
+    end
+
+    def print_results(elapsed_time : Time::Span, aborted : Bool)
+      Spec::RootContext.print_results(elapsed_time, aborted)
     end
   end
 

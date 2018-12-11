@@ -1,13 +1,15 @@
 require "./printer/*"
 
-# Float::Printer is based on Grisu3 algorithm described in the 2004 paper
+# :nodoc:
+#
+# `Float::Printer` is based on Grisu3 algorithm described in the 2004 paper
 # "Printing Floating-Point Numbers Quickly and Accurately with Integers" by
 # Florian Loitsch.
 module Float::Printer
   extend self
   BUFFER_SIZE = 128
 
-  # Converts Float *v* to a string representation and prints it onto *io*
+  # Converts `Float` *v* to a string representation and prints it onto *io*.
   #
   # It is used by `Float64#to_s` and it is probably not necessary to use
   # this directly.

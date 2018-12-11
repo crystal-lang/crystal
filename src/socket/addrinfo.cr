@@ -18,9 +18,9 @@ class Socket
     #   because different servers may handle the `mail` or `http` services for
     #   example.
     # - *family* is optional and defaults to `Family::UNSPEC`
-    # - *type* is the intented socket type (e.g. `Type::STREAM`) and must be
+    # - *type* is the intended socket type (e.g. `Type::STREAM`) and must be
     #   specified.
-    # - *protocol* is the intented socket protocol (e.g. `Protocol::TCP`) and
+    # - *protocol* is the intended socket protocol (e.g. `Protocol::TCP`) and
     #   should be specified.
     #
     # Example:
@@ -77,6 +77,18 @@ class Socket
       end
     end
 
+    class Error < Socket::Error
+      getter error_code : Int32
+
+      def self.new(error_code)
+        new error_code, "getaddrinfo: #{String.new(LibC.gai_strerror(error_code))}"
+      end
+
+      def initialize(@error_code, message)
+        super(message)
+      end
+    end
+
     private def self.getaddrinfo(domain, service, family, type, protocol, timeout)
       # RFC 3986 says:
       # > When a non-ASCII registered name represents an internationalized domain name
@@ -107,9 +119,9 @@ class Socket
       when 0
         # success
       when LibC::EAI_NONAME
-        raise Socket::Error.new("No address found for #{domain}:#{service} over #{protocol}")
+        raise Error.new(LibC::EAI_NONAME, "No address found for #{domain}:#{service} over #{protocol}")
       else
-        raise Socket::Error.new("getaddrinfo: #{String.new(LibC.gai_strerror(ret))}")
+        raise Error.new(ret)
       end
 
       begin
@@ -141,7 +153,7 @@ class Socket
     #
     # Example:
     # ```
-    # addrinfos = Socket::Addrinfo.tcp("example.org", 53)
+    # addrinfos = Socket::Addrinfo.udp("example.org", 53)
     # ```
     def self.udp(domain, service, family = Family::UNSPEC, timeout = nil) : Array(Addrinfo)
       resolve(domain, service, family, Type::DGRAM, Protocol::UDP)

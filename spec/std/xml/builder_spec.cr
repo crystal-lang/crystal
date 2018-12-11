@@ -169,7 +169,7 @@ describe XML::Builder do
   end
 
   it "writes namespace" do
-    assert_built(%{<?xml version="1.0"?>\n<foo x:xmlns="http://foo.com"/>\n}) do |xml|
+    assert_built(%{<?xml version="1.0"?>\n<foo xmlns:x="http://foo.com"/>\n}) do |xml|
       element("foo") do
         namespace "x", "http://foo.com"
       end

@@ -2,6 +2,8 @@
 lib LibLLVM
   LLVM_CONFIG = {{
                   `[ -n "$LLVM_CONFIG" ] && command -v "$LLVM_CONFIG" || \
+                   command -v llvm-config-6.0 || command -v llvm-config60 || \
+                   (command -v llvm-config > /dev/null && (case "$(llvm-config --version)" in 6.0*) command -v llvm-config;; *) false;; esac)) || \
                    command -v llvm-config-5.0 || command -v llvm-config50 || \
                    (command -v llvm-config > /dev/null && (case "$(llvm-config --version)" in 5.0*) command -v llvm-config;; *) false;; esac)) || \
                    command -v llvm-config-4.0 || command -v llvm-config40 || \
@@ -31,6 +33,7 @@ end
 
 {% begin %}
   lib LibLLVM
+    IS_60 = {{LibLLVM::VERSION.starts_with?("6.0")}}
     IS_50 = {{LibLLVM::VERSION.starts_with?("5.0")}}
     IS_40 = {{LibLLVM::VERSION.starts_with?("4.0")}}
     IS_39 = {{LibLLVM::VERSION.starts_with?("3.9")}}
@@ -134,6 +137,7 @@ lib LibLLVM
   fun build_zext = LLVMBuildZExt(builder : BuilderRef, val : ValueRef, dest_ty : TypeRef, name : UInt8*) : ValueRef
   fun const_array = LLVMConstArray(element_type : TypeRef, constant_vals : ValueRef*, length : UInt32) : ValueRef
   fun const_int = LLVMConstInt(int_type : TypeRef, value : UInt64, sign_extend : Int32) : ValueRef
+  fun const_int_of_arbitrary_precision = LLVMConstIntOfArbitraryPrecision(int_type : TypeRef, num_words : UInt32, words : UInt64*) : ValueRef
   fun const_null = LLVMConstNull(ty : TypeRef) : ValueRef
   fun const_pointer_null = LLVMConstPointerNull(ty : TypeRef) : ValueRef
   fun const_real = LLVMConstReal(real_ty : TypeRef, n : Float64) : ValueRef
@@ -223,6 +227,7 @@ lib LibLLVM
   fun set_thread_local = LLVMSetThreadLocal(global_var : ValueRef, is_thread_local : Int32)
   fun is_thread_local = LLVMIsThreadLocal(global_var : ValueRef) : Int32
   fun set_value_name = LLVMSetValueName(val : ValueRef, name : UInt8*)
+  fun set_personality_fn = LLVMSetPersonalityFn(fn : ValueRef, personality_fn : ValueRef)
   fun size_of = LLVMSizeOf(ty : TypeRef) : ValueRef
   fun size_of_type_in_bits = LLVMSizeOfTypeInBits(ref : TargetDataRef, ty : TypeRef) : UInt64
   fun struct_create_named = LLVMStructCreateNamed(c : ContextRef, name : UInt8*) : TypeRef

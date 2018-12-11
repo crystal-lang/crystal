@@ -108,25 +108,26 @@ def assert_error(str, message, inject_primitives = true)
   end
 end
 
-def assert_macro(macro_args, macro_body, call_args, expected, flags = nil)
-  assert_macro(macro_args, macro_body, expected, flags) { call_args }
+def assert_macro(macro_args, macro_body, call_args, expected, expected_pragmas = nil, flags = nil)
+  assert_macro(macro_args, macro_body, expected, expected_pragmas, flags) { call_args }
 end
 
-def assert_macro(macro_args, macro_body, expected, flags = nil)
+def assert_macro(macro_args, macro_body, expected, expected_pragmas = nil, flags = nil)
   program = Program.new
   program.flags = flags if flags
   sub_node = yield program
-  assert_macro_internal program, sub_node, macro_args, macro_body, expected
+  assert_macro_internal program, sub_node, macro_args, macro_body, expected, expected_pragmas
 end
 
-def assert_macro_internal(program, sub_node, macro_args, macro_body, expected)
+def assert_macro_internal(program, sub_node, macro_args, macro_body, expected, expected_pragmas)
   macro_def = "macro foo(#{macro_args});#{macro_body};end"
   a_macro = Parser.parse(macro_def).as(Macro)
 
   call = Call.new(nil, "", sub_node)
-  result = program.expand_macro a_macro, call, program, program
+  result, result_pragmas = program.expand_macro a_macro, call, program, program
   result = result.chomp(';')
   result.should eq(expected)
+  result_pragmas.should eq(expected_pragmas) if expected_pragmas
 end
 
 def codegen(code, inject_primitives = true, debug = Crystal::Debug::None)
@@ -186,25 +187,23 @@ def run(code, filename = nil, inject_primitives = true, debug = Crystal::Debug::
 end
 
 def build_and_run(code)
-  code_file = Tempfile.new("build_and_run_code")
-  code_file.close
+  code_file = File.tempname("build_and_run_code")
 
   # write code to the temp file
-  File.write(code_file.path, code)
+  File.write(code_file, code)
 
-  binary_file = Tempfile.new("build_and_run_bin")
-  binary_file.close
+  binary_file = File.tempname("build_and_run_bin")
 
   `bin/crystal build #{code_file.path.inspect} -o #{binary_file.path.inspect}`
-  File.exists?(binary_file.path).should be_true
+  File.exists?(binary_file).should be_true
 
   out_io, err_io = IO::Memory.new, IO::Memory.new
-  status = Process.run(binary_file.path, output: out_io, error: err_io)
+  status = Process.run(binary_file, output: out_io, error: err_io)
 
   {status, out_io.to_s, err_io.to_s}
 ensure
-  File.delete(code_file.path) if code_file
-  File.delete(binary_file.path) if binary_file
+  File.delete(code_file) if code_file
+  File.delete(binary_file) if binary_file
 end
 
 def test_c(c_code, crystal_code)

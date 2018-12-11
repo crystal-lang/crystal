@@ -35,10 +35,22 @@ lib LibC
   SIGSTKFLT = 16
   SIGUNUSED = LibC::SIGSYS
 
+  SIG_SETMASK = 2
+
   alias SighandlerT = Int ->
   SIG_DFL = SighandlerT.new(Pointer(Void).new(0_u64), Pointer(Void).null)
   SIG_IGN = SighandlerT.new(Pointer(Void).new(1_u64), Pointer(Void).null)
 
+  struct SigsetT
+    bits : ULong[16] # 128 / sizeof(long)
+  end
+
   fun kill(x0 : PidT, x1 : Int) : Int
+  fun pthread_sigmask(Int, SigsetT*, SigsetT*) : Int
   fun signal(x0 : Int, x1 : Int -> Void) : Int -> Void
+  fun sigemptyset(SigsetT*) : Int
+  fun sigfillset(SigsetT*) : Int
+  fun sigaddset(SigsetT*, Int) : Int
+  fun sigdelset(SigsetT*, Int) : Int
+  fun sigismember(SigsetT*, Int) : Int
 end

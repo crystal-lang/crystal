@@ -179,7 +179,7 @@ class Time::Location
     def inspect(io : IO)
       io << "Time::Location::ZoneTransition("
       io << '#' << index << ' '
-      Time.epoch(self.when).to_s("%F %T", io)
+      Time.unix(self.when).to_s("%F %T", io)
       if standard?
         io << " STD"
       else
@@ -260,12 +260,12 @@ class Time::Location
   # ```
   # # This tries to load the file `/usr/share/zoneinfo/Custom/Location`
   # ENV["ZONEINFO"] = "/usr/share/zoneinfo/"
-  # Location.load("Custom/Location")
+  # Time::Location.load("Custom/Location")
   #
   # # This tries to load the file `Custom/Location` in the uncompressed ZIP
   # # file at `/path/to/zoneinfo.zip`
   # ENV["ZONEINFO"] = "/path/to/zoneinfo.zip"
-  # Location.load("Custom/Location")
+  # Time::Location.load("Custom/Location")
   # ```
   #
   # If the location name cannot be found, `InvalidLocationNameError` is raised.
@@ -334,12 +334,17 @@ class Time::Location
   def self.load_local : Location
     case tz = ENV["TZ"]?
     when "", "UTC"
-      UTC
+      return UTC
     when Nil
       if localtime = Crystal::System::Time.load_localtime
         return localtime
       end
     else
+      if zoneinfo = ENV["ZONEINFO"]?
+        if location = load_from_dir_or_zip(tz, zoneinfo)
+          return location
+        end
+      end
       if location = load?(tz, Crystal::System::Time.zone_sources)
         return location
       end
@@ -377,31 +382,31 @@ class Time::Location
 
   # Returns the time zone offset observed at *time*.
   def lookup(time : Time) : Zone
-    lookup(time.epoch)
+    lookup(time.to_unix)
   end
 
-  # Returns the time zone offset observed at *epoch*.
+  # Returns the time zone offset observed at *unix_seconds*.
   #
-  # *epoch* expresses the number of seconds since UNIX epoch
+  # *unix_seconds* expresses the number of seconds since UNIX epoch
   # (`1970-01-01 00:00:00 UTC`).
-  def lookup(epoch : Int) : Zone
-    unless @cached_range[0] <= epoch < @cached_range[1]
-      @cached_zone, @cached_range = lookup_with_boundaries(epoch)
+  def lookup(unix_seconds : Int) : Zone
+    unless @cached_range[0] <= unix_seconds < @cached_range[1]
+      @cached_zone, @cached_range = lookup_with_boundaries(unix_seconds)
     end
 
     @cached_zone
   end
 
   # :nodoc:
-  def lookup_with_boundaries(epoch : Int) : {Zone, {Int64, Int64}}
+  def lookup_with_boundaries(unix_seconds : Int) : {Zone, {Int64, Int64}}
     case
     when zones.empty?
       return Zone::UTC, {Int64::MIN, Int64::MAX}
-    when transitions.empty? || epoch < transitions.first.when
+    when transitions.empty? || unix_seconds < transitions.first.when
       return lookup_first_zone, {Int64::MIN, transitions[0]?.try(&.when) || Int64::MAX}
     else
       tx_index = transitions.bsearch_index do |transition|
-        transition.when > epoch
+        transition.when > unix_seconds
       end || transitions.size
 
       tx_index -= 1 unless tx_index == 0

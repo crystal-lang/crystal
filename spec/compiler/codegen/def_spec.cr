@@ -558,4 +558,14 @@ describe "Code gen: def" do
       foo(1 || true)
       ))
   end
+
+  it "codegens yield with destructing tuple having unreachable element" do
+    codegen(%(
+      def foo
+        yield({1, while true; end})
+      end
+
+      foo { |a, b| }
+      ))
+  end
 end

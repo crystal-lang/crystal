@@ -214,6 +214,10 @@ module Crystal
       self
     end
 
+    # Returns the type that owns class vars for a type.
+    #
+    # This method returns self, but subclasses might override.
+    # For example, a metaclass's class_var_owner is the instance type.
     def class_var_owner
       self
     end
@@ -294,6 +298,52 @@ module Crystal
       var.bind_to var
       var.freeze_type = type
       instance_vars[name] = var
+    end
+
+    # Determines if `self` can access *type* assuming it's a `protected` access.
+    # If `allow_same_namespace` is true (the default), `protected` also means
+    # the types are in the same namespace. Otherwise, it means they are just
+    # in the same type hierarchy.
+    def has_protected_acces_to?(type, allow_same_namespace = true)
+      owner = self
+
+      # Allow two different generic instantiations
+      # of the same type to have protected access
+      type = type.generic_type.as(Type) if type.is_a?(GenericInstanceType)
+      owner = owner.generic_type.as(Type) if owner.is_a?(GenericInstanceType)
+
+      self.implements?(type) ||
+        type.implements?(self) ||
+        (allow_same_namespace && same_namespace?(type))
+    end
+
+    # Returns true if `self` and *other* are in the same namespace.
+    def same_namespace?(other)
+      top_namespace(self) == top_namespace(other) ||
+        parents.try &.any? { |parent| parent.same_namespace?(other) }
+    end
+
+    private def top_namespace(type)
+      type = type.generic_type if type.is_a?(GenericInstanceType)
+
+      namespace = case type
+                  when NamedType
+                    type.namespace
+                  when GenericClassInstanceType
+                    type.namespace
+                  else
+                    nil
+                  end
+      case namespace
+      when Program
+        type
+      when GenericInstanceType
+        top_namespace(namespace.generic_type)
+      when NamedType
+        top_namespace(namespace)
+      else
+        type
+      end
     end
 
     def types
@@ -533,7 +583,7 @@ module Crystal
       raise "BUG: #{self} doesn't implement add_subclass"
     end
 
-    # Replace type parameetrs in this type with the type parameters
+    # Replaces type parameetrs in this type with the type parameters
     # of the given *instance* type.
     def replace_type_parameters(instance) : Type
       self
@@ -618,6 +668,13 @@ module Crystal
     end
 
     def get_instance_var_initializer(name)
+      nil
+    end
+
+    # Checks whether an exception needs to be raised because of a restriction
+    # failure. Only overwriten by literal types (NumberLiteralType and
+    # SymbolLiteralType) when they produce an ambiguous call.
+    def check_restriction_exception
       nil
     end
 
@@ -941,7 +998,7 @@ module Crystal
       if !meta_vars && !self.is_a?(GenericType)
         meta_vars = MetaVars.new
         visitor = MainVisitor.new(program, vars: meta_vars, meta_vars: meta_vars)
-        visitor.scope = self
+        visitor.scope = self.metaclass
         value = value.clone
         value.accept visitor
       end
@@ -1249,6 +1306,17 @@ module Crystal
     def kind
       @bytes == 4 ? :f32 : :f64
     end
+
+    def range
+      case kind
+      when :f32
+        {Float32::MIN, Float32::MAX}
+      when :f64
+        {Float64::MIN, Float64::MAX}
+      else
+        raise "Bug: called 'range' for non-float literal"
+      end
+    end
   end
 
   class SymbolType < PrimitiveType
@@ -1267,19 +1335,55 @@ module Crystal
   class VoidType < NamedType
   end
 
-  # Type for a number literal: it has the specific type of the number literal
-  # but can also match other types (like ints and floats) if the literal
-  # fits in those types.
-  class NumberLiteralType < Type
-    getter literal : NumberLiteral
-    @matched_type : Type?
+  abstract class LiteralType < Type
+    # The most exact match type, or the first match otherwise
+    @match : Type?
 
-    def initialize(program, @literal)
-      super(program)
+    # All matches. It's nil if `@match` is an exact match.
+    @all_matches : Set(Type)?
+
+    def set_exact_match(type)
+      @match = type
+      @all_matches = nil
+    end
+
+    def add_match(type)
+      if match = @match
+        all_matches = @all_matches
+        if all_matches.nil?
+          all_matches = @all_matches = Set(Type).new
+          all_matches << match
+        end
+        all_matches << type
+      else
+        @match = type
+      end
+    end
+
+    def exact_match?
+      literal.type == @match
     end
 
     def remove_literal
       literal.type
+    end
+
+    def check_restriction_exception
+      if all_matches = @all_matches
+        literal.raise "ambiguous call, implicit cast of #{literal} matches all of #{all_matches.join(", ")}"
+      end
+    end
+  end
+
+  # Type for a number literal: it has the specific type of the number literal
+  # but can also match other types (like ints and floats) if the literal
+  # fits in those types.
+  class NumberLiteralType < LiteralType
+    # The literal associated with this type
+    getter literal : NumberLiteral
+
+    def initialize(program, @literal)
+      super(program)
     end
 
     def to_s_with_options(io : IO, skip_union_parens : Bool = false, generic_args : Bool = true, codegen = false)
@@ -1289,16 +1393,12 @@ module Crystal
 
   # Type for a symbol literal: it has the specific type of the symbol literal (SymbolType)
   # but can also match enums if their members match the symbol's name.
-  class SymbolLiteralType < Type
+  class SymbolLiteralType < LiteralType
+    # The literal associated with this type
     getter literal : SymbolLiteral
-    @matched_type : Type?
 
     def initialize(program, @literal)
       super(program)
-    end
-
-    def remove_literal
-      literal.type
     end
 
     def to_s_with_options(io : IO, skip_union_parens : Bool = false, generic_args : Bool = true, codegen = false)
@@ -1456,7 +1556,7 @@ module Crystal
     def run_instance_var_initializer(initializer, instance : GenericClassInstanceType | NonGenericClassType)
       meta_vars = MetaVars.new
       visitor = MainVisitor.new(program, vars: meta_vars, meta_vars: meta_vars)
-      visitor.scope = instance
+      visitor.scope = instance.metaclass
       value = initializer.value.clone
       value.accept visitor
       instance_var = instance.lookup_instance_var(initializer.name)
@@ -1725,7 +1825,7 @@ module Crystal
     end
 
     def class_var_owner
-      generic_type
+      generic_type.class_var_owner
     end
 
     def parents
@@ -2337,6 +2437,10 @@ module Crystal
       entries.any? &.type.unbound?
     end
 
+    def has_in_type_vars?(type)
+      entries.any? { |entry| entry.type.includes_type?(type) || entry.type.has_in_type_vars?(type) }
+    end
+
     def to_s_with_options(io : IO, skip_union_parens : Bool = false, generic_args : Bool = true, codegen = false)
       io << "NamedTuple("
       @entries.join(", ", io) do |entry|
@@ -2577,9 +2681,9 @@ module Crystal
 
   # A metaclass type, that results from invoking `.class` on a type.
   #
-  # For example `String:Class` is the metaclass of `String`, and it's
+  # For example `String.class` is the metaclass of `String`, and it's
   # the type of `String` (the type of `"foo"` is `String`, the type of
-  # `String` is `String:Class`).
+  # `String` is `String.class`).
   #
   # This metaclass represents only the metaclass of non-generic types.
   class MetaclassType < ClassType
@@ -2599,7 +2703,7 @@ module Crystal
         if instance_type.module?
           name = "#{@instance_type}:Module"
         else
-          name = "#{@instance_type}:Class"
+          name = "#{@instance_type}.class"
         end
       end
       super(program, program, name, super_class)
@@ -2613,7 +2717,7 @@ module Crystal
       type_var?, to: instance_type
 
     def class_var_owner
-      instance_type
+      instance_type.class_var_owner
     end
 
     def virtual_type
@@ -2640,7 +2744,7 @@ module Crystal
     end
   end
 
-  # The metaclass of a generic class instance type, like `Array(String):Class`
+  # The metaclass of a generic class instance type, like `Array(String).class`
   class GenericClassInstanceMetaclassType < Type
     include DefInstanceContainer
 
@@ -2676,7 +2780,7 @@ module Crystal
     delegate type_vars, abstract?, generic_nest, lookup_new_in_ancestors?, to: instance_type
 
     def class_var_owner
-      instance_type
+      instance_type.class_var_owner
     end
 
     def filter_by_responds_to(name)
@@ -2689,11 +2793,11 @@ module Crystal
 
     def to_s_with_options(io : IO, skip_union_parens : Bool = false, generic_args : Bool = true, codegen = false)
       instance_type.to_s(io)
-      io << ":Class"
+      io << ".class"
     end
   end
 
-  # The metaclass of a generic module instance type, like `Enumerable(Int32):Class`
+  # The metaclass of a generic module instance type, like `Enumerable(Int32).class`
   class GenericModuleInstanceMetaclassType < Type
     include DefInstanceContainer
 
@@ -2715,12 +2819,12 @@ module Crystal
     delegate type_vars, generic_nest, lookup_new_in_ancestors?, to: instance_type
 
     def class_var_owner
-      instance_type
+      instance_type.class_var_owner
     end
 
     def to_s_with_options(io : IO, skip_union_parens : Bool = false, generic_args : Bool = true, codegen = false)
       instance_type.to_s(io)
-      io << ":Class"
+      io << ".class"
     end
   end
 
@@ -3117,7 +3221,7 @@ module Crystal
       instance_type.leaf?
     end
 
-    # Given `Foo+:Class` returns `Foo` (not `Foo:Class`)
+    # Given `Foo+.class` returns `Foo` (not `Foo.class`)
     delegate base_type, to: instance_type
 
     delegate lookup_first_def, to: instance_type.metaclass
@@ -3152,7 +3256,7 @@ module Crystal
 
     def to_s_with_options(io : IO, skip_union_parens : Bool = false, generic_args : Bool = true, codegen = false)
       instance_type.to_s_with_options(io, codegen: codegen)
-      io << ":Class"
+      io << ".class"
     end
   end
 end

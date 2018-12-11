@@ -50,9 +50,16 @@ module Spec
       @@instance.succeeded
     end
 
-    def print_results(elapsed_time, aborted = false)
-      Spec.formatters.each(&.finish)
+    def self.finish(elapsed_time, aborted = false)
+      @@instance.finish(elapsed_time, aborted)
+    end
 
+    def finish(elapsed_time, aborted = false)
+      Spec.formatters.each(&.finish)
+      Spec.formatters.each(&.print_results(elapsed_time, aborted))
+    end
+
+    def print_results(elapsed_time, aborted = false)
       pendings = @results[:pending]
       unless pendings.empty?
         puts
@@ -82,15 +89,10 @@ module Spec
             end
             puts
 
-            ex.to_s.split('\n').each do |line|
+            message = ex.is_a?(AssertionFailed) ? ex.to_s : ex.inspect_with_backtrace
+            message.split('\n').each do |line|
               print "       "
               puts Spec.color(line, :error)
-            end
-            unless ex.is_a?(AssertionFailed)
-              ex.backtrace.each do |trace|
-                print "       "
-                puts Spec.color(trace, :error)
-              end
             end
 
             if ex.is_a?(AssertionFailed)

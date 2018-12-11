@@ -120,13 +120,13 @@ end
 
 module Time::EpochConverter
   def self.to_yaml(value : Time, yaml : YAML::Nodes::Builder)
-    yaml.scalar value.epoch
+    yaml.scalar value.to_unix
   end
 end
 
 module Time::EpochMillisConverter
   def self.to_yaml(value : Time, yaml : YAML::Nodes::Builder)
-    yaml.scalar value.epoch_ms
+    yaml.scalar value.to_unix_ms
   end
 end
 

@@ -1,4 +1,4 @@
-require "spec"
+require "../spec_helper"
 require "big"
 require "base64"
 
@@ -170,8 +170,8 @@ describe IO do
   end
 
   it "reopens" do
-    File.open("#{__DIR__}/../data/test_file.txt") do |file1|
-      File.open("#{__DIR__}/../data/test_file.ini") do |file2|
+    File.open(datapath("test_file.txt")) do |file1|
+      File.open(datapath("test_file.ini")) do |file2|
         file2.reopen(file1)
         file2.gets.should eq("Hello World")
       end
@@ -689,6 +689,18 @@ describe IO do
         end
       end
 
+      it "sets encoding to utf-8 and stays as UTF-8" do
+        io = SimpleIOMemory.new(Base64.decode_string("ey8qx+Tl8fwg7+Dw4Ozl8vD7IOLo5+jy4CovfQ=="))
+        io.set_encoding("utf-8")
+        io.encoding.should eq("UTF-8")
+      end
+
+      it "sets encoding to utf8 and stays as UTF-8" do
+        io = SimpleIOMemory.new(Base64.decode_string("ey8qx+Tl8fwg7+Dw4Ozl8vD7IOLo5+jy4CovfQ=="))
+        io.set_encoding("utf8")
+        io.encoding.should eq("UTF-8")
+      end
+
       it "does skips when converting to UTF-8" do
         io = SimpleIOMemory.new(Base64.decode_string("ey8qx+Tl8fwg7+Dw4Ozl8vD7IOLo5+jy4CovfQ=="))
         io.set_encoding("UTF-8", invalid: :skip)
@@ -703,14 +715,14 @@ describe IO do
       end
 
       it "decodes incomplete multibyte sequence with skip (2) (#3285)" do
-        str = File.read("#{__DIR__}/../data/io_data_incomplete_multibyte_sequence.txt")
+        str = File.read(datapath("io_data_incomplete_multibyte_sequence.txt"))
         m = IO::Memory.new(Base64.decode_string str)
         m.set_encoding("UTF-8", invalid: :skip)
         m.gets_to_end.bytesize.should eq(4277)
       end
 
       it "decodes incomplete multibyte sequence with skip (3) (#3285)" do
-        str = File.read("#{__DIR__}/../data/io_data_incomplete_multibyte_sequence_2.txt")
+        str = File.read(datapath("io_data_incomplete_multibyte_sequence_2.txt"))
         m = IO::Memory.new(Base64.decode_string str)
         m.set_encoding("UTF-8", invalid: :skip)
         m.gets_to_end.bytesize.should eq(8977)

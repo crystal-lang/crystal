@@ -54,7 +54,7 @@ class Regex
       group_size + 1
     end
 
-    # Return the position of the first character of the *n*th match.
+    # Returns the position of the first character of the *n*th match.
     #
     # When *n* is `0` or not given, uses the match of the entire `Regex`.
     # Otherwise, uses the match of the *n*th capture group.
@@ -68,7 +68,7 @@ class Regex
       @string.byte_index_to_char_index byte_begin(n)
     end
 
-    # Return the position of the next character after the match.
+    # Returns the position of the next character after the match.
     #
     # When *n* is `0` or not given, uses the match of the entire `Regex`.
     # Otherwise, uses the match of the *n*th capture group.
@@ -82,7 +82,7 @@ class Regex
       @string.byte_index_to_char_index byte_end(n)
     end
 
-    # Return the position of the first byte of the *n*th match.
+    # Returns the position of the first byte of the *n*th match.
     #
     # When *n* is `0` or not given, uses the match of the entire `Regex`.
     # Otherwise, uses the match of the *n*th capture group.
@@ -98,7 +98,7 @@ class Regex
       @ovector[n * 2]
     end
 
-    # Return the position of the next byte after the match.
+    # Returns the position of the next byte after the match.
     #
     # When *n* is `0` or not given, uses the match of the entire `Regex`.
     # Otherwise, uses the match of the *n*th capture group.

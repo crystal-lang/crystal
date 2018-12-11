@@ -86,6 +86,46 @@ describe JSON::Any do
     end
   end
 
+  describe "#dig?" do
+    it "gets the value at given path given splat" do
+      obj = JSON.parse(%({"foo": [1, {"bar": [2, 3]}]}))
+
+      obj.dig?("foo", 0).should eq(1)
+      obj.dig?("foo", 1, "bar", 1).should eq(3)
+    end
+
+    it "returns nil if not found" do
+      obj = JSON.parse(%({"foo": [1, {"bar": [2, 3]}]}))
+
+      obj.dig?("foo", 10).should be_nil
+      obj.dig?("bar", "baz").should be_nil
+      obj.dig?("").should be_nil
+    end
+  end
+
+  describe "dig" do
+    it "gets the value at given path given splat" do
+      obj = JSON.parse(%({"foo": [1, {"bar": [2, 3]}]}))
+
+      obj.dig("foo", 0).should eq(1)
+      obj.dig("foo", 1, "bar", 1).should eq(3)
+    end
+
+    it "raises if not found" do
+      obj = JSON.parse(%({"foo": [1, {"bar": [2, 3]}]}))
+
+      expect_raises Exception, %(Expected Hash for #[](key : String), not Array(JSON::Any)) do
+        obj.dig("foo", 1, "bar", "baz")
+      end
+      expect_raises KeyError, %(Missing hash key: "z") do
+        obj.dig("z")
+      end
+      expect_raises KeyError, %(Missing hash key: "") do
+        obj.dig("")
+      end
+    end
+  end
+
   it "traverses big structure" do
     obj = JSON.parse(%({"foo": [1, {"bar": [2, 3]}]}))
     obj["foo"][1]["bar"][1].as_i.should eq(3)
@@ -104,5 +144,17 @@ describe JSON::Any do
   it "exposes $~ when doing Regex#===" do
     (/o+/ === JSON.parse(%("foo"))).should be_truthy
     $~[0].should eq("oo")
+  end
+
+  it "dups" do
+    any = JSON.parse("[1, 2, 3]")
+    any2 = any.dup
+    any2.as_a.should_not be(any.as_a)
+  end
+
+  it "clones" do
+    any = JSON.parse("[[1], 2, 3]")
+    any2 = any.clone
+    any2.as_a[0].as_a.should_not be(any.as_a[0].as_a)
   end
 end

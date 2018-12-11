@@ -148,7 +148,7 @@ class Deque(T)
     @buffer[index] = value
   end
 
-  def unsafe_at(index : Int)
+  def unsafe_fetch(index : Int)
     index += @start
     index -= @capacity if index >= @capacity
     @buffer[index]
@@ -201,7 +201,7 @@ class Deque(T)
     found
   end
 
-  # Delete the item that is present at the *index*. Items to the right
+  # Deletes the item that is present at the *index*. Items to the right
   # of this one will have their indices decremented.
   # Raises `IndexError` if trying to delete an element outside the deque's range.
   #

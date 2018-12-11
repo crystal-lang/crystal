@@ -1175,7 +1175,7 @@ class String
         outbuf_ptr = outbuf.to_unsafe
         outbytesleft = LibC::SizeT.new(outbuf.size)
         err = iconv.convert(pointerof(inbuf_ptr), pointerof(inbytesleft), pointerof(outbuf_ptr), pointerof(outbytesleft))
-        if err == -1
+        if err == Iconv::ERROR
           iconv.handle_invalid(pointerof(inbuf_ptr), pointerof(inbytesleft))
         end
         io.write(outbuf.to_slice[0, outbuf.size - outbytesleft])
@@ -2033,7 +2033,7 @@ class String
           buffer[i] = byte
         end
       end
-      {bytesize, bytesize}
+      {bytesize, @length}
     end
   end
 
@@ -3491,7 +3491,7 @@ class String
         {@bytesize, @length}
       end
     else
-      # Iterate grpahemes to reverse the string,
+      # Iterate graphemes to reverse the string,
       # so combining characters are placed correctly
       String.new(bytesize) do |buffer|
         buffer += bytesize
@@ -3937,16 +3937,16 @@ class String
     while reader.has_next?
       current_char = reader.current_char
       case current_char
-      when '"'     then io << "\\\""
-      when '\\'    then io << "\\\\"
-      when (7.chr) then io << "\\a" # TODO: use \a
-      when '\b'    then io << "\\b"
-      when '\e'    then io << "\\e"
-      when '\f'    then io << "\\f"
-      when '\n'    then io << "\\n"
-      when '\r'    then io << "\\r"
-      when '\t'    then io << "\\t"
-      when '\v'    then io << "\\v"
+      when '"'  then io << "\\\""
+      when '\\' then io << "\\\\"
+      when '\a' then io << "\\a"
+      when '\b' then io << "\\b"
+      when '\e' then io << "\\e"
+      when '\f' then io << "\\f"
+      when '\n' then io << "\\n"
+      when '\r' then io << "\\r"
+      when '\t' then io << "\\t"
+      when '\v' then io << "\\v"
       when '#'
         current_char = reader.next_char
         if current_char == '{'
@@ -4168,7 +4168,8 @@ class String
     return 4
   end
 
-  protected def size_known?
+  # :nodoc:
+  def size_known?
     @bytesize == 0 || @length > 0
   end
 
@@ -4244,8 +4245,11 @@ class String
   # Raises an `ArgumentError` if `self` has null bytes. Returns `self` otherwise.
   #
   # This method should sometimes be called before passing a `String` to a C function.
-  def check_no_null_byte
-    raise ArgumentError.new("String contains null byte") if byte_index(0)
+  def check_no_null_byte(name = nil)
+    if byte_index(0)
+      name = "`#{name}` " if name
+      raise ArgumentError.new("String #{name}contains null byte")
+    end
     self
   end
 

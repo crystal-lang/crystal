@@ -30,9 +30,9 @@ abstract class Channel(T)
 
   def close
     @closed = true
-    Scheduler.enqueue @senders
+    Crystal::Scheduler.enqueue @senders
     @senders.clear
-    Scheduler.enqueue @receivers
+    Crystal::Scheduler.enqueue @receivers
     @receivers.clear
     nil
   end
@@ -57,19 +57,19 @@ abstract class Channel(T)
     pp.text inspect
   end
 
-  def wait_for_receive
+  protected def wait_for_receive
     @receivers << Fiber.current
   end
 
-  def unwait_for_receive
+  protected def unwait_for_receive
     @receivers.delete Fiber.current
   end
 
-  def wait_for_send
+  protected def wait_for_send
     @senders << Fiber.current
   end
 
-  def unwait_for_send
+  protected def unwait_for_send
     @senders.delete Fiber.current
   end
 
@@ -112,19 +112,22 @@ abstract class Channel(T)
       end
 
       ops.each &.wait
-      Scheduler.reschedule
+      Crystal::Scheduler.reschedule
       ops.each &.unwait
     end
   end
 
+  # :nodoc:
   def send_select_action(value : T)
     SendAction.new(self, value)
   end
 
+  # :nodoc:
   def receive_select_action
     ReceiveAction.new(self)
   end
 
+  # :nodoc:
   struct ReceiveAction(C)
     include SelectAction
 
@@ -148,6 +151,7 @@ abstract class Channel(T)
     end
   end
 
+  # :nodoc:
   struct SendAction(C, T)
     include SelectAction
 
@@ -182,13 +186,13 @@ class Channel::Buffered(T) < Channel(T)
     while full?
       raise_if_closed
       @senders << Fiber.current
-      Scheduler.reschedule
+      Crystal::Scheduler.reschedule
     end
 
     raise_if_closed
 
     @queue << value
-    Scheduler.enqueue @receivers
+    Crystal::Scheduler.enqueue @receivers
     @receivers.clear
 
     self
@@ -198,11 +202,11 @@ class Channel::Buffered(T) < Channel(T)
     while empty?
       yield if @closed
       @receivers << Fiber.current
-      Scheduler.reschedule
+      Crystal::Scheduler.reschedule
     end
 
     @queue.shift.tap do
-      Scheduler.enqueue @senders
+      Crystal::Scheduler.enqueue @senders
       @senders.clear
     end
   end
@@ -229,7 +233,7 @@ class Channel::Unbuffered(T) < Channel(T)
     while @has_value
       raise_if_closed
       @senders << Fiber.current
-      Scheduler.reschedule
+      Crystal::Scheduler.reschedule
     end
 
     raise_if_closed
@@ -241,7 +245,7 @@ class Channel::Unbuffered(T) < Channel(T)
     if receiver = @receivers.shift?
       receiver.resume
     else
-      Scheduler.reschedule
+      Crystal::Scheduler.reschedule
     end
   end
 
@@ -252,7 +256,7 @@ class Channel::Unbuffered(T) < Channel(T)
       if sender = @senders.shift?
         sender.resume
       else
-        Scheduler.reschedule
+        Crystal::Scheduler.reschedule
       end
     end
 
@@ -260,7 +264,7 @@ class Channel::Unbuffered(T) < Channel(T)
 
     @value.tap do
       @has_value = false
-      Scheduler.enqueue @sender.not_nil!
+      Crystal::Scheduler.enqueue @sender.not_nil!
       @sender = nil
     end
   end
@@ -276,7 +280,7 @@ class Channel::Unbuffered(T) < Channel(T)
   def close
     super
     if sender = @sender
-      Scheduler.enqueue sender
+      Crystal::Scheduler.enqueue sender
       @sender = nil
     end
   end

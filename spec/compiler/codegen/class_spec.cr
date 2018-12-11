@@ -504,15 +504,7 @@ describe "Code gen: class" do
 
   it "does to_s for virtual metaclass type (3)" do
     run(%(
-      class Class
-        def name : String
-          {{ @type.name.stringify }}
-        end
-
-        def to_s
-          name
-        end
-      end
+      require "prelude"
 
       class Foo; end
       class Bar < Foo; end
@@ -654,7 +646,7 @@ describe "Code gen: class" do
   it "doesn't crash on instance variable assigned a proc, and never instantiated (#923)" do
     codegen(%(
       class Klass
-        def f(arg)
+        def self.f(arg)
         end
 
         @a : Proc(String, Nil) = ->f(String)
@@ -1038,5 +1030,41 @@ describe "Code gen: class" do
       foo.foo = {Foo.new(2), Foo.new(3)}
       foo.x
       ), inject_primitives: false).to_i.should eq(1)
+  end
+
+  it "runs instance variable initializer at the class level" do
+    run(%(
+      class Foo
+        @x : Int32 = bar
+
+        def self.bar
+          42
+        end
+
+        def x
+          @x
+        end
+      end
+
+      Foo.new.x
+      )).to_i.should eq(42)
+  end
+
+  it "runs instance variable initializer at the class level, for generic type" do
+    run(%(
+      class Foo(T)
+        @x : T = bar
+
+        def self.bar
+          42
+        end
+
+        def x
+          @x
+        end
+      end
+
+      Foo(Int32).new.x
+      )).to_i.should eq(42)
   end
 end
