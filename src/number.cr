@@ -226,9 +226,12 @@ struct Number
   # 5.clamp(10..100)   # => 10
   # 50.clamp(10..100)  # => 50
   # 500.clamp(10..100) # => 100
+  #
+  # 5.clamp(10..)  # => 10
+  # 50.clamp(10..) # => 50
   # ```
   def clamp(range : Range)
-    raise ArgumentError.new("Can't clamp an exclusive range") if range.exclusive?
+    raise ArgumentError.new("Can't clamp an exclusive range") if !range.end.nil? && range.exclusive?
     clamp range.begin, range.end
   end
 
@@ -238,9 +241,12 @@ struct Number
   # 5.clamp(10, 100)   # => 10
   # 50.clamp(10, 100)  # => 50
   # 500.clamp(10, 100) # => 100
+  #
+  # 5.clamp(10, nil)  # => 10
+  # 50.clamp(10, nil) # => 50
   # ```
   def clamp(min, max)
-    return max if self > max
+    return max if !max.nil? && self > max
     return min if self < min
     self
   end

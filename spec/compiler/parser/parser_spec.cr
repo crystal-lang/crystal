@@ -783,6 +783,11 @@ module Crystal
 
     it_parses "1 .. 2", RangeLiteral.new(1.int32, 2.int32, false)
     it_parses "1 ... 2", RangeLiteral.new(1.int32, 2.int32, true)
+    it_parses "(1 .. )", Expressions.new([RangeLiteral.new(1.int32, Nop.new, false)] of ASTNode)
+    it_parses "(1 ... )", Expressions.new([RangeLiteral.new(1.int32, Nop.new, true)] of ASTNode)
+    it_parses "foo(1.., 2)", Call.new(nil, "foo", [RangeLiteral.new(1.int32, Nop.new, false), 2.int32] of ASTNode)
+    it_parses "1..;", RangeLiteral.new(1.int32, Nop.new, false)
+    it_parses "{1.. => 2};", HashLiteral.new([HashLiteral::Entry.new(RangeLiteral.new(1.int32, Nop.new, false), 2.int32)])
 
     it_parses "A = 1", Assign.new("A".path, 1.int32)
 

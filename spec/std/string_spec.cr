@@ -32,6 +32,10 @@ describe "String" do
       "há日本語"[1..3].should eq("á日本")
     end
 
+    it "gets with range without end" do
+      "há日本語"[1..nil].should eq("á日本語")
+    end
+
     it "gets when index is last and count is zero" do
       "foo"[3, 0].should eq("")
     end
@@ -1206,6 +1210,14 @@ describe "String" do
 
     it "subs range with string, non-ascii" do
       "あいうえお".sub(1..2, "けくこ").should eq("あけくこえお")
+    end
+
+    it "subs endless range with char" do
+      "hello".sub(2..nil, 'a').should eq("hea")
+    end
+
+    it "subs endless range with string" do
+      "hello".sub(2..nil, "ya").should eq("heya")
     end
   end
 

@@ -5,6 +5,7 @@
 # ```
 # x..y  # an inclusive range, in mathematics: [x, y]
 # x...y # an exclusive range, in mathematics: [x, y)
+# (x..) # an endless range, in mathematics: >= x
 # ```
 #
 # An easy way to remember which one is inclusive and which one is exclusive it
@@ -101,11 +102,12 @@ struct Range(B, E)
   # ```
   def each : Nil
     current = @begin
-    while current < @end
+    end_value = @end
+    while end_value.nil? || current < end_value
       yield current
       current = current.succ
     end
-    yield current if !@exclusive && current == @end
+    yield current if !@exclusive && !end_value.nil? && current == end_value
   end
 
   # Returns an `Iterator` over the elements of this range.
@@ -125,8 +127,17 @@ struct Range(B, E)
   # # prints: 14 13 12 11 10
   # ```
   def reverse_each : Nil
-    yield @end if !@exclusive && !(@end < @begin)
-    current = @end
+    {% if E == Nil %}
+      {% raise "Can't reverse_each endless range" %}
+    {% end %}
+
+    end_value = @end
+    if end_value.nil?
+      raise ArgumentError.new("Can't reverse_each endless range")
+    end
+
+    yield end_value if !@exclusive && !(end_value < @begin)
+    current = end_value
     while @begin < current
       current = current.pred
       yield current
@@ -139,6 +150,14 @@ struct Range(B, E)
   # (1..3).reverse_each.skip(1).to_a # => [2, 1]
   # ```
   def reverse_each
+    {% if E == Nil %}
+      {% raise "Can't reverse_each endless range" %}
+    {% end %}
+
+    if @end.nil?
+      raise ArgumentError.new("Can't reverse_each endless range")
+    end
+
     ReverseIterator.new(self)
   end
 
@@ -169,7 +188,8 @@ struct Range(B, E)
   # See `Range`'s overview for the definition of `Xs`.
   def step(by = 1)
     current = @begin
-    while current < @end
+    end_value = @end
+    while end_value.nil? || current < end_value
       yield current
       by.times { current = current.succ }
     end
@@ -207,10 +227,17 @@ struct Range(B, E)
   # (1...10).includes?(10) # => false
   # ```
   def includes?(value)
-    if @exclusive
-      @begin <= value < @end
+    end_value = @end
+
+    # TOOD: change to `nil?` after removing the `nil?` error related to `Pointer`
+    if end_value.is_a?(Nil)
+      @begin <= value
     else
-      @begin <= value <= @end
+      if @exclusive
+        @begin <= value < end_value
+      else
+        @begin <= value <= end_value
+      end
     end
   end
 
@@ -244,7 +271,7 @@ struct Range(B, E)
   def to_s(io : IO)
     @begin.inspect(io)
     io << (@exclusive ? "..." : "..")
-    @end.inspect(io)
+    @end.try &.inspect(io)
   end
 
   # :nodoc:
@@ -320,14 +347,16 @@ struct Range(B, E)
     def next
       return stop if @reached_end
 
-      if @current < @range.end
+      end_value = @range.end
+
+      if end_value.nil? || @current < end_value
         value = @current
         @current = @current.succ
         value
       else
         @reached_end = true
 
-        if !@range.excludes_end? && @current == @range.end
+        if !@range.excludes_end? && @current == end_value
           @current
         else
           stop
@@ -359,9 +388,9 @@ struct Range(B, E)
 
     def rewind
       if @range.excludes_end?
-        @current = @range.end
+        @current = @range.end.not_nil!
       else
-        @current = @range.end.succ
+        @current = @range.end.not_nil!.succ
       end
 
       self
@@ -382,7 +411,9 @@ struct Range(B, E)
     def next
       return stop if @reached_end
 
-      if @current < @range.end
+      end_value = @range.end
+
+      if end_value.nil? || @current < end_value
         value = @current
         @step.times { @current = @current.succ }
         value
