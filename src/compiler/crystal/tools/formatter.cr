@@ -1147,14 +1147,18 @@ module Crystal
       accept name
       skip_space_or_newline
 
-      check_open_paren
+      write_token :"("
+      skip_space
 
-      paren_count = @paren_count
+      # Given that generic type arguments are always inside parentheses
+      # we can start counting them from 0 inside them.
+      old_paren_count = @paren_count
+      @paren_count = 0
 
       if named_args = node.named_args
         has_newlines, _, _ = format_named_args([] of ASTNode, named_args, @indent + 2)
         # `format_named_args` doesn't skip trailing comma
-        if @paren_count == paren_count && @token.type == :","
+        if @paren_count == 0 && @token.type == :","
           next_token_skip_space_or_newline
           if has_newlines
             write ","
@@ -1166,7 +1170,7 @@ module Crystal
         skip_space_or_newline
         node.type_vars.each_with_index do |type_var, i|
           accept type_var
-          if @paren_count == paren_count
+          if @paren_count == 0
             skip_space_or_newline
             if @token.type == :","
               write ", " unless last?(i, node.type_vars)
@@ -1176,8 +1180,11 @@ module Crystal
         end
       end
 
-      skip_space_or_newline if @paren_count == paren_count
-      check_close_paren
+      skip_space_or_newline if @paren_count == 0
+      write_token :")"
+
+      # Restore the old parentheses count
+      @paren_count = old_paren_count
 
       false
     end
