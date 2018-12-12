@@ -440,7 +440,13 @@ module Crystal
 
     def parse_range
       location = @token.location
-      exp = parse_or
+
+      if @token.type == :".." || @token.type == :"..."
+        exp = Nop.new
+      else
+        exp = parse_or
+      end
+
       while true
         case @token.type
         when :".."
@@ -460,7 +466,6 @@ module Crystal
       right = if end_token? ||
                  @token.type == :")" ||
                  @token.type == :"," ||
-                 @token.type == :";"
                  @token.type == :";" ||
                  @token.type == :"=>"
                 Nop.new
@@ -723,7 +728,14 @@ module Crystal
 
           column_number = @token.column_number
           next_token_skip_space_or_newline
-          call_args = preserve_stop_on_do { parse_call_args_space_consumed check_plus_and_minus: false, allow_curly: true, end_token: :"]" }
+          call_args = preserve_stop_on_do do
+            parse_call_args_space_consumed(
+              check_plus_and_minus: false,
+              allow_curly: true,
+              end_token: :"]",
+              allow_beginless_range: true,
+            )
+          end
           skip_space_or_newline
           check :"]"
           @wants_regex = false
@@ -4210,7 +4222,8 @@ module Crystal
       @call_args_nest -= 1
     end
 
-    def parse_call_args_space_consumed(check_plus_and_minus = true, allow_curly = false, control = false, end_token = :")")
+    def parse_call_args_space_consumed(check_plus_and_minus = true, allow_curly = false, control = false, end_token = :")",
+                                       allow_beginless_range = false)
       # This method is called by `parse_call_args`, so it increments once too much in this case.
       # But it is no problem, because it decrements once too much.
       @call_args_nest += 1
@@ -4238,6 +4251,8 @@ module Crystal
         if current_char.ascii_whitespace?
           return nil
         end
+      when :"..", :"..."
+        return nil unless allow_beginless_range
       else
         return nil
       end

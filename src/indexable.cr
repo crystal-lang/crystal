@@ -705,8 +705,12 @@ module Indexable(T)
   # :nodoc:
   def self.range_to_index_and_count(range, collection_size)
     start_index = range.begin
-    start_index += collection_size if start_index < 0
-    raise IndexError.new if start_index < 0
+    if start_index.nil?
+      start_index = 0
+    else
+      start_index += collection_size if start_index < 0
+      raise IndexError.new if start_index < 0
+    end
 
     end_index = range.end
     if end_index.nil?

@@ -1218,8 +1218,10 @@ module Crystal
     end
 
     def visit(node : RangeLiteral)
-      need_parens = need_parens(node.from)
-      in_parenthesis(need_parens, node.from)
+      unless node.from.nop?
+        need_parens = need_parens(node.from)
+        in_parenthesis(need_parens, node.from)
+      end
 
       if node.exclusive?
         @str << "..."
