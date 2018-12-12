@@ -141,6 +141,7 @@ module Crystal
     @main_llvm_typer : LLVMTyper
     @main_module_info : ModuleInfo
     @main_builder : CrystalLLVMBuilder
+    @call_location : Location?
 
     def initialize(@program : Program, @node : ASTNode, single_module = false, @debug = Debug::Default)
       @single_module = !!single_module

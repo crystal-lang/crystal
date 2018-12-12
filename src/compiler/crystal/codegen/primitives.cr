@@ -14,6 +14,8 @@ class Crystal::CodeGenVisitor
   end
 
   def codegen_primitive(call, node, target_def, call_args)
+    @call_location = call.name_location if call.location
+
     @last = case node.name
             when "binary"
               codegen_primitive_binary node, target_def, call_args
@@ -79,6 +81,8 @@ class Crystal::CodeGenVisitor
             else
               raise "BUG: unhandled primitive in codegen: #{node.name}"
             end
+
+    @call_location = nil
   end
 
   def codegen_primitive_binary(node, target_def, call_args)
@@ -385,7 +389,7 @@ class Crystal::CodeGenVisitor
 
   def codegen_binary_op(op, t1 : FloatType, t2 : IntegerType, p1, p2)
     p2 = codegen_cast(t2, t1, p2)
-    codegen_binary_op op, t1, t1, p1, p2
+    codegen_binary_op(op, t1, t1, p1, p2)
   end
 
   def codegen_binary_op(op, t1 : FloatType, t2 : FloatType, p1, p2)
@@ -413,7 +417,7 @@ class Crystal::CodeGenVisitor
   end
 
   def codegen_binary_op(op, t1 : TypeDefType, t2, p1, p2)
-    codegen_binary_op op, t1.remove_typedef, t2, p1, p2
+    codegen_binary_op(op, t1.remove_typedef, t2, p1, p2)
   end
 
   def codegen_binary_op(op, t1, t2, p1, p2)
