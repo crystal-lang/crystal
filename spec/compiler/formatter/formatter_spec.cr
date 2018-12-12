@@ -1258,25 +1258,25 @@ describe Crystal::Formatter do
   assert_format <<-CODE
     macro foo
       <<-FOO
-        hello  
+        hello#{"  "}
       FOO
     end
 
     {% verbatim do %}
       <<-FOO
-        hello  
+        hello#{"  "}
       FOO
     {% end %}
 
     {% if true %}
       <<-FOO
-        hello  
+        hello#{"  "}
       FOO
     {% end %}
 
     {% for a in %w() %}
       <<-FOO
-        hello  
+        hello#{"  "}
       FOO
     {% end %}
     CODE
