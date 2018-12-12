@@ -582,7 +582,7 @@ class String
       value *= base
 
       old = value
-      value += digit
+      value &+= digit
       if value < old
         invalid = true
         break
@@ -2531,7 +2531,7 @@ class String
       {% if i != 1 %}
         byte = head_pointer.value
       {% end %}
-      hash = hash * PRIME_RK + pointer.value - pow * byte
+      hash = hash &* PRIME_RK &+ pointer.value &- pow &* byte
       pointer += 1
       head_pointer += 1
     {% end %}
@@ -2579,9 +2579,9 @@ class String
     # calculate a rolling hash of search text (needle)
     search_hash = 0u32
     search.each_byte do |b|
-      search_hash = search_hash * PRIME_RK + b
+      search_hash = search_hash &* PRIME_RK &+ b
     end
-    pow = PRIME_RK ** search.bytesize
+    pow = PRIME_RK &** search.bytesize
 
     # Find start index with offset
     char_index = 0
@@ -2608,7 +2608,7 @@ class String
     hash_end_pointer = pointer + search.bytesize
     return if hash_end_pointer > end_pointer
     while pointer < hash_end_pointer
-      hash = hash * PRIME_RK + pointer.value
+      hash = hash &* PRIME_RK &+ pointer.value
       pointer += 1
     end
 
@@ -2695,9 +2695,9 @@ class String
     # calculate a rolling hash of search text (needle)
     search_hash = 0u32
     search.to_slice.reverse_each do |b|
-      search_hash = search_hash * PRIME_RK + b
+      search_hash = search_hash &* PRIME_RK &+ b
     end
-    pow = PRIME_RK ** search.bytesize
+    pow = PRIME_RK &** search.bytesize
 
     hash = 0u32
     char_index = size
@@ -2715,7 +2715,7 @@ class String
       byte = pointer.value
       char_index -= 1 if (byte & 0xC0) != 0x80
 
-      hash = hash * PRIME_RK + byte
+      hash = hash &* PRIME_RK &+ byte
     end
 
     while true
@@ -2733,7 +2733,7 @@ class String
       char_index -= 1 if (byte & 0xC0) != 0x80
 
       # update a rolling hash of this text (haystack)
-      hash = hash * PRIME_RK + byte - pow * tail_pointer.value
+      hash = hash &* PRIME_RK &+ byte &- pow &* tail_pointer.value
     end
   end
 
@@ -2869,9 +2869,9 @@ class String
     # calculate a rolling hash of search text (needle)
     search_hash = 0u32
     search.each_byte do |b|
-      search_hash = search_hash * PRIME_RK + b
+      search_hash = search_hash &* PRIME_RK &+ b
     end
-    pow = PRIME_RK ** search.bytesize
+    pow = PRIME_RK &** search.bytesize
 
     # calculate a rolling hash of this text (haystack)
     pointer = head_pointer = to_unsafe + offset
@@ -2880,7 +2880,7 @@ class String
     hash = 0u32
     return if hash_end_pointer > end_pointer
     while pointer < hash_end_pointer
-      hash = hash * PRIME_RK + pointer.value
+      hash = hash &* PRIME_RK &+ pointer.value
       pointer += 1
     end
 
@@ -2893,7 +2893,7 @@ class String
       return if pointer >= end_pointer
 
       # update a rolling hash of this text (haystack)
-      hash = hash * PRIME_RK + pointer.value - pow * head_pointer.value
+      hash = hash &* PRIME_RK &+ pointer.value &- pow &* head_pointer.value
       pointer += 1
       head_pointer += 1
       offset += 1
