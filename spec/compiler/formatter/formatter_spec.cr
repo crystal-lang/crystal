@@ -1280,4 +1280,23 @@ describe Crystal::Formatter do
       FOO
     {% end %}
     CODE
+
+  # But remove trailing space in macro expression.
+  assert_format <<-CODE, <<-EXPECTED
+    macro foo
+      1#{"  "}
+      {{#{"  "}
+        42#{"  "}
+      }}#{"  "}
+      2#{"  "}
+    end
+    CODE
+    macro foo
+      1#{"  "}
+      {{
+        42
+      }}#{"  "}
+      2#{"  "}
+    end
+    EXPECTED
 end

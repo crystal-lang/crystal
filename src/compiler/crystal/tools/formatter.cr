@@ -1633,8 +1633,6 @@ module Crystal
     end
 
     def format_macro_body(node)
-      macro_line = @line
-
       if @token.keyword?(:end)
         return format_macro_end
       end
@@ -1660,15 +1658,9 @@ module Crystal
       end
 
       skip_space_or_newline
-      macro_end = @line
       check :MACRO_END
       write "end"
       next_token
-
-      # Keep trailing spaces in macro body.
-      (macro_line...macro_end).each do |line|
-        @no_rstrip_lines.add line
-      end
     end
 
     def format_macro_end
@@ -1680,6 +1672,12 @@ module Crystal
     end
 
     def visit(node : MacroLiteral)
+      line = @line
+      @token.raw.scan("\n") do
+        line -= 1
+        @no_rstrip_lines.add line
+      end
+
       write @token.raw
       next_macro_token
       false
@@ -1702,7 +1700,6 @@ module Crystal
       check_keyword :do
       write " do"
       next_token_skip_space
-      verbatim_line = @line
       check :"%}"
       write " %}"
 
@@ -1716,7 +1713,6 @@ module Crystal
       check :MACRO_CONTROL_START
       write "{%"
       next_token_skip_space_or_newline
-      verbatim_end = @line
       check_keyword :end
       write " end"
       next_token_skip_space
@@ -1728,10 +1724,6 @@ module Crystal
         next_macro_token
       else
         next_token
-      end
-
-      (verbatim_line...verbatim_end).each do |line|
-        @no_rstrip_lines.add line
       end
 
       false
@@ -1853,7 +1845,6 @@ module Crystal
 
     def format_macro_if_epilogue(node, macro_state, check_end = true)
       skip_space_or_newline
-      macro_if_line = @line
       check :"%}"
       write " %}"
 
@@ -1897,7 +1888,6 @@ module Crystal
 
         check_end
         next_token_skip_space_or_newline
-        macro_if_end = @line
         check :"%}"
 
         write "{% end %}"
@@ -1907,10 +1897,6 @@ module Crystal
           next_macro_token
         else
           next_token
-        end
-
-        (macro_if_line...macro_if_end).each do |line|
-          @no_rstrip_lines.add line
         end
       end
 
@@ -1951,7 +1937,6 @@ module Crystal
       outside_macro { indent(@column, node.exp) }
       skip_space_or_newline
 
-      macro_for_line = @line
       check :"%}"
       write " %}"
 
@@ -1967,7 +1952,6 @@ module Crystal
 
       check_end
       next_token_skip_space_or_newline
-      macro_for_end = @line
       check :"%}"
 
       write "{% end %}"
@@ -1977,10 +1961,6 @@ module Crystal
         next_macro_token
       else
         next_token
-      end
-
-      (macro_for_line...macro_for_end).each do |line|
-        @no_rstrip_lines.add line
       end
 
       false
