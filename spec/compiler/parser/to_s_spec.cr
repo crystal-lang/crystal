@@ -159,4 +159,5 @@ describe "ASTNode#to_s" do
   expect_to_s %(asm("nop" :: "a"(1) :: "volatile"))
   expect_to_s %(asm("nop" ::: "e" : "volatile"))
   expect_to_s %[(1..)]
+  expect_to_s %[..3]
 end

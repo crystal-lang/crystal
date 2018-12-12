@@ -6,6 +6,8 @@
 # x..y  # an inclusive range, in mathematics: [x, y]
 # x...y # an exclusive range, in mathematics: [x, y)
 # (x..) # an endless range, in mathematics: >= x
+# ..y   # a beginless inclusive range, in mathematics: <= y
+# ...y  # a beginless exclusive range, in mathematics: < y
 # ```
 #
 # An easy way to remember which one is inclusive and which one is exclusive it
@@ -102,6 +104,10 @@ struct Range(B, E)
   # ```
   def each : Nil
     current = @begin
+    if current.nil?
+      raise ArgumentError.new("Can't each beginless range")
+    end
+
     end_value = @end
     while end_value.nil? || current < end_value
       yield current
@@ -116,6 +122,10 @@ struct Range(B, E)
   # (1..3).each.skip(1).to_a # => [2, 3]
   # ```
   def each
+    if @begin.nil?
+      raise ArgumentError.new("Can't each beginless range")
+    end
+
     ItemIterator.new(self)
   end
 
@@ -136,9 +146,12 @@ struct Range(B, E)
       raise ArgumentError.new("Can't reverse_each endless range")
     end
 
-    yield end_value if !@exclusive && !(end_value < @begin)
+    begin_value = @begin
+
+    yield end_value if !@exclusive && (begin_value.nil? || !(end_value < begin_value))
     current = end_value
-    while @begin < current
+
+    while begin_value.nil? || begin_value < current
       current = current.pred
       yield current
     end
@@ -188,6 +201,10 @@ struct Range(B, E)
   # See `Range`'s overview for the definition of `Xs`.
   def step(by = 1)
     current = @begin
+    if current.nil?
+      raise ArgumentError.new("Can't step beginless range")
+    end
+
     end_value = @end
     while end_value.nil? || current < end_value
       yield current
@@ -203,6 +220,10 @@ struct Range(B, E)
   # (1..10).step(3).skip(1).to_a # => [4, 7, 10]
   # ```
   def step(by = 1)
+    if @begin.nil?
+      raise ArgumentError.new("Can't step beginless range")
+    end
+
     StepIterator(self, B, typeof(by)).new(self, by)
   end
 
@@ -227,18 +248,16 @@ struct Range(B, E)
   # (1...10).includes?(10) # => false
   # ```
   def includes?(value)
+    begin_value = @begin
     end_value = @end
 
     # TOOD: change to `nil?` after removing the `nil?` error related to `Pointer`
-    if end_value.is_a?(Nil)
-      @begin <= value
-    else
-      if @exclusive
-        @begin <= value < end_value
-      else
-        @begin <= value <= end_value
-      end
-    end
+
+    # begin passes
+    (begin_value.is_a?(Nil) || value >= begin_value) &&
+      # end passes
+      (end_value.is_a?(Nil) ||
+        (@exclusive ? value < end_value : value <= end_value))
   end
 
   # Same as `includes?`.
@@ -269,7 +288,7 @@ struct Range(B, E)
 
   # :nodoc:
   def to_s(io : IO)
-    @begin.inspect(io)
+    @begin.try &.inspect(io)
     io << (@exclusive ? "..." : "..")
     @end.try &.inspect(io)
   end

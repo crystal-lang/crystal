@@ -143,6 +143,10 @@ describe "Array" do
       [1, 2, 3][1..nil].should eq([2, 3])
     end
 
+    it "gets on range without begin" do
+      [1, 2, 3][nil..1].should eq([1, 2])
+    end
+
     it "raises on index out of bounds with range" do
       expect_raises IndexError do
         [1, 2, 3][4..6]
@@ -285,6 +289,10 @@ describe "Array" do
       a = [1, 2, 3, 4, 5]
       a[2..nil] = 6
       a.should eq([1, 2, 6])
+
+      a = [1, 2, 3, 4, 5]
+      a[nil..2] = 6
+      a.should eq([6, 4, 5])
     end
 
     it "replaces a subrange with an array" do
@@ -315,6 +323,10 @@ describe "Array" do
       a = [1, 2, 3, 4, 5]
       a[2..nil] = [6, 7]
       a.should eq([1, 2, 6, 7])
+
+      a = [1, 2, 3, 4, 5]
+      a[nil..2] = [6, 7]
+      a.should eq([6, 7, 4, 5])
     end
   end
 
@@ -600,6 +612,12 @@ describe "Array" do
       a = ['a', 'b', 'c']
       expected = ['a', 'x', 'x']
       a.fill('x', 1..nil).should eq(expected)
+    end
+
+    it "replaces only values in range begin" do
+      a = ['a', 'b', 'c']
+      expected = ['x', 'x', 'c']
+      a.fill('x', nil..1).should eq(expected)
     end
 
     it "works with a block" do

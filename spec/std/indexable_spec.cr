@@ -173,6 +173,17 @@ describe Indexable do
     last_element.should eq(4)
   end
 
+  it "iterates within a range of indices, no beginning" do
+    indexable = SafeIndexable.new(5)
+
+    elements = [] of Int32
+    return_value = indexable.each(within: nil..2) do |elem|
+      elements << elem
+    end
+
+    elements.should eq([0, 1, 2])
+  end
+
   it "joins strings (empty case)" do
     indexable = SafeStringIndexable.new(0)
     indexable.join.should eq("")

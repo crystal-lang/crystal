@@ -57,6 +57,8 @@ describe "Range" do
     (1...5).to_s.should eq("1...5")
     (1..5).to_s.should eq("1..5")
     (1..nil).to_s.should eq("1..")
+    (nil..3).to_s.should eq("..3")
+    (nil..nil).to_s.should eq("..")
   end
 
   it "does inspect" do
@@ -199,6 +201,13 @@ describe "Range" do
       end
       ary.should eq([3, 4, 5, 6, 7])
     end
+
+    it "raises on beginless" do
+      range = nil..4
+      expect_raises(ArgumentError, "Can't each beginless range") do
+        range.each { }
+      end
+    end
   end
 
   describe "reverse_each" do
@@ -228,6 +237,16 @@ describe "Range" do
       expect_raises(ArgumentError, "Can't reverse_each endless range") do
         range.reverse_each { }
       end
+    end
+
+    it "iterators on beginless range" do
+      range = nil..2
+      arr = [] of Int32
+      range.reverse_each do |x|
+        arr << x
+        break if arr.size == 5
+      end
+      arr.should eq([2, 1, 0, -1, -2])
     end
   end
 
@@ -264,6 +283,13 @@ describe "Range" do
       iter.rewind
       iter.next.should eq(3)
       iter.next.should eq(4)
+    end
+
+    it "raises on beginless range" do
+      r = nil..3
+      expect_raises(ArgumentError, "Can't each beginless range") do
+        r.each
+      end
     end
 
     it "cycles" do
@@ -366,6 +392,13 @@ describe "Range" do
       end
       elems.should eq([1, 3, 5, 7, 9])
     end
+
+    it "raises on beginless range" do
+      a = nil..3
+      expect_raises(ArgumentError, "Can't step beginless range") do
+        a.step(2) { }
+      end
+    end
   end
 
   describe "step iterator" do
@@ -430,6 +463,13 @@ describe "Range" do
       iter.next.should eq(1)
       iter.next.should eq(3)
     end
+
+    it "raises with beginless range" do
+      a = nil..3
+      expect_raises(ArgumentError, "Can't step beginless range") do
+        a.step(2)
+      end
+    end
   end
 
   describe "map" do
@@ -483,6 +523,18 @@ describe "Range" do
       ((1...nil) === 1).should be_true
       ((1...nil) === 2).should be_true
       ((1..nil) === 2).should be_true
+    end
+
+    it "beginless" do
+      ((nil..3) === -1).should be_true
+      ((nil..3) === 3).should be_true
+      ((nil..3) === 4).should be_false
+      ((nil...3) === 2).should be_true
+      ((nil...3) === 3).should be_false
+    end
+
+    it "no limits" do
+      ((nil..nil) === 1).should be_true
     end
   end
 end
