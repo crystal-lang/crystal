@@ -280,6 +280,8 @@ end
                              to_u8: UInt8, to_u16: UInt16, to_u32: UInt32, to_u64: UInt64, to_u128: UInt128,
                              to_f32: Float32, to_f64: Float64,
                            } %}
+        # TODO 0.28.0 replace with @[Primitive(:convert)]
+
         # Returns `self` converted to `{{type}}`.
         @[Primitive(:cast)]
         def {{name.id}} : {{type}}
