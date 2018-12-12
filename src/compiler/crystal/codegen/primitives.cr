@@ -22,6 +22,8 @@ class Crystal::CodeGenVisitor
               codegen_primitive_cast node, target_def, call_args
             when "convert"
               codegen_primitive_cast node, target_def, call_args
+            when "unchecked_convert"
+              codegen_primitive_cast node, target_def, call_args
             when "allocate"
               codegen_primitive_allocate node, target_def, call_args
             when "pointer_malloc"

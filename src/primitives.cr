@@ -286,6 +286,13 @@ end
         @[Primitive(:cast)]
         def {{name.id}} : {{type}}
         end
+
+        # TODO 0.28.0 replace with @[Primitive(:unchecked_convert)]
+
+        # Returns `self` converted to `{{type}}`.
+        @[Primitive(:cast)]
+        def {{name.id}}! : {{type}}
+        end
       {% end %}
 
       {% for num2 in nums %}
