@@ -1260,20 +1260,23 @@ describe Crystal::Formatter do
     "  <<-FOO\n" +
     "    hello  \n" +
     "  FOO\n" +
-    "end\n" +
-    "\n" +
+    "end"
+  )
+  assert_format(
     "{% verbatim do %}\n" +
     "  <<-FOO\n" +
     "    hello  \n" +
     "  FOO\n" +
-    "{% end %}\n" +
-    "\n" +
+    "{% end %}"
+  )
+  assert_format(
     "{% if true %}\n" +
     "  <<-FOO\n" +
     "    hello  \n" +
     "  FOO\n" +
-    "{% end %}\n" +
-    "\n" +
+    "{% end %}"
+  )
+  assert_format(
     "{% for a in %w() %}\n" +
     "  <<-FOO\n" +
     "    hello  \n" +
