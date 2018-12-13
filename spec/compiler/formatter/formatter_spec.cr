@@ -1255,48 +1255,47 @@ describe Crystal::Formatter do
     CODE
 
   # Keep trailing spaces in macros.
-  assert_format <<-CODE
-    macro foo
-      <<-FOO
-        hello#{"  "}
-      FOO
-    end
-
-    {% verbatim do %}
-      <<-FOO
-        hello#{"  "}
-      FOO
-    {% end %}
-
-    {% if true %}
-      <<-FOO
-        hello#{"  "}
-      FOO
-    {% end %}
-
-    {% for a in %w() %}
-      <<-FOO
-        hello#{"  "}
-      FOO
-    {% end %}
-    CODE
+  assert_format(
+    "macro foo\n" +
+    "  <<-FOO\n" +
+    "    hello  \n" +
+    "  FOO\n" +
+    "end\n" +
+    "\n" +
+    "{% verbatim do %}\n" +
+    "  <<-FOO\n" +
+    "    hello  \n" +
+    "  FOO\n" +
+    "{% end %}\n" +
+    "\n" +
+    "{% if true %}\n" +
+    "  <<-FOO\n" +
+    "    hello  \n" +
+    "  FOO\n" +
+    "{% end %}\n" +
+    "\n" +
+    "{% for a in %w() %}\n" +
+    "  <<-FOO\n" +
+    "    hello  \n" +
+    "  FOO\n" +
+    "{% end %}"
+  )
 
   # But remove trailing space in macro expression.
-  assert_format <<-CODE, <<-EXPECTED
-    macro foo
-      1#{"  "}
-      {{#{"  "}
-        42#{"  "}
-      }}#{"  "}
-      2#{"  "}
-    end
-    CODE
-    macro foo
-      1#{"  "}
-      {{
-        42
-      }}#{"  "}
-      2#{"  "}
-    end
-    EXPECTED
+  assert_format(
+    "macro foo\n" +
+    "  1  \n" +
+    "  {{  \n" +
+    "    42  \n" +
+    "  }}  \n" +
+    "  2  \n" +
+    "end",
+    "macro foo\n" +
+    "  1  \n" +
+    "  {{\n" +
+    "    42\n" +
+    "  }}  \n" +
+    "  2  \n" +
+    "end"
+  )
 end
