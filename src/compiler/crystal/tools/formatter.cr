@@ -565,11 +565,13 @@ module Crystal
           # It might be #{__DIR__}, for example
           if @token.type == :INTERPOLATION_START
             write "\#{"
+            delimiter_state = @token.delimiter_state
             next_token_skip_space_or_newline
             indent(@column, exp)
             skip_space_or_newline
             check :"}"
             write "}"
+            @token.delimiter_state = delimiter_state
           else
             write @token.raw
           end
