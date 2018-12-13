@@ -4692,6 +4692,11 @@ module Crystal
             type = parse_type(allow_primitives)
           end
 
+          # Allow a trailing comma
+          if @token.type == :","
+            next_token_skip_space_or_newline
+          end
+
           check :"}"
           next_token_skip_space
 
