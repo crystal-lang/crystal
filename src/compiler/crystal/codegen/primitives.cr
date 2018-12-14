@@ -341,6 +341,15 @@ class Crystal::CodeGenVisitor
     end
   end
 
+  private def codegen_out_of_range(target_type : FloatType, arg_type : FloatType, arg)
+    min_value, max_value = target_type.range
+    # arg < min_value || arg > max_value
+    or(
+      builder.fcmp(LLVM::RealPredicate::OLT, arg, float(min_value, arg_type)),
+      builder.fcmp(LLVM::RealPredicate::OGT, arg, float(max_value, arg_type))
+    )
+  end
+
   private def codegen_raise_overflow
     location = @call_location.not_nil!
     set_current_debug_location(location) if @debug.line_numbers?
@@ -685,6 +694,14 @@ class Crystal::CodeGenVisitor
     if from_type.rank < to_type.rank
       extend_float to_type, arg
     elsif from_type.rank > to_type.rank
+      # TODO remove conditional after 0.28
+      if @program.has_flag?("preview_overflow")
+        if checked
+          overflow = codegen_out_of_range(to_type, from_type, arg)
+          codegen_raise_overflow_cond(overflow)
+        end
+      end
+
       trunc_float to_type, arg
     else
       arg

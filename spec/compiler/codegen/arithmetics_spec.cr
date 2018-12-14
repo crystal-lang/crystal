@@ -269,4 +269,36 @@ describe "Code gen: arithmetics primitives" do
       {% end %}
     {% end %}
   end
+
+  describe ".to_f conversions" do
+    it "raises overflow if greater than Float32::MAX" do
+      run(%(
+        require "prelude"
+
+        v = Float64.new(Float32::MAX) * 1.5_f64
+
+        begin
+          v.to_f32
+          0
+        rescue OverflowError
+          1
+        end
+      ), flags: PreviewOverflowFlags).to_i.should eq(1)
+    end
+
+    it "raises overflow if lower than Float32::MIN" do
+      run(%(
+        require "prelude"
+
+        v = Float64.new(Float32::MIN) * 1.5_f64
+
+        begin
+          v.to_f32
+          0
+        rescue OverflowError
+          1
+        end
+      ), flags: PreviewOverflowFlags).to_i.should eq(1)
+    end
+  end
 end
