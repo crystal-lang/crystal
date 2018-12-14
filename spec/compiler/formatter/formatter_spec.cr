@@ -1236,4 +1236,16 @@ describe Crystal::Formatter do
     # 3 + 4
     # ```
     CODE
+
+  assert_format <<-CODE
+    X(typeof(begin
+      e.is_a?(Y) ? 1 : 2
+    end))
+    CODE
+
+  assert_format <<-CODE
+    X(typeof(begin
+      e.is_a?(Y)
+    end))
+    CODE
 end
