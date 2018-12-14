@@ -34,7 +34,8 @@ module Crystal
     end
 
     def self.date
-      {{ env("CRYSTAL_CONFIG_BUILD_DATE") || `date "+%Y-%m-%d"`.stringify.chomp }}
+      time = {{ (env("SOURCE_DATE_EPOCH") || `date +%s`).to_i }}
+      Time.unix(time).to_s("%Y-%m-%d")
     end
 
     def self.default_target_triple
