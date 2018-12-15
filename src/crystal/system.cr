@@ -12,7 +12,7 @@ end
   require "./system/unix/hostname"
 
   {% if flag?(:freebsd) || flag?(:openbsd) %}
-     require "./system/unix/sysctl_cpucount"
+    require "./system/unix/sysctl_cpucount"
   {% else %}
     require "./system/unix/sysconf_cpucount"
   {% end %}

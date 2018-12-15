@@ -4,8 +4,8 @@ require "system"
 describe System do
   describe "hostname" do
     it "returns current hostname" do
-      shell_hostname = `hostname`.strip # Workaround for inability to execute shell commands on Windows.
-      $?.success?.should be_true        # The hostname command has to be available
+      shell_hostname = `hostname`.strip
+      $?.success?.should be_true # The hostname command has to be available
       hostname = System.hostname
       hostname.should eq(shell_hostname)
     end
@@ -13,7 +13,6 @@ describe System do
 
   describe "cpu_count" do
     it "returns current CPU count" do
-      shell_cpus = 0
       {% if flag?(:win32) %}
         shell_cpus = ENV["NUMBER_OF_PROCESSORS"].to_i
       {% elsif flag?(:unix) %}
