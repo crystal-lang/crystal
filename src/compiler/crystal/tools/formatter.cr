@@ -1672,6 +1672,12 @@ module Crystal
     end
 
     def visit(node : MacroLiteral)
+      line = @line
+      @token.raw.scan("\n") do
+        line -= 1
+        @no_rstrip_lines.add line
+      end
+
       write @token.raw
       next_macro_token
       false
