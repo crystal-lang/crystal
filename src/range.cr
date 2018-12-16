@@ -103,6 +103,10 @@ struct Range(B, E)
   # # prints: 10 11 12 13 14 15
   # ```
   def each : Nil
+    {% if B == Nil %}
+      {% raise "Can't each beginless range" %}
+    {% end %}
+
     current = @begin
     if current.nil?
       raise ArgumentError.new("Can't each beginless range")
@@ -122,6 +126,10 @@ struct Range(B, E)
   # (1..3).each.skip(1).to_a # => [2, 3]
   # ```
   def each
+    {% if B == Nil %}
+      {% raise "Can't each beginless range" %}
+    {% end %}
+
     if @begin.nil?
       raise ArgumentError.new("Can't each beginless range")
     end
