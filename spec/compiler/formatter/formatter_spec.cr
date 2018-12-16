@@ -965,6 +965,11 @@ describe Crystal::Formatter do
 
   assert_format "<<-FOO\nFOO"
 
+  assert_format "<<-FOO\n#{"foo"}\nFOO"
+  assert_format "<<-FOO\n#{"foo"}bar\nFOO"
+  assert_format "<<-FOO\nbar#{"foo"}\nFOO"
+  assert_format "<<-FOO\nbar#{"foo"}bar\nFOO"
+
   assert_format "#!shebang\n1 + 2"
 
   assert_format "   {{\n1 + 2 }}", "{{\n  1 + 2\n}}"
