@@ -48,6 +48,19 @@ module Enumerable(T)
     true
   end
 
+  # Returns `true` if `pattern === element` for all elements in
+  # this enumerable.
+  #
+  # ```
+  # [2, 3, 4].all?(1..5)        # => true
+  # [2, 3, 4].all?(Int32)       # => true
+  # [2, "a", 3].all?(String)    # => false
+  # %w[foo bar baz].all?(/o|a/) # => true
+  # ```
+  def all?(pattern)
+    all? { |e| pattern === e }
+  end
+
   # Returns `true` if none of the elements of the collection is `false` or `nil`.
   #
   # ```
@@ -68,6 +81,19 @@ module Enumerable(T)
   def any?
     each { |e| return true if yield e }
     false
+  end
+
+  # Returns `true` if `pattern === element` for at least one
+  # element in this enumerable.
+  #
+  # ```
+  # [2, 3, 4].any?(1..3)      # => true
+  # [2, 3, 4].any?(5..10)     # => false
+  # [2, "a", 3].any?(String)  # => true
+  # %w[foo bar baz].any?(/a/) # => true
+  # ```
+  def any?(pattern)
+    any? { |e| pattern === e }
   end
 
   # Returns `true` if at least one of the collection members is not `false` or `nil`.
@@ -982,6 +1008,18 @@ module Enumerable(T)
     true
   end
 
+  # Returns `true` if `pattern === element` for no element in
+  # this enumerable.
+  #
+  # ```
+  # [2, 3, 4].none?(5..7)      # => true
+  # [2, "a", 3].none?(String)  # => false
+  # %w[foo bar baz].none?(/e/) # => true
+  # ```
+  def none?(pattern)
+    none? { |e| pattern === e }
+  end
+
   # Returns `true` if all of the elements of the collection are `false` or `nil`.
   #
   # ```
@@ -1008,6 +1046,18 @@ module Enumerable(T)
       return false if c > 1
     end
     c == 1
+  end
+
+  # Returns `true` if `pattern === element` for just one element
+  # in this enumerable.
+  #
+  # ```
+  # [1, 10, 100].one?(7..14)   # => true
+  # [2, "a", 3].one?(Int32)    # => false
+  # %w[foo bar baz].one?(/oo/) # => true
+  # ```
+  def one?(pattern)
+    one? { |e| pattern === e }
   end
 
   # Returns `true` if only one element in this enumerable
@@ -1051,6 +1101,33 @@ module Enumerable(T)
     ary
   end
 
+  # Returns an `Array` with all the elements in the collection
+  # that are **not** of the given *type*.
+  #
+  # ```
+  # ints = [1, true, 3, false].reject(Bool)
+  # ints         # => [1, 3]
+  # typeof(ints) # => Array(Int32)
+  # ```
+  def reject(type : U.class) forall U
+    ary = [] of typeof(begin
+      e = first
+      e.is_a?(U) ? raise("") : e
+    end)
+    each { |e| ary << e unless e.is_a?(U) }
+    ary
+  end
+
+  # Returns an `Array` with all the elements in the collection for which
+  # `pattern === element` is false.
+  #
+  # ```
+  # [1, 3, 2, 5, 4, 6].reject(3..5).should eq([1, 2, 6])
+  # ```
+  def reject(pattern)
+    reject { |e| pattern === e }
+  end
+
   # Returns an `Array` with all the elements in the collection for which
   # the passed block returns `true`.
   #
@@ -1061,6 +1138,30 @@ module Enumerable(T)
     ary = [] of T
     each { |e| ary << e if yield e }
     ary
+  end
+
+  # Returns an `Array` with all the elements in the collection
+  # that are of the given *type*.
+  #
+  # ```
+  # ints = [1, true, nil, 3, false].select(Int32)
+  # ints         # => [1, 3]
+  # typeof(ints) # => Array(Int32)
+  # ```
+  def select(type : U.class) forall U
+    ary = [] of U
+    each { |e| ary << e if e.is_a?(U) }
+    ary
+  end
+
+  # Returns an `Array` with all the elements in the collection for which
+  # `pattern === element`.
+  #
+  # ```
+  # [1, 3, 2, 5, 4, 6].select(3..5).should eq([3, 5, 4])
+  # ```
+  def select(pattern)
+    self.select { |e| pattern === e }
   end
 
   # Returns the number of elements in the collection.

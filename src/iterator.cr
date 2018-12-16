@@ -735,6 +735,36 @@ module Iterator(T)
     Reject(typeof(self), T, U).new(self, func)
   end
 
+  # Returns an iterator that only returns elements
+  # that are **not** of the given *type*.
+  #
+  # ```
+  # iter = [1, false, 3, true].each.reject(Bool)
+  # iter.next # => 1
+  # iter.next # => 3
+  # iter.next # => Iterator::Stop::INSTANCE
+  # ```
+  def reject(type : U.class) forall U
+    SelectType(typeof(self), typeof(begin
+      e = first
+      e.is_a?(U) ? raise("") : e
+    end)).new(self)
+  end
+
+  # Returns an iterator that only returns elements
+  # where `pattern === element` does not hold.
+  #
+  # ```
+  # iter = [2, 3, 1, 5, 4, 6].reject(3..5)
+  # iter.next # => 2
+  # iter.next # => 1
+  # iter.next # => 6
+  # iter.next # => Iterator::Stop::INSTANCE
+  # ```
+  def reject(pattern)
+    reject { |elem| pattern === elem }
+  end
+
   private struct Reject(I, T, B)
     include Iterator(T)
     include IteratorWrapper
@@ -765,6 +795,33 @@ module Iterator(T)
     Select(typeof(self), T, U).new(self, func)
   end
 
+  # Returns an iterator that only returns elements
+  # of the given *type*.
+  #
+  # ```
+  # iter = [1, false, 3, nil].each.select(Int32)
+  # iter.next # => 1
+  # iter.next # => 3
+  # iter.next # => Iterator::Stop::INSTANCE
+  # ```
+  def select(type : U.class) forall U
+    SelectType(typeof(self), U).new(self)
+  end
+
+  # Returns an iterator that only returns elements
+  # where `pattern === element`.
+  #
+  # ```
+  # iter = [1, 3, 2, 5, 4, 6].select(3..5)
+  # iter.next # => 3
+  # iter.next # => 5
+  # iter.next # => 4
+  # iter.next # => Iterator::Stop::INSTANCE
+  # ```
+  def select(pattern)
+    self.select { |elem| pattern === elem }
+  end
+
   private struct Select(I, T, B)
     include Iterator(T)
     include IteratorWrapper
@@ -776,6 +833,23 @@ module Iterator(T)
       while true
         value = wrapped_next
         if @func.call(value)
+          return value
+        end
+      end
+    end
+  end
+
+  private struct SelectType(I, T)
+    include Iterator(T)
+    include IteratorWrapper
+
+    def initialize(@iterator : I)
+    end
+
+    def next
+      while true
+        value = wrapped_next
+        if value.is_a?(T)
           return value
         end
       end
@@ -1318,6 +1392,34 @@ module Iterator(T)
     SliceAfter(typeof(self), T, B).new(self, block, reuse)
   end
 
+  # Returns an iterator over chunks of elements, where each
+  # chunk ends right **after** the given pattern is matched
+  # with `pattern === element`.
+  #
+  # For example, to get chunks that end at each ASCII uppercase letter:
+  #
+  # ```
+  # ary = ['a', 'b', 'C', 'd', 'E', 'F', 'g', 'h']
+  # #                   ^         ^    ^
+  # iter = ary.slice_after('A'..'Z')
+  # iter.next # => ['a', 'b', 'C']
+  # iter.next # => ['d', 'E']
+  # iter.next # => ['F']
+  # iter.next # => ['g', 'h']
+  # iter.next # => Iterator::Stop
+  # ```
+  #
+  # By default, a new array is created and yielded for each slice when invoking `next`.
+  # * If *reuse* is `false`, the method will create a new array for each chunk
+  # * If *reuse* is `true`, the method will create a new array and reuse it.
+  # * If *reuse* is an `Array`, that array will be reused
+  #
+  # This can be used to prevent many memory allocations when each slice of
+  # interest is to be used in a read-only fashion.
+  def slice_after(pattern, reuse : Bool | Array(T) = false)
+    slice_after(reuse) { |elem| pattern === elem }
+  end
+
   # :nodoc:
   class SliceAfter(I, T, B)
     include Iterator(Array(T))
@@ -1402,6 +1504,34 @@ module Iterator(T)
   # interest is to be used in a read-only fashion.
   def slice_before(reuse : Bool | Array(T) = false, &block : T -> B) forall B
     SliceBefore(typeof(self), T, B).new(self, block, reuse)
+  end
+
+  # Returns an iterator over chunks of elements, where each
+  # chunk ends right **before** the given pattern is matched
+  # with `pattern === element`.
+  #
+  # For example, to get chunks that end just before each ASCII uppercase letter:
+  #
+  # ```
+  # ary = ['a', 'b', 'C', 'd', 'E', 'F', 'g', 'h']
+  # #              ^         ^    ^
+  # iter = ary.slice_before('A'..'Z')
+  # iter.next # => ['a', 'b']
+  # iter.next # => ['C', 'd']
+  # iter.next # => ['E']
+  # iter.next # => ['F', 'g', 'h']
+  # iter.next # => Iterator::Stop
+  # ```
+  #
+  # By default, a new array is created and yielded for each slice when invoking `next`.
+  # * If *reuse* is `false`, the method will create a new array for each chunk
+  # * If *reuse* is `true`, the method will create a new array and reuse it.
+  # * If *reuse* is an `Array`, that array will be reused
+  #
+  # This can be used to prevent many memory allocations when each slice of
+  # interest is to be used in a read-only fashion.
+  def slice_before(pattern, reuse : Bool | Array(T) = false)
+    slice_before(reuse) { |elem| pattern === elem }
   end
 
   # :nodoc:
