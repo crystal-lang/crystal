@@ -2,6 +2,8 @@
 
 [![Travis CI Build Status](https://travis-ci.org/crystal-lang/crystal.svg)](https://travis-ci.org/crystal-lang/crystal)
 [![CircleCI Build Status](https://circleci.com/gh/crystal-lang/crystal/tree/master.svg?style=shield)](https://circleci.com/gh/crystal-lang/crystal)
+[![Backers on Open Collective](https://opencollective.com/crystal-lang/backers/badge.svg)](#backers) 
+[![Sponsors on Open Collective](https://opencollective.com/crystal-lang/sponsors/badge.svg)](#sponsors) 
 [![Join the chat at https://gitter.im/crystal-lang/crystal](https://badges.gitter.im/crystal-lang/crystal.svg)](https://gitter.im/crystal-lang/crystal)
 [![Bountysource](https://api.bountysource.com/badge/team?team_id=89730&style=raised)](https://salt.bountysource.com/teams/crystal-lang)
 [![Code Triagers Badge](https://www.codetriage.com/crystal-lang/crystal/badges/users.svg)](https://www.codetriage.com/crystal-lang/crystal)
@@ -72,3 +74,33 @@ Read the general [Contributing guide](https://github.com/crystal-lang/crystal/bl
 3. Commit your changes (`git commit -am 'Add some feature'`)
 4. Push to the branch (`git push origin my-new-feature`)
 5. Create a new Pull Request
+
+## Contributors
+
+This project exists thanks to all the people who contribute. [[Contribute](CONTRIBUTING.md)].
+<a href="https://github.com/crystal-lang/crystal/graphs/contributors"><img src="https://opencollective.com/crystal-lang/contributors.svg?width=890&button=false" /></a>
+
+
+## Backers
+
+Thank you to all our backers! 🙏 [[Become a backer](https://opencollective.com/crystal-lang#backer)]
+
+<a href="https://opencollective.com/crystal-lang#backers" target="_blank"><img src="https://opencollective.com/crystal-lang/backers.svg?width=890"></a>
+
+
+## Sponsors
+
+Support this project by becoming a sponsor. Your logo will show up here with a link to your website. [[Become a sponsor](https://opencollective.com/crystal-lang#sponsor)]
+
+<a href="https://opencollective.com/crystal-lang/sponsor/0/website" target="_blank"><img src="https://opencollective.com/crystal-lang/sponsor/0/avatar.svg"></a>
+<a href="https://opencollective.com/crystal-lang/sponsor/1/website" target="_blank"><img src="https://opencollective.com/crystal-lang/sponsor/1/avatar.svg"></a>
+<a href="https://opencollective.com/crystal-lang/sponsor/2/website" target="_blank"><img src="https://opencollective.com/crystal-lang/sponsor/2/avatar.svg"></a>
+<a href="https://opencollective.com/crystal-lang/sponsor/3/website" target="_blank"><img src="https://opencollective.com/crystal-lang/sponsor/3/avatar.svg"></a>
+<a href="https://opencollective.com/crystal-lang/sponsor/4/website" target="_blank"><img src="https://opencollective.com/crystal-lang/sponsor/4/avatar.svg"></a>
+<a href="https://opencollective.com/crystal-lang/sponsor/5/website" target="_blank"><img src="https://opencollective.com/crystal-lang/sponsor/5/avatar.svg"></a>
+<a href="https://opencollective.com/crystal-lang/sponsor/6/website" target="_blank"><img src="https://opencollective.com/crystal-lang/sponsor/6/avatar.svg"></a>
+<a href="https://opencollective.com/crystal-lang/sponsor/7/website" target="_blank"><img src="https://opencollective.com/crystal-lang/sponsor/7/avatar.svg"></a>
+<a href="https://opencollective.com/crystal-lang/sponsor/8/website" target="_blank"><img src="https://opencollective.com/crystal-lang/sponsor/8/avatar.svg"></a>
+<a href="https://opencollective.com/crystal-lang/sponsor/9/website" target="_blank"><img src="https://opencollective.com/crystal-lang/sponsor/9/avatar.svg"></a>
+
+
