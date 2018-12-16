@@ -113,7 +113,7 @@ struct Range(B, E)
       yield current
       current = current.succ
     end
-    yield current if !@exclusive && !end_value.nil? && current == end_value
+    yield current if !@exclusive && current == end_value
   end
 
   # Returns an `Iterator` over the elements of this range.
