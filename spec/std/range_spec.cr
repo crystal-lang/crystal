@@ -203,7 +203,7 @@ describe "Range" do
     end
 
     it "raises on beginless" do
-      range = nil..4
+      range = (true ? nil : 1)..4
       expect_raises(ArgumentError, "Can't each beginless range") do
         range.each { }
       end
@@ -286,7 +286,7 @@ describe "Range" do
     end
 
     it "raises on beginless range" do
-      r = nil..3
+      r = (true ? nil : 1)..3
       expect_raises(ArgumentError, "Can't each beginless range") do
         r.each
       end
