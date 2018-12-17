@@ -791,6 +791,7 @@ module Crystal
     it_parses "..2", RangeLiteral.new(Nop.new, 2.int32, false)
     it_parses "...2", RangeLiteral.new(Nop.new, 2.int32, true)
     it_parses "foo..2", RangeLiteral.new("foo".call, 2.int32, false)
+    it_parses "foo ..2", RangeLiteral.new("foo".call, 2.int32, false)
     it_parses "foo(..2)", Call.new(nil, "foo", RangeLiteral.new(Nop.new, 2.int32, false))
     it_parses "x[..2]", Call.new("x".call, "[]", RangeLiteral.new(Nop.new, 2.int32, false))
     it_parses "x[1, ..2]", Call.new("x".call, "[]", [1.int32, RangeLiteral.new(Nop.new, 2.int32, false)] of ASTNode)
