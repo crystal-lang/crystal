@@ -150,7 +150,7 @@ module Crystal::Signal
   @@pipe = IO.pipe(read_blocking: false, write_blocking: true)
   @@handlers = {} of ::Signal => Handler
   @@child_handler : Handler?
-  @@mutex = Mutex.new
+  @@mutex = ::Mutex.new
 
   def self.trap(signal, handler) : Nil
     @@mutex.synchronize do
@@ -268,7 +268,7 @@ module Crystal::SignalChildHandler
 
   @@pending = {} of LibC::PidT => Int32
   @@waiting = {} of LibC::PidT => Channel::Buffered(Int32)
-  @@mutex = Mutex.new
+  @@mutex = ::Mutex.new
 
   def self.wait(pid : LibC::PidT) : Channel::Buffered(Int32)
     channel = Channel::Buffered(Int32).new(1)

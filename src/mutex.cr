@@ -1,50 +1,50 @@
-# A fiber-safe mutex.
-#
-# TODO: this isn't thread-safe yet.
+require "crystal/mutex"
+
+# A fiber-aware mutual exclusion lock.
 class Mutex
   @mutex_fiber : Fiber?
 
   def initialize
+    @mutex = Crystal::Mutex.new
     @lock_count = 0
   end
 
-  def lock
-    mutex_fiber = @mutex_fiber
-    current_fiber = Fiber.current
+  # Locks the mutex, blocking the current fiber until the lock is acquired.
+  def lock : Nil
+    current = Fiber.current
 
-    if !mutex_fiber
-      @mutex_fiber = current_fiber
-    elsif mutex_fiber == current_fiber
-      @lock_count += 1 # recursive lock
+    if @mutex_fiber == current
+      @lock_count += 1
     else
-      queue = @queue ||= Deque(Fiber).new
-      queue << current_fiber
-      Crystal::Scheduler.reschedule
+      @mutex.lock
+      @mutex_fiber = current
     end
-
-    nil
   end
 
-  def unlock
+  # Try to lock the mutex. Returns immediately with `true` if the lock was
+  # acquired and `false` otherwise.
+  def try_lock : Bool
+    @mutex.try_lock
+  end
+
+  # Unlocks the mutex lock. Resumes a blocked fiber if one is pending.
+  def unlock : Nil
     unless @mutex_fiber == Fiber.current
       raise "Attempt to unlock a mutex which is not locked"
     end
 
     if @lock_count > 0
       @lock_count -= 1
-      return
-    end
-
-    if fiber = @queue.try &.shift?
-      @mutex_fiber = fiber
-      Crystal::Scheduler.enqueue fiber
     else
       @mutex_fiber = nil
+      @mutex.unlock
     end
-
-    nil
   end
 
+  # Locks the mutex, executes the block (aka the critical section) and
+  # eventually unlocks the mutex before returning.
+  #
+  # The block is guaranteed to never be executed concurrently.
   def synchronize
     lock
     begin

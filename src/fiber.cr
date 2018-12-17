@@ -39,6 +39,12 @@ class Fiber
   property previous : Fiber?
 
   # :nodoc:
+  #
+  # Link list of fibers in Crystal::WaitQueue. Assumes that a fiber may only
+  # ever be in a single wait queue, in which case it's suspended.
+  property mutex_next : Fiber?
+
+  # :nodoc:
   def self.inactive(fiber : Fiber)
     @@fibers.delete(fiber)
   end
