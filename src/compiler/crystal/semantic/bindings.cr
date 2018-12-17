@@ -557,6 +557,10 @@ module Crystal
       obj_type = obj.type?
       return unless obj_type
 
+      if obj_type.is_a?(UnionType)
+        raise "can't read instance variables of union types (#{name} of #{obj_type})"
+      end
+
       var = visitor.lookup_instance_var(self, obj_type)
       self.type = var.type
     end
