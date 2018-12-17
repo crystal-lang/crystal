@@ -409,7 +409,9 @@ struct Range(B, E)
     end
 
     def next
-      return stop if @current <= @range.begin
+      begin_value = @range.begin
+
+      return stop if !begin_value.nil? && @current <= begin_value
       return @current = @current.pred
     end
 

@@ -337,6 +337,18 @@ describe "Range" do
       iter.next.should eq(2)
     end
 
+    it "does next with beginless range" do
+      r = nil...3
+      iter = r.reverse_each
+      iter.next.should eq(2)
+      iter.next.should eq(1)
+      iter.next.should eq(0)
+      iter.next.should eq(-1)
+
+      iter.rewind
+      iter.next.should eq(2)
+    end
+
     it "reverse cycles" do
       (1..3).reverse_each.cycle.first(8).join.should eq("32132132")
     end
