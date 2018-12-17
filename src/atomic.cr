@@ -222,3 +222,34 @@ struct Atomic(T)
     end
   end
 end
+
+# An atomic flag, that can be set or not.
+#
+# Concurrency safe. If many fibers try to set the atomic in parallel, only one
+# will succeed.
+#
+# Example:
+# ```
+# flag = Atomic::Flag.new
+# flag.test_and_set # => true
+# flag.test_and_set # => false
+# flag.clear
+# flag.test_and_set # => true
+# ```
+struct Atomic::Flag
+  def initialize
+    @value = 0
+  end
+
+  # Atomically tries to set the flag. Only succeeds and returns `true` if the
+  # flag wasn't previously set; returns `false` otherwise.
+  def test_and_set : Bool
+    Atomic::Ops.atomicrmw(:xchg, pointerof(@value), 1, :sequentially_consistent, false) == 0
+  end
+
+  # Atomically clears the flag. Should only be called from the fiber that
+  # successfully set the flag.
+  def clear : Nil
+    Atomic::Ops.store(pointerof(@value), 0, :sequentially_consistent, true)
+  end
+end

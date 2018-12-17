@@ -186,3 +186,18 @@ describe Atomic do
     atomic.get.should eq(nil)
   end
 end
+
+describe Atomic::Flag do
+  it "#test_and_set" do
+    flag = Atomic::Flag.new
+    flag.test_and_set.should be_true
+    flag.test_and_set.should be_false
+  end
+
+  it "#clear" do
+    flag = Atomic::Flag.new
+    flag.test_and_set.should be_true
+    flag.clear
+    flag.test_and_set.should be_true
+  end
+end
