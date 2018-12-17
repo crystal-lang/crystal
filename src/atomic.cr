@@ -222,3 +222,21 @@ struct Atomic(T)
     end
   end
 end
+
+# An atomic flag, that can be set or not.
+struct Atomic::Flag
+  def initialize
+    @value = 0
+  end
+
+  # Atomically tries to set the flag. Only succeeds and returns `true` if the
+  # flag wasn't previously set; returns `false` otherwise.
+  def test_and_set : Bool
+    Atomic::Ops.atomicrmw(:xchg, pointerof(@value), 1, :sequentially_consistent, false) == 0
+  end
+
+  # Atomically clears the flag.
+  def clear : Nil
+    Atomic::Ops.store(pointerof(@value), 0, :sequentially_consistent, true)
+  end
+end
