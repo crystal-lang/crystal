@@ -414,6 +414,30 @@ struct BigInt < Int
     end
   end
 
+  def to_i!
+    to_i32!
+  end
+
+  def to_i8!
+    LibGMP.get_si(self).to_i8!
+  end
+
+  def to_i16!
+    LibGMP.get_si(self).to_i16!
+  end
+
+  def to_i32!
+    LibGMP.get_si(self).to_i32!
+  end
+
+  def to_i64!
+    if LibGMP::Long == Int64 || (self <= Int32::MAX && self >= Int32::MIN)
+      LibGMP.get_si(self).to_i64!
+    else
+      to_s.to_i64
+    end
+  end
+
   def to_u
     to_u32
   end
@@ -438,6 +462,30 @@ struct BigInt < Int
     end
   end
 
+  def to_u!
+    to_u32!
+  end
+
+  def to_u8!
+    LibGMP.get_ui(self).to_u8!
+  end
+
+  def to_u16!
+    LibGMP.get_ui(self).to_u16!
+  end
+
+  def to_u32!
+    LibGMP.get_ui(self).to_u32!
+  end
+
+  def to_u64!
+    if LibGMP::Long == Int64 || (self <= Int32::MAX && self >= Int32::MIN)
+      LibGMP.get_ui(self).to_u64!
+    else
+      to_s.to_u64
+    end
+  end
+
   def to_f
     to_f64
   end
@@ -447,6 +495,18 @@ struct BigInt < Int
   end
 
   def to_f64
+    LibGMP.get_d(self)
+  end
+
+  def to_f!
+    to_f64!
+  end
+
+  def to_f32!
+    LibGMP.get_d(self).to_f32!
+  end
+
+  def to_f64!
     LibGMP.get_d(self)
   end
 
