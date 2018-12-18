@@ -5,7 +5,7 @@ private def yield_to(fiber)
   Crystal::Scheduler.resume(fiber)
 end
 
-describe "select" do
+pending "select" do
   it "select many receviers" do
     ch1 = Channel(Int32).new
     ch2 = Channel(Int32).new

@@ -1,4 +1,6 @@
 require "fiber"
+require "crystal/mutex"
+require "crystal/condition_variable"
 
 abstract class Channel(T)
   module SelectAction
@@ -8,6 +10,12 @@ abstract class Channel(T)
     abstract def unwait
   end
 
+  enum State
+    Opened = 0
+    Closing = 1
+    Closed = 2
+  end
+
   class ClosedError < Exception
     def initialize(msg = "Channel is closed")
       super(msg)
@@ -15,9 +23,10 @@ abstract class Channel(T)
   end
 
   def initialize
-    @closed = false
-    @senders = Deque(Fiber).new
-    @receivers = Deque(Fiber).new
+    @state = State::Opened
+    @mutex = Crystal::Mutex.new
+    @senders = Crystal::ConditionVariable.new
+    @receivers = Crystal::ConditionVariable.new
   end
 
   def self.new : Unbuffered(T)
@@ -28,24 +37,35 @@ abstract class Channel(T)
     Buffered(T).new(capacity)
   end
 
-  def close
-    @closed = true
-    Crystal::Scheduler.enqueue @senders
-    @senders.clear
-    Crystal::Scheduler.enqueue @receivers
-    @receivers.clear
-    nil
+  def close : Nil
+    raise_if_closed
+
+    @mutex.lock
+
+    # close immediately or delay until the channel queue is emptied:
+    if empty?
+      @state = State::Closed
+    else
+      @state = State::Closing
+    end
+
+    # wakeup pending fibers:
+    @senders.broadcast
+    @receivers.broadcast
+
+    # done
+    @mutex.unlock
   end
 
-  def closed?
-    @closed
+  def closed? : Bool
+    !@state.opened?
   end
 
-  def receive
+  def receive : T
     receive_impl { raise ClosedError.new }
   end
 
-  def receive?
+  def receive? : T?
     receive_impl { return nil }
   end
 
@@ -57,231 +77,306 @@ abstract class Channel(T)
     pp.text inspect
   end
 
-  protected def wait_for_receive
-    @receivers << Fiber.current
-  end
+  #private macro debug(msg)
+  #  {% if flag?(:DEBUG) || flag?(:DEBUG1) || flag?(:DEBUG2) %}
+  #    LibC.dprintf 2, "Fiber@0x%x %s@0x%x: %s\n", Fiber.current.object_id, self.class.name, object_id, {{msg}}
+  #  {% end %}
+  #end
 
-  protected def unwait_for_receive
-    @receivers.delete Fiber.current
-  end
+  #protected def wait_for_receive
+  #  @receivers.wait(@mutex)
+  #end
 
-  protected def wait_for_send
-    @senders << Fiber.current
-  end
+  #protected def unwait_for_receive
+  #  @receivers.delete
+  #end
 
-  protected def unwait_for_send
-    @senders.delete Fiber.current
-  end
+  #protected def wait_for_send
+  #  @senders.wait(@mutex)
+  #end
+
+  #protected def unwait_for_send
+  #  @senders.delete
+  #end
 
   protected def raise_if_closed
-    raise ClosedError.new if @closed
+    raise ClosedError.new if closed?
   end
 
-  def self.receive_first(*channels)
-    receive_first channels
-  end
+  #def self.receive_first(*channels)
+  #  receive_first channels
+  #end
 
-  def self.receive_first(channels : Tuple | Array)
-    self.select(channels.map(&.receive_select_action))[1]
-  end
+  #def self.receive_first(channels : Tuple | Array)
+  #  self.select(channels.map(&.receive_select_action))[1]
+  #end
 
-  def self.send_first(value, *channels)
-    send_first value, channels
-  end
+  #def self.send_first(value, *channels)
+  #  send_first value, channels
+  #end
 
-  def self.send_first(value, channels : Tuple | Array)
-    self.select(channels.map(&.send_select_action(value)))
-    nil
-  end
+  #def self.send_first(value, channels : Tuple | Array)
+  #  self.select(channels.map(&.send_select_action(value)))
+  #  nil
+  #end
 
-  def self.select(*ops : SelectAction)
-    self.select ops
-  end
+  #def self.select(*ops : SelectAction)
+  #  self.select ops
+  #end
 
-  def self.select(ops : Tuple | Array, has_else = false)
-    loop do
-      ops.each_with_index do |op, index|
-        if op.ready?
-          result = op.execute
-          return index, result
-        end
-      end
+  #def self.select(ops : Tuple | Array, has_else = false)
+  #  loop do
+  #    ops.each_with_index do |op, index|
+  #      if op.ready?
+  #        result = op.execute
+  #        return index, result
+  #      end
+  #    end
 
-      if has_else
-        return ops.size, nil
-      end
+  #    if has_else
+  #      return ops.size, nil
+  #    end
 
-      ops.each &.wait
-      Crystal::Scheduler.reschedule
-      ops.each &.unwait
-    end
-  end
+  #    ops.each &.wait
+  #    Crystal::Scheduler.reschedule
+  #    ops.each &.unwait
+  #  end
+  #end
 
-  # :nodoc:
-  def send_select_action(value : T)
-    SendAction.new(self, value)
-  end
+  ## :nodoc:
+  #def send_select_action(value : T)
+  #  SendAction.new(self, value)
+  #end
 
-  # :nodoc:
-  def receive_select_action
-    ReceiveAction.new(self)
-  end
+  ## :nodoc:
+  #def receive_select_action
+  #  ReceiveAction.new(self)
+  #end
 
-  # :nodoc:
-  struct ReceiveAction(C)
-    include SelectAction
+  ## :nodoc:
+  #struct ReceiveAction(C)
+  #  include SelectAction
 
-    def initialize(@channel : C)
-    end
+  #  def initialize(@channel : C)
+  #  end
 
-    def ready?
-      !@channel.empty?
-    end
+  #  def ready?
+  #    !@channel.empty?
+  #  end
 
-    def execute
-      @channel.receive
-    end
+  #  def execute
+  #    @channel.receive
+  #  end
 
-    def wait
-      @channel.wait_for_receive
-    end
+  #  def wait
+  #    @channel.wait_for_receive
+  #  end
 
-    def unwait
-      @channel.unwait_for_receive
-    end
-  end
+  #  def unwait
+  #    @channel.unwait_for_receive
+  #  end
+  #end
 
-  # :nodoc:
-  struct SendAction(C, T)
-    include SelectAction
+  ## :nodoc:
+  #struct SendAction(C, T)
+  #  include SelectAction
 
-    def initialize(@channel : C, @value : T)
-    end
+  #  def initialize(@channel : C, @value : T)
+  #  end
 
-    def ready?
-      !@channel.full?
-    end
+  #  def ready?
+  #    !@channel.full?
+  #  end
 
-    def execute
-      @channel.send(@value)
-    end
+  #  def execute
+  #    @channel.send(@value)
+  #  end
 
-    def wait
-      @channel.wait_for_send
-    end
+  #  def wait
+  #    @channel.wait_for_send
+  #  end
 
-    def unwait
-      @channel.unwait_for_send
-    end
-  end
+  #  def unwait
+  #    @channel.unwait_for_send
+  #  end
+  #end
 end
 
 class Channel::Buffered(T) < Channel(T)
   def initialize(@capacity = 32)
-    @queue = Deque(T).new(@capacity)
+    @size = 0
+    @start = 0
+    @buf = Pointer(T).malloc(@capacity)
     super()
   end
 
-  def send(value : T)
-    while full?
-      raise_if_closed
-      @senders << Fiber.current
-      Crystal::Scheduler.reschedule
-    end
+  def full? : Bool
+    @size >= @capacity
+  end
 
+  def empty? : Bool
+    @size == 0
+  end
+
+  def send(value : T) : self
     raise_if_closed
 
-    @queue << value
-    Crystal::Scheduler.enqueue @receivers
-    @receivers.clear
+    @mutex.lock
+
+    # wait until the channel queue has some room for a value:
+    while full?
+      if closed?
+        @mutex.unlock
+        raise ClosedError.new
+      end
+      @senders.wait(@mutex)
+    end
+
+    # enqueue item:
+    index = @start + @size
+    index -= @capacity if index >= @capacity
+    @buf[index] = value
+    @size += 1
+
+    # wakeup one waiting receiver:
+    @receivers.signal
+
+    # done:
+    @mutex.unlock
 
     self
   end
 
-  private def receive_impl
+  private def receive_impl : T
+    # closed & empty: nothing left to receive
+    yield if @state.closed? && empty?
+
+    @mutex.lock
+
+    # wait until the channel queue has a value:
     while empty?
-      yield if @closed
-      @receivers << Fiber.current
-      Crystal::Scheduler.reschedule
+      if closed?
+        @mutex.unlock
+        yield
+      end
+      @receivers.wait(@mutex)
     end
 
-    @queue.shift.tap do
-      Crystal::Scheduler.enqueue @senders
-      @senders.clear
+    # dequeue item:
+    value = @buf[@start]
+    @size -= 1
+    @start += 1
+    @start -= @capacity if @start >= @capacity
+
+    if @state.closing?
+      # close the channel once it's empty:
+      @state = State::Closed if empty?
+    else
+      # wakeup a waiting sender:
+      @senders.signal
     end
-  end
 
-  def full?
-    @queue.size >= @capacity
-  end
-
-  def empty?
-    @queue.empty?
+    # done
+    @mutex.unlock
+    value
   end
 end
 
 class Channel::Unbuffered(T) < Channel(T)
-  @sender : Fiber?
-
   def initialize
     @has_value = false
     @value = uninitialized T
+    @sender = uninitialized Fiber
+
     super
   end
 
-  def send(value : T)
-    while @has_value
-      raise_if_closed
-      @senders << Fiber.current
-      Crystal::Scheduler.reschedule
-    end
+  def full? : Bool
+    @has_value
+  end
 
+  def empty? : Bool
+    !@has_value
+  end
+
+  def send(value : T) : self
     raise_if_closed
 
-    @value = value
-    @has_value = true
-    @sender = Fiber.current
+    @mutex.lock
 
-    if receiver = @receivers.shift?
-      receiver.resume
-    else
-      Crystal::Scheduler.reschedule
-    end
-  end
-
-  private def receive_impl
-    until @has_value
-      yield if @closed
-      @receivers << Fiber.current
-      if sender = @senders.shift?
-        sender.resume
-      else
-        Crystal::Scheduler.reschedule
+    # wait until we can deliver the value:
+    while @has_value
+      if closed?
+        @mutex.unlock
+        raise ClosedError.new
       end
+
+      @senders.wait(@mutex)
     end
 
-    yield if @closed
+    # set the value:
+    @value = value
+    @sender = Fiber.current
+    @has_value = true
 
-    @value.tap do
-      @has_value = false
-      Crystal::Scheduler.enqueue @sender.not_nil!
-      @sender = nil
+    # wakeup one pending receiver (if any):
+    @receivers.signal
+
+    # done
+    @mutex.unlock
+
+    # synchronous: suspend until a receiver got the value
+    Crystal::Scheduler.reschedule
+
+    self
+  end
+
+  private def receive_impl : T
+    # closed & empty: nothing left to receive
+    yield if @state.closed? && empty?
+
+    @mutex.lock
+
+    # wait until a value is set:
+    until @has_value
+      if closed?
+        @mutex.unlock
+        yield
+      end
+
+      @receivers.wait(@mutex)
     end
-  end
 
-  def empty?
-    !@has_value && @senders.empty?
-  end
+    # get the value:
+    value = @value
+    sender = @sender
+    @has_value = false
 
-  def full?
-    @has_value || @receivers.empty?
+    if @state.closing?
+      # close the channel once it's empty
+      @state = State::Closed
+    else
+      # wakeup a waiting sender:
+      @senders.signal
+    end
+
+    @mutex.unlock
+
+    # synchronous: wakeup pending sender
+    Crystal::Scheduler.enqueue(sender)
+
+    value
   end
 
   def close
     super
-    if sender = @sender
-      Crystal::Scheduler.enqueue sender
-      @sender = nil
-    end
+
+    # don't lock the mutex unless there is a pending sender (fast path):
+    return unless @has_value
+
+    # then check again for a pending sender inside a lock:
+    @mutex.lock
+    Crystal::Scheduler.enqueue(@sender) if @has_value
+    @mutex.unlock
   end
 end
