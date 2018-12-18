@@ -28,8 +28,12 @@ describe TCPServer do
       it "binds to port 0" do
         server = TCPServer.new(address, 0)
 
-        server.local_address.address.should eq(address)
-        server.local_address.port.should be > 0
+        begin
+          server.local_address.address.should eq(address)
+          server.local_address.port.should be > 0
+        ensure
+          server.close
+        end
       end
 
       it "raises when port is negative" do
@@ -74,7 +78,8 @@ describe TCPServer do
 
     describe "address resolution" do
       it "binds to localhost" do
-        TCPServer.new("localhost", unused_local_port)
+        server = TCPServer.new("localhost", unused_local_port)
+        server.close
       end
 
       it "raises when host doesn't exist" do
