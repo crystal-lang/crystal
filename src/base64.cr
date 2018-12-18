@@ -250,9 +250,9 @@ module Base64
       break if cstr > endcstr
       a, b, c, d = next_decoded_value, next_decoded_value, next_decoded_value, next_decoded_value
 
-      yield (a << 2 | b >> 4).to_u8
-      yield (b << 4 | c >> 2).to_u8
-      yield (c << 6 | d).to_u8
+      yield (a << 2 | b >> 4).to_u8!
+      yield (b << 4 | c >> 2).to_u8!
+      yield (c << 6 | d).to_u8!
     end
 
     while (cstr < endcstr + 4) && (cstr.value == NL || cstr.value == NR)
@@ -262,11 +262,11 @@ module Base64
     mod = (endcstr - cstr) % 4
     if mod == 2
       a, b = next_decoded_value, next_decoded_value
-      yield (a << 2 | b >> 4).to_u8
+      yield (a << 2 | b >> 4).to_u8!
     elsif mod == 3
       a, b, c = next_decoded_value, next_decoded_value, next_decoded_value
-      yield (a << 2 | b >> 4).to_u8
-      yield (b << 4 | c >> 2).to_u8
+      yield (a << 2 | b >> 4).to_u8!
+      yield (b << 4 | c >> 2).to_u8!
     elsif mod != 0
       raise Error.new("Wrong size")
     end
