@@ -615,6 +615,11 @@ struct Int8
     value.to_i8
   end
 
+  # Returns an `Int8` by invoking `to_i8!` on *value*.
+  def self.new!(value)
+    value.to_i8!
+  end
+
   def -
     0_i8 - self
   end
@@ -635,6 +640,11 @@ struct Int16
   # Returns an `Int16` by invoking `to_i16` on *value*.
   def self.new(value)
     value.to_i16
+  end
+
+  # Returns an `Int16` by invoking `to_i16!` on *value*.
+  def self.new!(value)
+    value.to_i16!
   end
 
   def -
@@ -659,6 +669,11 @@ struct Int32
     value.to_i32
   end
 
+  # Returns an `Int32` by invoking `to_i32!` on *value*.
+  def self.new!(value)
+    value.to_i32!
+  end
+
   def -
     0 - self
   end
@@ -679,6 +694,11 @@ struct Int64
   # Returns an `Int64` by invoking `to_i64` on *value*.
   def self.new(value)
     value.to_i64
+  end
+
+  # Returns an `Int64` by invoking `to_i64!` on *value*.
+  def self.new!(value)
+    value.to_i64!
   end
 
   def -
@@ -704,6 +724,11 @@ struct Int128
     value.to_i128
   end
 
+  # Returns an `Int128` by invoking `to_i128!` on *value*.
+  def self.new!(value)
+    value.to_i128!
+  end
+
   def -
     # TODO: use 0_i128 - self
     Int128.new(0) - self
@@ -725,6 +750,11 @@ struct UInt8
   # Returns an `UInt8` by invoking `to_u8` on *value*.
   def self.new(value)
     value.to_u8
+  end
+
+  # Returns an `UInt8` by invoking `to_u8!` on *value*.
+  def self.new!(value)
+    value.to_u8!
   end
 
   def abs
@@ -749,6 +779,11 @@ struct UInt16
     value.to_u16
   end
 
+  # Returns an `UInt16` by invoking `to_u16!` on *value*.
+  def self.new!(value)
+    value.to_u16!
+  end
+
   def abs
     self
   end
@@ -769,6 +804,11 @@ struct UInt32
   # Returns an `UInt32` by invoking `to_u32` on *value*.
   def self.new(value)
     value.to_u32
+  end
+
+  # Returns an `UInt32` by invoking `to_u32!` on *value*.
+  def self.new!(value)
+    value.to_u32!
   end
 
   def abs
@@ -793,6 +833,11 @@ struct UInt64
     value.to_u64
   end
 
+  # Returns an `UInt64` by invoking `to_u64!` on *value*.
+  def self.new!(value)
+    value.to_u64!
+  end
+
   def abs
     self
   end
@@ -814,6 +859,11 @@ struct UInt128
   # Returns an `UInt128` by invoking `to_u128` on *value*.
   def self.new(value)
     value.to_u128
+  end
+
+  # Returns an `UInt128` by invoking `to_u128!` on *value*.
+  def self.new!(value)
+    value.to_u128!
   end
 
   def abs
