@@ -1547,7 +1547,7 @@ class Array(T)
   end
 
   # Modifies `self` by randomizing the order of elements in the collection
-  # using the given *random* number generator.  Returns `self`.
+  # using the given *random* number generator. Returns `self`.
   def shuffle!(random = Random::DEFAULT)
     @buffer.shuffle!(size, random)
     self

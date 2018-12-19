@@ -572,7 +572,7 @@ module Crystal
       if replacement = node.syntax_replacement
         replacement.transform(self)
       else
-        # If it's `nil?` we want to give an error if obj has a Pointer type
+        # If it's `nil?`, we want to give an error if obj has a Pointer type
         # inside it. This is because `Pointer#nil?` would previously mean
         # "is it a null pointer?" but now it means "is it Nil?" which would
         # always give false. Having this as a silent change will break a lot
