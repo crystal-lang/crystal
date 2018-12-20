@@ -71,7 +71,7 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
   rescue ex : Crystal::Exception
     node.raise "while requiring \"#{node.string}\"", ex
   rescue ex
-    node.raise "while requiring \"#{node.string}\": #{ex.message}"
+    raise ::Exception.new("while requiring \"#{node.string}\"", ex)
   end
 
   def visit(node : ClassDef)
