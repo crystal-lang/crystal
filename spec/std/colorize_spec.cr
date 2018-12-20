@@ -17,7 +17,7 @@ private class ColorizeToS
   end
 end
 
-describe "colorize_wrap" do
+describe "colorize" do
   it "colorizes without change" do
     colorize_wrap("hello").to_s.should eq("hello")
   end
