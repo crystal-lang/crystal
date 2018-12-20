@@ -1,8 +1,6 @@
 require "spec"
 
 describe "raise" do
-  callstack_on_rescue = nil
-
   it "should set exception's callstack" do
     exception = expect_raises Exception, "without callstack" do
       raise "without callstack"
@@ -11,6 +9,7 @@ describe "raise" do
   end
 
   it "shouldn't overwrite the callstack on re-raise" do
+    callstack_on_rescue : CallStack? = nil
     exception_after_reraise = expect_raises Exception, "exception to be rescued" do
       begin
         raise "exception to be rescued"

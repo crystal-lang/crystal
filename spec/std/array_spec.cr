@@ -1096,7 +1096,7 @@ describe "Array" do
 
   describe "to_s" do
     it "does to_s" do
-      it { [1, 2, 3].to_s.should eq("[1, 2, 3]") }
+      [1, 2, 3].to_s.should eq("[1, 2, 3]")
     end
 
     it "does with recursive" do

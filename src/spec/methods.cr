@@ -43,7 +43,7 @@ module Spec::Methods
     start = Time.monotonic
     begin
       Spec.run_before_each_hooks
-      block.call
+      with Scope yield
       Spec::RootContext.report(:success, description, file, line, Time.monotonic - start)
     rescue ex : Spec::AssertionFailed
       Spec::RootContext.report(:fail, description, file, line, Time.monotonic - start, ex)
@@ -70,6 +70,9 @@ module Spec::Methods
   def pending(description = "assert", file = __FILE__, line = __LINE__, end_line = __END_LINE__, &block)
     return unless Spec.matches?(description, file, line, end_line)
 
+    # Run block on compile-time to detect nesting `it` and `pending`.
+    typeof(with Scope yield)
+
     Spec.formatters.each(&.before_example(description))
 
     Spec::RootContext.report(:pending, description, file, line)
@@ -90,6 +93,17 @@ module Spec::Methods
   # This method can be used to manually fail an example defined in an `#it` block.
   def fail(msg, file = __FILE__, line = __LINE__)
     raise Spec::AssertionFailed.new(msg, file, line)
+  end
+
+  # :nodoc:
+  module Scope
+    macro it(description = "assert", file = __FILE__, line = __LINE__, end_line = __END_LINE__, &block)
+      {{ raise("cannot nest 'it' of spec") }}
+    end
+
+    macro pending(description = "assert", file = __FILE__, line = __LINE__, end_line = __END_LINE__, &block)
+      {{ raise("cannot nest 'pending' of spec") }}
+    end
   end
 end
 
