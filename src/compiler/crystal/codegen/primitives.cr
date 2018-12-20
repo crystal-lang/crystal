@@ -136,9 +136,10 @@ class Crystal::CodeGenVisitor
     case op
     when "+"               then codegen_binary_op_add(tmax, t1, t2, p1, p2)
     when "-"               then codegen_binary_op_sub(tmax, t1, t2, p1, p2)
+    when "*"               then codegen_binary_op_mul(tmax, t1, t2, p1, p2)
     when "&+"              then codegen_trunc_binary_op_result(t1, t2, builder.add(p1, p2))
     when "&-"              then codegen_trunc_binary_op_result(t1, t2, builder.sub(p1, p2))
-    when "*", "&*"         then codegen_trunc_binary_op_result(t1, t2, builder.mul(p1, p2))
+    when "&*"              then codegen_trunc_binary_op_result(t1, t2, builder.mul(p1, p2))
     when "/", "unsafe_div" then codegen_trunc_binary_op_result(t1, t2, t1.signed? ? builder.sdiv(p1, p2) : builder.udiv(p1, p2))
     when "%", "unsafe_mod" then codegen_trunc_binary_op_result(t1, t2, t1.signed? ? builder.srem(p1, p2) : builder.urem(p1, p2))
     when "unsafe_shl"      then codegen_trunc_binary_op_result(t1, t2, builder.shl(p1, p2))
@@ -232,6 +233,38 @@ class Crystal::CodeGenVisitor
                  binary_overflow_fun "llvm.usub.with.overflow.i64", llvm_context.int64
                when :u128
                  binary_overflow_fun "llvm.usub.with.overflow.i128", llvm_context.int128
+               else
+                 raise "unreachable"
+               end
+
+    codegen_binary_overflow_check(llvm_fun, t, t1, t2, p1, p2)
+  end
+
+  def codegen_binary_op_mul(t : IntegerType, t1, t2, p1, p2)
+    # TODO remove on 0.28
+    return codegen_trunc_binary_op_result(t1, t2, builder.mul(p1, p2)) unless @program.has_flag?("preview_overflow")
+
+    llvm_fun = case t.kind
+               when :i8
+                 binary_overflow_fun "llvm.smul.with.overflow.i8", llvm_context.int8
+               when :i16
+                 binary_overflow_fun "llvm.smul.with.overflow.i16", llvm_context.int16
+               when :i32
+                 binary_overflow_fun "llvm.smul.with.overflow.i32", llvm_context.int32
+               when :i64
+                 binary_overflow_fun "llvm.smul.with.overflow.i64", llvm_context.int64
+               when :i128
+                 binary_overflow_fun "llvm.smul.with.overflow.i128", llvm_context.int128
+               when :u8
+                 binary_overflow_fun "llvm.umul.with.overflow.i8", llvm_context.int8
+               when :u16
+                 binary_overflow_fun "llvm.umul.with.overflow.i16", llvm_context.int16
+               when :u32
+                 binary_overflow_fun "llvm.umul.with.overflow.i32", llvm_context.int32
+               when :u64
+                 binary_overflow_fun "llvm.umul.with.overflow.i64", llvm_context.int64
+               when :u128
+                 binary_overflow_fun "llvm.umul.with.overflow.i128", llvm_context.int128
                else
                  raise "unreachable"
                end
