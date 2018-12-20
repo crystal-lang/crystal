@@ -262,6 +262,8 @@ struct Int
   # Raises `ArgumentError` if *exponent* is negative: if this is needed,
   # either use a float base or a float exponent.
   #
+  # Raises `OverflowError` in case of overflow.
+  #
   # ```
   # 2 ** 3  # => 8
   # 2 ** 0  # => 1
@@ -286,6 +288,8 @@ struct Int
   #
   # Raises `ArgumentError` if *exponent* is negative: if this is needed,
   # either use a float base or a float exponent.
+  #
+  # Intermediate multiplication will wrap around silently in case of overflow.
   #
   # ```
   # 2 &** 3  # => 8
