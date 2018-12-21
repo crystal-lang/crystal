@@ -17,13 +17,13 @@ describe "ECR" do
 
     pieces = [
       %(__str__ << "hello "),
-      %((#<loc:"foo.cr",1,10> 1 ).to_s __str__),
+      %(#<loc:push>(#<loc:"foo.cr",1,10> 1 )#<loc:pop>.to_s __str__),
       %(__str__ << " wor\\nld "),
-      %(#<loc:"foo.cr",2,6> while true ),
+      %(#<loc:push>#<loc:"foo.cr",2,6> while true #<loc:pop>),
       %(__str__ << " 2 "),
-      %(#<loc:"foo.cr",2,25> end ),
+      %(#<loc:push>#<loc:"foo.cr",2,25> end #<loc:pop>),
       %(__str__ << "\\n"),
-      %(#<loc:\"foo.cr\",3,3> # skip ),
+      %(#<loc:push>#<loc:\"foo.cr\",3,3> # skip #<loc:pop>),
       %(__str__ << " "),
       %(__str__ << "<% \\"string\\" %>"),
     ]
