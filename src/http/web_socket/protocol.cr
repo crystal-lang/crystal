@@ -33,7 +33,9 @@ class HTTP::WebSocket::Protocol
     size : Int32,
     final : Bool
 
-  def initialize(@io : IO, masked = false)
+  getter :response_headers
+
+  def initialize(@io : IO, masked = false, @response_headers : HTTP::Headers = HTTP::Headers.new)
     @header = uninitialized UInt8[2]
     @mask = uninitialized UInt8[4]
     @mask_offset = 0
@@ -285,7 +287,7 @@ class HTTP::WebSocket::Protocol
       raise exc
     end
 
-    new(socket, masked: true)
+    new(socket, masked: true, response_headers: handshake_response.headers)
   end
 
   def self.new(uri : URI | String, headers = HTTP::Headers.new)

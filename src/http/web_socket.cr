@@ -1,5 +1,6 @@
 class HTTP::WebSocket
   getter? closed = false
+  delegate :response_headers, to: @ws
 
   # :nodoc:
   def initialize(io : IO)
