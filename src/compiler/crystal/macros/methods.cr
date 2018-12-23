@@ -176,7 +176,7 @@ module Crystal
     end
 
     def interpret_skip_file(node)
-      raise SkipMacroException.new(@str.to_s)
+      raise SkipMacroException.new(@str.to_s, macro_expansion_pragmas)
     end
 
     def interpret_system(node)
@@ -937,7 +937,7 @@ module Crystal
           when StringLiteral
             key = key.value
           else
-            return NilLiteral.new
+            raise "argument to [] must be a symbol or string, not #{key.class_desc}:\n\n#{key}"
           end
 
           entry = entries.find &.key.==(key)
@@ -2013,15 +2013,18 @@ module Crystal
           case arg
           when NumberLiteral
             index = arg.to_number.to_i
-            self.args[index]? || NilLiteral.new
-          when SymbolLiteral
-            named_arg = self.named_args.try &.find do |named_arg|
-              named_arg.name == arg.value
-            end
-            named_arg.try(&.value) || NilLiteral.new
+            return self.args[index]? || NilLiteral.new
+          when SymbolLiteral then name = arg.value
+          when StringLiteral then name = arg.value
+          when MacroId       then name = arg.value
           else
-            raise "argument to 'Annotation#[]' must be integer or symbol, not #{arg.class_desc}"
+            raise "argument to [] must be a number, symbol or string, not #{arg.class_desc}:\n\n#{arg}"
           end
+
+          named_arg = self.named_args.try &.find do |named_arg|
+            named_arg.name == name
+          end
+          named_arg.try(&.value) || NilLiteral.new
         end
       else
         super

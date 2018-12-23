@@ -7,16 +7,17 @@ module Crystal
       to_s(io)
     end
 
-    def to_s(io, emit_loc_pragma = false, emit_doc = false)
-      visitor = ToSVisitor.new(io, emit_loc_pragma: emit_loc_pragma, emit_doc: emit_doc)
+    def to_s(io, macro_expansion_pragmas = nil, emit_doc = false)
+      visitor = ToSVisitor.new(io, macro_expansion_pragmas: macro_expansion_pragmas, emit_doc: emit_doc)
       self.accept visitor
     end
   end
 
   class ToSVisitor < Visitor
     @str : IO
+    @macro_expansion_pragmas : Hash(Int32, Array(Lexer::LocPragma))?
 
-    def initialize(@str = IO::Memory.new, @emit_loc_pragma = false, @emit_doc = false)
+    def initialize(@str = IO::Memory.new, @macro_expansion_pragmas = nil, @emit_doc = false)
       @indent = 0
       @inside_macro = 0
       @inside_lib = false
@@ -32,14 +33,9 @@ module Crystal
         @str.puts
       end
 
-      if @emit_loc_pragma && (loc = node.location) && loc.filename.is_a?(String)
-        @str << "#<loc:"
-        loc.filename.inspect(@str)
-        @str << ','
-        @str << loc.line_number
-        @str << ','
-        @str << loc.column_number
-        @str << '>'
+      if (macro_expansion_pragmas = @macro_expansion_pragmas) && (loc = node.location) && (filename = loc.filename).is_a?(String)
+        pragmas = macro_expansion_pragmas[@str.pos.to_i32] ||= [] of Lexer::LocPragma
+        pragmas << Lexer::LocSetPragma.new(filename, loc.line_number, loc.column_number)
       end
 
       true

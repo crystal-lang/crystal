@@ -821,7 +821,7 @@ class File < IO::FileDescriptor
   # in the *filename* parameter to the value given in *time*.
   #
   # If the file does not exist, it will be created.
-  def self.touch(filename : String, time : Time = Time.now)
+  def self.touch(filename : String, time : Time = Time.utc_now)
     open(filename, "a") { } unless exists?(filename)
     utime time, time, filename
   end

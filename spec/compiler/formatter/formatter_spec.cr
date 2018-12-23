@@ -486,6 +486,7 @@ describe Crystal::Formatter do
   assert_format "x  :   (A -> B)?", "x : (A -> B)?"
   assert_format "x  :   {A, B}", "x : {A, B}"
   assert_format "x : { {A, B}, {C, D} }"
+  assert_format "x : {A, B, }", "x : {A, B}"
   assert_format "class Foo\n@x  : Int32\nend", "class Foo\n  @x : Int32\nend"
   assert_format "class Foo\n@x  :  Int32\nend", "class Foo\n  @x : Int32\nend"
   assert_format "class Foo\nx = 1\nend", "class Foo\n  x = 1\nend"
@@ -598,12 +599,12 @@ describe Crystal::Formatter do
   assert_format "macro foo( x  =   1, y  =  2,  &block)\nend", "macro foo(x = 1, y = 2, &block)\nend"
   assert_format "macro foo\n  1 + 2\nend"
   assert_format "macro foo\n  if 1\n 1 + 2\n end\nend"
-  assert_format "macro foo\n  {{1 + 2}} \nend", "macro foo\n  {{1 + 2}}\nend"
-  assert_format "macro foo\n  {{ 1 + 2 }} \nend", "macro foo\n  {{ 1 + 2 }}\nend"
-  assert_format "macro foo\n  {% 1 + 2 %} \nend", "macro foo\n  {% 1 + 2 %}\nend"
-  assert_format "macro foo\n  {{ 1 + 2 }}\\ \nend", "macro foo\n  {{ 1 + 2 }}\\\nend"
-  assert_format "macro foo\n  {{ 1 + 2 }}\\ \n 1\n end", "macro foo\n  {{ 1 + 2 }}\\\n 1\n end"
-  assert_format "macro foo\n  {%1 + 2%}\\ \nend", "macro foo\n  {% 1 + 2 %}\\\nend"
+  assert_format "macro foo\n  {{1 + 2}}\nend", "macro foo\n  {{1 + 2}}\nend"
+  assert_format "macro foo\n  {{ 1 + 2 }}\nend", "macro foo\n  {{ 1 + 2 }}\nend"
+  assert_format "macro foo\n  {% 1 + 2 %}\nend", "macro foo\n  {% 1 + 2 %}\nend"
+  assert_format "macro foo\n  {{ 1 + 2 }}\\\nend", "macro foo\n  {{ 1 + 2 }}\\\nend"
+  assert_format "macro foo\n  {{ 1 + 2 }}\\\n 1\n end", "macro foo\n  {{ 1 + 2 }}\\\n 1\n end"
+  assert_format "macro foo\n  {%1 + 2%}\\\nend", "macro foo\n  {% 1 + 2 %}\\\nend"
   assert_format "macro foo\n  {% if 1 %} 2 {% end %}\nend"
   assert_format "macro foo\n  {% unless 1 %} 2 {% end %}\nend"
   assert_format "macro foo\n  {% if 1 %} 2 {% else %} 3 {% end %}\nend"
@@ -611,7 +612,7 @@ describe Crystal::Formatter do
   assert_format "macro foo\n  {% for x in y %} 2 {% end %}\nend"
   assert_format "macro foo\n  {% for x in y %}\\ 2 {% end %}\\\nend"
   assert_format "macro foo\n  %foo\nend"
-  assert_format "macro foo\n  %foo{x.id+2} \nend", "macro foo\n  %foo{x.id + 2}\nend"
+  assert_format "macro foo\n  %foo{x.id+2}\nend", "macro foo\n  %foo{x.id + 2}\nend"
   assert_format "macro foo\n  %foo{x,y}\nend", "macro foo\n  %foo{x, y}\nend"
   assert_format "def foo : Int32\n  1\nend"
   assert_format "class Foo\n  macro foo\n    1\n  end\nend"
@@ -624,7 +625,7 @@ describe Crystal::Formatter do
   assert_format "if 1\n  {{1 + 2}}\nend"
   assert_format "def foo : self | Nil\n  nil\nend"
   assert_format "macro foo(x)\n  {% if 1 %} 2 {% end %}\nend"
-  assert_format "macro foo()\n  {% if 1 %} 2 {% end %} \nend", "macro foo\n  {% if 1 %} 2 {% end %}\nend"
+  assert_format "macro foo()\n  {% if 1 %} 2 {% end %}\nend", "macro foo\n  {% if 1 %} 2 {% end %}\nend"
   assert_format "macro flags\n  {% if 1 %}\\\n  {% end %}\\\nend"
   assert_format "macro flags\n  {% if 1 %}\\\n 1 {% else %}\\\n {% end %}\\\nend"
   assert_format "macro flags\n  {% if 1 %}{{1}}a{{2}}{% end %}\\\nend"
@@ -964,6 +965,11 @@ describe Crystal::Formatter do
 
   assert_format "<<-FOO\nFOO"
 
+  assert_format "<<-FOO\n#{"foo"}\nFOO"
+  assert_format "<<-FOO\n#{"foo"}bar\nFOO"
+  assert_format "<<-FOO\nbar#{"foo"}\nFOO"
+  assert_format "<<-FOO\nbar#{"foo"}bar\nFOO"
+
   assert_format "#!shebang\n1 + 2"
 
   assert_format "   {{\n1 + 2 }}", "{{\n  1 + 2\n}}"
@@ -1235,4 +1241,64 @@ describe Crystal::Formatter do
     # 3 + 4
     # ```
     CODE
+
+  assert_format <<-CODE
+    X(typeof(begin
+      e.is_a?(Y) ? 1 : 2
+    end))
+    CODE
+
+  assert_format <<-CODE
+    X(typeof(begin
+      e.is_a?(Y)
+    end))
+    CODE
+
+  # Keep trailing spaces in macros.
+  assert_format(
+    "macro foo\n" +
+    "  <<-FOO\n" +
+    "    hello  \n" +
+    "  FOO\n" +
+    "end"
+  )
+  assert_format(
+    "{% verbatim do %}\n" +
+    "  <<-FOO\n" +
+    "    hello  \n" +
+    "  FOO\n" +
+    "{% end %}"
+  )
+  assert_format(
+    "{% if true %}\n" +
+    "  <<-FOO\n" +
+    "    hello  \n" +
+    "  FOO\n" +
+    "{% end %}"
+  )
+  assert_format(
+    "{% for a in %w() %}\n" +
+    "  <<-FOO\n" +
+    "    hello  \n" +
+    "  FOO\n" +
+    "{% end %}"
+  )
+
+  # But remove trailing space in macro expression.
+  assert_format(
+    "macro foo\n" +
+    "  1  \n" +
+    "  {{  \n" +
+    "    42  \n" +
+    "  }}  \n" +
+    "  2  \n" +
+    "end",
+    "macro foo\n" +
+    "  1  \n" +
+    "  {{\n" +
+    "    42\n" +
+    "  }}  \n" +
+    "  2  \n" +
+    "end"
+  )
 end

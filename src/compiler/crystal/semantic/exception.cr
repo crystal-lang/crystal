@@ -19,7 +19,7 @@ module Crystal
       if location
         column_number = node.name_column_number
         name_size = node.name_size
-        if column_number == 0
+        if column_number == 0 || (end_location = node.end_location) && end_location.filename != location.filename
           name_size = 0
           column_number = location.column_number
         end
@@ -296,8 +296,9 @@ module Crystal
 
   class SkipMacroException < ::Exception
     getter expanded_before_skip : String
+    getter macro_expansion_pragmas : Hash(Int32, Array(Lexer::LocPragma))?
 
-    def initialize(@expanded_before_skip)
+    def initialize(@expanded_before_skip, @macro_expansion_pragmas)
       super()
     end
   end

@@ -572,27 +572,6 @@ module Crystal
       if replacement = node.syntax_replacement
         replacement.transform(self)
       else
-        # If it's `nil?` we want to give an error if obj has a Pointer type
-        # inside it. This is because `Pointer#nil?` would previously mean
-        # "is it a null pointer?" but now it means "is it Nil?" which would
-        # always give false. Having this as a silent change will break a lot
-        # of code, so it's better to be more conservative for one release
-        # and let the user manually fix this (there might be valid `nil?`
-        # cases, for example if there is a union of Pointer and Nil).
-        if node.nil_check? && (obj_type = node.obj.type?)
-          if obj_type.pointer? || (obj_type.is_a?(UnionType) && obj_type.union_types.any?(&.pointer?))
-            node.raise <<-ERROR
-              use `null?` instead of `nil?` on pointer types.
-
-              The semantic of `nil?` changed in the last version of the language
-              to mean `is_a?(Nil)`. `Pointer#nil?` meant "is it a null pointer?"
-              so using `nil?` is probably not what you mean here. If it is,
-              you can use `is_a?(Nil)` instead and in the next version of
-              the language revert it to `nil?`.
-              ERROR
-          end
-        end
-
         transform_is_a_or_responds_to node, &.filter_by(node.const.type)
       end
     end

@@ -2437,6 +2437,10 @@ module Crystal
       entries.any? &.type.unbound?
     end
 
+    def has_in_type_vars?(type)
+      entries.any? { |entry| entry.type.includes_type?(type) || entry.type.has_in_type_vars?(type) }
+    end
+
     def to_s_with_options(io : IO, skip_union_parens : Bool = false, generic_args : Bool = true, codegen = false)
       io << "NamedTuple("
       @entries.join(", ", io) do |entry|

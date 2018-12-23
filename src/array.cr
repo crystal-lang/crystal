@@ -890,17 +890,58 @@ class Array(T)
   # Modifies `self`, keeping only the elements in the collection for which the
   # passed block returns `true`. Returns `self`.
   #
+  # ```
+  # ary = [1, 6, 2, 4, 8]
+  # ary.select! { |x| x > 3 }
+  # ary # => [6, 4, 8]
+  # ```
+  #
   # See also: `Array#select`.
   def select!
     reject! { |elem| !yield(elem) }
   end
 
+  # Modifies `self`, keeping only the elements in the collection for which
+  # `pattern === element`.
+  #
+  # ```
+  # ary = [1, 6, 2, 4, 8]
+  # ary.select!(3..7)
+  # ary # => [6, 4]
+  # ```
+  #
+  # See also: `Array#reject!`.
+  def select!(pattern)
+    self.select! { |elem| pattern === elem }
+  end
+
   # Modifies `self`, deleting the elements in the collection for which the
   # passed block returns `true`. Returns `self`.
+  #
+  # ```
+  # ary = [1, 6, 2, 4, 8]
+  # ary.reject! { |x| x > 3 }
+  # ary # => [1, 2]
+  # ```
   #
   # See also: `Array#reject`.
   def reject!
     internal_delete { |e| yield e }
+    self
+  end
+
+  # Modifies `self`, deleting the elements in the collection for which
+  # `pattern === element`.
+  #
+  # ```
+  # ary = [1, 6, 2, 4, 8]
+  # ary.reject!(3..7)
+  # ary # => [1, 2, 8]
+  # ```
+  #
+  # See also: `Array#select!`.
+  def reject!(pattern)
+    reject! { |elem| pattern === elem }
     self
   end
 

@@ -277,5 +277,6 @@ describe Time::Span do
     1.hours.should eq(60.minutes)
     1.week.should eq(7.days)
     2.weeks.should eq(14.days)
+    1.1.weeks.should eq(7.7.days)
   end
 end

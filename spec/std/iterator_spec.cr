@@ -303,6 +303,19 @@ describe Iterator do
       iter.rewind
       iter.next.should eq(1)
     end
+
+    it "does with pattern" do
+      iter = (1..5).each.reject(2..4)
+      iter.next.should eq(1)
+      iter.next.should eq(5)
+      iter.next.should be_a(Iterator::Stop)
+    end
+
+    it "does with type" do
+      ary = [1, false, 3, true].each.reject(Bool).to_a
+      ary.should eq([1, 3])
+      ary.should be_a(Array(Int32))
+    end
   end
 
   describe "select" do
@@ -314,6 +327,20 @@ describe Iterator do
 
       iter.rewind
       iter.next.should eq(2)
+    end
+
+    it "does with pattern" do
+      iter = (1..10).each.select(3..5)
+      iter.next.should eq(3)
+      iter.next.should eq(4)
+      iter.next.should eq(5)
+      iter.next.should be_a(Iterator::Stop)
+    end
+
+    it "does with type" do
+      ary = [1, nil, 3, false].each.select(Int32).to_a
+      ary.should eq([1, 3])
+      ary.should be_a(Array(Int32))
     end
   end
 
@@ -756,6 +783,296 @@ describe Iterator do
       iter.next.should eq(3)
 
       iter.rewind.to_a.should eq([1, 2, 2, 3, 3])
+    end
+  end
+
+  describe "#slice_after" do
+    it "slices after" do
+      ary = [1, 3, 5, 8, 10, 11, 13, 15, 16, 17]
+      iter = ary.slice_after(&.even?)
+      iter.next.should eq([1, 3, 5, 8])
+      iter.next.should eq([10])
+      iter.next.should eq([11, 13, 15, 16])
+      iter.next.should eq([17])
+      iter.next.should be_a(Iterator::Stop)
+    end
+
+    it "slices after: #to_a" do
+      ary = [1, 3, 5, 8, 10, 11, 13, 15, 16, 17]
+      ary.slice_after(&.even?).to_a.should eq([
+        [1, 3, 5, 8],
+        [10],
+        [11, 13, 15, 16],
+        [17],
+      ])
+    end
+
+    it "slices after: #rewind" do
+      ary = [1, 3, 5, 8, 10, 11, 13, 15, 16, 17]
+      iter = ary.slice_after(&.even?)
+      iter.next.should eq([1, 3, 5, 8])
+      iter.next.should eq([10])
+
+      iter.rewind
+      iter.next.should eq([1, 3, 5, 8])
+    end
+
+    it "slices after with reuse = true" do
+      ary = [1, 3, 5, 8, 10, 11, 13, 15, 16, 17]
+      iter = ary.slice_after(reuse: true, &.even?)
+      a = iter.next
+      a.should eq([1, 3, 5, 8])
+
+      b = iter.next
+      b.should eq([10])
+
+      a.should be(b)
+    end
+
+    it "slices after with reuse = array" do
+      reuse = [] of Int32
+      ary = [1, 3, 5, 8, 10, 11, 13, 15, 16, 17]
+      iter = ary.slice_after(reuse: reuse, &.even?)
+      a = iter.next
+      a.should eq([1, 3, 5, 8])
+
+      b = iter.next
+      b.should eq([10])
+
+      a.should be(b)
+      a.should be(reuse)
+    end
+
+    it "slices after: non-bool block" do
+      ary = [1, nil, nil, 2, 3, nil]
+      iter = ary.slice_after(&.itself)
+      iter.next.should eq([1])
+      iter.next.should eq([nil, nil, 2])
+      iter.next.should eq([3])
+      iter.next.should eq([nil])
+      iter.next.should be_a(Iterator::Stop)
+    end
+
+    it "slices after pattern" do
+      ary = ["foo", "bar", "baz\n", "qux", "other\n", "end"]
+      iter = ary.slice_after(/\n/)
+      iter.next.should eq(["foo", "bar", "baz\n"])
+      iter.next.should eq(["qux", "other\n"])
+      iter.next.should eq(["end"])
+      iter.next.should be_a(Iterator::Stop)
+    end
+
+    it "slices after pattern with reuse = true" do
+      ary = ["foo", "bar", "baz\n", "qux", "other\n", "end"]
+      iter = ary.slice_after(/\n/, reuse: true)
+
+      a = iter.next
+      a.should eq(["foo", "bar", "baz\n"])
+
+      b = iter.next
+      b.should eq(["qux", "other\n"])
+
+      a.should be(b)
+    end
+  end
+
+  describe "#slice_before" do
+    it "slices before" do
+      ary = [1, 3, 5, 8, 10, 11, 13, 15, 16, 17]
+      iter = ary.slice_before(&.even?)
+      iter.next.should eq([1, 3, 5])
+      iter.next.should eq([8])
+      iter.next.should eq([10, 11, 13, 15])
+      iter.next.should eq([16, 17])
+      iter.next.should be_a(Iterator::Stop)
+    end
+
+    it "slices before: first element matches" do
+      ary = [2, 3, 4]
+      iter = ary.slice_before(&.even?)
+      iter.next.should eq([2, 3])
+      iter.next.should eq([4])
+      iter.next.should be_a(Iterator::Stop)
+    end
+
+    it "slices before nil" do
+      ary = [1, 2, nil, 3, nil]
+      iter = ary.slice_before(&.nil?)
+      iter.next.should eq([1, 2])
+      iter.next.should eq([nil, 3])
+      iter.next.should eq([nil])
+      iter.next.should be_a(Iterator::Stop)
+    end
+
+    it "slices before: #to_a" do
+      ary = [1, 3, 5, 8, 10, 11, 13, 15, 16, 17]
+      ary.slice_before(&.even?).to_a.should eq([
+        [1, 3, 5],
+        [8],
+        [10, 11, 13, 15],
+        [16, 17],
+      ])
+    end
+
+    it "slices before: #rewind" do
+      ary = [1, 3, 5, 8, 10, 11, 13, 15, 16, 17]
+      iter = ary.slice_before(&.even?)
+      iter.next.should eq([1, 3, 5])
+      iter.next.should eq([8])
+
+      iter.rewind
+      iter.next.should eq([1, 3, 5])
+    end
+
+    it "slices before with reuse = true" do
+      ary = [1, 3, 5, 8, 10, 11, 13, 15, 16, 17]
+      iter = ary.slice_before(reuse: true, &.even?)
+      a = iter.next
+      a.should eq([1, 3, 5])
+
+      b = iter.next
+      b.should eq([8])
+
+      a.should be(b)
+    end
+
+    it "slices before with reuse = array" do
+      reuse = [] of Int32
+      ary = [1, 3, 5, 8, 10, 11, 13, 15, 16, 17]
+      iter = ary.slice_before(reuse: reuse, &.even?)
+      a = iter.next
+      a.should eq([1, 3, 5])
+
+      b = iter.next
+      b.should eq([8])
+
+      a.should be(b)
+      a.should be(reuse)
+    end
+
+    it "slices before: non-bool block" do
+      ary = [1, nil, nil, 2, 3, nil]
+      iter = ary.slice_before(&.itself)
+      iter.next.should eq([1, nil, nil])
+      iter.next.should eq([2])
+      iter.next.should eq([3, nil])
+    end
+
+    it "slices before pattern" do
+      ary = ["foo", "bar", "baz\n", "qux", "other\n", "end"]
+      iter = ary.slice_before(/\n/)
+      iter.next.should eq(["foo", "bar"])
+      iter.next.should eq(["baz\n", "qux"])
+      iter.next.should eq(["other\n", "end"])
+      iter.next.should be_a(Iterator::Stop)
+    end
+
+    it "slices before pattern with reuse = true" do
+      ary = ["foo", "bar", "baz\n", "qux", "other\n", "end"]
+      iter = ary.slice_before(/\n/, reuse: true)
+
+      a = iter.next
+      a.should eq(["foo", "bar"])
+
+      b = iter.next
+      b.should eq(["baz\n", "qux"])
+
+      a.should be(b)
+    end
+  end
+
+  describe "#slice_when" do
+    it "slices when" do
+      ary = [1, 1, 1, 2, 2, 3, 4, 4]
+      iter = ary.slice_when { |x, y| x != y }
+      iter.next.should eq([1, 1, 1])
+      iter.next.should eq([2, 2])
+      iter.next.should eq([3])
+      iter.next.should eq([4, 4])
+      iter.next.should be_a(Iterator::Stop)
+    end
+
+    it "slices when: single value" do
+      ary = [1]
+      iter = ary.slice_when { |x, y| x != y }
+      iter.next.should eq([1])
+      iter.next.should be_a(Iterator::Stop)
+    end
+
+    it "slices when: two values" do
+      ary = [1, 2]
+      iter = ary.slice_when { |x, y| x != y }
+      iter.next.should eq([1])
+      iter.next.should eq([2])
+      iter.next.should be_a(Iterator::Stop)
+    end
+
+    it "slices when: #to_a" do
+      ary = [1, 1, 1, 2, 2, 3, 4, 4]
+      ary.slice_when { |x, y| x != y }.to_a.should eq([
+        [1, 1, 1],
+        [2, 2],
+        [3],
+        [4, 4],
+      ])
+    end
+
+    it "slices when: #rewind" do
+      ary = [1, 1, 1, 2, 2, 3, 4, 4]
+      iter = ary.slice_when { |x, y| x != y }
+      iter.next.should eq([1, 1, 1])
+      iter.next.should eq([2, 2])
+
+      iter.rewind
+      iter.next.should eq([1, 1, 1])
+    end
+
+    it "slices when with reuse = true" do
+      ary = [1, 1, 1, 2, 2, 3, 4, 4]
+      iter = ary.slice_when(reuse: true) { |x, y| x != y }
+      a = iter.next
+      a.should eq([1, 1, 1])
+
+      b = iter.next
+      b.should eq([2, 2])
+
+      a.should be(b)
+    end
+
+    it "slices when with reuse = array" do
+      reuse = [] of Int32
+      ary = [1, 1, 1, 2, 2, 3, 4, 4]
+      iter = ary.slice_when(reuse) { |x, y| x != y }
+      a = iter.next
+      a.should eq([1, 1, 1])
+
+      b = iter.next
+      b.should eq([2, 2])
+
+      a.should be(b)
+      a.should be(reuse)
+    end
+
+    it "slices when: non-bool block" do
+      ary = [1, 2, nil, 3, nil, nil, 4]
+      ary.slice_when { |x, y| y }.to_a.should eq([
+        [1],
+        [2, nil],
+        [3, nil, nil],
+        [4],
+      ])
+    end
+  end
+
+  describe "#chunk_while" do
+    it "chunks while" do
+      ary = [1, 1, 1, 2, 2, 3, 4, 4]
+      iter = ary.chunk_while { |x, y| x == y }
+      iter.next.should eq([1, 1, 1])
+      iter.next.should eq([2, 2])
+      iter.next.should eq([3])
+      iter.next.should eq([4, 4])
+      iter.next.should be_a(Iterator::Stop)
     end
   end
 end

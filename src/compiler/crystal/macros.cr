@@ -769,11 +769,11 @@ module Crystal::Macros
     end
 
     # Similar to `NamedTuple#[]` but returns `NilLiteral` if *key* is undefined.
-    def [](key : ASTNode) : ASTNode
+    def [](key : SymbolLiteral | StringLiteral | MacroId) : ASTNode
     end
 
     # Adds or replaces a key.
-    def []=(key : ASTNode) : ASTNode
+    def []=(key : SymbolLiteral | StringLiteral | MacroId) : ASTNode
     end
   end
 
@@ -860,7 +860,7 @@ module Crystal::Macros
     # Returns the value of a named argument,
     # or NilLiteral if the named argument isn't
     # used in this attribute.
-    def [](name : SymbolLiteral) : ASTNode
+    def [](name : SymbolLiteral | StringLiteral | MacroId) : ASTNode
     end
   end
 

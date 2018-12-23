@@ -1404,4 +1404,32 @@ describe "Block inference" do
       i
       ), inject_primitives: false) { int32 }
   end
+
+  it "can infer block type given that the method has a return type (#7160)" do
+    assert_type(%(
+      struct Int32
+        def self.foo
+          0
+        end
+      end
+
+      class Node
+        @child : Node?
+
+        def sum : Int32
+          if child = @child
+            child.call(&.sum)
+          else
+            0
+          end
+        end
+
+        def call(&block : self -> T) forall T
+          T.foo
+        end
+      end
+
+      Node.new.sum
+      )) { int32 }
+  end
 end
