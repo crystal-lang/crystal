@@ -474,7 +474,7 @@ class String
 
   # Same as `#to_i` but returns an `Int128` or the block's value.
   def to_i128(base : Int = 10, whitespace = true, underscore = false, prefix = false, strict = true, &block)
-    gen_to_128 i128, ((1 << 127) - 1).to_u128, (1 << 127).to_u128
+    gen_to_ i128, ((1 << 127) - 1).to_u128, (1 << 127).to_u128
   end
 
   # Same as `#to_i` but returns an `UInt128`.
@@ -489,7 +489,7 @@ class String
 
   # Same as `#to_i` but returns an `UInt128` or the block's value.
   def to_u128(base : Int = 10, whitespace = true, underscore = false, prefix = false, strict = true, &block)
-    gen_to_128 u128, ((1 << 127) - 1).to_u128
+    gen_to_ u128, ((1 << 127) - 1).to_u128
   end
 
   # :nodoc:
@@ -521,7 +521,12 @@ class String
     invalid : Bool
 
   private macro gen_to_(method, max_positive = nil, max_negative = nil)
-    info = to_u64_info(base, whitespace, underscore, prefix, strict)
+    if base == UInt128
+      info = to_u128_info(base, whitespace, underscore, prefix, strict)
+    else
+      info = to_u64_info(base, whitespace, underscore, prefix, strict)
+    end
+
     return yield if info.invalid
 
     if info.negative
@@ -647,27 +652,8 @@ class String
     negative : Bool,
     invalid : Bool
 
-  private macro gen_to_128(method, max_positive = nil, max_negative = nil)
-    info = to_u128_info(base, whitespace, underscore, prefix, strict)
-    return yield if info.invalid
-
-    if info.negative
-      {% if max_negative %}
-        return yield if info.value > {{max_negative}}
-        -info.value.to_{{method}}
-      {% else %}
-        return yield
-      {% end %}
-    else
-      {% if max_positive %}
-        return yield if info.value > {{max_positive}}
-      {% end %}
-      info.value.to_{{method}}
-    end
-  end
-
   private def to_u128_info(base, whitespace, underscore, prefix, strict)
-    raise ArgumentError.new("Invalid base #{base}") unless 2 <= base <= 36 || base == 62
+    raise ArgumentError.new("Invalid base #{base}") unless 2 <= base <= 128 || base == 62
 
     ptr = to_unsafe
 
