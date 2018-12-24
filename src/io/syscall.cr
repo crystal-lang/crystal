@@ -86,20 +86,20 @@ module IO::Syscall
   end
 
   # :nodoc:
-  def resume_read(timed_out = false)
+  def enqueue_read(timed_out = false)
     @read_timed_out = timed_out
 
     if reader = @readers.try &.shift?
-      reader.resume
+      Crystal::Scheduler.enqueue(reader)
     end
   end
 
   # :nodoc:
-  def resume_write(timed_out = false)
+  def enqueue_write(timed_out = false)
     @write_timed_out = timed_out
 
     if writer = @writers.try &.shift?
-      writer.resume
+      Crystal::Scheduler.enqueue(writer)
     end
   end
 

@@ -4,6 +4,10 @@ lib LibCrystalMain
 end
 
 module Crystal
+  NPROCS = ENV.fetch("NPROCS", "1").to_i
+
+  @@running = false
+
   # Defines the main routine run by normal Crystal programs:
   #
   # - Initializes the GC
@@ -32,22 +36,39 @@ module Crystal
   # same can be accomplished with `at_exit`. But in some cases
   # redefinition of C's main is needed.
   def self.main(&block)
-    GC.init
+    # initialize Crystal core foundations, responsible to initialize enough of
+    # the main user code, which includes corelib and stdlib initializations, and
+    # that will be executed in a fiber:
+    GC.init                     # memory allocator
+    Fiber.init                  # stack pool, fiber list
+    Thread.init                 # threads, main thread
+    Crystal::EventLoop.init     # I/O, sleep timers, ...
+    Crystal::Scheduler.init     # fiber schedulers (threads)
 
-    status =
+    status = 0
+
+    # start the main fiber, a scheduler thread will pick it up later:
+    spawn(name: "main_user_code") do
       begin
-        yield
-        0
+        block.call
       rescue ex
-        1
+        AtExitHandlers.exception = ex
+        status = 1
       end
 
-    AtExitHandlers.exception = ex if ex
+      status = AtExitHandlers.run(status)
+      STDOUT.flush
+      STDERR.flush
+    ensure
+      # main program is terminated: break out of the main loop, so `#main` can
+      # be resumed and the program will exit:
+      break_main_loop
+    end
 
-    status = AtExitHandlers.run status
-    STDOUT.flush
-    STDERR.flush
+    # spawns scheduler threads, then blocks until the main user code is finished:
+    start_main_loop
 
+    # done: exit with status
     status
   end
 
@@ -95,6 +116,71 @@ module Crystal
   # more details.
   def self.main_user_code(argc : Int32, argv : UInt8**)
     LibCrystalMain.__crystal_main(argc, argv)
+  end
+
+  # :nodoc:
+  def self.running?
+    @@running
+  end
+
+  private def self.mutex
+    @@mutex ||= Thread::Mutex.new
+  end
+
+  private def self.condition_variable
+    @@condition_variable ||= Thread::ConditionVariable.new
+  end
+
+  # Start the main Crystal loop. This will start the scheduler threads then
+  # until `break_main_loop` is eventually called from the main user code fiber.
+  #
+  # We always start at least one thread, the main thread being dedicated to
+  # occasional cleanups, receiving signals, ...
+  private def self.start_main_loop : Nil
+    mutex.synchronize do
+      @@running = true
+
+      # TODO: block standard signal delivery with pthread_sigmask, so started
+      #       threads won't receive any standard signal (they inherit the
+      #       current thread's sigmask).
+
+      # starts N threads, each running their own scheduler:
+      NPROCS.times do
+        Thread.new do
+          Thread.current.scheduler.start
+        rescue ex
+          fatal ex, "Unexpected Crystal::Scheduler exception"
+        end
+      end
+
+      # TODO: unblock standard signal delivery with pthread_sigmask, so the main
+      #       thread will be the only one to receive & handle signals.
+
+      # block until `main` has terminated; unblocks temporarily once in a while
+      # to execute some cleanup operations:
+      while running?
+        condition_variable.wait(mutex, 5.seconds) do
+          Fiber.stack_pool.collect
+        end
+      end
+
+      # TODO: unpark threads (if any) and wait for them to be terminated
+    end
+  end
+
+  private def self.break_main_loop : Nil
+    mutex.synchronize do
+      @@running = false
+      condition_variable.broadcast
+    end
+  end
+
+  private def self.fatal(exception, message)
+    STDERR.print message
+    STDERR.print ": "
+    exception.inspect_with_backtrace(STDERR)
+    STDERR.flush
+    exit(1)
   end
 end
 

@@ -24,13 +24,26 @@ class Mutex
   # Try to lock the mutex. Returns immediately with `true` if the lock was
   # acquired and `false` otherwise.
   def try_lock : Bool
-    @mutex.try_lock
+    current = Fiber.current
+
+    if @mutex_fiber == current
+      @lock_count += 1
+    elsif @mutex.try_lock
+      @mutex_fiber = current
+    else
+      return false
+    end
+
+    true
   end
 
   # Unlocks the mutex lock. Resumes a blocked fiber if one is pending.
   def unlock : Nil
-    unless @mutex_fiber == Fiber.current
+    unless @mutex_fiber
       raise "Attempt to unlock a mutex which is not locked"
+    end
+    unless @mutex_fiber == Fiber.current
+      raise "Attempt to unlock a mutex that is locked by #{@mutex_fiber} from #{Fiber.current}"
     end
 
     if @lock_count > 0

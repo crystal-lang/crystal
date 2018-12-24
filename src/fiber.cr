@@ -24,7 +24,8 @@ class Fiber
 
   STACK_SIZE = 8 * 1024 * 1024
 
-  @@fibers = Thread::LinkedList(Fiber).new
+  @@stack_pool = uninitialized StackPool
+  @@fibers = uninitialized Thread::LinkedList(Fiber)
 
   @context : Context
   @stack : Void*
@@ -45,13 +46,19 @@ class Fiber
   property mutex_next : Fiber?
 
   # :nodoc:
-  def self.inactive(fiber : Fiber)
-    @@fibers.delete(fiber)
+  def self.init
+    @@stack_pool = StackPool.new
+    @@fibers = Thread::LinkedList(Fiber).new
   end
 
   # :nodoc:
   def self.stack_pool
-    @@stack_pool ||= StackPool.new
+    @@stack_pool
+  end
+
+  # :nodoc:
+  def self.inactive(fiber : Fiber)
+    @@fibers.delete(fiber)
   end
 
   def initialize(@name : String? = nil, &@proc : ->)
@@ -74,11 +81,10 @@ class Fiber
   end
 
   # :nodoc:
-  def initialize
+  def initialize(@name : String = "main")
     @proc = Proc(Void).new { }
     @context = Context.new(_fiber_get_stack_top)
     @stack_bottom = GC.stack_bottom
-    @name = "main"
 
     # Determine location of the top of the stack.
     # The technique here works only for the main stack on a POSIX platform.
@@ -100,7 +106,7 @@ class Fiber
   end
 
   protected def self.allocate_stack
-    if pointer = stack_pool.pop?
+    if pointer = @@stack_pool.pop?
       return pointer
     end
 
@@ -132,7 +138,7 @@ class Fiber
     ex.inspect_with_backtrace(STDERR)
     STDERR.flush
   ensure
-    Fiber.stack_pool << @stack
+    @@stack_pool << @stack
 
     # Remove the current fiber from the linked list
     @@fibers.delete(self)
@@ -193,16 +199,14 @@ class Fiber
   end
 
   protected def push_gc_roots
-    # Push the used section of the stack
+    # pushes the used section of the stack:
     GC.push_stack @context.stack_top, @stack_bottom
   end
 
   # pushes the stack of pending fibers when the GC wants to collect memory:
   GC.before_collect do
-    current = Fiber.current
-
     @@fibers.unsafe_each do |fiber|
-      fiber.push_gc_roots unless fiber == current
+      fiber.push_gc_roots unless fiber.running?
     end
   end
 end

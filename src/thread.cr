@@ -8,7 +8,7 @@ class Thread
   # Use spawn and channels instead.
 
   # all thread objects, so the GC can see them (it doesn't scan thread locals)
-  @@threads = Thread::LinkedList(Thread).new
+  @@threads = uninitialized Thread::LinkedList(Thread)
 
   @th : LibC::PthreadT
   @exception : Exception?
@@ -20,6 +20,21 @@ class Thread
 
   # :nodoc:
   property previous : Thread?
+
+  # :nodoc:
+  def self.init
+    @@threads = Thread::LinkedList(Thread).new
+
+    {% if flag?(:android) || flag?(:openbsd) %}
+      @@current_key = begin
+        ret = LibC.pthread_key_create(out current_key, nil)
+        raise Errno.new("pthread_key_create", ret) unless ret == 0
+        current_key
+      end
+    {% end %}
+
+    Thread.current = Thread.new
+  end
 
   # Starts a new system thread.
   def initialize(&@func : ->)
@@ -42,7 +57,7 @@ class Thread
   def initialize
     @func = ->{}
     @th = LibC.pthread_self
-    @main_fiber = Fiber.new
+    @main_fiber = Fiber.new(name: "main thread")
 
     @@threads.push(self)
   end
@@ -101,12 +116,7 @@ class Thread
     end
   {% end %}
 
-  # Create the thread object for the current thread (aka the main thread of the
-  # process).
-  #
-  # TODO: consider moving to `kernel.cr` or `crystal/main.cr`
-  self.current = new
-
+  # Yields CPU time to another thread.
   def self.yield
     ret = LibC.sched_yield
     raise Errno.new("sched_yield") unless ret == 0
@@ -124,7 +134,7 @@ class Thread
 
   protected def start
     Thread.current = self
-    @main_fiber = fiber = Fiber.new
+    @main_fiber = fiber = Fiber.new("thread")
 
     begin
       @func.call

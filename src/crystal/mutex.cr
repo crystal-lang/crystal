@@ -56,7 +56,7 @@ class Crystal::Mutex
     # wakeup next blocked fiber (if any):
     if fiber = @blocking.shift?
       @spin.unlock
-      Crystal::Scheduler.yield(fiber)
+      Crystal::Scheduler.enqueue(fiber)
     else
       @spin.unlock
     end

@@ -193,7 +193,7 @@ module Crystal::Signal
   end
 
   def self.start_loop
-    spawn do
+    spawn(name: "signal_loop") do
       loop do
         value = reader.read_bytes(Int32)
       rescue Errno
