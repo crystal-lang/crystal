@@ -35,6 +35,10 @@ class Thread
     Thread.current = Thread.new
   end
 
+  def self.unsafe_each
+    @@threads.unsafe_each { |thread| yield thread }
+  end
+
   # Starts a new system thread.
   def initialize(&@func : ->)
     @th = uninitialized LibC::PthreadT
@@ -179,5 +183,10 @@ class Thread
     {% end %}
 
     address
+  end
+
+  # :nodoc:
+  def to_unsafe
+    @th
   end
 end

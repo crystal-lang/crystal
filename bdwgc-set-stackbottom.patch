@@ -1,0 +1,39 @@
+--- bdwgc-7.6.4.orig/pthread_support.c	2018-12-26 18:58:52.500123823 +0100
++++ bdwgc-7.6.4/pthread_support.c	2018-12-26 19:42:15.588239320 +0100
+@@ -1427,6 +1427,36 @@
+     return client_data; /* result */
+ }
+ 
++GC_API char * GC_CALL GC_get_stackbottom()
++{
++    pthread_t thread = pthread_self();
++    GC_thread me;
++    char * ret;
++
++    LOCK();
++    me = GC_lookup_thread(thread);
++    if ((me -> flags & MAIN_THREAD) == 0) {
++        ret = me -> stack_end;
++    } else {
++        ret = GC_stackbottom;
++    }
++    UNLOCK();
++
++    return ret;
++}
++
++GC_API void GC_CALL GC_set_stackbottom(pthread_t thread,
++                                       char * stackbottom)
++{
++    GC_thread me = GC_lookup_thread(thread);
++
++    if ((me -> flags & MAIN_THREAD) == 0) {
++        me -> stack_end = stackbottom;
++    } else {
++        GC_stackbottom = stackbottom;
++    }
++}
++
+ STATIC void GC_unregister_my_thread_inner(GC_thread me)
+ {
+ #   ifdef DEBUG_THREADS

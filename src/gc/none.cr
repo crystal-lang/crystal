@@ -67,23 +67,38 @@ module GC
     end
   {% end %}
 
-  @@stack_bottom = Pointer(Void).null
-
   # :nodoc:
   def self.stack_bottom
-    @@stack_bottom
+    Pointer(Void).null
   end
 
-  # :nodoc:
-  def self.stack_bottom=(@@stack_bottom : Void*)
-    @@stack_bottom
-  end
+  {% if flag?(:mt) %}
+    # :nodoc:
+    def self.set_stackbottom(thread : Thread, pointer : Void*)
+    end
+
+    # :nodoc:
+    def self.lock_read
+    end
+
+    # :nodoc:
+    def self.unlock_read
+    end
+
+    # :nodoc:
+    def self.lock_write
+    end
+
+    # :nodoc:
+    def self.unlock_write
+    end
+  {% else %}
+    # :nodoc:
+    def self.stack_bottom=(stack_bottom : Void*)
+    end
+  {% end %}
 
   # :nodoc:
   def self.push_stack(stack_top, stack_bottom)
-  end
-
-  # :nodoc:
-  def self.before_collect(&block)
   end
 end
