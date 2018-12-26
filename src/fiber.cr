@@ -203,10 +203,20 @@ class Fiber
     GC.push_stack @context.stack_top, @stack_bottom
   end
 
-  # pushes the stack of pending fibers when the GC wants to collect memory:
+  # Pushes the stack of pending fibers when the GC wants to collect memory.
+  #
+  # Also sets the stackbottom of scheduler threads, because BDWGC stopped the
+  # world, and knows the current stack pointer of the active fiber eacg thread
+  # is running, but it doesn't know the fiber's stack bottom, it knows some
+  # other fiber's stack bottom, which is invalid.
   GC.before_collect do
     @@fibers.unsafe_each do |fiber|
       fiber.push_gc_roots unless fiber.running?
+    end
+
+    Thread.unsafe_each do |thread|
+      fiber = thread.scheduler.@current
+      GC.set_stackbottom(thread, fiber.@stack_bottom)
     end
   end
 end

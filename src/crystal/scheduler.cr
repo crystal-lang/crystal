@@ -137,26 +137,25 @@ class Crystal::Scheduler
     # context has been fully saved, so we wait:
     spin_until_resumable(fiber)
 
+    {% unless flag?(:gc_none) %}
+      # disable GC suspend signal for this thread, so it won't be interrupted
+      # while it's swapping context, which would leave the thread in an invalid
+      # state (e.g. @current points to the new fiber, but the current stack
+      # pointer still points to the old fiber stack) which would lead
+      # GC.before_collect to report an invalid stack (mismatched stack bottom &
+      # stack pointer) and... crash GC when it will scan the stack.
+      GC.block_suspend_signal
+    {% end %}
+
     # replace references:
     current, @current = @current, fiber
-
-    {% unless flag?(:gc_none) %}
-      # register the fiber's stack as the current thread's stack to the garbage
-      # collector; we disable BDWGC to avoid a race-condition between
-      # register-gc-stack and swapcontext during which another thread could call
-      # GC_collect and stop-the-world, leaving the GC with an invalid thread
-      # stack:
-      GC.disable
-      GC.stack_bottom = fiber.@stack_bottom
-      # GC.set_stack_bottom(LibC.pthread_self, fiber.@stack_bottom)
-    {% end %}
 
     # swap the execution context:
     Fiber.swapcontext(pointerof(current.@context), pointerof(fiber.@context))
 
     {% unless flag?(:gc_none) %}
-      # eventually resume the GC (in the new context)
-      GC.enable
+      # context was fully swapped, we can reenable the GC suspend signal:
+      GC.unblock_suspend_signal
     {% end %}
   end
 

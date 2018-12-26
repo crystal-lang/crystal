@@ -14,6 +14,8 @@ lib LibGC
   alias Word = LibC::ULong
 
   fun init = GC_init
+  fun get_suspend_signal = GC_get_suspend_signal : Int
+
   fun malloc = GC_malloc(size : SizeT) : Void*
   fun malloc_atomic = GC_malloc_atomic(size : SizeT) : Void*
   fun realloc = GC_realloc(ptr : Void*, size : SizeT) : Void*
@@ -46,6 +48,8 @@ lib LibGC
 
   fun push_all_eager = GC_push_all_eager(bottom : Void*, top : Void*)
 
+  fun set_stackbottom = GC_set_stackbottom(LibC::PthreadT, Void*)
+  fun get_stackbottom = GC_get_stackbottom : Char*
   $stackbottom = GC_stackbottom : Void*
 
   fun set_on_collection_event = GC_set_on_collection_event(cb : ->)
@@ -66,6 +70,18 @@ lib LibGC
 end
 
 module GC
+  @@sigset = uninitialized LibC::SigsetT
+
+  def self.init
+    {% unless flag?(:win32) %}
+      LibGC.set_handle_fork(1)
+    {% end %}
+    LibGC.init
+
+    LibC.sigemptyset(pointerof(@@sigset))
+    LibC.sigaddset(pointerof(@@sigset), LibGC.get_suspend_signal)
+  end
+
   # :nodoc:
   def self.malloc(size : LibC::SizeT) : Void*
     LibGC.malloc(size)
@@ -79,13 +95,6 @@ module GC
   # :nodoc:
   def self.realloc(ptr : Void*, size : LibC::SizeT) : Void*
     LibGC.realloc(ptr, size)
-  end
-
-  def self.init
-    {% unless flag?(:win32) %}
-      LibGC.set_handle_fork(1)
-    {% end %}
-    LibGC.init
   end
 
   def self.collect
@@ -173,8 +182,8 @@ module GC
   {% end %}
 
   # :nodoc:
-  def self.stack_bottom
-    LibGC.stackbottom
+  def self.stack_bottom : Void*
+    LibGC.get_stackbottom.as(Void*)
   end
 
   # :nodoc:
@@ -183,18 +192,36 @@ module GC
   end
 
   # :nodoc:
+  def self.set_stackbottom(thread : Thread, pointer : Void*)
+    LibGC.set_stackbottom(thread, pointer)
+  end
+
+  # :nodoc:
   def self.push_stack(stack_top, stack_bottom)
     LibGC.push_all_eager(stack_top, stack_bottom)
   end
 
   # :nodoc:
+  def self.block_suspend_signal
+    LibC.pthread_sigmask(LibC::SIG_BLOCK, pointerof(@@sigset), nil)
+  end
+
+  # :nodoc:
+  def self.unblock_suspend_signal
+    LibC.pthread_sigmask(LibC::SIG_UNBLOCK, pointerof(@@sigset), nil)
+  end
+
+  # :nodoc:
   def self.before_collect(&block)
-    @@prev_push_other_roots = LibGC.get_push_other_roots
     @@curr_push_other_roots = block
+    @@prev_push_other_roots = LibGC.get_push_other_roots
 
     LibGC.set_push_other_roots ->do
-      @@prev_push_other_roots.try(&.call)
+      # we call crystal's callback before calling the previously set callback,
+      # because we set the thread stacks before collect, and it must be done
+      # before GC starts scanning stacks:
       @@curr_push_other_roots.try(&.call)
+      @@prev_push_other_roots.try(&.call)
     end
   end
 end

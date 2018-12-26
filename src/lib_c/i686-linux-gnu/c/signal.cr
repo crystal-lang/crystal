@@ -36,6 +36,8 @@ lib LibC
   SIGSTKFLT = 16
   SIGUNUSED = 31
 
+  SIG_BLOCK = 0
+  SIG_UNBLOCK = 1
   SIG_SETMASK = 2
 
   alias SighandlerT = Int ->

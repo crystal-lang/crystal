@@ -34,6 +34,8 @@ lib LibC
   SIGINFO   = 29
   SIGWINCH  = 28
 
+  SIG_BLOCK = 1
+  SIG_UNBLOCK = 2
   SIG_SETMASK = 3
 
   alias SighandlerT = Int ->

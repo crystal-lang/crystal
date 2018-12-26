@@ -80,6 +80,10 @@ module GC
   end
 
   # :nodoc:
+  def self.set_stackbottom(thread : Thread, pointer : Void*)
+  end
+
+  # :nodoc:
   def self.push_stack(stack_top, stack_bottom)
   end
 
