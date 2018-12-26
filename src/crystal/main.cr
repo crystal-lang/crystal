@@ -57,8 +57,16 @@ module Crystal
       end
 
       status = AtExitHandlers.run(status)
-      STDOUT.flush
-      STDERR.flush
+
+      # flush buffered standard file descriptors, because they depend on ebent
+      # loop and schedulers to run, then remove the nonblocking state, so any
+      # further writes will still be printed after scheduler threads have been
+      # stopped:
+      STDOUT.sync = true
+      STDOUT.blocking = true
+
+      STDERR.sync = true
+      STDERR.blocking = true
     ensure
       # main program is terminated: break out of the main loop, so `#main` can
       # be resumed and the program will exit:
@@ -143,6 +151,8 @@ module Crystal
       # TODO: block standard signal delivery with pthread_sigmask, so started
       #       threads won't receive any standard signal (they inherit the
       #       current thread's sigmask).
+      #
+      # NOTE: always allow the GC stop-the-world user-signal!
 
       # starts N threads, each running their own scheduler:
       NPROCS.times do
@@ -154,7 +164,7 @@ module Crystal
       end
 
       # TODO: unblock standard signal delivery with pthread_sigmask, so the main
-      #       thread will be the only one to receive & handle signals.
+      #       thread will be the only one to be interrupted by signals.
 
       # block until `main` has terminated; unblocks temporarily once in a while
       # to execute some cleanup operations:
@@ -164,7 +174,8 @@ module Crystal
         end
       end
 
-      # TODO: unpark threads (if any) and wait for them to be terminated
+      # TODO: unpark threads (if any) then wait for all scheduler threads to be
+      #       terminated
     end
   end
 
