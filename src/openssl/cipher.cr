@@ -104,6 +104,10 @@ class OpenSSL::Cipher
     @ctx = nil
   end
 
+  def authenticated?
+    LibCrypto.evp_cipher_flags(cipher).includes?(LibCrypto::CipherFlags::EVP_CIPH_FLAG_AEAD_CIPHER)
+  end
+
   private def cipherinit(cipher = nil, engine = nil, key = nil, iv = nil, enc = -1)
     if LibCrypto.evp_cipherinit_ex(@ctx, cipher, engine, key, iv, enc) != 1
       raise Error.new "EVP_CipherInit_ex"
