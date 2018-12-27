@@ -2,9 +2,13 @@ require "../../spec_helper"
 
 {% if flag?(:bits64) %}
 SupportedInts = [UInt8, UInt16, UInt32, UInt64, UInt128, Int8, Int16, Int32, Int64, Int128]
+
+PreviewOverflowFlags = ["preview_overflow"]
 {% else %}
 # skip Int128 and UInt128 on 32 bits platforms
 SupportedInts = [UInt8, UInt16, UInt32, UInt64, Int8, Int16, Int32, Int64]
+
+PreviewOverflowFlags = ["preview_overflow", "compiler_rt"]
 {% end %}
 
 describe "Code gen: arithmetics primitives" do
@@ -73,7 +77,7 @@ describe "Code gen: arithmetics primitives" do
           rescue OverflowError
             1
           end
-        ), flags: ["preview_overflow"]).to_i.should eq(1)
+        ), flags: PreviewOverflowFlags).to_i.should eq(1)
       end
 
       it "raises overflow for {{type}} + Int64" do
@@ -85,7 +89,7 @@ describe "Code gen: arithmetics primitives" do
           rescue OverflowError
             1
           end
-        ), flags: ["preview_overflow"]).to_i.should eq(1)
+        ), flags: PreviewOverflowFlags).to_i.should eq(1)
       end
     {% end %}
   end
@@ -101,7 +105,7 @@ describe "Code gen: arithmetics primitives" do
           rescue OverflowError
             1
           end
-        ), flags: ["preview_overflow"]).to_i.should eq(1)
+        ), flags: PreviewOverflowFlags).to_i.should eq(1)
       end
 
       it "raises overflow for {{type}} - Int64" do
@@ -113,7 +117,7 @@ describe "Code gen: arithmetics primitives" do
           rescue OverflowError
             1
           end
-        ), flags: ["preview_overflow"]).to_i.should eq(1)
+        ), flags: PreviewOverflowFlags).to_i.should eq(1)
       end
     {% end %}
   end
@@ -129,7 +133,7 @@ describe "Code gen: arithmetics primitives" do
           rescue OverflowError
             1
           end
-        ), flags: ["preview_overflow"]).to_i.should eq(1)
+        ), flags: PreviewOverflowFlags).to_i.should eq(1)
       end
 
       it "raises overflow for {{type}} * Int64" do
@@ -141,7 +145,7 @@ describe "Code gen: arithmetics primitives" do
           rescue OverflowError
             1
           end
-        ), flags: ["preview_overflow"]).to_i.should eq(1)
+        ), flags: PreviewOverflowFlags).to_i.should eq(1)
       end
     {% end %}
   end
