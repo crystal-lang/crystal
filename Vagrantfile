@@ -126,7 +126,7 @@ def install_crystal(c, family, dist:, bits:, github_targz:)
     c.vm.provision :shell, inline: %(
       mkdir -p /opt/crystal
       echo '#{targz_url}'
-      curl -sSL --output - '#{targz_url}' | tar xz -C /opt/crystal --strip-component=1 -f -
+      curl -sSL '#{targz_url}' | tar xz -C /opt/crystal --strip-component=1 -f -
 
       echo 'export LIBRARY_PATH=/opt/crystal/lib/crystal/lib/:${LIBRARY_PATH}' >> /etc/profile.d/crystal.sh
       echo 'export PATH=/opt/crystal/bin:$PATH' >> /etc/profile.d/crystal.sh
