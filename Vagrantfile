@@ -18,7 +18,17 @@
 #
 # The vagrant machines will be provisined with a native crystal
 # package or with the targz version downloaded from github.
-# Change INSTALL_GITHUB_TARGZ to choose the installation method.
+# Set `INSTALL_GITHUB_TARGZ` to download .tar.gz files from github.
+#
+# ```
+# $ INSTALL_GITHUB_TARGZ=true vagrant up xenial64
+# ```
+#
+# Configuration via environment variables
+#
+# * `INSTALL_GITHUB_TARGZ=true|false` native package vs github tar.gz installation
+# * `VM_CPUS=N` number of cpus (default: 2)
+# * `VM_MEMORY_MB=N` megabytes of ram for vm (default: 4096)
 #
 # To use Makefile targets on some machines the `FLAGS=--no-debug`
 # might be needed to reduce the memory footprint.
@@ -36,7 +46,8 @@
 # * alpine is unable to to use the github .tar.gz compiler
 #
 
-INSTALL_GITHUB_TARGZ = false
+INSTALL_GITHUB_TARGZ = ENV.fetch("INSTALL_GITHUB_TARGZ", false) == "true"
+
 GITHUB_URL = "https://github.com/crystal-lang/crystal/releases/download/0.27.0/crystal-0.27.0-1"
 CRYSTAL_LINUX64_TARGZ = "#{GITHUB_URL}-linux-x86_64.tar.gz"
 CRYSTAL_LINUX32_TARGZ = "#{GITHUB_URL}-linux-i686.tar.gz"
@@ -59,8 +70,7 @@ Vagrant.configure("2") do |config|
   define_alpine config, name: 'alpine64', bits: 64
 
   config.vm.provider "virtualbox" do |vb|
-    vb.memory = 6*1024
-    vb.cpus = 2
+    vb.cpus = ENV.fetch("VM_CPUS", "2").to_i
 
     # Keep time synced with host
     # vb.customize [ "guestproperty", "set", :id, "/VirtualBox/GuestAdd/VBoxService/--timesync-set-threshold", 10000 ]
@@ -77,10 +87,11 @@ def clone_crystal_from_vagrant(config)
 end
 
 def setup_memory(config, bits)
-  if bits == 32
-    config.vm.provider "virtualbox" do |vb|
-      vb.memory = 4*1024
-    end
+  memory = ENV.fetch("VM_MEMORY_MB", "4096").to_i
+  memory = [memory, 4096].min if bits == 32
+
+  config.vm.provider "virtualbox" do |vb|
+    vb.memory = memory
   end
 end
 
@@ -253,6 +264,7 @@ def define_freebsd(config, name:, box:)
   config.vm.define name do |c|
     c.ssh.shell = "sh"
     c.vm.box = "freebsd/FreeBSD-#{box}"
+    setup_memory(config, 64)
 
     c.vm.hostname = name
     c.vm.base_mac = "6658695E16F0"
