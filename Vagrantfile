@@ -186,7 +186,8 @@ def install_crystal(c, family, dist:, bits:, github_targz:)
       MSG
     when "alpine"
       c.vm.provision :shell, inline: %(
-        apk add --no-cache crystal shards
+        apk add --no-cache crystal shards \
+          || echo "WARNING: apk failed (ignored)"
       )
     end
   end
@@ -288,7 +289,7 @@ def define_freebsd(config, name:, box:)
   end
 end
 
-def define_alpine(config, name:, bits:)
+def define_alpine(config, name:, bits:, llvm: '4')
   config.vm.define name do |c|
     c.vm.box = "alpine/alpine#{bits}"
 
@@ -297,13 +298,18 @@ def define_alpine(config, name:, bits:)
     c.vm.provision :shell, inline: %(
       echo '' > /etc/profile.d/crystal.sh
 
-      echo 'export LLVM_CONFIG=llvm4-config' >> /etc/profile.d/crystal.sh
       echo 'export FLAGS="--target x86_64-linux-musl --link-flags=-no-pie --static"' >> /etc/profile.d/crystal.sh
+
+      apk update
 
       apk add --no-cache \
         tar curl git gcc g++ make automake libtool autoconf bash coreutils paxmark \
         zlib-dev yaml-dev pcre-dev libxml2-dev gmp-dev readline-dev libressl-dev libatomic_ops libevent-dev gc-dev \
-        llvm4-dev llvm4-static || echo "WARNING: apk failed (ignored)"
+        || echo "WARNING: apk failed (ignored)"
+
+      echo 'export LLVM_CONFIG=llvm#{llvm}-config' >> /etc/profile.d/crystal.sh
+      apk add --no-cache llvm#{llvm}-dev llvm#{llvm}-static \
+        || echo "WARNING: apk failed (ignored)"
     )
 
     install_crystal(c, "alpine", dist: nil, bits: bits, github_targz: false)
