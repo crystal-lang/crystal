@@ -148,6 +148,7 @@ describe BigDecimal do
       BigDecimal.new(-1) / BigDecimal.new(0)
     end
     BigDecimal.new(1).should eq(BigDecimal.new(1) / BigDecimal.new(1))
+    BigDecimal.new(10).should eq(BigDecimal.new(100, 1) / BigDecimal.new(100000000, 8))
     BigDecimal.new(5.to_big_i, 1_u64).should eq(BigDecimal.new(1) / BigDecimal.new(2))
     BigDecimal.new(-5.to_big_i, 1_u64).should eq(BigDecimal.new(1) / BigDecimal.new(-2))
     BigDecimal.new(-5.to_big_i, 4_u64).should eq(BigDecimal.new(1) / BigDecimal.new(-2000))

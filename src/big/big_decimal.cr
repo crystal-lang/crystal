@@ -204,6 +204,7 @@ struct BigDecimal < Number
   # ```
   def div(other : BigDecimal, max_div_iterations = DEFAULT_MAX_DIV_ITERATIONS) : BigDecimal
     check_division_by_zero other
+    other.factor_powers_of_ten
 
     scale = @scale - other.scale
     numerator, denominator = @value, other.@value
@@ -413,7 +414,7 @@ struct BigDecimal < Number
 
   # Factors out any extra powers of ten in the internal representation.
   # For instance, value=100 scale=2 => value=1 scale=0
-  private def factor_powers_of_ten
+  protected def factor_powers_of_ten
     while @scale > 0
       quotient, remainder = value.divmod(TEN)
       break if remainder != 0
