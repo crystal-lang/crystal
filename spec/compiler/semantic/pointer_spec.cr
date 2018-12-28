@@ -163,4 +163,15 @@ describe "Semantic: pointer" do
       pointerof(LibFoo.extern)
       )) { pointer_of(int32) }
   end
+
+  it "doesn't allow non-invariant type in value= (#6997)" do
+    assert_error %(
+      class Gen(T)
+      end
+
+      ptr = Pointer(Gen(Char | Int32)).malloc(1_u64)
+      ptr.value = Gen(Char).new
+      ),
+      "can't insert Gen(Char) into Pointer(Gen(Char | Int32))"
+  end
 end

@@ -48,7 +48,7 @@ module Debug
           if abbrev = abbreviations[code - 1]? # abbreviations.find { |a| a.code == abbrev }
             abbrev.attributes.each do |attr|
               value = read_attribute_value(attr.form)
-              attributes << {attr.at, attr.form, value}
+              attributes << {attr.at, attr.form, value.as(Value)}
             end
             yield code, abbrev, attributes
           else

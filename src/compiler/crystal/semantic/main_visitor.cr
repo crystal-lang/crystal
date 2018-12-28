@@ -2426,7 +2426,11 @@ module Crystal
 
       value = @vars["value"]
 
-      scope.var.bind_to value
+      # Check for a strict match (filter_by does that)
+      unless scope.var.type.filter_by(value.type)
+        node.raise "can't insert #{value.type} into Pointer(#{scope.var.type})"
+      end
+
       node.bind_to value
     end
 
