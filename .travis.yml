@@ -27,7 +27,7 @@ install:
   - travis_retry bin/ci prepare_build
 
 script:
-  - travis_retry bin/ci build
+  - travis_wait 40 travis_retry bin/ci build
 
 branches:
   only:
