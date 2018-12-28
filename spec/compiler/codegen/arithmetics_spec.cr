@@ -1,11 +1,13 @@
 require "../../spec_helper"
 
-{% if flag?(:bits64) %}
+{% if flag?(:darwin) %}
 SupportedInts = [UInt8, UInt16, UInt32, UInt64, UInt128, Int8, Int16, Int32, Int64, Int128]
 
 PreviewOverflowFlags = ["preview_overflow"]
 {% else %}
-# skip Int128 and UInt128 on 32 bits platforms
+# Skip Int128 and UInt128 on linux platforms due to compiler-rt dependency.
+# PreviewOverflowFlags includes compiler_rt flag to support Int64 overflow
+# detection in 32 bits platforms.
 SupportedInts = [UInt8, UInt16, UInt32, UInt64, Int8, Int16, Int32, Int64]
 
 PreviewOverflowFlags = ["preview_overflow", "compiler_rt"]
