@@ -286,7 +286,7 @@ describe "Enumerable" do
       a.should be(reuse)
     end
 
-    it "returns running pairs with reuse = true" do
+    it "yields running pairs with reuse = true" do
       array = [] of Array(Int32)
       object_ids = Set(UInt64).new
       [1, 2, 3, 4].each_cons(2, reuse: true) do |pair|
@@ -297,7 +297,7 @@ describe "Enumerable" do
       object_ids.size.should eq(1)
     end
 
-    it "returns running pairs with reuse = array" do
+    it "yields running pairs with reuse = array" do
       array = [] of Array(Int32)
       reuse = [] of Int32
       [1, 2, 3, 4].each_cons(2, reuse: reuse) do |pair|
