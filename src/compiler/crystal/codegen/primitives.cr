@@ -623,10 +623,29 @@ class Crystal::CodeGenVisitor
 
   def codegen_convert(from_type : IntegerType, to_type : IntegerType, arg, *, checked : Bool)
     if from_type.normal_rank == to_type.normal_rank
+      # if the normal_rank is the same (eg: UInt64 / Int64)
+      # there is still chance for overflow
+
+      # TODO remove conditional after 0.28
+      if @program.has_flag?("preview_overflow")
+        if checked
+          overflow = codegen_out_of_range(to_type, from_type, arg)
+          codegen_raise_overflow_cond(overflow)
+        end
+      end
+
       arg
     elsif from_type.rank < to_type.rank
       extend_int from_type, to_type, arg
     else
+      # TODO remove conditional after 0.28
+      if @program.has_flag?("preview_overflow")
+        if checked
+          overflow = codegen_out_of_range(to_type, from_type, arg)
+          codegen_raise_overflow_cond(overflow)
+        end
+      end
+
       trunc arg, llvm_type(to_type)
     end
   end

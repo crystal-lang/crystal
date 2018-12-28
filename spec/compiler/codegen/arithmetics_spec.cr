@@ -2,6 +2,10 @@ require "../../spec_helper"
 
 {% if flag?(:darwin) %}
 SupportedInts = [UInt8, UInt16, UInt32, UInt64, UInt128, Int8, Int16, Int32, Int64, Int128]
+SupportedIntsConversions = {
+                             to_i8: Int8, to_i16: Int16, to_i32: Int32, to_i64: Int64, to_i128: Int128,
+                             to_u8: UInt8, to_u16: UInt16, to_u32: UInt32, to_u64: UInt64, to_u128: UInt128,
+                           }
 
 PreviewOverflowFlags = ["preview_overflow"]
 {% else %}
@@ -9,6 +13,10 @@ PreviewOverflowFlags = ["preview_overflow"]
 # PreviewOverflowFlags includes compiler_rt flag to support Int64 overflow
 # detection in 32 bits platforms.
 SupportedInts = [UInt8, UInt16, UInt32, UInt64, Int8, Int16, Int32, Int64]
+SupportedIntsConversions = {
+                             to_i8: Int8, to_i16: Int16, to_i32: Int32, to_i64: Int64,
+                             to_u8: UInt8, to_u16: UInt16, to_u32: UInt32, to_u64: UInt64,
+                           }
 
 PreviewOverflowFlags = ["preview_overflow", "compiler_rt"]
 {% end %}
@@ -149,6 +157,80 @@ describe "Code gen: arithmetics primitives" do
           end
         ), flags: PreviewOverflowFlags).to_i.should eq(1)
       end
+    {% end %}
+  end
+
+  describe ".to_i conversions" do
+    {% for method, path_type in SupportedIntsConversions %}
+      {% type = path_type.resolve %}
+
+      {% if ![UInt64, Int128, UInt128].includes?(type) %}
+        it "raises overflow if greater than {{type}}::MAX" do
+          run(%(
+            require "prelude"
+
+            v = UInt64.new({{type}}::MAX) + 1_u64
+
+            begin
+              v.{{method}}
+              0
+            rescue OverflowError
+              1
+            end
+          ), flags: PreviewOverflowFlags).to_i.should eq(1)
+        end
+      {% end %}
+
+      {% if ![UInt128].includes?(type) && SupportedInts.includes?(UInt128) %}
+        it "raises overflow if greater than {{type}}::MAX (using UInt128)" do
+          run(%(
+            require "prelude"
+
+            v = UInt128.new({{type}}::MAX) + 1_u128
+
+            begin
+              v.{{method}}
+              0
+            rescue OverflowError
+              1
+            end
+          ), flags: PreviewOverflowFlags).to_i.should eq(1)
+        end
+      {% end %}
+
+      {% if ![Int64, Int128, UInt128].includes?(type) %}
+        it "raises overflow if lower than {{type}}::MIN" do
+          run(%(
+            require "prelude"
+
+            v = Int64.new({{type}}::MIN) - 1_i64
+
+            begin
+              v.{{method}}
+              0
+            rescue OverflowError
+              1
+            end
+          ), flags: PreviewOverflowFlags).to_i.should eq(1)
+        end
+      {% end %}
+
+      {% if ![Int128].includes?(type) && SupportedInts.includes?(Int128) %}
+        it "raises overflow if lower than {{type}}::MIN (using Int128)" do
+          run(%(
+            require "prelude"
+
+            v = Int128.new({{type}}::MIN) - 1_i128
+
+            begin
+              v.{{method}}
+              0
+            rescue OverflowError
+              1
+            end
+          ), flags: PreviewOverflowFlags).to_i.should eq(1)
+        end
+      {% end %}
     {% end %}
   end
 end
