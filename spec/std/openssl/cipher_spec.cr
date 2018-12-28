@@ -46,8 +46,14 @@ describe OpenSSL::Cipher do
   end
 
   it "authenticated?" do
-    cipher = OpenSSL::Cipher.new("aes-128-gcm")
-    cipher.authenticated?.should eq(true)
+    begin
+      cipher = OpenSSL::Cipher.new("aes-128-gcm")
+      cipher.authenticated?.should eq(true)
+    rescue ArgumentError
+      # This system doesn't support GCM ciphers
+      # Silently skip, as this method will never return true
+      # Remove when macOS platforms target >= v10.13
+    end
 
     cipher = OpenSSL::Cipher.new("aes-128-cbc")
     cipher.authenticated?.should eq(false)
