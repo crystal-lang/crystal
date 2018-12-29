@@ -71,27 +71,27 @@ class HTTP::StatusCode
 
   # Returns `true` if the response status code is between 100 and 199.
   def self.informational?(status_code : Int)
-    (100..199).include?(status_code)
+    (100..199).includes?(status_code)
   end
 
   # Returns `true` if the response status code is between 200 and 299.
   def self.success?(status_code : Int)
-    (200..299).include?(status_code)
+    (200..299).includes?(status_code)
   end
 
   # Returns `true` if the response status code is between 300 and 399.
   def self.redirection?(status_code : Int)
-    (300..399).include?(status_code)
+    (300..399).includes?(status_code)
   end
 
   # Returns `true` if the response status code is between 400 and 499.
   def self.client_error?(status_code : Int)
-    (400..499).include?(status_code)
+    (400..499).includes?(status_code)
   end
 
   # Returns `true` if the response status code is between 500 and 599.
   def self.server_error?(status_code : Int)
-    (500..599).include?(status_code)
+    (500..599).includes?(status_code)
   end
 
   # Returns the default status message of the given HTTP status code.

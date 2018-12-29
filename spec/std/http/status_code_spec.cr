@@ -44,11 +44,11 @@ describe HTTP::StatusCode do
 
   describe ".server_error?" do
     it "returns true when given 5xx status code" do
-      HTTP::StatusCode.client_error?(500).should be true
+      HTTP::StatusCode.server_error?(500).should be true
     end
 
     it "returns false unless given 5xx status code" do
-      HTTP::StatusCode.client_error?(999).should be false
+      HTTP::StatusCode.server_error?(999).should be false
     end
   end
 
