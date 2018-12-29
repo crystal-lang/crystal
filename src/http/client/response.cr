@@ -10,7 +10,7 @@ class HTTP::Client::Response
   @cookies : Cookies?
 
   def initialize(@status_code, @body : String? = nil, @headers : Headers = Headers.new, status_message = nil, @version = "HTTP/1.1", @body_io = nil)
-    @status_message = status_message || HTTP.default_status_message_for(@status_code)
+    @status_message = status_message || HTTP::Status.default_message_for(@status_code)
 
     if Response.mandatory_body?(@status_code)
       @body = "" unless @body || @body_io
@@ -31,7 +31,7 @@ class HTTP::Client::Response
 
   # Returns `true` if the response status code is between 200 and 299.
   def success?
-    (200..299).includes?(status_code)
+    HTTP::Status.success?(status_code)
   end
 
   # Returns a convenience wrapper around querying and setting cookie related
