@@ -4,51 +4,51 @@ require "http"
 describe HTTP::StatusCode do
   describe ".informational?" do
     it "returns true when given 1xx status code" do
-      HTTP::StatusCode.informational?(100).should be true
+      HTTP::StatusCode.informational?(100).should be_true
     end
 
     it "returns false unless given 1xx status code" do
-      HTTP::StatusCode.informational?(999).should be false
+      HTTP::StatusCode.informational?(999).should be_false
     end
   end
 
   describe ".success?" do
     it "returns true when given 2xx status code" do
-      HTTP::StatusCode.success?(200).should be true
+      HTTP::StatusCode.success?(200).should be_true
     end
 
     it "returns false unless given 2xx status code" do
-      HTTP::StatusCode.success?(999).should be false
+      HTTP::StatusCode.success?(999).should be_false
     end
   end
 
   describe ".redirection?" do
     it "returns true when given 3xx status code" do
-      HTTP::StatusCode.redirection?(300).should be true
+      HTTP::StatusCode.redirection?(300).should be_true
     end
 
     it "returns false unless given 3xx status code" do
-      HTTP::StatusCode.redirection?(999).should be false
+      HTTP::StatusCode.redirection?(999).should be_false
     end
   end
 
   describe ".client_error?" do
     it "returns true when given 4xx status code" do
-      HTTP::StatusCode.client_error?(400).should be true
+      HTTP::StatusCode.client_error?(400).should be_true
     end
 
     it "returns false unless given 4xx status code" do
-      HTTP::StatusCode.client_error?(999).should be false
+      HTTP::StatusCode.client_error?(999).should be_false
     end
   end
 
   describe ".server_error?" do
     it "returns true when given 5xx status code" do
-      HTTP::StatusCode.server_error?(500).should be true
+      HTTP::StatusCode.server_error?(500).should be_true
     end
 
     it "returns false unless given 5xx status code" do
-      HTTP::StatusCode.server_error?(999).should be false
+      HTTP::StatusCode.server_error?(999).should be_false
     end
   end
 
