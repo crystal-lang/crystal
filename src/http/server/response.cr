@@ -62,8 +62,8 @@ class HTTP::Server
       headers["Content-Length"] = content_length.to_s
     end
 
-    def status_code=(status : HTTP::StatusCode)
-      status_code = status.value
+    def status_code=(status_code : HTTP::StatusCode)
+      self.status_code = status_code.value
     end
 
     # See `IO#write(slice)`.
