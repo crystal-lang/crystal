@@ -126,7 +126,7 @@ class HTTP::Server
     end
 
     protected def write_headers
-      status_message = HTTP::StatusCode.new(@status_code).default_message
+      status_message = HTTP::StatusCode.default_message_for(@status_code)
       @io << @version << ' ' << @status_code << ' ' << status_message << "\r\n"
       headers.each do |name, values|
         values.each do |value|
