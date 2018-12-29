@@ -10,7 +10,7 @@ class HTTP::Client::Response
   @cookies : Cookies?
 
   def initialize(@status_code, @body : String? = nil, @headers : Headers = Headers.new, status_message = nil, @version = "HTTP/1.1", @body_io = nil)
-    @status_message = status_message || HTTP::StatusCode.default_message_for(@status_code)
+    @status_message = status_message || HTTP::StatusCode.new(@status_code).default_message
 
     if Response.mandatory_body?(@status_code)
       @body = "" unless @body || @body_io

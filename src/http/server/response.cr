@@ -62,6 +62,10 @@ class HTTP::Server
       headers["Content-Length"] = content_length.to_s
     end
 
+    def status_code=(status : HTTP::StatusCode)
+      status_code = status.value
+    end
+
     # See `IO#write(slice)`.
     def write(slice : Bytes)
       return if slice.empty?
@@ -122,7 +126,7 @@ class HTTP::Server
     end
 
     protected def write_headers
-      status_message = HTTP::StatusCode.default_message_for(@status_code)
+      status_message = HTTP::StatusCode.new(@status_code).default_message
       @io << @version << ' ' << @status_code << ' ' << status_message << "\r\n"
       headers.each do |name, values|
         values.each do |value|
