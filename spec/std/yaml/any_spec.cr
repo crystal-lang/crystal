@@ -1,5 +1,6 @@
 require "spec"
 require "yaml"
+require "json"
 
 describe YAML::Any do
   describe "casts" do
@@ -212,5 +213,13 @@ describe YAML::Any do
     any = YAML.parse("[[1], 2, 3]")
     any2 = any.clone
     any2.as_a[0].as_a.should_not be(any.as_a[0].as_a)
+  end
+
+  it "#to_json" do
+    any = YAML.parse <<-YAML
+      foo: bar
+      baz: [1, 2.3, true, "qux", {"qax": "qox"}]
+      YAML
+    any.to_json.should eq %({"foo":"bar","baz":[1,2.3,true,"qux",{"qax":"qox"}]})
   end
 end
