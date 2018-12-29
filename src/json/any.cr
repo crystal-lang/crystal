@@ -276,6 +276,10 @@ struct JSON::Any
     raw.to_json(json)
   end
 
+  def to_yaml(yaml : YAML::Nodes::Builder)
+    raw.to_yaml(yaml)
+  end
+
   # Returns a new JSON::Any instance with the `raw` value `dup`ed.
   def dup
     Any.new(raw.dup)
