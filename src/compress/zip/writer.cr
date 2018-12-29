@@ -1,4 +1,5 @@
 require "./file_info"
+require "./serializer"
 
 # Writes (streams) zip entries to an `IO`.
 #
@@ -24,6 +25,10 @@ require "./file_info"
 # end
 # ```
 class Compress::Zip::Writer
+  # Gets raised if you try to add the same filename to a ZIP archive twice
+  class DuplicateEntryFilename < ArgumentError
+  end
+
   # Whether to close the enclosed `IO` when closing this writer.
   property? sync_close = false
 
@@ -34,14 +39,15 @@ class Compress::Zip::Writer
   setter comment = ""
 
   # Creates a new writer to the given *io*.
-  def initialize(@io : IO, @sync_close = false)
-    @entries = [] of Entry
-    @compressed_size_counter = ChecksumWriter.new
-    @uncompressed_size_counter = ChecksumWriter.new(compute_crc32: true)
+  def initialize(io : IO, @sync_close = false)
+    @raw_io = io
+    @written = Zip::OutputCounter.new # keeps track of how many bytes we write
+    @io = IO::MultiWriter.new(@raw_io, @written)
 
-    # Keep track of how many bytes we write, because we need
-    # that to write the offset of each local file header and some other info
-    @written = 0_u32
+    @entries = [] of Entry
+    @filenames = Set(String).new
+
+    @serializer = Zip::Serializer.new
   end
 
   # Creates a new writer to the given *filename*.
@@ -72,82 +78,85 @@ class Compress::Zip::Writer
     end
   end
 
-  # Adds an entry and yields `IO` to write that entry's contents.
+  # Adds an Entry and yields `IO` for writing that entry's contents. After the IO
+  # has been written and the block terminates will write out the accumulated CRC32
+  # for the entry and the sizes as the data descriptor.
   #
-  # You can choose the Entry's compression method before adding it.
-  #
-  # * If the STORED compression method is used, its crc32, compressed
-  # size and uncompressed size **must** be set and be correct with
-  # respect to the data that will be written to the yielded `IO`.
-  # * If the DEFLATED compression method is used, crc32, compressed
-  # size and uncompressed size will be computed from the data
-  # written to the yielded IO.
-  #
-  # You can also set the Entry's time (which is `Time.utc` by default)
-  #  and extra data before adding it to the zip stream.
+  # Entry can be configured the same way as for `add()` without the block, however
+  # the bit 3 of the general_purpose_bit_flag is going to be forcibly set, and the
+  # compressed/uncompressed sizes and CRC32 are going to be reset to 0.
   def add(entry : Entry)
-    # bit 3: unknown compression size (not needed for STORED, by if left out it doesn't work...)
+    # Configure the entry for data descriptor use
+    # bit 3: "use data descriptor" flag - if it is set, the crc32 and sizes
+    # must be written as 0 in the local entry header
     entry.general_purpose_bit_flag |= (1 << 3)
-    # bit 11: require UTF-8 set
-    entry.general_purpose_bit_flag |= (1 << 11)
-    entry.offset = @written
 
-    @written += entry.to_io(@io)
+    # These three fields have to be set to 0
+    entry.crc32 = 0_u32
+    entry.compressed_size = 0_u64
+    entry.uncompressed_size = 0_u64
 
+    add(entry) # Without the block it will write out the local file header only
+
+    # For the compressed data length (how much data goes into the archive for
+    # this particular entry) we can use our global write counter
+    entry_body_starts_at = @written.to_u64
+    uncompressed_size_counter = Zip::OutputCounter.new
+    crc32_writer = Zip::CRC32Writer.new
     case entry.compression_method
     when .stored?
-      if entry.compressed_size != entry.uncompressed_size
-        raise Error.new "Entry compressed size (#{entry.compressed_size}) is not equal to its uncompressed size (#{entry.uncompressed_size})"
-      end
-
-      @uncompressed_size_counter.io = @io
-      yield @uncompressed_size_counter
+      output_io = IO::MultiWriter.new(@io, uncompressed_size_counter, crc32_writer)
+      yield output_io
     when .deflated?
-      @compressed_size_counter.io = @io
-      io = Compress::Deflate::Writer.new(@compressed_size_counter)
-      @uncompressed_size_counter.io = io
-      yield @uncompressed_size_counter
-      io.close
+      deflater = Compress::Deflate::Writer.new(@io)
+      output_io = IO::MultiWriter.new(deflater, uncompressed_size_counter, crc32_writer)
+      yield output_io
+      deflater.close # Needed to flush the accumulated deflate buffers that might be remaining
     else
       raise "Unsupported compression method: #{entry.compression_method}"
     end
 
-    if entry.compression_method.stored?
-      @written += @uncompressed_size_counter.count
+    entry.crc32 = crc32_writer.to_u32
+    entry.uncompressed_size = uncompressed_size_counter.bytes_written
+    entry.compressed_size = @written.to_u64 - entry_body_starts_at
+
+    # A data descriptor is necessary _always_ if the gp_flags bit 3 is set (the current implementation always uses it)
+    @serializer.write_data_descriptor(io: @io, crc32: entry.crc32, compressed_size: entry.compressed_size, uncompressed_size: entry.uncompressed_size)
+  end
+
+  # Adds an Entry to the Writer and writes out its local file header.
+  #
+  # Calling the method without the block does not enable data descriptors, so the
+  # CRC32 for the entry has to be set upfront, as well as the correct `compressed_size`
+  # and `uncompressed_size`
+  #
+  # You can choose the Entry's compression method before adding it.
+  # You can also set the Entry's time (which is `Time.utc` by default)
+  #  and extra data before adding it to the zip stream.
+  def add(entry : Entry)
+    if @filenames.includes?(entry.filename)
+      raise DuplicateEntryFilename.new("Entry named #{entry.filename.inspect} has already been added to the archive")
     else
-      @written += @compressed_size_counter.count
+      @filenames.add(entry.filename)
     end
 
-    crc32 = @uncompressed_size_counter.crc32.to_u32
-    uncompressed_size = @uncompressed_size_counter.count
-
-    if entry.compression_method.stored?
-      compressed_size = uncompressed_size
-    else
-      compressed_size = @compressed_size_counter.count
+    # Set bit 11 (EFS) telling the reader that the filename is stored in UTF-8. Not needef for ASCII strings
+    unless entry.filename.ascii_only?
+      entry.general_purpose_bit_flag |= (1 << 11)
     end
 
-    if entry.compression_method.stored?
-      if entry.crc32 != crc32
-        raise Error.new("Entry CRC32 mismatch (#{entry.crc32} given but was #{crc32})")
-      end
-
-      if entry.uncompressed_size != uncompressed_size
-        raise Error.new("Entry uncompressed size mismatch (#{entry.uncompressed_size} given but was #{uncompressed_size})")
-      end
-    else
-      entry.crc32 = crc32
-      entry.compressed_size = compressed_size
-      entry.uncompressed_size = uncompressed_size
-    end
-
-    # A data descriptor is not needed for the STORED method
-    # (because we know how many bytes we need to read)
-    unless entry.compression_method.stored?
-      @written += entry.write_data_descriptor(@io)
-    end
-
+    entry.offset = @written.to_u64 # where the local file header will start in the archive
+    @serializer.write_local_file_header(io: @io,
+      filename: entry.filename,
+      compressed_size: entry.compressed_size,
+      uncompressed_size: entry.uncompressed_size,
+      crc32: entry.crc32,
+      gp_flags: entry.general_purpose_bit_flag,
+      mtime: entry.time,
+      storage_mode: entry.compression_method.to_i,
+      additional_extra_fields: entry.extra)
     @entries << entry
+    # The caller can then write the full compressed file contents into the target @io
   end
 
   # Adds an entry that will have *string* as its contents.
@@ -185,54 +194,46 @@ class Compress::Zip::Writer
     return if @closed
     @closed = true
 
-    start_offset = @written
+    central_directory_at = @written.to_u64
     write_central_directory
+    write_end_of_central_directory(central_directory_at, @written.to_u64 - central_directory_at)
 
-    write_end_of_central_directory(start_offset, @written - start_offset)
     @io.close if @sync_close
+  end
+
+  # Advance the internal offset by a number of bytes.
+  # This can be useful for esimating the size of the resulting ZIP archive
+  # without having access to the contents of files that are going to be
+  # included in the archive later.
+  def simulate_write(by : Int)
+    @written.simulate_write(by)
+  end
+
+  # How many bytes have been written into the destination IO so far
+  def written
+    @written.to_u64
   end
 
   private def write_central_directory
     @entries.each do |entry|
-      write Zip::CENTRAL_DIRECTORY_HEADER_SIGNATURE # 4
-      write Zip::VERSION                            # version made by (2)
-      write Zip::VERSION                            # version needed to extract (2)
-      @written += 8                                 # the 8 bytes we just wrote
-
-      @written += entry.meta_to_io(@io)
-
-      write entry.comment.bytesize.to_u16 # file comment length (2)
-      write 0_u16                         # disk number start (2)
-      write 0_u16                         # internal file attribute (2)
-      write 0_u32                         # external file attribute (4)
-      write entry.offset                  # relative offset of local header (4)
-      @written += 14                      # the 14 bytes we just wrote
-
-      @io << entry.filename
-      @written += entry.filename.bytesize
-
-      @io.write(entry.extra)
-      @written += entry.extra.size
-
-      @io << entry.comment
-      @written += entry.comment.bytesize
+      @serializer.write_central_directory_file_header(io: @io,
+        filename: entry.filename,
+        compressed_size: entry.compressed_size,
+        uncompressed_size: entry.uncompressed_size,
+        crc32: entry.crc32,
+        gp_flags: entry.general_purpose_bit_flag,
+        mtime: Time.utc,
+        storage_mode: entry.compression_method.to_i,
+        local_file_header_location: entry.offset,
+        additional_extra_fields: entry.extra)
     end
   end
 
   private def write_end_of_central_directory(offset, size)
-    write Zip::END_OF_CENTRAL_DIRECTORY_HEADER_SIGNATURE
-    write 0_u16                    # number of this disk
-    write 0_u16                    # disk start
-    write @entries.size.to_u16     # number of entries in disk
-    write @entries.size.to_u16     # number of total entries
-    write size.to_u32              # size of the central directory
-    write offset.to_u32            # offset of central directory
-    write @comment.bytesize.to_u16 # comment length
-    @io << @comment                # comment
-  end
-
-  private def write(value)
-    @io.write_bytes(value, IO::ByteFormat::LittleEndian)
+    @serializer.write_end_of_central_directory(io: @io,
+      start_of_central_directory_location: offset,
+      central_directory_size: size,
+      num_files_in_archive: @entries.size)
   end
 
   # An entry to write into a `Zip::Writer`.

@@ -21,7 +21,7 @@ describe Compress::Zip do
       entry.crc32.should eq(0)
       entry.compressed_size.should eq(0)
       entry.uncompressed_size.should eq(0)
-      entry.extra.should be_empty
+      entry.extra.empty?.should be_false # Contains the timestamp extra as well
       entry.io.gets_to_end.should eq("contents of foo")
 
       entry = zip.next_entry.not_nil!
@@ -50,7 +50,7 @@ describe Compress::Zip do
       entry = zip.next_entry.not_nil!
       entry.filename.should eq("foo.txt")
       entry.time.should eq(time)
-      entry.extra.should eq(extra)
+      entry.extra[9, 4].should eq(extra) # Serializer writes out the improved timestamp
       entry.io.gets_to_end.should eq("contents of foo")
     end
   end
@@ -65,20 +65,23 @@ describe Compress::Zip do
       entry = Compress::Zip::Writer::Entry.new("foo.txt")
       entry.compression_method = Compress::Zip::CompressionMethod::STORED
       entry.crc32 = crc32
-      entry.compressed_size = text.bytesize.to_u32
-      entry.uncompressed_size = text.bytesize.to_u32
+      entry.compressed_size = text.bytesize.to_u64
+      entry.uncompressed_size = text.bytesize.to_u64
       zip.add entry, &.print(text)
 
       entry = Compress::Zip::Writer::Entry.new("bar.txt")
       entry.compression_method = Compress::Zip::CompressionMethod::STORED
       entry.crc32 = crc32
-      entry.compressed_size = text.bytesize.to_u32
-      entry.uncompressed_size = text.bytesize.to_u32
+      entry.compressed_size = text.bytesize.to_u64
+      entry.uncompressed_size = text.bytesize.to_u64
       zip.add entry, &.print(text)
     end
 
     io.rewind
 
+    # This currently fails because the reader is actually not able to
+    # deal with data descriptors correctly, as straight-ahead ZIP reading
+    # using data descriptors is very unreliable
     Compress::Zip::Reader.open(io) do |zip|
       entry = zip.next_entry.not_nil!
       entry.filename.should eq("foo.txt")
@@ -104,8 +107,8 @@ describe Compress::Zip do
       entry = Compress::Zip::Writer::Entry.new("foo.txt")
       entry.compression_method = Compress::Zip::CompressionMethod::STORED
       entry.crc32 = crc32
-      entry.compressed_size = text.bytesize.to_u32
-      entry.uncompressed_size = text.bytesize.to_u32
+      # entry.compressed_size = text.bytesize.to_u32
+      # entry.uncompressed_size = text.bytesize.to_u32
       zip.add entry, &.print(text)
     end
 
@@ -189,6 +192,16 @@ describe Compress::Zip do
       entry = zip.next_entry.not_nil!
       entry.filename.should eq("foo.txt")
       entry.io.gets_to_end.should eq("contents of foo")
+    end
+  end
+
+  it "raises a DuplicateEntryFilename when trying to add the same filename twice" do
+    io = IO::Memory.new
+    expect_raises(Zip::Writer::DuplicateEntryFilename) do
+      Zip::Writer.open(io) do |zip|
+        zip.add "foo.txt", "The first foo"
+        zip.add "foo.txt", "The second foo"
+      end
     end
   end
 
