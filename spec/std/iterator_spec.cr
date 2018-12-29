@@ -127,6 +127,78 @@ describe Iterator do
       iter.rewind
       iter.next.should eq([1, 2, 3])
     end
+
+    describe "reuse" do
+      it "reuse as nil" do
+        iter = (1..5).each.cons(3, reuse: nil)
+        first = iter.next
+        first.should eq([1, 2, 3])
+        second = iter.next
+        second.should eq([2, 3, 4])
+        first.should_not be(second)
+        iter.next.should eq([3, 4, 5])
+        iter.next.should be_a(Iterator::Stop)
+
+        iter.rewind
+        iter.next.should eq([1, 2, 3])
+        iter.next.should_not be(first)
+      end
+
+      it "reuse as Bool" do
+        iter = (1..5).each.cons(3, reuse: true)
+        first = iter.next
+        first.should eq([1, 2, 3])
+        second = iter.next
+        second.should eq([2, 3, 4])
+        first.should be(second)
+        iter.next.should eq([3, 4, 5])
+        iter.next.should be_a(Iterator::Stop)
+
+        iter.rewind
+        iter.next.should eq([1, 2, 3])
+        iter.next.should be(first)
+      end
+
+      it "reuse as Array" do
+        reuse = [] of Int32
+        iter = (1..5).each.cons(3, reuse: reuse)
+        value = iter.next
+        value.should be(reuse)
+        value.should eq([1, 2, 3])
+        value = iter.next
+        value.should be(reuse)
+        value.should eq([2, 3, 4])
+        value = iter.next
+        value.should be(reuse)
+        value.should eq([3, 4, 5])
+        iter.next.should be_a(Iterator::Stop)
+
+        iter.rewind
+        value = iter.next
+        value.should be(reuse)
+        value.should eq([1, 2, 3])
+      end
+
+      it "reuse as deque" do
+        reuse = Deque(Int32).new
+        iter = (1..5).each.cons(3, reuse: reuse)
+        value = iter.next
+        value.should be(reuse)
+        value.should eq(Deque{1, 2, 3})
+        value = iter.next
+        value.should be(reuse)
+        value.should eq(Deque{2, 3, 4})
+        value = iter.next
+        value.should be(reuse)
+        value.should eq(Deque{3, 4, 5})
+        iter.next.should be_a(Iterator::Stop)
+
+        iter.rewind
+        value = iter.next
+        value.should be(reuse)
+        value.should eq(Deque{1, 2, 3})
+      end
+    end
   end
 
   describe "cycle" do

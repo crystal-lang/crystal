@@ -286,6 +286,15 @@ describe "Enumerable" do
       a.should be(reuse)
     end
 
+    it "returns each_cons iterator with reuse = deque" do
+      reuse = Deque(Int32).new
+      iter = [1, 2, 3, 4, 5].each_cons(3, reuse: reuse)
+
+      a = iter.next
+      a.should eq(Deque{1, 2, 3})
+      a.should be(reuse)
+    end
+
     it "yields running pairs with reuse = true" do
       array = [] of Array(Int32)
       object_ids = Set(UInt64).new
