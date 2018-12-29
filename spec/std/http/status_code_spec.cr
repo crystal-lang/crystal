@@ -8,7 +8,7 @@ describe HTTP::StatusCode do
     end
 
     it "returns false unless given 1xx status code" do
-      HTTP::StatusCode.informational?(999).should be true
+      HTTP::StatusCode.informational?(999).should be false
     end
   end
 
@@ -18,7 +18,7 @@ describe HTTP::StatusCode do
     end
 
     it "returns false unless given 2xx status code" do
-      HTTP::StatusCode.success?(999).should be true
+      HTTP::StatusCode.success?(999).should be false
     end
   end
 
@@ -28,7 +28,7 @@ describe HTTP::StatusCode do
     end
 
     it "returns false unless given 3xx status code" do
-      HTTP::StatusCode.redirection?(999).should be true
+      HTTP::StatusCode.redirection?(999).should be false
     end
   end
 
@@ -38,7 +38,7 @@ describe HTTP::StatusCode do
     end
 
     it "returns false unless given 4xx status code" do
-      HTTP::StatusCode.client_error?(999).should be true
+      HTTP::StatusCode.client_error?(999).should be false
     end
   end
 
@@ -48,7 +48,7 @@ describe HTTP::StatusCode do
     end
 
     it "returns false unless given 5xx status code" do
-      HTTP::StatusCode.client_error?(999).should be true
+      HTTP::StatusCode.client_error?(999).should be false
     end
   end
 
