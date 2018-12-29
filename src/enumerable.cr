@@ -283,22 +283,21 @@ module Enumerable(T)
   #
   # By default, a new array is created and yielded for each consecutive slice of elements.
   # * If *reuse* is given, the array can be reused
-  # * If *reuse* is an `Array`, this array will be reused
-  # * If *reuse* is truthy, the method will create a new array and reuse it.
+  # * If *reuse* is `true`, the method will create a new array and reuse it.
+  # * If *reuse*  is an instance of `Array`, `Deque` or a similar collection type (implementing `#<<`, `#shift` and `#size`) it will be used.
+  # * If *reuse* is falsey, the array will not be reused.
   #
   # This can be used to prevent many memory allocations when each slice of
   # interest is to be used in a read-only fashion.
   def each_cons(count : Int, reuse = false)
-    if reuse
-      unless reuse.is_a?(Array)
-        reuse = Array(T).new(count)
-      end
-      cons = reuse
+    if reuse.nil? || reuse.is_a?(Bool)
+      each_cons_internal(count, reuse, Array(T).new(count)) { |slice| yield slice }
     else
-      cons = Array(T).new(count)
-      reuse = nil
+      each_cons_internal(count, true, reuse) { |slice| yield slice }
     end
+  end
 
+  private def each_cons_internal(count : Int, reuse, cons)
     each do |elem|
       cons << elem
       cons.shift if cons.size > count

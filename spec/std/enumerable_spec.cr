@@ -306,6 +306,16 @@ describe "Enumerable" do
       end
       array.should eq([[1, 2], [2, 3], [3, 4]])
     end
+
+    it "yields running pairs with reuse = deque" do
+      array = [] of Deque(Int32)
+      reuse = Deque(Int32).new
+      [1, 2, 3, 4].each_cons(2, reuse: reuse) do |pair|
+        pair.should be(reuse)
+        array << pair.dup
+      end
+      array.should eq([Deque{1, 2}, Deque{2, 3}, Deque{3, 4}])
+    end
   end
 
   describe "each_slice" do
