@@ -94,7 +94,7 @@ enum HTTP::Status
   end
 
   # Returns the default status message of the given HTTP status code.
-  def self.default_message_for(status_code : Int) : String
+  def self.message(status_code : Int) : String
     case status_code
     when 100 then "Continue"
     when 101 then "Switching Protocols"

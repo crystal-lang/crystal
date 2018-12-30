@@ -52,13 +52,13 @@ describe HTTP::Status do
     end
   end
 
-  describe ".default_message_for" do
+  describe ".message" do
     it "returns a default message for status 200" do
-      HTTP::Status.default_message_for(200).should eq("OK")
+      HTTP::Status.message(200).should eq("OK")
     end
 
     it "returns an empty string on non-existent status" do
-      HTTP::Status.default_message_for(0).should eq("")
+      HTTP::Status.message(0).should eq("")
     end
   end
 end
