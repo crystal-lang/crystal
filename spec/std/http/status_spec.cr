@@ -52,13 +52,13 @@ describe HTTP::Status do
     end
   end
 
-  describe "#message" do
-    it "returns default message for status 200" do
-      HTTP::Status.new(200).message.should eq("OK")
+  describe "#description" do
+    it "returns default description for status 200" do
+      HTTP::Status.new(200).description.should eq("OK")
     end
 
     it "returns empty string on non-existent status" do
-      HTTP::Status.new(0).message.should eq("")
+      HTTP::Status.new(0).description.should eq("")
     end
   end
 end

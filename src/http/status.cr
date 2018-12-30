@@ -93,8 +93,8 @@ enum HTTP::Status
     500 <= value <= 599
   end
 
-  # Returns the default status message of the given HTTP status code.
-  def message : String
+  # Returns the default status description of the given HTTP status code.
+  def description : String
     case value
     when 100 then "Continue"
     when 101 then "Switching Protocols"
