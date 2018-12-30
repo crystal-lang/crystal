@@ -332,9 +332,9 @@ module HTTP
   end
 end
 
+require "./status"
 require "./request"
 require "./client/response"
-require "./status_code"
 require "./headers"
 require "./content"
 require "./cookie"
