@@ -69,33 +69,33 @@ enum HTTP::Status
   NETWORK_AUTHENTICATION_REQUIRED = 511
 
   # Returns `true` if the response status code is between 100 and 199.
-  def self.informational?(status_code : Int)
-    100 <= status_code <= 199
+  def informational?
+    100 <= value <= 199
   end
 
   # Returns `true` if the response status code is between 200 and 299.
-  def self.success?(status_code : Int)
-    200 <= status_code <= 299
+  def success?
+    200 <= value <= 299
   end
 
   # Returns `true` if the response status code is between 300 and 399.
-  def self.redirection?(status_code : Int)
-    300 <= status_code <= 399
+  def redirection?
+    300 <= value <= 399
   end
 
   # Returns `true` if the response status code is between 400 and 499.
-  def self.client_error?(status_code : Int)
-    400 <= status_code <= 499
+  def client_error?
+    400 <= value <= 499
   end
 
   # Returns `true` if the response status code is between 500 and 599.
-  def self.server_error?(status_code : Int)
-    500 <= status_code <= 599
+  def server_error?
+    500 <= value <= 599
   end
 
-  # Returns the default status message of the given HTTP status code.
-  def self.default_message_for(status_code : Int) : String
-    case status_code
+  # Returns the default status description of the given HTTP status code.
+  def description : String
+    case value
     when 100 then "Continue"
     when 101 then "Switching Protocols"
     when 102 then "Processing"

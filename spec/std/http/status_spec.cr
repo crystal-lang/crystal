@@ -2,63 +2,63 @@ require "spec"
 require "http"
 
 describe HTTP::Status do
-  describe ".informational?" do
+  describe "#informational?" do
     it "returns true when given 1xx status code" do
-      HTTP::Status.informational?(100).should be_true
+      HTTP::Status.new(100).informational?.should be_true
     end
 
     it "returns false unless given 1xx status code" do
-      HTTP::Status.informational?(999).should be_false
+      HTTP::Status.new(999).informational?.should be_false
     end
   end
 
-  describe ".success?" do
+  describe "#success?" do
     it "returns true when given 2xx status code" do
-      HTTP::Status.success?(200).should be_true
+      HTTP::Status.new(200).success?.should be_true
     end
 
     it "returns false unless given 2xx status code" do
-      HTTP::Status.success?(999).should be_false
+      HTTP::Status.new(999).success?.should be_false
     end
   end
 
-  describe ".redirection?" do
+  describe "#redirection?" do
     it "returns true when given 3xx status code" do
-      HTTP::Status.redirection?(300).should be_true
+      HTTP::Status.new(300).redirection?.should be_true
     end
 
     it "returns false unless given 3xx status code" do
-      HTTP::Status.redirection?(999).should be_false
+      HTTP::Status.new(999).redirection?.should be_false
     end
   end
 
-  describe ".client_error?" do
+  describe "#client_error?" do
     it "returns true when given 4xx status code" do
-      HTTP::Status.client_error?(400).should be_true
+      HTTP::Status.new(400).client_error?.should be_true
     end
 
     it "returns false unless given 4xx status code" do
-      HTTP::Status.client_error?(999).should be_false
+      HTTP::Status.new(999).client_error?.should be_false
     end
   end
 
-  describe ".server_error?" do
+  describe "#server_error?" do
     it "returns true when given 5xx status code" do
-      HTTP::Status.server_error?(500).should be_true
+      HTTP::Status.new(500).server_error?.should be_true
     end
 
     it "returns false unless given 5xx status code" do
-      HTTP::Status.server_error?(999).should be_false
+      HTTP::Status.new(999).server_error?.should be_false
     end
   end
 
-  describe ".default_message_for" do
-    it "returns a default message for status 200" do
-      HTTP::Status.default_message_for(200).should eq("OK")
+  describe "#description" do
+    it "returns default description for status 200" do
+      HTTP::Status.new(200).description.should eq("OK")
     end
 
-    it "returns an empty string on non-existent status" do
-      HTTP::Status.default_message_for(0).should eq("")
+    it "returns empty string on non-existent status" do
+      HTTP::Status.new(0).description.should eq("")
     end
   end
 end
