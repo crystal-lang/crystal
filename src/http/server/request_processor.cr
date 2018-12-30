@@ -59,21 +59,17 @@ class HTTP::Server::RequestProcessor
         break unless HTTP.keep_alive?(response)
 
         # The request body is either FixedLengthContent or ChunkedContent.
-        # In case it has not entirely been consumed by the handler, try to
-        # skip to the end. If the request is larger than maxmum skippable size,
-        # we close the connection even if keep alive was requested.
+        # In case it has not entirely been consumed by the handler, the connection is
+        # closed the connection even if keep alive was requested.
         case body = request.body
         when FixedLengthContent
-          if body.read_remaining > 16_384
-            # Close the connection if remaining length exceeds the maximum skipable size.
+          if body.read_remaining > 0
+            # Close the connection if there are bytes remaining
             break
-          else
-            body.skip_to_end
           end
         when ChunkedContent
-          # Try to read maximum skipable number of bytes.
-          # Close the connection if the IO has still more to read.
-          break unless skip_to_end(body)
+          # Close the connection if the IO has still bytes to read.
+          break unless body.closed?
         end
       end
     rescue ex : Errno
@@ -85,17 +81,5 @@ class HTTP::Server::RequestProcessor
         # IO-related error, nothing to do
       end
     end
-  end
-
-  # Reads and discards bytes from `io` until there are no more bytes.
-  # If there are more than 16_384 bytes to be read from the IO, it returns `false`.
-  private def skip_to_end(io : IO) : Bool
-    buffer = uninitialized UInt8[4096]
-
-    4.times do
-      return true if io.read(buffer.to_slice) < 4096
-    end
-
-    false
   end
 end

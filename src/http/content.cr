@@ -216,5 +216,9 @@ module HTTP
     def write(slice : Bytes)
       raise IO::Error.new "Can't write to ChunkedContent"
     end
+
+    def closed?
+      @received_final_chunk || super
+    end
   end
 end

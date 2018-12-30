@@ -715,44 +715,6 @@ module HTTP
         ))
       end
 
-      it "skips body with known length" do
-        processor = HTTP::Server::RequestProcessor.new do |context|
-          context.response.content_type = "text/plain"
-          context.response.puts "Hello world\r"
-        end
-
-        input = IO::Memory.new(requestize(<<-REQUEST
-          POST / HTTP/1.1
-          Content-Length: 7
-
-          hello
-          POST / HTTP/1.1
-          Content-Length: 7
-
-          hello
-          REQUEST
-        ))
-        output = IO::Memory.new
-        processor.process(input, output)
-        output.rewind
-        output.gets_to_end.should eq(requestize(<<-RESPONSE
-          HTTP/1.1 200 OK
-          Connection: keep-alive
-          Content-Type: text/plain
-          Content-Length: 13
-
-          Hello world
-          HTTP/1.1 200 OK
-          Connection: keep-alive
-          Content-Type: text/plain
-          Content-Length: 13
-
-          Hello world
-
-          RESPONSE
-        ))
-      end
-
       it "fail if body is not consumed" do
         processor = HTTP::Server::RequestProcessor.new do |context|
           context.response.content_type = "text/plain"
@@ -827,9 +789,9 @@ module HTTP
 
         input = IO::Memory.new(requestize(<<-REQUEST
           POST / HTTP/1.1
-          Content-Length: 16387
+          Content-Length: 4
 
-          #{"0" * 16_384}1
+          1
           POST / HTTP/1.1
           Content-Length: 7
 
