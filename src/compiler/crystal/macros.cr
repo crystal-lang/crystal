@@ -400,6 +400,10 @@ module Crystal::Macros
     def chomp : StringLiteral
     end
 
+    # Similar to `String#count`.
+    def count(other : CharLiteral) : NumberLiteral
+    end
+
     # Similar to `String#downcase`.
     def downcase : StringLiteral
     end
