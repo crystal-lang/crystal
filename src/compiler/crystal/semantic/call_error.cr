@@ -38,10 +38,6 @@ end
 
 class Crystal::Call
   def raise_matches_not_found(owner, def_name, arg_types, named_args_types, matches = nil, with_literals = false)
-    if def_name == "allocate" && owner.is_a?(ModuleType) && owner.is_a?(MetaclassType)
-      raise "cannot instantiate #{owner}"
-    end
-
     # Special case: Foo+.class#new
     if owner.is_a?(VirtualMetaclassType) && def_name == "new"
       raise_matches_not_found_for_virtual_metaclass_new owner
@@ -101,6 +97,9 @@ class Crystal::Call
             msg << "undefined method '#{def_name}'"
           else
             msg << "undefined local variable or method '#{def_name}'"
+            if def_name == "allocate" && owner.is_a?(ModuleType) && owner.is_a?(MetaclassType)
+              msg << colorize(" (modules cannot be instantiated)").yellow.bold
+            end
           end
         end
 
