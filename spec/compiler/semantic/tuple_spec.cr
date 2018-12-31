@@ -293,12 +293,12 @@ describe "Semantic: tuples" do
   it "errors on named tuple too big" do
     assert_error %(
       { #{String.build do |io|
-            301.times do |i|
+            333.times do |i|
               io << "arg" << i << ": 0, "
             end
           end} }
       ),
-      "named tuple size cannot be greater than 300 (size is 301)"
+      "named tuple size cannot be greater than 300 (size is 333)"
   end
 
   it "doesn't unify tuple metaclasses (#5384)" do
