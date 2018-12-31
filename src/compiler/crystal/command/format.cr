@@ -9,7 +9,6 @@ class Crystal::Command
       FORMAT
       SYNTAX
       INVALID_BYTE_SEQUENCE
-      BUG
     end
   end
 
@@ -83,8 +82,6 @@ class Crystal::Command
             error "'#{result.filename}' has syntax errors", exit_code: nil
           when .invalid_byte_sequence?
             error "'#{result.filename}' is not a valid Crystal source file", exit_code: nil
-          when .bug?
-            error "there's a bug formatting '#{result.filename}', to show more information, please run:\n\n  $ crystal tool format '#{result.filename}'", exit_code: nil
           end
         end
         exit 1
@@ -175,28 +172,14 @@ class Crystal::Command
         STDERR << "Syntax Error:".colorize(:yellow).toggle(@color) << ' ' << ex.message << " at " << filename << ':' << ex.line_number << ':' << ex.column_number << '\n'
       end
     rescue ex
-      if check_files
-        check_files << FormatResult.new(filename, FormatResult::Code::BUG)
-      else
-        couldnt_format "'#{filename}'"
-        STDERR.puts
-      end
+      couldnt_format "'#{filename}'", ex
     end
   end
 
-  private def couldnt_format(file, ex = nil)
-    STDERR << "Error: ".colorize(:red).toggle(@color)
-
-    if ex
-      STDERR.puts "couldn't format #{file}, please report a bug including the contents of it: https://github.com/crystal-lang/crystal/issues"
-      STDERR.puts
-
-      ex.inspect_with_backtrace STDERR
-    else
-      STDERR << "there's a bug formatting #{file}, to show more information, please run:\n\n  $ crystal tool format - < #{file}"
-    end
-
-    STDERR.puts
-    STDERR.flush
+  private def couldnt_format(file, ex)
+    ex.inspect_with_backtrace STDERR
+    Crystal.error <<-MSG, @color, exit_code: 1
+    couldn't format #{file}. You've found a bug in the Crystal formatter. Please open an issue, including source code that will allow us to reproduce the bug: https://github.com/crystal-lang/crystal/issues
+    MSG
   end
 end
