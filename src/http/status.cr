@@ -68,6 +68,10 @@ enum HTTP::Status
   NOT_EXTENDED                    = 510
   NETWORK_AUTHENTICATION_REQUIRED = 511
 
+  def code
+    value
+  end
+
   # Returns `true` if the response status code is between 100 and 199.
   def informational?
     100 <= value <= 199

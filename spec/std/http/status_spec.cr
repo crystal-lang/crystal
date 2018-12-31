@@ -2,6 +2,12 @@ require "spec"
 require "http"
 
 describe HTTP::Status do
+  describe "#code" do
+    it "returns the status code" do
+      HTTP::Status::INTERNAL_SERVER_ERROR.value.should eq 500
+    end
+  end
+
   describe "#informational?" do
     it "returns true when given 1xx status code" do
       HTTP::Status.new(100).informational?.should be_true
