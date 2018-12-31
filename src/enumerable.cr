@@ -105,7 +105,10 @@ module Enumerable(T)
   end
 
   module Chunk
+    # Can be used in `Enumerable#chunks` and specifies that the elements should be dropped.
     record Drop
+
+    # Can be used in `Enumerable#chunks` and specifies that the element should be chunked by itself.
     record Alone
 
     # :nodoc:
