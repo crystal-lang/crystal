@@ -283,11 +283,11 @@ describe "Semantic: tuples" do
       require "prelude"
 
       pos = {0, 0}
-      while true
+      301.times do
         pos += {0, 0}
       end
       ),
-      "tuple size cannot be greater than 300"
+      "tuple size cannot be greater than 300 (size is 301)"
   end
 
   it "errors on named tuple too big" do
@@ -298,7 +298,7 @@ describe "Semantic: tuples" do
             end
           end} }
       ),
-      "named tuple size cannot be greater than 300"
+      "named tuple size cannot be greater than 300 (size is 301)"
   end
 
   it "doesn't unify tuple metaclasses (#5384)" do
