@@ -283,7 +283,7 @@ describe "Semantic: tuples" do
       require "prelude"
 
       pos = {0, 0}
-      301.times do
+      while true
         pos += {0, 0}
       end
       ),
