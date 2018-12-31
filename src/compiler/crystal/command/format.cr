@@ -193,7 +193,7 @@ class Crystal::Command
 
       ex.inspect_with_backtrace STDERR
     else
-      STDERR << "there's a bug formatting #{file}, to show more information, please run:\n\n  $ crystal tool format #{file}"
+      STDERR << "there's a bug formatting #{file}, to show more information, please run:\n\n  $ crystal tool format - < #{file}"
     end
 
     STDERR.puts
