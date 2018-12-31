@@ -1,4 +1,4 @@
-# A support class that provides additional around HTTP status codes.
+# A support enum that provides additional around HTTP status codes.
 #
 # Based on [Hypertext Transfer Protocol (HTTP) Status Code Registry](https://www.iana.org/assignments/http-status-codes/http-status-codes.xhtml)
 #
