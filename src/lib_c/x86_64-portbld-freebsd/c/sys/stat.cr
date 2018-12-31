@@ -31,39 +31,39 @@ lib LibC
   struct Stat
     st_dev : DevT
     st_ino : InoT
-    {% if flag?(:"freebsd12.0") %}
+    {% if flag?(:freebsd11) %}
+      st_mode : ModeT
+      st_nlink : NlinkT
+    {% else %}
       st_nlink : NlinkT
       st_mode : ModeT
       st_pad0 : UShort
-    {% else %}
-      st_mode : ModeT
-      st_nlink : NlinkT
     {% end %}
     st_uid : UidT
     st_gid : GidT
-    {% if flag?(:"freebsd12.0") %}
+    {% if !flag?(:freebsd11) %}
       st_pad1 : UInt
     {% end %}
     st_rdev : DevT
     st_atim : Timespec
     st_mtim : Timespec
     st_ctim : Timespec
-    {% if flag?(:"freebsd12.0") %}
+    {% if !flag?(:freebsd11) %}
       st_birthtim : Timespec
     {% end %}
     st_size : OffT
     st_blocks : BlkcntT
     st_blksize : BlksizeT
     st_flags : FflagsT
-    {% if flag?("freebsd12.0") %}
-      st_gen : ULong
-      st_spare : StaticArray(ULong, 10)
-    {% else %}
+    {% if flag?(:freebsd11) %}
       st_gen : UInt
       st_lspare : Int
       st_birthtim : Timespec
       __reserved_17 : UInt
       __reserved_18 : UInt
+    {% else %}
+      st_gen : ULong
+      st_spare : StaticArray(ULong, 10)
     {% end %}
   end
 

@@ -1,4 +1,5 @@
 require "./spec_helper"
+require "../../support/errno"
 
 describe TCPSocket do
   describe "#connect" do
@@ -27,19 +28,20 @@ describe TCPSocket do
       it "raises when connection is refused" do
         port = unused_local_port
 
-        expect_raises(Errno, "Error connecting to '#{address}:#{port}': Connection refused") do
+        expect_raises_errno(Errno::ECONNREFUSED, "Error connecting to '#{address}:#{port}'") do
           TCPSocket.new(address, port)
         end
       end
 
       it "raises when port is negative" do
-        expect_raises(Socket::Error, linux? ? "getaddrinfo: Servname not supported for ai_socktype" : "No address found for #{address}:-12 over TCP") do
+        error = expect_raises(Socket::Addrinfo::Error) do
           TCPSocket.new(address, -12)
         end
+        error.error_code.should eq({% if flag?(:linux) %}LibC::EAI_SERVICE{% else %}LibC::EAI_NONAME{% end %})
       end
 
       it "raises when port is zero" do
-        expect_raises(Errno, linux? ? "Error connecting to '#{address}:0': Connection refused" : "connect: Can't assign requested address") do
+        expect_raises_errno({% if flag?(:linux) %}Errno::ECONNREFUSED{% else %}Errno::EADDRNOTAVAIL{% end %}) do
           TCPSocket.new(address, 0)
         end
       end
@@ -57,13 +59,13 @@ describe TCPSocket do
       end
 
       it "raises when host doesn't exist" do
-        expect_raises(Socket::Error, "No address") do
+        expect_raises(Socket::Error, "No address found for doesnotexist.example.org.:12345 over TCP") do
           TCPSocket.new("doesnotexist.example.org.", 12345)
         end
       end
 
       it "raises (rather than segfault on darwin) when host doesn't exist and port is 0" do
-        expect_raises(Socket::Error, "No address") do
+        expect_raises(Socket::Error, /No address found for doesnotexist.example.org.:00? over TCP/) do
           TCPSocket.new("doesnotexist.example.org.", 0)
         end
       end
@@ -73,7 +75,7 @@ describe TCPSocket do
       port = unused_local_port
 
       TCPServer.open("0.0.0.0", port) do |server|
-        expect_raises(Errno, "Error connecting to '::1:#{port}': Connection refused") do
+        expect_raises_errno(Errno::ECONNREFUSED, "Error connecting to '::1:#{port}'") do
           TCPSocket.new("::1", port)
         end
       end
@@ -127,7 +129,7 @@ describe TCPSocket do
       server.local_address.port
     end
 
-    expect_raises(Errno, "Error connecting to 'localhost:#{port}': Connection refused") do
+    expect_raises_errno(Errno::ECONNREFUSED, "Error connecting to 'localhost:#{port}'") do
       TCPSocket.new("localhost", port)
     end
   end

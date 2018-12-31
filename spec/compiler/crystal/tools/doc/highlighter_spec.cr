@@ -42,6 +42,7 @@ describe "Crystal::Doc::Highlighter#highlight" do
     as as? typeof for in with self super private asm
     nil? abstract pointerof
     protected uninitialized instance_sizeof
+    annotation verbatim
   ).each do |kw|
     it_highlights kw, %(<span class="k">#{kw}</span>)
   end

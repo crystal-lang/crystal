@@ -144,11 +144,12 @@ require "crystal/system/time"
 # time.to_s("%Y-%m-%d %H:%M:%S %:z") # => "2015-10-12 10:30:00 +00:00"
 # ```
 #
-# Similarly, `Time.parse` is used to construct a `Time` instance from date-time
+# Similarly, `Time.parse` and `Time.parse!` are used to construct a `Time` instance from date-time
 # information in a string, according to a specified pattern:
 #
 # ```
-# Time.parse("2015-10-12 10:30:00 +00:00", "%Y-%m-%d %H:%M:%S %z")
+# Time.parse("2015-10-12 10:30:00 +00:00", "%Y-%m-%d %H:%M:%S %z", Time::Location::UTC)
+# Time.parse!("2015-10-12 10:30:00 +00:00", "%Y-%m-%d %H:%M:%S %z")
 # ```
 #
 # See `Time::Format` for all directives.

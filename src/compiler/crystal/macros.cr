@@ -67,6 +67,26 @@ module Crystal::Macros
   def raise(message) : NoReturn
   end
 
+  # Reads a file and returns a `StringLiteral` with its contents.
+  #
+  # Gives a compile-time error if the file doesn't exist or if
+  # reading the file fails.
+  #
+  # To read a file relative to where the macro is defined, use:
+  #
+  # ```
+  # read_file("#{__DIR__}/some_file.txt")
+  # ```
+  #
+  # NOTE: Relative paths are resolved to the current working directory.
+  def read_file(filename) : StringLiteral
+  end
+
+  # Same as `read_file`, except that `nil` is returned on any I/O failure
+  # instead of issuing a compile-time failure.
+  def read_file?(filename) : StringLiteral | NilLiteral
+  end
+
   # Compiles and execute a Crystal program and returns its output
   # as a `MacroId`.
   #
@@ -623,7 +643,7 @@ module Crystal::Macros
     end
 
     # Similar to `Array#unshift`.
-    def unshift : ArrayLiteral
+    def unshift(value : ASTNode) : ArrayLiteral
     end
 
     # Similar to `Array#push`.
@@ -749,11 +769,11 @@ module Crystal::Macros
     end
 
     # Similar to `NamedTuple#[]` but returns `NilLiteral` if *key* is undefined.
-    def [](key : ASTNode) : ASTNode
+    def [](key : SymbolLiteral | StringLiteral | MacroId) : ASTNode
     end
 
     # Adds or replaces a key.
-    def []=(key : ASTNode) : ASTNode
+    def []=(key : SymbolLiteral | StringLiteral | MacroId) : ASTNode
     end
   end
 
@@ -840,7 +860,7 @@ module Crystal::Macros
     # Returns the value of a named argument,
     # or NilLiteral if the named argument isn't
     # used in this attribute.
-    def [](name : SymbolLiteral) : ASTNode
+    def [](name : SymbolLiteral | StringLiteral | MacroId) : ASTNode
     end
   end
 

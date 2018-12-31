@@ -2,6 +2,7 @@ require "spec"
 require "process"
 require "./spec_helper"
 require "../spec_helper"
+require "../support/errno"
 
 describe Process do
   it "runs true" do
@@ -15,7 +16,8 @@ describe Process do
   end
 
   it "raises if command could not be executed" do
-    expect_raises Errno do
+    # FIXME: Oddly doubled error message
+    expect_raises_errno(Errno::ENOENT, "execvp: No such file or directory: No such file or directory") do
       Process.new("foobarbaz")
     end
   end

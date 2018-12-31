@@ -1,6 +1,6 @@
 module HTTP::FormData
   class Parser
-    # Create a new parser which parses *io* with multipart boundary *boundary*.
+    # Creates a new parser which parses *io* with multipart boundary *boundary*.
     def initialize(io, boundary)
       @multipart = Multipart::Parser.new(io, boundary)
     end

@@ -28,7 +28,7 @@ class Crystal::Doc::Generator
     },
   }
 
-  def initialize(@program : Program, @included_dirs : Array(String), @output_dir : String, @canonical_base_url : String?)
+  def initialize(@program : Program, @included_dirs : Array(String), @output_dir : String, @output_format : String, @canonical_base_url : String?)
     @base_dir = Dir.current.chomp
     @types = {} of Crystal::Type => Doc::Type
     @repo_name = ""
@@ -42,24 +42,22 @@ class Crystal::Doc::Generator
     types = collect_subtypes(@program)
 
     program_type = type(@program)
-    if program_type.class_methods.any? { |method| must_include? method }
+    if must_include_toplevel? program_type
       types.insert 0, program_type
     end
 
-    generate_docs program_type, types
+    if @output_format == "json"
+      generate_docs_json program_type, types
+    else
+      generate_docs_html program_type, types
+    end
   end
 
   def program_type
     type(@program)
   end
 
-  def generate_docs(program_type, types)
-    copy_files
-    generate_types_docs types, @output_dir, types
-    generate_readme program_type, types
-  end
-
-  def generate_readme(program_type, types)
+  def read_readme
     if File.file?("README.md")
       filename = "README.md"
     elsif File.file?("Readme.md")
@@ -67,12 +65,29 @@ class Crystal::Doc::Generator
     end
 
     if filename
-      raw_body = File.read(filename)
-      body = doc(program_type, raw_body)
+      content = File.read(filename)
     else
-      raw_body = ""
-      body = ""
+      content = ""
     end
+
+    content
+  end
+
+  def generate_docs_json(program_type, types)
+    readme = read_readme
+    json = Main.new(readme, Type.new(self, @program), repository_name)
+    puts json
+  end
+
+  def generate_docs_html(program_type, types)
+    copy_files
+    generate_types_docs types, @output_dir, types
+    generate_readme program_type, types
+  end
+
+  def generate_readme(program_type, types)
+    raw_body = read_readme
+    body = doc(program_type, raw_body)
 
     File.write File.join(@output_dir, "index.html"), MainTemplate.new(body, types, repository_name, @canonical_base_url)
 
@@ -137,7 +152,7 @@ class Crystal::Doc::Generator
     must_include? a_def.location
   end
 
-  def must_include?(a_macro : Macro)
+  def must_include?(a_macro : Doc::Macro)
     must_include? a_macro.macro
   end
 
@@ -145,6 +160,16 @@ class Crystal::Doc::Generator
     return false if nodoc?(a_macro)
 
     must_include? a_macro.location
+  end
+
+  def must_include?(constant : Constant)
+    must_include? constant.const
+  end
+
+  def must_include?(const : Crystal::Const)
+    return false if nodoc?(const)
+
+    const.locations.try &.any? { |location| must_include? location }
   end
 
   def must_include?(location : Crystal::Location)
@@ -160,6 +185,15 @@ class Crystal::Doc::Generator
 
   def must_include?(a_nil : Nil)
     false
+  end
+
+  def must_include_toplevel?(program_type : Type)
+    toplevel_items = [] of Method | Macro | Constant
+    toplevel_items.concat program_type.class_methods
+    toplevel_items.concat program_type.macros
+    toplevel_items.concat program_type.constants
+
+    toplevel_items.any? { |item| must_include? item }
   end
 
   def nodoc?(str : String?)
@@ -203,6 +237,13 @@ class Crystal::Doc::Generator
 
   def collect_subtypes(parent)
     types = [] of Type
+
+    # AliasType has defined `types?` to be the types
+    # of the aliased type, but for docs we don't want
+    # to list the nested types for aliases.
+    if parent.is_a?(AliasType)
+      return types
+    end
 
     parent.types?.try &.each_value do |type|
       case type

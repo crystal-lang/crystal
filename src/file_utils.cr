@@ -77,7 +77,7 @@ module FileUtils
   # ```
   #
   # NOTE: Alias of `File.touch`
-  def touch(path : String, time : Time = Time.now)
+  def touch(path : String, time : Time = Time.utc_now)
     File.touch(path, time)
   end
 
@@ -89,7 +89,7 @@ module FileUtils
   # ```
   # FileUtils.touch(["foo", "bar"])
   # ```
-  def touch(paths : Enumerable(String), time : Time = Time.now)
+  def touch(paths : Enumerable(String), time : Time = Time.utc_now)
     paths.each do |path|
       touch(path, time)
     end
@@ -386,7 +386,7 @@ module FileUtils
 
   # Deletes a file or directory *path*.
   # If *path* is a directory, this method removes all its contents recursively.
-  # Ignore all errors.
+  # Ignores all errors.
   #
   # ```
   # FileUtils.rm_rf("dir")
@@ -402,7 +402,7 @@ module FileUtils
 
   # Deletes a list of files or directories *paths*.
   # If one path is a directory, this method removes all its contents recursively.
-  # Ignore all errors.
+  # Ignores all errors.
   #
   # ```
   # FileUtils.rm_rf(["dir", "file.cr", "non_existent_file"])

@@ -24,10 +24,10 @@ before_install:
 
 install:
   - export CURRENT_TAG=$TRAVIS_TAG
-  - bin/ci prepare_build
+  - travis_retry bin/ci prepare_build
 
 script:
-  - bin/ci build
+  - travis_retry bin/ci build
 
 branches:
   only:

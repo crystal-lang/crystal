@@ -81,25 +81,22 @@ struct UUID
 
     case value.size
     when 36 # Hyphenated
-      [8, 13, 18, 23].each do |offset|
+      {8, 13, 18, 23}.each do |offset|
         if value[offset] != '-'
           raise ArgumentError.new "Invalid UUID string format, expected hyphen at char #{offset}"
         end
       end
-      [0, 2, 4, 6, 9, 11, 14, 16, 19, 21, 24, 26, 28, 30, 32, 34].each_with_index do |offset, i|
-        string_has_hex_pair_at! value, offset
-        bytes[i] = value[offset, 2].to_u8(16)
+      {0, 2, 4, 6, 9, 11, 14, 16, 19, 21, 24, 26, 28, 30, 32, 34}.each_with_index do |offset, i|
+        bytes[i] = hex_pair_at value, offset
       end
     when 32 # Hexstring
       16.times do |i|
-        string_has_hex_pair_at! value, i * 2
-        bytes[i] = value[i * 2, 2].to_u8(16)
+        bytes[i] = hex_pair_at value, i * 2
       end
     when 45 # URN
       raise ArgumentError.new "Invalid URN UUID format, expected string starting with \"urn:uuid:\"" unless value.starts_with? "urn:uuid:"
-      [9, 11, 13, 15, 18, 20, 23, 25, 28, 30, 33, 35, 37, 39, 41, 43].each_with_index do |offset, i|
-        string_has_hex_pair_at! value, offset
-        bytes[i] = value[offset, 2].to_u8(16)
+      {9, 11, 13, 15, 18, 20, 23, 25, 28, 30, 33, 35, 37, 39, 41, 43}.each_with_index do |offset, i|
+        bytes[i] = hex_pair_at value, offset
       end
     else
       raise ArgumentError.new "Invalid string length #{value.size} for UUID, expected 32 (hexstring), 36 (hyphenated) or 45 (urn)"
@@ -110,8 +107,10 @@ struct UUID
 
   # Raises `ArgumentError` if string `value` at index `i` doesn't contain hex
   # digit followed by another hex digit.
-  private def self.string_has_hex_pair_at!(value : String, i)
-    unless value[i, 2].to_u8(16, whitespace: false, underscore: false, prefix: false)
+  private def self.hex_pair_at(value : String, i) : UInt8
+    if (ch1 = value[i].to_u8?(16)) && (ch2 = value[i + 1].to_u8?(16))
+      ch1 * 16 + ch2
+    else
       raise ArgumentError.new [
         "Invalid hex character at position #{i * 2} or #{i * 2 + 1}",
         "expected '0' to '9', 'a' to 'f' or 'A' to 'F'",

@@ -123,11 +123,7 @@ end
 def Hash.new(pull : JSON::PullParser)
   hash = new
   pull.read_object do |key|
-    if pull.kind == :null
-      pull.read_next
-    else
-      hash[key] = V.new(pull)
-    end
+    hash[key] = V.new(pull)
   end
   hash
 end

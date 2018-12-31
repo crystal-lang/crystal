@@ -35,7 +35,7 @@
 struct StaticArray(T, N)
   include Indexable(T)
 
-  # Create a new `StaticArray` with the given *args*. The type of the
+  # Creates a new `StaticArray` with the given *args*. The type of the
   # static array will be the union of the type of the given *args*,
   # and its size will be the number of elements in *args*.
   #

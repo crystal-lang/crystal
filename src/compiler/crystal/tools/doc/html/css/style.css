@@ -553,6 +553,9 @@ span.flag.purple {
 .js-modal-visible .modal-background {
   display: flex;
 }
+.main-content {
+  position: relative;
+}
 .modal-background {
   position: absolute;
   display: none;

@@ -565,11 +565,13 @@ module Crystal
           # It might be #{__DIR__}, for example
           if @token.type == :INTERPOLATION_START
             write "\#{"
+            delimiter_state = @token.delimiter_state
             next_token_skip_space_or_newline
             indent(@column, exp)
             skip_space_or_newline
             check :"}"
             write "}"
+            @token.delimiter_state = delimiter_state
           else
             write @token.raw
           end
@@ -820,7 +822,7 @@ module Crystal
         if next_needs_indent
           write_indent(offset, element)
         else
-          accept element
+          indent(offset, element)
         end
 
         has_heredoc_in_line = !@lexer.heredocs.empty?
@@ -1106,14 +1108,22 @@ module Crystal
       # Check if it's {A, B} instead of Tuple(A, B)
       if first_name == "Tuple" && @token.value != "Tuple"
         write_token :"{"
-        skip_space_or_newline
+        found_comment = skip_space_or_newline
+        write_space_at_end = false
         node.type_vars.each_with_index do |type_var, i|
+          # This is to prevent writing `{{` and `{%`
+          if i == 0 && !found_comment && (@token.type == :"{" || @token.type == :"{{" || @token.type == :"{%" || @token.type == :"%" || @token.raw.starts_with?("%"))
+            write " "
+            write_space_at_end = true
+          end
           accept type_var
           skip_space_or_newline
           if @token.type == :","
             write ", " unless last?(i, node.type_vars)
             next_token_skip_space_or_newline
           end
+          # Write space at end when write space for preventing writing `{{` and `{%` at first.
+          write " " if last?(i, node.type_vars) && write_space_at_end
         end
         write_token :"}"
         return false
@@ -1139,14 +1149,18 @@ module Crystal
       accept name
       skip_space_or_newline
 
-      check_open_paren
+      write_token :"("
+      skip_space
 
-      paren_count = @paren_count
+      # Given that generic type arguments are always inside parentheses
+      # we can start counting them from 0 inside them.
+      old_paren_count = @paren_count
+      @paren_count = 0
 
       if named_args = node.named_args
         has_newlines, _, _ = format_named_args([] of ASTNode, named_args, @indent + 2)
         # `format_named_args` doesn't skip trailing comma
-        if @paren_count == paren_count && @token.type == :","
+        if @paren_count == 0 && @token.type == :","
           next_token_skip_space_or_newline
           if has_newlines
             write ","
@@ -1158,7 +1172,7 @@ module Crystal
         skip_space_or_newline
         node.type_vars.each_with_index do |type_var, i|
           accept type_var
-          if @paren_count == paren_count
+          if @paren_count == 0
             skip_space_or_newline
             if @token.type == :","
               write ", " unless last?(i, node.type_vars)
@@ -1168,8 +1182,11 @@ module Crystal
         end
       end
 
-      skip_space_or_newline if @paren_count == paren_count
-      check_close_paren
+      skip_space_or_newline if @paren_count == 0
+      write_token :")"
+
+      # Restore the old parentheses count
+      @paren_count = old_paren_count
 
       false
     end
@@ -1655,6 +1672,12 @@ module Crystal
     end
 
     def visit(node : MacroLiteral)
+      line = @line
+      @token.raw.scan("\n") do
+        line -= 1
+        @no_rstrip_lines.add line
+      end
+
       write @token.raw
       next_macro_token
       false

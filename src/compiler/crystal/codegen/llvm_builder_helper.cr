@@ -32,6 +32,25 @@ module Crystal
       llvm_type(type).const_int(n)
     end
 
+    def float32(value)
+      llvm_context.float.const_float(value)
+    end
+
+    def float64(value)
+      llvm_context.double.const_double(value)
+    end
+
+    def float(value, type)
+      case type.kind
+      when :f32
+        float32(value.to_f32)
+      when :f64
+        float64(value.to_f64)
+      else
+        raise "Unsupported float type"
+      end
+    end
+
     def llvm_nil
       llvm_typer.nil_value
     end

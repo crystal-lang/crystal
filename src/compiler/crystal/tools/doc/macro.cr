@@ -64,7 +64,7 @@ class Crystal::Doc::Macro
   end
 
   def args_to_s(io)
-    return if @macro.args.empty?
+    return unless has_args?
 
     printed = false
     io << '('
@@ -72,17 +72,49 @@ class Crystal::Doc::Macro
     @macro.args.each_with_index do |arg, i|
       io << ", " if printed
       io << '*' if @macro.splat_index == i
-      io << arg
+      arg_to_s arg, io
       printed = true
     end
 
     if double_splat = @macro.double_splat
       io << ", " if printed
       io << "**"
-      io << double_splat
+      arg_to_s double_splat, io
+      printed = true
+    end
+
+    if block_arg = @macro.block_arg
+      io << ", " if printed
+      io << '&'
+      arg_to_s block_arg, io
     end
 
     io << ')'
+  end
+
+  def arg_to_s(arg : Arg, io)
+    if arg.external_name != arg.name
+      name = arg.external_name.empty? ? "_" : arg.external_name
+      if Symbol.needs_quotes? name
+        HTML.escape name.inspect, io
+      else
+        io << name
+      end
+      io << ' '
+    end
+
+    io << arg.name
+
+    # Macro arg cannot not have a restriction.
+
+    if default_value = arg.default_value
+      io << " = "
+      io << Highlighter.highlight(default_value.to_s)
+    end
+  end
+
+  def has_args?
+    !@macro.args.empty? || @macro.double_splat || @macro.block_arg
   end
 
   def args_to_html

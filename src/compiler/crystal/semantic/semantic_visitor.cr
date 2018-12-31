@@ -71,7 +71,7 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
   rescue ex : Crystal::Exception
     node.raise "while requiring \"#{node.string}\"", ex
   rescue ex
-    node.raise "while requiring \"#{node.string}\": #{ex.message}"
+    raise ::Exception.new("while requiring \"#{node.string}\"", ex)
   end
 
   def visit(node : ClassDef)
@@ -296,9 +296,9 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
     generated_nodes = expand_macro(the_macro, node) do
       old_args = node.args
       node.args = args
-      expanded = @program.expand_macro the_macro, node, expansion_scope, expansion_scope, @untyped_def
+      expanded_macro, macro_expansion_pragmas = @program.expand_macro the_macro, node, expansion_scope, expansion_scope, @untyped_def
       node.args = old_args
-      expanded
+      {expanded_macro, macro_expansion_pragmas}
     end
     @exp_nest += 1
 
@@ -310,7 +310,7 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
   end
 
   def expand_macro(the_macro, node, mode = nil)
-    expanded_macro =
+    expanded_macro, macro_expansion_pragmas =
       eval_macro(node) do
         yield
       end
@@ -323,7 +323,7 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
                Program::MacroExpansionMode::Normal
              end
 
-    generated_nodes = @program.parse_macro_source(expanded_macro, the_macro, node, Set.new(@vars.keys),
+    generated_nodes = @program.parse_macro_source(expanded_macro, macro_expansion_pragmas, the_macro, node, Set.new(@vars.keys),
       current_def: @typed_def,
       inside_type: !current_type.is_a?(Program),
       inside_exp: @exp_nest > 0,
@@ -400,7 +400,7 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
         @program.expand_macro node, (@scope || current_type), @path_lookup, free_vars, @untyped_def
       rescue ex : SkipMacroException
         skip_macro_exception = ex
-        ex.expanded_before_skip
+        {ex.expanded_before_skip, ex.macro_expansion_pragmas}
       end
     end
 

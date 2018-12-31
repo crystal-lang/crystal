@@ -94,17 +94,22 @@ module Crystal
         readme.should contain("# example")
 
         readme.should contain(%{1. Add the dependency to your `shard.yml`:})
-        readme.should contain(%{```yaml
-dependencies:
-  example:
-    github: jsmith/example
-```})
+        readme.should contain(<<-EOF
+
+           ```yaml
+           dependencies:
+             example:
+               github: jsmith/example
+           ```
+
+        EOF
+        )
         readme.should contain(%{2. Run `shards install`})
         readme.should contain(%{TODO: Write a description here})
         readme.should_not contain(%{TODO: Write installation instructions here})
         readme.should contain(%{require "example"})
         readme.should contain(%{1. Fork it (<https://github.com/jsmith/example/fork>)})
-        readme.should contain(%{[jsmith](https://github.com/jsmith) John Smith - creator, maintainer})
+        readme.should contain(%{[John Smith](https://github.com/jsmith) - creator and maintainer})
       end
 
       describe_file "example_app/README.md" do |readme|
@@ -113,16 +118,21 @@ dependencies:
         readme.should contain(%{TODO: Write a description here})
 
         readme.should_not contain(%{1. Add the dependency to your `shard.yml`:})
-        readme.should_not contain(%{```yaml
-dependencies:
-  example:
-    github: jsmith/example
-```})
+        readme.should_not contain(<<-EOF
+
+           ```yaml
+           dependencies:
+             example:
+               github: jsmith/example
+           ```
+
+        EOF
+        )
         readme.should_not contain(%{2. Run `shards install`})
         readme.should contain(%{TODO: Write installation instructions here})
         readme.should_not contain(%{require "example"})
         readme.should contain(%{1. Fork it (<https://github.com/jsmith/example_app/fork>)})
-        readme.should contain(%{[jsmith](https://github.com/jsmith) John Smith - creator, maintainer})
+        readme.should contain(%{[John Smith](https://github.com/jsmith) - creator and maintainer})
       end
 
       describe_file "example/shard.yml" do |shard_yml|
@@ -147,32 +157,41 @@ dependencies:
       end
 
       describe_file "example/src/example.cr" do |example|
-        example.should eq(%{# TODO: Write documentation for `Example`
-module Example
-  VERSION = "0.1.0"
+        example.should eq(<<-EOF
+        # TODO: Write documentation for `Example`
+        module Example
+          VERSION = "0.1.0"
 
-  # TODO: Put your code here
-end
-})
+          # TODO: Put your code here
+        end
+
+        EOF
+        )
       end
 
       describe_file "example/spec/spec_helper.cr" do |example|
-        example.should eq(%{require "spec"
-require "../src/example"
-})
+        example.should eq(<<-EOF
+        require "spec"
+        require "../src/example"
+
+        EOF
+        )
       end
 
       describe_file "example/spec/example_spec.cr" do |example|
-        example.should eq(%{require "./spec_helper"
+        example.should eq(<<-EOF
+        require "./spec_helper"
 
-describe Example do
-  # TODO: Write tests
+        describe Example do
+          # TODO: Write tests
 
-  it "works" do
-    false.should eq(true)
-  end
-end
-})
+          it "works" do
+            false.should eq(true)
+          end
+        end
+
+        EOF
+        )
       end
 
       describe_file "example/.git/config" { }

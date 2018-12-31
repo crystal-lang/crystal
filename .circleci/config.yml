@@ -47,6 +47,20 @@ jobs:
       TRAVIS_OS_NAME: osx
     steps: *ci_steps
 
+  check_format:
+    machine: true
+    environment:
+      <<: *env
+      TRAVIS_OS_NAME: linux
+      ARCH: x86_64
+      ARCH_CMD: linux64
+    steps:
+      - checkout
+      - run: bin/ci prepare_system
+      - run: echo 'export CURRENT_TAG="$CIRCLE_TAG"' >> $BASH_ENV
+      - run: bin/ci prepare_build
+      - run: bin/ci format
+
   sync_docs_s3:
     machine: true
     steps:
@@ -69,7 +83,7 @@ jobs:
       - run: |
           git clone https://github.com/crystal-lang/distribution-scripts.git ~/distribution-scripts
           cd ~/distribution-scripts
-          git checkout f83d13b3232d4e8594a2638f78ebbabc6b760467
+          git checkout a6a7a322df05fd57e8f1b1b9020045dd13e679c0
       # persist relevant information for build process
       - run: |
           cd ~/distribution-scripts
@@ -80,7 +94,7 @@ jobs:
           echo "export CRYSTAL_SHA1=$CIRCLE_SHA1" >> build.env
 
           # Which previous version use
-          export PREVIOUS_CRYSTAL_BASE_URL="https://github.com/crystal-lang/crystal/releases/download/0.26.1/crystal-0.26.1-1"
+          export PREVIOUS_CRYSTAL_BASE_URL="https://github.com/crystal-lang/crystal/releases/download/0.27.0/crystal-0.27.0-1"
           echo "export PREVIOUS_CRYSTAL_RELEASE_LINUX64_TARGZ=${PREVIOUS_CRYSTAL_BASE_URL}-linux-x86_64.tar.gz" >> build.env
           echo "export PREVIOUS_CRYSTAL_RELEASE_LINUX32_TARGZ=${PREVIOUS_CRYSTAL_BASE_URL}-linux-i686.tar.gz" >> build.env
           echo "export PREVIOUS_CRYSTAL_RELEASE_DARWIN_TARGZ=${PREVIOUS_CRYSTAL_BASE_URL}-darwin-x86_64.tar.gz" >> build.env
@@ -287,6 +301,7 @@ workflows:
       - test_linux
       - test_linux32
       - test_darwin
+      - check_format
       - sync_docs_s3:
           filters:
             branches:
@@ -306,12 +321,15 @@ workflows:
           filters: *per_tag
       - test_darwin:
           filters: *per_tag
+      - check_format:
+          filters: *per_tag
       - prepare_common:
           filters: *per_tag
           requires:
             - test_linux
             - test_linux32
             - test_darwin
+            - check_format
       - prepare_tagged:
           filters: *per_tag
           requires:
@@ -359,11 +377,13 @@ workflows:
       - test_linux
       - test_linux32
       - test_darwin
+      - check_format
       - prepare_common:
           requires:
             - test_linux
             - test_linux32
             - test_darwin
+            - check_format
       - prepare_nightly:
           requires:
             - prepare_common
@@ -405,12 +425,15 @@ workflows:
           filters: *maintenance
       - test_darwin:
           filters: *maintenance
+      - check_format:
+          filters: *maintenance
       - prepare_common:
           filters: *maintenance
           requires:
             - test_linux
             - test_linux32
             - test_darwin
+            - check_format
       - prepare_maintenance:
           filters: *maintenance
           requires:

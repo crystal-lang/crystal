@@ -89,7 +89,7 @@ class Socket < IO
     end
   end
 
-  # Force opened sockets to be closed on `exec(2)`. Only for platforms that don't
+  # Forces opened sockets to be closed on `exec(2)`. Only for platforms that don't
   # support `SOCK_CLOEXEC` (e.g., Darwin).
   protected def init_close_on_exec(fd : Int32)
     {% unless LibC.has_constant?(:SOCK_CLOEXEC) %}

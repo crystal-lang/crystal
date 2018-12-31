@@ -172,7 +172,12 @@ class Crystal::Doc::Method
 
   def arg_to_html(arg : Arg, io, links = true)
     if arg.external_name != arg.name
-      io << (arg.external_name.empty? ? '_' : arg.external_name)
+      name = arg.external_name.empty? ? "_" : arg.external_name
+      if Symbol.needs_quotes? name
+        HTML.escape name.inspect, io
+      else
+        io << name
+      end
       io << ' '
     end
 
@@ -185,6 +190,7 @@ class Crystal::Doc::Method
       io << " : "
       @type.type_to_html type, io, links: links
     end
+
     if default_value = arg.default_value
       io << " = "
       io << Highlighter.highlight(default_value.to_s)
@@ -200,7 +206,7 @@ class Crystal::Doc::Method
   end
 
   def has_args?
-    !@def.args.empty? || @def.block_arg || @def.yields
+    !@def.args.empty? || @def.double_splat || @def.block_arg || @def.yields
   end
 
   def to_json(builder : JSON::Builder)
@@ -213,7 +219,6 @@ class Crystal::Doc::Method
       builder.field "abstract", abstract?
       builder.field "args", args
       builder.field "args_string", args_to_s
-      builder.field "source_link", source_link
       builder.field "source_link", source_link
       builder.field "def", self.def
     end
