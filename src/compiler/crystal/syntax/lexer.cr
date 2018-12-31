@@ -2308,7 +2308,7 @@ module Crystal
           end
         when '#'
           if delimiter_state
-            # If it's "#{..." we don't want "#{{{" to parse it as "# {{ {", but as "#{ {{"
+            # If it's "#{...", we don't want "#{{{" to parse it as "# {{ {", but as "#{ {{"
             # (macro expression inside a string interpolation)
             if peek_next_char == '{'
               char = next_char

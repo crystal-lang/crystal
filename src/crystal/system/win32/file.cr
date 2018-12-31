@@ -67,7 +67,7 @@ module Crystal::System::File
       return check_not_found_error("GetFileAttributesEx") if ret == 0
 
       if file_attributes.dwFileAttributes.bits_set? LibC::FILE_ATTRIBUTE_REPARSE_POINT
-        # Could be a symlink, retrieve it's reparse tag with FindFirstFile
+        # Could be a symlink, retrieve its reparse tag with FindFirstFile
         handle = LibC.FindFirstFileW(winpath, out find_data)
         return check_not_found_error("FindFirstFile") if handle == LibC::INVALID_HANDLE_VALUE
 

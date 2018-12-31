@@ -40,7 +40,7 @@ require "./location/loader"
 # The local time zone can be accessed as `Time::Location.local`.
 #
 # It is initially configured according to system environment settings,
-# but it's value can be changed:
+# but its value can be changed:
 #
 # ```
 # location = Time::Location.local

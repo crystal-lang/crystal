@@ -583,7 +583,7 @@ module Crystal
       raise "BUG: #{self} doesn't implement add_subclass"
     end
 
-    # Replaces type parameetrs in this type with the type parameters
+    # Replace type parameters in this type with the type parameters
     # of the given *instance* type.
     def replace_type_parameters(instance) : Type
       self
@@ -694,7 +694,7 @@ module Crystal
   end
 
   # A type that has a name and can be inside a namespace.
-  # For example, given  `class Foo::Bar`, `Foo` is the namespace and `Bar` is the name.
+  # For example, given `class Foo::Bar`, `Foo` is the namespace and `Bar` is the name.
   #
   # There are other types that have a name but it can be deduced from other(s) type(s),
   # so they don't inherit NamedType: a union type, a metaclass, etc.
