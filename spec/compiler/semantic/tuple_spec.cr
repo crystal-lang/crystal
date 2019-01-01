@@ -291,12 +291,12 @@ describe "Semantic: tuples" do
   end
 
   it "errors on named tuple too big" do
+    named_tuple_keys = String.build do |io|
+      333.times { |i| io << "key" << i << ": 0, " }
+    end
+
     assert_error %(
-      { #{String.build do |io|
-            333.times do |i|
-              io << "arg" << i << ": 0, "
-            end
-          end} }
+      { #{named_tuple_keys} }
       ),
       "named tuple size cannot be greater than 300 (size is 333)"
   end
