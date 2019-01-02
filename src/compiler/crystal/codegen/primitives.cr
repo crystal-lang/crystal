@@ -21,11 +21,11 @@ class Crystal::CodeGenVisitor
               codegen_primitive_binary node, target_def, call_args
             when "cast"
               # TODO 0.28.0 delete :cast
-              codegen_primitive_cast node, target_def, call_args
+              codegen_primitive_convert node, target_def, call_args, checked: !call.name.ends_with?('!')
             when "convert"
-              codegen_primitive_cast node, target_def, call_args
+              codegen_primitive_convert node, target_def, call_args, checked: true
             when "unchecked_convert"
-              codegen_primitive_cast node, target_def, call_args
+              codegen_primitive_convert node, target_def, call_args, checked: false
             when "allocate"
               codegen_primitive_allocate node, target_def, call_args
             when "pointer_malloc"
@@ -615,13 +615,13 @@ class Crystal::CodeGenVisitor
     raise "BUG: codegen_binary_op called with #{t1} #{op} #{t2}"
   end
 
-  def codegen_primitive_cast(node, target_def, call_args)
+  def codegen_primitive_convert(node, target_def, call_args, *, checked : Bool)
     p1 = call_args[0]
     from_type, to_type = target_def.owner, target_def.type
-    codegen_cast from_type, to_type, p1
+    codegen_convert(from_type, to_type, p1, checked: checked)
   end
 
-  def codegen_cast(from_type : IntegerType, to_type : IntegerType, arg)
+  def codegen_convert(from_type : IntegerType, to_type : IntegerType, arg, *, checked : Bool)
     if from_type.normal_rank == to_type.normal_rank
       arg
     elsif from_type.rank < to_type.rank
@@ -631,15 +631,15 @@ class Crystal::CodeGenVisitor
     end
   end
 
-  def codegen_cast(from_type : IntegerType, to_type : FloatType, arg)
+  def codegen_convert(from_type : IntegerType, to_type : FloatType, arg, *, checked : Bool)
     int_to_float from_type, to_type, arg
   end
 
-  def codegen_cast(from_type : FloatType, to_type : IntegerType, arg)
+  def codegen_convert(from_type : FloatType, to_type : IntegerType, arg, *, checked : Bool)
     float_to_int from_type, to_type, arg
   end
 
-  def codegen_cast(from_type : FloatType, to_type : FloatType, arg)
+  def codegen_convert(from_type : FloatType, to_type : FloatType, arg, *, checked : Bool)
     if from_type.rank < to_type.rank
       extend_float to_type, arg
     elsif from_type.rank > to_type.rank
@@ -649,24 +649,28 @@ class Crystal::CodeGenVisitor
     end
   end
 
-  def codegen_cast(from_type : IntegerType, to_type : CharType, arg)
-    codegen_cast from_type, @program.int32, arg
+  def codegen_convert(from_type : IntegerType, to_type : CharType, arg, *, checked : Bool)
+    codegen_convert from_type, @program.int32, arg, checked: checked
   end
 
-  def codegen_cast(from_type : CharType, to_type : IntegerType, arg)
+  def codegen_convert(from_type : CharType, to_type : IntegerType, arg, *, checked : Bool)
     builder.zext arg, llvm_type(to_type)
   end
 
-  def codegen_cast(from_type : SymbolType, to_type : IntegerType, arg)
+  def codegen_convert(from_type : SymbolType, to_type : IntegerType, arg, *, checked : Bool)
     arg
   end
 
-  def codegen_cast(from_type : TypeDefType, to_type, arg)
-    codegen_cast from_type.remove_typedef, to_type, arg
+  def codegen_convert(from_type : TypeDefType, to_type, arg, *, checked : Bool)
+    codegen_convert from_type.remove_typedef, to_type, arg, checked: checked
+  end
+
+  def codegen_convert(from_type, to_type, arg, *, checked : Bool)
+    raise "BUG: codegen_convert called from #{from_type} to #{to_type}"
   end
 
   def codegen_cast(from_type, to_type, arg)
-    raise "BUG: codegen_cast called from #{from_type} to #{to_type}"
+    codegen_convert(from_type, to_type, arg, checked: false)
   end
 
   def codegen_primitive_allocate(node, target_def, call_args)
