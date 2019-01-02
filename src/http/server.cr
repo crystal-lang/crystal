@@ -28,7 +28,7 @@ require "./common"
 #
 # ## Binding to sockets
 #
-# The server can be bound to one ore more server sockets (see )
+# The server can be bound to one ore more server sockets (see `#bind`)
 #
 # Supported types:
 #
@@ -36,7 +36,7 @@ require "./common"
 # * TCP socket with TLS/SSL: `#bind_tls`
 # * Unix socket `#bind_unix`
 #
-# `#bind(uri : URI)` and `bind(uri : String)` parse socket configuration for
+# `#bind(uri : URI)` and `#bind(uri : String)` parse socket configuration for
 # one of these types from an `URI`. This can be useful for injecting plain text
 # configuration values.
 #
