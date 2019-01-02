@@ -697,6 +697,16 @@ module Crystal
         else
           wrong_number_of_arguments "StringLiteral#split", args.size, "0..1"
         end
+      when "count"
+        interpret_one_arg_method(method, args) do |arg|
+          case arg
+          when CharLiteral
+            chr = arg.value
+          else
+            raise "StringLiteral#count expects char, not #{arg.class_desc}"
+          end
+          NumberLiteral.new(@value.count(chr))
+        end
       when "starts_with?"
         interpret_one_arg_method(method, args) do |arg|
           case arg
