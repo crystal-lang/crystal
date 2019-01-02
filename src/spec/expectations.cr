@@ -138,6 +138,9 @@ module Spec
 
   # :nodoc:
   struct BeAExpectation(T)
+    def initialize(t : T.class)
+    end
+
     def match(actual_value)
       actual_value.is_a?(T)
     end
@@ -367,8 +370,8 @@ module Spec
     end
 
     # Creates an `Expectation` that passes if actual is of type *type* (`is_a?`).
-    macro be_a(type)
-      Spec::BeAExpectation({{type}}).new
+    def be_a(type)
+      Spec::BeAExpectation.new(type)
     end
 
     # Runs the block and passes if it raises an exception of type *klass* and the error message matches.
