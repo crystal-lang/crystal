@@ -1,7 +1,7 @@
 class HTTP::Server
   # The response to configure and write to in an `HTTP::Server` handler.
   #
-  # The response `status_code` and `headers` must be configured before writing
+  # The response `status` and `headers` must be configured before writing
   # the response body. Once response output is written, changing the `status`
   # and `headers` properties has no effect.
   #
@@ -28,12 +28,12 @@ class HTTP::Server
 
     # The status code of this response, which must be set before writing the response
     # body. If not set, the default value is 200 (OK).
-    property status_code : Int32
+    property status : HTTP::Status
 
     # :nodoc:
     def initialize(@io : IO, @version = "HTTP/1.1")
       @headers = Headers.new
-      @status_code = 200
+      @status = HTTP::Status::OK
       @wrote_headers = false
       @upgraded = false
       @output = output = @original_output = Output.new(@io)
@@ -45,7 +45,7 @@ class HTTP::Server
       # This method is called by RequestProcessor to avoid allocating a new instance for each iteration.
       @headers.clear
       @cookies = nil
-      @status_code = 200
+      @status = HTTP::Status::OK
       @wrote_headers = false
       @upgraded = false
       @output = @original_output
@@ -62,8 +62,8 @@ class HTTP::Server
       headers["Content-Length"] = content_length.to_s
     end
 
-    def status_code=(status : HTTP::Status)
-      self.status_code = status.value
+    def status_code=(status_code : Int32)
+      self.status = HTTP::Status.new(status_code)
     end
 
     # See `IO#write(slice)`.
@@ -117,17 +117,18 @@ class HTTP::Server
     # Generates an error response using *message* and *code*.
     #
     # Calls `reset` and then writes the given message.
-    def respond_with_error(message = "Internal Server Error", code = 500)
+    def respond_with_error(status : HTTP::Status = HTTP::Status::INTERNAL_SERVER_ERROR, status_message = nil)
       reset
-      @status_code = code
+      @status = status
+      message = status_message || @status.description
       self.content_type = "text/plain"
-      self << code << ' ' << message << '\n'
+      self << @status.code << ' ' << message << '\n'
       flush
     end
 
     protected def write_headers
-      status_message = HTTP::Status.new(@status_code).description
-      @io << @version << ' ' << @status_code << ' ' << status_message << "\r\n"
+      status_message = @status.description
+      @io << @version << ' ' << @status.code << ' ' << status_message << "\r\n"
       headers.each do |name, values|
         values.each do |value|
           @io << name << ": " << value << "\r\n"

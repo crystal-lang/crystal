@@ -16,7 +16,7 @@ class HTTP::ErrorHandler
     rescue ex : Exception
       if @verbose
         context.response.reset
-        context.response.status_code = HTTP::Status::INTERNAL_SERVER_ERROR
+        context.response.status = HTTP::Status::INTERNAL_SERVER_ERROR
         context.response.content_type = "text/plain"
         context.response.print("ERROR: ")
         ex.inspect_with_backtrace(context.response)

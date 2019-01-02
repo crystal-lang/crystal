@@ -158,7 +158,7 @@ module HTTP
       it "changes status and others" do
         io = IO::Memory.new
         response = Response.new(io)
-        response.status_code = 404
+        response.status = HTTP::Status::NOT_FOUND
         response.version = "HTTP/1.0"
         response.close
         io.to_s.should eq("HTTP/1.0 404 Not Found\r\nContent-Length: 0\r\n\r\n")
@@ -225,7 +225,7 @@ module HTTP
 
         io = IO::Memory.new
         response = Response.new(io)
-        response.respond_with_error("Bad Request", 400)
+        response.respond_with_error(HTTP::Status::BAD_REQUEST)
         io.to_s.should eq("HTTP/1.1 400 Bad Request\r\nContent-Type: text/plain\r\nTransfer-Encoding: chunked\r\n\r\n10\r\n400 Bad Request\n\r\n")
       end
     end
@@ -307,20 +307,20 @@ module HTTP
         socket.flush
 
         response = Client::Response.from_io(socket)
-        response.status_code.should eq(100)
+        response.status.code.should eq(100)
 
         socket << "hello"
         socket.flush
 
         response = Client::Response.from_io(socket)
-        response.status_code.should eq(200)
+        response.status.code.should eq(200)
         response.body.should eq("hello")
       end
     end
 
     it "handles Expect: 100-continue correctly when body isn't read" do
       server = Server.new do |context|
-        context.response.respond_with_error("I don't want your body", 400)
+        context.response.respond_with_error(HTTP::Status.new(400), "I don't want your body")
       end
 
       address = server.bind_unused_port
@@ -340,7 +340,7 @@ module HTTP
         socket.flush
 
         response = Client::Response.from_io(socket)
-        response.status_code.should eq(400)
+        response.status.code.should eq(400)
         response.body.should eq("400 I don't want your body\n")
       end
     end

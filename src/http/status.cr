@@ -1,4 +1,4 @@
-# A support class that provides additional around HTTP status codes.
+# A support enum that provides additional around HTTP status codes.
 #
 # Based on [Hypertext Transfer Protocol (HTTP) Status Code Registry](https://www.iana.org/assignments/http-status-codes/http-status-codes.xhtml)
 #
@@ -98,7 +98,7 @@ enum HTTP::Status
   end
 
   # Returns the default status description of the given HTTP status code.
-  def description : String
+  def description : String?
     case value
     when 100 then "Continue"
     when 101 then "Switching Protocols"
@@ -161,7 +161,7 @@ enum HTTP::Status
     when 508 then "Loop Detected"
     when 510 then "Not Extended"
     when 511 then "Network Authentication Required"
-    else          ""
+    else          nil
     end
   end
 end

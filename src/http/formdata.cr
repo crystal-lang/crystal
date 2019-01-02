@@ -27,7 +27,7 @@ require "./formdata/**"
 #   end
 #
 #   unless name && file
-#     context.response.status_code = HTTP::Status::BAD_REQUEST
+#     context.response.status = HTTP::Status::BAD_REQUEST
 #     next
 #   end
 #

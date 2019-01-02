@@ -25,7 +25,7 @@ class HTTP::Server::RequestProcessor
         break unless request
 
         if request.is_a?(HTTP::Request::BadRequest)
-          response.respond_with_error("Bad Request", 400)
+          response.respond_with_error(HTTP::Status::BAD_REQUEST)
           response.close
           return
         end

@@ -17,7 +17,7 @@ describe HTTP::StaticFileHandler do
 
   it "serves a file" do
     response = handle HTTP::Request.new("GET", "/test.txt"), ignore_body: false
-    response.status_code.should eq(200)
+    response.status.code.should eq(200)
     response.body.should eq(File.read(datapath("static_file_handler", "test.txt")))
   end
 
@@ -39,7 +39,7 @@ describe HTTP::StaticFileHandler do
       headers["If-Modified-Since"] = initial_response.headers["Last-Modified"]
 
       response = handle HTTP::Request.new("GET", "/test.txt", headers), ignore_body: true
-      response.status_code.should eq(304)
+      response.status.code.should eq(304)
 
       response.headers["Last-Modified"].should eq initial_response.headers["Last-Modified"]
       response.headers["Content-Type"]?.should be_nil
@@ -50,7 +50,7 @@ describe HTTP::StaticFileHandler do
       headers["If-Modified-Since"] = HTTP.format_time(File.info(datapath("static_file_handler", "test.txt")).modification_time + 1.hour)
       response = handle HTTP::Request.new("GET", "/test.txt", headers), ignore_body: true
 
-      response.status_code.should eq(304)
+      response.status.code.should eq(304)
     end
 
     it "serves file if file mtime is younger" do
@@ -58,7 +58,7 @@ describe HTTP::StaticFileHandler do
       headers["If-Modified-Since"] = HTTP.format_time(File.info(datapath("static_file_handler", "test.txt")).modification_time - 1.hour)
       response = handle HTTP::Request.new("GET", "/test.txt", headers), ignore_body: false
 
-      response.status_code.should eq(200)
+      response.status.code.should eq(200)
       response.body.should eq(File.read(datapath("static_file_handler", "test.txt")))
     end
   end
@@ -70,7 +70,7 @@ describe HTTP::StaticFileHandler do
       headers = HTTP::Headers.new
       headers["If-None-Match"] = initial_response.headers["Etag"]
       response = handle HTTP::Request.new("GET", "/test.txt", headers), ignore_body: true
-      response.status_code.should eq(304)
+      response.status.code.should eq(304)
     end
 
     it "serves file if header does not match etag" do
@@ -78,7 +78,7 @@ describe HTTP::StaticFileHandler do
       headers["If-None-Match"] = "some random etag"
 
       response = handle HTTP::Request.new("GET", "/test.txt", headers), ignore_body: false
-      response.status_code.should eq(200)
+      response.status.code.should eq(200)
       response.body.should eq(File.read(datapath("static_file_handler", "test.txt")))
     end
 
@@ -86,7 +86,7 @@ describe HTTP::StaticFileHandler do
       headers = HTTP::Headers.new
       headers["If-None-Match"] = "*"
       response = handle HTTP::Request.new("GET", "/test.txt", headers), ignore_body: true
-      response.status_code.should eq(304)
+      response.status.code.should eq(304)
     end
 
     it "serves file if header is empty" do
@@ -94,7 +94,7 @@ describe HTTP::StaticFileHandler do
       headers["If-None-Match"] = ""
 
       response = handle HTTP::Request.new("GET", "/test.txt", headers), ignore_body: false
-      response.status_code.should eq(200)
+      response.status.code.should eq(200)
       response.body.should eq(File.read(datapath("static_file_handler", "test.txt")))
     end
 
@@ -103,7 +103,7 @@ describe HTTP::StaticFileHandler do
       headers["If-None-Match"] = ", foo"
 
       response = handle HTTP::Request.new("GET", "/test.txt", headers), ignore_body: false
-      response.status_code.should eq(200)
+      response.status.code.should eq(200)
       response.body.should eq(File.read(datapath("static_file_handler", "test.txt")))
     end
   end
@@ -115,7 +115,7 @@ describe HTTP::StaticFileHandler do
       headers = HTTP::Headers.new
       headers["If-None-Match"] = %(,, ,W/"1234567"   , , #{initial_response.headers["Etag"]},"12345678",%)
       response = handle HTTP::Request.new("GET", "/test.txt", headers), ignore_body: true
-      response.status_code.should eq(304)
+      response.status.code.should eq(304)
     end
 
     it "serves file if no header matches etag" do
@@ -123,7 +123,7 @@ describe HTTP::StaticFileHandler do
       headers["If-None-Match"] = "some random etag, 1234567"
 
       response = handle HTTP::Request.new("GET", "/test.txt", headers), ignore_body: false
-      response.status_code.should eq(200)
+      response.status.code.should eq(200)
       response.body.should eq(File.read(datapath("static_file_handler", "test.txt")))
     end
   end
@@ -137,7 +137,7 @@ describe HTTP::StaticFileHandler do
       headers["If-None-Match"] = initial_response.headers["Etag"]
       response = handle HTTP::Request.new("GET", "/test.txt", headers), ignore_body: true
 
-      response.status_code.should eq(304)
+      response.status.code.should eq(304)
     end
 
     it "serves a file if header does not match etag even If-Modified-Since is fresh" do
@@ -148,48 +148,48 @@ describe HTTP::StaticFileHandler do
       headers["If-None-Match"] = "some random etag"
       response = handle HTTP::Request.new("GET", "/test.txt", headers), ignore_body: false
 
-      response.status_code.should eq(200)
+      response.status.code.should eq(200)
       response.body.should eq(File.read(datapath("static_file_handler", "test.txt")))
     end
   end
 
   it "lists directory's entries" do
     response = handle HTTP::Request.new("GET", "/")
-    response.status_code.should eq(200)
+    response.status.code.should eq(200)
     response.body.should match(/test.txt/)
   end
 
   it "does not list directory's entries when directory_listing is set to false" do
     response = handle HTTP::Request.new("GET", "/"), directory_listing: false
-    response.status_code.should eq(404)
+    response.status.code.should eq(404)
   end
 
   it "does not serve a not found file" do
     response = handle HTTP::Request.new("GET", "/not_found_file.txt")
-    response.status_code.should eq(404)
+    response.status.code.should eq(404)
   end
 
   it "does not serve a not found directory" do
     response = handle HTTP::Request.new("GET", "/not_found_dir/")
-    response.status_code.should eq(404)
+    response.status.code.should eq(404)
   end
 
   it "does not serve a file as directory" do
     response = handle HTTP::Request.new("GET", "/test.txt/")
-    response.status_code.should eq(404)
+    response.status.code.should eq(404)
   end
 
   it "handles only GET and HEAD method" do
     %w(GET HEAD).each do |method|
       response = handle HTTP::Request.new(method, "/test.txt")
-      response.status_code.should eq(200)
+      response.status.code.should eq(200)
     end
 
     %w(POST PUT DELETE).each do |method|
       response = handle HTTP::Request.new(method, "/test.txt")
-      response.status_code.should eq(404)
+      response.status.code.should eq(404)
       response = handle HTTP::Request.new(method, "/test.txt"), false
-      response.status_code.should eq(405)
+      response.status.code.should eq(405)
       response.headers["Allow"].should eq("GET, HEAD")
     end
   end
@@ -197,14 +197,14 @@ describe HTTP::StaticFileHandler do
   it "expands a request path" do
     %w(../test.txt ../../test.txt test.txt/../test.txt a/./b/../c/../../test.txt).each do |path|
       response = handle HTTP::Request.new("GET", "/#{path}")
-      response.status_code.should eq(302)
+      response.status.code.should eq(302)
       response.headers["Location"].should eq("/test.txt")
     end
 
     # directory
     %w(.. ../ ../.. a/.. a/.././b/../).each do |path|
       response = handle HTTP::Request.new("GET", "/#{path}")
-      response.status_code.should eq(302)
+      response.status.code.should eq(302)
       response.headers["Location"].should eq("/")
     end
   end
@@ -212,13 +212,13 @@ describe HTTP::StaticFileHandler do
   it "unescapes a request path" do
     %w(test%2Etxt %74%65%73%74%2E%74%78%74).each do |path|
       response = handle HTTP::Request.new("GET", "/#{path}")
-      response.status_code.should eq(200)
+      response.status.code.should eq(200)
       response.body.should eq(file_text)
     end
 
     %w(%2E%2E/test.txt found%2F%2E%2E%2Ftest%2Etxt).each do |path|
       response = handle HTTP::Request.new("GET", "/#{path}")
-      response.status_code.should eq(302)
+      response.status.code.should eq(302)
       response.headers["Location"].should eq("/test.txt")
     end
   end
@@ -226,16 +226,16 @@ describe HTTP::StaticFileHandler do
   it "returns 400" do
     %w(%00 test.txt%00).each do |path|
       response = handle HTTP::Request.new("GET", "/#{path}")
-      response.status_code.should eq(400)
+      response.status.code.should eq(400)
     end
   end
 
   it "handles invalid redirect path" do
     response = handle HTTP::Request.new("GET", "test.txt%0A")
-    response.status_code.should eq(302)
+    response.status.code.should eq(302)
     response.headers["Location"].should eq "/test.txt%0A"
 
     response = handle HTTP::Request.new("GET", "/test.txt%0A")
-    response.status_code.should eq(404)
+    response.status.code.should eq(404)
   end
 end

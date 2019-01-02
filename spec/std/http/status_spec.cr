@@ -63,8 +63,8 @@ describe HTTP::Status do
       HTTP::Status.new(200).description.should eq("OK")
     end
 
-    it "returns empty string on non-existent status" do
-      HTTP::Status.new(0).description.should eq("")
+    it "returns nil on non-existent status" do
+      HTTP::Status.new(0).description.should eq(nil)
     end
   end
 end
