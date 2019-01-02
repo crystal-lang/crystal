@@ -231,6 +231,42 @@ describe "Code gen: arithmetics primitives" do
           ), flags: PreviewOverflowFlags).to_i.should eq(1)
         end
       {% end %}
+
+      {% for float_type in [Float32, Float64] %}
+        {% if type != UInt128 || float_type != Float32 %}
+          # skip for type == UInt128 && float_type == Float32
+          # since Float32::MAX < UInt128::MAX
+          it "raises overflow if greater than {{type}}::MAX (from {{float_type}})" do
+            run(%(
+              require "prelude"
+
+              v = {{float_type}}.new({{type}}::MAX) * {{float_type}}.new(1.5)
+
+              begin
+                v.{{method}}
+                0
+              rescue OverflowError
+                1
+              end
+            ), flags: PreviewOverflowFlags).to_i.should eq(1)
+          end
+        {% end %}
+
+        it "raises overflow if lower than {{type}}::MIN (from {{float_type}})" do
+          run(%(
+            require "prelude"
+
+            v = {{float_type}}.new({{type}}::MIN) * {{float_type}}.new(1.5) - {{float_type}}.new(1.0)
+
+            begin
+              v.{{method}}
+              0
+            rescue OverflowError
+              1
+            end
+          ), flags: PreviewOverflowFlags).to_i.should eq(1)
+        end
+      {% end %}
     {% end %}
   end
 end
