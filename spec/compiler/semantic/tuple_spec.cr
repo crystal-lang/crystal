@@ -287,7 +287,7 @@ describe "Semantic: tuples" do
         pos += {0, 0}
       end
       ),
-      "tuple size cannot be greater than 300 (size is 301)"
+      "tuple size cannot be greater than 300 (size is 302)"
   end
 
   it "errors on named tuple too big" do
