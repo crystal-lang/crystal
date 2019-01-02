@@ -155,6 +155,20 @@ module HTTP
         io.to_s.should eq("HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: 5\r\n\r\nHello")
       end
 
+      it "sets status code" do
+        io = IO::Memory.new
+        response = Response.new(io)
+        response.status_code = 201
+        response.status.should eq HTTP::Status::CREATED
+      end
+
+      it "retrieves status code" do
+        io = IO::Memory.new
+        response = Response.new(io)
+        response.status = HTTP::Status::CREATED
+        response.status_code.should eq 201
+      end
+
       it "changes status and others" do
         io = IO::Memory.new
         response = Response.new(io)
@@ -307,13 +321,13 @@ module HTTP
         socket.flush
 
         response = Client::Response.from_io(socket)
-        response.status.code.should eq(100)
+        response.status_code.should eq(100)
 
         socket << "hello"
         socket.flush
 
         response = Client::Response.from_io(socket)
-        response.status.code.should eq(200)
+        response.status_code.should eq(200)
         response.body.should eq("hello")
       end
     end
@@ -340,7 +354,7 @@ module HTTP
         socket.flush
 
         response = Client::Response.from_io(socket)
-        response.status.code.should eq(400)
+        response.status_code.should eq(400)
         response.body.should eq("400 I don't want your body\n")
       end
     end

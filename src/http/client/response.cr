@@ -61,6 +61,11 @@ class HTTP::Client::Response
     process_content_type_header.content_type
   end
 
+  # Convenience method to retrieve the HTTP status code.
+  def status_code
+    status.code
+  end
+
   def charset
     process_content_type_header.charset
   end

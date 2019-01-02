@@ -6,7 +6,7 @@ class HTTP::Client
     it "parses response with body" do
       response = Response.from_io(IO::Memory.new("HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: 5\r\n\r\nhelloworld"))
       response.version.should eq("HTTP/1.1")
-      response.status.code.should eq(200)
+      response.status_code.should eq(200)
       response.status_message.should eq("OK")
       response.headers["content-type"].should eq("text/plain")
       response.headers["content-length"].should eq("5")
@@ -16,7 +16,7 @@ class HTTP::Client
     it "parses response with streamed body" do
       Response.from_io(IO::Memory.new("HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: 5\r\n\r\nhelloworld")) do |response|
         response.version.should eq("HTTP/1.1")
-        response.status.code.should eq(200)
+        response.status_code.should eq(200)
         response.status_message.should eq("OK")
         response.headers["content-type"].should eq("text/plain")
         response.headers["content-length"].should eq("5")
@@ -34,7 +34,7 @@ class HTTP::Client
     it "parses response with body without \\r" do
       response = Response.from_io(IO::Memory.new("HTTP/1.1 200 OK\nContent-Type: text/plain\nContent-Length: 5\n\nhelloworld"))
       response.version.should eq("HTTP/1.1")
-      response.status.code.should eq(200)
+      response.status_code.should eq(200)
       response.status_message.should eq("OK")
       response.headers["content-type"].should eq("text/plain")
       response.headers["content-length"].should eq("5")
@@ -43,7 +43,7 @@ class HTTP::Client
 
     it "parses response with body but without content-length" do
       response = Response.from_io(IO::Memory.new("HTTP/1.1 200 OK\r\n\r\nhelloworld"))
-      response.status.code.should eq(200)
+      response.status_code.should eq(200)
       response.status_message.should eq("OK")
       response.headers.size.should eq(0)
       response.body.should eq("helloworld")
@@ -51,7 +51,7 @@ class HTTP::Client
 
     it "parses response with empty body but without content-length" do
       response = Response.from_io(IO::Memory.new("HTTP/1.1 404 Not Found\r\n\r\n"))
-      response.status.code.should eq(404)
+      response.status_code.should eq(404)
       response.status_message.should eq("Not Found")
       response.headers.size.should eq(0)
       response.body.should eq("")
@@ -59,7 +59,7 @@ class HTTP::Client
 
     it "parses response without body" do
       response = Response.from_io(IO::Memory.new("HTTP/1.1 100 Continue\r\n\r\n"))
-      response.status.code.should eq(100)
+      response.status_code.should eq(100)
       response.status_message.should eq("Continue")
       response.headers.size.should eq(0)
       response.body?.should be_nil
@@ -67,7 +67,7 @@ class HTTP::Client
 
     it "parses response without status message" do
       response = Response.from_io(IO::Memory.new("HTTP/1.1 200\r\n\r\n"))
-      response.status.code.should eq(200)
+      response.status_code.should eq(200)
       response.status_message.should eq("")
       response.headers.size.should eq(0)
       response.body.should eq("")
@@ -106,7 +106,7 @@ class HTTP::Client
     it "parses response ignoring body" do
       response = Response.from_io(IO::Memory.new("HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: 5\r\n\r\nhelloworld"), true)
       response.version.should eq("HTTP/1.1")
-      response.status.code.should eq(200)
+      response.status_code.should eq(200)
       response.status_message.should eq("OK")
       response.headers["content-type"].should eq("text/plain")
       response.headers["content-length"].should eq("5")
@@ -116,7 +116,7 @@ class HTTP::Client
     it "parses 204 response without body but Content-Length == 0 (#2512)" do
       response = Response.from_io(IO::Memory.new("HTTP/1.1 204 OK\r\nContent-Type: text/plain\r\nContent-Length: 0\r\n\r\n"))
       response.version.should eq("HTTP/1.1")
-      response.status.code.should eq(204)
+      response.status_code.should eq(204)
       response.status_message.should eq("OK")
       response.headers["content-type"].should eq("text/plain")
       response.headers["content-length"].should eq("0")
@@ -284,9 +284,14 @@ class HTTP::Client
       response.charset.should eq("UTF-8")
     end
 
+    it "returns status_code" do
+      response = Response.new(HTTP::Status::CREATED)
+      response.status_code.should eq 201
+    end
+
     it "creates Response with status code 204, no body and Content-Length == 0 (#2512)" do
       response = Response.new(204, version: "HTTP/1.0", body: "", headers: HTTP::Headers{"Content-Length" => "0"})
-      response.status.code.should eq(204)
+      response.status_code.should eq(204)
       response.body.should eq("")
     end
 

@@ -62,6 +62,12 @@ class HTTP::Server
       headers["Content-Length"] = content_length.to_s
     end
 
+    # Convenience method to retrieve the HTTP status code.
+    def status_code
+      status.code
+    end
+
+    # Convenience method to set the HTTP status code.
     def status_code=(status_code : Int32)
       self.status = HTTP::Status.new(status_code)
     end
