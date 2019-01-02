@@ -914,7 +914,7 @@ describe "Semantic: module" do
         end
       end
       Moo.new),
-      "cannot instantiate Moo:Module"
+      "undefined local variable or method 'allocate' (modules cannot be instantiated)"
   end
 
   it "gives error when trying to instantiate with allocate" do
@@ -924,7 +924,7 @@ describe "Semantic: module" do
         end
       end
       Moo.allocate),
-      "cannot instantiate Moo:Module"
+      "undefined method 'allocate' for Moo:Module (modules cannot be instantiated)"
   end
 
   it "uses type declaration inside module" do

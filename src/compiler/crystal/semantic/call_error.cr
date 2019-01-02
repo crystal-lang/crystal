@@ -97,10 +97,11 @@ class Crystal::Call
             msg << "undefined method '#{def_name}'"
           else
             msg << "undefined local variable or method '#{def_name}'"
-            if def_name == "allocate" && owner.is_a?(ModuleType) && owner.is_a?(MetaclassType)
-              msg << colorize(" (modules cannot be instantiated)").yellow.bold
-            end
           end
+        end
+
+        if def_name == "allocate" && owner.is_a?(ModuleType) && owner.is_a?(MetaclassType)
+          msg << colorize(" (modules cannot be instantiated)").yellow.bold
         end
 
         if obj && obj.type != owner
