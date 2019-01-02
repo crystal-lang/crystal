@@ -341,6 +341,21 @@ class Crystal::CodeGenVisitor
     end
   end
 
+  private def codegen_out_of_range(target_type : FloatType, arg_type : IntegerType, arg)
+    if arg_type.kind == :u128 && target_type.kind == :f32
+      # since Float32::MAX < UInt128::MAX
+      # the value will be outside of the float range if
+      # arg > Float32::MAX
+      _, max_value = target_type.range
+      max_value_as_int = float_to_int(target_type, arg_type, float(max_value, target_type))
+
+      codegen_binary_op_gt(arg_type, arg_type, arg, max_value_as_int)
+    else
+      # for all other possibilities the integer value fit within the float range
+      llvm_false
+    end
+  end
+
   private def codegen_out_of_range(target_type : FloatType, arg_type : FloatType, arg)
     min_value, max_value = target_type.range
     # arg < min_value || arg > max_value
@@ -675,6 +690,16 @@ class Crystal::CodeGenVisitor
   end
 
   def codegen_convert(from_type : IntegerType, to_type : FloatType, arg, *, checked : Bool)
+    # TODO remove conditional after 0.28
+    if @program.has_flag?("preview_overflow")
+      if checked
+        if from_type.kind == :u128 && to_type.kind == :f32
+          overflow = codegen_out_of_range(to_type, from_type, arg)
+          codegen_raise_overflow_cond(overflow)
+        end
+      end
+    end
+
     int_to_float from_type, to_type, arg
   end
 

@@ -271,6 +271,21 @@ describe "Code gen: arithmetics primitives" do
   end
 
   describe ".to_f conversions" do
+    {% if SupportedInts.includes?(Int128) %}
+      it "raises overflow if greater than Float32::MAX (from UInt128)" do
+        run(%(
+          require "prelude"
+
+          begin
+            UInt128::MAX.to_f32
+            0
+          rescue OverflowError
+            1
+          end
+        ), flags: PreviewOverflowFlags).to_i.should eq(1)
+      end
+    {% end %}
+
     it "raises overflow if greater than Float32::MAX" do
       run(%(
         require "prelude"
