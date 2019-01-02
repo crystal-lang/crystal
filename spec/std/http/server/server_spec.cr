@@ -239,7 +239,7 @@ module HTTP
 
         io = IO::Memory.new
         response = Response.new(io)
-        response.respond_with_error(HTTP::Status::BAD_REQUEST)
+        response.respond_with_error("Bad Request", 400)
         io.to_s.should eq("HTTP/1.1 400 Bad Request\r\nContent-Type: text/plain\r\nTransfer-Encoding: chunked\r\n\r\n10\r\n400 Bad Request\n\r\n")
       end
     end
@@ -334,7 +334,7 @@ module HTTP
 
     it "handles Expect: 100-continue correctly when body isn't read" do
       server = Server.new do |context|
-        context.response.respond_with_error(HTTP::Status.new(400), "I don't want your body")
+        context.response.respond_with_error("I don't want your body", 400)
       end
 
       address = server.bind_unused_port

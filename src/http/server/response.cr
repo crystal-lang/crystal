@@ -123,10 +123,10 @@ class HTTP::Server
     # Generates an error response using *message* and *code*.
     #
     # Calls `reset` and then writes the given message.
-    def respond_with_error(status : HTTP::Status = HTTP::Status::INTERNAL_SERVER_ERROR, status_message = nil)
+    def respond_with_error(message = "Internal Server Error", code = 500)
       reset
-      @status = status
-      message = status_message || @status.description
+      @status = HTTP::Status.from_code(code)
+      message = message || @status.description
       self.content_type = "text/plain"
       self << @status.code << ' ' << message << '\n'
       flush
