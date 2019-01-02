@@ -2,6 +2,18 @@ require "spec"
 require "http"
 
 describe HTTP::Status do
+  describe "#from_code" do
+    it "raises when given invalid status code" do
+      expect_raises(Exception, "Invalid HTTP status code: 1000") do
+        HTTP::Status.from_code(1000)
+      end
+    end
+
+    it "returns a instance when given valid status code" do
+      HTTP::Status.from_code(201).should eq HTTP::Status::CREATED
+    end
+  end
+
   describe "#code" do
     it "returns the status code" do
       HTTP::Status::INTERNAL_SERVER_ERROR.value.should eq 500

@@ -68,6 +68,11 @@ enum HTTP::Status
   NOT_EXTENDED                    = 510
   NETWORK_AUTHENTICATION_REQUIRED = 511
 
+  def self.from_code(status_code : Int32)
+    raise "Invalid HTTP status code: #{status_code}" unless 100 <= status_code <= 999
+    new(status_code)
+  end
+
   def code
     value
   end
