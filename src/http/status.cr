@@ -106,7 +106,7 @@ enum HTTP::Status
 
   # Returns the default status description of the given HTTP status code.
   def description : String?
-    case value
+    case code
     when 100 then "Continue"
     when 101 then "Switching Protocols"
     when 102 then "Processing"
