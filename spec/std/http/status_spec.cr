@@ -4,8 +4,8 @@ require "http"
 describe HTTP::Status do
   describe ".from_code" do
     it "raises when given invalid status code" do
-      expect_raises(ArgumentError, "Invalid HTTP status code: 1000") do
-        HTTP::Status.from_code(1000)
+      expect_raises(ArgumentError, "Invalid HTTP status code: 50") do
+        HTTP::Status.from_code(50)
       end
     end
 
