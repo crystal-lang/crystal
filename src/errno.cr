@@ -204,8 +204,11 @@ class Errno < Exception
   # Returns the numeric value of errno.
   getter errno : Int32
 
-  # Creates a new Errno with the given message. The message will
-  # have concatenated the message denoted by `Errno#value`.
+  # Returns the message of errno.
+  getter errno_message : String
+
+  # Creates a new `Errno` with the given message. The message will
+  # have concatenated the errno message denoted by *errno*.
   #
   # Typical usage:
   #
@@ -217,7 +220,8 @@ class Errno < Exception
   # ```
   def initialize(message, errno = Errno.value)
     @errno = errno
-    super "#{message}: #{String.new(LibC.strerror(errno))}"
+    @errno_message = String.new(LibC.strerror(@errno))
+    super "#{message}: #{@errno_message}"
   end
 
   # Returns the value of libc's errno.
@@ -232,7 +236,7 @@ class Errno < Exception
       LibC.__error.value
     {% elsif flag?(:win32) %}
       ret = LibC._get_errno(out errno)
-      raise Errno.new("get_errno", ret) unless ret == 0
+      raise Errno.new("_get_errno", ret) unless ret == 0
       errno
     {% end %}
   end
@@ -249,7 +253,7 @@ class Errno < Exception
       LibC.__error.value = value
     {% elsif flag?(:win32) %}
       ret = LibC._set_errno(value)
-      raise Errno.new("set_errno", ret) unless ret == 0
+      raise Errno.new("_set_errno", ret) unless ret == 0
       value
     {% end %}
   end
