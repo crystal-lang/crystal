@@ -94,7 +94,7 @@ class HTTP::Client::Response
   end
 
   def self.mandatory_body?(status : HTTP::Status) : Bool
-    !(status.informational? || status == HTTP::Status::NO_CONTENT || status == HTTP::Status::NOT_MODIFIED)
+    !(status.informational? || status.no_content? || status.not_modified?)
   end
 
   def self.supports_chunked?(version) : Bool
