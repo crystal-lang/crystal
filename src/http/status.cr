@@ -1,4 +1,4 @@
-# A support enum that provides additional around HTTP status codes.
+# An enum that provides additional support around HTTP status codes.
 #
 # Based on [Hypertext Transfer Protocol (HTTP) Status Code Registry](https://www.iana.org/assignments/http-status-codes/http-status-codes.xhtml)
 #
@@ -68,8 +68,10 @@ enum HTTP::Status
   NOT_EXTENDED                    = 510
   NETWORK_AUTHENTICATION_REQUIRED = 511
 
+  # Create a new status instance with the given status code, or raise an
+  # error if the status code given is not inside 100..999.
   def self.from_code(status_code : Int32)
-    raise "Invalid HTTP status code: #{status_code}" unless 100 <= status_code <= 999
+    raise ArgumentError.new("Invalid HTTP status code: #{status_code}") unless 100 <= status_code <= 999
     new(status_code)
   end
 
