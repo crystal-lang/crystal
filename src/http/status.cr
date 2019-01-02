@@ -69,7 +69,7 @@ enum HTTP::Status
   NETWORK_AUTHENTICATION_REQUIRED = 511
 
   # Create a new status instance with the given status code, or raise an
-  # error if the status code given is not inside 000..999.
+  # error if the status code given is not inside 100..999.
   def self.from_code(status_code : Int32)
     raise ArgumentError.new("Invalid HTTP status code: #{status_code}") unless 100 <= status_code <= 999
     new(status_code)
