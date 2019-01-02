@@ -81,27 +81,27 @@ enum HTTP::Status
 
   # Returns `true` if the response status code is between 100 and 199.
   def informational?
-    100 <= value <= 199
+    100 <= code <= 199
   end
 
   # Returns `true` if the response status code is between 200 and 299.
   def success?
-    200 <= value <= 299
+    200 <= code <= 299
   end
 
   # Returns `true` if the response status code is between 300 and 399.
   def redirection?
-    300 <= value <= 399
+    300 <= code <= 399
   end
 
   # Returns `true` if the response status code is between 400 and 499.
   def client_error?
-    400 <= value <= 499
+    400 <= code <= 499
   end
 
   # Returns `true` if the response status code is between 500 and 599.
   def server_error?
-    500 <= value <= 599
+    500 <= code <= 599
   end
 
   # Returns the default status description of the given HTTP status code.
