@@ -407,7 +407,7 @@ struct BigInt < Int
   end
 
   def to_i64
-    if LibGMP::Long == Int64 || (self <= Int32::MAX && self >= Int32::MIN)
+    if LibGMP::Long == Int64 || (Int32::MIN <= self <= Int32::MAX)
       LibGMP.get_si(self).to_i64
     else
       to_s.to_i64
@@ -431,7 +431,7 @@ struct BigInt < Int
   end
 
   def to_i64!
-    if LibGMP::Long == Int64 || (self <= Int32::MAX && self >= Int32::MIN)
+    if LibGMP::Long == Int64 || (Int32::MIN <= self <= Int32::MAX)
       LibGMP.get_si(self).to_i64!
     else
       to_s.to_i64
@@ -455,7 +455,7 @@ struct BigInt < Int
   end
 
   def to_u64
-    if LibGMP::ULong == UInt64 || (self <= UInt32::MAX && self >= UInt32::MIN)
+    if LibGMP::ULong == UInt64 || (UInt32::MIN <= self <= UInt32::MAX)
       LibGMP.get_ui(self).to_u64
     else
       to_s.to_u64
@@ -479,7 +479,7 @@ struct BigInt < Int
   end
 
   def to_u64!
-    if LibGMP::Long == Int64 || (self <= Int32::MAX && self >= Int32::MIN)
+    if LibGMP::Long == Int64 || (Int32::MIN <= self <= Int32::MAX)
       LibGMP.get_ui(self).to_u64!
     else
       to_s.to_u64
