@@ -2470,6 +2470,13 @@ module Crystal
           return false
         end
         indent(block_indent) { format_block block, needs_space }
+        if has_parentheses
+          skip_space
+          if @token.type == :NEWLINE
+            ends_with_newline = true
+          end
+          skip_space_or_newline
+        end
       end
 
       if has_args || node.block_arg

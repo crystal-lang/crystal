@@ -298,6 +298,8 @@ describe Crystal::Formatter do
   assert_format "foo   &.is_a?(T)", "foo &.is_a?(T)"
   assert_format "foo   &.responds_to?(:foo)", "foo &.responds_to?(:foo)"
 
+  assert_format "foo(\n  1,\n  &.foo\n)"
+
   %w(return break next yield).each do |keyword|
     assert_format keyword
     assert_format "#{keyword}( 1 )", "#{keyword}(1)"
