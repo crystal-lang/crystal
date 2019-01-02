@@ -11,7 +11,7 @@ class HTTP::LogHandler
     elapsed = Time.measure { call_next(context) }
     elapsed_text = elapsed_text(elapsed)
 
-    @io.puts "#{context.request.method} #{context.request.resource} - #{context.response.status.code} (#{elapsed_text})"
+    @io.puts "#{context.request.method} #{context.request.resource} - #{context.response.status_code} (#{elapsed_text})"
   rescue e
     @io.puts "#{context.request.method} #{context.request.resource} - Unhandled exception:"
     e.inspect_with_backtrace(@io)

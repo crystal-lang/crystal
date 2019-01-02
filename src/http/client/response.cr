@@ -21,17 +21,8 @@ class HTTP::Client::Response
     end
   end
 
-  def initialize(status_code : Int32, @body : String? = nil, @headers : Headers = Headers.new, status_message = nil, @version = "HTTP/1.1", @body_io = nil)
-    @status = HTTP::Status.new(status_code)
-    @status_message = status_message || @status.description
-
-    if Response.mandatory_body?(@status)
-      @body = "" unless @body || @body_io
-    else
-      if (@body || @body_io) && (headers["Content-Length"]? != "0")
-        raise ArgumentError.new("Status #{status.code} should not have a body")
-      end
-    end
+  def self.new(status_code : Int32, body : String? = nil, headers : Headers = Headers.new, status_message = nil, version = "HTTP/1.1", body_io = nil)
+    new(HTTP::Status.new(status_code), body, headers, status_message, version, body_io)
   end
 
   def body
