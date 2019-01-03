@@ -20,7 +20,7 @@ describe HTTP::Status do
 
   describe "#code" do
     it "returns the status code" do
-      HTTP::Status::INTERNAL_SERVER_ERROR.value.should eq 500
+      HTTP::Status::INTERNAL_SERVER_ERROR.code.should eq 500
     end
   end
 
