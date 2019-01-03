@@ -165,14 +165,14 @@ module HTTP
       it "retrieves status code" do
         io = IO::Memory.new
         response = Response.new(io)
-        response.status = HTTP::Status::CREATED
+        response.status = :created
         response.status_code.should eq 201
       end
 
       it "changes status and others" do
         io = IO::Memory.new
         response = Response.new(io)
-        response.status = HTTP::Status::NOT_FOUND
+        response.status = :not_found
         response.version = "HTTP/1.0"
         response.close
         io.to_s.should eq("HTTP/1.0 404 Not Found\r\nContent-Length: 0\r\n\r\n")

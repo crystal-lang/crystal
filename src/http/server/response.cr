@@ -33,7 +33,7 @@ class HTTP::Server
     # :nodoc:
     def initialize(@io : IO, @version = "HTTP/1.1")
       @headers = Headers.new
-      @status = HTTP::Status::OK
+      @status = :ok
       @wrote_headers = false
       @upgraded = false
       @output = output = @original_output = Output.new(@io)
@@ -45,7 +45,7 @@ class HTTP::Server
       # This method is called by RequestProcessor to avoid allocating a new instance for each iteration.
       @headers.clear
       @cookies = nil
-      @status = HTTP::Status::OK
+      @status = :ok
       @wrote_headers = false
       @upgraded = false
       @output = @original_output

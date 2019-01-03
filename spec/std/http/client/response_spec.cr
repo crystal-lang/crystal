@@ -188,7 +188,7 @@ class HTTP::Client
       headers["Content-Type"] = "text/plain"
       headers["Content-Length"] = "5"
 
-      response = Response.new(HTTP::Status::OK, "hello", headers)
+      response = Response.new(:ok, "hello", headers)
       io = IO::Memory.new
       response.to_io(io)
       io.to_s.should eq("HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: 5\r\n\r\nhello")
@@ -200,7 +200,7 @@ class HTTP::Client
       headers["Content-Length"] = "5"
       headers["Set-Cookie"] = "foo=bar; path=/"
 
-      response = Response.new(HTTP::Status::OK, "hello", headers)
+      response = Response.new(:ok, "hello", headers)
 
       io = IO::Memory.new
       response.to_io(io)
@@ -221,71 +221,71 @@ class HTTP::Client
     end
 
     it "sets content length from body" do
-      response = Response.new(HTTP::Status::OK, "hello")
+      response = Response.new(:ok, "hello")
       io = IO::Memory.new
       response.to_io(io)
       io.to_s.should eq("HTTP/1.1 200 OK\r\nContent-Length: 5\r\n\r\nhello")
     end
 
     it "sets content length even without body" do
-      response = Response.new(HTTP::Status::OK)
+      response = Response.new(:ok)
       io = IO::Memory.new
       response.to_io(io)
       io.to_s.should eq("HTTP/1.1 200 OK\r\nContent-Length: 0\r\n\r\n")
     end
 
     it "serialize as chunked with body_io" do
-      response = Response.new(HTTP::Status::OK, body_io: IO::Memory.new("hello"))
+      response = Response.new(:ok, body_io: IO::Memory.new("hello"))
       io = IO::Memory.new
       response.to_io(io)
       io.to_s.should eq("HTTP/1.1 200 OK\r\nTransfer-Encoding: chunked\r\n\r\n5\r\nhello\r\n0\r\n\r\n")
     end
 
     it "serialize as not chunked with body_io if HTTP/1.0" do
-      response = Response.new(HTTP::Status::OK, version: "HTTP/1.0", body_io: IO::Memory.new("hello"))
+      response = Response.new(:ok, version: "HTTP/1.0", body_io: IO::Memory.new("hello"))
       io = IO::Memory.new
       response.to_io(io)
       io.to_s.should eq("HTTP/1.0 200 OK\r\nContent-Length: 5\r\n\r\nhello")
     end
 
     it "returns no content_type when header is missing" do
-      response = Response.new(HTTP::Status::OK, "")
+      response = Response.new(:ok, "")
       response.content_type.should be_nil
       response.charset.should be_nil
     end
 
     it "returns content type and no charset" do
-      response = Response.new(HTTP::Status::OK, "", headers: HTTP::Headers{"Content-Type" => "text/plain"})
+      response = Response.new(:ok, "", headers: HTTP::Headers{"Content-Type" => "text/plain"})
       response.content_type.should eq("text/plain")
       response.charset.should be_nil
     end
 
     it "returns content type and charset, removes semicolon" do
-      response = Response.new(HTTP::Status::OK, "", headers: HTTP::Headers{"Content-Type" => "text/plain ; charset=UTF-8"})
+      response = Response.new(:ok, "", headers: HTTP::Headers{"Content-Type" => "text/plain ; charset=UTF-8"})
       response.content_type.should eq("text/plain")
       response.charset.should eq("UTF-8")
     end
 
     it "returns content type and charset, removes quotes" do
-      response = Response.new(HTTP::Status::OK, "", headers: HTTP::Headers{"Content-Type" => %(text/plain ; charset="UTF-8")})
+      response = Response.new(:ok, "", headers: HTTP::Headers{"Content-Type" => %(text/plain ; charset="UTF-8")})
       response.content_type.should eq("text/plain")
       response.charset.should eq("UTF-8")
     end
 
     it "returns content type and no charset, other parameter (#2520)" do
-      response = Response.new(HTTP::Status::OK, "", headers: HTTP::Headers{"Content-Type" => "text/plain ; colenc=U"})
+      response = Response.new(:ok, "", headers: HTTP::Headers{"Content-Type" => "text/plain ; colenc=U"})
       response.content_type.should eq("text/plain")
       response.charset.should be_nil
     end
 
     it "returns content type and charset, removes semicolon, with multiple parameters (#2520)" do
-      response = Response.new(HTTP::Status::OK, "", headers: HTTP::Headers{"Content-Type" => "text/plain ; colenc=U ; charset=UTF-8"})
+      response = Response.new(:ok, "", headers: HTTP::Headers{"Content-Type" => "text/plain ; colenc=U ; charset=UTF-8"})
       response.content_type.should eq("text/plain")
       response.charset.should eq("UTF-8")
     end
 
     it "returns status_code" do
-      response = Response.new(HTTP::Status::CREATED)
+      response = Response.new(:created)
       response.status_code.should eq 201
     end
 
@@ -297,7 +297,7 @@ class HTTP::Client
 
     describe "success?" do
       it "returns true for the 2xx" do
-        response = Response.new(HTTP::Status::OK)
+        response = Response.new(:ok)
 
         response.success?.should eq(true)
       end
