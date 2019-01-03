@@ -2713,10 +2713,6 @@ module Crystal
       super(program, program, name, super_class)
     end
 
-    def metaclass
-      program.class_type
-    end
-
     delegate abstract?, generic_nest, lookup_new_in_ancestors?,
       type_var?, to: instance_type
 
@@ -3211,10 +3207,6 @@ module Crystal
 
     def initialize(program, @instance_type)
       super(program)
-    end
-
-    def metaclass
-      program.class_type
     end
 
     def parents

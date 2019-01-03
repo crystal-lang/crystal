@@ -662,7 +662,7 @@ describe "Code gen: class" do
       end
 
       Foo.class.to_s
-      )).to_string.should eq("Class")
+      )).to_string.should eq("Foo.class")
   end
 
   it "invokes class method inside instance method (#1119)" do

@@ -6,17 +6,17 @@ describe "Semantic: reflection" do
   end
 
   it "types Class class" do
-    assert_type("Class") { types["Class"] }
+    assert_type("Class") { types["Class"].metaclass }
   end
 
   it "types Object and Class metaclases" do
-    assert_type("Object.class") { types["Class"] }
-    assert_type("Class.class") { types["Class"] }
+    assert_type("Object.class") { types["Object"].metaclass.metaclass }
+    assert_type("Class.class") { types["Class"].metaclass.metaclass }
   end
 
   it "types Reference metaclass" do
     assert_type("Reference") { types["Reference"].metaclass }
-    assert_type("Reference.class") { types["Class"] }
+    assert_type("Reference.class") { types["Reference"].metaclass.metaclass }
   end
 
   it "types metaclass parent" do

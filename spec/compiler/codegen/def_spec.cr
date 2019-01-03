@@ -568,4 +568,23 @@ describe "Code gen: def" do
       foo { |a, b| }
       ))
   end
+
+  it "codegens T.class restriction matching metaclass type" do
+    run(%(
+      class Gen(T)
+        def initialize(@x : T.class)
+        end
+
+        def match(value)
+          value.is_a?(T)
+        end
+      end
+
+      def be(x)
+        Gen.new(x)
+      end
+
+      be(String.class).match(String)
+      )).to_b.should be_true
+  end
 end

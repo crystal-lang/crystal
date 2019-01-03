@@ -460,4 +460,14 @@ describe "Restrictions" do
       ),
       "no overload matches"
   end
+
+  it "matches metaclass with T.class restriction" do
+    assert_type(%(
+      def foo(x : T.class) forall T
+        T
+      end
+
+      foo(String.class)
+      )) { string.metaclass.metaclass }
+  end
 end
