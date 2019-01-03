@@ -164,11 +164,6 @@ struct Enum
     def to_{{name.id}} : {{type}}
       value.to_{{name.id}}
     end
-
-    # Returns the value of this enum member as a `{{type}}`
-    def to_{{name.id}}! : {{type}}
-      value.to_{{name.id}}!
-    end
   {% end %}
 
   # Returns the enum member that results from adding *other*

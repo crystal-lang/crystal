@@ -147,34 +147,16 @@ describe "BigFloat" do
     it { 1.234567.to_big_f.to_f32.should eq(1.234567_f32) }
   end
 
-  describe "to_f!" do
-    it { 1.34.to_big_f.to_f!.should eq(1.34) }
-    it { 0.0001304.to_big_f.to_f!.should eq(0.0001304) }
-    it { 1.234567.to_big_f.to_f32!.should eq(1.234567_f32) }
-  end
-
   describe "to_i" do
     it { 1.34.to_big_f.to_i.should eq(1) }
     it { 123.to_big_f.to_i.should eq(123) }
     it { -4321.to_big_f.to_i.should eq(-4321) }
   end
 
-  describe "to_i!" do
-    it { 1.34.to_big_f.to_i!.should eq(1) }
-    it { 123.to_big_f.to_i!.should eq(123) }
-    it { -4321.to_big_f.to_i!.should eq(-4321) }
-  end
-
   describe "to_u" do
     it { 1.34.to_big_f.to_u.should eq(1) }
     it { 123.to_big_f.to_u.should eq(123) }
     it { 4321.to_big_f.to_u.should eq(4321) }
-  end
-
-  describe "to_u!" do
-    it { 1.34.to_big_f.to_u!.should eq(1) }
-    it { 123.to_big_f.to_u!.should eq(123) }
-    it { 4321.to_big_f.to_u!.should eq(4321) }
   end
 
   describe "to_s" do

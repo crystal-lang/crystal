@@ -1,7 +1,7 @@
 # Conforms to Semantic Versioning 2.0.0
 #
 # See [https://semver.org/](https://semver.org/) for more information.
-struct SemanticVersion
+class SemanticVersion
   include Comparable(self)
 
   # The major version of this semantic version
@@ -30,7 +30,8 @@ struct SemanticVersion
   #
   # Raises `ArgumentError` if *str* is not a semantic version.
   def self.parse(str : String) : self
-    if m = str.match /^(\d+)\.(\d+)\.(\d+)(-([\w\.]+))?(\+(\w+))??$/
+    m = str.match /^(\d+)\.(\d+)\.(\d+)(-([\w\.]+))?(\+(\w+))??$/
+    if m
       major = m[1].to_i
       minor = m[2].to_i
       patch = m[3].to_i
@@ -117,8 +118,8 @@ struct SemanticVersion
     def self.parse(str : String) : self
       identifiers = [] of String | Int32
       str.split('.').each do |val|
-        if number = val.to_i32?
-          identifiers << number
+        if val.match /^\d+$/
+          identifiers << val.to_i32
         else
           identifiers << val
         end
@@ -142,7 +143,7 @@ struct SemanticVersion
     # semver.prerelease.to_s # => "rc.1"
     # ```
     def to_s(io : IO)
-      identifiers.join('.', io)
+      identifiers.join(".", io)
     end
 
     # The comparison operator
@@ -166,6 +167,8 @@ struct SemanticVersion
         end
       elsif other.identifiers.empty?
         return -1
+      else
+        # continue
       end
 
       identifiers.each_with_index do |item, i|

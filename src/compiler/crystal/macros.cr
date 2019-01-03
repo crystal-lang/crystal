@@ -90,7 +90,7 @@ module Crystal::Macros
   # Compiles and execute a Crystal program and returns its output
   # as a `MacroId`.
   #
-  # The file denoted by *filename* must be a valid Crystal program.
+  # The file denote by *filename* must be a valid Crystal program.
   # This macro invocation passes *args* to the program as regular
   # program arguments. The program must output a valid Crystal expression.
   # This output is the result of this macro invocation, as a `MacroId`.
@@ -126,7 +126,7 @@ module Crystal::Macros
   # shell commands at compile time, or other macro run programs). It's also strongly
   # discouraged to have a macro run program take a lot of time, because this will
   # slow down compilation times. Reading files is OK, opening an HTTP connection
-  # at compile-time will most likely result in very slow compilations.
+  # at compile-time will most likely result if very slow compilations.
   def run(filename, *args) : MacroId
   end
 
@@ -398,10 +398,6 @@ module Crystal::Macros
 
     # Similar to `String#chomp`.
     def chomp : StringLiteral
-    end
-
-    # Similar to `String#count`.
-    def count(other : CharLiteral) : NumberLiteral
     end
 
     # Similar to `String#downcase`.
@@ -773,11 +769,11 @@ module Crystal::Macros
     end
 
     # Similar to `NamedTuple#[]` but returns `NilLiteral` if *key* is undefined.
-    def [](key : SymbolLiteral | StringLiteral | MacroId) : ASTNode
+    def [](key : ASTNode) : ASTNode
     end
 
     # Adds or replaces a key.
-    def []=(key : SymbolLiteral | StringLiteral | MacroId) : ASTNode
+    def []=(key : ASTNode) : ASTNode
     end
   end
 
@@ -843,8 +839,8 @@ module Crystal::Macros
     def default_value : ASTNode
     end
 
-    # Returns whether this variable has a default value
-    # (which can in turn be `nil`).
+    # Returns whether this variable has a default value (which.
+    # can in turn be `nil`).
     def has_default_value? : BoolLiteral
     end
 
@@ -864,7 +860,7 @@ module Crystal::Macros
     # Returns the value of a named argument,
     # or NilLiteral if the named argument isn't
     # used in this attribute.
-    def [](name : SymbolLiteral | StringLiteral | MacroId) : ASTNode
+    def [](name : SymbolLiteral) : ASTNode
     end
   end
 

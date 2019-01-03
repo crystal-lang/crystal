@@ -21,7 +21,7 @@ class Crystal::Command
         docs                     generate documentation
         env                      print Crystal environment information
         eval                     eval code from args or standard input
-        play                     starts Crystal playground server
+        play                     starts crystal playground server
         run (default)            build and run program
         spec                     build and run specs (in spec directory)
         tool                     run a tool

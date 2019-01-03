@@ -76,10 +76,6 @@ build() {
   with_build_env 'make std_spec clean'
   with_build_env 'make crystal std_spec compiler_spec docs'
   with_build_env 'find samples -name "*.cr" | xargs -L 1 ./bin/crystal build --no-codegen'
-}
-
-format() {
-  with_build_env 'make clean crystal'
   with_build_env './bin/crystal tool format --check samples spec src'
 }
 
@@ -172,9 +168,6 @@ case $command in
     ;;
   build)
     build
-    ;;
-  format)
-    format
     ;;
   -h|--help|help)
     usage

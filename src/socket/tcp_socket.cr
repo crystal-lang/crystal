@@ -42,11 +42,6 @@ class TCPSocket < IPSocket
     super fd, family, type, protocol
   end
 
-  # Creates a TCPSocket from an already configured raw file descriptor
-  def initialize(*, fd : Int32, family : Family = Family::INET)
-    super fd, family, Type::STREAM, Protocol::TCP
-  end
-
   # Opens a TCP socket to a remote TCP server, yields it to the block, then
   # eventually closes the socket when the block returns.
   #

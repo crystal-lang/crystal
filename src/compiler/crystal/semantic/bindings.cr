@@ -10,11 +10,11 @@ module Crystal
     @type : Type?
 
     def type
-      type? || ::raise "BUG: `#{self}` at #{self.location} has no type"
+      @type || ::raise "BUG: `#{self}` at #{self.location} has no type"
     end
 
     def type?
-      @type || @freeze_type
+      @type
     end
 
     def type(*, with_literals = false)
@@ -556,10 +556,6 @@ module Crystal
     def update(from = nil)
       obj_type = obj.type?
       return unless obj_type
-
-      if obj_type.is_a?(UnionType)
-        raise "can't read instance variables of union types (#{name} of #{obj_type})"
-      end
 
       var = visitor.lookup_instance_var(self, obj_type)
       self.type = var.type

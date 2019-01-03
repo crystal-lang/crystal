@@ -1944,9 +1944,7 @@ module Crystal
           @inside_interpolation = true
           exp = preserve_stop_on_do { parse_expression }
 
-          # We cannot reduce `StringLiteral` of interpolation inside heredoc into `String`
-          # because heredoc try to remove its indentation.
-          if exp.is_a?(StringLiteral) && delimiter_state.kind != :heredoc
+          if exp.is_a?(StringLiteral)
             pieces << Piece.new(exp.value, line_number)
           else
             pieces << Piece.new(exp, line_number)
@@ -2027,7 +2025,7 @@ module Crystal
     def remove_heredoc_indent(pieces : Array, indent)
       current_line = IO::Memory.new
       remove_indent = true
-      new_pieces = [] of ASTNode | String
+      new_pieces = [] of ASTNode
       previous_line_number = 0
       pieces.each_with_index do |piece, i|
         value = piece.value
@@ -2085,22 +2083,15 @@ module Crystal
         line = remove_heredoc_from_line(line, indent, pieces.last.line_number) if remove_indent
         add_heredoc_piece new_pieces, line
       end
-      new_pieces.map do |piece|
-        if piece.is_a?(String)
-          StringLiteral.new(piece)
-        else
-          piece
-        end
-      end
+      new_pieces
     end
 
     private def add_heredoc_piece(pieces, piece : String)
       last = pieces.last?
-      if last.is_a?(String)
-        last += piece
-        pieces[-1] = last
+      if last.is_a?(StringLiteral)
+        last.value += piece
       else
-        pieces << piece
+        pieces << StringLiteral.new(piece)
       end
     end
 
@@ -4699,11 +4690,6 @@ module Crystal
             named_args = parse_type_named_args(:"}")
           else
             type = parse_type(allow_primitives)
-          end
-
-          # Allow a trailing comma
-          if @token.type == :","
-            next_token_skip_space_or_newline
           end
 
           check :"}"

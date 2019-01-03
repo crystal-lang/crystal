@@ -37,10 +37,10 @@ module ECR
 
           supress_trailing_whitespace(token, supress_trailing)
 
-          str << "#<loc:push>("
+          str << '('
           append_loc(str, filename, line_number, column_number)
           str << string
-          str << ")#<loc:pop>.to_s "
+          str << ").to_s "
           str << buffer_name
           str << '\n'
         when :CONTROL
@@ -52,11 +52,9 @@ module ECR
 
           supress_trailing_whitespace(token, supress_trailing)
 
-          str << "#<loc:push>"
           append_loc(str, filename, line_number, column_number)
           str << ' ' unless string.starts_with?(' ')
           str << string
-          str << "#<loc:pop>"
           str << '\n'
         when :EOF
           break

@@ -45,11 +45,6 @@ class UNIXServer < UNIXSocket
     end
   end
 
-  # Creates a UNIXServer from an already configured raw file descriptor
-  def initialize(*, fd : Int32, type : Type = Type::STREAM, @path : String? = nil)
-    super(fd: fd, type: type, path: @path)
-  end
-
   # Creates a new UNIX server and yields it to the block. Eventually closes the
   # server socket when the block returns.
   #
@@ -69,7 +64,7 @@ class UNIXServer < UNIXSocket
   # this method.
   def accept? : UNIXSocket?
     if client_fd = accept_impl
-      sock = UNIXSocket.new(fd: client_fd, type: type, path: @path)
+      sock = UNIXSocket.new(client_fd, type, @path)
       sock.sync = sync?
       sock
     end

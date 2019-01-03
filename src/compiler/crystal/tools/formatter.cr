@@ -565,13 +565,11 @@ module Crystal
           # It might be #{__DIR__}, for example
           if @token.type == :INTERPOLATION_START
             write "\#{"
-            delimiter_state = @token.delimiter_state
             next_token_skip_space_or_newline
             indent(@column, exp)
             skip_space_or_newline
             check :"}"
             write "}"
-            @token.delimiter_state = delimiter_state
           else
             write @token.raw
           end
@@ -1149,18 +1147,14 @@ module Crystal
       accept name
       skip_space_or_newline
 
-      write_token :"("
-      skip_space
+      check_open_paren
 
-      # Given that generic type arguments are always inside parentheses
-      # we can start counting them from 0 inside them.
-      old_paren_count = @paren_count
-      @paren_count = 0
+      paren_count = @paren_count
 
       if named_args = node.named_args
         has_newlines, _, _ = format_named_args([] of ASTNode, named_args, @indent + 2)
         # `format_named_args` doesn't skip trailing comma
-        if @paren_count == 0 && @token.type == :","
+        if @paren_count == paren_count && @token.type == :","
           next_token_skip_space_or_newline
           if has_newlines
             write ","
@@ -1172,7 +1166,7 @@ module Crystal
         skip_space_or_newline
         node.type_vars.each_with_index do |type_var, i|
           accept type_var
-          if @paren_count == 0
+          if @paren_count == paren_count
             skip_space_or_newline
             if @token.type == :","
               write ", " unless last?(i, node.type_vars)
@@ -1182,11 +1176,8 @@ module Crystal
         end
       end
 
-      skip_space_or_newline if @paren_count == 0
-      write_token :")"
-
-      # Restore the old parentheses count
-      @paren_count = old_paren_count
+      skip_space_or_newline if @paren_count == paren_count
+      check_close_paren
 
       false
     end
@@ -1672,12 +1663,6 @@ module Crystal
     end
 
     def visit(node : MacroLiteral)
-      line = @line
-      @token.raw.scan("\n") do
-        line -= 1
-        @no_rstrip_lines.add line
-      end
-
       write @token.raw
       next_macro_token
       false
@@ -2470,13 +2455,6 @@ module Crystal
           return false
         end
         indent(block_indent) { format_block block, needs_space }
-        if has_parentheses
-          skip_space
-          if @token.type == :NEWLINE
-            ends_with_newline = true
-          end
-          skip_space_or_newline
-        end
       end
 
       if has_args || node.block_arg

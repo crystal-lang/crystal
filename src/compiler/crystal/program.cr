@@ -44,7 +44,7 @@ module Crystal
     #
     # The way we detect this is by remembering the type of the splat,
     # associated to a def's object id (the UInt64), and on an instantiation
-    # we compare the new type with the previous one and check if it contains
+    # we compare the new type with the previous one and check if if contains
     # the previous type.
     getter splat_expansions = {} of UInt64 => Type
 
@@ -107,7 +107,7 @@ module Crystal
     # The main filename of this program
     property filename : String?
 
-    # A `ProgressTracker` object which tracks compilation progress.
+    # Set to a `ProgressTracker` object which tracks compilation progress.
     property progress_tracker = ProgressTracker.new
 
     def initialize
@@ -201,7 +201,7 @@ module Crystal
       types["ARGC_UNSAFE"] = @argc = argc_unsafe = Const.new self, self, "ARGC_UNSAFE", Primitive.new("argc", int32)
       types["ARGV_UNSAFE"] = @argv = argv_unsafe = Const.new self, self, "ARGV_UNSAFE", Primitive.new("argv", pointer_of(pointer_of(uint8)))
 
-      # Make sure to initialize `ARGC_UNSAFE` and `ARGV_UNSAFE` as soon as the program starts
+      # Make sure to initialize ARGC and ARGV as soon as the program starts
       class_var_and_const_initializers << argc_unsafe
       class_var_and_const_initializers << argv_unsafe
 
@@ -426,7 +426,7 @@ module Crystal
     end
     property recorded_requires = [] of RecordedRequire
 
-    # Remembers that the program depends on this require.
+    # Rmembers that the program depends on this require.
     def record_require(filename, relative_to) : Nil
       recorded_requires << RecordedRequire.new(filename, relative_to)
     end
@@ -449,12 +449,12 @@ module Crystal
       end
     {% end %}
 
-    # Returns the `Nil` type
+    # Returns the `Nil` `Type`
     def nil_type
       @nil.not_nil!
     end
 
-    # Returns the `Hash` type
+    # Returns the `Hash` `Type`
     def hash_type
       @hash_type.not_nil!
     end
@@ -493,12 +493,12 @@ module Crystal
       end
     end
 
-    # Returns the `Struct` type
+    # Retutns the `Struct` type
     def struct
       @struct_t.not_nil!
     end
 
-    # Returns the `Class` type
+    # Retutns the `Class` type
     def class_type
       @class.not_nil!
     end

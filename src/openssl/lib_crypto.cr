@@ -197,20 +197,6 @@ lib LibCrypto
   fun evp_cipher_ctx_set_padding = EVP_CIPHER_CTX_set_padding(ctx : EVP_CIPHER_CTX, padding : Int32) : Int32
   fun evp_cipher_ctx_cipher = EVP_CIPHER_CTX_cipher(ctx : EVP_CIPHER_CTX) : EVP_CIPHER
 
-  @[Flags]
-  enum CipherFlags : ULong
-    EVP_CIPH_FLAG_DEFAULT_ASN1      =   0x1000
-    EVP_CIPH_FLAG_LENGTH_BITS       =   0x2000
-    EVP_CIPH_FLAG_FIPS              =   0x4000
-    EVP_CIPH_FLAG_NON_FIPS_ALLOW    =   0x8000
-    EVP_CIPH_FLAG_CUSTOM_CIPHER     = 0x100000
-    EVP_CIPH_FLAG_AEAD_CIPHER       = 0x200000
-    EVP_CIPH_FLAG_TLS1_1_MULTIBLOCK = 0x400000
-    EVP_CIPH_FLAG_PIPELINE          = 0x800000
-  end
-
-  fun evp_cipher_flags = EVP_CIPHER_flags(ctx : EVP_CIPHER_CTX) : CipherFlags
-
   fun hmac = HMAC(evp : EVP_MD, key : Char*, key_len : Int,
                   d : Char*, n : SizeT, md : Char*, md_len : UInt*) : Char*
 
@@ -236,7 +222,6 @@ lib LibCrypto
   fun md5 = MD5(data : UInt8*, lengh : LibC::SizeT, md : UInt8*) : UInt8*
 
   fun pkcs5_pbkdf2_hmac_sha1 = PKCS5_PBKDF2_HMAC_SHA1(pass : LibC::Char*, passlen : LibC::Int, salt : UInt8*, saltlen : LibC::Int, iter : LibC::Int, keylen : LibC::Int, out : UInt8*) : LibC::Int
-  fun pkcs5_pbkdf2_hmac = PKCS5_PBKDF2_HMAC(pass : LibC::Char*, passlen : LibC::Int, salt : UInt8*, saltlen : LibC::Int, iter : LibC::Int, digest : EVP_MD, keylen : LibC::Int, out : UInt8*) : LibC::Int
 
   NID_X9_62_prime256v1 = 415
 

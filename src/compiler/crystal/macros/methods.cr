@@ -176,7 +176,7 @@ module Crystal
     end
 
     def interpret_skip_file(node)
-      raise SkipMacroException.new(@str.to_s, macro_expansion_pragmas)
+      raise SkipMacroException.new(@str.to_s)
     end
 
     def interpret_system(node)
@@ -697,16 +697,6 @@ module Crystal
         else
           wrong_number_of_arguments "StringLiteral#split", args.size, "0..1"
         end
-      when "count"
-        interpret_one_arg_method(method, args) do |arg|
-          case arg
-          when CharLiteral
-            chr = arg.value
-          else
-            raise "StringLiteral#count expects char, not #{arg.class_desc}"
-          end
-          NumberLiteral.new(@value.count(chr))
-        end
       when "starts_with?"
         interpret_one_arg_method(method, args) do |arg|
           case arg
@@ -947,7 +937,7 @@ module Crystal
           when StringLiteral
             key = key.value
           else
-            raise "argument to [] must be a symbol or string, not #{key.class_desc}:\n\n#{key}"
+            return NilLiteral.new
           end
 
           entry = entries.find &.key.==(key)
@@ -2023,18 +2013,15 @@ module Crystal
           case arg
           when NumberLiteral
             index = arg.to_number.to_i
-            return self.args[index]? || NilLiteral.new
-          when SymbolLiteral then name = arg.value
-          when StringLiteral then name = arg.value
-          when MacroId       then name = arg.value
+            self.args[index]? || NilLiteral.new
+          when SymbolLiteral
+            named_arg = self.named_args.try &.find do |named_arg|
+              named_arg.name == arg.value
+            end
+            named_arg.try(&.value) || NilLiteral.new
           else
-            raise "argument to [] must be a number, symbol or string, not #{arg.class_desc}:\n\n#{arg}"
+            raise "argument to 'Annotation#[]' must be integer or symbol, not #{arg.class_desc}"
           end
-
-          named_arg = self.named_args.try &.find do |named_arg|
-            named_arg.name == name
-          end
-          named_arg.try(&.value) || NilLiteral.new
         end
       else
         super

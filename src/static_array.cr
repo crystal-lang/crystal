@@ -174,7 +174,7 @@ struct StaticArray(T, N)
   end
 
   # Modifies `self` by randomizing the order of elements in the array
-  # using the given *random* number generator. Returns `self`.
+  # using the given *random* number generator.  Returns `self`.
   #
   # ```
   # a = StaticArray(Int32, 3).new { |i| i + 1 } # => StaticArray[1, 2, 3]

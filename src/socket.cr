@@ -79,8 +79,7 @@ class Socket < IO
     end
   end
 
-  # Creates a Socket from an existing socket file descriptor.
-  def initialize(@fd : Int32, @family, @type, @protocol = Protocol::IP, blocking = false)
+  protected def initialize(@fd : Int32, @family, @type, @protocol = Protocol::IP, blocking = false)
     @closed = false
     init_close_on_exec(@fd)
 

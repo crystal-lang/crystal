@@ -28,7 +28,7 @@ class Crystal::Doc::Generator
     },
   }
 
-  def initialize(@program : Program, @included_dirs : Array(String), @output_dir : String, @output_format : String, @canonical_base_url : String?)
+  def initialize(@program : Program, @included_dirs : Array(String), @output_dir : String, @canonical_base_url : String?)
     @base_dir = Dir.current.chomp
     @types = {} of Crystal::Type => Doc::Type
     @repo_name = ""
@@ -46,18 +46,20 @@ class Crystal::Doc::Generator
       types.insert 0, program_type
     end
 
-    if @output_format == "json"
-      generate_docs_json program_type, types
-    else
-      generate_docs_html program_type, types
-    end
+    generate_docs program_type, types
   end
 
   def program_type
     type(@program)
   end
 
-  def read_readme
+  def generate_docs(program_type, types)
+    copy_files
+    generate_types_docs types, @output_dir, types
+    generate_readme program_type, types
+  end
+
+  def generate_readme(program_type, types)
     if File.file?("README.md")
       filename = "README.md"
     elsif File.file?("Readme.md")
@@ -65,29 +67,12 @@ class Crystal::Doc::Generator
     end
 
     if filename
-      content = File.read(filename)
+      raw_body = File.read(filename)
+      body = doc(program_type, raw_body)
     else
-      content = ""
+      raw_body = ""
+      body = ""
     end
-
-    content
-  end
-
-  def generate_docs_json(program_type, types)
-    readme = read_readme
-    json = Main.new(readme, Type.new(self, @program), repository_name)
-    puts json
-  end
-
-  def generate_docs_html(program_type, types)
-    copy_files
-    generate_types_docs types, @output_dir, types
-    generate_readme program_type, types
-  end
-
-  def generate_readme(program_type, types)
-    raw_body = read_readme
-    body = doc(program_type, raw_body)
 
     File.write File.join(@output_dir, "index.html"), MainTemplate.new(body, types, repository_name, @canonical_base_url)
 
@@ -237,13 +222,6 @@ class Crystal::Doc::Generator
 
   def collect_subtypes(parent)
     types = [] of Type
-
-    # AliasType has defined `types?` to be the types
-    # of the aliased type, but for docs we don't want
-    # to list the nested types for aliases.
-    if parent.is_a?(AliasType)
-      return types
-    end
 
     parent.types?.try &.each_value do |type|
       case type

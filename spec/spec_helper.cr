@@ -108,26 +108,25 @@ def assert_error(str, message, inject_primitives = true)
   end
 end
 
-def assert_macro(macro_args, macro_body, call_args, expected, expected_pragmas = nil, flags = nil)
-  assert_macro(macro_args, macro_body, expected, expected_pragmas, flags) { call_args }
+def assert_macro(macro_args, macro_body, call_args, expected, flags = nil)
+  assert_macro(macro_args, macro_body, expected, flags) { call_args }
 end
 
-def assert_macro(macro_args, macro_body, expected, expected_pragmas = nil, flags = nil)
+def assert_macro(macro_args, macro_body, expected, flags = nil)
   program = Program.new
   program.flags = flags if flags
   sub_node = yield program
-  assert_macro_internal program, sub_node, macro_args, macro_body, expected, expected_pragmas
+  assert_macro_internal program, sub_node, macro_args, macro_body, expected
 end
 
-def assert_macro_internal(program, sub_node, macro_args, macro_body, expected, expected_pragmas)
+def assert_macro_internal(program, sub_node, macro_args, macro_body, expected)
   macro_def = "macro foo(#{macro_args});#{macro_body};end"
   a_macro = Parser.parse(macro_def).as(Macro)
 
   call = Call.new(nil, "", sub_node)
-  result, result_pragmas = program.expand_macro a_macro, call, program, program
+  result = program.expand_macro a_macro, call, program, program
   result = result.chomp(';')
   result.should eq(expected)
-  result_pragmas.should eq(expected_pragmas) if expected_pragmas
 end
 
 def codegen(code, inject_primitives = true, debug = Crystal::Debug::None)

@@ -48,11 +48,6 @@ class TCPServer < TCPSocket
     end
   end
 
-  # Creates a TCPServer from an already configured raw file descriptor
-  def initialize(*, fd : Int32, family : Family = Family::INET)
-    super(fd: fd, family: family)
-  end
-
   # Creates a new TCP server, listening on all local interfaces (`::`).
   def self.new(port : Int, backlog = SOMAXCONN, reuse_port = false)
     new("::", port, backlog, reuse_port: reuse_port)
@@ -105,7 +100,7 @@ class TCPServer < TCPSocket
   # ```
   def accept?
     if client_fd = accept_impl
-      sock = TCPSocket.new(fd: client_fd, family: family, type: type, protocol: protocol)
+      sock = TCPSocket.new(client_fd, family, type, protocol)
       sock.sync = sync?
       sock
     end

@@ -108,7 +108,7 @@ module Crystal
       # an "Reference**" llvm value and you need to load that value
       # to access it.
       # However, the "self" argument is not copied to a local variable:
-      # it's accessed from the arguments list, and is a "Reference*"
+      # it's accessed from the arguments list, and it a "Reference*"
       # llvm value, so in a way it's "already loaded".
       # This field is true if that's the case.
       getter already_loaded : Bool
@@ -441,9 +441,9 @@ module Crystal
         # TODO: implement String#to_u128 and use it
         @last = int128(node.value.to_u64)
       when :f32
-        @last = float32(node.value)
+        @last = llvm_context.float.const_float(node.value)
       when :f64
-        @last = float64(node.value)
+        @last = llvm_context.double.const_double(node.value)
       else
         node.raise "Bug: unhandled number kind: #{node.kind}"
       end

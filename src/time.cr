@@ -786,7 +786,7 @@ struct Time
   end
 
   # Creates an instance specified by a commercial week date consisting of ISO
-  # calendar *year*, *week* and a *day_of_week*.
+  # calendar *year* and *week* and a *day_of_week`.
   #
   # This equates to the results from `#calendar_week` and `#day_of_week`.
   #
@@ -797,7 +797,7 @@ struct Time
   # * `day_of_week`: `1..7`
   def self.week_date(year : Int32, week : Int32, day_of_week : Int32 | DayOfWeek, hour : Int32 = 0, minute : Int32 = 0, second : Int32 = 0, *, nanosecond : Int32 = 0, location : Location = Location.local) : self
     # For this calculation we need to know the weekday of Januar 4.
-    # The number of the day plus a fixed offset of 4 gives a correction value
+    # The number of the day plus a fixed offset of 4 gives a correction valud
     # for this year.
     jan4_day_of_week = Time.utc(year, 1, 4).day_of_week
     correction = jan4_day_of_week.to_i + 4
@@ -878,7 +878,7 @@ struct Time
   # Returns `true` if `#location` equals to the local time zone
   # (`Time::Location.local`).
   #
-  # Since the system's settings may change during a program's runtime,
+  # Since the system's settings may change during a programm's runtime,
   # the result may not be identical between different invocations.
   def local? : Bool
     location.local?
@@ -890,7 +890,7 @@ struct Time
   # date-time representation (wall clock) would compare differently.
   #
   # To ensure the comparison is also true for local wall clock, both date-times
-  # need to be transformed to the same time zone.
+  # need to be transforemd to the same time zone.
   def <=>(other : Time) : Int32
     cmp = total_seconds <=> other.total_seconds
     cmp = nanosecond <=> other.nanosecond if cmp == 0
@@ -1133,7 +1133,7 @@ struct Time
   end
 
   # Parses a `Time` from *time* string using the given *pattern* and
-  # `Time::Location.local` as default location
+  # `Time::Location.local` asdefault location
   #
   # See `Time::Format` for details.
   #

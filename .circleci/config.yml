@@ -47,20 +47,6 @@ jobs:
       TRAVIS_OS_NAME: osx
     steps: *ci_steps
 
-  check_format:
-    machine: true
-    environment:
-      <<: *env
-      TRAVIS_OS_NAME: linux
-      ARCH: x86_64
-      ARCH_CMD: linux64
-    steps:
-      - checkout
-      - run: bin/ci prepare_system
-      - run: echo 'export CURRENT_TAG="$CIRCLE_TAG"' >> $BASH_ENV
-      - run: bin/ci prepare_build
-      - run: bin/ci format
-
   sync_docs_s3:
     machine: true
     steps:
@@ -83,7 +69,7 @@ jobs:
       - run: |
           git clone https://github.com/crystal-lang/distribution-scripts.git ~/distribution-scripts
           cd ~/distribution-scripts
-          git checkout a6a7a322df05fd57e8f1b1b9020045dd13e679c0
+          git checkout f83d13b3232d4e8594a2638f78ebbabc6b760467
       # persist relevant information for build process
       - run: |
           cd ~/distribution-scripts
@@ -301,7 +287,6 @@ workflows:
       - test_linux
       - test_linux32
       - test_darwin
-      - check_format
       - sync_docs_s3:
           filters:
             branches:
@@ -321,15 +306,12 @@ workflows:
           filters: *per_tag
       - test_darwin:
           filters: *per_tag
-      - check_format:
-          filters: *per_tag
       - prepare_common:
           filters: *per_tag
           requires:
             - test_linux
             - test_linux32
             - test_darwin
-            - check_format
       - prepare_tagged:
           filters: *per_tag
           requires:
@@ -377,13 +359,11 @@ workflows:
       - test_linux
       - test_linux32
       - test_darwin
-      - check_format
       - prepare_common:
           requires:
             - test_linux
             - test_linux32
             - test_darwin
-            - check_format
       - prepare_nightly:
           requires:
             - prepare_common
@@ -425,15 +405,12 @@ workflows:
           filters: *maintenance
       - test_darwin:
           filters: *maintenance
-      - check_format:
-          filters: *maintenance
       - prepare_common:
           filters: *maintenance
           requires:
             - test_linux
             - test_linux32
             - test_darwin
-            - check_format
       - prepare_maintenance:
           filters: *maintenance
           requires:

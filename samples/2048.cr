@@ -1,5 +1,6 @@
 # Based on 2048 by Gabriele Cirulli - gabrielecirulli.github.io/2048
 
+require "io/console"
 require "colorize"
 
 module Screen
