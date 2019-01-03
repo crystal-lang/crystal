@@ -111,7 +111,7 @@ describe Crystal::Command::FormatCommand do
     stdout = IO::Memory.new
     stderr = IO::Memory.new
 
-    with_tempfile("format_files") do |path|
+    with_tempfile("format_files_dir") do |path|
       FileUtils.mkdir_p File.join(path, "dir")
       Dir.cd(path) do
         File.write File.join(path, "format.cr"), "if true\n1\nend"
