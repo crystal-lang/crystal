@@ -16,7 +16,6 @@ class Crystal::Command
     Usage: crystal [command] [switches] [program file] [--] [arguments]
 
     Command:
-        init                     generate a new project
         build                    build an executable
         docs                     generate documentation
         env                      print Crystal environment information
@@ -59,9 +58,6 @@ class Crystal::Command
     when !command
       puts USAGE
       exit
-    when "init".starts_with?(command)
-      options.shift
-      init
     when "build".starts_with?(command)
       options.shift
       build
@@ -147,10 +143,6 @@ class Crystal::Command
     else
       error "unknown tool: #{tool}"
     end
-  end
-
-  private def init
-    Init.run(options)
   end
 
   private def build
