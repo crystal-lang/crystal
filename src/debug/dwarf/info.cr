@@ -45,7 +45,7 @@ module Debug
           code = DWARF.read_unsigned_leb128(@io)
           attributes.clear
 
-          if abbrev = abbreviations[code - 1]? # abbreviations.find { |a| a.code == abbrev }
+          if abbrev = abbreviations[code &- 1]? # abbreviations.find { |a| a.code == abbrev }
             abbrev.attributes.each do |attr|
               value = read_attribute_value(attr.form)
               attributes << {attr.at, attr.form, value}

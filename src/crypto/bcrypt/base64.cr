@@ -68,18 +68,18 @@ module Crypto::Bcrypt::Base64
       break if c1 == -1 || c2 == -1
       off += 2
 
-      str[i += 1] = ((c1 << 2) | (c2 & 0x30) >> 4).to_u8
+      str[i += 1] = ((c1 << 2) | (c2 & 0x30) >> 4).to_u8!
       break if (olen += 1) >= maxolen || off >= slen
 
       c3 = char64(string[off])
       break if c3 == -1
       off += 1
 
-      str[i += 1] = (((c2 & 0x0f) << 4) | ((c3 & 0x3c) >> 2)).to_u8
+      str[i += 1] = (((c2 & 0x0f) << 4) | ((c3 & 0x3c) >> 2)).to_u8!
       break if (olen += 1) >= maxolen || off >= slen
 
       c4 = char64(string[off])
-      str[i += 1] = (((c3 & 0x03) << 6) | c4).to_u8
+      str[i += 1] = (((c3 & 0x03) << 6) | c4).to_u8!
       off += 1
       olen += 1
     end

@@ -288,8 +288,7 @@ module Debug
             adjusted_opcode = opcode - sequence.opcode_base
             operation_advance = adjusted_opcode / sequence.line_range
             increment_address_and_op_index(operation_advance)
-
-            registers.line += sequence.line_base + (adjusted_opcode % sequence.line_range)
+            registers.line &+= sequence.line_base + (adjusted_opcode % sequence.line_range)
             register_to_matrix(sequence, registers)
             registers.reset
           elsif opcode == 0
@@ -331,7 +330,7 @@ module Debug
               operation_advance = DWARF.read_unsigned_leb128(@io)
               increment_address_and_op_index(operation_advance)
             when LNS::AdvanceLine
-              registers.line += DWARF.read_signed_leb128(@io)
+              registers.line &+= DWARF.read_signed_leb128(@io)
             when LNS::SetFile
               registers.file = DWARF.read_unsigned_leb128(@io)
             when LNS::SetColumn

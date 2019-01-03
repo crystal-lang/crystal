@@ -47,7 +47,7 @@ struct Number
   macro slice(*nums, read_only = false)
     %slice = Slice({{@type}}).new({{nums.size}}, read_only: {{read_only}})
     {% for num, i in nums %}
-      %slice.to_unsafe[{{i}}] = {{@type}}.new({{num}})
+      %slice.to_unsafe[{{i}}] = {{@type}}.new!({{num}})
     {% end %}
     %slice
   end
@@ -65,7 +65,7 @@ struct Number
   macro static_array(*nums)
     %array = uninitialized StaticArray({{@type}}, {{nums.size}})
     {% for num, i in nums %}
-      %array.to_unsafe[{{i}}] = {{@type}}.new({{num}})
+      %array.to_unsafe[{{i}}] = {{@type}}.new!({{num}})
     {% end %}
     %array
   end

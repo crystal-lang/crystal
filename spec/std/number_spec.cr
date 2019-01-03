@@ -202,7 +202,7 @@ describe "Number" do
     slice.size.should eq(3)
     slice[0].should eq(1)
     slice[1].should eq(2)
-    slice[2].should eq(300.to_u8)
+    slice[2].should eq(300.to_u8!)
   end
 
   it "creates a static array" do
@@ -211,7 +211,7 @@ describe "Number" do
     ary.size.should eq(3)
     ary[0].should eq(1)
     ary[1].should eq(2)
-    ary[2].should eq(300.to_u8)
+    ary[2].should eq(300.to_u8!)
   end
 
   it "test zero?" do

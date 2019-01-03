@@ -895,7 +895,7 @@ describe "Hash" do
   end
 
   it "doesn't generate a negative index for the bucket index (#2321)" do
-    items = (0..100000).map { rand(100000).to_i16 }
+    items = (0..100000).map { rand(100000).to_i16! }
     items.uniq.size
   end
 
