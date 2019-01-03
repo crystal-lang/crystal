@@ -296,13 +296,13 @@ describe "BigInt" do
   it "can be casted into other Number types" do
     big = BigInt.new(1234567890)
     big.to_i.should eq(1234567890)
-    big.to_i8.should eq(-46)
-    big.to_i16.should eq(722)
+    big.to_i8!.should eq(-46)
+    big.to_i16!.should eq(722)
     big.to_i32.should eq(1234567890)
     big.to_i64.should eq(1234567890)
     big.to_u.should eq(1234567890)
-    big.to_u8.should eq(210)
-    big.to_u16.should eq(722)
+    big.to_u8!.should eq(210)
+    big.to_u16!.should eq(722)
     big.to_u32.should eq(1234567890)
 
     u64 = big.to_u64

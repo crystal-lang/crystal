@@ -101,7 +101,7 @@ class HTTP::Server
   # Returns `true` if this server is closed.
   getter? closed : Bool = false
 
-  # Returns `true` if this server is listening on it's sockets.
+  # Returns `true` if this server is listening on its sockets.
   getter? listening : Bool = false
 
   # Creates a new HTTP server with the given block as handler.

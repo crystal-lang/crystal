@@ -340,7 +340,7 @@ class File < IO::FileDescriptor
 
     current = bytes.size - 1
 
-    # if the pattern is foo. it has no extension
+    # if the pattern is foo, it has no extension
     return "" if bytes[current] == '.'.ord
 
     # position the reader at the last . or SEPARATOR
@@ -351,7 +351,7 @@ class File < IO::FileDescriptor
       current -= 1
     end
 
-    # if we are the beginning of the string there is no extension
+    # if we are at the beginning of the string, there is no extension.
     # /foo or .foo have no extension
     return "" unless current > 0
 
@@ -821,7 +821,7 @@ class File < IO::FileDescriptor
   # in the *filename* parameter to the value given in *time*.
   #
   # If the file does not exist, it will be created.
-  def self.touch(filename : String, time : Time = Time.now)
+  def self.touch(filename : String, time : Time = Time.utc_now)
     open(filename, "a") { } unless exists?(filename)
     utime time, time, filename
   end

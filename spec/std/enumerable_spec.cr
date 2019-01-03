@@ -31,6 +31,16 @@ describe "Enumerable" do
     end
   end
 
+  describe "all? with pattern" do
+    it "returns true" do
+      [2, 3, 4].all?(1..5).should be_true
+    end
+
+    it "returns false" do
+      [2, 3, 4].all?(1..3).should be_false
+    end
+  end
+
   describe "any? with block" do
     it "returns true if at least one element fulfills the condition" do
       ["ant", "bear", "cat"].any? { |word| word.size >= 4 }.should be_true
@@ -48,6 +58,16 @@ describe "Enumerable" do
 
     it "returns false if all elements are falsey" do
       [nil, false].any?.should be_false
+    end
+  end
+
+  describe "any? with pattern" do
+    it "returns true" do
+      [nil, true, 99].any?(Int32).should be_true
+    end
+
+    it "returns false" do
+      [nil, false].any?(Int32).should be_false
     end
   end
 
@@ -729,10 +749,20 @@ describe "Enumerable" do
     it { [nil, false, true].none?.should be_false }
   end
 
+  describe "none? with pattern" do
+    it { [2, 3, 4].none?(5..7).should be_true }
+    it { [1, false, nil].none?(Bool).should be_false }
+  end
+
   describe "one?" do
     it { [1, 2, 2, 3].one? { |x| x == 1 }.should eq(true) }
     it { [1, 2, 2, 3].one? { |x| x == 2 }.should eq(false) }
     it { [1, 2, 2, 3].one? { |x| x == 0 }.should eq(false) }
+    it { [1, 2, false].one?.should be_false }
+    it { [1, false, false].one?.should be_true }
+    it { [false].one?.should be_false }
+    it { [1, 5, 9].one?(3..6).should be_true }
+    it { [1, false, 2].one?(Int32).should be_false }
   end
 
   describe "partition" do
@@ -744,11 +774,31 @@ describe "Enumerable" do
     it "rejects the values for which the block returns true" do
       [1, 2, 3, 4].reject(&.even?).should eq([1, 3])
     end
+
+    it "rejects with pattern" do
+      [1, 2, 3, 4, 5, 6].reject(2..4).should eq([1, 5, 6])
+    end
+
+    it "with type" do
+      ints = [1, true, false, 3].reject(Bool)
+      ints.should eq([1, 3])
+      ints.should be_a(Array(Int32))
+    end
   end
 
   describe "select" do
     it "selects the values for which the block returns true" do
       [1, 2, 3, 4].select(&.even?).should eq([2, 4])
+    end
+
+    it "with pattern" do
+      [1, 2, 3, 4, 5].select(2..4).should eq([2, 3, 4])
+    end
+
+    it "with type" do
+      ints = [1, true, nil, 3, false].select(Int32)
+      ints.should eq([1, 3])
+      ints.should be_a(Array(Int32))
     end
   end
 
@@ -871,6 +921,10 @@ describe "Enumerable" do
 
     it "for array" do
       [[:a, :b], [:c, :d]].to_h.should eq({:a => :b, :c => :d})
+    end
+
+    it "with block" do
+      (1..3).to_h { |i| {i, i ** 2} }.should eq({1 => 1, 2 => 4, 3 => 9})
     end
   end
 end

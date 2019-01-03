@@ -27,6 +27,11 @@ describe Time::Span do
     t1.to_s.should eq("1.01:00:00")
   end
 
+  it "initializes with big seconds value" do
+    t = Time::Span.new 0, 0, 1231231231231
+    t.total_seconds.should eq(1231231231231)
+  end
+
   it "days overflows" do
     expect_overflow do
       days = 106751991167301
@@ -277,5 +282,6 @@ describe Time::Span do
     1.hours.should eq(60.minutes)
     1.week.should eq(7.days)
     2.weeks.should eq(14.days)
+    1.1.weeks.should eq(7.7.days)
   end
 end

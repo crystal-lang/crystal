@@ -583,7 +583,7 @@ module Crystal
       raise "BUG: #{self} doesn't implement add_subclass"
     end
 
-    # Replaces type parameetrs in this type with the type parameters
+    # Replace type parameters in this type with the type parameters
     # of the given *instance* type.
     def replace_type_parameters(instance) : Type
       self
@@ -694,7 +694,7 @@ module Crystal
   end
 
   # A type that has a name and can be inside a namespace.
-  # For example, given  `class Foo::Bar`, `Foo` is the namespace and `Bar` is the name.
+  # For example, given `class Foo::Bar`, `Foo` is the namespace and `Bar` is the name.
   #
   # There are other types that have a name but it can be deduced from other(s) type(s),
   # so they don't inherit NamedType: a union type, a metaclass, etc.
@@ -1305,6 +1305,17 @@ module Crystal
 
     def kind
       @bytes == 4 ? :f32 : :f64
+    end
+
+    def range
+      case kind
+      when :f32
+        {Float32::MIN, Float32::MAX}
+      when :f64
+        {Float64::MIN, Float64::MAX}
+      else
+        raise "Bug: called 'range' for non-float literal"
+      end
     end
   end
 
@@ -2424,6 +2435,10 @@ module Crystal
 
     def unbound?
       entries.any? &.type.unbound?
+    end
+
+    def has_in_type_vars?(type)
+      entries.any? { |entry| entry.type.includes_type?(type) || entry.type.has_in_type_vars?(type) }
     end
 
     def to_s_with_options(io : IO, skip_union_parens : Bool = false, generic_args : Bool = true, codegen = false)

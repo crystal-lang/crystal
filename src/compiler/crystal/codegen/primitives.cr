@@ -18,6 +18,11 @@ class Crystal::CodeGenVisitor
             when "binary"
               codegen_primitive_binary node, target_def, call_args
             when "cast"
+              # TODO 0.28.0 delete :cast
+              codegen_primitive_cast node, target_def, call_args
+            when "convert"
+              codegen_primitive_cast node, target_def, call_args
+            when "unchecked_convert"
               codegen_primitive_cast node, target_def, call_args
             when "allocate"
               codegen_primitive_allocate node, target_def, call_args
