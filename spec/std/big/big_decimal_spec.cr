@@ -323,6 +323,21 @@ describe BigDecimal do
     bd2.to_f.should eq -0.00123
     bd3.to_f.should eq 123.0
     bd4.to_f.should eq -123.0
+
+    bd1.to_i!.should eq 0
+    bd2.to_i!.should eq 0
+    bd3.to_i!.should eq 123
+    bd4.to_i!.should eq -123
+
+    bd1.to_u!.should eq 0
+    bd2.to_u!.should eq 0
+    bd3.to_u!.should eq 123
+    bd4.to_u!.should eq 123
+
+    bd1.to_f!.should eq 0.00123
+    bd2.to_f!.should eq -0.00123
+    bd3.to_f!.should eq 123.0
+    bd4.to_f!.should eq -123.0
   end
 
   it "hashes" do
