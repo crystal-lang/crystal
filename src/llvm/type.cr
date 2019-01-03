@@ -126,7 +126,12 @@ struct LLVM::Type
   end
 
   def const_int(value) : Value
-    Value.new LibLLVM.const_int(self, value, 0)
+    if !value.is_a?(Int128) && !value.is_a?(UInt128) && int_width != 128
+      Value.new LibLLVM.const_int(self, value, 0)
+    else
+      encoded_value = UInt64[value & UInt64::MAX, (value >> 64) & UInt64::MAX]
+      Value.new LibLLVM.const_int_of_arbitrary_precision(self, encoded_value.size, encoded_value)
+    end
   end
 
   def const_float(value : Float32) : Value

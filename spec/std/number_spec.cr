@@ -1,6 +1,48 @@
 require "spec"
 
+private macro it_initializes_from_value_to(number_type)
+  it "initialize from value to {{number_type}}" do
+    {{number_type}}.new(1).should be_a({{number_type}})
+    {{number_type}}.new(1).should eq(1)
+
+    {{number_type}}.new(1u32).should be_a({{number_type}})
+    {{number_type}}.new(1u32).should eq(1)
+
+    {{number_type}}.new(1.0).should be_a({{number_type}})
+    {{number_type}}.new(1.0).should eq(1)
+  end
+
+  it "unchecked initialize from value to {{number_type}}" do
+    {{number_type}}.new!(1).should be_a({{number_type}})
+    {{number_type}}.new!(1).should eq(1)
+
+    {{number_type}}.new!(1u32).should be_a({{number_type}})
+    {{number_type}}.new!(1u32).should eq(1)
+
+    {{number_type}}.new!(1.0).should be_a({{number_type}})
+    {{number_type}}.new!(1.0).should eq(1)
+  end
+end
+
 describe "Number" do
+  it_initializes_from_value_to Int8
+  it_initializes_from_value_to Int16
+  it_initializes_from_value_to Int32
+  it_initializes_from_value_to Int64
+
+  it_initializes_from_value_to UInt8
+  it_initializes_from_value_to UInt16
+  it_initializes_from_value_to UInt32
+  it_initializes_from_value_to UInt64
+
+  {% if flag?(:bits64) %}
+    it_initializes_from_value_to Int128
+    it_initializes_from_value_to UInt128
+  {% end %}
+
+  it_initializes_from_value_to Float32
+  it_initializes_from_value_to Float64
+
   describe "significant" do
     it "10 base" do
       1234.567.significant(1).should eq(1000)

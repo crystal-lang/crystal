@@ -2,6 +2,7 @@ module Crystal
   class MacroInterpreter < Visitor
     getter last : ASTNode
     property free_vars : Hash(String, TypeVar)?
+    property macro_expansion_pragmas : Hash(Int32, Array(Lexer::LocPragma))? = nil
 
     def self.new(program, scope : Type, path_lookup : Type, a_macro : Macro, call, a_def : Def? = nil, in_macro = false)
       vars = {} of String => ASTNode
@@ -99,13 +100,17 @@ module Crystal
       node.exp.accept self
 
       if node.output?
-        # In the caseof {{yield}}, we want to paste the block's body
-        # retaining the original node's location, so error messages
-        # are shown in the block instead of in the generated macro source
         is_yield = node.exp.is_a?(Yield) && !@last.is_a?(Nop)
-        @str << " #<loc:push>begin " if is_yield
-        @last.to_s(@str, emit_loc_pragma: is_yield, emit_doc: is_yield)
-        @str << " end#<loc:pop> " if is_yield
+        if (loc = @last.location) && loc.filename.is_a?(String) || is_yield
+          macro_expansion_pragmas = @macro_expansion_pragmas ||= {} of Int32 => Array(Lexer::LocPragma)
+          (macro_expansion_pragmas[@str.pos.to_i32] ||= [] of Lexer::LocPragma) << Lexer::LocPushPragma.new
+          @str << "begin " if is_yield
+          @last.to_s(@str, macro_expansion_pragmas: macro_expansion_pragmas, emit_doc: true)
+          @str << " end" if is_yield
+          (macro_expansion_pragmas[@str.pos.to_i32] ||= [] of Lexer::LocPragma) << Lexer::LocPopPragma.new
+        else
+          @last.to_s(@str)
+        end
       end
 
       false
@@ -161,7 +166,7 @@ module Crystal
             @last.to_s(str)
           end
         end
-      end).at(node)
+      end)
       false
     end
 
@@ -512,12 +517,12 @@ module Crystal
     end
 
     def visit(node : TupleLiteral)
-      @last = TupleLiteral.map(node.elements) { |element| accept element }.at(node)
+      @last = TupleLiteral.map(node.elements) { |element| accept element }
       false
     end
 
     def visit(node : ArrayLiteral)
-      @last = ArrayLiteral.map(node.elements) { |element| accept element }.at(node)
+      @last = ArrayLiteral.map(node.elements) { |element| accept element }
       false
     end
 
@@ -525,7 +530,7 @@ module Crystal
       @last =
         HashLiteral.new(node.entries.map do |entry|
           HashLiteral::Entry.new(accept(entry.key), accept(entry.value))
-        end).at(node)
+        end)
       false
     end
 
@@ -533,12 +538,12 @@ module Crystal
       @last =
         NamedTupleLiteral.new(node.entries.map do |entry|
           NamedTupleLiteral::Entry.new(entry.key, accept(entry.value))
-        end).at(node)
+        end)
       false
     end
 
     def visit(node : Nop | NilLiteral | BoolLiteral | NumberLiteral | CharLiteral | StringLiteral | SymbolLiteral | RangeLiteral | RegexLiteral | MacroId | TypeNode | Def)
-      @last = node
+      @last = node.clone_without_location
       false
     end
 

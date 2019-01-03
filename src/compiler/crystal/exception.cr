@@ -1,4 +1,5 @@
 require "./util"
+require "colorize"
 
 module Crystal
   abstract class Exception < ::Exception

@@ -1,10 +1,19 @@
 require "spec"
 require "yaml"
+require "json"
 
 describe YAML::Any do
   describe "casts" do
     it "gets nil" do
       YAML.parse("").as_nil.should be_nil
+    end
+
+    it "gets bool" do
+      YAML.parse("true").as_bool.should be_true
+      YAML.parse("false").as_bool.should be_false
+      YAML.parse("true").as_bool?.should be_true
+      YAML.parse("false").as_bool?.should be_false
+      YAML.parse("2").as_bool?.should be_nil
     end
 
     it "gets string" do
@@ -25,6 +34,19 @@ describe YAML::Any do
       YAML.parse("foo: bar")["foo"].as_h?.should be_nil
     end
 
+    it "gets int32" do
+      value = YAML.parse("1").as_i
+      value.should eq(1)
+      value.should be_a(Int32)
+
+      value = YAML.parse("1").as_i?
+      value.should eq(1)
+      value.should be_a(Int32)
+
+      value = YAML.parse("true").as_i?
+      value.should be_nil
+    end
+
     it "gets int64" do
       value = YAML.parse("1").as_i64
       value.should eq(1)
@@ -38,16 +60,16 @@ describe YAML::Any do
       value.should be_nil
     end
 
-    it "gets int32" do
-      value = YAML.parse("1").as_i
-      value.should eq(1)
-      value.should be_a(Int32)
+    it "gets float32" do
+      value = YAML.parse("1.2").as_f32
+      value.should eq(1.2_f32)
+      value.should be_a(Float32)
 
-      value = YAML.parse("1").as_i?
-      value.should eq(1)
-      value.should be_a(Int32)
+      value = YAML.parse("1.2").as_f32?
+      value.should eq(1.2_f32)
+      value.should be_a(Float32)
 
-      value = YAML.parse("true").as_i?
+      value = YAML.parse("true").as_f32?
       value.should be_nil
     end
 
@@ -212,5 +234,13 @@ describe YAML::Any do
     any = YAML.parse("[[1], 2, 3]")
     any2 = any.clone
     any2.as_a[0].as_a.should_not be(any.as_a[0].as_a)
+  end
+
+  it "#to_json" do
+    any = YAML.parse <<-YAML
+      foo: bar
+      baz: [1, 2.3, true, "qux", {"qax": "qox"}]
+      YAML
+    any.to_json.should eq %({"foo":"bar","baz":[1,2.3,true,"qux",{"qax":"qox"}]})
   end
 end

@@ -39,18 +39,18 @@ class Crystal::Program
   def expand_macro(a_macro : Macro, call : Call, scope : Type, path_lookup : Type? = nil, a_def : Def? = nil)
     interpreter = MacroInterpreter.new self, scope, path_lookup || scope, a_macro, call, a_def, in_macro: true
     a_macro.body.accept interpreter
-    interpreter.to_s
+    {interpreter.to_s, interpreter.macro_expansion_pragmas}
   end
 
   def expand_macro(node : ASTNode, scope : Type, path_lookup : Type? = nil, free_vars = nil, a_def : Def? = nil)
     interpreter = MacroInterpreter.new self, scope, path_lookup || scope, node.location, def: a_def, in_macro: false
     interpreter.free_vars = free_vars
     node.accept interpreter
-    interpreter.to_s
+    {interpreter.to_s, interpreter.macro_expansion_pragmas}
   end
 
-  def parse_macro_source(generated_source, the_macro, node, vars, current_def = nil, inside_type = false, inside_exp = false, mode : MacroExpansionMode = MacroExpansionMode::Normal)
-    parse_macro_source(generated_source, the_macro, node, vars, current_def, inside_type, inside_exp) do |parser|
+  def parse_macro_source(generated_source, macro_expansion_pragmas, the_macro, node, vars, current_def = nil, inside_type = false, inside_exp = false, mode : MacroExpansionMode = MacroExpansionMode::Normal)
+    parse_macro_source(generated_source, macro_expansion_pragmas, the_macro, node, vars, current_def, inside_type, inside_exp) do |parser|
       case mode
       when .lib?
         parser.parse_lib_body
@@ -64,10 +64,11 @@ class Crystal::Program
     end
   end
 
-  def parse_macro_source(generated_source, the_macro, node, vars, current_def = nil, inside_type = false, inside_exp = false)
+  def parse_macro_source(generated_source, macro_expansion_pragmas, the_macro, node, vars, current_def = nil, inside_type = false, inside_exp = false)
     begin
       parser = Parser.new(generated_source, @program.string_pool, [vars.dup])
       parser.filename = VirtualFile.new(the_macro, generated_source, node.location)
+      parser.macro_expansion_pragmas = macro_expansion_pragmas
       parser.visibility = node.visibility
       parser.def_nest = 1 if current_def
       parser.type_nest = 1 if inside_type
@@ -123,7 +124,7 @@ class Crystal::Program
 
     # First, update times for the program dir, so it remains in the cache longer
     # (this is specially useful if a macro run program is used by multiple programs)
-    now = Time.now
+    now = Time.utc_now
     File.utime(now, now, program_dir)
 
     if can_reuse_previous_compilation?(filename, executable_path, recorded_requires_path, requires_path)

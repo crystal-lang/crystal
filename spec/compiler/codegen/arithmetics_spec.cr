@@ -1,8 +1,15 @@
 require "../../spec_helper"
 
+{% if flag?(:bits64) %}
+SupportedInts = [UInt8, UInt16, UInt32, UInt64, UInt128, Int8, Int16, Int32, Int64, Int128]
+{% else %}
+# skip Int128 and UInt128 on 32 bits platforms
+SupportedInts = [UInt8, UInt16, UInt32, UInt64, Int8, Int16, Int32, Int64]
+{% end %}
+
 describe "Code gen: arithmetics primitives" do
   describe "&+ addition" do
-    {% for type in [UInt8, UInt16, UInt32, UInt64, Int8, Int16, Int32, Int64] %}
+    {% for type in SupportedInts %}
       it "wrap around for {{type}}" do
         run(%(
           require "prelude"
@@ -20,7 +27,7 @@ describe "Code gen: arithmetics primitives" do
   end
 
   describe "&- subtraction" do
-    {% for type in [UInt8, UInt16, UInt32, UInt64, Int8, Int16, Int32, Int64] %}
+    {% for type in SupportedInts %}
       it "wrap around for {{type}}" do
         run(%(
           require "prelude"
@@ -38,7 +45,7 @@ describe "Code gen: arithmetics primitives" do
   end
 
   describe "&* multiplication" do
-    {% for type in [UInt8, UInt16, UInt32, UInt64, Int8, Int16, Int32, Int64] %}
+    {% for type in SupportedInts %}
       it "wrap around for {{type}}" do
         run(%(
           require "prelude"

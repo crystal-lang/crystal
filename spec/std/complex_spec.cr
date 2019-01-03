@@ -104,6 +104,10 @@ describe "Complex" do
   end
 
   describe "+" do
+    it "+ complex" do
+      (+Complex.new(-5.43, -27.12)).should eq(Complex.new(5.43, 27.12))
+    end
+
     it "complex + complex" do
       (Complex.new(2.2, 7) + Complex.new(10.1, 1.34)).should eq(Complex.new(12.3, 8.34))
     end

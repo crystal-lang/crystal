@@ -26,6 +26,31 @@ module Crystal
     # Heredocs pushed when found. Should be processed when encountering a newline
     getter heredocs = [] of {Token::DelimiterState, HeredocItem}
 
+    property macro_expansion_pragmas : Hash(Int32, Array(LocPragma))? = nil
+
+    alias LocPragma = LocSetPragma | LocPushPragma | LocPopPragma
+
+    record LocSetPragma,
+      filename : String,
+      line_number : Int32,
+      column_number : Int32 do
+      def run_pragma(lexer)
+        lexer.set_location filename, line_number, column_number
+      end
+    end
+
+    record LocPushPragma do
+      def run_pragma(lexer)
+        lexer.push_location
+      end
+    end
+
+    record LocPopPragma do
+      def run_pragma(lexer)
+        lexer.pop_location
+      end
+    end
+
     def initialize(string, string_pool : StringPool? = nil)
       @reader = Char::Reader.new(string)
       @token = Token.new
@@ -90,6 +115,11 @@ module Crystal
       end
 
       start = current_pos
+
+      # Fix location by `macro_expansion_pragmas`.
+      if pragmas = macro_expansion_pragmas.try &.[start]?
+        pragmas.each &.run_pragma self
+      end
 
       reset_regex_flags = true
 
@@ -2278,7 +2308,7 @@ module Crystal
           end
         when '#'
           if delimiter_state
-            # If it's "#{..." we don't want "#{{{" to parse it as "# {{ {", but as "#{ {{"
+            # If it's "#{...", we don't want "#{{{" to parse it as "# {{ {", but as "#{ {{"
             # (macro expression inside a string interpolation)
             if peek_next_char == '{'
               char = next_char
@@ -2713,9 +2743,7 @@ module Crystal
           next_char
         end
 
-        @token.filename = @filename = filename
-        @token.line_number = @line_number = line_number
-        @token.column_number = @column_number = column_number
+        set_location filename, line_number, column_number
       when 'p'
         # skip 'p'
         next_char_no_column_increment
@@ -2754,6 +2782,12 @@ module Crystal
       else
         raise %(expected #<loc:push>, #<loc:pop> or #<loc:"...">)
       end
+    end
+
+    def set_location(filename, line_number, column_number)
+      @token.filename = @filename = filename
+      @token.line_number = @line_number = line_number
+      @token.column_number = @column_number = column_number
     end
 
     def pop_location

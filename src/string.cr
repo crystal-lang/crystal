@@ -497,7 +497,7 @@ class String
     if info.negative
       {% if max_negative %}
         return yield if info.value > {{max_negative}}
-        -info.value.to_{{method}}
+        (~info.value &+ 1).unsafe_as(Int64).to_{{method}}
       {% else %}
         return yield
       {% end %}

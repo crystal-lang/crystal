@@ -621,7 +621,7 @@ abstract class IO
     ascii = delimiter.ascii?
     decoder = decoder()
 
-    # # If the char's representation is a single byte and we have an encoding,
+    # If the char's representation is a single byte and we have an encoding,
     # search the delimiter in the buffer
     if ascii && decoder
       return decoder.gets(self, delimiter.ord.to_u8, limit: limit, chomp: chomp)

@@ -1296,11 +1296,27 @@ describe "Array" do
     ary2.should be(ary1)
   end
 
+  it "selects! with pattern" do
+    ary1 = [1, 2, 3, 4, 5]
+
+    ary2 = ary1.select!(2..4)
+    ary2.should eq([2, 3, 4])
+    ary2.should be(ary1)
+  end
+
   it "rejects!" do
     ary1 = [1, 2, 3, 4, 5]
 
     ary2 = ary1.reject! { |elem| elem % 2 == 0 }
     ary2.should eq([1, 3, 5])
+    ary2.should be(ary1)
+  end
+
+  it "rejects! with pattern" do
+    ary1 = [1, 2, 3, 4, 5]
+
+    ary2 = ary1.reject!(2..4)
+    ary2.should eq([1, 5])
     ary2.should be(ary1)
   end
 

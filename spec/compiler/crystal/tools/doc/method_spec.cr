@@ -4,7 +4,7 @@ describe Doc::Method do
   describe "args_to_s" do
     it "shows simple args" do
       program = Program.new
-      generator = Doc::Generator.new program, ["."], ".", nil
+      generator = Doc::Generator.new program, ["."], ".", "html", nil
       doc_type = Doc::Type.new generator, program
 
       a_def = Def.new "foo", ["foo".arg, "bar".arg]
@@ -14,7 +14,7 @@ describe Doc::Method do
 
     it "shows splat args" do
       program = Program.new
-      generator = Doc::Generator.new program, ["."], ".", nil
+      generator = Doc::Generator.new program, ["."], ".", "html", nil
       doc_type = Doc::Type.new generator, program
 
       a_def = Def.new "foo", ["foo".arg], splat_index: 0
@@ -24,7 +24,7 @@ describe Doc::Method do
 
     it "shows double splat args" do
       program = Program.new
-      generator = Doc::Generator.new program, ["."], ".", nil
+      generator = Doc::Generator.new program, ["."], ".", "html", nil
       doc_type = Doc::Type.new generator, program
 
       a_def = Def.new "foo", double_splat: "foo".arg
@@ -34,7 +34,7 @@ describe Doc::Method do
 
     it "shows block args" do
       program = Program.new
-      generator = Doc::Generator.new program, ["."], ".", nil
+      generator = Doc::Generator.new program, ["."], ".", "html", nil
       doc_type = Doc::Type.new generator, program
 
       a_def = Def.new "foo", block_arg: "foo".arg
@@ -44,7 +44,7 @@ describe Doc::Method do
 
     it "shows block args if a def has `yield`" do
       program = Program.new
-      generator = Doc::Generator.new program, ["."], ".", nil
+      generator = Doc::Generator.new program, ["."], ".", "html", nil
       doc_type = Doc::Type.new generator, program
 
       a_def = Def.new "foo", yields: 1
@@ -54,7 +54,7 @@ describe Doc::Method do
 
     it "shows return type restriction" do
       program = Program.new
-      generator = Doc::Generator.new program, ["."], ".", nil
+      generator = Doc::Generator.new program, ["."], ".", "html", nil
       doc_type = Doc::Type.new generator, program
 
       a_def = Def.new "foo", return_type: "Foo".path
@@ -64,7 +64,7 @@ describe Doc::Method do
 
     it "shows args and return type restriction" do
       program = Program.new
-      generator = Doc::Generator.new program, ["."], ".", nil
+      generator = Doc::Generator.new program, ["."], ".", "html", nil
       doc_type = Doc::Type.new generator, program
 
       a_def = Def.new "foo", ["foo".arg], return_type: "Foo".path
@@ -74,7 +74,7 @@ describe Doc::Method do
 
     it "shows external name of arg" do
       program = Program.new
-      generator = Doc::Generator.new program, ["."], ".", nil
+      generator = Doc::Generator.new program, ["."], ".", "html", nil
       doc_type = Doc::Type.new generator, program
 
       a_def = Def.new "foo", ["foo".arg(external_name: "bar")]
@@ -84,7 +84,7 @@ describe Doc::Method do
 
     it "shows external name of arg with quotes and escaping" do
       program = Program.new
-      generator = Doc::Generator.new program, ["."], ".", nil
+      generator = Doc::Generator.new program, ["."], ".", "html", nil
       doc_type = Doc::Type.new generator, program
 
       a_def = Def.new "foo", ["foo".arg(external_name: "<<-< uouo fish life")]
@@ -94,7 +94,7 @@ describe Doc::Method do
 
     it "shows typeof restriction of arg with highlighting" do
       program = Program.new
-      generator = Doc::Generator.new program, ["."], ".", nil
+      generator = Doc::Generator.new program, ["."], ".", "html", nil
       doc_type = Doc::Type.new generator, program
 
       a_def = Def.new "foo", ["foo".arg(restriction: TypeOf.new([1.int32] of ASTNode))]
@@ -104,7 +104,7 @@ describe Doc::Method do
 
     it "shows default value of arg with highlighting" do
       program = Program.new
-      generator = Doc::Generator.new program, ["."], ".", nil
+      generator = Doc::Generator.new program, ["."], ".", "html", nil
       doc_type = Doc::Type.new generator, program
 
       a_def = Def.new "foo", ["foo".arg(default_value: 1.int32)]
