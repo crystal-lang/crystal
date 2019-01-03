@@ -3,6 +3,8 @@
 #
 # It is used for `crystal tool context/expand/implementation`.
 module Crystal::TypedDefProcessor
+  @processed_types = Set(Type).new
+
   private def process_typed_def(typed_def : Def)
     typed_def.accept self
   end
@@ -17,6 +19,9 @@ module Crystal::TypedDefProcessor
   end
 
   private def process_type(type : Type) : Nil
+    return if @processed_types.includes?(type)
+    @processed_types << type
+
     if type.is_a?(NamedType) || type.is_a?(Program) || type.is_a?(FileModule)
       type.types?.try &.each_value do |inner_type|
         process_type inner_type
@@ -29,7 +34,7 @@ module Crystal::TypedDefProcessor
       end
     end
 
-    process_type type.metaclass if type.metaclass != type
+    process_type type.metaclass unless type.metaclass?
 
     if type.is_a?(DefInstanceContainer)
       type.def_instances.each_value do |typed_def|
