@@ -193,7 +193,7 @@ module Crystal
         return node unless const.used?
 
         unless const.value.type?
-          node.raise "can't infer type of constant #{const} (maybe the constant refers to itself?)"
+          node.raise "can't infer type of constant #{const} #{"(maybe the constant refers to itself?)".colorize.yellow.bold}"
         end
 
         if const.value.type.no_return?

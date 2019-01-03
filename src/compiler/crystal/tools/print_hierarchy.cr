@@ -1,5 +1,4 @@
 require "set"
-require "colorize"
 require "../syntax/ast"
 
 module Crystal
@@ -260,10 +259,6 @@ module Crystal
       @indents.push true
       yield
       @indents.pop
-    end
-
-    def with_color
-      ::with_color.toggle(@program.color?)
     end
   end
 

@@ -60,7 +60,7 @@ class Crystal::Command
       end
     end
 
-    unless @color
+    unless Colorize.enabled?
       options << "--no-color"
     end
 

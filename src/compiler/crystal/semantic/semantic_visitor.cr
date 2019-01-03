@@ -465,8 +465,11 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
     unless type.allowed_in_lib?
       msg = String.build do |msg|
         msg << "only primitive types, pointers, structs, unions, enums and tuples are allowed in lib declarations, not #{type}"
-        msg << " (did you mean LibC::Int?)" if type == @program.int
-        msg << " (did you mean LibC::Float?)" if type == @program.float
+        if type == @program.int
+          msg << " (did you mean LibC::Int?)".colorize.yellow.bold
+        elsif type == @program.float
+          msg << " (did you mean LibC::Float?)".colorize.yellow.bold
+        end
       end
       node.raise msg
     end

@@ -701,7 +701,7 @@ module Crystal
             raise "invalid char escape sequence", line, column
           end
         when '\''
-          raise "invalid empty char literal (did you mean '\\\''?)", line, column
+          raise "invalid empty char literal #{"(did you mean '\\\''?)".colorize.yellow.bold}", line, column
         when '\0'
           raise "unterminated char literal", line, column
         else

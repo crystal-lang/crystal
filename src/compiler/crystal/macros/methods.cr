@@ -252,7 +252,7 @@ module Crystal
 
           unless result.stdout.empty?
             message.puts
-            message << "stdout:".colorize.mode(:bold)
+            message << "stdout:".colorize.bold
             message.puts
             message.puts
             result.stdout.each_line do |line|
@@ -265,7 +265,7 @@ module Crystal
 
           unless result.stderr.empty?
             message.puts
-            message << "stderr:".colorize.mode(:bold)
+            message << "stderr:".colorize.bold
             message.puts
             message.puts
             result.stderr.each_line do |line|
