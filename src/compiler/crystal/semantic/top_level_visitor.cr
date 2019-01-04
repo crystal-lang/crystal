@@ -368,6 +368,10 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
       node.raise "structs can't have finalizers because they are not tracked by the GC"
     end
 
+    if target_type.is_a?(EnumType) && node.name == "initialize"
+      node.raise "enums can't define an `initialize` method, try using `def self.new`"
+    end
+
     target_type.add_def node
     node.set_type @program.nil
 
