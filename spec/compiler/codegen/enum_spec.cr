@@ -322,4 +322,19 @@ describe "Code gen: enum" do
       x
       )).to_i.should eq(1)
   end
+
+  it "can redefine Enum.new and use previous_def" do
+    run(%(
+      enum Foo
+        FOO = 1
+        BAR = 2
+
+        def self.new(x : Int32)
+          previous_def(2)
+        end
+      end
+
+      Foo.new(1)
+      )).to_i.should eq(2)
+  end
 end
