@@ -2636,7 +2636,7 @@ module Crystal
       super(program, namespace, name)
 
       add_def Def.new("value", [] of Arg, Primitive.new("enum_value", @base_type))
-      metaclass.as(ModuleType).add_def Def.new("new", [Arg.new("value", type: @base_type)], Primitive.new("enum_new", self))
+      metaclass.as(ModuleType).add_def Def.new("new", [Arg.new("value", restriction: Path.global(@base_type.to_s))], Primitive.new("enum_new", self))
     end
 
     def parents

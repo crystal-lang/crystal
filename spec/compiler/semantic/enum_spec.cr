@@ -448,4 +448,18 @@ describe "Semantic: enum" do
       ),
       "enums can't define an `initialize` method, try using `def self.new`"
   end
+
+  it "can redefine Enum.new" do
+    assert_type(%(
+      enum Foo
+        FOO = 1
+
+        def self.new(x : Int32)
+          "hello"
+        end
+      end
+
+      Foo.new(1)
+      )) { string }
+  end
 end
