@@ -391,15 +391,11 @@ class Crystal::Call
 
   def append_matches(defs, arg_types, str, *, matched_def = nil, argument_name = nil)
     defs.each do |a_def|
-      str << "\n - "
-      append_def_full_name a_def.owner, a_def, arg_types, str
+      str << "\n - #{def_full_name(a_def.owner, a_def, arg_types)}".colorize.bold
       if defs.size > 1 && a_def.same?(matched_def)
         str << " (trying this one)".colorize.blue
-        str << "\e[1m" # Make the rest of the string bold
-      end
-      if a_def.args.any? { |arg| arg.default_value && arg.external_name == argument_name }
+      elsif a_def.args.any? { |arg| arg.default_value && arg.external_name == argument_name }
         str << " (did you mean this one?)".colorize.yellow
-        str << "\e[1m" # Make the rest of the string bold
       end
     end
   end
