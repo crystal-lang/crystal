@@ -30,10 +30,19 @@ describe "Char" do
 
   describe "+" do
     it { ('a' + 2).should eq('c') }
+    it { ('a' + 'b').should eq("ab") }
+    it { ('f' + "oo").should eq("foo") }
   end
 
   describe "-" do
     it { ('c' - 2).should eq('a') }
+    it { ('c' - 'a').should eq(2) }
+  end
+
+  describe "<=>" do
+    it { ('a' <=> 'z').should eq(-1) }
+    it { ('a' <=> 'a').should eq(0) }
+    it { ('z' <=> 'a').should eq(1) }
   end
 
   describe "ascii_uppercase?" do

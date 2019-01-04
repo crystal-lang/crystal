@@ -63,6 +63,28 @@ struct Char
     ord - other.ord
   end
 
+  # Concatenates this char and *other*.
+  #
+  # ```
+  # 'a' + 'b' # => "ab"
+  # ```
+  def +(other : Char)
+    bytesize = other.bytesize + self.bytesize
+    String.new(bytesize) do |buffer|
+      index = 0
+      other.each_byte do |byte|
+        buffer[index] = byte
+        index += 1
+      end
+      self.each_byte do |byte|
+        buffer[index] = byte
+        index += 1
+      end
+
+      {bytesize, 2}
+    end
+  end
+
   # Concatenates this char and *string*.
   #
   # ```
@@ -103,13 +125,21 @@ struct Char
     (ord - other).chr
   end
 
-  # Implements the comparison operator.
+  # The comparison operator.
   #
   # ```
-  # 'a' <=> 'c' # => -2
+  # 'a' <=> 'z' # => -1
+  # 'a' <=> 'a' # => 0
+  # 'z' <=> 'a' # => 1
   # ```
   def <=>(other : Char)
-    self - other
+    if self == other
+      0
+    elsif self.ord > other.ord
+      1
+    else
+      -1
+    end
   end
 
   # Returns `true` if this char is an ASCII character
