@@ -126,7 +126,7 @@ class HTTP::Server
     def respond_with_error(message = "Internal Server Error", code = 500)
       reset
       @status = HTTP::Status.from_code(code)
-      message = message || @status.description
+      message ||= @status.description
       self.content_type = "text/plain"
       self << @status.code << ' ' << message << '\n'
       flush
