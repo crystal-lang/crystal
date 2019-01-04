@@ -298,6 +298,8 @@ describe Crystal::Formatter do
   assert_format "foo   &.is_a?(T)", "foo &.is_a?(T)"
   assert_format "foo   &.responds_to?(:foo)", "foo &.responds_to?(:foo)"
 
+  assert_format "foo(\n  1,\n  &.foo\n)"
+
   %w(return break next yield).each do |keyword|
     assert_format keyword
     assert_format "#{keyword}( 1 )", "#{keyword}(1)"
@@ -702,10 +704,10 @@ describe Crystal::Formatter do
   assert_format "->( x , y )   { x }", "->(x, y) { x }"
   assert_format "->( x : Int32 , y )   { x }", "->(x : Int32, y) { x }"
 
-  # TODO remove quotes after 0.26.0
-  {:+, :-, :*, :/, :^, :>>, :<<, :|, :&, :"&+", :"&-", :"&*", :"&**"}.each do |sym|
+  {:+, :-, :*, :/, :^, :>>, :<<, :|, :&, :&+, :&-, :&*, :&**}.each do |sym|
     assert_format ":#{sym}"
   end
+
   assert_format ":\"foo bar\""
 
   assert_format %("foo" \\\n "bar"), %("foo" \\\n"bar")

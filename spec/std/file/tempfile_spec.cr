@@ -81,6 +81,8 @@ describe File do
     it "accepts dir argument" do
       file = File.tempfile(dir: datapath)
       File.dirname(file.path).should eq(datapath)
+    ensure
+      file.try &.delete
     end
 
     it "fails in unwritable folder" do

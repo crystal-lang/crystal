@@ -31,7 +31,7 @@ class File
   #
   # The binary representation of this enum is defined to be same representation
   # as the permission bits of a unix `st_mode` field. `File::Permissions`
-  # can also be compared to it's underlying bitset, for example
+  # can also be compared to its underlying bitset, for example
   # `File::Permissions::All == 0o777` will always be `true`.
   #
   # On windows, only the `OwnerWrite` bit is effective. All file permissions

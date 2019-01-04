@@ -10,7 +10,7 @@ module Crystal::System::Dir
   # Rewinds the iterator to the beginning of the directory.
   # def self.rewind(handle : Handle) : Nil
 
-  # Closes *handle*, freeing it's resources.
+  # Closes *handle*, freeing its resources.
   # def self.close(handle : Handle) : Nil
 
   # Returns the current working directory of the application.

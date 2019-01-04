@@ -292,6 +292,10 @@ module Crystal
         assert_macro "", %({{"hello".size}}), [] of ASTNode, "5"
       end
 
+      it "executes count" do
+        assert_macro "", %({{"aabbcc".count('a')}}), [] of ASTNode, "2"
+      end
+
       it "executes empty" do
         assert_macro "", %({{"hello".empty?}}), [] of ASTNode, "false"
       end

@@ -307,28 +307,33 @@ struct BigDecimal < Number
     self
   end
 
+  # Converts to `BigInt`. Truncates anything on the right side of the decimal point.
+  def to_big_i
+    if @value >= 0
+      (@value / TEN ** @scale)
+    else
+      -(@value.abs / TEN ** @scale)
+    end
+  end
+
   # Converts to `Int64`. Truncates anything on the right side of the decimal point.
   def to_i64
-    if @value >= 0
-      (@value / TEN ** @scale).to_i64
-    else
-      -(@value.abs / TEN ** @scale).to_i64
-    end
+    to_big_i.to_i64
   end
 
   # Converts to `Int32`. Truncates anything on the right side of the decimal point.
   def to_i32
-    to_i64.to_i32
+    to_big_i.to_i32
   end
 
   # Converts to `Int16`. Truncates anything on the right side of the decimal point.
   def to_i16
-    to_i64.to_i16
+    to_big_i.to_i16
   end
 
   # Converts to `Int8`. Truncates anything on the right side of the decimal point.
   def to_i8
-    to_i64.to_i8
+    to_big_i.to_i8
   end
 
   # Converts to `Int32`. Truncates anything on the right side of the decimal point.
@@ -336,34 +341,93 @@ struct BigDecimal < Number
     to_i32
   end
 
+  # Converts to `Int8`. Truncates anything on the right side of the decimal point.
+  def to_i8!
+    to_big_i.to_i8!
+  end
+
+  # Converts to `Int16`. Truncates anything on the right side of the decimal point.
+  def to_i16!
+    to_big_i.to_i16!
+  end
+
+  # Converts to `Int32`. Truncates anything on the right side of the decimal point.
+  def to_i32!
+    to_big_i.to_i32!
+  end
+
+  # Converts to `Int64`. Truncates anything on the right side of the decimal point.
+  def to_i64!
+    to_big_i.to_i64!
+  end
+
+  # Converts to `Int32`. Truncates anything on the right side of the decimal point.
+  def to_i!
+    to_i32!
+  end
+
+  private def to_big_u
+    (@value.abs / TEN ** @scale)
+  end
+
   # Converts to `UInt64`. Truncates anything on the right side of the decimal point,
   # converting negative to positive.
   def to_u64
-    (@value.abs / TEN ** @scale).to_u64
+    to_big_u.to_u64
   end
 
   # Converts to `UInt32`. Truncates anything on the right side of the decimal point,
   # converting negative to positive.
   def to_u32
-    to_u64.to_u32
+    to_big_u.to_u32
   end
 
   # Converts to `UInt16`. Truncates anything on the right side of the decimal point,
   # converting negative to positive.
   def to_u16
-    to_u64.to_u16
+    to_big_u.to_u16
   end
 
   # Converts to `UInt8`. Truncates anything on the right side of the decimal point,
   # converting negative to positive.
   def to_u8
-    to_u64.to_u8
+    to_big_u.to_u8
   end
 
   # Converts to `UInt32`. Truncates anything on the right side of the decimal point,
   # converting negative to positive.
   def to_u
     to_u32
+  end
+
+  # Converts to `UInt8`. Truncates anything on the right side of the decimal point,
+  # converting negative to positive.
+  def to_u8!
+    to_big_u.to_u8!
+  end
+
+  # Converts to `UInt16`. Truncates anything on the right side of the decimal point,
+  # converting negative to positive.
+  def to_u16!
+    to_big_u.to_u16!
+  end
+
+  # Converts to `UInt32`. Truncates anything on the right side of the decimal point,
+  # converting negative to positive.
+  def to_u32!
+    to_big_u.to_u32!
+  end
+
+  # Converts to `UInt64`. Truncates anything on the right side of the decimal point,
+  # converting negative to positive.
+  def to_u64!
+    to_big_u.to_u64!
+  end
+
+  # Converts to `UInt32`. Truncates anything on the right side of the decimal point,
+  # converting negative to positive.
+  def to_u!
+    to_u32!
   end
 
   # Converts to `Float64`.
@@ -379,6 +443,21 @@ struct BigDecimal < Number
   # Converts to `Float64`.
   def to_f
     to_f64
+  end
+
+  # Converts to `Float32`.
+  def to_f32!
+    to_f64.to_f32!
+  end
+
+  # Converts to `Float64`.
+  def to_f64!
+    to_f64
+  end
+
+  # Converts to `Float64`.
+  def to_f!
+    to_f64!
   end
 
   # Converts to `BigFloat`.

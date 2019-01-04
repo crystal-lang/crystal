@@ -46,6 +46,42 @@ describe "Int" do
     end
   end
 
+  describe "&**" do
+    it "with positive Int32" do
+      x = 2 &** 2
+      x.should eq(4)
+      x.should be_a(Int32)
+
+      x = 2 &** 0
+      x.should eq(1)
+      x.should be_a(Int32)
+    end
+
+    it "with UInt8" do
+      x = 2_u8 &** 2
+      x.should eq(4)
+      x.should be_a(UInt8)
+    end
+
+    it "raises with negative exponent" do
+      expect_raises(ArgumentError, "Cannot raise an integer to a negative integer power, use floats for that") do
+        2 &** -1
+      end
+    end
+
+    it "works with large integers" do
+      x = 51_i64 &** 11
+      x.should eq(6071163615208263051_i64)
+      x.should be_a(Int64)
+    end
+
+    it "wraps with larger integers" do
+      x = 51_i64 &** 12
+      x.should eq(-3965304877440961871_i64)
+      x.should be_a(Int64)
+    end
+  end
+
   describe "#===(:Char)" do
     it { (99 === 'c').should be_true }
     it { (99_u8 === 'c').should be_true }

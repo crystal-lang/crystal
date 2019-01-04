@@ -177,6 +177,18 @@ struct BigRational < Number
     LibGMP.mpq_get_d(mpq)
   end
 
+  def to_f32!
+    to_f64.to_f32!
+  end
+
+  def to_f64!
+    to_f64
+  end
+
+  def to_f!
+    to_f64!
+  end
+
   def to_big_f
     BigFloat.new { |mpf| LibGMP.mpf_set_q(mpf, mpq) }
   end

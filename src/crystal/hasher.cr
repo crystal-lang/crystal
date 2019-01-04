@@ -93,8 +93,8 @@ struct Crystal::Hasher
   end
 
   private def permute(v : UInt64)
-    @a = rotl32(@a ^ v) * C1
-    @b = (rotl32(@b) ^ v) * C2
+    @a = rotl32(@a ^ v) &* C1
+    @b = (rotl32(@b) ^ v) &* C2
     self
   end
 
@@ -102,16 +102,16 @@ struct Crystal::Hasher
     a, b = @a, @b
     a ^= (a >> 23) ^ (a >> 40)
     b ^= (b >> 23) ^ (b >> 40)
-    a *= C1
-    b *= C2
+    a &*= C1
+    b &*= C2
     a ^= a >> 32
     b ^= b >> 32
-    a + b
+    a &+ b
   end
 
   def nil
-    @a += @b
-    @b += 1
+    @a &+= @b
+    @b &+= 1
     self
   end
 
