@@ -22,7 +22,7 @@ describe Crystal::Command::FormatCommand do
     stderr.to_s.empty?.should be_true
   end
 
-  it "formats stdin (ok)" do
+  it "formats stdin (formatted)" do
     stdin = IO::Memory.new "if true\n  1\nend\n"
     stdout = IO::Memory.new
     stderr = IO::Memory.new
