@@ -133,8 +133,7 @@ class HTTP::Server
     end
 
     protected def write_headers
-      status_message = @status.description
-      @io << @version << ' ' << @status.code << ' ' << status_message << "\r\n"
+      @io << @version << ' ' << @status.code << ' ' << @status.description << "\r\n"
       headers.each do |name, values|
         values.each do |value|
           @io << name << ": " << value << "\r\n"
