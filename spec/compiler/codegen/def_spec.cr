@@ -27,7 +27,7 @@ describe "Code gen: def" do
   end
 
   it "uses self" do
-    run("struct Int; def foo; self + 1; end; end; 3.foo").to_i.should eq(4)
+    run("struct Int; def foo; self &+ 1; end; end; 3.foo").to_i.should eq(4)
   end
 
   it "uses var after external" do
@@ -167,20 +167,20 @@ describe "Code gen: def" do
   it "codegens with and witout default arguments" do
     run("
       def foo(x = 1)
-        x + 1
+        x &+ 1
       end
 
-      foo(2) + foo
+      foo(2) &+ foo
       ").to_i.should eq(5)
   end
 
   it "codegens with and witout many default arguments" do
     run("
       def foo(x = 1, y = 2, z = 3)
-        x + y + z
+        x &+ y &+ z
       end
 
-      foo + foo(9) + foo(3, 4) + foo(6, 3, 1)
+      foo &+ foo(9) &+ foo(3, 4) &+ foo(6, 3, 1)
       ").to_i.should eq(40)
   end
 
@@ -188,7 +188,7 @@ describe "Code gen: def" do
     run("
       class Foo
         def foo(x = self.bar)
-          x + 1
+          x &+ 1
         end
 
         def bar
@@ -198,7 +198,7 @@ describe "Code gen: def" do
 
       f = Foo.new
 
-      f.foo(2) + f.foo
+      f.foo(2) &+ f.foo
       ").to_i.should eq(5)
   end
 
@@ -512,8 +512,8 @@ describe "Code gen: def" do
 
   it "uses previous argument in default value (#1062)" do
     run(%(
-      def foo(x = 123, y = x + 456)
-        x + y
+      def foo(x = 123, y = x &+ 456)
+        x &+ y
       end
 
       foo

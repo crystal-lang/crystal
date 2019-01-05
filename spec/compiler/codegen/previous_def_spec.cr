@@ -8,7 +8,7 @@ describe "codegen: previous_def" do
       end
 
       def foo
-        previous_def + 1
+        previous_def &+ 1
       end
 
       foo
@@ -18,11 +18,11 @@ describe "codegen: previous_def" do
   it "codeges previous def when inside fun and forwards args" do
     run(%(
       def foo(z)
-        z + 1
+        z &+ 1
       end
 
       def foo(z)
-        ->(x : Int32) { x + previous_def }
+        ->(x : Int32) { x &+ previous_def }
       end
 
       x = foo(2)
