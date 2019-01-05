@@ -100,6 +100,10 @@ class Crystal::Call
           end
         end
 
+        if def_name == "allocate" && owner.is_a?(MetaclassType) && owner.instance_type.module?
+          msg << colorize(" (modules cannot be instantiated)").yellow.bold
+        end
+
         if obj && obj.type != owner
           msg << colorize(" (compile-time type is #{obj.type})").yellow.bold
         end

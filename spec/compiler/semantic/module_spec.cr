@@ -907,6 +907,26 @@ describe "Semantic: module" do
       "undefined method 'new' for Moo:Module"
   end
 
+  it "gives error when trying to instantiate with new" do
+    assert_error %(
+      module Moo
+        def initialize
+        end
+      end
+      Moo.new),
+      "undefined local variable or method 'allocate'#{" (modules cannot be instantiated)".colorize.yellow.bold}"
+  end
+
+  it "gives error when trying to instantiate with allocate" do
+    assert_error %(
+      module Moo
+        def initialize
+        end
+      end
+      Moo.allocate),
+      "undefined method 'allocate' for Moo:Module#{" (modules cannot be instantiated)".colorize.yellow.bold}"
+  end
+
   it "uses type declaration inside module" do
     assert_type(%(
       module Moo
