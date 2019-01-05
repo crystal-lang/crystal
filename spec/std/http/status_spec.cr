@@ -2,19 +2,19 @@ require "spec"
 require "http"
 
 describe HTTP::Status do
-  describe ".from_code" do
+  describe ".new" do
     it "raises when given invalid status code" do
       expect_raises(ArgumentError, "Invalid HTTP status code: 1000") do
-        HTTP::Status.from_code(1000)
+        HTTP::Status.new(1000)
       end
     end
 
     it "returns an instance when given defined status code" do
-      HTTP::Status.from_code(201).should eq HTTP::Status::CREATED
+      HTTP::Status.new(201).should eq HTTP::Status::CREATED
     end
 
     it "returns an instance when given undefined status code" do
-      HTTP::Status.from_code(418).should eq HTTP::Status.new(418)
+      HTTP::Status.new(418).should eq HTTP::Status.new(418)
     end
   end
 
@@ -80,7 +80,7 @@ describe HTTP::Status do
     end
 
     it "returns nil on non-existent status" do
-      HTTP::Status.new(0).description.should eq(nil)
+      HTTP::Status.new(999).description.should eq(nil)
     end
   end
 end

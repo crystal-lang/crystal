@@ -70,9 +70,9 @@ enum HTTP::Status
 
   # Create a new status instance with the given status code, or raise an
   # error if the status code given is not inside 100..999.
-  def self.from_code(status_code : Int32)
+  def self.new(status_code : Int32)
     raise ArgumentError.new("Invalid HTTP status code: #{status_code}") unless 100 <= status_code <= 999
-    new(status_code)
+    previous_def(status_code)
   end
 
   def code

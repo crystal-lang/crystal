@@ -22,7 +22,7 @@ class HTTP::Client::Response
   end
 
   def self.new(status_code : Int32, body : String? = nil, headers : Headers = Headers.new, status_message = nil, version = "HTTP/1.1", body_io = nil)
-    new(HTTP::Status.from_code(status_code), body, headers, status_message, version, body_io)
+    new(HTTP::Status.new(status_code), body, headers, status_message, version, body_io)
   end
 
   def body
@@ -140,7 +140,7 @@ class HTTP::Client::Response
       raise "Invalid HTTP status code: #{pieces[1]}"
     end
 
-    status = HTTP::Status.from_code(status_code)
+    status = HTTP::Status.new(status_code)
     status_message = pieces[2]? ? pieces[2].chomp : ""
 
     body_type = HTTP::BodyType::OnDemand

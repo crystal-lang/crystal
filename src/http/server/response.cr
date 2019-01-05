@@ -69,7 +69,7 @@ class HTTP::Server
 
     # Convenience method to set the HTTP status code.
     def status_code=(status_code : Int32)
-      self.status = HTTP::Status.from_code(status_code)
+      self.status = HTTP::Status.new(status_code)
     end
 
     # See `IO#write(slice)`.
@@ -125,7 +125,7 @@ class HTTP::Server
     # Calls `reset` and then writes the given message.
     def respond_with_error(message = "Internal Server Error", code = 500)
       reset
-      @status = HTTP::Status.from_code(code)
+      @status = HTTP::Status.new(code)
       message ||= @status.description
       self.content_type = "text/plain"
       self << @status.code << ' ' << message << '\n'
