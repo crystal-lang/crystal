@@ -41,7 +41,7 @@ module Comparable(T)
   end
 
   # The comparison operator. Returns zero if the two objects are equal,
-  # a negative number, if this object is considered to be less than *other*,
+  # a negative number if this object is considered to be less than *other*,
   # or a positive number otherwise.
   #
   # Subclasses define this method to provide class-specific ordering.
