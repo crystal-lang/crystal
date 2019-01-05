@@ -103,10 +103,12 @@ struct Char
     (ord - other).chr
   end
 
-  # Implements the comparison operator.
+  # The comparison operator.
   #
   # ```
   # 'a' <=> 'c' # => -2
+  # 'z' <=> 'z' # => 0
+  # 'c' <=> 'a' # => 2
   # ```
   def <=>(other : Char)
     self - other

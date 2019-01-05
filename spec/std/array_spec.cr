@@ -1180,7 +1180,7 @@ describe "Array" do
     b = [4, 5, 6]
     c = [1, 2]
 
-    (a <=> b).should be < 1
+    (a <=> b).should be < 0
     (a <=> c).should be > 0
     (b <=> c).should be > 0
     (b <=> a).should be > 0
