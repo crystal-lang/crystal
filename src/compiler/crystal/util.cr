@@ -24,13 +24,17 @@ module Crystal
   end
 
   def self.with_line_numbers(source : String, highlight_line_number = nil)
-    source.lines.map_with_index do |line, i|
-      str = "#{"%4d" % (i + 1)}. #{line.to_s.chomp}"
-      target = i + 1 == highlight_line_number
-      if target
-        str = ">".colorize.green.bold.to_s + str.lchop.colorize.bold.to_s
+    String.build do |io|
+      i = 0
+      source.each_line do |line|
+        i += 1
+        if i == highlight_line_number
+          line = "#{">".colorize.green.bold}#{"%3d" % i}. #{line}".colorize.bold
+        else
+          line = "#{"%4d" % i}. #{line}"
+        end
+        io.puts line
       end
-      str
-    end.join '\n'
+    end
   end
 end
