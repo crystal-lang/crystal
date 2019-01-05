@@ -636,8 +636,8 @@ describe "Semantic: generic class" do
     begin
       semantic(nodes)
     rescue ex : TypeException
-      msg = ex.to_s.lines.map(&.strip)
-      msg.count("- Foo(T).foo(x : Int32)".colorize.bold).should eq(1)
+      msg = ex.to_s.lines
+      msg.count("\n - Foo(T).foo(x : Int32)".colorize.bold).should eq(1)
     end
   end
 

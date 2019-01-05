@@ -790,6 +790,7 @@ describe "Semantic: def overload" do
       <<-MSG
 
       #{" - Bar#foo(x : Int32)".colorize.bold}
+
       #{" - Foo#foo(x : Int32)".colorize.bold}
       MSG
   end

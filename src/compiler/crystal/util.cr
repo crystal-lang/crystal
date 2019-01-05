@@ -29,7 +29,8 @@ module Crystal
       source.each_line do |line|
         i += 1
         if i == highlight_line_number
-          io << ">".colorize.green.bold << "#{"%3d" % i}. #{line}".colorize.bold << '\n'
+          io << ">".colorize.green.bold
+          io.puts "#{"%3d" % i}. #{line}".colorize.bold
         else
           io.puts "#{"%4d" % i}. #{line}"
         end
