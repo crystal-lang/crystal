@@ -688,7 +688,7 @@ class Hash(K, V)
   #
   # ```
   # hash = {:a => 1, :b => 2, :c => 3}
-  # hash.transform_keys { |key| key.to_s } # => {"A" => 1, "B" => 2, "C" => 3}
+  # hash.transform_keys { |key| key.to_s } # => {"a" => 1, "b" => 2, "c" => 3}
   # ```
   def transform_keys(&block : K -> K2) forall K2
     each_with_object({} of K2 => V) do |(key, value), memo|
@@ -702,6 +702,7 @@ class Hash(K, V)
   # ```
   # hash = {:a => 1, :b => 2, :c => 3}
   # hash.transform_values { |value| value + 1 } # => {:a => 2, :b => 3, :c => 4}
+  # ```
   def transform_values(&block : V -> V2) forall V2
     each_with_object({} of K => V2) do |(key, value), memo|
       memo[key] = yield(value)
@@ -715,6 +716,7 @@ class Hash(K, V)
   # hash = {:a => 1, :b => 2, :c => 3}
   # hash.transform_values! { |value| value + 1 }
   # hash # => {:a => 2, :b => 3, :c => 4}
+  # ```
   def transform_values!(&block : V -> V)
     current = @first
     while current
