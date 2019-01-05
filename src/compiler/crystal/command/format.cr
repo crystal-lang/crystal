@@ -35,7 +35,7 @@ class Crystal::Command
           @color = false
         end
 
-        opts.on("--show-backtrace", "Show backtrace on a bug (it is only for report!)") do
+        opts.on("--show-backtrace", "Show backtrace on a bug (used only for debugging)") do
           show_backtrace = true
         end
       end
