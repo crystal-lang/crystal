@@ -86,9 +86,9 @@ module Crystal
     # A `ProgressTracker` object which tracks compilation progress.
     property progress_tracker = ProgressTracker.new
 
-    # Target triple to use in the compilation.
+    # Codegen target to use in the compilation.
     # If not set, asks LLVM the default one for the current machine.
-    property target_triple : String?
+    property codegen_target = Codegen::Target.new
 
     # If `true`, prints the link command line that is performed
     # to create the executable.
@@ -185,6 +185,7 @@ module Crystal
       program = Program.new
       program.filename = sources.first.filename
       program.cache_dir = CacheDir.instance.directory_for(sources)
+      program.codegen_target = codegen_target
       program.target_machine = target_machine
       program.flags << "release" if release?
       program.flags << "debug" unless debug.none?
@@ -231,7 +232,7 @@ module Crystal
 
     private def bc_flags_changed?(output_dir)
       bc_flags_changed = true
-      current_bc_flags = "#{@target_triple}|#{@mcpu}|#{@mattr}|#{@release}|#{@link_flags}"
+      current_bc_flags = "#{@codegen_target}|#{@mcpu}|#{@mattr}|#{@release}|#{@link_flags}"
       bc_flags_filename = "#{output_dir}/bc_flags"
       if File.file?(bc_flags_filename)
         previous_bc_flags = File.read(bc_flags_filename).strip
@@ -484,11 +485,8 @@ module Crystal
       end
     end
 
-    protected def target_machine
-      @target_machine ||= begin
-        triple = @target_triple || Crystal::Config.default_target_triple
-        TargetMachine.create(triple, @mcpu || "", @mattr || "", @release)
-      end
+    getter(target_machine : LLVM::TargetMachine) do
+      @codegen_target.to_target_machine(@mcpu || "", @mattr || "", @release)
     rescue ex : ArgumentError
       stderr.print colorize("Error: ").red.bold
       stderr.print "llc: "
