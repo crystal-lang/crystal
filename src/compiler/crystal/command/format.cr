@@ -136,21 +136,6 @@ class Crystal::Command
       @stdout.print result if @format_stdin
       return if result == source
 
-      on_format filename, result
-    rescue ex : InvalidByteSequenceError
-      on_invalid_byte_sequence_error filename, ex
-    rescue ex : Crystal::SyntaxException
-      on_syntax_error filename, ex
-    rescue ex
-      on_bug filename, ex
-    end
-
-    # This method is for mocking `Crystal.format` in test.
-    private def format(filename, source)
-      result = Crystal.format(source, filename: filename)
-    end
-
-    private def on_format(filename, result)
       if @check
         error "formatting '#{filename}' produced changes"
         @status_code = 1
@@ -160,19 +145,13 @@ class Crystal::Command
           @stdout << "Format".colorize(:green).toggle(@color) << ' ' << filename << '\n'
         end
       end
-    end
-
-    private def on_invalid_byte_sequence_error(filename, ex)
+    rescue ex : InvalidByteSequenceError
       error "file '#{filename}' is not a valid Crystal source file: #{ex.message}"
       @status_code = 1
-    end
-
-    private def on_syntax_error(filename, ex)
+    rescue ex : Crystal::SyntaxException
       error ex
       @status_code = 1
-    end
-
-    private def on_bug(filename, ex)
+    rescue ex
       if @show_backtrace
         ex.inspect_with_backtrace @stderr
         @stderr.puts
@@ -181,6 +160,11 @@ class Crystal::Command
         error "there's a bug formatting '#{filename}', to show more information, please run:\n\n  $ crystal tool format --show-backtrace #{@format_stdin ? "-" : "'#{filename}'"}\n"
       end
       @status_code = 1
+    end
+
+    # This method is for mocking `Crystal.format` in test.
+    private def format(filename, source)
+      result = Crystal.format(source, filename: filename)
     end
 
     private def error(msg)
