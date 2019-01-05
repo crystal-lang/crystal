@@ -40,7 +40,9 @@ module Comparable(T)
     (self <=> other) >= 0
   end
 
-  # The comparison operator. Returns zero if the two objects are equal,
+  # The comparison operator.
+  #
+  # Returns zero if the two objects are equal,
   # a negative number if this object is considered to be less than *other*,
   # or a positive number otherwise.
   #

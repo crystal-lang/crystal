@@ -2361,7 +2361,9 @@ class String
     to_unsafe.memcmp(other.to_unsafe, bytesize) == 0
   end
 
-  # Compares this string with *other*, returning `-1`, `0` or `+1` depending on whether
+  # The comparison operator.
+  #
+  # Compares this string with *other*, returning `-1`, `0` or `1` depending on whether
   # this string is less, equal or greater than *other*.
   #
   # Comparison is done byte-per-byte: if a byte is less then the other corresponding
@@ -2385,7 +2387,7 @@ class String
     cmp == 0 ? (bytesize <=> other.bytesize) : cmp.sign
   end
 
-  # Compares this string with *other*, returning `-1`, `0` or `+1` depending on whether
+  # Compares this string with *other*, returning `-1`, `0` or `1` depending on whether
   # this string is less, equal or greater than *other*, optionally in a *case_insensitive*
   # manner.
   #

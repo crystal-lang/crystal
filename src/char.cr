@@ -105,6 +105,11 @@ struct Char
 
   # The comparison operator.
   #
+  # Returns a negative difference of the codepoint values of this char and *other*
+  # if `self`'s codepoint is less than *other*'s codepoint, zero if `self`'s codepoint equals *other*'s
+  # codepoint, or a positive difference of the codepoint values of this char and *other*
+  # if `self`'s codepoint greater than *other*'s codepoint.
+  #
   # ```
   # 'a' <=> 'c' # => -2
   # 'z' <=> 'z' # => 0

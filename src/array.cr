@@ -171,7 +171,7 @@ class Array(T)
   # `self` is greater than *other* and `-1` if `self` is smaller than *other*.
   #
   # It compares the elements of both arrays in the same position using the
-  # `<=>` operator. As soon as one of such comparisons return a non-zero
+  # `<=>` operator. As soon as one of such comparisons returns a non-zero
   # value, that result is the return value of the comparison.
   #
   # If all elements are equal, the comparison is based on the size of the arrays.

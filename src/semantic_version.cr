@@ -78,7 +78,10 @@ struct SemanticVersion
     end
   end
 
-  # The comparison operator
+  # The comparison operator.
+  #
+  # Returns `-1` if `self`'s version is lower than *other*'s, `0` if `self`'s version equals *other*'s
+  # or `-1` if `self`'s version is greater than *other*'s.
   #
   # ```
   # require "semantic_version"
@@ -145,7 +148,10 @@ struct SemanticVersion
       identifiers.join('.', io)
     end
 
-    # The comparison operator
+    # The comparison operator.
+    #
+    # Returns `-1` if `self`'s pre-release is lower than *other*'s, `0` if `self`'s pre-release equals *other*'s
+    # or `-1` if `self`'s pre-release is greater than *other*'s.
     #
     # ```
     # require "semantic_version"

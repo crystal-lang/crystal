@@ -62,7 +62,9 @@ module PartialComparable(T)
     end
   end
 
-  # The comparison operator. Returns a negative number if the object
+  # The comparison operator.
+  #
+  # Returns a negative number if the object
   # is considered to be less than *other*, zero if the two objects are equal,
   # a positive number if this object is considered to be greater than *other*,
   # or `nil` if no order can be established.

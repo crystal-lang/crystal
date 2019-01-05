@@ -21,7 +21,7 @@ struct Symbol
   end
 
   # Compares symbol with other based on `String#<=>` method. Returns `-1`, `0`
-  # or `+1` depending on whether symbol is less than, equal to,
+  # or `1` depending on whether symbol is less than, equal to,
   # or greater than *other*.
   #
   # See `String#<=>` for more information.
