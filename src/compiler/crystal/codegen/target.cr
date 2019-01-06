@@ -46,7 +46,7 @@ class Crystal::Codegen::Target
     when .freebsd?
       "freebsd"
     when .openbsd?
-      "unknown-openbsd"
+      "openbsd"
     else
       environment
     end
