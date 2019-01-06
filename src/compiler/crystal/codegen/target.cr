@@ -17,8 +17,8 @@ class Crystal::Codegen::Target
 
     # Perform additional normalisation and parsing
     case @architecture
-    when "i386", "i486", "i586"
-      @architecture = "i686"
+    when "i486", "i586", "i686"
+      @architecture = "i386"
     when "amd64"
       @architecture = "x86_64"
     when .starts_with?("arm")
@@ -106,7 +106,7 @@ class Crystal::Codegen::Target
 
   def to_target_machine(cpu = "", features = "", release = false) : LLVM::TargetMachine
     case @architecture
-    when "i686", "x86_64"
+    when "i386", "x86_64"
       LLVM.init_x86
     when "aarch64"
       LLVM.init_aarch64
