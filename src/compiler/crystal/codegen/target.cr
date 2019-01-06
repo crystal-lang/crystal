@@ -42,7 +42,7 @@ class Crystal::Codegen::Target
   def os_name
     case self
     when .macos?
-      "macosx-darwin"
+      "darwin"
     when .freebsd?
       "portbld-freebsd"
     when .openbsd?
