@@ -126,6 +126,23 @@ struct YAML::Any
     end
   end
 
+  # Assumes the underlying value is an `Array` or `Hash`
+  # Returns `true` when index_or_key given by *index_or_key* exists, otherwise `false`
+  def has_key?(index_or_key) : Bool
+    case object = @raw
+    when Array
+      if index_or_key.is_a?(Int)
+        object[index_or_key]? != nil
+      else
+        false
+      end
+    when Hash
+      object.has_key?(index_or_key)
+    else
+      raise "Expected Array for #has_key?(index : Int), not #{object.class}"
+    end
+  end
+
   # Traverses the depth of a structure and returns the value.
   # Returns `nil` if not found.
   def dig?(index_or_key, *subkeys)
