@@ -115,6 +115,28 @@ struct JSON::Any
     end
   end
 
+  # Assumes the underlying value is a `Array`
+  # Returns `true` when index given by *index* exists, otherwise `false`
+  def has_key?(index : Int) : Bool
+    case object = @raw
+    when Array
+      object[index]? != nil
+    else
+      raise "Expected Array for #has_key?(index : Int), not #{object.class}"
+    end
+  end
+
+  # Assumes the underlying value is a `Hash`
+  # Returns `true` when key given by *key* exists, otherwise `false`
+  def has_key?(key : String) : Bool
+    case object = @raw
+    when Hash
+      object.has_key?(key)
+    else
+      raise "Expected Hash for #has_key?(key : String), not #{object.class}"
+    end
+  end
+
   # Traverses the depth of a structure and returns the value.
   # Returns `nil` if not found.
   def dig?(key : String | Int, *subkeys)
