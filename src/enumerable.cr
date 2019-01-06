@@ -290,6 +290,7 @@ module Enumerable(T)
   # This can be used to prevent many memory allocations when each slice of
   # interest is to be used in a read-only fashion.
   def each_cons(count : Int, reuse = false)
+    raise ArgumentError.new "Invalid cons size: #{count}" if count <= 0
     if reuse.nil? || reuse.is_a?(Bool)
       each_cons_internal(count, reuse, Array(T).new(count)) { |slice| yield slice }
     else
