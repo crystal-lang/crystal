@@ -44,7 +44,7 @@ class Crystal::Codegen::Target
     when .macos?
       "darwin"
     when .freebsd?
-      "portbld-freebsd"
+      "freebsd"
     when .openbsd?
       "unknown-openbsd"
     else
