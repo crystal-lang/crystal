@@ -68,22 +68,22 @@ describe Time::Format do
       t.to_s("%:z").should eq("+00:00")
       t.to_s("%::z").should eq("+00:00:00")
 
-      zoned = Time.new(2017, 11, 24, 13, 5, 6, location: Time::Location.load("Europe/Berlin"))
+      zoned = Time.local(2017, 11, 24, 13, 5, 6, location: Time::Location.load("Europe/Berlin"))
       zoned.to_s("%z").should eq("+0100")
       zoned.to_s("%:z").should eq("+01:00")
       zoned.to_s("%::z").should eq("+01:00:00")
 
-      zoned = Time.new(2017, 11, 24, 13, 5, 6, location: Time::Location.load("America/Buenos_Aires"))
+      zoned = Time.local(2017, 11, 24, 13, 5, 6, location: Time::Location.load("America/Buenos_Aires"))
       zoned.to_s("%z").should eq("-0300")
       zoned.to_s("%:z").should eq("-03:00")
       zoned.to_s("%::z").should eq("-03:00:00")
 
-      offset = Time.new(2017, 11, 24, 13, 5, 6, location: Time::Location.fixed(9000))
+      offset = Time.local(2017, 11, 24, 13, 5, 6, location: Time::Location.fixed(9000))
       offset.to_s("%z").should eq("+0230")
       offset.to_s("%:z").should eq("+02:30")
       offset.to_s("%::z").should eq("+02:30:00")
 
-      offset = Time.new(2017, 11, 24, 13, 5, 6, location: Time::Location.fixed(9001))
+      offset = Time.local(2017, 11, 24, 13, 5, 6, location: Time::Location.fixed(9001))
       offset.to_s("%z").should eq("+0230")
       offset.to_s("%:z").should eq("+02:30")
       offset.to_s("%::z").should eq("+02:30:01")

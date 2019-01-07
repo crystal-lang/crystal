@@ -52,7 +52,7 @@ struct Time::Format
         # If all components of a week date are available, they are used to create a Time instance
         time = Time.week_date calendar_week_year, calendar_week_week, day_of_week, @hour, @minute, @second, nanosecond: @nanosecond, location: location
       else
-        time = Time.new @year, @month, @day, @hour, @minute, @second, nanosecond: @nanosecond, location: location
+        time = Time.local @year, @month, @day, @hour, @minute, @second, nanosecond: @nanosecond, location: location
       end
 
       time = time.shift 0, @nanosecond_offset

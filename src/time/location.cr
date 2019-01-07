@@ -17,7 +17,7 @@ require "./location/loader"
 # ```
 # location = Time::Location.load("Europe/Berlin")
 # location # => #<Time::Location Europe/Berlin>
-# time = Time.new(2016, 2, 15, 21, 1, 10, location: location)
+# time = Time.local(2016, 2, 15, 21, 1, 10, location: location)
 # time # => 2016-02-15 21:01:10 +01:00 Europe/Berlin
 # ```
 #
@@ -313,9 +313,9 @@ class Time::Location
   # The value can be changed to overwrite the system default:
   #
   # ```
-  # Time.now.location # => #<Time::Location America/New_York>
+  # Time.local.location # => #<Time::Location America/New_York>
   # Time::Location.local = Time::Location.load("Europe/Berlin")
-  # Time.now.location # => #<Time::Location Europe/Berlin>
+  # Time.local.location # => #<Time::Location Europe/Berlin>
   # ```
   class_property(local : Location) { load_local }
 
