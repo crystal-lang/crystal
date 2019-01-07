@@ -274,6 +274,7 @@ class Crystal::CodeGenVisitor
     op_overflow = new_block "overflow"
     op_normal = new_block "normal"
 
+    overflow_condition = builder.call(llvm_expect_i1_fun, [overflow_condition, llvm_false])
     cond overflow_condition, op_overflow, op_normal
 
     position_at_end op_overflow
@@ -286,6 +287,12 @@ class Crystal::CodeGenVisitor
     llvm_mod.functions[fun_name]? ||
       llvm_mod.functions.add(fun_name, [llvm_operand_type, llvm_operand_type],
         llvm_context.struct([llvm_operand_type, llvm_context.int1]))
+  end
+
+  private def llvm_expect_i1_fun
+    llvm_mod.functions["llvm.expect.i1"]? ||
+      llvm_mod.functions.add("llvm.expect.i1", [llvm_context.int1, llvm_context.int1],
+        llvm_context.int1)
   end
 
   # The below methods (lt, lte, gt, gte, eq, ne) perform
