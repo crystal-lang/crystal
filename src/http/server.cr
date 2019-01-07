@@ -26,6 +26,49 @@ require "./common"
 # server.listen
 # ```
 #
+# ## Request processing
+#
+# The handler chain receives an instance of `HTTP::Server::Context` that holds
+# the `HTTP::Request` to process and a `HTTP::Server::Response` which it can
+# configure and write to.
+#
+# Each connection is processed concurrently in a separate `Fiber` and can handle
+# multiple subsequent requests-response cycles with connection keep-alive.
+#
+# ### Handler chain
+#
+# The handler given to a server can simply be a block that receives an `HTTP::Server::Context`,
+# or it can be an instance of `HTTP::Handler`. An `HTTP::Handler` has a `#next`
+# method to forward processing to the next handler in the chain.
+#
+# For example, an initial handler might handle exceptions raised from subsequent
+# handlers and return a `500 Server Error` status (see `HTTP::ErrorHandler`).
+# The next handler might log all incoming requests (see `HTTP::LogHandler`).
+# And the final handler deals with routing and application logic.
+#
+# ```
+# require "http/server"
+#
+# server = HTTP::Server.new([
+#   HTTP::ErrorHandler.new,
+#   HTTP::LogHandler.new,
+#   HTTP::CompressHandler.new,
+#   HTTP::StaticFileHandler.new("."),
+# ])
+#
+# server.bind_tcp "127.0.0.1", 8080
+# server.listen
+# ```
+#
+# ### Response object
+#
+# The `HTTP::Server::Response` object has `status` and `headers` properties that can be
+# configured before writing the response body. Once any response output has been
+# written, changing the `status` and `headers` properties has no effect.
+#
+# The `HTTP::Server::Response` is a write-only `IO`, so all `IO` methods are available
+# on it for sending the response body.
+#
 # ## Binding to sockets
 #
 # The server can be bound to one ore more server sockets (see `#bind`)
@@ -70,49 +113,6 @@ require "./common"
 # Currently processing requests are not interrupted but also not waited for.
 # In order to give them some grace period for finishing, the calling context
 # can add a timeout like `sleep 10.seconds` after `#listen` returns.
-#
-# ## Request processing
-#
-# The handler chain receives an instance of `HTTP::Server::Context` that holds
-# the `HTTP::Request` to process and a `HTTP::Server::Response` which it can
-# configure and write to.
-#
-# Each connection is processed concurrently in a separate `Fiber` and can handle
-# multiple subsequent requests-response cycles with connection keep-alive.
-#
-# ### Handler chain
-#
-# The handler given to a server can simply be a block that receives an `HTTP::Server::Context`,
-# or it can be an instance of `HTTP::Handler`. An `HTTP::Handler` has a `#next`
-# method to forward processing to the next handler in the chain.
-#
-# For example, an initial handler might handle exceptions raised from subsequent
-# handlers and return a `500 Server Error` status (see `HTTP::ErrorHandler`).
-# The next handler might log all incoming requests (see `HTTP::LogHandler`).
-# And the final handler deals with routing and application logic.
-#
-# ```
-# require "http/server"
-#
-# server = HTTP::Server.new([
-#   HTTP::ErrorHandler.new,
-#   HTTP::LogHandler.new,
-#   HTTP::CompressHandler.new,
-#   HTTP::StaticFileHandler.new("."),
-# ])
-#
-# server.bind_tcp "127.0.0.1", 8080
-# server.listen
-# ```
-#
-# ### Response object
-#
-# The `HTTP::Server::Response` object has `status` and `headers` properties that can be
-# configured before writing the response body. Once any response output has been
-# written, changing the `status` and `headers` properties has no effect.
-#
-# The `HTTP::Server::Response` is a write-only `IO`, so all `IO` methods are available
-# on it for sending the response body.
 class HTTP::Server
   @sockets = [] of Socket::Server
 
