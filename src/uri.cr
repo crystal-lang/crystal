@@ -67,10 +67,10 @@ class URI
   #
   # URI.parse("http://foo.com/bar").path # => "/bar"
   # ```
-  getter path : String?
+  getter path : String
 
   # Sets the path component of the URI.
-  setter path : String?
+  setter path : String
 
   # Returns the query component of the URI.
   #
@@ -134,7 +134,7 @@ class URI
 
   def_equals_and_hash scheme, host, port, path, query, user, password, fragment, opaque
 
-  def initialize(@scheme = nil, @host = nil, @port = nil, @path = nil, @query = nil, @user = nil, @password = nil, @fragment = nil, @opaque = nil)
+  def initialize(@scheme = nil, @host = nil, @port = nil, @path = "", @query = nil, @user = nil, @password = nil, @fragment = nil, @opaque = nil)
   end
 
   # Returns the host part of the URI and unwrap brackets for IPv6 addresses.
@@ -159,7 +159,7 @@ class URI
   # ```
   def full_path
     String.build do |str|
-      str << (@path.try { |p| !p.empty? } ? @path : '/')
+      str << (@path.empty? ? '/' : @path)
       if (query = @query) && !query.empty?
         str << '?' << query
       end
@@ -197,9 +197,7 @@ class URI
       io << ':'
       io << port
     end
-    if path
-      io << path
-    end
+    io << @path
     if query
       io << '?'
       io << query
@@ -422,9 +420,7 @@ class URI
   end
 
   # [RFC 3986 6.2.2.3](https://tools.ietf.org/html/rfc3986#section-5.2.4)
-  private def remove_dot_segments(path : String?)
-    return if path.nil?
-
+  private def remove_dot_segments(path : String)
     result = [] of String
     while path.size > 0
       # A.  If the input buffer begins with a prefix of "../" or "./",

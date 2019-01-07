@@ -106,9 +106,9 @@ class HTTP::Request
     BadRequest.new
   end
 
-  # Lazily parses and return the request's path component.
+  # Returns the request's path component.
   def path
-    uri.path || "/"
+    (path = uri.path).empty? ? "/" : path
   end
 
   # Sets request's path component.

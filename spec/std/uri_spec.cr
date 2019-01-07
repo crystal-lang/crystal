@@ -31,7 +31,7 @@ describe "URI" do
   assert_uri("http://www.foo-bar.example.com", scheme: "http", host: "www.foo-bar.example.com")
   assert_uri("/foo", path: "/foo")
   assert_uri("/foo?q=1", path: "/foo", query: "q=1")
-  assert_uri("mailto:foo@example.org", scheme: "mailto", path: nil, opaque: "foo@example.org")
+  assert_uri("mailto:foo@example.org", scheme: "mailto", opaque: "foo@example.org")
 
   describe "hostname" do
     it { URI.parse("http://www.example.com/foo").hostname.should eq("www.example.com") }
