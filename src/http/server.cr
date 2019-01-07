@@ -83,8 +83,8 @@ require "./common"
 # ### Handler chain
 #
 # The handler given to a server can simply be a block that receives an `HTTP::Server::Context`,
-# or it can be an instance of `HTTP::Handler`. An `HTTP::Handler` has an optional
-# `#next` method to forward processing to the next handler in the chain.
+# or it can be an instance of `HTTP::Handler`. An `HTTP::Handler` has a `#next`
+# method to forward processing to the next handler in the chain.
 #
 # For example, an initial handler might handle exceptions raised from subsequent
 # handlers and return a `500 Server Error` status (see `HTTP::ErrorHandler`).
