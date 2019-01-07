@@ -266,7 +266,7 @@ describe Time do
     end
 
     it "adds zero span" do
-      time = Time.now
+      time = Time.utc
       time.shift(0, 0).should eq time
     end
 
@@ -422,13 +422,13 @@ describe Time do
   end
 
   it "#time_of_day" do
-    t = Time.new 2014, 10, 30, 21, 18, 13
+    t = Time.utc 2014, 10, 30, 21, 18, 13
     t.time_of_day.should eq(Time::Span.new(21, 18, 13))
   end
 
   describe "#day_of_week" do
     it "gets day of week" do
-      t = Time.new 2014, 10, 30, 21, 18, 13
+      t = Time.utc 2014, 10, 30, 21, 18, 13
       t.day_of_week.should eq(Time::DayOfWeek::Thursday)
     end
 
@@ -441,7 +441,7 @@ describe Time do
 
   it "answers day name predicates" do
     7.times do |i|
-      time = Time.new(2015, 2, 15 + i)
+      time = Time.utc(2015, 2, 15 + i)
       time.sunday?.should eq(i == 0)
       time.monday?.should eq(i == 1)
       time.tuesday?.should eq(i == 2)
@@ -461,14 +461,14 @@ describe Time do
   end
 
   it "#day_of_year" do
-    t = Time.new 2014, 10, 30, 21, 18, 13
+    t = Time.utc 2014, 10, 30, 21, 18, 13
     t.day_of_year.should eq(303)
   end
 
   describe "#<=>" do
     it "compares" do
-      t1 = Time.new 2014, 10, 30, 21, 18, 13
-      t2 = Time.new 2014, 10, 30, 21, 18, 14
+      t1 = Time.utc 2014, 10, 30, 21, 18, 13
+      t2 = Time.utc 2014, 10, 30, 21, 18, 14
 
       (t1 <=> t2).should eq(-1)
       (t1 == t2).should be_false

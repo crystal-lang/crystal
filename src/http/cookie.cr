@@ -179,7 +179,7 @@ module HTTP
     #
     # ```
     # response = HTTP::Client::Response.new(200)
-    # response.cookies["foo"] = HTTP::Cookie.new("foo", "bar", "/admin", Time.now + 12.hours, secure: true)
+    # response.cookies["foo"] = HTTP::Cookie.new("foo", "bar", "/admin", Time.utc + 12.hours, secure: true)
     # ```
     def []=(key, value : Cookie)
       unless key == value.name

@@ -11,12 +11,12 @@ end
 describe Time::Format do
   it "formats" do
     with_zoneinfo do
-      t = Time.new 2014, 1, 2, 3, 4, 5, nanosecond: 6_000_000
-      t2 = Time.new 2014, 1, 2, 15, 4, 5, nanosecond: 6_000_000
-      t3 = Time.new 2014, 1, 2, 12, 4, 5, nanosecond: 6_000_000
+      t = Time.utc 2014, 1, 2, 3, 4, 5, nanosecond: 6_000_000
+      t2 = Time.utc 2014, 1, 2, 15, 4, 5, nanosecond: 6_000_000
+      t3 = Time.utc 2014, 1, 2, 12, 4, 5, nanosecond: 6_000_000
 
       t.to_s("%Y").should eq("2014")
-      Time.new(1, 1, 2, 3, 4, 5, nanosecond: 6).to_s("%Y").should eq("0001")
+      Time.utc(1, 1, 2, 3, 4, 5, nanosecond: 6).to_s("%Y").should eq("0001")
 
       t.to_s("%C").should eq("20")
       t.to_s("%y").should eq("14")
@@ -64,9 +64,9 @@ describe Time::Format do
       t.to_s("%6N").to_s.should eq("006000")
       t.to_s("%9N").to_s.should eq("006000000")
 
-      Time.utc_now.to_s("%z").should eq("+0000")
-      Time.utc_now.to_s("%:z").should eq("+00:00")
-      Time.utc_now.to_s("%::z").should eq("+00:00:00")
+      t.to_s("%z").should eq("+0000")
+      t.to_s("%:z").should eq("+00:00")
+      t.to_s("%::z").should eq("+00:00:00")
 
       zoned = Time.new(2017, 11, 24, 13, 5, 6, location: Time::Location.load("Europe/Berlin"))
       zoned.to_s("%z").should eq("+0100")
@@ -95,7 +95,7 @@ describe Time::Format do
       t.to_s("%u").to_s.should eq("4")
       t.to_s("%w").to_s.should eq("4")
 
-      t3 = Time.new 2014, 1, 5 # A Sunday
+      t3 = Time.utc 2014, 1, 5 # A Sunday
       t3.to_s("%u").to_s.should eq("7")
       t3.to_s("%w").to_s.should eq("0")
 

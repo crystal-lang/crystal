@@ -42,7 +42,7 @@ class Socket
     #
     # server = TCPServer.new(2202)
     # server.accept do |socket|
-    #   socket.puts Time.now
+    #   socket.puts Time.utc
     # end
     # ```
     def accept
@@ -65,7 +65,7 @@ class Socket
     #
     # server = UNIXServer.new("/tmp/service.sock")
     # server.accept? do |socket|
-    #   socket.puts Time.now
+    #   socket.puts Time.utc
     # end
     # ```
     def accept?

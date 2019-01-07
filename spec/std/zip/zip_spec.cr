@@ -35,7 +35,7 @@ describe Zip do
   it "writes entry" do
     io = IO::Memory.new
 
-    time = Time.new(2017, 1, 14, 2, 3, 4)
+    time = Time.utc(2017, 1, 14, 2, 3, 4)
     extra = Bytes[1, 2, 3, 4]
 
     Zip::Writer.open(io) do |zip|
