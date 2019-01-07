@@ -22,10 +22,8 @@ class INI
   def self.parse(str) : Hash(String, Hash(String, String))
     ini = Hash(String, Hash(String, String)).new
     current_section = ini[""] = Hash(String, String).new
-    lineno = 0
 
-    str.each_line do |line|
-      lineno += 1
+    str.each_line_with_number do |line, lineno|
       next if line.empty?
 
       offset = 0
