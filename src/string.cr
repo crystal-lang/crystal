@@ -3365,23 +3365,49 @@ class String
   def each_line(chomp = true, &block : String -> _) : Nil
     return if empty?
 
-    offset = 0
-
-    while byte_index = byte_index('\n'.ord.to_u8, offset)
-      count = byte_index - offset + 1
+    byte_offset = 0
+    while byte_index = byte_index('\n'.ord.to_u8, byte_offset)
+      count = byte_index - byte_offset + 1
       if chomp
         count -= 1
-        if offset + count > 0 && to_unsafe[offset + count - 1] === '\r'
+        if byte_offset + count > 0 && to_unsafe[byte_offset + count - 1] === '\r'
           count -= 1
         end
       end
 
-      yield unsafe_byte_slice_string(offset, count)
-      offset = byte_index + 1
+      yield unsafe_byte_slice_string(byte_offset, count)
+      byte_offset = byte_index + 1
     end
 
-    unless offset == bytesize
-      yield unsafe_byte_slice_string(offset)
+    unless byte_offset == bytesize
+      yield unsafe_byte_slice_string(byte_offset)
+    end
+  end
+
+  # Splits the string after each newline and yields each line and the line number to a block.
+  #
+  # See `#each_line` for basic behaviour.
+  #
+  # The second argument yielded to the block is the line number starting at `1`.
+  # The optional *offset* argument is added to the first line number.
+  #
+  # ```
+  # haiku = "the first cold shower
+  # even the monkey seems to want
+  # a little coat of straw"
+  # haiku.each_line do |stanza, lino|
+  #   puts "#{lino}: #{stanza}"
+  # end
+  # # output:
+  # # 1: the first cold shower
+  # # 2: even the monkey seems to want
+  # # 3: a little coat of straw
+  # ```
+  def each_line_with_number(chomp = true, offset : Int32 = 0, &block : String, Int32 -> _) : Nil
+    line_number = offset
+    each_line(chomp: chomp) do |line|
+      line_number += 1
+      yield line, line_number
     end
   end
 

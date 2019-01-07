@@ -2089,6 +2089,24 @@ describe "String" do
     lines.should eq(["foo\n", "\n", "bar\r\n", "baz\r\n"])
   end
 
+  describe "#each_line_with_number" do
+    it "yields line number" do
+      lines = [] of String
+      "foo\n\nbar\r\nbaz\r\n".each_line_with_number do |line, lino|
+        lines << "#{lino}:#{line}"
+      end.should be_nil
+      lines.should eq(["1:foo", "2:", "3:bar", "4:baz"])
+    end
+
+    it "yields line nubmer with offset" do
+      lines = [] of String
+      "foo\n\nbar\r\nbaz\r\n".each_line_with_number(offset: 10) do |line, lino|
+        lines << "#{lino}:#{line}"
+      end.should be_nil
+      lines.should eq(["11:foo", "12:", "13:bar", "14:baz"])
+    end
+  end
+
   it "gets each_line iterator" do
     iter = "foo\nbar\r\nbaz\r\n".each_line
     iter.next.should eq("foo")

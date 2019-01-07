@@ -400,6 +400,26 @@ describe IO do
     end
   end
 
+  describe "#each_line_with_number" do
+    it "yields line number" do
+      lines = [] of String
+      io = SimpleIOMemory.new("a\nbb\ncc")
+      io.each_line_with_number do |line, lino|
+        lines << "#{lino}:#{line}"
+      end
+      lines.should eq ["1:a", "2:bb", "3:cc"]
+    end
+
+    it "yields line number with offset" do
+      lines = [] of String
+      io = SimpleIOMemory.new("a\nbb\ncc")
+      io.each_line_with_number(offset: 10) do |line, lino|
+        lines << "#{lino}:#{line}"
+      end
+      lines.should eq ["11:a", "12:bb", "13:cc"]
+    end
+  end
+
   describe "write operations" do
     it "does puts" do
       io = SimpleIOMemory.new

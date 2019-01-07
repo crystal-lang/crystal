@@ -933,6 +933,30 @@ abstract class IO
     end
   end
 
+  # Reads this `IO` line by line and yields each line and the line number to a block.
+  #
+  # See `#each_line` for basic behaviour.
+  #
+  # The second argument yielded to the block is the line number starting at `1`.
+  # The optional *offset* argument is added to the first line number.
+  #
+  # ```
+  # io = IO::Memory.new("hello\nworld")
+  # io.each_line do |line, lino|
+  #   puts "#{lino}: #{line}"
+  # end
+  # # output:
+  # # 1: hello
+  # # 2: world
+  # ```
+  def each_line_with_number(*args, offset = 0, **options, &block : String, Int32 -> _) : Nil
+    line_number = offset
+    each_line do |line|
+      line_number += 1
+      yield line, line_number
+    end
+  end
+
   # Returns an `Iterator` for the *lines* in this `IO`, where a line
   # is defined by the arguments passed to this method, which can be the same
   # ones as in the `gets` methods.

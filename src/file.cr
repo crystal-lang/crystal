@@ -731,6 +731,30 @@ class File < IO::FileDescriptor
     end
   end
 
+  # Yields each line in *filename* and the line number to the given block.
+  #
+  # See `File.each_line` for basic behaviour.
+  #
+  # The second argument yielded to the block is the line number starting at `1`.
+  # The optional *offset* argument is added to the first line number.
+  #
+  # ```
+  # File.write("foobar", "foo\nbar")
+  #
+  # array = [] of String
+  # File.each_line("foobar") do |line, lino|
+  #   array << "#{lino}: #{line}"
+  # end
+  # array # => ["1: foo", "2: bar"]
+  # ```
+  def self.each_line_with_number(filename, encoding = nil, invalid = nil, chomp = true, offset : Int32 = 0)
+    open(filename, "r", encoding: encoding, invalid: invalid) do |file|
+      file.each_line_with_number(chomp: chomp, offset: offset) do |line, line_number|
+        yield line, line_number
+      end
+    end
+  end
+
   # Returns all lines in *filename* as an array of strings.
   #
   # ```

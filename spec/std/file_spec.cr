@@ -95,6 +95,32 @@ describe "File" do
     idx.should eq(20)
   end
 
+  describe ".each_line_with_number" do
+    it "yields line number" do
+      idx = 0
+      File.each_line_with_number(datapath("test_file.txt")) do |line, line_number|
+        if idx == 0
+          line.should eq("Hello World")
+        end
+        idx += 1
+        line_number.should eq idx
+      end
+      idx.should eq(20)
+    end
+
+    it "yields line number with offset" do
+      idx = 0
+      File.each_line_with_number(datapath("test_file.txt"), offset: 10) do |line, line_number|
+        if idx == 0
+          line.should eq("Hello World")
+        end
+        idx += 1
+        line_number.should eq idx + 10
+      end
+      idx.should eq(20)
+    end
+  end
+
   describe "empty?" do
     it "gives true when file is empty" do
       File.empty?(datapath("blank_test_file.txt")).should be_true
