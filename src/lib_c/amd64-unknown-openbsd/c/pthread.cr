@@ -4,6 +4,10 @@ require "./sys/types"
 lib LibC
   PTHREAD_MUTEX_ERRORCHECK = 1
 
+  fun pthread_attr_destroy(x0 : PthreadAttrT*) : Int
+  fun pthread_attr_getguardsize(x0 : PthreadAttrT*, x1 : SizeT*) : Int
+  fun pthread_attr_getstack(x0 : PthreadAttrT*, x1 : Void**, x2 : SizeT*) : Int
+  fun pthread_attr_init(x0 : PthreadAttrT*) : Int
   fun pthread_condattr_destroy(x0 : PthreadCondattrT*) : Int
   fun pthread_condattr_init(x0 : PthreadCondattrT*) : Int
   fun pthread_condattr_setclock(x0 : PthreadCondattrT*, x1 : ClockidT) : Int
@@ -30,4 +34,5 @@ lib LibC
   fun pthread_mutex_unlock(x0 : PthreadMutexT*) : Int
   fun pthread_self : PthreadT
   fun pthread_setspecific(PthreadKeyT, Void*) : Int
+  fun pthread_stackseg_np(x0 : PthreadT, x1 : StackT*) : Int
 end

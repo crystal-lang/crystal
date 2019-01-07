@@ -324,9 +324,12 @@ fun __crystal_sigfault_handler(sig : LibC::Int, addr : Void*)
   # Determine if the SEGV was inside or 'near' the top of the stack
   # to check for potential stack overflow. 'Near' is a small
   # amount larger than a typical stack frame, 4096 bytes here.
-  stack_top = Pointer(Void).new(Fiber.current.@stack.address - 4096)
 
-  if stack_top <= addr < Fiber.current.@stack_bottom
+  stack = Crystal::Scheduler.current_stack
+  page_size = 4096
+  stack_top = stack.top - page_size
+
+  if stack_top <= addr < stack.bottom
     LibC.dprintf 2, "Stack overflow (e.g., infinite or very deep recursion)\n"
   else
     LibC.dprintf 2, "Invalid memory access (signal %d) at address 0x%lx\n", sig, addr

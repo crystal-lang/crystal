@@ -37,4 +37,21 @@ describe Thread do
 
     thread.join
   end
+
+  it "returns its stack" do
+    stack_bottom = Pointer(Void).null
+    addr = Pointer(UInt64).null
+
+    thread = Thread.new do
+      a = 0_u64
+      addr = pointerof(a)
+      stack_bottom = Thread.current.stack.bottom
+    end
+
+    thread.join
+
+    gap = stack_bottom.address - addr.address
+    gap.should be > 0
+    gap.should be < 8192
+  end
 end

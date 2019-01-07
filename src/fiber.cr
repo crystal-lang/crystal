@@ -46,6 +46,7 @@ end
 
 class Fiber
   STACK_SIZE = 8 * 1024 * 1024
+  GUARD_SIZE = 4096
 
   @@fibers = Thread::LinkedList(Fiber).new
   @@stack_pool = [] of Void*
@@ -87,27 +88,12 @@ class Fiber
   end
 
   # :nodoc:
-  def initialize
+  def initialize(thread : Thread)
     @proc = Proc(Void).new { }
-    @stack_top = _fiber_get_stack_top
-    @stack_bottom = GC.stack_bottom
-    @name = "main"
-
-    # Determine location of the top of the stack.
-    # The technique here works only for the main stack on a POSIX platform.
-    # TODO: implement for Windows with GetCurrentThreadStackLimits
-    # TODO: implement for pthreads using
-    #    linux-glibc/musl: pthread_getattr_np
-    #              macosx: pthread_get_stackaddr_np, pthread_get_stacksize_np
-    #             freebsd: pthread_attr_get_np
-    #             openbsd: pthread_stackseg_np
     @stack = Pointer(Void).null
-    {% unless flag?(:win32) %}
-      if LibC.getrlimit(LibC::RLIMIT_STACK, out rlim) == 0
-        stack_size = rlim.rlim_cur
-        @stack = Pointer(Void).new(@stack_bottom.address - stack_size)
-      end
-    {% end %}
+    @stack_top = _fiber_get_stack_top
+    @stack_bottom = thread.stack.bottom
+    @name = "main"
 
     @@fibers.push(self)
   end
@@ -129,7 +115,16 @@ class Fiber
         LibC.madvise(pointer, Fiber::STACK_SIZE, LibC::MADV_NOHUGEPAGE)
       {% end %}
 
-      LibC.mprotect(pointer, 4096, LibC::PROT_NONE)
+      LibC.mprotect(pointer, GUARD_SIZE, LibC::PROT_NONE)
+    end
+  end
+
+  # :nodoc:
+  def stack : Thread::Stack?
+    if @stack.null?
+      nil
+    else
+      Thread::Stack.new(@stack, @stack_bottom.address - @stack.address, GUARD_SIZE.to_u64)
     end
   end
 
