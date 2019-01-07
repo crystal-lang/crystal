@@ -8,7 +8,7 @@ class Socket
     # server = TCPServer.new(2202)
     # while true
     #   socket = server.accept
-    #   socket.puts Time.utc_now
+    #   socket.puts Time.utc
     #   socket.close
     # end
     # ```
@@ -25,7 +25,7 @@ class Socket
     #
     # server = TCPServer.new(2202)
     # while socket = server.accept?
-    #   socket.puts Time.utc_now
+    #   socket.puts Time.utc
     #   socket.close
     # end
     # ```

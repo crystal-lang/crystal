@@ -21,7 +21,7 @@ require "crystal/system/time"
 # current time:
 #
 # ```crystal
-# Time.utc_now                                  # returns the current time in UTC
+# Time.utc                                      # returns the current time in UTC
 # Time.now Time::Location.load("Europe/Berlin") # returns the current time in time zone Europe/Berlin
 # Time.now                                      # returns the current time in current time zone
 # ```
@@ -179,9 +179,9 @@ require "crystal/system/time"
 # not reflect invocation order.
 #
 # ```
-# t1 = Time.utc_now
+# t1 = Time.utc
 # # operation that takes 1 minute
-# t2 = Time.utc_now
+# t2 = Time.utc
 # t2 - t1 # => ?
 # ```
 #
@@ -266,7 +266,7 @@ struct Time
   # Can be used to create a `Time::Span` that represents an Unix Epoch time duration.
   #
   # ```
-  # Time.utc_now - Time::UNIX_EPOCH
+  # Time.utc - Time::UNIX_EPOCH
   # ```
   UNIX_EPOCH = utc(1970, 1, 1)
 
@@ -371,7 +371,7 @@ struct Time
 
   # Creates a new `Time` instance representing the current time from the
   # system clock in UTC.
-  def self.utc_now : Time
+  def self.utc : Time
     now(Location::UTC)
   end
 

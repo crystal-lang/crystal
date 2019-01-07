@@ -188,7 +188,7 @@ describe Time do
 
   describe ".now" do
     it "current time is similar in different locations" do
-      (Time.now - Time.utc_now).should be_close(0.seconds, 1.second)
+      (Time.now - Time.utc).should be_close(0.seconds, 1.second)
       (Time.now - Time.now(Time::Location.fixed(1234))).should be_close(0.seconds, 1.second)
     end
   end
@@ -411,7 +411,7 @@ describe Time do
     end
 
     it "preserves location when adding" do
-      time = Time.utc_now
+      time = Time.utc
       time.utc?.should be_true
 
       (time + 5.minutes).utc?.should be_true
