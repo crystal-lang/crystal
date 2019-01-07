@@ -14,6 +14,7 @@ describe "URI" do
     assert_uri("http://[::1]:81", scheme: "http", host: "[::1]", port: 81)
     assert_uri("http://www.example.com/foo", scheme: "http", host: "www.example.com", path: "/foo")
     assert_uri("http://www.example.com/foo?q=1", scheme: "http", host: "www.example.com", path: "/foo", query: "q=1")
+    assert_uri("http://www.example.com/foo?", scheme: "http", host: "www.example.com", path: "/foo", query: "")
     assert_uri("http://www.example.com?q=1", scheme: "http", host: "www.example.com", query: "q=1")
     assert_uri("https://www.example.com", scheme: "https", host: "www.example.com")
     assert_uri("https://alice:pa55w0rd@www.example.com", scheme: "https", host: "www.example.com", user: "alice", password: "pa55w0rd")
@@ -100,6 +101,15 @@ describe "URI" do
         uri.path.should eq(expected), "failed to remove dot notation from #{input}"
       end
     end
+
+    it "removes default port" do
+      URI.new("http", "www.example.com", 80).normalize.to_s.should eq("http://www.example.com")
+      URI.new("https", "www.example.com", 443).normalize.to_s.should eq("https://www.example.com")
+      URI.new("ftp", "www.example.com", 21).normalize.to_s.should eq("ftp://www.example.com")
+      URI.new("sftp", "www.example.com", 22).normalize.to_s.should eq("sftp://www.example.com")
+      URI.new("ldap", "www.example.com", 389).normalize.to_s.should eq("ldap://www.example.com")
+      URI.new("ldaps", "www.example.com", 636).normalize.to_s.should eq("ldaps://www.example.com")
+    end
   end
 
   it "implements ==" do
@@ -118,27 +128,18 @@ describe "URI" do
 
   describe "to_s" do
     it { URI.new("http", "www.example.com").to_s.should eq("http://www.example.com") }
-    it { URI.new("http", "www.example.com", 80).to_s.should eq("http://www.example.com") }
+    it { URI.new("http", "www.example.com", 80).to_s.should eq("http://www.example.com:80") }
     it { URI.new("http", "www.example.com", user: "alice").to_s.should eq("http://alice@www.example.com") }
     it { URI.new("http", "www.example.com", user: "alice", password: "s3cr3t").to_s.should eq("http://alice:s3cr3t@www.example.com") }
     it { URI.new("http", "www.example.com", user: ":D").to_s.should eq("http://%3AD@www.example.com") }
     it { URI.new("http", "www.example.com", user: ":D", password: "@_@").to_s.should eq("http://%3AD:%40_%40@www.example.com") }
     it { URI.new("http", "www.example.com", user: "@al:ce", password: "s/cr3t").to_s.should eq("http://%40al%3Ace:s%2Fcr3t@www.example.com") }
     it { URI.new("http", "www.example.com", fragment: "top").to_s.should eq("http://www.example.com#top") }
-    it { URI.new("http", "www.example.com", 80, "/hello").to_s.should eq("http://www.example.com/hello") }
-    it { URI.new("http", "www.example.com", 80, "/hello", "a=1").to_s.should eq("http://www.example.com/hello?a=1") }
+    it { URI.new("http", "www.example.com", 80, "/hello").to_s.should eq("http://www.example.com:80/hello") }
+    it { URI.new("http", "www.example.com", 80, "/hello", "a=1").to_s.should eq("http://www.example.com:80/hello?a=1") }
     it { URI.new("mailto", opaque: "foo@example.com").to_s.should eq("mailto:foo@example.com") }
     it { URI.new("file", opaque: "/foo.html").to_s.should eq("file:/foo.html") }
     it { URI.new("file", opaque: "foo.html").to_s.should eq("file:foo.html") }
-
-    it "removes default port" do
-      URI.new("http", "www.example.com", 80).to_s.should eq("http://www.example.com")
-      URI.new("https", "www.example.com", 443).to_s.should eq("https://www.example.com")
-      URI.new("ftp", "www.example.com", 21).to_s.should eq("ftp://www.example.com")
-      URI.new("sftp", "www.example.com", 22).to_s.should eq("sftp://www.example.com")
-      URI.new("ldap", "www.example.com", 389).to_s.should eq("ldap://www.example.com")
-      URI.new("ldaps", "www.example.com", 636).to_s.should eq("ldaps://www.example.com")
-    end
 
     it "preserves non-default port" do
       URI.new("http", "www.example.com", 1234).to_s.should eq("http://www.example.com:1234")

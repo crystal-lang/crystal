@@ -193,9 +193,8 @@ class URI
     if host
       io << host
     end
-    unless port.nil? || default_port?
-      io << ':'
-      io << port
+    if port = @port
+      io << ':' << port
     end
     io << @path
     if query
@@ -218,6 +217,7 @@ class URI
   # Destructive normalize.
   def normalize!
     @path = remove_dot_segments(path)
+    @port = nil if default_port?
   end
 
   # Parses `raw_url` into an URI. The `raw_url` may be relative or absolute.
