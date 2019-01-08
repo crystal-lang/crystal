@@ -80,8 +80,8 @@ struct SemanticVersion
 
   # The comparison operator.
   #
-  # Returns `-1` if `self`'s version is lower than *other*'s, `0` if `self`'s version equals *other*'s
-  # or `-1` if `self`'s version is greater than *other*'s.
+  # Returns `-1`, `0` or `1` depending on whether `self`'s version is lower than *other*'s,
+  # equal to *other*'s version or greater than *other*'s version.
   #
   # ```
   # require "semantic_version"
@@ -150,8 +150,8 @@ struct SemanticVersion
 
     # The comparison operator.
     #
-    # Returns `-1` if `self`'s pre-release is lower than *other*'s, `0` if `self`'s pre-release equals *other*'s
-    # or `-1` if `self`'s pre-release is greater than *other*'s.
+    # Returns `-1`, `0` or `1` depending on whether `self`'s pre-release is lower than *other*'s,
+    # equal to *other*'s pre-release or greater than *other*'s pre-release.
     #
     # ```
     # require "semantic_version"
