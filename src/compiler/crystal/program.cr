@@ -113,6 +113,8 @@ module Crystal
     # A `ProgressTracker` object which tracks compilation progress.
     property progress_tracker = ProgressTracker.new
 
+    property codegen_target = Codegen::Target.new
+
     def initialize
       super(self, self, "main")
 
@@ -233,7 +235,7 @@ module Crystal
     getter(literal_expander) { LiteralExpander.new self }
 
     # Returns a `CrystalPath` for this program.
-    getter(crystal_path) { CrystalPath.new(target_triple: target_machine.triple) }
+    getter(crystal_path) { CrystalPath.new(codegen_target: codegen_target) }
 
     # Returns a `Var` that has `Nil` as a type.
     # This variable is bound to other nodes in the semantic phase for things
@@ -270,9 +272,7 @@ module Crystal
       crystal.types[name] = Const.new self, crystal, name, value
     end
 
-    setter target_machine : LLVM::TargetMachine?
-
-    getter(target_machine) { TargetMachine.create(Crystal::Config.default_target_triple) }
+    property(target_machine : LLVM::TargetMachine) { codegen_target.to_target_machine }
 
     # Returns the `Type` for `Array(type)`
     def array_of(type)
