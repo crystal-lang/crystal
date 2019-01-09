@@ -44,14 +44,6 @@ abstract class OpenSSL::SSL::Socket < IO
         socket.close
       end
     end
-
-    # This method allows to set the SSL SNI string for client
-    def hostname=(host_name : String)
-      ret = LibSSL.ssl_set_tlsext_host_name(@ssl, host_name)
-      unless ret == LibSSL::SSL_TLSEXT_ERR_OK
-        raise OpenSSL::SSL::Error.new(@ssl, ret, "SSL_set_tlsext_host_name")
-      end
-    end
   end
 
   class Server < Socket

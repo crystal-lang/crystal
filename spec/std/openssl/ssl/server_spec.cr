@@ -88,8 +88,7 @@ describe OpenSSL::SSL::Server do
         client.close
       end
 
-      OpenSSL::SSL::Socket::Client.open(TCPSocket.new(tcp_server.local_address.address, tcp_server.local_address.port), client_context) do |socket|
-        socket.hostname = "example.com"
+      OpenSSL::SSL::Socket::Client.open(TCPSocket.new(tcp_server.local_address.address, tcp_server.local_address.port), client_context, hostname: "example.com") do |socket|
       end
     end
   end
