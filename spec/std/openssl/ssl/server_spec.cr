@@ -76,4 +76,21 @@ describe OpenSSL::SSL::Server do
       end
     end
   end
+
+  it "detects SNI hostname" do
+    tcp_server = TCPServer.new(0)
+    server_context, client_context = ssl_context_pair
+
+    OpenSSL::SSL::Server.open tcp_server, server_context do |server|
+      spawn do
+        client = server.accept
+        client.hostname.should eq("example.com")
+        client.close
+      end
+
+      OpenSSL::SSL::Socket::Client.open(TCPSocket.new(tcp_server.local_address.address, tcp_server.local_address.port), client_context) do |socket|
+        socket.hostname = "example.com"
+      end
+    end
+  end
 end
