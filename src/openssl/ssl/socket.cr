@@ -181,4 +181,11 @@ abstract class OpenSSL::SSL::Socket < IO
   def unbuffered_rewind
     raise IO::Error.new("Can't rewind OpenSSL::SSL::Socket::Client")
   end
+
+  # This method allows to fetch the SSL SNI string if present
+  def hostname : String?
+    if host_name = LibSSL.ssl_get_servername(@ssl, LibSSL::TLSExt::NAMETYPE_host_name)
+      String.new(host_name)
+    end
+  end
 end
