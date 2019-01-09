@@ -72,6 +72,11 @@ class OpenSSL::SSL::Server
     end
   end
 
+  # This method allows to fetch the SSL SNI string if present
+  def get_sni : String
+    String.new(LibSSL.ssl_get_servername(@ssl, LibSSL::TLSExt::NAMETYPE_host_name))
+  end
+
   # Closes this SSL server.
   #
   # Propagates to `wrapped` if `sync_close` is `true`.
