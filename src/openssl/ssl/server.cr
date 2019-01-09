@@ -73,7 +73,7 @@ class OpenSSL::SSL::Server
   end
 
   # This method allows to fetch the SSL SNI string if present
-  def get_sni : String
+  def sni : String
     String.new(LibSSL.ssl_get_servername(@ssl, LibSSL::TLSExt::NAMETYPE_host_name))
   end
 
