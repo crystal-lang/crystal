@@ -83,13 +83,14 @@ describe OpenSSL::SSL::Server do
 
     OpenSSL::SSL::Server.open tcp_server, server_context do |server|
       spawn do
-        client = server.accept
-        client.hostname.should eq("example.com")
-        client.close
+        sleep 1
+        OpenSSL::SSL::Socket::Client.open(TCPSocket.new(tcp_server.local_address.address, tcp_server.local_address.port), client_context, hostname: "example.com") do |socket|
+        end
       end
 
-      OpenSSL::SSL::Socket::Client.open(TCPSocket.new(tcp_server.local_address.address, tcp_server.local_address.port), client_context, hostname: "example.com") do |socket|
-      end
+      client = server.accept
+      client.hostname.should eq("example.com")
+      client.close
     end
   end
 end
