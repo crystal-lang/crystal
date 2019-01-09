@@ -74,8 +74,9 @@ class OpenSSL::SSL::Server
 
   # This method allows to fetch the SSL SNI string if present
   def sni : String?
-    host_name = String.new(LibSSL.ssl_get_servername(@ssl, LibSSL::TLSExt::NAMETYPE_host_name))
-    host_name.empty? ? nil : host_name
+    if hostname = LibSSL.ssl_get_servername(@ssl, LibSSL::TLSExt::NAMETYPE_host_name)
+      String.new(hostname)
+    end
   end
 
   # Closes this SSL server.
