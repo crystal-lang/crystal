@@ -1,18 +1,43 @@
 require "spec"
 require "option_parser"
 
-private def expect_capture_option(args, option, value)
+private def expect_capture_option(args, option, expect_value, expect_args = [] of String,
+                                  add_args = ["arg"], block_first = false, &block)
+  args += add_args
   flag = nil
   OptionParser.parse(args) do |opts|
+    yield opts if block_first
     opts.on(option, "some flag") do |flag_value|
       flag = flag_value
     end
+    yield opts unless block_first
   end
-  flag.should eq(value)
-  args.size.should eq(0)
+  flag.should eq(expect_value)
+  args.should eq(expect_args + add_args)
 end
 
-private def expect_doesnt_capture_option(args, option)
+private def expect_capture_option(args, option, expect_value, expect_args = [] of String, add_args = ["arg"])
+  expect_capture_option(args, option, expect_value, expect_args) { }
+end
+
+private def expect_capture_optional_option(args_type, flag_type, value = "123",
+                                           expect_value = value, expect_args = [] of String, &block)
+  expect_capture_option args_type == :args_separated ? ["--flag", value] : ["--flag=#{value}"],
+    flag_type == :flag_separated ? "--flag [FLAG]" : "--flag=[FLAG]", expect_value, expect_args do |opts|
+    yield opts
+  end
+  expect_capture_option args_type == :args_separated ? ["-f", value] : ["-f#{value}"],
+    flag_type == :flag_separated ? "-f [FLAG]" : "-f[FLAG]", expect_value, expect_args do |opts|
+    yield opts
+  end
+end
+
+private def expect_capture_optional_option(args_type, flag_type, value = "123",
+                                           expect_value = value, expect_args = [] of String)
+  expect_capture_optional_option(args_type, flag_type, value, expect_value, expect_args) { }
+end
+
+private def expect_doesnt_capture_option(args, option, expect_args = [] of String)
   flag = false
   OptionParser.parse(args) do |opts|
     opts.on(option, "some flag") do
@@ -20,15 +45,7 @@ private def expect_doesnt_capture_option(args, option)
     end
   end
   flag.should be_false
-end
-
-private def expect_missing_option(option)
-  expect_raises OptionParser::MissingOption do
-    OptionParser.parse([] of String) do |opts|
-      opts.on(option, "some flag") do |flag_value|
-      end
-    end
-  end
+  args.should eq(expect_args)
 end
 
 private def expect_missing_option(args, option, flag)
@@ -419,6 +436,63 @@ describe "OptionParser" do
       value1.should eq("value1")
       value2.should eq("value2")
     end
+  end
+
+  describe "optional option" do
+    it "gets merged value if specified with separated flag" do
+      expect_capture_optional_option :args_merged, :flag_separated
+    end
+
+    it "gets merged value if specified with merged flag" do
+      expect_capture_optional_option :args_merged, :flag_merged
+    end
+
+    it "gets separated value if specified with separated flag" do
+      expect_capture_optional_option :args_separated, :flag_separated
+    end
+
+    it "doesn't get separated value if specified with merged flag" do
+      expect_capture_optional_option :args_separated, :flag_merged, value: "123",
+        expect_value: "", expect_args: ["123"]
+    end
+
+    it "gets merged value that looks like flag if specified with separated flag" do
+      expect_capture_optional_option :args_merged, :flag_separated, value: "-g -h"
+    end
+
+    it "doesn't get separated value that looks like flag if specified with separated flag" do
+      captured_g = nil
+      expect_capture_optional_option :args_separated, :flag_separated, value: "-g -h", expect_value: "" do |opts|
+        opts.on("-g [FLAG]", "another flag") { |flag_value| captured_g = flag_value }
+      end
+      captured_g.should eq(" -h")
+    end
+  end
+
+  it "doesn't get value shifted in position because of removing another flag" do
+    2.times do |i|
+      captured_g = nil
+      expect_capture_option ["-f", "-g", "123"], "-f [FLAG]", block_first: i == 0,
+        expect_value: "", expect_args: ["123"] do |opts|
+        opts.on("-g", "another flag") { |flag_value| captured_g = flag_value }
+      end
+      captured_g.should eq("")
+    end
+  end
+
+  it "should take short-flag's missing information about option from long flag" do
+    args = ["-f", "12", "-g", "13", "-h", "14"]
+    captured_f = captured_g = captured_z = nil
+    parser = OptionParser.parse(args) do |opts|
+      opts.on("-f", "--flag X", "some flag") { |flag_value| captured_f = flag_value }
+      opts.on("-g", "--gflag=Y", "another flag") { |flag_value| captured_g = flag_value }
+      opts.on("-h", "--hopt=[Z]", "optional flag") { |flag_value| captured_z = flag_value }
+    end
+    captured_f.should eq "12"
+    captured_g.should eq "13"
+    captured_z.should eq ""
+    args.should eq ["14"]
+    parser.to_s.should contain "   -f, --flag X"
   end
 
   it "raises if flag doesn't start with dash (#4001)" do

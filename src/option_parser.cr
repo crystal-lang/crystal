@@ -1,3 +1,5 @@
+require "bit_array"
+
 # `OptionParser` is a class for command-line options processing. It supports:
 #
 # * Short and long modifier style options (example: `-h`, `--help`)
@@ -51,11 +53,11 @@ class OptionParser
     block : String ->
 
   # Creates a new parser, with its configuration specified in the block,
-  # and uses it to parse the passed *args*.
-  def self.parse(args) : self
+  # and uses it to parse the passed *args*. Options are removed from *args* if *consume_args* is `true`.
+  def self.parse(args, consume_args = true) : self
     parser = OptionParser.new
     yield parser
-    parser.parse(args)
+    parser.parse(args, consume_args)
     parser
   end
 
@@ -123,10 +125,8 @@ class OptionParser
 
     append_flag "#{short_flag}, #{long_flag}", description
 
-    has_argument = /([ =].+)/
-    if long_flag =~ has_argument
-      argument = $1
-      short_flag += argument unless short_flag =~ has_argument
+    if short_flag.size <= 2 && long_flag =~ /([ =].+)/
+      short_flag += $1.lchop('=')
     end
 
     @handlers << Handler.new(short_flag, block)
@@ -180,8 +180,8 @@ class OptionParser
   end
 
   # Parses the passed *args*, running the handlers associated to each option.
-  def parse(args)
-    ParseTask.new(self, args).parse
+  def parse(args, consume_args = true)
+    ParseTask.new(self, args, consume_args).parse
   end
 
   # Parses the passed the arguments passed to the program,
@@ -199,139 +199,137 @@ class OptionParser
   end
 
   private struct ParseTask
-    @double_dash_index : Int32?
+    @dash_args_size : Int32
 
-    def initialize(@parser : OptionParser, @args : Array(String))
-      double_dash_index = @double_dash_index = @args.index("--")
-      if double_dash_index
-        @args.delete_at(double_dash_index)
+    def initialize(@parser : OptionParser, @args : Array(String), @consume_args : Bool)
+      dash_args_size = @dash_args_size = @args.index("--") || @args.size
+      consumable_max = 0
+      if dash_args_size > 0
+        if last_flag_index = @args.rindex(offset: dash_args_size - 1) { |arg| arg_is_flag?(arg) }
+          consumable_max = Math.min(dash_args_size, last_flag_index + 2) # +2 for value after last flag
+        end
       end
+      @consumable_args = BitArray.new(consumable_max)
     end
 
     def parse
       @parser.handlers.each do |handler|
         process_handler handler
       end
+      check_invalid_options
 
-      if unknown_args = @parser.unknown_args
-        double_dash_index = @double_dash_index
-        if double_dash_index
-          before_dash = @args[0...double_dash_index]
-          after_dash = @args[double_dash_index..-1]
-        else
-          before_dash = @args
-          after_dash = [] of String
+      consumed = @consumable_args.count(true)
+      consumed_max = @consumable_args.size
+      dash_args = @dash_args_size
+
+      if @consume_args
+        index = 0
+        @args.reject! do |arg|
+          reject = index < consumed_max ? @consumable_args[index] : (index == dash_args)
+          index += 1
+          reject
         end
-        unknown_args.call(before_dash, after_dash)
+        dash_args -= consumed
+        consumed_max = consumed = 0
       end
 
-      check_invalid_options
+      if unknown_args = @parser.unknown_args
+        if consumed == 0 && dash_args == @args.size
+          before_dash = @args # dup?
+        else
+          before_dash = Array(String).new(dash_args - consumed)
+          each_consumable_arg { |arg| before_dash << arg } unless consumed == consumed_max
+          consumed_max.upto(dash_args - 1) { |index| before_dash << @args[index] }
+        end
+
+        after_dash = @args.skip(@consume_args ? dash_args : dash_args + 1) # +1 skip double dash (--) argument
+        unknown_args.call(before_dash, after_dash)
+      end
     end
 
     private def process_handler(handler)
       flag = handler.flag
       block = handler.block
       case flag
-      when /--(\S+)\s+\[\S+\]/
-        process_double_flag("--#{$1}", block)
-      when /--(\S+)(\s+|\=)(\S+)?/
-        process_double_flag("--#{$1}", block, true)
-      when /--\S+/
+      when /\A(--\S+)(\s+|=)\[\S+\]\z/
+        process_double_flag($1, block, true, $2 != "=")
+      when /\A(--\S+)(?:\s+|=)(?:\S+)?\z/
+        process_double_flag($1, block)
+      when /\A--\S+\z/
         process_flag_presence(flag, block)
-      when /-(.)\s*\[\S+\]/
-        process_single_flag(flag[0..1], block)
-      when /-(.)\s+\S+/, /-(.)\s+/, /-(.)\S+/
-        process_single_flag(flag[0..1], block, true)
+      when /\A(-.)(\s*)\[\S+\]\z/
+        process_single_flag($1, block, true, $2 != "")
+      when /\A(-.)\s*\S+\z/, /\A(-.)\s+\z/
+        process_single_flag($1, block)
       else
         process_flag_presence(flag, block)
       end
     end
 
     private def process_flag_presence(flag, block)
-      while index = args_index(flag)
-        delete_arg_at_index(index)
+      each_consumable_arg do |arg, index|
+        next unless arg == flag
+        consume_arg_at_index(index)
         block.call ""
       end
     end
 
-    private def process_double_flag(flag, block, raise_if_missing = false)
-      while index = args_index { |arg| arg.split('=')[0] == flag }
-        arg = @args[index]
+    private def process_double_flag(flag, block, optional = false, separate = true)
+      each_consumable_arg do |arg, index|
+        next unless arg.starts_with?(flag)
+        arg = consume_arg_at_index(index)
         if arg.size == flag.size
-          delete_arg_at_index(index)
-          if index < args_size
-            block.call delete_arg_at_index(index)
-          else
-            if raise_if_missing
-              @parser.missing_option.call(flag)
-            end
-          end
+          value = consume_value_at_index(index + 1, optional, separate)
         elsif arg[flag.size] == '='
-          delete_arg_at_index(index)
           value = arg[flag.size + 1..-1]
-          if value.empty?
-            @parser.missing_option.call(flag)
-          else
-            block.call value
-          end
-        end
-      end
-    end
-
-    private def process_single_flag(flag, block, raise_if_missing = false)
-      while index = args_index { |arg| arg.starts_with?(flag) }
-        arg = delete_arg_at_index(index)
-        if arg.size == flag.size
-          if index < args_size
-            block.call delete_arg_at_index(index)
-          else
-            @parser.missing_option.call(flag) if raise_if_missing
-          end
         else
-          value = arg[2..-1]
-          @parser.missing_option.call(flag) if raise_if_missing && value.empty?
-          block.call value
+          unconsume_arg_at_index(index)
+          next
         end
+        @parser.missing_option.call(flag) if !optional && value.empty?
+        block.call value
       end
     end
 
-    private def args_size
-      @double_dash_index || @args.size
-    end
-
-    private def args_index(flag)
-      args_index { |arg| arg == flag }
-    end
-
-    private def args_index
-      index = @args.index { |arg| yield arg }
-      if index
-        if (double_dash_index = @double_dash_index) && index >= double_dash_index
-          return nil
-        end
+    private def process_single_flag(flag, block, optional = false, separate = true)
+      each_consumable_arg do |arg, index|
+        next unless arg.starts_with?(flag)
+        arg = consume_arg_at_index(index)
+        value = arg.size == flag.size ? consume_value_at_index(index + 1, optional, separate) : arg[2..-1]
+        @parser.missing_option.call(flag) if !optional && value.empty?
+        block.call value
       end
-      index
     end
 
-    private def delete_arg_at_index(index)
-      arg = @args.delete_at(index)
-      decrement_double_dash_index
-      arg
-    end
-
-    private def decrement_double_dash_index
-      if double_dash_index = @double_dash_index
-        @double_dash_index = double_dash_index - 1
+    private def each_consumable_arg
+      @consumable_args.each_with_index do |consumed, index|
+        yield @args[index], index unless consumed
       end
+    end
+
+    private def consume_value_at_index(index, optional, separate)
+      if separate && @consumable_args[index]? == false
+        return consume_arg_at_index(index) unless optional && arg_is_flag?(@args[index])
+      end
+      ""
+    end
+
+    private def consume_arg_at_index(index)
+      @consumable_args[index] = true
+      @args[index]
+    end
+
+    private def unconsume_arg_at_index(index)
+      @consumable_args[index] = false
+    end
+
+    private def arg_is_flag?(arg)
+      arg.starts_with?('-') && arg != "-"
     end
 
     private def check_invalid_options
-      @args.each_with_index do |arg, index|
-        return if (double_dash_index = @double_dash_index) && index >= double_dash_index
-
-        if arg.starts_with?('-') && arg != "-"
-          @parser.invalid_option.call(arg)
-        end
+      each_consumable_arg do |arg|
+        @parser.invalid_option.call(arg) if arg_is_flag?(arg)
       end
     end
   end
