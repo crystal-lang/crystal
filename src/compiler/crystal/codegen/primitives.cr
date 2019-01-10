@@ -368,11 +368,19 @@ class Crystal::CodeGenVisitor
   private def codegen_raise_overflow
     location = @call_location.not_nil!
     set_current_debug_location(location) if @debug.line_numbers?
-    ex = Call.new(Path.global("OverflowError").at(location), "new").at(location)
-    call = Call.global("raise", ex).at(location)
-    visitor = MainVisitor.new(@program)
-    @program.visit_main call, visitor: visitor
-    accept call
+
+    func = crystal_raise_overflow_fun
+    call_args = [] of LLVM::Value
+
+    if (rescue_block = @rescue_block)
+      invoke_out_block = new_block "invoke_out"
+      invoke func, call_args, invoke_out_block, rescue_block
+      position_at_end invoke_out_block
+    else
+      call func, call_args
+    end
+
+    unreachable
   end
 
   private def codegen_raise_overflow_cond(overflow_condition)
