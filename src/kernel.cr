@@ -125,7 +125,7 @@ def printf(format_string, *args) : Nil
   printf format_string, args
 end
 
-# ditto
+# :ditto:
 def printf(format_string, args : Array | Tuple) : Nil
   STDOUT.printf format_string, args
 end
@@ -353,7 +353,7 @@ def sprintf(format_string, *args) : String
   sprintf format_string, args
 end
 
-# ditto
+# :ditto:
 def sprintf(format_string, args : Array | Tuple) : String
   String.build(format_string.bytesize) do |str|
     String::Formatter(typeof(args)).new(format_string, args, str).format

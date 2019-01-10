@@ -53,7 +53,7 @@ struct BigInt < Int
     end
   end
 
-  # ditto
+  # :ditto:
   def initialize(num : Int::Unsigned)
     if num <= LibC::ULong::MAX
       LibGMP.init_set_ui(out @mpz, num)
@@ -62,22 +62,22 @@ struct BigInt < Int
     end
   end
 
-  # ditto
+  # :ditto:
   def initialize(num : Float::Primitive)
     LibGMP.init_set_d(out @mpz, num)
   end
 
-  # ditto
+  # :ditto:
   def self.new(num : BigFloat)
     num.to_big_i
   end
 
-  # ditto
+  # :ditto:
   def self.new(num : BigDecimal)
     num.to_big_i
   end
 
-  # ditto
+  # :ditto:
   def self.new(num : BigRational)
     num.to_big_i
   end
@@ -397,7 +397,7 @@ struct BigInt < Int
     String.new(to_cstr)
   end
 
-  # ditto
+  # :ditto:
   def to_s(io : IO) : Nil
     str = to_cstr
     io.write_utf8 Slice.new(str, LibC.strlen(str))

@@ -8,7 +8,7 @@ class Dir
     glob(patterns)
   end
 
-  # ditto
+  # :ditto:
   def self.[](patterns : Enumerable(String)) : Array(String)
     glob(patterns)
   end
@@ -24,7 +24,7 @@ class Dir
     glob(patterns, match_hidden: match_hidden)
   end
 
-  # ditto
+  # :ditto:
   def self.glob(patterns : Enumerable(String), match_hidden = false) : Array(String)
     paths = [] of String
     glob(patterns, match_hidden: match_hidden) do |path|
@@ -46,7 +46,7 @@ class Dir
     end
   end
 
-  # ditto
+  # :ditto:
   def self.glob(patterns : Enumerable(String), match_hidden = false, &block : String -> _)
     Globber.glob(patterns, match_hidden: match_hidden) do |path|
       yield path

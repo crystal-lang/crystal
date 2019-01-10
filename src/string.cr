@@ -2526,7 +2526,7 @@ class String
     match.try &.begin(0)
   end
 
-  # ditto
+  # :ditto:
   def =~(other)
     nil
   end
@@ -2554,7 +2554,7 @@ class String
     end
   end
 
-  # ditto
+  # :ditto:
   def +(char : Char)
     bytes, count = String.char_bytes_and_bytesize(char)
     size = bytesize + count
@@ -2647,7 +2647,7 @@ class String
     nil
   end
 
-  # ditto
+  # :ditto:
   def index(search : String, offset = 0)
     offset += size if offset < 0
     return if offset < 0
@@ -2718,7 +2718,7 @@ class String
     end
   end
 
-  # ditto
+  # :ditto:
   def index(search : Regex, offset = 0)
     offset += size if offset < 0
     return nil unless 0 <= offset <= size
@@ -2765,7 +2765,7 @@ class String
     end
   end
 
-  # ditto
+  # :ditto:
   def rindex(search : String, offset = size - search.size)
     offset += size if offset < 0
     return if offset < 0
@@ -2818,7 +2818,7 @@ class String
     end
   end
 
-  # ditto
+  # :ditto:
   def rindex(search : Regex, offset = size - 1)
     offset += size if offset < 0
     return nil unless 0 <= offset <= size
@@ -2857,7 +2857,7 @@ class String
     {pre, mid, post}
   end
 
-  # ditto
+  # :ditto:
   def partition(search : Regex) : Tuple(String, String, String)
     pre = mid = post = ""
     case m = self.match(search)
@@ -2900,7 +2900,7 @@ class String
     {pre, mid, post}
   end
 
-  # ditto
+  # :ditto:
   def rpartition(search : Regex) : Tuple(String, String, String)
     match_result = nil
     pos = self.size - 1

@@ -224,7 +224,7 @@ struct BitArray
     io << ']'
   end
 
-  # ditto
+  # :ditto:
   def inspect(io : IO) : Nil
     to_s(io)
   end

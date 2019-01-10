@@ -666,7 +666,7 @@ class Array(T)
     self
   end
 
-  # ditto
+  # :ditto:
   def concat(other : Enumerable)
     left_before_resize = @capacity - @size
     len = @size

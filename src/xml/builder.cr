@@ -73,7 +73,7 @@ struct XML::Builder
     end
   end
 
-  # ditto
+  # :ditto:
   def element(__name__ : String, attributes : Hash | NamedTuple)
     start_element __name__
     attributes(attributes)
@@ -85,7 +85,7 @@ struct XML::Builder
     element(__name__, attributes)
   end
 
-  # ditto
+  # :ditto:
   def element(name : String, attributes : Hash | NamedTuple)
     element(name, attributes) { }
   end
@@ -98,7 +98,7 @@ struct XML::Builder
     end
   end
 
-  # ditto
+  # :ditto:
   def element(__prefix__ : String?, __name__ : String, __namespace_uri__ : String?, attributes : Hash | NamedTuple)
     start_element __prefix__, __name__, __namespace_uri__
     attributes(attributes)
@@ -110,7 +110,7 @@ struct XML::Builder
     element(prefix, name, namespace_uri, attributes)
   end
 
-  # ditto
+  # :ditto:
   def element(prefix : String?, name : String, namespace_uri : String?, attributes : Hash | NamedTuple)
     start_element(prefix, name, namespace_uri)
     attributes(attributes)
@@ -154,7 +154,7 @@ struct XML::Builder
     attributes(attributes)
   end
 
-  # ditto
+  # :ditto:
   def attributes(attributes : Hash | NamedTuple)
     attributes.each do |key, value|
       attribute key.to_s, value
