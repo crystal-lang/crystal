@@ -173,6 +173,20 @@ abstract class OpenSSL::SSL::Socket < IO
     raise IO::Error.new("Can't rewind OpenSSL::SSL::Socket::Client")
   end
 
+  def remote_address
+    if (io = @bio.io).responds_to?(:remote_address)
+      io.remote_address
+    else
+      raise "#{io} doesn't have a remote address"
+    end
+  end
+
+  def remote_address?
+    if (io = @bio.io).responds_to?(:remote_address)
+      io.remote_address
+    end
+  end
+
   # Returns the hostname provided through Server Name Indication (SNI)
   def hostname : String?
     if host_name = LibSSL.ssl_get_servername(@ssl, LibSSL::TLSExt::NAMETYPE_host_name)

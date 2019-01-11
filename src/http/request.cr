@@ -19,8 +19,9 @@ class HTTP::Request
   @cookies : Cookies?
   @query_params : Params?
   @uri : URI?
+  @io : IO?
 
-  def initialize(@method : String, @resource : String, headers : Headers? = nil, body : String | Bytes | IO | Nil = nil, @version = "HTTP/1.1")
+  def initialize(@method : String, @resource : String, headers : Headers? = nil, body : String | Bytes | IO | Nil = nil, @version = "HTTP/1.1", @io : IO? = nil)
     @headers = headers.try(&.dup) || Headers.new
     self.body = body
   end
@@ -99,11 +100,25 @@ class HTTP::Request
     return BadRequest.new unless HTTP::SUPPORTED_VERSIONS.includes?(http_version)
 
     HTTP.parse_headers_and_body(io) do |headers, body|
-      return new method, resource, headers, body, http_version
+      return new method, resource, headers, body, http_version, io
     end
 
     # Malformed or unexpectedly ended http request
     BadRequest.new
+  end
+
+  def remote_address
+    if (io = @io).responds_to?(:remote_address)
+      io.remote_address
+    else
+      raise "#{io} doesn't have a remote address"
+    end
+  end
+
+  def remote_address?
+    if (io = @io).responds_to?(:remote_address)
+      io.remote_address
+    end
   end
 
   # Lazily parses and return the request's path component.
