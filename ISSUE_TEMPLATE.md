@@ -1,6 +1,6 @@
 # Submitting questions
 
-If your have a question like "how do I do X?", this is not the right place for asking it. Please ask on the [Crystal Forum](https://forum.crystal-lang.org), on our combined [Gitter](https://gitter.im/crystal-lang/crystal)/[IRC](http://webchat.freenode.net/?channels=#crystal-lang) or on [StackOverflow](http://stackoverflow.com/questions/tagged/crystal-lang).
+If you have a question like "how do I do X?", this is not the right place for asking it. Please ask on the [Crystal Forum](https://forum.crystal-lang.org), on our combined [Gitter](https://gitter.im/crystal-lang/crystal)/[IRC](http://webchat.freenode.net/?channels=#crystal-lang) or on [StackOverflow](http://stackoverflow.com/questions/tagged/crystal-lang).
 
 # Submitting bugs
 
