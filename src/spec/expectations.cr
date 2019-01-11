@@ -385,6 +385,11 @@ module Spec
         raise ex
       end
 
+      # `NestingSpecError` is also treated.
+      if ex.is_a?(Spec::NestingSpecError) && klass != Spec::NestingSpecError
+        raise ex
+      end
+
       ex_to_s = ex.to_s
       case message
       when Regex

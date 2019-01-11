@@ -42,17 +42,27 @@ module Spec::Methods
 
     start = Time.monotonic
     begin
-      Spec.run_before_each_hooks
-      block.call
-      Spec::RootContext.report(:success, description, file, line, Time.monotonic - start)
-    rescue ex : Spec::AssertionFailed
-      Spec::RootContext.report(:fail, description, file, line, Time.monotonic - start, ex)
-      Spec.abort! if Spec.fail_fast?
-    rescue ex
+      Spec::RootContext.check_nesting_spec(file, line) do
+        Spec.run_before_each_hooks
+        block.call
+        Spec::RootContext.report(:success, description, file, line, Time.monotonic - start)
+      rescue ex : Spec::AssertionFailed
+        Spec::RootContext.report(:fail, description, file, line, Time.monotonic - start, ex)
+        Spec.abort! if Spec.fail_fast?
+      rescue ex : Spec::NestingSpecError
+        new_ex = Spec::NestingSpecError.new("cannot nest `it` and `pending`: it has a nesting spec.", ex.file, ex.line)
+        Spec::RootContext.report(:error, description, file, line, Time.monotonic - start, new_ex)
+        Spec.abort! if Spec.fail_fast?
+      rescue ex
+        Spec::RootContext.report(:error, description, file, line, Time.monotonic - start, ex)
+        Spec.abort! if Spec.fail_fast?
+      ensure
+        Spec.run_after_each_hooks
+      end
+    rescue ex : Spec::NestingSpecError
       Spec::RootContext.report(:error, description, file, line, Time.monotonic - start, ex)
       Spec.abort! if Spec.fail_fast?
-    ensure
-      Spec.run_after_each_hooks
+      raise ex
     end
   end
 
@@ -71,6 +81,7 @@ module Spec::Methods
     return unless Spec.matches?(description, file, line, end_line)
 
     Spec.formatters.each(&.before_example(description))
+    Spec::RootContext.check_nesting_spec(file, line)
 
     Spec::RootContext.report(:pending, description, file, line)
   end
