@@ -385,7 +385,7 @@ module Spec
         raise ex
       end
 
-      # `NestingSpecError` is also treated.
+      # `NestingSpecError` is treated as the same above.
       if ex.is_a?(Spec::NestingSpecError) && klass != Spec::NestingSpecError
         raise ex
       end
