@@ -174,7 +174,7 @@ module Spec
     end
 
     def self.check_nesting_spec(file, line, &block)
-      raise NestingSpecError.new("cannot nest `it` and `pending`", file, line) if @@spec_nesting
+      raise NestingSpecError.new("can't nest `it` or `pending`", file, line) if @@spec_nesting
 
       @@spec_nesting = true
       begin
