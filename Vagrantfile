@@ -26,8 +26,8 @@ Vagrant.configure("2") do |config|
     end
   end
 
-  [[:jessie, '3.5'], [:stretch, '3.9']].product([32, 64]).each do |(dist, ver), bits|
-    box_name = "#{dist}#{bits}"
+  [[:jessie, '3.5'], [:stretch, '3.9']].each do |(dist, ver)|
+    box_name = "#{dist}64"
 
     config.vm.define(box_name) do |c|
       c.vm.box = "debian/#{box_name}"
