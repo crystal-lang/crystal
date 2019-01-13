@@ -31,6 +31,18 @@ describe "Code gen: union type" do
 
   it "codegens union type for instance var" do
     run("
+      struct Float
+        def &+(other)
+          self + other
+        end
+      end
+
+      struct Int32
+        def &+(other : Float)
+          self + other
+        end
+      end
+
       class Foo
         @value : Int32 | Float32
 
@@ -43,7 +55,7 @@ describe "Code gen: union type" do
 
       f = Foo.new(1)
       f.value = 1.5_f32
-      (f.value + f.value).to_f
+      (f.value &+ f.value).to_f
     ").to_f64.should eq(3)
   end
 

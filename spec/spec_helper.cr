@@ -57,7 +57,7 @@ end
 def semantic_result(str, flags = nil, inject_primitives = true)
   str = inject_primitives(str) if inject_primitives
   program = Program.new
-  program.flags = flags if flags
+  program.flags.concat(flags.split) if flags
   input = parse str
   input = program.normalize input
   input = program.semantic input
@@ -67,7 +67,7 @@ end
 
 def assert_normalize(from, to, flags = nil)
   program = Program.new
-  program.flags = flags if flags
+  program.flags.concat(flags.split) if flags
   normalizer = Normalizer.new(program)
   from_nodes = Parser.parse(from)
   to_nodes = program.normalize(from_nodes)
@@ -114,7 +114,7 @@ end
 
 def assert_macro(macro_args, macro_body, expected, expected_pragmas = nil, flags = nil)
   program = Program.new
-  program.flags = flags if flags
+  program.flags.concat(flags.split) if flags
   sub_node = yield program
   assert_macro_internal program, sub_node, macro_args, macro_body, expected, expected_pragmas
 end

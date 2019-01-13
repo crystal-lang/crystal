@@ -1,5 +1,6 @@
 require "spec"
 require "json"
+require "yaml"
 
 describe JSON::Any do
   describe "casts" do
@@ -15,22 +16,28 @@ describe JSON::Any do
       JSON.parse("2").as_bool?.should be_nil
     end
 
-    it "gets int" do
+    it "gets int32" do
       JSON.parse("123").as_i.should eq(123)
-      JSON.parse("123456789123456").as_i64.should eq(123456789123456)
       JSON.parse("123").as_i?.should eq(123)
-      JSON.parse("123456789123456").as_i64?.should eq(123456789123456)
       JSON.parse("true").as_i?.should be_nil
+    end
+
+    it "gets int64" do
+      JSON.parse("123456789123456").as_i64.should eq(123456789123456)
+      JSON.parse("123456789123456").as_i64?.should eq(123456789123456)
       JSON.parse("true").as_i64?.should be_nil
     end
 
-    it "gets float" do
-      JSON.parse("123.45").as_f.should eq(123.45)
+    it "gets float32" do
       JSON.parse("123.45").as_f32.should eq(123.45_f32)
-      JSON.parse("123.45").as_f?.should eq(123.45)
       JSON.parse("123.45").as_f32?.should eq(123.45_f32)
-      JSON.parse("true").as_f?.should be_nil
       JSON.parse("true").as_f32?.should be_nil
+    end
+
+    it "gets float64" do
+      JSON.parse("123.45").as_f.should eq(123.45)
+      JSON.parse("123.45").as_f?.should eq(123.45)
+      JSON.parse("true").as_f?.should be_nil
     end
 
     it "gets string" do
@@ -156,5 +163,25 @@ describe JSON::Any do
     any = JSON.parse("[[1], 2, 3]")
     any2 = any.clone
     any2.as_a[0].as_a.should_not be(any.as_a[0].as_a)
+  end
+
+  it "#to_yaml" do
+    any = JSON.parse <<-JSON
+      {
+        "foo": "bar",
+        "baz": [1, 2.3, true, "qux", {"qax": "qox"}]
+      }
+      JSON
+    any.to_yaml.should eq <<-YAML
+      ---
+      foo: bar
+      baz:
+      - 1
+      - 2.3
+      - true
+      - qux
+      - qax: qox
+
+      YAML
   end
 end

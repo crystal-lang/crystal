@@ -65,7 +65,7 @@ describe HTTP::Multipart::Builder do
   describe "#content_type" do
     it "calculates the content type" do
       builder = HTTP::Multipart::Builder.new(IO::Memory.new, "a delimiter string with a quote in \"")
-      builder.content_type("alternative").should eq(%q(multipart/alternative; boundary="a\ delimiter\ string\ with\ a\ quote\ in\ \""))
+      builder.content_type("alternative").should eq(%q(multipart/alternative; boundary="a delimiter string with a quote in \""))
     end
   end
 

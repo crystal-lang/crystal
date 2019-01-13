@@ -108,7 +108,7 @@ module Crystal
       # an "Reference**" llvm value and you need to load that value
       # to access it.
       # However, the "self" argument is not copied to a local variable:
-      # it's accessed from the arguments list, and it a "Reference*"
+      # it's accessed from the arguments list, and is a "Reference*"
       # llvm value, so in a way it's "already loaded".
       # This field is true if that's the case.
       getter already_loaded : Bool

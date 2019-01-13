@@ -96,11 +96,13 @@ struct Time::Span
   end
 
   private def self.compute_seconds(days, hours, minutes, seconds, raise_exception)
+    # TODO once overflow is the deafult this can be refactored
+
     # there's no overflow checks for hours, minutes, ...
     # so big hours/minutes values can overflow at some point and change expected values
-    hrssec = hours * 3600 # break point at (Int32::MAX - 596523)
-    minsec = minutes * 60
-    s = (hrssec + minsec + seconds).to_i64
+    hrssec = 3600_i64 &* hours # break point at (Int32::MAX - 596523)
+    minsec = 60_i64 &* minutes
+    s = hrssec &+ minsec &+ seconds
 
     result = 0_i64
 
@@ -109,7 +111,7 @@ struct Time::Span
     # "legal" (i.e. temporary) (e.g. if other parameters are negative) or
     # illegal (e.g. sign change).
     if days > 0
-      sd = SECONDS_PER_DAY.to_i64 * days
+      sd = SECONDS_PER_DAY.to_i64 &* days
       if sd < days
         overflow = true
       elsif s < 0
@@ -123,7 +125,7 @@ struct Time::Span
         overflow = s < 0
       end
     elsif days < 0
-      sd = SECONDS_PER_DAY.to_i64 * days
+      sd = SECONDS_PER_DAY.to_i64 &* days
       if sd > days
         overflow = true
       elsif s <= 0

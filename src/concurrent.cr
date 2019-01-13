@@ -5,7 +5,7 @@ require "./concurrent/*"
 
 # Blocks the current fiber for the specified number of seconds.
 #
-# While this fiber is waiting this time other ready-to-execute
+# While this fiber is waiting this time, other ready-to-execute
 # fibers might start their execution.
 def sleep(seconds : Number)
   if seconds < 0
@@ -17,7 +17,7 @@ end
 
 # Blocks the current Fiber for the specified time span.
 #
-# While this fiber is waiting this time other ready-to-execute
+# While this fiber is waiting this time, other ready-to-execute
 # fibers might start their execution.
 def sleep(time : Time::Span)
   Crystal::Scheduler.sleep(time)

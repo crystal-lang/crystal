@@ -1,5 +1,6 @@
 require "random/secure"
 require "./multipart/*"
+require "mime/media_type"
 
 # The `HTTP::Multipart` module contains utilities for parsing MIME multipart
 # messages, which contain multiple body parts, each containing a header section
@@ -35,10 +36,15 @@ module HTTP::Multipart
   # HTTP::Multipart.parse_boundary("multipart/mixed; boundary=\"abcde\"") # => "abcde"
   # ```
   def self.parse_boundary(content_type)
-    # TODO: remove regex
-    match = content_type.match(/\Amultipart\/.*boundary="?([^";,]+)"?/i)
-    return nil unless match
-    HTTP.dequote_string(match[1])
+    type = MIME::MediaType.parse?(content_type)
+
+    if type && type.type == "multipart"
+      boundary = type["boundary"]?
+
+      if boundary && !boundary.empty?
+        boundary
+      end
+    end
   end
 
   # Parses a MIME multipart message, yielding `HTTP::Headers` and an `IO` for

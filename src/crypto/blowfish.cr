@@ -73,7 +73,7 @@ class Crypto::Blowfish
     c = (x >> 8) & 0xff_u32
     b = (x >> 16) & 0xff_u32
     a = (x >> 24) & 0xff_u32
-    ((@s.to_unsafe[a] + @s1[b]) ^ @s2[c]) + @s3[d]
+    ((@s.to_unsafe[a] &+ @s1[b]) ^ @s2[c]) &+ @s3[d]
   end
 
   private def next_word(data, pos)

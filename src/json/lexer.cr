@@ -213,6 +213,8 @@ abstract class JSON::Lexer
   end
 
   private def consume_number
+    # TODO once overflow is the deafult the overflow custom logic can be refactored
+
     number_start
 
     integer = 0_i64
@@ -248,8 +250,8 @@ abstract class JSON::Lexer
       char = next_char
       while '0' <= char <= '9'
         append_number_char
-        integer *= 10
-        integer += char - '0'
+        integer &*= 10
+        integer &+= char - '0'
         digits += 1
         char = next_char
       end
@@ -270,6 +272,8 @@ abstract class JSON::Lexer
   end
 
   private def consume_float(negative, integer, digits)
+    # TODO once overflow is the deafult the overflow custom logic can be refactored
+
     append_number_char
     divisor = 1_u64
     char = next_char
@@ -280,9 +284,9 @@ abstract class JSON::Lexer
 
     while '0' <= char <= '9'
       append_number_char
-      integer *= 10
-      integer += char - '0'
-      divisor *= 10
+      integer &*= 10
+      integer &+= char - '0'
+      divisor &*= 10
       digits += 1
       char = next_char
     end
@@ -303,6 +307,8 @@ abstract class JSON::Lexer
   end
 
   private def consume_exponent(negative, float, digits)
+    # TODO once overflow is the deafult the overflow custom logic can be refactored
+
     append_number_char
     exponent = 0
     negative_exponent = false

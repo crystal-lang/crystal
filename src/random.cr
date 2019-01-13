@@ -156,12 +156,12 @@ module Random
         # are described below.
 
         # if max - 1 <= typeof(next_u)::MAX
-        if typeof(next_u).new(max - 1) == max - 1
+        if typeof(next_u).new!(max &- 1) == max &- 1
           # One number from the RNG will be enough.
           # All the computations will (almost) fit into `typeof(next_u)`.
 
           # Relies on integer overflow + wraparound to find the highest number divisible by *max*.
-          limit = typeof(next_u).new(0) - (typeof(next_u).new(0) - max) % max
+          limit = typeof(next_u).new(0) &- (typeof(next_u).new(0) &- max) % max
           # *limit* might be 0, which means it would've been `typeof(next_u)::MAX + 1, but didn't
           # fit into the integer type.
 
@@ -170,7 +170,7 @@ module Random
 
             # For a uniform distribution we may need to throw away some numbers
             if result < limit || limit == 0
-              return {{type}}.new(result % max)
+              return {{type}}.new!(result % max)
             end
           end
         else
@@ -192,12 +192,12 @@ module Random
           limit =
             if rand_max > 0
               # `rand_max` didn't overflow, so we can calculate the *limit* the straightforward way.
-              rand_max / max * max
+              rand_max / max &* max
             else
               # *rand_max* is `{{utype}}::MAX + 1`, need the same wraparound trick. *limit* might
               # overflow, which means it would've been `{{utype}}::MAX + 1`, but didn't fit into
               # the integer type.
-              {{utype}}.new(0) - ({{utype}}.new(0) - max) % max
+              {{utype}}.new(0) &- ({{utype}}.new(0) &- max) % max
             end
 
           loop do
@@ -212,7 +212,7 @@ module Random
       end
 
       private def rand_range(range : Range({{type}}, {{type}})) : {{type}}
-        span = {{utype}}.new(range.end - range.begin)
+        span = {{utype}}.new!(range.end &- range.begin)
         if range.excludes_end?
           unless range.begin < range.end
             raise ArgumentError.new "Invalid range for rand: #{range}"
@@ -226,18 +226,18 @@ module Random
           end
           span += 1
         end
-        range.begin + {{type}}.new(rand_int(span))
+        range.begin + {{type}}.new!(rand_int(span))
       end
 
       # Generates a random integer in range `{{type}}::MIN..{{type}}::MAX`.
       private def rand_type(type : {{type}}.class, needed_parts = sizeof({{type}}) / sizeof(typeof(next_u))) : {{type}}
         # Build up the number combining multiple outputs from the RNG.
-        result = {{utype}}.new(next_u)
+        result = {{utype}}.new!(next_u)
         (needed_parts - 1).times do
           result <<= sizeof(typeof(next_u))*8
-          result |= {{utype}}.new(next_u)
+          result |= {{utype}}.new!(next_u)
         end
-        {{type}}.new(result)
+        {{type}}.new!(result)
       end
     {% end %}
   {% end %}

@@ -211,7 +211,7 @@ struct Crystal::TypeDeclarationProcessor
     # Check if var is uninitialized
     var.uninitialized = true if info.uninitialized
 
-    # If the variable is gueseed to be nilable because it is not initialized
+    # If the variable is guessed to be nilable because it is not initialized
     # in all of the initialize methods, and the explicit type is not nilable,
     # give an error right now
     if check_nilable && instance_var && !var.type.includes_type?(@program.nil)

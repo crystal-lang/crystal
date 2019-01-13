@@ -21,7 +21,7 @@ class Crystal::Command
         docs                     generate documentation
         env                      print Crystal environment information
         eval                     eval code from args or standard input
-        play                     starts crystal playground server
+        play                     starts Crystal playground server
         run (default)            build and run program
         spec                     build and run specs (in spec directory)
         tool                     run a tool
@@ -401,7 +401,7 @@ class Crystal::Command
         end
         unless run
           opts.on("--target TRIPLE", "Target triple") do |triple|
-            compiler.target_triple = triple
+            compiler.codegen_target = Codegen::Target.new(triple)
           end
         end
         opts.on("--verbose", "Display executed commands") do
