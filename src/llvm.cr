@@ -83,6 +83,17 @@ module LLVM
     end
   end
 
+  def self.normalize_triple(triple : String)
+    normalized = LibLLVMExt.normalize_target_triple(triple)
+    normalized = LLVM.string_and_dispose(normalized)
+
+    # Fix LLVM not replacing empty triple parts with "unknown"
+    # This was fixed in LLVM 8
+    normalized = normalized.split('-').map { |c| c.empty? ? "unknown" : c }.join('-')
+
+    normalized
+  end
+
   def self.to_io(chars, io)
     io.write Slice.new(chars, LibC.strlen(chars))
     LibLLVM.dispose_message(chars)

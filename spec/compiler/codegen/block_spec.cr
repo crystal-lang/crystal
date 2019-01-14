@@ -20,7 +20,7 @@ describe "Code gen: block" do
       end
 
       foo do |x|
-        x + 1
+        x &+ 1
       end
     ").to_i.should eq(2)
   end
@@ -32,7 +32,7 @@ describe "Code gen: block" do
       end
 
       foo(3) do |x|
-        x + 1
+        x &+ 1
       end
     ").to_i.should eq(4)
   end
@@ -46,7 +46,7 @@ describe "Code gen: block" do
       end
 
       3.foo do |x|
-        x + 1
+        x &+ 1
       end
     ").to_i.should eq(4)
   end
@@ -60,7 +60,7 @@ describe "Code gen: block" do
       end
 
       3.foo(2) do |x, i|
-        x + i
+        x &+ i
       end
     ").to_i.should eq(5)
   end
@@ -73,7 +73,7 @@ describe "Code gen: block" do
 
       x = 1
       foo do
-        x + 1
+        x &+ 1
       end
     ").to_i.should eq(2)
   end
@@ -90,7 +90,7 @@ describe "Code gen: block" do
       end
 
       Foo.new.foo do |x|
-        x + 1
+        x &+ 1
       end
     ").to_i.should eq(2)
   end
@@ -127,7 +127,7 @@ describe "Code gen: block" do
         end
       end
 
-      Foo.new.foo { |x| x + 1 }
+      Foo.new.foo { |x| x &+ 1 }
     ").to_i.should eq(2)
   end
 
@@ -320,6 +320,8 @@ describe "Code gen: block" do
 
   it "call block from dispatch and use local vars" do
     run("
+      require \"prelude\"
+
       def bar(y)
         yield y
       end
@@ -377,7 +379,7 @@ describe "Code gen: block" do
       end
 
       a = 0
-      foo { a += 1; break }
+      foo { a &+= 1; break }
       a
     ").to_i.should eq(1)
   end
@@ -445,7 +447,7 @@ describe "Code gen: block" do
       require \"nil\"
 
       def foo
-        1 + yield
+        1 &+ yield
       end
 
       foo { break 2 }.to_i
@@ -494,7 +496,7 @@ describe "Code gen: block" do
       end
 
       def foo
-        bar { 1 + yield }
+        bar { 1 &+ yield }
       end
 
       foo { break 3 }
@@ -906,6 +908,8 @@ describe "Code gen: block" do
 
   it "codegens dispatch with block and break (1)" do
     run("
+      require \"prelude\"
+
       class Foo(T)
         def initialize(@x : T)
         end
@@ -1021,7 +1025,7 @@ describe "Code gen: block" do
       end
 
       foo = Foo.new do |a|
-        a + 1
+        a &+ 1
       end
       foo.x
       )).to_i.should eq(2)
@@ -1135,7 +1139,7 @@ describe "Code gen: block" do
       foo do |key|
         if 1 == 1
           extra = 1
-          extra + key
+          extra &+ key
         end
       end
 
@@ -1201,7 +1205,7 @@ describe "Code gen: block" do
 
       a = 0
       foo do |x|
-        a += x
+        a &+= x
         next if true
         break
       end
@@ -1219,7 +1223,7 @@ describe "Code gen: block" do
 
       a = 0
       foo do |x|
-        a += x
+        a &+= x
         next if 1 == 1
         break
       end
@@ -1358,7 +1362,7 @@ describe "Code gen: block" do
 
       a = 0
       foo do |x|
-        a += x
+        a &+= x
       end
       a
       )).to_i.should eq(4)
@@ -1372,7 +1376,7 @@ describe "Code gen: block" do
       end
 
       foo do |x, y, z|
-        x + y + z
+        x &+ y &+ z
       end
       )).to_i.should eq(6)
   end
@@ -1396,7 +1400,7 @@ describe "Code gen: block" do
       end
 
       foo do |*args|
-        args[0] + args[1] + args[2]
+        args[0] &+ args[1] &+ args[2]
       end
       )).to_i.should eq(6)
   end
@@ -1408,7 +1412,7 @@ describe "Code gen: block" do
       end
 
       foo do |x, y, *z, w|
-        ((((x + y) * z[0]) - z[1]) * z[2]) - w
+        ((((x &+ y) &* z[0]) &- z[1]) &* z[2]) &- w
       end
       )).to_i.should eq(((((1 + 2) * 3) - 4) * 5) - 6)
   end
@@ -1422,7 +1426,7 @@ describe "Code gen: block" do
 
       total = 0
       foo do |*args|
-        total += args[0].to_i
+        total &+= args[0].to_i
       end
       total
       )).to_i.should eq(3)
@@ -1436,7 +1440,7 @@ describe "Code gen: block" do
       end
 
       foo do |x, y, z|
-        (x + y) * z
+        (x &+ y) &* z
       end
       )).to_i.should eq((1 + 2) * 4)
   end
@@ -1453,7 +1457,7 @@ describe "Code gen: block" do
       w = 4
       foo do |(x, y), (z, w)|
       end
-      x + y + z + w
+      x &+ y &+ z &+ w
       )).to_i.should eq(10)
   end
 
@@ -1506,7 +1510,7 @@ describe "Code gen: block" do
 
       a = fn(1 || 'a') { 2 }
       b = fn('a' || 1) { 2 }
-      a + b
+      a &+ b
       )).to_i.should eq(3)
   end
 

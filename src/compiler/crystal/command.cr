@@ -398,7 +398,7 @@ class Crystal::Command
         end
         unless run
           opts.on("--target TRIPLE", "Target triple") do |triple|
-            compiler.target_triple = triple
+            compiler.codegen_target = Codegen::Target.new(triple)
           end
         end
         opts.on("--verbose", "Display executed commands") do

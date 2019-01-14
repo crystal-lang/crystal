@@ -110,7 +110,7 @@ describe "Code gen: virtual type" do
 
       class Bar < Foo
         def foo
-          @x + 1
+          @x &+ 1
         end
       end
 

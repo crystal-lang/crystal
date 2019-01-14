@@ -21,6 +21,19 @@ describe "Semantic: named args" do
       "argument 'x' already specified"
   end
 
+  it "errors if named arg already specified, but multiple overloads (#7281)" do
+    assert_error %(
+      def foo(x : String, y = 1, z = 2)
+      end
+
+      def foo(x : Int32, y : Int32)
+      end
+
+      foo 1, x: 1
+      ),
+      "no overload matches"
+  end
+
   it "errors if named arg not found in new" do
     assert_error %(
       class Foo

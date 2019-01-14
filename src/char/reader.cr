@@ -200,7 +200,7 @@ struct Char
       end
 
       if first < 0xe0
-        return yield (first << 6) + (second - 0x3080), 2, nil
+        return yield (first << 6) &+ (second &- 0x3080), 2, nil
       end
 
       third = byte_at?(pos + 2)
@@ -217,7 +217,7 @@ struct Char
           invalid_byte_sequence 3
         end
 
-        return yield (first << 12) + (second << 6) + (third - 0xE2080), 3, nil
+        return yield (first << 12) &+ (second << 6) &+ (third &- 0xE2080), 3, nil
       end
 
       if first == 0xf0 && second < 0x90
@@ -236,7 +236,7 @@ struct Char
       end
 
       if first < 0xf5
-        return yield (first << 18) + (second << 12) + (third << 6) + (fourth - 0x3C82080), 4, nil
+        return yield (first << 18) &+ (second << 12) &+ (third << 6) &+ (fourth &- 0x3C82080), 4, nil
       end
 
       invalid_byte_sequence 4
