@@ -788,8 +788,8 @@ describe "Semantic: def overload" do
       Bar.new.foo("hello")
       ),
       <<-MSG
-      #{" - Bar#foo(x : Int32)".colorize.bold.to_s}
-      #{" - Foo#foo(x : Int32)".colorize.bold.to_s}
+      #{Colorize.reset(" - Bar#foo(x : Int32)".colorize.bold.to_s)}
+      #{Colorize.reset(" - Foo#foo(x : Int32)".colorize.bold.to_s)}
       MSG
   end
 
@@ -845,7 +845,7 @@ describe "Semantic: def overload" do
 
       Moo::String.foo("Hello, World!", true)
       ),
-      " - Moo::String.foo(a : Moo::String, b : Bool)".colorize.bold
+      Colorize.reset(" - Moo::String.foo(a : Moo::String, b : Bool)".colorize.bold.to_s)
   end
 
   it "overloads on metaclass (#2916)" do

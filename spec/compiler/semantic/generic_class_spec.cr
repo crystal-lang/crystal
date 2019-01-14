@@ -636,12 +636,8 @@ describe "Semantic: generic class" do
     begin
       semantic(nodes)
     rescue ex : TypeException
-      p ex
-      puts ex.to_s.inspect
       msg = ex.to_s.lines
-      p msg
-      puts msg.to_s.inspect
-      msg.count("\n - Foo(T).foo(x : Int32)".colorize.bold).should eq(1)
+      msg.count(Colorize.reset("\n - Foo(T).foo(x : Int32)".colorize.bold.to_s)).should eq(1)
     end
   end
 

@@ -111,8 +111,14 @@ module Colorize
     self.enabled = STDOUT.tty? && STDERR.tty?
   end
 
-  def self.reset(io = STDOUT)
+  # Resets the color and mode of *io* if `enabled` is `true`.
+  def self.reset(io : IO = STDOUT)
     io << "\e[0m" if enabled?
+  end
+
+  # Resets the color and mode of *string* if `enabled` is `true`.
+  def self.reset(string : String)
+    enabled? ? string + "\e[0m" : string
   end
 end
 
