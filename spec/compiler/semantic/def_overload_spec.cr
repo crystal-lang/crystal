@@ -788,7 +788,7 @@ describe "Semantic: def overload" do
       Bar.new.foo("hello")
       ),
       <<-MSG
-      #{Colorize.reset(" - Bar#foo(x : Int32)".colorize.bold.to_s)}
+      #{" - Bar#foo(x : Int32)".colorize.bold}
       #{Colorize.reset(" - Foo#foo(x : Int32)".colorize.bold.to_s)}
       MSG
   end
@@ -836,7 +836,7 @@ describe "Semantic: def overload" do
   end
 
   it "uses long name when no overload matches and name is the same (#1030)" do
-    assert_error %(
+    p! assert_error %(
       module Moo::String
         def self.foo(a : String, b : Bool)
           puts a if b
