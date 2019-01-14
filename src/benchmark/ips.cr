@@ -40,7 +40,7 @@ module Benchmark
         run_comparison
       end
 
-      def report
+      def print_results
         max_label = ran_items.max_of &.label.size
         max_compare = ran_items.max_of &.human_compare.size
         max_bytes_per_op = ran_items.max_of &.bytes_per_op.to_s.size
@@ -102,7 +102,7 @@ module Benchmark
 
           if @interactive
             run_comparison
-            report
+            print_results
             print "\e[#{ran_items.size}A"
           end
         end

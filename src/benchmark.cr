@@ -90,6 +90,7 @@ module Benchmark
 
     report = BM::Job.new
     yield report
+    return if report.@reports.empty?
     report.execute
     report
   end
@@ -108,8 +109,9 @@ module Benchmark
 
     job = IPS::Job.new(calculation, warmup, interactive)
     yield job
+    return if job.items.empty?
     job.execute
-    job.report
+    job.print_results
     job
   end
 
