@@ -339,7 +339,11 @@ class Object
     # ```
     # class Person
     #   def {{method_prefix}}birth_date
-    #     {{var_prefix}}birth_date ||= Time.now
+    #     if (value = {{var_prefix}}birth_date).nil?
+    #       {{var_prefix}}birth_date = Time.now
+    #     else
+    #       value
+    #     end
     #   end
     # end
     # ```
@@ -355,11 +359,19 @@ class Object
           {{var_prefix}}\{{name.var.id}} : \{{name.type}}?
 
           def {{method_prefix}}\{{name.var.id}}
-            {{var_prefix}}\{{name.var.id}} ||= \{{yield}}
+            if (value = {{var_prefix}}\{{name.var.id}}).nil?
+              {{var_prefix}}\{{name.var.id}} = \{{yield}}
+            else
+              value
+            end
           end
         \{% else %}
           def {{method_prefix}}\{{name.id}}
-            {{var_prefix}}\{{name.id}} ||= \{{yield}}
+            if (value = {{var_prefix}}\{{name.id}}).nil?
+              {{var_prefix}}\{{name.id}} = \{{yield}}
+            else
+              value
+            end
           end
         \{% end %}
       \{% else %}
@@ -790,7 +802,11 @@ class Object
     # ```
     # class Person
     #   def {{method_prefix}}birth_date
-    #     {{var_prefix}}birth_date ||= Time.now
+    #     if (value = {{var_prefix}}birth_date).nil?
+    #       {{var_prefix}}birth_date = Time.now
+    #     else
+    #       value
+    #     end
     #   end
     #
     #   def {{method_prefix}}birth_date=({{var_prefix}}birth_date)
@@ -811,11 +827,19 @@ class Object
           {{var_prefix}}\{{name.var.id}} : \{{name.type}}?
 
           def {{method_prefix}}\{{name.var.id}}
-            {{var_prefix}}\{{name.var.id}} ||= \{{yield}}
+            if (value = {{var_prefix}}\{{name.var.id}}).nil?
+              {{var_prefix}}\{{name.var.id}} = \{{yield}}
+            else
+              value
+            end
           end
         \{% else %}
           def {{method_prefix}}\{{name.id}}
-            {{var_prefix}}\{{name.id}} ||= \{{yield}}
+            if (value = {{var_prefix}}\{{name.id}}).nil?
+              {{var_prefix}}\{{name.id}} = \{{yield}}
+            else
+              value
+            end
           end
         \{% end %}
       \{% else %}
