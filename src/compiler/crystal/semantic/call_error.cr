@@ -49,6 +49,15 @@ class Crystal::Call
       defs = owner.lookup_defs(def_name)
     end
 
+    # Also consider private top-level defs
+    if owner.is_a?(Program)
+      location = self.location
+      if location && (filename = location.original_filename)
+        private_defs = owner.file_module?(filename).try &.lookup_defs(def_name)
+        defs.concat(private_defs) if private_defs
+      end
+    end
+
     # Another special case: initialize is only looked up one level,
     # so we must find the first one defined.
     new_owner = owner
