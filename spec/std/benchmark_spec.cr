@@ -30,13 +30,13 @@ describe Benchmark::IPS::Job do
   end
 
   it "does nothing when no benchmark is given" do
-    Benchmark.ips {}
+    Benchmark.ips { }
   end
 end
 
 describe Benchmark::BM::Job do
   it "does nothing when no benchmark is given" do
-    Benchmark.bm {}
+    Benchmark.bm { }
   end
 end
 
