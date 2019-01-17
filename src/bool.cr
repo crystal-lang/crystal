@@ -50,7 +50,7 @@ struct Bool
   #
   # The value is `1` for `true` and `0` for `false`.
   def to_unsafe : LibC::Int
-    self ? 1 : 0
+    LibC::Int.new(self ? 1 : 0)
   end
 
   # Returns `"true"` for `true` and `"false"` for `false`.
