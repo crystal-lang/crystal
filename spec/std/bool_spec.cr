@@ -41,6 +41,11 @@ describe "Bool" do
     it { false.to_s.should eq("false") }
   end
 
+  describe "to_i" do
+    it { true.to_i.should eq 1 }
+    it { false.to_i.should eq 0 }
+  end
+
   describe "clone" do
     it { true.clone.should be_true }
     it { false.clone.should be_false }

@@ -51,6 +51,11 @@ struct Bool
     self ? 1 : 0
   end
 
+  # Returns the integer representation of `self`.  `1` for `true` and `0` for `false`.
+  def to_i : Int32
+    self ? 1 : 0
+  end
+
   # Returns `"true"` for `true` and `"false"` for `false`.
   def to_s
     self ? "true" : "false"
