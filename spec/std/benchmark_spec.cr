@@ -28,16 +28,6 @@ describe Benchmark::IPS::Job do
     first.should eq(1)
     second.should be > 1
   end
-
-  it "does nothing when no benchmark is given" do
-    Benchmark.ips { }
-  end
-end
-
-describe Benchmark::BM::Job do
-  it "does nothing when no benchmark is given" do
-    Benchmark.bm { }
-  end
 end
 
 private def create_entry
