@@ -1113,7 +1113,6 @@ module Crystal
       when "annotations"
         fetch_annotation(self, method, args) do |type|
           annotations = self.var.annotations(type)
-          annotations = self.var.annotations(type)
           return ArrayLiteral.new if annotations.nil?
           ArrayLiteral.map(annotations, &.itself)
         end
