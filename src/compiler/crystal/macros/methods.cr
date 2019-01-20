@@ -1113,8 +1113,9 @@ module Crystal
       when "annotations"
         fetch_annotation(self, method, args) do |type|
           annotations = self.var.annotations(type)
+          annotations = self.var.annotations(type)
           return ArrayLiteral.new if annotations.nil?
-          ArrayLiteral.map(annotations) { |ann| ann }
+          ArrayLiteral.map(annotations, &.itself)
         end
       else
         super
@@ -1305,7 +1306,7 @@ module Crystal
         fetch_annotation(self, method, args) do |type|
           annotations = self.annotations(type)
           return ArrayLiteral.new if annotations.nil?
-          ArrayLiteral.map(annotations) { |ann| ann }
+          ArrayLiteral.map(annotations, &.itself)
         end
       else
         super
@@ -1516,7 +1517,7 @@ module Crystal
         fetch_annotation(self, method, args) do |type|
           annotations = self.type.annotations(type)
           return ArrayLiteral.new if annotations.nil?
-          ArrayLiteral.map(annotations) { |ann| ann }
+          ArrayLiteral.map(annotations, &.itself)
         end
       when "size"
         interpret_argless_method(method, args) do

@@ -659,7 +659,7 @@ module Crystal
     # Adds an annotation with the given type and value
     def add_annotation(annotation_type : AnnotationType, value : Annotation)
       annotations = @annotations ||= {} of AnnotationType => Array(Annotation)
-      annotations[annotation_type] = [] of Annotation unless annotations.has_key? annotation_type
+      annotations[annotation_type] ||= [] of Annotation
       annotations[annotation_type] << value
     end
 
