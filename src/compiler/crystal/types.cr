@@ -663,12 +663,12 @@ module Crystal
       annotations[annotation_type] << value
     end
 
-    # Returns the last defined annotation with the given type, if any, or nil otherwise
+    # Returns the last defined annotation with the given type, if any, or `nil` otherwise
     def annotation(annotation_type) : Annotation?
       @annotations.try &.[annotation_type]?.try &.last?
     end
 
-    # Returns all annotations with the given type, if any, or nil otherwise
+    # Returns all annotations with the given type, if any, or `nil` otherwise
     def annotations(annotation_type) : Array(Annotation)?
       @annotations.try &.[annotation_type]?
     end

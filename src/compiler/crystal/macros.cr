@@ -853,7 +853,7 @@ module Crystal::Macros
     def annotation(type : TypeNode) : Annotation | NilLiteral
     end
 
-    # Returns all `Annotation` with the given `type`
+    # Returns an array of annotations with the given `type`
     # attached to this variable, or an empty `ArrayLiteral` if there are none.
     def annotations(type : TypeNode) : ArrayLiteral(Annotation)
     end
@@ -1117,7 +1117,7 @@ module Crystal::Macros
     def annotation(type : TypeNode) : Annotation | NilLiteral
     end
 
-    # Returns all `Annotation` with the given `type`
+    # Returns an array of annotations with the given `type`
     # attached to this variable, or an empty `ArrayLiteral` if there are none.
     def annotations(type : TypeNode) : ArrayLiteral(Annotation)
     end
@@ -1733,7 +1733,7 @@ module Crystal::Macros
     def annotation(type : TypeNode) : Annotation | NilLiteral
     end
 
-    # Returns all `Annotation` with the given `type`
+    # Returns an array of annotations with the given `type`
     # attached to this variable, or an empty `ArrayLiteral` if there are none.
     def annotations(type : TypeNode) : ArrayLiteral(Annotation)
     end
