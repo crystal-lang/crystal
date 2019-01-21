@@ -553,8 +553,28 @@ describe "String" do
     it { "foo".rchop('o').should eq("fo") }
     it { "foo".rchop('x').should eq("foo") }
 
+    it { "".rchop("").should eq("") }
     it { "foobar".rchop("bar").should eq("foo") }
     it { "foobar".rchop("baz").should eq("foobar") }
+  end
+
+  describe "rchop?" do
+    it { "".rchop?.should be_nil }
+    it { "foo".rchop?.should eq("fo") }
+    it { "foo\n".rchop?.should eq("foo") }
+    it { "foo\r".rchop?.should eq("foo") }
+    it { "foo\r\n".rchop?.should eq("foo\r") }
+    it { "\r\n".rchop?.should eq("\r") }
+    it { "かたな".rchop?.should eq("かた") }
+    it { "かたな\n".rchop?.should eq("かたな") }
+    it { "かたな\r\n".rchop?.should eq("かたな\r") }
+
+    it { "foo".rchop?('o').should eq("fo") }
+    it { "foo".rchop?('x').should be_nil }
+
+    it { "".rchop?("").should eq("") }
+    it { "foobar".rchop?("bar").should eq("foo") }
+    it { "foobar".rchop?("baz").should be_nil }
   end
 
   describe "lchomp" do

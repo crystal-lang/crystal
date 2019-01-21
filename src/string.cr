@@ -1104,8 +1104,33 @@ class String
   # "string".rchop     # => "strin"
   # "x".rchop.rchop    # => ""
   # ```
-  def rchop
-    return "" if bytesize <= 1
+  def rchop : String
+    rchop? || ""
+  end
+
+  # Returns a new `String` with *suffix* removed from the end of the string.
+  #
+  # ```
+  # "string".rchop('g')   # => "strin"
+  # "string".rchop('x')   # => "string"
+  # "string".rchop("ing") # => "str"
+  # "string".rchop("inx") # => "string"
+  # ```
+  def rchop(suffix : Char | String) : String
+    rchop?(suffix) || self
+  end
+
+  # Returns a new `String` with the last character removed if possible, else returns `nil`.
+  #
+  # ```
+  # "string\r\n".rchop? # => "string\r"
+  # "string\n\r".rchop? # => "string\n"
+  # "string\n".rchop?   # => "string"
+  # "string".rchop?     # => "strin"
+  # "".rchop?           # => nil
+  # ```
+  def rchop? : String?
+    return if bytesize <= 1
 
     if to_unsafe[bytesize - 1] < 128 || ascii_only?
       return unsafe_byte_slice_string(0, bytesize - 1)
@@ -1114,35 +1139,17 @@ class String
     self[0, size - 1]
   end
 
-  # Returns a new `String` with *suffix* removed from the end of the string.
+  # Returns a new `String` with *suffix* removed from the end of the string if possible, else returns `nil`.
   #
   # ```
-  # "string".rchop('g') # => "strin"
-  # "string".rchop('x') # => "string"
+  # "string".rchop?('g')   # => "strin"
+  # "string".rchop?('x')   # => nil
+  # "string".rchop?("ing") # => "str"
+  # "string".rchop?("inx") # => nil
   # ```
-  def rchop(suffix : Char)
-    return "" if empty?
-
+  def rchop?(suffix : Char | String) : String?
     if ends_with?(suffix)
       unsafe_byte_slice_string(0, bytesize - suffix.bytesize)
-    else
-      self
-    end
-  end
-
-  # Returns a new `String` with *suffix* removed from the end of the string.
-  #
-  # ```
-  # "string".rchop("ing") # => "str"
-  # "string".rchop("inx") # => "string"
-  # ```
-  def rchop(suffix : String)
-    return "" if empty?
-
-    if ends_with?(suffix)
-      unsafe_byte_slice_string(0, bytesize - suffix.bytesize)
-    else
-      self
     end
   end
 
