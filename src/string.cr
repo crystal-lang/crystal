@@ -1059,38 +1059,46 @@ class String
   # "hello".lchop # => "ello"
   # "".lchop      # => ""
   # ```
-  def lchop
-    return "" if empty?
+  def lchop : String
+    lchop? || ""
+  end
+
+  # Returns a new `String` with *prefix* removed from the beginning of the string.
+  #
+  # ```
+  # "hello".lchop('h')   # => "ello"
+  # "hello".lchop('g')   # => "hello"
+  # "hello".lchop("hel") # => "lo"
+  # "hello".lchop("eh")  # => "hello"
+  # ```
+  def lchop(prefix : Char | String) : String
+    lchop?(prefix) || self
+  end
+
+  # Returns a new `String` with the first char removed from it if possible, else returns `nil`.
+  #
+  # ```
+  # "hello".lchop? # => "ello"
+  # "".lchop?      # => nil
+  # ```
+  def lchop? : String?
+    return if empty?
 
     reader = Char::Reader.new(self)
     unsafe_byte_slice_string(reader.current_char_width, bytesize - reader.current_char_width)
   end
 
-  # Returns a new `String` with *prefix* removed from the beginning of the string.
+  # Returns a new `String` with *prefix* removed from the beginning of the string if possible, else returns `nil`.
   #
   # ```
-  # "hello".lchop('h') # => "ello"
-  # "hello".lchop('g') # => "hello"
+  # "hello".lchop?('h')   # => "ello"
+  # "hello".lchop?('g')   # => nil
+  # "hello".lchop?("hel") # => "lo"
+  # "hello".lchop?("eh")  # => nil
   # ```
-  def lchop(prefix : Char)
+  def lchop?(prefix : Char | String) : String?
     if starts_with?(prefix)
       unsafe_byte_slice_string(prefix.bytesize, bytesize - prefix.bytesize)
-    else
-      self
-    end
-  end
-
-  # Returns a new `String` with *prefix* removed from the beginning of the string.
-  #
-  # ```
-  # "hello".lchop("hel") # => "lo"
-  # "hello".lchop("eh")  # => "hello"
-  # ```
-  def lchop(prefix : String)
-    if starts_with?(prefix)
-      unsafe_byte_slice_string(prefix.bytesize, bytesize - prefix.bytesize)
-    else
-      self
     end
   end
 
