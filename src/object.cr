@@ -172,7 +172,8 @@ class Object
     yield self
   end
 
-  # Returns `self`. `Nil` overrides this method and raises an exception.
+  # Returns `self`.
+  # `Nil` overrides this method and raises `NilAssertionError`, see `Nil#not_nil!`.
   def not_nil!
     self
   end
