@@ -929,9 +929,9 @@ module Crystal
         end
       when :GLOBAL_MATCH_DATA_INDEX
         value = @token.value.to_s
-        if value.ends_with? '?'
+        if value_prefix = value.rchop? '?'
           method = "[]?"
-          value = value.rchop
+          value = value_prefix
         else
           method = "[]"
         end
