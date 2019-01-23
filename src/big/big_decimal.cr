@@ -317,51 +317,61 @@ struct BigDecimal < Number
   end
 
   # Converts to `Int64`. Truncates anything on the right side of the decimal point.
+  # Raises `OverflowError` in case of overflow.
   def to_i64
     to_big_i.to_i64
   end
 
   # Converts to `Int32`. Truncates anything on the right side of the decimal point.
+  # Raises `OverflowError` in case of overflow.
   def to_i32
     to_big_i.to_i32
   end
 
   # Converts to `Int16`. Truncates anything on the right side of the decimal point.
+  # Raises `OverflowError` in case of overflow.
   def to_i16
     to_big_i.to_i16
   end
 
   # Converts to `Int8`. Truncates anything on the right side of the decimal point.
+  # Raises `OverflowError` in case of overflow.
   def to_i8
     to_big_i.to_i8
   end
 
   # Converts to `Int32`. Truncates anything on the right side of the decimal point.
+  # Raises `OverflowError` in case of overflow.
   def to_i
     to_i32
   end
 
   # Converts to `Int8`. Truncates anything on the right side of the decimal point.
+  # In case of overflow a wrapping is performed.
   def to_i8!
     to_big_i.to_i8!
   end
 
   # Converts to `Int16`. Truncates anything on the right side of the decimal point.
+  # In case of overflow a wrapping is performed.
   def to_i16!
     to_big_i.to_i16!
   end
 
   # Converts to `Int32`. Truncates anything on the right side of the decimal point.
+  # In case of overflow a wrapping is performed.
   def to_i32!
     to_big_i.to_i32!
   end
 
   # Converts to `Int64`. Truncates anything on the right side of the decimal point.
+  # In case of overflow a wrapping is performed.
   def to_i64!
     to_big_i.to_i64!
   end
 
   # Converts to `Int32`. Truncates anything on the right side of the decimal point.
+  # In case of overflow a wrapping is performed.
   def to_i!
     to_i32!
   end
@@ -372,90 +382,106 @@ struct BigDecimal < Number
 
   # Converts to `UInt64`. Truncates anything on the right side of the decimal point,
   # converting negative to positive.
+  # Raises `OverflowError` in case of overflow.
   def to_u64
     to_big_u.to_u64
   end
 
   # Converts to `UInt32`. Truncates anything on the right side of the decimal point,
   # converting negative to positive.
+  # Raises `OverflowError` in case of overflow.
   def to_u32
     to_big_u.to_u32
   end
 
   # Converts to `UInt16`. Truncates anything on the right side of the decimal point,
   # converting negative to positive.
+  # Raises `OverflowError` in case of overflow.
   def to_u16
     to_big_u.to_u16
   end
 
   # Converts to `UInt8`. Truncates anything on the right side of the decimal point,
   # converting negative to positive.
+  # Raises `OverflowError` in case of overflow.
   def to_u8
     to_big_u.to_u8
   end
 
   # Converts to `UInt32`. Truncates anything on the right side of the decimal point,
   # converting negative to positive.
+  # Raises `OverflowError` in case of overflow.
   def to_u
     to_u32
   end
 
   # Converts to `UInt8`. Truncates anything on the right side of the decimal point,
   # converting negative to positive.
+  # In case of overflow a wrapping is performed.
   def to_u8!
     to_big_u.to_u8!
   end
 
   # Converts to `UInt16`. Truncates anything on the right side of the decimal point,
   # converting negative to positive.
+  # In case of overflow a wrapping is performed.
   def to_u16!
     to_big_u.to_u16!
   end
 
   # Converts to `UInt32`. Truncates anything on the right side of the decimal point,
   # converting negative to positive.
+  # In case of overflow a wrapping is performed.
   def to_u32!
     to_big_u.to_u32!
   end
 
   # Converts to `UInt64`. Truncates anything on the right side of the decimal point,
   # converting negative to positive.
+  # In case of overflow a wrapping is performed.
   def to_u64!
     to_big_u.to_u64!
   end
 
   # Converts to `UInt32`. Truncates anything on the right side of the decimal point,
   # converting negative to positive.
+  # In case of overflow a wrapping is performed.
   def to_u!
     to_u32!
   end
 
   # Converts to `Float64`.
+  # Raises `OverflowError` in case of overflow.
   def to_f64
     to_s.to_f64
   end
 
   # Converts to `Float32`.
+  # Raises `OverflowError` in case of overflow.
   def to_f32
     to_f64.to_f32
   end
 
   # Converts to `Float64`.
+  # Raises `OverflowError` in case of overflow.
   def to_f
     to_f64
   end
 
   # Converts to `Float32`.
+  # In case of overflow a wrapping is performed.
   def to_f32!
     to_f64.to_f32!
   end
 
   # Converts to `Float64`.
+  # In case of overflow a wrapping is performed.
   def to_f64!
     to_f64
   end
 
   # Converts to `Float64`.
+  # In case of overflow a wrapping is performed.
   def to_f!
     to_f64!
   end

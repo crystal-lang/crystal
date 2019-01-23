@@ -154,7 +154,7 @@ class Crystal::SpecRunOutput
   end
 end
 
-def run(code, filename = nil, inject_primitives = true, debug = Crystal::Debug::None)
+def run(code, filename = nil, inject_primitives = true, debug = Crystal::Debug::None, flags = nil)
   code = inject_primitives(code) if inject_primitives
 
   # Code that requires the prelude doesn't run in LLVM's MCJIT
@@ -162,7 +162,7 @@ def run(code, filename = nil, inject_primitives = true, debug = Crystal::Debug::
   # in the current executable!), so instead we compile
   # the program and run it, printing the last
   # expression and using that to compare the result.
-  if code.includes?(%(require "prelude"))
+  if code.includes?(%(require "prelude")) || flags
     ast = Parser.parse(code).as(Expressions)
     last = ast.expressions.last
     assign = Assign.new(Var.new("__tempvar"), last)
@@ -175,6 +175,7 @@ def run(code, filename = nil, inject_primitives = true, debug = Crystal::Debug::
 
     compiler = Compiler.new
     compiler.debug = debug
+    compiler.flags.concat flags if flags
     compiler.compile Compiler::Source.new("spec", code), output_filename
 
     output = `#{output_filename}`

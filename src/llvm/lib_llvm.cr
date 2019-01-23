@@ -196,7 +196,7 @@ lib LibLLVM
   fun is_constant = LLVMIsConstant(val : ValueRef) : Int32
   fun is_function_var_arg = LLVMIsFunctionVarArg(ty : TypeRef) : Int32
   fun module_create_with_name_in_context = LLVMModuleCreateWithNameInContext(module_id : UInt8*, context : ContextRef) : ModuleRef
-  fun offset_of_element = LLVMOffsetOfElement(td : TargetDataRef, struct_type : TypeRef, element : LibC::UInt) : Int64
+  fun offset_of_element = LLVMOffsetOfElement(td : TargetDataRef, struct_type : TypeRef, element : LibC::UInt) : UInt64
   fun pass_manager_builder_create = LLVMPassManagerBuilderCreate : PassManagerBuilderRef
   fun pass_manager_builder_set_opt_level = LLVMPassManagerBuilderSetOptLevel(builder : PassManagerBuilderRef, opt_level : UInt32)
   fun pass_manager_builder_set_size_level = LLVMPassManagerBuilderSetSizeLevel(builder : PassManagerBuilderRef, size_level : UInt32)

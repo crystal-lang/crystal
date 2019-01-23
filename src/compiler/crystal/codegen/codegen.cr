@@ -6,12 +6,13 @@ require "../program"
 require "./llvm_builder_helper"
 
 module Crystal
-  MAIN_NAME          = "__crystal_main"
-  RAISE_NAME         = "__crystal_raise"
-  MALLOC_NAME        = "__crystal_malloc64"
-  MALLOC_ATOMIC_NAME = "__crystal_malloc_atomic64"
-  REALLOC_NAME       = "__crystal_realloc64"
-  GET_EXCEPTION_NAME = "__crystal_get_exception"
+  MAIN_NAME           = "__crystal_main"
+  RAISE_NAME          = "__crystal_raise"
+  RAISE_OVERFLOW_NAME = "__crystal_raise_overflow"
+  MALLOC_NAME         = "__crystal_malloc64"
+  MALLOC_ATOMIC_NAME  = "__crystal_malloc_atomic64"
+  REALLOC_NAME        = "__crystal_realloc64"
+  GET_EXCEPTION_NAME  = "__crystal_get_exception"
 
   class Program
     def run(code, filename = nil, debug = Debug::Default)
@@ -137,10 +138,12 @@ module Crystal
     @cant_pass_closure_to_c_exception_call : Call?
     @realloc_fun : LLVM::Function?
     @c_realloc_fun : LLVM::Function?
+    @raise_overflow_fun : LLVM::Function?
     @main_llvm_context : LLVM::Context
     @main_llvm_typer : LLVMTyper
     @main_module_info : ModuleInfo
     @main_builder : CrystalLLVMBuilder
+    @call_location : Location?
 
     def initialize(@program : Program, @node : ASTNode, single_module = false, @debug = Debug::Default)
       @single_module = !!single_module
@@ -292,7 +295,7 @@ module Crystal
 
       def visit(node : FunDef)
         case node.name
-        when MALLOC_NAME, MALLOC_ATOMIC_NAME, REALLOC_NAME, RAISE_NAME, @codegen.personality_name, GET_EXCEPTION_NAME
+        when MALLOC_NAME, MALLOC_ATOMIC_NAME, REALLOC_NAME, RAISE_NAME, @codegen.personality_name, GET_EXCEPTION_NAME, RAISE_OVERFLOW_NAME
           @codegen.accept node
         end
         false
@@ -1923,6 +1926,15 @@ module Crystal
         check_main_fun REALLOC_NAME, realloc_fun
       else
         nil
+      end
+    end
+
+    def crystal_raise_overflow_fun
+      @raise_overflow_fun ||= @main_mod.functions[RAISE_OVERFLOW_NAME]?
+      if raise_overflow_fun = @raise_overflow_fun
+        check_main_fun RAISE_OVERFLOW_NAME, raise_overflow_fun
+      else
+        raise "BUG: __crystal_raise_overflow is not defined"
       end
     end
 
