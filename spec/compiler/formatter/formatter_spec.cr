@@ -700,6 +700,7 @@ describe Crystal::Formatter do
   assert_format "foo = 1\n->foo.bar(Int32)"
   assert_format "foo = 1\n->foo.bar(Int32*)"
   assert_format "foo = 1\n->foo.bar=(Int32)"
+  assert_format "foo = 1\n->foo.[](Int32)"
   assert_format "->{ x }"
   assert_format "->{\nx\n}", "->{\n  x\n}"
   assert_format "->do\nx\nend", "->do\n  x\nend"
