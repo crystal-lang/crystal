@@ -152,3 +152,14 @@ class NotImplementedError < Exception
     super("Not Implemented: #{item}")
   end
 end
+
+# Raised when a `not_nil!` assertion fails.
+#
+# ```
+# "hello".index('x').not_nil! # raises NilAssertionError ("hello" does not contain 'x')
+# ```
+class NilAssertionError < Exception
+  def initialize(message = "Nil assertion failed")
+    super(message)
+  end
+end
