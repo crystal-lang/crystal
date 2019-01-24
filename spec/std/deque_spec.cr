@@ -545,7 +545,7 @@ describe "Deque" do
 
   describe "to_s" do
     it "does to_s" do
-      it { Deque{1, 2, 3}.to_s.should eq("Deque{1, 2, 3}") }
+      Deque{1, 2, 3}.to_s.should eq("Deque{1, 2, 3}")
     end
 
     it "does with recursive" do
