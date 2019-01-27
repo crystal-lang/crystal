@@ -224,11 +224,6 @@ describe "Array" do
       a[0..0].should eq(a)
     end
 
-    it "gets nilable" do
-      [1, 2, 3][2]?.should eq(3)
-      [1, 2, 3][3]?.should be_nil
-    end
-
     it "doesn't exceed limits" do
       [1][0..3].should eq([1])
     end
@@ -242,6 +237,23 @@ describe "Array" do
       expect_raises IndexError do
         [1, 2, 3][-4..0]
       end
+    end
+  end
+
+  describe "[]?" do
+    it "gets with index" do
+      [1, 2, 3][2]?.should eq(3)
+      [1, 2, 3][3]?.should be_nil
+    end
+
+    it "gets with range" do
+      [1, 2, 3][1..2]?.should eq([2, 3])
+      [1, 2, 3][4..-1]?.should be_nil
+    end
+
+    it "gets with start and count" do
+      [1, 2, 3][1, 3]?.should eq([2, 3])
+      [1, 2, 3][4, 0]?.should be_nil
     end
   end
 
