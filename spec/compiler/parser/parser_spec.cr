@@ -571,6 +571,7 @@ module Crystal
     it_parses "foo { 1 }", Call.new(nil, "foo", block: Block.new(body: 1.int32))
     it_parses "foo { |a| 1 }", Call.new(nil, "foo", block: Block.new(["a".var], 1.int32))
     it_parses "foo { |a, b| 1 }", Call.new(nil, "foo", block: Block.new(["a".var, "b".var], 1.int32))
+    it_parses "foo { |a, b, | 1 }", Call.new(nil, "foo", block: Block.new(["a".var, "b".var], 1.int32))
     it_parses "1.foo do; 1; end", Call.new(1.int32, "foo", block: Block.new(body: 1.int32))
     it_parses "a b() {}", Call.new(nil, "a", Call.new(nil, "b", block: Block.new))
 
@@ -590,6 +591,16 @@ module Crystal
           Assign.new("c".var, Call.new("__arg0".var, "[]", 1.int32)),
           "c".var,
         ] of ASTNode)))
+
+    it_parses "foo { |(_, c, )| c }", Call.new(nil, "foo",
+      block: Block.new(["__arg0".var],
+        Expressions.new([
+          Assign.new("c".var, Call.new("__arg0".var, "[]", 1.int32)),
+          "c".var,
+        ] of ASTNode)))
+
+    assert_syntax_error "foo { |a b| }", "expecting ',' or '|', not b"
+    assert_syntax_error "foo { |(a b)| }", "expecting ',' or ')', not b"
 
     it_parses "1 ? 2 : 3", If.new(1.int32, 2.int32, 3.int32)
     it_parses "1 ? a : b", If.new(1.int32, "a".call, "b".call)
