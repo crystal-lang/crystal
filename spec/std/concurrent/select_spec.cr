@@ -100,4 +100,63 @@ describe "select" do
     sleep
     x.should eq 1
   end
+
+  it "select with buffered channels shouldn't segfault on resuming already completed fiber, fixed #3900" do
+    ch1 = Channel::Buffered(Int32).new(1)
+    ch2 = Channel::Buffered(Int32).new(1)
+    res = [] of Int32
+
+    spawn do
+      3.times do
+        select
+        when x = ch1.receive
+          res << x
+        when y = ch2.receive
+          res << y
+        end
+      end
+    end
+
+    spawn do
+      3.times do |i|
+        select
+        when ch1.send(1)
+        when ch2.send(2)
+        end
+      end
+    end
+
+    sleep 0
+    res.should eq([1, 2, 1])
+  end
+
+  it "select with buffered channels shouldn't segfault when current fiber resumes itself" do
+    ch1 = Channel::Buffered(Int32).new(1)
+    ch2 = Channel::Buffered(Int32).new(1)
+    res = [] of Int32
+
+    spawn do
+      3.times do
+        select
+        when x = ch1.receive
+          res << x
+        when y = ch2.receive
+          res << y
+        end
+      end
+    end
+
+    spawn do
+      3.times do |i|
+        select
+        when ch1.send(1)
+        when ch2.send(2)
+        end
+      end
+      sleep 0
+    end
+
+    sleep 0
+    res.should eq([1, 2, 1])
+  end
 end

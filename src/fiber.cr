@@ -62,6 +62,7 @@ class Fiber
 
   # :nodoc:
   property previous : Fiber?
+  property alive : Bool = true
 
   # :nodoc:
   def self.inactive(fiber : Fiber)
@@ -155,6 +156,7 @@ class Fiber
     ex.inspect_with_backtrace(STDERR)
     STDERR.flush
   ensure
+    @alive = false
     @@stack_pool << @stack
 
     # Remove the current fiber from the linked list

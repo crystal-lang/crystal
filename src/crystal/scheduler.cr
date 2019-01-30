@@ -63,7 +63,11 @@ class Crystal::Scheduler
   end
 
   protected def reschedule : Nil
-    if runnable = @runnables.shift?
+    while runnable = @runnables.shift?
+      next if runnable == @current
+      break if runnable.alive
+    end
+    if runnable
       runnable.resume
     else
       Crystal::EventLoop.resume
