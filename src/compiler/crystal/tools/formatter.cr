@@ -2433,7 +2433,7 @@ module Crystal
 
       # For special calls we want to format `.as (Int32)` into `.as(Int32)`
       # so we remove the space between "as" and "(".
-      skip_space_or_newline if special_call
+      skip_space if special_call
 
       if @token.type == :"("
         slash_is_regex!
