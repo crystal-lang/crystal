@@ -2173,7 +2173,26 @@ module Crystal
         return false
       end
 
+      special_call =
+        case node.name
+        when "as", "as?", "is_a?", "nil?", "responds_to?"
+          true
+        else
+          false
+        end
+
       obj = node.obj
+
+      # Consider the case of `&.as(...)` and similar
+      if obj.is_a?(Nop)
+        obj = nil
+      end
+
+      # Consider the case of `as T`, that is, casting `self` without an explicit `self`
+      if special_call && obj.is_a?(Var) && obj.name == "self" && @token.type != :self
+        obj = nil
+      end
+
       column = @column
 
       # Special case: $1, $2, ...
@@ -2412,11 +2431,18 @@ module Crystal
       has_newlines = false
       found_comment = false
 
+      # For special calls we want to format `.as (Int32)` into `.as(Int32)`
+      # so we remove the space between "as" and "(".
+      skip_space_or_newline if special_call
+
       if @token.type == :"("
-        check :"("
         slash_is_regex!
         next_token
-        if obj && !has_args && !node.block_arg && !node.block
+
+        # If it's something like `foo.bar()` we rewrite it as `foo.bar`
+        # (parentheses are not needed). Also applies for special calls
+        # like `nil?` when there might not be a receiver.
+        if (obj || special_call) && !has_args && !node.block_arg && !node.block
           skip_space_or_newline
           check :")"
           next_token
@@ -2948,72 +2974,14 @@ module Crystal
 
     def visit(node : IsA)
       if node.nil_check?
-        obj = node.obj
-
-        # Consider `nil?`
-        unless @token.keyword?(:nil?) && obj.is_a?(Var) && obj.name == "self"
-          accept obj
-          skip_space_or_newline
-          write_token :"."
-        end
-
-        write_keyword :"nil?"
-        if @token.type == :"("
-          write_token :"("
-          skip_space_or_newline
-          write_token :")"
-        end
-        false
+        visit Call.new(node.obj, "nil?")
       else
-        format_special_call(node, :is_a?) do
-          accept node.const
-          skip_space
-        end
+        visit Call.new(node.obj, "is_a?", node.const)
       end
     end
 
     def visit(node : RespondsTo)
-      format_special_call(node, :responds_to?) do
-        check :SYMBOL
-        write @token.raw
-        next_token
-      end
-    end
-
-    def format_special_call(node, keyword)
-      obj = node.obj
-
-      # Consider `special T`
-      unless @token.keyword?(keyword) && obj.is_a?(Var) && obj.name == "self"
-        unless obj.is_a?(Nop)
-          accept obj
-          skip_space_or_newline
-          write_token :"."
-        end
-
-        skip_space_or_newline
-      end
-
-      write_keyword keyword
-      skip_space_or_newline
-
-      has_parentheses = false
-      if @token.type == :"("
-        write "("
-        next_token_skip_space_or_newline
-        has_parentheses = true
-      else
-        write " "
-      end
-
-      yield
-
-      if has_parentheses
-        skip_space_or_newline
-        write_token :")"
-      end
-
-      false
+      visit Call.new(node.obj, "responds_to?", SymbolLiteral.new(node.name))
     end
 
     def visit(node : Or)
@@ -3610,79 +3578,27 @@ module Crystal
     end
 
     def visit(node : Cast)
-      format_cast node, :as
+      visit Call.new(node.obj, "as", node.to)
     end
 
     def visit(node : NilableCast)
-      format_cast node, :as?
-    end
-
-    def format_cast(node, keyword)
-      obj = node.obj
-
-      # This is for the case `&.as(...)`
-      if obj.is_a?(Nop)
-        write_keyword keyword
-        write_token :"("
-        accept node.to
-        write_token :")"
-        return false
-      end
-
-      # Consider `as T`
-      unless @token.keyword?(keyword) && obj.is_a?(Var) && obj.name == "self"
-        accept obj
-        skip_space
-        write_token :"."
-        skip_space_or_newline
-      end
-
-      write_keyword keyword
-      skip_space
-      if @token.type == :"("
-        write_token :"("
-        skip_space_or_newline
-        accept node.to
-        skip_space_or_newline
-        write_token :")"
-      else
-        skip_space
-        write " "
-        accept node.to
-      end
-      false
+      visit Call.new(node.obj, "as?", node.to)
     end
 
     def visit(node : TypeOf)
-      format_unary(:typeof) { format_args node.expressions, true }
+      visit Call.new(nil, "typeof", node.expressions)
     end
 
     def visit(node : SizeOf)
-      format_unary node, :sizeof
+      visit Call.new(nil, "sizeof", node.exp)
     end
 
     def visit(node : InstanceSizeOf)
-      format_unary node, :instance_sizeof
+      visit Call.new(nil, "instance_sizeof", node.exp)
     end
 
     def visit(node : PointerOf)
-      format_unary node, :pointerof
-    end
-
-    def format_unary(node, keyword)
-      format_unary(keyword) { no_indent node.exp }
-    end
-
-    def format_unary(keyword)
-      write_keyword keyword
-      skip_space_or_newline
-      write_token :"("
-      skip_space_or_newline
-      yield
-      skip_space_or_newline
-      write_token :")"
-
-      false
+      visit Call.new(nil, "pointerof", node.exp)
     end
 
     def visit(node : Underscore)

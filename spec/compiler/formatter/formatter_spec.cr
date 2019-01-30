@@ -1035,8 +1035,8 @@ describe Crystal::Formatter do
 
   assert_format "foo &.nil?"
   assert_format "foo &.bar.nil?"
-  assert_format "foo &.nil?()"
-  assert_format "foo &.bar.nil?()"
+  assert_format "foo &.nil?()", "foo &.nil?"
+  assert_format "foo &.bar.nil?()", "foo &.bar.nil?"
 
   assert_format "foo(<<-X,\na\nX\n  1)"
   assert_format "def bar\n  foo(<<-X,\n  a\n  X\n    1)\nend"
