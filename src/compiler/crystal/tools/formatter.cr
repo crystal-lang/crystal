@@ -2189,7 +2189,7 @@ module Crystal
       end
 
       # Consider the case of `as T`, that is, casting `self` without an explicit `self`
-      if special_call && obj.is_a?(Var) && obj.name == "self" && @token.type != :self
+      if special_call && obj.is_a?(Var) && obj.name == "self" && !@token.keyword?(:self)
         obj = nil
       end
 

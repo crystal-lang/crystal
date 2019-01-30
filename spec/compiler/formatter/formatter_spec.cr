@@ -1059,6 +1059,7 @@ describe Crystal::Formatter do
   assert_format "page= <<-HTML\n  foo\nHTML", "page = <<-HTML\n  foo\nHTML"
   assert_format "page= <<-HTML\n  \#{1}foo\nHTML", "page = <<-HTML\n  \#{1}foo\nHTML"
 
+  assert_format "self.as(Int32)"
   assert_format "foo.as ( Int32* )", "foo.as(Int32*)"
   assert_format "foo.as   Int32*", "foo.as Int32*"
   assert_format "foo.as(T).bar"
