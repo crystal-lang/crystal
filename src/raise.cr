@@ -229,7 +229,7 @@ end
 {% end %}
 
 # Raises an Exception with the *message*.
-def raise(message : String? = nil, cause : Exception? = nil) : NoReturn
+def raise(message : String, cause : Exception? = nil) : NoReturn
   raise Exception.new(message, cause)
 end
 

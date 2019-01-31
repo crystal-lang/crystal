@@ -13,7 +13,7 @@ describe "raise" do
   it "should reuse the previous callstack" do
     exception = expect_raises Exception, "with callstack" do
       begin
-        raise
+        raise ""
       rescue ex
         raise "with callstack", ex
       end
