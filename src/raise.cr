@@ -229,8 +229,8 @@ end
 {% end %}
 
 # Raises an Exception with the *message*.
-def raise(message : String) : NoReturn
-  raise Exception.new(message)
+def raise(message : String? = nil, cause : Exception? = nil) : NoReturn
+  raise Exception.new(message, cause)
 end
 
 # :nodoc:

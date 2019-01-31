@@ -10,6 +10,17 @@ describe "raise" do
     exception.callstack.should_not be_nil
   end
 
+  it "should reuse the previous callstack" do
+    exception = expect_raises Exception, "with callstack" do
+      begin
+        raise
+      rescue ex
+        raise "with callstack", ex
+      end
+    end
+    exception.callstack.should_not be_nil
+  end
+
   it "shouldn't overwrite the callstack on re-raise" do
     exception_after_reraise = expect_raises Exception, "exception to be rescued" do
       begin
