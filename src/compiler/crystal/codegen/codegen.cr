@@ -377,7 +377,7 @@ module Crystal
           # If the fun is not invoked we codegen it at the end so
           # we don't have issues with constants being used before
           # they are declared.
-          # But, apparenty, llvm requires us to define them so that
+          # But, apparently, llvm requires us to define them so that
           # calls can find them, so we do so.
           codegen_fun node.real_name, node.external, @program, is_exported_fun: false
           @unused_fun_defs << node

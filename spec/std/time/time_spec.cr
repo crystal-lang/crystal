@@ -187,7 +187,7 @@ describe Time do
   end
 
   describe ".now" do
-    it "current time is similar in differnt locations" do
+    it "current time is similar in different locations" do
       (Time.now - Time.utc_now).should be_close(0.seconds, 1.second)
       (Time.now - Time.now(Time::Location.fixed(1234))).should be_close(0.seconds, 1.second)
     end

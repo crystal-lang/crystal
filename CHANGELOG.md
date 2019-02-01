@@ -955,7 +955,7 @@
 * Added `|` as a string delimiter to allow `q|string|` syntax (See [#3467](https://github.com/crystal-lang/crystal/issues/3467), thanks @RX14)
 * Added support for Windows linker (See [#4491](https://github.com/crystal-lang/crystal/issues/4491), thanks @RX14)
 * Added llvm operand bundle def and catch pad/ret/switch in order to support Windows SEH (See [#4501](https://github.com/crystal-lang/crystal/issues/4501), thanks @bcardiff)
-* Added `Float::Printer` based on Grisu3 to speed up float to string convertion (See [#4333](https://github.com/crystal-lang/crystal/issues/4333), thanks @will)
+* Added `Float::Printer` based on Grisu3 to speed up float to string conversion (See [#4333](https://github.com/crystal-lang/crystal/issues/4333), thanks @will)
 * Added `Object.unsafe_as` to unsafely reinterpret the bytes of an object as being of another `type` (See [#4333](https://github.com/crystal-lang/crystal/issues/4333), thanks @asterite)
 * Added `.downcase(Unicode::CaseOptions::Fold)` option which convert strings to casefolded strings for caseless matching (See [#4512](https://github.com/crystal-lang/crystal/issues/4512), thanks @akzhan)
 * Added `OpenSSL::DigestIO` to wrap an IO while calculating a digest (See [#4260](https://github.com/crystal-lang/crystal/issues/4260), thanks @spalladino)
@@ -1531,7 +1531,7 @@
 ## 0.13.0 (2016-03-07)
 
 * **(breaking change)** `Matrix` was moved to a separate shard: [https://github.com/Exilor/matrix](https://github.com/Exilor/Matrix)
-* The syntax of a method argument with a default value and a type restriction is now `def foo(arg : Type = default_value)`. Run `crystal tool format` to automatically upgrade exsiting code to this new syntax. The old `def foo(arg = default_value : Type)` syntax will be removed in a next release.
+* The syntax of a method argument with a default value and a type restriction is now `def foo(arg : Type = default_value)`. Run `crystal tool format` to automatically upgrade existing code to this new syntax. The old `def foo(arg = default_value : Type)` syntax will be removed in a next release.
 * Special handling of `case` with a tuple literal. See [#2258](https://github.com/crystal-lang/crystal/pull/2258).
 * Keywords can now be used for variable declaration, so `property end : Time` works as expected.
 * Comparison of signed vs. unsigned integers now always give a correct result
@@ -1896,7 +1896,7 @@
 * Fixed lexing of octal characters and strings (thanks @rhysd)
 * Time.parse can return UTC times (thanks @will)
 * Handle dashes in `crystal init` (thanks @niftyn8)
-* Generic type varaibles can now only be single letters (T, U, A, B, etc.)
+* Generic type variables can now only be single letters (T, U, A, B, etc.)
 * Support `%x` and `%X` in `sprintf` (thanks @yyyc514)
 * Optimized `Int#to_s` (thanks @yyyc514)
 * Added `upcase` option to `Int#to_s`, and use downcase by default.

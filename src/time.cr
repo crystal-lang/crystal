@@ -174,7 +174,7 @@ require "crystal/system/time"
 #
 # Instances of `Time` are focused on telling time – using a "wall clock".
 # When `Time.now` is called multiple times, the difference between the
-# returned instances is not guranteed to equal to the time elapsed between
+# returned instances is not guaranteed to equal to the time elapsed between
 # making the calls; even the order of the returned `Time` instances might
 # not reflect invocation order.
 #
@@ -405,8 +405,8 @@ struct Time
   #
   # This process can sometimes be ambiguous, mostly due skipping or repeating
   # times at time zone transitions. For example, in `America/New_York` the
-  # date-time `2011-03-13 02:15:00` never occured, there is a gap between time
-  # zones. In return, `2011-11-06 01:15:00` occured twice because of overlapping
+  # date-time `2011-03-13 02:15:00` never occurred, there is a gap between time
+  # zones. In return, `2011-11-06 01:15:00` occurred twice because of overlapping
   # time zones.
   #
   # In such cases, the choice of time zone, and therefore the time, is not

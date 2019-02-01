@@ -186,7 +186,7 @@ module MIME
       # Stores regular attribute-value pairs
       params = {} of String => String
 
-      # Stores extended parameters with continuating values
+      # Stores extended parameters with continuation values
       continuation = Hash(String, Hash(String, String)).new do |hash, key|
         hash[key] = {} of String => String
       end
@@ -295,7 +295,7 @@ module MIME
       #
       #     extended-other-values := *(ext-octet / attribute-char)
       continuation.each do |base_key, pieces|
-        # `#{base_key}*` is an extended-initial-name without inital-section.
+        # `#{base_key}*` is an extended-initial-name without initial-section.
         # This is not the start of a continuation, just a single encoded value.
         if value = pieces["#{base_key}*"]?
           if decoded = decode_rfc2231(value)

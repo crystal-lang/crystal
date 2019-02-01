@@ -99,7 +99,7 @@ describe Indexable do
     is.should eq([0, 1, 2])
   end
 
-  it "iterates throught a subset of its elements (#3386)" do
+  it "iterates through a subset of its elements (#3386)" do
     indexable = SafeIndexable.new(5)
     last_element = nil
 

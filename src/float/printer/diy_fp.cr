@@ -123,7 +123,7 @@ struct Float::Printer::DiyFP
     new(frac, exp)
   end
 
-  # Normalize such that the most signficiant bit of `frac` is set.
+  # Normalize such that the most significant bit of `frac` is set.
   def self.from_f_normalized(v : Float64 | Float32)
     pre_normalized = from_f(v)
     f = pre_normalized.frac

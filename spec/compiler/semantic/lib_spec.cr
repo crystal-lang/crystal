@@ -745,7 +745,7 @@ describe "Semantic: lib" do
       "argument 'x' already specified"
   end
 
-  it "errors if missing arugment" do
+  it "errors if missing argument" do
     assert_error %(
       lib LibC
         fun foo(x : Int32, y : UInt8) : Int32
@@ -756,7 +756,7 @@ describe "Semantic: lib" do
       "missing argument: y"
   end
 
-  it "errors if missing arugments" do
+  it "errors if missing arguments" do
     assert_error %(
       lib LibC
         fun foo(x : Int32, y : UInt8, z: Int32) : Int32

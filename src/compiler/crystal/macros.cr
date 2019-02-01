@@ -1651,7 +1651,7 @@ module Crystal::Macros
     def nilable? : BoolLiteral
     end
 
-    # Returns the types comforming a union type, if this is a union type.
+    # Returns the types forming a union type, if this is a union type.
     # Gives a compile error otherwise.
     #
     # See also: `union?`.

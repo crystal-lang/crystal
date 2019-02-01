@@ -213,7 +213,7 @@ abstract class JSON::Lexer
   end
 
   private def consume_number
-    # TODO once overflow is the deafult the overflow custom logic can be refactored
+    # TODO once overflow is the default the overflow custom logic can be refactored
 
     number_start
 
@@ -272,7 +272,7 @@ abstract class JSON::Lexer
   end
 
   private def consume_float(negative, integer, digits)
-    # TODO once overflow is the deafult the overflow custom logic can be refactored
+    # TODO once overflow is the default the overflow custom logic can be refactored
 
     append_number_char
     divisor = 1_u64
@@ -307,7 +307,7 @@ abstract class JSON::Lexer
   end
 
   private def consume_exponent(negative, float, digits)
-    # TODO once overflow is the deafult the overflow custom logic can be refactored
+    # TODO once overflow is the default the overflow custom logic can be refactored
 
     append_number_char
     exponent = 0

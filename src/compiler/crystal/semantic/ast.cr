@@ -745,7 +745,7 @@ module Crystal
     def_equals_and_hash value
   end
 
-  # Ficticious node representing a variable in macros
+  # Fictitious node representing a variable in macros
   class MetaMacroVar < ASTNode
     property name : String
     property default_value : ASTNode?

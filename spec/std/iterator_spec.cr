@@ -174,9 +174,9 @@ describe Iterator do
   describe "each" do
     it "yields the individual elements to the block" do
       iter = ["a", "b", "c"].each
-      concatinated = ""
-      iter.each { |e| concatinated += e }.should be_nil
-      concatinated.should eq "abc"
+      concatenated = ""
+      iter.each { |e| concatenated += e }.should be_nil
+      concatenated.should eq "abc"
     end
   end
 

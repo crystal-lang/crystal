@@ -64,7 +64,7 @@ struct LLVM::Type
   end
 
   # Assuming this type is a struct, returns its name.
-  # The name can be `nil` if the struct is anynomous.
+  # The name can be `nil` if the struct is anonymous.
   # Raises if this type is not a struct.
   def struct_name : String?
     raise "not a Struct" unless kind == Kind::Struct

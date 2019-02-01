@@ -56,7 +56,7 @@ describe "BigInt" do
     [1.1, 1.to_big_i, 3.to_big_i, 2.2].sort.should eq([1, 1.1, 2.2, 3])
   end
 
-  it "divides and calculs the modulo" do
+  it "divides and calculates the modulo" do
     11.to_big_i.divmod(3.to_big_i).should eq({3, 2})
     11.to_big_i.divmod(-3.to_big_i).should eq({-4, -1})
 
