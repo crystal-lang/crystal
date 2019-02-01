@@ -559,9 +559,11 @@ describe Crystal::Formatter do
 
   assert_format "1.as   Int32", "1.as Int32"
   assert_format "foo.bar. as   Int32", "foo.bar.as Int32"
+  assert_format "1\n.as(Int32)", "1\n  .as(Int32)"
 
   assert_format "1.as?   Int32", "1.as? Int32"
   assert_format "foo.bar. as?   Int32", "foo.bar.as? Int32"
+  assert_format "1\n.as?(Int32)", "1\n  .as?(Int32)"
 
   assert_format "1 .. 2", "1..2"
   assert_format "1 ... 2", "1...2"
@@ -1035,8 +1037,10 @@ describe Crystal::Formatter do
 
   assert_format "foo &.nil?"
   assert_format "foo &.bar.nil?"
-  assert_format "foo &.nil?()"
-  assert_format "foo &.bar.nil?()"
+  assert_format "foo &.nil?()", "foo &.nil?"
+  assert_format "foo &.bar.nil?()", "foo &.bar.nil?"
+
+  assert_format "1 if nil?\na.b + c"
 
   assert_format "foo(<<-X,\na\nX\n  1)"
   assert_format "def bar\n  foo(<<-X,\n  a\n  X\n    1)\nend"
@@ -1055,6 +1059,7 @@ describe Crystal::Formatter do
   assert_format "page= <<-HTML\n  foo\nHTML", "page = <<-HTML\n  foo\nHTML"
   assert_format "page= <<-HTML\n  \#{1}foo\nHTML", "page = <<-HTML\n  \#{1}foo\nHTML"
 
+  assert_format "self.as(Int32)"
   assert_format "foo.as ( Int32* )", "foo.as(Int32*)"
   assert_format "foo.as   Int32*", "foo.as Int32*"
   assert_format "foo.as(T).bar"
