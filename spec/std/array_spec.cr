@@ -835,6 +835,32 @@ describe "Array" do
     a.reverse!
     a.should eq([6, 5, 4, 3, 2, 1])
   end
+  
+  it "does starts with other array" do
+    a = [1, 2, 3, 4, 5, 6]
+    a.starts_with?([1, 2, 3]).should be_true
+    a.starts_with?([1]).should be_true
+    a.starts_with?([2]).should be_false
+  end
+  
+  it "does starts with element" do
+    a = [1, 2, 3, 4, 5, 6]
+    a.starts_with?(1).should be_true
+    a.starts_with?(2).should be_false
+  end
+  
+  it "does ends with other array" do
+    a = [1, 2, 3, 4, 5, 6]
+    a.ends_with?([4, 5, 6]).should be_true
+    a.ends_with?([6]).should be_true
+    a.ends_with?([5]).should be_false
+  end
+  
+  it "does ends with element" do
+    a = [1, 2, 3, 4, 5, 6]
+    a.ends_with?(6).should be_true
+    a.ends_with?(5).should be_false
+  end
 
   describe "rindex" do
     it "performs without a block" do
