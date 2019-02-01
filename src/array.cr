@@ -1454,9 +1454,9 @@ class Array(T)
   # a.starts_with?(1) # => true
   # a.starts_with?(2) # => false
   # ```
-  def starts_with?(el : T)
+  def starts_with?(element : T)
     return false if empty?
-    self[0] == el
+    self[0] == element
   end
   
   # Returns `true` when array ends with *other*, otherwise `false`.
@@ -1481,9 +1481,9 @@ class Array(T)
   # a.ends_with?(3) # => true
   # a.ends_with?(2) # => false
   # ```
-  def ends_with?(el : T)
+  def ends_with?(element : T)
     return false if empty?
-    self[-1] == el
+    self[-1] == element
   end
 
   # Returns an array with all the elements in the collection reversed.
