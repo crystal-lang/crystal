@@ -29,7 +29,7 @@ describe "Code gen: class" do
 
       f = Foo.new(2)
       g = Foo.new(40)
-      f.coco + g.coco
+      f.coco &+ g.coco
       ").to_i.should eq(42)
   end
 

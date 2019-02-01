@@ -199,14 +199,14 @@ describe "Code gen: ssa" do
         i = 1
         while i <= 3
           yield i
-          i += 1
+          i &+= 1
         end
       end
 
       a = 0
       foo do |x|
         coconio = x if x == 1
-        a += coconio.to_i
+        a &+= coconio.to_i
       end
       a
       )).to_i.should eq(1)

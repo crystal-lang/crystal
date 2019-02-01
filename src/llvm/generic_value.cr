@@ -3,7 +3,7 @@ class LLVM::GenericValue
   end
 
   def to_i : Int32
-    to_i64.to_i32
+    to_i64.to_i32!
   end
 
   def to_i64 : Int64

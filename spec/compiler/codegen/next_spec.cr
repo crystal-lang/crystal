@@ -25,7 +25,7 @@ describe "Code gen: next" do
       a = 0
       foo do |i|
         next if i.unsafe_mod(2) == 0
-        a += i
+        a &+= i
       end
       a
       ").to_i.should eq(4)
@@ -35,10 +35,10 @@ describe "Code gen: next" do
     run("
       def foo
         x = 0
-        x += yield 1
-        x += yield 2
-        x += yield 3
-        x += yield 4
+        x &+= yield 1
+        x &+= yield 2
+        x &+= yield 3
+        x &+= yield 4
         x
       end
 
@@ -75,8 +75,8 @@ describe "Code gen: next" do
     run("
       def foo
         a = 0
-        a += yield 1
-        a += yield 2
+        a &+= yield 1
+        a &+= yield 2
         a
       end
 
@@ -95,8 +95,8 @@ describe "Code gen: next" do
     run("
       def foo
         a = 0
-        a += yield 1
-        a += yield 2
+        a &+= yield 1
+        a &+= yield 2
         a
       end
 
@@ -115,8 +115,8 @@ describe "Code gen: next" do
     run("
       def foo
         a = 0
-        a += yield 4
-        a += yield 5
+        a &+= yield 4
+        a &+= yield 5
         a
       end
 
@@ -124,9 +124,9 @@ describe "Code gen: next" do
         a = 0
         b = 0
         while a < 4
-          a += 1
+          a &+= 1
           next if a.unsafe_mod(2) == 0
-          b += a
+          b &+= a
         end
         if b == i
           next 10

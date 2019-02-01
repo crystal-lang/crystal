@@ -10,8 +10,8 @@ describe "Code gen: hash literal spec" do
         end
 
         def []=(key, value)
-          @keys += key
-          @values += value
+          @keys &+= key
+          @values &+= value
         end
 
         def keys
@@ -24,7 +24,7 @@ describe "Code gen: hash literal spec" do
       end
 
       custom = Custom {1 => 10, 2 => 20}
-      custom.keys * custom.values
+      custom.keys &* custom.values
       )).to_i.should eq(90)
   end
 
@@ -37,8 +37,8 @@ describe "Code gen: hash literal spec" do
         end
 
         def []=(key, value)
-          @keys += key
-          @values += value
+          @keys &+= key
+          @values &+= value
         end
 
         def keys
@@ -51,7 +51,7 @@ describe "Code gen: hash literal spec" do
       end
 
       custom = Custom {1 => 10, 2 => 20}
-      custom.keys * custom.values
+      custom.keys &* custom.values
       )).to_i.should eq(90)
   end
 
@@ -64,8 +64,8 @@ describe "Code gen: hash literal spec" do
         end
 
         def []=(key, value)
-          @keys += key
-          @values += value
+          @keys &+= key
+          @values &+= value
         end
 
         def keys
@@ -78,7 +78,7 @@ describe "Code gen: hash literal spec" do
       end
 
       custom = Custom(Int32, Int32) {1 => 10, 2 => 20}
-      custom.keys * custom.values
+      custom.keys &* custom.values
       )).to_i.should eq(90)
   end
 
@@ -91,8 +91,8 @@ describe "Code gen: hash literal spec" do
         end
 
         def []=(key, value)
-          @keys += key
-          @values += value
+          @keys &+= key
+          @values &+= value
         end
 
         def keys
@@ -107,7 +107,7 @@ describe "Code gen: hash literal spec" do
       alias MyCustom = Custom
 
       custom = MyCustom {1 => 10, 2 => 20}
-      custom.keys * custom.values
+      custom.keys &* custom.values
       )).to_i.should eq(90)
   end
 
@@ -120,8 +120,8 @@ describe "Code gen: hash literal spec" do
         end
 
         def []=(key, value)
-          @keys += key
-          @values += value
+          @keys &+= key
+          @values &+= value
         end
 
         def keys
@@ -136,7 +136,7 @@ describe "Code gen: hash literal spec" do
       alias MyCustom = Custom(Int32, Int32)
 
       custom = MyCustom {1 => 10, 2 => 20}
-      custom.keys * custom.values
+      custom.keys &* custom.values
       )).to_i.should eq(90)
   end
 
@@ -163,8 +163,8 @@ describe "Code gen: hash literal spec" do
           end
 
           def []=(key, value)
-            @keys += key
-            @values += value
+            @keys &+= key
+            @values &+= value
           end
 
           def keys
@@ -178,7 +178,7 @@ describe "Code gen: hash literal spec" do
       end
 
       custom = Moo::Custom {1 => 10, 2 => 20}
-      custom.keys * custom.values
+      custom.keys &* custom.values
       )).to_i.should eq(90)
   end
 
@@ -192,8 +192,8 @@ describe "Code gen: hash literal spec" do
           end
 
           def []=(key, value)
-            @keys += key
-            @values += value
+            @keys &+= key
+            @values &+= value
           end
 
           def keys
@@ -207,7 +207,7 @@ describe "Code gen: hash literal spec" do
       end
 
       custom = Moo::Custom {1 => 10, 2 => 20}
-      custom.keys * custom.values
+      custom.keys &* custom.values
       )).to_i.should eq(90)
   end
 end

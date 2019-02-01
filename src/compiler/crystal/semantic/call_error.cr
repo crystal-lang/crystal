@@ -49,6 +49,15 @@ class Crystal::Call
       defs = owner.lookup_defs(def_name)
     end
 
+    # Also consider private top-level defs
+    if owner.is_a?(Program)
+      location = self.location
+      if location && (filename = location.original_filename)
+        private_defs = owner.file_module?(filename).try &.lookup_defs(def_name)
+        defs.concat(private_defs) if private_defs
+      end
+    end
+
     # Another special case: initialize is only looked up one level,
     # so we must find the first one defined.
     new_owner = owner
@@ -98,6 +107,10 @@ class Crystal::Call
           else
             msg << "undefined local variable or method '#{def_name}'"
           end
+        end
+
+        if def_name == "allocate" && owner.is_a?(MetaclassType) && owner.instance_type.module?
+          msg << colorize(" (modules cannot be instantiated)").yellow.bold
         end
 
         if obj && obj.type != owner
@@ -204,7 +217,9 @@ class Crystal::Call
           raise "'#{full_name(owner, def_name)}' is expected to be invoked with a block, but no block was given"
         end
 
-        if named_args_types
+        # Only check for named args mismatch if there's just one overload for
+        # the method name, otherwise the error might not be correct
+        if named_args_types && defs.one?
           defs_matching_args_size.each do |a_def|
             check_named_args_mismatch owner, arg_types, named_args_types, a_def
           end

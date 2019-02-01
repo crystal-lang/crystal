@@ -1,3 +1,4 @@
+require "mime/media_type"
 {% if !flag?(:without_zlib) %}
   require "flate"
   require "gzip"
@@ -73,8 +74,11 @@ module HTTP
   private def self.check_content_type_charset(body, headers)
     return unless body
 
-    if charset = content_type_and_charset(headers).charset
-      body.set_encoding(charset, invalid: :skip)
+    if content_type = headers["Content-Type"]?
+      mime_type = MIME::MediaType.parse(content_type)
+      if charset = mime_type["charset"]?
+        body.set_encoding(charset, invalid: :skip)
+      end
     end
   end
 
@@ -201,43 +205,6 @@ module HTTP
 
   def self.expect_continue?(headers)
     headers["Expect"]?.try(&.downcase) == "100-continue"
-  end
-
-  record ComputedContentTypeHeader,
-    content_type : String?,
-    charset : String?
-
-  # :nodoc:
-  def self.content_type_and_charset(headers)
-    content_type = headers["Content-Type"]?
-    return ComputedContentTypeHeader.new(nil, nil) unless content_type
-
-    # Avoid allocating an array for the split if there's no ';'
-    if content_type.index(';')
-      pieces = content_type.split(';')
-      content_type = pieces[0].strip
-      (1...pieces.size).each do |i|
-        piece = pieces[i]
-        eq_index = piece.index('=')
-        if eq_index
-          key = piece[0...eq_index].strip
-          if key == "charset"
-            value = piece[eq_index + 1..-1].strip
-
-            # For the case of a quoted charset like charset="utf-8"
-            if value.starts_with?('"') && value.ends_with?('"')
-              value = value[1...-1].strip
-            end
-
-            return ComputedContentTypeHeader.new(content_type, value)
-          end
-        end
-      end
-    else
-      content_type = content_type.strip
-    end
-
-    ComputedContentTypeHeader.new(content_type.strip, nil)
   end
 
   # Parse a time string using the formats specified by [RFC 2616](https://tools.ietf.org/html/rfc2616#section-3.3.1)

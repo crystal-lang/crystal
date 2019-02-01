@@ -4014,7 +4014,7 @@ module Crystal
       next_token_skip_space
       if @token.type == :"|"
         next_token_skip_space_or_newline
-        while @token.type != :"|"
+        while true
           if @token.type == :"*"
             if splat_index
               raise "splat block argument already specified", @token
@@ -4064,12 +4064,14 @@ module Crystal
               end
 
               next_token_skip_space_or_newline
-              if @token.type == :","
+              case @token.type
+              when :","
                 next_token_skip_space_or_newline
-              end
-
-              if @token.type == :")"
+                break if @token.type == :")"
+              when :")"
                 break
+              else
+                raise "expecting ',' or ')', not #{@token}", @token
               end
 
               i += 1
@@ -4084,8 +4086,15 @@ module Crystal
           block_args << var
 
           next_token_skip_space_or_newline
-          if @token.type == :","
+
+          case @token.type
+          when :","
             next_token_skip_space_or_newline
+            break if @token.type == :"|"
+          when :"|"
+            break
+          else
+            raise "expecting ',' or '|', not #{@token}", @token
           end
 
           arg_index += 1

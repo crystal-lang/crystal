@@ -8,12 +8,7 @@ class Crystal::Program
   #
   # See `Compiler#flags`.
   def flags
-    @flags ||= parse_flags(target_machine.triple.split('-'))
-  end
-
-  # Overrides the default flags with the given ones.
-  def flags=(flags : String)
-    @flags = parse_flags(flags.split)
+    @flags ||= flags_for_target(codegen_target)
   end
 
   # Returns `true` if *name* is in the program's flags.
@@ -22,32 +17,33 @@ class Crystal::Program
   end
 
   def bits64?
-    has_flag?("bits64")
+    codegen_target.pointer_bit_width == 64
   end
 
-  private def parse_flags(flags_name)
-    set = flags_name.map(&.downcase).to_set
-    set.add "darwin" if set.any?(&.starts_with?("macosx")) || set.any?(&.starts_with?("darwin"))
-    set.add "freebsd" if set.any?(&.starts_with?("freebsd"))
-    set.add "freebsd11" if set.any?(&.starts_with?("freebsd11"))
-    set.add "openbsd" if set.any?(&.starts_with?("openbsd"))
-    set.add "unix" if set.any? { |flag| %w(cygnus darwin freebsd linux openbsd).includes?(flag) }
-    set.add "win32" if set.any?(&.starts_with?("windows")) && set.any? { |flag| %w(gnu msvc).includes?(flag) }
+  private def flags_for_target(codegen_target)
+    flags = Set(String).new
 
-    set.add "x86_64" if set.any?(&.starts_with?("amd64"))
-    set.add "i686" if set.any? { |flag| %w(i586 i486 i386).includes?(flag) }
+    flags.add codegen_target.architecture
+    flags.add codegen_target.vendor
+    flags.concat codegen_target.environment_parts
 
-    if set.any?(&.starts_with?("arm"))
-      set.add "arm"
-      set.add "armhf" if set.includes?("gnueabihf")
+    # TODO(0.28.0) remove this
+    flags.add "i686" if codegen_target.architecture == "i386"
+
+    flags.add "bits#{codegen_target.pointer_bit_width}"
+
+    flags.add "armhf" if codegen_target.armhf?
+
+    flags.add "unix" if codegen_target.unix?
+    flags.add "win32" if codegen_target.win32?
+
+    flags.add "darwin" if codegen_target.macos?
+    if codegen_target.freebsd?
+      flags.add "freebsd"
+      flags.add "freebsd#{codegen_target.freebsd_version}"
     end
+    flags.add "openbsd" if codegen_target.openbsd?
 
-    if set.includes?("x86_64") || set.includes?("aarch64")
-      set.add "bits64"
-    else
-      set.add "bits32"
-    end
-
-    set
+    flags
   end
 end

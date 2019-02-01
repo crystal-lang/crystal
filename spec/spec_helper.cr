@@ -57,7 +57,7 @@ end
 def semantic_result(str, flags = nil, inject_primitives = true)
   str = inject_primitives(str) if inject_primitives
   program = Program.new
-  program.flags = flags if flags
+  program.flags.concat(flags.split) if flags
   input = parse str
   input = program.normalize input
   input = program.semantic input
@@ -67,7 +67,7 @@ end
 
 def assert_normalize(from, to, flags = nil)
   program = Program.new
-  program.flags = flags if flags
+  program.flags.concat(flags.split) if flags
   normalizer = Normalizer.new(program)
   from_nodes = Parser.parse(from)
   to_nodes = program.normalize(from_nodes)
@@ -114,7 +114,7 @@ end
 
 def assert_macro(macro_args, macro_body, expected, expected_pragmas = nil, flags = nil)
   program = Program.new
-  program.flags = flags if flags
+  program.flags.concat(flags.split) if flags
   sub_node = yield program
   assert_macro_internal program, sub_node, macro_args, macro_body, expected, expected_pragmas
 end
@@ -154,7 +154,7 @@ class Crystal::SpecRunOutput
   end
 end
 
-def run(code, filename = nil, inject_primitives = true, debug = Crystal::Debug::None)
+def run(code, filename = nil, inject_primitives = true, debug = Crystal::Debug::None, flags = nil)
   code = inject_primitives(code) if inject_primitives
 
   # Code that requires the prelude doesn't run in LLVM's MCJIT
@@ -162,7 +162,7 @@ def run(code, filename = nil, inject_primitives = true, debug = Crystal::Debug::
   # in the current executable!), so instead we compile
   # the program and run it, printing the last
   # expression and using that to compare the result.
-  if code.includes?(%(require "prelude"))
+  if code.includes?(%(require "prelude")) || flags
     ast = Parser.parse(code).as(Expressions)
     last = ast.expressions.last
     assign = Assign.new(Var.new("__tempvar"), last)
@@ -175,6 +175,7 @@ def run(code, filename = nil, inject_primitives = true, debug = Crystal::Debug::
 
     compiler = Compiler.new
     compiler.debug = debug
+    compiler.flags.concat flags if flags
     compiler.compile Compiler::Source.new("spec", code), output_filename
 
     output = `#{output_filename}`

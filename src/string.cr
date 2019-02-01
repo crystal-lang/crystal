@@ -1019,7 +1019,7 @@ class String
   end
 
   # Returns a new `String` with *suffix* removed from the end of the string.
-  # If *suffix* is `'\n'` then `"\r\n"` is also removed if the string ends with it,
+  # If *suffix* is `'\n'` then `"\r\n"` is also removed if the string ends with it.
   #
   # ```
   # "hello".chomp('o') # => "hell"
@@ -1036,7 +1036,7 @@ class String
   end
 
   # Returns a new `String` with *suffix* removed from the end of the string.
-  # If *suffix* is `"\n"` then `"\r\n"` is also removed if the string ends with it,
+  # If *suffix* is `"\n"` then `"\r\n"` is also removed if the string ends with it.
   #
   # ```
   # "hello".chomp("llo") # => "he"

@@ -237,3 +237,8 @@ end
 fun __crystal_raise_string(message : UInt8*)
   raise String.new(message)
 end
+
+# :nodoc:
+fun __crystal_raise_overflow : NoReturn
+  raise OverflowError.new
+end

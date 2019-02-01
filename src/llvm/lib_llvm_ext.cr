@@ -136,4 +136,6 @@ lib LibLLVMExt
   {% unless LibLLVM::IS_38 || LibLLVM::IS_39 %}
     fun write_bitcode_with_summary_to_file = LLVMWriteBitcodeWithSummaryToFile(module : LibLLVM::ModuleRef, path : UInt8*) : Void
   {% end %}
+
+  fun normalize_target_triple = LLVMNormalizeTargetTriple(triple : Char*) : Char*
 end

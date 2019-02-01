@@ -129,6 +129,20 @@ class DivisionByZeroError < Exception
   end
 end
 
+# Raised when the result of an arithmetic operation is outside of the range
+# that can be represented within the given operands types.
+#
+# ```
+# Int32::MAX + 1      # raises OverflowError (Overflow)
+# Int32::MIN - 1      # raises OverflowError (Overflow)
+# Float64::MAX.to_f32 # raises OverflowError (Overflow)
+# ```
+class OverflowError < Exception
+  def initialize(message = "Overflow")
+    super(message)
+  end
+end
+
 # Raised when a method is not implemented.
 #
 # This can be used either to stub out method bodies, or when the method is not
@@ -136,5 +150,16 @@ end
 class NotImplementedError < Exception
   def initialize(item)
     super("Not Implemented: #{item}")
+  end
+end
+
+# Raised when a `not_nil!` assertion fails.
+#
+# ```
+# "hello".index('x').not_nil! # raises NilAssertionError ("hello" does not contain 'x')
+# ```
+class NilAssertionError < Exception
+  def initialize(message = "Nil assertion failed")
+    super(message)
   end
 end

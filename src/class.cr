@@ -146,7 +146,7 @@ class Class
   end
 
   def to_s(io)
-    io << name
+    io << {{ @type.name.stringify }}
   end
 
   def dup

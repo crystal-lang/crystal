@@ -53,11 +53,11 @@ describe "Code gen: pointer" do
   end
 
   it "codegens malloc" do
-    run("p = Pointer(Int32).malloc(10_u64); p.value = 1; p.value + 1_i64").to_i.should eq(2)
+    run("p = Pointer(Int32).malloc(10_u64); p.value = 1; p.value &+ 1_i64").to_i.should eq(2)
   end
 
   it "codegens realloc" do
-    run("p = Pointer(Int32).malloc(10_u64); p.value = 1; x = p.realloc(20_u64); x.value + 1_i64").to_i.should eq(2)
+    run("p = Pointer(Int32).malloc(10_u64); p.value = 1; x = p.realloc(20_u64); x.value &+ 1_i64").to_i.should eq(2)
   end
 
   it "codegens pointer cast" do

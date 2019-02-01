@@ -1282,6 +1282,8 @@ module Crystal
         {Int32::MIN, Int32::MAX}
       when :i64
         {Int64::MIN, Int64::MAX}
+      when :i128
+        {Int128::MIN, Int128::MAX}
       when :u8
         {UInt8::MIN, UInt8::MAX}
       when :u16
@@ -1290,6 +1292,8 @@ module Crystal
         {UInt32::MIN, UInt32::MAX}
       when :u64
         {UInt64::MIN, UInt64::MAX}
+      when :u128
+        {UInt128::MIN, UInt128::MAX}
       else
         raise "Bug: called 'range' for non-integer literal"
       end

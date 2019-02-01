@@ -36,23 +36,25 @@ module Spec::Methods
   #
   # It is usually used inside a `#describe` or `#context` section.
   def it(description = "assert", file = __FILE__, line = __LINE__, end_line = __END_LINE__, &block)
-    return unless Spec.matches?(description, file, line, end_line)
+    Spec::RootContext.check_nesting_spec(file, line) do
+      return unless Spec.matches?(description, file, line, end_line)
 
-    Spec.formatters.each(&.before_example(description))
+      Spec.formatters.each(&.before_example(description))
 
-    start = Time.monotonic
-    begin
-      Spec.run_before_each_hooks
-      block.call
-      Spec::RootContext.report(:success, description, file, line, Time.monotonic - start)
-    rescue ex : Spec::AssertionFailed
-      Spec::RootContext.report(:fail, description, file, line, Time.monotonic - start, ex)
-      Spec.abort! if Spec.fail_fast?
-    rescue ex
-      Spec::RootContext.report(:error, description, file, line, Time.monotonic - start, ex)
-      Spec.abort! if Spec.fail_fast?
-    ensure
-      Spec.run_after_each_hooks
+      start = Time.monotonic
+      begin
+        Spec.run_before_each_hooks
+        block.call
+        Spec::RootContext.report(:success, description, file, line, Time.monotonic - start)
+      rescue ex : Spec::AssertionFailed
+        Spec::RootContext.report(:fail, description, file, line, Time.monotonic - start, ex)
+        Spec.abort! if Spec.fail_fast?
+      rescue ex
+        Spec::RootContext.report(:error, description, file, line, Time.monotonic - start, ex)
+        Spec.abort! if Spec.fail_fast?
+      ensure
+        Spec.run_after_each_hooks
+      end
     end
   end
 
@@ -68,11 +70,13 @@ module Spec::Methods
   #
   # It is usually used inside a `#describe` or `#context` section.
   def pending(description = "assert", file = __FILE__, line = __LINE__, end_line = __END_LINE__, &block)
-    return unless Spec.matches?(description, file, line, end_line)
+    Spec::RootContext.check_nesting_spec(file, line) do
+      return unless Spec.matches?(description, file, line, end_line)
 
-    Spec.formatters.each(&.before_example(description))
+      Spec.formatters.each(&.before_example(description))
 
-    Spec::RootContext.report(:pending, description, file, line)
+      Spec::RootContext.report(:pending, description, file, line)
+    end
   end
 
   # Defines a yet-to-be-implemented pending test case

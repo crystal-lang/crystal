@@ -10,15 +10,15 @@ describe "Codegen: while" do
   end
 
   it "codegens while with non-false condition" do
-    run("a = 1; while a < 10; a = a + 1; end; a").to_i.should eq(10)
+    run("a = 1; while a < 10; a = a &+ 1; end; a").to_i.should eq(10)
   end
 
   it "break without value" do
-    run("a = 0; while a < 10; a += 1; break; end; a").to_i.should eq(1)
+    run("a = 0; while a < 10; a &+= 1; break; end; a").to_i.should eq(1)
   end
 
   it "conditional break without value" do
-    run("a = 0; while a < 10; a += 1; break if a > 5; end; a").to_i.should eq(6)
+    run("a = 0; while a < 10; a &+= 1; break if a > 5; end; a").to_i.should eq(6)
   end
 
   it "codegens endless while" do
@@ -73,9 +73,9 @@ describe "Codegen: while" do
       x = 0
 
       while i < 10
-        i += 1
+        i &+= 1
         next if i.unsafe_mod(2) == 0
-        x += i
+        x &+= i
       end
       x
     ").to_i.should eq(25)
