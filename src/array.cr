@@ -1441,6 +1441,11 @@ class Array(T)
     return false if other.size > size
     self[0, other.size] == other
   end
+
+  # ditto
+  def starts_with?(other : Enumerable)
+    starts_with?(other.to_a)
+  end
   
   # Returns `true` when array starts with *element*, otherwise `false`.
   #
@@ -1463,6 +1468,11 @@ class Array(T)
   def ends_with?(other : Array)
     return false if other.size > size
     self[size - other.size, other.size] == other
+  end
+
+  # ditto
+  def ends_with?(other : Enumerable)
+    ends_with?(other.to_a)
   end
   
   # Returns `true` when array ends with *element*, otherwise `false`.
