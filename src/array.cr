@@ -1450,6 +1450,7 @@ class Array(T)
   # a.starts_with?(2) # => false
   # ```
   def starts_with?(el : T)
+    return false if empty?
     self[0] == el
   end
   
@@ -1471,6 +1472,7 @@ class Array(T)
   # a.ends_with?(2) # => false
   # ```
   def ends_with?(el : T)
+    return false if empty?
     self[-1] == el
   end
 
