@@ -1430,6 +1430,50 @@ class Array(T)
     self
   end
 
+  # Returns `true` when array starts with *other*, otherwise `false`.
+  #
+  # ```
+  # a = [1, 2, 3]
+  # a.starts_with?([1, 2]) # => true
+  # a.starts_with?([2, 3]) # => false
+  # ```
+  def starts_with?(other : Array)
+    return false if other.size > size
+    self[0, other.size] == other
+  end
+  
+  # Returns `true` when array starts with *element*, otherwise `false`.
+  #
+  # ```
+  # a = [1, 2, 3]
+  # a.starts_with?(1) # => true
+  # a.starts_with?(2) # => false
+  # ```
+  def starts_with?(el : T)
+    self[0] == el
+  end
+  
+  # Returns `true` when array ends with *other*, otherwise `false`.
+  # ```
+  # a = [1, 2, 3]
+  # a.ends_with?([2, 3]) # => true
+  # a.ends_with?([1, 2]) # => false
+  # ```
+  def ends_with?(other : Array)
+    return false if other.size > size
+    self[size - other.size, other.size] == other
+  end
+  
+  # Returns `true` when array ends with *element*, otherwise `false`.
+  # ```
+  # a = [1, 2, 3]
+  # a.ends_with?(3) # => true
+  # a.ends_with?(2) # => false
+  # ```
+  def ends_with?(el : T)
+    self[-1] == el
+  end
+
   # Returns an array with all the elements in the collection reversed.
   #
   # ```
