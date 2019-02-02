@@ -114,7 +114,7 @@ with_build_env() {
 
   on_linux verify_linux_environment
 
-  export DOCKER_TEST_PREFIX="crystallang/crystal:0.27.0"
+  export DOCKER_TEST_PREFIX="crystallang/crystal:0.27.1"
 
   case $ARCH in
     x86_64)
