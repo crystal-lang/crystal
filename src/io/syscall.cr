@@ -103,11 +103,11 @@ module IO::Syscall
     end
   end
 
-  private def wait_readable(timeout = @read_timeout)
+  def wait_readable(timeout = @read_timeout)
     wait_readable(timeout: timeout) { |err| raise err }
   end
 
-  private def wait_readable(timeout = @read_timeout)
+  def wait_readable(timeout = @read_timeout)
     readers = (@readers ||= Deque(Fiber).new)
     readers << Fiber.current
     add_read_event(timeout)
@@ -123,11 +123,11 @@ module IO::Syscall
 
   private abstract def add_read_event(timeout = @read_timeout)
 
-  private def wait_writable(timeout = @write_timeout)
+  def wait_writable(timeout = @write_timeout)
     wait_writable(timeout: timeout) { |err| raise err }
   end
 
-  private def wait_writable(timeout = @write_timeout)
+  def wait_writable(timeout = @write_timeout)
     writers = (@writers ||= Deque(Fiber).new)
     writers << Fiber.current
     add_write_event(timeout)
