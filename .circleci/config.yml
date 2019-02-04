@@ -294,6 +294,27 @@ jobs:
           path: /tmp/workspace/build
           destination: dist_packages
 
+  test_dist_linux_on_docker:
+    machine: true
+    environment:
+      <<: *env
+      TRAVIS_OS_NAME: linux
+      ARCH: x86_64
+      ARCH_CMD: linux64
+    steps:
+      - attach_workspace:
+          at: /tmp/workspace
+      - run: |
+          cd /tmp/workspace/distribution-scripts
+          source ./build.env
+          gunzip -c /tmp/workspace/build/docker-${CRYSTAL_VERSION}.tar.gz | docker image load
+          export DOCKER_TEST_PREFIX="crystallang/crystal:$DOCKER_TAG" >> $BASH_ENV
+      - checkout
+      - run: bin/ci prepare_system
+      - run: echo 'export CURRENT_TAG="$CIRCLE_TAG"' >> $BASH_ENV
+      - run: bin/ci prepare_build
+      - run: bin/ci build
+
 workflows:
   version: 2
   test_all_platforms:
@@ -309,6 +330,7 @@ workflows:
                 - master
           requires:
             - test_linux
+
   tagged_release:
     jobs:
       - test_linux:
@@ -350,6 +372,10 @@ workflows:
           filters: *per_tag
           requires:
             - dist_linux
+      - test_dist_linux_on_docker:
+          filters: *per_tag
+          requires:
+            - dist_docker
       # Tagged release do not publish docker images since they are unsigned
       # publish_docker:
       - dist_docs:
@@ -399,6 +425,9 @@ workflows:
       - dist_docker:
           requires:
             - dist_linux
+      - test_dist_linux_on_docker:
+          requires:
+            - dist_docker
       - publish_docker:
           requires:
             - dist_docker
@@ -454,6 +483,10 @@ workflows:
           filters: *maintenance
           requires:
             - dist_linux
+      - test_dist_linux_on_docker:
+          filters: *maintenance
+          requires:
+            - dist_docker
       - publish_docker:
           filters: *maintenance
           requires:
