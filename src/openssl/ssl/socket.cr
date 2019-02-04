@@ -148,23 +148,14 @@ abstract class OpenSSL::SSL::Socket < IO
           ret = LibSSL.ssl_shutdown(@ssl)
           break if ret == 1
           raise OpenSSL::SSL::Error.new(@ssl, ret, "SSL_shutdown") if ret < 0
-        rescue e : Errno
-          case e.errno
-          when 0
-            # OpenSSL claimed an underlying syscall failed, but that didn't set any error state,
-            # assume we're done
-            break
-          when Errno::EAGAIN
-            # Ignore/retry, shutdown did not complete yet
-          when Errno::EINPROGRESS
-            # Ignore/retry, another operation not complete yet
-          else
-            raise e
-          end
         rescue e : OpenSSL::SSL::Error
           case e.error
           when .want_read?, .want_write?
             # Ignore, shutdown did not complete yet
+          when .syscall?
+            # OpenSSL claimed an underlying syscall failed, but that didn't set any error state,
+            # assume we're done
+            break
           else
             raise e
           end
