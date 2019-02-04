@@ -13,6 +13,8 @@ lib LibC
   fun pthread_cond_wait(x0 : PthreadCondT*, x1 : PthreadMutexT*) : Int
   fun pthread_create(x0 : PthreadT*, x1 : PthreadAttrT*, x2 : Void* -> Void*, x3 : Void*) : Int
   fun pthread_detach(x0 : PthreadT) : Int
+  fun pthread_get_stackaddr_np(x0 : PthreadT) : Void*
+  fun pthread_get_stacksize_np(x0 : PthreadT) : SizeT
   fun pthread_join(x0 : PthreadT, x1 : Void**) : Int
   fun pthread_mutexattr_destroy(x0 : PthreadMutexattrT*) : Int
   fun pthread_mutexattr_init(x0 : PthreadMutexattrT*) : Int

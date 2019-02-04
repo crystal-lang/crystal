@@ -42,7 +42,7 @@ class Thread
   def initialize
     @func = ->{}
     @th = LibC.pthread_self
-    @main_fiber = Fiber.new
+    @main_fiber = Fiber.new(stack_address)
 
     @@threads.push(self)
   end
@@ -124,7 +124,7 @@ class Thread
 
   protected def start
     Thread.current = self
-    @main_fiber = fiber = Fiber.new
+    @main_fiber = fiber = Fiber.new(stack_address)
 
     begin
       @func.call
@@ -134,5 +134,47 @@ class Thread
       @@threads.delete(self)
       Fiber.inactive(fiber)
     end
+  end
+
+  private def stack_address : Void*
+    address = Pointer(Void).null
+
+    {% if flag?(:darwin) %}
+      # FIXME: pthread_get_stacksize_np returns bogus value on macOS X 10.9.0:
+      address = LibC.pthread_get_stackaddr_np(@th) - LibC.pthread_get_stacksize_np(@th)
+
+    {% elsif flag?(:freebsd) %}
+      ret = LibC.pthread_attr_init(out attr)
+      unless ret == 0
+        LibC.pthread_attr_destroy(pointerof(attr))
+        raise Errno.new("pthread_attr_init", ret)
+      end
+
+      if LibC.pthread_attr_get_np(@th, pointerof(attr)) == 0
+        LibC.pthread_attr_getstack(pointerof(attr), pointerof(address), out _)
+      end
+      ret = LibC.pthread_attr_destroy(pointerof(attr))
+      raise Errno.new("pthread_attr_destroy", ret) unless ret == 0
+
+    {% elsif flag?(:linux) %}
+      if LibC.pthread_getattr_np(@th, out attr) == 0
+        LibC.pthread_attr_getstack(pointerof(attr), pointerof(address), out _)
+      end
+      ret = LibC.pthread_attr_destroy(pointerof(attr))
+      raise Errno.new("pthread_attr_destroy", ret) unless ret == 0
+
+    {% elsif flag?(:openbsd) %}
+      ret = LibC.pthread_stackseg_np(@th, out stack)
+      raise Errno.new("pthread_stackseg_np", ret) unless ret == 0
+
+      address =
+        if LibC.pthread_main_np == 1
+          stack.ss_sp - stack.ss_size + sysconf(LibC::SC_PAGESIZE)
+        else
+          stack.ss_sp - stack.ss_size
+        end
+    {% end %}
+
+    address
   end
 end
