@@ -165,6 +165,10 @@ abstract class OpenSSL::SSL::Socket < IO
           case e.error
           when .want_read?, .want_write?
             # Ignore, shutdown did not complete yet
+          when .syscall?
+            # OpenSSL claimed an underlying syscall failed, but that didn't set any error state,
+            # assume we're done
+            break
           else
             raise e
           end
