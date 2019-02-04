@@ -298,10 +298,18 @@ workflows:
   version: 2
   test_all_platforms:
     jobs:
-      - test_linux
-      - test_linux32
-      - test_darwin
-      - check_format
+      - test_linux:
+          filters: &unless_maintenance
+            branches:
+              ignore:
+                - /release\/.+/
+                - /.*\bci\b.*/
+      - test_linux32:
+          filters: *unless_maintenance
+      - test_darwin:
+          filters: *unless_maintenance
+      - check_format:
+          filters: *unless_maintenance
       - sync_docs_s3:
           filters:
             branches:
