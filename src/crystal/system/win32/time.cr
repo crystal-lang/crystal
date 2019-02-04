@@ -49,7 +49,7 @@ module Crystal::System::Time
       raise WinError.new("QueryPerformanceCounter")
     end
 
-    {ticks / @@performance_frequency, (ticks.remainder(NANOSECONDS_PER_SECOND) * NANOSECONDS_PER_SECOND / @@performance_frequency).to_i32}
+    {ticks / @@performance_frequency, (ticks.remainder(@@performance_frequency) * NANOSECONDS_PER_SECOND / @@performance_frequency).to_i32}
   end
 
   def self.load_localtime : ::Time::Location?
