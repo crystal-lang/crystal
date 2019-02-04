@@ -3,13 +3,13 @@ require "openssl"
 require "http/client"
 require "http/server"
 
-private def test_server(host, port, read_time = 0)
+private def test_server(host, port, read_time = 0, content_type = "text/plain")
   server = TCPServer.new(host, port)
   begin
     spawn do
       io = server.accept
       sleep read_time
-      response = HTTP::Client::Response.new(200, headers: HTTP::Headers{"Content-Type" => "text/plain"}, body: "OK")
+      response = HTTP::Client::Response.new(200, headers: HTTP::Headers{"Content-Type" => content_type}, body: "OK")
       response.to_io(io)
       io.flush
     end
@@ -209,6 +209,13 @@ module HTTP
       test_server("localhost", 0, 0) do |server|
         client = Client.new("localhost", server.local_address.port)
         client.connect_timeout = 0.5
+        client.get("/")
+      end
+    end
+
+    it "tests empty Content-Type" do
+      test_server("localhost", 0, content_type: "") do |server|
+        client = Client.new("localhost", server.local_address.port)
         client.get("/")
       end
     end
