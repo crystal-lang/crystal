@@ -9,7 +9,9 @@ services:
 matrix:
   fast_finish: true
   include:
-    - env: ARCH=x86_64 ARCH_CMD=linux64
+    - env: ARCH=x86_64 ARCH_CMD=linux64 CI_CMD=build
+      os: linux
+    - env: ARCH=x86_64 ARCH_CMD=linux64 CI_CMD=format
       os: linux
 
 git:
@@ -25,7 +27,7 @@ install:
   - travis_retry bin/ci prepare_build
 
 script:
-  - travis_retry bin/ci build
+  - travis_retry bin/ci $CI_CMD
 
 branches:
   only:

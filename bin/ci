@@ -150,7 +150,8 @@ Helper script to prepare and run the testsuite on Travis CI.
 Commands:
   prepare_system          setup any necessaries repositories etc.
   prepare_build           download and extract any dependencies needed for the build
-  build                   run specs, build crystal, run format check, build samples, build the docs
+  build                   run specs, build crystal, build samples, build the docs
+  format                  build crystal, run format check
   with_build_env command  run command in the build environment
   help                    display this
 
