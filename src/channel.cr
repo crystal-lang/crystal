@@ -2,10 +2,13 @@ require "fiber"
 
 abstract class Channel(T)
   module SelectAction
+    getter? canceled = false
+    getter? waiting = false
+
     abstract def ready?
     abstract def execute
-    abstract def wait
-    abstract def unwait
+    abstract def wait : Bool
+    abstract def unwait(fiber : Fiber)
   end
 
   class ClosedError < Exception
@@ -61,16 +64,16 @@ abstract class Channel(T)
     @receivers << Fiber.current
   end
 
-  protected def unwait_for_receive
-    @receivers.delete Fiber.current
+  protected def unwait_for_receive(fiber)
+    @receivers.delete fiber
   end
 
   protected def wait_for_send
     @senders << Fiber.current
   end
 
-  protected def unwait_for_send
-    @senders.delete Fiber.current
+  protected def unwait_for_send(fiber)
+    @senders.delete fiber
   end
 
   protected def raise_if_closed
@@ -94,26 +97,66 @@ abstract class Channel(T)
     nil
   end
 
+  # :nodoc:
   def self.select(*ops : SelectAction)
     self.select ops
   end
 
+  # :nodoc:
+  #
+  # Executes all operations inside its own fiber to wait in. Postpones the fiber
+  # execution so the fibers' array will always be filled with all fibers, and
+  # any ready operation can cancel all other fibers ASAP.
   def self.select(ops : Tuple | Array, has_else = false)
-    loop do
-      ops.each_with_index do |op, index|
-        if op.ready?
-          result = op.execute
-          return index, result
+    # fast path: check if any clause is ready
+    ops.each_with_index do |op, i|
+      if op.ready?
+        return {i, op.execute}
+      end
+    end
+
+    if has_else
+      return {ops.size, nil}
+    end
+
+    # slow path: spawn fibers to wait on each clause
+    main = Fiber.current
+    fibers = Array(Fiber).new(ops.size)
+    index = -1
+    value = nil
+
+    ops.each_with_index do |op, i|
+      fibers << Fiber.new(name: i.to_s) do
+        loop do
+          break if op.canceled?
+
+          if op.ready?
+            # cancel other fibers before executing the op, which could switch
+            # the current context:
+            cancel_select_actions(ops, fibers, i)
+            index, value = i, op.execute
+            Crystal::Scheduler.enqueue(main)
+            break
+          end
+
+          op.wait
+          Crystal::Scheduler.reschedule
         end
       end
+    end
 
-      if has_else
-        return ops.size, nil
-      end
+    Crystal::Scheduler.enqueue(fibers)
+    Crystal::Scheduler.reschedule
 
-      ops.each &.wait
-      Crystal::Scheduler.reschedule
-      ops.each &.unwait
+    {index, value}
+  end
+
+  private def self.cancel_select_actions(ops, fibers, running_index)
+    ops.each_with_index do |op, i|
+      next if i == running_index
+      fiber = fibers[i]
+      op.unwait(fiber)
+      Crystal::Scheduler.enqueue(fiber) if op.waiting?
     end
   end
 
@@ -128,7 +171,7 @@ abstract class Channel(T)
   end
 
   # :nodoc:
-  struct ReceiveAction(C)
+  class ReceiveAction(C)
     include SelectAction
 
     def initialize(@channel : C)
@@ -144,15 +187,17 @@ abstract class Channel(T)
 
     def wait
       @channel.wait_for_receive
+      @waiting = true
     end
 
-    def unwait
-      @channel.unwait_for_receive
+    def unwait(fiber)
+      @canceled = true
+      @channel.unwait_for_receive(fiber)
     end
   end
 
   # :nodoc:
-  struct SendAction(C, T)
+  class SendAction(C, T)
     include SelectAction
 
     def initialize(@channel : C, @value : T)
@@ -168,10 +213,12 @@ abstract class Channel(T)
 
     def wait
       @channel.wait_for_send
+      @waiting = true
     end
 
-    def unwait
-      @channel.unwait_for_send
+    def unwait(fiber)
+      @canceled = true
+      @channel.unwait_for_send(fiber)
     end
   end
 end
