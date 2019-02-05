@@ -1,3 +1,14 @@
+# 0.27.2 (2019-02-05)
+
+## Standard library
+
+- Fixed integer overflow in main thread stack base detection. ([#7373](https://github.com/crystal-lang/crystal/pull/7373), thanks @ysbaddaden)
+
+### Networking
+
+- Fixes TLS exception during shutdown. ([#7372](https://github.com/crystal-lang/crystal/pull/7372), thanks @bcardiff)
+- Fixed `HTTP::Client` support exception on missing Content-Type. ([#7371](https://github.com/crystal-lang/crystal/pull/7371), thanks @bew)
+
 # 0.27.1 (2019-01-30)
 
 ## Language changes
