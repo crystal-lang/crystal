@@ -913,7 +913,7 @@ class String
   def downcase(options = Unicode::CaseOptions::None)
     return self if empty?
 
-    if ascii_only?
+    if ascii_only? && (options.none? || options.ascii?)
       String.new(bytesize) do |buffer|
         bytesize.times do |i|
           buffer[i] = to_unsafe[i].unsafe_chr.downcase.ord.to_u8
