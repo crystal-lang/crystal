@@ -94,7 +94,11 @@ end
 # This is because in the first case all spawned fibers refer to
 # the same local variable, while in the second example copies of
 # *i* are passed to a `Proc` that eventually invokes the call.
-macro spawn(call, *, name = nil)
+macro spawn(call, *, name = nil, &block)
+  {% if block %}
+    {% raise "`spawn(call)` can't be invoked with a block, did you mean `spawn(name: ...) { ... }`?" %}
+  {% end %}
+
   {% if call.is_a?(Call) %}
     ->(
       {% for arg, i in call.args %}
