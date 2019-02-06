@@ -1,8 +1,9 @@
 require "./config"
+require "./exception"
 
 module Crystal
   struct CrystalPath
-    class Error < Exception
+    class Error < LocationlessException
     end
 
     def self.default_path
