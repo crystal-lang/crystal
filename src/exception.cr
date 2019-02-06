@@ -133,12 +133,12 @@ end
 # that can be represented within the given operands types.
 #
 # ```
-# Int32::MAX + 1      # raises OverflowError (Overflow)
-# Int32::MIN - 1      # raises OverflowError (Overflow)
-# Float64::MAX.to_f32 # raises OverflowError (Overflow)
+# Int32::MAX + 1      # raises OverflowError (Arithmetic overflow)
+# Int32::MIN - 1      # raises OverflowError (Arithmetic overflow)
+# Float64::MAX.to_f32 # raises OverflowError (Arithmetic overflow)
 # ```
 class OverflowError < Exception
-  def initialize(message = "Overflow")
+  def initialize(message = "Arithmetic overflow")
     super(message)
   end
 end
