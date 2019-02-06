@@ -914,7 +914,7 @@ describe "Semantic: module" do
         end
       end
       Moo.new),
-      "undefined local variable or method 'allocate' for Moo:Module #{" (modules cannot be instantiated)".colorize.yellow.bold}"
+      "undefined local variable or method 'allocate' for Moo:Module (modules cannot be instantiated)"
   end
 
   it "gives error when trying to instantiate with allocate" do
@@ -924,7 +924,7 @@ describe "Semantic: module" do
         end
       end
       Moo.allocate),
-      "undefined method 'allocate' for Moo:Module#{" (modules cannot be instantiated)".colorize.yellow.bold}"
+      "undefined method 'allocate' for Moo:Module (modules cannot be instantiated)"
   end
 
   it "uses type declaration inside module" do
