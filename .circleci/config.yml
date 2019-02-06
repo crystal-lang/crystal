@@ -45,7 +45,20 @@ jobs:
     environment:
       <<: *env
       TRAVIS_OS_NAME: osx
-    steps: *ci_steps
+    steps:
+      - restore_cache:
+          keys:
+            - brew-cache-v1
+      - checkout
+      - run: bin/ci prepare_system
+      - run: echo 'export CURRENT_TAG="$CIRCLE_TAG"' >> $BASH_ENV
+      - run: bin/ci prepare_build
+      - run: bin/ci build
+      - save_cache:
+          key: brew-cache-v1
+          paths:
+            - /usr/local/Homebrew
+            - ~/Library/Caches/Homebrew/downloads
 
   check_format:
     machine: true
@@ -213,6 +226,9 @@ jobs:
       xcode: "9.0"
     shell: /bin/bash --login -eo pipefail
     steps:
+      - restore_cache:
+          keys:
+            - brew-cache-v1
       - run:
           name: Setup environment
           command: |
