@@ -339,6 +339,11 @@ describe "BigInt" do
     x = 1.to_big_i
     x.clone.should eq(x)
   end
+
+  describe "#humanize_bytes" do
+    it { BigInt.new("1180591620717411303424").humanize_bytes.should eq("1.0ZiB") }
+    it { BigInt.new("1208925819614629174706176").humanize_bytes.should eq("1.0YiB") }
+  end
 end
 
 describe "BigInt Math" do
