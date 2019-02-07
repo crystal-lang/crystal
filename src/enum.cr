@@ -405,6 +405,7 @@ struct Enum
   # the enum members names, so a member named "FourtyTwo" or "FOURTY_TWO"
   # is found with any of these strings: "fourty_two", "FourtyTwo", "FOURTY_TWO",
   # "FOURTYTWO", "fourtytwo".
+  # It won't parse the `None` and `All` members of flags enums.
   #
   # ```
   # Color.parse?("Red")    # => Color::Red
@@ -415,8 +416,10 @@ struct Enum
     {% begin %}
       case string.camelcase.downcase
       {% for member in @type.constants %}
-        when {{member.stringify.camelcase.downcase}}
-          {{@type}}::{{member}}
+        {% unless @type.has_attribute?("Flags") && %w(none all).includes?(member.stringify.downcase) %}
+          when {{member.stringify.camelcase.downcase}}
+            {{@type}}::{{member}}
+        {% end %}
       {% end %}
       else
         nil
