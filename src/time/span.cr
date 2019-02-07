@@ -96,7 +96,7 @@ struct Time::Span
   end
 
   private def self.compute_seconds(days, hours, minutes, seconds, raise_exception)
-    # TODO once overflow is the deafult this can be refactored
+    # TODO once overflow is the default this can be refactored
 
     # there's no overflow checks for hours, minutes, ...
     # so big hours/minutes values can overflow at some point and change expected values

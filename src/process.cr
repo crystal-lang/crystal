@@ -142,7 +142,7 @@ class Process
   # How to redirect the standard input, output and error IO of a process.
   enum Redirect
     # Pipe the IO so the parent process can read (or write) to the process IO
-    # throught `#input`, `#output` or `#error`.
+    # through `#input`, `#output` or `#error`.
     Pipe
 
     # Discards the IO.

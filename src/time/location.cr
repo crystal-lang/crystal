@@ -6,7 +6,7 @@ require "./location/loader"
 #
 # It contains a list of zone offsets and rules for transitioning between them.
 #
-# If a location has only one offset (such as `UTC`) it is considerd
+# If a location has only one offset (such as `UTC`) it is considered
 # *fixed*.
 #
 # A `Location` instance is usually retrieved by name using
@@ -126,7 +126,7 @@ class Time::Location
     # When *with_colon* is `false`, the format is `+HHmmss`.
     #
     # When *with_seconds* is `false`, seconds are omitted; when `:auto`, seconds
-    # are ommitted if `0`.
+    # are omitted if `0`.
     def format(io : IO, with_colon = true, with_seconds = :auto)
       sign, hours, minutes, seconds = sign_hours_minutes_seconds
 
@@ -148,7 +148,7 @@ class Time::Location
     # When *with_colon* is `false`, the format is `+HHmmss`.
     #
     # When *with_seconds* is `false`, seconds are omitted; when `:auto`, seconds
-    # are ommitted if `0`.
+    # are omitted if `0`.
     def format(with_colon = true, with_seconds = :auto)
       String.build do |io|
         format(io, with_colon: with_colon, with_seconds: with_seconds)

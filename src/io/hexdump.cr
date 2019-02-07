@@ -1,4 +1,4 @@
-# IO object that prints an hexadecimal dump of all transfered data.
+# IO object that prints an hexadecimal dump of all transferred data.
 #
 # Especially useful for debugging binary protocols on an IO, to understand
 # better when and how data is sent or received.

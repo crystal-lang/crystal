@@ -384,7 +384,7 @@ struct Pointer(T)
     end
   end
 
-  # Like `map!`, but yield 2 arugments, the element and it's index
+  # Like `map!`, but yields 2 arguments, the element and its index
   def map_with_index!(count : Int, &block)
     count.times do |i|
       self[i] = yield self[i], i

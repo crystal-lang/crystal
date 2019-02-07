@@ -894,7 +894,7 @@ describe "Semantic: instance var" do
       )) { nilable int32 }
   end
 
-  it "infers type from ||= inside another assignemnt" do
+  it "infers type from ||= inside another assignment" do
     assert_type(%(
       class Foo
         def x

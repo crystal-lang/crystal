@@ -200,7 +200,7 @@ macro parallel(*jobs)
     %value = %channel.receive
     if %value.is_a?(Exception)
       raise ConcurrentExecutionException.new(
-        "An unhandled error occured inside a `parallel` call",
+        "An unhandled error occurred inside a `parallel` call",
         cause: %value
       )
     end

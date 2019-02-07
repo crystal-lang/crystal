@@ -472,7 +472,7 @@ module Crystal
 
         check_not_a_constant(node.declared_type)
 
-        # TOOD: should we be using a binding here to recompute the type?
+        # TODO: should we be using a binding here to recompute the type?
         if declared_type = node.declared_type.type?
           var_type = check_declare_var_type node, declared_type, "a variable"
           var.type = var_type

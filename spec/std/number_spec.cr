@@ -160,7 +160,7 @@ describe "Number" do
     0.sign.should eq(0)
   end
 
-  it "divides and calculs the modulo" do
+  it "divides and calculates the modulo" do
     11.divmod(3).should eq({3, 2})
     11.divmod(-3).should eq({-4, -1})
 

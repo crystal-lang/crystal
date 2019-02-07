@@ -55,7 +55,7 @@ class Socket
     end
 
     # Accepts an incoming connection and yields the client socket to the block.
-    # Eventualy closes the connection when the block returns.
+    # Eventually closes the connection when the block returns.
     #
     # Returns the value of the block or `nil` if the server is closed after
     # invoking this method.

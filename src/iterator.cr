@@ -1624,7 +1624,7 @@ module Iterator(T)
   # This can be used to prevent many memory allocations when each slice of
   # interest is to be used in a read-only fashion.
   #
-  # See also `#chunk_while`, which works similary but the block's condition is inverted.
+  # See also `#chunk_while`, which works similarly but the block's condition is inverted.
   def slice_when(reuse : Bool | Array(T) = false, &block : T, T -> B) forall B
     SliceWhen(typeof(self), T, B).new(self, block, reuse)
   end
@@ -1654,7 +1654,7 @@ module Iterator(T)
   # This can be used to prevent many memory allocations when each slice of
   # interest is to be used in a read-only fashion.
   #
-  # See also `#slice_when`, which works similary but the block's condition is inverted.
+  # See also `#slice_when`, which works similarly but the block's condition is inverted.
   def chunk_while(reuse : Bool | Array(T) = false, &block : T, T -> B) forall B
     SliceWhen(typeof(self), T, B).new(self, block, reuse, negate: true)
   end

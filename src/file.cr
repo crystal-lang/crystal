@@ -450,12 +450,12 @@ class File < IO::FileDescriptor
   #   * `"c*"` matches all files beginning with `c`.
   #   * `"*c"` matches all files ending with `c`.
   #   * `"*c*"` matches all files that have `c` in them (including at the beginning or end).
-  # * `**` matches an unlimited number of arbitrary charachters including `/`.
-  # * `?` matches any one charachter excluding `/`.
+  # * `**` matches an unlimited number of arbitrary characters including `/`.
+  # * `?` matches any one character excluding `/`.
   # * character sets:
   #   * `[abc]` matches any one of these character.
   #   * `[^abc]` matches any one character other than these.
-  #   * `[a-z]` matches any one charachter in the range.
+  #   * `[a-z]` matches any one character in the range.
   # * `{a,b}` matches subpattern `a` or `b`.
   # * `\\` escapes the next character.
   #
