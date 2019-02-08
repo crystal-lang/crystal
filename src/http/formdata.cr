@@ -1,4 +1,5 @@
 require "./formdata/**"
+require "mime/multipart"
 
 # Contains utilities for parsing `multipart/form-data` messages, which are
 # commonly used for encoding HTML form data.
@@ -113,7 +114,7 @@ module HTTP::FormData
     body = request.body
     raise Error.new "Cannot extract form-data from HTTP request: body is empty" unless body
 
-    boundary = request.headers["Content-Type"]?.try { |header| Multipart.parse_boundary(header) }
+    boundary = request.headers["Content-Type"]?.try { |header| MIME::Multipart.parse_boundary(header) }
     raise Error.new "Cannot extract form-data from HTTP request: could not find boundary in Content-Type" unless boundary
 
     parse(body, boundary) { |part| yield part }
@@ -178,7 +179,7 @@ module HTTP::FormData
   # ```
   #
   # See: `FormData::Builder`
-  def self.build(io, boundary = Multipart.generate_boundary)
+  def self.build(io, boundary = MIME::Multipart.generate_boundary)
     builder = Builder.new(io, boundary)
     yield builder
     builder.finish
@@ -202,7 +203,7 @@ module HTTP::FormData
   # ```
   #
   # See: `FormData::Builder`
-  def self.build(response : HTTP::Server::Response, boundary = Multipart.generate_boundary)
+  def self.build(response : HTTP::Server::Response, boundary = MIME::Multipart.generate_boundary)
     builder = Builder.new(response, boundary)
     yield builder
     builder.finish
