@@ -407,7 +407,7 @@ module Crystal
 
     private def codegen_many_units(program, units, target_triple)
       # Let's try with just one thread so we get ordered output here
-      @n_threads = 1
+      # @n_threads = 1
 
       jobs_count = 0
       all_reused = [] of String
@@ -628,10 +628,10 @@ module Crystal
         object_name = self.object_name
         temporary_object_name = self.temporary_object_name
 
-        puts "About to generate: "
-        puts " - bc: #{bc_name}"
-        puts " - object: #{object_name}"
-        puts " - temp object: #{temporary_object_name}"
+        # puts "About to generate: "
+        # puts " - bc: #{bc_name}"
+        # puts " - object: #{object_name}"
+        # puts " - temp object: #{temporary_object_name}"
 
         # To compile a file we first generate a `.bc` file and then
         # create an object file from it. These `.bc` files are stored
@@ -679,22 +679,22 @@ module Crystal
           File.write(bc_name, memory_buffer.to_slice)
           memory_buffer.dispose
 
-          puts "Wrote bc: #{bc_name}"
-          puts "Does bc exist? #{File.exists?(bc_name) ? "yes" : "no"}"
+          # puts "Wrote bc: #{bc_name}"
+          # puts "Does bc exist? #{File.exists?(bc_name) ? "yes" : "no"}"
         end
 
         if must_compile
           compiler.optimize llvm_mod if compiler.release?
           compiler.target_machine.emit_obj_to_file llvm_mod, temporary_object_name
 
-          puts "Wrote temp obj: #{temporary_object_name}"
-          puts "Does temp obj exist? #{File.exists?(temporary_object_name) ? "yes" : "no"}"
+          # puts "Wrote temp obj: #{temporary_object_name}"
+          # puts "Does temp obj exist? #{File.exists?(temporary_object_name) ? "yes" : "no"}"
 
-          puts "Moving temp obj #{temporary_object_name} to #{object_name}"
+          # puts "Moving temp obj #{temporary_object_name} to #{object_name}"
 
           File.rename(temporary_object_name, object_name)
 
-          puts "Does obj exist? #{File.exists?(object_name) ? "yes" : "no"}"
+          # puts "Does obj exist? #{File.exists?(object_name) ? "yes" : "no"}"
         else
           @reused_previous_compilation = true
         end
