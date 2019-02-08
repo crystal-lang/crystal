@@ -73,9 +73,10 @@ prepare_system() {
 }
 
 build() {
+  with_build_env 'make crystal'
   with_build_env 'make std_spec clean'
-  with_build_env 'make crystal std_spec compiler_spec docs'
-  with_build_env 'find samples -name "*.cr" | xargs -L 1 ./bin/crystal build --no-codegen'
+  # with_build_env 'make crystal std_spec compiler_spec docs'
+  # with_build_env 'find samples -name "*.cr" | xargs -L 1 ./bin/crystal build --no-codegen'
 }
 
 format() {
