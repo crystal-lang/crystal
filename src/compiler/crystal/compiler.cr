@@ -248,6 +248,7 @@ module Crystal
       end
 
       output_dir = CacheDir.instance.directory_for(sources)
+      puts "Output dir is: #{output_dir}"
 
       bc_flags_changed = bc_flags_changed? output_dir
       target_triple = target_machine.triple
@@ -368,6 +369,19 @@ module Crystal
 
       output_filename = File.expand_path(output_filename)
 
+      puts "Final check to see which object filenames don't exist..."
+      object_filenames = units.map &.object_name
+      missing_object_filenames = object_filenames.select { |name| !File.exists?(name) }
+      if missing_object_filenames.empty?
+        puts "Everything's good!"
+      else
+        puts "These object files are missing:"
+        missing_object_filenames.each do |missing_object_filename|
+          puts " - #{missing_object_filename}"
+        end
+        puts "Ouch :-("
+      end
+
       @progress_tracker.stage("Codegen (linking)") do
         Dir.cd(output_dir) do
           linker_command = linker_command(program, nil, output_filename, output_dir)
@@ -392,6 +406,9 @@ module Crystal
     end
 
     private def codegen_many_units(program, units, target_triple)
+      # Let's try with just one thread so we get ordered output here
+      @n_threads = 1
+
       jobs_count = 0
       all_reused = [] of String
       wait_channel = Channel(Array(String)).new(@n_threads)
@@ -611,6 +628,11 @@ module Crystal
         object_name = self.object_name
         temporary_object_name = self.temporary_object_name
 
+        puts "About to generate: "
+        puts " - bc: #{bc_name}"
+        puts " - object: #{object_name}"
+        puts " - temp object: #{temporary_object_name}"
+
         # To compile a file we first generate a `.bc` file and then
         # create an object file from it. These `.bc` files are stored
         # in the cache directory.
@@ -656,12 +678,23 @@ module Crystal
           # Create the .bc file (for next compilations)
           File.write(bc_name, memory_buffer.to_slice)
           memory_buffer.dispose
+
+          puts "Wrote bc: #{bc_name}"
+          puts "Does bc exist? #{File.exists?(bc_name) ? "yes" : "no"}"
         end
 
         if must_compile
           compiler.optimize llvm_mod if compiler.release?
           compiler.target_machine.emit_obj_to_file llvm_mod, temporary_object_name
+
+          puts "Wrote temp obj: #{temporary_object_name}"
+          puts "Does temp obj exist? #{File.exists?(temporary_object_name) ? "yes" : "no"}"
+
+          puts "Moving temp obj #{temporary_object_name} to #{object_name}"
+
           File.rename(temporary_object_name, object_name)
+
+          puts "Does obj exist? #{File.exists?(object_name) ? "yes" : "no"}"
         else
           @reused_previous_compilation = true
         end
