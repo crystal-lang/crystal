@@ -410,6 +410,8 @@ module Crystal
       # @n_threads = 1
 
       jobs_count = 0
+      track_reused = @progress_tracker.stats? || @progress_tracker.progress?
+
       all_reused = [] of String
       wait_channel = Channel(Array(String)).new(@n_threads)
 
@@ -420,7 +422,8 @@ module Crystal
           # .o files were reused, mainly to detect performance regressions.
           # Because we fork, we must communicate using a pipe.
           reused = [] of String
-          if @progress_tracker.stats? || @progress_tracker.progress?
+
+          if track_reused
             pr, pw = IO.pipe
             spawn do
               pr.each_line do |line|
@@ -448,13 +451,15 @@ module Crystal
             Fiber.yield
           end
 
-          wait_channel.send reused
+          wait_channel.send reused if track_reused
         end
       end
 
-      jobs_count.times do
-        reused = wait_channel.receive
-        all_reused.concat(reused)
+      if track_reused
+        jobs_count.times do
+          reused = wait_channel.receive
+          all_reused.concat(reused)
+        end
       end
 
       all_reused
