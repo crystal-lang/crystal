@@ -683,7 +683,7 @@ module Crystal
           # puts "Does bc exist? #{File.exists?(bc_name) ? "yes" : "no"}"
         end
 
-        puts "Must compile '#{object_name}'? #{must_compile}"
+        # puts "Must compile '#{object_name}'? #{must_compile}"
 
         if must_compile
           compiler.optimize llvm_mod if compiler.release?
@@ -699,7 +699,7 @@ module Crystal
           @reused_previous_compilation = true
         end
 
-        puts "Does obj '#{object_name}' exist? #{File.exists?(object_name)}"
+        # puts "Does obj '#{object_name}' exist? #{File.exists?(object_name)}"
 
         dump_llvm_ir
       end
