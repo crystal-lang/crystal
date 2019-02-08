@@ -683,21 +683,23 @@ module Crystal
           # puts "Does bc exist? #{File.exists?(bc_name) ? "yes" : "no"}"
         end
 
+        puts "Must compile '#{object_name}'? #{must_compile}"
+
         if must_compile
           compiler.optimize llvm_mod if compiler.release?
           compiler.target_machine.emit_obj_to_file llvm_mod, temporary_object_name
 
           # puts "Wrote temp obj: #{temporary_object_name}"
-          # puts "Does temp obj exist? #{File.exists?(temporary_object_name) ? "yes" : "no"}"
+          # puts "Does temp obj '#{temporary_object_name}' exist? #{File.exists?(temporary_object_name) ? "yes" : "no"}"
 
           # puts "Moving temp obj #{temporary_object_name} to #{object_name}"
 
           File.rename(temporary_object_name, object_name)
-
-          # puts "Does obj exist? #{File.exists?(object_name) ? "yes" : "no"}"
         else
           @reused_previous_compilation = true
         end
+
+        puts "Does obj '#{object_name}' exist? #{File.exists?(object_name)}"
 
         dump_llvm_ir
       end
