@@ -684,16 +684,16 @@ module Crystal
           File.write(bc_name, memory_buffer.to_slice)
           memory_buffer.dispose
 
-          puts "Does bc '#{bc_name}' exist? #{File.exists?(bc_name)}"
+          # puts "Does bc '#{bc_name}' exist? #{File.exists?(bc_name)}"
         end
 
-        puts "Must compile '#{object_name}'? #{must_compile}"
+        # puts "Must compile '#{object_name}'? #{must_compile}"
 
         if must_compile
           compiler.optimize llvm_mod if compiler.release?
           compiler.target_machine.emit_obj_to_file llvm_mod, temporary_object_name
 
-          puts "Does temp obj '#{temporary_object_name}' exist? #{File.exists?(temporary_object_name)}"
+          # puts "Does temp obj '#{temporary_object_name}' exist? #{File.exists?(temporary_object_name)}"
 
           # puts "Moving temp obj #{temporary_object_name} to #{object_name}"
 
@@ -702,7 +702,7 @@ module Crystal
           @reused_previous_compilation = true
         end
 
-        puts "Does obj '#{object_name}' exist? #{File.exists?(object_name)}"
+        # puts "Does obj '#{object_name}' exist? #{File.exists?(object_name)}"
 
         dump_llvm_ir
       end
