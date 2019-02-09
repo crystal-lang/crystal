@@ -248,7 +248,6 @@ module Crystal
       end
 
       output_dir = CacheDir.instance.directory_for(sources)
-      puts "Output dir is: #{output_dir}"
 
       bc_flags_changed = bc_flags_changed? output_dir
       target_triple = target_machine.triple
@@ -368,19 +367,6 @@ module Crystal
       end
 
       output_filename = File.expand_path(output_filename)
-
-      puts "Final check to see which object filenames don't exist..."
-      object_filenames = units.map &.object_name
-      missing_object_filenames = object_filenames.select { |name| !File.exists?(name) }
-      if missing_object_filenames.empty?
-        puts "Everything's good!"
-      else
-        puts "These object files are missing:"
-        missing_object_filenames.each do |missing_object_filename|
-          puts " - #{missing_object_filename}"
-        end
-        puts "Ouch :-("
-      end
 
       @progress_tracker.stage("Codegen (linking)") do
         Dir.cd(output_dir) do
@@ -636,11 +622,6 @@ module Crystal
         object_name = self.object_name
         temporary_object_name = self.temporary_object_name
 
-        # puts "About to generate: "
-        # puts " - bc: #{bc_name}"
-        # puts " - object: #{object_name}"
-        # puts " - temp object: #{temporary_object_name}"
-
         # To compile a file we first generate a `.bc` file and then
         # create an object file from it. These `.bc` files are stored
         # in the cache directory.
@@ -686,26 +667,16 @@ module Crystal
           # Create the .bc file (for next compilations)
           File.write(bc_name, memory_buffer.to_slice)
           memory_buffer.dispose
-
-          # puts "Does bc '#{bc_name}' exist? #{File.exists?(bc_name)}"
         end
-
-        # puts "Must compile '#{object_name}'? #{must_compile}"
 
         if must_compile
           compiler.optimize llvm_mod if compiler.release?
           compiler.target_machine.emit_obj_to_file llvm_mod, temporary_object_name
 
-          # puts "Does temp obj '#{temporary_object_name}' exist? #{File.exists?(temporary_object_name)}"
-
-          # puts "Moving temp obj #{temporary_object_name} to #{object_name}"
-
           File.rename(temporary_object_name, object_name)
         else
           @reused_previous_compilation = true
         end
-
-        # puts "Does obj '#{object_name}' exist? #{File.exists?(object_name)}"
 
         dump_llvm_ir
       end
