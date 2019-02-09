@@ -103,10 +103,12 @@ module IO::Syscall
     end
   end
 
+  # :nodoc:
   def wait_readable(timeout = @read_timeout)
     wait_readable(timeout: timeout) { |err| raise err }
   end
 
+  # :nodoc:
   def wait_readable(timeout = @read_timeout)
     readers = (@readers ||= Deque(Fiber).new)
     readers << Fiber.current
@@ -123,10 +125,12 @@ module IO::Syscall
 
   private abstract def add_read_event(timeout = @read_timeout)
 
+  # :nodoc:
   def wait_writable(timeout = @write_timeout)
     wait_writable(timeout: timeout) { |err| raise err }
   end
 
+  # :nodoc:
   def wait_writable(timeout = @write_timeout)
     writers = (@writers ||= Deque(Fiber).new)
     writers << Fiber.current
