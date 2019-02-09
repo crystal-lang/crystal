@@ -149,6 +149,12 @@ describe "YAML serialization" do
       big.should eq(BigFloat.new("1234.567891011121314"))
     end
 
+    it "does for BigDecimal" do
+      big = BigDecimal.from_yaml("1234.567891011121314")
+      big.should be_a(BigDecimal)
+      big.should eq(BigDecimal.new("1234.567891011121314"))
+    end
+
     it "does for Enum with number" do
       YAMLSpecEnum.from_yaml(%("1")).should eq(YAMLSpecEnum::One)
 
