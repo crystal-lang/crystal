@@ -397,8 +397,8 @@ module Crystal
       wants_stats_or_progress = @progress_tracker.stats? || @progress_tracker.progress?
 
       # If threads is 1 and no stats/progress is needed we can avoid
-      # fork/spwan/channels altogether. This is particularly useful for
-      # CI becuase there forking eventually leads to "out of memory" errors.
+      # fork/spawn/channels altogether. This is particularly useful for
+      # CI because there forking eventually leads to "out of memory" errors.
       if @n_threads == 1
         units.each do |unit|
           unit.compile
