@@ -101,6 +101,15 @@ module HTTP
         cookie.to_set_cookie_header.should eq("key=value; domain=www.example.com; path=/")
       end
 
+      it "parses expires iis" do
+        cookie = parse_set_cookie("key=value; expires=Sun, 06-Nov-1994 08:49:37 GMT")
+        time = Time.utc(1994, 11, 6, 8, 49, 37)
+
+        cookie.name.should eq("key")
+        cookie.value.should eq("value")
+        cookie.expires.should eq(time)
+      end
+
       it "parses expires rfc1123" do
         cookie = parse_set_cookie("key=value; expires=Sun, 06 Nov 1994 08:49:37 GMT")
         time = Time.utc(1994, 11, 6, 8, 49, 37)
