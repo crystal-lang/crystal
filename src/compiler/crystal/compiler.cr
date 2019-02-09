@@ -392,8 +392,22 @@ module Crystal
     end
 
     private def codegen_many_units(program, units, target_triple)
-      jobs_count = 0
       all_reused = [] of String
+
+      wants_stats_or_progress = @progress_tracker.stats? || @progress_tracker.progress?
+
+      # If threads is 1 and no stats/progress is needed we can avoid
+      # fork/spwan/channels altogether. This is particularly useful for
+      # CI becuase there forking eventually leads to "out of memory" errors.
+      if @n_threads == 1
+        units.each do |unit|
+          unit.compile
+          all_reused << unit.name if wants_stats_or_progress && unit.reused_previous_compilation?
+        end
+        return all_reused
+      end
+
+      jobs_count = 0
       wait_channel = Channel(Array(String)).new(@n_threads)
 
       units.each_slice(Math.max(units.size / @n_threads, 1)) do |slice|
@@ -403,7 +417,7 @@ module Crystal
           # .o files were reused, mainly to detect performance regressions.
           # Because we fork, we must communicate using a pipe.
           reused = [] of String
-          if @progress_tracker.stats? || @progress_tracker.progress?
+          if wants_stats_or_progress
             pr, pw = IO.pipe
             spawn do
               pr.each_line do |line|
