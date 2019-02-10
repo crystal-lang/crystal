@@ -370,8 +370,12 @@ class Array(T)
   # a = [1, 2, 3, 4, 5]
   # a[1...1] = 6
   # a # => [1, 6, 2, 3, 4, 5]
+  #
+  # a = [1, 2, 3, 4, 5]
+  # a[2...] = 6
+  # a # => [1, 2, 6]
   # ```
-  def []=(range : Range(Int, Int), value : T)
+  def []=(range : Range, value : T)
     self[*Indexable.range_to_index_and_count(range, size)] = value
   end
 
@@ -432,8 +436,12 @@ class Array(T)
   # a = [1, 2, 3, 4, 5]
   # a[1..3] = [6, 7, 8, 9, 10]
   # a # => [1, 6, 7, 8, 9, 10, 5]
+  #
+  # a = [1, 2, 3, 4, 5]
+  # a[2..] = [6, 7, 8, 9, 10]
+  # a # => [1, 2, 6, 7, 8, 9, 10]
   # ```
-  def []=(range : Range(Int, Int), values : Array(T))
+  def []=(range : Range, values : Array(T))
     self[*Indexable.range_to_index_and_count(range, size)] = values
   end
 
@@ -452,8 +460,9 @@ class Array(T)
   # a[6..10]   # raise IndexError
   # a[5..10]   # => []
   # a[-2...-1] # => ["d"]
+  # a[2..]     # => ["c", "d", "e"]
   # ```
-  def [](range : Range(Int, Int))
+  def [](range : Range)
     self[*Indexable.range_to_index_and_count(range, size)]
   end
 
@@ -640,7 +649,7 @@ class Array(T)
   # a                    # => ["ant", "dog"]
   # a.delete_at(99..100) # raises IndexError
   # ```
-  def delete_at(range : Range(Int, Int))
+  def delete_at(range : Range)
     index, count = Indexable.range_to_index_and_count(range, self.size)
     delete_at(index, count)
   end
@@ -754,7 +763,7 @@ class Array(T)
   # a = [1, 2, 3, 4, 5, 6]
   # a.fill(2..3) { |i| i * i } # => [1, 2, 4, 9, 5, 6]
   # ```
-  def fill(range : Range(Int, Int))
+  def fill(range : Range)
     fill(*Indexable.range_to_index_and_count(range, size)) do |i|
       yield i
     end
@@ -803,7 +812,7 @@ class Array(T)
   # a = [1, 2, 3, 4, 5]
   # a.fill(9, 2..3) # => [1, 2, 9, 9, 5]
   # ```
-  def fill(value : T, range : Range(Int, Int))
+  def fill(value : T, range : Range)
     fill(range) { value }
   end
 

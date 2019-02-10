@@ -729,7 +729,7 @@ class String
   # "hello"[1..-1]  # "ello"
   # "hello"[1...-1] # "ell"
   # ```
-  def [](range : Range(Int, Int))
+  def [](range : Range)
     self[*Indexable.range_to_index_and_count(range, size)]
   end
 
@@ -1882,7 +1882,7 @@ class String
   # ```
   # "hello".sub(1..2, 'a') # => "halo"
   # ```
-  def sub(range : Range(Int, Int), replacement : Char)
+  def sub(range : Range, replacement : Char)
     sub_range(range, replacement) do |buffer, from_index, to_index|
       replacement.each_byte do |byte|
         buffer.value = byte
@@ -1898,7 +1898,7 @@ class String
   # ```
   # "hello".sub(1..2, "eee") # => "heeelo"
   # ```
-  def sub(range : Range(Int, Int), replacement : String)
+  def sub(range : Range, replacement : String)
     sub_range(range, replacement) do |buffer|
       buffer.copy_from(replacement.to_unsafe, replacement.bytesize)
       buffer += replacement.bytesize
