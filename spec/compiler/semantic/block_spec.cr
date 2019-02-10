@@ -1085,7 +1085,7 @@ describe "Block inference" do
       }
       foo.call
       ),
-      "Invalid next"
+      "invalid next"
   end
 
   it "does next from captured block" do
