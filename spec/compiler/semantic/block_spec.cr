@@ -1075,7 +1075,7 @@ describe "Block inference" do
 
       bar
       ),
-      "can't break from captured block"
+      "can't break from captured block, use next"
   end
 
   it "errors if doing next in proc literal" do
