@@ -50,5 +50,25 @@ describe "Signal" do
     called.should be_true
   end
 
+  it "CHLD.reset removes previously set trap" do
+    call_count = 0
+
+    Signal::CHLD.trap do
+      call_count += 1
+    end
+
+    Process.new("true", shell: true).wait
+    Fiber.yield
+
+    call_count.should eq(1)
+
+    Signal::CHLD.reset
+
+    Process.new("true", shell: true).wait
+    Fiber.yield
+
+    call_count.should eq(1)
+  end
+
   # TODO: test Signal::X.reset
 end

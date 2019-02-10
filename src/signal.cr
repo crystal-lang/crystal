@@ -178,7 +178,9 @@ module Crystal::Signal
 
   private def self.set(signal, handler)
     if signal == ::Signal::CHLD
-      # don't reset/ignore SIGCHLD, Process#wait requires it
+      # Clear any existing signal child handler
+      @@child_handler = nil
+      # But keep a default SIGCHLD, Process#wait requires it
       trap(signal, ->(signal : ::Signal) {
         Crystal::SignalChildHandler.call
         @@child_handler.try(&.call(signal))
