@@ -37,17 +37,18 @@ describe "Signal" do
   end
 
   it "CHLD.trap is called after default Crystal child handler" do
-    called = false
-    child = nil
+    chan = Channel(Process).new
 
     Signal::CHLD.trap do
-      called = true
-      Process.exists?(child.not_nil!.pid).should be_false
+      child_process = chan.receive
+      Process.exists?(child_process.pid).should be_false
     end
 
     child = Process.new("true", shell: true)
-    child.not_nil!.wait # doesn't block forever
-    called.should be_true
+    child.wait # doesn't block forever
+    chan.send(child)
+  ensure
+    Signal::CHLD.reset
   end
 
   it "CHLD.reset removes previously set trap" do
