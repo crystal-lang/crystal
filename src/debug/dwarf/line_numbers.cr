@@ -389,20 +389,54 @@ module Debug
         end
       end
 
+      # When decoding statement programs when asking for the current
+      # filename it's usually the case that it's the same as the old
+      # one (because all info from a single file comes first, then
+      # another file comes next, etc.). So we remember the last
+      # mapped index to avoid unnecessary lookups.
+      @last_filename : String?
+      @last_filename_index = 0
+
       private def register_filename(name)
-        if index = @files.index(name)
-          return index
+        if name.same?(@last_filename)
+          return @last_filename_index
         end
-        @files << name
-        @files.size - 1
+
+        @last_filename = name
+
+        index = @files.index(name)
+
+        unless index
+          index = @files.size
+          @files << name
+        end
+
+        @last_filename_index = index
+
+        index
       end
 
+      # Same logic as `@last_filename` but for directories
+      @last_directory : String?
+      @last_directory_index = 0
+
       private def register_directory(name)
-        if index = @directories.index(name)
-          return index
+        if name.same?(@last_directory)
+          return @last_directory_index
         end
-        @directories << name
-        @directories.size - 1
+
+        @last_directory = name
+
+        index = @directories.index(name)
+
+        unless index
+          index = @directories.size
+          @directories << name
+        end
+
+        @last_directory_index = index
+
+        index
       end
     end
   end
