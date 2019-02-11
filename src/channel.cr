@@ -140,7 +140,6 @@ abstract class Channel(T)
           end
 
           op.wait
-          Crystal::Scheduler.reschedule
         end
       end
     end
@@ -188,6 +187,7 @@ abstract class Channel(T)
     def wait
       @channel.wait_for_receive
       @waiting = true
+      Crystal::Scheduler.reschedule
     end
 
     def unwait(fiber)
@@ -214,6 +214,7 @@ abstract class Channel(T)
     def wait
       @channel.wait_for_send
       @waiting = true
+      Crystal::Scheduler.reschedule
     end
 
     def unwait(fiber)
