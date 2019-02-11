@@ -61,6 +61,9 @@ class Fiber
   property previous : Fiber?
 
   # :nodoc:
+  setter callback : Proc(Nil)?
+
+  # :nodoc:
   def self.inactive(fiber : Fiber)
     @@fibers.delete(fiber)
   end
@@ -152,7 +155,13 @@ class Fiber
   end
 
   def resume : Nil
+    exec_callback
     Crystal::Scheduler.resume(self)
+  end
+
+  def enqueue
+    exec_callback
+    Crystal::Scheduler.enqueue(self)
   end
 
   # :nodoc:
@@ -175,6 +184,13 @@ class Fiber
 
   def inspect(io)
     to_s(io)
+  end
+
+  private def exec_callback
+    if callback = @callback
+      @callback = nil
+      callback.call
+    end
   end
 
   protected def push_gc_roots

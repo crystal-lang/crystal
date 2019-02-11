@@ -5,7 +5,7 @@ abstract class Channel(T)
     abstract def ready?
     abstract def execute
     abstract def wait
-    abstract def unwait
+    abstract def unwait(fiber : Fiber)
   end
 
   class ClosedError < Exception
@@ -30,10 +30,8 @@ abstract class Channel(T)
 
   def close
     @closed = true
-    Crystal::Scheduler.enqueue @senders
-    @senders.clear
-    Crystal::Scheduler.enqueue @receivers
-    @receivers.clear
+    enqueue! @senders
+    enqueue! @receivers
     nil
   end
 
@@ -57,20 +55,28 @@ abstract class Channel(T)
     pp.text inspect
   end
 
+  private def enqueue!(fibers : Deque(Fiber))
+    # not using .each here as fiber.enqueue method can mutate the deque through callback
+    # which will cause segfault with .each
+    while fiber = fibers.shift?
+      fiber.enqueue
+    end
+  end
+
   protected def wait_for_receive
     @receivers << Fiber.current
   end
 
-  protected def unwait_for_receive
-    @receivers.delete Fiber.current
+  protected def unwait_for_receive(fiber : Fiber)
+    @receivers.delete fiber
   end
 
   protected def wait_for_send
     @senders << Fiber.current
   end
 
-  protected def unwait_for_send
-    @senders.delete Fiber.current
+  protected def unwait_for_send(fiber : Fiber)
+    @senders.delete fiber
   end
 
   protected def raise_if_closed
@@ -111,9 +117,11 @@ abstract class Channel(T)
         return ops.size, nil
       end
 
+      fiber = Fiber.current
+      fiber.callback = ->{ ops.each &.unwait(fiber) }
+
       ops.each &.wait
       Crystal::Scheduler.reschedule
-      ops.each &.unwait
     end
   end
 
@@ -146,8 +154,8 @@ abstract class Channel(T)
       @channel.wait_for_receive
     end
 
-    def unwait
-      @channel.unwait_for_receive
+    def unwait(fiber : Fiber)
+      @channel.unwait_for_receive(fiber)
     end
   end
 
@@ -170,8 +178,8 @@ abstract class Channel(T)
       @channel.wait_for_send
     end
 
-    def unwait
-      @channel.unwait_for_send
+    def unwait(fiber : Fiber)
+      @channel.unwait_for_send fiber
     end
   end
 end
@@ -192,9 +200,7 @@ class Channel::Buffered(T) < Channel(T)
     raise_if_closed
 
     @queue << value
-    Crystal::Scheduler.enqueue @receivers
-    @receivers.clear
-
+    enqueue! @receivers
     self
   end
 
@@ -206,8 +212,7 @@ class Channel::Buffered(T) < Channel(T)
     end
 
     @queue.shift.tap do
-      Crystal::Scheduler.enqueue @senders
-      @senders.clear
+      enqueue! @senders
     end
   end
 
@@ -264,7 +269,7 @@ class Channel::Unbuffered(T) < Channel(T)
 
     @value.tap do
       @has_value = false
-      Crystal::Scheduler.enqueue @sender.not_nil!
+      @sender.not_nil!.enqueue
       @sender = nil
     end
   end
@@ -280,7 +285,7 @@ class Channel::Unbuffered(T) < Channel(T)
   def close
     super
     if sender = @sender
-      Crystal::Scheduler.enqueue sender
+      sender.enqueue
       @sender = nil
     end
   end
