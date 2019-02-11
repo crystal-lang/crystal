@@ -113,6 +113,19 @@ require "./common"
 # Currently processing requests are not interrupted but also not waited for.
 # In order to give them some grace period for finishing, the calling context
 # can add a timeout like `sleep 10.seconds` after `#listen` returns.
+#
+# ### Reusing connections
+#
+# The request processor supports reusing a connection for subsequent
+# requests. This is used by default for HTTP/1.1 or when requested by
+# the `Connection: keep-alive` header. This is signalled by this header being
+# set on the `HTTP::Server::Response` when it's passed into the handler chain.
+#
+# If in the handler chain this header is overridden to `Connection: close`, then
+# the connection will not be reused after the request has been processed.
+#
+# Reusing the connection also requires that the request body (if present) is
+# entirely consumed in the handler chain. Otherwise the connection will be closed.
 class HTTP::Server
   @sockets = [] of Socket::Server
 
