@@ -1,7 +1,7 @@
 # The `PartialComparable` mixin is used by classes whose objects may be partially ordered.
 #
 # Including types must provide an `<=>` method, which compares the receiver against
-# another object, returning a negative number, zero, a positive number or `nil` depending on whether
+# another object, returning a negative number, `0`, a positive number or `nil` depending on whether
 # the receiver is less than, equal to, greater than the other object,
 # or no order can be established.
 #
@@ -25,7 +25,7 @@ module PartialComparable(T)
   end
 
   # Compares this object to *other* based on the receiver's `<=>` method,
-  # returning `true` if it returns zero.
+  # returning `true` if it returns `0`.
   # Also returns `true` if this and *other* are the same object.
   def ==(other : T)
     if self.is_a?(Reference) && (other.is_a?(Reference) || other.is_a?(Nil))
@@ -46,7 +46,7 @@ module PartialComparable(T)
   end
 
   # Compares this object to *other* based on the receiver's `<=>` method,
-  # returning `true` if it returns a positive number or zero.
+  # returning `true` if it returns a positive number or `0`.
   def >=(other : T)
     compare_with(other) do |cmp|
       cmp >= 0
@@ -64,9 +64,8 @@ module PartialComparable(T)
 
   # The comparison operator.
   #
-  # Returns a negative number, `0` or a positive number depending on whether if the object is considered to be less than *other*, zero if the two objects are equal,
-  # a positive number if this object is considered to be greater than *other*,
-  # or `nil` if no order can be established.
+  # Returns a negative number, `0`, a positive number or `nil` depending on whether the object is considered to be less than *other*,
+  # equal to *other*, greater than *other* or if no order can be established.
   #
   # Subclasses define this method to provide class-specific ordering.
   #
