@@ -293,8 +293,8 @@ struct CallStack
                 info.read_abbreviations(io)
               end
 
-              parse_function_names_from_dwarf(info, strings) do |name, low_pc, high_pc|
-                names << {name, low_pc, high_pc}
+              parse_function_names_from_dwarf(info, strings) do |low_pc, high_pc, name|
+                names << {low_pc, high_pc, name}
               end
             end
 
