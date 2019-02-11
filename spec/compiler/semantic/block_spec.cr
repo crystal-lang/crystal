@@ -1075,7 +1075,7 @@ describe "Block inference" do
 
       bar
       ),
-      "can't break from captured block, use `next`, however `next` will have behave differently when used in a block or a loop inside of the captured block."
+      "can't break from captured block, try using `next` to exit the block."
   end
 
   it "errors if doing next in proc literal" do
