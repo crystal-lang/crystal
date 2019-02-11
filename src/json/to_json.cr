@@ -1,17 +1,24 @@
-class Object
-  def to_json
+# This module describes an interface for types to serialize instances to JSON
+# and provides methods to easily serialize directly to a `String` or an `IO`.
+module JSON::Serializable::Helper
+  # Serializes `self` to a `JSON::Builder` *builder*.
+  abstract def to_json(builder : JSON::Builder)
+
+  # Serializes `self` to a `String` as JSON using a `JSON::Builder`.
+  def to_json : String
     String.build do |str|
       to_json str
     end
   end
 
+  # Serializes `self` to *io* as JSON using a `JSON::Builder`.
   def to_json(io : IO)
     JSON.build(io) do |json|
       to_json(json)
     end
   end
 
-  def to_pretty_json(indent : String = "  ")
+  def to_pretty_json(indent : String = "  ") : String
     String.build do |str|
       to_pretty_json str, indent: indent
     end
@@ -25,6 +32,8 @@ class Object
 end
 
 struct Nil
+  include JSON::Serializable::Helper
+
   def to_json(json : JSON::Builder)
     json.null
   end
@@ -35,12 +44,16 @@ struct Nil
 end
 
 struct Bool
+  include JSON::Serializable::Helper
+
   def to_json(json : JSON::Builder)
     json.bool(self)
   end
 end
 
 struct Int
+  include JSON::Serializable::Helper
+
   def to_json(json : JSON::Builder)
     json.number(self)
   end
@@ -51,6 +64,8 @@ struct Int
 end
 
 struct Float
+  include JSON::Serializable::Helper
+
   def to_json(json : JSON::Builder)
     json.number(self)
   end
@@ -61,6 +76,8 @@ struct Float
 end
 
 class String
+  include JSON::Serializable::Helper
+
   def to_json(json : JSON::Builder)
     json.string(self)
   end
@@ -71,6 +88,8 @@ class String
 end
 
 struct Symbol
+  include JSON::Serializable::Helper
+
   def to_json(json : JSON::Builder)
     json.string(to_s)
   end
@@ -81,6 +100,8 @@ struct Symbol
 end
 
 class Array
+  include JSON::Serializable::Helper
+
   def to_json(json : JSON::Builder)
     json.array do
       each &.to_json(json)
@@ -97,6 +118,8 @@ class Deque
 end
 
 struct Set
+  include JSON::Serializable::Helper
+
   def to_json(json : JSON::Builder)
     json.array do
       each &.to_json(json)
@@ -105,6 +128,8 @@ struct Set
 end
 
 class Hash
+  include JSON::Serializable::Helper
+
   # Serializes this Hash into JSON.
   #
   # Keys are serialized by invoking `to_json_object_key` on them.
@@ -122,6 +147,8 @@ class Hash
 end
 
 struct Tuple
+  include JSON::Serializable::Helper
+
   def to_json(json : JSON::Builder)
     json.array do
       {% for i in 0...T.size %}
@@ -132,6 +159,8 @@ struct Tuple
 end
 
 struct NamedTuple
+  include JSON::Serializable::Helper
+
   def to_json(json : JSON::Builder)
     json.object do
       {% for key in T.keys %}
@@ -150,12 +179,16 @@ struct Time::Format
 end
 
 struct Enum
+  include JSON::Serializable::Helper
+
   def to_json(json : JSON::Builder)
     json.number(value)
   end
 end
 
 struct Time
+  include JSON::Serializable::Helper
+
   # Emits a string formated according to [RFC 3339](https://tools.ietf.org/html/rfc3339)
   # ([ISO 8601](http://xml.coverpages.org/ISO-FDIS-8601.pdf) profile).
   #

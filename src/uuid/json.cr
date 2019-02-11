@@ -2,6 +2,8 @@ require "json"
 require "uuid"
 
 struct UUID
+  include JSON::Serializable::Helper
+  
   # Creates UUID from JSON using `JSON::PullParser`.
   #
   # NOTE: `require "uuid/json"` is required to opt-in to this feature.

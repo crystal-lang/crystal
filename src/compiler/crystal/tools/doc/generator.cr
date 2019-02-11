@@ -443,6 +443,8 @@ class Crystal::Doc::Generator
   end
 
   class RelativeLocation
+    include JSON::Serializable::Helper
+
     property show_line_number
     getter filename, line_number, url
 

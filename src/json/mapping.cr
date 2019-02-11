@@ -56,7 +56,8 @@ module JSON
   # The mapping doesn't define a constructor accepting these variables as arguments, but you can provide an overload.
   #
   # The macro basically defines a constructor accepting a `JSON::PullParser` that reads from
-  # it and initializes this type's instance variables. It also defines a `to_json(JSON::Builder)` method
+  # it and initializes this type's instance variables.
+  # It also includes `JSON::Serializable` and defines a `to_json(JSON::Builder)` method
   # by invoking `to_json(JSON::Builder)` on each of the properties (unless a converter is specified, in
   # which case `to_json(value, JSON::Builder)` is invoked).
   #
@@ -66,6 +67,8 @@ module JSON
   # document will raise a parse exception. The default is `false`, so unknown properties
   # are silently ignored.
   macro mapping(_properties_, strict = false)
+    include ::JSON::Serializable::Helper
+
     {% for key, value in _properties_ %}
       {% _properties_[key] = {type: value} unless value.is_a?(HashLiteral) || value.is_a?(NamedTupleLiteral) %}
     {% end %}

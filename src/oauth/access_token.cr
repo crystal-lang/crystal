@@ -1,4 +1,6 @@
 class OAuth::AccessToken
+  include JSON::Serializable::Helper
+
   getter token : String
   getter secret : String
 

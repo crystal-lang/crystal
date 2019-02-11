@@ -1,4 +1,6 @@
 class Crystal::Arg
+  include JSON::Serializable::Helper
+
   def to_json(builder : JSON::Builder)
     builder.object do
       builder.field "name", name
@@ -11,6 +13,8 @@ class Crystal::Arg
 end
 
 class Crystal::Def
+  include JSON::Serializable::Helper
+
   def to_json(builder : JSON::Builder)
     builder.object do
       builder.field "name", name
@@ -27,6 +31,8 @@ class Crystal::Def
 end
 
 class Crystal::Macro
+  include JSON::Serializable::Helper
+
   def to_json(builder : JSON::Builder)
     builder.object do
       builder.field "name", name

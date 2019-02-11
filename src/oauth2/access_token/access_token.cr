@@ -2,6 +2,8 @@
 #
 # Use `#authenticate` to authenticate an `HTTP::Client`.
 abstract class OAuth2::AccessToken
+  include JSON::Serializable::Helper
+
   def self.new(pull : JSON::PullParser)
     token_type = nil
     access_token = nil
