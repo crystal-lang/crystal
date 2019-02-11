@@ -2299,7 +2299,7 @@ module Crystal
         break_vars.push @vars.dup
       else
         if @typed_def.try &.captured_block?
-          node.raise "can't break from captured block, use next"
+          node.raise "can't break from captured block, use `next`, however `next` will have behave differently when used in a block or a loop inside of the captured block."
         end
 
         node.raise "invalid break"
