@@ -21,13 +21,15 @@ module Comparable(T)
   # Compares this object to *other* based on the receiver’s `<=>` method,
   # returning `true` if it returns a value less than zero.
   def <(other : T)
-    _compare_with other, &.<(0)
+    cmp = self <=> other
+    cmp ? cmp < 0 : false
   end
 
   # Compares this object to *other* based on the receiver’s `<=>` method,
   # returning `true` if it returns a value equal or less then zero.
   def <=(other : T)
-    _compare_with other, &.<=(0)
+    cmp = self <=> other
+    cmp ? cmp <= 0 : false
   end
 
   # Compares this object to *other* based on the receiver’s `<=>` method,
@@ -43,19 +45,22 @@ module Comparable(T)
       return true if other.is_a?(Nil) && self.same?(other)
     end
 
-    _compare_with other, &.==(0)
+    cmp = self <=> other
+    cmp ? cmp == 0 : false
   end
 
   # Compares this object to *other* based on the receiver’s `<=>` method,
   # returning `true` if it returns a value greater then zero.
   def >(other : T)
-    _compare_with other, &.>(0)
+    cmp = self <=> other
+    cmp ? cmp > 0 : false
   end
 
   # Compares this object to *other* based on the receiver’s `<=>` method,
   # returning `true` if it returns a value equal or greater than zero.
   def >=(other : T)
-    _compare_with other, &.>=(0)
+    cmp = self <=> other
+    cmp ? cmp >= 0 : false
   end
 
   # The comparison operator. Returns `0` if the two objects are equal,
@@ -75,13 +80,4 @@ module Comparable(T)
   # [3, 1, 2].sort { |x, y| x <=> y } # => [1, 2, 3]
   # ```
   abstract def <=>(other : T)
-
-  private def _compare_with(other : T)
-    cmp = self <=> other
-    if cmp
-      yield cmp
-    else
-      false
-    end
-  end
 end
