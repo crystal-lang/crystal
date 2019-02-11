@@ -261,12 +261,12 @@ struct Time::Span
 
   # Returns a `Time` that happens later by `self` than the current time.
   def from_now : Time
-    Time.now + self
+    Time.local + self
   end
 
   # Returns a `Time` that happens earlier by `self` than the current time.
   def ago : Time
-    Time.now - self
+    Time.local - self
   end
 
   def -(other : self) : Time::Span
@@ -554,12 +554,12 @@ struct Time::MonthSpan
 
   # Returns a `Time` that happens N months after now.
   def from_now : Time
-    Time.now + self
+    Time.local + self
   end
 
   # Returns a `Time` that happens N months before now.
   def ago : Time
-    Time.now - self
+    Time.local - self
   end
 end
 

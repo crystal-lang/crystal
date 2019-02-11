@@ -21,9 +21,9 @@ require "crystal/system/time"
 # current time:
 #
 # ```crystal
-# Time.utc                                      # returns the current time in UTC
-# Time.now Time::Location.load("Europe/Berlin") # returns the current time in time zone Europe/Berlin
-# Time.now                                      # returns the current time in current time zone
+# Time.utc                                        # returns the current time in UTC
+# Time.local Time::Location.load("Europe/Berlin") # returns the current time in time zone Europe/Berlin
+# Time.local                                      # returns the current time in current time zone
 # ```
 #
 # It is generally recommended to keep instances in UTC and only apply a
@@ -173,7 +173,7 @@ require "crystal/system/time"
 # suitable for accurately measuring elapsed time.
 #
 # Instances of `Time` are focused on telling time – using a "wall clock".
-# When `Time.now` is called multiple times, the difference between the
+# When `Time.local` is called multiple times, the difference between the
 # returned instances is not guaranteed to equal to the time elapsed between
 # making the calls; even the order of the returned `Time` instances might
 # not reflect invocation order.
@@ -358,21 +358,15 @@ struct Time
 
   # Creates a new `Time` instance representing the current time from the
   # system clock observed in *location* (defaults to local time zone).
-  def self.new(location : Location = Location.local) : Time
+  def self.local(location : Location = Location.local) : Time
     seconds, nanoseconds = Crystal::System::Time.compute_utc_seconds_and_nanoseconds
     new(seconds: seconds, nanoseconds: nanoseconds, location: location)
   end
 
   # Creates a new `Time` instance representing the current time from the
-  # system clock observed in *location* (defaults to local time zone).
-  def self.now(location : Location = Location.local) : Time
-    new(location)
-  end
-
-  # Creates a new `Time` instance representing the current time from the
   # system clock in UTC.
   def self.utc : Time
-    now(Location::UTC)
+    local(Location::UTC)
   end
 
   # Creates a new `Time` instance representing the given local date-time in

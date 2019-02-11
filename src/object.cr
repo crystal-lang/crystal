@@ -331,7 +331,7 @@ class Object
     #
     # ```
     # class Person
-    #   {{macro_prefix}}getter(birth_date) { Time.now }
+    #   {{macro_prefix}}getter(birth_date) { Time.local }
     # end
     # ```
     #
@@ -341,7 +341,7 @@ class Object
     # class Person
     #   def {{method_prefix}}birth_date
     #     if (value = {{var_prefix}}birth_date).nil?
-    #       {{var_prefix}}birth_date = Time.now
+    #       {{var_prefix}}birth_date = Time.local
     #     else
     #       value
     #     end
@@ -794,7 +794,7 @@ class Object
     #
     # ```
     # class Person
-    #   {{macro_prefix}}property(birth_date) { Time.now }
+    #   {{macro_prefix}}property(birth_date) { Time.local }
     # end
     # ```
     #
@@ -804,7 +804,7 @@ class Object
     # class Person
     #   def {{method_prefix}}birth_date
     #     if (value = {{var_prefix}}birth_date).nil?
-    #       {{var_prefix}}birth_date = Time.now
+    #       {{var_prefix}}birth_date = Time.local
     #     else
     #       value
     #     end

@@ -188,8 +188,8 @@ describe Time do
 
   describe ".local without arguments" do
     it "current time is similar in different locations" do
-      (Time.now - Time.utc).should be_close(0.seconds, 1.second)
-      (Time.now - Time.now(Time::Location.fixed(1234))).should be_close(0.seconds, 1.second)
+      (Time.local - Time.utc).should be_close(0.seconds, 1.second)
+      (Time.local - Time.local(Time::Location.fixed(1234))).should be_close(0.seconds, 1.second)
     end
   end
 
@@ -211,7 +211,7 @@ describe Time do
   end
 
   it "#clone" do
-    time = Time.now
+    time = Time.local
     (time == time.clone).should be_true
   end
 
@@ -416,8 +416,9 @@ describe Time do
 
       (time + 5.minutes).utc?.should be_true
 
-      time = Time.now
-      (time + 5.minutes).location.should eq time.location
+      location = Time::Location.fixed(1234)
+      time = Time.local(location)
+      (time + 5.minutes).location.should eq location
     end
   end
 
@@ -476,7 +477,7 @@ describe Time do
     end
 
     it "compares different locations" do
-      time = Time.now
+      time = Time.local(Time::Location.fixed(1234))
       (time.to_utc <=> time).should eq(0)
     end
   end
@@ -489,7 +490,7 @@ describe Time do
     end
 
     it "gets unix seconds at GMT" do
-      t1 = Time.now
+      t1 = Time.local(Time::Location.fixed(1234))
       t1.to_unix.should eq(t1.to_utc.to_unix)
       t1.to_unix_f.should be_close(t1.to_utc.to_unix_f, 1e-01)
     end
@@ -638,7 +639,7 @@ describe Time do
   end
 
   it "does diff of utc vs local time" do
-    local = Time.now
+    local = Time.local(Time::Location.fixed(1234))
     utc = local.to_utc
     (utc - local).should eq(0.seconds)
     (local - utc).should eq(0.seconds)
@@ -648,7 +649,7 @@ describe Time do
     it "changes location" do
       location = Time::Location.fixed(3600)
       location2 = Time::Location.fixed(12345)
-      time1 = Time.now(location)
+      time1 = Time.local(location)
       time1.location.should eq(location)
 
       time2 = time1.in(location2)
@@ -661,7 +662,7 @@ describe Time do
     it "keeps wall clock" do
       location = Time::Location.fixed(3600)
       location2 = Time::Location.fixed(12345)
-      time1 = Time.now(location)
+      time1 = Time.local(location)
       time1.location.should eq(location)
 
       time2 = time1.to_local_in(location2)
@@ -678,7 +679,7 @@ describe Time do
     it "is the difference of offsets apart" do
       location = Time::Location.fixed(3600)
       location2 = Time::Location.fixed(12345)
-      time1 = Time.now(location)
+      time1 = Time.local(location)
       time2 = time1.to_local_in(location2)
 
       (time2 - time1).should eq (time1.offset - time2.offset).seconds
@@ -816,11 +817,11 @@ describe Time do
     end
   end
 
-  typeof(Time.now.year)
+  typeof(Time.local.year)
   typeof(1.minute.from_now.year)
   typeof(1.minute.ago.year)
   typeof(1.month.from_now.year)
   typeof(1.month.ago.year)
-  typeof(Time.now.to_utc)
-  typeof(Time.now.to_local)
+  typeof(Time.local.to_utc)
+  typeof(Time.local.to_local)
 end
