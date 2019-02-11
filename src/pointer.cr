@@ -98,7 +98,7 @@ struct Pointer(T)
     self + (-other.to_i64!)
   end
 
-  # Returns `-1`, `0` or `1` if this pointer's address is less, equal or greater than *other*'s address,
+  # Returns `-1`, `0` or `1` depending on whether this pointer's address is less, equal or greater than *other*'s address,
   # respectively.
   def <=>(other : self)
     address <=> other.address

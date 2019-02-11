@@ -6,7 +6,9 @@
 # `Macros` module are top-level methods that you can invoke, like `puts` and `run`.
 module Crystal::Macros
   # Compares two [semantic versions](http://semver.org/).
-  # Returns `-1` if `v1 < v2`, `0` if `v1 == v2` and `1` if `v1 > v2`.
+  #
+  # Returns `-1`, `0` or `1` depending on whether *v1* is lower than *v2*,
+  # equal to *v2* or greater than *v2*.
   #
   # ```
   # {{ compare_versions("1.10.0", "1.2.0") }} # => 1

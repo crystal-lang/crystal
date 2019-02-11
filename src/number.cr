@@ -163,7 +163,7 @@ struct Number
 
   # The comparison operator.
   #
-  # Returns `-1`, `0` or `1` if `self` is less than *other*, equals *other*
+  # Returns `-1`, `0` or `1` depending on whether `self` is less than *other*, equals *other*
   # or is greater than *other*.
   def <=>(other)
     self > other ? 1 : (self < other ? -1 : 0)

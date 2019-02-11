@@ -8,7 +8,7 @@
 # `PartialComparable` uses `<=>` to implement the conventional
 # comparison operators (`<`, `<=`, `==`, `>=`, and `>`).
 module PartialComparable(T)
-  # Compares this object to *other* based on the receiver’s `<=>` method,
+  # Compares this object to *other* based on the receiver's `<=>` method,
   # returning `true` if it returns a negative number.
   def <(other : T)
     compare_with(other) do |cmp|
@@ -16,15 +16,15 @@ module PartialComparable(T)
     end
   end
 
-  # Compares this object to *other* based on the receiver’s `<=>` method,
-  # returning `true` if it returns a negative number or zero.
+  # Compares this object to *other* based on the receiver's `<=>` method,
+  # returning `true` if it returns a negative number or `0`.
   def <=(other : T)
     compare_with(other) do |cmp|
       cmp <= 0
     end
   end
 
-  # Compares this object to *other* based on the receiver’s `<=>` method,
+  # Compares this object to *other* based on the receiver's `<=>` method,
   # returning `true` if it returns zero.
   # Also returns `true` if this and *other* are the same object.
   def ==(other : T)
@@ -37,7 +37,7 @@ module PartialComparable(T)
     end
   end
 
-  # Compares this object to *other* based on the receiver’s `<=>` method,
+  # Compares this object to *other* based on the receiver's `<=>` method,
   # returning `true` if it returns a positive number.
   def >(other : T)
     compare_with(other) do |cmp|
@@ -45,7 +45,7 @@ module PartialComparable(T)
     end
   end
 
-  # Compares this object to *other* based on the receiver’s `<=>` method,
+  # Compares this object to *other* based on the receiver's `<=>` method,
   # returning `true` if it returns a positive number or zero.
   def >=(other : T)
     compare_with(other) do |cmp|
@@ -64,8 +64,7 @@ module PartialComparable(T)
 
   # The comparison operator.
   #
-  # Returns a negative number if the object
-  # is considered to be less than *other*, zero if the two objects are equal,
+  # Returns a negative number, `0` or a positive number depending on whether if the object is considered to be less than *other*, zero if the two objects are equal,
   # a positive number if this object is considered to be greater than *other*,
   # or `nil` if no order can be established.
   #
