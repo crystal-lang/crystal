@@ -215,7 +215,7 @@ describe Time do
     (time == time.clone).should be_true
   end
 
-  describe "#add_span" do
+  describe "#shift" do
     it "adds hours, minutes, seconds" do
       t1 = Time.utc(2002, 2, 25, 15, 25, 13)
       t2 = t1 + Time::Span.new 3, 54, 1
@@ -244,10 +244,10 @@ describe Time do
         location = Time::Location.fixed(offset)
 
         time = Time.new(1, 1, 1, location: location)
-        time.add_span(0, 1).should eq Time.new(1, 1, 1, nanosecond: 1, location: location)
-        time.add_span(0, 0).should eq time
+        time.shift(0, 1).should eq Time.new(1, 1, 1, nanosecond: 1, location: location)
+        time.shift(0, 0).should eq time
         expect_raises(ArgumentError) do
-          time.add_span(0, -1)
+          time.shift(0, -1)
         end
       end
     end
@@ -257,17 +257,44 @@ describe Time do
         location = Time::Location.fixed(offset)
 
         time = Time.new(9999, 12, 31, 23, 59, 59, nanosecond: 999_999_999, location: location)
-        time.add_span(0, -1).should eq Time.new(9999, 12, 31, 23, 59, 59, nanosecond: 999_999_998, location: location)
-        time.add_span(0, 0).should eq time
+        time.shift(0, -1).should eq Time.new(9999, 12, 31, 23, 59, 59, nanosecond: 999_999_998, location: location)
+        time.shift(0, 0).should eq time
         expect_raises(ArgumentError) do
-          time.add_span(0, 1)
+          time.shift(0, 1)
         end
       end
     end
 
     it "adds zero span" do
       time = Time.now
-      time.add_span(0, 0).should eq time
+      time.shift(0, 0).should eq time
+    end
+
+    describe "irregular calendrical unit ratios" do
+      it "shifts by a week if one day is left out" do
+        # The week from 2011-12-25 to 2012-01-01 for example lasted only 6 days in Samoa,
+        # because it skipped 2011-12-28 due to changing time zone from -11:00 to +13:00.
+        with_zoneinfo do
+          samoa = Time::Location.load("Pacific/Apia")
+          start = Time.new(2011, 12, 25, 0, 0, 0, location: samoa)
+
+          plus_one_week = start.shift days: 7
+          plus_one_week.should eq start + 6.days
+
+          plus_one_year = start.shift years: 1
+          plus_one_year.should eq start + 365.days # 2012 is a leap year so it should've been 366 days, but 2011-12-28 was skipped
+        end
+      end
+
+      it "shifts by conceptual hour even if elapsed time is less" do
+        # Venezuela switched from -4:30 to -4:00 on 2016-05-01, the hour between 2:00 and 3:00 lasted only 30 minutes
+        with_zoneinfo do
+          venezuela = Time::Location.load("America/Caracas")
+          start = Time.new(2016, 5, 1, 2, 0, 0, location: venezuela)
+          plus_one_hour = start.shift hours: 1
+          plus_one_hour.should eq start + 30.minutes
+        end
+      end
     end
 
     describe "adds days" do
@@ -284,13 +311,13 @@ describe Time do
         time.should eq Time.utc(2002, 3, 2, 17, 49, 13)
       end
 
-      pending "over dst" do
+      it "over dst" do
         with_zoneinfo do
           location = Time::Location.load("Europe/Berlin")
           reference = Time.new(2017, 10, 28, 13, 37, location: location)
-          next_day = Time.new(2017, 10, 29, 13, 37, location: location)
+          next_day = reference.shift days: 1
 
-          (reference + 1.day).should eq next_day
+          next_day.should eq reference + 25.hours
         end
       end
 
@@ -301,10 +328,26 @@ describe Time do
         end
       end
 
+      pending "out of range max (shift days)" do
+        # this will be fixed with raise on overflow
+        time = Time.utc(2002, 2, 25, 15, 25, 13)
+        expect_raises ArgumentError do
+          time.shift days: 10000000
+        end
+      end
+
       it "out of range min" do
         time = Time.utc(2002, 2, 25, 15, 25, 13)
         expect_raises ArgumentError do
           time - 10000000.days
+        end
+      end
+
+      pending "out of range min (shift days)" do
+        # this will be fixed with raise on overflow
+        time = Time.utc(2002, 2, 25, 15, 25, 13)
+        expect_raises ArgumentError do
+          time.shift days: -10000000
         end
       end
     end
@@ -312,33 +355,32 @@ describe Time do
     it "adds months" do
       t = Time.utc 2014, 10, 30, 21, 18, 13
 
-      t2 = t + 1.month
+      t2 = t.shift months: 1
       t2.should eq Time.utc(2014, 11, 30, 21, 18, 13)
 
-      t2 = t + 1.months
-      t2.should eq Time.utc(2014, 11, 30, 21, 18, 13)
-
-      t = Time.utc 2014, 10, 31, 21, 18, 13
-      t2 = t + 1.month
+      t2 = t.shift months: 1
       t2.should eq Time.utc(2014, 11, 30, 21, 18, 13)
 
       t = Time.utc 2014, 10, 31, 21, 18, 13
-      t2 = t - 1.month
+      t2 = t.shift months: 1
+      t2.should eq Time.utc(2014, 11, 30, 21, 18, 13)
+
+      t = Time.utc 2014, 10, 31, 21, 18, 13
+      t2 = t.shift months: -1
       t2.should eq Time.utc(2014, 9, 30, 21, 18, 13)
 
       t = Time.utc 2014, 10, 31, 21, 18, 13
-      t2 = t + 6.month
+      t2 = t.shift months: 6
       t2.should eq Time.utc(2015, 4, 30, 21, 18, 13)
     end
 
     it "adds years" do
       t = Time.utc 2014, 10, 30, 21, 18, 13
-
-      t2 = t + 1.year
+      t2 = t.shift years: 1
       t2.should eq Time.utc(2015, 10, 30, 21, 18, 13)
 
       t = Time.utc 2014, 10, 30, 21, 18, 13
-      t2 = t - 2.years
+      t2 = t.shift years: -2
       t2.should eq Time.utc(2012, 10, 30, 21, 18, 13)
     end
 
@@ -356,15 +398,16 @@ describe Time do
     end
 
     it "adds nanoseconds" do
-      time = Time.utc(2002, 2, 25, 15, 25, 13)
-      time = time + 1e16.nanoseconds
-      time.should eq Time.utc(2002, 6, 21, 9, 11, 53)
+      t1 = Time.utc(2002, 2, 25, 15, 25, 13)
+      t1 = t1.shift nanoseconds: 10_000_000_000_000_000
 
-      time = time - 19e16.nanoseconds
-      time.should eq Time.utc(1996, 6, 13, 7, 25, 13)
+      t1.should eq Time.utc(2002, 6, 21, 9, 11, 53)
 
-      time = time + 15_623_487.nanoseconds
-      time.should eq Time.utc(1996, 6, 13, 7, 25, 13, nanosecond: 15_623_487)
+      t1 = t1.shift nanoseconds: -190_000_000_000_000_000
+      t1.should eq Time.utc(1996, 6, 13, 7, 25, 13)
+
+      t1 = t1.shift nanoseconds: 15_623_000
+      t1.should eq Time.utc(1996, 6, 13, 7, 25, 13, nanosecond: 15_623_000)
     end
 
     it "preserves location when adding" do

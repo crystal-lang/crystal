@@ -558,16 +558,16 @@ struct Time
 
   # Returns a copy of this `Time` with *span* added.
   #
-  # See `#add_span` for details.
+  # See `#shift` for details.
   def +(span : Time::Span) : Time
-    add_span span.to_i, span.nanoseconds
+    shift span.to_i, span.nanoseconds
   end
 
   # Returns a copy of this `Time` with *span* subtracted.
   #
-  # See `#add_span` for details.
+  # See `#shift` for details.
   def -(span : Time::Span) : Time
-    add_span -span.to_i, -span.nanoseconds
+    shift -span.to_i, -span.nanoseconds
   end
 
   # Returns a copy of this `Time` with *span* added.
@@ -585,7 +585,7 @@ struct Time
   # If the resulting date-time is ambiguous due to time zone transitions,
   # a correct time will be returned, but it does not guarantee which.
   def +(span : Time::MonthSpan) : Time
-    add_months span.value
+    shift months: span.value.to_i
   end
 
   # Returns a copy of this `Time` with *span* subtracted.
@@ -603,37 +603,15 @@ struct Time
   # If the resulting date-time is ambiguous due to time zone transitions,
   # a correct time will be returned, but it does not guarantee which.
   def -(span : Time::MonthSpan) : Time
-    add_months -span.value
+    shift months: -span.value.to_i
   end
 
-  private def add_months(months)
-    day = self.day
-    month = self.month + months.remainder(12)
-    year = self.year + months.tdiv(12)
-
-    if month < 1
-      month = 12 + month
-      year -= 1
-    elsif month > 12
-      month = month - 12
-      year += 1
-    end
-
-    maxday = Time.days_in_month(year, month)
-    if day > maxday
-      day = maxday
-    end
-
-    temp = Time.new(year, month, day, location: location)
-    temp + time_of_day
-  end
-
-  # Returns a copy of this `Time` with the number of *seconds* and
-  # *nanoseconds* added.
+  # Returns a copy of this `Time` shifted by the number of *seconds* and
+  # *nanoseconds*.
   #
   # Positive values result in a later time, negative values in an earlier time.
   #
-  # This operates on the instant time-line, such that adding the eqivalent of
+  # This operates on the instant time-line, such that adding the equivalent of
   # one hour will always be a duration of one hour later.
   # The local date-time representation may change by a different amount,
   # depending on time zone transitions.
@@ -643,7 +621,7 @@ struct Time
   # There is no explicit limit on the input values but the addition must result
   # in a valid time between `0001-01-01 00:00:00.0` and
   # `9999-12-31 23:59:59.999_999_999`. Otherwise `ArgumentError` is raised.
-  def add_span(seconds : Int, nanoseconds : Int) : Time
+  def shift(seconds : Int, nanoseconds : Int) : Time
     if seconds == 0 && nanoseconds == 0
       return self
     end
@@ -662,6 +640,96 @@ struct Time
     end
 
     Time.new(seconds: seconds, nanoseconds: nanoseconds.to_i, location: location)
+  end
+
+  # Returns a copy of this `Time` shifted by the amount of calendrical units
+  # provided as arguments.
+  #
+  # Positive values result in a later time, negative values in an earlier time.
+  #
+  # This operates on the local time-line, such that the local date-time
+  # represenation of the result will be apart by the specified amounts, but the
+  # elapsed time between both instances might not equal to the combined default
+  # durations
+  # This is the case for example when adding a day over a daylight-savings time
+  # change:
+  #
+  # ```
+  # start = Time.new(2017, 10, 28, 13, 37, location: Time::Location.load("Europe/Berlin"))
+  # one_day_later = start.shift days: 1
+  #
+  # one_day_later - start # => 25.hours
+  # ```
+  #
+  # *years* is equivalent to `12` months and *weeks* is equivalent to `7` days.
+  #
+  # If the day-of-month resulting from shifting by *years* and *months* would be
+  # invalid, the date is adjusted to the last valid day of the month.
+  # For example, adding one month to `2018-07-31` would result in the invalid
+  # date `2018-08-31` which will be adjusted to `2018-08-30`:
+  # ```
+  # Time.utc(2018, 7, 31).shift(months: 1) # => Time.utc(2018, 8, 30)
+  # ```
+  #
+  # Overflow in smaller units is transferred to the next larger unit.
+  #
+  # Changes are applied in the same order as the arguments, sorted by increasing
+  # granularity. This is relevant because the order of operations can change the result:
+  #
+  # ```
+  # Time.utc(2018, 7, 31).shift(months: 1, days: -1)       # => Time.utc(2018, 8, 29)
+  # Time.utc(2018, 7, 31).shift(months: 1).shift(days: -1) # => Time.utc(2018, 8, 29)
+  # Time.utc(2018, 7, 31).shift(days: -1).shift(months: 1) # => Time.utc(2018, 8, 30)
+  # ```
+  #
+  # There is no explicit limit on the input values but the shift must result
+  # in a valid time between `0001-01-01 00:00:00.0` and
+  # `9999-12-31 23:59:59.999_999_999`. Otherwise `ArgumentError` is raised.
+  #
+  # If the resulting date-time is ambiguous due to time zone transitions,
+  # a correct time will be returned, but it does not guarantee which.
+  def shift(*, years : Int = 0, months : Int = 0, weeks : Int = 0, days : Int = 0,
+            hours : Int = 0, minutes : Int = 0, seconds : Int = 0, nanoseconds : Int = 0)
+    seconds = seconds.to_i64
+
+    # Skip the entire month-based calculations if year and month are zero
+    if years.zero? && months.zero?
+      # Using offset_seconds with applied zone offset so that calculations
+      # are applied to the equivalent UTC representation of this local time.
+      seconds += offset_seconds
+    else
+      year, month, day, _ = to_utc.year_month_day_day_year
+
+      year += years
+
+      months += month
+      year += months.tdiv(12)
+      month = months.remainder(12)
+
+      if month < 1
+        month = 12 + month
+        year -= 1
+      end
+
+      maxday = Time.days_in_month(year, month)
+      if day > maxday
+        day = maxday
+      end
+
+      seconds += Time.absolute_days(year, month, day).to_i64 * SECONDS_PER_DAY
+      seconds += offset_seconds % SECONDS_PER_DAY
+    end
+
+    # FIXME: These operations currently don't have overflow checks applied.
+    # This should be fixed when operators by default raise on overflow.
+    seconds += weeks * SECONDS_PER_WEEK
+    seconds += days * SECONDS_PER_DAY
+    seconds += hours * SECONDS_PER_HOUR
+    seconds += minutes * SECONDS_PER_MINUTE
+
+    # Apply the nanosecond shift (including overflow handling) and transform to
+    # local time zone in `location`:
+    Time.utc(seconds: seconds, nanoseconds: self.nanosecond).shift(0, nanoseconds).to_local_in(location)
   end
 
   # Returns a `Time::Span` amounting to the duration between *other* and `self`.
@@ -1366,7 +1434,7 @@ struct Time
     @seconds + offset
   end
 
-  private def year_month_day_day_year
+  protected def year_month_day_day_year
     m = 1
 
     days = DAYS_MONTH

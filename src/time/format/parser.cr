@@ -55,7 +55,7 @@ struct Time::Format
         time = Time.new @year, @month, @day, @hour, @minute, @second, nanosecond: @nanosecond, location: location
       end
 
-      time = time.add_span 0, @nanosecond_offset
+      time = time.shift 0, @nanosecond_offset
 
       time
     end
