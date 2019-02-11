@@ -27,7 +27,7 @@ class URI
       self
     end
 
-    def parse_scheme_start
+    private def parse_scheme_start
       if alpha?
         parse_scheme
       else
@@ -35,7 +35,7 @@ class URI
       end
     end
 
-    def parse_scheme
+    private def parse_scheme
       start = @ptr
       loop do
         if alpha? || numeric? || c === '-' || c === '.' || c === '+'
@@ -56,7 +56,7 @@ class URI
       end
     end
 
-    def parse_path_or_authority
+    private def parse_path_or_authority
       if c === '/'
         @uri.host = ""
         parse_authority
@@ -66,7 +66,7 @@ class URI
       end
     end
 
-    def parse_no_scheme
+    private def parse_no_scheme
       case c
       when '#'
         parse_fragment
@@ -75,7 +75,7 @@ class URI
       end
     end
 
-    def parse_authority
+    private def parse_authority
       @ptr += 1
       start = @ptr
       loop do
@@ -91,7 +91,7 @@ class URI
       end
     end
 
-    def parse_userinfo
+    private def parse_userinfo
       start = @ptr
       password_flag = false
       loop do
@@ -114,7 +114,7 @@ class URI
       end
     end
 
-    def parse_host
+    private def parse_host
       start = @ptr
       bracket_flag = false
       return parse_path if c === '/'
@@ -134,7 +134,7 @@ class URI
       end
     end
 
-    def parse_port
+    private def parse_port
       start = @ptr
       loop do
         if numeric?
@@ -152,7 +152,7 @@ class URI
       end
     end
 
-    def parse_relative
+    private def parse_relative
       case c
       when '\0'
         nil
@@ -167,7 +167,7 @@ class URI
       end
     end
 
-    def parse_relative_slash
+    private def parse_relative_slash
       if @input[@ptr + 1] === '/'
         @ptr += 1
         @uri.host ||= ""
@@ -177,7 +177,7 @@ class URI
       end
     end
 
-    def parse_path
+    private def parse_path
       start = @ptr
       loop do
         case c
@@ -196,7 +196,7 @@ class URI
       end
     end
 
-    def parse_query
+    private def parse_query
       @ptr += 1
       start = @ptr
       loop do
@@ -213,7 +213,7 @@ class URI
       end
     end
 
-    def parse_fragment
+    private def parse_fragment
       @ptr += 1
       start = @ptr
       loop do
