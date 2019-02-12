@@ -62,6 +62,22 @@ jobs:
       - store_artifacts:
           path: ~/test-results/spec
 
+  test_alpine:
+    docker:
+    - image: jrei/crystal-alpine:latest
+    environment:
+      <<: *env
+      TRAVIS_OS_NAME: linux
+      ARCH: x86_64
+      ARCH_CMD: linux64
+    steps:
+    - checkout
+    - run: echo 'export CURRENT_TAG="$CIRCLE_TAG"' >> $BASH_ENV
+    - run: bin/ci prepare_build
+    - run: make std_spec clean threads=1
+    - run: make crystal std_spec compiler_spec docs threads=1
+    - run: find samples -name "*.cr" | xargs -L 1 ./bin/crystal build --no-codegen
+
   test_darwin:
     macos:
       xcode: "11.1.0"
@@ -504,6 +520,8 @@ workflows:
                 - /.*\bci\b.*/
       - test_linux32_std:
           filters: *unless_maintenance
+      - test_alpine:
+          filters: *unless_maintenance
       - test_darwin:
           filters: *unless_maintenance
       - test_preview_mt:
@@ -527,6 +545,8 @@ workflows:
             tags:
               only: /.*/
       - test_linux32_std:
+          filters: *per_tag
+      - test_alpine:
           filters: *per_tag
       - test_darwin:
           filters: *per_tag
@@ -602,6 +622,7 @@ workflows:
     jobs:
       - test_linux
       - test_linux32_std
+      - test_alpine
       - test_darwin
       - test_preview_mt
       - check_format
@@ -659,6 +680,8 @@ workflows:
                 - /release\/.+/
                 - /.*\bci\b.*/
       - test_linux32_std:
+          filters: *maintenance
+      - test_alpine:
           filters: *maintenance
       - test_darwin:
           filters: *maintenance
