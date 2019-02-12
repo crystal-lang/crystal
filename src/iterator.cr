@@ -293,34 +293,30 @@ module Iterator(T)
   # iter.next # => Iterator::Stop::INSTANCE
   # ```
   #
-  # By default, a new array is created and yielded for each consecutive when invoking `next`.
+  # By default, a new array is created and returned for each consecutive call of `next`.
   # * If *reuse* is given, the array can be reused
-  # * If *reuse* is an `Array`, this array will be reused
-  # * If *reuse* is truthy, the method will create a new array and reuse it.
+  # * If *reuse* is `true`, the method will create a new array and reuse it.
+  # * If *reuse*  is an instance of `Array`, `Deque` or a similar collection type (implementing `#<<`, `#shift` and `#size`) it will be used.
+  # * If *reuse* is falsey, the array will not be reused.
   #
   # This can be used to prevent many memory allocations when each slice of
   # interest is to be used in a read-only fashion.
   def cons(n : Int, reuse = false)
     raise ArgumentError.new "Invalid cons size: #{n}" if n <= 0
-    Cons(typeof(self), T, typeof(n)).new(self, n, reuse)
+    if reuse.nil? || reuse.is_a?(Bool)
+      Cons(typeof(self), T, typeof(n), Array(T)).new(self, n, Array(T).new(n), reuse)
+    else
+      Cons(typeof(self), T, typeof(n), typeof(reuse)).new(self, n, reuse, reuse)
+    end
   end
 
-  private struct Cons(I, T, N)
+  private struct Cons(I, T, N, V)
     include Iterator(Array(T))
     include IteratorWrapper
 
-    def initialize(@iterator : I, @n : N, reuse)
-      if reuse
-        if reuse.is_a?(Array)
-          @values = reuse
-        else
-          @values = Array(T).new(@n)
-        end
-        @reuse = true
-      else
-        @values = Array(T).new(@n)
-        @reuse = false
-      end
+    def initialize(@iterator : I, @n : N, values : V, reuse)
+      @values = values
+      @reuse = !!reuse
     end
 
     def next
