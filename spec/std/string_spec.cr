@@ -539,6 +539,42 @@ describe "String" do
     it { "hello\r\n".chomp("\n").should eq("hello") }
   end
 
+  describe "lchop" do
+    it { "".lchop.should eq("") }
+    it { "h".lchop.should eq("") }
+    it { "hello".lchop.should eq("ello") }
+    it { "かたな".lchop.should eq("たな") }
+
+    it { "hello".lchop('g').should eq("hello") }
+    it { "hello".lchop('h').should eq("ello") }
+    it { "かたな".lchop('か').should eq("たな") }
+
+    it { "".lchop("").should eq("") }
+    it { "hello".lchop("good").should eq("hello") }
+    it { "hello".lchop("hel").should eq("lo") }
+    it { "かたな".lchop("かた").should eq("な") }
+
+    it { "\n\n\n\nhello".lchop("").should eq("\n\n\n\nhello") }
+  end
+
+  describe "lchop?" do
+    it { "".lchop?.should be_nil }
+    it { "h".lchop?.should eq("") }
+    it { "hello".lchop?.should eq("ello") }
+    it { "かたな".lchop?.should eq("たな") }
+
+    it { "hello".lchop?('g').should be_nil }
+    it { "hello".lchop?('h').should eq("ello") }
+    it { "かたな".lchop?('か').should eq("たな") }
+
+    it { "".lchop?("").should eq("") }
+    it { "hello".lchop?("good").should be_nil }
+    it { "hello".lchop?("hel").should eq("lo") }
+    it { "かたな".lchop?("かた").should eq("な") }
+
+    it { "\n\n\n\nhello".lchop("").should eq("\n\n\n\nhello") }
+  end
+
   describe "rchop" do
     it { "".rchop.should eq("") }
     it { "foo".rchop.should eq("fo") }
@@ -553,25 +589,28 @@ describe "String" do
     it { "foo".rchop('o').should eq("fo") }
     it { "foo".rchop('x').should eq("foo") }
 
+    it { "".rchop("").should eq("") }
     it { "foobar".rchop("bar").should eq("foo") }
     it { "foobar".rchop("baz").should eq("foobar") }
   end
 
-  describe "lchomp" do
-    it { "".lchop.should eq("") }
-    it { "h".lchop.should eq("") }
-    it { "hello".lchop.should eq("ello") }
-    it { "かたな".lchop.should eq("たな") }
+  describe "rchop?" do
+    it { "".rchop?.should be_nil }
+    it { "foo".rchop?.should eq("fo") }
+    it { "foo\n".rchop?.should eq("foo") }
+    it { "foo\r".rchop?.should eq("foo") }
+    it { "foo\r\n".rchop?.should eq("foo\r") }
+    it { "\r\n".rchop?.should eq("\r") }
+    it { "かたな".rchop?.should eq("かた") }
+    it { "かたな\n".rchop?.should eq("かたな") }
+    it { "かたな\r\n".rchop?.should eq("かたな\r") }
 
-    it { "hello".lchop('g').should eq("hello") }
-    it { "hello".lchop('h').should eq("ello") }
-    it { "かたな".lchop('か').should eq("たな") }
+    it { "foo".rchop?('o').should eq("fo") }
+    it { "foo".rchop?('x').should be_nil }
 
-    it { "hello".lchop("good").should eq("hello") }
-    it { "hello".lchop("hel").should eq("lo") }
-    it { "かたな".lchop("かた").should eq("な") }
-
-    it { "\n\n\n\nhello".lchop("").should eq("\n\n\n\nhello") }
+    it { "".rchop?("").should eq("") }
+    it { "foobar".rchop?("bar").should eq("foo") }
+    it { "foobar".rchop?("baz").should be_nil }
   end
 
   describe "strip" do
