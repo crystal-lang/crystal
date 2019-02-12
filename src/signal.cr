@@ -122,15 +122,12 @@ enum Signal : Int32
     LibC.sigismember(pointerof(@@sigset), self) == 1
   end
 
-  @@setup_default_handlers = Atomic(Int32).new(0)
+  @@setup_default_handlers = Atomic::Flag.new
 
   # :nodoc:
   def self.setup_default_handlers
-    _, success = @@setup_default_handlers.compare_and_set(0, 1)
-    return unless success
-
+    return unless @@setup_default_handlers.test_and_set
     LibC.sigemptyset(pointerof(@@sigset))
-
     Crystal::Signal.start_loop
     Signal::PIPE.ignore
     Signal::CHLD.reset
