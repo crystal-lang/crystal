@@ -63,20 +63,14 @@ jobs:
           path: ~/test-results/spec
 
   test_alpine:
-    docker:
-    - image: jrei/crystal-alpine:latest
+    machine: true
     environment:
       <<: *env
       TRAVIS_OS_NAME: linux
       ARCH: x86_64
       ARCH_CMD: linux64
-    steps:
-    - checkout
-    - run: echo 'export CURRENT_TAG="$CIRCLE_TAG"' >> $BASH_ENV
-    - run: bin/ci prepare_build
-    - run: make std_spec clean threads=1
-    - run: make crystal std_spec compiler_spec docs threads=1
-    - run: find samples -name "*.cr" | xargs -L 1 ./bin/crystal build --no-codegen
+      DOCKER_TEST_IMAGE: jrei/crystal-alpine:latest
+    steps: *ci_steps
 
   test_darwin:
     macos:

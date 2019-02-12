@@ -146,10 +146,10 @@ with_build_env() {
 
   case $ARCH in
     x86_64)
-      export DOCKER_TEST_IMAGE="$DOCKER_TEST_PREFIX-build"
+      export DOCKER_TEST_IMAGE="${DOCKER_TEST_IMAGE:=$DOCKER_TEST_PREFIX-build}"
       ;;
     i386)
-      export DOCKER_TEST_IMAGE="$DOCKER_TEST_PREFIX-i386-build"
+      export DOCKER_TEST_IMAGE="${DOCKER_TEST_IMAGE:=$DOCKER_TEST_PREFIX-i386-build}"
       ;;
   esac
 
