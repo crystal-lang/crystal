@@ -213,6 +213,12 @@ module Debug
 
       # Decodes the compressed matrix of addresses to line numbers.
       private def decode_sequences(size)
+        # Map names to indexes to avoid doing linear scans over @files and @directories
+        indexes = {
+          directory: {} of String => Int32,
+          filename:  {} of String => Int32,
+        }
+
         while (@io.tell - @offset) < size
           sequence = Sequence.new
 
@@ -236,7 +242,7 @@ module Debug
           read_filename_table(sequence)
 
           if @io.tell - @offset < sequence.offset + sequence.total_length
-            read_statement_program(sequence)
+            read_statement_program(sequence, indexes)
           end
         end
       end
@@ -277,7 +283,7 @@ module Debug
       end
 
       # TODO: support LNE::DefineFile (manually register file, uncommon)
-      private def read_statement_program(sequence)
+      private def read_statement_program(sequence, indexes)
         registers = Register.new(sequence.default_is_stmt)
 
         loop do
@@ -289,7 +295,7 @@ module Debug
             operation_advance = adjusted_opcode / sequence.line_range
             increment_address_and_op_index(operation_advance)
             registers.line &+= sequence.line_base + (adjusted_opcode % sequence.line_range)
-            register_to_matrix(sequence, registers)
+            register_to_matrix(sequence, registers, indexes)
             registers.reset
           elsif opcode == 0
             # extended opcode
@@ -299,7 +305,7 @@ module Debug
             case extended_opcode
             when LNE::EndSequence
               registers.end_sequence = true
-              register_to_matrix(sequence, registers)
+              register_to_matrix(sequence, registers, indexes)
               if (@io.tell - @offset - sequence.offset) < sequence.total_length
                 registers = Register.new(sequence.default_is_stmt)
               else
@@ -324,7 +330,7 @@ module Debug
 
             case standard_opcode
             when LNS::Copy
-              register_to_matrix(sequence, registers)
+              register_to_matrix(sequence, registers, indexes)
               registers.reset
             when LNS::AdvancePc
               operation_advance = DWARF.read_unsigned_leb128(@io)
@@ -363,15 +369,15 @@ module Debug
 
       @current_sequence_matrix : Array(Row)?
 
-      private def register_to_matrix(sequence, registers)
+      private def register_to_matrix(sequence, registers, indexes)
         file = sequence.file_names[registers.file]
         path = sequence.include_directories[file[1]]
 
         row = Row.new(
           registers.address,
           registers.op_index,
-          register_directory(path),
-          register_filename(file[0]),
+          register_directory(path, indexes[:directory]),
+          register_filename(file[0], indexes[:filename]),
           registers.line.to_i,
           registers.column.to_i,
           registers.end_sequence
@@ -397,18 +403,19 @@ module Debug
       @last_filename : String?
       @last_filename_index = 0
 
-      private def register_filename(name)
+      private def register_filename(name, filename_indexes)
         if name.same?(@last_filename)
           return @last_filename_index
         end
 
         @last_filename = name
 
-        index = @files.index(name)
+        index = filename_indexes[name]? || @files.index(name)
 
         unless index
           index = @files.size
           @files << name
+          filename_indexes[name] = index
         end
 
         @last_filename_index = index
@@ -420,18 +427,19 @@ module Debug
       @last_directory : String?
       @last_directory_index = 0
 
-      private def register_directory(name)
+      private def register_directory(name, directory_indexes)
         if name.same?(@last_directory)
           return @last_directory_index
         end
 
         @last_directory = name
 
-        index = @directories.index(name)
+        index = directory_indexes[name]? || @directories.index(name)
 
         unless index
           index = @directories.size
           @directories << name
+          directory_indexes[name] = index
         end
 
         @last_directory_index = index
