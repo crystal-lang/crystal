@@ -279,7 +279,7 @@ struct CallStack
           end
 
           strings = mach_o.read_section?("__debug_str") do |sh, io|
-            Debug::DWARF::Strings.new(io, sh.offset)
+            Debug::DWARF::Strings.new(io, sh.offset, sh.size)
           end
 
           mach_o.read_section?("__debug_info") do |sh, io|
@@ -381,7 +381,7 @@ struct CallStack
           end
 
           strings = elf.read_section?(".debug_str") do |sh, io|
-            Debug::DWARF::Strings.new(io, sh.offset)
+            Debug::DWARF::Strings.new(io, sh.offset, sh.size)
           end
 
           elf.read_section?(".debug_info") do |sh, io|
