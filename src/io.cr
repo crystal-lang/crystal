@@ -908,17 +908,13 @@ abstract class IO
   # ```
   # io = IO::Memory.new("hello\nworld")
   # io.each_line do |line|
-  #   puts line.chomp.reverse
+  #   puts line
   # end
+  # # output:
+  # # hello
+  # # world
   # ```
-  #
-  # Output:
-  #
-  # ```text
-  # olleh
-  # dlrow
-  # ```
-  def each_line(*args, **options) : Nil
+  def each_line(*args, **options, &block : String -> _) : Nil
     while line = gets(*args, **options)
       yield line
     end
