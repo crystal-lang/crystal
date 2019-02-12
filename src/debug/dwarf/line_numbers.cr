@@ -219,10 +219,13 @@ module Debug
           filename:  {} of String => Int32,
         }
 
-        while (@io.tell - @offset) < size
-          sequence = Sequence.new
+        while true
+          pos = @io.tell
+          offset = pos - @offset
+          break unless offset < size
 
-          sequence.offset = @io.tell - @offset
+          sequence = Sequence.new
+          sequence.offset = offset
           sequence.unit_length = @io.read_bytes(UInt32)
           sequence.version = @io.read_bytes(UInt16)
           sequence.header_length = @io.read_bytes(UInt32)
