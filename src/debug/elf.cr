@@ -201,7 +201,7 @@ module Debug
     def sh_name(index)
       sh = section_headers[shstrndx]
       @io.seek(sh.offset + index) do
-        @io.gets('\0').to_s.chomp('\0')
+        @io.gets('\0', chomp: true).to_s
       end
     end
 

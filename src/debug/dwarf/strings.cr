@@ -6,7 +6,7 @@ module Debug
 
       def decode(strp)
         @io.seek(@offset + strp) do
-          @io.gets('\0').to_s.chomp('\0')
+          @io.gets('\0', chomp: true).to_s
         end
       end
     end

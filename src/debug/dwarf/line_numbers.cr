@@ -255,7 +255,7 @@ module Debug
 
       private def read_directory_table(sequence)
         loop do
-          name = @io.gets('\0').to_s.chomp('\0')
+          name = @io.gets('\0', chomp: true).to_s
           break if name.empty?
           sequence.include_directories << name
         end
@@ -263,7 +263,7 @@ module Debug
 
       private def read_filename_table(sequence)
         loop do
-          name = @io.gets('\0').to_s.chomp('\0')
+          name = @io.gets('\0', chomp: true).to_s
           break if name.empty?
           dir = DWARF.read_unsigned_leb128(@io)
           time = DWARF.read_unsigned_leb128(@io)
