@@ -44,7 +44,7 @@ module HTTP
 
     def expired?
       if e = expires
-        e < Time.utc_now
+        e < Time.utc
       else
         false
       end
@@ -101,7 +101,7 @@ module HTTP
         return unless match
 
         expires = if max_age = match["max_age"]?
-                    Time.utc_now + max_age.to_i.seconds
+                    Time.utc + max_age.to_i.seconds
                   else
                     parse_time(match["expires"]?)
                   end
@@ -179,7 +179,7 @@ module HTTP
     #
     # ```
     # response = HTTP::Client::Response.new(200)
-    # response.cookies["foo"] = HTTP::Cookie.new("foo", "bar", "/admin", Time.now + 12.hours, secure: true)
+    # response.cookies["foo"] = HTTP::Cookie.new("foo", "bar", "/admin", Time.utc + 12.hours, secure: true)
     # ```
     def []=(key, value : Cookie)
       unless key == value.name

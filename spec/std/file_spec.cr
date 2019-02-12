@@ -430,9 +430,9 @@ describe "File" do
     with_tempfile("mtime") do |path|
       File.touch(path)
       File.open(path) do |file|
-        file.info.modification_time.should be_close(Time.now, 1.seconds)
+        file.info.modification_time.should be_close(Time.utc, 1.seconds)
       end
-      File.info(path).modification_time.should be_close(Time.now, 1.seconds)
+      File.info(path).modification_time.should be_close(Time.utc, 1.seconds)
     end
   end
 
@@ -1171,12 +1171,12 @@ describe "File" do
       end
     end
 
-    it "sets file times to Time.now if no time argument given" do
+    it "sets file times to current time if no time argument given" do
       with_tempfile("touch-time_now.txt") do |path|
         File.touch(path)
 
         info = File.info(path)
-        info.modification_time.should be_close(Time.now, 1.second)
+        info.modification_time.should be_close(Time.utc, 1.second)
       end
     end
 

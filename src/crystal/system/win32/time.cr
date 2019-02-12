@@ -88,7 +88,7 @@ module Crystal::System::Time
 
     transitions = [] of ::Time::Location::ZoneTransition
 
-    current_year = ::Time.utc_now.year
+    current_year = ::Time.utc.year
 
     (current_year - 100).upto(current_year + 100) do |year|
       tstamp = calculate_switchdate_in_year(year, first_date) - (zones[second_index].offset)

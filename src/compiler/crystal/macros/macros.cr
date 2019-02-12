@@ -124,7 +124,7 @@ class Crystal::Program
 
     # First, update times for the program dir, so it remains in the cache longer
     # (this is specially useful if a macro run program is used by multiple programs)
-    now = Time.utc_now
+    now = Time.utc
     File.utime(now, now, program_dir)
 
     if can_reuse_previous_compilation?(filename, executable_path, recorded_requires_path, requires_path)
