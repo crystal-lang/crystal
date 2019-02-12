@@ -908,17 +908,26 @@ abstract class IO
   # ```
   # io = IO::Memory.new("hello\nworld")
   # io.each_line do |line|
-  #   puts line.chomp.reverse
+  #   puts line
   # end
+  # # output:
+  # # hello
+  # # world
   # ```
   #
-  # Output:
+  # The second argument yielded to the block is the line number starting at `1`.
+  # The optional *offset* argument is added to the first line number.
   #
-  # ```text
-  # olleh
-  # dlrow
   # ```
-  def each_line(*args, **options) : Nil
+  # io = IO::Memory.new("hello\nworld")
+  # io.each_line do |line, lino|
+  #   puts "#{lino}: #{line}"
+  # end
+  # # output:
+  # # 1: hello
+  # # 2: world
+  # ```
+  def each_line(*args, **options, &block : String -> _) : Nil
     while line = gets(*args, **options)
       yield line
     end
