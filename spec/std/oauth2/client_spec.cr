@@ -44,5 +44,7 @@ describe OAuth2::Client do
     client.get_access_token_using_refresh_token("some_refresh_token")
     client.get_access_token_using_refresh_token("some_refresh_token", scope: "some scope")
     client.get_access_token_using_client_credentials(scope: "some scope")
+    client.get_access_token_using_resource_owner_credentials(username: "user123", password: "monkey")
+    client.get_access_token_using_resource_owner_credentials(username: "user123", password: "monkey", scope: "foo")
   end)
 end
