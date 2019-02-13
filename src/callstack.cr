@@ -223,10 +223,7 @@ struct CallStack
       read_dwarf_sections unless @@dwarf_line_numbers
       if ln = @@dwarf_line_numbers
         if row = ln.find(pc)
-          path = ln.files[row.file]?
-          if dirname = ln.directories[row.directory]?
-            path = "#{dirname}/#{path}"
-          end
+          path = "#{row.directory}/#{row.file}"
           return {path, row.line, row.column}
         end
       end

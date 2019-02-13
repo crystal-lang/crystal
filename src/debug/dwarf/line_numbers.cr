@@ -115,8 +115,8 @@ module Debug
       record Row,
         address : UInt64,
         op_index : UInt32,
-        directory : Int32,
-        file : Int32,
+        directory : String,
+        file : String,
         line : Int32,
         column : Int32,
         end_sequence : Bool
@@ -168,19 +168,11 @@ module Debug
       # reduce the memory usage of repeating a String many times.
       getter matrix : Array(Array(Row))
 
-      # The array of indexed directory paths.
-      getter directories : Array(String)
-
-      # The array of indexed file names.
-      getter files : Array(String)
-
       @offset : LibC::OffT
 
       def initialize(@io : IO::FileDescriptor, size)
         @offset = @io.tell
         @matrix = Array(Array(Row)).new
-        @directories = [] of String
-        @files = [] of String
         decode_sequences(size)
       end
 
@@ -213,12 +205,6 @@ module Debug
 
       # Decodes the compressed matrix of addresses to line numbers.
       private def decode_sequences(size)
-        # Map names to indexes to avoid doing linear scans over @files and @directories
-        indexes = {
-          directory: {} of String => Int32,
-          filename:  {} of String => Int32,
-        }
-
         while true
           pos = @io.tell
           offset = pos - @offset
@@ -245,7 +231,7 @@ module Debug
           read_filename_table(sequence)
 
           if @io.tell - @offset < sequence.offset + sequence.total_length
-            read_statement_program(sequence, indexes)
+            read_statement_program(sequence)
           end
         end
       end
@@ -286,7 +272,7 @@ module Debug
       end
 
       # TODO: support LNE::DefineFile (manually register file, uncommon)
-      private def read_statement_program(sequence, indexes)
+      private def read_statement_program(sequence)
         registers = Register.new(sequence.default_is_stmt)
 
         loop do
@@ -298,7 +284,7 @@ module Debug
             operation_advance = adjusted_opcode / sequence.line_range
             increment_address_and_op_index(operation_advance)
             registers.line &+= sequence.line_base + (adjusted_opcode % sequence.line_range)
-            register_to_matrix(sequence, registers, indexes)
+            register_to_matrix(sequence, registers)
             registers.reset
           elsif opcode == 0
             # extended opcode
@@ -308,7 +294,7 @@ module Debug
             case extended_opcode
             when LNE::EndSequence
               registers.end_sequence = true
-              register_to_matrix(sequence, registers, indexes)
+              register_to_matrix(sequence, registers)
               if (@io.tell - @offset - sequence.offset) < sequence.total_length
                 registers = Register.new(sequence.default_is_stmt)
               else
@@ -333,7 +319,7 @@ module Debug
 
             case standard_opcode
             when LNS::Copy
-              register_to_matrix(sequence, registers, indexes)
+              register_to_matrix(sequence, registers)
               registers.reset
             when LNS::AdvancePc
               operation_advance = DWARF.read_unsigned_leb128(@io)
@@ -372,15 +358,15 @@ module Debug
 
       @current_sequence_matrix : Array(Row)?
 
-      private def register_to_matrix(sequence, registers, indexes)
+      private def register_to_matrix(sequence, registers)
         file = sequence.file_names[registers.file]
         path = sequence.include_directories[file[1]]
 
         row = Row.new(
           registers.address,
           registers.op_index,
-          register_directory(path, indexes[:directory]),
-          register_filename(file[0], indexes[:filename]),
+          path,
+          file[0],
           registers.line.to_i,
           registers.column.to_i,
           registers.end_sequence
@@ -396,58 +382,6 @@ module Debug
         if registers.end_sequence
           @current_sequence_matrix = nil
         end
-      end
-
-      # When decoding statement programs when asking for the current
-      # filename it's usually the case that it's the same as the old
-      # one (because all info from a single file comes first, then
-      # another file comes next, etc.). So we remember the last
-      # mapped index to avoid unnecessary lookups.
-      @last_filename : String?
-      @last_filename_index = 0
-
-      private def register_filename(name, filename_indexes)
-        if name.same?(@last_filename)
-          return @last_filename_index
-        end
-
-        @last_filename = name
-
-        index = filename_indexes[name]? || @files.index(name)
-
-        unless index
-          index = @files.size
-          @files << name
-          filename_indexes[name] = index
-        end
-
-        @last_filename_index = index
-
-        index
-      end
-
-      # Same logic as `@last_filename` but for directories
-      @last_directory : String?
-      @last_directory_index = 0
-
-      private def register_directory(name, directory_indexes)
-        if name.same?(@last_directory)
-          return @last_directory_index
-        end
-
-        @last_directory = name
-
-        index = directory_indexes[name]? || @directories.index(name)
-
-        unless index
-          index = @directories.size
-          @directories << name
-          directory_indexes[name] = index
-        end
-
-        @last_directory_index = index
-
-        index
       end
     end
   end
