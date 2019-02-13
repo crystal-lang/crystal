@@ -105,7 +105,7 @@ class OAuth2::Client
   end
 
   # Gets an access token using an authorization code, as specified by
-  # [RFC 6749, Section 4.1.1](https://tools.ietf.org/html/rfc6749#section-4.1.3).
+  # [RFC 6749, Section 4.1.3](https://tools.ietf.org/html/rfc6749#section-4.1.3).
   def get_access_token_using_authorization_code(authorization_code : String) : AccessToken
     get_access_token do |form|
       form.add("redirect_uri", @redirect_uri)
