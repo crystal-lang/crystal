@@ -57,7 +57,7 @@ module Spec::Methods
 
         # We do this to give a chance for signals (like CTRL+C) to be handled,
         # which currently are only handled when there's a fiber switch
-        # (IO stuff, sleep, etc.). Without it the use might way more than needed
+        # (IO stuff, sleep, etc.). Without it the user might wait more than needed
         # after pressing CTRL+C to quit the tests.
         Fiber.yield
       end
