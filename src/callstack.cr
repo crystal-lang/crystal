@@ -282,11 +282,7 @@ struct CallStack
           mach_o.read_section?("__debug_info") do |sh, io|
             names = [] of {LibC::SizeT, LibC::SizeT, String}
 
-            while true
-              pos = io.pos
-              offset = pos - sh.offset
-              break unless offset < sh.size
-
+            while (offset = io.pos - sh.offset) < sh.size
               info = Debug::DWARF::Info.new(io, offset)
 
               mach_o.read_section?("__debug_abbrev") do |sh, io|
@@ -387,11 +383,7 @@ struct CallStack
           elf.read_section?(".debug_info") do |sh, io|
             names = [] of {LibC::SizeT, LibC::SizeT, String}
 
-            while true
-              pos = io.pos
-              offset = pos - sh.offset
-              break unless offset < sh.size
-
+            while (offset = io.pos - sh.offset) < sh.size
               info = Debug::DWARF::Info.new(io, offset)
 
               elf.read_section?(".debug_abbrev") do |sh, io|
