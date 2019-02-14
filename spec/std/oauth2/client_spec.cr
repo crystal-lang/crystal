@@ -4,7 +4,7 @@ require "oauth2"
 private def assert_request
   server = HTTP::Server.new do |context|
     body = context.request.body.not_nil!.gets_to_end
-    response = {access_token: "access_token", body: body, headers: context.request.headers}
+    response = {access_token: "access_token", body: body}
     context.response.print response.to_json
   end
   address = server.bind_unused_port "::1"
