@@ -412,6 +412,19 @@ describe "Slice" do
   it "optimizes hash for Bytes" do
     Bytes[1, 2, 3].hash.should_not eq(Slice[1, 2, 3].hash)
   end
+
+  it "#[]" do
+    slice = Slice.new(6) { |i| i + 1 }
+    subslice = slice[2..4]
+    subslice.read_only?.should be_false
+    subslice.size.should eq(3)
+    subslice.should eq(Slice.new(3) { |i| i + 3 })
+  end
+
+  it "#[] keeps read-only value" do
+    slice = Slice.new(6, read_only: true) { |i| i + 1 }
+    slice[2..4].read_only?.should be_true
+  end
 end
 
 private def itself(*args)
