@@ -347,12 +347,10 @@ struct Enum
   # Color.from_value?(2) # => Color::Blue
   # Color.from_value?(3) # => nil
   # ```
-  def self.from_value?(value) : self?
+  def self.from_value?(value : Int) : self?
     {% if @type.has_attribute?("Flags") %}
-      mask = {% for member, i in @type.constants %}\
-        {% if i != 0 %} | {% end %}\
-        {{@type}}::{{member}}.value{% end %}
-      return if (mask & value != value) || (value == 0 && values.none? { |val| val.to_i == 0 })
+      all_mask = {{@type}}::All.value
+      return if all_mask & value != value
       return new(value)
     {% else %}
       {% for member in @type.constants %}
@@ -371,7 +369,7 @@ struct Enum
   # Color.from_value(2) # => Color::Blue
   # Color.from_value(3) # raises Exception
   # ```
-  def self.from_value(value) : self
+  def self.from_value(value : Int) : self
     from_value?(value) || raise "Unknown enum #{self} value: #{value}"
   end
 
