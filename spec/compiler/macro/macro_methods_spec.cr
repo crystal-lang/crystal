@@ -716,6 +716,10 @@ module Crystal
         assert_macro "", %({{{:a => 1, :b => 3}.size}}), [] of ASTNode, "2"
       end
 
+      it "executes sort_by" do
+        assert_macro "", %({{["abc", "a", "ab"].sort_by { |x| x.size }}}), [] of ASTNode, %(["a", "ab", "abc"])
+      end
+
       it "executes empty?" do
         assert_macro "", %({{{:a => 1}.empty?}}), [] of ASTNode, "false"
       end

@@ -172,7 +172,8 @@ class Object
     yield self
   end
 
-  # Returns `self`. `Nil` overrides this method and raises an exception.
+  # Returns `self`.
+  # `Nil` overrides this method and raises `NilAssertionError`, see `Nil#not_nil!`.
   def not_nil!
     self
   end
@@ -330,7 +331,7 @@ class Object
     #
     # ```
     # class Person
-    #   {{macro_prefix}}getter(birth_date) { Time.now }
+    #   {{macro_prefix}}getter(birth_date) { Time.local }
     # end
     # ```
     #
@@ -340,7 +341,7 @@ class Object
     # class Person
     #   def {{method_prefix}}birth_date
     #     if (value = {{var_prefix}}birth_date).nil?
-    #       {{var_prefix}}birth_date = Time.now
+    #       {{var_prefix}}birth_date = Time.local
     #     else
     #       value
     #     end
@@ -793,7 +794,7 @@ class Object
     #
     # ```
     # class Person
-    #   {{macro_prefix}}property(birth_date) { Time.now }
+    #   {{macro_prefix}}property(birth_date) { Time.local }
     # end
     # ```
     #
@@ -803,7 +804,7 @@ class Object
     # class Person
     #   def {{method_prefix}}birth_date
     #     if (value = {{var_prefix}}birth_date).nil?
-    #       {{var_prefix}}birth_date = Time.now
+    #       {{var_prefix}}birth_date = Time.local
     #     else
     #       value
     #     end

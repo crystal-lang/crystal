@@ -206,7 +206,7 @@ class Socket < IO
   #
   # server = TCPServer.new(2202)
   # socket = server.accept
-  # socket.puts Time.now
+  # socket.puts Time.utc
   # socket.close
   # ```
   def accept
@@ -223,7 +223,7 @@ class Socket < IO
   #
   # server = TCPServer.new(2202)
   # if socket = server.accept?
-  #   socket.puts Time.now
+  #   socket.puts Time.utc
   #   socket.close
   # end
   # ```

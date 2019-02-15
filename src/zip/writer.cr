@@ -62,7 +62,7 @@ class Zip::Writer
   end
 
   # Adds an entry that will have the given *filename* and current
-  # time (`Time.now`) and yields an `IO` to write that entry's
+  # time (`Time.utc`) and yields an `IO` to write that entry's
   # contents.
   def add(filename : String)
     add(Entry.new(filename)) do |io|
@@ -81,7 +81,7 @@ class Zip::Writer
   # size and uncompressed size will be computed from the data
   # written to the yielded IO.
   #
-  # You can also set the Entry's time (which is `Time.now` by default)
+  # You can also set the Entry's time (which is `Time.utc` by default)
   #  and extra data before adding it to the zip stream.
   def add(entry : Entry)
     # bit 3: unknown compression size (not needed for STORED, by if left out it doesn't work...)

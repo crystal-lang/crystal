@@ -47,7 +47,7 @@ def semantic(code : String, wants_doc = false, inject_primitives = true)
 end
 
 def semantic(node : ASTNode, wants_doc = false)
-  program = Program.new
+  program = new_program
   program.wants_doc = wants_doc
   node = program.normalize node
   node = program.semantic node
@@ -56,7 +56,7 @@ end
 
 def semantic_result(str, flags = nil, inject_primitives = true)
   str = inject_primitives(str) if inject_primitives
-  program = Program.new
+  program = new_program
   program.flags.concat(flags.split) if flags
   input = parse str
   input = program.normalize input
@@ -66,7 +66,7 @@ def semantic_result(str, flags = nil, inject_primitives = true)
 end
 
 def assert_normalize(from, to, flags = nil)
-  program = Program.new
+  program = new_program
   program.flags.concat(flags.split) if flags
   normalizer = Normalizer.new(program)
   from_nodes = Parser.parse(from)
@@ -79,7 +79,7 @@ def assert_expand(from : String, to)
 end
 
 def assert_expand(from_nodes : ASTNode, to)
-  to_nodes = LiteralExpander.new(Program.new).expand(from_nodes)
+  to_nodes = LiteralExpander.new(new_program).expand(from_nodes)
   to_nodes.to_s.strip.should eq(to.strip)
 end
 
@@ -113,7 +113,7 @@ def assert_macro(macro_args, macro_body, call_args, expected, expected_pragmas =
 end
 
 def assert_macro(macro_args, macro_body, expected, expected_pragmas = nil, flags = nil)
-  program = Program.new
+  program = new_program
   program.flags.concat(flags.split) if flags
   sub_node = yield program
   assert_macro_internal program, sub_node, macro_args, macro_body, expected, expected_pragmas
@@ -137,6 +137,12 @@ def codegen(code, inject_primitives = true, debug = Crystal::Debug::None)
   result.program.codegen(result.node, single_module: false, debug: debug)[""].mod
 end
 
+private def new_program
+  program = Program.new
+  program.color = false
+  program
+end
+
 class Crystal::SpecRunOutput
   @output : String
 
@@ -154,7 +160,7 @@ class Crystal::SpecRunOutput
   end
 end
 
-def run(code, filename = nil, inject_primitives = true, debug = Crystal::Debug::None)
+def run(code, filename = nil, inject_primitives = true, debug = Crystal::Debug::None, flags = nil)
   code = inject_primitives(code) if inject_primitives
 
   # Code that requires the prelude doesn't run in LLVM's MCJIT
@@ -162,7 +168,7 @@ def run(code, filename = nil, inject_primitives = true, debug = Crystal::Debug::
   # in the current executable!), so instead we compile
   # the program and run it, printing the last
   # expression and using that to compare the result.
-  if code.includes?(%(require "prelude"))
+  if code.includes?(%(require "prelude")) || flags
     ast = Parser.parse(code).as(Expressions)
     last = ast.expressions.last
     assign = Assign.new(Var.new("__tempvar"), last)
@@ -175,6 +181,7 @@ def run(code, filename = nil, inject_primitives = true, debug = Crystal::Debug::
 
     compiler = Compiler.new
     compiler.debug = debug
+    compiler.flags.concat flags if flags
     compiler.compile Compiler::Source.new("spec", code), output_filename
 
     output = `#{output_filename}`
@@ -182,7 +189,7 @@ def run(code, filename = nil, inject_primitives = true, debug = Crystal::Debug::
 
     SpecRunOutput.new(output)
   else
-    Program.new.run(code, filename: filename, debug: debug)
+    new_program.run(code, filename: filename, debug: debug)
   end
 end
 

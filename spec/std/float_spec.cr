@@ -14,7 +14,7 @@ describe "Float" do
 
   describe "%" do
     it "uses modulo behavior, not remainder behavior" do
-      it { ((-11.5) % 4.0).should eq(0.5) }
+      ((-11.5) % 4.0).should eq(0.5)
     end
   end
 

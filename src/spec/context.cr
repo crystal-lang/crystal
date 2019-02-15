@@ -81,7 +81,7 @@ module Spec
             puts
             puts "#{(i + 1).to_s.rjust(3, ' ')}) #{fail.description}"
 
-            if ex.is_a?(AssertionFailed)
+            if ex.is_a?(SpecError)
               source_line = Spec.read_line(ex.file, ex.line)
               if source_line
                 puts Spec.color("     Failure/Error: #{source_line.strip}", :error)
@@ -89,13 +89,13 @@ module Spec
             end
             puts
 
-            message = ex.is_a?(AssertionFailed) ? ex.to_s : ex.inspect_with_backtrace
+            message = ex.is_a?(SpecError) ? ex.to_s : ex.inspect_with_backtrace
             message.split('\n').each do |line|
               print "       "
               puts Spec.color(line, :error)
             end
 
-            if ex.is_a?(AssertionFailed)
+            if ex.is_a?(SpecError)
               puts
               puts Spec.color("     # #{Spec.relative_file(ex.file)}:#{ex.line}", :comment)
             end
@@ -165,6 +165,19 @@ module Spec
 
     def matches?(pattern, line, locations)
       false
+    end
+
+    @@spec_nesting = false
+
+    def self.check_nesting_spec(file, line, &block)
+      raise NestingSpecError.new("can't nest `it` or `pending`", file, line) if @@spec_nesting
+
+      @@spec_nesting = true
+      begin
+        yield
+      ensure
+        @@spec_nesting = false
+      end
     end
   end
 

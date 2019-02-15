@@ -286,7 +286,16 @@ describe "Enumerable" do
       a.should be(reuse)
     end
 
-    it "returns running pairs with reuse = true" do
+    it "returns each_cons iterator with reuse = deque" do
+      reuse = Deque(Int32).new
+      iter = [1, 2, 3, 4, 5].each_cons(3, reuse: reuse)
+
+      a = iter.next
+      a.should eq(Deque{1, 2, 3})
+      a.should be(reuse)
+    end
+
+    it "yields running pairs with reuse = true" do
       array = [] of Array(Int32)
       object_ids = Set(UInt64).new
       [1, 2, 3, 4].each_cons(2, reuse: true) do |pair|
@@ -297,7 +306,7 @@ describe "Enumerable" do
       object_ids.size.should eq(1)
     end
 
-    it "returns running pairs with reuse = array" do
+    it "yields running pairs with reuse = array" do
       array = [] of Array(Int32)
       reuse = [] of Int32
       [1, 2, 3, 4].each_cons(2, reuse: reuse) do |pair|
@@ -305,6 +314,16 @@ describe "Enumerable" do
         array << pair.dup
       end
       array.should eq([[1, 2], [2, 3], [3, 4]])
+    end
+
+    it "yields running pairs with reuse = deque" do
+      array = [] of Deque(Int32)
+      reuse = Deque(Int32).new
+      [1, 2, 3, 4].each_cons(2, reuse: reuse) do |pair|
+        pair.should be(reuse)
+        array << pair.dup
+      end
+      array.should eq([Deque{1, 2}, Deque{2, 3}, Deque{3, 4}])
     end
   end
 

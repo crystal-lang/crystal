@@ -74,12 +74,16 @@ module HTTP
   private def self.check_content_type_charset(body, headers)
     return unless body
 
-    if content_type = headers["Content-Type"]?
-      mime_type = MIME::MediaType.parse(content_type)
-      if charset = mime_type["charset"]?
-        body.set_encoding(charset, invalid: :skip)
-      end
-    end
+    content_type = headers["Content-Type"]?
+    return unless content_type
+
+    mime_type = MIME::MediaType.parse?(content_type)
+    return unless mime_type
+
+    charset = mime_type["charset"]?
+    return unless charset
+
+    body.set_encoding(charset, invalid: :skip)
   end
 
   # :nodoc:

@@ -55,9 +55,22 @@ class HTTP::Server::RequestProcessor
 
         break unless request.keep_alive?
 
-        # Skip request body in case the handler
-        # didn't read it all, for the next request
-        request.body.try &.close
+        # Don't continue if the handler set `Connection` header to `close`
+        break unless HTTP.keep_alive?(response)
+
+        # The request body is either FixedLengthContent or ChunkedContent.
+        # In case it has not entirely been consumed by the handler, the connection is
+        # closed the connection even if keep alive was requested.
+        case body = request.body
+        when FixedLengthContent
+          if body.read_remaining > 0
+            # Close the connection if there are bytes remaining
+            break
+          end
+        when ChunkedContent
+          # Close the connection if the IO has still bytes to read.
+          break unless body.closed?
+        end
       end
     rescue ex : Errno
       # IO-related error, nothing to do

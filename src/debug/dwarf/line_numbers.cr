@@ -115,8 +115,8 @@ module Debug
       record Row,
         address : UInt64,
         op_index : UInt32,
-        directory : Int32,
-        file : Int32,
+        directory : String,
+        file : String,
         line : Int32,
         column : Int32,
         end_sequence : Bool
@@ -168,19 +168,11 @@ module Debug
       # reduce the memory usage of repeating a String many times.
       getter matrix : Array(Array(Row))
 
-      # The array of indexed directory paths.
-      getter directories : Array(String)
-
-      # The array of indexed file names.
-      getter files : Array(String)
-
       @offset : LibC::OffT
 
       def initialize(@io : IO::FileDescriptor, size)
         @offset = @io.tell
         @matrix = Array(Array(Row)).new
-        @directories = [] of String
-        @files = [] of String
         decode_sequences(size)
       end
 
@@ -213,10 +205,13 @@ module Debug
 
       # Decodes the compressed matrix of addresses to line numbers.
       private def decode_sequences(size)
-        while (@io.tell - @offset) < size
-          sequence = Sequence.new
+        while true
+          pos = @io.tell
+          offset = pos - @offset
+          break unless offset < size
 
-          sequence.offset = @io.tell - @offset
+          sequence = Sequence.new
+          sequence.offset = offset
           sequence.unit_length = @io.read_bytes(UInt32)
           sequence.version = @io.read_bytes(UInt16)
           sequence.header_length = @io.read_bytes(UInt32)
@@ -249,7 +244,7 @@ module Debug
 
       private def read_directory_table(sequence)
         loop do
-          name = @io.gets('\0').to_s.chomp('\0')
+          name = @io.gets('\0', chomp: true).to_s
           break if name.empty?
           sequence.include_directories << name
         end
@@ -257,7 +252,7 @@ module Debug
 
       private def read_filename_table(sequence)
         loop do
-          name = @io.gets('\0').to_s.chomp('\0')
+          name = @io.gets('\0', chomp: true).to_s
           break if name.empty?
           dir = DWARF.read_unsigned_leb128(@io)
           time = DWARF.read_unsigned_leb128(@io)
@@ -370,8 +365,8 @@ module Debug
         row = Row.new(
           registers.address,
           registers.op_index,
-          register_directory(path),
-          register_filename(file[0]),
+          path,
+          file[0],
           registers.line.to_i,
           registers.column.to_i,
           registers.end_sequence
@@ -387,22 +382,6 @@ module Debug
         if registers.end_sequence
           @current_sequence_matrix = nil
         end
-      end
-
-      private def register_filename(name)
-        if index = @files.index(name)
-          return index
-        end
-        @files << name
-        @files.size - 1
-      end
-
-      private def register_directory(name)
-        if index = @directories.index(name)
-          return index
-        end
-        @directories << name
-        @directories.size - 1
       end
     end
   end

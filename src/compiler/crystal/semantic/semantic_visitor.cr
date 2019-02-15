@@ -5,7 +5,7 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
   getter program : Program
 
   # At every point there's a current type.
-  # In the beginnig this is the `Program` (top-level), but when
+  # In the beginning this is the `Program` (top-level), but when
   # a class definition is visited this changes to that type, and so on.
   property current_type : ModuleType
 

@@ -476,7 +476,7 @@ struct Crystal::TypeDeclarationProcessor
             next if initialized_outside?(owner, name)
 
             unless info.try &.instance_vars.try &.includes?(name)
-              # Rememebr that this variable wasn't initialized here, and later error
+              # Remember that this variable wasn't initialized here, and later error
               # if it turns out to be non-nilable
               nilable_vars = @nilable_instance_vars[owner] ||= {} of String => InitializeInfo
               nilable_vars[name] = info
@@ -518,7 +518,7 @@ struct Crystal::TypeDeclarationProcessor
 
         unless info.try(&.instance_vars.try(&.includes?(instance_var)))
           all_assigned = false
-          # Rememebr that this variable wasn't initialized here, and later error
+          # Remember that this variable wasn't initialized here, and later error
           # if it turns out to be non-nilable
           nilable_vars = @nilable_instance_vars[owner] ||= {} of String => InitializeInfo
           nilable_vars[instance_var] = info

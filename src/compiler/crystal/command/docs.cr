@@ -11,6 +11,8 @@ class Crystal::Command
     output_directory = File.join(".", "docs")
     canonical_base_url = nil
 
+    compiler = Compiler.new
+
     OptionParser.parse(options) do |opts|
       opts.banner = <<-'BANNER'
         Usage: crystal docs [options]
@@ -36,6 +38,35 @@ class Crystal::Command
         canonical_base_url = value
       end
 
+      opts.on("-D FLAG", "--define FLAG", "Define a compile-time flag") do |flag|
+        compiler.flags << flag
+      end
+
+      opts.on("--error-trace", "Show full error trace") do
+        compiler.show_error_trace = true
+      end
+
+      opts.on("--no-color", "Disable colored output") do
+        @color = false
+        compiler.color = false
+      end
+
+      opts.on("--prelude ", "Use given file as prelude") do |prelude|
+        compiler.prelude = prelude
+      end
+
+      opts.on("-s", "--stats", "Enable statistics output") do
+        @progress_tracker.stats = true
+      end
+
+      opts.on("-p", "--progress", "Enable progress output") do
+        @progress_tracker.progress = true
+      end
+
+      opts.on("-t", "--time", "Enable execution time output") do
+        @time = true
+      end
+
       opts.on("-h", "--help", "Show this message") do
         puts opts
         exit
@@ -54,6 +85,7 @@ class Crystal::Command
     included_dirs << File.expand_path("./src")
 
     compiler = Compiler.new
+    compiler.flags << "docs"
     compiler.wants_doc = true
     result = compiler.top_level_semantic sources
 

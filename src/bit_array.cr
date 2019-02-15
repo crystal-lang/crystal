@@ -85,7 +85,7 @@ struct BitArray
   # ba[5..10]   # => BitArray[]
   # ba[-2...-1] # => BitArray[0]
   # ```
-  def [](range : Range(Int, Int))
+  def [](range : Range)
     self[*Indexable.range_to_index_and_count(range, size)]
   end
 

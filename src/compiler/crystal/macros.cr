@@ -634,6 +634,10 @@ module Crystal::Macros
     def sort : ArrayLiteral
     end
 
+    # Similar to `Array#sort_by`
+    def sort_by(&block) : ArrayLiteral
+    end
+
     # Similar to `Array#uniq`
     def uniq : ArrayLiteral
     end
@@ -1657,7 +1661,7 @@ module Crystal::Macros
     def nilable? : BoolLiteral
     end
 
-    # Returns the types comforming a union type, if this is a union type.
+    # Returns the types forming a union type, if this is a union type.
     # Gives a compile error otherwise.
     #
     # See also: `union?`.
