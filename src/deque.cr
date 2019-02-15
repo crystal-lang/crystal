@@ -100,6 +100,13 @@ class Deque(T)
     Deque(T).new(array.size) { |i| array[i] }
   end
 
+  # Returns a pointer to the internal buffer where the deque's elements are stored.
+  #
+  # This method is **unsafe** because using the pointer in the wrong way can easily result in a segmentation fault.
+  def to_unsafe
+    @buffer
+  end
+
   # Returns `true` if it is passed a `Deque` and `equals?` returns `true`
   # for both deques, the caller and the argument.
   #
