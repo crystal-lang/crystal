@@ -390,12 +390,6 @@ struct Range(B, E)
         end
       end
     end
-
-    def rewind
-      @current = @range.begin
-      @reached_end = false
-      self
-    end
   end
 
   private class ReverseIterator(B, E)
@@ -404,8 +398,12 @@ struct Range(B, E)
     @range : Range(B, E)
     @current : E
 
-    def initialize(@range : Range(B, E), @current = range.end)
-      rewind
+    def initialize(@range : Range(B, E))
+      if range.excludes_end?
+        @current = range.end.not_nil!
+      else
+        @current = range.end.not_nil!.succ
+      end
     end
 
     def next
@@ -413,16 +411,6 @@ struct Range(B, E)
 
       return stop if !begin_value.nil? && @current <= begin_value
       return @current = @current.pred
-    end
-
-    def rewind
-      if @range.excludes_end?
-        @current = @range.end.not_nil!
-      else
-        @current = @range.end.not_nil!.succ
-      end
-
-      self
     end
   end
 
@@ -455,12 +443,6 @@ struct Range(B, E)
           stop
         end
       end
-    end
-
-    def rewind
-      @current = @range.begin
-      @reached_end = false
-      self
     end
 
     def sum(initial)

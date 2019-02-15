@@ -2179,15 +2179,6 @@ class Array(T)
       @stop = true
       stop
     end
-
-    def rewind
-      @cycles = (@n - @size + 1..@n).to_a.reverse!
-      @pool.replace(@array)
-      @stop = @size > @n
-      @i = @size - 1
-      @first = true
-      self
-    end
   end
 
   private class CombinationIterator(T)
@@ -2249,15 +2240,6 @@ class Array(T)
       @stop = true
       stop
     end
-
-    def rewind
-      @pool.replace(@copy)
-      @indices = (0...@size).to_a
-      @stop = @size > @n
-      @i = @size - 1
-      @first = true
-      self
-    end
   end
 
   private class RepeatedCombinationIterator(T)
@@ -2315,17 +2297,6 @@ class Array(T)
 
       @stop = true
       stop
-    end
-
-    def rewind
-      if @n > 0
-        @indices.fill(0)
-        @pool.fill(@copy[0])
-      end
-      @stop = @size > @n
-      @i = @size - 1
-      @first = true
-      self
     end
   end
 
