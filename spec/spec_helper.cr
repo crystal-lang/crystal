@@ -47,7 +47,7 @@ def semantic(code : String, wants_doc = false, inject_primitives = true)
 end
 
 def semantic(node : ASTNode, wants_doc = false)
-  program = Program.new
+  program = new_program
   program.wants_doc = wants_doc
   node = program.normalize node
   node = program.semantic node
@@ -56,7 +56,7 @@ end
 
 def semantic_result(str, flags = nil, inject_primitives = true)
   str = inject_primitives(str) if inject_primitives
-  program = Program.new
+  program = new_program
   program.flags.concat(flags.split) if flags
   input = parse str
   input = program.normalize input
@@ -66,7 +66,7 @@ def semantic_result(str, flags = nil, inject_primitives = true)
 end
 
 def assert_normalize(from, to, flags = nil)
-  program = Program.new
+  program = new_program
   program.flags.concat(flags.split) if flags
   normalizer = Normalizer.new(program)
   from_nodes = Parser.parse(from)
@@ -79,7 +79,7 @@ def assert_expand(from : String, to)
 end
 
 def assert_expand(from_nodes : ASTNode, to)
-  to_nodes = LiteralExpander.new(Program.new).expand(from_nodes)
+  to_nodes = LiteralExpander.new(new_program).expand(from_nodes)
   to_nodes.to_s.strip.should eq(to.strip)
 end
 
@@ -113,7 +113,7 @@ def assert_macro(macro_args, macro_body, call_args, expected, expected_pragmas =
 end
 
 def assert_macro(macro_args, macro_body, expected, expected_pragmas = nil, flags = nil)
-  program = Program.new
+  program = new_program
   program.flags.concat(flags.split) if flags
   sub_node = yield program
   assert_macro_internal program, sub_node, macro_args, macro_body, expected, expected_pragmas
@@ -135,6 +135,12 @@ def codegen(code, inject_primitives = true, debug = Crystal::Debug::None)
   node = parse code
   result = semantic node
   result.program.codegen(result.node, single_module: false, debug: debug)[""].mod
+end
+
+private def new_program
+  program = Program.new
+  program.color = false
+  program
 end
 
 class Crystal::SpecRunOutput
@@ -183,7 +189,7 @@ def run(code, filename = nil, inject_primitives = true, debug = Crystal::Debug::
 
     SpecRunOutput.new(output)
   else
-    Program.new.run(code, filename: filename, debug: debug)
+    new_program.run(code, filename: filename, debug: debug)
   end
 end
 
