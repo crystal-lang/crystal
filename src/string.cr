@@ -254,16 +254,21 @@ class String
   end
 
   # Builds a `String` by creating a `String::Builder` with the given initial capacity, yielding
-  # it to the block and finally getting a `String` out of it. The `String::Builder` automatically
-  # resizes as needed.
+  # it to the block and finally getting a `String` out of it.
+  # The `String::Builder` automatically resizes as needed.
   #
   # ```
-  # str = String.build do |str|
-  #   str << "hello "
-  #   str << 1
+  # string = String.build do |io|
+  #   io << "hello "
+  #   1.upto(5) { |i| io << i }
+  #   io << " hello"
   # end
-  # str # => "hello 1"
+  # string # => "hello 12345 hello"
   # ```
+  #
+  # NOTE: When you use this in a loop, consider using the `String::Builder` class
+  # and invoke `clear` on it to clear its contents after you are done with building.
+  # Otherwise you create a new `String::Builder` in every loop iteration.
   def self.build(capacity = 64) : self
     String::Builder.build(capacity) do |builder|
       yield builder
