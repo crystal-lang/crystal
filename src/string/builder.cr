@@ -116,7 +116,7 @@ class String::Builder < IO
 
   # Returns the contents of this builder as a string.
   # This method can only be invoked once.
-  # Use `clear` to clear this builder's contents and invoke `to_s` again.
+  # Use `clear` to clear this builder's contents and be able to invoke `to_s` again.
   def to_s
     raise "Can only invoke 'to_s' once on String::Builder" if @finished
     @finished = true
