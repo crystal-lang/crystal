@@ -277,6 +277,8 @@ module MIME
         end
       end
 
+      io = String::Builder.new
+
       # 3. Resolve continuation parameters
       #
       #     extended-parameter := (extended-initial-name "=" extended-value) /
@@ -307,23 +309,23 @@ module MIME
         # All other pieces are extended-parameter and need to be sequentially
         # ordered by section number
         valid = false
-        composite_value = String.build do |io|
-          counter = 0
-          loop do
-            part_key = "#{base_key}*#{counter}"
-            if part = pieces[part_key]?
-              valid = true
-              io << part
-            elsif part = pieces["#{part_key}*"]?
-              valid = true
+        counter = 0
+        loop do
+          part_key = "#{base_key}*#{counter}"
+          if part = pieces[part_key]?
+            valid = true
+            io << part
+          elsif part = pieces["#{part_key}*"]?
+            valid = true
 
-              io << decode_rfc2231(part) || next
-            else
-              break
-            end
-            counter += 1
+            io << decode_rfc2231(part) || next
+          else
+            break
           end
+          counter += 1
         end
+        composite_value = io.to_s
+        io.clear
         if valid
           params[base_key] = composite_value
         else
