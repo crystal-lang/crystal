@@ -10,7 +10,7 @@ describe String::Builder do
   end
 
   it "clears" do
-    builder = String::Builder.new
+    io = String::Builder.new
     io << 123
     io.to_s.should eq("123")
 
