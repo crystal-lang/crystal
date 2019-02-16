@@ -203,6 +203,25 @@ struct Slice(T)
     Slice.new(@pointer + start, count, read_only: @read_only)
   end
 
+  # Returns a new slice with the elements in the given range.
+  #
+  #
+  # Negative indices count backward from the end of the slice (-1 is the last
+  # element). Additionally, an empty slice is returned when the starting index
+  # for an element range is at the end of the slice.
+  #
+  # ```
+  # slice = Slice.new(5) { |i| i + 10 }
+  # slice # => Slice[10, 11, 12, 13, 14]
+  #
+  # slice2 = slice[1..3]
+  # slice2 # => Slice[11, 12, 13]
+  # ```
+  def [](range : Range)
+    start, count = Indexable.range_to_index_and_count(range, size)
+    self[start, count]
+  end
+
   @[AlwaysInline]
   def unsafe_fetch(index : Int)
     @pointer[index]
