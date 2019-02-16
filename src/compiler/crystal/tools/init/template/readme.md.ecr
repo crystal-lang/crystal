@@ -6,11 +6,13 @@ TODO: Write a description here
 
 <%- if config.skeleton_type == "lib" -%>
 1. Add the dependency to your `shard.yml`:
-```yaml
-dependencies:
-  <%= config.name %>:
-    github: <%= config.github_name %>/<%= config.name %>
-```
+
+   ```yaml
+   dependencies:
+     <%= config.name %>:
+       github: <%= config.github_name %>/<%= config.name %>
+   ```
+
 2. Run `shards install`
 <%- else -%>
 TODO: Write installation instructions here

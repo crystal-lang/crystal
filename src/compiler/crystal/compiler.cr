@@ -20,7 +20,7 @@ module Crystal
     CC = ENV["CC"]? || "cc"
     CL = "cl"
 
-    # A source to the compiler: it's filename and source code.
+    # A source to the compiler: its filename and source code.
     record Source,
       filename : String,
       code : String
@@ -83,12 +83,12 @@ module Crystal
     # one LLVM module is created for each type in a program.
     property? single_module = false
 
-    # Set to a `ProgressTracker` object which tracks compilation progress.
+    # A `ProgressTracker` object which tracks compilation progress.
     property progress_tracker = ProgressTracker.new
 
-    # Target triple to use in the compilation.
+    # Codegen target to use in the compilation.
     # If not set, asks LLVM the default one for the current machine.
-    property target_triple : String?
+    property codegen_target = Codegen::Target.new
 
     # If `true`, prints the link command line that is performed
     # to create the executable.
@@ -185,6 +185,7 @@ module Crystal
       program = Program.new
       program.filename = sources.first.filename
       program.cache_dir = CacheDir.instance.directory_for(sources)
+      program.codegen_target = codegen_target
       program.target_machine = target_machine
       program.flags << "release" if release?
       program.flags << "debug" unless debug.none?
@@ -231,7 +232,7 @@ module Crystal
 
     private def bc_flags_changed?(output_dir)
       bc_flags_changed = true
-      current_bc_flags = "#{@target_triple}|#{@mcpu}|#{@mattr}|#{@release}|#{@link_flags}"
+      current_bc_flags = "#{@codegen_target}|#{@mcpu}|#{@mattr}|#{@release}|#{@link_flags}"
       bc_flags_filename = "#{output_dir}/bc_flags"
       if File.file?(bc_flags_filename)
         previous_bc_flags = File.read(bc_flags_filename).strip
@@ -391,8 +392,22 @@ module Crystal
     end
 
     private def codegen_many_units(program, units, target_triple)
-      jobs_count = 0
       all_reused = [] of String
+
+      wants_stats_or_progress = @progress_tracker.stats? || @progress_tracker.progress?
+
+      # If threads is 1 and no stats/progress is needed we can avoid
+      # fork/spawn/channels altogether. This is particularly useful for
+      # CI because there forking eventually leads to "out of memory" errors.
+      if @n_threads == 1
+        units.each do |unit|
+          unit.compile
+          all_reused << unit.name if wants_stats_or_progress && unit.reused_previous_compilation?
+        end
+        return all_reused
+      end
+
+      jobs_count = 0
       wait_channel = Channel(Array(String)).new(@n_threads)
 
       units.each_slice(Math.max(units.size / @n_threads, 1)) do |slice|
@@ -402,7 +417,7 @@ module Crystal
           # .o files were reused, mainly to detect performance regressions.
           # Because we fork, we must communicate using a pipe.
           reused = [] of String
-          if @progress_tracker.stats? || @progress_tracker.progress?
+          if wants_stats_or_progress
             pr, pw = IO.pipe
             spawn do
               pr.each_line do |line|
@@ -484,11 +499,8 @@ module Crystal
       end
     end
 
-    protected def target_machine
-      @target_machine ||= begin
-        triple = @target_triple || Crystal::Config.default_target_triple
-        TargetMachine.create(triple, @mcpu || "", @mattr || "", @release)
-      end
+    getter(target_machine : LLVM::TargetMachine) do
+      @codegen_target.to_target_machine(@mcpu || "", @mattr || "", @release)
     rescue ex : ArgumentError
       stderr.print colorize("Error: ").red.bold
       stderr.print "llc: "

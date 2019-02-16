@@ -7,8 +7,8 @@ enum SpecEnum : Int8
 end
 
 enum SpecEnum2
-  FourtyTwo
-  FOURTY_FOUR
+  FortyTwo
+  FORTY_FOUR
 end
 
 @[Flags]
@@ -117,7 +117,7 @@ describe Enum do
     end
 
     it "for flags enum" do
-      SpecEnumFlags.from_value?(0).should be_nil
+      SpecEnumFlags.from_value?(0).should eq(SpecEnumFlags::None)
       SpecEnumFlags.from_value?(1).should eq(SpecEnumFlags::One)
       SpecEnumFlags.from_value?(2).should eq(SpecEnumFlags::Two)
       SpecEnumFlags.from_value?(3).should eq(SpecEnumFlags::One | SpecEnumFlags::Two)
@@ -134,10 +134,11 @@ describe Enum do
     end
 
     it "for flags enum" do
-      expect_raises(Exception, "Unknown enum SpecEnumFlags value: 0") { SpecEnumFlags.from_value(0) }
+      SpecEnumFlags.from_value(0).should eq(SpecEnumFlags::None)
       SpecEnumFlags.from_value(1).should eq(SpecEnumFlags::One)
       SpecEnumFlags.from_value(2).should eq(SpecEnumFlags::Two)
       SpecEnumFlags.from_value(3).should eq(SpecEnumFlags::One | SpecEnumFlags::Two)
+      expect_raises(Exception, "Unknown enum SpecEnumFlags value: 8") { SpecEnumFlags.from_value(8) }
     end
   end
 
@@ -147,19 +148,19 @@ describe Enum do
 
   it "parses" do
     SpecEnum.parse("Two").should eq(SpecEnum::Two)
-    SpecEnum2.parse("FourtyTwo").should eq(SpecEnum2::FourtyTwo)
-    SpecEnum2.parse("fourty_two").should eq(SpecEnum2::FourtyTwo)
+    SpecEnum2.parse("FortyTwo").should eq(SpecEnum2::FortyTwo)
+    SpecEnum2.parse("forty_two").should eq(SpecEnum2::FortyTwo)
     expect_raises(ArgumentError, "Unknown enum SpecEnum value: Four") { SpecEnum.parse("Four") }
 
     SpecEnum.parse("TWO").should eq(SpecEnum::Two)
     SpecEnum.parse("TwO").should eq(SpecEnum::Two)
-    SpecEnum2.parse("FOURTY_TWO").should eq(SpecEnum2::FourtyTwo)
+    SpecEnum2.parse("FORTY_TWO").should eq(SpecEnum2::FortyTwo)
 
-    SpecEnum2.parse("FOURTY_FOUR").should eq(SpecEnum2::FOURTY_FOUR)
-    SpecEnum2.parse("fourty_four").should eq(SpecEnum2::FOURTY_FOUR)
-    SpecEnum2.parse("FourtyFour").should eq(SpecEnum2::FOURTY_FOUR)
-    SpecEnum2.parse("FOURTYFOUR").should eq(SpecEnum2::FOURTY_FOUR)
-    SpecEnum2.parse("fourtyfour").should eq(SpecEnum2::FOURTY_FOUR)
+    SpecEnum2.parse("FORTY_FOUR").should eq(SpecEnum2::FORTY_FOUR)
+    SpecEnum2.parse("forty_four").should eq(SpecEnum2::FORTY_FOUR)
+    SpecEnum2.parse("FortyFour").should eq(SpecEnum2::FORTY_FOUR)
+    SpecEnum2.parse("FORTYFOUR").should eq(SpecEnum2::FORTY_FOUR)
+    SpecEnum2.parse("fortyfour").should eq(SpecEnum2::FORTY_FOUR)
   end
 
   it "parses?" do
@@ -200,6 +201,6 @@ describe Enum do
   end
 
   it "different enums classes not eq always" do
-    SpecEnum::One.should_not eq SpecEnum2::FourtyTwo
+    SpecEnum::One.should_not eq SpecEnum2::FortyTwo
   end
 end

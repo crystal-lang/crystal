@@ -64,7 +64,7 @@ struct LLVM::Type
   end
 
   # Assuming this type is a struct, returns its name.
-  # The name can be `nil` if the struct is anynomous.
+  # The name can be `nil` if the struct is anonymous.
   # Raises if this type is not a struct.
   def struct_name : String?
     raise "not a Struct" unless kind == Kind::Struct
@@ -126,7 +126,12 @@ struct LLVM::Type
   end
 
   def const_int(value) : Value
-    Value.new LibLLVM.const_int(self, value, 0)
+    if !value.is_a?(Int128) && !value.is_a?(UInt128) && int_width != 128
+      Value.new LibLLVM.const_int(self, value, 0)
+    else
+      encoded_value = UInt64[value & UInt64::MAX, (value >> 64) & UInt64::MAX]
+      Value.new LibLLVM.const_int_of_arbitrary_precision(self, encoded_value.size, encoded_value)
+    end
   end
 
   def const_int_of_string(string) : Value

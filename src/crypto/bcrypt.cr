@@ -115,10 +115,10 @@ class Crypto::Bcrypt
     j = -1
 
     cipher.size.times do |i|
-      ret[j += 1] = (cdata[i] >> 24).to_u8
-      ret[j += 1] = (cdata[i] >> 16).to_u8
-      ret[j += 1] = (cdata[i] >> 8).to_u8
-      ret[j += 1] = cdata[i].to_u8
+      ret[j += 1] = (cdata[i] >> 24).to_u8!
+      ret[j += 1] = (cdata[i] >> 16).to_u8!
+      ret[j += 1] = (cdata[i] >> 8).to_u8!
+      ret[j += 1] = cdata[i].to_u8!
     end
 
     ret

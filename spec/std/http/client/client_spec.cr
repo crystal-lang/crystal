@@ -3,15 +3,17 @@ require "openssl"
 require "http/client"
 require "http/server"
 
-private def test_server(host, port, read_time = 0)
+private def test_server(host, port, read_time = 0, content_type = "text/plain", write_response = true)
   server = TCPServer.new(host, port)
   begin
     spawn do
       io = server.accept
       sleep read_time
-      response = HTTP::Client::Response.new(200, headers: HTTP::Headers{"Content-Type" => "text/plain"}, body: "OK")
-      response.to_io(io)
-      io.flush
+      if write_response
+        response = HTTP::Client::Response.new(200, headers: HTTP::Headers{"Content-Type" => content_type}, body: "OK")
+        response.to_io(io)
+        io.flush
+      end
     end
 
     yield server
@@ -196,7 +198,11 @@ module HTTP
         client.get("/")
       end
 
-      test_server("localhost", 0, 0.5) do |server|
+      # Here we don't want to write a response on the server side because
+      # it doesn't make sense to try to write because the client will already
+      # timeout on read. Writing a response could lead on an exception in
+      # the server if the socket is closed.
+      test_server("localhost", 0, 0.5, write_response: false) do |server|
         client = Client.new("localhost", server.local_address.port)
         expect_raises(IO::Timeout, "Read timed out") do
           client.read_timeout = 0.001
@@ -209,6 +215,13 @@ module HTTP
       test_server("localhost", 0, 0) do |server|
         client = Client.new("localhost", server.local_address.port)
         client.connect_timeout = 0.5
+        client.get("/")
+      end
+    end
+
+    it "tests empty Content-Type" do
+      test_server("localhost", 0, content_type: "") do |server|
+        client = Client.new("localhost", server.local_address.port)
         client.get("/")
       end
     end

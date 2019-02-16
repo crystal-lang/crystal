@@ -287,7 +287,18 @@ describe "Semantic: tuples" do
         pos += {0, 0}
       end
       ),
-      "tuple too big"
+      "tuple size cannot be greater than 300 (size is 302)"
+  end
+
+  it "errors on named tuple too big" do
+    named_tuple_keys = String.build do |io|
+      333.times { |i| io << "key" << i << ": 0, " }
+    end
+
+    assert_error %(
+      { #{named_tuple_keys} }
+      ),
+      "named tuple size cannot be greater than 300 (size is 333)"
   end
 
   it "doesn't unify tuple metaclasses (#5384)" do

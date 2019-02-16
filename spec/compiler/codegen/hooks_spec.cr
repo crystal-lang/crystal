@@ -100,7 +100,7 @@ describe "Code gen: hooks" do
 
       class Foo
         macro inherited
-          Global.x += 1
+          Global.x &+= 1
         end
       end
 
@@ -138,7 +138,7 @@ describe "Code gen: hooks" do
       end
 
       class Bar < Foo
-        Global.x += 1
+        Global.x &+= 1
       end
 
       Bar.y

@@ -37,7 +37,7 @@ describe Thread::ConditionVariable do
     # first, and signal into the void.
     #
     # since increments to waiting are synchronized, at least 4 threads are
-    # guaranteed to be waiting when waiting is 5, which is enough for futher
+    # guaranteed to be waiting when waiting is 5, which is enough for further
     # tests to never hangup.
     until waiting == 5
       Thread.yield

@@ -472,7 +472,7 @@ module Crystal
 
         check_not_a_constant(node.declared_type)
 
-        # TOOD: should we be using a binding here to recompute the type?
+        # TODO: should we be using a binding here to recompute the type?
         if declared_type = node.declared_type.type?
           var_type = check_declare_var_type node, declared_type, "a variable"
           var.type = var_type
@@ -658,7 +658,7 @@ module Crystal
 
       if var.freeze_type
         deps = var.dependencies?
-        # If no dependencies it's the case of a global for a regex literal.
+        # If no dependencies, it's the case of a global for a regex literal.
         # If there are dependencies and it's just one, it's the same var
         deps ? deps.size == 1 : false
       else

@@ -8,10 +8,17 @@ module Crystal::System
   # def self.cpu_count
 end
 
-require "./system/unix/hostname"
+{% if flag?(:unix) %}
+  require "./system/unix/hostname"
 
-{% if flag?(:freebsd) || flag?(:openbsd) %}
-  require "./system/unix/sysctl_cpucount"
-{% elsif flag?(:unix) %}
-  require "./system/unix/sysconf_cpucount"
+  {% if flag?(:freebsd) || flag?(:openbsd) %}
+    require "./system/unix/sysctl_cpucount"
+  {% else %}
+    require "./system/unix/sysconf_cpucount"
+  {% end %}
+{% elsif flag?(:win32) %}
+  require "./system/win32/hostname"
+  require "./system/win32/cpucount"
+{% else %}
+  {% raise "No Crystal::System implementation available" %}
 {% end %}

@@ -164,6 +164,11 @@ struct Enum
     def to_{{name.id}} : {{type}}
       value.to_{{name.id}}
     end
+
+    # Returns the value of this enum member as a `{{type}}`
+    def to_{{name.id}}! : {{type}}
+      value.to_{{name.id}}!
+    end
   {% end %}
 
   # Returns the enum member that results from adding *other*
@@ -342,12 +347,10 @@ struct Enum
   # Color.from_value?(2) # => Color::Blue
   # Color.from_value?(3) # => nil
   # ```
-  def self.from_value?(value) : self?
+  def self.from_value?(value : Int) : self?
     {% if @type.has_attribute?("Flags") %}
-      mask = {% for member, i in @type.constants %}\
-        {% if i != 0 %} | {% end %}\
-        {{@type}}::{{member}}.value{% end %}
-      return if (mask & value != value) || (value == 0 && values.none? { |val| val.to_i == 0 })
+      all_mask = {{@type}}::All.value
+      return if all_mask & value != value
       return new(value)
     {% else %}
       {% for member in @type.constants %}
@@ -366,7 +369,7 @@ struct Enum
   # Color.from_value(2) # => Color::Blue
   # Color.from_value(3) # raises Exception
   # ```
-  def self.from_value(value) : self
+  def self.from_value(value : Int) : self
     from_value?(value) || raise "Unknown enum #{self} value: #{value}"
   end
 
@@ -381,9 +384,9 @@ struct Enum
   # Returns the enum member that has the given name, or
   # raises `ArgumentError` if no such member exists. The comparison is made by using
   # `String#camelcase` and `String#downcase` between *string* and
-  # the enum members names, so a member named "FourtyTwo" or "FOURTY_TWO"
-  # is found with any of these strings: "fourty_two", "FourtyTwo", "FOURTY_TWO",
-  # "FOURTYTWO", "fourtytwo".
+  # the enum members names, so a member named "FortyTwo" or "FORTY_TWO"
+  # is found with any of these strings: "forty_two", "FortyTwo", "FORTY_TWO",
+  # "FORTYTWO", "fortytwo".
   #
   # ```
   # Color.parse("Red")    # => Color::Red
@@ -397,9 +400,9 @@ struct Enum
   # Returns the enum member that has the given name, or
   # `nil` if no such member exists. The comparison is made by using
   # `String#camelcase` and `String#downcase` between *string* and
-  # the enum members names, so a member named "FourtyTwo" or "FOURTY_TWO"
-  # is found with any of these strings: "fourty_two", "FourtyTwo", "FOURTY_TWO",
-  # "FOURTYTWO", "fourtytwo".
+  # the enum members names, so a member named "FortyTwo" or "FORTY_TWO"
+  # is found with any of these strings: "forty_two", "FortyTwo", "FORTY_TWO",
+  # "FORTYTWO", "fortytwo".
   #
   # ```
   # Color.parse?("Red")    # => Color::Red

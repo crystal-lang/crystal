@@ -13,6 +13,7 @@ describe "BigFloat" do
       bigfloat_of_float_value.to_s.should eq(string_of_float_value)
       BigFloat.new("+#{string_of_integer_value}").to_s.should eq(string_of_integer_value)
       BigFloat.new("-#{string_of_integer_value}").to_s.should eq("-#{string_of_integer_value}")
+      BigFloat.new("123_456_789.123_456_789").to_s.should eq("123456789.123456789")
     end
 
     it "raises an ArgumentError unless string denotes valid float" do
@@ -146,16 +147,34 @@ describe "BigFloat" do
     it { 1.234567.to_big_f.to_f32.should eq(1.234567_f32) }
   end
 
+  describe "to_f!" do
+    it { 1.34.to_big_f.to_f!.should eq(1.34) }
+    it { 0.0001304.to_big_f.to_f!.should eq(0.0001304) }
+    it { 1.234567.to_big_f.to_f32!.should eq(1.234567_f32) }
+  end
+
   describe "to_i" do
     it { 1.34.to_big_f.to_i.should eq(1) }
     it { 123.to_big_f.to_i.should eq(123) }
     it { -4321.to_big_f.to_i.should eq(-4321) }
   end
 
+  describe "to_i!" do
+    it { 1.34.to_big_f.to_i!.should eq(1) }
+    it { 123.to_big_f.to_i!.should eq(123) }
+    it { -4321.to_big_f.to_i!.should eq(-4321) }
+  end
+
   describe "to_u" do
     it { 1.34.to_big_f.to_u.should eq(1) }
     it { 123.to_big_f.to_u.should eq(123) }
     it { 4321.to_big_f.to_u.should eq(4321) }
+  end
+
+  describe "to_u!" do
+    it { 1.34.to_big_f.to_u!.should eq(1) }
+    it { 123.to_big_f.to_u!.should eq(123) }
+    it { 4321.to_big_f.to_u!.should eq(4321) }
   end
 
   describe "to_s" do

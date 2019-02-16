@@ -79,6 +79,27 @@ class File < IO::FileDescriptor
     super(fd, blocking)
   end
 
+  # Opens the file named by *filename*.
+  #
+  # *mode* must be one of the following file open modes:
+  # ```text
+  # Mode | Description
+  # -----+------------------------------------------------------
+  # r    | Read-only, starts at the beginning of the file.
+  # r+   | Read-write, starts at the beginning of the file.
+  # w    | Write-only, truncates existing file to zero length or
+  #      | creates a new file if the file doesn't exists.
+  # w+   | Read-write, truncates existing file to zero length or
+  #      | creates a new file if the file doesn't exists.
+  # a    | Write-only, starts at the end of the file,
+  #      | creates a new file if the file doesn't exists.
+  # a+   | Read-write, starts at the end of the file,
+  #      | creates a new file if the file doesn't exists.
+  # rb   | Same as the 'r' mode but in binary file mode.
+  # wb   | Same as the 'w' mode but in binary file mode.
+  # ab   | Same as the 'a' mode but in binary file mode.
+  # ```
+  # In binary file mode, line endings are not converted to CRLF on Windows.
   def self.new(filename : String, mode = "r", perm = DEFAULT_CREATE_PERMISSIONS, encoding = nil, invalid = nil)
     fd = Crystal::System::File.open(filename, mode, perm)
     new(filename, fd, blocking: true, encoding: encoding, invalid: invalid)
@@ -119,7 +140,7 @@ class File < IO::FileDescriptor
   # File.info("bar", follow_symlinks: false).type.symlink? # => true
   # ```
   def self.info(path, follow_symlinks = true) : Info
-    info?(path, follow_symlinks) || raise Errno.new("Unable to get info for #{path.inspect}")
+    info?(path, follow_symlinks) || raise Errno.new("Unable to get info for '#{path.inspect_unquoted}'")
   end
 
   # Returns `true` if *path* exists else returns `false`
@@ -151,7 +172,7 @@ class File < IO::FileDescriptor
   def self.size(filename) : UInt64
     info(filename).size
   rescue ex : Errno
-    raise Errno.new("Error determining size of #{filename.inspect}", ex.errno)
+    raise Errno.new("Error determining size of '#{filename.inspect_unquoted}'", ex.errno)
   end
 
   # Returns `true` if the file at *path* is empty, otherwise returns `false`.
@@ -340,7 +361,7 @@ class File < IO::FileDescriptor
 
     current = bytes.size - 1
 
-    # if the pattern is foo. it has no extension
+    # if the pattern is foo, it has no extension
     return "" if bytes[current] == '.'.ord
 
     # position the reader at the last . or SEPARATOR
@@ -351,7 +372,7 @@ class File < IO::FileDescriptor
       current -= 1
     end
 
-    # if we are the beginning of the string there is no extension
+    # if we are at the beginning of the string, there is no extension.
     # /foo or .foo have no extension
     return "" unless current > 0
 
@@ -429,12 +450,12 @@ class File < IO::FileDescriptor
   #   * `"c*"` matches all files beginning with `c`.
   #   * `"*c"` matches all files ending with `c`.
   #   * `"*c*"` matches all files that have `c` in them (including at the beginning or end).
-  # * `**` matches an unlimited number of arbitrary charachters including `/`.
-  # * `?` matches any one charachter excluding `/`.
+  # * `**` matches an unlimited number of arbitrary characters including `/`.
+  # * `?` matches any one character excluding `/`.
   # * character sets:
   #   * `[abc]` matches any one of these character.
   #   * `[^abc]` matches any one character other than these.
-  #   * `[a-z]` matches any one charachter in the range.
+  #   * `[a-z]` matches any one character in the range.
   # * `{a,b}` matches subpattern `a` or `b`.
   # * `\\` escapes the next character.
   #
@@ -647,6 +668,8 @@ class File < IO::FileDescriptor
 
   # Opens the file named by *filename*. If a file is being created, its initial
   # permissions may be set using the *perm* parameter.
+  #
+  # See `self.new` for what *mode* can be.
   def self.open(filename, mode = "r", perm = DEFAULT_CREATE_PERMISSIONS, encoding = nil, invalid = nil) : self
     new filename, mode, perm, encoding, invalid
   end
@@ -654,6 +677,8 @@ class File < IO::FileDescriptor
   # Opens the file named by *filename*. If a file is being created, its initial
   # permissions may be set using the *perm* parameter. Then given block will be passed the opened
   # file as an argument, the file will be automatically closed when the block returns.
+  #
+  # See `self.new` for what *mode* can be.
   def self.open(filename, mode = "r", perm = DEFAULT_CREATE_PERMISSIONS, encoding = nil, invalid = nil)
     file = new filename, mode, perm, encoding, invalid
     begin
@@ -722,8 +747,6 @@ class File < IO::FileDescriptor
 
   # Writes the given *content* to *filename*.
   #
-  # The *mode* parameter can be used to change the file's `open` mode, e.g. to `"a"` for appending.
-  #
   # By default, an existing file will be overwritten.
   #
   # *filename* will be created if it does not already exist.
@@ -737,6 +760,8 @@ class File < IO::FileDescriptor
   # If it's an `IO`, all bytes from the `IO` will be written.
   # Otherwise, the string representation of *content* will be written
   # (the result of invoking `to_s` on *content*).
+  #
+  # See `self.new` for what *mode* can be.
   def self.write(filename, content, perm = DEFAULT_CREATE_PERMISSIONS, encoding = nil, invalid = nil, mode = "w")
     open(filename, mode, perm, encoding: encoding, invalid: invalid) do |file|
       case content
@@ -821,7 +846,7 @@ class File < IO::FileDescriptor
   # in the *filename* parameter to the value given in *time*.
   #
   # If the file does not exist, it will be created.
-  def self.touch(filename : String, time : Time = Time.now)
+  def self.touch(filename : String, time : Time = Time.utc)
     open(filename, "a") { } unless exists?(filename)
     utime time, time, filename
   end

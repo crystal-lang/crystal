@@ -440,7 +440,13 @@ module Crystal
 
     def parse_range
       location = @token.location
-      exp = parse_or
+
+      if @token.type == :".." || @token.type == :"..."
+        exp = Nop.new
+      else
+        exp = parse_or
+      end
+
       while true
         case @token.type
         when :".."
@@ -457,7 +463,15 @@ module Crystal
       check_void_value exp, location
       next_token_skip_space_or_newline
       check_void_expression_keyword
-      right = parse_or
+      right = if end_token? ||
+                 @token.type == :")" ||
+                 @token.type == :"," ||
+                 @token.type == :";" ||
+                 @token.type == :"=>"
+                Nop.new
+              else
+                parse_or
+              end
       RangeLiteral.new(exp, right, exclusive).at(location).at_end(right)
     end
 
@@ -714,7 +728,14 @@ module Crystal
 
           column_number = @token.column_number
           next_token_skip_space_or_newline
-          call_args = preserve_stop_on_do { parse_call_args_space_consumed check_plus_and_minus: false, allow_curly: true, end_token: :"]" }
+          call_args = preserve_stop_on_do do
+            parse_call_args_space_consumed(
+              check_plus_and_minus: false,
+              allow_curly: true,
+              end_token: :"]",
+              allow_beginless_range: true,
+            )
+          end
           skip_space_or_newline
           check :"]"
           @wants_regex = false
@@ -908,9 +929,9 @@ module Crystal
         end
       when :GLOBAL_MATCH_DATA_INDEX
         value = @token.value.to_s
-        if value.ends_with? '?'
+        if value_prefix = value.rchop? '?'
           method = "[]?"
-          value = value.rchop
+          value = value_prefix
         else
           method = "[]"
         end
@@ -1944,7 +1965,9 @@ module Crystal
           @inside_interpolation = true
           exp = preserve_stop_on_do { parse_expression }
 
-          if exp.is_a?(StringLiteral)
+          # We cannot reduce `StringLiteral` of interpolation inside heredoc into `String`
+          # because heredoc try to remove its indentation.
+          if exp.is_a?(StringLiteral) && delimiter_state.kind != :heredoc
             pieces << Piece.new(exp.value, line_number)
           else
             pieces << Piece.new(exp, line_number)
@@ -2025,7 +2048,7 @@ module Crystal
     def remove_heredoc_indent(pieces : Array, indent)
       current_line = IO::Memory.new
       remove_indent = true
-      new_pieces = [] of ASTNode
+      new_pieces = [] of ASTNode | String
       previous_line_number = 0
       pieces.each_with_index do |piece, i|
         value = piece.value
@@ -2083,15 +2106,22 @@ module Crystal
         line = remove_heredoc_from_line(line, indent, pieces.last.line_number) if remove_indent
         add_heredoc_piece new_pieces, line
       end
-      new_pieces
+      new_pieces.map do |piece|
+        if piece.is_a?(String)
+          StringLiteral.new(piece)
+        else
+          piece
+        end
+      end
     end
 
     private def add_heredoc_piece(pieces, piece : String)
       last = pieces.last?
-      if last.is_a?(StringLiteral)
-        last.value += piece
+      if last.is_a?(String)
+        last += piece
+        pieces[-1] = last
       else
-        pieces << StringLiteral.new(piece)
+        pieces << piece
       end
     end
 
@@ -4005,7 +4035,7 @@ module Crystal
       next_token_skip_space
       if @token.type == :"|"
         next_token_skip_space_or_newline
-        while @token.type != :"|"
+        while true
           if @token.type == :"*"
             if splat_index
               raise "splat block argument already specified", @token
@@ -4055,12 +4085,14 @@ module Crystal
               end
 
               next_token_skip_space_or_newline
-              if @token.type == :","
+              case @token.type
+              when :","
                 next_token_skip_space_or_newline
-              end
-
-              if @token.type == :")"
+                break if @token.type == :")"
+              when :")"
                 break
+              else
+                raise "expecting ',' or ')', not #{@token}", @token
               end
 
               i += 1
@@ -4075,8 +4107,15 @@ module Crystal
           block_args << var
 
           next_token_skip_space_or_newline
-          if @token.type == :","
+
+          case @token.type
+          when :","
             next_token_skip_space_or_newline
+            break if @token.type == :"|"
+          when :"|"
+            break
+          else
+            raise "expecting ',' or '|', not #{@token}", @token
           end
 
           arg_index += 1
@@ -4192,7 +4231,8 @@ module Crystal
       @call_args_nest -= 1
     end
 
-    def parse_call_args_space_consumed(check_plus_and_minus = true, allow_curly = false, control = false, end_token = :")")
+    def parse_call_args_space_consumed(check_plus_and_minus = true, allow_curly = false, control = false, end_token = :")",
+                                       allow_beginless_range = false)
       # This method is called by `parse_call_args`, so it increments once too much in this case.
       # But it is no problem, because it decrements once too much.
       @call_args_nest += 1
@@ -4220,6 +4260,8 @@ module Crystal
         if current_char.ascii_whitespace?
           return nil
         end
+      when :"..", :"..."
+        return nil unless allow_beginless_range
       else
         return nil
       end
@@ -4690,6 +4732,11 @@ module Crystal
             named_args = parse_type_named_args(:"}")
           else
             type = parse_type(allow_primitives)
+          end
+
+          # Allow a trailing comma
+          if @token.type == :","
+            next_token_skip_space_or_newline
           end
 
           check :"}"

@@ -66,7 +66,7 @@ describe "Code gen: alias" do
         if n == 0
           1
         else
-          foo(n - 1).as(Foo)
+          foo(n &- 1).as(Foo)
         end
       end
 

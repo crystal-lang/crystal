@@ -6,12 +6,13 @@ require "../program"
 require "./llvm_builder_helper"
 
 module Crystal
-  MAIN_NAME          = "__crystal_main"
-  RAISE_NAME         = "__crystal_raise"
-  MALLOC_NAME        = "__crystal_malloc64"
-  MALLOC_ATOMIC_NAME = "__crystal_malloc_atomic64"
-  REALLOC_NAME       = "__crystal_realloc64"
-  GET_EXCEPTION_NAME = "__crystal_get_exception"
+  MAIN_NAME           = "__crystal_main"
+  RAISE_NAME          = "__crystal_raise"
+  RAISE_OVERFLOW_NAME = "__crystal_raise_overflow"
+  MALLOC_NAME         = "__crystal_malloc64"
+  MALLOC_ATOMIC_NAME  = "__crystal_malloc_atomic64"
+  REALLOC_NAME        = "__crystal_realloc64"
+  GET_EXCEPTION_NAME  = "__crystal_get_exception"
 
   class Program
     def run(code, filename = nil, debug = Debug::Default)
@@ -108,7 +109,7 @@ module Crystal
       # an "Reference**" llvm value and you need to load that value
       # to access it.
       # However, the "self" argument is not copied to a local variable:
-      # it's accessed from the arguments list, and it a "Reference*"
+      # it's accessed from the arguments list, and is a "Reference*"
       # llvm value, so in a way it's "already loaded".
       # This field is true if that's the case.
       getter already_loaded : Bool
@@ -137,10 +138,12 @@ module Crystal
     @cant_pass_closure_to_c_exception_call : Call?
     @realloc_fun : LLVM::Function?
     @c_realloc_fun : LLVM::Function?
+    @raise_overflow_fun : LLVM::Function?
     @main_llvm_context : LLVM::Context
     @main_llvm_typer : LLVMTyper
     @main_module_info : ModuleInfo
     @main_builder : CrystalLLVMBuilder
+    @call_location : Location?
 
     def initialize(@program : Program, @node : ASTNode, single_module = false, @debug = Debug::Default)
       @single_module = !!single_module
@@ -292,7 +295,7 @@ module Crystal
 
       def visit(node : FunDef)
         case node.name
-        when MALLOC_NAME, MALLOC_ATOMIC_NAME, REALLOC_NAME, RAISE_NAME, @codegen.personality_name, GET_EXCEPTION_NAME
+        when MALLOC_NAME, MALLOC_ATOMIC_NAME, REALLOC_NAME, RAISE_NAME, @codegen.personality_name, GET_EXCEPTION_NAME, RAISE_OVERFLOW_NAME
           @codegen.accept node
         end
         false
@@ -374,7 +377,7 @@ module Crystal
           # If the fun is not invoked we codegen it at the end so
           # we don't have issues with constants being used before
           # they are declared.
-          # But, apparenty, llvm requires us to define them so that
+          # But, apparently, llvm requires us to define them so that
           # calls can find them, so we do so.
           codegen_fun node.real_name, node.external, @program, is_exported_fun: false
           @unused_fun_defs << node
@@ -441,9 +444,9 @@ module Crystal
         # TODO: implement String#to_u128 and use it
         @last = int128(node.value.to_u128)
       when :f32
-        @last = llvm_context.float.const_float(node.value)
+        @last = float32(node.value)
       when :f64
-        @last = llvm_context.double.const_double(node.value)
+        @last = float64(node.value)
       else
         node.raise "Bug: unhandled number kind: #{node.kind}"
       end
@@ -1923,6 +1926,15 @@ module Crystal
         check_main_fun REALLOC_NAME, realloc_fun
       else
         nil
+      end
+    end
+
+    def crystal_raise_overflow_fun
+      @raise_overflow_fun ||= @main_mod.functions[RAISE_OVERFLOW_NAME]?
+      if raise_overflow_fun = @raise_overflow_fun
+        check_main_fun RAISE_OVERFLOW_NAME, raise_overflow_fun
+      else
+        raise "BUG: __crystal_raise_overflow is not defined"
       end
     end
 

@@ -1,3 +1,5 @@
+require "crystal/compiler_rt"
+
 # Int is the base type of all integer types.
 #
 # There are four signed integer types: `Int8`, `Int16`, `Int32` and `Int64`,
@@ -260,6 +262,8 @@ struct Int
   # Raises `ArgumentError` if *exponent* is negative: if this is needed,
   # either use a float base or a float exponent.
   #
+  # Raises `OverflowError` in case of overflow.
+  #
   # ```
   # 2 ** 3  # => 8
   # 2 ** 0  # => 1
@@ -274,8 +278,35 @@ struct Int
     k = self
     while exponent > 0
       result *= k if exponent & 0b1 != 0
-      k *= k
       exponent = exponent.unsafe_shr(1)
+      k *= k if exponent > 0
+    end
+    result
+  end
+
+  # Returns the value of raising `self` to the power of *exponent*.
+  #
+  # Raises `ArgumentError` if *exponent* is negative: if this is needed,
+  # either use a float base or a float exponent.
+  #
+  # Intermediate multiplication will wrap around silently in case of overflow.
+  #
+  # ```
+  # 2 &** 3  # => 8
+  # 2 &** 0  # => 1
+  # 2 &** -1 # ArgumentError
+  # ```
+  def &**(exponent : Int) : self
+    if exponent < 0
+      raise ArgumentError.new "Cannot raise an integer to a negative integer power, use floats for that"
+    end
+
+    result = self.class.new(1)
+    k = self
+    while exponent > 0
+      result &*= k if exponent & 0b1 != 0
+      exponent = exponent.unsafe_shr(1)
+      k &*= k if exponent > 0
     end
     result
   end
@@ -615,6 +646,11 @@ struct Int8
     value.to_i8
   end
 
+  # Returns an `Int8` by invoking `to_i8!` on *value*.
+  def self.new!(value)
+    value.to_i8!
+  end
+
   def -
     0_i8 - self
   end
@@ -635,6 +671,11 @@ struct Int16
   # Returns an `Int16` by invoking `to_i16` on *value*.
   def self.new(value)
     value.to_i16
+  end
+
+  # Returns an `Int16` by invoking `to_i16!` on *value*.
+  def self.new!(value)
+    value.to_i16!
   end
 
   def -
@@ -659,6 +700,11 @@ struct Int32
     value.to_i32
   end
 
+  # Returns an `Int32` by invoking `to_i32!` on *value*.
+  def self.new!(value)
+    value.to_i32!
+  end
+
   def -
     0 - self
   end
@@ -679,6 +725,11 @@ struct Int64
   # Returns an `Int64` by invoking `to_i64` on *value*.
   def self.new(value)
     value.to_i64
+  end
+
+  # Returns an `Int64` by invoking `to_i64!` on *value*.
+  def self.new!(value)
+    value.to_i64!
   end
 
   def -
@@ -704,6 +755,11 @@ struct Int128
     value.to_i128
   end
 
+  # Returns an `Int128` by invoking `to_i128!` on *value*.
+  def self.new!(value)
+    value.to_i128!
+  end
+
   def -
     # TODO: use 0_i128 - self
     Int128.new(0) - self
@@ -725,6 +781,11 @@ struct UInt8
   # Returns an `UInt8` by invoking `to_u8` on *value*.
   def self.new(value)
     value.to_u8
+  end
+
+  # Returns an `UInt8` by invoking `to_u8!` on *value*.
+  def self.new!(value)
+    value.to_u8!
   end
 
   def abs
@@ -749,6 +810,11 @@ struct UInt16
     value.to_u16
   end
 
+  # Returns an `UInt16` by invoking `to_u16!` on *value*.
+  def self.new!(value)
+    value.to_u16!
+  end
+
   def abs
     self
   end
@@ -769,6 +835,11 @@ struct UInt32
   # Returns an `UInt32` by invoking `to_u32` on *value*.
   def self.new(value)
     value.to_u32
+  end
+
+  # Returns an `UInt32` by invoking `to_u32!` on *value*.
+  def self.new!(value)
+    value.to_u32!
   end
 
   def abs
@@ -793,6 +864,11 @@ struct UInt64
     value.to_u64
   end
 
+  # Returns an `UInt64` by invoking `to_u64!` on *value*.
+  def self.new!(value)
+    value.to_u64!
+  end
+
   def abs
     self
   end
@@ -814,6 +890,11 @@ struct UInt128
   # Returns an `UInt128` by invoking `to_u128` on *value*.
   def self.new(value)
     value.to_u128
+  end
+
+  # Returns an `UInt128` by invoking `to_u128!` on *value*.
+  def self.new!(value)
+    value.to_u128!
   end
 
   def abs

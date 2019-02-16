@@ -54,7 +54,7 @@ describe "Code gen: closure" do
       a = 1
       f = foo do
         b = 2
-        -> { a + b }
+        -> { a &+ b }
       end
       f.call
     ").to_i.should eq(3)
@@ -70,7 +70,7 @@ describe "Code gen: closure" do
 
       a = 1
       f = foo do |x|
-        -> { a + x }
+        -> { a &+ x }
       end
       f.call
     ").to_i.should eq(4)
@@ -85,7 +85,7 @@ describe "Code gen: closure" do
 
       f = foo do |x|
         a = 2
-        -> { a + x }
+        -> { a &+ x }
       end
       f.call
       ").to_i.should eq(3)
@@ -118,7 +118,7 @@ describe "Code gen: closure" do
         b = 1
         foo do |y|
           c = 1
-          -> { a + b + c + x + y }
+          -> { a &+ b &+ c &+ x &+ y }
         end
       end
       f.call
@@ -153,7 +153,7 @@ describe "Code gen: closure" do
       f = foo do
         b = 1
         bar do
-          -> { a + b }
+          -> { a &+ b }
         end
       end
       f.call
@@ -175,7 +175,7 @@ describe "Code gen: closure" do
         b = 1
         bar do |x|
           x
-          -> { a + b }
+          -> { a &+ b }
         end
       end
       f.call
@@ -210,7 +210,7 @@ describe "Code gen: closure" do
 
         def foo
           a = 2
-          ->{ self.x + a }
+          ->{ self.x &+ a }
         end
 
         def x
@@ -230,7 +230,7 @@ describe "Code gen: closure" do
 
         def foo
           a = 2
-          ->{ x + a }
+          ->{ x &+ a }
         end
 
         def x
@@ -250,7 +250,7 @@ describe "Code gen: closure" do
 
         def foo
           a = 2
-          ->{ @x + a }
+          ->{ @x &+ a }
         end
       end
 
@@ -286,7 +286,7 @@ describe "Code gen: closure" do
         def foo
           bar do
             a = 2
-            ->{ @x + a }
+            ->{ @x &+ a }
           end
         end
       end
@@ -392,7 +392,7 @@ describe "Code gen: closure" do
       a = 1
       ->{
         b = 2
-        ->{ a + b }
+        ->{ a &+ b }
       }.call.call
       )).to_i.should eq(3)
   end
@@ -412,7 +412,7 @@ describe "Code gen: closure" do
               c = 3
               foo do |d|
                 -> {
-                  a + b + c + d
+                  a &+ b &+ c &+ d
                 }
               end
             }
@@ -453,7 +453,7 @@ describe "Code gen: closure" do
 
       a = 1
       f = ->(foo : Foo) {
-        foo.x + a
+        foo.x &+ a
       }
 
       obj = Foo.new(2)
@@ -468,7 +468,7 @@ describe "Code gen: closure" do
         end
 
         def foo(x)
-          @x + x
+          @x &+ x
         end
 
         def bar
@@ -500,7 +500,7 @@ describe "Code gen: closure" do
 
       a = 1
       foo do |x|
-        x + a
+        x &+ a
       end
       ").to_i.should eq(2)
   end
@@ -512,7 +512,7 @@ describe "Code gen: closure" do
       end
 
       a = 1
-      g = foo { |x| x + a }
+      g = foo { |x| x &+ a }
       h = foo { |x| x.to_f + a }
       (g.call(3) + h.call(5)).to_i
       ").to_i.should eq(10)
@@ -557,7 +557,7 @@ describe "Code gen: closure" do
       end
 
       a = 1
-      f = ->(x : Int32) { x + a }
+      f = ->(x : Int32) { x &+ a }
       foo &f
       ").to_i.should eq(2)
   end
@@ -570,7 +570,7 @@ describe "Code gen: closure" do
       end
 
       a = 0
-      foo { |x| a += x }
+      foo { |x| a &+= x }
       a
       )).to_i.should eq(3)
   end
@@ -670,7 +670,7 @@ describe "Code gen: closure" do
         # Here 'local' isn't to be confused with
         # the outer closured 'local'
         local = 1
-        local + arg
+        local &+ arg
       }
 
       arg = 2
@@ -678,7 +678,7 @@ describe "Code gen: closure" do
       local = 4_i64
       f2 = ->{ local.to_i }
 
-      f1.call + f2.call
+      f1.call &+ f2.call
     ))
   end
 end

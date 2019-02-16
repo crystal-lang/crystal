@@ -1,5 +1,5 @@
 require "./spec_helper"
-require "socket"
+require "../../support/errno"
 
 describe TCPServer do
   describe ".new" do
@@ -20,7 +20,7 @@ describe TCPServer do
         server.close
 
         server.closed?.should be_true
-        expect_raises(Errno, "getsockname: Bad file descriptor") do
+        expect_raises_errno(Errno::EBADF, "getsockname: ") do
           server.local_address
         end
       end
@@ -33,15 +33,16 @@ describe TCPServer do
       end
 
       it "raises when port is negative" do
-        expect_raises(Socket::Error, linux? ? "getaddrinfo: Servname not supported for ai_socktype" : "No address found for #{address}:-12 over TCP") do
+        error = expect_raises(Socket::Addrinfo::Error) do
           TCPServer.new(address, -12)
         end
+        error.error_code.should eq({% if flag?(:linux) %}LibC::EAI_SERVICE{% else %}LibC::EAI_NONAME{% end %})
       end
 
       describe "reuse_port" do
         it "raises when port is in use" do
           TCPServer.open(address, 0) do |server|
-            expect_raises Errno, /(already|Address) in use/ do
+            expect_raises_errno(Errno::EADDRINUSE, "bind: ") do
               TCPServer.open(address, server.local_address.port) { }
             end
           end
@@ -49,7 +50,7 @@ describe TCPServer do
 
         it "raises when not binding with reuse_port" do
           TCPServer.open(address, 0, reuse_port: true) do |server|
-            expect_raises Errno, /(already|Address) in use/ do
+            expect_raises_errno(Errno::EADDRINUSE, {% if flag?(:linux) %}"listen: "{% else %}"bind: "{% end %}) do
               TCPServer.open(address, server.local_address.port) { }
             end
           end
@@ -57,7 +58,7 @@ describe TCPServer do
 
         it "raises when port is not ready to be reused" do
           TCPServer.open(address, 0) do |server|
-            expect_raises Errno, /(already|Address) in use/ do
+            expect_raises_errno(Errno::EADDRINUSE, "bind: ") do
               TCPServer.open(address, server.local_address.port, reuse_port: true) { }
             end
           end
@@ -77,13 +78,13 @@ describe TCPServer do
       end
 
       it "raises when host doesn't exist" do
-        expect_raises(Socket::Error, "No address") do
+        expect_raises(Socket::Error, "No address found for doesnotexist.example.org.:12345 over TCP") do
           TCPServer.new("doesnotexist.example.org.", 12345)
         end
       end
 
       it "raises (rather than segfault on darwin) when host doesn't exist and port is 0" do
-        expect_raises(Socket::Error, "No address") do
+        expect_raises(Socket::Error, /No address found for doesnotexist.example.org.:00? over TCP/) do
           TCPServer.new("doesnotexist.example.org.", 0)
         end
       end

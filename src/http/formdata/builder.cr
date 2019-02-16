@@ -15,7 +15,7 @@ module HTTP::FormData
   class Builder
     # Creates a new `FormData::Builder` which writes to *io*, using the
     # multipart boundary *boundary*.
-    def initialize(@io : IO, @boundary = Multipart.generate_boundary)
+    def initialize(@io : IO, @boundary = MIME::Multipart.generate_boundary)
       @state = :START
     end
 

@@ -22,6 +22,7 @@ describe "BigInt" do
 
   it "creates from string" do
     BigInt.new("12345678").to_s.should eq("12345678")
+    BigInt.new("123_456_78").to_s.should eq("12345678")
     BigInt.new("+12345678").to_s.should eq("12345678")
     BigInt.new("-12345678").to_s.should eq("-12345678")
   end
@@ -55,7 +56,7 @@ describe "BigInt" do
     [1.1, 1.to_big_i, 3.to_big_i, 2.2].sort.should eq([1, 1.1, 2.2, 3])
   end
 
-  it "divides and calculs the modulo" do
+  it "divides and calculates the modulo" do
     11.to_big_i.divmod(3.to_big_i).should eq({3, 2})
     11.to_big_i.divmod(-3.to_big_i).should eq({-4, -1})
 
@@ -295,13 +296,13 @@ describe "BigInt" do
   it "can be casted into other Number types" do
     big = BigInt.new(1234567890)
     big.to_i.should eq(1234567890)
-    big.to_i8.should eq(-46)
-    big.to_i16.should eq(722)
+    big.to_i8!.should eq(-46)
+    big.to_i16!.should eq(722)
     big.to_i32.should eq(1234567890)
     big.to_i64.should eq(1234567890)
     big.to_u.should eq(1234567890)
-    big.to_u8.should eq(210)
-    big.to_u16.should eq(722)
+    big.to_u8!.should eq(210)
+    big.to_u16!.should eq(722)
     big.to_u32.should eq(1234567890)
 
     u64 = big.to_u64

@@ -520,6 +520,7 @@ module Crystal
     it_parses "Foo(typeof(1))", Generic.new("Foo".path, [TypeOf.new([1.int32] of ASTNode)] of ASTNode)
     it_parses "Foo(typeof(1), typeof(2))", Generic.new("Foo".path, [TypeOf.new([1.int32] of ASTNode), TypeOf.new([2.int32] of ASTNode)] of ASTNode)
     it_parses "Foo({X, Y})", Generic.new("Foo".path, [Generic.new(Path.global("Tuple"), ["X".path, "Y".path] of ASTNode)] of ASTNode)
+    it_parses "Foo({X, Y,})", Generic.new("Foo".path, [Generic.new(Path.global("Tuple"), ["X".path, "Y".path] of ASTNode)] of ASTNode)
     it_parses "Foo({->})", Generic.new("Foo".path, [Generic.new(Path.global("Tuple"), [ProcNotation.new] of ASTNode)] of ASTNode)
     it_parses "Foo({String, ->})", Generic.new("Foo".path, [Generic.new(Path.global("Tuple"), ["String".path, ProcNotation.new] of ASTNode)] of ASTNode)
     it_parses "Foo({String, ->, ->})", Generic.new("Foo".path, [Generic.new(Path.global("Tuple"), ["String".path, ProcNotation.new, ProcNotation.new] of ASTNode)] of ASTNode)
@@ -570,6 +571,7 @@ module Crystal
     it_parses "foo { 1 }", Call.new(nil, "foo", block: Block.new(body: 1.int32))
     it_parses "foo { |a| 1 }", Call.new(nil, "foo", block: Block.new(["a".var], 1.int32))
     it_parses "foo { |a, b| 1 }", Call.new(nil, "foo", block: Block.new(["a".var, "b".var], 1.int32))
+    it_parses "foo { |a, b, | 1 }", Call.new(nil, "foo", block: Block.new(["a".var, "b".var], 1.int32))
     it_parses "1.foo do; 1; end", Call.new(1.int32, "foo", block: Block.new(body: 1.int32))
     it_parses "a b() {}", Call.new(nil, "a", Call.new(nil, "b", block: Block.new))
 
@@ -589,6 +591,16 @@ module Crystal
           Assign.new("c".var, Call.new("__arg0".var, "[]", 1.int32)),
           "c".var,
         ] of ASTNode)))
+
+    it_parses "foo { |(_, c, )| c }", Call.new(nil, "foo",
+      block: Block.new(["__arg0".var],
+        Expressions.new([
+          Assign.new("c".var, Call.new("__arg0".var, "[]", 1.int32)),
+          "c".var,
+        ] of ASTNode)))
+
+    assert_syntax_error "foo { |a b| }", "expecting ',' or '|', not b"
+    assert_syntax_error "foo { |(a b)| }", "expecting ',' or ')', not b"
 
     it_parses "1 ? 2 : 3", If.new(1.int32, 2.int32, 3.int32)
     it_parses "1 ? a : b", If.new(1.int32, "a".call, "b".call)
@@ -782,6 +794,20 @@ module Crystal
 
     it_parses "1 .. 2", RangeLiteral.new(1.int32, 2.int32, false)
     it_parses "1 ... 2", RangeLiteral.new(1.int32, 2.int32, true)
+    it_parses "(1 .. )", Expressions.new([RangeLiteral.new(1.int32, Nop.new, false)] of ASTNode)
+    it_parses "(1 ... )", Expressions.new([RangeLiteral.new(1.int32, Nop.new, true)] of ASTNode)
+    it_parses "foo(1.., 2)", Call.new(nil, "foo", [RangeLiteral.new(1.int32, Nop.new, false), 2.int32] of ASTNode)
+    it_parses "1..;", RangeLiteral.new(1.int32, Nop.new, false)
+    it_parses "{1.. => 2};", HashLiteral.new([HashLiteral::Entry.new(RangeLiteral.new(1.int32, Nop.new, false), 2.int32)])
+    it_parses "..2", RangeLiteral.new(Nop.new, 2.int32, false)
+    it_parses "...2", RangeLiteral.new(Nop.new, 2.int32, true)
+    it_parses "foo..2", RangeLiteral.new("foo".call, 2.int32, false)
+    it_parses "foo ..2", RangeLiteral.new("foo".call, 2.int32, false)
+    it_parses "foo(..2)", Call.new(nil, "foo", RangeLiteral.new(Nop.new, 2.int32, false))
+    it_parses "x[..2]", Call.new("x".call, "[]", RangeLiteral.new(Nop.new, 2.int32, false))
+    it_parses "x[1, ..2]", Call.new("x".call, "[]", [1.int32, RangeLiteral.new(Nop.new, 2.int32, false)] of ASTNode)
+    it_parses "{..2}", TupleLiteral.new([RangeLiteral.new(Nop.new, 2.int32, false)] of ASTNode)
+    it_parses "[..2]", ArrayLiteral.new([RangeLiteral.new(Nop.new, 2.int32, false)] of ASTNode)
 
     it_parses "A = 1", Assign.new("A".path, 1.int32)
 

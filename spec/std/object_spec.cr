@@ -35,6 +35,9 @@ private class TestObject
   def self.getter12_value=(@@getter12_value)
   end
 
+  @getter13_counter = 0
+  getter(getter13) { @getter13_counter += 1; false }
+
   setter setter1
   setter setter2 : Int32
   setter setter3 : Int32 = 3
@@ -57,6 +60,9 @@ private class TestObject
 
   property(property11) { 11 }
   property property12 : Int32 { 10 + 2 }
+
+  @property13_counter = 0
+  property(property13) { @property13_counter += 1; false }
 
   def initialize
     @getter1 = 1
@@ -205,6 +211,13 @@ describe Object do
       obj2 = TestObject.new
       obj2.getter12.should eq(24)
     end
+
+    it "defines lazy getter with block returning false" do
+      obj = TestObject.new
+      obj.@getter13_counter.should eq(0)
+      3.times { obj.getter13.should be_false }
+      obj.@getter13_counter.should eq(1)
+    end
   end
 
   describe "getter!" do
@@ -329,6 +342,13 @@ describe Object do
       obj.property12.should eq(12)
       obj.property12 = 13
       obj.property12.should eq(13)
+    end
+
+    it "defines lazy property with block returning false" do
+      obj = TestObject.new
+      obj.@property13_counter.should eq(0)
+      3.times { obj.property13.should be_false }
+      obj.@property13_counter.should eq(1)
     end
   end
 

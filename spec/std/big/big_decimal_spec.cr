@@ -21,6 +21,9 @@ describe BigDecimal do
     BigDecimal.new("42.0123")
       .should eq(BigDecimal.new(BigInt.new(420123), 4))
 
+    BigDecimal.new("42_42_42_24.0123_456_789")
+      .should eq(BigDecimal.new(BigInt.new(424242240123456789), 10))
+
     BigDecimal.new("0.0")
       .should eq(BigDecimal.new(BigInt.new(0)))
 
@@ -145,6 +148,7 @@ describe BigDecimal do
       BigDecimal.new(-1) / BigDecimal.new(0)
     end
     BigDecimal.new(1).should eq(BigDecimal.new(1) / BigDecimal.new(1))
+    BigDecimal.new(10).should eq(BigDecimal.new(100, 1) / BigDecimal.new(100000000, 8))
     BigDecimal.new(5.to_big_i, 1_u64).should eq(BigDecimal.new(1) / BigDecimal.new(2))
     BigDecimal.new(-5.to_big_i, 1_u64).should eq(BigDecimal.new(1) / BigDecimal.new(-2))
     BigDecimal.new(-5.to_big_i, 4_u64).should eq(BigDecimal.new(1) / BigDecimal.new(-2000))
@@ -319,6 +323,21 @@ describe BigDecimal do
     bd2.to_f.should eq -0.00123
     bd3.to_f.should eq 123.0
     bd4.to_f.should eq -123.0
+
+    bd1.to_i!.should eq 0
+    bd2.to_i!.should eq 0
+    bd3.to_i!.should eq 123
+    bd4.to_i!.should eq -123
+
+    bd1.to_u!.should eq 0
+    bd2.to_u!.should eq 0
+    bd3.to_u!.should eq 123
+    bd4.to_u!.should eq 123
+
+    bd1.to_f!.should eq 0.00123
+    bd2.to_f!.should eq -0.00123
+    bd3.to_f!.should eq 123.0
+    bd4.to_f!.should eq -123.0
   end
 
   it "hashes" do

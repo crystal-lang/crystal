@@ -458,7 +458,7 @@ module Debug
 
           if nlist.strx > 0
             @io.seek(symtab.stroff + nlist.strx) do
-              nlist.name = @io.gets('\0').to_s.chomp('\0')
+              nlist.name = @io.gets('\0', chomp: true).to_s
             end
           end
 

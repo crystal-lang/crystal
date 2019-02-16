@@ -45,7 +45,7 @@ class Crystal::Call
       return recalculate_lib_call obj_type
     end
 
-    # Check if it's call inside LibFoo
+    # Check if its call is inside LibFoo
     # (can happen when assigning the call to a constant)
     if !obj && (lib_type = scope()).is_a?(LibType)
       return recalculate_lib_call lib_type

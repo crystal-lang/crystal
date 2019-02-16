@@ -172,7 +172,8 @@ class Object
     yield self
   end
 
-  # Returns `self`. `Nil` overrides this method and raises an exception.
+  # Returns `self`.
+  # `Nil` overrides this method and raises `NilAssertionError`, see `Nil#not_nil!`.
   def not_nil!
     self
   end
@@ -330,7 +331,7 @@ class Object
     #
     # ```
     # class Person
-    #   {{macro_prefix}}getter(birth_date) { Time.now }
+    #   {{macro_prefix}}getter(birth_date) { Time.local }
     # end
     # ```
     #
@@ -339,7 +340,11 @@ class Object
     # ```
     # class Person
     #   def {{method_prefix}}birth_date
-    #     {{var_prefix}}birth_date ||= Time.now
+    #     if (value = {{var_prefix}}birth_date).nil?
+    #       {{var_prefix}}birth_date = Time.local
+    #     else
+    #       value
+    #     end
     #   end
     # end
     # ```
@@ -355,11 +360,19 @@ class Object
           {{var_prefix}}\{{name.var.id}} : \{{name.type}}?
 
           def {{method_prefix}}\{{name.var.id}}
-            {{var_prefix}}\{{name.var.id}} ||= \{{yield}}
+            if (value = {{var_prefix}}\{{name.var.id}}).nil?
+              {{var_prefix}}\{{name.var.id}} = \{{yield}}
+            else
+              value
+            end
           end
         \{% else %}
           def {{method_prefix}}\{{name.id}}
-            {{var_prefix}}\{{name.id}} ||= \{{yield}}
+            if (value = {{var_prefix}}\{{name.id}}).nil?
+              {{var_prefix}}\{{name.id}} = \{{yield}}
+            else
+              value
+            end
           end
         \{% end %}
       \{% else %}
@@ -781,7 +794,7 @@ class Object
     #
     # ```
     # class Person
-    #   {{macro_prefix}}property(birth_date) { Time.now }
+    #   {{macro_prefix}}property(birth_date) { Time.local }
     # end
     # ```
     #
@@ -790,7 +803,11 @@ class Object
     # ```
     # class Person
     #   def {{method_prefix}}birth_date
-    #     {{var_prefix}}birth_date ||= Time.now
+    #     if (value = {{var_prefix}}birth_date).nil?
+    #       {{var_prefix}}birth_date = Time.local
+    #     else
+    #       value
+    #     end
     #   end
     #
     #   def {{method_prefix}}birth_date=({{var_prefix}}birth_date)
@@ -811,11 +828,19 @@ class Object
           {{var_prefix}}\{{name.var.id}} : \{{name.type}}?
 
           def {{method_prefix}}\{{name.var.id}}
-            {{var_prefix}}\{{name.var.id}} ||= \{{yield}}
+            if (value = {{var_prefix}}\{{name.var.id}}).nil?
+              {{var_prefix}}\{{name.var.id}} = \{{yield}}
+            else
+              value
+            end
           end
         \{% else %}
           def {{method_prefix}}\{{name.id}}
-            {{var_prefix}}\{{name.id}} ||= \{{yield}}
+            if (value = {{var_prefix}}\{{name.id}}).nil?
+              {{var_prefix}}\{{name.id}} = \{{yield}}
+            else
+              value
+            end
           end
         \{% end %}
       \{% else %}

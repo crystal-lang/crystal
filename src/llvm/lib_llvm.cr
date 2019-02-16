@@ -138,6 +138,7 @@ lib LibLLVM
   fun const_array = LLVMConstArray(element_type : TypeRef, constant_vals : ValueRef*, length : UInt32) : ValueRef
   fun const_int = LLVMConstInt(int_type : TypeRef, value : UInt64, sign_extend : Int32) : ValueRef
   fun const_int_of_string = LLVMConstIntOfString(int_type : TypeRef, value : UInt8*, radix : UInt8) : ValueRef
+  fun const_int_of_arbitrary_precision = LLVMConstIntOfArbitraryPrecision(int_type : TypeRef, num_words : UInt32, words : UInt64*) : ValueRef
   fun const_null = LLVMConstNull(ty : TypeRef) : ValueRef
   fun const_pointer_null = LLVMConstPointerNull(ty : TypeRef) : ValueRef
   fun const_real = LLVMConstReal(real_ty : TypeRef, n : Float64) : ValueRef
@@ -196,7 +197,7 @@ lib LibLLVM
   fun is_constant = LLVMIsConstant(val : ValueRef) : Int32
   fun is_function_var_arg = LLVMIsFunctionVarArg(ty : TypeRef) : Int32
   fun module_create_with_name_in_context = LLVMModuleCreateWithNameInContext(module_id : UInt8*, context : ContextRef) : ModuleRef
-  fun offset_of_element = LLVMOffsetOfElement(td : TargetDataRef, struct_type : TypeRef, element : LibC::UInt) : Int64
+  fun offset_of_element = LLVMOffsetOfElement(td : TargetDataRef, struct_type : TypeRef, element : LibC::UInt) : UInt64
   fun pass_manager_builder_create = LLVMPassManagerBuilderCreate : PassManagerBuilderRef
   fun pass_manager_builder_set_opt_level = LLVMPassManagerBuilderSetOptLevel(builder : PassManagerBuilderRef, opt_level : UInt32)
   fun pass_manager_builder_set_size_level = LLVMPassManagerBuilderSetSizeLevel(builder : PassManagerBuilderRef, size_level : UInt32)

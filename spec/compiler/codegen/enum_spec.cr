@@ -317,9 +317,24 @@ describe "Code gen: enum" do
       end
 
       x = 0
-      x += 1 if Foo::None.none?
-      x += 2 if Foo::A.none?
+      x &+= 1 if Foo::None.none?
+      x &+= 2 if Foo::A.none?
       x
       )).to_i.should eq(1)
+  end
+
+  it "can redefine Enum.new and use previous_def" do
+    run(%(
+      enum Foo
+        FOO = 1
+        BAR = 2
+
+        def self.new(x : Int32)
+          previous_def(2)
+        end
+      end
+
+      Foo.new(1)
+      )).to_i.should eq(2)
   end
 end

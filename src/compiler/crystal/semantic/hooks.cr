@@ -29,7 +29,7 @@ module Crystal
 
   # Holds hook expansions.
   #
-  # For example, a `ClassDef` node will include macro exapnsions
+  # For example, a `ClassDef` node will include macro expansions
   # that result from the `inherited` hook. So in this code:
   #
   # ```

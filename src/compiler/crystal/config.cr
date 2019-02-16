@@ -5,11 +5,7 @@ module Crystal
     end
 
     def self.version
-      {% if flag?(:windows) %}
-        {{ `type #{__DIR__}/../../../VERSION`.stringify.chomp }}
-      {% else %}
-        {{ `cat #{__DIR__}/../../../VERSION`.stringify.chomp }}
-      {% end %}
+      {{ read_file("#{__DIR__}/../../../VERSION").chomp }}
     end
 
     def self.llvm_version
@@ -34,7 +30,8 @@ module Crystal
     end
 
     def self.date
-      {{ env("CRYSTAL_CONFIG_BUILD_DATE") || `date "+%Y-%m-%d"`.stringify.chomp }}
+      time = {{ (env("SOURCE_DATE_EPOCH") || `date +%s`).to_i }}
+      Time.unix(time).to_s("%Y-%m-%d")
     end
 
     def self.default_target_triple

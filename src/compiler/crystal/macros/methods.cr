@@ -65,6 +65,8 @@ module Crystal
         interpret_raise(node)
       when "read_file"
         interpret_read_file(node)
+      when "read_file?"
+        interpret_read_file(node, nilable: true)
       when "run"
         interpret_run(node)
       else
@@ -174,7 +176,7 @@ module Crystal
     end
 
     def interpret_skip_file(node)
-      raise SkipMacroException.new(@str.to_s)
+      raise SkipMacroException.new(@str.to_s, macro_expansion_pragmas)
     end
 
     def interpret_system(node)
@@ -198,16 +200,18 @@ module Crystal
       macro_raise(node, node.args, self)
     end
 
-    def interpret_read_file(node)
+    def interpret_read_file(node, nilable = false)
       unless node.args.size == 1
-        node.wrong_number_of_arguments "macro call 'read_file'", node.args.size, 1
+        node.wrong_number_of_arguments "macro call '#{node.name}'", node.args.size, 1
       end
 
       node.args[0].accept self
       filename = @last.to_macro_id
-      if File.file?(filename)
+
+      begin
         @last = StringLiteral.new(File.read(filename))
-      else
+      rescue ex
+        node.raise ex.to_s unless nilable
         @last = NilLiteral.new
       end
     end
@@ -693,6 +697,16 @@ module Crystal
         else
           wrong_number_of_arguments "StringLiteral#split", args.size, "0..1"
         end
+      when "count"
+        interpret_one_arg_method(method, args) do |arg|
+          case arg
+          when CharLiteral
+            chr = arg.value
+          else
+            raise "StringLiteral#count expects char, not #{arg.class_desc}"
+          end
+          NumberLiteral.new(@value.count(chr))
+        end
       when "starts_with?"
         interpret_one_arg_method(method, args) do |arg|
           case arg
@@ -933,7 +947,7 @@ module Crystal
           when StringLiteral
             key = key.value
           else
-            return NilLiteral.new
+            raise "argument to [] must be a symbol or string, not #{key.class_desc}:\n\n#{key}"
           end
 
           entry = entries.find &.key.==(key)
@@ -2009,15 +2023,18 @@ module Crystal
           case arg
           when NumberLiteral
             index = arg.to_number.to_i
-            self.args[index]? || NilLiteral.new
-          when SymbolLiteral
-            named_arg = self.named_args.try &.find do |named_arg|
-              named_arg.name == arg.value
-            end
-            named_arg.try(&.value) || NilLiteral.new
+            return self.args[index]? || NilLiteral.new
+          when SymbolLiteral then name = arg.value
+          when StringLiteral then name = arg.value
+          when MacroId       then name = arg.value
           else
-            raise "argument to 'Annotation#[]' must be integer or symbol, not #{arg.class_desc}"
+            raise "argument to [] must be a number, symbol or string, not #{arg.class_desc}:\n\n#{arg}"
           end
+
+          named_arg = self.named_args.try &.find do |named_arg|
+            named_arg.name == name
+          end
+          named_arg.try(&.value) || NilLiteral.new
         end
       else
         super
@@ -2143,6 +2160,12 @@ private def intepret_array_or_tuple_method(object, klass, method, args, block, i
     klass.new(object.elements.shuffle)
   when "sort"
     klass.new(object.elements.sort { |x, y| x.interpret_compare(y) })
+  when "sort_by"
+    object.interpret_argless_method(method, args) do
+      raise "sort_by expects a block" unless block
+
+      sort_by(object, klass, block, interpreter)
+    end
   when "uniq"
     klass.new(object.elements.uniq)
   when "[]"
@@ -2288,4 +2311,17 @@ private def fetch_annotation(node, method, args)
     value = yield type
     value || Crystal::NilLiteral.new
   end
+end
+
+private def sort_by(object, klass, block, interpreter)
+  block_arg = block.args.first?
+
+  klass.new(object.elements.sort { |x, y|
+    block_arg.try { |arg| interpreter.define_var(arg.name, x) }
+    x_result = interpreter.accept(block.body)
+    block_arg.try { |arg| interpreter.define_var(arg.name, y) }
+    y_result = interpreter.accept(block.body)
+
+    x_result.interpret_compare(y_result)
+  })
 end

@@ -48,7 +48,7 @@ end
 
 {% for type in %w(Int8 Int16 Int32 Int64 UInt8 UInt16 UInt32 UInt64) %}
   def {{type.id}}.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node)
-    {{type.id}}.new parse_scalar(ctx, node, Int64)
+    {{type.id}}.new! parse_scalar(ctx, node, Int64)
   end
 {% end %}
 
@@ -57,7 +57,7 @@ def String.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node)
 end
 
 def Float32.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node)
-  parse_scalar(ctx, node, Float64).to_f32
+  parse_scalar(ctx, node, Float64).to_f32!
 end
 
 def Float64.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node)
@@ -80,6 +80,31 @@ def Array.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node)
 end
 
 def Array.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node)
+  unless node.is_a?(YAML::Nodes::Sequence)
+    node.raise "Expected sequence, not #{node.class}"
+  end
+
+  node.each do |value|
+    yield T.new(ctx, value)
+  end
+end
+
+def Set.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node)
+  ctx.read_alias(node, self) do |obj|
+    return obj
+  end
+
+  ary = new
+
+  ctx.record_anchor(node, ary)
+
+  new(ctx, node) do |element|
+    ary << element
+  end
+  ary
+end
+
+def Set.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node)
   unless node.is_a?(YAML::Nodes::Sequence)
     node.raise "Expected sequence, not #{node.class}"
   end

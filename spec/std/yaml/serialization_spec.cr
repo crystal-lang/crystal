@@ -77,6 +77,10 @@ describe "YAML serialization" do
       Array(Int32).from_yaml("---\n- 1\n- 2\n- 3\n").should eq([1, 2, 3])
     end
 
+    it "does Set#from_yaml" do
+      Set(Int32).from_yaml("---\n- 1\n- 2\n- 2\n").should eq(Set.new([1, 2]))
+    end
+
     it "does Array#from_yaml from IO" do
       io = IO::Memory.new "---\n- 1\n- 2\n- 3\n"
       Array(Int32).from_yaml(io).should eq([1, 2, 3])
@@ -143,6 +147,12 @@ describe "YAML serialization" do
       big = BigFloat.from_yaml("1234.567891011121314")
       big.should be_a(BigFloat)
       big.should eq(BigFloat.new("1234.567891011121314"))
+    end
+
+    it "does for BigDecimal" do
+      big = BigDecimal.from_yaml("1234.567891011121314")
+      big.should be_a(BigDecimal)
+      big.should eq(BigDecimal.new("1234.567891011121314"))
     end
 
     it "does for Enum with number" do

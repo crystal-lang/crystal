@@ -292,6 +292,10 @@ module Crystal
         assert_macro "", %({{"hello".size}}), [] of ASTNode, "5"
       end
 
+      it "executes count" do
+        assert_macro "", %({{"aabbcc".count('a')}}), [] of ASTNode, "2"
+      end
+
       it "executes empty" do
         assert_macro "", %({{"hello".empty?}}), [] of ASTNode, "false"
       end
@@ -712,6 +716,10 @@ module Crystal
         assert_macro "", %({{{:a => 1, :b => 3}.size}}), [] of ASTNode, "2"
       end
 
+      it "executes sort_by" do
+        assert_macro "", %({{["abc", "a", "ab"].sort_by { |x| x.size }}}), [] of ASTNode, %(["a", "ab", "abc"])
+      end
+
       it "executes empty?" do
         assert_macro "", %({{{:a => 1}.empty?}}), [] of ASTNode, "false"
       end
@@ -809,6 +817,12 @@ module Crystal
       it "executes [] not found" do
         assert_macro "", %({{{a: 1}[:b]}}), [] of ASTNode, "nil"
         assert_macro "", %({{{a: 1}["b"]}}), [] of ASTNode, "nil"
+      end
+
+      it "executes [] with invalid key type" do
+        expect_raises(Crystal::TypeException, "argument to [] must be a symbol or string, not BoolLiteral") do
+          assert_macro "", %({{{a: 1}[true]}}), [] of ASTNode, ""
+        end
       end
 
       it "executes keys" do
@@ -1683,6 +1697,45 @@ module Crystal
       end
     end
 
+    describe "annotation methods" do
+      it "executes [] with NumberLiteral" do
+        assert_macro "x, y", %({{x[y]}}), [
+          Annotation.new(Path.new("Foo"), [42.int32] of ASTNode),
+          0.int32,
+        ] of ASTNode, %(42)
+      end
+
+      it "executes [] with SymbolLiteral" do
+        assert_macro "x, y", %({{x[y]}}), [
+          Annotation.new(Path.new("Foo"), [] of ASTNode, [NamedArgument.new("foo", 42.int32)]),
+          "foo".symbol,
+        ] of ASTNode, %(42)
+      end
+
+      it "executes [] with StringLiteral" do
+        assert_macro "x, y", %({{x[y]}}), [
+          Annotation.new(Path.new("Foo"), [] of ASTNode, [NamedArgument.new("foo", 42.int32)]),
+          "foo".string,
+        ] of ASTNode, %(42)
+      end
+
+      it "executes [] with MacroId" do
+        assert_macro "x, y", %({{x[y]}}), [
+          Annotation.new(Path.new("Foo"), [] of ASTNode, [NamedArgument.new("foo", 42.int32)]),
+          MacroId.new("foo"),
+        ] of ASTNode, %(42)
+      end
+
+      it "executes [] with other ASTNode, but raises an error" do
+        expect_raises(Crystal::TypeException, "argument to [] must be a number, symbol or string, not BoolLiteral") do
+          assert_macro "x, y", %({{x[y]}}), [
+            Annotation.new(Path.new("Foo"), [] of ASTNode),
+            true.bool,
+          ] of ASTNode, %(nil)
+        end
+      end
+    end
+
     describe "env" do
       it "has key" do
         ENV["FOO"] = "foo"
@@ -1766,10 +1819,12 @@ module Crystal
           >, filename = __FILE__).to_string.should eq(File.read("#{__DIR__}/../data/build"))
       end
 
-      it "reads file (doesn't exists)" do
-        run(%q<
-          {{read_file("#{__DIR__}/../data/build_foo")}} ? 10 : 20
-          >, filename = __FILE__).to_i.should eq(20)
+      it "reads file (doesn't exist)" do
+        expect_raises(Crystal::TypeException, "No such file or directory") do
+          run(%q<
+            {{read_file("#{__DIR__}/../data/build_foo")}}
+            >, filename = __FILE__)
+        end
       end
     end
 
@@ -1780,9 +1835,29 @@ module Crystal
           >, filename = __FILE__).to_string.should eq(File.read("spec/compiler/data/build"))
       end
 
-      it "reads file (doesn't exists)" do
+      it "reads file (doesn't exist)" do
+        expect_raises(Crystal::TypeException, "No such file or directory") do
+          run(%q<
+          {{read_file("spec/compiler/data/build_foo")}}
+          >, filename = __FILE__)
+        end
+      end
+    end
+  end
+
+  describe "read_file?" do
+    context "with absolute path" do
+      it "reads file (doesn't exist)" do
         run(%q<
-          {{read_file("spec/compiler/data/build_foo")}} ? 10 : 20
+          {{read_file?("#{__DIR__}/../data/build_foo")}} ? 10 : 20
+          >, filename = __FILE__).to_i.should eq(20)
+      end
+    end
+
+    context "with relative path" do
+      it "reads file (doesn't exist)" do
+        run(%q<
+          {{read_file?("spec/compiler/data/build_foo")}} ? 10 : 20
           >, filename = __FILE__).to_i.should eq(20)
       end
     end

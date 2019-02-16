@@ -82,6 +82,16 @@ describe "Semantic: automatic cast" do
       )) { float32 }
   end
 
+  it "casts literal integer in private top-level method (#7016)" do
+    assert_type(%(
+      private def foo(x : Int64)
+        x
+      end
+
+      foo(12345)
+      )) { int64 }
+  end
+
   it "matches correct overload" do
     assert_type(%(
       def foo(x : Int32)

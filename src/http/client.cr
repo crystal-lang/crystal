@@ -676,16 +676,14 @@ class HTTP::Client
     socket = TCPSocket.new hostname, @port, @dns_timeout, @connect_timeout
     socket.read_timeout = @read_timeout if @read_timeout
     socket.sync = false
-    @socket = socket
 
     {% if !flag?(:without_openssl) %}
       if tls = @tls
-        tls_socket = OpenSSL::SSL::Socket::Client.new(socket, context: tls, sync_close: true, hostname: @host)
-        @socket = socket = tls_socket
+        socket = OpenSSL::SSL::Socket::Client.new(socket, context: tls, sync_close: true, hostname: @host)
       end
     {% end %}
 
-    socket
+    @socket = socket
   end
 
   private def host_header

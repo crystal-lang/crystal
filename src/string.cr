@@ -529,7 +529,7 @@ class String
     if info.negative
       {% if max_negative %}
         return yield if info.value > {{max_negative}}
-        -info.value.to_{{method}}
+        (~info.value &+ 1).unsafe_as(Int64).to_{{method}}
       {% else %}
         return yield
       {% end %}
@@ -614,7 +614,7 @@ class String
       value *= base
 
       old = value
-      value += digit
+      value &+= digit
       if value < old
         invalid = true
         break
@@ -761,7 +761,7 @@ class String
   # "hello"[1..-1]  # "ello"
   # "hello"[1...-1] # "ell"
   # ```
-  def [](range : Range(Int, Int))
+  def [](range : Range)
     self[*Indexable.range_to_index_and_count(range, size)]
   end
 
@@ -1051,7 +1051,7 @@ class String
   end
 
   # Returns a new `String` with *suffix* removed from the end of the string.
-  # If *suffix* is `'\n'` then `"\r\n"` is also removed if the string ends with it,
+  # If *suffix* is `'\n'` then `"\r\n"` is also removed if the string ends with it.
   #
   # ```
   # "hello".chomp('o') # => "hell"
@@ -1068,7 +1068,7 @@ class String
   end
 
   # Returns a new `String` with *suffix* removed from the end of the string.
-  # If *suffix* is `"\n"` then `"\r\n"` is also removed if the string ends with it,
+  # If *suffix* is `"\n"` then `"\r\n"` is also removed if the string ends with it.
   #
   # ```
   # "hello".chomp("llo") # => "he"
@@ -1091,38 +1091,46 @@ class String
   # "hello".lchop # => "ello"
   # "".lchop      # => ""
   # ```
-  def lchop
-    return "" if empty?
+  def lchop : String
+    lchop? || ""
+  end
+
+  # Returns a new `String` with *prefix* removed from the beginning of the string.
+  #
+  # ```
+  # "hello".lchop('h')   # => "ello"
+  # "hello".lchop('g')   # => "hello"
+  # "hello".lchop("hel") # => "lo"
+  # "hello".lchop("eh")  # => "hello"
+  # ```
+  def lchop(prefix : Char | String) : String
+    lchop?(prefix) || self
+  end
+
+  # Returns a new `String` with the first char removed from it if possible, else returns `nil`.
+  #
+  # ```
+  # "hello".lchop? # => "ello"
+  # "".lchop?      # => nil
+  # ```
+  def lchop? : String?
+    return if empty?
 
     reader = Char::Reader.new(self)
     unsafe_byte_slice_string(reader.current_char_width, bytesize - reader.current_char_width)
   end
 
-  # Returns a new `String` with *prefix* removed from the beginning of the string.
+  # Returns a new `String` with *prefix* removed from the beginning of the string if possible, else returns `nil`.
   #
   # ```
-  # "hello".lchop('h') # => "ello"
-  # "hello".lchop('g') # => "hello"
+  # "hello".lchop?('h')   # => "ello"
+  # "hello".lchop?('g')   # => nil
+  # "hello".lchop?("hel") # => "lo"
+  # "hello".lchop?("eh")  # => nil
   # ```
-  def lchop(prefix : Char)
+  def lchop?(prefix : Char | String) : String?
     if starts_with?(prefix)
       unsafe_byte_slice_string(prefix.bytesize, bytesize - prefix.bytesize)
-    else
-      self
-    end
-  end
-
-  # Returns a new `String` with *prefix* removed from the beginning of the string.
-  #
-  # ```
-  # "hello".lchop("hel") # => "lo"
-  # "hello".lchop("eh")  # => "hello"
-  # ```
-  def lchop(prefix : String)
-    if starts_with?(prefix)
-      unsafe_byte_slice_string(prefix.bytesize, bytesize - prefix.bytesize)
-    else
-      self
     end
   end
 
@@ -1136,8 +1144,33 @@ class String
   # "string".rchop     # => "strin"
   # "x".rchop.rchop    # => ""
   # ```
-  def rchop
-    return "" if bytesize <= 1
+  def rchop : String
+    rchop? || ""
+  end
+
+  # Returns a new `String` with *suffix* removed from the end of the string.
+  #
+  # ```
+  # "string".rchop('g')   # => "strin"
+  # "string".rchop('x')   # => "string"
+  # "string".rchop("ing") # => "str"
+  # "string".rchop("inx") # => "string"
+  # ```
+  def rchop(suffix : Char | String) : String
+    rchop?(suffix) || self
+  end
+
+  # Returns a new `String` with the last character removed if possible, else returns `nil`.
+  #
+  # ```
+  # "string\r\n".rchop? # => "string\r"
+  # "string\n\r".rchop? # => "string\n"
+  # "string\n".rchop?   # => "string"
+  # "string".rchop?     # => "strin"
+  # "".rchop?           # => nil
+  # ```
+  def rchop? : String?
+    return if bytesize <= 1
 
     if to_unsafe[bytesize - 1] < 128 || ascii_only?
       return unsafe_byte_slice_string(0, bytesize - 1)
@@ -1146,35 +1179,17 @@ class String
     self[0, size - 1]
   end
 
-  # Returns a new `String` with *suffix* removed from the end of the string.
+  # Returns a new `String` with *suffix* removed from the end of the string if possible, else returns `nil`.
   #
   # ```
-  # "string".rchop('g') # => "strin"
-  # "string".rchop('x') # => "string"
+  # "string".rchop?('g')   # => "strin"
+  # "string".rchop?('x')   # => nil
+  # "string".rchop?("ing") # => "str"
+  # "string".rchop?("inx") # => nil
   # ```
-  def rchop(suffix : Char)
-    return "" if empty?
-
+  def rchop?(suffix : Char | String) : String?
     if ends_with?(suffix)
       unsafe_byte_slice_string(0, bytesize - suffix.bytesize)
-    else
-      self
-    end
-  end
-
-  # Returns a new `String` with *suffix* removed from the end of the string.
-  #
-  # ```
-  # "string".rchop("ing") # => "str"
-  # "string".rchop("inx") # => "string"
-  # ```
-  def rchop(suffix : String)
-    return "" if empty?
-
-    if ends_with?(suffix)
-      unsafe_byte_slice_string(0, bytesize - suffix.bytesize)
-    else
-      self
     end
   end
 
@@ -1914,7 +1929,7 @@ class String
   # ```
   # "hello".sub(1..2, 'a') # => "halo"
   # ```
-  def sub(range : Range(Int, Int), replacement : Char)
+  def sub(range : Range, replacement : Char)
     sub_range(range, replacement) do |buffer, from_index, to_index|
       replacement.each_byte do |byte|
         buffer.value = byte
@@ -1930,7 +1945,7 @@ class String
   # ```
   # "hello".sub(1..2, "eee") # => "heeelo"
   # ```
-  def sub(range : Range(Int, Int), replacement : String)
+  def sub(range : Range, replacement : String)
     sub_range(range, replacement) do |buffer|
       buffer.copy_from(replacement.to_unsafe, replacement.bytesize)
       buffer += replacement.bytesize
@@ -2563,7 +2578,7 @@ class String
       {% if i != 1 %}
         byte = head_pointer.value
       {% end %}
-      hash = hash * PRIME_RK + pointer.value - pow * byte
+      hash = hash &* PRIME_RK &+ pointer.value &- pow &* byte
       pointer += 1
       head_pointer += 1
     {% end %}
@@ -2611,9 +2626,9 @@ class String
     # calculate a rolling hash of search text (needle)
     search_hash = 0u32
     search.each_byte do |b|
-      search_hash = search_hash * PRIME_RK + b
+      search_hash = search_hash &* PRIME_RK &+ b
     end
-    pow = PRIME_RK ** search.bytesize
+    pow = PRIME_RK &** search.bytesize
 
     # Find start index with offset
     char_index = 0
@@ -2640,7 +2655,7 @@ class String
     hash_end_pointer = pointer + search.bytesize
     return if hash_end_pointer > end_pointer
     while pointer < hash_end_pointer
-      hash = hash * PRIME_RK + pointer.value
+      hash = hash &* PRIME_RK &+ pointer.value
       pointer += 1
     end
 
@@ -2727,9 +2742,9 @@ class String
     # calculate a rolling hash of search text (needle)
     search_hash = 0u32
     search.to_slice.reverse_each do |b|
-      search_hash = search_hash * PRIME_RK + b
+      search_hash = search_hash &* PRIME_RK &+ b
     end
-    pow = PRIME_RK ** search.bytesize
+    pow = PRIME_RK &** search.bytesize
 
     hash = 0u32
     char_index = size
@@ -2747,7 +2762,7 @@ class String
       byte = pointer.value
       char_index -= 1 if (byte & 0xC0) != 0x80
 
-      hash = hash * PRIME_RK + byte
+      hash = hash &* PRIME_RK &+ byte
     end
 
     while true
@@ -2765,7 +2780,7 @@ class String
       char_index -= 1 if (byte & 0xC0) != 0x80
 
       # update a rolling hash of this text (haystack)
-      hash = hash * PRIME_RK + byte - pow * tail_pointer.value
+      hash = hash &* PRIME_RK &+ byte &- pow &* tail_pointer.value
     end
   end
 
@@ -2901,9 +2916,9 @@ class String
     # calculate a rolling hash of search text (needle)
     search_hash = 0u32
     search.each_byte do |b|
-      search_hash = search_hash * PRIME_RK + b
+      search_hash = search_hash &* PRIME_RK &+ b
     end
-    pow = PRIME_RK ** search.bytesize
+    pow = PRIME_RK &** search.bytesize
 
     # calculate a rolling hash of this text (haystack)
     pointer = head_pointer = to_unsafe + offset
@@ -2912,7 +2927,7 @@ class String
     hash = 0u32
     return if hash_end_pointer > end_pointer
     while pointer < hash_end_pointer
-      hash = hash * PRIME_RK + pointer.value
+      hash = hash &* PRIME_RK &+ pointer.value
       pointer += 1
     end
 
@@ -2925,7 +2940,7 @@ class String
       return if pointer >= end_pointer
 
       # update a rolling hash of this text (haystack)
-      hash = hash * PRIME_RK + pointer.value - pow * head_pointer.value
+      hash = hash &* PRIME_RK &+ pointer.value &- pow &* head_pointer.value
       pointer += 1
       head_pointer += 1
       offset += 1
