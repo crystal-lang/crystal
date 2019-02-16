@@ -2,7 +2,7 @@ require "io"
 
 # Similar to `IO::Memory`, but optimized for building a single string.
 #
-# You should never have to deal with this class. Instead, use `String.build`.
+# See also: `String.build`.
 class String::Builder < IO
   getter bytesize : Int32
   getter capacity : Int32
@@ -32,6 +32,23 @@ class String::Builder < IO
     io = new(string.bytesize)
     io << string
     io
+  end
+
+  # Resets the position to zero.
+  #
+  # ```
+  # io = String::Builder.new
+  #
+  # 1.upto(5) { |i| io << i }
+  # io.to_s # => "12345"
+  #
+  # io.clear
+  #
+  # io.to_s # => ""
+  # ```
+  def clear
+    @bytesize = 0
+    @finished = false
   end
 
   def read(slice : Bytes)
@@ -88,7 +105,7 @@ class String::Builder < IO
   end
 
   # Moves the write pointer, and the resulting string bytesize,
-  # by the given *amount*.
+  # back by the given *amount*.
   def back(amount : Int)
     unless 0 <= amount <= @bytesize
       raise ArgumentError.new "Invalid back amount"
