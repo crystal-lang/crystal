@@ -9,6 +9,17 @@ describe String::Builder do
     str.should eq("123456")
   end
 
+  it "clears" do
+    builder = String::Builder.new
+    io << 123
+    io.to_s.should eq("123")
+
+    io.clear
+
+    io << "hello"
+    io.to_s.should eq("hello")
+  end
+
   it "raises if invokes to_s twice" do
     builder = String::Builder.new
     builder << 123
