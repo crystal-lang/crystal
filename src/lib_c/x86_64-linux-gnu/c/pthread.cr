@@ -26,5 +26,14 @@ lib LibC
   fun pthread_mutex_lock(mutex : PthreadMutexT*) : Int
   fun pthread_mutex_trylock(mutex : PthreadMutexT*) : Int
   fun pthread_mutex_unlock(mutex : PthreadMutexT*) : Int
+
+  fun pthread_rwlock_destroy(rwlock : PthreadRwlockT*) : Int
+  fun pthread_rwlock_init(rwlock : PthreadRwlockT*, rwlockattr : PthreadRwlockattrT*) : Int
+  fun pthread_rwlock_rdlock(rwlock : PthreadRwlockT*) : Int
+  fun pthread_rwlock_tryrdlock(rwlock : PthreadRwlockT*) : Int
+  fun pthread_rwlock_trywrlock(rwlock : PthreadRwlockT*) : Int
+  fun pthread_rwlock_unlock(rwlock : PthreadRwlockT*) : Int
+  fun pthread_rwlock_wrlock(rwlock : PthreadRwlockT*) : Int
+
   fun pthread_self : PthreadT
 end

@@ -53,6 +53,31 @@ lib LibC
     __align : Int
   end
 
+  struct PthreadRwlockTData
+    __lock : Int
+    __nr_readers : UInt
+    __readers_wakeup : UInt
+    __writer_wakeup : UInt
+    __nr_readers_queued : UInt
+    __nr_writers_queued : UInt
+    __writer : Int
+    __shared : Int
+    __pad1 : ULong
+    __pad2 : ULong
+    __flags : Int
+  end
+
+  struct PthreadRwlockattrT
+    __size : StaticArray(Char, 8)
+    __align : Long
+  end
+
+  union PthreadRwlockT
+    __data : PthreadRwlockTData
+    __size : StaticArray(Char, 56)
+    __align : Long
+  end
+
   alias PthreadT = ULong
   alias SSizeT = Long
   alias SusecondsT = Long
