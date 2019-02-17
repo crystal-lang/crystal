@@ -31,8 +31,7 @@ describe OpenSSL::SSL::Socket do
       end
 
       client = server.accept
-      client.tls_version.should_not be_nil
-      client.tls_version.not_nil!.should contain "TLS"
+      client.tls_version.should contain "TLS"
       client.close
     end
   end

@@ -186,9 +186,7 @@ abstract class OpenSSL::SSL::Socket < IO
   end
 
   # Returns the TLS version currently in use
-  def tls_version : String?
-    if version = LibSSL.ssl_get_version(@ssl)
-      String.new(version)
-    end
+  def tls_version : String
+    String.new(LibSSL.ssl_get_version(@ssl))
   end
 end
