@@ -179,4 +179,16 @@ abstract class OpenSSL::SSL::Socket < IO
       String.new(host_name)
     end
   end
+
+  # Returns the cipher currently in use
+  def cipher : String
+    String.new(LibSSL.ssl_cipher_get_name(LibSSL.ssl_get_current_cipher(@ssl)))
+  end
+
+  # Returns the TLS version currently in use
+  def tls_version : String?
+    if version = LibSSL.ssl_get_version(@ssl)
+      String.new(version)
+    end
+  end
 end
