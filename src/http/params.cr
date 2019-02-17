@@ -132,7 +132,7 @@ module HTTP
       form_builder.to_s
     end
 
-    protected getter raw_params
+    getter raw_params
 
     # Returns an empty `HTTP::Params`.
     def initialize
