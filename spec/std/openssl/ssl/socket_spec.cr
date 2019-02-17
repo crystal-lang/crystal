@@ -4,7 +4,7 @@ require "../../spec_helper"
 require "../../../support/ssl"
 
 describe OpenSSL::SSL::Socket do
-  it "knows which cipher that is in use" do
+  it "returns the cipher that is currently in use" do
     tcp_server = TCPServer.new(0)
     server_context, client_context = ssl_context_pair
 
