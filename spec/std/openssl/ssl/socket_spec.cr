@@ -20,7 +20,7 @@ describe OpenSSL::SSL::Socket do
     end
   end
 
-  it "knows which TLS version that is in use" do
+  it "returns the TLS version" do
     tcp_server = TCPServer.new(0)
     server_context, client_context = ssl_context_pair
 
