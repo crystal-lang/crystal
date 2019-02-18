@@ -4,6 +4,8 @@ lib LibCrystalMain
 end
 
 module Crystal
+  @@main_fiber : Fiber?
+
   # Defines the main routine run by normal Crystal programs:
   #
   # - Initializes the GC
@@ -43,20 +45,39 @@ module Crystal
     Crystal::Hasher.init      # random hash seed
     Crystal::Signal.init      # signal handlers
 
-    status =
+    @@main_fiber = Fiber.current
+    status = 0
+
+    # start the main fiber:
+    spawn(name: "main_user_code") do
       begin
-        yield
-        0
+        block.call
       rescue ex
-        1
+        AtExitHandlers.exception = ex
+        status = 1
       end
 
-    AtExitHandlers.exception = ex if ex
+      status = AtExitHandlers.run(status)
 
-    status = AtExitHandlers.run status
-    STDOUT.flush
-    STDERR.flush
+      # flush buffered standard file descriptors, because they depend on event
+      # loop and schedulers to run, then remove the nonblocking state, so any
+      # further writes will still be printed after scheduler threads have been
+      # stopped:
+      STDOUT.sync = true
+      STDOUT.blocking = true
 
+      STDERR.sync = true
+      STDERR.blocking = true
+    ensure
+      # main program is terminated: break out of the main loop, so `#main` can
+      # be resumed and the program will exit:
+      break_main_loop
+    end
+
+    # blocks until the main user code is finished:
+    start_main_loop
+
+    # done: exit with status
     status
   end
 
@@ -104,6 +125,16 @@ module Crystal
   # more details.
   def self.main_user_code(argc : Int32, argv : UInt8**)
     LibCrystalMain.__crystal_main(argc, argv)
+  end
+
+  # Starts the main Crystal loop. Blocks until `#break_main_loop` is eventually
+  # called from the main user code fiber.
+  private def self.start_main_loop : Nil
+    Crystal::Scheduler.reschedule
+  end
+
+  private def self.break_main_loop : Nil
+    @@main_fiber.as(Fiber).enqueue
   end
 end
 
