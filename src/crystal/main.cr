@@ -4,8 +4,6 @@ lib LibCrystalMain
 end
 
 module Crystal
-  @@main_fiber : Fiber?
-
   # Defines the main routine run by normal Crystal programs:
   #
   # - Initializes the GC
@@ -45,7 +43,9 @@ module Crystal
     Crystal::Hasher.init      # random hash seed
     Crystal::Signal.init      # signal handlers
 
-    @@main_fiber = Fiber.current
+    {% unless flag?(:mt) %}
+      @@main_fiber = Fiber.current
+    {% end %}
     status = 0
 
     # start the main fiber:
@@ -127,15 +127,94 @@ module Crystal
     LibCrystalMain.__crystal_main(argc, argv)
   end
 
-  # Starts the main Crystal loop. Blocks until `#break_main_loop` is eventually
-  # called from the main user code fiber.
-  private def self.start_main_loop : Nil
-    Crystal::Scheduler.reschedule
-  end
+  {% if flag?(:mt) %}
+    NPROCS = ENV.fetch("NPROCS", "1").to_i
 
-  private def self.break_main_loop : Nil
-    @@main_fiber.as(Fiber).enqueue
-  end
+    @@running = false
+
+    # :nodoc:
+    def self.running?
+      @@running
+    end
+
+    private def self.mutex
+      @@mutex ||= Thread::Mutex.new
+    end
+
+    private def self.condition_variable
+      @@condition_variable ||= Thread::ConditionVariable.new
+    end
+
+    # Start the main Crystal loop. This will start the scheduler threads then
+    # until `break_main_loop` is eventually called from the main user code
+    # fiber.
+    #
+    # We always start at least one thread, the main thread being dedicated to
+    # occasional cleanups, receiving signals, ...
+    private def self.start_main_loop : Nil
+      mutex.synchronize do
+        @@running = true
+
+        # TODO: block standard signal delivery with pthread_sigmask, so started
+        #       threads won't receive any standard signal (they inherit the
+        #       current thread's sigmask).
+        #
+        # NOTE: always allow the GC stop-the-world user-signal!
+
+        # starts N threads, each running their own scheduler:
+        NPROCS.times do
+          Thread.new do
+            Thread.current.scheduler.start
+          rescue ex
+            fatal ex, "Unexpected Crystal::Scheduler exception"
+          end
+        end
+
+        # TODO: unblock standard signal delivery with pthread_sigmask, so the main
+        #       thread will be the only one to be interrupted by signals.
+
+        # block until `main` has terminated; unblocks temporarily once in a while
+        # to execute cleanup operations:
+        while running?
+          condition_variable.wait(mutex, 5.seconds) do
+            Fiber.stack_pool.collect
+          end
+        end
+
+        # TODO: unpark threads (if any) then wait for all scheduler threads to be
+        #       terminated
+      end
+    end
+
+    private def self.break_main_loop : Nil
+      mutex.synchronize do
+        @@running = false
+        condition_variable.broadcast
+      end
+    end
+
+    private def self.fatal(exception, message)
+      STDERR.print message
+      STDERR.print ": "
+      exception.inspect_with_backtrace(STDERR)
+      STDERR.flush
+      exit(1)
+    end
+  {% else %}
+    NPROCS = 1
+
+    @@main_fiber : Fiber?
+
+    # Starts the main Crystal loop. Blocks until `#break_main_loop` is eventually
+    # called from the main user code fiber.
+    private def self.start_main_loop : Nil
+      Crystal::Scheduler.reschedule
+    end
+
+    private def self.break_main_loop : Nil
+      @@main_fiber.as(Fiber).enqueue
+    end
+  {% end %}
 end
 
 # Main function that acts as C's main function.
