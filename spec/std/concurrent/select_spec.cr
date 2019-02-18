@@ -5,7 +5,15 @@ private def yield_to(fiber)
   Crystal::Scheduler.resume(fiber)
 end
 
-describe "select" do
+private macro describe_unless_mt(name, &block)
+  {% if flag?(:mt) %}
+    pending({{name}}) { {{yield}} }
+  {% else %}
+    describe({{name}}) { {{yield}} }
+  {% end %}
+end
+
+describe_unless_mt "select" do
   it "select many receviers" do
     ch1 = Channel(Int32).new
     ch2 = Channel(Int32).new

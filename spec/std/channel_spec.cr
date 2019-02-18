@@ -5,6 +5,14 @@ private def yield_to(fiber)
   Crystal::Scheduler.resume(fiber)
 end
 
+private macro it_unless_mt(name, &block)
+  {% if flag?(:mt) %}
+    pending({{name}}) { {{yield}} }
+  {% else %}
+    it({{name}}) { {{yield}} }
+  {% end %}
+end
+
 describe Channel do
   it "creates unbuffered with no arguments" do
     Channel(Int32).new.should be_a(Channel::Unbuffered(Int32))
@@ -19,13 +27,13 @@ describe Channel do
     channel.send(1).should be(channel)
   end
 
-  it "does receive_first" do
+  it_unless_mt "does receive_first" do
     channel = Channel(Int32).new(1)
     channel.send(1)
     Channel.receive_first(Channel(Int32).new, channel).should eq 1
   end
 
-  it "does send_first" do
+  it_unless_mt "does send_first" do
     ch1 = Channel(Int32).new(1)
     ch2 = Channel(Int32).new(1)
     ch1.send(1)
@@ -52,15 +60,20 @@ describe Channel::Unbuffered do
       ch.send 123
       state = 2
     ensure
+      # resumes main sleep
       yield_to(main)
     end
 
+    # let the sender channel send 123 then block:
     yield_to(sender)
     state.should eq(1)
+
+    # receive, which must enqueue sender:
     ch.receive.should eq(123)
     state.should eq(1)
 
-    sleep
+    # sleep until sender fiber resumes (or timeout):
+    sleep 2
     state.should eq(2)
   end
 
@@ -73,7 +86,7 @@ describe Channel::Unbuffered do
     (1..6).map { ch.receive }.sort.should eq([1, 2, 3, 4, 5, 6])
   end
 
-  it "gets not full when there is a sender" do
+  it_unless_mt "gets not full when there is a sender" do
     ch = Channel::Unbuffered(Int32).new
     ch.full?.should be_true
     ch.empty?.should be_true
@@ -84,14 +97,14 @@ describe Channel::Unbuffered do
     ch.receive.should eq(123)
   end
 
-  it "works with select" do
+  it_unless_mt "works with select" do
     ch1 = Channel::Unbuffered(Int32).new
     ch2 = Channel::Unbuffered(Int32).new
     spawn { ch1.send 123 }
     Channel.select(ch1.receive_select_action, ch2.receive_select_action).should eq({0, 123})
   end
 
-  it "works with select else" do
+  it_unless_mt "works with select else" do
     ch1 = Channel::Unbuffered(Int32).new
     Channel.select({ch1.receive_select_action}, true).should eq({1, nil})
   end
@@ -239,7 +252,7 @@ describe Channel::Buffered do
     ch.empty?.should be_false
   end
 
-  it "works with select" do
+  it_unless_mt "works with select" do
     ch1 = Channel::Buffered(Int32).new
     ch2 = Channel::Buffered(Int32).new
     spawn { ch1.send 123 }
