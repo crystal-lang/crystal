@@ -46,6 +46,7 @@ struct Time::Span
   MIN  = new seconds: Int64::MIN, nanoseconds: -999_999_999
   ZERO = new nanoseconds: 0
 
+  @months : Int64 = 0
   @seconds : Int64
 
   # Nanoseconds are always in the range (-999_999_999..999_999_999)
@@ -59,12 +60,33 @@ struct Time::Span
 
   def self.new(days : Int, hours : Int, minutes : Int, seconds : Int, nanoseconds : Int = 0)
     new(
+      months: 0,
       seconds: compute_seconds!(days, hours, minutes, seconds),
       nanoseconds: nanoseconds.to_i64,
     )
   end
 
-  def initialize(*, seconds : Int, nanoseconds : Int)
+  def self.new(
+    years : Int,
+    months : Int,
+    days : Int,
+    hours : Int,
+    minutes : Int,
+    seconds : Int,
+    nanoseconds : Int = 0,
+  )
+    new(
+      months: years * 12 + months,
+      seconds: compute_seconds!(days, hours, minutes, seconds),
+      nanoseconds: nanoseconds.to_i64,
+    )
+  end
+
+  def self.new(*, seconds : Int, nanoseconds : Int)
+    new(months: 0, seconds: seconds, nanoseconds: nanoseconds)
+  end
+
+  def initialize(*, months : Int, seconds : Int, nanoseconds : Int)
     # Normalize nanoseconds in the range 0...1_000_000_000
     seconds += nanoseconds.tdiv(NANOSECONDS_PER_SECOND)
     nanoseconds = nanoseconds.remainder(NANOSECONDS_PER_SECOND)
@@ -80,6 +102,7 @@ struct Time::Span
       nanoseconds -= NANOSECONDS_PER_SECOND
     end
 
+    @months = months.to_i64
     @seconds = seconds.to_i64
     @nanoseconds = nanoseconds.to_i32
   end
@@ -150,6 +173,14 @@ struct Time::Span
     s
   end
 
+  def years
+    @months / 12
+  end
+
+  def months
+    @months % 12
+  end
+
   # Returns the number of full days in this time span.
   #
   # ```
@@ -193,6 +224,10 @@ struct Time::Span
   # in this time span.
   def nanoseconds : Int32
     @nanoseconds
+  end
+
+  def total_months
+    @months
   end
 
   # Converts to a (possibly fractional) number of weeks.
@@ -272,6 +307,7 @@ struct Time::Span
   def -(other : self) : Time::Span
     # TODO check overflow
     Span.new(
+      months: months - other.months,
       seconds: to_i - other.to_i,
       nanoseconds: nanoseconds - other.nanoseconds,
     )
@@ -288,6 +324,7 @@ struct Time::Span
   def +(other : self) : Time::Span
     # TODO check overflow
     Span.new(
+      months: total_months + other.total_months,
       seconds: to_i + other.to_i,
       nanoseconds: nanoseconds + other.nanoseconds,
     )
@@ -346,6 +383,16 @@ struct Time::Span
       io << '-'
     end
 
+    if (years = self.years) != 0
+      io << years
+      io << 'y'
+    end
+
+    if (months = self.months) != 0
+      io << months
+      io << "mo"
+    end
+
     # We need to take absolute values of all components.
     # Can't handle negative timespans by negating the Time::Span
     # as a whole. This would lead to an overflow for the
@@ -396,6 +443,26 @@ struct Time::Span
 end
 
 struct Int
+  # Returns a `Time::Span` of `self` years.
+  def years : Time::Span
+    (self * 12).months
+  end
+
+  # ditto
+  def year : Time::Span
+    years
+  end
+
+  # Returns a `Time::Span` of `self` months.
+  def months : Time::Span
+    Time::Span.new(months: self, seconds: 0, nanoseconds: 0)
+  end
+
+  # ditto
+  def month : Time::Span
+    months
+  end
+
   # Returns a `Time::Span` of `self` weeks.
   def weeks : Time::Span
     Time::Span.new 7 * self, 0, 0, 0
@@ -534,53 +601,5 @@ struct Float
       seconds: seconds,
       nanoseconds: nanoseconds,
     )
-  end
-end
-
-# Represents a number of months passed. Used for shifting `Time`s by a
-# specified number of months.
-#
-# ```
-# Time.local(2016, 2, 1) + 13.months # => 2017-03-01 00:00:00
-# Time.local(2016, 2, 29) + 2.years  # => 2018-02-28 00:00:00
-# ```
-struct Time::MonthSpan
-  # The number of months.
-  getter value : Int64
-
-  def initialize(value : Int)
-    @value = value.to_i64
-  end
-
-  # Returns a `Time` that happens N months after now.
-  def from_now : Time
-    Time.local + self
-  end
-
-  # Returns a `Time` that happens N months before now.
-  def ago : Time
-    Time.local - self
-  end
-end
-
-struct Int
-  # Returns a `Time::MonthSpan` of `self` months.
-  def months : Time::MonthSpan
-    Time::MonthSpan.new(self)
-  end
-
-  # ditto
-  def month : Time::MonthSpan
-    months
-  end
-
-  # Returns a `Time::MonthSpan` of `self` years.
-  def years : Time::MonthSpan
-    Time::MonthSpan.new(self * 12)
-  end
-
-  # ditto
-  def year : Time::MonthSpan
-    years
   end
 end

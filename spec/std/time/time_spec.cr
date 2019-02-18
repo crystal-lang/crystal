@@ -364,24 +364,29 @@ describe Time do
       t = Time.utc 2014, 10, 31, 21, 18, 13
       t2 = t.shift months: 1
       t2.should eq Time.utc(2014, 11, 30, 21, 18, 13)
+      (t + 1.month).should eq t2
 
       t = Time.utc 2014, 10, 31, 21, 18, 13
       t2 = t.shift months: -1
       t2.should eq Time.utc(2014, 9, 30, 21, 18, 13)
+      (t - 1.month).should eq t2
 
       t = Time.utc 2014, 10, 31, 21, 18, 13
       t2 = t.shift months: 6
       t2.should eq Time.utc(2015, 4, 30, 21, 18, 13)
+      (t + 6.months).should eq t2
     end
 
     it "adds years" do
       t = Time.utc 2014, 10, 30, 21, 18, 13
       t2 = t.shift years: 1
       t2.should eq Time.utc(2015, 10, 30, 21, 18, 13)
+      (t + 1.year).should eq t2
 
       t = Time.utc 2014, 10, 30, 21, 18, 13
       t2 = t.shift years: -2
       t2.should eq Time.utc(2012, 10, 30, 21, 18, 13)
+      (t - 2.years).should eq t2
     end
 
     it "adds hours" do

@@ -118,17 +118,17 @@ describe Time::Span do
   end
 
   it "test add" do
-    t1 = Time::Span.new 2, 3, 4, 5, 6_000_000
-    t2 = Time::Span.new 1, 2, 3, 4, 5_000_000
+    t1 = 1.year  + 2.months + 3.days + 4.hours + 5.minutes + 6.seconds + 7_000_000.nanoseconds
+    t2 = 2.years + 3.months + 4.days + 5.hours + 6.minutes + 7.seconds + 8_000_000.nanoseconds
     t3 = t1 + t2
 
-    t3.days.should eq(3)
-    t3.hours.should eq(5)
-    t3.minutes.should eq(7)
-    t3.seconds.should eq(9)
-    t3.milliseconds.should eq(11)
-    t3.nanoseconds.should eq(11_000_000)
-    t3.to_s.should eq("3.05:07:09.011000000")
+    t3.years.should eq 3
+    t3.months.should eq 5
+    t3.days.should eq 7
+    t3.hours.should eq 9
+    t3.minutes.should eq 11
+    t3.seconds.should eq 13
+    t3.nanoseconds.should eq 15_000_000
 
     # TODO check overflow
   end
