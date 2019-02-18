@@ -11,10 +11,11 @@ fun _fiber_get_stack_top : Void*
 end
 
 class Fiber
-  @@fibers = Thread::LinkedList(Fiber).new
+  @@fibers = uninitialized Thread::LinkedList(Fiber)
+  @@stack_pool = uninitialized StackPool
 
   # :nodoc:
-  class_getter stack_pool = StackPool.new
+  class_getter stack_pool
 
   @context : Context
   @stack : Void*
@@ -28,6 +29,13 @@ class Fiber
 
   # :nodoc:
   property previous : Fiber?
+
+  # :nodoc:
+  # :nodoc:
+  def self.init
+    @@fibers = Thread::LinkedList(Fiber).new
+    @@stack_pool = StackPool.new
+  end
 
   # :nodoc:
   def self.inactive(fiber : Fiber)

@@ -101,53 +101,60 @@ enum Signal : Int32
     Crystal::Signal.ignore(self)
   end
 
-  {% if flag?(:darwin) || flag?(:openbsd) %}
-    @@sigset = LibC::SigsetT.new(0)
-  {% else %}
-    @@sigset = LibC::SigsetT.new
-  {% end %}
-
   # :nodoc:
   def set_add : Nil
-    LibC.sigaddset(pointerof(@@sigset), self)
+    LibC.sigaddset(Crystal::Signal.sigset_pointer, self)
   end
 
   # :nodoc:
   def set_del : Nil
-    LibC.sigdelset(pointerof(@@sigset), self)
+    LibC.sigdelset(Crystal::Signal.sigset_pointer, self)
   end
 
   # :nodoc:
   def set? : Bool
-    LibC.sigismember(pointerof(@@sigset), self) == 1
-  end
-
-  @@setup_default_handlers = Atomic::Flag.new
-
-  # :nodoc:
-  def self.setup_default_handlers
-    return unless @@setup_default_handlers.test_and_set
-    LibC.sigemptyset(pointerof(@@sigset))
-    Crystal::Signal.start_loop
-    Signal::PIPE.ignore
-    Signal::CHLD.reset
+    LibC.sigismember(Crystal::Signal.sigset_pointer, self) == 1
   end
 end
 
 # :nodoc:
+#
+# The number of libc functions that can be called safely from a signal(2)
+# handler is very limited. An usual safe solution is to use a pipe(2) and
+# just write the signal to the file descriptor and nothing more. A loop in
+# the main program is responsible for reading the signals back from the
+# pipe(2) and handle the signal there.
 module Crystal::Signal
-  # The number of libc functions that can be called safely from a signal(2)
-  # handler is very limited. An usual safe solution is to use a pipe(2) and
-  # just write the signal to the file descriptor and nothing more. A loop in
-  # the main program is responsible for reading the signals back from the
-  # pipe(2) and handle the signal there.
-
   alias Handler = ::Signal ->
 
-  @@pipe = IO.pipe(read_blocking: false, write_blocking: true)
-  @@handlers = {} of ::Signal => Handler
+  @@sigset = uninitialized LibC::SigsetT
+  @@pipe = uninitialized {IO, IO}
+  @@mutex = uninitialized Thread::Mutex
+  @@handlers = uninitialized Hash(::Signal, Handler)
   @@child_handler : Handler?
-  @@mutex = Mutex.new
+
+  def self.init
+    {% if flag?(:darwin) || flag?(:openbsd) %}
+      @@sigset = LibC::SigsetT.new(0)
+    {% else %}
+      @@sigset = LibC::SigsetT.new
+    {% end %}
+    LibC.sigemptyset(pointerof(@@sigset))
+
+    @@pipe = IO.pipe(read_blocking: false, write_blocking: true)
+    @@handlers = {} of ::Signal => Handler
+    @@mutex = Thread::Mutex.new
+
+    Crystal::SignalChildHandler.init
+    Crystal::Signal.start_loop
+
+    ::Signal::PIPE.ignore
+    ::Signal::CHLD.reset
+  end
+
+  def self.sigset_pointer
+    pointerof(@@sigset)
+  end
 
   def self.trap(signal, handler) : Nil
     @@mutex.synchronize do
@@ -268,9 +275,15 @@ module Crystal::SignalChildHandler
   # Process#wait through a channel, that may be created before or after the
   # child process exited.
 
-  @@pending = {} of LibC::PidT => Int32
-  @@waiting = {} of LibC::PidT => Channel::Buffered(Int32)
-  @@mutex = Mutex.new
+  @@pending = uninitialized Hash(LibC::PidT, Int32)
+  @@waiting = uninitialized Hash(LibC::PidT, Channel::Buffered(Int32))
+  @@mutex = uninitialized Thread::Mutex
+
+  def self.init
+    @@pending = {} of LibC::PidT => Int32
+    @@waiting = {} of LibC::PidT => Channel::Buffered(Int32)
+    @@mutex = Thread::Mutex.new
+  end
 
   def self.wait(pid : LibC::PidT) : Channel::Buffered(Int32)
     channel = Channel::Buffered(Int32).new(1)

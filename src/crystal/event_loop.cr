@@ -1,8 +1,12 @@
 require "./event"
 
 module Crystal::EventLoop
-  @@eb = Crystal::Event::Base.new
+  @@eb = uninitialized Crystal::Event::Base
   @@dns_base : Crystal::Event::DnsBase?
+
+  def self.init
+    @@eb = Crystal::Event::Base.new
+  end
 
   def self.after_fork
     @@eb.reinit

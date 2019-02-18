@@ -32,7 +32,16 @@ module Crystal
   # same can be accomplished with `at_exit`. But in some cases
   # redefinition of C's main is needed.
   def self.main(&block)
-    GC.init
+    # initialize Crystal core foundations, responsible to initialize enough of
+    # the main user code, which includes corelib and stdlib initializations, and
+    # that will be executed in a fiber:
+    GC.init                   # memory allocator
+    Fiber.init                # stack pool, fiber list
+    Thread.init               # thread list, main thread (main fiber)
+    Crystal::EventLoop.init   # I/O, sleep timer, ...
+    Crystal::Scheduler.init   # fiber schedulers (single or multi-thread)
+    Crystal::Hasher.init      # random hash seed
+    Crystal::Signal.init      # signal handlers
 
     status =
       begin

@@ -10,6 +10,9 @@ require "thread"
 # Only the class methods are public and safe to use. Instance methods are
 # protected and must never be called directly.
 class Crystal::Scheduler
+  def self.init
+  end
+
   def self.current_fiber : Fiber
     Thread.current.scheduler.@current
   end
