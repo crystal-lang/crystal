@@ -125,6 +125,10 @@ class Fiber
     @resume_event ||= Crystal::EventLoop.create_resume_event(self)
   end
 
+  def enqueue : Nil
+    Crystal::Scheduler.enqueue(self)
+  end
+
   def self.yield
     Crystal::Scheduler.yield
   end

@@ -4,25 +4,52 @@ module Crystal::EventLoop
   @@eb = uninitialized Crystal::Event::Base
   @@dns_base : Crystal::Event::DnsBase?
 
+  {% if flag?(:mt) %}
+    @@mutex = uninitialized Thread::Mutex
+  {% end %}
+
   def self.init
     @@eb = Crystal::Event::Base.new
+    {% if flag?(:mt) %}
+      @@mutex = Thread::Mutex.new
+    {% end %}
   end
 
   def self.after_fork
     @@eb.reinit
   end
 
-  def self.resume
-    loop_fiber.resume
-  end
+  {% if flag?(:mt) %}
+    def self.run
+      @@mutex.synchronize { @@eb.loop(:none) }
+    end
 
-  private def self.loop_fiber
-    @@loop_fiber ||= Fiber.new { @@eb.loop }
-  end
+    def self.run_nonblock
+      if @@mutex.try_lock
+        begin
+          @@eb.loop(:non_block)
+        ensure
+          @@mutex.unlock
+        end
+      end
+    end
+  {% else %}
+    def self.resume
+      loop_fiber.resume
+    end
+
+    private def self.loop_fiber
+      @@loop_fiber ||= Fiber.new { @@eb.loop }
+    end
+  {% end %}
 
   def self.create_resume_event(fiber)
     @@eb.new_event(-1, LibEvent2::EventFlags::None, fiber) do |s, flags, data|
-      data.as(Fiber).resume
+      {% if flag?(:mt) %}
+        data.as(Fiber).enqueue
+      {% else %}
+        data.as(Fiber).resume
+      {% end %}
     end
   end
 

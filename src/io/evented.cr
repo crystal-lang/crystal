@@ -99,7 +99,11 @@ module IO::Evented
     @read_timed_out = timed_out
 
     if reader = @readers.try &.shift?
-      reader.resume
+      {% if flag?(:mt) %}
+        reader.enqueue
+      {% else %}
+        reader.resume
+      {% end %}
     end
   end
 
@@ -108,7 +112,11 @@ module IO::Evented
     @write_timed_out = timed_out
 
     if writer = @writers.try &.shift?
-      writer.resume
+      {% if flag?(:mt) %}
+        writer.enqueue
+      {% else %}
+        writer.resume
+      {% end %}
     end
   end
 
