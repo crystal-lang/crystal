@@ -87,7 +87,7 @@ abstract class OpenSSL::SSL::Socket < IO
     # Since OpenSSL::SSL::Socket is buffered it makes no
     # sense to wrap a IO::Buffered with buffering activated.
     if io.is_a?(IO::Buffered)
-      io.sync = false
+      io.sync = true
       io.read_buffering = false
     end
 
