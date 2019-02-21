@@ -243,7 +243,7 @@ describe "Codegen: is_a?" do
     run("
       a = 1
       if a.is_a?(Int32 | Char)
-        a + 1
+        a &+ 1
       else
         0
       end
@@ -253,7 +253,7 @@ describe "Codegen: is_a?" do
   it "restricts union with union" do
     run("
       struct Char
-        def +(other : Int32)
+        def &+(other : Int32)
           other
         end
       end
@@ -266,7 +266,7 @@ describe "Codegen: is_a?" do
 
       a = 1 || 'a' || false
       if a.is_a?(Int32 | Char)
-        a + 2
+        a &+ 2
       else
         a.foo
       end
@@ -433,7 +433,7 @@ describe "Codegen: is_a?" do
       foo = Foo.new(1)
       x = foo.x
       if x.is_a?(Int32)
-        z = x + 1
+        z = x &+ 1
       else
         z = x.foo_bar
       end
@@ -513,7 +513,7 @@ describe "Codegen: is_a?" do
     run(%(
       a = 123
       if (b = a).is_a?(Int32)
-        b + 1
+        b &+ 1
       else
         a
       end
@@ -524,7 +524,7 @@ describe "Codegen: is_a?" do
     run(%(
       a = 123
       if (b = a).is_a?(Int32)
-        a + 2
+        a &+ 2
       else
         b
       end
@@ -537,7 +537,7 @@ describe "Codegen: is_a?" do
       if (b = a).is_a?(Char)
         b
       else
-        b + 1
+        b &+ 1
       end
       )).to_i.should eq(124)
   end
@@ -550,7 +550,7 @@ describe "Codegen: is_a?" do
       else
         a
       end
-      b ? b + 1 : 0
+      b ? b &+ 1 : 0
       )).to_i.should eq(124)
   end
 

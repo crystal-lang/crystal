@@ -42,7 +42,7 @@ class OpenSSL::HMAC
   end
 
   # Returns the HMAC digest of *data* using the secret *key*,
-  # formatted as a hexadecimal string. This is neccesary to safely transfer
+  # formatted as a hexadecimal string. This is necessary to safely transfer
   # the digest where binary messages are not allowed.
   #
   # See also `#digest`.

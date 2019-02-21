@@ -69,7 +69,7 @@ module Crystal::System::Random
   end
 
   # Low-level wrapper for the `getrandom(2)` syscall, returns the number of
-  # bytes read or `-1` if an error occured (or the syscall isn't available)
+  # bytes read or `-1` if an error occurred (or the syscall isn't available)
   # and sets `Errno.value`.
   #
   # We use the kernel syscall instead of the `getrandom` C function so any

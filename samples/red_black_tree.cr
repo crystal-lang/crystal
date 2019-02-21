@@ -8,9 +8,8 @@ class RedBlackTree
     property! :right
     property! parent : self
 
-    RED    = :red
-    BLACK  = :black
-    COLORS = [RED, BLACK]
+    RED   = :red
+    BLACK = :black
 
     def initialize(@key : Int32, @color = RED)
       @left = @right = @parent = NilNode.instance
@@ -44,8 +43,6 @@ class RedBlackTree
       true
     end
   end
-
-  #  include Enumerable
 
   property root : Node
   property :size

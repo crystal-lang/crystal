@@ -186,13 +186,13 @@ struct JSON::Any
   # Checks that the underlying value is `Float`, and returns its value as an `Float64`.
   # Raises otherwise.
   def as_f : Float64
-    @raw.as(Float).to_f
+    @raw.as(Float64)
   end
 
   # Checks that the underlying value is `Float`, and returns its value as an `Float64`.
   # Returns `nil` otherwise.
   def as_f? : Float64?
-    as_f if @raw.is_a?(Float64)
+    @raw.as?(Float64)
   end
 
   # Checks that the underlying value is `Float`, and returns its value as an `Float32`.
@@ -204,7 +204,7 @@ struct JSON::Any
   # Checks that the underlying value is `Float`, and returns its value as an `Float32`.
   # Returns `nil` otherwise.
   def as_f32? : Float32?
-    as_f32 if (@raw.is_a?(Float32) || @raw.is_a?(Float64))
+    as_f32 if @raw.is_a?(Float)
   end
 
   # Checks that the underlying value is `String`, and returns its value.
@@ -274,6 +274,10 @@ struct JSON::Any
   # :nodoc:
   def to_json(json : JSON::Builder)
     raw.to_json(json)
+  end
+
+  def to_yaml(yaml : YAML::Nodes::Builder)
+    raw.to_yaml(yaml)
   end
 
   # Returns a new JSON::Any instance with the `raw` value `dup`ed.

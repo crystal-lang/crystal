@@ -14,7 +14,7 @@ describe "Code gen: named args" do
   it "calls with named arg and other args" do
     run(%(
       def foo(x, y = 2, z = 3)
-        x + y + z
+        x &+ y &+ z
       end
 
       foo 1, z: 10
@@ -25,7 +25,7 @@ describe "Code gen: named args" do
     run(%(
       class Foo
         def foo(x, y = 2, z = 3)
-          x + y + z
+          x &+ y &+ z
         end
       end
 
@@ -35,13 +35,19 @@ describe "Code gen: named args" do
 
   it "calls twice with different types" do
     run(%(
+      struct Int32
+        def &+(other : Float)
+          self + other
+        end
+      end
+
       def add(x, y = 1)
-        x + y
+        x &+ y
       end
 
       value = 0
-      value += add(1, y: 2)
-      value += add(1, y: 1.3)
+      value &+= add(1, y: 2)
+      value &+= add(1, y: 1.3)
       value.to_i
       )).to_i.should eq(5)
   end
@@ -52,7 +58,7 @@ describe "Code gen: named args" do
         @value : Int32
 
         def initialize(x, y = 2, z = 3)
-          @value = x + y + z
+          @value = x &+ y &+ z
         end
 
         def value
@@ -68,13 +74,13 @@ describe "Code gen: named args" do
     run(%(
       class Foo
         def foo(x, z = 2)
-          x + z + 1
+          x &+ z &+ 1
         end
       end
 
       class Bar
         def foo(x, z = 2)
-          x + z
+          x &+ z
         end
       end
 
@@ -96,7 +102,7 @@ describe "Code gen: named args" do
   it "sends two regular arguments as named arguments" do
     run(%(
       def foo(x, y)
-        x + y
+        x &+ y
       end
 
       foo x: 10, y: 32
@@ -126,32 +132,32 @@ describe "Code gen: named args" do
   it "overloads based on required named args" do
     run(%(
       def foo(x, *, y)
-        x + y
+        x &+ y
       end
 
       def foo(x, *, z)
-        x * z
+        x &* z
       end
 
       a = foo(10, y: 20)
       b = foo(30, z: 40)
-      a + b
+      a &+ b
       )).to_i.should eq(10 + 20 + 30*40)
   end
 
   it "overloads based on required named args, with restrictions" do
     run(%(
       def foo(x, *, z : Int32)
-        x + z
+        x &+ z
       end
 
       def foo(x, *, z : Float64)
-        x * z.to_i
+        x &* z.to_i
       end
 
       a = foo(10, z: 20)
       b = foo(30, z: 40.0)
-      a + b
+      a &+ b
       )).to_i.should eq(10 + 20 + 30*40)
   end
 
@@ -169,7 +175,7 @@ describe "Code gen: named args" do
 
       v1 = Foo.new.y
       v2 = Foo.new(y: 20).y
-      v1 + v2
+      v1 &+ v2
       )).to_i.should eq(42)
   end
 end

@@ -79,7 +79,8 @@ class Socket < IO
     end
   end
 
-  protected def initialize(@fd : Int32, @family, @type, @protocol = Protocol::IP, blocking = false)
+  # Creates a Socket from an existing socket file descriptor.
+  def initialize(@fd : Int32, @family, @type, @protocol = Protocol::IP, blocking = false)
     @closed = false
     init_close_on_exec(@fd)
 
@@ -205,7 +206,7 @@ class Socket < IO
   #
   # server = TCPServer.new(2202)
   # socket = server.accept
-  # socket.puts Time.now
+  # socket.puts Time.utc
   # socket.close
   # ```
   def accept
@@ -222,7 +223,7 @@ class Socket < IO
   #
   # server = TCPServer.new(2202)
   # if socket = server.accept?
-  #   socket.puts Time.now
+  #   socket.puts Time.utc
   #   socket.close
   # end
   # ```

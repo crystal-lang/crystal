@@ -49,7 +49,7 @@ module Crystal::System::Time
       raise WinError.new("QueryPerformanceCounter")
     end
 
-    {ticks / @@performance_frequency, (ticks.remainder(NANOSECONDS_PER_SECOND) * NANOSECONDS_PER_SECOND / @@performance_frequency).to_i32}
+    {ticks / @@performance_frequency, (ticks.remainder(@@performance_frequency) * NANOSECONDS_PER_SECOND / @@performance_frequency).to_i32}
   end
 
   def self.load_localtime : ::Time::Location?
@@ -88,7 +88,7 @@ module Crystal::System::Time
 
     transitions = [] of ::Time::Location::ZoneTransition
 
-    current_year = ::Time.utc_now.year
+    current_year = ::Time.utc.year
 
     (current_year - 100).upto(current_year + 100) do |year|
       tstamp = calculate_switchdate_in_year(year, first_date) - (zones[second_index].offset)

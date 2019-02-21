@@ -139,6 +139,11 @@ struct Float32
     value.to_f32
   end
 
+  # Returns a `Float32` by invoking `to_f32!` on *value*.
+  def self.new!(value)
+    value.to_f32!
+  end
+
   def ceil
     LibM.ceil_f32(self)
   end
@@ -221,6 +226,11 @@ struct Float64
   # Returns a `Float64` by invoking `to_f64` on *value*.
   def Float64.new(value)
     value.to_f64
+  end
+
+  # Returns a `Float64` by invoking `to_f64!` on *value*.
+  def Float64.new!(value)
+    value.to_f64!
   end
 
   def ceil

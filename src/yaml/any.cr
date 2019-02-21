@@ -158,6 +158,18 @@ struct YAML::Any
     @raw.as(Nil)
   end
 
+  # Checks that the underlying value is `Bool`, and returns its value.
+  # Raises otherwise.
+  def as_bool : Bool
+    @raw.as(Bool)
+  end
+
+  # Checks that the underlying value is `Bool`, and returns its value.
+  # Returns `nil` otherwise.
+  def as_bool? : Bool?
+    as_bool if @raw.is_a?(Bool)
+  end
+
   # Checks that the underlying value is `String`, and returns its value.
   # Raises otherwise.
   def as_s : String
@@ -191,7 +203,7 @@ struct YAML::Any
   # Checks that the underlying value is `Int64`, and returns its value as `Int32`.
   # Returns `nil` otherwise.
   def as_i? : Int32?
-    @raw.as?(Int64).try &.to_i
+    as_i if @raw.is_a?(Int)
   end
 
   # Checks that the underlying value is `Float64`, and returns its value.
@@ -204,6 +216,18 @@ struct YAML::Any
   # Returns `nil` otherwise.
   def as_f? : Float64?
     @raw.as?(Float64)
+  end
+
+  # Checks that the underlying value is `Float`, and returns its value as an `Float32`.
+  # Raises otherwise.
+  def as_f32 : Float32
+    @raw.as(Float).to_f32
+  end
+
+  # Checks that the underlying value is `Float`, and returns its value as an `Float32`.
+  # Returns `nil` otherwise.
+  def as_f32? : Float32?
+    as_f32 if @raw.is_a?(Float)
   end
 
   # Checks that the underlying value is `Time`, and returns its value.
@@ -285,6 +309,14 @@ struct YAML::Any
   # :nodoc:
   def to_yaml(io)
     raw.to_yaml(io)
+  end
+
+  def to_json(builder : JSON::Builder)
+    if (raw = self.raw).is_a?(Slice)
+      raise "Can't serialize #{raw.class} to JSON"
+    else
+      raw.to_json(builder)
+    end
   end
 
   # Returns a new YAML::Any instance with the `raw` value `dup`ed.

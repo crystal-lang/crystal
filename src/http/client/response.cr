@@ -1,5 +1,6 @@
 require "../client"
 require "../common"
+require "mime/media_type"
 
 class HTTP::Client::Response
   getter version : String
@@ -44,19 +45,17 @@ class HTTP::Client::Response
     HTTP.keep_alive?(self)
   end
 
-  def content_type
-    process_content_type_header.content_type
+  def content_type : String?
+    mime_type.try &.media_type
   end
 
-  def charset
-    process_content_type_header.charset
+  def charset : String?
+    mime_type.try &.["charset"]?
   end
 
-  @computed_content_type_header : ComputedContentTypeHeader?
-
-  private def process_content_type_header
-    @computed_content_type_header ||= begin
-      HTTP.content_type_and_charset(headers)
+  def mime_type : MIME::MediaType?
+    if content_type = headers["Content-Type"]?
+      MIME::MediaType.parse(content_type)
     end
   end
 

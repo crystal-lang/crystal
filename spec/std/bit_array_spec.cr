@@ -106,6 +106,14 @@ describe "BitArray" do
       from_int(3, 0b011)[2..-2].should eq(BitArray.new(0))
     end
 
+    it "gets on endless range" do
+      from_int(6, 0b011110)[2..nil].should eq(from_int(4, 0b1110))
+    end
+
+    it "gets on beginless range" do
+      from_int(6, 0b011110)[nil..2].should eq(from_int(3, 0b011))
+    end
+
     it "raises on index out of bounds with range" do
       expect_raises IndexError do
         from_int(3, 0b111)[4..6]

@@ -66,10 +66,10 @@ struct Tuple
   include Indexable(Union(*T))
   include Comparable(Tuple)
 
-  # Creates a tuple that will contain the given arguments.
+  # Creates a tuple that will contain the given values.
   #
   # This method is useful in macros and generic code because with it you can
-  # creates empty tuples, something that you can't do with a tuple literal.
+  # create empty tuples, something that you can't do with a tuple literal.
   #
   # ```
   # Tuple.new(1, "hello", 'x') #=> {1, "hello", 'x'}

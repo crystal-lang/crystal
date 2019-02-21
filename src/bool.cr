@@ -46,9 +46,11 @@ struct Bool
     hasher.bool(self)
   end
 
-  # Returns `1` for `true` and `0` for `false`.
-  def to_unsafe
-    self ? 1 : 0
+  # Returns an integer derived from the boolean value, for interoperability with C-style booleans.
+  #
+  # The value is `1` for `true` and `0` for `false`.
+  def to_unsafe : LibC::Int
+    LibC::Int.new(self ? 1 : 0)
   end
 
   # Returns `"true"` for `true` and `"false"` for `false`.

@@ -19,7 +19,7 @@ struct Iconv
 
     @iconv = LibC.iconv_open(to, from)
 
-    if @iconv.address == LibC::SizeT.new(-1)
+    if @iconv.address == ERROR
       if Errno.value == Errno::EINVAL
         if original_from == "UTF-8"
           raise ArgumentError.new("Invalid encoding: #{original_to}")

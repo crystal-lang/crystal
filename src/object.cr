@@ -172,7 +172,8 @@ class Object
     yield self
   end
 
-  # Returns `self`. `Nil` overrides this method and raises an exception.
+  # Returns `self`.
+  # `Nil` overrides this method and raises `NilAssertionError`, see `Nil#not_nil!`.
   def not_nil!
     self
   end
@@ -330,7 +331,7 @@ class Object
     #
     # ```
     # class Person
-    #   {{macro_prefix}}getter(birth_date) { Time.now }
+    #   {{macro_prefix}}getter(birth_date) { Time.local }
     # end
     # ```
     #
@@ -339,7 +340,11 @@ class Object
     # ```
     # class Person
     #   def {{method_prefix}}birth_date
-    #     {{var_prefix}}birth_date ||= Time.now
+    #     if (value = {{var_prefix}}birth_date).nil?
+    #       {{var_prefix}}birth_date = Time.local
+    #     else
+    #       value
+    #     end
     #   end
     # end
     # ```
@@ -355,11 +360,19 @@ class Object
           {{var_prefix}}\{{name.var.id}} : \{{name.type}}?
 
           def {{method_prefix}}\{{name.var.id}}
-            {{var_prefix}}\{{name.var.id}} ||= \{{yield}}
+            if (value = {{var_prefix}}\{{name.var.id}}).nil?
+              {{var_prefix}}\{{name.var.id}} = \{{yield}}
+            else
+              value
+            end
           end
         \{% else %}
           def {{method_prefix}}\{{name.id}}
-            {{var_prefix}}\{{name.id}} ||= \{{yield}}
+            if (value = {{var_prefix}}\{{name.id}}).nil?
+              {{var_prefix}}\{{name.id}} = \{{yield}}
+            else
+              value
+            end
           end
         \{% end %}
       \{% else %}
@@ -547,24 +560,56 @@ class Object
     #   end
     # end
     # ```
-    macro {{macro_prefix}}getter?(*names)
-      \{% for name in names %}
+    #
+    # If a block is given to the macro, a getter is generated
+    # with a variable that is lazily initialized with
+    # the block's contents, for examples see `#{{macro_prefix}}getter`.
+    macro {{macro_prefix}}getter?(*names, &block)
+      \{% if block %}
+        \{% if names.size != 1 %}
+          \{{ raise "Only one argument can be passed to `getter?` with a block" }}
+        \{% end %}
+
+        \{% name = names[0] %}
+
         \{% if name.is_a?(TypeDeclaration) %}
-          {{var_prefix}}\{{name}}
+          {{var_prefix}}\{{name.var.id}} : \{{name.type}}?
 
-          def {{method_prefix}}\{{name.var.id}}? : \{{name.type}}
-            {{var_prefix}}\{{name.var.id}}
-          end
-        \{% elsif name.is_a?(Assign) %}
-          {{var_prefix}}\{{name}}
-
-          def {{method_prefix}}\{{name.target.id}}?
-            {{var_prefix}}\{{name.target.id}}
+          def {{method_prefix}}\{{name.var.id}}?
+            if (value = {{var_prefix}}\{{name.var.id}}).nil?
+              {{var_prefix}}\{{name.var.id}} = \{{yield}}
+            else
+              value
+            end
           end
         \{% else %}
           def {{method_prefix}}\{{name.id}}?
-            {{var_prefix}}\{{name.id}}
+            if (value = {{var_prefix}}\{{name.id}}).nil?
+              {{var_prefix}}\{{name.id}} = \{{yield}}
+            else
+              value
+            end
           end
+        \{% end %}
+      \{% else %}
+        \{% for name in names %}
+          \{% if name.is_a?(TypeDeclaration) %}
+            {{var_prefix}}\{{name}}
+
+            def {{method_prefix}}\{{name.var.id}}? : \{{name.type}}
+              {{var_prefix}}\{{name.var.id}}
+            end
+          \{% elsif name.is_a?(Assign) %}
+            {{var_prefix}}\{{name}}
+
+            def {{method_prefix}}\{{name.target.id}}?
+              {{var_prefix}}\{{name.target.id}}
+            end
+          \{% else %}
+            def {{method_prefix}}\{{name.id}}?
+              {{var_prefix}}\{{name.id}}
+            end
+          \{% end %}
         \{% end %}
       \{% end %}
     end
@@ -781,7 +826,7 @@ class Object
     #
     # ```
     # class Person
-    #   {{macro_prefix}}property(birth_date) { Time.now }
+    #   {{macro_prefix}}property(birth_date) { Time.local }
     # end
     # ```
     #
@@ -790,7 +835,11 @@ class Object
     # ```
     # class Person
     #   def {{method_prefix}}birth_date
-    #     {{var_prefix}}birth_date ||= Time.now
+    #     if (value = {{var_prefix}}birth_date).nil?
+    #       {{var_prefix}}birth_date = Time.local
+    #     else
+    #       value
+    #     end
     #   end
     #
     #   def {{method_prefix}}birth_date=({{var_prefix}}birth_date)
@@ -811,11 +860,19 @@ class Object
           {{var_prefix}}\{{name.var.id}} : \{{name.type}}?
 
           def {{method_prefix}}\{{name.var.id}}
-            {{var_prefix}}\{{name.var.id}} ||= \{{yield}}
+            if (value = {{var_prefix}}\{{name.var.id}}).nil?
+              {{var_prefix}}\{{name.var.id}} = \{{yield}}
+            else
+              value
+            end
           end
         \{% else %}
           def {{method_prefix}}\{{name.id}}
-            {{var_prefix}}\{{name.id}} ||= \{{yield}}
+            if (value = {{var_prefix}}\{{name.id}}).nil?
+              {{var_prefix}}\{{name.id}} = \{{yield}}
+            else
+              value
+            end
           end
         \{% end %}
       \{% else %}
@@ -1027,33 +1084,71 @@ class Object
     #   end
     # end
     # ```
-    macro {{macro_prefix}}property?(*names)
-      \{% for name in names %}
-        \{% if name.is_a?(TypeDeclaration) %}
-          {{var_prefix}}\{{name}}
+    #
+    # If a block is given to the macro, a property is generated
+    # with a variable that is lazily initialized with
+    # the block's contents, for examples see `#{{macro_prefix}}property`.
+    macro {{macro_prefix}}property?(*names, &block)
+      \{% if block %}
+        \{% if names.size != 1 %}
+          \{{ raise "Only one argument can be passed to `property?` with a block" }}
+        \{% end %}
 
-          def {{method_prefix}}\{{name.var.id}}? : \{{name.type}}
-            {{var_prefix}}\{{name.var.id}}
+        \{% name = names[0] %}
+
+        \{% if name.is_a?(TypeDeclaration) %}
+          {{var_prefix}}\{{name.var.id}} : \{{name.type}}?
+
+          def {{method_prefix}}\{{name.var.id}}?
+            if (value = {{var_prefix}}\{{name.var.id}}).nil?
+              {{var_prefix}}\{{name.var.id}} = \{{yield}}
+            else
+              value
+            end
           end
 
           def {{method_prefix}}\{{name.var.id}}=({{var_prefix}}\{{name.var.id}} : \{{name.type}})
           end
-        \{% elsif name.is_a?(Assign) %}
-          {{var_prefix}}\{{name}}
-
-          def {{method_prefix}}\{{name.target.id}}?
-            {{var_prefix}}\{{name.target.id}}
-          end
-
-          def {{method_prefix}}\{{name.target.id}}=({{var_prefix}}\{{name.target.id}})
-          end
         \{% else %}
           def {{method_prefix}}\{{name.id}}?
-            {{var_prefix}}\{{name.id}}
+            if (value = {{var_prefix}}\{{name.id}}).nil?
+              {{var_prefix}}\{{name.id}} = \{{yield}}
+            else
+              value
+            end
           end
 
           def {{method_prefix}}\{{name.id}}=({{var_prefix}}\{{name.id}})
           end
+        \{% end %}
+      \{% else %}
+        \{% for name in names %}
+          \{% if name.is_a?(TypeDeclaration) %}
+            {{var_prefix}}\{{name}}
+
+            def {{method_prefix}}\{{name.var.id}}? : \{{name.type}}
+              {{var_prefix}}\{{name.var.id}}
+            end
+
+            def {{method_prefix}}\{{name.var.id}}=({{var_prefix}}\{{name.var.id}} : \{{name.type}})
+            end
+          \{% elsif name.is_a?(Assign) %}
+            {{var_prefix}}\{{name}}
+
+            def {{method_prefix}}\{{name.target.id}}?
+              {{var_prefix}}\{{name.target.id}}
+            end
+
+            def {{method_prefix}}\{{name.target.id}}=({{var_prefix}}\{{name.target.id}})
+            end
+          \{% else %}
+            def {{method_prefix}}\{{name.id}}?
+              {{var_prefix}}\{{name.id}}
+            end
+
+            def {{method_prefix}}\{{name.id}}=({{var_prefix}}\{{name.id}})
+            end
+          \{% end %}
         \{% end %}
       \{% end %}
     end

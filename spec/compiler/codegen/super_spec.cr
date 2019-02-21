@@ -6,7 +6,7 @@ describe "Codegen: super" do
   end
 
   it "codegens super without arguments but parent has arguments" do
-    run("class Foo; def foo(x); x + 1; end; end; class Bar < Foo; def foo(x); super; end; end; Bar.new.foo(1)").to_i.should eq(2)
+    run("class Foo; def foo(x); x &+ 1; end; end; class Bar < Foo; def foo(x); super; end; end; Bar.new.foo(1)").to_i.should eq(2)
   end
 
   it "codegens super without arguments and instance variable" do
@@ -222,13 +222,13 @@ describe "Codegen: super" do
         end
 
         def foo(z)
-          z + @x
+          z &+ @x
         end
       end
 
       class Bar < Foo
         def foo(z)
-          ->(x : Int32) { x + super }
+          ->(x : Int32) { x &+ super }
         end
       end
 
@@ -344,7 +344,7 @@ describe "Codegen: super" do
 
       class Bar(T) < Foo
         def initialize
-            Global.x += 1
+            Global.x &+= 1
             super
         end
       end

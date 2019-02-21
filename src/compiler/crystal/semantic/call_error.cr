@@ -49,6 +49,15 @@ class Crystal::Call
       defs = owner.lookup_defs(def_name)
     end
 
+    # Also consider private top-level defs
+    if owner.is_a?(Program)
+      location = self.location
+      if location && (filename = location.original_filename)
+        private_defs = owner.file_module?(filename).try &.lookup_defs(def_name)
+        defs.concat(private_defs) if private_defs
+      end
+    end
+
     # Another special case: initialize is only looked up one level,
     # so we must find the first one defined.
     new_owner = owner
@@ -83,21 +92,40 @@ class Crystal::Call
       similar_name = owner.lookup_similar_def_name(def_name, self.args.size, block)
 
       error_msg = String.build do |msg|
-        if obj && owner != program
-          msg << "undefined method '#{def_name}' for #{owner}"
-        elsif convert_to_logical_operator(def_name)
-          msg << "undefined method '#{def_name}'"
-          similar_name = convert_to_logical_operator(def_name)
+        if obj
+          could_be_local_variable = false
+        elsif logical_op = convert_to_logical_operator(def_name)
+          similar_name = logical_op
+          could_be_local_variable = false
         elsif args.size > 0 || has_parentheses?
-          msg << "undefined method '#{def_name}'"
+          could_be_local_variable = false
         else
+          # This check is for the case `a if a = 1`
           similar_name = parent_visitor.lookup_similar_var_name(def_name) unless similar_name
           if similar_name == def_name
-            # This check is for the case `a if a = 1`
-            msg << "undefined method '#{def_name}'"
+            could_be_local_variable = false
           else
-            msg << "undefined local variable or method '#{def_name}'"
+            could_be_local_variable = true
           end
+        end
+
+        if could_be_local_variable
+          msg << "undefined local variable or method '#{def_name}'"
+        else
+          msg << "undefined method '#{def_name}'"
+        end
+
+        owner_name = owner.is_a?(Program) ? "top-level" : owner.to_s
+        with_scope = @with_scope
+
+        if with_scope && !obj && with_scope != owner
+          msg << " for #{with_scope} (with ... yield) and #{owner_name} (current scope)"
+        else
+          msg << " for #{owner_name}"
+        end
+
+        if def_name == "allocate" && owner.is_a?(MetaclassType) && owner.instance_type.module?
+          msg << colorize(" (modules cannot be instantiated)").yellow.bold
         end
 
         if obj && obj.type != owner
@@ -204,7 +232,9 @@ class Crystal::Call
           raise "'#{full_name(owner, def_name)}' is expected to be invoked with a block, but no block was given"
         end
 
-        if named_args_types
+        # Only check for named args mismatch if there's just one overload for
+        # the method name, otherwise the error might not be correct
+        if named_args_types && defs.one?
           defs_matching_args_size.each do |a_def|
             check_named_args_mismatch owner, arg_types, named_args_types, a_def
           end

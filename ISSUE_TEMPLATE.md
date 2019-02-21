@@ -1,3 +1,7 @@
+# Submitting questions
+
+If you have a question like "how do I do X?", this is not the right place for asking it. Please ask on the [Crystal Forum](https://forum.crystal-lang.org), on our combined [Gitter](https://gitter.im/crystal-lang/crystal)/[IRC](http://webchat.freenode.net/?channels=#crystal-lang) or on [StackOverflow](http://stackoverflow.com/questions/tagged/crystal-lang).
+
 # Submitting bugs
 
 Make sure to review these points before submitting issues - thank you!
@@ -8,8 +12,3 @@ Make sure to review these points before submitting issues - thank you!
 - Reduce code, if possible, to the minimum size that reproduces the bug.
 - If all of the above is impossible due to a large project, create a branch that reproduces the bug and point us to it.
 - Include Crystal compiler version (`crystal -v`) and OS. If possible, try to see if the bug still reproduces on master.
-
-# Submitting questions
-
-- If the question is something like "how do I do X?", consider using [StackOverflow](http://stackoverflow.com/questions/tagged/crystal-lang)
-- If the question is about a shard, consider asking the question in that shard

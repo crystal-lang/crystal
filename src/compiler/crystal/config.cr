@@ -5,11 +5,7 @@ module Crystal
     end
 
     def self.version
-      {% if flag?(:windows) %}
-        {{ `type #{__DIR__}/../../../VERSION`.stringify.chomp }}
-      {% else %}
-        {{ `cat #{__DIR__}/../../../VERSION`.stringify.chomp }}
-      {% end %}
+      {{ read_file("#{__DIR__}/../../../VERSION").chomp }}
     end
 
     def self.llvm_version

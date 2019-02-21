@@ -436,4 +436,30 @@ describe "Semantic: enum" do
     method = result.program.types["Foo"].lookup_first_def("bar", block: false).not_nil!
     method.always_inline?.should be_true
   end
+
+  it "errors if defining initialize in Enum (#7238)" do
+    assert_error %(
+      enum Foo
+        FOO = 1
+
+        def initialize
+        end
+      end
+      ),
+      "enums can't define an `initialize` method, try using `def self.new`"
+  end
+
+  it "can redefine Enum.new" do
+    assert_type(%(
+      enum Foo
+        FOO = 1
+
+        def self.new(x : Int32)
+          "hello"
+        end
+      end
+
+      Foo.new(1)
+      )) { string }
+  end
 end

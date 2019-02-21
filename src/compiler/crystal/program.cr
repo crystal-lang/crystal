@@ -44,7 +44,7 @@ module Crystal
     #
     # The way we detect this is by remembering the type of the splat,
     # associated to a def's object id (the UInt64), and on an instantiation
-    # we compare the new type with the previous one and check if if contains
+    # we compare the new type with the previous one and check if it contains
     # the previous type.
     getter splat_expansions = {} of UInt64 => Type
 
@@ -110,8 +110,10 @@ module Crystal
     # The main filename of this program
     property filename : String?
 
-    # Set to a `ProgressTracker` object which tracks compilation progress.
+    # A `ProgressTracker` object which tracks compilation progress.
     property progress_tracker = ProgressTracker.new
+
+    property codegen_target = Codegen::Target.new
 
     def initialize
       super(self, self, "main")
@@ -204,7 +206,7 @@ module Crystal
       types["ARGC_UNSAFE"] = @argc = argc_unsafe = Const.new self, self, "ARGC_UNSAFE", Primitive.new("argc", int32)
       types["ARGV_UNSAFE"] = @argv = argv_unsafe = Const.new self, self, "ARGV_UNSAFE", Primitive.new("argv", pointer_of(pointer_of(uint8)))
 
-      # Make sure to initialize ARGC and ARGV as soon as the program starts
+      # Make sure to initialize `ARGC_UNSAFE` and `ARGV_UNSAFE` as soon as the program starts
       class_var_and_const_initializers << argc_unsafe
       class_var_and_const_initializers << argv_unsafe
 
@@ -233,7 +235,7 @@ module Crystal
     getter(literal_expander) { LiteralExpander.new self }
 
     # Returns a `CrystalPath` for this program.
-    getter(crystal_path) { CrystalPath.new(target_triple: target_machine.triple) }
+    getter(crystal_path) { CrystalPath.new(codegen_target: codegen_target) }
 
     # Returns a `Var` that has `Nil` as a type.
     # This variable is bound to other nodes in the semantic phase for things
@@ -270,9 +272,7 @@ module Crystal
       crystal.types[name] = Const.new self, crystal, name, value
     end
 
-    setter target_machine : LLVM::TargetMachine?
-
-    getter(target_machine) { TargetMachine.create(Crystal::Config.default_target_triple) }
+    property(target_machine : LLVM::TargetMachine) { codegen_target.to_target_machine }
 
     # Returns the `Type` for `Array(type)`
     def array_of(type)
@@ -429,7 +429,7 @@ module Crystal
     end
     property recorded_requires = [] of RecordedRequire
 
-    # Rmembers that the program depends on this require.
+    # Remembers that the program depends on this require.
     def record_require(filename, relative_to) : Nil
       recorded_requires << RecordedRequire.new(filename, relative_to)
     end
@@ -452,12 +452,12 @@ module Crystal
       end
     {% end %}
 
-    # Returns the `Nil` `Type`
+    # Returns the `Nil` type
     def nil_type
       @nil.not_nil!
     end
 
-    # Returns the `Hash` `Type`
+    # Returns the `Hash` type
     def hash_type
       @hash_type.not_nil!
     end
@@ -496,12 +496,12 @@ module Crystal
       end
     end
 
-    # Retutns the `Struct` type
+    # Returns the `Struct` type
     def struct
       @struct_t.not_nil!
     end
 
-    # Retutns the `Class` type
+    # Returns the `Class` type
     def class_type
       @class.not_nil!
     end

@@ -298,6 +298,8 @@ describe Crystal::Formatter do
   assert_format "foo   &.is_a?(T)", "foo &.is_a?(T)"
   assert_format "foo   &.responds_to?(:foo)", "foo &.responds_to?(:foo)"
 
+  assert_format "foo(\n  1,\n  &.foo\n)"
+
   %w(return break next yield).each do |keyword|
     assert_format keyword
     assert_format "#{keyword}( 1 )", "#{keyword}(1)"
@@ -557,12 +559,16 @@ describe Crystal::Formatter do
 
   assert_format "1.as   Int32", "1.as Int32"
   assert_format "foo.bar. as   Int32", "foo.bar.as Int32"
+  assert_format "1\n.as(Int32)", "1\n  .as(Int32)"
 
   assert_format "1.as?   Int32", "1.as? Int32"
   assert_format "foo.bar. as?   Int32", "foo.bar.as? Int32"
+  assert_format "1\n.as?(Int32)", "1\n  .as?(Int32)"
 
   assert_format "1 .. 2", "1..2"
   assert_format "1 ... 2", "1...2"
+  assert_format "(1 .. )", "(1..)"
+  assert_format " .. 2", "..2"
 
   assert_format "typeof( 1, 2, 3 )", "typeof(1, 2, 3)"
   assert_format "sizeof( Int32 )", "sizeof(Int32)"
@@ -702,10 +708,10 @@ describe Crystal::Formatter do
   assert_format "->( x , y )   { x }", "->(x, y) { x }"
   assert_format "->( x : Int32 , y )   { x }", "->(x : Int32, y) { x }"
 
-  # TODO remove quotes after 0.26.0
-  {:+, :-, :*, :/, :^, :>>, :<<, :|, :&, :"&+", :"&-", :"&*", :"&**"}.each do |sym|
+  {:+, :-, :*, :/, :^, :>>, :<<, :|, :&, :&+, :&-, :&*, :&**}.each do |sym|
     assert_format ":#{sym}"
   end
+
   assert_format ":\"foo bar\""
 
   assert_format %("foo" \\\n "bar"), %("foo" \\\n"bar")
@@ -1033,8 +1039,10 @@ describe Crystal::Formatter do
 
   assert_format "foo &.nil?"
   assert_format "foo &.bar.nil?"
-  assert_format "foo &.nil?()"
-  assert_format "foo &.bar.nil?()"
+  assert_format "foo &.nil?()", "foo &.nil?"
+  assert_format "foo &.bar.nil?()", "foo &.bar.nil?"
+
+  assert_format "1 if nil?\na.b + c"
 
   assert_format "foo(<<-X,\na\nX\n  1)"
   assert_format "def bar\n  foo(<<-X,\n  a\n  X\n    1)\nend"
@@ -1053,6 +1061,7 @@ describe Crystal::Formatter do
   assert_format "page= <<-HTML\n  foo\nHTML", "page = <<-HTML\n  foo\nHTML"
   assert_format "page= <<-HTML\n  \#{1}foo\nHTML", "page = <<-HTML\n  \#{1}foo\nHTML"
 
+  assert_format "self.as(Int32)"
   assert_format "foo.as ( Int32* )", "foo.as(Int32*)"
   assert_format "foo.as   Int32*", "foo.as Int32*"
   assert_format "foo.as(T).bar"

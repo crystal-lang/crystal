@@ -160,7 +160,7 @@ describe "Codegen: extern struct" do
       x = f.call(Data.new(1))
       y = f.call(Data.new(2))
 
-      x + y
+      x &+ y
       )).to_i.should eq(3)
   end
 
@@ -219,7 +219,7 @@ describe "Codegen: extern struct" do
               Global.y = s.y
             })
 
-            Global.x + Global.y
+            Global.x &+ Global.y
           ), &.to_i.should eq(3))
     end
 
@@ -270,11 +270,11 @@ describe "Codegen: extern struct" do
             end
 
             LibMylib.foo(->(x, s, y) {
-              Global.x = s.x + x
-              Global.y = s.y + y
+              Global.x = s.x &+ x
+              Global.y = s.y &+ y
             })
 
-            Global.x + Global.y
+            Global.x &+ Global.y
           ), &.to_i.should eq(33))
     end
 
@@ -330,7 +330,7 @@ describe "Codegen: extern struct" do
               nil
             })
 
-            Global.x + Global.y
+            Global.x &+ Global.y
           ), &.to_i.should eq(3))
     end
 
@@ -388,7 +388,7 @@ describe "Codegen: extern struct" do
               s
             })
 
-            Global.x + Global.y + s2.x + s2.y
+            Global.x &+ Global.y &+ s2.x &+ s2.y
           ), &.to_i.should eq(303))
     end
 
@@ -423,7 +423,7 @@ describe "Codegen: extern struct" do
               s
             })
 
-            s2.x + s2.y
+            s2.x &+ s2.y
           ), &.to_i.should eq(30))
     end
 
@@ -469,15 +469,15 @@ describe "Codegen: extern struct" do
             end
 
             s2 = LibMylib.foo(->(s) {
-              Global.x += s.x
-              Global.x += s.y
-              Global.x += s.z
+              Global.x &+= s.x
+              Global.x &+= s.y
+              Global.x &+= s.z
               s
             })
 
-            Global.x += s2.x
-            Global.x += s2.y
-            Global.x += s2.z
+            Global.x &+= s2.x
+            Global.x &+= s2.y
+            Global.x &+= s2.z
             Global.x.to_i32
           ), &.to_i.should eq(12))
     end
@@ -523,8 +523,8 @@ describe "Codegen: extern struct" do
           end
 
           f = ->(s : LibMylib::Struct) {
-            Global.x += s.x
-            Global.x += s.y
+            Global.x &+= s.x
+            Global.x &+= s.y
           }
 
           s = LibMylib::Struct.new
@@ -559,7 +559,7 @@ describe "Codegen: extern struct" do
           }
 
           s = f.call
-          s.x + s.y + s.z + s.w + s.a
+          s.x &+ s.y &+ s.z &+ s.w &+ s.a
           )).to_i.should eq(15)
     end
   {% end %}

@@ -99,66 +99,90 @@ describe Indexable do
     is.should eq([0, 1, 2])
   end
 
-  it "iterates throught a subset of its elements (#3386)" do
+  it "iterates through a subset of its elements (#3386)" do
     indexable = SafeIndexable.new(5)
-    last_element = nil
+    elems = [] of Int32
 
     return_value = indexable.each(start: 2, count: 3) do |elem|
-      last_element = elem
+      elems << elem
     end
 
+    elems.should eq([2, 3, 4])
     return_value.should eq(indexable)
-    last_element.should eq(4)
   end
 
   it "iterates until its size (#3386)" do
     indexable = SafeIndexable.new(5)
-    last_element = nil
+    elems = [] of Int32
 
     indexable.each(start: 3, count: 999) do |elem|
-      last_element = elem
+      elems << elem
     end
 
-    last_element.should eq(4)
+    elems.should eq([3, 4])
   end
 
   it "iterates until its size, having mutated (#3386)" do
     indexable = SafeIndexable.new(10)
-    last_element = nil
+    elems = [] of Int32
 
     indexable.each(start: 3, count: 999) do |elem|
-      indexable.size += 1 if elem <= 5
       # size is incremented 3 times
-      last_element = elem
+      indexable.size += 1 if elem <= 5
+      elems << elem
     end
 
     # last was 9, but now is 12.
-    last_element.should eq(12)
+    elems.should eq([3, 4, 5, 6, 7, 8, 9, 10, 11, 12])
   end
 
   it "iterates until its size, having mutated (#3386)" do
     indexable = SafeIndexable.new(10)
-    last_element = nil
+    elems = [] of Int32
 
     indexable.each(start: 3, count: 5) do |elem|
       indexable.size += 1
-      last_element = elem
+      elems << elem
     end
 
     # last element iterated is still 7.
-    last_element.should eq(7)
+    elems.should eq([3, 4, 5, 6, 7])
   end
 
   it "iterates within a range of indices (#3386)" do
     indexable = SafeIndexable.new(5)
-    last_element = nil
+    elems = [] of Int32
 
     return_value = indexable.each(within: 2..3) do |elem|
-      last_element = elem
+      elems << elem
     end
 
+    elems.should eq([2, 3])
     return_value.should eq(indexable)
-    last_element.should eq(3)
+  end
+
+  it "iterates within a range of indices, no end" do
+    indexable = SafeIndexable.new(5)
+    elems = [] of Int32
+
+    return_value = indexable.each(within: 2..nil) do |elem|
+      elems << elem
+    end
+
+    elems.should eq([2, 3, 4])
+    return_value.should eq(indexable)
+  end
+
+  it "iterates within a range of indices, no beginning" do
+    indexable = SafeIndexable.new(5)
+
+    elems = [] of Int32
+    return_value = indexable.each(within: nil..2) do |elem|
+      elems << elem
+    end
+
+    elems.should eq([0, 1, 2])
+    return_value.should eq(indexable)
   end
 
   it "joins strings (empty case)" do

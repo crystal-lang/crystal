@@ -5,7 +5,7 @@ require "./concurrent/*"
 
 # Blocks the current fiber for the specified number of seconds.
 #
-# While this fiber is waiting this time other ready-to-execute
+# While this fiber is waiting this time, other ready-to-execute
 # fibers might start their execution.
 def sleep(seconds : Number)
   if seconds < 0
@@ -17,7 +17,7 @@ end
 
 # Blocks the current Fiber for the specified time span.
 #
-# While this fiber is waiting this time other ready-to-execute
+# While this fiber is waiting this time, other ready-to-execute
 # fibers might start their execution.
 def sleep(time : Time::Span)
   Crystal::Scheduler.sleep(time)
@@ -94,7 +94,11 @@ end
 # This is because in the first case all spawned fibers refer to
 # the same local variable, while in the second example copies of
 # *i* are passed to a `Proc` that eventually invokes the call.
-macro spawn(call, *, name = nil)
+macro spawn(call, *, name = nil, &block)
+  {% if block %}
+    {% raise "`spawn(call)` can't be invoked with a block, did you mean `spawn(name: ...) { ... }`?" %}
+  {% end %}
+
   {% if call.is_a?(Call) %}
     ->(
       {% for arg, i in call.args %}
@@ -196,7 +200,7 @@ macro parallel(*jobs)
     %value = %channel.receive
     if %value.is_a?(Exception)
       raise ConcurrentExecutionException.new(
-        "An unhandled error occured inside a `parallel` call",
+        "An unhandled error occurred inside a `parallel` call",
         cause: %value
       )
     end

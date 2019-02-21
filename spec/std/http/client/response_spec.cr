@@ -255,8 +255,8 @@ class HTTP::Client
     end
 
     it "returns content type and no charset" do
-      response = Response.new(200, "", headers: HTTP::Headers{"Content-Type" => "text/plain"})
-      response.content_type.should eq("text/plain")
+      response = Response.new(200, "", headers: HTTP::Headers{"Content-Type" => "application/octet-stream"})
+      response.content_type.should eq("application/octet-stream")
       response.charset.should be_nil
     end
 
@@ -273,8 +273,8 @@ class HTTP::Client
     end
 
     it "returns content type and no charset, other parameter (#2520)" do
-      response = Response.new(200, "", headers: HTTP::Headers{"Content-Type" => "text/plain ; colenc=U"})
-      response.content_type.should eq("text/plain")
+      response = Response.new(200, "", headers: HTTP::Headers{"Content-Type" => "application/octet-stream ; colenc=U"})
+      response.content_type.should eq("application/octet-stream")
       response.charset.should be_nil
     end
 

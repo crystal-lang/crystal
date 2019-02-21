@@ -8,60 +8,43 @@ require "./common"
   require "openssl"
 {% end %}
 
-# An HTTP server.
+# A concurrent HTTP server implementation.
 #
-# A server is given a handler that receives an `HTTP::Server::Context` that holds
-# the `HTTP::Request` to process and must in turn configure and write to an `HTTP::Server::Response`.
+# A server is initialized with a handler chain responsible for processing each
+# incoming request.
 #
-# The `HTTP::Server::Response` object has `status` and `headers` properties that can be
-# configured before writing the response body. Once response output is written,
-# changing the `status` and `headers` properties has no effect.
+# ```
+# require "http/server"
 #
-# The `HTTP::Server::Response` is also a write-only `IO`, so all `IO` methods are available
-# in it.
+# server = HTTP::Server.new do |context|
+#   context.response.content_type = "text/plain"
+#   context.response.print "Hello world!"
+# end
+#
+# address = server.bind_tcp 8080
+# puts "Listening on http://#{address}"
+# server.listen
+# ```
+#
+# ## Request processing
+#
+# The handler chain receives an instance of `HTTP::Server::Context` that holds
+# the `HTTP::Request` to process and a `HTTP::Server::Response` which it can
+# configure and write to.
+#
+# Each connection is processed concurrently in a separate `Fiber` and can handle
+# multiple subsequent requests-response cycles with connection keep-alive.
+#
+# ### Handler chain
 #
 # The handler given to a server can simply be a block that receives an `HTTP::Server::Context`,
-# or it can be an `HTTP::Handler`. An `HTTP::Handler` has an optional `next` handler,
-# so handlers can be chained. For example, an initial handler may handle exceptions
-# in a subsequent handler and return a 500 status code (see `HTTP::ErrorHandler`),
-# the next handler might log the incoming request (see `HTTP::LogHandler`), and
-# the final handler deals with routing and application logic.
+# or it can be an instance of `HTTP::Handler`. An `HTTP::Handler` has a `#next`
+# method to forward processing to the next handler in the chain.
 #
-# ### Simple Setup
-#
-# A handler is given with a block.
-#
-# ```
-# require "http/server"
-#
-# server = HTTP::Server.new do |context|
-#   context.response.content_type = "text/plain"
-#   context.response.print "Hello world!"
-# end
-#
-# server.bind_tcp 8080
-# puts "Listening on http://127.0.0.1:8080"
-# server.listen
-# ```
-#
-# ### With non-localhost bind address
-#
-# ```
-# require "http/server"
-#
-# server = HTTP::Server.new do |context|
-#   context.response.content_type = "text/plain"
-#   context.response.print "Hello world!"
-# end
-#
-# server.bind_tcp "0.0.0.0", 8080
-# puts "Listening on http://0.0.0.0:8080"
-# server.listen
-# ```
-#
-# ### Add handlers
-#
-# A series of handlers are chained.
+# For example, an initial handler might handle exceptions raised from subsequent
+# handlers and return a `500 Server Error` status (see `HTTP::ErrorHandler`).
+# The next handler might log all incoming requests (see `HTTP::LogHandler`).
+# And the final handler deals with routing and application logic.
 #
 # ```
 # require "http/server"
@@ -77,31 +60,79 @@ require "./common"
 # server.listen
 # ```
 #
-# ### Add handlers and block
+# ### Response object
 #
-# A series of handlers is chained, the last one being the given block.
+# The `HTTP::Server::Response` object has `status` and `headers` properties that can be
+# configured before writing the response body. Once any response output has been
+# written, changing the `status` and `headers` properties has no effect.
+#
+# The `HTTP::Server::Response` is a write-only `IO`, so all `IO` methods are available
+# on it for sending the response body.
+#
+# ## Binding to sockets
+#
+# The server can be bound to one ore more server sockets (see `#bind`)
+#
+# Supported types:
+#
+# * TCP socket: `#bind_tcp`, `#bind_unused_port`
+# * TCP socket with TLS/SSL: `#bind_tls`
+# * Unix socket `#bind_unix`
+#
+# `#bind(uri : URI)` and `#bind(uri : String)` parse socket configuration for
+# one of these types from an `URI`. This can be useful for injecting plain text
+# configuration values.
+#
+# Each of these methods returns the `Socket::Address` that was added to this
+# server.
 #
 # ```
 # require "http/server"
 #
-# server = HTTP::Server.new([
-#   HTTP::ErrorHandler.new,
-#   HTTP::LogHandler.new,
-# ]) do |context|
+# server = HTTP::Server.new do |context|
 #   context.response.content_type = "text/plain"
 #   context.response.print "Hello world!"
 # end
 #
-# server.bind_tcp "0.0.0.0", 8080
+# address = server.bind_tcp "0.0.0.0", 8080
+# puts "Listening on http://#{address}"
 # server.listen
 # ```
+#
+# It is also possible to bind a generic `Socket::Server` using
+# `#bind(socket : Socket::Server)` which can be used for custom network protocol
+# configurations.
+#
+# ## Server loop
+#
+# After defining all server sockets to listen to, the server can be started by
+# calling `#listen`. This call blocks until the server is closed.
+#
+# A server can be closed by calling `#close`. This closes the server sockets and
+# stops processing any new requests, even on connections with keep-alive enabled.
+# Currently processing requests are not interrupted but also not waited for.
+# In order to give them some grace period for finishing, the calling context
+# can add a timeout like `sleep 10.seconds` after `#listen` returns.
+#
+# ### Reusing connections
+#
+# The request processor supports reusing a connection for subsequent
+# requests. This is used by default for HTTP/1.1 or when requested by
+# the `Connection: keep-alive` header. This is signalled by this header being
+# set on the `HTTP::Server::Response` when it's passed into the handler chain.
+#
+# If in the handler chain this header is overridden to `Connection: close`, then
+# the connection will not be reused after the request has been processed.
+#
+# Reusing the connection also requires that the request body (if present) is
+# entirely consumed in the handler chain. Otherwise the connection will be closed.
 class HTTP::Server
   @sockets = [] of Socket::Server
 
   # Returns `true` if this server is closed.
   getter? closed : Bool = false
 
-  # Returns `true` if this server is listening on it's sockets.
+  # Returns `true` if this server is listening on its sockets.
   getter? listening : Bool = false
 
   # Creates a new HTTP server with the given block as handler.
@@ -125,7 +156,7 @@ class HTTP::Server
     @processor = RequestProcessor.new(handler)
   end
 
-  # Creates a `TCPServer` listenting on `host:port` and adds it as a socket, returning the local address
+  # Creates a `TCPServer` listening on `host:port` and adds it as a socket, returning the local address
   # and port the server listens on.
   #
   # ```
@@ -143,7 +174,7 @@ class HTTP::Server
     tcp_server.local_address
   end
 
-  # Creates a `TCPServer` listenting on `127.0.0.1:port` and adds it as a socket,
+  # Creates a `TCPServer` listening on `127.0.0.1:port` and adds it as a socket,
   # returning the local address and port the server listens on.
   #
   # ```
@@ -157,7 +188,7 @@ class HTTP::Server
     bind_tcp Socket::IPAddress::LOOPBACK, port, reuse_port
   end
 
-  # Creates a `TCPServer` listenting on *address* and adds it as a socket, returning the local address
+  # Creates a `TCPServer` listening on *address* and adds it as a socket, returning the local address
   # and port the server listens on.
   #
   # ```
@@ -211,7 +242,7 @@ class HTTP::Server
   {% unless flag?(:without_openssl) %}
     # Creates an `OpenSSL::SSL::Server` and adds it as a socket.
     #
-    # The SSL server wraps a `TCPServer` listenting on `host:port`.
+    # The SSL server wraps a `TCPServer` listening on `host:port`.
     #
     # ```
     # server = HTTP::Server.new { }
@@ -231,7 +262,7 @@ class HTTP::Server
 
     # Creates an `OpenSSL::SSL::Server` and adds it as a socket.
     #
-    # The SSL server wraps a `TCPServer` listenting on an unused port on *host*.
+    # The SSL server wraps a `TCPServer` listening on an unused port on *host*.
     #
     # ```
     # server = HTTP::Server.new { }
@@ -246,7 +277,7 @@ class HTTP::Server
 
     # Creates an `OpenSSL::SSL::Server` and adds it as a socket.
     #
-    # The SSL server wraps a `TCPServer` listenting on an unused port on *host*.
+    # The SSL server wraps a `TCPServer` listening on an unused port on *host*.
     #
     # ```
     # server = HTTP::Server.new { }
@@ -317,7 +348,7 @@ class HTTP::Server
     array
   end
 
-  # Creates a `TCPServer` listenting on `127.0.0.1:port`, adds it as a socket
+  # Creates a `TCPServer` listening on `127.0.0.1:port`, adds it as a socket
   # and starts the server. Blocks until the server is closed.
   #
   # See `#bind(port : Int32)` for details.
@@ -327,7 +358,7 @@ class HTTP::Server
     listen
   end
 
-  # Creates a `TCPServer` listenting on `host:port`, adds it as a socket
+  # Creates a `TCPServer` listening on `host:port`, adds it as a socket
   # and starts the server. Blocks until the server is closed.
   #
   # See `#bind(host : String, port : Int32)` for details.

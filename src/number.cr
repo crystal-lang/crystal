@@ -47,7 +47,7 @@ struct Number
   macro slice(*nums, read_only = false)
     %slice = Slice({{@type}}).new({{nums.size}}, read_only: {{read_only}})
     {% for num, i in nums %}
-      %slice.to_unsafe[{{i}}] = {{@type}}.new({{num}})
+      %slice.to_unsafe[{{i}}] = {{@type}}.new!({{num}})
     {% end %}
     %slice
   end
@@ -65,7 +65,7 @@ struct Number
   macro static_array(*nums)
     %array = uninitialized StaticArray({{@type}}, {{nums.size}})
     {% for num, i in nums %}
-      %array.to_unsafe[{{i}}] = {{@type}}.new({{num}})
+      %array.to_unsafe[{{i}}] = {{@type}}.new!({{num}})
     {% end %}
     %array
   end
@@ -226,9 +226,15 @@ struct Number
   # 5.clamp(10..100)   # => 10
   # 50.clamp(10..100)  # => 50
   # 500.clamp(10..100) # => 100
+  #
+  # 5.clamp(10..)  # => 10
+  # 50.clamp(10..) # => 50
+  #
+  # 5.clamp(..10)  # => 5
+  # 50.clamp(..10) # => 10
   # ```
   def clamp(range : Range)
-    raise ArgumentError.new("Can't clamp an exclusive range") if range.exclusive?
+    raise ArgumentError.new("Can't clamp an exclusive range") if !range.end.nil? && range.exclusive?
     clamp range.begin, range.end
   end
 
@@ -238,10 +244,16 @@ struct Number
   # 5.clamp(10, 100)   # => 10
   # 50.clamp(10, 100)  # => 50
   # 500.clamp(10, 100) # => 100
+  #
+  # 5.clamp(10, nil)  # => 10
+  # 50.clamp(10, nil) # => 50
+  #
+  # 5.clamp(nil, 10)  # => 5
+  # 50.clamp(nil, 10) # => 10
   # ```
   def clamp(min, max)
-    return max if self > max
-    return min if self < min
+    return max if !max.nil? && self > max
+    return min if !min.nil? && self < min
     self
   end
 

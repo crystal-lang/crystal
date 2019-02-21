@@ -168,7 +168,7 @@ module Debug
       ei_version = @io.read_byte.not_nil!
       raise Error.new("Unsupported version number") unless ei_version == 1
 
-      ei_osabi = OSABI.from_value(@io.read_byte)
+      ei_osabi = OSABI.from_value(@io.read_byte.not_nil!)
       ei_abiversion = @io.read_byte.not_nil!
 
       # padding (unused)
@@ -201,7 +201,7 @@ module Debug
     def sh_name(index)
       sh = section_headers[shstrndx]
       @io.seek(sh.offset + index) do
-        @io.gets('\0').to_s.chomp('\0')
+        @io.gets('\0', chomp: true).to_s
       end
     end
 

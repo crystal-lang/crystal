@@ -351,7 +351,7 @@ module Crystal
         in_parenthesis(need_parens, node_obj)
 
         @str << decorate_call(node, "[")
-        visit_args(node, excluse_last: true)
+        visit_args(node, exclude_last: true)
         @str << decorate_call(node, "]")
         @str << ' '
         @str << decorate_call(node, "=")
@@ -438,10 +438,10 @@ module Crystal
       false
     end
 
-    private def visit_args(node, excluse_last = false)
+    private def visit_args(node, exclude_last = false)
       printed_arg = false
       node.args.each_with_index do |arg, i|
-        break if excluse_last && i == node.args.size - 1
+        break if exclude_last && i == node.args.size - 1
 
         @str << ", " if printed_arg
         arg.accept self
@@ -1218,8 +1218,10 @@ module Crystal
     end
 
     def visit(node : RangeLiteral)
-      need_parens = need_parens(node.from)
-      in_parenthesis(need_parens, node.from)
+      unless node.from.nop?
+        need_parens = need_parens(node.from)
+        in_parenthesis(need_parens, node.from)
+      end
 
       if node.exclusive?
         @str << "..."
@@ -1227,8 +1229,10 @@ module Crystal
         @str << ".."
       end
 
-      need_parens = need_parens(node.to)
-      in_parenthesis(need_parens, node.to)
+      unless node.to.nop?
+        need_parens = need_parens(node.to)
+        in_parenthesis(need_parens, node.to)
+      end
 
       false
     end

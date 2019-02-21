@@ -892,7 +892,7 @@ class Hash(K, V)
       copy = hasher
       copy = key.hash(copy)
       copy = value.hash(copy)
-      result += copy.result
+      result &+= copy.result
     end
 
     result.hash(hasher)

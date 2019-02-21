@@ -13,7 +13,7 @@
 # Calculation between `Time` also returns a `Time::Span`.
 #
 # ```
-# span = Time.new(2015, 10, 10) - Time.new(2015, 9, 10)
+# span = Time.utc(2015, 10, 10) - Time.utc(2015, 9, 10)
 # span       # => 30.00:00:00
 # span.class # => Time::Span
 # ```
@@ -96,11 +96,13 @@ struct Time::Span
   end
 
   private def self.compute_seconds(days, hours, minutes, seconds, raise_exception)
+    # TODO once overflow is the default this can be refactored
+
     # there's no overflow checks for hours, minutes, ...
     # so big hours/minutes values can overflow at some point and change expected values
-    hrssec = hours * 3600 # break point at (Int32::MAX - 596523)
-    minsec = minutes * 60
-    s = (hrssec + minsec + seconds).to_i64
+    hrssec = 3600_i64 &* hours # break point at (Int32::MAX - 596523)
+    minsec = 60_i64 &* minutes
+    s = hrssec &+ minsec &+ seconds
 
     result = 0_i64
 
@@ -109,7 +111,7 @@ struct Time::Span
     # "legal" (i.e. temporary) (e.g. if other parameters are negative) or
     # illegal (e.g. sign change).
     if days > 0
-      sd = SECONDS_PER_DAY.to_i64 * days
+      sd = SECONDS_PER_DAY.to_i64 &* days
       if sd < days
         overflow = true
       elsif s < 0
@@ -123,7 +125,7 @@ struct Time::Span
         overflow = s < 0
       end
     elsif days < 0
-      sd = SECONDS_PER_DAY.to_i64 * days
+      sd = SECONDS_PER_DAY.to_i64 &* days
       if sd > days
         overflow = true
       elsif s <= 0
@@ -259,12 +261,12 @@ struct Time::Span
 
   # Returns a `Time` that happens later by `self` than the current time.
   def from_now : Time
-    Time.now + self
+    Time.local + self
   end
 
   # Returns a `Time` that happens earlier by `self` than the current time.
   def ago : Time
-    Time.now - self
+    Time.local - self
   end
 
   def -(other : self) : Time::Span
@@ -539,8 +541,8 @@ end
 # specified number of months.
 #
 # ```
-# Time.new(2016, 2, 1) + 13.months # => 2017-03-01 00:00:00
-# Time.new(2016, 2, 29) + 2.years  # => 2018-02-28 00:00:00
+# Time.local(2016, 2, 1) + 13.months # => 2017-03-01 00:00:00
+# Time.local(2016, 2, 29) + 2.years  # => 2018-02-28 00:00:00
 # ```
 struct Time::MonthSpan
   # The number of months.
@@ -552,12 +554,12 @@ struct Time::MonthSpan
 
   # Returns a `Time` that happens N months after now.
   def from_now : Time
-    Time.now + self
+    Time.local + self
   end
 
   # Returns a `Time` that happens N months before now.
   def ago : Time
-    Time.now - self
+    Time.local - self
   end
 end
 

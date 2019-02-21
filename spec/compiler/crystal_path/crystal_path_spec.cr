@@ -106,7 +106,7 @@ describe Crystal::CrystalPath do
   it "doesn't print an explanatory message for relative requires" do
     crystal_path = Crystal::CrystalPath.new(__DIR__)
     ex = expect_raises Exception, /can't find file/ do
-      crystal_path.find "./non_existant", relative_to: __DIR__
+      crystal_path.find "./non_existent", relative_to: __DIR__
     end
 
     ex.message.not_nil!.should_not contain "If you're trying to require a shard"

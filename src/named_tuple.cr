@@ -66,8 +66,10 @@ struct NamedTuple
   #   "I see #{n} #{thing}s"
   # end
   #
-  # data = JSON.parse(%({"thing": "world", "n": 2})).as_h
-  # speak_about(**{thing: String, n: Int64}.from(data)) # => "I see 2 worlds"
+  # hash = JSON.parse(%({"thing": "world", "n": 2})).as_h # hash : Hash(String, JSON::Any)
+  # hash = hash.transform_values(&.raw)                   # hash : Hash(String, JSON::Any::Type)
+  #
+  # speak_about(**{thing: String, n: Int64}.from(hash)) # => "I see 2 worlds"
   # ```
   def from(hash : Hash)
     if size != hash.size

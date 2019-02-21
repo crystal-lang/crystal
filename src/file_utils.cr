@@ -77,7 +77,7 @@ module FileUtils
   # ```
   #
   # NOTE: Alias of `File.touch`
-  def touch(path : String, time : Time = Time.utc_now)
+  def touch(path : String, time : Time = Time.utc)
     File.touch(path, time)
   end
 
@@ -89,7 +89,7 @@ module FileUtils
   # ```
   # FileUtils.touch(["foo", "bar"])
   # ```
-  def touch(paths : Enumerable(String), time : Time = Time.utc_now)
+  def touch(paths : Enumerable(String), time : Time = Time.utc)
     paths.each do |path|
       touch(path, time)
     end

@@ -8,6 +8,7 @@
 #include <llvm/IR/Metadata.h>
 #include <llvm/Support/raw_ostream.h>
 #include <llvm/Support/FileSystem.h>
+#include <llvm/ADT/Triple.h>
 
 using namespace llvm;
 
@@ -443,5 +444,13 @@ void LLVMWriteBitcodeWithSummaryToFile(LLVMModuleRef mref, const char *File) {
   llvm::WriteBitcodeToFile(m, OS, true, &moduleSummaryIndex, true);
 #endif
 }
+
+// LLVMNormalizeTargetTriple is available from LLVM in LLVM 8 and up,
+// in lower releases, we emulate it.
+#if LLVM_VERSION_LE(7, 0)
+char *LLVMNormalizeTargetTriple(const char* triple) {
+    return strdup(Triple::normalize(StringRef(triple)).c_str());
+}
+#endif
 
 }

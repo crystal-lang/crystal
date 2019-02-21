@@ -48,7 +48,7 @@ end
 
 {% for type in %w(Int8 Int16 Int32 Int64 UInt8 UInt16 UInt32 UInt64) %}
   def {{type.id}}.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node)
-    {{type.id}}.new parse_scalar(ctx, node, Int64)
+    {{type.id}}.new! parse_scalar(ctx, node, Int64)
   end
 {% end %}
 
@@ -57,7 +57,7 @@ def String.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node)
 end
 
 def Float32.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node)
-  parse_scalar(ctx, node, Float64).to_f32
+  parse_scalar(ctx, node, Float64).to_f32!
 end
 
 def Float64.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node)
