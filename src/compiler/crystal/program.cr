@@ -108,7 +108,7 @@ module Crystal
     property? show_error_trace = false
 
     # The main filename of this program
-    property filename : String?
+    getter filename : String?
 
     # A `ProgressTracker` object which tracks compilation progress.
     property progress_tracker = ProgressTracker.new
@@ -228,6 +228,14 @@ module Crystal
       types["ThreadLocal"] = @thread_local_annotation = AnnotationType.new self, self, "ThreadLocal"
 
       define_crystal_constants
+    end
+
+    def filename=(filename : String?)
+      @filename = filename
+
+      if filename
+        types["MAIN_FILE"] = Const.new self, self, "MAIN_FILE", StringLiteral.new(filename)
+      end
     end
 
     # Returns a `LiteralExpander` useful to expand literal like arrays and hashes
