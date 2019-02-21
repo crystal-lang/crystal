@@ -1310,4 +1310,11 @@ describe Crystal::Formatter do
     "  2  \n" +
     "end"
   )
+
+  # #7443
+  assert_format "long_variable_name = [{\n  :foo => 1,\n}, {\n  :bar => 2,\n}]"
+  assert_format "long_variable_name = [\n  {\n    :foo => 1,\n  }, {\n    :bar => 2,\n  },\n]"
+  assert_format "long_variable_name = [\n  {\n    :foo => 1,\n  },\n  {\n    :bar => 2,\n  },\n]"
+  assert_format "long_variable_name = [1, 2, 3,\n                      4, 5, 6]"
+  assert_format "long_variable_name = [1, 2, 3, # foo\n                      4, 5, 6]"
 end
