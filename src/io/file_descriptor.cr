@@ -31,7 +31,11 @@ class IO::FileDescriptor < IO
     clone_fd = LibC.open(path, LibC::O_RDWR)
     return new(fd, blocking: true) if clone_fd == -1
 
-    new(clone_fd).tap(&.close_on_exec = true)
+    # We don't buffer output for TTY devices to see their output right away
+    io = new(clone_fd)
+    io.close_on_exec = true
+    io.sync = true
+    io
   end
 
   def blocking
