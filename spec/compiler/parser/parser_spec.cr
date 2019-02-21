@@ -152,6 +152,8 @@ module Crystal
     it_parses "@a, b = 1, 2", MultiAssign.new(["@a".instance_var, "b".var] of ASTNode, [1.int32, 2.int32] of ASTNode)
     it_parses "@@a, b = 1, 2", MultiAssign.new(["@@a".class_var, "b".var] of ASTNode, [1.int32, 2.int32] of ASTNode)
 
+    assert_syntax_error "a, B = 1, 2", "can't assign to constant in multiple assignment"
+
     assert_syntax_error "1 == 2, a = 4"
     assert_syntax_error "x : String, a = 4"
     assert_syntax_error "b, 1 == 2, a = 4"
