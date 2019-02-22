@@ -308,4 +308,15 @@ describe "Semantic: cast" do
       1.as(Int)
       )) { int32 }
   end
+
+  it "doesn't crash with typeof no-type (#7441)" do
+    assert_type(%(
+      a = 1
+      if a.is_a?(Char)
+        1.as(typeof(a))
+      else
+        ""
+      end
+      )) { string }
+  end
 end

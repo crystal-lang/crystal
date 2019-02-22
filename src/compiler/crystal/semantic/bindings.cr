@@ -300,8 +300,10 @@ module Crystal
     property? upcast = false
 
     def update(from = nil)
+      to_type = to.type?
+      return unless to_type
+
       obj_type = obj.type?
-      to_type = to.type
 
       @upcast = false
 
