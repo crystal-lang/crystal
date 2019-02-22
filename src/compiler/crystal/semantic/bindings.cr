@@ -335,8 +335,10 @@ module Crystal
     getter! non_nilable_type : Type
 
     def update(from = nil)
+      to_type = to.type?
+      return unless to_type
+
       obj_type = obj.type?
-      to_type = to.type
 
       @upcast = false
 
