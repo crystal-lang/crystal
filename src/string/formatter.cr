@@ -55,7 +55,7 @@ struct String::Formatter(A)
     next_char
     arg = current_arg
     if arg.is_a?(Hash) || arg.is_a?(NamedTuple)
-      target_arg = arg[key]
+      target_arg = arg[key] unless arg.empty?
     else
       raise ArgumentError.new "One hash or named tuple required"
     end
