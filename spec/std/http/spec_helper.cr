@@ -7,7 +7,7 @@ private def wait_for(timeout = 5.seconds)
     Fiber.yield
 
     if (Time.monotonic - now) > timeout
-      raise "server failed to start within 5 seconds"
+      raise "server failed to start within #{timeout}"
     end
   end
 end
