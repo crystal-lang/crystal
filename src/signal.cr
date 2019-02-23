@@ -208,13 +208,16 @@ module Crystal::Signal
 
   private def self.process(signal) : Nil
     if handler = @@handlers[signal]?
-      handler.call(signal)
+      non_nil_handler = handler # if handler is closured it will also have the Nil type
+      spawn do
+        non_nil_handler.call(signal)
+      rescue ex
+        ex.inspect_with_backtrace(STDERR)
+        fatal("uncaught exception while processing handler for #{signal}")
+      end
     else
       fatal("missing handler for #{signal}")
     end
-  rescue ex
-    ex.inspect_with_backtrace(STDERR)
-    fatal("uncaught exception while processing handler for #{signal}")
   end
 
   # Replaces the signal pipe so the child process won't share the file
