@@ -20,8 +20,8 @@ module Crystal::EventLoop
   end
 
   {% if flag?(:mt) %}
-    def self.run
-      @@mutex.synchronize { @@eb.loop(:none) }
+    def self.run_once
+      @@mutex.synchronize { @@eb.loop(:once) }
     end
 
     def self.run_nonblock

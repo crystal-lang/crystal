@@ -11,9 +11,19 @@ class Crystal::Scheduler
   @@mutex = uninitialized Thread::Mutex
   @@all_runnables = uninitialized Array(Crystal::Scheduler::Runnables)
 
+  @@park_mutex = uninitialized Thread::Mutex
+  @@park_cond = uninitialized Thread::ConditionVariable
+  @@park_count = uninitialized Int32
+
+  # :nodoc:
   def self.init
     @@mutex = Thread::Mutex.new
     @@all_runnables = Array(Crystal::Scheduler::Runnables).new(Crystal::NPROCS + 1)
+
+    @@park_mutex = Thread::Mutex.new
+    @@park_cond = Thread::ConditionVariable.new
+    @@park_count = 0
+
     # allocate the main scheduler:
     Thread.current.scheduler
   end
@@ -73,9 +83,6 @@ class Crystal::Scheduler
   # 1. passes CPU time to another thread, allowing other threads to progress;
   # 2. tries to steal a fiber from another random scheduler;
   # 3. executes the event loop to try and fill its internal queue.
-  #
-  # TODO: loop a limited number of time and eventually park the thread to avoid
-  #       burning CPU time.
   def start : Nil
     # always process the internal runnables queue on startup:
     if fiber = @runnables.pop?
@@ -85,28 +92,35 @@ class Crystal::Scheduler
     # the runnables queue is now empty
 
     while Crystal.running?
+      if fiber = steal_loop
+        resume(fiber)
+
+        # the runnables queue is now empty again
+      else
+        park
+      end
+    end
+  end
+
+  protected def steal_loop : Fiber?
+    100.times do
       # 1. yield CPU time to another thread
       Thread.yield
 
       # 2. try to steal a runnable fiber from a random scheduler:
-      fiber = steal_once
-
-      unless fiber
-        # 3. process the event loop to fill the runnables queue if any events
-        #    are pending, but don't block, since it would prevent this thread
-        #    from stealing fibers (or resuming a yielded fiber), and block other
-        #    threads, too:
-        Crystal::EventLoop.run_nonblock
-
-        # try to dequeue a fiber from the internal runnables queue:
-        fiber = @runnables.pop?
+      if fiber = steal_once
+        return fiber
       end
 
-      if fiber
-        # success: we now have a runnable fiber (dequeued, stolen or ready):
-        resume(fiber)
+      # 3. process the event loop to fill the runnables queue if any events
+      #    are pending, but don't block, since it would prevent this thread
+      #    from stealing fibers (or resuming a yielded fiber), and block other
+      #    threads, too:
+      Crystal::EventLoop.run_nonblock
 
-        # the runnables queue is now empty (again)
+      # 4. try to dequeue a fiber from the internal runnables queue:
+      if fiber = @runnables.pop?
+        return fiber
       end
     end
   end
@@ -118,14 +132,12 @@ class Crystal::Scheduler
 
   protected def enqueue(fiber : Fiber) : Nil
     @runnables.push(fiber)
-    # TODO: wakeup a parked thread (if any)
+    unpark_one
   end
 
   protected def enqueue(fibers : Enumerable(Fiber)) : Nil
-    fibers.each do |fiber|
-      @runnables.push(fiber)
-    end
-    # TODO: wakeup parked threads (if any)
+    fibers.each { |fiber| @runnables.push(fiber) }
+    unpark_one
   end
 
   protected def resume(fiber : Fiber) : Nil
@@ -183,7 +195,7 @@ class Crystal::Scheduler
 
   # Suspends execution of `@current` by saving its context, and resumes another
   # fiber. `@current` is never enqueued and must be manually resumed by another
-  # main (event loop, explicit call the `#resume` or `#enqueue`, ...).
+  # mean (event loop, explicit call the `#resume` or `#enqueue`, ...).
   protected def reschedule : Nil
     # try to dequeue the next fiber from the internal runnables queue:
     fiber = @runnables.pop?
@@ -233,5 +245,35 @@ class Crystal::Scheduler
   protected def yield(fiber : Fiber) : Nil
     enqueue(@current)
     resume(fiber)
+  end
+
+  private def park
+    @@park_mutex.lock
+
+    if @@park_count < (Crystal::NPROCS - 1)
+      # keep a counter, so we don't signal on enqueue unless there is a thread
+      # to wakeup, and don't park the last scheduler thread either:
+      @@park_count += 1
+
+      begin
+        # wait for a fiber to be enqueued:
+        @@park_cond.wait(@@park_mutex)
+      ensure
+        # unpark
+        @@park_count -= 1
+        @@park_mutex.unlock
+      end
+    else
+      @@park_mutex.unlock
+
+      # don't park the last standing thread, run the event loop in a blocking
+      # manner instead, to wait and eventually have it enqueue fibers to resume:
+      Crystal::EventLoop.run_once
+    end
+  end
+
+  private def unpark_one
+    return if @@park_count == 0
+    @@park_mutex.synchronize { @@park_cond.signal }
   end
 end
