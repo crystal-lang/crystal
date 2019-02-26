@@ -527,7 +527,7 @@ class String
     case ptr.value.unsafe_chr
     when '-'
       {% if unsigned %}    
-        return ToU64Info.new 0, true, true
+        return yield
       {% end %}
       negative = true
       ptr += 1
