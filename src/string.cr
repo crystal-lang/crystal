@@ -4299,13 +4299,6 @@ class String
       value
     end
 
-    def rewind
-      @reader.pos = 0
-      @end = false
-      check_empty
-      self
-    end
-
     private def check_empty
       @end = true if @reader.string.bytesize == 0
     end
@@ -4344,12 +4337,6 @@ class String
       end
 
       value
-    end
-
-    def rewind
-      @offset = 0
-      @end = false
-      self
     end
   end
 end

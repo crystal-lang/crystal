@@ -485,17 +485,13 @@ describe "Int" do
     iter.next.should eq(1)
     iter.next.should eq(2)
     iter.next.should be_a(Iterator::Stop)
-
-    iter.rewind
-    iter.next.should eq(0)
   end
 
   it "gets times iterator for UInt32 (#5019)" do
     iter = 4_u32.times
     iter.next.should be_a(UInt32)
 
-    iter.rewind
-    ary = iter.to_a
+    ary = 4_u32.times.to_a
     ary.should be_a(Array(UInt32))
     ary.should eq([0, 1, 2, 3])
   end
@@ -543,9 +539,6 @@ describe "Int" do
     iter.next.should eq(2)
     iter.next.should eq(3)
     iter.next.should be_a(Iterator::Stop)
-
-    iter.rewind
-    iter.next.should eq(1)
   end
 
   it "gets upto iterator max" do
@@ -555,9 +548,6 @@ describe "Int" do
     iter.next.should eq(Int32::MAX - 1)
     iter.next.should eq(Int32::MAX)
     iter.next.should be_a(Iterator::Stop)
-
-    iter.rewind
-    iter.next.should eq(Int32::MAX - 3)
   end
 
   it "upto iterator ups and downs" do
@@ -606,9 +596,6 @@ describe "Int" do
     iter.next.should eq(2)
     iter.next.should eq(1)
     iter.next.should be_a(Iterator::Stop)
-
-    iter.rewind
-    iter.next.should eq(3)
   end
 
   it "downto iterator ups and downs" do
@@ -627,9 +614,6 @@ describe "Int" do
     iter.next.should eq(1)
     iter.next.should eq(0)
     iter.next.should be_a(Iterator::Stop)
-
-    iter.rewind
-    iter.next.should eq(3)
   end
 
   it "gets to iterator" do
@@ -638,9 +622,6 @@ describe "Int" do
     iter.next.should eq(2)
     iter.next.should eq(3)
     iter.next.should be_a(Iterator::Stop)
-
-    iter.rewind
-    iter.next.should eq(1)
   end
 
   describe "#popcount" do

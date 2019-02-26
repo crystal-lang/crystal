@@ -2006,16 +2006,10 @@ describe "String" do
     iter.next.should eq('b')
     iter.next.should eq('c')
     iter.next.should be_a(Iterator::Stop)
-
-    iter.rewind
-    iter.next.should eq('a')
   end
 
   it "gets each_char with empty string" do
     iter = "".each_char
-    iter.next.should be_a(Iterator::Stop)
-
-    iter.rewind
     iter.next.should be_a(Iterator::Stop)
   end
 
@@ -2046,9 +2040,6 @@ describe "String" do
     iter.next.should eq('b'.ord)
     iter.next.should eq('c'.ord)
     iter.next.should be_a(Iterator::Stop)
-
-    iter.rewind
-    iter.next.should eq('a'.ord)
   end
 
   it "cycles bytes" do
@@ -2095,9 +2086,6 @@ describe "String" do
     iter.next.should eq("bar")
     iter.next.should eq("baz")
     iter.next.should be_a(Iterator::Stop)
-
-    iter.rewind
-    iter.next.should eq("foo")
   end
 
   it "gets each_line iterator with chomp = false" do
@@ -2106,9 +2094,6 @@ describe "String" do
     iter.next.should eq("bar\n")
     iter.next.should eq("baz\n")
     iter.next.should be_a(Iterator::Stop)
-
-    iter.rewind
-    iter.next.should eq("foo\n")
   end
 
   it "has yields to each_codepoint" do

@@ -1168,11 +1168,6 @@ abstract class IO
     def next
       @io.gets(*@args, **@nargs) || stop
     end
-
-    def rewind
-      @io.rewind
-      self
-    end
   end
 
   private struct CharIterator(I)
@@ -1184,11 +1179,6 @@ abstract class IO
     def next
       @io.read_char || stop
     end
-
-    def rewind
-      @io.rewind
-      self
-    end
   end
 
   private struct ByteIterator(I)
@@ -1199,11 +1189,6 @@ abstract class IO
 
     def next
       @io.read_byte || stop
-    end
-
-    def rewind
-      @io.rewind
-      self
     end
   end
 end

@@ -251,9 +251,6 @@ describe "Number" do
       iter.next.should eq(0.1)
       iter.next.should eq(0.2)
       iter.next.should be_a(Iterator::Stop)
-
-      iter.rewind
-      iter.next.should eq(0.0)
     end
 
     it "iterator without limit" do

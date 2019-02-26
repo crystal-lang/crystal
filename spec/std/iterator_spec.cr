@@ -34,9 +34,6 @@ describe Iterator do
       iter.next.should eq(1)
       iter.next.should eq(3)
       iter.next.should be_a(Iterator::Stop)
-
-      iter.rewind
-      iter.next.should eq(1)
     end
 
     it "sums after compact_map to_a" do
@@ -52,12 +49,6 @@ describe Iterator do
       iter.next.should eq('a')
       iter.next.should eq('b')
       iter.next.should be_a(Iterator::Stop)
-
-      iter.rewind
-      iter.next.should eq(1)
-
-      iter.rewind
-      iter.to_a.should eq([1, 2, 'a', 'b'])
     end
 
     describe "chain indeterminate number of iterators" do
@@ -84,9 +75,6 @@ describe Iterator do
       it "rewinds" do
         iters = [[0], [1], ([] of Int32), [2, 3], ([] of Int32), [4, 5, 6]].each.map &.each
         iter = Iterator.chain iters
-        7.times { |i| iter.next.should eq i }
-        iter.next.should be_a Iterator::Stop
-        iter.rewind
         7.times { |i| iter.next.should eq i }
         iter.next.should be_a Iterator::Stop
       end
@@ -123,9 +111,6 @@ describe Iterator do
       iter.next.should eq([2, 3, 4])
       iter.next.should eq([3, 4, 5])
       iter.next.should be_a(Iterator::Stop)
-
-      iter.rewind
-      iter.next.should eq([1, 2, 3])
     end
 
     describe "reuse" do
@@ -138,10 +123,6 @@ describe Iterator do
         first.should_not be(second)
         iter.next.should eq([3, 4, 5])
         iter.next.should be_a(Iterator::Stop)
-
-        iter.rewind
-        iter.next.should eq([1, 2, 3])
-        iter.next.should_not be(first)
       end
 
       it "reuse as Bool" do
@@ -153,10 +134,6 @@ describe Iterator do
         first.should be(second)
         iter.next.should eq([3, 4, 5])
         iter.next.should be_a(Iterator::Stop)
-
-        iter.rewind
-        iter.next.should eq([1, 2, 3])
-        iter.next.should be(first)
       end
 
       it "reuse as Array" do
@@ -172,11 +149,6 @@ describe Iterator do
         value.should be(reuse)
         value.should eq([3, 4, 5])
         iter.next.should be_a(Iterator::Stop)
-
-        iter.rewind
-        value = iter.next
-        value.should be(reuse)
-        value.should eq([1, 2, 3])
       end
 
       it "reuse as deque" do
@@ -192,11 +164,6 @@ describe Iterator do
         value.should be(reuse)
         value.should eq(Deque{3, 4, 5})
         iter.next.should be_a(Iterator::Stop)
-
-        iter.rewind
-        value = iter.next
-        value.should be(reuse)
-        value.should eq(Deque{1, 2, 3})
       end
     end
   end
@@ -209,9 +176,6 @@ describe Iterator do
       iter.next.should eq(3)
       iter.next.should eq(1)
       iter.next.should eq(2)
-
-      iter.rewind
-      iter.next.should eq(1)
     end
 
     it "cycles an empty array" do
@@ -227,9 +191,6 @@ describe Iterator do
       iter.next.should eq(1)
       iter.next.should eq(2)
       iter.next.should be_a(Iterator::Stop)
-
-      iter.rewind
-      iter.next.should eq(1)
     end
 
     it "does not cycle provided 0" do
@@ -300,9 +261,6 @@ describe Iterator do
       iter.next.should eq([2])
       iter.next.should eq([3])
       iter.next.should be_a(Iterator::Stop)
-
-      iter.rewind
-      iter.next.should eq [1]
     end
 
     it "creats a group of two" do
@@ -310,9 +268,6 @@ describe Iterator do
       iter.next.should eq([1, 2])
       iter.next.should eq([3, nil])
       iter.next.should be_a(Iterator::Stop)
-
-      iter.rewind
-      iter.next.should eq [1, 2]
     end
 
     it "fills up with the fill up argument" do
@@ -320,9 +275,6 @@ describe Iterator do
       iter.next.should eq([1, 2])
       iter.next.should eq([3, 'z'])
       iter.next.should be_a(Iterator::Stop)
-
-      iter.rewind
-      iter.next.should eq [1, 2]
     end
 
     it "raises argument error if size is less than 0" do
@@ -347,9 +299,6 @@ describe Iterator do
       b.should be(a)
 
       iter.next.should be_a(Iterator::Stop)
-
-      iter.rewind
-      iter.next.should eq [1, 2]
     end
   end
 
@@ -360,9 +309,6 @@ describe Iterator do
       iter.next.should eq(4)
       iter.next.should eq(6)
       iter.next.should be_a(Iterator::Stop)
-
-      iter.rewind
-      iter.next.should eq(2)
     end
   end
 
@@ -371,9 +317,6 @@ describe Iterator do
       iter = (1..3).each.reject &.>=(2)
       iter.next.should eq(1)
       iter.next.should be_a(Iterator::Stop)
-
-      iter.rewind
-      iter.next.should eq(1)
     end
 
     it "does with pattern" do
@@ -396,9 +339,6 @@ describe Iterator do
       iter.next.should eq(2)
       iter.next.should eq(3)
       iter.next.should be_a(Iterator::Stop)
-
-      iter.rewind
-      iter.next.should eq(2)
     end
 
     it "does with pattern" do
@@ -421,9 +361,6 @@ describe Iterator do
       iter = (1..3).each.skip(2)
       iter.next.should eq(3)
       iter.next.should be_a(Iterator::Stop)
-
-      iter.rewind
-      iter.next.should eq(3)
     end
 
     it "is cool to skip 0 elements" do
@@ -444,9 +381,6 @@ describe Iterator do
       iter.next.should eq(4)
       iter.next.should eq(0)
       iter.next.should be_a(Iterator::Stop)
-
-      iter.rewind
-      iter.next.should eq(3)
     end
 
     it "can skip everything" do
@@ -477,9 +411,6 @@ describe Iterator do
       iter.next.should eq([4, 5, 6])
       iter.next.should eq([7, 8])
       iter.next.should be_a(Iterator::Stop)
-
-      iter.rewind
-      iter.next.should eq([1, 2, 3])
     end
   end
 
@@ -526,9 +457,6 @@ describe Iterator do
       iter.next.should eq(1)
       iter.next.should eq(2)
       iter.next.should be_a(Iterator::Stop)
-
-      iter.rewind
-      iter.next.should eq(1)
     end
 
     it "does first with more than available" do
@@ -553,9 +481,6 @@ describe Iterator do
       iter.next.should eq(1)
       iter.next.should eq(2)
       iter.next.should be_a(Iterator::Stop)
-
-      iter.rewind
-      iter.next.should eq(1)
     end
 
     it "does take_while with more than available" do
@@ -588,9 +513,6 @@ describe Iterator do
       a.should eq(6)
 
       iter.next.should be_a(Iterator::Stop)
-
-      iter.rewind
-      iter.next.should eq(1)
     end
   end
 
@@ -601,9 +523,6 @@ describe Iterator do
       iter.next.should eq(2)
       iter.next.should eq(0)
       iter.next.should be_a(Iterator::Stop)
-
-      iter.rewind
-      iter.next.should eq(1)
     end
 
     it "with block" do
@@ -612,9 +531,6 @@ describe Iterator do
       iter.next.should eq(2)
       iter.next.should eq(3)
       iter.next.should be_a(Iterator::Stop)
-
-      iter.rewind
-      iter.next.should eq(1)
     end
   end
 
@@ -625,9 +541,6 @@ describe Iterator do
       iter.next.should eq({2, 1})
       iter.next.should eq({3, 2})
       iter.next.should be_a(Iterator::Stop)
-
-      iter.rewind
-      iter.next.should eq({1, 0})
     end
 
     it "does with_index with offset from range" do
@@ -636,9 +549,6 @@ describe Iterator do
       iter.next.should eq({2, 11})
       iter.next.should eq({3, 12})
       iter.next.should be_a(Iterator::Stop)
-
-      iter.rewind
-      iter.next.should eq({1, 10})
     end
 
     it "does with_index from range, with block" do
@@ -665,9 +575,6 @@ describe Iterator do
       iter.next.should eq({2, "a"})
       iter.next.should eq({3, "a"})
       iter.next.should be_a(Iterator::Stop)
-
-      iter.rewind
-      iter.next.should eq({1, "a"})
     end
   end
 
@@ -680,12 +587,6 @@ describe Iterator do
       iter.next.should eq({2, 'b'})
       iter.next.should eq({3, 'c'})
       iter.next.should be_a(Iterator::Stop)
-
-      iter.rewind
-      iter.next.should eq({1, 'a'})
-
-      iter.rewind
-      iter.to_a.should eq([{1, 'a'}, {2, 'b'}, {3, 'c'}])
     end
   end
 
@@ -711,12 +612,6 @@ describe Iterator do
       iter.next.should eq({:c, 3})
 
       iter.next.should be_a(Iterator::Stop)
-
-      iter.rewind
-      iter.next.should eq(1)
-
-      iter.rewind
-      iter.to_a.should eq([1, 2, 'a', 'b', {:c, 3}])
     end
 
     it "flattens an iterator of mixed-type elements and iterators" do
@@ -727,12 +622,6 @@ describe Iterator do
       iter.next.should eq('a')
 
       iter.next.should be_a(Iterator::Stop)
-
-      iter.rewind
-      iter.next.should eq(1)
-
-      iter.rewind
-      iter.to_a.should eq([1, 2, 'a'])
     end
 
     it "flattens an iterator of mixed-type elements and iterators and iterators of iterators" do
@@ -745,12 +634,6 @@ describe Iterator do
       iter.next.should eq("foo")
 
       iter.next.should be_a(Iterator::Stop)
-
-      iter.rewind
-      iter.next.should eq(1)
-
-      iter.rewind
-      iter.to_a.should eq([1, 2, 'a', 'b', "foo"])
     end
 
     it "flattens deeply-nested and mixed type iterators" do
@@ -766,12 +649,6 @@ describe Iterator do
       iter.next.should eq("a")
 
       iter.next.should be_a(Iterator::Stop)
-
-      iter.rewind
-      iter.next.should eq(1)
-
-      iter.rewind
-      iter.to_a.should eq([1, 2, 3, 4, 5, 6, 7, "a"])
     end
 
     it "flattens a variety of edge cases" do
@@ -795,7 +672,6 @@ describe Iterator do
       iter = [1, [2, 3], 4].each.flatten
 
       iter.to_a.should eq([1, 2, 3, 4])
-      iter.rewind.to_a.should eq([1, 2, 3, 4])
     end
   end
 
@@ -809,8 +685,6 @@ describe Iterator do
       iter.next.should eq(2)
       iter.next.should eq(3)
       iter.next.should eq(3)
-
-      iter.rewind.to_a.should eq([1, 1, 2, 2, 3, 3])
     end
 
     it "flattens returned items" do
@@ -819,8 +693,6 @@ describe Iterator do
       iter.next.should eq(1)
       iter.next.should eq(2)
       iter.next.should eq(3)
-
-      iter.rewind.to_a.should eq([1, 2, 3])
     end
 
     it "flattens returned iterators" do
@@ -832,8 +704,6 @@ describe Iterator do
       iter.next.should eq(2)
       iter.next.should eq(3)
       iter.next.should eq(3)
-
-      iter.rewind.to_a.should eq([1, 1, 2, 2, 3, 3])
     end
 
     it "flattens returned values" do
@@ -853,8 +723,6 @@ describe Iterator do
       iter.next.should eq(2)
       iter.next.should eq(3)
       iter.next.should eq(3)
-
-      iter.rewind.to_a.should eq([1, 2, 2, 3, 3])
     end
   end
 
@@ -884,9 +752,6 @@ describe Iterator do
       iter = ary.slice_after(&.even?)
       iter.next.should eq([1, 3, 5, 8])
       iter.next.should eq([10])
-
-      iter.rewind
-      iter.next.should eq([1, 3, 5, 8])
     end
 
     it "slices after with reuse = true" do
@@ -991,9 +856,6 @@ describe Iterator do
       iter = ary.slice_before(&.even?)
       iter.next.should eq([1, 3, 5])
       iter.next.should eq([8])
-
-      iter.rewind
-      iter.next.should eq([1, 3, 5])
     end
 
     it "slices before with reuse = true" do
@@ -1094,9 +956,6 @@ describe Iterator do
       iter = ary.slice_when { |x, y| x != y }
       iter.next.should eq([1, 1, 1])
       iter.next.should eq([2, 2])
-
-      iter.rewind
-      iter.next.should eq([1, 1, 1])
     end
 
     it "slices when with reuse = true" do

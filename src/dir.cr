@@ -287,11 +287,6 @@ class Dir
     def next
       @dir.read || stop
     end
-
-    def rewind
-      @dir.rewind
-      self
-    end
   end
 
   private struct ChildIterator
@@ -306,11 +301,6 @@ class Dir
         return entry unless excluded.includes?(entry)
       end
       stop
-    end
-
-    def rewind
-      @dir.rewind
-      self
     end
   end
 end

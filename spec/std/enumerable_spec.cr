@@ -135,9 +135,6 @@ describe "Enumerable" do
       i = (0..10).chunk(&./(3))
       i.next.should eq({0, [0, 1, 2]})
       i.next.should eq({1, [3, 4, 5]})
-      i.rewind
-      i.next.should eq({0, [0, 1, 2]})
-      i.next.should eq({1, [3, 4, 5]})
     end
 
     it "returns elements of the Enumerable in an Array of Tuple, {v, ary}, where 'ary' contains the consecutive elements for which the block returned the value 'v'" do
@@ -187,11 +184,6 @@ describe "Enumerable" do
       c = iter.next.as(Tuple)
       c.should eq({3, [3, 3]})
       c[1].should be(a[1])
-
-      iter.rewind
-      a1 = iter.next.as(Tuple)
-      a1.should eq({1, [1, 1]})
-      a1[1].should be(a[1])
     end
   end
 
@@ -262,9 +254,6 @@ describe "Enumerable" do
       iter.next.should eq([2, 3, 4])
       iter.next.should eq([3, 4, 5])
       iter.next.should be_a(Iterator::Stop)
-
-      iter.rewind
-      iter.next.should eq([1, 2, 3])
     end
 
     it "returns each_cons iterator with reuse = true" do
@@ -369,9 +358,6 @@ describe "Enumerable" do
       iter.next.should eq([3, 4])
       iter.next.should eq([5])
       iter.next.should be_a(Iterator::Stop)
-
-      iter.rewind
-      iter.next.should eq([1, 2])
     end
   end
 
@@ -397,9 +383,6 @@ describe "Enumerable" do
       iter.next.should eq({1, 0})
       iter.next.should eq({2, 1})
       iter.next.should be_a(Iterator::Stop)
-
-      iter.rewind
-      iter.next.should eq({1, 0})
     end
   end
 
@@ -418,9 +401,6 @@ describe "Enumerable" do
       iter.next.should eq({1, "a"})
       iter.next.should eq({2, "a"})
       iter.next.should be_a(Iterator::Stop)
-
-      iter.rewind
-      iter.next.should eq({1, "a"})
     end
   end
 
