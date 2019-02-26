@@ -161,7 +161,7 @@ class OAuth2::Client
     when 200, 201
       OAuth2::AccessToken.from_json(response.body)
     else
-      raise OAuth2::Error.from_json(response.body)
+      raise OAuth2::Error.new(response.body)
     end
   end
 
