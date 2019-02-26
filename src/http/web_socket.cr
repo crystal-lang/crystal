@@ -90,10 +90,11 @@ class HTTP::WebSocket
     end
   end
 
-  def close(message = nil)
+  # Closes the websocket with *reason* and *code*.
+  def close(reason : String? = nil, code : Int16? = nil)
     return if closed?
     @closed = true
-    @ws.close(message)
+    @ws.close(reason, code)
   end
 
   def run

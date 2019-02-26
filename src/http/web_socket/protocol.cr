@@ -229,7 +229,20 @@ class HTTP::WebSocket::Protocol
     end
   end
 
-  def close(message = nil)
+  def close(reason : String? = nil, code : Int16? = nil)
+    if code
+      raw = uninitialized UInt8[2]
+      IO::ByteFormat::BigEndian.encode(code, raw.to_slice)
+
+      message = String.new(raw)
+
+      if reason
+        message += reason
+      end
+    else
+      message = reason
+    end
+
     if message
       send(message.to_slice, Opcode::CLOSE)
     else
