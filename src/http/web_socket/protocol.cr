@@ -229,25 +229,15 @@ class HTTP::WebSocket::Protocol
     end
   end
 
-  def close(reason : String? = nil, code : Int16? = nil)
-    if code
-      raw = uninitialized UInt8[2]
-      IO::ByteFormat::BigEndian.encode(code, raw.to_slice)
+  def close
+    send(Bytes.empty, Opcode::CLOSE)
+  end
 
-      message = String.new(raw)
-
-      if reason
-        message += reason
-      end
-    else
-      message = reason
-    end
-
-    if message
-      send(message.to_slice, Opcode::CLOSE)
-    else
-      send(Bytes.empty, Opcode::CLOSE)
-    end
+  def close(code : Int16, reason : String? = nil)
+    slice = Bytes.new(sizeof(Int16) + (reason ? reason.bytesize : 0))
+    IO::ByteFormat::NetworkEndian.encode(code, slice)
+    reason.to_slice.copy_to(slice + sizeof(Int16)) if reason
+    send(slice, Opcode::CLOSE)
   end
 
   def self.new(host : String, path : String, port = nil, tls = false, headers = HTTP::Headers.new)

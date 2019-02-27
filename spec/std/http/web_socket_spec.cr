@@ -275,14 +275,16 @@ describe HTTP::WebSocket do
   end
 
   describe "close" do
-    it "closes with message" do
-      message = "bye"
+    it "closes with code and response" do
+      response = "bye"
+      code = 4000_i16
       io = IO::Memory.new
       ws = HTTP::WebSocket::Protocol.new(io)
-      ws.close(message)
+      ws.close(code, response)
       bytes = io.to_slice
       (bytes[0] & 0x0f).should eq(0x8) # CLOSE frame
-      String.new(bytes[2, bytes[1]]).should eq(message)
+      IO::ByteFormat::NetworkEndian.decode(Int16, bytes[2, 3]).should eq(code)
+      String.new(bytes[4, bytes[1] - 2]).should eq(response)
     end
 
     it "closes without message" do

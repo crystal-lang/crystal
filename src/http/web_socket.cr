@@ -53,7 +53,7 @@ class HTTP::WebSocket
   def on_binary(&@on_binary : Bytes ->)
   end
 
-  def on_close(&@on_close : String ->)
+  def on_close(&@on_close : Int16?, String? ->)
   end
 
   protected def check_open
@@ -90,11 +90,18 @@ class HTTP::WebSocket
     end
   end
 
-  # Closes the websocket with *reason* and *code*.
-  def close(reason : String? = nil, code : Int16? = nil)
+  # Closes the websocket.
+  def close
     return if closed?
     @closed = true
-    @ws.close(reason, code)
+    @ws.close
+  end
+
+  # Closes the websocket with *code* and *reason*.
+  def close(code : Int16, reason : String? = nil)
+    return if closed?
+    @closed = true
+    @ws.close(code, reason)
   end
 
   def run
@@ -102,7 +109,7 @@ class HTTP::WebSocket
       begin
         info = @ws.receive(@buffer)
       rescue IO::EOFError
-        @on_close.try &.call("")
+        @on_close.try &.call(nil, nil)
         break
       end
 
@@ -136,9 +143,16 @@ class HTTP::WebSocket
       when Protocol::Opcode::CLOSE
         @current_message.write @buffer[0, info.size]
         if info.final
-          message = @current_message.to_s
-          @on_close.try &.call(message)
-          close(message) unless closed?
+          begin
+            code = @current_message.read_bytes(Int16, IO::ByteFormat::NetworkEndian)
+            reason = @current_message.gets_to_end
+            @on_close.try &.call(code, reason)
+            close(code, reason) unless closed?
+          rescue IO::EOFError
+            @on_close.try &.call(nil, nil)
+            close unless closed?
+          end
+
           @current_message.clear
           break
         end
