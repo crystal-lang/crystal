@@ -593,7 +593,7 @@ module Crystal
       0
     end
 
-    def type_desc
+    def type_desc(indefinitive_article = false)
       to_s
     end
 
