@@ -2342,8 +2342,8 @@ module Crystal
       io << ')'
     end
 
-    def type_desc
-      "tuple"
+    def type_desc(indefinitive_article = false)
+      "#{"a " if indefinitive_article}tuple"
     end
   end
 
@@ -2466,8 +2466,8 @@ module Crystal
       io << ')'
     end
 
-    def type_desc
-      "tuple"
+    def type_desc(indefinitive_article = false)
+      "#{"a " if indefinitive_article}tuple"
     end
   end
 
