@@ -5,6 +5,19 @@ require "random"
 # A `BigInt` can represent arbitrarily large integers.
 #
 # It is implemented under the hood with [GMP](https://gmplib.org/).
+#
+# ### Usage:
+# ```
+# require "big"
+# # From a string representation
+# BigInt.new("123456789123456789123456789123456789") # => 123456789123456789123456789123456789
+# # With an optionally specified base
+# BigInt.new("1234567890ABCDEF", base: 16)           # => 1311768467294899695
+# # Defaults to 0
+# BigInt.new                                         # => 0
+# # From a number
+# (BigInt.new 18_446_744_073_709_551_615) + 1        # => 18446744073709551616
+# ```
 struct BigInt < Int
   include Comparable(Int::Signed)
   include Comparable(Int::Unsigned)
