@@ -142,7 +142,7 @@ describe "Semantic: enum" do
         B
       end
       ),
-      "Foo is not a enum, it's a class"
+      "Foo is not an enum, it's a class"
   end
 
   it "errors if reopen and tries to define constant" do

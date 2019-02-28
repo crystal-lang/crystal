@@ -9,15 +9,15 @@ describe "Semantic: primitives" do
     assert_type("1") { int32 }
   end
 
-  it "types a int64" do
+  it "types an int64" do
     assert_type("1_i64") { int64 }
   end
 
-  it "types a int128" do
+  it "types an int128" do
     assert_type("1_i128") { int128 }
   end
 
-  it "types a uint128" do
+  it "types an uint128" do
     assert_type("1_u128") { uint128 }
   end
 

@@ -535,8 +535,8 @@ module Crystal
       self
     end
 
-    def type_desc
-      "main"
+    def type_desc(indefinitive_article = false)
+      "#{"a " if indefinitive_article}main"
     end
 
     def add_def(node : Def)

@@ -143,11 +143,11 @@ module Spec
     end
 
     def failure_message(actual_value)
-      "Expected #{actual_value.inspect} (#{actual_value.class}) to be a #{T}"
+      "Expected #{actual_value.inspect} (#{actual_value.class}) to be #{T}"
     end
 
     def negative_failure_message(actual_value)
-      "Expected #{actual_value.inspect} (#{actual_value.class}) not to be a #{T}"
+      "Expected #{actual_value.inspect} (#{actual_value.class}) not to be #{T}"
     end
   end
 

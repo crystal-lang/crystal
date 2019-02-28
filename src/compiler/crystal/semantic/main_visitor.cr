@@ -245,7 +245,7 @@ module Crystal
 
       instance_type = node.name.type.instance_type
       unless instance_type.is_a?(GenericType)
-        node.raise "#{instance_type} is not a generic type, it's a #{instance_type.type_desc}"
+        node.raise "#{instance_type} is not a generic type, it's #{instance_type.type_desc(true)}"
       end
 
       if instance_type.double_variadic?
@@ -523,7 +523,7 @@ module Crystal
         when GenericClassInstanceType
           # OK
         else
-          node.raise "can only declare instance variables of a non-generic class, not a #{type.type_desc} (#{type})"
+          node.raise "can only declare instance variables of a non-generic class, not #{type.type_desc(true)} (#{type})"
         end
       when ClassVar
         thread_local = check_class_var_annotations

@@ -175,7 +175,7 @@ class Crystal::TypeDeclarationVisitor < Crystal::SemanticVisitor
     field_type = lookup_type(node.declared_type)
     field_type = check_allowed_in_lib node.declared_type, field_type
     if field_type.remove_typedef.void?
-      node.declared_type.raise "can't use Void as a #{type.type_desc} field type"
+      node.declared_type.raise "can't use Void as #{type.type_desc(true)} field type"
     end
 
     field_name = node.var.as(Var).name
@@ -220,7 +220,7 @@ class Crystal::TypeDeclarationVisitor < Crystal::SemanticVisitor
       return
     end
 
-    node.raise "can only declare instance variables of a non-generic class, not a #{owner.type_desc} (#{owner})"
+    node.raise "can only declare instance variables of a non-generic class, not #{owner.type_desc(true)} (#{owner})"
   end
 
   def declare_instance_var(owner, node, var)

@@ -647,7 +647,7 @@ abstract class IO
 
     # We first check, if the delimiter is already in the peek buffer.
     # In that case it's much faster to create a String from a slice
-    # of the buffer instead of appending to a IO::Memory,
+    # of the buffer instead of appending to an IO::Memory,
     # which happens in the other case.
     index = peek.index(delimiter_byte)
     if index

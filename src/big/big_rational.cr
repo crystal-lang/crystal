@@ -44,7 +44,7 @@ struct BigRational < Number
     initialize(num, 1)
   end
 
-  # Creates a exact representation of float as rational.
+  # Creates an exact representation of float as rational.
   def initialize(num : Float)
     # It ensures that `BigRational.new(f) == f`
     # It relies on fact, that mantissa is at most 53 bits

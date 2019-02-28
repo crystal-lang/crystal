@@ -142,7 +142,7 @@ class Zip::Reader
     @io.read_bytes(type, IO::ByteFormat::LittleEndian)
   end
 
-  # A entry inside a `Zip::Reader`.
+  # An entry inside a `Zip::Reader`.
   #
   # Use the `io` method to read from it.
   class Entry

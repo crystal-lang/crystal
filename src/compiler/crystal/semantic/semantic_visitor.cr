@@ -443,7 +443,7 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
     end
 
     unless type.is_a?(AnnotationType)
-      ann.raise "#{ann.path} is not an annotation, it's a #{type.type_desc}"
+      ann.raise "#{ann.path} is not an annotation, it's #{type.type_desc(true)}"
     end
 
     type

@@ -212,7 +212,7 @@ class Crystal::Type
           end
         end
       else
-        node.raise "#{instance_type} is not a generic type, it's a #{instance_type.type_desc}"
+        node.raise "#{instance_type} is not a generic type, it's #{instance_type.type_desc(true)}"
       end
 
       type_vars = Array(TypeVar).new(node.type_vars.size + 1)

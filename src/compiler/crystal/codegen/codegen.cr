@@ -1036,7 +1036,7 @@ module Crystal
       # If it's thread local, we use a NoInline function to access it
       # because of http://lists.llvm.org/pipermail/llvm-dev/2016-February/094736.html
       #
-      # So, we basically make a function like this (assuming the global is a i32):
+      # So, we basically make a function like this (assuming the global is an i32):
       #
       # define void @"*$foo"(i32**) noinline {
       #   store i32* @"$foo", i32** %0

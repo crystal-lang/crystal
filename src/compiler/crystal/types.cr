@@ -913,8 +913,8 @@ module Crystal
       super || parents.any? &.covariant?(other_type)
     end
 
-    def type_desc
-      "module"
+    def type_desc(indefinitive_article = false)
+      "#{"a " if indefinitive_article}module"
     end
   end
 
@@ -1178,15 +1178,16 @@ module Crystal
       false
     end
 
-    def type_desc
-      case
-      when extern? && extern_union?
-        "union"
-      when struct?
-        "struct"
-      else
-        "class"
-      end
+    def type_desc(indefinitive_article = false)
+      description = case
+                    when extern? && extern_union?
+                      "union"
+                    when struct?
+                      "struct"
+                    else
+                      "class"
+                    end
+      "#{"a " if indefinitive_article}#{description}"
     end
   end
 
@@ -1705,8 +1706,8 @@ module Crystal
       false
     end
 
-    def type_desc
-      "generic module"
+    def type_desc(indefinitive_article = false)
+      "#{"a " if indefinitive_article}generic module"
     end
 
     def add_including_type(type)
@@ -1761,8 +1762,12 @@ module Crystal
       metaclass.add_def Def.new("allocate", body: Primitive.new("allocate"))
     end
 
-    def type_desc
-      struct? ? "generic struct" : "generic class"
+    def type_desc(indefinitive_article = false)
+      if struct?
+        "#{"a " if indefinitive_article}generic struct"
+      else
+        "#{"a " if indefinitive_article}generic class"
+      end
     end
 
     def including_types
@@ -2095,8 +2100,8 @@ module Crystal
       PointerInstanceType.new program, generic_type, program.struct, type_vars
     end
 
-    def type_desc
-      "generic struct"
+    def type_desc(indefinitive_article = false)
+      "#{"a " if indefinitive_article}generic struct"
     end
   end
 
@@ -2110,8 +2115,8 @@ module Crystal
       var.type
     end
 
-    def type_desc
-      "struct"
+    def type_desc(indefinitive_article = false)
+      "#{"a " if indefinitive_article}struct"
     end
   end
 
@@ -2181,8 +2186,8 @@ module Crystal
       raise "BUG: ProcType#new_generic_instance shouldn't be invoked"
     end
 
-    def type_desc
-      "function"
+    def type_desc(indefinitive_article = false)
+      "#{"a " if indefinitive_article}function"
     end
   end
 
@@ -2255,8 +2260,8 @@ module Crystal
       raise "BUG: TupleType#new_generic_instance shouldn't be invoked"
     end
 
-    def type_desc
-      "tuple"
+    def type_desc(indefinitive_article = false)
+      "#{"a " if indefinitive_article}tuple"
     end
   end
 
@@ -2360,8 +2365,8 @@ module Crystal
       raise "BUG: NamedTupleType#new_generic_instance shouldn't be invoked"
     end
 
-    def type_desc
-      "named tuple"
+    def type_desc(indefinitive_article = false)
+      "#{"a " if indefinitive_article}named tuple"
     end
   end
 
@@ -2504,8 +2509,8 @@ module Crystal
       a_def
     end
 
-    def type_desc
-      "lib"
+    def type_desc(indefinitive_article = false)
+      "#{"a " if indefinitive_article}lib"
     end
   end
 
@@ -2526,8 +2531,8 @@ module Crystal
       true
     end
 
-    def type_desc
-      "type def"
+    def type_desc(indefinitive_article = false)
+      "#{"a " if indefinitive_article}type def"
     end
   end
 
@@ -2604,8 +2609,8 @@ module Crystal
       remove_indirection.includes_type?(other)
     end
 
-    def type_desc
-      "alias"
+    def type_desc(indefinitive_article = false)
+      "#{"an " if indefinitive_article}alias"
     end
   end
 
@@ -2672,14 +2677,14 @@ module Crystal
       nil
     end
 
-    def type_desc
-      "enum"
+    def type_desc(indefinitive_article = false)
+      "#{"an " if indefinitive_article}enum"
     end
   end
 
   class AnnotationType < NamedType
-    def type_desc
-      "annotation"
+    def type_desc(indefinitive_article = false)
+      "#{"an " if indefinitive_article}annotation"
     end
   end
 
@@ -2865,8 +2870,8 @@ module Crystal
       raise "BUG: GenericUnionType#new_generic_instance shouldn't be invoked"
     end
 
-    def type_desc
-      "union"
+    def type_desc(indefinitive_article = false)
+      "#{"a " if indefinitive_article}union"
     end
   end
 
@@ -2978,8 +2983,8 @@ module Crystal
       io << ')' unless skip_union_parens
     end
 
-    def type_desc
-      "union"
+    def type_desc(indefinitive_article = false)
+      "#{"a " if indefinitive_article}union"
     end
   end
 
@@ -3060,8 +3065,8 @@ module Crystal
       super(program, namespace, name)
     end
 
-    def type_desc
-      "constant"
+    def type_desc(indefinitive_article = false)
+      "#{"a " if indefinitive_article}constant"
     end
   end
 

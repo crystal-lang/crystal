@@ -54,12 +54,8 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
     if type
       type = type.remove_alias
 
-      unless type.is_a?(ClassType)
-        node.raise "#{name} is not a #{node.struct? ? "struct" : "class"}, it's a #{type.type_desc}"
-      end
-
-      if node.struct? != type.struct?
-        node.raise "#{name} is not a #{node.struct? ? "struct" : "class"}, it's a #{type.type_desc}"
+      if !type.is_a?(ClassType) || node.struct? != type.struct?
+        node.raise "#{name} is not a #{node.struct? ? "struct" : "class"}, it's #{type.type_desc(true)}"
       end
 
       if type_vars = node.type_vars
@@ -123,7 +119,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
           node_superclass.raise "can't inherit Enum. Use the enum keyword to define enums"
         end
       else
-        node_superclass.raise "#{superclass} is not a class, it's a #{superclass.type_desc}"
+        node_superclass.raise "#{superclass} is not a class, it's #{superclass.type_desc(true)}"
       end
     else
       superclass = node.struct? ? program.struct : program.reference
@@ -217,7 +213,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
       type = type.remove_alias
 
       unless type.module?
-        node.raise "#{type} is not a module, it's a #{type.type_desc}"
+        node.raise "#{type} is not a module, it's #{type.type_desc(true)}"
       end
 
       type = type.as(ModuleType)
@@ -255,7 +251,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
 
     if type
       unless type.is_a?(AnnotationType)
-        node.raise "#{type} is not an annotation, it's a #{type.type_desc}"
+        node.raise "#{type} is not an annotation, it's #{type.type_desc(true)}"
       end
     else
       type = AnnotationType.new(@program, scope, name)
@@ -276,7 +272,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
       if existing_type.is_a?(AliasType)
         node.raise "alias #{node.name} is already defined"
       else
-        node.raise "can't alias #{node.name} because it's already defined as a #{existing_type.type_desc}"
+        node.raise "can't alias #{node.name} because it's already defined as #{existing_type.type_desc(true)}"
       end
     end
 
@@ -536,7 +532,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
 
     if enum_type
       unless enum_type.is_a?(EnumType)
-        node.raise "#{name} is not a enum, it's a #{enum_type.type_desc}"
+        node.raise "#{name} is not an enum, it's #{enum_type.type_desc(true)}"
       end
     end
 
@@ -955,7 +951,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
     when .module?
       # OK
     else
-      node_name.raise "#{type} is not a module, it's a #{type.type_desc}"
+      node_name.raise "#{type} is not a module, it's #{type.type_desc(true)}"
     end
 
     begin

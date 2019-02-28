@@ -11,7 +11,7 @@ module Crystal::System::FileDescriptor
 
   private def unbuffered_read(slice : Bytes)
     read_syscall_helper(slice, "Error reading file") do
-      # `to_i32` is acceptable because `Slice#size` is a Int32
+      # `to_i32` is acceptable because `Slice#size` is an Int32
       LibC.read(@fd, slice, slice.size).to_i32
     end
   end
