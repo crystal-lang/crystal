@@ -186,7 +186,7 @@ struct Time::Format
       end
     end
 
-    def time_zone_offset(force_colon = false, allow_colon = true, format_seconds = true, parse_seconds = true)
+    def time_zone_offset(force_colon = false, allow_colon = true, format_seconds = false, parse_seconds = true)
       time.zone.format(io, with_colon: force_colon, with_seconds: format_seconds)
     end
 
@@ -203,7 +203,7 @@ struct Time::Format
     end
 
     def time_zone_rfc2822
-      time_zone_offset(allow_colon: false, format_seconds: false)
+      time_zone_offset(allow_colon: false)
     end
 
     def time_zone_gmt_or_rfc2822(**options)
