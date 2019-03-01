@@ -19,7 +19,9 @@ lib LibC
   {% end %}
 
   alias LongLong = Int64
+  alias INT128 = Int128
   alias ULongLong = UInt64
+  alias UINT128 = UInt128
   alias Float = Float32
   alias Double = Float64
 

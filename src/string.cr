@@ -652,8 +652,8 @@ class String
     negative : Bool,
     invalid : Bool
 
-  private def to_u128_info(base, whitespace, underscore, prefix, strict)
-    raise ArgumentError.new("Invalid base #{base}") unless 2 <= base <= 128 || base == 62
+  private def to_u128_info(base, whitespace, underscore, prefix, strict) : ToU128Info
+    # raise ArgumentError.new("Invalid base #{base}") unless 2 <= base <= 128 || base == 62
 
     ptr = to_unsafe
 
