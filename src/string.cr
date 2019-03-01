@@ -509,7 +509,7 @@ class String
     end
   end
 
-  private macro to_u64_info(base, whitespace, underscore, prefix, strict, unsigned)
+  private def to_u64_info(base, whitespace, underscore, prefix, strict, unsigned)
     raise ArgumentError.new("Invalid base #{base}") unless 2 <= base <= 36 || base == 62
 
     ptr = to_unsafe
@@ -526,9 +526,9 @@ class String
     # Check + and -
     case ptr.value.unsafe_chr
     when '-'
-      {% if unsigned %}    
-        return yield
-      {% end %}
+      if unsigned
+        return ToU64Info.new 0, true, true
+      end
       negative = true
       ptr += 1
     when '+'
