@@ -71,6 +71,18 @@ struct Set(T)
     self
   end
 
+  # Adds *object* to the set and returns `self`.
+  # If the *object* is already in the set, returns `nil`.
+  #
+  # ```
+  # s = Set{1, 5}
+  # s.add? 8 # => Set{1, 5, 8}
+  # s.add? 8 # => nil
+  # ```
+  def add?(object : T)
+    add(object) unless includes?(object)
+  end
+
   # Adds `#each` element of *elems* to the set and returns `self`.
   #
   # ```

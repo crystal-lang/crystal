@@ -40,6 +40,19 @@ describe "Set" do
     end
   end
 
+  describe "add?" do
+    it "returns self when object is not in the set" do
+      set = Set(Int32).new
+      set.add?(1).should eq(set)
+    end
+
+    it "returns nil when object is in the set" do
+      set = Set(Int32).new
+      set.add?(1)
+      set.add?(1).should be_nil
+    end
+  end
+
   describe "delete" do
     it "deletes an object" do
       set = Set{1, 2, 3}
