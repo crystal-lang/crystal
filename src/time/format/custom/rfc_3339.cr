@@ -29,7 +29,7 @@ struct Time::Format
       char 'T', 't', ' '
       twenty_four_hour_time_with_seconds
       second_fraction?(fraction_digits: fraction_digits)
-      time_zone_z_or_offset(force_colon: true)
+      time_zone_z_or_offset(force_colon: true, format_seconds: false)
     end
   end
 end
