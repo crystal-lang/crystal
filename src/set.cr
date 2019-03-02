@@ -71,16 +71,17 @@ struct Set(T)
     self
   end
 
-  # Adds *object* to the set and returns `self`.
-  # If the *object* is already in the set, returns `nil`.
+  # Adds *object* to the set and returns `true` on success
+  # and `false` if the value was already in the set.
   #
   # ```
   # s = Set{1, 5}
-  # s.add? 8 # => Set{1, 5, 8}
-  # s.add? 8 # => nil
+  # s.add? 8 # => true
+  # s.add? 8 # => false
   # ```
   def add?(object : T)
-    add(object) unless includes?(object)
+    # TODO: optimize the hash lookup call
+    !!(add(object) unless includes?(object))
   end
 
   # Adds `#each` element of *elems* to the set and returns `self`.

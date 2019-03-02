@@ -41,15 +41,16 @@ describe "Set" do
   end
 
   describe "add?" do
-    it "returns self when object is not in the set" do
+    it "returns true when object is not in the set" do
       set = Set(Int32).new
-      set.add?(1).should eq(set)
+      set.add?(1).should be_true
     end
 
-    it "returns nil when object is in the set" do
+    it "returns false when object is in the set" do
       set = Set(Int32).new
-      set.add?(1)
-      set.add?(1).should be_nil
+      set.add?(1).should be_true
+      set.includes?(1).should be_true
+      set.add?(1).should be_false
     end
   end
 
