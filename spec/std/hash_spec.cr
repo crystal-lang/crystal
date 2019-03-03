@@ -97,6 +97,22 @@ describe "Hash" do
     end
   end
 
+  describe "#includes?" do
+    it "returns true if all key-values are matching" do
+      h = (0..10).to_h { |i| {i.to_s, i} }
+      h.includes?({"0" => 0}).should be_true
+      h.includes?({"0" => 0, "10" => 10}).should be_true
+    end
+
+    it "returns false if any key-value is different" do
+      h = (0..10).to_h { |i| {i.to_s, i} }
+      h.includes?({0 => 0}).should be_false
+      h.includes?({"0" => 10}).should be_false
+      h.includes?({"0" => 0, "10" => 11}).should be_false
+      h.includes?({"0" => 0, "11" => 10}).should be_false
+    end
+  end
+
   describe "[]=" do
     it "overrides value" do
       a = {1 => 2}

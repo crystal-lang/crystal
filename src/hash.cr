@@ -141,6 +141,23 @@ class Hash(K, V)
     end
   end
 
+  # Returns `true` if *other* hash is included in the `self`,
+  # i.e. all keys and values from *other* are present in `self`.
+  #
+  # ```
+  # h = {"foo" => "bar", "qux" => "quux"}
+  # h.includes?({"foo" => "bar", "qux" => "quux"}) # => true
+  # h.includes?({"foo" => "bar"})                  # => true
+  # h.includes?({"baz" => "bar", "qux" => "quux"}) # => false
+  # h.includes?({"foo" => "baz"})                  # => false
+  # h.includes?({"baz" => "bar"})                  # => false
+  # ```
+  def includes?(other : Hash)
+    other.all? do |key, value|
+      self[key]? == value
+    end
+  end
+
   # Returns the value for the key given by *key*.
   # If not found, returns `nil`. This ignores the default value set by `Hash.new`.
   #
