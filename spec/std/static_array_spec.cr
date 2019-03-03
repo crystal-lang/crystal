@@ -160,12 +160,6 @@ describe "StaticArray" do
     iter.next.should eq(2)
     iter.next.should eq(3)
     iter.next.should be_a(Iterator::Stop)
-
-    iter.rewind
-    iter.next.should eq(1)
-
-    iter.rewind
-    iter.cycle.first(5).to_a.should eq([1, 2, 3, 1, 2])
   end
 
   it "iterates with reverse each" do
@@ -175,11 +169,5 @@ describe "StaticArray" do
     iter.next.should eq(2)
     iter.next.should eq(1)
     iter.next.should be_a(Iterator::Stop)
-
-    iter.rewind
-    iter.next.should eq(3)
-
-    iter.rewind
-    iter.cycle.first(5).to_a.should eq([3, 2, 1, 3, 2])
   end
 end

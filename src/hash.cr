@@ -1086,10 +1086,6 @@ class Hash(K, V)
         stop
       end
     end
-
-    def rewind
-      @current = @hash.@first
-    end
   end
 
   private class EntryIterator(K, V)

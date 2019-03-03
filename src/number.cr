@@ -296,10 +296,5 @@ struct Number
         value
       end
     end
-
-    def rewind
-      @n = @original
-      self
-    end
   end
 end

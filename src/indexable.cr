@@ -740,11 +740,6 @@ module Indexable(T)
         value
       end
     end
-
-    def rewind
-      @index = 0
-      self
-    end
   end
 
   private class ReverseItemIterator(A, T)
@@ -762,11 +757,6 @@ module Indexable(T)
         value
       end
     end
-
-    def rewind
-      @index = @array.size - 1
-      self
-    end
   end
 
   private class IndexIterator(A)
@@ -783,11 +773,6 @@ module Indexable(T)
         @index += 1
         value
       end
-    end
-
-    def rewind
-      @index = 0
-      self
     end
   end
 end

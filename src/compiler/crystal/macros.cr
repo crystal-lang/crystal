@@ -852,9 +852,14 @@ module Crystal::Macros
     def has_default_value? : BoolLiteral
     end
 
-    # Returns any `Annotation` with the given `type`
-    # attached to this variable.
-    def annotation(type : TypeNode) : Annotation
+    # Returns the last `Annotation` with the given `type`
+    # attached to this variable or `NilLiteral` if there are none.
+    def annotation(type : TypeNode) : Annotation | NilLiteral
+    end
+
+    # Returns an array of annotations with the given `type`
+    # attached to this variable, or an empty `ArrayLiteral` if there are none.
+    def annotations(type : TypeNode) : ArrayLiteral(Annotation)
     end
   end
 
@@ -1111,9 +1116,14 @@ module Crystal::Macros
     def visibility : SymbolLiteral
     end
 
-    # Returns any `Annotation` with the given `type`
-    # attached to this method.
-    def annotation(type : TypeNode) : Annotation
+    # Returns the last `Annotation` with the given `type`
+    # attached to this variable or `NilLiteral` if there are none.
+    def annotation(type : TypeNode) : Annotation | NilLiteral
+    end
+
+    # Returns an array of annotations with the given `type`
+    # attached to this variable, or an empty `ArrayLiteral` if there are none.
+    def annotations(type : TypeNode) : ArrayLiteral(Annotation)
     end
   end
 
@@ -1722,9 +1732,14 @@ module Crystal::Macros
     def has_attribute?(name : StringLiteral | SymbolLiteral) : BoolLiteral
     end
 
-    # Returns any `Annotation` with the given `type`
-    # attached to this type.
-    def annotation(type : TypeNode) : Annotation
+    # Returns the last `Annotation` with the given `type`
+    # attached to this variable or `NilLiteral` if there are none.
+    def annotation(type : TypeNode) : Annotation | NilLiteral
+    end
+
+    # Returns an array of annotations with the given `type`
+    # attached to this variable, or an empty `ArrayLiteral` if there are none.
+    def annotations(type : TypeNode) : ArrayLiteral(Annotation)
     end
 
     # Returns the number of elements in this tuple type or tuple metaclass type.

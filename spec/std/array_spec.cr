@@ -1395,9 +1395,6 @@ describe "Array" do
       iter.next.should eq(2)
       iter.next.should eq(3)
       iter.next.should be_a(Iterator::Stop)
-
-      iter.rewind
-      iter.next.should eq(1)
     end
 
     it "cycles" do
@@ -1413,9 +1410,6 @@ describe "Array" do
       iter.next.should eq(1)
       iter.next.should eq(2)
       iter.next.should be_a(Iterator::Stop)
-
-      iter.rewind
-      iter.next.should eq(0)
     end
   end
 
@@ -1427,9 +1421,6 @@ describe "Array" do
       iter.next.should eq(2)
       iter.next.should eq(1)
       iter.next.should be_a(Iterator::Stop)
-
-      iter.rewind
-      iter.next.should eq(3)
     end
   end
 
@@ -1574,9 +1565,6 @@ describe "Array" do
         iter.next.should eq(perm)
       end
       iter.next.should be_a(Iterator::Stop)
-
-      iter.rewind
-      iter.next.should eq(perms[0])
     end
 
     it "returns iterator with given size" do
@@ -1587,9 +1575,6 @@ describe "Array" do
         iter.next.should eq(perm)
       end
       iter.next.should be_a(Iterator::Stop)
-
-      iter.rewind
-      iter.next.should eq(perms[0])
     end
 
     it "returns iterator with reuse = true" do
@@ -1667,9 +1652,6 @@ describe "Array" do
         iter.next.should eq(comb)
       end
       iter.next.should be_a(Iterator::Stop)
-
-      iter.rewind
-      iter.next.should eq(combs[0])
     end
 
     it "returns iterator with reuse = true" do
@@ -1760,9 +1742,6 @@ describe "Array" do
         iter.next.should eq(comb)
       end
       iter.next.should be_a(Iterator::Stop)
-
-      iter.rewind
-      iter.next.should eq(combs[0])
     end
 
     it "returns iterator with reuse = true" do

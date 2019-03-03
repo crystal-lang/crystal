@@ -105,12 +105,32 @@ class OAuth2::Client
   end
 
   # Gets an access token using an authorization code, as specified by
-  # [RFC 6749, Section 4.1.1](https://tools.ietf.org/html/rfc6749#section-4.1.3).
-  def get_access_token_using_authorization_code(authorization_code) : AccessToken
+  # [RFC 6749, Section 4.1.3](https://tools.ietf.org/html/rfc6749#section-4.1.3).
+  def get_access_token_using_authorization_code(authorization_code : String) : AccessToken
     get_access_token do |form|
       form.add("redirect_uri", @redirect_uri)
       form.add("grant_type", "authorization_code")
       form.add("code", authorization_code)
+    end
+  end
+
+  # Gets an access token using the resource owner credentials, as specified by
+  # [RFC 6749, Section 4.3.2](https://tools.ietf.org/html/rfc6749#section-4.3.2).
+  def get_access_token_using_resource_owner_credentials(username : String, password : String, scope = nil) : AccessToken
+    get_access_token do |form|
+      form.add("grant_type", "password")
+      form.add("username", username)
+      form.add("password", password)
+      form.add("scope", scope) unless scope.nil?
+    end
+  end
+
+  # Gets an access token using client credentials, as specified by
+  # [RFC 6749, Section 4.4.2](https://tools.ietf.org/html/rfc6749#section-4.4.2).
+  def get_access_token_using_client_credentials(scope = nil) : AccessToken
+    get_access_token do |form|
+      form.add("grant_type", "client_credentials")
+      form.add("scope", scope) unless scope.nil?
     end
   end
 
@@ -124,16 +144,7 @@ class OAuth2::Client
     end
   end
 
-  # Gets an access token using client credentials, as specified by
-  # [RFC 6749, Section 4.4.2](https://tools.ietf.org/html/rfc6749#section-4.4.2).
-  def get_access_token_using_client_credentials(scope = nil)
-    get_access_token do |form|
-      form.add("grant_type", "client_credentials")
-      form.add("scope", scope) unless scope.nil?
-    end
-  end
-
-  private def get_access_token
+  private def get_access_token : AccessToken
     body = HTTP::Params.build do |form|
       form.add("client_id", @client_id)
       form.add("client_secret", @client_secret)
@@ -141,7 +152,8 @@ class OAuth2::Client
     end
 
     headers = HTTP::Headers{
-      "Accept" => "application/json",
+      "Accept"       => "application/json",
+      "Content-Type" => "application/x-www-form-urlencoded",
     }
 
     response = HTTP::Client.post(token_uri, form: body, headers: headers)
@@ -149,7 +161,7 @@ class OAuth2::Client
     when 200, 201
       OAuth2::AccessToken.from_json(response.body)
     else
-      raise OAuth2::Error.from_json(response.body)
+      raise OAuth2::Error.new(response.body)
     end
   end
 

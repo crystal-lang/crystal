@@ -573,11 +573,6 @@ struct Int
         stop
       end
     end
-
-    def rewind
-      @index = T.zero
-      self
-    end
   end
 
   private class UptoIterator(T, N)
@@ -600,12 +595,6 @@ struct Int
       @current += 1 unless @done
       value
     end
-
-    def rewind
-      @current = @from
-      @done = !(@from <= @to)
-      self
-    end
   end
 
   private class DowntoIterator(T, N)
@@ -627,12 +616,6 @@ struct Int
       @done = @current == @to
       @current -= 1 unless @done
       value
-    end
-
-    def rewind
-      @current = @from
-      @done = !(@from >= @to)
-      self
     end
   end
 end

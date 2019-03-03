@@ -311,9 +311,6 @@ describe "Set" do
     iter.next.should eq(2)
     iter.next.should eq(3)
     iter.next.should be_a(Iterator::Stop)
-
-    iter.rewind
-    iter.next.should eq(1)
   end
 
   it "check subset" do
