@@ -220,7 +220,14 @@ module Spec
     end
 
     def match(actual_value)
-      actual_value.includes?(@expected_value)
+      expected_value = @expected_value
+      if expected_value.is_a?(Hash) && actual_value.is_a?(Hash)
+        expected_value.all? do |key, value|
+          actual_value[key]? == value
+        end
+      else
+        actual_value.includes?(expected_value)
+      end
     end
 
     def failure_message(actual_value)

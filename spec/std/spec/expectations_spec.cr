@@ -74,6 +74,14 @@ describe "expectations" do
     it { "crystal".should contain("crystal") }
     it { "crystal".should_not contain("o") }
     it { "crystal".should_not contain("world") }
+    it do
+      hash = (0..10).to_h { |i| {i.to_s, i} }
+      hash.should contain({"0" => 0})
+      hash.should contain({"0" => 0, "10" => 10})
+      hash.should_not contain({"0" => 1})
+      hash.should_not contain({"1" => 0})
+      hash.should_not contain({"0" => 0, "11" => 11})
+    end
   end
 
   describe "eq" do
