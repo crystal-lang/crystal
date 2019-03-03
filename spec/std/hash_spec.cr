@@ -99,6 +99,53 @@ describe "Hash" do
     end
   end
 
+  context "subset/superset operators" do
+    h1 = {"a" => 1, "b" => 2}
+    h2 = {"a" => 1, "b" => 2, "c" => 3}
+    h3 = {"c" => 3}
+    h4 = {} of Nil => Nil
+
+    describe "<" do
+      it do
+        (h1 < h2).should be_true
+        (h2 < h1).should be_false
+        (h1 < h1).should be_false
+        (h1 < h3).should be_false
+        (h1 < h4).should be_false
+      end
+    end
+
+    describe "<=" do
+      it do
+        (h1 <= h2).should be_true
+        (h2 <= h1).should be_false
+        (h1 <= h1).should be_true
+        (h1 <= h3).should be_false
+        (h1 <= h4).should be_false
+      end
+    end
+
+    describe ">" do
+      it do
+        (h1 > h2).should be_false
+        (h2 > h1).should be_true
+        (h1 > h1).should be_false
+        (h1 > h3).should be_false
+        (h1 > h4).should be_true
+      end
+    end
+
+    describe ">=" do
+      it do
+        (h1 >= h2).should be_false
+        (h2 >= h1).should be_true
+        (h1 >= h1).should be_true
+        (h1 >= h3).should be_false
+        (h1 >= h4).should be_true
+      end
+    end
+  end
+
   describe "[]" do
     it "gets" do
       a = {1 => 2}
