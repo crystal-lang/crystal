@@ -88,13 +88,15 @@ class Fiber
     {% end %}
     @proc.call
   rescue ex
-    if name = @name
-      STDERR.print "Unhandled exception in spawn(name: #{name}): "
-    else
-      STDERR.print "Unhandled exception in spawn: "
+    message = String.build do |str|
+      str << "Unhandled exception in spawn"
+      str << "(name: " << name << ")" if name = @name
+      str << ": "
+      ex.inspect_with_backtrace(str)
     end
-    ex.inspect_with_backtrace(STDERR)
-    STDERR.flush
+    # FIXME: can't write to STDERR because of https://github.com/crystal-lang/crystal/issues/6920
+    # STDERR.print message
+    LibC.dprintf(2, message)
   ensure
     Fiber.stack_pool.release(@stack)
 
