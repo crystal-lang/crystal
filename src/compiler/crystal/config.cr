@@ -37,7 +37,7 @@ module Crystal
     @@default_target : Crystal::Codegen::Target?
 
     def self.default_target : Crystal::Codegen::Target
-      @@default_target || begin
+      @@default_target ||= begin
         target = Crystal::Codegen::Target.new({{env("CRYSTAL_CONFIG_TARGET")}} || LLVM.default_target_triple)
 
         if target.linux?
@@ -51,7 +51,7 @@ module Crystal
           target = Crystal::Codegen::Target.new(target.to_s.sub(default_libc, "-#{runtime_libc}"))
         end
 
-        @@default_target = target
+        target
       end
     end
 
