@@ -1,4 +1,5 @@
 {% skip_file if flag?(:win32) %}
+require "crystal/wait_deque"
 
 module IO::Evented
   @read_timed_out = false
@@ -7,11 +8,7 @@ module IO::Evented
   @read_timeout : Time::Span?
   @write_timeout : Time::Span?
 
-  @readers : Deque(Fiber)?
-  @writers : Deque(Fiber)?
-
-  @read_event : Crystal::Event?
-  @write_event : Crystal::Event?
+  @pending_fibers = Crystal::WaitDeque.new
 
   # Returns the time to wait when reading before raising an `IO::Timeout`.
   def read_timeout : Time::Span?
@@ -59,8 +56,6 @@ module IO::Evented
         raise Errno.new(errno_msg)
       end
     end
-  ensure
-    resume_pending_readers
   end
 
   def evented_write(slice : Bytes, errno_msg : String) : Nil
@@ -80,8 +75,6 @@ module IO::Evented
           end
         end
       end
-    ensure
-      resume_pending_writers
     end
   end
 
@@ -90,34 +83,6 @@ module IO::Evented
     raise Errno.new(errno_msg) if bytes_written == -1
     # `to_i32` is acceptable because `Slice#size` is an Int32
     bytes_written.to_i32
-  ensure
-    resume_pending_writers
-  end
-
-  # :nodoc:
-  def resume_read(timed_out = false)
-    @read_timed_out = timed_out
-
-    if reader = @readers.try &.shift?
-      {% if flag?(:mt) %}
-        reader.enqueue
-      {% else %}
-        reader.resume
-      {% end %}
-    end
-  end
-
-  # :nodoc:
-  def resume_write(timed_out = false)
-    @write_timed_out = timed_out
-
-    if writer = @writers.try &.shift?
-      {% if flag?(:mt) %}
-        writer.enqueue
-      {% else %}
-        writer.resume
-      {% end %}
-    end
   end
 
   protected def wait_readable(timeout = @read_timeout)
@@ -125,20 +90,16 @@ module IO::Evented
   end
 
   protected def wait_readable(timeout = @read_timeout) : Nil
-    readers = (@readers ||= Deque(Fiber).new)
-    readers << Fiber.current
-    add_read_event(timeout)
-    Crystal::Scheduler.reschedule
+    fiber = Fiber.current
+    @pending_fibers << fiber
 
-    if @read_timed_out
-      @read_timed_out = false
-      yield Timeout.new("Read timed out")
+    begin
+      Crystal::EventLoop.wait(self, :read, timeout) do
+        yield IO::Timeout.new("Read timed out")
+      end
+    ensure
+      @pending_fibers.delete fiber
     end
-  end
-
-  private def add_read_event(timeout = @read_timeout) : Nil
-    event = @read_event ||= Crystal::EventLoop.create_fd_read_event(self)
-    event.add timeout
   end
 
   protected def wait_writable(timeout = @write_timeout)
@@ -146,20 +107,16 @@ module IO::Evented
   end
 
   protected def wait_writable(timeout = @write_timeout) : Nil
-    writers = (@writers ||= Deque(Fiber).new)
-    writers << Fiber.current
-    add_write_event(timeout)
-    Crystal::Scheduler.reschedule
+    fiber = Fiber.current
+    @pending_fibers << fiber
 
-    if @write_timed_out
-      @write_timed_out = false
-      yield Timeout.new("Write timed out")
+    begin
+      Crystal::EventLoop.wait(self, :write, timeout) do
+        yield IO::Timeout.new("Write timed out")
+      end
+    ensure
+      @pending_fibers.delete fiber
     end
-  end
-
-  private def add_write_event(timeout = @write_timeout) : Nil
-    event = @write_event ||= Crystal::EventLoop.create_fd_write_event(self)
-    event.add timeout
   end
 
   def evented_reopen
@@ -167,32 +124,21 @@ module IO::Evented
   end
 
   def evented_close
-    @read_event.try &.free
-    @read_event = nil
+    Thread.log "IO#evented_closed"
+    pending = @pending_fibers.clear
 
-    @write_event.try &.free
-    @write_event = nil
+    pending.unsafe_each do |fiber|
+      # FIXME: why is a running fiber still in the list of pending fibers ?!
+      next if fiber.running?
 
-    if readers = @readers
-      Crystal::Scheduler.enqueue readers
-      readers.clear
-    end
-
-    if writers = @writers
-      Crystal::Scheduler.enqueue writers
-      writers.clear
-    end
-  end
-
-  private def resume_pending_readers
-    if (readers = @readers) && !readers.empty?
-      add_read_event
-    end
-  end
-
-  private def resume_pending_writers
-    if (writers = @writers) && !writers.empty?
-      add_write_event
+      {% if flag?(:mt) %}
+        # only enqueue the fiber if we can cancel the event, otherwise the event
+        # callback may have been executed in parallel and the fiber be enqueued
+        # already:
+        Crystal::Scheduler.enqueue(fiber) if fiber.event.cancel
+      {% else %}
+        Crystal::Scheduler.enqueue(fiber)
+      {% end %}
     end
   end
 end

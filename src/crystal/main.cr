@@ -212,7 +212,7 @@ module Crystal
     end
 
     private def self.break_main_loop : Nil
-      @@main_fiber.as(Fiber).enqueue
+      Crystal::Scheduler.enqueue(@@main_fiber.as(Fiber))
     end
   {% end %}
 end

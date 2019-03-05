@@ -1,10 +1,13 @@
 # :nodoc:
 #
-# A linked-list of pending fibers. Assumes that a fiber can only be in a
-# single wait queue at a time, during which its execution is suspended.
+# A FIFO queue of pending fibers implemented as a singly-linked list.
 #
-# The linked-list is fiber and thread unsafe. Accesses must be synchronized
-# using another mean, usually `Crystal::SpinLock`.
+# Assumes that a `Fiber` can only be in a single `WaitQueue`, `WaitDeque` or
+# `Scheduler::Runnables` at a time, during which its execution will be
+# suspended.
+#
+# The queue is fiber and thread unsafe. Accesses must be synchronized using
+# another mean, for example `Thread::Mutex` or `Crystal::SpinLock`.
 struct Crystal::WaitQueue
   @head : Fiber?
   @tail : Fiber?
@@ -30,8 +33,11 @@ struct Crystal::WaitQueue
     fiber = @head
 
     while fiber
+      # avoid issues if fiber is queued somewhere else during the block call by
+      # memorizing the next fiber to iterate:
+      next_fiber = fiber.queue_next
       yield fiber
-      fiber = fiber.queue_next
+      fiber = next_fiber
     end
   end
 

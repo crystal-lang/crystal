@@ -29,12 +29,8 @@ class Crystal::Scheduler
     Thread.current.scheduler.resume(fiber)
   end
 
-  def self.sleep(time : Time::Span) : Nil
-    Thread.current.scheduler.sleep(time)
-  end
-
   def self.yield : Nil
-    Thread.current.scheduler.yield
+    ::sleep(0)
   end
 
   def self.yield(fiber : Fiber) : Nil
@@ -84,17 +80,8 @@ class Crystal::Scheduler
     end
   end
 
-  protected def sleep(time : Time::Span) : Nil
-    @current.resume_event.add(time)
-    reschedule
-  end
-
-  protected def yield : Nil
-    sleep(0.seconds)
-  end
-
   protected def yield(fiber : Fiber) : Nil
-    @current.resume_event.add(0.seconds)
-    resume(fiber)
+    @runnables.unshift @current
+    fiber.resume
   end
 end

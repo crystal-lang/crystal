@@ -13,7 +13,7 @@ def sleep(seconds : Number)
     raise ArgumentError.new "Sleep seconds must be positive"
   end
 
-  Crystal::Scheduler.sleep(seconds.seconds)
+  Crystal::EventLoop.sleep(seconds.seconds)
 end
 
 # Blocks the current Fiber for the specified time span.
@@ -21,7 +21,7 @@ end
 # While this fiber is waiting this time, other ready-to-execute
 # fibers might start their execution.
 def sleep(time : Time::Span)
-  Crystal::Scheduler.sleep(time)
+  Crystal::EventLoop.sleep(time)
 end
 
 # Blocks the current fiber forever.

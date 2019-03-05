@@ -19,7 +19,6 @@ class Fiber
 
   @context : Context
   @stack : Void*
-  @resume_event : Crystal::Event?
   protected property stack_bottom : Void*
   property name : String?
   @alive = true
@@ -35,6 +34,8 @@ class Fiber
   # Link list of fibers in `Crystal::WaitQueue`. Assumes that a fiber may only
   # ever be in a single wait queue, in which case it's suspended.
   property queue_next : Fiber?
+  # :nodoc:
+  property queue_prev : Fiber?
 
   # :nodoc:
   def self.init
@@ -82,7 +83,9 @@ class Fiber
 
   # :nodoc:
   def run
-    {% if flag?(:mt) %} GC.unlock_read {% end %}
+    {% if flag?(:mt) %}
+      GC.unlock_read
+    {% end %}
     @proc.call
   rescue ex
     if name = @name
@@ -97,9 +100,6 @@ class Fiber
 
     # Remove the current fiber from the linked list
     @@fibers.delete(self)
-
-    # Delete the resume event if it was used by `yield` or `sleep`
-    @resume_event.try &.free
 
     @alive = false
     Crystal::Scheduler.reschedule
@@ -132,12 +132,8 @@ class Fiber
   end
 
   # :nodoc:
-  def resume_event
-    @resume_event ||= Crystal::EventLoop.create_resume_event(self)
-  end
-
-  def enqueue : Nil
-    Crystal::Scheduler.enqueue(self)
+  def event
+    @event ||= Crystal::Event.allocate_once
   end
 
   def self.yield

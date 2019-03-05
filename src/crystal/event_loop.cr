@@ -8,6 +8,11 @@ module Crystal::EventLoop
     @@mutex = uninitialized Thread::Mutex
   {% end %}
 
+  # :nodoc:
+  def self.event_base
+    @@eb
+  end
+
   def self.init
     @@eb = Crystal::Event::Base.new
     {% if flag?(:mt) %}
@@ -21,7 +26,9 @@ module Crystal::EventLoop
 
   {% if flag?(:mt) %}
     def self.run_once
-      @@mutex.synchronize { @@eb.loop(:once) }
+      @@mutex.synchronize do
+        @@eb.loop(:once)
+      end
     end
 
     def self.run_nonblock
@@ -43,42 +50,50 @@ module Crystal::EventLoop
     end
   {% end %}
 
-  def self.create_resume_event(fiber)
-    @@eb.new_event(-1, LibEvent2::EventFlags::None, fiber) do |s, flags, data|
+  def self.wait(io : IO::Evented, what : LibEvent2::EventFlags, timeout = nil)
+    fiber = Fiber.current
+
+    @@eb.event_assign(fiber.event, io.fd, what, fiber) do |_, flags, data|
+      f = data.as(Fiber)
+
+      if flags.includes?(:timeout)
+        f.event.timed_out = true
+      end
+
       {% if flag?(:mt) %}
-        data.as(Fiber).enqueue
+        # only enqueue the fiber if we can cancel the event; the event may be
+        # canceled in parallel, and the fiber would end up being enqueued twice:
+        if f.event.cancel(delete: false)
+          Crystal::Scheduler.enqueue(f)
+        end
       {% else %}
-        data.as(Fiber).resume
+        f.resume
       {% end %}
     end
-  end
+    fiber.event.add(timeout)
 
-  def self.create_fd_write_event(io : IO::Evented, edge_triggered : Bool = false)
-    flags = LibEvent2::EventFlags::Write
-    flags |= LibEvent2::EventFlags::Persist | LibEvent2::EventFlags::ET if edge_triggered
+    Crystal::Scheduler.reschedule
 
-    @@eb.new_event(io.fd, flags, io) do |s, flags, data|
-      io_ref = data.as(typeof(io))
-      if flags.includes?(LibEvent2::EventFlags::Write)
-        io_ref.resume_write
-      elsif flags.includes?(LibEvent2::EventFlags::Timeout)
-        io_ref.resume_write(timed_out: true)
-      end
+    if fiber.event.timed_out?
+      yield
     end
   end
 
-  def self.create_fd_read_event(io : IO::Evented, edge_triggered : Bool = false)
-    flags = LibEvent2::EventFlags::Read
-    flags |= LibEvent2::EventFlags::Persist | LibEvent2::EventFlags::ET if edge_triggered
+  def self.sleep(time : Time::Span)
+    fiber = Fiber.current
 
-    @@eb.new_event(io.fd, flags, io) do |s, flags, data|
-      io_ref = data.as(typeof(io))
-      if flags.includes?(LibEvent2::EventFlags::Read)
-        io_ref.resume_read
-      elsif flags.includes?(LibEvent2::EventFlags::Timeout)
-        io_ref.resume_read(timed_out: true)
-      end
+    @@eb.event_assign(fiber.event, -1, :none, fiber) do |_, _, data|
+      f = data.as(Fiber)
+
+      {% if flag?(:mt) %}
+        Crystal::Scheduler.enqueue(f)
+      {% else %}
+        f.resume
+      {% end %}
     end
+    fiber.event.add(time)
+
+    Crystal::Scheduler.reschedule
   end
 
   private def self.dns_base

@@ -52,9 +52,11 @@ lib LibEvent2
   fun event_enable_debug_mode
   fun event_reinit(eb : EventBase) : Int
   fun event_new(eb : EventBase, s : EvutilSocketT, events : EventFlags, callback : Callback, data : Void*) : Event
+  fun event_assign(event : Event, eb : EventBase, s : EvutilSocketT, events : EventFlags, callback : Callback, data : Void*) : Event
   fun event_free(event : Event)
   fun event_add(event : Event, timeout : LibC::Timeval*) : Int
   fun event_del(event : Event) : Int
+  fun event_get_struct_event_size : LibC::SizeT
 
   type DnsBase = Void*
   type DnsGetAddrinfoRequest = Void*

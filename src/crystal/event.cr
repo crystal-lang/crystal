@@ -1,23 +1,52 @@
 require "./lib_event2"
 
 # :nodoc:
-struct Crystal::Event
+class Crystal::Event
   VERSION = String.new(LibEvent2.event_get_version)
 
-  def self.callback(&block : Int32, LibEvent2::EventFlags, Void* ->)
-    block
+  {% if flag?(:abi64) %}
+    # align to 8 bytes:
+    SIZE_SELF = (instance_sizeof(Crystal::Event) + 7) & (~7)
+    SIZE = SIZE_SELF + ((LibEvent2.event_get_struct_event_size + 7) & (~7))
+  {% else %}
+    # align to 4 bytes:
+    SIZE_SELF = (instance_sizeof(Crystal::Event) + 3) & (~3)
+    SIZE = SIZE_SELF + ((LibEvent2.event_get_struct_event_size + 3) & (~3))
+  {% end %}
+
+  property? timed_out : Bool
+
+  # Avoids a double memory allocation while retaining compatibility with
+  # various libevent versions that may use different sizes for the opaque
+  # `struct event`.
+  def self.allocate_once : self
+    event = GC.malloc(SIZE).as(Crystal::Event)
+    event.initialize
+    event
   end
 
-  def initialize(@event : LibEvent2::Event)
-    @freed = false
+  # :nodoc:
+  def initialize
+    @timed_out = false
+    Crystal::EventLoop.event_base.event_assign(self, -1, LibEvent2::EventFlags.new(0), nil) { }
+  end
+
+  def finalize
+    LibEvent2.event_del(self)
   end
 
   def add(timeout : LibC::Timeval? = nil)
+    @timed_out = false
+
+    {% if flag?(:mt) %}
+      @canceled.clear
+    {% end %}
+
     if timeout
       timeout_copy = timeout
-      LibEvent2.event_add(@event, pointerof(timeout_copy))
+      LibEvent2.event_add(self, pointerof(timeout_copy))
     else
-      LibEvent2.event_add(@event, nil)
+      LibEvent2.event_add(self, nil)
     end
   end
 
@@ -28,9 +57,22 @@ struct Crystal::Event
     )
   end
 
-  def free
-    LibEvent2.event_free(@event) unless @freed
-    @freed = true
+  def del
+    LibEvent2.event_del(self)
+  end
+
+  {% if flag?(:mt) %}
+    @canceled = Atomic::Flag.new
+
+    def cancel(delete = true)
+      success = @canceled.test_and_set
+      del if delete && success
+      success
+    end
+  {% end %}
+
+  def to_unsafe
+    (self.as(Void*) + SIZE_SELF).as(LibEvent2::Event)
   end
 
   # :nodoc:
@@ -52,9 +94,8 @@ struct Crystal::Event
       end
     end
 
-    def new_event(s : Int32, flags : LibEvent2::EventFlags, data, &callback : LibEvent2::Callback)
-      event = LibEvent2.event_new(@base, s, flags, callback, data.as(Void*))
-      Event.new(event)
+    def event_assign(event : Event, fd : Int32, flags : LibEvent2::EventFlags, data, &callback : LibEvent2::Callback)
+      LibEvent2.event_assign(event, @base, fd, flags, callback, data.as(Void*))
     end
 
     def loop(flags : LibEvent2::EventLoopFlags = :none)
@@ -67,6 +108,10 @@ struct Crystal::Event
 
     def new_dns_base(init = true)
       DnsBase.new LibEvent2.evdns_base_new(@base, init ? 1 : 0)
+    end
+
+    def to_unsafe
+      @base
     end
   end
 
