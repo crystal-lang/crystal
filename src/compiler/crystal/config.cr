@@ -46,28 +46,29 @@ module Crystal
           # system.
           # This can be automatically detected from the output of `ldd --version`
           # in order to use the appropriate environment target.
-          musl_environment = musl_environment?
-          if musl_environment && target.gnu?
-            target = Crystal::Codegen::Target.new(target.to_s.sub("-gnu", "-musl"))
-          elsif !musl_environment && target.musl?
-            target = Crystal::Codegen::Target.new(target.to_s.sub("-musl", "-gnu"))
-          end
+          default_libc = target.gnu? ? "-gnu" : "-musl"
+
+          target = Crystal::Codegen::Target.new(target.to_s.sub(default_libc, "-#{runtime_libc}"))
         end
 
         @@default_target = target
       end
     end
 
-    private def self.musl_environment?
+    private def self.runtime_libc
       ldd_version = String.build do |io|
         Process.new("ldd", ["--version"], output: io, error: io).wait
       rescue Errno
         # In case of an error (for example `ldd` not available), we simply
-        # assume it's not musl
-        return false
+        # assume it's gnu.
+        return "gnu"
       end
 
-      ldd_version.starts_with?("musl")
+      if ldd_version.starts_with?("musl")
+        "musl"
+      else
+        "gnu"
+      end
     end
   end
 end
