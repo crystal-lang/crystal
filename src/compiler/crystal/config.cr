@@ -57,7 +57,7 @@ module Crystal
 
     private def self.runtime_libc
       ldd_version = String.build do |io|
-        Process.new("ldd", ["--version"], output: io, error: io).wait
+        Process.new("ldd", {"--version"}, output: io, error: io).wait
       rescue Errno
         # In case of an error (for example `ldd` not available), we simply
         # assume it's gnu.
