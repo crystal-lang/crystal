@@ -1,6 +1,5 @@
-# Provides methods that answer questions about Unicode characters,
-# and the `Unicode::CaseOptions` enum for special case conversions
-# like Turkic.
+# Provides the `Unicode::CaseOptions` enum for special case conversions like Turkic and
+# private and undocumented methods that are exposed in `Char`.
 module Unicode
   # Case options to pass to various char and string methods such as `upcase` or `downcase`.
   @[Flags]
