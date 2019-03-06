@@ -59,8 +59,7 @@ module Crystal
       ldd_version = String.build do |io|
         Process.new("ldd", {"--version"}, output: io, error: io).wait
       rescue Errno
-        # In case of an error (for example `ldd` not available), we simply
-        # assume it's gnu.
+        # In case of an error (eg. `ldd` not available), we assume it's gnu.
         return "gnu"
       end
 
