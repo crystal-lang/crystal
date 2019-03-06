@@ -13,8 +13,12 @@ module OpenSSL
     SHA512
 
     def to_evp
-      # The method `to_evp` converts an enum member of type `Algorithm` to its
-      # correspondent `EVP_MD` from the *LibCrypto API*.
+      # The internal bindings to the *LibCrypto* digest operations sometimes require a hash algorithm
+      # implementation to be passed as one of the arguments.
+      #
+      # This method will return the appropriate equivalent hash algorithm that corresponds to the
+      # current enum value.
+      #
       case self
       when MD4       then LibCrypto.evp_md4
       when MD5       then LibCrypto.evp_md5
