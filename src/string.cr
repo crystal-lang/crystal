@@ -3383,7 +3383,7 @@ class String
   # "3.14IsPi".underscore                                       # => "3.14_is_pi"
   # "InterestingImage".underscore(Unicode::CaseOptions::Turkic) # => "ınteresting_ımage"
   # ```
-  def underscore(options = Unicode::CaseOptions::None)
+  def underscore(options : Unicode::CaseOptions = Unicode::CaseOptions::None)
     first = true
     last_is_downcase = false
     last_is_upcase = false
@@ -3459,7 +3459,7 @@ class String
   # "eiffel_tower".camelcase                                   # => "EiffelTower"
   # "isolated_integer".camelcase(Unicode::CaseOptions::Turkic) # => "İsolatedİnteger"
   # ```
-  def camelcase(options = Unicode::CaseOptions::None)
+  def camelcase(options : Unicode::CaseOptions = Unicode::CaseOptions::None)
     return self if empty?
 
     first = true
