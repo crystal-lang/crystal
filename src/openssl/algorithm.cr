@@ -2,6 +2,7 @@ require "openssl"
 
 module OpenSSL
   enum Algorithm
+    # This enum indicates the standard possible algorithms for *OpenSSL* calls.
     MD4
     MD5
     RIPEMD160
@@ -12,6 +13,8 @@ module OpenSSL
     SHA512
 
     def to_evp
+      # The method `to_evp` converts an enum member of type `Algorithm` to its
+      # correspondent `EVP_MD` from the *LibCrypto API*.
       case self
       when MD4       then LibCrypto.evp_md4
       when MD5       then LibCrypto.evp_md5
