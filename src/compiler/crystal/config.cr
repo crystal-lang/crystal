@@ -41,9 +41,9 @@ module Crystal
         target = Crystal::Codegen::Target.new({{env("CRYSTAL_CONFIG_TARGET")}} || LLVM.default_target_triple)
 
         if target.linux?
-          # The linux binary runs as well on linux-gnu as linux-musl, but the
-          # default target needs to match the C library used on the current
-          # system.
+          # The statically linked linux binary runs as well on linux-gnu as
+          # on linux-musl, but the default target needs to match the C
+          # library used on the current system.
           # This can be automatically detected from the output of `ldd --version`
           # in order to use the appropriate environment target.
           default_libc = target.gnu? ? "-gnu" : "-musl"
@@ -57,7 +57,7 @@ module Crystal
 
     private def self.runtime_libc
       ldd_version = String.build do |io|
-        Process.new("ldd", {"--version"}, output: io, error: io).wait
+        Process.run("ldd", {"--version"}, output: io, error: io)
       rescue Errno
         # In case of an error (eg. `ldd` not available), we assume it's gnu.
         return "gnu"
