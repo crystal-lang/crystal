@@ -34,7 +34,7 @@ class Crystal::Command
       end
     end
 
-    playground_url = "http://#{server.host || "127.0.0.1"}:#{server.port || "8080"}"
+    playground_url = "http://#{server.host || "localhost"}:#{server.port || "8080"}"
 
     system "open #{playground_url}" # Open up the default browser automatically to the Playground.
 
