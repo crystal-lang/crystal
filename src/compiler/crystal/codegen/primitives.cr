@@ -14,14 +14,14 @@ class Crystal::CodeGenVisitor
   end
 
   def codegen_primitive(call, node, target_def, call_args)
-    @call_location = call.name_location if call.location
+    @call_location = call.name_location if call && call.location
 
     @last = case node.name
             when "binary"
               codegen_primitive_binary node, target_def, call_args
             when "cast"
               # TODO 0.28.0 delete :cast
-              codegen_primitive_convert node, target_def, call_args, checked: !call.name.ends_with?('!')
+              codegen_primitive_convert node, target_def, call_args, checked: !target_def.name.ends_with?('!')
             when "convert"
               codegen_primitive_convert node, target_def, call_args, checked: true
             when "unchecked_convert"
@@ -366,8 +366,8 @@ class Crystal::CodeGenVisitor
   end
 
   private def codegen_raise_overflow
-    location = @call_location.not_nil!
-    set_current_debug_location(location) if @debug.line_numbers?
+    location = @call_location
+    set_current_debug_location(location) if location && @debug.line_numbers?
 
     func = crystal_raise_overflow_fun
     call_args = [] of LLVM::Value
@@ -1172,6 +1172,7 @@ class Crystal::CodeGenVisitor
   end
 
   def codegen_primitive_cmpxchg(call, node, target_def, call_args)
+    call = check_atomic_call(call, target_def)
     success_ordering = atomic_ordering_from_symbol_literal(call.args[-2])
     failure_ordering = atomic_ordering_from_symbol_literal(call.args[-1])
 
@@ -1184,6 +1185,7 @@ class Crystal::CodeGenVisitor
   end
 
   def codegen_primitive_atomicrmw(call, node, target_def, call_args)
+    call = check_atomic_call(call, target_def)
     op = atomicrwm_bin_op_from_symbol_literal(call.args[0])
     ordering = atomic_ordering_from_symbol_literal(call.args[-2])
     singlethread = bool_from_bool_literal(call.args[-1])
@@ -1193,6 +1195,7 @@ class Crystal::CodeGenVisitor
   end
 
   def codegen_primitive_fence(call, node, target_def, call_args)
+    call = check_atomic_call(call, target_def)
     ordering = atomic_ordering_from_symbol_literal(call.args[0])
     singlethread = bool_from_bool_literal(call.args[1])
 
@@ -1201,6 +1204,7 @@ class Crystal::CodeGenVisitor
   end
 
   def codegen_primitive_load_atomic(call, node, target_def, call_args)
+    call = check_atomic_call(call, target_def)
     ordering = atomic_ordering_from_symbol_literal(call.args[-2])
     volatile = bool_from_bool_literal(call.args[-1])
 
@@ -1214,6 +1218,7 @@ class Crystal::CodeGenVisitor
   end
 
   def codegen_primitive_store_atomic(call, node, target_def, call_args)
+    call = check_atomic_call(call, target_def)
     ordering = atomic_ordering_from_symbol_literal(call.args[-2])
     volatile = bool_from_bool_literal(call.args[-1])
 
@@ -1224,6 +1229,16 @@ class Crystal::CodeGenVisitor
     inst.volatile = true if volatile
     set_alignment inst, node.type
     inst
+  end
+
+  def check_atomic_call(call, target_def)
+    # This could only happen when taking a proc pointer to an atomic
+    # primitive: it could be fixed but it's probably not important for now.
+    if call.nil?
+      target_def.raise "can't take proc pointer of atomic call"
+    end
+
+    call
   end
 
   def set_alignment(inst, type)

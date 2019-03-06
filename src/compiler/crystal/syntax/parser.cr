@@ -1796,8 +1796,7 @@ module Crystal
         else
           skip_space
           if @token.type == :"."
-            next_token_skip_space
-            second_name = check_ident
+            second_name = consume_def_or_macro_name
             if name != "self" && !@def_vars.last.includes?(name)
               raise "undefined variable '#{name}'", location.line_number, location.column_number
             end
@@ -1815,8 +1814,7 @@ module Crystal
       when :CONST
         obj = parse_ident
         check :"."
-        next_token_skip_space
-        name = check_ident
+        name = consume_def_or_macro_name
         next_token_skip_space
       else
         unexpected_token
@@ -2798,16 +2796,11 @@ module Crystal
     def parse_macro
       doc = @token.doc
 
-      next_token
-
       # Force lexer return if possible a def or macro name
       # cases like: def `, def /, def //
       # that in regular statements states for delimiters
       # here must be treated as method names.
-      @wants_def_or_macro_name = true
-      skip_space_or_newline
-      check DefOrMacroCheck1
-      @wants_def_or_macro_name = false
+      name = consume_def_or_macro_name
 
       push_def
 
@@ -2816,10 +2809,8 @@ module Crystal
 
       if @token.type == :IDENT
         check_valid_def_name
-        name = @token.value.to_s
       else
         check_valid_def_op_name
-        name = @token.type.to_s
       end
       next_token_skip_space
 
@@ -3218,8 +3209,6 @@ module Crystal
       exp
     end
 
-    DefOrMacroCheck1 = [:IDENT, :CONST, :"`",
-                        :"<<", :"<", :"<=", :"==", :"===", :"!=", :"=~", :"!~", :">>", :">", :">=", :"+", :"-", :"*", :"/", :"//", :"!", :"~", :"%", :"&", :"|", :"^", :"**", :"[]", :"[]?", :"[]=", :"<=>", :"&+", :"&-", :"&*", :"&**"]
     DefOrMacroCheck2 = [:"<<", :"<", :"<=", :"==", :"===", :"!=", :"=~", :"!~", :">>", :">", :">=", :"+", :"-", :"*", :"/", :"//", :"!", :"~", :"%", :"&", :"|", :"^", :"**", :"[]", :"[]?", :"[]=", :"<=>", :"&+", :"&-", :"&*", :"&**"]
 
     def parse_def_helper(is_abstract = false)
@@ -3233,14 +3222,7 @@ module Crystal
 
       next_token
 
-      # Force lexer return if possible a def or macro name
-      # cases like: def `, def /, def //
-      # that in regular statements states for delimiters
-      # here must be treated as method names.
-      @wants_def_or_macro_name = true
-      skip_space_or_newline
-      check DefOrMacroCheck1
-      @wants_def_or_macro_name = false
+      consume_def_or_macro_name
 
       receiver = nil
       @yields = nil
@@ -5642,6 +5624,21 @@ module Crystal
       else
         false
       end
+    end
+
+    DefOrMacroCheck1 = [:IDENT, :CONST, :"`",
+                        :"<<", :"<", :"<=", :"==", :"===", :"!=", :"=~", :"!~", :">>", :">", :">=", :"+", :"-", :"*", :"/", :"//", :"!", :"~", :"%", :"&", :"|", :"^", :"**", :"[]", :"[]?", :"[]=", :"<=>", :"&+", :"&-", :"&*", :"&**"]
+
+    def consume_def_or_macro_name
+      # Force lexer return if possible a def or macro name
+      # cases like: def `, def /, def //
+      # that in regular statements states for delimiters
+      # here must be treated as method names.
+      @wants_def_or_macro_name = true
+      next_token_skip_space_or_newline
+      check DefOrMacroCheck1
+      @wants_def_or_macro_name = false
+      @token.to_s
     end
 
     def push_def
