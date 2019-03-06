@@ -3377,10 +3377,11 @@ class String
   # Converts camelcase boundaries to underscores.
   #
   # ```
-  # "DoesWhatItSaysOnTheTin".underscore # => "does_what_it_says_on_the_tin"
-  # "PartyInTheUSA".underscore          # => "party_in_the_usa"
-  # "HTTP_CLIENT".underscore            # => "http_client"
-  # "3.14IsPi".underscore               # => "3.14_is_pi"
+  # "DoesWhatItSaysOnTheTin".underscore                         # => "does_what_it_says_on_the_tin"
+  # "PartyInTheUSA".underscore                                  # => "party_in_the_usa"
+  # "HTTP_CLIENT".underscore                                    # => "http_client"
+  # "3.14IsPi".underscore                                       # => "3.14_is_pi"
+  # "InterestingImage".underscore(Unicode::CaseOptions::Turkic) # => "ınteresting_ımage"
   # ```
   def underscore(options = Unicode::CaseOptions::None)
     first = true
@@ -3392,8 +3393,14 @@ class String
     String.build(bytesize + 10) do |str|
       each_char do |char|
         digit = char.ascii_number?
-        downcase = char.ascii_lowercase? || digit
-        upcase = char.ascii_uppercase?
+
+        if options.none?
+          downcase = digit || char.ascii_lowercase?
+          upcase = char.ascii_uppercase?
+        else
+          downcase = digit || char.lowercase?
+          upcase = char.uppercase?
+        end
 
         if first
           str << char.downcase(options)
@@ -3449,7 +3456,8 @@ class String
   # Converts underscores to camelcase boundaries.
   #
   # ```
-  # "eiffel_tower".camelcase # => "EiffelTower"
+  # "eiffel_tower".camelcase                                   # => "EiffelTower"
+  # "isolated_integer".camelcase(Unicode::CaseOptions::Turkic) # => "İsolatedİnteger"
   # ```
   def camelcase(options = Unicode::CaseOptions::None)
     return self if empty?
