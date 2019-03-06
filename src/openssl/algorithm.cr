@@ -2,7 +2,7 @@ require "openssl"
 
 module OpenSSL
   enum Algorithm
-    # This enum indicates the standard possible algorithms for *OpenSSL* calls.
+    # This enum indicates the possible hash algorithms for *OpenSSL* digest operations.
     MD4
     MD5
     RIPEMD160
