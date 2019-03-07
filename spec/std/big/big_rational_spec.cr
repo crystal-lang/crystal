@@ -192,6 +192,10 @@ describe BigRational do
     x = br(10, 3)
     x.clone.should eq(x)
   end
+
+  describe "#inspect" do
+    it { 123.to_big_r.inspect.should eq("123") }
+  end
 end
 
 describe "BigRational Math" do
