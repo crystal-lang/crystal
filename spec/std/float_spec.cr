@@ -204,13 +204,33 @@ describe "Float" do
     end
   end
 
+  describe "#dump" do
+    it "does dump for f64" do
+      3.2.dump.should eq("3.2")
+    end
+
+    it "does dump for f32" do
+      3.2_f32.dump.should eq("3.2_f32")
+    end
+
+    it "does dump for f64 with IO" do
+      str = String.build { |io| 3.2.dump(io) }
+      str.should eq("3.2")
+    end
+
+    it "does dump for f32" do
+      str = String.build { |io| 3.2_f32.dump(io) }
+      str.should eq("3.2_f32")
+    end
+  end
+
   describe "#inspect" do
     it "does inspect for f64" do
       3.2.inspect.should eq("3.2")
     end
 
     it "does inspect for f32" do
-      3.2_f32.inspect.should eq("3.2_f32")
+      3.2_f32.inspect.should eq("3.2")
     end
 
     it "does inspect for f64 with IO" do
@@ -220,7 +240,7 @@ describe "Float" do
 
     it "does inspect for f32" do
       str = String.build { |io| 3.2_f32.inspect(io) }
-      str.should eq("3.2_f32")
+      str.should eq("3.2")
     end
   end
 

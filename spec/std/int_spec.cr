@@ -220,24 +220,45 @@ describe "Int" do
     end
   end
 
-  describe "#inspect" do
+  describe "#dump" do
     it "appends the type" do
-      23.inspect.should eq("23")
-      23_i8.inspect.should eq("23_i8")
-      23_i16.inspect.should eq("23_i16")
-      -23_i64.inspect.should eq("-23_i64")
-      23_u8.inspect.should eq("23_u8")
-      23_u16.inspect.should eq("23_u16")
-      23_u32.inspect.should eq("23_u32")
-      23_u64.inspect.should eq("23_u64")
+      23.dump.should eq("23")
+      23_i8.dump.should eq("23_i8")
+      23_i16.dump.should eq("23_i16")
+      -23_i64.dump.should eq("-23_i64")
+      23_u8.dump.should eq("23_u8")
+      23_u16.dump.should eq("23_u16")
+      23_u32.dump.should eq("23_u32")
+      23_u64.dump.should eq("23_u64")
     end
 
     it "appends the type using IO" do
+      str = String.build { |io| 23.dump(io) }
+      str.should eq("23")
+
+      str = String.build { |io| -23_i64.dump(io) }
+      str.should eq("-23_i64")
+    end
+  end
+
+  describe "#inspect" do
+    it "doesn't append the type" do
+      23.inspect.should eq("23")
+      23_i8.inspect.should eq("23")
+      23_i16.inspect.should eq("23")
+      -23_i64.inspect.should eq("-23")
+      23_u8.inspect.should eq("23")
+      23_u16.inspect.should eq("23")
+      23_u32.inspect.should eq("23")
+      23_u64.inspect.should eq("23")
+    end
+
+    it "doesn't append the type using IO" do
       str = String.build { |io| 23.inspect(io) }
       str.should eq("23")
 
       str = String.build { |io| -23_i64.inspect(io) }
-      str.should eq("-23_i64")
+      str.should eq("-23")
     end
   end
 

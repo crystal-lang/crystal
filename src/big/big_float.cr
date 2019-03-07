@@ -272,9 +272,8 @@ struct BigFloat < Float
     mpf
   end
 
-  def inspect(io)
-    to_s(io)
-    io << "_big_f"
+  def dump_suffix : String
+    "_big_f"
   end
 
   def to_s(io : IO)

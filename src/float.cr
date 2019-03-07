@@ -186,9 +186,8 @@ struct Float32
     Printer.print(self, io)
   end
 
-  def inspect(io)
-    to_s(io)
-    io << "_f32"
+  def dump_suffix : String
+    "_f32"
   end
 
   def clone
@@ -273,6 +272,10 @@ struct Float64
 
   def to_s(io : IO)
     Printer.print(self, io)
+  end
+
+  def dump_suffix : String
+    ""
   end
 
   def clone

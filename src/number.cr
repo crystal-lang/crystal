@@ -268,6 +268,35 @@ struct Number
     self == 0
   end
 
+  # Returns a string representation of this number including a suffix
+  # that shows it's type. The suffix is not shown for `Int32` and `Float64`
+  # because they are the default integer and float types respectively, in Crystal.
+  #
+  # ```
+  # 1.dump     # => "1"
+  # 1_i64.dump # => "1_i64"
+  # 1_u8.dump  # => "1_u8"
+  # ```
+  def dump : String
+    String.build do |io|
+      dump(io)
+    end
+  end
+
+  # Appends a string representation of this number including a suffix
+  # that shows it's type. The suffix is not shown for `Int32` and `Float64`
+  # because they are the default integer and float types respectively, in Crystal.
+  #
+  # See `#dump`.
+  def dump(io : IO)
+    to_s(io)
+    io << dump_suffix
+  end
+
+  # Returns the suffix used for `#dump`.
+  # Can return an empty string if there's no suffix.
+  abstract def dump_suffix : String
+
   private class StepIterator(T, L, B)
     include Iterator(T)
 

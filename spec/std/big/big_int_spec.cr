@@ -259,8 +259,12 @@ describe "BigInt" do
     a.to_big_f.should eq(BigFloat.new("1234567890123456789.0"))
   end
 
+  describe "#dump" do
+    it { "2".to_big_i.dump.should eq("2_big_i") }
+  end
+
   describe "#inspect" do
-    it { "2".to_big_i.inspect.should eq("2_big_i") }
+    it { "2".to_big_i.inspect.should eq("2") }
   end
 
   it "does gcd and lcm" do

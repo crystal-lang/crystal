@@ -187,8 +187,12 @@ describe "BigFloat" do
     it { "1234567890123456789".to_big_f.to_s.should eq("1234567890123456789") }
   end
 
+  describe "#dump" do
+    it { "2.3".to_big_f.dump.should eq("2.3_big_f") }
+  end
+
   describe "#inspect" do
-    it { "2.3".to_big_f.inspect.should eq("2.3_big_f") }
+    it { "2.3".to_big_f.inspect.should eq("2.3") }
   end
 
   it "#hash" do

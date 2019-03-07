@@ -220,6 +220,10 @@ struct BigRational < Number
     to_s io
   end
 
+  def dump_suffix : String
+    "_big_r"
+  end
+
   def clone
     self
   end

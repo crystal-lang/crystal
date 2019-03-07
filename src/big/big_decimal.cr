@@ -298,9 +298,8 @@ struct BigDecimal < Number
     end
   end
 
-  def inspect(io)
-    to_s(io)
-    io << "_big_d"
+  def dump_suffix : String
+    "_big_d"
   end
 
   def to_big_d

@@ -514,25 +514,6 @@ struct Int
     yield ptr, count
   end
 
-  def inspect(io)
-    type = case self
-           when Int8    then "_i8"
-           when Int16   then "_i16"
-           when Int32   then ""
-           when Int64   then "_i64"
-           when Int128  then "_i128"
-           when UInt8   then "_u8"
-           when UInt16  then "_u16"
-           when UInt32  then "_u32"
-           when UInt64  then "_u64"
-           when UInt128 then "_u128"
-           else              raise "BUG: impossible"
-           end
-
-    to_s(io)
-    io << type
-  end
-
   # Writes this integer to the given *io* in the given *format*.
   #
   # See also: `IO#write_bytes`.
@@ -642,6 +623,10 @@ struct Int8
     Intrinsics.popcount8(self)
   end
 
+  def dump_suffix : String
+    "_i8"
+  end
+
   def clone
     self
   end
@@ -667,6 +652,10 @@ struct Int16
 
   def popcount
     Intrinsics.popcount16(self)
+  end
+
+  def dump_suffix : String
+    "_i16"
   end
 
   def clone
@@ -696,6 +685,10 @@ struct Int32
     Intrinsics.popcount32(self)
   end
 
+  def dump_suffix : String
+    ""
+  end
+
   def clone
     self
   end
@@ -721,6 +714,10 @@ struct Int64
 
   def popcount
     Intrinsics.popcount64(self)
+  end
+
+  def dump_suffix : String
+    "_i64"
   end
 
   def clone
@@ -752,6 +749,10 @@ struct Int128
     Intrinsics.popcount128(self)
   end
 
+  def dump_suffix : String
+    "_i128"
+  end
+
   def clone
     self
   end
@@ -777,6 +778,10 @@ struct UInt8
 
   def popcount
     Intrinsics.popcount8(self)
+  end
+
+  def dump_suffix : String
+    "_u8"
   end
 
   def clone
@@ -806,6 +811,10 @@ struct UInt16
     Intrinsics.popcount16(self)
   end
 
+  def dump_suffix : String
+    "_u16"
+  end
+
   def clone
     self
   end
@@ -831,6 +840,10 @@ struct UInt32
 
   def popcount
     Intrinsics.popcount32(self)
+  end
+
+  def dump_suffix : String
+    "_u32"
   end
 
   def clone
@@ -860,6 +873,10 @@ struct UInt64
     Intrinsics.popcount64(self)
   end
 
+  def dump_suffix : String
+    "_u64"
+  end
+
   def clone
     self
   end
@@ -886,6 +903,10 @@ struct UInt128
 
   def popcount
     Intrinsics.popcount128(self)
+  end
+
+  def dump_suffix : String
+    "_u128"
   end
 
   def clone
