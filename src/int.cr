@@ -514,25 +514,6 @@ struct Int
     yield ptr, count
   end
 
-  def inspect(io : IO) : Nil
-    type = case self
-           when Int8    then "_i8"
-           when Int16   then "_i16"
-           when Int32   then ""
-           when Int64   then "_i64"
-           when Int128  then "_i128"
-           when UInt8   then "_u8"
-           when UInt16  then "_u16"
-           when UInt32  then "_u32"
-           when UInt64  then "_u64"
-           when UInt128 then "_u128"
-           else              raise "BUG: impossible"
-           end
-
-    to_s(io)
-    io << type
-  end
-
   # Writes this integer to the given *io* in the given *format*.
   #
   # See also: `IO#write_bytes`.

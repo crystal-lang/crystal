@@ -344,11 +344,6 @@ struct BigInt < Int
     BigInt.new { |mpz| LibGMP.lcm_ui(mpz, self, other.abs.to_u64) }
   end
 
-  def inspect(io : IO) : Nil
-    to_s io
-    io << "_big_i"
-  end
-
   # TODO: improve this
   def_hash to_u64
 

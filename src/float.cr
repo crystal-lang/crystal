@@ -186,11 +186,6 @@ struct Float32
     Printer.print(self, io)
   end
 
-  def inspect(io : IO) : Nil
-    to_s(io)
-    io << "_f32"
-  end
-
   def clone
     self
   end

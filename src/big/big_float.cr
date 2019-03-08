@@ -272,11 +272,6 @@ struct BigFloat < Float
     mpf
   end
 
-  def inspect(io : IO) : Nil
-    to_s(io)
-    io << "_big_f"
-  end
-
   def to_s(io : IO) : Nil
     cstr = LibGMP.mpf_get_str(nil, out expptr, 10, 0, self)
     length = LibC.strlen(cstr)

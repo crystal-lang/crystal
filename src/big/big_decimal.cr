@@ -298,11 +298,6 @@ struct BigDecimal < Number
     end
   end
 
-  def inspect(io : IO) : Nil
-    to_s(io)
-    io << "_big_d"
-  end
-
   def to_big_d
     self
   end
