@@ -12,7 +12,7 @@ module OpenSSL
     SHA384
     SHA512
 
-    # The internal bindings to the *LibCrypto* digest operations sometimes require a hash algorithm
+    # The internal bindings to the `LibCrypto` digest operations sometimes require a hash algorithm
     # implementation to be passed as one of the arguments.
     #
     # This method will return the appropriate equivalent hash algorithm that corresponds to the
