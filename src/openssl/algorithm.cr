@@ -12,13 +12,13 @@ module OpenSSL
     SHA384
     SHA512
 
+    # The internal bindings to the *LibCrypto* digest operations sometimes require a hash algorithm
+    # implementation to be passed as one of the arguments.
+    #
+    # This method will return the appropriate equivalent hash algorithm that corresponds to the
+    # current enum value.
+    #
     def to_evp
-      # The internal bindings to the *LibCrypto* digest operations sometimes require a hash algorithm
-      # implementation to be passed as one of the arguments.
-      #
-      # This method will return the appropriate equivalent hash algorithm that corresponds to the
-      # current enum value.
-      #
       case self
       when MD4       then LibCrypto.evp_md4
       when MD5       then LibCrypto.evp_md5
