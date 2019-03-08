@@ -385,6 +385,10 @@ struct BigInt < Int
     LibGMP.popcount(self)
   end
 
+  def trailing_zeros_count
+    LibGMP.scan1(self, 0)
+  end
+
   def to_i
     to_i32
   end
