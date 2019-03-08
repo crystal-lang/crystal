@@ -6,7 +6,7 @@
 # (`Char#upcase`, `Char#downcase`, `Char#whitespace?`, etc.)
 
 module Unicode
-  # Case options to pass to various char and string methods such as `upcase` or `downcase`.
+  # Case options to pass to various `Char` and `String` methods such as `upcase` or `downcase`.
   @[Flags]
   enum CaseOptions
     # Only transform ASCII characters.
