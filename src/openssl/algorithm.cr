@@ -1,8 +1,8 @@
 require "openssl"
 
 module OpenSSL
+  # Indicates the possible hash algorithms for *OpenSSL* digest operations.
   enum Algorithm
-    # This enum indicates the possible hash algorithms for *OpenSSL* digest operations.
     MD4
     MD5
     RIPEMD160
