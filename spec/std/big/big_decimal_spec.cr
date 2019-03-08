@@ -394,4 +394,8 @@ describe BigDecimal do
     negative_one.normalize_quotient(negative_one, positive_ten).should eq(positive_ten)
     negative_one.normalize_quotient(negative_one, negative_ten).should eq(negative_ten)
   end
+
+  describe "#inspect" do
+    it { "123".to_big_d.inspect.should eq("123") }
+  end
 end
