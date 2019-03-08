@@ -318,7 +318,7 @@ struct Pointer(T)
   # ptr2 = Pointer(Int32).new(0)
   # ptr2.to_s # => "Pointer(Int32).null"
   # ```
-  def to_s(io : IO)
+  def to_s(io : IO) : Nil
     io << "Pointer("
     io << T.to_s
     io << ')'

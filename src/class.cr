@@ -1,10 +1,10 @@
 class Class
-  def inspect(io)
+  def inspect(io : IO) : Nil
     to_s(io)
   end
 
   # See `Object#hash(hasher)`
-  def hash(hasher)
+  def hash(hasher : Crystal::Hasher) : UInt64
     hasher.class(self)
   end
 
@@ -94,7 +94,7 @@ class Class
     {{ @type >= T }}
   end
 
-  def ===(other)
+  def ===(other) : Bool
     other.is_a?(self)
   end
 
@@ -141,19 +141,19 @@ class Class
   # Int32.nilable? # => false
   # Nil.nilable?   # => true
   # ```
-  def nilable?
+  def nilable? : Bool
     self == ::Nil
   end
 
-  def to_s(io)
+  def to_s(io : IO) : Nil
     io << {{ @type.name.stringify }}
   end
 
-  def dup
+  def dup : self
     self
   end
 
-  def clone
+  def clone : self
     self
   end
 end

@@ -63,11 +63,11 @@ class Crypto::Bcrypt::Password
     Crypto::Subtle.constant_time_compare(@raw_hash, hashed_password)
   end
 
-  def to_s(io)
+  def to_s(io : IO) : Nil
     io << @raw_hash
   end
 
-  def inspect(io)
+  def inspect(io : IO) : Nil
     to_s(io)
   end
 end

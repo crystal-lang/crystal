@@ -4211,11 +4211,11 @@ class String
     self
   end
 
-  def to_s
+  def to_s : String
     self
   end
 
-  def to_s(io)
+  def to_s(io : IO) : Nil
     io.write_utf8(to_slice)
   end
 

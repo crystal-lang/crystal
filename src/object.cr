@@ -10,12 +10,12 @@ class Object
   # By default this method is implemented as `!(self == other)`
   # so there's no need to override this unless there's a more efficient
   # way to do it.
-  def !=(other)
+  def !=(other) : Bool
     !(self == other)
   end
 
   # Shortcut to `!(self =~ other)`.
-  def !~(other)
+  def !~(other) : Bool
     !(self =~ other)
   end
 
@@ -46,7 +46,7 @@ class Object
   #
   # Object simply implements `===` by invoking `==`, but subclasses
   # (notably `Regex`) can override it to provide meaningful case-equality semantics.
-  def ===(other)
+  def ===(other) : Bool
     self == other
   end
 
@@ -54,7 +54,7 @@ class Object
   #
   # Overridden by descendants (notably `Regex` and `String`) to provide meaningful
   # pattern-match semantics.
-  def =~(other)
+  def =~(other) : Bool
     nil
   end
 
@@ -91,7 +91,7 @@ class Object
   # Descendants must usually **not** override this method. Instead,
   # they must override `to_s(io)`, which must append to the given
   # IO object.
-  def to_s
+  def to_s : String
     String.build do |io|
       to_s io
     end
@@ -102,7 +102,7 @@ class Object
   #
   # An object must never append itself to the io argument,
   # as this will in turn call `to_s(io)` on it.
-  abstract def to_s(io : IO)
+  abstract def to_s(io : IO) : Nil
 
   # Returns a `String` representation of this object.
   #
@@ -112,7 +112,7 @@ class Object
   # Classes must usually **not** override this method. Instead,
   # they must override `inspect(io)`, which must append to the
   # given `IO` object.
-  def inspect
+  def inspect : String
     String.build do |io|
       inspect io
     end
@@ -123,7 +123,7 @@ class Object
   #
   # Similar to `to_s(io)`, but usually appends more information
   # about this object.
-  def inspect(io : IO)
+  def inspect(io : IO) : Nil
     to_s io
   end
 

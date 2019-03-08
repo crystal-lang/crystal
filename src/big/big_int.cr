@@ -344,7 +344,7 @@ struct BigInt < Int
     BigInt.new { |mpz| LibGMP.lcm_ui(mpz, self, other.abs.to_u64) }
   end
 
-  def inspect(io)
+  def inspect(io : IO) : Nil
     to_s io
     io << "_big_i"
   end
@@ -357,12 +357,12 @@ struct BigInt < Int
   # ```
   # BigInt.new("123456789101101987654321").to_s # => 123456789101101987654321
   # ```
-  def to_s
+  def to_s : String
     String.new(to_cstr)
   end
 
   # ditto
-  def to_s(io)
+  def to_s(io : IO) : Nil
     str = to_cstr
     io.write_utf8 Slice.new(str, LibC.strlen(str))
   end
@@ -374,7 +374,7 @@ struct BigInt < Int
   # BigInt.new("123456789101101987654321").to_s(16) # => "1a249b1f61599cd7eab1"
   # BigInt.new("123456789101101987654321").to_s(36) # => "k3qmt029k48nmpd"
   # ```
-  def to_s(base : Int)
+  def to_s(base : Int) : String
     raise "Invalid base #{base}" unless 2 <= base <= 36
     cstr = LibGMP.get_str(nil, base, self)
     String.new(cstr)

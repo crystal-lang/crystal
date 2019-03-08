@@ -206,7 +206,7 @@ struct BitArray
   # ba = BitArray.new(5)
   # ba.to_s # => "BitArray[00000]"
   # ```
-  def to_s(io : IO)
+  def to_s(io : IO) : Nil
     io << "BitArray["
     each do |value|
       io << (value ? '1' : '0')
@@ -215,7 +215,7 @@ struct BitArray
   end
 
   # ditto
-  def inspect(io : IO)
+  def inspect(io : IO) : Nil
     to_s(io)
   end
 

@@ -149,7 +149,7 @@ class Flate::Reader < IO
   end
 
   # :nodoc:
-  def inspect(io)
+  def inspect(io : IO) : Nil
     to_s(io)
   end
 end

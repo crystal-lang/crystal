@@ -445,15 +445,15 @@ struct Int
   private DIGITS_UPCASE   = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"
   private DIGITS_BASE62   = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
-  def to_s
+  def to_s : String
     to_s(10)
   end
 
-  def to_s(io : IO)
+  def to_s(io : IO) : Nil
     to_s(10, io)
   end
 
-  def to_s(base : Int, upcase : Bool = false)
+  def to_s(base : Int, upcase : Bool = false) : String
     raise ArgumentError.new("Invalid base #{base}") unless 2 <= base <= 36 || base == 62
     raise ArgumentError.new("upcase must be false for base 62") if upcase && base == 62
 
@@ -469,7 +469,7 @@ struct Int
     end
   end
 
-  def to_s(base : Int, io : IO, upcase : Bool = false)
+  def to_s(base : Int, io : IO, upcase : Bool = false) : Nil
     raise ArgumentError.new("Invalid base #{base}") unless 2 <= base <= 36 || base == 62
     raise ArgumentError.new("upcase must be false for base 62") if upcase && base == 62
 
@@ -514,7 +514,7 @@ struct Int
     yield ptr, count
   end
 
-  def inspect(io)
+  def inspect(io : IO) : Nil
     type = case self
            when Int8    then "_i8"
            when Int16   then "_i16"

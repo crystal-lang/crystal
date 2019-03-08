@@ -373,7 +373,7 @@ struct Slice(T)
     source.move_to(self)
   end
 
-  def inspect(io)
+  def inspect(io : IO) : Nil
     to_s(io)
   end
 
@@ -495,7 +495,7 @@ struct Slice(T)
     self
   end
 
-  def to_s(io)
+  def to_s(io : IO) : Nil
     if T == UInt8
       io << "Bytes["
       # Inspect using to_s because we know this is a UInt8.

@@ -154,7 +154,7 @@ class URI
     !absolute?
   end
 
-  def to_s(io : IO)
+  def to_s(io : IO) : Nil
     if scheme
       io << scheme
       io << ':'

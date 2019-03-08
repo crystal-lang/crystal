@@ -361,7 +361,7 @@ class Socket < IO
     end
   end
 
-  def inspect(io)
+  def inspect(io : IO) : Nil
     io << "#<#{self.class}:fd #{@fd}>"
   end
 

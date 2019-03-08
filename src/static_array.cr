@@ -259,7 +259,7 @@ struct StaticArray(T, N)
   # array = StaticArray(Int32, 3).new { |i| i + 1 }
   # array.to_s # => "StaticArray[1, 2, 3]"
   # ```
-  def to_s(io : IO)
+  def to_s(io : IO) : Nil
     io << "StaticArray["
     join ", ", io, &.inspect(io)
     io << ']'

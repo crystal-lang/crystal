@@ -3,11 +3,11 @@ require "./visitor"
 
 module Crystal
   class ASTNode
-    def inspect(io)
+    def inspect(io : IO) : Nil
       to_s(io)
     end
 
-    def to_s(io, macro_expansion_pragmas = nil, emit_doc = false)
+    def to_s(io : IO, macro_expansion_pragmas = nil, emit_doc = false) : Nil
       visitor = ToSVisitor.new(io, macro_expansion_pragmas: macro_expansion_pragmas, emit_doc: emit_doc)
       self.accept visitor
     end
@@ -1558,11 +1558,11 @@ module Crystal
       @inside_macro = old_inside_macro
     end
 
-    def to_s
+    def to_s : String
       @str.to_s
     end
 
-    def to_s(io)
+    def to_s(io : IO) : Nil
       @str.to_s(io)
     end
   end

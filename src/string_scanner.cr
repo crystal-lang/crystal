@@ -268,7 +268,7 @@ class StringScanner
   #
   # Includes the current position of the offset, the total size of the string,
   # and five characters near the current position.
-  def inspect(io : IO)
+  def inspect(io : IO) : Nil
     io << "#<StringScanner "
     offset = offset()
     io << offset << '/' << @str.size

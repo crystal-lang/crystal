@@ -1031,7 +1031,7 @@ struct Time
   # When the location is `UTC`, the offset is omitted. Offset seconds are omitted if `0`.
   #
   # The name of the location is appended unless it is a fixed zone offset.
-  def inspect(io : IO, with_nanoseconds = true)
+  def inspect(io : IO, with_nanoseconds = true) : Nil
     to_s "%F %T", io
 
     if with_nanoseconds
@@ -1049,8 +1049,6 @@ struct Time
       zone.format(io)
       io << ' ' << location.name unless location.fixed?
     end
-
-    io
   end
 
   # Prints this `Time` to *io*.
@@ -1059,7 +1057,7 @@ struct Time
   # Nanoseconds are always omitted.
   # When the location is `UTC`, the offset is replaced with the string `UTC`.
   # Offset seconds are omitted if `0`.
-  def to_s(io : IO)
+  def to_s(io : IO) : Nil
     to_s("%F %T ", io)
 
     if utc?
