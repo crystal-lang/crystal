@@ -210,7 +210,7 @@ describe "Float" do
     end
 
     it "does inspect for f32" do
-      3.2_f32.inspect.should eq("3.2_f32")
+      3.2_f32.inspect.should eq("3.2")
     end
 
     it "does inspect for f64 with IO" do
@@ -220,7 +220,7 @@ describe "Float" do
 
     it "does inspect for f32" do
       str = String.build { |io| 3.2_f32.inspect(io) }
-      str.should eq("3.2_f32")
+      str.should eq("3.2")
     end
   end
 

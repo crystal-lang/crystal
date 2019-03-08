@@ -1,5 +1,6 @@
 require "c/sys/mman"
 require "thread/linked_list"
+require "./fiber/stack_pool"
 
 # Load the arch-specific methods to create a context and to swap from one
 # context to another one. There are two methods: `Fiber#makecontext` and
@@ -42,10 +43,10 @@ fun _fiber_get_stack_top : Void*
 end
 
 class Fiber
-  STACK_SIZE = 8 * 1024 * 1024
-
   @@fibers = Thread::LinkedList(Fiber).new
-  @@stack_pool = [] of Void*
+
+  # :nodoc:
+  class_getter stack_pool = StackPool.new
 
   @stack : Void*
   @resume_event : Crystal::Event?
@@ -66,8 +67,7 @@ class Fiber
   end
 
   def initialize(@name : String? = nil, &@proc : ->)
-    @stack = Fiber.allocate_stack
-    @stack_bottom = @stack + STACK_SIZE
+    @stack, @stack_bottom = Fiber.stack_pool.checkout
 
     fiber_main = ->(f : Fiber) { f.run }
 
@@ -93,37 +93,6 @@ class Fiber
     @@fibers.push(self)
   end
 
-  protected def self.allocate_stack
-    if pointer = @@stack_pool.pop?
-      return pointer
-    end
-
-    flags = LibC::MAP_PRIVATE | LibC::MAP_ANON
-    {% if flag?(:openbsd) && !flag?(:"openbsd6.2") %}
-      flags |= LibC::MAP_STACK
-    {% end %}
-
-    LibC.mmap(nil, Fiber::STACK_SIZE, LibC::PROT_READ | LibC::PROT_WRITE, flags, -1, 0).tap do |pointer|
-      raise Errno.new("Cannot allocate new fiber stack") if pointer == LibC::MAP_FAILED
-
-      {% if flag?(:linux) %}
-        LibC.madvise(pointer, Fiber::STACK_SIZE, LibC::MADV_NOHUGEPAGE)
-      {% end %}
-
-      LibC.mprotect(pointer, 4096, LibC::PROT_NONE)
-    end
-  end
-
-  # :nodoc:
-  def self.stack_pool_collect
-    return if @@stack_pool.size == 0
-    free_count = @@stack_pool.size > 1 ? @@stack_pool.size / 2 : 1
-    free_count.times do
-      stack = @@stack_pool.pop
-      LibC.munmap(stack, Fiber::STACK_SIZE)
-    end
-  end
-
   # :nodoc:
   def run
     @proc.call
@@ -136,7 +105,7 @@ class Fiber
     ex.inspect_with_backtrace(STDERR)
     STDERR.flush
   ensure
-    @@stack_pool << @stack
+    Fiber.stack_pool.release(@stack)
 
     # Remove the current fiber from the linked list
     @@fibers.delete(self)

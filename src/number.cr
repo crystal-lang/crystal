@@ -161,9 +161,10 @@ struct Number
     {(self / number).floor, self % number}
   end
 
-  # Implements the comparison operator.
+  # The comparison operator.
   #
-  # See also: `Object#<=>`.
+  # Returns `-1`, `0` or `1` depending on whether `self` is less than *other*, equals *other*
+  # or is greater than *other*.
   def <=>(other)
     self > other ? 1 : (self < other ? -1 : 0)
   end

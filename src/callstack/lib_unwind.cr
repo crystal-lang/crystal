@@ -1,9 +1,4 @@
-# libunwind prevents END_OF_STACK errors, but the backtrace is empty
-# https://github.com/crystal-lang/crystal/issues/4276#issuecomment-313678321
-{% if flag?(:musl) && flag?(:static) %}
-require "llvm/lib_llvm"
-require "llvm/enums"
-{% elsif flag?(:openbsd) %}
+{% if flag?(:openbsd) %}
   @[Link("c++abi")]
 {% end %}
 lib LibUnwind
