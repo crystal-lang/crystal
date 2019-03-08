@@ -271,12 +271,24 @@ module Crystal
 
   class ProcInstanceType
     def common_ancestor(other : ProcInstanceType)
+      # For Proc(..., NoReturn), Proc(..., T) we keep Proc(..., T)
       if return_type.no_return? && arg_types == other.arg_types
         return other
       end
 
+      # Same but the other way around
       if other.return_type.no_return? && arg_types == other.arg_types
         return self
+      end
+
+      # For Proc(..., Nil), Proc(..., T) we keep Proc(..., Nil)
+      if return_type.nil_type? && arg_types == other.arg_types
+        return self
+      end
+
+      # Same but the other way around
+      if other.return_type.nil_type? && arg_types == other.arg_types
+        return other
       end
 
       nil

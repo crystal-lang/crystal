@@ -2213,7 +2213,10 @@ module Crystal
 
     def implements?(other : Type)
       if other.is_a?(ProcInstanceType)
-        if (self.return_type.no_return? || other.return_type.void?) &&
+        # - Proc(..., NoReturn) can be cast to Proc(..., T)
+        # - Anything can be cast to Proc(..., Void)
+        # - Anything can be cast to Proc(..., Nil)
+        if (self.return_type.no_return? || other.return_type.void? || other.return_type.nil_type?) &&
            arg_types == other.arg_types
           return true
         end
