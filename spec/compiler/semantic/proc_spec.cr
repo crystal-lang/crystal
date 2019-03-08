@@ -880,4 +880,30 @@ describe "Semantic: proc" do
       Foo.new.x
       )) { proc_of(int32) }
   end
+
+  it "merges Proc that returns Nil with another one that returns something else (#3655)" do
+    assert_type(%(
+      a = ->(x : Int32) { 1 }
+      b = ->(x : Int32) { nil }
+      a || b
+      )) { proc_of(int32, nil_type) }
+  end
+
+  it "can assign proc that returns anything to proc that returns nil (#3655)" do
+    assert_type(%(
+      class Foo
+        @block : -> Nil
+
+        def initialize
+          @block = ->{ 1 }
+        end
+
+        def block
+          @block
+        end
+      end
+
+      Foo.new.block
+      )) { proc_of(nil_type) }
+  end
 end
