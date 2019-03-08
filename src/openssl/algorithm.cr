@@ -27,7 +27,7 @@ module OpenSSL
       when SHA256    then LibCrypto.evp_sha256
       when SHA384    then LibCrypto.evp_sha384
       when SHA512    then LibCrypto.evp_sha512
-      else                raise "Invalid algorithm: #{self}"
+      else                raise "Unsupported algorithm: #{self}"
       end
     end
   end
