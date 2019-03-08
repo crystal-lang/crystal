@@ -80,7 +80,7 @@ module Crystal
                match_named_args.size == signature_named_args.size
               match_named_args = match_named_args.sort_by &.name
               signature_named_args = signature_named_args.sort_by &.name
-              named_arg_types_equal = match_named_args.equals?(signature_named_args) do |x, y|
+              named_arg_types_equal = signature_named_args.equals?(match_named_args) do |x, y|
                 x.name == y.name && x.type.compatible_with?(y.type)
               end
             else
