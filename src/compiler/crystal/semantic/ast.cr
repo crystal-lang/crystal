@@ -462,7 +462,7 @@ module Crystal
       self
     end
 
-    def inspect(io)
+    def inspect(io : IO) : Nil
       io << name
       if type = type?
         io << " : "

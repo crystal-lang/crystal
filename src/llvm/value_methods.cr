@@ -103,7 +103,7 @@ module LLVM::ValueMethods
     LibLLVM.dump_value self
   end
 
-  def inspect(io)
+  def inspect(io : IO) : Nil
     LLVM.to_io(LibLLVM.print_value_to_string(self), io)
     self
   end

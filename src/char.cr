@@ -471,7 +471,7 @@ struct Char
   # 'あ'.inspect      # => "'あ'"
   # '\u0012'.inspect # => "'\\u{12}'"
   # ```
-  def inspect
+  def inspect : String
     dump_or_inspect do |io|
       if ascii_control?
         io << "\\u{"
@@ -486,7 +486,7 @@ struct Char
   # Appends this char as a string that contains a char literal to the given `IO`.
   #
   # See also: `#inspect`.
-  def inspect(io)
+  def inspect(io : IO) : Nil
     io << inspect
   end
 
@@ -751,7 +751,7 @@ struct Char
   # 'a'.to_s # => "a"
   # 'あ'.to_s # => "あ"
   # ```
-  def to_s
+  def to_s : String
     String.new(4) do |buffer|
       appender = buffer.appender
       each_byte { |byte| appender << byte }
@@ -762,7 +762,7 @@ struct Char
   # Appends this char to the given `IO`.
   #
   # This appends this char's bytes as encoded by UTF-8 to the given `IO`.
-  def to_s(io : IO)
+  def to_s(io : IO) : Nil
     if ascii?
       byte = ord.to_u8
 

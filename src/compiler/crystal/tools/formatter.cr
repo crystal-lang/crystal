@@ -4135,7 +4135,7 @@ module Crystal
       raise "BUG: unexpected node: #{node.class} at #{node.location}"
     end
 
-    def to_s(io)
+    def to_s(io : IO) : Nil
       io << @output
     end
 

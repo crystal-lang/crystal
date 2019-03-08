@@ -579,7 +579,7 @@ module Crystal
       file_module(filename)
     end
 
-    def to_s(io)
+    def to_s(io : IO) : Nil
       io << "<Program>"
     end
   end

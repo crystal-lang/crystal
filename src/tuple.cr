@@ -370,7 +370,7 @@ struct Tuple
   end
 
   # Same as `to_s`.
-  def inspect
+  def inspect : String
     to_s
   end
 
@@ -380,7 +380,7 @@ struct Tuple
   # tuple = {1, "hello"}
   # tuple.to_s # => "{1, \"hello\"}"
   # ```
-  def to_s(io)
+  def to_s(io : IO) : Nil
     io << '{'
     join ", ", io, &.inspect(io)
     io << '}'

@@ -54,7 +54,7 @@ class Crystal::Doc::Macro
     "macro "
   end
 
-  def to_s(io)
+  def to_s(io : IO) : Nil
     io << name
     args_to_s io
   end
@@ -63,7 +63,7 @@ class Crystal::Doc::Macro
     String.build { |io| args_to_s io }
   end
 
-  def args_to_s(io)
+  def args_to_s(io : IO) : Nil
     return unless has_args?
 
     printed = false
@@ -92,7 +92,7 @@ class Crystal::Doc::Macro
     io << ')'
   end
 
-  def arg_to_s(arg : Arg, io)
+  def arg_to_s(arg : Arg, io : IO) : Nil
     if arg.external_name != arg.name
       name = arg.external_name.empty? ? "_" : arg.external_name
       if Symbol.needs_quotes? name

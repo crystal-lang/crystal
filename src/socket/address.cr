@@ -240,7 +240,7 @@ class Socket
         address == other.address
     end
 
-    def to_s(io)
+    def to_s(io : IO) : Nil
       if family == Family::INET6
         io << '[' << address << ']' << ':' << port
       else
@@ -248,7 +248,7 @@ class Socket
       end
     end
 
-    def inspect(io)
+    def inspect(io : IO) : Nil
       io << "Socket::IPAddress("
       to_s(io)
       io << ")"
@@ -361,7 +361,7 @@ class Socket
       path == other.path
     end
 
-    def to_s(io)
+    def to_s(io : IO) : Nil
       io << path
     end
 

@@ -67,7 +67,7 @@ struct SemanticVersion
   # semver = SemanticVersion.parse("0.27.1")
   # semver.to_s # => "0.27.1"
   # ```
-  def to_s(io : IO)
+  def to_s(io : IO) : Nil
     io << major << '.' << minor << '.' << patch
     unless prerelease.identifiers.empty?
       io << '-'
@@ -144,7 +144,7 @@ struct SemanticVersion
     # semver = SemanticVersion.parse("0.27.1-rc.1")
     # semver.prerelease.to_s # => "rc.1"
     # ```
-    def to_s(io : IO)
+    def to_s(io : IO) : Nil
       identifiers.join('.', io)
     end
 

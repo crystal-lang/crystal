@@ -86,7 +86,7 @@ struct Complex
   # ```
   # Complex.new(42, 2).to_s # => "42.0 + 2.0i"
   # ```
-  def to_s(io : IO)
+  def to_s(io : IO) : Nil
     io << @real
     io << (@imag >= 0 ? " + " : " - ")
     io << @imag.abs
@@ -98,7 +98,7 @@ struct Complex
   # ```
   # Complex.new(42, 2).inspect # => "(42.0 + 2.0i)"
   # ```
-  def inspect(io : IO)
+  def inspect(io : IO) : Nil
     io << '('
     to_s(io)
     io << ')'

@@ -101,7 +101,7 @@ class LLVM::Module
     @unwrap == other.@unwrap
   end
 
-  def to_s(io)
+  def to_s(io : IO) : Nil
     LLVM.to_io(LibLLVM.print_module_to_string(self), io)
     self
   end

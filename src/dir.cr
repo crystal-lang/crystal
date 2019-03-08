@@ -266,11 +266,11 @@ class Dir
     Crystal::System::Dir.delete(path)
   end
 
-  def to_s(io)
+  def to_s(io : IO) : Nil
     io << "#<Dir:" << @path << '>'
   end
 
-  def inspect(io)
+  def inspect(io : IO) : Nil
     to_s(io)
   end
 

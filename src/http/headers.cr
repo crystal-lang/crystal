@@ -210,7 +210,7 @@ struct HTTP::Headers
     object_id == other.object_id
   end
 
-  def to_s(io : IO)
+  def to_s(io : IO) : Nil
     io << "HTTP::Headers{"
     @hash.each_with_index do |(key, values), index|
       io << ", " if index > 0
@@ -225,7 +225,7 @@ struct HTTP::Headers
     io << '}'
   end
 
-  def inspect(io : IO)
+  def inspect(io : IO) : Nil
     to_s(io)
   end
 

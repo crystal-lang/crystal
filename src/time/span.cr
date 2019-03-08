@@ -341,7 +341,7 @@ struct Time::Span
     cmp
   end
 
-  def inspect(io : IO)
+  def inspect(io : IO) : Nil
     if to_i < 0 || nanoseconds < 0
       io << '-'
     end
