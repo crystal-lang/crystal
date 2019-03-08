@@ -17,7 +17,6 @@ module OpenSSL
     #
     # This method will return the appropriate equivalent hash algorithm that corresponds to the
     # current enum value.
-    #
     def to_evp
       case self
       when MD4       then LibCrypto.evp_md4
