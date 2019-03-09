@@ -49,11 +49,6 @@ class Crystal::Command
       system "start #{playground_url}"
     {% elsif flag?(:linux) %}
       system "xdg-open #{playground_url}"
-    # TODO
-    # {% elsif flag?(:freebsd) %}
-    #   system "xdg-open #{playground_url}"
-    # {% elsif flag?(:openbsd) %}
-    #   system "xdg-open #{playground_url}"
     {% end %}
   end
 end
