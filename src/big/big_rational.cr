@@ -203,7 +203,7 @@ struct BigRational < Number
   # r.to_s(16) # => "7dc82b/218c1652"
   # r.to_s(36) # => "4woiz/9b3djm"
   # ```
-  def to_s(base = 10) : String
+  def to_s(base : Int = 10) : String
     String.new(to_cstr(base))
   end
 
