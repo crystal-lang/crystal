@@ -62,6 +62,35 @@ describe "Restrictions" do
     end
   end
 
+  describe "restriction_of?" do
+    it "is true for valid type vs free variable" do
+      assert_type(%(
+        def foo(a : T.class) forall T
+          1
+        end
+
+        def foo(a : Int32.class)
+          true
+        end
+
+        foo(Int32)
+        )) { bool }
+
+      # inverted
+      assert_type(%(
+        def foo(a : Int32.class)
+          true
+        end
+
+        def foo(a : T.class) forall T
+          1
+        end
+
+        foo(Int32)
+        )) { bool }
+    end
+  end
+
   it "self always matches instance type in restriction" do
     assert_type(%(
       class Foo
