@@ -2337,7 +2337,7 @@ module Crystal
       tuple_types.any? &.unbound?
     end
 
-    def to_s_with_options(io : IO, skip_union_parens : Bool = false, generic_args : Bool = true, codegen = false) : Nil
+    def to_s_with_options(io : IO, skip_union_parens : Bool = false, generic_args : Bool = true, codegen : Bool = false) : Nil
       io << "Tuple("
       @tuple_types.join(", ", io) do |tuple_type|
         tuple_type = tuple_type.devirtualize unless codegen
