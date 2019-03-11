@@ -1919,7 +1919,7 @@ module Crystal
       false
     end
 
-    def to_s_with_options(io : IO, skip_union_parens : Bool = false, generic_args : Bool = true, codegen = false) : Nil
+    def to_s_with_options(io : IO, skip_union_parens : Bool = false, generic_args : Bool = true, codegen : Bool = false) : Nil
       generic_type.append_full_name(io)
       io << '('
       type_vars.each_value.with_index do |type_var, i|
