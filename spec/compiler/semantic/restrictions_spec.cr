@@ -63,31 +63,34 @@ describe "Restrictions" do
   end
 
   describe "restriction_of?" do
-    it "is true for valid type vs free variable" do
-      assert_type(%(
-        def foo(a : T.class) forall T
-          1
-        end
+    describe "Metaclass vs Metaclass-with-free-vars" do
+      it "inserts Metaclass before Metaclass-with-free-vars" do
+        assert_type(%(
+          def foo(a : T.class) forall T
+            1
+          end
 
-        def foo(a : Int32.class)
-          true
-        end
+          def foo(a : Int32.class)
+            true
+          end
 
-        foo(Int32)
-        )) { bool }
+          foo(Int32)
+          )) { bool }
+      end
 
-      # inverted
-      assert_type(%(
-        def foo(a : Int32.class)
-          true
-        end
+      it "keeps Metaclass before Metaclass-with-free-vars" do
+        assert_type(%(
+          def foo(a : Int32.class)
+            true
+          end
 
-        def foo(a : T.class) forall T
-          1
-        end
+          def foo(a : T.class) forall T
+            1
+          end
 
-        foo(Int32)
-        )) { bool }
+          foo(Int32)
+          )) { bool }
+      end
     end
   end
 
