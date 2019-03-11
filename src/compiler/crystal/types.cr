@@ -2972,7 +2972,7 @@ module Crystal
       program.type_merge(new_union_types) || program.no_return
     end
 
-    def to_s_with_options(io : IO, skip_union_parens : Bool = false, generic_args : Bool = true, codegen = false) : Nil
+    def to_s_with_options(io : IO, skip_union_parens : Bool = false, generic_args : Bool = true, codegen : Bool = false) : Nil
       io << '(' unless skip_union_parens
       union_types = @union_types
       # Make sure to put Nil at the end
