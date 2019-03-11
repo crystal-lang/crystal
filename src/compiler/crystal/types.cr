@@ -3201,7 +3201,7 @@ module Crystal
       base_type.replace_type_parameters(instance).virtual_type
     end
 
-    def to_s_with_options(io : IO, skip_union_parens : Bool = false, generic_args : Bool = true, codegen = false) : Nil
+    def to_s_with_options(io : IO, skip_union_parens : Bool = false, generic_args : Bool = true, codegen : Bool = false) : Nil
       base_type.to_s(io)
       io << '+'
     end
