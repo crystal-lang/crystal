@@ -122,7 +122,7 @@ class Crystal::Doc::Method
     String.build { |io| args_to_html io }
   end
 
-  def args_to_html(io : IO, links = true) : Nil
+  def args_to_html(io : IO, links : Bool = true) : Nil
     return_type = self.return_type
 
     return unless has_args? || return_type
