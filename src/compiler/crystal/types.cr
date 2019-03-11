@@ -2454,7 +2454,7 @@ module Crystal
       entries.any? { |entry| entry.type.includes_type?(type) || entry.type.has_in_type_vars?(type) }
     end
 
-    def to_s_with_options(io : IO, skip_union_parens : Bool = false, generic_args : Bool = true, codegen = false) : Nil
+    def to_s_with_options(io : IO, skip_union_parens : Bool = false, generic_args : Bool = true, codegen : Bool = false) : Nil
       io << "NamedTuple("
       @entries.join(", ", io) do |entry|
         if Symbol.needs_quotes?(entry.name)
