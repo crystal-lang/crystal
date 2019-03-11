@@ -44,9 +44,9 @@ class Crystal::Command
   # Open up the default browser automatically to the Playground.
   private def open_browser(playground_url)
     {% if flag?(:darwin) %}
-      system "open #{playground_url}"
+      Process.run("open #{playground_url}", shell: true)
     {% elsif flag?(:win32) %}
-      system "start #{playground_url}"
+      Process.run("start #{playground_url}", shell: true)
     {% elsif flag?(:linux) %}
       Process.run("xdg-open #{playground_url}", shell: true)
     {% end %}
