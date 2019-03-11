@@ -727,7 +727,7 @@ module Crystal
       @types
     end
 
-    def append_full_name(io : IO, codegen = false) : Nil
+    def append_full_name(io : IO, codegen : Bool = false) : Nil
       case namespace
       when Program
         # Skip
