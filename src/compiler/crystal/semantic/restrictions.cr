@@ -316,8 +316,7 @@ module Crystal
       #
       # Here, self is `Array`, other is `Array(Int32)`
 
-      return unless self == other.generic_type
-
+      # Even when the underlying generic type is the same,
       # `SomeGeneric` is never a restriction of `SomeGeneric(X)`
       false
     end
@@ -335,10 +334,9 @@ module Crystal
       #
       # Here, self is `Array(Int32)`, other is `Array`
 
-      return unless self.generic_type == other
-
+      # When the underlying generic type is the same:
       # `SomeGeneric(X)` is always a restriction of `SomeGeneric`
-      true
+      self.generic_type == other
     end
   end
 
