@@ -2804,7 +2804,7 @@ module Crystal
       end
     end
 
-    def to_s_with_options(io : IO, skip_union_parens : Bool = false, generic_args : Bool = true, codegen = false) : Nil
+    def to_s_with_options(io : IO, skip_union_parens : Bool = false, generic_args : Bool = true, codegen : Bool = false) : Nil
       instance_type.to_s(io)
       io << ".class"
     end
