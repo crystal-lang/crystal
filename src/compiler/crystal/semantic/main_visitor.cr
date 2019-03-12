@@ -2284,10 +2284,10 @@ module Crystal
         break_vars.push @vars.dup
       else
         if @typed_def.try &.captured_block?
-          node.raise "can't break from captured block"
+          node.raise "can't break from captured block, try using `next`."
         end
 
-        node.raise "Invalid break"
+        node.raise "invalid break"
       end
 
       node.type = @program.no_return
@@ -2317,7 +2317,7 @@ module Crystal
           node.target = typed_def
           typed_def.bind_to(node_exp_or_nil_literal(node))
         else
-          node.raise "Invalid next"
+          node.raise "invalid next"
         end
       end
 
