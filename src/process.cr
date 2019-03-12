@@ -457,7 +457,17 @@ class Process
     argv << Pointer(UInt8).null
 
     LibC.execvp(command, argv)
-    raise Errno.new("execvp")
+
+    error_message = String.build do |io|
+      io << "execvp ("
+      command.inspect_unquoted(io)
+      args.try &.each do |arg|
+        io << ' '
+        arg.inspect(io)
+      end
+      io << ")"
+    end
+    raise Errno.new(error_message)
   end
 
   private def self.reopen_io(src_io : IO::FileDescriptor, dst_io : IO::FileDescriptor)
