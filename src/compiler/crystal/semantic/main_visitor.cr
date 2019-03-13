@@ -2482,7 +2482,7 @@ module Crystal
 
     def visit(node : PointerOf)
       var = pointerof_var(node)
-      node.exp.raise "can't take address of #{node.exp}, put #{node.exp} in a variable" unless var
+      node.exp.raise "can't take address of #{node.exp}, pointerof only works with variables" unless var
       node.bind_to var
       true
     end

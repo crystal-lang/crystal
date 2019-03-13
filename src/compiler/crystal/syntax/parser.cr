@@ -5337,7 +5337,7 @@ module Crystal
       next_token_skip_space_or_newline
 
       if @token.keyword?(:self)
-        raise "can't take address of pointerof(self), put self in a variable", @token.line_number, @token.column_number
+        raise "can't take address of self, pointerof only works with variables", @token.line_number, @token.column_number
       end
 
       exp = parse_op_assign
