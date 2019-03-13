@@ -1632,12 +1632,8 @@ class Array(T)
   # a # => [3, 1, 2]
   # ```
   def sort(&block : T, T -> U) : Array(T) forall U
-    # TODO: use a better way to check U < Int32?
-    {% begin %}
-      {% block_type = U.union? ? U.union_types.first { |t| t != Nil } : U %}
-      {% if block_type != Int32 && block_type != Nil %}
-        {% raise "expected block to return Int32 or Nil, not #{U}" %}
-      {% end %}
+    {% unless U <= Int32? %}
+      {% raise "expected block to return Int32 or Nil, not #{U}" %}
     {% end %}
 
     dup.sort! &block
@@ -1670,12 +1666,8 @@ class Array(T)
   # a # => [3, 2, 1]
   # ```
   def sort!(&block : T, T -> U) : Array(T) forall U
-    # TODO: use a better way to check U < Int32?
-    {% begin %}
-      {% block_type = U.union? ? U.union_types.first { |t| t != Nil } : U %}
-      {% if block_type != Int32 && block_type != Nil %}
-        {% raise "expected block to return Int32 or Nil, not #{U}" %}
-      {% end %}
+    {% unless U <= Int32? %}
+      {% raise "expected block to return Int32 or Nil, not #{U}" %}
     {% end %}
 
     Array.intro_sort!(@buffer, @size, block)
