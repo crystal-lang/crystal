@@ -339,7 +339,7 @@ fun __crystal_sigfault_handler(sig : LibC::Int, addr : Void*)
         method()
 
       This recursively calls itself over and over and results in a stack overflow.
-      If a method you define in your current type has the same name as a top-level method,
+      If a method you define in a type has the same name as a top-level method,
       prefix your call to the top-level method with `::`.\n
       STACK_OVERFLOW
   else
