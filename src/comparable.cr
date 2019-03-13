@@ -8,14 +8,15 @@
 # - `nil` if `self` and the other object are not comparable
 #
 # `Comparable` uses `<=>` to implement the conventional comparison operators
-# (`<`, `<=`, `==`, `>=`, and `>`).
+# (`<`, `<=`, `==`, `>=`, and `>`). All of these return `false` when `<=>`
+# returns `nil`.
 #
 # Note that returning `nil` is only useful when defining a partial comparable
 # relationship. One such example is float values: they are generally comparable,
 # except for `NaN`. If none of the values of a type are comparable between each
 # other, `Comparable` shouldn't be included.
 #
-# NOTE: when `nil` is returned from `<=>`, `Array#sort` and related sorting
+# NOTE: When `nil` is returned from `<=>`, `Array#sort` and related sorting
 # methods will perform slightly slower.
 module Comparable(T)
   # Compares this object to *other* based on the receiver’s `<=>` method,

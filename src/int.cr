@@ -237,7 +237,7 @@ struct Int
     end
   end
 
-  def <=>(other : Int)
+  def <=>(other : Int) : Int32
     # Override Number#<=> because when comparing
     # Int vs Int there's no way we can return `nil`
     self > other ? 1 : (self < other ? -1 : 0)
