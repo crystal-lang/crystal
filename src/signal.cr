@@ -327,7 +327,21 @@ fun __crystal_sigfault_handler(sig : LibC::Int, addr : Void*)
   stack_top = Pointer(Void).new(Fiber.current.@stack.address - 4096)
 
   if stack_top <= addr < Fiber.current.@stack_bottom
-    LibC.dprintf 2, "Stack overflow (e.g., infinite or very deep recursion)\n"
+    LibC.dprintf 2,
+      <<-STACK_OVERFLOW
+      Stack overflow (e.g., infinite or very deep recursion)
+      This can happen when doing for example this:
+
+        def method
+          method()
+        end
+
+        method()
+
+      This recursively calls itself over and over and results in a stack overflow.
+      If a method you define in your current type has the same name as a top-level method,
+      prefix your call to the top-level method with `::`.\n
+      STACK_OVERFLOW
   else
     LibC.dprintf 2, "Invalid memory access (signal %d) at address 0x%lx\n", sig, addr
   end
