@@ -2,9 +2,9 @@
 #
 # Including types must provide an `<=>` method, which compares the receiver against
 # another object, returning:
-# - a value less than zero if `self` is less than the other object
-# - a value greater than zero if `self` is greater than the other object
-# - zero if `self` is equal to the other object
+# - a negative number if `self` is less than the other object
+# - a positive number if `self` is greater than the other object
+# - `0` if `self` is equal to the other object
 # - `nil` if `self` and the other object are not comparable
 #
 # `Comparable` uses `<=>` to implement the conventional comparison operators
@@ -19,14 +19,14 @@
 # methods will perform slightly slower.
 module Comparable(T)
   # Compares this object to *other* based on the receiver’s `<=>` method,
-  # returning `true` if it returns a value less than zero.
+  # returning `true` if it returns a negative number.
   def <(other : T)
     cmp = self <=> other
     cmp ? cmp < 0 : false
   end
 
   # Compares this object to *other* based on the receiver’s `<=>` method,
-  # returning `true` if it returns a value equal or less then zero.
+  # returning `true` if it returns a value equal or less then `0`.
   def <=(other : T)
     cmp = self <=> other
     cmp ? cmp <= 0 : false
@@ -50,14 +50,14 @@ module Comparable(T)
   end
 
   # Compares this object to *other* based on the receiver’s `<=>` method,
-  # returning `true` if it returns a value greater then zero.
+  # returning `true` if it returns a value greater then `0`.
   def >(other : T)
     cmp = self <=> other
     cmp ? cmp > 0 : false
   end
 
   # Compares this object to *other* based on the receiver’s `<=>` method,
-  # returning `true` if it returns a value equal or greater than zero.
+  # returning `true` if it returns a value equal or greater than `0`.
   def >=(other : T)
     cmp = self <=> other
     cmp ? cmp >= 0 : false
