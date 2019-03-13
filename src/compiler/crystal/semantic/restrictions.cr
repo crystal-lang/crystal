@@ -364,11 +364,11 @@ module Crystal
   end
 
   class Type
-    def restrict(other : Nil, context)
+    def restrict(other : Nil, match_ctx)
       self
     end
 
-    def restrict(other : Type, context)
+    def restrict(other : Type, match_ctx)
       if self == other
         return self
       end
@@ -378,146 +378,146 @@ module Crystal
         return self
       end
 
-      if parents.try &.any? &.restriction_of?(other, context.instantiated_type)
+      if parents.try &.any? &.restriction_of?(other, match_ctx.instantiated_type)
         return self
       end
 
       nil
     end
 
-    def restrict(other : AliasType, context)
+    def restrict(other : AliasType, match_ctx)
       if self == other
         self
       else
-        restrict(other.remove_alias, context)
+        restrict(other.remove_alias, match_ctx)
       end
     end
 
-    def restrict(other : Self, context)
-      restrict(context.instantiated_type.instance_type, context)
+    def restrict(other : Self, match_ctx)
+      restrict(match_ctx.instantiated_type.instance_type, match_ctx)
     end
 
-    def restrict(other : TypeOf, context)
+    def restrict(other : TypeOf, match_ctx)
       other.raise "can't use typeof in type restrictions"
     end
 
-    def restrict(other : UnionType, context)
+    def restrict(other : UnionType, match_ctx)
       restricted = nil
 
       other.union_types.each do |union_type|
         # Apply the restriction logic on each union type, even if we already
         # have a match, so that we can detect ambiguous calls between of
         # literal types against aliases that resolve to union types.
-        restriction = restrict(union_type, context)
+        restriction = restrict(union_type, match_ctx)
         restricted ||= restriction
       end
 
       restricted ? self : nil
     end
 
-    def restrict(other : VirtualType, context)
+    def restrict(other : VirtualType, match_ctx)
       implements?(other.base_type) ? self : nil
     end
 
-    def restrict(other : Union, context)
+    def restrict(other : Union, match_ctx)
       types = other.types.compact_map do |ident|
-        restrict(ident, context).as(Type?)
+        restrict(ident, match_ctx).as(Type?)
       end
       types.size > 0 ? program.type_merge_union_of(types) : nil
     end
 
-    def restrict(other : Path, context)
+    def restrict(other : Path, match_ctx)
       single_name = other.names.size == 1
       if single_name
         first_name = other.names.first
-        if context.has_def_free_var?(first_name)
-          return context.set_free_var(first_name, self)
+        if match_ctx.has_def_free_var?(first_name)
+          return match_ctx.set_free_var(first_name, self)
         end
       end
 
       if single_name
-        owner = context.instantiated_type
+        owner = match_ctx.instantiated_type
 
         # Special case: if we have an *uninstantiated* generic type like Foo(X)
         # and a restriction X, it matches, and we add X to the free vars.
         if owner.is_a?(GenericType)
           first_name = other.names.first
           if owner.type_vars.includes?(first_name)
-            context.set_free_var(first_name, self)
+            match_ctx.set_free_var(first_name, self)
             return self
           end
         end
 
-        ident_type = context.get_free_var(other.names.first)
+        ident_type = match_ctx.get_free_var(other.names.first)
       end
 
       had_ident_type = !!ident_type
-      ident_type ||= context.defining_type.lookup_path other
+      ident_type ||= match_ctx.defining_type.lookup_path other
 
       if ident_type
         if ident_type.is_a?(Const)
           other.raise "#{ident_type} is not a type, it's a constant"
         end
 
-        return restrict ident_type, context
+        return restrict ident_type, match_ctx
       end
 
       if single_name
         first_name = other.names.first
-        if context.defining_type.type_var?(first_name)
-          return context.set_free_var(first_name, self)
+        if match_ctx.defining_type.type_var?(first_name)
+          return match_ctx.set_free_var(first_name, self)
         end
       end
 
       if had_ident_type
         other.raise "undefined constant #{other}"
       else
-        other.raise_undefined_constant(context.defining_type)
+        other.raise_undefined_constant(match_ctx.defining_type)
       end
     end
 
-    def restrict(other : Generic, context)
+    def restrict(other : Generic, match_ctx)
       # Special case: consider `Union(X, Y, ...)` the same as `X | Y | ...`
-      generic_type = get_generic_type(other, context)
+      generic_type = get_generic_type(other, match_ctx)
       if generic_type.is_a?(GenericUnionType)
-        return restrict(Union.new(other.type_vars), context)
+        return restrict(Union.new(other.type_vars), match_ctx)
       end
 
       parents.try &.each do |parent|
         next if parent.is_a?(NonGenericModuleType)
 
-        restricted = parent.restrict other, context
+        restricted = parent.restrict other, match_ctx
         return self if restricted
       end
 
       nil
     end
 
-    def restrict(other : Metaclass, context)
+    def restrict(other : Metaclass, match_ctx)
       nil
     end
 
-    def restrict(other : ProcNotation, context)
+    def restrict(other : ProcNotation, match_ctx)
       nil
     end
 
-    def restrict(other : Underscore, context)
+    def restrict(other : Underscore, match_ctx)
       self
     end
 
-    def restrict(other : Arg, context)
-      restrict (other.type? || other.restriction), context
+    def restrict(other : Arg, match_ctx)
+      restrict (other.type? || other.restriction), match_ctx
     end
 
-    def restrict(other : NumberLiteral, context)
+    def restrict(other : NumberLiteral, match_ctx)
       nil
     end
 
-    def restrict(other : Splat, context)
+    def restrict(other : Splat, match_ctx)
       nil
     end
 
-    def restrict(other : ASTNode, context)
+    def restrict(other : ASTNode, match_ctx)
       raise "BUG: unsupported restriction: #{self} vs. #{other}"
     end
 
@@ -559,14 +559,14 @@ module Crystal
       self == type || union_types.any? &.restriction_of?(type, owner)
     end
 
-    def restrict(other : Union, context)
+    def restrict(other : Union, match_ctx)
       types = [] of Type
       discarded = [] of Type
       other.types.each do |other_type|
         self.union_types.each do |type|
           next if discarded.includes?(type)
 
-          restricted = type.restrict(other_type, context)
+          restricted = type.restrict(other_type, match_ctx)
           if restricted
             types << restricted
             discarded << type
@@ -577,25 +577,25 @@ module Crystal
       program.type_merge_union_of(types)
     end
 
-    def restrict(other : Type, context)
-      restrict_type_or_fun_or_generic other, context
+    def restrict(other : Type, match_ctx)
+      restrict_type_or_fun_or_generic other, match_ctx
     end
 
-    def restrict(other : ProcNotation, context)
-      restrict_type_or_fun_or_generic other, context
+    def restrict(other : ProcNotation, match_ctx)
+      restrict_type_or_fun_or_generic other, match_ctx
     end
 
-    def restrict(other : Generic, context)
-      restrict_type_or_fun_or_generic other, context
+    def restrict(other : Generic, match_ctx)
+      restrict_type_or_fun_or_generic other, match_ctx
     end
 
-    def restrict(other : Metaclass, context)
-      restrict_type_or_fun_or_generic other, context
+    def restrict(other : Metaclass, match_ctx)
+      restrict_type_or_fun_or_generic other, match_ctx
     end
 
-    def restrict_type_or_fun_or_generic(other, context)
+    def restrict_type_or_fun_or_generic(other, match_ctx)
       types = union_types.compact_map do |type|
-        type.restrict(other, context).as(Type?)
+        type.restrict(other, match_ctx).as(Type?)
       end
       program.type_merge_union_of(types)
     end
@@ -623,12 +623,12 @@ module Crystal
       true
     end
 
-    def restrict(other : GenericType, context)
+    def restrict(other : GenericType, contet)
       generic_type == other ? self : super
     end
 
-    def restrict(other : Generic, context)
-      generic_type = get_generic_type(other, context)
+    def restrict(other : Generic, match_ctx)
+      generic_type = get_generic_type(other, match_ctx)
       generic_type = generic_type.remove_alias if generic_type.is_a? AliasType
       return super unless generic_type == self.generic_type
 
@@ -670,15 +670,15 @@ module Crystal
             return nil unless count >= 0
 
             arg_types = types[i, count]
-            arg_types_tuple = context.instantiated_type.program.tuple_of(arg_types)
+            arg_types_tuple = match_ctx.instantiated_type.program.tuple_of(arg_types)
 
-            restricted = arg_types_tuple.restrict(type_var.exp, context)
+            restricted = arg_types_tuple.restrict(type_var.exp, match_ctx)
             return nil unless restricted == arg_types_tuple
 
             i += count
           else
             arg_type = types[i]
-            restricted = arg_type.restrict(type_var, context)
+            restricted = arg_type.restrict(type_var, match_ctx)
             return unless restricted == arg_type
 
             i += 1
@@ -695,7 +695,7 @@ module Crystal
       i = 0
       type_vars.each do |name, type_var|
         other_type_var = other.type_vars[i]
-        restricted = restrict_type_var(type_var, other_type_var, context)
+        restricted = restrict_type_var(type_var, other_type_var, match_ctx)
         return nil unless restricted
         i += 1
       end
@@ -703,19 +703,19 @@ module Crystal
       self
     end
 
-    def restrict(other : GenericInstanceType, context)
+    def restrict(other : GenericInstanceType, match_ctx)
       return super unless generic_type == other.generic_type
 
       type_vars.each do |name, type_var|
         other_type_var = other.type_vars[name]
-        restricted = restrict_type_var(type_var, other_type_var, context)
+        restricted = restrict_type_var(type_var, other_type_var, match_ctx)
         return super unless restricted
       end
 
       self
     end
 
-    def restrict_type_var(type_var, other_type_var, context)
+    def restrict_type_var(type_var, other_type_var, match_ctx)
       if type_var.is_a?(NumberLiteral)
         case other_type_var
         when NumberLiteral
@@ -728,12 +728,12 @@ module Crystal
 
             # If the free variable is already set to another
             # number, there's no match
-            existing = context.get_free_var(name)
+            existing = match_ctx.get_free_var(name)
             if existing && existing != type_var
               return nil
             end
 
-            context.set_free_var(name, type_var)
+            match_ctx.set_free_var(name, type_var)
             return type_var
           end
         end
@@ -746,14 +746,14 @@ module Crystal
       end
 
       if type_var.is_a?(ASTNode)
-        type_var.restriction_of?(other_type_var, context.instantiated_type)
-      elsif context.strict?
+        type_var.restriction_of?(other_type_var, match_ctx.instantiated_type)
+      elsif match_ctx.strict?
         type_var == other_type_var
       else
         # To prevent infinite recursion, it checks equality between
         # `type_var` and `other_type_var` directly before try to restrict
         # `type_var` by `other_type_var`.
-        type_var == other_type_var || type_var.restrict(other_type_var, context) == type_var
+        type_var == other_type_var || type_var.restrict(other_type_var, match_ctx) == type_var
       end
     end
   end
@@ -765,8 +765,8 @@ module Crystal
       false
     end
 
-    def restrict(other : Generic, context)
-      generic_type = get_generic_type(other, context)
+    def restrict(other : Generic, match_ctx)
+      generic_type = get_generic_type(other, match_ctx)
       return super unless generic_type == self.generic_type
 
       generic_type = generic_type.as(TupleType)
@@ -785,15 +785,15 @@ module Crystal
             return nil unless count >= 0
 
             arg_types = tuple_types[i, count]
-            arg_types_tuple = context.instantiated_type.program.tuple_of(arg_types)
+            arg_types_tuple = match_ctx.instantiated_type.program.tuple_of(arg_types)
 
-            restricted = arg_types_tuple.restrict(type_var.exp, context)
+            restricted = arg_types_tuple.restrict(type_var.exp, match_ctx)
             return nil unless restricted == arg_types_tuple
 
             i += count
           else
             arg_type = tuple_types[i]
-            restricted = arg_type.restrict(type_var, context)
+            restricted = arg_type.restrict(type_var, match_ctx)
             return unless restricted == arg_type
 
             i += 1
@@ -805,7 +805,7 @@ module Crystal
         return nil unless other.type_vars.size == tuple_types.size
 
         tuple_types.zip(other.type_vars) do |tuple_type, type_var|
-          restricted = tuple_type.restrict(type_var, context)
+          restricted = tuple_type.restrict(type_var, match_ctx)
           return nil unless restricted == tuple_type
         end
       end
@@ -813,7 +813,7 @@ module Crystal
       self
     end
 
-    def restrict(other : TupleInstanceType, context)
+    def restrict(other : TupleInstanceType, match_ctx)
       self.implements?(other) ? self : nil
     end
   end
@@ -825,8 +825,8 @@ module Crystal
       false
     end
 
-    def restrict(other : Generic, context)
-      generic_type = get_generic_type(other, context)
+    def restrict(other : Generic, match_ctx)
+      generic_type = get_generic_type(other, match_ctx)
       return super unless generic_type == self.generic_type
 
       other_named_args = other.named_args
@@ -845,14 +845,14 @@ module Crystal
         self_type = self.name_type(named_arg.name)
         other_type = named_arg.value
 
-        restricted = self_type.restrict(other_type, context)
+        restricted = self_type.restrict(other_type, match_ctx)
         return nil unless restricted
       end
 
       self
     end
 
-    def restrict(other : NamedTupleInstanceType, context)
+    def restrict(other : NamedTupleInstanceType, match_ctx)
       self.implements?(other) ? self : nil
     end
   end
@@ -863,7 +863,7 @@ module Crystal
       base_type.implements?(other) || other.implements?(base_type)
     end
 
-    def restrict(other : Type, context)
+    def restrict(other : Type, match_ctx)
       other = other.remove_alias
       base_type = self.base_type
 
@@ -871,11 +871,11 @@ module Crystal
         self
       elsif other.is_a?(UnionType)
         types = other.union_types.compact_map do |t|
-          restrict(t, context).as(Type?)
+          restrict(t, match_ctx).as(Type?)
         end
         program.type_merge types
       elsif other.is_a?(VirtualType)
-        result = base_type.restrict(other.base_type, context) || other.base_type.restrict(base_type, context)
+        result = base_type.restrict(other.base_type, match_ctx) || other.base_type.restrict(base_type, match_ctx)
         result ? result.virtual_type : nil
       elsif other.implements?(base_type)
         other.virtual_type
@@ -886,7 +886,7 @@ module Crystal
           self
         else
           types = base_type.subclasses.compact_map do |subclass|
-            subclass.virtual_type.restrict(other, context).as(Type?)
+            subclass.virtual_type.restrict(other, match_ctx).as(Type?)
           end
           program.type_merge_union_of types
         end
@@ -904,29 +904,29 @@ module Crystal
       end
     end
 
-    def restrict(other : Generic, context)
+    def restrict(other : Generic, match_ctx)
       # Restrict first against the base type
-      restricted = base_type.restrict(other, context)
+      restricted = base_type.restrict(other, match_ctx)
       if restricted
         return restricted.virtual_type
       end
 
       types = base_type.subclasses.compact_map do |subclass|
-        subclass.virtual_type.restrict(other, context).as(Type?)
+        subclass.virtual_type.restrict(other, match_ctx).as(Type?)
       end
       program.type_merge_union_of types
     end
   end
 
   class VirtualMetaclassType
-    def restrict(other : Metaclass, context)
-      instance_type.restrict(other.name, context).try &.metaclass
+    def restrict(other : Metaclass, match_ctx)
+      instance_type.restrict(other.name, match_ctx).try &.metaclass
     end
   end
 
   class NonGenericModuleType
-    def restrict(other, context)
-      super || including_types.try(&.restrict(other, context))
+    def restrict(other, match_ctx)
+      super || including_types.try(&.restrict(other, match_ctx))
     end
   end
 
@@ -937,16 +937,16 @@ module Crystal
       remove_alias.restriction_of?(other, owner)
     end
 
-    def restrict(other : Path, context)
+    def restrict(other : Path, match_ctx)
       single_name = other.names.size == 1
       if single_name
         first_name = other.names.first
-        if context.has_def_free_var?(first_name)
-          return context.set_free_var(first_name, self)
+        if match_ctx.has_def_free_var?(first_name)
+          return match_ctx.set_free_var(first_name, self)
         end
       end
 
-      other_type = context.defining_type.lookup_path other
+      other_type = match_ctx.defining_type.lookup_path other
       if other_type
         if other_type == self
           return self
@@ -955,43 +955,43 @@ module Crystal
         single_name = other.names.size == 1
         if single_name
           first_name = other.names.first
-          if context.defining_type.type_var?(first_name)
-            return context.set_free_var(first_name, self)
+          if match_ctx.defining_type.type_var?(first_name)
+            return match_ctx.set_free_var(first_name, self)
           else
-            other.raise_undefined_constant(context.defining_type)
+            other.raise_undefined_constant(match_ctx.defining_type)
           end
         end
       end
 
-      remove_alias.restrict(other, context)
+      remove_alias.restrict(other, match_ctx)
     end
 
-    def restrict(other : AliasType, context)
+    def restrict(other : AliasType, match_ctx)
       return self if self == other
 
       if !self.simple? && !other.simple?
         return nil
       end
 
-      remove_alias.restrict(other, context)
+      remove_alias.restrict(other, match_ctx)
     end
 
-    def restrict(other, context)
+    def restrict(other, match_ctx)
       return self if self == other
 
-      remove_alias.restrict(other, context)
+      remove_alias.restrict(other, match_ctx)
     end
   end
 
   class TypeDefType
-    def restrict(other : UnionType, context)
+    def restrict(other : UnionType, match_ctx)
       super
     end
 
-    def restrict(other : Type, context)
+    def restrict(other : Type, match_ctx)
       return self if self == other
 
-      restricted = typedef.restrict(other, context)
+      restricted = typedef.restrict(other, match_ctx)
       if restricted == typedef
         return self
       elsif restricted.is_a?(UnionType)
@@ -1003,16 +1003,16 @@ module Crystal
   end
 
   class MetaclassType
-    def restrict(other : Metaclass, context)
-      restricted = instance_type.restrict(other.name, context)
+    def restrict(other : Metaclass, match_ctx)
+      restricted = instance_type.restrict(other.name, match_ctx)
       instance_type == restricted ? self : nil
     end
 
-    def restrict(other : VirtualMetaclassType, context)
+    def restrict(other : VirtualMetaclassType, match_ctx)
       # A module class can't be restricted into a class
       return nil if instance_type.module?
 
-      restricted = instance_type.restrict(other.instance_type.base_type, context)
+      restricted = instance_type.restrict(other.instance_type.base_type, match_ctx)
       restricted ? self : nil
     end
 
@@ -1022,35 +1022,35 @@ module Crystal
   end
 
   class GenericClassInstanceMetaclassType
-    def restrict(other : Metaclass, context)
-      restricted = instance_type.restrict(other.name, context)
+    def restrict(other : Metaclass, match_ctx)
+      restricted = instance_type.restrict(other.name, match_ctx)
       instance_type == restricted ? self : nil
     end
 
-    def restrict(other : MetaclassType, context)
+    def restrict(other : MetaclassType, match_ctx)
       return self if instance_type.generic_type.metaclass == other
 
-      restricted = instance_type.restrict(other.instance_type, context)
+      restricted = instance_type.restrict(other.instance_type, match_ctx)
       restricted ? self : nil
     end
   end
 
   class GenericModuleInstanceMetaclassType
-    def restrict(other : Metaclass, context)
-      restricted = instance_type.restrict(other.name, context)
+    def restrict(other : Metaclass, match_ctx)
+      restricted = instance_type.restrict(other.name, match_ctx)
       instance_type == restricted ? self : nil
     end
 
-    def restrict(other : MetaclassType, context)
+    def restrict(other : MetaclassType, match_ctx)
       return self if instance_type.generic_type.metaclass == other
 
-      restricted = instance_type.restrict(other.instance_type, context)
+      restricted = instance_type.restrict(other.instance_type, match_ctx)
       restricted ? self : nil
     end
   end
 
   class ProcInstanceType
-    def restrict(other : ProcNotation, context)
+    def restrict(other : ProcNotation, match_ctx)
       inputs = other.inputs
       inputs_size = inputs ? inputs.size : 0
       output = other.output
@@ -1064,15 +1064,15 @@ module Crystal
             return nil unless count >= 0
 
             input_arg_types = arg_types[i, count]
-            input_arg_types_tuple = context.instantiated_type.program.tuple_of(input_arg_types)
+            input_arg_types_tuple = match_ctx.instantiated_type.program.tuple_of(input_arg_types)
 
-            restricted = input_arg_types_tuple.restrict(input.exp, context)
+            restricted = input_arg_types_tuple.restrict(input.exp, match_ctx)
             return nil unless restricted == input_arg_types_tuple
 
             i += count
           else
             arg_type = arg_types[i]
-            restricted = arg_type.restrict(input, context)
+            restricted = arg_type.restrict(input, match_ctx)
             return unless restricted == arg_type
 
             i += 1
@@ -1083,7 +1083,7 @@ module Crystal
 
         if inputs
           inputs.zip(arg_types) do |input, my_input|
-            restricted = my_input.restrict(input, context)
+            restricted = my_input.restrict(input, match_ctx)
             return nil unless restricted == my_input
           end
         end
@@ -1094,7 +1094,7 @@ module Crystal
         if my_output.no_return?
           # Ok, NoReturn can be "cast" to anything
         else
-          restricted = my_output.restrict(output, context)
+          restricted = my_output.restrict(output, match_ctx)
           return nil unless restricted == my_output
         end
 
@@ -1104,12 +1104,12 @@ module Crystal
       end
     end
 
-    def restrict(other : ProcInstanceType, context)
+    def restrict(other : ProcInstanceType, match_ctx)
       compatible_with?(other) ? other : nil
     end
 
-    def restrict(other : Generic, context)
-      generic_type = get_generic_type(other, context)
+    def restrict(other : Generic, match_ctx)
+      generic_type = get_generic_type(other, match_ctx)
       return super unless generic_type.is_a?(ProcType)
 
       # Consider the case of a splat in the type vars
@@ -1124,15 +1124,15 @@ module Crystal
             return nil unless count >= 0
 
             arg_types = proc_types[i, count]
-            arg_types_tuple = context.instantiated_type.program.tuple_of(arg_types)
+            arg_types_tuple = match_ctx.instantiated_type.program.tuple_of(arg_types)
 
-            restricted = arg_types_tuple.restrict(type_var.exp, context)
+            restricted = arg_types_tuple.restrict(type_var.exp, match_ctx)
             return nil unless restricted == arg_types_tuple
 
             i += count
           else
             arg_type = proc_types[i]
-            restricted = arg_type.restrict(type_var, context)
+            restricted = arg_type.restrict(type_var, match_ctx)
             return unless restricted == arg_type
 
             i += 1
@@ -1148,7 +1148,7 @@ module Crystal
 
       other.type_vars.each_with_index do |other_type_var, i|
         proc_type = arg_types[i]? || return_type
-        restricted = proc_type.restrict other_type_var, context
+        restricted = proc_type.restrict other_type_var, match_ctx
         return nil unless restricted == proc_type
       end
 
@@ -1178,7 +1178,7 @@ module Crystal
   end
 
   class NumberLiteralType
-    def restrict(other, context)
+    def restrict(other, match_ctx)
       if other.is_a?(IntegerType) || other.is_a?(FloatType)
         # Check for an exact match, which can't produce an ambiguous call
         if literal.type == other
@@ -1188,11 +1188,11 @@ module Crystal
           add_match(other)
           other
         else
-          literal.type.restrict(other, context)
+          literal.type.restrict(other, match_ctx)
         end
       else
-        type = super(other, context) ||
-               literal.type.restrict(other, context)
+        type = super(other, match_ctx) ||
+               literal.type.restrict(other, match_ctx)
         if type == self
           type = @match || literal.type
         end
@@ -1202,7 +1202,7 @@ module Crystal
   end
 
   class SymbolLiteralType
-    def restrict(other, context)
+    def restrict(other, match_ctx)
       case other
       when SymbolType
         set_exact_match(other)
@@ -1212,11 +1212,11 @@ module Crystal
           add_match(other)
           other
         else
-          literal.type.restrict(other, context)
+          literal.type.restrict(other, match_ctx)
         end
       else
-        type = super(other, context) ||
-               literal.type.restrict(other, context)
+        type = super(other, match_ctx) ||
+               literal.type.restrict(other, match_ctx)
         if type == self
           type = @match || literal.type
         end
@@ -1226,10 +1226,10 @@ module Crystal
   end
 end
 
-private def get_generic_type(node, context)
+private def get_generic_type(node, match_ctx)
   name = node.name
   if name.is_a?(Crystal::Path)
-    context.defining_type.lookup_path name
+    match_ctx.defining_type.lookup_path name
   else
     name.type
   end
