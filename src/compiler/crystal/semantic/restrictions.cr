@@ -360,8 +360,21 @@ module Crystal
         # def foo(param : Int32.class)
         # end
         # ```
+
+        if (other_def = ctx.other_def) &&
+            (free_vars = other_def.def.free_vars) &&
+            (free_vars.includes?(other.name.to_s))
+
+          puts "Metaclass #{other} 's name is a free variable"
+          true
+
+        end
+        # Basically we always return true.. Am I missing something?
+
         true
       else
+        # Is there something to do here?
+
         false
       end
     end
