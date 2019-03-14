@@ -827,8 +827,10 @@ module Crystal
       defs = (@defs ||= {} of String => Array(DefWithMetadata))
       list = defs[a_def.name] ||= [] of DefWithMetadata
       list.each_with_index do |ex_item, i|
-        if item.restriction_of?(ex_item, self)
-          if ex_item.restriction_of?(item, self)
+        ctx = RestrictionsContext.new owner: self, self_def: item, other_def: ex_item
+        if item.restriction_of?(ex_item, ctx)
+          ctx = RestrictionsContext.new owner: self, self_def: ex_item, other_def: item
+          if ex_item.restriction_of?(item, ctx)
             # The two defs have the same signature so item overrides ex_item.
             list[i] = item
             a_def.previous = ex_item
