@@ -52,7 +52,7 @@ class Crystal::Command
       Process.run("open #{playground_url}", shell: true)
     {% elsif flag?(:win32) %}
       Process.run("start #{playground_url}", shell: true)
-    {% elsif flag?(:linux) %}
+    {% elsif flag?(:unix) %}
       Process.run("xdg-open #{playground_url}", shell: true)
     {% end %}
   end
