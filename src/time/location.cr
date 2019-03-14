@@ -109,7 +109,7 @@ class Time::Location
     #
     # It contains the `name`, hour-minute-second format (see `#format`),
     # `offset` in seconds and `"DST"` if `#dst?`, otherwise `"STD"`.
-    def inspect(io : IO)
+    def inspect(io : IO) : Nil
       io << "Time::Location::Zone("
       io << @name << ' ' unless @name.nil?
       format(io)
@@ -176,7 +176,7 @@ class Time::Location
   record ZoneTransition, when : Int64, index : UInt8, standard : Bool, utc : Bool do
     getter? standard, utc
 
-    def inspect(io : IO)
+    def inspect(io : IO) : Nil
       io << "Time::Location::ZoneTransition("
       io << '#' << index << ' '
       Time.unix(self.when).to_s("%F %T", io)
@@ -364,11 +364,11 @@ class Time::Location
   end
 
   # Prints `name` to *io*.
-  def to_s(io : IO)
+  def to_s(io : IO) : Nil
     io << name
   end
 
-  def inspect(io : IO)
+  def inspect(io : IO) : Nil
     io << "#<Time::Location "
     to_s(io)
     io << '>'

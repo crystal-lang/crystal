@@ -336,7 +336,7 @@ struct Set(T)
   end
 
   # Alias of `#to_s`.
-  def inspect(io)
+  def inspect(io : IO) : Nil
     to_s(io)
   end
 
@@ -363,7 +363,7 @@ struct Set(T)
   end
 
   # Writes a string representation of the set to *io*.
-  def to_s(io)
+  def to_s(io : IO) : Nil
     io << "Set{"
     join ", ", io, &.inspect(io)
     io << '}'

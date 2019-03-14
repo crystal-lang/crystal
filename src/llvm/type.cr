@@ -162,7 +162,7 @@ struct LLVM::Type
     Context.new(LibLLVM.get_type_context(self), dispose_on_finalize: false)
   end
 
-  def inspect(io)
+  def inspect(io : IO) : Nil
     LLVM.to_io(LibLLVM.print_type_to_string(self), io)
     self
   end

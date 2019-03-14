@@ -330,7 +330,7 @@ class Deque(T)
     self
   end
 
-  def inspect(io : IO)
+  def inspect(io : IO) : Nil
     executed = exec_recursive(:inspect) do
       io << "Deque{"
       join ", ", io, &.inspect(io)
@@ -483,7 +483,7 @@ class Deque(T)
     self
   end
 
-  def to_s(io : IO)
+  def to_s(io : IO) : Nil
     inspect(io)
   end
 

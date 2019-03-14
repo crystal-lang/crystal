@@ -857,7 +857,7 @@ class Array(T)
   end
 
   # :nodoc:
-  def inspect(io : IO)
+  def inspect(io : IO) : Nil
     to_s io
   end
 
@@ -1725,7 +1725,7 @@ class Array(T)
     self
   end
 
-  def to_s(io : IO)
+  def to_s(io : IO) : Nil
     executed = exec_recursive(:to_s) do
       io << '['
       join ", ", io, &.inspect(io)

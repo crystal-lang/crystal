@@ -40,11 +40,11 @@ class Crystal::Location
     min <= self && self <= max
   end
 
-  def inspect(io)
+  def inspect(io : IO) : Nil
     to_s(io)
   end
 
-  def to_s(io)
+  def to_s(io : IO) : Nil
     io << filename << ':' << line_number << ':' << column_number
   end
 

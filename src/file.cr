@@ -897,11 +897,10 @@ class File < IO::FileDescriptor
     yield io ensure io.close
   end
 
-  def inspect(io)
+  def inspect(io : IO) : Nil
     io << "#<File:" << @path
     io << " (closed)" if closed?
     io << '>'
-    io
   end
 
   # TODO: use fcntl/lockf instead of flock (which doesn't lock over NFS)

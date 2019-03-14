@@ -39,21 +39,21 @@ class Exception
     {% end %}
   end
 
-  def to_s(io : IO)
+  def to_s(io : IO) : Nil
     io << message
   end
 
-  def inspect(io : IO)
+  def inspect(io : IO) : Nil
     io << "#<" << self.class.name << ':' << message << '>'
   end
 
-  def inspect_with_backtrace
+  def inspect_with_backtrace : String
     String.build do |io|
       inspect_with_backtrace io
     end
   end
 
-  def inspect_with_backtrace(io : IO)
+  def inspect_with_backtrace(io : IO) : Nil
     io << message << " (" << self.class << ")\n"
     backtrace?.try &.each do |frame|
       io.print "  from "

@@ -14,7 +14,7 @@ module MIME
       end
     end
 
-    def to_s(io : IO)
+    def to_s(io : IO) : Nil
       io << media_type
 
       @params.each do |key, value|

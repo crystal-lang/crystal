@@ -32,7 +32,7 @@ module OpenSSL
       digest.hexstring
     end
 
-    def to_s(io)
+    def to_s(io : IO) : Nil
       io << hexdigest
     end
   end

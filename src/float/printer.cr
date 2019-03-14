@@ -13,7 +13,7 @@ module Float::Printer
   #
   # It is used by `Float64#to_s` and it is probably not necessary to use
   # this directly.
-  def print(v : Float64 | Float32, io : IO)
+  def print(v : Float64 | Float32, io : IO) : Nil
     d = IEEE.to_uint(v)
 
     if IEEE.sign(d) < 0

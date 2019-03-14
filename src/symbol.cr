@@ -34,7 +34,7 @@ struct Symbol
   # ```
   # :crystal.inspect # => ":crystal"
   # ```
-  def inspect(io : IO)
+  def inspect(io : IO) : Nil
     io << ':'
 
     value = to_s
@@ -50,7 +50,7 @@ struct Symbol
   # ```
   # :crystal.to_s # => "crystal"
   # ```
-  def to_s(io : IO)
+  def to_s(io : IO) : Nil
     io << to_s
   end
 

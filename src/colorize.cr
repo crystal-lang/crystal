@@ -298,13 +298,13 @@ struct Colorize::Object(T)
     self
   end
 
-  def to_s(io)
+  def to_s(io : IO) : Nil
     surround(io) do
       io << @object
     end
   end
 
-  def inspect(io)
+  def inspect(io : IO) : Nil
     surround(io) do
       @object.inspect(io)
     end

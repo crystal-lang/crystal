@@ -129,7 +129,7 @@ class Crystal::Codegen::Target
     target.create_target_machine(self.to_s, cpu: cpu, features: features, opt_level: opt_level).not_nil!
   end
 
-  def to_s(io)
+  def to_s(io : IO) : Nil
     io << architecture << '-' << vendor << '-' << environment
   end
 end
