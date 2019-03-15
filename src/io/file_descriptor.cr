@@ -1,4 +1,3 @@
-require "./syscall"
 require "crystal/system/file_descriptor"
 
 # An `IO` over a file descriptor.
