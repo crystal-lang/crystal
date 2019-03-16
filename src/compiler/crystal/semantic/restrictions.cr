@@ -69,8 +69,10 @@ module Crystal
   end
 
   struct DefWithMetadata
-    def restriction_of?(other : DefWithMetadata, ctx)
-      # This is how multiple defs are sorted by 'restrictions' (?)
+    def restriction_of?(other : DefWithMetadata, *, owner)
+      # This is how multiple defs are sorted by 'restrictions'
+
+      ctx = RestrictionsContext.new owner: owner, self_def: self, other_def: other
 
       # If one yields and the other doesn't, none is stricter than the other
       return false unless yields == other.yields
@@ -365,12 +367,11 @@ module Crystal
             (free_vars = other_def.def.free_vars) &&
             (free_vars.includes?(other.name.to_s))
 
-          puts "Metaclass #{other} 's name is a free variable"
+          # Metaclass `other`'s name is a free variable
           true
-
         end
-        # Basically we always return true.. Am I missing something?
 
+        # Basically we always return true.. Am I missing something?
         true
       else
         # Is there something to do here?
