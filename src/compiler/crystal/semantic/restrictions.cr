@@ -351,9 +351,15 @@ module Crystal
       self_type = ctx.owner.lookup_type?(self)
       other_type = ctx.owner.lookup_type?(other)
       if self_type && other_type
-        self_type.restriction_of?(other_type, ctx)
-      elsif self_type
-        # `other` cannot resolve to a type, it's probably a free variable like:
+        return self_type.restriction_of?(other_type, ctx)
+      end
+
+      other_is_free_var = (other_def = ctx.other_def) &&
+        (free_vars = other_def.def.free_vars) &&
+        (free_vars.includes?(other.name.to_s))
+
+      if self_type && other_is_free_var
+        # `other` cannot resolve to a because it is a free variable, like:
         #
         # ```
         # def foo(param : T.class) forall T
@@ -362,21 +368,9 @@ module Crystal
         # def foo(param : Int32.class)
         # end
         # ```
-
-        if (other_def = ctx.other_def) &&
-            (free_vars = other_def.def.free_vars) &&
-            (free_vars.includes?(other.name.to_s))
-
-          # Metaclass `other`'s name is a free variable
-          true
-        end
-
-        # Basically we always return true.. Am I missing something?
         true
       else
-        # Is there something to do here?
-
-        false
+        self == other
       end
     end
   end
