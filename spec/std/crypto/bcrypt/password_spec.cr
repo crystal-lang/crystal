@@ -22,7 +22,7 @@ describe "Crypto::Bcrypt::Password" do
     end
 
     it "validates the hash string has the required amount of parts" do
-      expect_raises(Crypto::Bcrypt::Error, /Invalid hash string/) do
+      expect_raises(Crypto::Bcrypt::Error, "Invalid hash string") do
         Crypto::Bcrypt::Password.new("blarp")
       end
     end
