@@ -12,7 +12,7 @@ class IO::Memory < IO
   @capacity : Int32
 
   # Creates an empty, resizeable and writeable `IO::Memory` with the given
-  # initialize capactiy for the internal buffer.
+  # initial *capacity* for the internal buffer.
   #
   # ```
   # io = IO::Memory.new

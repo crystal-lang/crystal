@@ -62,7 +62,7 @@ class StringPool
   # pool.empty? # => true
   # pool.get(slice)
   # pool.empty? # => false
-  #  ```
+  # ```
   def get(slice : Bytes)
     get slice.pointer(slice.size), slice.size
   end

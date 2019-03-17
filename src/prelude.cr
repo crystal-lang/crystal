@@ -4,7 +4,7 @@
 # requirement to place these in load order.
 #
 # When adding new files, use alpha-sort when possible. Make sure
-# to also add them to `docs_main.cr` if their content need to
+# to also add them to `docs_main.cr` if their content needs to
 # appear in the API docs.
 
 private macro no_win(stmt)

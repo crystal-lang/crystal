@@ -183,7 +183,7 @@ struct Int
   #
   # This uses truncated division.
   #
-  # See `Int#div` for more details.
+  # See `Int#tdiv` for more details.
   def remainder(other : Int)
     if other == 0
       raise DivisionByZeroError.new

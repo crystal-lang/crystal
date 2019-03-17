@@ -82,23 +82,25 @@ class File < IO::FileDescriptor
   # Opens the file named by *filename*.
   #
   # *mode* must be one of the following file open modes:
+  #
   # ```text
   # Mode | Description
   # -----+------------------------------------------------------
   # r    | Read-only, starts at the beginning of the file.
   # r+   | Read-write, starts at the beginning of the file.
   # w    | Write-only, truncates existing file to zero length or
-  #      | creates a new file if the file doesn't exists.
+  #      | creates a new file if the file doesn't exist.
   # w+   | Read-write, truncates existing file to zero length or
-  #      | creates a new file if the file doesn't exists.
+  #      | creates a new file if the file doesn't exist.
   # a    | Write-only, starts at the end of the file,
-  #      | creates a new file if the file doesn't exists.
+  #      | creates a new file if the file doesn't exist.
   # a+   | Read-write, starts at the end of the file,
-  #      | creates a new file if the file doesn't exists.
-  # rb   | Same as the 'r' mode but in binary file mode.
-  # wb   | Same as the 'w' mode but in binary file mode.
-  # ab   | Same as the 'a' mode but in binary file mode.
+  #      | creates a new file if the file doesn't exist.
+  # rb   | Same as 'r' but in binary file mode.
+  # wb   | Same as 'w' but in binary file mode.
+  # ab   | Same as 'a' but in binary file mode.
   # ```
+  #
   # In binary file mode, line endings are not converted to CRLF on Windows.
   def self.new(filename : String, mode = "r", perm = DEFAULT_CREATE_PERMISSIONS, encoding = nil, invalid = nil)
     fd = Crystal::System::File.open(filename, mode, perm)

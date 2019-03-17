@@ -1153,7 +1153,7 @@ describe "File" do
   end
 
   describe "touch" do
-    it "creates file if it doesn't exists" do
+    it "creates file if it doesn't exist" do
       with_tempfile("touch-create.txt") do |path|
         File.exists?(path).should be_false
         File.touch(path)
