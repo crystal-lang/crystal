@@ -1,20 +1,19 @@
 require "big"
 
-# A `BigDecimal` represents arbitrary precision decimals.
-#
-# It is internally represented by a pair of `BigInt` and `UInt64`: value and scale.
-# Value contains the actual value, and scale tells the decimal point place.
-# e.g. value=1234, scale=2 => 12.34
-#
-# The general idea and some of the arithmetic algorithms were adapted from
-# the MIT/APACHE -licensed https://github.com/akubera/bigdecimal-rs
-
 class InvalidBigDecimalException < Exception
   def initialize(big_decimal_str : String, reason : String)
     super("Invalid BigDecimal: #{big_decimal_str} (#{reason})")
   end
 end
 
+# A `BigDecimal` can represent arbitrarily large precision decimals.
+#
+# It is internally represented by a pair of `BigInt` and `UInt64`: value and scale.
+# Value contains the actual value, and scale tells the decimal point place.
+# e.g. when value is 1234 and scale 2, the result is 12.34.
+#
+# The general idea and some of the arithmetic algorithms were adapted from
+# the MIT/APACHE-licensed bigdecimal-rs: https://github.com/akubera/bigdecimal-rs.
 struct BigDecimal < Number
   ZERO                       = BigInt.new(0)
   TEN                        = BigInt.new(10)
@@ -518,7 +517,7 @@ struct BigDecimal < Number
   end
 
   # Factors out any extra powers of ten in the internal representation.
-  # For instance, value=100 scale=2 => value=1 scale=0
+  # For instance, when value is 100 and scale 2, the result is 1 and 0.
   protected def factor_powers_of_ten
     while @scale > 0
       quotient, remainder = value.divmod(TEN)
