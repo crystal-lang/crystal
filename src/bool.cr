@@ -54,12 +54,12 @@ struct Bool
   end
 
   # Returns `"true"` for `true` and `"false"` for `false`.
-  def to_s
+  def to_s : String
     self ? "true" : "false"
   end
 
   # Appends `"true"` for `true` and `"false"` for `false` to the given IO.
-  def to_s(io)
+  def to_s(io : IO) : Nil
     io << to_s
   end
 

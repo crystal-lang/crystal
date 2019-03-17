@@ -44,7 +44,7 @@ module HTTP
 
     def expired?
       if e = expires
-        e < Time.utc_now
+        e < Time.utc
       else
         false
       end
@@ -68,8 +68,9 @@ module HTTP
         Zone           = /(?:UT|GMT|EST|EDT|CST|CDT|MST|MDT|PST|PDT|[+-]?\d{4})/
         RFC1036Date    = /#{Weekday}, \d{2}-#{Month}-\d{2} #{Time} GMT/
         RFC1123Date    = /#{Wkday}, \d{1,2} #{Month} \d{2,4} #{Time} #{Zone}/
+        IISDate        = /#{Wkday}, \d{1,2}-#{Month}-\d{2,4} #{Time} GMT/
         ANSICDate      = /#{Wkday} #{Month} (?:\d{2}| \d) #{Time} \d{4}/
-        SaneCookieDate = /(?:#{RFC1123Date}|#{RFC1036Date}|#{ANSICDate})/
+        SaneCookieDate = /(?:#{RFC1123Date}|#{RFC1036Date}|#{IISDate}|#{ANSICDate})/
         ExtensionAV    = /(?<extension>[^\x00-\x1f\x7f]+)/
         HttpOnlyAV     = /(?<http_only>HttpOnly)/i
         SecureAV       = /(?<secure>Secure)/i
@@ -100,7 +101,7 @@ module HTTP
         return unless match
 
         expires = if max_age = match["max_age"]?
-                    Time.utc_now + max_age.to_i.seconds
+                    Time.utc + max_age.to_i.seconds
                   else
                     parse_time(match["expires"]?)
                   end
@@ -178,7 +179,7 @@ module HTTP
     #
     # ```
     # response = HTTP::Client::Response.new(200)
-    # response.cookies["foo"] = HTTP::Cookie.new("foo", "bar", "/admin", Time.now + 12.hours, secure: true)
+    # response.cookies["foo"] = HTTP::Cookie.new("foo", "bar", "/admin", Time.utc + 12.hours, secure: true)
     # ```
     def []=(key, value : Cookie)
       unless key == value.name

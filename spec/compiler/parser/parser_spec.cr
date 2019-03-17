@@ -152,6 +152,8 @@ module Crystal
     it_parses "@a, b = 1, 2", MultiAssign.new(["@a".instance_var, "b".var] of ASTNode, [1.int32, 2.int32] of ASTNode)
     it_parses "@@a, b = 1, 2", MultiAssign.new(["@@a".class_var, "b".var] of ASTNode, [1.int32, 2.int32] of ASTNode)
 
+    assert_syntax_error "a, B = 1, 2", "can't assign to constant in multiple assignment"
+
     assert_syntax_error "1 == 2, a = 4"
     assert_syntax_error "x : String, a = 4"
     assert_syntax_error "b, 1 == 2, a = 4"
@@ -451,6 +453,14 @@ module Crystal
       it_parses "foo(z: 0, a: n #{op} 2)", Call.new(nil, "foo", [] of ASTNode, named_args: [NamedArgument.new("z", 0.int32), NamedArgument.new("a", Call.new("n".call, op, 2.int32))])
       it_parses "def #{op}(); end", Def.new(op)
       it_parses "macro #{op};end", Macro.new(op, [] of Arg, Expressions.new)
+
+      it_parses "foo = 1; ->foo.#{op}(Int32)", [Assign.new("foo".var, 1.int32), ProcPointer.new("foo".var, op, ["Int32".path] of ASTNode)]
+      it_parses "->Foo.#{op}(Int32)", ProcPointer.new("Foo".path, op, ["Int32".path] of ASTNode)
+    end
+
+    ["[]", "[]="].each do |op|
+      it_parses "foo = 1; ->foo.#{op}(Int32)", [Assign.new("foo".var, 1.int32), ProcPointer.new("foo".var, op, ["Int32".path] of ASTNode)]
+      it_parses "->Foo.#{op}(Int32)", ProcPointer.new("Foo".path, op, ["Int32".path] of ASTNode)
     end
 
     ["bar", "+", "-", "*", "/", "<", "<=", "==", ">", ">=", "%", "|", "&", "^", "**", "===", "=~", "!~"].each do |name|
@@ -794,6 +804,20 @@ module Crystal
 
     it_parses "1 .. 2", RangeLiteral.new(1.int32, 2.int32, false)
     it_parses "1 ... 2", RangeLiteral.new(1.int32, 2.int32, true)
+    it_parses "(1 .. )", Expressions.new([RangeLiteral.new(1.int32, Nop.new, false)] of ASTNode)
+    it_parses "(1 ... )", Expressions.new([RangeLiteral.new(1.int32, Nop.new, true)] of ASTNode)
+    it_parses "foo(1.., 2)", Call.new(nil, "foo", [RangeLiteral.new(1.int32, Nop.new, false), 2.int32] of ASTNode)
+    it_parses "1..;", RangeLiteral.new(1.int32, Nop.new, false)
+    it_parses "{1.. => 2};", HashLiteral.new([HashLiteral::Entry.new(RangeLiteral.new(1.int32, Nop.new, false), 2.int32)])
+    it_parses "..2", RangeLiteral.new(Nop.new, 2.int32, false)
+    it_parses "...2", RangeLiteral.new(Nop.new, 2.int32, true)
+    it_parses "foo..2", RangeLiteral.new("foo".call, 2.int32, false)
+    it_parses "foo ..2", RangeLiteral.new("foo".call, 2.int32, false)
+    it_parses "foo(..2)", Call.new(nil, "foo", RangeLiteral.new(Nop.new, 2.int32, false))
+    it_parses "x[..2]", Call.new("x".call, "[]", RangeLiteral.new(Nop.new, 2.int32, false))
+    it_parses "x[1, ..2]", Call.new("x".call, "[]", [1.int32, RangeLiteral.new(Nop.new, 2.int32, false)] of ASTNode)
+    it_parses "{..2}", TupleLiteral.new([RangeLiteral.new(Nop.new, 2.int32, false)] of ASTNode)
+    it_parses "[..2]", ArrayLiteral.new([RangeLiteral.new(Nop.new, 2.int32, false)] of ASTNode)
 
     it_parses "A = 1", Assign.new("A".path, 1.int32)
 

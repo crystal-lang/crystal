@@ -103,15 +103,15 @@ CALENDAR_WEEK_TEST_DATA = [
 ]
 
 describe Time do
-  describe ".new" do
+  describe ".local" do
     it "initializes" do
-      t1 = Time.new 2002, 2, 25
+      t1 = Time.local 2002, 2, 25
       t1.year.should eq(2002)
       t1.month.should eq(2)
       t1.day.should eq(25)
       t1.local?.should be_true
 
-      t2 = Time.new 2002, 2, 25, 15, 25, 13, nanosecond: 8
+      t2 = Time.local 2002, 2, 25, 15, 25, 13, nanosecond: 8
       t2.year.should eq(2002)
       t2.month.should eq(2)
       t2.day.should eq(25)
@@ -123,7 +123,7 @@ describe Time do
     end
 
     it "initializes max value" do
-      time = Time.new(9999, 12, 31, 23, 59, 59, nanosecond: 999_999_999)
+      time = Time.local(9999, 12, 31, 23, 59, 59, nanosecond: 999_999_999)
       time.year.should eq(9999)
       time.month.should eq(12)
       time.day.should eq(31)
@@ -135,13 +135,13 @@ describe Time do
 
     it "fails with negative nanosecond" do
       expect_raises ArgumentError, "Invalid time" do
-        Time.new(9999, 12, 31, 23, 59, 59, nanosecond: -1)
+        Time.local(9999, 12, 31, 23, 59, 59, nanosecond: -1)
       end
     end
 
     it "fails with too big nanoseconds" do
       expect_raises ArgumentError, "Invalid time" do
-        Time.new(9999, 12, 31, 23, 59, 59, nanosecond: 1_000_000_000)
+        Time.local(9999, 12, 31, 23, 59, 59, nanosecond: 1_000_000_000)
       end
     end
 
@@ -186,10 +186,10 @@ describe Time do
     time.utc?.should be_true
   end
 
-  describe ".now" do
+  describe ".local without arguments" do
     it "current time is similar in different locations" do
-      (Time.now - Time.utc_now).should be_close(0.seconds, 1.second)
-      (Time.now - Time.now(Time::Location.fixed(1234))).should be_close(0.seconds, 1.second)
+      (Time.local - Time.utc).should be_close(0.seconds, 1.second)
+      (Time.local - Time.local(Time::Location.fixed(1234))).should be_close(0.seconds, 1.second)
     end
   end
 
@@ -211,11 +211,11 @@ describe Time do
   end
 
   it "#clone" do
-    time = Time.now
+    time = Time.local
     (time == time.clone).should be_true
   end
 
-  describe "#add_span" do
+  describe "#shift" do
     it "adds hours, minutes, seconds" do
       t1 = Time.utc(2002, 2, 25, 15, 25, 13)
       t2 = t1 + Time::Span.new 3, 54, 1
@@ -243,11 +243,11 @@ describe Time do
       {5 * 3600, 1, 0, -1, -5 * 3600}.each do |offset|
         location = Time::Location.fixed(offset)
 
-        time = Time.new(1, 1, 1, location: location)
-        time.add_span(0, 1).should eq Time.new(1, 1, 1, nanosecond: 1, location: location)
-        time.add_span(0, 0).should eq time
+        time = Time.local(1, 1, 1, location: location)
+        time.shift(0, 1).should eq Time.local(1, 1, 1, nanosecond: 1, location: location)
+        time.shift(0, 0).should eq time
         expect_raises(ArgumentError) do
-          time.add_span(0, -1)
+          time.shift(0, -1)
         end
       end
     end
@@ -256,18 +256,45 @@ describe Time do
       {5 * 3600, 1, 0, -1, -5 * 3600}.each do |offset|
         location = Time::Location.fixed(offset)
 
-        time = Time.new(9999, 12, 31, 23, 59, 59, nanosecond: 999_999_999, location: location)
-        time.add_span(0, -1).should eq Time.new(9999, 12, 31, 23, 59, 59, nanosecond: 999_999_998, location: location)
-        time.add_span(0, 0).should eq time
+        time = Time.local(9999, 12, 31, 23, 59, 59, nanosecond: 999_999_999, location: location)
+        time.shift(0, -1).should eq Time.local(9999, 12, 31, 23, 59, 59, nanosecond: 999_999_998, location: location)
+        time.shift(0, 0).should eq time
         expect_raises(ArgumentError) do
-          time.add_span(0, 1)
+          time.shift(0, 1)
         end
       end
     end
 
     it "adds zero span" do
-      time = Time.now
-      time.add_span(0, 0).should eq time
+      time = Time.utc
+      time.shift(0, 0).should eq time
+    end
+
+    describe "irregular calendrical unit ratios" do
+      it "shifts by a week if one day is left out" do
+        # The week from 2011-12-25 to 2012-01-01 for example lasted only 6 days in Samoa,
+        # because it skipped 2011-12-28 due to changing time zone from -11:00 to +13:00.
+        with_zoneinfo do
+          samoa = Time::Location.load("Pacific/Apia")
+          start = Time.local(2011, 12, 25, 0, 0, 0, location: samoa)
+
+          plus_one_week = start.shift days: 7
+          plus_one_week.should eq start + 6.days
+
+          plus_one_year = start.shift years: 1
+          plus_one_year.should eq start + 365.days # 2012 is a leap year so it should've been 366 days, but 2011-12-28 was skipped
+        end
+      end
+
+      it "shifts by conceptual hour even if elapsed time is less" do
+        # Venezuela switched from -4:30 to -4:00 on 2016-05-01, the hour between 2:00 and 3:00 lasted only 30 minutes
+        with_zoneinfo do
+          venezuela = Time::Location.load("America/Caracas")
+          start = Time.local(2016, 5, 1, 2, 0, 0, location: venezuela)
+          plus_one_hour = start.shift hours: 1
+          plus_one_hour.should eq start + 30.minutes
+        end
+      end
     end
 
     describe "adds days" do
@@ -284,13 +311,13 @@ describe Time do
         time.should eq Time.utc(2002, 3, 2, 17, 49, 13)
       end
 
-      pending "over dst" do
+      it "over dst" do
         with_zoneinfo do
           location = Time::Location.load("Europe/Berlin")
-          reference = Time.new(2017, 10, 28, 13, 37, location: location)
-          next_day = Time.new(2017, 10, 29, 13, 37, location: location)
+          reference = Time.local(2017, 10, 28, 13, 37, location: location)
+          next_day = reference.shift days: 1
 
-          (reference + 1.day).should eq next_day
+          next_day.should eq reference + 25.hours
         end
       end
 
@@ -301,10 +328,26 @@ describe Time do
         end
       end
 
+      pending "out of range max (shift days)" do
+        # this will be fixed with raise on overflow
+        time = Time.utc(2002, 2, 25, 15, 25, 13)
+        expect_raises ArgumentError do
+          time.shift days: 10000000
+        end
+      end
+
       it "out of range min" do
         time = Time.utc(2002, 2, 25, 15, 25, 13)
         expect_raises ArgumentError do
           time - 10000000.days
+        end
+      end
+
+      pending "out of range min (shift days)" do
+        # this will be fixed with raise on overflow
+        time = Time.utc(2002, 2, 25, 15, 25, 13)
+        expect_raises ArgumentError do
+          time.shift days: -10000000
         end
       end
     end
@@ -312,33 +355,32 @@ describe Time do
     it "adds months" do
       t = Time.utc 2014, 10, 30, 21, 18, 13
 
-      t2 = t + 1.month
+      t2 = t.shift months: 1
       t2.should eq Time.utc(2014, 11, 30, 21, 18, 13)
 
-      t2 = t + 1.months
-      t2.should eq Time.utc(2014, 11, 30, 21, 18, 13)
-
-      t = Time.utc 2014, 10, 31, 21, 18, 13
-      t2 = t + 1.month
+      t2 = t.shift months: 1
       t2.should eq Time.utc(2014, 11, 30, 21, 18, 13)
 
       t = Time.utc 2014, 10, 31, 21, 18, 13
-      t2 = t - 1.month
+      t2 = t.shift months: 1
+      t2.should eq Time.utc(2014, 11, 30, 21, 18, 13)
+
+      t = Time.utc 2014, 10, 31, 21, 18, 13
+      t2 = t.shift months: -1
       t2.should eq Time.utc(2014, 9, 30, 21, 18, 13)
 
       t = Time.utc 2014, 10, 31, 21, 18, 13
-      t2 = t + 6.month
+      t2 = t.shift months: 6
       t2.should eq Time.utc(2015, 4, 30, 21, 18, 13)
     end
 
     it "adds years" do
       t = Time.utc 2014, 10, 30, 21, 18, 13
-
-      t2 = t + 1.year
+      t2 = t.shift years: 1
       t2.should eq Time.utc(2015, 10, 30, 21, 18, 13)
 
       t = Time.utc 2014, 10, 30, 21, 18, 13
-      t2 = t - 2.years
+      t2 = t.shift years: -2
       t2.should eq Time.utc(2012, 10, 30, 21, 18, 13)
     end
 
@@ -356,36 +398,38 @@ describe Time do
     end
 
     it "adds nanoseconds" do
-      time = Time.utc(2002, 2, 25, 15, 25, 13)
-      time = time + 1e16.nanoseconds
-      time.should eq Time.utc(2002, 6, 21, 9, 11, 53)
+      t1 = Time.utc(2002, 2, 25, 15, 25, 13)
+      t1 = t1.shift nanoseconds: 10_000_000_000_000_000
 
-      time = time - 19e16.nanoseconds
-      time.should eq Time.utc(1996, 6, 13, 7, 25, 13)
+      t1.should eq Time.utc(2002, 6, 21, 9, 11, 53)
 
-      time = time + 15_623_487.nanoseconds
-      time.should eq Time.utc(1996, 6, 13, 7, 25, 13, nanosecond: 15_623_487)
+      t1 = t1.shift nanoseconds: -190_000_000_000_000_000
+      t1.should eq Time.utc(1996, 6, 13, 7, 25, 13)
+
+      t1 = t1.shift nanoseconds: 15_623_000
+      t1.should eq Time.utc(1996, 6, 13, 7, 25, 13, nanosecond: 15_623_000)
     end
 
     it "preserves location when adding" do
-      time = Time.utc_now
+      time = Time.utc
       time.utc?.should be_true
 
       (time + 5.minutes).utc?.should be_true
 
-      time = Time.now
-      (time + 5.minutes).location.should eq time.location
+      location = Time::Location.fixed(1234)
+      time = Time.local(location)
+      (time + 5.minutes).location.should eq location
     end
   end
 
   it "#time_of_day" do
-    t = Time.new 2014, 10, 30, 21, 18, 13
+    t = Time.utc 2014, 10, 30, 21, 18, 13
     t.time_of_day.should eq(Time::Span.new(21, 18, 13))
   end
 
   describe "#day_of_week" do
     it "gets day of week" do
-      t = Time.new 2014, 10, 30, 21, 18, 13
+      t = Time.utc 2014, 10, 30, 21, 18, 13
       t.day_of_week.should eq(Time::DayOfWeek::Thursday)
     end
 
@@ -398,7 +442,7 @@ describe Time do
 
   it "answers day name predicates" do
     7.times do |i|
-      time = Time.new(2015, 2, 15 + i)
+      time = Time.utc(2015, 2, 15 + i)
       time.sunday?.should eq(i == 0)
       time.monday?.should eq(i == 1)
       time.tuesday?.should eq(i == 2)
@@ -418,14 +462,14 @@ describe Time do
   end
 
   it "#day_of_year" do
-    t = Time.new 2014, 10, 30, 21, 18, 13
+    t = Time.utc 2014, 10, 30, 21, 18, 13
     t.day_of_year.should eq(303)
   end
 
   describe "#<=>" do
     it "compares" do
-      t1 = Time.new 2014, 10, 30, 21, 18, 13
-      t2 = Time.new 2014, 10, 30, 21, 18, 14
+      t1 = Time.utc 2014, 10, 30, 21, 18, 13
+      t2 = Time.utc 2014, 10, 30, 21, 18, 14
 
       (t1 <=> t2).should eq(-1)
       (t1 == t2).should be_false
@@ -433,7 +477,7 @@ describe Time do
     end
 
     it "compares different locations" do
-      time = Time.now
+      time = Time.local(Time::Location.fixed(1234))
       (time.to_utc <=> time).should eq(0)
     end
   end
@@ -446,7 +490,7 @@ describe Time do
     end
 
     it "gets unix seconds at GMT" do
-      t1 = Time.now
+      t1 = Time.local(Time::Location.fixed(1234))
       t1.to_unix.should eq(t1.to_utc.to_unix)
       t1.to_unix_f.should be_close(t1.to_utc.to_unix_f, 1e-01)
     end
@@ -455,17 +499,17 @@ describe Time do
   describe "#to_s" do
     it "prints string" do
       with_zoneinfo do
-        time = Time.new(2017, 11, 25, 22, 6, 17, location: Time::Location::UTC)
+        time = Time.local(2017, 11, 25, 22, 6, 17, location: Time::Location::UTC)
         time.to_s.should eq "2017-11-25 22:06:17 UTC"
 
-        time = Time.new(2017, 11, 25, 22, 6, 17, location: Time::Location.fixed(-7200))
+        time = Time.local(2017, 11, 25, 22, 6, 17, location: Time::Location.fixed(-7200))
         time.to_s.should eq "2017-11-25 22:06:17 -02:00"
 
-        time = Time.new(2017, 11, 25, 22, 6, 17, location: Time::Location.fixed(-7259))
+        time = Time.local(2017, 11, 25, 22, 6, 17, location: Time::Location.fixed(-7259))
         time.to_s.should eq "2017-11-25 22:06:17 -02:00:59"
 
         location = Time::Location.load("Europe/Berlin")
-        time = Time.new(2017, 11, 25, 22, 6, 17, location: location)
+        time = Time.local(2017, 11, 25, 22, 6, 17, location: location)
         time.to_s.should eq "2017-11-25 22:06:17 +01:00"
       end
     end
@@ -486,20 +530,20 @@ describe Time do
     it "prints offset for location" do
       with_zoneinfo do
         location = Time::Location.load("Europe/Berlin")
-        Time.new(2014, 10, 30, 21, 18, 13, location: location).to_s.should eq("2014-10-30 21:18:13 +01:00")
-        Time.new(2014, 10, 30, 21, 18, 13, nanosecond: 123_456, location: location).to_s.should eq("2014-10-30 21:18:13 +01:00")
+        Time.local(2014, 10, 30, 21, 18, 13, location: location).to_s.should eq("2014-10-30 21:18:13 +01:00")
+        Time.local(2014, 10, 30, 21, 18, 13, nanosecond: 123_456, location: location).to_s.should eq("2014-10-30 21:18:13 +01:00")
 
-        Time.new(2014, 10, 10, 21, 18, 13, location: location).to_s.should eq("2014-10-10 21:18:13 +02:00")
-        Time.new(2014, 10, 10, 21, 18, 13, nanosecond: 123_456, location: location).to_s.should eq("2014-10-10 21:18:13 +02:00")
+        Time.local(2014, 10, 10, 21, 18, 13, location: location).to_s.should eq("2014-10-10 21:18:13 +02:00")
+        Time.local(2014, 10, 10, 21, 18, 13, nanosecond: 123_456, location: location).to_s.should eq("2014-10-10 21:18:13 +02:00")
       end
     end
 
     it "prints offset for fixed location" do
       location = Time::Location.fixed(3601)
-      Time.new(2014, 1, 2, 3, 4, 5, location: location).to_s.should eq "2014-01-02 03:04:05 +01:00:01"
-      Time.new(2014, 1, 2, 3, 4, 5, nanosecond: 123_456_789, location: location).to_s.should eq "2014-01-02 03:04:05 +01:00:01"
+      Time.local(2014, 1, 2, 3, 4, 5, location: location).to_s.should eq "2014-01-02 03:04:05 +01:00:01"
+      Time.local(2014, 1, 2, 3, 4, 5, nanosecond: 123_456_789, location: location).to_s.should eq "2014-01-02 03:04:05 +01:00:01"
 
-      t = Time.new 2014, 10, 30, 21, 18, 13, location: Time::Location.fixed(-9000)
+      t = Time.local 2014, 10, 30, 21, 18, 13, location: Time::Location.fixed(-9000)
       t.to_s.should eq("2014-10-30 21:18:13 -02:30")
     end
 
@@ -510,7 +554,7 @@ describe Time do
         location = Time::Location.new "Local", [Time::Location::Zone.new("STZ", 3600, false), Time::Location::Zone.new("DTZ", -3600, false)], [] of Time::Location::ZoneTransition
         Time::Location.local = location
 
-        Time.new(2014, 10, 30, 21, 18, 13).to_s.should eq("2014-10-30 21:18:13 +01:00")
+        Time.local(2014, 10, 30, 21, 18, 13).to_s.should eq("2014-10-30 21:18:13 +01:00")
       ensure
         Time::Location.local = old_local
       end
@@ -523,13 +567,13 @@ describe Time do
 
     with_zoneinfo do
       location = Time::Location.load("Europe/Berlin")
-      Time.new(2014, 1, 2, 3, 4, 5, location: location).inspect.should eq "2014-01-02 03:04:05.0 +01:00 Europe/Berlin"
-      Time.new(2014, 1, 2, 3, 4, 5, nanosecond: 123_456_789, location: location).inspect.should eq "2014-01-02 03:04:05.123456789 +01:00 Europe/Berlin"
+      Time.local(2014, 1, 2, 3, 4, 5, location: location).inspect.should eq "2014-01-02 03:04:05.0 +01:00 Europe/Berlin"
+      Time.local(2014, 1, 2, 3, 4, 5, nanosecond: 123_456_789, location: location).inspect.should eq "2014-01-02 03:04:05.123456789 +01:00 Europe/Berlin"
     end
 
     location = Time::Location.fixed(3601)
-    Time.new(2014, 1, 2, 3, 4, 5, location: location).inspect.should eq "2014-01-02 03:04:05.0 +01:00:01"
-    Time.new(2014, 1, 2, 3, 4, 5, nanosecond: 123_456_789, location: location).inspect.should eq "2014-01-02 03:04:05.123456789 +01:00:01"
+    Time.local(2014, 1, 2, 3, 4, 5, location: location).inspect.should eq "2014-01-02 03:04:05.0 +01:00:01"
+    Time.local(2014, 1, 2, 3, 4, 5, nanosecond: 123_456_789, location: location).inspect.should eq "2014-01-02 03:04:05.123456789 +01:00:01"
   end
 
   it "at methods" do
@@ -595,7 +639,7 @@ describe Time do
   end
 
   it "does diff of utc vs local time" do
-    local = Time.now
+    local = Time.local(Time::Location.fixed(1234))
     utc = local.to_utc
     (utc - local).should eq(0.seconds)
     (local - utc).should eq(0.seconds)
@@ -605,7 +649,7 @@ describe Time do
     it "changes location" do
       location = Time::Location.fixed(3600)
       location2 = Time::Location.fixed(12345)
-      time1 = Time.now(location)
+      time1 = Time.local(location)
       time1.location.should eq(location)
 
       time2 = time1.in(location2)
@@ -618,7 +662,7 @@ describe Time do
     it "keeps wall clock" do
       location = Time::Location.fixed(3600)
       location2 = Time::Location.fixed(12345)
-      time1 = Time.now(location)
+      time1 = Time.local(location)
       time1.location.should eq(location)
 
       time2 = time1.to_local_in(location2)
@@ -635,7 +679,7 @@ describe Time do
     it "is the difference of offsets apart" do
       location = Time::Location.fixed(3600)
       location2 = Time::Location.fixed(12345)
-      time1 = Time.now(location)
+      time1 = Time.local(location)
       time2 = time1.to_local_in(location2)
 
       (time2 - time1).should eq (time1.offset - time2.offset).seconds
@@ -644,17 +688,17 @@ describe Time do
 
   it "#to_s" do
     with_zoneinfo do
-      time = Time.new(2017, 11, 25, 22, 6, 17, location: Time::Location::UTC)
+      time = Time.local(2017, 11, 25, 22, 6, 17, location: Time::Location::UTC)
       time.to_s.should eq "2017-11-25 22:06:17 UTC"
 
-      time = Time.new(2017, 11, 25, 22, 6, 17, location: Time::Location.fixed(-7200))
+      time = Time.local(2017, 11, 25, 22, 6, 17, location: Time::Location.fixed(-7200))
       time.to_s.should eq "2017-11-25 22:06:17 -02:00"
 
-      time = Time.new(2017, 11, 25, 22, 6, 17, location: Time::Location.fixed(-7259))
+      time = Time.local(2017, 11, 25, 22, 6, 17, location: Time::Location.fixed(-7259))
       time.to_s.should eq "2017-11-25 22:06:17 -02:00:59"
 
       location = Time::Location.load("Europe/Berlin")
-      time = Time.new(2017, 11, 25, 22, 6, 17, location: location)
+      time = Time.local(2017, 11, 25, 22, 6, 17, location: location)
       time.to_s.should eq "2017-11-25 22:06:17 +01:00"
     end
   end
@@ -753,8 +797,8 @@ describe Time do
           it "W#{week_date.join('-')} eq #{date.join('-')}" do
             Time.week_date(*week_date, location: Time::Location::UTC).should eq(Time.utc(*date))
             Time.week_date(week_date[0], week_date[1], Time::DayOfWeek.from_value(week_date[2]), location: Time::Location::UTC).should eq(Time.utc(*date))
-            Time.week_date(*week_date).should eq(Time.new(*date))
-            Time.week_date(*week_date, location: location).should eq(Time.new(*date, location: location))
+            Time.week_date(*week_date).should eq(Time.local(*date))
+            Time.week_date(*week_date, location: location).should eq(Time.local(*date, location: location))
           end
         end
       end
@@ -764,20 +808,20 @@ describe Time do
       with_zoneinfo do
         location = Time::Location.load("Europe/Berlin")
         Time.week_date(*CALENDAR_WEEK_TEST_DATA[0][1], 11, 57, 32, nanosecond: 123_567, location: location).should eq(
-          Time.new(*CALENDAR_WEEK_TEST_DATA[0][0], 11, 57, 32, nanosecond: 123_567, location: location))
+          Time.local(*CALENDAR_WEEK_TEST_DATA[0][0], 11, 57, 32, nanosecond: 123_567, location: location))
 
         location = Time::Location.load("America/Buenos_Aires")
         Time.week_date(*CALENDAR_WEEK_TEST_DATA[0][1], 11, 57, 32, nanosecond: 123_567, location: location).should eq(
-          Time.new(*CALENDAR_WEEK_TEST_DATA[0][0], 11, 57, 32, nanosecond: 123_567, location: location))
+          Time.local(*CALENDAR_WEEK_TEST_DATA[0][0], 11, 57, 32, nanosecond: 123_567, location: location))
       end
     end
   end
 
-  typeof(Time.now.year)
+  typeof(Time.local.year)
   typeof(1.minute.from_now.year)
   typeof(1.minute.ago.year)
   typeof(1.month.from_now.year)
   typeof(1.month.ago.year)
-  typeof(Time.now.to_utc)
-  typeof(Time.now.to_local)
+  typeof(Time.local.to_utc)
+  typeof(Time.local.to_local)
 end

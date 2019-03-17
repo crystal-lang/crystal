@@ -164,14 +164,14 @@ module Crystal
         unexpected_token
       end
 
-      targets = exps[0...assign_index].map { |exp| to_lhs(exp) }
+      targets = exps[0...assign_index].map { |exp| multiassign_left_hand(exp) }
 
       assign = exps[assign_index]
       values = [] of ASTNode
 
       case assign
       when Assign
-        targets << to_lhs(assign.target)
+        targets << multiassign_left_hand(assign.target)
         values << assign.value
       when Call
         assign.name = assign.name.byte_slice(0, assign.name.bytesize - 1)
@@ -216,9 +216,9 @@ module Crystal
       end
     end
 
-    def to_lhs(exp)
-      if exp.is_a?(Path) && inside_def?
-        raise "dynamic constant assignment. Constants can only be declared at the top level or inside other types."
+    def multiassign_left_hand(exp)
+      if exp.is_a?(Path)
+        raise "can't assign to constant in multiple assignment", exp.location.not_nil!
       end
 
       if exp.is_a?(Call) && !exp.obj && exp.args.empty?
@@ -440,7 +440,13 @@ module Crystal
 
     def parse_range
       location = @token.location
-      exp = parse_or
+
+      if @token.type == :".." || @token.type == :"..."
+        exp = Nop.new
+      else
+        exp = parse_or
+      end
+
       while true
         case @token.type
         when :".."
@@ -457,7 +463,15 @@ module Crystal
       check_void_value exp, location
       next_token_skip_space_or_newline
       check_void_expression_keyword
-      right = parse_or
+      right = if end_token? ||
+                 @token.type == :")" ||
+                 @token.type == :"," ||
+                 @token.type == :";" ||
+                 @token.type == :"=>"
+                Nop.new
+              else
+                parse_or
+              end
       RangeLiteral.new(exp, right, exclusive).at(location).at_end(right)
     end
 
@@ -714,7 +728,14 @@ module Crystal
 
           column_number = @token.column_number
           next_token_skip_space_or_newline
-          call_args = preserve_stop_on_do { parse_call_args_space_consumed check_plus_and_minus: false, allow_curly: true, end_token: :"]" }
+          call_args = preserve_stop_on_do do
+            parse_call_args_space_consumed(
+              check_plus_and_minus: false,
+              allow_curly: true,
+              end_token: :"]",
+              allow_beginless_range: true,
+            )
+          end
           skip_space_or_newline
           check :"]"
           @wants_regex = false
@@ -908,9 +929,9 @@ module Crystal
         end
       when :GLOBAL_MATCH_DATA_INDEX
         value = @token.value.to_s
-        if value.ends_with? '?'
+        if value_prefix = value.rchop? '?'
           method = "[]?"
-          value = value.rchop
+          value = value_prefix
         else
           method = "[]"
         end
@@ -1775,8 +1796,7 @@ module Crystal
         else
           skip_space
           if @token.type == :"."
-            next_token_skip_space
-            second_name = check_ident
+            second_name = consume_def_or_macro_name
             if name != "self" && !@def_vars.last.includes?(name)
               raise "undefined variable '#{name}'", location.line_number, location.column_number
             end
@@ -1794,8 +1814,7 @@ module Crystal
       when :CONST
         obj = parse_ident
         check :"."
-        next_token_skip_space
-        name = check_ident
+        name = consume_def_or_macro_name
         next_token_skip_space
       else
         unexpected_token
@@ -2777,16 +2796,11 @@ module Crystal
     def parse_macro
       doc = @token.doc
 
-      next_token
-
       # Force lexer return if possible a def or macro name
       # cases like: def `, def /, def //
       # that in regular statements states for delimiters
       # here must be treated as method names.
-      @wants_def_or_macro_name = true
-      skip_space_or_newline
-      check DefOrMacroCheck1
-      @wants_def_or_macro_name = false
+      name = consume_def_or_macro_name
 
       push_def
 
@@ -2795,10 +2809,8 @@ module Crystal
 
       if @token.type == :IDENT
         check_valid_def_name
-        name = @token.value.to_s
       else
         check_valid_def_op_name
-        name = @token.type.to_s
       end
       next_token_skip_space
 
@@ -3197,8 +3209,6 @@ module Crystal
       exp
     end
 
-    DefOrMacroCheck1 = [:IDENT, :CONST, :"`",
-                        :"<<", :"<", :"<=", :"==", :"===", :"!=", :"=~", :"!~", :">>", :">", :">=", :"+", :"-", :"*", :"/", :"//", :"!", :"~", :"%", :"&", :"|", :"^", :"**", :"[]", :"[]?", :"[]=", :"<=>", :"&+", :"&-", :"&*", :"&**"]
     DefOrMacroCheck2 = [:"<<", :"<", :"<=", :"==", :"===", :"!=", :"=~", :"!~", :">>", :">", :">=", :"+", :"-", :"*", :"/", :"//", :"!", :"~", :"%", :"&", :"|", :"^", :"**", :"[]", :"[]?", :"[]=", :"<=>", :"&+", :"&-", :"&*", :"&**"]
 
     def parse_def_helper(is_abstract = false)
@@ -3212,14 +3222,7 @@ module Crystal
 
       next_token
 
-      # Force lexer return if possible a def or macro name
-      # cases like: def `, def /, def //
-      # that in regular statements states for delimiters
-      # here must be treated as method names.
-      @wants_def_or_macro_name = true
-      skip_space_or_newline
-      check DefOrMacroCheck1
-      @wants_def_or_macro_name = false
+      consume_def_or_macro_name
 
       receiver = nil
       @yields = nil
@@ -4210,7 +4213,8 @@ module Crystal
       @call_args_nest -= 1
     end
 
-    def parse_call_args_space_consumed(check_plus_and_minus = true, allow_curly = false, control = false, end_token = :")")
+    def parse_call_args_space_consumed(check_plus_and_minus = true, allow_curly = false, control = false, end_token = :")",
+                                       allow_beginless_range = false)
       # This method is called by `parse_call_args`, so it increments once too much in this case.
       # But it is no problem, because it decrements once too much.
       @call_args_nest += 1
@@ -4238,6 +4242,8 @@ module Crystal
         if current_char.ascii_whitespace?
           return nil
         end
+      when :"..", :"..."
+        return nil unless allow_beginless_range
       else
         return nil
       end
@@ -5618,6 +5624,21 @@ module Crystal
       else
         false
       end
+    end
+
+    DefOrMacroCheck1 = [:IDENT, :CONST, :"`",
+                        :"<<", :"<", :"<=", :"==", :"===", :"!=", :"=~", :"!~", :">>", :">", :">=", :"+", :"-", :"*", :"/", :"//", :"!", :"~", :"%", :"&", :"|", :"^", :"**", :"[]", :"[]?", :"[]=", :"<=>", :"&+", :"&-", :"&*", :"&**"]
+
+    def consume_def_or_macro_name
+      # Force lexer return if possible a def or macro name
+      # cases like: def `, def /, def //
+      # that in regular statements states for delimiters
+      # here must be treated as method names.
+      @wants_def_or_macro_name = true
+      next_token_skip_space_or_newline
+      check DefOrMacroCheck1
+      @wants_def_or_macro_name = false
+      @token.to_s
     end
 
     def push_def

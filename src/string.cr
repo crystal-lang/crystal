@@ -729,7 +729,7 @@ class String
   # "hello"[1..-1]  # "ello"
   # "hello"[1...-1] # "ell"
   # ```
-  def [](range : Range(Int, Int))
+  def [](range : Range)
     self[*Indexable.range_to_index_and_count(range, size)]
   end
 
@@ -1059,38 +1059,46 @@ class String
   # "hello".lchop # => "ello"
   # "".lchop      # => ""
   # ```
-  def lchop
-    return "" if empty?
+  def lchop : String
+    lchop? || ""
+  end
+
+  # Returns a new `String` with *prefix* removed from the beginning of the string.
+  #
+  # ```
+  # "hello".lchop('h')   # => "ello"
+  # "hello".lchop('g')   # => "hello"
+  # "hello".lchop("hel") # => "lo"
+  # "hello".lchop("eh")  # => "hello"
+  # ```
+  def lchop(prefix : Char | String) : String
+    lchop?(prefix) || self
+  end
+
+  # Returns a new `String` with the first char removed from it if possible, else returns `nil`.
+  #
+  # ```
+  # "hello".lchop? # => "ello"
+  # "".lchop?      # => nil
+  # ```
+  def lchop? : String?
+    return if empty?
 
     reader = Char::Reader.new(self)
     unsafe_byte_slice_string(reader.current_char_width, bytesize - reader.current_char_width)
   end
 
-  # Returns a new `String` with *prefix* removed from the beginning of the string.
+  # Returns a new `String` with *prefix* removed from the beginning of the string if possible, else returns `nil`.
   #
   # ```
-  # "hello".lchop('h') # => "ello"
-  # "hello".lchop('g') # => "hello"
+  # "hello".lchop?('h')   # => "ello"
+  # "hello".lchop?('g')   # => nil
+  # "hello".lchop?("hel") # => "lo"
+  # "hello".lchop?("eh")  # => nil
   # ```
-  def lchop(prefix : Char)
+  def lchop?(prefix : Char | String) : String?
     if starts_with?(prefix)
       unsafe_byte_slice_string(prefix.bytesize, bytesize - prefix.bytesize)
-    else
-      self
-    end
-  end
-
-  # Returns a new `String` with *prefix* removed from the beginning of the string.
-  #
-  # ```
-  # "hello".lchop("hel") # => "lo"
-  # "hello".lchop("eh")  # => "hello"
-  # ```
-  def lchop(prefix : String)
-    if starts_with?(prefix)
-      unsafe_byte_slice_string(prefix.bytesize, bytesize - prefix.bytesize)
-    else
-      self
     end
   end
 
@@ -1104,8 +1112,33 @@ class String
   # "string".rchop     # => "strin"
   # "x".rchop.rchop    # => ""
   # ```
-  def rchop
-    return "" if bytesize <= 1
+  def rchop : String
+    rchop? || ""
+  end
+
+  # Returns a new `String` with *suffix* removed from the end of the string.
+  #
+  # ```
+  # "string".rchop('g')   # => "strin"
+  # "string".rchop('x')   # => "string"
+  # "string".rchop("ing") # => "str"
+  # "string".rchop("inx") # => "string"
+  # ```
+  def rchop(suffix : Char | String) : String
+    rchop?(suffix) || self
+  end
+
+  # Returns a new `String` with the last character removed if possible, else returns `nil`.
+  #
+  # ```
+  # "string\r\n".rchop? # => "string\r"
+  # "string\n\r".rchop? # => "string\n"
+  # "string\n".rchop?   # => "string"
+  # "string".rchop?     # => "strin"
+  # "".rchop?           # => nil
+  # ```
+  def rchop? : String?
+    return if bytesize <= 1
 
     if to_unsafe[bytesize - 1] < 128 || ascii_only?
       return unsafe_byte_slice_string(0, bytesize - 1)
@@ -1114,35 +1147,17 @@ class String
     self[0, size - 1]
   end
 
-  # Returns a new `String` with *suffix* removed from the end of the string.
+  # Returns a new `String` with *suffix* removed from the end of the string if possible, else returns `nil`.
   #
   # ```
-  # "string".rchop('g') # => "strin"
-  # "string".rchop('x') # => "string"
+  # "string".rchop?('g')   # => "strin"
+  # "string".rchop?('x')   # => nil
+  # "string".rchop?("ing") # => "str"
+  # "string".rchop?("inx") # => nil
   # ```
-  def rchop(suffix : Char)
-    return "" if empty?
-
+  def rchop?(suffix : Char | String) : String?
     if ends_with?(suffix)
       unsafe_byte_slice_string(0, bytesize - suffix.bytesize)
-    else
-      self
-    end
-  end
-
-  # Returns a new `String` with *suffix* removed from the end of the string.
-  #
-  # ```
-  # "string".rchop("ing") # => "str"
-  # "string".rchop("inx") # => "string"
-  # ```
-  def rchop(suffix : String)
-    return "" if empty?
-
-    if ends_with?(suffix)
-      unsafe_byte_slice_string(0, bytesize - suffix.bytesize)
-    else
-      self
     end
   end
 
@@ -1882,7 +1897,7 @@ class String
   # ```
   # "hello".sub(1..2, 'a') # => "halo"
   # ```
-  def sub(range : Range(Int, Int), replacement : Char)
+  def sub(range : Range, replacement : Char)
     sub_range(range, replacement) do |buffer, from_index, to_index|
       replacement.each_byte do |byte|
         buffer.value = byte
@@ -1898,7 +1913,7 @@ class String
   # ```
   # "hello".sub(1..2, "eee") # => "heeelo"
   # ```
-  def sub(range : Range(Int, Int), replacement : String)
+  def sub(range : Range, replacement : String)
     sub_range(range, replacement) do |buffer|
       buffer.copy_from(replacement.to_unsafe, replacement.bytesize)
       buffer += replacement.bytesize
@@ -2361,7 +2376,9 @@ class String
     to_unsafe.memcmp(other.to_unsafe, bytesize) == 0
   end
 
-  # Compares this string with *other*, returning `-1`, `0` or `+1` depending on whether
+  # The comparison operator.
+  #
+  # Compares this string with *other*, returning `-1`, `0` or `1` depending on whether
   # this string is less, equal or greater than *other*.
   #
   # Comparison is done byte-per-byte: if a byte is less then the other corresponding
@@ -2385,7 +2402,7 @@ class String
     cmp == 0 ? (bytesize <=> other.bytesize) : cmp.sign
   end
 
-  # Compares this string with *other*, returning `-1`, `0` or `+1` depending on whether
+  # Compares this string with *other*, returning `-1`, `0` or `1` depending on whether
   # this string is less, equal or greater than *other*, optionally in a *case_insensitive*
   # manner.
   #
@@ -4194,11 +4211,11 @@ class String
     self
   end
 
-  def to_s
+  def to_s : String
     self
   end
 
-  def to_s(io)
+  def to_s(io : IO) : Nil
     io.write_utf8(to_slice)
   end
 
@@ -4284,13 +4301,6 @@ class String
       value
     end
 
-    def rewind
-      @reader.pos = 0
-      @end = false
-      check_empty
-      self
-    end
-
     private def check_empty
       @end = true if @reader.string.bytesize == 0
     end
@@ -4329,12 +4339,6 @@ class String
       end
 
       value
-    end
-
-    def rewind
-      @offset = 0
-      @end = false
-      self
     end
   end
 end

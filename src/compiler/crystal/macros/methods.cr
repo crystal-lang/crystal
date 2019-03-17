@@ -422,7 +422,9 @@ module Crystal
       when "<="
         bool_bin_op(method, args) { |me, other| me <= other }
       when "<=>"
-        num_bin_op(method, args) { |me, other| me <=> other }
+        num_bin_op(method, args) do |me, other|
+          (me <=> other) || (return NilLiteral.new)
+        end
       when "+"
         if args.empty?
           self
@@ -1110,6 +1112,12 @@ module Crystal
         fetch_annotation(self, method, args) do |type|
           self.var.annotation(type)
         end
+      when "annotations"
+        fetch_annotation(self, method, args) do |type|
+          annotations = self.var.annotations(type)
+          return ArrayLiteral.new if annotations.nil?
+          ArrayLiteral.map(annotations, &.itself)
+        end
       else
         super
       end
@@ -1294,6 +1302,12 @@ module Crystal
       when "annotation"
         fetch_annotation(self, method, args) do |type|
           self.annotation(type)
+        end
+      when "annotations"
+        fetch_annotation(self, method, args) do |type|
+          annotations = self.annotations(type)
+          return ArrayLiteral.new if annotations.nil?
+          ArrayLiteral.map(annotations, &.itself)
         end
       else
         super
@@ -1499,6 +1513,12 @@ module Crystal
       when "annotation"
         fetch_annotation(self, method, args) do |type|
           self.type.annotation(type)
+        end
+      when "annotations"
+        fetch_annotation(self, method, args) do |type|
+          annotations = self.type.annotations(type)
+          return ArrayLiteral.new if annotations.nil?
+          ArrayLiteral.map(annotations, &.itself)
         end
       when "size"
         interpret_argless_method(method, args) do

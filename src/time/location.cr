@@ -17,7 +17,7 @@ require "./location/loader"
 # ```
 # location = Time::Location.load("Europe/Berlin")
 # location # => #<Time::Location Europe/Berlin>
-# time = Time.new(2016, 2, 15, 21, 1, 10, location: location)
+# time = Time.local(2016, 2, 15, 21, 1, 10, location: location)
 # time # => 2016-02-15 21:01:10 +01:00 Europe/Berlin
 # ```
 #
@@ -109,7 +109,7 @@ class Time::Location
     #
     # It contains the `name`, hour-minute-second format (see `#format`),
     # `offset` in seconds and `"DST"` if `#dst?`, otherwise `"STD"`.
-    def inspect(io : IO)
+    def inspect(io : IO) : Nil
       io << "Time::Location::Zone("
       io << @name << ' ' unless @name.nil?
       format(io)
@@ -176,7 +176,7 @@ class Time::Location
   record ZoneTransition, when : Int64, index : UInt8, standard : Bool, utc : Bool do
     getter? standard, utc
 
-    def inspect(io : IO)
+    def inspect(io : IO) : Nil
       io << "Time::Location::ZoneTransition("
       io << '#' << index << ' '
       Time.unix(self.when).to_s("%F %T", io)
@@ -313,9 +313,9 @@ class Time::Location
   # The value can be changed to overwrite the system default:
   #
   # ```
-  # Time.now.location # => #<Time::Location America/New_York>
+  # Time.local.location # => #<Time::Location America/New_York>
   # Time::Location.local = Time::Location.load("Europe/Berlin")
-  # Time.now.location # => #<Time::Location Europe/Berlin>
+  # Time.local.location # => #<Time::Location Europe/Berlin>
   # ```
   class_property(local : Location) { load_local }
 
@@ -364,11 +364,11 @@ class Time::Location
   end
 
   # Prints `name` to *io*.
-  def to_s(io : IO)
+  def to_s(io : IO) : Nil
     io << name
   end
 
-  def inspect(io : IO)
+  def inspect(io : IO) : Nil
     io << "#<Time::Location "
     to_s(io)
     io << '>'

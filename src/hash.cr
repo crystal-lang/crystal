@@ -930,7 +930,7 @@ class Hash(K, V)
     hash
   end
 
-  def inspect(io : IO)
+  def inspect(io : IO) : Nil
     to_s(io)
   end
 
@@ -941,7 +941,7 @@ class Hash(K, V)
   # h.to_s       # => "{\"foo\" => \"bar\"}"
   # h.to_s.class # => String
   # ```
-  def to_s(io : IO)
+  def to_s(io : IO) : Nil
     executed = exec_recursive(:to_s) do
       io << '{'
       found_one = false
@@ -1085,10 +1085,6 @@ class Hash(K, V)
       else
         stop
       end
-    end
-
-    def rewind
-      @current = @hash.@first
     end
   end
 

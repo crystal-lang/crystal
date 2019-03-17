@@ -85,7 +85,7 @@ struct BitArray
   # ba[5..10]   # => BitArray[]
   # ba[-2...-1] # => BitArray[0]
   # ```
-  def [](range : Range(Int, Int))
+  def [](range : Range)
     self[*Indexable.range_to_index_and_count(range, size)]
   end
 
@@ -206,7 +206,7 @@ struct BitArray
   # ba = BitArray.new(5)
   # ba.to_s # => "BitArray[00000]"
   # ```
-  def to_s(io : IO)
+  def to_s(io : IO) : Nil
     io << "BitArray["
     each do |value|
       io << (value ? '1' : '0')
@@ -215,7 +215,7 @@ struct BitArray
   end
 
   # ditto
-  def inspect(io : IO)
+  def inspect(io : IO) : Nil
     to_s(io)
   end
 

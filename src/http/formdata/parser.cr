@@ -2,7 +2,7 @@ module HTTP::FormData
   class Parser
     # Creates a new parser which parses *io* with multipart boundary *boundary*.
     def initialize(io, boundary)
-      @multipart = Multipart::Parser.new(io, boundary)
+      @multipart = MIME::Multipart::Parser.new(io, boundary)
     end
 
     # Parses the next form-data part and yields field name, io, `FileMetadata`,

@@ -33,9 +33,6 @@ require "./enumerable"
 # element in the sequence or `Iterator::Stop::INSTANCE`, which signals the end of the sequence
 # (you can invoke `stop` inside an iterator as a shortcut).
 #
-# Additionally, an `Iterator` can implement `rewind`, which must rewind the iterator to
-# its initial state. This is needed to implement the `cycle` method.
-#
 # For example, this is an iterator that returns a sequence of `N` zeros:
 #
 # ```
@@ -54,18 +51,10 @@ require "./enumerable"
 #       stop
 #     end
 #   end
-#
-#   def rewind
-#     @produced = 0
-#     self
-#   end
 # end
 #
 # zeros = Zeros.new(5)
 # zeros.to_a # => [0, 0, 0, 0, 0]
-#
-# zeros.rewind
-# zeros.first(3).to_a # => [0, 0, 0]
 # ```
 #
 # The standard library provides iterators for many classes, like `Array`, `Hash`, `Range`, `String` and `IO`.
@@ -86,12 +75,6 @@ module Iterator(T)
   # To use it, include this module in your iterator and make sure that the wrapped
   # iterator is stored in the `@iterator` instance variable.
   module IteratorWrapper
-    # Rewinds the wrapped iterator and returns `self`.
-    def rewind
-      @iterator.rewind
-      self
-    end
-
     # Invokes `next` on the wrapped iterator and returns `stop` if
     # the given value was a `Iterator::Stop`. Otherwise, returns the value.
     macro wrapped_next
@@ -124,10 +107,6 @@ module Iterator(T)
     def next
       @element
     end
-
-    def rewind
-      self
-    end
   end
 
   def self.of(&block : -> T)
@@ -154,9 +133,6 @@ module Iterator(T)
   # Returns the next element in this iterator, or `Iterator::Stop::INSTANCE` if there
   # are no more elements.
   abstract def next
-
-  # Rewinds the iterator to its original state.
-  abstract def rewind
 
   # Returns an iterator that returns elements from the original iterator until
   # it is exhausted and then returns the elements of the second iterator.
@@ -195,12 +171,6 @@ module Iterator(T)
         value
       end
     end
-
-    def rewind
-      @iterator1.rewind
-      @iterator2.rewind
-      @iterator1_consumed = false
-    end
   end
 
   # The same as `#chain`, but have better performance when the quantity of
@@ -230,14 +200,6 @@ module Iterator(T)
 
     def initialize(@iterators)
       @current = @iterators.next
-    end
-
-    def rewind
-      @iterators.rewind
-      @iterators.each &.rewind
-      @iterators.rewind
-      @current = @iterators.next
-      self
     end
 
     def next : T | Stop
@@ -293,34 +255,30 @@ module Iterator(T)
   # iter.next # => Iterator::Stop::INSTANCE
   # ```
   #
-  # By default, a new array is created and yielded for each consecutive when invoking `next`.
+  # By default, a new array is created and returned for each consecutive call of `next`.
   # * If *reuse* is given, the array can be reused
-  # * If *reuse* is an `Array`, this array will be reused
-  # * If *reuse* is truthy, the method will create a new array and reuse it.
+  # * If *reuse* is `true`, the method will create a new array and reuse it.
+  # * If *reuse*  is an instance of `Array`, `Deque` or a similar collection type (implementing `#<<`, `#shift` and `#size`) it will be used.
+  # * If *reuse* is falsey, the array will not be reused.
   #
   # This can be used to prevent many memory allocations when each slice of
   # interest is to be used in a read-only fashion.
   def cons(n : Int, reuse = false)
     raise ArgumentError.new "Invalid cons size: #{n}" if n <= 0
-    Cons(typeof(self), T, typeof(n)).new(self, n, reuse)
+    if reuse.nil? || reuse.is_a?(Bool)
+      Cons(typeof(self), T, typeof(n), Array(T)).new(self, n, Array(T).new(n), reuse)
+    else
+      Cons(typeof(self), T, typeof(n), typeof(reuse)).new(self, n, reuse, reuse)
+    end
   end
 
-  private struct Cons(I, T, N)
+  private struct Cons(I, T, N, V)
     include Iterator(Array(T))
     include IteratorWrapper
 
-    def initialize(@iterator : I, @n : N, reuse)
-      if reuse
-        if reuse.is_a?(Array)
-          @values = reuse
-        else
-          @values = Array(T).new(@n)
-        end
-        @reuse = true
-      else
-        @values = Array(T).new(@n)
-        @reuse = false
-      end
+    def initialize(@iterator : I, @n : N, values : V, reuse)
+      @values = values
+      @reuse = !!reuse
     end
 
     def next
@@ -336,11 +294,6 @@ module Iterator(T)
       else
         @values.dup
       end
-    end
-
-    def rewind
-      @values.clear
-      super
     end
   end
 
@@ -367,16 +320,36 @@ module Iterator(T)
     include IteratorWrapper
 
     def initialize(@iterator : I)
+      @values = [] of T
+      @use_values = false
+      @index = 0
     end
 
     def next
-      value = @iterator.next
-      if value.is_a?(Stop)
-        @iterator.rewind
-        @iterator.next
-      else
-        value
+      if @use_values
+        return stop if @values.empty?
+
+        if @index >= @values.size
+          @index = 1
+          return @values.first
+        end
+
+        @index += 1
+        return @values[@index - 1]
       end
+
+      value = @iterator.next
+
+      if value.is_a?(Stop)
+        @use_values = true
+        return stop if @values.empty?
+
+        @index = 1
+        return @values.first
+      end
+
+      @values << value
+      value
     end
   end
 
@@ -404,25 +377,42 @@ module Iterator(T)
 
     def initialize(@iterator : I, @n : N)
       @count = 0
+      @values = [] of T
+      @use_values = false
+      @index = 0
     end
 
     def next
       return stop if @count >= @n
+
+      if @count > 0
+        return stop if @values.empty?
+
+        if @index >= @values.size
+          @count += 1
+          return stop if @count >= @n
+
+          @index = 1
+          return @values.first
+        end
+
+        @index += 1
+        return @values[@index - 1]
+      end
+
       value = @iterator.next
+
       if value.is_a?(Stop)
         @count += 1
         return stop if @count >= @n
+        return stop if @values.empty?
 
-        @iterator.rewind
-        @iterator.next
-      else
-        value
+        @index = 1
+        return @values.first
       end
-    end
 
-    def rewind
-      @count = 0
-      super
+      @values << value
+      value
     end
   end
 
@@ -515,15 +505,6 @@ module Iterator(T)
       end
     end
 
-    def rewind
-      @generators.each &.rewind
-      @generators.clear
-      @generators << @iterator
-      @stopped.each &.rewind
-      @stopped.clear
-      self
-    end
-
     def self.element_type(element)
       case element
       when Stop
@@ -604,14 +585,6 @@ module Iterator(T)
           value
         end
       end
-    end
-
-    def rewind
-      @nest_iterator.try &.rewind
-      @nest_iterator = nil
-      @stopped.each &.rewind
-      @stopped.clear
-      super
     end
 
     def self.iterator_type(iter, func)
@@ -884,11 +857,6 @@ module Iterator(T)
       end
       @iterator.next
     end
-
-    def rewind
-      @n = @original
-      super
-    end
   end
 
   # Returns an iterator that only starts to return elements once the given block
@@ -922,11 +890,6 @@ module Iterator(T)
           return value
         end
       end
-    end
-
-    def rewind
-      @returned_false = false
-      super
     end
   end
 
@@ -1041,11 +1004,6 @@ module Iterator(T)
         stop
       end
     end
-
-    def rewind
-      @n = @original
-      super
-    end
   end
 
   # Returns an iterator that returns elements while the given block returns a
@@ -1078,11 +1036,6 @@ module Iterator(T)
         @returned_false = true
         stop
       end
-    end
-
-    def rewind
-      @returned_false = false
-      super
     end
   end
 
@@ -1164,11 +1117,6 @@ module Iterator(T)
         end
       end
     end
-
-    def rewind
-      @hash.clear
-      super
-    end
   end
 
   # Returns an iterator that returns a `Tuple` of the element and its index.
@@ -1205,11 +1153,6 @@ module Iterator(T)
       value = {v, @index}
       @index += 1
       value
-    end
-
-    def rewind
-      @index = @offset
-      super
     end
   end
 
@@ -1269,12 +1212,6 @@ module Iterator(T)
       return stop if v2.is_a?(Stop)
 
       {v1, v2}
-    end
-
-    def rewind
-      @iterator1.rewind
-      @iterator2.rewind
-      self
     end
   end
 
@@ -1351,11 +1288,6 @@ module Iterator(T)
         return tuple
       end
       stop
-    end
-
-    def rewind
-      @iterator.rewind
-      init_state
     end
 
     private def init_state
@@ -1469,14 +1401,6 @@ module Iterator(T)
         end
       end
     end
-
-    def rewind
-      @iterator.rewind
-      @values.clear
-      @end = false
-      @clear_on_next = false
-      self
-    end
   end
 
   # Returns an iterator over chunks of elements, where each
@@ -1587,15 +1511,6 @@ module Iterator(T)
 
         @values << value
       end
-    end
-
-    def rewind
-      @iterator.rewind
-      @values.clear
-      @end = false
-      @has_value_to_add = false
-      @value_to_add = nil
-      self
     end
   end
 
@@ -1720,15 +1635,6 @@ module Iterator(T)
       else
         @reuse ? @values : @values.dup
       end
-    end
-
-    def rewind
-      @iterator.rewind
-      @values.clear
-      @end = false
-      @has_previous_value = false
-      @previous_value = nil
-      self
     end
   end
 end

@@ -115,7 +115,7 @@ module Crystal
       @doc_buffer = other.doc_buffer
     end
 
-    def to_s(io)
+    def to_s(io : IO) : Nil
       @value ? @value.to_s(io) : @type.to_s(io)
     end
   end

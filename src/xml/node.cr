@@ -169,7 +169,7 @@ struct XML::Node
   end
 
   # Returns detailed information for this node including node type, name, attributes and children.
-  def inspect(io)
+  def inspect(io : IO) : Nil
     io << "#<XML::"
     case type
     when XML::Type::ELEMENT_NODE       then io << "Element"
@@ -226,7 +226,6 @@ struct XML::Node
     end
 
     io << '>'
-    io
   end
 
   # Returns the next sibling node or `nil` if not found.
@@ -412,7 +411,7 @@ struct XML::Node
   # Serialize this Node as XML to *io* using default options.
   #
   # See `#to_xml`.
-  def to_s(io : IO)
+  def to_s(io : IO) : Nil
     to_xml io
   end
 

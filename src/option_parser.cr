@@ -163,7 +163,7 @@ class OptionParser
   end
 
   # Returns all the setup options, formatted in a help message.
-  def to_s(io : IO)
+  def to_s(io : IO) : Nil
     if banner = @banner
       io << banner
       io << '\n'

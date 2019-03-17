@@ -271,7 +271,7 @@ struct BigDecimal < Number
     end
   end
 
-  def to_s(io : IO)
+  def to_s(io : IO) : Nil
     factor_powers_of_ten
 
     s = @value.to_s
@@ -296,11 +296,6 @@ struct BigDecimal < Number
       offset = s.size - @scale
       io << s[0...offset] << '.' << s[offset..-1]
     end
-  end
-
-  def inspect(io)
-    to_s(io)
-    io << "_big_d"
   end
 
   def to_big_d

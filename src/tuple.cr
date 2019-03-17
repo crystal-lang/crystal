@@ -269,13 +269,13 @@ struct Tuple
     true
   end
 
-  # Implements the comparison operator.
+  # The comparison operator.
   #
-  # Each object in each tuple is compared (using the `<=>` operator).
+  # Each object in each tuple is compared using the `<=>` operator.
   #
   # Tuples are compared in an "element-wise" manner; the first element of this tuple is
   # compared with the first one of *other* using the `<=>` operator, then each of the second elements,
-  # etc. As soon as the result of any such comparison is non zero
+  # etc. As soon as the result of any such comparison is non-zero
   # (i.e. the two corresponding elements are not equal), that result is returned for the whole tuple comparison.
   #
   # If all the elements are equal, then the result is based on a comparison of the tuple sizes.
@@ -284,11 +284,9 @@ struct Tuple
   #
   # ```
   # {"a", "a", "c"} <=> {"a", "b", "c"} # => -1
-  # {1, 2, 3, 4, 5, 6} <=> {1, 2}       # => +1
+  # {1, 2, 3, 4, 5, 6} <=> {1, 2}       # => 1
   # {1, 2} <=> {1, 2.0}                 # => 0
   # ```
-  #
-  # See also: `Object#<=>`.
   def <=>(other : self)
     {% for i in 0...T.size %}
       cmp = self[{{i}}] <=> other[{{i}}]
@@ -372,7 +370,7 @@ struct Tuple
   end
 
   # Same as `to_s`.
-  def inspect
+  def inspect : String
     to_s
   end
 
@@ -382,7 +380,7 @@ struct Tuple
   # tuple = {1, "hello"}
   # tuple.to_s # => "{1, \"hello\"}"
   # ```
-  def to_s(io)
+  def to_s(io : IO) : Nil
     io << '{'
     join ", ", io, &.inspect(io)
     io << '}'

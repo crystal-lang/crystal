@@ -38,6 +38,9 @@ private class TestObject
   @getter13_counter = 0
   getter(getter13) { @getter13_counter += 1; false }
 
+  getter?(getter14 : Bool) { true }
+  getter?(getter15) { true }
+
   setter setter1
   setter setter2 : Int32
   setter setter3 : Int32 = 3
@@ -63,6 +66,9 @@ private class TestObject
 
   @property13_counter = 0
   property(property13) { @property13_counter += 1; false }
+
+  property?(property14 : Bool) { true }
+  property?(property15) { true }
 
   def initialize
     @getter1 = 1
@@ -272,6 +278,24 @@ describe Object do
       typeof(obj.@getter10).should eq(Bool)
       typeof(obj.getter10?).should eq(Bool)
     end
+
+    it "uses getter? with type declaration and block" do
+      obj = TestObject.new
+      typeof(obj.@getter14).should eq(Bool?)
+      typeof(obj.getter14?).should eq(Bool)
+      obj.@getter14.should be_nil
+      obj.getter14?.should be_true
+      obj.@getter14.should be_true
+    end
+
+    it "uses getter? with block" do
+      obj = TestObject.new
+      typeof(obj.@getter15).should eq(Bool?)
+      typeof(obj.getter15?).should eq(Bool)
+      obj.@getter15.should be_nil
+      obj.getter15?.should be_true
+      obj.@getter15.should be_true
+    end
   end
 
   describe "setter" do
@@ -399,6 +423,24 @@ describe Object do
       obj.property10?.should be_true
       obj.property10 = false
       obj.property10?.should be_false
+    end
+
+    it "uses property? with type declaration and block" do
+      obj = TestObject.new
+      typeof(obj.@property14).should eq(Bool?)
+      typeof(obj.property14?).should eq(Bool)
+      obj.@property14.should be_nil
+      obj.property14?.should be_true
+      obj.@property14.should be_true
+    end
+
+    it "uses property? with block" do
+      obj = TestObject.new
+      typeof(obj.@property15).should eq(Bool?)
+      typeof(obj.property15?).should eq(Bool)
+      obj.@property15.should be_nil
+      obj.property15?.should be_true
+      obj.@property15.should be_true
     end
   end
 

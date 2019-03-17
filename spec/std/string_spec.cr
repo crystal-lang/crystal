@@ -32,6 +32,14 @@ describe "String" do
       "há日本語"[1..3].should eq("á日本")
     end
 
+    it "gets with range without end" do
+      "há日本語"[1..nil].should eq("á日本語")
+    end
+
+    it "gets with range without beginning" do
+      "há日本語"[nil..2].should eq("há日")
+    end
+
     it "gets when index is last and count is zero" do
       "foo"[3, 0].should eq("")
     end
@@ -531,6 +539,42 @@ describe "String" do
     it { "hello\r\n".chomp("\n").should eq("hello") }
   end
 
+  describe "lchop" do
+    it { "".lchop.should eq("") }
+    it { "h".lchop.should eq("") }
+    it { "hello".lchop.should eq("ello") }
+    it { "かたな".lchop.should eq("たな") }
+
+    it { "hello".lchop('g').should eq("hello") }
+    it { "hello".lchop('h').should eq("ello") }
+    it { "かたな".lchop('か').should eq("たな") }
+
+    it { "".lchop("").should eq("") }
+    it { "hello".lchop("good").should eq("hello") }
+    it { "hello".lchop("hel").should eq("lo") }
+    it { "かたな".lchop("かた").should eq("な") }
+
+    it { "\n\n\n\nhello".lchop("").should eq("\n\n\n\nhello") }
+  end
+
+  describe "lchop?" do
+    it { "".lchop?.should be_nil }
+    it { "h".lchop?.should eq("") }
+    it { "hello".lchop?.should eq("ello") }
+    it { "かたな".lchop?.should eq("たな") }
+
+    it { "hello".lchop?('g').should be_nil }
+    it { "hello".lchop?('h').should eq("ello") }
+    it { "かたな".lchop?('か').should eq("たな") }
+
+    it { "".lchop?("").should eq("") }
+    it { "hello".lchop?("good").should be_nil }
+    it { "hello".lchop?("hel").should eq("lo") }
+    it { "かたな".lchop?("かた").should eq("な") }
+
+    it { "\n\n\n\nhello".lchop("").should eq("\n\n\n\nhello") }
+  end
+
   describe "rchop" do
     it { "".rchop.should eq("") }
     it { "foo".rchop.should eq("fo") }
@@ -545,25 +589,28 @@ describe "String" do
     it { "foo".rchop('o').should eq("fo") }
     it { "foo".rchop('x').should eq("foo") }
 
+    it { "".rchop("").should eq("") }
     it { "foobar".rchop("bar").should eq("foo") }
     it { "foobar".rchop("baz").should eq("foobar") }
   end
 
-  describe "lchomp" do
-    it { "".lchop.should eq("") }
-    it { "h".lchop.should eq("") }
-    it { "hello".lchop.should eq("ello") }
-    it { "かたな".lchop.should eq("たな") }
+  describe "rchop?" do
+    it { "".rchop?.should be_nil }
+    it { "foo".rchop?.should eq("fo") }
+    it { "foo\n".rchop?.should eq("foo") }
+    it { "foo\r".rchop?.should eq("foo") }
+    it { "foo\r\n".rchop?.should eq("foo\r") }
+    it { "\r\n".rchop?.should eq("\r") }
+    it { "かたな".rchop?.should eq("かた") }
+    it { "かたな\n".rchop?.should eq("かたな") }
+    it { "かたな\r\n".rchop?.should eq("かたな\r") }
 
-    it { "hello".lchop('g').should eq("hello") }
-    it { "hello".lchop('h').should eq("ello") }
-    it { "かたな".lchop('か').should eq("たな") }
+    it { "foo".rchop?('o').should eq("fo") }
+    it { "foo".rchop?('x').should be_nil }
 
-    it { "hello".lchop("good").should eq("hello") }
-    it { "hello".lchop("hel").should eq("lo") }
-    it { "かたな".lchop("かた").should eq("な") }
-
-    it { "\n\n\n\nhello".lchop("").should eq("\n\n\n\nhello") }
+    it { "".rchop?("").should eq("") }
+    it { "foobar".rchop?("bar").should eq("foo") }
+    it { "foobar".rchop?("baz").should be_nil }
   end
 
   describe "strip" do
@@ -1206,6 +1253,22 @@ describe "String" do
 
     it "subs range with string, non-ascii" do
       "あいうえお".sub(1..2, "けくこ").should eq("あけくこえお")
+    end
+
+    it "subs endless range with char" do
+      "hello".sub(2..nil, 'a').should eq("hea")
+    end
+
+    it "subs endless range with string" do
+      "hello".sub(2..nil, "ya").should eq("heya")
+    end
+
+    it "subs beginless range with char" do
+      "hello".sub(nil..2, 'a').should eq("alo")
+    end
+
+    it "subs beginless range with string" do
+      "hello".sub(nil..2, "ye").should eq("yelo")
     end
   end
 
@@ -1943,16 +2006,10 @@ describe "String" do
     iter.next.should eq('b')
     iter.next.should eq('c')
     iter.next.should be_a(Iterator::Stop)
-
-    iter.rewind
-    iter.next.should eq('a')
   end
 
   it "gets each_char with empty string" do
     iter = "".each_char
-    iter.next.should be_a(Iterator::Stop)
-
-    iter.rewind
     iter.next.should be_a(Iterator::Stop)
   end
 
@@ -1983,9 +2040,6 @@ describe "String" do
     iter.next.should eq('b'.ord)
     iter.next.should eq('c'.ord)
     iter.next.should be_a(Iterator::Stop)
-
-    iter.rewind
-    iter.next.should eq('a'.ord)
   end
 
   it "cycles bytes" do
@@ -2032,9 +2086,6 @@ describe "String" do
     iter.next.should eq("bar")
     iter.next.should eq("baz")
     iter.next.should be_a(Iterator::Stop)
-
-    iter.rewind
-    iter.next.should eq("foo")
   end
 
   it "gets each_line iterator with chomp = false" do
@@ -2043,9 +2094,6 @@ describe "String" do
     iter.next.should eq("bar\n")
     iter.next.should eq("baz\n")
     iter.next.should be_a(Iterator::Stop)
-
-    iter.rewind
-    iter.next.should eq("foo\n")
   end
 
   it "has yields to each_codepoint" do

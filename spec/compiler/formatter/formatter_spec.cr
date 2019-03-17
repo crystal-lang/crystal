@@ -567,6 +567,8 @@ describe Crystal::Formatter do
 
   assert_format "1 .. 2", "1..2"
   assert_format "1 ... 2", "1...2"
+  assert_format "(1 .. )", "(1..)"
+  assert_format " .. 2", "..2"
 
   assert_format "typeof( 1, 2, 3 )", "typeof(1, 2, 3)"
   assert_format "sizeof( Int32 )", "sizeof(Int32)"
@@ -698,6 +700,7 @@ describe Crystal::Formatter do
   assert_format "foo = 1\n->foo.bar(Int32)"
   assert_format "foo = 1\n->foo.bar(Int32*)"
   assert_format "foo = 1\n->foo.bar=(Int32)"
+  assert_format "foo = 1\n->foo.[](Int32)"
   assert_format "->{ x }"
   assert_format "->{\nx\n}", "->{\n  x\n}"
   assert_format "->do\nx\nend", "->do\n  x\nend"
@@ -1308,4 +1311,11 @@ describe Crystal::Formatter do
     "  2  \n" +
     "end"
   )
+
+  # #7443
+  assert_format "long_variable_name = [{\n  :foo => 1,\n}, {\n  :bar => 2,\n}]"
+  assert_format "long_variable_name = [\n  {\n    :foo => 1,\n  }, {\n    :bar => 2,\n  },\n]"
+  assert_format "long_variable_name = [\n  {\n    :foo => 1,\n  },\n  {\n    :bar => 2,\n  },\n]"
+  assert_format "long_variable_name = [1, 2, 3,\n                      4, 5, 6]"
+  assert_format "long_variable_name = [1, 2, 3, # foo\n                      4, 5, 6]"
 end

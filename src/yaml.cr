@@ -2,6 +2,7 @@ require "./yaml/*"
 require "./yaml/schema/*"
 require "./yaml/schema/core/*"
 require "./yaml/nodes/*"
+require "semantic_version"
 
 require "base64"
 
@@ -159,8 +160,9 @@ module YAML
   end
 
   # Returns the used version of `libyaml`.
-  def self.libyaml_version : {Int32, Int32, Int32}
+  def self.libyaml_version : SemanticVersion
     LibYAML.yaml_get_version(out major, out minor, out patch)
-    {major, minor, patch}
+
+    SemanticVersion.new(major, minor, patch)
   end
 end

@@ -16,7 +16,7 @@ struct OAuth::Params
     end
   end
 
-  def to_s(io : IO)
+  def to_s(io : IO) : Nil
     @params.sort_by! &.[0]
     @params.each_with_index do |(key, value), i|
       io << "%26" if i > 0

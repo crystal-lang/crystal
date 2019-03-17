@@ -18,7 +18,7 @@ class Gzip::Header
 
   # :nodoc:
   def initialize
-    @modification_time = Time.new
+    @modification_time = Time.utc
     @os = 255_u8 # Unknown
   end
 

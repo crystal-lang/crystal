@@ -113,7 +113,7 @@ module Crystal
     # A `ProgressTracker` object which tracks compilation progress.
     property progress_tracker = ProgressTracker.new
 
-    property codegen_target = Codegen::Target.new
+    property codegen_target = Config.default_target
 
     def initialize
       super(self, self, "main")
@@ -579,7 +579,7 @@ module Crystal
       file_module(filename)
     end
 
-    def to_s(io)
+    def to_s(io : IO) : Nil
       io << "<Program>"
     end
   end

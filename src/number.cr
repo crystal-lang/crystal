@@ -161,10 +161,18 @@ struct Number
     {(self / number).floor, self % number}
   end
 
-  # Implements the comparison operator.
+  # The comparison operator.
   #
-  # See also: `Object#<=>`.
-  def <=>(other)
+  # Returns:
+  # - `-1` if `self` is less than *other*
+  # - `0` if `self` is equal to *other*
+  # - `-1` if `self` is greater than *other*
+  # - `nil` if self is `NaN` or *other* is `NaN`, because `NaN` values are not comparable
+  def <=>(other) : Int32?
+    # NaN can't be compared to other numbers
+    return nil if self.is_a?(Float) && self.nan?
+    return nil if other.is_a?(Float) && other.nan?
+
     self > other ? 1 : (self < other ? -1 : 0)
   end
 
@@ -226,9 +234,15 @@ struct Number
   # 5.clamp(10..100)   # => 10
   # 50.clamp(10..100)  # => 50
   # 500.clamp(10..100) # => 100
+  #
+  # 5.clamp(10..)  # => 10
+  # 50.clamp(10..) # => 50
+  #
+  # 5.clamp(..10)  # => 5
+  # 50.clamp(..10) # => 10
   # ```
   def clamp(range : Range)
-    raise ArgumentError.new("Can't clamp an exclusive range") if range.exclusive?
+    raise ArgumentError.new("Can't clamp an exclusive range") if !range.end.nil? && range.exclusive?
     clamp range.begin, range.end
   end
 
@@ -238,10 +252,16 @@ struct Number
   # 5.clamp(10, 100)   # => 10
   # 50.clamp(10, 100)  # => 50
   # 500.clamp(10, 100) # => 100
+  #
+  # 5.clamp(10, nil)  # => 10
+  # 50.clamp(10, nil) # => 50
+  #
+  # 5.clamp(nil, 10)  # => 5
+  # 50.clamp(nil, 10) # => 10
   # ```
   def clamp(min, max)
-    return max if self > max
-    return min if self < min
+    return max if !max.nil? && self > max
+    return min if !min.nil? && self < min
     self
   end
 
@@ -283,11 +303,6 @@ struct Number
         @n += @by
         value
       end
-    end
-
-    def rewind
-      @n = @original
-      self
     end
   end
 end

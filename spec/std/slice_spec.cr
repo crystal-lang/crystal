@@ -272,12 +272,6 @@ describe "Slice" do
     iter.next.should eq(2)
     iter.next.should eq(3)
     iter.next.should be_a(Iterator::Stop)
-
-    iter.rewind
-    iter.next.should eq(1)
-
-    iter.rewind
-    iter.cycle.first(5).to_a.should eq([1, 2, 3, 1, 2])
   end
 
   it "does reverse iterator" do
@@ -287,9 +281,6 @@ describe "Slice" do
     iter.next.should eq(2)
     iter.next.should eq(1)
     iter.next.should be_a(Iterator::Stop)
-
-    iter.rewind
-    iter.next.should eq(3)
   end
 
   it "does index iterator" do
@@ -298,9 +289,6 @@ describe "Slice" do
     iter.next.should eq(0)
     iter.next.should eq(1)
     iter.next.should be_a(Iterator::Stop)
-
-    iter.rewind
-    iter.next.should eq(0)
   end
 
   it "does to_a" do
@@ -411,6 +399,19 @@ describe "Slice" do
 
   it "optimizes hash for Bytes" do
     Bytes[1, 2, 3].hash.should_not eq(Slice[1, 2, 3].hash)
+  end
+
+  it "#[]" do
+    slice = Slice.new(6) { |i| i + 1 }
+    subslice = slice[2..4]
+    subslice.read_only?.should be_false
+    subslice.size.should eq(3)
+    subslice.should eq(Slice.new(3) { |i| i + 3 })
+  end
+
+  it "#[] keeps read-only value" do
+    slice = Slice.new(6, read_only: true) { |i| i + 1 }
+    slice[2..4].read_only?.should be_true
   end
 end
 

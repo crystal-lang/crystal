@@ -1,4 +1,3 @@
-require "./syscall"
 require "crystal/system/file_descriptor"
 
 # An `IO` over a file descriptor.
@@ -153,7 +152,7 @@ class IO::FileDescriptor < IO
     other
   end
 
-  def inspect(io)
+  def inspect(io : IO) : Nil
     io << "#<IO::FileDescriptor:"
     if closed?
       io << "(closed)"
@@ -161,7 +160,6 @@ class IO::FileDescriptor < IO
       io << " fd=" << @fd
     end
     io << '>'
-    io
   end
 
   def pretty_print(pp)

@@ -203,20 +203,20 @@ struct BigRational < Number
   # r.to_s(16) # => "7dc82b/218c1652"
   # r.to_s(36) # => "4woiz/9b3djm"
   # ```
-  def to_s(base = 10)
+  def to_s(base : Int = 10) : String
     String.new(to_cstr(base))
   end
 
-  def to_s(io : IO, base = 10)
+  def to_s(io : IO, base : Int = 10) : Nil
     str = to_cstr(base)
     io.write_utf8 Slice.new(str, LibC.strlen(str))
   end
 
-  def inspect
+  def inspect : String
     to_s
   end
 
-  def inspect(io)
+  def inspect(io : IO) : Nil
     to_s io
   end
 

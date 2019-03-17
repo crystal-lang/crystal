@@ -18,7 +18,7 @@ module Crystal
       TypeFilteredNode.new(@filter, @node)
     end
 
-    def to_s(io)
+    def to_s(io : IO) : Nil
       @filter.to_s(io)
     end
   end
@@ -65,7 +65,7 @@ module Crystal
       @type == other.type
     end
 
-    def to_s(io)
+    def to_s(io : IO) : Nil
       io << "F("
       @type.to_s(io)
       io << ')'
@@ -87,7 +87,7 @@ module Crystal
       @filter1 == other.@filter1 && @filter2 == other.@filter2
     end
 
-    def to_s(io)
+    def to_s(io : IO) : Nil
       io << '(' << @filter1 << " && " << @filter2 << ')'
     end
   end
@@ -111,7 +111,7 @@ module Crystal
       @filter1 == other.@filter1 && @filter2 == other.@filter2
     end
 
-    def to_s(io)
+    def to_s(io : IO) : Nil
       io << '(' << @filter1 << " || " << @filter2 << ')'
     end
   end
@@ -140,7 +140,7 @@ module Crystal
       true
     end
 
-    def to_s(io)
+    def to_s(io : IO) : Nil
       io << "truthy"
     end
   end
@@ -202,7 +202,7 @@ module Crystal
       @filter == other.filter
     end
 
-    def to_s(io)
+    def to_s(io : IO) : Nil
       io << '!'
       @filter.to_s(io)
     end
@@ -216,7 +216,7 @@ module Crystal
       other.try &.filter_by_responds_to(@name)
     end
 
-    def to_s(io)
+    def to_s(io : IO) : Nil
       io << "responds_to?(" << @name << ')'
     end
   end
