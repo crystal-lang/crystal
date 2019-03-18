@@ -7,10 +7,11 @@ class Fiber
     # and one more to store the argument of `fiber_main` (+ alignment), we thus
     # reserve space for 22 pointers:
     @context.stack_top = (stack_ptr - 22).as(Void*)
-    @context.resumable = 1
 
     stack_ptr[-2] = self.as(Void*)      # x0 (r0): puts `self` as first argument for `fiber_main`
     stack_ptr[-14] = fiber_main.pointer # x30 (lr): initial `resume` will `ret` to this address
+
+    @context.resumable.lazy_set(1)
   end
 
   # :nodoc:
@@ -50,10 +51,10 @@ class Fiber
 
       mov     x19, sp               // current_context.stack_top = sp
       str     x19, [$0, #0]
-      mov     x19, #1               // current_context.resumable = 1
+      mov     x19, #1               // current_context.resumable.lazy_set(1)
       str     x19, [$0, #8]
 
-      mov     x19, #0               // new_context.resumable = 0
+      mov     x19, #0               // new_context.resumable.lazy_set(0)
       str     x19, [$1, #8]
       ldr     x19, [$1, #0]         // sp = new_context.stack_top (x19)
       mov     sp, x19

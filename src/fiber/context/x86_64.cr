@@ -6,10 +6,11 @@ class Fiber
     # in x86-64, the context switch push/pop 6 registers + the return address
     # that is left on the stack, we thus reserve space for 7 pointers:
     @context.stack_top = (stack_ptr - 7).as(Void*)
-    @context.resumable = 1
 
     stack_ptr[0] = fiber_main.pointer # %rbx: initial `resume` will `ret` to this address
     stack_ptr[-1] = self.as(Void*)    # %rdi: puts `self` as first argument for `fiber_main`
+
+    @context.resumable.lazy_set(1)
   end
 
   # :nodoc:
@@ -25,9 +26,9 @@ class Fiber
       pushq %r14
       pushq %r15
       movq %rsp, 0($0)  // current_context.stack_top = %rsp
-      movl $$1, 8($0)   // current_context.resumable = 1
+      movl $$1, 8($0)   // current_context.resumable.lazy_set(1)
 
-      movl $$0, 8($1)   // new_context.resumable = 0
+      movl $$0, 8($1)   // new_context.resumable.lazy_set(0)
       movq 0($1), %rsp  // %rsp = new_context.stack_top
       popq %r15         // pop callee-saved registers from the stack
       popq %r14

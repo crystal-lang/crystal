@@ -4,13 +4,24 @@ class Fiber
   # The arch-specific make/swapcontext assembly relies on the Context struct and
   # expects the following layout. Avoid moving the struct properties as it would
   # require to update all the make/swapcontext implementations.
-  @[Extern]
   struct Context
     property stack_top : Void*
-    property resumable : LibC::Long
+    property resumable : Atomic(LibC::Long)
 
     def initialize(@stack_top = Pointer(Void).null)
-      @resumable = 0
+      @resumable = Atomic(LibC::Long).new(0)
+    end
+
+    # Atomically transitions `#resumable` from the 'resumable' state to the
+    # 'resuming' state. Only one thread must be capable to execute this
+    # transition.
+    #
+    # This protects the program from double fiber enqueues that could lead two
+    # threads to try and resume the same fiber in parallel and segfault.
+    #
+    # Assumes that an `Atomic(Long)` is a mere pointer-sized value.
+    def can_resume?
+      @resumable.compare_and_set(1, 2).last
     end
   end
 

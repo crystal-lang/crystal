@@ -146,6 +146,13 @@ class Crystal::Scheduler
     # context has been fully saved, so we wait:
     spin_until_resumable(fiber)
 
+    # protect against parallel resumes of a fiber in case it was incorrectly
+    # queued twice, only one thread must swapcontext to the new fiber, otherwise
+    # one or both threads would segfault:
+    unless fiber.@context.can_resume?
+      fatal "concurrent resume of fiber #{fiber} (double enqueue?)"
+    end
+
     # don't initiate GC collect while swapping context; if we update the
     # @current reference but GC starts scanning stacks before the stack pointer
     # is changed, this would lead to report a mismatched stack pointer & stack
@@ -176,15 +183,19 @@ class Crystal::Scheduler
         end
 
         if fiber.dead?
-          LibC.dprintf 2, "\nFATAL: tried to resume a dead fiber: #{fiber}\n"
-          caller.each { |line| LibC.dprintf(2, "  from #{line}\n") }
-          exit 1
+          fatal "tried to resume a dead fiber: #{fiber}"
         end
       end
 
       # 3. give up, yield CPU time to another thread (avoid contention):
       Thread.yield
     end
+  end
+
+  private def fatal(message)
+    LibC.dprintf 2, "\nFATAL: #{message}\n"
+    caller.each { |line| LibC.dprintf(2, "  from #{line}\n") }
+    LibC._exit 1
   end
 
   # Suspends execution of `@current` by saving its context, and resumes another

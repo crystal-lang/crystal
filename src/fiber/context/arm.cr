@@ -11,10 +11,11 @@ class Fiber
     {% else %}
       @context.stack_top = (stack_ptr - 9).as(Void*)
     {% end %}
-    @context.resumable = 1
 
     stack_ptr[0] = fiber_main.pointer # lr: initial `resume` will `ret` to this address
     stack_ptr[-9] = self.as(Void*)    # r0: puts `self` as first argument for `fiber_main`
+
+    @context.resumable.lazy_set(1)
   end
 
   # :nodoc:
@@ -36,10 +37,10 @@ class Fiber
         stmdb  sp!, {r0, r4-r11, lr}  // push 1st argument + callee-saved registers
         vstmdb sp!, {d8-d15}          // push FPU registers
         str    sp, [$0, #0]           // current_context.stack_top = sp
-        mov    r4, #1                 // current_context.resumable = 1
+        mov    r4, #1                 // current_context.resumable.lazy_set(1)
         str    r4, [$0, #4]
 
-        mov    r4, #0                 // new_context.resumable = 0
+        mov    r4, #0                 // new_context.resumable.lazy_set(0)
         str    r4, [$1, #4]
         ldr    sp, [$1, #0]           // sp = new_context.stack_top
         vldmia sp!, {d8-d15}          // pop FPU registers
@@ -54,10 +55,10 @@ class Fiber
       asm("
         stmdb  sp!, {r0, r4-r11, lr}  // push 1st argument + calleed-saved registers
         str    sp, [$0, #0]           // current_context.stack_top = sp
-        mov    r4, #1                 // current_context.resumable = 1
+        mov    r4, #1                 // current_context.resumable.lazy_set(1)
         str    r4, [$0, #4]
 
-        mov    r4, #0                 // new_context.resumable = 0
+        mov    r4, #0                 // new_context.resumable.lazy_set(0)
         str    r4, [$1, #4]
         ldr    sp, [$1, #0]           // sp = new_context.stack_top
         ldmia  sp!, {r0, r4-r11, lr}  // pop 1st argument + calleed-saved registers
