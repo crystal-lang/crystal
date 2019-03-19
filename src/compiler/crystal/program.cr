@@ -256,6 +256,7 @@ module Crystal
       define_crystal_string_constant "DEFAULT_PATH", Crystal::Config.path
       define_crystal_string_constant "DESCRIPTION", Crystal::Config.description
       define_crystal_string_constant "PATH", Crystal::CrystalPath.default_path
+      define_crystal_string_constant "LIBRARY_PATH", Crystal::CrystalLibraryPath.default_path
       define_crystal_string_constant "VERSION", Crystal::Config.version
       define_crystal_string_constant "LLVM_VERSION", Crystal::Config.llvm_version
     end
