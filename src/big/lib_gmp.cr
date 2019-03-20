@@ -93,6 +93,8 @@ lib LibGMP
   # # Logic
 
   fun popcount = __gmpz_popcount(op : MPZ*) : BitcntT
+  fun scan0 = __gmpz_scan0(op : MPZ*, starting_bit : BitcntT) : BitcntT
+  fun scan1 = __gmpz_scan1(op : MPZ*, starting_bit : BitcntT) : BitcntT
 
   # # Comparison
 

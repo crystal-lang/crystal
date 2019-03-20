@@ -646,6 +646,22 @@ describe "Int" do
     it { 18446744073709551615_u64.popcount.should eq(64) }
   end
 
+  describe "#leading_zeros_count" do
+    {% for width in %w(8 16 32 64).map(&.id) %}
+      it { -1_i{{width}}.leading_zeros_count.should eq(0) }
+      it { 0_i{{width}}.leading_zeros_count.should eq({{width}}) }
+      it { 0_u{{width}}.leading_zeros_count.should eq({{width}}) }
+    {% end %}
+  end
+
+  describe "#trailing_zeros_count" do
+    {% for width in %w(8 16 32 64).map(&.id) %}
+      it { -2_i{{width}}.trailing_zeros_count.should eq(1) }
+      it { 2_i{{width}}.trailing_zeros_count.should eq(1) }
+      it { 2_u{{width}}.trailing_zeros_count.should eq(1) }
+    {% end %}
+  end
+
   it "compares signed vs. unsigned integers" do
     signed_ints = [Int8::MAX, Int16::MAX, Int32::MAX, Int64::MAX, Int8::MIN, Int16::MIN, Int32::MIN, Int64::MIN, 0_i8, 0_i16, 0_i32, 0_i64]
     unsigned_ints = [UInt8::MAX, UInt16::MAX, UInt32::MAX, UInt64::MAX, 0_u8, 0_u16, 0_u32, 0_u64]

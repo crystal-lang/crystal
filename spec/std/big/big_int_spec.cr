@@ -326,6 +326,10 @@ describe "BigInt" do
     5.to_big_i.popcount.should eq(2)
   end
 
+  it "#trailing_zeros_count" do
+    "00000000000000001000000000001000".to_big_i(base: 2).trailing_zeros_count.should eq(3)
+  end
+
   it "#hash" do
     b1 = 5.to_big_i
     b2 = 5.to_big_i
