@@ -54,6 +54,8 @@ struct BitArray
   # Raises `IndexError` if trying to access a bit outside the array's range.
   #
   # ```
+  # require "bit_array"
+  #
   # ba = BitArray.new(5)
   # ba[3] = true
   # ```
@@ -75,6 +77,8 @@ struct BitArray
   # Raises `IndexError` if the starting index is out of range.
   #
   # ```
+  # require "bit_array"
+  #
   # ba = BitArray.new(5)
   # ba[0] = true; ba[2] = true; ba[4] = true
   # ba # => BitArray[10101]
@@ -99,6 +103,8 @@ struct BitArray
   # Raises `IndexError` if the starting index is out of range.
   #
   # ```
+  # require "bit_array"
+  #
   # ba = BitArray.new(5)
   # ba[0] = true; ba[2] = true; ba[4] = true
   # ba # => BitArray[10101]
@@ -175,6 +181,8 @@ struct BitArray
   # Raises `IndexError` if trying to access a bit outside the array's range.
   #
   # ```
+  # require "bit_array"
+  #
   # ba = BitArray.new(5)
   # ba[3] # => false
   # ba.toggle(3)
@@ -188,6 +196,8 @@ struct BitArray
   # Inverts all bits in the array. Falses become `true` and vice versa.
   #
   # ```
+  # require "bit_array"
+  #
   # ba = BitArray.new(5)
   # ba[2] = true; ba[3] = true
   # ba # => BitArray[00110]
@@ -203,6 +213,8 @@ struct BitArray
   # Creates a string representation of self.
   #
   # ```
+  # require "bit_array"
+  #
   # ba = BitArray.new(5)
   # ba.to_s # => "BitArray[00000]"
   # ```

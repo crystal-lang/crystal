@@ -25,6 +25,8 @@ class StringPool
   # Returns the size
   #
   # ```
+  # require "string_pool"
+  #
   # pool = StringPool.new
   # pool.size # => 0
   # ```
@@ -41,6 +43,8 @@ class StringPool
   # Returns `true` if the `StringPool` has no element otherwise returns `false`.
   #
   # ```
+  # require "string_pool"
+  #
   # pool = StringPool.new
   # pool.empty? # => true
   # pool.get("crystal")
@@ -56,6 +60,8 @@ class StringPool
   # Otherwise a new string is created, put in the pool and returned.
   #
   # ```
+  # require "string_pool"
+  #
   # pool = StringPool.new
   # ptr = Pointer.malloc(9) { |i| ('a'.ord + i).to_u8 }
   # slice = Slice.new(ptr, 3)
@@ -73,6 +79,8 @@ class StringPool
   # Otherwise a new string is created, put in the pool and returned.
   #
   # ```
+  # require "string_pool"
+  #
   # pool = StringPool.new
   # pool.get("hey".to_unsafe, 3)
   # pool.size # => 1
@@ -124,6 +132,8 @@ class StringPool
   # Otherwise a new string is created, put in the pool and returned.
   #
   # ```
+  # require "string_pool"
+  #
   # pool = StringPool.new
   # io = IO::Memory.new "crystal"
   # pool.empty? # => true
@@ -140,6 +150,8 @@ class StringPool
   # Otherwise a new string is created, put in the pool and returned.
   #
   # ```
+  # require "string_pool"
+  #
   # pool = StringPool.new
   # string = "crystal"
   # pool.empty? # => true

@@ -15,6 +15,7 @@ struct BigInt < Int
   #
   # ```
   # require "big"
+  #
   # BigInt.new # => 0
   # ```
   def initialize
@@ -26,6 +27,8 @@ struct BigInt < Int
   # Raises `ArgumentError` if the string doesn't denote a valid integer.
   #
   # ```
+  # require "big"
+  #
   # BigInt.new("123456789123456789123456789123456789") # => 123456789123456789123456789123456789
   # BigInt.new("123_456_789_123_456_789_123_456_789")  # => 123456789012345678901234567890
   # BigInt.new("1234567890ABCDEF", base: 16)           # => 1311768467294899695
@@ -350,6 +353,8 @@ struct BigInt < Int
   # Returns a string representation of self.
   #
   # ```
+  # require "big"
+  #
   # BigInt.new("123456789101101987654321").to_s # => 123456789101101987654321
   # ```
   def to_s : String
@@ -365,6 +370,8 @@ struct BigInt < Int
   # Returns a string containing the representation of big radix base (2 through 36).
   #
   # ```
+  # require "big"
+  #
   # BigInt.new("123456789101101987654321").to_s(8)  # => "32111154373025463465765261"
   # BigInt.new("123456789101101987654321").to_s(16) # => "1a249b1f61599cd7eab1"
   # BigInt.new("123456789101101987654321").to_s(36) # => "k3qmt029k48nmpd"
@@ -583,6 +590,7 @@ struct Int
   # Returns a `BigInt` representing this integer.
   # ```
   # require "big"
+  #
   # 123.to_big_i
   # ```
   def to_big_i : BigInt
@@ -600,6 +608,7 @@ struct Float
   # Returns a `BigInt` representing this float (rounded using `floor`).
   # ```
   # require "big"
+  #
   # 1212341515125412412412421.0.to_big_i
   # ```
   def to_big_i : BigInt
@@ -613,6 +622,7 @@ class String
   # Raises `ArgumentError` if this string doesn't denote a valid integer.
   # ```
   # require "big"
+  #
   # "3a060dbf8d1a5ac3e67bc8f18843fc48".to_big_i(16)
   # ```
   def to_big_i(base = 10) : BigInt
@@ -625,6 +635,7 @@ module Math
   #
   # ```
   # require "big"
+  #
   # Math.sqrt((1000_000_000_0000.to_big_i*1000_000_000_00000.to_big_i))
   # ```
   def sqrt(value : BigInt)

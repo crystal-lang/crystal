@@ -496,6 +496,7 @@ struct XML::Node
   #
   # ```
   # require "xml"
+  #
   # doc = XML.parse("<person></person>")
   #
   # doc.xpath_bool("count(//person) > 0") # => true
@@ -507,6 +508,10 @@ struct XML::Node
   # Searches this node for XPath *path* and restricts the return type to `Float64`.
   #
   # ```
+  # require "xml"
+  #
+  # doc = XML.parse("<person></person>")
+  #
   # doc.xpath_float("count(//person)") # => 1.0
   # ```
   def xpath_float(path, namespaces = nil, variables = nil)
@@ -516,6 +521,10 @@ struct XML::Node
   # Searches this node for XPath *path* and restricts the return type to `NodeSet`.
   #
   # ```
+  # require "xml"
+  #
+  # doc = XML.parse("<person></person>")
+  #
   # nodes = doc.xpath_nodes("//person")
   # nodes.class       # => XML::NodeSet
   # nodes.map(&.name) # => ["person"]
@@ -528,6 +537,10 @@ struct XML::Node
   # or `nil` if not found
   #
   # ```
+  # require "xml"
+  #
+  # doc = XML.parse("<person></person>")
+  #
   # doc.xpath_node("//person")  # => #<XML::Node:0x2013e80 name="person">
   # doc.xpath_node("//invalid") # => nil
   # ```
@@ -538,6 +551,10 @@ struct XML::Node
   # Searches this node for XPath *path* and restricts the return type to `String`.
   #
   # ```
+  # require "xml"
+  #
+  # doc = XML.parse("<person></person>")
+  #
   # doc.xpath_string("string(/persons/person[1])")
   # ```
   def xpath_string(path, namespaces = nil, variables = nil)

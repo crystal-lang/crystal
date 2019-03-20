@@ -4,6 +4,8 @@ module MIME::Multipart
   # ### Example
   #
   # ```
+  # require "mime/multipart"
+  #
   # multipart = "--aA40\r\nContent-Type: text/plain\r\n\r\nbody\r\n--aA40--"
   # parser = MIME::Multipart::Parser.new(IO::Memory.new(multipart), "aA40")
   #
@@ -36,6 +38,8 @@ module MIME::Multipart
     # into memory.
     #
     # ```
+    # require "mime/multipart"
+    #
     # multipart = "--aA40\r\nContent-Type: text/plain\r\n\r\nbody\r\n--aA40--"
     # parser = MIME::Multipart::Parser.new(IO::Memory.new(multipart), "aA40")
     # parser.next do |headers, io|

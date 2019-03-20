@@ -4,6 +4,8 @@ module HTTP::FormData
   # ### Example
   #
   # ```
+  # require "http"
+  #
   # io = IO::Memory.new
   # builder = HTTP::FormData::Builder.new(io, "aA47")
   # builder.field("name", "joe")

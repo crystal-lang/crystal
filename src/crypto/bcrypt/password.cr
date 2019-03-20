@@ -18,6 +18,8 @@ class Crypto::Bcrypt::Password
   # Hashes a password.
   #
   # ```
+  # require "crypto/bcrypt/password"
+  #
   # password = Crypto::Bcrypt::Password.create("super secret", cost: 10)
   # # => $2a$10$rI4xRiuAN2fyiKwynO6PPuorfuoM4L2PVv6hlnVJEmNLjqcibAfHq
   # ```
@@ -33,6 +35,8 @@ class Crypto::Bcrypt::Password
   # Loads a bcrypt hash.
   #
   # ```
+  # require "crypto/bcrypt/password"
+  #
   # password = Crypto::Bcrypt::Password.new("$2a$10$X6rw/jDiLBuzHV./JjBNXe8/Po4wTL0fhdDNdAdjcKN/Fup8tGCya")
   # password.version # => "2a"
   # password.salt    # => "X6rw/jDiLBuzHV./JjBNXe"
@@ -54,6 +58,8 @@ class Crypto::Bcrypt::Password
   # Verifies a password against the hash.
   #
   # ```
+  # require "crypto/bcrypt/password"
+  #
   # password = Crypto::Bcrypt::Password.create("super secret")
   # password == "wrong secret" # => false
   # password == "super secret" # => true

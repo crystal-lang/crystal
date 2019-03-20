@@ -130,6 +130,8 @@ struct BigRational < Number
   # Divides the rational by (2 ** *other*)
   #
   # ```
+  # require "big"
+  #
   # BigRational.new(2, 3) >> 2 # => 1/6
   # ```
   def >>(other : Int)
@@ -139,6 +141,8 @@ struct BigRational < Number
   # Multiplies the rational by (2 ** *other*)
   #
   # ```
+  # require "big"
+  #
   # BigRational.new(2, 3) << 2 # => 8/3
   # ```
   def <<(other : Int)
@@ -198,6 +202,8 @@ struct BigRational < Number
   # Optionally takes a radix base (2 through 36).
   #
   # ```
+  # require "big"
+  #
   # r = BigRational.new(8243243, 562828882)
   # r.to_s     # => "8243243/562828882"
   # r.to_s(16) # => "7dc82b/218c1652"
@@ -248,6 +254,7 @@ struct Int
   # Returns a `BigRational` representing this integer.
   # ```
   # require "big"
+  #
   # 123.to_big_r
   # ```
   def to_big_r
@@ -281,6 +288,7 @@ struct Float
   # Returns a `BigRational` representing this float.
   # ```
   # require "big"
+  #
   # 123.0.to_big_r
   # ```
   def to_big_r
@@ -296,6 +304,7 @@ module Math
   # Returns the sqrt of a `BigRational`.
   # ```
   # require "big"
+  #
   # Math.sqrt((1000_000_000_0000.to_big_r*1000_000_000_00000.to_big_r))
   # ```
   def sqrt(value : BigRational)

@@ -84,6 +84,8 @@ struct Complex
   # Writes this complex object to an *io*.
   #
   # ```
+  # require "complex"
+  #
   # Complex.new(42, 2).to_s # => "42.0 + 2.0i"
   # ```
   def to_s(io : IO) : Nil
@@ -96,6 +98,8 @@ struct Complex
   # Writes this complex object to an *io*, surrounded by parentheses.
   #
   # ```
+  # require "complex"
+  #
   # Complex.new(42, 2).inspect # => "(42.0 + 2.0i)"
   # ```
   def inspect(io : IO) : Nil
@@ -108,6 +112,8 @@ struct Complex
   # number form, using the Pythagorean theorem.
   #
   # ```
+  # require "complex"
+  #
   # Complex.new(42, 2).abs  # => 42.04759208325728
   # Complex.new(-42, 2).abs # => 42.04759208325728
   # ```
@@ -118,6 +124,8 @@ struct Complex
   # Returns the square of absolute value in a number form.
   #
   # ```
+  # require "complex"
+  #
   # Complex.new(42, 2).abs2 # => 1768
   # ```
   def abs2
@@ -136,6 +144,8 @@ struct Complex
   # Returns a `Tuple` with the `abs` value and the `phase`.
   #
   # ```
+  # require "complex"
+  #
   # Complex.new(42, 2).polar # => {42.047592083257278, 0.047583103276983396}
   # ```
   def polar
@@ -145,6 +155,8 @@ struct Complex
   # Returns the conjugate of `self`.
   #
   # ```
+  # require "complex"
+  #
   # Complex.new(42, 2).conj  # => 42.0 - 2.0i
   # Complex.new(42, -2).conj # => 42.0 + 2.0i
   # ```
@@ -181,6 +193,8 @@ struct Complex
   # Calculates the exp of `self`.
   #
   # ```
+  # require "complex"
+  #
   # Complex.new(4, 2).exp # => -22.720847417619233 + 49.645957334580565i
   # ```
   def exp

@@ -91,6 +91,8 @@ class OptionParser
   # Example:
   #
   # ```
+  # require "option_parser"
+  #
   # parser = OptionParser.new
   # parser.banner = "Usage: crystal [command] [switches] [program file] [--] [arguments]"
   # ```

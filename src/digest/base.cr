@@ -12,6 +12,8 @@ abstract class Digest::Base
   # method available. Returns the resulting digest afterwards.
   #
   # ```
+  # require "digest/md5"
+  #
   # digest = Digest::MD5.digest do |ctx|
   #   ctx.update "f"
   #   ctx.update "oo"
@@ -28,6 +30,8 @@ abstract class Digest::Base
   # Returns the hexadecimal representation of the hash of *data*.
   #
   # ```
+  # require "digest/md5"
+  #
   # Digest::MD5.hexdigest("foo") # => "acbd18db4cc2f85cedef654fccc4a4d8"
   # ```
   def self.hexdigest(data) : String
@@ -39,6 +43,9 @@ abstract class Digest::Base
   # afterwards.
   #
   # ```
+  # require "digest/md5"
+  #
+  # Digest::MD5.hexdigest("foo") # => "acbd18db4cc2f85cedef654fccc4a4d8"
   # Digest::MD5.hexdigest do |ctx|
   #   ctx.update "f"
   #   ctx.update "oo"
@@ -56,6 +63,8 @@ abstract class Digest::Base
   # Returns the base64-encoded hash of *data*.
   #
   # ```
+  # require "digest/sha1"
+  #
   # Digest::SHA1.base64digest("foo") # => "C+7Hteo/D9vJXQ3UfzxbwnXaijM="
   # ```
   def self.base64digest(data) : String
@@ -65,6 +74,8 @@ abstract class Digest::Base
   # Returns the base64-encoded hash of *data*.
   #
   # ```
+  # require "digest/sha1"
+  #
   # Digest::SHA1.base64digest do |ctx|
   #   ctx.update "f"
   #   ctx.update "oo"

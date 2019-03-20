@@ -26,6 +26,8 @@ class URI
   # Returns the scheme component of the URI.
   #
   # ```
+  # require "uri"
+  #
   # URI.parse("http://foo.com").scheme           # => "http"
   # URI.parse("mailto:alice@example.com").scheme # => "mailto"
   # ```
@@ -37,6 +39,8 @@ class URI
   # Returns the host component of the URI.
   #
   # ```
+  # require "uri"
+  #
   # URI.parse("http://foo.com").host # => "foo.com"
   # ```
   getter host : String?
@@ -47,6 +51,8 @@ class URI
   # Returns the port component of the URI.
   #
   # ```
+  # require "uri"
+  #
   # URI.parse("http://foo.com:5432").port # => 5432
   # ```
   getter port : Int32?
@@ -57,6 +63,8 @@ class URI
   # Returns the path component of the URI.
   #
   # ```
+  # require "uri"
+  #
   # URI.parse("http://foo.com/bar").path # => "/bar"
   # ```
   getter path : String?
@@ -67,6 +75,8 @@ class URI
   # Returns the query component of the URI.
   #
   # ```
+  # require "uri"
+  #
   # URI.parse("http://foo.com/bar?q=1").query # => "q=1"
   # ```
   getter query : String?
@@ -77,6 +87,8 @@ class URI
   # Returns the user component of the URI.
   #
   # ```
+  # require "uri"
+  #
   # URI.parse("http://admin:password@foo.com").user # => "admin"
   # ```
   getter user : String?
@@ -87,6 +99,8 @@ class URI
   # Returns the password component of the URI.
   #
   # ```
+  # require "uri"
+  #
   # URI.parse("http://admin:password@foo.com").password # => "password"
   # ```
   getter password : String?
@@ -97,6 +111,8 @@ class URI
   # Returns the fragment component of the URI.
   #
   # ```
+  # require "uri"
+  #
   # URI.parse("http://foo.com/bar#section1").fragment # => "section1"
   # ```
   getter fragment : String?
@@ -107,6 +123,8 @@ class URI
   # Returns the opaque component of the URI.
   #
   # ```
+  # require "uri"
+  #
   # URI.parse("mailto:alice@example.com").opaque # => "alice@example.com"
   # ```
   getter opaque : String?
@@ -122,6 +140,8 @@ class URI
   # Returns the host part of the URI and unwrap brackets for IPv6 addresses.
   #
   # ```
+  # require "uri"
+  #
   # URI.parse("http://[::1]/bar").hostname # => "::1"
   # URI.parse("http://[::1]/bar").host     # => "[::1]"
   # ```
@@ -132,6 +152,8 @@ class URI
   # Returns the full path of this URI.
   #
   # ```
+  # require "uri"
+  #
   # uri = URI.parse "http://foo.com/posts?id=30&limit=5#time=1305298413"
   # uri.full_path # => "/posts?id=30&limit=5"
   # ```
@@ -219,6 +241,8 @@ class URI
   # e.g. `application/x-www-form-urlencoded` wants this replace.
   #
   # ```
+  # require "uri"
+  #
   # URI.unescape("%27Stop%21%27%20said%20Fred")                  # => "'Stop!' said Fred"
   # URI.unescape("%27Stop%21%27+said+Fred", plus_to_space: true) # => "'Stop!' said Fred"
   # ```
@@ -260,6 +284,8 @@ class URI
   # encoded to `'%2B'`. e.g. `application/x-www-form-urlencoded` want this replace.
   #
   # ```
+  # require "uri"
+  #
   # URI.escape("'Stop!' said Fred")                      # => "%27Stop%21%27%20said%20Fred"
   # URI.escape("'Stop!' said Fred", space_to_plus: true) # => "%27Stop%21%27+said+Fred"
   # ```
@@ -274,6 +300,8 @@ class URI
   # `true` are not escaped, other characters are escaped.
   #
   # ```
+  # require "uri"
+  #
   # # Escape URI path
   # URI.escape("/foo/file?(1).txt") do |byte|
   #   URI.unreserved?(byte) || byte.chr == '/'
@@ -333,6 +361,8 @@ class URI
   # the provided username and password.
   #
   # ```
+  # require "uri"
+  #
   # uri = URI.parse "http://admin:password@foo.com"
   # uri.userinfo # => "admin:password"
   # ```
@@ -507,6 +537,8 @@ class URI
   # otherwise returns `nil`.
   #
   # ```
+  # require "uri"
+  #
   # URI.default_port "http"  # => 80
   # URI.default_port "ponzi" # => nil
   # ```
@@ -520,6 +552,8 @@ class URI
   # *scheme*, if any, will be unregistered.
   #
   # ```
+  # require "uri"
+  #
   # URI.set_default_port "ponzi", 9999
   # ```
   def self.set_default_port(scheme : String, port : Int32?) : Nil

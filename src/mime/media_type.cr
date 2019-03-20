@@ -34,6 +34,8 @@ module MIME
     # Returns the value for the parameter given by *key*. If not found, raises `KeyError`.
     #
     # ```
+    # require "mime/media_type"
+    #
     # MIME::MediaType.parse("text/plain; charset=UTF-8")["charset"] # => "UTF-8"
     # MIME::MediaType.parse("text/plain; charset=UTF-8")["foo"]     # raises KeyError
     # ```
@@ -44,6 +46,8 @@ module MIME
     # Returns the value for the parameter given by *key*. If not found, returns `nil`.
     #
     # ```
+    # require "mime/media_type"
+    #
     # MIME::MediaType.parse("text/plain; charset=UTF-8")["charset"]? # => "UTF-8"
     # MIME::MediaType.parse("text/plain; charset=UTF-8")["foo"]?     # => nil
     # ```
@@ -54,6 +58,8 @@ module MIME
     # Sets the value of parameter *key* to the given value.
     #
     # ```
+    # require "mime/media_type"
+    #
     # mime_type = MIME::MediaType.parse("x-application/example")
     # mime_type["foo"] = "bar"
     # mime_type["foo"] # => "bar"
@@ -66,6 +72,8 @@ module MIME
     # Returns the value for the parameter given by *key*, or when not found the value given by *default*.
     #
     # ```
+    # require "mime/media_type"
+    #
     # MIME::MediaType.parse("x-application/example").fetch("foo", "baz")          # => "baz"
     # MIME::MediaType.parse("x-application/example; foo=bar").fetch("foo", "baz") # => "bar"
     # ```
@@ -76,6 +84,8 @@ module MIME
     # Returns the value for the parameter given by *key*, or when not found calls the given block with the *key*.
     #
     # ```
+    # require "mime/media_type"
+    #
     # MIME::MediaType.parse("x-application/example").fetch("foo") { |key| key }          # => "foo"
     # MIME::MediaType.parse("x-application/example; foo=bar").fetch("foo") { |key| key } # => "bar"
     # ```
@@ -98,6 +108,8 @@ module MIME
     # First component of `media_type`.
     #
     # ```
+    # require "mime/media_type"
+    #
     # MIME::MediaType.new("text/plain").type # => "text"
     # MIME::MediaType.new("foo").type        # => "foo"
     # ```
@@ -110,6 +122,8 @@ module MIME
     # Second component of `media_type` or `nil`.
     #
     # ```
+    # require "mime/media_type"
+    #
     # MIME::MediaType.new("text/plain").sub_type # => "plain"
     # MIME::MediaType.new("foo").sub_type        # => nil
     # ```
