@@ -70,13 +70,15 @@ module GC
   @@stack_bottom = Pointer(Void).null
 
   # :nodoc:
-  def self.stack_bottom
+  def self.current_thread_stack_bottom
     @@stack_bottom
   end
 
   # :nodoc:
-  def self.stack_bottom=(@@stack_bottom : Void*)
-    @@stack_bottom
+  def self.set_stackbottom(thread : Thread, stack_bottom : Void*)
+    # NOTE we could store stack_bottom per thread,
+    #      and return it in `#current_thread_stack_bottom`,
+    #      but there is no actual use for that.
   end
 
   # :nodoc:

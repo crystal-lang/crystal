@@ -48,6 +48,13 @@ lib LibGC
 
   $stackbottom = GC_stackbottom : Void*
 
+  {% if flag?(:preview_mt) %}
+    fun set_stackbottom = GC_set_stackbottom(LibC::PthreadT, Void*)
+    fun get_stackbottom = GC_get_stackbottom : Void*
+  {% else %}
+    $stackbottom = GC_stackbottom : Void*
+  {% end %}
+
   fun set_on_collection_event = GC_set_on_collection_event(cb : ->)
 
   $gc_no = GC_gc_no : LibC::ULong
@@ -173,13 +180,21 @@ module GC
   {% end %}
 
   # :nodoc:
-  def self.stack_bottom
-    LibGC.stackbottom
+  def self.current_thread_stack_bottom
+    {% if flag?(:preview_mt) %}
+      LibGC.get_stackbottom
+    {% else %}
+      LibGC.stackbottom
+    {% end %}
   end
 
   # :nodoc:
-  def self.stack_bottom=(pointer : Void*)
-    LibGC.stackbottom = pointer
+  def self.set_stackbottom(thread : Thread, stack_bottom : Void*)
+    {% if flag?(:preview_mt) %}
+      LibGC.set_stackbottom(thread.to_unsafe, stack_bottom)
+    {% else %}
+      LibGC.stackbottom = stack_bottom
+    {% end %}
   end
 
   # :nodoc:

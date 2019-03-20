@@ -59,9 +59,15 @@ class Crystal::Scheduler
   protected def resume(fiber : Fiber) : Nil
     validate_resumable(fiber)
     ensure_single_resume(fiber)
+    {% if flag?(:preview_mt) %}
+      GC.disable
+    {% end %}
     current, @current = @current, fiber
-    GC.stack_bottom = fiber.@stack_bottom
+    GC.set_stackbottom(Thread.current, fiber.@stack_bottom)
     Fiber.swapcontext(pointerof(current.@context), pointerof(fiber.@context))
+    {% if flag?(:preview_mt) %}
+      GC.enable
+    {% end %}
   end
 
   private def validate_resumable(fiber)

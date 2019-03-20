@@ -62,7 +62,7 @@ class Fiber
   def initialize(@stack : Void*, thread)
     @proc = Proc(Void).new { }
     @context = Context.new(_fiber_get_stack_top)
-    @stack_bottom = GC.stack_bottom
+    @stack_bottom = GC.current_thread_stack_bottom
     @name = "main"
     @current_thread.set(thread)
     @@fibers.push(self)
@@ -70,6 +70,9 @@ class Fiber
 
   # :nodoc:
   def run
+    {% if flag?(:preview_mt) %}
+      GC.enable
+    {% end %}
     @proc.call
   rescue ex
     if name = @name
