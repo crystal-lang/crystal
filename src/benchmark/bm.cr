@@ -1,7 +1,7 @@
 module Benchmark
   module BM
     # A data object, representing the times associated with a benchmark measurement.
-    class Tms
+    struct Tms
       # User CPU time
       getter utime : Float64
 

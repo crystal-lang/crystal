@@ -12,7 +12,7 @@ module Benchmark
   # which are then reported. Additionally we compare the means to that of the
   # fastest.
   module IPS
-    class Job
+    struct Job
       # List of all entries in the benchmark.
       # After #execute, these are populated with the resulting statistics.
       property items : Array(Entry)
@@ -155,14 +155,10 @@ module Benchmark
       # Number of bytes allocated per operation
       property! bytes_per_op : Int32
 
-      @ran : Bool
-      @ran = false
+      # The stats have been calculated
+      getter? ran : Bool = false
 
       def initialize(@label : String, @action : ->)
-      end
-
-      def ran?
-        @ran
       end
 
       def call

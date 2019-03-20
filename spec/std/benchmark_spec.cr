@@ -64,7 +64,7 @@ end
 describe Benchmark::IPS::Entry, "#calculate_stats" do
   it "correctly calculates basic stats" do
     e = create_entry
-    e.calculate_stats([2, 4, 4, 4, 5, 5, 7, 9])
+    e.calculate_stats({2, 4, 4, 4, 5, 5, 7, 9})
 
     e.size.should eq(8)
     e.mean.should eq(5.0)
