@@ -197,4 +197,13 @@ module GC
       @@curr_push_other_roots.try(&.call)
     end
   end
+
+  # pushes the stack of pending fibers when the GC wants to collect memory:
+  GC.before_collect do
+    current = Fiber.current
+
+    Fiber.unsafe_each do |fiber|
+      fiber.push_gc_roots unless fiber == current
+    end
+  end
 end

@@ -35,6 +35,11 @@ class Fiber
     @@fibers.delete(fiber)
   end
 
+  # :nodoc:
+  def self.unsafe_each
+    @@fibers.unsafe_each { |fiber| yield fiber }
+  end
+
   def initialize(@name : String? = nil, &@proc : ->)
     @context = Context.new
     @stack, @stack_bottom = Fiber.stack_pool.checkout
@@ -135,17 +140,9 @@ class Fiber
     to_s(io)
   end
 
-  protected def push_gc_roots
+  # :nodoc:
+  def push_gc_roots
     # Push the used section of the stack
     GC.push_stack @context.stack_top, @stack_bottom
-  end
-
-  # pushes the stack of pending fibers when the GC wants to collect memory:
-  GC.before_collect do
-    current = Fiber.current
-
-    @@fibers.unsafe_each do |fiber|
-      fiber.push_gc_roots unless fiber == current
-    end
   end
 end

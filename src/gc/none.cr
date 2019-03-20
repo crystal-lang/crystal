@@ -82,8 +82,4 @@ module GC
   # :nodoc:
   def self.push_stack(stack_top, stack_bottom)
   end
-
-  # :nodoc:
-  def self.before_collect(&block)
-  end
 end
