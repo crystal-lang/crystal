@@ -20,8 +20,7 @@ module Benchmark
       @warmup_time : Time::Span
       @calculation_time : Time::Span
 
-      def initialize(calculation = 5, warmup = 2, interactive = STDOUT.tty?)
-        @interactive = !!interactive
+      def initialize(calculation = 5, warmup = 2)
         @warmup_time = warmup.seconds
         @calculation_time = calculation.seconds
         @items = [] of Entry
@@ -34,19 +33,21 @@ module Benchmark
         item
       end
 
-      def execute
+      # Executes the benchmark.
+      # An optional IO can be set for interactive reports.
+      def execute(io : IO? = nil) : Nil
         run_warmup
-        run_calculation
+        run_calculation io
         run_comparison
       end
 
-      def report
+      def report(io : IO = STDOUT) : Nil
         max_label = ran_items.max_of &.label.size
         max_compare = ran_items.max_of &.human_compare.size
         max_bytes_per_op = ran_items.max_of &.bytes_per_op.humanize(base: 1024).size
 
         ran_items.each do |item|
-          printf "%s %s (%s) (±%5.2f%%)  %sB/op  %s\n",
+          io.printf "%s %s (%s) (±%5.2f%%)  %sB/op  %s\n",
             item.label.rjust(max_label),
             item.human_mean,
             item.human_iteration_time,
@@ -76,7 +77,9 @@ module Benchmark
         end
       end
 
-      private def run_calculation
+      # Runs the benchmark calculations.
+      # An optional IO can be set for interactive reports.
+      private def run_calculation(io : IO?) : Nil
         @items.each do |item|
           GC.collect
 
@@ -100,10 +103,10 @@ module Benchmark
 
           item.bytes_per_op = (bytes.to_f / cycles.to_f).round.to_i
 
-          if @interactive
+          if io
             run_comparison
-            report
-            print "\e[#{ran_items.size}A"
+            report io
+            io.print "\e[#{ran_items.size}A"
           end
         end
       end

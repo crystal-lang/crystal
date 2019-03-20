@@ -9,13 +9,12 @@ typeof(begin
 end)
 
 describe Benchmark::IPS::Job do
-  it "works in general / integration test" do
+  it "executes in non-interactive" do
     # test several things to avoid running a benchmark over and over again in
     # the specs
-    j = Benchmark::IPS::Job.new(0.001, 0.001, interactive: false)
+    j = Benchmark::IPS::Job.new(0.001, 0.001)
     a = j.report("a") { sleep 0.001 }
     b = j.report("b") { sleep 0.002 }
-
     j.execute
 
     # the mean should be calculated
@@ -27,6 +26,17 @@ describe Benchmark::IPS::Job do
     first, second = [a.slower, b.slower].sort
     first.should eq(1)
     second.should be > 1
+  end
+
+  it "executes interactively with an IO" do
+    io = IO::Memory.new
+    Benchmark.ips(0.001, 0.001, io) do |bm|
+      bm.report("first benchmark") { sleep 0.001 }
+      bm.report("second benchmark") { sleep 0.002 }
+    end
+    result = io.to_s
+    result.should contain "first benchmark"
+    result.should contain "second benchmark"
   end
 end
 

@@ -85,15 +85,15 @@ module Benchmark
 
   # Main interface of the `Benchmark` module. Yields a `Job` to which
   # one can report the benchmarks. See the module's description.
-  def bm
+  def bm(io : IO = STDOUT)
     {% if !flag?(:release) %}
       puts "Warning: benchmarking without the `--release` flag won't yield useful results"
     {% end %}
 
-    report = BM::Job.new
-    yield report
-    report.execute
-    report
+    job = BM::Job.new
+    yield job
+    job.execute io
+    job
   end
 
   # Instruction per second interface of the `Benchmark` module. Yields a `Job`
@@ -101,22 +101,22 @@ module Benchmark
   #
   # The optional parameters *calculation* and *warmup* set the duration of
   # those stages in seconds. For more detail on these stages see
-  # `Benchmark::IPS`. When the *interactive* parameter is `true`, results are
-  # displayed and updated as they are calculated, otherwise all at once.
-  def ips(calculation = 5, warmup = 2, interactive = STDOUT.tty?)
+  # `Benchmark::IPS`. The IO must be a valid TTY to show interactive results, that will be
+  # displayed and updated as they are calculated. Otherwise, use `IPS::Job` directly.
+  def ips(calculation = 5, warmup = 2, io : IO = STDOUT)
     {% if !flag?(:release) %}
       puts "Warning: benchmarking without the `--release` flag won't yield useful results"
     {% end %}
 
-    job = IPS::Job.new(calculation, warmup, interactive)
+    job = IPS::Job.new(calculation, warmup)
     yield job
-    job.execute
-    job.report
+    job.execute io
+    job.report io
     job
   end
 
   # Returns the time used to execute the given block.
-  def measure(label = "") : BM::Tms
+  def measure(label : String = "") : BM::Tms
     t0, r0 = Process.times, Time.monotonic
     yield
     t1, r1 = Process.times, Time.monotonic

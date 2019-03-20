@@ -44,27 +44,26 @@ module Benchmark
       end
 
       # Reports a single benchmark unit.
-      def report(label = " ", &block)
+      def report(label : String = " ", &block)
         @label_width = label.size if label.size > @label_width
         @reports << {label, block}
       end
 
       # :nodoc:
-      def execute
-        if @label_width > 0
-          print " " * @label_width
+      def execute(io : IO = STDOUT) : Nil
+        @label_width.times do
+          io << ' '
         end
-        puts "       user     system      total        real"
+        io.puts "       user     system      total        real"
 
         @reports.each do |report|
           label, block = report
-          print label
+          io.print label
           diff = @label_width - label.size + 1
-          if diff > 0
-            print " " * diff
+          diff.times do
+            io << ' '
           end
-          print Benchmark.measure(label, &block)
-          puts
+          io.puts Benchmark.measure(label, &block)
         end
       end
     end
