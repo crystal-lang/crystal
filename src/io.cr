@@ -81,7 +81,6 @@ abstract class IO
   #
   # ```
   # STDIN.read_timeout = 1
-  # sleep 1
   # STDIN.gets # raises IO::Timeout (after 1 second)
   # ```
   class Timeout < Exception
