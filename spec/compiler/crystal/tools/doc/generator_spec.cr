@@ -82,7 +82,7 @@ describe Doc::Generator do
       generator.must_include_toplevel?(doc_type).should be_false
     end
   end
-  
+
   describe "constants" do
     it "should be empty when there are only private constants" do
       program = Program.new
