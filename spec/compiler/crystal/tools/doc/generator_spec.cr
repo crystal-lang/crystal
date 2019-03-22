@@ -83,8 +83,8 @@ describe Doc::Generator do
     end
   end
 
-  describe "constants" do
-    it "should be empty when there are only private constants" do
+  describe "collect_constants" do
+    it "returns empty array when constants are private" do
       program = Program.new
       generator = Doc::Generator.new program, ["foo"], ".", "html", nil
       doc_type = Doc::Type.new generator, program
@@ -94,7 +94,7 @@ describe Doc::Generator do
       constant.add_location Location.new "foo", 1, 1
       program.types[constant.name] = constant
 
-      generator.constants.should be_empty
+      generator.collect_constants(doc_type).should be_empty
     end
   end
 end
