@@ -99,6 +99,8 @@ class Socket < IO
   # Connects the socket to a remote host:port.
   #
   # ```
+  # require "socket"
+  #
   # sock = Socket.tcp(Socket::Family::INET)
   # sock.connect "crystal-lang.org", 80
   # ```
@@ -111,6 +113,8 @@ class Socket < IO
   # Connects the socket to a remote address. Raises if the connection failed.
   #
   # ```
+  # require "socket"
+  #
   # sock = Socket.unix
   # sock.connect Socket::UNIXAddress.new("/tmp/service.sock")
   # ```
@@ -142,6 +146,8 @@ class Socket < IO
   # Binds the socket to a local address.
   #
   # ```
+  # require "socket"
+  #
   # sock = Socket.tcp(Socket::Family::INET)
   # sock.bind "localhost", 1234
   # ```
@@ -154,6 +160,8 @@ class Socket < IO
   # Binds the socket on *port* to all local interfaces.
   #
   # ```
+  # require "socket"
+  #
   # sock = Socket.tcp(Socket::Family::INET6)
   # sock.bind 1234
   # ```
@@ -166,6 +174,8 @@ class Socket < IO
   # Binds the socket to a local address.
   #
   # ```
+  # require "socket"
+  #
   # sock = Socket.udp(Socket::Family::INET)
   # sock.bind Socket::IPAddress.new("192.168.1.25", 80)
   # ```
@@ -253,6 +263,8 @@ class Socket < IO
   # Sends a message to a previously connected remote address.
   #
   # ```
+  # require "socket"
+  #
   # sock = Socket.udp(Socket::Family::INET)
   # sock.connect("example.com", 2000)
   # sock.send("text message")
@@ -270,6 +282,8 @@ class Socket < IO
   # Sends a message to the specified remote address.
   #
   # ```
+  # require "socket"
+  #
   # server = Socket::IPAddress.new("10.0.3.1", 2022)
   # sock = Socket.udp(Socket::Family::INET)
   # sock.connect("example.com", 2000)
@@ -286,6 +300,8 @@ class Socket < IO
   # Receives a text message from the previously bound address.
   #
   # ```
+  # require "socket"
+  #
   # server = Socket.udp(Socket::Family::INET)
   # server.bind("localhost", 1234)
   #
@@ -304,6 +320,8 @@ class Socket < IO
   # Receives a binary message from the previously bound address.
   #
   # ```
+  # require "socket"
+  #
   # server = Socket.udp(Socket::Family::INET)
   # server.bind("localhost", 1234)
   #

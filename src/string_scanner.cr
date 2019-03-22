@@ -81,6 +81,8 @@ class StringScanner
   # returns the matched string. Otherwise, the scanner returns `nil`.
   #
   # ```
+  # require "string_scanner"
+  #
   # s = StringScanner.new("test string")
   # s.scan(/\w+/)   # => "test"
   # s.scan(/\w+/)   # => nil
@@ -96,6 +98,8 @@ class StringScanner
   # advances the scan offset. Returns `nil` if no match.
   #
   # ```
+  # require "string_scanner"
+  #
   # s = StringScanner.new("test string")
   # s.scan_until(/tr/) # => "test str"
   # s.scan_until(/tr/) # => nil
@@ -153,6 +157,8 @@ class StringScanner
   # offset. The last match is still saved, however.
   #
   # ```
+  # require "string_scanner"
+  #
   # s = StringScanner.new("this is a string")
   # s.offset = 5
   # s.check(/\w+/) # => "is"
@@ -166,6 +172,8 @@ class StringScanner
   # scan offset. The last match is still saved, however.
   #
   # ```
+  # require "string_scanner"
+  #
   # s = StringScanner.new("test string")
   # s.check_until(/tr/) # => "test str"
   # s.check_until(/g/)  # => "test string"
@@ -179,6 +187,8 @@ class StringScanner
   # Raises an exception if there was no last match or if there is no subgroup.
   #
   # ```
+  # require "string_scanner"
+  #
   # s = StringScanner.new("Fri Dec 12 1975 14:39")
   # regex = /(?<wday>\w+) (?<month>\w+) (?<day>\d+)/
   # s.scan(regex) # => "Fri Dec 12"
@@ -199,6 +209,8 @@ class StringScanner
   # Returns `nil` if there was no last match or if there is no subgroup.
   #
   # ```
+  # require "string_scanner"
+  #
   # s = StringScanner.new("Fri Dec 12 1975 14:39")
   # regex = /(?<wday>\w+) (?<month>\w+) (?<day>\d+)/
   # s.scan(regex)  # => "Fri Dec 12"
@@ -221,6 +233,8 @@ class StringScanner
   # Returns `true` if the scan offset is at the end of the string.
   #
   # ```
+  # require "string_scanner"
+  #
   # s = StringScanner.new("this is a string")
   # s.eos?                # => false
   # s.scan(/(\w+\s?){4}/) # => "this is a string"
@@ -256,6 +270,8 @@ class StringScanner
   # Returns the remainder of the string after the scan offset.
   #
   # ```
+  # require "string_scanner"
+  #
   # s = StringScanner.new("this is a string")
   # s.scan(/(\w+\s?){2}/) # => "this is "
   # s.rest                # => "a string"

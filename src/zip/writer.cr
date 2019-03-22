@@ -5,6 +5,8 @@ require "./file_info"
 # ### Example
 #
 # ```
+# require "zip"
+#
 # File.open("./file.zip", "w") do |file|
 #   Zip::Writer.open(file) do |zip|
 #     # Add a file with a String content

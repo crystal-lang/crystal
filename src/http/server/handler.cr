@@ -5,6 +5,8 @@
 # ### A custom handler
 #
 # ```
+# require "http/server/handler"
+#
 # class CustomHandler
 #   include HTTP::Handler
 #

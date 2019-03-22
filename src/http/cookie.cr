@@ -166,6 +166,8 @@ module HTTP
     # no explicit domain restriction and the path `/`.
     #
     # ```
+    # require "http/client"
+    #
     # request = HTTP::Request.new "GET", "/"
     # request.cookies["foo"] = "bar"
     # ```
@@ -178,6 +180,8 @@ module HTTP
     # `ArgumentError` is raised.
     #
     # ```
+    # require "http/client"
+    #
     # response = HTTP::Client::Response.new(200)
     # response.cookies["foo"] = HTTP::Cookie.new("foo", "bar", "/admin", Time.utc + 12.hours, secure: true)
     # ```
@@ -201,6 +205,8 @@ module HTTP
     # Gets the current `HTTP::Cookie` for the given *key* or `nil` if none is set.
     #
     # ```
+    # require "http/client"
+    #
     # request = HTTP::Request.new "GET", "/"
     # request.cookies["foo"]? # => nil
     # request.cookies["foo"] = "bar"

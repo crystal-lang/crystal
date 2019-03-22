@@ -14,12 +14,16 @@
 #
 # There are alternative ways to change the foreground color:
 # ```
+# require "colorize"
+#
 # "foo".colorize.fore(:green)
 # "foo".colorize.green
 # ```
 #
 # To change the background color, the following methods are available:
 # ```
+# require "colorize"
+#
 # "foo".colorize.back(:green)
 # "foo".colorize.on(:green)
 # "foo".colorize.on_green
@@ -27,16 +31,22 @@
 #
 # You can also pass an RGB color to `colorize`:
 # ```
+# require "colorize"
+#
 # "foo".colorize(Colorize::ColorRGB.new(0, 255, 255)) # => "foo" in aqua
 # ```
 #
 # Or an 8-bit color:
 # ```
+# require "colorize"
+#
 # "foo".colorize(Colorize::Color256.new(208)) # => "foo" in orange
 # ```
 #
 # It's also possible to change the text decoration:
 # ```
+# require "colorize"
+#
 # "foo".colorize.mode(:underline)
 # "foo".colorize.underline
 # ```
@@ -44,12 +54,16 @@
 # The `colorize` method returns a `Colorize::Object` instance,
 # which allows chaining methods together:
 # ```
+# require "colorize"
+#
 # "foo".colorize.fore(:yellow).back(:blue).mode(:underline)
 # ```
 #
 # With the `toggle` method you can temporarily disable adding the escape codes.
 # Settings of the instance are preserved however and can be turned back on later:
 # ```
+# require "colorize"
+#
 # "foo".colorize(:red).toggle(false)              # => "foo" without color
 # "foo".colorize(:red).toggle(false).toggle(true) # => "foo" in red
 # ```
@@ -57,6 +71,8 @@
 # The color `:default` will just leave the object as it is (but it's an `Colorize::Object(String)` then).
 # That's handy in for example conditions:
 # ```
+# require "colorize"
+#
 # "foo".colorize(some_bool ? :green : :default)
 # ```
 #
@@ -98,6 +114,8 @@ module Colorize
   # The default value is `true`.
   #
   # ```
+  # require "colorize"
+  #
   # Colorize.enabled = true
   # "hello".colorize.red.to_s # => "\e[31mhello\e[0m"
   #

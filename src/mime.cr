@@ -39,6 +39,7 @@ require "crystal/system/mime"
 #
 # ```
 # require "mime"
+#
 # MIME.from_extension?(".cr")     # => nil
 # MIME.extensions("text/crystal") # => Set(String).new
 #
@@ -53,6 +54,8 @@ require "crystal/system/mime"
 # `IO` to read the database from.
 #
 # ```
+# require "mime"
+#
 # # Load user-defined MIME types
 # File.open("~/.mime.types") do |io|
 #   MIME.load_mime_database(io)

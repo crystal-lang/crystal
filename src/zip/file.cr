@@ -6,6 +6,8 @@ require "./file_info"
 # ### Example
 #
 # ```
+# require "zip"
+#
 # Zip::File.open("./file.zip") do |file|
 #   # Iterate through all entries printing their filename and contents
 #   file.entries.each do |entry|
