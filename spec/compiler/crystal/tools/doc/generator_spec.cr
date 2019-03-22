@@ -82,4 +82,19 @@ describe Doc::Generator do
       generator.must_include_toplevel?(doc_type).should be_false
     end
   end
+  
+  describe "constants" do
+    it "should be empty when there are only private constants" do
+      program = Program.new
+      generator = Doc::Generator.new program, ["foo"], ".", "html", nil
+      doc_type = Doc::Type.new generator, program
+
+      constant = Const.new program, program, "Foo", 1.int32
+      constant.private = true
+      constant.add_location Location.new "foo", 1, 1
+      program.types[constant.name] = constant
+
+      generator.constants.should be_empty
+    end
+  end
 end
