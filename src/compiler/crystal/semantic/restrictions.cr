@@ -261,6 +261,13 @@ module Crystal
         end
       end
 
+      # ```
+      # def foo(param : T) forall T
+      # end
+      #
+      # def foo(param : Array(Foo))
+      # end
+      # ```
       false
     end
 
@@ -281,6 +288,16 @@ module Crystal
 
   class Generic
     def restriction_of?(other : Path, owner)
+      # ```
+      # def foo(param : Array(T)) forall T
+      # end
+      #
+      # def foo(param : Int32)
+      # end
+      # ```
+      #
+      # Here, self is `Array`, other is `Int32`
+
       self_type = owner.lookup_type?(self)
       if self_type
         other_type = owner.lookup_path(other)
@@ -289,7 +306,20 @@ module Crystal
         end
       end
 
-      false
+      # `Array(T)` is always more strict than `Foo`
+      #
+      # Useful in cases where `Array(T)` overload must be checked before
+      # `T` overload:
+      # ```
+      # def foo(param : T) forall T
+      # end
+      #
+      # def foo(param : Array(T)) forall T
+      # end
+      #
+      # foo([1])
+      # ```
+      true
     end
 
     def restriction_of?(other : Generic, owner)
