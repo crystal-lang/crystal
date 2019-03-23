@@ -75,8 +75,7 @@ class File
     end
   end
 
-  # A `File::Info` contains metadata regarding a file. It is returned by
-  # `File.info`, and `File#info`.
+  # A `File::Info` contains metadata regarding a file. It is returned by `File.info`.
   abstract struct Info
     # Size of the file, in bytes.
     abstract def size : UInt64
