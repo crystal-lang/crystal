@@ -147,9 +147,7 @@ struct Slice(T)
   # slice2 # => Slice[12, 13, 14]
   # ```
   def +(offset : Int)
-    unless 0 <= offset <= size
-      raise IndexError.new
-    end
+    check_size(offset)
 
     Slice.new(@pointer + offset, @size - offset, read_only: @read_only)
   end
@@ -245,14 +243,6 @@ struct Slice(T)
     self
   end
 
-  def pointer(size)
-    unless 0 <= size <= @size
-      raise IndexError.new
-    end
-
-    @pointer
-  end
-
   def shuffle!(random = Random::DEFAULT)
     check_writable
 
@@ -299,12 +289,15 @@ struct Slice(T)
 
   def copy_from(source : Pointer(T), count)
     check_writable
+    check_size(count)
 
-    pointer(count).copy_from(source, count)
+    @pointer.copy_from(source, count)
   end
 
   def copy_to(target : Pointer(T), count)
-    pointer(count).copy_to(target, count)
+    check_size(count)
+
+    @pointer.copy_to(target, count)
   end
 
   # Copies the contents of this slice into *target*.
@@ -321,8 +314,9 @@ struct Slice(T)
   # ```
   def copy_to(target : self)
     target.check_writable
+    raise IndexError.new if target.size < size
 
-    @pointer.copy_to(target.pointer(size), size)
+    @pointer.copy_to(target.to_unsafe, size)
   end
 
   # Copies the contents of *source* into this slice.
@@ -335,12 +329,13 @@ struct Slice(T)
 
   def move_from(source : Pointer(T), count)
     check_writable
+    check_size(count)
 
-    pointer(count).move_from(source, count)
+    @pointer.move_from(source, count)
   end
 
   def move_to(target : Pointer(T), count)
-    pointer(count).move_to(target, count)
+    @pointer.move_to(target, count)
   end
 
   # Moves the contents of this slice into *target*. *target* and `self` may
@@ -360,8 +355,9 @@ struct Slice(T)
   # See also: `Pointer#move_to`.
   def move_to(target : self)
     target.check_writable
+    raise IndexError.new if target.size < size
 
-    @pointer.move_to(target.pointer(size), size)
+    @pointer.move_to(target.to_unsafe, size)
   end
 
   # Moves the contents of *source* into this slice. *source* and `self` may
@@ -565,6 +561,12 @@ struct Slice(T)
 
   protected def check_writable
     raise "Can't write to read-only Slice" if @read_only
+  end
+
+  private def check_size(count : Int)
+    unless 0 <= count <= size
+      raise IndexError.new
+    end
   end
 end
 

@@ -72,7 +72,7 @@ module IO::Buffered
     end
 
     to_read = Math.min(count, @in_buffer_rem.size)
-    slice.copy_from(@in_buffer_rem.pointer(to_read), to_read)
+    slice.copy_from(@in_buffer_rem.to_unsafe, to_read)
     @in_buffer_rem += to_read
     to_read
   end

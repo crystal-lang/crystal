@@ -4,7 +4,7 @@ describe "Slice" do
   it "gets pointer and size" do
     pointer = Pointer.malloc(1, 0)
     slice = Slice.new(pointer, 1)
-    slice.pointer(0).should eq(pointer)
+    slice.to_unsafe.should eq(pointer)
     slice.size.should eq(1)
   end
 
@@ -75,12 +75,6 @@ describe "Slice" do
   it "does to_s for bytes" do
     slice = Bytes[1, 2, 3]
     slice.to_s.should eq("Bytes[1, 2, 3]")
-  end
-
-  it "gets pointer" do
-    slice = Slice.new(4, 0)
-    expect_raises(IndexError) { slice.pointer(5) }
-    expect_raises(IndexError) { slice.pointer(-1) }
   end
 
   it "does copy_from pointer" do

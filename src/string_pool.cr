@@ -70,7 +70,7 @@ class StringPool
   # pool.empty? # => false
   #  ```
   def get(slice : Bytes)
-    get slice.pointer(slice.size), slice.size
+    get slice.to_unsafe, slice.size
   end
 
   # Returns a `String` with the contents given by the pointer *str* of size *len*.
