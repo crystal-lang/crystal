@@ -372,24 +372,7 @@ module Crystal
 
   class Metaclass
     def restriction_of?(other : Metaclass, owner)
-      self_type = owner.lookup_type?(self)
-      other_type = owner.lookup_type?(other)
-      if self_type && other_type
-        self_type.restriction_of?(other_type, owner)
-      elsif self_type
-        # `other` cannot resolve to a type, it's probably a free variable like:
-        #
-        # ```
-        # def foo(param : T.class) forall T
-        # end
-        #
-        # def foo(param : Int32.class)
-        # end
-        # ```
-        true
-      else
-        false
-      end
+      name.restriction_of?(other.name, owner)
     end
   end
 
