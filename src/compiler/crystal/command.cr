@@ -206,7 +206,7 @@ class Crystal::Command
   end
 
   private def execute(output_filename, run_args, compiler, *, error_on_exit = false)
-    time? = @time && !@progress_tracker.stats?
+    time = @time && !@progress_tracker.stats?
     status, elapsed_time = @progress_tracker.stage("Execute") do
       begin
         elapsed = Time.measure do

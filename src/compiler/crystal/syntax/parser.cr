@@ -332,8 +332,7 @@ module Crystal
               raise "can't change the value of self", location
             end
 
-            if atomic.is_a?(Call) && (atomic.name.ends_with?('?') ||
-               (atomic.name.ends_with?('?') || atomic.name.ends_with?('!'))
+            if atomic.is_a?(Call) && (atomic.name.ends_with?('?') || atomic.name.ends_with?('!'))
               raise "unexpected token: =", location
             end
 
