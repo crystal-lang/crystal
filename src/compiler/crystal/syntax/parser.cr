@@ -315,7 +315,6 @@ module Crystal
           break
         when :"="
           slash_is_regex!
-
           if atomic.is_a?(Call) && atomic.name == "[]"
             next_token_skip_space_or_newline
 
@@ -331,6 +330,11 @@ module Crystal
 
             if atomic.is_a?(Var) && atomic.name == "self"
               raise "can't change the value of self", location
+            end
+
+            if atomic.is_a?(Call) && (atomic.name.ends_with?('?') ||
+               atomic.name.ends_with?('!'))
+              raise "unexpected token: =", location
             end
 
             atomic = Var.new(atomic.name).at(atomic) if atomic.is_a?(Call)

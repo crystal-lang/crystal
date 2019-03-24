@@ -229,7 +229,7 @@ class Crystal::Command
       end
     end
 
-    if time?
+    if time
       puts "Execute: #{elapsed_time}"
     end
 
