@@ -3604,6 +3604,10 @@ module Crystal
       visit Call.new(nil, "instance_sizeof", node.exp)
     end
 
+    def visit(node : OffsetOf)
+      visit Call.new(nil, "offsetof", [node.structure, node.member])
+    end
+
     def visit(node : PointerOf)
       visit Call.new(nil, "pointerof", node.exp)
     end

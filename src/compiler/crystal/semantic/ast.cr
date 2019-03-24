@@ -610,7 +610,7 @@ module Crystal
                    ArrayLiteral HashLiteral RegexLiteral RangeLiteral
                    Case StringInterpolation
                    MacroExpression MacroIf MacroFor MacroVerbatim MultiAssign
-                   SizeOf InstanceSizeOf Global Require Select) %}
+                   SizeOf InstanceSizeOf OffsetOf Global Require Select) %}
     class {{name.id}}
       include ExpandableNode
     end

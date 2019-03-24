@@ -2581,6 +2581,32 @@ module Crystal
       false
     end
 
+    def visit(node : OffsetOf)
+      @in_type_args += 1
+      node.structure.accept self
+      @in_type_args -= 1
+
+      type = node.structure.type
+      members = type.all_instance_vars
+      member_name = node.member.as(InstanceVar).name
+      member_index = members.keys.index(member_name)
+      node.member.raise "type #{type} doesn't have an instance variable called #{member_name}" unless member_index
+
+      if node.structure.is_a?(GenericType)
+        node.structure.raise "can't take offsetof element #{member_name} of uninstantiated generic type #{type}"
+      end
+
+      ### sizeof checks here if type != nil && !node.structure.is_a?(TypeOf), why do we need that? This works fine with a typeof expression
+      expanded = NumberLiteral.new(@program.offset_of(type.sizeof_type, member_index).to_s, :i32)
+      expanded.type = @program.int32
+      node.expanded = expanded
+      ###
+
+      node.type = @program.int32
+
+      false
+    end
+
     def visit(node : Rescue)
       if node_types = node.types
         types = node_types.map do |type|

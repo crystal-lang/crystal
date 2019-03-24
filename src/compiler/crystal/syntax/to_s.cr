@@ -1261,6 +1261,15 @@ module Crystal
       false
     end
 
+    def visit(node : OffsetOf)
+      @str << keyword("offsetof")
+      @str << '('
+      node.structure.accept(self)
+      @str << ", "
+      node.member.accept(self)
+      @str << ')'
+    end
+
     def visit(node : IsA)
       node.obj.accept self
       if node.nil_check?

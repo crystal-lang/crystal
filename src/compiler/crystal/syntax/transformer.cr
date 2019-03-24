@@ -180,6 +180,12 @@ module Crystal
       node
     end
 
+    def transform(node : OffsetOf)
+      node.structure = node.structure.transform(self)
+      node.member = node.member.transform(self)
+      node
+    end
+
     def transform(node : ReadInstanceVar)
       node.obj = node.obj.transform(self)
       node

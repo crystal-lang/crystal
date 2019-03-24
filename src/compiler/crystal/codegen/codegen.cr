@@ -82,6 +82,10 @@ module Crystal
     def instance_size_of(type)
       llvm_typer.size_of(llvm_typer.llvm_struct_type(type))
     end
+
+    def offset_of(type, element_index)
+      llvm_typer.offset_of(llvm_typer.llvm_type(type), element_index)
+    end
   end
 
   class CodeGenVisitor < Visitor
