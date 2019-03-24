@@ -163,8 +163,8 @@ class File < IO::FileDescriptor
     info(path1, follow_symlinks).same_file? info(path2, follow_symlinks)
   end
 
-  # Returns the size of *filename* bytes. Raises `Errno` if the file at *path*
-  # does not exist.
+  # Returns the size of the file at *filename* in bytes.
+  # Raises `Errno` if the file at *filename* does not exist.
   #
   # ```
   # File.size("foo") # raises Errno
