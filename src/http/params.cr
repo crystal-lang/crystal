@@ -184,8 +184,8 @@ module HTTP
     # Returns `true` if params is empty.
     #
     # ```
-    # Params.new.empty?                              # => true
-    # Params.parse("foo=bar&foo=baz&qux=zoo").empty? # => false
+    # HTTP::Params.new.empty?                              # => true
+    # HTTP::Params.parse("foo=bar&foo=baz&qux=zoo").empty? # => false
     # ```
     delegate empty?, to: raw_params
 

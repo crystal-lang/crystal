@@ -199,8 +199,8 @@ struct BigDecimal < Number
   # defines a maximum number of iterations in case the division is not exact.
   #
   # ```
-  # BigDecimal(1).div(BigDecimal(2))    # => BigDecimal(@value=5, @scale=2)
-  # BigDecimal(1).div(BigDecimal(3), 5) # => BigDecimal(@value=33333, @scale=5)
+  # BigDecimal.new(1).div(BigDecimal.new(2))    # => BigDecimal(@value=5, @scale=2)
+  # BigDecimal.new(1).div(BigDecimal.new(3), 5) # => BigDecimal(@value=33333, @scale=5)
   # ```
   def div(other : BigDecimal, max_div_iterations = DEFAULT_MAX_DIV_ITERATIONS) : BigDecimal
     check_division_by_zero other
@@ -531,7 +531,7 @@ struct Int
   # Converts `self` to `BigDecimal`.
   # ```
   # require "big"
-  # 1212341515125412412412421.to_big_d
+  # 12123415151254124124.to_big_d
   # ```
   def to_big_d
     BigDecimal.new(self)

@@ -5,8 +5,8 @@ require "crystal/system/mime"
 # ```
 # require "mime"
 #
-# MIME.from_extension(".html")         # => "text/html; charset=utf-8"
-# MIME.from_filename("path/file.html") # => "text/html; charset=utf-8"
+# MIME.from_extension(".html")         # => "text/html"
+# MIME.from_filename("path/file.html") # => "text/html"
 # ```
 #
 # The registry will be populated with some default values (see `DEFAULT_TYPES`)

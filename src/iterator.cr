@@ -177,7 +177,7 @@ module Iterator(T)
   # iterators to chain is large (usually greater than 4) or undetermined.
   #
   # ```
-  # array_of_iters = [[1], [2, 3], [4, 5, 6]]
+  # array_of_iters = [[1], [2, 3], [4, 5, 6]].each.map &.each
   # iter = Iterator(Int32).chain array_of_iters
   # iter.next # => 1
   # iter.next # => 2
@@ -728,7 +728,7 @@ module Iterator(T)
   # where `pattern === element` does not hold.
   #
   # ```
-  # iter = [2, 3, 1, 5, 4, 6].reject(3..5)
+  # iter = [2, 3, 1, 5, 4, 6].each.reject(3..5)
   # iter.next # => 2
   # iter.next # => 1
   # iter.next # => 6
@@ -785,7 +785,7 @@ module Iterator(T)
   # where `pattern === element`.
   #
   # ```
-  # iter = [1, 3, 2, 5, 4, 6].select(3..5)
+  # iter = [1, 3, 2, 5, 4, 6].each.select(3..5)
   # iter.next # => 3
   # iter.next # => 5
   # iter.next # => 4
@@ -1310,7 +1310,7 @@ module Iterator(T)
   # iter.next # => ['d', 'E']
   # iter.next # => ['F']
   # iter.next # => ['g', 'h']
-  # iter.next # => Iterator::Stop
+  # iter.next # => Iterator::Stop::INSTANCE
   # ```
   #
   # By default, a new array is created and yielded for each slice when invoking `next`.
@@ -1338,7 +1338,7 @@ module Iterator(T)
   # iter.next # => ['d', 'E']
   # iter.next # => ['F']
   # iter.next # => ['g', 'h']
-  # iter.next # => Iterator::Stop
+  # iter.next # => Iterator::Stop::INSTANCE
   # ```
   #
   # By default, a new array is created and yielded for each slice when invoking `next`.
@@ -1416,7 +1416,7 @@ module Iterator(T)
   # iter.next # => ['C', 'd']
   # iter.next # => ['E']
   # iter.next # => ['F', 'g', 'h']
-  # iter.next # => Iterator::Stop
+  # iter.next # => Iterator::Stop::INSTANCE
   # ```
   #
   # By default, a new array is created and yielded for each slice when invoking `next`.
@@ -1444,7 +1444,7 @@ module Iterator(T)
   # iter.next # => ['C', 'd']
   # iter.next # => ['E']
   # iter.next # => ['F', 'g', 'h']
-  # iter.next # => Iterator::Stop
+  # iter.next # => Iterator::Stop::INSTANCE
   # ```
   #
   # By default, a new array is created and yielded for each slice when invoking `next`.
@@ -1528,7 +1528,7 @@ module Iterator(T)
   # iter.next # => [9, 10, 11, 12]
   # iter.next # => [15, 16]
   # iter.next # => [19, 20, 21]
-  # iter.next # => Iterator::Stop
+  # iter.next # => Iterator::Stop::INSTANCE
   # ```
   #
   # By default, a new array is created and yielded for each slice when invoking `next`.
@@ -1558,7 +1558,7 @@ module Iterator(T)
   # iter.next # => [9, 10, 11, 12]
   # iter.next # => [15, 16]
   # iter.next # => [19, 20, 21]
-  # iter.next # => Iterator::Stop
+  # iter.next # => Iterator::Stop::INSTANCE
   # ```
   #
   # By default, a new array is created and yielded for each slice when invoking `next`.

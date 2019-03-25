@@ -19,7 +19,7 @@
 # ints = uninitialized Int32[3]
 # ints[0] = 0
 # ints[1] = 8
-# ints[3] = 15
+# ints[2] = 15
 # ```
 #
 # For number types there is also `Number.static_array` which can be used to initialize

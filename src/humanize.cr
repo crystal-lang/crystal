@@ -98,7 +98,7 @@ struct Number
   #
   # ```
   # 1_200_000_000.humanize # => "1.2G"
-  # 0.000_000_012.humanize # => "12n"
+  # 0.000_000_012.humanize # => "12.0n"
   # ```
   #
   # If *significant* is `false`, the number of *precision* digits is preserved
@@ -139,7 +139,7 @@ struct Number
   #
   # ```
   # 1_200_000_000.humanize # => "1.2G"
-  # 0.000_000_012.humanize # => "12n"
+  # 0.000_000_012.humanize # => "12.0n"
   # ```
   #
   # If *significant* is `false`, the number of *precision* digits is preserved
@@ -172,7 +172,7 @@ struct Number
   # end
   #
   # humanize_length(1_420) # => "1.42 km"
-  # humanize_length(0.23)  # => "23 cm"
+  # humanize_length(0.23)  # => "23.0 cm"
   # ```
   #
   # See `Int#humanize_bytes` to format a file size.
@@ -275,9 +275,9 @@ struct Int
   #
   # ```
   # 1.humanize_bytes                        # => "1B"
-  # 1024.humanize_bytes                     # => "1.0KB"
-  # 1536.humanize_bytes                     # => "1.5KB"
-  # 524288.humanize_bytes                   # => "512KB"
+  # 1024.humanize_bytes                     # => "1.0kiB"
+  # 1536.humanize_bytes                     # => "1.5kiB"
+  # 524288.humanize_bytes                   # => "512kiB"
   # 1073741824.humanize_bytes(format: :IEC) # => "1.0GiB"
   # ```
   #
