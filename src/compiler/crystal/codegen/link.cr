@@ -137,6 +137,10 @@ module Crystal
           end
         end
 
+        # Append the CRYSTAL_LIBRARY_PATH values as -L flags.
+        CrystalLibraryPath.paths.each do |path|
+          flags << " -L#{path}"
+        end
         # Append the default paths as -L flags in case the linker doesn't know
         # about them (eg: FreeBSD won't search /usr/local/lib by default):
         library_path.each do |path|
