@@ -2586,21 +2586,29 @@ module Crystal
       node.structure.accept self
       @in_type_args -= 1
 
-      type = node.structure.type
+      type = node.structure.type?
+
+      node.structure.raise "type #{type} can't have instance variables" unless type.is_a?(InstanceVarContainer)
+      node.structure.raise "can't use typeof inside offsetof expression" if node.structure.is_a?(TypeOf)
+
       members = type.all_instance_vars
       member_name = node.member.as(InstanceVar).name
       member_index = members.keys.index(member_name)
+
       node.member.raise "type #{type} doesn't have an instance variable called #{member_name}" unless member_index
+      node.structure.raise "can't take offsetof element #{member_name} of uninstantiated generic type #{type}" if type.is_a?(GenericType)
 
-      if node.structure.is_a?(GenericType)
-        node.structure.raise "can't take offsetof element #{member_name} of uninstantiated generic type #{type}"
+      if type && type.struct?
+        expanded = NumberLiteral.new(@program.offset_of(type.sizeof_type, member_index).to_s, :i32)
+        expanded.type = @program.int32
+        node.expanded = expanded
+      elsif type && type.instance_type.devirtualize.class?
+        expanded = NumberLiteral.new(@program.instance_offset_of(type.sizeof_type, member_index).to_s, :i32)
+        expanded.type = @program.int32
+        node.expanded = expanded
+      else
+        node.structure.raise "can't use type #{type} with offsetof"
       end
-
-      ### sizeof checks here if type != nil && !node.structure.is_a?(TypeOf), why do we need that? This works fine with a typeof expression
-      expanded = NumberLiteral.new(@program.offset_of(type.sizeof_type, member_index).to_s, :i32)
-      expanded.type = @program.int32
-      node.expanded = expanded
-      ###
 
       node.type = @program.int32
 
