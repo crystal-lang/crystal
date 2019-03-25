@@ -193,7 +193,7 @@ module Crystal
       def macro require case select if unless include
       extend class struct module enum while until return
       next break lib fun alias pointerof sizeof
-      instance_sizeof typeof private protected asm out
+      instance_sizeof offsetof typeof private protected asm out
       end
     ).each do |kw|
       assert_syntax_error "def foo(#{kw}); end", "cannot use '#{kw}' as an argument name", 1, 9
@@ -560,6 +560,7 @@ module Crystal
 
     it_parses "Foo(X, sizeof(Int32))", Generic.new("Foo".path, ["X".path, SizeOf.new("Int32".path)] of ASTNode)
     it_parses "Foo(X, instance_sizeof(Int32))", Generic.new("Foo".path, ["X".path, InstanceSizeOf.new("Int32".path)] of ASTNode)
+    it_parses "Foo(X, offsetof(Foo, @a))", Generic.new("Foo".path, ["X".path, OffsetOf.new("Foo".path, "@a".instance_var)] of ASTNode)
 
     it_parses "Foo(\nT\n)", Generic.new("Foo".path, ["T".path] of ASTNode)
     it_parses "Foo(\nT,\nU,\n)", Generic.new("Foo".path, ["T".path, "U".path] of ASTNode)
@@ -909,6 +910,7 @@ module Crystal
 
     it_parses "sizeof(X)", SizeOf.new("X".path)
     it_parses "instance_sizeof(X)", InstanceSizeOf.new("X".path)
+    it_parses "offsetof(X, @a)", OffsetOf.new("X".path, "@a".instance_var)
 
     it_parses "foo.is_a?(Const)", IsA.new("foo".call, "Const".path)
     it_parses "foo.is_a?(Foo | Bar)", IsA.new("foo".call, Crystal::Union.new(["Foo".path, "Bar".path] of ASTNode))
@@ -1411,7 +1413,7 @@ module Crystal
     it_parses "return 1.bar do\nend", Return.new(Call.new(1.int32, "bar", block: Block.new))
 
     %w(begin nil true false yield with abstract def macro require case if unless include extend class struct module enum while
-      until return next break lib fun alias pointerof sizeof instance_sizeof typeof private protected asm end do else elsif when rescue ensure).each do |keyword|
+      until return next break lib fun alias pointerof sizeof instance_sizeof offsetof typeof private protected asm end do else elsif when rescue ensure).each do |keyword|
       it_parses "#{keyword} : Int32", TypeDeclaration.new(keyword.var, "Int32".path)
       it_parses "property #{keyword} : Int32", Call.new(nil, "property", TypeDeclaration.new(keyword.var, "Int32".path))
     end
@@ -1719,6 +1721,7 @@ module Crystal
       assert_end_location "!foo"
       assert_end_location "pointerof(@foo)"
       assert_end_location "sizeof(Foo)"
+      assert_end_location "offsetof(Foo, @a)"
       assert_end_location "typeof(1)"
       assert_end_location "1 if 2"
       assert_end_location "while 1; end"

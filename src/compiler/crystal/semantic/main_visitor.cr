@@ -2607,7 +2607,7 @@ module Crystal
         expanded.type = @program.int32
         node.expanded = expanded
       else
-        node.structure.raise "can't use type #{type} with offsetof"
+        node.structure.raise "#{type} is neither a class nor a struct, it's a #{type.type_desc}"
       end
 
       node.type = @program.int32

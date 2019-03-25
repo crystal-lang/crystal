@@ -573,6 +573,7 @@ describe Crystal::Formatter do
   assert_format "typeof( 1, 2, 3 )", "typeof(1, 2, 3)"
   assert_format "sizeof( Int32 )", "sizeof(Int32)"
   assert_format "instance_sizeof( Int32 )", "instance_sizeof(Int32)"
+  assert_format "offsetof( String, @length )", "offsetof(String, @length)"
   assert_format "pointerof( @a )", "pointerof(@a)"
 
   assert_format "_ = 1"
