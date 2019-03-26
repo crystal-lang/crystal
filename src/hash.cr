@@ -1,8 +1,36 @@
 require "crystal/hasher"
 
-# A `Hash` represents a mapping of keys to values.
+# A `Hash` represents a collection of key-value mappings, similar to a dictionary.
 #
-# See the [official docs](http://crystal-lang.org/docs/syntax_and_semantics/literals/hash.html) for the basics.
+# Main operations are storing a key-value mapping (`#[]=`) and
+# querying the value associated to a key (`#[]`). Key-value mappings can also be
+# deleted (`#delete`).
+# Keys are unique within a hash. When adding a key-value mapping with a key that
+# is already in use, the old value will be forgotten.
+#
+# ```
+# # Create a new Hash for mapping String to Int32
+# hash = Hash(String, Int32).new
+# hash["one"] = 1
+# hash["two"] = 2
+# hash["one"] # => 1
+# ```
+#
+# [Hash literals](http://crystal-lang.org/reference/syntax_and_semantics/literals/hash.html)
+# can also be used to create a `Hash`:
+#
+# ```
+# {"one" => 1, "two" => 2}
+# ```
+#
+# Implementation is based on an open hash table.
+# Two objects refer to the same hash key when their hash value (`Object#hash`)
+# is identical and both objects are equal to each other (`Object#==`).
+#
+# Enumeration follows the order that the corresponding keys were inserted.
+#
+# NOTE: When using mutable data types as keys, changing the value of a key after
+# it was inserted into the `Hash` may lead to undefined behaviour.
 class Hash(K, V)
   include Enumerable({K, V})
   include Iterable({K, V})
@@ -397,6 +425,8 @@ class Hash(K, V)
   #   key_and_value # => {"foo", "bar"}
   # end
   # ```
+  #
+  # The enumeration follows the order the keys were inserted.
   def each : Nil
     current = @first
     while current
@@ -415,6 +445,8 @@ class Hash(K, V)
   # iterator.next # => {"foo", "bar"}
   # iterator.next # => {"baz", "qux"}
   # ```
+  #
+  # The enumeration follows the order the keys were inserted.
   def each
     EntryIterator(K, V).new(self, @first)
   end
@@ -427,6 +459,8 @@ class Hash(K, V)
   #   key # => "foo"
   # end
   # ```
+  #
+  # The enumeration follows the order the keys were inserted.
   def each_key
     each do |key, value|
       yield key
@@ -446,6 +480,8 @@ class Hash(K, V)
   # key = iterator.next
   # key # => "baz"
   # ```
+  #
+  # The enumeration follows the order the keys were inserted.
   def each_key
     KeyIterator(K, V).new(self, @first)
   end
@@ -458,6 +494,8 @@ class Hash(K, V)
   #   value # => "bar"
   # end
   # ```
+  #
+  # The enumeration follows the order the keys were inserted.
   def each_value
     each do |key, value|
       yield value
@@ -477,6 +515,8 @@ class Hash(K, V)
   # value = iterator.next
   # value # => "qux"
   # ```
+  #
+  # The enumeration follows the order the keys were inserted.
   def each_value
     ValueIterator(K, V).new(self, @first)
   end
