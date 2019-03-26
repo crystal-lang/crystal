@@ -24,7 +24,7 @@ _crystal()
                 COMPREPLY=( $(compgen -f ${cur}) )
             fi
             ;;
-        compile)
+        build)
             if [[ ${cur} == -* ]] ; then
                 local opts="--cross-compile --debug --emit --ll --link-flags --mcpu --no-color --no-codegen --prelude --release --single-module --threads --target --verbose --help"
                 COMPREPLY=( $(compgen -W "${opts}" -- ${cur}) )
