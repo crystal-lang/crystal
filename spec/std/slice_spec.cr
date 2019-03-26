@@ -413,6 +413,11 @@ describe "Slice" do
     slice = Slice.new(6, read_only: true) { |i| i + 1 }
     slice[2..4].read_only?.should be_true
   end
+
+  it "#clone non-primitive" do
+    slice = Slice["abc", "a"]
+    slice.clone.should eq slice
+  end
 end
 
 private def itself(*args)

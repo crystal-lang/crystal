@@ -122,7 +122,8 @@ struct Slice(T)
   # Returns a copy of this slice.
   # This method allocates memory for the slice copy.
   def clone
-    copy = self.class.new(size)
+    pointer = Pointer(T).malloc(size)
+    copy = self.class.new(pointer, size)
     copy.copy_from(self)
     copy
   end
