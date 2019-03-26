@@ -1190,11 +1190,11 @@ module Crystal::Macros
   # An `offsetof` expression.
   class OffsetOf < ASTNode
     # Returns the type that has been used in this `offsetof` expression.
-    def structure : ASTNode
+    def offsetof_type : ASTNode
     end
 
     # Returns the instance variable used in this `offsetof` expression.
-    def member : ASTNode
+    def instance_var : ASTNode
     end
   end
 

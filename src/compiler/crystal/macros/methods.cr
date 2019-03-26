@@ -1356,10 +1356,10 @@ module Crystal
   class OffsetOf
     def interpret(method, args, block, interpreter)
       case method
-      when "structure"
-        interpret_argless_method(method, args) { @structure }
-      when "member"
-        interpret_argless_method(method, args) { @member }
+      when "offsetof_type"
+        interpret_argless_method(method, args) { @offsetof_type }
+      when "instance_var"
+        interpret_argless_method(method, args) { @instance_var }
       else
         super
       end

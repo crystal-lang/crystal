@@ -1077,22 +1077,22 @@ module Crystal
   end
 
   class OffsetOf < ASTNode
-    property structure : ASTNode
-    property member : ASTNode
+    property offsetof_type : ASTNode
+    property instance_var : ASTNode
 
-    def initialize(@structure, @member)
+    def initialize(@offsetof_type, @instance_var)
     end
 
     def accept_children(visitor)
-      @structure.accept visitor
-      @member.accept visitor
+      @offsetof_type.accept visitor
+      @instance_var.accept visitor
     end
 
     def clone_without_location
-      OffsetOf.new(@structure.clone, @member.clone)
+      OffsetOf.new(@offsetof_type.clone, @instance_var.clone)
     end
 
-    def_equals_and_hash @type, @member
+    def_equals_and_hash @offsetof_type, @instance_var
   end
 
   class VisibilityModifier < ASTNode

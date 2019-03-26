@@ -5399,9 +5399,9 @@ module Crystal
 
       next_token_skip_space_or_newline
       check :INSTANCE_VAR
-      
-      member_location = @token.location
-      member = InstanceVar.new(@token.value.to_s).at(member_location)
+
+      ivar_location = @token.location
+      instance_var = InstanceVar.new(@token.value.to_s).at(ivar_location)
 
       next_token_skip_space_or_newline
 
@@ -5409,7 +5409,7 @@ module Crystal
       check :")"
       next_token_skip_space
 
-      OffsetOf.new(type, member).at_end(end_location)
+      OffsetOf.new(type, instance_var).at_end(end_location)
     end
 
     def parse_type_def

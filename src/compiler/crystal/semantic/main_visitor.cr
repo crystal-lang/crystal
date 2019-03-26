@@ -2583,31 +2583,31 @@ module Crystal
 
     def visit(node : OffsetOf)
       @in_type_args += 1
-      node.structure.accept self
+      node.offsetof_type.accept self
       @in_type_args -= 1
 
-      type = node.structure.type?
+      type = node.offsetof_type.type?
 
-      node.structure.raise "type #{type} can't have instance variables" unless type.is_a?(InstanceVarContainer)
-      node.structure.raise "can't use typeof inside offsetof expression" if node.structure.is_a?(TypeOf)
+      node.offsetof_type.raise "type #{type} can't have instance variables" unless type.is_a?(InstanceVarContainer)
+      node.offsetof_type.raise "can't use typeof inside offsetof expression" if node.offsetof_type.is_a?(TypeOf)
 
-      members = type.all_instance_vars
-      member_name = node.member.as(InstanceVar).name
-      member_index = members.keys.index(member_name)
+      instance_vars = type.all_instance_vars
+      ivar_name = node.instance_var.as(InstanceVar).name
+      ivar_index = instance_vars.keys.index(ivar_name)
 
-      node.member.raise "type #{type} doesn't have an instance variable called #{member_name}" unless member_index
-      node.structure.raise "can't take offsetof element #{member_name} of uninstantiated generic type #{type}" if type.is_a?(GenericType)
+      node.instance_var.raise "type #{type} doesn't have an instance variable called #{ivar_name}" unless ivar_index
+      node.offsetof_type.raise "can't take offsetof element #{ivar_name} of uninstantiated generic type #{type}" if type.is_a?(GenericType)
 
       if type && type.struct?
-        expanded = NumberLiteral.new(@program.offset_of(type.sizeof_type, member_index).to_s, :i32)
+        expanded = NumberLiteral.new(@program.offset_of(type.sizeof_type, ivar_index).to_s, :i32)
         expanded.type = @program.int32
         node.expanded = expanded
       elsif type && type.instance_type.devirtualize.class?
-        expanded = NumberLiteral.new(@program.instance_offset_of(type.sizeof_type, member_index).to_s, :i32)
+        expanded = NumberLiteral.new(@program.instance_offset_of(type.sizeof_type, ivar_index).to_s, :i32)
         expanded.type = @program.int32
         node.expanded = expanded
       else
-        node.structure.raise "#{type} is neither a class nor a struct, it's a #{type.type_desc}"
+        node.offsetof_type.raise "#{type} is neither a class nor a struct, it's a #{type.type_desc}"
       end
 
       node.type = @program.int32

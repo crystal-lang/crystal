@@ -5,6 +5,14 @@ describe "Semantic: offsetof" do
     assert_type("offsetof(String, @length)") { int32 }
   end
 
+  it "can be used with generic types" do
+    assert_type("struct Foo(T); @a : T = 0; end; offsetof(Foo(Int32), @a)") { int32 }
+  end
+
+  it "can be used with classes" do
+    assert_type("class Foo; @a = 0; end; offsetof(Foo, @a)") { int32 }
+  end
+
   it "errors on undefined instance variable" do
     assert_error "struct Foo; @a = 0; end; offsetof(Foo, @b)", "type Foo doesn't have an instance variable called @b"
   end
@@ -21,7 +29,7 @@ describe "Semantic: offsetof" do
     assert_error "module Foo; @a = 0; end; offsetof(Foo, @a)", "Foo is neither a class nor a struct, it's a module"
   end
 
-  it "errors on offsetof uninstantiated generic type" do
+  it "errors on offsetof element of uninstantiated generic type" do
     assert_error "struct Foo(T); @a = 0; end; offsetof(Foo, @a)", "can't take offsetof element @a of uninstantiated generic type Foo(T)"
   end
 end

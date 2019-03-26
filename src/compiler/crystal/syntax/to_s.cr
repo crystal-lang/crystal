@@ -1264,9 +1264,9 @@ module Crystal
     def visit(node : OffsetOf)
       @str << keyword("offsetof")
       @str << '('
-      node.structure.accept(self)
+      node.offsetof_type.accept(self)
       @str << ", "
-      node.member.accept(self)
+      node.instance_var.accept(self)
       @str << ')'
     end
 

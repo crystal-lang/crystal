@@ -181,8 +181,8 @@ module Crystal
     end
 
     def transform(node : OffsetOf)
-      node.structure = node.structure.transform(self)
-      node.member = node.member.transform(self)
+      node.offsetof_type = node.offsetof_type.transform(self)
+      node.instance_var = node.instance_var.transform(self)
       node
     end
 

@@ -1144,7 +1144,7 @@ describe "Semantic: instance var" do
 
       Foo.new.x
       )) { int32 }
-  end  
+  end
 
   it "infers type from path that is a type" do
     assert_type(%(
