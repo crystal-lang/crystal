@@ -741,6 +741,11 @@ struct Time
     )
   end
 
+  # Returns an epoch current timestamp in second
+  def self.now_seconds : Int64
+    (Time.utc - Time::UNIX_EPOCH).to_i
+  end
+
   # Returns a copy of `self` with time-of-day components (hour, minute, second,
   # nanoseconds) set to zero.
   #
