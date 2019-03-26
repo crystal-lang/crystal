@@ -1382,6 +1382,16 @@ module Crystal
       end
     end
 
+    describe "offsetof methods" do
+      it "executes structure" do
+        assert_macro "x", %({{x.structure}}), [OffsetOf.new("SomeType".path, "@some_ivar".instance_var)] of ASTNode, "SomeType"
+      end
+
+      it "executes member" do
+        assert_macro "x", %({{x.member}}), [OffsetOf.new("SomeType".path, "@some_ivar".instance_var)] of ASTNode, "@some_ivar"
+      end
+    end
+
     describe "visibility modifier methods" do
       node = VisibilityModifier.new(Visibility::Protected, Def.new("some_def"))
 
