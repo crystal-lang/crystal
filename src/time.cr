@@ -524,8 +524,22 @@ struct Time
     utc(seconds: seconds, nanoseconds: nanoseconds.to_i)
   end
 
-  def self.now(*args)
-    {% raise "`Time.now` has been removed in Crystal 0.28.0, use `Time.local` or `Time.utc` instead.\n\nMore information on this change: https://github.com/crystal-lang/crystal/issues/5346" %}
+  # Creates a new `Time` instance representing the current time from the
+  # system clock observed in *location* (defaults to local time zone).
+  #
+  # DEPRECATED: `Time.now` is deprecated, use `Time.local` or `Time.utc` instead.
+  # More information on this change: https://github.com/crystal-lang/crystal/issues/5346
+  def self.now(location : Location = Location.local) : Time
+    local(location)
+  end
+
+  # Creates a new `Time` instance representing the current time from the
+  # system clock in UTC.
+  #
+  # DEPRECATED: `Time.utc_now` is deprecated, use `Time.utc` instead.
+  # More information on this change: https://github.com/crystal-lang/crystal/issues/5346
+  def self.utc_now : Time
+    utc
   end
 
   # Creates a new `Time` instance with the same local date-time representation
