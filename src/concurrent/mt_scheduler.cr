@@ -84,6 +84,8 @@ class Crystal::Scheduler
   # 2. tries to steal a fiber from another random scheduler;
   # 3. executes the event loop to try and fill its internal queue.
   def start : Nil
+    Thread.log "scheduler#start", self
+
     # always process the internal runnables queue on startup:
     if fiber = @runnables.pop?
       resume(fiber)
@@ -103,6 +105,8 @@ class Crystal::Scheduler
   end
 
   protected def steal_loop : Fiber?
+    Thread.log "scheduler#steal_loop", self
+
     100.times do
       # 1. yield CPU time to another thread
       Thread.yield
@@ -131,16 +135,22 @@ class Crystal::Scheduler
   end
 
   protected def enqueue(fiber : Fiber) : Nil
+    Thread.log "scheduler#enqueue", self, fiber
     @runnables.push(fiber)
     unpark_one
   end
 
   protected def enqueue(fibers : Enumerable(Fiber)) : Nil
-    fibers.each { |fiber| @runnables.push(fiber) }
+    fibers.each do |fiber|
+      Thread.log "scheduler#enqueue", self, fiber
+      @runnables.push(fiber)
+    end
     unpark_one
   end
 
   protected def resume(fiber : Fiber) : Nil
+    Thread.log "scheduler#resume", self, fiber
+
     # a fiber can be enqueued before saving its context, which means there is a
     # time window for a scheduler to steal and try to resume a fiber before its
     # context has been fully saved, so we wait:
@@ -202,6 +212,8 @@ class Crystal::Scheduler
   # fiber. `@current` is never enqueued and must be manually resumed by another
   # mean (event loop, explicit call the `#resume` or `#enqueue`, ...).
   protected def reschedule : Nil
+    Thread.log "scheduler#reschedule", self, @current
+
     # try to dequeue the next fiber from the internal runnables queue:
     fiber = @runnables.pop?
 
@@ -217,6 +229,8 @@ class Crystal::Scheduler
   end
 
   protected def sleep(time : Time::Span) : Nil
+    Thread.log "scheduler#sleep", self, @current
+
     @current.resume_event.add(time)
     reschedule
   end
@@ -229,6 +243,8 @@ class Crystal::Scheduler
   # push/pop from the bottom of the queue —a shift from the top of the queue is
   # reserved for stealing a fiber from another scheduler queue.
   protected def yield : Nil
+    # Thread.log "scheduler#yield", self, @current
+
     # try to dequeue the next fiber from the internal runnables queue:
     fiber = @runnables.pop?
 
@@ -248,11 +264,14 @@ class Crystal::Scheduler
   end
 
   protected def yield(fiber : Fiber) : Nil
+    # Thread.log "scheduler#yield", self, @current
+
     enqueue(@current)
     resume(fiber)
   end
 
   private def park
+    Thread.log "scheduler#park", self
     @@park_mutex.lock
 
     if @@park_count < (Crystal::NPROCS - 1)
@@ -279,6 +298,7 @@ class Crystal::Scheduler
 
   private def unpark_one
     return if @@park_count == 0
+    Thread.log "scheduler#unpark_one", self
     @@park_mutex.synchronize { @@park_cond.signal }
   end
 end

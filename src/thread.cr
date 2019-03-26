@@ -10,6 +10,30 @@ class Thread
   # all thread objects, so the GC can see them (it doesn't scan thread locals)
   @@threads = uninitialized Thread::LinkedList(Thread)
 
+  {% if flag?(:mt_debug) %}
+    @@color_counter = uninitialized Atomic(Int32)
+    @color = 0
+
+    def self.log(action, scheduler = nil, fiber = nil)
+      thread = Thread.current
+      current.log(action, thread, scheduler || thread.scheduler, fiber)
+    end
+
+    def log(action, thread, scheduler, fiber = nil)
+      if fiber
+        LibC.dprintf(2, "\033[%dmthread=%lx %20s scheduler=%p fiber=%p [%s]\033[0m\n",
+                     @color, thread.to_unsafe, action, scheduler.as(Void*),
+                     fiber.as(Void*), fiber.name.try(&.to_unsafe))
+      else
+        LibC.dprintf(2, "\033[%dmthread=%lx %20s scheduler=%p\033[0m\n",
+                     @color, thread.to_unsafe, action, scheduler.as(Void*))
+      end
+    end
+  {% else %}
+    def self.log(action, scheduler = nil, fiber = nil)
+    end
+  {% end %}
+
   @th : LibC::PthreadT
   @exception : Exception?
   @detached = false
@@ -23,6 +47,10 @@ class Thread
 
   def self.init
     @@threads = Thread::LinkedList(Thread).new
+
+    {% if flag?(:mt_debug) %}
+      @@color_counter = Atomic(Int32).new(32)
+    {% end %}
 
     {% if flag?(:android) || flag?(:openbsd) %}
       @@current_key = begin
@@ -43,6 +71,10 @@ class Thread
   def initialize(&@func : ->)
     @th = uninitialized LibC::PthreadT
 
+    {% if flag?(:mt_debug) %}
+      @color = @@color_counter.add(1)
+    {% end %}
+
     ret = GC.pthread_create(pointerof(@th), Pointer(LibC::PthreadAttrT).null, ->(data : Void*) {
       (data.as(Thread)).start
       Pointer(Void).null
@@ -61,6 +93,10 @@ class Thread
     @func = ->{}
     @th = LibC.pthread_self
     @main_fiber = Fiber.new(stack_address)
+
+    {% if flag?(:mt_debug) %}
+      @color = @@color_counter.add(1)
+    {% end %}
 
     @@threads.push(self)
   end
