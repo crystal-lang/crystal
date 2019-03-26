@@ -414,9 +414,46 @@ describe "Slice" do
     slice[2..4].read_only?.should be_true
   end
 
-  it "#clone non-primitive" do
-    slice = Slice["abc", "a"]
-    slice.clone.should eq slice
+  describe "#clone" do
+    it "clones primitive" do
+      slice = Slice[1, 2]
+      slice.clone.should eq slice
+    end
+
+    it "clones non-primitive" do
+      slice = Slice["abc", "a"]
+      slice.clone.should eq slice
+    end
+
+    it "buffer copy" do
+      slice = Slice["foo"]
+      copy = slice.clone
+      slice[0] = "bar"
+      copy.should_not eq slice
+    end
+
+    it "deep copy" do
+      slice = Slice[["foo"]]
+      copy = slice.clone
+      slice[0] << "bar"
+      copy.should_not eq slice
+    end
+  end
+
+  describe "#dup" do
+    it "buffer copy" do
+      slice = Slice["foo"]
+      copy = slice.dup
+      slice[0] = "bar"
+      copy.should_not eq slice
+    end
+
+    it "don't deep copy" do
+      slice = Slice[["foo"]]
+      copy = slice.dup
+      slice[0] << "bar"
+      copy.should eq slice
+    end
   end
 end
 
