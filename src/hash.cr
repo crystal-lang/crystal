@@ -30,7 +30,8 @@ require "crystal/hasher"
 # Enumeration follows the order that the corresponding keys were inserted.
 #
 # NOTE: When using mutable data types as keys, changing the value of a key after
-# it was inserted into the `Hash` may lead to undefined behaviour.
+# it was inserted into the `Hash` may lead to undefined behaviour. This can be
+# restored by re-indexing the hash with `#rehash`.
 class Hash(K, V)
   include Enumerable({K, V})
   include Iterable({K, V})
@@ -1018,7 +1019,12 @@ class Hash(K, V)
     self
   end
 
-  def rehash
+  # Rebuilds the hash table based on the current value of each key.
+  #
+  # When using mutable data types as keys, changing the value of a key after
+  # it was inserted into the `Hash` may lead to undefined behaviour.
+  # This method re-indexes the hash using the current key values.
+  def rehash : Nil
     new_size = calculate_new_size(@size)
     @buckets = @buckets.realloc(new_size)
     new_size.times { |i| @buckets[i] = nil }
