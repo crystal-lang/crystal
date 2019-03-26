@@ -2101,7 +2101,7 @@
 * Added `Array#fill` (thanks @Exilor).
 * Added `Array#uniq`.
 * Optimized `File.read_lines`.
-* Allow any expression inside `{% ... %}` so that you can intepret code without outputting the result.
+* Allow any expression inside `{% ... %}` so that you can interpret code without outputting the result.
 * Allow `\` at the end of a line.
 * Allow using `if` and `unless` inside macro expressions.
 * Allow marking a `fun/def` as `@[Raises]` (useful when a function can potentially raise from a callback).

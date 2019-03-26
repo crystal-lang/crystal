@@ -790,7 +790,7 @@ module Crystal
           self
         end
       else
-        value = intepret_array_or_tuple_method(self, ArrayLiteral, method, args, block, interpreter)
+        value = interpret_array_or_tuple_method(self, ArrayLiteral, method, args, block, interpreter)
         value || super
       end
     end
@@ -1002,7 +1002,7 @@ module Crystal
 
   class TupleLiteral
     def interpret(method, args, block, interpreter)
-      value = intepret_array_or_tuple_method(self, TupleLiteral, method, args, block, interpreter)
+      value = interpret_array_or_tuple_method(self, TupleLiteral, method, args, block, interpreter)
       value || super
     end
   end
@@ -2063,7 +2063,7 @@ module Crystal
   end
 end
 
-private def intepret_array_or_tuple_method(object, klass, method, args, block, interpreter)
+private def interpret_array_or_tuple_method(object, klass, method, args, block, interpreter)
   case method
   when "any?"
     object.interpret_argless_method(method, args) do
