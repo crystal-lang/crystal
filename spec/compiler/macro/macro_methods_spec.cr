@@ -1383,8 +1383,8 @@ module Crystal
     end
 
     describe "offsetof methods" do
-      it "executes offsetof_type" do
-        assert_macro "x", %({{x.offsetof_type}}), [OffsetOf.new("SomeType".path, "@some_ivar".instance_var)] of ASTNode, "SomeType"
+      it "executes type" do
+        assert_macro "x", %({{x.type}}), [OffsetOf.new("SomeType".path, "@some_ivar".instance_var)] of ASTNode, "SomeType"
       end
 
       it "executes instance_var" do
