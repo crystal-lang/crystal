@@ -1,4 +1,5 @@
 require "c/string"
+require "slice/sort"
 
 # A `Slice` is a `Pointer` with an associated size.
 #
@@ -543,6 +544,106 @@ struct Slice(T)
   # ```
   def to_unsafe : Pointer(T)
     @pointer
+  end
+
+  # Returns a new slice with all elements sorted based on the return value of
+  # their comparison method `<=>`
+  #
+  # ```
+  # a = Slice[3, 1, 2]
+  # a.sort # => Slice[1, 2, 3]
+  # a      # => Slice[3, 1, 2]
+  # ```
+  def sort : Slice(T)
+    dup.sort!
+  end
+
+  # Returns a new slice with all elements sorted based on the comparator in the
+  # given block.
+  #
+  # The block must implement a comparison between two elements *a* and *b*,
+  # where `a < b` returns `-1`, `a == b` returns `0`, and `a > b` returns `1`.
+  # The comparison operator `<=>` can be used for this.
+  #
+  # ```
+  # a = Slice[3, 1, 2]
+  # b = a.sort { |a, b| b <=> a }
+  #
+  # b # => Slice[3, 2, 1]
+  # a # => Slice[3, 1, 2]
+  # ```
+  def sort(&block : T, T -> U) : Slice(T) forall U
+    {% unless U <= Int32? %}
+      {% raise "expected block to return Int32 or Nil, not #{U}" %}
+    {% end %}
+
+    dup.sort! &block
+  end
+
+  # Modifies `self` by sorting all elements based on the return value of their
+  # comparison method `<=>`
+  #
+  # ```
+  # a = Slice[3, 1, 2]
+  # a.sort!
+  # a # => Slice[1, 2, 3]
+  # ```
+  def sort! : Slice(T)
+    Slice.intro_sort!(to_unsafe, size)
+    self
+  end
+
+  # Modifies `self` by sorting all elements based on the comparator in the given
+  # block.
+  #
+  # The given block must implement a comparison between two elements
+  # *a* and *b*, where `a < b` returns `-1`, `a == b` returns `0`,
+  # and `a > b` returns `1`.
+  # The comparison operator `<=>` can be used for this.
+  #
+  # ```
+  # a = Slice[3, 1, 2]
+  # a.sort! { |a, b| b <=> a }
+  # a # => Slice[3, 2, 1]
+  # ```
+  def sort!(&block : T, T -> U) : Slice(T) forall U
+    {% unless U <= Int32? %}
+      {% raise "expected block to return Int32 or Nil, not #{U}" %}
+    {% end %}
+
+    Slice.intro_sort!(to_unsafe, size, block)
+    self
+  end
+
+  # Returns a new array with all elements sorted. The given block is called for
+  # each element, then the comparison method `<=>` is called on the object
+  # returned from the block to determine sort order.
+  #
+  # ```
+  # a = Slice["apple", "pear", "fig"]
+  # b = a.sort_by { |word| word.size }
+  # b # => Slice["fig", "pear", "apple"]
+  # a # => Slice["apple", "pear", "fig"]
+  # ```
+  def sort_by(&block : T -> _) : Slice(T)
+    dup.sort_by! { |e| yield(e) }
+  end
+
+  # Modifies `self` by sorting all elements. The given block is called for
+  # each element, then the comparison method `<=>` is called on the object
+  # returned from the block to determine sort order.
+  #
+  # ```
+  # a = Slice["apple", "pear", "fig"]
+  # a.sort_by! { |word| word.size }
+  # a # => Slice["fig", "pear", "apple"]
+  # ```
+  def sort_by!(&block : T -> _) : Slice(T)
+    sorted = map { |e| {e, yield(e)} }.sort! { |x, y| x[1] <=> y[1] }
+    size.times do |i|
+      to_unsafe[i] = sorted.to_unsafe[i][0]
+    end
+    self
   end
 
   # :nodoc:
