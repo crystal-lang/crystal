@@ -1,4 +1,4 @@
-{% if flag?(:gc_pthread) %}
+{% if flag?(:gc_pthread_rwlock) %}
   require "thread/rwlock"
 {% end %}
 
@@ -127,7 +127,7 @@ module GC
   {% if flag?(:mt) %}
     {% if flag?(:gc_rwlock) %}
       @@rwlock = uninitialized RWLock
-    {% elsif flag?(:gc_pthread) %}
+    {% elsif flag?(:gc_pthread_rwlock) %}
       @@rwlock = uninitialized Thread::RWLock
     {% end %}
   {% end %}
@@ -142,10 +142,10 @@ module GC
     {% if flag?(:mt) %}
       {% if flag?(:gc_rwlock) %}
         @@rwlock = RWLock.new
-      {% elsif flag?(:gc_pthread) %}
+      {% elsif flag?(:gc_pthread_rwlock) %}
         @@rwlock = Thread::RWLock.new
       {% else %}
-        return # no lock
+        return # no write lock
       {% end %}
 
       LibGC.set_start_callback ->do
@@ -268,8 +268,10 @@ module GC
     def self.lock_read
       {% if flag?(:gc_rwlock) %}
         @@rwlock.lock_read
-      {% elsif flag?(:gc_pthread) %}
+      {% elsif flag?(:gc_pthread_rwlock) %}
         @@rwlock.lock_read
+      {% else %}
+        LibGC.disable
       {% end %}
     end
 
@@ -277,10 +279,10 @@ module GC
     def self.lock_write
       {% if flag?(:gc_rwlock) %}
         @@rwlock.lock_write
-      {% elsif flag?(:gc_pthread) %}
+      {% elsif flag?(:gc_pthread_rwlock) %}
         @@rwlock.lock_write
       {% else %}
-        LibGC.disable
+        # no write lock
       {% end %}
     end
 
@@ -288,8 +290,10 @@ module GC
     def self.unlock_read
       {% if flag?(:gc_rwlock) %}
         @@rwlock.unlock_read
-      {% elsif flag?(:gc_pthread) %}
+      {% elsif flag?(:gc_pthread_rwlock) %}
         @@rwlock.unlock
+      {% else %}
+        LibGC.enable
       {% end %}
     end
 
@@ -297,10 +301,10 @@ module GC
     def self.unlock_write
       {% if flag?(:gc_rwlock) %}
         @@rwlock.unlock_write
-      {% elsif flag?(:gc_pthread) %}
+      {% elsif flag?(:gc_pthread_rwlock) %}
         @@rwlock.unlock
       {% else %}
-        LibGC.enable
+        # no write lock
       {% end %}
     end
   {% else %}
