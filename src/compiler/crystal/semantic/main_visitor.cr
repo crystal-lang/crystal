@@ -2591,25 +2591,23 @@ module Crystal
       node.offsetof_type.raise "type #{type} can't have instance variables" unless type.is_a?(InstanceVarContainer)
       node.offsetof_type.raise "can't use typeof inside offsetof expression" if node.offsetof_type.is_a?(TypeOf)
 
-      instance_vars = type.all_instance_vars
       ivar_name = node.instance_var.as(InstanceVar).name
-      ivar_index = instance_vars.keys.index(ivar_name)
+      ivar_index = type.index_of_instance_var(ivar_name)
 
       node.instance_var.raise "type #{type} doesn't have an instance variable called #{ivar_name}" unless ivar_index
       node.offsetof_type.raise "can't take offsetof element #{ivar_name} of uninstantiated generic type #{type}" if type.is_a?(GenericType)
 
       if type && type.struct?
-        expanded = NumberLiteral.new(@program.offset_of(type.sizeof_type, ivar_index).to_s, :i32)
-        expanded.type = @program.int32
-        node.expanded = expanded
+        offset = @program.offset_of(type.sizeof_type, ivar_index)
       elsif type && type.instance_type.devirtualize.class?
-        expanded = NumberLiteral.new(@program.instance_offset_of(type.sizeof_type, ivar_index).to_s, :i32)
-        expanded.type = @program.int32
-        node.expanded = expanded
+        offset = @program.instance_offset_of(type.sizeof_type, ivar_index)
       else
         node.offsetof_type.raise "#{type} is neither a class nor a struct, it's a #{type.type_desc}"
       end
 
+      expanded = NumberLiteral.new(offset.to_s, :i32)
+      expanded.type = @program.int32
+      node.expanded = expanded
       node.type = @program.int32
 
       false
