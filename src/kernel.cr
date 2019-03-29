@@ -5,16 +5,12 @@
   # The standard output file descriptor.
   #
   # Typically used to output data and information.
-  #
-  # NOTE: Gets flushed when a newline is written.
-  STDOUT = IO::FileDescriptor.new(1).tap { |f| f.flush_on_newline = true }
+  STDOUT = IO::FileDescriptor.new(1)
 
   # The standard error file descriptor.
   #
   # Typically used to output error messages and diagnostics.
-  #
-  # NOTE: Gets flushed when a newline is written.
-  STDERR = IO::FileDescriptor.new(2).tap { |f| f.flush_on_newline = true }
+  STDERR = IO::FileDescriptor.new(2)
 {% else %}
   require "c/unistd"
 
@@ -25,15 +21,17 @@
   #
   # Typically used to output data and information.
   #
-  # NOTE: Gets flushed when a newline is written.
-  STDOUT = IO::FileDescriptor.from_stdio(1).tap { |f| f.flush_on_newline = true }
+  # When this is a TTY device, `sync` will be true for it
+  # at the start of the program.
+  STDOUT = IO::FileDescriptor.from_stdio(1)
 
   # The standard error file descriptor.
   #
   # Typically used to output error messages and diagnostics.
   #
-  # NOTE: Gets flushed when a newline is written.
-  STDERR = IO::FileDescriptor.from_stdio(2).tap { |f| f.flush_on_newline = true }
+  # When this is a TTY device, `sync` will be true for it
+  # at the start of the program.
+  STDERR = IO::FileDescriptor.from_stdio(2)
 {% end %}
 
 # The name, the program was called with.
@@ -118,7 +116,6 @@ end
 # See also: `IO#print`.
 def print(*objects : _) : Nil
   STDOUT.print *objects
-  STDOUT.flush
 end
 
 # Prints a formatted string to `STDOUT`.

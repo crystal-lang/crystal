@@ -430,8 +430,8 @@ class Process
   end
 
   ORIGINAL_STDIN  = IO::FileDescriptor.new(0, blocking: true)
-  ORIGINAL_STDOUT = IO::FileDescriptor.new(1, blocking: true).tap { |f| f.flush_on_newline = true }
-  ORIGINAL_STDERR = IO::FileDescriptor.new(2, blocking: true).tap { |f| f.flush_on_newline = true }
+  ORIGINAL_STDOUT = IO::FileDescriptor.new(1, blocking: true)
+  ORIGINAL_STDERR = IO::FileDescriptor.new(2, blocking: true)
 
   # :nodoc:
   protected def self.exec_internal(command, args, env, clear_env, input, output, error, chdir) : NoReturn
