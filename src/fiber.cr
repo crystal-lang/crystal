@@ -93,13 +93,18 @@ class Fiber
   # The fiber's proc is currently running or didn't fully save its context. The
   # fiber can't be resumed.
   def running?
-    @context.resumable == 0
+    @context.resumable.get == 0
   end
 
   # The fiber's proc is currently not running and fully save its context. The
   # fiber can be resumed safely.
   def resumable?
-    @context.resumable == 1
+    @context.resumable.get == 1
+  end
+
+  # :nodoc:
+  def single_resume?
+    @context.single_resume?
   end
 
   # The fiber's proc has terminated, and the fiber is now considered dead. The
