@@ -5,7 +5,7 @@
 {% if flag?(:freebsd) %}
   @[Link("gc-threaded")]
 {% else %}
-  @[Link("gc")]
+  @[Link("gc", static: true)]
 {% end %}
 
 lib LibGC
