@@ -7,9 +7,10 @@ class Crystal::Command
     end
 
     vars = {
-      "CRYSTAL_CACHE_DIR" => CacheDir.instance.dir,
-      "CRYSTAL_PATH"      => CrystalPath.default_path,
-      "CRYSTAL_VERSION"   => Config.version || "",
+      "CRYSTAL_CACHE_DIR"    => CacheDir.instance.dir,
+      "CRYSTAL_PATH"         => CrystalPath.default_path,
+      "CRYSTAL_VERSION"      => Config.version || "",
+      "CRYSTAL_LIBRARY_PATH" => CrystalLibraryPath.default_path,
     }
 
     if ARGV.empty?
