@@ -1361,6 +1361,8 @@ module Crystal
 
     it_parses "enum Foo; @[Bar]; end", EnumDef.new("Foo".path, [Annotation.new("Bar".path)] of ASTNode)
 
+    assert_syntax_error "enum Foo; A B; end", "expecting ',', ';', 'end' or newline after enum member"
+
     it_parses "1.[](2)", Call.new(1.int32, "[]", 2.int32)
     it_parses "1.[]?(2)", Call.new(1.int32, "[]?", 2.int32)
     it_parses "1.[]=(2, 3)", Call.new(1.int32, "[]=", 2.int32, 3.int32)
