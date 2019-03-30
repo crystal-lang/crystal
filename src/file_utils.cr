@@ -18,6 +18,8 @@ module FileUtils
   # and invoked the block, restoring the original working directory when the block exits.
   #
   # ```
+  # require "file_utils"
+  #
   # FileUtils.cd("/tmp") { Dir.current } # => "/tmp"
   # ```
   #
@@ -30,6 +32,8 @@ module FileUtils
   # Returns `true` if content are the same, `false` otherwise.
   #
   # ```
+  # require "file_utils"
+  #
   # File.write("file.cr", "1")
   # File.write("bar.cr", "1")
   # FileUtils.cmp("file.cr", "bar.cr") # => true
@@ -48,6 +52,8 @@ module FileUtils
   # Returns `true` if content are the same, `false` otherwise.
   #
   # ```
+  # require "file_utils"
+  #
   # File.write("afile", "123")
   # stream1 = File.open("afile")
   # stream2 = IO::Memory.new("123")
@@ -73,6 +79,8 @@ module FileUtils
   # If the file does not exist, it will be created.
   #
   # ```
+  # require "file_utils"
+  #
   # FileUtils.touch("afile.cr")
   # ```
   #
@@ -87,6 +95,8 @@ module FileUtils
   # If the file does not exist, it will be created.
   #
   # ```
+  # require "file_utils"
+  #
   # FileUtils.touch(["foo", "bar"])
   # ```
   def touch(paths : Enumerable(String), time : Time = Time.utc)
@@ -100,6 +110,8 @@ module FileUtils
   # Permission bits are copied too.
   #
   # ```
+  # require "file_utils"
+  #
   # File.chmod("afile", 0o600)
   # FileUtils.cp("afile", "afile_copy")
   # File.info("afile_copy").permissions.value # => 0o600
@@ -117,6 +129,8 @@ module FileUtils
   # *dest* must be an existing directory.
   #
   # ```
+  # require "file_utils"
+  #
   # Dir.mkdir("files")
   # FileUtils.cp({"bar.cr", "afile"}, "files")
   # ```
@@ -131,6 +145,8 @@ module FileUtils
   # If *src_path* is a directory, this method copies all its contents recursively.
   #
   # ```
+  # require "file_utils"
+  #
   # FileUtils.cp_r("files", "dir")
   # ```
   def cp_r(src_path : String, dest_path : String)
@@ -150,6 +166,8 @@ module FileUtils
   # If *dest_path* already exists and is a directory, creates a link *dest_path/src_path*.
   #
   # ```
+  # require "file_utils"
+  #
   # # Create a hard link, pointing from /usr/bin/emacs to /usr/bin/vim
   # FileUtils.ln("/usr/bin/vim", "/usr/bin/emacs")
   # # Create a hard link, pointing from /tmp/foo.c to foo.c
@@ -167,6 +185,8 @@ module FileUtils
   # If *dest_dir* is not a directory, raises an `ArgumentError`.
   #
   # ```
+  # require "file_utils"
+  #
   # # Create /usr/bin/vim, /usr/bin/emacs, and /usr/bin/nano as hard links
   # FileUtils.ln(["vim", "emacs", "nano"], "/usr/bin")
   # ```
@@ -182,6 +202,8 @@ module FileUtils
   # If *dest_path* already exists and is a directory, creates a link *dest_path/src_path*.
   #
   # ```
+  # require "file_utils"
+  #
   # # Create a symbolic link pointing from logs to /var/log
   # FileUtils.ln_s("/var/log", "logs")
   # # Create a symbolic link pointing from /tmp/src to src
@@ -199,6 +221,8 @@ module FileUtils
   # If *dest_dir* is not a directory, raises an `ArgumentError`.
   #
   # ```
+  # require "file_utils"
+  #
   # # Create symbolic links in src/ pointing to every .c file in the current directory
   # FileUtils.ln_s(Dir["*.c"], "src")
   # ```
@@ -214,6 +238,8 @@ module FileUtils
   # or if `dest_path/src_path` exists.
   #
   # ```
+  # require "file_utils"
+  #
   # # Create a symbolic link pointing from bar.c to foo.c, even if bar.c already exists
   # FileUtils.ln_sf("foo.c", "bar.c")
   # ```
@@ -232,6 +258,8 @@ module FileUtils
   # If *dest_dir* is not a directory, raises an `ArgumentError`.
   #
   # ```
+  # require "file_utils"
+  #
   # # Create symbolic links in src/ pointing to every .c file in the current directory,
   # # even if it means overwriting files in src/
   # FileUtils.ln_sf(Dir["*.c"], "src")
@@ -248,6 +276,8 @@ module FileUtils
   # can be specified, with a default of 777 (0o777).
   #
   # ```
+  # require "file_utils"
+  #
   # FileUtils.mkdir("src")
   # ```
   #
@@ -260,6 +290,8 @@ module FileUtils
   # can be specified, with a default of 777 (0o777).
   #
   # ```
+  # require "file_utils"
+  #
   # FileUtils.mkdir(["foo", "bar"])
   # ```
   def mkdir(paths : Enumerable(String), mode = 0o777) : Nil
@@ -273,6 +305,8 @@ module FileUtils
   # with a default of 777 (0o777).
   #
   # ```
+  # require "file_utils"
+  #
   # FileUtils.mkdir_p("foo")
   # ```
   #
@@ -286,6 +320,8 @@ module FileUtils
   # with a default of 777 (0o777).
   #
   # ```
+  # require "file_utils"
+  #
   # FileUtils.mkdir_p(["foo", "bar", "baz", "dir1", "dir2", "dir3"])
   # ```
   def mkdir_p(paths : Enumerable(String), mode = 0o777) : Nil
@@ -297,6 +333,8 @@ module FileUtils
   # Moves *src_path* to *dest_path*.
   #
   # ```
+  # require "file_utils"
+  #
   # FileUtils.mv("afile", "afile.cr")
   # ```
   #
@@ -308,6 +346,8 @@ module FileUtils
   # Moves every *srcs* to *dest*.
   #
   # ```
+  # require "file_utils"
+  #
   # FileUtils.mv(["foo", "bar"], "src")
   # ```
   def mv(srcs : Enumerable(String), dest : String) : Nil
@@ -323,6 +363,8 @@ module FileUtils
   # Returns the current working directory.
   #
   # ```
+  # require "file_utils"
+  #
   # FileUtils.pwd
   # ```
   #
@@ -334,6 +376,8 @@ module FileUtils
   # Deletes the *path* file given.
   #
   # ```
+  # require "file_utils"
+  #
   # FileUtils.rm("afile.cr")
   # ```
   #
@@ -345,6 +389,8 @@ module FileUtils
   # Deletes all *paths* file given.
   #
   # ```
+  # require "file_utils"
+  #
   # FileUtils.rm(["dir/afile", "afile_copy"])
   # ```
   def rm(paths : Enumerable(String)) : Nil
@@ -357,6 +403,8 @@ module FileUtils
   # If *path* is a directory, this method removes all its contents recursively.
   #
   # ```
+  # require "file_utils"
+  #
   # FileUtils.rm_r("dir")
   # FileUtils.rm_r("file.cr")
   # ```
@@ -376,6 +424,8 @@ module FileUtils
   # If one path is a directory, this method removes all its contents recursively.
   #
   # ```
+  # require "file_utils"
+  #
   # FileUtils.rm_r(["files", "bar.cr"])
   # ```
   def rm_r(paths : Enumerable(String)) : Nil
@@ -389,6 +439,8 @@ module FileUtils
   # Ignores all errors.
   #
   # ```
+  # require "file_utils"
+  #
   # FileUtils.rm_rf("dir")
   # FileUtils.rm_rf("file.cr")
   # FileUtils.rm_rf("non_existent_file")
@@ -405,6 +457,8 @@ module FileUtils
   # Ignores all errors.
   #
   # ```
+  # require "file_utils"
+  #
   # FileUtils.rm_rf(["dir", "file.cr", "non_existent_file"])
   # ```
   def rm_rf(paths : Enumerable(String)) : Nil
@@ -419,6 +473,8 @@ module FileUtils
   # Removes the directory at the given *path*.
   #
   # ```
+  # require "file_utils"
+  #
   # FileUtils.rmdir("baz")
   # ```
   #
@@ -430,6 +486,8 @@ module FileUtils
   # Removes all directories at the given *paths*.
   #
   # ```
+  # require "file_utils"
+  #
   # FileUtils.rmdir(["dir1", "dir2", "dir3"])
   # ```
   def rmdir(paths : Enumerable(String)) : Nil

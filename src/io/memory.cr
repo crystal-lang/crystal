@@ -397,7 +397,7 @@ class IO::Memory < IO
   # io.print 1, 2, 3
   # io.to_s # => "123"
   # ```
-  def to_s
+  def to_s : String
     String.new @buffer, @bytesize
   end
 
@@ -414,7 +414,7 @@ class IO::Memory < IO
   end
 
   # Appends this internal buffer to the given `IO`.
-  def to_s(io)
+  def to_s(io : IO) : Nil
     io.write(to_slice)
   end
 

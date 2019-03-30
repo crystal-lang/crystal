@@ -4,10 +4,11 @@ require "c/netinet/in"
 require "c/netinet/tcp"
 require "c/sys/socket"
 require "c/sys/un"
+require "io/evented"
 
 class Socket < IO
   include IO::Buffered
-  include IO::Syscall
+  include IO::Evented
 
   class Error < Exception
   end
@@ -38,9 +39,6 @@ class Socket < IO
   SOMAXCONN = 128
 
   getter fd : Int32
-
-  @read_event : Crystal::Event?
-  @write_event : Crystal::Event?
 
   @closed : Bool
 
@@ -101,6 +99,8 @@ class Socket < IO
   # Connects the socket to a remote host:port.
   #
   # ```
+  # require "socket"
+  #
   # sock = Socket.tcp(Socket::Family::INET)
   # sock.connect "crystal-lang.org", 80
   # ```
@@ -113,6 +113,8 @@ class Socket < IO
   # Connects the socket to a remote address. Raises if the connection failed.
   #
   # ```
+  # require "socket"
+  #
   # sock = Socket.unix
   # sock.connect Socket::UNIXAddress.new("/tmp/service.sock")
   # ```
@@ -144,6 +146,8 @@ class Socket < IO
   # Binds the socket to a local address.
   #
   # ```
+  # require "socket"
+  #
   # sock = Socket.tcp(Socket::Family::INET)
   # sock.bind "localhost", 1234
   # ```
@@ -156,6 +160,8 @@ class Socket < IO
   # Binds the socket on *port* to all local interfaces.
   #
   # ```
+  # require "socket"
+  #
   # sock = Socket.tcp(Socket::Family::INET6)
   # sock.bind 1234
   # ```
@@ -168,6 +174,8 @@ class Socket < IO
   # Binds the socket to a local address.
   #
   # ```
+  # require "socket"
+  #
   # sock = Socket.udp(Socket::Family::INET)
   # sock.bind Socket::IPAddress.new("192.168.1.25", 80)
   # ```
@@ -255,6 +263,8 @@ class Socket < IO
   # Sends a message to a previously connected remote address.
   #
   # ```
+  # require "socket"
+  #
   # sock = Socket.udp(Socket::Family::INET)
   # sock.connect("example.com", 2000)
   # sock.send("text message")
@@ -263,36 +273,35 @@ class Socket < IO
   # sock.connect Socket::UNIXAddress.new("/tmp/service.sock")
   # sock.send(Bytes[0])
   # ```
-  def send(message)
-    slice = message.to_slice
-    bytes_sent = LibC.send(fd, slice.to_unsafe.as(Void*), slice.size, 0)
-    raise Errno.new("Error sending datagram") if bytes_sent == -1
-    bytes_sent
-  ensure
-    # see IO::FileDescriptor#unbuffered_write
-    if (writers = @writers) && !writers.empty?
-      add_write_event
+  def send(message) : Int32
+    evented_send(message.to_slice, "Error sending datagram") do |slice|
+      LibC.send(fd, slice.to_unsafe.as(Void*), slice.size, 0)
     end
   end
 
   # Sends a message to the specified remote address.
   #
   # ```
+  # require "socket"
+  #
   # server = Socket::IPAddress.new("10.0.3.1", 2022)
   # sock = Socket.udp(Socket::Family::INET)
   # sock.connect("example.com", 2000)
   # sock.send("text query", to: server)
   # ```
-  def send(message, to addr : Address)
+  def send(message, to addr : Address) : Int32
     slice = message.to_slice
     bytes_sent = LibC.sendto(fd, slice.to_unsafe.as(Void*), slice.size, 0, addr, addr.size)
     raise Errno.new("Error sending datagram to #{addr}") if bytes_sent == -1
-    bytes_sent
+    # to_i32 is fine because string/slice sizes are an Int32
+    bytes_sent.to_i32
   end
 
   # Receives a text message from the previously bound address.
   #
   # ```
+  # require "socket"
+  #
   # server = Socket.udp(Socket::Family::INET)
   # server.bind("localhost", 1234)
   #
@@ -311,6 +320,8 @@ class Socket < IO
   # Receives a binary message from the previously bound address.
   #
   # ```
+  # require "socket"
+  #
   # server = Socket.udp(Socket::Family::INET)
   # server.bind("localhost", 1234)
   #
@@ -322,27 +333,15 @@ class Socket < IO
     {bytes_read, Address.from(sockaddr, addrlen)}
   end
 
-  protected def recvfrom(message)
+  protected def recvfrom(bytes)
     sockaddr = Pointer(LibC::SockaddrStorage).malloc.as(LibC::Sockaddr*)
     addrlen = LibC::SocklenT.new(sizeof(LibC::SockaddrStorage))
 
-    loop do
-      bytes_read = LibC.recvfrom(fd, message.to_unsafe.as(Void*), message.size, 0, sockaddr, pointerof(addrlen))
-      if bytes_read == -1
-        if Errno.value == Errno::EAGAIN
-          wait_readable
-        else
-          raise Errno.new("Error receiving datagram")
-        end
-      else
-        return {bytes_read.to_i, sockaddr, addrlen}
-      end
+    bytes_read = evented_read(bytes, "Error receiving datagram") do |slice|
+      LibC.recvfrom(fd, slice.to_unsafe.as(Void*), slice.size, 0, sockaddr, pointerof(addrlen))
     end
-  ensure
-    # see IO::FileDescriptor#unbuffered_read
-    if (readers = @readers) && !readers.empty?
-      add_read_event
-    end
+
+    {bytes_read, sockaddr, addrlen}
   end
 
   # Calls `shutdown(2)` with `SHUT_RD`
@@ -361,7 +360,7 @@ class Socket < IO
     end
   end
 
-  def inspect(io)
+  def inspect(io : IO) : Nil
     io << "#<#{self.class}:fd #{@fd}>"
   end
 
@@ -539,28 +538,15 @@ class Socket < IO
   end
 
   private def unbuffered_read(slice : Bytes)
-    read_syscall_helper(slice, "Error reading socket") do
-      # `to_i32` is acceptable because `Slice#size` is a Int32
+    evented_read(slice, "Error reading socket") do
       LibC.recv(@fd, slice, slice.size, 0).to_i32
     end
   end
 
   private def unbuffered_write(slice : Bytes)
-    write_syscall_helper(slice, "Error writing to socket") do |slice|
+    evented_write(slice, "Error writing to socket") do |slice|
       LibC.send(@fd, slice, slice.size, 0)
     end
-  end
-
-  private def add_read_event(timeout = @read_timeout)
-    event = @read_event ||= Crystal::EventLoop.create_fd_read_event(self)
-    event.add timeout
-    nil
-  end
-
-  private def add_write_event(timeout = @write_timeout)
-    event = @write_event ||= Crystal::EventLoop.create_fd_write_event(self)
-    event.add timeout
-    nil
   end
 
   private def unbuffered_rewind
@@ -581,13 +567,7 @@ class Socket < IO
     end
 
     @closed = true
-
-    @read_event.try &.free
-    @read_event = nil
-    @write_event.try &.free
-    @write_event = nil
-
-    reschedule_waiting
+    evented_close
 
     raise err if err
   end

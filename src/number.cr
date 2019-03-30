@@ -163,9 +163,16 @@ struct Number
 
   # The comparison operator.
   #
-  # Returns `-1`, `0` or `1` depending on whether `self` is less than *other*, equals *other*
-  # or is greater than *other*.
-  def <=>(other)
+  # Returns:
+  # - `-1` if `self` is less than *other*
+  # - `0` if `self` is equal to *other*
+  # - `-1` if `self` is greater than *other*
+  # - `nil` if self is `NaN` or *other* is `NaN`, because `NaN` values are not comparable
+  def <=>(other) : Int32?
+    # NaN can't be compared to other numbers
+    return nil if self.is_a?(Float) && self.nan?
+    return nil if other.is_a?(Float) && other.nan?
+
     self > other ? 1 : (self < other ? -1 : 0)
   end
 

@@ -255,7 +255,7 @@ module Crystal::Playground
       end
     end
 
-    def to_s(io)
+    def to_s(io : IO) : Nil
       body = content
       # avoid the layout if the file is a full html
       if File.extname(@filename).starts_with?(".htm") && content.starts_with?("<!")
@@ -309,7 +309,7 @@ module Crystal::Playground
       Dir["playground/*.{md,html,cr}"]
     end
 
-    def to_s(io)
+    def to_s(io : IO) : Nil
       render_with_layout(io) do
         ECR.embed "#{__DIR__}/views/_workbook.html.ecr", io
         nil

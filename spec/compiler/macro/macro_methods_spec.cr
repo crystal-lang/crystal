@@ -169,6 +169,10 @@ module Crystal
         assert_macro "", "{{1 <=> -1}}", [] of ASTNode, "1"
       end
 
+      it "executes <=> (returns nil)" do
+        assert_macro "", "{{0.0/0.0 <=> -1}}", [] of ASTNode, "nil"
+      end
+
       it "executes +" do
         assert_macro "", "{{1 + 2}}", [] of ASTNode, "3"
       end

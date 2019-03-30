@@ -295,14 +295,14 @@ struct Range(B, E)
   end
 
   # :nodoc:
-  def to_s(io : IO)
+  def to_s(io : IO) : Nil
     @begin.try &.inspect(io)
     io << (@exclusive ? "..." : "..")
     @end.try &.inspect(io)
   end
 
   # :nodoc:
-  def inspect(io)
+  def inspect(io : IO) : Nil
     to_s(io)
   end
 

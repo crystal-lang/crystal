@@ -906,4 +906,14 @@ describe "Semantic: proc" do
       Foo.new.block
       )) { proc_of(nil_type) }
   end
+
+  it "can pass proc that returns T as Void with named args (#7523)" do
+    assert_type(%(
+      def foo(proc : ->)
+        proc
+      end
+
+      foo(proc: ->{ 1 })
+      )) { proc_of(nil_type) }
+  end
 end

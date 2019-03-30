@@ -12,7 +12,6 @@ module IO::Buffered
   @out_count = 0
   @sync = false
   @read_buffering = true
-  @flush_on_newline = false
 
   # Reads at most *slice.size* bytes from the wrapped `IO` into *slice*.
   # Returns the number of bytes read.
@@ -123,17 +122,6 @@ module IO::Buffered
       return unbuffered_write(slice)
     end
 
-    if flush_on_newline?
-      index = slice[0, count.to_i32].rindex('\n'.ord.to_u8)
-      if index
-        flush
-        index += 1
-        unbuffered_write slice[0, index]
-        slice += index
-        count -= index
-      end
-    end
-
     if count >= BUFFER_SIZE
       flush
       return unbuffered_write slice[0, count]
@@ -161,20 +149,6 @@ module IO::Buffered
     end
     out_buffer[@out_count] = byte
     @out_count += 1
-
-    if flush_on_newline? && byte === '\n'
-      flush
-    end
-  end
-
-  # Turns on/off flushing the underlying `IO` when a newline is written.
-  def flush_on_newline=(flush_on_newline)
-    @flush_on_newline = !!flush_on_newline
-  end
-
-  # Determines if this `IO` flushes automatically when a newline is written.
-  def flush_on_newline?
-    @flush_on_newline
   end
 
   # Turns on/off `IO` **write** buffering. When *sync* is set to `true`, no buffering

@@ -1,4 +1,3 @@
-require "./syscall"
 require "crystal/system/file_descriptor"
 
 # An `IO` over a file descriptor.
@@ -31,7 +30,11 @@ class IO::FileDescriptor < IO
     clone_fd = LibC.open(path, LibC::O_RDWR)
     return new(fd, blocking: true) if clone_fd == -1
 
-    new(clone_fd).tap(&.close_on_exec = true)
+    # We don't buffer output for TTY devices to see their output right away
+    io = new(clone_fd)
+    io.close_on_exec = true
+    io.sync = true
+    io
   end
 
   def blocking
@@ -153,7 +156,7 @@ class IO::FileDescriptor < IO
     other
   end
 
-  def inspect(io)
+  def inspect(io : IO) : Nil
     io << "#<IO::FileDescriptor:"
     if closed?
       io << "(closed)"
@@ -161,7 +164,6 @@ class IO::FileDescriptor < IO
       io << " fd=" << @fd
     end
     io << '>'
-    io
   end
 
   def pretty_print(pp)

@@ -85,7 +85,6 @@ class Reference
       io << " ..."
     end
     io << '>'
-    nil
   end
 
   def pretty_print(pp) : Nil
@@ -132,7 +131,6 @@ class Reference
     io << "#<" << self.class.name << ":0x"
     object_id.to_s(16, io)
     io << '>'
-    nil
   end
 
   # :nodoc:

@@ -65,6 +65,8 @@ class CSV
   # non-standard csv cell separators and quote characters.
   #
   # ```
+  # require "csv"
+  #
   # CSV.parse("one,two\nthree")
   # # => [["one", "two"], ["three"]]
   # CSV.parse("one;two\n'three;'", separator: ';', quote_char: '\'')
@@ -79,6 +81,8 @@ class CSV
   # See `CSV.parse` about the *separator* and *quote_char* arguments.
   #
   # ```
+  # require "csv"
+  #
   # CSV.each_row("one,two\nthree") do |row|
   #   puts row
   # end
@@ -101,6 +105,8 @@ class CSV
   # See `CSV.parse` about the *separator* and *quote_char* arguments.
   #
   # ```
+  # require "csv"
+  #
   # rows = CSV.each_row("one,two\nthree")
   # rows.next # => ["one", "two"]
   # rows.next # => ["three"]
@@ -114,6 +120,8 @@ class CSV
   # Takes optional *quoting* argument to define quote behavior.
   #
   # ```
+  # require "csv"
+  #
   # result = CSV.build do |csv|
   #   csv.row "one", "two"
   #   csv.row "three"
@@ -137,6 +145,8 @@ class CSV
   # that writes to the given `IO`.
   #
   # ```
+  # require "csv"
+  #
   # io = IO::Memory.new
   # io.puts "HEADER"
   # CSV.build(io) do |csv|

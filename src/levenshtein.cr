@@ -48,6 +48,8 @@ module Levenshtein
   # Finds the closest string to a given string amongst many strings.
   #
   # ```
+  # require "levenshtein"
+  #
   # finder = Levenshtein::Finder.new "hallo"
   # finder.test "hay"
   # finder.test "hall"

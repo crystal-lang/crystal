@@ -71,6 +71,19 @@ struct Set(T)
     self
   end
 
+  # Adds *object* to the set and returns `true` on success
+  # and `false` if the value was already in the set.
+  #
+  # ```
+  # s = Set{1, 5}
+  # s.add? 8 # => true
+  # s.add? 8 # => false
+  # ```
+  def add?(object : T)
+    # TODO: optimize the hash lookup call
+    !!(add(object) unless includes?(object))
+  end
+
   # Adds `#each` element of *elems* to the set and returns `self`.
   #
   # ```
@@ -323,7 +336,7 @@ struct Set(T)
   end
 
   # Alias of `#to_s`.
-  def inspect(io)
+  def inspect(io : IO) : Nil
     to_s(io)
   end
 
@@ -350,7 +363,7 @@ struct Set(T)
   end
 
   # Writes a string representation of the set to *io*.
-  def to_s(io)
+  def to_s(io : IO) : Nil
     io << "Set{"
     join ", ", io, &.inspect(io)
     io << '}'

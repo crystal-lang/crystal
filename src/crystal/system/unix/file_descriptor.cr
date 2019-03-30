@@ -1,23 +1,20 @@
 require "c/fcntl"
+require "io/evented"
 
 # :nodoc:
 module Crystal::System::FileDescriptor
-  include IO::Syscall
+  include IO::Evented
 
   @fd : Int32
 
-  @read_event : Crystal::Event?
-  @write_event : Crystal::Event?
-
   private def unbuffered_read(slice : Bytes)
-    read_syscall_helper(slice, "Error reading file") do
-      # `to_i32` is acceptable because `Slice#size` is a Int32
-      LibC.read(@fd, slice, slice.size).to_i32
+    evented_read(slice, "Error reading file") do
+      LibC.read(@fd, slice, slice.size)
     end
   end
 
   private def unbuffered_write(slice : Bytes)
-    write_syscall_helper(slice, "Error writing file") do |slice|
+    evented_write(slice, "Error writing file") do |slice|
       LibC.write(@fd, slice, slice.size).tap do |return_code|
         if return_code == -1 && Errno.value == Errno::EBADF
           raise IO::Error.new "File not open for writing"
@@ -109,25 +106,7 @@ module Crystal::System::FileDescriptor
     # Mark the handle open, since we had to have dup'd a live handle.
     @closed = false
 
-    # We are now pointing to a new file descriptor, we need to re-register
-    # events with libevent and enqueue readers and writers again.
-    @read_event.try &.free
-    @read_event = nil
-
-    @write_event.try &.free
-    @write_event = nil
-
-    reschedule_waiting
-  end
-
-  private def add_read_event(timeout = @read_timeout) : Nil
-    event = @read_event ||= Crystal::EventLoop.create_fd_read_event(self)
-    event.add timeout
-  end
-
-  private def add_write_event(timeout = @write_timeout) : Nil
-    event = @write_event ||= Crystal::EventLoop.create_fd_write_event(self)
-    event.add timeout
+    evented_reopen
   end
 
   private def system_close
@@ -140,12 +119,7 @@ module Crystal::System::FileDescriptor
       end
     end
   ensure
-    @read_event.try &.free
-    @read_event = nil
-    @write_event.try &.free
-    @write_event = nil
-
-    reschedule_waiting
+    evented_close
   end
 
   def self.pipe(read_blocking, write_blocking)

@@ -84,8 +84,8 @@ struct Tuple
   # Creates a tuple from the given array, with elements casted to the given types.
   #
   # ```
-  # Tuple(String, Int64).from(["world", 2])       # => {"world", 2}
-  # Tuple(String, Int64).from(["world", 2]).class # => {String, Int64}
+  # Tuple(String, Int64).from(["world", 2_i64])       # => {"world", 2_i64}
+  # Tuple(String, Int64).from(["world", 2_i64]).class # => {String, Int64}
   # ```
   #
   # See also: `#from`.
@@ -101,11 +101,13 @@ struct Tuple
   # This allows you to easily pass an array as individual arguments to a method.
   #
   # ```
+  # require "json"
+  #
   # def speak_about(thing : String, n : Int64)
   #   "I see #{n} #{thing}s"
   # end
   #
-  # data = JSON.parse(%(["world", 2])).as_a
+  # data = JSON.parse(%(["world", 2])).as_a.map(&.raw)
   # speak_about(*{String, Int64}.from(data)) # => "I see 2 worlds"
   # ```
   def from(array : Array)
@@ -370,7 +372,7 @@ struct Tuple
   end
 
   # Same as `to_s`.
-  def inspect
+  def inspect : String
     to_s
   end
 
@@ -380,7 +382,7 @@ struct Tuple
   # tuple = {1, "hello"}
   # tuple.to_s # => "{1, \"hello\"}"
   # ```
-  def to_s(io)
+  def to_s(io : IO) : Nil
     io << '{'
     join ", ", io, &.inspect(io)
     io << '}'

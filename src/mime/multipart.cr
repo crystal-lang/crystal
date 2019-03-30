@@ -14,6 +14,8 @@ module MIME::Multipart
   # block is executing. The IO is closed as soon as the supplied block returns.
   #
   # ```
+  # require "mime/multipart"
+  #
   # multipart = "--aA40\r\nContent-Type: text/plain\r\n\r\nbody\r\n--aA40--"
   # MIME::Multipart.parse(IO::Memory.new(multipart), "aA40") do |headers, io|
   #   headers["Content-Type"] # => "text/plain"
@@ -33,6 +35,8 @@ module MIME::Multipart
   # `nil` is the boundary was not found.
   #
   # ```
+  # require "mime/multipart"
+  #
   # MIME::Multipart.parse_boundary("multipart/mixed; boundary=\"abcde\"") # => "abcde"
   # ```
   def self.parse_boundary(content_type)
@@ -54,6 +58,9 @@ module MIME::Multipart
   # block is executing. The IO is closed as soon as the supplied block returns.
   #
   # ```
+  # require "http"
+  # require "mime/multipart"
+  #
   # headers = HTTP::Headers{"Content-Type" => "multipart/mixed; boundary=aA40"}
   # body = "--aA40\r\nContent-Type: text/plain\r\n\r\nbody\r\n--aA40--"
   # request = HTTP::Request.new("POST", "/", headers, body)
@@ -93,6 +100,8 @@ module MIME::Multipart
   # Returns a unique string suitable for use as a multipart boundary.
   #
   # ```
+  # require "mime/multipart"
+  #
   # MIME::Multipart.generate_boundary # => "---------------------------dQu6bXHYb4m5zrRC3xPTGwV"
   # ```
   def self.generate_boundary

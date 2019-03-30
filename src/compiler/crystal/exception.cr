@@ -7,7 +7,7 @@ module Crystal
 
     @filename : String | VirtualFile | Nil
 
-    def to_s(io)
+    def to_s(io) : Nil
       to_s_with_source(nil, io)
     end
 

@@ -160,6 +160,8 @@ class HTTP::Server
   # and port the server listens on.
   #
   # ```
+  # require "http/server"
+  #
   # server = HTTP::Server.new { }
   # server.bind_tcp("127.0.0.100", 8080) # => Socket::IPAddress.new("127.0.0.100", 8080)
   # ```
@@ -178,6 +180,8 @@ class HTTP::Server
   # returning the local address and port the server listens on.
   #
   # ```
+  # require "http/server"
+  #
   # server = HTTP::Server.new { }
   # server.bind_tcp(8080) # => Socket::IPAddress.new("127.0.0.1", 8080)
   # ```
@@ -192,6 +196,8 @@ class HTTP::Server
   # and port the server listens on.
   #
   # ```
+  # require "http/server"
+  #
   # server = HTTP::Server.new { }
   # server.bind_tcp(Socket::IPAddress.new("127.0.0.100", 8080)) # => Socket::IPAddress.new("127.0.0.100", 8080)
   # server.bind_tcp(Socket::IPAddress.new("127.0.0.100", 0))    # => Socket::IPAddress.new("127.0.0.100", 35487)
@@ -208,6 +214,8 @@ class HTTP::Server
   # Returns the `Socket::IPAddress` with the determined port number.
   #
   # ```
+  # require "http/server"
+  #
   # server = HTTP::Server.new { }
   # server.bind_unused_port # => Socket::IPAddress.new("127.0.0.1", 12345)
   # ```
@@ -218,6 +226,8 @@ class HTTP::Server
   # Creates a `UNIXServer` bound to *path* and adds it as a socket.
   #
   # ```
+  # require "http/server"
+  #
   # server = HTTP::Server.new { }
   # server.bind_unix "/tmp/my-socket.sock"
   # ```
@@ -232,6 +242,8 @@ class HTTP::Server
   # Creates a `UNIXServer` bound to *address* and adds it as a socket.
   #
   # ```
+  # require "http/server"
+  #
   # server = HTTP::Server.new { }
   # server.bind_unix(Socket::UNIXAddress.new("/tmp/my-socket.sock"))
   # ```
@@ -245,6 +257,8 @@ class HTTP::Server
     # The SSL server wraps a `TCPServer` listening on `host:port`.
     #
     # ```
+    # require "http/server"
+    #
     # server = HTTP::Server.new { }
     # context = OpenSSL::SSL::Context::Server.new
     # context.certificate_chain = "openssl.crt"
@@ -265,6 +279,8 @@ class HTTP::Server
     # The SSL server wraps a `TCPServer` listening on an unused port on *host*.
     #
     # ```
+    # require "http/server"
+    #
     # server = HTTP::Server.new { }
     # context = OpenSSL::SSL::Context::Server.new
     # context.certificate_chain = "openssl.crt"
@@ -280,6 +296,8 @@ class HTTP::Server
     # The SSL server wraps a `TCPServer` listening on an unused port on *host*.
     #
     # ```
+    # require "http/server"
+    #
     # server = HTTP::Server.new { }
     # context = OpenSSL::SSL::Context::Server.new
     # context.certificate_chain = "openssl.crt"
@@ -295,10 +313,12 @@ class HTTP::Server
   # Returns the effective address it is bound to.
   #
   # ```
+  # require "http/server"
+  #
   # server = HTTP::Server.new { }
-  # server.bind("tcp://localhost:80")  # => Socket::IPAddress.new("127.0.0.1", 8080)
-  # server.bind("unix:///tmp/server.sock")  # => Socket::UNIXAddress.new("/tmp/server.sock")
-  # server.bind("tls://127.0.0.1:443?key=private.key&cert=certificate.cert&ca=ca.crt)  # => Socket::IPAddress.new("127.0.0.1", 443)
+  # server.bind("tcp://localhost:80")                                                  # => Socket::IPAddress.new("127.0.0.1", 8080)
+  # server.bind("unix:///tmp/server.sock")                                             # => Socket::UNIXAddress.new("/tmp/server.sock")
+  # server.bind("tls://127.0.0.1:443?key=private.key&cert=certificate.cert&ca=ca.crt") # => Socket::IPAddress.new("127.0.0.1", 443)
   # ```
   def bind(uri : String) : Socket::Address
     bind(URI.parse(uri))

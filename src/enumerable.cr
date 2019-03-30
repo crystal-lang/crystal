@@ -1124,7 +1124,7 @@ module Enumerable(T)
   # `pattern === element` is false.
   #
   # ```
-  # [1, 3, 2, 5, 4, 6].reject(3..5).should eq([1, 2, 6])
+  # [1, 3, 2, 5, 4, 6].reject(3..5) # => [1, 2, 6]
   # ```
   def reject(pattern)
     reject { |e| pattern === e }
@@ -1160,7 +1160,7 @@ module Enumerable(T)
   # `pattern === element`.
   #
   # ```
-  # [1, 3, 2, 5, 4, 6].select(3..5).should eq([3, 5, 4])
+  # [1, 3, 2, 5, 4, 6].select(3..5) # => [3, 5, 4]
   # ```
   def select(pattern)
     self.select { |e| pattern === e }

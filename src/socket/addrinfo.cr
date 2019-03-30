@@ -25,6 +25,8 @@ class Socket
     #
     # Example:
     # ```
+    # require "socket"
+    #
     # addrinfos = Socket::Addrinfo.resolve("example.org", "http", type: Socket::Type::STREAM, protocol: Socket::Protocol::TCP)
     # ```
     def self.resolve(domain, service, family : Family? = nil, type : Type = nil, protocol : Protocol = Protocol::IP, timeout = nil) : Array(Addrinfo)
@@ -136,6 +138,8 @@ class Socket
     #
     # Example:
     # ```
+    # require "socket"
+    #
     # addrinfos = Socket::Addrinfo.tcp("example.org", 80)
     # ```
     def self.tcp(domain, service, family = Family::UNSPEC, timeout = nil) : Array(Addrinfo)
@@ -153,6 +157,8 @@ class Socket
     #
     # Example:
     # ```
+    # require "socket"
+    #
     # addrinfos = Socket::Addrinfo.udp("example.org", 53)
     # ```
     def self.udp(domain, service, family = Family::UNSPEC, timeout = nil) : Array(Addrinfo)

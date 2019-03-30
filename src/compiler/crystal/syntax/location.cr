@@ -1,8 +1,6 @@
-require "../../../partial_comparable"
-
 # A location of an `ASTnode`, including its filename, line number and column number.
 class Crystal::Location
-  include PartialComparable(self)
+  include Comparable(self)
 
   getter line_number
   getter column_number
@@ -40,11 +38,11 @@ class Crystal::Location
     min <= self && self <= max
   end
 
-  def inspect(io)
+  def inspect(io : IO) : Nil
     to_s(io)
   end
 
-  def to_s(io)
+  def to_s(io : IO) : Nil
     io << filename << ':' << line_number << ':' << column_number
   end
 

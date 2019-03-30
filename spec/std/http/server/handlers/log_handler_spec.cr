@@ -13,7 +13,7 @@ describe HTTP::LogHandler do
     handler = HTTP::LogHandler.new(log_io)
     handler.next = ->(ctx : HTTP::Server::Context) { called = true }
     handler.call(context)
-    (log_io.to_s =~ %r(GET / - 200 \(\d.+\))).should be_truthy
+    log_io.to_s.should match %r(GET / - 200 \(\d+(\.\d+)?[mµn]s\))
     called.should be_true
   end
 

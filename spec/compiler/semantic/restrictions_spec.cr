@@ -62,6 +62,126 @@ describe "Restrictions" do
     end
   end
 
+  describe "restriction_of?" do
+    describe "Metaclass vs Metaclass-with-free-vars" do
+      it "inserts Metaclass before Metaclass-with-free-vars" do
+        assert_type(%(
+          def foo(a : T.class) forall T
+            1
+          end
+
+          def foo(a : Int32.class)
+            true
+          end
+
+          foo(Int32)
+          )) { bool }
+      end
+
+      it "keeps Metaclass before Metaclass-with-free-vars" do
+        assert_type(%(
+          def foo(a : Int32.class)
+            true
+          end
+
+          def foo(a : T.class) forall T
+            1
+          end
+
+          foo(Int32)
+          )) { bool }
+      end
+    end
+
+    describe "GenericClassType vs GenericClassInstanceType" do
+      it "inserts GenericClassInstanceType before GenericClassType" do
+        assert_type(%(
+          class Foo(T)
+          end
+
+          def bar(a : Foo)
+            1
+          end
+
+          def bar(a : Foo(Int32))
+            true
+          end
+
+          {
+            bar(Foo(Int32).new),
+            bar(Foo(Float64).new)
+          }
+          )) { tuple_of([bool, int32]) }
+      end
+
+      it "keeps GenericClassInstanceType before GenericClassType" do
+        assert_type(%(
+          class Foo(T)
+          end
+
+          def bar(a : Foo(Int32))
+            true
+          end
+
+          def bar(a : Foo)
+            1
+          end
+
+          {
+            bar(Foo(Int32).new),
+            bar(Foo(Float64).new)
+          }
+          )) { tuple_of([bool, int32]) }
+      end
+
+      it "works with classes in different namespaces" do
+        assert_type(%(
+          class Foo(T)
+          end
+
+          class Mod::Foo(G)
+          end
+
+          def bar(a : Foo(Int32))
+            true
+          end
+
+          def bar(a : Mod::Foo)
+            1
+          end
+
+          {
+            bar(Foo(Int32).new),
+            bar(Mod::Foo(Int32).new)
+          }
+          )) { tuple_of([bool, int32]) }
+      end
+
+      it "doesn't mix different generic classes" do
+        assert_type(%(
+          class Foo(T)
+          end
+
+          class Bar(U)
+          end
+
+          def bar(a : Bar(Int32))
+            true
+          end
+
+          def bar(a : Foo)
+            1
+          end
+
+          {
+            bar(Foo(Int32).new),
+            bar(Bar(Int32).new)
+          }
+          )) { tuple_of([int32, bool]) }
+      end
+    end
+  end
+
   it "self always matches instance type in restriction" do
     assert_type(%(
       class Foo

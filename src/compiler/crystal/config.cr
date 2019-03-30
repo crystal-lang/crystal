@@ -69,5 +69,9 @@ module Crystal
         "gnu"
       end
     end
+
+    def self.library_path
+      {{env("CRYSTAL_CONFIG_LIBRARY_PATH") || ""}}
+    end
   end
 end

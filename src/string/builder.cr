@@ -97,7 +97,7 @@ class String::Builder < IO
     @bytesize -= amount
   end
 
-  def to_s
+  def to_s : String
     raise "Can only invoke 'to_s' once on String::Builder" if @finished
     @finished = true
 
