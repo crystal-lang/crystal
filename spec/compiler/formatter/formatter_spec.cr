@@ -1324,4 +1324,7 @@ describe Crystal::Formatter do
   assert_format "def foo(x) # bar\n  # baz\nend"
   assert_format "def foo(x) : Int32 # bar\n  # baz\nend"
   assert_format "def foo(x) forall T # bar\n  # baz\nend"
+
+  # #7600
+  assert_format "enum E\n  A, # hello\n  B, # hello\n  C, # hello\nend"
 end

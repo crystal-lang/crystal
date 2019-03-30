@@ -2061,9 +2061,16 @@ module Crystal
 
       # This is the case of an enum member
       if node.name[0].ascii_uppercase? && @token.type == :","
-        write ", "
-        next_token_skip_space
-        @exp_needs_indent = @token.type == :NEWLINE
+        write ","
+        next_token
+        @lexer.skip_space
+        if @token.type == :COMMENT
+          write_comment
+          @exp_needs_indent = true
+        else
+          write " "
+          @exp_needs_indent = @token.type == :NEWLINE
+        end
       end
 
       false
