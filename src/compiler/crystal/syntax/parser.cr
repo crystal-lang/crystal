@@ -5522,17 +5522,20 @@ module Crystal
           next_token_skip_space
           if @token.type == :"="
             next_token_skip_space_or_newline
-
             constant_value = parse_logical_or
-            next_token_skip_statement_end
           else
             constant_value = nil
-            skip_statement_end
           end
 
+          skip_space
+
           case @token.type
-          when :",", :";"
+          when :",", :";", :NEWLINE, :EOF
             next_token_skip_statement_end
+          else
+            unless @token.keyword?(:end)
+              raise "expecting ',', ';', 'end' or newline after enum member", location
+            end
           end
 
           arg = Arg.new(constant_name, constant_value).at(location).at_end(constant_value || location)
