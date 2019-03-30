@@ -1342,6 +1342,26 @@ describe "Array" do
         a.zip(b) { |x, y| r += "#{x}:#{y}," }
         r.should eq("1:4,2:5,3:6,")
       end
+
+      it "works with iterable" do
+        a = [1, 2, 3]
+        b = ('a'..'c')
+        r = [] of {Int32, Char}
+        a.zip(b) do |x, y|
+          r << {x, y}
+        end
+        r.should eq([{1, 'a'}, {2, 'b'}, {3, 'c'}])
+      end
+
+      it "works with iterator" do
+        a = [1, 2, 3]
+        b = ('a'..'c').each
+        r = [] of {Int32, Char}
+        a.zip(b) do |x, y|
+          r << {x, y}
+        end
+        r.should eq([{1, 'a'}, {2, 'b'}, {3, 'c'}])
+      end
     end
 
     describe "when no block is provided" do
@@ -1349,7 +1369,33 @@ describe "Array" do
         it "returns an array of paired elements (tuples)" do
           a, b = [1, 2, 3], ["a", "b", "c"]
           r = a.zip(b)
+          r.should be_a(Array({Int32, String}))
           r.should eq([{1, "a"}, {2, "b"}, {3, "c"}])
+        end
+
+        it "works with iterable" do
+          a = [1, 2, 3]
+          b = ('a'..'c')
+          r = a.zip(b)
+          r.should be_a(Array({Int32, Char}))
+          r.should eq([{1, 'a'}, {2, 'b'}, {3, 'c'}])
+        end
+
+        it "works with iterator" do
+          a = [1, 2, 3]
+          b = ('a'..'c').each
+          r = a.zip(b)
+          r.should be_a(Array({Int32, Char}))
+          r.should eq([{1, 'a'}, {2, 'b'}, {3, 'c'}])
+        end
+
+        it "zips three things" do
+          a = [1, 2, 3]
+          b = 'a'..'c'
+          c = ('x'..'z').each
+          r = a.zip(b, c)
+          r.should be_a(Array({Int32, Char, Char}))
+          r.should eq([{1, 'a', 'x'}, {2, 'b', 'y'}, {3, 'c', 'z'}])
         end
       end
     end
@@ -1363,6 +1409,26 @@ describe "Array" do
           a.zip?(b) { |x, y| r += "#{x}:#{y}," }
           r.should eq("1:4,2:5,3:,")
         end
+
+        it "works with iterable" do
+          a = [1, 2, 3]
+          b = ('a'..'b')
+          r = [] of {Int32, Char?}
+          a.zip?(b) do |x, y|
+            r << {x, y}
+          end
+          r.should eq([{1, 'a'}, {2, 'b'}, {3, nil}])
+        end
+
+        it "works with iterator" do
+          a = [1, 2, 3]
+          b = ('a'..'b').each
+          r = [] of {Int32, Char?}
+          a.zip?(b) do |x, y|
+            r << {x, y}
+          end
+          r.should eq([{1, 'a'}, {2, 'b'}, {3, nil}])
+        end
       end
     end
 
@@ -1373,6 +1439,31 @@ describe "Array" do
             a, b = [1, 2, 3], ["a", "b"]
             r = a.zip?(b)
             r.should eq([{1, "a"}, {2, "b"}, {3, nil}])
+          end
+
+          it "works with iterable" do
+            a = [1, 2, 3]
+            b = ('a'..'b')
+            r = a.zip?(b)
+            r.should be_a(Array({Int32, Char?}))
+            r.should eq([{1, 'a'}, {2, 'b'}, {3, nil}])
+          end
+
+          it "works with iterator" do
+            a = [1, 2, 3]
+            b = ('a'..'b').each
+            r = a.zip?(b)
+            r.should be_a(Array({Int32, Char?}))
+            r.should eq([{1, 'a'}, {2, 'b'}, {3, nil}])
+          end
+
+          it "zips three things" do
+            a = [1, 2, 3]
+            b = 'a'..'b'
+            c = ('x'..'y').each
+            r = a.zip?(b, c)
+            r.should be_a(Array({Int32, Char?, Char?}))
+            r.should eq([{1, 'a', 'x'}, {2, 'b', 'y'}, {3, nil, nil}])
           end
         end
       end
