@@ -1318,4 +1318,21 @@ describe Crystal::Formatter do
   assert_format "long_variable_name = [\n  {\n    :foo => 1,\n  },\n  {\n    :bar => 2,\n  },\n]"
   assert_format "long_variable_name = [1, 2, 3,\n                      4, 5, 6]"
   assert_format "long_variable_name = [1, 2, 3, # foo\n                      4, 5, 6]"
+
+  # #7599
+  assert_format <<-CODE
+    # module comment
+    module Foo
+      # class comment
+      class Bar
+        def method # this is a method
+          # method comment
+          if 1 == 1
+            # block comment
+            a = 1
+          end
+        end
+      end
+    end
+    CODE
 end

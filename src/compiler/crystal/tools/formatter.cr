@@ -76,7 +76,6 @@ module Crystal
     @implicit_exception_handler_indent : Int32
     @last_write : String
     @exp_needs_indent : Bool
-    @inside_def : Int32
     @when_infos : Array(AlignInfo)
     @hash_infos : Array(AlignInfo)
     @assign_infos : Array(AlignInfo)
@@ -113,7 +112,6 @@ module Crystal
       @implicit_exception_handler_indent = 0
       @last_write = ""
       @exp_needs_indent = true
-      @inside_def = 0
 
       # When we parse a type, parentheses information is not stored in ASTs, unlike
       # for an Expressions node. So when we are printing a type (Path, ProcNotation, Union, etc.)
@@ -1399,8 +1397,6 @@ module Crystal
 
     def visit(node : Def)
       @implicit_exception_handler_indent = @indent
-      @inside_def += 1
-
       write_keyword :abstract, " " if node.abstract?
 
       write_keyword :def, " ", skip_space_or_newline: false
@@ -1417,7 +1413,7 @@ module Crystal
       @lexer.wants_def_or_macro_name = false
 
       write node.name
-      next_token_skip_space
+      next_token_skip_space(@indent + 2)
       next_token_skip_space if @token.type == :"="
 
       to_skip = format_def_args node
@@ -1452,8 +1448,6 @@ module Crystal
       unless node.abstract?
         format_nested_with_end body
       end
-
-      @inside_def -= 1
 
       false
     end
@@ -4179,9 +4173,9 @@ module Crystal
       end
     end
 
-    def next_token_skip_space
+    def next_token_skip_space(indent : Int32 = @indent)
       next_token
-      skip_space
+      skip_space(indent)
     end
 
     def next_token_skip_space_or_newline
@@ -4342,7 +4336,9 @@ module Crystal
       while @token.type == :COMMENT
         empty_line = @line_output.to_s.strip.empty?
         if empty_line
-          write_indent if needs_indent
+          if needs_indent
+            write_indent
+          end
         end
 
         value = @token.value.to_s.strip
