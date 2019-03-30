@@ -413,6 +413,48 @@ describe "Slice" do
     slice = Slice.new(6, read_only: true) { |i| i + 1 }
     slice[2..4].read_only?.should be_true
   end
+
+  describe "#clone" do
+    it "clones primitive" do
+      slice = Slice[1, 2]
+      slice.clone.should eq slice
+    end
+
+    it "clones non-primitive" do
+      slice = Slice["abc", "a"]
+      slice.clone.should eq slice
+    end
+
+    it "buffer copy" do
+      slice = Slice["foo"]
+      copy = slice.clone
+      slice[0] = "bar"
+      copy.should_not eq slice
+    end
+
+    it "deep copy" do
+      slice = Slice[["foo"]]
+      copy = slice.clone
+      slice[0] << "bar"
+      copy.should_not eq slice
+    end
+  end
+
+  describe "#dup" do
+    it "buffer copy" do
+      slice = Slice["foo"]
+      copy = slice.dup
+      slice[0] = "bar"
+      copy.should_not eq slice
+    end
+
+    it "don't deep copy" do
+      slice = Slice[["foo"]]
+      copy = slice.dup
+      slice[0] << "bar"
+      copy.should eq slice
+    end
+  end
 end
 
 private def itself(*args)

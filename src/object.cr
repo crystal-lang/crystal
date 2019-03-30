@@ -91,7 +91,7 @@ class Object
   # Descendants must usually **not** override this method. Instead,
   # they must override `to_s(io)`, which must append to the given
   # IO object.
-  def to_s
+  def to_s : String
     String.build do |io|
       to_s io
     end
@@ -102,7 +102,7 @@ class Object
   #
   # An object must never append itself to the io argument,
   # as this will in turn call `to_s(io)` on it.
-  abstract def to_s(io : IO)
+  abstract def to_s(io : IO) : Nil
 
   # Returns a `String` representation of this object suitable
   # to be embedded inside other expressions, sometimes providing
@@ -140,7 +140,7 @@ class Object
   # Classes must usually **not** override this method. Instead,
   # they must override `inspect(io)`, which must append to the
   # given `IO` object.
-  def inspect
+  def inspect : String
     String.build do |io|
       inspect io
     end
@@ -149,8 +149,10 @@ class Object
   # Appends a string representation of this object
   # to the given `IO` object.
   #
+  # Similar to `to_s(io)`, but usually appends more information
+  # about this object.
   # See `#inspect`.
-  def inspect(io : IO)
+  def inspect(io : IO) : Nil
     to_s io
   end
 

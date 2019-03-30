@@ -216,7 +216,8 @@ class Crystal::Doc::Generator
     return false unless type.namespace == crystal_type
 
     {"BUILD_COMMIT", "BUILD_DATE", "CACHE_DIR", "DEFAULT_PATH",
-     "DESCRIPTION", "PATH", "VERSION", "LLVM_VERSION"}.each do |name|
+     "DESCRIPTION", "PATH", "VERSION", "LLVM_VERSION",
+     "LIBRARY_PATH"}.each do |name|
       return true if type == crystal_type.types[name]?
     end
 
@@ -261,7 +262,7 @@ class Crystal::Doc::Generator
     types = [] of Constant
 
     parent.type.types?.try &.each_value do |type|
-      if type.is_a?(Const) && must_include? type
+      if type.is_a?(Const) && must_include?(type) && !type.private?
         types << Constant.new(self, parent, type)
       end
     end

@@ -237,6 +237,12 @@ struct Int
     end
   end
 
+  def <=>(other : Int) : Int32
+    # Override Number#<=> because when comparing
+    # Int vs Int there's no way we can return `nil`
+    self > other ? 1 : (self < other ? -1 : 0)
+  end
+
   def abs
     self >= 0 ? self : -self
   end
@@ -445,15 +451,15 @@ struct Int
   private DIGITS_UPCASE   = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"
   private DIGITS_BASE62   = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
-  def to_s
+  def to_s : String
     to_s(10)
   end
 
-  def to_s(io : IO)
+  def to_s(io : IO) : Nil
     to_s(10, io)
   end
 
-  def to_s(base : Int, upcase : Bool = false)
+  def to_s(base : Int, upcase : Bool = false) : String
     raise ArgumentError.new("Invalid base #{base}") unless 2 <= base <= 36 || base == 62
     raise ArgumentError.new("upcase must be false for base 62") if upcase && base == 62
 
@@ -469,7 +475,7 @@ struct Int
     end
   end
 
-  def to_s(base : Int, io : IO, upcase : Bool = false)
+  def to_s(base : Int, io : IO, upcase : Bool = false) : Nil
     raise ArgumentError.new("Invalid base #{base}") unless 2 <= base <= 36 || base == 62
     raise ArgumentError.new("upcase must be false for base 62") if upcase && base == 62
 
@@ -535,6 +541,9 @@ struct Int
   # -15.popcount # => 29
   # ```
   abstract def popcount
+
+  # Returns the number of trailing `0`-bits.
+  abstract def trailing_zeros_count
 
   private class TimesIterator(T)
     include Iterator(T)
@@ -623,6 +632,15 @@ struct Int8
     Intrinsics.popcount8(self)
   end
 
+  # Returns the number of leading `0`-bits.
+  def leading_zeros_count
+    Intrinsics.countleading8(self, false)
+  end
+
+  def trailing_zeros_count
+    Intrinsics.counttrailing8(self, false)
+  end
+
   def clone
     self
   end
@@ -648,6 +666,15 @@ struct Int16
 
   def popcount
     Intrinsics.popcount16(self)
+  end
+
+  # Returns the number of leading `0`-bits.
+  def leading_zeros_count
+    Intrinsics.countleading16(self, false)
+  end
+
+  def trailing_zeros_count
+    Intrinsics.counttrailing16(self, false)
   end
 
   def clone
@@ -677,6 +704,15 @@ struct Int32
     Intrinsics.popcount32(self)
   end
 
+  # Returns the number of leading `0`-bits.
+  def leading_zeros_count
+    Intrinsics.countleading32(self, false)
+  end
+
+  def trailing_zeros_count
+    Intrinsics.counttrailing32(self, false)
+  end
+
   def clone
     self
   end
@@ -702,6 +738,15 @@ struct Int64
 
   def popcount
     Intrinsics.popcount64(self)
+  end
+
+  # Returns the number of leading `0`-bits.
+  def leading_zeros_count
+    Intrinsics.countleading64(self, false)
+  end
+
+  def trailing_zeros_count
+    Intrinsics.counttrailing64(self, false)
   end
 
   def clone
@@ -732,6 +777,15 @@ struct Int128
     Intrinsics.popcount128(self)
   end
 
+  # Returns the number of leading `0`-bits.
+  def leading_zeros_count
+    Intrinsics.countleading128(self, false)
+  end
+
+  def trailing_zeros_count
+    Intrinsics.counttrailing128(self, false)
+  end
+
   def clone
     self
   end
@@ -757,6 +811,15 @@ struct UInt8
 
   def popcount
     Intrinsics.popcount8(self)
+  end
+
+  # Returns the number of leading `0`-bits.
+  def leading_zeros_count
+    Intrinsics.countleading8(self, false)
+  end
+
+  def trailing_zeros_count
+    Intrinsics.counttrailing8(self, false)
   end
 
   def clone
@@ -786,6 +849,15 @@ struct UInt16
     Intrinsics.popcount16(self)
   end
 
+  # Returns the number of leading `0`-bits.
+  def leading_zeros_count
+    Intrinsics.countleading16(self, false)
+  end
+
+  def trailing_zeros_count
+    Intrinsics.counttrailing16(self, false)
+  end
+
   def clone
     self
   end
@@ -811,6 +883,15 @@ struct UInt32
 
   def popcount
     Intrinsics.popcount32(self)
+  end
+
+  # Returns the number of leading `0`-bits.
+  def leading_zeros_count
+    Intrinsics.countleading32(self, false)
+  end
+
+  def trailing_zeros_count
+    Intrinsics.counttrailing32(self, false)
   end
 
   def clone
@@ -840,6 +921,15 @@ struct UInt64
     Intrinsics.popcount64(self)
   end
 
+  # Returns the number of leading `0`-bits.
+  def leading_zeros_count
+    Intrinsics.countleading64(self, false)
+  end
+
+  def trailing_zeros_count
+    Intrinsics.counttrailing64(self, false)
+  end
+
   def clone
     self
   end
@@ -865,6 +955,15 @@ struct UInt128
 
   def popcount
     Intrinsics.popcount128(self)
+  end
+
+  # Returns the number of leading `0`-bits.
+  def leading_zeros_count
+    Intrinsics.countleading128(self, false)
+  end
+
+  def trailing_zeros_count
+    Intrinsics.counttrailing128(self, false)
   end
 
   def clone

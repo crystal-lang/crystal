@@ -88,7 +88,9 @@ class Crystal::Command
     private def normalize_paths(paths)
       path_start = ".#{File::SEPARATOR}"
       paths.map do |path|
-        path = path_start + path unless path.starts_with?(path_start)
+        unless path.starts_with?(path_start) || path.starts_with?(File::SEPARATOR)
+          path = path_start + path
+        end
         path.rstrip(File::SEPARATOR)
       end
     end

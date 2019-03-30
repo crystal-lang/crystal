@@ -92,10 +92,9 @@ struct Time::Format
   end
 
   # Formats a `Time` into the given *io*.
-  def format(time : Time, io : IO)
+  def format(time : Time, io : IO) : Nil
     formatter = Formatter.new(time, io)
     formatter.visit(pattern)
-    io
   end
 end
 

@@ -58,7 +58,7 @@ class File
       new(int.to_i16)
     end
 
-    def to_s(io)
+    def to_s(io : IO) : Nil
       io << (owner_read? ? 'r' : '-')
       io << (owner_write? ? 'w' : '-')
       io << (owner_execute? ? 'x' : '-')

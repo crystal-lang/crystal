@@ -81,6 +81,8 @@ module HTTP::FormData
   # Parses a multipart/form-data message, yielding a `FormData::Parser`.
   #
   # ```
+  # require "http"
+  #
   # form_data = "--aA40\r\nContent-Disposition: form-data; name=\"field1\"\r\n\r\nfield data\r\n--aA40--"
   # HTTP::FormData.parse(IO::Memory.new(form_data), "aA40") do |part|
   #   part.name             # => "field1"
@@ -99,6 +101,8 @@ module HTTP::FormData
   # Parses a multipart/form-data message, yielding a `FormData::Parser`.
   #
   # ```
+  # require "http"
+  #
   # headers = HTTP::Headers{"Content-Type" => "multipart/form-data; boundary=aA40"}
   # body = "--aA40\r\nContent-Disposition: form-data; name=\"field1\"\r\n\r\nfield data\r\n--aA40--"
   # request = HTTP::Request.new("POST", "/", headers, body)
@@ -171,6 +175,8 @@ module HTTP::FormData
   # `Builder#finish` is called on the builder when the block returns.
   #
   # ```
+  # require "http"
+  #
   # io = IO::Memory.new
   # HTTP::FormData.build(io, "boundary") do |builder|
   #   builder.field("foo", "bar")
@@ -191,6 +197,8 @@ module HTTP::FormData
   # builder when the block returns.
   #
   # ```
+  # require "http"
+  #
   # io = IO::Memory.new
   # response = HTTP::Server::Response.new io
   # HTTP::FormData.build(response, "boundary") do |builder|

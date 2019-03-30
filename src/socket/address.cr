@@ -64,6 +64,8 @@ class Socket
   #
   # Example:
   # ```
+  # require "socket"
+  #
   # Socket::IPAddress.new("127.0.0.1", 8080)
   # Socket::IPAddress.new("fe80::2ab2:bdff:fe59:8e2c", 1234)
   # ```
@@ -119,6 +121,8 @@ class Socket
     # raised. Domain names will not be resolved.
     #
     # ```
+    # require "socket"
+    #
     # Socket::IPAddress.parse("tcp://127.0.0.1:8080") # => Socket::IPAddress.new("127.0.0.1", 8080)
     # Socket::IPAddress.parse("udp://[::1]:8080")     # => Socket::IPAddress.new("::1", 8080)
     # ```
@@ -240,7 +244,7 @@ class Socket
         address == other.address
     end
 
-    def to_s(io)
+    def to_s(io : IO) : Nil
       if family == Family::INET6
         io << '[' << address << ']' << ':' << port
       else
@@ -248,7 +252,7 @@ class Socket
       end
     end
 
-    def inspect(io)
+    def inspect(io : IO) : Nil
       io << "Socket::IPAddress("
       to_s(io)
       io << ")"
@@ -293,6 +297,8 @@ class Socket
   #
   # Example:
   # ```
+  # require "socket"
+  #
   # Socket::UNIXAddress.new("/tmp/my.sock")
   # ```
   struct UNIXAddress < Address
@@ -323,6 +329,8 @@ class Socket
     # path.
     #
     # ```
+    # require "socket"
+    #
     # Socket::UNIXAddress.parse("unix:///foo.sock") # => Socket::UNIXAddress.new("/foo.sock")
     # Socket::UNIXAddress.parse("unix://foo.sock")  # => Socket::UNIXAddress.new("foo.sock")
     # ```
@@ -361,7 +369,7 @@ class Socket
       path == other.path
     end
 
-    def to_s(io)
+    def to_s(io : IO) : Nil
       io << path
     end
 

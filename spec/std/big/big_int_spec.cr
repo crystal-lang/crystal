@@ -326,6 +326,10 @@ describe "BigInt" do
     5.to_big_i.popcount.should eq(2)
   end
 
+  it "#trailing_zeros_count" do
+    "00000000000000001000000000001000".to_big_i(base: 2).trailing_zeros_count.should eq(3)
+  end
+
   it "#hash" do
     b1 = 5.to_big_i
     b2 = 5.to_big_i
@@ -338,6 +342,11 @@ describe "BigInt" do
   it "clones" do
     x = 1.to_big_i
     x.clone.should eq(x)
+  end
+
+  describe "#humanize_bytes" do
+    it { BigInt.new("1180591620717411303424").humanize_bytes.should eq("1.0ZiB") }
+    it { BigInt.new("1208925819614629174706176").humanize_bytes.should eq("1.0YiB") }
   end
 end
 

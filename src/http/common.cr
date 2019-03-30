@@ -214,6 +214,8 @@ module HTTP
   # Parse a time string using the formats specified by [RFC 2616](https://tools.ietf.org/html/rfc2616#section-3.3.1)
   #
   # ```
+  # require "http"
+  #
   # HTTP.parse_time("Sun, 14 Feb 2016 21:00:00 GMT")  # => "2016-02-14 21:00:00 UTC"
   # HTTP.parse_time("Sunday, 14-Feb-16 21:00:00 GMT") # => "2016-02-14 21:00:00 UTC"
   # HTTP.parse_time("Sun Feb 14 21:00:00 2016")       # => "2016-02-14 21:00:00 UTC"
@@ -232,6 +234,8 @@ module HTTP
   # timezone `GMT` (interpreted as `UTC`).
   #
   # ```
+  # require "http"
+  #
   # HTTP.format_time(Time.utc(2016, 2, 15)) # => "Mon, 15 Feb 2016 00:00:00 GMT"
   # ```
   #
@@ -244,6 +248,8 @@ module HTTP
   # quoted-string.
   #
   # ```
+  # require "http"
+  #
   # quoted = %q(\"foo\\bar\")
   # HTTP.dequote_string(quoted) # => %q("foo\bar")
   # ```
@@ -269,6 +275,8 @@ module HTTP
   # contains an invalid character.
   #
   # ```
+  # require "http"
+  #
   # string = %q("foo\ bar")
   # io = IO::Memory.new
   # HTTP.quote_string(string, io)
@@ -293,6 +301,8 @@ module HTTP
   # quoted-string. May raise when *string* contains an invalid character.
   #
   # ```
+  # require "http"
+  #
   # string = %q("foo\ bar")
   # HTTP.quote_string(string) # => %q(\"foo\\\ bar\")
   # ```
