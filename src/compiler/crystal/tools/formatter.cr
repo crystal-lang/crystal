@@ -1417,8 +1417,11 @@ module Crystal
       @lexer.wants_def_or_macro_name = false
 
       write node.name
-      next_token_skip_space
-      next_token_skip_space if @token.type == :"="
+
+      indent do
+        next_token_skip_space
+        next_token_skip_space if @token.type == :"="
+      end
 
       to_skip = format_def_args node
 
