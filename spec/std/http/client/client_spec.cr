@@ -1,4 +1,4 @@
-require "spec"
+require "../spec_helper"
 require "openssl"
 require "http/client"
 require "http/server"
@@ -132,11 +132,10 @@ module HTTP
         context.response.print context.request.headers["Host"]
       end
       address = server.bind_unused_port "::1"
-      spawn { server.listen }
 
-      HTTP::Client.get("http://[::1]:#{address.port}/").body.should eq("[::1]:#{address.port}")
-
-      server.close
+      run_server(server) do
+        HTTP::Client.get("http://[::1]:#{address.port}/").body.should eq("[::1]:#{address.port}")
+      end
     end
 
     it "sends a 'connection: close' header on one-shot request" do
@@ -144,11 +143,10 @@ module HTTP
         context.response.print context.request.headers["connection"]
       end
       address = server.bind_unused_port "::1"
-      spawn { server.listen }
 
-      HTTP::Client.get("http://[::1]:#{address.port}/").body.should eq("close")
-
-      server.close
+      run_server(server) do
+        HTTP::Client.get("http://[::1]:#{address.port}/").body.should eq("close")
+      end
     end
 
     it "sends a 'connection: close' header on one-shot request with block" do
@@ -156,13 +154,12 @@ module HTTP
         context.response.print context.request.headers["connection"]
       end
       address = server.bind_unused_port "::1"
-      spawn { server.listen }
 
-      HTTP::Client.get("http://[::1]:#{address.port}/") do |response|
-        response.body_io.gets_to_end
-      end.should eq("close")
-
-      server.close
+      run_server(server) do
+        HTTP::Client.get("http://[::1]:#{address.port}/") do |response|
+          response.body_io.gets_to_end
+        end.should eq("close")
+      end
     end
 
     it "doesn't read the body if request was HEAD" do
