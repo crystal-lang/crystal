@@ -171,7 +171,12 @@ class HTTP::Server
   def bind_tcp(host : String, port : Int32, reuse_port : Bool = false) : Socket::IPAddress
     tcp_server = TCPServer.new(host, port, reuse_port: reuse_port)
 
-    bind(tcp_server)
+    begin
+      bind(tcp_server)
+    rescue exc
+      tcp_server.close
+      raise exc
+    end
 
     tcp_server.local_address
   end
@@ -234,7 +239,12 @@ class HTTP::Server
   def bind_unix(path : String) : Socket::UNIXAddress
     server = UNIXServer.new(path)
 
-    bind(server)
+    begin
+      bind(server)
+    rescue exc
+      server.close
+      raise exc
+    end
 
     server.local_address
   end
@@ -269,7 +279,12 @@ class HTTP::Server
       tcp_server = TCPServer.new(host, port, reuse_port: reuse_port)
       server = OpenSSL::SSL::Server.new(tcp_server, context)
 
-      bind(server)
+      begin
+        bind(server)
+      rescue exc
+        server.close
+        raise exc
+      end
 
       tcp_server.local_address
     end

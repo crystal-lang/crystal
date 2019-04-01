@@ -14,17 +14,32 @@ describe Socket do
   end
 
   it ".accept" do
+    client_done = Channel(Nil).new
     server = Socket.new(Socket::Family::INET, Socket::Type::STREAM, Socket::Protocol::TCP)
-    port = unused_local_port
-    server.bind("0.0.0.0", port)
-    server.listen
 
-    spawn { TCPSocket.new("127.0.0.1", port).close }
+    begin
+      port = unused_local_port
+      server.bind("0.0.0.0", port)
+      server.listen
 
-    client = server.accept
-    client.family.should eq(Socket::Family::INET)
-    client.type.should eq(Socket::Type::STREAM)
-    client.protocol.should eq(Socket::Protocol::TCP)
+      spawn do
+        TCPSocket.new("127.0.0.1", port).close
+      ensure
+        client_done.send nil
+      end
+
+      client = server.accept
+      begin
+        client.family.should eq(Socket::Family::INET)
+        client.type.should eq(Socket::Type::STREAM)
+        client.protocol.should eq(Socket::Protocol::TCP)
+      ensure
+        client.close
+      end
+    ensure
+      server.close
+      client_done.receive
+    end
   end
 
   it "sends messages" do
