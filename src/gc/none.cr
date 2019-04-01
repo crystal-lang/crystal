@@ -82,6 +82,22 @@ module GC
   end
 
   # :nodoc:
+  def self.lock_read
+  end
+
+  # :nodoc:
+  def self.unlock_read
+  end
+
+  # :nodoc:
+  def self.lock_write
+  end
+
+  # :nodoc:
+  def self.unlock_write
+  end
+
+  # :nodoc:
   def self.push_stack(stack_top, stack_bottom)
   end
 end

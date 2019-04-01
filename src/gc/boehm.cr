@@ -93,6 +93,10 @@ module GC
       LibGC.set_handle_fork(1)
     {% end %}
     LibGC.init
+
+    LibGC.set_start_callback ->do
+      GC.lock_write
+    end
   end
 
   def self.collect
@@ -198,6 +202,28 @@ module GC
   end
 
   # :nodoc:
+  def self.lock_read
+    {% if flag?(:preview_mt) %}
+      GC.disable
+    {% end %}
+  end
+
+  # :nodoc:
+  def self.unlock_read
+    {% if flag?(:preview_mt) %}
+      GC.enable
+    {% end %}
+  end
+
+  # :nodoc:
+  def self.lock_write
+  end
+
+  # :nodoc:
+  def self.unlock_write
+  end
+
+  # :nodoc:
   def self.push_stack(stack_top, stack_bottom)
     LibGC.push_all_eager(stack_top, stack_bottom)
   end
@@ -218,5 +244,7 @@ module GC
     Fiber.unsafe_each do |fiber|
       fiber.push_gc_roots unless fiber.running?
     end
+
+    GC.unlock_write
   end
 end

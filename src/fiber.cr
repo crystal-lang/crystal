@@ -70,9 +70,7 @@ class Fiber
 
   # :nodoc:
   def run
-    {% if flag?(:preview_mt) %}
-      GC.enable
-    {% end %}
+    GC.unlock_read
     @proc.call
   rescue ex
     if name = @name
