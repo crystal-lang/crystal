@@ -230,12 +230,12 @@ module GC
 
   # :nodoc:
   def self.before_collect(&block)
-    @@prev_push_other_roots = LibGC.get_push_other_roots
     @@curr_push_other_roots = block
+    @@prev_push_other_roots = LibGC.get_push_other_roots
 
     LibGC.set_push_other_roots ->do
-      @@prev_push_other_roots.try(&.call)
       @@curr_push_other_roots.try(&.call)
+      @@prev_push_other_roots.try(&.call)
     end
   end
 
@@ -244,6 +244,13 @@ module GC
     Fiber.unsafe_each do |fiber|
       fiber.push_gc_roots unless fiber.running?
     end
+
+    {% if flag?(:preview_mt) %}
+      Thread.unsafe_each do |thread|
+        fiber = thread.scheduler.@current
+        GC.set_stackbottom(thread, fiber.@stack_bottom)
+      end
+    {% end %}
 
     GC.unlock_write
   end

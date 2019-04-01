@@ -61,7 +61,6 @@ class Crystal::Scheduler
     ensure_single_resume(fiber)
     GC.lock_read
     current, @current = @current, fiber
-    GC.set_stackbottom(Thread.current, fiber.@stack_bottom)
     Fiber.swapcontext(pointerof(current.@context), pointerof(fiber.@context))
     GC.unlock_read
   end
