@@ -1,4 +1,5 @@
 require "spec"
+require "../spec_helper"
 
 private def wait_for(timeout = 5.seconds)
   now = Time.monotonic
