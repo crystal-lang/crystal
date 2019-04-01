@@ -27,14 +27,20 @@ class Foo
 end
 
 class Context
+  enum State
+    Wait
+    Run
+  end
+
   property expected_depth : Int32 = 0
   @worker_fibers = Array(Fiber).new(0)
 
   def initialize(@fibers : Int32, @threads : Int32, @log : Bool)
     @fibers_reached = Atomic(Int32).new(0)
+    @threads_reached = Atomic(Int32).new(0)
     @fiber_depths = Array(Int32).new(@fibers, 0)
-    @pending_fibers_queues = Array(Array(Fiber)).new(@fibers) { Array(Fiber).new }
-    @threads_state = :wait
+    @pending_fibers_queues = Array(Array(Fiber)).new(@threads) { Array(Fiber).new }
+    @threads_state = Atomic(State).new(State::Wait)
 
     # Create worker fibers but do not start them yet.
     # Each fiber will try to reach the `expected_depth` value
@@ -86,6 +92,7 @@ class Context
 
     @expected_depth = depth
     @fibers_reached.set(0)
+    @threads_reached.set(0)
 
     # allocate fibers on each thread queue.
     @pending_fibers_queues.each &.clear
@@ -93,14 +100,19 @@ class Context
       @pending_fibers_queues[index % @threads] << f
     end
 
-    @threads_state = :run
+    @threads_state.set(State::Run)
 
     # spin wait for all fibers to finish
     while @fibers_reached.get < @fibers
     end
     log "All fibers_reached!"
 
-    @threads_state = :wait
+    @threads_state.set(State::Wait)
+
+    # spin wait for threads to finish the round
+    while (c = @threads_reached.get) < @threads
+    end
+    log "All threads_reached!"
   end
 
   def notify_depth_reached
@@ -113,8 +125,13 @@ class Context
 
   def pick_and_resume_fiber(queue_index)
     fiber = @pending_fibers_queues[queue_index].shift?
-    # log "Picking #{fiber}"
-    fiber.resume if fiber
+
+    if fiber
+      fiber.resume
+      true
+    else
+      false
+    end
   end
 
   def gc_stats
@@ -124,11 +141,22 @@ class Context
 
   def create_thread(queue_index)
     Thread.new do
+      # this loop will iterate once per #run_until_depth
       while true
-        case @threads_state
-        when :run
-          pick_and_resume_fiber(queue_index)
+        # wait for queues to be ready
+        while @threads_state.get != State::Run
         end
+
+        # consume the queue until empty
+        while pick_and_resume_fiber(queue_index)
+        end
+
+        # wait for all worker threads to finish
+        while @threads_state.get != State::Wait
+        end
+
+        # sync all workers threads end of loop
+        @threads_reached.add(1)
       end
     end
   end
