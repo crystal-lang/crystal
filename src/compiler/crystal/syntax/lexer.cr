@@ -995,7 +995,14 @@ module Crystal
       when 'o'
         case next_char
         when 'f'
-          return check_ident_or_keyword(:of, start)
+          if peek_next_char == 'f'
+            next_char
+            if next_char == 's' && next_char == 'e' && next_char == 't' && next_char == 'o' && next_char == 'f'
+              return check_ident_or_keyword(:offsetof, start)
+            end
+          else
+            return check_ident_or_keyword(:of, start)
+          end
         when 'u'
           if next_char == 't'
             return check_ident_or_keyword(:out, start)

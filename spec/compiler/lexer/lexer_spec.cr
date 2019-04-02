@@ -147,7 +147,7 @@ describe "Lexer" do
                      :extend, :while, :until, :nil, :do, :yield, :return, :unless, :next, :break,
                      :begin, :lib, :fun, :type, :struct, :union, :enum, :macro, :out, :require,
                      :case, :when, :select, :then, :of, :abstract, :rescue, :ensure, :is_a?, :alias,
-                     :pointerof, :sizeof, :instance_sizeof, :as, :as?, :typeof, :for, :in,
+                     :pointerof, :sizeof, :instance_sizeof, :offsetof, :as, :as?, :typeof, :for, :in,
                      :with, :self, :super, :private, :protected, :asm, :uninitialized, :nil?,
                      :annotation, :verbatim]
   it_lexes_idents ["ident", "something", "with_underscores", "with_1", "foo?", "bar!", "fooBar",

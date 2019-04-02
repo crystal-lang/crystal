@@ -968,6 +968,10 @@ module Crystal
       @program.int32
     end
 
+    def guess_type(node : OffsetOf)
+      @program.int32
+    end
+
     def guess_type(node : Nop)
       @program.nil
     end
@@ -1164,7 +1168,7 @@ module Crystal
       false
     end
 
-    def visit(node : InstanceSizeOf | SizeOf | TypeOf | PointerOf)
+    def visit(node : InstanceSizeOf | SizeOf | OffsetOf | TypeOf | PointerOf)
       false
     end
 

@@ -1353,6 +1353,19 @@ module Crystal
     end
   end
 
+  class OffsetOf
+    def interpret(method, args, block, interpreter)
+      case method
+      when "type"
+        interpret_argless_method(method, args) { @offsetof_type }
+      when "instance_var"
+        interpret_argless_method(method, args) { @instance_var }
+      else
+        super
+      end
+    end
+  end
+
   class VisibilityModifier
     def interpret(method, args, block, interpreter)
       case method

@@ -1076,6 +1076,8 @@ module Crystal
           check_type_declaration { parse_sizeof }
         when :instance_sizeof
           check_type_declaration { parse_instance_sizeof }
+        when :offsetof
+          check_type_declaration { parse_offsetof }
         when :typeof
           check_type_declaration { parse_typeof }
         when :private
@@ -3746,7 +3748,7 @@ module Crystal
         when :begin, :nil, :true, :false, :yield, :with, :abstract,
              :def, :macro, :require, :case, :select, :if, :unless, :include,
              :extend, :class, :struct, :module, :enum, :while, :until, :return,
-             :next, :break, :lib, :fun, :alias, :pointerof, :sizeof,
+             :next, :break, :lib, :fun, :alias, :pointerof, :sizeof, :offsetof,
              :instance_sizeof, :typeof, :private, :protected, :asm, :out,
         # `end` is also invalid because it maybe terminate `def` block.
              :end
@@ -3759,7 +3761,7 @@ module Crystal
         when "begin", "nil", "true", "false", "yield", "with", "abstract",
              "def", "macro", "require", "case", "select", "if", "unless", "include",
              "extend", "class", "struct", "module", "enum", "while", "until", "return",
-             "next", "break", "lib", "fun", "alias", "pointerof", "sizeof",
+             "next", "break", "lib", "fun", "alias", "pointerof", "sizeof", "offsetof",
              "instance_sizeof", "typeof", "private", "protected", "asm", "out",
              "end"
           true
@@ -4777,6 +4779,8 @@ module Crystal
         type = parse_sizeof
       when .keyword?(:instance_sizeof)
         type = parse_instance_sizeof
+      when .keyword?(:offsetof)
+        type = parse_offsetof
       else
         type = parse_ident(parse_nilable: false)
       end
@@ -4877,7 +4881,7 @@ module Crystal
           return allow_int && @token.number_kind == :i32
         when :IDENT
           case @token.value
-          when :typeof, :self, :sizeof, :instance_sizeof
+          when :typeof, :self, :sizeof, :instance_sizeof, :offsetof
             return true
           end
         when :"::"
@@ -5380,6 +5384,32 @@ module Crystal
       next_token_skip_space
 
       klass.new(exp).at_end(end_location)
+    end
+
+    def parse_offsetof
+      next_token_skip_space
+      check :"("
+
+      next_token_skip_space_or_newline
+      type_location = @token.location
+      type = parse_single_type.at(type_location)
+
+      skip_space
+      check :","
+
+      next_token_skip_space_or_newline
+      check :INSTANCE_VAR
+
+      ivar_location = @token.location
+      instance_var = InstanceVar.new(@token.value.to_s).at(ivar_location)
+
+      next_token_skip_space_or_newline
+
+      end_location = token_end_location
+      check :")"
+      next_token_skip_space
+
+      OffsetOf.new(type, instance_var).at_end(end_location)
     end
 
     def parse_type_def

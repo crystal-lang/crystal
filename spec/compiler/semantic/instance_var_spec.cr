@@ -1126,6 +1126,26 @@ describe "Semantic: instance var" do
       )) { int32 }
   end
 
+  it "infers type from offsetof" do
+    assert_type(%(
+      class Foo
+        def initialize
+          @x = offsetof(Bar, @x)
+        end
+
+        def x
+          @x
+        end
+      end
+
+      struct Bar
+        @x = 0
+      end
+
+      Foo.new.x
+      )) { int32 }
+  end
+
   it "infers type from path that is a type" do
     assert_type(%(
       class Bar; end
