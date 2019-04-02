@@ -48,11 +48,11 @@
 # ```
 # Path.posix("/foo/./bar").normalize   # => Path.posix("/foo/bar")
 # Path.windows("/foo/./bar").normalize # => Path.windows("\\foo\\bar")
-
+#
 # Path.posix("/foo").absolute?   # => true
 # Path.windows("/foo").absolute? # => false
 #
-# Path.posix("foo") == Path.posix("FOO")    # => false
+# Path.posix("foo") == Path.posix("FOO")     # => false
 # Path.windows("foo") == Path.windows("FOO") # => true
 # ```
 struct Path
@@ -647,8 +647,8 @@ struct Path
   # Non-matching paths are implicitly converted to this path's kind.
   #
   # ```
-  # Path.posix("foo/bar").join(Path.windows("baz\baq"))  # => Path.posix("foo/bar/baz/baq")
-  # Path.windows("foo\\bar").join(Path.posix("baz/baq")) # => Path.posix("foo\\bar\\baz/baq")
+  # Path.posix("foo/bar").join(Path.windows("baz\\baq")) # => Path.posix("foo/bar/baz/baq")
+  # Path.windows("foo\\bar").join(Path.posix("baz/baq")) # => Path.windows("foo\\bar\\baz/baq")
   # ```
   def join(parts : Enumerable) : Path
     new_name = String.build do |str|
@@ -751,8 +751,8 @@ struct Path
   # See `#anchor` for the combination of drive and `#root`.
   #
   # ```
-  # Path.windows("C:\Program Files").drive    # => Path.windows("C:")
-  # Path.windows("\\host\share\folder").drive # => Path.windows("\\host\share")
+  # Path.windows("C:\\Program Files").drive     # => Path.windows("C:")
+  # Path.windows("\\host\\share\\folder").drive # => nil
   # ```
   #
   # NOTE: Drives are only available for Windows paths. It can either be a drive letter (`C:`) or a UNC share (`\\host\share`).
@@ -767,10 +767,10 @@ struct Path
   # See `#anchor` for the combination of `#drive` and root.
   #
   # ```
-  # Path["/etc/"].root                       # => Path["/"]
-  # Path.windows("C:Program Files").root     # => nil
-  # Path.windows("C:\Program Files").root    # => Path.windows("\")
-  # Path.windows("\\host\share\folder").root # => Path.windows("\")
+  # Path["/etc/"].root                         # => Path["/"]
+  # Path.windows("C:Program Files").root       # => nil
+  # Path.windows("C:\\Program Files").root     # => Path.windows("\\")
+  # Path.windows("\\host\\share\\folder").root # => Path.windows("\\")
   # ```
   def root : Path?
     if root = drive_and_root[1]
@@ -781,10 +781,10 @@ struct Path
   # Returns the concatenation of `#drive` and `#root`.
   #
   # ```
-  # Path["/etc/"].anchor                       # => Path["/"]
-  # Path.windows("C:Program Files").anchor     # => Path.windows("C:")
-  # Path.windows("C:\Program Files").anchor    # => Path.windows("C:\")
-  # Path.windows("\\host\share\folder").anchor # => Path.windows("\\host\share\")
+  # Path["/etc/"].anchor                         # => Path["/"]
+  # Path.windows("C:Program Files").anchor       # => Path.windows("C:")
+  # Path.windows("C:\\Program Files").anchor     # => Path.windows("C:\\")
+  # Path.windows("\\host\\share\\folder").anchor # => Path.windows("\\")
   # ```
   def anchor : Path?
     drive, root = drive_and_root
