@@ -63,8 +63,8 @@ describe "Restrictions" do
   end
 
   describe "restriction_of?" do
-    describe "Metaclass vs Metaclass-with-free-vars" do
-      it "inserts Metaclass before Metaclass-with-free-vars" do
+    describe "Metaclass vs Metaclass" do
+      it "inserts typed Metaclass before untyped Metaclass" do
         assert_type(%(
           def foo(a : T.class) forall T
             1
@@ -78,7 +78,7 @@ describe "Restrictions" do
           )) { bool }
       end
 
-      it "keeps Metaclass before Metaclass-with-free-vars" do
+      it "keeps typed Metaclass before untyped Metaclass" do
         assert_type(%(
           def foo(a : Int32.class)
             true
@@ -89,6 +89,138 @@ describe "Restrictions" do
           end
 
           foo(Int32)
+          )) { bool }
+      end
+    end
+
+    describe "Path vs Path" do
+      it "inserts typed Path before untyped Path" do
+        assert_type(%(
+          def foo(a : T) forall T
+            1
+          end
+
+          def foo(a : Int32)
+            true
+          end
+
+          foo(1)
+          )) { bool }
+      end
+
+      it "keeps typed Path before untyped Path" do
+        assert_type(%(
+          def foo(a : Int32)
+            true
+          end
+
+          def foo(a : T) forall T
+            1
+          end
+
+          foo(1)
+          )) { bool }
+      end
+    end
+
+    describe "Generic vs Path" do
+      it "inserts typed Generic before untyped Path" do
+        assert_type(%(
+          def foo(a : T) forall T
+            1
+          end
+
+          def foo(a : Array(Int32))
+            true
+          end
+
+          foo(Array(Int32).new)
+          )) { bool }
+      end
+
+      it "keeps typed Generic before untyped Path" do
+        assert_type(%(
+          def foo(a : Array(Int32))
+            true
+          end
+
+          def foo(a : T) forall T
+            1
+          end
+
+          foo(Array(Int32).new)
+          )) { bool }
+      end
+
+      it "inserts untyped Generic before untyped Path" do
+        assert_type(%(
+          def foo(a : T) forall T
+            1
+          end
+
+          def foo(a : Array(T)) forall T
+            true
+          end
+
+          foo(Array(Int32).new)
+          )) { bool }
+      end
+
+      it "inserts untyped Generic before untyped Path (2)" do
+        assert_type(%(
+          def foo(a : T) forall T
+            1
+          end
+
+          def foo(a : Array)
+            true
+          end
+
+          foo(Array(Int32).new)
+          )) { bool }
+      end
+
+      it "keeps untyped Generic before untyped Path" do
+        assert_type(%(
+          def foo(a : Array(T)) forall T
+            true
+          end
+
+          def foo(a : T) forall T
+            1
+          end
+
+          foo(Array(Int32).new)
+          )) { bool }
+      end
+    end
+
+    describe "Generic vs Generic" do
+      it "inserts typed Generic before untyped Generic" do
+        assert_type(%(
+          def foo(a : Array(T)) forall T
+            1
+          end
+
+          def foo(a : Array(Int32))
+            true
+          end
+
+          foo(Array(Int32).new)
+          )) { bool }
+      end
+
+      it "keeps typed Generic before untyped Generic" do
+        assert_type(%(
+          def foo(a : Array(Int32))
+            true
+          end
+
+          def foo(a : Array(T)) forall T
+            1
+          end
+
+          foo(Array(Int32).new)
           )) { bool }
       end
     end
