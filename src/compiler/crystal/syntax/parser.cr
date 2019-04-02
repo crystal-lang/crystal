@@ -333,7 +333,7 @@ module Crystal
             end
 
             if atomic.is_a?(Call) && (atomic.name.ends_with?('?') ||
-               atomic.name.ends_with?('!'))
+               (atomic.name.ends_with?('?') || atomic.name.ends_with?('!'))
               raise "unexpected token: =", location
             end
 
