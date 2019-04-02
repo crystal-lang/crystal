@@ -3395,12 +3395,13 @@ class String
   # Converts camelcase boundaries to underscores.
   #
   # ```
-  # "DoesWhatItSaysOnTheTin".underscore # => "does_what_it_says_on_the_tin"
-  # "PartyInTheUSA".underscore          # => "party_in_the_usa"
-  # "HTTP_CLIENT".underscore            # => "http_client"
-  # "3.14IsPi".underscore               # => "3.14_is_pi"
+  # "DoesWhatItSaysOnTheTin".underscore                         # => "does_what_it_says_on_the_tin"
+  # "PartyInTheUSA".underscore                                  # => "party_in_the_usa"
+  # "HTTP_CLIENT".underscore                                    # => "http_client"
+  # "3.14IsPi".underscore                                       # => "3.14_is_pi"
+  # "InterestingImage".underscore(Unicode::CaseOptions::Turkic) # => "ınteresting_ımage"
   # ```
-  def underscore
+  def underscore(options : Unicode::CaseOptions = Unicode::CaseOptions::None)
     first = true
     last_is_downcase = false
     last_is_upcase = false
@@ -3409,12 +3410,18 @@ class String
 
     String.build(bytesize + 10) do |str|
       each_char do |char|
-        digit = '0' <= char <= '9'
-        downcase = 'a' <= char <= 'z' || digit
-        upcase = 'A' <= char <= 'Z'
+        digit = char.ascii_number?
+
+        if options.none?
+          downcase = digit || char.ascii_lowercase?
+          upcase = char.ascii_uppercase?
+        else
+          downcase = digit || char.lowercase?
+          upcase = char.uppercase?
+        end
 
         if first
-          str << char.downcase
+          str << char.downcase(options)
         elsif last_is_downcase && upcase
           if mem
             # This is the case of A1Bcd, we need to put 'mem' (not to need to convert as downcase
@@ -3426,7 +3433,7 @@ class String
           # This is the case of AbcDe, we need to put an underscore before the 'D'
           #                        ^
           str << '_'
-          str << char.downcase
+          str << char.downcase(options)
         elsif (last_is_upcase || last_is_digit) && (upcase || digit)
           # This is the case of 1) A1Bcd, 2) A1BCd or 3) A1B_cd:if the next char is upcase (case 1) we need
           #                          ^         ^           ^
@@ -3436,7 +3443,7 @@ class String
           # 3) we need to append this char as downcase and then a single underscore
           if mem
             # case 2
-            str << mem.downcase
+            str << mem.downcase(options)
           end
           mem = char
         else
@@ -3447,11 +3454,11 @@ class String
               # case 1
               str << '_'
             end
-            str << mem.downcase
+            str << mem.downcase(options)
             mem = nil
           end
 
-          str << char.downcase
+          str << char.downcase(options)
         end
 
         last_is_downcase = downcase
@@ -3460,16 +3467,17 @@ class String
         first = false
       end
 
-      str << mem.downcase if mem
+      str << mem.downcase(options) if mem
     end
   end
 
   # Converts underscores to camelcase boundaries.
   #
   # ```
-  # "eiffel_tower".camelcase # => "EiffelTower"
+  # "eiffel_tower".camelcase                                   # => "EiffelTower"
+  # "isolated_integer".camelcase(Unicode::CaseOptions::Turkic) # => "İsolatedİnteger"
   # ```
-  def camelcase
+  def camelcase(options : Unicode::CaseOptions = Unicode::CaseOptions::None)
     return self if empty?
 
     first = true
@@ -3478,11 +3486,11 @@ class String
     String.build(bytesize) do |str|
       each_char do |char|
         if first
-          str << char.upcase
+          str << char.upcase(options)
         elsif char == '_'
           last_is_underscore = true
         elsif last_is_underscore
-          str << char.upcase
+          str << char.upcase(options)
           last_is_underscore = false
         else
           str << char
