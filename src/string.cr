@@ -3357,13 +3357,14 @@ class String
   # even the monkey seems to want
   # a little coat of straw"
   # haiku.each_line do |stanza|
-  #   puts stanza.upcase
+  #   puts stanza
   # end
-  # # => THE FIRST COLD SHOWER
-  # # => EVEN THE MONKEY SEEMS TO WANT
-  # # => A LITTLE COAT OF STRAW
+  # # output:
+  # # the first cold shower
+  # # even the monkey seems to want
+  # # a little coat of straw
   # ```
-  def each_line(chomp = true) : Nil
+  def each_line(chomp = true, &block : String -> _) : Nil
     return if empty?
 
     offset = 0
