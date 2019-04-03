@@ -2060,7 +2060,7 @@ module Crystal
       end
 
       # This is the case of an enum member
-      if node.name[0].ascii_uppercase? && @token.type == :";"
+      if @token.type == :";"
         next_token
         @lexer.skip_space
         if @token.type == :COMMENT
