@@ -64,7 +64,10 @@ class Crystal::Command
       init
     when "build".starts_with?(command)
       options.shift
-      build
+      result = build
+      report_warnings result
+      exit 1 if warnings_fail_on_exit?(result)
+      result
     when "play".starts_with?(command)
       options.shift
       playground
@@ -168,7 +171,9 @@ class Crystal::Command
   private def run_command(single_file = false)
     config = create_compiler "run", run: true, single_file: single_file
     if config.specified_output
-      config.compile
+      result = config.compile
+      report_warnings result
+      exit 1 if warnings_fail_on_exit?(result)
       return
     end
 
@@ -177,6 +182,9 @@ class Crystal::Command
     result = config.compile output_filename
 
     unless config.compiler.no_codegen?
+      report_warnings result
+      exit 1 if warnings_fail_on_exit?(result)
+
       execute output_filename, config.arguments, config.compiler
     end
   end
@@ -197,7 +205,7 @@ class Crystal::Command
     {config, result}
   end
 
-  private def execute(output_filename, run_args, compiler)
+  private def execute(output_filename, run_args, compiler, *, error_on_exit = false)
     time? = @time && !@progress_tracker.stats?
     status, elapsed_time = @progress_tracker.stage("Execute") do
       begin
@@ -226,7 +234,7 @@ class Crystal::Command
     end
 
     if status.normal_exit?
-      exit status.exit_code
+      exit error_on_exit ? 1 : status.exit_code
     else
       case status.exit_signal
       when ::Signal::KILL
@@ -353,6 +361,7 @@ class Crystal::Command
         opts.on("--mattr CPU", "Target specific features") do |features|
           compiler.mattr = features
         end
+        setup_compiler_warning_options(opts, compiler)
       end
 
       opts.on("--no-color", "Disable colored output") do
@@ -511,7 +520,29 @@ class Crystal::Command
       @color = false
       compiler.color = false
     end
+    setup_compiler_warning_options(opts, compiler)
     opts.invalid_option { }
+  end
+
+  private def setup_compiler_warning_options(opts, compiler)
+    compiler.warnings_exclude << Crystal.normalize_path "lib"
+    opts.on("--warnings all|none", "Which warnings detect. (default: all)") do |w|
+      compiler.warnings = case w
+                          when "all"
+                            Crystal::Warnings::All
+                          when "none"
+                            Crystal::Warnings::None
+                          else
+                            error "--warnings should be all, or none"
+                            raise "unreachable"
+                          end
+    end
+    opts.on("--error-on-warnings", "Treat warnings as errors.") do |w|
+      compiler.error_on_warnings = true
+    end
+    opts.on("--exclude-warnings <path>", "Exclude warnings from path (default: lib)") do |f|
+      compiler.warnings_exclude << Crystal.normalize_path f
+    end
   end
 
   private def validate_emit_values(values)
