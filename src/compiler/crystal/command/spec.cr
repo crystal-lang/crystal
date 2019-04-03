@@ -72,7 +72,6 @@ class Crystal::Command
     output_filename = Crystal.tempfile "spec"
 
     result = compiler.compile sources, output_filename
-    report_warnings result
-    execute output_filename, options, compiler, error_on_exit: warnings_fail_on_exit?(result)
+    execute output_filename, options, compiler
   end
 end

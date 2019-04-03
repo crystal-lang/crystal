@@ -24,9 +24,9 @@ _crystal()
                 COMPREPLY=( $(compgen -f ${cur}) )
             fi
             ;;
-        build)
+        compile)
             if [[ ${cur} == -* ]] ; then
-                local opts="--cross-compile --debug --emit --error-on-warnings --exclude-warnings --ll --link-flags --mcpu --no-color --no-codegen --prelude --release --single-module --threads --target --verbose --warnings --help"
+                local opts="--cross-compile --debug --emit --ll --link-flags --mcpu --no-color --no-codegen --prelude --release --single-module --threads --target --verbose --help"
                 COMPREPLY=( $(compgen -W "${opts}" -- ${cur}) )
             else
                 COMPREPLY=($(_crystal_compgen_files $cur))
@@ -34,7 +34,7 @@ _crystal()
             ;;
         run)
             if [[ ${cur} == -* ]] ; then
-                local opts="--debug --define --emit --error-on-warnings --exclude-warnings --format --help --ll --link-flags --mcpu --no-color --no-codegen --prelude --release --stats --single-module --threads --verbose --warnings"
+                local opts="--debug --define --emit --format --help --ll --link-flags --mcpu --no-color --no-codegen --prelude --release --stats --single-module --threads --verbose"
                 COMPREPLY=( $(compgen -W "${opts}" -- ${cur}) )
             else
                 COMPREPLY=($(_crystal_compgen_files $cur))
