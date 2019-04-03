@@ -2060,14 +2060,15 @@ module Crystal
       end
 
       # This is the case of an enum member
-      if node.name[0].ascii_uppercase? && @token.type == :","
-        write ","
+      if node.name[0].ascii_uppercase? && @token.type == :";"
+        has_semicolon = @token.type == :";"
         next_token
         @lexer.skip_space
         if @token.type == :COMMENT
           write_comment
           @exp_needs_indent = true
         else
+          write ";" if has_semicolon && @token.type == :CONST
           write " "
           @exp_needs_indent = @token.type == :NEWLINE
         end
