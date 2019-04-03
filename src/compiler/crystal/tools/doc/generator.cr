@@ -168,6 +168,7 @@ class Crystal::Doc::Generator
 
   def must_include?(const : Crystal::Const)
     return false if nodoc?(const)
+    return true if crystal_builtin?(const)
 
     const.locations.try &.any? { |location| must_include? location }
   end
