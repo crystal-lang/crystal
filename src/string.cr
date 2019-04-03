@@ -707,10 +707,10 @@ class String
   # Negative indices can be used to start counting from the end of the string.
   #
   # ```
-  # "hello"[0]  # 'h'
-  # "hello"[1]  # 'e'
-  # "hello"[-1] # 'o'
-  # "hello"[-2] # 'l'
+  # "hello"[0]  # => 'h'
+  # "hello"[1]  # => 'e'
+  # "hello"[-1] # => 'o'
+  # "hello"[-2] # => 'l'
   # "hello"[5]  # raises IndexError
   # ```
   def [](index : Int)
@@ -721,31 +721,44 @@ class String
   # as character indices. Indices can be negative to start
   # counting from the end of the string.
   #
-  # Raises `IndexError` if the range's start is not in range.
+  # Raises `IndexError` if the range's start is out of range.
   #
   # ```
-  # "hello"[0..2]   # "hel"
-  # "hello"[0...2]  # "he"
-  # "hello"[1..-1]  # "ello"
-  # "hello"[1...-1] # "ell"
+  # "hello"[0..2]   # => "hel"
+  # "hello"[0...2]  # => "he"
+  # "hello"[1..-1]  # => "ello"
+  # "hello"[1...-1] # => "ell"
+  # "hello"[6..7]   # raises IndexError
   # ```
   def [](range : Range)
     self[*Indexable.range_to_index_and_count(range, size)]
   end
 
-  # Returns a substring starting from the *start* character
-  # of size *count*.
+  # Like `#[Range(Int, Int)]`, but returns `nil` if the range's start is out of range.
+  #
+  # ```
+  # "hello"[6..7]? # => nil
+  # ```
+  def []?(range : Range(Int, Int))
+    self[*Indexable.range_to_index_and_count(range, size)]?
+  end
+
+  # Returns a substring starting from the *start* character of size *count*.
   #
   # The *start* argument can be negative to start counting
   # from the end of the string.
   #
-  # Raises `IndexError` if *start* isn't in range.
+  # Raises `IndexError` if the *start* index is out of range.
   #
   # Raises `ArgumentError` if *count* is negative.
   def [](start : Int, count : Int)
-    if ascii_only?
-      return byte_slice(start, count)
-    end
+    self[start, count]? || raise IndexError.new
+  end
+
+  # Like `#[Int, Int]` but returns `nil` if the *start* index is out of range.
+  def []?(start : Int, count : Int)
+    raise ArgumentError.new "Negative count: #{count}" if count < 0
+    return byte_slice?(start, count) if ascii_only?
 
     start += size if start < 0
 
@@ -769,7 +782,6 @@ class String
     end_pos ||= reader.pos
 
     if start_pos
-      raise ArgumentError.new "Negative count" if count < 0
       return "" if count == 0
 
       count = end_pos - start_pos
@@ -780,13 +792,7 @@ class String
         {count, 0}
       end
     elsif start == i
-      if count >= 0
-        return ""
-      else
-        raise ArgumentError.new "Negative count"
-      end
-    else
-      raise IndexError.new
+      ""
     end
   end
 
@@ -845,12 +851,16 @@ class String
   end
 
   def byte_slice(start : Int, count : Int)
+    byte_slice?(start, count) || raise IndexError.new
+  end
+
+  def byte_slice?(start : Int, count : Int)
+    raise ArgumentError.new "Negative count" if count < 0
+
     start += bytesize if start < 0
     single_byte_optimizable = ascii_only?
 
     if 0 <= start < bytesize
-      raise ArgumentError.new "Negative count" if count < 0
-
       count = bytesize - start if start + count > bytesize
       return "" if count == 0
       return self if count == bytesize
@@ -861,13 +871,7 @@ class String
         {count, slice_size}
       end
     elsif start == bytesize
-      if count >= 0
-        return ""
-      else
-        raise ArgumentError.new "Negative count"
-      end
-    else
-      raise IndexError.new
+      ""
     end
   end
 

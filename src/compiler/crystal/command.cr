@@ -429,8 +429,8 @@ class Crystal::Command
     filenames += opt_filenames.not_nil!
     arguments = opt_arguments.not_nil!
 
-    if single_file && filenames.size > 1
-      arguments = filenames[1..-1] + arguments
+    if single_file && (files = filenames[1..-1]?)
+      arguments = files + arguments
       filenames = [filenames[0]]
     end
 
