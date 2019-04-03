@@ -13,6 +13,21 @@ module Crystal
       ::raise exception_type.for_node(self, message, inner)
     end
 
+    def warning(message, inner = nil, exception_type = Crystal::TypeException)
+      # TODO extract message formatting from exceptions
+      String.build do |io|
+        exception = exception_type.for_node(self, message, inner)
+        io << "Warning "
+        exception.append_to_s(nil, io)
+        # Macro errors will first include the trace of the macro
+        # expansions, and then the warning message.
+        # In other warning messages the code snippet includes a newline
+        if exception.@filename.is_a?(VirtualFile)
+          io.puts
+        end
+      end
+    end
+
     def simple_literal?
       case self
       when Nop, NilLiteral, BoolLiteral, NumberLiteral, CharLiteral,
@@ -214,6 +229,7 @@ module Crystal
       a_def.always_inline = always_inline?
       a_def.returns_twice = returns_twice?
       a_def.naked = naked?
+      a_def.annotations = annotations
       a_def.new = new?
       a_def
     end
