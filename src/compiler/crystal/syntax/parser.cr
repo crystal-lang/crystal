@@ -5560,7 +5560,8 @@ module Crystal
           skip_space
 
           case @token.type
-          when :";", :NEWLINE, :EOF
+          # TODO: remove comma support after 0.28.0
+          when :",", :";", :NEWLINE, :EOF
             next_token_skip_statement_end
           else
             unless @token.keyword?(:end)
