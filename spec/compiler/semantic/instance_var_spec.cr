@@ -1247,7 +1247,9 @@ describe "Semantic: instance var" do
   it "infers type from enum member" do
     assert_type(%(
       enum Color
-        Red, Green, Blue
+        Red
+        Green
+        Blue
       end
 
       class Foo
