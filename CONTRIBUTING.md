@@ -169,6 +169,17 @@ your own projects; a not so clean history is to prefer once a commit landed ther
 git push -f origin my_feature_branch
 ```
 
+## Git pre-commit hook
+
+Code submitted to this repository should be formatted according to `crystal tool format`.
+A pre-commit hook can be installed into the local git repo to ensure the formatter validates every commit: https://gist.github.com/straight-shoota/fdaf4cf1954e084cd5abccf8f77975f6
+
+Install the pre-commit hook:
+
+```sh
+curl https://gist.githubusercontent.com/straight-shoota/fdaf4cf1954e084cd5abccf8f77975f6/raw/pre-commit > .git/hooks/pre-commit && chmod +x .git/hooks/pre-commit
+```
+
 ## Code of Conduct
 
 Please note that this project is released with a [Contributor Code of Conduct][ccoc].
