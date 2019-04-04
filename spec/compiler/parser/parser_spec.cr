@@ -1410,7 +1410,7 @@ module Crystal
     assert_syntax_error %q(asm("nop" ::: "#{foo}")), "interpolation not allowed in asm clobber"
     assert_syntax_error %q(asm("nop" :::: "#{volatile}")), "interpolation not allowed in asm option"
     assert_syntax_error %q(asm("" ::: ""(var))), "unexpected token: ("
-    assert_syntax_error %q(asm("" : 1), "unexpected token: 1"
+    assert_syntax_error %q(asm("" : 1)), "unexpected token: 1"
 
     it_parses "foo begin\nbar do\nend\nend", Call.new(nil, "foo", Expressions.new([Call.new(nil, "bar", block: Block.new)] of ASTNode))
     it_parses "foo 1.bar do\nend", Call.new(nil, "foo", args: [Call.new(1.int32, "bar")] of ASTNode, block: Block.new)
