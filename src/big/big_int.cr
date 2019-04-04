@@ -122,6 +122,10 @@ struct BigInt < Int
     end
   end
 
+  def &+(other) : BigInt
+    self + other
+  end
+
   def -(other : BigInt) : BigInt
     BigInt.new { |mpz| LibGMP.sub(mpz, self, other) }
   end
@@ -134,6 +138,10 @@ struct BigInt < Int
     else
       self - other.to_big_i
     end
+  end
+
+  def &-(other) : BigInt
+    self - other
   end
 
   def - : BigInt
@@ -160,7 +168,16 @@ struct BigInt < Int
     self * other.to_big_i
   end
 
+  def &*(other) : BigInt
+    self * other
+  end
+
   def /(other : Int) : BigInt
+    # TODO replace to float division
+    self // other
+  end
+
+  def //(other : Int) : BigInt
     check_division_by_zero other
 
     if other < 0
@@ -558,6 +575,10 @@ struct Int
     other + self
   end
 
+  def &+(other : BigInt) : BigInt
+    self + other
+  end
+
   def -(other : BigInt) : BigInt
     if self < 0
       -(abs + other)
@@ -571,12 +592,24 @@ struct Int
     end
   end
 
+  def &-(other : BigInt) : BigInt
+    self - other
+  end
+
   def *(other : BigInt) : BigInt
     other * self
   end
 
+  def &*(other : BigInt) : BigInt
+    self * other
+  end
+
   def /(other : BigInt) : BigInt
-    to_big_i / other
+    self // other
+  end
+
+  def //(other : BigInt) : BigInt
+    to_big_i // other
   end
 
   def %(other : BigInt) : BigInt

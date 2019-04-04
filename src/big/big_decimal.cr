@@ -195,6 +195,10 @@ struct BigDecimal < Number
     self / BigDecimal.new(other)
   end
 
+  def //(other)
+    (self / other).floor
+  end
+
   # Divides `self` with another `BigDecimal`, with a optionally configurable *max_div_iterations*, which
   # defines a maximum number of iterations in case the division is not exact.
   #
@@ -256,19 +260,35 @@ struct BigDecimal < Number
   # Scales a `BigDecimal` to another `BigDecimal`, so they can be
   # computed easier.
   def scale_to(new_scale : BigDecimal) : BigDecimal
-    new_scale = new_scale.scale
+    in_scale(new_scale.scale)
+  end
 
+  private def in_scale(new_scale : UInt64) : BigDecimal
     if @value == 0
       BigDecimal.new(0.to_big_i, new_scale)
     elsif @scale > new_scale
       scale_diff = @scale - new_scale.to_big_i
-      BigDecimal.new(@value / power_ten_to(scale_diff), new_scale)
+      BigDecimal.new(@value // power_ten_to(scale_diff), new_scale)
     elsif @scale < new_scale
       scale_diff = new_scale - @scale.to_big_i
       BigDecimal.new(@value * power_ten_to(scale_diff), new_scale)
     else
       self
     end
+  end
+
+  def ceil : BigDecimal
+    mask = power_ten_to(@scale)
+    diff = (mask - @value % mask) % mask
+    (self + BigDecimal.new(diff, @scale))
+  end
+
+  def floor : BigDecimal
+    in_scale(0)
+  end
+
+  def trunc : BigDecimal
+    self < 0 ? ceil : floor
   end
 
   def to_s(io : IO) : Nil
@@ -305,9 +325,9 @@ struct BigDecimal < Number
   # Converts to `BigInt`. Truncates anything on the right side of the decimal point.
   def to_big_i
     if @value >= 0
-      (@value / TEN ** @scale)
+      (@value // TEN ** @scale)
     else
-      -(@value.abs / TEN ** @scale)
+      -(@value.abs // TEN ** @scale)
     end
   end
 
@@ -372,7 +392,7 @@ struct BigDecimal < Number
   end
 
   private def to_big_u
-    (@value.abs / TEN ** @scale)
+    (@value.abs // TEN ** @scale)
   end
 
   # Converts to `UInt64`. Truncates anything on the right side of the decimal point,
@@ -555,6 +575,10 @@ struct Int
 
   def /(other : BigDecimal)
     to_big_d / other
+  end
+
+  def //(other : BigDecimal)
+    to_big_d // other
   end
 end
 
