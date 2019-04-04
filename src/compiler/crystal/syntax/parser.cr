@@ -4961,6 +4961,8 @@ module Crystal
         elsif @token.type == :":"
           next_token_skip_space_or_newline
           part_index += 1
+        else
+          unexpected_token
         end
 
         case part_index
