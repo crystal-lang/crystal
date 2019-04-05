@@ -172,7 +172,7 @@ git push -f origin my_feature_branch
 ## Git pre-commit hook
 
 Code submitted to this repository should be formatted according to `crystal tool format`.
-A pre-commit hook can be installed into the local git repo to ensure the formatter validates every commit: https://gist.github.com/straight-shoota/fdaf4cf1954e084cd5abccf8f77975f6
+A pre-commit hook can be installed into the local git repo to ensure the formatter validates every commit: https://github.com/crystal-lang/crystal/blob/master/scripts/git/pre-commit
 
 Install the pre-commit hook:
 
