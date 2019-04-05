@@ -157,8 +157,8 @@ class OAuth2::Client
     }
 
     response = HTTP::Client.post(token_uri, form: body, headers: headers)
-    case response.status_code
-    when 200, 201
+    case response.status
+    when .ok?, .created?
       OAuth2::AccessToken.from_json(response.body)
     else
       raise OAuth2::Error.new(response.body)

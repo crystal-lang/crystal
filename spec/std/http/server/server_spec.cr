@@ -143,10 +143,24 @@ module HTTP
         io.to_s.should eq("HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: 5\r\n\r\nHello")
       end
 
+      it "sets status code" do
+        io = IO::Memory.new
+        response = Response.new(io)
+        response.status_code = 201
+        response.status.should eq HTTP::Status::CREATED
+      end
+
+      it "retrieves status code" do
+        io = IO::Memory.new
+        response = Response.new(io)
+        response.status = :created
+        response.status_code.should eq 201
+      end
+
       it "changes status and others" do
         io = IO::Memory.new
         response = Response.new(io)
-        response.status_code = 404
+        response.status = :not_found
         response.version = "HTTP/1.0"
         response.close
         io.to_s.should eq("HTTP/1.0 404 Not Found\r\nContent-Length: 0\r\n\r\n")
