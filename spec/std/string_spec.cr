@@ -1707,10 +1707,6 @@ describe "String" do
     "\u{AB}1".codepoint_at(1).should eq('1'.ord)
   end
 
-  it "does char_at" do
-    "いただきます".char_at(2).should eq('だ')
-  end
-
   it "does byte_at" do
     "hello".byte_at(1).should eq('e'.ord)
     expect_raises(IndexError) { "hello".byte_at(5) }

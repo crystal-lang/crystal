@@ -868,11 +868,7 @@ class String
   end
 
   def codepoint_at(index)
-    char_at(index).ord
-  end
-
-  def char_at(index)
-    self[index]
+    at(index).ord
   end
 
   def byte_at(index)
