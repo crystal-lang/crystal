@@ -67,10 +67,10 @@ class URI
   #
   # URI.parse("http://foo.com/bar").path # => "/bar"
   # ```
-  getter path : String?
+  getter path : String
 
   # Sets the path component of the URI.
-  setter path : String?
+  setter path : String
 
   # Returns the query component of the URI.
   #
@@ -120,21 +120,9 @@ class URI
   # Sets the fragment component of the URI.
   setter fragment : String?
 
-  # Returns the opaque component of the URI.
-  #
-  # ```
-  # require "uri"
-  #
-  # URI.parse("mailto:alice@example.com").opaque # => "alice@example.com"
-  # ```
-  getter opaque : String?
+  def_equals_and_hash scheme, host, port, path, query, user, password, fragment
 
-  # Sets the opaque component of the URI.
-  setter opaque : String?
-
-  def_equals_and_hash scheme, host, port, path, query, user, password, fragment, opaque
-
-  def initialize(@scheme = nil, @host = nil, @port = nil, @path = nil, @query = nil, @user = nil, @password = nil, @fragment = nil, @opaque = nil)
+  def initialize(@scheme = nil, @host = nil, @port = nil, @path = "", @query = nil, @user = nil, @password = nil, @fragment = nil)
   end
 
   # Returns the host part of the URI and unwrap brackets for IPv6 addresses.
@@ -157,9 +145,9 @@ class URI
   # uri = URI.parse "http://foo.com/posts?id=30&limit=5#time=1305298413"
   # uri.full_path # => "/posts?id=30&limit=5"
   # ```
-  def full_path
+  def full_path : String
     String.build do |str|
-      str << (@path.try { |p| !p.empty? } ? @path : '/')
+      str << (@path.empty? ? '/' : @path)
       if (query = @query) && !query.empty?
         str << '?' << query
       end
@@ -167,39 +155,53 @@ class URI
   end
 
   # Returns `true` if URI has a *scheme* specified.
-  def absolute?
+  def absolute? : Bool
     @scheme ? true : false
   end
 
   # Returns `true` if URI does not have a *scheme* specified.
-  def relative?
+  def relative? : Bool
     !absolute?
+  end
+
+  # Returns `true` if this URI is opaque.
+  #
+  # A URI is considered opaque if it has a `scheme` but no hierachical part,
+  # i.e. no `host` and the first character of `path` is not a slash (`/`).
+  def opaque? : Bool
+    !@scheme.nil? && @host.nil? && !@path.starts_with?('/')
   end
 
   def to_s(io : IO) : Nil
     if scheme
       io << scheme
       io << ':'
-      io << "//" unless opaque
     end
-    if opaque
-      io << opaque
-      return
-    end
+
+    authority = @user || @host || @port
+    io << "//" if authority
     if user = @user
       userinfo(user, io)
       io << '@'
     end
-    if host
-      io << host
+    if host = @host
+      URI.escape(host, io) do |byte|
+        URI.unreserved?(byte) || URI.reserved?(byte)
+      end
     end
-    unless port.nil? || default_port?
-      io << ':'
-      io << port
+    if port = @port
+      io << ':' << port
     end
-    if path
-      io << path
+
+    if authority
+      if !@path.empty? && !@path.starts_with?('/')
+        io << '/'
+      end
+    elsif @path.starts_with?("//")
+      io << "/."
     end
+    io << @path
+
     if query
       io << '?'
       io << query
@@ -211,15 +213,16 @@ class URI
   end
 
   # Returns normalized URI.
-  def normalize
+  def normalize : self
     uri = dup
     uri.normalize!
     uri
   end
 
   # Destructive normalize.
-  def normalize!
+  def normalize! : Nil
     @path = remove_dot_segments(path)
+    @port = nil if default_port?
   end
 
   # Parses `raw_url` into an URI. The `raw_url` may be relative or absolute.
@@ -422,9 +425,7 @@ class URI
   end
 
   # [RFC 3986 6.2.2.3](https://tools.ietf.org/html/rfc3986#section-5.2.4)
-  private def remove_dot_segments(path : String?)
-    return if path.nil?
-
+  private def remove_dot_segments(path : String)
     result = [] of String
     while path.size > 0
       # A.  If the input buffer begins with a prefix of "../" or "./",

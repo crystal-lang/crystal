@@ -61,7 +61,7 @@ class OAuth2::Client
   # If they are relative, the given *host*, *port* and *scheme* will be used.
   # If they are absolute, the absolute URL will be used.
   def initialize(@host : String, @client_id : String, @client_secret : String,
-                 @port = 443,
+                 @port : Int32? = nil,
                  @scheme = "https",
                  @authorize_uri = "/oauth2/authorize",
                  @token_uri = "/oauth2/token",
