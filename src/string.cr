@@ -130,6 +130,8 @@ require "c/string"
 # is not good. It's better if programs are more resilient, but
 # show a replacement character when there's an error in incoming data.
 class String
+  include Indexable(Char)
+
   # :nodoc:
   TYPE_ID = "".crystal_type_id
 
@@ -702,21 +704,6 @@ class String
     end
   end
 
-  # Returns the `Char` at the given *index*, or raises `IndexError` if out of bounds.
-  #
-  # Negative indices can be used to start counting from the end of the string.
-  #
-  # ```
-  # "hello"[0]  # => 'h'
-  # "hello"[1]  # => 'e'
-  # "hello"[-1] # => 'o'
-  # "hello"[-2] # => 'l'
-  # "hello"[5]  # raises IndexError
-  # ```
-  def [](index : Int)
-    at(index) { raise IndexError.new }
-  end
-
   # Returns a substring by using a Range's *begin* and *end*
   # as character indices. Indices can be negative to start
   # counting from the end of the string.
@@ -796,10 +783,6 @@ class String
     end
   end
 
-  def []?(index : Int)
-    at(index) { nil }
-  end
-
   def []?(str : String | Char)
     includes?(str) ? str : nil
   end
@@ -823,6 +806,11 @@ class String
 
   def [](regex : Regex, group)
     self[regex, group]?.not_nil!
+  end
+
+  # WIP TODO: improve this
+  def unsafe_fetch(index : Int) : Char
+    at(index)
   end
 
   def at(index : Int)

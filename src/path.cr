@@ -650,7 +650,7 @@ struct Path
   # Path.posix("foo/bar").join(Path.windows("baz\baq"))  # => Path.posix("foo/bar/baz/baq")
   # Path.windows("foo\\bar").join(Path.posix("baz/baq")) # => Path.posix("foo\\bar\\baz/baq")
   # ```
-  def join(parts : Enumerable) : Path
+  def join(parts : Enumerable(String | Path)) : Path
     new_name = String.build do |str|
       str << @name
       last_ended_with_separator = ends_with_separator?
