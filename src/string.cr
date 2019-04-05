@@ -3867,7 +3867,7 @@ class String
         printed_bytesize += part.bytesize
         if printed_bytesize != bytesize
           printed_bytesize += 1 # == "\n".bytesize
-          pp.text("\"")
+          pp.text('"')
           pp.text(part.inspect_unquoted)
           pp.text("\\n\"")
           break if printed_bytesize == bytesize

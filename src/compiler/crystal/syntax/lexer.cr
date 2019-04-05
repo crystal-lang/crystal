@@ -555,21 +555,21 @@ module Crystal
             when '\\'
               case char = next_char
               when 'a'
-                io << "\u{7}"
+                io << '\a'
               when 'b'
-                io << "\u{8}"
+                io << '\b'
               when 'n'
-                io << "\n"
+                io << '\n'
               when 'r'
-                io << "\r"
+                io << '\r'
               when 't'
-                io << "\t"
+                io << '\t'
               when 'v'
-                io << "\v"
+                io << '\v'
               when 'f'
-                io << "\f"
+                io << '\f'
               when 'e'
-                io << "\e"
+                io << '\e'
               when 'x'
                 io.write_byte consume_string_hex_escape
               when 'u'
@@ -578,7 +578,7 @@ module Crystal
                 io.write_byte consume_octal_escape(char)
               when '\n'
                 incr_line_number nil
-                io << "\n"
+                io << '\n'
               when '\0'
                 raise "unterminated quoted symbol", line, column
               else
@@ -1928,9 +1928,9 @@ module Crystal
           else
             case char = next_char
             when 'a'
-              string_token_escape_value "\u{7}"
+              string_token_escape_value "\a"
             when 'b'
-              string_token_escape_value "\u{8}"
+              string_token_escape_value "\b"
             when 'n'
               string_token_escape_value "\n"
             when 'r'
