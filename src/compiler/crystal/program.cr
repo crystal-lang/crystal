@@ -506,7 +506,7 @@ module Crystal
       when UInt16  then uint16
       when UInt32  then uint32
       when UInt64  then uint64
-      when Uint128 then uint128
+      when UInt128 then uint128
       else
         nil
       end
