@@ -1,10 +1,4 @@
-# The `Unicode` module provides methods that answer questions about unicode characters,
-# and the `Unicode::CaseOptions` enum for special case conversions like Turkic.
-#
-# There's no need to use the methods defined here
-# because they are exposed in `Char` in a more convenient way
-# (`Char#upcase`, `Char#downcase`, `Char#whitespace?`, etc.)
-
+# Provides the `Unicode::CaseOptions` enum for special case conversions like Turkic.
 module Unicode
   # Case options to pass to various `Char` and `String` methods such as `upcase` or `downcase`.
   @[Flags]
