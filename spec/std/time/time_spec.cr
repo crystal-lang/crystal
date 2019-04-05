@@ -501,6 +501,19 @@ describe Time do
     end
   end
 
+  it "#year" do
+    Time.utc(2008, 12, 31).year.should eq 2008
+    Time.utc(2000, 12, 31).year.should eq 2000
+    Time.utc(1900, 12, 31).year.should eq 1900
+    Time.utc(1800, 12, 31).year.should eq 1800
+    Time.utc(1700, 12, 31).year.should eq 1700
+    Time.utc(1600, 12, 31).year.should eq 1600
+    Time.utc(400, 12, 31).year.should eq 400
+    Time.utc(100, 12, 31).year.should eq 100
+    Time.utc(4, 12, 31).year.should eq 4
+    Time.utc(1, 1, 1).year.should eq 1
+  end
+
   describe "#to_s" do
     it "prints string" do
       with_zoneinfo do

@@ -991,10 +991,6 @@ struct Time
       raise ArgumentError.new "Invalid month"
     end
 
-    unless 1 <= year <= 9999
-      raise ArgumentError.new "Invalid year"
-    end
-
     days = leap_year?(year) ? DAYS_MONTH_LEAP : DAYS_MONTH
     days[month]
   end
@@ -1402,17 +1398,25 @@ struct Time
     end
   {% end %}
 
-  protected def self.absolute_days(year, month, day)
-    days = leap_year?(year) ? DAYS_MONTH_LEAP : DAYS_MONTH
+  # Returns the number of days from `0001-01-01` to the date indicated
+  # by *year*, *month*, *day* in the proleptic Gregorian calendar.
+  #
+  # The valid range for *year* is `1..9999` and for *month* `1..12`. The value
+  # of *day*  is not validated and can exceed the number of days in the specified
+  # month or even a year.
+  protected def self.absolute_days(year, month, day) : Int32
+    days_per_month = leap_year?(year) ? DAYS_MONTH_LEAP : DAYS_MONTH
 
-    temp = 0
-    m = 1
-    while m < month
-      temp += days[m]
-      m += 1
+    days_in_year = day - 1
+    month_index = 1
+    while month_index < month
+      days_in_year += days_per_month[month_index]
+      month_index += 1
     end
 
-    (day - 1) + temp + (365*(year - 1)) + ((year - 1)/4) - ((year - 1)/100) + ((year - 1)/400)
+    year -= 1
+
+    year * 365 + year / 4 - year / 100 + year / 400 + days_in_year
   end
 
   protected def total_seconds
@@ -1423,48 +1427,53 @@ struct Time
     @seconds + offset
   end
 
-  protected def year_month_day_day_year
-    m = 1
+  # Returns the calendrical representation of this instance's date.
+  #
+  # The return value is a tuple consisting of year (`1..9999`), month (`1..12`),
+  # day (`1..31`) and ordinal day of the year (`1..366`).
+  protected def year_month_day_day_year : {Int32, Int32, Int32, Int32}
+    total_days = (offset_seconds / SECONDS_PER_DAY).to_i
 
-    days = DAYS_MONTH
-    totaldays = offset_seconds / SECONDS_PER_DAY
+    num400 = total_days / DAYS_PER_400_YEARS
+    total_days -= num400 * DAYS_PER_400_YEARS
 
-    num400 = totaldays / DAYS_PER_400_YEARS
-    totaldays -= num400 * DAYS_PER_400_YEARS
-
-    num100 = totaldays / DAYS_PER_100_YEARS
+    num100 = total_days / DAYS_PER_100_YEARS
     if num100 == 4 # leap
       num100 = 3
     end
-    totaldays -= num100 * DAYS_PER_100_YEARS
+    total_days -= num100 * DAYS_PER_100_YEARS
 
-    num4 = totaldays / DAYS_PER_4_YEARS
-    totaldays -= num4 * DAYS_PER_4_YEARS
+    num4 = total_days / DAYS_PER_4_YEARS
+    total_days -= num4 * DAYS_PER_4_YEARS
 
-    numyears = totaldays / 365
-
+    numyears = total_days / 365
     if numyears == 4 # leap
       numyears = 3
     end
+    total_days -= numyears * 365
 
-    year = num400*400 + num100*100 + num4*4 + numyears + 1
+    year = num400 * 400 + num100 * 100 + num4 * 4 + numyears + 1
 
-    totaldays -= numyears * 365
-    day_year = totaldays + 1
+    ordinal_day_in_year = total_days + 1
 
     if (numyears == 3) && ((num100 == 3) || !(num4 == 24)) # 31 dec leapyear
-      days = DAYS_MONTH_LEAP
+      days_per_month = DAYS_MONTH_LEAP
+    else
+      days_per_month = DAYS_MONTH
     end
 
-    while totaldays >= days[m]
-      totaldays -= days[m]
-      m += 1
+    month = 1
+    while true
+      days_in_month = days_per_month[month]
+      break if total_days < days_in_month
+
+      total_days -= days_in_month
+      month += 1
     end
 
-    month = m
-    day = totaldays + 1
+    day = total_days + 1
 
-    {year.to_i, month.to_i, day.to_i, day_year.to_i}
+    {year, month, day, ordinal_day_in_year}
   end
 
   protected def self.zone_offset_at(seconds, location)
