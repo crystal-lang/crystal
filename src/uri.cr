@@ -223,8 +223,8 @@ class URI
   #
   # The following normalizations are applied to the individual components (if available):
   #
-  # * `scheme` is lowercased
-  # * `host` is lowercased
+  # * `scheme` is lowercased.
+  # * `host` is lowercased.
   # * `port` is removed if it is the `.default_port?` of the scheme.
   # * `path` is resolved to a minimal, semantical equivalent representation removing
   #    dot segments `/.` and `/..`.
