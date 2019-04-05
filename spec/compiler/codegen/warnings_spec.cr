@@ -88,6 +88,78 @@ describe "Code gen: warnings" do
       inject_primitives: false
   end
 
+  it "informs warnings once per call site location (a)" do
+    warning_failures = warnings_result %(
+      class Foo
+        @[Deprecated("Do not use me")]
+        def m
+        end
+
+        def b
+          m
+        end
+      end
+
+      Foo.new.b
+      Foo.new.b
+    ), inject_primitives: false
+
+    warning_failures.size.should eq(1)
+  end
+
+  it "informs warnings once per call site location (b)" do
+    warning_failures = warnings_result %(
+      class Foo
+        @[Deprecated("Do not use me")]
+        def m
+        end
+      end
+
+      Foo.new.m
+      Foo.new.m
+    ), inject_primitives: false
+
+    warning_failures.size.should eq(2)
+  end
+
+  it "informs warnings once per yield" do
+    warning_failures = warnings_result %(
+      class Foo
+        @[Deprecated("Do not use me")]
+        def m
+        end
+      end
+
+      def twice
+        yield
+        yield
+      end
+
+      twice { Foo.new.m }
+    ), inject_primitives: false
+
+    warning_failures.size.should eq(1)
+  end
+
+  it "informs warnings once per target type" do
+    warning_failures = warnings_result %(
+      class Foo(T)
+        @[Deprecated("Do not use me")]
+        def m
+        end
+
+        def b
+          m
+        end
+      end
+
+      Foo(Int32).new.b
+      Foo(Int64).new.b
+    ), inject_primitives: false
+
+    warning_failures.size.should eq(2)
+  end
+
   it "ignore deprecation excluded locations" do
     with_tempfile("check_warnings_excludes") do |path|
       FileUtils.mkdir_p File.join(path, "lib")
