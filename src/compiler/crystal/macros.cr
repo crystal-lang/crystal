@@ -1187,6 +1187,17 @@ module Crystal::Macros
   class Out < UnaryExpression
   end
 
+  # An `offsetof` expression.
+  class OffsetOf < ASTNode
+    # Returns the type that has been used in this `offsetof` expression.
+    def type : ASTNode
+    end
+
+    # Returns the instance variable used in this `offsetof` expression.
+    def instance_var : ASTNode
+    end
+  end
+
   # A visibility modifier
   class VisibilityModifier < ASTNode
     # Returns the visibility of this modifier: `:public`, `:protected` or `:private`.

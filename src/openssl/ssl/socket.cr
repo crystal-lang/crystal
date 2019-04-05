@@ -179,4 +179,14 @@ abstract class OpenSSL::SSL::Socket < IO
       String.new(host_name)
     end
   end
+
+  def local_address
+    io = @bio.io
+    io.responds_to?(:local_address) ? io.local_address : nil
+  end
+
+  def remote_address
+    io = @bio.io
+    io.responds_to?(:remote_address) ? io.remote_address : nil
+  end
 end

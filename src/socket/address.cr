@@ -127,7 +127,8 @@ class Socket
     # Socket::IPAddress.parse("udp://[::1]:8080")     # => Socket::IPAddress.new("::1", 8080)
     # ```
     def self.parse(uri : URI) : IPAddress
-      host = uri.host || raise Socket::Error.new("Invalid IP address: missing host")
+      host = uri.host
+      raise Socket::Error.new("Invalid IP address: missing host") if !host || host.empty?
 
       port = uri.port || raise Socket::Error.new("Invalid IP address: missing port")
 

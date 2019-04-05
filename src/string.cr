@@ -850,10 +850,10 @@ class String
   # Negative indices can be used to start counting from the end of the string.
   #
   # ```
-  # "hello"[0]  # 'h'
-  # "hello"[1]  # 'e'
-  # "hello"[-1] # 'o'
-  # "hello"[-2] # 'l'
+  # "hello"[0]  # => 'h'
+  # "hello"[1]  # => 'e'
+  # "hello"[-1] # => 'o'
+  # "hello"[-2] # => 'l'
   # "hello"[5]  # raises IndexError
   # ```
   def [](index : Int)
@@ -864,31 +864,44 @@ class String
   # as character indices. Indices can be negative to start
   # counting from the end of the string.
   #
-  # Raises `IndexError` if the range's start is not in range.
+  # Raises `IndexError` if the range's start is out of range.
   #
   # ```
-  # "hello"[0..2]   # "hel"
-  # "hello"[0...2]  # "he"
-  # "hello"[1..-1]  # "ello"
-  # "hello"[1...-1] # "ell"
+  # "hello"[0..2]   # => "hel"
+  # "hello"[0...2]  # => "he"
+  # "hello"[1..-1]  # => "ello"
+  # "hello"[1...-1] # => "ell"
+  # "hello"[6..7]   # raises IndexError
   # ```
   def [](range : Range)
     self[*Indexable.range_to_index_and_count(range, size)]
   end
 
-  # Returns a substring starting from the *start* character
-  # of size *count*.
+  # Like `#[Range(Int, Int)]`, but returns `nil` if the range's start is out of range.
+  #
+  # ```
+  # "hello"[6..7]? # => nil
+  # ```
+  def []?(range : Range(Int, Int))
+    self[*Indexable.range_to_index_and_count(range, size)]?
+  end
+
+  # Returns a substring starting from the *start* character of size *count*.
   #
   # The *start* argument can be negative to start counting
   # from the end of the string.
   #
-  # Raises `IndexError` if *start* isn't in range.
+  # Raises `IndexError` if the *start* index is out of range.
   #
   # Raises `ArgumentError` if *count* is negative.
   def [](start : Int, count : Int)
-    if ascii_only?
-      return byte_slice(start, count)
-    end
+    self[start, count]? || raise IndexError.new
+  end
+
+  # Like `#[Int, Int]` but returns `nil` if the *start* index is out of range.
+  def []?(start : Int, count : Int)
+    raise ArgumentError.new "Negative count: #{count}" if count < 0
+    return byte_slice?(start, count) if ascii_only?
 
     start += size if start < 0
 
@@ -912,7 +925,6 @@ class String
     end_pos ||= reader.pos
 
     if start_pos
-      raise ArgumentError.new "Negative count" if count < 0
       return "" if count == 0
 
       count = end_pos - start_pos
@@ -923,13 +935,7 @@ class String
         {count, 0}
       end
     elsif start == i
-      if count >= 0
-        return ""
-      else
-        raise ArgumentError.new "Negative count"
-      end
-    else
-      raise IndexError.new
+      ""
     end
   end
 
@@ -988,12 +994,16 @@ class String
   end
 
   def byte_slice(start : Int, count : Int)
+    byte_slice?(start, count) || raise IndexError.new
+  end
+
+  def byte_slice?(start : Int, count : Int)
+    raise ArgumentError.new "Negative count" if count < 0
+
     start += bytesize if start < 0
     single_byte_optimizable = ascii_only?
 
     if 0 <= start < bytesize
-      raise ArgumentError.new "Negative count" if count < 0
-
       count = bytesize - start if start + count > bytesize
       return "" if count == 0
       return self if count == bytesize
@@ -1004,13 +1014,7 @@ class String
         {count, slice_size}
       end
     elsif start == bytesize
-      if count >= 0
-        return ""
-      else
-        raise ArgumentError.new "Negative count"
-      end
-    else
-      raise IndexError.new
+      ""
     end
   end
 
@@ -3500,13 +3504,14 @@ class String
   # even the monkey seems to want
   # a little coat of straw"
   # haiku.each_line do |stanza|
-  #   puts stanza.upcase
+  #   puts stanza
   # end
-  # # => THE FIRST COLD SHOWER
-  # # => EVEN THE MONKEY SEEMS TO WANT
-  # # => A LITTLE COAT OF STRAW
+  # # output:
+  # # the first cold shower
+  # # even the monkey seems to want
+  # # a little coat of straw
   # ```
-  def each_line(chomp = true) : Nil
+  def each_line(chomp = true, &block : String -> _) : Nil
     return if empty?
 
     offset = 0
@@ -3537,12 +3542,13 @@ class String
   # Converts camelcase boundaries to underscores.
   #
   # ```
-  # "DoesWhatItSaysOnTheTin".underscore # => "does_what_it_says_on_the_tin"
-  # "PartyInTheUSA".underscore          # => "party_in_the_usa"
-  # "HTTP_CLIENT".underscore            # => "http_client"
-  # "3.14IsPi".underscore               # => "3.14_is_pi"
+  # "DoesWhatItSaysOnTheTin".underscore                         # => "does_what_it_says_on_the_tin"
+  # "PartyInTheUSA".underscore                                  # => "party_in_the_usa"
+  # "HTTP_CLIENT".underscore                                    # => "http_client"
+  # "3.14IsPi".underscore                                       # => "3.14_is_pi"
+  # "InterestingImage".underscore(Unicode::CaseOptions::Turkic) # => "ınteresting_ımage"
   # ```
-  def underscore
+  def underscore(options : Unicode::CaseOptions = Unicode::CaseOptions::None)
     first = true
     last_is_downcase = false
     last_is_upcase = false
@@ -3551,12 +3557,18 @@ class String
 
     String.build(bytesize + 10) do |str|
       each_char do |char|
-        digit = '0' <= char <= '9'
-        downcase = 'a' <= char <= 'z' || digit
-        upcase = 'A' <= char <= 'Z'
+        digit = char.ascii_number?
+
+        if options.none?
+          downcase = digit || char.ascii_lowercase?
+          upcase = char.ascii_uppercase?
+        else
+          downcase = digit || char.lowercase?
+          upcase = char.uppercase?
+        end
 
         if first
-          str << char.downcase
+          str << char.downcase(options)
         elsif last_is_downcase && upcase
           if mem
             # This is the case of A1Bcd, we need to put 'mem' (not to need to convert as downcase
@@ -3568,7 +3580,7 @@ class String
           # This is the case of AbcDe, we need to put an underscore before the 'D'
           #                        ^
           str << '_'
-          str << char.downcase
+          str << char.downcase(options)
         elsif (last_is_upcase || last_is_digit) && (upcase || digit)
           # This is the case of 1) A1Bcd, 2) A1BCd or 3) A1B_cd:if the next char is upcase (case 1) we need
           #                          ^         ^           ^
@@ -3578,7 +3590,7 @@ class String
           # 3) we need to append this char as downcase and then a single underscore
           if mem
             # case 2
-            str << mem.downcase
+            str << mem.downcase(options)
           end
           mem = char
         else
@@ -3589,11 +3601,11 @@ class String
               # case 1
               str << '_'
             end
-            str << mem.downcase
+            str << mem.downcase(options)
             mem = nil
           end
 
-          str << char.downcase
+          str << char.downcase(options)
         end
 
         last_is_downcase = downcase
@@ -3602,16 +3614,17 @@ class String
         first = false
       end
 
-      str << mem.downcase if mem
+      str << mem.downcase(options) if mem
     end
   end
 
   # Converts underscores to camelcase boundaries.
   #
   # ```
-  # "eiffel_tower".camelcase # => "EiffelTower"
+  # "eiffel_tower".camelcase                                   # => "EiffelTower"
+  # "isolated_integer".camelcase(Unicode::CaseOptions::Turkic) # => "İsolatedİnteger"
   # ```
-  def camelcase
+  def camelcase(options : Unicode::CaseOptions = Unicode::CaseOptions::None)
     return self if empty?
 
     first = true
@@ -3620,11 +3633,11 @@ class String
     String.build(bytesize) do |str|
       each_char do |char|
         if first
-          str << char.upcase
+          str << char.upcase(options)
         elsif char == '_'
           last_is_underscore = true
         elsif last_is_underscore
-          str << char.upcase
+          str << char.upcase(options)
           last_is_underscore = false
         else
           str << char
@@ -3997,7 +4010,7 @@ class String
         printed_bytesize += part.bytesize
         if printed_bytesize != bytesize
           printed_bytesize += 1 # == "\n".bytesize
-          pp.text("\"")
+          pp.text('"')
           pp.text(part.inspect_unquoted)
           pp.text("\\n\"")
           break if printed_bytesize == bytesize

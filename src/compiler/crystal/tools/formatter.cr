@@ -1417,8 +1417,11 @@ module Crystal
       @lexer.wants_def_or_macro_name = false
 
       write node.name
-      next_token_skip_space
-      next_token_skip_space if @token.type == :"="
+
+      indent do
+        next_token_skip_space
+        next_token_skip_space if @token.type == :"="
+      end
 
       to_skip = format_def_args node
 
@@ -2058,9 +2061,16 @@ module Crystal
 
       # This is the case of an enum member
       if node.name[0].ascii_uppercase? && @token.type == :","
-        write ", "
-        next_token_skip_space
-        @exp_needs_indent = @token.type == :NEWLINE
+        write ","
+        next_token
+        @lexer.skip_space
+        if @token.type == :COMMENT
+          write_comment
+          @exp_needs_indent = true
+        else
+          write " "
+          @exp_needs_indent = @token.type == :NEWLINE
+        end
       end
 
       false
@@ -3602,6 +3612,10 @@ module Crystal
 
     def visit(node : InstanceSizeOf)
       visit Call.new(nil, "instance_sizeof", node.exp)
+    end
+
+    def visit(node : OffsetOf)
+      visit Call.new(nil, "offsetof", [node.offsetof_type, node.instance_var])
     end
 
     def visit(node : PointerOf)

@@ -268,6 +268,8 @@ module Crystal
     def covariant?(other_type : Type)
       return true if self == other_type
 
+      other_type = other_type.remove_alias
+
       case other_type
       when UnionType
         other_type.union_types.any? do |union_type|

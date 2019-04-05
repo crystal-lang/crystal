@@ -20,6 +20,15 @@ class HTTP::Request
   @query_params : Params?
   @uri : URI?
 
+  # The network address that sent the request to an HTTP server.
+  #
+  # `HTTP::Server` will try to fill this property, and its value
+  # will have a format like "IP:port", but this format is not guaranteed.
+  # Middlewares can overwrite this value.
+  #
+  # This property is not used by `HTTP::Client`.
+  property remote_address : String?
+
   def initialize(@method : String, @resource : String, headers : Headers? = nil, body : String | Bytes | IO | Nil = nil, @version = "HTTP/1.1")
     @headers = headers.try(&.dup) || Headers.new
     self.body = body
@@ -99,16 +108,22 @@ class HTTP::Request
     return BadRequest.new unless HTTP::SUPPORTED_VERSIONS.includes?(http_version)
 
     HTTP.parse_headers_and_body(io) do |headers, body|
-      return new method, resource, headers, body, http_version
+      request = new method, resource, headers, body, http_version
+
+      if io.responds_to?(:remote_address)
+        request.remote_address = io.remote_address.try &.to_s
+      end
+
+      return request
     end
 
     # Malformed or unexpectedly ended http request
     BadRequest.new
   end
 
-  # Lazily parses and return the request's path component.
+  # Returns the request's path component.
   def path
-    uri.path || "/"
+    (path = uri.path).empty? ? "/" : path
   end
 
   # Sets request's path component.

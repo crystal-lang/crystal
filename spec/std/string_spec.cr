@@ -148,6 +148,15 @@ describe "String" do
     it "gets with a string" do
       "FooBar"["Bar"].should eq "Bar"
       expect_raises(Exception, "Nil assertion failed") { "FooBar"["Baz"] }
+    end
+
+    it "gets with a char" do
+      expect_raises(Exception, "Nil assertion failed") { "foo/bar"['-'] }
+    end
+  end
+
+  describe "[]?" do
+    it "gets with a string" do
       "FooBar"["Bar"]?.should eq "Bar"
       "FooBar"["Baz"]?.should be_nil
     end
@@ -159,15 +168,25 @@ describe "String" do
       "foo/bar"['-']?.should be_nil
     end
 
-    it "gets with index and []?" do
+    it "gets with index" do
       "hello"[1]?.should eq('e')
       "hello"[5]?.should be_nil
       "hello"[-1]?.should eq('o')
       "hello"[-6]?.should be_nil
     end
 
-    it "returns nil with []? if pointing after last char which is non-ASCII" do
+    it "returns nil if pointing after last char which is non-ASCII" do
       "ß"[1]?.should be_nil
+    end
+
+    it "gets with range" do
+      "hello"[1..2]?.should eq "el"
+      "hello"[6..-1]?.should be_nil
+    end
+
+    it "gets with start and count" do
+      "hello"[1, 3]?.should eq("ell")
+      "hello"[6, 3]?.should be_nil
     end
   end
 

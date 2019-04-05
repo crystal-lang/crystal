@@ -453,7 +453,7 @@ class Array(T)
   # element). Additionally, an empty array is returned when the starting index
   # for an element range is at the end of the array.
   #
-  # Raises `IndexError` if the starting index is out of range.
+  # Raises `IndexError` if the range's start is out of range.
   #
   # ```
   # a = ["a", "b", "c", "d", "e"]
@@ -468,6 +468,16 @@ class Array(T)
     self[*Indexable.range_to_index_and_count(range, size)]
   end
 
+  # Like `#[Range(Int, Int)]`, but returns `nil` if the range's start is out of range.
+  #
+  # ```
+  # a = ["a", "b", "c", "d", "e"]
+  # a[6..10]? # => nil
+  # ```
+  def []?(range : Range(Int, Int))
+    self[*Indexable.range_to_index_and_count(range, size)]?
+  end
+
   # Returns count or less (if there aren't enough) elements starting at the
   # given start index.
   #
@@ -475,34 +485,37 @@ class Array(T)
   # element). Additionally, an empty array is returned when the starting index
   # for an element range is at the end of the array.
   #
-  # Raises `IndexError` if the starting index is out of range.
+  # Raises `IndexError` if the *start* index is out of range.
+  #
+  # Raises `ArgumentError` if *count* is negative.
   #
   # ```
   # a = ["a", "b", "c", "d", "e"]
   # a[-3, 3] # => ["c", "d", "e"]
-  # a[6, 1]  # raise IndexError
   # a[1, 2]  # => ["b", "c"]
   # a[5, 1]  # => []
+  # a[6, 1]  # raises IndexError
   # ```
   def [](start : Int, count : Int)
-    raise ArgumentError.new "Negative count: #{count}" if count < 0
+    self[start, count]? || raise IndexError.new
+  end
 
-    if start == size
-      return Array(T).new
-    end
+  # Like `#[Int, Int]` but returns `nil` if the *start* index is out of range.
+  def []?(start : Int, count : Int)
+    raise ArgumentError.new "Negative count: #{count}" if count < 0
+    return Array(T).new if start == size
 
     start += size if start < 0
-    raise IndexError.new unless 0 <= start <= size
 
-    if count == 0
-      return Array(T).new
-    end
+    if 0 <= start <= size
+      return Array(T).new if count == 0
 
-    count = Math.min(count, size - start)
+      count = Math.min(count, size - start)
 
-    Array(T).build(count) do |buffer|
-      buffer.copy_from(@buffer + start, count)
-      count
+      Array(T).build(count) do |buffer|
+        buffer.copy_from(@buffer + start, count)
+        count
+      end
     end
   end
 

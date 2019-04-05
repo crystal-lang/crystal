@@ -155,7 +155,7 @@ class URI
         first = true
         string.split('.') do |part|
           unless first
-            io << "."
+            io << '.'
           end
 
           if part.ascii_only?

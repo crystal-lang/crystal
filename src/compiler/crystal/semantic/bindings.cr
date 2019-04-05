@@ -479,6 +479,9 @@ module Crystal
           if node.is_a?(InstanceSizeOf) && (expanded = node.expanded)
             node = expanded
           end
+          if node.is_a?(OffsetOf) && (expanded = node.expanded)
+            node = expanded
+          end
 
           case node
           when NumberLiteral

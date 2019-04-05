@@ -115,6 +115,18 @@ module Crystal
 
     property codegen_target = Config.default_target
 
+    # Which kind of warnings wants to be detected.
+    property warnings : Warnings = Warnings::All
+
+    # Paths to ignore for warnings detection.
+    property warnings_exclude : Array(String) = [] of String
+
+    # Detected warning failures.
+    property warning_failures = [] of String
+
+    # If `true` compiler will error if warnings are found.
+    property error_on_warnings : Bool = false
+
     def initialize
       super(self, self, "main")
 
@@ -226,6 +238,7 @@ module Crystal
       types["Raises"] = @raises_annotation = AnnotationType.new self, self, "Raises"
       types["ReturnsTwice"] = @returns_twice_annotation = AnnotationType.new self, self, "ReturnsTwice"
       types["ThreadLocal"] = @thread_local_annotation = AnnotationType.new self, self, "ThreadLocal"
+      types["Deprecated"] = @deprecated_annotation = AnnotationType.new self, self, "Deprecated"
 
       define_crystal_constants
     end
@@ -447,7 +460,7 @@ module Crystal
                      packed_annotation thread_local_annotation no_inline_annotation
                      always_inline_annotation naked_annotation returns_twice_annotation
                      raises_annotation primitive_annotation call_convention_annotation
-                     flags_annotation link_annotation extern_annotation) %}
+                     flags_annotation link_annotation extern_annotation deprecated_annotation) %}
       def {{name.id}}
         @{{name.id}}.not_nil!
       end

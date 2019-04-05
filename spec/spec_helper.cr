@@ -108,6 +108,26 @@ def assert_error(str, message, inject_primitives = true)
   end
 end
 
+def warnings_result(code, inject_primitives = true)
+  code = inject_primitives(code) if inject_primitives
+
+  output_filename = Crystal.tempfile("crystal-spec-output")
+
+  compiler = Compiler.new
+  compiler.warnings = Warnings::All
+  compiler.error_on_warnings = false
+  compiler.prelude = "empty" # avoid issues in the current std lib
+  result = compiler.compile Compiler::Source.new("code.cr", code), output_filename
+
+  result.program.warning_failures
+end
+
+def assert_warning(code, message, inject_primitives = true)
+  warning_failures = warnings_result(code, inject_primitives)
+  warning_failures.size.should eq(1)
+  warning_failures[0].should start_with(message)
+end
+
 def assert_macro(macro_args, macro_body, call_args, expected, expected_pragmas = nil, flags = nil)
   assert_macro(macro_args, macro_body, expected, expected_pragmas, flags) { call_args }
 end

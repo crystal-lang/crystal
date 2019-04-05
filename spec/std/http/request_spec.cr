@@ -230,8 +230,7 @@ module HTTP
       end
 
       it "falls back to /" do
-        request = Request.new("GET", "/foo")
-        request.path = nil
+        request = Request.new("GET", "")
         request.path.should eq("/")
       end
     end

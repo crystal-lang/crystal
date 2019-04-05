@@ -573,6 +573,7 @@ describe Crystal::Formatter do
   assert_format "typeof( 1, 2, 3 )", "typeof(1, 2, 3)"
   assert_format "sizeof( Int32 )", "sizeof(Int32)"
   assert_format "instance_sizeof( Int32 )", "instance_sizeof(Int32)"
+  assert_format "offsetof( String, @length )", "offsetof(String, @length)"
   assert_format "pointerof( @a )", "pointerof(@a)"
 
   assert_format "_ = 1"
@@ -1318,4 +1319,13 @@ describe Crystal::Formatter do
   assert_format "long_variable_name = [\n  {\n    :foo => 1,\n  },\n  {\n    :bar => 2,\n  },\n]"
   assert_format "long_variable_name = [1, 2, 3,\n                      4, 5, 6]"
   assert_format "long_variable_name = [1, 2, 3, # foo\n                      4, 5, 6]"
+
+  # #7599
+  assert_format "def foo # bar\n  # baz\nend"
+  assert_format "def foo(x) # bar\n  # baz\nend"
+  assert_format "def foo(x) : Int32 # bar\n  # baz\nend"
+  assert_format "def foo(x) forall T # bar\n  # baz\nend"
+
+  # #7600
+  assert_format "enum E\n  A, # hello\n  B, # hello\n  C, # hello\nend"
 end

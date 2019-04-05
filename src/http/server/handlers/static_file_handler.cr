@@ -29,7 +29,7 @@ class HTTP::StaticFileHandler
       if @fallthrough
         call_next(context)
       else
-        context.response.status_code = 405
+        context.response.status = :method_not_allowed
         context.response.headers.add("Allow", "GET, HEAD")
       end
       return
@@ -42,7 +42,7 @@ class HTTP::StaticFileHandler
     # File path cannot contains '\0' (NUL) because all filesystem I know
     # don't accept '\0' character as file name.
     if request_path.includes? '\0'
-      context.response.status_code = 400
+      context.response.status = :bad_request
       return
     end
 
@@ -69,7 +69,7 @@ class HTTP::StaticFileHandler
       add_cache_headers(context.response.headers, last_modified)
 
       if cache_request?(context, last_modified)
-        context.response.status_code = 304
+        context.response.status = :not_modified
         return
       end
 
@@ -90,7 +90,7 @@ class HTTP::StaticFileHandler
   end
 
   private def redirect_to(context, url)
-    context.response.status_code = 302
+    context.response.status = :found
 
     url = URI.escape(url) { |byte| URI.unreserved?(byte) || byte.chr == '/' }
     context.response.headers.add "Location", url
