@@ -130,7 +130,7 @@ struct NamedTuple
   # h.dig? "a", "b", "c", "d", "e" # => nil
   # ```
   def dig?(key : Symbol | String, *subkeys)
-    if (value = self[key]?) && value.responds_to?(:dig?)
+    if (value = self[key]?) && !value.is_a?(Symbol | String) && value.responds_to?(:dig?)
       value.dig?(*subkeys)
     end
   end
@@ -149,7 +149,7 @@ struct NamedTuple
   # h.dig "a", "b", "c", "d", "e" # raises KeyError
   # ```
   def dig(key : Symbol | String, *subkeys)
-    if (value = self[key]) && value.responds_to?(:dig)
+    if (value = self[key]) && !value.is_a?(Symbol | String) && value.responds_to?(:dig)
       return value.dig(*subkeys)
     end
     raise KeyError.new "NamedTuple value not diggable for key: #{key.inspect}"
