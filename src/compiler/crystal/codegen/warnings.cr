@@ -46,26 +46,17 @@ module Crystal
   end
 
   class CodeGenVisitor
-    @deprecated_methods_detected = Set(String).new
-
     def check_call_to_deprecated_method(node : Call)
       return unless @program.warnings.all?
 
       if (ann = node.target_def.annotation(@program.deprecated_annotation)) &&
          (deprecated_annotation = DeprecatedAnnotation.from(ann))
         return if ignore_warning_due_to_location(node.location)
-        short_reference = node.target_def.short_reference
-        warning_key = node.location.try { |l| "#{short_reference} #{l}" }
-
-        # skip warning if the call site was already informed
-        # if there is no location information just inform it.
-        return if !warning_key || @deprecated_methods_detected.includes?(warning_key)
-        @deprecated_methods_detected.add(warning_key) if warning_key
 
         message = deprecated_annotation.message
         message = message ? " #{message}" : ""
 
-        full_message = node.warning "Deprecated #{short_reference}.#{message}"
+        full_message = node.warning "Deprecated #{node.target_def.short_reference}.#{message}"
 
         @program.warning_failures << full_message
       end
