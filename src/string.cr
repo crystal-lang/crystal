@@ -714,7 +714,7 @@ class String
   # "hello"[5]  # raises IndexError
   # ```
   def [](index : Int)
-    at(index) { raise IndexError.new }
+    char_at(index) { raise IndexError.new }
   end
 
   # Returns a substring by using a Range's *begin* and *end*
@@ -797,7 +797,7 @@ class String
   end
 
   def []?(index : Int)
-    at(index) { nil }
+    char_at(index) { nil }
   end
 
   def []?(str : String | Char)
@@ -825,11 +825,11 @@ class String
     self[regex, group]?.not_nil!
   end
 
-  def at(index : Int)
-    at(index) { raise IndexError.new }
+  def char_at(index : Int)
+    char_at(index) { raise IndexError.new }
   end
 
-  def at(index : Int)
+  def char_at(index : Int)
     if ascii_only?
       byte = byte_at?(index)
       if byte
@@ -881,10 +881,6 @@ class String
 
   def codepoint_at(index)
     char_at(index).ord
-  end
-
-  def char_at(index)
-    self[index]
   end
 
   def byte_at(index)
