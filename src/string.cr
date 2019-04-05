@@ -808,7 +808,7 @@ class String
     self[regex, group]?.not_nil!
   end
 
-  # WIP TODO: improve this
+  # TODO: improve this
   def unsafe_fetch(index : Int) : Char
     at(index)
   end
@@ -3696,6 +3696,8 @@ class String
 
   # Yields each character in the string to the block.
   #
+  # DEPRECATED: `each_char` is deprecated, use `each` instead.
+  #
   # ```
   # array = [] of Char
   # "ab☃".each_char do |char|
@@ -3704,18 +3706,12 @@ class String
   # array # => ['a', 'b', '☃']
   # ```
   def each_char : Nil
-    if ascii_only?
-      each_byte do |byte|
-        yield (byte < 0x80 ? byte.unsafe_chr : Char::REPLACEMENT)
-      end
-    else
-      Char::Reader.new(self).each do |char|
-        yield char
-      end
-    end
+    each { |c| yield c }
   end
 
   # Returns an `Iterator` over each character in the string.
+  #
+  # DEPRECATED: `each_char` is deprecated, use `each` instead.
   #
   # ```
   # chars = "ab☃".each_char
@@ -3724,7 +3720,22 @@ class String
   # chars.next # => '☃'
   # ```
   def each_char
-    CharIterator.new(Char::Reader.new(self))
+    each
+  end
+
+  # Yields each character and its index in the string to the block.
+  #
+  # DEPRECATED: `each_char_with_index` is deprecated, use `each_with_index` instead.
+  #
+  # ```
+  # array = [] of Tuple(Char, Int32)
+  # "ab☃".each_char_with_index do |char, index|
+  #   array << {char, index}
+  # end
+  # array # => [{'a', 0}, {'b', 1}, {'☃', 2}]
+  # ```
+  def each_char_with_index
+    each_with_index { |c, i| yield c, i }
   end
 
   # Yields each character and its index in the string to the block.
@@ -3736,7 +3747,7 @@ class String
   # end
   # array # => [{'a', 0}, {'b', 1}, {'☃', 2}]
   # ```
-  def each_char_with_index
+  def each_with_index(&block : Char, Int32 ->)
     i = 0
     each_char do |char|
       yield char, i
