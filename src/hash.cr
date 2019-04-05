@@ -194,7 +194,7 @@ class Hash(K, V)
   # h.dig? "a", "b", "c", "d", "e" # => nil
   # ```
   def dig?(key : K, *subkeys)
-    if (value = self[key]?) && value.responds_to?(:dig?)
+    if (value = self[key]?) && !value.is_a?(K) && value.responds_to?(:dig?)
       value.dig?(*subkeys)
     end
   end
@@ -213,7 +213,7 @@ class Hash(K, V)
   # h.dig "a", "b", "c", "d", "e" # raises KeyError
   # ```
   def dig(key : K, *subkeys)
-    if (value = self[key]) && value.responds_to?(:dig)
+    if (value = self[key]) && !value.is_a?(K) && value.responds_to?(:dig)
       return value.dig(*subkeys)
     end
     raise KeyError.new "Hash value not diggable for key: #{key.inspect}"
