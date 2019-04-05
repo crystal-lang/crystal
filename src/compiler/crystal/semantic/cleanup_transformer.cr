@@ -817,7 +817,7 @@ module Crystal
           end
         when 1
           case node.name
-          when "+", "-", "*", "/", "&", "|"
+          when "+", "-", "*", "&+", "&-", "&*", "/", "//", "&", "|"
             return simple_constant?(obj, consts) && simple_constant?(node.args.first, consts)
           end
         end
