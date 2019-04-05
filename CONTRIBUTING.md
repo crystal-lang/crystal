@@ -177,7 +177,7 @@ A pre-commit hook can be installed into the local git repo to ensure the formatt
 Install the pre-commit hook:
 
 ```sh
-curl https://gist.githubusercontent.com/straight-shoota/fdaf4cf1954e084cd5abccf8f77975f6/raw/pre-commit > .git/hooks/pre-commit && chmod +x .git/hooks/pre-commit
+ln -s scripts/git/pre-commit .git/hooks
 ```
 
 ## Code of Conduct
