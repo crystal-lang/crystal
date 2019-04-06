@@ -1,0 +1,25 @@
+#! /bin/sh
+#
+# This script ensures Crystal code is correctly formatted before committing it.
+# It won't apply any format changes automatically.
+#
+# Only staged files (the ones to be committed) are being processed, but each file is checked
+# entirely as it is stored on disc, even parts that are not staged.
+#
+# To use this script, it needs to be installed in the local git repository. For example by running
+# `ln -s scripts/git/pre-commit .git/hooks` in the root folder.
+#
+# Called by "git commit" with no arguments. The hook should
+# exit with non-zero status after issuing an appropriate message if
+# it wants to stop the commit.
+
+changed_cr_files=$(git diff --cached --name-only --diff-filter=ACM | grep '\.cr$')
+
+[ -z "$changed_cr_files" ] && exit 0
+
+if [ -x bin/crystal ]; then
+  # use bin/crystal wrapper when available to run local compiler build
+  exec bin/crystal tool format --check $changed_cr_files >&2
+else
+  exec crystal tool format --check $changed_cr_files >&2
+fi
