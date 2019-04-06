@@ -2553,10 +2553,6 @@ class String
   # this string is less, equal or greater than *other*, optionally in a *case_insensitive*
   # manner.
   #
-  # If *case_insitive* is `false`, this method delegates to `<=>`. Otherwise,
-  # the strings are compared char-by-char, and ASCII characters are compared in a
-  # case-insensitive way.
-  #
   # ```
   # "abcdef".compare("abcde")   # => 1
   # "abcdef".compare("abcdef")  # => 0
@@ -2565,29 +2561,55 @@ class String
   #
   # "abcdef".compare("ABCDEF", case_insensitive: true) # => 0
   # "abcdef".compare("ABCDEG", case_insensitive: true) # => -1
+  #
+  # "heIIo".compare("heııo", case_insensitive: true, Unicode::CaseOptions::Turkic) # => 0
   # ```
-  def compare(other : String, case_insensitive = false)
+  def compare(other : String, case_insensitive = false, options = Unicode::CaseOptions::None)
     return self <=> other unless case_insensitive
 
-    reader1 = Char::Reader.new(self)
-    reader2 = Char::Reader.new(other)
-    ch1 = reader1.current_char
-    ch2 = reader2.current_char
+    if ascii_only? && other.ascii_only?
+      position = 0
 
-    while reader1.has_next? && reader2.has_next?
-      cmp = ch1.downcase <=> ch2.downcase
-      return cmp.sign if cmp != 0
+      while position < bytesize && position < other.bytesize
+        byte1 = to_unsafe[position]
+        byte2 = other.to_unsafe[position]
 
-      ch1 = reader1.next_char
-      ch2 = reader2.next_char
-    end
+        # Lowercase both bytes
+        if 65 <= byte1 <= 90
+          byte1 += 32
+        end
+        if 65 <= byte2 <= 90
+          byte2 += 32
+        end
 
-    if reader1.has_next?
-      1
-    elsif reader2.has_next?
-      -1
+        comparison = byte1 <=> byte2
+        return comparison unless comparison == 0
+
+        position += 1
+      end
+
+      bytesize <=> other.bytesize
     else
-      0
+      reader1 = Char::Reader.new(self)
+      reader2 = Char::Reader.new(other)
+      char1 = reader1.current_char
+      char2 = reader2.current_char
+
+      while reader1.has_next? && reader2.has_next?
+        comparison = char1.downcase(options) <=> char2.downcase(options)
+        return comparison.sign unless comparison == 0
+
+        char1 = reader1.next_char
+        char2 = reader2.next_char
+      end
+
+      if reader1.has_next?
+        1
+      elsif reader2.has_next?
+        -1
+      else
+        0
+      end
     end
   end
 

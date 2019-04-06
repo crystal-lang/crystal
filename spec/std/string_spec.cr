@@ -2245,22 +2245,38 @@ describe "String" do
     end
   end
 
-  it "compares non-case insensitive" do
-    "fo".compare("foo").should eq(-1)
-    "foo".compare("fo").should eq(1)
-    "foo".compare("foo").should eq(0)
-    "foo".compare("fox").should eq(-1)
-    "fox".compare("foo").should eq(1)
-    "foo".compare("Foo").should eq(1)
-  end
+  describe "compare" do
+    it "compares case-sensitive" do
+      "fo".compare("foo").should eq(-1)
+      "foo".compare("fo").should eq(1)
+      "foo".compare("foo").should eq(0)
+      "foo".compare("fox").should eq(-1)
+      "fox".compare("foo").should eq(1)
+      "foo".compare("Foo").should eq(1)
+      "hällo".compare("Hällo").should eq(1)
+      "".compare("").should eq(0)
+    end
 
-  it "compares case insensitive" do
-    "fo".compare("FOO", case_insensitive: true).should eq(-1)
-    "foo".compare("FO", case_insensitive: true).should eq(1)
-    "foo".compare("FOO", case_insensitive: true).should eq(0)
-    "foo".compare("FOX", case_insensitive: true).should eq(-1)
-    "fox".compare("FOO", case_insensitive: true).should eq(1)
-    "fo\u{0000}".compare("FO", case_insensitive: true).should eq(1)
+    it "compares case-insensitive" do
+      "foo".compare("FO", case_insensitive: true).should eq(1)
+      "FOO".compare("fo", case_insensitive: true).should eq(1)
+      "fo".compare("FOO", case_insensitive: true).should eq(-1)
+      "FOX".compare("foo", case_insensitive: true).should eq(1)
+      "foo".compare("FOX", case_insensitive: true).should eq(-1)
+      "foo".compare("FOO", case_insensitive: true).should eq(0)
+      "hELLo".compare("HellO", case_insensitive: true).should eq(0)
+      "fo\u{0}".compare("FO", case_insensitive: true).should eq(1)
+      "fo".compare("FO\u{0}", case_insensitive: true).should eq(-1)
+      "\u{0}".compare("\u{0}", case_insensitive: true).should eq(0)
+      "z".compare("hello", case_insensitive: true).should eq(1)
+      "h".compare("zzz", case_insensitive: true).should eq(-1)
+      "ä".compare("äA", case_insensitive: true).should eq(-1)
+      "äÄ".compare("äÄ", case_insensitive: true).should eq(0)
+      "heIIo".compare("heııo", case_insensitive: true, options: Unicode::CaseOptions::Turkic).should eq(0)
+      "".compare("abc", case_insensitive: true).should eq(-1)
+      "abc".compare("", case_insensitive: true).should eq(1)
+      "abcA".compare("abca", case_insensitive: true).should eq(0)
+    end
   end
 
   it "builds with write_byte" do
