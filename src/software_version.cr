@@ -13,7 +13,7 @@
 # This format is described by the regular expression:
 # `/[0-9]+(?>\.[0-9a-zA-Z]+)*(-[0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*)?(\+[0-9A-Za-z-.]+)?/`
 #
-# This implementation is compatible to popular versioning schemes such as
+# This implementation is compatible with popular versioning schemes such as
 # [`SemVer`](https://semver.org/) and [`CalVer`](https://calver.org/) but
 # doesn't enforce any particular one.
 #
@@ -59,7 +59,7 @@ struct SoftwareVersion
   # Returns `nil` if *string* describes an invalid version.
   def self.parse?(string : String) : self?
     # If string is an empty string convert it to 0
-    string = "0" if string =~ /\A\s*\Z/
+    string = "0" if string.blank?
 
     return unless valid?(string)
 
@@ -111,7 +111,7 @@ struct SoftwareVersion
 
   # Returns `true` if this version is a pre-release version.
   #
-  # A version is considered pre-release if it contains an letter or a dash (`-`).
+  # A version is considered pre-release if it contains a letter or a dash (`-`).
   #
   # ```
   # require "software_version"
@@ -178,8 +178,8 @@ struct SoftwareVersion
     self
   end
 
-  # Compares this version with *other* returning `-1`, `0`, or `1` if the
-  # other version is lower, equal or greater than `self`.
+  # Compares this version with *other* returning `-1`, `0`, or `1` depending on whether
+  # *other*'s version is lower, equal or greater than `self`.
   def <=>(other : self) : Int
     lstring = @version
     rstring = other.@version
@@ -209,7 +209,7 @@ struct SoftwareVersion
         return lchar.ascii_letter? ? -1 : 1
       end
 
-      # Try to consume consequitive digits into a number
+      # Try to consume consecutive digits into a number
       lnumber, new_lindex = consume_number(lstring, lindex)
       rnumber, new_rindex = consume_number(rstring, rindex)
 
