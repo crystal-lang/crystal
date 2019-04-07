@@ -3,7 +3,7 @@ require "./spec_helper"
 
 describe "Compiler" do
   it "has a valid version" do
-    SemanticVersion.parse(Crystal::Config.version)
+    SoftwareVersion.parse(Crystal::Config.version)
   end
 
   it "compiles a file" do

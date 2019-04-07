@@ -15,7 +15,7 @@ alias YamlRec = Int32 | Array(YamlRec) | Hash(YamlRec, YamlRec)
 # Earlier libyaml releases still write the document end marker and this is hard to fix on Crystal's side.
 # So we just ignore it and adopt the specs accordingly to coincide with the used libyaml version.
 private def assert_yaml_document_end(actual, expected)
-  if YAML.libyaml_version < SemanticVersion.new(0, 2, 1)
+  if YAML.libyaml_version < SoftwareVersion.new(0, 2, 1)
     expected += "...\n"
   end
 
@@ -333,7 +333,7 @@ describe "YAML serialization" do
     it "does for bytes" do
       yaml = "hello".to_slice.to_yaml
 
-      if YAML.libyaml_version < SemanticVersion.new(0, 2, 2)
+      if YAML.libyaml_version < SoftwareVersion.new(0, 2, 2)
         yaml.should eq("--- !!binary 'aGVsbG8=\n\n'\n")
       else
         yaml.should eq("--- !!binary 'aGVsbG8=\n\n  '\n")

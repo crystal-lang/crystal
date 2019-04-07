@@ -1,6 +1,6 @@
 require "../semantic/ast"
 require "./macros"
-require "semantic_version"
+require "software_version"
 
 module Crystal
   class MacroInterpreter
@@ -88,13 +88,13 @@ module Crystal
       second_string = second.to_string("second argument to 'compare_versions'")
 
       first_version = begin
-        SemanticVersion.parse(first_string)
+        SoftwareVersion.parse(first_string)
       rescue ex
         first_arg.raise ex.message
       end
 
       second_version = begin
-        SemanticVersion.parse(second_string)
+        SoftwareVersion.parse(second_string)
       rescue ex
         second_arg.raise ex.message
       end
