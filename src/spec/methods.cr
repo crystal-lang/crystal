@@ -36,6 +36,7 @@ module Spec::Methods
   #
   # It is usually used inside a `#describe` or `#context` section.
   def it(description = "assert", file = __FILE__, line = __LINE__, end_line = __END_LINE__, &block)
+    description = description.to_s
     Spec::RootContext.check_nesting_spec(file, line) do
       return unless Spec.matches?(description, file, line, end_line)
 
@@ -76,6 +77,7 @@ module Spec::Methods
   #
   # It is usually used inside a `#describe` or `#context` section.
   def pending(description = "assert", file = __FILE__, line = __LINE__, end_line = __END_LINE__, &block)
+    description = description.to_s
     Spec::RootContext.check_nesting_spec(file, line) do
       return unless Spec.matches?(description, file, line, end_line)
 
