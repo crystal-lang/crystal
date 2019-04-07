@@ -188,7 +188,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
         end
       end
 
-      annotation_type.class_types << type unless annotation_type.class_types.includes? type
+      annotation_type.class_types << type
       type.add_annotation(annotation_type, ann)
     end
 
@@ -239,7 +239,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
     attach_doc type, node
 
     process_annotations(annotations) do |annotation_type, ann|
-      annotation_type.class_types << type unless annotation_type.class_types.includes? type
+      annotation_type.class_types << type
       type.add_annotation(annotation_type, ann)
     end
 
