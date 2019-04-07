@@ -247,7 +247,7 @@ module Crystal
       else
         node.exp.raise <<-ERROR
                        `for` expression must be of one of the following types:
-                       ArrayLiteral, HashLiteral, TupleLiteral, NamedTupleLiteral or RangeLiteral not #{exp.class_desc}
+                       ArrayLiteral, HashLiteral, TupleLiteral, NamedTupleLiteral or RangeLiteral, not #{exp.class_desc}
                        Expression: #{exp}
                        ERROR
       end
