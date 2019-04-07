@@ -2685,6 +2685,8 @@ module Crystal
   end
 
   class AnnotationType < NamedType
+    property class_types : Array(Type) = [] of Type
+
     def type_desc
       "annotation"
     end

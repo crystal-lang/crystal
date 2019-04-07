@@ -1755,6 +1755,10 @@ module Crystal::Macros
     def annotations(type : TypeNode) : ArrayLiteral(Annotation)
     end
 
+    # Returns an array of `TypeNode` that are annotated with `self`.
+    def annotated_types : ArrayLiteral(TypeNode)
+    end
+
     # Returns the number of elements in this tuple type or tuple metaclass type.
     # Gives a compile error if this is not one of those types.
     def size : NumberLiteral

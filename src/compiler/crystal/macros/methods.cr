@@ -1533,6 +1533,17 @@ module Crystal
           return ArrayLiteral.new if annotations.nil?
           ArrayLiteral.map(annotations, &.itself)
         end
+      when "annotated_types"
+        interpret_argless_method(method, args) do
+          type = self.type.instance_type
+          case type
+          when Crystal::AnnotationType
+            types = type.class_types
+            ArrayLiteral.map(types) { |class_type| TypeNode.new class_type }
+          else
+            raise "undefined method 'annotated_types' for TypeNode of type #{type} (must be an annotation type)"
+          end
+        end
       when "size"
         interpret_argless_method(method, args) do
           type = self.type.instance_type

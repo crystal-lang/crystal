@@ -794,4 +794,116 @@ describe "Semantic: annotation" do
       ))
     end
   end
+
+  describe "#annotated_types" do
+    it "returns an empty array if there are none defined" do
+      assert_type(%(
+        annotation Foo
+        end
+
+        module Moo
+        end
+
+        {% if Foo.annotated_types.empty? %}
+          1
+        {% else %}
+          'a'
+        {% end %}
+      )) { int32 }
+    end
+
+    it "includes annotated modules" do
+      assert_type(%(
+        annotation Foo
+        end
+
+        @[Foo]
+        module Moo
+        end
+
+        {% if Foo.annotated_types.size == 1 %}
+          1
+        {% else %}
+          'a'
+        {% end %}
+      )) { int32 }
+    end
+
+    it "includes annotated classes" do
+      assert_type(%(
+        annotation Foo
+        end
+
+        @[Foo]
+        class Moo
+        end
+
+        {% if Foo.annotated_types.size == 1 %}
+          1
+        {% else %}
+          'a'
+        {% end %}
+      )) { int32 }
+    end
+
+    it "includes annotated structs" do
+      assert_type(%(
+        annotation Foo
+        end
+
+        @[Foo]
+        struct Moo
+        end
+
+        {% if Foo.annotated_types.size == 1 %}
+          1
+        {% else %}
+          'a'
+        {% end %}
+      )) { int32 }
+    end
+
+    it "does not duplicate types if multiple annotations of same type are applied" do
+      assert_type(%(
+        annotation Foo
+        end
+
+        @[Foo]
+        @[Foo]
+        struct Moo
+        end
+
+        {% if Foo.annotated_types.size == 1 %}
+          1
+        {% else %}
+          'a'
+        {% end %}
+      )) { int32 }
+    end
+
+    it "works with multiple types/annotations" do
+      assert_type(%(
+        annotation Foo; end
+        annotation Bar; end
+
+        @[Foo]
+        struct Chicken; end
+
+        @[Foo]
+        @[Bar]
+        class Cow; end
+
+        @[Foo]
+        module Turkey; end
+
+        class Monkey; end
+
+        {% if Foo.annotated_types.size == 3 && Bar.annotated_types.size == 1 %}
+          1
+        {% else %}
+          'a'
+        {% end %}
+      )) { int32 }
+    end
+  end
 end
