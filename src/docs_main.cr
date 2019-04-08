@@ -2,6 +2,7 @@
 # It, for example, doesn't include API for the compiler, but does include
 # the fictitious API for the Crystal::Macros module.
 
+require "./annotations"
 require "./big"
 require "./compiler/crystal/macros"
 require "./crypto/**"
