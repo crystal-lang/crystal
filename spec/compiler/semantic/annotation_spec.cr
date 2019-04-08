@@ -821,7 +821,7 @@ describe "Semantic: annotation" do
         module Moo
         end
 
-        {% if Foo.annotated_types.size == 1 %}
+        {% if Foo.annotated_types == [Moo] %}
           1
         {% else %}
           'a'
@@ -838,7 +838,7 @@ describe "Semantic: annotation" do
         class Moo
         end
 
-        {% if Foo.annotated_types.size == 1 %}
+        {% if Foo.annotated_types == [Moo] %}
           1
         {% else %}
           'a'
@@ -855,7 +855,7 @@ describe "Semantic: annotation" do
         struct Moo
         end
 
-        {% if Foo.annotated_types.size == 1 %}
+        {% if Foo.annotated_types == [Moo] %}
           1
         {% else %}
           'a'
@@ -873,7 +873,7 @@ describe "Semantic: annotation" do
         struct Moo
         end
 
-        {% if Foo.annotated_types.size == 1 %}
+        {% if Foo.annotated_types == [Moo] %}
           1
         {% else %}
           'a'
@@ -898,7 +898,7 @@ describe "Semantic: annotation" do
 
         class Monkey; end
 
-        {% if Foo.annotated_types.size == 3 && Bar.annotated_types.size == 1 %}
+        {% if Foo.annotated_types == [Chicken, Cow, Turkey] && Bar.annotated_types == [Cow] %}
           1
         {% else %}
           'a'
