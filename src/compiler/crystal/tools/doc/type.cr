@@ -837,4 +837,8 @@ class Crystal::Doc::Type
       builder.field "name", name
     end
   end
+
+  def annotations(annotation_type)
+    @type.annotations(annotation_type)
+  end
 end
