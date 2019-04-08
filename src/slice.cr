@@ -64,7 +64,7 @@ struct Slice(T)
   #
   # String.new(slice) # => "abc"
   # ```
-  def initialize(@pointer : Pointer(T), size : Int, *, @read_only = false)
+  def initialize(@pointer : Pointer(T), size : Int, *, @read_only : Bool = false)
     @size = size.to_i32
   end
 
@@ -80,7 +80,7 @@ struct Slice(T)
   # slice = Slice(UInt8).new(3)
   # slice # => Bytes[0, 0, 0]
   # ```
-  def self.new(size : Int, *, read_only = false)
+  def self.new(size : Int, *, read_only : Bool = false)
     {% unless T <= Int::Primitive || T <= Float::Primitive %}
       {% raise "Can only use primitive integers and floats with Slice.new(size), not #{T}" %}
     {% end %}
@@ -115,7 +115,7 @@ struct Slice(T)
   # slice = Slice.new(3, 10)
   # slice # => Slice[10, 10, 10]
   # ```
-  def self.new(size : Int, value : T, *, read_only = false)
+  def self.new(size : Int, value : T, *, read_only : Bool = false)
     new(size, read_only: read_only) { value }
   end
 
@@ -123,7 +123,7 @@ struct Slice(T)
   #
   # This method allocates memory for the slice copy and stores the return values
   # from calling `#clone` on each item.
-  def clone
+  def clone : Slice(T)
     pointer = Pointer(T).malloc(size)
     copy = self.class.new(pointer, size)
     each_with_index do |item, i|
@@ -135,7 +135,7 @@ struct Slice(T)
   # Returns a shallow copy of this slice.
   #
   # This method allocates memory for the slice copy and duplicates the values.
-  def dup
+  def dup : Slice(T)
     pointer = Pointer(T).malloc(size)
     copy = self.class.new(pointer, size)
     copy.copy_from(self)
@@ -148,7 +148,7 @@ struct Slice(T)
   # slice = Slice(UInt8).empty
   # slice.size # => 0
   # ```
-  def self.empty
+  def self.empty : Slice(T)
     new(Pointer(T).null, 0)
   end
 
@@ -161,7 +161,7 @@ struct Slice(T)
   # slice2 = slice + 2
   # slice2 # => Slice[12, 13, 14]
   # ```
-  def +(offset : Int)
+  def +(offset : Int) : Slice(T)
     unless 0 <= offset <= size
       raise IndexError.new
     end
@@ -183,7 +183,7 @@ struct Slice(T)
   # slice[10] = 1 # raises IndexError
   # ```
   @[AlwaysInline]
-  def []=(index : Int, value : T)
+  def []=(index : Int, value : T) : T
     check_writable
 
     index += size if index < 0
@@ -206,7 +206,7 @@ struct Slice(T)
   # slice2 = slice[1, 3]
   # slice2 # => Slice[11, 12, 13]
   # ```
-  def [](start, count)
+  def [](start : Int, count : Int) : Slice(T)
     unless 0 <= start <= @size
       raise IndexError.new
     end
@@ -232,18 +232,18 @@ struct Slice(T)
   # slice2 = slice[1..3]
   # slice2 # => Slice[11, 12, 13]
   # ```
-  def [](range : Range)
+  def [](range : Range) : Slice(T)
     start, count = Indexable.range_to_index_and_count(range, size)
     self[start, count]
   end
 
   @[AlwaysInline]
-  def unsafe_fetch(index : Int)
+  def unsafe_fetch(index : Int) : T
     @pointer[index]
   end
 
   # Reverses in-place all the elements of `self`.
-  def reverse!
+  def reverse! : Slice(T)
     check_writable
 
     return self if size <= 1
@@ -260,7 +260,7 @@ struct Slice(T)
     self
   end
 
-  def pointer(size)
+  def pointer(size : Int) : Pointer(T)
     unless 0 <= size <= @size
       raise IndexError.new
     end
@@ -268,10 +268,12 @@ struct Slice(T)
     @pointer
   end
 
-  def shuffle!(random = Random::DEFAULT)
+  def shuffle!(random : Random = Random::DEFAULT) : Slice(T)
     check_writable
 
     @pointer.shuffle!(size, random)
+
+    self
   end
 
   # Invokes the given block for each element of `self`, replacing the element
@@ -282,7 +284,7 @@ struct Slice(T)
   # slice.map! { |x| x * x }
   # slice # => Slice[1, 4, 9]
   # ```
-  def map!
+  def map! : Slice(T)
     check_writable
 
     @pointer.map!(size) { |e| yield e }
@@ -295,12 +297,12 @@ struct Slice(T)
   # slice = Slice[1, 2.5, "a"]
   # slice.map &.to_s # => Slice["1", "2.5", "a"]
   # ```
-  def map(*, read_only = false, &block : T -> U) forall U
+  def map(*, read_only : Bool = false, &block : T -> U) forall U
     Slice.new(size, read_only: read_only) { |i| yield @pointer[i] }
   end
 
   # Like `map!`, but the block gets passed both the element and its index.
-  def map_with_index!(&block : (T, Int32) -> T)
+  def map_with_index!(&block : (T, Int32) -> T) : Slice(T)
     check_writable
 
     @pointer.map_with_index!(size) { |e, i| yield e, i }
@@ -308,17 +310,17 @@ struct Slice(T)
   end
 
   # Like `map`, but the block gets passed both the element and its index.
-  def map_with_index(*, read_only = false, &block : (T, Int32) -> U) forall U
+  def map_with_index(*, read_only : Bool = false, &block : (T, Int32) -> U) forall U
     Slice.new(size, read_only: read_only) { |i| yield @pointer[i], i }
   end
 
-  def copy_from(source : Pointer(T), count)
+  def copy_from(source : Pointer(T), count : Int) : Nil
     check_writable
 
     pointer(count).copy_from(source, count)
   end
 
-  def copy_to(target : Pointer(T), count)
+  def copy_to(target : Pointer(T), count : Int) : Nil
     pointer(count).copy_to(target, count)
   end
 
@@ -334,7 +336,7 @@ struct Slice(T)
   # dst             # => Slice['a', 'a', 'a', 'b', 'b']
   # dst.copy_to src # raises IndexError
   # ```
-  def copy_to(target : self)
+  def copy_to(target : self) : Nil
     target.check_writable
 
     @pointer.copy_to(target.pointer(size), size)
@@ -344,17 +346,17 @@ struct Slice(T)
   #
   # Raises `IndexError` if the desination slice cannot fit the data being transferred.
   @[AlwaysInline]
-  def copy_from(source : self)
+  def copy_from(source : self) : Nil
     source.copy_to(self)
   end
 
-  def move_from(source : Pointer(T), count)
+  def move_from(source : Pointer(T), count : Int) : Nil
     check_writable
 
     pointer(count).move_from(source, count)
   end
 
-  def move_to(target : Pointer(T), count)
+  def move_to(target : Pointer(T), count : Int) : Nil
     pointer(count).move_to(target, count)
   end
 
@@ -373,7 +375,7 @@ struct Slice(T)
   # ```
   #
   # See also: `Pointer#move_to`.
-  def move_to(target : self)
+  def move_to(target : self) : Nil
     target.check_writable
 
     @pointer.move_to(target.pointer(size), size)
@@ -384,7 +386,7 @@ struct Slice(T)
   #
   # Raises `IndexError` if the desination slice cannot fit the data being transferred.
   @[AlwaysInline]
-  def move_from(source : self)
+  def move_from(source : self) : Nil
     source.move_to(self)
   end
 
@@ -399,18 +401,18 @@ struct Slice(T)
   # slice = UInt8.slice(97, 62, 63, 8, 255)
   # slice.hexstring # => "613e3f08ff"
   # ```
-  def hexstring
+  def hexstring : String
     self.as(Slice(UInt8))
 
     str_size = size * 2
     String.new(str_size) do |buffer|
-      hexstring(buffer)
+      to_unsafe_hexstring(buffer)
       {str_size, str_size}
     end
   end
 
   # :nodoc:
-  def hexstring(buffer)
+  def to_unsafe_hexstring(buffer : Pointer(UInt8)) : Nil
     self.as(Slice(UInt8))
 
     offset = 0
@@ -431,7 +433,7 @@ struct Slice(T)
   # slice = UInt8.slice(97, 62, 63, 8, 255)
   # slice.hexdump # => "00000000  61 3e 3f 08 ff                                    a>?.."
   # ```
-  def hexdump
+  def hexdump : String
     self.as(Slice(UInt8))
 
     return "" if empty?
@@ -493,11 +495,11 @@ struct Slice(T)
     end
   end
 
-  private def to_hex(c)
+  private def to_hex(c : Int) : UInt8
     ((c < 10 ? 48_u8 : 87_u8) + c)
   end
 
-  def bytesize
+  def bytesize : Int32
     sizeof(T) * size
   end
 
@@ -506,7 +508,7 @@ struct Slice(T)
     return LibC.memcmp(to_unsafe.as(Void*), other.to_unsafe.as(Void*), bytesize) == 0
   end
 
-  def to_slice
+  def to_slice : Slice(T)
     self
   end
 
@@ -523,12 +525,12 @@ struct Slice(T)
     end
   end
 
-  def pretty_print(pp) : Nil
+  def pretty_print(pp : PrettyPrint) : Nil
     prefix = T == UInt8 ? "Bytes[" : "Slice["
     pp.list(prefix, self, "]")
   end
 
-  def to_a
+  def to_a : Array(T)
     Array(T).build(@size) do |pointer|
       pointer.copy_from(@pointer, @size)
       @size
@@ -546,7 +548,7 @@ struct Slice(T)
   end
 
   # :nodoc:
-  def index(object, offset : Int = 0)
+  def index(object : T, offset : Int = 0) : Int32?
     # Optimize for the case of looking for a byte in a byte slice
     if T.is_a?(UInt8.class) &&
        (object.is_a?(UInt8) || (object.is_a?(Int) && 0 <= object < 256))
@@ -557,7 +559,7 @@ struct Slice(T)
   end
 
   # :nodoc:
-  def fast_index(object, offset)
+  def fast_index(object : T, offset : Int) : Int32?
     offset += size if offset < 0
     if 0 <= offset < size
       result = LibC.memchr(to_unsafe + offset, object, size - offset)
@@ -578,7 +580,7 @@ struct Slice(T)
     {% end %}
   end
 
-  protected def check_writable
+  protected def check_writable : Nil
     raise "Can't write to read-only Slice" if @read_only
   end
 end

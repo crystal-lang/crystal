@@ -190,11 +190,11 @@ struct UUID
     buffer_ptr = buffer.to_unsafe
 
     buffer_ptr[8] = buffer_ptr[13] = buffer_ptr[18] = buffer_ptr[23] = '-'.ord.to_u8
-    slice[0, 4].hexstring(buffer_ptr + 0)
-    slice[4, 2].hexstring(buffer_ptr + 9)
-    slice[6, 2].hexstring(buffer_ptr + 14)
-    slice[8, 2].hexstring(buffer_ptr + 19)
-    slice[10, 6].hexstring(buffer_ptr + 24)
+    slice[0, 4].to_unsafe_hexstring(buffer_ptr + 0)
+    slice[4, 2].to_unsafe_hexstring(buffer_ptr + 9)
+    slice[6, 2].to_unsafe_hexstring(buffer_ptr + 14)
+    slice[8, 2].to_unsafe_hexstring(buffer_ptr + 19)
+    slice[10, 6].to_unsafe_hexstring(buffer_ptr + 24)
 
     io.write(buffer.to_slice)
   end
