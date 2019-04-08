@@ -216,6 +216,7 @@ module Crystal
       # Built-in annotations
       types["AlwaysInline"] = @always_inline_annotation = AnnotationType.new self, self, "AlwaysInline"
       types["CallConvention"] = @call_convention_annotation = AnnotationType.new self, self, "CallConvention"
+      types["Deprecated"] = @deprecated_annotation = AnnotationType.new self, self, "Deprecated"
       types["Extern"] = @extern_annotation = AnnotationType.new self, self, "Extern"
       types["Flags"] = @flags_annotation = AnnotationType.new self, self, "Flags"
       types["Link"] = @link_annotation = AnnotationType.new self, self, "Link"
@@ -447,7 +448,7 @@ module Crystal
                      packed_annotation thread_local_annotation no_inline_annotation
                      always_inline_annotation naked_annotation returns_twice_annotation
                      raises_annotation primitive_annotation call_convention_annotation
-                     flags_annotation link_annotation extern_annotation) %}
+                     flags_annotation link_annotation extern_annotation deprecated_annotation) %}
       def {{name.id}}
         @{{name.id}}.not_nil!
       end
