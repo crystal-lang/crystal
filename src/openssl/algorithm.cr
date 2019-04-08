@@ -11,7 +11,7 @@ module OpenSSL
     SHA256
     SHA384
     SHA512
-    
+
     # Returns the appropriate equivalent hash algorithm that corresponds to the
     # current enum value.
     #
