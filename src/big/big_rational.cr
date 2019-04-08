@@ -127,6 +127,23 @@ struct BigRational < Number
     self / other.to_big_r
   end
 
+  def //(other)
+    (self / other).floor
+  end
+
+  def ceil
+    diff = (denominator - numerator % denominator) % denominator
+    BigRational.new(numerator + diff, denominator)
+  end
+
+  def floor
+    BigRational.new(numerator - numerator % denominator, denominator)
+  end
+
+  def trunc
+    self < 0 ? ceil : floor
+  end
+
   # Divides the rational by (2 ** *other*)
   #
   # ```
@@ -275,6 +292,10 @@ struct Int
 
   def /(other : BigRational)
     self.to_big_r / other
+  end
+
+  def //(other : BigRational)
+    self.to_big_r // other
   end
 
   def *(other : BigRational)
