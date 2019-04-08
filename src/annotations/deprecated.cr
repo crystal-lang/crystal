@@ -3,7 +3,7 @@
 # It receives a `StringLiteral` as single argument containing a deprecation notice.
 #
 # ```cr
-# @[Deprecated("#foo has been deprecated, use #bar instead")]
+# @[Deprecated("use #bar instead")]
 # def foo
 # end
 # ```

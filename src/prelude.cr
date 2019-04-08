@@ -28,6 +28,7 @@ require "indexable"
 require "string"
 
 # Alpha-sorted list
+require "annotations/*"
 require "array"
 require "atomic"
 require "bool"
