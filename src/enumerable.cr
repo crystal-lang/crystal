@@ -1173,9 +1173,9 @@ module Enumerable(T)
   # ```
   def size
     if self.is_a?(Array) || self.is_a?(Slice) ||
-       self.is_a?(Deque) || self.is_a?(BitArray) ||
-       self.is_a?(Tuple) || self.is_a?(StaticArray) ||
-       self.is_a?(Range) || self.is_a?(Set)
+       self.is_a?(Deque) || self.is_a?(Tuple) ||
+       self.is_a?(Range) || self.is_a?(Set) ||
+       self.is_a?(StaticArray)
       self.size
     else
       count { true }
