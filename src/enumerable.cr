@@ -517,10 +517,17 @@ module Enumerable(T)
   def in_groups_of(size : Int, filled_up_with : U = nil) forall U
     raise ArgumentError.new("Size must be positive") if size <= 0
 
-    ary = Array(Array(T | U)).new(self.size*size)
+    initial_capacity = self.size / size
+
+    if self.size.odd?
+      initial_capacity += 1
+    end
+
+    ary = Array(Array(T | U)).new(initial_capacity)
     in_groups_of(size, filled_up_with) do |group|
       ary << group
     end
+
     ary
   end
 
