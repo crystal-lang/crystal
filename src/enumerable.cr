@@ -1172,14 +1172,7 @@ module Enumerable(T)
   # [1, 2, 3, 4].size # => 4
   # ```
   def size
-    if self.is_a?(Array) || self.is_a?(Slice) ||
-       self.is_a?(Deque) || self.is_a?(Tuple) ||
-       self.is_a?(Range) || self.is_a?(Set) ||
-       self.is_a?(StaticArray)
-      self.size
-    else
-      count { true }
-    end
+    count { true }
   end
 
   # Returns an `Array` with the first *count* elements removed
@@ -1193,7 +1186,7 @@ module Enumerable(T)
   def skip(count : Int)
     raise ArgumentError.new("Attempt to skip negative size") if count < 0
 
-    array = Array(T).new(self.size - count)
+    array = Array(T).new(size - count)
     each_with_index do |e, i|
       array << e if i >= count
     end
