@@ -517,7 +517,7 @@ struct BigDecimal < Number
   end
 
   # Factors out any extra powers of ten in the internal representation.
-  # For instance, when value is 100 and scale 2, the result is 1 and 0.
+  # For instance, value=100 scale=2 => value=1 scale=0
   protected def factor_powers_of_ten
     while @scale > 0
       quotient, remainder = value.divmod(TEN)

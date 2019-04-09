@@ -55,7 +55,7 @@ class Array(T)
   getter size : Int32
   @capacity : Int32
 
-  # Creates a new empty `Array`. This doesn't allocate memory.
+  # Creates a new empty `Array`.
   def initialize
     @size = 0
     @capacity = 0
