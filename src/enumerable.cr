@@ -517,7 +517,7 @@ module Enumerable(T)
   def in_groups_of(size : Int, filled_up_with : U = nil) forall U
     raise ArgumentError.new("Size must be positive") if size <= 0
 
-    ary = Array(Array(T | U)).new
+    ary = Array(Array(T | U)).new(self.size*size)
     in_groups_of(size, filled_up_with) do |group|
       ary << group
     end
@@ -705,7 +705,7 @@ module Enumerable(T)
   # [1, 2, 3].map { |i| i * 10 } # => [10, 20, 30]
   # ```
   def map(&block : T -> U) forall U
-    ary = [] of U
+    ary = Array(U).new(size)
     each { |e| ary << yield e }
     ary
   end
@@ -717,7 +717,7 @@ module Enumerable(T)
   # # => ["User #0: Alice", "User #1: Bob"]
   # ```
   def map_with_index(&block : T, Int32 -> U) forall U
-    ary = [] of U
+    ary = Array(U).new(size)
     each_with_index { |e, i| ary << yield e, i }
     ary
   end
@@ -1172,7 +1172,14 @@ module Enumerable(T)
   # [1, 2, 3, 4].size # => 4
   # ```
   def size
-    count { true }
+    if self.is_a?(Array) || self.is_a?(Slice) ||
+       self.is_a?(Deque) || self.is_a?(BitArray) ||
+       self.is_a?(Tuple) || self.is_a?(StaticArray) ||
+       self.is_a?(Range) || self.is_a?(Set)
+      self.size
+    else
+      count { true }
+    end
   end
 
   # Returns an `Array` with the first *count* elements removed
@@ -1186,7 +1193,7 @@ module Enumerable(T)
   def skip(count : Int)
     raise ArgumentError.new("Attempt to skip negative size") if count < 0
 
-    array = Array(T).new
+    array = Array(T).new(self.size - count)
     each_with_index do |e, i|
       array << e if i >= count
     end
@@ -1390,7 +1397,7 @@ module Enumerable(T)
   # (1..5).to_a # => [1, 2, 3, 4, 5]
   # ```
   def to_a
-    ary = [] of T
+    ary = Array(T).new(size)
     each { |e| ary << e }
     ary
   end

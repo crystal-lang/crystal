@@ -732,7 +732,7 @@ struct Char
   # 'あ'.bytes # => [227, 129, 130]
   # ```
   def bytes
-    bytes = [] of UInt8
+    bytes = Array(UInt8).new(bytesize)
     each_byte do |byte|
       bytes << byte
     end
