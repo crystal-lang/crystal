@@ -104,7 +104,7 @@ module Crystal
     property? wants_doc = false
 
     # Which kind of warnings wants to be detected.
-    property warnings : Warnings = Warnings::All
+    property warnings : Warnings = Warnings::None
 
     # Paths to ignore for warnings detection.
     property warnings_exclude : Array(String) = [] of String
