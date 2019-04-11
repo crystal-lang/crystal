@@ -524,6 +524,20 @@ struct Time
     utc(seconds: seconds, nanoseconds: nanoseconds.to_i)
   end
 
+  # Creates a new `Time` instance representing the current time from the
+  # system clock observed in *location* (defaults to local time zone).
+  @[Deprecated("Use `Time.local` or `Time.utc` instead.")]
+  def self.now(location : Location = Location.local) : Time
+    local(location)
+  end
+
+  # Creates a new `Time` instance representing the current time from the
+  # system clock in UTC.
+  @[Deprecated("Use `Time.utc` instead.")]
+  def self.utc_now : Time
+    utc
+  end
+
   # Creates a new `Time` instance with the same local date-time representation
   # (wall clock) in a different *location*.
   #
