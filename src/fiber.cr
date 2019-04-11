@@ -22,6 +22,7 @@ class Fiber
   protected property stack_bottom : Void*
   property name : String?
   @alive = true
+  @current_thread = Atomic(Thread?).new(nil)
 
   # :nodoc:
   property next : Fiber?
@@ -53,12 +54,12 @@ class Fiber
   end
 
   # :nodoc:
-  def initialize(@stack : Void*)
+  def initialize(@stack : Void*, thread)
     @proc = Proc(Void).new { }
     @context = Context.new(_fiber_get_stack_top)
     @stack_bottom = GC.stack_bottom
     @name = "main"
-
+    @current_thread.set(thread)
     @@fibers.push(self)
   end
 

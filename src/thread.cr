@@ -42,7 +42,7 @@ class Thread
   def initialize
     @func = ->{}
     @th = LibC.pthread_self
-    @main_fiber = Fiber.new(stack_address)
+    @main_fiber = Fiber.new(stack_address, self)
 
     @@threads.push(self)
   end
@@ -124,7 +124,7 @@ class Thread
 
   protected def start
     Thread.current = self
-    @main_fiber = fiber = Fiber.new(stack_address)
+    @main_fiber = fiber = Fiber.new(stack_address, self)
 
     begin
       @func.call

@@ -58,6 +58,7 @@ class Crystal::Scheduler
 
   protected def resume(fiber : Fiber) : Nil
     validate_resumable(fiber)
+    ensure_single_resume(fiber)
     current, @current = @current, fiber
     GC.stack_bottom = fiber.@stack_bottom
     Fiber.swapcontext(pointerof(current.@context), pointerof(fiber.@context))
@@ -67,13 +68,28 @@ class Crystal::Scheduler
     return if fiber.resumable?
 
     if fiber.dead?
-      LibC.dprintf 2, "\nFATAL: tried to resume a dead fiber: #{fiber}\n"
+      fatal_resume_error(fiber, "tried to resume a dead fiber")
     else
-      LibC.dprintf 2, "\nFATAL: can't resume a running fiber: #{fiber}\n"
+      fatal_resume_error(fiber, "can't resume a running fiber")
     end
+  end
 
+  private def ensure_single_resume(fiber)
+    # Set the current thread as the running thread of *fiber*,
+    # but only if *fiber.@current_thread* is effectively *nil*
+    if fiber.@current_thread.compare_and_set(nil, Thread.current).last
+      # the current fiber will leave the current thread shortly
+      # although it's not resumable yet we need to clear
+      # *@current.@current_thread* for a future `Scheduler.resume(@current)`
+      @current.@current_thread.set(nil)
+    else
+      fatal_resume_error(fiber, "tried to resume the same fiber multiple times")
+    end
+  end
+
+  private def fatal_resume_error(fiber, message)
+    LibC.dprintf 2, "\nFATAL: #{message}: #{fiber}\n"
     caller.each { |line| LibC.dprintf(2, "  from #{line}\n") }
-
     exit 1
   end
 
