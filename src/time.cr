@@ -526,24 +526,14 @@ struct Time
 
   # Creates a new `Time` instance representing the current time from the
   # system clock observed in *location* (defaults to local time zone).
-  #
-  # DEPRECATED: `Time.now` is deprecated, use `Time.local` or `Time.utc` instead.
-  # More information on this change: https://github.com/crystal-lang/crystal/issues/5346
-  {% if compare_versions(Crystal::VERSION, "0.28.0-0") >= 0 %}
-    @[Deprecated("`Time.now` is deprecated, use `Time.local` or `Time.utc` instead.")]
-  {% end %}
+  @[Deprecated("`Time.now` is deprecated, use `Time.local` or `Time.utc` instead.")]
   def self.now(location : Location = Location.local) : Time
     local(location)
   end
 
   # Creates a new `Time` instance representing the current time from the
   # system clock in UTC.
-  #
-  # DEPRECATED: `Time.utc_now` is deprecated, use `Time.utc` instead.
-  # More information on this change: https://github.com/crystal-lang/crystal/issues/5346
-  {% if compare_versions(Crystal::VERSION, "0.28.0-0") >= 0 %}
-    @[Deprecated("`Time.utc_now` is deprecated, use `Time.utc` instead.")]
-  {% end %}
+  @[Deprecated("`Time.utc_now` is deprecated, use `Time.utc` instead.")]
   def self.utc_now : Time
     utc
   end
