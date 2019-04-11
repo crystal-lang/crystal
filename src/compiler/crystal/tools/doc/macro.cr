@@ -139,4 +139,9 @@ class Crystal::Doc::Macro
       builder.field "def", self.macro
     end
   end
+
+  def annotations(annotation_type)
+    # macros does not support annotations
+    nil
+  end
 end
