@@ -526,14 +526,14 @@ struct Time
 
   # Creates a new `Time` instance representing the current time from the
   # system clock observed in *location* (defaults to local time zone).
-  @[Deprecated("`Time.now` is deprecated, use `Time.local` or `Time.utc` instead.")]
+  @[Deprecated("Use `Time.local` or `Time.utc` instead.")]
   def self.now(location : Location = Location.local) : Time
     local(location)
   end
 
   # Creates a new `Time` instance representing the current time from the
   # system clock in UTC.
-  @[Deprecated("`Time.utc_now` is deprecated, use `Time.utc` instead.")]
+  @[Deprecated("Use `Time.utc` instead.")]
   def self.utc_now : Time
     utc
   end
