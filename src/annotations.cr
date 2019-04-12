@@ -45,6 +45,9 @@ end
 #
 # `@[Link(framework: "Cocoa")]` will pass `-framework Cocoa` to the linker.
 #
-# The `CRYSTAL_LIBRARY_PATH`, `/usr/lib`, and `/usr/local/lib` are added for shared libraries lookup using `-L`.
+# When an `-l` option is passed to the linker, it will lookup the libraries in
+# paths passed with the `-L` option. `CRYSTAL_LIBRARY_PATH`, `/usr/lib`,
+# and `/usr/local/lib` are added by default. Custom paths can be passed
+# using `ldflags`: `@[Link(ldflags: "-Lvendor/bin")]`.
 annotation Link
 end
