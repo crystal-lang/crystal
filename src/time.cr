@@ -431,6 +431,11 @@ struct Time
     new(seconds: seconds, nanoseconds: nanosecond.to_i, location: location)
   end
 
+  @[Deprecated("Use `Time.local` instead.")]
+  def self.new(year : Int32, month : Int32, day : Int32, hour : Int32 = 0, minute : Int32 = 0, second : Int32 = 0, *, nanosecond : Int32 = 0, location : Location = Location.local) : Time
+    local(year, month, day, hour, minute, second, nanosecond: nanosecond, location: location)
+  end
+
   # Creates a new `Time` instance representing the given date-time in UTC.
   #
   # ```
