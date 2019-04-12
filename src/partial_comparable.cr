@@ -1,3 +1,4 @@
+@[Deprecated("This module is deprecated as of Crystal 0.28.0. Its behaviour has been fully integrated into `Comparable`.")]
 # The `PartialComparable` mixin is used by classes whose objects may be partially ordered.
 #
 # Including types must provide an `<=>` method, which compares the receiver against
@@ -7,7 +8,6 @@
 #
 # `PartialComparable` uses `<=>` to implement the conventional
 # comparison operators (`<`, `<=`, `==`, `>=`, and `>`).
-@[Deprecated("This module is deprecated as of Crystal 0.28.0. Its behaviour has been fully integrated into `Comparable`.")]
 module PartialComparable(T)
   # Compares this object to *other* based on the receiver's `<=>` method,
   # returning `true` if it returns a negative number.
