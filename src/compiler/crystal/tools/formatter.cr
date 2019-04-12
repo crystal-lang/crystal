@@ -2060,14 +2060,15 @@ module Crystal
       end
 
       # This is the case of an enum member
-      if node.name[0].ascii_uppercase? && @token.type == :","
-        write ","
+      # TODO: remove comma support after 0.28.0
+      if @token.type == :";" || (node.name[0].ascii_uppercase? && @token.type == :",")
         next_token
         @lexer.skip_space
         if @token.type == :COMMENT
           write_comment
           @exp_needs_indent = true
         else
+          write ";" if @token.type == :CONST
           write " "
           @exp_needs_indent = @token.type == :NEWLINE
         end
