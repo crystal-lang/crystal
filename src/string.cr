@@ -3390,7 +3390,7 @@ class String
   # # even the monkey seems to want
   # # a little coat of straw
   # ```
-  def each_line(chomp = true, &block : String -> _) : Nil
+  def each_line(chomp = true, &block : String ->) : Nil
     return if empty?
 
     offset = 0

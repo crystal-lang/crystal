@@ -914,7 +914,7 @@ abstract class IO
   # # hello
   # # world
   # ```
-  def each_line(*args, **options, &block : String -> _) : Nil
+  def each_line(*args, **options, &block : String ->) : Nil
     while line = gets(*args, **options)
       yield line
     end
