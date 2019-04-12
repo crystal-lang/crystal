@@ -76,14 +76,14 @@ struct Number
   # Number.si_prefix(3) # => 'k'
   # ```
   def self.si_prefix(magnitude : Int, prefixes = SI_PREFIXES) : Char?
-    index = (magnitude / 3)
+    index = (magnitude // 3)
     prefixes = prefixes[magnitude < 0 ? 0 : 1]
     prefixes[index.clamp((-prefixes.size + 1)..(prefixes.size - 1))]
   end
 
   # :nodoc:
   def self.prefix_index(i, group = 3)
-    ((i - (i > 0 ? 1 : 0)) / group) * group
+    ((i - (i > 0 ? 1 : 0)) // group) * group
   end
 
   # Pretty prints this number as a `String` in a human-readable format.

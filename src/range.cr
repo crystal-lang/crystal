@@ -316,7 +316,7 @@ struct Range(B, E)
       e -= 1 if @exclusive
       n = e - b + 1
       if n >= 0
-        initial + n * (b + e) / 2
+        initial + n * (b + e) // 2
       else
         initial
       end
@@ -454,10 +454,10 @@ struct Range(B, E)
 
       if b.is_a?(Int) && e.is_a?(Int) && d.is_a?(Int)
         e -= 1 if @range.excludes_end?
-        n = (e - b) / d + 1
+        n = (e - b) // d + 1
         if n >= 0
           e = b + (n - 1) * d
-          initial + n * (b + e) / 2
+          initial + n * (b + e) // 2
         else
           initial
         end

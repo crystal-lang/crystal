@@ -9,7 +9,7 @@ class Fiber
 
     # Removes and frees at most *count* stacks from the top of the pool,
     # returning memory to the operating system.
-    def collect(count = lazy_size / 2)
+    def collect(count = lazy_size // 2)
       count.times do
         if stack = @deque.shift?
           LibC.munmap(stack, STACK_SIZE)

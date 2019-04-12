@@ -9,7 +9,7 @@ describe "Random::Secure" do
     x.should be >= 123456
     x.should be < 654321
 
-    Random::Secure.rand(Int64::MAX / 2).should be <= (Int64::MAX / 2)
+    Random::Secure.rand(Int64::MAX // 2).should be <= (Int64::MAX // 2)
   end
 
   it "fully fills a large buffer" do

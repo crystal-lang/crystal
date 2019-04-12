@@ -696,7 +696,7 @@ module Random
       needed_parts += 1
     end
 
-    limit = rand_max / max * max
+    limit = rand_max // max * max
 
     loop do
       result = BigInt.new(next_u)

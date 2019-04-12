@@ -362,7 +362,7 @@ struct Int
   end
 
   def lcm(other : Int)
-    (self * other).abs / gcd(other)
+    (self * other).abs // gcd(other)
   end
 
   def divisible_by?(num)

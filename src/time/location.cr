@@ -165,8 +165,8 @@ class Time::Location
         sign = '+'
       end
       seconds = offset % 60
-      minutes = offset / 60
-      hours = minutes / 60
+      minutes = offset // 60
+      hours = minutes // 60
       minutes = minutes % 60
       {sign, hours, minutes, seconds}
     end

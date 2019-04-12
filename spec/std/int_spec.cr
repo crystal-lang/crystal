@@ -429,7 +429,7 @@ describe "Int" do
   it "holds true that x == q*y + r" do
     [5, -5, 6, -6, 10, -10].each do |x|
       [3, -3].each do |y|
-        q = x / y
+        q = x // y
         r = x % y
         (q*y + r).should eq(x)
       end
