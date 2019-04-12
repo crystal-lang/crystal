@@ -524,7 +524,7 @@ struct Time
   # ```
   def self.unix_ms(milliseconds : Int) : Time
     milliseconds = milliseconds.to_i64
-    seconds = UNIX_EPOCH.total_seconds + (milliseconds / 1_000)
+    seconds = UNIX_EPOCH.total_seconds + (milliseconds // 1_000)
     nanoseconds = (milliseconds % 1000) * NANOSECONDS_PER_MILLISECOND
     utc(seconds: seconds, nanoseconds: nanoseconds.to_i)
   end
@@ -783,12 +783,12 @@ struct Time
 
   # Returns the hour of the day (`0..23`).
   def hour : Int32
-    ((offset_seconds % SECONDS_PER_DAY) / SECONDS_PER_HOUR).to_i
+    ((offset_seconds % SECONDS_PER_DAY) // SECONDS_PER_HOUR).to_i
   end
 
   # Returns the minute of the hour (`0..59`).
   def minute : Int32
-    ((offset_seconds % SECONDS_PER_HOUR) / SECONDS_PER_MINUTE).to_i
+    ((offset_seconds % SECONDS_PER_HOUR) // SECONDS_PER_MINUTE).to_i
   end
 
   # Returns the second of the minute (`0..59`).
@@ -798,7 +798,7 @@ struct Time
 
   # Returns the millisecond of the second (`0..999`).
   def millisecond : Int32
-    nanosecond / NANOSECONDS_PER_MILLISECOND
+    nanosecond // NANOSECONDS_PER_MILLISECOND
   end
 
   # Returns the nanosecond of the second (`0..999_999_999`).
@@ -832,7 +832,7 @@ struct Time
     # The addition by +10 consists of +7 to start the week numbering with 1
     # instead of 0 and +3 because the first week has already started in the
     # previous year and the first Monday is actually in week 2.
-    week_number = (day_year - day_of_week.to_i + 10) / 7
+    week_number = (day_year - day_of_week.to_i + 10) // 7
 
     if week_number == 0
       # Week number 0 means the date belongs to the last week of the previous year.
@@ -926,7 +926,7 @@ struct Time
 
   # Returns the day of the week (`Monday..Sunday`).
   def day_of_week : Time::DayOfWeek
-    days = offset_seconds / SECONDS_PER_DAY
+    days = offset_seconds // SECONDS_PER_DAY
     DayOfWeek.new days.to_i % 7 + 1
   end
 
@@ -1239,7 +1239,7 @@ struct Time
   # time.to_unix_ms # => 1452567845678
   # ```
   def to_unix_ms : Int64
-    to_unix * 1_000 + (nanosecond / NANOSECONDS_PER_MILLISECOND)
+    to_unix * 1_000 + (nanosecond // NANOSECONDS_PER_MILLISECOND)
   end
 
   # Returns the number of seconds since the Unix epoch
@@ -1327,8 +1327,8 @@ struct Time
   end
 
   def_at_beginning(year) { Time.local(year, 1, 1, location: location) }
-  def_at_beginning(semester) { Time.local(year, ((month - 1) / 6) * 6 + 1, 1, location: location) }
-  def_at_beginning(quarter) { Time.local(year, ((month - 1) / 3) * 3 + 1, 1, location: location) }
+  def_at_beginning(semester) { Time.local(year, ((month - 1) // 6) * 6 + 1, 1, location: location) }
+  def_at_beginning(quarter) { Time.local(year, ((month - 1) // 3) * 3 + 1, 1, location: location) }
   def_at_beginning(month) { Time.local(year, month, 1, location: location) }
   def_at_beginning(day) { Time.local(year, month, day, location: location) }
   def_at_beginning(hour) { Time.local(year, month, day, hour, location: location) }
@@ -1435,7 +1435,7 @@ struct Time
 
     year -= 1
 
-    year * 365 + year / 4 - year / 100 + year / 400 + days_in_year
+    year * 365 + year // 4 - year // 100 + year // 400 + days_in_year
   end
 
   protected def total_seconds
@@ -1451,21 +1451,21 @@ struct Time
   # The return value is a tuple consisting of year (`1..9999`), month (`1..12`),
   # day (`1..31`) and ordinal day of the year (`1..366`).
   protected def year_month_day_day_year : {Int32, Int32, Int32, Int32}
-    total_days = (offset_seconds / SECONDS_PER_DAY).to_i
+    total_days = (offset_seconds // SECONDS_PER_DAY).to_i
 
-    num400 = total_days / DAYS_PER_400_YEARS
+    num400 = total_days // DAYS_PER_400_YEARS
     total_days -= num400 * DAYS_PER_400_YEARS
 
-    num100 = total_days / DAYS_PER_100_YEARS
+    num100 = total_days // DAYS_PER_100_YEARS
     if num100 == 4 # leap
       num100 = 3
     end
     total_days -= num100 * DAYS_PER_100_YEARS
 
-    num4 = total_days / DAYS_PER_4_YEARS
+    num4 = total_days // DAYS_PER_4_YEARS
     total_days -= num4 * DAYS_PER_4_YEARS
 
-    numyears = total_days / 365
+    numyears = total_days // 365
     if numyears == 4 # leap
       numyears = 3
     end

@@ -172,6 +172,7 @@ struct BigInt < Int
     self * other
   end
 
+  @[Deprecated("BigInt#/ will return a BigFloat in 0.29.0. Use BigInt#// for integer division.")]
   def /(other : Int) : BigInt
     # TODO replace to float division
     self // other
@@ -604,6 +605,7 @@ struct Int
     self * other
   end
 
+  @[Deprecated("Int#/(other: BigInt) will return a BigFloat in 0.29.0. Use Int#// for integer division.")]
   def /(other : BigInt) : BigInt
     self // other
   end
@@ -694,7 +696,7 @@ module Random
       needed_parts += 1
     end
 
-    limit = rand_max / max * max
+    limit = rand_max // max * max
 
     loop do
       result = BigInt.new(next_u)

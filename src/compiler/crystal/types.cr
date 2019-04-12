@@ -1273,7 +1273,7 @@ module Crystal
     end
 
     def normal_rank
-      (@rank - 1) / 2
+      (@rank - 1) // 2
     end
 
     def range

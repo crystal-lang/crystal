@@ -523,7 +523,7 @@ class String
 
     negative = false
     found_digit = false
-    mul_overflow = ~0_u64 / base
+    mul_overflow = ~0_u64 // base
 
     # Check + and -
     case ptr.value.unsafe_chr
@@ -1231,7 +1231,7 @@ class String
   def hexbytes? : Bytes?
     return unless bytesize.divisible_by?(2)
 
-    bytes = Bytes.new(bytesize / 2)
+    bytes = Bytes.new(bytesize // 2)
 
     i = 0
     while i < bytesize
@@ -1239,7 +1239,7 @@ class String
       low_nibble = to_unsafe[i + 1].unsafe_chr.to_u8?(16)
       return unless high_nibble && low_nibble
 
-      bytes[i / 2] = (high_nibble << 4) | low_nibble
+      bytes[i // 2] = (high_nibble << 4) | low_nibble
       i += 2
     end
 
@@ -2555,7 +2555,7 @@ class String
       buffer.copy_from(to_unsafe, bytesize)
       n = bytesize
 
-      while n <= total_bytesize / 2
+      while n <= total_bytesize // 2
         (buffer + n).copy_from(buffer, n)
         n *= 2
       end

@@ -7,7 +7,7 @@ struct LLVM::TargetData
   end
 
   def size_in_bytes(type)
-    size_in_bits(type) / 8
+    size_in_bits(type) // 8
   end
 
   def abi_size(type)

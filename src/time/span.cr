@@ -181,12 +181,12 @@ struct Time::Span
 
   # Returns the number of milliseconds of the second (`0..999`) in this time span.
   def milliseconds : Int32
-    nanoseconds / NANOSECONDS_PER_MILLISECOND
+    nanoseconds // NANOSECONDS_PER_MILLISECOND
   end
 
   # Returns the number of microseconds of the second (`0..999999`) in this time span.
   def microseconds : Int32
-    nanoseconds / NANOSECONDS_PER_MICROSECOND
+    nanoseconds // NANOSECONDS_PER_MICROSECOND
   end
 
   # Returns the number of nanoseconds of the second (`0..999_999_999`)
@@ -317,7 +317,7 @@ struct Time::Span
     nanoseconds = self.nanoseconds.tdiv(number)
 
     remainder = to_i.remainder(number)
-    nanoseconds += (remainder * NANOSECONDS_PER_SECOND) / number
+    nanoseconds += (remainder * NANOSECONDS_PER_SECOND) // number
 
     # TODO check overflow
     Span.new(

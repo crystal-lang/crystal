@@ -26,11 +26,11 @@ fun __mulodi4(a : Int64, b : Int64, overflow : Int32*) : Int64
     return result
   end
   if sa == sb
-    if abs_a > max / abs_b
+    if abs_a > max // abs_b
       overflow.value = 1
     end
   else
-    if abs_a > min / (0i64 &- abs_b)
+    if abs_a > min // (0i64 &- abs_b)
       overflow.value = 1
     end
   end

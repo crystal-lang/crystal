@@ -117,6 +117,7 @@ struct Int
     self.class.new(to_f // other)
   end
 
+  @[Deprecated("Int#/ will return a Float in 0.29.0. Use Int#// for integer division.")]
   def /(other : Int)
     self // other
   end
@@ -361,7 +362,7 @@ struct Int
   end
 
   def lcm(other : Int)
-    (self * other).abs / gcd(other)
+    (self * other).abs // gcd(other)
   end
 
   def divisible_by?(num)

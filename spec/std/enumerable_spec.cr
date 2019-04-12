@@ -118,7 +118,7 @@ describe "Enumerable" do
       [1, 2].chunk { false }.to_a.should eq [{false, [1, 2]}]
       [1, 1, 2, 3, 3].chunk(&.itself).to_a.should eq [{1, [1, 1]}, {2, [2]}, {3, [3, 3]}]
       [1, 1, 2, 3, 3].chunk(&.<=(2)).to_a.should eq [{true, [1, 1, 2]}, {false, [3, 3]}]
-      (0..10).chunk(&./(3)).to_a.should eq [{0, [0, 1, 2]}, {1, [3, 4, 5]}, {2, [6, 7, 8]}, {3, [9, 10]}]
+      (0..10).chunk(&.//(3)).to_a.should eq [{0, [0, 1, 2]}, {1, [3, 4, 5]}, {2, [6, 7, 8]}, {3, [9, 10]}]
     end
 
     it "work with class" do
@@ -132,7 +132,7 @@ describe "Enumerable" do
     end
 
     it "rewind" do
-      i = (0..10).chunk(&./(3))
+      i = (0..10).chunk(&.//(3))
       i.next.should eq({0, [0, 1, 2]})
       i.next.should eq({1, [3, 4, 5]})
     end
@@ -193,7 +193,7 @@ describe "Enumerable" do
       [1, 2].chunks { false }.should eq [{false, [1, 2]}]
       [1, 1, 2, 3, 3].chunks(&.itself).should eq [{1, [1, 1]}, {2, [2]}, {3, [3, 3]}]
       [1, 1, 2, 3, 3].chunks(&.<=(2)).should eq [{true, [1, 1, 2]}, {false, [3, 3]}]
-      (0..10).chunks(&./(3)).should eq [{0, [0, 1, 2]}, {1, [3, 4, 5]}, {2, [6, 7, 8]}, {3, [9, 10]}]
+      (0..10).chunks(&.//(3)).should eq [{0, [0, 1, 2]}, {1, [3, 4, 5]}, {2, [6, 7, 8]}, {3, [9, 10]}]
     end
 
     it "work with class" do
@@ -201,7 +201,7 @@ describe "Enumerable" do
     end
 
     it "work with pure enumerable" do
-      SpecEnumerable.new.chunks(&./(2)).should eq [{0, [1]}, {1, [2, 3]}]
+      SpecEnumerable.new.chunks(&.//(2)).should eq [{0, [1]}, {1, [2, 3]}]
     end
 
     it "returns elements for which the block returns Enumerable::Chunk::Alone in separate Arrays" do
