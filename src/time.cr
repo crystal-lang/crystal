@@ -432,6 +432,11 @@ struct Time
   end
 
   @[Deprecated("Use `Time.local` instead.")]
+  def self.new(location : Location = Location.local) : Time
+    local(location)
+  end
+
+  @[Deprecated("Use `Time.local` instead.")]
   def self.new(year : Int32, month : Int32, day : Int32, hour : Int32 = 0, minute : Int32 = 0, second : Int32 = 0, *, nanosecond : Int32 = 0, location : Location = Location.local) : Time
     local(year, month, day, hour, minute, second, nanosecond: nanosecond, location: location)
   end
