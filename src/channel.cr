@@ -62,7 +62,6 @@ abstract class Channel(T)
   # channel.send(1)
   # channel.receive # => 1
   # ```
-  #
   def receive
     receive_impl { raise ClosedError.new }
   end
