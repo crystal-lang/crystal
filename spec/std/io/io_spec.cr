@@ -606,7 +606,7 @@ describe IO do
         buffer = uninitialized UInt8[1024]
         bytes_read = io.read_utf8(buffer.to_slice) # => 3
         bytes_read.should eq(3)
-        buffer.to_slice[0, bytes_read].to_a.should eq("你".bytes)
+        buffer.to_slice[0, bytes_read].to_a.should eq("你".bytes.to_a)
       end
 
       it "raises on incomplete byte sequence" do
