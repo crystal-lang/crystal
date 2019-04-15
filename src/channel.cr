@@ -57,6 +57,7 @@ abstract class Channel(T)
   end
 
   # Receive a value from the channel.
+  #
   # ```
   # channel = Channel(Int32).new
   # channel.send(1)
