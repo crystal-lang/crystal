@@ -1,6 +1,7 @@
 require "fiber"
 
 # Channels enable concurrent communication between fibers.
+
 # ```
 # channel = Channel(Nil).new
 
