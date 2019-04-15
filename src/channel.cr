@@ -4,7 +4,7 @@ require "fiber"
 
 # ```
 # channel = Channel(Nil).new
-
+#
 # spawn do
 #   puts "Before send"
 #   channel.send(nil)
