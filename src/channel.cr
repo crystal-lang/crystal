@@ -1,6 +1,6 @@
 require "fiber"
 
-# Channels enable concurrent communication between fibers.
+# A `Channel` enables concurrent communication between fibers.
 #
 #
 # ```
