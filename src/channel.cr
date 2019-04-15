@@ -1,6 +1,6 @@
 require "fiber"
 
-# Channels enables to execute multiple tasks concurrently.
+# Channels enable concurrent communication between fibers.
 # ```
 # channel = Channel(Nil).new
 
