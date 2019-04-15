@@ -46,8 +46,6 @@ lib LibGC
 
   fun push_all_eager = GC_push_all_eager(bottom : Void*, top : Void*)
 
-  $stackbottom = GC_stackbottom : Void*
-
   {% if flag?(:preview_mt) %}
     fun set_stackbottom = GC_set_stackbottom(LibC::PthreadT, Void*)
     fun get_stackbottom = GC_get_stackbottom : Void*
@@ -193,13 +191,15 @@ module GC
   end
 
   # :nodoc:
-  def self.set_stackbottom(thread : Thread, stack_bottom : Void*)
-    {% if flag?(:preview_mt) %}
+  {% if flag?(:preview_mt) %}
+    def self.set_stackbottom(thread : Thread, stack_bottom : Void*)
       LibGC.set_stackbottom(thread.to_unsafe, stack_bottom)
-    {% else %}
+    end
+  {% else %}
+    def self.set_stackbottom(stack_bottom : Void*)
       LibGC.stackbottom = stack_bottom
-    {% end %}
-  end
+    end
+  {% end %}
 
   # :nodoc:
   def self.lock_read

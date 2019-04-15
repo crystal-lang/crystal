@@ -75,11 +75,16 @@ module GC
   end
 
   # :nodoc:
-  def self.set_stackbottom(thread : Thread, stack_bottom : Void*)
-    # NOTE we could store stack_bottom per thread,
-    #      and return it in `#current_thread_stack_bottom`,
-    #      but there is no actual use for that.
-  end
+  {% if flag?(:preview_mt) %}
+    def self.set_stackbottom(thread : Thread, stack_bottom : Void*)
+      # NOTE we could store stack_bottom per thread,
+      #      and return it in `#current_thread_stack_bottom`,
+      #      but there is no actual use for that.
+    end
+  {% else %}
+    def self.set_stackbottom(stack_bottom : Void*)
+    end
+  {% end %}
 
   # :nodoc:
   def self.lock_read
