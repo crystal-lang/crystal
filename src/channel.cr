@@ -57,7 +57,10 @@ abstract class Channel(T)
     @closed
   end
 
-  # Receive a value from the channel.
+  # Receives a value from the channel.
+  # If there is a value waiting, it is returned immediately. Otherwise, this method blocks until a value is sent to the channel.
+  #
+  # Raises `ClosedError` if the channel is closed or closes while waiting for receive.
   #
   # ```
   # channel = Channel(Int32).new
