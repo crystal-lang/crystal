@@ -137,7 +137,7 @@ class Program
     new source.chars
   end
 
-  def self.new(source : Array(Char))
+  def self.new(source : String::Chars)
     new parse(source, 0, source.size)
   end
 
