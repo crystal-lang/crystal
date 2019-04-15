@@ -99,7 +99,7 @@ class URI
 
     def self.decode(string)
       output, _, rest = string.rpartition(DELIMITER)
-      output = output.chars
+      output = output.chars.to_a
 
       n = INITIAL_N
       bias = INITIAL_BIAS
