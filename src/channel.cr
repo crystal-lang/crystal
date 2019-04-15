@@ -1,5 +1,19 @@
 require "fiber"
 
+# Channels enables to execute multiple tasks concurrently.
+# ```
+# channel = Channel(Nil).new
+
+# spawn do
+#   puts "Before send"
+#   channel.send(nil)
+#   puts "After send"
+# end
+
+# puts "Before receive"
+# channel.receive
+# puts "After receive"
+# ```
 abstract class Channel(T)
   module SelectAction
     abstract def ready?
@@ -41,10 +55,18 @@ abstract class Channel(T)
     @closed
   end
 
+  # Receive a value from the channel.
+  # ```
+  # channel = Channel(Int32).new
+  # channel.send(1)
+  # channel.receive # => 1
+  # ```
+  #
   def receive
     receive_impl { raise ClosedError.new }
   end
 
+  # Receive a value from the channel, if any.
   def receive?
     receive_impl { return nil }
   end
@@ -127,61 +149,71 @@ abstract class Channel(T)
     ReceiveAction.new(self)
   end
 
-  # :nodoc:
+  # Defines the receive actions for a channel.
   struct ReceiveAction(C)
     include SelectAction
 
     def initialize(@channel : C)
     end
 
+    # Checks if the channel is ready.
     def ready?
       !@channel.empty?
     end
 
+    # Receive the value to the channel.
     def execute
       @channel.receive
     end
 
+    # Wait for the channel to receive the value.
     def wait
       @channel.wait_for_receive
     end
 
+    # Do not wait to receive the value from the channel anymore.
     def unwait
       @channel.unwait_for_receive
     end
   end
 
-  # :nodoc:
+  # Defines the send actions for a channel.
   struct SendAction(C, T)
     include SelectAction
 
     def initialize(@channel : C, @value : T)
     end
 
+    # Checks if the channel is ready.
     def ready?
       !@channel.full?
     end
 
+    # Sends the value to the channel.
     def execute
       @channel.send(@value)
     end
 
+    # Wait for the channel to send the value.
     def wait
       @channel.wait_for_send
     end
 
+    # Do not wait for the channel to send the value anymore.
     def unwait
       @channel.unwait_for_send
     end
   end
 end
 
+# Buffered channel, using a queue.
 class Channel::Buffered(T) < Channel(T)
   def initialize(@capacity = 32)
     @queue = Deque(T).new(@capacity)
     super()
   end
 
+  # Send a value to the channel.
   def send(value : T)
     while full?
       raise_if_closed
@@ -220,6 +252,7 @@ class Channel::Buffered(T) < Channel(T)
   end
 end
 
+# Unbuffered channel.
 class Channel::Unbuffered(T) < Channel(T)
   @sender : Fiber?
 
@@ -229,6 +262,7 @@ class Channel::Unbuffered(T) < Channel(T)
     super
   end
 
+  # Send a value to the channel.
   def send(value : T)
     while @has_value
       raise_if_closed
