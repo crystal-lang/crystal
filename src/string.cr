@@ -3391,31 +3391,14 @@ class String
   # # a little coat of straw
   # ```
   def each_line(chomp = true, &block : String ->) : Nil
-    return if empty?
-
-    offset = 0
-
-    while byte_index = byte_index('\n'.ord.to_u8, offset)
-      count = byte_index - offset + 1
-      if chomp
-        count -= 1
-        if offset + count > 0 && to_unsafe[offset + count - 1] === '\r'
-          count -= 1
-        end
-      end
-
-      yield unsafe_byte_slice_string(offset, count)
-      offset = byte_index + 1
-    end
-
-    unless offset == bytesize
-      yield unsafe_byte_slice_string(offset)
+    lines(chomp).each do |line|
+      yield line
     end
   end
 
   # Returns an `Iterator` which yields each line of this string (see `String#each_line`).
   def each_line(chomp = true)
-    LineIterator.new(self, chomp)
+    lines(chomp).each
   end
 
   # Converts camelcase boundaries to underscores.
@@ -3632,7 +3615,7 @@ class String
   def succ
     return self if empty?
 
-    chars = self.chars
+    chars = self.chars.to_a
 
     carry = nil
     last_alnum = 0
@@ -3742,14 +3725,8 @@ class String
   # array # => ['a', 'b', '☃']
   # ```
   def each_char : Nil
-    if ascii_only?
-      each_byte do |byte|
-        yield (byte < 0x80 ? byte.unsafe_chr : Char::REPLACEMENT)
-      end
-    else
-      Char::Reader.new(self).each do |char|
-        yield char
-      end
+    chars.each do |char|
+      yield char
     end
   end
 
@@ -3762,7 +3739,7 @@ class String
   # chars.next # => '☃'
   # ```
   def each_char
-    CharIterator.new(Char::Reader.new(self))
+    chars.each
   end
 
   # Yields each character and its index in the string to the block.
@@ -3775,24 +3752,9 @@ class String
   # array # => [{'a', 0}, {'b', 1}, {'☃', 2}]
   # ```
   def each_char_with_index
-    i = 0
-    each_char do |char|
+    chars.each_with_index do |char, i|
       yield char, i
-      i += 1
     end
-  end
-
-  # Returns an `Array` of all characters in the string.
-  #
-  # ```
-  # "ab☃".chars # => ['a', 'b', '☃']
-  # ```
-  def chars
-    chars = Array(Char).new(@length > 0 ? @length : bytesize)
-    each_char do |char|
-      chars << char
-    end
-    chars
   end
 
   # Yields each codepoint to the block.
@@ -3869,16 +3831,6 @@ class String
   # ```
   def each_byte
     to_slice.each
-  end
-
-  # Returns this string's bytes as an `Array(UInt8)`.
-  #
-  # ```
-  # "hello".bytes # => [104, 101, 108, 108, 111]
-  # "你好".bytes    # => [228, 189, 160, 229, 165, 189]
-  # ```
-  def bytes
-    Array.new(bytesize) { |i| to_unsafe[i] }
   end
 
   # Pretty prints `self` into the given printer.
@@ -4316,65 +4268,214 @@ class String
     end
   end
 
-  private class CharIterator
-    include Iterator(Char)
+  # Represents a string as a sequence of chars.
+  struct Chars
+    include Indexable(Char)
 
-    @reader : Char::Reader
-    @end : Bool
-
-    def initialize(@reader, @end = false)
-      check_empty
+    def initialize(@str : String)
     end
 
-    def next
-      return stop if @end
-
-      value = @reader.current_char
-      @reader.next_char
-      @end = true unless @reader.has_next?
-
-      value
+    def unsafe_fetch(index : Int) : Char
+      @str.char_at(index)
     end
 
-    private def check_empty
-      @end = true if @reader.string.bytesize == 0
+    # Yields each character in the string to the block.
+    #
+    # ```
+    # array = [] of Char
+    # "ab☃".chars.each do |char|
+    #   array << char
+    # end
+    # array # => ['a', 'b', '☃']
+    # ```
+    def each(&block : Char ->)
+      if @str.ascii_only?
+        @str.each_byte do |byte|
+          yield (byte < 0x80 ? byte.unsafe_chr : Char::REPLACEMENT)
+        end
+      else
+        Char::Reader.new(@str).each do |char|
+          yield char
+        end
+      end
+    end
+
+    def size
+      @str.size
+    end
+
+    # Returns an `Iterator` over each character in the string.
+    #
+    # ```
+    # chars = "ab☃".each_char
+    # chars.next # => 'a'
+    # chars.next # => 'b'
+    # chars.next # => '☃'
+    # ```
+    def each
+      Iterator.new(Char::Reader.new(@str))
+    end
+
+    private class Iterator
+      include ::Iterator(Char)
+
+      @reader : Char::Reader
+      @end : Bool
+
+      def initialize(@reader, @end = false)
+        check_empty
+      end
+
+      def next
+        return stop if @end
+
+        value = @reader.current_char
+        @reader.next_char
+        @end = true unless @reader.has_next?
+
+        value
+      end
+
+      private def check_empty
+        @end = true if @reader.string.bytesize == 0
+      end
     end
   end
 
-  private class LineIterator
-    include Iterator(String)
+  # Represents a string as a sequence of lines.
+  struct Lines
+    include Indexable(String)
 
-    def initialize(@string : String, @chomp : Bool)
-      @offset = 0
-      @end = false
+    def initialize(@str : String, @chomp : Bool = true)
     end
 
-    def next
-      return stop if @end
+    def unsafe_fetch(index : Int) : String
+      each_with_index do |line, i|
+        return line if index == i
+      end
+      raise IndexError.new
+    end
 
-      byte_index = @string.byte_index('\n'.ord.to_u8, @offset)
-      if byte_index
-        count = byte_index - @offset + 1
+    # Splits the string after each newline and yields each line to a block.
+    #
+    # ```
+    # haiku = "the first cold shower
+    # even the monkey seems to want
+    # a little coat of straw"
+    # haiku.lines.each do |stanza|
+    #   puts stanza
+    # end
+    # # output:
+    # # the first cold shower
+    # # even the monkey seems to want
+    # # a little coat of straw
+    # ```
+    def each(&block : String ->)
+      return if @str.empty?
+
+      offset = 0
+
+      while byte_index = @str.byte_index('\n'.ord.to_u8, offset)
+        count = byte_index - offset + 1
         if @chomp
           count -= 1
-          if @offset + count > 0 && @string.to_unsafe[@offset + count - 1] === '\r'
+          if offset + count > 0 && @str.to_unsafe[offset + count - 1] === '\r'
             count -= 1
           end
         end
 
-        value = @string.unsafe_byte_slice_string(@offset, count)
-        @offset = byte_index + 1
-      else
-        if @offset == @string.bytesize
-          value = stop
-        else
-          value = @string.unsafe_byte_slice_string(@offset)
-        end
-        @end = true
+        yield @str.unsafe_byte_slice_string(offset, count)
+        offset = byte_index + 1
       end
 
-      value
+      if offset != @str.bytesize
+        yield @str.unsafe_byte_slice_string(offset)
+      end
     end
+
+    # Returns an `Iterator` which yields each line of this string (see `String#each_line`).
+    def each
+      Iterator.new(@str, @chomp)
+    end
+
+    private class Iterator
+      include ::Iterator(String)
+
+      def initialize(@string : String, @chomp : Bool)
+        @offset = 0
+        @end = false
+      end
+
+      def next
+        return stop if @end
+
+        byte_index = @string.byte_index('\n'.ord.to_u8, @offset)
+        if byte_index
+          count = byte_index - @offset + 1
+          if @chomp
+            count -= 1
+            if @offset + count > 0 && @string.to_unsafe[@offset + count - 1] === '\r'
+              count -= 1
+            end
+          end
+
+          value = @string.unsafe_byte_slice_string(@offset, count)
+          @offset = byte_index + 1
+        else
+          if @offset == @string.bytesize
+            value = stop
+          else
+            value = @string.unsafe_byte_slice_string(@offset)
+          end
+          @end = true
+        end
+
+        value
+      end
+    end
+  end
+
+  # Represents a string as a sequence of bytes.
+  struct StringBytes
+    include Indexable(UInt8)
+
+    def initialize(@str : String)
+    end
+
+    def unsafe_fetch(index : Int)
+      @str.to_unsafe[index]
+    end
+
+    # Yields each byte in the string to the block.
+    #
+    # ```
+    # array = Array(UInt8).new
+    # "ab☃".bytes.each do |byte|
+    #   array << byte
+    # end
+    # array # => [97, 98, 226, 152, 131]
+    # ```
+    def each(&block : UInt8 ->)
+      @str.to_slice.each do |byte|
+        yield byte
+      end
+      nil
+    end
+  end
+
+  # Represents a string as a sequence of bytes.
+  def bytes : StringBytes
+    StringBytes.new self
+  end
+
+  # Represents a string as a sequence of chars.
+  def chars : Chars
+    Chars.new self
+  end
+
+  # Represents a string as a sequence of lines, whith `chomp` to remove the last carriage return.
+  def lines(chomp : Bool = true) : Lines
+    Lines.new self, chomp
   end
 end
 

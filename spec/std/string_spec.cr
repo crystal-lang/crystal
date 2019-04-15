@@ -1722,7 +1722,7 @@ describe "String" do
   end
 
   it "does chars" do
-    "ぜんぶ".chars.should eq(['ぜ', 'ん', 'ぶ'])
+    "ぜんぶ".chars.to_a.should eq(['ぜ', 'ん', 'ぶ'])
   end
 
   it "allows creating a string with zeros" do
@@ -2066,21 +2066,21 @@ describe "String" do
   end
 
   it "gets lines" do
-    "".lines.should eq([] of String)
-    "\n".lines.should eq([""] of String)
-    "\r".lines.should eq(["\r"] of String)
-    "\r\n".lines.should eq([""] of String)
-    "foo".lines.should eq(["foo"])
-    "foo\n".lines.should eq(["foo"])
-    "foo\r\n".lines.should eq(["foo"])
-    "foo\nbar\r\nbaz\n".lines.should eq(["foo", "bar", "baz"])
-    "foo\nbar\r\nbaz\r\n".lines.should eq(["foo", "bar", "baz"])
+    "".lines.to_a.should eq([] of String)
+    "\n".lines.to_a.should eq([""] of String)
+    "\r".lines.to_a.should eq(["\r"] of String)
+    "\r\n".lines.to_a.should eq([""] of String)
+    "foo".lines.to_a.should eq(["foo"])
+    "foo\n".lines.to_a.should eq(["foo"])
+    "foo\r\n".lines.to_a.should eq(["foo"])
+    "foo\nbar\r\nbaz\n".lines.to_a.should eq(["foo", "bar", "baz"])
+    "foo\nbar\r\nbaz\r\n".lines.to_a.should eq(["foo", "bar", "baz"])
   end
 
   it "gets lines with chomp = false" do
-    "foo".lines(chomp: false).should eq(["foo"])
-    "foo\nbar\r\nbaz\n".lines(chomp: false).should eq(["foo\n", "bar\r\n", "baz\n"])
-    "foo\nbar\r\nbaz\r\n".lines(chomp: false).should eq(["foo\n", "bar\r\n", "baz\r\n"])
+    "foo".lines(chomp: false).to_a.should eq(["foo"])
+    "foo\nbar\r\nbaz\n".lines(chomp: false).to_a.should eq(["foo\n", "bar\r\n", "baz\n"])
+    "foo\nbar\r\nbaz\r\n".lines(chomp: false).to_a.should eq(["foo\n", "bar\r\n", "baz\r\n"])
   end
 
   it "gets each_line" do
@@ -2448,12 +2448,12 @@ describe "String" do
 
     it "gets chars" do
       string = String.new(Bytes[255, 0, 0, 0, 65])
-      string.chars.should eq([Char::REPLACEMENT, 0.chr, 0.chr, 0.chr, 65.chr])
+      string.chars.to_a.should eq([Char::REPLACEMENT, 0.chr, 0.chr, 0.chr, 65.chr])
     end
 
     it "gets chars (2)" do
       string = String.new(Bytes[255, 0])
-      string.chars.should eq([Char::REPLACEMENT, 0.chr])
+      string.chars.to_a.should eq([Char::REPLACEMENT, 0.chr])
     end
 
     it "valid_encoding?" do
@@ -2463,7 +2463,7 @@ describe "String" do
 
     it "scrubs" do
       string = String.new(Bytes[255, 129, 97, 255, 97])
-      string.scrub.bytes.should eq([239, 191, 189, 97, 239, 191, 189, 97])
+      string.scrub.bytes.to_a.should eq([239, 191, 189, 97, 239, 191, 189, 97])
 
       string.scrub("?").should eq("?a?a")
 

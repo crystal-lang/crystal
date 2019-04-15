@@ -6,7 +6,7 @@ class Markdown::Parser
   @lines : Array(String)
 
   def initialize(text : String, @renderer : Renderer)
-    @lines = text.lines
+    @lines = text.lines.to_a
     @line = 0
   end
 

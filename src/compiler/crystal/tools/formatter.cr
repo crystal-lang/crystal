@@ -4695,8 +4695,7 @@ module Crystal
 
         begin
           formatted_comment = Formatter.format(comment)
-          formatted_lines = formatted_comment.lines
-          formatted_lines.map! do |line|
+          formatted_lines = formatted_comment.lines.map do |line|
             String.build do |str|
               sharp_index.times { str << ' ' }
               str << "# "
