@@ -129,7 +129,6 @@ class Fiber
     @resume_event ||= Crystal::EventLoop.create_resume_event(self)
   end
 
-  # Set the current fiber to wait, in order to eventually execute others fibers.
   def self.yield
     Crystal::Scheduler.yield
   end

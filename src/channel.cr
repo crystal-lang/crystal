@@ -157,57 +157,50 @@ abstract class Channel(T)
     ReceiveAction.new(self)
   end
 
-  # Defines the receive actions for a channel.
+  # :nodoc:
   struct ReceiveAction(C)
     include SelectAction
 
     def initialize(@channel : C)
     end
 
-    # Checks if the channel is ready.
     def ready?
       !@channel.empty?
     end
 
-    # Receive the value to the channel.
     def execute
       @channel.receive
     end
 
-    # Wait for the channel to receive the value.
     def wait
       @channel.wait_for_receive
     end
-
-    # Do not wait to receive the value from the channel anymore.
+    
+    
     def unwait
       @channel.unwait_for_receive
     end
   end
 
-  # Defines the send actions for a channel.
+  # :nodoc:
   struct SendAction(C, T)
     include SelectAction
 
     def initialize(@channel : C, @value : T)
     end
 
-    # Checks if the channel is ready.
     def ready?
       !@channel.full?
     end
 
-    # Sends the value to the channel.
     def execute
       @channel.send(@value)
     end
 
-    # Wait for the channel to send the value.
     def wait
       @channel.wait_for_send
     end
 
-    # Do not wait for the channel to send the value anymore.
     def unwait
       @channel.unwait_for_send
     end
