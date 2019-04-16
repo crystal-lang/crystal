@@ -12,7 +12,7 @@ class Thread
 
   @th : LibC::PthreadT
   @exception : Exception?
-  @detached = false
+  @detached = Atomic(UInt8).new(0)
   @main_fiber : Fiber?
 
   # :nodoc:
@@ -51,14 +51,15 @@ class Thread
     @@threads.push(self)
   end
 
-  def finalize
-    GC.pthread_detach(@th) unless @detached
+  private def detach
+    if @detached.compare_and_set(0, 1).last
+      yield
+    end
   end
 
   # Suspends the current thread until this thread terminates.
   def join
-    GC.pthread_join(@th)
-    @detached = true
+    detach { GC.pthread_join(@th) }
 
     if exception = @exception
       raise exception
@@ -137,6 +138,7 @@ class Thread
     ensure
       @@threads.delete(self)
       Fiber.inactive(fiber)
+      detach { GC.pthread_detach(@th) }
     end
   end
 
