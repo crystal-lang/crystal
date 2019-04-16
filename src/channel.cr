@@ -2,19 +2,16 @@ require "fiber"
 
 # A `Channel` enables concurrent communication between fibers.
 #
-#
 # ```
-# channel = Channel(Nil).new
+# channel = Channel(Int32).new
 #
 # spawn do
-#   puts "Before send"
-#   channel.send(nil)
-#   puts "After send"
+#   channel.send(0)
+#   channel.send(1)
 # end
 #
-# puts "Before receive"
-# channel.receive
-# puts "After receive"
+# channel.receive #=> 0
+# channel.receive #=> 1
 # ```
 abstract class Channel(T)
   module SelectAction
