@@ -70,6 +70,7 @@ class HTTP::Server
     # Convenience method to set the HTTP status code.
     def status_code=(status_code : Int32)
       self.status = HTTP::Status.new(status_code)
+      status_code
     end
 
     # See `IO#write(slice)`.

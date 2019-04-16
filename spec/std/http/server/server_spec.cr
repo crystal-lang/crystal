@@ -146,7 +146,8 @@ module HTTP
       it "sets status code" do
         io = IO::Memory.new
         response = Response.new(io)
-        response.status_code = 201
+        return_value = response.status_code = 201
+        return_value.should eq 201
         response.status.should eq HTTP::Status::CREATED
       end
 
