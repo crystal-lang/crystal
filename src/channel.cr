@@ -10,8 +10,8 @@ require "fiber"
 #   channel.send(1)
 # end
 #
-# channel.receive #=> 0
-# channel.receive #=> 1
+# channel.receive # => 0
+# channel.receive # => 1
 # ```
 abstract class Channel(T)
   module SelectAction
@@ -70,7 +70,7 @@ abstract class Channel(T)
 
   # Receives a value from the channel.
   # If there is a value waiting, it is returned immediately. Otherwise, this method blocks until a value is sent to the channel.
-  # 
+  #
   # Returns `nil` if the channel is closed or closes while waiting for receive.
   def receive?
     receive_impl { return nil }
@@ -172,8 +172,7 @@ abstract class Channel(T)
     def wait
       @channel.wait_for_receive
     end
-    
-    
+
     def unwait
       @channel.unwait_for_receive
     end
