@@ -2,6 +2,8 @@ require "fiber"
 
 # A `Channel` enables concurrent communication between fibers.
 #
+# They allow communicating data between fibers without sharing memory and without having to worry about locks, semaphores or other special structures.
+#
 # ```
 # channel = Channel(Int32).new
 #
