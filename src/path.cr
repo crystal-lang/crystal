@@ -52,7 +52,7 @@
 # Path.posix("/foo").absolute?   # => true
 # Path.windows("/foo").absolute? # => false
 #
-# Path.posix("foo") == Path.posix("FOO")    # => false
+# Path.posix("foo") == Path.posix("FOO")     # => false
 # Path.windows("foo") == Path.windows("FOO") # => true
 # ```
 struct Path
