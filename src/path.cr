@@ -48,7 +48,7 @@
 # ```
 # Path.posix("/foo/./bar").normalize   # => Path.posix("/foo/bar")
 # Path.windows("/foo/./bar").normalize # => Path.windows("\\foo\\bar")
-
+#
 # Path.posix("/foo").absolute?   # => true
 # Path.windows("/foo").absolute? # => false
 #
