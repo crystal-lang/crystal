@@ -330,7 +330,7 @@ struct Colorize::Object(T)
     io << internal_io.to_s.inspect
   end
 
-  private def surround(io = STDOUT)
+  def surround(io = STDOUT)
     return yield io unless @enabled
 
     Object.surround(io, to_named_tuple) do |io|
