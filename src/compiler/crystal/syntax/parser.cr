@@ -164,14 +164,14 @@ module Crystal
         unexpected_token
       end
 
-      targets = exps[0...assign_index].map { |exp| to_lhs(exp) }
+      targets = exps[0...assign_index].map { |exp| multiassign_left_hand(exp) }
 
       assign = exps[assign_index]
       values = [] of ASTNode
 
       case assign
       when Assign
-        targets << to_lhs(assign.target)
+        targets << multiassign_left_hand(assign.target)
         values << assign.value
       when Call
         assign.name = assign.name.byte_slice(0, assign.name.bytesize - 1)
@@ -216,9 +216,9 @@ module Crystal
       end
     end
 
-    def to_lhs(exp)
-      if exp.is_a?(Path) && inside_def?
-        raise "dynamic constant assignment. Constants can only be declared at the top level or inside other types."
+    def multiassign_left_hand(exp)
+      if exp.is_a?(Path)
+        raise "can't assign to constant in multiple assignment", exp.location.not_nil!
       end
 
       if exp.is_a?(Call) && !exp.obj && exp.args.empty?
@@ -1076,6 +1076,8 @@ module Crystal
           check_type_declaration { parse_sizeof }
         when :instance_sizeof
           check_type_declaration { parse_instance_sizeof }
+        when :offsetof
+          check_type_declaration { parse_offsetof }
         when :typeof
           check_type_declaration { parse_typeof }
         when :private
@@ -1796,8 +1798,7 @@ module Crystal
         else
           skip_space
           if @token.type == :"."
-            next_token_skip_space
-            second_name = check_ident
+            second_name = consume_def_or_macro_name
             if name != "self" && !@def_vars.last.includes?(name)
               raise "undefined variable '#{name}'", location.line_number, location.column_number
             end
@@ -1815,8 +1816,7 @@ module Crystal
       when :CONST
         obj = parse_ident
         check :"."
-        next_token_skip_space
-        name = check_ident
+        name = consume_def_or_macro_name
         next_token_skip_space
       else
         unexpected_token
@@ -2798,16 +2798,11 @@ module Crystal
     def parse_macro
       doc = @token.doc
 
-      next_token
-
       # Force lexer return if possible a def or macro name
       # cases like: def `, def /, def //
       # that in regular statements states for delimiters
       # here must be treated as method names.
-      @wants_def_or_macro_name = true
-      skip_space_or_newline
-      check DefOrMacroCheck1
-      @wants_def_or_macro_name = false
+      name = consume_def_or_macro_name
 
       push_def
 
@@ -2816,10 +2811,8 @@ module Crystal
 
       if @token.type == :IDENT
         check_valid_def_name
-        name = @token.value.to_s
       else
         check_valid_def_op_name
-        name = @token.type.to_s
       end
       next_token_skip_space
 
@@ -3218,8 +3211,6 @@ module Crystal
       exp
     end
 
-    DefOrMacroCheck1 = [:IDENT, :CONST, :"`",
-                        :"<<", :"<", :"<=", :"==", :"===", :"!=", :"=~", :"!~", :">>", :">", :">=", :"+", :"-", :"*", :"/", :"//", :"!", :"~", :"%", :"&", :"|", :"^", :"**", :"[]", :"[]?", :"[]=", :"<=>", :"&+", :"&-", :"&*", :"&**"]
     DefOrMacroCheck2 = [:"<<", :"<", :"<=", :"==", :"===", :"!=", :"=~", :"!~", :">>", :">", :">=", :"+", :"-", :"*", :"/", :"//", :"!", :"~", :"%", :"&", :"|", :"^", :"**", :"[]", :"[]?", :"[]=", :"<=>", :"&+", :"&-", :"&*", :"&**"]
 
     def parse_def_helper(is_abstract = false)
@@ -3233,14 +3224,7 @@ module Crystal
 
       next_token
 
-      # Force lexer return if possible a def or macro name
-      # cases like: def `, def /, def //
-      # that in regular statements states for delimiters
-      # here must be treated as method names.
-      @wants_def_or_macro_name = true
-      skip_space_or_newline
-      check DefOrMacroCheck1
-      @wants_def_or_macro_name = false
+      consume_def_or_macro_name
 
       receiver = nil
       @yields = nil
@@ -3764,7 +3748,7 @@ module Crystal
         when :begin, :nil, :true, :false, :yield, :with, :abstract,
              :def, :macro, :require, :case, :select, :if, :unless, :include,
              :extend, :class, :struct, :module, :enum, :while, :until, :return,
-             :next, :break, :lib, :fun, :alias, :pointerof, :sizeof,
+             :next, :break, :lib, :fun, :alias, :pointerof, :sizeof, :offsetof,
              :instance_sizeof, :typeof, :private, :protected, :asm, :out,
         # `end` is also invalid because it maybe terminate `def` block.
              :end
@@ -3777,7 +3761,7 @@ module Crystal
         when "begin", "nil", "true", "false", "yield", "with", "abstract",
              "def", "macro", "require", "case", "select", "if", "unless", "include",
              "extend", "class", "struct", "module", "enum", "while", "until", "return",
-             "next", "break", "lib", "fun", "alias", "pointerof", "sizeof",
+             "next", "break", "lib", "fun", "alias", "pointerof", "sizeof", "offsetof",
              "instance_sizeof", "typeof", "private", "protected", "asm", "out",
              "end"
           true
@@ -4795,6 +4779,8 @@ module Crystal
         type = parse_sizeof
       when .keyword?(:instance_sizeof)
         type = parse_instance_sizeof
+      when .keyword?(:offsetof)
+        type = parse_offsetof
       else
         type = parse_ident(parse_nilable: false)
       end
@@ -4895,7 +4881,7 @@ module Crystal
           return allow_int && @token.number_kind == :i32
         when :IDENT
           case @token.value
-          when :typeof, :self, :sizeof, :instance_sizeof
+          when :typeof, :self, :sizeof, :instance_sizeof, :offsetof
             return true
           end
         when :"::"
@@ -4975,6 +4961,8 @@ module Crystal
         elsif @token.type == :":"
           next_token_skip_space_or_newline
           part_index += 1
+        else
+          unexpected_token
         end
 
         case part_index
@@ -5400,6 +5388,32 @@ module Crystal
       klass.new(exp).at_end(end_location)
     end
 
+    def parse_offsetof
+      next_token_skip_space
+      check :"("
+
+      next_token_skip_space_or_newline
+      type_location = @token.location
+      type = parse_single_type.at(type_location)
+
+      skip_space
+      check :","
+
+      next_token_skip_space_or_newline
+      check :INSTANCE_VAR
+
+      ivar_location = @token.location
+      instance_var = InstanceVar.new(@token.value.to_s).at(ivar_location)
+
+      next_token_skip_space_or_newline
+
+      end_location = token_end_location
+      check :")"
+      next_token_skip_space
+
+      OffsetOf.new(type, instance_var).at_end(end_location)
+    end
+
     def parse_type_def
       next_token_skip_space_or_newline
       name = check_const
@@ -5540,17 +5554,21 @@ module Crystal
           next_token_skip_space
           if @token.type == :"="
             next_token_skip_space_or_newline
-
             constant_value = parse_logical_or
-            next_token_skip_statement_end
           else
             constant_value = nil
-            skip_statement_end
           end
 
+          skip_space
+
           case @token.type
-          when :",", :";"
+          # TODO: remove comma support after 0.28.0
+          when :",", :";", :NEWLINE, :EOF
             next_token_skip_statement_end
+          else
+            unless @token.keyword?(:end)
+              raise "expecting ';', 'end' or newline after enum member", location
+            end
           end
 
           arg = Arg.new(constant_name, constant_value).at(location).at_end(constant_value || location)
@@ -5642,6 +5660,21 @@ module Crystal
       else
         false
       end
+    end
+
+    DefOrMacroCheck1 = [:IDENT, :CONST, :"`",
+                        :"<<", :"<", :"<=", :"==", :"===", :"!=", :"=~", :"!~", :">>", :">", :">=", :"+", :"-", :"*", :"/", :"//", :"!", :"~", :"%", :"&", :"|", :"^", :"**", :"[]", :"[]?", :"[]=", :"<=>", :"&+", :"&-", :"&*", :"&**"]
+
+    def consume_def_or_macro_name
+      # Force lexer return if possible a def or macro name
+      # cases like: def `, def /, def //
+      # that in regular statements states for delimiters
+      # here must be treated as method names.
+      @wants_def_or_macro_name = true
+      next_token_skip_space_or_newline
+      check DefOrMacroCheck1
+      @wants_def_or_macro_name = false
+      @token.to_s
     end
 
     def push_def

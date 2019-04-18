@@ -56,6 +56,8 @@ module YAML::Schema::Core
   # the string had a plain style.
   #
   # ```
+  # require "yaml"
+  #
   # YAML::Schema::Core.parse_scalar("hello") # => "hello"
   # YAML::Schema::Core.parse_scalar("1.2")   # => 1.2
   # YAML::Schema::Core.parse_scalar("false") # => false
@@ -108,6 +110,8 @@ module YAML::Schema::Core
   # with a plain style, according to the core schema.
   #
   # ```
+  # require "yaml"
+  #
   # YAML::Schema::Core.reserved_string?("hello") # => false
   # YAML::Schema::Core.reserved_string?("1.2")   # => true
   # YAML::Schema::Core.reserved_string?("false") # => true

@@ -60,7 +60,7 @@ class OAuth::Consumer
   # If they are relative, the given *host*, *port* and *scheme* will be used.
   # If they are absolute, the absolute URL will be used.
   def initialize(@host : String, @consumer_key : String, @consumer_secret : String,
-                 @port : Int32 = 443,
+                 @port : Int32? = nil,
                  @scheme : String = "https",
                  @request_token_uri : String = "/oauth/request_token",
                  @authorize_uri : String = "/oauth/authorize",

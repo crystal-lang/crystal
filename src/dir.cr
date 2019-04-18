@@ -266,11 +266,11 @@ class Dir
     Crystal::System::Dir.delete(path)
   end
 
-  def to_s(io)
+  def to_s(io : IO) : Nil
     io << "#<Dir:" << @path << '>'
   end
 
-  def inspect(io)
+  def inspect(io : IO) : Nil
     to_s(io)
   end
 
@@ -287,11 +287,6 @@ class Dir
     def next
       @dir.read || stop
     end
-
-    def rewind
-      @dir.rewind
-      self
-    end
   end
 
   private struct ChildIterator
@@ -306,11 +301,6 @@ class Dir
         return entry unless excluded.includes?(entry)
       end
       stop
-    end
-
-    def rewind
-      @dir.rewind
-      self
     end
   end
 end

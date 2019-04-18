@@ -66,11 +66,6 @@ class CSV::Parser
     end
   end
 
-  # Rewinds this parser to the first row.
-  def rewind
-    @lexer.rewind
-  end
-
   private struct RowIterator
     include Iterator(Array(String))
 
@@ -81,10 +76,6 @@ class CSV::Parser
 
     def next
       @parser.next_row || stop
-    end
-
-    def rewind
-      @parser.rewind
     end
   end
 end

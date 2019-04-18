@@ -177,13 +177,13 @@ struct UUID
   end
 
   # Convert to `String` in literal format.
-  def inspect(io : IO)
+  def inspect(io : IO) : Nil
     io << "UUID("
     to_s(io)
     io << ')'
   end
 
-  def to_s(io : IO)
+  def to_s(io : IO) : Nil
     slice = to_slice
 
     buffer = uninitialized UInt8[36]

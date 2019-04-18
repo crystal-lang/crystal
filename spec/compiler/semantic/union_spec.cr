@@ -165,4 +165,18 @@ describe "Semantic: union" do
       {foo(1), foo("hi")}
       )) { tuple_of([int32, string]) }
   end
+
+  it "doesn't crash with union of no-types (#5805)" do
+    assert_type(%(
+      class Gen(T)
+      end
+
+      foo = 42
+      if foo.is_a?(String)
+        Gen(typeof(foo) | Int32)
+      else
+        'a'
+      end
+      )) { union_of char, generic_class("Gen", int32).metaclass }
+  end
 end

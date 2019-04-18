@@ -98,10 +98,8 @@ struct Pointer(T)
     self + (-other.to_i64!)
   end
 
-  # Returns -1, 0 or 1 if this pointer's address is less, equal or greater than *other*'s address,
+  # Returns `-1`, `0` or `1` depending on whether this pointer's address is less, equal or greater than *other*'s address,
   # respectively.
-  #
-  # See also: `Object#<=>`.
   def <=>(other : self)
     address <=> other.address
   end
@@ -320,7 +318,7 @@ struct Pointer(T)
   # ptr2 = Pointer(Int32).new(0)
   # ptr2.to_s # => "Pointer(Int32).null"
   # ```
-  def to_s(io : IO)
+  def to_s(io : IO) : Nil
     io << "Pointer("
     io << T.to_s
     io << ')'

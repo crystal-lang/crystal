@@ -12,6 +12,11 @@ module Crystal
     Default     = LineNumbers
   end
 
+  enum Warnings
+    All
+    None
+  end
+
   # Main interface to the compiler.
   #
   # A Compiler parses source code, type checks it and
@@ -88,7 +93,7 @@ module Crystal
 
     # Codegen target to use in the compilation.
     # If not set, asks LLVM the default one for the current machine.
-    property codegen_target = Codegen::Target.new
+    property codegen_target = Config.default_target
 
     # If `true`, prints the link command line that is performed
     # to create the executable.
@@ -97,6 +102,15 @@ module Crystal
     # If `true`, doc comments are attached to types and methods
     # and can later be used to generate API docs.
     property? wants_doc = false
+
+    # Which kind of warnings wants to be detected.
+    property warnings : Warnings = Warnings::None
+
+    # Paths to ignore for warnings detection.
+    property warnings_exclude : Array(String) = [] of String
+
+    # If `true` compiler will error if warnings are found.
+    property error_on_warnings : Bool = false
 
     @[Flags]
     enum EmitTarget
@@ -196,6 +210,9 @@ module Crystal
       program.stdout = stdout
       program.show_error_trace = show_error_trace?
       program.progress_tracker = @progress_tracker
+      program.warnings = @warnings
+      program.warnings_exclude = @warnings_exclude.map { |p| File.expand_path p }
+      program.error_on_warnings = @error_on_warnings
       program
     end
 
@@ -410,7 +427,7 @@ module Crystal
       jobs_count = 0
       wait_channel = Channel(Array(String)).new(@n_threads)
 
-      units.each_slice(Math.max(units.size / @n_threads, 1)) do |slice|
+      units.each_slice(Math.max(units.size // @n_threads, 1)) do |slice|
         jobs_count += 1
         spawn do
           # For stats output we want to count how many previous

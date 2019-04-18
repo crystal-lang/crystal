@@ -148,6 +148,15 @@ describe "String" do
     it "gets with a string" do
       "FooBar"["Bar"].should eq "Bar"
       expect_raises(Exception, "Nil assertion failed") { "FooBar"["Baz"] }
+    end
+
+    it "gets with a char" do
+      expect_raises(Exception, "Nil assertion failed") { "foo/bar"['-'] }
+    end
+  end
+
+  describe "[]?" do
+    it "gets with a string" do
       "FooBar"["Bar"]?.should eq "Bar"
       "FooBar"["Baz"]?.should be_nil
     end
@@ -159,15 +168,25 @@ describe "String" do
       "foo/bar"['-']?.should be_nil
     end
 
-    it "gets with index and []?" do
+    it "gets with index" do
       "hello"[1]?.should eq('e')
       "hello"[5]?.should be_nil
       "hello"[-1]?.should eq('o')
       "hello"[-6]?.should be_nil
     end
 
-    it "returns nil with []? if pointing after last char which is non-ASCII" do
+    it "returns nil if pointing after last char which is non-ASCII" do
       "ß"[1]?.should be_nil
+    end
+
+    it "gets with range" do
+      "hello"[1..2]?.should eq "el"
+      "hello"[6..-1]?.should be_nil
+    end
+
+    it "gets with start and count" do
+      "hello"[1, 3]?.should eq("ell")
+      "hello"[6, 3]?.should be_nil
     end
   end
 
@@ -2006,16 +2025,10 @@ describe "String" do
     iter.next.should eq('b')
     iter.next.should eq('c')
     iter.next.should be_a(Iterator::Stop)
-
-    iter.rewind
-    iter.next.should eq('a')
   end
 
   it "gets each_char with empty string" do
     iter = "".each_char
-    iter.next.should be_a(Iterator::Stop)
-
-    iter.rewind
     iter.next.should be_a(Iterator::Stop)
   end
 
@@ -2046,9 +2059,6 @@ describe "String" do
     iter.next.should eq('b'.ord)
     iter.next.should eq('c'.ord)
     iter.next.should be_a(Iterator::Stop)
-
-    iter.rewind
-    iter.next.should eq('a'.ord)
   end
 
   it "cycles bytes" do
@@ -2095,9 +2105,6 @@ describe "String" do
     iter.next.should eq("bar")
     iter.next.should eq("baz")
     iter.next.should be_a(Iterator::Stop)
-
-    iter.rewind
-    iter.next.should eq("foo")
   end
 
   it "gets each_line iterator with chomp = false" do
@@ -2106,9 +2113,6 @@ describe "String" do
     iter.next.should eq("bar\n")
     iter.next.should eq("baz\n")
     iter.next.should be_a(Iterator::Stop)
-
-    iter.rewind
-    iter.next.should eq("foo\n")
   end
 
   it "has yields to each_codepoint" do
@@ -2241,22 +2245,38 @@ describe "String" do
     end
   end
 
-  it "compares non-case insensitive" do
-    "fo".compare("foo").should eq(-1)
-    "foo".compare("fo").should eq(1)
-    "foo".compare("foo").should eq(0)
-    "foo".compare("fox").should eq(-1)
-    "fox".compare("foo").should eq(1)
-    "foo".compare("Foo").should eq(1)
-  end
+  describe "compare" do
+    it "compares case-sensitive" do
+      "fo".compare("foo").should eq(-1)
+      "foo".compare("fo").should eq(1)
+      "foo".compare("foo").should eq(0)
+      "foo".compare("fox").should eq(-1)
+      "fox".compare("foo").should eq(1)
+      "foo".compare("Foo").should eq(1)
+      "hällo".compare("Hällo").should eq(1)
+      "".compare("").should eq(0)
+    end
 
-  it "compares case insensitive" do
-    "fo".compare("FOO", case_insensitive: true).should eq(-1)
-    "foo".compare("FO", case_insensitive: true).should eq(1)
-    "foo".compare("FOO", case_insensitive: true).should eq(0)
-    "foo".compare("FOX", case_insensitive: true).should eq(-1)
-    "fox".compare("FOO", case_insensitive: true).should eq(1)
-    "fo\u{0000}".compare("FO", case_insensitive: true).should eq(1)
+    it "compares case-insensitive" do
+      "foo".compare("FO", case_insensitive: true).should eq(1)
+      "FOO".compare("fo", case_insensitive: true).should eq(1)
+      "fo".compare("FOO", case_insensitive: true).should eq(-1)
+      "FOX".compare("foo", case_insensitive: true).should eq(1)
+      "foo".compare("FOX", case_insensitive: true).should eq(-1)
+      "foo".compare("FOO", case_insensitive: true).should eq(0)
+      "hELLo".compare("HellO", case_insensitive: true).should eq(0)
+      "fo\u{0}".compare("FO", case_insensitive: true).should eq(1)
+      "fo".compare("FO\u{0}", case_insensitive: true).should eq(-1)
+      "\u{0}".compare("\u{0}", case_insensitive: true).should eq(0)
+      "z".compare("hello", case_insensitive: true).should eq(1)
+      "h".compare("zzz", case_insensitive: true).should eq(-1)
+      "ä".compare("äA", case_insensitive: true).should eq(-1)
+      "äÄ".compare("äÄ", case_insensitive: true).should eq(0)
+      "heIIo".compare("heııo", case_insensitive: true, options: Unicode::CaseOptions::Turkic).should eq(0)
+      "".compare("abc", case_insensitive: true).should eq(-1)
+      "abc".compare("", case_insensitive: true).should eq(1)
+      "abcA".compare("abca", case_insensitive: true).should eq(0)
+    end
   end
 
   it "builds with write_byte" do

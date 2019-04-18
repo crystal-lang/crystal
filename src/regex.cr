@@ -435,7 +435,7 @@ class Regex
   # ```
   # /ab+c/ix.inspect # => "/ab+c/ix"
   # ```
-  def inspect(io : IO)
+  def inspect(io : IO) : Nil
     io << '/'
     Regex.append_source(source, io)
     io << '/'
@@ -532,7 +532,7 @@ class Regex
   # re = /A*/                  # => "(?-imsx:A*)"
   # "Crystal".match(/t#{re}l/) # => nil
   # ```
-  def to_s(io : IO)
+  def to_s(io : IO) : Nil
     io << "(?"
     io << 'i' if options.ignore_case?
     io << "ms" if options.multiline?

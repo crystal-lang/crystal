@@ -88,6 +88,15 @@ describe "BigInt" do
     (5.to_big_i + Int64::MAX).should eq(Int64::MAX.to_big_i + 5)
 
     (2 + 1.to_big_i).should eq(3.to_big_i)
+
+    (1.to_big_i &+ 2.to_big_i).should eq(3.to_big_i)
+    (1.to_big_i &+ 2).should eq(3.to_big_i)
+    (1.to_big_i &+ 2_u8).should eq(3.to_big_i)
+    (5.to_big_i &+ (-2_i64)).should eq(3.to_big_i)
+    (5.to_big_i &+ Int64::MAX).should be > Int64::MAX.to_big_i
+    (5.to_big_i &+ Int64::MAX).should eq(Int64::MAX.to_big_i &+ 5)
+
+    (2 &+ 1.to_big_i).should eq(3.to_big_i)
   end
 
   it "subs" do
@@ -100,6 +109,16 @@ describe "BigInt" do
 
     (5 - 1.to_big_i).should eq(4.to_big_i)
     (-5 - 1.to_big_i).should eq(-6.to_big_i)
+
+    (5.to_big_i &- 2.to_big_i).should eq(3.to_big_i)
+    (5.to_big_i &- 2).should eq(3.to_big_i)
+    (5.to_big_i &- 2_u8).should eq(3.to_big_i)
+    (5.to_big_i &- (-2_i64)).should eq(7.to_big_i)
+    (-5.to_big_i &- Int64::MAX).should be < -Int64::MAX.to_big_i
+    (-5.to_big_i &- Int64::MAX).should eq(-Int64::MAX.to_big_i &- 5)
+
+    (5 &- 1.to_big_i).should eq(4.to_big_i)
+    (-5 &- 1.to_big_i).should eq(-6.to_big_i)
   end
 
   it "negates" do
@@ -113,6 +132,13 @@ describe "BigInt" do
     (3 * 2.to_big_i).should eq(6.to_big_i)
     (3_u8 * 2.to_big_i).should eq(6.to_big_i)
     (2.to_big_i * Int64::MAX).should eq(2.to_big_i * Int64::MAX.to_big_i)
+
+    (2.to_big_i &* 3.to_big_i).should eq(6.to_big_i)
+    (2.to_big_i &* 3).should eq(6.to_big_i)
+    (2.to_big_i &* 3_u8).should eq(6.to_big_i)
+    (3 &* 2.to_big_i).should eq(6.to_big_i)
+    (3_u8 &* 2.to_big_i).should eq(6.to_big_i)
+    (2.to_big_i &* Int64::MAX).should eq(2.to_big_i &* Int64::MAX.to_big_i)
   end
 
   it "gets absolute value" do
@@ -124,6 +150,13 @@ describe "BigInt" do
     (10.to_big_i / 3).should eq(3.to_big_i)
     (10 / 3.to_big_i).should eq(3.to_big_i)
     ((Int64::MAX.to_big_i * 2.to_big_i) / Int64::MAX).should eq(2.to_big_i)
+  end
+
+  it "divides" do
+    (10.to_big_i // 3.to_big_i).should eq(3.to_big_i)
+    (10.to_big_i // 3).should eq(3.to_big_i)
+    (10 // 3.to_big_i).should eq(3.to_big_i)
+    ((Int64::MAX.to_big_i * 2.to_big_i) // Int64::MAX).should eq(2.to_big_i)
   end
 
   it "divides with negative numbers" do
@@ -139,6 +172,21 @@ describe "BigInt" do
     (-6.to_big_i / 2).should eq(-3.to_big_i)
     (6.to_big_i / -2).should eq(-3.to_big_i)
     (-6.to_big_i / -2).should eq(3.to_big_i)
+  end
+
+  it "divides with negative numbers" do
+    (7.to_big_i // 2).should eq(3.to_big_i)
+    (7.to_big_i // 2.to_big_i).should eq(3.to_big_i)
+    (7.to_big_i // -2).should eq(-4.to_big_i)
+    (7.to_big_i // -2.to_big_i).should eq(-4.to_big_i)
+    (-7.to_big_i // 2).should eq(-4.to_big_i)
+    (-7.to_big_i // 2.to_big_i).should eq(-4.to_big_i)
+    (-7.to_big_i // -2).should eq(3.to_big_i)
+    (-7.to_big_i // -2.to_big_i).should eq(3.to_big_i)
+
+    (-6.to_big_i // 2).should eq(-3.to_big_i)
+    (6.to_big_i // -2).should eq(-3.to_big_i)
+    (-6.to_big_i // -2).should eq(3.to_big_i)
   end
 
   it "tdivs" do
@@ -224,6 +272,20 @@ describe "BigInt" do
     end
   end
 
+  it "raises if divides by zero" do
+    expect_raises DivisionByZeroError do
+      10.to_big_i // 0.to_big_i
+    end
+
+    expect_raises DivisionByZeroError do
+      10.to_big_i // 0
+    end
+
+    expect_raises DivisionByZeroError do
+      10 // 0.to_big_i
+    end
+  end
+
   it "raises if mods by zero" do
     expect_raises DivisionByZeroError do
       10.to_big_i % 0.to_big_i
@@ -260,7 +322,7 @@ describe "BigInt" do
   end
 
   describe "#inspect" do
-    it { "2".to_big_i.inspect.should eq("2_big_i") }
+    it { "2".to_big_i.inspect.should eq("2") }
   end
 
   it "does gcd and lcm" do
@@ -326,6 +388,10 @@ describe "BigInt" do
     5.to_big_i.popcount.should eq(2)
   end
 
+  it "#trailing_zeros_count" do
+    "00000000000000001000000000001000".to_big_i(base: 2).trailing_zeros_count.should eq(3)
+  end
+
   it "#hash" do
     b1 = 5.to_big_i
     b2 = 5.to_big_i
@@ -338,6 +404,11 @@ describe "BigInt" do
   it "clones" do
     x = 1.to_big_i
     x.clone.should eq(x)
+  end
+
+  describe "#humanize_bytes" do
+    it { BigInt.new("1180591620717411303424").humanize_bytes.should eq("1.0ZiB") }
+    it { BigInt.new("1208925819614629174706176").humanize_bytes.should eq("1.0YiB") }
   end
 end
 

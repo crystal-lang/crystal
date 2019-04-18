@@ -161,7 +161,7 @@ module Zip::FileInfo
 
     time = (@time.hour << 11) |
            (@time.minute << 5) |
-           (@time.second / 2)
+           (@time.second // 2)
 
     {date.to_u16, time.to_u16}
   end

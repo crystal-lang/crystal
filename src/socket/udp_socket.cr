@@ -60,6 +60,8 @@ class UDPSocket < IPSocket
   # Receives a text message from the previously bound address.
   #
   # ```
+  # require "socket"
+  #
   # server = UDPSocket.new
   # server.bind("localhost", 1234)
   #
@@ -78,6 +80,8 @@ class UDPSocket < IPSocket
   # Receives a binary message from the previously bound address.
   #
   # ```
+  # require "socket"
+  #
   # server = UDPSocket.new
   # server.bind "localhost", 1234
   #

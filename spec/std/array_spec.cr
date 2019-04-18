@@ -10,6 +10,19 @@ private class BadSortingClass
   end
 end
 
+private class Spaceship
+  getter value : Float64
+
+  def initialize(@value : Float64, @return_nil = false)
+  end
+
+  def <=>(other : Spaceship)
+    return nil if @return_nil
+
+    value <=> other.value
+  end
+end
+
 describe "Array" do
   describe "new" do
     it "creates with default value" do
@@ -211,11 +224,6 @@ describe "Array" do
       a[0..0].should eq(a)
     end
 
-    it "gets nilable" do
-      [1, 2, 3][2]?.should eq(3)
-      [1, 2, 3][3]?.should be_nil
-    end
-
     it "doesn't exceed limits" do
       [1][0..3].should eq([1])
     end
@@ -229,6 +237,23 @@ describe "Array" do
       expect_raises IndexError do
         [1, 2, 3][-4..0]
       end
+    end
+  end
+
+  describe "[]?" do
+    it "gets with index" do
+      [1, 2, 3][2]?.should eq(3)
+      [1, 2, 3][3]?.should be_nil
+    end
+
+    it "gets with range" do
+      [1, 2, 3][1..2]?.should eq([2, 3])
+      [1, 2, 3][4..-1]?.should be_nil
+    end
+
+    it "gets with start and count" do
+      [1, 2, 3][1, 3]?.should eq([2, 3])
+      [1, 2, 3][4, 0]?.should be_nil
     end
   end
 
@@ -1059,6 +1084,37 @@ describe "Array" do
       [1, 2, 3].sort { 1 }
       Array.new(10) { BadSortingClass.new }.sort
     end
+
+    it "can sort just by using <=> (#6608)" do
+      spaceships = [
+        Spaceship.new(2),
+        Spaceship.new(0),
+        Spaceship.new(1),
+        Spaceship.new(3),
+      ]
+
+      sorted = spaceships.sort
+      4.times do |i|
+        sorted[i].value.should eq(i)
+      end
+    end
+
+    it "raises if <=> returns nil" do
+      spaceships = [
+        Spaceship.new(2, return_nil: true),
+        Spaceship.new(0, return_nil: true),
+      ]
+
+      expect_raises(ArgumentError) do
+        spaceships.sort
+      end
+    end
+
+    it "raises if sort block returns nil" do
+      expect_raises(ArgumentError) do
+        [1, 2].sort { nil }
+      end
+    end
   end
 
   describe "sort!" do
@@ -1078,6 +1134,37 @@ describe "Array" do
       a = [1] * 17
       b = a.sort { -1 }
       a.should eq(b)
+    end
+
+    it "can sort! just by using <=> (#6608)" do
+      spaceships = [
+        Spaceship.new(2),
+        Spaceship.new(0),
+        Spaceship.new(1),
+        Spaceship.new(3),
+      ]
+
+      spaceships.sort!
+      4.times do |i|
+        spaceships[i].value.should eq(i)
+      end
+    end
+
+    it "raises if <=> returns nil" do
+      spaceships = [
+        Spaceship.new(2, return_nil: true),
+        Spaceship.new(0, return_nil: true),
+      ]
+
+      expect_raises(ArgumentError) do
+        spaceships.sort!
+      end
+    end
+
+    it "raises if sort! block returns nil" do
+      expect_raises(ArgumentError) do
+        [1, 2].sort! { nil }
+      end
     end
   end
 
@@ -1226,7 +1313,7 @@ describe "Array" do
     b = [4, 5, 6]
     c = [1, 2]
 
-    (a <=> b).should be < 1
+    (a <=> b).should be < 0
     (a <=> c).should be > 0
     (b <=> c).should be > 0
     (b <=> a).should be > 0
@@ -1267,6 +1354,26 @@ describe "Array" do
         a.zip(b) { |x, y| r += "#{x}:#{y}," }
         r.should eq("1:4,2:5,3:6,")
       end
+
+      it "works with iterable" do
+        a = [1, 2, 3]
+        b = ('a'..'c')
+        r = [] of {Int32, Char}
+        a.zip(b) do |x, y|
+          r << {x, y}
+        end
+        r.should eq([{1, 'a'}, {2, 'b'}, {3, 'c'}])
+      end
+
+      it "works with iterator" do
+        a = [1, 2, 3]
+        b = ('a'..'c').each
+        r = [] of {Int32, Char}
+        a.zip(b) do |x, y|
+          r << {x, y}
+        end
+        r.should eq([{1, 'a'}, {2, 'b'}, {3, 'c'}])
+      end
     end
 
     describe "when no block is provided" do
@@ -1274,7 +1381,33 @@ describe "Array" do
         it "returns an array of paired elements (tuples)" do
           a, b = [1, 2, 3], ["a", "b", "c"]
           r = a.zip(b)
+          r.should be_a(Array({Int32, String}))
           r.should eq([{1, "a"}, {2, "b"}, {3, "c"}])
+        end
+
+        it "works with iterable" do
+          a = [1, 2, 3]
+          b = ('a'..'c')
+          r = a.zip(b)
+          r.should be_a(Array({Int32, Char}))
+          r.should eq([{1, 'a'}, {2, 'b'}, {3, 'c'}])
+        end
+
+        it "works with iterator" do
+          a = [1, 2, 3]
+          b = ('a'..'c').each
+          r = a.zip(b)
+          r.should be_a(Array({Int32, Char}))
+          r.should eq([{1, 'a'}, {2, 'b'}, {3, 'c'}])
+        end
+
+        it "zips three things" do
+          a = [1, 2, 3]
+          b = 'a'..'c'
+          c = ('x'..'z').each
+          r = a.zip(b, c)
+          r.should be_a(Array({Int32, Char, Char}))
+          r.should eq([{1, 'a', 'x'}, {2, 'b', 'y'}, {3, 'c', 'z'}])
         end
       end
     end
@@ -1288,6 +1421,26 @@ describe "Array" do
           a.zip?(b) { |x, y| r += "#{x}:#{y}," }
           r.should eq("1:4,2:5,3:,")
         end
+
+        it "works with iterable" do
+          a = [1, 2, 3]
+          b = ('a'..'b')
+          r = [] of {Int32, Char?}
+          a.zip?(b) do |x, y|
+            r << {x, y}
+          end
+          r.should eq([{1, 'a'}, {2, 'b'}, {3, nil}])
+        end
+
+        it "works with iterator" do
+          a = [1, 2, 3]
+          b = ('a'..'b').each
+          r = [] of {Int32, Char?}
+          a.zip?(b) do |x, y|
+            r << {x, y}
+          end
+          r.should eq([{1, 'a'}, {2, 'b'}, {3, nil}])
+        end
       end
     end
 
@@ -1298,6 +1451,31 @@ describe "Array" do
             a, b = [1, 2, 3], ["a", "b"]
             r = a.zip?(b)
             r.should eq([{1, "a"}, {2, "b"}, {3, nil}])
+          end
+
+          it "works with iterable" do
+            a = [1, 2, 3]
+            b = ('a'..'b')
+            r = a.zip?(b)
+            r.should be_a(Array({Int32, Char?}))
+            r.should eq([{1, 'a'}, {2, 'b'}, {3, nil}])
+          end
+
+          it "works with iterator" do
+            a = [1, 2, 3]
+            b = ('a'..'b').each
+            r = a.zip?(b)
+            r.should be_a(Array({Int32, Char?}))
+            r.should eq([{1, 'a'}, {2, 'b'}, {3, nil}])
+          end
+
+          it "zips three things" do
+            a = [1, 2, 3]
+            b = 'a'..'b'
+            c = ('x'..'y').each
+            r = a.zip?(b, c)
+            r.should be_a(Array({Int32, Char?, Char?}))
+            r.should eq([{1, 'a', 'x'}, {2, 'b', 'y'}, {3, nil, nil}])
           end
         end
       end
@@ -1395,9 +1573,6 @@ describe "Array" do
       iter.next.should eq(2)
       iter.next.should eq(3)
       iter.next.should be_a(Iterator::Stop)
-
-      iter.rewind
-      iter.next.should eq(1)
     end
 
     it "cycles" do
@@ -1413,9 +1588,6 @@ describe "Array" do
       iter.next.should eq(1)
       iter.next.should eq(2)
       iter.next.should be_a(Iterator::Stop)
-
-      iter.rewind
-      iter.next.should eq(0)
     end
   end
 
@@ -1427,9 +1599,6 @@ describe "Array" do
       iter.next.should eq(2)
       iter.next.should eq(1)
       iter.next.should be_a(Iterator::Stop)
-
-      iter.rewind
-      iter.next.should eq(3)
     end
   end
 
@@ -1574,9 +1743,6 @@ describe "Array" do
         iter.next.should eq(perm)
       end
       iter.next.should be_a(Iterator::Stop)
-
-      iter.rewind
-      iter.next.should eq(perms[0])
     end
 
     it "returns iterator with given size" do
@@ -1587,9 +1753,6 @@ describe "Array" do
         iter.next.should eq(perm)
       end
       iter.next.should be_a(Iterator::Stop)
-
-      iter.rewind
-      iter.next.should eq(perms[0])
     end
 
     it "returns iterator with reuse = true" do
@@ -1667,9 +1830,6 @@ describe "Array" do
         iter.next.should eq(comb)
       end
       iter.next.should be_a(Iterator::Stop)
-
-      iter.rewind
-      iter.next.should eq(combs[0])
     end
 
     it "returns iterator with reuse = true" do
@@ -1760,9 +1920,6 @@ describe "Array" do
         iter.next.should eq(comb)
       end
       iter.next.should be_a(Iterator::Stop)
-
-      iter.rewind
-      iter.next.should eq(combs[0])
     end
 
     it "returns iterator with reuse = true" do

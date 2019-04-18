@@ -1,19 +1,7 @@
-require "../../spec_helper"
+require "../spec_helper"
 require "http/server"
 require "http/client/response"
 require "../../../support/ssl"
-
-private def wait_for(timeout = 5.seconds)
-  now = Time.monotonic
-
-  until yield
-    Fiber.yield
-
-    if (Time.monotonic - now) > timeout
-      raise "server failed to start within 5 seconds"
-    end
-  end
-end
 
 private class RaiseErrno < IO
   def initialize(@value : Int32)
@@ -155,10 +143,25 @@ module HTTP
         io.to_s.should eq("HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: 5\r\n\r\nHello")
       end
 
+      it "sets status code" do
+        io = IO::Memory.new
+        response = Response.new(io)
+        return_value = response.status_code = 201
+        return_value.should eq 201
+        response.status.should eq HTTP::Status::CREATED
+      end
+
+      it "retrieves status code" do
+        io = IO::Memory.new
+        response = Response.new(io)
+        response.status = :created
+        response.status_code.should eq 201
+      end
+
       it "changes status and others" do
         io = IO::Memory.new
         response = Response.new(io)
-        response.status_code = 404
+        response.status = :not_found
         response.version = "HTTP/1.0"
         response.close
         io.to_s.should eq("HTTP/1.0 404 Not Found\r\nContent-Length: 0\r\n\r\n")
@@ -237,9 +240,13 @@ module HTTP
       address = server.bind_unused_port
       address.port.should_not eq(0)
 
+      server.close
+
       server = Server.new { |ctx| }
       port = server.bind_tcp(0).port
       port.should_not eq(0)
+    ensure
+      server.close if server
     end
 
     it "doesn't raise on accept after close #2692" do
@@ -278,11 +285,11 @@ module HTTP
 
       address1.should_not eq address2
 
-      spawn { server.listen }
-
-      HTTP::Client.get("http://#{address2}/").body.should eq "Test Server (#{address2})"
-      HTTP::Client.get("http://#{address1}/").body.should eq "Test Server (#{address1})"
-      HTTP::Client.get("http://#{address1}/").body.should eq "Test Server (#{address1})"
+      run_server(server) do
+        HTTP::Client.get("http://#{address2}/").body.should eq "Test Server (#{address2})"
+        HTTP::Client.get("http://#{address1}/").body.should eq "Test Server (#{address1})"
+        HTTP::Client.get("http://#{address1}/").body.should eq "Test Server (#{address1})"
+      end
     end
 
     it "handles Expect: 100-continue correctly when body is read" do
@@ -291,30 +298,29 @@ module HTTP
       end
 
       address = server.bind_unused_port
-      spawn server.listen
 
-      wait_for { server.listening? }
+      run_server(server) do
+        TCPSocket.open(address.address, address.port) do |socket|
+          socket << requestize(<<-REQUEST
+            POST / HTTP/1.1
+            Expect: 100-continue
+            Content-Length: 5
 
-      TCPSocket.open(address.address, address.port) do |socket|
-        socket << requestize(<<-REQUEST
-          POST / HTTP/1.1
-          Expect: 100-continue
-          Content-Length: 5
+            REQUEST
+          )
+          socket << "\r\n"
+          socket.flush
 
-          REQUEST
-        )
-        socket << "\r\n"
-        socket.flush
+          response = Client::Response.from_io(socket)
+          response.status_code.should eq(100)
 
-        response = Client::Response.from_io(socket)
-        response.status_code.should eq(100)
+          socket << "hello"
+          socket.flush
 
-        socket << "hello"
-        socket.flush
-
-        response = Client::Response.from_io(socket)
-        response.status_code.should eq(200)
-        response.body.should eq("hello")
+          response = Client::Response.from_io(socket)
+          response.status_code.should eq(200)
+          response.body.should eq("hello")
+        end
       end
     end
 
@@ -324,24 +330,23 @@ module HTTP
       end
 
       address = server.bind_unused_port
-      spawn server.listen
 
-      wait_for { server.listening? }
+      run_server(server) do
+        TCPSocket.open(address.address, address.port) do |socket|
+          socket << requestize(<<-REQUEST
+            POST / HTTP/1.1
+            Expect: 100-continue
+            Content-Length: 5
 
-      TCPSocket.open(address.address, address.port) do |socket|
-        socket << requestize(<<-REQUEST
-          POST / HTTP/1.1
-          Expect: 100-continue
-          Content-Length: 5
+            REQUEST
+          )
+          socket << "\r\n"
+          socket.flush
 
-          REQUEST
-        )
-        socket << "\r\n"
-        socket.flush
-
-        response = Client::Response.from_io(socket)
-        response.status_code.should eq(400)
-        response.body.should eq("400 I don't want your body\n")
+          response = Client::Response.from_io(socket)
+          response.status_code.should eq(400)
+          response.body.should eq("400 I don't want your body\n")
+        end
       end
     end
 
@@ -353,30 +358,33 @@ module HTTP
       server.bind tcp_server
 
       server.addresses.should eq addresses
+    ensure
+      server.try &.close
     end
 
     describe "#bind" do
       it "fails after listen" do
         server = Server.new { }
         server.bind_unused_port
-        spawn { server.listen }
-        wait_for { server.listening? }
-        expect_raises(Exception, "Can't add socket to running server") do
-          server.bind_unused_port
+
+        run_server(server) do
+          expect_raises(Exception, "Can't add socket to running server") do
+            server.bind_unused_port
+          end
         end
-        server.close
       end
 
       it "fails after close" do
         server = Server.new { }
         server.bind_unused_port
-        spawn { server.listen }
-        wait_for { server.listening? }
-        server.close
-        expect_raises(Exception, "Can't add socket to closed server") do
-          server.bind_unused_port
+
+        run_server(server) do
+          server.close
+
+          expect_raises(Exception, "Can't add socket to closed server") do
+            server.bind_unused_port
+          end
         end
-        server.close unless server.closed?
       end
 
       describe "with URI" do
@@ -482,12 +490,10 @@ module HTTP
         ip_address1 = server.bind_tls "127.0.0.1", 0, server_context
         ip_address2 = socket.local_address
 
-        spawn server.listen
-
-        HTTP::Client.get("https://#{ip_address1}", tls: client_context).body.should eq "Test Server (#{ip_address1})\n"
-        HTTP::Client.get("https://#{ip_address2}", tls: client_context).body.should eq "Test Server (#{ip_address2})\n"
-
-        server.close
+        run_server(server) do
+          HTTP::Client.get("https://#{ip_address1}", tls: client_context).body.should eq "Test Server (#{ip_address1})\n"
+          HTTP::Client.get("https://#{ip_address2}", tls: client_context).body.should eq "Test Server (#{ip_address2})\n"
+        end
       end
     end
 
@@ -495,23 +501,25 @@ module HTTP
       it "fails after listen" do
         server = Server.new { }
         server.bind_unused_port
-        spawn { server.listen }
-        wait_for { server.listening? }
-        expect_raises(Exception, "Can't start running server") do
-          server.listen
+
+        run_server(server) do
+          expect_raises(Exception, "Can't start running server") do
+            server.listen
+          end
         end
-        server.close
       end
 
       it "fails after close" do
         server = Server.new { }
         server.bind_unused_port
-        spawn { server.listen }
-        wait_for { server.listening? }
-        server.close
-        server.listening?.should be_false
-        expect_raises(Exception, "Can't re-start closed server") do
-          server.listen
+
+        run_server(server) do
+          server.close
+          server.listening?.should be_false
+
+          expect_raises(Exception, "Can't re-start closed server") do
+            server.listen
+          end
         end
       end
     end
@@ -533,13 +541,10 @@ module HTTP
             server.bind socket1
             socket2 = server.bind_unix path2
 
-            spawn server.listen
-            wait_for { server.listening? }
-
-            unix_request(path1).should eq "Test Server (#{path1})"
-            unix_request(path2).should eq "Test Server (#{path2})"
-
-            server.close
+            run_server(server) do
+              unix_request(path1).should eq "Test Server (#{path1})"
+              unix_request(path2).should eq "Test Server (#{path2})"
+            end
 
             File.exists?(path1).should be_false
             File.exists?(path2).should be_false
@@ -560,27 +565,25 @@ module HTTP
       server_context, client_context = ssl_context_pair
       address = server.bind_tls "localhost", server_context
 
-      server_done = false
-      spawn do
-        server.listen
-      ensure
-        server_done = true
-      end
-
-      3.times do
-        # Perform multiple wrong calls together and check
-        # that the server is still able to respond.
+      run_server(server) do |server_done|
         3.times do
-          empty_context = OpenSSL::SSL::Context::Client.new
-          socket = TCPSocket.new(address.address, address.port)
-          expect_raises(OpenSSL::SSL::Error) do
-            OpenSSL::SSL::Socket::Client.new(socket, empty_context)
+          # Perform multiple wrong calls together and check
+          # that the server is still able to respond.
+          3.times do
+            empty_context = OpenSSL::SSL::Context::Client.new
+            TCPSocket.open(address.address, address.port) do |socket|
+              expect_raises(OpenSSL::SSL::Error) do
+                OpenSSL::SSL::Socket::Client.new(socket, empty_context)
+              end
+            end
           end
-        end
-        HTTP::Client.get("https://#{address}/", tls: client_context).body.should eq "ok"
-      end
 
-      server_done.should be_false
+          HTTP::Client.get("https://#{address}/", tls: client_context).body.should eq "ok"
+        end
+
+        server.closed?.should be_false
+        server_done.empty?.should be_true
+      end
     end
 
     describe "#close" do
@@ -594,24 +597,25 @@ module HTTP
         end
 
         address = server.bind_unused_port
-        spawn server.listen
 
-        TCPSocket.open(address.address, address.port) do |socket|
-          socket << "GET / HTTP/1.1\r\n\r\n"
+        run_server(server) do
+          TCPSocket.open(address.address, address.port) do |socket|
+            socket << "GET / HTTP/1.1\r\n\r\n"
 
-          while true
-            line = socket.gets || break
-            break if line.empty?
+            while true
+              line = socket.gets || break
+              break if line.empty?
+            end
+
+            socket = HTTP::ChunkedContent.new(socket)
+
+            socket.gets.should eq "foo"
+
+            server.close
+
+            socket.closed?.should be_false
+            socket.gets.should eq "bar"
           end
-
-          socket = HTTP::ChunkedContent.new(socket)
-
-          socket.gets.should eq "foo"
-
-          server.close
-
-          socket.closed?.should be_false
-          socket.gets.should eq "bar"
         end
       end
     end
@@ -843,6 +847,51 @@ module HTTP
 
           RESPONSE
         ))
+      end
+    end
+
+    describe "#remote_address" do
+      it "for http server" do
+        remote_address = nil
+
+        server = Server.new do |context|
+          remote_address = context.request.remote_address
+        end
+
+        tcp_server = TCPServer.new("127.0.0.1", 0)
+        server.bind tcp_server
+        address1 = tcp_server.local_address
+
+        run_server(server) do
+          HTTP::Client.new(URI.parse("http://#{address1}/")) do |client|
+            client.get("/")
+
+            remote_address.should eq(client.@socket.as(IPSocket).local_address.to_s)
+          end
+        end
+      end
+
+      it "for https server" do
+        remote_address = nil
+
+        server = Server.new do |context|
+          remote_address = context.request.remote_address
+        end
+
+        server_context, client_context = ssl_context_pair
+
+        socket = OpenSSL::SSL::Server.new(TCPServer.new("127.0.0.1", 0), server_context)
+        server.bind socket
+        ip_address1 = server.bind_tls "127.0.0.1", 0, server_context
+
+        run_server(server) do
+          HTTP::Client.new(
+            uri: URI.parse("https://#{ip_address1}"),
+            tls: client_context) do |client|
+            client.get("/")
+            remote_address.should eq(client.@socket.as(OpenSSL::SSL::Socket).local_address.to_s)
+          end
+        end
       end
     end
 
