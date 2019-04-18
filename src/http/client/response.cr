@@ -1,24 +1,29 @@
 require "../client"
 require "../common"
+require "mime/media_type"
 
 class HTTP::Client::Response
   getter version : String
-  getter status_code : Int32
-  getter status_message : String
+  getter status : HTTP::Status
+  getter status_message : String?
   getter headers : Headers
   getter! body_io : IO
   @cookies : Cookies?
 
-  def initialize(@status_code, @body : String? = nil, @headers : Headers = Headers.new, status_message = nil, @version = "HTTP/1.1", @body_io = nil)
-    @status_message = status_message || HTTP.default_status_message_for(@status_code)
+  def initialize(@status : HTTP::Status, @body : String? = nil, @headers : Headers = Headers.new, status_message = nil, @version = "HTTP/1.1", @body_io = nil)
+    @status_message = status_message || @status.description
 
-    if Response.mandatory_body?(@status_code)
+    if Response.mandatory_body?(@status)
       @body = "" unless @body || @body_io
     else
       if (@body || @body_io) && (headers["Content-Length"]? != "0")
-        raise ArgumentError.new("Status #{status_code} should not have a body")
+        raise ArgumentError.new("Status #{status.code} should not have a body")
       end
     end
+  end
+
+  def self.new(status_code : Int32, body : String? = nil, headers : Headers = Headers.new, status_message = nil, version = "HTTP/1.1", body_io = nil)
+    new(HTTP::Status.new(status_code), body, headers, status_message, version, body_io)
   end
 
   def body
@@ -31,7 +36,7 @@ class HTTP::Client::Response
 
   # Returns `true` if the response status code is between 200 and 299.
   def success?
-    (200..299).includes?(status_code)
+    @status.success?
   end
 
   # Returns a convenience wrapper around querying and setting cookie related
@@ -44,24 +49,27 @@ class HTTP::Client::Response
     HTTP.keep_alive?(self)
   end
 
-  def content_type
-    process_content_type_header.content_type
+  def content_type : String?
+    mime_type.try &.media_type
   end
 
-  def charset
-    process_content_type_header.charset
+  # Convenience method to retrieve the HTTP status code.
+  def status_code
+    status.code
   end
 
-  @computed_content_type_header : ComputedContentTypeHeader?
+  def charset : String?
+    mime_type.try &.["charset"]?
+  end
 
-  private def process_content_type_header
-    @computed_content_type_header ||= begin
-      HTTP.content_type_and_charset(headers)
+  def mime_type : MIME::MediaType?
+    if content_type = headers["Content-Type"]?
+      MIME::MediaType.parse(content_type)
     end
   end
 
   def to_io(io)
-    io << @version << ' ' << @status_code << ' ' << @status_message << "\r\n"
+    io << @version << ' ' << @status.code << ' ' << @status_message << "\r\n"
     cookies = @cookies
     headers = cookies ? cookies.add_response_headers(@headers) : @headers
     HTTP.serialize_headers_and_body(io, headers, @body, @body_io, @version)
@@ -75,8 +83,8 @@ class HTTP::Client::Response
     end
   end
 
-  def self.mandatory_body?(status_code) : Bool
-    !(status_code / 100 == 1 || status_code == 204 || status_code == 304)
+  def self.mandatory_body?(status : HTTP::Status) : Bool
+    !(status.informational? || status.no_content? || status.not_modified?)
   end
 
   def self.supports_chunked?(version) : Bool
@@ -131,14 +139,15 @@ class HTTP::Client::Response
       raise "Invalid HTTP status code: #{pieces[1]}"
     end
 
+    status = HTTP::Status.new(status_code)
     status_message = pieces[2]? ? pieces[2].chomp : ""
 
     body_type = HTTP::BodyType::OnDemand
-    body_type = HTTP::BodyType::Mandatory if mandatory_body?(status_code)
+    body_type = HTTP::BodyType::Mandatory if mandatory_body?(status)
     body_type = HTTP::BodyType::Prohibited if ignore_body
 
     HTTP.parse_headers_and_body(io, body_type: body_type, decompress: decompress) do |headers, body|
-      return yield new status_code, nil, headers, status_message, http_version, body
+      return yield new status, nil, headers, status_message, http_version, body
     end
   end
 end

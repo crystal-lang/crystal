@@ -56,6 +56,9 @@ describe "Range" do
   it "does to_s" do
     (1...5).to_s.should eq("1...5")
     (1..5).to_s.should eq("1..5")
+    (1..nil).to_s.should eq("1..")
+    (nil..3).to_s.should eq("..3")
+    (nil..nil).to_s.should eq("..")
   end
 
   it "does inspect" do
@@ -188,6 +191,23 @@ describe "Range" do
       range.each { any = true }
       any.should eq(false)
     end
+
+    it "endless" do
+      range = (3..nil)
+      ary = [] of Int32
+      range.each do |x|
+        ary << x
+        break if ary.size == 5
+      end
+      ary.should eq([3, 4, 5, 6, 7])
+    end
+
+    it "raises on beginless" do
+      range = (true ? nil : 1)..4
+      expect_raises(ArgumentError, "Can't each beginless range") do
+        range.each { }
+      end
+    end
   end
 
   describe "reverse_each" do
@@ -211,6 +231,23 @@ describe "Range" do
       range.reverse_each { any = true }
       any.should eq(false)
     end
+
+    it "raises on endless range" do
+      range = (3..(true ? nil : 1))
+      expect_raises(ArgumentError, "Can't reverse_each endless range") do
+        range.reverse_each { }
+      end
+    end
+
+    it "iterators on beginless range" do
+      range = nil..2
+      arr = [] of Int32
+      range.reverse_each do |x|
+        arr << x
+        break if arr.size == 5
+      end
+      arr.should eq([2, 1, 0, -1, -2])
+    end
   end
 
   describe "each iterator" do
@@ -221,9 +258,6 @@ describe "Range" do
       iter.next.should eq(2)
       iter.next.should eq(3)
       iter.next.should be_a(Iterator::Stop)
-
-      iter.rewind
-      iter.next.should eq(1)
     end
 
     it "does next with exclusive range" do
@@ -232,9 +266,20 @@ describe "Range" do
       iter.next.should eq(1)
       iter.next.should eq(2)
       iter.next.should be_a(Iterator::Stop)
+    end
 
-      iter.rewind
-      iter.next.should eq(1)
+    it "does with endless range" do
+      r = (3..nil)
+      iter = r.each
+      iter.next.should eq(3)
+      iter.next.should eq(4)
+    end
+
+    it "raises on beginless range" do
+      r = (true ? nil : 1)..3
+      expect_raises(ArgumentError, "Can't each beginless range") do
+        r.each
+      end
     end
 
     it "cycles" do
@@ -266,9 +311,6 @@ describe "Range" do
       iter.next.should eq(2)
       iter.next.should eq(1)
       iter.next.should be_a(Iterator::Stop)
-
-      iter.rewind
-      iter.next.should eq(3)
     end
 
     it "does next with exclusive range" do
@@ -277,9 +319,15 @@ describe "Range" do
       iter.next.should eq(2)
       iter.next.should eq(1)
       iter.next.should be_a(Iterator::Stop)
+    end
 
-      iter.rewind
+    it "does next with beginless range" do
+      r = nil...3
+      iter = r.reverse_each
       iter.next.should eq(2)
+      iter.next.should eq(1)
+      iter.next.should eq(0)
+      iter.next.should eq(-1)
     end
 
     it "reverse cycles" do
@@ -301,6 +349,49 @@ describe "Range" do
     it "is not empty with ... and begin.succ == end" do
       (1...2).reverse_each.to_a.should eq([1])
     end
+
+    it "raises on endless range" do
+      expect_raises(ArgumentError, "Can't reverse_each endless range") do
+        (1..(true ? nil : 1)).reverse_each
+      end
+    end
+  end
+
+  describe "step" do
+    it "does with inclusive range" do
+      a = 1..5
+      elems = [] of Int32
+      iter = a.step(2) do |x|
+        elems << x
+      end
+      elems.should eq([1, 3, 5])
+    end
+
+    it "does with exclusive range" do
+      a = 1...5
+      elems = [] of Int32
+      iter = a.step(2) do |x|
+        elems << x
+      end
+      elems.should eq([1, 3])
+    end
+
+    it "does with endless range" do
+      a = (1...nil)
+      elems = [] of Int32
+      iter = a.step(2) do |x|
+        elems << x
+        break if elems.size == 5
+      end
+      elems.should eq([1, 3, 5, 7, 9])
+    end
+
+    it "raises on beginless range" do
+      a = nil..3
+      expect_raises(ArgumentError, "Can't step beginless range") do
+        a.step(2) { }
+      end
+    end
   end
 
   describe "step iterator" do
@@ -311,9 +402,6 @@ describe "Range" do
       iter.next.should eq(3)
       iter.next.should eq(5)
       iter.next.should be_a(Iterator::Stop)
-
-      iter.rewind
-      iter.next.should eq(1)
     end
 
     it "does next with exclusive range" do
@@ -322,9 +410,6 @@ describe "Range" do
       iter.next.should eq(1)
       iter.next.should eq(3)
       iter.next.should be_a(Iterator::Stop)
-
-      iter.rewind
-      iter.next.should eq(1)
     end
 
     it "does next with exclusive range (2)" do
@@ -334,9 +419,6 @@ describe "Range" do
       iter.next.should eq(3)
       iter.next.should eq(5)
       iter.next.should be_a(Iterator::Stop)
-
-      iter.rewind
-      iter.next.should eq(1)
     end
 
     it "is empty with .. and begin > end" do
@@ -353,6 +435,20 @@ describe "Range" do
 
     it "is not empty with ... and begin.succ == end" do
       (1...2).step(1).to_a.should eq([1])
+    end
+
+    it "does with endless range" do
+      a = (1...nil)
+      iter = a.step(2)
+      iter.next.should eq(1)
+      iter.next.should eq(3)
+    end
+
+    it "raises with beginless range" do
+      a = nil..3
+      expect_raises(ArgumentError, "Can't step beginless range") do
+        a.step(2)
+      end
     end
   end
 
@@ -386,5 +482,39 @@ describe "Range" do
     clone.should eq(range)
     clone.begin.should_not be(range.begin)
     clone.end.should_not be(range.end)
+  end
+
+  describe "===" do
+    it "inclusive" do
+      ((1..2) === 0).should be_false
+      ((1..2) === 1).should be_true
+      ((1..2) === 2).should be_true
+      ((1..2) === 3).should be_false
+    end
+
+    it "exclusive" do
+      ((1...2) === 0).should be_false
+      ((1...2) === 1).should be_true
+      ((1...2) === 2).should be_false
+    end
+
+    it "endless" do
+      ((1...nil) === 0).should be_false
+      ((1...nil) === 1).should be_true
+      ((1...nil) === 2).should be_true
+      ((1..nil) === 2).should be_true
+    end
+
+    it "beginless" do
+      ((nil..3) === -1).should be_true
+      ((nil..3) === 3).should be_true
+      ((nil..3) === 4).should be_false
+      ((nil...3) === 2).should be_true
+      ((nil...3) === 3).should be_false
+    end
+
+    it "no limits" do
+      ((nil..nil) === 1).should be_true
+    end
   end
 end

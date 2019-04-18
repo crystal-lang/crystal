@@ -30,9 +30,9 @@ describe "Code gen: var" do
 
         def foo
           if 1 == 2
-            @angle += 1
+            @angle &+= 1
           else
-            @angle -= 1
+            @angle &-= 1
           end
         end
       end

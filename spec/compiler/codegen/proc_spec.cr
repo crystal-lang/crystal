@@ -6,7 +6,7 @@ describe "Code gen: proc" do
   end
 
   it "call proc literal with arguments" do
-    run("f = ->(x : Int32) { x + 1 }; f.call(41)").to_i.should eq(42)
+    run("f = ->(x : Int32) { x &+ 1 }; f.call(41)").to_i.should eq(42)
   end
 
   it "call proc pointer" do
@@ -16,7 +16,7 @@ describe "Code gen: proc" do
   it "call proc pointer with args" do
     run("
       def foo(x, y)
-        x + y
+        x &+ y
       end
 
       f = ->foo(Int32, Int32)
@@ -87,7 +87,13 @@ describe "Code gen: proc" do
 
   it "codegens proc that accepts a union and is called with a single type" do
     run("
-      f = ->(x : Int32 | Float64) { x + 1 }
+      struct Float
+        def &+(other)
+          self + other
+        end
+      end
+
+      f = ->(x : Int32 | Float64) { x &+ 1 }
       f.call(1).to_i
       ").to_i.should eq(2)
   end
@@ -390,7 +396,7 @@ describe "Code gen: proc" do
       alias Func = Int32 -> Int32
 
       a = 2
-      f = Func.new { |x| x + a }
+      f = Func.new { |x| x &+ a }
       f.call(1)
       ").to_i.should eq(3)
   end
@@ -744,5 +750,13 @@ describe "Code gen: proc" do
       f = ->(x : Gen(Int32)) {}
       f.call(Foo.new)
       ))
+  end
+
+  it "executes proc pointer on primitive" do
+    run(%(
+      a = 1
+      f = ->a.&+(Int32)
+      f.call(20)
+      )).to_i.should eq(21)
   end
 end

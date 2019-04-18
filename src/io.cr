@@ -908,17 +908,13 @@ abstract class IO
   # ```
   # io = IO::Memory.new("hello\nworld")
   # io.each_line do |line|
-  #   puts line.chomp.reverse
+  #   puts line
   # end
+  # # output:
+  # # hello
+  # # world
   # ```
-  #
-  # Output:
-  #
-  # ```text
-  # olleh
-  # dlrow
-  # ```
-  def each_line(*args, **options) : Nil
+  def each_line(*args, **options, &block : String ->) : Nil
     while line = gets(*args, **options)
       yield line
     end
@@ -1168,11 +1164,6 @@ abstract class IO
     def next
       @io.gets(*@args, **@nargs) || stop
     end
-
-    def rewind
-      @io.rewind
-      self
-    end
   end
 
   private struct CharIterator(I)
@@ -1184,11 +1175,6 @@ abstract class IO
     def next
       @io.read_char || stop
     end
-
-    def rewind
-      @io.rewind
-      self
-    end
   end
 
   private struct ByteIterator(I)
@@ -1199,11 +1185,6 @@ abstract class IO
 
     def next
       @io.read_byte || stop
-    end
-
-    def rewind
-      @io.rewind
-      self
     end
   end
 end

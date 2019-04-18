@@ -142,7 +142,7 @@ class Process
   # How to redirect the standard input, output and error IO of a process.
   enum Redirect
     # Pipe the IO so the parent process can read (or write) to the process IO
-    # throught `#input`, `#output` or `#error`.
+    # through `#input`, `#output` or `#error`.
     Pipe
 
     # Discards the IO.
@@ -430,8 +430,8 @@ class Process
   end
 
   ORIGINAL_STDIN  = IO::FileDescriptor.new(0, blocking: true)
-  ORIGINAL_STDOUT = IO::FileDescriptor.new(1, blocking: true).tap { |f| f.flush_on_newline = true }
-  ORIGINAL_STDERR = IO::FileDescriptor.new(2, blocking: true).tap { |f| f.flush_on_newline = true }
+  ORIGINAL_STDOUT = IO::FileDescriptor.new(1, blocking: true)
+  ORIGINAL_STDERR = IO::FileDescriptor.new(2, blocking: true)
 
   # :nodoc:
   protected def self.exec_internal(command, args, env, clear_env, input, output, error, chdir) : NoReturn
@@ -457,7 +457,17 @@ class Process
     argv << Pointer(UInt8).null
 
     LibC.execvp(command, argv)
-    raise Errno.new("execvp")
+
+    error_message = String.build do |io|
+      io << "execvp ("
+      command.inspect_unquoted(io)
+      args.try &.each do |arg|
+        io << ' '
+        arg.inspect(io)
+      end
+      io << ")"
+    end
+    raise Errno.new(error_message)
   end
 
   private def self.reopen_io(src_io : IO::FileDescriptor, dst_io : IO::FileDescriptor)

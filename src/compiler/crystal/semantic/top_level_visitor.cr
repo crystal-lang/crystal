@@ -680,10 +680,10 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
           if counter == 0 # In case the member is set to 0
             1
           else
-            counter * 2
+            counter &* 2
           end
         else
-          counter + 1
+          counter &+ 1
         end
       {new_counter, all_value}
     else
@@ -1049,6 +1049,12 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
         node.returns_twice = true
       when @program.raises_annotation
         node.raises = true
+      when @program.deprecated_annotation
+        # Check whether a DeprecatedAnnotation can be built.
+        # There is no need to store it, but enforcing
+        # arguments makes sense here.
+        DeprecatedAnnotation.from(ann)
+        yield annotation_type, ann
       else
         yield annotation_type, ann
       end

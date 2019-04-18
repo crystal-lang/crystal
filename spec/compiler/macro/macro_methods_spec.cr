@@ -169,6 +169,10 @@ module Crystal
         assert_macro "", "{{1 <=> -1}}", [] of ASTNode, "1"
       end
 
+      it "executes <=> (returns nil)" do
+        assert_macro "", "{{0.0/0.0 <=> -1}}", [] of ASTNode, "nil"
+      end
+
       it "executes +" do
         assert_macro "", "{{1 + 2}}", [] of ASTNode, "3"
       end
@@ -187,6 +191,10 @@ module Crystal
 
       it "executes /" do
         assert_macro "", "{{5 / 3}}", [] of ASTNode, "1"
+      end
+
+      it "executes //" do
+        assert_macro "", "{{5 // 3}}", [] of ASTNode, "1"
       end
 
       it "executes %" do
@@ -714,6 +722,10 @@ module Crystal
     describe "hash methods" do
       it "executes size" do
         assert_macro "", %({{{:a => 1, :b => 3}.size}}), [] of ASTNode, "2"
+      end
+
+      it "executes sort_by" do
+        assert_macro "", %({{["abc", "a", "ab"].sort_by { |x| x.size }}}), [] of ASTNode, %(["a", "ab", "abc"])
       end
 
       it "executes empty?" do
@@ -1371,6 +1383,16 @@ module Crystal
     describe "unary expression methods" do
       it "executes exp" do
         assert_macro "x", %({{x.exp}}), [Not.new("some_call".call)] of ASTNode, "some_call"
+      end
+    end
+
+    describe "offsetof methods" do
+      it "executes type" do
+        assert_macro "x", %({{x.type}}), [OffsetOf.new("SomeType".path, "@some_ivar".instance_var)] of ASTNode, "SomeType"
+      end
+
+      it "executes instance_var" do
+        assert_macro "x", %({{x.instance_var}}), [OffsetOf.new("SomeType".path, "@some_ivar".instance_var)] of ASTNode, "@some_ivar"
       end
     end
 

@@ -787,6 +787,7 @@ module Crystal
       if found_comment || @token.type == :NEWLINE
         # add one level of indentation for contents if a newline is present
         offset = @indent + 2
+        start_column = @indent + 2
 
         if elements.empty?
           skip_space_or_newline
@@ -802,7 +803,8 @@ module Crystal
         found_first_newline = true
       else
         # indent contents at the same column as starting token if no newline
-        offset = @column
+        offset = @indent
+        start_column = @column
       end
 
       elements.each_with_index do |element, i|
@@ -819,17 +821,20 @@ module Crystal
           write_space_at_end = true
         end
 
+        start_line = @line
         if next_needs_indent
           write_indent(offset, element)
         else
           indent(offset, element)
         end
+        element_lines = @line - start_line
+        next_offset = element_lines == 0 ? start_column : offset
 
         has_heredoc_in_line = !@lexer.heredocs.empty?
 
         last = last?(i, elements)
 
-        found_comment = skip_space(offset, write_comma: (last || has_heredoc_in_line) && has_newlines)
+        found_comment = skip_space(next_offset, write_comma: (last || has_heredoc_in_line) && has_newlines)
 
         if @token.type == :","
           if !found_comment && (!last || has_heredoc_in_line)
@@ -839,7 +844,7 @@ module Crystal
 
           slash_is_regex!
           next_token
-          found_comment = skip_space(offset, write_comma: last && has_newlines)
+          found_comment = skip_space(element_lines == 0 ? start_column : offset, write_comma: last && has_newlines)
           if @token.type == :NEWLINE
             if last && !found_comment && !wrote_comma
               write ","
@@ -849,12 +854,14 @@ module Crystal
             skip_space_or_newline
             next_needs_indent = true
             has_newlines = true
+            offset = next_offset if element_lines == 0
           else
             if !last && !found_comment
               write " "
               next_needs_indent = false
             elsif found_comment
               next_needs_indent = true
+              offset = next_offset if element_lines == 0
             end
           end
         end
@@ -1410,8 +1417,11 @@ module Crystal
       @lexer.wants_def_or_macro_name = false
 
       write node.name
-      next_token_skip_space
-      next_token_skip_space if @token.type == :"="
+
+      indent do
+        next_token_skip_space
+        next_token_skip_space if @token.type == :"="
+      end
 
       to_skip = format_def_args node
 
@@ -2050,10 +2060,18 @@ module Crystal
       end
 
       # This is the case of an enum member
-      if node.name[0].ascii_uppercase? && @token.type == :","
-        write ", "
-        next_token_skip_space
-        @exp_needs_indent = @token.type == :NEWLINE
+      # TODO: remove comma support after 0.28.0
+      if @token.type == :";" || (node.name[0].ascii_uppercase? && @token.type == :",")
+        next_token
+        @lexer.skip_space
+        if @token.type == :COMMENT
+          write_comment
+          @exp_needs_indent = true
+        else
+          write ";" if @token.type == :CONST
+          write " "
+          @exp_needs_indent = @token.type == :NEWLINE
+        end
       end
 
       false
@@ -2173,7 +2191,26 @@ module Crystal
         return false
       end
 
+      special_call =
+        case node.name
+        when "as", "as?", "is_a?", "nil?", "responds_to?"
+          true
+        else
+          false
+        end
+
       obj = node.obj
+
+      # Consider the case of `&.as(...)` and similar
+      if obj.is_a?(Nop)
+        obj = nil
+      end
+
+      # Consider the case of `as T`, that is, casting `self` without an explicit `self`
+      if special_call && obj.is_a?(Var) && obj.name == "self" && !@token.keyword?(:self)
+        obj = nil
+      end
+
       column = @column
 
       # Special case: $1, $2, ...
@@ -2412,11 +2449,18 @@ module Crystal
       has_newlines = false
       found_comment = false
 
+      # For special calls we want to format `.as (Int32)` into `.as(Int32)`
+      # so we remove the space between "as" and "(".
+      skip_space if special_call
+
       if @token.type == :"("
-        check :"("
         slash_is_regex!
         next_token
-        if obj && !has_args && !node.block_arg && !node.block
+
+        # If it's something like `foo.bar()` we rewrite it as `foo.bar`
+        # (parentheses are not needed). Also applies for special calls
+        # like `nil?` when there might not be a receiver.
+        if (obj || special_call) && !has_args && !node.block_arg && !node.block
           skip_space_or_newline
           check :")"
           next_token
@@ -2948,72 +2992,14 @@ module Crystal
 
     def visit(node : IsA)
       if node.nil_check?
-        obj = node.obj
-
-        # Consider `nil?`
-        unless @token.keyword?(:nil?) && obj.is_a?(Var) && obj.name == "self"
-          accept obj
-          skip_space_or_newline
-          write_token :"."
-        end
-
-        write_keyword :"nil?"
-        if @token.type == :"("
-          write_token :"("
-          skip_space_or_newline
-          write_token :")"
-        end
-        false
+        visit Call.new(node.obj, "nil?")
       else
-        format_special_call(node, :is_a?) do
-          accept node.const
-          skip_space
-        end
+        visit Call.new(node.obj, "is_a?", node.const)
       end
     end
 
     def visit(node : RespondsTo)
-      format_special_call(node, :responds_to?) do
-        check :SYMBOL
-        write @token.raw
-        next_token
-      end
-    end
-
-    def format_special_call(node, keyword)
-      obj = node.obj
-
-      # Consider `special T`
-      unless @token.keyword?(keyword) && obj.is_a?(Var) && obj.name == "self"
-        unless obj.is_a?(Nop)
-          accept obj
-          skip_space_or_newline
-          write_token :"."
-        end
-
-        skip_space_or_newline
-      end
-
-      write_keyword keyword
-      skip_space_or_newline
-
-      has_parentheses = false
-      if @token.type == :"("
-        write "("
-        next_token_skip_space_or_newline
-        has_parentheses = true
-      else
-        write " "
-      end
-
-      yield
-
-      if has_parentheses
-        skip_space_or_newline
-        write_token :")"
-      end
-
-      false
+      visit Call.new(node.obj, "responds_to?", SymbolLiteral.new(node.name))
     end
 
     def visit(node : Or)
@@ -3610,79 +3596,31 @@ module Crystal
     end
 
     def visit(node : Cast)
-      format_cast node, :as
+      visit Call.new(node.obj, "as", node.to)
     end
 
     def visit(node : NilableCast)
-      format_cast node, :as?
-    end
-
-    def format_cast(node, keyword)
-      obj = node.obj
-
-      # This is for the case `&.as(...)`
-      if obj.is_a?(Nop)
-        write_keyword keyword
-        write_token :"("
-        accept node.to
-        write_token :")"
-        return false
-      end
-
-      # Consider `as T`
-      unless @token.keyword?(keyword) && obj.is_a?(Var) && obj.name == "self"
-        accept obj
-        skip_space
-        write_token :"."
-        skip_space_or_newline
-      end
-
-      write_keyword keyword
-      skip_space
-      if @token.type == :"("
-        write_token :"("
-        skip_space_or_newline
-        accept node.to
-        skip_space_or_newline
-        write_token :")"
-      else
-        skip_space
-        write " "
-        accept node.to
-      end
-      false
+      visit Call.new(node.obj, "as?", node.to)
     end
 
     def visit(node : TypeOf)
-      format_unary(:typeof) { format_args node.expressions, true }
+      visit Call.new(nil, "typeof", node.expressions)
     end
 
     def visit(node : SizeOf)
-      format_unary node, :sizeof
+      visit Call.new(nil, "sizeof", node.exp)
     end
 
     def visit(node : InstanceSizeOf)
-      format_unary node, :instance_sizeof
+      visit Call.new(nil, "instance_sizeof", node.exp)
+    end
+
+    def visit(node : OffsetOf)
+      visit Call.new(nil, "offsetof", [node.offsetof_type, node.instance_var])
     end
 
     def visit(node : PointerOf)
-      format_unary node, :pointerof
-    end
-
-    def format_unary(node, keyword)
-      format_unary(keyword) { no_indent node.exp }
-    end
-
-    def format_unary(keyword)
-      write_keyword keyword
-      skip_space_or_newline
-      write_token :"("
-      skip_space_or_newline
-      yield
-      skip_space_or_newline
-      write_token :")"
-
-      false
+      visit Call.new(nil, "pointerof", node.exp)
     end
 
     def visit(node : Underscore)
@@ -4212,7 +4150,7 @@ module Crystal
       raise "BUG: unexpected node: #{node.class} at #{node.location}"
     end
 
-    def to_s(io)
+    def to_s(io : IO) : Nil
       io << @output
     end
 

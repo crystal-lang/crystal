@@ -73,13 +73,13 @@ prepare_system() {
 }
 
 build() {
-  with_build_env 'make std_spec clean'
-  with_build_env 'make crystal std_spec compiler_spec docs'
+  with_build_env 'make std_spec clean threads=1'
+  with_build_env 'make crystal std_spec compiler_spec docs threads=1'
   with_build_env 'find samples -name "*.cr" | xargs -L 1 ./bin/crystal build --no-codegen'
 }
 
 format() {
-  with_build_env 'make clean crystal'
+  with_build_env 'make clean crystal threads=1'
   with_build_env './bin/crystal tool format --check samples spec src'
 }
 
@@ -114,7 +114,7 @@ with_build_env() {
 
   on_linux verify_linux_environment
 
-  export DOCKER_TEST_PREFIX="crystallang/crystal:0.27.0"
+  export DOCKER_TEST_PREFIX="${DOCKER_TEST_PREFIX:=crystallang/crystal:0.27.2}"
 
   case $ARCH in
     x86_64)
@@ -150,7 +150,8 @@ Helper script to prepare and run the testsuite on Travis CI.
 Commands:
   prepare_system          setup any necessaries repositories etc.
   prepare_build           download and extract any dependencies needed for the build
-  build                   run specs, build crystal, run format check, build samples, build the docs
+  build                   run specs, build crystal, build samples, build the docs
+  format                  build crystal, run format check
   with_build_env command  run command in the build environment
   help                    display this
 

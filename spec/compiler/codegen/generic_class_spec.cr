@@ -8,7 +8,7 @@ describe "Code gen: generic class type" do
         end
 
         def x
-          @x + 1
+          @x &+ 1
         end
       end
 
@@ -30,7 +30,7 @@ describe "Code gen: generic class type" do
         end
       end
 
-      Foo(Int32).new.x + 1
+      Foo(Int32).new.x &+ 1
       )).to_i.should eq(2)
   end
 
@@ -150,7 +150,7 @@ describe "Code gen: generic class type" do
       end
 
       baz = Baz.new
-      baz.x + baz.y
+      baz.x &+ baz.y
       )).to_i.should eq(42)
   end
 

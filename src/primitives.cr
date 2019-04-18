@@ -283,13 +283,16 @@ end
         # TODO 0.28.0 replace with @[Primitive(:convert)]
 
         # Returns `self` converted to `{{type}}`.
+        # Raises `OverflowError` in case of overflow.
         @[Primitive(:cast)]
+        @[Raises]
         def {{name.id}} : {{type}}
         end
 
         # TODO 0.28.0 replace with @[Primitive(:unchecked_convert)]
 
         # Returns `self` converted to `{{type}}`.
+        # In case of overflow a wrapping is performed.
         @[Primitive(:cast)]
         def {{name.id}}! : {{type}}
         end
@@ -333,7 +336,9 @@ end
         {% for op, desc in binaries %}
           {% if op != "/" %}
             # Returns the result of {{desc.id}} `self` and *other*.
+            # Raises `OverflowError` in case of overflow.
             @[Primitive(:binary)]
+            @[Raises]
             def {{op.id}}(other : {{int2.id}}) : self
             end
 

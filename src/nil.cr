@@ -73,22 +73,22 @@ struct Nil
   end
 
   # Returns an empty string.
-  def to_s
+  def to_s : String
     ""
   end
 
   # Doesn't write anything to the given `IO`.
-  def to_s(io : IO)
+  def to_s(io : IO) : Nil
     # Nothing to do
   end
 
   # Returns `"nil"`.
-  def inspect
+  def inspect : String
     "nil"
   end
 
   # Writes `"nil"` to the given `IO`.
-  def inspect(io)
+  def inspect(io : IO) : Nil
     io << "nil"
   end
 
@@ -99,12 +99,11 @@ struct Nil
     self
   end
 
-  # Raises an exception.
-  # Reports the file and line at which the `not_nil!` assertion is called.
+  # Raises `NilAssertionError`.
   #
   # See also: `Object#not_nil!`.
-  def not_nil!(caller_file = __FILE__, caller_line = __LINE__)
-    raise "Nil assertion failed at #{caller_file}:#{caller_line}"
+  def not_nil!
+    raise NilAssertionError.new
   end
 
   def clone

@@ -152,7 +152,7 @@ class Logger
   # severity. *progname* overrides a default progname set in this logger.
   def log(severity, message, progname = nil)
     return if severity < level || !@io
-    write(severity, Time.now, progname || @progname, message)
+    write(severity, Time.local, progname || @progname, message)
   end
 
   # Logs the message as returned from the given block if *severity*
@@ -160,7 +160,7 @@ class Logger
   # if *severity* is lower. *progname* overrides a default progname set in this logger.
   def log(severity, progname = nil)
     return if severity < level || !@io
-    write(severity, Time.now, progname || @progname, yield)
+    write(severity, Time.local, progname || @progname, yield)
   end
 
   private def write(severity, datetime, progname, message)

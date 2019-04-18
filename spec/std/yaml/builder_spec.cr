@@ -6,8 +6,7 @@ private def assert_built(expected, expect_document_end = false)
   # Earlier libyaml releases still write the document end marker and this is hard to fix on Crystal's side.
   # So we just ignore it and adopt the specs accordingly to coincide with the used libyaml version.
   if expect_document_end
-    major, minor, _ = YAML.libyaml_version
-    if major == 0 && minor < 2
+    if YAML.libyaml_version < SemanticVersion.new(0, 2, 1)
       expected += "...\n"
     end
   end

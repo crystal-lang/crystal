@@ -110,7 +110,7 @@ describe "Codegen: class var" do
         @@var : Int32
         @@var = begin
           a = class_method
-          a + 3
+          a &+ 3
         end
 
         def self.var
@@ -118,7 +118,7 @@ describe "Codegen: class var" do
         end
 
         def self.class_method
-          1 + 2
+          1 &+ 2
         end
       end
 
@@ -130,7 +130,7 @@ describe "Codegen: class var" do
     run(%(
       class Foo
         @@var2 : Int32
-        @@var2 = @@var + 1
+        @@var2 = @@var &+ 1
 
         @@var = 41
 
@@ -199,7 +199,7 @@ describe "Codegen: class var" do
       def foo
         a = 1
         b = 2
-        a + b
+        a &+ b
       end
 
       CONST = foo()
@@ -256,7 +256,7 @@ describe "Codegen: class var" do
         @@foo = begin
           a = 1
           b = 2
-          a + b
+          a &+ b
         end
 
         def self.foo
@@ -274,7 +274,7 @@ describe "Codegen: class var" do
         @@foo : Int32 = begin
           a = 1
           b = 2
-          a + b
+          a &+ b
         end
 
         def self.foo
@@ -548,7 +548,7 @@ describe "Codegen: class var" do
       c = f2.bar
       f2.bar = 20
       d = f1.bar
-      a + b + c + d
+      a &+ b &+ c &+ d
       )).to_i.should eq(1 + 1 + 10 + 20)
   end
 end

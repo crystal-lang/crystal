@@ -49,7 +49,7 @@ abstract class Channel(T)
     receive_impl { return nil }
   end
 
-  def inspect(io)
+  def inspect(io : IO) : Nil
     to_s(io)
   end
 

@@ -1075,7 +1075,7 @@ describe "Block inference" do
 
       bar
       ),
-      "can't break from captured block"
+      "can't break from captured block, try using `next`."
   end
 
   it "errors if doing next in proc literal" do
@@ -1085,7 +1085,7 @@ describe "Block inference" do
       }
       foo.call
       ),
-      "Invalid next"
+      "invalid next"
   end
 
   it "does next from captured block" do

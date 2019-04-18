@@ -6,12 +6,13 @@ require "../program"
 require "./llvm_builder_helper"
 
 module Crystal
-  MAIN_NAME          = "__crystal_main"
-  RAISE_NAME         = "__crystal_raise"
-  MALLOC_NAME        = "__crystal_malloc64"
-  MALLOC_ATOMIC_NAME = "__crystal_malloc_atomic64"
-  REALLOC_NAME       = "__crystal_realloc64"
-  GET_EXCEPTION_NAME = "__crystal_get_exception"
+  MAIN_NAME           = "__crystal_main"
+  RAISE_NAME          = "__crystal_raise"
+  RAISE_OVERFLOW_NAME = "__crystal_raise_overflow"
+  MALLOC_NAME         = "__crystal_malloc64"
+  MALLOC_ATOMIC_NAME  = "__crystal_malloc_atomic64"
+  REALLOC_NAME        = "__crystal_realloc64"
+  GET_EXCEPTION_NAME  = "__crystal_get_exception"
 
   class Program
     def run(code, filename = nil, debug = Debug::Default)
@@ -81,6 +82,14 @@ module Crystal
     def instance_size_of(type)
       llvm_typer.size_of(llvm_typer.llvm_struct_type(type))
     end
+
+    def offset_of(type, element_index)
+      llvm_typer.offset_of(llvm_typer.llvm_type(type), element_index)
+    end
+
+    def instance_offset_of(type, element_index)
+      llvm_typer.offset_of(llvm_typer.llvm_struct_type(type), element_index)
+    end
   end
 
   class CodeGenVisitor < Visitor
@@ -137,10 +146,12 @@ module Crystal
     @cant_pass_closure_to_c_exception_call : Call?
     @realloc_fun : LLVM::Function?
     @c_realloc_fun : LLVM::Function?
+    @raise_overflow_fun : LLVM::Function?
     @main_llvm_context : LLVM::Context
     @main_llvm_typer : LLVMTyper
     @main_module_info : ModuleInfo
     @main_builder : CrystalLLVMBuilder
+    @call_location : Location?
 
     def initialize(@program : Program, @node : ASTNode, single_module = false, @debug = Debug::Default)
       @single_module = !!single_module
@@ -292,7 +303,7 @@ module Crystal
 
       def visit(node : FunDef)
         case node.name
-        when MALLOC_NAME, MALLOC_ATOMIC_NAME, REALLOC_NAME, RAISE_NAME, @codegen.personality_name, GET_EXCEPTION_NAME
+        when MALLOC_NAME, MALLOC_ATOMIC_NAME, REALLOC_NAME, RAISE_NAME, @codegen.personality_name, GET_EXCEPTION_NAME, RAISE_OVERFLOW_NAME
           @codegen.accept node
         end
         false
@@ -374,7 +385,7 @@ module Crystal
           # If the fun is not invoked we codegen it at the end so
           # we don't have issues with constants being used before
           # they are declared.
-          # But, apparenty, llvm requires us to define them so that
+          # But, apparently, llvm requires us to define them so that
           # calls can find them, so we do so.
           codegen_fun node.real_name, node.external, @program, is_exported_fun: false
           @unused_fun_defs << node
@@ -571,9 +582,17 @@ module Crystal
 
     def visit(node : ProcPointer)
       owner = node.call.target_def.owner
+
       if obj = node.obj
         accept obj
-        call_self = @last
+
+        # If obj is a primitive like an integer we need to pass
+        # the variable as is (without loading it)
+        if obj.is_a?(Var) && obj.type.is_a?(PrimitiveType)
+          call_self = context.vars[obj.name].pointer
+        else
+          call_self = @last
+        end
       elsif owner.passed_as_self?
         call_self = llvm_self
       end
@@ -1923,6 +1942,15 @@ module Crystal
         check_main_fun REALLOC_NAME, realloc_fun
       else
         nil
+      end
+    end
+
+    def crystal_raise_overflow_fun
+      @raise_overflow_fun ||= @main_mod.functions[RAISE_OVERFLOW_NAME]?
+      if raise_overflow_fun = @raise_overflow_fun
+        check_main_fun RAISE_OVERFLOW_NAME, raise_overflow_fun
+      else
+        raise "BUG: __crystal_raise_overflow is not defined"
       end
     end
 

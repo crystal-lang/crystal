@@ -17,11 +17,11 @@ struct OAuth::AuthorizationHeader
     @first = false
   end
 
-  def to_s(io : IO)
+  def to_s(io : IO) : Nil
     @str.to_s(io)
   end
 
-  def to_s
+  def to_s : String
     @str.to_s
   end
 end

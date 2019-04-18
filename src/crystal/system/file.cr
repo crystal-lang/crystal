@@ -4,7 +4,7 @@ module Crystal::System::File
   # calls.
   private def self.open_flag(mode)
     if mode.size == 0
-      raise "Invalid access mode #{mode}"
+      raise "No file open mode specified"
     end
 
     m = 0
@@ -19,7 +19,7 @@ module Crystal::System::File
       m = LibC::O_WRONLY
       o = LibC::O_CREAT | LibC::O_APPEND
     else
-      raise "Invalid access mode #{mode}"
+      raise "Invalid file open mode: '#{mode}'"
     end
 
     case mode.size
@@ -32,10 +32,10 @@ module Crystal::System::File
       when 'b'
         # Nothing
       else
-        raise "Invalid access mode #{mode}"
+        raise "Invalid file open mode: '#{mode}'"
       end
     else
-      raise "Invalid access mode #{mode}"
+      raise "Invalid file open mode: '#{mode}'"
     end
 
     oflag = m | o

@@ -11,6 +11,8 @@ require "./file_info"
 # ### Example
 #
 # ```
+# require "zip"
+#
 # File.open("./file.zip") do |file|
 #   Zip::Reader.open(file) do |zip|
 #     zip.each_entry do |entry|

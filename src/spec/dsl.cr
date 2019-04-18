@@ -38,13 +38,21 @@ module Spec
   end
 
   # :nodoc:
-  class AssertionFailed < Exception
+  class SpecError < Exception
     getter file : String
     getter line : Int32
 
     def initialize(message, @file, @line)
       super(message)
     end
+  end
+
+  # :nodoc:
+  class AssertionFailed < SpecError
+  end
+
+  # :nodoc:
+  class NestingSpecError < SpecError
   end
 
   @@aborted = false

@@ -283,22 +283,22 @@ module Enumerable(T)
   #
   # By default, a new array is created and yielded for each consecutive slice of elements.
   # * If *reuse* is given, the array can be reused
-  # * If *reuse* is an `Array`, this array will be reused
-  # * If *reuse* is truthy, the method will create a new array and reuse it.
+  # * If *reuse* is `true`, the method will create a new array and reuse it.
+  # * If *reuse*  is an instance of `Array`, `Deque` or a similar collection type (implementing `#<<`, `#shift` and `#size`) it will be used.
+  # * If *reuse* is falsey, the array will not be reused.
   #
   # This can be used to prevent many memory allocations when each slice of
   # interest is to be used in a read-only fashion.
   def each_cons(count : Int, reuse = false)
-    if reuse
-      unless reuse.is_a?(Array)
-        reuse = Array(T).new(count)
-      end
-      cons = reuse
+    raise ArgumentError.new "Invalid cons size: #{count}" if count <= 0
+    if reuse.nil? || reuse.is_a?(Bool)
+      each_cons_internal(count, reuse, Array(T).new(count)) { |slice| yield slice }
     else
-      cons = Array(T).new(count)
-      reuse = nil
+      each_cons_internal(count, true, reuse) { |slice| yield slice }
     end
+  end
 
+  private def each_cons_internal(count : Int, reuse, cons)
     each do |elem|
       cons << elem
       cons.shift if cons.size > count
@@ -1124,7 +1124,7 @@ module Enumerable(T)
   # `pattern === element` is false.
   #
   # ```
-  # [1, 3, 2, 5, 4, 6].reject(3..5).should eq([1, 2, 6])
+  # [1, 3, 2, 5, 4, 6].reject(3..5) # => [1, 2, 6]
   # ```
   def reject(pattern)
     reject { |e| pattern === e }
@@ -1160,7 +1160,7 @@ module Enumerable(T)
   # `pattern === element`.
   #
   # ```
-  # [1, 3, 2, 5, 4, 6].select(3..5).should eq([3, 5, 4])
+  # [1, 3, 2, 5, 4, 6].select(3..5) # => [3, 5, 4]
   # ```
   def select(pattern)
     self.select { |e| pattern === e }
@@ -1418,5 +1418,224 @@ module Enumerable(T)
       key, value = yield item
       hash[key] = value
     end
+  end
+
+  # Yields elements of `self` and *others* in tandem to the given block.
+  #
+  # Raises an `IndexError` if any of *others* doesn't have as many elements
+  # as `self`. See `zip?` for a version that yields `nil` instead of raising.
+  #
+  # ```
+  # a = [1, 2, 3]
+  # b = ["a", "b", "c"]
+  #
+  # a.zip(b) { |x, y| puts "#{x} -- #{y}" }
+  # ```
+  #
+  # The above produces:
+  #
+  # ```text
+  # 1 -- a
+  # 2 -- b
+  # 3 -- c
+  # ```
+  #
+  # An example with multiple arguments:
+  #
+  # ```
+  # (1..3).zip(4..6, 7..9) do |x, y, z|
+  #   puts "#{x} -- #{y} -- #{z}"
+  # end
+  # ```
+  #
+  # The above produces:
+  #
+  # ```text
+  # 1 -- 4 -- 7
+  # 2 -- 5 -- 8
+  # 3 -- 6 -- 9
+  # ```
+  def zip(*others : Indexable | Iterable | Iterator, &block)
+    Enumerable.zip(self, others) do |elems|
+      yield elems
+    end
+  end
+
+  # Returns an `Array` of tuples populated with the elements of `self` and
+  # *others* traversed in tandem.
+  #
+  # Raises an `IndexError` if any of *others* doesn't have as many elements
+  # as `self`. See `zip?` for a version that yields `nil` instead of raising.
+  #
+  # ```
+  # a = [1, 2, 3]
+  # b = ["a", "b", "c"]
+  #
+  # a.zip(b) # => [{1, "a"}, {2, "b"}, {3, "c"}]
+  # ```
+  #
+  # An example with multiple arguments:
+  #
+  # ```
+  # a = [1, 2, 3]
+  # b = (4..6)
+  # c = 8.downto(3)
+  #
+  # a.zip(b, c) # => [{1, 4, 8}, {2, 5, 7}, {3, 6, 6}]
+  # ```
+  def zip(*others : Indexable | Iterable | Iterator)
+    pairs = Array(typeof(zip(*others) { |e| break e }.not_nil!)).new(size)
+    zip(*others) { |e| pairs << e }
+    pairs
+  end
+
+  # Yields elements of `self` and *others* in tandem to the given block.
+  #
+  # All of the elements in `self` will be yielded: if *others* don't have
+  # that many elements they will be returned as `nil`.
+  #
+  # ```
+  # a = [1, 2, 3]
+  # b = ["a", "b"]
+  #
+  # a.zip?(b) { |x, y| puts "#{x.inspect} -- #{y.inspect}" }
+  # ```
+  #
+  # The above produces:
+  #
+  # ```text
+  # 1 -- "a"
+  # 2 -- "b"
+  # 3 -- nil
+  # ```
+  #
+  # An example with multiple arguments:
+  #
+  # ```
+  # (1..3).zip?(4..5, 7..8) do |x, y, z|
+  #   puts "#{x.inspect} -- #{y.inspect} -- #{z.inspect}"
+  # end
+  # ```
+  #
+  # The above produces:
+  #
+  # ```text
+  # 1 -- 4 -- 7
+  # 2 -- 5 -- 8
+  # 3 -- nil -- nil
+  # ```
+  def zip?(*others : Indexable | Iterable | Iterator)
+    Enumerable.zip?(self, others) do |elems|
+      yield elems
+    end
+  end
+
+  # Returns an `Array` of tuples populated with the elements of `self` and
+  # *others* traversed in tandem.
+  #
+  # All elements in `self` are returned in the Array. If matching elements
+  # in *others* are missing (because they don't have that many elements)
+  # `nil` is returned inside that tuple index.
+  #
+  # ```
+  # a = [1, 2, 3]
+  # b = ["a", "b"]
+  #
+  # a.zip?(b) # => [{1, "a"}, {2, "b"}, {3, nil}]
+  # ```
+  #
+  # An example with multiple arguments:
+  #
+  # ```
+  # a = [1, 2, 3]
+  # b = (4..5)
+  # c = 8.downto(7)
+  #
+  # a.zip?(b, c) # => [{1, 4, 8}, {2, 5, 7}, {3, nil, nil}]
+  # ```
+  def zip?(*others : Indexable | Iterable | Iterator)
+    pairs = Array(typeof(zip?(*others) { |e| break e }.not_nil!)).new(size)
+    zip?(*others) { |e| pairs << e }
+    pairs
+  end
+
+  # :nodoc:
+  def self.zip(main, others : U, &block) forall U
+    {% begin %}
+      # Try to see if we need to create iterators (or treat as iterators)
+      # for every element in `others`.
+      {% for type, type_index in U %}
+        {% if type < Indexable %}
+          # Nothing to do, but needed because many Indexables are Iterable/Iterator
+        {% elsif type < Iterable %}
+          iter{{type_index}} = others[{{type_index}}].each
+        {% elsif type < Iterator %}
+          iter{{type_index}} = others[{{type_index}}]
+        {% end %}
+      {% end %}
+
+      main.each_with_index do |elem, i|
+        {% for type, type_index in U %}
+          {% if type < Indexable %}
+            # Index into those we can
+            other_elem{{type_index}} = others[{{type_index}}][i]
+          {% else %}
+            # Otherwise advance the iterator
+            other_elem{{type_index}} = iter{{type_index}}.next
+            if other_elem{{type_index}}.is_a?(Iterator::Stop)
+              raise IndexError.new
+            end
+          {% end %}
+        {% end %}
+
+        # Yield all elements as a tuple
+        yield({
+          elem,
+          {% for _t, type_index in U %}
+            other_elem{{type_index}},
+          {% end %}
+        })
+      end
+    {% end %}
+  end
+
+  # :nodoc:
+  def self.zip?(main, others : U, &block) forall U
+    {% begin %}
+      # Try to see if we need to create iterators (or treat as iterators)
+      # for every element in `others`.
+      {% for type, type_index in U %}
+        {% if type < Indexable %}
+          # Nothing to do, but needed because many Indexables are Iterable/Iterator
+        {% elsif type < Iterable %}
+          iter{{type_index}} = others[{{type_index}}].each
+        {% elsif type < Iterator %}
+          iter{{type_index}} = others[{{type_index}}]
+        {% end %}
+      {% end %}
+
+      main.each_with_index do |elem, i|
+        {% for type, type_index in U %}
+          {% if type < Indexable %}
+            # Index into those we can
+            other_elem{{type_index}} = others[{{type_index}}][i]?
+          {% else %}
+            # Otherwise advance the iterator
+            other_elem{{type_index}} = iter{{type_index}}.next
+            if other_elem{{type_index}}.is_a?(Iterator::Stop)
+              other_elem{{type_index}} = nil
+            end
+          {% end %}
+        {% end %}
+
+        # Yield all elements as a tuple
+        yield({
+          elem,
+          {% for _t, type_index in U %}
+            other_elem{{type_index}},
+          {% end %}
+        })
+      end
+    {% end %}
   end
 end

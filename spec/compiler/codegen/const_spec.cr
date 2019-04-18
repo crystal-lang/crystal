@@ -288,7 +288,7 @@ describe "Codegen: const" do
       def foo
         a = 1
         b = 2
-        a + b
+        a &+ b
       end
 
       x
@@ -404,10 +404,17 @@ describe "Codegen: const" do
 
   it "inlines const with math" do
     mod = codegen(%(
-      CONST = (1 + 2) * 3
-      ))
+      struct Int32
+        def //(other)
+          self
+        end
+      end
 
+      CONST = (((1 + 2) * 3 &+ 1 &* 3 &- 2) // 2) + 42000
+      CONST
+      ))
     mod.to_s.should_not contain("CONST")
+    mod.to_s.should contain("42005")
   end
 
   it "inlines const referencing another const" do

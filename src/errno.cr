@@ -3,12 +3,7 @@ require "c/string"
 
 lib LibC
   {% if flag?(:linux) %}
-    {% if flag?(:musl) %}
-      fun __errno_location : Int*
-    {% else %}
-      @[ThreadLocal]
-      $errno : Int
-    {% end %}
+    fun __errno_location : Int*
   {% elsif flag?(:darwin) || flag?(:freebsd) %}
     fun __error : Int*
   {% elsif flag?(:openbsd) %}
@@ -227,11 +222,7 @@ class Errno < Exception
   # Returns the value of libc's errno.
   def self.value : LibC::Int
     {% if flag?(:linux) %}
-      {% if flag?(:musl) %}
-        LibC.__errno_location.value
-      {% else %}
-        LibC.errno
-      {% end %}
+      LibC.__errno_location.value
     {% elsif flag?(:darwin) || flag?(:freebsd) || flag?(:openbsd) %}
       LibC.__error.value
     {% elsif flag?(:win32) %}
@@ -244,11 +235,7 @@ class Errno < Exception
   # Sets the value of libc's errno.
   def self.value=(value)
     {% if flag?(:linux) %}
-      {% if flag?(:musl) %}
-        LibC.__errno_location.value = value
-      {% else %}
-        LibC.errno = value
-      {% end %}
+      LibC.__errno_location.value = value
     {% elsif flag?(:darwin) || flag?(:freebsd) || flag?(:openbsd) %}
       LibC.__error.value = value
     {% elsif flag?(:win32) %}

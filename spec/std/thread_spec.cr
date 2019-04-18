@@ -21,6 +21,10 @@ describe Thread do
     thread.join
     current.should be(thread)
     current.should_not be(Thread.current)
+  ensure
+    # avoids a "GC Warning: Finalization cycle" caused by *current*
+    # referencing the thread itself, preventing the finalizer to run:
+    current = nil
   end
 
   it "yields the processor" do

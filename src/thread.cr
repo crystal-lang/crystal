@@ -12,7 +12,7 @@ class Thread
 
   @th : LibC::PthreadT
   @exception : Exception?
-  @detached = false
+  @detached = Atomic(UInt8).new(0)
   @main_fiber : Fiber?
 
   # :nodoc:
@@ -20,6 +20,10 @@ class Thread
 
   # :nodoc:
   property previous : Thread?
+
+  def self.unsafe_each
+    @@threads.unsafe_each { |thread| yield thread }
+  end
 
   # Starts a new system thread.
   def initialize(&@func : ->)
@@ -42,19 +46,20 @@ class Thread
   def initialize
     @func = ->{}
     @th = LibC.pthread_self
-    @main_fiber = Fiber.new
+    @main_fiber = Fiber.new(stack_address, self)
 
     @@threads.push(self)
   end
 
-  def finalize
-    GC.pthread_detach(@th) unless @detached
+  private def detach
+    if @detached.compare_and_set(0, 1).last
+      yield
+    end
   end
 
   # Suspends the current thread until this thread terminates.
   def join
-    GC.pthread_join(@th)
-    @detached = true
+    detach { GC.pthread_join(@th) }
 
     if exception = @exception
       raise exception
@@ -124,7 +129,7 @@ class Thread
 
   protected def start
     Thread.current = self
-    @main_fiber = fiber = Fiber.new
+    @main_fiber = fiber = Fiber.new(stack_address, self)
 
     begin
       @func.call
@@ -133,6 +138,54 @@ class Thread
     ensure
       @@threads.delete(self)
       Fiber.inactive(fiber)
+      detach { GC.pthread_detach(@th) }
     end
+  end
+
+  private def stack_address : Void*
+    address = Pointer(Void).null
+
+    {% if flag?(:darwin) %}
+      # FIXME: pthread_get_stacksize_np returns bogus value on macOS X 10.9.0:
+      address = LibC.pthread_get_stackaddr_np(@th) - LibC.pthread_get_stacksize_np(@th)
+
+    {% elsif flag?(:freebsd) %}
+      ret = LibC.pthread_attr_init(out attr)
+      unless ret == 0
+        LibC.pthread_attr_destroy(pointerof(attr))
+        raise Errno.new("pthread_attr_init", ret)
+      end
+
+      if LibC.pthread_attr_get_np(@th, pointerof(attr)) == 0
+        LibC.pthread_attr_getstack(pointerof(attr), pointerof(address), out _)
+      end
+      ret = LibC.pthread_attr_destroy(pointerof(attr))
+      raise Errno.new("pthread_attr_destroy", ret) unless ret == 0
+
+    {% elsif flag?(:linux) %}
+      if LibC.pthread_getattr_np(@th, out attr) == 0
+        LibC.pthread_attr_getstack(pointerof(attr), pointerof(address), out _)
+      end
+      ret = LibC.pthread_attr_destroy(pointerof(attr))
+      raise Errno.new("pthread_attr_destroy", ret) unless ret == 0
+
+    {% elsif flag?(:openbsd) %}
+      ret = LibC.pthread_stackseg_np(@th, out stack)
+      raise Errno.new("pthread_stackseg_np", ret) unless ret == 0
+
+      address =
+        if LibC.pthread_main_np == 1
+          stack.ss_sp - stack.ss_size + sysconf(LibC::SC_PAGESIZE)
+        else
+          stack.ss_sp - stack.ss_size
+        end
+    {% end %}
+
+    address
+  end
+
+  # :nodoc:
+  def to_unsafe
+    @th
   end
 end

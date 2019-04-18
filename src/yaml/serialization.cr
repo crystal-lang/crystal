@@ -48,6 +48,8 @@ module YAML
   # To change how individual instance variables are parsed and serialized, the annotation `YAML::Field`
   # can be placed on the instance variable. Annotating property, getter and setter macros is also allowed.
   # ```
+  # require "yaml"
+  #
   # class A
   #   include YAML::Serializable
   #
@@ -65,6 +67,8 @@ module YAML
   #
   # Deserialization also respects default values of variables:
   # ```
+  # require "yaml"
+  #
   # struct A
   #   include YAML::Serializable
   #   @a : Int32
@@ -83,6 +87,8 @@ module YAML
   # document will be stored in a `Hash(String, YAML::Any)`. On serialization, any keys inside yaml_unmapped
   # will be serialized appended to the current yaml object.
   # ```
+  # require "yaml"
+  #
   # struct A
   #   include YAML::Serializable
   #   include YAML::Serializable::Unmapped
@@ -100,6 +106,8 @@ module YAML
   # * **emit_nulls**: if `true`, emits a `null` value for all nilable properties (by default nulls are not emitted)
   #
   # ```
+  # require "yaml"
+  #
   # @[YAML::Serializable::Options(emit_nulls: true)]
   # class A
   #   include YAML::Serializable

@@ -422,7 +422,9 @@ module Crystal
       when "<="
         bool_bin_op(method, args) { |me, other| me <= other }
       when "<=>"
-        num_bin_op(method, args) { |me, other| me <=> other }
+        num_bin_op(method, args) do |me, other|
+          (me <=> other) || (return NilLiteral.new)
+        end
       when "+"
         if args.empty?
           self
@@ -444,6 +446,8 @@ module Crystal
         num_bin_op(method, args) { |me, other| me * other }
       when "/"
         num_bin_op(method, args) { |me, other| me / other }
+      when "//"
+        num_bin_op(method, args) { |me, other| me // other }
       when "**"
         num_bin_op(method, args) { |me, other| me ** other }
       when "%"
@@ -788,7 +792,7 @@ module Crystal
           self
         end
       else
-        value = intepret_array_or_tuple_method(self, ArrayLiteral, method, args, block, interpreter)
+        value = interpret_array_or_tuple_method(self, ArrayLiteral, method, args, block, interpreter)
         value || super
       end
     end
@@ -1000,7 +1004,7 @@ module Crystal
 
   class TupleLiteral
     def interpret(method, args, block, interpreter)
-      value = intepret_array_or_tuple_method(self, TupleLiteral, method, args, block, interpreter)
+      value = interpret_array_or_tuple_method(self, TupleLiteral, method, args, block, interpreter)
       value || super
     end
   end
@@ -1109,6 +1113,12 @@ module Crystal
       when "annotation"
         fetch_annotation(self, method, args) do |type|
           self.var.annotation(type)
+        end
+      when "annotations"
+        fetch_annotation(self, method, args) do |type|
+          annotations = self.var.annotations(type)
+          return ArrayLiteral.new if annotations.nil?
+          ArrayLiteral.map(annotations, &.itself)
         end
       else
         super
@@ -1295,6 +1305,12 @@ module Crystal
         fetch_annotation(self, method, args) do |type|
           self.annotation(type)
         end
+      when "annotations"
+        fetch_annotation(self, method, args) do |type|
+          annotations = self.annotations(type)
+          return ArrayLiteral.new if annotations.nil?
+          ArrayLiteral.map(annotations, &.itself)
+        end
       else
         super
       end
@@ -1333,6 +1349,19 @@ module Crystal
       case method
       when "exp"
         interpret_argless_method(method, args) { @exp }
+      else
+        super
+      end
+    end
+  end
+
+  class OffsetOf
+    def interpret(method, args, block, interpreter)
+      case method
+      when "type"
+        interpret_argless_method(method, args) { @offsetof_type }
+      when "instance_var"
+        interpret_argless_method(method, args) { @instance_var }
       else
         super
       end
@@ -1499,6 +1528,12 @@ module Crystal
       when "annotation"
         fetch_annotation(self, method, args) do |type|
           self.type.annotation(type)
+        end
+      when "annotations"
+        fetch_annotation(self, method, args) do |type|
+          annotations = self.type.annotations(type)
+          return ArrayLiteral.new if annotations.nil?
+          ArrayLiteral.map(annotations, &.itself)
         end
       when "size"
         interpret_argless_method(method, args) do
@@ -2043,7 +2078,7 @@ module Crystal
   end
 end
 
-private def intepret_array_or_tuple_method(object, klass, method, args, block, interpreter)
+private def interpret_array_or_tuple_method(object, klass, method, args, block, interpreter)
   case method
   when "any?"
     object.interpret_argless_method(method, args) do
@@ -2160,6 +2195,12 @@ private def intepret_array_or_tuple_method(object, klass, method, args, block, i
     klass.new(object.elements.shuffle)
   when "sort"
     klass.new(object.elements.sort { |x, y| x.interpret_compare(y) })
+  when "sort_by"
+    object.interpret_argless_method(method, args) do
+      raise "sort_by expects a block" unless block
+
+      sort_by(object, klass, block, interpreter)
+    end
   when "uniq"
     klass.new(object.elements.uniq)
   when "[]"
@@ -2305,4 +2346,17 @@ private def fetch_annotation(node, method, args)
     value = yield type
     value || Crystal::NilLiteral.new
   end
+end
+
+private def sort_by(object, klass, block, interpreter)
+  block_arg = block.args.first?
+
+  klass.new(object.elements.sort { |x, y|
+    block_arg.try { |arg| interpreter.define_var(arg.name, x) }
+    x_result = interpreter.accept(block.body)
+    block_arg.try { |arg| interpreter.define_var(arg.name, y) }
+    y_result = interpreter.accept(block.body)
+
+    x_result.interpret_compare(y_result)
+  })
 end

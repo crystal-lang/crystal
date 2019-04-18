@@ -17,7 +17,7 @@ class JSON::Token
     @raw_value = ""
   end
 
-  def to_s(io)
+  def to_s(io : IO) : Nil
     case @type
     when :INT
       @int_value.to_s(io)

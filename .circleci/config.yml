@@ -45,7 +45,20 @@ jobs:
     environment:
       <<: *env
       TRAVIS_OS_NAME: osx
-    steps: *ci_steps
+    steps:
+      - restore_cache:
+          keys:
+            - brew-cache-v1
+      - checkout
+      - run: bin/ci prepare_system
+      - run: echo 'export CURRENT_TAG="$CIRCLE_TAG"' >> $BASH_ENV
+      - run: bin/ci prepare_build
+      - run: bin/ci build
+      - save_cache:
+          key: brew-cache-v1
+          paths:
+            - /usr/local/Homebrew
+            - ~/Library/Caches/Homebrew/downloads
 
   check_format:
     machine: true
@@ -83,7 +96,7 @@ jobs:
       - run: |
           git clone https://github.com/crystal-lang/distribution-scripts.git ~/distribution-scripts
           cd ~/distribution-scripts
-          git checkout a6a7a322df05fd57e8f1b1b9020045dd13e679c0
+          git checkout ab683792f34c60159f0e697adf792ff5b0fcbf91
       # persist relevant information for build process
       - run: |
           cd ~/distribution-scripts
@@ -94,7 +107,7 @@ jobs:
           echo "export CRYSTAL_SHA1=$CIRCLE_SHA1" >> build.env
 
           # Which previous version use
-          export PREVIOUS_CRYSTAL_BASE_URL="https://github.com/crystal-lang/crystal/releases/download/0.27.0/crystal-0.27.0-1"
+          export PREVIOUS_CRYSTAL_BASE_URL="https://github.com/crystal-lang/crystal/releases/download/0.27.2/crystal-0.27.2-1"
           echo "export PREVIOUS_CRYSTAL_RELEASE_LINUX64_TARGZ=${PREVIOUS_CRYSTAL_BASE_URL}-linux-x86_64.tar.gz" >> build.env
           echo "export PREVIOUS_CRYSTAL_RELEASE_LINUX32_TARGZ=${PREVIOUS_CRYSTAL_BASE_URL}-linux-i686.tar.gz" >> build.env
           echo "export PREVIOUS_CRYSTAL_RELEASE_DARWIN_TARGZ=${PREVIOUS_CRYSTAL_BASE_URL}-darwin-x86_64.tar.gz" >> build.env
@@ -213,6 +226,9 @@ jobs:
       xcode: "9.0"
     shell: /bin/bash --login -eo pipefail
     steps:
+      - restore_cache:
+          keys:
+            - brew-cache-v1
       - run:
           name: Setup environment
           command: |
@@ -294,14 +310,43 @@ jobs:
           path: /tmp/workspace/build
           destination: dist_packages
 
+  test_dist_linux_on_docker:
+    machine: true
+    environment:
+      <<: *env
+      TRAVIS_OS_NAME: linux
+      ARCH: x86_64
+      ARCH_CMD: linux64
+    steps:
+      - attach_workspace:
+          at: /tmp/workspace
+      - run: |
+          cd /tmp/workspace/distribution-scripts
+          source ./build.env
+          gunzip -c /tmp/workspace/build/docker-${CRYSTAL_VERSION}.tar.gz | docker image load
+          export DOCKER_TEST_PREFIX="crystallang/crystal:$DOCKER_TAG" >> $BASH_ENV
+      - checkout
+      - run: bin/ci prepare_system
+      - run: echo 'export CURRENT_TAG="$CIRCLE_TAG"' >> $BASH_ENV
+      - run: bin/ci prepare_build
+      - run: bin/ci build
+
 workflows:
   version: 2
   test_all_platforms:
     jobs:
-      - test_linux
-      - test_linux32
-      - test_darwin
-      - check_format
+      - test_linux:
+          filters: &unless_maintenance
+            branches:
+              ignore:
+                - /release\/.+/
+                - /.*\bci\b.*/
+      - test_linux32:
+          filters: *unless_maintenance
+      - test_darwin:
+          filters: *unless_maintenance
+      - check_format:
+          filters: *unless_maintenance
       - sync_docs_s3:
           filters:
             branches:
@@ -309,6 +354,7 @@ workflows:
                 - master
           requires:
             - test_linux
+
   tagged_release:
     jobs:
       - test_linux:
@@ -350,6 +396,10 @@ workflows:
           filters: *per_tag
           requires:
             - dist_linux
+      - test_dist_linux_on_docker:
+          filters: *per_tag
+          requires:
+            - dist_docker
       # Tagged release do not publish docker images since they are unsigned
       # publish_docker:
       - dist_docs:
@@ -399,6 +449,9 @@ workflows:
       - dist_docker:
           requires:
             - dist_linux
+      - test_dist_linux_on_docker:
+          requires:
+            - dist_docker
       - publish_docker:
           requires:
             - dist_docker
@@ -454,6 +507,10 @@ workflows:
           filters: *maintenance
           requires:
             - dist_linux
+      - test_dist_linux_on_docker:
+          filters: *maintenance
+          requires:
+            - dist_docker
       - publish_docker:
           filters: *maintenance
           requires:

@@ -1,3 +1,4 @@
+require "mime/media_type"
 {% if !flag?(:without_zlib) %}
   require "flate"
   require "gzip"
@@ -73,9 +74,16 @@ module HTTP
   private def self.check_content_type_charset(body, headers)
     return unless body
 
-    if charset = content_type_and_charset(headers).charset
-      body.set_encoding(charset, invalid: :skip)
-    end
+    content_type = headers["Content-Type"]?
+    return unless content_type
+
+    mime_type = MIME::MediaType.parse?(content_type)
+    return unless mime_type
+
+    charset = mime_type["charset"]?
+    return unless charset
+
+    body.set_encoding(charset, invalid: :skip)
   end
 
   # :nodoc:
@@ -203,46 +211,11 @@ module HTTP
     headers["Expect"]?.try(&.downcase) == "100-continue"
   end
 
-  record ComputedContentTypeHeader,
-    content_type : String?,
-    charset : String?
-
-  # :nodoc:
-  def self.content_type_and_charset(headers)
-    content_type = headers["Content-Type"]?
-    return ComputedContentTypeHeader.new(nil, nil) unless content_type
-
-    # Avoid allocating an array for the split if there's no ';'
-    if content_type.index(';')
-      pieces = content_type.split(';')
-      content_type = pieces[0].strip
-      (1...pieces.size).each do |i|
-        piece = pieces[i]
-        eq_index = piece.index('=')
-        if eq_index
-          key = piece[0...eq_index].strip
-          if key == "charset"
-            value = piece[eq_index + 1..-1].strip
-
-            # For the case of a quoted charset like charset="utf-8"
-            if value.starts_with?('"') && value.ends_with?('"')
-              value = value[1...-1].strip
-            end
-
-            return ComputedContentTypeHeader.new(content_type, value)
-          end
-        end
-      end
-    else
-      content_type = content_type.strip
-    end
-
-    ComputedContentTypeHeader.new(content_type.strip, nil)
-  end
-
   # Parse a time string using the formats specified by [RFC 2616](https://tools.ietf.org/html/rfc2616#section-3.3.1)
   #
   # ```
+  # require "http"
+  #
   # HTTP.parse_time("Sun, 14 Feb 2016 21:00:00 GMT")  # => "2016-02-14 21:00:00 UTC"
   # HTTP.parse_time("Sunday, 14-Feb-16 21:00:00 GMT") # => "2016-02-14 21:00:00 UTC"
   # HTTP.parse_time("Sun Feb 14 21:00:00 2016")       # => "2016-02-14 21:00:00 UTC"
@@ -261,6 +234,8 @@ module HTTP
   # timezone `GMT` (interpreted as `UTC`).
   #
   # ```
+  # require "http"
+  #
   # HTTP.format_time(Time.utc(2016, 2, 15)) # => "Mon, 15 Feb 2016 00:00:00 GMT"
   # ```
   #
@@ -273,6 +248,8 @@ module HTTP
   # quoted-string.
   #
   # ```
+  # require "http"
+  #
   # quoted = %q(\"foo\\bar\")
   # HTTP.dequote_string(quoted) # => %q("foo\bar")
   # ```
@@ -298,6 +275,8 @@ module HTTP
   # contains an invalid character.
   #
   # ```
+  # require "http"
+  #
   # string = %q("foo\ bar")
   # io = IO::Memory.new
   # HTTP.quote_string(string, io)
@@ -322,6 +301,8 @@ module HTTP
   # quoted-string. May raise when *string* contains an invalid character.
   #
   # ```
+  # require "http"
+  #
   # string = %q("foo\ bar")
   # HTTP.quote_string(string) # => %q(\"foo\\\ bar\")
   # ```
@@ -330,87 +311,9 @@ module HTTP
       quote_string(string, io)
     end
   end
-
-  # Returns the default status message of the given HTTP status code.
-  #
-  # Based on [Hypertext Transfer Protocol (HTTP) Status Code Registry](https://www.iana.org/assignments/http-status-codes/http-status-codes.xhtml)
-  #
-  # Last Updated 2017-04-14
-  #
-  # HTTP Status Codes (source: [http-status-codes-1.csv](https://www.iana.org/assignments/http-status-codes/http-status-codes-1.csv))
-  #
-  # * 1xx: Informational - Request received, continuing process
-  # * 2xx: Success - The action was successfully received, understood, and accepted
-  # * 3xx: Redirection - Further action must be taken in order to complete the request
-  # * 4xx: Client Error - The request contains bad syntax or cannot be fulfilled
-  # * 5xx: Server Error - The server failed to fulfill an apparently valid request
-  #
-  def self.default_status_message_for(status_code : Int) : String
-    case status_code
-    when 100 then "Continue"
-    when 101 then "Switching Protocols"
-    when 102 then "Processing"
-    when 200 then "OK"
-    when 201 then "Created"
-    when 202 then "Accepted"
-    when 203 then "Non-Authoritative Information"
-    when 204 then "No Content"
-    when 205 then "Reset Content"
-    when 206 then "Partial Content"
-    when 207 then "Multi-Status"
-    when 208 then "Already Reported"
-    when 226 then "IM Used"
-    when 300 then "Multiple Choices"
-    when 301 then "Moved Permanently"
-    when 302 then "Found"
-    when 303 then "See Other"
-    when 304 then "Not Modified"
-    when 305 then "Use Proxy"
-    when 307 then "Temporary Redirect"
-    when 308 then "Permanent Redirect"
-    when 400 then "Bad Request"
-    when 401 then "Unauthorized"
-    when 402 then "Payment Required"
-    when 403 then "Forbidden"
-    when 404 then "Not Found"
-    when 405 then "Method Not Allowed"
-    when 406 then "Not Acceptable"
-    when 407 then "Proxy Authentication Required"
-    when 408 then "Request Timeout"
-    when 409 then "Conflict"
-    when 410 then "Gone"
-    when 411 then "Length Required"
-    when 412 then "Precondition Failed"
-    when 413 then "Payload Too Large"
-    when 414 then "URI Too Long"
-    when 415 then "Unsupported Media Type"
-    when 416 then "Range Not Satisfiable"
-    when 417 then "Expectation Failed"
-    when 421 then "Misdirected Request"
-    when 422 then "Unprocessable Entity"
-    when 423 then "Locked"
-    when 424 then "Failed Dependency"
-    when 426 then "Upgrade Required"
-    when 428 then "Precondition Required"
-    when 429 then "Too Many Requests"
-    when 431 then "Request Header Fields Too Large"
-    when 451 then "Unavailable For Legal Reasons"
-    when 500 then "Internal Server Error"
-    when 501 then "Not Implemented"
-    when 502 then "Bad Gateway"
-    when 503 then "Service Unavailable"
-    when 504 then "Gateway Timeout"
-    when 505 then "HTTP Version Not Supported"
-    when 506 then "Variant Also Negotiates"
-    when 507 then "Insufficient Storage"
-    when 508 then "Loop Detected"
-    when 510 then "Not Extended"
-    when 511 then "Network Authentication Required"
-    else          ""
-    end
-  end
 end
 
+require "./status"
 require "./request"
 require "./client/response"
 require "./headers"

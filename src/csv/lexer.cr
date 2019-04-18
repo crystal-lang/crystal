@@ -42,9 +42,6 @@ abstract class CSV::Lexer
   private abstract def next_char_no_column_increment
   private abstract def current_char
 
-  # Rewinds this lexer to its beginning.
-  abstract def rewind
-
   # Returns the next `Token` in this CSV.
   def next_token
     if @last_empty_column

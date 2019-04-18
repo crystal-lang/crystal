@@ -133,7 +133,7 @@ struct Char
 
     # Returns the previous character, `#pos`
     # is decremented.
-    # Raises `IndexError` if the reader is at the begining of
+    # Raises `IndexError` if the reader is at the beginning of
     # the `#string`
     def previous_char : Char
       unless has_previous?

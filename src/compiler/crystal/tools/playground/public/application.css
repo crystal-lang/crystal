@@ -23,7 +23,7 @@ footer small {
 
 html {
   font-family: Helvetica Neue, Helvetica, Arial, sans-serif;
-  font-weight: 200;
+  font-weight: 400;
 }
 
 h1 {
@@ -139,7 +139,7 @@ h4 {
 
 .sidebar .type {
   color: #64b5f6;
-  font-weight: 200;
+  font-weight: 400;
 }
 
 .sidebar .type::before {

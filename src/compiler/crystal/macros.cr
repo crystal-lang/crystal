@@ -6,7 +6,9 @@
 # `Macros` module are top-level methods that you can invoke, like `puts` and `run`.
 module Crystal::Macros
   # Compares two [semantic versions](http://semver.org/).
-  # Returns `-1` if `v1 < v2`, `0` if `v1 == v2` and `1` if `v1 > v2`.
+  #
+  # Returns `-1`, `0` or `1` depending on whether *v1* is lower than *v2*,
+  # equal to *v2* or greater than *v2*.
   #
   # ```
   # {{ compare_versions("1.10.0", "1.2.0") }} # => 1
@@ -634,6 +636,10 @@ module Crystal::Macros
     def sort : ArrayLiteral
     end
 
+    # Similar to `Array#sort_by`
+    def sort_by(&block) : ArrayLiteral
+    end
+
     # Similar to `Array#uniq`
     def uniq : ArrayLiteral
     end
@@ -848,9 +854,14 @@ module Crystal::Macros
     def has_default_value? : BoolLiteral
     end
 
-    # Returns any `Annotation` with the given `type`
-    # attached to this variable.
-    def annotation(type : TypeNode) : Annotation
+    # Returns the last `Annotation` with the given `type`
+    # attached to this variable or `NilLiteral` if there are none.
+    def annotation(type : TypeNode) : Annotation | NilLiteral
+    end
+
+    # Returns an array of annotations with the given `type`
+    # attached to this variable, or an empty `ArrayLiteral` if there are none.
+    def annotations(type : TypeNode) : ArrayLiteral(Annotation)
     end
   end
 
@@ -1107,9 +1118,14 @@ module Crystal::Macros
     def visibility : SymbolLiteral
     end
 
-    # Returns any `Annotation` with the given `type`
-    # attached to this method.
-    def annotation(type : TypeNode) : Annotation
+    # Returns the last `Annotation` with the given `type`
+    # attached to this variable or `NilLiteral` if there are none.
+    def annotation(type : TypeNode) : Annotation | NilLiteral
+    end
+
+    # Returns an array of annotations with the given `type`
+    # attached to this variable, or an empty `ArrayLiteral` if there are none.
+    def annotations(type : TypeNode) : ArrayLiteral(Annotation)
     end
   end
 
@@ -1169,6 +1185,17 @@ module Crystal::Macros
 
   # An `out` expression.
   class Out < UnaryExpression
+  end
+
+  # An `offsetof` expression.
+  class OffsetOf < ASTNode
+    # Returns the type that has been used in this `offsetof` expression.
+    def type : ASTNode
+    end
+
+    # Returns the instance variable used in this `offsetof` expression.
+    def instance_var : ASTNode
+    end
   end
 
   # A visibility modifier
@@ -1647,7 +1674,7 @@ module Crystal::Macros
     def nilable? : BoolLiteral
     end
 
-    # Returns the types comforming a union type, if this is a union type.
+    # Returns the types forming a union type, if this is a union type.
     # Gives a compile error otherwise.
     #
     # See also: `union?`.
@@ -1718,9 +1745,14 @@ module Crystal::Macros
     def has_attribute?(name : StringLiteral | SymbolLiteral) : BoolLiteral
     end
 
-    # Returns any `Annotation` with the given `type`
-    # attached to this type.
-    def annotation(type : TypeNode) : Annotation
+    # Returns the last `Annotation` with the given `type`
+    # attached to this variable or `NilLiteral` if there are none.
+    def annotation(type : TypeNode) : Annotation | NilLiteral
+    end
+
+    # Returns an array of annotations with the given `type`
+    # attached to this variable, or an empty `ArrayLiteral` if there are none.
+    def annotations(type : TypeNode) : ArrayLiteral(Annotation)
     end
 
     # Returns the number of elements in this tuple type or tuple metaclass type.

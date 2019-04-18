@@ -296,12 +296,40 @@ module Crystal
     end
   end
 
+  class Union
+    property? inside_is_a = false
+
+    def update(from = nil)
+      computed_types = types.compact_map do |subtype|
+        instance_type = subtype.type?
+        next unless instance_type
+
+        unless instance_type.allowed_in_generics?
+          subtype.raise "can't use #{instance_type} in unions yet, use a more specific type"
+        end
+        instance_type.virtual_type
+      end
+
+      return if computed_types.empty?
+
+      program = computed_types.first.program
+
+      if inside_is_a?
+        self.type = program.type_merge_union_of(computed_types)
+      else
+        self.type = program.type_merge(computed_types)
+      end
+    end
+  end
+
   class Cast
     property? upcast = false
 
     def update(from = nil)
+      to_type = to.type?
+      return unless to_type
+
       obj_type = obj.type?
-      to_type = to.type
 
       @upcast = false
 
@@ -333,8 +361,10 @@ module Crystal
     getter! non_nilable_type : Type
 
     def update(from = nil)
+      to_type = to.type?
+      return unless to_type
+
       obj_type = obj.type?
-      to_type = to.type
 
       @upcast = false
 
@@ -447,6 +477,9 @@ module Crystal
             node = expanded
           end
           if node.is_a?(InstanceSizeOf) && (expanded = node.expanded)
+            node = expanded
+          end
+          if node.is_a?(OffsetOf) && (expanded = node.expanded)
             node = expanded
           end
 
