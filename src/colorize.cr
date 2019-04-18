@@ -1,4 +1,4 @@
-# With Colorize you can change the fore- and background colors and text decorations when rendering text
+# With `Colorize` you can change the fore- and background colors and text decorations when rendering text
 # on terminals supporting ANSI escape codes. It adds the `colorize` method to `Object` and thus all classes
 # as its main interface, which calls `to_s` and surrounds it with the necessary escape codes
 # when it comes to obtaining a string representation of the object.
@@ -32,6 +32,10 @@
 # You can also pass an RGB color to `colorize`:
 # ```
 # require "colorize"
+#
+# "foo".colorize(0, 255, 255) # => "foo" in aqua
+#
+# # This is the same as:
 #
 # "foo".colorize(Colorize::ColorRGB.new(0, 255, 255)) # => "foo" in aqua
 # ```
@@ -68,8 +72,8 @@
 # "foo".colorize(:red).toggle(false).toggle(true) # => "foo" in red
 # ```
 #
-# The color `:default` will just leave the object as it is (but it's an `Colorize::Object(String)` then).
-# That's handy in for example conditions:
+# The color `:default` leaves the object's representation as it is but the object is a `Colorize::Object` then
+# which is handy in conditions such as:
 # ```
 # require "colorize"
 #
@@ -117,18 +121,16 @@ module Colorize
   # require "colorize"
   #
   # Colorize.enabled = true
-  # "hello".colorize.red.to_s # => "\e[31mhello\e[0m"
+  # "hello".colorize.red.to_s # => "hello" in red
   #
   # Colorize.enabled = false
   # "hello".colorize.red.to_s # => "hello"
   # ```
-  class_property? enabled : Bool = true
+  #
+  # NOTE: This is by default disabled on non-TTY devices as they most likely do not support ANSI escape codes.
+  class_property? enabled : Bool = STDOUT.tty? && STDERR.tty?
 
-  # Makes `Colorize.enabled` `true` if and only if both of `STDOUT.tty?` and `STDERR.tty?` are `true`.
-  def self.on_tty_only!
-    self.enabled = STDOUT.tty? && STDERR.tty?
-  end
-
+  # Resets the color of the object to the default.
   def self.reset(io = STDOUT)
     io << "\e[0m" if enabled?
   end
@@ -138,17 +140,24 @@ def with_color
   "".colorize
 end
 
-def with_color(color : Symbol)
+def with_color(color : Colorize::Color)
   "".colorize(color)
 end
 
 module Colorize::ObjectExtensions
+  # Turns `self` into a `Colorize::Object`.
   def colorize
     Colorize::Object.new(self)
   end
 
-  def colorize(fore)
+  # Turns `self` into a `Colorize::Object` and colors it.
+  def colorize(fore : Color)
     Colorize::Object.new(self).fore(fore)
+  end
+
+  # Turns `self` into a `Colorize::Object` and colors it with an RGB color.
+  def colorize(r : UInt8, g : UInt8, b : UInt8)
+    Colorize::Object.new(self).fore(Colorize::ColorRGB.new(r, g, b))
   end
 end
 
@@ -159,6 +168,7 @@ end
 module Colorize
   alias Color = ColorANSI | Color256 | ColorRGB
 
+  # One color of a fixed set of colors.
   enum ColorANSI
     Default      = 39
     Black        = 30
@@ -187,6 +197,7 @@ module Colorize
     end
   end
 
+  # An 8-bit color.
   record Color256,
     value : UInt8 do
     def fore(io : IO) : Nil
@@ -200,6 +211,7 @@ module Colorize
     end
   end
 
+  # An RGB color.
   record ColorRGB,
     red : UInt8,
     green : UInt8,
@@ -214,10 +226,33 @@ module Colorize
       {red, green, blue}.join(';', io, &.to_s io)
     end
   end
+
+  # A text decoration.
+  #
+  # Note that not all decorations are supported in all terminals.
+  # When a decoration is not supported, the text won't have any decoration.
+  @[Flags]
+  enum Mode
+    # Makes the text bold.
+    Bold = 1
+    # Makes the text color bright.
+    Bright = 1
+    # Dims the text color, the opposite of `Bold` and `Bright`.
+    Dim
+    # Underlines the text.
+    Underline
+    # Makes the text blink slowly.
+    Blink
+    # Swaps the foreground and background colors.
+    Reverse
+    # Makes the text invisible.
+    Hidden
+  end
 end
 
+# A colorize object colors and decorations can be applied to.
 struct Colorize::Object(T)
-  private MODE_DEFAULT   = '0'
+  private MODE_NONE      = '0'
   private MODE_BOLD      = '1'
   private MODE_BRIGHT    = '1'
   private MODE_DIM       = '2'
@@ -226,24 +261,13 @@ struct Colorize::Object(T)
   private MODE_REVERSE   = '7'
   private MODE_HIDDEN    = '8'
 
-  private MODE_BOLD_FLAG      =  1
-  private MODE_BRIGHT_FLAG    =  1
-  private MODE_DIM_FLAG       =  2
-  private MODE_UNDERLINE_FLAG =  4
-  private MODE_BLINK_FLAG     =  8
-  private MODE_REVERSE_FLAG   = 16
-  private MODE_HIDDEN_FLAG    = 32
-
   private COLORS = %w(default black red green yellow blue magenta cyan light_gray dark_gray light_red light_green light_yellow light_blue light_magenta light_cyan white)
   private MODES  = %w(bold bright dim underline blink reverse hidden)
-
-  @fore : Color
-  @back : Color
 
   def initialize(@object : T)
     @fore = ColorANSI::Default
     @back = ColorANSI::Default
-    @mode = 0
+    @mode = Mode::None
     @enabled = Colorize.enabled?
   end
 
@@ -261,74 +285,52 @@ struct Colorize::Object(T)
 
   {% for name in MODES %}
     def {{name.id}}
-      @mode |= MODE_{{name.upcase.id}}_FLAG
+      @mode |= Mode::{{name.capitalize.id}}
       self
     end
   {% end %}
 
-  def fore(color : Symbol)
-    {% for name in COLORS %}
-      if color == :{{name.id}}
-        @fore = ColorANSI::{{name.camelcase.id}}
-        return self
-      end
-    {% end %}
-
-    raise ArgumentError.new "Unknown color: #{color}"
-  end
-
-  def fore(@fore : Color)
+  # Sets the foreground color of the object to *color*.
+  def fore(color : Color)
+    @fore = color
     self
   end
 
-  def back(color : Symbol)
-    {% for name in COLORS %}
-      if color == :{{name.id}}
-        @back = ColorANSI::{{name.camelcase.id}}
-        return self
-      end
-    {% end %}
-
-    raise ArgumentError.new "Unknown color: #{color}"
-  end
-
-  def back(@back : Color)
+  # Sets the background color of the object to *color*.
+  def back(color : Color)
+    @back = color
     self
   end
 
-  def mode(mode : Symbol)
-    {% for name in MODES %}
-      if mode == :{{name.id}}
-        @mode |= MODE_{{name.upcase.id}}_FLAG
-        return self
-      end
-    {% end %}
-
-    raise ArgumentError.new "Unknown mode: #{mode}"
+  # Sets the text decoration of the object to *mode*.
+  def mode(mode : Mode)
+    @mode |= mode
+    self
   end
 
-  def on(color : Symbol)
-    back color
-  end
-
+  # Enables or disables colors and text decoration on this object.
   def toggle(flag)
     @enabled = !!flag
     self
   end
 
+  # Appends this object colored and with text decoration to *io*.
   def to_s(io : IO) : Nil
     surround(io) do
       io << @object
     end
   end
 
+  # Inspects this object and makes the ANSI escape codes visible.
   def inspect(io : IO) : Nil
-    surround(io) do
-      @object.inspect(io)
-    end
+    internal_io = IO::Memory.new
+    (surround(internal_io) do
+      @object.to_s internal_io
+    end)
+    io << internal_io.to_s.inspect
   end
 
-  def surround(io = STDOUT)
+  private def surround(io = STDOUT)
     return yield io unless @enabled
 
     Object.surround(io, to_named_tuple) do |io|
@@ -347,7 +349,7 @@ struct Colorize::Object(T)
   @@last_color = {
     fore: ColorANSI::Default.as(Color),
     back: ColorANSI::Default.as(Color),
-    mode: 0,
+    mode: Mode::None,
   }
 
   protected def self.surround(io, color)
@@ -367,7 +369,7 @@ struct Colorize::Object(T)
     last_color_is_default =
       @@last_color[:fore] == ColorANSI::Default &&
         @@last_color[:back] == ColorANSI::Default &&
-        @@last_color[:mode] == 0
+        @@last_color[:mode] == Mode::None
 
     fore = color[:fore]
     back = color[:back]
@@ -375,9 +377,9 @@ struct Colorize::Object(T)
 
     fore_is_default = fore == ColorANSI::Default
     back_is_default = back == ColorANSI::Default
-    mode_is_default = mode == 0
+    no_mode = mode == Mode::None
 
-    if fore_is_default && back_is_default && mode_is_default && last_color_is_default || @@last_color == color
+    if @@last_color == color || fore_is_default && back_is_default && no_mode && last_color_is_default
       false
     else
       io << "\e["
@@ -385,7 +387,7 @@ struct Colorize::Object(T)
       printed = false
 
       unless last_color_is_default
-        io << MODE_DEFAULT
+        io << MODE_NONE
         printed = true
       end
 
@@ -401,12 +403,12 @@ struct Colorize::Object(T)
         printed = true
       end
 
-      unless mode_is_default
+      unless no_mode
         # Can't reuse MODES constant because it has bold/bright duplicated
-        {% for name in %w(bold dim underline blink reverse hidden) %}
-          if mode.bits_set? MODE_{{name.upcase.id}}_FLAG
+        {% for mode in %w(bold dim underline blink reverse hidden) %}
+          if mode.includes? Mode::{{mode.capitalize.id}}
             io << ';' if printed
-            io << MODE_{{name.upcase.id}}
+            io << MODE_{{mode.upcase.id}}
             printed = true
           end
         {% end %}
