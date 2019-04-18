@@ -1,7 +1,7 @@
 require "spec"
 require "colorize"
 
-private def colorize(obj, *args)
+private def colorize(obj, *args : Colorize::ColorANSI)
   obj.colorize(*args).toggle(true)
 end
 
@@ -107,26 +107,8 @@ describe "colorize" do
     colorize("hello").mode(:bold).to_s.should eq("\e[1mhello\e[0m")
   end
 
-  it "raises on unknown foreground color" do
-    expect_raises ArgumentError, "Unknown color: brown" do
-      colorize("hello", :brown)
-    end
-  end
-
-  it "raises on unknown background color" do
-    expect_raises ArgumentError, "Unknown color: brown" do
-      colorize("hello").back(:brown)
-    end
-  end
-
-  it "raises on unknown mode" do
-    expect_raises ArgumentError, "Unknown mode: bad" do
-      colorize("hello").mode(:bad)
-    end
-  end
-
   it "inspects" do
-    colorize("hello", :red).inspect.should eq("\e[31m\"hello\"\e[0m")
+    colorize("hello", :red).inspect.should eq("\"\\e[31mhello\\e[0m\"")
   end
 
   it "colorizes with surround" do
