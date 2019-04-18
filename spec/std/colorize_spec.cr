@@ -2,7 +2,7 @@ require "spec"
 require "colorize"
 
 private def colorize(obj)
-  obj.colorize(*args).toggle(true)
+  obj.colorize.toggle(true)
 end
 
 private def with_color_wrap(*args)
