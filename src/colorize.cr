@@ -271,21 +271,21 @@ struct Colorize::Object(T)
     @enabled = Colorize.enabled?
   end
 
-  {% for name in COLORS %}
-    def {{name.id}}
-      @fore = ColorANSI::{{name.camelcase.id}}
+  {% for color in COLORS %}
+    def {{color.id}}
+      @fore = ColorANSI::{{color.camelcase.id}}
       self
     end
 
-    def on_{{name.id}}
-      @back = ColorANSI::{{name.camelcase.id}}
+    def on_{{color.id}}
+      @back = ColorANSI::{{color.camelcase.id}}
       self
     end
   {% end %}
 
-  {% for name in MODES %}
-    def {{name.id}}
-      @mode |= Mode::{{name.capitalize.id}}
+  {% for mode in MODES %}
+    def {{mode.id}}
+      @mode |= Mode::{{mode.capitalize.id}}
       self
     end
   {% end %}
@@ -325,11 +325,30 @@ struct Colorize::Object(T)
   def inspect(io : IO) : Nil
     internal_io = IO::Memory.new
     (surround(internal_io) do
-      @object.to_s internal_io
+      @object.to_s(internal_io)
     end)
     io << internal_io.to_s.inspect
   end
 
+  # Surrounds *io* by the ANSI escape codes and let's you build colored strings:
+  #
+  # ```
+  # io = IO::Memory.new
+  #
+  # with_color.red.surround(io) do
+  #   io << "colorful"
+  #   with_color.green.bold.surround(io) do
+  #     io << " hello "
+  #   end
+  #   with_color.blue.surround(io) do
+  #     io << "world"
+  #   end
+  #   io << " string"
+  # end
+  #
+  # io.to_s # => "colorful hello world string"
+  # # Where "colorful" is red, "hello" green, "world" blue and " string" red again
+  # ```
   def surround(io = STDOUT)
     return yield io unless @enabled
 
