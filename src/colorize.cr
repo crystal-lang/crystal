@@ -80,37 +80,7 @@
 # "foo".colorize(some_bool ? :green : :default)
 # ```
 #
-# Available colors are:
-# ```
-# :default
-# :black
-# :red
-# :green
-# :yellow
-# :blue
-# :magenta
-# :cyan
-# :light_gray
-# :dark_gray
-# :light_red
-# :light_green
-# :light_yellow
-# :light_blue
-# :light_magenta
-# :light_cyan
-# :white
-# ```
-#
-# Available text decorations are:
-# ```
-# :bold
-# :bright
-# :dim
-# :underline
-# :blink
-# :reverse
-# :hidden
-# ```
+# See `Colorize::ColorANSI` and `Colorize::Mode` for the available colors and text decorations.
 module Colorize
   # If this value is `true`, `Colorize::Object` is enabled by default.
   # But if this value is `false`, `Colorize::Object` is disabled.
@@ -282,6 +252,10 @@ struct Colorize::Object(T)
       self
     end
   {% end %}
+
+  def on(color : Color)
+    back color
+  end
 
   {% for mode in MODES %}
     def {{mode.id}}
