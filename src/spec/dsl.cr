@@ -3,11 +3,11 @@ require "option_parser"
 
 module Spec
   private COLORS = {
-    success: :green,
-    fail:    :red,
-    error:   :red,
-    pending: :yellow,
-    comment: :cyan,
+    success: Colorize::ColorANSI::Green,
+    fail:    Colorize::ColorANSI::Red,
+    error:   Colorize::ColorANSI::Red,
+    pending: Colorize::ColorANSI::Yellow,
+    comment: Colorize::ColorANSI::Cyan,
   }
 
   private LETTERS = {
