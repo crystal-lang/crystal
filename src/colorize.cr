@@ -298,9 +298,9 @@ struct Colorize::Object(T)
   # Inspects this object and makes the ANSI escape codes visible.
   def inspect(io : IO) : Nil
     internal_io = IO::Memory.new
-    (surround(internal_io) do
+    surround(internal_io) do
       @object.to_s(internal_io)
-    end)
+    end
     io << internal_io.to_s.inspect
   end
 
@@ -398,8 +398,8 @@ struct Colorize::Object(T)
 
       unless no_mode
         # Can't reuse MODES constant because it has bold/bright duplicated
-        {% for mode in %w(bold dim underline blink reverse hidden) %}
-          if mode.includes? Mode::{{mode.capitalize.id}}
+        {% for mode in %w(Bold Dim Underline Blink Reverse Hidden) %}
+          if mode.includes? Mode::{{mode.id}}
             io << ';' if printed
             io << MODE_{{mode.upcase.id}}
             printed = true
