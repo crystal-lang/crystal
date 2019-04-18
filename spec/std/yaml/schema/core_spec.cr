@@ -104,8 +104,9 @@ describe YAML::Schema::Core do
   it_parses_scalar "0b10110", 0b10110
 
   # integer (octal)
-  it_parses_scalar "00", 0
-  it_parses_scalar "0123", 0o123
+  it_parses_scalar "0o0", 0
+  it_parses_scalar "0o123", 0o123
+  it_parses_scalar "0755", 755
 
   # integer (hex)
   it_parses_scalar "0x0", 0
@@ -207,9 +208,11 @@ describe YAML::Schema::Core do
   it_raises_on_parse "!!float 'hello'", "Invalid float"
 
   # !!int
+  it_parses "!!int 0", 0
   it_parses "!!int 123", 123
   it_parses "!!int 0b10", 0b10
-  it_parses "!!int 0123", 0o123
+  it_parses "!!int 0o123", 0o123
+  it_parses "!!int 0755", 755
   it_parses "!!int 0xabc", 0xabc
   it_parses "!!int -123", -123
   it_raises_on_parse "!!int 'hello'", "Invalid int"

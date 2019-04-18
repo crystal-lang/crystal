@@ -289,7 +289,7 @@ class String
   # Options:
   # * **whitespace**: if `true`, leading and trailing whitespaces are allowed
   # * **underscore**: if `true`, underscores in numbers are allowed
-  # * **prefix**: if `true`, the prefixes `"0x"`, `"0"` and `"0b"` override the base
+  # * **prefix**: if `true`, the prefixes `"0x"`, `"0o"` and `"0b"` override the base
   # * **strict**: if `true`, extraneous characters past the end of the number are disallowed
   #
   # ```
@@ -539,17 +539,23 @@ class String
       ptr += 1
 
       if prefix
-        case ptr.value.unsafe_chr
-        when 'b'
-          base = 2
-          ptr += 1
-        when 'x'
-          base = 16
-          ptr += 1
-        else
-          base = 8
-        end
-        found_digit = false
+        found_digit = case ptr.value.unsafe_chr
+                      when 'b'
+                        base = 2
+                        ptr += 1
+                        false
+                      when 'x'
+                        base = 16
+                        ptr += 1
+                        false
+                      when 'o'
+                        base = 8
+                        ptr += 1
+                        false
+                      else
+                        base = 10
+                        true
+                      end
       else
         found_digit = true
       end
