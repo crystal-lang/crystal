@@ -48,8 +48,8 @@
     saved_to = to
     satisfied = nil
     while from < to
-      mid = (from < 0) == (to < 0) ? from + (to - from) / 2
-          : (from < -to) ? -((- from - to - 1) / 2 + 1) : (from + to) / 2
+      mid = (from < 0) == (to < 0) ? from + ((to - from) >> 1)
+          : (from < -to) ? -(((- from - to - 1) >> 1) + 1) : ((from + to) >> 1)
 
       if yield mid
         satisfied = mid
@@ -102,7 +102,7 @@ struct Range(B, E)
     saved_to = to
     satisfied = nil
     while from < to
-      mid = from + (to - from) / 2
+      mid = from + ((to - from) >> 1)
 
       if yield mid
         satisfied = mid

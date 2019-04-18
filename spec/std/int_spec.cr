@@ -221,23 +221,23 @@ describe "Int" do
   end
 
   describe "#inspect" do
-    it "appends the type" do
+    it "doesn't append the type" do
       23.inspect.should eq("23")
-      23_i8.inspect.should eq("23_i8")
-      23_i16.inspect.should eq("23_i16")
-      -23_i64.inspect.should eq("-23_i64")
-      23_u8.inspect.should eq("23_u8")
-      23_u16.inspect.should eq("23_u16")
-      23_u32.inspect.should eq("23_u32")
-      23_u64.inspect.should eq("23_u64")
+      23_i8.inspect.should eq("23")
+      23_i16.inspect.should eq("23")
+      -23_i64.inspect.should eq("-23")
+      23_u8.inspect.should eq("23")
+      23_u16.inspect.should eq("23")
+      23_u32.inspect.should eq("23")
+      23_u64.inspect.should eq("23")
     end
 
-    it "appends the type using IO" do
+    it "doesn't append the type using IO" do
       str = String.build { |io| 23.inspect(io) }
       str.should eq("23")
 
       str = String.build { |io| -23_i64.inspect(io) }
-      str.should eq("-23_i64")
+      str.should eq("-23")
     end
   end
 
@@ -429,7 +429,7 @@ describe "Int" do
   it "holds true that x == q*y + r" do
     [5, -5, 6, -6, 10, -10].each do |x|
       [3, -3].each do |y|
-        q = x / y
+        q = x // y
         r = x % y
         (q*y + r).should eq(x)
       end
@@ -485,17 +485,13 @@ describe "Int" do
     iter.next.should eq(1)
     iter.next.should eq(2)
     iter.next.should be_a(Iterator::Stop)
-
-    iter.rewind
-    iter.next.should eq(0)
   end
 
   it "gets times iterator for UInt32 (#5019)" do
     iter = 4_u32.times
     iter.next.should be_a(UInt32)
 
-    iter.rewind
-    ary = iter.to_a
+    ary = 4_u32.times.to_a
     ary.should be_a(Array(UInt32))
     ary.should eq([0, 1, 2, 3])
   end
@@ -543,9 +539,6 @@ describe "Int" do
     iter.next.should eq(2)
     iter.next.should eq(3)
     iter.next.should be_a(Iterator::Stop)
-
-    iter.rewind
-    iter.next.should eq(1)
   end
 
   it "gets upto iterator max" do
@@ -555,9 +548,6 @@ describe "Int" do
     iter.next.should eq(Int32::MAX - 1)
     iter.next.should eq(Int32::MAX)
     iter.next.should be_a(Iterator::Stop)
-
-    iter.rewind
-    iter.next.should eq(Int32::MAX - 3)
   end
 
   it "upto iterator ups and downs" do
@@ -606,9 +596,6 @@ describe "Int" do
     iter.next.should eq(2)
     iter.next.should eq(1)
     iter.next.should be_a(Iterator::Stop)
-
-    iter.rewind
-    iter.next.should eq(3)
   end
 
   it "downto iterator ups and downs" do
@@ -627,9 +614,6 @@ describe "Int" do
     iter.next.should eq(1)
     iter.next.should eq(0)
     iter.next.should be_a(Iterator::Stop)
-
-    iter.rewind
-    iter.next.should eq(3)
   end
 
   it "gets to iterator" do
@@ -638,9 +622,6 @@ describe "Int" do
     iter.next.should eq(2)
     iter.next.should eq(3)
     iter.next.should be_a(Iterator::Stop)
-
-    iter.rewind
-    iter.next.should eq(1)
   end
 
   describe "#popcount" do
@@ -663,6 +644,22 @@ describe "Int" do
     it { 5_i64.popcount.should eq(2) }
     it { 9223372036854775807_i64.popcount.should eq(63) }
     it { 18446744073709551615_u64.popcount.should eq(64) }
+  end
+
+  describe "#leading_zeros_count" do
+    {% for width in %w(8 16 32 64).map(&.id) %}
+      it { -1_i{{width}}.leading_zeros_count.should eq(0) }
+      it { 0_i{{width}}.leading_zeros_count.should eq({{width}}) }
+      it { 0_u{{width}}.leading_zeros_count.should eq({{width}}) }
+    {% end %}
+  end
+
+  describe "#trailing_zeros_count" do
+    {% for width in %w(8 16 32 64).map(&.id) %}
+      it { -2_i{{width}}.trailing_zeros_count.should eq(1) }
+      it { 2_i{{width}}.trailing_zeros_count.should eq(1) }
+      it { 2_u{{width}}.trailing_zeros_count.should eq(1) }
+    {% end %}
   end
 
   it "compares signed vs. unsigned integers" do

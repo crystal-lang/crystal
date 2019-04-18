@@ -22,7 +22,7 @@ private def run_expand_tool(code)
     end
   end
 
-  code = code.gsub('‸', "")
+  code = code.delete('‸')
 
   if cursor_location
     visitor, result = processed_expand_visitor(code, cursor_location)
@@ -55,11 +55,11 @@ private def assert_expand(code, expected_result)
   end
 end
 
-private def assert_expand_simple(code, expanded, original = code.gsub('‸', ""))
+private def assert_expand_simple(code, expanded, original = code.delete('‸'))
   assert_expand_simple(code, expanded, original) { }
 end
 
-private def assert_expand_simple(code, expanded, original = code.gsub('‸', ""))
+private def assert_expand_simple(code, expanded, original = code.delete('‸'))
   assert_expand(code, [[original, expanded]]) { |result| yield result.expansions.not_nil![0] }
 end
 

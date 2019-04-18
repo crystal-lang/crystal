@@ -129,6 +129,16 @@ struct XML::Reader
 
   # Returns the XML for the node and its content including subtrees.
   def read_outer_xml
+    # On a NONE type libxml2 2.9.9 is giving a segfault:
+    #
+    #   https://gitlab.gnome.org/GNOME/libxml2/issues/43
+    #
+    # so we avoid the issue by returning early here.
+    #
+    # FIXME: if that issue is fixed we should revert this line
+    # to avoid doing an extra C call each time.
+    return "" if node_type.none?
+
     xml = LibXML.xmlTextReaderReadOuterXml(@reader)
     xml ? String.new(xml) : ""
   end

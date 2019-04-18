@@ -28,8 +28,8 @@ module Crystal::System::Time
   def self.monotonic : {Int64, Int32}
     {% if flag?(:darwin) %}
       info = mach_timebase_info
-      total_nanoseconds = LibC.mach_absolute_time * info.numer / info.denom
-      seconds = total_nanoseconds / 1_000_000_000
+      total_nanoseconds = LibC.mach_absolute_time * info.numer // info.denom
+      seconds = total_nanoseconds // 1_000_000_000
       nanoseconds = total_nanoseconds.remainder(1_000_000_000)
       {seconds.to_i64, nanoseconds.to_i32}
     {% else %}

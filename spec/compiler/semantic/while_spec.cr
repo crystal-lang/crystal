@@ -15,7 +15,7 @@ describe "Semantic: while" do
 
   it "reports break cannot be used outside a while" do
     assert_error "break",
-      "Invalid break"
+      "invalid break"
   end
 
   it "types while true as NoReturn" do
@@ -32,7 +32,7 @@ describe "Semantic: while" do
 
   it "reports next cannot be used outside a while" do
     assert_error "next",
-      "Invalid next"
+      "invalid next"
   end
 
   it "uses var type inside while if endless loop" do

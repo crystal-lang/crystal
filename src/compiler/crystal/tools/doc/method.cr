@@ -88,7 +88,7 @@ class Crystal::Doc::Method
 
   def id
     String.build do |io|
-      io << to_s.gsub(/<.+?>/, "").gsub(' ', "")
+      io << to_s.gsub(/<.+?>/, "").delete(' ')
       if @class_method
         io << "-class-method"
       else
@@ -105,7 +105,7 @@ class Crystal::Doc::Method
     "#" + URI.escape(id)
   end
 
-  def to_s(io)
+  def to_s(io : IO) : Nil
     io << name
     args_to_s io
   end
@@ -114,7 +114,7 @@ class Crystal::Doc::Method
     String.build { |io| args_to_s io }
   end
 
-  def args_to_s(io)
+  def args_to_s(io : IO) : Nil
     args_to_html(io, links: false)
   end
 
@@ -122,7 +122,7 @@ class Crystal::Doc::Method
     String.build { |io| args_to_html io }
   end
 
-  def args_to_html(io, links = true)
+  def args_to_html(io : IO, links : Bool = true) : Nil
     return_type = self.return_type
 
     return unless has_args? || return_type
@@ -222,5 +222,9 @@ class Crystal::Doc::Method
       builder.field "source_link", source_link
       builder.field "def", self.def
     end
+  end
+
+  def annotations(annotation_type)
+    @def.annotations(annotation_type)
   end
 end

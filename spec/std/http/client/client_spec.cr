@@ -1,17 +1,19 @@
-require "spec"
+require "../spec_helper"
 require "openssl"
 require "http/client"
 require "http/server"
 
-private def test_server(host, port, read_time = 0, content_type = "text/plain")
+private def test_server(host, port, read_time = 0, content_type = "text/plain", write_response = true)
   server = TCPServer.new(host, port)
   begin
     spawn do
       io = server.accept
       sleep read_time
-      response = HTTP::Client::Response.new(200, headers: HTTP::Headers{"Content-Type" => content_type}, body: "OK")
-      response.to_io(io)
-      io.flush
+      if write_response
+        response = HTTP::Client::Response.new(200, headers: HTTP::Headers{"Content-Type" => content_type}, body: "OK")
+        response.to_io(io)
+        io.flush
+      end
     end
 
     yield server
@@ -130,11 +132,10 @@ module HTTP
         context.response.print context.request.headers["Host"]
       end
       address = server.bind_unused_port "::1"
-      spawn { server.listen }
 
-      HTTP::Client.get("http://[::1]:#{address.port}/").body.should eq("[::1]:#{address.port}")
-
-      server.close
+      run_server(server) do
+        HTTP::Client.get("http://[::1]:#{address.port}/").body.should eq("[::1]:#{address.port}")
+      end
     end
 
     it "sends a 'connection: close' header on one-shot request" do
@@ -142,11 +143,10 @@ module HTTP
         context.response.print context.request.headers["connection"]
       end
       address = server.bind_unused_port "::1"
-      spawn { server.listen }
 
-      HTTP::Client.get("http://[::1]:#{address.port}/").body.should eq("close")
-
-      server.close
+      run_server(server) do
+        HTTP::Client.get("http://[::1]:#{address.port}/").body.should eq("close")
+      end
     end
 
     it "sends a 'connection: close' header on one-shot request with block" do
@@ -154,13 +154,12 @@ module HTTP
         context.response.print context.request.headers["connection"]
       end
       address = server.bind_unused_port "::1"
-      spawn { server.listen }
 
-      HTTP::Client.get("http://[::1]:#{address.port}/") do |response|
-        response.body_io.gets_to_end
-      end.should eq("close")
-
-      server.close
+      run_server(server) do
+        HTTP::Client.get("http://[::1]:#{address.port}/") do |response|
+          response.body_io.gets_to_end
+        end.should eq("close")
+      end
     end
 
     it "doesn't read the body if request was HEAD" do
@@ -196,7 +195,11 @@ module HTTP
         client.get("/")
       end
 
-      test_server("localhost", 0, 0.5) do |server|
+      # Here we don't want to write a response on the server side because
+      # it doesn't make sense to try to write because the client will already
+      # timeout on read. Writing a response could lead on an exception in
+      # the server if the socket is closed.
+      test_server("localhost", 0, 0.5, write_response: false) do |server|
         client = Client.new("localhost", server.local_address.port)
         expect_raises(IO::Timeout, "Read timed out") do
           client.read_timeout = 0.001

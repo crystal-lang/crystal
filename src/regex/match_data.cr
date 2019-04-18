@@ -325,11 +325,11 @@ class Regex
       hash
     end
 
-    def inspect(io : IO)
+    def inspect(io : IO) : Nil
       to_s(io)
     end
 
-    def to_s(io : IO)
+    def to_s(io : IO) : Nil
       name_table = @regex.name_table
 
       io << "Regex::MatchData("

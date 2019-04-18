@@ -50,9 +50,9 @@ class LLVM::ABI::ARM < LLVM::ABI
         non_struct(aty, context)
       else
         if align(aty) <= 4
-          ArgType.direct(aty, context.int32.array(((size(aty) + 3) / 4).to_u64))
+          ArgType.direct(aty, context.int32.array(((size(aty) + 3) // 4).to_u64))
         else
-          ArgType.direct(aty, context.int64.array(((size(aty) + 7) / 8).to_u64))
+          ArgType.direct(aty, context.int64.array(((size(aty) + 7) // 8).to_u64))
         end
       end
     end

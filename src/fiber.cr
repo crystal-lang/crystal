@@ -1,38 +1,7 @@
 require "c/sys/mman"
 require "thread/linked_list"
-
-# Load the arch-specific methods to create a context and to swap from one
-# context to another one. There are two methods: `Fiber#makecontext` and
-# `Fiber.swapcontext`.
-#
-# - `Fiber.swapcontext(current_stack_ptr : Void**, dest_stack_ptr : Void*)
-#
-#   A fiber context switch in Crystal is achieved by calling a symbol (which
-#   must never be inlined) that will push the callee-saved registers (sometimes
-#   FPU registers and others) on the stack, saving the current stack pointer at
-#   location pointed by `current_stack_ptr` (the current fiber is now paused)
-#   then loading the `dest_stack_ptr` pointer into the stack pointer register
-#   and popping previously saved registers from the stack. Upon return from the
-#   symbol the new fiber is resumed since we returned/jumped to the calling
-#   symbol.
-#
-#   Details are arch-specific. For example:
-#   - which registers must be saved, the callee-saved are sometimes enough (X86)
-#     but some archs need to save the FPU register too (ARMHF);
-#   - a simple return may be enough (X86), but sometimes an explicit jump is
-#     required to not confuse the stack unwinder (ARM);
-#   - and more.
-#
-#   For the initial resume, the register holding the first parameter must be set
-#   (see makecontext below) and thus must also be saved/restored.
-#
-# - `Fiber#makecontext(stack_ptr : Void*, fiber_main : Fiber ->)`
-#
-#   `makecontext` is responsible to reserve and initialize space on the stack
-#   for the initial context and save the initial `@stack_top` pointer. The first
-#   time a fiber is resumed, the `fiber_main` proc must be called, passing
-#   `self` as its first argument.
-require "./fiber/*"
+require "./fiber/context"
+require "./fiber/stack_pool"
 
 # :nodoc:
 @[NoInline]
@@ -42,17 +11,18 @@ fun _fiber_get_stack_top : Void*
 end
 
 class Fiber
-  STACK_SIZE = 8 * 1024 * 1024
-
   @@fibers = Thread::LinkedList(Fiber).new
-  @@stack_pool = [] of Void*
 
+  # :nodoc:
+  class_getter stack_pool = StackPool.new
+
+  @context : Context
   @stack : Void*
   @resume_event : Crystal::Event?
-  @stack_top = Pointer(Void).null
-  protected property stack_top : Void*
   protected property stack_bottom : Void*
   property name : String?
+  @alive = true
+  @current_thread = Atomic(Thread?).new(nil)
 
   # :nodoc:
   property next : Fiber?
@@ -65,9 +35,14 @@ class Fiber
     @@fibers.delete(fiber)
   end
 
+  # :nodoc:
+  def self.unsafe_each
+    @@fibers.unsafe_each { |fiber| yield fiber }
+  end
+
   def initialize(@name : String? = nil, &@proc : ->)
-    @stack = Fiber.allocate_stack
-    @stack_bottom = @stack + STACK_SIZE
+    @context = Context.new
+    @stack, @stack_bottom = Fiber.stack_pool.checkout
 
     fiber_main = ->(f : Fiber) { f.run }
 
@@ -84,48 +59,18 @@ class Fiber
   end
 
   # :nodoc:
-  def initialize(@stack : Void*)
+  def initialize(@stack : Void*, thread)
     @proc = Proc(Void).new { }
-    @stack_top = _fiber_get_stack_top
-    @stack_bottom = GC.stack_bottom
+    @context = Context.new(_fiber_get_stack_top)
+    @stack_bottom = GC.current_thread_stack_bottom
     @name = "main"
-
+    @current_thread.set(thread)
     @@fibers.push(self)
-  end
-
-  protected def self.allocate_stack
-    if pointer = @@stack_pool.pop?
-      return pointer
-    end
-
-    flags = LibC::MAP_PRIVATE | LibC::MAP_ANON
-    {% if flag?(:openbsd) && !flag?(:"openbsd6.2") %}
-      flags |= LibC::MAP_STACK
-    {% end %}
-
-    LibC.mmap(nil, Fiber::STACK_SIZE, LibC::PROT_READ | LibC::PROT_WRITE, flags, -1, 0).tap do |pointer|
-      raise Errno.new("Cannot allocate new fiber stack") if pointer == LibC::MAP_FAILED
-
-      {% if flag?(:linux) %}
-        LibC.madvise(pointer, Fiber::STACK_SIZE, LibC::MADV_NOHUGEPAGE)
-      {% end %}
-
-      LibC.mprotect(pointer, 4096, LibC::PROT_NONE)
-    end
-  end
-
-  # :nodoc:
-  def self.stack_pool_collect
-    return if @@stack_pool.size == 0
-    free_count = @@stack_pool.size > 1 ? @@stack_pool.size / 2 : 1
-    free_count.times do
-      stack = @@stack_pool.pop
-      LibC.munmap(stack, Fiber::STACK_SIZE)
-    end
   end
 
   # :nodoc:
   def run
+    GC.unlock_read
     @proc.call
   rescue ex
     if name = @name
@@ -136,7 +81,7 @@ class Fiber
     ex.inspect_with_backtrace(STDERR)
     STDERR.flush
   ensure
-    @@stack_pool << @stack
+    Fiber.stack_pool.release(@stack)
 
     # Remove the current fiber from the linked list
     @@fibers.delete(self)
@@ -144,11 +89,30 @@ class Fiber
     # Delete the resume event if it was used by `yield` or `sleep`
     @resume_event.try &.free
 
+    @alive = false
     Crystal::Scheduler.reschedule
   end
 
   def self.current
     Crystal::Scheduler.current_fiber
+  end
+
+  # The fiber's proc is currently running or didn't fully save its context. The
+  # fiber can't be resumed.
+  def running?
+    @context.resumable == 0
+  end
+
+  # The fiber's proc is currently not running and fully saved its context. The
+  # fiber can be resumed safely.
+  def resumable?
+    @context.resumable == 1
+  end
+
+  # The fiber's proc has terminated, and the fiber is now considered dead. The
+  # fiber is impossible to resume, ever.
+  def dead?
+    @alive == false
   end
 
   def resume : Nil
@@ -164,7 +128,7 @@ class Fiber
     Crystal::Scheduler.yield
   end
 
-  def to_s(io)
+  def to_s(io : IO) : Nil
     io << "#<" << self.class.name << ":0x"
     object_id.to_s(16, io)
     if name = @name
@@ -173,21 +137,13 @@ class Fiber
     io << '>'
   end
 
-  def inspect(io)
+  def inspect(io : IO) : Nil
     to_s(io)
   end
 
-  protected def push_gc_roots
+  # :nodoc:
+  def push_gc_roots
     # Push the used section of the stack
-    GC.push_stack @stack_top, @stack_bottom
-  end
-
-  # pushes the stack of pending fibers when the GC wants to collect memory:
-  GC.before_collect do
-    current = Fiber.current
-
-    @@fibers.unsafe_each do |fiber|
-      fiber.push_gc_roots unless fiber == current
-    end
+    GC.push_stack @context.stack_top, @stack_bottom
   end
 end

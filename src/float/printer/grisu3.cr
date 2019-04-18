@@ -251,7 +251,7 @@ module Float::Printer::Grisu3
     # with the divisor exponent + 1. And the divisor is the biggest power of ten
     # that is smaller than integrals.
     while kappa > 0
-      digit = integrals / divisor
+      digit = integrals // divisor
       # pp [digit, kappa]
       buffer[length] = 48_u8 + digit
       length += 1
@@ -271,7 +271,7 @@ module Float::Printer::Grisu3
         return weeded, kappa, length
       end
 
-      divisor /= 10
+      divisor //= 10
     end
 
     # The integrals have been generated. We are at the point of the decimal

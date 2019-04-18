@@ -2,6 +2,8 @@
 # and can be used for traversing dynamic or unknown JSON structures.
 #
 # ```
+# require "json"
+#
 # obj = JSON.parse(%({"access": [{"name": "mapping", "speed": "fast"}, {"name": "any", "speed": "slow"}]}))
 # obj["access"][1]["name"].as_s  # => "any"
 # obj["access"][1]["speed"].as_s # => "slow"
@@ -244,12 +246,12 @@ struct JSON::Any
   end
 
   # :nodoc:
-  def inspect(io)
+  def inspect(io : IO) : Nil
     @raw.inspect(io)
   end
 
   # :nodoc:
-  def to_s(io)
+  def to_s(io : IO) : Nil
     @raw.to_s(io)
   end
 

@@ -91,7 +91,7 @@ class Object
   # Descendants must usually **not** override this method. Instead,
   # they must override `to_s(io)`, which must append to the given
   # IO object.
-  def to_s
+  def to_s : String
     String.build do |io|
       to_s io
     end
@@ -102,17 +102,45 @@ class Object
   #
   # An object must never append itself to the io argument,
   # as this will in turn call `to_s(io)` on it.
-  abstract def to_s(io : IO)
+  abstract def to_s(io : IO) : Nil
 
-  # Returns a `String` representation of this object.
+  # Returns a `String` representation of this object suitable
+  # to be embedded inside other expressions, sometimes providing
+  # more information about this object.
   #
-  # Similar to `to_s`, but usually returns more information about
-  # this object.
+  # `#inspect` (and `#inspect(io)`) are the methods used when
+  # you invoke `#to_s` or `#inspect` on an object that holds
+  # other objects and wants to show them. For example when you
+  # invoke `Array#to_s`, `#inspect` will be invoked on each element:
+  #
+  # ```
+  # ary = ["one", "two", "three, etc."]
+  # ary.inspect # => ["one", "two", "three, etc."]
+  # ```
+  #
+  # Note that if Array invoked `#to_s` on each of the elements
+  # above, the output would have been this:
+  #
+  # ```
+  # ary = ["one", "two", "three, etc."]
+  # # If inspect invoked to_s on each element...
+  # ary.inspect # => [one, two, three, etc.]
+  # ```
+  #
+  # Note that it's not clear how many elements the array has,
+  # or which are they, because `#to_s` doesn't guarantee that
+  # the string representation is clearly delimited (in the case
+  # of `String` the quotes are not shown).
+  #
+  # Also note that sometimes the output of `#inspect` will look
+  # like a Crystal expression that will compile, but this isn't
+  # always the case, nor is it necessary. Notably, `Reference#inspect`
+  # and `Struct#inspect` return values that don't compile.
   #
   # Classes must usually **not** override this method. Instead,
   # they must override `inspect(io)`, which must append to the
   # given `IO` object.
-  def inspect
+  def inspect : String
     String.build do |io|
       inspect io
     end
@@ -123,7 +151,8 @@ class Object
   #
   # Similar to `to_s(io)`, but usually appends more information
   # about this object.
-  def inspect(io : IO)
+  # See `#inspect`.
+  def inspect(io : IO) : Nil
     to_s io
   end
 
@@ -331,7 +360,7 @@ class Object
     #
     # ```
     # class Person
-    #   {{macro_prefix}}getter(birth_date) { Time.now }
+    #   {{macro_prefix}}getter(birth_date) { Time.local }
     # end
     # ```
     #
@@ -341,7 +370,7 @@ class Object
     # class Person
     #   def {{method_prefix}}birth_date
     #     if (value = {{var_prefix}}birth_date).nil?
-    #       {{var_prefix}}birth_date = Time.now
+    #       {{var_prefix}}birth_date = Time.local
     #     else
     #       value
     #     end
@@ -560,24 +589,56 @@ class Object
     #   end
     # end
     # ```
-    macro {{macro_prefix}}getter?(*names)
-      \{% for name in names %}
+    #
+    # If a block is given to the macro, a getter is generated
+    # with a variable that is lazily initialized with
+    # the block's contents, for examples see `#{{macro_prefix}}getter`.
+    macro {{macro_prefix}}getter?(*names, &block)
+      \{% if block %}
+        \{% if names.size != 1 %}
+          \{{ raise "Only one argument can be passed to `getter?` with a block" }}
+        \{% end %}
+
+        \{% name = names[0] %}
+
         \{% if name.is_a?(TypeDeclaration) %}
-          {{var_prefix}}\{{name}}
+          {{var_prefix}}\{{name.var.id}} : \{{name.type}}?
 
-          def {{method_prefix}}\{{name.var.id}}? : \{{name.type}}
-            {{var_prefix}}\{{name.var.id}}
-          end
-        \{% elsif name.is_a?(Assign) %}
-          {{var_prefix}}\{{name}}
-
-          def {{method_prefix}}\{{name.target.id}}?
-            {{var_prefix}}\{{name.target.id}}
+          def {{method_prefix}}\{{name.var.id}}?
+            if (value = {{var_prefix}}\{{name.var.id}}).nil?
+              {{var_prefix}}\{{name.var.id}} = \{{yield}}
+            else
+              value
+            end
           end
         \{% else %}
           def {{method_prefix}}\{{name.id}}?
-            {{var_prefix}}\{{name.id}}
+            if (value = {{var_prefix}}\{{name.id}}).nil?
+              {{var_prefix}}\{{name.id}} = \{{yield}}
+            else
+              value
+            end
           end
+        \{% end %}
+      \{% else %}
+        \{% for name in names %}
+          \{% if name.is_a?(TypeDeclaration) %}
+            {{var_prefix}}\{{name}}
+
+            def {{method_prefix}}\{{name.var.id}}? : \{{name.type}}
+              {{var_prefix}}\{{name.var.id}}
+            end
+          \{% elsif name.is_a?(Assign) %}
+            {{var_prefix}}\{{name}}
+
+            def {{method_prefix}}\{{name.target.id}}?
+              {{var_prefix}}\{{name.target.id}}
+            end
+          \{% else %}
+            def {{method_prefix}}\{{name.id}}?
+              {{var_prefix}}\{{name.id}}
+            end
+          \{% end %}
         \{% end %}
       \{% end %}
     end
@@ -794,7 +855,7 @@ class Object
     #
     # ```
     # class Person
-    #   {{macro_prefix}}property(birth_date) { Time.now }
+    #   {{macro_prefix}}property(birth_date) { Time.local }
     # end
     # ```
     #
@@ -804,7 +865,7 @@ class Object
     # class Person
     #   def {{method_prefix}}birth_date
     #     if (value = {{var_prefix}}birth_date).nil?
-    #       {{var_prefix}}birth_date = Time.now
+    #       {{var_prefix}}birth_date = Time.local
     #     else
     #       value
     #     end
@@ -1052,33 +1113,71 @@ class Object
     #   end
     # end
     # ```
-    macro {{macro_prefix}}property?(*names)
-      \{% for name in names %}
-        \{% if name.is_a?(TypeDeclaration) %}
-          {{var_prefix}}\{{name}}
+    #
+    # If a block is given to the macro, a property is generated
+    # with a variable that is lazily initialized with
+    # the block's contents, for examples see `#{{macro_prefix}}property`.
+    macro {{macro_prefix}}property?(*names, &block)
+      \{% if block %}
+        \{% if names.size != 1 %}
+          \{{ raise "Only one argument can be passed to `property?` with a block" }}
+        \{% end %}
 
-          def {{method_prefix}}\{{name.var.id}}? : \{{name.type}}
-            {{var_prefix}}\{{name.var.id}}
+        \{% name = names[0] %}
+
+        \{% if name.is_a?(TypeDeclaration) %}
+          {{var_prefix}}\{{name.var.id}} : \{{name.type}}?
+
+          def {{method_prefix}}\{{name.var.id}}?
+            if (value = {{var_prefix}}\{{name.var.id}}).nil?
+              {{var_prefix}}\{{name.var.id}} = \{{yield}}
+            else
+              value
+            end
           end
 
           def {{method_prefix}}\{{name.var.id}}=({{var_prefix}}\{{name.var.id}} : \{{name.type}})
           end
-        \{% elsif name.is_a?(Assign) %}
-          {{var_prefix}}\{{name}}
-
-          def {{method_prefix}}\{{name.target.id}}?
-            {{var_prefix}}\{{name.target.id}}
-          end
-
-          def {{method_prefix}}\{{name.target.id}}=({{var_prefix}}\{{name.target.id}})
-          end
         \{% else %}
           def {{method_prefix}}\{{name.id}}?
-            {{var_prefix}}\{{name.id}}
+            if (value = {{var_prefix}}\{{name.id}}).nil?
+              {{var_prefix}}\{{name.id}} = \{{yield}}
+            else
+              value
+            end
           end
 
           def {{method_prefix}}\{{name.id}}=({{var_prefix}}\{{name.id}})
           end
+        \{% end %}
+      \{% else %}
+        \{% for name in names %}
+          \{% if name.is_a?(TypeDeclaration) %}
+            {{var_prefix}}\{{name}}
+
+            def {{method_prefix}}\{{name.var.id}}? : \{{name.type}}
+              {{var_prefix}}\{{name.var.id}}
+            end
+
+            def {{method_prefix}}\{{name.var.id}}=({{var_prefix}}\{{name.var.id}} : \{{name.type}})
+            end
+          \{% elsif name.is_a?(Assign) %}
+            {{var_prefix}}\{{name}}
+
+            def {{method_prefix}}\{{name.target.id}}?
+              {{var_prefix}}\{{name.target.id}}
+            end
+
+            def {{method_prefix}}\{{name.target.id}}=({{var_prefix}}\{{name.target.id}})
+            end
+          \{% else %}
+            def {{method_prefix}}\{{name.id}}?
+              {{var_prefix}}\{{name.id}}
+            end
+
+            def {{method_prefix}}\{{name.id}}=({{var_prefix}}\{{name.id}})
+            end
+          \{% end %}
         \{% end %}
       \{% end %}
     end

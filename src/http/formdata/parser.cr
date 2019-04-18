@@ -15,6 +15,8 @@ module HTTP::FormData
     # into memory.
     #
     # ```
+    # require "http"
+    #
     # form_data = "--aA40\r\nContent-Disposition: form-data; name=\"field1\"; filename=\"foo.txt\"; size=13\r\nContent-Type: text/plain\r\n\r\nfield data\r\n--aA40--"
     # parser = HTTP::FormData::Parser.new(IO::Memory.new(form_data), "aA40")
     # parser.next do |part|

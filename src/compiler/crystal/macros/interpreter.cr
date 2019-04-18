@@ -551,7 +551,7 @@ module Crystal
       node.raise "can't execute #{node.class_desc} in a macro"
     end
 
-    def to_s
+    def to_s : String
       @str.to_s
     end
 

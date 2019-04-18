@@ -176,19 +176,14 @@ struct Float32
     self ** other.to_f32
   end
 
-  def to_s
+  def to_s : String
     String.build(22) do |buffer|
       Printer.print(self, buffer)
     end
   end
 
-  def to_s(io : IO)
+  def to_s(io : IO) : Nil
     Printer.print(self, io)
-  end
-
-  def inspect(io)
-    to_s(io)
-    io << "_f32"
   end
 
   def clone
@@ -265,13 +260,13 @@ struct Float64
     self ** other.to_f64
   end
 
-  def to_s
+  def to_s : String
     String.build(22) do |buffer|
       Printer.print(self, buffer)
     end
   end
 
-  def to_s(io : IO)
+  def to_s(io : IO) : Nil
     Printer.print(self, io)
   end
 

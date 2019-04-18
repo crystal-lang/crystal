@@ -48,6 +48,8 @@ module JSON
   # To change how individual instance variables are parsed and serialized, the annotation `JSON::Field`
   # can be placed on the instance variable. Annotating property, getter and setter macros is also allowed.
   # ```
+  # require "json"
+  #
   # class A
   #   include JSON::Serializable
   #
@@ -66,6 +68,8 @@ module JSON
   #
   # Deserialization also respects default values of variables:
   # ```
+  # require "json"
+  #
   # struct A
   #   include JSON::Serializable
   #   @a : Int32
@@ -84,6 +88,8 @@ module JSON
   # document will be stored in a `Hash(String, JSON::Any)`. On serialization, any keys inside json_unmapped
   # will be serialized and appended to the current json object.
   # ```
+  # require "json"
+  #
   # struct A
   #   include JSON::Serializable
   #   include JSON::Serializable::Unmapped
@@ -101,6 +107,8 @@ module JSON
   # * **emit_nulls**: if `true`, emits a `null` value for all nilable properties (by default nulls are not emitted)
   #
   # ```
+  # require "json"
+  #
   # @[JSON::Serializable::Options(emit_nulls: true)]
   # class A
   #   include JSON::Serializable

@@ -400,4 +400,16 @@ describe "Visibility modifiers" do
       ),
       "undefined local variable or method 'foo'"
   end
+
+  it "defines protected initialize (#7501)" do
+    assert_error %(
+      class Foo
+        protected def initialize
+        end
+      end
+
+      Foo.new
+      ),
+      "protected method 'new' called for Foo.class"
+  end
 end

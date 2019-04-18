@@ -130,8 +130,8 @@ def print_sol(str)
   i = 0
   str.each_byte do |c|
     puts if i % 5 == 0
-    print " " if (i + 5) % 10 == 0
-    print " "
+    print ' ' if (i + 5) % 10 == 0
+    print ' '
     print c.chr
     i += 1
   end

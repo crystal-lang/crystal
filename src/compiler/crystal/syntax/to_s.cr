@@ -3,11 +3,11 @@ require "./visitor"
 
 module Crystal
   class ASTNode
-    def inspect(io)
+    def inspect(io : IO) : Nil
       to_s(io)
     end
 
-    def to_s(io, macro_expansion_pragmas = nil, emit_doc = false)
+    def to_s(io : IO, macro_expansion_pragmas = nil, emit_doc = false) : Nil
       visitor = ToSVisitor.new(io, macro_expansion_pragmas: macro_expansion_pragmas, emit_doc: emit_doc)
       self.accept visitor
     end
@@ -1218,8 +1218,10 @@ module Crystal
     end
 
     def visit(node : RangeLiteral)
-      need_parens = need_parens(node.from)
-      in_parenthesis(need_parens, node.from)
+      unless node.from.nop?
+        need_parens = need_parens(node.from)
+        in_parenthesis(need_parens, node.from)
+      end
 
       if node.exclusive?
         @str << "..."
@@ -1227,8 +1229,10 @@ module Crystal
         @str << ".."
       end
 
-      need_parens = need_parens(node.to)
-      in_parenthesis(need_parens, node.to)
+      unless node.to.nop?
+        need_parens = need_parens(node.to)
+        in_parenthesis(need_parens, node.to)
+      end
 
       false
     end
@@ -1255,6 +1259,15 @@ module Crystal
       node.exp.accept(self)
       @str << ')'
       false
+    end
+
+    def visit(node : OffsetOf)
+      @str << keyword("offsetof")
+      @str << '('
+      node.offsetof_type.accept(self)
+      @str << ", "
+      node.instance_var.accept(self)
+      @str << ')'
     end
 
     def visit(node : IsA)
@@ -1554,11 +1567,11 @@ module Crystal
       @inside_macro = old_inside_macro
     end
 
-    def to_s
+    def to_s : String
       @str.to_s
     end
 
-    def to_s(io)
+    def to_s(io : IO) : Nil
       @str.to_s(io)
     end
   end

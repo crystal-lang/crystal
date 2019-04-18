@@ -157,6 +157,13 @@ describe BigRational do
     (1 / br(10, 7)).should eq(br(7, 10))
   end
 
+  it "#//" do
+    (br(10, 7) // br(3, 7)).should eq(br(9, 3))
+    expect_raises(DivisionByZeroError) { br(10, 7) / br(0, 10) }
+    (br(10, 7) // 3).should eq(0)
+    (1 // br(10, 7)).should eq(0)
+  end
+
   it "#- (negation)" do
     (-br(10, 3)).should eq(br(-10, 3))
   end
@@ -178,6 +185,39 @@ describe BigRational do
     (br(10, 3) >> 2).should eq(br(5, 6))
   end
 
+  it "#ceil" do
+    br(2, 1).ceil.should eq(2)
+    br(21, 10).ceil.should eq(3)
+    br(29, 10).ceil.should eq(3)
+
+    br(201, 100).ceil.should eq(3)
+    br(211, 100).ceil.should eq(3)
+    br(291, 100).ceil.should eq(3)
+
+    br(-201, 100).ceil.should eq(-2)
+    br(-291, 100).ceil.should eq(-2)
+  end
+
+  it "#floor" do
+    br(21, 10).floor.should eq(2)
+    br(29, 10).floor.should eq(2)
+    br(-29, 10).floor.should eq(-3)
+
+    br(211, 100).floor.should eq(2)
+    br(291, 100).floor.should eq(2)
+    br(-291, 100).floor.should eq(-3)
+  end
+
+  it "#trunc" do
+    br(21, 10).trunc.should eq(2)
+    br(29, 10).trunc.should eq(2)
+    br(-29, 10).trunc.should eq(-2)
+
+    br(211, 100).trunc.should eq(2)
+    br(291, 100).trunc.should eq(2)
+    br(-291, 100).trunc.should eq(-2)
+  end
+
   it "#hash" do
     b = br(10, 3)
     hash = b.hash
@@ -191,6 +231,10 @@ describe BigRational do
   it "clones" do
     x = br(10, 3)
     x.clone.should eq(x)
+  end
+
+  describe "#inspect" do
+    it { 123.to_big_r.inspect.should eq("123") }
   end
 end
 

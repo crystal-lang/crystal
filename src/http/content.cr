@@ -10,7 +10,6 @@ module HTTP
 
     def close
       @expects_continue = false
-      skip_to_end
       super
     end
 
@@ -216,6 +215,10 @@ module HTTP
 
     def write(slice : Bytes)
       raise IO::Error.new "Can't write to ChunkedContent"
+    end
+
+    def closed?
+      @received_final_chunk || super
     end
   end
 end

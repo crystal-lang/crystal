@@ -72,6 +72,8 @@ class HTTP::Client
   # Returns the target host.
   #
   # ```
+  # require "http/client"
+  #
   # client = HTTP::Client.new "www.example.com"
   # client.host # => "www.example.com"
   # ```
@@ -80,6 +82,8 @@ class HTTP::Client
   # Returns the target port.
   #
   # ```
+  # require "http/client"
+  #
   # client = HTTP::Client.new "www.example.com"
   # client.port # => 80
   # ```
@@ -90,6 +94,8 @@ class HTTP::Client
   # Changes made after the initial request will have no effect.
   #
   # ```
+  # require "http/client"
+  #
   # client = HTTP::Client.new "www.example.com", tls: true
   # client.tls # => #<OpenSSL::SSL::Context::Client ...>
   # ```
@@ -149,6 +155,9 @@ class HTTP::Client
   # to port 443 and sets tls to `true`.
   #
   # ```
+  # require "http/client"
+  # require "uri"
+  #
   # uri = URI.parse("https://secure.example.com")
   # client = HTTP::Client.new(uri)
   #
@@ -176,6 +185,9 @@ class HTTP::Client
   # https protocol, which defaults to port 443 and sets tls to `true`.
   #
   # ```
+  # require "http/client"
+  # require "uri"
+  #
   # uri = URI.parse("https://secure.example.com")
   # HTTP::Client.new(uri) do |client|
   #   client.tls? # => #<OpenSSL::SSL::Context::Client>
@@ -206,6 +218,8 @@ class HTTP::Client
   # the client afterwards.
   #
   # ```
+  # require "http/client"
+  #
   # HTTP::Client.new("www.example.com") do |client|
   #   client.get "/"
   # end
@@ -231,6 +245,8 @@ class HTTP::Client
   # Sets the number of seconds to wait when reading before raising an `IO::Timeout`.
   #
   # ```
+  # require "http/client"
+  #
   # client = HTTP::Client.new("example.org")
   # client.read_timeout = 1.5
   # begin
@@ -246,6 +262,8 @@ class HTTP::Client
   # Sets the read timeout with a `Time::Span`, to wait when reading before raising an `IO::Timeout`.
   #
   # ```
+  # require "http/client"
+  #
   # client = HTTP::Client.new("example.org")
   # client.read_timeout = 5.minutes
   # begin
@@ -261,6 +279,8 @@ class HTTP::Client
   # Sets the number of seconds to wait when connecting, before raising an `IO::Timeout`.
   #
   # ```
+  # require "http/client"
+  #
   # client = HTTP::Client.new("example.org")
   # client.connect_timeout = 1.5
   # begin
@@ -276,6 +296,8 @@ class HTTP::Client
   # Sets the open timeout with a `Time::Span` to wait when connecting, before raising an `IO::Timeout`.
   #
   # ```
+  # require "http/client"
+  #
   # client = HTTP::Client.new("example.org")
   # client.connect_timeout = 5.minutes
   # begin
@@ -293,6 +315,8 @@ class HTTP::Client
   # Sets the number of seconds to wait when resolving a name, before raising an `IO::Timeout`.
   #
   # ```
+  # require "http/client"
+  #
   # client = HTTP::Client.new("example.org")
   # client.dns_timeout = 1.5
   # begin
@@ -310,6 +334,8 @@ class HTTP::Client
   # Sets the number of seconds to wait when resolving a name with a `Time::Span`, before raising an `IO::Timeout`.
   #
   # ```
+  # require "http/client"
+  #
   # client = HTTP::Client.new("example.org")
   # client.dns_timeout = 1.5.seconds
   # begin
@@ -328,6 +354,8 @@ class HTTP::Client
   #
   #
   # ```
+  # require "http/client"
+  #
   # client = HTTP::Client.new("www.example.com")
   # client.before_request do |request|
   #   request.headers["Authorization"] = "XYZ123"
@@ -344,6 +372,8 @@ class HTTP::Client
     # The response will have its body as a `String`, accessed via `HTTP::Client::Response#body`.
     #
     # ```
+    # require "http/client"
+    #
     # client = HTTP::Client.new("www.example.com")
     # response = client.{{method.id}}("/", headers: HTTP::Headers{"User-Agent" => "AwesomeApp"}, body: "Hello!")
     # response.body #=> "..."
@@ -356,6 +386,8 @@ class HTTP::Client
     # The response will have its body as an `IO` accessed via `HTTP::Client::Response#body_io`.
     #
     # ```
+    # require "http/client"
+    #
     # client = HTTP::Client.new("www.example.com")
     # client.{{method.id}}("/", headers: HTTP::Headers{"User-Agent" => "AwesomeApp"}, body: "Hello!") do |response|
     #   response.body_io.gets #=> "..."
@@ -371,6 +403,8 @@ class HTTP::Client
     # The response will have its body as a `String`, accessed via `HTTP::Client::Response#body`.
     #
     # ```
+    # require "http/client"
+    #
     # response = HTTP::Client.{{method.id}}("/", headers: HTTP::Headers{"User-Agent" => "AwesomeApp"}, body: "Hello!")
     # response.body #=> "..."
     # ```
@@ -382,6 +416,8 @@ class HTTP::Client
     # The response will have its body as an `IO` accessed via `HTTP::Client::Response#body_io`.
     #
     # ```
+    # require "http/client"
+    #
     # HTTP::Client.{{method.id}}("/", headers: HTTP::Headers{"User-Agent" => "AwesomeApp"}, body: "Hello!") do |response|
     #   response.body_io.gets #=> "..."
     # end
@@ -396,6 +432,8 @@ class HTTP::Client
     # to "application/x-www-form-urlencoded".
     #
     # ```
+    # require "http/client"
+    #
     # client = HTTP::Client.new "www.example.com"
     # response = client.{{method.id}} "/", form: "foo=bar"
     # ```
@@ -410,6 +448,8 @@ class HTTP::Client
     # The "Content-Type" header is set to "application/x-www-form-urlencoded".
     #
     # ```
+    # require "http/client"
+    #
     # client = HTTP::Client.new "www.example.com"
     # client.{{method.id}}("/", form: "foo=bar") do |response|
     #   response.body_io.gets
@@ -427,6 +467,8 @@ class HTTP::Client
     # to "application/x-www-form-urlencoded".
     #
     # ```
+    # require "http/client"
+    #
     # client = HTTP::Client.new "www.example.com"
     # response = client.{{method.id}} "/", form: {"foo" => "bar"}
     # ```
@@ -440,6 +482,8 @@ class HTTP::Client
     # The "Content-type" header is set to "application/x-www-form-urlencoded".
     #
     # ```
+    # require "http/client"
+    #
     # client = HTTP::Client.new "www.example.com"
     # client.{{method.id}}("/", form: {"foo" => "bar"}) do |response|
     #   response.body_io.gets
@@ -456,6 +500,8 @@ class HTTP::Client
     # to "application/x-www-form-urlencoded".
     #
     # ```
+    # require "http/client"
+    #
     # response = HTTP::Client.{{method.id}} "http://www.example.com", form: "foo=bar"
     # ```
     def self.{{method.id}}(url, headers : HTTP::Headers? = nil, tls = nil, *, form : String | IO | Hash) : HTTP::Client::Response
@@ -469,6 +515,8 @@ class HTTP::Client
     # The "Content-Type" header is set to "application/x-www-form-urlencoded".
     #
     # ```
+    # require "http/client"
+    #
     # HTTP::Client.{{method.id}}("http://www.example.com", form: "foo=bar") do |response|
     #   response.body_io.gets
     # end
@@ -486,6 +534,8 @@ class HTTP::Client
   # The response will have its body as a `String`, accessed via `HTTP::Client::Response#body`.
   #
   # ```
+  # require "http/client"
+  #
   # client = HTTP::Client.new "www.example.com"
   # response = client.exec HTTP::Request.new("GET", "/")
   # response.body # => "..."
@@ -521,6 +571,8 @@ class HTTP::Client
   # The response will have its body as an `IO` accessed via `HTTP::Client::Response#body_io`.
   #
   # ```
+  # require "http/client"
+  #
   # client = HTTP::Client.new "www.example.com"
   # client.exec(HTTP::Request.new("GET", "/")) do |response|
   #   response.body_io.gets # => "..."
@@ -604,6 +656,8 @@ class HTTP::Client
   # The response will have its body as a `String`, accessed via `HTTP::Client::Response#body`.
   #
   # ```
+  # require "http/client"
+  #
   # client = HTTP::Client.new "www.example.com"
   # response = client.exec "GET", "/"
   # response.body # => "..."
@@ -616,6 +670,8 @@ class HTTP::Client
   # The response will have its body as an `IO` accessed via `HTTP::Client::Response#body_io`.
   #
   # ```
+  # require "http/client"
+  #
   # client = HTTP::Client.new "www.example.com"
   # client.exec("GET", "/") do |response|
   #   response.body_io.gets # => "..."
@@ -631,6 +687,8 @@ class HTTP::Client
   # The response will have its body as an `IO` accessed via `HTTP::Client::Response#body_io`.
   #
   # ```
+  # require "http/client"
+  #
   # response = HTTP::Client.exec "GET", "http://www.example.com"
   # response.body # => "..."
   # ```
@@ -645,6 +703,8 @@ class HTTP::Client
   # The response will have its body as an `IO` accessed via `HTTP::Client::Response#body_io`.
   #
   # ```
+  # require "http/client"
+  #
   # HTTP::Client.exec("GET", "http://www.example.com") do |response|
   #   response.body_io.gets # => "..."
   # end

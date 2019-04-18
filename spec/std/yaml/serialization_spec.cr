@@ -15,8 +15,7 @@ alias YamlRec = Int32 | Array(YamlRec) | Hash(YamlRec, YamlRec)
 # Earlier libyaml releases still write the document end marker and this is hard to fix on Crystal's side.
 # So we just ignore it and adopt the specs accordingly to coincide with the used libyaml version.
 private def assert_yaml_document_end(actual, expected)
-  major, minor, _ = YAML.libyaml_version
-  if major == 0 && minor < 2
+  if YAML.libyaml_version < SemanticVersion.new(0, 2, 1)
     expected += "...\n"
   end
 
@@ -147,6 +146,12 @@ describe "YAML serialization" do
       big = BigFloat.from_yaml("1234.567891011121314")
       big.should be_a(BigFloat)
       big.should eq(BigFloat.new("1234.567891011121314"))
+    end
+
+    it "does for BigDecimal" do
+      big = BigDecimal.from_yaml("1234.567891011121314")
+      big.should be_a(BigDecimal)
+      big.should eq(BigDecimal.new("1234.567891011121314"))
     end
 
     it "does for Enum with number" do
@@ -326,7 +331,13 @@ describe "YAML serialization" do
     end
 
     it "does for bytes" do
-      "hello".to_slice.to_yaml.should eq("--- !!binary 'aGVsbG8=\n\n'\n")
+      yaml = "hello".to_slice.to_yaml
+
+      if YAML.libyaml_version < SemanticVersion.new(0, 2, 2)
+        yaml.should eq("--- !!binary 'aGVsbG8=\n\n'\n")
+      else
+        yaml.should eq("--- !!binary 'aGVsbG8=\n\n  '\n")
+      end
     end
 
     it "does a full document" do

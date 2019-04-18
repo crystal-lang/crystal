@@ -103,10 +103,16 @@ struct Char
     (ord - other).chr
   end
 
-  # Implements the comparison operator.
+  # The comparison operator.
+  #
+  # Returns the difference of the codepoint values of `self` and *other*.
+  # The result is either negative, `0` or positive based on whether `other`'s codepoint is
+  # less, equal, or greater than `self`'s codepoint.
   #
   # ```
   # 'a' <=> 'c' # => -2
+  # 'z' <=> 'z' # => 0
+  # 'c' <=> 'a' # => 2
   # ```
   def <=>(other : Char)
     self - other
@@ -465,7 +471,7 @@ struct Char
   # 'あ'.inspect      # => "'あ'"
   # '\u0012'.inspect # => "'\\u{12}'"
   # ```
-  def inspect
+  def inspect : String
     dump_or_inspect do |io|
       if ascii_control?
         io << "\\u{"
@@ -480,7 +486,7 @@ struct Char
   # Appends this char as a string that contains a char literal to the given `IO`.
   #
   # See also: `#inspect`.
-  def inspect(io)
+  def inspect(io : IO) : Nil
     io << inspect
   end
 
@@ -745,7 +751,7 @@ struct Char
   # 'a'.to_s # => "a"
   # 'あ'.to_s # => "あ"
   # ```
-  def to_s
+  def to_s : String
     String.new(4) do |buffer|
       appender = buffer.appender
       each_byte { |byte| appender << byte }
@@ -756,7 +762,7 @@ struct Char
   # Appends this char to the given `IO`.
   #
   # This appends this char's bytes as encoded by UTF-8 to the given `IO`.
-  def to_s(io : IO)
+  def to_s(io : IO) : Nil
     if ascii?
       byte = ord.to_u8
 

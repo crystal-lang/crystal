@@ -38,4 +38,8 @@ class Crystal::Doc::Constant
       builder.field "summary", formatted_summary
     end
   end
+
+  def annotations(annotation_type)
+    @const.annotations(annotation_type)
+  end
 end

@@ -204,7 +204,7 @@ module Debug
         bytes == other.bytes
       end
 
-      def inspect(io)
+      def inspect(io : IO) : Nil
         io << bytes.to_slice.hexstring
       end
     end
@@ -309,7 +309,7 @@ module Debug
           Stab.new(value) if stab?
         end
 
-        def to_s(io)
+        def to_s(io : IO) : Nil
           if stab?
             io << "STAB(#{stab})"
             return
@@ -335,7 +335,7 @@ module Debug
           io << n.join('|')
         end
 
-        def inspect(io)
+        def inspect(io : IO) : Nil
           to_s(io)
         end
       end
@@ -357,7 +357,7 @@ module Debug
         type.stab
       end
 
-      def inspect(io)
+      def inspect(io : IO) : Nil
         io << "#{self.class.name}(type=#{type}, name=#{name.inspect}, sect=#{sect}, desc=#{desc}, value=#{value})"
       end
     end
@@ -458,7 +458,7 @@ module Debug
 
           if nlist.strx > 0
             @io.seek(symtab.stroff + nlist.strx) do
-              nlist.name = @io.gets('\0').to_s.chomp('\0')
+              nlist.name = @io.gets('\0', chomp: true).to_s
             end
           end
 

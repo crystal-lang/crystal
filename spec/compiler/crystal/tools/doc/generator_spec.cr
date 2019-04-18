@@ -82,4 +82,19 @@ describe Doc::Generator do
       generator.must_include_toplevel?(doc_type).should be_false
     end
   end
+
+  describe "collect_constants" do
+    it "returns empty array when constants are private" do
+      program = Program.new
+      generator = Doc::Generator.new program, ["foo"], ".", "html", nil
+      doc_type = Doc::Type.new generator, program
+
+      constant = Const.new program, program, "Foo", 1.int32
+      constant.private = true
+      constant.add_location Location.new "foo", 1, 1
+      program.types[constant.name] = constant
+
+      generator.collect_constants(doc_type).should be_empty
+    end
+  end
 end

@@ -245,7 +245,7 @@ struct NamedTuple
   end
 
   # Same as `to_s`.
-  def inspect
+  def inspect : String
     to_s
   end
 
@@ -319,7 +319,7 @@ struct NamedTuple
   # tuple = {name: "Crystal", year: 2011}
   # tuple.to_s # => %({name: "Crystal", year: 2011})
   # ```
-  def to_s(io)
+  def to_s(io : IO) : Nil
     io << '{'
     {% for key, value, i in T %}
       {% if i > 0 %}

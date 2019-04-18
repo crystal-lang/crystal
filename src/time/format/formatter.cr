@@ -20,7 +20,7 @@ struct Time::Format
     end
 
     def year_divided_by_100
-      io << time.year / 100
+      io << time.year // 100
     end
 
     def full_or_short_year
@@ -136,7 +136,7 @@ struct Time::Format
     end
 
     def microseconds
-      pad6 time.nanosecond / 1000, '0'
+      pad6 time.nanosecond // 1000, '0'
     end
 
     def nanoseconds

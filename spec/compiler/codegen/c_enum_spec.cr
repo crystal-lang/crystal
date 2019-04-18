@@ -1,6 +1,6 @@
 require "../../spec_helper"
 
-CodeGenCEnumString = "lib LibFoo; enum Bar; X, Y, Z = 10, W; end end"
+CodeGenCEnumString = "lib LibFoo; enum Bar; X; Y; Z = 10; W; end end"
 
 describe "Code gen: c enum" do
   it "codegens enum value" do

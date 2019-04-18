@@ -26,14 +26,14 @@ class URI
     private BASE36 = "abcdefghijklmnopqrstuvwxyz0123456789"
 
     private def self.adapt(delta, numpoints, firsttime)
-      delta /= firsttime ? DAMP : 2
-      delta += delta / numpoints
+      delta //= firsttime ? DAMP : 2
+      delta += delta // numpoints
       k = 0
-      while delta > ((BASE - TMIN) * TMAX) / 2
-        delta /= BASE - TMIN
+      while delta > ((BASE - TMIN) * TMAX) // 2
+        delta //= BASE - TMIN
         k += BASE
       end
-      k + (((BASE - TMIN + 1) * delta) / (delta + SKEW))
+      k + (((BASE - TMIN + 1) * delta) // (delta + SKEW))
     end
 
     def self.encode(string)
@@ -67,7 +67,7 @@ class URI
         next if m == prev
         prev = m
 
-        raise Exception.new("Overflow: input needs wider integers to process") if m.ord - n > (Int32::MAX - delta) / h
+        raise Exception.new("Overflow: input needs wider integers to process") if m.ord - n > (Int32::MAX - delta) // h
         delta += (m.ord - n) * h
         n = m.ord + 1
 
@@ -82,7 +82,7 @@ class URI
               t = k <= bias ? TMIN : k >= bias + TMAX ? TMAX : k - bias
               break if q < t
               io << BASE36[t + ((q - t) % (BASE - t))]
-              q = (q - t) / (BASE - t)
+              q = (q - t) // (BASE - t)
               k += BASE
             end
             io << BASE36[q]
@@ -135,7 +135,7 @@ class URI
         else
           outsize = output.size + 1
           bias = adapt i - oldi, outsize, oldi == 0
-          n += i / outsize
+          n += i // outsize
           i %= outsize
           output.insert i, n.chr
           i += 1
@@ -155,7 +155,7 @@ class URI
         first = true
         string.split('.') do |part|
           unless first
-            io << "."
+            io << '.'
           end
 
           if part.ascii_only?

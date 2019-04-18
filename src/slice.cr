@@ -119,10 +119,25 @@ struct Slice(T)
     new(size, read_only: read_only) { value }
   end
 
-  # Returns a copy of this slice.
-  # This method allocates memory for the slice copy.
+  # Returns a deep copy of this slice.
+  #
+  # This method allocates memory for the slice copy and stores the return values
+  # from calling `#clone` on each item.
   def clone
-    copy = self.class.new(size)
+    pointer = Pointer(T).malloc(size)
+    copy = self.class.new(pointer, size)
+    each_with_index do |item, i|
+      copy[i] = item.clone
+    end
+    copy
+  end
+
+  # Returns a shallow copy of this slice.
+  #
+  # This method allocates memory for the slice copy and duplicates the values.
+  def dup
+    pointer = Pointer(T).malloc(size)
+    copy = self.class.new(pointer, size)
     copy.copy_from(self)
     copy
   end
@@ -201,6 +216,25 @@ struct Slice(T)
     end
 
     Slice.new(@pointer + start, count, read_only: @read_only)
+  end
+
+  # Returns a new slice with the elements in the given range.
+  #
+  #
+  # Negative indices count backward from the end of the slice (-1 is the last
+  # element). Additionally, an empty slice is returned when the starting index
+  # for an element range is at the end of the slice.
+  #
+  # ```
+  # slice = Slice.new(5) { |i| i + 10 }
+  # slice # => Slice[10, 11, 12, 13, 14]
+  #
+  # slice2 = slice[1..3]
+  # slice2 # => Slice[11, 12, 13]
+  # ```
+  def [](range : Range)
+    start, count = Indexable.range_to_index_and_count(range, size)
+    self[start, count]
   end
 
   @[AlwaysInline]
@@ -354,7 +388,7 @@ struct Slice(T)
     source.move_to(self)
   end
 
-  def inspect(io)
+  def inspect(io : IO) : Nil
     to_s(io)
   end
 
@@ -476,7 +510,7 @@ struct Slice(T)
     self
   end
 
-  def to_s(io)
+  def to_s(io : IO) : Nil
     if T == UInt8
       io << "Bytes["
       # Inspect using to_s because we know this is a UInt8.

@@ -13,7 +13,7 @@
 # Calculation between `Time` also returns a `Time::Span`.
 #
 # ```
-# span = Time.new(2015, 10, 10) - Time.new(2015, 9, 10)
+# span = Time.utc(2015, 10, 10) - Time.utc(2015, 9, 10)
 # span       # => 30.00:00:00
 # span.class # => Time::Span
 # ```
@@ -181,12 +181,12 @@ struct Time::Span
 
   # Returns the number of milliseconds of the second (`0..999`) in this time span.
   def milliseconds : Int32
-    nanoseconds / NANOSECONDS_PER_MILLISECOND
+    nanoseconds // NANOSECONDS_PER_MILLISECOND
   end
 
   # Returns the number of microseconds of the second (`0..999999`) in this time span.
   def microseconds : Int32
-    nanoseconds / NANOSECONDS_PER_MICROSECOND
+    nanoseconds // NANOSECONDS_PER_MICROSECOND
   end
 
   # Returns the number of nanoseconds of the second (`0..999_999_999`)
@@ -261,12 +261,12 @@ struct Time::Span
 
   # Returns a `Time` that happens later by `self` than the current time.
   def from_now : Time
-    Time.now + self
+    Time.local + self
   end
 
   # Returns a `Time` that happens earlier by `self` than the current time.
   def ago : Time
-    Time.now - self
+    Time.local - self
   end
 
   def -(other : self) : Time::Span
@@ -317,7 +317,7 @@ struct Time::Span
     nanoseconds = self.nanoseconds.tdiv(number)
 
     remainder = to_i.remainder(number)
-    nanoseconds += (remainder * NANOSECONDS_PER_SECOND) / number
+    nanoseconds += (remainder * NANOSECONDS_PER_SECOND) // number
 
     # TODO check overflow
     Span.new(
@@ -341,7 +341,7 @@ struct Time::Span
     cmp
   end
 
-  def inspect(io : IO)
+  def inspect(io : IO) : Nil
     if to_i < 0 || nanoseconds < 0
       io << '-'
     end
@@ -541,8 +541,8 @@ end
 # specified number of months.
 #
 # ```
-# Time.new(2016, 2, 1) + 13.months # => 2017-03-01 00:00:00
-# Time.new(2016, 2, 29) + 2.years  # => 2018-02-28 00:00:00
+# Time.local(2016, 2, 1) + 13.months # => 2017-03-01 00:00:00
+# Time.local(2016, 2, 29) + 2.years  # => 2018-02-28 00:00:00
 # ```
 struct Time::MonthSpan
   # The number of months.
@@ -554,12 +554,12 @@ struct Time::MonthSpan
 
   # Returns a `Time` that happens N months after now.
   def from_now : Time
-    Time.now + self
+    Time.local + self
   end
 
   # Returns a `Time` that happens N months before now.
   def ago : Time
-    Time.now - self
+    Time.local - self
   end
 end
 

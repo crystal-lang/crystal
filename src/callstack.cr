@@ -223,10 +223,7 @@ struct CallStack
       read_dwarf_sections unless @@dwarf_line_numbers
       if ln = @@dwarf_line_numbers
         if row = ln.find(pc)
-          path = ln.files[row.file]?
-          if dirname = ln.directories[row.directory]?
-            path = "#{dirname}/#{path}"
-          end
+          path = "#{row.directory}/#{row.file}"
           return {path, row.line, row.column}
         end
       end
@@ -279,22 +276,21 @@ struct CallStack
           end
 
           strings = mach_o.read_section?("__debug_str") do |sh, io|
-            Debug::DWARF::Strings.new(io, sh.offset)
+            Debug::DWARF::Strings.new(io, sh.offset, sh.size)
           end
 
           mach_o.read_section?("__debug_info") do |sh, io|
             names = [] of {LibC::SizeT, LibC::SizeT, String}
 
-            while io.tell - sh.offset < sh.size
-              offset = io.tell - sh.offset
+            while (offset = io.pos - sh.offset) < sh.size
               info = Debug::DWARF::Info.new(io, offset)
 
               mach_o.read_section?("__debug_abbrev") do |sh, io|
                 info.read_abbreviations(io)
               end
 
-              parse_function_names_from_dwarf(info, strings) do |name, low_pc, high_pc|
-                names << {name, low_pc, high_pc}
+              parse_function_names_from_dwarf(info, strings) do |low_pc, high_pc, name|
+                names << {low_pc, high_pc, name}
               end
             end
 
@@ -381,14 +377,13 @@ struct CallStack
           end
 
           strings = elf.read_section?(".debug_str") do |sh, io|
-            Debug::DWARF::Strings.new(io, sh.offset)
+            Debug::DWARF::Strings.new(io, sh.offset, sh.size)
           end
 
           elf.read_section?(".debug_info") do |sh, io|
             names = [] of {LibC::SizeT, LibC::SizeT, String}
 
-            while io.tell - sh.offset < sh.size
-              offset = io.tell - sh.offset
+            while (offset = io.pos - sh.offset) < sh.size
               info = Debug::DWARF::Info.new(io, offset)
 
               elf.read_section?(".debug_abbrev") do |sh, io|

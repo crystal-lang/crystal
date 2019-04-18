@@ -15,11 +15,11 @@ class Crystal::VirtualFile
   def initialize(@macro : Macro, @source : String, @expanded_location : Location?)
   end
 
-  def to_s(io)
+  def to_s(io : IO) : Nil
     io << "expanded macro: " << @macro.name
   end
 
-  def inspect(io)
+  def inspect(io : IO) : Nil
     to_s(io)
   end
 

@@ -169,6 +169,17 @@ your own projects; a not so clean history is to prefer once a commit landed ther
 git push -f origin my_feature_branch
 ```
 
+## Git pre-commit hook
+
+Code submitted to this repository should be formatted according to `crystal tool format`.
+A pre-commit hook can be installed into the local git repo to ensure the formatter validates every commit: https://github.com/crystal-lang/crystal/blob/master/scripts/git/pre-commit
+
+Install the pre-commit hook:
+
+```sh
+ln -s scripts/git/pre-commit .git/hooks
+```
+
 ## Code of Conduct
 
 Please note that this project is released with a [Contributor Code of Conduct][ccoc].
