@@ -218,9 +218,9 @@ module Colorize
   @[Flags]
   enum Mode
     # Makes the text bold.
-    Bold
+    Bold = 1
     # Makes the text color bright.
-    Bright
+    Bright = 1
     # Dims the text color.
     Dim
     # Underlines the text.
