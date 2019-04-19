@@ -480,6 +480,72 @@ class URI
     end
   end
 
+  # Merge two URIs into new one. Both URIs not modified.
+  # Useful to get reative uri, for example:
+  #   uri = URI.parse("http://domain.com/some/path")
+  #   redirect = URI.parse("redirect?q=1")
+  #   (uri + redirect).to_s # => "http://domain.com/some/redirect?q=1"
+  # Section 5.2.2, 5.2.3 of RFC 3986
+  def +(other : URI)
+    return other.dup if other.host
+    uri = URI.new
+
+    uri.scheme = @scheme
+    uri.host = @host
+    uri.port = @port
+    uri.user = @user
+    uri.password = @password
+
+    base_path = @path
+    base_query = @query
+    base_fragment = @fragment
+
+    new_path = other.path
+    new_query = other.query
+    new_fragment = other.fragment
+
+    case new_path
+    when nil, .empty?
+      if base_path && !base_path.empty?
+        uri.path = base_path
+        uri.query = new_query || base_query
+        uri.fragment = new_fragment || base_fragment
+      else
+        q = uri.query = new_query || base_query
+        f = uri.fragment = new_fragment || base_fragment
+        uri.path = "/" if (q && !q.empty?) || (f && !f.empty?)
+      end
+    when .starts_with?('/')
+      uri.path = new_path
+      uri.query = new_query
+      uri.fragment = new_fragment
+    else
+      if base_path && !base_path.empty?
+        if ri = base_path.rindex('/')
+          path = String.build do |buf|
+            buf.write Slice.new(base_path.to_unsafe, ri)
+            buf << '/'
+            buf << new_path
+          end
+
+          uri.path = path
+          uri.query = new_query
+          uri.fragment = new_fragment
+        else
+          uri.path = base_path + new_path
+          uri.query = new_query
+          uri.fragment = new_fragment
+        end
+      else
+        uri.path = new_path.starts_with?('/') ? new_path : "/#{new_path}"
+        uri.query = new_query
+        uri.fragment = new_fragment
+      end
+    end
+
+    uri
+  end
+
   # A map of schemes and their respective default ports, seeded
   # with some well-known schemes sourced from the IANA [Uniform
   # Resource Identifier (URI) Schemes][1] and [Service Name and
