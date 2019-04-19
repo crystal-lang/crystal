@@ -170,6 +170,10 @@ struct BigRational < Number
     BigRational.new { |mpq| LibGMP.mpq_neg(mpq, self) }
   end
 
+  def **(other : Int)
+    ([self] * other).reduce { |i, j| i * j }
+  end
+
   # Returns a new `BigRational` as 1/r.
   #
   # This will raise an exception if rational is 0.

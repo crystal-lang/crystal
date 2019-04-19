@@ -199,6 +199,10 @@ struct BigDecimal < Number
     (self / other).floor
   end
 
+  def **(other : Int)
+    ([self] * other).reduce { |i, j| i * j }
+  end
+
   # Divides `self` with another `BigDecimal`, with a optionally configurable *max_div_iterations*, which
   # defines a maximum number of iterations in case the division is not exact.
   #
