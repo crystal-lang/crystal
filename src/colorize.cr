@@ -4,6 +4,7 @@
 # when it comes to obtaining a string representation of the object.
 #
 # Its first argument changes the foreground color:
+#
 # ```
 # require "colorize"
 #
@@ -13,6 +14,7 @@
 # ```
 #
 # There are alternative ways to change the foreground color:
+#
 # ```
 # require "colorize"
 #
@@ -21,6 +23,7 @@
 # ```
 #
 # To change the background color, the following methods are available:
+#
 # ```
 # require "colorize"
 #
@@ -30,6 +33,7 @@
 # ```
 #
 # You can also pass an RGB color to `colorize`:
+#
 # ```
 # require "colorize"
 #
@@ -41,6 +45,7 @@
 # ```
 #
 # Or an 8-bit color:
+#
 # ```
 # require "colorize"
 #
@@ -48,6 +53,7 @@
 # ```
 #
 # It's also possible to change the text decoration:
+#
 # ```
 # require "colorize"
 #
@@ -57,6 +63,7 @@
 #
 # The `colorize` method returns a `Colorize::Object` instance,
 # which allows chaining methods together:
+#
 # ```
 # require "colorize"
 #
@@ -65,6 +72,7 @@
 #
 # With the `toggle` method you can temporarily disable adding the escape codes.
 # Settings of the instance are preserved however and can be turned back on later:
+#
 # ```
 # require "colorize"
 #
@@ -74,18 +82,16 @@
 #
 # The color `:default` leaves the object's representation as it is but the object is a `Colorize::Object` then
 # which is handy in conditions such as:
+#
 # ```
 # require "colorize"
 #
 # "foo".colorize(some_bool ? :green : :default)
 # ```
 #
-# See `Colorize::ColorANSI` and `Colorize::Mode` for the available colors and text decorations.
+# See `Colorize::ColorANSI` and `Colorize::Mode` for all available colors and text decorations.
 module Colorize
-  # If this value is `true`, `Colorize::Object` is enabled by default.
-  # But if this value is `false`, `Colorize::Object` is disabled.
-  #
-  # The default value is `true`.
+  # Objects will only be colored if this is `true`.
   #
   # ```
   # require "colorize"
@@ -100,7 +106,15 @@ module Colorize
   # NOTE: This is by default disabled on non-TTY devices as they most likely do not support ANSI escape codes.
   class_property? enabled : Bool = STDOUT.tty? && STDERR.tty?
 
-  # Resets the color of the object to the default.
+  # Resets the color and text decoration of the *io*.
+  #
+  # ```
+  # with_color.green.surround(io) do
+  #   io << "green"
+  #   Colorize.reset
+  #   io << " default"
+  # end
+  # ```
   def self.reset(io = STDOUT)
     io << "\e[0m" if enabled?
   end
@@ -199,15 +213,15 @@ module Colorize
 
   # A text decoration.
   #
-  # Note that not all decorations are supported in all terminals.
-  # When a decoration is not supported, the text won't have any decoration.
+  # Note that not all text decorations are supported in all terminals.
+  # When a text decoration is not supported, it will not be visible.
   @[Flags]
   enum Mode
     # Makes the text bold.
-    Bold = 1
+    Bold
     # Makes the text color bright.
-    Bright = 1
-    # Dims the text color, the opposite of `Bold` and `Bright`.
+    Bright
+    # Dims the text color.
     Dim
     # Underlines the text.
     Underline
@@ -220,7 +234,7 @@ module Colorize
   end
 end
 
-# A colorize object colors and decorations can be applied to.
+# A colorized object. Colors and text decorations can be modified.
 struct Colorize::Object(T)
   private MODE_NONE      = '0'
   private MODE_BOLD      = '1'
@@ -307,6 +321,8 @@ struct Colorize::Object(T)
   # Surrounds *io* by the ANSI escape codes and let's you build colored strings:
   #
   # ```
+  # require "colorize"
+  #
   # io = IO::Memory.new
   #
   # with_color.red.surround(io) do
