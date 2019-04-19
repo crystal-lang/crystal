@@ -2105,6 +2105,18 @@ module Crystal
           end
           named_arg.try(&.value) || NilLiteral.new
         end
+      when "named_args"
+        interpret_argless_method(method, args) do
+          if named_args = self.named_args
+            NamedTupleLiteral.new(named_args.map { |arg| NamedTupleLiteral::Entry.new(arg.name, arg.value) })
+          else
+            NamedTupleLiteral.new
+          end
+        end
+      when "pos_args"
+        interpret_argless_method(method, args) do
+          TupleLiteral.new self.args
+        end
       else
         super
       end
