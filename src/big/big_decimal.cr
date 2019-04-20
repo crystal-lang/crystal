@@ -200,7 +200,11 @@ struct BigDecimal < Number
   end
 
   def **(other : Int)
-    ([self] * other).reduce { |i, j| i * j }
+    result = 1
+    other.times do
+      result *= self
+    end
+    result
   end
 
   # Divides `self` with another `BigDecimal`, with a optionally configurable *max_div_iterations*, which

@@ -171,7 +171,11 @@ struct BigRational < Number
   end
 
   def **(other : Int)
-    ([self] * other).reduce { |i, j| i * j }
+    result = 1
+    other.times do
+      result *= self
+    end
+    result
   end
 
   # Returns a new `BigRational` as 1/r.
