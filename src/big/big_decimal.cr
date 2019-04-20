@@ -200,7 +200,7 @@ struct BigDecimal < Number
   end
 
   # Returns the value of raising `self` to the power of *exponent* exponent.
-  # 
+  #
   # Raise `ArgumentError` if *exponent* is negative.
   def **(exponent : Int)
     if exponent < 0
