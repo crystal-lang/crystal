@@ -199,6 +199,7 @@ struct BigDecimal < Number
     (self / other).floor
   end
 
+  # Returns `self` at the power `other`
   def **(other : Int)
     result = 1
     other.times do

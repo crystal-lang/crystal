@@ -170,6 +170,7 @@ struct BigRational < Number
     BigRational.new { |mpq| LibGMP.mpq_neg(mpq, self) }
   end
 
+  # Returns `self` at the power `other`
   def **(other : Int)
     result = 1
     other.times do
