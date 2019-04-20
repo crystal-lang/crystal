@@ -199,7 +199,7 @@ struct BigDecimal < Number
     (self / other).floor
   end
 
-  # Returns `self` at the power `other`
+  # Returns the value of raising `self` to the power of *other* exponent.
   def **(other : Int)
     result = 1
     other.times do
