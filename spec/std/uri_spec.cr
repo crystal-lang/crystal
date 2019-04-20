@@ -402,7 +402,7 @@ describe "URI" do
     end
   end
 
-  describe "+" do
+  describe "#merge" do
     it { merge_uri("", "").should eq "" }
     it { merge_uri("", "/").should eq "/" }
     it { merge_uri("/", "/").should eq "/" }
