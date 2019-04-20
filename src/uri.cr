@@ -480,13 +480,13 @@ class URI
     end
   end
 
-  # Merge two URIs into new one. Both URIs not modified.
+  # Merge two URIs into new one. Original URI not modified.
   # Useful to get reative uri, for example:
   #   uri = URI.parse("http://domain.com/some/path")
   #   redirect = URI.parse("redirect?q=1")
-  #   (uri + redirect).to_s # => "http://domain.com/some/redirect?q=1"
+  #   uri.merge(redirect).to_s # => "http://domain.com/some/redirect?q=1"
   # Section 5.2.2, 5.2.3 of RFC 3986
-  def +(other : URI)
+  def merge(other : URI)
     return other.dup if other.host
     uri = URI.new
 

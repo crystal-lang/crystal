@@ -8,8 +8,8 @@ private def assert_uri(string, file = __FILE__, line = __LINE__, **args)
   end
 end
 
-private def sum_uri(a, b)
-  (URI.parse(a) + URI.parse(b)).to_s
+private def merge_uri(a, b)
+  URI.parse(a).merge(URI.parse(b)).to_s
 end
 
 describe "URI" do
@@ -403,66 +403,66 @@ describe "URI" do
   end
 
   describe "+" do
-    it { sum_uri("", "").should eq "" }
-    it { sum_uri("", "/").should eq "/" }
-    it { sum_uri("/", "/").should eq "/" }
-    it { sum_uri("/aaa/", "bbb").should eq "/aaa/bbb" }
+    it { merge_uri("", "").should eq "" }
+    it { merge_uri("", "/").should eq "/" }
+    it { merge_uri("/", "/").should eq "/" }
+    it { merge_uri("/aaa/", "bbb").should eq "/aaa/bbb" }
 
-    it { sum_uri("http://domain.ru/", "").should eq "http://domain.ru/" }
-    it { sum_uri("http://domain.ru/", "/").should eq "http://domain.ru/" }
-    it { sum_uri("http://domain.ru/", "/some_path").should eq "http://domain.ru/some_path" }
-    it { sum_uri("http://domain.ru/", "/some_path/").should eq "http://domain.ru/some_path/" }
-    it { sum_uri("http://domain.ru/", "some_path").should eq "http://domain.ru/some_path" }
-    it { sum_uri("http://domain.ru/", "some_path/").should eq "http://domain.ru/some_path/" }
+    it { merge_uri("http://domain.ru/", "").should eq "http://domain.ru/" }
+    it { merge_uri("http://domain.ru/", "/").should eq "http://domain.ru/" }
+    it { merge_uri("http://domain.ru/", "/some_path").should eq "http://domain.ru/some_path" }
+    it { merge_uri("http://domain.ru/", "/some_path/").should eq "http://domain.ru/some_path/" }
+    it { merge_uri("http://domain.ru/", "some_path").should eq "http://domain.ru/some_path" }
+    it { merge_uri("http://domain.ru/", "some_path/").should eq "http://domain.ru/some_path/" }
 
-    it { sum_uri("http://domain.ru", "").should eq "http://domain.ru" }
-    it { sum_uri("http://domain.ru", "/").should eq "http://domain.ru/" }
-    it { sum_uri("http://domain.ru", "/some_path").should eq "http://domain.ru/some_path" }
-    it { sum_uri("http://domain.ru", "/some_path/").should eq "http://domain.ru/some_path/" }
-    it { sum_uri("http://domain.ru", "some_path").should eq "http://domain.ru/some_path" }
-    it { sum_uri("http://domain.ru", "some_path/").should eq "http://domain.ru/some_path/" }
+    it { merge_uri("http://domain.ru", "").should eq "http://domain.ru" }
+    it { merge_uri("http://domain.ru", "/").should eq "http://domain.ru/" }
+    it { merge_uri("http://domain.ru", "/some_path").should eq "http://domain.ru/some_path" }
+    it { merge_uri("http://domain.ru", "/some_path/").should eq "http://domain.ru/some_path/" }
+    it { merge_uri("http://domain.ru", "some_path").should eq "http://domain.ru/some_path" }
+    it { merge_uri("http://domain.ru", "some_path/").should eq "http://domain.ru/some_path/" }
 
-    it { sum_uri("http://domain.ru", "/some_path").should eq "http://domain.ru/some_path" }
-    it { sum_uri("http://domain.ru", "some_path").should eq "http://domain.ru/some_path" }
-    it { sum_uri("http://domain.ru", "?some_path=1").should eq "http://domain.ru/?some_path=1" }
-    it { sum_uri("http://domain.ru", "#some_path").should eq "http://domain.ru/#some_path" }
+    it { merge_uri("http://domain.ru", "/some_path").should eq "http://domain.ru/some_path" }
+    it { merge_uri("http://domain.ru", "some_path").should eq "http://domain.ru/some_path" }
+    it { merge_uri("http://domain.ru", "?some_path=1").should eq "http://domain.ru/?some_path=1" }
+    it { merge_uri("http://domain.ru", "#some_path").should eq "http://domain.ru/#some_path" }
 
-    it { sum_uri("http://domain.ru/", "/some_path").should eq "http://domain.ru/some_path" }
-    it { sum_uri("http://domain.ru/", "some_path").should eq "http://domain.ru/some_path" }
-    it { sum_uri("http://domain.ru/", "?some_path=1").should eq "http://domain.ru/?some_path=1" }
-    it { sum_uri("http://domain.ru/", "#some_path").should eq "http://domain.ru/#some_path" }
+    it { merge_uri("http://domain.ru/", "/some_path").should eq "http://domain.ru/some_path" }
+    it { merge_uri("http://domain.ru/", "some_path").should eq "http://domain.ru/some_path" }
+    it { merge_uri("http://domain.ru/", "?some_path=1").should eq "http://domain.ru/?some_path=1" }
+    it { merge_uri("http://domain.ru/", "#some_path").should eq "http://domain.ru/#some_path" }
 
-    it { sum_uri("http://www.domain.ru/path", "/some_path").should eq "http://www.domain.ru/some_path" }
-    it { sum_uri("http://www.domain.ru/path", "some_path?h=1#hz").should eq "http://www.domain.ru/some_path?h=1#hz" }
-    it { sum_uri("http://www.domain.ru/path/", "some_path?h=1#hz").should eq "http://www.domain.ru/path/some_path?h=1#hz" }
-    it { sum_uri("http://www.domain.ru/path", "http://domain-22.ru/some_path").should eq "http://domain-22.ru/some_path" }
-    it { sum_uri("http://www.domain.ru/path/sub_path", "domain-22.ru/some_path").should eq "http://www.domain.ru/path/domain-22.ru/some_path" }
-    it { sum_uri("http://www.domain.ru/path/sub_path", "/domain-22.ru/some_path").should eq "http://www.domain.ru/domain-22.ru/some_path" }
+    it { merge_uri("http://www.domain.ru/path", "/some_path").should eq "http://www.domain.ru/some_path" }
+    it { merge_uri("http://www.domain.ru/path", "some_path?h=1#hz").should eq "http://www.domain.ru/some_path?h=1#hz" }
+    it { merge_uri("http://www.domain.ru/path/", "some_path?h=1#hz").should eq "http://www.domain.ru/path/some_path?h=1#hz" }
+    it { merge_uri("http://www.domain.ru/path", "http://domain-22.ru/some_path").should eq "http://domain-22.ru/some_path" }
+    it { merge_uri("http://www.domain.ru/path/sub_path", "domain-22.ru/some_path").should eq "http://www.domain.ru/path/domain-22.ru/some_path" }
+    it { merge_uri("http://www.domain.ru/path/sub_path", "/domain-22.ru/some_path").should eq "http://www.domain.ru/domain-22.ru/some_path" }
 
-    it { sum_uri("http://domain.com/url?", "some_path").should eq "http://domain.com/some_path" }
-    it { sum_uri("http://domain.com/url?", "/some_path").should eq "http://domain.com/some_path" }
+    it { merge_uri("http://domain.com/url?", "some_path").should eq "http://domain.com/some_path" }
+    it { merge_uri("http://domain.com/url?", "/some_path").should eq "http://domain.com/some_path" }
 
-    it { sum_uri("http://d.ru/foo.php/some_path.html", "other").should eq "http://d.ru/foo.php/other" }
-    it { sum_uri("http://d.ru/foo.php/some_path.html", "#other").should eq "http://d.ru/foo.php/some_path.html#other" }
-    it { sum_uri("http://d.ru/foo.php/some_path.html", "?b=1").should eq "http://d.ru/foo.php/some_path.html?b=1" }
-    it { sum_uri("http://d.ru/foo.php/some_path.html", "?b=1#j").should eq "http://d.ru/foo.php/some_path.html?b=1#j" }
-    it { sum_uri("http://d.ru/foo.php/some_path.html", "/other?b=1#hhh").should eq "http://d.ru/other?b=1#hhh" }
-    it { sum_uri("http://d.ru/foo.php/some_path.html#gg", "ha/other?b=1#hhh").should eq "http://d.ru/foo.php/ha/other?b=1#hhh" }
+    it { merge_uri("http://d.ru/foo.php/some_path.html", "other").should eq "http://d.ru/foo.php/other" }
+    it { merge_uri("http://d.ru/foo.php/some_path.html", "#other").should eq "http://d.ru/foo.php/some_path.html#other" }
+    it { merge_uri("http://d.ru/foo.php/some_path.html", "?b=1").should eq "http://d.ru/foo.php/some_path.html?b=1" }
+    it { merge_uri("http://d.ru/foo.php/some_path.html", "?b=1#j").should eq "http://d.ru/foo.php/some_path.html?b=1#j" }
+    it { merge_uri("http://d.ru/foo.php/some_path.html", "/other?b=1#hhh").should eq "http://d.ru/other?b=1#hhh" }
+    it { merge_uri("http://d.ru/foo.php/some_path.html#gg", "ha/other?b=1#hhh").should eq "http://d.ru/foo.php/ha/other?b=1#hhh" }
 
-    it { sum_uri("http://domain.com/url?", "ha?some_path=1").should eq "http://domain.com/ha?some_path=1" }
+    it { merge_uri("http://domain.com/url?", "ha?some_path=1").should eq "http://domain.com/ha?some_path=1" }
 
-    it { sum_uri("http://domain.ru/some_path", "").should eq "http://domain.ru/some_path" }
-    it { sum_uri("http://domain.ru/some_path", "/").should eq "http://domain.ru/" }
-    it { sum_uri("http://domain.ru/some_path", "/blah").should eq "http://domain.ru/blah" }
-    it { sum_uri("http://domain.ru/some_path", "/blah/").should eq "http://domain.ru/blah/" }
-    it { sum_uri("http://domain.ru/some_path", "blah").should eq "http://domain.ru/blah" }
-    it { sum_uri("http://domain.ru/some_path", "blah/").should eq "http://domain.ru/blah/" }
+    it { merge_uri("http://domain.ru/some_path", "").should eq "http://domain.ru/some_path" }
+    it { merge_uri("http://domain.ru/some_path", "/").should eq "http://domain.ru/" }
+    it { merge_uri("http://domain.ru/some_path", "/blah").should eq "http://domain.ru/blah" }
+    it { merge_uri("http://domain.ru/some_path", "/blah/").should eq "http://domain.ru/blah/" }
+    it { merge_uri("http://domain.ru/some_path", "blah").should eq "http://domain.ru/blah" }
+    it { merge_uri("http://domain.ru/some_path", "blah/").should eq "http://domain.ru/blah/" }
 
-    it { sum_uri("http://domain.ru/some_path/", "").should eq "http://domain.ru/some_path/" }
-    it { sum_uri("http://domain.ru/some_path/", "/").should eq "http://domain.ru/" }
-    it { sum_uri("http://domain.ru/some_path/", "/blah").should eq "http://domain.ru/blah" }
-    it { sum_uri("http://domain.ru/some_path/", "/blah/").should eq "http://domain.ru/blah/" }
-    it { sum_uri("http://domain.ru/some_path/", "blah").should eq "http://domain.ru/some_path/blah" }
-    it { sum_uri("http://domain.ru/some_path/", "blah/").should eq "http://domain.ru/some_path/blah/" }
+    it { merge_uri("http://domain.ru/some_path/", "").should eq "http://domain.ru/some_path/" }
+    it { merge_uri("http://domain.ru/some_path/", "/").should eq "http://domain.ru/" }
+    it { merge_uri("http://domain.ru/some_path/", "/blah").should eq "http://domain.ru/blah" }
+    it { merge_uri("http://domain.ru/some_path/", "/blah/").should eq "http://domain.ru/blah/" }
+    it { merge_uri("http://domain.ru/some_path/", "blah").should eq "http://domain.ru/some_path/blah" }
+    it { merge_uri("http://domain.ru/some_path/", "blah/").should eq "http://domain.ru/some_path/blah/" }
   end
 end
