@@ -505,8 +505,8 @@ class URI
     new_fragment = other.fragment
 
     case new_path
-    when nil, .empty?
-      if base_path && !base_path.empty?
+    when .empty?
+      if !base_path.empty?
         uri.path = base_path
         uri.query = new_query || base_query
         uri.fragment = new_fragment || base_fragment
@@ -520,7 +520,7 @@ class URI
       uri.query = new_query
       uri.fragment = new_fragment
     else
-      if base_path && !base_path.empty?
+      if !base_path.empty?
         if ri = base_path.rindex('/')
           path = String.build do |buf|
             buf.write Slice.new(base_path.to_unsafe, ri)
