@@ -170,11 +170,20 @@ struct BigRational < Number
     BigRational.new { |mpq| LibGMP.mpq_neg(mpq, self) }
   end
 
-  # Returns `self` at the power `other`
-  def **(other : Int)
-    result = 1
-    other.times do
-      result *= self
+  # Returns the value of raising `self` to the power of *exponent* exponent.
+  #
+  # Raise `ArgumentError` if *exponent* is negative.
+  def **(exponent : Int)
+    if exponent < 0
+      raise ArgumentError.new "Cannot raise a BigRational to a negative integer power."
+    end
+
+    k = self
+    result = k.class.new(1)
+    while exponent > 0
+      result *= k
+      exponent = exponent.unsafe_shr(1)
+      k *= k if exponent > 0
     end
     result
   end

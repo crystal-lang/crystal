@@ -199,11 +199,20 @@ struct BigDecimal < Number
     (self / other).floor
   end
 
-  # Returns the value of raising `self` to the power of *other* exponent.
-  def **(other : Int)
-    result = 1
-    other.times do
-      result *= self
+  # Returns the value of raising `self` to the power of *exponent* exponent.
+  # 
+  # Raise `ArgumentError` if *exponent* is negative.
+  def **(exponent : Int)
+    if exponent < 0
+      raise ArgumentError.new "Cannot raise a BigDecimal to a negative integer power."
+    end
+
+    k = self
+    result = k.class.new(1)
+    while exponent > 0
+      result *= k
+      exponent = exponent.unsafe_shr(1)
+      k *= k if exponent > 0
     end
     result
   end
