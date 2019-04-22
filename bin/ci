@@ -136,6 +136,7 @@ with_build_env() {
 
   on_osx sudo systemsetup -settimezone $TZ
   on_osx PATH="~/crystal/bin:\$PATH" \
+    CRYSTAL_LIBRARY_PATH="~/crystal/embedded/lib" \
     CRYSTAL_CACHE_DIR="/tmp/crystal" \
     /bin/sh -c "'$command'"
 
