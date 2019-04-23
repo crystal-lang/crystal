@@ -545,6 +545,7 @@ module Crystal
     property? global : Bool
     property? expansion = false
     property? has_parentheses : Bool
+    property? setter = false
 
     def initialize(@obj, @name, @args = [] of ASTNode, @block = nil, @block_arg = nil, @named_args = nil, global = false, @name_column_number = 0, has_parentheses = false)
       @global = !!global
@@ -589,6 +590,7 @@ module Crystal
       clone = Call.new(@obj.clone, @name, @args.clone, @block.clone, @block_arg.clone, @named_args.clone, @global, @name_column_number, @has_parentheses)
       clone.name_size = name_size
       clone.expansion = expansion?
+      clone.setter = setter?
       clone
     end
 
@@ -600,6 +602,12 @@ module Crystal
     def name_end_location
       loc = location.not_nil!
       Location.new(loc.filename, loc.line_number, name_column_number + name_size)
+    end
+
+    def setter?
+      name.ends_with?('=') &&
+        !(33 <= name.byte_at(0) <= 64) && # first letter must not be a symbol like `=` or `!`
+        args.size == 1 && !named_args && !block && !block_arg
     end
 
     def_equals_and_hash obj, name, args, block, block_arg, named_args, global?

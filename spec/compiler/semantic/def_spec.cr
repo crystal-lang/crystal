@@ -486,4 +486,18 @@ describe "Semantic: def" do
       foo
     ), "there's no self in this scope"
   end
+
+  it "types setter" do
+    assert_type(%(
+      class Foo
+        def x=(y)
+          'a'
+        end
+      end
+
+      foo = Foo.new
+      z = foo.x = 1
+      z
+    )) { int32 }
+  end
 end

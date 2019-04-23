@@ -393,7 +393,7 @@ class Crystal::CodeGenVisitor
     body = target_def.body
 
     # Try to inline the call
-    if try_inline_call(target_def, body, self_type, call_args)
+    if try_inline_call(node, target_def, body, self_type, call_args)
       return
     end
 
@@ -419,7 +419,7 @@ class Crystal::CodeGenVisitor
   # to read a constant value or the value of an instance variable.
   # Additionally, not inlining instance variable getters changes the semantic
   # a program, so we must always inline these.
-  def try_inline_call(target_def, body, self_type, call_args)
+  def try_inline_call(node, target_def, body, self_type, call_args)
     return false if target_def.is_a?(External)
 
     case body
@@ -427,29 +427,36 @@ class Crystal::CodeGenVisitor
       return true unless @needs_value
 
       accept body
-      inline_call_return_value target_def, body
+      inline_call_return_value node, target_def, body, self_type, call_args
       return true
     when Var
       if body.name == "self"
         return true unless @needs_value
 
         @last = self_type.passed_as_self? ? call_args.first : type_id(self_type)
-        inline_call_return_value target_def, body
+        inline_call_return_value node, target_def, body, self_type, call_args
         return true
       end
     when InstanceVar
       return true unless @needs_value
 
       read_instance_var(body.type, self_type, body.name, call_args.first)
-      inline_call_return_value target_def, body
+      inline_call_return_value node, target_def, body, self_type, call_args
       return true
     end
 
     false
   end
 
-  def inline_call_return_value(target_def, body)
-    if target_def.type.nil_type?
+  def inline_call_return_value(node, target_def, body, self_type, call_args)
+    if node.setter?
+      # For a setter value (`foo.x = y`) the last value is `y`, which, depending
+      # on whether `foo` is passed as self or not, is the first or second codegen argument
+      @last = call_args[self_type.try(&.passed_as_self?) ? 1 : 0]
+
+      first_arg_type = node.args.first.type
+      @last = box_value(@last, first_arg_type) if first_arg_type.passed_by_value?
+    elsif target_def.type.nil_type?
       @last = llvm_nil
     else
       @last = upcast(@last, target_def.type, body.type)
@@ -510,21 +517,28 @@ class Crystal::CodeGenVisitor
         end
       end
     else
+      # For a setter value (`foo.x = y`) the last value is `y`, which, depending
+      # on whether `foo` is passed as self or not, is the first or second codegen argument
+      if node.is_a?(Call) && node.setter?
+        @last = call_args[self_type.try(&.passed_as_self?) ? 1 : 0]
+        type = node.args.first.type
+      end
+
       case type
       when .no_return?
         unreachable
       when .passed_by_value?
-        if @needs_value
-          union = alloca llvm_type(type)
-          store @last, union
-          @last = union
-        else
-          @last = llvm_nil
-        end
+        @last = @needs_value ? box_value(@last, type) : llvm_nil
       end
     end
 
     @last
+  end
+
+  def box_value(value, type)
+    union = alloca llvm_type(type)
+    store value, union
+    union
   end
 
   def set_call_attributes(node : Call, target_def, self_type, is_closure, fun_type)

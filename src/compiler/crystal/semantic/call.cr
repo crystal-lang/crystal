@@ -77,8 +77,13 @@ class Crystal::Call
 
     @target_defs = matches
 
-    bind_to matches if matches
-    bind_to block.break if block
+    # For a setter like `foo.x = y` we'd like to use `y`'s type
+    if self.setter?
+      bind_to args.first
+    else
+      bind_to matches if matches
+      bind_to block.break if block
+    end
 
     if (parent_visitor = @parent_visitor) && matches
       if parent_visitor.typed_def? && matches.any?(&.raises?)
