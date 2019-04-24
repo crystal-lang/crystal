@@ -245,9 +245,6 @@ struct Colorize::Object(T)
   private MODE_REVERSE   = '7'
   private MODE_HIDDEN    = '8'
 
-  private COLORS = %w(default black red green yellow blue magenta cyan light_gray dark_gray light_red light_green light_yellow light_blue light_magenta light_cyan white)
-  private MODES  = %w(bold bright dim underline blink reverse hidden)
-
   def initialize(@object : T)
     @fore = ColorANSI::Default
     @back = ColorANSI::Default
@@ -255,7 +252,7 @@ struct Colorize::Object(T)
     @enabled = Colorize.enabled?
   end
 
-  {% for color in COLORS %}
+  {% for color in ColorANSI.constants %}
     def {{color.id}}
       @fore = ColorANSI::{{color.camelcase.id}}
       self
@@ -271,7 +268,7 @@ struct Colorize::Object(T)
     back color
   end
 
-  {% for mode in MODES %}
+  {% for mode in Mode.constants %}
     def {{mode.id}}
       @mode |= Mode::{{mode.capitalize.id}}
       self
@@ -318,7 +315,7 @@ struct Colorize::Object(T)
     io << internal_io.to_s.inspect
   end
 
-  # Surrounds *io* by the ANSI escape codes and let's you build colored strings:
+  # Surrounds *io* by the ANSI escape codes and lets you build colored strings:
   #
   # ```
   # require "colorize"
