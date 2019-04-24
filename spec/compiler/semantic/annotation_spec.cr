@@ -12,7 +12,43 @@ describe "Semantic: annotation" do
     type.name.should eq("Foo")
   end
 
-  describe "#*_args" do
+  describe "#args/named_args" do
+    describe "#args" do
+      it "returns an empty TupleLiteral if there are none defined" do
+        assert_type(%(
+          annotation Foo
+          end
+
+          @[Foo]
+          module Moo
+          end
+
+          {% if (args = Moo.annotation(Foo).args) && args.is_a? TupleLiteral && args.empty? %}
+            1
+          {% else %}
+            'a'
+          {% end %}
+        )) { int32 }
+      end
+
+      it "returns a TupleLiteral if there are positional arguments defined" do
+        assert_type(%(
+          annotation Foo
+          end
+
+          @[Foo(1, "foo", true)]
+            module Moo
+          end
+
+          {% if Moo.annotation(Foo).args == {1, "foo", true} %}
+            1
+          {% else %}
+            'a'
+          {% end %}
+        )) { int32 }
+      end
+    end
+
     describe "#named_args" do
       it "returns an empty NamedTupleLiteral if there are none defined" do
         assert_type(%(
@@ -49,42 +85,6 @@ describe "Semantic: annotation" do
       end
     end
 
-    describe "#pos_args" do
-      it "returns an empty TupleLiteral if there are none defined" do
-        assert_type(%(
-          annotation Foo
-          end
-
-          @[Foo]
-          module Moo
-          end
-
-          {% if (args = Moo.annotation(Foo).pos_args) && args.is_a? TupleLiteral && args.empty? %}
-            1
-          {% else %}
-            'a'
-          {% end %}
-        )) { int32 }
-      end
-
-      it "returns a TupleLiteral if there are positional arguments defined" do
-        assert_type(%(
-          annotation Foo
-          end
-
-          @[Foo(1, "foo", true)]
-            module Moo
-          end
-
-          {% if Moo.annotation(Foo).pos_args == {1, "foo", true} %}
-            1
-          {% else %}
-            'a'
-          {% end %}
-        )) { int32 }
-      end
-    end
-
     it "returns a correctly with both positional and named arguments" do
       assert_type(%(
         annotation Foo
@@ -94,7 +94,7 @@ describe "Semantic: annotation" do
           module Moo
         end
 
-        {% if Moo.annotation(Foo).pos_args == {1, "foo", true} && Moo.annotation(Foo).named_args == {foo: "bar", cat: 0..0} %}
+        {% if Moo.annotation(Foo).args == {1, "foo", true} && Moo.annotation(Foo).named_args == {foo: "bar", cat: 0..0} %}
           1
         {% else %}
           'a'

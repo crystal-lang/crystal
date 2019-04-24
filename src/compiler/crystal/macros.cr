@@ -878,12 +878,12 @@ module Crystal::Macros
     def [](name : SymbolLiteral | StringLiteral | MacroId) : ASTNode
     end
 
-    # Returns a `NamedTupleLiteral` representing the named arguments on `self`.
-    def named_args : NamedTupleLiteral
+    # Returns a `TupleLiteral` representing the positional arguments on `self`.
+    def args : TupleLiteral
     end
 
-    # Returns a `TupleLiteral` representing the positional arguments on `self`.
-    def pos_args : TupleLiteral
+    # Returns a `NamedTupleLiteral` representing the named arguments on `self`.
+    def named_args : NamedTupleLiteral
     end
   end
 

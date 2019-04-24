@@ -2105,6 +2105,10 @@ module Crystal
           end
           named_arg.try(&.value) || NilLiteral.new
         end
+      when "args"
+        interpret_argless_method(method, args) do
+          TupleLiteral.new self.args
+        end
       when "named_args"
         interpret_argless_method(method, args) do
           if named_args = self.named_args
@@ -2112,10 +2116,6 @@ module Crystal
           else
             NamedTupleLiteral.new
           end
-        end
-      when "pos_args"
-        interpret_argless_method(method, args) do
-          TupleLiteral.new self.args
         end
       else
         super
