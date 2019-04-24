@@ -1329,4 +1329,8 @@ describe Crystal::Formatter do
 
   # #7608
   assert_format "enum E\n  A # hello\n  B # hello;  C # hello\nend"
+
+  # #7631
+  assert_format "x.try &.[] 123"
+  assert_format "x.try &.[]= 123, 456"
 end
