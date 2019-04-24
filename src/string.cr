@@ -3503,10 +3503,10 @@ class String
   # "eiffel_tower".camelcase                                   # => "EiffelTower"
   # "isolated_integer".camelcase(Unicode::CaseOptions::Turkic) # => "İsolatedİnteger"
   # ```
-  def camelcase(options : Unicode::CaseOptions = Unicode::CaseOptions::None)
+  def camelcase(options : Unicode::CaseOptions = Unicode::CaseOptions::None, lowercase_first_letter = false)
     return self if empty?
 
-    first = true
+    first = !lowercase_first_letter
     last_is_underscore = false
 
     String.build(bytesize) do |str|
