@@ -15,6 +15,11 @@
 
 LLVM_CONFIG ?= ## llvm-config command path to use
 
+CRYSTAL_ROOT := ./
+export CRYSTAL_DIR="$(CRYSTAL_ROOT)/.build"
+export CRYSTAL_PATH=$(CRYSTAL_ROOT)src:lib
+export CRYSTAL_HAS_WRAPPER=true
+
 release ?=      ## Compile in release mode
 stats ?=        ## Enable statistics output
 progress ?=     ## Enable progress output
@@ -25,6 +30,9 @@ junit_output ?= ## Directory to output junit results
 static ?=       ## Enable static linking
 
 O := .build
+CRYSTAL_BINARY ?= $(shell [ -f $(O)/crystal ] && echo "$(O)/crystal" || which crystal)
+#CRYSTAL_BINARY := $(strip $(CRYSTAL_BINARY))
+
 SOURCES := $(shell find src -name '*.cr')
 SPEC_SOURCES := $(shell find spec -name '*.cr')
 override FLAGS += -D preview_overflow -D compiler_rt $(if $(release),--release )$(if $(stats),--stats )$(if $(progress),--progress )$(if $(threads),--threads $(threads) )$(if $(debug),-d )$(if $(static),--static )$(if $(LDFLAGS),--link-flags="$(LDFLAGS)" )
@@ -58,10 +66,14 @@ DEPS = $(LLVM_EXT_OBJ) $(LIB_CRYSTAL_TARGET)
 CFLAGS += -fPIC $(if $(debug),-g -O0)
 CXXFLAGS += $(if $(debug),-g -O0)
 
-ifeq (${LLVM_CONFIG},)
+ifeq ($(LLVM_CONFIG),)
   $(error Could not locate llvm-config, make sure it is installed and in your PATH, or set LLVM_CONFIG)
 else
-  $(shell echo $(shell printf '\033[33m')Using $(LLVM_CONFIG) [version=$(shell $(LLVM_CONFIG) --version)]$(shell printf '\033[0m') >&2)
+  ifeq ($(strip $(CRYSTAL_BINARY)),)
+    $(error crystal binary not found)
+  else
+    $(shell echo $(shell printf '\033[33m')Using $(LLVM_CONFIG) $(CRYSTAL_BINARY)[version=$(shell $(LLVM_CONFIG) --version)]$(shell printf '\033[0m') >&2)
+  endif
 endif
 
 .PHONY: all
@@ -98,7 +110,7 @@ compiler_spec: $(O)/compiler_spec ## Run compiler specs
 
 .PHONY: docs
 docs: ## Generate standard library documentation
-	$(BUILD_PATH) ./bin/crystal docs -b https://crystal-lang.org/api/latest src/docs_main.cr
+	$(BUILD_PATH) $(CRYSTAL_BINARY) docs -b https://crystal-lang.org/api/latest src/docs_main.cr
 
 .PHONY: crystal
 crystal: $(O)/crystal ## Build the compiler
@@ -111,19 +123,19 @@ libcrystal: $(LIB_CRYSTAL_TARGET)
 
 $(O)/all_spec: $(DEPS) $(SOURCES) $(SPEC_SOURCES)
 	@mkdir -p $(O)
-	$(BUILD_PATH) ./bin/crystal build $(FLAGS) -o $@ spec/all_spec.cr
+	$(BUILD_PATH) $(CRYSTAL_BINARY) build $(FLAGS) -o $@ spec/all_spec.cr
 
 $(O)/std_spec: $(DEPS) $(SOURCES) $(SPEC_SOURCES)
 	@mkdir -p $(O)
-	$(BUILD_PATH) ./bin/crystal build $(FLAGS) -o $@ spec/std_spec.cr
+	$(BUILD_PATH) $(CRYSTAL_BINARY) build $(FLAGS) -o $@ spec/std_spec.cr
 
 $(O)/compiler_spec: $(DEPS) $(SOURCES) $(SPEC_SOURCES)
 	@mkdir -p $(O)
-	$(BUILD_PATH) ./bin/crystal build $(FLAGS) -o $@ spec/compiler_spec.cr
+	$(BUILD_PATH) $(CRYSTAL_BINARY) build $(FLAGS) -o $@ spec/compiler_spec.cr
 
 $(O)/crystal: $(DEPS) $(SOURCES)
 	@mkdir -p $(O)
-	$(BUILD_PATH) $(EXPORTS) ./bin/crystal build $(FLAGS) -o $@ src/compiler/crystal.cr -D without_openssl -D without_zlib
+	$(BUILD_PATH) $(EXPORTS) $(CRYSTAL_BINARY) build $(FLAGS) -o $@ src/compiler/crystal.cr -D without_openssl -D without_zlib
 
 $(LLVM_EXT_OBJ): $(LLVM_EXT_DIR)/llvm_ext.cc
 	$(CXX) -c $(CXXFLAGS) -o $@ $< $(shell $(LLVM_CONFIG) --cxxflags)
