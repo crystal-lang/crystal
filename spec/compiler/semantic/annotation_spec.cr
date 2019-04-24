@@ -16,72 +16,72 @@ describe "Semantic: annotation" do
     describe "#named_args" do
       it "returns an empty NamedTupleLiteral if there are none defined" do
         assert_type(%(
-        annotation Foo
-        end
+          annotation Foo
+          end
 
-        @[Foo]
-        module Moo
-        end
+          @[Foo]
+          module Moo
+          end
 
-        {% if (args = Moo.annotation(Foo).named_args) && args.is_a? NamedTupleLiteral && args.empty? %}
-          1
-        {% else %}
-          'a'
-        {% end %}
-      )) { int32 }
+          {% if (args = Moo.annotation(Foo).named_args) && args.is_a? NamedTupleLiteral && args.empty? %}
+            1
+          {% else %}
+            'a'
+          {% end %}
+        )) { int32 }
       end
 
       it "returns a NamedTupleLiteral if there are named arguments defined" do
         assert_type(%(
-        annotation Foo
-        end
+          annotation Foo
+          end
 
-        @[Foo(extra: "three", "foo": 99)]
-          module Moo
-        end
+          @[Foo(extra: "three", "foo": 99)]
+            module Moo
+          end
 
-        {% if Moo.annotation(Foo).named_args == {extra: "three", foo: 99} %}
-          1
-        {% else %}
-          'a'
-        {% end %}
-      )) { int32 }
+          {% if Moo.annotation(Foo).named_args == {extra: "three", foo: 99} %}
+            1
+          {% else %}
+            'a'
+          {% end %}
+        )) { int32 }
       end
     end
 
     describe "#pos_args" do
       it "returns an empty TupleLiteral if there are none defined" do
         assert_type(%(
-        annotation Foo
-        end
+          annotation Foo
+          end
 
-        @[Foo]
-        module Moo
-        end
+          @[Foo]
+          module Moo
+          end
 
-        {% if (args = Moo.annotation(Foo).pos_args) && args.is_a? TupleLiteral && args.empty? %}
-          1
-        {% else %}
-          'a'
-        {% end %}
-      )) { int32 }
+          {% if (args = Moo.annotation(Foo).pos_args) && args.is_a? TupleLiteral && args.empty? %}
+            1
+          {% else %}
+            'a'
+          {% end %}
+        )) { int32 }
       end
 
       it "returns a TupleLiteral if there are positional arguments defined" do
         assert_type(%(
-        annotation Foo
-        end
+          annotation Foo
+          end
 
-        @[Foo(1, "foo", true)]
-          module Moo
-        end
+          @[Foo(1, "foo", true)]
+            module Moo
+          end
 
-        {% if Moo.annotation(Foo).pos_args == {1, "foo", true} %}
-          1
-        {% else %}
-          'a'
-        {% end %}
-      )) { int32 }
+          {% if Moo.annotation(Foo).pos_args == {1, "foo", true} %}
+            1
+          {% else %}
+            'a'
+          {% end %}
+        )) { int32 }
       end
     end
 
