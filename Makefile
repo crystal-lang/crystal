@@ -30,8 +30,8 @@ junit_output ?= ## Directory to output junit results
 static ?=       ## Enable static linking
 
 O := .build
-CRYSTAL_BINARY ?= $(shell [ -f $(O)/crystal ] && echo "$(O)/crystal" || which crystal)
-#CRYSTAL_BINARY := $(strip $(CRYSTAL_BINARY))
+CRYSTAL_BINARY_PATH := $(CRYSTAL_ROOT)/bin/crystal
+CRYSTAL_BINARY ?= $(shell [ -f $(CRYSTAL_BINARY_PATH) ] && printf -- "$(CRYSTAL_BINARY_PATH)" || which crystal)
 
 SOURCES := $(shell find src -name '*.cr')
 SPEC_SOURCES := $(shell find spec -name '*.cr')
@@ -113,7 +113,7 @@ docs: ## Generate standard library documentation
 	$(BUILD_PATH) $(CRYSTAL_BINARY) docs -b https://crystal-lang.org/api/latest src/docs_main.cr
 
 .PHONY: crystal
-crystal: $(O)/crystal ## Build the compiler
+crystal: $(CRYSTAL_BINARY_PATH) ## Build the compiler
 
 .PHONY: deps llvm_ext libcrystal
 deps: $(DEPS) ## Build dependencies
@@ -133,7 +133,7 @@ $(O)/compiler_spec: $(DEPS) $(SOURCES) $(SPEC_SOURCES)
 	@mkdir -p $(O)
 	$(BUILD_PATH) $(CRYSTAL_BINARY) build $(FLAGS) -o $@ spec/compiler_spec.cr
 
-$(O)/crystal: $(DEPS) $(SOURCES)
+$(CRYSTAL_BINARY_PATH): $(DEPS) $(SOURCES)
 	@mkdir -p $(O)
 	$(BUILD_PATH) $(EXPORTS) $(CRYSTAL_BINARY) build $(FLAGS) -o $@ src/compiler/crystal.cr -D without_openssl -D without_zlib
 
@@ -152,3 +152,4 @@ clean: clean_crystal ## Clean up built directories and files
 clean_crystal: ## Clean up crystal built files
 	rm -rf $(O)
 	rm -rf ./docs
+	rm -f $(CRYSTAL_BINARY_PATH)
