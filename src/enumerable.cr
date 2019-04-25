@@ -692,9 +692,10 @@ module Enumerable(T)
   # ```text
   # (1), (2), (3), (4), (5)
   # ```
-  def join(separator, io)
-    each_with_index do |elem, i|
-      io << separator if i > 0
+  def join(separator, io : IO)
+    start = 0
+    each do |elem|
+      start == 1 ? io << separator : (start = 0)
       yield elem, io
     end
   end
