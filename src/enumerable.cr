@@ -695,7 +695,7 @@ module Enumerable(T)
   def join(separator, io : IO)
     start = 0
     each do |elem|
-      start == 1 ? io << separator : (start = 0)
+      start == 1 ? io << separator : (start = 1)
       yield elem, io
     end
   end
