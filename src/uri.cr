@@ -232,7 +232,7 @@ class URI
   # ```
   # uri = URI.parse("HTTP://example.COM:80/./foo/../bar/")
   # uri.normalize!
-  # uri # => http://example.com/bar/
+  # uri # => "http://example.com/bar/"
   # ```
   def normalize! : URI
     @scheme = @scheme.try &.downcase
