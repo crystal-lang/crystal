@@ -2419,7 +2419,7 @@ class String
   # "abcdef".compare("ABCDEF", case_insensitive: true) # => 0
   # "abcdef".compare("ABCDEG", case_insensitive: true) # => -1
   #
-  # "heIIo".compare("heııo", case_insensitive: true, Unicode::CaseOptions::Turkic) # => 0
+  # "heIIo".compare("heııo", case_insensitive: true, options: Unicode::CaseOptions::Turkic) # => 0
   # ```
   def compare(other : String, case_insensitive = false, options = Unicode::CaseOptions::None)
     return self <=> other unless case_insensitive
