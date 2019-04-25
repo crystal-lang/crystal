@@ -781,10 +781,10 @@ struct Path
   # Returns the concatenation of `#drive` and `#root`.
   #
   # ```
-  # Path["/etc/"].anchor                         # => Path["/"]
-  # Path.windows("C:Program Files").anchor       # => Path.windows("C:")
-  # Path.windows("C:\\Program Files").anchor     # => Path.windows("C:\\")
-  # Path.windows("\\host\\share\\folder").anchor # => Path.windows("\\")
+  # Path["/etc/"].anchor                           # => Path["/"]
+  # Path.windows("C:Program Files").anchor         # => Path.windows("C:")
+  # Path.windows("C:\\Program Files").anchor       # => Path.windows("C:\\")
+  # Path.windows("\\\\host\\share\\folder").anchor # => Path.windows("\\\\host\\share\\")
   # ```
   def anchor : Path?
     drive, root = drive_and_root
