@@ -693,7 +693,7 @@ module Enumerable(T)
   # (1), (2), (3), (4), (5)
   # ```
   def join(separator, io : IO)
-    start = false
+    first = true
     each do |elem|
       io << separator unless first
       yield elem, io
