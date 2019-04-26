@@ -1807,7 +1807,6 @@ describe "String" do
     "foo_bar".camelcase.should eq("FooBar")
     "foo".camelcase(downcase: true).should eq("foo")
     "foo_bar".camelcase(downcase: true).should eq("fooBar")
-    "foo_bar".camelcase(true).should eq("fooBar")
   end
 
   it "answers ascii_only?" do
