@@ -1268,6 +1268,7 @@ module Crystal
       @str << ", "
       node.instance_var.accept(self)
       @str << ')'
+      false
     end
 
     def visit(node : IsA)

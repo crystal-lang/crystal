@@ -2060,14 +2060,15 @@ module Crystal
       end
 
       # This is the case of an enum member
-      if node.name[0].ascii_uppercase? && @token.type == :","
-        write ","
+      # TODO: remove comma support after 0.28.0
+      if @token.type == :";" || (node.name[0].ascii_uppercase? && @token.type == :",")
         next_token
         @lexer.skip_space
         if @token.type == :COMMENT
           write_comment
           @exp_needs_indent = true
         else
+          write ";" if @token.type == :CONST
           write " "
           @exp_needs_indent = @token.type == :NEWLINE
         end
@@ -2767,58 +2768,7 @@ module Crystal
         when Call
           call = body
           clear_object call
-
-          if !call.obj && (call.name == "[]" || call.name == "[]?")
-            case @token.type
-            when :"["
-              write_token :"["
-              skip_space_or_newline
-              format_call_args(call, false)
-              skip_space_or_newline
-              write_token :"]"
-              write_token :"?" if call.name == "[]?"
-            when :"[]", :"[]?"
-              write_token @token.type
-              skip_space_or_newline
-              if @token.type == :"("
-                write "("
-                next_token_skip_space_or_newline
-                format_call_args(call, true)
-                skip_space_or_newline
-                write_token :")"
-              end
-            else
-              raise "BUG: expected `[`, `[]` or `[]?`"
-            end
-          elsif !call.obj && call.name == "[]="
-            case @token.type
-            when :"["
-              last_arg = call.args.pop
-              write_token :"["
-              skip_space_or_newline
-              format_call_args(call, false)
-              skip_space_or_newline
-              write_token :"]"
-              skip_space
-              write_token " ", :"=", " "
-              skip_space_or_newline
-              accept last_arg
-            when :"[]="
-              write_token @token.type
-              skip_space_or_newline
-              if @token.type == :"("
-                write "("
-                next_token_skip_space_or_newline
-                format_call_args(call, true)
-                skip_space_or_newline
-                write_token :")"
-              end
-            else
-              raise "BUG: expected `[` or `[]=`"
-            end
-          else
-            indent(@indent, call)
-          end
+          indent(@indent, call)
         when IsA
           if body.obj.is_a?(Var)
             if body.nil_check?

@@ -223,4 +223,8 @@ class Crystal::Doc::Method
       builder.field "def", self.def
     end
   end
+
+  def annotations(annotation_type)
+    @def.annotations(annotation_type)
+  end
 end

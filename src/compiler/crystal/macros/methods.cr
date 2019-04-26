@@ -446,6 +446,8 @@ module Crystal
         num_bin_op(method, args) { |me, other| me * other }
       when "/"
         num_bin_op(method, args) { |me, other| me / other }
+      when "//"
+        num_bin_op(method, args) { |me, other| me // other }
       when "**"
         num_bin_op(method, args) { |me, other| me ** other }
       when "%"

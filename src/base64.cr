@@ -191,7 +191,7 @@ module Base64
 
   private def encode_size(str_size, new_lines = false)
     size = (str_size * 4 / 3.0).to_i + 4
-    size += size / LINE_SIZE if new_lines
+    size += size // LINE_SIZE if new_lines
     size
   end
 

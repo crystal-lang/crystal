@@ -266,7 +266,7 @@ module Debug
           registers.address += {{operation_advance}} * sequence.minimum_instruction_length
         else
           registers.address += sequence.minimum_instruction_length *
-            ((registers.op_index + operation_advance) / sequence.maximum_operations_per_instruction)
+            ((registers.op_index + operation_advance) // sequence.maximum_operations_per_instruction)
           registers.op_index = (registers.op_index + operation_advance) % sequence.maximum_operations_per_instruction
         end
       end
@@ -281,7 +281,7 @@ module Debug
           if opcode >= sequence.opcode_base
             # special opcode
             adjusted_opcode = opcode - sequence.opcode_base
-            operation_advance = adjusted_opcode / sequence.line_range
+            operation_advance = adjusted_opcode // sequence.line_range
             increment_address_and_op_index(operation_advance)
             registers.line &+= sequence.line_base + (adjusted_opcode % sequence.line_range)
             register_to_matrix(sequence, registers)
@@ -336,7 +336,7 @@ module Debug
               registers.basic_block = true
             when LNS::ConstAddPc
               adjusted_opcode = 255 - sequence.opcode_base
-              operation_advance = adjusted_opcode / sequence.line_range
+              operation_advance = adjusted_opcode // sequence.line_range
               increment_address_and_op_index(operation_advance)
             when LNS::FixedAdvancePc
               registers.address += @io.read_bytes(UInt16).not_nil!

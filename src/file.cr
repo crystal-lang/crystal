@@ -690,8 +690,8 @@ class File < IO::FileDescriptor
   # File.join("foo/", "/bar/", "/baz")   # => "foo/bar/baz"
   # File.join("/foo/", "/bar/", "/baz/") # => "/foo/bar/baz/"
   # ```
-  def self.join(first : String | Path, *parts : String | Path) : String
-    Path.new(first, *parts).to_s
+  def self.join(*parts : String | Path) : String
+    Path.new(*parts).to_s
   end
 
   # Returns a new string formed by joining the strings using `File::SEPARATOR`.

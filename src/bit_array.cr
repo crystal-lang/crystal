@@ -153,7 +153,7 @@ struct BitArray
     else
       ba = BitArray.new(count)
       start_bit_index, start_sub_index = start.divmod(32)
-      end_bit_index = (start + count) / 32
+      end_bit_index = (start + count) // 32
 
       i = 0
       bits = @bits[start_bit_index]

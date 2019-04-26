@@ -1474,7 +1474,7 @@ class Array(T)
     return self if size == 0
     n %= size
     return self if n == 0
-    if n <= size / 2
+    if n <= size // 2
       tmp = self[0..n]
       @buffer.move_from(@buffer + n, size - n)
       (@buffer + size - n).copy_from(tmp.to_unsafe, n)
@@ -1946,7 +1946,7 @@ class Array(T)
   end
 
   protected def self.heap_sort!(a, n)
-    (n / 2).downto 0 do |p|
+    (n // 2).downto 0 do |p|
       heapify!(a, p, n)
     end
     while n > 1
@@ -1958,14 +1958,14 @@ class Array(T)
 
   protected def self.heapify!(a, p, n)
     v, c = a[p], p
-    while c < (n - 1) / 2
+    while c < (n - 1) // 2
       c = 2 * (c + 1)
       c -= 1 if cmp(a[c], a[c - 1]) < 0
       break unless cmp(v, a[c]) <= 0
       a[p] = a[c]
       p = c
     end
-    if n & 1 == 0 && c == n / 2 - 1
+    if n & 1 == 0 && c == n // 2 - 1
       c = 2 * c + 1
       if cmp(v, a[c]) < 0
         a[p] = a[c]
@@ -1976,7 +1976,7 @@ class Array(T)
   end
 
   protected def self.center_median!(a, n)
-    b, c = a + n / 2, a + n - 1
+    b, c = a + n // 2, a + n - 1
     if cmp(a.value, b.value) <= 0
       if cmp(b.value, c.value) <= 0
         return
@@ -1995,7 +1995,7 @@ class Array(T)
   end
 
   protected def self.partition_for_quick_sort!(a, n)
-    v, l, r = a[n / 2], a + 1, a + n - 1
+    v, l, r = a[n // 2], a + 1, a + n - 1
     loop do
       while cmp(l.value, v) < 0
         l += 1
@@ -2044,7 +2044,7 @@ class Array(T)
   end
 
   protected def self.heap_sort!(a, n, comp)
-    (n / 2).downto 0 do |p|
+    (n // 2).downto 0 do |p|
       heapify!(a, p, n, comp)
     end
     while n > 1
@@ -2056,14 +2056,14 @@ class Array(T)
 
   protected def self.heapify!(a, p, n, comp)
     v, c = a[p], p
-    while c < (n - 1) / 2
+    while c < (n - 1) // 2
       c = 2 * (c + 1)
       c -= 1 if cmp(a[c], a[c - 1], comp) < 0
       break unless cmp(v, a[c], comp) <= 0
       a[p] = a[c]
       p = c
     end
-    if n & 1 == 0 && c == n / 2 - 1
+    if n & 1 == 0 && c == n // 2 - 1
       c = 2 * c + 1
       if cmp(v, a[c], comp) < 0
         a[p] = a[c]
@@ -2074,7 +2074,7 @@ class Array(T)
   end
 
   protected def self.center_median!(a, n, comp)
-    b, c = a + n / 2, a + n - 1
+    b, c = a + n // 2, a + n - 1
     if cmp(a.value, b.value, comp) <= 0
       if cmp(b.value, c.value, comp) <= 0
         return
@@ -2093,7 +2093,7 @@ class Array(T)
   end
 
   protected def self.partition_for_quick_sort!(a, n, comp)
-    v, l, r = a[n / 2], a + 1, a + n - 1
+    v, l, r = a[n // 2], a + 1, a + n - 1
     loop do
       while l < a + n && cmp(l.value, v, comp) < 0
         l += 1

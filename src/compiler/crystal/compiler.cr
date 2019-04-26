@@ -104,7 +104,7 @@ module Crystal
     property? wants_doc = false
 
     # Which kind of warnings wants to be detected.
-    property warnings : Warnings = Warnings::All
+    property warnings : Warnings = Warnings::None
 
     # Paths to ignore for warnings detection.
     property warnings_exclude : Array(String) = [] of String
@@ -427,7 +427,7 @@ module Crystal
       jobs_count = 0
       wait_channel = Channel(Array(String)).new(@n_threads)
 
-      units.each_slice(Math.max(units.size / @n_threads, 1)) do |slice|
+      units.each_slice(Math.max(units.size // @n_threads, 1)) do |slice|
         jobs_count += 1
         spawn do
           # For stats output we want to count how many previous

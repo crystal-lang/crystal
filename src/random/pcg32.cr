@@ -83,7 +83,7 @@ class Random::PCG32
       end
       cur_plus = (cur_mult &+ 1) &* cur_plus
       cur_mult &*= cur_mult
-      deltau64 /= 2
+      deltau64 //= 2
     end
     @state = acc_mult &* @state &+ acc_plus
   end

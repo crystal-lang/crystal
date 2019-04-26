@@ -140,6 +140,10 @@ struct BigFloat < Float
     end
   end
 
+  def //(other : Number)
+    (self / other).floor
+  end
+
   def **(other : Int)
     BigFloat.new { |mpf| LibGMP.mpf_pow_ui(mpf, self, other.to_u64) }
   end
@@ -321,6 +325,10 @@ struct Number
 
   def /(other : BigFloat)
     to_big_f / other
+  end
+
+  def //(other : BigFloat)
+    to_big_f // other
   end
 
   def to_big_f

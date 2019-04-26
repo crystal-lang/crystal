@@ -193,6 +193,10 @@ module Crystal
         assert_macro "", "{{5 / 3}}", [] of ASTNode, "1"
       end
 
+      it "executes //" do
+        assert_macro "", "{{5 // 3}}", [] of ASTNode, "1"
+      end
+
       it "executes %" do
         assert_macro "", "{{5 % 3}}", [] of ASTNode, "2"
       end

@@ -12,7 +12,7 @@ class Thread
 
   @th : LibC::PthreadT
   @exception : Exception?
-  @detached = false
+  @detached = Atomic(UInt8).new(0)
   @main_fiber : Fiber?
 
   # :nodoc:
@@ -20,6 +20,10 @@ class Thread
 
   # :nodoc:
   property previous : Thread?
+
+  def self.unsafe_each
+    @@threads.unsafe_each { |thread| yield thread }
+  end
 
   # Starts a new system thread.
   def initialize(&@func : ->)
@@ -42,19 +46,20 @@ class Thread
   def initialize
     @func = ->{}
     @th = LibC.pthread_self
-    @main_fiber = Fiber.new(stack_address)
+    @main_fiber = Fiber.new(stack_address, self)
 
     @@threads.push(self)
   end
 
-  def finalize
-    GC.pthread_detach(@th) unless @detached
+  private def detach
+    if @detached.compare_and_set(0, 1).last
+      yield
+    end
   end
 
   # Suspends the current thread until this thread terminates.
   def join
-    GC.pthread_join(@th)
-    @detached = true
+    detach { GC.pthread_join(@th) }
 
     if exception = @exception
       raise exception
@@ -124,7 +129,7 @@ class Thread
 
   protected def start
     Thread.current = self
-    @main_fiber = fiber = Fiber.new(stack_address)
+    @main_fiber = fiber = Fiber.new(stack_address, self)
 
     begin
       @func.call
@@ -133,6 +138,7 @@ class Thread
     ensure
       @@threads.delete(self)
       Fiber.inactive(fiber)
+      detach { GC.pthread_detach(@th) }
     end
   end
 
@@ -176,5 +182,10 @@ class Thread
     {% end %}
 
     address
+  end
+
+  # :nodoc:
+  def to_unsafe
+    @th
   end
 end

@@ -5562,11 +5562,12 @@ module Crystal
           skip_space
 
           case @token.type
+          # TODO: remove comma support after 0.28.0
           when :",", :";", :NEWLINE, :EOF
             next_token_skip_statement_end
           else
             unless @token.keyword?(:end)
-              raise "expecting ',', ';', 'end' or newline after enum member", location
+              raise "expecting ';', 'end' or newline after enum member", location
             end
           end
 

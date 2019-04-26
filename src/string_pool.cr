@@ -91,7 +91,7 @@ class StringPool
   end
 
   private def get(hash : UInt64, str : UInt8*, len)
-    rehash if @size >= @capacity / 4 * 3
+    rehash if @size >= @capacity // 4 * 3
 
     mask = (@capacity - 1).to_u64
     index = hash & mask

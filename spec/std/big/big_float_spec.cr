@@ -109,6 +109,18 @@ describe "BigFloat" do
     it { ("5.5".to_big_f / 16_u8).to_s.should eq("0.34375") }
   end
 
+  describe "//" do
+    it { ("1.0".to_big_f // "2.0".to_big_f).to_s.should eq("0") }
+    it { ("0.04".to_big_f // "89.0001".to_big_f).to_s.should eq("0") }
+    it { ("-5.5".to_big_f // "5.5".to_big_f).to_s.should eq("-1") }
+    it { ("5.5".to_big_f // "-5.5".to_big_f).to_s.should eq("-1") }
+    expect_raises(DivisionByZeroError) { 0.1.to_big_f // 0 }
+    it { ("5.5".to_big_f // 16_u64).to_s.should eq("0") }
+    it { ("5.5".to_big_f // 16_u8).to_s.should eq("0") }
+
+    it { ("-1".to_big_f // 2_u8).to_s.should eq("-1") }
+  end
+
   describe "**" do
     # TODO: investigate why in travis this gives ""1.79559999999999999991"
     # it { ("1.34".to_big_f ** 2).to_s.should eq("1.79559999999999999994") }
