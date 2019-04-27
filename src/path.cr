@@ -751,8 +751,8 @@ struct Path
   # See `#anchor` for the combination of drive and `#root`.
   #
   # ```
-  # Path.windows("C:\\Program Files").drive     # => Path.windows("C:")
-  # Path.windows("\\host\\share\\folder").drive # => nil
+  # Path.windows("C:\\Program Files").drive       # => Path.windows("C:")
+  # Path.windows("\\\\host\\share\\folder").drive # => Path.windows("\\\\host\\share")
   # ```
   #
   # NOTE: Drives are only available for Windows paths. It can either be a drive letter (`C:`) or a UNC share (`\\host\share`).
@@ -767,10 +767,10 @@ struct Path
   # See `#anchor` for the combination of `#drive` and root.
   #
   # ```
-  # Path["/etc/"].root                         # => Path["/"]
-  # Path.windows("C:Program Files").root       # => nil
-  # Path.windows("C:\\Program Files").root     # => Path.windows("\\")
-  # Path.windows("\\host\\share\\folder").root # => Path.windows("\\")
+  # Path["/etc/"].root                           # => Path["/"]
+  # Path.windows("C:Program Files").root         # => nil
+  # Path.windows("C:\\Program Files").root       # => Path.windows("\\")
+  # Path.windows("\\\\host\\share\\folder").root # => Path.windows("\\")
   # ```
   def root : Path?
     if root = drive_and_root[1]
