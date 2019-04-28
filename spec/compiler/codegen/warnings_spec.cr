@@ -88,6 +88,17 @@ describe "Code gen: warnings" do
       inject_primitives: false
   end
 
+  it "detects deprecated methods with named arguments" do
+    assert_warning %(
+      @[Deprecated]
+      def foo(*, a)
+      end
+
+      foo(a: 2)
+    ), "Warning in line 6: Deprecated top-level foo:a.",
+      inject_primitives: false
+  end
+
   it "informs warnings once per call site location (a)" do
     warning_failures = warnings_result %(
       class Foo
