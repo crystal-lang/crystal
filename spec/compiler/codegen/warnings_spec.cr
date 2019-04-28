@@ -99,6 +99,32 @@ describe "Code gen: warnings" do
       inject_primitives: false
   end
 
+  it "detects deprecated initialize" do
+    assert_warning %(
+      class Foo
+        @[Deprecated]
+        def initialize
+        end
+      end
+
+      Foo.new
+    ), "Warning in line 8: Deprecated Foo.new.",
+      inject_primitives: false
+  end
+
+  it "detects deprecated initialize with named arguments" do
+    assert_warning %(
+      class Foo
+        @[Deprecated]
+        def initialize(*, a)
+        end
+      end
+
+      Foo.new(a: 2)
+    ), "Warning in line 8: Deprecated Foo.new:a.",
+      inject_primitives: false
+  end
+
   it "informs warnings once per call site location (a)" do
     warning_failures = warnings_result %(
       class Foo
