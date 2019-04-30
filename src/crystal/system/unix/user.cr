@@ -29,7 +29,7 @@ class Crystal::System::User
     end
 
     raise Errno.new("getpwnam_r") if ret != 0
-    return nil if pwd_pointer.null?
+    return if pwd_pointer.null?
 
     self.from_struct(pwd)
   end
