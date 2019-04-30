@@ -3504,7 +3504,7 @@ class String
   # "empire_state_building".camelcase(downcase: true)                   # => "empireStateBuilding"
   # "isolated_integer".camelcase(options: Unicode::CaseOptions::Turkic) # => "İsolatedİnteger"
   # ```
-  def camelcase(options : Unicode::CaseOptions = Unicode::CaseOptions::None, *, downcase = false)
+  def camelcase(options : Unicode::CaseOptions = Unicode::CaseOptions::None, *, downcase : Bool = false)
     return self if empty?
 
     first = !downcase
