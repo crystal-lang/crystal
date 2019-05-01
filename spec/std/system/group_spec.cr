@@ -65,4 +65,28 @@ describe System::Group do
       end
     end
   end
+
+  describe "name" do
+    it "is a String" do
+      System::Group.from_name(COMMON_GROUP).name.should be_a(String)
+    end
+  end
+
+  describe "password" do
+    it "is a String" do
+      System::Group.from_name(COMMON_GROUP).password.should be_a(String)
+    end
+  end
+
+  describe "id" do
+    it "is a UInt32" do
+      System::Group.from_name(COMMON_GROUP).id.should be_a(UInt32)
+    end
+  end
+
+  describe "members" do
+    it "is an Array(String)" do
+      System::Group.from_name(COMMON_GROUP).members.should be_a(Array(String))
+    end
+  end
 end

@@ -59,4 +59,40 @@ describe System::User do
       end
     end
   end
+
+  describe "name" do
+    it "is a String" do
+      System::User.from_name("root").name.should be_a(String)
+    end
+  end
+
+  describe "password" do
+    it "is a String" do
+      System::User.from_name("root").password.should be_a(String)
+    end
+  end
+
+  describe "user_id" do
+    it "is a UInt32" do
+      System::User.from_name("root").user_id.should be_a(UInt32)
+    end
+  end
+
+  describe "group_id" do
+    it "is a UInt32" do
+      System::User.from_name("root").group_id.should be_a(UInt32)
+    end
+  end
+
+  describe "directory" do
+    it "is a String" do
+      System::User.from_name("root").directory.should be_a(String)
+    end
+  end
+
+  describe "shell" do
+    it "is a String" do
+      System::User.from_name("root").shell.should be_a(String)
+    end
+  end
 end
