@@ -1,7 +1,7 @@
 require "spec"
 require "system/group"
 
-{% if flag?(:darwin) %}
+{% if flag?(:darwin) || flag?(:openbsd) %}
   COMMON_GROUP = "wheel"
 {% else %}
   COMMON_GROUP = "root"
