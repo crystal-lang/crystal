@@ -1,10 +1,10 @@
 require "spec"
 require "system/group"
 
-{% if flag?(:darwin) || flag?(:openbsd) %}
-  COMMON_GROUP = "wheel"
-{% else %}
+{% if flag?(:linux) %}
   COMMON_GROUP = "root"
+{% else %}
+  COMMON_GROUP = "wheel"
 {% end %}
 
 describe System::Group do
