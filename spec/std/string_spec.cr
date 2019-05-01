@@ -1805,6 +1805,8 @@ describe "String" do
   it "does camelcase" do
     "foo".camelcase.should eq("Foo")
     "foo_bar".camelcase.should eq("FooBar")
+    "foo".camelcase(downcase: true).should eq("foo")
+    "foo_bar".camelcase(downcase: true).should eq("fooBar")
   end
 
   it "answers ascii_only?" do

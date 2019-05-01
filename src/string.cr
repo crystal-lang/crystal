@@ -3500,13 +3500,14 @@ class String
   # Converts underscores to camelcase boundaries.
   #
   # ```
-  # "eiffel_tower".camelcase                                   # => "EiffelTower"
-  # "isolated_integer".camelcase(Unicode::CaseOptions::Turkic) # => "İsolatedİnteger"
+  # "eiffel_tower".camelcase                                            # => "EiffelTower"
+  # "empire_state_building".camelcase(downcase: true)                   # => "empireStateBuilding"
+  # "isolated_integer".camelcase(options: Unicode::CaseOptions::Turkic) # => "İsolatedİnteger"
   # ```
-  def camelcase(options : Unicode::CaseOptions = Unicode::CaseOptions::None)
+  def camelcase(options : Unicode::CaseOptions = Unicode::CaseOptions::None, *, downcase : Bool = false)
     return self if empty?
 
-    first = true
+    first = !downcase
     last_is_underscore = false
 
     String.build(bytesize) do |str|
