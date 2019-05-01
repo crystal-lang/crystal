@@ -1,13 +1,19 @@
 require "spec"
 require "system/group"
 
+{% if flag?(:darwin) %}
+  COMMON_GROUP = "wheel"
+{% else %}
+  COMMON_GROUP = "root"
+{% end %}
+
 describe System::Group do
   describe "from_name?" do
     it "returns a group by name" do
-      group = System::Group.from_name?("root").not_nil!
+      group = System::Group.from_name?(COMMON_GROUP).not_nil!
 
       group.should be_a(System::Group)
-      group.name.should eq("root")
+      group.name.should eq(COMMON_GROUP)
     end
 
     it "returns nil on nonexistent group" do
@@ -18,10 +24,10 @@ describe System::Group do
 
   describe "from_name" do
     it "returns a group by name" do
-      group = System::Group.from_name("root")
+      group = System::Group.from_name(COMMON_GROUP)
 
       group.should be_a(System::Group)
-      group.name.should eq("root")
+      group.name.should eq(COMMON_GROUP)
     end
 
     it "raises on nonexistent group" do
