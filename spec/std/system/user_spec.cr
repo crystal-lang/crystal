@@ -25,7 +25,7 @@ describe System::User do
     end
 
     it "raises on a nonexistent user" do
-      expect_raises System::User::NotFound, /no such user/ do
+      expect_raises System::User::NotFound, "No such user" do
         System::User.from_name("this_user_does_not_exist")
       end
     end
@@ -54,7 +54,7 @@ describe System::User do
     end
 
     it "raises on nonexistent user" do
-      expect_raises System::User::NotFound, /no such user/ do
+      expect_raises System::User::NotFound, "No such user" do
         System::User.from_id(1234567_u32)
       end
     end
