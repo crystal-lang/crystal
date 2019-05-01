@@ -23,7 +23,7 @@ class System::Group
   # Raises `NotFound` if no such group exists.
   # See `from_name?`.
   def self.from_name(name)
-    self.from_name?(name) || raise NotFound.new("no such group: #{name}")
+    from_name?(name) || raise NotFound.new("No such group: #{name}")
   end
 
   # Returns the group associated with the given ID, if it exists.
@@ -39,7 +39,7 @@ class System::Group
   # Raises `NotFound` if no such group exists.
   # See `from_id?`.
   def self.from_id(id)
-    self.from_id?(id) || raise NotFound.new("no such group: #{id}")
+    from_id?(id) || raise NotFound.new("No such group: #{id}")
   end
 
   # Returns the group's name.

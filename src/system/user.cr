@@ -39,7 +39,7 @@ class System::User
   # Raises `NotFound` if no such user exists.
   # See `from_name?`.
   def self.from_id(id)
-    self.from_id?(id) || raise NotFound.new("no such user: #{id}")
+    from_id?(id) || raise NotFound.new("No such user: #{id}")
   end
 
   # Returns the user's username.
