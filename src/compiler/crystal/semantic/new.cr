@@ -141,6 +141,7 @@ module Crystal
       new_def.new = true
       new_def.doc = doc
       new_def.free_vars = free_vars
+      new_def.annotations = annotations
 
       # Forward block argument if any
       if uses_block_arg?
@@ -288,6 +289,8 @@ module Crystal
       expansion = Def.new(name, def_args, Nop.new, splat_index: splat_index).at(self)
       expansion.yields = yields
       expansion.visibility = visibility
+      expansion.annotations = annotations
+
       if uses_block_arg?
         block_arg = self.block_arg.not_nil!
         expansion.block_arg = block_arg.clone
