@@ -53,8 +53,10 @@ module Crystal
         interpret_env(node)
       when "flag?"
         interpret_flag?(node)
-      when "puts", "p", "pp"
+      when "puts"
         interpret_puts(node)
+      when "p", "pp"
+        interpret_p(node)
       when "p!", "pp!"
         interpret_pp!(node)
       when "skip_file"
@@ -151,6 +153,21 @@ module Crystal
     end
 
     def interpret_puts(node)
+      node.args.each do |arg|
+        arg.accept self
+        last = @last
+
+        # The only difference in macro land between `p` and `puts` is that
+        # `puts` with a string literal shouldn't show the string quotes
+        last = last.value if last.is_a?(StringLiteral)
+
+        @program.stdout.puts last
+      end
+
+      @last = Nop.new
+    end
+
+    def interpret_p(node)
       node.args.each do |arg|
         arg.accept self
         @program.stdout.puts @last
