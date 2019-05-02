@@ -1333,4 +1333,9 @@ describe Crystal::Formatter do
   # #7631
   assert_format "x.try &.[] 123"
   assert_format "x.try &.[]= 123, 456"
+
+  # #7684
+  assert_format "foo(\n  <<-HERE,\n  hello\n  HERE\n  1,\n)"
+  assert_format "foo(\n  <<-HERE,\n  hello\n  HERE\n  foo: 1,\n)"
+  assert_format "foo(\n  <<-HERE,\n  hello\n  HERE\n  # foo\n  foo: 1,\n)"
 end

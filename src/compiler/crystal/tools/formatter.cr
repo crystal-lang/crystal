@@ -2630,7 +2630,7 @@ module Crystal
         write_token :","
         found_comment = skip_space(needed_indent)
         if found_comment || @token.type == :NEWLINE
-          write_indent(needed_indent)
+          write_indent(needed_indent) unless @last_is_heredoc
         else
           write " "
         end
