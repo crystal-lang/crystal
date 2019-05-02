@@ -1788,7 +1788,7 @@ module Crystal
             program.stdout = io
             ["bar".string] of ASTNode
           end
-        end.should eq %("bar"\n)
+        end.should eq %(bar\n)
       end
 
       it "p" do
