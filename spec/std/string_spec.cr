@@ -1805,8 +1805,13 @@ describe "String" do
   it "does camelcase" do
     "foo".camelcase.should eq("Foo")
     "foo_bar".camelcase.should eq("FooBar")
-    "foo".camelcase(downcase: true).should eq("foo")
-    "foo_bar".camelcase(downcase: true).should eq("fooBar")
+    "foo".camelcase(lower: true).should eq("foo")
+    "foo_bar".camelcase(lower: true).should eq("fooBar")
+
+    "Foo".camelcase.should eq("Foo")
+    "Foo_bar".camelcase.should eq("FooBar")
+    "Foo".camelcase(lower: true).should eq("foo")
+    "Foo_bar".camelcase(lower: true).should eq("fooBar")
   end
 
   it "answers ascii_only?" do
