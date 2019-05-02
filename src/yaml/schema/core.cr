@@ -87,7 +87,7 @@ module YAML::Schema::Core
       return value || string
     when .starts_with?('0')
       return 0_i64 if string.size == 1
-      value = string.to_i64?(base: 8, prefix: true)
+      value = string.to_i64?(base: 8, prefix: true, leading_zero_is_octal: true)
       return value || string
     when .starts_with?('-'),
          .starts_with?('+')
@@ -241,7 +241,9 @@ module YAML::Schema::Core
   end
 
   protected def self.parse_int(string, location) : Int64
-    string.to_i64?(underscore: true, prefix: true) ||
+    return 0_i64 if string == "0"
+
+    string.to_i64?(underscore: true, prefix: true, leading_zero_is_octal: true) ||
       raise(YAML::ParseException.new("Invalid int", *location))
   end
 
@@ -314,7 +316,7 @@ module YAML::Schema::Core
   end
 
   private def self.parse_int?(string)
-    string.to_i64?(underscore: true)
+    string.to_i64?(underscore: true, leading_zero_is_octal: true)
   end
 
   private def self.parse_float?(string)
