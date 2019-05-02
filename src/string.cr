@@ -3499,21 +3499,23 @@ class String
 
   # Converts underscores to camelcase boundaries.
   #
+  # If *lower* is true, the first letter will be downcased.
+  #
   # ```
   # "eiffel_tower".camelcase                                            # => "EiffelTower"
-  # "empire_state_building".camelcase(downcase: true)                   # => "empireStateBuilding"
+  # "empire_state_building".camelcase(lower: true)                      # => "empireStateBuilding"
   # "isolated_integer".camelcase(options: Unicode::CaseOptions::Turkic) # => "İsolatedİnteger"
   # ```
-  def camelcase(options : Unicode::CaseOptions = Unicode::CaseOptions::None, *, downcase : Bool = false)
+  def camelcase(options : Unicode::CaseOptions = Unicode::CaseOptions::None, *, lower : Bool = false)
     return self if empty?
 
-    first = !downcase
+    first = true
     last_is_underscore = false
 
     String.build(bytesize) do |str|
       each_char do |char|
         if first
-          str << char.upcase(options)
+          str << (lower ? char.downcase(options) : char.upcase(options))
         elsif char == '_'
           last_is_underscore = true
         elsif last_is_underscore
