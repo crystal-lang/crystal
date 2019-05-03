@@ -53,6 +53,7 @@ module Crystal
 
       if (ann = node.target_def.annotation(@program.deprecated_annotation)) &&
          (deprecated_annotation = DeprecatedAnnotation.from(ann))
+        return if compiler_expanded_call(node)
         return if ignore_warning_due_to_location(node.location)
         short_reference = node.target_def.short_reference
         warning_key = node.location.try { |l| "#{short_reference} #{l}" }
@@ -80,6 +81,11 @@ module Crystal
       return @program.warnings_exclude.any? do |path|
         filename.starts_with?(path)
       end
+    end
+
+    private def compiler_expanded_call(node : Call)
+      # Compiler generates a `_.initialize` call in `new`
+      node.obj.as?(Var).try { |v| v.name == "_" } && node.name == "initialize"
     end
   end
 

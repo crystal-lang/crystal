@@ -2630,7 +2630,7 @@ module Crystal
         write_token :","
         found_comment = skip_space(needed_indent)
         if found_comment || @token.type == :NEWLINE
-          write_indent(needed_indent)
+          write_indent(needed_indent) unless @last_is_heredoc
         else
           write " "
         end
@@ -2768,58 +2768,7 @@ module Crystal
         when Call
           call = body
           clear_object call
-
-          if !call.obj && (call.name == "[]" || call.name == "[]?")
-            case @token.type
-            when :"["
-              write_token :"["
-              skip_space_or_newline
-              format_call_args(call, false)
-              skip_space_or_newline
-              write_token :"]"
-              write_token :"?" if call.name == "[]?"
-            when :"[]", :"[]?"
-              write_token @token.type
-              skip_space_or_newline
-              if @token.type == :"("
-                write "("
-                next_token_skip_space_or_newline
-                format_call_args(call, true)
-                skip_space_or_newline
-                write_token :")"
-              end
-            else
-              raise "BUG: expected `[`, `[]` or `[]?`"
-            end
-          elsif !call.obj && call.name == "[]="
-            case @token.type
-            when :"["
-              last_arg = call.args.pop
-              write_token :"["
-              skip_space_or_newline
-              format_call_args(call, false)
-              skip_space_or_newline
-              write_token :"]"
-              skip_space
-              write_token " ", :"=", " "
-              skip_space_or_newline
-              accept last_arg
-            when :"[]="
-              write_token @token.type
-              skip_space_or_newline
-              if @token.type == :"("
-                write "("
-                next_token_skip_space_or_newline
-                format_call_args(call, true)
-                skip_space_or_newline
-                write_token :")"
-              end
-            else
-              raise "BUG: expected `[` or `[]=`"
-            end
-          else
-            indent(@indent, call)
-          end
+          indent(@indent, call)
         when IsA
           if body.obj.is_a?(Var)
             if body.nil_check?
