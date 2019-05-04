@@ -5,9 +5,7 @@ class System::User
   class NotFound < Exception
   end
 
-  private getter sys_user : Crystal::System::User
-
-  private def initialize(@sys_user)
+  private def initialize(@sys_user : Crystal::System::User)
   end
 
   # Returns the user associated with the given name, if it exists.

@@ -5,9 +5,7 @@ class System::Group
   class NotFound < Exception
   end
 
-  private getter sys_group : Crystal::System::Group
-
-  private def initialize(@sys_group)
+  private def initialize(@sys_group : Crystal::System::Group)
   end
 
   # Returns the group associated with the given name, if it exists.
