@@ -11,6 +11,7 @@ describe System::Group do
 
       group.should be_a(System::Group)
       group.name.should eq(GROUP_NAME)
+      group.id.should eq(GROUP_ID)
     end
 
     it "returns nil on nonexistent group" do
@@ -25,6 +26,7 @@ describe System::Group do
 
       group.should be_a(System::Group)
       group.name.should eq(GROUP_NAME)
+      group.id.should eq(GROUP_ID)
     end
 
     it "raises on nonexistent group" do
@@ -40,6 +42,7 @@ describe System::Group do
 
       group.should be_a(System::Group)
       group.id.should eq(GROUP_ID)
+      group.name.should eq(GROUP_NAME)
     end
 
     it "returns nil on nonexistent group" do
@@ -54,6 +57,7 @@ describe System::Group do
 
       group.should be_a(System::Group)
       group.id.should eq(GROUP_ID)
+      group.name.should eq(GROUP_NAME)
     end
 
     it "raises on nonexistent group" do

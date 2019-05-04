@@ -11,6 +11,7 @@ describe System::User do
 
       user.should be_a(System::User)
       user.name.should eq(USER_NAME)
+      user.user_id.should eq(USER_ID)
     end
 
     it "returns nil on nonexistent user" do
@@ -25,6 +26,7 @@ describe System::User do
 
       user.should be_a(System::User)
       user.name.should eq(USER_NAME)
+      user.user_id.should eq(USER_ID)
     end
 
     it "raises on a nonexistent user" do
@@ -40,6 +42,7 @@ describe System::User do
 
       user.should be_a(System::User)
       user.user_id.should eq(USER_ID)
+      user.name.should eq(USER_NAME)
     end
 
     it "returns nil on nonexistent user" do
@@ -54,6 +57,7 @@ describe System::User do
 
       user.should be_a(System::User)
       user.user_id.should eq(USER_ID)
+      user.name.should eq(USER_NAME)
     end
 
     it "raises on nonexistent user" do
