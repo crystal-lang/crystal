@@ -1,19 +1,16 @@
 require "spec"
 require "system/group"
 
-{% if flag?(:linux) %}
-  COMMON_GROUP = "root"
-{% else %}
-  COMMON_GROUP = "wheel"
-{% end %}
+GROUP_NAME = {{ `id -gn`.stringify.chomp }}
+GROUP_ID   = {{ `id -g`.stringify.to_i }}.to_u32!
 
 describe System::Group do
   describe "from_name?" do
     it "returns a group by name" do
-      group = System::Group.from_name?(COMMON_GROUP).not_nil!
+      group = System::Group.from_name?(GROUP_NAME).not_nil!
 
       group.should be_a(System::Group)
-      group.name.should eq(COMMON_GROUP)
+      group.name.should eq(GROUP_NAME)
     end
 
     it "returns nil on nonexistent group" do
@@ -24,10 +21,10 @@ describe System::Group do
 
   describe "from_name" do
     it "returns a group by name" do
-      group = System::Group.from_name(COMMON_GROUP)
+      group = System::Group.from_name(GROUP_NAME)
 
       group.should be_a(System::Group)
-      group.name.should eq(COMMON_GROUP)
+      group.name.should eq(GROUP_NAME)
     end
 
     it "raises on nonexistent group" do
@@ -39,10 +36,10 @@ describe System::Group do
 
   describe "from_id?" do
     it "returns a group by id" do
-      group = System::Group.from_id?(0_u32).not_nil!
+      group = System::Group.from_id?(GROUP_ID).not_nil!
 
       group.should be_a(System::Group)
-      group.id.should eq(0_u32)
+      group.id.should eq(GROUP_ID)
     end
 
     it "returns nil on nonexistent group" do
@@ -53,10 +50,10 @@ describe System::Group do
 
   describe "from_id" do
     it "returns a group by id" do
-      group = System::Group.from_id(0_u32)
+      group = System::Group.from_id(GROUP_ID)
 
       group.should be_a(System::Group)
-      group.id.should eq(0_u32)
+      group.id.should eq(GROUP_ID)
     end
 
     it "raises on nonexistent group" do
@@ -68,25 +65,25 @@ describe System::Group do
 
   describe "name" do
     it "is a String" do
-      System::Group.from_name(COMMON_GROUP).name.should be_a(String)
+      System::Group.from_name(GROUP_NAME).name.should be_a(String)
     end
   end
 
   describe "password" do
     it "is a String" do
-      System::Group.from_name(COMMON_GROUP).password.should be_a(String)
+      System::Group.from_name(GROUP_NAME).password.should be_a(String)
     end
   end
 
   describe "id" do
     it "is a UInt32" do
-      System::Group.from_name(COMMON_GROUP).id.should be_a(UInt32)
+      System::Group.from_name(GROUP_NAME).id.should be_a(UInt32)
     end
   end
 
   describe "members" do
     it "is an Array(String)" do
-      System::Group.from_name(COMMON_GROUP).members.should be_a(Array(String))
+      System::Group.from_name(GROUP_NAME).members.should be_a(Array(String))
     end
   end
 end

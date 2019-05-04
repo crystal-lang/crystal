@@ -1,13 +1,16 @@
 require "spec"
 require "system/user"
 
+USER_NAME = {{ `id -un`.stringify.chomp }}
+USER_ID   = {{ `id -u`.stringify.to_i }}.to_u32!
+
 describe System::User do
   describe "from_name?" do
     it "returns a user by name" do
-      user = System::User.from_name?("root").not_nil!
+      user = System::User.from_name?(USER_NAME).not_nil!
 
       user.should be_a(System::User)
-      user.name.should eq("root")
+      user.name.should eq(USER_NAME)
     end
 
     it "returns nil on nonexistent user" do
@@ -18,10 +21,10 @@ describe System::User do
 
   describe "from_name" do
     it "returns a user by name" do
-      user = System::User.from_name("root")
+      user = System::User.from_name(USER_NAME)
 
       user.should be_a(System::User)
-      user.name.should eq("root")
+      user.name.should eq(USER_NAME)
     end
 
     it "raises on a nonexistent user" do
@@ -33,10 +36,10 @@ describe System::User do
 
   describe "from_id?" do
     it "returns a user by id" do
-      user = System::User.from_id?(0_u32).not_nil!
+      user = System::User.from_id?(USER_ID).not_nil!
 
       user.should be_a(System::User)
-      user.user_id.should eq(0_u32)
+      user.user_id.should eq(USER_ID)
     end
 
     it "returns nil on nonexistent user" do
@@ -47,10 +50,10 @@ describe System::User do
 
   describe "from_id" do
     it "returns a user by id" do
-      user = System::User.from_id(0_u32)
+      user = System::User.from_id(USER_ID)
 
       user.should be_a(System::User)
-      user.user_id.should eq(0_u32)
+      user.user_id.should eq(USER_ID)
     end
 
     it "raises on nonexistent user" do
@@ -62,37 +65,37 @@ describe System::User do
 
   describe "name" do
     it "is a String" do
-      System::User.from_name("root").name.should be_a(String)
+      System::User.from_name(USER_NAME).name.should be_a(String)
     end
   end
 
   describe "password" do
     it "is a String" do
-      System::User.from_name("root").password.should be_a(String)
+      System::User.from_name(USER_NAME).password.should be_a(String)
     end
   end
 
   describe "user_id" do
     it "is a UInt32" do
-      System::User.from_name("root").user_id.should be_a(UInt32)
+      System::User.from_name(USER_NAME).user_id.should be_a(UInt32)
     end
   end
 
   describe "group_id" do
     it "is a UInt32" do
-      System::User.from_name("root").group_id.should be_a(UInt32)
+      System::User.from_name(USER_NAME).group_id.should be_a(UInt32)
     end
   end
 
   describe "directory" do
     it "is a String" do
-      System::User.from_name("root").directory.should be_a(String)
+      System::User.from_name(USER_NAME).directory.should be_a(String)
     end
   end
 
   describe "shell" do
     it "is a String" do
-      System::User.from_name("root").shell.should be_a(String)
+      System::User.from_name(USER_NAME).shell.should be_a(String)
     end
   end
 end
