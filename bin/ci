@@ -127,7 +127,7 @@ with_build_env() {
 
   on_linux docker run \
     --rm -t \
-    -u $(id -u) \
+    -u $(id -un) \
     -v $PWD:/mnt \
     -w /mnt \
     -e CRYSTAL_CACHE_DIR="/tmp/crystal" \
