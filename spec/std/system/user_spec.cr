@@ -1,7 +1,7 @@
 require "spec"
 require "system/user"
 
-USER_NAME = {{ `id -un`.stringify.chomp }}
+USER_NAME = {{ `whoami`.stringify.chomp }}
 USER_ID   = {{ `id -u`.stringify.to_i }}.to_u32!
 
 describe System::User do
