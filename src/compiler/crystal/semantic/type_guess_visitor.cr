@@ -631,6 +631,14 @@ module Crystal
       return type if type
 
       type = guess_type_call_with_type_annotation(node)
+
+      # If the type is unbound (uninstantiated generic) but the call
+      # wasn't something like `Gen(Int32).something` then we can never
+      # guess a type, the type is probably inferred from type restrictions
+      if !obj.is_a?(Generic) && type.try &.unbound?
+        return nil
+      end
+
       return type if type
 
       nil

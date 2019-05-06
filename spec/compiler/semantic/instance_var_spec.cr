@@ -5223,4 +5223,24 @@ describe "Semantic: instance var" do
       Foo.new.x
       )) { int32 }
   end
+
+  it "doesn't infer unbound generic type on non-generic call (#6390)" do
+    assert_error %(
+      class Gen(T)
+        def self.new(&block)
+          Gen(T).build
+        end
+
+        def self.build : self
+        end
+      end
+
+      class Foo
+        def initialize
+          @x = Gen.new { }
+        end
+      end
+      ),
+      "can't use Gen(T) as the type of instance variable @x of Foo, use a more specific type"
+  end
 end
