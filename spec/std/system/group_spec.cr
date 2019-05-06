@@ -30,7 +30,7 @@ describe System::Group do
     end
 
     it "raises on nonexistent group" do
-      expect_raises System::Group::NotFound, "No such group" do
+      expect_raises System::Group::NotFoundError, "No such group" do
         System::Group.from_name("this_group_does_not_exist")
       end
     end
@@ -61,7 +61,7 @@ describe System::Group do
     end
 
     it "raises on nonexistent group" do
-      expect_raises System::Group::NotFound, "No such group" do
+      expect_raises System::Group::NotFoundError, "No such group" do
         System::Group.from_id(1234567_u32)
       end
     end

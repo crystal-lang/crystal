@@ -2,7 +2,7 @@ require "crystal/system/group"
 
 class System::Group
   # Raised on group lookup failure.
-  class NotFound < Exception
+  class NotFoundError < Exception
   end
 
   private def initialize(@sys_group : Crystal::System::Group)
@@ -18,10 +18,10 @@ class System::Group
 
   # Returns the group associated with the given name.
   #
-  # Raises `NotFound` if no such group exists.
+  # Raises `NotFoundError` if no such group exists.
   # See `from_name?`.
   def self.from_name(name)
-    from_name?(name) || raise NotFound.new("No such group: #{name}")
+    from_name?(name) || raise NotFoundError.new("No such group: #{name}")
   end
 
   # Returns the group associated with the given ID, if it exists.
@@ -34,10 +34,10 @@ class System::Group
 
   # Returns the group associated with the given ID.
   #
-  # Raises `NotFound` if no such group exists.
+  # Raises `NotFoundError` if no such group exists.
   # See `from_id?`.
   def self.from_id(id)
-    from_id?(id) || raise NotFound.new("No such group: #{id}")
+    from_id?(id) || raise NotFoundError.new("No such group: #{id}")
   end
 
   # Returns the group's name.

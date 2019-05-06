@@ -2,7 +2,7 @@ require "crystal/system/user"
 
 class System::User
   # Raised on user lookup failure.
-  class NotFound < Exception
+  class NotFoundError < Exception
   end
 
   private def initialize(@sys_user : Crystal::System::User)
@@ -18,10 +18,10 @@ class System::User
 
   # Returns the user associated with the given name.
   #
-  # Raises `NotFound` if no such user exists.
+  # Raises `NotFoundError` if no such user exists.
   # See `from_name?`.
   def self.from_name(name)
-    from_name?(name) || raise NotFound.new("No such user: #{name}")
+    from_name?(name) || raise NotFoundError.new("No such user: #{name}")
   end
 
   # Returns the user associated with the given ID, if it exists.
@@ -34,10 +34,10 @@ class System::User
 
   # Returns the user associated with the given ID.
   #
-  # Raises `NotFound` if no such user exists.
+  # Raises `NotFoundError` if no such user exists.
   # See `from_name?`.
   def self.from_id(id)
-    from_id?(id) || raise NotFound.new("No such user: #{id}")
+    from_id?(id) || raise NotFoundError.new("No such user: #{id}")
   end
 
   # Returns the user's username.
