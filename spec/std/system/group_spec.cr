@@ -68,20 +68,20 @@ describe System::Group do
   end
 
   describe "name" do
-    it "is a String" do
-      System::Group.from_name(GROUP_NAME).name.should be_a(String)
+    it "is the same as the source name" do
+      System::Group.from_name(GROUP_NAME).name.should eq(GROUP_NAME)
     end
   end
 
   describe "id" do
-    it "is a UInt32" do
-      System::Group.from_name(GROUP_NAME).id.should be_a(UInt32)
+    it "is the same as the source ID" do
+      System::Group.from_id(GROUP_ID).id.should eq(GROUP_ID)
     end
   end
 
   describe "members" do
-    it "is an Array(String)" do
-      System::Group.from_name(GROUP_NAME).members.should be_a(Array(String))
+    it "calls without raising" do
+      System::Group.from_name(GROUP_NAME).members
     end
   end
 end

@@ -68,32 +68,32 @@ describe System::User do
   end
 
   describe "name" do
-    it "is a String" do
-      System::User.from_name(USER_NAME).name.should be_a(String)
+    it "is the same as the source name" do
+      System::User.from_name(USER_NAME).name.should eq(USER_NAME)
     end
   end
 
   describe "user_id" do
-    it "is a UInt32" do
-      System::User.from_name(USER_NAME).user_id.should be_a(UInt32)
+    it "is the same as the source ID" do
+      System::User.from_id(USER_ID).user_id.should eq(USER_ID)
     end
   end
 
   describe "group_id" do
-    it "is a UInt32" do
-      System::User.from_name(USER_NAME).group_id.should be_a(UInt32)
+    it "calls without raising" do
+      System::User.from_name(USER_NAME).group_id
     end
   end
 
   describe "directory" do
-    it "is a String" do
-      System::User.from_name(USER_NAME).directory.should be_a(String)
+    it "calls without raising" do
+      System::User.from_name(USER_NAME).directory
     end
   end
 
   describe "shell" do
-    it "is a String" do
-      System::User.from_name(USER_NAME).shell.should be_a(String)
+    it "calls without raising" do
+      System::User.from_name(USER_NAME).shell
     end
   end
 end
