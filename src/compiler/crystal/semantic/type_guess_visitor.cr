@@ -1073,21 +1073,16 @@ module Crystal
     end
 
     def check_allowed_in_generics(node, type)
-      # Types such as Object, Int, etc., are not allowed in generics
-      # and as variables types, so we disallow them.
-      if type && !type.allowed_in_generics?
-        @error = Error.new(node, type)
-        return nil
-      end
-
-      case type
-      when GenericClassType
+      if type.is_a?(GenericClassType)
+        nil
+      elsif type.is_a?(GenericModuleType)
+        nil
+      elsif type && !type.allowed_in_generics?
+        # Types such as Object, Int, etc., are not allowed in generics
+        # and as variables types, so we disallow them.
         @error = Error.new(node, type)
         nil
-      when GenericModuleType
-        @error = Error.new(node, type)
-        nil
-      when NonGenericClassType
+      elsif type.is_a?(NonGenericClassType)
         type.virtual_type
       else
         type

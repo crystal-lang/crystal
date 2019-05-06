@@ -1860,7 +1860,7 @@ describe "Semantic: instance var" do
 
       Foo.new.x
       ),
-      "Can't infer the type of instance variable '@x' of Foo"
+      "can't infer the type of instance variable '@x' of Foo"
   end
 
   it "says undefined instance variable on assign" do
@@ -1874,7 +1874,7 @@ describe "Semantic: instance var" do
 
       Foo.new.x
       ),
-      "Can't infer the type of instance variable '@x' of Foo"
+      "can't infer the type of instance variable '@x' of Foo"
   end
 
   it "errors if declaring instance var and turns out to be nilable" do
@@ -2603,7 +2603,7 @@ describe "Semantic: instance var" do
       point = Bar.new(1)
       Foo.new(1).x
       ),
-      "Can't infer the type of instance variable '@x' of Bar"
+      "can't infer the type of instance variable '@x' of Bar"
   end
 
   it "infers type from array literal in generic type" do
@@ -3086,7 +3086,7 @@ describe "Semantic: instance var" do
 
       Foo(Int32).new.bar
       ),
-      "can't use Bar(T) as the type of instance variable @bar of Foo(T), use a more specific type"
+      "can't infer the type parameter T for the generic class Bar(T)"
   end
 
   it "doesn't crash on missing var on subclass, with superclass not specifying a type" do
@@ -3577,7 +3577,7 @@ describe "Semantic: instance var" do
 
       Foo.new.x
       ),
-      "Can't infer the type of instance variable '@x' of Foo"
+      "can't infer the type of instance variable '@x' of Foo"
   end
 
   it "doesn't infer from class method with multiple statements and return, on non-easy return (2)" do
@@ -3605,7 +3605,7 @@ describe "Semantic: instance var" do
 
       Foo.new.x
       ),
-      "Can't infer the type of instance variable '@x' of Foo"
+      "can't infer the type of instance variable '@x' of Foo"
   end
 
   it "infer from class method where new is redefined" do
@@ -3658,7 +3658,7 @@ describe "Semantic: instance var" do
 
       Foo.new.x
       ),
-      "Can't infer the type of instance variable '@x' of Foo"
+      "can't infer the type of instance variable '@x' of Foo"
   end
 
   it "infers in multiple assign for tuple type (1)" do
@@ -3704,7 +3704,7 @@ describe "Semantic: instance var" do
 
       Foo.new(3).foo
       ),
-      "Can't infer the type of instance variable '@foo' of Foo(Int32)"
+      "can't infer the type of instance variable '@foo' of Foo(Int32)"
   end
 
   it "doesn't crash when inferring from new without matches (#2538)" do
@@ -3777,7 +3777,7 @@ describe "Semantic: instance var" do
 
       Foo.new.x
       ),
-      "Can't infer the type of instance variable '@x' of Foo"
+      "can't infer the type of instance variable '@x' of Foo"
   end
 
   it "can't infer type from initializer in non-generic module" do
@@ -3796,7 +3796,7 @@ describe "Semantic: instance var" do
 
       Foo.new.x
       ),
-      "Can't infer the type of instance variable '@x' of Moo"
+      "can't infer the type of instance variable '@x' of Moo"
   end
 
   it "can't infer type from initializer in generic module type" do
@@ -3815,7 +3815,7 @@ describe "Semantic: instance var" do
 
       Foo.new.x
       ),
-      "Can't infer the type of instance variable '@x' of Moo(T)"
+      "can't infer the type of instance variable '@x' of Moo(T)"
   end
 
   it "can't infer type from initializer in generic class type" do
@@ -3830,7 +3830,7 @@ describe "Semantic: instance var" do
 
       Foo(Int32).new.x
       ),
-      "Can't infer the type of instance variable '@x' of Foo(T)"
+      "can't infer the type of instance variable '@x' of Foo(T)"
   end
 
   it "infers type from self (#2575)" do
@@ -3969,7 +3969,7 @@ describe "Semantic: instance var" do
         end
       end
       ),
-      "can't use Class as the type of instance variable @class of Foo, use a more specific type"
+      "can't use Class as the type of instance variable '@class' of Foo, use a more specific type"
   end
 
   it "errors when using Class in generic type" do
@@ -3979,7 +3979,7 @@ describe "Semantic: instance var" do
         end
       end
       ),
-      "can't use Class as the type of instance variable @class of Foo(T), use a more specific type"
+      "can't use Class as the type of instance variable '@class' of Foo(T), use a more specific type"
   end
 
   it "doesn't error when using Class but specifying type" do
@@ -4689,7 +4689,7 @@ describe "Semantic: instance var" do
 
       Bar.new
       ),
-      "Can't infer the type of instance variable '@bar' of Foo"
+      "can't infer the type of instance variable '@bar' of Foo"
   end
 
   it "can't infer type when using operation on const (#4054)" do
@@ -4704,7 +4704,7 @@ describe "Semantic: instance var" do
 
       Foo.new
       ),
-      "Can't infer the type of instance variable '@baz' of Foo"
+      "can't infer the type of instance variable '@baz' of Foo"
   end
 
   it "instance variables initializers are used in class variables initialized objects (#3988)" do
@@ -4822,7 +4822,7 @@ describe "Semantic: instance var" do
         @x = Gen.new
       end
       ),
-      "can't use Gen(T) as the type of instance variable @x of Foo"
+      "can't infer the type of instance variable '@x' of Foo"
   end
 
   it "doesn't consider instance var as nilable if assigned before self access (#4981)" do
@@ -4964,7 +4964,7 @@ describe "Semantic: instance var" do
 
       Foo.new(1).foo
     ),
-      "Can't infer the type of instance variable '@foo' of Foo"
+      "can't infer the type of instance variable '@foo' of Foo"
   end
 
   it "can guess the type from double-splat argument with double-splated type" do
@@ -5010,7 +5010,7 @@ describe "Semantic: instance var" do
 
       Foo.new(foo: 1).foo
     ),
-      "Can't infer the type of instance variable '@foo' of Foo"
+      "can't infer the type of instance variable '@foo' of Foo"
   end
 
   it "cannot guess type from argument assigned in body" do
@@ -5024,7 +5024,7 @@ describe "Semantic: instance var" do
 
       Foo.new "foo"
       ),
-      "Can't infer the type of instance variable '@x' of Foo"
+      "can't infer the type of instance variable '@x' of Foo"
   end
 
   it "can't infer type of generic method that returns self (#5383)" do
@@ -5035,12 +5035,14 @@ describe "Semantic: instance var" do
       end
 
       class Foo
-        def initialize(x, y)
+        def initialize
           @x = Gen.new { 1 }
         end
       end
+
+      Foo.new
       ),
-      "can't use Gen(T) as the type of instance variable @x of Foo, use a more specific type"
+      "type must be Gen(T), not Nil"
   end
 
   it "guesses virtual array type (1) (#5342)" do
@@ -5240,7 +5242,9 @@ describe "Semantic: instance var" do
           @x = Gen.new { }
         end
       end
+
+      Foo.new
       ),
-      "can't use Gen(T) as the type of instance variable @x of Foo, use a more specific type"
+      "can't infer the type parameter T for the generic class Gen(T)"
   end
 end
