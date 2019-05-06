@@ -43,9 +43,6 @@ class System::User
   # Returns the user's username.
   delegate name, to: @sys_user
 
-  # Returns the user's password.
-  delegate password, to: @sys_user
-
   # Returns the user's ID.
   delegate user_id, to: @sys_user
 

@@ -73,12 +73,6 @@ describe System::User do
     end
   end
 
-  describe "password" do
-    it "is a String" do
-      System::User.from_name(USER_NAME).password.should be_a(String)
-    end
-  end
-
   describe "user_id" do
     it "is a UInt32" do
       System::User.from_name(USER_NAME).user_id.should be_a(UInt32)

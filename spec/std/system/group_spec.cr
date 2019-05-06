@@ -73,12 +73,6 @@ describe System::Group do
     end
   end
 
-  describe "password" do
-    it "is a String" do
-      System::Group.from_name(GROUP_NAME).password.should be_a(String)
-    end
-  end
-
   describe "id" do
     it "is a UInt32" do
       System::Group.from_name(GROUP_NAME).id.should be_a(UInt32)
