@@ -391,7 +391,7 @@ struct Time
   #
   # ```
   # time = Time.utc(2016, 2, 15)
-  # time.to_s # => "2016-02-15 00:00:00 +00:00"
+  # time.to_s # => "2016-02-15 00:00:00 UTC"
   # ```
   #
   # The local date-time representation is resolved to a single instant based on
@@ -560,8 +560,8 @@ struct Time
   # new_year = Time.utc(2019, 1, 1, 0, 0, 0)
   # tokyo = new_year.to_local_in(Time::Location.load("Asia/Tokyo"))
   # new_york = new_year.to_local_in(Time::Location.load("America/New_York"))
-  # tokyo.to_s    # => 2019-01-01 00:00:00.0 +09:00 Asia/Tokyo
-  # new_york.to_s # => 2019-01-01 00:00:00.0 -05:00 America/New_York
+  # tokyo.inspect    # => "2019-01-01 00:00:00.0 +09:00 Asia/Tokyo"
+  # new_york.inspect # => "2019-01-01 00:00:00.0 -05:00 America/New_York"
   # ```
   def to_local_in(location : Location)
     local_seconds = offset_seconds
@@ -683,10 +683,11 @@ struct Time
   #
   # If the day-of-month resulting from shifting by *years* and *months* would be
   # invalid, the date is adjusted to the last valid day of the month.
-  # For example, adding one month to `2018-07-31` would result in the invalid
-  # date `2018-08-31` which will be adjusted to `2018-08-30`:
+  # For example, adding one month to `2018-08-31` would result in the invalid
+  # date `2018-09-31` which will be adjusted to `2018-09-30`:
   # ```
-  # Time.utc(2018, 7, 31).shift(months: 1) # => Time.utc(2018, 8, 30)
+  # Time.utc(2018, 7, 31).shift(months: 1) # => Time.utc(2018, 8, 31)
+  # Time.utc(2018, 8, 31).shift(months: 1) # => Time.utc(2018, 9, 30)
   # ```
   #
   # Overflow in smaller units is transferred to the next larger unit.
@@ -695,9 +696,9 @@ struct Time
   # granularity. This is relevant because the order of operations can change the result:
   #
   # ```
-  # Time.utc(2018, 7, 31).shift(months: 1, days: -1)       # => Time.utc(2018, 8, 29)
-  # Time.utc(2018, 7, 31).shift(months: 1).shift(days: -1) # => Time.utc(2018, 8, 29)
-  # Time.utc(2018, 7, 31).shift(days: -1).shift(months: 1) # => Time.utc(2018, 8, 30)
+  # Time.utc(2018, 8, 31).shift(months: 1, days: -1)       # => Time.utc(2018, 9, 29)
+  # Time.utc(2018, 8, 31).shift(months: 1).shift(days: -1) # => Time.utc(2018, 9, 29)
+  # Time.utc(2018, 8, 31).shift(days: -1).shift(months: 1) # => Time.utc(2018, 9, 30)
   # ```
   #
   # There is no explicit limit on the input values but the shift must result

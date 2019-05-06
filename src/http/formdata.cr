@@ -11,7 +11,6 @@ require "mime/multipart"
 #
 # ```
 # require "http"
-# require "tempfile"
 #
 # server = HTTP::Server.new do |context|
 #   name = nil
