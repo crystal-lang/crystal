@@ -368,4 +368,104 @@ describe "implementations" do
     Bar.bar
     )
   end
+
+  it "find class implementation" do
+    assert_implementations %(
+    ༓class Foo
+    end
+
+    F‸oo
+    )
+  end
+
+  it "find open class implementation" do
+    assert_implementations %(
+    ༓class Foo
+      def foo
+      end
+    end
+
+    ༓class Foo
+      def bar
+      end
+    end
+
+    F‸oo
+    )
+  end
+
+  it "find struct implementation" do
+    assert_implementations %(
+    ༓struct Foo
+    end
+
+    F‸oo
+    )
+  end
+
+  it "find module implementation" do
+    assert_implementations %(
+    ༓module Foo
+    end
+
+    F‸oo
+    )
+  end
+
+  it "find enum implementation" do
+    assert_implementations %(
+    ༓enum Foo
+      Foo
+    end
+
+    F‸oo
+    )
+  end
+
+  it "find enum value implementation" do
+    assert_implementations %(
+    enum Foo
+      ༓Foo
+    end
+
+    Foo::F‸oo
+    )
+  end
+
+  it "find class implementation via alias" do
+    assert_implementations %(
+    ༓class Foo
+    end
+
+    alias Bar = Foo
+
+    B‸ar
+    )
+  end
+
+  it "find class defined by macro" do
+    assert_implementations %(
+    macro foo
+      class Foo
+      end
+    end
+
+    ༓foo
+
+    F‸oo
+    )
+  end
+
+  it "find class inside method" do
+    assert_implementations %(
+    ༓class Foo
+    end
+
+    def foo
+      F‸oo
+    end
+
+    foo
+    )
+  end
 end
