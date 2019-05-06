@@ -43,7 +43,7 @@ describe "Semantic: nilable instance var" do
       p.value = Baz.new
       p.value.foo + 1
       ),
-      "Can't infer the type of instance variable '@foo' of Foo"
+      "can't infer the type of instance variable '@foo' of Foo"
   end
 
   it "says instance var was not initialized in all of the initialize methods, with var declaration" do
