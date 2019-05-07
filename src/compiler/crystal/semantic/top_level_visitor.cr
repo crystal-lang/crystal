@@ -861,6 +861,10 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
     if (var = node.var).is_a?(Var)
       @vars[var.name] = MetaVar.new(var.name)
     end
+
+    # Because the value could be using macro expansions
+    node.value.try &.accept(self)
+
     false
   end
 
