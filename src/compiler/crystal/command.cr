@@ -50,6 +50,7 @@ class Crystal::Command
 
   def initialize(@options : Array(String))
     @color = true
+    @all_frames = false
     @progress_tracker = ProgressTracker.new
   end
 
@@ -107,6 +108,7 @@ class Crystal::Command
     error ex.message
   rescue ex : Crystal::Exception
     ex.color = @color
+    ex.all_frames = @all_frames
     if @config.try(&.output_format) == "json"
       STDERR.puts ex.to_json
     else
@@ -367,6 +369,10 @@ class Crystal::Command
       opts.on("--no-color", "Disable colored output") do
         @color = false
         compiler.color = false
+      end
+
+      opts.on("--all-frames", "Show all error frames") do
+        @all_frames = true
       end
 
       unless no_codegen

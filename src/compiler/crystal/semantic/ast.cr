@@ -17,14 +17,8 @@ module Crystal
       # TODO extract message formatting from exceptions
       String.build do |io|
         exception = exception_type.for_node(self, message, inner)
-        io << "Warning "
+        exception.warning = true
         exception.append_to_s(nil, io)
-        # Macro errors will first include the trace of the macro
-        # expansions, and then the warning message.
-        # In other warning messages the code snippet includes a newline
-        if exception.@filename.is_a?(VirtualFile)
-          io.puts
-        end
       end
     end
 

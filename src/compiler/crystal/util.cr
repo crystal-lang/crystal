@@ -13,8 +13,8 @@ module Crystal
     filename
   end
 
-  def self.error(msg, color, exit_code = 1, stderr = STDERR)
-    stderr.print "Error: ".colorize.toggle(color).red.bold
+  def self.error(msg, color, exit_code = 1, stderr = STDERR, leading_error = true)
+    stderr.print "Error: ".colorize.toggle(color).red.bold if leading_error
     stderr.puts msg.colorize.toggle(color).bright
     exit(exit_code) if exit_code
   end
@@ -23,19 +23,39 @@ module Crystal
     CacheDir.instance.join("crystal-run-#{basename}.tmp")
   end
 
-  def self.with_line_numbers(source : String, highlight_line_number = nil, color = false)
-    source.lines.map_with_index do |line, i|
-      str = "#{"%4d" % (i + 1)}. #{line.to_s.chomp}"
+  def self.with_line_numbers(
+    source : String,
+    highlight_line_number = nil,
+    color = false,
+    hide_after_highlight = false,
+    join_lines = true
+  )
+    line_number_padding = (source.lines.size + 1).to_s.chars.size
+    source_lines = source.lines
+    if hide_after_highlight && highlight_line_number
+      source_lines = source_lines[0..(highlight_line_number - 1)]
+    end
+    lines_with_numbers = source_lines.map_with_index do |line, i|
+      line = line.to_s.chomp
+      line_number = "%#{line_number_padding}d" % (i + 1)
       target = i + 1 == highlight_line_number
       if target
         if color
-          str = ">".colorize.green.bold.to_s + str[1..-1].colorize.bold.to_s
+          " > #{line_number} | ".colorize.green.to_s + line.colorize.bold.to_s
         else
-          str = ">" + str[1..-1]
+          " > #{line_number} | " + line
+        end
+      else
+        if color
+          " > #{line_number} | ".colorize.dim.to_s + line
+        else
+          "   #{line_number} | " + line
         end
       end
-      str
-    end.join '\n'
+    end
+
+    return lines_with_numbers unless join_lines
+    lines_with_numbers.join '\n'
   end
 
   def self.normalize_path(path)

@@ -3,15 +3,27 @@ require "../types"
 
 module Crystal
   class TypeException < Exception
+    include ErrorFormat
+
     getter node
     property inner : Exception?
-    getter line : Int32?
-    getter column : Int32
-    getter size : Int32
+    @line_number : Int32?
+    @column_number : Int32
+    @size : Int32
 
     def color=(color)
       @color = !!color
       inner.try &.color=(color)
+    end
+
+    def all_frames=(all_frames)
+      @all_frames = !!all_frames
+      inner.try &.all_frames=(all_frames)
+    end
+
+    def warning=(warning)
+      super
+      inner.try &.warning=(warning)
     end
 
     def self.for_node(node, message, inner = nil)
@@ -24,7 +36,7 @@ module Crystal
       end
     end
 
-    def initialize(message, @line, @column : Int32, @filename, @size, @inner = nil)
+    def initialize(message, @line_number, @column_number : Int32, @filename, @size, @inner = nil)
       # If the inner exception is a macro raise, we replace this exception's
       # message with that message. In this way the error message will
       # look like a regular message produced by the compiler, and not
@@ -56,8 +68,8 @@ module Crystal
     def to_json_single(json)
       json.object do
         json.field "file", true_filename
-        json.field "line", @line
-        json.field "column", @column
+        json.field "line", @line_number
+        json.field "column", @column_number
         json.field "size", @size
         json.field "message", @message
       end
@@ -78,13 +90,17 @@ module Crystal
     end
 
     def to_s_with_source(source, io)
-      io << "Error "
       append_to_s source, io
     end
 
     def append_to_s(source, io)
       inner = @inner
-      filename = @filename
+
+      unless @all_frames || inner.is_a? MethodTraceException
+        if inner && inner.has_location?
+          return inner.append_to_s(source, io)
+        end
+      end
 
       # If the inner exception has no location it means that they came from virtual nodes.
       # In that case, get the deepest error message and only show that.
@@ -94,59 +110,45 @@ module Crystal
         msg = @message.to_s
       end
 
-      is_macro = false
+      error_message_lines = msg.lines
 
-      case filename
-      when String
-        if File.file?(filename)
-          lines = File.read_lines(filename)
-          io << "in " << relative_filename(filename) << ':' << @line << ": "
-          append_error_message io, msg
-        else
-          lines = source ? source.lines.to_a : nil
-          io << "in line #{@line}: " if @line
-          append_error_message io, msg
-        end
-      when VirtualFile
-        io << "in macro '#{filename.macro.name}' #{filename.macro.location.try &.filename}:#{filename.macro.location.try &.line_number}, line #{@line}:\n\n"
-        io << Crystal.with_line_numbers(filename.source, @line, @color)
-        is_macro = true
-      else
-        lines = source ? source.lines.to_a : nil
-        io << "in line #{@line}: " if @line
-        append_error_message io, msg
-      end
+      io << error_headline(error_message_lines.shift)
 
-      if lines && (line_number = @line) && (line = lines[line_number - 1]?)
-        io << "\n\n"
-        io << replace_leading_tabs_with_spaces(line.chomp)
+      unless @all_frames || @warning
         io << '\n'
-        io << (" " * (@column - 1))
-        with_color.green.bold.surround(io) do
-          io << '^'
-          if @size > 0
-            io << ("~" * (@size - 1))
-          end
-        end
+        io << colorize("Showing last frame. Use --all-frames for full trace.").dim
       end
-      io << '\n'
+      io << "\n\n" if default_message
+      io << error_body(source, default_message)
+      io << remaining error_message_lines
 
-      if is_macro
+      if inner
+        return if inner.is_a? MethodTraceException && !inner.has_message?
         io << '\n'
+<<<<<<< HEAD
         append_error_message io, msg
       end
 
       if inner && inner.has_location?
+=======
+        io << "--" unless inner.is_a? MethodTraceException
+>>>>>>> Revamp compile error formatting & output
         io << '\n'
         inner.append_to_s source, io
       end
     end
 
-    def append_error_message(io, msg)
-      if @inner
-        io << msg
+    def default_message
+      "#{@warning ? "Warning" : "Error"} in line #{@line_number}" if line_number = @line_number
+    end
+
+    def error_headline(msg)
+      return "Warning: #{msg}" if @warning
+
+      if (inner = @inner) && !inner.is_a? MethodTraceException?
+        "Error: #{msg}"
       else
-        io << colorize(msg).bold
+        colorize("Error: #{msg}").yellow.bold
       end
     end
 
@@ -154,7 +156,7 @@ module Crystal
       if @inner.try &.has_location?
         true
       else
-        @filename || @line
+        @filename || @line_number
       end
     end
 
@@ -183,27 +185,32 @@ module Crystal
       append_to_s(source, io)
     end
 
+    def has_trace?
+      @trace.any?(&.location)
+    end
+
+    def has_message?
+      @nil_reason || has_trace?
+    end
+
     def append_to_s(source, io)
-      has_trace = @trace.any?(&.location)
       nil_reason = @nil_reason
 
       if !@show
         if nil_reason
           print_nil_reason(nil_reason, io)
-          if has_trace || nil_reason.try(&.nodes)
+          if has_trace? || nil_reason.try(&.nodes)
             io.puts
             io.puts
           end
         end
-        if has_trace || nil_reason.try(&.nodes)
+        if has_trace? || nil_reason.try(&.nodes)
           io.print "Rerun with --error-trace to show a complete error trace."
         end
         return
       end
 
-      if has_trace
-        io.puts ("=" * 80)
-        io.puts
+      if has_trace?
         io << "#{@owner} trace:"
         @trace.each do |node|
           print_with_location node, io
@@ -212,12 +219,10 @@ module Crystal
 
       return unless nil_reason
 
-      if has_trace
+      if has_trace?
         io.puts
         io.puts
       end
-      io.puts ("=" * 80)
-      io.puts
 
       print_nil_reason(nil_reason, io)
 
@@ -229,14 +234,13 @@ module Crystal
     end
 
     def print_nil_reason(nil_reason, io)
-      io << colorize("Error: ").bold
       case nil_reason.reason
       when :used_before_initialized
-        io << colorize("instance variable '#{nil_reason.name}' was used before it was initialized in one of the 'initialize' methods, rendering it nilable").bold
+        io << "Instance variable '#{nil_reason.name}' was used before it was initialized in one of the 'initialize' methods, rendering it nilable"
       when :used_self_before_initialized
-        io << colorize("'self' was used before initializing instance variable '#{nil_reason.name}', rendering it nilable").bold
+        io << "'self' was used before initializing instance variable '#{nil_reason.name}', rendering it nilable"
       when :initialized_in_rescue
-        io << colorize("instance variable '#{nil_reason.name}' is initialized inside a begin-rescue, so it can potentially be left uninitialized if an exception is raised and rescued").bold
+        io << "Instance variable '#{nil_reason.name}' is initialized inside a begin-rescue, so it can potentially be left uninitialized if an exception is raised and rescued"
       end
     end
 

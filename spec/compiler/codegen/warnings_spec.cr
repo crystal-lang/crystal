@@ -8,7 +8,7 @@ describe "Code gen: warnings" do
       end
 
       foo
-    ), "Warning in line 6: Deprecated top-level foo. Do not use me",
+    ), "Warning: Deprecated top-level foo. Do not use me\n\nWarning in line 6",
       inject_primitives: false
   end
 
@@ -19,7 +19,7 @@ describe "Code gen: warnings" do
       end
 
       foo
-    ), "Warning in line 6: Deprecated top-level foo.",
+    ), "Warning: Deprecated top-level foo.\n\nWarning in line 6",
       inject_primitives: false
   end
 
@@ -32,7 +32,7 @@ describe "Code gen: warnings" do
       end
 
       Foo.new.m
-    ), "Warning in line 8: Deprecated Foo#m. Do not use me",
+    ), "Warning: Deprecated Foo#m. Do not use me\n\nWarning in line 8",
       inject_primitives: false
   end
 
@@ -45,7 +45,7 @@ describe "Code gen: warnings" do
       end
 
       Foo.m
-    ), "Warning in line 8: Deprecated Foo.m. Do not use me",
+    ), "Warning: Deprecated Foo.m. Do not use me\n\nWarning in line 8",
       inject_primitives: false
   end
 
@@ -58,7 +58,7 @@ describe "Code gen: warnings" do
       end
 
       Foo(Int32).new.m
-    ), "Warning in line 8: Deprecated Foo(Int32)#m. Do not use me",
+    ), "Warning: Deprecated Foo(Int32)#m. Do not use me\n\nWarning in line 8",
       inject_primitives: false
   end
 
@@ -71,7 +71,7 @@ describe "Code gen: warnings" do
       end
 
       Foo(Int32).m
-    ), "Warning in line 8: Deprecated Foo(Int32).m. Do not use me",
+    ), "Warning: Deprecated Foo(Int32).m. Do not use me\n\nWarning in line 8",
       inject_primitives: false
   end
 
@@ -84,7 +84,7 @@ describe "Code gen: warnings" do
       end
 
       Foo.m
-    ), "Warning in line 8: Deprecated Foo.m. Do not use me",
+    ), "Warning: Deprecated Foo.m. Do not use me\n\nWarning in line 8",
       inject_primitives: false
   end
 
@@ -95,7 +95,7 @@ describe "Code gen: warnings" do
       end
 
       foo(a: 2)
-    ), "Warning in line 6: Deprecated top-level foo:a.",
+    ), "Warning: Deprecated top-level foo:a.\n\nWarning in line 6",
       inject_primitives: false
   end
 
@@ -108,7 +108,7 @@ describe "Code gen: warnings" do
       end
 
       Foo.new
-    ), "Warning in line 8: Deprecated Foo.new.",
+    ), "Warning: Deprecated Foo.new.\n\nWarning in line 8",
       inject_primitives: false
   end
 
@@ -121,7 +121,7 @@ describe "Code gen: warnings" do
       end
 
       Foo.new(a: 2)
-    ), "Warning in line 8: Deprecated Foo.new:a.",
+    ), "Warning: Deprecated Foo.new:a.\n\nWarning in line 8",
       inject_primitives: false
   end
 
@@ -243,7 +243,7 @@ describe "Code gen: warnings" do
       def foo
       end
       ),
-      "Error in line 3: first argument must be a String"
+      "Error: first argument must be a String"
   end
 
   it "errors if too many arguments" do
@@ -252,7 +252,7 @@ describe "Code gen: warnings" do
       def foo
       end
       ),
-      "Error in line 3: wrong number of deprecated annotation arguments (given 2, expected 1)"
+      "Error: wrong number of deprecated annotation arguments (given 2, expected 1)"
   end
 
   it "errors if missing link arguments" do
@@ -261,6 +261,6 @@ describe "Code gen: warnings" do
       def foo
       end
       ),
-      "Error in line 3: too many named arguments (given 1, expected maximum 0)"
+      "Error: too many named arguments (given 1, expected maximum 0)"
   end
 end

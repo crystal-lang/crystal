@@ -390,6 +390,7 @@ module Spec
         raise ex
       end
 
+      ex.all_frames = true if ex.responds_to?(:all_frames=)
       ex_to_s = ex.to_s
       case message
       when Regex

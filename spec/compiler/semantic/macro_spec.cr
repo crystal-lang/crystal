@@ -293,8 +293,9 @@ describe "Semantic: macro" do
       end
 
       foo(1)
-      ), "OH\nNO"
+      ), "OH"
 
+    ex.to_s.should contain "NO"
     ex.to_s.should_not contain("expanding macro")
   end
 
@@ -575,7 +576,7 @@ describe "Semantic: macro" do
   end
 
   it "errors if requires inside class through macro expansion" do
-    assert_error %(
+    str = %(
       macro req
         require "bar"
       end
@@ -583,8 +584,10 @@ describe "Semantic: macro" do
       class Foo
         req
       end
-      ),
-      "can't require inside type declarations"
+    )
+    expect_raises SyntaxException, "can't require inside type declarations" do
+      semantic parse str
+    end
   end
 
   it "errors if requires inside if through macro expansion" do
@@ -679,7 +682,7 @@ describe "Semantic: macro" do
 
       foo
     ),
-      "Error in line 6: expanding macro",
+      "Error: expanding macro\n\nError in line 6",
       inject_primitives: false
   end
 
@@ -689,7 +692,7 @@ describe "Semantic: macro" do
         Bar
       {% end %}
     ),
-      "Error in line 2: expanding macro",
+      "Error: expanding macro\n\nError in line 2",
       inject_primitives: false
   end
 
