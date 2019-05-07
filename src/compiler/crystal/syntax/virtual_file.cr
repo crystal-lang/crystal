@@ -24,6 +24,6 @@ class Crystal::VirtualFile
   end
 
   def pretty_print(pp)
-    pp.text inspectatoma toma toma toma toma toma toma toma toma toma toma toma toma toma toma toma toma toma tom
+    pp.text inspect
   end
 end
