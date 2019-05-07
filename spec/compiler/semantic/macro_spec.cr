@@ -1387,4 +1387,22 @@ describe "Semantic: macro" do
       Foo.new.x
       )) { string }
   end
+
+  it "can use macro in instance var initializer (just assignment) (#7666)" do
+    assert_type(%(
+      class Foo
+        macro m
+          "test"
+        end
+
+        @x = m
+
+        def x
+          @x
+        end
+      end
+
+      Foo.new.x
+      )) { string }
+  end
 end
