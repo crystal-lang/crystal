@@ -363,8 +363,8 @@ describe Time do
       t2 = t.shift months: 1
       t2.should eq Time.utc(2014, 11, 30, 21, 18, 13)
 
-      t2 = t.shift months: 1
-      t2.should eq Time.utc(2014, 11, 30, 21, 18, 13)
+      t2 = t.shift months: -1
+      t2.should eq Time.utc(2014, 9, 30, 21, 18, 13)
 
       t = Time.utc 2014, 10, 31, 21, 18, 13
       t2 = t.shift months: 1

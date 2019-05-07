@@ -22,7 +22,7 @@ end
 # end
 #
 # (IOMode::Write | IOMode::Async).value # => 6
-# puts IOMode::Write | IOMode::Async    # => Write | Async
+# (IOMode::Write | IOMode::Async).to_s  # => "Write | Async"
 # ```
 annotation Flags
 end

@@ -1344,4 +1344,9 @@ describe Crystal::Formatter do
   assert_format "@[ Foo(foo: 1) ]\ndef foo\nend", "@[Foo(foo: 1)]\ndef foo\nend"
   assert_format "@[Foo(\n  foo: 1\n)]\ndef foo\nend"
   assert_format "@[Foo(\n  foo: 1,\n)]\ndef foo\nend"
+
+  # #7550
+  assert_format "foo\n  .bar(\n    1\n  )"
+  assert_format "foo\n  .bar\n  .baz(\n    1\n  )"
+  assert_format "foo.bar\n  .baz(\n    1\n  )"
 end
