@@ -174,7 +174,7 @@ module Crystal
         io << "Was expanded to:"
         io << "\n\n"
         append_expanded_macro(io, virtual_file.source)
-        next if @all_frames && self.is_a? TypeException
+        next if @all_frames && self.responds_to?(:all_frames=)
         io << "\n\n"
         append_where_macro_expanded(io, virtual_file)
       end
