@@ -38,6 +38,9 @@ end
 
 class Crystal::Call
   def raise_matches_not_found(owner, def_name, arg_types, named_args_types, matches = nil, with_literals = false)
+    obj = @obj
+    with_scope = @with_scope
+
     # Special case: Foo+.class#new
     if owner.is_a?(VirtualMetaclassType) && def_name == "new"
       raise_matches_not_found_for_virtual_metaclass_new owner
@@ -71,10 +74,13 @@ class Crystal::Call
       end
     end
 
+    # Also check with scope
+    if with_scope
+      defs.concat with_scope.lookup_defs(def_name)
+    end
+
     # Check if it's the case of an abstract def
     check_abstract_def_error(owner, matches, defs, def_name)
-
-    obj = @obj
 
     # Check if this is a `foo` call and we actually find it in the Program
     if !obj && defs.empty?
@@ -116,7 +122,6 @@ class Crystal::Call
         end
 
         owner_name = owner.is_a?(Program) ? "top-level" : owner.to_s
-        with_scope = @with_scope
 
         if with_scope && !obj && with_scope != owner
           msg << " for #{with_scope} (with ... yield) and #{owner_name} (current scope)"
