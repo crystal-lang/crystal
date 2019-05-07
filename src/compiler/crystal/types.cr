@@ -1356,7 +1356,7 @@ module Crystal
     end
 
     def add_match(type)
-      if match = @match
+      if (match = @match) && match != type
         all_matches = @all_matches
         if all_matches.nil?
           all_matches = @all_matches = Set(Type).new
