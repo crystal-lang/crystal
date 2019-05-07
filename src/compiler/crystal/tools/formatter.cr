@@ -2700,7 +2700,11 @@ module Crystal
       next_token_skip_space
       has_newlines, found_comment, _ = format_args args, true, named_args: named_args
       skip_space
-      ends_with_newline = @token.type == :NEWLINE
+      ends_with_newline = false
+      if @token.type == :NEWLINE
+        ends_with_newline = true
+        next_token
+      end
       finish_args(true, has_newlines, ends_with_newline, found_comment, @indent)
     end
 
@@ -3535,10 +3539,11 @@ module Crystal
         else
           next_token_skip_space_or_newline
           check :")"
-          next_token_skip_space_or_newline
+          next_token
         end
       end
 
+      skip_space_or_newline
       write_token :"]"
 
       false
