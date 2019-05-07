@@ -72,6 +72,17 @@ module Crystal
       end
     end
 
+    def inspect_with_backtrace(io : IO) : Nil
+      to_s(io)
+
+      backtrace?.try &.each do |frame|
+        io.print "  from "
+        io.puts frame
+      end
+
+      io.flush
+    end
+
     def to_s_with_source(source, io)
       io << "Error "
       append_to_s source, io

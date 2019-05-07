@@ -436,4 +436,22 @@ describe "Semantic: automatic cast" do
       ),
       "no overload matches"
   end
+
+  it "can use automatic cast with `with ... yield` (#7736)" do
+    assert_type(%(
+      def foo
+        with 1 yield
+      end
+
+      struct Int32
+        def bar(x : Int64)
+          x
+        end
+      end
+
+      foo do
+        bar(1)
+      end
+      )) { int64 }
+  end
 end
