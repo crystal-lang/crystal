@@ -96,4 +96,10 @@ describe System::User do
       System::User.from_name(USER_NAME).shell
     end
   end
+
+  describe "to_s" do
+    it "returns a string representation" do
+      System::User.from_name(USER_NAME).to_s.should eq("#{USER_NAME} (#{USER_ID})")
+    end
+  end
 end

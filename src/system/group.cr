@@ -5,15 +5,15 @@ class System::Group
   class NotFoundError < Exception
   end
 
-  private def initialize(@sys_group : Crystal::System::Group)
-  end
+  extend Crystal::System::Group
 
-  # Returns the group associated with the given name, if it exists.
-  #
-  # Raises `Errno` if a system error occurs.
-  def self.from_name?(name)
-    sys_group = Crystal::System::Group.from_name?(name)
-    new(sys_group) if sys_group
+  getter name : String
+  getter id : LibC::GidT
+  getter members : Array(String)
+
+  def_equals_and_hash @id
+
+  private def initialize(@name, @id, @members)
   end
 
   # Returns the group associated with the given name.
@@ -24,14 +24,6 @@ class System::Group
     from_name?(name) || raise NotFoundError.new("No such group: #{name}")
   end
 
-  # Returns the group associated with the given ID, if it exists.
-  #
-  # Raises `Errno` if a system error occurs.
-  def self.from_id?(id)
-    sys_group = Crystal::System::Group.from_id?(id)
-    new(sys_group) if sys_group
-  end
-
   # Returns the group associated with the given ID.
   #
   # Raises `NotFoundError` if no such group exists.
@@ -40,15 +32,7 @@ class System::Group
     from_id?(id) || raise NotFoundError.new("No such group: #{id}")
   end
 
-  # Returns the group's name.
-  delegate name, to: @sys_group
-
-  # Returns the group's password.
-  delegate password, to: @sys_group
-
-  # Returns the group's ID.
-  delegate id, to: @sys_group
-
-  # Returns an array of the group's members.
-  delegate members, to: @sys_group
+  def to_s(io)
+    io << "#{name} (#{id})"
+  end
 end

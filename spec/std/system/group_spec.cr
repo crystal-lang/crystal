@@ -84,4 +84,10 @@ describe System::Group do
       System::Group.from_name(GROUP_NAME).members
     end
   end
+
+  describe "to_s" do
+    it "returns a string representation" do
+      System::Group.from_name(GROUP_NAME).to_s.should eq("#{GROUP_NAME} (#{GROUP_ID})")
+    end
+  end
 end

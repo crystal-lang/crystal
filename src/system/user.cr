@@ -5,15 +5,17 @@ class System::User
   class NotFoundError < Exception
   end
 
-  private def initialize(@sys_user : Crystal::System::User)
-  end
+  extend Crystal::System::User
 
-  # Returns the user associated with the given name, if it exists.
-  #
-  # Raises `Errno` if a system error occurs.
-  def self.from_name?(name)
-    sys_user = Crystal::System::User.from_name?(name)
-    new(sys_user) if sys_user
+  getter name : String
+  getter user_id : LibC::UidT
+  getter group_id : LibC::GidT
+  getter directory : String
+  getter shell : String
+
+  def_equals_and_hash @user_id
+
+  private def initialize(@name, @user_id, @group_id, @directory, @shell)
   end
 
   # Returns the user associated with the given name.
@@ -24,14 +26,6 @@ class System::User
     from_name?(name) || raise NotFoundError.new("No such user: #{name}")
   end
 
-  # Returns the user associated with the given ID, if it exists.
-  #
-  # Raises `Errno` if a system error occurs.
-  def self.from_id?(id)
-    sys_user = Crystal::System::User.from_id?(id)
-    new(sys_user) if sys_user
-  end
-
   # Returns the user associated with the given ID.
   #
   # Raises `NotFoundError` if no such user exists.
@@ -40,18 +34,7 @@ class System::User
     from_id?(id) || raise NotFoundError.new("No such user: #{id}")
   end
 
-  # Returns the user's username.
-  delegate name, to: @sys_user
-
-  # Returns the user's ID.
-  delegate user_id, to: @sys_user
-
-  # Returns the user's group ID.
-  delegate group_id, to: @sys_user
-
-  # Returns the user's home directory.
-  delegate directory, to: @sys_user
-
-  # Returns the user's shell.
-  delegate shell, to: @sys_user
+  def to_s(io)
+    io << "#{name} (#{user_id})"
+  end
 end

@@ -1,21 +1,14 @@
 require "c/pwd"
 
-class Crystal::System::User
-  getter name : String
-  getter password : String
-  getter user_id : LibC::UidT
-  getter group_id : LibC::GidT
-  getter directory : String
-  getter shell : String
-
-  private def initialize(@name, @password, @user_id, @group_id, @directory, @shell)
+module Crystal::System::User
+  private def from_struct(pwd)
+    new(String.new(pwd.pw_name), pwd.pw_uid, pwd.pw_gid, String.new(pwd.pw_dir), String.new(pwd.pw_shell))
   end
 
-  private def self.from_struct(pwd)
-    new(String.new(pwd.pw_name), String.new(pwd.pw_passwd), pwd.pw_uid, pwd.pw_gid, String.new(pwd.pw_dir), String.new(pwd.pw_shell))
-  end
-
-  def self.from_name?(username : String)
+  # Returns the user associated with the given ID, if it exists.
+  #
+  # Raises `Errno` if a system error occurs.
+  def from_name?(username : String)
     username.check_no_null_byte
 
     pwd = uninitialized LibC::Passwd
@@ -31,10 +24,10 @@ class Crystal::System::User
     raise Errno.new("getpwnam_r") if ret != 0
     return if pwd_pointer.null?
 
-    self.from_struct(pwd)
+    from_struct(pwd)
   end
 
-  def self.from_id?(id : LibC::UidT)
+  def from_id?(id : LibC::UidT)
     pwd = uninitialized LibC::Passwd
     pwd_pointer = pointerof(pwd)
     buf = Bytes.new(1024)
@@ -48,6 +41,6 @@ class Crystal::System::User
     raise Errno.new("getpwuid_r") if ret != 0
     return nil if pwd_pointer.null?
 
-    self.from_struct(pwd)
+    from_struct(pwd)
   end
 end
