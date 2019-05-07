@@ -1338,4 +1338,9 @@ describe Crystal::Formatter do
   assert_format "foo(\n  <<-HERE,\n  hello\n  HERE\n  1,\n)"
   assert_format "foo(\n  <<-HERE,\n  hello\n  HERE\n  foo: 1,\n)"
   assert_format "foo(\n  <<-HERE,\n  hello\n  HERE\n  # foo\n  foo: 1,\n)"
+
+  # #7550
+  assert_format "foo\n  .bar(\n    1\n  )"
+  assert_format "foo\n  .bar\n  .baz(\n    1\n  )"
+  assert_format "foo.bar\n  .baz(\n    1\n  )"
 end
