@@ -682,7 +682,7 @@ describe "Semantic: macro" do
 
       foo
     ),
-      "Error: expanding macro\n\nError in line 6",
+      "Error: expanding macro\n\nerror in line 6",
       inject_primitives: false
   end
 
@@ -692,7 +692,7 @@ describe "Semantic: macro" do
         Bar
       {% end %}
     ),
-      "Error: expanding macro\n\nError in line 2",
+      "Error: expanding macro\n\nerror in line 2",
       inject_primitives: false
   end
 

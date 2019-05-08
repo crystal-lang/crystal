@@ -34,7 +34,7 @@ module Crystal
     def append_to_s(source, io)
       msg = @message.to_s
       error_message_lines = msg.lines
-      default_message = "Syntax error in #{@filename}:#{@line_number}"
+      default_message = "syntax error in #{@filename}:#{@line_number}"
 
       io << colorize("Error: #{error_message_lines.shift}").yellow.bold
       io << "\n\n"

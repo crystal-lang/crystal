@@ -139,7 +139,7 @@ module Crystal
     end
 
     def default_message
-      "#{@warning ? "Warning" : "Error"} in line #{@line_number}" if line_number = @line_number
+      "#{@warning ? "warning" : "error"} in line #{@line_number}" if line_number = @line_number
     end
 
     def error_headline(msg)

@@ -43,7 +43,7 @@ describe Crystal::Command::FormatCommand do
     format_command.run
     format_command.status_code.should eq(1)
     stdout.to_s.empty?.should be_true
-    stderr.to_s.should contain("Error: unexpected token: EOF\n\nSyntax error in STDIN:1")
+    stderr.to_s.should contain("Error: unexpected token: EOF\n\nsyntax error in STDIN:1")
   end
 
   it "formats stdin (invalid byte sequence error)" do
