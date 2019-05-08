@@ -308,4 +308,14 @@ describe "Semantic: named args" do
       ),
       "no overload matches"
   end
+
+  it "says correct error when forwarding named args (#7491)" do
+    assert_error %(
+      def bar(foo = false)
+      end
+
+      bar(**{foo: true, baz: true})
+      ),
+      "no argument named 'baz'"
+  end
 end
