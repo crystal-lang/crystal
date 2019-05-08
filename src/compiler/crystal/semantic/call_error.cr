@@ -580,7 +580,7 @@ class Crystal::Call
     named_args.each do |named_arg|
       found_index = a_def.args.index { |arg| arg.external_name == named_arg.name }
       if found_index
-        min_size = args.size
+        min_size = arg_types.size
         if found_index < min_size
           raise "argument '#{named_arg.name}' already specified"
         end
