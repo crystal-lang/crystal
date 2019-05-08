@@ -129,7 +129,7 @@ module Crystal
       with_color.green.bold.surround(io) do
         io << '^'
         if size > 0
-          io << ("~" * (size - 1))
+          io << ("-" * (size - 1))
         end
       end
     end
