@@ -526,6 +526,9 @@ class Crystal::Command
       @color = false
       compiler.color = false
     end
+    opts.on("--all-frames", "Show all error frames") do
+      @all_frames = true
+    end
     setup_compiler_warning_options(opts, compiler)
     opts.invalid_option { }
   end

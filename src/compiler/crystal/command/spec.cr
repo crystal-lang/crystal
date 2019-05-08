@@ -64,6 +64,10 @@ class Crystal::Command
       options << "--no-color"
     end
 
+    if @all_frames
+      options << "--all-frames"
+    end
+
     source_filename = File.expand_path("spec")
 
     source = target_filenames.map { |filename| %(require "./#{filename}") }.join('\n')
