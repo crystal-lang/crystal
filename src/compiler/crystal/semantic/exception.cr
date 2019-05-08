@@ -16,9 +16,9 @@ module Crystal
       inner.try &.color=(color)
     end
 
-    def all_frames=(all_frames)
-      @all_frames = !!all_frames
-      inner.try &.all_frames=(all_frames)
+    def error_trace=(error_trace)
+      @error_trace = !!error_trace
+      inner.try &.error_trace=(error_trace)
     end
 
     def warning=(warning)
@@ -96,7 +96,7 @@ module Crystal
     def append_to_s(source, io)
       inner = @inner
 
-      unless @all_frames || inner.is_a? MethodTraceException
+      unless @error_trace || inner.is_a? MethodTraceException
         if inner && inner.has_location?
           return inner.append_to_s(source, io)
         end
@@ -114,9 +114,9 @@ module Crystal
 
       io << error_headline(error_message_lines.shift)
 
-      unless @all_frames || @warning
+      unless @error_trace || @warning
         io << '\n'
-        io << colorize("Showing last frame. Use --all-frames for full trace.").dim
+        io << colorize("Showing last frame. Use --error-trace for full trace.").dim
       end
       io << "\n\n" if default_message
       io << error_body(source, default_message)

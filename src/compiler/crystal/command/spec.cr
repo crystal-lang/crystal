@@ -64,8 +64,8 @@ class Crystal::Command
       options << "--no-color"
     end
 
-    if @all_frames
-      options << "--all-frames"
+    if @error_trace
+      options << "--error-trace"
     end
 
     source_filename = File.expand_path("spec")

@@ -4,7 +4,7 @@ require "colorize"
 module Crystal
   abstract class Exception < ::Exception
     property? color = false
-    property? all_frames = false
+    property? error_trace = false
 
     @filename : String | VirtualFile | Nil
 
@@ -174,7 +174,7 @@ module Crystal
         io << "Was expanded to:"
         io << "\n\n"
         append_expanded_macro(io, virtual_file.source)
-        next if @all_frames && self.responds_to?(:all_frames=)
+        next if @error_trace && self.responds_to?(:error_trace=)
         io << "\n\n"
         append_where_macro_expanded(io, virtual_file)
       end
@@ -241,7 +241,7 @@ module Crystal
 
     def append_expanded_macro(io, source)
       line_number = @line_number
-      if @all_frames
+      if @error_trace
         io << Crystal.with_line_numbers(source, line_number, @color)
       else
         io << expanded_source_subsection(source, line_number)
