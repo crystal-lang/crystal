@@ -2809,8 +2809,16 @@ module Crystal
             clear_object(body)
             accept body
           end
+        when ReadInstanceVar
+          if body.obj.is_a?(Var)
+            call = Call.new(nil, body.name)
+            accept call
+          else
+            clear_object(body)
+            accept body
+          end
         else
-          raise "BUG: expected Call, IsA or RespondsTo as &. argument, at #{node.location}, not #{body.class}"
+          raise "BUG: unexpected node for &. argument, at #{node.location}, not #{body.class}"
         end
       end
 
