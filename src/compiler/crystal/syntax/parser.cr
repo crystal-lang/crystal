@@ -1425,78 +1425,18 @@ module Crystal
           skip_space
         else
           next_token_skip_space
+
+          if @token.type == :INSTANCE_VAR
+            ivar_name = @token.value.to_s
+            end_location = token_end_location
+            next_token
+
+            call = ReadInstanceVar.new(obj, ivar_name).at(location)
+            call.end_location = end_location
+          end
         end
 
-        location = @token.location
-
-        check AtomicWithMethodCheck
-
-        if @token.value == :is_a?
-          call = parse_is_a(obj).at(location)
-          call = parse_atomic_method_suffix_special(call, location)
-        elsif @token.value == :as
-          call = parse_as(obj).at(location)
-          call = parse_atomic_method_suffix_special(call, location)
-        elsif @token.value == :as?
-          call = parse_as?(obj).at(location)
-          call = parse_atomic_method_suffix_special(call, location)
-        elsif @token.value == :responds_to?
-          call = parse_responds_to(obj).at(location)
-          call = parse_atomic_method_suffix_special(call, location)
-        elsif @token.value == :nil?
-          call = parse_nil?(obj).at(location)
-          call = parse_atomic_method_suffix_special(call, location)
-        elsif @token.type == :"["
-          call = parse_atomic_method_suffix obj, location
-
-          if @token.type == :"=" && call.is_a?(Call)
-            next_token_skip_space
-            exp = parse_op_assign
-            call.name = "#{call.name}="
-            call.args << exp
-          end
-        else
-          # At this point we want to attach the "do" to the next call
-          old_stop_on_do = @stop_on_do
-          @stop_on_do = false
-          call = parse_var_or_call(force_call: true).at(location)
-
-          if call.is_a?(Call)
-            call.obj = obj
-          else
-            raise "BUG: #{call} should be a call"
-          end
-
-          call = call.as(Call)
-
-          if @token.type == :"="
-            next_token_skip_space
-            if @token.type == :"("
-              next_token_skip_space
-              exp = parse_op_assign
-              check :")"
-              next_token_skip_space
-              call.name = "#{call.name}="
-              call.args = [exp] of ASTNode
-              call = parse_atomic_method_suffix call, location
-            else
-              exp = parse_op_assign
-              call.name = "#{call.name}="
-              call.args = [exp] of ASTNode
-            end
-          else
-            call = parse_atomic_method_suffix call, location
-
-            if @token.type == :"=" && call.is_a?(Call) && call.name == "[]"
-              next_token_skip_space
-              exp = parse_op_assign
-              call.name = "#{call.name}="
-              call.args << exp
-            end
-          end
-
-          @stop_on_do = old_stop_on_do
-        end
+        call ||= parse_call_block_arg_after_dot(obj)
 
         block = Block.new([Var.new(block_arg_name)], call).at(location)
       else
@@ -1514,6 +1454,81 @@ module Crystal
       end
 
       CallArgs.new args, block, block_arg, named_args, false, end_location, has_parentheses: check_paren
+    end
+
+    def parse_call_block_arg_after_dot(obj)
+      location = @token.location
+
+      check AtomicWithMethodCheck
+
+      if @token.value == :is_a?
+        call = parse_is_a(obj).at(location)
+        call = parse_atomic_method_suffix_special(call, location)
+      elsif @token.value == :as
+        call = parse_as(obj).at(location)
+        call = parse_atomic_method_suffix_special(call, location)
+      elsif @token.value == :as?
+        call = parse_as?(obj).at(location)
+        call = parse_atomic_method_suffix_special(call, location)
+      elsif @token.value == :responds_to?
+        call = parse_responds_to(obj).at(location)
+        call = parse_atomic_method_suffix_special(call, location)
+      elsif @token.value == :nil?
+        call = parse_nil?(obj).at(location)
+        call = parse_atomic_method_suffix_special(call, location)
+      elsif @token.type == :"["
+        call = parse_atomic_method_suffix obj, location
+
+        if @token.type == :"=" && call.is_a?(Call)
+          next_token_skip_space
+          exp = parse_op_assign
+          call.name = "#{call.name}="
+          call.args << exp
+        end
+      else
+        # At this point we want to attach the "do" to the next call
+        old_stop_on_do = @stop_on_do
+        @stop_on_do = false
+        call = parse_var_or_call(force_call: true).at(location)
+
+        if call.is_a?(Call)
+          call.obj = obj
+        else
+          raise "BUG: #{call} should be a call"
+        end
+
+        call = call.as(Call)
+
+        if @token.type == :"="
+          next_token_skip_space
+          if @token.type == :"("
+            next_token_skip_space
+            exp = parse_op_assign
+            check :")"
+            next_token_skip_space
+            call.name = "#{call.name}="
+            call.args = [exp] of ASTNode
+            call = parse_atomic_method_suffix call, location
+          else
+            exp = parse_op_assign
+            call.name = "#{call.name}="
+            call.args = [exp] of ASTNode
+          end
+        else
+          call = parse_atomic_method_suffix call, location
+
+          if @token.type == :"=" && call.is_a?(Call) && call.name == "[]"
+            next_token_skip_space
+            exp = parse_op_assign
+            call.name = "#{call.name}="
+            call.args << exp
+          end
+        end
+
+        @stop_on_do = old_stop_on_do
+      end
+
+      call
     end
 
     def parse_class_def(is_abstract = false, is_struct = false, doc = nil)
