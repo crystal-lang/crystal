@@ -2467,7 +2467,15 @@ module Crystal
 
     def visit(node : PointerOf)
       var = pointerof_var(node)
-      node.exp.raise "can't take address of #{node.exp}" unless var
+
+      unless var
+        # Accept the exp to trigger potential errors there, like
+        # "undefined local variable or method"
+        node.exp.accept self
+
+        node.exp.raise "can't take address of #{node.exp}"
+      end
+
       node.bind_to var
       true
     end
