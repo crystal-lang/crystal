@@ -969,7 +969,7 @@ module Crystal
     end
 
     def remove_subclass_observer(observer)
-      @subclass_observers.try &.delete(observer)
+      @subclass_observers.try &.reject! &.same?(observer)
     end
 
     def notify_subclass_added
@@ -1356,7 +1356,7 @@ module Crystal
     end
 
     def add_match(type)
-      if match = @match
+      if (match = @match) && match != type
         all_matches = @all_matches
         if all_matches.nil?
           all_matches = @all_matches = Set(Type).new
@@ -1509,16 +1509,16 @@ module Crystal
 
       instance.after_initialize
 
-      # Notify modules that an instance was added
-      notify_parent_modules_subclass_added(self)
+      # Notify parents that an instance was added
+      notify_parents_subclass_added(self)
 
       instance
     end
 
-    def notify_parent_modules_subclass_added(type)
+    def notify_parents_subclass_added(type)
       type.parents.try &.each do |parent|
-        parent.notify_subclass_added if parent.is_a?(NonGenericModuleType)
-        notify_parent_modules_subclass_added parent
+        parent.notify_subclass_added if parent.is_a?(SubclassObservable)
+        notify_parents_subclass_added parent
       end
     end
 

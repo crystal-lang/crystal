@@ -2445,7 +2445,7 @@ module Crystal
       ends_with_newline = false
       has_args = !node.args.empty? || node.named_args
 
-      column = @indent
+      column = @multiline_call_indent || @indent
       has_newlines = false
       found_comment = false
 
@@ -2538,7 +2538,7 @@ module Crystal
       format_args node.args, has_parentheses, node.named_args, node.block_arg
     end
 
-    def format_args(args : Array, has_parentheses, named_args = nil, block_arg = nil, needed_indent = @indent + (@passed_backslash_newline ? 0 : 2), do_consume_newlines = false)
+    def format_args(args : Array, has_parentheses, named_args = nil, block_arg = nil, needed_indent = (@multiline_call_indent || @indent) + (@passed_backslash_newline ? 0 : 2), do_consume_newlines = false)
       has_newlines = false
       found_comment = false
       @inside_call_or_assign += 1
@@ -2630,7 +2630,7 @@ module Crystal
         write_token :","
         found_comment = skip_space(needed_indent)
         if found_comment || @token.type == :NEWLINE
-          write_indent(needed_indent)
+          write_indent(needed_indent) unless @last_is_heredoc
         else
           write " "
         end
@@ -2700,7 +2700,11 @@ module Crystal
       next_token_skip_space
       has_newlines, found_comment, _ = format_args args, true, named_args: named_args
       skip_space
-      ends_with_newline = @token.type == :NEWLINE
+      ends_with_newline = false
+      if @token.type == :NEWLINE
+        ends_with_newline = true
+        next_token
+      end
       finish_args(true, has_newlines, ends_with_newline, found_comment, @indent)
     end
 
@@ -2805,8 +2809,16 @@ module Crystal
             clear_object(body)
             accept body
           end
+        when ReadInstanceVar
+          if body.obj.is_a?(Var)
+            call = Call.new(nil, body.name)
+            accept call
+          else
+            clear_object(body)
+            accept body
+          end
         else
-          raise "BUG: expected Call, IsA or RespondsTo as &. argument, at #{node.location}, not #{body.class}"
+          raise "BUG: unexpected node for &. argument, at #{node.location}, not #{body.class}"
         end
       end
 
@@ -3535,10 +3547,11 @@ module Crystal
         else
           next_token_skip_space_or_newline
           check :")"
-          next_token_skip_space_or_newline
+          next_token
         end
       end
 
+      skip_space_or_newline
       write_token :"]"
 
       false

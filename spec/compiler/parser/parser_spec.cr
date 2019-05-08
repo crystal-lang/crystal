@@ -373,6 +373,7 @@ module Crystal
     it_parses "foo(&.responds_to?(:foo))", Call.new(nil, "foo", block: Block.new([Var.new("__arg0")], RespondsTo.new(Var.new("__arg0"), "foo")))
     it_parses "foo &.each {\n}", Call.new(nil, "foo", block: Block.new(["__arg0".var], Call.new("__arg0".var, "each", block: Block.new)))
     it_parses "foo &.each do\nend", Call.new(nil, "foo", block: Block.new(["__arg0".var], Call.new("__arg0".var, "each", block: Block.new)))
+    it_parses "foo &.@bar", Call.new(nil, "foo", block: Block.new(["__arg0".var], ReadInstanceVar.new("__arg0".var, "@bar")))
 
     it_parses "foo(&.as(T))", Call.new(nil, "foo", block: Block.new([Var.new("__arg0")], Cast.new(Var.new("__arg0"), "T".path)))
     it_parses "foo(&.as(T).bar)", Call.new(nil, "foo", block: Block.new([Var.new("__arg0")], Call.new(Cast.new(Var.new("__arg0"), "T".path), "bar")))

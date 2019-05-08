@@ -638,11 +638,11 @@ struct Crystal::TypeDeclarationProcessor
       entries.each do |name, error|
         case name
         when .starts_with?("$")
-          error.node.raise "can't use #{error.type} as the type of global variable #{name}, use a more specific type"
+          error.node.raise "can't use #{error.type} as the type of global variable '#{name}', use a more specific type"
         when .starts_with?("@@")
-          error.node.raise "can't use #{error.type} as the type of class variable #{name} of #{type}, use a more specific type"
+          error.node.raise "can't use #{error.type} as the type of class variable '#{name}' of #{type}, use a more specific type"
         when .starts_with?("@")
-          error.node.raise "can't use #{error.type} as the type of instance variable #{name} of #{type}, use a more specific type"
+          error.node.raise "can't use #{error.type} as the type of instance variable '#{name}' of #{type}, use a more specific type"
         end
       end
     end

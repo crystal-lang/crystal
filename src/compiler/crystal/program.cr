@@ -586,11 +586,8 @@ module Crystal
     def check_private(node)
       return nil unless node.visibility.private?
 
-      location = node.location
-      return nil unless location
-
-      filename = location.filename
-      return nil unless filename.is_a?(String)
+      filename = node.location.try &.original_filename
+      return nil unless filename
 
       file_module(filename)
     end

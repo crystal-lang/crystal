@@ -85,7 +85,7 @@ struct Tuple
   #
   # ```
   # Tuple(String, Int64).from(["world", 2_i64])       # => {"world", 2_i64}
-  # Tuple(String, Int64).from(["world", 2_i64]).class # => {String, Int64}
+  # Tuple(String, Int64).from(["world", 2_i64]).class # => Tuple(String, Int64)
   # ```
   #
   # See also: `#from`.
