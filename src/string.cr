@@ -525,16 +525,11 @@ class String
     invalid : Bool
 
   private macro gen_to_(method, max_positive = nil, max_negative = nil)
-<<<<<<< HEAD
     if base == UInt128
       info = to_u128_info(base, whitespace, underscore, prefix, strict)
     else
-      info = to_u64_info(base, whitespace, underscore, prefix, strict)
+      info = to_u64_info(base, whitespace, underscore, prefix, strict, leading_zero_is_octal)
     end
-
-=======
-    info = to_u64_info(base, whitespace, underscore, prefix, strict, leading_zero_is_octal)
->>>>>>> master
     return yield if info.invalid
 
     if info.negative
