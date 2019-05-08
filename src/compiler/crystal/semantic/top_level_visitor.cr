@@ -898,6 +898,21 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
     !expand_macro(node, raise_on_missing_const: false, first_pass: true)
   end
 
+  def visit(node : ProcPointer)
+    # A proc pointer at the top-level might refer to a macro, so we check
+    # that here but we don't yet give an error: we let the real semantic visitor
+    # (MainVisitor) do that job to avoid duplicating code.
+    obj = node.obj
+
+    call = Call.new(obj, node.name).at(obj)
+    call.scope = current_type.metaclass
+    node.call = call
+
+    expand_macro(call, raise_on_missing_const: false, first_pass: true)
+
+    false
+  end
+
   def visit(node : Out)
     exp = node.exp
     if exp.is_a?(Var)
