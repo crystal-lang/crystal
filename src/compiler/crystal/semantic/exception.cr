@@ -37,6 +37,8 @@ module Crystal
     end
 
     def initialize(message, @line_number, @column_number : Int32, @filename, @size, @inner = nil)
+      @error_trace = true
+
       # If the inner exception is a macro raise, we replace this exception's
       # message with that message. In this way the error message will
       # look like a regular message produced by the compiler, and not

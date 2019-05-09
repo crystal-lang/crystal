@@ -390,7 +390,6 @@ module Spec
         raise ex
       end
 
-      ex.error_trace = true if ex.responds_to?(:error_trace=)
       ex_to_s = ex.to_s
       case message
       when Regex
