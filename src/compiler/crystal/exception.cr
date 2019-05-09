@@ -150,10 +150,12 @@ module Crystal
         end
 
         decorator = line_number_decorator(line_number)
+        lstripped_line = line.lstrip
+        space_delta = line.chars.size - lstripped_line.chars.size
 
         io << "\n\n"
-        io << colorize(decorator).dim << colorize(replace_leading_tabs_with_spaces(line.chomp)).bold
-        append_error_indicator(io, decorator.chars.size, column_number, size || 0)
+        io << colorize(decorator).dim << colorize(lstripped_line.chomp).bold
+        append_error_indicator(io, decorator.chars.size, column_number - space_delta, size || 0)
       end
     end
 
@@ -220,7 +222,7 @@ module Crystal
       if lines && line_number
         io << "\n\n"
         io << colorize(line_number_decorator(line_number)).dim
-        io << replace_leading_tabs_with_spaces(lines[line_number - 1])
+        io << lines[line_number - 1].lstrip
       end
     end
 
