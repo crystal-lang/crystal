@@ -174,9 +174,9 @@ struct Path
   # Returns all components of this path except the last one.
   #
   # ```
-  # Path["/foo/bar/file.cr"].dirname # => "/foo/bar"
+  # Path["/foo/bar/file.cr"].dirname # => Path["/foo/bar]"
   # ```
-  def dirname : String
+  def dirname : Path
     reader = Char::Reader.new(at_end: @name)
     separators = self.separators
 
@@ -199,22 +199,22 @@ struct Path
       current = reader.current_char
 
       if separators.includes?(current)
-        return current.to_s
+        return Path.new current.to_s
       else
         # skip windows here for next condition regarding anchor
         if windows? && reader.has_next? && reader.peek_next_char == ':'
           reader.next_char
         else
-          return "."
+          return Path.new "."
         end
       end
     end
 
     if windows? && reader.current_char == ':' && reader.pos == 1 && (anchor = self.anchor)
-      return anchor.to_s
+      return anchor
     end
 
-    @name.byte_slice(0, reader.pos + 1)
+    Path.new @name.byte_slice(0, reader.pos + 1)
   end
 
   # Returns the parent path of this path.

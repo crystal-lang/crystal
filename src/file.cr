@@ -255,7 +255,7 @@ class File < IO::FileDescriptor
   # File.dirname("/foo/bar/file.cr") # => "/foo/bar"
   # ```
   def self.dirname(path) : String
-    Path.new(path).dirname
+    Path.new(path).dirname.to_s
   end
 
   # Returns the last component of the given *path*.

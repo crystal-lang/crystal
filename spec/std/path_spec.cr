@@ -167,7 +167,7 @@ describe Path do
   end
 
   describe "#dirname" do
-    assert_paths_raw("/Users/foo/bar.cr", "/Users/foo", &.dirname)
+    assert_paths("/Users/foo/bar.cr", "/Users/foo", &.dirname)
   end
 
   describe "#basename" do
