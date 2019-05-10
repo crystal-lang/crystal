@@ -463,8 +463,8 @@ class String
 
   # Same as `#to_i` but returns an `UInt64` or the block's value.
   def to_u64(base : Int = 10, whitespace : Bool = true, underscore : Bool = false, prefix : Bool = false, strict : Bool = true, leading_zero_is_octal : Bool = false, &block)
-      gen_to_ u64
-    end
+    gen_to_ u64
+  end
 
   # Same as `#to_i` but returns an `Int128`.
   def to_i128(base : Int = 10, whitespace = true, underscore = false, prefix = false, strict = true) : Int128
@@ -526,7 +526,7 @@ class String
 
   private macro gen_to_(method, max_positive = nil, max_negative = nil)
     if base == UInt128
-      info = to_u128_info(base, whitespace, underscore, prefix, strict)
+      info = to_u128_info(base, whitespace, underscore, prefix, strict, leading_zero_is_octal)
     else
       info = to_u64_info(base, whitespace, underscore, prefix, strict, leading_zero_is_octal)
     end
@@ -664,7 +664,7 @@ class String
     negative : Bool,
     invalid : Bool
 
-  private def to_u128_info(base, whitespace, underscore, prefix, strict) : ToU128Info
+  private def to_u128_info(base, whitespace, underscore, prefix, strict, leading_zero_is_octal) : ToU128Info
     # raise ArgumentError.new("Invalid base #{base}") unless 2 <= base <= 128 || base == 62
 
     ptr = to_unsafe
