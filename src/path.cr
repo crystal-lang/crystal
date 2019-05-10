@@ -174,9 +174,27 @@ struct Path
   # Returns all components of this path except the last one.
   #
   # ```
-  # Path["/foo/bar/file.cr"].dirname # => Path["/foo/bar]"
+  # Path["/foo/bar/file.cr"].dirname # => "/foo/bar]"
   # ```
+  @[Deprecated("Use `Path#parent.to_s` instead")]
   def dirname : Path
+    parent.to_s
+  end
+
+  # Returns the parent path of this path, all components of this path except the last one.
+  #
+  # If the path is empty or `"."`, it returns `"."`. If the path is rooted
+  # and in the top-most hierarchy, the root path is returned.
+  #
+  # ```
+  # Path["foo/bar/file.cr"].parent # => Path["foo/bar"]
+  # Path["foo"].parent             # => Path["."]
+  # Path["/foo"].parent            # => Path["/"]
+  # Path["/"].parent               # => Path["/"]
+  # Path[""].parent                # => Path["."]
+  # Path["foo/bar/."].parent       # => Path["foo/bar"]
+  # ```
+  def parent : Path
     reader = Char::Reader.new(at_end: @name)
     separators = self.separators
 
@@ -199,13 +217,13 @@ struct Path
       current = reader.current_char
 
       if separators.includes?(current)
-        return Path.new current.to_s
+        return new_instance current.to_s
       else
         # skip windows here for next condition regarding anchor
         if windows? && reader.has_next? && reader.peek_next_char == ':'
           reader.next_char
         else
-          return Path.new "."
+          return new_instance "."
         end
       end
     end
@@ -214,24 +232,7 @@ struct Path
       return anchor
     end
 
-    Path.new @name.byte_slice(0, reader.pos + 1)
-  end
-
-  # Returns the parent path of this path.
-  #
-  # If the path is empty or `"."`, it returns `"."`. If the path is rooted
-  # and in the top-most hierarchy, the root path is returned.
-  #
-  # ```
-  # Path["foo/bar/file.cr"].parent # => Path["foo/bar"]
-  # Path["foo"].parent             # => Path["."]
-  # Path["/foo"].parent            # => Path["/"]
-  # Path["/"].parent               # => Path["/"]
-  # Path[""].parent                # => Path["."]
-  # Path["foo/bar/."].parent       # => Path["foo/bar"]
-  # ```
-  def parent : Path
-    new_instance dirname
+    new_instance @name.byte_slice(0, reader.pos + 1)
   end
 
   # Returns all parent paths of this path beginning with the topmost path.

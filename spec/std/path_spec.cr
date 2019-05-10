@@ -166,10 +166,6 @@ describe Path do
     assert_paths("foo/bar/./.", [".", "foo", "foo/bar", "foo/bar/."], &.parents)
   end
 
-  describe "#dirname" do
-    assert_paths("/Users/foo/bar.cr", "/Users/foo", &.dirname)
-  end
-
   describe "#basename" do
     assert_paths_raw("/foo/bar/baz.cr", "baz.cr", &.basename)
     assert_paths_raw("/foo/", "foo", &.basename)
