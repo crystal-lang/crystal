@@ -53,7 +53,27 @@ class Crystal::Call
 
     check_not_lib_out_args
 
+    # We can't type a call if any argument has a NoReturn type
+    #
+    # Note: we could make `NoReturn` match any type and instantiate methods,
+    # but it's a bit pointless because the call will never be made if we got
+    # there with something that's NoReturn.
+    #
+    # The only problem is that we might be missing out some errors, for example:
+    #
+    # ```
+    # def foo(x, y : Int32)
+    # end
+    #
+    # x = exit
+    #
+    # # Here the second argument should produce an error, but it doesn't
+    # foo(x, "y")
+    # ```
+    #
+    # So this is definitely a tradeoff.
     return if args.any? &.type?.try &.no_return?
+    return if named_args.try &.any? &.value.type?.try &.no_return?
 
     return unless obj_and_args_types_set?
 
