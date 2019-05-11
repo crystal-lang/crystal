@@ -174,7 +174,7 @@ struct Path
   # Returns all components of this path except the last one.
   #
   # ```
-  # Path["/foo/bar/file.cr"].dirname # => "/foo/bar]"
+  # Path["/foo/bar/file.cr"].dirname # => "/foo/bar"
   # ```
   @[Deprecated("Use `Path#parent.to_s` instead")]
   def dirname : Path
