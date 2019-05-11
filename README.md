@@ -53,7 +53,7 @@ Try it online
 Documentation
 -------------
 
-* [Official docs](http://crystal-lang.org/docs)
+* [Official docs](https://crystal-lang.org/reference/)
 * [Standard library API](https://crystal-lang.org/api)
 * [Roadmap](https://github.com/crystal-lang/crystal/wiki/Roadmap)
 
