@@ -564,14 +564,10 @@ struct Path
 
     name = @name
 
-    if name.starts_with?('~')
-      home = home.to_kind(@kind).normalize
-
-      if name.size == 1
-        name = home.to_s
-      else
-        name = home.join(name.byte_slice(2, name.bytesize - 2)).to_s
-      end
+    if name == "~"
+      name = home.to_kind(@kind).normalize.to_s
+    elsif name.starts_with?("~/")
+      name = home.to_kind(@kind).normalize.join(name.byte_slice(2, name.bytesize - 2)).to_s
     end
 
     unless new_instance(name).absolute?
