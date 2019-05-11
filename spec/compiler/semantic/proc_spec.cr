@@ -918,17 +918,19 @@ describe "Semantic: proc" do
   end
 
   it "errors when using macro as proc value (top-level) (#7465)" do
-    assert_error %(
+    ex = assert_error %(
       macro bar
       end
 
       ->bar
       ),
-      "undefined method 'bar'\n\n'bar' exists as a macro, but macros can't be used in proc pointers"
+      "undefined method 'bar'"
+
+    ex.to_s.should contain "'bar' exists as a macro, but macros can't be used in proc pointers"
   end
 
   it "errors when using macro as proc value (top-level with obj) (#7465)" do
-    assert_error %(
+    ex = assert_error %(
       class Foo
         macro bar
         end
@@ -936,11 +938,13 @@ describe "Semantic: proc" do
 
       ->Foo.bar
       ),
-      "undefined method 'bar' for Foo.class\n\n'bar' exists as a macro, but macros can't be used in proc pointers"
+      "undefined method 'bar' for Foo.class"
+
+    ex.to_s.should contain "'bar' exists as a macro, but macros can't be used in proc pointers"
   end
 
   it "errors when using macro as proc value (inside method) (#7465)" do
-    assert_error %(
+    ex = assert_error %(
       macro bar
       end
 
@@ -950,6 +954,8 @@ describe "Semantic: proc" do
 
       foo
       ),
-      "undefined method 'bar'\n\n'bar' exists as a macro, but macros can't be used in proc pointers"
+      "undefined method 'bar'\n\n"
+
+    ex.to_s.should contain "'bar' exists as a macro, but macros can't be used in proc pointers"
   end
 end
