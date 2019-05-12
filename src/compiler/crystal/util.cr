@@ -24,14 +24,14 @@ module Crystal
   end
 
   def self.with_line_numbers(
-    source : String,
+    source : String | Array(String),
     highlight_line_number = nil,
     color = false,
     line_number_start = 1
   )
-    line_number_padding = (source.lines.size + line_number_start).to_s.chars.size
-    source_lines = source.lines
-    lines_with_numbers = source_lines.map_with_index do |line, i|
+    source = source.lines if source.is_a? String
+    line_number_padding = (source.size + line_number_start).to_s.chars.size
+    lines_with_numbers = source.map_with_index do |line, i|
       line = line.to_s.chomp
       line_number = "%#{line_number_padding}d" % (i + line_number_start)
       target = i + line_number_start == highlight_line_number

@@ -226,34 +226,36 @@ module Crystal
       end
     end
 
-    def expanded_source_subsection(source, line_number)
-      from_index = [0, line_number - MACRO_LINES_TO_SHOW].max
-      source_slice = source.lines[from_index...line_number]
-
+    def minimize_indentation(source)
       min_leading_white_space =
-        source_slice.map do |line|
+        source.map do |line|
           if match = line.match(/^(\s+)\S/)
             spaces = match[1]?
             spaces.size if spaces
           end
         end
-        .compact
-        .min
+          .compact
+          .min
 
-      source_slice = source_slice.map do |line|
+      source = source.map do |line|
         replace_leading_tabs_with_spaces(line).lchop(" " * min_leading_white_space)
-      end.join('\n')
+      end
 
-      Crystal.with_line_numbers(source_slice, line_number, @color, line_number_start = from_index + 1)
+      {source, min_leading_white_space}
     end
 
     def append_expanded_macro(io, source)
       line_number = @line_number
       if @error_trace || !line_number
+        source, _ = minimize_indentation(source.lines)
         io << Crystal.with_line_numbers(source, line_number, @color)
       else
-        io << expanded_source_subsection(source, line_number)
-        offset = OFFSET_FROM_LINE_NUMBER_DECORATOR + line_number.to_s.chars.size
+        from_index = [0, line_number - MACRO_LINES_TO_SHOW].max
+        source_slice = source.lines[from_index...line_number]
+        source_slice, spaces_removed = minimize_indentation(source_slice)
+
+        io << Crystal.with_line_numbers(source_slice, line_number, @color, line_number_start = from_index + 1)
+        offset = OFFSET_FROM_LINE_NUMBER_DECORATOR + line_number.to_s.chars.size - spaces_removed
         append_error_indicator(io, offset, @column_number, @size)
       end
     end
