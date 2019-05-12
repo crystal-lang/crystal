@@ -27,18 +27,14 @@ module Crystal
     source : String,
     highlight_line_number = nil,
     color = false,
-    hide_after_highlight = false,
-    join_lines = true
+    line_number_start = 1
   )
-    line_number_padding = (source.lines.size + 1).to_s.chars.size
+    line_number_padding = (source.lines.size + line_number_start).to_s.chars.size
     source_lines = source.lines
-    if hide_after_highlight && highlight_line_number
-      source_lines = source_lines[0..(highlight_line_number - 1)]
-    end
     lines_with_numbers = source_lines.map_with_index do |line, i|
       line = line.to_s.chomp
-      line_number = "%#{line_number_padding}d" % (i + 1)
-      target = i + 1 == highlight_line_number
+      line_number = "%#{line_number_padding}d" % (i + line_number_start)
+      target = i + line_number_start == highlight_line_number
       if target
         if color
           " > #{line_number} | ".colorize.green.to_s + line.colorize.bold.to_s
@@ -52,10 +48,7 @@ module Crystal
           "   #{line_number} | " + line
         end
       end
-    end
-
-    return lines_with_numbers unless join_lines
-    lines_with_numbers.join '\n'
+    end.join '\n'
   end
 
   def self.normalize_path(path)

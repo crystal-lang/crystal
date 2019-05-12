@@ -227,23 +227,29 @@ module Crystal
     end
 
     def expanded_source_subsection(source, line_number)
-      expanded_source = Crystal.with_line_numbers(source, line_number, @color, hide_after_highlight: true, join_lines: false)
+      from_index = [0, line_number - MACRO_LINES_TO_SHOW].max
+      source_slice = source.lines[from_index...line_number]
 
-      case expanded_source
-      when String # just a single line
-        expanded_source
-      when Array(String)
-        if expanded_source.size <= MACRO_LINES_TO_SHOW
-          expanded_source.join '\n'
-        else
-          expanded_source[-(MACRO_LINES_TO_SHOW)..-1].join '\n'
+      min_leading_white_space =
+        source_slice.map do |line|
+          if match = line.match(/^(\s+)\S/)
+            spaces = match[1]?
+            spaces.size if spaces
+          end
         end
-      end
+        .compact
+        .min
+
+      source_slice = source_slice.map do |line|
+        replace_leading_tabs_with_spaces(line).lchop(" " * min_leading_white_space)
+      end.join('\n')
+
+      Crystal.with_line_numbers(source_slice, line_number, @color, line_number_start = from_index + 1)
     end
 
     def append_expanded_macro(io, source)
       line_number = @line_number
-      if @error_trace
+      if @error_trace || !line_number
         io << Crystal.with_line_numbers(source, line_number, @color)
       else
         io << expanded_source_subsection(source, line_number)
