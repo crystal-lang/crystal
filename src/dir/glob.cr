@@ -166,6 +166,7 @@ class Dir
         when EntryMatch
           return if sequence[pos + 1]?.is_a?(RecursiveDirectories)
           each_child(path) do |entry|
+            next if entry[0] == '.' && !options[:match_hidden]
             yield join(path, entry) if cmd.matches?(entry)
           end
         when DirectoryMatch
