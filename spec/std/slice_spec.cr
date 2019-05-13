@@ -8,6 +8,19 @@ describe "Slice" do
     slice.size.should eq(1)
   end
 
+  it "does []?" do
+    slice = Slice.new(3) { |i| i + 1 }
+    3.times do |i|
+      slice[i]?.should eq(i + 1)
+    end
+    slice[-1]?.should eq(3)
+    slice[-2]?.should eq(2)
+    slice[-3]?.should eq(1)
+
+    slice[-4]?.should be_nil
+    slice[3]?.should be_nil
+  end
+
   it "does []" do
     slice = Slice.new(3) { |i| i + 1 }
     3.times do |i|
@@ -43,6 +56,21 @@ describe "Slice" do
 
     expect_raises(IndexError) { slice + 4 }
     expect_raises(IndexError) { slice + (-1) }
+  end
+
+  it "does []? with start and count" do
+    slice = Slice.new(4) { |i| i + 1 }
+    slice1 = slice[1, 2]?
+    slice1.should_not be_nil
+    slice1 = slice1.not_nil!
+    slice1.size.should eq(2)
+    slice1[0].should eq(2)
+    slice1[1].should eq(3)
+
+    slice[-1, 1]?.should be_nil
+    slice[3, 2]?.should be_nil
+    slice[0, 5]?.should be_nil
+    slice[3, -1]?.should be_nil
   end
 
   it "does [] with start and count" do

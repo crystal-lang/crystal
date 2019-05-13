@@ -159,31 +159,19 @@ describe "URI" do
     it { URI.parse("/foo").relative?.should be_true }
   end
 
-  describe "normalize" do
-    it "removes dot notation from path" do
-      cases = {
-        "../bar"      => "bar",
-        "./bar"       => "bar",
-        ".././bar"    => "bar",
-        "/foo/./bar"  => "/foo/bar",
-        "/bar/./"     => "/bar/",
-        "/."          => "/",
-        "/bar/."      => "/bar/",
-        "/foo/../bar" => "/bar",
-        "/bar/../"    => "/",
-        "/.."         => "/",
-        "/bar/.."     => "/",
-        "/foo/bar/.." => "/foo/",
-        "."           => "",
-        ".."          => "",
-      }
+  describe "#normalize" do
+    it "doesn't modify instance" do
+      uri = URI.parse("HTTP://example.COM:80/./foo/../bar/")
+      uri.normalize.should eq URI.parse("http://example.com/bar/")
+      uri.should eq URI.parse("HTTP://example.COM:80/./foo/../bar/")
+    end
 
-      cases.each do |input, expected|
-        uri = URI.parse(input)
-        uri = uri.normalize
+    it "normalizes scheme" do
+      URI.parse("HtTp://").normalize.should eq URI.parse("http://")
+    end
 
-        uri.path.should eq(expected), "failed to remove dot notation from #{input}"
-      end
+    it "normalizes host" do
+      URI.parse("http://FoO.cOm/").normalize.should eq URI.parse("http://foo.com/")
     end
 
     it "removes default port" do
@@ -194,6 +182,34 @@ describe "URI" do
       URI.new("ldap", "www.example.com", 389).normalize.to_s.should eq("ldap://www.example.com")
       URI.new("ldaps", "www.example.com", 636).normalize.to_s.should eq("ldaps://www.example.com")
     end
+
+    it "removes dot notation from path" do
+      URI.new(path: "../bar").normalize.path.should eq "bar"
+      URI.new(path: "./bar").normalize.path.should eq "bar"
+      URI.new(path: ".././bar").normalize.path.should eq "bar"
+      URI.new(path: "/foo/./bar").normalize.path.should eq "/foo/bar"
+      URI.new(path: "/bar/./").normalize.path.should eq "/bar/"
+      URI.new(path: "/.").normalize.path.should eq "/"
+      URI.new(path: "/bar/.").normalize.path.should eq "/bar/"
+      URI.new(path: "/foo/../bar").normalize.path.should eq "/bar"
+      URI.new(path: "/bar/../").normalize.path.should eq "/"
+      URI.new(path: "/..").normalize.path.should eq "/"
+      URI.new(path: "/bar/..").normalize.path.should eq "/"
+      URI.new(path: "/foo/bar/..").normalize.path.should eq "/foo/"
+      URI.new(path: ".").normalize.path.should eq ""
+      URI.new(path: "..").normalize.path.should eq ""
+    end
+
+    it "prefixes relative path with colon with `./`" do
+      URI.parse("./a:b").normalize.should eq URI.parse("./a:b")
+      URI.parse("http:a:b").normalize.should eq URI.parse("http:./a:b")
+    end
+  end
+
+  it "#normalize!" do
+    uri = URI.parse("HTTP://example.COM:80/./foo/../bar/")
+    uri.normalize!
+    uri.should eq URI.parse("http://example.com/bar/")
   end
 
   it "implements ==" do

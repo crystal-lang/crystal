@@ -308,4 +308,31 @@ describe "Semantic: named args" do
       ),
       "no overload matches"
   end
+
+  it "says correct error when forwarding named args (#7491)" do
+    assert_error %(
+      def bar(foo = false)
+      end
+
+      bar(**{foo: true, baz: true})
+      ),
+      "no argument named 'baz'"
+  end
+
+  it "doesn't fail on named argument with NoReturn type (#7760)" do
+    assert_type(%(
+      lib LibC
+        fun exit : NoReturn
+      end
+
+      def foo(x : Int32)
+        'a'
+      end
+
+      x = 1
+      LibC.exit if x.is_a?(Int32)
+
+      foo(x: x)
+      )) { no_return }
+  end
 end

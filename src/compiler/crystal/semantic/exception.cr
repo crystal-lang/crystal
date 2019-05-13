@@ -72,6 +72,17 @@ module Crystal
       end
     end
 
+    def inspect_with_backtrace(io : IO) : Nil
+      to_s(io)
+
+      backtrace?.try &.each do |frame|
+        io.print "  from "
+        io.puts frame
+      end
+
+      io.flush
+    end
+
     def to_s_with_source(source, io)
       io << "Error "
       append_to_s source, io
@@ -306,7 +317,7 @@ module Crystal
   class Program
     def undefined_global_variable(node, similar_name)
       common = String.build do |str|
-        str << "Can't infer the type of global variable '#{node.name}'"
+        str << "can't infer the type of global variable '#{node.name}'"
         if similar_name
           str << colorize(" (did you mean #{similar_name}?)").yellow.bold.to_s
         end
@@ -324,7 +335,7 @@ module Crystal
 
     def undefined_class_variable(node, owner, similar_name)
       common = String.build do |str|
-        str << "Can't infer the type of class variable '#{node.name}' of #{owner.devirtualize}"
+        str << "can't infer the type of class variable '#{node.name}' of #{owner.devirtualize}"
         if similar_name
           str << colorize(" (did you mean #{similar_name}?)").yellow.bold.to_s
         end
@@ -342,7 +353,7 @@ module Crystal
 
     def undefined_instance_variable(node, owner, similar_name)
       common = String.build do |str|
-        str << "Can't infer the type of instance variable '#{node.name}' of #{owner.devirtualize}"
+        str << "can't infer the type of instance variable '#{node.name}' of #{owner.devirtualize}"
         if similar_name
           str << colorize(" (did you mean #{similar_name}?)").yellow.bold.to_s
         end

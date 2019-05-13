@@ -212,17 +212,35 @@ class URI
     end
   end
 
-  # Returns normalized URI.
-  def normalize : self
-    uri = dup
-    uri.normalize!
-    uri
+  # Returns a normalized copy of this URI.
+  #
+  # See `#normalize!` for details.
+  def normalize : URI
+    dup.normalize!
   end
 
-  # Destructive normalize.
-  def normalize! : Nil
-    @path = remove_dot_segments(path)
+  # Normalizes this URI instance.
+  #
+  # The following normalizations are applied to the individual components (if available):
+  #
+  # * `scheme` is lowercased.
+  # * `host` is lowercased.
+  # * `port` is removed if it is the `.default_port?` of the scheme.
+  # * `path` is resolved to a minimal, semantical equivalent representation removing
+  #    dot segments `/.` and `/..`.
+  #
+  # ```
+  # uri = URI.parse("HTTP://example.COM:80/./foo/../bar/")
+  # uri.normalize!
+  # uri # => "http://example.com/bar/"
+  # ```
+  def normalize! : URI
+    @scheme = @scheme.try &.downcase
+    @host = @host.try &.downcase
     @port = nil if default_port?
+    @path = remove_dot_segments(path)
+
+    self
   end
 
   # Parses `raw_url` into an URI. The `raw_url` may be relative or absolute.
@@ -467,6 +485,10 @@ class URI
         result << path[0...segment_end_idx]
         path = path[segment_end_idx..-1]
       end
+    end
+    first = result.first?
+    if first && !first.starts_with?('/') && first.includes?(':')
+      result.unshift "./"
     end
 
     result.join
