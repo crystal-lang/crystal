@@ -468,4 +468,12 @@ describe "implementations" do
     foo
     )
   end
+
+  it "find const implementation" do
+    assert_implementations %(
+    ༓Foo = 42
+
+    F‸oo
+    )
+  end
 end
