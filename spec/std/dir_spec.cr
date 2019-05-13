@@ -315,6 +315,16 @@ describe "Dir" do
         ].sort
       end
     end
+
+    context "match_hidden: false" do
+      it "ignores hidden files" do
+        Dir.glob("#{datapath}/dir/dots/*", match_hidden: false).size.should eq 0
+      end
+
+      it "ignores hidden files recursively" do
+        Dir.glob("#{datapath}/dir/dots/**/*", match_hidden: false).size.should eq 0
+      end
+    end
   end
 
   describe "cd" do
