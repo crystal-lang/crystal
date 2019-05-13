@@ -350,7 +350,8 @@ struct Colorize::Object(T)
     end
   end
 
-  private def to_named_tuple
+  # :nodoc:
+  def to_named_tuple
     {
       fore: @fore,
       back: @back,
@@ -377,7 +378,8 @@ struct Colorize::Object(T)
     end
   end
 
-  private def self.append_start(io, color)
+  # :nodoc:
+  def self.append_start(io, color)
     last_color_is_default =
       @@last_color[:fore] == ColorANSI::Default &&
         @@last_color[:back] == ColorANSI::Default &&
