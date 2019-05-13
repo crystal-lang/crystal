@@ -120,10 +120,16 @@ module Colorize
   end
 end
 
+# Returns an empty colorized string.
+#
+# This is useful for building colored strings. See `Colorize#surround`.
 def with_color
   "".colorize
 end
 
+# Returns an empty string colorized with *color*.
+#
+# This is useful for building colored strings. See `Colorize#surround`.
 def with_color(color : Colorize::Color)
   "".colorize(color)
 end
