@@ -220,7 +220,7 @@ module Colorize
   # A text decoration.
   #
   # Note that not all text decorations are supported in all terminals.
-  # When a text decoration is not supported, it will not be visible.
+  # When a text decoration is not supported, it will leave the text unaffected.
   @[Flags]
   enum Mode
     # Makes the text bold.
@@ -233,7 +233,7 @@ module Colorize
     Underline
     # Makes the text blink slowly.
     Blink
-    # Swaps the foreground and background colors.
+    # Swaps the foreground and background colors of the text.
     Reverse
     # Makes the text invisible.
     Hidden
