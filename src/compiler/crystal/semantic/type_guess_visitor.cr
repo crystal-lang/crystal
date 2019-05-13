@@ -584,6 +584,10 @@ module Crystal
     end
 
     def guess_type(node : Call)
+      if expanded = node.expanded
+        return guess_type(expanded)
+      end
+
       guess_type_call_lib_out(node)
 
       obj = node.obj

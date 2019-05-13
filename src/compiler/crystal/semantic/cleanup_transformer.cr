@@ -310,6 +310,12 @@ module Crystal
         end
       end
 
+      node.named_args.try &.each do |named_arg|
+        unless named_arg.value.type?
+          return untyped_expression(node, "`#{named_arg}` has no type")
+        end
+      end
+
       # Check if the block has its type freezed and it doesn't match the current type
       if block && (freeze_type = block.freeze_type) && (block_type = block.type?)
         unless block_type.implements?(freeze_type)
@@ -320,13 +326,18 @@ module Crystal
 
       # If any expression is no-return, replace the call with its expressions up to
       # the one that no returns.
-      if (obj.try &.type?.try &.no_return?) || node.args.any? &.type?.try &.no_return?
+      if (obj.try &.type?.try &.no_return?) || (node.args.any? &.type?.try &.no_return?) ||
+         (node.named_args.try &.any? &.value.type?.try &.no_return?)
         call_exps = [] of ASTNode
         call_exps << obj if obj
         unless obj.try &.type?.try &.no_return?
           node.args.each do |arg|
             call_exps << arg
             break if arg.type?.try &.no_return?
+          end
+          node.named_args.try &.each do |named_arg|
+            call_exps << named_arg.value
+            break if named_arg.value.type?.try &.no_return?
           end
         end
         exps = Expressions.new(call_exps)

@@ -2,7 +2,7 @@ require "./spec_helper"
 require "../spec_helper"
 require "http/web_socket"
 require "random/secure"
-require "../../../support/ssl"
+require "../../support/ssl"
 
 private def assert_text_packet(packet, size, final = false)
   assert_packet packet, HTTP::WebSocket::Protocol::Opcode::TEXT, size, final: final
