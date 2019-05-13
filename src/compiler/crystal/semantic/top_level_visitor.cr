@@ -568,7 +568,8 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
     pushing_type(enum_type) do
       counter = enum_type.flags? ? 1 : 0
       counter = interpret_enum_value(NumberLiteral.new(counter), enum_base_type)
-      counter, all_value = visit_enum_members(node, node.members, counter, all_value,
+      counter, all_value, overflow = visit_enum_members(node, node.members, counter, all_value,
+        overflow: false,
         existed: existed,
         enum_type: enum_type,
         enum_base_type: enum_base_type,
@@ -608,27 +609,27 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
     false
   end
 
-  def visit_enum_members(node, members, counter, all_value, **options)
+  def visit_enum_members(node, members, counter, all_value, overflow, **options)
     members.each do |member|
-      counter, all_value =
-        visit_enum_member(node, member, counter, all_value, **options)
+      counter, all_value, overflow =
+        visit_enum_member(node, member, counter, all_value, overflow, **options)
     end
-    {counter, all_value}
+    {counter, all_value, overflow}
   end
 
-  def visit_enum_member(node, member, counter, all_value, **options)
+  def visit_enum_member(node, member, counter, all_value, overflow, **options)
     case member
     when MacroIf
       expanded = expand_inline_macro(member, mode: Program::MacroExpansionMode::Enum)
-      visit_enum_member(node, expanded, counter, all_value, **options)
+      visit_enum_member(node, expanded, counter, all_value, overflow, **options)
     when MacroExpression
       expanded = expand_inline_macro(member, mode: Program::MacroExpansionMode::Enum)
-      visit_enum_member(node, expanded, counter, all_value, **options)
+      visit_enum_member(node, expanded, counter, all_value, overflow, **options)
     when MacroFor
       expanded = expand_inline_macro(member, mode: Program::MacroExpansionMode::Enum)
-      visit_enum_member(node, expanded, counter, all_value, **options)
+      visit_enum_member(node, expanded, counter, all_value, overflow, **options)
     when Expressions
-      visit_enum_members(node, member.expressions, counter, all_value, **options)
+      visit_enum_members(node, member.expressions, counter, all_value, overflow, **options)
     when Arg
       existed = options[:existed]
       enum_type = options[:enum_type]
@@ -641,6 +642,8 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
 
       if default_value = member.default_value
         counter = interpret_enum_value(default_value, base_type)
+      elsif overflow
+        member.raise "value of enum member #{member} would overflow the base type #{base_type}"
       end
 
       if is_flags && !@in_lib
@@ -686,10 +689,12 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
         else
           counter &+ 1
         end
-      {new_counter, all_value}
+      overflow = !default_value && (new_counter.abs < counter.abs)
+      new_counter = overflow ? counter : new_counter
+      {new_counter, all_value, overflow}
     else
       member.accept self
-      {counter, all_value}
+      {counter, all_value, overflow}
     end
   end
 
