@@ -259,13 +259,13 @@ struct Colorize::Object(T)
   end
 
   {% for color in ColorANSI.constants %}
-    def {{color.id}}
-      @fore = ColorANSI::{{color.camelcase.id}}
+    def {{color.underscore.id}}
+      @fore = ColorANSI::{{color.id}}
       self
     end
 
-    def on_{{color.id}}
-      @back = ColorANSI::{{color.camelcase.id}}
+    def on_{{color.underscore.id}}
+      @back = ColorANSI::{{color.id}}
       self
     end
   {% end %}
@@ -275,8 +275,8 @@ struct Colorize::Object(T)
   end
 
   {% for mode in Mode.constants %}
-    def {{mode.id}}
-      @mode |= Mode::{{mode.capitalize.id}}
+    def {{mode.underscore.id}}
+      @mode |= Mode::{{mode.id}}
       self
     end
   {% end %}
