@@ -565,6 +565,10 @@ module Crystal
       end
     end
 
+    def offset_of(type, element_index)
+      @layout.offset_of_element(type, element_index)
+    end
+
     def align_of(type)
       @layout.abi_alignment(type)
     end

@@ -26,6 +26,8 @@ class URI
   # Returns the scheme component of the URI.
   #
   # ```
+  # require "uri"
+  #
   # URI.parse("http://foo.com").scheme           # => "http"
   # URI.parse("mailto:alice@example.com").scheme # => "mailto"
   # ```
@@ -37,6 +39,8 @@ class URI
   # Returns the host component of the URI.
   #
   # ```
+  # require "uri"
+  #
   # URI.parse("http://foo.com").host # => "foo.com"
   # ```
   getter host : String?
@@ -47,6 +51,8 @@ class URI
   # Returns the port component of the URI.
   #
   # ```
+  # require "uri"
+  #
   # URI.parse("http://foo.com:5432").port # => 5432
   # ```
   getter port : Int32?
@@ -57,16 +63,20 @@ class URI
   # Returns the path component of the URI.
   #
   # ```
+  # require "uri"
+  #
   # URI.parse("http://foo.com/bar").path # => "/bar"
   # ```
-  getter path : String?
+  getter path : String
 
   # Sets the path component of the URI.
-  setter path : String?
+  setter path : String
 
   # Returns the query component of the URI.
   #
   # ```
+  # require "uri"
+  #
   # URI.parse("http://foo.com/bar?q=1").query # => "q=1"
   # ```
   getter query : String?
@@ -77,6 +87,8 @@ class URI
   # Returns the user component of the URI.
   #
   # ```
+  # require "uri"
+  #
   # URI.parse("http://admin:password@foo.com").user # => "admin"
   # ```
   getter user : String?
@@ -87,6 +99,8 @@ class URI
   # Returns the password component of the URI.
   #
   # ```
+  # require "uri"
+  #
   # URI.parse("http://admin:password@foo.com").password # => "password"
   # ```
   getter password : String?
@@ -97,6 +111,8 @@ class URI
   # Returns the fragment component of the URI.
   #
   # ```
+  # require "uri"
+  #
   # URI.parse("http://foo.com/bar#section1").fragment # => "section1"
   # ```
   getter fragment : String?
@@ -104,24 +120,16 @@ class URI
   # Sets the fragment component of the URI.
   setter fragment : String?
 
-  # Returns the opaque component of the URI.
-  #
-  # ```
-  # URI.parse("mailto:alice@example.com").opaque # => "alice@example.com"
-  # ```
-  getter opaque : String?
+  def_equals_and_hash scheme, host, port, path, query, user, password, fragment
 
-  # Sets the opaque component of the URI.
-  setter opaque : String?
-
-  def_equals_and_hash scheme, host, port, path, query, user, password, fragment, opaque
-
-  def initialize(@scheme = nil, @host = nil, @port = nil, @path = nil, @query = nil, @user = nil, @password = nil, @fragment = nil, @opaque = nil)
+  def initialize(@scheme = nil, @host = nil, @port = nil, @path = "", @query = nil, @user = nil, @password = nil, @fragment = nil)
   end
 
   # Returns the host part of the URI and unwrap brackets for IPv6 addresses.
   #
   # ```
+  # require "uri"
+  #
   # URI.parse("http://[::1]/bar").hostname # => "::1"
   # URI.parse("http://[::1]/bar").host     # => "[::1]"
   # ```
@@ -132,12 +140,14 @@ class URI
   # Returns the full path of this URI.
   #
   # ```
+  # require "uri"
+  #
   # uri = URI.parse "http://foo.com/posts?id=30&limit=5#time=1305298413"
   # uri.full_path # => "/posts?id=30&limit=5"
   # ```
-  def full_path
+  def full_path : String
     String.build do |str|
-      str << (@path.try { |p| !p.empty? } ? @path : '/')
+      str << (@path.empty? ? '/' : @path)
       if (query = @query) && !query.empty?
         str << '?' << query
       end
@@ -145,39 +155,53 @@ class URI
   end
 
   # Returns `true` if URI has a *scheme* specified.
-  def absolute?
+  def absolute? : Bool
     @scheme ? true : false
   end
 
   # Returns `true` if URI does not have a *scheme* specified.
-  def relative?
+  def relative? : Bool
     !absolute?
   end
 
-  def to_s(io : IO)
+  # Returns `true` if this URI is opaque.
+  #
+  # A URI is considered opaque if it has a `scheme` but no hierachical part,
+  # i.e. no `host` and the first character of `path` is not a slash (`/`).
+  def opaque? : Bool
+    !@scheme.nil? && @host.nil? && !@path.starts_with?('/')
+  end
+
+  def to_s(io : IO) : Nil
     if scheme
       io << scheme
       io << ':'
-      io << "//" unless opaque
     end
-    if opaque
-      io << opaque
-      return
-    end
+
+    authority = @user || @host || @port
+    io << "//" if authority
     if user = @user
       userinfo(user, io)
       io << '@'
     end
-    if host
-      io << host
+    if host = @host
+      URI.escape(host, io) do |byte|
+        URI.unreserved?(byte) || URI.reserved?(byte)
+      end
     end
-    unless port.nil? || default_port?
-      io << ':'
-      io << port
+    if port = @port
+      io << ':' << port
     end
-    if path
-      io << path
+
+    if authority
+      if !@path.empty? && !@path.starts_with?('/')
+        io << '/'
+      end
+    elsif @path.starts_with?("//")
+      io << "/."
     end
+    io << @path
+
     if query
       io << '?'
       io << query
@@ -188,16 +212,35 @@ class URI
     end
   end
 
-  # Returns normalized URI.
-  def normalize
-    uri = dup
-    uri.normalize!
-    uri
+  # Returns a normalized copy of this URI.
+  #
+  # See `#normalize!` for details.
+  def normalize : URI
+    dup.normalize!
   end
 
-  # Destructive normalize.
-  def normalize!
+  # Normalizes this URI instance.
+  #
+  # The following normalizations are applied to the individual components (if available):
+  #
+  # * `scheme` is lowercased.
+  # * `host` is lowercased.
+  # * `port` is removed if it is the `.default_port?` of the scheme.
+  # * `path` is resolved to a minimal, semantical equivalent representation removing
+  #    dot segments `/.` and `/..`.
+  #
+  # ```
+  # uri = URI.parse("HTTP://example.COM:80/./foo/../bar/")
+  # uri.normalize!
+  # uri # => "http://example.com/bar/"
+  # ```
+  def normalize! : URI
+    @scheme = @scheme.try &.downcase
+    @host = @host.try &.downcase
+    @port = nil if default_port?
     @path = remove_dot_segments(path)
+
+    self
   end
 
   # Parses `raw_url` into an URI. The `raw_url` may be relative or absolute.
@@ -219,6 +262,8 @@ class URI
   # e.g. `application/x-www-form-urlencoded` wants this replace.
   #
   # ```
+  # require "uri"
+  #
   # URI.unescape("%27Stop%21%27%20said%20Fred")                  # => "'Stop!' said Fred"
   # URI.unescape("%27Stop%21%27+said+Fred", plus_to_space: true) # => "'Stop!' said Fred"
   # ```
@@ -260,6 +305,8 @@ class URI
   # encoded to `'%2B'`. e.g. `application/x-www-form-urlencoded` want this replace.
   #
   # ```
+  # require "uri"
+  #
   # URI.escape("'Stop!' said Fred")                      # => "%27Stop%21%27%20said%20Fred"
   # URI.escape("'Stop!' said Fred", space_to_plus: true) # => "%27Stop%21%27+said+Fred"
   # ```
@@ -274,6 +321,8 @@ class URI
   # `true` are not escaped, other characters are escaped.
   #
   # ```
+  # require "uri"
+  #
   # # Escape URI path
   # URI.escape("/foo/file?(1).txt") do |byte|
   #   URI.unreserved?(byte) || byte.chr == '/'
@@ -333,6 +382,8 @@ class URI
   # the provided username and password.
   #
   # ```
+  # require "uri"
+  #
   # uri = URI.parse "http://admin:password@foo.com"
   # uri.userinfo # => "admin:password"
   # ```
@@ -392,9 +443,7 @@ class URI
   end
 
   # [RFC 3986 6.2.2.3](https://tools.ietf.org/html/rfc3986#section-5.2.4)
-  private def remove_dot_segments(path : String?)
-    return if path.nil?
-
+  private def remove_dot_segments(path : String)
     result = [] of String
     while path.size > 0
       # A.  If the input buffer begins with a prefix of "../" or "./",
@@ -436,6 +485,10 @@ class URI
         result << path[0...segment_end_idx]
         path = path[segment_end_idx..-1]
       end
+    end
+    first = result.first?
+    if first && !first.starts_with?('/') && first.includes?(':')
+      result.unshift "./"
     end
 
     result.join
@@ -507,6 +560,8 @@ class URI
   # otherwise returns `nil`.
   #
   # ```
+  # require "uri"
+  #
   # URI.default_port "http"  # => 80
   # URI.default_port "ponzi" # => nil
   # ```
@@ -520,6 +575,8 @@ class URI
   # *scheme*, if any, will be unregistered.
   #
   # ```
+  # require "uri"
+  #
   # URI.set_default_port "ponzi", 9999
   # ```
   def self.set_default_port(scheme : String, port : Int32?) : Nil

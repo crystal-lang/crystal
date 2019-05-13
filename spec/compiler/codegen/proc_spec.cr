@@ -751,4 +751,12 @@ describe "Code gen: proc" do
       f.call(Foo.new)
       ))
   end
+
+  it "executes proc pointer on primitive" do
+    run(%(
+      a = 1
+      f = ->a.&+(Int32)
+      f.call(20)
+      )).to_i.should eq(21)
+  end
 end

@@ -106,6 +106,14 @@ describe "BitArray" do
       from_int(3, 0b011)[2..-2].should eq(BitArray.new(0))
     end
 
+    it "gets on endless range" do
+      from_int(6, 0b011110)[2..nil].should eq(from_int(4, 0b1110))
+    end
+
+    it "gets on beginless range" do
+      from_int(6, 0b011110)[nil..2].should eq(from_int(3, 0b011))
+    end
+
     it "raises on index out of bounds with range" do
       expect_raises IndexError do
         from_int(3, 0b111)[4..6]
@@ -308,12 +316,6 @@ describe "BitArray" do
     iter.next.should be_true
     iter.next.should be_false
     iter.next.should be_a(Iterator::Stop)
-
-    iter.rewind
-    iter.next.should be_true
-
-    iter.rewind
-    iter.cycle.first(3).to_a.should eq([true, false, true])
   end
 
   it "provides an index iterator" do
@@ -323,9 +325,6 @@ describe "BitArray" do
     iter.next.should eq(0)
     iter.next.should eq(1)
     iter.next.should be_a(Iterator::Stop)
-
-    iter.rewind
-    iter.next.should eq(0)
   end
 
   it "provides a reverse iterator" do
@@ -337,8 +336,5 @@ describe "BitArray" do
     iter.next.should be_false
     iter.next.should be_true
     iter.next.should be_a(Iterator::Stop)
-
-    iter.rewind
-    iter.next.should be_false
   end
 end

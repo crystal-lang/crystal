@@ -261,6 +261,13 @@ module Crystal
         end
       end
 
+      # ```
+      # def foo(param : T) forall T
+      # end
+      #
+      # def foo(param : Array(Foo))
+      # end
+      # ```
       false
     end
 
@@ -281,15 +288,38 @@ module Crystal
 
   class Generic
     def restriction_of?(other : Path, owner)
-      other_type = owner.lookup_type?(self)
-      if other_type
-        self_type = owner.lookup_path(other)
-        if self_type
+      # ```
+      # def foo(param : Array(T)) forall T
+      # end
+      #
+      # def foo(param : Int32)
+      # end
+      # ```
+      #
+      # Here, self is `Array`, other is `Int32`
+
+      self_type = owner.lookup_type?(self)
+      if self_type
+        other_type = owner.lookup_path(other)
+        if other_type
           return self_type.restriction_of?(other_type, owner)
         end
       end
 
-      false
+      # `Array(T)` is always more strict than `Foo`
+      #
+      # Useful in cases where `Array(T)` overload must be checked before
+      # `T` overload:
+      # ```
+      # def foo(param : T) forall T
+      # end
+      #
+      # def foo(param : Array(T)) forall T
+      # end
+      #
+      # foo([1])
+      # ```
+      true
     end
 
     def restriction_of?(other : Generic, owner)
@@ -304,15 +334,56 @@ module Crystal
     end
   end
 
+  class GenericClassType
+    def restriction_of?(other : GenericClassInstanceType, owner)
+      # ```
+      # def foo(param : Array)
+      # end
+      #
+      # def foo(param : Array(Int32))
+      # end
+      # ```
+      #
+      # Here, self is `Array`, other is `Array(Int32)`
+
+      # Even when the underlying generic type is the same,
+      # `SomeGeneric` is never a restriction of `SomeGeneric(X)`
+      false
+    end
+  end
+
+  class GenericClassInstanceType
+    def restriction_of?(other : GenericClassType, owner)
+      # ```
+      # def foo(param : Array(Int32))
+      # end
+      #
+      # def foo(param : Array)
+      # end
+      # ```
+      #
+      # Here, self is `Array(Int32)`, other is `Array`
+
+      # When the underlying generic type is the same:
+      # `SomeGeneric(X)` is always a restriction of `SomeGeneric`
+      self.generic_type == other
+    end
+  end
+
   class Metaclass
     def restriction_of?(other : Metaclass, owner)
-      self_type = owner.lookup_type?(self)
-      other_type = owner.lookup_type?(other)
-      if self_type && other_type
-        self_type.restriction_of?(other_type, owner)
-      else
-        self == other
+      name.restriction_of?(other.name, owner)
+    end
+
+    def restriction_of?(other : Path, owner)
+      other_type = owner.lookup_type(other)
+
+      # Special case: when comparing Foo.class to Class, Foo.class has precedence
+      if other_type == other_type.program.class_type
+        return true
       end
+
+      super
     end
   end
 

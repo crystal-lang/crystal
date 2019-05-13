@@ -166,6 +166,7 @@ class Dir
         when EntryMatch
           return if sequence[pos + 1]?.is_a?(RecursiveDirectories)
           each_child(path) do |entry|
+            next if !options[:match_hidden] && entry.starts_with?('.')
             yield join(path, entry) if cmd.matches?(entry)
           end
         when DirectoryMatch
@@ -219,7 +220,7 @@ class Dir
 
             if entry = dir.try(&.read)
               next if {".", ".."}.includes?(entry)
-              next if entry[0] == '.' && !options[:match_hidden]
+              next if !options[:match_hidden] && entry.starts_with?('.')
 
               if dir_path.bytesize == 0
                 fullpath = entry

@@ -75,6 +75,16 @@ module Crystal
     end
   end
 
+  class CrystalLibraryPath
+    def self.default_path : String
+      ENV.fetch("CRYSTAL_LIBRARY_PATH", Crystal::Config.library_path)
+    end
+
+    class_getter paths : Array(String) do
+      default_path.split(':', remove_empty: true)
+    end
+  end
+
   class Program
     def lib_flags
       has_flag?("windows") ? lib_flags_windows : lib_flags_posix
@@ -111,7 +121,9 @@ module Crystal
 
             static = has_flag?("static") || ann.static?
 
-            if has_pkg_config && (libflags = pkg_config_flags(libname, static, library_path))
+            if static && (static_lib = find_static_lib(libname, CrystalLibraryPath.paths))
+              flags << ' ' << static_lib
+            elsif has_pkg_config && (libflags = pkg_config_flags(libname, static, library_path))
               flags << ' ' << libflags
             elsif static && (static_lib = find_static_lib(libname, library_path))
               flags << ' ' << static_lib
@@ -125,6 +137,10 @@ module Crystal
           end
         end
 
+        # Append the CRYSTAL_LIBRARY_PATH values as -L flags.
+        CrystalLibraryPath.paths.each do |path|
+          flags << " -L#{path}"
+        end
         # Append the default paths as -L flags in case the linker doesn't know
         # about them (eg: FreeBSD won't search /usr/local/lib by default):
         library_path.each do |path|

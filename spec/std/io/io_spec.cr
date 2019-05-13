@@ -103,9 +103,6 @@ describe IO do
       lines.next.should eq("hello")
       lines.next.should eq("bye")
       lines.next.should be_a(Iterator::Stop)
-
-      lines.rewind
-      lines.next.should eq("hello")
     end
 
     it "iterates by line with chomp false" do
@@ -114,9 +111,6 @@ describe IO do
       lines.next.should eq("hello\n")
       lines.next.should eq("bye\n")
       lines.next.should be_a(Iterator::Stop)
-
-      lines.rewind
-      lines.next.should eq("hello\n")
     end
 
     it "iterates by char" do
@@ -127,9 +121,6 @@ describe IO do
       chars.next.should eq('あ')
       chars.next.should eq('ぼ')
       chars.next.should be_a(Iterator::Stop)
-
-      chars.rewind
-      chars.next.should eq('a')
     end
 
     it "iterates by byte" do
@@ -138,9 +129,6 @@ describe IO do
       bytes.next.should eq('a'.ord)
       bytes.next.should eq('b'.ord)
       bytes.next.should be_a(Iterator::Stop)
-
-      bytes.rewind
-      bytes.next.should eq('a'.ord)
     end
   end
 
@@ -334,54 +322,30 @@ describe IO do
     end
 
     it "does each_line" do
+      lines = [] of String
       io = SimpleIOMemory.new("a\nbb\ncc")
-      counter = 0
       io.each_line do |line|
-        case counter
-        when 0
-          line.should eq("a")
-        when 1
-          line.should eq("bb")
-        when 2
-          line.should eq("cc")
-        end
-        counter += 1
-      end.should be_nil
-      counter.should eq(3)
+        lines << line
+      end
+      lines.should eq ["a", "bb", "cc"]
     end
 
     it "does each_char" do
+      chars = [] of Char
       io = SimpleIOMemory.new("あいう")
-      counter = 0
       io.each_char do |c|
-        case counter
-        when 0
-          c.should eq('あ')
-        when 1
-          c.should eq('い')
-        when 2
-          c.should eq('う')
-        end
-        counter += 1
-      end.should be_nil
-      counter.should eq(3)
+        chars << c
+      end
+      chars.should eq ['あ', 'い', 'う']
     end
 
     it "does each_byte" do
+      bytes = [] of UInt8
       io = SimpleIOMemory.new("abc")
-      counter = 0
       io.each_byte do |b|
-        case counter
-        when 0
-          b.should eq('a'.ord)
-        when 1
-          b.should eq('b'.ord)
-        when 2
-          b.should eq('c'.ord)
-        end
-        counter += 1
-      end.should be_nil
-      counter.should eq(3)
+        bytes << b
+      end
+      bytes.should eq ['a'.ord.to_u8, 'b'.ord.to_u8, 'c'.ord.to_u8]
     end
 
     it "raises on EOF with read_line" do

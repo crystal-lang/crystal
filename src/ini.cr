@@ -17,6 +17,8 @@ class INI
   # Raises a `ParseException` on any errors.
   #
   # ```
+  # require "ini"
+  #
   # INI.parse("[foo]\na = 1") # => {"foo" => {"a" => "1"}}
   # ```
   def self.parse(str) : Hash(String, Hash(String, String))
@@ -59,6 +61,8 @@ class INI
   # Generates an INI-style configuration from a given hash.
   #
   # ```
+  # require "ini"
+  #
   # INI.build({"foo" => {"a" => "1"}}, true) # => "[foo]\na = 1\n\n"
   # ```
   def self.build(ini, space : Bool = false) : String

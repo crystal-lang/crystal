@@ -62,6 +62,258 @@ describe "Restrictions" do
     end
   end
 
+  describe "restriction_of?" do
+    describe "Metaclass vs Metaclass" do
+      it "inserts typed Metaclass before untyped Metaclass" do
+        assert_type(%(
+          def foo(a : T.class) forall T
+            1
+          end
+
+          def foo(a : Int32.class)
+            true
+          end
+
+          foo(Int32)
+          )) { bool }
+      end
+
+      it "keeps typed Metaclass before untyped Metaclass" do
+        assert_type(%(
+          def foo(a : Int32.class)
+            true
+          end
+
+          def foo(a : T.class) forall T
+            1
+          end
+
+          foo(Int32)
+          )) { bool }
+      end
+    end
+
+    describe "Path vs Path" do
+      it "inserts typed Path before untyped Path" do
+        assert_type(%(
+          def foo(a : T) forall T
+            1
+          end
+
+          def foo(a : Int32)
+            true
+          end
+
+          foo(1)
+          )) { bool }
+      end
+
+      it "keeps typed Path before untyped Path" do
+        assert_type(%(
+          def foo(a : Int32)
+            true
+          end
+
+          def foo(a : T) forall T
+            1
+          end
+
+          foo(1)
+          )) { bool }
+      end
+    end
+
+    describe "Generic vs Path" do
+      it "inserts typed Generic before untyped Path" do
+        assert_type(%(
+          def foo(a : T) forall T
+            1
+          end
+
+          def foo(a : Array(Int32))
+            true
+          end
+
+          foo(Array(Int32).new)
+          )) { bool }
+      end
+
+      it "keeps typed Generic before untyped Path" do
+        assert_type(%(
+          def foo(a : Array(Int32))
+            true
+          end
+
+          def foo(a : T) forall T
+            1
+          end
+
+          foo(Array(Int32).new)
+          )) { bool }
+      end
+
+      it "inserts untyped Generic before untyped Path" do
+        assert_type(%(
+          def foo(a : T) forall T
+            1
+          end
+
+          def foo(a : Array(T)) forall T
+            true
+          end
+
+          foo(Array(Int32).new)
+          )) { bool }
+      end
+
+      it "inserts untyped Generic before untyped Path (2)" do
+        assert_type(%(
+          def foo(a : T) forall T
+            1
+          end
+
+          def foo(a : Array)
+            true
+          end
+
+          foo(Array(Int32).new)
+          )) { bool }
+      end
+
+      it "keeps untyped Generic before untyped Path" do
+        assert_type(%(
+          def foo(a : Array(T)) forall T
+            true
+          end
+
+          def foo(a : T) forall T
+            1
+          end
+
+          foo(Array(Int32).new)
+          )) { bool }
+      end
+    end
+
+    describe "Generic vs Generic" do
+      it "inserts typed Generic before untyped Generic" do
+        assert_type(%(
+          def foo(a : Array(T)) forall T
+            1
+          end
+
+          def foo(a : Array(Int32))
+            true
+          end
+
+          foo(Array(Int32).new)
+          )) { bool }
+      end
+
+      it "keeps typed Generic before untyped Generic" do
+        assert_type(%(
+          def foo(a : Array(Int32))
+            true
+          end
+
+          def foo(a : Array(T)) forall T
+            1
+          end
+
+          foo(Array(Int32).new)
+          )) { bool }
+      end
+    end
+
+    describe "GenericClassType vs GenericClassInstanceType" do
+      it "inserts GenericClassInstanceType before GenericClassType" do
+        assert_type(%(
+          class Foo(T)
+          end
+
+          def bar(a : Foo)
+            1
+          end
+
+          def bar(a : Foo(Int32))
+            true
+          end
+
+          {
+            bar(Foo(Int32).new),
+            bar(Foo(Float64).new)
+          }
+          )) { tuple_of([bool, int32]) }
+      end
+
+      it "keeps GenericClassInstanceType before GenericClassType" do
+        assert_type(%(
+          class Foo(T)
+          end
+
+          def bar(a : Foo(Int32))
+            true
+          end
+
+          def bar(a : Foo)
+            1
+          end
+
+          {
+            bar(Foo(Int32).new),
+            bar(Foo(Float64).new)
+          }
+          )) { tuple_of([bool, int32]) }
+      end
+
+      it "works with classes in different namespaces" do
+        assert_type(%(
+          class Foo(T)
+          end
+
+          class Mod::Foo(G)
+          end
+
+          def bar(a : Foo(Int32))
+            true
+          end
+
+          def bar(a : Mod::Foo)
+            1
+          end
+
+          {
+            bar(Foo(Int32).new),
+            bar(Mod::Foo(Int32).new)
+          }
+          )) { tuple_of([bool, int32]) }
+      end
+
+      it "doesn't mix different generic classes" do
+        assert_type(%(
+          class Foo(T)
+          end
+
+          class Bar(U)
+          end
+
+          def bar(a : Bar(Int32))
+            true
+          end
+
+          def bar(a : Foo)
+            1
+          end
+
+          {
+            bar(Foo(Int32).new),
+            bar(Bar(Int32).new)
+          }
+          )) { tuple_of([int32, bool]) }
+      end
+    end
+  end
+
   it "self always matches instance type in restriction" do
     assert_type(%(
       class Foo
@@ -459,5 +711,19 @@ describe "Restrictions" do
       foo(x, y)
       ),
       "no overload matches"
+  end
+
+  it "gives precedence to T.class over Class (#7392)" do
+    assert_type(%(
+      def foo(x : Class)
+        'a'
+      end
+
+      def foo(x : Int32.class)
+        1
+      end
+
+      foo(Int32)
+      )) { int32 }
   end
 end

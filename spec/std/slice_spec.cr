@@ -8,6 +8,19 @@ describe "Slice" do
     slice.size.should eq(1)
   end
 
+  it "does []?" do
+    slice = Slice.new(3) { |i| i + 1 }
+    3.times do |i|
+      slice[i]?.should eq(i + 1)
+    end
+    slice[-1]?.should eq(3)
+    slice[-2]?.should eq(2)
+    slice[-3]?.should eq(1)
+
+    slice[-4]?.should be_nil
+    slice[3]?.should be_nil
+  end
+
   it "does []" do
     slice = Slice.new(3) { |i| i + 1 }
     3.times do |i|
@@ -43,6 +56,21 @@ describe "Slice" do
 
     expect_raises(IndexError) { slice + 4 }
     expect_raises(IndexError) { slice + (-1) }
+  end
+
+  it "does []? with start and count" do
+    slice = Slice.new(4) { |i| i + 1 }
+    slice1 = slice[1, 2]?
+    slice1.should_not be_nil
+    slice1 = slice1.not_nil!
+    slice1.size.should eq(2)
+    slice1[0].should eq(2)
+    slice1[1].should eq(3)
+
+    slice[-1, 1]?.should be_nil
+    slice[3, 2]?.should be_nil
+    slice[0, 5]?.should be_nil
+    slice[3, -1]?.should be_nil
   end
 
   it "does [] with start and count" do
@@ -272,12 +300,6 @@ describe "Slice" do
     iter.next.should eq(2)
     iter.next.should eq(3)
     iter.next.should be_a(Iterator::Stop)
-
-    iter.rewind
-    iter.next.should eq(1)
-
-    iter.rewind
-    iter.cycle.first(5).to_a.should eq([1, 2, 3, 1, 2])
   end
 
   it "does reverse iterator" do
@@ -287,9 +309,6 @@ describe "Slice" do
     iter.next.should eq(2)
     iter.next.should eq(1)
     iter.next.should be_a(Iterator::Stop)
-
-    iter.rewind
-    iter.next.should eq(3)
   end
 
   it "does index iterator" do
@@ -298,9 +317,6 @@ describe "Slice" do
     iter.next.should eq(0)
     iter.next.should eq(1)
     iter.next.should be_a(Iterator::Stop)
-
-    iter.rewind
-    iter.next.should eq(0)
   end
 
   it "does to_a" do
@@ -411,6 +427,61 @@ describe "Slice" do
 
   it "optimizes hash for Bytes" do
     Bytes[1, 2, 3].hash.should_not eq(Slice[1, 2, 3].hash)
+  end
+
+  it "#[]" do
+    slice = Slice.new(6) { |i| i + 1 }
+    subslice = slice[2..4]
+    subslice.read_only?.should be_false
+    subslice.size.should eq(3)
+    subslice.should eq(Slice.new(3) { |i| i + 3 })
+  end
+
+  it "#[] keeps read-only value" do
+    slice = Slice.new(6, read_only: true) { |i| i + 1 }
+    slice[2..4].read_only?.should be_true
+  end
+
+  describe "#clone" do
+    it "clones primitive" do
+      slice = Slice[1, 2]
+      slice.clone.should eq slice
+    end
+
+    it "clones non-primitive" do
+      slice = Slice["abc", "a"]
+      slice.clone.should eq slice
+    end
+
+    it "buffer copy" do
+      slice = Slice["foo"]
+      copy = slice.clone
+      slice[0] = "bar"
+      copy.should_not eq slice
+    end
+
+    it "deep copy" do
+      slice = Slice[["foo"]]
+      copy = slice.clone
+      slice[0] << "bar"
+      copy.should_not eq slice
+    end
+  end
+
+  describe "#dup" do
+    it "buffer copy" do
+      slice = Slice["foo"]
+      copy = slice.dup
+      slice[0] = "bar"
+      copy.should_not eq slice
+    end
+
+    it "don't deep copy" do
+      slice = Slice[["foo"]]
+      copy = slice.dup
+      slice[0] << "bar"
+      copy.should eq slice
+    end
   end
 end
 

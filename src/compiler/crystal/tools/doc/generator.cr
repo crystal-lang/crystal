@@ -168,6 +168,7 @@ class Crystal::Doc::Generator
 
   def must_include?(const : Crystal::Const)
     return false if nodoc?(const)
+    return true if crystal_builtin?(const)
 
     const.locations.try &.any? { |location| must_include? location }
   end
@@ -216,7 +217,8 @@ class Crystal::Doc::Generator
     return false unless type.namespace == crystal_type
 
     {"BUILD_COMMIT", "BUILD_DATE", "CACHE_DIR", "DEFAULT_PATH",
-     "DESCRIPTION", "PATH", "VERSION", "LLVM_VERSION"}.each do |name|
+     "DESCRIPTION", "PATH", "VERSION", "LLVM_VERSION",
+     "LIBRARY_PATH"}.each do |name|
       return true if type == crystal_type.types[name]?
     end
 
@@ -261,7 +263,7 @@ class Crystal::Doc::Generator
     types = [] of Constant
 
     parent.type.types?.try &.each_value do |type|
-      if type.is_a?(Const) && must_include? type
+      if type.is_a?(Const) && must_include?(type) && !type.private?
         types << Constant.new(self, parent, type)
       end
     end
@@ -298,6 +300,7 @@ class Crystal::Doc::Generator
 
   def doc(context, string)
     string = isolate_flag_lines string
+    string += build_flag_lines_from_annotations context
     markdown = String.build do |io|
       Markdown.parse string, MarkdownDocRenderer.new(context, io)
     end
@@ -336,6 +339,19 @@ class Crystal::Doc::Generator
           io << '\n' << line
         else
           io << line
+        end
+      end
+    end
+  end
+
+  def build_flag_lines_from_annotations(context)
+    first = true
+    String.build do |io|
+      if anns = context.annotations(@program.deprecated_annotation)
+        anns.each do |ann|
+          io << "\n\n" if first
+          first = false
+          io << "DEPRECATED: #{DeprecatedAnnotation.from(ann).message}\n\n"
         end
       end
     end

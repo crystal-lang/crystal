@@ -118,7 +118,7 @@ module Debug
         when FORM::RefSig8
           @io.read_bytes(UInt64)
         when FORM::String
-          @io.gets('\0').to_s.chomp('\0')
+          @io.gets('\0', chomp: true).to_s
         when FORM::Strp
           read_ulong
         when FORM::Indirect

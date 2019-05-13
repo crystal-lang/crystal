@@ -150,7 +150,7 @@ module Random
         # 0 to 15, only with the `UInt8`, `UInt16`, `UInt32` and `UInt64` ranges.
         #
         # Another problem is how to actually compute the *limit*. The obvious way to do it, which is
-        # `(RAND_MAX + 1) / max * max`, fails because `RAND_MAX` is usually already the highest
+        # `(RAND_MAX + 1) // max * max`, fails because `RAND_MAX` is usually already the highest
         # number that an integer type can hold. And even the *limit* itself will often be
         # `RAND_MAX + 1`, meaning that we don't have to discard anything. The ways to deal with this
         # are described below.
@@ -192,7 +192,7 @@ module Random
           limit =
             if rand_max > 0
               # `rand_max` didn't overflow, so we can calculate the *limit* the straightforward way.
-              rand_max / max &* max
+              rand_max // max &* max
             else
               # *rand_max* is `{{utype}}::MAX + 1`, need the same wraparound trick. *limit* might
               # overflow, which means it would've been `{{utype}}::MAX + 1`, but didn't fit into
@@ -230,7 +230,7 @@ module Random
       end
 
       # Generates a random integer in range `{{type}}::MIN..{{type}}::MAX`.
-      private def rand_type(type : {{type}}.class, needed_parts = sizeof({{type}}) / sizeof(typeof(next_u))) : {{type}}
+      private def rand_type(type : {{type}}.class, needed_parts = sizeof({{type}}) // sizeof(typeof(next_u))) : {{type}}
         # Build up the number combining multiple outputs from the RNG.
         result = {{utype}}.new!(next_u)
         (needed_parts - 1).times do

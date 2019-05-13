@@ -283,4 +283,31 @@ describe "Code gen: generic class type" do
       Bar(Int32).new.as(Foo(Int32)).class.name
       )).to_string.should eq("Bar(Int32)")
   end
+
+  it "recomputes two calls that look the same due to generic type being instantiated (#7728)" do
+    run(%(
+      require "prelude"
+
+      abstract class Base
+      end
+
+      class Gen(T) < Base
+        def initialize(@x : T)
+        end
+
+        def x
+          @x
+        end
+      end
+
+      def foo(gen)
+        gen.x
+        gen.x
+      end
+
+      foo(Gen.new(1) || Gen.new(1.5))
+      foo(Gen.new(true) || Gen.new(1_u8))
+      foo(Gen.new("hello") || Gen.new('z')).as(String)
+      )).to_string.should eq("hello")
+  end
 end

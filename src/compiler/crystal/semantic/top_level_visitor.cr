@@ -861,6 +861,10 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
     if (var = node.var).is_a?(Var)
       @vars[var.name] = MetaVar.new(var.name)
     end
+
+    # Because the value could be using macro expansions
+    node.value.try &.accept(self)
+
     false
   end
 
@@ -896,6 +900,21 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
   def visit(node : Call)
     node.scope = node.global? ? @program : current_type.metaclass
     !expand_macro(node, raise_on_missing_const: false, first_pass: true)
+  end
+
+  def visit(node : ProcPointer)
+    # A proc pointer at the top-level might refer to a macro, so we check
+    # that here but we don't yet give an error: we let the real semantic visitor
+    # (MainVisitor) do that job to avoid duplicating code.
+    obj = node.obj
+
+    call = Call.new(obj, node.name).at(obj)
+    call.scope = current_type.metaclass
+    node.call = call
+
+    expand_macro(call, raise_on_missing_const: false, first_pass: true)
+
+    false
   end
 
   def visit(node : Out)
@@ -1049,6 +1068,12 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
         node.returns_twice = true
       when @program.raises_annotation
         node.raises = true
+      when @program.deprecated_annotation
+        # Check whether a DeprecatedAnnotation can be built.
+        # There is no need to store it, but enforcing
+        # arguments makes sense here.
+        DeprecatedAnnotation.from(ann)
+        yield annotation_type, ann
       else
         yield annotation_type, ann
       end

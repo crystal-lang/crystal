@@ -163,4 +163,11 @@ describe "Semantic: pointer" do
       pointerof(LibFoo.extern)
       )) { pointer_of(int32) }
   end
+
+  it "says undefined variable (#7556)" do
+    assert_error %(
+      pointerof(foo)
+      ),
+      "undefined local variable or method 'foo'"
+  end
 end

@@ -73,25 +73,25 @@ prepare_system() {
 }
 
 build() {
-  with_build_env 'make std_spec clean'
-  with_build_env 'make crystal std_spec compiler_spec docs'
+  with_build_env 'make std_spec clean threads=1'
+  with_build_env 'make crystal std_spec compiler_spec docs threads=1'
   with_build_env 'find samples -name "*.cr" | xargs -L 1 ./bin/crystal build --no-codegen'
 }
 
 format() {
-  with_build_env 'make clean crystal'
+  with_build_env 'make clean crystal threads=1'
   with_build_env './bin/crystal tool format --check samples spec src'
 }
 
 prepare_build() {
   on_linux verify_linux_environment
 
-  on_osx brew install crystal
+  on_osx curl -L https://github.com/crystal-lang/crystal/releases/download/0.28.0/crystal-0.28.0-1-darwin-x86_64.tar.gz -o ~/crystal.tar.gz
+  on_osx 'pushd ~;gunzip -c ~/crystal.tar.gz | tar xopf -;mv crystal-0.28.0-1 crystal;popd'
 
-  # Make sure binaries from llvm are available in PATH
-  on_osx brew install jq
-  on_osx OSX_LLVM_PACKAGE=`brew info --json=v1 crystal | jq '.[].dependencies | .[] | select(startswith("llvm"))'`
-  on_osx brew link --force $OSX_LLVM_PACKAGE
+  on_osx brew install llvm@6 gmp libevent pcre pkg-config
+  on_osx brew upgrade libyaml
+  on_osx brew link --force llvm@6
 
   on_tag verify_version
 }
@@ -114,7 +114,7 @@ with_build_env() {
 
   on_linux verify_linux_environment
 
-  export DOCKER_TEST_PREFIX="${DOCKER_TEST_PREFIX:=crystallang/crystal:0.27.2}"
+  export DOCKER_TEST_PREFIX="${DOCKER_TEST_PREFIX:=crystallang/crystal:0.28.0}"
 
   case $ARCH in
     x86_64)
@@ -135,7 +135,8 @@ with_build_env() {
     "$ARCH_CMD" /bin/sh -c "'$command'"
 
   on_osx sudo systemsetup -settimezone $TZ
-  on_osx PATH="/usr/local/opt/llvm/bin:\$PATH" \
+  on_osx PATH="~/crystal/bin:\$PATH" \
+    CRYSTAL_LIBRARY_PATH="~/crystal/embedded/lib" \
     CRYSTAL_CACHE_DIR="/tmp/crystal" \
     /bin/sh -c "'$command'"
 

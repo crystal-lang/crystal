@@ -19,7 +19,7 @@
 # ints = uninitialized Int32[3]
 # ints[0] = 0
 # ints[1] = 8
-# ints[3] = 15
+# ints[2] = 15
 # ```
 #
 # For number types there is also `Number.static_array` which can be used to initialize
@@ -259,7 +259,7 @@ struct StaticArray(T, N)
   # array = StaticArray(Int32, 3).new { |i| i + 1 }
   # array.to_s # => "StaticArray[1, 2, 3]"
   # ```
-  def to_s(io : IO)
+  def to_s(io : IO) : Nil
     io << "StaticArray["
     join ", ", io, &.inspect(io)
     io << ']'

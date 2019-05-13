@@ -117,7 +117,7 @@ describe Enum do
     end
 
     it "for flags enum" do
-      SpecEnumFlags.from_value?(0).should be_nil
+      SpecEnumFlags.from_value?(0).should eq(SpecEnumFlags::None)
       SpecEnumFlags.from_value?(1).should eq(SpecEnumFlags::One)
       SpecEnumFlags.from_value?(2).should eq(SpecEnumFlags::Two)
       SpecEnumFlags.from_value?(3).should eq(SpecEnumFlags::One | SpecEnumFlags::Two)
@@ -134,10 +134,11 @@ describe Enum do
     end
 
     it "for flags enum" do
-      expect_raises(Exception, "Unknown enum SpecEnumFlags value: 0") { SpecEnumFlags.from_value(0) }
+      SpecEnumFlags.from_value(0).should eq(SpecEnumFlags::None)
       SpecEnumFlags.from_value(1).should eq(SpecEnumFlags::One)
       SpecEnumFlags.from_value(2).should eq(SpecEnumFlags::Two)
       SpecEnumFlags.from_value(3).should eq(SpecEnumFlags::One | SpecEnumFlags::Two)
+      expect_raises(Exception, "Unknown enum SpecEnumFlags value: 8") { SpecEnumFlags.from_value(8) }
     end
   end
 

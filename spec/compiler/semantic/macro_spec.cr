@@ -566,9 +566,9 @@ describe "Semantic: macro" do
       )) { types["Foo"] }
   end
 
-  it "allows declaring class with macro expression" do
+  it "allows declaring class with inline macro expression (#1333)" do
     assert_type(%(
-      {{ `echo "class Foo; end"` }}
+      {{ "class Foo; end".id }}
 
       Foo.new
       )) { types["Foo"] }
@@ -1368,5 +1368,41 @@ describe "Semantic: macro" do
         }}
       {% end %}
     )) { int32 }
+  end
+
+  it "can use macro in instance var initializer (#7666)" do
+    assert_type(%(
+      class Foo
+        macro m
+          "test"
+        end
+
+        @x : String = m
+
+        def x
+          @x
+        end
+      end
+
+      Foo.new.x
+      )) { string }
+  end
+
+  it "can use macro in instance var initializer (just assignment) (#7666)" do
+    assert_type(%(
+      class Foo
+        macro m
+          "test"
+        end
+
+        @x = m
+
+        def x
+          @x
+        end
+      end
+
+      Foo.new.x
+      )) { string }
   end
 end

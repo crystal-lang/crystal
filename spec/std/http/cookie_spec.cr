@@ -101,6 +101,15 @@ module HTTP
         cookie.to_set_cookie_header.should eq("key=value; domain=www.example.com; path=/")
       end
 
+      it "parses expires iis" do
+        cookie = parse_set_cookie("key=value; expires=Sun, 06-Nov-1994 08:49:37 GMT")
+        time = Time.utc(1994, 11, 6, 8, 49, 37)
+
+        cookie.name.should eq("key")
+        cookie.value.should eq("value")
+        cookie.expires.should eq(time)
+      end
+
       it "parses expires rfc1123" do
         cookie = parse_set_cookie("key=value; expires=Sun, 06 Nov 1994 08:49:37 GMT")
         time = Time.utc(1994, 11, 6, 8, 49, 37)
@@ -150,14 +159,14 @@ module HTTP
         parse_set_cookie("a=1; domain=127.0.0.1; path=/; HttpOnly").domain.should eq "127.0.0.1"
       end
 
-      it "parse max-age as seconds from Time.now" do
+      it "parse max-age as seconds from current time" do
         cookie = parse_set_cookie("a=1; max-age=10")
-        delta = cookie.expires.not_nil! - Time.now
+        delta = cookie.expires.not_nil! - Time.utc
         delta.should be > 9.seconds
         delta.should be < 11.seconds
 
         cookie = parse_set_cookie("a=1; max-age=0")
-        delta = Time.now - cookie.expires.not_nil!
+        delta = Time.utc - cookie.expires.not_nil!
         delta.should be > 0.seconds
         delta.should be < 1.seconds
       end

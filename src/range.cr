@@ -5,6 +5,9 @@
 # ```
 # x..y  # an inclusive range, in mathematics: [x, y]
 # x...y # an exclusive range, in mathematics: [x, y)
+# (x..) # an endless range, in mathematics: >= x
+# ..y   # a beginless inclusive range, in mathematics: <= y
+# ...y  # a beginless exclusive range, in mathematics: < y
 # ```
 #
 # An easy way to remember which one is inclusive and which one is exclusive it
@@ -100,12 +103,21 @@ struct Range(B, E)
   # # prints: 10 11 12 13 14 15
   # ```
   def each : Nil
+    {% if B == Nil %}
+      {% raise "Can't each beginless range" %}
+    {% end %}
+
     current = @begin
-    while current < @end
+    if current.nil?
+      raise ArgumentError.new("Can't each beginless range")
+    end
+
+    end_value = @end
+    while end_value.nil? || current < end_value
       yield current
       current = current.succ
     end
-    yield current if !@exclusive && current == @end
+    yield current if !@exclusive && current == end_value
   end
 
   # Returns an `Iterator` over the elements of this range.
@@ -114,6 +126,14 @@ struct Range(B, E)
   # (1..3).each.skip(1).to_a # => [2, 3]
   # ```
   def each
+    {% if B == Nil %}
+      {% raise "Can't each beginless range" %}
+    {% end %}
+
+    if @begin.nil?
+      raise ArgumentError.new("Can't each beginless range")
+    end
+
     ItemIterator.new(self)
   end
 
@@ -125,9 +145,21 @@ struct Range(B, E)
   # # prints: 14 13 12 11 10
   # ```
   def reverse_each : Nil
-    yield @end if !@exclusive && !(@end < @begin)
-    current = @end
-    while @begin < current
+    {% if E == Nil %}
+      {% raise "Can't reverse_each endless range" %}
+    {% end %}
+
+    end_value = @end
+    if end_value.nil?
+      raise ArgumentError.new("Can't reverse_each endless range")
+    end
+
+    begin_value = @begin
+
+    yield end_value if !@exclusive && (begin_value.nil? || !(end_value < begin_value))
+    current = end_value
+
+    while begin_value.nil? || begin_value < current
       current = current.pred
       yield current
     end
@@ -139,6 +171,14 @@ struct Range(B, E)
   # (1..3).reverse_each.skip(1).to_a # => [2, 1]
   # ```
   def reverse_each
+    {% if E == Nil %}
+      {% raise "Can't reverse_each endless range" %}
+    {% end %}
+
+    if @end.nil?
+      raise ArgumentError.new("Can't reverse_each endless range")
+    end
+
     ReverseIterator.new(self)
   end
 
@@ -169,7 +209,12 @@ struct Range(B, E)
   # See `Range`'s overview for the definition of `Xs`.
   def step(by = 1)
     current = @begin
-    while current < @end
+    if current.nil?
+      raise ArgumentError.new("Can't step beginless range")
+    end
+
+    end_value = @end
+    while end_value.nil? || current < end_value
       yield current
       by.times { current = current.succ }
     end
@@ -183,6 +228,10 @@ struct Range(B, E)
   # (1..10).step(3).skip(1).to_a # => [4, 7, 10]
   # ```
   def step(by = 1)
+    if @begin.nil?
+      raise ArgumentError.new("Can't step beginless range")
+    end
+
     StepIterator(self, B, typeof(by)).new(self, by)
   end
 
@@ -207,11 +256,16 @@ struct Range(B, E)
   # (1...10).includes?(10) # => false
   # ```
   def includes?(value)
-    if @exclusive
-      @begin <= value < @end
-    else
-      @begin <= value <= @end
-    end
+    begin_value = @begin
+    end_value = @end
+
+    # TODO: change to `nil?` after removing the `nil?` error related to `Pointer`
+
+    # begin passes
+    (begin_value.is_a?(Nil) || value >= begin_value) &&
+      # end passes
+      (end_value.is_a?(Nil) ||
+        (@exclusive ? value < end_value : value <= end_value))
   end
 
   # Same as `includes?`.
@@ -241,14 +295,14 @@ struct Range(B, E)
   end
 
   # :nodoc:
-  def to_s(io : IO)
-    @begin.inspect(io)
+  def to_s(io : IO) : Nil
+    @begin.try &.inspect(io)
     io << (@exclusive ? "..." : "..")
-    @end.inspect(io)
+    @end.try &.inspect(io)
   end
 
   # :nodoc:
-  def inspect(io)
+  def inspect(io : IO) : Nil
     to_s(io)
   end
 
@@ -262,7 +316,7 @@ struct Range(B, E)
       e -= 1 if @exclusive
       n = e - b + 1
       if n >= 0
-        initial + n * (b + e) / 2
+        initial + n * (b + e) // 2
       else
         initial
       end
@@ -320,25 +374,21 @@ struct Range(B, E)
     def next
       return stop if @reached_end
 
-      if @current < @range.end
+      end_value = @range.end
+
+      if end_value.nil? || @current < end_value
         value = @current
         @current = @current.succ
         value
       else
         @reached_end = true
 
-        if !@range.excludes_end? && @current == @range.end
+        if !@range.excludes_end? && @current == end_value
           @current
         else
           stop
         end
       end
-    end
-
-    def rewind
-      @current = @range.begin
-      @reached_end = false
-      self
     end
   end
 
@@ -348,23 +398,19 @@ struct Range(B, E)
     @range : Range(B, E)
     @current : E
 
-    def initialize(@range : Range(B, E), @current = range.end)
-      rewind
+    def initialize(@range : Range(B, E))
+      if range.excludes_end?
+        @current = range.end.not_nil!
+      else
+        @current = range.end.not_nil!.succ
+      end
     end
 
     def next
-      return stop if @current <= @range.begin
+      begin_value = @range.begin
+
+      return stop if !begin_value.nil? && @current <= begin_value
       return @current = @current.pred
-    end
-
-    def rewind
-      if @range.excludes_end?
-        @current = @range.end
-      else
-        @current = @range.end.succ
-      end
-
-      self
     end
   end
 
@@ -382,7 +428,9 @@ struct Range(B, E)
     def next
       return stop if @reached_end
 
-      if @current < @range.end
+      end_value = @range.end
+
+      if end_value.nil? || @current < end_value
         value = @current
         @step.times { @current = @current.succ }
         value
@@ -397,12 +445,6 @@ struct Range(B, E)
       end
     end
 
-    def rewind
-      @current = @range.begin
-      @reached_end = false
-      self
-    end
-
     def sum(initial)
       super if @reached_end
 
@@ -412,10 +454,10 @@ struct Range(B, E)
 
       if b.is_a?(Int) && e.is_a?(Int) && d.is_a?(Int)
         e -= 1 if @range.excludes_end?
-        n = (e - b) / d + 1
+        n = (e - b) // d + 1
         if n >= 0
           e = b + (n - 1) * d
-          initial + n * (b + e) / 2
+          initial + n * (b + e) // 2
         else
           initial
         end

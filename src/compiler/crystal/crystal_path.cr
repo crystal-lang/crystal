@@ -12,7 +12,7 @@ module Crystal
 
     @crystal_path : Array(String)
 
-    def initialize(path = CrystalPath.default_path, codegen_target = Codegen::Target.new)
+    def initialize(path = CrystalPath.default_path, codegen_target = Config.default_target)
       @crystal_path = path.split(':').reject &.empty?
       add_target_path(codegen_target)
     end
@@ -45,60 +45,69 @@ module Crystal
     end
 
     private def find_in_path_relative_to_dir(filename, relative_to)
-      if relative_to.is_a?(String)
-        # Check if it's a wildcard.
-        if filename.ends_with?("/*") || (recursive = filename.ends_with?("/**"))
-          filename_dir_index = filename.rindex('/').not_nil!
-          filename_dir = filename[0..filename_dir_index]
-          relative_dir = "#{relative_to}/#{filename_dir}"
-          if File.exists?(relative_dir)
-            files = [] of String
-            gather_dir_files(relative_dir, files, recursive)
-            return files
-          end
-        else
-          relative_filename = "#{relative_to}/#{filename}"
+      return unless relative_to.is_a?(String)
 
-          # Check if .cr file exists.
-          relative_filename_cr = relative_filename.ends_with?(".cr") ? relative_filename : "#{relative_filename}.cr"
-          if File.exists?(relative_filename_cr)
-            return make_relative_unless_absolute relative_filename_cr
-          end
-
-          if slash_index = filename.index('/')
-            # If it's "foo/bar/baz", check if "foo/src/bar/baz.cr" exists (for a shard, non-namespaced structure)
-            before_slash, after_slash = filename.split('/', 2)
-            absolute_filename = make_relative_unless_absolute("#{relative_to}/#{before_slash}/src/#{after_slash}.cr")
-            return absolute_filename if File.exists?(absolute_filename)
-
-            # Then check if "foo/src/foo/bar/baz.cr" exists (for a shard, namespaced structure)
-            absolute_filename = make_relative_unless_absolute("#{relative_to}/#{before_slash}/src/#{before_slash}/#{after_slash}.cr")
-            return absolute_filename if File.exists?(absolute_filename)
-
-            # If it's "foo/bar/baz", check if "foo/bar/baz/baz.cr" exists (std, nested)
-            basename = File.basename(relative_filename)
-            absolute_filename = make_relative_unless_absolute("#{relative_to}/#{filename}/#{basename}.cr")
-            return absolute_filename if File.exists?(absolute_filename)
-
-            # If it's "foo/bar/baz", check if "foo/src/foo/bar/baz/baz.cr" exists (shard, non-namespaced, nested)
-            absolute_filename = make_relative_unless_absolute("#{relative_to}/#{before_slash}/src/#{after_slash}/#{after_slash}.cr")
-            return absolute_filename if File.exists?(absolute_filename)
-
-            # If it's "foo/bar/baz", check if "foo/src/foo/bar/baz/baz.cr" exists (shard, namespaced, nested)
-            absolute_filename = make_relative_unless_absolute("#{relative_to}/#{before_slash}/src/#{before_slash}/#{after_slash}/#{after_slash}.cr")
-            return absolute_filename if File.exists?(absolute_filename)
-          else
-            basename = File.basename(relative_filename)
-
-            # If it's "foo", check if "foo/foo.cr" exists (for the std, nested)
-            absolute_filename = make_relative_unless_absolute("#{relative_filename}/#{basename}.cr")
-            return absolute_filename if File.exists?(absolute_filename)
-
-            # If it's "foo", check if "foo/src/foo.cr" exists (for a shard)
-            absolute_filename = make_relative_unless_absolute("#{relative_filename}/src/#{basename}.cr")
-            return absolute_filename if File.exists?(absolute_filename)
-          end
+      # Check if it's a wildcard.
+      if filename.ends_with?("/*") || (recursive = filename.ends_with?("/**"))
+        filename_dir_index = filename.rindex('/').not_nil!
+        filename_dir = filename[0..filename_dir_index]
+        relative_dir = "#{relative_to}/#{filename_dir}"
+        if File.exists?(relative_dir)
+          files = [] of String
+          gather_dir_files(relative_dir, files, recursive)
+          return files
         end
+
+        return nil
+      end
+
+      relative_filename = "#{relative_to}/#{filename}"
+
+      # Check if .cr file exists.
+      relative_filename_cr = relative_filename.ends_with?(".cr") ? relative_filename : "#{relative_filename}.cr"
+      if File.exists?(relative_filename_cr)
+        return make_relative_unless_absolute relative_filename_cr
+      end
+
+      filename_is_relative = filename.starts_with?('.')
+
+      if !filename_is_relative && (slash_index = filename.index('/'))
+        # If it's "foo/bar/baz", check if "foo/src/bar/baz.cr" exists (for a shard, non-namespaced structure)
+        before_slash, after_slash = filename.split('/', 2)
+
+        absolute_filename = make_relative_unless_absolute("#{relative_to}/#{before_slash}/src/#{after_slash}.cr")
+        return absolute_filename if File.exists?(absolute_filename)
+
+        # Then check if "foo/src/foo/bar/baz.cr" exists (for a shard, namespaced structure)
+        absolute_filename = make_relative_unless_absolute("#{relative_to}/#{before_slash}/src/#{before_slash}/#{after_slash}.cr")
+        return absolute_filename if File.exists?(absolute_filename)
+
+        # If it's "foo/bar/baz", check if "foo/bar/baz/baz.cr" exists (std, nested)
+        basename = File.basename(relative_filename)
+        absolute_filename = make_relative_unless_absolute("#{relative_to}/#{filename}/#{basename}.cr")
+        return absolute_filename if File.exists?(absolute_filename)
+
+        # If it's "foo/bar/baz", check if "foo/src/foo/bar/baz/baz.cr" exists (shard, non-namespaced, nested)
+        absolute_filename = make_relative_unless_absolute("#{relative_to}/#{before_slash}/src/#{after_slash}/#{after_slash}.cr")
+        return absolute_filename if File.exists?(absolute_filename)
+
+        # If it's "foo/bar/baz", check if "foo/src/foo/bar/baz/baz.cr" exists (shard, namespaced, nested)
+        absolute_filename = make_relative_unless_absolute("#{relative_to}/#{before_slash}/src/#{before_slash}/#{after_slash}/#{after_slash}.cr")
+        return absolute_filename if File.exists?(absolute_filename)
+
+        return nil
+      end
+
+      basename = File.basename(relative_filename)
+
+      # If it's "foo", check if "foo/foo.cr" exists (for the std, nested)
+      absolute_filename = make_relative_unless_absolute("#{relative_filename}/#{basename}.cr")
+      return absolute_filename if File.exists?(absolute_filename)
+
+      unless filename_is_relative
+        # If it's "foo", check if "foo/src/foo.cr" exists (for a shard)
+        absolute_filename = make_relative_unless_absolute("#{relative_filename}/src/#{basename}.cr")
+        return absolute_filename if File.exists?(absolute_filename)
       end
 
       nil

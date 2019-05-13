@@ -38,6 +38,9 @@ end
 
 class Crystal::Call
   def raise_matches_not_found(owner, def_name, arg_types, named_args_types, matches = nil, with_literals = false)
+    obj = @obj
+    with_scope = @with_scope
+
     # Special case: Foo+.class#new
     if owner.is_a?(VirtualMetaclassType) && def_name == "new"
       raise_matches_not_found_for_virtual_metaclass_new owner
@@ -71,10 +74,13 @@ class Crystal::Call
       end
     end
 
+    # Also check with scope
+    if with_scope
+      defs.concat with_scope.lookup_defs(def_name)
+    end
+
     # Check if it's the case of an abstract def
     check_abstract_def_error(owner, matches, defs, def_name)
-
-    obj = @obj
 
     # Check if this is a `foo` call and we actually find it in the Program
     if !obj && defs.empty?
@@ -92,21 +98,35 @@ class Crystal::Call
       similar_name = owner.lookup_similar_def_name(def_name, self.args.size, block)
 
       error_msg = String.build do |msg|
-        if obj && owner != program
-          msg << "undefined method '#{def_name}' for #{owner}"
-        elsif convert_to_logical_operator(def_name)
-          msg << "undefined method '#{def_name}'"
-          similar_name = convert_to_logical_operator(def_name)
+        if obj
+          could_be_local_variable = false
+        elsif logical_op = convert_to_logical_operator(def_name)
+          similar_name = logical_op
+          could_be_local_variable = false
         elsif args.size > 0 || has_parentheses?
-          msg << "undefined method '#{def_name}'"
+          could_be_local_variable = false
         else
+          # This check is for the case `a if a = 1`
           similar_name = parent_visitor.lookup_similar_var_name(def_name) unless similar_name
           if similar_name == def_name
-            # This check is for the case `a if a = 1`
-            msg << "undefined method '#{def_name}'"
+            could_be_local_variable = false
           else
-            msg << "undefined local variable or method '#{def_name}'"
+            could_be_local_variable = true
           end
+        end
+
+        if could_be_local_variable
+          msg << "undefined local variable or method '#{def_name}'"
+        else
+          msg << "undefined method '#{def_name}'"
+        end
+
+        owner_name = owner.is_a?(Program) ? "top-level" : owner.to_s
+
+        if with_scope && !obj && with_scope != owner
+          msg << " for #{with_scope} (with ... yield) and #{owner_name} (current scope)"
+        else
+          msg << " for #{owner_name}"
         end
 
         if def_name == "allocate" && owner.is_a?(MetaclassType) && owner.instance_type.module?
@@ -560,7 +580,7 @@ class Crystal::Call
     named_args.each do |named_arg|
       found_index = a_def.args.index { |arg| arg.external_name == named_arg.name }
       if found_index
-        min_size = args.size
+        min_size = arg_types.size
         if found_index < min_size
           raise "argument '#{named_arg.name}' already specified"
         end

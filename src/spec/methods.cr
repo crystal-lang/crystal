@@ -36,6 +36,7 @@ module Spec::Methods
   #
   # It is usually used inside a `#describe` or `#context` section.
   def it(description = "assert", file = __FILE__, line = __LINE__, end_line = __END_LINE__, &block)
+    description = description.to_s
     Spec::RootContext.check_nesting_spec(file, line) do
       return unless Spec.matches?(description, file, line, end_line)
 
@@ -54,6 +55,12 @@ module Spec::Methods
         Spec.abort! if Spec.fail_fast?
       ensure
         Spec.run_after_each_hooks
+
+        # We do this to give a chance for signals (like CTRL+C) to be handled,
+        # which currently are only handled when there's a fiber switch
+        # (IO stuff, sleep, etc.). Without it the user might wait more than needed
+        # after pressing CTRL+C to quit the tests.
+        Fiber.yield
       end
     end
   end
@@ -70,6 +77,7 @@ module Spec::Methods
   #
   # It is usually used inside a `#describe` or `#context` section.
   def pending(description = "assert", file = __FILE__, line = __LINE__, end_line = __END_LINE__, &block)
+    description = description.to_s
     Spec::RootContext.check_nesting_spec(file, line) do
       return unless Spec.matches?(description, file, line, end_line)
 

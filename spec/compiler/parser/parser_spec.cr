@@ -74,7 +74,7 @@ module Crystal
      ":>=", ":!", ":!=", ":=~", ":!~", ":&", ":|", ":^", ":~", ":**", ":>>", ":<<", ":%", ":[]", ":[]?",
      ":[]=", ":<=>", ":==="].each do |symbol|
       value = symbol[1, symbol.size - 1]
-      value = value[1, value.size - 2] if value.starts_with?("\"")
+      value = value[1, value.size - 2] if value.starts_with?('"')
       it_parses symbol, value.symbol
     end
     it_parses ":foo", "foo".symbol
@@ -152,6 +152,8 @@ module Crystal
     it_parses "@a, b = 1, 2", MultiAssign.new(["@a".instance_var, "b".var] of ASTNode, [1.int32, 2.int32] of ASTNode)
     it_parses "@@a, b = 1, 2", MultiAssign.new(["@@a".class_var, "b".var] of ASTNode, [1.int32, 2.int32] of ASTNode)
 
+    assert_syntax_error "a, B = 1, 2", "can't assign to constant in multiple assignment"
+
     assert_syntax_error "1 == 2, a = 4"
     assert_syntax_error "x : String, a = 4"
     assert_syntax_error "b, 1 == 2, a = 4"
@@ -191,7 +193,7 @@ module Crystal
       def macro require case select if unless include
       extend class struct module enum while until return
       next break lib fun alias pointerof sizeof
-      instance_sizeof typeof private protected asm out
+      instance_sizeof offsetof typeof private protected asm out
       end
     ).each do |kw|
       assert_syntax_error "def foo(#{kw}); end", "cannot use '#{kw}' as an argument name", 1, 9
@@ -371,6 +373,7 @@ module Crystal
     it_parses "foo(&.responds_to?(:foo))", Call.new(nil, "foo", block: Block.new([Var.new("__arg0")], RespondsTo.new(Var.new("__arg0"), "foo")))
     it_parses "foo &.each {\n}", Call.new(nil, "foo", block: Block.new(["__arg0".var], Call.new("__arg0".var, "each", block: Block.new)))
     it_parses "foo &.each do\nend", Call.new(nil, "foo", block: Block.new(["__arg0".var], Call.new("__arg0".var, "each", block: Block.new)))
+    it_parses "foo &.@bar", Call.new(nil, "foo", block: Block.new(["__arg0".var], ReadInstanceVar.new("__arg0".var, "@bar")))
 
     it_parses "foo(&.as(T))", Call.new(nil, "foo", block: Block.new([Var.new("__arg0")], Cast.new(Var.new("__arg0"), "T".path)))
     it_parses "foo(&.as(T).bar)", Call.new(nil, "foo", block: Block.new([Var.new("__arg0")], Call.new(Cast.new(Var.new("__arg0"), "T".path), "bar")))
@@ -451,6 +454,14 @@ module Crystal
       it_parses "foo(z: 0, a: n #{op} 2)", Call.new(nil, "foo", [] of ASTNode, named_args: [NamedArgument.new("z", 0.int32), NamedArgument.new("a", Call.new("n".call, op, 2.int32))])
       it_parses "def #{op}(); end", Def.new(op)
       it_parses "macro #{op};end", Macro.new(op, [] of Arg, Expressions.new)
+
+      it_parses "foo = 1; ->foo.#{op}(Int32)", [Assign.new("foo".var, 1.int32), ProcPointer.new("foo".var, op, ["Int32".path] of ASTNode)]
+      it_parses "->Foo.#{op}(Int32)", ProcPointer.new("Foo".path, op, ["Int32".path] of ASTNode)
+    end
+
+    ["[]", "[]="].each do |op|
+      it_parses "foo = 1; ->foo.#{op}(Int32)", [Assign.new("foo".var, 1.int32), ProcPointer.new("foo".var, op, ["Int32".path] of ASTNode)]
+      it_parses "->Foo.#{op}(Int32)", ProcPointer.new("Foo".path, op, ["Int32".path] of ASTNode)
     end
 
     ["bar", "+", "-", "*", "/", "<", "<=", "==", ">", ">=", "%", "|", "&", "^", "**", "===", "=~", "!~"].each do |name|
@@ -550,6 +561,7 @@ module Crystal
 
     it_parses "Foo(X, sizeof(Int32))", Generic.new("Foo".path, ["X".path, SizeOf.new("Int32".path)] of ASTNode)
     it_parses "Foo(X, instance_sizeof(Int32))", Generic.new("Foo".path, ["X".path, InstanceSizeOf.new("Int32".path)] of ASTNode)
+    it_parses "Foo(X, offsetof(Foo, @a))", Generic.new("Foo".path, ["X".path, OffsetOf.new("Foo".path, "@a".instance_var)] of ASTNode)
 
     it_parses "Foo(\nT\n)", Generic.new("Foo".path, ["T".path] of ASTNode)
     it_parses "Foo(\nT,\nU,\n)", Generic.new("Foo".path, ["T".path, "U".path] of ASTNode)
@@ -768,8 +780,8 @@ module Crystal
     it_parses "lib LibC; struct Foo; x : Int**; end end", LibDef.new("LibC", [CStructOrUnionDef.new("Foo", Expressions.from(TypeDeclaration.new("x".var, "Int".path.pointer_of.pointer_of)))] of ASTNode)
     it_parses "lib LibC; struct Foo; x, y, z : Int; end end", LibDef.new("LibC", [CStructOrUnionDef.new("Foo", [TypeDeclaration.new("x".var, "Int".path), TypeDeclaration.new("y".var, "Int".path), TypeDeclaration.new("z".var, "Int".path)] of ASTNode)] of ASTNode)
     it_parses "lib LibC; union Foo; end end", LibDef.new("LibC", [CStructOrUnionDef.new("Foo", union: true)] of ASTNode)
-    it_parses "lib LibC; enum Foo; A\nB, C\nD = 1; end end", LibDef.new("LibC", [EnumDef.new("Foo".path, [Arg.new("A"), Arg.new("B"), Arg.new("C"), Arg.new("D", 1.int32)] of ASTNode)] of ASTNode)
-    it_parses "lib LibC; enum Foo; A = 1, B; end end", LibDef.new("LibC", [EnumDef.new("Foo".path, [Arg.new("A", 1.int32), Arg.new("B")] of ASTNode)] of ASTNode)
+    it_parses "lib LibC; enum Foo; A\nB; C\nD = 1; end end", LibDef.new("LibC", [EnumDef.new("Foo".path, [Arg.new("A"), Arg.new("B"), Arg.new("C"), Arg.new("D", 1.int32)] of ASTNode)] of ASTNode)
+    it_parses "lib LibC; enum Foo; A = 1; B; end end", LibDef.new("LibC", [EnumDef.new("Foo".path, [Arg.new("A", 1.int32), Arg.new("B")] of ASTNode)] of ASTNode)
     it_parses "lib LibC; Foo = 1; end", LibDef.new("LibC", [Assign.new("Foo".path, 1.int32)] of ASTNode)
     it_parses "lib LibC\nfun getch = GetChar\nend", LibDef.new("LibC", [FunDef.new("getch", real_name: "GetChar")] of ASTNode)
     it_parses %(lib LibC\nfun getch = "get.char"\nend), LibDef.new("LibC", [FunDef.new("getch", real_name: "get.char")] of ASTNode)
@@ -794,6 +806,20 @@ module Crystal
 
     it_parses "1 .. 2", RangeLiteral.new(1.int32, 2.int32, false)
     it_parses "1 ... 2", RangeLiteral.new(1.int32, 2.int32, true)
+    it_parses "(1 .. )", Expressions.new([RangeLiteral.new(1.int32, Nop.new, false)] of ASTNode)
+    it_parses "(1 ... )", Expressions.new([RangeLiteral.new(1.int32, Nop.new, true)] of ASTNode)
+    it_parses "foo(1.., 2)", Call.new(nil, "foo", [RangeLiteral.new(1.int32, Nop.new, false), 2.int32] of ASTNode)
+    it_parses "1..;", RangeLiteral.new(1.int32, Nop.new, false)
+    it_parses "{1.. => 2};", HashLiteral.new([HashLiteral::Entry.new(RangeLiteral.new(1.int32, Nop.new, false), 2.int32)])
+    it_parses "..2", RangeLiteral.new(Nop.new, 2.int32, false)
+    it_parses "...2", RangeLiteral.new(Nop.new, 2.int32, true)
+    it_parses "foo..2", RangeLiteral.new("foo".call, 2.int32, false)
+    it_parses "foo ..2", RangeLiteral.new("foo".call, 2.int32, false)
+    it_parses "foo(..2)", Call.new(nil, "foo", RangeLiteral.new(Nop.new, 2.int32, false))
+    it_parses "x[..2]", Call.new("x".call, "[]", RangeLiteral.new(Nop.new, 2.int32, false))
+    it_parses "x[1, ..2]", Call.new("x".call, "[]", [1.int32, RangeLiteral.new(Nop.new, 2.int32, false)] of ASTNode)
+    it_parses "{..2}", TupleLiteral.new([RangeLiteral.new(Nop.new, 2.int32, false)] of ASTNode)
+    it_parses "[..2]", ArrayLiteral.new([RangeLiteral.new(Nop.new, 2.int32, false)] of ASTNode)
 
     it_parses "A = 1", Assign.new("A".path, 1.int32)
 
@@ -885,6 +911,7 @@ module Crystal
 
     it_parses "sizeof(X)", SizeOf.new("X".path)
     it_parses "instance_sizeof(X)", InstanceSizeOf.new("X".path)
+    it_parses "offsetof(X, @a)", OffsetOf.new("X".path, "@a".instance_var)
 
     it_parses "foo.is_a?(Const)", IsA.new("foo".call, "Const".path)
     it_parses "foo.is_a?(Foo | Bar)", IsA.new("foo".call, Crystal::Union.new(["Foo".path, "Bar".path] of ASTNode))
@@ -1316,8 +1343,8 @@ module Crystal
     it_parses "x, y, z = <<-FOO, <<-BAR, <<-BAZ\nhello\nFOO\nworld\nBAR\n!\nBAZ",
       MultiAssign.new(["x".var, "y".var, "z".var] of ASTNode, ["hello".string_interpolation, "world".string_interpolation, "!".string_interpolation] of ASTNode)
 
-    it_parses "enum Foo; A\nB, C\nD = 1; end", EnumDef.new("Foo".path, [Arg.new("A"), Arg.new("B"), Arg.new("C"), Arg.new("D", 1.int32)] of ASTNode)
-    it_parses "enum Foo; A = 1, B; end", EnumDef.new("Foo".path, [Arg.new("A", 1.int32), Arg.new("B")] of ASTNode)
+    it_parses "enum Foo; A\nB; C\nD = 1; end", EnumDef.new("Foo".path, [Arg.new("A"), Arg.new("B"), Arg.new("C"), Arg.new("D", 1.int32)] of ASTNode)
+    it_parses "enum Foo; A = 1; B; end", EnumDef.new("Foo".path, [Arg.new("A", 1.int32), Arg.new("B")] of ASTNode)
     it_parses "enum Foo : UInt16; end", EnumDef.new("Foo".path, base_type: "UInt16".path)
     it_parses "enum Foo; def foo; 1; end; end", EnumDef.new("Foo".path, [Def.new("foo", body: 1.int32)] of ASTNode)
     it_parses "enum Foo; A = 1\ndef foo; 1; end; end", EnumDef.new("Foo".path, [Arg.new("A", 1.int32), Def.new("foo", body: 1.int32)] of ASTNode)
@@ -1336,6 +1363,8 @@ module Crystal
     it_parses "enum Foo; macro foo;end; end", EnumDef.new("Foo".path, [Macro.new("foo", [] of Arg, Expressions.new)] of ASTNode)
 
     it_parses "enum Foo; @[Bar]; end", EnumDef.new("Foo".path, [Annotation.new("Bar".path)] of ASTNode)
+
+    assert_syntax_error "enum Foo; A B; end", "expecting ';', 'end' or newline after enum member"
 
     it_parses "1.[](2)", Call.new(1.int32, "[]", 2.int32)
     it_parses "1.[]?(2)", Call.new(1.int32, "[]?", 2.int32)
@@ -1381,13 +1410,15 @@ module Crystal
 
     assert_syntax_error %q(asm("nop" ::: "#{foo}")), "interpolation not allowed in asm clobber"
     assert_syntax_error %q(asm("nop" :::: "#{volatile}")), "interpolation not allowed in asm option"
+    assert_syntax_error %q(asm("" ::: ""(var))), "unexpected token: ("
+    assert_syntax_error %q(asm("" : 1)), "unexpected token: 1"
 
     it_parses "foo begin\nbar do\nend\nend", Call.new(nil, "foo", Expressions.new([Call.new(nil, "bar", block: Block.new)] of ASTNode))
     it_parses "foo 1.bar do\nend", Call.new(nil, "foo", args: [Call.new(1.int32, "bar")] of ASTNode, block: Block.new)
     it_parses "return 1.bar do\nend", Return.new(Call.new(1.int32, "bar", block: Block.new))
 
     %w(begin nil true false yield with abstract def macro require case if unless include extend class struct module enum while
-      until return next break lib fun alias pointerof sizeof instance_sizeof typeof private protected asm end do else elsif when rescue ensure).each do |keyword|
+      until return next break lib fun alias pointerof sizeof instance_sizeof offsetof typeof private protected asm end do else elsif when rescue ensure).each do |keyword|
       it_parses "#{keyword} : Int32", TypeDeclaration.new(keyword.var, "Int32".path)
       it_parses "property #{keyword} : Int32", Call.new(nil, "property", TypeDeclaration.new(keyword.var, "Int32".path))
     end
@@ -1695,6 +1726,7 @@ module Crystal
       assert_end_location "!foo"
       assert_end_location "pointerof(@foo)"
       assert_end_location "sizeof(Foo)"
+      assert_end_location "offsetof(Foo, @a)"
       assert_end_location "typeof(1)"
       assert_end_location "1 if 2"
       assert_end_location "while 1; end"

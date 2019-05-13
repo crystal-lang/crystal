@@ -87,7 +87,7 @@ abstract class OpenSSL::SSL::Socket < IO
     # Since OpenSSL::SSL::Socket is buffered it makes no
     # sense to wrap a IO::Buffered with buffering activated.
     if io.is_a?(IO::Buffered)
-      io.sync = false
+      io.sync = true
       io.read_buffering = false
     end
 
@@ -178,5 +178,15 @@ abstract class OpenSSL::SSL::Socket < IO
     if host_name = LibSSL.ssl_get_servername(@ssl, LibSSL::TLSExt::NAMETYPE_host_name)
       String.new(host_name)
     end
+  end
+
+  def local_address
+    io = @bio.io
+    io.responds_to?(:local_address) ? io.local_address : nil
+  end
+
+  def remote_address
+    io = @bio.io
+    io.responds_to?(:remote_address) ? io.remote_address : nil
   end
 end

@@ -102,7 +102,7 @@ module Crystal
           size = @program.target_machine.data_layout.size_in_bits(llvm_embedded_type(ivar_type))
 
           # FIXME structs like LibC::PthreadMutexT generate huge offset values
-          next if offset > UInt64::MAX / 8u64
+          next if offset > UInt64::MAX // 8u64
 
           member = di_builder.create_member_type(nil, name[1..-1], nil, 1, size, size, 8u64 * offset, LLVM::DIFlags::Zero, ivar_debug_type)
           element_types << member
