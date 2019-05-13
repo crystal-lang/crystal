@@ -183,7 +183,8 @@ module Crystal
 
       type = lookup_scope.lookup_type_var(node,
         free_vars: free_vars,
-        find_root_generic_type_parameters: find_root_generic_type_parameters)
+        find_root_generic_type_parameters: find_root_generic_type_parameters,
+        remove_alias: false)
 
       case type
       when Const
@@ -218,6 +219,7 @@ module Crystal
         # It's different if from a virtual type we do `v.class.new`
         # because the class could be any in the hierarchy.
         node.type = check_type_in_type_args(type.remove_alias_if_simple).devirtualize
+        node.target_type = type
       when ASTNode
         type.accept self unless type.type?
         node.syntax_replacement = type

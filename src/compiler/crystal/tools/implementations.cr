@@ -119,7 +119,7 @@ module Crystal
     def visit(node : Path)
       return contains_target(node) unless (loc = node.location) && (end_loc = node.end_location) && @target_location.between?(loc, end_loc)
 
-      target = node.target_const || node.type?.try &.instance_type
+      target = node.target_const || node.target_type
       target.try &.locations.try &.each do |loc|
         @locations << loc
       end

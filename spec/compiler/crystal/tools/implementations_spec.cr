@@ -432,12 +432,12 @@ describe "implementations" do
     )
   end
 
-  it "find class implementation via alias" do
+  it "find alias implementation" do
     assert_implementations %(
-    ༓class Foo
+    class Foo
     end
 
-    alias Bar = Foo
+    ༓alias Bar = Foo
 
     B‸ar
     )
