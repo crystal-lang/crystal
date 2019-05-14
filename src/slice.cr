@@ -203,8 +203,8 @@ struct Slice(T)
   # slice = Slice.new(5) { |i| i + 10 }
   # slice # => Slice[10, 11, 12, 13, 14]
   #
-  # slice2 = slice[1, 3]
-  # slice2 # => Slice[11, 12, 13]
+  # slice[1, 3]?  # => Slice[11, 12, 13]
+  # slice[1, 33]? # => nil
   # ```
   def []?(start : Int, count : Int)
     return unless 0 <= start <= @size
@@ -222,8 +222,8 @@ struct Slice(T)
   # slice = Slice.new(5) { |i| i + 10 }
   # slice # => Slice[10, 11, 12, 13, 14]
   #
-  # slice2 = slice[1, 3]
-  # slice2 # => Slice[11, 12, 13]
+  # slice[1, 3]  # => Slice[11, 12, 13]
+  # slice[1, 33] # raises IndexError
   # ```
   def [](start : Int, count : Int)
     self[start, count]? || raise IndexError.new
@@ -241,8 +241,8 @@ struct Slice(T)
   # slice = Slice.new(5) { |i| i + 10 }
   # slice # => Slice[10, 11, 12, 13, 14]
   #
-  # slice2 = slice[1..3]
-  # slice2 # => Slice[11, 12, 13]
+  # slice[1..3]?  # => Slice[11, 12, 13]
+  # slice[1..33]? # => nil
   # ```
   def []?(range : Range)
     start, count = Indexable.range_to_index_and_count(range, size)
@@ -261,8 +261,8 @@ struct Slice(T)
   # slice = Slice.new(5) { |i| i + 10 }
   # slice # => Slice[10, 11, 12, 13, 14]
   #
-  # slice2 = slice[1..3]
-  # slice2 # => Slice[11, 12, 13]
+  # slice[1..3]  # => Slice[11, 12, 13]
+  # slice[1..33] # raises IndexError
   # ```
   def [](range : Range)
     start, count = Indexable.range_to_index_and_count(range, size)
