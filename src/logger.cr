@@ -7,9 +7,6 @@
 # When you are developing the system, however, you probably want to know about the program’s internal state,
 # and would set the `Logger` to `DEBUG`.
 #
-# If logging to multiple locations is required, an `IO::MultiWriter` can be
-# used.
-#
 # ### Example
 #
 # ```
@@ -35,6 +32,18 @@
 #   log.fatal("Caught exception; exiting")
 #   log.fatal(err)
 # end
+# ```
+#
+# If logging to multiple locations is required, an `IO::MultiWriter` can be
+# used.
+#
+# ```
+# file = File.new("production.log", "a")
+# writer = IO::MultiWriter.new(file, STDOUT)
+#
+# log = Logger.new(writer)
+# log.level = Logger::DEBUG
+# log.debug("Created logger")
 # ```
 class Logger
   property level : Severity

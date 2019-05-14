@@ -47,4 +47,8 @@ class IO::MultiWriter < IO
 
     @writers.each { |writer| writer.close } if sync_close?
   end
+
+  def flush
+    @writers.each(&.flush)
+  end
 end
