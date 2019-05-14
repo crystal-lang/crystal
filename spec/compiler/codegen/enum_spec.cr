@@ -337,4 +337,15 @@ describe "Code gen: enum" do
       Foo.new(1)
       )).to_i.should eq(2)
   end
+
+  it "can define flags enum : UInt64 with more than 32 values (#7268)" do
+    run(%(
+      @[Flags]
+      enum Foo : UInt64
+        #{Array.new(33) { |i| "V#{i + 1}" }.join "\n"}
+      end
+
+      Foo::V33.value
+      )).to_u64.should eq(1_u64 << 32)
+  end
 end
