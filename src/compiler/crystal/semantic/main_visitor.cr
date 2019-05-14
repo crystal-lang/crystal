@@ -2635,7 +2635,7 @@ module Crystal
           type.accept self
           instance_type = type.type.instance_type
           unless instance_type.implements?(@program.exception)
-            type.raise "#{type} is not a subclass of Exception"
+            type.raise "#{instance_type} is not a subclass of Exception"
           end
           instance_type
         end

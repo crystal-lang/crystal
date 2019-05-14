@@ -3274,6 +3274,12 @@ end
 
 private def add_to_including_types(type : Crystal::GenericType, all_types)
   type.generic_types.each_value do |generic_type|
+    # Unbound generic types are not concrete types
+    next if generic_type.unbound?
+
+    # Abstract types also shouldn't form the union of including types
+    next if generic_type.abstract?
+
     all_types << generic_type unless all_types.includes?(generic_type)
   end
   type.subclasses.each do |subclass|
