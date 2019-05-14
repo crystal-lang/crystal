@@ -310,4 +310,26 @@ describe "Code gen: generic class type" do
       foo(Gen.new("hello") || Gen.new('z')).as(String)
       )).to_string.should eq("hello")
   end
+
+  it "doesn't consider abstract types for including types (#7200)" do
+    codegen(%(
+      module Moo
+      end
+
+      abstract class Foo(T)
+        include Moo
+
+        def foo
+          bar
+        end
+      end
+
+      class Bar(T) < Foo(T)
+        def bar
+        end
+      end
+
+      Bar(Int32).new.as(Moo).foo
+      ))
+  end
 end
