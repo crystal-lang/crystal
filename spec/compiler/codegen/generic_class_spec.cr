@@ -332,4 +332,29 @@ describe "Code gen: generic class type" do
       Bar(Int32).new.as(Moo).foo
       ))
   end
+
+  it "doesn't consider abstract generic instantiation when restricting type (#5190)" do
+    codegen(%(
+      abstract class Foo(E)
+        abstract def foo
+      end
+
+      abstract class Bar(E) < Foo(E)
+      end
+
+      class Baz(E) < Bar(E)
+        def foo
+        end
+      end
+
+      ptr = Pointer(Foo(String)).malloc(1_u64)
+
+      Baz(String).new
+
+      x = ptr.value
+      if x.is_a?(Bar)
+        x.foo
+      end
+      ))
+  end
 end
