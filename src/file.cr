@@ -60,15 +60,15 @@ class File < IO::FileDescriptor
   # return EOF, and any data written will be immediately discarded.
   #
   # ```
-  # File.open(File::DEVNULL) do |file|
+  # File.open(File::NULL) do |file|
   #   file.puts "this is discarded"
   # end
   # ```
-  DEVNULL = {% if flag?(:win32) %}
-              "NUL"
-            {% else %}
-              "/dev/null"
-            {% end %}
+  NULL = {% if flag?(:win32) %}
+           "NUL"
+         {% else %}
+           "/dev/null"
+         {% end %}
 
   include Crystal::System::File
 
