@@ -2481,7 +2481,7 @@ module Crystal
         # "undefined local variable or method"
         node.exp.accept self
 
-        node.exp.raise "can't take address of #{node.exp}, pointerof only works with variables"
+        node.exp.raise "can't take address of #{node.exp}"
       end
 
       node.bind_to var

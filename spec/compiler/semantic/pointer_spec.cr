@@ -79,11 +79,11 @@ describe "Semantic: pointer" do
   end
 
   it "pointer of class raises error" do
-    assert_error "pointerof(Int32)", "can't take address of Int32, pointerof only works with variables"
+    assert_error "pointerof(Int32)", "can't take address of Int32"
   end
 
   it "pointer of value error" do
-    assert_error "pointerof(1)", "can't take address of 1, pointerof only works with variables"
+    assert_error "pointerof(1)", "can't take address of 1"
   end
 
   it "types pointer value on typedef" do
