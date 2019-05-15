@@ -107,16 +107,21 @@ module Crystal
     end
 
     def visit(node : Call)
-      if node.location
-        if @target_location.between?(node.name_location, node.name_end_location)
-          if target_defs = node.target_defs
-            target_defs.each do |target_def|
-              @locations << target_def.location.not_nil!
-            end
-          end
-        else
-          contains_target(node)
+      return contains_target(node) unless node.location && @target_location.between?(node.name_location, node.name_end_location)
+
+      if target_defs = node.target_defs
+        target_defs.each do |target_def|
+          @locations << target_def.location.not_nil!
         end
+      end
+    end
+
+    def visit(node : Path)
+      return contains_target(node) unless (loc = node.location) && (end_loc = node.end_location) && @target_location.between?(loc, end_loc)
+
+      target = node.target_const || node.target_type
+      target.try &.locations.try &.each do |loc|
+        @locations << loc
       end
     end
 

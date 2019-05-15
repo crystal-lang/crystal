@@ -566,6 +566,7 @@ module Crystal
 
   class Path
     property target_const : Const?
+    property target_type : Type?
     property syntax_replacement : ASTNode?
   end
 

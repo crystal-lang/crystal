@@ -52,8 +52,8 @@ class Crystal::Type
 
   # Similar to `lookup_type`, but the result might also be an ASTNode, for example when
   # looking `N` relative to a StaticArray.
-  def lookup_type_var(node : Path, free_vars : Hash(String, TypeVar)? = nil, find_root_generic_type_parameters = true) : Type | ASTNode
-    TypeLookup.new(self, self.instance_type, true, false, free_vars, find_root_generic_type_parameters).lookup_type_var(node).not_nil!
+  def lookup_type_var(node : Path, free_vars : Hash(String, TypeVar)? = nil, find_root_generic_type_parameters = true, remove_alias = true) : Type | ASTNode
+    TypeLookup.new(self, self.instance_type, true, false, free_vars, find_root_generic_type_parameters, remove_alias).lookup_type_var(node).not_nil!
   end
 
   # Similar to `lookup_type_var`, but might return `nil`.
@@ -62,7 +62,7 @@ class Crystal::Type
   end
 
   private struct TypeLookup
-    def initialize(@root : Type, @self_type : Type, @raise : Bool, @allow_typeof : Bool, @free_vars : Hash(String, TypeVar)? = nil, @find_root_generic_type_parameters = true)
+    def initialize(@root : Type, @self_type : Type, @raise : Bool, @allow_typeof : Bool, @free_vars : Hash(String, TypeVar)? = nil, @find_root_generic_type_parameters = true, @remove_alias = true)
       @in_generic_args = 0
 
       # If we are looking types inside a non-instantiated generic type,
@@ -131,7 +131,7 @@ class Crystal::Type
             type.process_value
           end
         end
-        type = type.remove_alias_if_simple
+        type = type.remove_alias_if_simple if @remove_alias
       end
 
       type
