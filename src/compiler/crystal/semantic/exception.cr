@@ -319,6 +319,7 @@ module Crystal
       common = String.build do |str|
         str << "can't infer the type of global variable '#{node.name}'"
         if similar_name
+          str << '\n'
           str << colorize(" (did you mean #{similar_name}?)").yellow.bold.to_s
         end
       end
@@ -327,8 +328,6 @@ module Crystal
         str << common
         str << "\n\n"
         str << undefined_variable_message("global", node.name)
-        str << "\n\n"
-        str << common
       end
       node.raise msg
     end
@@ -337,7 +336,8 @@ module Crystal
       common = String.build do |str|
         str << "can't infer the type of class variable '#{node.name}' of #{owner.devirtualize}"
         if similar_name
-          str << colorize(" (did you mean #{similar_name}?)").yellow.bold.to_s
+          str << '\n'
+          str << "Did you mean '#{similar_name}'?"
         end
       end
 
@@ -345,8 +345,6 @@ module Crystal
         str << common
         str << "\n\n"
         str << undefined_variable_message("class", node.name)
-        str << "\n\n"
-        str << common
       end
       node.raise msg
     end
@@ -355,7 +353,8 @@ module Crystal
       common = String.build do |str|
         str << "can't infer the type of instance variable '#{node.name}' of #{owner.devirtualize}"
         if similar_name
-          str << colorize(" (did you mean #{similar_name}?)").yellow.bold.to_s
+          str << '\n'
+          str << "Did you mean '#{similar_name}'?"
         end
       end
 
@@ -363,8 +362,6 @@ module Crystal
         str << common
         str << "\n\n"
         str << undefined_variable_message("instance", node.name)
-        str << "\n\n"
-        str << common
       end
       node.raise msg
     end
