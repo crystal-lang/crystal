@@ -73,6 +73,7 @@ prepare_system() {
 }
 
 build() {
+	with_build_env 'make deps'
 	with_build_env 'bin/crystal spec/std_spec.cr --verbose'
 	with_build_env 'make crystal threads=1'
 	with_build_env 'bin/crystal spec/std_spec.cr --verbose'
