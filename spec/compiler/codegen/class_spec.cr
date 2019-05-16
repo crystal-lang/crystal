@@ -1067,4 +1067,42 @@ describe "Code gen: class" do
       Foo(Int32).new.x
       )).to_i.should eq(42)
   end
+
+  it "raises when trying to instantiate abstract class (#3835)" do
+    run(%(
+      require "prelude"
+
+      abstract class Foo
+      end
+
+      class Bar < Foo
+      end
+
+      begin
+        (Foo || Bar).new
+        1
+      rescue
+        2
+      end
+      )).to_i.should eq(2)
+  end
+
+  it "raises when trying to instantiate abstract generic class (#3835)" do
+    run(%(
+      require "prelude"
+
+      abstract class Foo(T)
+      end
+
+      class Bar < Foo(Int32)
+      end
+
+      begin
+        (Foo(Int32) || Bar).new
+        1
+      rescue
+        2
+      end
+      )).to_i.should eq(2)
+  end
 end

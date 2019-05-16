@@ -1182,6 +1182,20 @@ module Crystal
       false
     end
 
+    protected def define_allocate(metaclass)
+      if metaclass.instance_type.abstract?
+        metaclass.add_def(
+          Def.new("allocate",
+            body: Call.new(nil, "raise",
+              args: [StringLiteral.new("can't instantiate abstract class #{metaclass.instance_type}")] of ASTNode,
+              global: true
+            ))
+        )
+      else
+        metaclass.add_def Def.new("allocate", body: Primitive.new("allocate"))
+      end
+    end
+
     def type_desc
       case
       when extern? && extern_union?
@@ -1200,7 +1214,7 @@ module Crystal
     include ClassVarContainer
 
     protected def initialize_metaclass(metaclass)
-      metaclass.add_def Def.new("allocate", body: Primitive.new("allocate"))
+      define_allocate(metaclass)
     end
 
     def virtual_type
@@ -1762,7 +1776,7 @@ module Crystal
     end
 
     protected def initialize_metaclass(metaclass)
-      metaclass.add_def Def.new("allocate", body: Primitive.new("allocate"))
+      define_allocate(metaclass)
     end
 
     def type_desc
