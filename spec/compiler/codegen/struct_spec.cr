@@ -624,4 +624,18 @@ describe "Code gen: struct" do
       entry.as(Entry).uid
       )).to_string.should eq("1")
   end
+
+  it "can call new on abstract struct with single child (#7309)" do
+    codegen(%(
+      abstract struct Foo
+        @x = 1
+      end
+
+      struct A < Foo
+        @y = 2
+      end
+
+      A.as(Foo.class).new
+      ), inject_primitives: false)
+  end
 end
