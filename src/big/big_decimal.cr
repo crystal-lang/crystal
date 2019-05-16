@@ -210,7 +210,7 @@ struct BigDecimal < Number
     k = self
     result = k.class.new(1)
     while exponent > 0
-      result *= k
+      result *= k if exponent & 0b1 != 0
       exponent = exponent.unsafe_shr(1)
       k *= k if exponent > 0
     end
