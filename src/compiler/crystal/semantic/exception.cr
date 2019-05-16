@@ -192,7 +192,7 @@ module Crystal
     end
 
     def has_message?
-      @nil_reason || has_trace?
+      @nil_reason || has_trace? && @show
     end
 
     def append_to_s(source, io)
@@ -205,9 +205,6 @@ module Crystal
             io.puts
             io.puts
           end
-        end
-        if has_trace? || nil_reason.try(&.nodes)
-          io.print "Rerun with --error-trace to show a complete error trace."
         end
         return
       end

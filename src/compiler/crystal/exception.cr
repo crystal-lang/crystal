@@ -186,9 +186,7 @@ module Crystal
       String.build do |io|
         return if lines.empty?
         io << "\n\n"
-        lines
-          .skip_while(&.blank?)
-          .each { |line| io << line << '\n' }
+        io << lines.skip_while(&.blank?).join('\n')
       end
     end
 
