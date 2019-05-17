@@ -1246,13 +1246,17 @@ module Crystal
       to_type = node.to.type
 
       resulting_type = node.type
-      non_nilable_type = node.non_nilable_type
 
       filtered_type = obj_type.filter_by(to_type)
 
-      if !filtered_type
+      unless filtered_type
         @last = upcast llvm_nil, resulting_type, @program.nil
-      elsif node.upcast?
+        return
+      end
+
+      non_nilable_type = node.non_nilable_type
+
+      if node.upcast?
         @last = upcast last_value, non_nilable_type, obj_type
         @last = upcast @last, resulting_type, non_nilable_type
       elsif obj_type != non_nilable_type

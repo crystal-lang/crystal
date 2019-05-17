@@ -348,10 +348,14 @@ module Crystal
         end
       end
 
+      # If we couldn't filter the type and we are casting to something that
+      # isn't allowed in variables (like Int or uninstantiated Array(T))
+      # we can't guess a type.
+      return if !filtered_type && !to_type.allowed_in_generics?
+
       # If we don't have a matching type, leave it as the to_type:
       # later (in cleanup) we will check again.
       filtered_type ||= to_type
-
       self.type = filtered_type.virtual_type
     end
   end
@@ -381,6 +385,14 @@ module Crystal
           filtered_type = to_type.virtual_type
           @upcast = true
         end
+      end
+
+      # If we couldn't filter the type and we are casting to something that
+      # isn't allowed in variables (like Int or uninstantiated Array(T))
+      # we can't guess a type.
+      if !filtered_type && !to_type.allowed_in_generics?
+        self.type = to_type.program.nil_type
+        return
       end
 
       # If we don't have a matching type, leave it as the to_type:
