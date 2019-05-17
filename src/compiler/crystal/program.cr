@@ -135,11 +135,11 @@ module Crystal
       types = self.types
 
       types["Object"] = object = @object = NonGenericClassType.new self, self, "Object", nil
-      object.allowed_in_generics = false
+      object.can_be_stored = false
       object.abstract = true
 
       types["Reference"] = reference = @reference = NonGenericClassType.new self, self, "Reference", object
-      reference.allowed_in_generics = false
+      reference.can_be_stored = false
 
       types["Value"] = value = @value = NonGenericClassType.new self, self, "Value", object
       abstract_value_type(value)
@@ -176,18 +176,18 @@ module Crystal
       types["Symbol"] = @symbol = SymbolType.new self, self, "Symbol", value, 4
       types["Pointer"] = pointer = @pointer = PointerType.new self, self, "Pointer", value, ["T"]
       pointer.struct = true
-      pointer.allowed_in_generics = false
+      pointer.can_be_stored = false
 
       types["Tuple"] = tuple = @tuple = TupleType.new self, self, "Tuple", value, ["T"]
-      tuple.allowed_in_generics = false
+      tuple.can_be_stored = false
 
       types["NamedTuple"] = named_tuple = @named_tuple = NamedTupleType.new self, self, "NamedTuple", value, ["T"]
-      named_tuple.allowed_in_generics = false
+      named_tuple.can_be_stored = false
 
       types["StaticArray"] = static_array = @static_array = StaticArrayType.new self, self, "StaticArray", value, ["T", "N"]
       static_array.struct = true
       static_array.declare_instance_var("@buffer", static_array.type_parameter("T"))
-      static_array.allowed_in_generics = false
+      static_array.can_be_stored = false
 
       types["String"] = string = @string = NonGenericClassType.new self, self, "String", reference
       string.declare_instance_var("@bytesize", int32)
@@ -195,7 +195,7 @@ module Crystal
       string.declare_instance_var("@c", uint8)
 
       types["Class"] = klass = @class = MetaclassType.new(self, object, value, "Class")
-      klass.allowed_in_generics = false
+      klass.can_be_stored = false
 
       types["Struct"] = struct_t = @struct_t = NonGenericClassType.new self, self, "Struct", value
       abstract_value_type(struct_t)
@@ -540,7 +540,7 @@ module Crystal
     private def abstract_value_type(type)
       type.abstract = true
       type.struct = true
-      type.allowed_in_generics = false
+      type.can_be_stored = false
     end
 
     # Next come overrides for the type system

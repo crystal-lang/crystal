@@ -304,7 +304,7 @@ module Crystal
         instance_type = subtype.type?
         next unless instance_type
 
-        unless instance_type.allowed_in_generics?
+        unless instance_type.can_be_stored?
           subtype.raise "can't use #{instance_type} in unions yet, use a more specific type"
         end
         instance_type.virtual_type
@@ -342,7 +342,7 @@ module Crystal
         #   1 as Int32 | Float64
         #   Bar.new as Foo # where Bar < Foo
         if obj_type == filtered_type && !to_type.is_a?(GenericClassType) &&
-           to_type.allowed_in_generics?
+           to_type.can_be_stored?
           filtered_type = to_type
           @upcast = true
         end
@@ -351,7 +351,7 @@ module Crystal
       # If we couldn't filter the type and we are casting to something that
       # isn't allowed in variables (like Int or uninstantiated Array(T))
       # we can't guess a type.
-      return if !filtered_type && !to_type.allowed_in_generics?
+      return if !filtered_type && !to_type.can_be_stored?
 
       # If we don't have a matching type, leave it as the to_type:
       # later (in cleanup) we will check again.
@@ -381,7 +381,7 @@ module Crystal
         #   1 as Int32 | Float64
         #   Bar.new as Foo # where Bar < Foo
         if obj_type == filtered_type && !to_type.is_a?(GenericClassType) &&
-           to_type.allowed_in_generics?
+           to_type.can_be_stored?
           filtered_type = to_type.virtual_type
           @upcast = true
         end
@@ -390,7 +390,7 @@ module Crystal
       # If we couldn't filter the type and we are casting to something that
       # isn't allowed in variables (like Int or uninstantiated Array(T))
       # we can't guess a type.
-      if !filtered_type && !to_type.allowed_in_generics?
+      if !filtered_type && !to_type.can_be_stored?
         self.type = to_type.program.nil_type
         return
       end
@@ -472,7 +472,7 @@ module Crystal
             node.raise "can't use constant as type for NamedTuple"
           end
 
-          Crystal.check_type_allowed_in_generics(node, node_type, "can't use #{node_type} as generic type argument")
+          Crystal.check_type_can_be_stored(node, node_type, "can't use #{node_type} as generic type argument")
           node_type = node_type.virtual_type
 
           NamedArgumentType.new(named_arg.name, node_type)
@@ -526,7 +526,7 @@ module Crystal
                 end
               end
             else
-              Crystal.check_type_allowed_in_generics(node, node_type, "can't use #{node_type} as generic type argument")
+              Crystal.check_type_can_be_stored(node, node_type, "can't use #{node_type} as generic type argument")
               type_var = node_type.virtual_type
             end
           end
