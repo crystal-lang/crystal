@@ -9,8 +9,8 @@ require "../subtle"
 # password = Crypto::Bcrypt::Password.create("super secret", cost: 10)
 # # => $2a$10$rI4xRiuAN2fyiKwynO6PPuorfuoM4L2PVv6hlnVJEmNLjqcibAfHq
 #
-# password == "wrong secret" # => false
-# password == "super secret" # => true
+# password.verify("wrong secret") # => false
+# password.verify("super secret") # => true
 # ```
 #
 # See `Crypto::Bcrypt` for hints to select the cost when generating hashes.
@@ -61,12 +61,17 @@ class Crypto::Bcrypt::Password
   # require "crypto/bcrypt/password"
   #
   # password = Crypto::Bcrypt::Password.create("super secret")
-  # password == "wrong secret" # => false
-  # password == "super secret" # => true
+  # password.verify("wrong secret") # => false
+  # password.verify("super secret") # => true
   # ```
-  def ==(password : String) : Bool
+  def verify(password : String) : Bool
     hashed_password = Bcrypt.new(password, salt, cost)
     Crypto::Subtle.constant_time_compare(@raw_hash, hashed_password)
+  end
+
+  @[Deprecated("Use Crypto::Bcrypt::Password#verify")]
+  def ==(password : String) : Bool
+    verify(password)
   end
 
   def to_s(io : IO) : Nil
