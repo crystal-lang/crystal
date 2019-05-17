@@ -64,10 +64,6 @@ class Crystal::Command
       options << "--no-color"
     end
 
-    if @error_trace
-      options << "--error-trace"
-    end
-
     source_filename = File.expand_path("spec")
 
     source = target_filenames.map { |filename| %(require "./#{filename}") }.join('\n')
