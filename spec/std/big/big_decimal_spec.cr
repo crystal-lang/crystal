@@ -454,4 +454,8 @@ describe BigDecimal do
   describe "#inspect" do
     it { "123".to_big_d.inspect.should eq("123") }
   end
+
+  describe "#**" do
+    it { (Math.log(2).to_big_d**3).should eq(0.333024651988929466145240916046094220685147532677) }
+  end
 end
