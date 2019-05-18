@@ -1209,7 +1209,7 @@ module Crystal
     end
 
     def self.check_type_allowed_as_proc_argument(node, type)
-      Crystal.check_type_allowed_in_generics(node, type, "cannot be used as a Proc argument type")
+      Crystal.check_type_can_be_stored(node, type, "cannot be used as a Proc argument type")
     end
 
     def visit(node : ProcPointer)

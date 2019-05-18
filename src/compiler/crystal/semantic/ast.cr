@@ -1,10 +1,10 @@
 require "../syntax/ast"
 
 module Crystal
-  def self.check_type_allowed_in_generics(node, type, msg)
-    return if type.allowed_in_generics?
+  def self.check_type_can_be_stored(node, type, msg)
+    return if type.can_be_stored?
 
-    type = type.union_types.find { |t| !t.allowed_in_generics? } if type.is_a?(UnionType)
+    type = type.union_types.find { |t| !t.can_be_stored? } if type.is_a?(UnionType)
     node.raise "#{msg} yet, use a more specific type"
   end
 

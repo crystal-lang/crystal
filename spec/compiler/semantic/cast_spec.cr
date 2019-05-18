@@ -319,4 +319,44 @@ describe "Semantic: cast" do
       end
       )) { string }
   end
+
+  it "doesn't cast to unbound generic type (as) (#5927)" do
+    assert_error %(
+      class Gen(T)
+        def foo
+          sizeof(T)
+        end
+      end
+
+      class Foo(I)
+        def initialize(@x : Gen(I))
+        end
+      end
+
+      Foo.new(Gen(Int32).new)
+
+      1.as(Gen).foo
+      ),
+      "can't cast Int32 to Gen(T)"
+  end
+
+  it "doesn't cast to unbound generic type (as?) (#5927)" do
+    assert_type(%(
+      class Gen(T)
+        def foo
+          sizeof(T)
+        end
+      end
+
+      class Foo(I)
+        def initialize(@x : Gen(I))
+        end
+      end
+
+      Foo.new(Gen(Int32).new)
+
+      x = 1.as?(Gen)
+      x.foo if x
+      )) { nil_type }
+  end
 end

@@ -105,8 +105,12 @@ module Crystal
       # Nothing
     end
 
-    # Returns `true` if this type can be used in a generic type argument.
-    def allowed_in_generics?
+    # Returns `true` if this type can be assigned to an instance or class
+    # variable, or used in a generic type argument.
+    #
+    # As of now, abstract base type such as Object, Reference, Value,
+    # Int, and unbound generic types such as `Array(T)`, can't be stored.
+    def can_be_stored?
       true
     end
 
@@ -1137,7 +1141,7 @@ module Crystal
     getter depth : Int32
     property? :abstract; @abstract = false
     property? :struct; @struct = false
-    property? allowed_in_generics = true
+    property? can_be_stored = true
     property? lookup_new_in_ancestors = false
 
     property? extern = false
@@ -1705,7 +1709,7 @@ module Crystal
       true
     end
 
-    def allowed_in_generics?
+    def can_be_stored?
       false
     end
 
@@ -1753,7 +1757,7 @@ module Crystal
       true
     end
 
-    def allowed_in_generics?
+    def can_be_stored?
       false
     end
 
@@ -2177,7 +2181,7 @@ module Crystal
       instance
     end
 
-    def allowed_in_generics?
+    def can_be_stored?
       false
     end
 
@@ -2590,10 +2594,10 @@ module Crystal
       end
     end
 
-    def allowed_in_generics?
+    def can_be_stored?
       process_value
       if aliased_type = @aliased_type
-        aliased_type.remove_alias.allowed_in_generics?
+        aliased_type.remove_alias.can_be_stored?
       else
         true
       end
