@@ -46,7 +46,11 @@ class Crystal::Doc::Macro
     ""
   end
 
-  def abstract?
+  def abstract? : Bool
+    false
+  end
+
+  def protected? : Bool
     false
   end
 

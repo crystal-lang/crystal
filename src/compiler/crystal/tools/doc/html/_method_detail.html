@@ -3,6 +3,7 @@
   <% methods.each do |method| %>
     <div class="entry-detail" id="<%= method.html_id %>">
       <div class="signature">
+        <%= method.protected? ? "protected " : "" %>
         <%= method.abstract? ? "abstract " : "" %>
         <%= method.kind %><strong><%= method.name %></strong><%= method.args_to_html %>
 

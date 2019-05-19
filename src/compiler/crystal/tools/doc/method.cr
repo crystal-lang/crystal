@@ -55,8 +55,12 @@ class Crystal::Doc::Method
     {type.name, "self"}.includes?(return_type.to_s)
   end
 
-  def abstract?
+  def abstract? : Bool
     @def.abstract?
+  end
+
+  def protected? : Bool
+    @def.visibility.protected?
   end
 
   def return_type
