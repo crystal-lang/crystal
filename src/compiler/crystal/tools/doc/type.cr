@@ -162,10 +162,7 @@ class Crystal::Doc::Type
         defs = [] of Method
         @type.defs.try &.each do |def_name, defs_with_metadata|
           defs_with_metadata.each do |def_with_metadata|
-            case def_with_metadata.def.visibility
-            when .private?
-              next
-            end
+            next if def_with_metadata.def.visibility.private?
 
             if @generator.must_include? def_with_metadata.def
               defs << method(def_with_metadata.def, false)
@@ -185,10 +182,7 @@ class Crystal::Doc::Type
       @type.metaclass.defs.try &.each_value do |defs_with_metadata|
         defs_with_metadata.each do |def_with_metadata|
           a_def = def_with_metadata.def
-          case a_def.visibility
-          when .private?
-            next
-          end
+          next if a_def.visibility.private?
 
           body = a_def.body
 
