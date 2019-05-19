@@ -24,10 +24,6 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-realpath() {
-    canonicalize_path "$(resolve_symlinks "$1")"
-}
-
 resolve_symlinks() {
     _resolve_symlinks "$1"
 }
@@ -73,25 +69,6 @@ _assert_no_path_cycles() {
     done
 }
 
-canonicalize_path() {
-    if [ -d "$1" ]; then
-        _canonicalize_dir_path "$1"
-    else
-        _canonicalize_file_path "$1"
-    fi
-}
-
-_canonicalize_dir_path() {
-    (cd "$1" 2>/dev/null && pwd -P)
-}
-
-_canonicalize_file_path() {
-    local dir file
-    dir=$(dirname -- "$1")
-    file=$(basename -- "$1")
-    (cd "$dir" 2>/dev/null >/dev/null && printf '%s/%s\n' "$(pwd -P)" "$file")
-}
-
 ##############################################################################
 
 # Based on http://stackoverflow.com/q/370047/641451
@@ -133,7 +110,7 @@ __warning_msg() {
 }
 
 
-SCRIPT_PATH="$(realpath "$0")"
+SCRIPT_PATH="$(readlink --canonicalize "$0")"
 SCRIPT_ROOT="$(dirname "$SCRIPT_PATH")"
 CRYSTAL_ROOT="$(dirname "$SCRIPT_ROOT")"
 CRYSTAL_DIR="$CRYSTAL_ROOT/.build"
