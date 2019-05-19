@@ -183,7 +183,8 @@ module Crystal
 
       type = lookup_scope.lookup_type_var(node,
         free_vars: free_vars,
-        find_root_generic_type_parameters: find_root_generic_type_parameters)
+        find_root_generic_type_parameters: find_root_generic_type_parameters,
+        remove_alias: false)
 
       case type
       when Const
@@ -218,6 +219,7 @@ module Crystal
         # It's different if from a virtual type we do `v.class.new`
         # because the class could be any in the hierarchy.
         node.type = check_type_in_type_args(type.remove_alias_if_simple).devirtualize
+        node.target_type = type
       when ASTNode
         type.accept self unless type.type?
         node.syntax_replacement = type
@@ -1207,7 +1209,7 @@ module Crystal
     end
 
     def self.check_type_allowed_as_proc_argument(node, type)
-      Crystal.check_type_allowed_in_generics(node, type, "cannot be used as a Proc argument type")
+      Crystal.check_type_can_be_stored(node, type, "cannot be used as a Proc argument type")
     end
 
     def visit(node : ProcPointer)
@@ -1997,7 +1999,12 @@ module Crystal
         next if then_var.same?(else_var)
 
         if_var = MetaVar.new(name)
-        if_var.nil_if_read = !!(then_var.try(&.nil_if_read?) || else_var.try(&.nil_if_read?))
+
+        # Only copy `nil_if_read` from each branch if it's not unreachable
+        then_var_nil_if_read = !then_unreachable && then_var.try(&.nil_if_read?)
+        else_var_nil_if_read = !else_unreachable && else_var.try(&.nil_if_read?)
+
+        if_var.nil_if_read = !!(then_var_nil_if_read || else_var_nil_if_read)
 
         # Check if no types were changes in either then 'then' and 'else' branches
         if cond_var && then_var.same?(before_then_var) && else_var.same?(before_else_var) && !then_unreachable && !else_unreachable
@@ -2635,7 +2642,7 @@ module Crystal
           type.accept self
           instance_type = type.type.instance_type
           unless instance_type.implements?(@program.exception)
-            type.raise "#{type} is not a subclass of Exception"
+            type.raise "#{instance_type} is not a subclass of Exception"
           end
           instance_type
         end

@@ -105,6 +105,12 @@ module Crystal
       @last_is_falsey = false
     end
 
+    def compute_last_truhiness
+      reset_last_status
+      yield
+      {@last_is_truthy, @last_is_falsey}
+    end
+
     def transform(node : Def)
       node.hook_expansions.try &.map! &.transform self
       node
@@ -524,11 +530,11 @@ module Crystal
     end
 
     def transform(node : If)
-      node.cond = node.cond.transform(self)
+      cond_is_truthy, cond_is_falsey = compute_last_truhiness do
+        node.cond = node.cond.transform(self)
+      end
 
       node_cond = node.cond
-      cond_is_truthy, cond_is_falsey = @last_is_truthy, @last_is_falsey
-      reset_last_status
 
       if node_cond.no_returns?
         return node_cond
@@ -551,27 +557,29 @@ module Crystal
         then_is_truthy = false
         then_is_falsey = false
       else
-        node.then = node.then.transform(self)
-        then_is_truthy, then_is_falsey = @last_is_truthy, @last_is_falsey
+        then_is_truthy, then_is_falsey = compute_last_truhiness do
+          node.then = node.then.transform(self)
+        end
       end
 
       if node.truthy?
         else_is_truthy = false
         else_is_falsey = false
       else
-        node.else = node.else.transform(self)
-        else_is_truthy, else_is_falsey = @last_is_truthy, @last_is_falsey
+        else_is_truthy, else_is_falsey = compute_last_truhiness do
+          node.else = node.else.transform(self)
+        end
       end
-
-      reset_last_status
 
       case node
       when .and?
         @last_is_truthy = cond_is_truthy && then_is_truthy
         @last_is_falsey = cond_is_falsey || then_is_falsey
       when .or?
-        @last_is_truthy = (cond_is_truthy && then_is_truthy) || (cond_is_falsey && else_is_truthy)
+        @last_is_truthy = cond_is_truthy || else_is_truthy
         @last_is_falsey = cond_is_falsey && else_is_falsey
+      else
+        reset_last_status
       end
 
       node

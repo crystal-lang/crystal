@@ -457,7 +457,7 @@ module Crystal
             return type.instantiate([Type.merge!(element_types)] of TypeVar).virtual_type
           end
         else
-          return check_allowed_in_generics(node, type)
+          return check_can_be_stored(node, type)
         end
       elsif node_of = node.of
         type = lookup_type?(node_of)
@@ -495,7 +495,7 @@ module Crystal
             return type.instantiate([Type.merge!(key_types), Type.merge!(value_types)] of TypeVar).virtual_type
           end
         else
-          return check_allowed_in_generics(node, type)
+          return check_can_be_stored(node, type)
         end
       elsif node_of = node.of
         key_type = lookup_type?(node_of.key)
@@ -1061,14 +1061,14 @@ module Crystal
         allow_typeof: false,
         find_root_generic_type_parameters: find_root_generic_type_parameters
       )
-      check_allowed_in_generics(node, type)
+      check_can_be_stored(node, type)
     end
 
     def lookup_type_var?(node, root = current_type)
       type_var = root.lookup_type_var?(node)
       return nil unless type_var.is_a?(Type)
 
-      check_allowed_in_generics(node, type_var)
+      check_can_be_stored(node, type_var)
       type_var
     end
 
@@ -1076,12 +1076,12 @@ module Crystal
       current_type.lookup_type?(node, allow_typeof: false)
     end
 
-    def check_allowed_in_generics(node, type)
+    def check_can_be_stored(node, type)
       if type.is_a?(GenericClassType)
         nil
       elsif type.is_a?(GenericModuleType)
         nil
-      elsif type && !type.allowed_in_generics?
+      elsif type && !type.can_be_stored?
         # Types such as Object, Int, etc., are not allowed in generics
         # and as variables types, so we disallow them.
         @error = Error.new(node, type)
