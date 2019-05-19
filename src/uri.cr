@@ -273,9 +273,9 @@ class URI
 
   # URL-decodes *string*.
   #
-  # This method requires a block, the block is called with each character
-  # whose codepoint is less than `0x80`. The characters that return
-  # `true` in the block are not unescaped, other characters are unescaped.
+  # This method requires a block, the block is called with each byte
+  # whose codepoint is less than `0x80`. The bytes that return
+  # `true` in the block are not unescaped, other bytes are unescaped.
   def self.unescape(string : String, plus_to_space = false, &block) : String
     String.build { |io| unescape(string, io, plus_to_space) { |byte| yield byte } }
   end
@@ -316,9 +316,9 @@ class URI
 
   # URL-encodes *string*.
   #
-  # This method requires a block, the block is called with each character
-  # whose codepoint is less than `0x80`. The characters that return
-  # `true` in the block are not escaped, other characters are escaped.
+  # This method requires a block, the block is called with each byte
+  # whose codepoint is less than `0x80`. The bytes that return
+  # `true` in the block are not escaped, other bytes are escaped.
   #
   # ```
   # require "uri"
@@ -371,7 +371,7 @@ class URI
   # Returns whether given byte is unreserved character defined in
   # [RFC 3986](https://tools.ietf.org/html/rfc3986).
   #
-  # Unreserved characters are letters, digits, '_', '.', '-' and '~'.
+  # Unreserved characters are ASCII letters, ASCII digits, '_', '.', '-' and '~'.
   def self.unreserved?(byte) : Bool
     char = byte.unsafe_chr
     char.ascii_alphanumeric? ||
