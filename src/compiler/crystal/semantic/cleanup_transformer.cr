@@ -714,7 +714,7 @@ module Crystal
       if exp_type
         instance_type = exp_type.instance_type.devirtualize
         if instance_type.struct? || instance_type.module?
-          node.exp.raise "#{instance_type} is not a class, it's a #{instance_type.type_desc}"
+          node.exp.raise "instance_sizeof can only be used with a class, but #{instance_type} is a #{instance_type.type_desc}"
         end
       end
 

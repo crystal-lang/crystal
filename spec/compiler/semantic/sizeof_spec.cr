@@ -22,7 +22,10 @@ describe "Semantic: sizeof" do
   end
 
   it "gives error if using instance_sizeof on something that's not a class" do
-    assert_error "instance_sizeof(Int32)", "Int32 is not a class, it's a struct"
+    assert_error %(
+      instance_sizeof(Int32)
+      ),
+      "instance_sizeof can only be used with a class, but Int32 is a struct"
   end
 
   it "gives error if using instance_sizeof on a struct" do
@@ -32,7 +35,7 @@ describe "Semantic: sizeof" do
 
       instance_sizeof(Foo)
       ),
-      "Foo is not a class, it's a struct"
+      "instance_sizeof can only be used with a class, but Foo is a struct"
   end
 
   it "gives error if using instance_sizeof on a module" do
@@ -42,7 +45,7 @@ describe "Semantic: sizeof" do
 
       instance_sizeof(Moo)
       ),
-      "Moo is not a class, it's a module"
+      "instance_sizeof can only be used with a class, but Moo is a module"
   end
 
   it "gives error if using instance_sizeof on a generic type without type vars" do
