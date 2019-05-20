@@ -25,6 +25,26 @@ describe "Semantic: sizeof" do
     assert_error "instance_sizeof(Int32)", "Int32 is not a class, it's a struct"
   end
 
+  it "gives error if using instance_sizeof on a struct" do
+    assert_error %(
+      struct Foo
+      end
+
+      instance_sizeof(Foo)
+      ),
+      "Foo is not a class, it's a struct"
+  end
+
+  it "gives error if using instance_sizeof on a module" do
+    assert_error %(
+      module Moo
+      end
+
+      instance_sizeof(Moo)
+      ),
+      "Moo is not a class, it's a module"
+  end
+
   it "gives error if using instance_sizeof on a generic type without type vars" do
     assert_error "instance_sizeof(Array)", "can't take instance_sizeof uninstantiated generic type Array(T)"
   end
