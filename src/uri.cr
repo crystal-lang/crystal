@@ -243,7 +243,7 @@ class URI
     self
   end
 
-  # Parses `raw_url` into an URI. The `raw_url` may be relative or absolute.
+  # Parses the given *raw_url* into an URI. The *raw_url* may be relative or absolute.
   #
   # ```
   # require "uri"
@@ -256,7 +256,7 @@ class URI
     URI::Parser.new(raw_url).run.uri
   end
 
-  # URL-decodes *string*.
+  # URL-decodes the given *string*.
   #
   # If *plus_to_space* is `true`, all plus characters (`0x2B`) will be replaced by ' '.
   # E.g. `application/x-www-form-urlencoded` wants this replace.
@@ -271,7 +271,7 @@ class URI
     String.build { |io| unescape(string, io, plus_to_space) }
   end
 
-  # URL-decodes *string*.
+  # URL-decodes the given *string*.
   #
   # This method requires a block, the block is called with each byte
   # whose codepoint is less than `0x80`. The bytes that return
@@ -280,12 +280,12 @@ class URI
     String.build { |io| unescape(string, io, plus_to_space) { |byte| yield byte } }
   end
 
-  # URL-decodes *string* and writes the result to *io*.
+  # URL-decodes the given *string* and writes the result to *io*.
   def self.unescape(string : String, io : IO, plus_to_space = false)
     self.unescape(string, io, plus_to_space) { false }
   end
 
-  # URL-decodes *string* and writes the result to *io*.
+  # URL-decodes the given *string* and writes the result to *io*.
   #
   # This method requires a block.
   def self.unescape(string : String, io : IO, plus_to_space = false, &block)
@@ -299,7 +299,7 @@ class URI
     io
   end
 
-  # URL-encodes *string*.
+  # URL-encodes the given *string*.
   #
   # If *space_to_plus* is `true`, all space characters (0x20) are replaced by `'+'` and `'+'` is
   # encoded to `'%2B'`. E.g. `application/x-www-form-urlencoded` wants this replace.
@@ -314,7 +314,7 @@ class URI
     String.build { |io| escape(string, io, space_to_plus) }
   end
 
-  # URL-encodes *string*.
+  # URL-encodes the given *string*.
   #
   # This method requires a block, the block is called with each byte
   # whose codepoint is less than `0x80`. The bytes that return
@@ -333,12 +333,12 @@ class URI
     String.build { |io| escape(string, io, space_to_plus) { |byte| yield byte } }
   end
 
-  # URL-encodes *string* and writes the result to *io*.
+  # URL-encodes the given *string* and writes the result to *io*.
   def self.escape(string : String, io : IO, space_to_plus = false)
     self.escape(string, io, space_to_plus) { |byte| URI.unreserved? byte }
   end
 
-  # URL-encodes *string* and writes the result to *io*.
+  # URL-encodes the given *string* and writes the result to *io*.
   #
   # This method requires a block.
   def self.escape(string : String, io : IO, space_to_plus = false, &block)
