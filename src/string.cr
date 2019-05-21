@@ -495,7 +495,8 @@ class String
     invalid : Bool
 
   private macro gen_to_(method, max_positive = nil, max_negative = nil)
-    info = to_u64_info(base, whitespace, underscore, prefix, strict, leading_zero_is_octal)
+    info = to_u64_info(base, whitespace, underscore, prefix, strict, leading_zero_is_octal, unsigned: {{max_negative == nil}})
+
     return yield if info.invalid
 
     if info.negative
@@ -513,7 +514,7 @@ class String
     end
   end
 
-  private def to_u64_info(base, whitespace, underscore, prefix, strict, leading_zero_is_octal)
+  private def to_u64_info(base, whitespace, underscore, prefix, strict, leading_zero_is_octal, unsigned)
     raise ArgumentError.new("Invalid base #{base}") unless 2 <= base <= 36 || base == 62
 
     ptr = to_unsafe
@@ -526,17 +527,20 @@ class String
     end
 
     negative = false
-    found_digit = false
-    mul_overflow = ~0_u64 // base
 
     # Check + and -
     case ptr.value.unsafe_chr
-    when '+'
-      ptr += 1
     when '-'
+      if unsigned
+        return ToU64Info.new 0, true, true
+      end
       negative = true
       ptr += 1
+    when '+'
+      ptr += 1
     end
+
+    found_digit = false
 
     # Check leading zero
     if ptr.value.unsafe_chr == '0'
@@ -569,12 +573,13 @@ class String
     end
 
     value = 0_u64
+    mul_overflow = ~0_u64 // base
     last_is_underscore = true
     invalid = false
 
     digits = (base == 62 ? CHAR_TO_DIGIT62 : CHAR_TO_DIGIT).to_unsafe
     while ptr.value != 0
-      if ptr.value.unsafe_chr == '_' && underscore
+      if underscore && ptr.value.unsafe_chr == '_'
         break if last_is_underscore
         last_is_underscore = true
         ptr += 1
