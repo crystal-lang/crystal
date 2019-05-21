@@ -1721,6 +1721,12 @@ describe "String" do
 
   it "does char_at" do
     "いただきます".char_at(2).should eq('だ')
+    "foo".char_at(0).should eq('f')
+    "foo".char_at(4) { 'x' }.should eq('x')
+
+    expect_raises(IndexError) do
+      "foo".char_at(4)
+    end
   end
 
   it "does byte_at" do
@@ -2428,15 +2434,6 @@ describe "String" do
     string = "foo"
     clone = string.clone
     string.should be(clone)
-  end
-
-  it "#at" do
-    "foo".at(0).should eq('f')
-    "foo".at(4) { 'x' }.should eq('x')
-
-    expect_raises(IndexError) do
-      "foo".at(4)
-    end
   end
 
   it "allocates buffer of correct size when UInt8 is given to new (#3332)" do
