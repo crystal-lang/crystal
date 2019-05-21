@@ -569,6 +569,10 @@ describe Path do
       it_expands_path("~", "/", "\\", base: "/tmp/gumby/ddd", env_home: "/")
       it_expands_path("~/a", "/a", "\\a", base: "/tmp/gumby/ddd", env_home: "/")
     end
+
+    describe "ignores name starting with ~" do
+      it_expands_path("~foo.txt", "/current/~foo.txt", "\\current\\~foo.txt", base: "/current", env_home: "/")
+    end
   end
 
   describe "#<=>" do
