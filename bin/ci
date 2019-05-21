@@ -98,7 +98,7 @@ prepare_build() {
 
 verify_version() {
   # If building a tag, check it matches with file
-  FILE_VERSION=`cat VERSION`
+  FILE_VERSION=`cat ./src/VERSION`
 
   if [ "$FILE_VERSION" != "$CURRENT_TAG" ]
   then
