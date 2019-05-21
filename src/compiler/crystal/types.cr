@@ -2685,7 +2685,7 @@ module Crystal
   end
 
   class AnnotationType < NamedType
-    property class_types : Set(Type) = Set(Type).new
+    property annotated_types : Set(Type) = Set(Type).new
 
     def type_desc
       "annotation"

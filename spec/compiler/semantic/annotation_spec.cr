@@ -881,6 +881,26 @@ describe "Semantic: annotation" do
       )) { int32 }
     end
 
+    it "does not include children of a parent type" do
+      assert_type(%(
+        annotation Foo
+        end
+
+        @[Foo]
+        abstract struct Moo
+        end
+
+        struct Bar < Moo
+        end
+
+        {% if Foo.annotated_types == [Moo] %}
+          1
+        {% else %}
+          'a'
+        {% end %}
+      )) { int32 }
+    end
+
     it "works with multiple types/annotations" do
       assert_type(%(
         annotation Foo; end
