@@ -2773,13 +2773,9 @@ module Crystal
       # Nothing
     end
 
-    @parents : Array(Type)?
-
     def parents
-      @parents ||= begin
-        parents = [] of Type
-        parents << (instance_type.superclass.try(&.metaclass) || program.class_type)
-        parents
+      instance_type.generic_type.metaclass.parents.try &.map do |parent|
+        parent.replace_type_parameters(instance_type)
       end
     end
 
@@ -2827,7 +2823,9 @@ module Crystal
     end
 
     def parents
-      @parents ||= [program.class_type] of Type
+      instance_type.generic_type.metaclass.parents.try &.map do |parent|
+        parent.replace_type_parameters(instance_type)
+      end
     end
 
     delegate defs, macros, to: instance_type.generic_type.metaclass
