@@ -55,10 +55,8 @@ describe "YAML serialization" do
       String.from_yaml("hello").should eq("hello")
     end
 
-    it "raises on reserved string" do
-      expect_raises(YAML::ParseException) do
-        String.from_yaml(%(1.2))
-      end
+    it "can parse string that looks like a number" do
+      String.from_yaml(%(1.2)).should eq ("1.2")
     end
 
     it "does Float32#from_yaml" do

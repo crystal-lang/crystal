@@ -53,7 +53,17 @@ end
 {% end %}
 
 def String.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node)
-  parse_scalar(ctx, node, self)
+  ctx.read_alias(node, String) do |obj|
+    return obj
+  end
+
+  if node.is_a?(YAML::Nodes::Scalar)
+    value = node.value
+    ctx.record_anchor(node, value)
+    value
+  else
+    node.raise "Expected String, not #{node.class.name}"
+  end
 end
 
 def Float32.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node)
