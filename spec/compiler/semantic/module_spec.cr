@@ -1352,4 +1352,20 @@ describe "Semantic: module" do
       Gen(Int32).foo
       )) { int32.metaclass }
   end
+
+  it "doesn't look up initialize past module that defines initialize (#7007)" do
+    assert_error %(
+      module Moo
+        def initialize(x)
+        end
+      end
+
+      class Foo
+        include Moo
+      end
+
+      Foo.new
+      ),
+      "wrong number of arguments"
+  end
 end

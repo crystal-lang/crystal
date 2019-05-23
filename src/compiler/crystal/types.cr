@@ -393,10 +393,25 @@ module Crystal
         all_defs << item.def unless all_defs.find(&.same?(item.def))
       end
 
-      if lookup_ancestors_for_new || self.lookup_new_in_ancestors? ||
-         !(name == "new" || name == "initialize")
-        parents.try &.each do |parent|
+      is_new = name == "new"
+      is_new_or_initialize = is_new || name == "initialize"
+      return if is_new_or_initialize && !all_defs.empty?
+
+      if !is_new_or_initialize || (lookup_ancestors_for_new || self.lookup_new_in_ancestors?)
+        if is_new
+          # For a `new` method we need to do this in case a `new` is defined
+          # in a module type
+          my_parents = instance_type.parents.try &.map(&.metaclass)
+        else
+          my_parents = parents
+        end
+
+        my_parents.try &.each do |parent|
+          old_size = all_defs.size
           parent.lookup_defs(name, all_defs, lookup_ancestors_for_new)
+
+          # Don't lookup new or initialize in parents once we found some defs
+          break if is_new_or_initialize && all_defs.size > old_size
         end
       end
     end
