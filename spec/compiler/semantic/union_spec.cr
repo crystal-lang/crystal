@@ -179,4 +179,13 @@ describe "Semantic: union" do
       end
       )) { union_of char, generic_class("Gen", int32).metaclass }
   end
+
+  it "doesn't virtualize union elements (#7814)" do
+    assert_type(%(
+      class Foo; end
+      class Bar < Foo; end
+
+      Union(Foo)
+      )) { types["Foo"].metaclass }
+  end
 end
