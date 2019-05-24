@@ -199,4 +199,40 @@ describe "Code gen: sizeof" do
       size.should eq(16)
     end
   {% end %}
+
+  it "doesn't precompute sizeof of abstract struct (#7741)" do
+    run(%(
+      abstract struct Base
+      end
+
+      struct Foo(T) < Base
+        def initialize(@x : T)
+        end
+      end
+
+      z = sizeof(Base)
+
+      Foo({Int32, Int32, Int32, Int32})
+
+      z)).to_i.should eq(16)
+  end
+
+  it "doesn't precompute sizeof of module (#7741)" do
+    run(%(
+      module Base
+      end
+
+      struct Foo(T)
+        include Base
+
+        def initialize(@x : T)
+        end
+      end
+
+      z = sizeof(Base)
+
+      Foo({Int32, Int32, Int32, Int32})
+
+      z)).to_i.should eq(16)
+  end
 end

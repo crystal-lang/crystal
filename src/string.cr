@@ -526,10 +526,11 @@ class String
 
   private macro gen_to_(method, max_positive = nil, max_negative = nil)
     if base == UInt128
-      info = to_u128_info(base, whitespace, underscore, prefix, strict, leading_zero_is_octal)
+      info = to_u128_info(base, whitespace, underscore, prefix, strict, leading_zero_is_octal, unsigned: {{max_negative == nil}})
     else
-      info = to_u64_info(base, whitespace, underscore, prefix, strict, leading_zero_is_octal)
+      info = to_u64_info(base, whitespace, underscore, prefix, strict, leading_zero_is_octal, unsigned: {{max_negative == nil}})
     end
+
     return yield if info.invalid
 
     if info.negative
@@ -547,7 +548,7 @@ class String
     end
   end
 
-  private def to_u64_info(base, whitespace, underscore, prefix, strict, leading_zero_is_octal)
+  private def to_u64_info(base, whitespace, underscore, prefix, strict, leading_zero_is_octal, unsigned)
     raise ArgumentError.new("Invalid base #{base}") unless 2 <= base <= 36 || base == 62
 
     ptr = to_unsafe
@@ -560,17 +561,20 @@ class String
     end
 
     negative = false
-    found_digit = false
-    mul_overflow = ~0_u64 // base
 
     # Check + and -
     case ptr.value.unsafe_chr
-    when '+'
-      ptr += 1
     when '-'
+      if unsigned
+        return ToU64Info.new 0, true, true
+      end
       negative = true
       ptr += 1
+    when '+'
+      ptr += 1
     end
+
+    found_digit = false
 
     # Check leading zero
     if ptr.value.unsafe_chr == '0'
@@ -603,12 +607,13 @@ class String
     end
 
     value = 0_u64
+    mul_overflow = ~0_u64 // base
     last_is_underscore = true
     invalid = false
 
     digits = (base == 62 ? CHAR_TO_DIGIT62 : CHAR_TO_DIGIT).to_unsafe
     while ptr.value != 0
-      if ptr.value.unsafe_chr == '_' && underscore
+      if underscore && ptr.value.unsafe_chr == '_'
         break if last_is_underscore
         last_is_underscore = true
         ptr += 1
@@ -869,7 +874,7 @@ class String
   # "hello"[5]  # raises IndexError
   # ```
   def [](index : Int)
-    at(index) { raise IndexError.new }
+    char_at(index) { raise IndexError.new }
   end
 
   # Returns a substring by using a Range's *begin* and *end*
@@ -952,7 +957,7 @@ class String
   end
 
   def []?(index : Int)
-    at(index) { nil }
+    char_at(index) { nil }
   end
 
   def []?(str : String | Char)
@@ -980,11 +985,21 @@ class String
     self[regex, group]?.not_nil!
   end
 
+  @[Deprecated("Use `String#char_at` instead.")]
   def at(index : Int)
-    at(index) { raise IndexError.new }
+    char_at(index)
   end
 
+  @[Deprecated("Use `String#char_at` instead.")]
   def at(index : Int)
+    char_at(index) { yield }
+  end
+
+  def char_at(index : Int)
+    char_at(index) { raise IndexError.new }
+  end
+
+  def char_at(index : Int)
     if ascii_only?
       byte = byte_at?(index)
       if byte
@@ -1036,10 +1051,6 @@ class String
 
   def codepoint_at(index)
     char_at(index).ord
-  end
-
-  def char_at(index)
-    self[index]
   end
 
   def byte_at(index)

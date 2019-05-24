@@ -103,6 +103,12 @@ private class YAMLWithPresence
   })
 end
 
+private class YAMLWithString
+  YAML.mapping({
+    value: String,
+  })
+end
+
 class YAMLRecursive
   YAML.mapping({
     name:  String,
@@ -529,5 +535,13 @@ describe "YAML mapping" do
 
   it "calls #finalize" do
     assert_finalizes(:yaml) { YAMLWithFinalize.from_yaml("---\nvalue: 1\n") }
+  end
+
+  it "parses string even if it looks like a number" do
+    yaml = YAMLWithString.from_yaml <<-YAML
+      ---
+      value: 12.34
+      YAML
+    yaml.value.should eq("12.34")
   end
 end

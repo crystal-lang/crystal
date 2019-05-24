@@ -2773,13 +2773,9 @@ module Crystal
       # Nothing
     end
 
-    @parents : Array(Type)?
-
     def parents
-      @parents ||= begin
-        parents = [] of Type
-        parents << (instance_type.superclass.try(&.metaclass) || program.class_type)
-        parents
+      instance_type.generic_type.metaclass.parents.try &.map do |parent|
+        parent.replace_type_parameters(instance_type)
       end
     end
 
@@ -2827,7 +2823,9 @@ module Crystal
     end
 
     def parents
-      @parents ||= [program.class_type] of Type
+      instance_type.generic_type.metaclass.parents.try &.map do |parent|
+        parent.replace_type_parameters(instance_type)
+      end
     end
 
     delegate defs, macros, to: instance_type.generic_type.metaclass
@@ -2867,7 +2865,11 @@ module Crystal
         unless type_var.is_a?(Type)
           type_var.raise "argument to Proc must be a type, not #{type_var}"
         end
-        type_var
+        # There's no need for types to be virtual because at the end
+        # `type_merge` will take care of that.
+        # The benefit is that if one writes `Union(T)`, that becomes exactly T
+        # and not T+ (which might lead to some inconsistencies).
+        type_var.devirtualize.as(Type)
       end
       program.type_merge(types) || program.no_return
     end
