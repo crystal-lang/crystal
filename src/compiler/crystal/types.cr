@@ -2865,7 +2865,11 @@ module Crystal
         unless type_var.is_a?(Type)
           type_var.raise "argument to Proc must be a type, not #{type_var}"
         end
-        type_var
+        # There's no need for types to be virtual because at the end
+        # `type_merge` will take care of that.
+        # The benefit is that if one writes `Union(T)`, that becomes exactly T
+        # and not T+ (which might lead to some inconsistencies).
+        type_var.devirtualize.as(Type)
       end
       program.type_merge(types) || program.no_return
     end
