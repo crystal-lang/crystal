@@ -73,22 +73,22 @@ struct Nil
   end
 
   # Returns an empty string.
-  def to_s
+  def to_s : String
     ""
   end
 
   # Doesn't write anything to the given `IO`.
-  def to_s(io : IO)
+  def to_s(io : IO) : Nil
     # Nothing to do
   end
 
   # Returns `"nil"`.
-  def inspect
+  def inspect : String
     "nil"
   end
 
   # Writes `"nil"` to the given `IO`.
-  def inspect(io)
+  def inspect(io : IO) : Nil
     io << "nil"
   end
 

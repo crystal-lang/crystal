@@ -258,9 +258,6 @@ describe "Range" do
       iter.next.should eq(2)
       iter.next.should eq(3)
       iter.next.should be_a(Iterator::Stop)
-
-      iter.rewind
-      iter.next.should eq(1)
     end
 
     it "does next with exclusive range" do
@@ -269,18 +266,11 @@ describe "Range" do
       iter.next.should eq(1)
       iter.next.should eq(2)
       iter.next.should be_a(Iterator::Stop)
-
-      iter.rewind
-      iter.next.should eq(1)
     end
 
     it "does with endless range" do
       r = (3..nil)
       iter = r.each
-      iter.next.should eq(3)
-      iter.next.should eq(4)
-
-      iter.rewind
       iter.next.should eq(3)
       iter.next.should eq(4)
     end
@@ -321,9 +311,6 @@ describe "Range" do
       iter.next.should eq(2)
       iter.next.should eq(1)
       iter.next.should be_a(Iterator::Stop)
-
-      iter.rewind
-      iter.next.should eq(3)
     end
 
     it "does next with exclusive range" do
@@ -332,9 +319,6 @@ describe "Range" do
       iter.next.should eq(2)
       iter.next.should eq(1)
       iter.next.should be_a(Iterator::Stop)
-
-      iter.rewind
-      iter.next.should eq(2)
     end
 
     it "does next with beginless range" do
@@ -344,9 +328,6 @@ describe "Range" do
       iter.next.should eq(1)
       iter.next.should eq(0)
       iter.next.should eq(-1)
-
-      iter.rewind
-      iter.next.should eq(2)
     end
 
     it "reverse cycles" do
@@ -421,9 +402,6 @@ describe "Range" do
       iter.next.should eq(3)
       iter.next.should eq(5)
       iter.next.should be_a(Iterator::Stop)
-
-      iter.rewind
-      iter.next.should eq(1)
     end
 
     it "does next with exclusive range" do
@@ -432,9 +410,6 @@ describe "Range" do
       iter.next.should eq(1)
       iter.next.should eq(3)
       iter.next.should be_a(Iterator::Stop)
-
-      iter.rewind
-      iter.next.should eq(1)
     end
 
     it "does next with exclusive range (2)" do
@@ -444,9 +419,6 @@ describe "Range" do
       iter.next.should eq(3)
       iter.next.should eq(5)
       iter.next.should be_a(Iterator::Stop)
-
-      iter.rewind
-      iter.next.should eq(1)
     end
 
     it "is empty with .. and begin > end" do
@@ -468,10 +440,6 @@ describe "Range" do
     it "does with endless range" do
       a = (1...nil)
       iter = a.step(2)
-      iter.next.should eq(1)
-      iter.next.should eq(3)
-
-      iter.rewind
       iter.next.should eq(1)
       iter.next.should eq(3)
     end

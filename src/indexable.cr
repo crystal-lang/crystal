@@ -147,7 +147,7 @@ module Indexable(T)
   # [2, 5, 7, 10].bsearch { |x| x >= 4 } # => 5
   # [2, 5, 7, 10].bsearch { |x| x > 10 } # => nil
   # ```
-  def bsearch
+  def bsearch(&block : T -> Bool)
     bsearch_index { |value| yield value }.try { |index| unsafe_fetch(index) }
   end
 
@@ -166,7 +166,7 @@ module Indexable(T)
   # [2, 5, 7, 10].bsearch_index { |x, i| x >= 4 } # => 1
   # [2, 5, 7, 10].bsearch_index { |x, i| x > 10 } # => nil
   # ```
-  def bsearch_index
+  def bsearch_index(&block : T, Int32 -> Bool)
     (0...size).bsearch { |index| yield unsafe_fetch(index), index }
   end
 
@@ -605,90 +605,6 @@ module Indexable(T)
     indexes.map { |index| self[index] }
   end
 
-  # Calls the given block for each index in `self`, passing in the elements
-  # `{self[i], other[i]}` for each index.
-  #
-  # Raises an `IndexError` if `other` is shorter than `self`.
-  #
-  # ```
-  # a = [1, 2, 3]
-  # b = ["a", "b", "c"]
-  #
-  # a.zip(b) { |x, y| puts "#{x} -- #{y}" }
-  # ```
-  #
-  # The above produces:
-  #
-  # ```text
-  # 1 --- a
-  # 2 --- b
-  # 3 --- c
-  # ```
-  def zip(other : Indexable(U), &block : T, U ->) forall U
-    each_with_index do |elem, i|
-      yield elem, other[i]
-    end
-  end
-
-  # Returns an `Array` of tuples populated with the *i*th indexed element from
-  # `self` followed by the *i*th indexed element from `other`.
-  #
-  # Raises an `IndexError` if `other` is shorter than `self`.
-  #
-  # ```
-  # a = [1, 2, 3]
-  # b = ["a", "b", "c"]
-  #
-  # a.zip(b) # => [{1, "a"}, {2, "b"}, {3, "c"}]
-  # ```
-  def zip(other : Indexable(U)) : Array({T, U}) forall U
-    pairs = Array({T, U}).new(size)
-    zip(other) { |x, y| pairs << {x, y} }
-    pairs
-  end
-
-  # Calls the given block for each index in `self`, passing in the elements
-  # `{self[i], other[i]}` for each index.
-  #
-  # If `other` is shorter than `self`, missing values are filled up with `nil`.
-  #
-  # ```
-  # a = [1, 2, 3]
-  # b = ["a", "b"]
-  #
-  # a.zip?(b) { |x, y| puts "#{x} -- #{y}" }
-  # ```
-  #
-  # The above produces:
-  #
-  # ```text
-  # 1 --- a
-  # 2 --- b
-  # 3 ---
-  # ```
-  def zip?(other : Indexable(U), &block : T, U? ->) forall U
-    each_with_index do |elem, i|
-      yield elem, other[i]?
-    end
-  end
-
-  # Returns an `Array` of tuples populated with the *i*th indexed element from
-  # `self` followed by the *i*th indexed element from `other`.
-  #
-  # If `other` is shorter than `self`, missing values are filled up with `nil`.
-  #
-  # ```
-  # a = [1, 2, 3]
-  # b = ["a", "b"]
-  #
-  # a.zip?(b) # => [{1, "a"}, {2, "b"}, {3, nil}]
-  # ```
-  def zip?(other : Indexable(U)) : Array({T, U?}) forall U
-    pairs = Array({T, U?}).new(size)
-    zip?(other) { |x, y| pairs << {x, y} }
-    pairs
-  end
-
   private def check_index_out_of_bounds(index)
     check_index_out_of_bounds(index) { raise IndexError.new }
   end
@@ -740,11 +656,6 @@ module Indexable(T)
         value
       end
     end
-
-    def rewind
-      @index = 0
-      self
-    end
   end
 
   private class ReverseItemIterator(A, T)
@@ -762,11 +673,6 @@ module Indexable(T)
         value
       end
     end
-
-    def rewind
-      @index = @array.size - 1
-      self
-    end
   end
 
   private class IndexIterator(A)
@@ -783,11 +689,6 @@ module Indexable(T)
         @index += 1
         value
       end
-    end
-
-    def rewind
-      @index = 0
-      self
     end
   end
 end

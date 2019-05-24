@@ -106,12 +106,17 @@ describe Time do
   describe ".local" do
     it "initializes" do
       t1 = Time.local 2002, 2, 25
+      t1.date.should eq({2002, 2, 25})
       t1.year.should eq(2002)
       t1.month.should eq(2)
       t1.day.should eq(25)
+      t1.hour.should eq(0)
+      t1.minute.should eq(0)
+      t1.second.should eq(0)
       t1.local?.should be_true
 
       t2 = Time.local 2002, 2, 25, 15, 25, 13, nanosecond: 8
+      t2.date.should eq({2002, 2, 25})
       t2.year.should eq(2002)
       t2.month.should eq(2)
       t2.day.should eq(25)
@@ -358,8 +363,8 @@ describe Time do
       t2 = t.shift months: 1
       t2.should eq Time.utc(2014, 11, 30, 21, 18, 13)
 
-      t2 = t.shift months: 1
-      t2.should eq Time.utc(2014, 11, 30, 21, 18, 13)
+      t2 = t.shift months: -1
+      t2.should eq Time.utc(2014, 9, 30, 21, 18, 13)
 
       t = Time.utc 2014, 10, 31, 21, 18, 13
       t2 = t.shift months: 1
@@ -494,6 +499,19 @@ describe Time do
       t1.to_unix.should eq(t1.to_utc.to_unix)
       t1.to_unix_f.should be_close(t1.to_utc.to_unix_f, 1e-01)
     end
+  end
+
+  it "#year" do
+    Time.utc(2008, 12, 31).year.should eq 2008
+    Time.utc(2000, 12, 31).year.should eq 2000
+    Time.utc(1900, 12, 31).year.should eq 1900
+    Time.utc(1800, 12, 31).year.should eq 1800
+    Time.utc(1700, 12, 31).year.should eq 1700
+    Time.utc(1600, 12, 31).year.should eq 1600
+    Time.utc(400, 12, 31).year.should eq 400
+    Time.utc(100, 12, 31).year.should eq 100
+    Time.utc(4, 12, 31).year.should eq 4
+    Time.utc(1, 1, 1).year.should eq 1
   end
 
   describe "#to_s" do

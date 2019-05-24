@@ -13,7 +13,7 @@ struct Bool
   # true | false  # => true
   # true | true   # => true
   # ```
-  def |(other : Bool)
+  def |(other : Bool) : Bool
     self ? true : other
   end
 
@@ -25,7 +25,7 @@ struct Bool
   # true & false  # => false
   # true & true   # => true
   # ```
-  def &(other : Bool)
+  def &(other : Bool) : Bool
     self ? other : false
   end
 
@@ -37,7 +37,7 @@ struct Bool
   # true ^ false  # => true
   # true ^ true   # => false
   # ```
-  def ^(other : Bool)
+  def ^(other : Bool) : Bool
     self != other
   end
 
@@ -54,16 +54,16 @@ struct Bool
   end
 
   # Returns `"true"` for `true` and `"false"` for `false`.
-  def to_s
+  def to_s : String
     self ? "true" : "false"
   end
 
   # Appends `"true"` for `true` and `"false"` for `false` to the given IO.
-  def to_s(io)
+  def to_s(io : IO) : Nil
     io << to_s
   end
 
-  def clone
+  def clone : Bool
     self
   end
 end

@@ -8,7 +8,7 @@ class Crystal::Codegen::Target
   getter vendor : String
   getter environment : String
 
-  def initialize(target_triple = Crystal::Config.default_target_triple)
+  def initialize(target_triple : String)
     # Let LLVM convert the user-inputted target triple into at least a target
     # triple with the architecture, vendor and OS in the correct place.
     target_triple = LLVM.normalize_triple(target_triple.downcase)
@@ -129,7 +129,7 @@ class Crystal::Codegen::Target
     target.create_target_machine(self.to_s, cpu: cpu, features: features, opt_level: opt_level).not_nil!
   end
 
-  def to_s(io)
+  def to_s(io : IO) : Nil
     io << architecture << '-' << vendor << '-' << environment
   end
 end

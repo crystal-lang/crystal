@@ -83,11 +83,17 @@ describe "Semantic: static array" do
 
   it "types static array new with size being a computed constant" do
     assert_type(%(
+      struct Int
+        def //(other : Int)
+          0
+        end
+      end
+
       OTHER = 10
-      SIZE = OTHER * 20
+      SIZE = OTHER * 20 // 2
       x = StaticArray(Char, SIZE).new
       x
-      )) { static_array_of(char, 200) }
+      )) { static_array_of(char, 100) }
   end
 
   it "types staic array new with size being a computed constant, and use N (bug)" do

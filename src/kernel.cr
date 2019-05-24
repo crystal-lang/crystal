@@ -5,16 +5,12 @@
   # The standard output file descriptor.
   #
   # Typically used to output data and information.
-  #
-  # NOTE: Gets flushed when a newline is written.
-  STDOUT = IO::FileDescriptor.new(1).tap { |f| f.flush_on_newline = true }
+  STDOUT = IO::FileDescriptor.new(1)
 
   # The standard error file descriptor.
   #
   # Typically used to output error messages and diagnostics.
-  #
-  # NOTE: Gets flushed when a newline is written.
-  STDERR = IO::FileDescriptor.new(2).tap { |f| f.flush_on_newline = true }
+  STDERR = IO::FileDescriptor.new(2)
 {% else %}
   require "c/unistd"
 
@@ -25,15 +21,17 @@
   #
   # Typically used to output data and information.
   #
-  # NOTE: Gets flushed when a newline is written.
-  STDOUT = IO::FileDescriptor.from_stdio(1).tap { |f| f.flush_on_newline = true }
+  # When this is a TTY device, `sync` will be true for it
+  # at the start of the program.
+  STDOUT = IO::FileDescriptor.from_stdio(1)
 
   # The standard error file descriptor.
   #
   # Typically used to output error messages and diagnostics.
   #
-  # NOTE: Gets flushed when a newline is written.
-  STDERR = IO::FileDescriptor.from_stdio(2).tap { |f| f.flush_on_newline = true }
+  # When this is a TTY device, `sync` will be true for it
+  # at the start of the program.
+  STDERR = IO::FileDescriptor.from_stdio(2)
 {% end %}
 
 # The name, the program was called with.
@@ -118,7 +116,6 @@ end
 # See also: `IO#print`.
 def print(*objects : _) : Nil
   STDOUT.print *objects
-  STDOUT.flush
 end
 
 # Prints a formatted string to `STDOUT`.
@@ -276,8 +273,8 @@ end
 # sprintf "%20.8g", 1234.56789 # => "           1234.5679"
 # sprintf "%20.8g", 123456789  # => "       1.2345679e+08"
 # sprintf "%20.8G", 123456789  # => "       1.2345679E+08"
-# sprintf "%20.8g", -123456789 # => "       -1.2345679e+08"
-# sprintf "%20.8G", -123456789 # => "       -1.2345679E+08"
+# sprintf "%20.8g", -123456789 # => "      -1.2345679e+08"
+# sprintf "%20.8G", -123456789 # => "      -1.2345679E+08"
 # ```
 #
 # The field width is an optional integer, followed optionally by a
@@ -289,7 +286,7 @@ end
 # sprintf "%20d", 123   # => "                 123"
 # sprintf "%+20d", 123  # => "                +123"
 # sprintf "%020d", 123  # => "00000000000000000123"
-# sprintf "%+020d", 12  # => "+0000000000000000123"
+# sprintf "%+020d", 123 # => "+0000000000000000123"
 # sprintf "% 020d", 123 # => " 0000000000000000123"
 # sprintf "%-20d", 123  # => "123                 "
 # sprintf "%-+20d", 123 # => "+123                "
@@ -315,7 +312,7 @@ end
 # sprintf "%020.8o", 123  # => "00000000000000000173"
 # sprintf "%20.8x", 123   # => "                  7b"
 # sprintf "%020.8x", 123  # => "0000000000000000007b"
-# sprintf "%20.8b", 123   # => "            01111011"
+# sprintf "%20.8b", 123   # => "             1111011"
 # sprintf "%20.8d", -123  # => "                -123"
 # sprintf "%020.8d", -123 # => "0000000000000000-123"
 # sprintf "%20.8o", -123  # => "                -173"
@@ -545,7 +542,7 @@ end
   spawn do
     loop do
       sleep 5
-      Fiber.stack_pool_collect
+      Fiber.stack_pool.collect
     end
   end
 

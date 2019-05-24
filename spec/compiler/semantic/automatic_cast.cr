@@ -395,6 +395,20 @@ describe "Semantic: automatic cast" do
       )) { int64 }
   end
 
+  it "can match multiple times with the same argument type (#7578)" do
+    assert_type(%(
+      def foo(unused, foo : Int64)
+        unused
+      end
+
+      def foo(foo : Int64)
+        foo
+      end
+
+      foo(foo: 1)
+      )) { int64 }
+  end
+
   it "doesn't say 'ambiguous call' when there's an exact match for integer (#6601)" do
     assert_error %(
       class Zed
@@ -435,5 +449,23 @@ describe "Semantic: automatic cast" do
       a + :red
       ),
       "no overload matches"
+  end
+
+  it "can use automatic cast with `with ... yield` (#7736)" do
+    assert_type(%(
+      def foo
+        with 1 yield
+      end
+
+      struct Int32
+        def bar(x : Int64)
+          x
+        end
+      end
+
+      foo do
+        bar(1)
+      end
+      )) { int64 }
   end
 end

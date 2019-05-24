@@ -391,7 +391,7 @@ struct Time
   #
   # ```
   # time = Time.utc(2016, 2, 15)
-  # time.to_s # => "2016-02-15 00:00:00 +00:00"
+  # time.to_s # => "2016-02-15 00:00:00 UTC"
   # ```
   #
   # The local date-time representation is resolved to a single instant based on
@@ -429,6 +429,16 @@ struct Time
     seconds = seconds - zone_offset_at(seconds, location) if !location.utc?
 
     new(seconds: seconds, nanoseconds: nanosecond.to_i, location: location)
+  end
+
+  @[Deprecated("Use `Time.local` instead.")]
+  def self.new(location : Location = Location.local) : Time
+    local(location)
+  end
+
+  @[Deprecated("Use `Time.local` instead.")]
+  def self.new(year : Int32, month : Int32, day : Int32, hour : Int32 = 0, minute : Int32 = 0, second : Int32 = 0, *, nanosecond : Int32 = 0, location : Location = Location.local) : Time
+    local(year, month, day, hour, minute, second, nanosecond: nanosecond, location: location)
   end
 
   # Creates a new `Time` instance representing the given date-time in UTC.
@@ -519,9 +529,23 @@ struct Time
   # ```
   def self.unix_ms(milliseconds : Int) : Time
     milliseconds = milliseconds.to_i64
-    seconds = UNIX_EPOCH.total_seconds + (milliseconds / 1_000)
+    seconds = UNIX_EPOCH.total_seconds + (milliseconds // 1_000)
     nanoseconds = (milliseconds % 1000) * NANOSECONDS_PER_MILLISECOND
     utc(seconds: seconds, nanoseconds: nanoseconds.to_i)
+  end
+
+  # Creates a new `Time` instance representing the current time from the
+  # system clock observed in *location* (defaults to local time zone).
+  @[Deprecated("Use `Time.local` or `Time.utc` instead.")]
+  def self.now(location : Location = Location.local) : Time
+    local(location)
+  end
+
+  # Creates a new `Time` instance representing the current time from the
+  # system clock in UTC.
+  @[Deprecated("Use `Time.utc` instead.")]
+  def self.utc_now : Time
+    utc
   end
 
   # Creates a new `Time` instance with the same local date-time representation
@@ -536,8 +560,8 @@ struct Time
   # new_year = Time.utc(2019, 1, 1, 0, 0, 0)
   # tokyo = new_year.to_local_in(Time::Location.load("Asia/Tokyo"))
   # new_york = new_year.to_local_in(Time::Location.load("America/New_York"))
-  # tokyo.to_s    # => 2019-01-01 00:00:00.0 +09:00 Asia/Tokyo
-  # new_york.to_s # => 2019-01-01 00:00:00.0 -05:00 America/New_York
+  # tokyo.inspect    # => "2019-01-01 00:00:00.0 +09:00 Asia/Tokyo"
+  # new_york.inspect # => "2019-01-01 00:00:00.0 -05:00 America/New_York"
   # ```
   def to_local_in(location : Location)
     local_seconds = offset_seconds
@@ -659,10 +683,11 @@ struct Time
   #
   # If the day-of-month resulting from shifting by *years* and *months* would be
   # invalid, the date is adjusted to the last valid day of the month.
-  # For example, adding one month to `2018-07-31` would result in the invalid
-  # date `2018-08-31` which will be adjusted to `2018-08-30`:
+  # For example, adding one month to `2018-08-31` would result in the invalid
+  # date `2018-09-31` which will be adjusted to `2018-09-30`:
   # ```
-  # Time.utc(2018, 7, 31).shift(months: 1) # => Time.utc(2018, 8, 30)
+  # Time.utc(2018, 7, 31).shift(months: 1) # => Time.utc(2018, 8, 31)
+  # Time.utc(2018, 8, 31).shift(months: 1) # => Time.utc(2018, 9, 30)
   # ```
   #
   # Overflow in smaller units is transferred to the next larger unit.
@@ -671,9 +696,9 @@ struct Time
   # granularity. This is relevant because the order of operations can change the result:
   #
   # ```
-  # Time.utc(2018, 7, 31).shift(months: 1, days: -1)       # => Time.utc(2018, 8, 29)
-  # Time.utc(2018, 7, 31).shift(months: 1).shift(days: -1) # => Time.utc(2018, 8, 29)
-  # Time.utc(2018, 7, 31).shift(days: -1).shift(months: 1) # => Time.utc(2018, 8, 30)
+  # Time.utc(2018, 8, 31).shift(months: 1, days: -1)       # => Time.utc(2018, 9, 29)
+  # Time.utc(2018, 8, 31).shift(months: 1).shift(days: -1) # => Time.utc(2018, 9, 29)
+  # Time.utc(2018, 8, 31).shift(days: -1).shift(months: 1) # => Time.utc(2018, 9, 30)
   # ```
   #
   # There is no explicit limit on the input values but the shift must result
@@ -741,13 +766,10 @@ struct Time
     )
   end
 
-  # Returns a copy of `self` with time-of-day components (hour, minute, second,
-  # nanoseconds) set to zero.
-  #
-  # This equals `at_beginning_of_day` or
-  # `Time.local(year, month, day, 0, 0, 0, nanoseconds: 0, location: location)`.
-  def date : Time
-    Time.local(year, month, day, location: location)
+  # Returns a `Tuple` with `year`, `month` and `day`.
+  def date : Tuple(Int32, Int32, Int32)
+    year, month, day, _ = year_month_day_day_year
+    {year, month, day}
   end
 
   # Returns the year of the proleptic Georgian Calendar (`0..9999`).
@@ -767,12 +789,12 @@ struct Time
 
   # Returns the hour of the day (`0..23`).
   def hour : Int32
-    ((offset_seconds % SECONDS_PER_DAY) / SECONDS_PER_HOUR).to_i
+    ((offset_seconds % SECONDS_PER_DAY) // SECONDS_PER_HOUR).to_i
   end
 
   # Returns the minute of the hour (`0..59`).
   def minute : Int32
-    ((offset_seconds % SECONDS_PER_HOUR) / SECONDS_PER_MINUTE).to_i
+    ((offset_seconds % SECONDS_PER_HOUR) // SECONDS_PER_MINUTE).to_i
   end
 
   # Returns the second of the minute (`0..59`).
@@ -782,7 +804,7 @@ struct Time
 
   # Returns the millisecond of the second (`0..999`).
   def millisecond : Int32
-    nanosecond / NANOSECONDS_PER_MILLISECOND
+    nanosecond // NANOSECONDS_PER_MILLISECOND
   end
 
   # Returns the nanosecond of the second (`0..999_999_999`).
@@ -816,7 +838,7 @@ struct Time
     # The addition by +10 consists of +7 to start the week numbering with 1
     # instead of 0 and +3 because the first week has already started in the
     # previous year and the first Monday is actually in week 2.
-    week_number = (day_year - day_of_week.to_i + 10) / 7
+    week_number = (day_year - day_of_week.to_i + 10) // 7
 
     if week_number == 0
       # Week number 0 means the date belongs to the last week of the previous year.
@@ -910,7 +932,7 @@ struct Time
 
   # Returns the day of the week (`Monday..Sunday`).
   def day_of_week : Time::DayOfWeek
-    days = offset_seconds / SECONDS_PER_DAY
+    days = offset_seconds // SECONDS_PER_DAY
     DayOfWeek.new days.to_i % 7 + 1
   end
 
@@ -994,10 +1016,6 @@ struct Time
       raise ArgumentError.new "Invalid month"
     end
 
-    unless 1 <= year <= 9999
-      raise ArgumentError.new "Invalid year"
-    end
-
     days = leap_year?(year) ? DAYS_MONTH_LEAP : DAYS_MONTH
     days[month]
   end
@@ -1031,7 +1049,7 @@ struct Time
   # When the location is `UTC`, the offset is omitted. Offset seconds are omitted if `0`.
   #
   # The name of the location is appended unless it is a fixed zone offset.
-  def inspect(io : IO, with_nanoseconds = true)
+  def inspect(io : IO, with_nanoseconds = true) : Nil
     to_s "%F %T", io
 
     if with_nanoseconds
@@ -1049,8 +1067,6 @@ struct Time
       zone.format(io)
       io << ' ' << location.name unless location.fixed?
     end
-
-    io
   end
 
   # Prints this `Time` to *io*.
@@ -1059,7 +1075,7 @@ struct Time
   # Nanoseconds are always omitted.
   # When the location is `UTC`, the offset is replaced with the string `UTC`.
   # Offset seconds are omitted if `0`.
-  def to_s(io : IO)
+  def to_s(io : IO) : Nil
     to_s("%F %T ", io)
 
     if utc?
@@ -1229,7 +1245,7 @@ struct Time
   # time.to_unix_ms # => 1452567845678
   # ```
   def to_unix_ms : Int64
-    to_unix * 1_000 + (nanosecond / NANOSECONDS_PER_MILLISECOND)
+    to_unix * 1_000 + (nanosecond // NANOSECONDS_PER_MILLISECOND)
   end
 
   # Returns the number of seconds since the Unix epoch
@@ -1317,8 +1333,8 @@ struct Time
   end
 
   def_at_beginning(year) { Time.local(year, 1, 1, location: location) }
-  def_at_beginning(semester) { Time.local(year, ((month - 1) / 6) * 6 + 1, 1, location: location) }
-  def_at_beginning(quarter) { Time.local(year, ((month - 1) / 3) * 3 + 1, 1, location: location) }
+  def_at_beginning(semester) { Time.local(year, ((month - 1) // 6) * 6 + 1, 1, location: location) }
+  def_at_beginning(quarter) { Time.local(year, ((month - 1) // 3) * 3 + 1, 1, location: location) }
   def_at_beginning(month) { Time.local(year, month, 1, location: location) }
   def_at_beginning(day) { Time.local(year, month, day, location: location) }
   def_at_beginning(hour) { Time.local(year, month, day, hour, location: location) }
@@ -1407,17 +1423,25 @@ struct Time
     end
   {% end %}
 
-  protected def self.absolute_days(year, month, day)
-    days = leap_year?(year) ? DAYS_MONTH_LEAP : DAYS_MONTH
+  # Returns the number of days from `0001-01-01` to the date indicated
+  # by *year*, *month*, *day* in the proleptic Gregorian calendar.
+  #
+  # The valid range for *year* is `1..9999` and for *month* `1..12`. The value
+  # of *day*  is not validated and can exceed the number of days in the specified
+  # month or even a year.
+  protected def self.absolute_days(year, month, day) : Int32
+    days_per_month = leap_year?(year) ? DAYS_MONTH_LEAP : DAYS_MONTH
 
-    temp = 0
-    m = 1
-    while m < month
-      temp += days[m]
-      m += 1
+    days_in_year = day - 1
+    month_index = 1
+    while month_index < month
+      days_in_year += days_per_month[month_index]
+      month_index += 1
     end
 
-    (day - 1) + temp + (365*(year - 1)) + ((year - 1)/4) - ((year - 1)/100) + ((year - 1)/400)
+    year -= 1
+
+    year * 365 + year // 4 - year // 100 + year // 400 + days_in_year
   end
 
   protected def total_seconds
@@ -1428,48 +1452,53 @@ struct Time
     @seconds + offset
   end
 
-  protected def year_month_day_day_year
-    m = 1
+  # Returns the calendrical representation of this instance's date.
+  #
+  # The return value is a tuple consisting of year (`1..9999`), month (`1..12`),
+  # day (`1..31`) and ordinal day of the year (`1..366`).
+  protected def year_month_day_day_year : {Int32, Int32, Int32, Int32}
+    total_days = (offset_seconds // SECONDS_PER_DAY).to_i
 
-    days = DAYS_MONTH
-    totaldays = offset_seconds / SECONDS_PER_DAY
+    num400 = total_days // DAYS_PER_400_YEARS
+    total_days -= num400 * DAYS_PER_400_YEARS
 
-    num400 = totaldays / DAYS_PER_400_YEARS
-    totaldays -= num400 * DAYS_PER_400_YEARS
-
-    num100 = totaldays / DAYS_PER_100_YEARS
+    num100 = total_days // DAYS_PER_100_YEARS
     if num100 == 4 # leap
       num100 = 3
     end
-    totaldays -= num100 * DAYS_PER_100_YEARS
+    total_days -= num100 * DAYS_PER_100_YEARS
 
-    num4 = totaldays / DAYS_PER_4_YEARS
-    totaldays -= num4 * DAYS_PER_4_YEARS
+    num4 = total_days // DAYS_PER_4_YEARS
+    total_days -= num4 * DAYS_PER_4_YEARS
 
-    numyears = totaldays / 365
-
+    numyears = total_days // 365
     if numyears == 4 # leap
       numyears = 3
     end
+    total_days -= numyears * 365
 
-    year = num400*400 + num100*100 + num4*4 + numyears + 1
+    year = num400 * 400 + num100 * 100 + num4 * 4 + numyears + 1
 
-    totaldays -= numyears * 365
-    day_year = totaldays + 1
+    ordinal_day_in_year = total_days + 1
 
     if (numyears == 3) && ((num100 == 3) || !(num4 == 24)) # 31 dec leapyear
-      days = DAYS_MONTH_LEAP
+      days_per_month = DAYS_MONTH_LEAP
+    else
+      days_per_month = DAYS_MONTH
     end
 
-    while totaldays >= days[m]
-      totaldays -= days[m]
-      m += 1
+    month = 1
+    while true
+      days_in_month = days_per_month[month]
+      break if total_days < days_in_month
+
+      total_days -= days_in_month
+      month += 1
     end
 
-    month = m
-    day = totaldays + 1
+    day = total_days + 1
 
-    {year.to_i, month.to_i, day.to_i, day_year.to_i}
+    {year, month, day, ordinal_day_in_year}
   end
 
   protected def self.zone_offset_at(seconds, location)

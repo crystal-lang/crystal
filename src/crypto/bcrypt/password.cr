@@ -9,8 +9,8 @@ require "../subtle"
 # password = Crypto::Bcrypt::Password.create("super secret", cost: 10)
 # # => $2a$10$rI4xRiuAN2fyiKwynO6PPuorfuoM4L2PVv6hlnVJEmNLjqcibAfHq
 #
-# password == "wrong secret" # => false
-# password == "super secret" # => true
+# password.verify("wrong secret") # => false
+# password.verify("super secret") # => true
 # ```
 #
 # See `Crypto::Bcrypt` for hints to select the cost when generating hashes.
@@ -18,6 +18,8 @@ class Crypto::Bcrypt::Password
   # Hashes a password.
   #
   # ```
+  # require "crypto/bcrypt/password"
+  #
   # password = Crypto::Bcrypt::Password.create("super secret", cost: 10)
   # # => $2a$10$rI4xRiuAN2fyiKwynO6PPuorfuoM4L2PVv6hlnVJEmNLjqcibAfHq
   # ```
@@ -33,6 +35,8 @@ class Crypto::Bcrypt::Password
   # Loads a bcrypt hash.
   #
   # ```
+  # require "crypto/bcrypt/password"
+  #
   # password = Crypto::Bcrypt::Password.new("$2a$10$X6rw/jDiLBuzHV./JjBNXe8/Po4wTL0fhdDNdAdjcKN/Fup8tGCya")
   # password.version # => "2a"
   # password.salt    # => "X6rw/jDiLBuzHV./JjBNXe"
@@ -54,20 +58,27 @@ class Crypto::Bcrypt::Password
   # Verifies a password against the hash.
   #
   # ```
+  # require "crypto/bcrypt/password"
+  #
   # password = Crypto::Bcrypt::Password.create("super secret")
-  # password == "wrong secret" # => false
-  # password == "super secret" # => true
+  # password.verify("wrong secret") # => false
+  # password.verify("super secret") # => true
   # ```
-  def ==(password : String) : Bool
+  def verify(password : String) : Bool
     hashed_password = Bcrypt.new(password, salt, cost)
     Crypto::Subtle.constant_time_compare(@raw_hash, hashed_password)
   end
 
-  def to_s(io)
+  @[Deprecated("Use `Crypto::Bcrypt::Password#verify`")]
+  def ==(password : String) : Bool
+    verify(password)
+  end
+
+  def to_s(io : IO) : Nil
     io << @raw_hash
   end
 
-  def inspect(io)
+  def inspect(io : IO) : Nil
     to_s(io)
   end
 end

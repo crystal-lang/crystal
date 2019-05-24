@@ -2,7 +2,7 @@ require "../../spec_helper"
 
 describe "Semantic: c enum" do
   it "types enum value" do
-    assert_type("lib LibFoo; enum Bar; X, Y, Z = 10, W; end; end; LibFoo::Bar::X") { types["LibFoo"].types["Bar"] }
+    assert_type("lib LibFoo; enum Bar; X; Y; Z = 10, W; end; end; LibFoo::Bar::X") { types["LibFoo"].types["Bar"] }
   end
 
   it "allows using an enum as a type in a fun" do

@@ -1076,6 +1076,25 @@ module Crystal
     end
   end
 
+  class OffsetOf < ASTNode
+    property offsetof_type : ASTNode
+    property instance_var : ASTNode
+
+    def initialize(@offsetof_type, @instance_var)
+    end
+
+    def accept_children(visitor)
+      @offsetof_type.accept visitor
+      @instance_var.accept visitor
+    end
+
+    def clone_without_location
+      OffsetOf.new(@offsetof_type.clone, @instance_var.clone)
+    end
+
+    def_equals_and_hash @offsetof_type, @instance_var
+  end
+
   class VisibilityModifier < ASTNode
     property modifier : Visibility
     property exp : ASTNode

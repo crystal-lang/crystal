@@ -462,4 +462,14 @@ describe "Semantic: enum" do
       Foo.new(1)
       )) { string }
   end
+
+  it "gives error on enum overflow" do
+    assert_error %(
+      @[Flags]
+      enum Foo : UInt8
+        #{Array.new(9) { |i| "V#{i + 1}" }.join "\n"}
+      end
+      ),
+      "value of enum member V9 would overflow the base type UInt8"
+  end
 end

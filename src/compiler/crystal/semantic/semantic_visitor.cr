@@ -485,7 +485,7 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
       node.raise "can't declare variable of generic non-instantiated type #{type}"
     end
 
-    Crystal.check_type_allowed_in_generics(node, type, "can't use #{type} as the type of #{variable_kind}")
+    Crystal.check_type_can_be_stored(node, type, "can't use #{type} as the type of #{variable_kind}")
 
     declared_type
   end
@@ -500,9 +500,10 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
     scope.as(ClassVarContainer)
   end
 
-  def interpret_enum_value(node : ASTNode, target_type = nil)
-    interpreter = MathInterpreter.new(current_type, self)
-    interpreter.interpret(node, target_type)
+  def interpret_enum_value(node : ASTNode, target_type : IntegerType? = nil)
+    MathInterpreter
+      .new(current_type, self, target_type)
+      .interpret(node)
   end
 
   def inside_exp?

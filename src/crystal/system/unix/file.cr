@@ -125,7 +125,7 @@ module Crystal::System::File
   private def self.to_timeval(time : ::Time)
     t = uninitialized LibC::Timeval
     t.tv_sec = typeof(t.tv_sec).new(time.to_unix)
-    t.tv_usec = typeof(t.tv_usec).new(time.nanosecond / ::Time::NANOSECONDS_PER_MICROSECOND)
+    t.tv_usec = typeof(t.tv_usec).new(time.nanosecond // ::Time::NANOSECONDS_PER_MICROSECOND)
     t
   end
 

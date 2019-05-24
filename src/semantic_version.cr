@@ -67,7 +67,7 @@ struct SemanticVersion
   # semver = SemanticVersion.parse("0.27.1")
   # semver.to_s # => "0.27.1"
   # ```
-  def to_s(io : IO)
+  def to_s(io : IO) : Nil
     io << major << '.' << minor << '.' << patch
     unless prerelease.identifiers.empty?
       io << '-'
@@ -78,7 +78,10 @@ struct SemanticVersion
     end
   end
 
-  # The comparison operator
+  # The comparison operator.
+  #
+  # Returns `-1`, `0` or `1` depending on whether `self`'s version is lower than *other*'s,
+  # equal to *other*'s version or greater than *other*'s version.
   #
   # ```
   # require "semantic_version"
@@ -141,11 +144,14 @@ struct SemanticVersion
     # semver = SemanticVersion.parse("0.27.1-rc.1")
     # semver.prerelease.to_s # => "rc.1"
     # ```
-    def to_s(io : IO)
+    def to_s(io : IO) : Nil
       identifiers.join('.', io)
     end
 
-    # The comparison operator
+    # The comparison operator.
+    #
+    # Returns `-1`, `0` or `1` depending on whether `self`'s pre-release is lower than *other*'s,
+    # equal to *other*'s pre-release or greater than *other*'s pre-release.
     #
     # ```
     # require "semantic_version"

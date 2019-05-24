@@ -461,12 +461,12 @@ class Crystal::Doc::Type
     @generator.macro(self, a_macro)
   end
 
-  def to_s(io)
+  def to_s(io : IO) : Nil
     io << name
     append_type_vars io
   end
 
-  private def append_type_vars(io)
+  private def append_type_vars(io : IO) : Nil
     type = @type
     if type_vars = type_vars()
       io << '('
@@ -836,5 +836,9 @@ class Crystal::Doc::Type
       builder.field "full_name", full_name
       builder.field "name", name
     end
+  end
+
+  def annotations(annotation_type)
+    @type.annotations(annotation_type)
   end
 end

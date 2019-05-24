@@ -5,11 +5,6 @@ require "llvm"
 NUM_CELLS          = 30000
 CELL_SIZE_IN_BYTES =     1
 
-def error(message)
-  puts message
-  exit 1
-end
-
 abstract class Instruction
   abstract def compile(program, bb)
 end
@@ -166,12 +161,12 @@ class Program
       when '['
         matching_close_index = find_matching_close(source, i)
         unless matching_close_index
-          error "Unmatched '[' at position #{i}"
+          abort "Unmatched '[' at position #{i}"
         end
         program << Loop.new(parse(source, i + 1, matching_close_index))
         i = matching_close_index
       when ']'
-        error "Unmatched ']' at position #{i}"
+        abort "Unmatched ']' at position #{i}"
       end
       i += 1
     end
@@ -253,11 +248,11 @@ end
 
 filename = ARGV.first?
 unless filename
-  error "Missing filename"
+  abort "Missing filename"
 end
 
 unless File.file?(filename)
-  error "'#{filename} is not a file"
+  abort "#{filename} is not a file"
 end
 
 source = File.read(filename)

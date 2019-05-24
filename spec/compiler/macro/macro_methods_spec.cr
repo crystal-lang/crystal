@@ -169,6 +169,10 @@ module Crystal
         assert_macro "", "{{1 <=> -1}}", [] of ASTNode, "1"
       end
 
+      it "executes <=> (returns nil)" do
+        assert_macro "", "{{0.0/0.0 <=> -1}}", [] of ASTNode, "nil"
+      end
+
       it "executes +" do
         assert_macro "", "{{1 + 2}}", [] of ASTNode, "3"
       end
@@ -187,6 +191,10 @@ module Crystal
 
       it "executes /" do
         assert_macro "", "{{5 / 3}}", [] of ASTNode, "1"
+      end
+
+      it "executes //" do
+        assert_macro "", "{{5 // 3}}", [] of ASTNode, "1"
       end
 
       it "executes %" do
@@ -1378,6 +1386,16 @@ module Crystal
       end
     end
 
+    describe "offsetof methods" do
+      it "executes type" do
+        assert_macro "x", %({{x.type}}), [OffsetOf.new("SomeType".path, "@some_ivar".instance_var)] of ASTNode, "SomeType"
+      end
+
+      it "executes instance_var" do
+        assert_macro "x", %({{x.instance_var}}), [OffsetOf.new("SomeType".path, "@some_ivar".instance_var)] of ASTNode, "@some_ivar"
+      end
+    end
+
     describe "visibility modifier methods" do
       node = VisibilityModifier.new(Visibility::Protected, Def.new("some_def"))
 
@@ -1770,7 +1788,7 @@ module Crystal
             program.stdout = io
             ["bar".string] of ASTNode
           end
-        end.should eq %("bar"\n)
+        end.should eq %(bar\n)
       end
 
       it "p" do

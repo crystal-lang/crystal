@@ -19,7 +19,7 @@ class HTTP::WebSocketHandler
 
       version = context.request.headers["Sec-WebSocket-Version"]?
       unless version == WebSocket::Protocol::VERSION
-        response.status_code = 426
+        response.status = :upgrade_required
         response.headers["Sec-WebSocket-Version"] = WebSocket::Protocol::VERSION
         return
       end
@@ -27,13 +27,13 @@ class HTTP::WebSocketHandler
       key = context.request.headers["Sec-WebSocket-Key"]?
 
       unless key
-        response.status_code = 400
+        response.status = :bad_request
         return
       end
 
       accept_code = WebSocket::Protocol.key_challenge(key)
 
-      response.status_code = 101
+      response.status = :switching_protocols
       response.headers["Upgrade"] = "websocket"
       response.headers["Connection"] = "Upgrade"
       response.headers["Sec-WebSocket-Accept"] = accept_code

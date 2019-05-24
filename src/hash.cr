@@ -1,8 +1,37 @@
 require "crystal/hasher"
 
-# A `Hash` represents a mapping of keys to values.
+# A `Hash` represents a collection of key-value mappings, similar to a dictionary.
 #
-# See the [official docs](http://crystal-lang.org/docs/syntax_and_semantics/literals/hash.html) for the basics.
+# Main operations are storing a key-value mapping (`#[]=`) and
+# querying the value associated to a key (`#[]`). Key-value mappings can also be
+# deleted (`#delete`).
+# Keys are unique within a hash. When adding a key-value mapping with a key that
+# is already in use, the old value will be forgotten.
+#
+# ```
+# # Create a new Hash for mapping String to Int32
+# hash = Hash(String, Int32).new
+# hash["one"] = 1
+# hash["two"] = 2
+# hash["one"] # => 1
+# ```
+#
+# [Hash literals](http://crystal-lang.org/reference/syntax_and_semantics/literals/hash.html)
+# can also be used to create a `Hash`:
+#
+# ```
+# {"one" => 1, "two" => 2}
+# ```
+#
+# Implementation is based on an open hash table.
+# Two objects refer to the same hash key when their hash value (`Object#hash`)
+# is identical and both objects are equal to each other (`Object#==`).
+#
+# Enumeration follows the order that the corresponding keys were inserted.
+#
+# NOTE: When using mutable data types as keys, changing the value of a key after
+# it was inserted into the `Hash` may lead to undefined behaviour. This can be
+# restored by re-indexing the hash with `#rehash`.
 class Hash(K, V)
   include Enumerable({K, V})
   include Iterable({K, V})
@@ -397,6 +426,8 @@ class Hash(K, V)
   #   key_and_value # => {"foo", "bar"}
   # end
   # ```
+  #
+  # The enumeration follows the order the keys were inserted.
   def each : Nil
     current = @first
     while current
@@ -415,6 +446,8 @@ class Hash(K, V)
   # iterator.next # => {"foo", "bar"}
   # iterator.next # => {"baz", "qux"}
   # ```
+  #
+  # The enumeration follows the order the keys were inserted.
   def each
     EntryIterator(K, V).new(self, @first)
   end
@@ -427,6 +460,8 @@ class Hash(K, V)
   #   key # => "foo"
   # end
   # ```
+  #
+  # The enumeration follows the order the keys were inserted.
   def each_key
     each do |key, value|
       yield key
@@ -446,6 +481,8 @@ class Hash(K, V)
   # key = iterator.next
   # key # => "baz"
   # ```
+  #
+  # The enumeration follows the order the keys were inserted.
   def each_key
     KeyIterator(K, V).new(self, @first)
   end
@@ -458,6 +495,8 @@ class Hash(K, V)
   #   value # => "bar"
   # end
   # ```
+  #
+  # The enumeration follows the order the keys were inserted.
   def each_value
     each do |key, value|
       yield value
@@ -477,6 +516,8 @@ class Hash(K, V)
   # value = iterator.next
   # value # => "qux"
   # ```
+  #
+  # The enumeration follows the order the keys were inserted.
   def each_value
     ValueIterator(K, V).new(self, @first)
   end
@@ -688,7 +729,7 @@ class Hash(K, V)
   #
   # ```
   # hash = {:a => 1, :b => 2, :c => 3}
-  # hash.transform_keys { |key| key.to_s } # => {"A" => 1, "B" => 2, "C" => 3}
+  # hash.transform_keys { |key| key.to_s } # => {"a" => 1, "b" => 2, "c" => 3}
   # ```
   def transform_keys(&block : K -> K2) forall K2
     each_with_object({} of K2 => V) do |(key, value), memo|
@@ -702,6 +743,7 @@ class Hash(K, V)
   # ```
   # hash = {:a => 1, :b => 2, :c => 3}
   # hash.transform_values { |value| value + 1 } # => {:a => 2, :b => 3, :c => 4}
+  # ```
   def transform_values(&block : V -> V2) forall V2
     each_with_object({} of K => V2) do |(key, value), memo|
       memo[key] = yield(value)
@@ -715,6 +757,7 @@ class Hash(K, V)
   # hash = {:a => 1, :b => 2, :c => 3}
   # hash.transform_values! { |value| value + 1 }
   # hash # => {:a => 2, :b => 3, :c => 4}
+  # ```
   def transform_values!(&block : V -> V)
     current = @first
     while current
@@ -930,7 +973,7 @@ class Hash(K, V)
     hash
   end
 
-  def inspect(io : IO)
+  def inspect(io : IO) : Nil
     to_s(io)
   end
 
@@ -941,7 +984,7 @@ class Hash(K, V)
   # h.to_s       # => "{\"foo\" => \"bar\"}"
   # h.to_s.class # => String
   # ```
-  def to_s(io : IO)
+  def to_s(io : IO) : Nil
     executed = exec_recursive(:to_s) do
       io << '{'
       found_one = false
@@ -978,7 +1021,12 @@ class Hash(K, V)
     self
   end
 
-  def rehash
+  # Rebuilds the hash table based on the current value of each key.
+  #
+  # When using mutable data types as keys, changing the value of a key after
+  # it was inserted into the `Hash` may lead to undefined behaviour.
+  # This method re-indexes the hash using the current key values.
+  def rehash : Nil
     new_size = calculate_new_size(@size)
     @buckets = @buckets.realloc(new_size)
     new_size.times { |i| @buckets[i] = nil }
@@ -1085,10 +1133,6 @@ class Hash(K, V)
       else
         stop
       end
-    end
-
-    def rewind
-      @current = @hash.@first
     end
   end
 

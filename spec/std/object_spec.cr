@@ -3,7 +3,7 @@ require "../support/finalize"
 
 private class StringWrapper
   delegate downcase, to: @string
-  delegate upcase, capitalize, at, scan, to: @string
+  delegate upcase, capitalize, char_at, scan, to: @string
 
   @string : String
 
@@ -152,10 +152,10 @@ describe Object do
       wrapper.upcase.should eq("HELLO")
       wrapper.capitalize.should eq("Hello")
 
-      wrapper.at(0).should eq('H')
-      wrapper.at(index: 1).should eq('e')
+      wrapper.char_at(0).should eq('H')
+      wrapper.char_at(index: 1).should eq('e')
 
-      wrapper.at(10) { 20 }.should eq(20)
+      wrapper.char_at(10) { 20 }.should eq(20)
 
       matches = [] of String
       wrapper.scan(/l/) do |match|

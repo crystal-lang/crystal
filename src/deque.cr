@@ -224,7 +224,7 @@ class Deque(T)
     rindex -= @capacity if rindex >= @capacity
     value = @buffer[rindex]
 
-    if index > @size / 2
+    if index > @size // 2
       # Move following items to the left, starting with the first one
       # [56-01234] -> [6x-01235]
       dst = rindex
@@ -296,7 +296,7 @@ class Deque(T)
     rindex = @start + index
     rindex -= @capacity if rindex >= @capacity
 
-    if index > @size / 2
+    if index > @size // 2
       # Move following items to the right, starting with the last one
       # [56-01234] -> [4560123^]
       dst = @start + @size
@@ -330,7 +330,7 @@ class Deque(T)
     self
   end
 
-  def inspect(io : IO)
+  def inspect(io : IO) : Nil
     executed = exec_recursive(:inspect) do
       io << "Deque{"
       join ", ", io, &.inspect(io)
@@ -421,7 +421,7 @@ class Deque(T)
       @start = (@start + n) % @capacity
     else
       # Turn *n* into an equivalent index in range -size/2 .. size/2
-      half = @size / 2
+      half = @size // 2
       if n.abs >= half
         n = (n + half) % @size - half
       end
@@ -483,7 +483,7 @@ class Deque(T)
     self
   end
 
-  def to_s(io : IO)
+  def to_s(io : IO) : Nil
     inspect(io)
   end
 

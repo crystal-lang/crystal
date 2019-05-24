@@ -113,7 +113,19 @@ module Crystal
     # A `ProgressTracker` object which tracks compilation progress.
     property progress_tracker = ProgressTracker.new
 
-    property codegen_target = Codegen::Target.new
+    property codegen_target = Config.default_target
+
+    # Which kind of warnings wants to be detected.
+    property warnings : Warnings = Warnings::None
+
+    # Paths to ignore for warnings detection.
+    property warnings_exclude : Array(String) = [] of String
+
+    # Detected warning failures.
+    property warning_failures = [] of String
+
+    # If `true` compiler will error if warnings are found.
+    property error_on_warnings : Bool = false
 
     def initialize
       super(self, self, "main")
@@ -123,11 +135,11 @@ module Crystal
       types = self.types
 
       types["Object"] = object = @object = NonGenericClassType.new self, self, "Object", nil
-      object.allowed_in_generics = false
+      object.can_be_stored = false
       object.abstract = true
 
       types["Reference"] = reference = @reference = NonGenericClassType.new self, self, "Reference", object
-      reference.allowed_in_generics = false
+      reference.can_be_stored = false
 
       types["Value"] = value = @value = NonGenericClassType.new self, self, "Value", object
       abstract_value_type(value)
@@ -164,18 +176,18 @@ module Crystal
       types["Symbol"] = @symbol = SymbolType.new self, self, "Symbol", value, 4
       types["Pointer"] = pointer = @pointer = PointerType.new self, self, "Pointer", value, ["T"]
       pointer.struct = true
-      pointer.allowed_in_generics = false
+      pointer.can_be_stored = false
 
       types["Tuple"] = tuple = @tuple = TupleType.new self, self, "Tuple", value, ["T"]
-      tuple.allowed_in_generics = false
+      tuple.can_be_stored = false
 
       types["NamedTuple"] = named_tuple = @named_tuple = NamedTupleType.new self, self, "NamedTuple", value, ["T"]
-      named_tuple.allowed_in_generics = false
+      named_tuple.can_be_stored = false
 
       types["StaticArray"] = static_array = @static_array = StaticArrayType.new self, self, "StaticArray", value, ["T", "N"]
       static_array.struct = true
       static_array.declare_instance_var("@buffer", static_array.type_parameter("T"))
-      static_array.allowed_in_generics = false
+      static_array.can_be_stored = false
 
       types["String"] = string = @string = NonGenericClassType.new self, self, "String", reference
       string.declare_instance_var("@bytesize", int32)
@@ -183,7 +195,7 @@ module Crystal
       string.declare_instance_var("@c", uint8)
 
       types["Class"] = klass = @class = MetaclassType.new(self, object, value, "Class")
-      klass.allowed_in_generics = false
+      klass.can_be_stored = false
 
       types["Struct"] = struct_t = @struct_t = NonGenericClassType.new self, self, "Struct", value
       abstract_value_type(struct_t)
@@ -226,6 +238,7 @@ module Crystal
       types["Raises"] = @raises_annotation = AnnotationType.new self, self, "Raises"
       types["ReturnsTwice"] = @returns_twice_annotation = AnnotationType.new self, self, "ReturnsTwice"
       types["ThreadLocal"] = @thread_local_annotation = AnnotationType.new self, self, "ThreadLocal"
+      types["Deprecated"] = @deprecated_annotation = AnnotationType.new self, self, "Deprecated"
 
       define_crystal_constants
     end
@@ -256,6 +269,7 @@ module Crystal
       define_crystal_string_constant "DEFAULT_PATH", Crystal::Config.path
       define_crystal_string_constant "DESCRIPTION", Crystal::Config.description
       define_crystal_string_constant "PATH", Crystal::CrystalPath.default_path
+      define_crystal_string_constant "LIBRARY_PATH", Crystal::CrystalLibraryPath.default_path
       define_crystal_string_constant "VERSION", Crystal::Config.version
       define_crystal_string_constant "LLVM_VERSION", Crystal::Config.llvm_version
     end
@@ -446,7 +460,7 @@ module Crystal
                      packed_annotation thread_local_annotation no_inline_annotation
                      always_inline_annotation naked_annotation returns_twice_annotation
                      raises_annotation primitive_annotation call_convention_annotation
-                     flags_annotation link_annotation extern_annotation) %}
+                     flags_annotation link_annotation extern_annotation deprecated_annotation) %}
       def {{name.id}}
         @{{name.id}}.not_nil!
       end
@@ -526,7 +540,7 @@ module Crystal
     private def abstract_value_type(type)
       type.abstract = true
       type.struct = true
-      type.allowed_in_generics = false
+      type.can_be_stored = false
     end
 
     # Next come overrides for the type system
@@ -570,16 +584,13 @@ module Crystal
     def check_private(node)
       return nil unless node.visibility.private?
 
-      location = node.location
-      return nil unless location
-
-      filename = location.filename
-      return nil unless filename.is_a?(String)
+      filename = node.location.try &.original_filename
+      return nil unless filename
 
       file_module(filename)
     end
 
-    def to_s(io)
+    def to_s(io : IO) : Nil
       io << "<Program>"
     end
   end

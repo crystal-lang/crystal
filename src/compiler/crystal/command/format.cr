@@ -72,25 +72,17 @@ class Crystal::Command
     )
       @format_stdin = files.size == 1 && files[0] == "-"
 
-      includes = normalize_paths includes
-      excludes = normalize_paths excludes
+      includes.map! { |p| Crystal.normalize_path p }
+      excludes.map! { |p| Crystal.normalize_path p }
       excludes = excludes - includes
       if files.empty?
         files = Dir["./**/*.cr"]
       else
-        files = normalize_paths files
+        files.map! { |p| Crystal.normalize_path p }
       end
 
       @files = files
       @excludes = excludes
-    end
-
-    private def normalize_paths(paths)
-      path_start = ".#{File::SEPARATOR}"
-      paths.map do |path|
-        path = path_start + path unless path.starts_with?(path_start)
-        path.rstrip(File::SEPARATOR)
-      end
     end
 
     def run

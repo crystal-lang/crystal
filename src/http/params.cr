@@ -8,6 +8,8 @@ module HTTP
     # Parses an HTTP query string into a `HTTP::Params`
     #
     # ```
+    # require "http/params"
+    #
     # HTTP::Params.parse("foo=bar&foo=baz&qux=zoo")
     # # => #<HTTP::Params @raw_params = {"foo" => ["bar", "baz"], "qux" => ["zoo"]}>
     # ```
@@ -23,6 +25,8 @@ module HTTP
     # Parses an HTTP query and yields each key-value pair.
     #
     # ```
+    # require "http/params"
+    #
     # query = "foo=bar&foo=baz&qux=zoo"
     # HTTP::Params.parse(query) do |key, value|
     #   # ...
@@ -79,6 +83,8 @@ module HTTP
     # Returns the given key value pairs as a url-encoded HTTP form/query.
     #
     # ```
+    # require "http/params"
+    #
     # HTTP::Params.encode({"foo" => "bar", "baz" => "qux"}) # => "foo=bar&baz=qux"
     # ```
     def self.encode(hash : Hash(String, String))
@@ -92,6 +98,8 @@ module HTTP
     # Returns the given key value pairs as a url-encoded HTTP form/query.
     #
     # ```
+    # require "http/params"
+    #
     # HTTP::Params.encode({foo: "bar", baz: "qux"}) # => "foo=bar&baz=qux"
     # ```
     def self.encode(named_tuple : NamedTuple)
@@ -109,6 +117,8 @@ module HTTP
     # Keys and values are escaped using `URI#escape`.
     #
     # ```
+    # require "http/params"
+    #
     # params = HTTP::Params.build do |form|
     #   form.add "color", "black"
     #   form.add "name", "crystal"
@@ -143,6 +153,8 @@ module HTTP
     # Returns first value for specified param name.
     #
     # ```
+    # require "http/params"
+    #
     # params = HTTP::Params.parse("email=john@example.org")
     # params["email"]              # => "john@example.org"
     # params["non_existent_param"] # KeyError
@@ -172,8 +184,8 @@ module HTTP
     # Returns `true` if params is empty.
     #
     # ```
-    # Params.new.empty?                              # => true
-    # Params.parse("foo=bar&foo=baz&qux=zoo").empty? # => false
+    # HTTP::Params.new.empty?                              # => true
+    # HTTP::Params.parse("foo=bar&foo=baz&qux=zoo").empty? # => false
     # ```
     delegate empty?, to: raw_params
 
@@ -296,11 +308,13 @@ module HTTP
     # Serializes to string representation as http url-encoded form.
     #
     # ```
+    # require "http/params"
+    #
     # params = HTTP::Params.parse("item=keychain&item=keynote&email=john@example.org")
     # params.to_s # => "item=keychain&item=keynote&email=john%40example.org"
     # ```
     # TODO: `to_s` should escape @ to %40 ?
-    def to_s(io)
+    def to_s(io : IO) : Nil
       builder = Builder.new(io)
       each do |name, value|
         builder.add(name, value)
@@ -339,7 +353,7 @@ module HTTP
         self
       end
 
-      def to_s(io)
+      def to_s(io : IO) : Nil
         io << @io.to_s
       end
     end

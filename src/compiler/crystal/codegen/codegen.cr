@@ -82,6 +82,14 @@ module Crystal
     def instance_size_of(type)
       llvm_typer.size_of(llvm_typer.llvm_struct_type(type))
     end
+
+    def offset_of(type, element_index)
+      llvm_typer.offset_of(llvm_typer.llvm_type(type), element_index)
+    end
+
+    def instance_offset_of(type, element_index)
+      llvm_typer.offset_of(llvm_typer.llvm_struct_type(type), element_index)
+    end
   end
 
   class CodeGenVisitor < Visitor
@@ -574,9 +582,17 @@ module Crystal
 
     def visit(node : ProcPointer)
       owner = node.call.target_def.owner
+
       if obj = node.obj
         accept obj
-        call_self = @last
+
+        # If obj is a primitive like an integer we need to pass
+        # the variable as is (without loading it)
+        if obj.is_a?(Var) && obj.type.is_a?(PrimitiveType)
+          call_self = context.vars[obj.name].pointer
+        else
+          call_self = @last
+        end
       elsif owner.passed_as_self?
         call_self = llvm_self
       end
@@ -1230,13 +1246,17 @@ module Crystal
       to_type = node.to.type
 
       resulting_type = node.type
-      non_nilable_type = node.non_nilable_type
 
       filtered_type = obj_type.filter_by(to_type)
 
-      if !filtered_type
+      unless filtered_type
         @last = upcast llvm_nil, resulting_type, @program.nil
-      elsif node.upcast?
+        return
+      end
+
+      non_nilable_type = node.non_nilable_type
+
+      if node.upcast?
         @last = upcast last_value, non_nilable_type, obj_type
         @last = upcast @last, resulting_type, non_nilable_type
       elsif obj_type != non_nilable_type

@@ -1304,4 +1304,52 @@ describe "Semantic: module" do
       ),
       "no overload matches"
   end
+
+  it "extends module from generic class and calls class method (#7167)" do
+    assert_type(%(
+      module Foo
+        def foo
+          1
+        end
+      end
+
+      class Gen(T)
+        extend Foo
+      end
+
+      Gen(Int32).foo
+      )) { int32 }
+  end
+
+  it "extends generic module from generic class and calls class method (#7167)" do
+    assert_type(%(
+      module Foo(T)
+        def foo
+          T
+        end
+      end
+
+      class Gen(U)
+        extend Foo(U)
+      end
+
+      Gen(Int32).foo
+      )) { int32.metaclass }
+  end
+
+  it "extends generic module from generic module and calls class method (#7167)" do
+    assert_type(%(
+      module Foo(T)
+        def foo
+          T
+        end
+      end
+
+      module Gen(U)
+        extend Foo(U)
+      end
+
+      Gen(Int32).foo
+      )) { int32.metaclass }
+  end
 end

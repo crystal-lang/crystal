@@ -3,13 +3,13 @@ require "./semantic_visitor"
 # Interprets math expressions like 1 + 2 for enum values and
 # constant values that are being used for the N of a StaticArray.
 struct Crystal::MathInterpreter
-  def initialize(@path_lookup : Type, @visitor : SemanticVisitor? = nil)
+  def initialize(@path_lookup : Type, @visitor : SemanticVisitor? = nil, @target_type : IntegerType? = nil)
   end
 
-  def interpret(node : NumberLiteral, target_type = nil)
+  def interpret(node : NumberLiteral)
     case node.kind
     when :i8, :i16, :i32, :i64, :u8, :u16, :u32, :u64
-      target_kind = target_type.try(&.kind) || node.kind
+      target_kind = @target_type.try(&.kind) || node.kind
       case target_kind
       when :i8  then node.value.to_i8? || node.raise "invalid Int8: #{node.value}"
       when :u8  then node.value.to_u8? || node.raise "invalid UInt8: #{node.value}"
@@ -27,17 +27,17 @@ struct Crystal::MathInterpreter
     end
   end
 
-  def interpret(node : Call, target_type = nil)
+  def interpret(node : Call)
     obj = node.obj
     if obj
       if obj.is_a?(Path)
-        value = interpret_call_macro?(node, target_type)
+        value = interpret_call_macro?(node)
         return value if value
       end
 
       case node.args.size
       when 0
-        left = interpret(obj, target_type)
+        left = interpret(obj)
 
         case node.name
         when "+" then +left
@@ -48,43 +48,47 @@ struct Crystal::MathInterpreter
           when Int32 then -left
           when Int64 then -left
           else
-            interpret_call_macro(node, target_type)
+            interpret_call_macro(node)
           end
         when "~" then ~left
         else
-          interpret_call_macro(node, target_type)
+          interpret_call_macro(node)
         end
       when 1
-        left = interpret(obj, target_type)
-        right = interpret(node.args.first, target_type)
+        left = interpret(obj)
+        right = interpret(node.args.first)
 
         case node.name
         when "+"  then left + right
         when "-"  then left - right
         when "*"  then left * right
+        when "&+" then left &+ right
+        when "&-" then left &- right
+        when "&*" then left &* right
         when "/"  then left / right
+        when "//" then left // right
         when "&"  then left & right
         when "|"  then left | right
         when "<<" then left << right
         when ">>" then left >> right
         when "%"  then left % right
         else
-          interpret_call_macro(node, target_type)
+          interpret_call_macro(node)
         end
       else
         node.raise "invalid constant value"
       end
     else
-      interpret_call_macro(node, target_type)
+      interpret_call_macro(node)
     end
   end
 
-  def interpret_call_macro(node : Call, target_type = nil)
-    interpret_call_macro?(node, target_type) ||
+  def interpret_call_macro(node : Call)
+    interpret_call_macro?(node) ||
       node.raise("invalid constant value")
   end
 
-  def interpret_call_macro?(node : Call, target_type = nil)
+  def interpret_call_macro?(node : Call)
     visitor = @visitor
     return unless visitor
 
@@ -95,23 +99,23 @@ struct Crystal::MathInterpreter
     end
 
     if visitor.expand_macro(node, raise_on_missing_const: false, first_pass: true)
-      return interpret(node.expanded.not_nil!, target_type)
+      return interpret(node.expanded.not_nil!)
     end
 
     nil
   end
 
-  def interpret(node : Path, target_type = nil)
+  def interpret(node : Path)
     type = @path_lookup.lookup_type_var(node)
     case type
     when Const
-      interpret(type.value, target_type)
+      interpret(type.value)
     else
       node.raise "invalid constant value"
     end
   end
 
-  def interpret(node : Expressions, target_type = nil)
+  def interpret(node : Expressions)
     if node.expressions.size == 1
       interpret(node.expressions.first)
     else
@@ -119,7 +123,7 @@ struct Crystal::MathInterpreter
     end
   end
 
-  def interpret(node : ASTNode, target_type = nil)
+  def interpret(node : ASTNode)
     node.raise "invalid constant value"
   end
 end

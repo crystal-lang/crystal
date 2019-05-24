@@ -208,9 +208,9 @@ class Process
       dst_io
     when Redirect::Close
       if dst_io == STDIN
-        File.open(File::DEVNULL, "r")
+        File.open(File::NULL, "r")
       else
-        File.open(File::DEVNULL, "w")
+        File.open(File::NULL, "w")
       end
     else
       raise "BUG: impossible type in ExecStdio #{stdio.class}"
@@ -321,9 +321,9 @@ class Process
       dst_io
     when Redirect::Close
       if dst_io == STDIN
-        File.open(File::DEVNULL, "r")
+        File.open(File::NULL, "r")
       else
-        File.open(File::DEVNULL, "w")
+        File.open(File::NULL, "w")
       end
     else
       raise "BUG: impossible type in stdio #{stdio.class}"
@@ -430,8 +430,8 @@ class Process
   end
 
   ORIGINAL_STDIN  = IO::FileDescriptor.new(0, blocking: true)
-  ORIGINAL_STDOUT = IO::FileDescriptor.new(1, blocking: true).tap { |f| f.flush_on_newline = true }
-  ORIGINAL_STDERR = IO::FileDescriptor.new(2, blocking: true).tap { |f| f.flush_on_newline = true }
+  ORIGINAL_STDOUT = IO::FileDescriptor.new(1, blocking: true)
+  ORIGINAL_STDERR = IO::FileDescriptor.new(2, blocking: true)
 
   # :nodoc:
   protected def self.exec_internal(command, args, env, clear_env, input, output, error, chdir) : NoReturn
@@ -457,7 +457,17 @@ class Process
     argv << Pointer(UInt8).null
 
     LibC.execvp(command, argv)
-    raise Errno.new("execvp")
+
+    error_message = String.build do |io|
+      io << "execvp ("
+      command.inspect_unquoted(io)
+      args.try &.each do |arg|
+        io << ' '
+        arg.inspect(io)
+      end
+      io << ")"
+    end
+    raise Errno.new(error_message)
   end
 
   private def self.reopen_io(src_io : IO::FileDescriptor, dst_io : IO::FileDescriptor)

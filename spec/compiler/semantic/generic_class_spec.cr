@@ -1076,4 +1076,30 @@ describe "Semantic: generic class" do
       f.foo
       )) { generic_class "Foo", 1.int32 }
   end
+
+  it "doesn't consider unbound generic instantiations as concrete (#7200)" do
+    assert_type(%(
+      module Moo
+      end
+
+      abstract class Foo(T)
+        include Moo
+
+        def call
+          T.as(Int32.class)
+        end
+      end
+
+      class Bar(T) < Foo(T)
+      end
+
+      class MooHolder
+        def initialize(@moo : Moo)
+        end
+      end
+
+      moo = MooHolder.new(Bar(Int32).new)
+      moo.@moo.call
+      )) { int32.metaclass }
+  end
 end

@@ -2,6 +2,7 @@
 # It, for example, doesn't include API for the compiler, but does include
 # the fictitious API for the Crystal::Macros module.
 
+require "./annotations"
 require "./big"
 require "./compiler/crystal/macros"
 require "./crypto/**"
@@ -48,12 +49,14 @@ require "./ini"
 require "./levenshtein"
 require "./option_parser"
 require "./partial_comparable"
+require "./path"
 require "./random/**"
 require "./readline"
 require "./semantic_version"
 require "./signal"
 require "./string_pool"
 require "./string_scanner"
+require "./unicode/unicode"
 require "./uri"
 require "./uuid"
 require "./uuid/json"

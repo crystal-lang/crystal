@@ -60,15 +60,15 @@ class File < IO::FileDescriptor
   # return EOF, and any data written will be immediately discarded.
   #
   # ```
-  # File.open(File::DEVNULL) do |file|
+  # File.open(File::NULL) do |file|
   #   file.puts "this is discarded"
   # end
   # ```
-  DEVNULL = {% if flag?(:win32) %}
-              "NUL"
-            {% else %}
-              "/dev/null"
-            {% end %}
+  NULL = {% if flag?(:win32) %}
+           "NUL"
+         {% else %}
+           "/dev/null"
+         {% end %}
 
   include Crystal::System::File
 
@@ -100,7 +100,8 @@ class File < IO::FileDescriptor
   # ab   | Same as the 'a' mode but in binary file mode.
   # ```
   # In binary file mode, line endings are not converted to CRLF on Windows.
-  def self.new(filename : String, mode = "r", perm = DEFAULT_CREATE_PERMISSIONS, encoding = nil, invalid = nil)
+  def self.new(filename : Path | String, mode = "r", perm = DEFAULT_CREATE_PERMISSIONS, encoding = nil, invalid = nil)
+    filename = filename.to_s
     fd = Crystal::System::File.open(filename, mode, perm)
     new(filename, fd, blocking: true, encoding: encoding, invalid: invalid)
   end
@@ -121,8 +122,8 @@ class File < IO::FileDescriptor
   # File.symlink("foo", "bar")
   # File.info?("bar", follow_symlinks: false).try(&.type.symlink?) # => true
   # ```
-  def self.info?(path : String, follow_symlinks = true) : Info?
-    Crystal::System::File.info?(path, follow_symlinks)
+  def self.info?(path : Path | String, follow_symlinks = true) : Info?
+    Crystal::System::File.info?(path.to_s, follow_symlinks)
   end
 
   # Returns a `File::Info` object for the file given by *path* or raises
@@ -139,8 +140,8 @@ class File < IO::FileDescriptor
   # File.symlink("foo", "bar")
   # File.info("bar", follow_symlinks: false).type.symlink? # => true
   # ```
-  def self.info(path, follow_symlinks = true) : Info
-    info?(path, follow_symlinks) || raise Errno.new("Unable to get info for '#{path.inspect_unquoted}'")
+  def self.info(path : Path | String, follow_symlinks = true) : Info
+    info?(path, follow_symlinks) || raise Errno.new("Unable to get info for '#{path.inspect_unquoted}''")
   end
 
   # Returns `true` if *path* exists else returns `false`
@@ -151,8 +152,8 @@ class File < IO::FileDescriptor
   # File.write("foo", "foo")
   # File.exists?("foo") # => true
   # ```
-  def self.exists?(path) : Bool
-    Crystal::System::File.exists?(path)
+  def self.exists?(path : Path | String) : Bool
+    Crystal::System::File.exists?(path.to_s)
   end
 
   # Returns `true` if *path1* and *path2* represents the same file.
@@ -169,7 +170,7 @@ class File < IO::FileDescriptor
   # File.write("foo", "foo")
   # File.size("foo") # => 3
   # ```
-  def self.size(filename) : UInt64
+  def self.size(filename : Path | String) : UInt64
     info(filename).size
   rescue ex : Errno
     raise Errno.new("Error determining size of '#{filename.inspect_unquoted}'", ex.errno)
@@ -184,7 +185,7 @@ class File < IO::FileDescriptor
   # File.write("foo", "foo")
   # File.empty?("foo") # => false
   # ```
-  def self.empty?(path) : Bool
+  def self.empty?(path : Path | String) : Bool
     size(path) == 0
   end
 
@@ -194,8 +195,8 @@ class File < IO::FileDescriptor
   # File.write("foo", "foo")
   # File.readable?("foo") # => true
   # ```
-  def self.readable?(path) : Bool
-    Crystal::System::File.readable?(path)
+  def self.readable?(path : Path | String) : Bool
+    Crystal::System::File.readable?(path.to_s)
   end
 
   # Returns `true` if *path* is writable by the real user id of this process else returns `false`.
@@ -204,8 +205,8 @@ class File < IO::FileDescriptor
   # File.write("foo", "foo")
   # File.writable?("foo") # => true
   # ```
-  def self.writable?(path) : Bool
-    Crystal::System::File.writable?(path)
+  def self.writable?(path : Path | String) : Bool
+    Crystal::System::File.writable?(path.to_s)
   end
 
   # Returns `true` if *path* is executable by the real user id of this process else returns `false`.
@@ -214,8 +215,8 @@ class File < IO::FileDescriptor
   # File.write("foo", "foo")
   # File.executable?("foo") # => false
   # ```
-  def self.executable?(path) : Bool
-    Crystal::System::File.executable?(path)
+  def self.executable?(path : Path | String) : Bool
+    Crystal::System::File.executable?(path.to_s)
   end
 
   # Returns `true` if given *path* exists and is a file.
@@ -227,7 +228,7 @@ class File < IO::FileDescriptor
   # File.file?("dir1")   # => false
   # File.file?("foobar") # => false
   # ```
-  def self.file?(path) : Bool
+  def self.file?(path : Path | String) : Bool
     if info = info?(path)
       info.type.file?
     else
@@ -244,7 +245,7 @@ class File < IO::FileDescriptor
   # File.directory?("dir2")   # => true
   # File.directory?("foobar") # => false
   # ```
-  def self.directory?(path) : Bool
+  def self.directory?(path : Path | String) : Bool
     Dir.exists?(path)
   end
 
@@ -254,17 +255,7 @@ class File < IO::FileDescriptor
   # File.dirname("/foo/bar/file.cr") # => "/foo/bar"
   # ```
   def self.dirname(path) : String
-    path.check_no_null_byte
-    index = path.rindex SEPARATOR
-    if index
-      if index == 0
-        SEPARATOR_STRING
-      else
-        path[0, index]
-      end
-    else
-      "."
-    end
+    Path.new(path).dirname
   end
 
   # Returns the last component of the given *path*.
@@ -273,20 +264,7 @@ class File < IO::FileDescriptor
   # File.basename("/foo/bar/file.cr") # => "file.cr"
   # ```
   def self.basename(path) : String
-    return "" if path.bytesize == 0
-    return SEPARATOR_STRING if path == SEPARATOR_STRING
-
-    path.check_no_null_byte
-
-    last = path.size - 1
-    last -= 1 if path[last] == SEPARATOR
-
-    index = path.rindex SEPARATOR, last
-    if index
-      path[index + 1, last - index]
-    else
-      path
-    end
+    Path.new(path).basename
   end
 
   # Returns the last component of the given *path*.
@@ -297,8 +275,7 @@ class File < IO::FileDescriptor
   # File.basename("/foo/bar/file.cr", ".cr") # => "file"
   # ```
   def self.basename(path, suffix) : String
-    suffix.check_no_null_byte
-    basename(path).chomp(suffix)
+    Path.new(path).basename(suffix.check_no_null_byte)
   end
 
   # Changes the owner of the specified file.
@@ -316,8 +293,8 @@ class File < IO::FileDescriptor
   # File.chown("foo", gid: 100)                        # changes foo's gid
   # File.chown("foo", gid: 100, follow_symlinks: true) # changes baz's gid
   # ```
-  def self.chown(path, uid : Int = -1, gid : Int = -1, follow_symlinks = false)
-    Crystal::System::File.chown(path, uid, gid, follow_symlinks)
+  def self.chown(path : Path | String, uid : Int = -1, gid : Int = -1, follow_symlinks = false)
+    Crystal::System::File.chown(path.to_s, uid, gid, follow_symlinks)
   end
 
   # Changes the permissions of the specified file.
@@ -332,8 +309,8 @@ class File < IO::FileDescriptor
   # File.chmod("foo", 0o700)
   # File.info("foo").permissions.value # => 0o700
   # ```
-  def self.chmod(path, permissions : Int | Permissions)
-    Crystal::System::File.chmod(path, permissions)
+  def self.chmod(path : Path | String, permissions : Int | Permissions)
+    Crystal::System::File.chmod(path.to_s, permissions)
   end
 
   # Deletes the file at *path*. Deleting non-existent file will raise an exception.
@@ -343,8 +320,8 @@ class File < IO::FileDescriptor
   # File.delete("./foo")
   # File.delete("./bar") # raises Errno (No such file or directory)
   # ```
-  def self.delete(path)
-    Crystal::System::File.delete(path)
+  def self.delete(path : Path | String)
+    Crystal::System::File.delete(path.to_s)
   end
 
   # Returns *filename*'s extension, or an empty string if it has no extension.
@@ -353,42 +330,7 @@ class File < IO::FileDescriptor
   # File.extname("foo.cr") # => ".cr"
   # ```
   def self.extname(filename) : String
-    filename.check_no_null_byte
-
-    bytes = filename.to_slice
-
-    return "" if bytes.empty?
-
-    current = bytes.size - 1
-
-    # if the pattern is foo, it has no extension
-    return "" if bytes[current] == '.'.ord
-
-    # position the reader at the last . or SEPARATOR
-    # that is not the first char
-    while bytes[current] != SEPARATOR.ord &&
-          bytes[current] != '.'.ord &&
-          current > 0
-      current -= 1
-    end
-
-    # if we are at the beginning of the string, there is no extension.
-    # /foo or .foo have no extension
-    return "" unless current > 0
-
-    # otherwise we are not at the beginning, and there is a previous char.
-    # if current is '/', then the pattern is prefix/foo and has no extension
-    return "" if bytes[current] == SEPARATOR.ord
-
-    # otherwise the current_char is '.'
-    # if previous is '/', then the pattern is prefix/.foo and has no extension
-    return "" if bytes[current - 1] == SEPARATOR.ord
-
-    # So the current char is '.',
-    # we are not at the beginning,
-    # the previous char is not a '/',
-    # and we have an extension
-    String.new(bytes[current, bytes.size - current])
+    Path.new(filename).extension
   end
 
   # Converts *path* to an absolute path. Relative paths are
@@ -401,41 +343,7 @@ class File < IO::FileDescriptor
   # File.expand_path("baz", "/foo/bar") # => "/foo/bar/baz"
   # ```
   def self.expand_path(path, dir = nil) : String
-    path.check_no_null_byte
-
-    if path.starts_with?('~')
-      home = ENV["HOME"]
-      home = home.chomp('/') unless home == "/"
-
-      if path.size >= 2 && path[1] == SEPARATOR
-        path = home + path[1..-1]
-      elsif path.size < 2
-        return home
-      end
-    end
-
-    unless path.starts_with?(SEPARATOR)
-      dir = dir ? expand_path(dir) : Dir.current
-      path = "#{dir}#{SEPARATOR}#{path}"
-    end
-
-    parts = path.split(SEPARATOR)
-    items = [] of String
-    parts.each do |part|
-      case part
-      when "", "."
-        # Nothing
-      when ".."
-        items.pop?
-      else
-        items << part
-      end
-    end
-
-    String.build do |str|
-      str << SEPARATOR_STRING
-      items.join SEPARATOR_STRING, str
-    end
+    Path.new(path).expand(dir || Dir.current).to_s
   end
 
   class BadPatternError < Exception
@@ -460,7 +368,7 @@ class File < IO::FileDescriptor
   # * `\\` escapes the next character.
   #
   # NOTE: Only `/` is recognized as path separator in both *pattern* and *path*.
-  def self.match?(pattern : String, path : String)
+  def self.match?(pattern : String, path : Path | String)
     expanded_patterns = [] of String
     File.expand_brace_pattern(pattern, expanded_patterns)
 
@@ -670,7 +578,7 @@ class File < IO::FileDescriptor
   # permissions may be set using the *perm* parameter.
   #
   # See `self.new` for what *mode* can be.
-  def self.open(filename, mode = "r", perm = DEFAULT_CREATE_PERMISSIONS, encoding = nil, invalid = nil) : self
+  def self.open(filename : Path | String, mode = "r", perm = DEFAULT_CREATE_PERMISSIONS, encoding = nil, invalid = nil) : self
     new filename, mode, perm, encoding, invalid
   end
 
@@ -679,7 +587,7 @@ class File < IO::FileDescriptor
   # file as an argument, the file will be automatically closed when the block returns.
   #
   # See `self.new` for what *mode* can be.
-  def self.open(filename, mode = "r", perm = DEFAULT_CREATE_PERMISSIONS, encoding = nil, invalid = nil)
+  def self.open(filename : Path | String, mode = "r", perm = DEFAULT_CREATE_PERMISSIONS, encoding = nil, invalid = nil)
     file = new filename, mode, perm, encoding, invalid
     begin
       yield file
@@ -782,8 +690,8 @@ class File < IO::FileDescriptor
   # File.join("foo/", "/bar/", "/baz")   # => "foo/bar/baz"
   # File.join("/foo/", "/bar/", "/baz/") # => "/foo/bar/baz/"
   # ```
-  def self.join(*parts) : String
-    join parts
+  def self.join(*parts : String | Path) : String
+    Path.new(*parts).to_s
   end
 
   # Returns a new string formed by joining the strings using `File::SEPARATOR`.
@@ -794,33 +702,7 @@ class File < IO::FileDescriptor
   # File.join(["/foo/", "/bar/", "/baz/"]) # => "/foo/bar/baz/"
   # ```
   def self.join(parts : Array | Tuple) : String
-    String.build do |str|
-      first = true
-      parts_last_index = parts.size - 1
-      parts.each_with_index do |part, index|
-        part.check_no_null_byte
-        next if part.empty? && index != parts_last_index
-        next if !first && index != parts_last_index && part == SEPARATOR_STRING
-
-        str << SEPARATOR unless first
-
-        byte_start = 0
-        byte_count = part.bytesize
-
-        if !first && part.starts_with?(SEPARATOR)
-          byte_start += 1
-          byte_count -= 1
-        end
-
-        if index != parts_last_index && part.ends_with?(SEPARATOR)
-          byte_count -= 1
-        end
-
-        str.write part.unsafe_byte_slice(byte_start, byte_count)
-
-        first = false
-      end
-    end
+    Path.new(parts).to_s
   end
 
   # Moves *old_filename* to *new_filename*.
@@ -897,11 +779,10 @@ class File < IO::FileDescriptor
     yield io ensure io.close
   end
 
-  def inspect(io)
+  def inspect(io : IO) : Nil
     io << "#<File:" << @path
     io << " (closed)" if closed?
     io << '>'
-    io
   end
 
   # TODO: use fcntl/lockf instead of flock (which doesn't lock over NFS)

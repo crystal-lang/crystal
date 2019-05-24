@@ -244,7 +244,7 @@ struct Crystal::Hasher
   end
 
   private def read_u24(ptr, rest)
-    ptr[0].to_u64 | (ptr[rest/2].to_u64 << 8) | (ptr[rest - 1].to_u64 << 16)
+    ptr[0].to_u64 | (ptr[rest // 2].to_u64 << 8) | (ptr[rest - 1].to_u64 << 16)
   end
 
   private def read_u32(ptr)
@@ -289,8 +289,7 @@ struct Crystal::Hasher
     value.crystal_type_id.hash(self)
   end
 
-  def inspect(io)
+  def inspect(io : IO) : Nil
     io << "#{self.class}(hidden_state)"
-    nil
   end
 end
