@@ -38,13 +38,9 @@ describe HTTP::CompressHandler do
     response2 = HTTP::Client::Response.from_io(io, decompress: false)
     body = response2.body
 
-    io2 = IO::Memory.new
-    deflate = Flate::Writer.new(io2)
-    deflate.print "Hello"
-    deflate.close
-    io2.rewind
-
-    body.to_slice.should eq(io2.to_slice)
+    io2 = IO::Memory.new(body)
+    flate = Flate::Reader.new(io2)
+    flate.gets_to_end.should eq("Hello")
   end
 
   it "deflates gzip if has deflate in 'deflate' Accept-Encoding header" do
@@ -66,12 +62,8 @@ describe HTTP::CompressHandler do
     response2 = HTTP::Client::Response.from_io(io, decompress: false)
     body = response2.body
 
-    io2 = IO::Memory.new
-    deflate = Gzip::Writer.new(io2)
-    deflate.print "Hello"
-    deflate.close
-    io2.rewind
-
-    body.to_slice.should eq(io2.to_slice)
+    io2 = IO::Memory.new(body)
+    gzip = Gzip::Reader.new(io2)
+    gzip.gets_to_end.should eq("Hello")
   end
 end
