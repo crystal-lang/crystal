@@ -69,9 +69,15 @@ class Process
   # Returns a `Tms` for the current process. For the children times, only those
   # of terminated children are returned.
   def self.times : Tms
-    hertz = LibC.sysconf(LibC::SC_CLK_TCK).to_f
-    LibC.times(out tms)
-    Tms.new(tms.tms_utime / hertz, tms.tms_stime / hertz, tms.tms_cutime / hertz, tms.tms_cstime / hertz)
+    LibC.getrusage(LibC::RUSAGE_SELF, out usage)
+    LibC.getrusage(LibC::RUSAGE_CHILDREN, out child)
+
+    Tms.new(
+      usage.ru_utime.tv_sec.to_f64 + usage.ru_utime.tv_usec.to_f64 / 1e6,
+      usage.ru_stime.tv_sec.to_f64 + usage.ru_stime.tv_usec.to_f64 / 1e6,
+      child.ru_utime.tv_sec.to_f64 + child.ru_utime.tv_usec.to_f64 / 1e6,
+      child.ru_stime.tv_sec.to_f64 + child.ru_stime.tv_usec.to_f64 / 1e6,
+    )
   end
 
   # Runs the given block inside a new process and
