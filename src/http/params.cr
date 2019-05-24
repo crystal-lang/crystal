@@ -132,6 +132,17 @@ module HTTP
       form_builder.to_s
     end
 
+    # Returns a `Hash` with raw parameters mapping from `String` to `Array(String)`.
+    #
+    # The return value can be supplied to `.new` to create a new instance.
+    #
+    # ```
+    # params = HTTP::Params.parse("foo=bar&foo=baz&qux=zoo")
+    # params.raw_params # => {"foo" => ["bar", "baz"], "qux" => ["zoo"]}
+    #
+    # params2 = HTTP::Params.new(params.raw_params)
+    # params2.to_s # => "foo=bar&foo=baz&qux=zoo"
+    # ```
     getter raw_params
 
     # Returns an empty `HTTP::Params`.
