@@ -45,7 +45,6 @@ end
 # NOTE: This is not in the GCC spec
 # fun __mulosi4(a : Int32, b : Int32, overflow : Int32*) : Int32
 fun __mulodi4(a : Int64, b : Int64, overflow : Int32*) : Int64
-  raise "__mulodi4"
   n = 64
   min = Int64::MIN
   max = Int64::MAX
