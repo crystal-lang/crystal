@@ -27,6 +27,7 @@ lib LibSSL
   type SSLMethod = Void*
   type SSLContext = Void*
   type SSL = Void*
+  type SSLCipher = Void*
 
   alias VerifyCallback = (Int, LibCrypto::X509_STORE_CTX) -> Int
   alias CertVerifyCallback = (LibCrypto::X509_STORE_CTX, Void*) -> Int
@@ -160,6 +161,10 @@ lib LibSSL
   fun ssl_select_next_proto = SSL_select_next_proto(output : Char**, output_len : Char*, input : Char*, input_len : Int, client : Char*, client_len : Int) : Int
   fun ssl_ctrl = SSL_ctrl(handle : SSL, cmd : Int, larg : Long, parg : Void*) : Long
   fun ssl_free = SSL_free(handle : SSL)
+
+  fun ssl_get_current_cipher = SSL_get_current_cipher(ssl : SSL) : SSLCipher
+  fun ssl_cipher_get_name = SSL_CIPHER_get_name(cipher : SSLCipher) : UInt8*
+  fun ssl_get_version = SSL_get_version(ssl : SSL) : UInt8*
 
   @[Raises]
   fun ssl_new = SSL_new(context : SSLContext) : SSL

@@ -180,6 +180,16 @@ abstract class OpenSSL::SSL::Socket < IO
     end
   end
 
+  # Returns the current cipher used by this socket.
+  def cipher : String
+    String.new(LibSSL.ssl_cipher_get_name(LibSSL.ssl_get_current_cipher(@ssl)))
+  end
+
+  # Returns the name of the TLS protocol version used by this socket.
+  def tls_version : String
+    String.new(LibSSL.ssl_get_version(@ssl))
+  end
+
   def local_address
     io = @bio.io
     io.responds_to?(:local_address) ? io.local_address : nil
