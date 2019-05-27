@@ -513,6 +513,116 @@ class Process
     io.close if io
   end
 
+  # Returns the **real** user id of the current process.
+  def self.user_id : LibC::UidT
+    LibC.getuid
+  end
+
+  # Returns the **effective** user id of the current process.
+  def self.effective_user_id : LibC::UidT
+    LibC.geteuid
+  end
+
+  # Returns the **real** group id of the current process.
+  def self.group_id : LibC::GidT
+    LibC.getgid
+  end
+
+  # Returns the **effective** group id of the current process.
+  def self.effective_group_id : LibC::GidT
+    LibC.getegid
+  end
+
+  # Attempts to change real, effective, and saved user id's of the current process with no way back.
+  def self.user_id=(uid : LibC::UidT) : LibC::UidT
+    self.setresuid(uid, uid, uid)
+    uid
+  end
+
+  # Attempts to change real, effective, and saved group id's of the current process.
+  def self.group_id=(gid : LibC::GidT) : LibC::GidT
+    self.setresgid(gid, gid, gid)
+    gid
+  end
+
+  # :nodoc:
+  UID_DEFAULT = if LibC::UidT.new(0).is_a?(Int::Signed)
+                  LibC::UidT.new(-1)
+                else
+                  LibC::UidT::MAX
+                end
+  GID_DEFAULT = if LibC::GidT.new(0).is_a?(Int::Signed)
+                  LibC::GidT.new(-1)
+                else
+                  LibC::GidT::MAX
+                end
+
+  # Attempts to change real, effective, and/or saved user id's of the current process.
+  # Uid's not supplied in arguments are kept at their current values (if supported).
+  # Explicit setting of saved id's is not supported on all platforms.
+  #
+  # * *ruid*: real user id.
+  # * *euid*: effective user id.
+  # * *suid*: saved user id.
+  #
+  # Example:
+  #
+  # ```
+  # Process.setresuid(0, 0, 0) # Changes real, effective, saved user id to 0 (root).
+  # Process.setresuid(euid: 0) # Only changes the euid.
+  # Process.setresuid(suid: 0) # Platform specific and may not function.
+  # ```
+  def self.setresuid(ruid : LibC::UidT = UID_DEFAULT, euid : LibC::UidT = UID_DEFAULT, suid : LibC::UidT = ruid)
+    {% if LibC.has_method?(:setresuid) %}
+      if LibC.setresuid(ruid, euid, suid) != 0
+        raise Errno.new("setresuid failed")
+      end
+    {% else %}
+      if suid != UID_DEFAULT && ruid == UID_DEFAULT && euid == UID_DEFAULT
+        Errno.value = Errno::ENOSYS
+        raise Errno.new("only setting the saved uid not supported")
+      end
+
+      if LibC.setreuid(ruid, euid) != 0
+        raise Errno.new("setreuid failed")
+      end
+    {% end %}
+    self
+  end
+
+  # Attempts to change real, effective, and/or saved group id's of the current process.
+  # Gid's not supplied in arguments are kept at their current values (if supported).
+  # Explicit setting of saved id's is not supported on all platforms.
+  #
+  # * *rgid*: real group id.
+  # * *egid*: effective group id.
+  # * *sgid*: saved group id.
+  #
+  # Example:
+  #
+  # ```
+  # Process.setresgid(0, 0, 0) # Changes real, effective, saved group id to 0.
+  # Process.setresgid(egid: 0) # Only changes the egid.
+  # Process.setresgid(sgid: 0) # Platform specific and may not function.
+  # ```
+  def self.setresgid(rgid : LibC::GidT = GID_DEFAULT, egid : LibC::GidT = GID_DEFAULT, sgid : LibC::GidT = rgid)
+    {% if LibC.has_method?(:setresgid) %}
+      if LibC.setresgid(rgid, egid, sgid) != 0
+        raise Errno.new("setresgid failed")
+      end
+    {% else %}
+      if sgid != GID_DEFAULT && rgid == GID_DEFAULT && egid == GID_DEFAULT
+        Errno.value = Errno::ENOSYS
+        raise Errno.new("only setting the saved gid not supported")
+      end
+
+      if LibC.setregid(rgid, egid) != 0
+        raise Errno.new("setregid failed")
+      end
+    {% end %}
+    self
+  end
+
   # Changes the root directory and the current working directory for the current
   # process.
   #
