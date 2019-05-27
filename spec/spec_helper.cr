@@ -117,6 +117,7 @@ def warnings_result(code, inject_primitives = true)
   compiler.warnings = Warnings::All
   compiler.error_on_warnings = false
   compiler.prelude = "empty" # avoid issues in the current std lib
+  apply_program_flags(compiler.flags)
   result = compiler.compile Compiler::Source.new("code.cr", code), output_filename
 
   result.program.warning_failures
@@ -160,7 +161,22 @@ end
 private def new_program
   program = Program.new
   program.color = false
+  apply_program_flags(program.flags)
   program
+end
+
+# Use CRYSTAL_SPEC_COMPILER_FLAGS env var to run the compiler specs
+# against a compiler with the specified options.
+# Separate flags with a space.
+# Using CRYSTAL_SPEC_COMPILER_FLAGS="foo bar" will mimic -Dfoo -Dbar options.
+private def apply_program_flags(target)
+  ENV["CRYSTAL_SPEC_COMPILER_FLAGS"]?.try { |f| target.concat(f.split) }
+end
+
+private def encode_program_flags : String
+  f = [] of String
+  apply_program_flags(f)
+  f.map { |x| "-D#{x}" }.join(" ") || ""
 end
 
 class Crystal::SpecRunOutput
@@ -202,6 +218,7 @@ def run(code, filename = nil, inject_primitives = true, debug = Crystal::Debug::
     compiler = Compiler.new
     compiler.debug = debug
     compiler.flags.concat flags if flags
+    apply_program_flags(compiler.flags)
     compiler.compile Compiler::Source.new("spec", code), output_filename
 
     output = `#{output_filename}`
@@ -221,7 +238,7 @@ def build_and_run(code)
 
   binary_file = File.tempname("build_and_run_bin")
 
-  `bin/crystal build #{code_file.path.inspect} -o #{binary_file.path.inspect}`
+  `bin/crystal build #{encode_program_flags} #{code_file.path.inspect} -o #{binary_file.path.inspect}`
   File.exists?(binary_file).should be_true
 
   out_io, err_io = IO::Memory.new, IO::Memory.new
