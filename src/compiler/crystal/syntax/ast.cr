@@ -544,11 +544,9 @@ module Crystal
     property visibility = Visibility::Public
     property? global : Bool
     property? expansion = false
-    property? has_parentheses : Bool
+    property? has_parentheses = false
 
-    def initialize(@obj, @name, @args = [] of ASTNode, @block = nil, @block_arg = nil, @named_args = nil, global = false, @name_location = nil, has_parentheses = false)
-      @global = !!global
-      @has_parentheses = !!has_parentheses
+    def initialize(@obj, @name, @args = [] of ASTNode, @block = nil, @block_arg = nil, @named_args = nil, @global : Bool = false)
       if block = @block
         block.call = self
       end
@@ -586,7 +584,9 @@ module Crystal
     end
 
     def clone_without_location
-      clone = Call.new(@obj.clone, @name, @args.clone, @block.clone, @block_arg.clone, @named_args.clone, @global, @name_location, @has_parentheses)
+      clone = Call.new(@obj.clone, @name, @args.clone, @block.clone, @block_arg.clone, @named_args.clone, @global)
+      clone.name_location = name_location
+      clone.has_parentheses = has_parentheses?
       clone.name_size = name_size
       clone.expansion = expansion?
       clone
@@ -1300,7 +1300,7 @@ module Crystal
     property? struct : Bool
     property visibility = Visibility::Public
 
-    def initialize(@name, body = nil, @superclass = nil, @type_vars = nil, @abstract = false, @struct = false, @name_location = nil, @splat_index = nil)
+    def initialize(@name, body = nil, @superclass = nil, @type_vars = nil, @abstract = false, @struct = false, @splat_index = nil)
       @body = Expressions.from body
     end
 
@@ -1310,7 +1310,9 @@ module Crystal
     end
 
     def clone_without_location
-      ClassDef.new(@name, @body.clone, @superclass.clone, @type_vars.clone, @abstract, @struct, @name_location, @splat_index)
+      clone = ClassDef.new(@name, @body.clone, @superclass.clone, @type_vars.clone, @abstract, @struct, @splat_index)
+      clone.name_location = name_location
+      clone
     end
 
     def_equals_and_hash @name, @body, @superclass, @type_vars, @abstract, @struct, @splat_index
@@ -1331,7 +1333,7 @@ module Crystal
     property doc : String?
     property visibility = Visibility::Public
 
-    def initialize(@name, body = nil, @type_vars = nil, @name_location = nil, @splat_index = nil)
+    def initialize(@name, body = nil, @type_vars = nil, @splat_index = nil)
       @body = Expressions.from body
     end
 
@@ -1340,7 +1342,9 @@ module Crystal
     end
 
     def clone_without_location
-      ModuleDef.new(@name, @body.clone, @type_vars.clone, @name_location, @splat_index)
+      clone = ModuleDef.new(@name, @body.clone, @type_vars.clone, @splat_index)
+      clone.name_location = name_location
+      clone
     end
 
     def_equals_and_hash @name, @body, @type_vars, @splat_index
@@ -1356,14 +1360,16 @@ module Crystal
     property doc : String?
     property name_location : Location?
 
-    def initialize(@name, @name_location = nil)
+    def initialize(@name)
     end
 
     def accept_children(visitor)
     end
 
     def clone_without_location
-      AnnotationDef.new(@name, @name_location)
+      clone = AnnotationDef.new(@name)
+      clone.name_location = name_location
+      clone
     end
 
     def_equals_and_hash @name
@@ -1745,7 +1751,7 @@ module Crystal
     property name_location : Location?
     property visibility = Visibility::Public
 
-    def initialize(@name, body = nil, @name_location = nil)
+    def initialize(@name, body = nil)
       @body = Expressions.from body
     end
 
@@ -1754,7 +1760,9 @@ module Crystal
     end
 
     def clone_without_location
-      LibDef.new(@name, @body.clone, @name_location)
+      clone = LibDef.new(@name, @body.clone)
+      clone.name_location = name_location
+      clone
     end
 
     def_equals_and_hash @name, @body
@@ -1790,7 +1798,7 @@ module Crystal
     property type_spec : ASTNode
     property name_location : Location?
 
-    def initialize(@name, @type_spec, @name_location = nil)
+    def initialize(@name, @type_spec)
     end
 
     def accept_children(visitor)
@@ -1798,7 +1806,9 @@ module Crystal
     end
 
     def clone_without_location
-      TypeDef.new(@name, @type_spec.clone, @name_location)
+      clone = TypeDef.new(@name, @type_spec.clone)
+      clone.name_location = name_location
+      clone
     end
 
     def_equals_and_hash @name, @type_spec

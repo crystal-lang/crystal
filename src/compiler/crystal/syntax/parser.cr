@@ -488,12 +488,13 @@ module Crystal
             check_void_value left, location
 
             method = @token.type.to_s
-            method_name_location = @token.location
+            name_location = @token.location
 
             slash_is_regex!
             next_token_skip_space_or_newline
             right = parse_{{next_operator.id}}
             left = ({{node.id}}).at(location).at_end(right)
+            left.name_location = name_location if left.is_a?(Call)
           else
             return left
           end
@@ -503,11 +504,11 @@ module Crystal
 
     parse_operator :or, :and, "Or.new left, right", ":\"||\""
     parse_operator :and, :equality, "And.new left, right", ":\"&&\""
-    parse_operator :equality, :cmp, "Call.new left, method, [right] of ASTNode, name_location: method_name_location", ":\"<\", :\"<=\", :\">\", :\">=\", :\"<=>\""
-    parse_operator :cmp, :logical_or, "Call.new left, method, [right] of ASTNode, name_location: method_name_location", ":\"==\", :\"!=\", :\"=~\", :\"!~\", :\"===\""
-    parse_operator :logical_or, :logical_and, "Call.new left, method, [right] of ASTNode, name_location: method_name_location", ":\"|\", :\"^\""
-    parse_operator :logical_and, :shift, "Call.new left, method, [right] of ASTNode, name_location: method_name_location", ":\"&\""
-    parse_operator :shift, :add_or_sub, "Call.new left, method, [right] of ASTNode, name_location: method_name_location", ":\"<<\", :\">>\""
+    parse_operator :equality, :cmp, "Call.new left, method, right", ":\"<\", :\"<=\", :\">\", :\">=\", :\"<=>\""
+    parse_operator :cmp, :logical_or, "Call.new left, method, right", ":\"==\", :\"!=\", :\"=~\", :\"!~\", :\"===\""
+    parse_operator :logical_or, :logical_and, "Call.new left, method, right", ":\"|\", :\"^\""
+    parse_operator :logical_and, :shift, "Call.new left, method, right", ":\"&\""
+    parse_operator :shift, :add_or_sub, "Call.new left, method, right", ":\"<<\", :\">>\""
 
     def parse_add_or_sub
       location = @token.location
@@ -521,22 +522,24 @@ module Crystal
           check_void_value left, location
 
           method = @token.type.to_s
-          method_name_location = @token.location
+          name_location = @token.location
           next_token_skip_space_or_newline
           right = parse_mul_or_div
-          left = Call.new(left, method, [right] of ASTNode, name_location: method_name_location).at(location).at_end(right)
+          left = Call.new(left, method, right).at(location).at_end(right)
+          left.name_location = name_location
         when :NUMBER
           case char = @token.value.to_s[0]
           when '+', '-'
             method = char.to_s
-            method_name_location = @token.location
+            name_location = @token.location
 
             # Go back to the +/-, advance one char and continue from there
             self.current_pos = @token.start + 1
             next_token
 
             right = parse_mul_or_div
-            left = Call.new(left, method, [right] of ASTNode, name_location: method_name_location).at(location).at_end(right)
+            left = Call.new(left, method, right).at(location).at_end(right)
+            left.name_location = name_location
           else
             return left
           end
@@ -546,8 +549,8 @@ module Crystal
       end
     end
 
-    parse_operator :mul_or_div, :pow, "Call.new left, method, [right] of ASTNode, name_location: method_name_location", %(:"*", :"/", :"//", :"%", :"&*")
-    parse_operator :pow, :prefix, "Call.new left, method, [right] of ASTNode, name_location: method_name_location", %(:"**", :"&**")
+    parse_operator :mul_or_div, :pow, "Call.new left, method, right", %(:"*", :"/", :"//", :"%", :"&*")
+    parse_operator :pow, :prefix, "Call.new left, method, right", %(:"**", :"&**")
 
     def parse_prefix
       name_location = @token.location
@@ -560,7 +563,9 @@ module Crystal
         if token_type == :"!"
           Not.new(arg).at(location).at_end(arg)
         else
-          Call.new(arg, token_type.to_s, name_location: name_location).at(location).at_end(arg)
+          call = Call.new(arg, token_type.to_s).at(location).at_end(arg)
+          call.name_location = name_location
+          call
         end
       else
         parse_atomic_with_method
@@ -679,13 +684,15 @@ module Crystal
                 arg = parse_single_arg
               end
 
-              atomic = Call.new(atomic, "#{name}=", [arg] of ASTNode, name_location: name_location).at(location)
+              atomic = Call.new(atomic, "#{name}=", arg).at(location)
+              atomic.name_location = name_location
               next
             when :"+=", :"-=", :"*=", :"/=", :"//=", :"%=", :"|=", :"&=", :"^=", :"**=", :"<<=", :">>=", :"||=", :"&&=", :"&+=", :"&-=", :"&*="
               method = @token.type.to_s.byte_slice(0, @token.type.to_s.size - 1)
               next_token_skip_space_or_newline
               value = parse_op_assign
-              call = Call.new(atomic, name, name_location: name_location).at(location)
+              call = Call.new(atomic, name).at(location)
+              call.name_location = name_location
               atomic = OpAssign.new(call, method, value).at(location)
               next
             else
@@ -705,11 +712,10 @@ module Crystal
               if name == "[]="
                 raise "setter method '[]=' cannot be called with a block"
               end
-
-              atomic = Call.new atomic, name, (args || [] of ASTNode), block, block_arg, named_args, name_location: name_location
-            else
-              atomic = args ? (Call.new atomic, name, args, named_args: named_args, name_location: name_location) : (Call.new atomic, name, name_location: name_location)
             end
+
+            atomic = Call.new atomic, name, (args || [] of ASTNode), block, block_arg, named_args
+            atomic.name_location = name_location
             atomic.end_location = call_args.try(&.end_location) || block.try(&.end_location) || end_location
             atomic.at(location)
             atomic
@@ -720,7 +726,8 @@ module Crystal
           name_location = @token.location
           @wants_regex = false
           next_token_skip_space
-          atomic = Call.new(atomic, "[]", name_location: name_location).at(location)
+          atomic = Call.new(atomic, "[]").at(location)
+          atomic.name_location = name_location
           atomic.name_size = 0 if atomic.is_a?(Call)
           atomic
         when :"["
@@ -756,7 +763,8 @@ module Crystal
             skip_space
           end
 
-          atomic = Call.new(atomic, method_name, args: (args || [] of ASTNode), block: block, block_arg: block_arg, named_args: named_args, name_location: name_location).at(location)
+          atomic = Call.new(atomic, method_name, (args || [] of ASTNode), block, block_arg, named_args).at(location)
+          atomic.name_location = name_location
           atomic.name_size = 0 if atomic.is_a?(Call)
           atomic
         else
@@ -1567,8 +1575,9 @@ module Crystal
 
       @type_nest -= 1
 
-      class_def = ClassDef.new name, body, superclass, type_vars, is_abstract, is_struct, name_location, splat_index: splat_index
+      class_def = ClassDef.new name, body, superclass, type_vars, is_abstract, is_struct, splat_index
       class_def.doc = doc
+      class_def.name_location = name_location
       class_def.end_location = end_location
       class_def
     end
@@ -1641,8 +1650,9 @@ module Crystal
 
       @type_nest -= 1
 
-      module_def = ModuleDef.new name, body, type_vars, name_location, splat_index: splat_index
+      module_def = ModuleDef.new name, body, type_vars, splat_index
       module_def.doc = doc
+      module_def.name_location = name_location
       module_def.end_location = end_location
       module_def
     end
@@ -1662,8 +1672,9 @@ module Crystal
       check_ident :end
       next_token_skip_space
 
-      annotation_def = AnnotationDef.new name, name_location
+      annotation_def = AnnotationDef.new name
       annotation_def.doc = doc
+      annotation_def.name_location = name_location
       annotation_def.end_location = end_location
       annotation_def
     end
@@ -3945,7 +3956,10 @@ module Crystal
 
       node =
         if block || block_arg || global
-          Call.new(nil, name, (args || [] of ASTNode), block, block_arg, named_args, global, name_location, has_parentheses)
+          call = Call.new(nil, name, (args || [] of ASTNode), block, block_arg, named_args, global)
+          call.name_location = name_location
+          call.has_parentheses = has_parentheses
+          call
         else
           if args
             maybe_var = !force_call && is_var && !has_parentheses
@@ -3956,7 +3970,10 @@ module Crystal
               num.value = num.value.byte_slice(1)
               Call.new(Var.new(name), sign, args)
             else
-              Call.new(nil, name, args, nil, block_arg, named_args, global, name_location, has_parentheses)
+              call = Call.new(nil, name, args, nil, block_arg, named_args, global)
+              call.name_location = name_location
+              call.has_parentheses = has_parentheses
+              call
             end
           else
             if @no_type_declaration == 0 && @token.type == :":"
@@ -3973,7 +3990,10 @@ module Crystal
                 raise "can't use variable name '#{name}' inside assignment to variable '#{name}'", location
               end
 
-              Call.new(nil, name, [] of ASTNode, nil, block_arg, named_args, global, name_location, has_parentheses)
+              call = Call.new(nil, name, [] of ASTNode, nil, block_arg, named_args, global)
+              call.name_location = name_location
+              call.has_parentheses = has_parentheses
+              call
             end
           end
         end
@@ -5147,7 +5167,9 @@ module Crystal
       end_location = token_end_location
       next_token_skip_space
 
-      LibDef.new(name, body, name_location).at(location).at_end(end_location)
+      lib_def = LibDef.new(name, body).at(location).at_end(end_location)
+      lib_def.name_location = name_location
+      lib_def
     end
 
     def parse_lib_body
@@ -5439,7 +5461,9 @@ module Crystal
       type = parse_single_type
       skip_space
 
-      TypeDef.new name, type, name_location
+      typedef = TypeDef.new name, type
+      typedef.name_location = name_location
+      typedef
     end
 
     def parse_c_struct_or_union(union : Bool)
