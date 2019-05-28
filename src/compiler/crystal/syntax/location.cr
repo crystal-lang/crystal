@@ -35,6 +35,8 @@ class Crystal::Location
   end
 
   def between?(min, max)
+    return false unless min && max
+
     min <= self && self <= max
   end
 
