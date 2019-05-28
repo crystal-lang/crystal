@@ -5,9 +5,9 @@ module Crystal
   class TypeException < Exception
     getter node
     property inner : Exception?
-    @line : Int32?
-    @column : Int32
-    @size : Int32
+    getter line : Int32?
+    getter column : Int32
+    getter size : Int32
 
     def color=(color)
       @color = !!color
