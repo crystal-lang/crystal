@@ -54,22 +54,8 @@ describe "INI" do
       it "parses empty section" do
         INI.parse("[section]").should eq({"section" => Hash(String, String).new})
       end
-
-      it "parses a file" do
-        INI.parse(File.read datapath("test_file.ini")).should eq({
-          "general" => {
-            "log_level" => "D",
-          },
-          "section1" => {
-            "foo" => "1.1",
-            "bar" => "2",
-          },
-          "section2" => {
-            "x.y.z" => "coco lala",
-          },
-        })
-      end
     end
+
     describe "from IO" do
       it "parses a file" do
         File.open datapath("test_file.ini") do |file|
