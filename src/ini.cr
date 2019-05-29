@@ -21,7 +21,7 @@ class INI
   #
   # INI.parse("[foo]\na = 1") # => {"foo" => {"a" => "1"}}
   # ```
-  def self.parse(str : String) : Hash(String, Hash(String, String))
+  def self.parse(str : String | IO) : Hash(String, Hash(String, String))
     ini = Hash(String, Hash(String, String)).new
     current_section = ini[""] = Hash(String, String).new
     lineno = 0
