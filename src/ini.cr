@@ -65,12 +65,12 @@ class INI
   #
   # INI.build({"foo" => {"a" => "1"}}, true) # => "[foo]\na = 1\n\n"
   # ```
-  def self.build(ini : Hash(String, Hash(String, String)) | T, space : Bool = false) : String forall T
+  def self.build(ini, space : Bool = false) : String
     String.build { |str| build str, ini, space }
   end
 
   # Appends INI data to the given IO.
-  def self.build(io : IO, ini : Hash(String, Hash(String, String)) | T, space : Bool = false) : Nil forall T
+  def self.build(io : IO, ini, space : Bool = false) : Nil
     ini.each do |section, contents|
       io << '[' << section << "]\n"
       contents.each do |key, value|
