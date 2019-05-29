@@ -41,6 +41,9 @@ class Fiber
   end
 
   def initialize(@name : String? = nil, &@proc : ->)
+    {% if flag?(:preview_mt) %}
+      Thread.current.load += 1
+    {% end %}
     @context = Context.new
     @stack, @stack_bottom = Fiber.stack_pool.checkout
 
@@ -60,6 +63,9 @@ class Fiber
 
   # :nodoc:
   def initialize(@stack : Void*, thread)
+    {% if flag?(:preview_mt) %}
+      thread.load += 1
+    {% end %}
     @proc = Proc(Void).new { }
     @context = Context.new(_fiber_get_stack_top)
     @stack_bottom = GC.current_thread_stack_bottom
@@ -90,6 +96,9 @@ class Fiber
     @resume_event.try &.free
 
     @alive = false
+    {% if flag?(:preview_mt) %}
+      Thread.current.load -= 1
+    {% end %}
     Crystal::Scheduler.reschedule
   end
 

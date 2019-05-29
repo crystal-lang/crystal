@@ -123,4 +123,36 @@ class Crystal::Scheduler
     @current.resume_event.add(0.seconds)
     resume(fiber)
   end
+
+  {% if flag?(:preview_mt) %}
+    @rr_target = 0
+
+    private def find_target_thread
+      target = Thread.workers[@rr_target % Thread.workers.size]
+      target_i = 0
+      (Thread.workers.size - 1).times do |i|
+        w = Thread.workers[(@rr_target + i) % Thread.workers.size]
+        if w.load < target.load
+          target = w
+          target_i = @rr_target + i
+        end
+      end
+
+      @rr_target += (target_i + 1) % Thread.workers.size
+      target
+    end
+
+    def enqueue_self(fiber : Fiber) : Nil
+      @runnables << fiber
+    end
+
+    protected def enqueue(fiber : Fiber) : Nil
+      if Thread.workers.empty?
+        previous_def
+      else
+        target = find_target_thread
+        target.send_fiber(fiber)
+      end
+    end
+  {% end %}
 end

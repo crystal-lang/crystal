@@ -21,6 +21,12 @@ class Thread
   # :nodoc:
   property previous : Thread?
 
+  {% if flag?(:preview_mt) %}
+    property load = 0
+    @worker_in : IO?
+    @@workers = [] of Thread
+  {% end %}
+
   def self.unsafe_each
     @@threads.unsafe_each { |thread| yield thread }
   end
@@ -185,4 +191,35 @@ class Thread
   def to_unsafe
     @th
   end
+
+  {% if flag?(:preview_mt) %}
+    def send_fiber(fiber : Fiber)
+      Thread.current.load -= 1
+      @worker_in.not_nil!.write_bytes(fiber.object_id)
+    end
+
+    def worker_loop
+      worker_out, @worker_in = IO.pipe
+      loop do
+        oid = worker_out.read_bytes(UInt64)
+        fiber = Pointer(Fiber).new(oid).as(Fiber)
+        self.load += 1
+        scheduler.enqueue_self(Fiber.current)
+        fiber.resume
+      end
+    end
+
+    def self.workers
+      @@workers
+    end
+
+    def self.init_workers
+      count = ENV["CRYSTAL_WORKERS"]?.try &.to_i || 4
+      count.times do
+        @@workers << Thread.new do
+          Thread.current.worker_loop
+        end
+      end
+    end
+  {% end %}
 end

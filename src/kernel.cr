@@ -549,3 +549,7 @@ end
   Signal.setup_default_handlers
   LibExt.setup_sigfault_handler
 {% end %}
+
+{% if flag?(:preview_mt) %}
+  Thread.init_workers
+{% end %}
