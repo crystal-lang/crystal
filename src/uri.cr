@@ -267,6 +267,69 @@ class URI
     self
   end
 
+  # Resolves *uri* against this URI.
+  #
+  # If *uri* is `absolute?`, or if this URI is `opaque?`, then an exact copy of *uri* is returned.
+  #
+  # Otherwise the URI is resolved according to the specifications in [RFC 3986 section 5.2](https://tools.ietf.org/html/rfc3986#section-5.2.2).
+  #
+  # ```
+  # URI.parse("http://foo.com/bar/baz").resolve("../quux")         # => http://foo.com/quux
+  # URI.parse("http://foo.com/bar/baz").resolve("/quux")           # => http://foo.com/quux
+  # URI.parse("http://foo.com/bar/baz").resolve("http://quux.com") # => http://quux.com
+  # URI.parse("http://foo.com/bar/baz").resolve("#quux")           # => http://foo.com/bar/baz#quux
+  # ```
+  def resolve(uri : URI | String) : URI
+    if uri.is_a?(URI)
+      target = uri.dup
+    else
+      target = URI.parse(uri)
+    end
+
+    if target.absolute? || opaque?
+      return target
+    end
+
+    target.scheme = scheme
+
+    unless target.host || target.user
+      target.host = host
+      target.port = port
+      target.user = user
+      target.password = password
+      if target.path.empty?
+        target.path = remove_dot_segments(path)
+        target.query ||= query
+      else
+        base = path
+        if base.empty? && target.absolute?
+          base = "/"
+        end
+        target.path = resolve_path(target.path, base: base)
+      end
+    end
+
+    target
+  end
+
+  private def resolve_path(path : String, base : String) : String
+    unless path.starts_with?('/')
+      if path.empty?
+        path = base
+      elsif !base.empty?
+        path = String.build do |io|
+          if base.ends_with?('/')
+            io << base
+          elsif pos = base.rindex('/')
+            io << base[0..pos]
+          end
+          io << path
+        end
+      end
+    end
+    remove_dot_segments(path)
+  end
+
   # Parses the given *raw_url* into an URI. The *raw_url* may be relative or absolute.
   #
   # ```
