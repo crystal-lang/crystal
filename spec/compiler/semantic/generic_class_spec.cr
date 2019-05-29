@@ -1102,4 +1102,29 @@ describe "Semantic: generic class" do
       moo.@moo.call
       )) { int32.metaclass }
   end
+
+  it "shows error due to generic instantiation (#7083)" do
+    assert_error %(
+      abstract class Base
+      end
+
+      class Gen(T) < Base
+        def valid? : Bool
+          # true
+        end
+      end
+
+      class Other < Base
+        def valid?
+          true
+        end
+      end
+
+      x = Pointer(Base).malloc(1)
+      x.value.valid?
+
+      Gen(String).new
+      ),
+      "type must be Bool, not Nil"
+  end
 end
