@@ -1,5 +1,26 @@
 require "spec"
 
+private class BadSortingClass
+  include Comparable(self)
+
+  def <=>(other)
+    1
+  end
+end
+
+private class Spaceship
+  getter value : Float64
+
+  def initialize(@value : Float64, @return_nil = false)
+  end
+
+  def <=>(other : Spaceship)
+    return nil if @return_nil
+
+    value <=> other.value
+  end
+end
+
 describe "Slice" do
   it "gets pointer and size" do
     pointer = Pointer.malloc(1, 0)
@@ -481,6 +502,133 @@ describe "Slice" do
       copy = slice.dup
       slice[0] << "bar"
       copy.should eq slice
+    end
+  end
+
+  describe "sort" do
+    it "sort without block" do
+      slice = Slice[3, 4, 1, 2, 5, 6]
+      sorted_slice = slice.sort
+      sorted_slice.to_a.should eq([1, 2, 3, 4, 5, 6])
+      slice.should_not eq(sorted_slice)
+    end
+
+    it "sort with a block" do
+      a = Slice["foo", "a", "hello"]
+      b = a.sort { |x, y| x.size <=> y.size }
+      b.to_a.should eq(["a", "foo", "hello"])
+      a.should_not eq(b)
+    end
+
+    it "doesn't crash on special situations" do
+      Slice[1, 2, 3].sort { 1 }
+      Slice.[BadSortingClass.new].sort
+    end
+
+    it "can sort just by using <=> (#6608)" do
+      spaceships = [
+        Spaceship.new(2),
+        Spaceship.new(0),
+        Spaceship.new(1),
+        Spaceship.new(3),
+      ]
+
+      sorted = spaceships.sort
+      4.times do |i|
+        sorted[i].value.should eq(i)
+      end
+    end
+
+    it "raises if <=> returns nil" do
+      spaceships = [
+        Spaceship.new(2, return_nil: true),
+        Spaceship.new(0, return_nil: true),
+      ]
+
+      expect_raises(ArgumentError) do
+        spaceships.sort
+      end
+    end
+
+    it "raises if sort block returns nil" do
+      expect_raises(ArgumentError) do
+        [1, 2].sort { nil }
+      end
+    end
+  end
+
+  describe "sort!" do
+    it "sort! without block" do
+      a = [3, 4, 1, 2, 5, 6]
+      a.sort!
+      a.should eq([1, 2, 3, 4, 5, 6])
+    end
+
+    it "sort! with a block" do
+      a = ["foo", "a", "hello"]
+      a.sort! { |x, y| x.size <=> y.size }
+      a.should eq(["a", "foo", "hello"])
+    end
+
+    it "sorts with invalid block (#4379)" do
+      a = [1] * 17
+      b = a.sort { -1 }
+      a.should eq(b)
+    end
+
+    it "can sort! just by using <=> (#6608)" do
+      spaceships = Slice[
+        Spaceship.new(2),
+        Spaceship.new(0),
+        Spaceship.new(1),
+        Spaceship.new(3),
+      ]
+
+      spaceships.sort!
+      4.times do |i|
+        spaceships[i].value.should eq(i)
+      end
+    end
+
+    it "raises if <=> returns nil" do
+      spaceships = Slice[
+        Spaceship.new(2, return_nil: true),
+        Spaceship.new(0, return_nil: true),
+      ]
+
+      expect_raises(ArgumentError) do
+        spaceships.sort!
+      end
+    end
+
+    it "raises if sort! block returns nil" do
+      expect_raises(ArgumentError) do
+        Slice[1, 2].sort! { nil }
+      end
+    end
+  end
+
+  describe "sort_by" do
+    it "sorts by" do
+      a = Slice["foo", "a", "hello"]
+      b = a.sort_by &.size
+      b.to_a.should eq(["a", "foo", "hello"])
+      a.should_not eq(b)
+    end
+  end
+
+  describe "sort_by!" do
+    it "sorts by!" do
+      a = Slice["foo", "a", "hello"]
+      a.sort_by! &.size
+      a.to_a.should eq(["a", "foo", "hello"])
+    end
+
+    it "calls given block exactly once for each element" do
+      calls = Hash(String, Int32).new(0)
+      a = Slice["foo", "a", "hello"]
+      a.sort_by! { |e| calls[e] += 1; e.size }
+      calls.should eq({"foo" => 1, "a" => 1, "hello" => 1})
     end
   end
 end
