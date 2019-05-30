@@ -139,7 +139,7 @@ module Crystal
 
       if is_macro
         io << '\n'
-        append_error_message io, @message
+        append_error_message io, msg
       end
 
       if inner && inner.has_location?

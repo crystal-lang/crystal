@@ -1405,4 +1405,19 @@ describe "Semantic: macro" do
       Foo.new.x
       )) { string }
   end
+
+  it "shows correct error message in macro expansion (#7083)" do
+    assert_error %(
+      abstract class Foo
+        {% begin %}
+          def self.new
+            allocate
+          end
+        {% end %}
+      end
+
+      Foo.new
+      ),
+      "can't instantiate abstract class Foo"
+  end
 end
