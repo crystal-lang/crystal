@@ -53,7 +53,7 @@ class HTTP::WebSocket::Protocol
       return if slice.empty?
 
       count = Math.min(@buffer.size - @pos, slice.size)
-      (@buffer + @pos).copy_from(slice.pointer(count), count)
+      (@buffer + @pos).copy_from(slice.to_unsafe, count)
       @pos += count
 
       if @pos == @buffer.size

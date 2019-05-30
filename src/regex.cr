@@ -513,7 +513,8 @@ class Regex
       capture_number = (name_table[capture_offset].to_u16 << 8) | name_table[capture_offset + 1].to_u16
 
       name_offset = capture_offset + 2
-      name = String.new((name_table + name_offset).pointer(name_entry_size - 3))
+      checked = name_table[name_offset, name_entry_size - 3]
+      name = String.new(checked.to_unsafe)
 
       lookup[capture_number] = name
     end

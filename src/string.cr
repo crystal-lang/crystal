@@ -152,7 +152,7 @@ class String
   # String.new(slice) # => "abcd"
   # ```
   def self.new(slice : Bytes)
-    new(slice.pointer(slice.size), slice.size)
+    new(slice.to_unsafe, slice.size)
   end
 
   # Creates a new `String` from the given *bytes*, which are encoded in the given *encoding*.
