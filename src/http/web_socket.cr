@@ -147,9 +147,9 @@ class HTTP::WebSocket
             code = @current_message.read_bytes(Int16, IO::ByteFormat::NetworkEndian)
             reason = @current_message.gets_to_end
             @on_close.try &.call(code, reason)
-            close(code, reason) unless closed?
           rescue IO::EOFError
             @on_close.try &.call(nil, nil)
+          ensure
             close unless closed?
           end
 
