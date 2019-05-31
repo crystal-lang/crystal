@@ -176,7 +176,7 @@ end
 private def encode_program_flags : String
   f = [] of String
   apply_program_flags(f)
-  f.map { |x| "-D#{x}" }.join(" ") || ""
+  f.map { |x| "-D#{x}" }.join(' ')
 end
 
 class Crystal::SpecRunOutput
