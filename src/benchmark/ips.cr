@@ -87,10 +87,11 @@ module Benchmark
           target = Time.monotonic + @calculation_time
 
           loop do
+            elapsed = nil
             bytes_taken = Benchmark.memory { elapsed = Time.measure { item.call_for_100ms } }
             bytes += bytes_taken
             cycles += item.cycles
-            measurements << elapsed
+            measurements << elapsed.not_nil!
             break if Time.monotonic >= target
           end
 
