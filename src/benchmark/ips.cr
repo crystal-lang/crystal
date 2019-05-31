@@ -87,9 +87,8 @@ module Benchmark
           target = Time.monotonic + @calculation_time
 
           loop do
-            bytes_before_measure = GC.stats.total_bytes
-            elapsed = Time.measure { item.call_for_100ms }
-            bytes += (GC.stats.total_bytes - bytes_before_measure).to_i64
+            bytes_taken = Benchmark.memory { elapsed = Time.measure { item.call_for_100ms } }
+            bytes += bytes_taken
             cycles += item.cycles
             measurements << elapsed
             break if Time.monotonic >= target
