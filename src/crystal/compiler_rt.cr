@@ -41,7 +41,7 @@ fun __multi3(a : Int128, b : Int128) : Int128
   x = a.unsafe_as(Tuple(Int64, Int64))
   y = b.unsafe_as(Tuple(Int64, Int64))
 
-  r __mulddi3(x.last, y.last).unsafe_as(Tuple(Int64, Int64))
+  r = x.last * y.last
 
   # r.s.high += x.s.high * y.s.low + x.s.low * y.s.high;
   r.first += x.first * y.last + x.last * y.first
