@@ -5,9 +5,9 @@ module Crystal
   class TypeException < Exception
     getter node
     property inner : Exception?
-    @line : Int32?
-    @column : Int32
-    @size : Int32
+    getter line : Int32?
+    getter column : Int32
+    getter size : Int32
 
     def color=(color)
       @color = !!color
@@ -15,15 +15,9 @@ module Crystal
     end
 
     def self.for_node(node, message, inner = nil)
-      location = node.location
+      location = node.name_location || node.location
       if location
-        column_number = node.name_column_number
-        name_size = node.name_size
-        if column_number == 0 || (end_location = node.end_location) && end_location.filename != location.filename
-          name_size = 0
-          column_number = location.column_number
-        end
-        ex = new message, location.line_number, column_number, location.filename, name_size, inner
+        ex = new message, location.line_number, location.column_number, location.filename, node.name_size, inner
         wrap_macro_expression(ex, location)
       else
         new message, nil, 0, nil, 0, inner
@@ -272,17 +266,17 @@ module Crystal
 
       line = lines[line_number - 1]
 
-      name_column = node.name_column_number
+      name_location = node.name_location
       name_size = node.name_size
 
       io << "    "
       io << replace_leading_tabs_with_spaces(line.chomp)
       io.puts
 
-      return unless name_column > 0
+      return unless name_location
 
       io << "    "
-      io << (" " * (name_column - 1))
+      io << (" " * (name_location.column_number - 1))
       with_color.green.bold.surround(io) do
         io << '^'
         if name_size > 0

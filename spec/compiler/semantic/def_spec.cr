@@ -486,4 +486,16 @@ describe "Semantic: def" do
       foo
     ), "there's no self in this scope"
   end
+
+  it "points error at name (#6937)" do
+    ex = assert_error <<-CODE,
+      1.
+        foobar
+      CODE
+      "undefined method",
+      inject_primitives: false
+    ex.line.should eq(2)
+    ex.column.should eq(3)
+    ex.size.should eq(6)
+  end
 end
