@@ -97,6 +97,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // this comes handy for establishing a custom browser search engine with https://crystal-lang.org/api/#q=%s as a search URL
     // TODO: Add OpenSearch description
     var searchQuery = location.hash.substring(3);
+    searchQuery = searchQuery.split('=')[0]; // xss filter
     history.pushState({searchQuery: searchQuery}, "Search for " + searchQuery, location.href.replace(/#q=.*/, ""));
     searchInput.value = searchQuery;
     document.addEventListener('CrystalDoc:loaded', performSearch);
