@@ -395,6 +395,47 @@ describe "OptionParser" do
     end
   end
 
+  describe "stop_at_subcommand" do
+    it "stops at foo" do
+      args = ["-f", "foo", "-b", "bar", "--", "baz"]
+      f = false
+      b = false
+      OptionParser.parse(args, stop_at_subcommand: true) do |opts|
+        opts.on("-f", "some flag") do
+          f = true
+        end
+        opts.on("-b", "some flag") do
+          b = true
+        end
+      end
+      f.should be_true
+      b.should be_false
+      args.should eq(["foo", "-b", "bar", "--", "baz"])
+    end
+
+    it "still stops at --" do
+      args = ["-f", "--", "-g", "foo", "-b", "bar", "--", "baz"]
+      f = false
+      g = false
+      b = false
+      OptionParser.parse(args, stop_at_subcommand: true) do |opts|
+        opts.on("-f", "some flag") do
+          f = true
+        end
+        opts.on("-g", "some flag") do
+          g = true
+        end
+        opts.on("-b", "some flag") do
+          b = true
+        end
+      end
+      f.should be_true
+      g.should be_false
+      b.should be_false
+      args.should eq(["-g", "foo", "-b", "bar", "--", "baz"])
+    end
+  end
+
   describe "forward-match" do
     it "distinguishes between '--lamb VALUE' and '--lambda VALUE'" do
       args = %w(--lamb value1 --lambda value2)
