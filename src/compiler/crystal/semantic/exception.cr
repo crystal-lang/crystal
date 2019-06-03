@@ -7,9 +7,9 @@ module Crystal
 
     getter node
     property inner : Exception?
-    @line_number : Int32?
-    @column_number : Int32
-    @size : Int32
+    getter line_number : Int32?
+    getter column_number : Int32
+    getter size : Int32
 
     def color=(color)
       @color = !!color

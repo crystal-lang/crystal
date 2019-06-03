@@ -494,8 +494,8 @@ describe "Semantic: def" do
       CODE
       "undefined method",
       inject_primitives: false
-    ex.line.should eq(2)
-    ex.column.should eq(3)
+    ex.line_number.should eq(2)
+    ex.column_number.should eq(3)
     ex.size.should eq(6)
   end
 end
