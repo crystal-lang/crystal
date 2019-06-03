@@ -127,14 +127,7 @@ module Crystal
       if inner
         return if inner.is_a? MethodTraceException && !inner.has_message?
         io << '\n'
-<<<<<<< HEAD
-        append_error_message io, msg
-      end
-
-      if inner && inner.has_location?
-=======
         io << "--" unless inner.is_a? MethodTraceException
->>>>>>> Revamp compile error formatting & output
         io << '\n'
         inner.append_to_s source, io
       end
