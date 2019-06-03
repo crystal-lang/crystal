@@ -126,9 +126,7 @@ module Crystal
 
       if inner
         return if inner.is_a? MethodTraceException && !inner.has_message?
-        io << '\n'
-        io << "--" unless inner.is_a? MethodTraceException
-        io << '\n'
+        io << "\n\n"
         inner.append_to_s source, io
       end
     end
@@ -141,7 +139,7 @@ module Crystal
       return "Warning: #{msg}" if @warning
 
       if (inner = @inner) && !inner.is_a? MethodTraceException?
-        "Error: #{msg}"
+        colorize("Error: #{msg}").yellow
       else
         colorize("Error: #{msg}").yellow.bold
       end
