@@ -3,7 +3,7 @@ require "ini"
 
 describe "INI" do
   describe "parse" do
-    describe "from String" do
+    context "from String" do
       it "fails on malformed section" do
         expect_raises(INI::ParseException, "unterminated section") do
           INI.parse("[section")
@@ -56,7 +56,7 @@ describe "INI" do
       end
     end
 
-    describe "from IO" do
+    context "from IO" do
       it "parses a file" do
         File.open datapath("test_file.ini") do |file|
           INI.parse(file).should eq({
