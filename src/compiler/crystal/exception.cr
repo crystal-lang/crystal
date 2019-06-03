@@ -134,17 +134,25 @@ module Crystal
       end
     end
 
+    def filename_row_col_message(io, filename, line_number, column_number)
+      io << "In "
+      io << colorize("#{relative_filename(filename)}:#{line_number}:#{column_number}").underline
+    end
+
     def format_error(filename, lines, line_number, column_number, size = 0)
       String.build do |io|
-        return "In #{filename}" unless line_number
+        return "In #{relative_filename(filename)}" unless line_number
         line = lines[line_number - 1]?
-        return "In #{filename}:#{line_number}:#{column_number}" unless line
+
+        unless line
+          return filename_row_col_message(io, filename, line_number, column_number)
+        end
 
         case filename
         when String
-          io << "In #{relative_filename(filename)}"
+          filename_row_col_message(io, filename, line_number, column_number)
         when VirtualFile
-          io << "In macro '#{filename.macro.name}'"
+          io << "In macro '" << colorize("#{filename.macro.name}").underline << '\''
         else
           io << "In unknown location"
         end
@@ -204,18 +212,21 @@ module Crystal
     def append_macro_definition_location(io, filename : VirtualFile)
       macro_source = filename.macro.location
       source_filename = macro_source.try &.filename
+      line_number = macro_source.try &.line_number
+      column_number = macro_source.try &.column_number
 
-      io << "Macro defined in " << case source_filename
+      io << "Macro defined in "
+
+      case source_filename
       when String
-        "#{relative_filename(source_filename)}"
+        io << colorize("#{relative_filename(source_filename)}:#{line_number}:#{column_number}").underline
       when VirtualFile
-        "macro '#{source_filename.macro.name}'"
+        io << "macro '" << colorize("#{source_filename.macro.name}").underline << '\''
       else
         "unknown location"
       end
 
       lines = source_lines(source_filename)
-      line_number = macro_source.try &.line_number
 
       if lines && line_number
         io << "\n\n"
