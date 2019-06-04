@@ -1,8 +1,9 @@
 require "./spec_helper"
+require "../../support/errno"
 require "socket"
 
 describe UDPSocket do
-  each_ip_family do |family, address|
+  each_ip_family do |family, address, unspecified_address|
     it "#bind" do
       port = unused_local_port
       socket = UDPSocket.new(family)
@@ -51,6 +52,63 @@ describe UDPSocket do
 
       client.close
       server.close
+    end
+
+    if {{ flag?(:darwin) }} && family == Socket::Family::INET6
+      # Darwin is failing to join IPv6 multicast groups on older versions.
+      # However this is known to work on macOS Mojave with Darwin 18.2.0.
+      # Darwin also has a bug that prevents selecting the "default" interface.
+      # https://lists.apple.com/archives/darwin-kernel/2014/Mar/msg00012.html
+      pending "joins and transmits to multicast groups"
+    else
+      it "joins and transmits to multicast groups" do
+        udp = UDPSocket.new(family)
+        udp.bind(unspecified_address, 2000)
+
+        udp.multicast_loopback = false
+        udp.multicast_loopback?.should eq(false)
+
+        udp.multicast_hops = 4
+        udp.multicast_hops.should eq(4)
+        udp.multicast_hops = 0
+        udp.multicast_hops.should eq(0)
+
+        addr = case family
+               when Socket::Family::INET
+                 expect_raises(Socket::Error, "Unsupported IP address family: INET. For use with IPv6 only") do
+                   udp.multicast_interface 0
+                 end
+                 udp.multicast_interface Socket::IPAddress.new(unspecified_address, 0)
+
+                 Socket::IPAddress.new("224.0.0.254", 2000)
+               when Socket::Family::INET6
+                 expect_raises(Socket::Error, "Unsupported IP address family: INET6. For use with IPv4 only") do
+                   udp.multicast_interface(Socket::IPAddress.new(unspecified_address, 0))
+                 end
+                 udp.multicast_interface(0)
+
+                 Socket::IPAddress.new("ff02::102", 2000)
+               else
+                 raise "Unsupported IP address family: #{family}"
+               end
+
+        udp.join_group(addr)
+        udp.multicast_loopback = true
+        udp.multicast_loopback?.should eq(true)
+
+        udp.send("testing", addr)
+        udp.receive[0].should eq("testing")
+
+        udp.leave_group(addr)
+        udp.send("testing", addr)
+
+        # Test that nothing was received after leaving the multicast group
+        spawn do
+          sleep 100.milliseconds
+          udp.close
+        end
+        expect_raises_errno(Errno::EBADF, "Error receiving datagram: Bad file descriptor") { udp.receive }
+      end
     end
   end
 
