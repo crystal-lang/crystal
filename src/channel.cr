@@ -325,7 +325,9 @@ class Channel::Unbuffered(T) < Channel(T)
         end
       end
 
-      yield if @closed
+      # At this point the channel might be closed already
+      # but still the value is returned because the receiver
+      # was scheduled by the sender before the channel was closed
 
       if sender = @sender
         sender.restore
