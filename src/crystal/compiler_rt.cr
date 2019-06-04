@@ -60,10 +60,9 @@ def multi3(a : Int128, b : Int128) : Int128
   x = a.unsafe_as(Int128Info)
   y = b.unsafe_as(Int128Info)
 
-  r = mulddi3(x.low, y.low).unsafe_as(Int128Info)
+  r = (x.low * y.low).unsafe_as(Int128Info)
   r.high += (x.high * y.low + x.low * y.high).unsafe_as(Int64)
 
-  # p x, y, r.unsafe_as(Int128Info)
   r.unsafe_as(Int128)
 end
 
