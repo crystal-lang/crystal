@@ -674,6 +674,7 @@ module Crystal
           @str << ", " if printed_arg
           @str << "**"
           double_splat.accept self
+          printed_arg = true
         end
         if block_arg = node.block_arg
           @str << ", " if printed_arg
