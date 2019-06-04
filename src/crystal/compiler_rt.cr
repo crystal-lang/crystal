@@ -37,16 +37,34 @@
 # fun __mulhi3(a : Int16, b : Int16) : Int16
 # fun __mulsi3(a : Int32, b : Int32) : Int32
 # fun __muldi3(a : Int64, b : Int64) : Int64
-fun __multi3(a : Int128, b : Int128) : Int128
-  x = a.unsafe_as(Tuple(Int64, Int64))
-  y = b.unsafe_as(Tuple(Int64, Int64))
+def mulddi3(a : UInt64, b : UInt64) : Int128
+  r = Int128Info.new
+  bits_in_dword_2 = (sizeof(Int64) * 8) / 2
+  lower_mask = ~0_u64 >> bits_in_dword_2
+  r.low = (a & lower_mask) * (b & lower_mask)
+  t = (r.low >> bits_in_dword_2).unsafe_as(UInt64)
+  r.low &= lower_mask
+  t += (a >> bits_in_dword_2) * (b & lower_mask)
+  r.low += (t & lower_mask) << bits_in_dword_2
+  r.high = (t >> bits_in_dword_2).unsafe_as(Int64) ## TODO validate cast to Int64
+  t = r.low >> bits_in_dword_2
+  r.low &= lower_mask
+  t += (b >> bits_in_dword_2) * (a & lower_mask)
+  r.low += (t & lower_mask) << bits_in_dword_2
+  r.high += t >> bits_in_dword_2
+  r.high += (a >> bits_in_dword_2) * (b >> bits_in_dword_2)
+  r.unsafe_as(Int128)
+end
 
-  r = x.last * y.last
+def multi3(a : Int128, b : Int128) : Int128
+  x = a.unsafe_as(Int128Info)
+  y = b.unsafe_as(Int128Info)
 
-  # r.s.high += x.s.high * y.s.low + x.s.low * y.s.high;
-  r.first += x.first * y.last + x.last * y.first
+  r = mulddi3(x.low, y.low).unsafe_as(Int128Info)
+  r.high += (x.high * y.low + x.low * y.high).unsafe_as(Int64)
 
-  return r.unsafe_as(Int128)
+  # p x, y, r.unsafe_as(Int128Info)
+  r.unsafe_as(Int128)
 end
 
 # Functions for returning the product with overflow eg. `a * b`
