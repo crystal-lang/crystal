@@ -161,4 +161,5 @@ describe "ASTNode#to_s" do
   expect_to_s %[(1..)]
   expect_to_s %[..3]
   expect_to_s "offsetof(Foo, @bar)"
+  expect_to_s "def foo(**options, &block)\nend"
 end
