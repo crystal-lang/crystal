@@ -6,7 +6,7 @@
 
 ### Macros
 
-- Fix inheritance support of `record` macro . ([#7811](https://github.com/crystal-lang/crystal/pull/7811), thanks @asterite)
+- Fix inheritance support of `record` macro. ([#7811](https://github.com/crystal-lang/crystal/pull/7811), thanks @asterite)
 - Omit quotes in `puts` macro output. ([#7734](https://github.com/crystal-lang/crystal/pull/7734), thanks @asterite)
 
 ### Numeric
@@ -16,7 +16,7 @@
 ### Text
 
 - **(breaking-change)** Deprecate `String#at`, use `String#char_at`. ([#7633](https://github.com/crystal-lang/crystal/pull/7633), thanks @j8r)
-- **(breaking-change)** Change `String#to_i` to parse octals with prefix 0o (but not `0` by default). ([#7691](https://github.com/crystal-lang/crystal/pull/7691), thanks @icy-arctic-fox)
+- **(breaking-change)** Change `String#to_i` to parse octals with prefix `0o` (but not `0` by default). ([#7691](https://github.com/crystal-lang/crystal/pull/7691), thanks @icy-arctic-fox)
 - **(breaking-change)** Restrict some `String#to_i` arguments to be `Bool`. ([#7436](https://github.com/crystal-lang/crystal/pull/7436), thanks @j8r)
 - Add `downcase` option to `String#camelcase`. ([#7717](https://github.com/crystal-lang/crystal/pull/7717), thanks @wontruefree)
 - Add support for unicode 12.0.0. ([#7721](https://github.com/crystal-lang/crystal/pull/7721), thanks @Blacksmoke16)
@@ -27,7 +27,7 @@
 - **(breaking-change)** Remove `Slice#pointer`. ([#7581](https://github.com/crystal-lang/crystal/pull/7581), thanks @Maroo-b)
 - Add sort methods to `Slice`. ([#7597](https://github.com/crystal-lang/crystal/pull/7597), thanks @Maroo-b)
 - Add `Slice#[]?`. ([#7701](https://github.com/crystal-lang/crystal/pull/7701), thanks @Sija)
-- Docs tweaks for `Slice#[]`. ([#7780](https://github.com/crystal-lang/crystal/pull/7780), thanks @Sija)
+- Improve docs for `Slice#[]`. ([#7780](https://github.com/crystal-lang/crystal/pull/7780), thanks @Sija)
 
 ### Serialization
 
@@ -41,7 +41,7 @@
 
 ### Networking
 
-- **(breaking-change)** Let `IO#copy` return UInt64. ([#7660](https://github.com/crystal-lang/crystal/pull/7660), thanks @asterite)
+- **(breaking-change)** Let `IO#copy` return `UInt64`. ([#7660](https://github.com/crystal-lang/crystal/pull/7660), thanks @asterite)
 - Add missing requires to `openssl.cr`. ([#7803](https://github.com/crystal-lang/crystal/pull/7803), thanks @RX14)
 - Add `IO::MultiWriter#flush`. ([#7765](https://github.com/crystal-lang/crystal/pull/7765), thanks @mamantoha)
 - Add `OpenSSL::SSL::Socket#cipher` and `#tls_version`. ([#7445](https://github.com/crystal-lang/crystal/pull/7445), thanks @carlhoerberg)
