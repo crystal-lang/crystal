@@ -270,6 +270,12 @@ describe "File" do
     end
   end
 
+  describe "symlink?" do
+    it "reads link" do
+      File.readlink(datapath("symlink.txt")).should eq "test_file.txt"
+    end
+  end
+
   it "gets dirname" do
     File.dirname("/Users/foo/bar.cr").should eq("/Users/foo")
     File.dirname("foo").should eq(".")
