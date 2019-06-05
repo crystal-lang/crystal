@@ -1,4 +1,4 @@
-# 0.29.0 (2019-06-??)
+# 0.29.0 (2019-06-05)
 
 ## Standard library
 
@@ -33,6 +33,10 @@
 
 - YAML: let String handle numbers too. ([#7809](https://github.com/crystal-lang/crystal/pull/7809), thanks @asterite)
 
+### Time
+
+- Fix time format RFC 3339 to not include offset seconds. ([#7492](https://github.com/crystal-lang/crystal/pull/7492), thanks @straight-shoota)
+
 ### Files
 
 - **(breaking-change)** Rename `File::DEVNULL` to `File::NULL`. ([#7778](https://github.com/crystal-lang/crystal/pull/7778), thanks @r00ster91)
@@ -42,6 +46,7 @@
 ### Networking
 
 - **(breaking-change)** Let `IO#copy` return `UInt64`. ([#7660](https://github.com/crystal-lang/crystal/pull/7660), thanks @asterite)
+- Add support for UDP multicast. ([#7423](https://github.com/crystal-lang/crystal/pull/7423), thanks @stakach)
 - Add missing requires to `openssl.cr`. ([#7803](https://github.com/crystal-lang/crystal/pull/7803), thanks @RX14)
 - Add `IO::MultiWriter#flush`. ([#7765](https://github.com/crystal-lang/crystal/pull/7765), thanks @mamantoha)
 - Add `OpenSSL::SSL::Socket#cipher` and `#tls_version`. ([#7445](https://github.com/crystal-lang/crystal/pull/7445), thanks @carlhoerberg)
@@ -54,9 +59,14 @@
 
 - **(breaking-change)** Rename `Crypto::Bcrypt::Password#==` to `#verify`. ([#7790](https://github.com/crystal-lang/crystal/pull/7790), thanks @asterite)
 
+### Concurrency
+
+- Add docs for `Channel`. ([#7673](https://github.com/crystal-lang/crystal/pull/7673), thanks @j8r)
+
 ## Compiler
 
 - **(breaking-change)** Fix require relative path resolution. ([#7758](https://github.com/crystal-lang/crystal/pull/7758), thanks @asterite)
+- **(breaking-change)** Disallow '!' or '?' at the end of the LHS in an assignment. ([#7582](https://github.com/crystal-lang/crystal/pull/7582), thanks @Maroo-b)
 - Allow running compiler_specs with specific flags. ([#7837](https://github.com/crystal-lang/crystal/pull/7837), thanks @bcardiff)
 - Fix extend from generic types. ([#7812](https://github.com/crystal-lang/crystal/pull/7812), thanks @asterite)
 - Don't virtualize types in `Union(...)` and keep more accurate type information. ([#7815](https://github.com/crystal-lang/crystal/pull/7815), thanks @asterite)
@@ -65,6 +75,7 @@
 - Fix track of AST nodes location. ([#7827](https://github.com/crystal-lang/crystal/pull/7827), thanks @asterite)
 - Fix `offsetof` not being usable with macros. ([#7703](https://github.com/crystal-lang/crystal/pull/7703), thanks @malte-v)
 - Allow parsing of `call &.@ivar`. ([#7754](https://github.com/crystal-lang/crystal/pull/7754), thanks @asterite)
+- Fix `Def#to_s` with `**options` and `&block`. ([#7854](https://github.com/crystal-lang/crystal/pull/7854), thanks @MakeNowJust)
 - Check `pointerof` inner expression for errors. ([#7755](https://github.com/crystal-lang/crystal/pull/7755), thanks @asterite)
 - Fix some error messages. ([#7833](https://github.com/crystal-lang/crystal/pull/7833), thanks @asterite)
 - Improve wording of `pointerof(self)` parser error. ([#7542](https://github.com/crystal-lang/crystal/pull/7542), thanks @r00ster91)
@@ -104,7 +115,7 @@
 
 ## Others
 
-- CI improvements and housekeeping. ([#7705](https://github.com/crystal-lang/crystal/pull/7705), thanks @bcardiff)
+- CI improvements and housekeeping. ([#7705](https://github.com/crystal-lang/crystal/pull/7705), [#7852](https://github.com/crystal-lang/crystal/pull/7852), thanks @bcardiff)
 - Move VERSION inside ./src. ([#7804](https://github.com/crystal-lang/crystal/pull/7804), thanks @bcardiff)
 
 # 0.28.0 (2019-04-17)
