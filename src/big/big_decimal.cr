@@ -277,6 +277,20 @@ struct BigDecimal < Number
     end
   end
 
+  # Raises the decimal to the *other*th power
+  #
+  # ```
+  # require "big"
+  #
+  # BigDecimal.new(1234, 2) ** 2 # => 152.2756
+  # ```
+  def **(other : Int) : BigDecimal
+    if other < 0
+      raise ArgumentError.new("Negative exponent isn't supported")
+    end
+    BigDecimal.new(@value ** other, @scale * other)
+  end
+
   def ceil : BigDecimal
     mask = power_ten_to(@scale)
     diff = (mask - @value % mask) % mask
