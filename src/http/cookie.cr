@@ -3,7 +3,7 @@ require "./common"
 module HTTP
   # Represents a cookie with all its attributes. Provides convenient access and modification of them.
   class Cookie
-    # Possible values for the SameSite cookie as described in the [Same-site Cookies Draft](https://tools.ietf.org/html/draft-west-first-party-cookies-07#section-4.1.1).
+    # Possible values for the `SameSite` cookie as described in the [Same-site Cookies Draft](https://tools.ietf.org/html/draft-west-first-party-cookies-07#section-4.1.1).
     enum SameSite
       # Prevents the cookie from being sent by the browser in all cross-site browsing contexts.
       Strict
