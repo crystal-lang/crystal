@@ -1,9 +1,17 @@
 require "./common"
 
 module HTTP
-  # Represents a cookie with all its attributes. Provides convenient
-  # access and modification of them.
+  # Represents a cookie with all its attributes. Provides convenient access and modification of them.
   class Cookie
+    # Possible values for the SameSite cookie as described in the [Same-site Cookies Draft](https://tools.ietf.org/html/draft-west-first-party-cookies-07#section-4.1.1).
+    enum SameSite
+      # Prevents the cookie from being sent by the browser in all cross-site browsing contexts.
+      Strict
+
+      # Allows the cookie to be sent by the browser during top-level navigations that use a [safe](https://tools.ietf.org/html/rfc7231#section-4.2.1) HTTP method.
+      Lax
+    end
+
     property name : String
     property value : String
     property path : String
@@ -11,6 +19,7 @@ module HTTP
     property domain : String?
     property secure : Bool
     property http_only : Bool
+    property samesite : SameSite?
     property extension : String?
 
     def_equals_and_hash name, value, path, expires, domain, secure, http_only
@@ -18,7 +27,7 @@ module HTTP
     def initialize(@name : String, value : String, @path : String = "/",
                    @expires : Time? = nil, @domain : String? = nil,
                    @secure : Bool = false, @http_only : Bool = false,
-                   @extension : String? = nil)
+                   @samesite : SameSite? = nil, @extension : String? = nil)
       @name = URI.unescape name
       @value = URI.unescape value
     end
@@ -27,6 +36,7 @@ module HTTP
       path = @path
       expires = @expires
       domain = @domain
+      samesite = @samesite
       String.build do |header|
         header << "#{URI.escape @name}=#{URI.escape value}"
         header << "; domain=#{domain}" if domain
@@ -34,6 +44,7 @@ module HTTP
         header << "; expires=#{HTTP.format_time(expires)}" if expires
         header << "; Secure" if @secure
         header << "; HttpOnly" if @http_only
+        header << "; SameSite=#{samesite.to_s}" if samesite
         header << "; #{@extension}" if @extension
       end
     end
@@ -73,12 +84,13 @@ module HTTP
         SaneCookieDate = /(?:#{RFC1123Date}|#{RFC1036Date}|#{IISDate}|#{ANSICDate})/
         ExtensionAV    = /(?<extension>[^\x00-\x1f\x7f]+)/
         HttpOnlyAV     = /(?<http_only>HttpOnly)/i
+        SameSiteAV     = /SameSite=(?<samesite>\w+)/i
         SecureAV       = /(?<secure>Secure)/i
         PathAV         = /Path=(?<path>#{PathValue})/i
         DomainAV       = /Domain=(?<domain>#{DomainValue})/i
         MaxAgeAV       = /Max-Age=(?<max_age>[0-9]*)/i
         ExpiresAV      = /Expires=(?<expires>#{SaneCookieDate})/i
-        CookieAV       = /(?:#{ExpiresAV}|#{MaxAgeAV}|#{DomainAV}|#{PathAV}|#{SecureAV}|#{HttpOnlyAV}|#{ExtensionAV})/
+        CookieAV       = /(?:#{ExpiresAV}|#{MaxAgeAV}|#{DomainAV}|#{PathAV}|#{SecureAV}|#{HttpOnlyAV}|#{SameSiteAV}|#{ExtensionAV})/
       end
 
       CookieString    = /(?:^|; )#{Regex::CookiePair}/
@@ -113,6 +125,7 @@ module HTTP
           domain: match["domain"]?,
           secure: match["secure"]? != nil,
           http_only: match["http_only"]? != nil,
+          samesite: (ss = match["samesite"]?) ? SameSite.parse? ss : nil,
           extension: match["extension"]?
         )
       end
