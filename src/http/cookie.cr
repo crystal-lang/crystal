@@ -44,7 +44,7 @@ module HTTP
         header << "; expires=#{HTTP.format_time(expires)}" if expires
         header << "; Secure" if @secure
         header << "; HttpOnly" if @http_only
-        header << "; SameSite=#{samesite.to_s}" if samesite
+        header << "; SameSite=#{samesite}" if samesite
         header << "; #{@extension}" if @extension
       end
     end
