@@ -125,7 +125,7 @@ module HTTP
           domain: match["domain"]?,
           secure: match["secure"]? != nil,
           http_only: match["http_only"]? != nil,
-          samesite: (ss = match["samesite"]?) ? SameSite.parse? ss : nil,
+          samesite: match["samesite"]?.try { |v| SameSite.parse? v },
           extension: match["extension"]?
         )
       end
