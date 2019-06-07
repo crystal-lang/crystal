@@ -59,7 +59,7 @@ class Crystal::Scheduler
   protected def resume(fiber : Fiber) : Nil
     validate_resumable(fiber)
     {% if flag?(:preview_mt) %}
-      ensure_single_resume(fiber)
+      set_current_thread(fiber)
       GC.lock_read
     {% else %}
       GC.set_stackbottom(fiber.@stack_bottom)
@@ -83,17 +83,8 @@ class Crystal::Scheduler
     end
   end
 
-  private def ensure_single_resume(fiber)
-    # Set the current thread as the running thread of *fiber*,
-    # but only if *fiber.@current_thread* is effectively *nil*
-    if fiber.@current_thread.compare_and_set(nil, Thread.current).last
-      # the current fiber will leave the current thread shortly
-      # although it's not resumable yet we need to clear
-      # *@current.@current_thread* for a future `Scheduler.resume(@current)`
-      @current.@current_thread.set(nil)
-    else
-      fatal_resume_error(fiber, "tried to resume the same fiber multiple times")
-    end
+  private def set_current_thread(fiber)
+    fiber.@current_thread.set(Thread.current)
   end
 
   private def fatal_resume_error(fiber, message)

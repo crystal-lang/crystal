@@ -1,4 +1,9 @@
 require "fiber"
+{% if flag?(:preview_mt) %}
+  require "crystal/spin_lock"
+{% else %}
+  require "crystal/null_lock"
+{% end %}
 
 # A `Channel` enables concurrent communication between fibers.
 #
@@ -207,6 +212,12 @@ end
 
 # Buffered channel, using a queue.
 class Channel::Buffered(T) < Channel(T)
+  {% if flag?(:preview_mt) %}
+    @lock = Crystal::SpinLock.new
+  {% else %}
+    @lock = Crystal::NullLock.new
+  {% end %}
+
   def initialize(@capacity = 32)
     @queue = Deque(T).new(@capacity)
     super()
@@ -254,6 +265,11 @@ end
 # Unbuffered channel.
 class Channel::Unbuffered(T) < Channel(T)
   @sender : Fiber?
+  {% if flag?(:preview_mt) %}
+    @lock = Crystal::SpinLock.new
+  {% else %}
+    @lock = Crystal::NullLock.new
+  {% end %}
 
   def initialize
     @has_value = false
@@ -263,42 +279,65 @@ class Channel::Unbuffered(T) < Channel(T)
 
   # Send a value to the channel.
   def send(value : T)
-    while @has_value
+    receiver = nil
+
+    @lock.sync do
+      while @has_value
+        raise_if_closed
+        @senders << Fiber.current
+        @lock.unsync do
+          Crystal::Scheduler.reschedule
+        end
+      end
+
       raise_if_closed
-      @senders << Fiber.current
-      Crystal::Scheduler.reschedule
+
+      @value = value
+      @has_value = true
+      receiver = @receivers.shift?
+
+      if !receiver
+        @sender = Fiber.current
+      end
     end
 
-    raise_if_closed
-
-    @value = value
-    @has_value = true
-    @sender = Fiber.current
-
-    if receiver = @receivers.shift?
-      receiver.resume
+    if receiver
+      receiver.restore
     else
       Crystal::Scheduler.reschedule
     end
   end
 
   private def receive_impl
-    until @has_value
-      yield if @closed
-      @receivers << Fiber.current
-      if sender = @senders.shift?
-        sender.resume
-      else
-        Crystal::Scheduler.reschedule
+    @lock.sync do
+      until @has_value
+        yield if @closed
+        @receivers << Fiber.current
+        if sender = @senders.shift?
+          @lock.unsync do
+            sender.restore
+            Crystal::Scheduler.reschedule
+          end
+        else
+          @lock.unsync do
+            Crystal::Scheduler.reschedule
+          end
+        end
       end
-    end
 
-    yield if @closed
+      yield if @closed
 
-    @value.tap do
+      if sender = @sender
+        sender.restore
+      end
+
+      if sender = @senders.shift?
+        sender.restore
+      end
+
       @has_value = false
-      Crystal::Scheduler.enqueue @sender.not_nil!
       @sender = nil
+      @value
     end
   end
 
