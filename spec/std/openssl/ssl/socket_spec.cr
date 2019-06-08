@@ -15,9 +15,7 @@ describe OpenSSL::SSL::Socket do
       end
 
       client = server.accept
-      cipher = client.cipher
-      cipher.upcase.should eq cipher
-      cipher.should_not be_empty
+      client.cipher.should_not be_empty
       client.close
     end
   end
