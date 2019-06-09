@@ -15,7 +15,7 @@ describe OpenSSL::SSL::Socket do
       end
 
       client = server.accept
-      client.cipher.should contain "RSA"
+      client.cipher.should_not be_empty
       client.close
     end
   end
