@@ -88,7 +88,9 @@ module Benchmark
 
           loop do
             elapsed = nil
-            bytes_taken = Benchmark.memory { elapsed = Time.measure { item.call_for_100ms } }
+            bytes_taken = Benchmark.memory do
+              elapsed = Time.measure { item.call_for_100ms }
+            end
             bytes += bytes_taken
             cycles += item.cycles
             measurements << elapsed.not_nil!
