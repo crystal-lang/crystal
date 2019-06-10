@@ -5,9 +5,6 @@ module Crystal::System::User
     new(String.new(pwd.pw_name), pwd.pw_uid, pwd.pw_gid, String.new(pwd.pw_dir), String.new(pwd.pw_shell))
   end
 
-  # Returns the user associated with the given ID, if it exists.
-  #
-  # Raises `Errno` if a system error occurs.
   def from_name?(username : String)
     username.check_no_null_byte
 
