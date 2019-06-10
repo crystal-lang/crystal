@@ -2,10 +2,10 @@ require "c/pwd"
 
 module Crystal::System::User
   private def from_struct(pwd)
-    new(String.new(pwd.pw_name), pwd.pw_uid, pwd.pw_gid, String.new(pwd.pw_dir), String.new(pwd.pw_shell))
+    new(String.new(pwd.pw_name), pwd.pw_uid, pwd.pw_gid, String.new(pwd.pw_gecos), String.new(pwd.pw_dir), String.new(pwd.pw_shell))
   end
 
-  def from_name?(username : String)
+  def from_username?(username : String)
     username.check_no_null_byte
 
     pwd = uninitialized LibC::Passwd

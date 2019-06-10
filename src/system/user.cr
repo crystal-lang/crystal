@@ -7,23 +7,25 @@ class System::User
 
   extend Crystal::System::User
 
-  getter name : String
+  getter username : String
   getter user_id : LibC::UidT
   getter group_id : LibC::GidT
+  getter name : String
   getter directory : String
   getter shell : String
 
   def_equals_and_hash @user_id
 
-  private def initialize(@name, @user_id, @group_id, @directory, @shell)
+  private def initialize(@username, @user_id, @group_id, gecos, @directory, @shell)
+    @name = gecos.split(",").first
   end
 
-  # Returns the user associated with the given name.
+  # Returns the user associated with the given username.
   #
   # Raises `NotFoundError` if no such user exists.
   # See `from_name?`.
-  def self.from_name(name)
-    from_name?(name) || raise NotFoundError.new("No such user: #{name}")
+  def self.from_username(username)
+    from_username?(username) || raise NotFoundError.new("No such user: #{username}")
   end
 
   # Returns the user associated with the given ID.
@@ -35,6 +37,6 @@ class System::User
   end
 
   def to_s(io)
-    io << "#{name} (#{user_id})"
+    io << "#{username} (#{user_id})"
   end
 end
