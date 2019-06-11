@@ -482,4 +482,14 @@ describe "Semantic: enum" do
       end
     ))
   end
+
+  it "doesn't overflow on flags member (#7877)" do
+    semantic(%(
+      @[Flags]
+      enum Filter
+        A = 1 << 29
+        B
+      end
+    ))
+  end
 end
