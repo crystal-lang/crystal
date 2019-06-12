@@ -3,7 +3,7 @@ require "c/pwd"
 module Crystal::System::User
   private def from_struct(pwd)
     user = String.new(pwd.pw_gecos).split(",").first
-    new(String.new(pwd.pw_name), pwd.pw_uid, pwd.pw_gid, user, String.new(pwd.pw_dir), String.new(pwd.pw_shell))
+    new(String.new(pwd.pw_name), pwd.pw_uid.to_s, pwd.pw_gid.to_s, user, String.new(pwd.pw_dir), String.new(pwd.pw_shell))
   end
 
   def from_username?(username : String)
@@ -25,7 +25,8 @@ module Crystal::System::User
     from_struct(pwd)
   end
 
-  def from_id?(id : LibC::UidT)
+  def from_id?(id : String)
+    id = id.to_i.to_u32!
     pwd = uninitialized LibC::Passwd
     pwd_pointer = pointerof(pwd)
     buf = Bytes.new(1024)

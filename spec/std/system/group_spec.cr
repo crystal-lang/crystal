@@ -2,7 +2,7 @@ require "spec"
 require "system/group"
 
 GROUP_NAME = {{ `id -gn`.stringify.chomp }}
-GROUP_ID   = {{ `id -g`.stringify.to_i }}.to_u32!
+GROUP_ID   = {{ `id -g`.stringify.chomp }}
 
 describe System::Group do
   describe "from_name?" do
@@ -46,7 +46,7 @@ describe System::Group do
     end
 
     it "returns nil on nonexistent group" do
-      group = System::Group.from_id?(1234567_u32)
+      group = System::Group.from_id?("1234567")
       group.should eq(nil)
     end
   end
@@ -62,7 +62,7 @@ describe System::Group do
 
     it "raises on nonexistent group" do
       expect_raises System::Group::NotFoundError, "No such group" do
-        System::Group.from_id(1234567_u32)
+        System::Group.from_id("1234567")
       end
     end
   end

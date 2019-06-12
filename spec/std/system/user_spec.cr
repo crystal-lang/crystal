@@ -2,7 +2,7 @@ require "spec"
 require "system/user"
 
 USER_NAME = {{ `id -un`.stringify.chomp }}
-USER_ID   = {{ `id -u`.stringify.to_i }}.to_u32!
+USER_ID   = {{ `id -u`.stringify.chomp }}
 
 describe System::User do
   describe "from_username?" do
@@ -46,7 +46,7 @@ describe System::User do
     end
 
     it "returns nil on nonexistent user" do
-      user = System::User.from_id?(1234567_u32)
+      user = System::User.from_id?("1234567")
       user.should eq(nil)
     end
   end
@@ -62,7 +62,7 @@ describe System::User do
 
     it "raises on nonexistent user" do
       expect_raises System::User::NotFoundError, "No such user" do
-        System::User.from_id(1234567_u32)
+        System::User.from_id("1234567")
       end
     end
   end

@@ -14,7 +14,7 @@ module Crystal::System::Group
   end
 
   private def from_struct(grp)
-    new(String.new(grp.gr_name), grp.gr_gid, extract_members(grp.gr_mem))
+    new(String.new(grp.gr_name), grp.gr_gid.to_s, extract_members(grp.gr_mem))
   end
 
   def from_name?(groupname : String)
@@ -36,7 +36,8 @@ module Crystal::System::Group
     from_struct(grp)
   end
 
-  def from_id?(groupid : LibC::GidT)
+  def from_id?(groupid : String)
+    groupid = groupid.to_i.to_u32!
     grp = uninitialized LibC::Group
     grp_pointer = pointerof(grp)
     buf = Bytes.new(1024)

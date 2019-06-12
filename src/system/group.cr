@@ -8,7 +8,7 @@ class System::Group
   extend Crystal::System::Group
 
   getter name : String
-  getter id : LibC::GidT
+  getter id : String
   getter members : Array(String)
 
   def_equals_and_hash @id

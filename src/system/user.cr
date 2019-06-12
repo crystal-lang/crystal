@@ -8,8 +8,8 @@ class System::User
   extend Crystal::System::User
 
   getter username : String
-  getter user_id : LibC::UidT
-  getter group_id : LibC::GidT
+  getter user_id : String
+  getter group_id : String
   getter name : String
   getter directory : String
   getter shell : String
