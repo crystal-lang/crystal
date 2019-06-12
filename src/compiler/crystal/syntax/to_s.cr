@@ -733,7 +733,7 @@ module Crystal
       newline
 
       inside_macro do
-        accept_with_indent node.body
+        accept node.body
       end
 
       # newline
