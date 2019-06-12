@@ -1984,6 +1984,8 @@ module Crystal
                 end
               end
               next_string_token delimiter_state
+            when '\0'
+              raise_unterminated_quoted delimiter_state
             else
               @token.type = :STRING
               @token.value = current_char.to_s

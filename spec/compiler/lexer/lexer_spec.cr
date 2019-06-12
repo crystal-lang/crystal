@@ -529,4 +529,6 @@ describe "Lexer" do
   it_lexes_string %("\\xFF"), String.new(Bytes[0xFF])
   assert_syntax_error %("\\xz"), "invalid hex escape"
   assert_syntax_error %("\\x1z"), "invalid hex escape"
+
+  assert_syntax_error %("hi\\)
 end
