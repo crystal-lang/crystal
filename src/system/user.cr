@@ -16,8 +16,7 @@ class System::User
 
   def_equals_and_hash @user_id
 
-  private def initialize(@username, @user_id, @group_id, gecos, @directory, @shell)
-    @name = gecos.split(",").first
+  private def initialize(@username, @user_id, @group_id, @name, @directory, @shell)
   end
 
   # Returns the user associated with the given username.
