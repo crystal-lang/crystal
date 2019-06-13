@@ -1132,7 +1132,7 @@ describe Crystal::Formatter do
   assert_format "Foo::Bar(T, U?)?"
   assert_format "Union(Foo::Bar?, Baz?, Qux(T, U?))"
 
-  assert_format "lib Foo\n  {% if 1 %}\n    2\n  {% end %}\nend\n\nmacro bar\n  1\nend"
+  assert_format "lib Foo\n  {% if 1 %}\n    fun foo\n  {% end %}\nend\n\nmacro bar\n  1\nend"
 
   assert_format "x : Int32 |\nString", "x : Int32 |\n    String"
 
@@ -1352,4 +1352,140 @@ describe Crystal::Formatter do
   assert_format "foo\n  .bar(\n    1\n  )"
   assert_format "foo\n  .bar\n  .baz(\n    1\n  )"
   assert_format "foo.bar\n  .baz(\n    1\n  )"
+
+  assert_format <<-BEFORE,
+    def foo
+      {% if flag?(:foo) %}
+        foo  +  bar
+      {% else %}
+        baz  +  qux
+      {% end %}
+    end
+    BEFORE
+    <<-AFTER
+    def foo
+      {% if flag?(:foo) %}
+        foo + bar
+      {% else %}
+        baz + qux
+      {% end %}
+    end
+    AFTER
+
+  assert_format <<-BEFORE,
+    def foo
+      {% for x in y %}
+        foo  +  bar
+      {% end %}
+    end
+    BEFORE
+    <<-AFTER
+    def foo
+      {% for x in y %}
+        foo + bar
+      {% end %}
+    end
+    AFTER
+
+  assert_format <<-BEFORE,
+    x = {% if flag?(:foo) %}
+          foo  +  bar
+        {% else %}
+          baz  +  qux
+        {% end %}
+    BEFORE
+    <<-AFTER
+    x = {% if flag?(:foo) %}
+          foo + bar
+        {% else %}
+          baz + qux
+        {% end %}
+    AFTER
+
+  assert_format <<-CODE
+    {% if flag?(:freebsd) %}
+      1 + 2
+    {% end %}
+
+    case x
+    when 1234 then 1
+    else           x
+    end
+    CODE
+
+  assert_format <<-CODE
+    {% if z %}
+      1
+    {% end %}
+
+    def foo
+      z =
+        123 + # foo
+          4   # bar
+
+      1
+    end
+    CODE
+
+  assert_format <<-CODE
+    lib LibFoo
+      {% begin %}
+        fun foo : Int32
+      {% end %}
+    end
+    CODE
+
+  assert_format <<-CODE
+    lib LibFoo
+      struct Bar
+        {% begin %}
+          x : Int32
+        {% end %}
+      end
+    end
+    CODE
+
+  assert_format <<-CODE
+    enum Foo
+      {% begin %}
+        A
+        B
+        C
+      {% end %}
+    end
+    CODE
+
+  assert_format <<-CODE
+    a = 1
+    b, c = 2, 3
+    {% begin %}
+      a |= 1
+      b |= 2
+      c |= 3
+    {% end %}
+    CODE
+
+  assert_format <<-CODE
+    lib LibFoo
+      {% begin %}
+        fun x = y(Int32)
+      {% end %}
+    end
+    CODE
+
+  it "gives proper line number in syntax error inside macro" do
+    source = <<-CODE
+      a = 1
+      b = 2
+
+      {% begin %}
+        c |= 3
+      {% end %}
+    CODE
+
+    ex = expect_raises(Crystal::SyntaxException) do
+      Crystal.format(source)
+    end
+    ex.line_number.should eq(5)
+  end
 end

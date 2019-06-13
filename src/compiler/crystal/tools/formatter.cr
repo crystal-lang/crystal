@@ -72,6 +72,7 @@ module Crystal
     @inside_cond : Int32
     @inside_lib : Int32
     @inside_struct_or_union : Int32
+    @inside_enum : Int32
     @multiline_call_indent : Int32?
     @implicit_exception_handler_indent : Int32
     @last_write : String
@@ -87,6 +88,12 @@ module Crystal
     @heredoc_fixes : Array(HeredocFix)
     @assign_length : Int32?
     @current_hash : ASTNode?
+
+    getter no_rstrip_lines
+    property vars
+    property inside_lib
+    property inside_enum
+    property inside_struct_or_union
 
     def initialize(source)
       @lexer = Lexer.new(source)
@@ -108,6 +115,7 @@ module Crystal
       @inside_macro = 0
       @inside_cond = 0
       @inside_lib = 0
+      @inside_enum = 0
       @inside_struct_or_union = 0
       @multiline_call_indent = nil
       @implicit_exception_handler_indent = 0
@@ -139,6 +147,9 @@ module Crystal
 
       # Lines that must not be rstripped (HEREDOC lines)
       @no_rstrip_lines = Set(Int32).new
+
+      # Variables for when we format macro code without interpolation
+      @vars = [Set(String).new]
     end
 
     def end_visit_any(node)
@@ -1400,6 +1411,7 @@ module Crystal
     def visit(node : Def)
       @implicit_exception_handler_indent = @indent
       @inside_def += 1
+      @vars.push Set(String).new
 
       write_keyword :abstract, " " if node.abstract?
 
@@ -1456,6 +1468,7 @@ module Crystal
         format_nested_with_end body
       end
 
+      @vars.pop
       @inside_def -= 1
 
       false
@@ -1861,9 +1874,10 @@ module Crystal
       @macro_state = macro_state
       @macro_state.control_nest += 1
       check_macro_whitespace
-      next_macro_token
 
-      inside_macro { no_indent node.then }
+      macro_node_line = @line
+      next_macro_token
+      format_macro_contents(node.then, macro_node_line)
 
       unless node.else.is_a?(Nop)
         check :MACRO_CONTROL_START
@@ -1885,9 +1899,10 @@ module Crystal
           @macro_state = macro_state
           @macro_state.control_nest += 1
           check_macro_whitespace
-          next_macro_token
 
-          inside_macro { no_indent node.else }
+          macro_node_line = @line
+          next_macro_token
+          format_macro_contents(node.else, macro_node_line)
         end
       end
 
@@ -1952,9 +1967,11 @@ module Crystal
 
       @macro_state.control_nest += 1
       check_macro_whitespace
-      next_macro_token
 
-      inside_macro { no_indent node.body }
+      macro_node_line = @line
+      next_macro_token
+      format_macro_contents(node.body, macro_node_line)
+
       @macro_state = old_macro_state
 
       check :MACRO_CONTROL_START
@@ -2000,6 +2017,79 @@ module Crystal
       next_macro_token
 
       false
+    end
+
+    def format_macro_contents(node, macro_node_line)
+      # If macro contents don't have interpolations nor newlines, and we
+      # are at the top-level (not already inside a macro) then the content
+      # must be a valid Crystal expression and we can format it.
+      #
+      # For example:
+      #
+      # {% if flag?(:foo) %}
+      #   puts "This is an expression that we can format just fine"
+      # {% end %}
+      if !inside_macro? && node.is_a?(MacroLiteral) && node.value.includes?("\n")
+        # Format the value and append 2 more spaces of indentation
+        value = node.value
+
+        begin
+          formatter, value = subformat(value)
+        rescue ex : Crystal::SyntaxException
+          raise Crystal::SyntaxException.new(
+            ex.message,
+            ex.line_number + macro_node_line,
+            ex.column_number,
+            ex.filename,
+            ex.size)
+        end
+
+        lines = value.lines
+        value = lines.map { |line| "#{" " * (@indent + 2)}#{line}" }.join("\n")
+
+        # The formatted contents might have heredocs for which we must preserve
+        # trailing spaces, so here we copy those from the formatter we used
+        # to format the contents to this formatter (we add one because we insert
+        # a newline before the contents).
+        formatter.no_rstrip_lines.each do |line|
+          @no_rstrip_lines.add(macro_node_line + line + 1)
+        end
+
+        write_line
+        write value
+        write_line
+        write_indent
+
+        increment_lines(macro_node_line + lines.size + 1 - @line)
+
+        next_macro_token
+      else
+        inside_macro { no_indent node }
+      end
+    end
+
+    def subformat(source)
+      if @inside_struct_or_union > 0
+        mode = Parser::ParseMode::LibStructOrUnion
+      elsif @inside_enum < 0
+        mode = Parser::ParseMode::Enum
+      elsif @inside_lib > 0
+        mode = Parser::ParseMode::Lib
+      else
+        mode = Parser::ParseMode::Normal
+      end
+
+      parser = Parser.new(source, def_vars: @vars.clone)
+      # parser.filename = formatter.filename
+      nodes = parser.parse(mode)
+
+      formatter = Formatter.new(source)
+      formatter.inside_lib = @inside_lib
+      formatter.inside_enum = @inside_enum
+      formatter.inside_struct_or_union = @inside_struct_or_union
+      formatter.skip_space_or_newline
+      nodes.accept formatter
+      {formatter, formatter.finish}
     end
 
     def visit(node : Arg)
@@ -3026,7 +3116,11 @@ module Crystal
     end
 
     def visit(node : Assign)
-      accept node.target
+      target = node.target
+
+      @vars.last.add target.name if target.is_a?(Var)
+
+      accept target
       skip_space_or_newline
 
       check_align = check_assign_length node.target
@@ -3065,7 +3159,7 @@ module Crystal
 
     def accept_assign_value(value, check_align = false)
       before_column = @column
-      if @token.keyword?(:if) || @token.keyword?(:case)
+      if @token.keyword?(:if) || @token.keyword?(:case) || value.is_a?(MacroIf)
         indent(@column, value)
       else
         inside_call_or_assign do
@@ -3250,7 +3344,9 @@ module Crystal
         accept base_type
       end
 
+      @inside_enum += 1
       format_nested_with_end Expressions.from(node.members)
+      @inside_enum -= 1
 
       false
     end
@@ -3595,6 +3691,8 @@ module Crystal
 
     def visit(node : MultiAssign)
       node.targets.each_with_index do |target, i|
+        @vars.last.add target.name if target.is_a?(Var)
+
         accept target
         skip_space_or_newline
         if @token.type == :","
@@ -4479,8 +4577,17 @@ module Crystal
       @comment_columns << nil
     end
 
+    def decrement_line
+      @line -= 1
+      @comment_columns.pop
+    end
+
     def increment_lines(count)
-      count.times { increment_line }
+      if count < 0
+        (-count).times { decrement_line }
+      else
+        count.times { increment_line }
+      end
     end
 
     def finish
