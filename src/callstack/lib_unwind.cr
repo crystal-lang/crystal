@@ -22,7 +22,7 @@ lib LibUnwind
     INSTALL_CONTEXT          = 7
     CONTINUE_UNWIND          = 8
     {% if flag?(:arm) %}
-    FAILURE                  = 9
+      FAILURE = 9
     {% end %}
   end
 

@@ -108,11 +108,11 @@ lib LibSSL
       NETSCAPE_CHALLENGE_BUG           = 0x00000000
       NETSCAPE_REUSE_CIPHER_CHANGE_BUG = 0x00000000
       SSLREF2_REUSE_CERT_TYPE_BUG      = 0x00000000
-      MICROSOFT_BIG_SSL_V3_BUFFER       = 0x00000000
+      MICROSOFT_BIG_SSL_V3_BUFFER      = 0x00000000
       SSLEAY_080_CLIENT_DH_BUG         = 0x00000000
       TLS_D5_BUG                       = 0x00000000
       TLS_BLOCK_PADDING_BUG            = 0x00000000
-      NO_SSL_V2                         = 0x00000000
+      NO_SSL_V2                        = 0x00000000
       SINGLE_ECDH_USE                  = 0x00000000
       SINGLE_DH_USE                    = 0x00000000
     {% else %}
@@ -120,11 +120,11 @@ lib LibSSL
       NETSCAPE_CHALLENGE_BUG           = 0x00000002
       NETSCAPE_REUSE_CIPHER_CHANGE_BUG = 0x00000008
       SSLREF2_REUSE_CERT_TYPE_BUG      = 0x00000010
-      MICROSOFT_BIG_SSL_V3_BUFFER       = 0x00000020
+      MICROSOFT_BIG_SSL_V3_BUFFER      = 0x00000020
       SSLEAY_080_CLIENT_DH_BUG         = 0x00000080
       TLS_D5_BUG                       = 0x00000100
       TLS_BLOCK_PADDING_BUG            = 0x00000200
-      NO_SSL_V2                         = 0x01000000
+      NO_SSL_V2                        = 0x01000000
       SINGLE_ECDH_USE                  = 0x00080000
       SINGLE_DH_USE                    = 0x00100000
     {% end %}

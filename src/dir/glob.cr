@@ -261,9 +261,9 @@ class Dir
     private def self.root
       # TODO: better implementation for windows?
       {% if flag?(:windows) %}
-      "C:\\"
+        "C:\\"
       {% else %}
-      File::SEPARATOR_STRING
+        File::SEPARATOR_STRING
       {% end %}
     end
 

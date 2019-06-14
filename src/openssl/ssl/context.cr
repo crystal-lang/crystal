@@ -82,7 +82,7 @@ abstract class OpenSSL::SSL::Context
 
       self.verify_mode = OpenSSL::SSL::VerifyMode::PEER
       {% if compare_versions(LibSSL::OPENSSL_VERSION, "1.0.2") >= 0 %}
-      self.default_verify_param = "ssl_server"
+        self.default_verify_param = "ssl_server"
       {% end %}
     end
 
@@ -158,7 +158,7 @@ abstract class OpenSSL::SSL::Context
 
       add_options(OpenSSL::SSL::Options::CIPHER_SERVER_PREFERENCE)
       {% if compare_versions(LibSSL::OPENSSL_VERSION, "1.0.2") >= 0 %}
-      self.default_verify_param = "ssl_client"
+        self.default_verify_param = "ssl_client"
       {% end %}
 
       set_tmp_ecdh_key(curve: LibCrypto::NID_X9_62_prime256v1)
@@ -302,10 +302,10 @@ abstract class OpenSSL::SSL::Context
   # Returns the current options set on the TLS context.
   def options
     opts = {% if compare_versions(LibSSL::OPENSSL_VERSION, "1.1.0") >= 0 %}
-      LibSSL.ssl_ctx_get_options(@handle)
-    {% else %}
-      LibSSL.ssl_ctx_ctrl(@handle, LibSSL::SSL_CTRL_OPTIONS, 0, nil)
-    {% end %}
+             LibSSL.ssl_ctx_get_options(@handle)
+           {% else %}
+             LibSSL.ssl_ctx_ctrl(@handle, LibSSL::SSL_CTRL_OPTIONS, 0, nil)
+           {% end %}
     OpenSSL::SSL::Options.new(opts)
   end
 
@@ -321,10 +321,10 @@ abstract class OpenSSL::SSL::Context
   # ```
   def add_options(options : OpenSSL::SSL::Options)
     opts = {% if compare_versions(LibSSL::OPENSSL_VERSION, "1.1.0") >= 0 %}
-      LibSSL.ssl_ctx_set_options(@handle, options)
-    {% else %}
-      LibSSL.ssl_ctx_ctrl(@handle, LibSSL::SSL_CTRL_OPTIONS, options, nil)
-    {% end %}
+             LibSSL.ssl_ctx_set_options(@handle, options)
+           {% else %}
+             LibSSL.ssl_ctx_ctrl(@handle, LibSSL::SSL_CTRL_OPTIONS, options, nil)
+           {% end %}
     OpenSSL::SSL::Options.new(opts)
   end
 
@@ -336,10 +336,10 @@ abstract class OpenSSL::SSL::Context
   # ```
   def remove_options(options : OpenSSL::SSL::Options)
     opts = {% if compare_versions(LibSSL::OPENSSL_VERSION, "1.1.0") >= 0 %}
-      LibSSL.ssl_ctx_clear_options(@handle, options)
-    {% else %}
-      LibSSL.ssl_ctx_ctrl(@handle, LibSSL::SSL_CTRL_CLEAR_OPTIONS, options, nil)
-    {% end %}
+             LibSSL.ssl_ctx_clear_options(@handle, options)
+           {% else %}
+             LibSSL.ssl_ctx_ctrl(@handle, LibSSL::SSL_CTRL_CLEAR_OPTIONS, options, nil)
+           {% end %}
     OpenSSL::SSL::Options.new(opts)
   end
 
