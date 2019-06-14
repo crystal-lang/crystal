@@ -597,6 +597,11 @@ module Crystal
       node
     end
 
+    def transform(node : Pipe)
+      node.body = node.body.transform self
+      node
+    end
+
     def transform_many(exps)
       exps.map! { |exp| exp.transform(self) } if exps
     end

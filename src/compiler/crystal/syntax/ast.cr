@@ -2236,6 +2236,23 @@ module Crystal
     def_equals_and_hash constraint, exp
   end
 
+  class Pipe < ASTNode
+    property body : ASTNode
+
+    def initialize(@body : ASTNode)
+    end
+
+    def accept_children(visitor)
+      @body.accept visitor
+    end
+
+    def clone_without_location
+      Pipe.new(@body.clone)
+    end
+
+    def_equals_and_hash @body
+  end
+
   enum Visibility : Int8
     Public
     Protected

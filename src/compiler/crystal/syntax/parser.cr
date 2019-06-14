@@ -447,7 +447,7 @@ module Crystal
       if @token.type == :".." || @token.type == :"..."
         exp = Nop.new
       else
-        exp = parse_or
+        exp = parse_pipe
       end
 
       while true
@@ -473,9 +473,38 @@ module Crystal
                  @token.type == :"=>"
                 Nop.new
               else
-                parse_or
+                parse_pipe
               end
       RangeLiteral.new(exp, right, exclusive).at(location).at_end(right)
+    end
+
+    def parse_pipe
+      location = @token.location
+
+      atomic = parse_or
+
+      while true
+        atomic.location = location
+
+        case @token.type
+        when :SPACE
+          next_token
+        when :"|>"
+          next_token_skip_space_or_newline
+          exp = parse_or
+          case exp
+          when Call
+            exp.args.unshift atomic
+          else
+            raise "Call node expected" unless typeof(exp) == Call
+          end
+          atomic = Pipe.new(exp)
+        else
+          break
+        end
+      end
+
+      atomic
     end
 
     macro parse_operator(name, next_operator, node, operators)

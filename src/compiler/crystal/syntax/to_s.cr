@@ -1519,6 +1519,11 @@ module Crystal
       false
     end
 
+    def visit(node : Pipe)
+      node.body.accept self
+      false
+    end
+
     def newline
       @str << '\n'
     end

@@ -680,6 +680,8 @@ module Crystal
           else
             @token.type = :"||"
           end
+        when '>'
+          next_char :"|>"
         when '='
           next_char :"|="
         else
