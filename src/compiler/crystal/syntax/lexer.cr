@@ -1496,13 +1496,16 @@ module Crystal
     end
 
     macro gen_check_int_fits_in_size(type, method, size)
+      if num_size >= 20
+        raise_value_doesnt_fit_in "{{type}}", string_value, start
+      end
       if num_size >= {{size}}
         int_value = absolute_integer_value(string_value, negative)
         max = {{type}}::MAX.{{method}}
         max += 1 if negative
 
         if int_value > max
-          raise "#{string_value} doesn't fit in an {{type}}", @token, (current_pos - start)
+          raise_value_doesnt_fit_in "{{type}}", string_value, start
         end
       end
     end
@@ -1511,11 +1514,13 @@ module Crystal
       if negative
         raise "Invalid negative value #{string_value} for {{type}}"
       end
-
+      if num_size >= 20
+        raise_value_doesnt_fit_in "{{type}}", string_value, start
+      end
       if num_size >= {{size}}
         int_value = absolute_integer_value(string_value, negative)
         if int_value > {{type}}::MAX
-          raise "#{string_value} doesn't fit in an {{type}}", @token, (current_pos - start)
+          raise_value_doesnt_fit_in "{{type}}", string_value, start
         end
       end
     end
@@ -1984,6 +1989,8 @@ module Crystal
                 end
               end
               next_string_token delimiter_state
+            when '\0'
+              raise_unterminated_quoted delimiter_state
             else
               @token.type = :STRING
               @token.value = current_char.to_s

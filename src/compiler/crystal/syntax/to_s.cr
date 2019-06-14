@@ -733,7 +733,7 @@ module Crystal
       newline
 
       inside_macro do
-        accept_with_indent node.body
+        accept node.body
       end
 
       # newline
@@ -1146,7 +1146,11 @@ module Crystal
       else
         @str << node.name
         @str << " = "
-        @str << node.real_name
+        if Symbol.needs_quotes?(node.real_name)
+          node.real_name.inspect(@str)
+        else
+          @str << node.real_name
+        end
       end
       if node.args.size > 0
         @str << '('
