@@ -1303,6 +1303,12 @@ describe "String" do
     end
   end
 
+  describe "occurrences" do
+    it "returns the amount of occurrences of a string in a string" do
+      "hello hello".occurrences("ll").should eq(2)
+    end
+  end
+
   describe "gsub" do
     it "gsubs char with char" do
       "foobar".gsub('o', 'e').should eq("feebar")
