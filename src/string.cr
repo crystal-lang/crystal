@@ -2029,18 +2029,18 @@ class String
     end
   end
 
-  # Returns the amount of occurrences of *pattern* in `self`.
+  # Returns the amount of occurrences of *string* in `self`.
   #
   # ```
-  # "hello hello".find("ll") # => 2
+  # "hello hello".occurrences("ll") # => 2
   # ```
-  def find(pattern : String)
-    return self.size + 1 if pattern.empty?
+  def occurrences(of string : String)
+    return self.size + 1 if string.empty?
     count = 0
     index = 0
-    while index = byte_index(pattern, index)
+    while index = byte_index(string, index)
       count += 1
-      index += pattern.bytesize
+      index += string.bytesize
     end
     count
   end
