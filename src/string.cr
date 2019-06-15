@@ -2030,6 +2030,10 @@ class String
   end
 
   # Returns the amount of occurrences of *pattern* in `self`.
+  #
+  # ```
+  # "hello hello".find("ll") # => 2
+  # ```
   def find(pattern : String)
     return self.size + 1 if pattern.empty?
     count = 0
