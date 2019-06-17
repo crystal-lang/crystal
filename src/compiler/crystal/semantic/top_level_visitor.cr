@@ -679,17 +679,18 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
       end
 
       const_value.type = enum_type
-      new_counter =
-        if is_flags
-          if counter == 0 # In case the member is set to 0
-            1
-          else
-            counter &* 2
-          end
+      if is_flags
+        if counter == 0 # In case the member is set to 0
+          new_counter = 1
+          overflow = false
         else
-          counter &+ 1
+          new_counter = counter &* 2
+          overflow = !default_value && counter.sign != new_counter.sign
         end
-      overflow = !default_value && (new_counter.abs < counter.abs)
+      else
+        new_counter = counter &+ 1
+        overflow = !default_value && counter > 0 && new_counter < 0
+      end
       new_counter = overflow ? counter : new_counter
       {new_counter, all_value, overflow}
     else
