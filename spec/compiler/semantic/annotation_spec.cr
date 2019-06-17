@@ -360,6 +360,22 @@ describe "Semantic: annotation" do
         {% end %}
       )) { char }
     end
+
+    it "finds annotations in generic parent (#7885)" do
+      assert_type(%(
+        annotation Ann
+        end
+
+        @[Ann(1)]
+        class Parent(T)
+        end
+
+        class Child < Parent(Int32)
+        end
+
+        {{ Child.superclass.annotations(Ann)[0][0] }}
+      )) { int32 }
+    end
   end
 
   describe "#annotation" do
@@ -792,6 +808,22 @@ describe "Semantic: annotation" do
           fun foo
         end
       ))
+    end
+
+    it "finds annotation in generic parent (#7885)" do
+      assert_type(%(
+        annotation Ann
+        end
+
+        @[Ann(1)]
+        class Parent(T)
+        end
+
+        class Child < Parent(Int32)
+        end
+
+        {{ Child.superclass.annotation(Ann)[0] }}
+      )) { int32 }
     end
   end
 end
