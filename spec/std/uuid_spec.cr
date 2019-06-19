@@ -92,6 +92,7 @@ describe "UUID" do
     uuid = UUID.new(uuid, version: UUID::Version::V2, variant: UUID::Variant::Microsoft)
     uuid.version.should eq UUID::Version::V2
     uuid.variant.should eq UUID::Variant::Microsoft
+    uuid.bytes.should eq(UInt8.static_array(80, 161, 29, 166, 55, 123, 43, 223, 217, 240, 7, 111, 157, 182, 28, 147))
     uuid.to_s.should eq "50a11da6-377b-2bdf-d9f0-076f9db61c93"
   end
 
