@@ -697,33 +697,4 @@ class Crystal::CodeGenVisitor
   def upcast_distinct(value, to_type : Type, from_type : Type)
     raise "BUG: trying to upcast #{to_type} <- #{from_type}"
   end
-
-  def store_in_union(union_pointer, value_type, value)
-    store type_id(value, value_type), union_type_id(union_pointer)
-    casted_value_ptr = cast_to_pointer(union_value(union_pointer), value_type)
-    store value, casted_value_ptr
-  end
-
-  def store_bool_in_union(union_type, union_pointer, value)
-    store type_id(value, @program.bool), union_type_id(union_pointer)
-
-    # To store a boolean in a union
-    # we sign-extend it to the size in bits of the union
-    union_value_type = llvm_union_value_type(union_type)
-    union_size = @llvm_typer.size_of(union_value_type)
-    int_type = llvm_context.int((union_size * 8).to_i32)
-
-    bool_as_extended_int = builder.zext(value, int_type)
-    casted_value_ptr = bit_cast(union_value(union_pointer), int_type.pointer)
-    store bool_as_extended_int, casted_value_ptr
-  end
-
-  def store_nil_in_union(union_pointer, target_type)
-    union_value_type = llvm_union_value_type(target_type)
-    value = union_value_type.null
-
-    store type_id(value, @program.nil), union_type_id(union_pointer)
-    casted_value_ptr = bit_cast union_value(union_pointer), union_value_type.pointer
-    store value, casted_value_ptr
-  end
 end

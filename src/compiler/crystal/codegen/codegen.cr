@@ -2051,14 +2051,6 @@ module Crystal
       type.passed_by_value? ? load value : value
     end
 
-    def union_type_id(union_pointer)
-      aggregate_index union_pointer, 0
-    end
-
-    def union_value(union_pointer)
-      aggregate_index union_pointer, 1
-    end
-
     def aggregate_index(ptr, index)
       gep ptr, 0, index
     end
