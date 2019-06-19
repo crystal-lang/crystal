@@ -67,7 +67,7 @@ describe StringPool do
   end
 
   it "can be created with larger initial capacity" do
-    pool = StringPool.new(capacity: 32)
+    pool = StringPool.new(initial_capacity: 32)
     s1 = pool.get "foo"
     s2 = pool.get "foo"
     s1.should be(s2)
