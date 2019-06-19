@@ -34,7 +34,7 @@ class StringPool
 
   # Creates a new empty string pool.
   def initialize
-    @capacity = 8
+    @capacity = @initial_capacity = 8
     @hashes = Pointer(UInt64).malloc(@capacity, 0_u64)
     @values = Pointer(String).malloc(@capacity, "")
     @size = 0
@@ -184,6 +184,13 @@ class StringPool
         put_on_rehash(old_hashes[i], old_values[i])
       end
     end
+  end
+
+  def clear
+    @capacity = @initial_capacity
+    @hashes = Pointer(UInt64).malloc(@capacity, 0_u64)
+    @values = Pointer(String).malloc(@capacity, "")
+    @size = 0
   end
 
   private def hash(str, len)

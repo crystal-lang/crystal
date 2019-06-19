@@ -65,4 +65,12 @@ describe StringPool do
     end
     pool.size.should eq(10_000)
   end
+
+  it "can be cleared" do
+    pool = StringPool.new
+    pool.get "foo"
+    pool.size.should eq(1)
+    pool.clear
+    pool.size.should eq(0)
+  end
 end
