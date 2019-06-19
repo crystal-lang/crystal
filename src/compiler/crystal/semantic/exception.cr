@@ -114,25 +114,31 @@ module Crystal
 
       error_message_lines = msg.lines
 
-      io << error_headline(error_message_lines.shift)
-
       unless @error_trace || @warning
-        io << '\n'
         io << colorize("Showing last frame. Use --error-trace for full trace.").dim
+        io << "\n\n"
       end
-      io << "\n\n" if default_message
-      io << error_body(source, default_message)
+
+      if body = error_body(source, default_message)
+        io << body
+        io << '\n'
+      end
+
+      io << error_headline(error_message_lines.shift)
       io << remaining error_message_lines
 
       if inner
         return if inner.is_a? MethodTraceException && !inner.has_message?
         io << "\n\n"
+        io << '\n' unless inner.is_a? MethodTraceException
         inner.append_to_s source, io
       end
     end
 
     def default_message
-      "#{@warning ? "warning" : "error"} in line #{@line_number}" if line_number = @line_number
+      if line_number = @line_number
+        "#{@warning ? "warning" : "error"} in line #{@line_number}"
+      end
     end
 
     def error_headline(msg)

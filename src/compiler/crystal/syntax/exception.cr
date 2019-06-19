@@ -36,9 +36,9 @@ module Crystal
       error_message_lines = msg.lines
       default_message = "syntax error in #{@filename}:#{@line_number}"
 
-      io << colorize("Error: #{error_message_lines.shift}").yellow.bold
-      io << "\n\n"
       io << error_body(source, default_message)
+      io << '\n'
+      io << colorize("Error: #{error_message_lines.shift}").yellow.bold
       io << remaining error_message_lines
     end
 

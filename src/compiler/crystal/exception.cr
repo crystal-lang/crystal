@@ -104,7 +104,7 @@ module Crystal
     MACRO_LINES_TO_SHOW               = 3
     OFFSET_FROM_LINE_NUMBER_DECORATOR = 6
 
-    def error_body(source, default_message)
+    def error_body(source, default_message) : String | Nil
       case filename = @filename
       when VirtualFile
         return format_error(filename)
@@ -134,9 +134,11 @@ module Crystal
       end
     end
 
-    def filename_row_col_message(io, filename, line_number, column_number)
-      io << "In "
-      io << colorize("#{relative_filename(filename)}:#{line_number}:#{column_number}").underline
+    def filename_row_col_message(filename, line_number, column_number)
+      String.build do |io|
+        io << "In "
+        io << colorize("#{relative_filename(filename)}:#{line_number}:#{column_number}").underline
+      end
     end
 
     def format_error(filename, lines, line_number, column_number, size = 0)
@@ -145,12 +147,12 @@ module Crystal
         line = lines[line_number - 1]?
 
         unless line
-          return filename_row_col_message(io, filename, line_number, column_number)
+          return filename_row_col_message(filename, line_number, column_number)
         end
 
         case filename
         when String
-          filename_row_col_message(io, filename, line_number, column_number)
+          io << filename_row_col_message(filename, line_number, column_number)
         when VirtualFile
           io << "In macro '" << colorize("#{filename.macro.name}").underline << '\''
         else
