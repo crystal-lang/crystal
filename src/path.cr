@@ -15,10 +15,10 @@
 # # Examples
 #
 # ```
-# Path["foo/bar/baz.cr"].parent   # => Path["foo/bar"]
-# Path["foo/bar/baz.cr"].basename # => "baz.cr"
-# Path["./foo/../bar"].normalize  # => Path["bar"]
-# Path["~/bin"].expand            # => Path["/home/crystal/bin"]
+# Path["foo/bar/baz.cr"].parent         # => Path["foo/bar"]
+# Path["foo/bar/baz.cr"].basename       # => "baz.cr"
+# Path["./foo/../bar"].normalize        # => Path["bar"]
+# Path["~/bin"].expand(home: Path.home) # => Path["/home/crystal/bin"]
 # ```
 #
 # For now, its methods are purely lexical, there is no direct filesystem access.
@@ -548,17 +548,19 @@ struct Path
   # unless *base* is given, in which case it will be used as the reference path.
   #
   # ```
-  # Path["foo"].expand             # => Path["/current/path/foo"]
-  # Path["~/crystal/foo"].expand   # => Path["/home/crystal/foo"]
-  # Path["baz"].expand("/foo/bar") # => Path["/foo/bar/baz"]
+  # Path["foo"].expand                 # => Path["/current/path/foo"]
+  # Path["~/foo"].expand(home: "/bar") # => Path["/bar/foo"]
+  # Path["baz"].expand("/foo/bar")     # => Path["/foo/bar/baz"]
   # ```
   #
-  # *home* specifies the home directory which `~` will expand to. If not given
-  # (or `nil` is given) then `Path.home` will be used.
+  # *home* specifies the home directory which `~` will expand to.
+  # If `true` is given then `Path.home` will be used.
+  # "~/" is expanded to the value passed to *home* or the user's home directory
+  # when *home* is `true`
   # If *expand_base* is `true`, *base* itself will be exanded in `Dir.current`
   # if it is not an absolute path. This guarantees the method returns an absolute
   # path (assuming that `Dir.current` is absolute).
-  def expand(base : Path | String = Dir.current, *, home : String | Path | Nil = nil, expand_base = true) : Path
+  def expand(base : Path | String = Dir.current, *, home : Path | String | Bool = false, expand_base = true) : Path
     base = Path.new(base) unless base.is_a?(Path)
     base = base.to_kind(@kind)
     if base == self
@@ -568,10 +570,12 @@ struct Path
 
     name = @name
 
-    if name == "~"
-      name = (home || Path.home).to_kind(@kind).normalize.to_s
-    elsif name.starts_with?("~/")
-      name = (home || Path.home).to_kind(@kind).normalize.join(name.byte_slice(2, name.bytesize - 2)).to_s
+    if home
+      if name == "~"
+        name = (resolve_home(home)).to_kind(@kind).normalize.to_s
+      elsif name.starts_with?("~/")
+        name = (resolve_home(home)).to_kind(@kind).normalize.join(name.byte_slice(2, name.bytesize - 2)).to_s
+      end
     end
 
     unless new_instance(name).absolute?
@@ -623,6 +627,15 @@ struct Path
 
     expanded = new_instance(expanded) unless expanded.is_a?(Path)
     expanded.normalize(remove_final_separator: false)
+  end
+
+  private def resolve_home(home)
+    case home
+    when Path   then home
+    when String then Path[home]
+    when true   then Path.home
+    else             raise ArgumentError.new("Expected Path | String | Bool, not #{home.class}")
+    end
   end
 
   # Appends the given *part* to this path and returns the joined path.

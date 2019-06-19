@@ -10,7 +10,7 @@ private def it_normalizes_path(path, posix = path, windows = path, file = __FILE
   assert_paths(path, posix, windows, "normalizes", file, line, &.normalize)
 end
 
-private def it_expands_path(path, posix, windows = posix, *, base = nil, env_home = nil, expand_base = false, file = __FILE__, line = __LINE__)
+private def it_expands_path(path, posix, windows = posix, *, base = nil, env_home = nil, expand_base = false, home = false, file = __FILE__, line = __LINE__)
   assert_paths(path, posix, windows, %((base: "#{base}")), file, line) do |path|
     prev_home = ENV["HOME"]
 
@@ -18,7 +18,15 @@ private def it_expands_path(path, posix, windows = posix, *, base = nil, env_hom
       ENV["HOME"] = env_home || (path.windows? ? HOME_WINDOWS : HOME_POSIX)
 
       base_arg = base || (path.windows? ? BASE_WINDOWS : BASE_POSIX)
-      path.expand(base_arg.not_nil!, expand_base: !!expand_base)
+      home_arg = case home
+                 when Path   then home
+                 when String then home
+                 when Bool   then Path.home
+                   #       home ? Path.home : raise "invalid value 'false' for home"
+                 else raise "invalid type for home #{home}"
+                 end
+      #      puts "#{typeof(home_arg)} #{home_arg.class} #{home_arg.inspect} #{home.inspect}"
+      path.expand(base_arg.not_nil!, expand_base: !!expand_base, home: home)
     ensure
       ENV["HOME"] = prev_home
     end
@@ -544,34 +552,49 @@ describe Path do
       it_expands_path("C:\\foo", "D:/C:\\foo", "C:\\foo", base: "D:/")
     end
 
+    describe "doesn't expand ~" do
+      path = Path["~"]
+      path.expand.should_not eq path.expand(home: "/foo")
+    end
+
+    describe "checks all possible types for expand(home:)" do
+      home_posix2 = Path.posix(BASE_POSIX).join("foo").to_s
+      home_windows2 = Path.windows(BASE_WINDOWS).join("foo").to_s
+
+      home = Path[""].windows? ? home_windows2 : home_posix2
+      it_expands_path("~/a", {BASE_POSIX, "~/a"}, {BASE_WINDOWS, "~\\a"}, home: false)
+      it_expands_path("~/a", {home_posix2, "a"}, {home_windows2, "a"}, home: home)
+      it_expands_path("~/a", {home_posix2, "a"}, {home_windows2, "a"}, home: Path[home])
+    end
+
     describe "converts a pathname to an absolute pathname, using ~ (home) as base" do
-      it_expands_path("~/", {HOME_POSIX, ""}, {HOME_WINDOWS, ""})
-      it_expands_path("~/..badfilename", {HOME_POSIX, "..badfilename"}, {HOME_WINDOWS, "..badfilename"})
-      it_expands_path("..", "/default", "\\default")
-      it_expands_path("~/a", {HOME_POSIX, "a"}, {HOME_WINDOWS, "a"}, base: "~/b")
-      it_expands_path("~", HOME_POSIX, HOME_WINDOWS)
-      it_expands_path("~", HOME_POSIX, HOME_WINDOWS, base: "/tmp/gumby/ddd")
-      it_expands_path("~/a", {HOME_POSIX, "a"}, {HOME_WINDOWS, "a"}, base: "/tmp/gumby/ddd")
+      it_expands_path("~/", {HOME_POSIX, ""}, {HOME_WINDOWS, ""}, home: true)
+      it_expands_path("~/..badfilename", {HOME_POSIX, "..badfilename"}, {HOME_WINDOWS, "..badfilename"}, home: true)
+      it_expands_path("..", "/default", "\\default", home: true)
+      it_expands_path("~/a", {HOME_POSIX, "a"}, {HOME_WINDOWS, "a"}, base: "~/b", home: true)
+      it_expands_path("~", HOME_POSIX, HOME_WINDOWS, home: true)
+      it_expands_path("~", HOME_POSIX, HOME_WINDOWS, base: "/tmp/gumby/ddd", home: true)
+      it_expands_path("~/a", {HOME_POSIX, "a"}, {HOME_WINDOWS, "a"}, base: "/tmp/gumby/ddd", home: true)
     end
 
     describe "converts a pathname to an absolute pathname, using ~ (home) as base (trailing /)" do
-      it_expands_path("~/", {HOME_POSIX, ""}, {HOME_WINDOWS, ""})
-      it_expands_path("~/..badfilename", {"#{HOME_POSIX}/", "..badfilename"}, {"#{HOME_WINDOWS}\\", "..badfilename"}, base: "")
-      it_expands_path("~/..", "/home", "C:\\Users")
-      it_expands_path("~/a", {HOME_POSIX, "a"}, {HOME_WINDOWS, "a"}, base: "~/b")
-      it_expands_path("~", HOME_POSIX, HOME_WINDOWS)
-      it_expands_path("~", HOME_POSIX, HOME_WINDOWS, base: "/tmp/gumby/ddd")
-      it_expands_path("~/a", {HOME_POSIX, "a"}, {HOME_WINDOWS, "a"}, base: "/tmp/gumby/ddd")
+      it_expands_path("~/", {HOME_POSIX, ""}, {HOME_WINDOWS, ""}, home: true)
+      it_expands_path("~/..badfilename", {"#{HOME_POSIX}/", "..badfilename"}, {"#{HOME_WINDOWS}\\", "..badfilename"}, base: "", home: true)
+      it_expands_path("~/..", "/home", "C:\\Users", home: true)
+      it_expands_path("~/a", {HOME_POSIX, "a"}, {HOME_WINDOWS, "a"}, base: "~/b", home: true)
+      it_expands_path("~", HOME_POSIX, HOME_WINDOWS, home: true)
+      it_expands_path("~", HOME_POSIX, HOME_WINDOWS, base: "/tmp/gumby/ddd", home: true)
+      it_expands_path("~/a", {HOME_POSIX, "a"}, {HOME_WINDOWS, "a"}, base: "/tmp/gumby/ddd", home: true)
     end
 
     describe "converts a pathname to an absolute pathname, using ~ (home) as base (HOME=/)" do
-      it_expands_path("~/", "/", "\\", env_home: "/")
-      it_expands_path("~/..badfilename", "/..badfilename", "\\..badfilename", env_home: "/")
-      it_expands_path("..", "/default", "\\default", env_home: "/")
-      it_expands_path("~/a", "/a", "\\a", base: "~/b", env_home: "/")
-      it_expands_path("~", "/", "\\", env_home: "/")
-      it_expands_path("~", "/", "\\", base: "/tmp/gumby/ddd", env_home: "/")
-      it_expands_path("~/a", "/a", "\\a", base: "/tmp/gumby/ddd", env_home: "/")
+      it_expands_path("~/", "/", "\\", env_home: "/", home: true)
+      it_expands_path("~/..badfilename", "/..badfilename", "\\..badfilename", env_home: "/", home: true)
+      it_expands_path("..", "/default", "\\default", env_home: "/", home: true)
+      it_expands_path("~/a", "/a", "\\a", base: "~/b", env_home: "/", home: true)
+      it_expands_path("~", "/", "\\", env_home: "/", home: true)
+      it_expands_path("~", "/", "\\", base: "/tmp/gumby/ddd", env_home: "/", home: true)
+      it_expands_path("~/a", "/a", "\\a", base: "/tmp/gumby/ddd", env_home: "/", home: true)
     end
 
     describe "ignores name starting with ~" do
