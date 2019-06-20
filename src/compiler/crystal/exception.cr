@@ -181,14 +181,15 @@ module Crystal
 
     def format_error(virtual_file : VirtualFile)
       String.build do |io|
+        unless @error_trace && self.responds_to?(:error_trace=)
+          append_where_macro_expanded(io, virtual_file)
+          io << "\n\n"
+        end
         append_macro_definition_location(io, virtual_file)
         io << "\n\n"
-        io << "Was expanded to:"
+        io << "Which expanded to:"
         io << "\n\n"
         append_expanded_macro(io, virtual_file.source)
-        next if @error_trace && self.responds_to?(:error_trace=)
-        io << "\n\n"
-        append_where_macro_expanded(io, virtual_file)
       end
     end
 
