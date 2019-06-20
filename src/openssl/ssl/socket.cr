@@ -199,4 +199,40 @@ abstract class OpenSSL::SSL::Socket < IO
     io = @bio.io
     io.responds_to?(:remote_address) ? io.remote_address : nil
   end
+
+  def read_timeout
+    io = @bio.io
+    if io.responds_to? :read_timeout
+      io.read_timeout
+    else
+      raise NotImplementedError.new("#{io.class}#read_timeout")
+    end
+  end
+
+  def read_timeout=(value)
+    io = @bio.io
+    if io.responds_to? :read_timeout=
+      io.read_timeout = value
+    else
+      raise NotImplementedError.new("#{io.class}#read_timeout=")
+    end
+  end
+
+  def write_timeout
+    io = @bio.io
+    if io.responds_to? :write_timeout
+      io.write_timeout
+    else
+      raise NotImplementedError.new("#{io.class}#write_timeout")
+    end
+  end
+
+  def write_timeout=(value)
+    io = @bio.io
+    if io.responds_to? :write_timeout=
+      io.write_timeout = value
+    else
+      raise NotImplementedError.new("#{io.class}#write_timeout=")
+    end
+  end
 end
