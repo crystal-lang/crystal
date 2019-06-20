@@ -742,6 +742,9 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
     @exp_nest += 1
 
     scope, name = lookup_type_def_name(target)
+    if current_type.is_a?(Program)
+      scope = program.check_private(target) || scope
+    end
 
     type = scope.types[name]?
     if type
