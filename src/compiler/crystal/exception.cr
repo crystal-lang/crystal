@@ -107,10 +107,10 @@ module Crystal
     def error_body(source, default_message) : String | Nil
       case filename = @filename
       when VirtualFile
-        return format_error(filename)
+        return format_macro_error(filename)
       when String
         if File.file?(filename)
-          return format_error(File.read_lines(filename)).capitalize
+          return format_error_from_file(filename)
         end
       end
 
@@ -169,18 +169,21 @@ module Crystal
       end
     end
 
-    def format_error(lines : Array(String))
+    def format_error_from_file(filename : String)
+      lines = File.read_lines(filename)
       format_error(
         filename: @filename,
         lines: lines,
         line_number: @line_number,
         column_number: @column_number,
         size: @size
-      )
+      ).capitalize
     end
 
-    def format_error(virtual_file : VirtualFile)
+    def format_macro_error(virtual_file : VirtualFile)
       String.build do |io|
+        io << "There was a problem expanding macro '#{virtual_file.macro.name}'"
+        io << "\n\n"
         unless @error_trace && self.responds_to?(:error_trace=)
           append_where_macro_expanded(io, virtual_file)
           io << "\n\n"
