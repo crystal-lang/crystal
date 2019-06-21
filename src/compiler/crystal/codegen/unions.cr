@@ -41,6 +41,10 @@ module Crystal
   end
 
   class CodeGenVisitor
+    def union_type_and_value_pointer(union_pointer)
+      {load(union_type_id(union_pointer)), union_value(union_pointer)}
+    end
+
     def union_type_id(union_pointer)
       aggregate_index union_pointer, 0
     end
@@ -83,7 +87,7 @@ module Crystal
     end
 
     private def type_id_impl(value, type : MixedUnionType)
-      load(union_type_id(value))
+      union_type_and_value_pointer(value)[0]
     end
   end
 end

@@ -119,7 +119,7 @@ class Crystal::CodeGenVisitor
         needs_value_cast_inside_union?(vt, target_type)
       end
       # Fetch the value's type id
-      value_type_id = type_id(value, value_type)
+      value_type_id, union_value_ptr = union_type_and_value_pointer(value)
 
       exit_label = new_block "exit"
 
@@ -133,13 +133,11 @@ class Crystal::CodeGenVisitor
 
         position_at_end matches_label
 
-        # Store union type id
-        store type_id(compatible_type), union_type_id(target_pointer)
-
         # Store value
-        casted_value = cast_to_pointer(union_value(value), type_needing_cast)
-        casted_target = cast_to_pointer(union_value(target_pointer), compatible_type)
-        assign(casted_target, compatible_type, type_needing_cast, casted_value)
+        casted_value = cast_to_pointer(union_value_ptr, type_needing_cast)
+        compatible_ptr = alloca llvm_type(compatible_type)
+        assign(compatible_ptr, compatible_type, type_needing_cast, casted_value)
+        store_in_union target_pointer, compatible_type, load(compatible_ptr)
         br exit_label
 
         position_at_end doesnt_match_label
@@ -202,7 +200,8 @@ class Crystal::CodeGenVisitor
   end
 
   def assign_distinct(target_pointer, target_type : VirtualType, value_type : MixedUnionType, value)
-    casted_value = cast_to_pointer(union_value(value), target_type)
+    _, union_value_ptr = union_type_and_value_pointer(value)
+    casted_value = cast_to_pointer(union_value_ptr, target_type)
     store load(casted_value), target_pointer
   end
 
@@ -220,7 +219,8 @@ class Crystal::CodeGenVisitor
 
   def assign_distinct(target_pointer, target_type : VirtualMetaclassType, value_type : UnionType, value)
     # Can happen when assigning Foo+.class <- Bar.class | Baz.class with Bar < Foo and Baz < Foo
-    casted_value = cast_to_pointer(union_value(value), target_type)
+    _, union_value_ptr = union_type_and_value_pointer(value)
+    casted_value = cast_to_pointer(union_value_ptr, target_type)
     store load(casted_value), target_pointer
   end
 
@@ -402,7 +402,7 @@ class Crystal::CodeGenVisitor
       end
 
       # Fetch the value's type id
-      from_type_id = type_id(value, from_type)
+      from_type_id, union_value_ptr = union_type_and_value_pointer(value)
 
       Phi.open(self, to_type, @needs_value) do |phi|
         types_needing_cast.each_with_index do |type_needing_cast, i|
@@ -415,7 +415,7 @@ class Crystal::CodeGenVisitor
 
           position_at_end matches_label
 
-          casted_value = cast_to_pointer(union_value(value), type_needing_cast)
+          casted_value = cast_to_pointer(union_value_ptr, type_needing_cast)
           downcasted_value = downcast(casted_value, compatible_type, type_needing_cast, true)
           final_value = upcast(downcasted_value, to_type, compatible_type)
           phi.add final_value, to_type
@@ -432,11 +432,12 @@ class Crystal::CodeGenVisitor
   end
 
   def downcast_distinct(value, to_type : NilableType, from_type : MixedUnionType)
-    load cast_to_pointer(union_value(value), to_type)
+    _, value_ptr = union_type_and_value_pointer(value)
+    load cast_to_pointer(value_ptr, to_type)
   end
 
   def downcast_distinct(value, to_type : BoolType, from_type : MixedUnionType)
-    value_ptr = union_value(value)
+    _, value_ptr = union_type_and_value_pointer(value)
     value = cast_to_pointer(value_ptr, @program.int8)
     value = load(value)
     trunc value, llvm_context.int1
@@ -455,7 +456,7 @@ class Crystal::CodeGenVisitor
       end
     end
 
-    value_ptr = union_value(value)
+    _, value_ptr = union_type_and_value_pointer(value)
     value = cast_to_pointer(value_ptr, to_type)
     to_lhs value, to_type
   end
@@ -610,7 +611,7 @@ class Crystal::CodeGenVisitor
       end
 
       # Fetch the value's type id
-      from_type_id = type_id(value, from_type)
+      from_type_id, union_value_ptr = union_type_and_value_pointer(value)
 
       Phi.open(self, to_type, @needs_value) do |phi|
         types_needing_cast.each_with_index do |type_needing_cast, i|
@@ -623,7 +624,7 @@ class Crystal::CodeGenVisitor
 
           position_at_end matches_label
 
-          casted_value = cast_to_pointer(union_value(value), type_needing_cast)
+          casted_value = cast_to_pointer(union_value_ptr, type_needing_cast)
           upcasted_value = upcast(casted_value, compatible_type, type_needing_cast)
           final_value = upcast(upcasted_value, to_type, compatible_type)
           phi.add final_value, to_type
