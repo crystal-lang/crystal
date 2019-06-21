@@ -110,7 +110,7 @@ module Crystal
         return format_error(filename)
       when String
         if File.file?(filename)
-          return format_error(File.read_lines(filename))
+          return format_error(File.read_lines(filename)).capitalize
         end
       end
 
@@ -136,14 +136,14 @@ module Crystal
 
     def filename_row_col_message(filename, line_number, column_number)
       String.build do |io|
-        io << "In "
         io << colorize("#{relative_filename(filename)}:#{line_number}:#{column_number}").underline
       end
     end
 
     def format_error(filename, lines, line_number, column_number, size = 0)
       String.build do |io|
-        return "In #{relative_filename(filename)}" unless line_number
+        io << "in "
+        return "#{relative_filename(filename)}" unless line_number
         line = lines[line_number - 1]?
 
         unless line
@@ -154,9 +154,9 @@ module Crystal
         when String
           io << filename_row_col_message(filename, line_number, column_number)
         when VirtualFile
-          io << "In macro '" << colorize("#{filename.macro.name}").underline << '\''
+          io << "macro '" << colorize("#{filename.macro.name}").underline << '\''
         else
-          io << "In unknown location"
+          io << "unknown location"
         end
 
         decorator = line_number_decorator(line_number)
@@ -187,7 +187,7 @@ module Crystal
         end
         append_macro_definition_location(io, virtual_file)
         io << "\n\n"
-        io << "Which expanded to:"
+        io << "which expanded to:"
         io << "\n\n"
         append_expanded_macro(io, virtual_file.source)
       end
@@ -218,7 +218,7 @@ module Crystal
       line_number = macro_source.try &.line_number
       column_number = macro_source.try &.column_number
 
-      io << "Macro defined in "
+      io << "called macro defined in "
 
       case source_filename
       when String
@@ -279,7 +279,7 @@ module Crystal
       lines = source_lines(source_filename)
       return unless lines
 
-      io << format_error(
+      io << "Code " << format_error(
         filename: source_filename,
         lines: lines,
         line_number: expanded_source.line_number,
