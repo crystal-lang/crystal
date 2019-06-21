@@ -174,7 +174,7 @@ class Crystal::CodeGenVisitor
   end
 
   def assign_distinct(target_pointer, target_type : MixedUnionType, value_type : VoidType, value)
-    store type_id(value_type), union_type_id(target_pointer)
+    store_void_in_union target_pointer, target_type
   end
 
   def assign_distinct(target_pointer, target_type : MixedUnionType, value_type : BoolType, value)
@@ -641,7 +641,7 @@ class Crystal::CodeGenVisitor
 
   def upcast_distinct(value, to_type : MixedUnionType, from_type : VoidType)
     union_ptr = alloca(llvm_type(to_type))
-    store type_id(from_type), union_type_id(union_ptr)
+    store_void_in_union union_ptr, to_type
     union_ptr
   end
 

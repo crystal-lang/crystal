@@ -78,6 +78,10 @@ module Crystal
       store value, casted_value_ptr
     end
 
+    def store_void_in_union(union_pointer, target_type)
+      store type_id(@program.void), union_type_id(union_pointer)
+    end
+
     private def type_id_impl(value, type : MixedUnionType)
       load(union_type_id(value))
     end
