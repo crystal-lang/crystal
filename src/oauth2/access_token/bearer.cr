@@ -10,18 +10,18 @@ class OAuth2::AccessToken::Bearer < OAuth2::AccessToken
   end
 
   def authenticate(request : HTTP::Request, tls)
-    request.headers["Authorization"] = "Bearer #{access_token}"
+    request.headers["Authorization"] = "Bearer #{token}"
   end
 
   def to_json(json : JSON::Builder)
     json.object do
       json.field "token_type", "bearer"
-      json.field "access_token", access_token
+      json.field "access_token", token
       json.field "expires_in", expires_in
       json.field "refresh_token", refresh_token if refresh_token
       json.field "scope", scope if scope
     end
   end
 
-  def_equals_and_hash access_token, expires_in, refresh_token, scope
+  def_equals_and_hash token, expires_in, refresh_token, scope
 end

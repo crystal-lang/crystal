@@ -4,7 +4,7 @@
 abstract class OAuth2::AccessToken
   def self.new(pull : JSON::PullParser)
     token_type = nil
-    access_token = nil
+    token = nil
     expires_in = nil
     refresh_token = nil
     scope = nil
@@ -15,7 +15,7 @@ abstract class OAuth2::AccessToken
     pull.read_object do |key|
       case key
       when "token_type"    then token_type = pull.read_string
-      when "access_token"  then access_token = pull.read_string
+      when "access_token"  then token = pull.read_string
       when "expires_in"    then expires_in = pull.read_int
       when "refresh_token" then refresh_token = pull.read_string_or_null
       when "scope"         then scope = pull.read_string_or_null
@@ -27,21 +27,26 @@ abstract class OAuth2::AccessToken
       end
     end
 
-    access_token = access_token.not_nil!
+    token = token.not_nil!
 
     token_type ||= "bearer"
 
     case token_type.downcase
     when "bearer"
-      Bearer.new(access_token, expires_in, refresh_token, scope, extra)
+      Bearer.new(token, expires_in, refresh_token, scope, extra)
     when "mac"
-      Mac.new(access_token, expires_in, mac_algorithm.not_nil!, mac_key.not_nil!, refresh_token, scope, Time.utc.to_unix, extra)
+      Mac.new(token, expires_in, mac_algorithm.not_nil!, mac_key.not_nil!, refresh_token, scope, Time.utc.to_unix, extra)
     else
       raise "Unknown token_type in access token json: #{token_type}"
     end
   end
 
-  property access_token : String
+  @[Deprecated("Use `OAuth2::AccessToken#token`")]
+  def access_token : String
+    token
+  end
+
+  property token : String
   property expires_in : Int64?
   property refresh_token : String?
   property scope : String?
@@ -54,7 +59,13 @@ abstract class OAuth2::AccessToken
   # will be the string "[1,2,3]".
   property extra : Hash(String, String)?
 
-  def initialize(@access_token : String, expires_in : Int?, @refresh_token : String? = nil, @scope : String? = nil, @extra = nil)
+  @[Deprecated("Use `token` instead of `access_token`")]
+  def initialize(access_token : String, expires_in : Int?, @refresh_token : String? = nil, @scope : String? = nil, @extra = nil)
+    @token = access_token
+    @expires_in = expires_in.try &.to_i64
+  end
+
+  def initialize(@token : String, expires_in : Int?, @refresh_token : String? = nil, @scope : String? = nil, @extra = nil)
     @expires_in = expires_in.try &.to_i64
   end
 
