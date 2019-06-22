@@ -2794,6 +2794,10 @@ module Crystal
       end
     end
 
+    def replace_type_parameters(instance_type)
+      self.instance_type.replace_type_parameters(instance_type).metaclass
+    end
+
     def virtual_type
       instance_type.virtual_type.metaclass
     end
@@ -2841,6 +2845,10 @@ module Crystal
       instance_type.generic_type.metaclass.parents.try &.map do |parent|
         parent.replace_type_parameters(instance_type)
       end
+    end
+
+    def replace_type_parameters(instance_type)
+      self.instance_type.replace_type_parameters(instance_type).metaclass
     end
 
     delegate defs, macros, to: instance_type.generic_type.metaclass

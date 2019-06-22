@@ -1127,4 +1127,25 @@ describe "Semantic: generic class" do
       ),
       "type must be Bool, not Nil"
   end
+
+  it "resolves T through metaclass inheritance (#7914)" do
+    assert_type(%(
+      struct Int32
+        def self.foo
+          1
+        end
+      end
+
+      class Matrix(T)
+        def self.foo
+          T.foo
+        end
+      end
+
+      class GeneralMatrix(T) < Matrix(T)
+      end
+
+      GeneralMatrix(Int32).foo
+    )) { int32 }
+  end
 end
