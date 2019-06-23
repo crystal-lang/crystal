@@ -1,15 +1,6 @@
 require "../lib_crypto"
 require "./digest_base"
 
-# ## Generate SHA256 hash of a string
-# 
-# ```
-# require "openssl"
-# enc = OpenSSL::Digest.new("sha256")
-# enc.update("helloworld")             # => 1a16eef5663e63cf4e88692c9c24dba001c5693e2ae92e944215d041456440b8
-# ```
-
-
 module OpenSSL
   class Digest
     class Error < OpenSSL::Error; end
@@ -63,6 +54,12 @@ module OpenSSL
       self
     end
 
+    # Generate SHA256 hash of *data*
+    #
+    # ```
+    # require "openssl"
+    # enc = OpenSSL::Digest.new("sha256").update("helloworld") # => 1a16eef5663e63cf4e88692c9c24dba001c5693e2ae92e944215d041456440b8
+    # ```
     def update(data : String | Slice)
       LibCrypto.evp_digestupdate(self, data, data.bytesize)
       self
