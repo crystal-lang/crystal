@@ -58,7 +58,7 @@ module OpenSSL
     #
     # ```
     # require "openssl"
-    # enc = OpenSSL::Digest.new("sha256").update("helloworld") # => 1a16eef5663e63cf4e88692c9c24dba001c5693e2ae92e944215d041456440b8
+    # enc = OpenSSL::Digest.new("sha256").update("helloworld") # => "1a16eef5663e63cf4e88692c9c24dba001c5693e2ae92e944215d041456440b8"
     # ```
     def update(data : String | Slice)
       LibCrypto.evp_digestupdate(self, data, data.bytesize)
