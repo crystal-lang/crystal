@@ -275,7 +275,7 @@ struct Number
     self == 0
   end
 
-  # Returns `true` if value is greater than zero.
+  # Returns `true` if `self` is greater than zero.
   #
   # ```
   # 0.positive?  # => false
@@ -286,7 +286,7 @@ struct Number
     self.sign == 1
   end
 
-  # Returns `false` if value is less than zero.
+  # Returns `false` if `self` is less than zero.
   #
   # ```
   # 0.negative?  # => false
