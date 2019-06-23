@@ -322,6 +322,8 @@ module Crystal
         str << common
         str << "\n\n"
         str << undefined_variable_message("global", node.name)
+        str << "\n\n"
+        str << common
       end
       node.raise msg
     end
@@ -339,6 +341,8 @@ module Crystal
         str << common
         str << "\n\n"
         str << undefined_variable_message("class", node.name)
+        str << "\n\n"
+        str << common
       end
       node.raise msg
     end
@@ -356,6 +360,8 @@ module Crystal
         str << common
         str << "\n\n"
         str << undefined_variable_message("instance", node.name)
+        str << "\n\n"
+        str << common
       end
       node.raise msg
     end
