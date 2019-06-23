@@ -113,6 +113,8 @@ class HTTP::Server
     # Closes this response, writing headers and body if not done yet.
     # This method must be implemented if wrapping the response output.
     def close
+      return if closed?
+
       @output.close
     end
 
@@ -204,6 +206,8 @@ class HTTP::Server
       end
 
       def close
+        return if closed?
+
         unless response.wrote_headers?
           response.content_length = @out_count
         end

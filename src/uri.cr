@@ -243,7 +243,7 @@ class URI
     self
   end
 
-  # Parses `raw_url` into an URI. The `raw_url` may be relative or absolute.
+  # Parses the given *raw_url* into an URI. The *raw_url* may be relative or absolute.
   #
   # ```
   # require "uri"
@@ -256,10 +256,10 @@ class URI
     URI::Parser.new(raw_url).run.uri
   end
 
-  # URL-decode a `String`.
+  # URL-decodes the given *string*.
   #
-  # If *plus_to_space* is `true`, it replace plus character (`0x2B`) to ' '.
-  # e.g. `application/x-www-form-urlencoded` wants this replace.
+  # If *plus_to_space* is `true`, all plus characters (`0x2B`) will be replaced by ' '.
+  # E.g. `application/x-www-form-urlencoded` wants this replace.
   #
   # ```
   # require "uri"
@@ -271,23 +271,23 @@ class URI
     String.build { |io| unescape(string, io, plus_to_space) }
   end
 
-  # URL-decode a `String`.
+  # URL-decodes the given *string*.
   #
-  # This method requires block, the block is called with each bytes
-  # whose is less than `0x80`. The bytes that block returns `true`
-  # are not unescaped, other characters are unescaped.
+  # This method requires a block, the block is called with each byte
+  # whose codepoint is less than `0x80`. The bytes that return
+  # `true` in the block are not unescaped, other bytes are unescaped.
   def self.unescape(string : String, plus_to_space = false, &block) : String
     String.build { |io| unescape(string, io, plus_to_space) { |byte| yield byte } }
   end
 
-  # URL-decode a string and write the result to an `IO`.
+  # URL-decodes the given *string* and writes the result to *io*.
   def self.unescape(string : String, io : IO, plus_to_space = false)
     self.unescape(string, io, plus_to_space) { false }
   end
 
-  # URL-decode a `String` and write the result to an `IO`.
+  # URL-decodes the given *string* and writes the result to *io*.
   #
-  # This method requires block.
+  # This method requires a block.
   def self.unescape(string : String, io : IO, plus_to_space = false, &block)
     i = 0
     bytesize = string.bytesize
@@ -299,10 +299,10 @@ class URI
     io
   end
 
-  # URL-encode a `String`.
+  # URL-encodes the given *string*.
   #
-  # If *space_to_plus* is `true`, it replace space character (0x20) to `'+'` and `'+'` is
-  # encoded to `'%2B'`. e.g. `application/x-www-form-urlencoded` want this replace.
+  # If *space_to_plus* is `true`, all space characters (0x20) are replaced by `'+'` and `'+'` is
+  # encoded to `'%2B'`. E.g. `application/x-www-form-urlencoded` wants this replace.
   #
   # ```
   # require "uri"
@@ -314,11 +314,11 @@ class URI
     String.build { |io| escape(string, io, space_to_plus) }
   end
 
-  # URL-encode a `String`.
+  # URL-encodes the given *string*.
   #
-  # This method requires block, the block is called with each characters
-  # whose code is less than `0x80`. The characters that block returns
-  # `true` are not escaped, other characters are escaped.
+  # This method requires a block, the block is called with each byte
+  # whose codepoint is less than `0x80`. The bytes that return
+  # `true` in the block are not escaped, other bytes are escaped.
   #
   # ```
   # require "uri"
@@ -333,14 +333,14 @@ class URI
     String.build { |io| escape(string, io, space_to_plus) { |byte| yield byte } }
   end
 
-  # URL-encode a `String` and write the result to an `IO`.
+  # URL-encodes the given *string* and writes the result to *io*.
   def self.escape(string : String, io : IO, space_to_plus = false)
     self.escape(string, io, space_to_plus) { |byte| URI.unreserved? byte }
   end
 
-  # URL-encode a `String` and write the result to an `IO`.
+  # URL-encodes the given *string* and writes the result to *io*.
   #
-  # This method requires block.
+  # This method requires a block.
   def self.escape(string : String, io : IO, space_to_plus = false, &block)
     string.each_byte do |byte|
       char = byte.unsafe_chr
@@ -371,7 +371,7 @@ class URI
   # Returns whether given byte is unreserved character defined in
   # [RFC 3986](https://tools.ietf.org/html/rfc3986).
   #
-  # Unreserved characters are alphabet, digit, '_', '.', '-', '~'.
+  # Unreserved characters are ASCII letters, ASCII digits, '_', '.', '-' and '~'.
   def self.unreserved?(byte) : Bool
     char = byte.unsafe_chr
     char.ascii_alphanumeric? ||

@@ -338,7 +338,7 @@ struct Time::Format
       next_char
     end
 
-    def time_zone_offset(force_colon = false, allow_colon = true, allow_seconds = true, force_zero_padding = true, force_minutes = true)
+    def time_zone_offset(force_colon = false, allow_colon = true, format_seconds = false, parse_seconds = true, force_zero_padding = true, force_minutes = true)
       case current_char
       when '-'
         sign = -1
@@ -386,7 +386,7 @@ struct Time::Format
       end
 
       seconds = 0
-      if @reader.has_next? && allow_seconds
+      if @reader.has_next? && parse_seconds
         pos = @reader.pos
         if char == ':'
           char = next_char

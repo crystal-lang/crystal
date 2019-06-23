@@ -105,7 +105,7 @@ module Crystal
       @last_is_falsey = false
     end
 
-    def compute_last_truhiness
+    def compute_last_truthiness
       reset_last_status
       yield
       {@last_is_truthy, @last_is_falsey}
@@ -530,7 +530,7 @@ module Crystal
     end
 
     def transform(node : If)
-      cond_is_truthy, cond_is_falsey = compute_last_truhiness do
+      cond_is_truthy, cond_is_falsey = compute_last_truthiness do
         node.cond = node.cond.transform(self)
       end
 
@@ -557,7 +557,7 @@ module Crystal
         then_is_truthy = false
         then_is_falsey = false
       else
-        then_is_truthy, then_is_falsey = compute_last_truhiness do
+        then_is_truthy, then_is_falsey = compute_last_truthiness do
           node.then = node.then.transform(self)
         end
       end
@@ -566,7 +566,7 @@ module Crystal
         else_is_truthy = false
         else_is_falsey = false
       else
-        else_is_truthy, else_is_falsey = compute_last_truhiness do
+        else_is_truthy, else_is_falsey = compute_last_truthiness do
           node.else = node.else.transform(self)
         end
       end

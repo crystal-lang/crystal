@@ -81,7 +81,7 @@ module HTTP
         cookie = parse_set_cookie("key=value; Secure")
         cookie.name.should eq("key")
         cookie.value.should eq("value")
-        cookie.secure.should eq(true)
+        cookie.secure.should be_true
         cookie.to_set_cookie_header.should eq("key=value; path=/; Secure")
       end
 
@@ -89,8 +89,40 @@ module HTTP
         cookie = parse_set_cookie("key=value; HttpOnly")
         cookie.name.should eq("key")
         cookie.value.should eq("value")
-        cookie.http_only.should eq(true)
+        cookie.http_only.should be_true
         cookie.to_set_cookie_header.should eq("key=value; path=/; HttpOnly")
+      end
+
+      describe "SameSite" do
+        context "Lax" do
+          it "parses samesite" do
+            cookie = parse_set_cookie("key=value; SameSite=Lax")
+            cookie.name.should eq "key"
+            cookie.value.should eq "value"
+            cookie.samesite.should eq HTTP::Cookie::SameSite::Lax
+            cookie.to_set_cookie_header.should eq "key=value; path=/; SameSite=Lax"
+          end
+        end
+
+        context "Strict" do
+          it "parses samesite" do
+            cookie = parse_set_cookie("key=value; SameSite=Strict")
+            cookie.name.should eq "key"
+            cookie.value.should eq "value"
+            cookie.samesite.should eq HTTP::Cookie::SameSite::Strict
+            cookie.to_set_cookie_header.should eq "key=value; path=/; SameSite=Strict"
+          end
+        end
+
+        context "Invalid" do
+          it "parses samesite" do
+            cookie = parse_set_cookie("key=value; SameSite=Foo")
+            cookie.name.should eq "key"
+            cookie.value.should eq "value"
+            cookie.samesite.should be_nil
+            cookie.to_set_cookie_header.should eq "key=value; path=/"
+          end
+        end
       end
 
       it "parses domain" do
@@ -143,16 +175,17 @@ module HTTP
       end
 
       it "parses full" do
-        cookie = parse_set_cookie("key=value; path=/test; domain=www.example.com; HttpOnly; Secure; expires=Sun, 06 Nov 1994 08:49:37 GMT")
+        cookie = parse_set_cookie("key=value; path=/test; domain=www.example.com; HttpOnly; Secure; expires=Sun, 06 Nov 1994 08:49:37 GMT; SameSite=Strict")
         time = Time.utc(1994, 11, 6, 8, 49, 37)
 
-        cookie.name.should eq("key")
-        cookie.value.should eq("value")
-        cookie.path.should eq("/test")
-        cookie.domain.should eq("www.example.com")
-        cookie.http_only.should eq(true)
-        cookie.secure.should eq(true)
-        cookie.expires.should eq(time)
+        cookie.name.should eq "key"
+        cookie.value.should eq "value"
+        cookie.path.should eq "/test"
+        cookie.domain.should eq "www.example.com"
+        cookie.http_only.should be_true
+        cookie.secure.should be_true
+        cookie.expires.should eq time
+        cookie.samesite.should eq HTTP::Cookie::SameSite::Strict
       end
 
       it "parse domain as IP" do

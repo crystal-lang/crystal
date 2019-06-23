@@ -49,8 +49,8 @@ describe StringPool do
     pool = StringPool.new
     slice = Bytes.new(3, 'a'.ord.to_u8)
 
-    s1 = pool.get(slice.pointer(slice.size), slice.size)
-    s2 = pool.get(slice.pointer(slice.size), slice.size)
+    s1 = pool.get(slice.to_unsafe, slice.size)
+    s2 = pool.get(slice.to_unsafe, slice.size)
 
     s1.should eq("aaa")
     s2.should eq("aaa")

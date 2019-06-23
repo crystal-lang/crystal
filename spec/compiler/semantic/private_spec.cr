@@ -434,4 +434,17 @@ describe "Semantic: private" do
       ),
       "private constant Foo::Bar referenced"
   end
+
+  it "doesn't find private constant in another file (#7850)" do
+    expect_raises Crystal::TypeException, "undefined constant Foo" do
+      compiler = Compiler.new
+      sources = [
+        Compiler::Source.new("foo.cr", %(private Foo = 1)),
+        Compiler::Source.new("bar.cr", %(Foo)),
+      ]
+      compiler.no_codegen = true
+      compiler.prelude = "empty"
+      compiler.compile sources, "output"
+    end
+  end
 end

@@ -368,6 +368,7 @@ describe "JSON serialization" do
     describe "Time" do
       it "#to_json" do
         Time.utc(2016, 11, 16, 12, 55, 48).to_json.should eq(%("2016-11-16T12:55:48Z"))
+        Time.local(2016, 11, 16, 12, 55, 48, location: Time::Location.fixed(7200)).to_json.should eq(%("2016-11-16T12:55:48+02:00"))
       end
 
       it "omit sub-second precision" do

@@ -1,4 +1,5 @@
 require "c/string"
+require "slice/sort"
 
 # A `Slice` is a `Pointer` with an associated size.
 #
@@ -162,9 +163,7 @@ struct Slice(T)
   # slice2 # => Slice[12, 13, 14]
   # ```
   def +(offset : Int)
-    unless 0 <= offset <= size
-      raise IndexError.new
-    end
+    check_size(offset)
 
     Slice.new(@pointer + offset, @size - offset, read_only: @read_only)
   end
@@ -292,14 +291,6 @@ struct Slice(T)
     self
   end
 
-  def pointer(size)
-    unless 0 <= size <= @size
-      raise IndexError.new
-    end
-
-    @pointer
-  end
-
   def shuffle!(random = Random::DEFAULT)
     check_writable
 
@@ -346,12 +337,15 @@ struct Slice(T)
 
   def copy_from(source : Pointer(T), count)
     check_writable
+    check_size(count)
 
-    pointer(count).copy_from(source, count)
+    @pointer.copy_from(source, count)
   end
 
   def copy_to(target : Pointer(T), count)
-    pointer(count).copy_to(target, count)
+    check_size(count)
+
+    @pointer.copy_to(target, count)
   end
 
   # Copies the contents of this slice into *target*.
@@ -368,8 +362,9 @@ struct Slice(T)
   # ```
   def copy_to(target : self)
     target.check_writable
+    raise IndexError.new if target.size < size
 
-    @pointer.copy_to(target.pointer(size), size)
+    @pointer.copy_to(target.to_unsafe, size)
   end
 
   # Copies the contents of *source* into this slice.
@@ -382,12 +377,13 @@ struct Slice(T)
 
   def move_from(source : Pointer(T), count)
     check_writable
+    check_size(count)
 
-    pointer(count).move_from(source, count)
+    @pointer.move_from(source, count)
   end
 
   def move_to(target : Pointer(T), count)
-    pointer(count).move_to(target, count)
+    @pointer.move_to(target, count)
   end
 
   # Moves the contents of this slice into *target*. *target* and `self` may
@@ -407,8 +403,9 @@ struct Slice(T)
   # See also: `Pointer#move_to`.
   def move_to(target : self)
     target.check_writable
+    raise IndexError.new if target.size < size
 
-    @pointer.move_to(target.pointer(size), size)
+    @pointer.move_to(target.to_unsafe, size)
   end
 
   # Moves the contents of *source* into this slice. *source* and `self` may
@@ -577,6 +574,106 @@ struct Slice(T)
     @pointer
   end
 
+  # Returns a new slice with all elements sorted based on the return value of
+  # their comparison method `<=>`
+  #
+  # ```
+  # a = Slice[3, 1, 2]
+  # a.sort # => Slice[1, 2, 3]
+  # a      # => Slice[3, 1, 2]
+  # ```
+  def sort : Slice(T)
+    dup.sort!
+  end
+
+  # Returns a new slice with all elements sorted based on the comparator in the
+  # given block.
+  #
+  # The block must implement a comparison between two elements *a* and *b*,
+  # where `a < b` returns `-1`, `a == b` returns `0`, and `a > b` returns `1`.
+  # The comparison operator `<=>` can be used for this.
+  #
+  # ```
+  # a = Slice[3, 1, 2]
+  # b = a.sort { |a, b| b <=> a }
+  #
+  # b # => Slice[3, 2, 1]
+  # a # => Slice[3, 1, 2]
+  # ```
+  def sort(&block : T, T -> U) : Slice(T) forall U
+    {% unless U <= Int32? %}
+      {% raise "expected block to return Int32 or Nil, not #{U}" %}
+    {% end %}
+
+    dup.sort! &block
+  end
+
+  # Modifies `self` by sorting all elements based on the return value of their
+  # comparison method `<=>`
+  #
+  # ```
+  # a = Slice[3, 1, 2]
+  # a.sort!
+  # a # => Slice[1, 2, 3]
+  # ```
+  def sort! : Slice(T)
+    Slice.intro_sort!(to_unsafe, size)
+    self
+  end
+
+  # Modifies `self` by sorting all elements based on the comparator in the given
+  # block.
+  #
+  # The given block must implement a comparison between two elements
+  # *a* and *b*, where `a < b` returns `-1`, `a == b` returns `0`,
+  # and `a > b` returns `1`.
+  # The comparison operator `<=>` can be used for this.
+  #
+  # ```
+  # a = Slice[3, 1, 2]
+  # a.sort! { |a, b| b <=> a }
+  # a # => Slice[3, 2, 1]
+  # ```
+  def sort!(&block : T, T -> U) : Slice(T) forall U
+    {% unless U <= Int32? %}
+      {% raise "expected block to return Int32 or Nil, not #{U}" %}
+    {% end %}
+
+    Slice.intro_sort!(to_unsafe, size, block)
+    self
+  end
+
+  # Returns a new array with all elements sorted. The given block is called for
+  # each element, then the comparison method `<=>` is called on the object
+  # returned from the block to determine sort order.
+  #
+  # ```
+  # a = Slice["apple", "pear", "fig"]
+  # b = a.sort_by { |word| word.size }
+  # b # => Slice["fig", "pear", "apple"]
+  # a # => Slice["apple", "pear", "fig"]
+  # ```
+  def sort_by(&block : T -> _) : Slice(T)
+    dup.sort_by! { |e| yield(e) }
+  end
+
+  # Modifies `self` by sorting all elements. The given block is called for
+  # each element, then the comparison method `<=>` is called on the object
+  # returned from the block to determine sort order.
+  #
+  # ```
+  # a = Slice["apple", "pear", "fig"]
+  # a.sort_by! { |word| word.size }
+  # a # => Slice["fig", "pear", "apple"]
+  # ```
+  def sort_by!(&block : T -> _) : Slice(T)
+    sorted = map { |e| {e, yield(e)} }.sort! { |x, y| x[1] <=> y[1] }
+    size.times do |i|
+      to_unsafe[i] = sorted.to_unsafe[i][0]
+    end
+    self
+  end
+
   # :nodoc:
   def index(object, offset : Int = 0)
     # Optimize for the case of looking for a byte in a byte slice
@@ -612,6 +709,12 @@ struct Slice(T)
 
   protected def check_writable
     raise "Can't write to read-only Slice" if @read_only
+  end
+
+  private def check_size(count : Int)
+    unless 0 <= count <= size
+      raise IndexError.new
+    end
   end
 end
 

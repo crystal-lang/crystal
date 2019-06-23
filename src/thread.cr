@@ -175,7 +175,7 @@ class Thread
 
       address =
         if LibC.pthread_main_np == 1
-          stack.ss_sp - stack.ss_size + sysconf(LibC::SC_PAGESIZE)
+          stack.ss_sp - stack.ss_size + LibC.sysconf(LibC::SC_PAGESIZE)
         else
           stack.ss_sp - stack.ss_size
         end

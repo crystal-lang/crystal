@@ -222,6 +222,8 @@ describe "Lexer" do
   it_lexes_i64 ["2147483648", "-2147483649"]
   it_lexes_i64 [["2147483648.foo", "2147483648"]]
   it_lexes_u64 ["18446744073709551615", "14146167139683460000", "9223372036854775808"]
+  it_lexes_number :u64, ["10000000000000000000_u64", "10000000000000000000"]
+
   it_lexes_i64 [["0x3fffffffffffffff", "4611686018427387903"]]
   it_lexes_i64 ["-9223372036854775808", "9223372036854775807"]
   it_lexes_u64 [["0xffffffffffffffff", "18446744073709551615"]]
@@ -294,8 +296,12 @@ describe "Lexer" do
   assert_syntax_error "18446744073709551616_u64", "18446744073709551616 doesn't fit in an UInt64"
   assert_syntax_error "-1_u64", "Invalid negative value -1 for UInt64"
 
+  assert_syntax_error "18446744073709551616_i32", "18446744073709551616 doesn't fit in an Int32"
+  assert_syntax_error "9999999999999999999_i32", "9999999999999999999 doesn't fit in an Int32"
+
   assert_syntax_error "-9999999999999999999", "-9999999999999999999 doesn't fit in an Int64"
   assert_syntax_error "-99999999999999999999", "-99999999999999999999 doesn't fit in an Int64"
+  assert_syntax_error "-11111111111111111111", "-11111111111111111111 doesn't fit in an Int64"
   assert_syntax_error "-9223372036854775809", "-9223372036854775809 doesn't fit in an Int64"
   assert_syntax_error "18446744073709551616", "18446744073709551616 doesn't fit in an UInt64"
 
@@ -529,4 +535,6 @@ describe "Lexer" do
   it_lexes_string %("\\xFF"), String.new(Bytes[0xFF])
   assert_syntax_error %("\\xz"), "invalid hex escape"
   assert_syntax_error %("\\x1z"), "invalid hex escape"
+
+  assert_syntax_error %("hi\\)
 end
