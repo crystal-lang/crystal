@@ -181,12 +181,14 @@ module Crystal
     end
 
     def format_macro_error(virtual_file : VirtualFile)
+      show_where_macro_expanded = !(@error_trace && self.responds_to?(:error_trace=))
       String.build do |io|
         io << "There was a problem expanding macro '#{virtual_file.macro.name}'"
         io << "\n\n"
-        unless @error_trace && self.responds_to?(:error_trace=)
+        if show_where_macro_expanded
           append_where_macro_expanded(io, virtual_file)
-          io << "\n\n"
+          io << '\n'
+          io << "called macro "
         end
         append_macro_definition_location(io, virtual_file)
         io << "\n\n"
@@ -221,7 +223,7 @@ module Crystal
       line_number = macro_source.try &.line_number
       column_number = macro_source.try &.column_number
 
-      io << "called macro defined in "
+      io << "defined in "
 
       case source_filename
       when String
