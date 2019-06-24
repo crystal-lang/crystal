@@ -41,8 +41,7 @@ end
 # fun __mulqi3(a : Int8, b : Int8) : Int8
 # fun __mulhi3(a : Int16, b : Int16) : Int16
 # fun __mulsi3(a : Int32, b : Int32) : Int32
-fun __muldi3(a : Int64, b : Int64) : Int64
-end
+# fun __muldi3(a : Int64, b : Int64) : Int64
 
 def __umuldi3(a : UInt64, b : UInt64) : UInt128
   r = Int128Info.new
