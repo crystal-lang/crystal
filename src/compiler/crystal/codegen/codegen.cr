@@ -1810,7 +1810,7 @@ module Crystal
     end
 
     def printf(format, args = [] of LLVM::Value)
-      call @program.printf(@llvm_mod), [builder.global_string_pointer(format)] + args
+      call @program.printf(@llvm_mod, llvm_context), [builder.global_string_pointer(format)] + args
     end
 
     def allocate_aggregate(type)
