@@ -688,7 +688,7 @@ describe "Enumerable" do
 
   describe "min_by?" do
     it "returns nil if empty" do
-      ([] of Int32).max_by? { |x| -x }.should be_nil
+      ([] of Int32).min_by? { |x| -x }.should be_nil
     end
   end
 
