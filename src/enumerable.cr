@@ -1384,6 +1384,18 @@ module Enumerable(T)
     result
   end
 
+  # Returns a `Hash` with counts the elements in the collection.
+  #
+  # ```
+  # %w[1 2 3 3 3 2].tally # => { "1" => 1, "2" => 2, "3" => 3 }
+  # ```
+  def tally
+    each_with_object(Hash(T, Int32).new) do |item, hash|
+      hash[item] ||= 0
+      hash[item] += 1
+    end
+  end
+
   # Returns an `Array` with all the elements in the collection.
   #
   # ```
