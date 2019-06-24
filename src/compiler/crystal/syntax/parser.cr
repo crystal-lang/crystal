@@ -4,6 +4,13 @@ require "./lexer"
 
 module Crystal
   class Parser < Lexer
+    enum ParseMode
+      Normal
+      Lib
+      LibStructOrUnion
+      Enum
+    end
+
     record Unclosed, name : String, location : Location
 
     property visibility : Visibility?
@@ -77,6 +84,19 @@ module Crystal
       check :EOF
 
       expressions
+    end
+
+    def parse(mode : ParseMode)
+      case mode
+      when .normal?
+        parse
+      when .lib?
+        parse_lib_body
+      when .lib_struct_or_union?
+        parse_c_struct_or_union_body
+      else
+        parse_enum_body
+      end
     end
 
     def parse_expressions

@@ -10,10 +10,10 @@ lib LibYAML
   # structs if necessary, where we mapped only some fields
   # we are interested in.
   {% if flag?(:x86_64) || flag?(:aarch64) %}
-    PARSER_SIZE = 480
+    PARSER_SIZE  = 480
     EMITTER_SIZE = 432
   {% else %}
-    PARSER_SIZE = 248
+    PARSER_SIZE  = 248
     EMITTER_SIZE = 264
   {% end %}
 

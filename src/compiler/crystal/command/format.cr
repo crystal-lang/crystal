@@ -141,7 +141,7 @@ class Crystal::Command
       error "file '#{filename}' is not a valid Crystal source file: #{ex.message}"
       @status_code = 1
     rescue ex : Crystal::SyntaxException
-      error ex
+      error "syntax error in '#{filename}:#{ex.line_number}:#{ex.column_number}': #{ex.message}"
       @status_code = 1
     rescue ex
       if @show_backtrace

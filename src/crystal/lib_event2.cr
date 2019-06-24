@@ -5,10 +5,10 @@ require "c/netdb"
 {% end %}
 
 {% if flag?(:openbsd) %}
-@[Link("event_core")]
-@[Link("event_extra")]
+  @[Link("event_core")]
+  @[Link("event_extra")]
 {% else %}
-@[Link("event")]
+  @[Link("event")]
 {% end %}
 lib LibEvent2
   alias Int = LibC::Int
