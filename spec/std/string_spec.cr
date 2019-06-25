@@ -534,6 +534,7 @@ describe "String" do
     it { "aeiou".upcase(Unicode::CaseOptions::Turkic).should eq("AEİOU") }
     it { "baﬄe".upcase.should eq("BAFFLE") }
     it { "ﬀ".upcase.should eq("FF") }
+    it { "ňž".upcase.should eq("ŇŽ") } # #7922
   end
 
   describe "capitalize" do
