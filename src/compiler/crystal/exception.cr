@@ -188,11 +188,11 @@ module Crystal
         if show_where_macro_expanded
           append_where_macro_expanded(io, virtual_file)
           io << '\n'
-          io << "called macro "
         end
+        io << "Called macro defined in "
         append_macro_definition_location(io, virtual_file)
         io << "\n\n"
-        io << "which expanded to:"
+        io << "Which expanded to:"
         io << "\n\n"
         append_expanded_macro(io, virtual_file.source)
       end
@@ -222,8 +222,6 @@ module Crystal
       source_filename = macro_source.try &.filename
       line_number = macro_source.try &.line_number
       column_number = macro_source.try &.column_number
-
-      io << "defined in "
 
       case source_filename
       when String
