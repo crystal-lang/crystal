@@ -1391,8 +1391,12 @@ module Enumerable(T)
   # ```
   def tally
     each_with_object(Hash(T, Int32).new) do |item, hash|
-      hash[item] ||= 0
-      hash[item] += 1
+      count = hash[item]?
+      if count
+        hash[item] = count + 1
+      else
+        hash[item] = 1
+      end
     end
   end
 
