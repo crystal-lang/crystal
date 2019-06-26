@@ -192,7 +192,7 @@ module HTTP
         parse_set_cookie("a=1; domain=127.0.0.1; path=/; HttpOnly").domain.should eq "127.0.0.1"
       end
 
-      it "parse max-age as seconds from current time" do
+      it "parse max-age as Time::Span from current time" do
         cookie = parse_set_cookie("a=1; max-age=10")
         cookie.max_age.should eq 10.seconds
 
