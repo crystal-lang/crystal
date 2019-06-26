@@ -141,15 +141,14 @@ module Crystal
     end
 
     def format_error(filename, lines, line_number, column_number, size = 0)
+      return "#{relative_filename(filename)}" unless line_number
+      
+      unless line = lines[line_number - 1]?
+        return "in #{filename_row_col_message(filename, line_number, column_number)}"
+      end
+
       String.build do |io|
         io << "in "
-        return "#{relative_filename(filename)}" unless line_number
-        line = lines[line_number - 1]?
-
-        unless line
-          return filename_row_col_message(filename, line_number, column_number)
-        end
-
         case filename
         when String
           io << filename_row_col_message(filename, line_number, column_number)
