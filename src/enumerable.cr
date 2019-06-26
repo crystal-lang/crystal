@@ -1389,7 +1389,7 @@ module Enumerable(T)
   # ```
   # %w[1 2 3 3 3 2].tally # => { "1" => 1, "2" => 2, "3" => 3 }
   # ```
-  def tally
+  def tally : Hash(T, Int32)
     each_with_object(Hash(T, Int32).new) do |item, hash|
       count = hash[item]?
       if count
