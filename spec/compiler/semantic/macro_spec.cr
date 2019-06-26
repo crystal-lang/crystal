@@ -675,25 +675,29 @@ describe "Semantic: macro" do
   end
 
   it "show macro trace in errors (1)" do
-    assert_error %(
+    ex = assert_error %(
       macro foo
         Bar
       end
 
       foo
     ),
-      "Error: expanding macro\n\nerror in line 6",
+      "Error: expanding macro",
       inject_primitives: false
+
+    ex.to_s.should contain "error in line 6"
   end
 
   it "show macro trace in errors (2)" do
-    assert_error %(
+    ex = assert_error %(
       {% begin %}
         Bar
       {% end %}
     ),
-      "Error: expanding macro\n\nerror in line 2",
+      "Error: expanding macro",
       inject_primitives: false
+
+    ex.to_s.should contain "error in line 2"
   end
 
   it "errors if using macro that is defined later" do

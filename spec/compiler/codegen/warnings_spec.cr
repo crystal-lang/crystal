@@ -8,7 +8,7 @@ describe "Code gen: warnings" do
       end
 
       foo
-    ), "Warning: Deprecated top-level foo. Do not use me\n\nwarning in line 6",
+    ), "warning in line 6\nWarning: Deprecated top-level foo. Do not use me",
       inject_primitives: false
   end
 
@@ -19,7 +19,7 @@ describe "Code gen: warnings" do
       end
 
       foo
-    ), "Warning: Deprecated top-level foo.\n\nwarning in line 6",
+    ), "warning in line 6\nWarning: Deprecated top-level foo.",
       inject_primitives: false
   end
 
@@ -32,7 +32,7 @@ describe "Code gen: warnings" do
       end
 
       Foo.new.m
-    ), "Warning: Deprecated Foo#m. Do not use me\n\nwarning in line 8",
+    ), "warning in line 8\nWarning: Deprecated Foo#m. Do not use me",
       inject_primitives: false
   end
 
@@ -45,7 +45,7 @@ describe "Code gen: warnings" do
       end
 
       Foo.m
-    ), "Warning: Deprecated Foo.m. Do not use me\n\nwarning in line 8",
+    ), "warning in line 8\nWarning: Deprecated Foo.m. Do not use me",
       inject_primitives: false
   end
 
@@ -58,7 +58,7 @@ describe "Code gen: warnings" do
       end
 
       Foo(Int32).new.m
-    ), "Warning: Deprecated Foo(Int32)#m. Do not use me\n\nwarning in line 8",
+    ), "warning in line 8\nWarning: Deprecated Foo(Int32)#m. Do not use me",
       inject_primitives: false
   end
 
@@ -71,7 +71,7 @@ describe "Code gen: warnings" do
       end
 
       Foo(Int32).m
-    ), "Warning: Deprecated Foo(Int32).m. Do not use me\n\nwarning in line 8",
+    ), "warning in line 8\nWarning: Deprecated Foo(Int32).m. Do not use me",
       inject_primitives: false
   end
 
@@ -84,7 +84,7 @@ describe "Code gen: warnings" do
       end
 
       Foo.m
-    ), "Warning: Deprecated Foo.m. Do not use me\n\nwarning in line 8",
+    ), "warning in line 8\nWarning: Deprecated Foo.m. Do not use me",
       inject_primitives: false
   end
 
@@ -95,7 +95,7 @@ describe "Code gen: warnings" do
       end
 
       foo(a: 2)
-    ), "Warning: Deprecated top-level foo:a.\n\nwarning in line 6",
+    ), "warning in line 6\nWarning: Deprecated top-level foo:a.",
       inject_primitives: false
   end
 
@@ -108,7 +108,7 @@ describe "Code gen: warnings" do
       end
 
       Foo.new
-    ), "Warning: Deprecated Foo.new.\n\nwarning in line 8",
+    ), "warning in line 8\nWarning: Deprecated Foo.new.",
       inject_primitives: false
   end
 
@@ -121,7 +121,7 @@ describe "Code gen: warnings" do
       end
 
       Foo.new(a: 2)
-    ), "Warning: Deprecated Foo.new:a.\n\nwarning in line 8",
+    ), "warning in line 8\nWarning: Deprecated Foo.new:a.",
       inject_primitives: false
   end
 

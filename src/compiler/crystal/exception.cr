@@ -142,7 +142,7 @@ module Crystal
 
     def format_error(filename, lines, line_number, column_number, size = 0)
       return "#{relative_filename(filename)}" unless line_number
-      
+
       unless line = lines[line_number - 1]?
         return "in #{filename_row_col_message(filename, line_number, column_number)}"
       end
