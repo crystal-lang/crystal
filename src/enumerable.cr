@@ -1384,6 +1384,24 @@ module Enumerable(T)
     result
   end
 
+  # Tallys the collection.  Returns a hash where the keys are the
+  # elements and the values are numbers of elements in the collection
+  # that correspond to the key.
+  #
+  # ```
+  # ["a", "b", "c", "b"].tally # => {"a"=>1, "b"=>2, "c"=>1}
+  # ```
+  def tally : Hash(T, Int32)
+    each_with_object(Hash(T, Int32).new) do |item, hash|
+      count = hash[item]?
+      if count
+        hash[item] = count + 1
+      else
+        hash[item] = 1
+      end
+    end
+  end
+
   # Returns an `Array` with all the elements in the collection.
   #
   # ```

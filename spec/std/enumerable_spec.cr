@@ -905,6 +905,12 @@ describe "Enumerable" do
     end
   end
 
+  describe "tally" do
+    it "returns a hash with counts according to the value" do
+      %w[1 2 3 3 3 2].tally.should eq({"1" => 1, "2" => 2, "3" => 3})
+    end
+  end
+
   describe "to_a" do
     it "converts to an Array" do
       (1..3).to_a.should eq [1, 2, 3]
