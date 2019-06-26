@@ -194,36 +194,80 @@ module HTTP
 
       it "parse max-age as seconds from current time" do
         cookie = parse_set_cookie("a=1; max-age=10")
-        delta = cookie.expires.not_nil! - Time.utc
-        delta.should be > 9.seconds
-        delta.should be < 11.seconds
+        cookie.max_age.should eq 10.seconds
 
         cookie = parse_set_cookie("a=1; max-age=0")
-        delta = Time.utc - cookie.expires.not_nil!
-        delta.should be > 0.seconds
-        delta.should be < 1.seconds
+        cookie.max_age.should eq 0.seconds
+      end
+    end
+
+    describe "expiration_time" do
+      it "sets expiration_time to be current when max-age=0" do
+        cookie = parse_set_cookie("bla=1; max-age=0")
+        (Time.now - cookie.expiration_time.not_nil!).should be <= 1.seconds
+      end
+
+      it "sets expiration_time with old date" do
+        cookie = parse_set_cookie("bla=1; expires=Thu, 01 Jan 1970 00:00:00 -0000")
+        cookie.expiration_time.should eq Time.utc(1970, 1, 1, 0, 0, 0)
+      end
+
+      it "sets future expiration_time with max-age" do
+        cookie = parse_set_cookie("bla=1; max-age=1")
+        (cookie.expiration_time.not_nil!).should be > Time.now
+      end
+
+      it "sets future expiration_time with max-age and future cookie creation time" do
+        cookie = parse_set_cookie("bla=1; max-age=1")
+        cookie_expiration = cookie.expiration_time(time_reference: Time.now + 20.seconds).not_nil!
+        (Time.now + 20.seconds).should be < cookie_expiration
+        (Time.now + 21.seconds).should be >= cookie_expiration
+      end
+
+      it "sets future expiration_time with expires" do
+        cookie = parse_set_cookie("bla=1; expires=Thu, 01 Jan 2020 00:00:00 -0000")
+        (cookie.expiration_time.not_nil! >= Time.utc(2020, 1, 1, 0, 0, 0)).should be_true
+      end
+
+      it "returns nil expiration_time when expires and max-age are not set" do
+        cookie = parse_set_cookie("bla=1")
+        cookie.expiration_time.should be_nil
       end
     end
 
     describe "expired?" do
-      it "by max-age=0" do
-        parse_set_cookie("bla=1; max-age=0").expired?.should eq true
+      it "expired when max-age=0" do
+        cookie = parse_set_cookie("bla=1; max-age=0")
+        cookie.expired?.should be_true
       end
 
-      it "by old date" do
-        parse_set_cookie("bla=1; expires=Thu, 01 Jan 1970 00:00:00 -0000").expired?.should eq true
+      it "expired with old expires date" do
+        cookie = parse_set_cookie("bla=1; expires=Thu, 01 Jan 1970 00:00:00 -0000")
+        cookie.expired?.should be_true
       end
 
-      it "not expired" do
-        parse_set_cookie("bla=1; max-age=1").expired?.should eq false
+      it "not expired with future max-age" do
+        cookie = parse_set_cookie("bla=1; max-age=1")
+        cookie.expired?.should be_false
       end
 
-      it "not expired" do
-        parse_set_cookie("bla=1; expires=Thu, 01 Jan 2020 00:00:00 -0000").expired?.should eq false
+      it "not expired with future expires" do
+        cookie = parse_set_cookie("bla=1; expires=Thu, 01 Jan 2020 00:00:00 -0000")
+        cookie.expired?.should be_false
       end
 
-      it "not expired" do
-        parse_set_cookie("bla=1").expired?.should eq false
+      it "sets past expiration_time with max-age and future time reference" do
+        cookie = parse_set_cookie("bla=1; max-age=1")
+        cookie_expiration = cookie.expiration_time(time_reference: Time.now - 20.seconds).not_nil!
+        (Time.now - 20.seconds).should be < cookie_expiration
+        (Time.now - 18.seconds).should be > cookie_expiration
+        cookie_expired = cookie.expired?(time_reference: Time.now - 20.seconds)
+        cookie_expired.should be_true
+      end
+
+      it "not expired when max-age and expires are not provided" do
+        cookie = parse_set_cookie("bla=1")
+        cookie.expired?.should be_false
       end
     end
   end

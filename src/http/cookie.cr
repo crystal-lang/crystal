@@ -16,6 +16,7 @@ module HTTP
     property value : String
     property path : String
     property expires : Time?
+    property max_age : Time::Span?
     property domain : String?
     property secure : Bool
     property http_only : Bool
@@ -25,9 +26,11 @@ module HTTP
     def_equals_and_hash name, value, path, expires, domain, secure, http_only
 
     def initialize(@name : String, value : String, @path : String = "/",
-                   @expires : Time? = nil, @domain : String? = nil,
-                   @secure : Bool = false, @http_only : Bool = false,
-                   @samesite : SameSite? = nil, @extension : String? = nil)
+                   @expires : Time? = nil, @max_age : Time::Span? = nil,
+                   @domain : String? = nil, @secure : Bool = false,
+                   @http_only : Bool = false, @samesite : SameSite? = nil,
+                   @extension : String? = nil)
+      @creation_time = Time.now
       @name = URI.unescape name
       @value = URI.unescape value
     end
@@ -35,6 +38,7 @@ module HTTP
     def to_set_cookie_header
       path = @path
       expires = @expires
+      max_age = @max_age
       domain = @domain
       samesite = @samesite
       String.build do |header|
@@ -42,6 +46,7 @@ module HTTP
         header << "; domain=#{domain}" if domain
         header << "; path=#{path}" if path
         header << "; expires=#{HTTP.format_time(expires)}" if expires
+        header << "; max-age=#{max_age.total_seconds}" if max_age
         header << "; Secure" if @secure
         header << "; HttpOnly" if @http_only
         header << "; SameSite=#{samesite}" if samesite
@@ -53,9 +58,20 @@ module HTTP
       "#{@name}=#{URI.escape value}"
     end
 
-    def expired?
-      if e = expires
-        e < Time.utc
+    def expiration_time(time_reference = @creation_time)
+      if max_age = @max_age
+        time_reference + max_age
+      else
+        @expires
+      end
+    end
+
+    # Returns the expiration status of this cookie as a `Bool` given a creation time
+    def expired?(time_reference = @creation_time)
+      if @max_age == 0.seconds
+        true
+      elsif (time = expiration_time(time_reference)) && time < Time.now
+        true
       else
         false
       end
@@ -112,16 +128,14 @@ module HTTP
         match = header.match(SetCookieString)
         return unless match
 
-        expires = if max_age = match["max_age"]?
-                    Time.utc + max_age.to_i.seconds
-                  else
-                    parse_time(match["expires"]?)
-                  end
+        expires = parse_time(match["expires"]?)
+        max_age = match["max_age"]?.try(&.to_i64.seconds)
 
         Cookie.new(
           match["name"], match["value"],
           path: match["path"]? || "/",
           expires: expires,
+          max_age: max_age,
           domain: match["domain"]?,
           secure: match["secure"]? != nil,
           http_only: match["http_only"]? != nil,
