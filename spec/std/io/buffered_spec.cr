@@ -121,14 +121,14 @@ describe "IO::Buffered" do
   end
 
   it "does gets with char and limit when not found in buffer" do
-    io = BufferedWrapper.new(IO::Memory.new(("a" * (IO::Buffered::BUFFER_SIZE + 10)) + "b"))
+    io = BufferedWrapper.new(IO::Memory.new(("a" * (8192 + 10)) + "b"))
     io.gets('b', 2).should eq("aa")
   end
 
   it "does gets with char and limit when not found in buffer (2)" do
-    base = "a" * (IO::Buffered::BUFFER_SIZE + 10)
+    base = "a" * (8192 + 10)
     io = BufferedWrapper.new(IO::Memory.new(base + "aabaaa"))
-    io.gets('b', IO::Buffered::BUFFER_SIZE + 11).should eq(base + "a")
+    io.gets('b', 8192 + 11).should eq(base + "a")
   end
 
   it "raises if invoking gets with negative limit" do
@@ -298,13 +298,13 @@ describe "IO::Buffered" do
 
     it "works with IO#read (already buffered)" do
       str = IO::Memory.new
-      str << "a" * IO::Buffered::BUFFER_SIZE
+      str << "a" * str.buffer_size
       str.pos = 0
 
       io = BufferedWrapper.new(str)
       io.read_buffering?.should be_true
 
-      IO::Buffered::BUFFER_SIZE.times do
+      io.buffer_size.times do
         byte = Bytes.new(1)
         io.read_fully(byte)
         byte[0].should eq('a'.ord.to_u8)
@@ -339,13 +339,13 @@ describe "IO::Buffered" do
 
     it "works with IO#read_byte (already buffered)" do
       str = IO::Memory.new
-      str << "a" * IO::Buffered::BUFFER_SIZE
+      str << "a" * str.buffer_size
       str.pos = 0
 
       io = BufferedWrapper.new(str)
       io.read_buffering?.should be_true
 
-      IO::Buffered::BUFFER_SIZE.times do
+      io.buffer_size.times do
         io.read_byte.should eq('a'.ord.to_u8)
       end
 
