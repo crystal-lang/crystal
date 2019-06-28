@@ -138,4 +138,6 @@ lib LibLLVMExt
   {% end %}
 
   fun normalize_target_triple = LLVMNormalizeTargetTriple(triple : Char*) : Char*
+
+  fun basic_block_name = LLVMExtBasicBlockName(basic_block : LibLLVM::BasicBlockRef) : Char*
 end

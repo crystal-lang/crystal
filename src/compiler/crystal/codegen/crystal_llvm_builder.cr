@@ -32,9 +32,6 @@ module Crystal
     end
 
     def unreachable
-      if ENV["UNREACHABLE"]? == "1"
-        printf "Reached the unreachable!"
-      end
       return if @end
       value = @builder.unreachable
       @end = true
