@@ -1813,6 +1813,42 @@ module Crystal
       call @program.printf(@llvm_mod, llvm_context), [builder.global_string_pointer(format)] + args
     end
 
+    # Emits a debug message that shows the current llvm basic block name,
+    # the location within the codegen that was used to emit this log.
+    #
+    # The message is only generated if `CRYSTAL_DEBUG_CODEGEN` is set
+    #
+    # The block given to this method should yield `printf` arguments to show
+    # additional information. The following forms are all valid and helps to
+    # allocate the arguments only if the message is to be generated.
+    #
+    # ```
+    # debug_codegen_log
+    # debug_codegen_log { }
+    # debug_codegen_log { "Lorem" }
+    # debug_codegen_log { {"Lorem"} }
+    # debug_codegen_log { {"Lorem %d", [an_int_llvm_value] of LLVM::Value} }
+    # ```
+    #
+    def debug_codegen_log(file = __FILE__, line = __LINE__)
+      return unless ENV["CRYSTAL_DEBUG_CODEGEN"]?
+      printf_args = yield || ""
+      printf_args = {printf_args, [] of LLVM::Value} if printf_args.is_a?(String)
+      printf_args = {printf_args[0], [] of LLVM::Value} if printf_args.is_a?({String})
+      msg, args = printf_args
+      printf("<block: #{insert_block.name || "???"} @ #{Crystal.relative_filename(file)}:#{line}> #{msg}\n", args)
+    end
+
+    # :ditto:
+    def debug_codegen_log(file = __FILE__, line = __LINE__)
+      debug_codegen_log(file, line) { }
+    end
+
+    def unreachable(file = __FILE__, line = __LINE__)
+      debug_codegen_log(file, line) { "Reached the unreachable!" }
+      builder.unreachable
+    end
+
     def allocate_aggregate(type)
       struct_type = llvm_struct_type(type)
       if type.passed_by_value?

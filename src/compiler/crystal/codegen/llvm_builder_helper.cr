@@ -124,7 +124,7 @@ module Crystal
     end
 
     delegate ptr2int, int2ptr, and, or, not, bit_cast,
-      trunc, load, store, br, insert_block, position_at_end, unreachable,
+      trunc, load, store, br, insert_block, position_at_end,
       cond, phi, extract_value, to: builder
 
     def ret
