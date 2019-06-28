@@ -144,11 +144,10 @@ module Crystal
       return "#{relative_filename(filename)}" unless line_number
 
       unless line = lines[line_number - 1]?
-        return "in #{filename_row_col_message(filename, line_number, column_number)}"
+        return "#{filename_row_col_message(filename, line_number, column_number)}"
       end
 
       String.build do |io|
-        io << "in "
         case filename
         when String
           io << filename_row_col_message(filename, line_number, column_number)
@@ -170,13 +169,14 @@ module Crystal
 
     def format_error_from_file(filename : String)
       lines = File.read_lines(filename)
-      format_error(
+      formatted_error = format_error(
         filename: @filename,
         lines: lines,
         line_number: @line_number,
         column_number: @column_number,
         size: @size
-      ).capitalize
+      )
+      "In #{formatted_error}"
     end
 
     def format_macro_error(virtual_file : VirtualFile)
@@ -281,7 +281,7 @@ module Crystal
       lines = source_lines(source_filename)
       return unless lines
 
-      io << "Code " << format_error(
+      io << "Code in " << format_error(
         filename: source_filename,
         lines: lines,
         line_number: expanded_source.line_number,
