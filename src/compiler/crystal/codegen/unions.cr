@@ -41,7 +41,11 @@ module Crystal
   end
 
   class CodeGenVisitor
-    def union_type_and_value_pointer(union_pointer)
+    def union_type_and_value_pointer(union_pointer, type : UnionType)
+      raise "BUG: trying to access union_type_and_value_pointer of a #{type} from #{union_pointer}"
+    end
+
+    def union_type_and_value_pointer(union_pointer, type : MixedUnionType)
       {load(union_type_id(union_pointer)), union_value(union_pointer)}
     end
 
@@ -53,7 +57,7 @@ module Crystal
       aggregate_index union_pointer, 1
     end
 
-    def store_in_union(union_pointer, value_type, value)
+    def store_in_union(union_type, union_pointer, value_type, value)
       store type_id(value, value_type), union_type_id(union_pointer)
       casted_value_ptr = cast_to_pointer(union_value(union_pointer), value_type)
       store value, casted_value_ptr
@@ -87,7 +91,7 @@ module Crystal
     end
 
     private def type_id_impl(value, type : MixedUnionType)
-      union_type_and_value_pointer(value)[0]
+      union_type_and_value_pointer(value, type)[0]
     end
   end
 end

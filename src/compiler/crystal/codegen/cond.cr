@@ -36,7 +36,7 @@ class Crystal::CodeGenVisitor
     cond = llvm_true
 
     if has_nil || has_bool || has_pointer
-      type_id, value_ptr = union_type_and_value_pointer(@last)
+      type_id, value_ptr = union_type_and_value_pointer(@last, type)
 
       if has_nil
         is_nil = equal? type_id, type_id(@program.nil)
