@@ -1,3 +1,17 @@
+# Here lies the logic of the representation of the MixedUnionType.
+#
+# Which structure is used to represent them is defined in `LLVMTyper#create_llvm_type`.
+#
+# The `#union_type_and_value_pointer` will allow to read the current value of the union.
+# The `#store*_in_union` operations allow to write the value in a unions.
+# The `#{assign|downcast|upcast}_distinct_union_types` operation matches the
+# semantics described in `./casts.cr`
+#
+# Together these operations should encapsulate the binary representation of the MixedUnionType.
+#
+# Other unions like ReferenceUnionType that have a more trivial
+# representation are not handled here.
+#
 module Crystal
   class LLVMTyper
     private def create_llvm_type(type : MixedUnionType, wants_size)
