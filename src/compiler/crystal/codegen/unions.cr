@@ -43,9 +43,7 @@ module Crystal
 
         llvm_value_type = size_t.array(max_size)
 
-        if wants_size
-          @wants_size_union_value_cache[type] = llvm_value_type
-        else
+        if !wants_size
           @union_value_cache[type] = llvm_value_type
         end
 

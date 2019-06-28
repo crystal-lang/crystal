@@ -45,7 +45,6 @@ module Crystal
       # types, because there can be cycles.
       @wants_size_cache = TypeCache.new
       @wants_size_struct_cache = TypeCache.new
-      @wants_size_union_value_cache = TypeCache.new
 
       @structs = {} of String => LLVM::Type
 
