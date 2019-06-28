@@ -90,6 +90,19 @@ module Crystal
       store type_id(@program.void), union_type_id(union_pointer)
     end
 
+    def assign_distinct_union_types(target_pointer, target_type, value_type, value)
+      casted_value = cast_to_pointer value, target_type
+      store load(casted_value), target_pointer
+    end
+
+    def downcast_distinct_union_types(value, to_type : MixedUnionType, from_type : MixedUnionType)
+      cast_to_pointer value, to_type
+    end
+
+    def upcast_distinct_union_types(value, to_type : MixedUnionType, from_type : MixedUnionType)
+      cast_to_pointer value, to_type
+    end
+
     private def type_id_impl(value, type : MixedUnionType)
       union_type_and_value_pointer(value, type)[0]
     end

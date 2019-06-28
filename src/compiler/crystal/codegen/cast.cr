@@ -162,11 +162,6 @@ class Crystal::CodeGenVisitor
       union_type.union_types.any? { |ut| value_type.implements?(ut) || ut.implements?(value_type) }
   end
 
-  def assign_distinct_union_types(target_pointer, target_type, value_type, value)
-    casted_value = cast_to_pointer value, target_type
-    store load(casted_value), target_pointer
-  end
-
   def assign_distinct(target_pointer, target_type : MixedUnionType, value_type : NilableType, value)
     store_in_union target_type, target_pointer, value_type, value
   end
@@ -427,7 +422,7 @@ class Crystal::CodeGenVisitor
         phi.add final_value, to_type, last: true
       end
     else
-      cast_to_pointer value, to_type
+      downcast_distinct_union_types(value, to_type, from_type)
     end
   end
 
@@ -636,7 +631,7 @@ class Crystal::CodeGenVisitor
         phi.add final_value, to_type, last: true
       end
     else
-      cast_to_pointer value, to_type
+      upcast_distinct_union_types(value, to_type, from_type)
     end
   end
 
