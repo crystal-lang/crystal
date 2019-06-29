@@ -43,16 +43,12 @@ module Crystal
 
         llvm_value_type = size_t.array(max_size)
 
-        if !wants_size
-          @union_value_cache[type] = llvm_value_type
-        end
-
         [@llvm_context.int32, llvm_value_type]
       end
     end
 
     def union_value_type(type : MixedUnionType)
-      @union_value_cache[type] ||= llvm_type(type).struct_element_types[1]
+      llvm_type(type).struct_element_types[1]
     end
   end
 

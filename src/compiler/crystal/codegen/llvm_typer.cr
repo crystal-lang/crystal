@@ -15,7 +15,6 @@ module Crystal
     def initialize(@program : Program, @llvm_context : LLVM::Context)
       @cache = TypeCache.new
       @struct_cache = TypeCache.new
-      @union_value_cache = TypeCache.new
 
       # For union types we just need to know the maximum size of their types.
       # It might happen that we have a recursive type, for example:
