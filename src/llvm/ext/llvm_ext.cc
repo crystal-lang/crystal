@@ -458,7 +458,7 @@ char *LLVMExtBasicBlockName(LLVMBasicBlockRef BB) {
   // It seems to work since llvm-4.0 https://stackoverflow.com/a/46045548/30948
   return strdup(unwrap(BB)->getName().data());
 #else
-  return NULL
+  return NULL;
 #endif
 }
 
