@@ -175,8 +175,8 @@ describe "YAML serialization" do
       value.should eq(Time.utc(2014, 1, 2))
     end
 
-    it "deserializes union" do
-      Array(Int32 | String).from_yaml(%([1, "hello"])).should eq([1, "hello"])
+    it "deserializes union with nil, string and int (#7936)" do
+      Array(Int32 | String | Nil).from_yaml(%([1, "hello", null])).should eq([1, "hello", nil])
     end
 
     it "deserializes time" do
