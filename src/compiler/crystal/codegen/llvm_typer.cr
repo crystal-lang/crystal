@@ -546,9 +546,5 @@ module Crystal
     def pointer_size
       @pointer_size ||= size_of(@llvm_context.void_pointer)
     end
-
-    def union_value_type(type : MixedUnionType)
-      @union_value_cache[type] ||= llvm_type(type).struct_element_types[1]
-    end
   end
 end

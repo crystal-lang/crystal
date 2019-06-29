@@ -50,6 +50,10 @@ module Crystal
         [@llvm_context.int32, llvm_value_type]
       end
     end
+
+    def union_value_type(type : MixedUnionType)
+      @union_value_cache[type] ||= llvm_type(type).struct_element_types[1]
+    end
   end
 
   class CodeGenVisitor
@@ -80,7 +84,7 @@ module Crystal
 
       # To store a boolean in a union
       # we sign-extend it to the size in bits of the union
-      union_value_type = llvm_union_value_type(union_type)
+      union_value_type = @llvm_typer.union_value_type(union_type)
       union_size = @llvm_typer.size_of(union_value_type)
       int_type = llvm_context.int((union_size * 8).to_i32)
 
@@ -90,7 +94,7 @@ module Crystal
     end
 
     def store_nil_in_union(union_pointer, target_type)
-      union_value_type = llvm_union_value_type(target_type)
+      union_value_type = @llvm_typer.union_value_type(target_type)
       value = union_value_type.null
 
       store type_id(value, @program.nil), union_type_id(union_pointer)
