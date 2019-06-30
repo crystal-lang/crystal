@@ -144,7 +144,7 @@ module Crystal
       return "#{relative_filename(filename)}" unless line_number
 
       unless line = lines[line_number - 1]?
-        return "#{filename_row_col_message(filename, line_number, column_number)}"
+        return filename_row_col_message(filename, line_number, column_number)
       end
 
       String.build do |io|
