@@ -637,6 +637,24 @@ module Enumerable(T)
     memo
   end
 
+  # Similar to `reduce`, but instead of raising when the input is empty,
+  # return `nil`
+  #
+  # ```
+  # ([] of Int32).reduce? { |acc, i| acc + i } # => nil
+  # ```
+  def reduce?
+    memo = uninitialized T
+    found = false
+
+    each do |elem|
+      memo = found ? (yield memo, elem) : elem
+      found = true
+    end
+
+    found ? memo : nil
+  end
+
   # Returns a `String` created by concatenating the elements in the collection,
   # separated by *separator* (defaults to none).
   #
