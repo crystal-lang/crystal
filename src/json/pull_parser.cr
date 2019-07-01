@@ -86,8 +86,9 @@ class JSON::PullParser
   def read_object
     read_begin_object
     while kind != :end_object
+      key_location = location
       key = read_object_key
-      yield key
+      yield key, key_location
     end
     read_end_object
   end

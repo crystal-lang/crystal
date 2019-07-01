@@ -28,6 +28,10 @@ struct Nil
   def to_json(json : JSON::Builder)
     json.null
   end
+
+  def to_json_object_key
+    ""
+  end
 end
 
 struct Bool
@@ -40,11 +44,19 @@ struct Int
   def to_json(json : JSON::Builder)
     json.number(self)
   end
+
+  def to_json_object_key
+    to_s
+  end
 end
 
 struct Float
   def to_json(json : JSON::Builder)
     json.number(self)
+  end
+
+  def to_json_object_key
+    to_s
   end
 end
 
@@ -52,11 +64,19 @@ class String
   def to_json(json : JSON::Builder)
     json.string(self)
   end
+
+  def to_json_object_key
+    self
+  end
 end
 
 struct Symbol
   def to_json(json : JSON::Builder)
     json.string(to_s)
+  end
+
+  def to_json_object_key
+    to_s
   end
 end
 
@@ -77,10 +97,15 @@ struct Set
 end
 
 class Hash
+  # Serializes this Hash into JSON.
+  #
+  # Keys are serialized by invoking `to_json_object_key` on them.
+  # Values are serialized with the usual `to_json(json : JSON::Builder)`
+  # method.
   def to_json(json : JSON::Builder)
     json.object do
       each do |key, value|
-        json.field key do
+        json.field key.to_json_object_key do
           value.to_json(json)
         end
       end
