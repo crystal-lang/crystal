@@ -484,13 +484,14 @@ module Crystal
 
     def new_range(exp, location, exclusive)
       check_void_value exp, location
-      next_token_skip_space_or_newline
+      next_token_skip_space
       check_void_expression_keyword
       right = if end_token? ||
                  @token.type == :")" ||
                  @token.type == :"," ||
                  @token.type == :";" ||
-                 @token.type == :"=>"
+                 @token.type == :"=>" ||
+                 @token.type == :NEWLINE
                 Nop.new
               else
                 parse_or
