@@ -25,7 +25,7 @@ describe YAML::Nodes::Builder do
   describe "#alias" do
     describe "as a scalar value" do
       it "writes correctly" do
-        assert_built("--- *key\n", expect_document_end: true) do
+        assert_built("--- *key\n") do
           itself.alias "key"
         end
       end

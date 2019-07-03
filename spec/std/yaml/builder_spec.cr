@@ -25,7 +25,7 @@ describe YAML::Builder do
   end
 
   it "writes alias" do
-    assert_built("--- *key\n", expect_document_end: true) do
+    assert_built("--- *key\n") do
       itself.alias "key"
     end
   end
