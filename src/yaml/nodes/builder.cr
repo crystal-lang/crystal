@@ -44,7 +44,7 @@ class YAML::Nodes::Builder
     push_node Alias.new anchor
   end
 
-  # Emits the scalar "<<" followed by an alias to the given *anchor*.
+  # Emits the scalar `"<<"` followed by an alias to the given *anchor*.
   #
   # See [YAML Merge](https://yaml.org/type/merge.html).
   #
