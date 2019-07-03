@@ -130,10 +130,10 @@ describe YAML::Builder do
     end
   end
 
-  it "writes mapping with extend" do
+  it "writes mapping with merge" do
     assert_built("---\n<<: *key\n") do
       mapping do
-        itself.extend "key"
+        merge "key"
       end
     end
   end

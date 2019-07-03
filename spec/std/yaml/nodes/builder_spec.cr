@@ -43,12 +43,12 @@ describe YAML::Nodes::Builder do
     end
   end
 
-  describe "#extend" do
+  describe "#merge" do
     describe "within a mapping" do
       it "writes correctly" do
         assert_built("---\n<<: *bar\n") do
           mapping do
-            itself.extend "bar"
+            merge "bar"
           end
         end
       end

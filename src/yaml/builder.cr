@@ -130,7 +130,7 @@ class YAML::Builder
     yield.tap { end_mapping }
   end
 
-  # Aliases *anchor*.
+  # Emits an alias to the given *anchor*.
   #
   # ```crystal
   # require "yaml"
@@ -149,20 +149,22 @@ class YAML::Builder
     yaml_emit("alias")
   end
 
-  # Extends *anchor*.
+  # Emits the scalar "<<" followed by an alias to the given *anchor*.
+  #
+  # See [YAML Merge](https://yaml.org/type/merge.html).
   #
   # ```crystal
   # require "yaml"
   #
   # yaml = YAML.build do |builder|
   #   builder.mapping do
-  #     builder.extend "development"
+  #     builder.merge "development"
   #   end
   # end
   #
   # yaml # => "---\n<<: *development\n"
   # ```
-  def extend(anchor : String) : Nil
+  def merge(anchor : String) : Nil
     self.scalar "<<"
     self.alias anchor
   end
