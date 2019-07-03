@@ -24,6 +24,12 @@ describe YAML::Builder do
     end
   end
 
+  it "writes alias" do
+    assert_built("--- *key\n", expect_document_end: true) do
+      itself.alias "key"
+    end
+  end
+
   it "writes scalar with style" do
     assert_built(%(--- "1"\n)) do
       scalar(1, style: YAML::ScalarStyle::DOUBLE_QUOTED)
@@ -111,6 +117,23 @@ describe YAML::Builder do
         scalar(1)
         scalar("bar")
         scalar(2)
+      end
+    end
+  end
+
+  it "writes mapping with alias" do
+    assert_built("---\nfoo: *bar\n") do
+      mapping do
+        scalar "foo"
+        itself.alias "bar"
+      end
+    end
+  end
+
+  it "writes mapping with extend" do
+    assert_built("---\n<<: *key\n") do
+      mapping do
+        itself.extend "key"
       end
     end
   end

@@ -22,6 +22,50 @@ class YAML::Nodes::Builder
     @anchor_count = 0
   end
 
+  # Aliases *anchor*.
+  #
+  # ```crystal
+  # require "yaml"
+  #
+  # nodes_builder = YAML::Nodes::Builder.new
+  #
+  # nodes_builder.mapping do
+  #   nodes_builder.scalar "foo"
+  #   nodes_builder.alias "key"
+  # end
+  #
+  # yaml = YAML.build do |builder|
+  #   nodes_builder.document.to_yaml builder
+  # end
+  #
+  # yaml => "---\nkey: *foo\n"
+  # ```
+  def alias(anchor : String) : Nil
+    push_node Alias.new anchor
+  end
+
+  # Extends *anchor*.
+  #
+  # ```crystal
+  # require "yaml"
+  #
+  # nodes_builder = YAML::Nodes::Builder.new
+  #
+  # nodes_builder.mapping do
+  #   nodes_builder.extend "key"
+  # end
+  #
+  # yaml = YAML.build do |builder|
+  #   nodes_builder.document.to_yaml builder
+  # end
+  #
+  # yaml => "---\n<<: *key\n"
+  # ```
+  def extend(anchor : String) : Nil
+    self.scalar "<<"
+    self.alias anchor
+  end
+
   def scalar(value, anchor : String? = nil, tag : String? = nil,
              style : YAML::ScalarStyle = YAML::ScalarStyle::ANY,
              reference = nil) : Nil

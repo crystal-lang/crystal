@@ -130,9 +130,41 @@ class YAML::Builder
     yield.tap { end_mapping }
   end
 
-  def alias(anchor : String)
+  # Aliases *anchor*.
+  #
+  # ```crystal
+  # require "yaml"
+  #
+  # yaml = YAML.build do |builder|
+  #   builder.mapping do
+  #     builder.scalar "key"
+  #     builder.alias "example"
+  #   end
+  # end
+  #
+  # yaml => "---\nkey: *example\n"
+  # ```
+  def alias(anchor : String) : Nil
     LibYAML.yaml_alias_event_initialize(pointerof(@event), anchor)
     yaml_emit("alias")
+  end
+
+  # Extends *anchor*.
+  #
+  # ```crystal
+  # require "yaml"
+  #
+  # yaml = YAML.build do |builder|
+  #   builder.mapping do
+  #     buidler.extend "development"
+  #   end
+  # end
+  #
+  # yaml => "---\<<: *development\n"
+  # ```
+  def extend(anchor : String) : Nil
+    self.scalar "<<"
+    self.alias anchor
   end
 
   # Flushes any pending data to the underlying `IO`.
