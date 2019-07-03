@@ -142,7 +142,7 @@ class YAML::Builder
   #   end
   # end
   #
-  # yaml => "---\nkey: *example\n"
+  # yaml # => "---\nkey: *example\n"
   # ```
   def alias(anchor : String) : Nil
     LibYAML.yaml_alias_event_initialize(pointerof(@event), anchor)
@@ -160,7 +160,7 @@ class YAML::Builder
   #   end
   # end
   #
-  # yaml => "---\<<: *development\n"
+  # yaml # => "---\n<<: *development\n"
   # ```
   def extend(anchor : String) : Nil
     self.scalar "<<"

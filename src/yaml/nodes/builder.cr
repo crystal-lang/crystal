@@ -38,7 +38,7 @@ class YAML::Nodes::Builder
   #   nodes_builder.document.to_yaml builder
   # end
   #
-  # yaml => "---\nkey: *foo\n"
+  # yaml # => "---\nkey: *foo\n"
   # ```
   def alias(anchor : String) : Nil
     push_node Alias.new anchor
@@ -59,7 +59,7 @@ class YAML::Nodes::Builder
   #   nodes_builder.document.to_yaml builder
   # end
   #
-  # yaml => "---\n<<: *key\n"
+  # yaml # => "---\n<<: *key\n"
   # ```
   def extend(anchor : String) : Nil
     self.scalar "<<"
