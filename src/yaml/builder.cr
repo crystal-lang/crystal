@@ -156,7 +156,7 @@ class YAML::Builder
   #
   # yaml = YAML.build do |builder|
   #   builder.mapping do
-  #     buidler.extend "development"
+  #     builder.extend "development"
   #   end
   # end
   #
