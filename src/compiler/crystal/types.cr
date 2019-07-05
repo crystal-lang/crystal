@@ -2953,9 +2953,21 @@ module Crystal
 
     def each_concrete_type
       union_types.each do |type|
-        if type.is_a?(VirtualType)
-          type.subtypes.each do |subtype|
-            yield subtype
+        if type.is_a?(VirtualType) || type.is_a?(VirtualMetaclassType)
+          type.each_concrete_type do |concrete_type|
+            yield concrete_type
+          end
+        elsif type.is_a?(ModuleType) || type.is_a?(GenericModuleInstanceType)
+          _type = type.remove_indirection
+          if _type.responds_to?(:concrete_types)
+            # do to recursion uncaptured block method
+            # we need to use concrete_types.each
+            # instead of each_concrete_types
+            _type.concrete_types.each do |concrete_type|
+              yield concrete_type
+            end
+          else
+            yield _type
           end
         else
           yield type
@@ -3241,6 +3253,7 @@ module Crystal
   end
 
   class VirtualMetaclassType < Type
+    include MultiType
     include DefInstanceContainer
     include VirtualTypeLookup
     include ClassVarContainer
