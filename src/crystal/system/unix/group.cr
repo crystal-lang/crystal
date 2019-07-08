@@ -24,7 +24,7 @@ module Crystal::System::Group
 
     grp = uninitialized LibC::Group
     grp_pointer = pointerof(grp)
-    initial_buf = Bytes.new(1024)
+    initial_buf = uninitialized UInt8[1024]
     buf = initial_buf.to_slice
 
     ret = LibC.getgrnam_r(groupname, grp_pointer, buf, buf.size, pointerof(grp_pointer))
@@ -42,7 +42,7 @@ module Crystal::System::Group
     groupid = groupid.to_i.to_u32!
     grp = uninitialized LibC::Group
     grp_pointer = pointerof(grp)
-    initial_buf = Bytes.new(1024)
+    initial_buf = uninitialized UInt8[1024]
     buf = initial_buf.to_slice
 
     ret = LibC.getgrgid_r(groupid, grp_pointer, buf, buf.size, pointerof(grp_pointer))
