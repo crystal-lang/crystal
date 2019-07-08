@@ -1,6 +1,8 @@
 require "c/pwd"
 
 module Crystal::System::User
+  private GETPW_R_SIZE_MAX = 1024 * 16
+
   private def from_struct(pwd)
     user = String.new(pwd.pw_gecos).split(",").first
     new(String.new(pwd.pw_name), pwd.pw_uid.to_s, pwd.pw_gid.to_s, user, String.new(pwd.pw_dir), String.new(pwd.pw_shell))
@@ -11,35 +13,35 @@ module Crystal::System::User
 
     pwd = uninitialized LibC::Passwd
     pwd_pointer = pointerof(pwd)
-    buf = Bytes.new(1024)
+    initial_buf = uninitialized UInt8[1024]
+    buf = initial_buf.to_slice
 
     ret = LibC.getpwnam_r(username, pwd_pointer, buf, buf.size, pointerof(pwd_pointer))
-    while ret == LibC::ERANGE
+    while ret == LibC::ERANGE && buf.size < GETPW_R_SIZE_MAX
       buf = Bytes.new(buf.size * 2)
       ret = LibC.getpwnam_r(username, pwd_pointer, buf, buf.size, pointerof(pwd_pointer))
     end
 
     raise Errno.new("getpwnam_r") if ret != 0
-    return if pwd_pointer.null?
 
-    from_struct(pwd)
+    from_struct(pwd) if pwd_pointer
   end
 
   def from_id?(id : String)
     id = id.to_i.to_u32!
     pwd = uninitialized LibC::Passwd
     pwd_pointer = pointerof(pwd)
-    buf = Bytes.new(1024)
+    initial_buf = uninitialized UInt8[1024]
+    buf = initial_buf.to_slice
 
     ret = LibC.getpwuid_r(id, pwd_pointer, buf, buf.size, pointerof(pwd_pointer))
-    while ret == LibC::ERANGE
+    while ret == LibC::ERANGE && buf.size < GETPW_R_SIZE_MAX
       buf = Bytes.new(buf.size * 2)
       ret = LibC.getpwuid_r(id, pwd_pointer, buf, buf.size, pointerof(pwd_pointer))
     end
 
     raise Errno.new("getpwuid_r") if ret != 0
-    return nil if pwd_pointer.null?
 
-    from_struct(pwd)
+    from_struct(pwd) if pwd_pointer
   end
 end

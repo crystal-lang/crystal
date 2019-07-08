@@ -1,6 +1,8 @@
 require "c/grp"
 
 module Crystal::System::Group
+  private GETGR_R_SIZE_MAX = 1024 * 16
+
   private def extract_members(gr_mem)
     members = Array(String).new
 
@@ -22,35 +24,35 @@ module Crystal::System::Group
 
     grp = uninitialized LibC::Group
     grp_pointer = pointerof(grp)
-    buf = Bytes.new(1024)
+    initial_buf = Bytes.new(1024)
+    buf = initial_buf.to_slice
 
     ret = LibC.getgrnam_r(groupname, grp_pointer, buf, buf.size, pointerof(grp_pointer))
-    while ret == LibC::ERANGE
+    while ret == LibC::ERANGE && buf.size < GETGR_R_SIZE_MAX
       buf = Bytes.new(buf.size * 2)
       ret = LibC.getgrnam_r(groupname, grp_pointer, buf, buf.size, pointerof(grp_pointer))
     end
 
     raise Errno.new("getgrnam_r") if ret != 0
-    return nil if grp_pointer.null?
 
-    from_struct(grp)
+    from_struct(grp) if grp_pointer
   end
 
   def from_id?(groupid : String)
     groupid = groupid.to_i.to_u32!
     grp = uninitialized LibC::Group
     grp_pointer = pointerof(grp)
-    buf = Bytes.new(1024)
+    initial_buf = Bytes.new(1024)
+    buf = initial_buf.to_slice
 
     ret = LibC.getgrgid_r(groupid, grp_pointer, buf, buf.size, pointerof(grp_pointer))
-    while ret == LibC::ERANGE
+    while ret == LibC::ERANGE && buf.size < GETGR_R_SIZE_MAX
       buf = Bytes.new(buf.size * 2)
       ret = LibC.getgrgid_r(groupid, grp_pointer, buf, buf.size, pointerof(grp_pointer))
     end
 
     raise Errno.new("getgrgid_r") if ret != 0
-    return nil if grp_pointer.null?
 
-    from_struct(grp)
+    from_struct(grp) if grp_pointer
   end
 end
