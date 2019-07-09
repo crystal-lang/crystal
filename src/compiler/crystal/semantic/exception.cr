@@ -129,6 +129,7 @@ module Crystal
 
       if inner
         return if inner.is_a? MethodTraceException && !inner.has_message?
+        return unless inner.has_location?
         io << "\n\n"
         io << '\n' unless inner.is_a? MethodTraceException
         inner.append_to_s source, io
@@ -144,7 +145,7 @@ module Crystal
     def error_headline(msg)
       return "Warning: #{msg}" if @warning
 
-      if (inner = @inner) && !inner.is_a? MethodTraceException?
+      if (inner = @inner) && !inner.is_a? MethodTraceException? && inner.has_location?
         colorize("Error: #{msg}").yellow
       else
         colorize("Error: #{msg}").yellow.bold
