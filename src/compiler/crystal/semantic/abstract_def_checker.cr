@@ -99,7 +99,11 @@ class Crystal::AbstractDefChecker
     type.defs.try &.each_value do |defs_with_metadata|
       defs_with_metadata.each do |def_with_metadata|
         a_def = def_with_metadata.def
-        return true if implements?(type, a_def, base, method)
+
+        if implements?(type, a_def, base, method)
+          check_return_type(type, a_def, base, method)
+          return true
+        end
       end
     end
     false
@@ -137,5 +141,23 @@ class Crystal::AbstractDefChecker
     end
 
     true
+  end
+
+  def check_return_type(type : Type, method : Def, base_type : Type, base_method : Def)
+    base_return_type_node = base_method.return_type
+    return unless base_return_type_node
+
+    base_return_type = base_type.lookup_type(base_return_type_node)
+
+    return_type_node = method.return_type
+    unless return_type_node
+      method.raise "this method overrides #{Call.def_full_name(base_type, base_method)} which has an explicit return type of #{base_return_type}: please add an explicit return type to this method as well"
+    end
+
+    return_type = type.lookup_type(return_type_node)
+
+    unless return_type.implements?(base_return_type)
+      return_type_node.raise "this method must return #{base_return_type}, which is the return type of the overwritten method #{Call.def_full_name(base_type, base_method)}, not #{return_type}"
+    end
   end
 end

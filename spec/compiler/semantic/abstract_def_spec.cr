@@ -394,4 +394,60 @@ describe "Semantic: abstract def" do
       end
       )
   end
+
+  it "errors if missing return type" do
+    assert_error %(
+      abstract class Foo
+        abstract def foo : Int32
+      end
+
+      class Bar < Foo
+        def foo
+          1
+        end
+      end
+      ),
+      "this method overrides Foo#foo() which has an explicit return type of Int32: please add an explicit return type to this method as well"
+  end
+
+  it "errors if different return type" do
+    assert_error %(
+      abstract class Foo
+        abstract def foo : Int32
+      end
+
+      class Bar < Foo
+        struct Int32
+        end
+
+        def foo : Int32
+          1
+        end
+      end
+      ),
+      "this method must return Int32, which is the return type of the overwritten method Foo#foo(), not Bar::Int32"
+  end
+
+  it "can return a more specific type" do
+    assert_type(%(
+      class Parent
+      end
+
+      class Child < Parent
+      end
+
+
+      abstract class Foo
+        abstract def foo : Parent
+      end
+
+      class Bar < Foo
+        def foo : Child
+          Child.new
+        end
+      end
+
+      Bar.new.foo
+      )) { types["Child"] }
+  end
 end
