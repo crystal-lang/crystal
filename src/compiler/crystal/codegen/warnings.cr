@@ -95,6 +95,7 @@ module Crystal
 
       result.program.warning_failures.each do |message|
         STDERR.puts message
+        STDERR.puts "\n"
       end
       STDERR.puts "A total of #{result.program.warning_failures.size} warnings were found."
     end
