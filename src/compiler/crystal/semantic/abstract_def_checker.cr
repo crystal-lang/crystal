@@ -44,6 +44,10 @@ class Crystal::AbstractDefChecker
     @all_checked << type
 
     if type.abstract? || type.module?
+      # TODO: check generic types too
+      # (it's tricky because of type parameter resolution)
+      return if type.is_a?(GenericType)
+
       type.defs.try &.each_value do |defs_with_metadata|
         defs_with_metadata.each do |def_with_metadata|
           a_def = def_with_metadata.def
