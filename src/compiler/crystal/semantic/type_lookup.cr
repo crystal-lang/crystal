@@ -80,6 +80,13 @@ class Crystal::Type
     delegate program, to: @root
 
     def lookup(node : Path)
+      # A Path might have a type set.
+      # This is at least done in AbstractDefChecker when we replace type
+      # parameters with concrete types.
+      if type = node.type?
+        return type
+      end
+
       type_var = lookup_type_var?(node)
 
       case type_var
