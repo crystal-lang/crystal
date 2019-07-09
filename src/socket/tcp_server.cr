@@ -103,7 +103,7 @@ class TCPServer < TCPSocket
   #   end
   # end
   # ```
-  def accept?
+  def accept? : TCPSocket?
     if client_fd = accept_impl
       sock = TCPSocket.new(fd: client_fd, family: family, type: type, protocol: protocol)
       sock.sync = sync?

@@ -66,7 +66,7 @@ module Random
   #
   # The integers must be uniformly distributed between `0` and
   # the maximal value for the chosen type.
-  abstract def next_u : UInt
+  abstract def next_u
 
   # Generates a random `Bool`.
   #

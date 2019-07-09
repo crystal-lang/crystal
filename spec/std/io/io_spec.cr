@@ -42,7 +42,7 @@ private class SimpleIOMemory < IO
     count
   end
 
-  def write(slice : Bytes)
+  def write(slice : Bytes) : Nil
     count = slice.size
     new_bytesize = bytesize + count
     if new_bytesize > @capacity
