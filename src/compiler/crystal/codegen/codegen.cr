@@ -69,6 +69,10 @@ module Crystal
       visitor.modules
     end
 
+    def llvm_id
+      @llvm_id ||= LLVMId.new(self)
+    end
+
     def llvm_typer
       @llvm_typer ||= LLVMTyper.new(self, LLVM::Context.new)
     end
@@ -163,7 +167,6 @@ module Crystal
       @main_llvm_context = @main_mod.context
       @llvm_typer = LLVMTyper.new(@program, @llvm_context)
       @main_llvm_typer = @llvm_typer
-      @llvm_id = LLVMId.new(@program)
       @main_ret_type = node.type? || @program.nil_type
       ret_type = @llvm_typer.llvm_return_type(@main_ret_type)
       @main = @llvm_mod.functions.add(MAIN_NAME, [llvm_context.int32, llvm_context.void_pointer.pointer], ret_type)

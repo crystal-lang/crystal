@@ -988,7 +988,7 @@ class Crystal::CodeGenVisitor
   end
 
   def create_metaclass_fun(name)
-    id_to_metaclass = @llvm_id.id_to_metaclass.to_a.sort_by! &.[0]
+    id_to_metaclass = @program.llvm_id.id_to_metaclass.to_a.sort_by! &.[0]
 
     in_main do
       define_main_function(name, ([llvm_context.int32]), llvm_context.int32) do |func|
