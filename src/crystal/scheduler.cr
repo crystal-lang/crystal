@@ -119,19 +119,22 @@ class Crystal::Scheduler
     @rr_target = 0
 
     private def find_target_thread
-      target = Thread.workers[@rr_target]
-      target_i = @rr_target
-      (Thread.workers.size - 1).times do |i|
-        w_i =(@rr_target + i + 1) % Thread.workers.size
-        w = Thread.workers[w_i]
-        if w.load < target.load
-          target = w
-          target_i = w_i
-        end
-      end
+      @rr_target += 1
+      Thread.workers[@rr_target % Thread.workers.size]
 
-      @rr_target = (target_i + 1) % Thread.workers.size
-      target
+      # target = Thread.workers[@rr_target]
+      # target_i = @rr_target
+      # (Thread.workers.size - 1).times do |i|
+      #   w_i =(@rr_target + i + 1) % Thread.workers.size
+      #   w = Thread.workers[w_i]
+      #   if w.load < target.load
+      #     target = w
+      #     target_i = w_i
+      #   end
+      # end
+
+      # @rr_target = (target_i + 1) % Thread.workers.size
+      # target
     end
 
     def enqueue_self(fiber : Fiber) : Nil
