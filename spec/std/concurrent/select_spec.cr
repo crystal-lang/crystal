@@ -31,11 +31,11 @@ describe "select" do
     ch1 = Channel(Int32).new
     ch2 = Channel(Int32).new
     res = [] of Int32
-    spawn do
+    f1 = spawn do
       5.times { res << ch1.receive }
     end
 
-    spawn do
+    f2 = spawn do
       5.times { res << ch2.receive }
     end
 
@@ -45,14 +45,19 @@ describe "select" do
       when ch2.send(i)
       end
     end
-    res.should eq (0...10).to_a
+
+    until f1.dead? && f2.dead?
+      Fiber.yield
+    end
+
+    res.sort.should eq (0...10).to_a
   end
 
   it "select many receivers, senders" do
     ch1 = Channel(Int32).new
     ch2 = Channel(Int32).new
     res = [] of Int32
-    spawn do
+    f = spawn do
       10.times do |i|
         select
         when x = ch1.receive
@@ -69,6 +74,11 @@ describe "select" do
         res << y
       end
     end
+
+    until f.dead?
+      Fiber.yield
+    end
+
     res.should eq (0...10).to_a
   end
 

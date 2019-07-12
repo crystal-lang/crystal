@@ -20,12 +20,53 @@ require "fiber"
 # channel.receive # => 0
 # channel.receive # => 1
 # ```
-abstract class Channel(T)
+class Channel(T)
+  {% if flag?(:preview_mt) %}
+    @lock = Crystal::SpinLock.new
+  {% else %}
+    @lock = Crystal::NullLock.new
+  {% end %}
+
+  @queue : Deque(T)?
+
   module SelectAction
-    abstract def ready?
-    abstract def execute
-    abstract def wait
+    abstract def execute(&block)
+    abstract def wait(context : SelectContext)
     abstract def unwait
+    abstract def result
+    abstract def lock
+    abstract def unlock
+
+    def <=>(other : SelectAction)
+      self.object_id <=> other.object_id
+    end
+  end
+
+  enum SelectState
+    None   = 0
+    Active = 1
+    Done   = 2
+  end
+
+  private class SelectContext
+    @state : Pointer(Atomic(SelectState))
+    property action : SelectAction
+    @activated = false
+
+    def initialize(@state, @action)
+    end
+
+    def activated?
+      @activated
+    end
+
+    def try_trigger : Bool
+      _, succeed = @state.value.compare_and_set(SelectState::Active, SelectState::Done)
+      if succeed
+        @activated = true
+      end
+      succeed
+    end
   end
 
   class ClosedError < Exception
@@ -34,31 +75,66 @@ abstract class Channel(T)
     end
   end
 
-  def initialize
+  enum DeliveryState
+    None
+    Delivered
+    Closed
+  end
+
+  def initialize(@capacity = 0)
     @closed = false
-    @senders = Deque(Fiber).new
-    @receivers = Deque(Fiber).new
-  end
-
-  def self.new : Unbuffered(T)
-    Unbuffered(T).new
-  end
-
-  def self.new(capacity) : Buffered(T)
-    Buffered(T).new(capacity)
+    @senders = Deque({Fiber, T, SelectContext?}).new
+    @receivers = Deque({Fiber, Pointer(T), Pointer(DeliveryState), SelectContext?}).new
+    if capacity > 0
+      @queue = Deque(T).new(capacity)
+    end
   end
 
   def close
     @closed = true
-    Crystal::Scheduler.enqueue @senders
+
+    @senders.each &.first.restore
+
+    @receivers.each do |receiver|
+      receiver[2].value = DeliveryState::Closed
+      receiver[0].restore
+    end
+
     @senders.clear
-    Crystal::Scheduler.enqueue @receivers
     @receivers.clear
     nil
   end
 
   def closed?
     @closed
+  end
+
+  def send(value : T)
+    @lock.sync do
+      raise_if_closed
+
+      send_internal(value) do
+        @senders << {Fiber.current, value, nil}
+        @lock.unsync do
+          Crystal::Scheduler.reschedule
+        end
+        raise_if_closed
+      end
+
+      self
+    end
+  end
+
+  protected def send_internal(value : T)
+    if receiver = dequeue_receiver
+      receiver[1].value = value
+      receiver[2].value = DeliveryState::Delivered
+      receiver[0].restore
+    elsif (queue = @queue) && queue.size < @capacity
+      queue << value
+    else
+      yield
+    end
   end
 
   # Receives a value from the channel.
@@ -83,6 +159,70 @@ abstract class Channel(T)
     receive_impl { return nil }
   end
 
+  def receive_impl
+    @lock.sync do
+      yield if @closed
+
+      receive_internal do
+        value = uninitialized T
+        state = DeliveryState::None
+        @receivers << {Fiber.current, pointerof(value), pointerof(state), nil}
+        @lock.unsync do
+          Crystal::Scheduler.reschedule
+        end
+
+        case state
+        when DeliveryState::Delivered
+          value
+        when DeliveryState::Closed
+          yield
+        else
+          raise "BUG: Fiber was awaken without channel delivery state set"
+        end
+      end
+    end
+  end
+
+  def receive_internal
+    if (queue = @queue) && !queue.empty?
+      deque_value = queue.shift
+      if sender = dequeue_sender
+        sender[0].restore
+        queue << sender[1]
+      end
+      deque_value
+    elsif sender = dequeue_sender
+      sender[0].restore
+      sender[1]
+    else
+      yield
+    end
+  end
+
+  private def dequeue_receiver
+    while receiver = @receivers.shift?
+      if (select_context = receiver[3]) && !select_context.try_trigger
+        next
+      end
+
+      break
+    end
+
+    receiver
+  end
+
+  private def dequeue_sender
+    while sender = @senders.shift?
+      if (select_context = sender[2]) && !select_context.try_trigger
+        next
+      end
+
+      break
+    end
+
+    sender
+  end
+
   def inspect(io : IO) : Nil
     to_s(io)
   end
@@ -91,20 +231,20 @@ abstract class Channel(T)
     pp.text inspect
   end
 
-  protected def wait_for_receive
-    @receivers << Fiber.current
+  protected def wait_for_receive(value, state, context)
+    @receivers << {Fiber.current, value, state, context}
   end
 
   protected def unwait_for_receive
-    @receivers.delete Fiber.current
+    @receivers.delete_if { |r| r[0] == Fiber.current }
   end
 
-  protected def wait_for_send
-    @senders << Fiber.current
+  protected def wait_for_send(value, context)
+    @senders << {Fiber.current, value, context}
   end
 
   protected def unwait_for_send
-    @senders.delete Fiber.current
+    @senders.delete_if { |r| r[0] == Fiber.current }
   end
 
   protected def raise_if_closed
@@ -132,23 +272,61 @@ abstract class Channel(T)
     self.select ops
   end
 
-  def self.select(ops : Tuple | Array, has_else = false)
-    loop do
-      ops.each_with_index do |op, index|
-        if op.ready?
-          result = op.execute
-          return index, result
-        end
-      end
+  def self.select(ops : Indexable(SelectAction), has_else = false)
+    # Sort the operations by the channel they contain
+    # This is to avoid deadlocks between concurrent `select` calls
 
-      if has_else
-        return ops.size, nil
-      end
+    ops = ops
+      .map_with_index { |op, index| {op, index} }
+      .to_a
+      .sort_by &.first
 
-      ops.each &.wait
-      Crystal::Scheduler.reschedule
-      ops.each &.unwait
+    ops.each &.first.lock
+
+    ops.each do |o|
+      op, index = o
+
+      ignore = false
+      result = op.execute { ignore = true; nil }
+
+      unless ignore
+        ops.each &.first.unlock
+        return index, result
+      end
     end
+
+    if has_else
+      ops.each &.first.unlock
+      return ops.size, nil
+    end
+
+    state = Atomic(SelectState).new(SelectState::Active)
+
+    contexts = ops.map do |o|
+      op, index = o
+      context = SelectContext.new(pointerof(state), op)
+      op.wait(context)
+      {context, index}
+    end
+
+    ops.each &.first.unlock
+    Crystal::Scheduler.reschedule
+
+    ops.each do |o|
+      op, _ = o
+      op.lock
+      op.unwait
+      op.unlock
+    end
+
+    contexts.each do |∂|
+      context, index = ∂
+      if context.activated?
+        return index, context.action.result
+      end
+    end
+
+    raise "BUG: Fiber was awaken from select but no action was activated"
   end
 
   # :nodoc:
@@ -162,210 +340,77 @@ abstract class Channel(T)
   end
 
   # :nodoc:
-  struct ReceiveAction(C)
+  class ReceiveAction(T)
     include SelectAction
+    property value : T
+    property state : DeliveryState
 
-    def initialize(@channel : C)
-    end
-
-    def ready?
-      !@channel.empty?
+    def initialize(@channel : Channel(T))
+      @value = uninitialized T
+      @state = DeliveryState::None
     end
 
     def execute
-      @channel.receive
+      @channel.receive_internal { yield }
     end
 
-    def wait
-      @channel.wait_for_receive
+    def result
+      @value
+    end
+
+    def wait(context : SelectContext)
+      @channel.wait_for_receive(pointerof(@value), pointerof(@state), context)
     end
 
     def unwait
       @channel.unwait_for_receive
     end
+
+    def object_id
+      @channel.object_id
+    end
+
+    def lock
+      @channel.@lock.lock
+    end
+
+    def unlock
+      @channel.@lock.unlock
+    end
   end
 
   # :nodoc:
-  struct SendAction(C, T)
+  class SendAction(C, T)
     include SelectAction
 
     def initialize(@channel : C, @value : T)
     end
 
-    def ready?
-      !@channel.full?
-    end
-
     def execute
-      @channel.send(@value)
+      @channel.send_internal(@value) { yield }
     end
 
-    def wait
-      @channel.wait_for_send
+    def result
+    end
+
+    def wait(context : SelectContext)
+      @channel.wait_for_send(@value, context)
     end
 
     def unwait
       @channel.unwait_for_send
     end
-  end
-end
 
-# Buffered channel, using a queue.
-class Channel::Buffered(T) < Channel(T)
-  {% if flag?(:preview_mt) %}
-    @lock = Crystal::SpinLock.new
-  {% else %}
-    @lock = Crystal::NullLock.new
-  {% end %}
-
-  def initialize(@capacity = 32)
-    @queue = Deque(T).new(@capacity)
-    super()
-  end
-
-  # Send a value to the channel.
-  def send(value : T)
-    @lock.sync do
-      while full?
-        raise_if_closed
-        @senders << Fiber.current
-        @lock.unsync do
-          Crystal::Scheduler.reschedule
-        end
-      end
-
-      raise_if_closed
-
-      @queue << value
-      if receiver = @receivers.shift?
-        receiver.restore
-      end
+    def object_id
+      @channel.object_id
     end
 
-    self
-  end
-
-  private def receive_impl
-    @lock.sync do
-      while empty?
-        yield if @closed
-        @receivers << Fiber.current
-        @lock.unsync do
-          Crystal::Scheduler.reschedule
-        end
-      end
-
-      @queue.shift.tap do
-        if sender = @senders.shift?
-          sender.restore
-        end
-      end
-    end
-  end
-
-  def full?
-    @queue.size >= @capacity
-  end
-
-  def empty?
-    @queue.empty?
-  end
-end
-
-# Unbuffered channel.
-class Channel::Unbuffered(T) < Channel(T)
-  @sender : Fiber?
-  {% if flag?(:preview_mt) %}
-    @lock = Crystal::SpinLock.new
-  {% else %}
-    @lock = Crystal::NullLock.new
-  {% end %}
-
-  def initialize
-    @has_value = false
-    @value = uninitialized T
-    super
-  end
-
-  # Send a value to the channel.
-  def send(value : T)
-    receiver = nil
-
-    @lock.sync do
-      while @has_value
-        raise_if_closed
-        @senders << Fiber.current
-        @lock.unsync do
-          Crystal::Scheduler.reschedule
-        end
-      end
-
-      raise_if_closed
-
-      @value = value
-      @has_value = true
-      receiver = @receivers.shift?
-
-      if !receiver
-        @sender = Fiber.current
-      end
+    def lock
+      @channel.@lock.lock
     end
 
-    if receiver
-      receiver.restore
-    else
-      Crystal::Scheduler.reschedule
-    end
-  end
-
-  private def receive_impl
-    @lock.sync do
-      until @has_value
-        yield if @closed
-        @receivers << Fiber.current
-        if sender = @senders.shift?
-          @lock.unsync do
-            sender.restore
-            Crystal::Scheduler.reschedule
-          end
-        else
-          @lock.unsync do
-            Crystal::Scheduler.reschedule
-          end
-        end
-      end
-
-      # At this point the channel might be closed already
-      # but still the value is returned because the receiver
-      # was scheduled by the sender before the channel was closed
-
-      if sender = @sender
-        sender.restore
-      end
-
-      if sender = @senders.shift?
-        sender.restore
-      end
-
-      @has_value = false
-      @sender = nil
-      @value
-    end
-  end
-
-  def empty?
-    !@has_value && @senders.empty?
-  end
-
-  def full?
-    @has_value || @receivers.empty?
-  end
-
-  def close
-    super
-    if sender = @sender
-      Crystal::Scheduler.enqueue sender
-      @sender = nil
+    def unlock
+      @channel.@lock.unlock
     end
   end
 end

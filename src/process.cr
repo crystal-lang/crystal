@@ -228,7 +228,7 @@ class Process
   # A pipe to this process's error. Raises if a pipe wasn't asked when creating the process.
   getter! error : IO::FileDescriptor
 
-  @waitpid : Channel::Buffered(Int32)
+  @waitpid : Channel(Int32)
   @wait_count = 0
 
   # Creates a process, executes it, but doesn't wait for it to complete.

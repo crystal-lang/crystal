@@ -58,7 +58,7 @@ describe "concurrent" do
     end
 
     it "spawns named" do
-      chan = Channel::Unbuffered(Nil).new
+      chan = Channel(Nil).new
       spawn(name: "sub") do
         Fiber.current.name.should eq("sub")
         chan.close
@@ -67,7 +67,7 @@ describe "concurrent" do
     end
 
     it "spawns named with macro" do
-      chan = Channel::Unbuffered(Nil).new
+      chan = Channel(Nil).new
       spawn method_named("foo", chan), name: "foo"
       chan.receive?
     end
