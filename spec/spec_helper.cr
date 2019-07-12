@@ -174,9 +174,13 @@ private def apply_program_flags(target)
 end
 
 private def encode_program_flags : String
+  program_flags_options.join(' ')
+end
+
+def program_flags_options : Array(String)
   f = [] of String
   apply_program_flags(f)
-  f.map { |x| "-D#{x}" }.join(' ')
+  f.map { |x| "-D#{x}" }
 end
 
 class Crystal::SpecRunOutput
