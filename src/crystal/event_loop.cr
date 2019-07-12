@@ -17,7 +17,7 @@ class Thread
 
   # :nodoc:
   def loop_fiber : Fiber
-    @loop_fiber ||= Fiber.new do
+    @loop_fiber ||= Fiber.new(name: "Event Loop") do
       loop do
         self.eb.run_once
         Crystal::Scheduler.reschedule

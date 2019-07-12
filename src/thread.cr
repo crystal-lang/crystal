@@ -209,7 +209,7 @@ class Thread
 
         if thread
           th = thread
-          worker_loop = Fiber.new { th.worker.not_nil!.run_loop }
+          worker_loop = Fiber.new(name: "Worker Loop") { th.worker.not_nil!.run_loop }
           thread.scheduler.enqueue_self worker_loop
         end
       end

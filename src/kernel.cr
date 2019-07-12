@@ -539,7 +539,7 @@ end
 
 {% unless flag?(:win32) %}
   # Background loop to cleanup unused fiber stacks.
-  spawn do
+  spawn(name: "Fiber Clean Loop") do
     loop do
       sleep 5
       Fiber.stack_pool.collect
