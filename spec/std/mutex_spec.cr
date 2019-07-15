@@ -64,4 +64,25 @@ describe Mutex do
     three.should be_true
     four.should be_true
   end
+
+  it "works with multiple threads" do
+    x = 0
+    mutex = Mutex.new
+
+    fibers = 10.times.map do
+      spawn do
+        100.times do
+          mutex.synchronize { x += 1 }
+        end
+      end
+    end.to_a
+
+    fibers.each do |f|
+      while !f.dead?
+        Fiber.yield
+      end
+    end
+
+    x.should eq(1000)
+  end
 end
