@@ -44,14 +44,14 @@ struct XML::Builder
 
   # Emits the start of an element.
   def start_element(name : String) : Nil
-    raise XML::Error.new("Invalid element name: '#{name}'", __LINE__) unless validate_element_name name
+    check_valid_element_name name, "element name"
     call StartElement, name
   end
 
   # Emits the start of an element with namespace info.
   def start_element(prefix : String?, name : String, namespace_uri : String?) : Nil
-    raise XML::Error.new("Invalid element name: '#{name}'", __LINE__) unless validate_element_name name
-    raise XML::Error.new("Invalid prefix: '#{prefix}'", __LINE__) if prefix && !validate_element_name prefix
+    check_valid_element_name name, "element name"
+    check_valid_element_name prefix, "prefix" if prefix
     call StartElementNS, string_to_unsafe(prefix), string_to_unsafe(name), string_to_unsafe(namespace_uri)
   end
 
@@ -287,8 +287,8 @@ struct XML::Builder
     Pointer(UInt8).null
   end
 
-  private def validate_element_name(name : String) : Bool
-    LibXML.xmlValidateNameValue(string_to_unsafe(name)) == 1
+  private def check_valid_element_name(name : String, element_type : String) : Nil
+    raise XML::Error.new("Invalid #{element_type}: '#{name}'", 0) if LibXML.xmlValidateNameValue(string_to_unsafe(name)).zero?
   end
 end
 
