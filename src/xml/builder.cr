@@ -44,8 +44,9 @@ struct XML::Builder
 
   # Emits the start of an element.
   def start_element(name : String) : Nil
-    check_valid_element_name name, string_to_unsafe(name), "element name"
-    call StartElement, name
+    unsafe_name = string_to_unsafe(name)
+    check_valid_element_name name, unsafe_name, "element name"
+    call StartElement, unsafe_name
   end
 
   # Emits the start of an element with namespace info.
