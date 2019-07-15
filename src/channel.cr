@@ -34,12 +34,9 @@ class Channel(T)
     abstract def wait(context : SelectContext)
     abstract def unwait
     abstract def result
+    abstract def lock_object_id
     abstract def lock
     abstract def unlock
-
-    def <=>(other : SelectAction)
-      self.object_id <=> other.object_id
-    end
   end
 
   enum SelectState
@@ -275,52 +272,46 @@ class Channel(T)
   def self.select(ops : Indexable(SelectAction), has_else = false)
     # Sort the operations by the channel they contain
     # This is to avoid deadlocks between concurrent `select` calls
-
-    ops = ops
-      .map_with_index { |op, index| {op, index} }
+    ops_locks = ops
       .to_a
-      .sort_by &.first
+      .uniq(&.lock_object_id)
+      .sort_by(&.lock_object_id)
 
-    ops.each &.first.lock
+    ops_locks.each &.lock
 
-    ops.each do |o|
-      op, index = o
-
+    ops.each_with_index do |op, index|
       ignore = false
       result = op.execute { ignore = true; nil }
 
       unless ignore
-        ops.each &.first.unlock
+        ops_locks.each &.unlock
         return index, result
       end
     end
 
     if has_else
-      ops.each &.first.unlock
+      ops_locks.each &.unlock
       return ops.size, nil
     end
 
     state = Atomic(SelectState).new(SelectState::Active)
 
-    contexts = ops.map do |o|
-      op, index = o
+    contexts = ops.map_with_index do |op, index|
       context = SelectContext.new(pointerof(state), op)
       op.wait(context)
-      {context, index}
+      context
     end
 
-    ops.each &.first.unlock
+    ops_locks.each &.unlock
     Crystal::Scheduler.reschedule
 
-    ops.each do |o|
-      op, _ = o
+    ops.each do |op|
       op.lock
       op.unwait
       op.unlock
     end
 
-    contexts.each do |∂|
-      context, index = ∂
+    contexts.each_with_index do |context, index|
       if context.activated?
         return index, context.action.result
       end
@@ -366,7 +357,7 @@ class Channel(T)
       @channel.unwait_for_receive
     end
 
-    def object_id
+    def lock_object_id
       @channel.object_id
     end
 
@@ -401,7 +392,7 @@ class Channel(T)
       @channel.unwait_for_send
     end
 
-    def object_id
+    def lock_object_id
       @channel.object_id
     end
 

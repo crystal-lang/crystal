@@ -111,6 +111,21 @@ describe "select" do
     x.should eq 1
   end
 
+  it "select same channel multiple times" do
+    ch = Channel(Int32).new
+
+    spawn do
+      ch.send(123)
+    end
+
+    select
+    when ch.send(456)
+    when x = ch.receive
+    end
+
+    x.should eq 123
+  end
+
   it "stress select with send/receive in multiple fibers" do
     fibers = 4
     msg_per_sender = 1000
