@@ -44,15 +44,19 @@ struct XML::Builder
 
   # Emits the start of an element.
   def start_element(name : String) : Nil
-    check_valid_element_name name, "element name"
+    check_valid_element_name name, string_to_unsafe(name), "element name"
     call StartElement, name
   end
 
   # Emits the start of an element with namespace info.
   def start_element(prefix : String?, name : String, namespace_uri : String?) : Nil
-    check_valid_element_name name, "element name"
-    check_valid_element_name prefix, "prefix" if prefix
-    call StartElementNS, string_to_unsafe(prefix), string_to_unsafe(name), string_to_unsafe(namespace_uri)
+    unsafe_name = string_to_unsafe(name)
+    unsafe_prefix = string_to_unsafe(prefix)
+
+    check_valid_element_name name, unsafe_name, "element name"
+    check_valid_element_name prefix, unsafe_prefix, "prefix" if prefix
+
+    call StartElementNS, unsafe_prefix, unsafe_name, string_to_unsafe(namespace_uri)
   end
 
   # Emits the end of an element.
@@ -278,6 +282,10 @@ struct XML::Builder
     raise XML::Error.new("Error in #{msg}", 0) if ret < 0
   end
 
+  private def check_valid_element_name(name : String, unsafe_name : Pointer(UInt8), element_type : String) : Nil
+    raise XML::Error.new("Invalid #{element_type}: '#{name}'", 0) if LibXML.xmlValidateNameValue(unsafe_name).zero?
+  end
+
   private def string_to_unsafe(string : String)
     raise XML::Error.new("String cannot contain null character", 0) if string.includes? '\0'
     string.to_unsafe
@@ -285,10 +293,6 @@ struct XML::Builder
 
   private def string_to_unsafe(string : Nil)
     Pointer(UInt8).null
-  end
-
-  private def check_valid_element_name(name : String, element_type : String) : Nil
-    raise XML::Error.new("Invalid #{element_type}: '#{name}'", 0) if LibXML.xmlValidateNameValue(string_to_unsafe(name)).zero?
   end
 end
 
