@@ -126,6 +126,26 @@ describe "select" do
     x.should eq 123
   end
 
+  it "priorize by order when entering in a select" do
+    ch1 = Channel(Int32).new(5)
+    ch2 = Channel(Int32).new(5)
+
+    2.times { ch1.send 1 }
+    2.times { ch2.send 2 }
+
+    select
+    when x = ch1.receive
+    when x = ch2.receive
+    end
+    x.should eq 1
+
+    select
+    when x = ch2.receive
+    when x = ch1.receive
+    end
+    x.should eq 2
+  end
+
   it "stress select with send/receive in multiple fibers" do
     fibers = 4
     msg_per_sender = 1000
