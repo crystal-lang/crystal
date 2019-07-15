@@ -110,4 +110,52 @@ describe "select" do
     sleep
     x.should eq 1
   end
+
+  it "stress select with send/receive in multiple fibers" do
+    fibers = 4
+    msg_per_sender = 1000
+    ch = Array.new(fibers) { Array.new(fibers) { Channel(Int32).new } }
+    done = Channel({Int32, Int32}).new
+
+    fibers.times do |i|
+      spawn(name: "sender #{i}") do
+        channels = ch[i]
+        msg_per_sender.times do |i|
+          Channel.send_first(i, channels)
+        end
+        channels.map &.send(-1)
+      end
+    end
+
+    fibers.times do |i|
+      spawn(name: "receiver #{i}") do
+        channels = ch.map { |chs| chs[i] }
+        closed = 0
+        count = 0
+        sum = 0
+        loop do
+          x = Channel.receive_first(channels).not_nil!
+          if x == -1
+            closed += 1
+            break if closed == fibers
+          else
+            count += 1
+            sum += x
+          end
+        end
+        done.send({count, sum})
+      end
+    end
+
+    count = 0
+    sum = 0
+    fibers.times do
+      c, s = done.receive
+      count += c
+      sum += s
+    end
+
+    count.should eq(fibers * msg_per_sender)
+    sum.should eq(msg_per_sender * (msg_per_sender - 1) / 2 * fibers)
+  end
 end
