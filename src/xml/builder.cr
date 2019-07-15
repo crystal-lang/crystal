@@ -44,11 +44,14 @@ struct XML::Builder
 
   # Emits the start of an element.
   def start_element(name : String) : Nil
-    call StartElement, string_to_unsafe(name)
+    element_name = string_to_unsafe name
+    raise XML::Error.new("Invalid element name: '#{name}'", __LINE__) if LibXML.xmlValidateNameValue(element_name).zero?
+    call StartElement, element_name
   end
 
   # Emits the start of an element with namespace info.
   def start_element(prefix : String?, name : String, namespace_uri : String?) : Nil
+    raise XML::Error.new("Invalid element name: '#{prefix}#{name}'", __LINE__) if LibXML.xmlValidateNameValue(string_to_unsafe("#{prefix}#{name}")).zero?
     call StartElementNS, string_to_unsafe(prefix), string_to_unsafe(name), string_to_unsafe(namespace_uri)
   end
 

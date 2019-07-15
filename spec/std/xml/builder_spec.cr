@@ -20,6 +20,22 @@ describe XML::Builder do
     end
   end
 
+  it "errors on invalid element names" do
+    expect_raises(XML::Error, "Invalid element name: '1'") do
+      XML.build do |xml|
+        xml.element("1") do
+        end
+      end
+    end
+
+    expect_raises(XML::Error, "Invalid element name: 'a b=\"c\"'") do
+      XML.build do |xml|
+        xml.element("a b=\"c\"") do
+        end
+      end
+    end
+  end
+
   it "writes nested element" do
     assert_built(%[<?xml version="1.0"?>\n<foo><bar/></foo>\n]) do
       element("foo") do
@@ -52,6 +68,42 @@ describe XML::Builder do
     assert_built(%[<?xml version="1.0"?>\n<foo x:id="1" xmlns:x="http://ww.foo.com"/>\n]) do
       element("foo") do
         attribute("x", "id", "http://ww.foo.com", 1)
+      end
+    end
+  end
+
+  it "writes element with namespace" do
+    assert_built(%[<?xml version=\"1.0\"?>\n<foo xmlns=\"bar\">baz</foo>\n]) do
+      element(nil, "foo", "bar") do
+        text "baz"
+      end
+    end
+  end
+
+  it "writes element with prefix" do
+    assert_built(%[<?xml version=\"1.0\"?>\n<foo:bar>baz</foo:bar>\n]) do
+      element("foo", "bar", nil) do
+        text "baz"
+      end
+    end
+  end
+
+  it "errors on invalid element name with prefix" do
+    expect_raises(XML::Error, "Invalid element name: 'foo=bar'") do
+      XML.build do |xml|
+        xml.element("foo=", "bar", nil) do
+          xml.text "baz"
+        end
+      end
+    end
+  end
+
+  it "errors on invalid element name with prefix and namespace" do
+    expect_raises(XML::Error, "Invalid element name: 'foo bar'") do
+      XML.build do |xml|
+        xml.element("foo ", "bar", "ns") do
+          xml.text "baz"
+        end
       end
     end
   end
