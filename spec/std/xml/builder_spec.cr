@@ -89,7 +89,7 @@ describe XML::Builder do
   end
 
   it "errors on invalid element name with prefix" do
-    expect_raises(XML::Error, "Invalid element name: 'foo=bar'") do
+    expect_raises(XML::Error, "Invalid prefix: 'foo='") do
       XML.build do |xml|
         xml.element("foo=", "bar", nil) do
           xml.text "baz"
@@ -99,7 +99,7 @@ describe XML::Builder do
   end
 
   it "errors on invalid element name with prefix and namespace" do
-    expect_raises(XML::Error, "Invalid element name: 'foo bar'") do
+    expect_raises(XML::Error, "Invalid prefix: 'foo '") do
       XML.build do |xml|
         xml.element("foo ", "bar", "ns") do
           xml.text "baz"
