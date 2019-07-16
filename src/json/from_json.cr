@@ -87,7 +87,7 @@ end
 
 def Float32.new(pull : JSON::PullParser)
   case pull.kind
-  when :int
+  when .int?
     value = pull.int_value.to_f32
     pull.read_next
     value
@@ -102,7 +102,7 @@ end
 
 def Float64.new(pull : JSON::PullParser)
   case pull.kind
-  when :int
+  when .int?
     value = pull.int_value.to_f
     pull.read_next
     value
@@ -212,9 +212,9 @@ end
 
 def Enum.new(pull : JSON::PullParser)
   case pull.kind
-  when :int
+  when .int?
     from_value(pull.read_int)
-  when :string
+  when .string?
     parse(pull.read_string)
   else
     raise "Expecting int or string in JSON for #{self.class}, not #{pull.kind}"
@@ -231,7 +231,7 @@ def Union.new(pull : JSON::PullParser)
 
     {% for type, index in T %}
       {% if type == Nil %}
-        return pull.read_null if pull.kind == :null
+        return pull.read_null if pull.kind.null?
       {% elsif type == Bool ||
                  type == Int8 || type == Int16 || type == Int32 || type == Int64 ||
                  type == UInt8 || type == UInt16 || type == UInt32 || type == UInt64 ||

@@ -16,22 +16,22 @@ class JSON::Parser
   end
 
   private def parse_value
-    case token.type
-    when :INT
+    case token.kind
+    when .int?
       value_and_next_token token.int_value
-    when :FLOAT
+    when .float?
       value_and_next_token token.float_value
-    when :STRING
+    when .string?
       value_and_next_token token.string_value
-    when :null
+    when .null?
       value_and_next_token nil
-    when :true
+    when .true?
       value_and_next_token true
-    when :false
+    when .false?
       value_and_next_token false
-    when :"["
+    when .begin_array?
       parse_array
-    when :"{"
+    when .begin_object?
       parse_object
     else
       unexpected_token
@@ -44,15 +44,15 @@ class JSON::Parser
     ary = [] of Any
 
     nest do
-      if token.type != :"]"
+      unless token.kind.end_array?
         while true
           ary << parse_value
 
-          case token.type
-          when :","
+          case token.kind
+          when .comma?
             next_token
-            unexpected_token if token.type == :"]"
-          when :"]"
+            unexpected_token if token.kind.end_array?
+          when .end_array?
             break
           else
             unexpected_token
@@ -72,25 +72,25 @@ class JSON::Parser
     object = {} of String => Any
 
     nest do
-      if token.type != :"}"
+      unless token.kind.end_object?
         while true
-          check :STRING
+          check :string
           key = token.string_value
 
           next_token
 
-          check :":"
+          check :colon
           next_token
 
           value = parse_value
 
           object[key] = value
 
-          case token.type
-          when :","
+          case token.kind
+          when .comma?
             next_token_expect_object_key
-            unexpected_token if token.type == :"}"
-          when :"}"
+            unexpected_token if token.kind.end_object?
+          when .end_object?
             break
           else
             unexpected_token
@@ -113,8 +113,8 @@ class JSON::Parser
     Any.new(value)
   end
 
-  private def check(token_type)
-    unexpected_token unless token.type == token_type
+  private def check(kind : Token::Kind)
+    unexpected_token unless token.kind == kind
   end
 
   private def unexpected_token

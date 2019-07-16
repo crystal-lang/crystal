@@ -43,7 +43,7 @@ class OAuth::AccessToken
       when "oauth_token_secret"
         secret = pull.read_string
       else
-        if pull.kind == :STRING
+        if pull.kind.string?
           extra ||= {} of String => String
           extra[key] = pull.read_string
         else
