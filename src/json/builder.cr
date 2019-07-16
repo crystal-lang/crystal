@@ -280,6 +280,13 @@ class JSON::Builder
     end
   end
 
+  # Returns `true` if the next thing that must pushed into this
+  # builder is an object key (so a string) or the end of an object.
+  def next_is_object_key? : Bool
+    state = @state.last
+    state.is_a?(ObjectState) && state.name
+  end
+
   private def scalar(string = false)
     start_scalar(string)
     yield.tap { end_scalar(string) }
