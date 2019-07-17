@@ -1218,6 +1218,18 @@ module Crystal
           [TypeNode.new(program.union_of(program.string, program.nil))] of ASTNode
         end
       end
+
+      it "executes resolve" do
+        assert_macro("x", "{{x.resolve}}", "String") do |program|
+          [TypeNode.new(program.string)] of ASTNode
+        end
+      end
+
+      it "executes resolve?" do
+        assert_macro("x", "{{x.resolve?}}", "String") do |program|
+          [TypeNode.new(program.string)] of ASTNode
+        end
+      end
     end
 
     describe "type declaration methods" do

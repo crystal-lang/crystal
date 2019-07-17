@@ -1645,6 +1645,10 @@ module Crystal
           value = arg2.to_string("second argument to 'TypeNode#overrides?")
           TypeNode.overrides?(type, arg1.type, value)
         end
+      when "resolve"
+        interpret_argless_method(method, args) { self }
+      when "resolve?"
+        interpret_argless_method(method, args) { self }
       else
         super
       end
