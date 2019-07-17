@@ -85,9 +85,9 @@ module HTTP
     # ```
     # require "http/params"
     #
-    # HTTP::Params.encode({"foo" => "bar", "baz" => "qux"}) # => "foo=bar&baz=qux"
+    # HTTP::Params.encode({"foo" => "bar", "baz" => ["quux", "quuz"]}) # => "foo=bar&baz=quux&baz=quuz"
     # ```
-    def self.encode(hash : Hash(String, String))
+    def self.encode(hash : Hash(String, String | Array(String)))
       build do |builder|
         hash.each do |key, value|
           builder.add key, value
@@ -100,7 +100,7 @@ module HTTP
     # ```
     # require "http/params"
     #
-    # HTTP::Params.encode({foo: "bar", baz: "qux"}) # => "foo=bar&baz=qux"
+    # HTTP::Params.encode({foo: "bar", baz: ["quux", "quuz"]}) # => "foo=bar&baz=quux&baz=quuz"
     # ```
     def self.encode(named_tuple : NamedTuple)
       build do |builder|
@@ -344,12 +344,18 @@ module HTTP
       end
 
       # Adds a key-value pair to the params being built.
-      def add(key, value)
+      def add(key, value : String?)
         @io << '&' unless @first
         @first = false
         URI.escape key, @io
         @io << '='
         Params.encode_www_form_component value, @io if value
+        self
+      end
+
+      # Adds all of the given *values* as key-value pairs to the params being built.
+      def add(key, values : Array)
+        values.each { |value| add(key, value) }
         self
       end
 

@@ -140,3 +140,7 @@ clean: clean_crystal ## Clean up built directories and files
 clean_crystal: ## Clean up crystal built files
 	rm -rf $(O)
 	rm -rf ./docs
+
+.PHONY: clean_cache
+clean_cache: ## Clean up CRYSTAL_CACHE_DIR files
+	rm -rf $(shell ./bin/crystal env CRYSTAL_CACHE_DIR)

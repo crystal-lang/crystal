@@ -124,7 +124,7 @@ module Crystal
     end
 
     delegate ptr2int, int2ptr, and, or, not, bit_cast,
-      trunc, load, store, br, insert_block, position_at_end, unreachable,
+      trunc, load, store, br, insert_block, position_at_end,
       cond, phi, extract_value, to: builder
 
     def ret
@@ -196,10 +196,6 @@ module Crystal
 
     def llvm_struct_size(type)
       llvm_struct_type(type).size
-    end
-
-    def llvm_union_value_type(type)
-      llvm_typer.union_value_type(type)
     end
   end
 end

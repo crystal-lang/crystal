@@ -637,6 +637,24 @@ module Enumerable(T)
     memo
   end
 
+  # Similar to `reduce`, but instead of raising when the input is empty,
+  # return `nil`
+  #
+  # ```
+  # ([] of Int32).reduce? { |acc, i| acc + i } # => nil
+  # ```
+  def reduce?
+    memo = uninitialized T
+    found = false
+
+    each do |elem|
+      memo = found ? (yield memo, elem) : elem
+      found = true
+    end
+
+    found ? memo : nil
+  end
+
   # Returns a `String` created by concatenating the elements in the collection,
   # separated by *separator* (defaults to none).
   #
@@ -1382,6 +1400,24 @@ module Enumerable(T)
       result << x
     end
     result
+  end
+
+  # Tallys the collection.  Returns a hash where the keys are the
+  # elements and the values are numbers of elements in the collection
+  # that correspond to the key.
+  #
+  # ```
+  # ["a", "b", "c", "b"].tally # => {"a"=>1, "b"=>2, "c"=>1}
+  # ```
+  def tally : Hash(T, Int32)
+    each_with_object(Hash(T, Int32).new) do |item, hash|
+      count = hash[item]?
+      if count
+        hash[item] = count + 1
+      else
+        hash[item] = 1
+      end
+    end
   end
 
   # Returns an `Array` with all the elements in the collection.

@@ -453,4 +453,13 @@ char *LLVMNormalizeTargetTriple(const char* triple) {
 }
 #endif
 
+char *LLVMExtBasicBlockName(LLVMBasicBlockRef BB) {
+#if LLVM_VERSION_GE(4, 0)
+  // It seems to work since llvm-4.0 https://stackoverflow.com/a/46045548/30948
+  return strdup(unwrap(BB)->getName().data());
+#else
+  return NULL;
+#endif
+}
+
 }

@@ -50,6 +50,7 @@ class Crystal::Command
 
   def initialize(@options : Array(String))
     @color = true
+    @error_trace = false
     @progress_tracker = ProgressTracker.new
   end
 
@@ -107,6 +108,7 @@ class Crystal::Command
     error ex.message
   rescue ex : Crystal::Exception
     ex.color = @color
+    ex.error_trace = @error_trace
     if @config.try(&.output_format) == "json"
       STDERR.puts ex.to_json
     else
@@ -341,6 +343,7 @@ class Crystal::Command
 
       opts.on("--error-trace", "Show full error trace") do
         compiler.show_error_trace = true
+        @error_trace = true
       end
 
       opts.on("-h", "--help", "Show this message") do
@@ -498,6 +501,7 @@ class Crystal::Command
       compiler.flags << flag
     end
     opts.on("--error-trace", "Show full error trace") do
+      @error_trace = true
       compiler.show_error_trace = true
     end
     opts.on("--release", "Compile in release mode") do

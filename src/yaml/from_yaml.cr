@@ -227,12 +227,28 @@ def Union.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node)
     node.raise("Error deserailizing alias")
   end
 
-  {% for type in T %}
-    begin
-      return {{type}}.new(ctx, node)
-    rescue YAML::ParseException
-      # Ignore
-    end
+  {% begin %}
+    # String must come last because anything can be parsed into a String.
+    # So, we give a chance first to types in the union to be parsed.
+    {% string_type = T.find { |type| type == ::String } %}
+
+    {% for type in T %}
+      {% unless type == string_type %}
+        begin
+          return {{type}}.new(ctx, node)
+        rescue YAML::ParseException
+          # Ignore
+        end
+      {% end %}
+    {% end %}
+
+    {% if string_type %}
+      begin
+        return {{string_type}}.new(ctx, node)
+      rescue YAML::ParseException
+        # Ignore
+      end
+    {% end %}
   {% end %}
 
   node.raise "Couldn't parse #{self}"

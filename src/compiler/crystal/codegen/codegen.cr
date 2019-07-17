@@ -1810,7 +1810,43 @@ module Crystal
     end
 
     def printf(format, args = [] of LLVM::Value)
-      call @program.printf(@llvm_mod), [builder.global_string_pointer(format)] + args
+      call @program.printf(@llvm_mod, llvm_context), [builder.global_string_pointer(format)] + args
+    end
+
+    # Emits a debug message that shows the current llvm basic block name,
+    # the location within the codegen that was used to emit this log.
+    #
+    # The message is only generated if `CRYSTAL_DEBUG_CODEGEN` is set
+    #
+    # The block given to this method should yield `printf` arguments to show
+    # additional information. The following forms are all valid and helps to
+    # allocate the arguments only if the message is to be generated.
+    #
+    # ```
+    # debug_codegen_log
+    # debug_codegen_log { }
+    # debug_codegen_log { "Lorem" }
+    # debug_codegen_log { {"Lorem"} }
+    # debug_codegen_log { {"Lorem %d", [an_int_llvm_value] of LLVM::Value} }
+    # ```
+    #
+    def debug_codegen_log(file = __FILE__, line = __LINE__)
+      return unless ENV["CRYSTAL_DEBUG_CODEGEN"]?
+      printf_args = yield || ""
+      printf_args = {printf_args, [] of LLVM::Value} if printf_args.is_a?(String)
+      printf_args = {printf_args[0], [] of LLVM::Value} if printf_args.is_a?({String})
+      msg, args = printf_args
+      printf("<block: #{insert_block.name || "???"} @ #{Crystal.relative_filename(file)}:#{line}> #{msg}\n", args)
+    end
+
+    # :ditto:
+    def debug_codegen_log(file = __FILE__, line = __LINE__)
+      debug_codegen_log(file, line) { }
+    end
+
+    def unreachable(file = __FILE__, line = __LINE__)
+      debug_codegen_log(file, line) { "Reached the unreachable!" }
+      builder.unreachable
     end
 
     def allocate_aggregate(type)
@@ -2015,14 +2051,6 @@ module Crystal
       type.passed_by_value? ? load value : value
     end
 
-    def union_type_id(union_pointer)
-      aggregate_index union_pointer, 0
-    end
-
-    def union_value(union_pointer)
-      aggregate_index union_pointer, 1
-    end
-
     def aggregate_index(ptr, index)
       gep ptr, 0, index
     end
@@ -2040,9 +2068,9 @@ module Crystal
 
       if type.is_a?(VirtualType)
         if type.struct?
-          if type.remove_indirection.is_a?(UnionType)
+          if (_type = type.remove_indirection).is_a?(UnionType)
             # For a struct we need to cast the second part of the union to the base type
-            value_ptr = gep(pointer, 0, 1)
+            _, value_ptr = union_type_and_value_pointer(pointer, _type)
             pointer = bit_cast value_ptr, llvm_type(type.base_type).pointer
           else
             # Nothing, there's only one subclass so it's the struct already

@@ -29,7 +29,7 @@ class Crystal::Path
 
     similar_name = type.lookup_similar_path(self)
     if similar_name
-      self.raise("undefined constant #{self} #{type.program.colorize("(did you mean '#{similar_name}')").yellow.bold}")
+      self.raise("undefined constant #{self}\nDid you mean '#{similar_name}'?")
     else
       self.raise("undefined constant #{self}")
     end
@@ -138,11 +138,12 @@ class Crystal::Call
         end
 
         if similar_name
+          msg << '\n'
           if similar_name == def_name
             # This check is for the case `a if a = 1`
-            msg << colorize(" (If you declared '#{def_name}' in a suffix if, declare it in a regular if for this to work. If the variable was declared in a macro it's not visible outside it)").yellow.bold
+            msg << "If you declared '#{def_name}' in a suffix if, declare it in a regular if for this to work. If the variable was declared in a macro it's not visible outside it)"
           else
-            msg << colorize(" (did you mean '#{similar_name}'?)").yellow.bold
+            msg << "Did you mean '#{similar_name}'?"
           end
         end
 
@@ -592,7 +593,9 @@ class Crystal::Call
           str << named_arg.name
           str << '\''
           if similar_name
-            str << colorize(" (did you mean '#{similar_name}'?)").yellow.bold
+            str << '\n'
+            str << "Did you mean '#{similar_name}'?"
+            str << '\n'
           end
 
           defs = owner.lookup_defs(a_def.name)

@@ -55,6 +55,10 @@ describe "YAML serialization" do
       String.from_yaml("hello").should eq("hello")
     end
 
+    it "does String#from_yaml (empty string)" do
+      String.from_yaml("").should eq("")
+    end
+
     it "can parse string that looks like a number" do
       String.from_yaml(%(1.2)).should eq ("1.2")
     end
@@ -175,8 +179,8 @@ describe "YAML serialization" do
       value.should eq(Time.utc(2014, 1, 2))
     end
 
-    it "deserializes union" do
-      Array(Int32 | String).from_yaml(%([1, "hello"])).should eq([1, "hello"])
+    it "deserializes union with nil, string and int (#7936)" do
+      Array(Int32 | String | Nil).from_yaml(%([1, "hello", null])).should eq([1, "hello", nil])
     end
 
     it "deserializes time" do
@@ -238,6 +242,10 @@ describe "YAML serialization" do
   describe "to_yaml" do
     it "does for Nil" do
       Nil.from_yaml(nil.to_yaml).should eq(nil)
+    end
+
+    it "does for Nil (empty string)" do
+      Nil.from_yaml("").should eq(nil)
     end
 
     it "does for Bool" do
