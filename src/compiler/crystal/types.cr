@@ -2547,8 +2547,12 @@ module Crystal
       super(program, namespace, name)
     end
 
-    delegate remove_typedef, remove_indirection, pointer?, defs,
+    delegate remove_typedef, pointer?, defs,
       macros, reference_link?, parents, to: typedef
+
+    def remove_indirection
+      self
+    end
 
     def type_def_type?
       true
