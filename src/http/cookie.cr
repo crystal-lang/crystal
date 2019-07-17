@@ -46,7 +46,7 @@ module HTTP
         header << "; domain=#{domain}" if domain
         header << "; path=#{path}" if path
         header << "; expires=#{HTTP.format_time(expires)}" if expires
-        header << "; max-age=#{max_age.total_seconds.to_i}" if max_age
+        header << "; max-age=#{max_age.to_i}" if max_age
         header << "; Secure" if @secure
         header << "; HttpOnly" if @http_only
         header << "; SameSite=#{samesite}" if samesite
