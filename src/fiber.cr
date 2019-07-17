@@ -128,17 +128,8 @@ class Fiber
     Crystal::Scheduler.resume(self)
   end
 
-  def restore : Nil
-    {% if flag?(:preview_mt) %}
-      th = @current_thread.lazy_get
-      if th.nil? || th == Thread.current
-        Thread.current.scheduler.enqueue_self self
-      else
-        th.scheduler.send_fiber(self)
-      end
-    {% else %}
-      Crystal::Scheduler.enqueue self
-    {% end %}
+  def enqueue
+    Crystal::Scheduler.enqueue(self)
   end
 
   # :nodoc:

@@ -50,7 +50,7 @@ class Mutex
 
       if fiber = @queue.try &.shift?
         @mutex_fiber = fiber
-        fiber.restore
+        fiber.enqueue
       else
         @mutex_fiber = nil
       end

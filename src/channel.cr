@@ -90,11 +90,11 @@ class Channel(T)
   def close
     @closed = true
 
-    @senders.each &.first.restore
+    @senders.each &.first.enqueue
 
     @receivers.each do |receiver|
       receiver[2].value = DeliveryState::Closed
-      receiver[0].restore
+      receiver[0].enqueue
     end
 
     @senders.clear
@@ -126,7 +126,7 @@ class Channel(T)
     if receiver = dequeue_receiver
       receiver[1].value = value
       receiver[2].value = DeliveryState::Delivered
-      receiver[0].restore
+      receiver[0].enqueue
     elsif (queue = @queue) && queue.size < @capacity
       queue << value
     else
@@ -184,12 +184,12 @@ class Channel(T)
     if (queue = @queue) && !queue.empty?
       deque_value = queue.shift
       if sender = dequeue_sender
-        sender[0].restore
+        sender[0].enqueue
         queue << sender[1]
       end
       deque_value
     elsif sender = dequeue_sender
-      sender[0].restore
+      sender[0].enqueue
       sender[1]
     else
       yield

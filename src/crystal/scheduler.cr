@@ -15,7 +15,21 @@ class Crystal::Scheduler
   end
 
   def self.enqueue(fiber : Fiber) : Nil
-    Thread.current.scheduler.enqueue(fiber)
+    {% if flag?(:preview_mt) %}
+      th = fiber.@current_thread.lazy_get
+
+      if th.nil?
+        th = Thread.current.scheduler.find_target_thread
+      end
+
+      if th == Thread.current
+        Thread.current.scheduler.enqueue(fiber)
+      else
+        th.scheduler.send_fiber(fiber)
+      end
+    {% else %}
+      Thread.current.scheduler.enqueue(fiber)
+    {% end %}
   end
 
   def self.enqueue(fibers : Enumerable(Fiber)) : Nil
@@ -122,9 +136,13 @@ class Crystal::Scheduler
   {% if flag?(:preview_mt) %}
     @rr_target = 0
 
-    private def find_target_thread
-      @rr_target += 1
-      @@workers[@rr_target % @@workers.size]
+    protected def find_target_thread
+      if @@workers.empty?
+        Thread.current
+      else
+        @rr_target += 1
+        @@workers[@rr_target % @@workers.size]
+      end
 
       # target = Thread.workers[@rr_target]
       # target_i = @rr_target
@@ -141,25 +159,12 @@ class Crystal::Scheduler
       # target
     end
 
-    def enqueue_self(fiber : Fiber) : Nil
-      @runnables << fiber
-    end
-
-    protected def enqueue(fiber : Fiber) : Nil
-      if Scheduler.workers.empty?
-        previous_def
-      else
-        target = find_target_thread
-        target.scheduler.send_fiber(fiber)
-      end
-    end
-
     def run_loop
       loop do
         oid = @worker_out.read_bytes(UInt64)
         fiber = Pointer(Fiber).new(oid).as(Fiber)
         Thread.current.load += 1
-        enqueue_self(Fiber.current)
+        enqueue(Fiber.current)
         fiber.resume
       end
     end
@@ -180,7 +185,7 @@ class Crystal::Scheduler
       @@workers = Array(Thread).new(count) do |i|
         if i == 0
           worker_loop = Fiber.new(name: "Worker Loop") { Thread.current.scheduler.run_loop }
-          Thread.current.scheduler.enqueue_self worker_loop
+          Thread.current.scheduler.enqueue worker_loop
           Thread.current
         else
           Thread.new { Thread.current.scheduler.run_loop }
