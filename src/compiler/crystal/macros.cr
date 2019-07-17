@@ -1411,6 +1411,16 @@ module Crystal::Macros
 
   # A type union, like `(Int32 | String)`.
   class Union < ASTNode
+    # Resolves this union to a `TypeNode`. Gives a compile-time error
+    # if any type inside the union can't be resolved.
+    def resolve : ASTNode
+    end
+
+    # Resolves this union to a `TypeNode`. Returns a `NilLiteral`
+    # if any type inside the union can't be resolved.
+    def resolve? : ASTNode | NilLiteral
+    end
+
     # Returns the types of this union.
     def types : ArrayLiteral(ASTNode)
     end

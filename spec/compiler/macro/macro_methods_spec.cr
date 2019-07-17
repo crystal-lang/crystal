@@ -1674,6 +1674,15 @@ module Crystal
       it "executes types" do
         assert_macro "x", %({{x.types}}), [Crystal::Union.new(["Int32".path, "String".path] of ASTNode)] of ASTNode, "[Int32, String]"
       end
+
+      it "executes resolve" do
+        assert_macro "x", %({{x.resolve}}), [Crystal::Union.new(["Int32".path, "String".path] of ASTNode)] of ASTNode, "(Int32 | String)"
+      end
+
+      it "executes resolve?" do
+        assert_macro "x", %({{x.resolve?}}), [Crystal::Union.new(["Int32".path, "String".path] of ASTNode)] of ASTNode, "(Int32 | String)"
+        assert_macro "x", %({{x.resolve?}}), [Crystal::Union.new(["Int32".path, "Unknown".path] of ASTNode)] of ASTNode, "nil"
+      end
     end
 
     describe "range methods" do

@@ -1266,6 +1266,10 @@ module Crystal
   class Union
     def interpret(method, args, block, interpreter)
       case method
+      when "resolve"
+        interpret_argless_method(method, args) { interpreter.resolve(self) }
+      when "resolve?"
+        interpret_argless_method(method, args) { interpreter.resolve?(self) || NilLiteral.new }
       when "types"
         interpret_argless_method(method, args) { ArrayLiteral.new(@types) }
       else
