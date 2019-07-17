@@ -1680,6 +1680,10 @@ module Crystal
         assert_macro "x", %({{x.resolve?}}), [Generic.new("Foo".path, ["String".path] of ASTNode)] of ASTNode, %(nil)
         assert_macro "x", %({{x.resolve?}}), [Generic.new("Array".path, ["Foo".path] of ASTNode)] of ASTNode, %(nil)
       end
+
+      it "executes types" do
+        assert_macro "x", %({{x.types}}), [Generic.new("Foo".path, ["T".path] of ASTNode)] of ASTNode, "[Foo(T)]"
+      end
     end
 
     describe "union methods" do
@@ -1733,6 +1737,10 @@ module Crystal
       it "executes resolve?" do
         assert_macro "x", %({{x.resolve?}}), [Path.new("String")] of ASTNode, %(String)
         assert_macro "x", %({{x.resolve?}}), [Path.new("Foo")] of ASTNode, %(nil)
+      end
+
+      it "executes types" do
+        assert_macro "x", %({{x.types}}), [Path.new("String")] of ASTNode, %([String])
       end
     end
 

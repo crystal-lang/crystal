@@ -1297,6 +1297,12 @@ module Crystal::Macros
     # returns a `NilLiteral`.
     def resolve? : ASTNode | NilLiteral
     end
+
+    # Returns this path inside an array literal.
+    # This method exists so you can call `types` on the type of a type
+    # declaration and get all types, whether it's a Generic, Path or Union.
+    def types : ArrayLiteral(ASTNode)
+    end
   end
 
   # A class definition.
@@ -1343,6 +1349,12 @@ module Crystal::Macros
     # Resolves this path to a `TypeNode` if it denotes a type,
     # or otherwise returns a `NilLiteral`.
     def resolve? : ASTNode | NilLiteral
+    end
+
+    # Returns this generic inside an array literal.
+    # This method exists so you can call `types` on the type of a type
+    # declaration and get all types, whether it's a Generic, Path or Union.
+    def types : ArrayLiteral(ASTNode)
     end
   end
 

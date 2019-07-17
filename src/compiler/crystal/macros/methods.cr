@@ -1990,6 +1990,8 @@ module Crystal
         interpret_argless_method(method, args) { interpreter.resolve(self) }
       when "resolve?"
         interpret_argless_method(method, args) { interpreter.resolve?(self) || NilLiteral.new }
+      when "types"
+        interpret_argless_method(method, args) { ArrayLiteral.new([self] of ASTNode) }
       else
         super
       end
@@ -2069,6 +2071,8 @@ module Crystal
         interpret_argless_method(method, args) { interpreter.resolve(self) }
       when "resolve?"
         interpret_argless_method(method, args) { interpreter.resolve?(self) || NilLiteral.new }
+      when "types"
+        interpret_argless_method(method, args) { ArrayLiteral.new([self] of ASTNode) }
       else
         super
       end
