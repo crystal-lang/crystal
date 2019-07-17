@@ -1697,7 +1697,7 @@ module Crystal::Macros
     end
 
     # Returns the types forming a union type, if this is a union type.
-    # Gives a compile error otherwise.
+    # Otherwise returns this single type inside an array literal (so you can safely call `union_types` on any type and treat all types uniformly).
     #
     # See also: `union?`.
     def union_types : ArrayLiteral(TypeNode)

@@ -1230,6 +1230,18 @@ module Crystal
           [TypeNode.new(program.string)] of ASTNode
         end
       end
+
+      it "executes union_types (union)" do
+        assert_macro("x", "{{x.union_types}}", %([Bool, Int32])) do |program|
+          [TypeNode.new(program.union_of(program.int32, program.bool))] of ASTNode
+        end
+      end
+
+      it "executes union_types (non-union)" do
+        assert_macro("x", "{{x.union_types}}", %([Int32])) do |program|
+          [TypeNode.new(program.int32)] of ASTNode
+        end
+      end
     end
 
     describe "type declaration methods" do
