@@ -23,8 +23,6 @@ class Thread
 
   {% if flag?(:preview_mt) %}
     property load = 0
-    property worker : Worker?
-    @@workers = [] of Worker
   {% end %}
 
   def self.unsafe_each
@@ -191,59 +189,4 @@ class Thread
   def to_unsafe
     @th
   end
-
-  {% if flag?(:preview_mt) %}
-    def send_fiber(fiber : Fiber)
-      @worker.not_nil!.send_fiber(fiber)
-    end
-
-    class Worker
-      @thread : Thread
-      @worker_in : IO
-      @worker_out : IO
-
-      def initialize(thread = nil)
-        @worker_out, @worker_in = IO.pipe
-        @thread = thread || Thread.new { run_loop }
-        @thread.worker = self
-
-        if thread
-          th = thread
-          worker_loop = Fiber.new(name: "Worker Loop") { th.worker.not_nil!.run_loop }
-          thread.scheduler.enqueue_self worker_loop
-        end
-      end
-
-      def run_loop
-        th = Thread.current
-        worker_out = @worker_out
-
-        loop do
-          oid = worker_out.read_bytes(UInt64)
-          fiber = Pointer(Fiber).new(oid).as(Fiber)
-          th.load += 1
-          th.scheduler.enqueue_self(Fiber.current)
-          fiber.resume
-        end
-      end
-
-      def load
-        @thread.load
-      end
-
-      def send_fiber(fiber : Fiber)
-        Thread.current.load -= 1
-        @worker_in.write_bytes(fiber.object_id)
-      end
-    end
-
-    def self.workers
-      @@workers
-    end
-
-    def self.init_workers
-      count = ENV["CRYSTAL_WORKERS"]?.try &.to_i || 4
-      @@workers = Array(Worker).new(count) { |i| Worker.new(i == 0 ? Thread.current : nil) }
-    end
-  {% end %}
 end

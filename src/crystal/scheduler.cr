@@ -42,10 +42,14 @@ class Crystal::Scheduler
     Thread.current.scheduler.yield(fiber)
   end
 
+  @worker_in : IO
+  @worker_out : IO
+
   # :nodoc:
   def initialize(@main : Fiber)
     @current = @main
     @runnables = Deque(Fiber).new
+    @worker_out, @worker_in = IO.pipe
   end
 
   protected def enqueue(fiber : Fiber) : Nil
@@ -120,7 +124,7 @@ class Crystal::Scheduler
 
     private def find_target_thread
       @rr_target += 1
-      Thread.workers[@rr_target % Thread.workers.size]
+      @@workers[@rr_target % @@workers.size]
 
       # target = Thread.workers[@rr_target]
       # target_i = @rr_target
@@ -142,11 +146,45 @@ class Crystal::Scheduler
     end
 
     protected def enqueue(fiber : Fiber) : Nil
-      if Thread.workers.empty?
+      if Scheduler.workers.empty?
         previous_def
       else
         target = find_target_thread
-        target.send_fiber(fiber)
+        target.scheduler.send_fiber(fiber)
+      end
+    end
+
+    def run_loop
+      loop do
+        oid = @worker_out.read_bytes(UInt64)
+        fiber = Pointer(Fiber).new(oid).as(Fiber)
+        Thread.current.load += 1
+        enqueue_self(Fiber.current)
+        fiber.resume
+      end
+    end
+
+    def send_fiber(fiber : Fiber)
+      Thread.current.load -= 1
+      @worker_in.write_bytes(fiber.object_id)
+    end
+
+    @@workers = [] of Thread
+
+    def self.workers
+      @@workers
+    end
+
+    def self.init_workers
+      count = ENV["CRYSTAL_WORKERS"]?.try &.to_i || 4
+      @@workers = Array(Thread).new(count) do |i|
+        if i == 0
+          worker_loop = Fiber.new(name: "Worker Loop") { Thread.current.scheduler.run_loop }
+          Thread.current.scheduler.enqueue_self worker_loop
+          Thread.current
+        else
+          Thread.new { Thread.current.scheduler.run_loop }
+        end
       end
     end
   {% end %}

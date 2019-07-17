@@ -134,7 +134,7 @@ class Fiber
       if th.nil? || th == Thread.current
         Thread.current.scheduler.enqueue_self self
       else
-        th.send_fiber(self)
+        th.scheduler.send_fiber(self)
       end
     {% else %}
       Crystal::Scheduler.enqueue self

@@ -551,5 +551,5 @@ end
 {% end %}
 
 {% if flag?(:preview_mt) %}
-  Thread.init_workers
+  Crystal::Scheduler.init_workers
 {% end %}
