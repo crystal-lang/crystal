@@ -486,7 +486,7 @@ class Object
     macro {{macro_prefix}}getter!(*names)
       \{% for name in names %}
         \{% if name.is_a?(TypeDeclaration) %}
-          {{var_prefix}}\{{name}}?
+          {{var_prefix}}\{{name.var}} : \{{name.type}}? \{% unless name.value.is_a? Nop %} = \{{name.value}} \{% end %}
           \{% name = name.var %}
         \{% end %}
 

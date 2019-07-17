@@ -21,6 +21,7 @@ private class TestObject
   @getter5 : Int32?
 
   getter! getter6 : Int32
+  getter! getter_default : String = "Jim"
 
   getter? getter7
   getter? getter8 : Bool
@@ -247,6 +248,13 @@ describe Object do
       obj.getter6.should eq(6)
       typeof(obj.@getter6).should eq(Int32 | Nil)
       typeof(obj.getter6).should eq(Int32)
+    end
+
+    it "uses getter! with type declaration and default value" do
+      obj = TestObject.new
+      obj.getter_default.should eq "Jim"
+      typeof(obj.@getter_default).should eq String?
+      typeof(obj.getter_default).should eq String
     end
   end
 
