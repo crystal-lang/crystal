@@ -1266,6 +1266,10 @@ module Crystal
   class Union
     def interpret(method, args, block, interpreter)
       case method
+      when "resolve"
+        interpret_argless_method(method, args) { interpreter.resolve(self) }
+      when "resolve?"
+        interpret_argless_method(method, args) { interpreter.resolve?(self) || NilLiteral.new }
       when "types"
         interpret_argless_method(method, args) { ArrayLiteral.new(@types) }
       else
@@ -1503,7 +1507,7 @@ module Crystal
       when "nilable?"
         interpret_argless_method(method, args) { BoolLiteral.new(type.nilable?) }
       when "union_types"
-        interpret_argless_method(method, args) { TypeNode.union_types(type) }
+        interpret_argless_method(method, args) { TypeNode.union_types(self) }
       when "name"
         interpret_argless_method(method, args) { MacroId.new(type.devirtualize.to_s) }
       when "type_vars"
@@ -1641,6 +1645,10 @@ module Crystal
           value = arg2.to_string("second argument to 'TypeNode#overrides?")
           TypeNode.overrides?(type, arg1.type, value)
         end
+      when "resolve"
+        interpret_argless_method(method, args) { self }
+      when "resolve?"
+        interpret_argless_method(method, args) { self }
       else
         super
       end
@@ -1730,9 +1738,14 @@ module Crystal
       end
     end
 
-    def self.union_types(type)
-      raise "undefined method 'union_types' for TypeNode of type #{type} (must be a union type)" unless type.is_a?(UnionType)
-      ArrayLiteral.map(type.union_types) { |uniontype| TypeNode.new(uniontype) }
+    def self.union_types(type_node)
+      type = type_node.type
+
+      if type.is_a?(UnionType)
+        ArrayLiteral.map(type.union_types) { |uniontype| TypeNode.new(uniontype) }
+      else
+        ArrayLiteral.new([type_node] of ASTNode)
+      end
     end
 
     def self.constants(type)
@@ -1982,6 +1995,8 @@ module Crystal
         interpret_argless_method(method, args) { interpreter.resolve(self) }
       when "resolve?"
         interpret_argless_method(method, args) { interpreter.resolve?(self) || NilLiteral.new }
+      when "types"
+        interpret_argless_method(method, args) { ArrayLiteral.new([self] of ASTNode) }
       else
         super
       end
@@ -2061,6 +2076,8 @@ module Crystal
         interpret_argless_method(method, args) { interpreter.resolve(self) }
       when "resolve?"
         interpret_argless_method(method, args) { interpreter.resolve?(self) || NilLiteral.new }
+      when "types"
+        interpret_argless_method(method, args) { ArrayLiteral.new([self] of ASTNode) }
       else
         super
       end

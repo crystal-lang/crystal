@@ -1218,6 +1218,30 @@ module Crystal
           [TypeNode.new(program.union_of(program.string, program.nil))] of ASTNode
         end
       end
+
+      it "executes resolve" do
+        assert_macro("x", "{{x.resolve}}", "String") do |program|
+          [TypeNode.new(program.string)] of ASTNode
+        end
+      end
+
+      it "executes resolve?" do
+        assert_macro("x", "{{x.resolve?}}", "String") do |program|
+          [TypeNode.new(program.string)] of ASTNode
+        end
+      end
+
+      it "executes union_types (union)" do
+        assert_macro("x", "{{x.union_types}}", %([Bool, Int32])) do |program|
+          [TypeNode.new(program.union_of(program.int32, program.bool))] of ASTNode
+        end
+      end
+
+      it "executes union_types (non-union)" do
+        assert_macro("x", "{{x.union_types}}", %([Int32])) do |program|
+          [TypeNode.new(program.int32)] of ASTNode
+        end
+      end
     end
 
     describe "type declaration methods" do
@@ -1668,11 +1692,24 @@ module Crystal
         assert_macro "x", %({{x.resolve?}}), [Generic.new("Foo".path, ["String".path] of ASTNode)] of ASTNode, %(nil)
         assert_macro "x", %({{x.resolve?}}), [Generic.new("Array".path, ["Foo".path] of ASTNode)] of ASTNode, %(nil)
       end
+
+      it "executes types" do
+        assert_macro "x", %({{x.types}}), [Generic.new("Foo".path, ["T".path] of ASTNode)] of ASTNode, "[Foo(T)]"
+      end
     end
 
     describe "union methods" do
       it "executes types" do
         assert_macro "x", %({{x.types}}), [Crystal::Union.new(["Int32".path, "String".path] of ASTNode)] of ASTNode, "[Int32, String]"
+      end
+
+      it "executes resolve" do
+        assert_macro "x", %({{x.resolve}}), [Crystal::Union.new(["Int32".path, "String".path] of ASTNode)] of ASTNode, "(Int32 | String)"
+      end
+
+      it "executes resolve?" do
+        assert_macro "x", %({{x.resolve?}}), [Crystal::Union.new(["Int32".path, "String".path] of ASTNode)] of ASTNode, "(Int32 | String)"
+        assert_macro "x", %({{x.resolve?}}), [Crystal::Union.new(["Int32".path, "Unknown".path] of ASTNode)] of ASTNode, "nil"
       end
     end
 
@@ -1712,6 +1749,10 @@ module Crystal
       it "executes resolve?" do
         assert_macro "x", %({{x.resolve?}}), [Path.new("String")] of ASTNode, %(String)
         assert_macro "x", %({{x.resolve?}}), [Path.new("Foo")] of ASTNode, %(nil)
+      end
+
+      it "executes types" do
+        assert_macro "x", %({{x.types}}), [Path.new("String")] of ASTNode, %([String])
       end
     end
 
