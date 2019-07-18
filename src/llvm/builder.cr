@@ -89,6 +89,14 @@ class LLVM::Builder
     Value.new LibLLVM.build_load(self, ptr, name)
   end
 
+  def store_volatile(value, ptr)
+    store(value, ptr).tap { |v| v.volatile = true }
+  end
+
+  def load_volatile(ptr, name = "")
+    load(ptr, name).tap { |v| v.volatile = true }
+  end
+
   {% for method_name in %w(gep inbounds_gep) %}
     def {{method_name.id}}(value, indices : Array(LLVM::ValueRef), name = "")
       # check_value(value)
