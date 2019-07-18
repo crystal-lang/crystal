@@ -58,6 +58,12 @@ class Crystal::Scheduler
 
   @worker_in : IO
   @worker_out : IO
+  {% if flag?(:preview_mt) %}
+    @lock = Crystal::SpinLock.new
+  {% else %}
+    @lock = Crystal::NullLock.new
+  {% end %}
+  @sleeping = false
 
   # :nodoc:
   def initialize(@main : Fiber)
@@ -67,11 +73,11 @@ class Crystal::Scheduler
   end
 
   protected def enqueue(fiber : Fiber) : Nil
-    @runnables << fiber
+    @lock.sync { @runnables << fiber }
   end
 
   protected def enqueue(fibers : Enumerable(Fiber)) : Nil
-    @runnables.concat fibers
+    @lock.sync { @runnables.concat fibers }
   end
 
   protected def resume(fiber : Fiber) : Nil
@@ -112,8 +118,10 @@ class Crystal::Scheduler
   end
 
   protected def reschedule : Nil
-    if runnable = @runnables.shift?
-      runnable.resume
+    if runnable = @lock.sync { @runnables.shift? }
+      unless runnable == Fiber.current
+        runnable.resume
+      end
     else
       Crystal::EventLoop.resume
     end
@@ -161,17 +169,36 @@ class Crystal::Scheduler
 
     def run_loop
       loop do
-        oid = @worker_out.read_bytes(UInt64)
-        fiber = Pointer(Fiber).new(oid).as(Fiber)
-        Thread.current.load += 1
-        enqueue(Fiber.current)
-        fiber.resume
+        @lock.lock
+        if runnable = @runnables.shift?
+          @runnables << Fiber.current
+          @lock.unlock
+          runnable.resume
+        else
+          @sleeping = true
+          @lock.unlock
+          oid = @worker_out.read_bytes(UInt64)
+          fiber = Pointer(Fiber).new(oid).as(Fiber)
+          Thread.current.load += 1
+
+          @lock.lock
+          @sleeping = false
+          @runnables << Fiber.current
+          @lock.unlock
+          fiber.resume
+        end
       end
     end
 
     def send_fiber(fiber : Fiber)
       Thread.current.load -= 1
-      @worker_in.write_bytes(fiber.object_id)
+      @lock.lock
+      if @sleeping
+        @worker_in.write_bytes(fiber.object_id)
+      else
+        @runnables << fiber
+      end
+      @lock.unlock
     end
 
     @@workers = [] of Thread
