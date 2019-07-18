@@ -274,14 +274,14 @@ class Crystal::Doc::Generator
 
   def summary(obj : Type | Method | Macro | Constant)
     doc = obj.doc
-    return nil unless doc
 
-    summary obj, doc
+    return if !doc && !obj.annotations(@program.deprecated_annotation)
+
+    summary obj, doc || ""
   end
 
   def summary(context, string)
-    line = fetch_doc_lines(string).lines.first?
-    return nil unless line
+    line = fetch_doc_lines(string).lines.first? || ""
 
     dot_index = line =~ /\.($|\s)/
     if dot_index
@@ -293,9 +293,10 @@ class Crystal::Doc::Generator
 
   def doc(obj : Type | Method | Macro | Constant)
     doc = obj.doc
-    return nil unless doc
 
-    doc obj, doc
+    return if !doc && !obj.annotations(@program.deprecated_annotation)
+
+    doc obj, doc || ""
   end
 
   def doc(context, string)
@@ -307,14 +308,8 @@ class Crystal::Doc::Generator
     generate_flags markdown
   end
 
-  def fetch_doc_lines(doc)
-    doc.gsub /\n+/ do |match|
-      if match.size == 1
-        " "
-      else
-        "\n"
-      end
-    end
+  def fetch_doc_lines(doc : String) : String
+    doc.gsub /\n+/ { |match| match.size == 1 ? " " : "\n" }
   end
 
   # Replaces flag keywords with html equivalent
