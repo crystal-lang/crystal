@@ -1,16 +1,22 @@
 # :nodoc:
 class Crystal::SpinLock
-  @m = Atomic(Int32).new(0)
+  {% if flag?(:preview_mt) %}
+    @m = Atomic(Int32).new(0)
+  {% end %}
 
   def lock
-    while @m.swap(1) == 1
-      while @m.get == 1
+    {% if flag?(:preview_mt) %}
+      while @m.swap(1) == 1
+        while @m.get == 1
+        end
       end
-    end
+    {% end %}
   end
 
   def unlock
-    @m.lazy_set(0)
+    {% if flag?(:preview_mt) %}
+      @m.lazy_set(0)
+    {% end %}
   end
 
   def sync

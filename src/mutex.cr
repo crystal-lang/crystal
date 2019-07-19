@@ -1,19 +1,11 @@
-{% if flag?(:preview_mt) %}
 require "crystal/spin_lock"
-{% else %}
-require "crystal/null_lock"
-{% end %}
 
 # A fiber-safe mutex.
 class Mutex
   @mutex_fiber : Fiber?
   @lock_count = 0
   @queue = Deque(Fiber).new
-  {% if flag?(:preview_mt) %}
-    @lock = Crystal::SpinLock.new
-  {% else %}
-    @lock = Crystal::NullLock.new
-  {% end %}
+  @lock = Crystal::SpinLock.new
 
   def lock
     @lock.lock

@@ -58,11 +58,7 @@ class Crystal::Scheduler
 
   @worker_in : IO
   @worker_out : IO
-  {% if flag?(:preview_mt) %}
-    @lock = Crystal::SpinLock.new
-  {% else %}
-    @lock = Crystal::NullLock.new
-  {% end %}
+  @lock = Crystal::SpinLock.new
   @sleeping = false
 
   # :nodoc:

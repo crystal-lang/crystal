@@ -1,9 +1,5 @@
 require "fiber"
-{% if flag?(:preview_mt) %}
-  require "crystal/spin_lock"
-{% else %}
-  require "crystal/null_lock"
-{% end %}
+require "crystal/spin_lock"
 
 # A `Channel` enables concurrent communication between fibers.
 #
@@ -21,12 +17,7 @@ require "fiber"
 # channel.receive # => 1
 # ```
 class Channel(T)
-  {% if flag?(:preview_mt) %}
-    @lock = Crystal::SpinLock.new
-  {% else %}
-    @lock = Crystal::NullLock.new
-  {% end %}
-
+  @lock = Crystal::SpinLock.new
   @queue : Deque(T)?
 
   module SelectAction
