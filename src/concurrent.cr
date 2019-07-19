@@ -58,8 +58,11 @@ end
 #
 # 2.times { ch.receive }
 # ```
-def spawn(*, name : String? = nil, &block)
+def spawn(*, name : String? = nil, same_thread = false, &block)
   fiber = Fiber.new(name, &block)
+  if same_thread
+    fiber.@current_thread.set(Thread.current)
+  end
   Crystal::Scheduler.enqueue fiber
   fiber
 end
@@ -94,7 +97,7 @@ end
 # This is because in the first case all spawned fibers refer to
 # the same local variable, while in the second example copies of
 # *i* are passed to a `Proc` that eventually invokes the call.
-macro spawn(call, *, name = nil, &block)
+macro spawn(call, *, name = nil, same_thread = false, &block)
   {% if block %}
     {% raise "`spawn(call)` can't be invoked with a block, did you mean `spawn(name: ...) { ... }`?" %}
   {% end %}
@@ -110,7 +113,7 @@ macro spawn(call, *, name = nil, &block)
         {% end %}
       {% end %}
       ) {
-      spawn(name: {{name}}) do
+      spawn(name: {{name}}, same_thread: {{same_thread}}) do
         {% if call.receiver %}{{ call.receiver }}.{% end %}{{call.name}}(
           {% for arg, i in call.args %}
             __arg{{i}},
