@@ -301,4 +301,11 @@ describe "Random" do
       hex.should eq("9fd857f462831002ffffffffffffffff0000000000000000e88d3a30db4e730021b8a5e33b020000362f518e0700000062da")
     end
   end
+
+  it "returns a random static array" do
+    {% for type in %w(Int8 UInt8 Int16 UInt16 Int32 UInt32 Int64 UInt64).map(&.id) %}
+      array = TestRNG.new(RNG_DATA_32).rand(StaticArray({{type}}, 4))
+      typeof(array).should eq(StaticArray({{type}}, 4))
+    {% end %}
+  end
 end

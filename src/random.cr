@@ -289,6 +289,28 @@ module Random
     end
   end
 
+  # Returns a StaticArray filled with random integers.
+  # Note that this only works with StaticArray of integer types.
+  #
+  # ```
+  # Random.new.rand(StaticArray(Int32, 4))  # => StaticArray[4795590, -1987398873, 1859211601, 546845569]
+  # Random.new.rand(StaticArray(UInt16, 2)) # => StaticArray[49247, 53674]
+  # ```
+  def rand(type : StaticArray(T, N).class) forall T, N
+    {%
+      if T != Int8 && T != UInt8 &&
+         T != Int16 && T != UInt16 &&
+         T != Int32 && T != UInt32 &&
+         T != Int64 && T != UInt64
+        raise "Random::Secure#random_static argument must be StaticArray of integer type"
+      end
+    %}
+
+    buffer = uninitialized UInt8[sizeof(StaticArray(T, N))]
+    random_bytes(buffer.to_slice)
+    buffer.unsafe_as(StaticArray(T, N))
+  end
+
   # Fills a given slice with random bytes.
   #
   # ```
