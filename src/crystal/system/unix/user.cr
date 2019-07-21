@@ -8,7 +8,7 @@ module Crystal::System::User
     new(String.new(pwd.pw_name), pwd.pw_uid.to_s, pwd.pw_gid.to_s, user, String.new(pwd.pw_dir), String.new(pwd.pw_shell))
   end
 
-  def from_username?(username : String)
+  private def from_username?(username : String)
     username.check_no_null_byte
 
     pwd = uninitialized LibC::Passwd
@@ -27,7 +27,7 @@ module Crystal::System::User
     from_struct(pwd) if pwd_pointer
   end
 
-  def from_id?(id : String)
+  private def from_id?(id : String)
     id = id.to_u32
     pwd = uninitialized LibC::Passwd
     pwd_pointer = pointerof(pwd)
