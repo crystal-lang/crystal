@@ -172,7 +172,7 @@ struct Int
   def %(other : Int)
     if other == 0
       raise DivisionByZeroError.new
-    elsif (self ^ other) >= 0
+    elsif (self < 0) == (other < 0)
       self.unsafe_mod(other)
     else
       me = self.unsafe_mod(other)
