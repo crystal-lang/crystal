@@ -154,18 +154,29 @@ end
     #puts "Personality - actions : #{actions}, start: #{start}, ip: #{ip}, throw_offset: #{throw_offset}"
 
     leb = LEBReader.new(lsd)
-    leb.read_uint8               # @LPStart encoding
+    lp_start_encoding = leb.read_uint8 # @LPStart encoding
+    if lp_start_encoding != 0xff_u8
+      LibC.dprintf 2, "Unexpected encoding for LPStart: #{lp_start_encoding}\n"
+      LibC.exit 1
+    end
+
     if leb.read_uint8 != 0xff_u8 # @TType encoding
       leb.read_uleb128           # @TType base offset
     end
-    leb.read_uint8                     # CS Encoding
+
+    cs_encoding = leb.read_uint8 # CS Encoding (1: uleb128, 3: uint32)
+    if cs_encoding != 1 && cs_encoding != 3
+      LibC.dprintf 2, "Unexpected CS encoding: #{cs_encoding}\n"
+      LibC.exit 1
+    end
+
     cs_table_length = leb.read_uleb128 # CS table length
     cs_table_end = leb.data + cs_table_length
 
     while leb.data < cs_table_end
-      cs_offset = leb.read_uint32
-      cs_length = leb.read_uint32
-      cs_addr = leb.read_uint32
+      cs_offset = cs_encoding == 3 ? leb.read_uint32 : leb.read_uleb128
+      cs_length = cs_encoding == 3 ? leb.read_uint32 : leb.read_uleb128
+      cs_addr = cs_encoding == 3 ? leb.read_uint32 : leb.read_uleb128
       action = leb.read_uleb128
       #puts "cs_offset: #{cs_offset}, cs_length: #{cs_length}, cs_addr: #{cs_addr}, action: #{action}"
 
