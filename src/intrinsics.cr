@@ -1,6 +1,6 @@
 lib Intrinsics
   fun debugtrap = "llvm.debugtrap"
-  {% if flag?(:x86_64) %}
+  {% if flag?(:x86_64) || flag?(:aarch64) %}
     fun memcpy = "llvm.memcpy.p0i8.p0i8.i64"(dest : Void*, src : Void*, len : UInt64, align : UInt32, is_volatile : Bool)
     fun memmove = "llvm.memmove.p0i8.p0i8.i64"(dest : Void*, src : Void*, len : UInt64, align : UInt32, is_volatile : Bool)
     fun memset = "llvm.memset.p0i8.i64"(dest : Void*, val : UInt8, len : UInt64, align : UInt32, is_volatile : Bool)
