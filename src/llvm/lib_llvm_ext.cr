@@ -28,70 +28,70 @@ lib LibLLVMExt
                                                                        optimized : Int, flags : Char*,
                                                                        runtime_version : UInt) : Metadata
   fun di_builder_create_lexical_block = LLVMDIBuilderCreateLexicalBlock2(builder : DIBuilder,
-                                                                        scope : Metadata,
-                                                                        file : Metadata,
-                                                                        line : Int,
-                                                                        column : Int) : Metadata
+                                                                         scope : Metadata,
+                                                                         file : Metadata,
+                                                                         line : Int,
+                                                                         column : Int) : Metadata
 
   fun di_builder_create_basic_type = LLVMDIBuilderCreateBasicType2(builder : DIBuilder,
-                                                                  name : Char*,
-                                                                  size_in_bits : UInt64,
-                                                                  align_in_bits : UInt64,
-                                                                  encoding : UInt) : Metadata
+                                                                   name : Char*,
+                                                                   size_in_bits : UInt64,
+                                                                   align_in_bits : UInt64,
+                                                                   encoding : UInt) : Metadata
 
   fun di_builder_create_auto_variable = LLVMDIBuilderCreateAutoVariable2(builder : DIBuilder,
-                                                                        scope : Metadata,
-                                                                        name : Char*,
-                                                                        file : Metadata, line : UInt,
-                                                                        type : Metadata,
-                                                                        always_preserve : Int,
-                                                                        flags : LLVM::DIFlags,
-                                                                        align_in_bits : UInt32) : Metadata
+                                                                         scope : Metadata,
+                                                                         name : Char*,
+                                                                         file : Metadata, line : UInt,
+                                                                         type : Metadata,
+                                                                         always_preserve : Int,
+                                                                         flags : LLVM::DIFlags,
+                                                                         align_in_bits : UInt32) : Metadata
 
   fun di_builder_create_parameter_variable = LLVMDIBuilderCreateParameterVariable2(builder : DIBuilder,
-                                                                                  scope : Metadata,
-                                                                                  name : Char*, arg_no : UInt,
-                                                                                  file : Metadata, line : UInt, type : Metadata,
-                                                                                  always_preserve : Int, flags : LLVM::DIFlags) : Metadata
+                                                                                   scope : Metadata,
+                                                                                   name : Char*, arg_no : UInt,
+                                                                                   file : Metadata, line : UInt, type : Metadata,
+                                                                                   always_preserve : Int, flags : LLVM::DIFlags) : Metadata
 
   fun di_builder_insert_declare_at_end = LLVMDIBuilderInsertDeclareAtEnd2(builder : DIBuilder,
-                                                                         storage : LibLLVM::ValueRef,
-                                                                         var_info : Metadata,
-                                                                         expr : Metadata,
-                                                                         dl : LibLLVM::ValueRef,
-                                                                         block : LibLLVM::BasicBlockRef) : LibLLVM::ValueRef
+                                                                          storage : LibLLVM::ValueRef,
+                                                                          var_info : Metadata,
+                                                                          expr : Metadata,
+                                                                          dl : LibLLVM::ValueRef,
+                                                                          block : LibLLVM::BasicBlockRef) : LibLLVM::ValueRef
 
   fun di_builder_create_expression = LLVMDIBuilderCreateExpression2(builder : DIBuilder,
-                                                                   addr : Int64*, length : SizeT) : Metadata
+                                                                    addr : Int64*, length : SizeT) : Metadata
 
   fun di_builder_get_or_create_array = LLVMDIBuilderGetOrCreateArray2(builder : DIBuilder, data : Metadata*, length : SizeT) : Metadata
   fun di_builder_create_enumerator = LLVMDIBuilderCreateEnumerator(builder : DIBuilder, name : Char*, value : Int64) : Metadata
   fun di_builder_create_enumeration_type = LLVMDIBuilderCreateEnumerationType2(builder : DIBuilder,
-                                                                              scope : Metadata, name : Char*, file : Metadata, line_number : UInt,
-                                                                              size_in_bits : UInt64, align_in_bits : UInt64, elements : Metadata, underlying_type : Metadata) : Metadata
+                                                                               scope : Metadata, name : Char*, file : Metadata, line_number : UInt,
+                                                                               size_in_bits : UInt64, align_in_bits : UInt64, elements : Metadata, underlying_type : Metadata) : Metadata
 
   fun di_builder_get_or_create_type_array = LLVMDIBuilderGetOrCreateTypeArray2(builder : DIBuilder, data : Metadata*, length : SizeT) : Metadata
   fun di_builder_create_subroutine_type = LLVMDIBuilderCreateSubroutineType2(builder : DIBuilder, file : Metadata, parameter_types : Metadata) : Metadata
 
   fun di_builder_create_struct_type = LLVMDIBuilderCreateStructType2(builder : DIBuilder,
-                                                                    scope : Metadata, name : Char*, file : Metadata, line : UInt, size_in_bits : UInt64,
-                                                                    align_in_bits : UInt64, flags : LLVM::DIFlags, derived_from : Metadata, element_types : Metadata) : Metadata
+                                                                     scope : Metadata, name : Char*, file : Metadata, line : UInt, size_in_bits : UInt64,
+                                                                     align_in_bits : UInt64, flags : LLVM::DIFlags, derived_from : Metadata, element_types : Metadata) : Metadata
 
   fun di_builder_create_member_type = LLVMDIBuilderCreateMemberType2(builder : DIBuilder,
-                                                                    scope : Metadata, name : Char*, file : Metadata, line : UInt, size_in_bits : UInt64,
-                                                                    align_in_bits : UInt64, offset_in_bits : UInt64, flags : LLVM::DIFlags, ty : Metadata) : Metadata
+                                                                     scope : Metadata, name : Char*, file : Metadata, line : UInt, size_in_bits : UInt64,
+                                                                     align_in_bits : UInt64, offset_in_bits : UInt64, flags : LLVM::DIFlags, ty : Metadata) : Metadata
 
   fun di_builder_create_pointer_type = LLVMDIBuilderCreatePointerType2(builder : DIBuilder,
-                                                                      pointee_type : Metadata,
-                                                                      size_in_bits : UInt64,
-                                                                      align_in_bits : UInt64,
-                                                                      name : Char*) : Metadata
+                                                                       pointee_type : Metadata,
+                                                                       size_in_bits : UInt64,
+                                                                       align_in_bits : UInt64,
+                                                                       name : Char*) : Metadata
 
   fun di_builder_create_replaceable_composite_type = LLVMDIBuilderCreateReplaceableCompositeType2(builder : DIBuilder,
-                                                                                                 scope : Metadata,
-                                                                                                 name : Char*,
-                                                                                                 file : Metadata,
-                                                                                                 line : UInt) : Metadata
+                                                                                                  scope : Metadata,
+                                                                                                  name : Char*,
+                                                                                                  file : Metadata,
+                                                                                                  line : UInt) : Metadata
   fun di_builder_replace_temporary = LLVMDIBuilderReplaceTemporary(builder : DIBuilder, from : Metadata, to : Metadata)
 
   fun set_current_debug_location = LLVMSetCurrentDebugLocation2(LibLLVM::BuilderRef, Int, Int, Metadata, Metadata)
