@@ -37,6 +37,7 @@ end
 
 {% begin %}
   lib LibLLVM
+    IS_71 = {{LibLLVM::VERSION.starts_with?("7.1")}}
     IS_70 = {{LibLLVM::VERSION.starts_with?("7.0")}}
     IS_60 = {{LibLLVM::VERSION.starts_with?("6.0")}}
     IS_50 = {{LibLLVM::VERSION.starts_with?("5.0")}}
