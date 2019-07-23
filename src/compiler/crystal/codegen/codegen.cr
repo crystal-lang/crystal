@@ -2031,25 +2031,34 @@ module Crystal
 
     def memset(pointer, value, size)
       pointer = cast_to_void_pointer pointer
-      call @program.memset(@llvm_mod, llvm_context),
+      res = call @program.memset(@llvm_mod, llvm_context),
         if LibLLVM::IS_LT_70
           [pointer, value, trunc(size, llvm_context.int32), int32(4), int1(0)]
         else
-          # TODO LibLLVM.set_param_alignment(pointer, 4)
-          # Assertion failed: (isa<X>(Val) && "cast<Ty>() argument of incompatible type!"), function cast, file ...src/include/llvm/Support/Casting.h, line 255.
           [pointer, value, trunc(size, llvm_context.int32), int1(0)]
         end
+
+      unless LibLLVM::IS_LT_70
+        LibLLVM.set_instr_param_alignment(res, 1, 4)
+      end
+
+      res
     end
 
     def memcpy(dest, src, len, align, volatile)
-      call @program.memcpy(@llvm_mod, llvm_context),
+      res = call @program.memcpy(@llvm_mod, llvm_context),
         if LibLLVM::IS_LT_70
           [dest, src, len, int32(align), volatile]
         else
-          # TODO LibLLVM.set_param_alignment(dest, align)
-          # TODO LibLLVM.set_param_alignment(src, align)
           [dest, src, len, volatile]
         end
+
+      unless LibLLVM::IS_LT_70
+        LibLLVM.set_instr_param_alignment(res, 1, align)
+        LibLLVM.set_instr_param_alignment(res, 2, align)
+      end
+
+      res
     end
 
     def realloc(buffer, size)
