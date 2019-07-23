@@ -45,6 +45,30 @@ describe "JSON serialization" do
       Hash(String, Int32).from_json(%({"foo": 1, "bar": 2})).should eq({"foo" => 1, "bar" => 2})
     end
 
+    it "does Hash(Int32, String)#from_json" do
+      Hash(Int32, String).from_json(%({"1": "x", "2": "y"})).should eq({1 => "x", 2 => "y"})
+    end
+
+    it "does Hash(Float32, String)#from_json" do
+      Hash(Float32, String).from_json(%({"1.23": "x", "4.56": "y"})).should eq({1.23_f32 => "x", 4.56_f32 => "y"})
+    end
+
+    it "does Hash(Float64, String)#from_json" do
+      Hash(Float64, String).from_json(%({"1.23": "x", "4.56": "y"})).should eq({1.23 => "x", 4.56 => "y"})
+    end
+
+    it "does Hash(BigInt, String)#from_json" do
+      Hash(BigInt, String).from_json(%({"12345678901234567890": "x"})).should eq({"12345678901234567890".to_big_i => "x"})
+    end
+
+    it "does Hash(BigFloat, String)#from_json" do
+      Hash(BigFloat, String).from_json(%({"1234567890.123456789": "x"})).should eq({"1234567890.123456789".to_big_f => "x"})
+    end
+
+    it "does Hash(BigDecimal, String)#from_json" do
+      Hash(BigDecimal, String).from_json(%({"1234567890.123456789": "x"})).should eq({"1234567890.123456789".to_big_d => "x"})
+    end
+
     it "raises an error Hash(String, Int32)#from_json with null value" do
       expect_raises(JSON::ParseException, "Expected int but was null") do
         Hash(String, Int32).from_json(%({"foo": 1, "bar": 2, "baz": null}))
@@ -276,8 +300,24 @@ describe "JSON serialization" do
       {"foo" => 1, "bar" => 2}.to_json.should eq(%({"foo":1,"bar":2}))
     end
 
-    it "does for Hash with non-string keys" do
+    it "does for Hash with symbol keys" do
       {:foo => 1, :bar => 2}.to_json.should eq(%({"foo":1,"bar":2}))
+    end
+
+    it "does for Hash with int keys" do
+      {1 => 2, 3 => 6}.to_json.should eq(%({"1":2,"3":6}))
+    end
+
+    it "does for Hash with Float32 keys" do
+      {1.2_f32 => 2, 3.4_f32 => 6}.to_json.should eq(%({"1.2":2,"3.4":6}))
+    end
+
+    it "does for Hash with Float64 keys" do
+      {1.2 => 2, 3.4 => 6}.to_json.should eq(%({"1.2":2,"3.4":6}))
+    end
+
+    it "does for Hash with BigInt keys" do
+      {123.to_big_i => 2}.to_json.should eq(%({"123":2}))
     end
 
     it "does for Hash with newlines" do
