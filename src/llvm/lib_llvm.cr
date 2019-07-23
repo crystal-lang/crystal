@@ -2,6 +2,10 @@
 lib LibLLVM
   LLVM_CONFIG = {{
                   `[ -n "$LLVM_CONFIG" ] && command -v "$LLVM_CONFIG" || \
+                   command -v llvm-config-7 || \
+                   (command -v llvm-config > /dev/null && (case "$(llvm-config --version)" in 7.1*) command -v llvm-config;; *) false;; esac)) || \
+                   command -v llvm-config-7.0 || command -v llvm-config70 || \
+                   (command -v llvm-config > /dev/null && (case "$(llvm-config --version)" in 7.0*) command -v llvm-config;; *) false;; esac)) || \
                    command -v llvm-config-6.0 || command -v llvm-config60 || \
                    (command -v llvm-config > /dev/null && (case "$(llvm-config --version)" in 6.0*) command -v llvm-config;; *) false;; esac)) || \
                    command -v llvm-config-5.0 || command -v llvm-config50 || \
@@ -33,11 +37,15 @@ end
 
 {% begin %}
   lib LibLLVM
+    IS_71 = {{LibLLVM::VERSION.starts_with?("7.1")}}
+    IS_70 = {{LibLLVM::VERSION.starts_with?("7.0")}}
     IS_60 = {{LibLLVM::VERSION.starts_with?("6.0")}}
     IS_50 = {{LibLLVM::VERSION.starts_with?("5.0")}}
     IS_40 = {{LibLLVM::VERSION.starts_with?("4.0")}}
     IS_39 = {{LibLLVM::VERSION.starts_with?("3.9")}}
     IS_38 = {{LibLLVM::VERSION.starts_with?("3.8")}}
+
+    IS_LT_70 = IS_38 || IS_39 || IS_40 || IS_50 || IS_60
   end
 {% end %}
 
@@ -164,6 +172,7 @@ lib LibLLVM
   fun get_insert_block = LLVMGetInsertBlock(builder : BuilderRef) : BasicBlockRef
   fun get_named_function = LLVMGetNamedFunction(mod : ModuleRef, name : UInt8*) : ValueRef
   fun get_named_global = LLVMGetNamedGlobal(mod : ModuleRef, name : UInt8*) : ValueRef
+  fun get_count_params = LLVMCountParams(fn : ValueRef) : UInt
   fun get_param = LLVMGetParam(fn : ValueRef, index : Int32) : ValueRef
   fun get_param_types = LLVMGetParamTypes(function_type : TypeRef, dest : TypeRef*)
   fun get_params = LLVMGetParams(fn : ValueRef, params : ValueRef*)
@@ -360,4 +369,14 @@ lib LibLLVM
 
   fun const_int_get_sext_value = LLVMConstIntGetSExtValue(ValueRef) : Int64
   fun const_int_get_zext_value = LLVMConstIntGetZExtValue(ValueRef) : UInt64
+
+  fun get_num_operands = LLVMGetNumOperands(val : ValueRef) : Int32
+  fun get_operand = LLVMGetOperand(val : ValueRef, index : UInt) : ValueRef
+
+  fun get_num_arg_operands = LLVMGetNumArgOperands(instr : ValueRef) : UInt
+  fun get_arg_operand = LLVMGetArgOperand(val : ValueRef, index : UInt) : ValueRef
+
+  fun set_instr_param_alignment = LLVMSetInstrParamAlignment(instr : ValueRef, index : UInt, align : UInt)
+
+  fun set_param_alignment = LLVMSetParamAlignment(arg : ValueRef, align : UInt)
 end

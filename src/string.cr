@@ -2569,7 +2569,7 @@ class String
       return ""
     elsif bytesize == 1
       return String.new(times) do |buffer|
-        Intrinsics.memset(buffer.as(Void*), to_unsafe[0], times, 0, false)
+        Intrinsics.memset(buffer.as(Void*), to_unsafe[0], times, false)
         {times, times}
       end
     end
@@ -3621,7 +3621,7 @@ class String
       end
 
       if count == 1
-        Intrinsics.memset(buffer.as(Void*), char.ord.to_u8, difference.to_u32, 0_u32, false)
+        Intrinsics.memset(buffer.as(Void*), char.ord.to_u8, difference.to_u32, false)
         buffer += difference
       else
         difference.times do
