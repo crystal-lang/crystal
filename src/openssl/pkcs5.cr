@@ -1,4 +1,5 @@
 require "openssl"
+require "openssl/algorithm"
 
 module OpenSSL::PKCS5
   def self.pbkdf2_hmac_sha1(secret, salt, iterations = 2**16, key_size = 64) : Bytes
