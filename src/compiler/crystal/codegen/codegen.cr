@@ -2031,11 +2031,25 @@ module Crystal
 
     def memset(pointer, value, size)
       pointer = cast_to_void_pointer pointer
-      call @program.memset(@llvm_mod, llvm_context), [pointer, value, trunc(size, llvm_context.int32), int32(4), int1(0)]
+      call @program.memset(@llvm_mod, llvm_context),
+        if LibLLVM::IS_LT_70
+          [pointer, value, trunc(size, llvm_context.int32), int32(4), int1(0)]
+        else
+          # TODO LibLLVM.set_param_alignment(pointer, 4)
+          # Assertion failed: (isa<X>(Val) && "cast<Ty>() argument of incompatible type!"), function cast, file ...src/include/llvm/Support/Casting.h, line 255.
+          [pointer, value, trunc(size, llvm_context.int32), int1(0)]
+        end
     end
 
     def memcpy(dest, src, len, align, volatile)
-      call @program.memcpy(@llvm_mod, llvm_context), [dest, src, len, align, volatile]
+      call @program.memcpy(@llvm_mod, llvm_context),
+        if LibLLVM::IS_LT_70
+          [dest, src, len, int32(align), volatile]
+        else
+          # TODO LibLLVM.set_param_alignment(dest, align)
+          # TODO LibLLVM.set_param_alignment(src, align)
+          [dest, src, len, volatile]
+        end
     end
 
     def realloc(buffer, size)
@@ -2162,11 +2176,29 @@ module Crystal
     end
 
     def memset(llvm_mod, llvm_context)
-      llvm_mod.functions["llvm.memset.p0i8.i32"]? || llvm_mod.functions.add("llvm.memset.p0i8.i32", [llvm_context.void_pointer, llvm_context.int8, llvm_context.int32, llvm_context.int32, llvm_context.int1], llvm_context.void)
+      llvm_mod.functions["llvm.memset.p0i8.i32"]? || begin
+        arg_types =
+          if LibLLVM::IS_LT_70
+            [llvm_context.void_pointer, llvm_context.int8, llvm_context.int32, llvm_context.int32, llvm_context.int1]
+          else
+            [llvm_context.void_pointer, llvm_context.int8, llvm_context.int32, llvm_context.int1]
+          end
+
+        llvm_mod.functions.add("llvm.memset.p0i8.i32", arg_types, llvm_context.void)
+      end
     end
 
     def memcpy(llvm_mod, llvm_context)
-      llvm_mod.functions["llvm.memcpy.p0i8.p0i8.i32"]? || llvm_mod.functions.add("llvm.memcpy.p0i8.p0i8.i32", [llvm_context.void_pointer, llvm_context.void_pointer, llvm_context.int32, llvm_context.int32, llvm_context.int1], llvm_context.void)
+      llvm_mod.functions["llvm.memcpy.p0i8.p0i8.i32"]? || begin
+        arg_types =
+          if LibLLVM::IS_LT_70
+            [llvm_context.void_pointer, llvm_context.void_pointer, llvm_context.int32, llvm_context.int32, llvm_context.int1]
+          else
+            [llvm_context.void_pointer, llvm_context.void_pointer, llvm_context.int32, llvm_context.int1]
+          end
+
+        llvm_mod.functions.add("llvm.memcpy.p0i8.p0i8.i32", arg_types, llvm_context.void)
+      end
     end
   end
 end
