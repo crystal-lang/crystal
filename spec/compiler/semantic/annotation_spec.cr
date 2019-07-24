@@ -12,8 +12,78 @@ describe "Semantic: annotation" do
     type.name.should eq("Foo")
   end
 
-  describe "#args/named_args" do
+  describe "arguments" do
     describe "#args" do
+      it "returns a NamedTupleLiteral with empty values if there are non defined" do
+        assert_type(%(
+          annotation Foo
+          end
+
+          @[Foo]
+          module Moo
+          end
+
+          {% if (args = Moo.annotation(Foo).args) && args["named"].empty? && args["positional"].empty? %}
+            1
+          {% else %}
+            'a'
+          {% end %}
+        )) { int32 }
+      end
+
+      it "returns an empty NamedTuple if there no named arguments defined" do
+        assert_type(%(
+          annotation Foo
+          end
+
+          @[Foo(1, "foo", true)]
+          module Moo
+          end
+
+          {% if (args = Moo.annotation(Foo).args) && args["named"].empty? && args["positional"] == {1, "foo", true} %}
+            1
+          {% else %}
+            'a'
+          {% end %}
+        )) { int32 }
+      end
+
+      it "returns an empty Tuple if there no positional arguments defined" do
+        assert_type(%(
+          annotation Foo
+          end
+
+          @[Foo(foo: "bar", "cat": 0..0)]
+          module Moo
+          end
+
+          {% if (args = Moo.annotation(Foo).args) && args["positional"].empty? && args["named"] == {foo: "bar", cat: 0..0} %}
+            1
+          {% else %}
+            'a'
+          {% end %}
+        )) { int32 }
+      end
+
+      it "returns a correctly with both types of args" do
+        assert_type(%(
+          annotation Foo
+          end
+
+          @[Foo(1, "foo", true, foo: "bar", "cat": 0..0)]
+            module Moo
+          end
+
+          {% if Moo.annotation(Foo).args == {named: {foo: "bar", cat: 0..0}, positional: {1, "foo", true}} %}
+            1
+          {% else %}
+            'a'
+          {% end %}
+        )) { int32 }
+      end
+    end
+
+    describe "#pos_args" do
       it "returns an empty TupleLiteral if there are none defined" do
         assert_type(%(
           annotation Foo
@@ -23,7 +93,7 @@ describe "Semantic: annotation" do
           module Moo
           end
 
-          {% if (args = Moo.annotation(Foo).args) && args.is_a? TupleLiteral && args.empty? %}
+          {% if (args = Moo.annotation(Foo).pos_args) && args.is_a? TupleLiteral && args.empty? %}
             1
           {% else %}
             'a'
@@ -40,7 +110,7 @@ describe "Semantic: annotation" do
             module Moo
           end
 
-          {% if Moo.annotation(Foo).args == {1, "foo", true} %}
+          {% if Moo.annotation(Foo).pos_args == {1, "foo", true} %}
             1
           {% else %}
             'a'
@@ -85,7 +155,7 @@ describe "Semantic: annotation" do
       end
     end
 
-    it "returns a correctly with both positional and named arguments" do
+    it "returns a correctly with #named_args and #pos_args" do
       assert_type(%(
         annotation Foo
         end
@@ -94,7 +164,7 @@ describe "Semantic: annotation" do
           module Moo
         end
 
-        {% if Moo.annotation(Foo).args == {1, "foo", true} && Moo.annotation(Foo).named_args == {foo: "bar", cat: 0..0} %}
+        {% if Moo.annotation(Foo).pos_args == {1, "foo", true} && Moo.annotation(Foo).named_args == {foo: "bar", cat: 0..0} %}
           1
         {% else %}
           'a'
