@@ -124,7 +124,7 @@ module IO::Buffered
   end
 
   # Buffered implementation of `IO#write(slice)`.
-  def write(slice : Bytes)
+  def write(slice : Bytes) : Nil
     check_open
 
     return if slice.empty?

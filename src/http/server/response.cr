@@ -74,7 +74,7 @@ class HTTP::Server
     end
 
     # See `IO#write(slice)`.
-    def write(slice : Bytes)
+    def write(slice : Bytes) : Nil
       return if slice.empty?
 
       @output.write(slice)

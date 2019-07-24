@@ -23,7 +23,7 @@ private class ReverseResponseOutput < IO
   def initialize(@output : IO)
   end
 
-  def write(slice : Bytes)
+  def write(slice : Bytes) : Nil
     slice.reverse_each do |byte|
       @output.write_byte(byte)
     end

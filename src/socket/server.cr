@@ -14,7 +14,7 @@ class Socket
     # ```
     #
     # If the server is closed after invoking this method, an `IO::Error` (closed stream) exception must be raised.
-    abstract def accept : Socket
+    abstract def accept : IO
 
     # Accepts an incoming connection and returns the client socket.
     #
@@ -29,7 +29,7 @@ class Socket
     #   socket.close
     # end
     # ```
-    abstract def accept? : Socket?
+    abstract def accept? : IO?
 
     # Accepts an incoming connection and yields the client socket to the block.
     # Eventually closes the connection when the block returns.

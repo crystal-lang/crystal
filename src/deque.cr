@@ -11,7 +11,6 @@
 # [circular buffer](https://en.wikipedia.org/wiki/Circular_buffer).
 class Deque(T)
   include Indexable(T)
-  include Comparable(Deque)
 
   # This Deque is based on a circular buffer. It works like a normal array, but when an item is removed from the left
   # side, instead of shifting all the items, only the start position is shifted. This can lead to configurations like:

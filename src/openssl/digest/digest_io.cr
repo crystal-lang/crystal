@@ -42,7 +42,7 @@ module OpenSSL
       read_bytes
     end
 
-    def write(slice : Bytes)
+    def write(slice : Bytes) : Nil
       return if slice.empty?
 
       if @mode.write?

@@ -38,7 +38,7 @@ class String::Builder < IO
     raise "Not implemented"
   end
 
-  def write(slice : Bytes)
+  def write(slice : Bytes) : Nil
     return if slice.empty?
 
     count = slice.size
