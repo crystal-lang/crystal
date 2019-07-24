@@ -89,9 +89,16 @@ prepare_build() {
   on_osx curl -L https://github.com/crystal-lang/crystal/releases/download/0.29.0/crystal-0.29.0-1-darwin-x86_64.tar.gz -o ~/crystal.tar.gz
   on_osx 'pushd ~;gunzip -c ~/crystal.tar.gz | tar xopf -;mv crystal-0.29.0-1 crystal;popd'
 
-  on_osx brew install llvm@7 gmp libevent pcre pkg-config
+  on_osx brew install llvm@8 gmp libevent pcre pkg-config
   on_osx brew upgrade libyaml
-  on_osx brew link --force llvm@7
+  on_osx brew link --force llvm@8
+  # Note: brew link --force might show:
+  #   Warning: Refusing to link macOS-provided software: llvm
+  #
+  #   If you need to have llvm first in your PATH run:
+  #     echo 'export PATH="/usr/local/opt/llvm/bin:$PATH"' >> ~/.bash_profile
+  #
+  # This is added in the .circleci/config.yml
 
   on_tag verify_version
 }
