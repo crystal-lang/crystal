@@ -5,9 +5,9 @@ GROUP_NAME = {{ `id -gn`.stringify.chomp }}
 GROUP_ID   = {{ `id -g`.stringify.chomp }}
 
 describe System::Group do
-  describe "find" do
+  describe "find_by" do
     it "returns a group by name" do
-      group = System::Group.find(name: GROUP_NAME)
+      group = System::Group.find_by(name: GROUP_NAME)
 
       group.should be_a(System::Group)
       group.name.should eq(GROUP_NAME)
@@ -16,12 +16,12 @@ describe System::Group do
 
     it "raises on nonexistent group" do
       expect_raises System::Group::NotFoundError, "No such group" do
-        System::Group.find(name: "this_group_does_not_exist")
+        System::Group.find_by(name: "this_group_does_not_exist")
       end
     end
 
     it "returns a group by id" do
-      group = System::Group.find(id: GROUP_ID)
+      group = System::Group.find_by(id: GROUP_ID)
 
       group.should be_a(System::Group)
       group.id.should eq(GROUP_ID)
@@ -30,14 +30,14 @@ describe System::Group do
 
     it "raises on nonexistent group name" do
       expect_raises System::Group::NotFoundError, "No such group" do
-        System::Group.find(id: "1234567")
+        System::Group.find_by(id: "1234567")
       end
     end
   end
 
-  describe "find?" do
+  describe "find_by?" do
     it "returns a group by name" do
-      group = System::Group.find?(name: GROUP_NAME).not_nil!
+      group = System::Group.find_by?(name: GROUP_NAME).not_nil!
 
       group.should be_a(System::Group)
       group.name.should eq(GROUP_NAME)
@@ -45,12 +45,12 @@ describe System::Group do
     end
 
     it "returns nil on nonexistent group" do
-      group = System::Group.find?(name: "this_group_does_not_exist")
+      group = System::Group.find_by?(name: "this_group_does_not_exist")
       group.should eq(nil)
     end
 
     it "returns a group by id" do
-      group = System::Group.find?(id: GROUP_ID).not_nil!
+      group = System::Group.find_by?(id: GROUP_ID).not_nil!
 
       group.should be_a(System::Group)
       group.id.should eq(GROUP_ID)
@@ -58,32 +58,32 @@ describe System::Group do
     end
 
     it "returns nil on nonexistent group id" do
-      group = System::Group.find?(id: "1234567")
+      group = System::Group.find_by?(id: "1234567")
       group.should eq(nil)
     end
   end
 
   describe "name" do
     it "is the same as the source name" do
-      System::Group.find(name: GROUP_NAME).name.should eq(GROUP_NAME)
+      System::Group.find_by(name: GROUP_NAME).name.should eq(GROUP_NAME)
     end
   end
 
   describe "id" do
     it "is the same as the source ID" do
-      System::Group.find(id: GROUP_ID).id.should eq(GROUP_ID)
+      System::Group.find_by(id: GROUP_ID).id.should eq(GROUP_ID)
     end
   end
 
   describe "members" do
     it "calls without raising" do
-      System::Group.find(name: GROUP_NAME).members
+      System::Group.find_by(name: GROUP_NAME).members
     end
   end
 
   describe "to_s" do
     it "returns a string representation" do
-      System::Group.find(name: GROUP_NAME).to_s.should eq("#{GROUP_NAME} (#{GROUP_ID})")
+      System::Group.find_by(name: GROUP_NAME).to_s.should eq("#{GROUP_NAME} (#{GROUP_ID})")
     end
   end
 end

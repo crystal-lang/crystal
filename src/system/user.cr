@@ -22,28 +22,28 @@ class System::User
   # Returns the user associated with the given username.
   #
   # Raises `NotFoundError` if no such user exists.
-  def self.find(*, name)
-    find?(name: name) || raise NotFoundError.new("No such user: #{name}")
+  def self.find_by(*, name)
+    find_by?(name: name) || raise NotFoundError.new("No such user: #{name}")
   end
 
   # Returns the user associated with the given username.
   #
   # Returns `nil` if no such user exists.
-  def self.find?(*, name)
+  def self.find_by?(*, name)
     from_username?(name)
   end
 
   # Returns the user associated with the given ID.
   #
   # Raises `NotFoundError` if no such user exists.
-  def self.find(*, id)
-    find?(id: id) || raise NotFoundError.new("No such user: #{id}")
+  def self.find_by(*, id)
+    find_by?(id: id) || raise NotFoundError.new("No such user: #{id}")
   end
 
   # Returns the user associated with the given ID.
   #
   # Returns `nil` if no such user exists.
-  def self.find?(*, id)
+  def self.find_by?(*, id)
     from_id?(id)
   end
 

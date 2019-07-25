@@ -19,28 +19,28 @@ class System::Group
   # Returns the group associated with the given name.
   #
   # Raises `NotFoundError` if no such group exists.
-  def self.find(*, name)
-    find?(name: name) || raise NotFoundError.new("No such group: #{name}")
+  def self.find_by(*, name)
+    find_by?(name: name) || raise NotFoundError.new("No such group: #{name}")
   end
 
   # Returns the group associated with the given name.
   #
   # Returns `nil` if no such group exists.
-  def self.find?(*, name)
+  def self.find_by?(*, name)
     from_name?(name)
   end
 
   # Returns the group associated with the given ID.
   #
   # Raises `NotFoundError` if no such group exists.
-  def self.find(*, id)
-    find?(id: id) || raise NotFoundError.new("No such group: #{id}")
+  def self.find_by(*, id)
+    find_by?(id: id) || raise NotFoundError.new("No such group: #{id}")
   end
 
   # Returns the group associated with the given ID.
   #
   # Returns `nil` if no such group exists.
-  def self.find?(*, id)
+  def self.find_by?(*, id)
     from_id?(id)
   end
 

@@ -5,9 +5,9 @@ USER_NAME = {{ `id -un`.stringify.chomp }}
 USER_ID   = {{ `id -u`.stringify.chomp }}
 
 describe System::User do
-  describe "find" do
+  describe "find_by" do
     it "returns a user by name" do
-      user = System::User.find(name: USER_NAME)
+      user = System::User.find_by(name: USER_NAME)
 
       user.should be_a(System::User)
       user.username.should eq(USER_NAME)
@@ -16,12 +16,12 @@ describe System::User do
 
     it "raises on a nonexistent user" do
       expect_raises System::User::NotFoundError, "No such user" do
-        System::User.find(name: "this_user_does_not_exist")
+        System::User.find_by(name: "this_user_does_not_exist")
       end
     end
 
     it "returns a user by id" do
-      user = System::User.find(id: USER_ID)
+      user = System::User.find_by(id: USER_ID)
 
       user.should be_a(System::User)
       user.user_id.should eq(USER_ID)
@@ -30,14 +30,14 @@ describe System::User do
 
     it "raises on nonexistent user id" do
       expect_raises System::User::NotFoundError, "No such user" do
-        System::User.find(id: "1234567")
+        System::User.find_by(id: "1234567")
       end
     end
   end
 
-  describe "find?" do
+  describe "find_by?" do
     it "returns a user by name" do
-      user = System::User.find?(name: USER_NAME).not_nil!
+      user = System::User.find_by?(name: USER_NAME).not_nil!
 
       user.should be_a(System::User)
       user.username.should eq(USER_NAME)
@@ -45,12 +45,12 @@ describe System::User do
     end
 
     it "returns nil on nonexistent user" do
-      user = System::User.find?(name: "this_user_does_not_exist")
+      user = System::User.find_by?(name: "this_user_does_not_exist")
       user.should eq(nil)
     end
 
     it "returns a user by id" do
-      user = System::User.find?(id: USER_ID).not_nil!
+      user = System::User.find_by?(id: USER_ID).not_nil!
 
       user.should be_a(System::User)
       user.user_id.should eq(USER_ID)
@@ -58,44 +58,44 @@ describe System::User do
     end
 
     it "returns nil on nonexistent user id" do
-      user = System::User.find?(id: "1234567")
+      user = System::User.find_by?(id: "1234567")
       user.should eq(nil)
     end
   end
 
   describe "username" do
     it "is the same as the source name" do
-      System::User.find(name: USER_NAME).username.should eq(USER_NAME)
+      System::User.find_by(name: USER_NAME).username.should eq(USER_NAME)
     end
   end
 
   describe "user_id" do
     it "is the same as the source ID" do
-      System::User.find(id: USER_ID).user_id.should eq(USER_ID)
+      System::User.find_by(id: USER_ID).user_id.should eq(USER_ID)
     end
   end
 
   describe "group_id" do
     it "calls without raising" do
-      System::User.find(name: USER_NAME).group_id
+      System::User.find_by(name: USER_NAME).group_id
     end
   end
 
   describe "directory" do
     it "calls without raising" do
-      System::User.find(name: USER_NAME).directory
+      System::User.find_by(name: USER_NAME).directory
     end
   end
 
   describe "shell" do
     it "calls without raising" do
-      System::User.find(name: USER_NAME).shell
+      System::User.find_by(name: USER_NAME).shell
     end
   end
 
   describe "to_s" do
     it "returns a string representation" do
-      System::User.find(name: USER_NAME).to_s.should eq("#{USER_NAME} (#{USER_ID})")
+      System::User.find_by(name: USER_NAME).to_s.should eq("#{USER_NAME} (#{USER_ID})")
     end
   end
 end
