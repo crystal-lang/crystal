@@ -74,7 +74,7 @@ module Crystal
     property? no_codegen = false
 
     # Maximum number of LLVM modules that are compiled in parallel
-    property n_threads = 8
+    property n_threads = 1
 
     # Default prelude file to use. This ends up adding a
     # `require "prelude"` (or whatever name is set here) to
