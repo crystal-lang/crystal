@@ -1473,6 +1473,13 @@ describe Crystal::Formatter do
     end
     CODE
 
+  assert_format <<-CODE
+    {% begin %}
+      "
+        foo"
+    {% end %}
+    CODE
+
   it "gives proper line number in syntax error inside macro" do
     source = <<-CODE
       a = 1
