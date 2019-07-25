@@ -469,6 +469,10 @@ describe "Int" do
     (4 % 2).should eq(0)
   end
 
+  it "% doesn't overflow (#7979)" do
+    (53 % 532_000_782_588_491_410).should eq(53)
+  end
+
   it "does times" do
     i = sum = 0
     3.times do |n|
