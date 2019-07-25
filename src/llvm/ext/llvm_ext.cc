@@ -95,10 +95,17 @@ LLVMMetadataRef LLVMExtDIBuilderCreateFunction(
 #endif
     bool IsOptimized,
     LLVMValueRef Func) {
+#if LLVM_VERSION_GE(8, 0)
+  DISubprogram *Sub = Dref->createFunction(
+      unwrapDI<DIScope>(Scope), StringRef(Name), StringRef(LinkageName), unwrapDI<DIFile>(File), Line,
+      unwrapDI<DISubroutineType>(CompositeType),
+      ScopeLine, Flags, DISubprogram::toSPFlags(IsLocalToUnit, IsDefinition, IsOptimized));
+#else
   DISubprogram *Sub = Dref->createFunction(
       unwrapDI<DIScope>(Scope), Name, LinkageName, unwrapDI<DIFile>(File), Line,
       unwrapDI<DISubroutineType>(CompositeType), IsLocalToUnit, IsDefinition,
       ScopeLine, Flags, IsOptimized);
+#endif
   unwrap<Function>(Func)->setSubprogram(Sub);
   return wrap(Sub);
 }

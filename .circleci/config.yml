@@ -46,6 +46,7 @@ jobs:
       <<: *env
       TRAVIS_OS_NAME: osx
     steps:
+      - run: echo 'export PATH="/usr/local/opt/llvm/bin:$PATH"' >> $BASH_ENV
       - restore_cache:
           keys:
             - brew-cache-v1
