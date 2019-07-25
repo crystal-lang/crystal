@@ -70,7 +70,7 @@ describe "JSON serialization" do
     end
 
     it "raises an error Hash(String, Int32)#from_json with null value" do
-      expect_raises(JSON::ParseException, "Expected int but was null") do
+      expect_raises(JSON::ParseException, "Expected Int but was Null") do
         Hash(String, Int32).from_json(%({"foo": 1, "bar": 2, "baz": null}))
       end
     end

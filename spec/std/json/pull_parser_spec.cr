@@ -2,42 +2,42 @@ require "spec"
 require "json"
 
 class JSON::PullParser
-  def assert(event_kind : Symbol)
+  def assert(event_kind : Kind)
     kind.should eq(event_kind)
     read_next
   end
 
   def assert(value : Nil)
-    kind.should eq(:null)
+    kind.should eq(JSON::PullParser::Kind::Null)
     read_next
   end
 
   def assert(value : Int)
-    kind.should eq(:int)
+    kind.should eq(JSON::PullParser::Kind::Int)
     int_value.should eq(value)
     read_next
   end
 
   def assert(value : Float)
-    kind.should eq(:float)
+    kind.should eq(JSON::PullParser::Kind::Float)
     float_value.should eq(value)
     read_next
   end
 
   def assert(value : Bool)
-    kind.should eq(:bool)
+    kind.should eq(JSON::PullParser::Kind::Bool)
     bool_value.should eq(value)
     read_next
   end
 
   def assert(value : String)
-    kind.should eq(:string)
+    kind.should eq(JSON::PullParser::Kind::String)
     string_value.should eq(value)
     read_next
   end
 
   def assert(value : String)
-    kind.should eq(:string)
+    kind.should eq(JSON::PullParser::Kind::String)
     string_value.should eq(value)
     read_next
     yield
@@ -62,10 +62,10 @@ class JSON::PullParser
   end
 
   def assert_array
-    kind.should eq(:begin_array)
+    kind.should eq(JSON::PullParser::Kind::BeginArray)
     read_next
     yield
-    kind.should eq(:end_array)
+    kind.should eq(JSON::PullParser::Kind::EndArray)
     read_next
   end
 
@@ -74,10 +74,10 @@ class JSON::PullParser
   end
 
   def assert_object
-    kind.should eq(:begin_object)
+    kind.should eq(JSON::PullParser::Kind::BeginObject)
     read_next
     yield
-    kind.should eq(:end_object)
+    kind.should eq(JSON::PullParser::Kind::EndObject)
     read_next
   end
 
@@ -96,7 +96,7 @@ private def assert_pull_parse(string)
   it "parses #{string}" do
     parser = JSON::PullParser.new string
     parser.assert JSON.parse(string).raw
-    parser.kind.should eq(:EOF)
+    parser.kind.should eq(JSON::PullParser::Kind::EOF)
   end
 end
 
@@ -104,7 +104,7 @@ private def assert_pull_parse_error(string)
   it "errors on #{string}" do
     expect_raises JSON::ParseException do
       parser = JSON::PullParser.new string
-      while parser.kind != :EOF
+      until parser.kind.eof?
         parser.read_next
       end
     end
@@ -166,7 +166,7 @@ describe JSON::PullParser do
     parser = JSON::PullParser.new(("[" * 513) + ("]" * 513))
     expect_raises JSON::ParseException, "Nesting of 513 is too deep" do
       while true
-        break if parser.kind == :EOF
+        break if parser.kind.eof?
         parser.read_next
       end
     end
@@ -176,7 +176,7 @@ describe JSON::PullParser do
     parser = JSON::PullParser.new((%({"x": ) * 513) + ("}" * 513))
     expect_raises JSON::ParseException, "Nesting of 513 is too deep" do
       while true
-        break if parser.kind == :EOF
+        break if parser.kind.eof?
         parser.read_next
       end
     end

@@ -25,10 +25,10 @@ end
 
 def BigDecimal.new(pull : JSON::PullParser)
   case pull.kind
-  when :int
+  when .int?
     pull.read_int
     value = pull.raw_value
-  when :float
+  when .float?
     pull.read_float
     value = pull.raw_value
   else

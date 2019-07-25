@@ -307,4 +307,18 @@ describe JSON::Builder do
       builder.start_object
     end
   end
+
+  it "#next_is_object_key?" do
+    io = IO::Memory.new
+    builder = JSON::Builder.new(io)
+    builder.next_is_object_key?.should be_false
+    builder.start_document
+    builder.next_is_object_key?.should be_false
+    builder.start_object
+    builder.next_is_object_key?.should be_true
+    builder.scalar("foo")
+    builder.next_is_object_key?.should be_false
+    builder.scalar("bar")
+    builder.next_is_object_key?.should be_true
+  end
 end
