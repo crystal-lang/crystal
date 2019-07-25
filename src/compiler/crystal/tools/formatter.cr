@@ -94,6 +94,7 @@ module Crystal
     property inside_lib
     property inside_enum
     property inside_struct_or_union
+    property indent
 
     def initialize(source)
       @lexer = Lexer.new(source)
@@ -2044,9 +2045,6 @@ module Crystal
             ex.size)
         end
 
-        lines = value.lines
-        value = lines.map { |line| "#{" " * (@indent + 2)}#{line}" }.join("\n")
-
         # The formatted contents might have heredocs for which we must preserve
         # trailing spaces, so here we copy those from the formatter we used
         # to format the contents to this formatter (we add one because we insert
@@ -2057,10 +2055,11 @@ module Crystal
 
         write_line
         write value
-        write_line
+        # No need to append a newline because the formatter value
+        # will already have it.
         write_indent
 
-        increment_lines(macro_node_line + lines.size + 1 - @line)
+        increment_lines(macro_node_line + value.lines.size + 1 - @line)
 
         next_macro_token
       else
@@ -2088,6 +2087,8 @@ module Crystal
       formatter.inside_enum = @inside_enum
       formatter.inside_struct_or_union = @inside_struct_or_union
       formatter.skip_space_or_newline
+      formatter.indent = @indent + 2
+      formatter.write_indent
       nodes.accept formatter
       {formatter, formatter.finish}
     end
@@ -4596,7 +4597,11 @@ module Crystal
       skip_space
       write_line
       skip_space_or_newline last: true
-      result = to_s.strip
+
+      # rstrip instead of string in case this is a subformat
+      # (we want to preserve the leading indentation)
+      result = to_s.rstrip
+
       lines = result.split('\n')
       fix_heredocs(lines, @heredoc_fixes)
       align_infos(lines, @when_infos)
