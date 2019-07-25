@@ -175,6 +175,10 @@ describe Time do
     end
   end
 
+  it "UNIX_EPOCH" do
+    Time::UNIX_EPOCH.should eq(Time.utc(1970, 1, 1))
+  end
+
   it ".unix" do
     seconds = 1439404155
     time = Time.unix(seconds)

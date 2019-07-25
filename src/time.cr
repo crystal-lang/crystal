@@ -268,7 +268,7 @@ struct Time
   # ```
   # Time.utc - Time::UNIX_EPOCH
   # ```
-  UNIX_EPOCH = utc(1970, 1, 1)
+  UNIX_EPOCH = new(unsafe_utc_seconds: 62135596800)
 
   # :nodoc:
   MAX_SECONDS = 315537897599_i64
@@ -485,6 +485,13 @@ struct Time
     unless 0 <= @nanoseconds < NANOSECONDS_PER_SECOND
       raise ArgumentError.new "Invalid time: nanoseconds out of range"
     end
+  end
+
+  # :nodoc:
+  protected def initialize(*, unsafe_utc_seconds : Int64)
+    @seconds = unsafe_utc_seconds
+    @nanoseconds = 0
+    @location = Location::UTC
   end
 
   # Creates a new `Time` instance that corresponds to the number of *seconds*
