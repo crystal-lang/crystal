@@ -96,7 +96,7 @@ module LLVM::ValueMethods
   end
 
   def to_value
-    LLVM::Value.new unwrap
+    LLVM::Value.new @unwrap
   end
 
   def dump

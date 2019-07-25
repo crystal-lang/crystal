@@ -447,6 +447,8 @@ describe "Code gen: class" do
 
   it "allows using self in class scope" do
     run(%(
+      require "prelude"
+
       class Foo
         def self.foo
           1
@@ -713,6 +715,8 @@ describe "Code gen: class" do
 
   it "codegens singleton (#718)" do
     run(%(
+      require "prelude"
+
       class Singleton
         @@instance = new
 

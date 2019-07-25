@@ -82,6 +82,7 @@ class Crystal::CodeGenVisitor
 
   def initialize_class_var(class_var : MetaTypeVar, initializer : ClassVarInitializer)
     init_func = create_initialize_class_var_function(class_var, initializer)
+    init_func = check_main_fun(init_func.name, init_func) if init_func
 
     # For unsafe class var we just initialize them without
     # using a flag to know if they were initialized
@@ -89,7 +90,6 @@ class Crystal::CodeGenVisitor
       global = declare_class_var(class_var)
       global = ensure_class_var_in_this_module(global, class_var)
       if init_func
-        check_main_fun init_func.name, init_func
         call init_func
       end
       return global
@@ -97,20 +97,12 @@ class Crystal::CodeGenVisitor
 
     global, initialized_flag = declare_class_var_and_initialized_flag_in_this_module(class_var)
 
-    initialized_block, not_initialized_block = new_blocks "initialized", "not_initialized"
+    lazy_initialize_class_var(initializer.node, init_func, global, initialized_flag)
+  end
 
-    initialized = load(initialized_flag)
-    cond initialized, initialized_block, not_initialized_block
-
-    position_at_end not_initialized_block
-    store int1(1), initialized_flag
-
-    init_func = check_main_fun init_func.name, init_func
-    call init_func
-
-    br initialized_block
-
-    position_at_end initialized_block
+  def lazy_initialize_class_var(node, init_func, global, initialized_flag)
+    set_current_debug_location node if @debug.line_numbers?
+    run_once(initialized_flag, init_func)
 
     global
   end
@@ -317,22 +309,8 @@ class Crystal::CodeGenVisitor
 
     in_main do
       define_main_function(fun_name, ([] of LLVM::Type), llvm_type(class_var.type).pointer) do |func|
-        initialized_block, not_initialized_block = new_blocks "initialized", "not_initialized"
-
-        initialized = load(initialized_flag)
-        cond initialized, initialized_block, not_initialized_block
-
-        position_at_end not_initialized_block
-        store int1(1), initialized_flag
-
-        check_main_fun init_func.name, init_func
-        call init_func
-
-        br initialized_block
-
-        position_at_end initialized_block
-
-        ret global
+        init_func = check_main_fun init_func.name, init_func
+        ret lazy_initialize_class_var(initializer.node, init_func, global, initialized_flag)
       end
     end
   end

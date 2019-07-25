@@ -250,10 +250,11 @@ describe "Code gen: pointer" do
   end
 
   it "gets pointer to constant" do
-    run("
+    run(%(
+      require "prelude"
       FOO = 1
       pointerof(FOO).value
-    ").to_i.should eq(1)
+    )).to_i.should eq(1)
   end
 
   it "passes pointer of pointer to method" do
@@ -324,6 +325,8 @@ describe "Code gen: pointer" do
 
   it "does pointerof class variable with class" do
     run(%(
+      require "prelude"
+
       class Bar
         def initialize(@x : Int32)
         end
