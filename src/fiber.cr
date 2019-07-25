@@ -1,4 +1,3 @@
-require "c/sys/mman"
 require "thread/linked_list"
 require "./fiber/context"
 require "./fiber/stack_pool"
