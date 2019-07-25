@@ -1,3 +1,5 @@
+require "crystal/system/fiber"
+
 class Fiber
   # :nodoc:
   class StackPool
@@ -13,7 +15,7 @@ class Fiber
     def collect(count = lazy_size // 2)
       count.times do
         if stack = @mutex.synchronize { @deque.shift? }
-          LibC.munmap(stack, STACK_SIZE)
+          Crystal::System::Fiber.free_stack(stack, STACK_SIZE)
         else
           return
         end
@@ -22,7 +24,7 @@ class Fiber
 
     # Removes a stack from the bottom of the pool, or allocates a new one.
     def checkout
-      stack = @mutex.synchronize { @deque.pop? } || allocate
+      stack = @mutex.synchronize { @deque.pop? } || Crystal::System::Fiber.allocate_stack(STACK_SIZE)
       {stack, stack + STACK_SIZE}
     end
 
@@ -35,23 +37,6 @@ class Fiber
     # bigger or smaller than the actual size.
     def lazy_size
       @mutex.synchronize { @deque.size }
-    end
-
-    private def allocate
-      flags = LibC::MAP_PRIVATE | LibC::MAP_ANON
-      {% if flag?(:openbsd) && !flag?(:"openbsd6.2") %}
-        flags |= LibC::MAP_STACK
-      {% end %}
-
-      pointer = LibC.mmap(nil, STACK_SIZE, LibC::PROT_READ | LibC::PROT_WRITE, flags, -1, 0)
-      raise Errno.new("Cannot allocate new fiber stack") if pointer == LibC::MAP_FAILED
-
-      {% if flag?(:linux) %}
-        LibC.madvise(pointer, STACK_SIZE, LibC::MADV_NOHUGEPAGE)
-      {% end %}
-
-      LibC.mprotect(pointer, 4096, LibC::PROT_NONE)
-      pointer
     end
   end
 end
