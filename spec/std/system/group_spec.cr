@@ -5,7 +5,7 @@ GROUP_NAME = {{ `id -gn`.stringify.chomp }}
 GROUP_ID   = {{ `id -g`.stringify.chomp }}
 
 describe System::Group do
-  describe ".find_by" do
+  describe ".find_by(*, name)" do
     it "returns a group by name" do
       group = System::Group.find_by(name: GROUP_NAME)
 
@@ -19,7 +19,9 @@ describe System::Group do
         System::Group.find_by(name: "this_group_does_not_exist")
       end
     end
+  end
 
+  describe ".find_by(*, id)" do
     it "returns a group by id" do
       group = System::Group.find_by(id: GROUP_ID)
 
@@ -35,7 +37,7 @@ describe System::Group do
     end
   end
 
-  describe ".find_by?" do
+  describe ".find_by?(*, name)" do
     it "returns a group by name" do
       group = System::Group.find_by?(name: GROUP_NAME).not_nil!
 
@@ -48,7 +50,9 @@ describe System::Group do
       group = System::Group.find_by?(name: "this_group_does_not_exist")
       group.should eq(nil)
     end
+  end
 
+  describe ".find_by(*, id)" do
     it "returns a group by id" do
       group = System::Group.find_by?(id: GROUP_ID).not_nil!
 

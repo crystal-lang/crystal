@@ -5,7 +5,7 @@ USER_NAME = {{ `id -un`.stringify.chomp }}
 USER_ID   = {{ `id -u`.stringify.chomp }}
 
 describe System::User do
-  describe ".find_by" do
+  describe ".find_by(*, name)" do
     it "returns a user by name" do
       user = System::User.find_by(name: USER_NAME)
 
@@ -19,7 +19,9 @@ describe System::User do
         System::User.find_by(name: "this_user_does_not_exist")
       end
     end
+  end
 
+  describe ".find_by(*, id)" do
     it "returns a user by id" do
       user = System::User.find_by(id: USER_ID)
 
@@ -35,7 +37,7 @@ describe System::User do
     end
   end
 
-  describe ".find_by?" do
+  describe ".find_by?(*, name)" do
     it "returns a user by name" do
       user = System::User.find_by?(name: USER_NAME).not_nil!
 
@@ -48,7 +50,9 @@ describe System::User do
       user = System::User.find_by?(name: "this_user_does_not_exist")
       user.should eq(nil)
     end
+  end
 
+  describe ".find_by?(*, id)" do
     it "returns a user by id" do
       user = System::User.find_by?(id: USER_ID).not_nil!
 
