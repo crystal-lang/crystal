@@ -4,12 +4,15 @@ module Crystal::System::Group
   private GETGR_R_SIZE_MAX = 1024 * 16
 
   private def extract_members(gr_mem)
-    members = Array(String).new
-
     n = 0
     while gr_mem[n]
-      members << String.new(gr_mem[n])
       n += 1
+    end
+
+    members = Array(String).new(n)
+
+    n.times do |i|
+      members << String.new(gr_mem[i])
     end
 
     members
