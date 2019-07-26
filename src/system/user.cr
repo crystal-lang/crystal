@@ -1,5 +1,13 @@
 require "crystal/system/user"
 
+# Represents a user on the host system.
+#
+# Users can be retrieved by either username or their user ID:
+#
+# ```
+# System::User.find_by name: "root"
+# System::User.find_by id: "1000"
+# ```
 class System::User
   # Raised on user lookup failure.
   class NotFoundError < Exception
@@ -33,28 +41,28 @@ class System::User
   # Returns the user associated with the given username.
   #
   # Raises `NotFoundError` if no such user exists.
-  def self.find_by(*, name)
+  def self.find_by(*, name : String)
     find_by?(name: name) || raise NotFoundError.new("No such user: #{name}")
   end
 
   # Returns the user associated with the given username.
   #
   # Returns `nil` if no such user exists.
-  def self.find_by?(*, name)
+  def self.find_by?(*, name : String)
     from_username?(name)
   end
 
   # Returns the user associated with the given ID.
   #
   # Raises `NotFoundError` if no such user exists.
-  def self.find_by(*, id)
+  def self.find_by(*, id : String)
     find_by?(id: id) || raise NotFoundError.new("No such user: #{id}")
   end
 
   # Returns the user associated with the given ID.
   #
   # Returns `nil` if no such user exists.
-  def self.find_by?(*, id)
+  def self.find_by?(*, id : String)
     from_id?(id)
   end
 
