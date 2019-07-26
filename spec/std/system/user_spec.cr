@@ -5,7 +5,7 @@ USER_NAME = {{ `id -un`.stringify.chomp }}
 USER_ID   = {{ `id -u`.stringify.chomp }}
 
 describe System::User do
-  describe "find_by" do
+  describe ".find_by" do
     it "returns a user by name" do
       user = System::User.find_by(name: USER_NAME)
 
@@ -35,7 +35,7 @@ describe System::User do
     end
   end
 
-  describe "find_by?" do
+  describe ".find_by?" do
     it "returns a user by name" do
       user = System::User.find_by?(name: USER_NAME).not_nil!
 
@@ -63,37 +63,43 @@ describe System::User do
     end
   end
 
-  describe "username" do
+  describe "#username" do
     it "is the same as the source name" do
       System::User.find_by(name: USER_NAME).username.should eq(USER_NAME)
     end
   end
 
-  describe "user_id" do
+  describe "#user_id" do
     it "is the same as the source ID" do
       System::User.find_by(id: USER_ID).user_id.should eq(USER_ID)
     end
   end
 
-  describe "group_id" do
+  describe "#group_id" do
     it "calls without raising" do
       System::User.find_by(name: USER_NAME).group_id
     end
   end
 
-  describe "home_directory" do
+  describe "#name" do
+    it "calls without raising" do
+      System::User.find_by(name: USER_NAME).name
+    end
+  end
+
+  describe "#home_directory" do
     it "calls without raising" do
       System::User.find_by(name: USER_NAME).home_directory
     end
   end
 
-  describe "shell" do
+  describe "#shell" do
     it "calls without raising" do
       System::User.find_by(name: USER_NAME).shell
     end
   end
 
-  describe "to_s" do
+  describe "#to_s" do
     it "returns a string representation" do
       System::User.find_by(name: USER_NAME).to_s.should eq("#{USER_NAME} (#{USER_ID})")
     end
