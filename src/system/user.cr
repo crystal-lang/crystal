@@ -28,14 +28,14 @@ class System::User
   getter name : String
 
   # The user's home directory.
-  getter directory : String
+  getter home_directory : String
 
   # The user's login shell.
   getter shell : String
 
   def_equals_and_hash @user_id
 
-  private def initialize(@username, @user_id, @group_id, @name, @directory, @shell)
+  private def initialize(@username, @user_id, @group_id, @name, @home_directory, @shell)
   end
 
   # Returns the user associated with the given username.

@@ -81,9 +81,9 @@ describe System::User do
     end
   end
 
-  describe "directory" do
+  describe "home_directory" do
     it "calls without raising" do
-      System::User.find_by(name: USER_NAME).directory
+      System::User.find_by(name: USER_NAME).home_directory
     end
   end
 
