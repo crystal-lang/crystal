@@ -28,7 +28,9 @@ module Crystal::System::User
   end
 
   private def from_id?(id : String)
-    id = id.to_u32
+    id = id.to_u32?
+    return unless id
+
     pwd = uninitialized LibC::Passwd
     pwd_pointer = pointerof(pwd)
     initial_buf = uninitialized UInt8[1024]

@@ -39,7 +39,9 @@ module Crystal::System::Group
   end
 
   private def from_id?(groupid : String)
-    groupid = groupid.to_u32
+    groupid = groupid.to_u32?
+    return unless groupid
+
     grp = uninitialized LibC::Group
     grp_pointer = pointerof(grp)
     initial_buf = uninitialized UInt8[1024]
