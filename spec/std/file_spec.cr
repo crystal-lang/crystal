@@ -270,7 +270,7 @@ describe "File" do
     end
   end
 
-  describe "symlink?" do
+  describe ".readlink" do
     it "reads link" do
       File.readlink(datapath("symlink.txt")).should eq "test_file.txt"
     end
