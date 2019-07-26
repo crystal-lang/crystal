@@ -37,7 +37,7 @@ class HTTP::StaticFileHandler
 
     original_path = context.request.path.not_nil!
     is_dir_path = original_path.ends_with? "/"
-    request_path = self.request_path(URI.unescape(original_path))
+    request_path = self.request_path(URI.decode(original_path))
 
     # File path cannot contains '\0' (NUL) because all filesystem I know
     # don't accept '\0' character as file name.
@@ -92,7 +92,7 @@ class HTTP::StaticFileHandler
   private def redirect_to(context, url)
     context.response.status = :found
 
-    url = URI.escape(url) { |byte| URI.unreserved?(byte) || byte.chr == '/' }
+    url = URI.encode(url)
     context.response.headers.add "Location", url
   end
 
@@ -132,7 +132,7 @@ class HTTP::StaticFileHandler
 
     def escaped_request_path
       @escaped_request_path ||= begin
-        esc_path = URI.escape(request_path) { |byte| URI.unreserved?(byte) || byte.chr == '/' }
+        esc_path = URI.encode(request_path)
         esc_path = esc_path.chomp('/')
         esc_path
       end

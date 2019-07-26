@@ -28,8 +28,8 @@ module HTTP
                    @expires : Time? = nil, @domain : String? = nil,
                    @secure : Bool = false, @http_only : Bool = false,
                    @samesite : SameSite? = nil, @extension : String? = nil)
-      @name = URI.unescape name
-      @value = URI.unescape value
+      @name = URI.decode_www_form name
+      @value = URI.decode_www_form value
     end
 
     def to_set_cookie_header
@@ -38,7 +38,7 @@ module HTTP
       domain = @domain
       samesite = @samesite
       String.build do |header|
-        header << "#{URI.escape @name}=#{URI.escape value}"
+        header << to_cookie_header
         header << "; domain=#{domain}" if domain
         header << "; path=#{path}" if path
         header << "; expires=#{HTTP.format_time(expires)}" if expires
@@ -50,7 +50,7 @@ module HTTP
     end
 
     def to_cookie_header
-      "#{@name}=#{URI.escape value}"
+      "#{URI.encode_www_form(@name)}=#{URI.encode_www_form(value)}"
     end
 
     def expired?

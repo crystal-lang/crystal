@@ -1,4 +1,5 @@
 require "./uri/uri_parser"
+require "./uri/encoding"
 
 # This class represents a URI reference as defined by [RFC 3986: Uniform Resource Identifier
 # (URI): Generic Syntax](https://www.ietf.org/rfc/rfc3986.txt).
@@ -19,6 +20,31 @@ require "./uri/uri_parser"
 # uri.query  # => "id=30&limit=5"
 # uri.to_s   # => "http://foo.com/posts?id=30&limit=5#time=1305298413"
 # ```
+#
+# # URL Encoding
+#
+# This class provides a number of methods for encoding and decoding strings using
+# URL Encoding (also known as Percent Encoding) as defined in [RFC 3986](https://www.ietf.org/rfc/rfc3986.txt)
+# as well as [`x-www-form-urlencoded`](https://url.spec.whatwg.org/#urlencoded-serializing).
+#
+# Each method has two variants, one returns a string, the other writes directly
+# to an IO.
+#
+# * `.decode(string : String, *, plus_to_space : Bool = false) : String`: Decodes a URL-encoded string.
+# * `.decode(string : String, io : IO, *, plus_to_space : Bool = false) : Nil`: Decodes a URL-encoded string to an IO.
+# * `.encode(string : String, *, space_to_plus : Bool = false) : String`: URL-encodes a string.
+# * `.encode(string : String, io : IO, *, space_to_plus : Bool = false) : Nil`: URL-encodes a string to an IO.
+# * `.decode_www_form(string : String, *, plus_to_space : Bool = true) : String`: Decodes an `x-www-form-urlencoded` string component.
+# * `.decode_www_form(string : String, io : IO, *, plus_to_space : Bool = true) : Nil`: Decodes an `x-www-form-urlencoded` string component to an IO.
+# * `.encode_www_form(string : String, *, space_to_plus : Bool = true) : String`: Encodes a string as a `x-www-form-urlencoded` component.
+# * `.encode_www_form(string : String, io : IO, *, space_to_plus : Bool = true) : Nil`: Encodes a string as a `x-www-form-urlencoded` component to an IO.
+#
+# The main difference is that `.encode_www_form` encodes reserved characters
+# (see `.reserved?`), while `.encode` does not. The decode methods are exactly
+# similar except for the handling of `+` characters.
+#
+# NOTE: `HTTP::Params` provides a higher-level API for handling `x-www-form-urlencoded`
+# serialized data.
 class URI
   class Error < Exception
   end
@@ -185,9 +211,7 @@ class URI
       io << '@'
     end
     if host = @host
-      URI.escape(host, io) do |byte|
-        URI.unreserved?(byte) || URI.reserved?(byte)
-      end
+      URI.encode(host, io)
     end
     if port = @port
       io << ':' << port
@@ -256,128 +280,6 @@ class URI
     URI::Parser.new(raw_url).run.uri
   end
 
-  # URL-decodes the given *string*.
-  #
-  # If *plus_to_space* is `true`, all plus characters (`0x2B`) will be replaced by ' '.
-  # E.g. `application/x-www-form-urlencoded` wants this replace.
-  #
-  # ```
-  # require "uri"
-  #
-  # URI.unescape("%27Stop%21%27%20said%20Fred")                  # => "'Stop!' said Fred"
-  # URI.unescape("%27Stop%21%27+said+Fred", plus_to_space: true) # => "'Stop!' said Fred"
-  # ```
-  def self.unescape(string : String, plus_to_space = false) : String
-    String.build { |io| unescape(string, io, plus_to_space) }
-  end
-
-  # URL-decodes the given *string*.
-  #
-  # This method requires a block, the block is called with each byte
-  # whose codepoint is less than `0x80`. The bytes that return
-  # `true` in the block are not unescaped, other bytes are unescaped.
-  def self.unescape(string : String, plus_to_space = false, &block) : String
-    String.build { |io| unescape(string, io, plus_to_space) { |byte| yield byte } }
-  end
-
-  # URL-decodes the given *string* and writes the result to *io*.
-  def self.unescape(string : String, io : IO, plus_to_space = false)
-    self.unescape(string, io, plus_to_space) { false }
-  end
-
-  # URL-decodes the given *string* and writes the result to *io*.
-  #
-  # This method requires a block.
-  def self.unescape(string : String, io : IO, plus_to_space = false, &block)
-    i = 0
-    bytesize = string.bytesize
-    while i < bytesize
-      byte = string.unsafe_byte_at(i)
-      char = byte.unsafe_chr
-      i = unescape_one(string, bytesize, i, byte, char, io, plus_to_space) { |byte| yield byte }
-    end
-    io
-  end
-
-  # URL-encodes the given *string*.
-  #
-  # If *space_to_plus* is `true`, all space characters (0x20) are replaced by `'+'` and `'+'` is
-  # encoded to `'%2B'`. E.g. `application/x-www-form-urlencoded` wants this replace.
-  #
-  # ```
-  # require "uri"
-  #
-  # URI.escape("'Stop!' said Fred")                      # => "%27Stop%21%27%20said%20Fred"
-  # URI.escape("'Stop!' said Fred", space_to_plus: true) # => "%27Stop%21%27+said+Fred"
-  # ```
-  def self.escape(string : String, space_to_plus = false) : String
-    String.build { |io| escape(string, io, space_to_plus) }
-  end
-
-  # URL-encodes the given *string*.
-  #
-  # This method requires a block, the block is called with each byte
-  # whose codepoint is less than `0x80`. The bytes that return
-  # `true` in the block are not escaped, other bytes are escaped.
-  #
-  # ```
-  # require "uri"
-  #
-  # # Escape URI path
-  # URI.escape("/foo/file?(1).txt") do |byte|
-  #   URI.unreserved?(byte) || byte.chr == '/'
-  # end
-  # # => "/foo/file%3F%281%29.txt"
-  # ```
-  def self.escape(string : String, space_to_plus = false, &block) : String
-    String.build { |io| escape(string, io, space_to_plus) { |byte| yield byte } }
-  end
-
-  # URL-encodes the given *string* and writes the result to *io*.
-  def self.escape(string : String, io : IO, space_to_plus = false)
-    self.escape(string, io, space_to_plus) { |byte| URI.unreserved? byte }
-  end
-
-  # URL-encodes the given *string* and writes the result to *io*.
-  #
-  # This method requires a block.
-  def self.escape(string : String, io : IO, space_to_plus = false, &block)
-    string.each_byte do |byte|
-      char = byte.unsafe_chr
-      if char == ' ' && space_to_plus
-        io.write_byte '+'.ord.to_u8
-      elsif char.ascii? && yield(byte) && (!space_to_plus || char != '+')
-        io.write_byte byte
-      else
-        io.write_byte '%'.ord.to_u8
-        io.write_byte '0'.ord.to_u8 if byte < 16
-        byte.to_s(16, io, upcase: true)
-      end
-    end
-    io
-  end
-
-  # Returns whether given byte is reserved character defined in
-  # [RFC 3986](https://tools.ietf.org/html/rfc3986).
-  #
-  # Reserved characters are ':', '/', '?', '#', '[', ']', '@', '!',
-  # '$', '&', "'", '(', ')', '*', '+', ',', ';' and '='.
-  def self.reserved?(byte) : Bool
-    char = byte.unsafe_chr
-    '&' <= char <= ',' ||
-      {'!', '#', '$', '/', ':', ';', '?', '@', '[', ']', '='}.includes?(char)
-  end
-
-  # Returns whether given byte is unreserved character defined in
-  # [RFC 3986](https://tools.ietf.org/html/rfc3986).
-  #
-  # Unreserved characters are ASCII letters, ASCII digits, '_', '.', '-' and '~'.
-  def self.unreserved?(byte) : Bool
-    char = byte.unsafe_chr
-    char.ascii_alphanumeric? ||
-      {'_', '.', '-', '~'}.includes?(char)
-  end
-
   # Returns the user-information component containing
   # the provided username and password.
   #
@@ -387,59 +289,33 @@ class URI
   # uri = URI.parse "http://admin:password@foo.com"
   # uri.userinfo # => "admin:password"
   # ```
+  #
+  # The return value is URL encoded (see `#encode_www_form`).
   def userinfo
     if user = @user
       String.build { |io| userinfo(user, io) }
     end
   end
 
-  # :nodoc:
-  def self.unescape_one(string, bytesize, i, byte, char, io, plus_to_space = false)
-    self.unescape_one(string, bytesize, i, byte, char, io, plus_to_space) { false }
+  private def userinfo(user, io)
+    URI.encode_www_form(user, io)
+    if password = @password
+      io << ':'
+      URI.encode_www_form(password, io)
+    end
   end
 
-  # :nodoc:
-  # Unescapes one character. Private API
-  def self.unescape_one(string, bytesize, i, byte, char, io, plus_to_space = false)
-    if plus_to_space && char == '+'
-      io.write_byte ' '.ord.to_u8
-      i += 1
-      return i
-    end
-
-    if char == '%' && i < bytesize - 2
-      i += 1
-      first = string.unsafe_byte_at(i)
-      first_num = first.unsafe_chr.to_i? 16
-      unless first_num
-        io.write_byte byte
-        return i
-      end
-
-      i += 1
-      second = string.unsafe_byte_at(i)
-      second_num = second.unsafe_chr.to_i? 16
-      unless second_num
-        io.write_byte byte
-        io.write_byte first
-        return i
-      end
-
-      encoded = (first_num * 16 + second_num).to_u8
-      i += 1
-      if encoded < 0x80 && yield encoded
-        io.write_byte byte
-        io.write_byte first
-        io.write_byte second
-        return i
-      end
-      io.write_byte encoded
-      return i
-    end
-
-    io.write_byte byte
-    i += 1
-    i
+  # Parses `raw_url` into an URI. The `raw_url` may be relative or absolute.
+  #
+  # ```
+  # require "uri"
+  #
+  # uri = URI.parse("http://crystal-lang.org") # => #<URI:0x1068a7e40 @scheme="http", @host="crystal-lang.org", ... >
+  # uri.scheme                                 # => "http"
+  # uri.host                                   # => "crystal-lang.org"
+  # ```
+  def self.parse(raw_url : String) : URI
+    URI::Parser.new(raw_url).run.uri
   end
 
   # [RFC 3986 6.2.2.3](https://tools.ietf.org/html/rfc3986#section-5.2.4)
@@ -492,14 +368,6 @@ class URI
     end
 
     result.join
-  end
-
-  private def userinfo(user, io)
-    URI.escape(user, io)
-    if password = @password
-      io << ':'
-      URI.escape(password, io)
-    end
   end
 
   # A map of schemes and their respective default ports, seeded

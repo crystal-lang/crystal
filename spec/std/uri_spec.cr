@@ -8,6 +8,46 @@ private def assert_uri(string, file = __FILE__, line = __LINE__, **args)
   end
 end
 
+private def it_encodes(string, expected_result, file = __FILE__, line = __LINE__, **options)
+  it "encodes #{string.inspect}", file, line do
+    URI.encode(string, **options).should eq(expected_result), file, line
+
+    String.build do |io|
+      URI.encode(string, io, **options)
+    end.should eq(expected_result), file, line
+  end
+end
+
+private def it_decodes(string, expected_result, file = __FILE__, line = __LINE__, **options)
+  it "decodes #{string.inspect}", file, line do
+    URI.decode(string, **options).should eq(expected_result), file, line
+
+    String.build do |io|
+      URI.decode(string, io, **options)
+    end.should eq(expected_result), file, line
+  end
+end
+
+private def it_encodes_www_form(string, expected_result, file = __FILE__, line = __LINE__, **options)
+  it "encodes #{string.inspect}", file, line do
+    URI.encode_www_form(string, **options).should eq(expected_result), file, line
+
+    String.build do |io|
+      URI.encode_www_form(string, io, **options)
+    end.should eq(expected_result), file, line
+  end
+end
+
+private def it_decodes_www_form(string, expected_result, file = __FILE__, line = __LINE__, **options)
+  it "decodes #{string.inspect}", file, line do
+    URI.decode_www_form(string, **options).should eq(expected_result), file, line
+
+    String.build do |io|
+      URI.decode_www_form(string, io, **options)
+    end.should eq(expected_result), file, line
+  end
+end
+
 describe "URI" do
   describe ".parse" do
     # scheme
@@ -224,6 +264,7 @@ describe "URI" do
     it { URI.parse("http://www.example.com").userinfo.should be_nil }
     it { URI.parse("http://foo@www.example.com").userinfo.should eq("foo") }
     it { URI.parse("http://foo:bar@www.example.com").userinfo.should eq("foo:bar") }
+    it { URI.new(user: "ä /", password: "ö :").userinfo.should eq("%C3%A4+%2F:%C3%B6+%3A") }
   end
 
   describe "to_s" do
@@ -305,112 +346,96 @@ describe "URI" do
     end
   end
 
-  describe ".unescape" do
-    {
-      {"hello", "hello"},
-      {"hello%20world", "hello world"},
-      {"hello+world", "hello+world"},
-      {"hello%", "hello%"},
-      {"hello%2", "hello%2"},
-      {"hello%2B", "hello+"},
-      {"hello%2Bworld", "hello+world"},
-      {"hello%2%2Bworld", "hello%2+world"},
-      {"%E3%81%AA%E3%81%AA", "なな"},
-      {"%e3%81%aa%e3%81%aa", "なな"},
-      {"%27Stop%21%27+said+Fred", "'Stop!'+said+Fred"},
-    }.each do |(from, to)|
-      it "unescapes #{from}" do
-        URI.unescape(from).should eq(to)
-      end
+  describe ".decode" do
+    it_decodes("hello", "hello")
+    it_decodes("hello%20world", "hello world")
+    it_decodes("hello+world", "hello+world")
+    it_decodes("hello%", "hello%")
+    it_decodes("hello%2", "hello%2")
+    it_decodes("hello%2B", "hello+")
+    it_decodes("hello%2Bworld", "hello+world")
+    it_decodes("hello%2%2Bworld", "hello%2+world")
+    it_decodes("%E3%81%AA%E3%81%AA", "なな")
+    it_decodes("%e3%81%aa%e3%81%aa", "なな")
+    it_decodes("%27Stop%21%27+said+Fred", "'Stop!'+said+Fred")
+    it_decodes("hello+world", "hello world", plus_to_space: true)
+    it_decodes("+%2B %20", "++  ")
 
-      it "unescapes #{from} to IO" do
-        String.build do |str|
-          URI.unescape(from, str)
-        end.should eq(to)
-      end
-    end
-
-    it "unescapes plus to space" do
-      URI.unescape("hello+world", plus_to_space: true).should eq("hello world")
-      String.build do |str|
-        URI.unescape("hello+world", str, plus_to_space: true)
-      end.should eq("hello world")
-    end
-
-    it "does not unescape string when block returns true" do
-      URI.unescape("hello%26world") { |byte| URI.reserved? byte }
-        .should eq("hello%26world")
+    it "does not decode string when block returns true" do
+      String.build do |io|
+        URI.decode("hello%26world", io) { |byte| URI.reserved? byte }
+      end.should eq("hello%26world")
     end
   end
 
-  describe ".escape" do
-    [
-      {"hello", "hello"},
-      {"hello%20world", "hello world"},
-      {"hello%25", "hello%"},
-      {"hello%252", "hello%2"},
-      {"hello%2B", "hello+"},
-      {"hello%2Bworld", "hello+world"},
-      {"hello%252%2Bworld", "hello%2+world"},
-      {"%E3%81%AA%E3%81%AA", "なな"},
-      {"%27Stop%21%27%20said%20Fred", "'Stop!' said Fred"},
-      {"%0A", "\n"},
-    ].each do |(from, to)|
-      it "escapes #{to}" do
-        URI.escape(to).should eq(from)
-      end
+  describe ".encode" do
+    it_encodes("hello", "hello")
+    it_encodes("hello world", "hello%20world")
+    it_encodes("hello%", "hello%25")
+    it_encodes("hello%2", "hello%252")
+    it_encodes("hello+", "hello+")
+    it_encodes("hello+world", "hello+world")
+    it_encodes("hello%2+world", "hello%252+world")
+    it_encodes("なな", "%E3%81%AA%E3%81%AA")
+    it_encodes("'Stop!' said Fred", "'Stop!'%20said%20Fred")
+    it_encodes("\n", "%0A")
+    it_encodes("https://en.wikipedia.org/wiki/Crystal (programming language)", "https://en.wikipedia.org/wiki/Crystal%20(programming%20language)")
+    it_encodes("\xFF", "%FF") # encodes invalid UTF-8 character
+    it_encodes("hello world", "hello+world", space_to_plus: true)
+    it_encodes("'Stop!' said Fred", "'Stop!'+said+Fred", space_to_plus: true)
 
-      it "escapes #{to} to IO" do
-        String.build do |str|
-          URI.escape(to, str)
-        end.should eq(from)
-      end
-    end
-
-    describe "invalid utf8 strings" do
-      input = String.new(1) { |buf| buf.value = 255_u8; {1, 0} }
-
-      it "escapes without failing" do
-        URI.escape(input).should eq("%FF")
-      end
-
-      it "escapes to IO without failing" do
-        String.build do |str|
-          URI.escape(input, str)
-        end.should eq("%FF")
-      end
-    end
-
-    it "escape space to plus when space_to_plus flag is true" do
-      URI.escape("hello world", space_to_plus: true).should eq("hello+world")
-      URI.escape("'Stop!' said Fred", space_to_plus: true).should eq("%27Stop%21%27+said+Fred")
-    end
-
-    it "does not escape character when block returns true" do
-      URI.unescape("hello&world") { |byte| URI.reserved? byte }
-        .should eq("hello&world")
+    it "does not encode character when block returns true" do
+      String.build do |io|
+        URI.decode("hello&world", io) { |byte| URI.reserved? byte }
+      end.should eq("hello&world")
     end
   end
 
-  describe "reserved?" do
-    reserved_chars = Set.new([':', '/', '?', '#', '[', ']', '@', '!', '$', '&', '\'', '(', ')', '*', '+', ',', ';', '='])
+  describe ".encode_www_form" do
+    it_encodes_www_form("", "")
+    it_encodes_www_form("abc", "abc")
+    it_encodes_www_form("1%41", "1%2541")
+    it_encodes_www_form("a b+", "a+b%2B")
+    it_encodes_www_form("a b+", "a%20b%2B", space_to_plus: false)
+    it_encodes_www_form("10%", "10%25")
+    it_encodes_www_form(" ?&=#+%!<>#\"{}|\\^[]`☺\t:/@$'()*,;", "+%3F%26%3D%23%2B%25%21%3C%3E%23%22%7B%7D%7C%5C%5E%5B%5D%60%E2%98%BA%09%3A%2F%40%24%27%28%29%2A%2C%3B")
+    it_encodes_www_form("* foo=bar baz&hello/", "%2A+foo%3Dbar+baz%26hello%2F")
+  end
+
+  describe ".decode_www_form" do
+    it_decodes_www_form("", "")
+    it_decodes_www_form("abc", "abc")
+    it_decodes_www_form("1%41", "1A")
+    it_decodes_www_form("1%41%42%43", "1ABC")
+    it_decodes_www_form("%4a", "J")
+    it_encodes_www_form("hello+", "hello%2B")
+    it_encodes_www_form("hello+world", "hello%2Bworld")
+    it_encodes_www_form("hello%2+world", "hello%252%2Bworld")
+    it_encodes_www_form("'Stop!' said Fred", "%27Stop%21%27+said+Fred")
+    it_decodes_www_form("a+b", "a b")
+    it_decodes_www_form("a%20b", "a b")
+    it_decodes_www_form("%20%3F%26%3D%23%2B%25%21%3C%3E%23%22%7B%7D%7C%5C%5E%5B%5D%60%E2%98%BA%09%3A%2F%40%24%27%28%29%2A%2C%3B", " ?&=#+%!<>#\"{}|\\^[]`☺\t:/@$'()*,;")
+    it_decodes_www_form("+%2B %20", " +  ")
+
+    it_decodes_www_form("%", "%")
+    it_decodes_www_form("%1", "%1")
+    it_decodes_www_form("123%45%6", "123E%6")
+    it_decodes_www_form("%zzzzz", "%zzzzz")
+  end
+
+  it ".reserved?" do
+    reserved_chars = {':', '/', '?', '#', '[', ']', '@', '!', '$', '&', '\'', '(', ')', '*', '+', ',', ';', '='}
 
     ('\u{00}'..'\u{7F}').each do |char|
-      ok = reserved_chars.includes? char
-      it "should return #{ok} on given #{char}" do
-        URI.reserved?(char.ord.to_u8).should eq(ok)
-      end
+      URI.reserved?(char.ord.to_u8).should eq(reserved_chars.includes?(char))
     end
   end
 
-  describe "unreserved?" do
-    unreserved_chars = Set.new(('a'..'z').to_a + ('A'..'Z').to_a + ('0'..'9').to_a + ['_', '.', '-', '~'])
+  it ".unreserved?" do
+    unreserved_chars = ('a'..'z').to_a + ('A'..'Z').to_a + ('0'..'9').to_a + ['_', '.', '-', '~']
 
     ('\u{00}'..'\u{7F}').each do |char|
-      ok = unreserved_chars.includes? char
-      it "should return #{ok} on given #{char}" do
-        URI.unreserved?(char.ord.to_u8).should eq(ok)
-      end
+      URI.unreserved?(char.ord.to_u8).should eq(unreserved_chars.includes?(char))
     end
   end
 end
