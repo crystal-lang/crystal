@@ -119,6 +119,15 @@ class Fiber
     Crystal::Scheduler.resume(self)
   end
 
+  # Wakeup a sleeping fiber
+  def wakeup
+    raise "Can't wakeup dead fibers" if dead?
+    raise "Can't wakeup one self" if self == Fiber.current
+    @resume_event.try &.delete
+    Crystal::Scheduler.enqueue(Fiber.current)
+    Crystal::Scheduler.resume(self)
+  end
+
   # :nodoc:
   def resume_event
     @resume_event ||= Crystal::EventLoop.create_resume_event(self)
