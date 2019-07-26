@@ -52,7 +52,7 @@ describe System::Group do
     end
   end
 
-  describe ".find_by(*, id)" do
+  describe ".find_by?(*, id)" do
     it "returns a group by id" do
       group = System::Group.find_by?(id: GROUP_ID).not_nil!
 
