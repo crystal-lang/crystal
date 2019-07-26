@@ -11,7 +11,7 @@ describe System::User do
 
       user.should be_a(System::User)
       user.username.should eq(USER_NAME)
-      user.user_id.should eq(USER_ID)
+      user.id.should eq(USER_ID)
     end
 
     it "raises on a nonexistent user" do
@@ -24,7 +24,7 @@ describe System::User do
       user = System::User.find_by(id: USER_ID)
 
       user.should be_a(System::User)
-      user.user_id.should eq(USER_ID)
+      user.id.should eq(USER_ID)
       user.username.should eq(USER_NAME)
     end
 
@@ -41,7 +41,7 @@ describe System::User do
 
       user.should be_a(System::User)
       user.username.should eq(USER_NAME)
-      user.user_id.should eq(USER_ID)
+      user.id.should eq(USER_ID)
     end
 
     it "returns nil on nonexistent user" do
@@ -53,7 +53,7 @@ describe System::User do
       user = System::User.find_by?(id: USER_ID).not_nil!
 
       user.should be_a(System::User)
-      user.user_id.should eq(USER_ID)
+      user.id.should eq(USER_ID)
       user.username.should eq(USER_NAME)
     end
 
@@ -69,9 +69,9 @@ describe System::User do
     end
   end
 
-  describe "#user_id" do
+  describe "#id" do
     it "is the same as the source ID" do
-      System::User.find_by(id: USER_ID).user_id.should eq(USER_ID)
+      System::User.find_by(id: USER_ID).id.should eq(USER_ID)
     end
   end
 

@@ -19,7 +19,7 @@ class System::User
   getter username : String
 
   # The user's identifier.
-  getter user_id : String
+  getter id : String
 
   # The user's primary group identifier.
   getter group_id : String
@@ -33,9 +33,9 @@ class System::User
   # The user's login shell.
   getter shell : String
 
-  def_equals_and_hash @user_id
+  def_equals_and_hash @id
 
-  private def initialize(@username, @user_id, @group_id, @name, @home_directory, @shell)
+  private def initialize(@username, @id, @group_id, @name, @home_directory, @shell)
   end
 
   # Returns the user associated with the given username.
@@ -67,6 +67,6 @@ class System::User
   end
 
   def to_s(io)
-    io << username << " (" << user_id << ")"
+    io << username << " (" << id << ")"
   end
 end
