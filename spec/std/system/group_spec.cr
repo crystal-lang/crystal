@@ -5,7 +5,7 @@ GROUP_NAME = {{ `id -gn`.stringify.chomp }}
 GROUP_ID   = {{ `id -g`.stringify.chomp }}
 
 describe System::Group do
-  describe "find_by" do
+  describe ".find_by" do
     it "returns a group by name" do
       group = System::Group.find_by(name: GROUP_NAME)
 
@@ -35,7 +35,7 @@ describe System::Group do
     end
   end
 
-  describe "find_by?" do
+  describe ".find_by?" do
     it "returns a group by name" do
       group = System::Group.find_by?(name: GROUP_NAME).not_nil!
 
@@ -63,25 +63,25 @@ describe System::Group do
     end
   end
 
-  describe "name" do
+  describe "#name" do
     it "is the same as the source name" do
       System::Group.find_by(name: GROUP_NAME).name.should eq(GROUP_NAME)
     end
   end
 
-  describe "id" do
+  describe "#id" do
     it "is the same as the source ID" do
       System::Group.find_by(id: GROUP_ID).id.should eq(GROUP_ID)
     end
   end
 
-  describe "members" do
+  describe "#members" do
     it "calls without raising" do
       System::Group.find_by(name: GROUP_NAME).members
     end
   end
 
-  describe "to_s" do
+  describe "#to_s" do
     it "returns a string representation" do
       System::Group.find_by(name: GROUP_NAME).to_s.should eq("#{GROUP_NAME} (#{GROUP_ID})")
     end
