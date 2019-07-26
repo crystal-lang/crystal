@@ -7,11 +7,22 @@ class System::User
 
   extend Crystal::System::User
 
+  # The user's username.
   getter username : String
+
+  # The user's identifier.
   getter user_id : String
+
+  # The user's primary group identifier.
   getter group_id : String
+
+  # The user's real or full name.
   getter name : String
+
+  # The user's home directory.
   getter directory : String
+
+  # The user's login shell.
   getter shell : String
 
   def_equals_and_hash @user_id

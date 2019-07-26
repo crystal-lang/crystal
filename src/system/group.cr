@@ -7,8 +7,13 @@ class System::Group
 
   extend Crystal::System::Group
 
+  # The group's name.
   getter name : String
+
+  # The group's identifier.
   getter id : String
+
+  # The group's usernames.
   getter members : Array(String)
 
   def_equals_and_hash @id
