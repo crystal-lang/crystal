@@ -63,13 +63,8 @@ abstract class Channel(T)
   #
   # ```
   # channel = Channel(Int32).new
-  # spawn do
-  #   channel.send(1)
-  #   channel.send(2)
-  # end
+  # channel.send(1)
   # channel.receive # => 1
-  # channel.close
-  # channel.receive # raises Channel::ClosedError
   # ```
   def receive
     receive_impl { raise ClosedError.new }
