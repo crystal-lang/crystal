@@ -38,7 +38,7 @@ class YAML::Nodes::Builder
   #   nodes_builder.document.to_yaml builder
   # end
   #
-  # yaml # => "---\nkey: *foo\n"
+  # yaml # => "---\nfoo: *key\n"
   # ```
   def alias(anchor : String) : Nil
     push_node Alias.new anchor

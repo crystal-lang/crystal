@@ -60,7 +60,7 @@ class File < IO::FileDescriptor
   # return EOF, and any data written will be immediately discarded.
   #
   # ```
-  # File.open(File::NULL) do |file|
+  # File.open(File::NULL, "w") do |file|
   #   file.puts "this is discarded"
   # end
   # ```
