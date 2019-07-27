@@ -223,8 +223,9 @@ class Channel::Buffered(T) < Channel(T)
     raise_if_closed
 
     @queue << value
-    Crystal::Scheduler.enqueue @receivers
-    @receivers.clear
+    if receiver = @receivers.shift?
+      Crystal::Scheduler.enqueue receiver
+    end
 
     self
   end
@@ -237,8 +238,9 @@ class Channel::Buffered(T) < Channel(T)
     end
 
     @queue.shift.tap do
-      Crystal::Scheduler.enqueue @senders
-      @senders.clear
+      if sender = @senders.shift?
+        Crystal::Scheduler.enqueue sender
+      end
     end
   end
 
