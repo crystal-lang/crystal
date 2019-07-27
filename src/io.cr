@@ -29,7 +29,7 @@ require "c/errno"
 #     slice.size
 #   end
 #
-#   def write(slice : Bytes)
+#   def write(slice : Bytes) : Nil
 #     slice.size.times { |i| @slice[i] = slice[i] }
 #     @slice += slice.size
 #     nil
