@@ -136,6 +136,8 @@ with_build_env() {
     --rm -t \
     -u $(id -u) \
     -v $PWD:/mnt \
+    -v /etc/passwd:/etc/passwd \
+    -v /etc/group:/etc/group \
     -w /mnt \
     -e CRYSTAL_CACHE_DIR="/tmp/crystal" \
     "$DOCKER_TEST_IMAGE" \
