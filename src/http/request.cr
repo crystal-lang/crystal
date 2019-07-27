@@ -29,8 +29,13 @@ class HTTP::Request
   # This property is not used by `HTTP::Client`.
   property remote_address : String?
 
-  def initialize(@method : String, @resource : String, headers : Headers? = nil, body : String | Bytes | IO | Nil = nil, @version = "HTTP/1.1")
-    @headers = headers.try(&.dup) || Headers.new
+  def self.new(method : String, resource : String, headers : Headers? = nil, body : String | Bytes | IO | Nil = nil, version = "HTTP/1.1")
+    # Duplicate headers to prevent the request from modifying data that the user might hold.
+    new(method, resource, headers.try(&.dup), body, version, internal: nil)
+  end
+
+  private def initialize(@method : String, @resource : String, headers : Headers? = nil, body : String | Bytes | IO | Nil = nil, @version = "HTTP/1.1", *, internal)
+    @headers = headers || Headers.new
     self.body = body
   end
 
@@ -104,7 +109,7 @@ class HTTP::Request
 
     HTTP.parse_headers_and_body(io) do |headers, body|
       # No need to dup headers since nobody else holds them
-      request = new line.method, line.resource, headers, body, line.http_version
+      request = new line.method, line.resource, headers, body, line.http_version, internal: nil
 
       if io.responds_to?(:remote_address)
         request.remote_address = io.remote_address.try &.to_s
