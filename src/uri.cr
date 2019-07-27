@@ -40,8 +40,8 @@ require "./uri/encoding"
 # * `.encode_www_form(string : String, io : IO, *, space_to_plus : Bool = true) : Nil`: Encodes a string as a `x-www-form-urlencoded` component to an IO.
 #
 # The main difference is that `.encode_www_form` encodes reserved characters
-# (see `.reserved?`), while `.encode` does not. The decode methods are exactly
-# similar except for the handling of `+` characters.
+# (see `.reserved?`), while `.encode` does not. The decode methods are
+# identical except for the handling of `+` characters.
 #
 # NOTE: `HTTP::Params` provides a higher-level API for handling `x-www-form-urlencoded`
 # serialized data.

@@ -38,7 +38,7 @@ module HTTP
       domain = @domain
       samesite = @samesite
       String.build do |header|
-        header << to_cookie_header
+        to_cookie_header(header)
         header << "; domain=#{domain}" if domain
         header << "; path=#{path}" if path
         header << "; expires=#{HTTP.format_time(expires)}" if expires
@@ -50,7 +50,15 @@ module HTTP
     end
 
     def to_cookie_header
-      "#{URI.encode_www_form(@name)}=#{URI.encode_www_form(value)}"
+      String.build do |io|
+        to_cookie_header(io)
+      end
+    end
+
+    def to_cookie_header(io)
+      URI.encode_www_form(@name, io)
+      io << '='
+      URI.encode_www_form(value, io)
     end
 
     def expired?

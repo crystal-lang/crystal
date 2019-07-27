@@ -424,7 +424,7 @@ describe "URI" do
   end
 
   it ".reserved?" do
-    reserved_chars = {':', '/', '?', '#', '[', ']', '@', '!', '$', '&', '\'', '(', ')', '*', '+', ',', ';', '='}
+    reserved_chars = Set{':', '/', '?', '#', '[', ']', '@', '!', '$', '&', '\'', '(', ')', '*', '+', ',', ';', '='}
 
     ('\u{00}'..'\u{7F}').each do |char|
       URI.reserved?(char.ord.to_u8).should eq(reserved_chars.includes?(char))
