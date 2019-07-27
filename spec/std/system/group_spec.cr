@@ -79,12 +79,6 @@ describe System::Group do
     end
   end
 
-  describe "#members" do
-    it "calls without raising" do
-      System::Group.find_by(name: GROUP_NAME).members
-    end
-  end
-
   describe "#to_s" do
     it "returns a string representation" do
       System::Group.find_by(name: GROUP_NAME).to_s.should eq("#{GROUP_NAME} (#{GROUP_ID})")

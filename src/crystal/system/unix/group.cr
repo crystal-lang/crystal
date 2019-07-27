@@ -3,23 +3,8 @@ require "c/grp"
 module Crystal::System::Group
   private GETGR_R_SIZE_MAX = 1024 * 16
 
-  private def extract_members(gr_mem)
-    n = 0
-    while gr_mem[n]
-      n += 1
-    end
-
-    members = Array(String).new(n)
-
-    n.times do |i|
-      members << String.new(gr_mem[i])
-    end
-
-    members
-  end
-
   private def from_struct(grp)
-    new(String.new(grp.gr_name), grp.gr_gid.to_s, extract_members(grp.gr_mem))
+    new(String.new(grp.gr_name), grp.gr_gid.to_s)
   end
 
   private def from_name?(groupname : String)

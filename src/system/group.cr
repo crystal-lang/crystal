@@ -21,12 +21,9 @@ class System::Group
   # The group's identifier.
   getter id : String
 
-  # The group's usernames.
-  getter members : Array(String)
-
   def_equals_and_hash @id
 
-  private def initialize(@name, @id, @members)
+  private def initialize(@name, @id)
   end
 
   # Returns the group associated with the given name.
