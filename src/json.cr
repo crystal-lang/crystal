@@ -21,8 +21,8 @@
 # ```
 # require "json"
 #
-# [1, 2, 3].to_json            # => "[1, 2, 3]"
-# {"x" => 1, "y" => 2}.to_json # => "{\"x\": 1, \"y\": 2}
+# [1, 2, 3].to_json            # => "[1,2,3]"
+# {"x" => 1, "y" => 2}.to_json # => "{\"x\":1,\"y\":2}"
 # ```
 #
 # Most types in the standard library implement these methods. For user-defined types
@@ -40,10 +40,10 @@
 # ```
 # require "json"
 #
-# json_text = %({"1" => 2, "3" => 4})
+# json_text = %({"1": 2, "3": 4})
 # Hash(Int32, Int32).from_json(json_text) # => {1 => 2, 3 => 4}
 #
-# {1.5 => 2}.to_json # => "{\"1.5\" => 2}"
+# {1.5 => 2}.to_json # => "{\"1.5\":2}"
 # ```
 #
 # ### Parsing and generating with `JSON.mapping`
