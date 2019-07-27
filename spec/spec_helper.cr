@@ -117,6 +117,7 @@ def warnings_result(code, inject_primitives = true)
   compiler.warnings = Warnings::All
   compiler.error_on_warnings = false
   compiler.prelude = "empty" # avoid issues in the current std lib
+  compiler.color = false
   apply_program_flags(compiler.flags)
   result = compiler.compile Compiler::Source.new("code.cr", code), output_filename
 

@@ -158,7 +158,11 @@ class Crystal::AbstractDefChecker
     base_return_type_node = base_method.return_type
     return unless base_return_type_node
 
-    original_base_return_type = base_type.lookup_type(base_return_type_node)
+    original_base_return_type = base_type.lookup_type?(base_return_type_node)
+    unless original_base_return_type
+      @program.warning_failures << base_return_type_node.warning "can't resolve return type #{base_return_type_node}\n#{this_warning_will_become_an_error}"
+      return
+    end
 
     # If the base type is a generic type, we find the generic instantiation of
     # t1 for it. This will have a mapping of type vars to types, for example
@@ -173,17 +177,27 @@ class Crystal::AbstractDefChecker
       base_return_type_node.accept(replacer)
     end
 
-    base_return_type = base_type.lookup_type(base_return_type_node)
+    base_return_type = base_type.lookup_type?(base_return_type_node)
+    unless base_return_type
+      @program.warning_failures << base_return_type_node.warning "can't resolve return type #{base_return_type_node}\n#{this_warning_will_become_an_error}"
+      return
+    end
 
     return_type_node = method.return_type
     unless return_type_node
-      method.raise "this method overrides #{Call.def_full_name(base_type, base_method)} which has an explicit return type of #{original_base_return_type}.\n#{@program.colorize("Please add an explicit return type (#{base_return_type} or a subtype of it) to this method as well.").yellow.bold}"
+      @program.warning_failures << method.warning "this method overrides #{Call.def_full_name(base_type, base_method)} which has an explicit return type of #{original_base_return_type}.\n#{@program.colorize("Please add an explicit return type (#{base_return_type} or a subtype of it) to this method as well.").yellow.bold}\n\n#{this_warning_will_become_an_error}"
+      return
     end
 
-    return_type = type.lookup_type(return_type_node)
+    return_type = type.lookup_type?(return_type_node)
+    unless return_type
+      @program.warning_failures << return_type_node.warning "can't resolve return type #{return_type_node}\n#{this_warning_will_become_an_error}"
+      return
+    end
 
     unless return_type.implements?(base_return_type)
-      return_type_node.raise "this method must return #{base_return_type}, which is the return type of the overridden method #{Call.def_full_name(base_type, base_method)}, or a subtype of it, not #{return_type}"
+      @program.warning_failures << return_type_node.warning "this method must return #{base_return_type}, which is the return type of the overridden method #{Call.def_full_name(base_type, base_method)}, or a subtype of it, not #{return_type}\n#{this_warning_will_become_an_error}"
+      return
     end
   end
 
@@ -201,6 +215,10 @@ class Crystal::AbstractDefChecker
     type.ancestors.find do |t|
       t.is_a?(GenericInstanceType) && t.generic_type == base_type
     end.as(GenericInstanceType)
+  end
+
+  private def this_warning_will_become_an_error
+    @program.colorize("The above warning will become an error in a future Crystal version.").yellow.bold
   end
 
   class ReplacePathWithTypeVar < Visitor
