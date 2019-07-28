@@ -203,6 +203,31 @@ abstract class Channel(T)
       @channel.unwait_for_send
     end
   end
+
+  # :nodoc:
+  struct TimeoutAction
+    include SelectAction
+
+    def initialize(@timeout : Time::Span)
+    end
+
+    def ready?
+      Fiber.current.timed_out
+    end
+
+    def execute
+      Fiber.current.timed_out = false
+      nil
+    end
+
+    def wait
+      Fiber.timeout @timeout
+    end
+
+    def unwait
+      Fiber.cancel_timeout
+    end
+  end
 end
 
 # Buffered channel, using a queue.

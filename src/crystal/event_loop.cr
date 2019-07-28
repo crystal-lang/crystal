@@ -22,6 +22,14 @@ module Crystal::EventLoop
     end
   end
 
+  def self.create_timeout_event(fiber)
+    @@eb.new_event(-1, LibEvent2::EventFlags::None, fiber) do |s, flags, data|
+      f = data.as(Fiber)
+      f.timed_out = true
+      f.resume
+    end
+  end
+
   def self.create_fd_write_event(io : IO::Evented, edge_triggered : Bool = false)
     flags = LibEvent2::EventFlags::Write
     flags |= LibEvent2::EventFlags::Persist | LibEvent2::EventFlags::ET if edge_triggered
