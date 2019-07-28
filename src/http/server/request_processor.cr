@@ -24,8 +24,8 @@ class HTTP::Server::RequestProcessor
         # EOF
         break unless request
 
-        if request.is_a?(HTTP::Request::BadRequest)
-          response.respond_with_error("Bad Request", 400)
+        if request.is_a?(HTTP::Status)
+          response.respond_with_error(request.description, request.value)
           response.close
           return
         end
