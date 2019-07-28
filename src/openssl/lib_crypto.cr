@@ -130,6 +130,7 @@ lib LibCrypto
   fun obj_obj2nid = OBJ_obj2nid(obj : ASN1_OBJECT) : Int
   fun obj_ln2nid = OBJ_ln2nid(ln : Char*) : Int
   fun obj_sn2nid = OBJ_sn2nid(sn : Char*) : Int
+  fun obj_find_sigid_algs = OBJ_find_sigid_algs(sigid : Int32, pdig_nid : Int32*, ppkey_nid : Int32*) : Int32
 
   fun asn1_object_free = ASN1_OBJECT_free(obj : ASN1_OBJECT)
   fun asn1_string_data = ASN1_STRING_data(x : ASN1_STRING) : Char*
@@ -165,6 +166,7 @@ lib LibCrypto
   fun hmac_final = HMAC_Final(ctx : HMAC_CTX, md : UInt8*, len : UInt32*) : Int32
   fun hmac_ctx_copy = HMAC_CTX_copy(dst : HMAC_CTX, src : HMAC_CTX) : Int32
 
+  fun x509_digest = X509_digest(x509 : X509, evp_md : EVP_MD, hash : UInt8*, len : Int32*) : Int32
   fun evp_get_digestbyname = EVP_get_digestbyname(name : UInt8*) : EVP_MD
   fun evp_digestinit_ex = EVP_DigestInit_ex(ctx : EVP_MD_CTX, type : EVP_MD, engine : Void*) : Int32
   fun evp_digestupdate = EVP_DigestUpdate(ctx : EVP_MD_CTX, data : UInt8*, count : LibC::SizeT) : Int32
@@ -274,6 +276,7 @@ lib LibCrypto
   fun x509_dup = X509_dup(a : X509) : X509
   fun x509_free = X509_free(a : X509)
   fun x509_get_subject_name = X509_get_subject_name(a : X509) : X509_NAME
+  fun x509_get_signature_nid = X509_get_signature_nid(x509 : X509) : Int32
   fun x509_new = X509_new : X509
   fun x509_set_subject_name = X509_set_subject_name(x : X509, name : X509_NAME) : Int
   fun x509_store_ctx_get_current_cert = X509_STORE_CTX_get_current_cert(x : X509_STORE_CTX) : X509
