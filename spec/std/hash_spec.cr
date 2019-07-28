@@ -892,18 +892,53 @@ describe "Hash" do
 
   it "creates with initial capacity" do
     hash = Hash(Int32, Int32).new(initial_capacity: 1234)
-    hash.@buckets_size.should eq(1234)
+    hash.@indices_size_pow2.should eq(11)
   end
 
   it "creates with initial capacity and default value" do
     hash = Hash(Int32, Int32).new(default_value: 3, initial_capacity: 1234)
     hash[1].should eq(3)
-    hash.@buckets_size.should eq(1234)
+    hash.@indices_size_pow2.should eq(11)
   end
 
   it "creates with initial capacity and block" do
     hash = Hash(Int32, Int32).new(initial_capacity: 1234) { |h, k| h[k] = 3 }
     hash[1].should eq(3)
-    hash.@buckets_size.should eq(1234)
+    hash.@indices_size_pow2.should eq(11)
+  end
+
+  describe "some edge cases while changing the implementation to open addressing" do
+    it "edge case 1" do
+      h = {1 => 10}
+      h[1]?.should eq(10)
+      h.size.should eq(1)
+
+      h.delete(1)
+      h[1]?.should be_nil
+      h.size.should eq(0)
+
+      h[2] = 10
+      h[2]?.should eq(10)
+      h.size.should eq(1)
+
+      h[2] = 10
+      h[2]?.should eq(10)
+      h.size.should eq(1)
+    end
+
+    it "edge case 2" do
+      hash = Hash(Int32, Int32).new(initial_capacity: 0)
+      hash.@indices_size_pow2.should eq(0)
+      hash[1] = 2
+      hash[1].should eq(2)
+    end
+
+    it "edge case 3" do
+      h = {} of Int32 => Int32
+      (1 << 17).times do |i|
+        h[i] = i
+        h[i].should eq(i)
+      end
+    end
   end
 end
