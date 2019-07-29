@@ -2105,10 +2105,26 @@ module Crystal
           end
           named_arg.try(&.value) || NilLiteral.new
         end
+      when "args"
+        interpret_argless_method(method, args) do
+          TupleLiteral.new self.args
+        end
+      when "named_args"
+        interpret_argless_method(method, args) do
+          get_named_annotation_args self
+        end
       else
         super
       end
     end
+  end
+end
+
+private def get_named_annotation_args(object)
+  if named_args = object.named_args
+    Crystal::NamedTupleLiteral.new(named_args.map { |arg| Crystal::NamedTupleLiteral::Entry.new(arg.name, arg.value) })
+  else
+    Crystal::NamedTupleLiteral.new
   end
 end
 

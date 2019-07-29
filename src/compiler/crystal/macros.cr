@@ -874,8 +874,16 @@ module Crystal::Macros
 
     # Returns the value of a named argument,
     # or NilLiteral if the named argument isn't
-    # used in this attribute.
+    # used on `self`.
     def [](name : SymbolLiteral | StringLiteral | MacroId) : ASTNode
+    end
+
+    # Returns a `TupleLiteral` representing the positional arguments on `self`.
+    def args : TupleLiteral
+    end
+
+    # Returns a `NamedTupleLiteral` representing the named arguments on `self`.
+    def named_args : NamedTupleLiteral
     end
   end
 
