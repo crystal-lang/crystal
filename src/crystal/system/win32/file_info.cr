@@ -74,12 +74,12 @@ struct Crystal::System::FileInfo < ::File::Info
     Time.from_filetime(@file_attributes.ftLastWriteTime)
   end
 
-  def owner : UInt32
-    0_u32
+  def owner_id : String
+    "0"
   end
 
-  def group : UInt32
-    0_u32
+  def group_id : String
+    "0"
   end
 
   def same_file?(other : ::File::Info) : Bool
