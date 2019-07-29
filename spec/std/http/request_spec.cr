@@ -124,6 +124,13 @@ module HTTP
       request.headers.should eq({"Host" => "host.example.org"})
     end
 
+    it "parses GET (just \\n instead of \\r\\n)" do
+      request = Request.from_io(IO::Memory.new("GET / HTTP/1.1\nHost: host.example.org\n\n")).as(Request)
+      request.method.should eq("GET")
+      request.path.should eq("/")
+      request.headers.should eq({"Host" => "host.example.org"})
+    end
+
     it "parses GET with query params" do
       request = Request.from_io(IO::Memory.new("GET /greet?q=hello&name=world HTTP/1.1\r\nHost: host.example.org\r\n\r\n")).as(Request)
       request.method.should eq("GET")
