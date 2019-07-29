@@ -114,7 +114,7 @@ module HTTP
     #
     # The yielded object has an `add` method that accepts two arguments,
     # a key (`String`) and a value (`String` or `Nil`).
-    # Keys and values are escaped using `URI#escape`.
+    # Keys and values are escaped using `URI.encode_www_form`.
     #
     # ```
     # require "http/params"
@@ -322,13 +322,8 @@ module HTTP
     end
 
     # :nodoc:
-    def self.encode_www_form_component(string : String, io : IO)
-      URI.escape(string, io, true)
-    end
-
-    # :nodoc:
     def self.decode_one_www_form_component(query, bytesize, i, byte, char, buffer)
-      URI.unescape_one query, bytesize, i, byte, char, buffer, true
+      URI.decode_one query, bytesize, i, byte, char, buffer, true
     end
 
     # HTTP params builder.
@@ -347,9 +342,9 @@ module HTTP
       def add(key, value : String?)
         @io << '&' unless @first
         @first = false
-        URI.escape key, @io
+        URI.encode_www_form key, @io
         @io << '='
-        Params.encode_www_form_component value, @io if value
+        URI.encode_www_form value, @io if value
         self
       end
 

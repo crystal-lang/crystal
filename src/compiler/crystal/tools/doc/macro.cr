@@ -39,7 +39,7 @@ class Crystal::Doc::Macro
   end
 
   def anchor
-    '#' + URI.escape(id)
+    '#' + URI.encode(id)
   end
 
   def prefix
