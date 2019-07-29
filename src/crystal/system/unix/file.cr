@@ -105,6 +105,27 @@ module Crystal::System::File
     ret
   end
 
+  def self.readlink(path) : String
+    buf = Bytes.new 256
+    # First pass at 256 bytes handles all normal occurences in 1 system call.
+    # Second pass at 1024 bytes handles outliers?
+    # Third pass is the max or double what Linux/MacOS can store.
+    3.times do |iter|
+      bytesize = LibC.readlink(path, buf, buf.bytesize)
+      if bytesize == -1
+        raise Errno.new("readlink")
+      elsif bytesize == buf.bytesize
+        break if iter >= 2
+        buf = Bytes.new(buf.bytesize * 4)
+      else
+        return String.new(buf.to_unsafe, bytesize)
+      end
+    end
+
+    Errno.value = Errno::ENAMETOOLONG
+    raise Errno.new("readlink")
+  end
+
   def self.rename(old_filename, new_filename)
     code = LibC.rename(old_filename.check_no_null_byte, new_filename.check_no_null_byte)
     if code != 0

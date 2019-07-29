@@ -574,6 +574,11 @@ class File < IO::FileDescriptor
     end
   end
 
+  # Returns value of a symbolic link .
+  def self.readlink(path) : String
+    Crystal::System::File.readlink(path)
+  end
+
   # Opens the file named by *filename*. If a file is being created, its initial
   # permissions may be set using the *perm* parameter.
   #
