@@ -1819,6 +1819,7 @@ module Crystal
     property name : String
     property body : ASTNode
     property? union : Bool
+    property doc : String?
 
     def initialize(@name, body = nil, @union = false)
       @body = Expressions.from(body)
