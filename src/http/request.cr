@@ -149,7 +149,7 @@ class HTTP::Request
     end
 
     request_line = io.gets(4096, chomp: true)
-    return BadRequest.new unless request_line
+    return nil unless request_line
 
     parse_request_line(request_line)
   end
