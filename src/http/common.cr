@@ -18,15 +18,18 @@ module HTTP
   SUPPORTED_VERSIONS = {"HTTP/1.0", "HTTP/1.1"}
 
   # :nodoc:
+  record EndOfRequest
+  # :nodoc:
+  record HeaderLine, name : String, value : String, bytesize : Int32
+
+  # :nodoc:
   def self.parse_headers_and_body(io, body_type : BodyType = BodyType::OnDemand, decompress = true)
     headers = Headers.new
 
     headers_size = 0
-    while line = io.gets(MAX_HEADER_SIZE, chomp: true)
-      headers_size += line.bytesize
-      break if headers_size > MAX_HEADER_SIZE
-
-      if line.empty?
+    while header_line = read_header_line(io)
+      case header_line
+      when EndOfRequest
         body = nil
 
         if body_type.prohibited?
@@ -64,11 +67,45 @@ module HTTP
 
         yield headers, body
         break
-      end
+      else # HeaderLine
+        headers_size += header_line.bytesize
+        break if headers_size > MAX_HEADER_SIZE
 
-      name, value = parse_header(line)
-      break unless headers.add?(name, value)
+        break unless headers.add?(header_line.name, header_line.value)
+      end
     end
+  end
+
+  private def self.read_header_line(io) : HeaderLine | EndOfRequest | Nil
+    # Optimization: check if we have a peek buffer
+    if peek = io.peek
+      # peek.empty? means EOF (so bad request)
+      return nil if peek.empty?
+
+      # Find \r\n (first \n, then \r before it)
+      index = peek.index('\n'.ord.to_u8)
+      if index && index > 0 && peek[index - 1] == '\r'.ord.to_u8
+        # `index == 1` means we just have "\r\n", so end of request
+        if index == 1
+          io.skip(2)
+          return EndOfRequest.new
+        end
+
+        name, value = parse_header(peek[0, index - 1])
+        io.skip(index + 1) # Must skip until after \r\n
+        return HeaderLine.new name: name, value: value, bytesize: index + 1
+      end
+    end
+
+    line = io.gets(MAX_HEADER_SIZE, chomp: true)
+    return nil unless line
+
+    if line.empty?
+      return EndOfRequest.new
+    end
+
+    name, value = parse_header(line)
+    return HeaderLine.new name: name, value: value, bytesize: line.bytesize
   end
 
   private def self.check_content_type_charset(body, headers)
@@ -87,7 +124,12 @@ module HTTP
   end
 
   # :nodoc:
-  def self.parse_header(line)
+  def self.parse_header(line : String) : {String, String}
+    parse_header(line.to_slice)
+  end
+
+  # :nodoc:
+  def self.parse_header(slice : Bytes) : {String, String}
     # This is basically
     #
     # ```
@@ -100,12 +142,12 @@ module HTTP
     # instead of 3 (two from the split and one for the lstrip),
     # and there's no need for the array returned by split.
 
-    cstr = line.to_unsafe
-    bytesize = line.bytesize
+    cstr = slice.to_unsafe
+    bytesize = slice.size
 
     # Get the colon index and name
-    colon_index = cstr.to_slice(bytesize).index(':'.ord) || 0
-    name = line.byte_slice(0, colon_index)
+    colon_index = slice.index(':'.ord.to_u8) || 0
+    name = header_name(slice[0, colon_index])
 
     # Get where the header value starts (skip space)
     middle_index = colon_index + 1
@@ -117,15 +159,54 @@ module HTTP
     right_index = bytesize
     if middle_index >= right_index
       return {name, ""}
-    elsif right_index > 1 && cstr[right_index - 2] === '\r' && cstr[right_index - 1] === '\n'
+    elsif right_index > 1 && cstr[right_index - 2] == '\r'.ord.to_u8 && cstr[right_index - 1] == '\n'.ord.to_u8
       right_index -= 2
-    elsif right_index > 0 && cstr[right_index - 1] === '\n'
+    elsif right_index > 0 && cstr[right_index - 1] == '\n'.ord.to_u8
       right_index -= 1
     end
 
-    value = line.byte_slice(middle_index, right_index - middle_index)
+    value = String.new(slice[middle_index, right_index - middle_index])
 
     {name, value}
+  end
+
+  private COMMON_HEADERS = %w(
+    accept-language
+    accept-encoding
+    allow
+    cache-control
+    connection
+    content-disposition
+    content-encoding
+    content-language
+    content-length
+    content-type
+    etag
+    expires
+    host
+    last-modified
+    user-agent
+  )
+
+  # :nodoc:
+  def self.header_name(slice : Bytes)
+    # Check if the header name is a common one.
+    # If so we avoid having to allocate a string for it.
+    if slice.size < 20
+      buffer = uninitialized UInt8[20]
+
+      # Copy the slice to buffer, downcased
+      slice.each_with_index do |byte, i|
+        buffer[i] = 65 <= byte <= 90 ? byte + 32 : byte
+      end
+
+      buffer_slice = buffer.to_slice[0, slice.size]
+
+      name = COMMON_HEADERS.find { |value| value.to_slice == buffer_slice }
+      return name if name
+    end
+
+    String.new(slice)
   end
 
   # :nodoc:
