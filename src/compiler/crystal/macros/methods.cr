@@ -2107,16 +2107,6 @@ module Crystal
         end
       when "args"
         interpret_argless_method(method, args) do
-          named_args = get_named_annotation_args self
-          pos_args = TupleLiteral.new self.args
-
-          NamedTupleLiteral.new([
-            NamedTupleLiteral::Entry.new("named", named_args),
-            NamedTupleLiteral::Entry.new("positional", pos_args),
-          ])
-        end
-      when "pos_args"
-        interpret_argless_method(method, args) do
           TupleLiteral.new self.args
         end
       when "named_args"
