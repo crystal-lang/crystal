@@ -519,10 +519,8 @@ class String
   end
 
   # :nodoc:
-  record ToU64Info,
-    value : UInt64,
-    negative : Bool,
-    invalid : Bool
+  struct UIntInfo
+    getter value : (UInt64 | UInt128), negative : Bool, invalid : Bool
 
   private macro gen_to_(method, max_positive = nil, max_negative = nil)
     if base == UInt128
@@ -548,8 +546,8 @@ class String
     end
   end
 
-  private def to_u64_info(base, whitespace, underscore, prefix, strict, leading_zero_is_octal, unsigned)
-    raise ArgumentError.new("Invalid base #{base}") unless 2 <= base <= 36 || base == 62
+  private def to_info(base, whitespace, underscore, prefix, strict, leading_zero_is_octal, unsigned)
+    raise ArgumentError.new("Invalid base #{base}") unless 2 <= base <= 36 || base == 62 || base == 128
 
     ptr = to_unsafe
 
@@ -566,7 +564,7 @@ class String
     case ptr.value.unsafe_chr
     when '-'
       if unsigned
-        return ToU64Info.new 0, true, true
+        return UIntInfo.new 0_u64, true, true
       end
       negative = true
       ptr += 1
@@ -606,8 +604,8 @@ class String
       end
     end
 
-    value = 0_u64
-    mul_overflow = ~0_u64 // base
+    value = ((base == 128) ? 0_u128 : 0_u64)
+    mul_overflow = ~value // base
     last_is_underscore = true
     invalid = false
 
@@ -660,115 +658,7 @@ class String
       invalid = true
     end
 
-    ToU64Info.new value, negative, invalid
-  end
-
-  # :nodoc:
-  record ToU128Info,
-    value : UInt128,
-    negative : Bool,
-    invalid : Bool
-
-  private def to_u128_info(base, whitespace, underscore, prefix, strict)
-    raise ArgumentError.new("Invalid base #{base}") unless 2 <= base <= 128 || base == 62
-
-    ptr = to_unsafe
-
-    # Skip leading whitespace
-    if whitespace
-      while ptr.value.unsafe_chr.ascii_whitespace?
-        ptr += 1
-      end
-    end
-
-    negative = false
-    found_digit = false
-    mul_overflow = ~0_u128 / base
-
-    # Check + and -
-    case ptr.value.unsafe_chr
-    when '+'
-      ptr += 1
-    when '-'
-      negative = true
-      ptr += 1
-    end
-
-    # Check leading zero
-    if ptr.value.unsafe_chr == '0'
-      ptr += 1
-
-      if prefix
-        case ptr.value.unsafe_chr
-        when 'b'
-          base = 2
-          ptr += 1
-        when 'x'
-          base = 16
-          ptr += 1
-        else
-          base = 8
-        end
-        found_digit = false
-      else
-        found_digit = true
-      end
-    end
-
-    value = 0_u128
-    last_is_underscore = true
-    invalid = false
-
-    digits = (base == 62 ? CHAR_TO_DIGIT62 : CHAR_TO_DIGIT).to_unsafe
-    while ptr.value != 0
-      if ptr.value.unsafe_chr == '_' && underscore
-        break if last_is_underscore
-        last_is_underscore = true
-        ptr += 1
-        next
-      end
-
-      last_is_underscore = false
-      digit = digits[ptr.value]
-      if digit == -1 || digit >= base
-        break
-      end
-
-      if value > mul_overflow
-        invalid = true
-        break
-      end
-
-      value *= base
-
-      old = value
-      value += digit
-      if value < old
-        invalid = true
-        break
-      end
-
-      found_digit = true
-      ptr += 1
-    end
-
-    if found_digit
-      unless ptr.value == 0
-        if whitespace
-          while ptr.value.unsafe_chr.ascii_whitespace?
-            ptr += 1
-          end
-        end
-
-        if strict && ptr.value != 0
-          invalid = true
-        end
-      end
-    else
-      invalid = true
-    end
-
-    ToU128Info.new value, negative, invalid
+    UIntInfo.new value, negative, invalid
   end
 
   # Returns the result of interpreting characters in this string as a floating point number (`Float64`).

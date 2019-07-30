@@ -771,8 +771,7 @@ struct Int128
   end
 
   def -
-    # TODO: use 0_i128 - self
-    Int128.new(0) - self
+    0_i128 - self
   end
 
   def popcount
