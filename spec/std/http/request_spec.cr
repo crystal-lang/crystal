@@ -1,6 +1,15 @@
 require "spec"
 require "http/request"
 
+private class EmptyIO < IO
+  def read(slice : Bytes)
+    0
+  end
+
+  def write(slice : Bytes) : Nil
+  end
+end
+
 module HTTP
   describe Request do
     it "serialize GET" do
@@ -124,6 +133,13 @@ module HTTP
       request.headers.should eq({"Host" => "host.example.org"})
     end
 
+    it "parses GET (just \\n instead of \\r\\n)" do
+      request = Request.from_io(IO::Memory.new("GET / HTTP/1.1\nHost: host.example.org\n\n")).as(Request)
+      request.method.should eq("GET")
+      request.path.should eq("/")
+      request.headers.should eq({"Host" => "host.example.org"})
+    end
+
     it "parses GET with query params" do
       request = Request.from_io(IO::Memory.new("GET /greet?q=hello&name=world HTTP/1.1\r\nHost: host.example.org\r\n\r\n")).as(Request)
       request.method.should eq("GET")
@@ -136,6 +152,14 @@ module HTTP
       request.method.should eq("GET")
       request.path.should eq("/")
       request.headers.should eq({"Host" => "host.example.org"})
+    end
+
+    it "parses empty string (EOF), returns nil" do
+      Request.from_io(IO::Memory.new("")).should be_nil
+    end
+
+    it "parses empty string (EOF), returns nil (no peek)" do
+      Request.from_io(EmptyIO.new).should be_nil
     end
 
     it "parses GET with spaces in request line" do

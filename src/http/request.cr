@@ -131,18 +131,25 @@ class HTTP::Request
       # peek.empty? means there's no more input (EOF), so no more requests
       return nil if peek.empty?
 
-      # See if we can find \r\n (first \n, then \r before it)
+      # See if we can find \n
       index = peek.index('\n'.ord.to_u8)
       # TODO: eventually increase the 4096 bytes limit
-      if index && index > 0 && index < 4096 && peek[index - 1] == '\r'.ord.to_u8
-        parts = parse_request_line(peek[0, index - 1])
-        io.skip(index + 1) # Must skip until after \r\n
+      if index && index < 4096
+        end_index = index
+
+        # Also check (and discard) \r before that
+        if index > 0 && peek[index - 1] == '\r'.ord.to_u8
+          end_index -= 1
+        end
+
+        parts = parse_request_line(peek[0, end_index])
+        io.skip(index + 1) # Must skip until after \n
         return parts
       end
     end
 
     request_line = io.gets(4096, chomp: true)
-    return BadRequest.new unless request_line
+    return nil unless request_line
 
     parse_request_line(request_line)
   end

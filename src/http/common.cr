@@ -82,17 +82,24 @@ module HTTP
       # peek.empty? means EOF (so bad request)
       return nil if peek.empty?
 
-      # Find \r\n (first \n, then \r before it)
+      # See if we can find \n
       index = peek.index('\n'.ord.to_u8)
-      if index && index > 0 && peek[index - 1] == '\r'.ord.to_u8
-        # `index == 1` means we just have "\r\n", so end of request
-        if index == 1
-          io.skip(2)
+      if index
+        end_index = index
+
+        # Also check (and discard) \r before that
+        if index > 0 && peek[index - 1] == '\r'.ord.to_u8
+          end_index -= 1
+        end
+
+        # Check if we just have "\n" or "\r\n" (so end of request)
+        if end_index == 0
+          io.skip(index + 1)
           return EndOfRequest.new
         end
 
-        name, value = parse_header(peek[0, index - 1])
-        io.skip(index + 1) # Must skip until after \r\n
+        name, value = parse_header(peek[0, end_index])
+        io.skip(index + 1) # Must skip until after \n
         return HeaderLine.new name: name, value: value, bytesize: index + 1
       end
     end
