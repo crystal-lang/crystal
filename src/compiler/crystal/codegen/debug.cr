@@ -64,7 +64,7 @@ module Crystal
     end
 
     def create_debug_type(type : FloatType)
-      di_builder.create_basic_type(type.to_s, type.bytes * 8, type.bytes * 8, LLVM::DwarfTypeEncoding::Float)
+      di_builder.create_basic_type(type.to_s, 8u64 * type.bytes, 8u64 * type.bytes, LLVM::DwarfTypeEncoding::Float)
     end
 
     def create_debug_type(type : BoolType)
@@ -98,9 +98,13 @@ module Crystal
 
       ivars.each_with_index do |(name, ivar), idx|
         if (ivar_type = ivar.type?) && (ivar_debug_type = get_debug_type(ivar_type))
-          offset = @program.target_machine.data_layout.offset_of_element(struct_type, idx + (type.struct? ? 0 : 1))
+          offset = @program.target_machine.data_layout.offset_of_element(struct_type, idx &+ (type.struct? ? 0 : 1))
           size = @program.target_machine.data_layout.size_in_bits(llvm_embedded_type(ivar_type))
-          member = di_builder.create_member_type(nil, name[1..-1], nil, 1, size, size, offset * 8, LLVM::DIFlags::Zero, ivar_debug_type)
+
+          # FIXME structs like LibC::PthreadMutexT generate huge offset values
+          next if offset > UInt64::MAX // 8u64
+
+          member = di_builder.create_member_type(nil, name[1..-1], nil, 1, size, size, 8u64 * offset, LLVM::DIFlags::Zero, ivar_debug_type)
           element_types << member
         end
       end
@@ -108,7 +112,7 @@ module Crystal
       size = @program.target_machine.data_layout.size_in_bits(struct_type)
       debug_type = di_builder.create_struct_type(nil, type.to_s, nil, 1, size, size, LLVM::DIFlags::Zero, nil, di_builder.get_or_create_type_array(element_types))
       unless type.struct?
-        debug_type = di_builder.create_pointer_type(debug_type, llvm_typer.pointer_size * 8, llvm_typer.pointer_size * 8, type.to_s)
+        debug_type = di_builder.create_pointer_type(debug_type, 8u64 * llvm_typer.pointer_size, 8u64 * llvm_typer.pointer_size, type.to_s)
       end
       di_builder.replace_temporary(tmp_debug_type, debug_type)
       debug_type
@@ -117,7 +121,7 @@ module Crystal
     def create_debug_type(type : PointerInstanceType)
       element_type = get_debug_type(type.element_type)
       return unless element_type
-      di_builder.create_pointer_type(element_type, llvm_typer.pointer_size * 8, llvm_typer.pointer_size * 8, type.to_s)
+      di_builder.create_pointer_type(element_type, 8u64 * llvm_typer.pointer_size, 8u64 * llvm_typer.pointer_size, type.to_s)
     end
 
     def create_debug_type(type : StaticArrayInstanceType)

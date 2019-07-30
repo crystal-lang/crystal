@@ -6,7 +6,9 @@
 # `Macros` module are top-level methods that you can invoke, like `puts` and `run`.
 module Crystal::Macros
   # Compares two [semantic versions](http://semver.org/).
-  # Returns `-1` if `v1 < v2`, `0` if `v1 == v2` and `1` if `v1 > v2`.
+  #
+  # Returns `-1`, `0` or `1` depending on whether *v1* is lower than *v2*,
+  # equal to *v2* or greater than *v2*.
   #
   # ```
   # {{ compare_versions("1.10.0", "1.2.0") }} # => 1
@@ -634,6 +636,10 @@ module Crystal::Macros
     def sort : ArrayLiteral
     end
 
+    # Similar to `Array#sort_by`
+    def sort_by(&block) : ArrayLiteral
+    end
+
     # Similar to `Array#uniq`
     def uniq : ArrayLiteral
     end
@@ -848,9 +854,14 @@ module Crystal::Macros
     def has_default_value? : BoolLiteral
     end
 
-    # Returns any `Annotation` with the given `type`
-    # attached to this variable.
-    def annotation(type : TypeNode) : Annotation
+    # Returns the last `Annotation` with the given `type`
+    # attached to this variable or `NilLiteral` if there are none.
+    def annotation(type : TypeNode) : Annotation | NilLiteral
+    end
+
+    # Returns an array of annotations with the given `type`
+    # attached to this variable, or an empty `ArrayLiteral` if there are none.
+    def annotations(type : TypeNode) : ArrayLiteral(Annotation)
     end
   end
 
@@ -863,8 +874,16 @@ module Crystal::Macros
 
     # Returns the value of a named argument,
     # or NilLiteral if the named argument isn't
-    # used in this attribute.
+    # used on `self`.
     def [](name : SymbolLiteral | StringLiteral | MacroId) : ASTNode
+    end
+
+    # Returns a `TupleLiteral` representing the positional arguments on `self`.
+    def args : TupleLiteral
+    end
+
+    # Returns a `NamedTupleLiteral` representing the named arguments on `self`.
+    def named_args : NamedTupleLiteral
     end
   end
 
@@ -1107,9 +1126,14 @@ module Crystal::Macros
     def visibility : SymbolLiteral
     end
 
-    # Returns any `Annotation` with the given `type`
-    # attached to this method.
-    def annotation(type : TypeNode) : Annotation
+    # Returns the last `Annotation` with the given `type`
+    # attached to this variable or `NilLiteral` if there are none.
+    def annotation(type : TypeNode) : Annotation | NilLiteral
+    end
+
+    # Returns an array of annotations with the given `type`
+    # attached to this variable, or an empty `ArrayLiteral` if there are none.
+    def annotations(type : TypeNode) : ArrayLiteral(Annotation)
     end
   end
 
@@ -1169,6 +1193,17 @@ module Crystal::Macros
 
   # An `out` expression.
   class Out < UnaryExpression
+  end
+
+  # An `offsetof` expression.
+  class OffsetOf < ASTNode
+    # Returns the type that has been used in this `offsetof` expression.
+    def type : ASTNode
+    end
+
+    # Returns the instance variable used in this `offsetof` expression.
+    def instance_var : ASTNode
+    end
   end
 
   # A visibility modifier
@@ -1270,6 +1305,12 @@ module Crystal::Macros
     # returns a `NilLiteral`.
     def resolve? : ASTNode | NilLiteral
     end
+
+    # Returns this path inside an array literal.
+    # This method exists so you can call `types` on the type of a type
+    # declaration and get all types, whether it's a Generic, Path or Union.
+    def types : ArrayLiteral(ASTNode)
+    end
   end
 
   # A class definition.
@@ -1316,6 +1357,12 @@ module Crystal::Macros
     # Resolves this path to a `TypeNode` if it denotes a type,
     # or otherwise returns a `NilLiteral`.
     def resolve? : ASTNode | NilLiteral
+    end
+
+    # Returns this generic inside an array literal.
+    # This method exists so you can call `types` on the type of a type
+    # declaration and get all types, whether it's a Generic, Path or Union.
+    def types : ArrayLiteral(ASTNode)
     end
   end
 
@@ -1384,6 +1431,16 @@ module Crystal::Macros
 
   # A type union, like `(Int32 | String)`.
   class Union < ASTNode
+    # Resolves this union to a `TypeNode`. Gives a compile-time error
+    # if any type inside the union can't be resolved.
+    def resolve : ASTNode
+    end
+
+    # Resolves this union to a `TypeNode`. Returns a `NilLiteral`
+    # if any type inside the union can't be resolved.
+    def resolve? : ASTNode | NilLiteral
+    end
+
     # Returns the types of this union.
     def types : ArrayLiteral(ASTNode)
     end
@@ -1647,8 +1704,8 @@ module Crystal::Macros
     def nilable? : BoolLiteral
     end
 
-    # Returns the types comforming a union type, if this is a union type.
-    # Gives a compile error otherwise.
+    # Returns the types forming a union type, if this is a union type.
+    # Otherwise returns this single type inside an array literal (so you can safely call `union_types` on any type and treat all types uniformly).
     #
     # See also: `union?`.
     def union_types : ArrayLiteral(TypeNode)
@@ -1718,9 +1775,14 @@ module Crystal::Macros
     def has_attribute?(name : StringLiteral | SymbolLiteral) : BoolLiteral
     end
 
-    # Returns any `Annotation` with the given `type`
-    # attached to this type.
-    def annotation(type : TypeNode) : Annotation
+    # Returns the last `Annotation` with the given `type`
+    # attached to this variable or `NilLiteral` if there are none.
+    def annotation(type : TypeNode) : Annotation | NilLiteral
+    end
+
+    # Returns an array of annotations with the given `type`
+    # attached to this variable, or an empty `ArrayLiteral` if there are none.
+    def annotations(type : TypeNode) : ArrayLiteral(Annotation)
     end
 
     # Returns the number of elements in this tuple type or tuple metaclass type.
@@ -1771,6 +1833,14 @@ module Crystal::Macros
     # {{ Bar.overrides?(Foo, "two") }} # => false
     # ```
     def overrides?(type : TypeNode, method : StringLiteral | SymbolLiteral | MacroId) : Bool
+    end
+
+    # Returns `self`. This method exists so you can safely call `resolve` on a node and resolve it to a type, even if it's a type already.
+    def resolve : TypeNode
+    end
+
+    # Returns `self`. This method exists so you can safely call `resolve` on a node and resolve it to a type, even if it's a type already.
+    def resolve? : TypeNode
     end
 
     # Returns `true` if *other* is an ancestor of `self`.

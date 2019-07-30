@@ -1076,4 +1076,76 @@ describe "Semantic: generic class" do
       f.foo
       )) { generic_class "Foo", 1.int32 }
   end
+
+  it "doesn't consider unbound generic instantiations as concrete (#7200)" do
+    assert_type(%(
+      module Moo
+      end
+
+      abstract class Foo(T)
+        include Moo
+
+        def call
+          T.as(Int32.class)
+        end
+      end
+
+      class Bar(T) < Foo(T)
+      end
+
+      class MooHolder
+        def initialize(@moo : Moo)
+        end
+      end
+
+      moo = MooHolder.new(Bar(Int32).new)
+      moo.@moo.call
+      )) { int32.metaclass }
+  end
+
+  it "shows error due to generic instantiation (#7083)" do
+    assert_error %(
+      abstract class Base
+      end
+
+      class Gen(T) < Base
+        def valid? : Bool
+          # true
+        end
+      end
+
+      class Other < Base
+        def valid?
+          true
+        end
+      end
+
+      x = Pointer(Base).malloc(1)
+      x.value.valid?
+
+      Gen(String).new
+      ),
+      "type must be Bool, not Nil"
+  end
+
+  it "resolves T through metaclass inheritance (#7914)" do
+    assert_type(%(
+      struct Int32
+        def self.foo
+          1
+        end
+      end
+
+      class Matrix(T)
+        def self.foo
+          T.foo
+        end
+      end
+
+      class GeneralMatrix(T) < Matrix(T)
+      end
+
+      GeneralMatrix(Int32).foo
+    )) { int32 }
+  end
 end

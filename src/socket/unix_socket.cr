@@ -49,6 +49,8 @@ class UNIXSocket < Socket
   # Returns a pair of unamed UNIX sockets.
   #
   # ```
+  # require "socket"
+  #
   # left, right = UNIXSocket.pair
   #
   # spawn do

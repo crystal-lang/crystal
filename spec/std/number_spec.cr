@@ -122,6 +122,14 @@ describe "Number" do
       500.clamp(10, 100).should eq(100)
 
       50.clamp(10..100).should eq(50)
+
+      50.clamp(10..nil).should eq(50)
+      50.clamp(10...nil).should eq(50)
+      5.clamp(10..nil).should eq(10)
+      5.clamp(10...nil).should eq(10)
+
+      5.clamp(nil..10).should eq(5)
+      50.clamp(nil..10).should eq(10)
     end
 
     it "clamps floats" do
@@ -160,7 +168,7 @@ describe "Number" do
     0.sign.should eq(0)
   end
 
-  it "divides and calculs the modulo" do
+  it "divides and calculates the modulo" do
     11.divmod(3).should eq({3, 2})
     11.divmod(-3).should eq({-4, -1})
 
@@ -243,9 +251,6 @@ describe "Number" do
       iter.next.should eq(0.1)
       iter.next.should eq(0.2)
       iter.next.should be_a(Iterator::Stop)
-
-      iter.rewind
-      iter.next.should eq(0.0)
     end
 
     it "iterator without limit" do

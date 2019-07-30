@@ -914,7 +914,7 @@ describe "Semantic: module" do
         end
       end
       Moo.new),
-      "undefined local variable or method 'allocate'#{" (modules cannot be instantiated)".colorize.yellow.bold}"
+      "undefined local variable or method 'allocate' for Moo:Module (modules cannot be instantiated)"
   end
 
   it "gives error when trying to instantiate with allocate" do
@@ -924,7 +924,7 @@ describe "Semantic: module" do
         end
       end
       Moo.allocate),
-      "undefined method 'allocate' for Moo:Module#{" (modules cannot be instantiated)".colorize.yellow.bold}"
+      "undefined method 'allocate' for Moo:Module (modules cannot be instantiated)"
   end
 
   it "uses type declaration inside module" do
@@ -1303,5 +1303,69 @@ describe "Semantic: module" do
       Gen(Foo.class).foo(Moo)
       ),
       "no overload matches"
+  end
+
+  it "extends module from generic class and calls class method (#7167)" do
+    assert_type(%(
+      module Foo
+        def foo
+          1
+        end
+      end
+
+      class Gen(T)
+        extend Foo
+      end
+
+      Gen(Int32).foo
+      )) { int32 }
+  end
+
+  it "extends generic module from generic class and calls class method (#7167)" do
+    assert_type(%(
+      module Foo(T)
+        def foo
+          T
+        end
+      end
+
+      class Gen(U)
+        extend Foo(U)
+      end
+
+      Gen(Int32).foo
+      )) { int32.metaclass }
+  end
+
+  it "extends generic module from generic module and calls class method (#7167)" do
+    assert_type(%(
+      module Foo(T)
+        def foo
+          T
+        end
+      end
+
+      module Gen(U)
+        extend Foo(U)
+      end
+
+      Gen(Int32).foo
+      )) { int32.metaclass }
+  end
+
+  it "doesn't look up initialize past module that defines initialize (#7007)" do
+    assert_error %(
+      module Moo
+        def initialize(x)
+        end
+      end
+
+      class Foo
+        include Moo
+      end
+
+      Foo.new
+      ),
+      "wrong number of arguments"
   end
 end

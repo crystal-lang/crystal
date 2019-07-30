@@ -101,7 +101,7 @@ class LLVM::ABI::AArch64 < LLVM::ABI
                elsif size <= 8
                  context.int64
                else
-                 context.int64.array(((size + 7) / 8).to_u64)
+                 context.int64.array(((size + 7) // 8).to_u64)
                end
         ArgType.direct(rty, cast)
       else
@@ -130,7 +130,7 @@ class LLVM::ABI::AArch64 < LLVM::ABI
                elsif size <= 8
                  context.int64
                else
-                 context.int64.array(((size + 7) / 8).to_u64)
+                 context.int64.array(((size + 7) // 8).to_u64)
                end
         ArgType.direct(aty, cast)
       else

@@ -6,7 +6,7 @@ require "http/client"
 require "ecr"
 require "../src/compiler/crystal/formatter"
 
-UCD_ROOT = "http://www.unicode.org/Public/11.0.0/ucd/"
+UCD_ROOT = "http://www.unicode.org/Public/12.0.0/ucd/"
 
 # Each entry in UnicodeData.txt
 # (some info is missing but we don't use it yet)
@@ -69,7 +69,7 @@ def alternate_ranges(ranges)
       # Continue streak
     else
       if first_codepoint
-        alternate << AlternateRange.new(first_codepoint, last_codepoint.not_nil!)
+        alternate << new_alternate_range(first_codepoint, last_codepoint)
       end
       first_codepoint = codepoint
     end
@@ -78,10 +78,16 @@ def alternate_ranges(ranges)
   end
 
   if first_codepoint
-    alternate << AlternateRange.new(first_codepoint, last_codepoint.not_nil!)
+    alternate << new_alternate_range(first_codepoint, last_codepoint)
   end
 
   alternate
+end
+
+def new_alternate_range(first_codepoint, last_codepoint)
+  # The last codepoint is the one for the uppercase letter and we
+  # need to also consider the next codepoint for the lowercase one.
+  AlternateRange.new(first_codepoint, last_codepoint.not_nil! + 1)
 end
 
 def strides(entries, targets)

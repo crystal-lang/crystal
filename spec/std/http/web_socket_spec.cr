@@ -1,7 +1,8 @@
+require "./spec_helper"
 require "../spec_helper"
 require "http/web_socket"
 require "random/secure"
-require "../../../support/ssl"
+require "../../support/ssl"
 
 private def assert_text_packet(packet, size, final = false)
   assert_packet packet, HTTP::WebSocket::Protocol::Opcode::TEXT, size, final: final
@@ -380,13 +381,12 @@ describe HTTP::WebSocket do
     end
 
     address = http_server.bind_unused_port
-    spawn http_server.not_nil!.listen # TODO: Remove .not_nil! when #6037 is fixed
 
-    expect_raises(Socket::Error, "Handshake got denied. Status code was 200.") do
-      HTTP::WebSocket::Protocol.new(address.address, port: address.port, path: "/")
+    run_server(http_server) do
+      expect_raises(Socket::Error, "Handshake got denied. Status code was 200.") do
+        HTTP::WebSocket::Protocol.new(address.address, port: address.port, path: "/")
+      end
     end
-  ensure
-    # http_server.try &.close # TODO: Uncomment when #5958 is fixed
   end
 
   describe "handshake fails if server does not verify Sec-WebSocket-Key" do
@@ -399,13 +399,12 @@ describe HTTP::WebSocket do
       end
 
       address = http_server.bind_unused_port
-      spawn http_server.not_nil!.listen # TODO: Remove .not_nil! when #6037 is fixed
 
-      expect_raises(Socket::Error, "Handshake got denied. Server did not verify WebSocket challenge.") do
-        HTTP::WebSocket::Protocol.new(address.address, port: address.port, path: "/")
+      run_server(http_server) do
+        expect_raises(Socket::Error, "Handshake got denied. Server did not verify WebSocket challenge.") do
+          HTTP::WebSocket::Protocol.new(address.address, port: address.port, path: "/")
+        end
       end
-    ensure
-      # http_server.try &.close # TODO: Uncomment when #5958 is fixed
     end
 
     it "Sec-WebSocket-Accept incorrect" do
@@ -418,13 +417,12 @@ describe HTTP::WebSocket do
       end
 
       address = http_server.bind_unused_port
-      spawn http_server.not_nil!.listen # TODO: Remove .not_nil! when #6037 is fixed
 
-      expect_raises(Socket::Error, "Handshake got denied. Server did not verify WebSocket challenge.") do
-        HTTP::WebSocket::Protocol.new(address.address, port: address.port, path: "/")
+      run_server(http_server) do
+        expect_raises(Socket::Error, "Handshake got denied. Server did not verify WebSocket challenge.") do
+          HTTP::WebSocket::Protocol.new(address.address, port: address.port, path: "/")
+        end
       end
-    ensure
-      # http_server.try &.close # TODO: Uncomment when #5958 is fixed
     end
   end
 

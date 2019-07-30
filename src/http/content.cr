@@ -10,7 +10,6 @@ module HTTP
 
     def close
       @expects_continue = false
-      skip_to_end
       super
     end
 
@@ -79,7 +78,7 @@ module HTTP
       @io.skip(bytes_count)
     end
 
-    def write(slice : Bytes)
+    def write(slice : Bytes) : NoReturn
       raise IO::Error.new "Can't write to UnknownLengthContent"
     end
   end
@@ -214,8 +213,12 @@ module HTTP
       end
     end
 
-    def write(slice : Bytes)
+    def write(slice : Bytes) : NoReturn
       raise IO::Error.new "Can't write to ChunkedContent"
+    end
+
+    def closed?
+      @received_final_chunk || super
     end
   end
 end

@@ -428,7 +428,7 @@ describe "JSON mapping" do
 
   it "raises if not an object" do
     error_message = <<-'MSG'
-      Expected begin_object but was string at 1:1
+      Expected BeginObject but was String at 1:1
         parsing StrictJSONAttrPerson at 0:0
       MSG
     ex = expect_raises JSON::MappingError, error_message do

@@ -147,6 +147,17 @@ describe BigDecimal do
     expect_raises(DivisionByZeroError) do
       BigDecimal.new(-1) / BigDecimal.new(0)
     end
+
+    expect_raises(DivisionByZeroError) do
+      BigDecimal.new(0) // BigDecimal.new(0)
+    end
+    expect_raises(DivisionByZeroError) do
+      BigDecimal.new(1) // BigDecimal.new(0)
+    end
+    expect_raises(DivisionByZeroError) do
+      BigDecimal.new(-1) // BigDecimal.new(0)
+    end
+
     BigDecimal.new(1).should eq(BigDecimal.new(1) / BigDecimal.new(1))
     BigDecimal.new(10).should eq(BigDecimal.new(100, 1) / BigDecimal.new(100000000, 8))
     BigDecimal.new(5.to_big_i, 1_u64).should eq(BigDecimal.new(1) / BigDecimal.new(2))
@@ -160,6 +171,18 @@ describe BigDecimal do
     BigDecimal.new(500.to_big_i, 0).should eq(BigDecimal.new(-1000) / BigDecimal.new(-2))
     BigDecimal.new(0).should eq(BigDecimal.new(0) / BigDecimal.new(1))
     BigDecimal.new("3333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333".to_big_i, 100_u64).should eq(BigDecimal.new(1) / BigDecimal.new(3))
+
+    BigDecimal.new(0).should eq(BigDecimal.new(1) // BigDecimal.new(2))
+    BigDecimal.new(-1).should eq(BigDecimal.new(1) // BigDecimal.new(-2))
+    BigDecimal.new(-1).should eq(BigDecimal.new(1) // BigDecimal.new(-2000))
+    BigDecimal.new(-500).should eq(BigDecimal.new(1000) // BigDecimal.new(-2))
+    BigDecimal.new(-500).should eq(BigDecimal.new(-1000) // BigDecimal.new(2))
+    BigDecimal.new(500).should eq(BigDecimal.new(-1000) // BigDecimal.new(-2))
+    BigDecimal.new(0).should eq(BigDecimal.new(-1) // BigDecimal.new(-2))
+    BigDecimal.new(0).should eq(BigDecimal.new(-1) // BigDecimal.new(-2000))
+    BigDecimal.new(500).should eq(BigDecimal.new(-1000) // BigDecimal.new(-2))
+    BigDecimal.new(0).should eq(BigDecimal.new(0) // BigDecimal.new(1))
+    BigDecimal.new(0).should eq(BigDecimal.new(1) // BigDecimal.new(3))
 
     BigDecimal.new(33333.to_big_i, 5_u64).should eq(BigDecimal.new(1).div(BigDecimal.new(3), 5))
     BigDecimal.new(33.to_big_i, 5_u64).should eq(BigDecimal.new(1).div(BigDecimal.new(3000), 5))
@@ -393,5 +416,42 @@ describe BigDecimal do
 
     negative_one.normalize_quotient(negative_one, positive_ten).should eq(positive_ten)
     negative_one.normalize_quotient(negative_one, negative_ten).should eq(negative_ten)
+  end
+
+  describe "#ceil" do
+    it { 2.0.to_big_d.ceil.should eq(2) }
+    it { 2.1.to_big_d.ceil.should eq(3) }
+    it { 2.9.to_big_d.ceil.should eq(3) }
+
+    it { 2.01.to_big_d.ceil.should eq(3) }
+    it { 2.11.to_big_d.ceil.should eq(3) }
+    it { 2.91.to_big_d.ceil.should eq(3) }
+
+    it { -2.01.to_big_d.ceil.should eq(-2) }
+    it { -2.91.to_big_d.ceil.should eq(-2) }
+  end
+
+  describe "#floor" do
+    it { 2.1.to_big_d.floor.should eq(2) }
+    it { 2.9.to_big_d.floor.should eq(2) }
+    it { -2.9.to_big_d.floor.should eq(-3) }
+
+    it { 2.11.to_big_d.floor.should eq(2) }
+    it { 2.91.to_big_d.floor.should eq(2) }
+    it { -2.91.to_big_d.floor.should eq(-3) }
+  end
+
+  describe "#trunc" do
+    it { 2.1.to_big_d.trunc.should eq(2) }
+    it { 2.9.to_big_d.trunc.should eq(2) }
+    it { -2.9.to_big_d.trunc.should eq(-2) }
+
+    it { 2.11.to_big_d.trunc.should eq(2) }
+    it { 2.91.to_big_d.trunc.should eq(2) }
+    it { -2.91.to_big_d.trunc.should eq(-2) }
+  end
+
+  describe "#inspect" do
+    it { "123".to_big_d.inspect.should eq("123") }
   end
 end

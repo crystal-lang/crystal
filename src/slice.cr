@@ -1,4 +1,5 @@
 require "c/string"
+require "slice/sort"
 
 # A `Slice` is a `Pointer` with an associated size.
 #
@@ -119,10 +120,25 @@ struct Slice(T)
     new(size, read_only: read_only) { value }
   end
 
-  # Returns a copy of this slice.
-  # This method allocates memory for the slice copy.
+  # Returns a deep copy of this slice.
+  #
+  # This method allocates memory for the slice copy and stores the return values
+  # from calling `#clone` on each item.
   def clone
-    copy = self.class.new(size)
+    pointer = Pointer(T).malloc(size)
+    copy = self.class.new(pointer, size)
+    each_with_index do |item, i|
+      copy[i] = item.clone
+    end
+    copy
+  end
+
+  # Returns a shallow copy of this slice.
+  #
+  # This method allocates memory for the slice copy and duplicates the values.
+  def dup
+    pointer = Pointer(T).malloc(size)
+    copy = self.class.new(pointer, size)
     copy.copy_from(self)
     copy
   end
@@ -147,9 +163,7 @@ struct Slice(T)
   # slice2 # => Slice[12, 13, 14]
   # ```
   def +(offset : Int)
-    unless 0 <= offset <= size
-      raise IndexError.new
-    end
+    check_size(offset)
 
     Slice.new(@pointer + offset, @size - offset, read_only: @read_only)
   end
@@ -182,25 +196,76 @@ struct Slice(T)
   # Returns a new slice that starts at *start* elements from this slice's start,
   # and of *count* size.
   #
+  # Returns `nil` if the new slice falls outside this slice.
+  #
+  # ```
+  # slice = Slice.new(5) { |i| i + 10 }
+  # slice # => Slice[10, 11, 12, 13, 14]
+  #
+  # slice[1, 3]?  # => Slice[11, 12, 13]
+  # slice[1, 33]? # => nil
+  # ```
+  def []?(start : Int, count : Int)
+    return unless 0 <= start <= @size
+    return unless 0 <= count <= @size - start
+
+    Slice.new(@pointer + start, count, read_only: @read_only)
+  end
+
+  # Returns a new slice that starts at *start* elements from this slice's start,
+  # and of *count* size.
+  #
   # Raises `IndexError` if the new slice falls outside this slice.
   #
   # ```
   # slice = Slice.new(5) { |i| i + 10 }
   # slice # => Slice[10, 11, 12, 13, 14]
   #
-  # slice2 = slice[1, 3]
-  # slice2 # => Slice[11, 12, 13]
+  # slice[1, 3]  # => Slice[11, 12, 13]
+  # slice[1, 33] # raises IndexError
   # ```
-  def [](start, count)
-    unless 0 <= start <= @size
-      raise IndexError.new
-    end
+  def [](start : Int, count : Int)
+    self[start, count]? || raise IndexError.new
+  end
 
-    unless 0 <= count <= @size - start
-      raise IndexError.new
-    end
+  # Returns a new slice with the elements in the given range.
+  #
+  # Negative indices count backward from the end of the slice (`-1` is the last
+  # element). Additionally, an empty slice is returned when the starting index
+  # for an element range is at the end of the slice.
+  #
+  # Returns `nil` if the new slice falls outside this slice.
+  #
+  # ```
+  # slice = Slice.new(5) { |i| i + 10 }
+  # slice # => Slice[10, 11, 12, 13, 14]
+  #
+  # slice[1..3]?  # => Slice[11, 12, 13]
+  # slice[1..33]? # => nil
+  # ```
+  def []?(range : Range)
+    start, count = Indexable.range_to_index_and_count(range, size)
+    self[start, count]?
+  end
 
-    Slice.new(@pointer + start, count, read_only: @read_only)
+  # Returns a new slice with the elements in the given range.
+  #
+  # Negative indices count backward from the end of the slice (`-1` is the last
+  # element). Additionally, an empty slice is returned when the starting index
+  # for an element range is at the end of the slice.
+  #
+  # Raises `IndexError` if the new slice falls outside this slice.
+  #
+  # ```
+  # slice = Slice.new(5) { |i| i + 10 }
+  # slice # => Slice[10, 11, 12, 13, 14]
+  #
+  # slice[1..3]  # => Slice[11, 12, 13]
+  # slice[1..33] # raises IndexError
+  # ```
+  def [](range : Range)
+    start, count = Indexable.range_to_index_and_count(range, size)
+    self[start, count]
   end
 
   @[AlwaysInline]
@@ -224,14 +289,6 @@ struct Slice(T)
     end
 
     self
-  end
-
-  def pointer(size)
-    unless 0 <= size <= @size
-      raise IndexError.new
-    end
-
-    @pointer
   end
 
   def shuffle!(random = Random::DEFAULT)
@@ -280,12 +337,15 @@ struct Slice(T)
 
   def copy_from(source : Pointer(T), count)
     check_writable
+    check_size(count)
 
-    pointer(count).copy_from(source, count)
+    @pointer.copy_from(source, count)
   end
 
   def copy_to(target : Pointer(T), count)
-    pointer(count).copy_to(target, count)
+    check_size(count)
+
+    @pointer.copy_to(target, count)
   end
 
   # Copies the contents of this slice into *target*.
@@ -302,8 +362,9 @@ struct Slice(T)
   # ```
   def copy_to(target : self)
     target.check_writable
+    raise IndexError.new if target.size < size
 
-    @pointer.copy_to(target.pointer(size), size)
+    @pointer.copy_to(target.to_unsafe, size)
   end
 
   # Copies the contents of *source* into this slice.
@@ -316,12 +377,13 @@ struct Slice(T)
 
   def move_from(source : Pointer(T), count)
     check_writable
+    check_size(count)
 
-    pointer(count).move_from(source, count)
+    @pointer.move_from(source, count)
   end
 
   def move_to(target : Pointer(T), count)
-    pointer(count).move_to(target, count)
+    @pointer.move_to(target, count)
   end
 
   # Moves the contents of this slice into *target*. *target* and `self` may
@@ -341,8 +403,9 @@ struct Slice(T)
   # See also: `Pointer#move_to`.
   def move_to(target : self)
     target.check_writable
+    raise IndexError.new if target.size < size
 
-    @pointer.move_to(target.pointer(size), size)
+    @pointer.move_to(target.to_unsafe, size)
   end
 
   # Moves the contents of *source* into this slice. *source* and `self` may
@@ -354,7 +417,7 @@ struct Slice(T)
     source.move_to(self)
   end
 
-  def inspect(io)
+  def inspect(io : IO) : Nil
     to_s(io)
   end
 
@@ -476,7 +539,7 @@ struct Slice(T)
     self
   end
 
-  def to_s(io)
+  def to_s(io : IO) : Nil
     if T == UInt8
       io << "Bytes["
       # Inspect using to_s because we know this is a UInt8.
@@ -509,6 +572,106 @@ struct Slice(T)
   # ```
   def to_unsafe : Pointer(T)
     @pointer
+  end
+
+  # Returns a new slice with all elements sorted based on the return value of
+  # their comparison method `<=>`
+  #
+  # ```
+  # a = Slice[3, 1, 2]
+  # a.sort # => Slice[1, 2, 3]
+  # a      # => Slice[3, 1, 2]
+  # ```
+  def sort : Slice(T)
+    dup.sort!
+  end
+
+  # Returns a new slice with all elements sorted based on the comparator in the
+  # given block.
+  #
+  # The block must implement a comparison between two elements *a* and *b*,
+  # where `a < b` returns `-1`, `a == b` returns `0`, and `a > b` returns `1`.
+  # The comparison operator `<=>` can be used for this.
+  #
+  # ```
+  # a = Slice[3, 1, 2]
+  # b = a.sort { |a, b| b <=> a }
+  #
+  # b # => Slice[3, 2, 1]
+  # a # => Slice[3, 1, 2]
+  # ```
+  def sort(&block : T, T -> U) : Slice(T) forall U
+    {% unless U <= Int32? %}
+      {% raise "expected block to return Int32 or Nil, not #{U}" %}
+    {% end %}
+
+    dup.sort! &block
+  end
+
+  # Modifies `self` by sorting all elements based on the return value of their
+  # comparison method `<=>`
+  #
+  # ```
+  # a = Slice[3, 1, 2]
+  # a.sort!
+  # a # => Slice[1, 2, 3]
+  # ```
+  def sort! : Slice(T)
+    Slice.intro_sort!(to_unsafe, size)
+    self
+  end
+
+  # Modifies `self` by sorting all elements based on the comparator in the given
+  # block.
+  #
+  # The given block must implement a comparison between two elements
+  # *a* and *b*, where `a < b` returns `-1`, `a == b` returns `0`,
+  # and `a > b` returns `1`.
+  # The comparison operator `<=>` can be used for this.
+  #
+  # ```
+  # a = Slice[3, 1, 2]
+  # a.sort! { |a, b| b <=> a }
+  # a # => Slice[3, 2, 1]
+  # ```
+  def sort!(&block : T, T -> U) : Slice(T) forall U
+    {% unless U <= Int32? %}
+      {% raise "expected block to return Int32 or Nil, not #{U}" %}
+    {% end %}
+
+    Slice.intro_sort!(to_unsafe, size, block)
+    self
+  end
+
+  # Returns a new array with all elements sorted. The given block is called for
+  # each element, then the comparison method `<=>` is called on the object
+  # returned from the block to determine sort order.
+  #
+  # ```
+  # a = Slice["apple", "pear", "fig"]
+  # b = a.sort_by { |word| word.size }
+  # b # => Slice["fig", "pear", "apple"]
+  # a # => Slice["apple", "pear", "fig"]
+  # ```
+  def sort_by(&block : T -> _) : Slice(T)
+    dup.sort_by! { |e| yield(e) }
+  end
+
+  # Modifies `self` by sorting all elements. The given block is called for
+  # each element, then the comparison method `<=>` is called on the object
+  # returned from the block to determine sort order.
+  #
+  # ```
+  # a = Slice["apple", "pear", "fig"]
+  # a.sort_by! { |word| word.size }
+  # a # => Slice["fig", "pear", "apple"]
+  # ```
+  def sort_by!(&block : T -> _) : Slice(T)
+    sorted = map { |e| {e, yield(e)} }.sort! { |x, y| x[1] <=> y[1] }
+    size.times do |i|
+      to_unsafe[i] = sorted.to_unsafe[i][0]
+    end
+    self
   end
 
   # :nodoc:
@@ -546,6 +709,12 @@ struct Slice(T)
 
   protected def check_writable
     raise "Can't write to read-only Slice" if @read_only
+  end
+
+  private def check_size(count : Int)
+    unless 0 <= count <= size
+      raise IndexError.new
+    end
   end
 end
 

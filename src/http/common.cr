@@ -18,15 +18,18 @@ module HTTP
   SUPPORTED_VERSIONS = {"HTTP/1.0", "HTTP/1.1"}
 
   # :nodoc:
+  record EndOfRequest
+  # :nodoc:
+  record HeaderLine, name : String, value : String, bytesize : Int32
+
+  # :nodoc:
   def self.parse_headers_and_body(io, body_type : BodyType = BodyType::OnDemand, decompress = true)
     headers = Headers.new
 
     headers_size = 0
-    while line = io.gets(MAX_HEADER_SIZE, chomp: true)
-      headers_size += line.bytesize
-      break if headers_size > MAX_HEADER_SIZE
-
-      if line.empty?
+    while header_line = read_header_line(io)
+      case header_line
+      when EndOfRequest
         body = nil
 
         if body_type.prohibited?
@@ -64,26 +67,69 @@ module HTTP
 
         yield headers, body
         break
-      end
+      else # HeaderLine
+        headers_size += header_line.bytesize
+        break if headers_size > MAX_HEADER_SIZE
 
-      name, value = parse_header(line)
-      break unless headers.add?(name, value)
+        break unless headers.add?(header_line.name, header_line.value)
+      end
     end
+  end
+
+  private def self.read_header_line(io) : HeaderLine | EndOfRequest | Nil
+    # Optimization: check if we have a peek buffer
+    if peek = io.peek
+      # peek.empty? means EOF (so bad request)
+      return nil if peek.empty?
+
+      # Find \r\n (first \n, then \r before it)
+      index = peek.index('\n'.ord.to_u8)
+      if index && index > 0 && peek[index - 1] == '\r'.ord.to_u8
+        # `index == 1` means we just have "\r\n", so end of request
+        if index == 1
+          io.skip(2)
+          return EndOfRequest.new
+        end
+
+        name, value = parse_header(peek[0, index - 1])
+        io.skip(index + 1) # Must skip until after \r\n
+        return HeaderLine.new name: name, value: value, bytesize: index + 1
+      end
+    end
+
+    line = io.gets(MAX_HEADER_SIZE, chomp: true)
+    return nil unless line
+
+    if line.empty?
+      return EndOfRequest.new
+    end
+
+    name, value = parse_header(line)
+    return HeaderLine.new name: name, value: value, bytesize: line.bytesize
   end
 
   private def self.check_content_type_charset(body, headers)
     return unless body
 
-    if content_type = headers["Content-Type"]?
-      mime_type = MIME::MediaType.parse(content_type)
-      if charset = mime_type["charset"]?
-        body.set_encoding(charset, invalid: :skip)
-      end
-    end
+    content_type = headers["Content-Type"]?
+    return unless content_type
+
+    mime_type = MIME::MediaType.parse?(content_type)
+    return unless mime_type
+
+    charset = mime_type["charset"]?
+    return unless charset
+
+    body.set_encoding(charset, invalid: :skip)
   end
 
   # :nodoc:
-  def self.parse_header(line)
+  def self.parse_header(line : String) : {String, String}
+    parse_header(line.to_slice)
+  end
+
+  # :nodoc:
+  def self.parse_header(slice : Bytes) : {String, String}
     # This is basically
     #
     # ```
@@ -96,12 +142,12 @@ module HTTP
     # instead of 3 (two from the split and one for the lstrip),
     # and there's no need for the array returned by split.
 
-    cstr = line.to_unsafe
-    bytesize = line.bytesize
+    cstr = slice.to_unsafe
+    bytesize = slice.size
 
     # Get the colon index and name
-    colon_index = cstr.to_slice(bytesize).index(':'.ord) || 0
-    name = line.byte_slice(0, colon_index)
+    colon_index = slice.index(':'.ord.to_u8) || 0
+    name = header_name(slice[0, colon_index])
 
     # Get where the header value starts (skip space)
     middle_index = colon_index + 1
@@ -113,15 +159,54 @@ module HTTP
     right_index = bytesize
     if middle_index >= right_index
       return {name, ""}
-    elsif right_index > 1 && cstr[right_index - 2] === '\r' && cstr[right_index - 1] === '\n'
+    elsif right_index > 1 && cstr[right_index - 2] == '\r'.ord.to_u8 && cstr[right_index - 1] == '\n'.ord.to_u8
       right_index -= 2
-    elsif right_index > 0 && cstr[right_index - 1] === '\n'
+    elsif right_index > 0 && cstr[right_index - 1] == '\n'.ord.to_u8
       right_index -= 1
     end
 
-    value = line.byte_slice(middle_index, right_index - middle_index)
+    value = String.new(slice[middle_index, right_index - middle_index])
 
     {name, value}
+  end
+
+  private COMMON_HEADERS = %w(
+    accept-language
+    accept-encoding
+    allow
+    cache-control
+    connection
+    content-disposition
+    content-encoding
+    content-language
+    content-length
+    content-type
+    etag
+    expires
+    host
+    last-modified
+    user-agent
+  )
+
+  # :nodoc:
+  def self.header_name(slice : Bytes)
+    # Check if the header name is a common one.
+    # If so we avoid having to allocate a string for it.
+    if slice.size < 20
+      buffer = uninitialized UInt8[20]
+
+      # Copy the slice to buffer, downcased
+      slice.each_with_index do |byte, i|
+        buffer[i] = 65 <= byte <= 90 ? byte + 32 : byte
+      end
+
+      buffer_slice = buffer.to_slice[0, slice.size]
+
+      name = COMMON_HEADERS.find { |value| value.to_slice == buffer_slice }
+      return name if name
+    end
+
+    String.new(slice)
   end
 
   # :nodoc:
@@ -210,6 +295,8 @@ module HTTP
   # Parse a time string using the formats specified by [RFC 2616](https://tools.ietf.org/html/rfc2616#section-3.3.1)
   #
   # ```
+  # require "http"
+  #
   # HTTP.parse_time("Sun, 14 Feb 2016 21:00:00 GMT")  # => "2016-02-14 21:00:00 UTC"
   # HTTP.parse_time("Sunday, 14-Feb-16 21:00:00 GMT") # => "2016-02-14 21:00:00 UTC"
   # HTTP.parse_time("Sun Feb 14 21:00:00 2016")       # => "2016-02-14 21:00:00 UTC"
@@ -228,6 +315,8 @@ module HTTP
   # timezone `GMT` (interpreted as `UTC`).
   #
   # ```
+  # require "http"
+  #
   # HTTP.format_time(Time.utc(2016, 2, 15)) # => "Mon, 15 Feb 2016 00:00:00 GMT"
   # ```
   #
@@ -240,6 +329,8 @@ module HTTP
   # quoted-string.
   #
   # ```
+  # require "http"
+  #
   # quoted = %q(\"foo\\bar\")
   # HTTP.dequote_string(quoted) # => %q("foo\bar")
   # ```
@@ -265,6 +356,8 @@ module HTTP
   # contains an invalid character.
   #
   # ```
+  # require "http"
+  #
   # string = %q("foo\ bar")
   # io = IO::Memory.new
   # HTTP.quote_string(string, io)
@@ -289,6 +382,8 @@ module HTTP
   # quoted-string. May raise when *string* contains an invalid character.
   #
   # ```
+  # require "http"
+  #
   # string = %q("foo\ bar")
   # HTTP.quote_string(string) # => %q(\"foo\\\ bar\")
   # ```
@@ -297,87 +392,9 @@ module HTTP
       quote_string(string, io)
     end
   end
-
-  # Returns the default status message of the given HTTP status code.
-  #
-  # Based on [Hypertext Transfer Protocol (HTTP) Status Code Registry](https://www.iana.org/assignments/http-status-codes/http-status-codes.xhtml)
-  #
-  # Last Updated 2017-04-14
-  #
-  # HTTP Status Codes (source: [http-status-codes-1.csv](https://www.iana.org/assignments/http-status-codes/http-status-codes-1.csv))
-  #
-  # * 1xx: Informational - Request received, continuing process
-  # * 2xx: Success - The action was successfully received, understood, and accepted
-  # * 3xx: Redirection - Further action must be taken in order to complete the request
-  # * 4xx: Client Error - The request contains bad syntax or cannot be fulfilled
-  # * 5xx: Server Error - The server failed to fulfill an apparently valid request
-  #
-  def self.default_status_message_for(status_code : Int) : String
-    case status_code
-    when 100 then "Continue"
-    when 101 then "Switching Protocols"
-    when 102 then "Processing"
-    when 200 then "OK"
-    when 201 then "Created"
-    when 202 then "Accepted"
-    when 203 then "Non-Authoritative Information"
-    when 204 then "No Content"
-    when 205 then "Reset Content"
-    when 206 then "Partial Content"
-    when 207 then "Multi-Status"
-    when 208 then "Already Reported"
-    when 226 then "IM Used"
-    when 300 then "Multiple Choices"
-    when 301 then "Moved Permanently"
-    when 302 then "Found"
-    when 303 then "See Other"
-    when 304 then "Not Modified"
-    when 305 then "Use Proxy"
-    when 307 then "Temporary Redirect"
-    when 308 then "Permanent Redirect"
-    when 400 then "Bad Request"
-    when 401 then "Unauthorized"
-    when 402 then "Payment Required"
-    when 403 then "Forbidden"
-    when 404 then "Not Found"
-    when 405 then "Method Not Allowed"
-    when 406 then "Not Acceptable"
-    when 407 then "Proxy Authentication Required"
-    when 408 then "Request Timeout"
-    when 409 then "Conflict"
-    when 410 then "Gone"
-    when 411 then "Length Required"
-    when 412 then "Precondition Failed"
-    when 413 then "Payload Too Large"
-    when 414 then "URI Too Long"
-    when 415 then "Unsupported Media Type"
-    when 416 then "Range Not Satisfiable"
-    when 417 then "Expectation Failed"
-    when 421 then "Misdirected Request"
-    when 422 then "Unprocessable Entity"
-    when 423 then "Locked"
-    when 424 then "Failed Dependency"
-    when 426 then "Upgrade Required"
-    when 428 then "Precondition Required"
-    when 429 then "Too Many Requests"
-    when 431 then "Request Header Fields Too Large"
-    when 451 then "Unavailable For Legal Reasons"
-    when 500 then "Internal Server Error"
-    when 501 then "Not Implemented"
-    when 502 then "Bad Gateway"
-    when 503 then "Service Unavailable"
-    when 504 then "Gateway Timeout"
-    when 505 then "HTTP Version Not Supported"
-    when 506 then "Variant Also Negotiates"
-    when 507 then "Insufficient Storage"
-    when 508 then "Loop Detected"
-    when 510 then "Not Extended"
-    when 511 then "Network Authentication Required"
-    else          ""
-    end
-  end
 end
 
+require "./status"
 require "./request"
 require "./client/response"
 require "./headers"

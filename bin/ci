@@ -73,32 +73,39 @@ prepare_system() {
 }
 
 build() {
-  with_build_env 'make std_spec clean'
-  with_build_env 'make crystal std_spec compiler_spec docs'
+  with_build_env 'make std_spec clean threads=1'
+  with_build_env 'make crystal std_spec compiler_spec docs threads=1'
   with_build_env 'find samples -name "*.cr" | xargs -L 1 ./bin/crystal build --no-codegen'
 }
 
 format() {
-  with_build_env 'make clean crystal'
+  with_build_env 'make clean crystal threads=1'
   with_build_env './bin/crystal tool format --check samples spec src'
 }
 
 prepare_build() {
   on_linux verify_linux_environment
 
-  on_osx brew install crystal
+  on_osx curl -L https://github.com/crystal-lang/crystal/releases/download/0.29.0/crystal-0.29.0-1-darwin-x86_64.tar.gz -o ~/crystal.tar.gz
+  on_osx 'pushd ~;gunzip -c ~/crystal.tar.gz | tar xopf -;mv crystal-0.29.0-1 crystal;popd'
 
-  # Make sure binaries from llvm are available in PATH
-  on_osx brew install jq
-  on_osx OSX_LLVM_PACKAGE=`brew info --json=v1 crystal | jq '.[].dependencies | .[] | select(startswith("llvm"))'`
-  on_osx brew link --force $OSX_LLVM_PACKAGE
+  on_osx brew install llvm@8 gmp libevent pcre pkg-config
+  on_osx brew upgrade libyaml
+  on_osx brew link --force llvm@8
+  # Note: brew link --force might show:
+  #   Warning: Refusing to link macOS-provided software: llvm
+  #
+  #   If you need to have llvm first in your PATH run:
+  #     echo 'export PATH="/usr/local/opt/llvm/bin:$PATH"' >> ~/.bash_profile
+  #
+  # This is added in the .circleci/config.yml
 
   on_tag verify_version
 }
 
 verify_version() {
   # If building a tag, check it matches with file
-  FILE_VERSION=`cat VERSION`
+  FILE_VERSION=`cat ./src/VERSION`
 
   if [ "$FILE_VERSION" != "$CURRENT_TAG" ]
   then
@@ -114,7 +121,7 @@ with_build_env() {
 
   on_linux verify_linux_environment
 
-  export DOCKER_TEST_PREFIX="crystallang/crystal:0.27.0"
+  export DOCKER_TEST_PREFIX="${DOCKER_TEST_PREFIX:=crystallang/crystal:0.29.0}"
 
   case $ARCH in
     x86_64)
@@ -129,13 +136,16 @@ with_build_env() {
     --rm -t \
     -u $(id -u) \
     -v $PWD:/mnt \
+    -v /etc/passwd:/etc/passwd \
+    -v /etc/group:/etc/group \
     -w /mnt \
     -e CRYSTAL_CACHE_DIR="/tmp/crystal" \
     "$DOCKER_TEST_IMAGE" \
     "$ARCH_CMD" /bin/sh -c "'$command'"
 
   on_osx sudo systemsetup -settimezone $TZ
-  on_osx PATH="/usr/local/opt/llvm/bin:\$PATH" \
+  on_osx PATH="~/crystal/bin:\$PATH" \
+    CRYSTAL_LIBRARY_PATH="~/crystal/embedded/lib" \
     CRYSTAL_CACHE_DIR="/tmp/crystal" \
     /bin/sh -c "'$command'"
 
@@ -150,7 +160,8 @@ Helper script to prepare and run the testsuite on Travis CI.
 Commands:
   prepare_system          setup any necessaries repositories etc.
   prepare_build           download and extract any dependencies needed for the build
-  build                   run specs, build crystal, run format check, build samples, build the docs
+  build                   run specs, build crystal, build samples, build the docs
+  format                  build crystal, run format check
   with_build_env command  run command in the build environment
   help                    display this
 

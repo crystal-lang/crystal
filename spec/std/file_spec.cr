@@ -270,6 +270,12 @@ describe "File" do
     end
   end
 
+  describe ".readlink" do
+    it "reads link" do
+      File.readlink(datapath("symlink.txt")).should eq "test_file.txt"
+    end
+  end
+
   it "gets dirname" do
     File.dirname("/Users/foo/bar.cr").should eq("/Users/foo")
     File.dirname("foo").should eq(".")
@@ -322,6 +328,8 @@ describe "File" do
     File.join(["foo", "/", "bar"]).should eq("foo/bar")
     File.join(["foo", "/", "/", "bar"]).should eq("foo/bar")
     File.join(["/", "/foo", "/", "bar/", "/"]).should eq("/foo/bar/")
+    File.join(["foo"]).should eq("foo")
+    File.join("foo").should eq("foo")
   end
 
   it "chown" do
@@ -397,7 +405,7 @@ describe "File" do
 
   # TODO: support stating nul on windows
   pending_win32 "gets info for a character device" do
-    info = File.info(File::DEVNULL)
+    info = File.info(File::NULL)
     info.type.should eq(File::Type::CharacterDevice)
   end
 
@@ -430,9 +438,9 @@ describe "File" do
     with_tempfile("mtime") do |path|
       File.touch(path)
       File.open(path) do |file|
-        file.info.modification_time.should be_close(Time.now, 1.seconds)
+        file.info.modification_time.should be_close(Time.utc, 1.seconds)
       end
-      File.info(path).modification_time.should be_close(Time.now, 1.seconds)
+      File.info(path).modification_time.should be_close(Time.utc, 1.seconds)
     end
   end
 
@@ -564,17 +572,17 @@ describe "File" do
       File.expand_path("../bin", "x/../tmp").should eq(File.join([base, "bin"]))
     end
 
-    pending_win32 "expand_path for commoms unix path  give a full path" do
-      File.expand_path("/tmp/").should eq("/tmp")
+    it "expand_path for commoms unix path  give a full path" do
+      File.expand_path("/tmp/").should eq("/tmp/")
       File.expand_path("/tmp/../../../tmp").should eq("/tmp")
       File.expand_path("").should eq(base)
-      File.expand_path("./////").should eq(base)
+      File.expand_path("./////").should eq(File.join(base, ""))
       File.expand_path(".").should eq(base)
       File.expand_path(base).should eq(base)
     end
 
-    pending_win32 "converts a pathname to an absolute pathname, using ~ (home) as base" do
-      File.expand_path("~/").should eq(home)
+    it "converts a pathname to an absolute pathname, using ~ (home) as base" do
+      File.expand_path("~/").should eq(File.join(home, ""))
       File.expand_path("~/..badfilename").should eq(File.join(home, "..badfilename"))
       File.expand_path("..").should eq("/#{base.split('/')[0...-1].join('/')}".gsub(%r{\A//}, "/"))
       File.expand_path("~/a", "~/b").should eq(File.join(home, "a"))
@@ -583,11 +591,11 @@ describe "File" do
       File.expand_path("~/a", "/tmp/gumby/ddd").should eq(File.join([home, "a"]))
     end
 
-    pending_win32 "converts a pathname to an absolute pathname, using ~ (home) as base (trailing /)" do
+    it "converts a pathname to an absolute pathname, using ~ (home) as base (trailing /)" do
       prev_home = home
       begin
         ENV["HOME"] = File.expand_path(datapath)
-        File.expand_path("~/").should eq(home)
+        File.expand_path("~/").should eq(File.join(home, ""))
         File.expand_path("~/..badfilename").should eq(File.join(home, "..badfilename"))
         File.expand_path("..").should eq("/#{base.split('/')[0...-1].join('/')}".gsub(%r{\A//}, "/"))
         File.expand_path("~/a", "~/b").should eq(File.join(home, "a"))
@@ -599,13 +607,13 @@ describe "File" do
       end
     end
 
-    pending_win32 "converts a pathname to an absolute pathname, using ~ (home) as base (HOME=/)" do
+    it "converts a pathname to an absolute pathname, using ~ (home) as base (HOME=/)" do
       prev_home = home
       begin
         ENV["HOME"] = "/"
         File.expand_path("~/").should eq(home)
         File.expand_path("~/..badfilename").should eq(File.join(home, "..badfilename"))
-        File.expand_path("..").should eq("/#{base.split('/')[0...-1].join('/')}".gsub(%r{\A//}, "/"))
+        File.expand_path("..").should eq("/#{base.split('/')[0...-1].join('/')}".gsub(/\A\/\//, "/"))
         File.expand_path("~/a", "~/b").should eq(File.join(home, "a"))
         File.expand_path("~").should eq(home)
         File.expand_path("~", "/tmp/gumby/ddd").should eq(home)
@@ -1171,12 +1179,12 @@ describe "File" do
       end
     end
 
-    it "sets file times to Time.now if no time argument given" do
+    it "sets file times to current time if no time argument given" do
       with_tempfile("touch-time_now.txt") do |path|
         File.touch(path)
 
         info = File.info(path)
-        info.modification_time.should be_close(Time.now, 1.second)
+        info.modification_time.should be_close(Time.utc, 1.second)
       end
     end
 

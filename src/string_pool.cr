@@ -25,14 +25,26 @@ class StringPool
   # Returns the size
   #
   # ```
+  # require "string_pool"
+  #
   # pool = StringPool.new
   # pool.size # => 0
   # ```
   getter size : Int32
 
   # Creates a new empty string pool.
-  def initialize
-    @capacity = 8
+  #
+  # The *initial_capacity* is useful to avoid unnecessary reallocations
+  # of the internal buffers in case of growth. If you have an estimate
+  # of the maximum number of elements the pool will hold it should
+  # be initialized with that capacity for improved performance.
+  #
+  # ```
+  # pool = StringPool.new(256)
+  # pool.size # => 0
+  # ```
+  def initialize(initial_capacity = 8)
+    @capacity = initial_capacity
     @hashes = Pointer(UInt64).malloc(@capacity, 0_u64)
     @values = Pointer(String).malloc(@capacity, "")
     @size = 0
@@ -41,6 +53,8 @@ class StringPool
   # Returns `true` if the `StringPool` has no element otherwise returns `false`.
   #
   # ```
+  # require "string_pool"
+  #
   # pool = StringPool.new
   # pool.empty? # => true
   # pool.get("crystal")
@@ -56,6 +70,8 @@ class StringPool
   # Otherwise a new string is created, put in the pool and returned.
   #
   # ```
+  # require "string_pool"
+  #
   # pool = StringPool.new
   # ptr = Pointer.malloc(9) { |i| ('a'.ord + i).to_u8 }
   # slice = Slice.new(ptr, 3)
@@ -64,7 +80,7 @@ class StringPool
   # pool.empty? # => false
   #  ```
   def get(slice : Bytes)
-    get slice.pointer(slice.size), slice.size
+    get slice.to_unsafe, slice.size
   end
 
   # Returns a `String` with the contents given by the pointer *str* of size *len*.
@@ -73,6 +89,8 @@ class StringPool
   # Otherwise a new string is created, put in the pool and returned.
   #
   # ```
+  # require "string_pool"
+  #
   # pool = StringPool.new
   # pool.get("hey".to_unsafe, 3)
   # pool.size # => 1
@@ -83,7 +101,7 @@ class StringPool
   end
 
   private def get(hash : UInt64, str : UInt8*, len)
-    rehash if @size >= @capacity / 4 * 3
+    rehash if @size >= @capacity // 4 * 3
 
     mask = (@capacity - 1).to_u64
     index = hash & mask
@@ -124,6 +142,8 @@ class StringPool
   # Otherwise a new string is created, put in the pool and returned.
   #
   # ```
+  # require "string_pool"
+  #
   # pool = StringPool.new
   # io = IO::Memory.new "crystal"
   # pool.empty? # => true
@@ -140,6 +160,8 @@ class StringPool
   # Otherwise a new string is created, put in the pool and returned.
   #
   # ```
+  # require "string_pool"
+  #
   # pool = StringPool.new
   # string = "crystal"
   # pool.empty? # => true

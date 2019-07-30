@@ -296,12 +296,40 @@ module Crystal
     end
   end
 
+  class Union
+    property? inside_is_a = false
+
+    def update(from = nil)
+      computed_types = types.compact_map do |subtype|
+        instance_type = subtype.type?
+        next unless instance_type
+
+        unless instance_type.can_be_stored?
+          subtype.raise "can't use #{instance_type} in unions yet, use a more specific type"
+        end
+        instance_type.virtual_type
+      end
+
+      return if computed_types.empty?
+
+      program = computed_types.first.program
+
+      if inside_is_a?
+        self.type = program.type_merge_union_of(computed_types)
+      else
+        self.type = program.type_merge(computed_types)
+      end
+    end
+  end
+
   class Cast
     property? upcast = false
 
     def update(from = nil)
+      to_type = to.type?
+      return unless to_type
+
       obj_type = obj.type?
-      to_type = to.type
 
       @upcast = false
 
@@ -314,16 +342,20 @@ module Crystal
         #   1 as Int32 | Float64
         #   Bar.new as Foo # where Bar < Foo
         if obj_type == filtered_type && !to_type.is_a?(GenericClassType) &&
-           to_type.allowed_in_generics?
+           to_type.can_be_stored?
           filtered_type = to_type
           @upcast = true
         end
       end
 
+      # If we couldn't filter the type and we are casting to something that
+      # isn't allowed in variables (like Int or uninstantiated Array(T))
+      # we can't guess a type.
+      return if !filtered_type && !to_type.can_be_stored?
+
       # If we don't have a matching type, leave it as the to_type:
       # later (in cleanup) we will check again.
       filtered_type ||= to_type
-
       self.type = filtered_type.virtual_type
     end
   end
@@ -333,8 +365,10 @@ module Crystal
     getter! non_nilable_type : Type
 
     def update(from = nil)
+      to_type = to.type?
+      return unless to_type
+
       obj_type = obj.type?
-      to_type = to.type
 
       @upcast = false
 
@@ -347,10 +381,18 @@ module Crystal
         #   1 as Int32 | Float64
         #   Bar.new as Foo # where Bar < Foo
         if obj_type == filtered_type && !to_type.is_a?(GenericClassType) &&
-           to_type.allowed_in_generics?
+           to_type.can_be_stored?
           filtered_type = to_type.virtual_type
           @upcast = true
         end
+      end
+
+      # If we couldn't filter the type and we are casting to something that
+      # isn't allowed in variables (like Int or uninstantiated Array(T))
+      # we can't guess a type.
+      if !filtered_type && !to_type.can_be_stored?
+        self.type = to_type.program.nil_type
+        return
       end
 
       # If we don't have a matching type, leave it as the to_type:
@@ -430,7 +472,7 @@ module Crystal
             node.raise "can't use constant as type for NamedTuple"
           end
 
-          Crystal.check_type_allowed_in_generics(node, node_type, "can't use #{node_type} as generic type argument")
+          Crystal.check_type_can_be_stored(node, node_type, "can't use #{node_type} as generic type argument")
           node_type = node_type.virtual_type
 
           NamedArgumentType.new(named_arg.name, node_type)
@@ -447,6 +489,9 @@ module Crystal
             node = expanded
           end
           if node.is_a?(InstanceSizeOf) && (expanded = node.expanded)
+            node = expanded
+          end
+          if node.is_a?(OffsetOf) && (expanded = node.expanded)
             node = expanded
           end
 
@@ -481,7 +526,7 @@ module Crystal
                 end
               end
             else
-              Crystal.check_type_allowed_in_generics(node, node_type, "can't use #{node_type} as generic type argument")
+              Crystal.check_type_can_be_stored(node, node_type, "can't use #{node_type} as generic type argument")
               type_var = node_type.virtual_type
             end
           end
@@ -492,7 +537,7 @@ module Crystal
         begin
           generic_type = instance_type.as(GenericType).instantiate(type_vars_types)
         rescue ex : Crystal::Exception
-          raise ex.message
+          raise ex.message, ex
         end
       end
 

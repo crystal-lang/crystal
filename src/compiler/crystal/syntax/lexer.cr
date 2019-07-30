@@ -555,21 +555,21 @@ module Crystal
             when '\\'
               case char = next_char
               when 'a'
-                io << "\u{7}"
+                io << '\a'
               when 'b'
-                io << "\u{8}"
+                io << '\b'
               when 'n'
-                io << "\n"
+                io << '\n'
               when 'r'
-                io << "\r"
+                io << '\r'
               when 't'
-                io << "\t"
+                io << '\t'
               when 'v'
-                io << "\v"
+                io << '\v'
               when 'f'
-                io << "\f"
+                io << '\f'
               when 'e'
-                io << "\e"
+                io << '\e'
               when 'x'
                 io.write_byte consume_string_hex_escape
               when 'u'
@@ -578,7 +578,7 @@ module Crystal
                 io.write_byte consume_octal_escape(char)
               when '\n'
                 incr_line_number nil
-                io << "\n"
+                io << '\n'
               when '\0'
                 raise "unterminated quoted symbol", line, column
               else
@@ -995,7 +995,14 @@ module Crystal
       when 'o'
         case next_char
         when 'f'
-          return check_ident_or_keyword(:of, start)
+          if peek_next_char == 'f'
+            next_char
+            if next_char == 's' && next_char == 'e' && next_char == 't' && next_char == 'o' && next_char == 'f'
+              return check_ident_or_keyword(:offsetof, start)
+            end
+          else
+            return check_ident_or_keyword(:of, start)
+          end
         when 'u'
           if next_char == 't'
             return check_ident_or_keyword(:out, start)
@@ -1489,13 +1496,16 @@ module Crystal
     end
 
     macro gen_check_int_fits_in_size(type, method, size)
+      if num_size >= 20
+        raise_value_doesnt_fit_in "{{type}}", string_value, start
+      end
       if num_size >= {{size}}
         int_value = absolute_integer_value(string_value, negative)
         max = {{type}}::MAX.{{method}}
         max += 1 if negative
 
         if int_value > max
-          raise "#{string_value} doesn't fit in an {{type}}", @token, (current_pos - start)
+          raise_value_doesnt_fit_in "{{type}}", string_value, start
         end
       end
     end
@@ -1504,11 +1514,13 @@ module Crystal
       if negative
         raise "Invalid negative value #{string_value} for {{type}}"
       end
-
+      if num_size >= 20
+        raise_value_doesnt_fit_in "{{type}}", string_value, start
+      end
       if num_size >= {{size}}
         int_value = absolute_integer_value(string_value, negative)
         if int_value > {{type}}::MAX
-          raise "#{string_value} doesn't fit in an {{type}}", @token, (current_pos - start)
+          raise_value_doesnt_fit_in "{{type}}", string_value, start
         end
       end
     end
@@ -1921,9 +1933,9 @@ module Crystal
           else
             case char = next_char
             when 'a'
-              string_token_escape_value "\u{7}"
+              string_token_escape_value "\a"
             when 'b'
-              string_token_escape_value "\u{8}"
+              string_token_escape_value "\b"
             when 'n'
               string_token_escape_value "\n"
             when 'r'
@@ -1977,6 +1989,8 @@ module Crystal
                 end
               end
               next_string_token delimiter_state
+            when '\0'
+              raise_unterminated_quoted delimiter_state
             else
               @token.type = :STRING
               @token.value = current_char.to_s

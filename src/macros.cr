@@ -89,31 +89,31 @@ macro record(name, *properties)
                       end
                     end
                   }})
-      {{name.id}}.new({{
-                        *properties.map do |property|
-                          if property.is_a?(Assign)
-                            "_#{property.target.id}".id
-                          elsif property.is_a?(TypeDeclaration)
-                            "_#{property.var.id}".id
-                          else
-                            "_#{property.id}".id
-                          end
-                        end
-                      }})
+      self.class.new({{
+                       *properties.map do |property|
+                         if property.is_a?(Assign)
+                           "_#{property.target.id}".id
+                         elsif property.is_a?(TypeDeclaration)
+                           "_#{property.var.id}".id
+                         else
+                           "_#{property.id}".id
+                         end
+                       end
+                     }})
     end
 
     def clone
-      {{name.id}}.new({{
-                        *properties.map do |property|
-                          if property.is_a?(Assign)
-                            "@#{property.target.id}.clone".id
-                          elsif property.is_a?(TypeDeclaration)
-                            "@#{property.var.id}.clone".id
-                          else
-                            "@#{property.id}.clone".id
-                          end
-                        end
-                      }})
+      self.class.new({{
+                       *properties.map do |property|
+                         if property.is_a?(Assign)
+                           "@#{property.target.id}.clone".id
+                         elsif property.is_a?(TypeDeclaration)
+                           "@#{property.var.id}.clone".id
+                         else
+                           "@#{property.id}.clone".id
+                         end
+                       end
+                     }})
     end
   end
 end

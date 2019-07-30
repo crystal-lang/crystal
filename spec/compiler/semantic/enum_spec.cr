@@ -462,4 +462,34 @@ describe "Semantic: enum" do
       Foo.new(1)
       )) { string }
   end
+
+  it "gives error on enum overflow" do
+    assert_error %(
+      @[Flags]
+      enum Foo : UInt8
+        #{Array.new(9) { |i| "V#{i + 1}" }.join "\n"}
+      end
+      ),
+      "value of enum member V9 would overflow the base type UInt8"
+  end
+
+  it "doesn't overflow when going from negative to zero (#7874)" do
+    semantic(%(
+      enum Nums
+        Zero  = -2
+        One
+        Two
+      end
+    ))
+  end
+
+  it "doesn't overflow on flags member (#7877)" do
+    semantic(%(
+      @[Flags]
+      enum Filter
+        A = 1 << 29
+        B
+      end
+    ))
+  end
 end

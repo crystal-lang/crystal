@@ -140,6 +140,10 @@ struct BigFloat < Float
     end
   end
 
+  def //(other : Number)
+    (self / other).floor
+  end
+
   def **(other : Int)
     BigFloat.new { |mpf| LibGMP.mpf_pow_ui(mpf, self, other.to_u64) }
   end
@@ -272,28 +276,31 @@ struct BigFloat < Float
     mpf
   end
 
-  def inspect(io)
-    to_s(io)
-    io << "_big_f"
-  end
-
-  def to_s(io : IO)
+  def to_s(io : IO) : Nil
     cstr = LibGMP.mpf_get_str(nil, out expptr, 10, 0, self)
     length = LibC.strlen(cstr)
+    decimal_set = false
     io << '-' if self < 0
     if expptr == 0
       io << 0
     elsif expptr < 0
       io << 0 << '.'
+      decimal_set = true
       expptr.abs.times { io << 0 }
     end
     expptr += 1 if self < 0
     length.times do |i|
       next if cstr[i] == 45 # '-'
-      io << '.' if i == expptr
+      if i == expptr
+        io << '.'
+        decimal_set = true
+      end
       io << cstr[i].unsafe_chr
     end
     (expptr - length).times { io << 0 } if expptr > 0
+    if !decimal_set
+      io << ".0"
+    end
   end
 
   def clone
@@ -326,6 +333,10 @@ struct Number
 
   def /(other : BigFloat)
     to_big_f / other
+  end
+
+  def //(other : BigFloat)
+    to_big_f // other
   end
 
   def to_big_f

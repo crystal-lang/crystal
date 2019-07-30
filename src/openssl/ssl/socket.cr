@@ -87,7 +87,7 @@ abstract class OpenSSL::SSL::Socket < IO
     # Since OpenSSL::SSL::Socket is buffered it makes no
     # sense to wrap a IO::Buffered with buffering activated.
     if io.is_a?(IO::Buffered)
-      io.sync = false
+      io.sync = true
       io.read_buffering = false
     end
 
@@ -105,7 +105,7 @@ abstract class OpenSSL::SSL::Socket < IO
     count = slice.size
     return 0 if count == 0
 
-    LibSSL.ssl_read(@ssl, slice.pointer(count), count).tap do |bytes|
+    LibSSL.ssl_read(@ssl, slice.to_unsafe, count).tap do |bytes|
       if bytes <= 0 && !LibSSL.ssl_get_error(@ssl, bytes).zero_return?
         raise OpenSSL::SSL::Error.new(@ssl, bytes, "SSL_read")
       end
@@ -118,7 +118,7 @@ abstract class OpenSSL::SSL::Socket < IO
     return if slice.empty?
 
     count = slice.size
-    bytes = LibSSL.ssl_write(@ssl, slice.pointer(count), count)
+    bytes = LibSSL.ssl_write(@ssl, slice.to_unsafe, count)
     unless bytes > 0
       raise OpenSSL::SSL::Error.new(@ssl, bytes, "SSL_write")
     end
@@ -148,23 +148,14 @@ abstract class OpenSSL::SSL::Socket < IO
           ret = LibSSL.ssl_shutdown(@ssl)
           break if ret == 1
           raise OpenSSL::SSL::Error.new(@ssl, ret, "SSL_shutdown") if ret < 0
-        rescue e : Errno
-          case e.errno
-          when 0
-            # OpenSSL claimed an underlying syscall failed, but that didn't set any error state,
-            # assume we're done
-            break
-          when Errno::EAGAIN
-            # Ignore/retry, shutdown did not complete yet
-          when Errno::EINPROGRESS
-            # Ignore/retry, another operation not complete yet
-          else
-            raise e
-          end
         rescue e : OpenSSL::SSL::Error
           case e.error
           when .want_read?, .want_write?
             # Ignore, shutdown did not complete yet
+          when .syscall?
+            # OpenSSL claimed an underlying syscall failed, but that didn't set any error state,
+            # assume we're done
+            break
           else
             raise e
           end
@@ -186,6 +177,62 @@ abstract class OpenSSL::SSL::Socket < IO
   def hostname : String?
     if host_name = LibSSL.ssl_get_servername(@ssl, LibSSL::TLSExt::NAMETYPE_host_name)
       String.new(host_name)
+    end
+  end
+
+  # Returns the current cipher used by this socket.
+  def cipher : String
+    String.new(LibSSL.ssl_cipher_get_name(LibSSL.ssl_get_current_cipher(@ssl)))
+  end
+
+  # Returns the name of the TLS protocol version used by this socket.
+  def tls_version : String
+    String.new(LibSSL.ssl_get_version(@ssl))
+  end
+
+  def local_address
+    io = @bio.io
+    io.responds_to?(:local_address) ? io.local_address : nil
+  end
+
+  def remote_address
+    io = @bio.io
+    io.responds_to?(:remote_address) ? io.remote_address : nil
+  end
+
+  def read_timeout
+    io = @bio.io
+    if io.responds_to? :read_timeout
+      io.read_timeout
+    else
+      raise NotImplementedError.new("#{io.class}#read_timeout")
+    end
+  end
+
+  def read_timeout=(value)
+    io = @bio.io
+    if io.responds_to? :read_timeout=
+      io.read_timeout = value
+    else
+      raise NotImplementedError.new("#{io.class}#read_timeout=")
+    end
+  end
+
+  def write_timeout
+    io = @bio.io
+    if io.responds_to? :write_timeout
+      io.write_timeout
+    else
+      raise NotImplementedError.new("#{io.class}#write_timeout")
+    end
+  end
+
+  def write_timeout=(value)
+    io = @bio.io
+    if io.responds_to? :write_timeout=
+      io.write_timeout = value
+    else
+      raise NotImplementedError.new("#{io.class}#write_timeout=")
     end
   end
 end

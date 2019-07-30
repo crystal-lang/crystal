@@ -349,4 +349,10 @@ describe "Random::ISAAC" do
   it "can be initialized without explicit seed" do
     Random::ISAAC.new.should be_a Random::ISAAC
   end
+
+  it "different instances generate different numbers (#7976)" do
+    isaacs = Array.new(1000) { Random::ISAAC.new }
+    values = isaacs.map(&.rand(10_000_000))
+    values.uniq.size.should be > 2
+  end
 end

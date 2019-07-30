@@ -52,7 +52,7 @@ module Crystal::Doc::Highlighter
                :while, :until, :do, :yield, :return, :unless, :next, :break, :begin,
                :lib, :fun, :type, :struct, :union, :enum, :macro, :out, :require,
                :case, :when, :select, :then, :of, :abstract, :rescue, :ensure, :is_a?,
-               :alias, :pointerof, :sizeof, :instance_sizeof, :as, :as?, :typeof, :for, :in,
+               :alias, :pointerof, :sizeof, :instance_sizeof, :offsetof, :as, :as?, :typeof, :for, :in,
                :undef, :with, :self, :super, :private, :asm, :nil?, :protected, :uninitialized, "new",
                :annotation, :verbatim
             highlight token, "k", io
@@ -62,7 +62,10 @@ module Crystal::Doc::Highlighter
             io << token
           end
         end
-      when :"+", :"-", :"*", :"/", :"=", :"==", :"<", :"<=", :">", :">=", :"!", :"!=", :"=~", :"!~", :"&", :"|", :"^", :"~", :"**", :">>", :"<<", :"%", :"[]", :"[]?", :"[]=", :"<=>", :"==="
+      when :+, :-, :*, :&+, :&-, :&*, :/, ://,
+           :"=", :==, :<, :<=, :>, :>=, :!, :!=, :=~, :!~,
+           :&, :|, :^, :~, :**, :>>, :<<, :%,
+           :[], :[]?, :[]=, :<=>, :===
         highlight HTML.escape(token.to_s), "o", io
       when :"}"
         if break_on_rcurly

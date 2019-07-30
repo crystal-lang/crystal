@@ -20,8 +20,22 @@ class HTTP::Request
   @query_params : Params?
   @uri : URI?
 
-  def initialize(@method : String, @resource : String, headers : Headers? = nil, body : String | Bytes | IO | Nil = nil, @version = "HTTP/1.1")
-    @headers = headers.try(&.dup) || Headers.new
+  # The network address that sent the request to an HTTP server.
+  #
+  # `HTTP::Server` will try to fill this property, and its value
+  # will have a format like "IP:port", but this format is not guaranteed.
+  # Middlewares can overwrite this value.
+  #
+  # This property is not used by `HTTP::Client`.
+  property remote_address : String?
+
+  def self.new(method : String, resource : String, headers : Headers? = nil, body : String | Bytes | IO | Nil = nil, version = "HTTP/1.1")
+    # Duplicate headers to prevent the request from modifying data that the user might hold.
+    new(method, resource, headers.try(&.dup), body, version, internal: nil)
+  end
+
+  private def initialize(@method : String, @resource : String, headers : Headers? = nil, body : String | Bytes | IO | Nil = nil, @version = "HTTP/1.1", *, internal)
+    @headers = headers || Headers.new
     self.body = body
   end
 
@@ -84,31 +98,116 @@ class HTTP::Request
 
   # :nodoc:
   record BadRequest
+  # :nodoc:
+  record RequestLine, method : String, resource : String, http_version : String
 
   # Returns a `HTTP::Request` instance if successfully parsed,
   # `nil` on EOF or `BadRequest` otherwise.
-  def self.from_io(io)
-    request_line = io.gets(4096, chomp: true)
-    return unless request_line
-
-    parts = request_line.split
-    return BadRequest.new unless parts.size == 3
-
-    method, resource, http_version = parts
-
-    return BadRequest.new unless HTTP::SUPPORTED_VERSIONS.includes?(http_version)
+  def self.from_io(io) : HTTP::Request | BadRequest | Nil
+    line = parse_request_line(io)
+    return line unless line.is_a?(RequestLine)
 
     HTTP.parse_headers_and_body(io) do |headers, body|
-      return new method, resource, headers, body, http_version
+      # No need to dup headers since nobody else holds them
+      request = new line.method, line.resource, headers, body, line.http_version, internal: nil
+
+      if io.responds_to?(:remote_address)
+        request.remote_address = io.remote_address.try &.to_s
+      end
+
+      return request
     end
 
     # Malformed or unexpectedly ended http request
     BadRequest.new
   end
 
-  # Lazily parses and return the request's path component.
+  private METHODS = %w(GET HEAD POST PUT DELETE CONNECT OPTIONS PATCH TRACE)
+
+  private def self.parse_request_line(io : IO) : RequestLine | BadRequest | Nil
+    # Optimization: see if we have a peek buffer
+    # (avoids a string allocation for the entire request line)
+    if peek = io.peek
+      # peek.empty? means there's no more input (EOF), so no more requests
+      return nil if peek.empty?
+
+      # See if we can find \r\n (first \n, then \r before it)
+      index = peek.index('\n'.ord.to_u8)
+      # TODO: eventually increase the 4096 bytes limit
+      if index && index > 0 && index < 4096 && peek[index - 1] == '\r'.ord.to_u8
+        parts = parse_request_line(peek[0, index - 1])
+        io.skip(index + 1) # Must skip until after \r\n
+        return parts
+      end
+    end
+
+    request_line = io.gets(4096, chomp: true)
+    return BadRequest.new unless request_line
+
+    parse_request_line(request_line)
+  end
+
+  private def self.parse_request_line(line : String) : RequestLine | BadRequest
+    parse_request_line(line.to_slice)
+  end
+
+  private def self.parse_request_line(slice : Bytes) : RequestLine | BadRequest
+    space_index = slice.index(' '.ord.to_u8)
+
+    # Oops, only a single part (should be three)
+    return BadRequest.new unless space_index
+
+    subslice = slice[0...space_index]
+
+    # Optimization: see if it's one of the common methods
+    # (avoids a string allocation for these methods)
+    method = METHODS.find { |method| method.to_slice == subslice } ||
+             String.new(subslice)
+
+    # Skip spaces.
+    # The RFC just mentions a single space but most servers allow multiple.
+    while space_index < slice.size && slice[space_index] == ' '.ord.to_u8
+      space_index += 1
+    end
+
+    # Oops, we only found the "method" part followed by spaces
+    return BadRequest.new if space_index == slice.size
+
+    next_space_index = slice.index(' '.ord.to_u8, offset: space_index)
+
+    # Oops, we only found two parts (should be three)
+    return BadRequest.new unless next_space_index
+
+    resource = String.new(slice[space_index...next_space_index])
+
+    # Skip spaces again
+    space_index = next_space_index
+    while space_index < slice.size && slice[space_index] == ' '.ord.to_u8
+      space_index += 1
+    end
+
+    next_space_index = slice.index(' '.ord.to_u8, offset: space_index) || slice.size
+
+    subslice = slice[space_index...next_space_index]
+
+    # Optimization: avoid allocating a string for common HTTP version
+    http_version = HTTP::SUPPORTED_VERSIONS.find { |version| version.to_slice == subslice }
+    return BadRequest.new unless http_version
+
+    # Skip trailing spaces
+    space_index = next_space_index
+    while space_index < slice.size
+      # Oops, we find something else (more than three parts)
+      return BadRequest.new unless slice[space_index] == ' '.ord.to_u8
+      space_index += 1
+    end
+
+    RequestLine.new method: method, resource: resource, http_version: http_version
+  end
+
+  # Returns the request's path component.
   def path
-    uri.path || "/"
+    (path = uri.path).empty? ? "/" : path
   end
 
   # Sets request's path component.

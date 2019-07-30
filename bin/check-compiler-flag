@@ -1,0 +1,57 @@
+#!/bin/sh
+
+# Use `./bin/check-compiler-flag FLAG` to check the behaviour of the given compiler flag.
+# This is useful if `crystal build` is affected when using `-DFLAG` option.
+#
+# This script will
+#   * run the compiler_spec using the flag
+#   * build the compiler to have the flag available (in case the flag is introduced in this version)
+#   * run the std_spec with and without the flag
+#   * check the compiler_spec built with and without the flag (eg: the specs build with the flag can generate a compiler without the flag)
+#   * build a 2nd generation of the compiler using the flag
+#   * repeat the checks for the std_spec and compiler_spec with and without the flag
+
+set -eux
+
+COMPILER_FLAG=$1
+
+# test compiler_specs
+make clean_cache clean_crystal
+CRYSTAL_LIBRARY_PATH=$(./bin/crystal env CRYSTAL_LIBRARY_PATH) CRYSTAL_SPEC_COMPILER_FLAGS="$COMPILER_FLAG" make compiler_spec
+
+# first gen compiler
+make clean_cache clean_crystal crystal
+./bin/crystal --version
+md5 .build/crystal
+
+# run specs
+make clean_cache std_spec
+make clean_cache std_spec FLAGS="-D$COMPILER_FLAG"
+
+# test compiler_specs
+make clean_cache
+CRYSTAL_LIBRARY_PATH=$(./bin/crystal env CRYSTAL_LIBRARY_PATH) CRYSTAL_SPEC_COMPILER_FLAGS="$COMPILER_FLAG" make compiler_spec FLAGS="-D$COMPILER_FLAG"
+make clean_cache
+CRYSTAL_LIBRARY_PATH=$(./bin/crystal env CRYSTAL_LIBRARY_PATH) make compiler_spec FLAGS="-D$COMPILER_FLAG"
+make clean_cache
+CRYSTAL_LIBRARY_PATH=$(./bin/crystal env CRYSTAL_LIBRARY_PATH) make compiler_spec
+
+# building 2nd gen compiler
+make clean_crystal clean_cache crystal # first
+md5 .build/crystal
+touch src/compiler/crystal.cr
+sleep 2
+make clean_cache crystal FLAGS="-D$COMPILER_FLAG" # second
+md5 .build/crystal
+
+# run specs
+make clean_cache std_spec
+make clean_cache std_spec FLAGS="-D$COMPILER_FLAG"
+
+# run compiler specs
+make clean_cache
+CRYSTAL_LIBRARY_PATH=$(./bin/crystal env CRYSTAL_LIBRARY_PATH) CRYSTAL_SPEC_COMPILER_FLAGS="$COMPILER_FLAG" make compiler_spec FLAGS="-D$COMPILER_FLAG"
+make clean_cache
+CRYSTAL_LIBRARY_PATH=$(./bin/crystal env CRYSTAL_LIBRARY_PATH) make compiler_spec FLAGS="-D$COMPILER_FLAG"
+make clean_cache
+CRYSTAL_LIBRARY_PATH=$(./bin/crystal env CRYSTAL_LIBRARY_PATH) make compiler_spec

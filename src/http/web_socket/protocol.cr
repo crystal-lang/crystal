@@ -49,11 +49,11 @@ class HTTP::WebSocket::Protocol
       @pos = 0
     end
 
-    def write(slice : Bytes)
+    def write(slice : Bytes) : Nil
       return if slice.empty?
 
       count = Math.min(@buffer.size - @pos, slice.size)
-      (@buffer + @pos).copy_from(slice.pointer(count), count)
+      (@buffer + @pos).copy_from(slice.to_unsafe, count)
       @pos += count
 
       if @pos == @buffer.size
@@ -272,8 +272,8 @@ class HTTP::WebSocket::Protocol
       handshake.to_io(socket)
       socket.flush
       handshake_response = HTTP::Client::Response.from_io(socket)
-      unless handshake_response.status_code == 101
-        raise Socket::Error.new("Handshake got denied. Status code was #{handshake_response.status_code}.")
+      unless handshake_response.status.switching_protocols?
+        raise Socket::Error.new("Handshake got denied. Status code was #{handshake_response.status.code}.")
       end
 
       challenge_response = Protocol.key_challenge(random_key)

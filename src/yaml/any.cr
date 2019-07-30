@@ -279,12 +279,12 @@ struct YAML::Any
   end
 
   # :nodoc:
-  def inspect(io)
+  def inspect(io : IO) : Nil
     @raw.inspect(io)
   end
 
   # :nodoc:
-  def to_s(io)
+  def to_s(io : IO) : Nil
     @raw.to_s(io)
   end
 
@@ -327,6 +327,17 @@ struct YAML::Any
   # Returns a new YAML::Any instance with the `raw` value `clone`ed.
   def clone
     Any.new(raw.clone)
+  end
+
+  # Forwards `to_json_object_key` to `raw` if it responds to that method,
+  # raises `JSON::Error` otherwise.
+  def to_json_object_key
+    raw = @raw
+    if raw.responds_to?(:to_json_object_key)
+      raw.to_json_object_key
+    else
+      raise JSON::Error.new("can't convert #{raw.class} to a JSON object key")
+    end
   end
 end
 

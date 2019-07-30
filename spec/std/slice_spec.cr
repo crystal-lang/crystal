@@ -1,11 +1,45 @@
 require "spec"
 
+private class BadSortingClass
+  include Comparable(self)
+
+  def <=>(other)
+    1
+  end
+end
+
+private class Spaceship
+  getter value : Float64
+
+  def initialize(@value : Float64, @return_nil = false)
+  end
+
+  def <=>(other : Spaceship)
+    return nil if @return_nil
+
+    value <=> other.value
+  end
+end
+
 describe "Slice" do
   it "gets pointer and size" do
     pointer = Pointer.malloc(1, 0)
     slice = Slice.new(pointer, 1)
-    slice.pointer(0).should eq(pointer)
+    slice.to_unsafe.should eq(pointer)
     slice.size.should eq(1)
+  end
+
+  it "does []?" do
+    slice = Slice.new(3) { |i| i + 1 }
+    3.times do |i|
+      slice[i]?.should eq(i + 1)
+    end
+    slice[-1]?.should eq(3)
+    slice[-2]?.should eq(2)
+    slice[-3]?.should eq(1)
+
+    slice[-4]?.should be_nil
+    slice[3]?.should be_nil
   end
 
   it "does []" do
@@ -45,6 +79,21 @@ describe "Slice" do
     expect_raises(IndexError) { slice + (-1) }
   end
 
+  it "does []? with start and count" do
+    slice = Slice.new(4) { |i| i + 1 }
+    slice1 = slice[1, 2]?
+    slice1.should_not be_nil
+    slice1 = slice1.not_nil!
+    slice1.size.should eq(2)
+    slice1[0].should eq(2)
+    slice1[1].should eq(3)
+
+    slice[-1, 1]?.should be_nil
+    slice[3, 2]?.should be_nil
+    slice[0, 5]?.should be_nil
+    slice[3, -1]?.should be_nil
+  end
+
   it "does [] with start and count" do
     slice = Slice.new(4) { |i| i + 1 }
     slice1 = slice[1, 2]
@@ -75,12 +124,6 @@ describe "Slice" do
   it "does to_s for bytes" do
     slice = Bytes[1, 2, 3]
     slice.to_s.should eq("Bytes[1, 2, 3]")
-  end
-
-  it "gets pointer" do
-    slice = Slice.new(4, 0)
-    expect_raises(IndexError) { slice.pointer(5) }
-    expect_raises(IndexError) { slice.pointer(-1) }
   end
 
   it "does copy_from pointer" do
@@ -272,12 +315,6 @@ describe "Slice" do
     iter.next.should eq(2)
     iter.next.should eq(3)
     iter.next.should be_a(Iterator::Stop)
-
-    iter.rewind
-    iter.next.should eq(1)
-
-    iter.rewind
-    iter.cycle.first(5).to_a.should eq([1, 2, 3, 1, 2])
   end
 
   it "does reverse iterator" do
@@ -287,9 +324,6 @@ describe "Slice" do
     iter.next.should eq(2)
     iter.next.should eq(1)
     iter.next.should be_a(Iterator::Stop)
-
-    iter.rewind
-    iter.next.should eq(3)
   end
 
   it "does index iterator" do
@@ -298,9 +332,6 @@ describe "Slice" do
     iter.next.should eq(0)
     iter.next.should eq(1)
     iter.next.should be_a(Iterator::Stop)
-
-    iter.rewind
-    iter.next.should eq(0)
   end
 
   it "does to_a" do
@@ -411,6 +442,188 @@ describe "Slice" do
 
   it "optimizes hash for Bytes" do
     Bytes[1, 2, 3].hash.should_not eq(Slice[1, 2, 3].hash)
+  end
+
+  it "#[]" do
+    slice = Slice.new(6) { |i| i + 1 }
+    subslice = slice[2..4]
+    subslice.read_only?.should be_false
+    subslice.size.should eq(3)
+    subslice.should eq(Slice.new(3) { |i| i + 3 })
+  end
+
+  it "#[] keeps read-only value" do
+    slice = Slice.new(6, read_only: true) { |i| i + 1 }
+    slice[2..4].read_only?.should be_true
+  end
+
+  describe "#clone" do
+    it "clones primitive" do
+      slice = Slice[1, 2]
+      slice.clone.should eq slice
+    end
+
+    it "clones non-primitive" do
+      slice = Slice["abc", "a"]
+      slice.clone.should eq slice
+    end
+
+    it "buffer copy" do
+      slice = Slice["foo"]
+      copy = slice.clone
+      slice[0] = "bar"
+      copy.should_not eq slice
+    end
+
+    it "deep copy" do
+      slice = Slice[["foo"]]
+      copy = slice.clone
+      slice[0] << "bar"
+      copy.should_not eq slice
+    end
+  end
+
+  describe "#dup" do
+    it "buffer copy" do
+      slice = Slice["foo"]
+      copy = slice.dup
+      slice[0] = "bar"
+      copy.should_not eq slice
+    end
+
+    it "don't deep copy" do
+      slice = Slice[["foo"]]
+      copy = slice.dup
+      slice[0] << "bar"
+      copy.should eq slice
+    end
+  end
+
+  describe "sort" do
+    it "sort without block" do
+      slice = Slice[3, 4, 1, 2, 5, 6]
+      sorted_slice = slice.sort
+      sorted_slice.to_a.should eq([1, 2, 3, 4, 5, 6])
+      slice.should_not eq(sorted_slice)
+    end
+
+    it "sort with a block" do
+      a = Slice["foo", "a", "hello"]
+      b = a.sort { |x, y| x.size <=> y.size }
+      b.to_a.should eq(["a", "foo", "hello"])
+      a.should_not eq(b)
+    end
+
+    it "doesn't crash on special situations" do
+      Slice[1, 2, 3].sort { 1 }
+      Slice.[BadSortingClass.new].sort
+    end
+
+    it "can sort just by using <=> (#6608)" do
+      spaceships = [
+        Spaceship.new(2),
+        Spaceship.new(0),
+        Spaceship.new(1),
+        Spaceship.new(3),
+      ]
+
+      sorted = spaceships.sort
+      4.times do |i|
+        sorted[i].value.should eq(i)
+      end
+    end
+
+    it "raises if <=> returns nil" do
+      spaceships = [
+        Spaceship.new(2, return_nil: true),
+        Spaceship.new(0, return_nil: true),
+      ]
+
+      expect_raises(ArgumentError) do
+        spaceships.sort
+      end
+    end
+
+    it "raises if sort block returns nil" do
+      expect_raises(ArgumentError) do
+        [1, 2].sort { nil }
+      end
+    end
+  end
+
+  describe "sort!" do
+    it "sort! without block" do
+      a = [3, 4, 1, 2, 5, 6]
+      a.sort!
+      a.should eq([1, 2, 3, 4, 5, 6])
+    end
+
+    it "sort! with a block" do
+      a = ["foo", "a", "hello"]
+      a.sort! { |x, y| x.size <=> y.size }
+      a.should eq(["a", "foo", "hello"])
+    end
+
+    it "sorts with invalid block (#4379)" do
+      a = [1] * 17
+      b = a.sort { -1 }
+      a.should eq(b)
+    end
+
+    it "can sort! just by using <=> (#6608)" do
+      spaceships = Slice[
+        Spaceship.new(2),
+        Spaceship.new(0),
+        Spaceship.new(1),
+        Spaceship.new(3),
+      ]
+
+      spaceships.sort!
+      4.times do |i|
+        spaceships[i].value.should eq(i)
+      end
+    end
+
+    it "raises if <=> returns nil" do
+      spaceships = Slice[
+        Spaceship.new(2, return_nil: true),
+        Spaceship.new(0, return_nil: true),
+      ]
+
+      expect_raises(ArgumentError) do
+        spaceships.sort!
+      end
+    end
+
+    it "raises if sort! block returns nil" do
+      expect_raises(ArgumentError) do
+        Slice[1, 2].sort! { nil }
+      end
+    end
+  end
+
+  describe "sort_by" do
+    it "sorts by" do
+      a = Slice["foo", "a", "hello"]
+      b = a.sort_by &.size
+      b.to_a.should eq(["a", "foo", "hello"])
+      a.should_not eq(b)
+    end
+  end
+
+  describe "sort_by!" do
+    it "sorts by!" do
+      a = Slice["foo", "a", "hello"]
+      a.sort_by! &.size
+      a.to_a.should eq(["a", "foo", "hello"])
+    end
+
+    it "calls given block exactly once for each element" do
+      calls = Hash(String, Int32).new(0)
+      a = Slice["foo", "a", "hello"]
+      a.sort_by! { |e| calls[e] += 1; e.size }
+      calls.should eq({"foo" => 1, "a" => 1, "hello" => 1})
+    end
   end
 end
 

@@ -36,7 +36,7 @@ module Crystal
       # `new` must only be searched in ancestors if this type itself doesn't define
       # an `initialize` or `self.new` method. This was already computed in `new.cr`
       # and can be known by invoking `lookup_new_in_ancestors?`
-      if my_parents && !(!lookup_new_in_ancestors? && is_new)
+      if my_parents && !(is_new && !lookup_new_in_ancestors?)
         my_parents.each do |parent|
           matches = parent.lookup_matches(signature, owner, parent, matches_array)
           if matches.cover_all?
@@ -44,6 +44,11 @@ module Crystal
           else
             matches_array = matches.matches
           end
+
+          # If this is a `new` method, once a parent defines an `initialize`
+          # method and we couldn't find any matches we must not go up in the
+          # hierarchy.
+          break if is_new && parent.has_def_without_parents?(signature.name)
         end
       end
 
@@ -80,7 +85,7 @@ module Crystal
                match_named_args.size == signature_named_args.size
               match_named_args = match_named_args.sort_by &.name
               signature_named_args = signature_named_args.sort_by &.name
-              named_arg_types_equal = match_named_args.equals?(signature_named_args) do |x, y|
+              named_arg_types_equal = signature_named_args.equals?(match_named_args) do |x, y|
                 x.name == y.name && x.type.compatible_with?(y.type)
               end
             else

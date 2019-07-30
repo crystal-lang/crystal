@@ -12,13 +12,8 @@ class Random::ISAAC
   private getter bb
   private getter cc
 
-  private alias Seeds = StaticArray(UInt32, 8)
-
   private def random_seeds
-    result = uninitialized Seeds
-    result_slice = result.unsafe_as(StaticArray(UInt8, sizeof(Seeds))).to_slice
-    Random::Secure.random_bytes(result_slice)
-    result
+    Random::Secure.rand(StaticArray(UInt32, 8))
   end
 
   def initialize(seeds = random_seeds)

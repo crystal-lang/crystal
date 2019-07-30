@@ -103,6 +103,7 @@ class Crystal::Def
     expansion.yields = yields
     expansion.raises = raises?
     expansion.free_vars = free_vars
+    expansion.annotations = annotations
     if owner = self.owner?
       expansion.owner = owner
     end

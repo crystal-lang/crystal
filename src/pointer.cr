@@ -98,10 +98,8 @@ struct Pointer(T)
     self + (-other.to_i64!)
   end
 
-  # Returns -1, 0 or 1 if this pointer's address is less, equal or greater than *other*'s address,
+  # Returns `-1`, `0` or `1` depending on whether this pointer's address is less, equal or greater than *other*'s address,
   # respectively.
-  #
-  # See also: `Object#<=>`.
   def <=>(other : self)
     address <=> other.address
   end
@@ -245,7 +243,7 @@ struct Pointer(T)
     raise ArgumentError.new("Negative count") if count < 0
 
     if self.class == source.class
-      Intrinsics.memcpy(self.as(Void*), source.as(Void*), bytesize(count), 0_u32, false)
+      Intrinsics.memcpy(self.as(Void*), source.as(Void*), bytesize(count), false)
     else
       while (count -= 1) >= 0
         self[count] = source[count]
@@ -258,7 +256,7 @@ struct Pointer(T)
     raise ArgumentError.new("Negative count") if count < 0
 
     if self.class == source.class
-      Intrinsics.memmove(self.as(Void*), source.as(Void*), bytesize(count), 0_u32, false)
+      Intrinsics.memmove(self.as(Void*), source.as(Void*), bytesize(count), false)
     else
       if source.address < address
         copy_from source, count
@@ -320,7 +318,7 @@ struct Pointer(T)
   # ptr2 = Pointer(Int32).new(0)
   # ptr2.to_s # => "Pointer(Int32).null"
   # ```
-  def to_s(io : IO)
+  def to_s(io : IO) : Nil
     io << "Pointer("
     io << T.to_s
     io << ')'
@@ -384,7 +382,7 @@ struct Pointer(T)
     end
   end
 
-  # Like `map!`, but yield 2 arugments, the element and it's index
+  # Like `map!`, but yields 2 arguments, the element and its index
   def map_with_index!(count : Int, &block)
     count.times do |i|
       self[i] = yield self[i], i
@@ -502,7 +500,7 @@ struct Pointer(T)
   # ptr.to_slice(6) # => Slice[0, 0, 0, 13, 14, 15]
   # ```
   def clear(count = 1)
-    Intrinsics.memset(self.as(Void*), 0_u8, bytesize(count), 0_u32, false)
+    Intrinsics.memset(self.as(Void*), 0_u8, bytesize(count), false)
   end
 
   def clone

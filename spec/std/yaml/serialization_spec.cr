@@ -15,8 +15,7 @@ alias YamlRec = Int32 | Array(YamlRec) | Hash(YamlRec, YamlRec)
 # Earlier libyaml releases still write the document end marker and this is hard to fix on Crystal's side.
 # So we just ignore it and adopt the specs accordingly to coincide with the used libyaml version.
 private def assert_yaml_document_end(actual, expected)
-  major, minor, _ = YAML.libyaml_version
-  if major == 0 && minor < 2
+  if YAML.libyaml_version < SemanticVersion.new(0, 2, 1)
     expected += "...\n"
   end
 
@@ -56,10 +55,12 @@ describe "YAML serialization" do
       String.from_yaml("hello").should eq("hello")
     end
 
-    it "raises on reserved string" do
-      expect_raises(YAML::ParseException) do
-        String.from_yaml(%(1.2))
-      end
+    it "does String#from_yaml (empty string)" do
+      String.from_yaml("").should eq("")
+    end
+
+    it "can parse string that looks like a number" do
+      String.from_yaml(%(1.2)).should eq ("1.2")
     end
 
     it "does Float32#from_yaml" do
@@ -149,6 +150,12 @@ describe "YAML serialization" do
       big.should eq(BigFloat.new("1234.567891011121314"))
     end
 
+    it "does for BigDecimal" do
+      big = BigDecimal.from_yaml("1234.567891011121314")
+      big.should be_a(BigDecimal)
+      big.should eq(BigDecimal.new("1234.567891011121314"))
+    end
+
     it "does for Enum with number" do
       YAMLSpecEnum.from_yaml(%("1")).should eq(YAMLSpecEnum::One)
 
@@ -172,8 +179,8 @@ describe "YAML serialization" do
       value.should eq(Time.utc(2014, 1, 2))
     end
 
-    it "deserializes union" do
-      Array(Int32 | String).from_yaml(%([1, "hello"])).should eq([1, "hello"])
+    it "deserializes union with nil, string and int (#7936)" do
+      Array(Int32 | String | Nil).from_yaml(%([1, "hello", null])).should eq([1, "hello", nil])
     end
 
     it "deserializes time" do
@@ -235,6 +242,10 @@ describe "YAML serialization" do
   describe "to_yaml" do
     it "does for Nil" do
       Nil.from_yaml(nil.to_yaml).should eq(nil)
+    end
+
+    it "does for Nil (empty string)" do
+      Nil.from_yaml("").should eq(nil)
     end
 
     it "does for Bool" do
@@ -326,7 +337,13 @@ describe "YAML serialization" do
     end
 
     it "does for bytes" do
-      "hello".to_slice.to_yaml.should eq("--- !!binary 'aGVsbG8=\n\n'\n")
+      yaml = "hello".to_slice.to_yaml
+
+      if YAML.libyaml_version < SemanticVersion.new(0, 2, 2)
+        yaml.should eq("--- !!binary 'aGVsbG8=\n\n'\n")
+      else
+        yaml.should eq("--- !!binary 'aGVsbG8=\n\n  '\n")
+      end
     end
 
     it "does a full document" do

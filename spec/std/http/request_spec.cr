@@ -138,6 +138,13 @@ module HTTP
       request.headers.should eq({"Host" => "host.example.org"})
     end
 
+    it "parses GET with spaces in request line" do
+      request = Request.from_io(IO::Memory.new("GET   /   HTTP/1.1  \r\nHost: host.example.org\r\n\r\n")).as(Request)
+      request.method.should eq("GET")
+      request.path.should eq("/")
+      request.headers.should eq({"Host" => "host.example.org"})
+    end
+
     it "parses empty header" do
       request = Request.from_io(IO::Memory.new("GET / HTTP/1.1\r\nHost: host.example.org\r\nReferer:\r\n\r\n")).as(Request)
       request.method.should eq("GET")
@@ -230,8 +237,7 @@ module HTTP
       end
 
       it "falls back to /" do
-        request = Request.new("GET", "/foo")
-        request.path = nil
+        request = Request.new("GET", "")
         request.path.should eq("/")
       end
     end

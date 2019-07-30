@@ -28,6 +28,8 @@ module HTML
   # the given *io*.
   #
   # ```
+  # require "html"
+  #
   # io = IO::Memory.new
   # HTML.escape("Crystal & You", io) # => nil
   # io.to_s                          # => "Crystal &amp; You"
@@ -84,6 +86,8 @@ module HTML
   # without a trailing semicolon (such as `&copy`).
   #
   # ```
+  # require "html"
+  #
   # HTML.unescape("Crystal &amp; You") # => "Crystal & You"
   # ```
   def self.unescape(string : String) : String

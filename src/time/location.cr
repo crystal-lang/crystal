@@ -6,7 +6,7 @@ require "./location/loader"
 #
 # It contains a list of zone offsets and rules for transitioning between them.
 #
-# If a location has only one offset (such as `UTC`) it is considerd
+# If a location has only one offset (such as `UTC`) it is considered
 # *fixed*.
 #
 # A `Location` instance is usually retrieved by name using
@@ -17,7 +17,7 @@ require "./location/loader"
 # ```
 # location = Time::Location.load("Europe/Berlin")
 # location # => #<Time::Location Europe/Berlin>
-# time = Time.new(2016, 2, 15, 21, 1, 10, location: location)
+# time = Time.local(2016, 2, 15, 21, 1, 10, location: location)
 # time # => 2016-02-15 21:01:10 +01:00 Europe/Berlin
 # ```
 #
@@ -109,7 +109,7 @@ class Time::Location
     #
     # It contains the `name`, hour-minute-second format (see `#format`),
     # `offset` in seconds and `"DST"` if `#dst?`, otherwise `"STD"`.
-    def inspect(io : IO)
+    def inspect(io : IO) : Nil
       io << "Time::Location::Zone("
       io << @name << ' ' unless @name.nil?
       format(io)
@@ -126,7 +126,7 @@ class Time::Location
     # When *with_colon* is `false`, the format is `+HHmmss`.
     #
     # When *with_seconds* is `false`, seconds are omitted; when `:auto`, seconds
-    # are ommitted if `0`.
+    # are omitted if `0`.
     def format(io : IO, with_colon = true, with_seconds = :auto)
       sign, hours, minutes, seconds = sign_hours_minutes_seconds
 
@@ -148,7 +148,7 @@ class Time::Location
     # When *with_colon* is `false`, the format is `+HHmmss`.
     #
     # When *with_seconds* is `false`, seconds are omitted; when `:auto`, seconds
-    # are ommitted if `0`.
+    # are omitted if `0`.
     def format(with_colon = true, with_seconds = :auto)
       String.build do |io|
         format(io, with_colon: with_colon, with_seconds: with_seconds)
@@ -165,8 +165,8 @@ class Time::Location
         sign = '+'
       end
       seconds = offset % 60
-      minutes = offset / 60
-      hours = minutes / 60
+      minutes = offset // 60
+      hours = minutes // 60
       minutes = minutes % 60
       {sign, hours, minutes, seconds}
     end
@@ -176,7 +176,7 @@ class Time::Location
   record ZoneTransition, when : Int64, index : UInt8, standard : Bool, utc : Bool do
     getter? standard, utc
 
-    def inspect(io : IO)
+    def inspect(io : IO) : Nil
       io << "Time::Location::ZoneTransition("
       io << '#' << index << ' '
       Time.unix(self.when).to_s("%F %T", io)
@@ -313,9 +313,9 @@ class Time::Location
   # The value can be changed to overwrite the system default:
   #
   # ```
-  # Time.now.location # => #<Time::Location America/New_York>
+  # Time.local.location # => #<Time::Location America/New_York>
   # Time::Location.local = Time::Location.load("Europe/Berlin")
-  # Time.now.location # => #<Time::Location Europe/Berlin>
+  # Time.local.location # => #<Time::Location Europe/Berlin>
   # ```
   class_property(local : Location) { load_local }
 
@@ -364,11 +364,11 @@ class Time::Location
   end
 
   # Prints `name` to *io*.
-  def to_s(io : IO)
+  def to_s(io : IO) : Nil
     io << name
   end
 
-  def inspect(io : IO)
+  def inspect(io : IO) : Nil
     io << "#<Time::Location "
     to_s(io)
     io << '>'

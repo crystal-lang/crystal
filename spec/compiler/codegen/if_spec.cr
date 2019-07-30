@@ -286,4 +286,34 @@ describe "Code gen: if" do
       1
       ))
   end
+
+  it "doesn't crash no NoReturn var (true left cond) (#1823)" do
+    codegen(%(
+      def foo
+        arg = nil
+        if true || arg.nil?
+          return
+        end
+
+        arg
+      end
+
+      foo
+      ))
+  end
+
+  it "doesn't crash no NoReturn var (non-true left cond) (#1823)" do
+    codegen(%(
+      def foo
+        arg = nil
+        if 1 == 2 || arg.nil?
+          return
+        end
+
+        arg
+      end
+
+      foo
+      ))
+  end
 end

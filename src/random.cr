@@ -66,7 +66,7 @@ module Random
   #
   # The integers must be uniformly distributed between `0` and
   # the maximal value for the chosen type.
-  abstract def next_u : UInt
+  abstract def next_u
 
   # Generates a random `Bool`.
   #
@@ -150,7 +150,7 @@ module Random
         # 0 to 15, only with the `UInt8`, `UInt16`, `UInt32` and `UInt64` ranges.
         #
         # Another problem is how to actually compute the *limit*. The obvious way to do it, which is
-        # `(RAND_MAX + 1) / max * max`, fails because `RAND_MAX` is usually already the highest
+        # `(RAND_MAX + 1) // max * max`, fails because `RAND_MAX` is usually already the highest
         # number that an integer type can hold. And even the *limit* itself will often be
         # `RAND_MAX + 1`, meaning that we don't have to discard anything. The ways to deal with this
         # are described below.
@@ -192,7 +192,7 @@ module Random
           limit =
             if rand_max > 0
               # `rand_max` didn't overflow, so we can calculate the *limit* the straightforward way.
-              rand_max / max &* max
+              rand_max // max &* max
             else
               # *rand_max* is `{{utype}}::MAX + 1`, need the same wraparound trick. *limit* might
               # overflow, which means it would've been `{{utype}}::MAX + 1`, but didn't fit into
@@ -230,7 +230,7 @@ module Random
       end
 
       # Generates a random integer in range `{{type}}::MIN..{{type}}::MAX`.
-      private def rand_type(type : {{type}}.class, needed_parts = sizeof({{type}}) / sizeof(typeof(next_u))) : {{type}}
+      private def rand_type(type : {{type}}.class, needed_parts = sizeof({{type}}) // sizeof(typeof(next_u))) : {{type}}
         # Build up the number combining multiple outputs from the RNG.
         result = {{utype}}.new!(next_u)
         (needed_parts - 1).times do
@@ -287,6 +287,41 @@ module Random
       end
       range.begin + rand * span
     end
+  end
+
+  {% for type, values in {
+                           "Int8".id   => %w(20 -66 89 19),
+                           "UInt8".id  => %w(186 221 127 245),
+                           "Int16".id  => %w(-32554 32169 -20152 -7686),
+                           "UInt16".id => %w(39546 44091 2874 17348),
+                           "Int32".id  => %w(1870830079 -1043532158 -867180637 -1216773590),
+                           "UInt32".id => %w(3147957137 4245108745 2207809043 3184391838),
+                           "Int64".id  => %w(4438449217673515190 8514493061600538358 -4874671083204037318 -7825896160729246667),
+                           "UInt64".id => %w(15004487597684511003 12027825265648206103 11303949506191212698 6228566501671148658),
+                         } %}
+    # Returns a random {{type}}
+    #
+    # ```
+    # rand({{type}}) # => {{values[0].id}}
+    # ```
+    def rand(type : {{type}}.class) : {{type}}
+      rand_type_from_bytes(type)
+    end
+
+    # Returns a StaticArray filled with random {{type}} values.
+    #
+    # ```
+    # rand(StaticArray({{type}}, 4)) # => StaticArray[{{values.join(", ").id}}]
+    # ```
+    def rand(type : StaticArray({{type}}, _).class)
+      rand_type_from_bytes(type)
+    end
+  {% end %}
+
+  private def rand_type_from_bytes(t : T.class) forall T
+    buffer = uninitialized UInt8[sizeof(T)]
+    random_bytes(buffer.to_slice)
+    buffer.unsafe_as(T)
   end
 
   # Fills a given slice with random bytes.

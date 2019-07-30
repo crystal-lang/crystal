@@ -52,10 +52,10 @@ struct Time::Format
         # If all components of a week date are available, they are used to create a Time instance
         time = Time.week_date calendar_week_year, calendar_week_week, day_of_week, @hour, @minute, @second, nanosecond: @nanosecond, location: location
       else
-        time = Time.new @year, @month, @day, @hour, @minute, @second, nanosecond: @nanosecond, location: location
+        time = Time.local @year, @month, @day, @hour, @minute, @second, nanosecond: @nanosecond, location: location
       end
 
-      time = time.add_span 0, @nanosecond_offset
+      time = time.shift 0, @nanosecond_offset
 
       time
     end
@@ -338,7 +338,7 @@ struct Time::Format
       next_char
     end
 
-    def time_zone_offset(force_colon = false, allow_colon = true, allow_seconds = true, force_zero_padding = true, force_minutes = true)
+    def time_zone_offset(force_colon = false, allow_colon = true, format_seconds = false, parse_seconds = true, force_zero_padding = true, force_minutes = true)
       case current_char
       when '-'
         sign = -1
@@ -386,7 +386,7 @@ struct Time::Format
       end
 
       seconds = 0
-      if @reader.has_next? && allow_seconds
+      if @reader.has_next? && parse_seconds
         pos = @reader.pos
         if char == ':'
           char = next_char

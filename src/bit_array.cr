@@ -54,6 +54,8 @@ struct BitArray
   # Raises `IndexError` if trying to access a bit outside the array's range.
   #
   # ```
+  # require "bit_array"
+  #
   # ba = BitArray.new(5)
   # ba[3] = true
   # ```
@@ -75,6 +77,8 @@ struct BitArray
   # Raises `IndexError` if the starting index is out of range.
   #
   # ```
+  # require "bit_array"
+  #
   # ba = BitArray.new(5)
   # ba[0] = true; ba[2] = true; ba[4] = true
   # ba # => BitArray[10101]
@@ -85,7 +89,7 @@ struct BitArray
   # ba[5..10]   # => BitArray[]
   # ba[-2...-1] # => BitArray[0]
   # ```
-  def [](range : Range(Int, Int))
+  def [](range : Range)
     self[*Indexable.range_to_index_and_count(range, size)]
   end
 
@@ -99,6 +103,8 @@ struct BitArray
   # Raises `IndexError` if the starting index is out of range.
   #
   # ```
+  # require "bit_array"
+  #
   # ba = BitArray.new(5)
   # ba[0] = true; ba[2] = true; ba[4] = true
   # ba # => BitArray[10101]
@@ -147,7 +153,7 @@ struct BitArray
     else
       ba = BitArray.new(count)
       start_bit_index, start_sub_index = start.divmod(32)
-      end_bit_index = (start + count) / 32
+      end_bit_index = (start + count) // 32
 
       i = 0
       bits = @bits[start_bit_index]
@@ -175,6 +181,8 @@ struct BitArray
   # Raises `IndexError` if trying to access a bit outside the array's range.
   #
   # ```
+  # require "bit_array"
+  #
   # ba = BitArray.new(5)
   # ba[3] # => false
   # ba.toggle(3)
@@ -188,6 +196,8 @@ struct BitArray
   # Inverts all bits in the array. Falses become `true` and vice versa.
   #
   # ```
+  # require "bit_array"
+  #
   # ba = BitArray.new(5)
   # ba[2] = true; ba[3] = true
   # ba # => BitArray[00110]
@@ -203,10 +213,12 @@ struct BitArray
   # Creates a string representation of self.
   #
   # ```
+  # require "bit_array"
+  #
   # ba = BitArray.new(5)
   # ba.to_s # => "BitArray[00000]"
   # ```
-  def to_s(io : IO)
+  def to_s(io : IO) : Nil
     io << "BitArray["
     each do |value|
       io << (value ? '1' : '0')
@@ -215,7 +227,7 @@ struct BitArray
   end
 
   # ditto
-  def inspect(io : IO)
+  def inspect(io : IO) : Nil
     to_s(io)
   end
 

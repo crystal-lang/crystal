@@ -4,15 +4,16 @@ require "big"
 describe "BigFloat" do
   describe "new" do
     string_of_integer_value = "123456789012345678901"
+    string_of_integer_value_as_float = "123456789012345678901.0"
     bigfloat_of_integer_value = BigFloat.new(string_of_integer_value)
     string_of_float_value = "1234567890.12345678901"
     bigfloat_of_float_value = BigFloat.new(string_of_float_value)
 
     it "new(String)" do
-      bigfloat_of_integer_value.to_s.should eq(string_of_integer_value)
+      bigfloat_of_integer_value.to_s.should eq(string_of_integer_value_as_float)
       bigfloat_of_float_value.to_s.should eq(string_of_float_value)
-      BigFloat.new("+#{string_of_integer_value}").to_s.should eq(string_of_integer_value)
-      BigFloat.new("-#{string_of_integer_value}").to_s.should eq("-#{string_of_integer_value}")
+      BigFloat.new("+#{string_of_integer_value}").to_s.should eq(string_of_integer_value_as_float)
+      BigFloat.new("-#{string_of_integer_value}").to_s.should eq("-#{string_of_integer_value_as_float}")
       BigFloat.new("123_456_789.123_456_789").to_s.should eq("123456789.123456789")
     end
 
@@ -25,7 +26,7 @@ describe "BigFloat" do
     it "new(BigInt)" do
       bigfloat_on_bigint_value = BigFloat.new(BigInt.new(string_of_integer_value))
       bigfloat_on_bigint_value.should eq(bigfloat_of_integer_value)
-      bigfloat_on_bigint_value.to_s.should eq(string_of_integer_value)
+      bigfloat_on_bigint_value.to_s.should eq(string_of_integer_value_as_float)
     end
 
     it "new(BigRational)" do
@@ -39,31 +40,31 @@ describe "BigFloat" do
     end
 
     it "new(Int)" do
-      BigFloat.new(1_u8).to_s.should eq("1")
-      BigFloat.new(1_u16).to_s.should eq("1")
-      BigFloat.new(1_u32).to_s.should eq("1")
-      BigFloat.new(1_u64).to_s.should eq("1")
-      BigFloat.new(1_i8).to_s.should eq("1")
-      BigFloat.new(1_i16).to_s.should eq("1")
-      BigFloat.new(1_i32).to_s.should eq("1")
-      BigFloat.new(1_i64).to_s.should eq("1")
-      BigFloat.new(-1_i8).to_s.should eq("-1")
-      BigFloat.new(-1_i16).to_s.should eq("-1")
-      BigFloat.new(-1_i32).to_s.should eq("-1")
-      BigFloat.new(-1_i64).to_s.should eq("-1")
+      BigFloat.new(1_u8).to_s.should eq("1.0")
+      BigFloat.new(1_u16).to_s.should eq("1.0")
+      BigFloat.new(1_u32).to_s.should eq("1.0")
+      BigFloat.new(1_u64).to_s.should eq("1.0")
+      BigFloat.new(1_i8).to_s.should eq("1.0")
+      BigFloat.new(1_i16).to_s.should eq("1.0")
+      BigFloat.new(1_i32).to_s.should eq("1.0")
+      BigFloat.new(1_i64).to_s.should eq("1.0")
+      BigFloat.new(-1_i8).to_s.should eq("-1.0")
+      BigFloat.new(-1_i16).to_s.should eq("-1.0")
+      BigFloat.new(-1_i32).to_s.should eq("-1.0")
+      BigFloat.new(-1_i64).to_s.should eq("-1.0")
 
-      BigFloat.new(255_u8).to_s.should eq("255")
-      BigFloat.new(65535_u16).to_s.should eq("65535")
-      BigFloat.new(4294967295_u32).to_s.should eq("4294967295")
-      BigFloat.new(18446744073709551615_u64).to_s.should eq("18446744073709551615")
-      BigFloat.new(127_i8).to_s.should eq("127")
-      BigFloat.new(32767_i16).to_s.should eq("32767")
-      BigFloat.new(2147483647_i32).to_s.should eq("2147483647")
-      BigFloat.new(9223372036854775807_i64).to_s.should eq("9223372036854775807")
-      BigFloat.new(-128_i8).to_s.should eq("-128")
-      BigFloat.new(-32768_i16).to_s.should eq("-32768")
-      BigFloat.new(-2147483648_i32).to_s.should eq("-2147483648")
-      BigFloat.new(-9223372036854775808_i64).to_s.should eq("-9223372036854775808")
+      BigFloat.new(255_u8).to_s.should eq("255.0")
+      BigFloat.new(65535_u16).to_s.should eq("65535.0")
+      BigFloat.new(4294967295_u32).to_s.should eq("4294967295.0")
+      BigFloat.new(18446744073709551615_u64).to_s.should eq("18446744073709551615.0")
+      BigFloat.new(127_i8).to_s.should eq("127.0")
+      BigFloat.new(32767_i16).to_s.should eq("32767.0")
+      BigFloat.new(2147483647_i32).to_s.should eq("2147483647.0")
+      BigFloat.new(9223372036854775807_i64).to_s.should eq("9223372036854775807.0")
+      BigFloat.new(-128_i8).to_s.should eq("-128.0")
+      BigFloat.new(-32768_i16).to_s.should eq("-32768.0")
+      BigFloat.new(-2147483648_i32).to_s.should eq("-2147483648.0")
+      BigFloat.new(-9223372036854775808_i64).to_s.should eq("-9223372036854775808.0")
     end
   end
 
@@ -79,21 +80,21 @@ describe "BigFloat" do
   end
 
   describe "+" do
-    it { ("1.0".to_big_f + "2.0".to_big_f).to_s.should eq("3") }
+    it { ("1.0".to_big_f + "2.0".to_big_f).to_s.should eq("3.0") }
     it { ("0.04".to_big_f + "89.0001".to_big_f).to_s.should eq("89.0401") }
-    it { ("-5.5".to_big_f + "5.5".to_big_f).to_s.should eq("0") }
-    it { ("5.5".to_big_f + "-5.5".to_big_f).to_s.should eq("0") }
+    it { ("-5.5".to_big_f + "5.5".to_big_f).to_s.should eq("0.0") }
+    it { ("5.5".to_big_f + "-5.5".to_big_f).to_s.should eq("0.0") }
   end
 
   describe "-" do
-    it { ("1.0".to_big_f - "2.0".to_big_f).to_s.should eq("-1") }
+    it { ("1.0".to_big_f - "2.0".to_big_f).to_s.should eq("-1.0") }
     it { ("0.04".to_big_f - "89.0001".to_big_f).to_s.should eq("-88.9601") }
-    it { ("-5.5".to_big_f - "5.5".to_big_f).to_s.should eq("-11") }
-    it { ("5.5".to_big_f - "-5.5".to_big_f).to_s.should eq("11") }
+    it { ("-5.5".to_big_f - "5.5".to_big_f).to_s.should eq("-11.0") }
+    it { ("5.5".to_big_f - "-5.5".to_big_f).to_s.should eq("11.0") }
   end
 
   describe "*" do
-    it { ("1.0".to_big_f * "2.0".to_big_f).to_s.should eq("2") }
+    it { ("1.0".to_big_f * "2.0".to_big_f).to_s.should eq("2.0") }
     it { ("0.04".to_big_f * "89.0001".to_big_f).to_s.should eq("3.560004") }
     it { ("-5.5".to_big_f * "5.5".to_big_f).to_s.should eq("-30.25") }
     it { ("5.5".to_big_f * "-5.5".to_big_f).to_s.should eq("-30.25") }
@@ -102,11 +103,23 @@ describe "BigFloat" do
   describe "/" do
     it { ("1.0".to_big_f / "2.0".to_big_f).to_s.should eq("0.5") }
     it { ("0.04".to_big_f / "89.0001".to_big_f).to_s.should eq("0.000449437697261014313467") }
-    it { ("-5.5".to_big_f / "5.5".to_big_f).to_s.should eq("-1") }
-    it { ("5.5".to_big_f / "-5.5".to_big_f).to_s.should eq("-1") }
+    it { ("-5.5".to_big_f / "5.5".to_big_f).to_s.should eq("-1.0") }
+    it { ("5.5".to_big_f / "-5.5".to_big_f).to_s.should eq("-1.0") }
     expect_raises(DivisionByZeroError) { 0.1.to_big_f / 0 }
     it { ("5.5".to_big_f / 16_u64).to_s.should eq("0.34375") }
     it { ("5.5".to_big_f / 16_u8).to_s.should eq("0.34375") }
+  end
+
+  describe "//" do
+    it { ("1.0".to_big_f // "2.0".to_big_f).to_s.should eq("0.0") }
+    it { ("0.04".to_big_f // "89.0001".to_big_f).to_s.should eq("0.0") }
+    it { ("-5.5".to_big_f // "5.5".to_big_f).to_s.should eq("-1.0") }
+    it { ("5.5".to_big_f // "-5.5".to_big_f).to_s.should eq("-1.0") }
+    expect_raises(DivisionByZeroError) { 0.1.to_big_f // 0 }
+    it { ("5.5".to_big_f // 16_u64).to_s.should eq("0.0") }
+    it { ("5.5".to_big_f // 16_u8).to_s.should eq("0.0") }
+
+    it { ("-1".to_big_f // 2_u8).to_s.should eq("-1.0") }
   end
 
   describe "**" do
@@ -178,17 +191,31 @@ describe "BigFloat" do
   end
 
   describe "to_s" do
-    it { "0".to_big_f.to_s.should eq("0") }
+    it { "0".to_big_f.to_s.should eq("0.0") }
     it { "0.000001".to_big_f.to_s.should eq("0.000001") }
-    it { "48600000".to_big_f.to_s.should eq("48600000") }
+    it { "48600000".to_big_f.to_s.should eq("48600000.0") }
     it { "12345678.87654321".to_big_f.to_s.should eq("12345678.87654321") }
     it { "9.000000000000987".to_big_f.to_s.should eq("9.000000000000987") }
-    it { "12345678901234567".to_big_f.to_s.should eq("12345678901234567") }
-    it { "1234567890123456789".to_big_f.to_s.should eq("1234567890123456789") }
+    it { "12345678901234567".to_big_f.to_s.should eq("12345678901234567.0") }
+    it { "1234567890123456789".to_big_f.to_s.should eq("1234567890123456789.0") }
+
+    it { ".01".to_big_f.to_s.should eq("0.01") }
+    it { "-.01".to_big_f.to_s.should eq("-0.01") }
+    it { ".1".to_big_f.to_s.should eq("0.1") }
+    it { "-.1".to_big_f.to_s.should eq("-0.1") }
+    it { "1".to_big_f.to_s.should eq("1.0") }
+    it { "-1".to_big_f.to_s.should eq("-1.0") }
+    it { "10".to_big_f.to_s.should eq("10.0") }
+    it { "100".to_big_f.to_s.should eq("100.0") }
+    it { "150".to_big_f.to_s.should eq("150.0") }
+
+    it { (3.0).to_big_f.to_s.should eq("3.0") }
+    it { 3.to_big_f.to_s.should eq("3.0") }
+    it { -3.to_big_f.to_s.should eq("-3.0") }
   end
 
   describe "#inspect" do
-    it { "2.3".to_big_f.inspect.should eq("2.3_big_f") }
+    it { "2.3".to_big_f.inspect.should eq("2.3") }
   end
 
   it "#hash" do

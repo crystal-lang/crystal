@@ -169,6 +169,10 @@ module Crystal
         assert_macro "", "{{1 <=> -1}}", [] of ASTNode, "1"
       end
 
+      it "executes <=> (returns nil)" do
+        assert_macro "", "{{0.0/0.0 <=> -1}}", [] of ASTNode, "nil"
+      end
+
       it "executes +" do
         assert_macro "", "{{1 + 2}}", [] of ASTNode, "3"
       end
@@ -187,6 +191,10 @@ module Crystal
 
       it "executes /" do
         assert_macro "", "{{5 / 3}}", [] of ASTNode, "1"
+      end
+
+      it "executes //" do
+        assert_macro "", "{{5 // 3}}", [] of ASTNode, "1"
       end
 
       it "executes %" do
@@ -716,6 +724,10 @@ module Crystal
         assert_macro "", %({{{:a => 1, :b => 3}.size}}), [] of ASTNode, "2"
       end
 
+      it "executes sort_by" do
+        assert_macro "", %({{["abc", "a", "ab"].sort_by { |x| x.size }}}), [] of ASTNode, %(["a", "ab", "abc"])
+      end
+
       it "executes empty?" do
         assert_macro "", %({{{:a => 1}.empty?}}), [] of ASTNode, "false"
       end
@@ -1206,6 +1218,30 @@ module Crystal
           [TypeNode.new(program.union_of(program.string, program.nil))] of ASTNode
         end
       end
+
+      it "executes resolve" do
+        assert_macro("x", "{{x.resolve}}", "String") do |program|
+          [TypeNode.new(program.string)] of ASTNode
+        end
+      end
+
+      it "executes resolve?" do
+        assert_macro("x", "{{x.resolve?}}", "String") do |program|
+          [TypeNode.new(program.string)] of ASTNode
+        end
+      end
+
+      it "executes union_types (union)" do
+        assert_macro("x", "{{x.union_types}}", %([Bool, Int32])) do |program|
+          [TypeNode.new(program.union_of(program.int32, program.bool))] of ASTNode
+        end
+      end
+
+      it "executes union_types (non-union)" do
+        assert_macro("x", "{{x.union_types}}", %([Int32])) do |program|
+          [TypeNode.new(program.int32)] of ASTNode
+        end
+      end
     end
 
     describe "type declaration methods" do
@@ -1371,6 +1407,16 @@ module Crystal
     describe "unary expression methods" do
       it "executes exp" do
         assert_macro "x", %({{x.exp}}), [Not.new("some_call".call)] of ASTNode, "some_call"
+      end
+    end
+
+    describe "offsetof methods" do
+      it "executes type" do
+        assert_macro "x", %({{x.type}}), [OffsetOf.new("SomeType".path, "@some_ivar".instance_var)] of ASTNode, "SomeType"
+      end
+
+      it "executes instance_var" do
+        assert_macro "x", %({{x.instance_var}}), [OffsetOf.new("SomeType".path, "@some_ivar".instance_var)] of ASTNode, "@some_ivar"
       end
     end
 
@@ -1646,11 +1692,24 @@ module Crystal
         assert_macro "x", %({{x.resolve?}}), [Generic.new("Foo".path, ["String".path] of ASTNode)] of ASTNode, %(nil)
         assert_macro "x", %({{x.resolve?}}), [Generic.new("Array".path, ["Foo".path] of ASTNode)] of ASTNode, %(nil)
       end
+
+      it "executes types" do
+        assert_macro "x", %({{x.types}}), [Generic.new("Foo".path, ["T".path] of ASTNode)] of ASTNode, "[Foo(T)]"
+      end
     end
 
     describe "union methods" do
       it "executes types" do
         assert_macro "x", %({{x.types}}), [Crystal::Union.new(["Int32".path, "String".path] of ASTNode)] of ASTNode, "[Int32, String]"
+      end
+
+      it "executes resolve" do
+        assert_macro "x", %({{x.resolve}}), [Crystal::Union.new(["Int32".path, "String".path] of ASTNode)] of ASTNode, "(Int32 | String)"
+      end
+
+      it "executes resolve?" do
+        assert_macro "x", %({{x.resolve?}}), [Crystal::Union.new(["Int32".path, "String".path] of ASTNode)] of ASTNode, "(Int32 | String)"
+        assert_macro "x", %({{x.resolve?}}), [Crystal::Union.new(["Int32".path, "Unknown".path] of ASTNode)] of ASTNode, "nil"
       end
     end
 
@@ -1690,6 +1749,10 @@ module Crystal
       it "executes resolve?" do
         assert_macro "x", %({{x.resolve?}}), [Path.new("String")] of ASTNode, %(String)
         assert_macro "x", %({{x.resolve?}}), [Path.new("Foo")] of ASTNode, %(nil)
+      end
+
+      it "executes types" do
+        assert_macro "x", %({{x.types}}), [Path.new("String")] of ASTNode, %([String])
       end
     end
 
@@ -1766,7 +1829,7 @@ module Crystal
             program.stdout = io
             ["bar".string] of ASTNode
           end
-        end.should eq %("bar"\n)
+        end.should eq %(bar\n)
       end
 
       it "p" do

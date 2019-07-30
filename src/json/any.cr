@@ -2,6 +2,8 @@
 # and can be used for traversing dynamic or unknown JSON structures.
 #
 # ```
+# require "json"
+#
 # obj = JSON.parse(%({"access": [{"name": "mapping", "speed": "fast"}, {"name": "any", "speed": "slow"}]}))
 # obj["access"][1]["name"].as_s  # => "any"
 # obj["access"][1]["speed"].as_s # => "slow"
@@ -20,23 +22,23 @@ struct JSON::Any
   # Reads a `JSON::Any` value from the given pull parser.
   def self.new(pull : JSON::PullParser)
     case pull.kind
-    when :null
+    when .null?
       new pull.read_null
-    when :bool
+    when .bool?
       new pull.read_bool
-    when :int
+    when .int?
       new pull.read_int
-    when :float
+    when .float?
       new pull.read_float
-    when :string
+    when .string?
       new pull.read_string
-    when :begin_array
+    when .begin_array?
       ary = [] of JSON::Any
       pull.read_array do
         ary << new(pull)
       end
       new ary
-    when :begin_object
+    when .begin_object?
       hash = {} of String => JSON::Any
       pull.read_object do |key|
         hash[key] = new(pull)
@@ -244,12 +246,12 @@ struct JSON::Any
   end
 
   # :nodoc:
-  def inspect(io)
+  def inspect(io : IO) : Nil
     @raw.inspect(io)
   end
 
   # :nodoc:
-  def to_s(io)
+  def to_s(io : IO) : Nil
     @raw.to_s(io)
   end
 

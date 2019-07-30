@@ -56,6 +56,18 @@ class Reference
     hasher.reference(self)
   end
 
+  # Appends a String representation of this object
+  # which includes its class name, its object address
+  # and the values of all instance variables.
+  #
+  # ```
+  # class Person
+  #   def initialize(@name : String, @age : Int32)
+  #   end
+  # end
+  #
+  # Person.new("John", 32).inspect # => #<Person:0x10fd31f20 @name="John", @age=32>
+  # ```
   def inspect(io : IO) : Nil
     io << "#<" << {{@type.name.id.stringify}} << ":0x"
     object_id.to_s(16, io)
@@ -73,7 +85,6 @@ class Reference
       io << " ..."
     end
     io << '>'
-    nil
   end
 
   def pretty_print(pp) : Nil
@@ -105,11 +116,21 @@ class Reference
     {% end %}
   end
 
+  # Appends a short String representation of this object
+  # which includes its class name and its object address.
+  #
+  # ```
+  # class Person
+  #   def initialize(@name : String, @age : Int32)
+  #   end
+  # end
+  #
+  # Person.new("John", 32).to_s # => #<Person:0x10a199f20>
+  # ```
   def to_s(io : IO) : Nil
     io << "#<" << self.class.name << ":0x"
     object_id.to_s(16, io)
     io << '>'
-    nil
   end
 
   # :nodoc:

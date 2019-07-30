@@ -122,15 +122,12 @@ enum Signal : Int32
     LibC.sigismember(pointerof(@@sigset), self) == 1
   end
 
-  @@setup_default_handlers = Atomic(Int32).new(0)
+  @@setup_default_handlers = Atomic::Flag.new
 
   # :nodoc:
   def self.setup_default_handlers
-    _, success = @@setup_default_handlers.compare_and_set(0, 1)
-    return unless success
-
+    return unless @@setup_default_handlers.test_and_set
     LibC.sigemptyset(pointerof(@@sigset))
-
     Crystal::Signal.start_loop
     Signal::PIPE.ignore
     Signal::CHLD.reset
@@ -178,7 +175,9 @@ module Crystal::Signal
 
   private def self.set(signal, handler)
     if signal == ::Signal::CHLD
-      # don't reset/ignore SIGCHLD, Process#wait requires it
+      # Clear any existing signal child handler
+      @@child_handler = nil
+      # But keep a default SIGCHLD, Process#wait requires it
       trap(signal, ->(signal : ::Signal) {
         Crystal::SignalChildHandler.call
         @@child_handler.try(&.call(signal))
@@ -206,13 +205,16 @@ module Crystal::Signal
 
   private def self.process(signal) : Nil
     if handler = @@handlers[signal]?
-      handler.call(signal)
+      non_nil_handler = handler # if handler is closured it will also have the Nil type
+      spawn do
+        non_nil_handler.call(signal)
+      rescue ex
+        ex.inspect_with_backtrace(STDERR)
+        fatal("uncaught exception while processing handler for #{signal}")
+      end
     else
       fatal("missing handler for #{signal}")
     end
-  rescue ex
-    ex.inspect_with_backtrace(STDERR)
-    fatal("uncaught exception while processing handler for #{signal}")
   end
 
   # Replaces the signal pipe so the child process won't share the file

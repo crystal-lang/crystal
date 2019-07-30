@@ -38,7 +38,7 @@ class String::Builder < IO
     raise "Not implemented"
   end
 
-  def write(slice : Bytes)
+  def write(slice : Bytes) : Nil
     return if slice.empty?
 
     count = slice.size
@@ -97,7 +97,7 @@ class String::Builder < IO
     @bytesize -= amount
   end
 
-  def to_s
+  def to_s : String
     raise "Can only invoke 'to_s' once on String::Builder" if @finished
     @finished = true
 

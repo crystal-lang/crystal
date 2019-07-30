@@ -65,7 +65,7 @@ module Zip::FileInfo
     {file_name_length, extra_field_length, time}
   end
 
-  def initialize(@filename : String, @time = Time.now, @comment = "", @extra = Bytes.empty)
+  def initialize(@filename : String, @time = Time.utc, @comment = "", @extra = Bytes.empty)
   end
 
   # Returns `true` if this entry is a directory.
@@ -151,7 +151,7 @@ module Zip::FileInfo
     minute = (time >> 5) & 0b111111
     second = (time & 0b11111) * 2
 
-    Time.new(year.to_i, month.to_i, day.to_i, hour.to_i, minute.to_i, second.to_i)
+    Time.utc(year.to_i, month.to_i, day.to_i, hour.to_i, minute.to_i, second.to_i)
   end
 
   private def to_dos
@@ -161,7 +161,7 @@ module Zip::FileInfo
 
     time = (@time.hour << 11) |
            (@time.minute << 5) |
-           (@time.second / 2)
+           (@time.second // 2)
 
     {date.to_u16, time.to_u16}
   end

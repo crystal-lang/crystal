@@ -394,4 +394,193 @@ describe "Semantic: abstract def" do
       end
       )
   end
+
+  it "warning if missing return type" do
+    assert_warning %(
+      abstract class Foo
+        abstract def foo : Int32
+      end
+
+      class Bar < Foo
+        def foo
+          1
+        end
+      end
+      ),
+      "warning in line 8\nWarning: this method overrides Foo#foo() which has an explicit return type of Int32.\n\nPlease add an explicit return type (Int32 or a subtype of it) to this method as well."
+  end
+
+  it "warning if different return type" do
+    assert_warning %(
+      abstract class Foo
+        abstract def foo : Int32
+      end
+
+      class Bar < Foo
+        struct Int32
+        end
+
+        def foo : Int32
+          1
+        end
+      end
+      ),
+      "warning in line 11\nWarning: this method must return Int32, which is the return type of the overridden method Foo#foo(), or a subtype of it, not Bar::Int32"
+  end
+
+  it "can return a more specific type" do
+    assert_type(%(
+      class Parent
+      end
+
+      class Child < Parent
+      end
+
+
+      abstract class Foo
+        abstract def foo : Parent
+      end
+
+      class Bar < Foo
+        def foo : Child
+          Child.new
+        end
+      end
+
+      Bar.new.foo
+      )) { types["Child"] }
+  end
+
+  it "matches instantiated generic types" do
+    semantic(%(
+      abstract class Foo(T)
+        abstract def foo(x : T)
+      end
+
+      abstract class Bar(U) < Foo(U)
+      end
+
+      class Baz < Bar(Int32)
+        def foo(x : Int32)
+        end
+      end
+    ))
+  end
+
+  it "matches generic types" do
+    semantic(%(
+      abstract class Foo(T)
+        abstract def foo(x : T)
+      end
+
+      class Bar(U) < Foo(U)
+        def foo(x : U)
+        end
+      end
+    ))
+  end
+
+  it "matches instantiated generic module" do
+    semantic(%(
+      module Foo(T)
+        abstract def foo(x : T)
+      end
+
+      class Bar
+        include Foo(Int32)
+
+        def foo(x : Int32)
+        end
+      end
+      ))
+  end
+
+  it "matches generic module" do
+    semantic(%(
+      module Foo(T)
+        abstract def foo(x : T)
+      end
+
+      class Bar(U)
+        include Foo(U)
+
+        def foo(x : U)
+        end
+      end
+      ))
+  end
+
+  it "matches generic module (a bit more complex)" do
+    semantic(%(
+      class Gen(T)
+      end
+
+      module Foo(T)
+        abstract def foo(x : Gen(T))
+      end
+
+      class Bar
+        include Foo(Int32)
+
+        def foo(x : Gen(Int32))
+        end
+      end
+      ))
+  end
+
+  it "matches generic return type" do
+    semantic(%(
+      abstract class Foo(T)
+        abstract def foo : T
+      end
+
+      class Bar < Foo(Int32)
+        def foo : Int32
+          1
+        end
+      end
+    ))
+  end
+
+  it "is missing a return type in subclass of generic subclass" do
+    assert_warning %(
+        abstract class Foo(T)
+          abstract def foo : T
+        end
+
+        class Bar < Foo(Int32)
+          def foo
+          end
+        end
+      ),
+      "warning in line 8\nWarning: this method overrides Foo(T)#foo() which has an explicit return type of T.\n\nPlease add an explicit return type (Int32 or a subtype of it) to this method as well."
+  end
+
+  it "can't find parent return type" do
+    assert_warning %(
+        abstract class Foo
+          abstract def foo : Unknown
+        end
+
+        class Bar < Foo
+          def foo
+          end
+        end
+      ),
+      "warning in line 4\nWarning: can't resolve return type Unknown"
+  end
+
+  it "can't find child return type" do
+    assert_warning %(
+        abstract class Foo
+          abstract def foo : Int32
+        end
+
+        class Bar < Foo
+          def foo : Unknown
+          end
+        end
+      ),
+      "warning in line 8\nWarning: can't resolve return type Unknown"
+  end
 end

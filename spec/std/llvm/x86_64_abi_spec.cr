@@ -2,7 +2,7 @@ require "spec"
 require "llvm"
 
 {% if LibLLVM::BUILT_TARGETS.includes?(:x86) %}
-LLVM.init_x86
+  LLVM.init_x86
 {% end %}
 
 private def abi

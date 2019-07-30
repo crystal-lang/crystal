@@ -127,9 +127,28 @@ struct BigRational < Number
     self / other.to_big_r
   end
 
+  def //(other)
+    (self / other).floor
+  end
+
+  def ceil
+    diff = (denominator - numerator % denominator) % denominator
+    BigRational.new(numerator + diff, denominator)
+  end
+
+  def floor
+    BigRational.new(numerator - numerator % denominator, denominator)
+  end
+
+  def trunc
+    self < 0 ? ceil : floor
+  end
+
   # Divides the rational by (2 ** *other*)
   #
   # ```
+  # require "big"
+  #
   # BigRational.new(2, 3) >> 2 # => 1/6
   # ```
   def >>(other : Int)
@@ -139,6 +158,8 @@ struct BigRational < Number
   # Multiplies the rational by (2 ** *other*)
   #
   # ```
+  # require "big"
+  #
   # BigRational.new(2, 3) << 2 # => 8/3
   # ```
   def <<(other : Int)
@@ -198,25 +219,27 @@ struct BigRational < Number
   # Optionally takes a radix base (2 through 36).
   #
   # ```
+  # require "big"
+  #
   # r = BigRational.new(8243243, 562828882)
   # r.to_s     # => "8243243/562828882"
   # r.to_s(16) # => "7dc82b/218c1652"
   # r.to_s(36) # => "4woiz/9b3djm"
   # ```
-  def to_s(base = 10)
+  def to_s(base : Int = 10) : String
     String.new(to_cstr(base))
   end
 
-  def to_s(io : IO, base = 10)
+  def to_s(io : IO, base : Int = 10) : Nil
     str = to_cstr(base)
     io.write_utf8 Slice.new(str, LibC.strlen(str))
   end
 
-  def inspect
+  def inspect : String
     to_s
   end
 
-  def inspect(io)
+  def inspect(io : IO) : Nil
     to_s io
   end
 
@@ -248,6 +271,7 @@ struct Int
   # Returns a `BigRational` representing this integer.
   # ```
   # require "big"
+  #
   # 123.to_big_r
   # ```
   def to_big_r
@@ -270,6 +294,10 @@ struct Int
     self.to_big_r / other
   end
 
+  def //(other : BigRational)
+    self.to_big_r // other
+  end
+
   def *(other : BigRational)
     other * self
   end
@@ -281,6 +309,7 @@ struct Float
   # Returns a `BigRational` representing this float.
   # ```
   # require "big"
+  #
   # 123.0.to_big_r
   # ```
   def to_big_r
@@ -296,6 +325,7 @@ module Math
   # Returns the sqrt of a `BigRational`.
   # ```
   # require "big"
+  #
   # Math.sqrt((1000_000_000_0000.to_big_r*1000_000_000_00000.to_big_r))
   # ```
   def sqrt(value : BigRational)

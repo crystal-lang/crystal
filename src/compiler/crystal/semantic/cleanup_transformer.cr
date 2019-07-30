@@ -105,6 +105,12 @@ module Crystal
       @last_is_falsey = false
     end
 
+    def compute_last_truthiness
+      reset_last_status
+      yield
+      {@last_is_truthy, @last_is_falsey}
+    end
+
     def transform(node : Def)
       node.hook_expansions.try &.map! &.transform self
       node
@@ -310,6 +316,12 @@ module Crystal
         end
       end
 
+      node.named_args.try &.each do |named_arg|
+        unless named_arg.value.type?
+          return untyped_expression(node, "`#{named_arg}` has no type")
+        end
+      end
+
       # Check if the block has its type freezed and it doesn't match the current type
       if block && (freeze_type = block.freeze_type) && (block_type = block.type?)
         unless block_type.implements?(freeze_type)
@@ -320,13 +332,18 @@ module Crystal
 
       # If any expression is no-return, replace the call with its expressions up to
       # the one that no returns.
-      if (obj.try &.type?.try &.no_return?) || node.args.any? &.type?.try &.no_return?
+      if (obj.try &.type?.try &.no_return?) || (node.args.any? &.type?.try &.no_return?) ||
+         (node.named_args.try &.any? &.value.type?.try &.no_return?)
         call_exps = [] of ASTNode
         call_exps << obj if obj
         unless obj.try &.type?.try &.no_return?
           node.args.each do |arg|
             call_exps << arg
             break if arg.type?.try &.no_return?
+          end
+          node.named_args.try &.each do |named_arg|
+            call_exps << named_arg.value
+            break if named_arg.value.type?.try &.no_return?
           end
         end
         exps = Expressions.new(call_exps)
@@ -513,11 +530,11 @@ module Crystal
     end
 
     def transform(node : If)
-      node.cond = node.cond.transform(self)
+      cond_is_truthy, cond_is_falsey = compute_last_truthiness do
+        node.cond = node.cond.transform(self)
+      end
 
       node_cond = node.cond
-      cond_is_truthy, cond_is_falsey = @last_is_truthy, @last_is_falsey
-      reset_last_status
 
       if node_cond.no_returns?
         return node_cond
@@ -540,27 +557,29 @@ module Crystal
         then_is_truthy = false
         then_is_falsey = false
       else
-        node.then = node.then.transform(self)
-        then_is_truthy, then_is_falsey = @last_is_truthy, @last_is_falsey
+        then_is_truthy, then_is_falsey = compute_last_truthiness do
+          node.then = node.then.transform(self)
+        end
       end
 
       if node.truthy?
         else_is_truthy = false
         else_is_falsey = false
       else
-        node.else = node.else.transform(self)
-        else_is_truthy, else_is_falsey = @last_is_truthy, @last_is_falsey
+        else_is_truthy, else_is_falsey = compute_last_truthiness do
+          node.else = node.else.transform(self)
+        end
       end
-
-      reset_last_status
 
       case node
       when .and?
         @last_is_truthy = cond_is_truthy && then_is_truthy
         @last_is_falsey = cond_is_falsey || then_is_falsey
       when .or?
-        @last_is_truthy = (cond_is_truthy && then_is_truthy) || (cond_is_falsey && else_is_truthy)
+        @last_is_truthy = cond_is_truthy || else_is_truthy
         @last_is_falsey = cond_is_falsey && else_is_falsey
+      else
+        reset_last_status
       end
 
       node
@@ -694,8 +713,8 @@ module Crystal
 
       if exp_type
         instance_type = exp_type.instance_type.devirtualize
-        unless instance_type.class?
-          node.exp.raise "#{instance_type} is not a class, it's a #{instance_type.type_desc}"
+        if instance_type.struct? || instance_type.module?
+          node.exp.raise "instance_sizeof can only be used with a class, but #{instance_type} is a #{instance_type.type_desc}"
         end
       end
 
@@ -817,7 +836,7 @@ module Crystal
           end
         when 1
           case node.name
-          when "+", "-", "*", "/", "&", "|"
+          when "+", "-", "*", "&+", "&-", "&*", "/", "//", "&", "|"
             return simple_constant?(obj, consts) && simple_constant?(node.args.first, consts)
           end
         end

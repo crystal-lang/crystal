@@ -567,7 +567,9 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
 
     pushing_type(enum_type) do
       counter = enum_type.flags? ? 1 : 0
-      counter, all_value = visit_enum_members(node, node.members, counter, all_value,
+      counter = interpret_enum_value(NumberLiteral.new(counter), enum_base_type)
+      counter, all_value, overflow = visit_enum_members(node, node.members, counter, all_value,
+        overflow: false,
         existed: existed,
         enum_type: enum_type,
         enum_base_type: enum_base_type,
@@ -607,27 +609,27 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
     false
   end
 
-  def visit_enum_members(node, members, counter, all_value, **options)
+  def visit_enum_members(node, members, counter, all_value, overflow, **options)
     members.each do |member|
-      counter, all_value =
-        visit_enum_member(node, member, counter, all_value, **options)
+      counter, all_value, overflow =
+        visit_enum_member(node, member, counter, all_value, overflow, **options)
     end
-    {counter, all_value}
+    {counter, all_value, overflow}
   end
 
-  def visit_enum_member(node, member, counter, all_value, **options)
+  def visit_enum_member(node, member, counter, all_value, overflow, **options)
     case member
     when MacroIf
-      expanded = expand_inline_macro(member, mode: Program::MacroExpansionMode::Enum)
-      visit_enum_member(node, expanded, counter, all_value, **options)
+      expanded = expand_inline_macro(member, mode: Parser::ParseMode::Enum)
+      visit_enum_member(node, expanded, counter, all_value, overflow, **options)
     when MacroExpression
-      expanded = expand_inline_macro(member, mode: Program::MacroExpansionMode::Enum)
-      visit_enum_member(node, expanded, counter, all_value, **options)
+      expanded = expand_inline_macro(member, mode: Parser::ParseMode::Enum)
+      visit_enum_member(node, expanded, counter, all_value, overflow, **options)
     when MacroFor
-      expanded = expand_inline_macro(member, mode: Program::MacroExpansionMode::Enum)
-      visit_enum_member(node, expanded, counter, all_value, **options)
+      expanded = expand_inline_macro(member, mode: Parser::ParseMode::Enum)
+      visit_enum_member(node, expanded, counter, all_value, overflow, **options)
     when Expressions
-      visit_enum_members(node, member.expressions, counter, all_value, **options)
+      visit_enum_members(node, member.expressions, counter, all_value, overflow, **options)
     when Arg
       existed = options[:existed]
       enum_type = options[:enum_type]
@@ -640,6 +642,8 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
 
       if default_value = member.default_value
         counter = interpret_enum_value(default_value, base_type)
+      elsif overflow
+        member.raise "value of enum member #{member} would overflow the base type #{base_type}"
       end
 
       if is_flags && !@in_lib
@@ -675,20 +679,23 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
       end
 
       const_value.type = enum_type
-      new_counter =
-        if is_flags
-          if counter == 0 # In case the member is set to 0
-            1
-          else
-            counter &* 2
-          end
+      if is_flags
+        if counter == 0 # In case the member is set to 0
+          new_counter = 1
+          overflow = false
         else
-          counter &+ 1
+          new_counter = counter &* 2
+          overflow = !default_value && counter.sign != new_counter.sign
         end
-      {new_counter, all_value}
+      else
+        new_counter = counter &+ 1
+        overflow = !default_value && counter > 0 && new_counter < 0
+      end
+      new_counter = overflow ? counter : new_counter
+      {new_counter, all_value, overflow}
     else
       member.accept self
-      {counter, all_value}
+      {counter, all_value, overflow}
     end
   end
 
@@ -735,6 +742,9 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
     @exp_nest += 1
 
     scope, name = lookup_type_def_name(target)
+    if current_type.is_a?(Program)
+      scope = program.check_private(target) || scope
+    end
 
     type = scope.types[name]?
     if type
@@ -861,6 +871,10 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
     if (var = node.var).is_a?(Var)
       @vars[var.name] = MetaVar.new(var.name)
     end
+
+    # Because the value could be using macro expansions
+    node.value.try &.accept(self)
+
     false
   end
 
@@ -896,6 +910,21 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
   def visit(node : Call)
     node.scope = node.global? ? @program : current_type.metaclass
     !expand_macro(node, raise_on_missing_const: false, first_pass: true)
+  end
+
+  def visit(node : ProcPointer)
+    # A proc pointer at the top-level might refer to a macro, so we check
+    # that here but we don't yet give an error: we let the real semantic visitor
+    # (MainVisitor) do that job to avoid duplicating code.
+    obj = node.obj
+
+    call = Call.new(obj, node.name).at(obj)
+    call.scope = current_type.metaclass
+    node.call = call
+
+    expand_macro(call, raise_on_missing_const: false, first_pass: true)
+
+    false
   end
 
   def visit(node : Out)
@@ -1049,6 +1078,12 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
         node.returns_twice = true
       when @program.raises_annotation
         node.raises = true
+      when @program.deprecated_annotation
+        # Check whether a DeprecatedAnnotation can be built.
+        # There is no need to store it, but enforcing
+        # arguments makes sense here.
+        DeprecatedAnnotation.from(ann)
+        yield annotation_type, ann
       else
         yield annotation_type, ann
       end

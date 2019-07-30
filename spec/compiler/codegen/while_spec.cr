@@ -165,4 +165,19 @@ describe "Codegen: while" do
       10
       )).to_i.should eq(10)
   end
+
+  it "doesn't crash on while true begin break rescue (#7786)" do
+    codegen(%(
+      require "prelude"
+
+      while true
+        begin
+          foo = 1
+          break
+        rescue
+        end
+      end
+      foo
+      ))
+  end
 end

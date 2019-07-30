@@ -17,9 +17,11 @@ class INI
   # Raises a `ParseException` on any errors.
   #
   # ```
+  # require "ini"
+  #
   # INI.parse("[foo]\na = 1") # => {"foo" => {"a" => "1"}}
   # ```
-  def self.parse(str) : Hash(String, Hash(String, String))
+  def self.parse(str : String | IO) : Hash(String, Hash(String, String))
     ini = Hash(String, Hash(String, String)).new
     current_section = ini[""] = Hash(String, String).new
     lineno = 0
@@ -59,6 +61,8 @@ class INI
   # Generates an INI-style configuration from a given hash.
   #
   # ```
+  # require "ini"
+  #
   # INI.build({"foo" => {"a" => "1"}}, true) # => "[foo]\na = 1\n\n"
   # ```
   def self.build(ini, space : Bool = false) : String
@@ -66,7 +70,7 @@ class INI
   end
 
   # Appends INI data to the given IO.
-  def self.build(io : IO, ini, space : Bool = false)
+  def self.build(io : IO, ini, space : Bool = false) : Nil
     ini.each do |section, contents|
       io << '[' << section << "]\n"
       contents.each do |key, value|

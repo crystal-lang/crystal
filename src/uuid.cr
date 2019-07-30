@@ -161,9 +161,9 @@ struct UUID
     end
   end
 
-  # Returns 16-byte slice.
-  def to_slice
-    @bytes.to_slice
+  # Returns the binary representation of the UUID.
+  def bytes : StaticArray(UInt8, 16)
+    @bytes.dup
   end
 
   # Returns unsafe pointer to 16-bytes.
@@ -173,18 +173,18 @@ struct UUID
 
   # Returns `true` if `other` UUID represents the same UUID, `false` otherwise.
   def ==(other : UUID)
-    to_slice == other.to_slice
+    @bytes == other.@bytes
   end
 
   # Convert to `String` in literal format.
-  def inspect(io : IO)
+  def inspect(io : IO) : Nil
     io << "UUID("
     to_s(io)
     io << ')'
   end
 
-  def to_s(io : IO)
-    slice = to_slice
+  def to_s(io : IO) : Nil
+    slice = @bytes.to_slice
 
     buffer = uninitialized UInt8[36]
     buffer_ptr = buffer.to_unsafe
@@ -200,7 +200,7 @@ struct UUID
   end
 
   def hexstring
-    to_slice.hexstring
+    @bytes.to_slice.hexstring
   end
 
   def urn

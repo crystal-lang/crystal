@@ -250,7 +250,7 @@ describe "JSON mapping" do
 
   it "raises if not an object" do
     error_message = <<-'MSG'
-      Expected begin_object but was string at 1:1
+      Expected BeginObject but was String at 1:1
         parsing StrictJSONPerson at 0:0
       MSG
     ex = expect_raises JSON::MappingError, error_message do
@@ -263,7 +263,7 @@ describe "JSON mapping" do
 
   it "raises if data type does not match" do
     error_message = <<-'MSG'
-      Expected int but was string at 3:15
+      Expected Int but was String at 3:15
         parsing StrictJSONPerson#age at 3:3
       MSG
     ex = expect_raises JSON::MappingError, error_message do

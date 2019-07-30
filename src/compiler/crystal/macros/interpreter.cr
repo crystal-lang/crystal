@@ -484,6 +484,31 @@ module Crystal
       nil
     end
 
+    def resolve(node : Union)
+      union_type = @program.union_of(node.types.map do |type|
+        resolve(type).type
+      end)
+      TypeNode.new(union_type.not_nil!)
+    end
+
+    def resolve?(node : Union)
+      union_type = @program.union_of(node.types.map do |type|
+        resolved = resolve?(type)
+        return nil unless resolved
+
+        resolved.type
+      end)
+      TypeNode.new(union_type.not_nil!)
+    end
+
+    def resolve(node : ASTNode?)
+      node.raise "can't resolve #{node} (#{node.class_desc})"
+    end
+
+    def resolve?(node : ASTNode)
+      node.raise "can't resolve #{node} (#{node.class_desc})"
+    end
+
     def visit(node : Splat)
       node.exp.accept self
       @last = @last.interpret("splat", [] of ASTNode, nil, self)
@@ -551,7 +576,7 @@ module Crystal
       node.raise "can't execute #{node.class_desc} in a macro"
     end
 
-    def to_s
+    def to_s : String
       @str.to_s
     end
 

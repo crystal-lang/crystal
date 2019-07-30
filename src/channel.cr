@@ -1,5 +1,20 @@
 require "fiber"
 
+# A `Channel` enables concurrent communication between fibers.
+#
+# They allow communicating data between fibers without sharing memory and without having to worry about locks, semaphores or other special structures.
+#
+# ```
+# channel = Channel(Int32).new
+#
+# spawn do
+#   channel.send(0)
+#   channel.send(1)
+# end
+#
+# channel.receive # => 0
+# channel.receive # => 1
+# ```
 abstract class Channel(T)
   module SelectAction
     abstract def ready?
@@ -41,15 +56,29 @@ abstract class Channel(T)
     @closed
   end
 
+  # Receives a value from the channel.
+  # If there is a value waiting, it is returned immediately. Otherwise, this method blocks until a value is sent to the channel.
+  #
+  # Raises `ClosedError` if the channel is closed or closes while waiting for receive.
+  #
+  # ```
+  # channel = Channel(Int32).new
+  # channel.send(1)
+  # channel.receive # => 1
+  # ```
   def receive
     receive_impl { raise ClosedError.new }
   end
 
+  # Receives a value from the channel.
+  # If there is a value waiting, it is returned immediately. Otherwise, this method blocks until a value is sent to the channel.
+  #
+  # Returns `nil` if the channel is closed or closes while waiting for receive.
   def receive?
     receive_impl { return nil }
   end
 
-  def inspect(io)
+  def inspect(io : IO) : Nil
     to_s(io)
   end
 
@@ -176,12 +205,14 @@ abstract class Channel(T)
   end
 end
 
+# Buffered channel, using a queue.
 class Channel::Buffered(T) < Channel(T)
   def initialize(@capacity = 32)
     @queue = Deque(T).new(@capacity)
     super()
   end
 
+  # Send a value to the channel.
   def send(value : T)
     while full?
       raise_if_closed
@@ -220,6 +251,7 @@ class Channel::Buffered(T) < Channel(T)
   end
 end
 
+# Unbuffered channel.
 class Channel::Unbuffered(T) < Channel(T)
   @sender : Fiber?
 
@@ -229,6 +261,7 @@ class Channel::Unbuffered(T) < Channel(T)
     super
   end
 
+  # Send a value to the channel.
   def send(value : T)
     while @has_value
       raise_if_closed

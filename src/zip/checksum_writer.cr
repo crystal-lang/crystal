@@ -13,7 +13,7 @@ module Zip
       raise IO::Error.new "Can't read from Zip::Writer entry"
     end
 
-    def write(slice : Bytes)
+    def write(slice : Bytes) : Nil
       return if slice.empty?
 
       @count += slice.size

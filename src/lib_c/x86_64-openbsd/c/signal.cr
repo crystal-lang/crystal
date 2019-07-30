@@ -42,6 +42,12 @@ lib LibC
   SIG_DFL = SighandlerT.new(Pointer(Void).new(0_u64), Pointer(Void).null)
   SIG_IGN = SighandlerT.new(Pointer(Void).new(1_u64), Pointer(Void).null)
 
+  struct StackT
+    ss_sp : Void*
+    ss_size : SizeT
+    ss_flags : Int
+  end
+
   fun kill(x0 : PidT, x1 : Int) : Int
   fun pthread_sigmask(Int, SigsetT*, SigsetT*) : Int
   fun signal(x0 : Int, x1 : Int -> Void) : Int -> Void

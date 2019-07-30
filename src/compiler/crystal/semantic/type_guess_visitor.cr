@@ -457,7 +457,7 @@ module Crystal
             return type.instantiate([Type.merge!(element_types)] of TypeVar).virtual_type
           end
         else
-          return check_allowed_in_generics(node, type)
+          return check_can_be_stored(node, type)
         end
       elsif node_of = node.of
         type = lookup_type?(node_of)
@@ -495,7 +495,7 @@ module Crystal
             return type.instantiate([Type.merge!(key_types), Type.merge!(value_types)] of TypeVar).virtual_type
           end
         else
-          return check_allowed_in_generics(node, type)
+          return check_can_be_stored(node, type)
         end
       elsif node_of = node.of
         key_type = lookup_type?(node_of.key)
@@ -584,6 +584,10 @@ module Crystal
     end
 
     def guess_type(node : Call)
+      if expanded = node.expanded
+        return guess_type(expanded)
+      end
+
       guess_type_call_lib_out(node)
 
       obj = node.obj
@@ -631,6 +635,14 @@ module Crystal
       return type if type
 
       type = guess_type_call_with_type_annotation(node)
+
+      # If the type is unbound (uninstantiated generic) but the call
+      # wasn't something like `Gen(Int32).something` then we can never
+      # guess a type, the type is probably inferred from type restrictions
+      if !obj.is_a?(Generic) && type.try &.unbound?
+        return nil
+      end
+
       return type if type
 
       nil
@@ -968,6 +980,10 @@ module Crystal
       @program.int32
     end
 
+    def guess_type(node : OffsetOf)
+      @program.int32
+    end
+
     def guess_type(node : Nop)
       @program.nil
     end
@@ -1045,14 +1061,14 @@ module Crystal
         allow_typeof: false,
         find_root_generic_type_parameters: find_root_generic_type_parameters
       )
-      check_allowed_in_generics(node, type)
+      check_can_be_stored(node, type)
     end
 
     def lookup_type_var?(node, root = current_type)
       type_var = root.lookup_type_var?(node)
       return nil unless type_var.is_a?(Type)
 
-      check_allowed_in_generics(node, type_var)
+      check_can_be_stored(node, type_var)
       type_var
     end
 
@@ -1060,22 +1076,17 @@ module Crystal
       current_type.lookup_type?(node, allow_typeof: false)
     end
 
-    def check_allowed_in_generics(node, type)
-      # Types such as Object, Int, etc., are not allowed in generics
-      # and as variables types, so we disallow them.
-      if type && !type.allowed_in_generics?
-        @error = Error.new(node, type)
-        return nil
-      end
-
-      case type
-      when GenericClassType
+    def check_can_be_stored(node, type)
+      if type.is_a?(GenericClassType)
+        nil
+      elsif type.is_a?(GenericModuleType)
+        nil
+      elsif type && !type.can_be_stored?
+        # Types such as Object, Int, etc., are not allowed in generics
+        # and as variables types, so we disallow them.
         @error = Error.new(node, type)
         nil
-      when GenericModuleType
-        @error = Error.new(node, type)
-        nil
-      when NonGenericClassType
+      elsif type.is_a?(NonGenericClassType)
         type.virtual_type
       else
         type
@@ -1164,7 +1175,7 @@ module Crystal
       false
     end
 
-    def visit(node : InstanceSizeOf | SizeOf | TypeOf | PointerOf)
+    def visit(node : InstanceSizeOf | SizeOf | OffsetOf | TypeOf | PointerOf)
       false
     end
 

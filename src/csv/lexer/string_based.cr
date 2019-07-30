@@ -11,10 +11,6 @@ class CSV::Lexer::StringBased < CSV::Lexer
     end
   end
 
-  def rewind
-    @reader.pos = 0
-  end
-
   private def consume_unquoted_cell
     start_pos = @reader.pos
     end_pos = start_pos

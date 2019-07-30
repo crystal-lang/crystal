@@ -30,7 +30,7 @@ module Benchmark
       end
 
       # Prints *utime*, *stime*, *total* and *real* to the given IO.
-      def to_s(io : IO)
+      def to_s(io : IO) : Nil
         io.printf "  %.6f   %.6f   %.6f (  %.6f)", utime, stime, total, real
       end
     end

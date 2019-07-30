@@ -5,7 +5,7 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
   getter program : Program
 
   # At every point there's a current type.
-  # In the beginnig this is the `Program` (top-level), but when
+  # In the beginning this is the `Program` (top-level), but when
   # a class definition is visited this changes to that type, and so on.
   property current_type : ModuleType
 
@@ -316,11 +316,11 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
       end
 
     mode ||= if @in_c_struct_or_union
-               Program::MacroExpansionMode::Normal
+               Parser::ParseMode::LibStructOrUnion
              elsif @in_lib
-               Program::MacroExpansionMode::Lib
+               Parser::ParseMode::Lib
              else
-               Program::MacroExpansionMode::Normal
+               Parser::ParseMode::Normal
              end
 
     generated_nodes = @program.parse_macro_source(expanded_macro, macro_expansion_pragmas, the_macro, node, Set.new(@vars.keys),
@@ -485,7 +485,7 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
       node.raise "can't declare variable of generic non-instantiated type #{type}"
     end
 
-    Crystal.check_type_allowed_in_generics(node, type, "can't use #{type} as the type of #{variable_kind}")
+    Crystal.check_type_can_be_stored(node, type, "can't use #{type} as the type of #{variable_kind}")
 
     declared_type
   end
@@ -500,9 +500,10 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
     scope.as(ClassVarContainer)
   end
 
-  def interpret_enum_value(node : ASTNode, target_type = nil)
-    interpreter = MathInterpreter.new(current_type, self)
-    interpreter.interpret(node, target_type)
+  def interpret_enum_value(node : ASTNode, target_type : IntegerType? = nil)
+    MathInterpreter
+      .new(current_type, self, target_type)
+      .interpret(node)
   end
 
   def inside_exp?

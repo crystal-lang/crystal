@@ -1,4 +1,5 @@
 require "./formdata/**"
+require "mime/multipart"
 
 # Contains utilities for parsing `multipart/form-data` messages, which are
 # commonly used for encoding HTML form data.
@@ -10,7 +11,6 @@ require "./formdata/**"
 #
 # ```
 # require "http"
-# require "tempfile"
 #
 # server = HTTP::Server.new do |context|
 #   name = nil
@@ -27,7 +27,7 @@ require "./formdata/**"
 #   end
 #
 #   unless name && file
-#     context.response.status_code = 400
+#     context.response.status = :bad_request
 #     next
 #   end
 #
@@ -80,6 +80,8 @@ module HTTP::FormData
   # Parses a multipart/form-data message, yielding a `FormData::Parser`.
   #
   # ```
+  # require "http"
+  #
   # form_data = "--aA40\r\nContent-Disposition: form-data; name=\"field1\"\r\n\r\nfield data\r\n--aA40--"
   # HTTP::FormData.parse(IO::Memory.new(form_data), "aA40") do |part|
   #   part.name             # => "field1"
@@ -98,6 +100,8 @@ module HTTP::FormData
   # Parses a multipart/form-data message, yielding a `FormData::Parser`.
   #
   # ```
+  # require "http"
+  #
   # headers = HTTP::Headers{"Content-Type" => "multipart/form-data; boundary=aA40"}
   # body = "--aA40\r\nContent-Disposition: form-data; name=\"field1\"\r\n\r\nfield data\r\n--aA40--"
   # request = HTTP::Request.new("POST", "/", headers, body)
@@ -113,7 +117,7 @@ module HTTP::FormData
     body = request.body
     raise Error.new "Cannot extract form-data from HTTP request: body is empty" unless body
 
-    boundary = request.headers["Content-Type"]?.try { |header| Multipart.parse_boundary(header) }
+    boundary = request.headers["Content-Type"]?.try { |header| MIME::Multipart.parse_boundary(header) }
     raise Error.new "Cannot extract form-data from HTTP request: could not find boundary in Content-Type" unless boundary
 
     parse(body, boundary) { |part| yield part }
@@ -170,6 +174,8 @@ module HTTP::FormData
   # `Builder#finish` is called on the builder when the block returns.
   #
   # ```
+  # require "http"
+  #
   # io = IO::Memory.new
   # HTTP::FormData.build(io, "boundary") do |builder|
   #   builder.field("foo", "bar")
@@ -178,7 +184,7 @@ module HTTP::FormData
   # ```
   #
   # See: `FormData::Builder`
-  def self.build(io, boundary = Multipart.generate_boundary)
+  def self.build(io, boundary = MIME::Multipart.generate_boundary)
     builder = Builder.new(io, boundary)
     yield builder
     builder.finish
@@ -190,6 +196,8 @@ module HTTP::FormData
   # builder when the block returns.
   #
   # ```
+  # require "http"
+  #
   # io = IO::Memory.new
   # response = HTTP::Server::Response.new io
   # HTTP::FormData.build(response, "boundary") do |builder|
@@ -202,7 +210,7 @@ module HTTP::FormData
   # ```
   #
   # See: `FormData::Builder`
-  def self.build(response : HTTP::Server::Response, boundary = Multipart.generate_boundary)
+  def self.build(response : HTTP::Server::Response, boundary = MIME::Multipart.generate_boundary)
     builder = Builder.new(response, boundary)
     yield builder
     builder.finish

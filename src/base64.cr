@@ -191,7 +191,7 @@ module Base64
 
   private def encode_size(str_size, new_lines = false)
     size = (str_size * 4 / 3.0).to_i + 4
-    size += size / LINE_SIZE if new_lines
+    size += size // LINE_SIZE if new_lines
     size
   end
 
@@ -202,7 +202,7 @@ module Base64
   private def to_base64(data, chars, pad = false)
     bytes = chars.to_unsafe
     size = data.size
-    cstr = data.pointer(size)
+    cstr = data.to_unsafe
     endcstr = cstr + size - size % 3
     while cstr < endcstr
       n = Intrinsics.bswap32(cstr.as(UInt32*).value)
@@ -234,7 +234,7 @@ module Base64
   private def from_base64(data)
     size = data.size
     dt = DECODE_TABLE.to_unsafe
-    cstr = data.pointer(size)
+    cstr = data.to_unsafe
     start_cstr = cstr
     while (size > 0) && (sym = cstr[size - 1]) && (sym == NL || sym == NR || sym == PAD)
       size -= 1

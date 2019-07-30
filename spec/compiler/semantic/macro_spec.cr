@@ -293,8 +293,9 @@ describe "Semantic: macro" do
       end
 
       foo(1)
-      ), "OH\nNO"
+      ), "OH"
 
+    ex.to_s.should contain "NO"
     ex.to_s.should_not contain("expanding macro")
   end
 
@@ -566,16 +567,16 @@ describe "Semantic: macro" do
       )) { types["Foo"] }
   end
 
-  it "allows declaring class with macro expression" do
+  it "allows declaring class with inline macro expression (#1333)" do
     assert_type(%(
-      {{ `echo "class Foo; end"` }}
+      {{ "class Foo; end".id }}
 
       Foo.new
       )) { types["Foo"] }
   end
 
   it "errors if requires inside class through macro expansion" do
-    assert_error %(
+    str = %(
       macro req
         require "bar"
       end
@@ -583,8 +584,10 @@ describe "Semantic: macro" do
       class Foo
         req
       end
-      ),
-      "can't require inside type declarations"
+    )
+    expect_raises SyntaxException, "can't require inside type declarations" do
+      semantic parse str
+    end
   end
 
   it "errors if requires inside if through macro expansion" do
@@ -672,25 +675,29 @@ describe "Semantic: macro" do
   end
 
   it "show macro trace in errors (1)" do
-    assert_error %(
+    ex = assert_error %(
       macro foo
         Bar
       end
 
       foo
     ),
-      "Error in line 6: expanding macro",
+      "Error: expanding macro",
       inject_primitives: false
+
+    ex.to_s.should contain "error in line 6"
   end
 
   it "show macro trace in errors (2)" do
-    assert_error %(
+    ex = assert_error %(
       {% begin %}
         Bar
       {% end %}
     ),
-      "Error in line 2: expanding macro",
+      "Error: expanding macro",
       inject_primitives: false
+
+    ex.to_s.should contain "error in line 2"
   end
 
   it "errors if using macro that is defined later" do
@@ -1368,5 +1375,56 @@ describe "Semantic: macro" do
         }}
       {% end %}
     )) { int32 }
+  end
+
+  it "can use macro in instance var initializer (#7666)" do
+    assert_type(%(
+      class Foo
+        macro m
+          "test"
+        end
+
+        @x : String = m
+
+        def x
+          @x
+        end
+      end
+
+      Foo.new.x
+      )) { string }
+  end
+
+  it "can use macro in instance var initializer (just assignment) (#7666)" do
+    assert_type(%(
+      class Foo
+        macro m
+          "test"
+        end
+
+        @x = m
+
+        def x
+          @x
+        end
+      end
+
+      Foo.new.x
+      )) { string }
+  end
+
+  it "shows correct error message in macro expansion (#7083)" do
+    assert_error %(
+      abstract class Foo
+        {% begin %}
+          def self.new
+            allocate
+          end
+        {% end %}
+      end
+
+      Foo.new
+      ),
+      "can't instantiate abstract class Foo"
   end
 end

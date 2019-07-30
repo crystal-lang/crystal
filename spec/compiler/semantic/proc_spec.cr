@@ -880,4 +880,82 @@ describe "Semantic: proc" do
       Foo.new.x
       )) { proc_of(int32) }
   end
+
+  it "merges Proc that returns Nil with another one that returns something else (#3655)" do
+    assert_type(%(
+      a = ->(x : Int32) { 1 }
+      b = ->(x : Int32) { nil }
+      a || b
+      )) { proc_of(int32, nil_type) }
+  end
+
+  it "can assign proc that returns anything to proc that returns nil (#3655)" do
+    assert_type(%(
+      class Foo
+        @block : -> Nil
+
+        def initialize
+          @block = ->{ 1 }
+        end
+
+        def block
+          @block
+        end
+      end
+
+      Foo.new.block
+      )) { proc_of(nil_type) }
+  end
+
+  it "can pass proc that returns T as Void with named args (#7523)" do
+    assert_type(%(
+      def foo(proc : ->)
+        proc
+      end
+
+      foo(proc: ->{ 1 })
+      )) { proc_of(nil_type) }
+  end
+
+  it "errors when using macro as proc value (top-level) (#7465)" do
+    ex = assert_error %(
+      macro bar
+      end
+
+      ->bar
+      ),
+      "undefined method 'bar'"
+
+    ex.to_s.should contain "'bar' exists as a macro, but macros can't be used in proc pointers"
+  end
+
+  it "errors when using macro as proc value (top-level with obj) (#7465)" do
+    ex = assert_error %(
+      class Foo
+        macro bar
+        end
+      end
+
+      ->Foo.bar
+      ),
+      "undefined method 'bar' for Foo.class"
+
+    ex.to_s.should contain "'bar' exists as a macro, but macros can't be used in proc pointers"
+  end
+
+  it "errors when using macro as proc value (inside method) (#7465)" do
+    ex = assert_error %(
+      macro bar
+      end
+
+      def foo
+        ->bar
+      end
+
+      foo
+      ),
+      "undefined method 'bar'\n\n"
+
+    ex.to_s.should contain "'bar' exists as a macro, but macros can't be used in proc pointers"
+  end
 end
