@@ -172,7 +172,7 @@ struct BigRational < Number
 
   # Raises the rational to the *other*th power
   #
-  # This will raise an exception if rational is 0 and other is negative.
+  # This will raise `DivisionByZeroError` if rational is 0 and *other* is negative.
   #
   # ```
   # require "big"

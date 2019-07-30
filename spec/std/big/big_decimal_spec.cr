@@ -205,7 +205,7 @@ describe BigDecimal do
   end
 
   it "exponentiates" do
-    result = ("12.34".to_big_d ** 5)
+    result = "12.34".to_big_d ** 5
     result.should be_a(BigDecimal)
     result.to_s.should eq("286138.1721051424")
   end
