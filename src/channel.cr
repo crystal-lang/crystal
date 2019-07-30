@@ -208,20 +208,20 @@ abstract class Channel(T)
   struct TimeoutAction
     include SelectAction
 
-    def initialize(@timeout : Time::Span)
+    def initialize(timeout : Time::Span)
+      @timeout_at = Time.monotonic + timeout
     end
 
     def ready?
-      Fiber.current.timed_out
+      Fiber.current.timed_out?
     end
 
-    def execute
+    def execute : Nil
       Fiber.current.timed_out = false
-      nil
     end
 
     def wait
-      Fiber.timeout @timeout
+      Fiber.timeout @timeout_at - Time.monotonic
     end
 
     def unwait

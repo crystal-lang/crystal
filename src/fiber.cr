@@ -22,7 +22,7 @@ class Fiber
   @timeout_event : Crystal::Event?
   protected property stack_bottom : Void*
   property name : String?
-  property timed_out = false
+  property? timed_out = false
   @alive = true
   @current_thread = Atomic(Thread?).new(nil)
 

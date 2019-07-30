@@ -30,14 +30,16 @@ def sleep
   Crystal::Scheduler.reschedule
 end
 
-# timeout keyword for use in `select`
+# Timeout keyword for use in `select`.
 #
+# ```
 # select
 # when x = ch.recieve
 #   puts "got #{x}"
 # when timeout(1.seconds)
 #   puts "timeout"
 # end
+# ```
 def timeout_select_action(timeout)
   Channel::TimeoutAction.new(timeout)
 end
