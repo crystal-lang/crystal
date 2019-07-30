@@ -1,6 +1,6 @@
 # The status of a terminated process.
 class Process::Status
-  # platform-specific exit status code, which usually contains either the exit code or a termination signal.
+  # Platform-specific exit status code, which usually contains either the exit code or a termination signal.
   # The other Status methods extract the values from exit_status.
   getter exit_status : Int32
 
