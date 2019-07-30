@@ -101,8 +101,8 @@ class HTTP::Request
 
   # Returns a `HTTP::Request` instance if successfully parsed,
   # `nil` on EOF or `HTTP::Status` otherwise.
-  def self.from_io(io) : HTTP::Request | HTTP::Status | Nil
-    line = parse_request_line(io)
+  def self.from_io(io, *, max_request_line_size : Int32 = 1_048_576) : HTTP::Request | HTTP::Status | Nil
+    line = parse_request_line(io, max_request_line_size)
     return line unless line.is_a?(RequestLine)
 
     HTTP.parse_headers_and_body(io) do |headers, body|
@@ -122,7 +122,7 @@ class HTTP::Request
 
   private METHODS = %w(GET HEAD POST PUT DELETE CONNECT OPTIONS PATCH TRACE)
 
-  private def self.parse_request_line(io : IO) : RequestLine | HTTP::Status | Nil
+  private def self.parse_request_line(io : IO, max_size : Int32) : RequestLine | HTTP::Status | Nil
     # Optimization: see if we have a peek buffer
     # (avoids a string allocation for the entire request line)
     if peek = io.peek
@@ -131,8 +131,9 @@ class HTTP::Request
 
       # See if we can find \n
       index = peek.index('\n'.ord.to_u8)
-      # TODO: eventually increase the 4096 bytes limit
-      if index && index < 4096
+      if index
+        return HTTP::Status::URI_TOO_LONG if index > max_size
+
         end_index = index
 
         # Also check (and discard) \r before that
@@ -146,8 +147,13 @@ class HTTP::Request
       end
     end
 
-    request_line = io.gets(4096, chomp: true)
+    request_line = io.gets(max_size + 1, chomp: true)
     return nil unless request_line
+
+    # Identify Request-URI too long
+    if request_line.bytesize > max_size
+      return HTTP::Status::URI_TOO_LONG
+    end
 
     parse_request_line(request_line)
   end

@@ -215,9 +215,27 @@ module HTTP
         request.should eq HTTP::Status::BAD_REQUEST
       end
 
-      it "handles long request lines" do
-        request = Request.from_io(IO::Memory.new("GET /#{"a" * 4096} HTTP/1.1\r\n\r\n"))
-        request.should eq HTTP::Status::BAD_REQUEST
+      describe "long request lines" do
+        it "handles long URI" do
+          path = "a" * (1_048_561)
+          request = Request.from_io(IO::Memory.new("GET /#{path} HTTP/1.1\r\n\r\n")).as(Request)
+          request.path.count('a').should eq 1_048_561
+        end
+
+        it "fails for too-long URI" do
+          request = Request.from_io(IO::Memory.new("GET /#{"a" * 1_048_576} HTTP/1.1\r\n\r\n"))
+          request.should eq HTTP::Status::URI_TOO_LONG
+        end
+
+        it "handles long URI with custom size" do
+          request = Request.from_io(IO::Memory.new("GET /12345 HTTP/1.1\r\n\r\n"), max_request_line_size: 20).as(Request)
+          request.path.should eq "/12345"
+        end
+
+        it "fails for too-long URI with custom size" do
+          request = Request.from_io(IO::Memory.new("GET /1234567 HTTP/1.1\r\n\r\n"), max_request_line_size: 20)
+          request.should eq HTTP::Status::URI_TOO_LONG
+        end
       end
 
       it "handles long headers" do
