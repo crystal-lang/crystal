@@ -395,10 +395,9 @@ struct Int
     (self & mask) == mask
   end
 
-  # Returns the greatest common divisor of `self` and `other` (which
-  # is an `Int` of some kind). The return type is whichever side can
-  # fit the biggest values. If either is signed and has value equal to
-  # `MIN` of its type, then overflow will be raised.
+  # Returns the greatest common divisor of `self` and `other`. Signed
+  # integers may raise overflow if either has value equal to `MIN` of
+  # its type.
   #
   # ```
   # 5.gcd(10) # => 2
