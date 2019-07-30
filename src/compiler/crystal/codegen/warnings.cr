@@ -1,4 +1,17 @@
 module Crystal
+  class Program
+    def ignore_warning_due_to_location?(location : Location?)
+      return false unless location
+
+      filename = location.original_filename
+      return false unless filename
+
+      @program.warnings_exclude.any? do |path|
+        filename.starts_with?(path)
+      end
+    end
+  end
+
   struct DeprecatedAnnotation
     getter message : String?
 
@@ -54,7 +67,7 @@ module Crystal
       if (ann = node.target_def.annotation(@program.deprecated_annotation)) &&
          (deprecated_annotation = DeprecatedAnnotation.from(ann))
         return if compiler_expanded_call(node)
-        return if ignore_warning_due_to_location(node.location)
+        return if @program.ignore_warning_due_to_location?(node.location)
         short_reference = node.target_def.short_reference
         warning_key = node.location.try { |l| "#{short_reference} #{l}" }
 
@@ -69,17 +82,6 @@ module Crystal
         full_message = node.warning "Deprecated #{short_reference}.#{message}"
 
         @program.warning_failures << full_message
-      end
-    end
-
-    private def ignore_warning_due_to_location(location : Location?)
-      return false unless location
-
-      filename = location.original_filename
-      return false unless filename
-
-      return @program.warnings_exclude.any? do |path|
-        filename.starts_with?(path)
       end
     end
 
