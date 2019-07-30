@@ -100,7 +100,7 @@ class File < IO::FileDescriptor
   # ab   | Same as the 'a' mode but in binary file mode.
   # ```
   # In binary file mode, line endings are not converted to CRLF on Windows.
-  def self.new(filename : Path | String, mode = "r", perm = DEFAULT_CREATE_PERMISSIONS, encoding = nil, invalid = nil)
+  def self.new(filename : Path | String, mode : Mode | String = "r", perm = DEFAULT_CREATE_PERMISSIONS, encoding = nil, invalid = nil)
     filename = filename.to_s
     fd = Crystal::System::File.open(filename, mode, perm)
     new(filename, fd, blocking: true, encoding: encoding, invalid: invalid)
