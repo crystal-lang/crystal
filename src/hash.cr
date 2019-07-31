@@ -374,8 +374,8 @@ class Hash(K, V)
   # Upserts the key-value-hash triplet by doing a linear scan
   # first to see if the key already exists.
   # Returns true if the key was updated or inserted without needing
-  # a resize. Returns false if a resize was needed (and one) and
-  # the key wasn't inserted.
+  # a resize. Returns false if a resize was needed and the key
+  # wasn't inserted.
   private def upsert_linear_scan(key, value, hash) : Bool
     # Just do a linear scan...
     each_entry_with_index do |entry, index|
