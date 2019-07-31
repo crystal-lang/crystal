@@ -379,7 +379,7 @@ class Hash(K, V)
   private def upsert_linear_scan(key, value, hash) : Bool
     # Just do a linear scan...
     each_entry_with_index do |entry, index|
-      if hash == entry.hash && entry.key == key
+      if entry.matches?(hash, key)
         set_entry(index, Entry(K, V).new(entry.hash, entry.key, value))
         return true
       end
