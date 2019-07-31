@@ -218,16 +218,16 @@ class Hash(K, V)
   # less than 11 are ignored.
   def initialize(block : (Hash(K, V), K -> V)? = nil, *, initial_capacity = nil)
     initial_capacity = (initial_capacity || 0).to_i32
-    initial_indices_size = Math.pw2ceil(initial_capacity)
 
     # Same as the empty hash case
     # (but this constructor is a bit more expensive in terms of code execution).
-    if initial_indices_size == 0
+    if initial_capacity == 0
       @entries = Pointer(Entry(K, V)).null
       @indices = Pointer(UInt8).null
       @indices_size_pow2 = 0
       @indices_bytesize = 1
     else
+      initial_indices_size = Math.pw2ceil(initial_capacity)
       @entries = Pointer(Entry(K, V)).malloc(initial_indices_size / 2)
 
       # Check if we can avoid allocating the `@indices` buffer for
