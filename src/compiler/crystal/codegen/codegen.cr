@@ -1211,7 +1211,12 @@ module Crystal
           @last = cast_to last_value, to_type
         end
       elsif obj_type.pointer?
-        @last = cast_to last_value, to_type
+        # Special case: for `ptr.as(Nil)` there's no bitcast involved
+        if to_type.nil_type?
+          @last = llvm_nil
+        else
+          @last = cast_to last_value, to_type
+        end
       else
         resulting_type = node.type
         if node.upcast?

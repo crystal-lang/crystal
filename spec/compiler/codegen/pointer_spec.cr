@@ -64,6 +64,10 @@ describe "Code gen: pointer" do
     run("a = 1_i64; pointerof(a).as(Int32*).value").to_i.should eq(1)
   end
 
+  it "codegens pointer cast to Nil (#8015)" do
+    run("a = 1_i64; pointerof(a).as(Nil).nil? ? 3 : 7").to_i.should eq(3)
+  end
+
   it "codegens pointer as if condition" do
     run("a = 0; pointerof(a) ? 1 : 2").to_i.should eq(1)
   end
