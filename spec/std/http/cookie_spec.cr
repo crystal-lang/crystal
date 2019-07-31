@@ -243,6 +243,15 @@ module HTTP
       cookies.has_key?("a").should be_true
     end
 
+    it "allows adding cookies and retrieving with reserved chars" do
+      cookies = Cookies.new
+      cookies << Cookie.new("a[0]", "b+c")
+      cookies["d"] = "e+f"
+
+      cookies["a[0]"].value.should eq "b+c"
+      cookies["d"].value.should eq "e+f"
+    end
+
     describe "adding request headers" do
       it "overwrites a pre-existing Cookie header" do
         headers = Headers.new
@@ -256,6 +265,14 @@ module HTTP
         cookies.add_request_headers(headers)
 
         headers["Cookie"].should eq "a=b"
+      end
+
+      it "use encode_www_form to write the cookie's value" do
+        headers = Headers.new
+        cookies = Cookies.new
+        cookies << Cookie.new("a[0]", "b+c")
+        cookies.add_request_headers(headers)
+        headers["Cookie"].should eq "a%5B0%5D=b%2Bc"
       end
 
       it "merges multiple cookies into one Cookie header" do
@@ -313,6 +330,14 @@ module HTTP
 
         headers.get("Set-Cookie").includes?("a=b; path=/").should be_true
         headers.get("Set-Cookie").includes?("c=d; path=/").should be_true
+      end
+
+      it "use decode_www_form to parse the cookie's value" do
+        headers = Headers.new
+        cookies = Cookies.new
+        cookies << Cookie.new("a[0]", "b+c")
+        cookies.add_response_headers(headers)
+        headers.get("Set-Cookie").includes?("a%5B0%5D=b%2Bc; path=/").should be_true
       end
 
       describe "when no cookies are set" do
