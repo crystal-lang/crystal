@@ -147,6 +147,12 @@ class Hash(K, V)
   # Then all other methods use the internal methods, usually using other high-level
   # methods.
 
+  # The first valid entry in `@entries`.
+  # This is useful to support `shift`: instead of marking an entry
+  # as deleted and then always having to ignore it we just increment this
+  # variable and always start iterating from it.
+  @first : Int32 = 0
+
   # The buffer of entries.
   # Might be null if the hash is empty at the very beginning.
   # Has always the size of `indices_size` / 2.
@@ -500,6 +506,16 @@ class Hash(K, V)
     nil
   end
 
+  # Implementation on shift when we are sure there's something
+  # to shift (called from `shift`).
+  private def shift_impl
+    # We have to mark the entry as deleted for the GC to clear it
+    delete_entry(@first)
+    @first += 1
+    @deleted_count += 1
+    @size -= 1
+  end
+
   # Tries to resize the hash table in the condition that there are
   # no more available entries to add.
   # Might not result in a resize if there are many entries marked as
@@ -559,6 +575,9 @@ class Hash(K, V)
 
     # After compaction we no longer have deleted entries
     @deleted_count = 0
+
+    # And the first valid entry is the first one
+    @first = 0
   end
 
   # After this it's 1 << 28, and with entries being Int32
@@ -691,7 +710,7 @@ class Hash(K, V)
   private def each_entry_with_index : Nil
     return if @size == 0
 
-    entries_size.times do |i|
+    @first.upto(entries_size - 1) do |i|
       entry = get_entry(i)
       yield entry, i unless entry.deleted?
     end
@@ -727,7 +746,7 @@ class Hash(K, V)
   private def last_entry?
     return nil if @size == 0
 
-    (entries_size - 1).downto(0).each do |i|
+    (entries_size - 1).downto(@first).each do |i|
       entry = get_entry(i)
       return entry unless entry.deleted?
     end
@@ -1482,10 +1501,10 @@ class Hash(K, V)
   # hash                # => {}
   # ```
   def shift
-    first = first_entry?
-    if first
-      delete first.key
-      {first.key, first.value}
+    first_entry = first_entry?
+    if first_entry
+      shift_impl
+      {first_entry.key, first_entry.value}
     else
       yield
     end
@@ -1676,7 +1695,7 @@ class Hash(K, V)
 
   private module BaseIterator
     def initialize(@hash)
-      @index = 0
+      @index = @hash.@first
     end
 
     def base_next

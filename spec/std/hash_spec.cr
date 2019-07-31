@@ -635,9 +635,33 @@ describe "Hash" do
 
   it "shifts" do
     h = {1 => 2, 3 => 4}
+
     h.shift.should eq({1, 2})
     h.should eq({3 => 4})
+    h.first_key.should eq(3)
+    h.first_value.should eq(4)
+    h[1]?.should be_nil
+    h[3].should eq(4)
+
+    h.each.to_a.should eq([{3, 4}])
+    h.each_key.to_a.should eq([3])
+    h.each_value.to_a.should eq([4])
+
     h.shift.should eq({3, 4})
+    h.empty?.should be_true
+
+    expect_raises(IndexError) do
+      h.shift
+    end
+
+    20.times do |i|
+      h[i] = i
+    end
+    h.size.should eq(20)
+
+    20.times do |i|
+      h.shift.should eq({i, i})
+    end
     h.empty?.should be_true
   end
 
