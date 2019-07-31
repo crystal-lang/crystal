@@ -620,18 +620,6 @@ class Hash(K, V)
     end
   end
 
-  # Marks `@indices` at `index` as empty.
-  private def empty_index(index) : Nil
-    case @indices_bytesize
-    when 1
-      @indices[index] = 0_u8
-    when 2
-      @indices.as(UInt16*)[index] = 0_u16
-    else
-      @indices.as(UInt32*)[index] = 0_u32
-    end
-  end
-
   # Returns the capacity of `@indices`.
   private def indices_size
     1 << @indices_size_pow2
