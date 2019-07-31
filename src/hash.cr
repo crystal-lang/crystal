@@ -589,7 +589,7 @@ class Hash(K, V)
   # whether the maximum hash size is reached.
   private def double_indices_size : Nil
     if indices_size == MAXIMUM_INDICES_SIZE
-      raise "Maximim Hash size reached"
+      raise "Maximum Hash size reached"
     end
 
     @indices_size_pow2 += 1
