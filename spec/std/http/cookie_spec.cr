@@ -243,12 +243,12 @@ module HTTP
       cookies.has_key?("a").should be_true
     end
 
-    it "allows adding cookies and retrieving with reserved chars" do
+    it "allows adding and retrieving cookies with reserved chars" do
       cookies = Cookies.new
-      cookies << Cookie.new("a[0]", "b+c")
+      cookies << Cookie.new("a[0]", "b+c%20")
       cookies["d"] = "e+f"
 
-      cookies["a[0]"].value.should eq "b+c"
+      cookies["a[0]"].value.should eq "b+c%20"
       cookies["d"].value.should eq "e+f"
     end
 
@@ -332,7 +332,7 @@ module HTTP
         headers.get("Set-Cookie").includes?("c=d; path=/").should be_true
       end
 
-      it "use decode_www_form to parse the cookie's value" do
+      it "uses encode_www_form on Set-Cookie" do
         headers = Headers.new
         cookies = Cookies.new
         cookies << Cookie.new("a[0]", "b+c")
