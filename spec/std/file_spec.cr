@@ -224,6 +224,21 @@ describe "File" do
     end
   end
 
+  describe "open with symnofollow" do
+    it "doesn't follow symlinks" do
+      file = datapath("test_file.txt")
+      other = datapath("test_file.ini")
+
+      with_tempfile("test_file_symlink.txt") do |symlink|
+        File.symlink(File.real_path(file), symlink)
+        File.new(symlink, File::Mode.flags(Read))
+        expect_raises(Errno) do
+          File.new(symlink, File::Mode.flags(Read, SymlinkNoFollow))
+        end
+      end
+    end
+  end
+
   describe "same?" do
     it "compares following symlinks only if requested" do
       file = datapath("test_file.txt")

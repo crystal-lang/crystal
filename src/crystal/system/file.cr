@@ -2,29 +2,24 @@ require "file/mode"
 
 # :nodoc:
 module Crystal::System::File
-  private ModeMap = {
-    ::File::Mode::Read      => LibC::O_RDONLY,
-    ::File::Mode::Write     => LibC::O_WRONLY,
-    ::File::Mode::ReadWrite => LibC::O_RDWR,
-
-    ::File::Mode::Create    => LibC::O_CREAT,
-    ::File::Mode::CreateNew => LibC::O_CREAT | LibC::O_EXCL,
-    ::File::Mode::Append    => LibC::O_APPEND,
-    ::File::Mode::Truncate  => LibC::O_TRUNC,
-
-    ::File::Mode::Sync            => LibC::O_SYNC,
-    ::File::Mode::SymlinkNoFollow => LibC::O_NOFOLLOW,
-  }
-
   # Helper method for calculating file open modes on systems with posix-y `open`
   # calls.
   private def self.open_flag(mode : ::File::Mode)
     flags = 0
-    # Missing hash key?
-    #    mode.each do |key|
-    #      flags |= ModeMap[key]
-    ModeMap.each do |key, val|
-      flags |= val if mode.includes?(key)
+    mode.each do |m|
+      case m
+      when ::File::Mode::Read            then flags |= LibC::O_RDONLY
+      when ::File::Mode::Write           then flags |= LibC::O_WRONLY
+      when ::File::Mode::ReadWrite       then flags |= LibC::O_RDWR
+      when ::File::Mode::Create          then flags |= LibC::O_CREAT
+      when ::File::Mode::CreateNew       then flags |= LibC::O_CREAT | LibC::O_EXCL
+      when ::File::Mode::Append          then flags |= LibC::O_WRONLY | LibC::O_APPEND
+      when ::File::Mode::Truncate        then flags |= LibC::O_TRUNC
+      when ::File::Mode::Sync            then flags |= LibC::O_SYNC
+      when ::File::Mode::SymlinkNoFollow then flags |= LibC::O_NOFOLLOW
+      else
+        raise "Unknown mode #{m}"
+      end
     end
     flags
   end
