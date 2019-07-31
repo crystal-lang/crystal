@@ -557,24 +557,80 @@ describe "Hash" do
     h.first.should eq({1, 2})
   end
 
-  it "gets first key" do
-    h = {1 => 2, 3 => 4}
-    h.first_key.should eq(1)
+  describe "first_key" do
+    it "gets first key" do
+      h = {1 => 2, 3 => 4}
+      h.first_key.should eq(1)
+    end
+
+    it "raises on first key (nilable key)" do
+      h = {} of Int32? => Int32
+      expect_raises(Exception, "Can't get first key of empty Hash") do
+        h.first_key
+      end
+    end
+
+    it "doesn't raise on first key (nilable key)" do
+      h = {nil => 1} of Int32? => Int32
+      h.first_key.should be_nil
+    end
   end
 
-  it "gets first value" do
-    h = {1 => 2, 3 => 4}
-    h.first_value.should eq(2)
+  describe "first_value" do
+    it "gets first value" do
+      h = {1 => 2, 3 => 4}
+      h.first_value.should eq(2)
+    end
+
+    it "raises on first value (nilable value)" do
+      h = {} of Int32 => Int32?
+      expect_raises(Exception, "Can't get first value of empty Hash") do
+        h.first_value
+      end
+    end
+
+    it "doesn't raise on first value (nilable value)" do
+      h = {1 => nil} of Int32 => Int32?
+      h.first_value.should be_nil
+    end
   end
 
-  it "gets last key" do
-    h = {1 => 2, 3 => 4}
-    h.last_key.should eq(3)
+  describe "last_key" do
+    it "gets last key" do
+      h = {1 => 2, 3 => 4}
+      h.last_key.should eq(3)
+    end
+
+    it "raises on last key (nilable key)" do
+      h = {} of Int32? => Int32
+      expect_raises(Exception, "Can't get last key of empty Hash") do
+        h.last_key
+      end
+    end
+
+    it "doesn't raise on last key (nilable key)" do
+      h = {nil => 1} of Int32? => Int32
+      h.last_key.should be_nil
+    end
   end
 
-  it "gets last value" do
-    h = {1 => 2, 3 => 4}
-    h.last_value.should eq(4)
+  describe "last_value" do
+    it "gets last value" do
+      h = {1 => 2, 3 => 4}
+      h.last_value.should eq(4)
+    end
+
+    it "raises on last value (nilable value)" do
+      h = {} of Int32 => Int32?
+      expect_raises(Exception, "Can't get last value of empty Hash") do
+        h.last_value
+      end
+    end
+
+    it "doesn't raise on last value (nilable value)" do
+      h = {1 => nil} of Int32 => Int32?
+      h.last_value.should be_nil
+    end
   end
 
   it "shifts" do

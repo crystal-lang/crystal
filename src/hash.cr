@@ -1376,7 +1376,8 @@ class Hash(K, V)
 
   # Returns the first key in the hash.
   def first_key
-    first_key?.not_nil!
+    entry = first_entry?
+    entry ? entry.key : raise "Can't get first key of empty Hash"
   end
 
   # Returns the first key if it exists, or returns `nil`.
@@ -1393,7 +1394,8 @@ class Hash(K, V)
 
   # Returns the first value in the hash.
   def first_value
-    first_value?.not_nil!
+    entry = first_entry?
+    entry ? entry.value : raise "Can't get first value of empty Hash"
   end
 
   # Returns the first value if it exists, or returns `nil`.
@@ -1410,7 +1412,8 @@ class Hash(K, V)
 
   # Returns the last key in the hash.
   def last_key
-    last_key?.not_nil!
+    entry = last_entry?
+    entry ? entry.key : raise "Can't get last key of empty Hash"
   end
 
   # Returns the last key if it exists, or returns `nil`.
@@ -1427,7 +1430,8 @@ class Hash(K, V)
 
   # Returns the last value in the hash.
   def last_value
-    last_value?.not_nil!
+    entry = last_entry?
+    entry ? entry.value : raise "Can't get last value of empty Hash"
   end
 
   # Returns the last value if it exists, or returns `nil`.
