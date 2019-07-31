@@ -158,12 +158,6 @@ class Hash(K, V)
   # Could be a Slice but this way we might save a few bounds checking.
   @indices : Pointer(UInt8)
 
-  # The size of `@indices` given as a power of 2.
-  # For example if it's 4 it means 2**4 so size 16.
-  # Can be zero when hash is totally empty.
-  # Otherwise guaranteed to be at least 3.
-  @indices_size_pow2 : UInt32
-
   # The number of actual entries in the hash.
   # Exposed to the user via the `size` getter.
   @size : Int32
@@ -177,6 +171,12 @@ class Hash(K, V)
   # - 2 means `Pointer(UInt16)`
   # - 4 means `Pointer(UInt32)`
   @indices_bytesize : Int8
+
+  # The size of `@indices` given as a power of 2.
+  # For example if it's 4 it means 2**4 so size 16.
+  # Can be zero when hash is totally empty.
+  # Otherwise guaranteed to be at least 3.
+  @indices_size_pow2 : UInt8
 
   # The optional block that triggers on non-existing keys.
   @block : (self, K -> V)?
@@ -234,7 +234,7 @@ class Hash(K, V)
         @indices_bytesize = 1
       end
 
-      @indices_size_pow2 = Math.log2(initial_indices_size).to_u32
+      @indices_size_pow2 = Math.log2(initial_indices_size).to_u8
     end
 
     @size = 0
