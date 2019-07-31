@@ -82,7 +82,7 @@ describe "unbuffered" do
 
   it "works with select else" do
     ch1 = Channel(Int32).new
-    Channel.select({ch1.receive_select_action}, true).should eq({1, nil})
+    Channel.select({ch1.receive_select_action}, true).should eq({1, Channel::NotReady})
   end
 
   it "can send and receive nil" do

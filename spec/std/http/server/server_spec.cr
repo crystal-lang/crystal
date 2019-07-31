@@ -376,7 +376,11 @@ describe HTTP::Server do
       end
 
       server.closed?.should be_false
-      server_done.empty?.should be_true
+      select
+      when ret = server_done.receive
+        fail("Server finished with #{ret}")
+      else
+      end
     end
   end
 

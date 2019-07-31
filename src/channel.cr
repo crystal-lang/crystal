@@ -20,14 +20,24 @@ class Channel(T)
   @lock = Crystal::SpinLock.new
   @queue : Deque(T)?
 
-  module SelectAction
-    abstract def execute(&block)
-    abstract def wait(context : SelectContext)
+  module NotReady
+    extend self
+  end
+
+  module SelectAction(S)
+    abstract def execute : S | NotReady
+    abstract def wait(context : SelectContext(S))
     abstract def unwait
-    abstract def result
+    abstract def result : S
     abstract def lock_object_id
     abstract def lock
     abstract def unlock
+
+    def create_context_and_wait(state_ptr)
+      context = SelectContext.new(state_ptr, self)
+      self.wait(context)
+      context
+    end
   end
 
   enum SelectState
@@ -36,12 +46,12 @@ class Channel(T)
     Done   = 2
   end
 
-  private class SelectContext
+  private class SelectContext(S)
     @state : Pointer(Atomic(SelectState))
-    property action : SelectAction
+    property action : SelectAction(S)
     @activated = false
 
-    def initialize(@state, @action)
+    def initialize(@state, @action : SelectAction(S))
     end
 
     def activated?
@@ -71,8 +81,8 @@ class Channel(T)
 
   def initialize(@capacity = 0)
     @closed = false
-    @senders = Deque({Fiber, T, SelectContext?}).new
-    @receivers = Deque({Fiber, Pointer(T), Pointer(DeliveryState), SelectContext?}).new
+    @senders = Deque({Fiber, T, SelectContext(Nil)?}).new
+    @receivers = Deque({Fiber, Pointer(T), Pointer(DeliveryState), SelectContext(T)?}).new
     if capacity > 0
       @queue = Deque(T).new(capacity)
     end
@@ -244,7 +254,12 @@ class Channel(T)
   end
 
   def self.receive_first(channels : Tuple | Array)
-    self.select(channels.map(&.receive_select_action))[1]
+    _, value = self.select(channels.map(&.receive_select_action))
+    if value.is_a?(NotReady)
+      raise "BUG: Channel.select returned not ready status"
+    end
+
+    value
   end
 
   def self.send_first(value, *channels)
@@ -272,9 +287,9 @@ class Channel(T)
 
     ops.each_with_index do |op, index|
       ignore = false
-      result = op.execute { ignore = true; nil }
+      result = op.execute
 
-      unless ignore
+      unless result.is_a?(NotReady)
         ops_locks.each &.unlock
         return index, result
       end
@@ -282,16 +297,11 @@ class Channel(T)
 
     if has_else
       ops_locks.each &.unlock
-      return ops.size, nil
+      return ops.size, NotReady
     end
 
     state = Atomic(SelectState).new(SelectState::Active)
-
-    contexts = ops.map_with_index do |op, index|
-      context = SelectContext.new(pointerof(state), op)
-      op.wait(context)
-      context
-    end
+    contexts = ops.map &.create_context_and_wait(pointerof(state))
 
     ops_locks.each &.unlock
     Crystal::Scheduler.reschedule
@@ -323,7 +333,7 @@ class Channel(T)
 
   # :nodoc:
   class ReceiveAction(T)
-    include SelectAction
+    include SelectAction(T)
     property value : T
     property state : DeliveryState
 
@@ -333,14 +343,14 @@ class Channel(T)
     end
 
     def execute
-      @channel.receive_internal { yield }
+      @channel.receive_internal { return NotReady }
     end
 
     def result
       @value
     end
 
-    def wait(context : SelectContext)
+    def wait(context : SelectContext(T))
       @channel.wait_for_receive(pointerof(@value), pointerof(@state), context)
     end
 
@@ -362,20 +372,22 @@ class Channel(T)
   end
 
   # :nodoc:
-  class SendAction(C, T)
-    include SelectAction
+  class SendAction(T)
+    include SelectAction(Nil)
 
-    def initialize(@channel : C, @value : T)
+    def initialize(@channel : Channel(T), @value : T)
     end
 
     def execute
-      @channel.send_internal(@value) { yield }
+      @channel.send_internal(@value) { return NotReady }
+      nil
     end
 
     def result
+      nil
     end
 
-    def wait(context : SelectContext)
+    def wait(context : SelectContext(Nil))
       @channel.wait_for_send(@value, context)
     end
 
