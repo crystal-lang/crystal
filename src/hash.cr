@@ -754,6 +754,9 @@ class Hash(K, V)
   # Internal implementation ends
   # ===========================================================================
 
+  # Returns the number of elements in this Hash.
+  getter size : Int32
+
   # Sets the value of *key* to the given *value*.
   #
   # ```
