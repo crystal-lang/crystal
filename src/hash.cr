@@ -699,7 +699,9 @@ class Hash(K, V)
   end
 
   # Yields each non-deleted Entry with its index inside `@entries`.
-  private def each_entry_with_index
+  private def each_entry_with_index : Nil
+    return if @size == 0
+
     entries_size.times do |i|
       entry = get_entry(i)
       yield entry, i unless entry.deleted?
