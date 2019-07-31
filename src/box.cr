@@ -14,6 +14,11 @@ class Box(T)
   def initialize(@object : T)
   end
 
+  # Creates a Box for a reference type (or `nil`) and returns the same pointer (or `NULL`)
+  def self.box(r : Reference?) : Void*
+    r.as(Void*)
+  end
+
   # Creates a Box for an object and returns it as a `Void*`.
   def self.box(object) : Void*
     new(object).as(Void*)
@@ -22,6 +27,13 @@ class Box(T)
   # Unboxes a `Void*` into an object of type `T`. Note that for this you must
   # specify T: `Box(T).unbox(data)`.
   def self.unbox(pointer : Void*) : T
-    pointer.as(self).object
+    {% if T <= Reference %}
+      pointer.as(T)
+    {% elsif T == Nil %}
+      # FIXME: This branch could be merged with the previous one once the issue #8015 is fixed
+      nil
+    {% else %}
+      pointer.as(self).object
+    {% end %}
   end
 end
