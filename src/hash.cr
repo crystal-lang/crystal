@@ -598,9 +598,10 @@ class Hash(K, V)
             else
               @indices.as(UInt32*)[index].to_i32!
             end
-    # Because 0 means empty we return -1,
-    # otherwise we decrement the value (so we can represent the index "0")
-    value == 0 ? -1 : value - 1
+
+    # Because we increment the value by one when we store the value
+    # here we have to substract one
+    value - 1
   end
 
   # Sets `@indices` at `index` with the given value.
