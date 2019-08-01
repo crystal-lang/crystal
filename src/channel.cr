@@ -159,9 +159,9 @@ class Channel(T)
 
   def receive_impl
     @lock.sync do
-      yield if @closed
-
       receive_internal do
+        yield if @closed
+
         value = uninitialized T
         state = DeliveryState::None
         @receivers << {Fiber.current, pointerof(value), pointerof(state), nil}

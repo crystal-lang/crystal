@@ -249,7 +249,8 @@ describe "buffered" do
 
   it "can be closed after sending" do
     ch = Channel(Int32).new(10)
-    spawn { ch.send 123; ch.close }
+    ch.send 123
+    ch.close
     ch.receive.should eq(123)
     expect_raises(Channel::ClosedError) { ch.receive }
   end
