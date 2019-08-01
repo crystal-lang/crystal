@@ -237,7 +237,7 @@ class Hash(K, V)
         initial_indices_size = Math.pw2ceil(initial_capacity)
       end
 
-      @entries = Pointer(Entry(K, V)).malloc(initial_indices_size / 2)
+      @entries = malloc_entries(initial_indices_size / 2)
 
       # Check if we can avoid allocating the `@indices` buffer for
       # small hashes.
@@ -326,7 +326,7 @@ class Hash(K, V)
     # Empty hash table so only initialize entries for now
     if @entries.null?
       @indices_size_pow2 = 3
-      @entries = Pointer(Entry(K, V)).malloc(4)
+      @entries = malloc_entries(4)
     end
 
     hash = key_hash(key)
@@ -626,6 +626,61 @@ class Hash(K, V)
     @first = 0
   end
 
+  # Initializes a `dup` copy from the contents of `other`.
+  protected def initialize_dup(other)
+    return if other.empty?
+
+    initialize_dup_entries(other)
+    initialize_copy_non_entries_vars(other)
+  end
+
+  # Initializes a `clone` copy from the contents of `other`.
+  protected def initialize_clone(other)
+    return if other.empty?
+
+    initialize_clone_entries(other)
+    initialize_copy_non_entries_vars(other)
+  end
+
+  # Initializes `@entries` for a dup copy.
+  # Here we only need tu duplicate the buffer.
+  private def initialize_dup_entries(other)
+    return if other.@entries.null?
+
+    @entries = malloc_entries(other.entries_capacity)
+
+    # Note that we only need to copy `entries_size` which
+    # are the effectives entries in use.
+    @entries.copy_from(other.@entries, other.entries_size)
+  end
+
+  # Initializes `@entries` for a clone copy.
+  # Here we need to copy entries while cloning their values.
+  private def initialize_clone_entries(other)
+    return if other.@entries.null?
+
+    @entries = malloc_entries(other.entries_capacity)
+
+    other.each_entry_with_index do |entry, index|
+      set_entry(index, entry.clone)
+    end
+  end
+
+  # Initializes all variables other than `@entries` for a copy.
+  private def initialize_copy_non_entries_vars(other)
+    @indices_bytesize = other.@indices_bytesize
+    @first = other.@first
+    @size = other.@size
+    @deleted_count = other.@deleted_count
+    @indices_size_pow2 = other.@indices_size_pow2
+    @block = other.@block
+
+    unless other.@indices.null?
+      @indices = malloc_indices(other.indices_size)
+      @indices.copy_from(other.@indices, indices_malloc_size(other.indices_size))
+    end
+  end
+
   # Gets from `@indices` at the given `index`.
   # Returns the index in `@entries` or `-1` if the slot is empty.
   private def get_index(index : Int32) : Int32
@@ -661,7 +716,7 @@ class Hash(K, V)
   end
 
   # Returns the capacity of `@indices`.
-  private def indices_size
+  protected def indices_size
     1 << @indices_size_pow2
   end
 
@@ -679,17 +734,22 @@ class Hash(K, V)
 
   # Allocates `size` number of indices for `@indices`.
   private def malloc_indices(size)
-    Pointer(UInt8).malloc(size * @indices_bytesize)
+    Pointer(UInt8).malloc(indices_malloc_size(size))
+  end
+
+  # The actual number of bytes needed to allocate `@indices`.
+  private def indices_malloc_size(size)
+    size * @indices_bytesize
   end
 
   # Reallocates `size` number of indices for `@indices`.
   private def realloc_indices(size)
-    @indices.realloc(size * @indices_bytesize)
+    @indices.realloc(indices_malloc_size(size))
   end
 
   # Marks all existing indices as empty.
   private def clear_indices : Nil
-    @indices.clear(indices_size * @indices_bytesize)
+    @indices.clear(indices_malloc_size(indices_size))
   end
 
   # Returns the entry in `@entries` at `index`.
@@ -747,11 +807,11 @@ class Hash(K, V)
 
   # Returns true if there's no place for new entries without doing a resize.
   private def entries_full? : Bool
-    entries_size == indices_size / 2
+    entries_size == entries_capacity
   end
 
   # Yields each non-deleted Entry with its index inside `@entries`.
-  private def each_entry_with_index : Nil
+  protected def each_entry_with_index : Nil
     return if @size == 0
 
     @first.upto(entries_size - 1) do |i|
@@ -760,9 +820,14 @@ class Hash(K, V)
     end
   end
 
+  # Allocates `size` number of entries for `@entries`.
+  private def malloc_entries(size)
+    Pointer(Entry(K, V)).malloc(size)
+  end
+
   # Marks all existing entries as deleted
   private def clear_entries
-    @entries.clear(indices_size / 2)
+    @entries.clear(entries_capacity)
   end
 
   # Computes the next index in `@indices`, needed when an index is not empty.
@@ -806,6 +871,11 @@ class Hash(K, V)
   # deleted and non-deleted ones.
   protected def entries_size
     @size + @deleted_count
+  end
+
+  # Returns the capacity of `@entries`.
+  protected def entries_capacity
+    indices_size / 2
   end
 
   # Computes the hash of a key.
@@ -1601,10 +1671,8 @@ class Hash(K, V)
   # hash_a # => {"foo" => "bar"}
   # ```
   def dup
-    hash = Hash(K, V).new(initial_capacity: @size)
-    each do |key, value|
-      hash[key] = value
-    end
+    hash = Hash(K, V).new
+    hash.initialize_dup(self)
     hash
   end
 
@@ -1617,10 +1685,8 @@ class Hash(K, V)
   # hash_a # => {"foobar" => {"foo" => "bar"}}
   # ```
   def clone
-    hash = Hash(K, V).new(initial_capacity: @size)
-    each do |key, value|
-      hash[key] = value.clone
-    end
+    hash = Hash(K, V).new
+    hash.initialize_clone(self)
     hash
   end
 
@@ -1725,6 +1791,10 @@ class Hash(K, V)
       {% else %}
         @hash == hash && @key == key
       {% end %}
+    end
+
+    def clone
+      Entry(K, V).new(hash, key, value.clone)
     end
   end
 

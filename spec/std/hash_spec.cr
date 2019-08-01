@@ -355,18 +355,95 @@ describe "Hash" do
     h.to_h.should be(h)
   end
 
-  it "clones with size = 1" do
-    h1 = {1 => 2}
-    h2 = h1.clone
-    h1.should_not be(h2)
-    h1.should eq(h2)
+  describe "clone" do
+    it "clones with size = 1" do
+      h1 = {1 => 2}
+      h2 = h1.clone
+      h1.should_not be(h2)
+      h1.should eq(h2)
+    end
+
+    it "clones empty hash" do
+      h1 = {} of Int32 => Int32
+      h2 = h1.clone
+      h2.empty?.should be_true
+    end
+
+    it "clones small hash" do
+      h1 = {} of Int32 => Array(Int32)
+      4.times do |i|
+        h1[i] = [i]
+      end
+      h2 = h1.clone
+      h1.should_not be(h2)
+      h1.should eq(h2)
+
+      4.times do |i|
+        h1[i].should_not be(h2[i])
+      end
+
+      h1.delete(0)
+      h2[0].should eq([0])
+    end
+
+    it "clones big hash" do
+      h1 = {} of Int32 => Array(Int32)
+      1_000.times do |i|
+        h1[i] = [i]
+      end
+      h2 = h1.clone
+      h1.should_not be(h2)
+      h1.should eq(h2)
+
+      1_000.times do |i|
+        h1[i].should_not be(h2[i])
+      end
+
+      h1.delete(0)
+      h2[0].should eq([0])
+    end
   end
 
-  it "clones" do
-    h1 = {1 => 2, 3 => 4}
-    h2 = h1.clone
-    h1.should_not be(h2)
-    h1.should eq(h2)
+  describe "dup" do
+    it "dups empty hash" do
+      h1 = {} of Int32 => Int32
+      h2 = h1.dup
+      h2.empty?.should be_true
+    end
+
+    it "dups small hash" do
+      h1 = {} of Int32 => Array(Int32)
+      4.times do |i|
+        h1[i] = [i]
+      end
+      h2 = h1.dup
+      h1.should_not be(h2)
+      h1.should eq(h2)
+
+      4.times do |i|
+        h1[i].should be(h2[i])
+      end
+
+      h1.delete(0)
+      h2[0].should eq([0])
+    end
+
+    it "dups big hash" do
+      h1 = {} of Int32 => Array(Int32)
+      1_000.times do |i|
+        h1[i] = [i]
+      end
+      h2 = h1.dup
+      h1.should_not be(h2)
+      h1.should eq(h2)
+
+      1_000.times do |i|
+        h1[i].should be(h2[i])
+      end
+
+      h1.delete(0)
+      h2[0].should eq([0])
+    end
   end
 
   it "initializes with block" do
