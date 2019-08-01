@@ -49,10 +49,13 @@ class Fiber
     # FIXME: This line shouldn't be necessary (#7975)
     stack_ptr = nil
     {% if flag?(:win32) %}
+      # align stack bottom to 16 bytes
+      @stack_bottom = Pointer(Void).new(@stack_bottom.address & ~0x0f_u64)
+
       # It's the caller's responsibility to allocate 32 bytes of "shadow space" on the stack right
       # before calling the function (regardless of the actual number of parameters used)
-      stack_ptr = @stack_bottom - sizeof(Void*) * 4
 
+      stack_ptr = @stack_bottom - sizeof(Void*) * 6
     {% else %}
       # point to first addressable pointer on the stack (@stack_bottom points past
       # the stack because the stack grows down):
