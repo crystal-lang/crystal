@@ -521,29 +521,32 @@ class Hash(K, V)
   # deleted. In that case the entries table is simply compacted.
   # However, in case of a resize deleted entries are also compcated.
   private def resize : Nil
-    # If we don't have `@indices` it means we have less than 16 elements
-    # in `@entries` so just grow that. Here we don't try to compact
-    # deleted elements (might not be worth it).
-    if @indices.null?
+    # Only do an actual resize (grow `@entries` buffer) if we don't
+    # have many deleted elements.
+    if @deleted_count < @size
+      # First grow `@entries`
       @entries = @entries.realloc(indices_size)
       double_indices_size
-      # Stop doing linear scan when we have more than 16 entries
-      if indices_size > MAX_INDICES_SIZE_LINEAR_SCAN
-        @indices_bytesize = compute_indices_bytesize(indices_size)
-        @indices = malloc_indices(indices_size)
-      else
+
+      # If we didn't have `@indices` and we still don't have 16 entries
+      # we keep doing linear scans (not using `@indices`)
+      if @indices.null? && indices_size <= MAX_INDICES_SIZE_LINEAR_SCAN
         return
       end
-    else
-      # Only resize if we don't have many deleted elements.
-      if @deleted_count < @size
-        @entries = @entries.realloc(indices_size)
-        double_indices_size
-        @indices_bytesize = compute_indices_bytesize(indices_size)
-        @indices = realloc_indices(indices_size)
-      end
 
-      # Must must clear the indices because we'll rebuild them from scratch
+      # Otherwise, we must start using `@indices`
+      @indices_bytesize = compute_indices_bytesize(indices_size)
+      @indices = malloc_indices(indices_size)
+    end
+
+    # `@indices` might still be null if we are compacting in the case where
+    # we are still doing a linear scan (and we had many deleted elements)
+    if @indices.null?
+      has_indices = false
+    else
+      # If we do have indices we must clear them because we'll rebuild
+      # them from scratch
+      has_indices = true
       clear_indices
     end
 
@@ -554,14 +557,16 @@ class Hash(K, V)
       # First we move the index to its new index (if we need to do that)
       set_entry(new_entry_index, entry) if entry_index != new_entry_index
 
-      # Then we try to find an empty index slot (we should find one now
-      # that we have more space)
-      index = fit_in_indices(entry.hash)
-      until get_index(index) == -1
-        index = next_index(index)
+      if has_indices
+        # Then we try to find an empty index slot
+        # (we should find one now that we have more space)
+        index = fit_in_indices(entry.hash)
+        until get_index(index) == -1
+          index = next_index(index)
+        end
+        set_index(index, new_entry_index)
       end
 
-      set_index(index, new_entry_index)
       new_entry_index += 1
     end
 

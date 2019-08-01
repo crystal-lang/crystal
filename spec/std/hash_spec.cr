@@ -290,6 +290,20 @@ describe "Hash" do
       a.delete(2).should be_nil
     end
 
+    it "deletes many in the beginning and then will need a resize" do
+      h = {} of Int32 => Int32
+      8.times do |i|
+        h[i] = i
+      end
+      5.times do |i|
+        h.delete(i)
+      end
+      (9..12).each do |i|
+        h[i] = i
+      end
+      h.should eq({5 => 5, 6 => 6, 7 => 7, 9 => 9, 10 => 10, 11 => 11, 12 => 12})
+    end
+
     describe "with block" do
       it "returns the value if a key is found" do
         a = {1 => 2}
