@@ -29,8 +29,8 @@ module HTTP
   def self.parse_headers_and_body(io, body_type : BodyType = BodyType::OnDemand, decompress = true, *, max_headers_size : Int32 = MAX_HEADERS_SIZE) : HTTP::Status?
     headers = Headers.new
 
-    headers_size = 0
-    while header_line = read_header_line(io, max_headers_size)
+    max_size = max_headers_size
+    while header_line = read_header_line(io, max_size)
       case header_line
       when EndOfRequest
         body = nil
@@ -71,15 +71,15 @@ module HTTP
         yield headers, body
         return
       else # HeaderLine
-        headers_size += header_line.bytesize
-        return HTTP::Status::REQUEST_HEADER_FIELDS_TOO_LARGE if headers_size > max_headers_size
+        max_size -= header_line.bytesize
+        return HTTP::Status::REQUEST_HEADER_FIELDS_TOO_LARGE if max_size < 0
 
         return HTTP::Status::BAD_REQUEST unless headers.add?(header_line.name, header_line.value)
       end
     end
   end
 
-  private def self.read_header_line(io, max_headers_size) : HeaderLine | EndOfRequest | Nil
+  private def self.read_header_line(io, max_size) : HeaderLine | EndOfRequest | Nil
     # Optimization: check if we have a peek buffer
     if peek = io.peek
       # peek.empty? means EOF (so bad request)
@@ -101,14 +101,19 @@ module HTTP
           return EndOfRequest.new
         end
 
+        return HeaderLine.new name: "", value: "", bytesize: index + 1 if index > max_size
+
         name, value = parse_header(peek[0, end_index])
         io.skip(index + 1) # Must skip until after \n
         return HeaderLine.new name: name, value: value, bytesize: index + 1
       end
     end
 
-    line = io.gets(max_headers_size, chomp: true)
+    line = io.gets(max_size + 1, chomp: true)
     return nil unless line
+    if line.bytesize > max_size
+      return HeaderLine.new name: "", value: "", bytesize: max_size
+    end
 
     if line.empty?
       return EndOfRequest.new
