@@ -16,15 +16,6 @@ class HTTP::WebSocket::Protocol
     RSV3  = 0x10
   end
 
-  enum Opcode : UInt8
-    CONTINUATION = 0x0
-    TEXT         = 0x1
-    BINARY       = 0x2
-    CLOSE        = 0x8
-    PING         = 0x9
-    PONG         = 0xA
-  end
-
   MASK_BIT = 128_u8
   VERSION  = "13"
 
@@ -307,3 +298,5 @@ class HTTP::WebSocket::Protocol
     {% end %}
   end
 end
+
+require "../web_socket"

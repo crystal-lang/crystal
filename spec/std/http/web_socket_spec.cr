@@ -5,19 +5,19 @@ require "random/secure"
 require "../../support/ssl"
 
 private def assert_text_packet(packet, size, final = false)
-  assert_packet packet, HTTP::WebSocket::Protocol::Opcode::TEXT, size, final: final
+  assert_packet packet, HTTP::WebSocket::Opcode::TEXT, size, final: final
 end
 
 private def assert_binary_packet(packet, size, final = false)
-  assert_packet packet, HTTP::WebSocket::Protocol::Opcode::BINARY, size, final: final
+  assert_packet packet, HTTP::WebSocket::Opcode::BINARY, size, final: final
 end
 
 private def assert_ping_packet(packet, size, final = false)
-  assert_packet packet, HTTP::WebSocket::Protocol::Opcode::PING, size, final: final
+  assert_packet packet, HTTP::WebSocket::Opcode::PING, size, final: final
 end
 
 private def assert_close_packet(packet, size, final = false)
-  assert_packet packet, HTTP::WebSocket::Protocol::Opcode::CLOSE, size, final: final
+  assert_packet packet, HTTP::WebSocket::Opcode::CLOSE, size, final: final
 end
 
 private def assert_packet(packet, opcode, size, final = false)
