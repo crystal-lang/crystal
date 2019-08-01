@@ -1,4 +1,5 @@
 require "crystal/system/event_loop"
+require "crystal/system/print_error"
 require "./fiber_channel"
 require "fiber"
 require "crystal/system/thread"
@@ -118,8 +119,12 @@ class Crystal::Scheduler
   end
 
   private def fatal_resume_error(fiber, message)
-    LibC.dprintf 2, "\nFATAL: #{message}: #{fiber}\n"
-    caller.each { |line| LibC.dprintf(2, "  from #{line}\n") }
+    Crystal::System.print_error "\nFATAL: #{message}: #{fiber}\n"
+    {% unless flag?(:win32) %}
+      # FIXME: Enable when caller is supported on win32
+      caller.each { |line| Crystal::System.print_error "  from #{line}\n" }
+    {% end %}
+
     exit 1
   end
 
