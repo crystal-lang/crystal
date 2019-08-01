@@ -665,6 +665,16 @@ describe "Hash" do
     h.empty?.should be_true
   end
 
+  it "shifts: delete elements in the middle position and then in the first position" do
+    h = {1 => 'a', 2 => 'b', 3 => 'c', 4 => 'd'}
+    h.delete(2)
+    h.delete(3)
+    h.delete(1)
+    h.size.should eq(1)
+    h.should eq({4 => 'd'})
+    h.first.should eq({4, 'd'})
+  end
+
   it "shifts?" do
     h = {1 => 2}
     h.shift?.should eq({1, 2})

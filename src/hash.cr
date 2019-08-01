@@ -147,10 +147,13 @@ class Hash(K, V)
   # Then all other methods use the internal methods, usually using other high-level
   # methods.
 
-  # The first valid entry in `@entries`.
+  # The index of the first non-deleted entry in `@entries`.
   # This is useful to support `shift`: instead of marking an entry
   # as deleted and then always having to ignore it we just increment this
   # variable and always start iterating from it.
+  # The invariant of `@first` always pointing to a non-deleted entry holds
+  # (unless `@size` is 0) and is guaranteed because of how
+  # `delete_and_update_counts` is implemented.
   @first : Int32 = 0
 
   # The buffer of entries.
@@ -506,16 +509,6 @@ class Hash(K, V)
     nil
   end
 
-  # Implementation on shift when we are sure there's something
-  # to shift (called from `shift`).
-  private def shift_impl
-    # We have to mark the entry as deleted for the GC to clear it
-    delete_entry(@first)
-    @first += 1
-    @deleted_count += 1
-    @size -= 1
-  end
-
   # Tries to resize the hash table in the condition that there are
   # no more available entries to add.
   # Might not result in a resize if there are many entries marked as
@@ -699,6 +692,29 @@ class Hash(K, V)
     delete_entry(index)
     @size -= 1
     @deleted_count += 1
+
+    # If we are deleting the first entry there are some
+    # more optimizations we can do
+    return if index != @first
+
+    # If the Hash is now empty then the first effective
+    # entry starts right after all the deleted ones.
+    if @size == 0
+      @first = @deleted_count
+    else
+      # Otherwise, we bump `@first` and keep bumping it
+      # until we find a non-deleted entry. It's guaranteed
+      # that this loop will end because `@size != 0` so
+      # there will be a non-deleted entry.
+      # It's better to skip the deleted entries once here
+      # and not every next time someone accesses the Hash.
+      # With this we also keep the invariant that `@first`
+      # always points to the first non-deleted entry.
+      @first += 1
+      while @entries[@first].deleted?
+        @first += 1
+      end
+    end
   end
 
   # Returns true if there's no place for new entries without doing a resize.
@@ -732,14 +748,10 @@ class Hash(K, V)
 
   # Returns the first `Entry` or `nil` if non exists.
   private def first_entry?
-    return nil if @size == 0
-
-    each_entry_with_index do |entry|
-      return entry
-    end
-
-    # Might happen if the Hash is modified concurrently
-    nil
+    # We always make sure that `@first` points to the first
+    # non-deleted entry, so `@entries[@first]` is guaranteed
+    # to be non-deleted.
+    @size == 0 ? nil : @entries[@first]
   end
 
   # Returns the first `Entry` or `nil` if non exists.
@@ -1503,7 +1515,7 @@ class Hash(K, V)
   def shift
     first_entry = first_entry?
     if first_entry
-      shift_impl
+      delete_entry_and_update_counts(@first)
       {first_entry.key, first_entry.value}
     else
       yield
