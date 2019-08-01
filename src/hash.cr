@@ -601,12 +601,17 @@ class Hash(K, V)
 
   # Implementation of clearing the hash table.
   private def clear_impl : Nil
-    @entries = Pointer(Entry(K, V)).null
-    @indices = Pointer(UInt8).null
-    @indices_size_pow2 = 0
+    # We _could_ set all buffers to null and start like in the
+    # empty case.
+    # However, it might happen that a user calls clear and then inserts
+    # elements in a loop. In that case each insert after clear will cause
+    # a new memory allocation and that's not good.
+    # Just clearing the buffers might retain some memory but it
+    # avoids a possible constant reallocation (which is slower).
+    clear_entries unless @entries.null?
+    clear_indices unless @indices.null?
     @size = 0
     @deleted_count = 0
-    @indices_bytesize = 1
     @first = 0
   end
 
@@ -742,6 +747,11 @@ class Hash(K, V)
       entry = get_entry(i)
       yield entry, i unless entry.deleted?
     end
+  end
+
+  # Marks all existing entries as deleted
+  private def clear_entries
+    @entries.clear(indices_size / 2)
   end
 
   # Computes the next index in `@indices`, needed when an index is not empty.
