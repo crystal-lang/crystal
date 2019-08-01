@@ -341,6 +341,13 @@ describe "Hash" do
     h.to_h.should be(h)
   end
 
+  it "clones with size = 1" do
+    h1 = {1 => 2}
+    h2 = h1.clone
+    h1.should_not be(h2)
+    h1.should eq(h2)
+  end
+
   it "clones" do
     h1 = {1 => 2, 3 => 4}
     h2 = h1.clone

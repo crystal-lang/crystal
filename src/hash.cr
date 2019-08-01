@@ -230,7 +230,13 @@ class Hash(K, V)
       @indices_size_pow2 = 0
       @indices_bytesize = 1
     else
-      initial_indices_size = Math.pw2ceil(initial_capacity)
+      # Translate initial capacity to the nearest power of 2, but keep it a minimum of 8.
+      if initial_capacity < 8
+        initial_indices_size = 8
+      else
+        initial_indices_size = Math.pw2ceil(initial_capacity)
+      end
+
       @entries = Pointer(Entry(K, V)).malloc(initial_indices_size / 2)
 
       # Check if we can avoid allocating the `@indices` buffer for
