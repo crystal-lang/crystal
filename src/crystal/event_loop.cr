@@ -27,9 +27,11 @@ class Thread
 end
 
 module Crystal::EventLoop
-  def self.after_fork
-    raise "Not Supported"
-  end
+  {% unless flag?(:preview_mt) %}
+    def self.after_fork
+      Thread.current.eb.reinit
+    end
+  {% end %}
 
   def self.resume
     loop_fiber.resume

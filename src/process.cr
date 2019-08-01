@@ -77,6 +77,8 @@ class Process
   # Runs the given block inside a new process and
   # returns a `Process` representing the new child process.
   def self.fork : Process
+    {% raise("Process fork is unsupported with multithread mode") if flag?(:preview_mt) %}
+
     if pid = fork_internal(will_exec: false)
       new pid
     else
@@ -97,6 +99,8 @@ class Process
   # Returns a `Process` representing the new child process in the current process
   # and `nil` inside the new child process.
   def self.fork : Process?
+    {% raise("Process fork is unsupported with multithread mode") if flag?(:preview_mt) %}
+
     if pid = fork_internal(will_exec: false)
       new pid
     else
@@ -123,7 +127,9 @@ class Process
         LibC.sigemptyset(pointerof(newmask))
         LibC.pthread_sigmask(LibC::SIG_SETMASK, pointerof(newmask), nil)
       else
-        Process.after_fork_child_callbacks.each(&.call)
+        {% unless flag?(:preview_mt) %}
+          Process.after_fork_child_callbacks.each(&.call)
+        {% end %}
         LibC.pthread_sigmask(LibC::SIG_SETMASK, pointerof(oldmask), nil)
       end
     when -1

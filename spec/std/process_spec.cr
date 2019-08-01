@@ -161,20 +161,20 @@ describe Process do
 
   describe "kill" do
     it "kills a process" do
-      process = fork { loop { } }
+      process = Process.new("yes")
       process.kill(Signal::KILL).should be_nil
     end
 
     it "kills many process" do
-      process1 = fork { loop { } }
-      process2 = fork { loop { } }
+      process1 = Process.new("yes")
+      process2 = Process.new("yes")
       process1.kill(Signal::KILL).should be_nil
       process2.kill(Signal::KILL).should be_nil
     end
   end
 
   it "gets the pgid of a process id" do
-    process = fork { loop { } }
+    process = Process.new("yes")
     Process.pgid(process.pid).should be_a(Int32)
     process.kill(Signal::KILL)
     Process.pgid.should eq(Process.pgid(Process.pid))
@@ -191,18 +191,20 @@ describe Process do
     buffer.to_s.lines.size.should eq(1000)
   end
 
-  it "executes the new process with exec" do
-    with_tempfile("crystal-spec-exec") do |path|
-      File.exists?(path).should be_false
+  {% unless flag?(:preview_mt) %}
+    it "executes the new process with exec" do
+      with_tempfile("crystal-spec-exec") do |path|
+        File.exists?(path).should be_false
 
-      fork = Process.fork do
-        Process.exec("/usr/bin/env", {"touch", path})
+        fork = Process.fork do
+          Process.exec("/usr/bin/env", {"touch", path})
+        end
+        fork.wait
+
+        File.exists?(path).should be_true
       end
-      fork.wait
-
-      File.exists?(path).should be_true
     end
-  end
+  {% end %}
 
   it "checks for existence" do
     # We can't reliably check whether it ever returns false, since we can't predict
@@ -211,7 +213,7 @@ describe Process do
     # pid.
     Process.exists?(Process.ppid).should be_true
 
-    process = Process.fork { sleep 5 }
+    process = Process.new("yes")
     process.exists?.should be_true
     process.terminated?.should be_false
 
