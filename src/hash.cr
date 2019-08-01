@@ -607,6 +607,7 @@ class Hash(K, V)
     @size = 0
     @deleted_count = 0
     @indices_bytesize = 1
+    @first = 0
   end
 
   # Gets from `@indices` at the given `index`.

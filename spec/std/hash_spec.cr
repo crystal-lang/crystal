@@ -747,6 +747,18 @@ describe "Hash" do
     h.to_a.size.should eq(0)
   end
 
+  it "clears after shift" do
+    h = {1 => 2, 3 => 4}
+    h.shift
+    h.clear
+    h.empty?.should be_true
+    h.to_a.size.should eq(0)
+    h[5] = 6
+    h.empty?.should be_false
+    h[5].should eq(6)
+    h.should eq({5 => 6})
+  end
+
   it "computes hash" do
     h1 = { {1 => 2} => {3 => 4} }
     h2 = { {1 => 2} => {3 => 4} }
