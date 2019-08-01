@@ -238,9 +238,41 @@ module HTTP
         end
       end
 
-      it "handles long headers" do
-        request = Request.from_io(IO::Memory.new("GET / HTTP/1.1\r\n#{"X-Test-Header: A pretty log header value\r\n" * 1000}\r\n"))
-        request.should eq HTTP::Status::BAD_REQUEST
+      describe "long headers" do
+        it "handles long headers" do
+          request = Request.from_io(IO::Memory.new("GET / HTTP/1.1\r\n#{"X-Test-Header: A pretty log header value\r\n" * 390}\r\n"))
+          request.should be_a(Request)
+          request.as(Request).headers["X-Test-Header"].should eq (["A pretty log header value"] * 390).join(',')
+        end
+
+        it "fails for too-long headers" do
+          request = Request.from_io(IO::Memory.new("GET / HTTP/1.1\r\n#{"X-Test-Header: A pretty log header value\r\n" * 391}\r\n"))
+          request.should eq HTTP::Status::REQUEST_HEADER_FIELDS_TOO_LARGE
+        end
+
+        it "handles long headers with custom size" do
+          request = Request.from_io(IO::Memory.new("GET / HTTP/1.1\r\nFoo: Bar\r\n\r\n"), max_headers_size: 10)
+          request.should be_a(Request)
+          request.as(Request).headers["Foo"].should eq "Bar"
+        end
+
+        it "fails for too-long headers with custom size" do
+          request = Request.from_io(IO::Memory.new("GET / HTTP/1.1\r\nFoo: Bar!\r\n\r\n"), max_headers_size: 10)
+          request.should eq HTTP::Status::REQUEST_HEADER_FIELDS_TOO_LARGE
+        end
+      end
+
+      describe "long single header" do
+        it "handles long header" do
+          request = Request.from_io(IO::Memory.new("GET / HTTP/1.1\r\nFoo: #{"b" * 16377}\r\n\r\n"))
+          request.should be_a(Request)
+          request.as(Request).headers["Foo"].size.should eq 16377
+        end
+
+        it "fails for too-long header" do
+          request = Request.from_io(IO::Memory.new("GET / HTTP/1.1\r\nFoo: #{"b" * 16378}\r\n"))
+          request.should eq HTTP::Status::REQUEST_HEADER_FIELDS_TOO_LARGE
+        end
       end
     end
 

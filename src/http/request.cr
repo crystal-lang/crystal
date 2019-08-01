@@ -105,7 +105,7 @@ class HTTP::Request
     line = parse_request_line(io, max_request_line_size)
     return line unless line.is_a?(RequestLine)
 
-    HTTP.parse_headers_and_body(io) do |headers, body|
+    status = HTTP.parse_headers_and_body(io) do |headers, body|
       # No need to dup headers since nobody else holds them
       request = new line.method, line.resource, headers, body, line.http_version, internal: nil
 
@@ -117,7 +117,7 @@ class HTTP::Request
     end
 
     # Malformed or unexpectedly ended http request
-    HTTP::Status::BAD_REQUEST
+    status || HTTP::Status::BAD_REQUEST
   end
 
   private METHODS = %w(GET HEAD POST PUT DELETE CONNECT OPTIONS PATCH TRACE)

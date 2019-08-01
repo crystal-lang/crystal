@@ -6,7 +6,7 @@ require "mime/media_type"
 
 module HTTP
   # :nodoc:
-  MAX_HEADER_SIZE = 16_384
+  MAX_HEADER_SIZE = 1_048_576 # 1 MB
 
   # :nodoc:
   enum BodyType
@@ -23,7 +23,7 @@ module HTTP
   record HeaderLine, name : String, value : String, bytesize : Int32
 
   # :nodoc:
-  def self.parse_headers_and_body(io, body_type : BodyType = BodyType::OnDemand, decompress = true)
+  def self.parse_headers_and_body(io, body_type : BodyType = BodyType::OnDemand, decompress = true) : HTTP::Status?
     headers = Headers.new
 
     headers_size = 0
@@ -66,12 +66,12 @@ module HTTP
         check_content_type_charset(body, headers)
 
         yield headers, body
-        break
+        return
       else # HeaderLine
         headers_size += header_line.bytesize
-        break if headers_size > MAX_HEADER_SIZE
+        return HTTP::Status::REQUEST_HEADER_FIELDS_TOO_LARGE if headers_size > MAX_HEADER_SIZE
 
-        break unless headers.add?(header_line.name, header_line.value)
+        return HTTP::Status::BAD_REQUEST unless headers.add?(header_line.name, header_line.value)
       end
     end
   end
