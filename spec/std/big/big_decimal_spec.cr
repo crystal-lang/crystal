@@ -204,6 +204,12 @@ describe BigDecimal do
     (3 / 2.to_big_d).should eq(BigDecimal.new("1.5"))
   end
 
+  it "exponentiates" do
+    result = "12.34".to_big_d ** 5
+    result.should be_a(BigDecimal)
+    result.to_s.should eq("286138.1721051424")
+  end
+
   it "can be converted from other types" do
     1.to_big_d.should eq (BigDecimal.new(1))
     "1.5".to_big_d.should eq (BigDecimal.new(15, 1))
