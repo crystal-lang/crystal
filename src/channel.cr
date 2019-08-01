@@ -208,6 +208,8 @@ abstract class Channel(T)
   struct TimeoutAction
     include SelectAction
 
+    @timeout_at : Time::Span
+
     def initialize(timeout : Time::Span)
       @timeout_at = Time.monotonic + timeout
     end
