@@ -190,11 +190,11 @@ describe HTTP::Server::Response do
     response = Response.new(io)
     response.content_type = "text/html"
     response.respond_with_error
-    io.to_s.should eq("HTTP/1.1 500 Internal Server Error\r\nContent-Type: text/plain\r\nTransfer-Encoding: chunked\r\n\r\n1a\r\n500 Internal Server Error\n\r\n")
+    io.to_s.should eq("HTTP/1.1 500 Internal Server Error\r\nContent-Type: text/plain\r\nContent-Length: 26\r\n\r\n500 Internal Server Error\n")
 
     io = IO::Memory.new
     response = Response.new(io)
     response.respond_with_error("Bad Request", 400)
-    io.to_s.should eq("HTTP/1.1 400 Bad Request\r\nContent-Type: text/plain\r\nTransfer-Encoding: chunked\r\n\r\n10\r\n400 Bad Request\n\r\n")
+    io.to_s.should eq("HTTP/1.1 400 Bad Request\r\nContent-Type: text/plain\r\nContent-Length: 16\r\n\r\n400 Bad Request\n")
   end
 end

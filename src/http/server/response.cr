@@ -123,16 +123,16 @@ class HTTP::Server
       @output.closed?
     end
 
-    # Generates an error response using *message* and *code*.
+    # Sends an error response.
     #
-    # Calls `reset` and then writes the given message.
+    # Calls `#reset`, writes the given message, and closes the response.
     def respond_with_error(message = "Internal Server Error", code = 500)
       reset
       @status = HTTP::Status.new(code)
       message ||= @status.description
       self.content_type = "text/plain"
       self << @status.code << ' ' << message << '\n'
-      flush
+      close
     end
 
     protected def write_headers

@@ -36,7 +36,6 @@ class HTTP::Server::RequestProcessor
 
         if request.is_a?(HTTP::Status)
           response.respond_with_error(request.description, request.value)
-          response.close
           return
         end
 
@@ -49,7 +48,6 @@ class HTTP::Server::RequestProcessor
           @handler.call(context)
         rescue ex
           response.respond_with_error
-          response.close
           error.puts "Unhandled exception on HTTP::Handler"
           ex.inspect_with_backtrace(error)
           return
