@@ -190,6 +190,28 @@ describe HTTP::ChunkedContent do
     end
   end
 
+  describe "long trailer part" do
+    it "fails for long single header" do
+      mem = IO::Memory.new("0\r\nFoo: Bar Baz Qux\r\n\r\n")
+
+      chunked = HTTP::ChunkedContent.new(mem, max_headers_size: 12)
+      expect_raises(IO::Error, "Trailing headers too long") do
+        chunked.gets
+      end
+      chunked.headers.empty?.should be_true
+    end
+
+    it "fails for long combined headers" do
+      mem = IO::Memory.new("0\r\nFoo: Bar\r\nBaz: Qux\r\n\r\n")
+
+      chunked = HTTP::ChunkedContent.new(mem, max_headers_size: 12)
+      expect_raises(IO::Error, "Trailing headers too long") do
+        chunked.gets
+      end
+      chunked.headers.should eq HTTP::Headers{"Foo" => "Bar"}
+    end
+  end
+
   it "fails if not properly delimited" do
     mem = IO::Memory.new("0\r\n")
 
