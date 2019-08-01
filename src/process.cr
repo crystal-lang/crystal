@@ -301,11 +301,13 @@ class Process
         fork_io, process_io = IO.pipe(read_blocking: true)
 
         @wait_count += 1
+        ensure_channel
         spawn { copy_io(stdio, process_io, channel, close_dst: true) }
       else
         process_io, fork_io = IO.pipe(write_blocking: true)
 
         @wait_count += 1
+        ensure_channel
         spawn { copy_io(process_io, stdio, channel, close_src: true) }
       end
 
@@ -405,6 +407,14 @@ class Process
   end
 
   private def channel
+    if channel = @channel
+      channel
+    else
+      raise "BUG: Notification channel was not initialized for this process"
+    end
+  end
+
+  private def ensure_channel
     @channel ||= Channel(Exception?).new
   end
 
