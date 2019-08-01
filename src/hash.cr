@@ -539,6 +539,18 @@ class Hash(K, V)
       @indices = malloc_indices(indices_size)
     end
 
+    do_compaction
+
+    # After compaction we no longer have deleted entries
+    @deleted_count = 0
+
+    # And the first valid entry is the first one
+    @first = 0
+  end
+
+  # Compacts `@entries` (only keeps non-deleted ones) and rebuilds `@indices.`
+  # If `rehash` is `true` then hash values inside each `Entry` will be recomputed.
+  private def do_compaction(rehash : Bool = false) : Nil
     # `@indices` might still be null if we are compacting in the case where
     # we are still doing a linear scan (and we had many deleted elements)
     if @indices.null?
@@ -554,8 +566,13 @@ class Hash(K, V)
     # while moving non-deleted entries to the beginning (compaction).
     new_entry_index = 0
     each_entry_with_index do |entry, entry_index|
-      # First we move the index to its new index (if we need to do that)
-      set_entry(new_entry_index, entry) if entry_index != new_entry_index
+      if rehash
+        # When rehashing we always have to copy the entry
+        set_entry(new_entry_index, Entry(K, V).new(key_hash(entry.key), entry.key, entry.value))
+      else
+        # First we move the entry to its new index (if we need to do that)
+        set_entry(new_entry_index, entry) if entry_index != new_entry_index
+      end
 
       if has_indices
         # Then we try to find an empty index slot
@@ -576,12 +593,6 @@ class Hash(K, V)
     if entries_to_clear > 0
       (entries + new_entry_index).clear(entries_to_clear)
     end
-
-    # After compaction we no longer have deleted entries
-    @deleted_count = 0
-
-    # And the first valid entry is the first one
-    @first = 0
   end
 
   # After this it's 1 << 28, and with entries being Int32
@@ -1667,17 +1678,7 @@ class Hash(K, V)
   # it was inserted into the `Hash` may lead to undefined behaviour.
   # This method re-indexes the hash using the current key values.
   def rehash : Nil
-    new_size = calculate_new_size(@size)
-    @buckets = @buckets.realloc(new_size)
-    new_size.times { |i| @buckets[i] = nil }
-    @buckets_size = new_size
-    entry = @last
-    while entry
-      index = bucket_index entry.key
-      entry.next = @buckets[index]
-      @buckets[index] = entry
-      entry = entry.back
-    end
+    do_compaction(rehash: true)
   end
 
   # Inverts keys and values. If there are duplicated values, the last key becomes the new value.

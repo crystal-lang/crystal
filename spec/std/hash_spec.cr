@@ -1030,6 +1030,18 @@ describe "Hash" do
     hash.@indices_size_pow2.should eq(11)
   end
 
+  it "rehashes" do
+    a = [1]
+    h = {a => 0}
+    (10..20).each do |i|
+      h[[i]] = i
+    end
+    a << 2
+    h[a]?.should be_nil
+    h.rehash
+    h[a].should eq(0)
+  end
+
   describe "some edge cases while changing the implementation to open addressing" do
     it "edge case 1" do
       h = {1 => 10}
