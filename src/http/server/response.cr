@@ -125,6 +125,13 @@ class HTTP::Server
 
     # Sends an error response.
     #
+    # Calls `#reset`, writes the given status, and closes the response.
+    def respond_with_error(status : HTTP::Status)
+      respond_with_error(status.description, status.code)
+    end
+
+    # Sends an error response.
+    #
     # Calls `#reset`, writes the given message, and closes the response.
     def respond_with_error(message = "Internal Server Error", code = 500)
       reset
