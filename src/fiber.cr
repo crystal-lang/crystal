@@ -1,4 +1,4 @@
-require "thread/linked_list"
+require "crystal/system/thread_linked_list"
 require "./fiber/context"
 require "./fiber/stack_pool"
 

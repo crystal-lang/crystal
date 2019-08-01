@@ -1,7 +1,7 @@
 require "./event_loop"
 require "./fiber_channel"
 require "fiber"
-require "thread"
+require "crystal/system/thread"
 
 # :nodoc:
 #
