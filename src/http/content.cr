@@ -192,7 +192,7 @@ module HTTP
     end
 
     private def read_chunk_size
-      line = @io.read_line(HTTP::MAX_HEADER_SIZE, chomp: true)
+      line = @io.read_line(HTTP::MAX_HEADERS_SIZE, chomp: true)
 
       if index = line.byte_index(';'.ord)
         chunk_size = line.byte_slice(0, index)
@@ -205,7 +205,7 @@ module HTTP
 
     private def read_trailer
       while true
-        line = @io.read_line(HTTP::MAX_HEADER_SIZE, chomp: true)
+        line = @io.read_line(HTTP::MAX_HEADERS_SIZE, chomp: true)
         break if line.empty?
 
         key, value = HTTP.parse_header(line)

@@ -217,13 +217,13 @@ module HTTP
 
       describe "long request lines" do
         it "handles long URI" do
-          path = "a" * (1_048_561)
+          path = "a" * 8177
           request = Request.from_io(IO::Memory.new("GET /#{path} HTTP/1.1\r\n\r\n")).as(Request)
-          request.path.count('a').should eq 1_048_561
+          request.path.count('a').should eq 8177
         end
 
         it "fails for too-long URI" do
-          request = Request.from_io(IO::Memory.new("GET /#{"a" * 1_048_576} HTTP/1.1\r\n\r\n"))
+          request = Request.from_io(IO::Memory.new("GET /#{"a" * 8192} HTTP/1.1\r\n\r\n"))
           request.should eq HTTP::Status::URI_TOO_LONG
         end
 

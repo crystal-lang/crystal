@@ -1,6 +1,12 @@
 require "../server"
 
 class HTTP::Server::RequestProcessor
+  # Maximum permitted size of the request line in an HTTP request.
+  property max_request_line_size = HTTP::MAX_REQUEST_LINE_SIZE
+
+  # Maximum permitted combined size of the headers in an HTTP request.
+  property max_headers_size = HTTP::MAX_HEADERS_SIZE
+
   def initialize(&@handler : HTTP::Handler::HandlerProc)
     @wants_close = false
   end
@@ -19,7 +25,11 @@ class HTTP::Server::RequestProcessor
 
     begin
       until @wants_close
-        request = HTTP::Request.from_io(input)
+        request = HTTP::Request.from_io(
+          input,
+          max_request_line_size: max_request_line_size,
+          max_headers_size: max_headers_size,
+        )
 
         # EOF
         break unless request

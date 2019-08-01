@@ -5,8 +5,11 @@ require "mime/media_type"
 {% end %}
 
 module HTTP
-  # :nodoc:
-  MAX_HEADER_SIZE = 1_048_576 # 1 MB
+  # Default maximum permitted size (in bytes) of the request line in an HTTP request.
+  MAX_REQUEST_LINE_SIZE = 8192 # 8 KB
+
+  # Default maximum permitted combined size (in bytes) of the headers in an HTTP request.
+  MAX_HEADERS_SIZE = 16_384 # 16 KB
 
   # :nodoc:
   enum BodyType
@@ -23,11 +26,11 @@ module HTTP
   record HeaderLine, name : String, value : String, bytesize : Int32
 
   # :nodoc:
-  def self.parse_headers_and_body(io, body_type : BodyType = BodyType::OnDemand, decompress = true) : HTTP::Status?
+  def self.parse_headers_and_body(io, body_type : BodyType = BodyType::OnDemand, decompress = true, *, max_headers_size : Int32 = MAX_HEADERS_SIZE) : HTTP::Status?
     headers = Headers.new
 
     headers_size = 0
-    while header_line = read_header_line(io)
+    while header_line = read_header_line(io, max_headers_size)
       case header_line
       when EndOfRequest
         body = nil
@@ -69,14 +72,14 @@ module HTTP
         return
       else # HeaderLine
         headers_size += header_line.bytesize
-        return HTTP::Status::REQUEST_HEADER_FIELDS_TOO_LARGE if headers_size > MAX_HEADER_SIZE
+        return HTTP::Status::REQUEST_HEADER_FIELDS_TOO_LARGE if headers_size > max_headers_size
 
         return HTTP::Status::BAD_REQUEST unless headers.add?(header_line.name, header_line.value)
       end
     end
   end
 
-  private def self.read_header_line(io) : HeaderLine | EndOfRequest | Nil
+  private def self.read_header_line(io, max_headers_size) : HeaderLine | EndOfRequest | Nil
     # Optimization: check if we have a peek buffer
     if peek = io.peek
       # peek.empty? means EOF (so bad request)
@@ -104,7 +107,7 @@ module HTTP
       end
     end
 
-    line = io.gets(MAX_HEADER_SIZE, chomp: true)
+    line = io.gets(max_headers_size, chomp: true)
     return nil unless line
 
     if line.empty?
