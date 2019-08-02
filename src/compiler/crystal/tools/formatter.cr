@@ -2135,8 +2135,8 @@ module Crystal
       formatter.inside_enum = @inside_enum
       formatter.inside_struct_or_union = @inside_struct_or_union
       formatter.indent = @indent + 2
-      wrote_comment = formatter.skip_space_or_newline
-      formatter.write_indent unless wrote_comment
+      formatter.skip_space_or_newline
+      formatter.write_indent
       nodes.accept formatter
       {formatter, formatter.finish}
     end
