@@ -58,18 +58,10 @@ describe Concurrent::Future do
     end
 
     it "raises" do
-      # we rely on the channel to sync fibers:
-      chan = Channel(Int32).new
-
       f = future do
-        chan.receive
         raise IndexError.new("test error")
       end
       f.running?.should be_true
-
-      chan.send(0)
-      Fiber.yield
-      f.completed?.should be_true
 
       expect_raises(IndexError) { f.get }
       f.completed?.should be_true
