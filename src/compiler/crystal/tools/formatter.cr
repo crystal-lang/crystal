@@ -2059,9 +2059,18 @@ module Crystal
 
         increment_lines(macro_node_line + value.lines.size + 1 - @line)
 
+        line = @line
+
         # We have to potentially skip multiple macro literal tokens
         while @token.type == :MACRO_LITERAL
           next_macro_token
+        end
+
+        # Skipping the macro literal tokens might have altered `@line`:
+        # restore it to what it was before the macro tokens (we are
+        # already accounting for the lines in a different way).
+        if @line != line
+          increment_lines(line - @line)
         end
       else
         inside_macro { no_indent node }
@@ -2125,9 +2134,9 @@ module Crystal
       formatter.inside_lib = @inside_lib
       formatter.inside_enum = @inside_enum
       formatter.inside_struct_or_union = @inside_struct_or_union
-      formatter.skip_space_or_newline
       formatter.indent = @indent + 2
-      formatter.write_indent
+      wrote_comment = formatter.skip_space_or_newline
+      formatter.write_indent unless wrote_comment
       nodes.accept formatter
       {formatter, formatter.finish}
     end
