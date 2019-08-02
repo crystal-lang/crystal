@@ -261,8 +261,10 @@ module GC
 
     {% if flag?(:preview_mt) %}
       Thread.unsafe_each do |thread|
-        fiber = thread.scheduler.@current
-        GC.set_stackbottom(thread, fiber.@stack_bottom)
+        if scheduler = thread.@scheduler
+          fiber = scheduler.@current
+          GC.set_stackbottom(thread, fiber.@stack_bottom)
+        end
       end
     {% end %}
 
