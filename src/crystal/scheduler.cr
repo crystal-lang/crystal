@@ -33,7 +33,9 @@ class Crystal::Scheduler
   end
 
   def self.enqueue(fibers : Enumerable(Fiber)) : Nil
-    Thread.current.scheduler.enqueue(fibers)
+    fibers.each do |fiber|
+      enqueue(fiber)
+    end
   end
 
   def self.reschedule : Nil

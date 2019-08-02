@@ -167,15 +167,15 @@ module IO::Evented
     @write_event.each &.free
     @write_event.clear
 
-    if readers = @readers.get?
+    @readers.each do |readers|
       Crystal::Scheduler.enqueue readers
-      readers.clear
     end
+    @readers.clear
 
-    if writers = @writers.get?
+    @writers.each do |writers|
       Crystal::Scheduler.enqueue writers
-      writers.clear
     end
+    @writers.clear
   end
 
   private def resume_pending_readers
