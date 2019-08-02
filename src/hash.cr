@@ -525,7 +525,7 @@ class Hash(K, V)
     # have many deleted elements.
     if @deleted_count < @size
       # First grow `@entries`
-      @entries = @entries.realloc(indices_size)
+      realloc_entries(indices_size)
       double_indices_size
 
       # If we didn't have `@indices` and we still don't have 16 entries
@@ -828,6 +828,10 @@ class Hash(K, V)
   # Allocates `size` number of entries for `@entries`.
   private def malloc_entries(size)
     Pointer(Entry(K, V)).malloc(size)
+  end
+
+  private def realloc_entries(size)
+    @entries = @entries.realloc(size)
   end
 
   # Marks all existing entries as deleted
