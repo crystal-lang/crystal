@@ -2155,6 +2155,8 @@ module Crystal
         end
       end
 
+      @vars.last.add(node.name)
+
       at_skip = at_skip?
 
       if !at_skip && node.external_name != node.name
