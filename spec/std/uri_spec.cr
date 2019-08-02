@@ -48,6 +48,21 @@ private def it_decodes_www_form(string, expected_result, file = __FILE__, line =
   end
 end
 
+# This helper method is used in the specs for #relativize and also ensures the
+# reversibility of #relativize and #resolve.
+private def assert_relativize(base, uri, relative)
+  base = URI.parse(base)
+  relative = URI.parse(relative)
+  base.relativize(uri).should eq relative
+
+  # Reversibility is only guaranteed on normalized URIs
+  uri = URI.parse(uri).normalize
+  base.normalize!
+  relative.normalize!
+  base.relativize(base.resolve(relative)).should eq relative
+  base.resolve(base.relativize(uri)).should eq uri
+end
+
 describe "URI" do
   describe ".parse" do
     # scheme
@@ -579,6 +594,115 @@ describe "URI" do
     it "opaque URIs" do
       URI.parse("mailto:urbi@orbi.va").resolve("bar/baz").should eq URI.parse("bar/baz")
       URI.parse("bar/baz").resolve("mailto:urbi@orbi.va").should eq URI.parse("mailto:urbi@orbi.va")
+    end
+  end
+
+  describe "#relativize" do
+    it "absolute URI references" do
+      assert_relativize("http://foo.com?a=b", "https://bar.com/", "https://bar.com/")
+      assert_relativize("http://foo.com/", "https://bar.com/?a=b", "https://bar.com/?a=b")
+      assert_relativize("http://foo.com/", "https://bar.com/?", "https://bar.com/?")
+      assert_relativize("http://foo.com/bar", "mailto:urbi@orbi.va", "mailto:urbi@orbi.va")
+    end
+
+    it "path relative references" do
+      # same depth
+      assert_relativize("http://foo.com", "http://foo.com/", "./")
+      assert_relativize("http://foo.com/bar", "http://foo.com/", "./")
+      assert_relativize("http://foo.com/bar", "http://foo.com/bar/", "bar/")
+      assert_relativize("http://foo.com/bar", "http://foo.com/baz", "baz")
+      assert_relativize("http://foo.com/bar?a=b#f", "http://foo.com/baz", "baz")
+      assert_relativize("http://foo.com/bar?a=b", "http://foo.com/baz?", "baz?")
+      assert_relativize("http://foo.com/bar?a=b", "http://foo.com/baz?c=d", "baz?c=d")
+
+      # deeper
+      assert_relativize("http://foo.com", "http://foo.com/bar", "bar")
+      assert_relativize("http://foo.com/", "http://foo.com/bar", "bar")
+      assert_relativize("http://foo.com/bar/baz", "http://foo.com/bar/quux", "quux")
+
+      # higher
+      assert_relativize("http://foo.com/bar/baz", "http://foo.com/quux", "../quux")
+      assert_relativize("http://foo.com/bar/baz/", "http://foo.com/quux", "../../quux")
+      assert_relativize("http://foo.com/bar", "http://foo.com/", "./")
+      assert_relativize("http://foo.com/bar/baz", "http://foo.com/", "../")
+      assert_relativize("http://foo.com/bar/", "http://foo.com/qux/", "../qux/")
+      assert_relativize("http://a/b/c/d;p?q", "http://a/b/", "../")
+      assert_relativize("http://a/b/c/d;p?q", "http://a/b/g", "../g")
+      assert_relativize("http://a/b/c/d;p?q", "http://a/", "../../")
+      assert_relativize("http://a/b/c/d;p?q", "http://a/g", "../../g")
+    end
+
+    it "identical" do
+      assert_relativize("http://foo.com/a", "http://foo.com/a", "")
+      assert_relativize("http://foo.com/a", "http://FOO.com/a", "")
+    end
+
+    it "ignore base path with dot-segments" do
+      # These specs don't use assert_relativize because they explicitly not reversible as thy perform on non-normalized paths
+      URI.parse("http://foo.com/dot/./dotdot/../foo/bar").relativize("http://foo.com/dot/baz").should eq URI.parse("/dot/baz")
+      URI.parse("http://foo.com/dot/./dotdot/../foo/bar").relativize("dot/baz").should eq URI.parse("dot/baz")
+    end
+
+    it "..." do
+      assert_relativize("http://foo.com/bar", "http://foo.com/.../", ".../")
+    end
+
+    it "fragment" do
+      assert_relativize("http://foo.com/bar", "http://foo.com/#frag", "./#frag")
+      assert_relativize("http://example.org/bar", "http://example.org/bar#!$&%27()*+,;=", "#!$&%27()*+,;=")
+    end
+
+    it "encoded characters" do
+      assert_relativize("http://foo.com/foo%2fbar/", "http://foo.com/baz", "../baz")
+      assert_relativize("http://foo.com/1/2%2f/3%2f4/5", "http://foo.com/1/a/b/c", "../../a/b/c")
+      assert_relativize("http://foo.com/1/2/3", "http://foo.com/1/2/b/..%2fc", "b/..%2fc")
+      assert_relativize("http://foo.com/1/2%2f/3%2f4/5", "http://foo.com/1/2%2f/3%2f4/a%2f../c", "a%2f../c")
+      assert_relativize("http://foo.com/foo%20bar/", "http://foo.com/baz", "../baz")
+      assert_relativize("http://foo.com/foo", "http://foo.com/bar%2fbaz", "bar%2fbaz")
+      assert_relativize("http://foo.com/foo%2dbar/", "http://foo.com/foo%2dbar/baz-quux", "baz-quux")
+    end
+
+    it "RFC 3986: 5.4.1. Normal Examples" do
+      # http://tools.ietf.org/html/rfc3986#section-5.4.1
+      assert_relativize("http://a/b/c/d;p?q", "g:h", "g:h")
+      assert_relativize("http://a/b/c/d;p?q", "http://a/b/c/g", "g")
+      assert_relativize("http://a/b/c/d;p?q", "http://a/b/c/g/", "g/")
+      assert_relativize("http://a/b/c/d;p?q", "http://a/b/c/d;p?y", "?y")
+      assert_relativize("http://a/b/c/d;p?q", "http://a/b/c/g?y", "g?y")
+      assert_relativize("http://a/b/c/d;p?q", "http://a/b/c/d;p?q#s", "#s")
+      assert_relativize("http://a/b/c/d;p?q", "http://a/b/c/g#s", "g#s")
+      assert_relativize("http://a/b/c/d;p?q", "http://a/b/c/g?y#s", "g?y#s")
+      assert_relativize("http://a/b/c/d;p?q", "http://a/b/c/;x", ";x")
+      assert_relativize("http://a/b/c/d;p?q", "http://a/b/c/g;x", "g;x")
+      assert_relativize("http://a/b/c/d;p?q", "http://a/b/c/g;x?y#s", "g;x?y#s")
+      assert_relativize("http://a/b/c/d;p?q", "http://a/b/c/d;p?q", "")
+      assert_relativize("http://a/b/c/d;p?q", "http://a/b/c/", "./")
+    end
+
+    it "RFC 3986: 5.4.2. Abnormal Examples" do
+      # http://tools.ietf.org/html/rfc3986#section-5.4.2
+      assert_relativize("http://a/b/c/d;p?q", "http://a/b/c/g.", "g.")
+      assert_relativize("http://a/b/c/d;p?q", "http://a/b/c/.g", ".g")
+      assert_relativize("http://a/b/c/d;p?q", "http://a/b/c/g..", "g..")
+      assert_relativize("http://a/b/c/d;p?q", "http://a/b/c/..g", "..g")
+      assert_relativize("http://a/b/c/d;p?q", "http://a/b/c/g;x=1/y", "g;x=1/y")
+      assert_relativize("http://a/b/c/d;p?q", "http://a/b/c/g?y/./x", "g?y/./x")
+      assert_relativize("http://a/b/c/d;p?q", "http://a/b/c/g?y/../x", "g?y/../x")
+      assert_relativize("http://a/b/c/d;p?q", "http://a/b/c/g#s/./x", "g#s/./x")
+      assert_relativize("http://a/b/c/d;p?q", "http://a/b/c/g#s/../x", "g#s/../x")
+      assert_relativize("https://a/b/c/d;p#s", "https://a/b/c/d;p?y", "?y")
+      assert_relativize("https://a/b/c/d;p?q#s", "https://a/b/c/d;p?y", "?y")
+    end
+
+    it "relative base" do
+      assert_relativize("a/b/c", "a/b/bar/baz", "bar/baz")
+      assert_relativize("foo/", "foo/a:b", "./a:b")
+    end
+
+    it "opaque base" do
+      assert_relativize("mailto:urbi@orbi.va", "bar/baz", "bar/baz")
+      assert_relativize("mailto:urbi@orbi.va", "mailto:urbi@orbi.va#bar", "mailto:urbi@orbi.va#bar")
+      assert_relativize("mailto:urbi@orbi.va#bar", "mailto:urbi@orbi.va", "mailto:urbi@orbi.va")
     end
   end
 end
