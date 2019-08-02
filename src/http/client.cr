@@ -762,7 +762,7 @@ class HTTP::Client
         begin
           socket = OpenSSL::SSL::Socket::Client.new(tcp_socket, context: tls, sync_close: true, hostname: @host)
         rescue exc
-          # TODO: This fixes #7843 but needs a spec
+         # don't leak the TCP socket when the SSL connection failed
           tcp_socket.close
           raise exc
         end
