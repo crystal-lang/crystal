@@ -534,9 +534,14 @@ class Hash(K, V)
         return
       end
 
-      # Otherwise, we must start using `@indices`
+      # Otherwise, we must either start using `@indices`
+      # or grow the ones we had.
       @indices_bytesize = compute_indices_bytesize(indices_size)
-      @indices = malloc_indices(indices_size)
+      if @indices.null?
+        @indices = malloc_indices(indices_size)
+      else
+        @indices = realloc_indices(indices_size)
+      end
     end
 
     do_compaction
