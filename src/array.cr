@@ -47,6 +47,38 @@ class Array(T)
   include Indexable(T)
   include Comparable(Array)
 
+  # The size of this array.
+  @size : Int32
+
+  # The capacity of `@buffer`.
+  # Note that, because `@buffer` moves on shift, the actual
+  # capacity (the allocated memory) starts at `@buffer - @offset_to_buffer`.
+  # The actualy capacity is also given by the `remaining_capacity` internal method.
+  @capacity : Int32
+
+  # Offset to the buffer that was originally allocated, and which needs to
+  # be reallocated on resize. On shift this value gets increased, together with
+  # `@buffer`. To reach the root buffer you have to do `@buffer - @offset_to_buffer`,
+  # and this is also provided by the `root_buffer` internal method.
+  @offset_to_buffer : Int32 = 0
+
+  # The buffer where elements start.
+  @buffer : Pointer(T)
+
+  # In 64 bits the Array is composed then by:
+  # - type_id            : Int32   # 4 bytes -|
+  # - size               : Int32   # 4 bytes  |- packed as 8 bytes
+  #
+  # - capacity           : Int32   # 4 bytes -|
+  # - offset_to_buffer   : Int32   # 4 bytes  |- packed as 8 bytes
+  #
+  # - buffer             : Pointer # 8 bytes  |- another 8 bytes
+  #
+  # So in total 24 bytes. Without offset_to_buffer it's the same,
+  # because of aligning to 8 bytes (at least in 64 bits), and that's
+  # why we chose to include this value, because with it we can optimize
+  # `shift` to let Array be used as a queue/deque.
+
   # Size of an Array that we consider small to do linear scans
   # or other optimizations instead of using a lookup Hash.
   private SMALL_ARRAY_SIZE = 16
@@ -57,7 +89,6 @@ class Array(T)
   # [:foo, :bar].size # => 2
   # ```
   getter size : Int32
-  @capacity : Int32
 
   # Creates a new empty Array.
   def initialize
@@ -153,6 +184,13 @@ class Array(T)
     ary.size = (yield ary.to_unsafe).to_i
     ary
   end
+
+  # Returns the number of elements in the array.
+  #
+  # ```
+  # [:foo, :bar].size # => 2
+  # ```
+  getter size : Int32
 
   # Equality. Returns `true` if each element in `self` is equal to each
   # corresponding element in *other*.
@@ -410,9 +448,32 @@ class Array(T)
       @buffer[index] = value
     else
       diff = count - 1
-      (@buffer + index + 1).move_from(@buffer + index + count, size - index - count)
-      (@buffer + @size - diff).clear(diff)
-      @buffer[index] = value
+
+      # If index is 0 we can avoid a memcopy by doing a shift.
+      # For example if we have:
+      #
+      #    a = ['a', 'b', 'c', 'd']
+      #
+      # and someone does:
+      #
+      #    a[0..2] = 'x'
+      #
+      # we can change the value at 2 to 'x' and repoint `@offset_to_buffer`:
+      #
+      #    [-, -, 'x', 'd']
+      #           ^
+      #
+      # (we also have to clear the elements before that)
+      if index == 0
+        @buffer.clear(diff)
+        shift_buffer_by(diff)
+        @buffer.value = value
+      else
+        (@buffer + index + 1).move_from(@buffer + index + count, size - index - count)
+        (@buffer + @size - diff).clear(diff)
+        @buffer[index] = value
+      end
+
       @size -= diff
     end
 
@@ -642,26 +703,24 @@ class Array(T)
   # ```
   def concat(other : Array)
     other_size = other.size
-    new_size = size + other_size
-    if new_size > @capacity
-      resize_to_capacity(Math.pw2ceil(new_size))
-    end
+
+    resize_if_cant_insert(other_size)
 
     (@buffer + @size).copy_from(other.to_unsafe, other_size)
-    @size = new_size
+    @size += other_size
 
     self
   end
 
   # ditto
   def concat(other : Enumerable)
-    left_before_resize = @capacity - @size
+    left_before_resize = remaining_capacity - @size
     len = @size
     buf = @buffer + len
     other.each do |elem|
       if left_before_resize == 0
         double_capacity
-        left_before_resize = @capacity - len
+        left_before_resize = remaining_capacity - len
         buf = @buffer + len
       end
       buf.value = elem
@@ -704,10 +763,16 @@ class Array(T)
   def delete_at(index : Int)
     index = check_index_out_of_bounds index
 
+    # Deleting the first element is the same as a shift
+    if index == 0
+      return shift_when_not_empty
+    end
+
     elem = @buffer[index]
     (@buffer + index).move_from(@buffer + index + 1, size - index - 1)
     @size -= 1
     (@buffer + @size).clear
+
     elem
   end
 
@@ -763,7 +828,7 @@ class Array(T)
   # ary2 # => [[5, 2], [3, 4], [7, 8]]
   # ```
   def dup
-    Array(T).build(@capacity) do |buffer|
+    Array(T).build(@size) do |buffer|
       buffer.copy_from(@buffer, size)
       size
     end
@@ -910,8 +975,6 @@ class Array(T)
   # a.insert(-1, "z") # => ["x", "a", "y", "b", "c", "z"]
   # ```
   def insert(index : Int, object : T)
-    check_needs_resize
-
     if index < 0
       index += size + 1
     end
@@ -920,9 +983,18 @@ class Array(T)
       raise IndexError.new
     end
 
-    (@buffer + index + 1).move_from(@buffer + index, size - index)
-    @buffer[index] = object
+    # See if we can move backwards if we have space
+    if index == 0 && @offset_to_buffer > 0
+      shift_buffer_by(-1)
+      @buffer.value = object
+    else
+      check_needs_resize
+      (@buffer + index + 1).move_from(@buffer + index, size - index)
+      @buffer[index] = object
+    end
+
     @size += 1
+
     self
   end
 
@@ -1416,6 +1488,13 @@ class Array(T)
       @size -= 1
       value = @buffer[@size]
       (@buffer + @size).clear
+
+      # If we remain empty we also take the chance to
+      # reset the buffer to it's original position.
+      if empty? && @offset_to_buffer != 0
+        reset_buffer_to_root_buffer
+      end
+
       value
     end
   end
@@ -1496,16 +1575,19 @@ class Array(T)
   # ```
   def push(*values : T)
     new_size = @size + values.size
-    resize_to_capacity(Math.pw2ceil(new_size)) if new_size > @capacity
+
+    resize_if_cant_insert(values.size)
+
     values.each_with_index do |value, i|
       @buffer[@size + i] = value
     end
-    @size = new_size
+    @size += values.size
     self
   end
 
   def replace(other : Array)
     @size = other.size
+    reset_buffer_to_root_buffer
     resize_to_capacity(Math.pw2ceil(@size)) if @size > @capacity
     @buffer.copy_from(other.to_unsafe, other.size)
     self
@@ -1604,16 +1686,38 @@ class Array(T)
     shift { raise IndexError.new }
   end
 
+  # Removes the first value of `self`, at index 0, or otherwise invokes the given block.
+  # This method returns the removed value.
+  # If the array is empty, it invokes the given block and returns its value.
+  #
+  # ```
+  # a = ["a"]
+  # a.shift { "empty!" } # => "a"
+  # a                    # => []
+  # a.shift { "empty!" } # => "empty!"
+  # a                    # => []
+  # ```
   def shift
     if @size == 0
       yield
     else
-      value = @buffer[0]
-      @size -= 1
-      @buffer.move_from(@buffer + 1, @size)
-      (@buffer + @size).clear
-      value
+      shift_when_not_empty
     end
+  end
+
+  # Internal implementation of shift when we are sure the array is not empty
+  private def shift_when_not_empty
+    value = @buffer[0]
+    @size -= 1
+    @buffer.clear(1)
+
+    if empty?
+      reset_buffer_to_root_buffer
+    else
+      shift_buffer_by(1)
+    end
+
+    value
   end
 
   # Removes the first *n* values of `self`, starting at index 0.
@@ -1639,9 +1743,14 @@ class Array(T)
     n = Math.min(n, @size)
     ary = Array(T).new(n) { |i| @buffer[i] }
 
-    @buffer.move_from(@buffer + n, @size - n)
     @size -= n
-    (@buffer + @size).clear(n)
+    @buffer.clear(n)
+
+    if empty?
+      reset_buffer_to_root_buffer
+    else
+      shift_buffer_by(n)
+    end
 
     ary
   end
@@ -1977,15 +2086,25 @@ class Array(T)
   # Prepend multiple values. The same as `unshift`, but takes an arbitrary number
   # of values to add to the array. Returns `self`.
   def unshift(*values : T)
-    new_size = @size + values.size
-    resize_to_capacity(Math.pw2ceil(new_size)) if new_size > @capacity
+    # Check if we have enough offset from the buffer to fit the values
+    if @offset_to_buffer >= values.size
+      shift_buffer_by(-values.size)
+      values.each_with_index do |value, i|
+        @buffer[i] = value
+      end
+      @size += values.size
+      return self
+    end
+
+    resize_if_cant_insert(values.size)
+
     move_value = values.size
     @buffer.move_to(@buffer + move_value, @size)
 
     values.each_with_index do |value, i|
       @buffer[i] = value
     end
-    @size = new_size
+    @size += values.size
     self
   end
 
@@ -1995,7 +2114,71 @@ class Array(T)
   end
 
   private def check_needs_resize
-    double_capacity if @size == @capacity
+    # We have to compare against the actual capacity in case `@buffer` was moved
+    if @size == remaining_capacity
+      # If the array is not empty and more than half of the elements were shifted
+      # then we avoid a resize and just move the elements to the left.
+      # This is an heuristic. We could always try to move the elements if
+      # `@offset_to_buffer` is positive but it might happen that a user does
+      # `shift` + `push` in succession and it will produce a lot of memcopies.
+      #
+      # Note: `@offset_to_buffer != 0` is not redundant because `@capacity` might be 1.
+      # and so `@capacity / 2` is 0 and `@offset_to_buffer >= @capacity / 2` would hold
+      # without it.
+      if @capacity != 0 && @offset_to_buffer != 0 && @offset_to_buffer >= @capacity / 2
+        # Given
+        #
+        #     [-, -, -, 'c', 'd', -]
+        #      |         |
+        #      |         ^-- `@buffer`
+        #      |
+        #      ^-- root_buffer
+        #
+        # and:
+        # - @size is 2
+        # - @capacity is 6
+        # - @offset_to_buffer is 3
+        # - remaining_capacity is 3
+
+        # First copy the remaining elements in the array to the front
+        #
+        #     [-, -, -, 'c', 'd', -]
+        #               ^-------^
+        #                   |
+        #                   ^-- copy this
+        #
+        #     [-, -, -, 'c', 'd', -]
+        #     ^----^
+        #       |
+        #       ^-- here
+        #
+        # We get:
+        #
+        #     ['c', 'd', '-', 'c', 'd', -]
+        root_buffer.copy_from(@buffer, @size)
+
+        # Then after that we have to clear the rest of the elements
+        #
+        #     ['c', 'd', '-', 'c', 'd', -]
+        #              ^-------------^
+        #                     |
+        #                     ^-- clear this
+        # We get:
+        #
+        #     ['c', 'd', -, -, -, -]
+        (root_buffer + @size).clear(@offset_to_buffer)
+
+        # Move the buffer pointer to where it was originally allocated,
+        # and now we don't have any offset to the root buffer
+        reset_buffer_to_root_buffer
+      else
+        double_capacity
+      end
+    end
+  end
+
+  private def remaining_capacity
+    @capacity - @offset_to_buffer
   end
 
   private def double_capacity
@@ -2005,10 +2188,39 @@ class Array(T)
   private def resize_to_capacity(capacity)
     @capacity = capacity
     if @buffer
-      @buffer = @buffer.realloc(@capacity)
+      @buffer = root_buffer.realloc(@capacity) + @offset_to_buffer
     else
       @buffer = Pointer(T).malloc(@capacity)
     end
+  end
+
+  private def resize_if_cant_insert(insert_size)
+    # Resize if we exceed the remaining capacity.
+    # `remaining_capacity - @size` is the actual number of slots we have
+    # to push new elements.
+    if insert_size > remaining_capacity - @size
+      # The new capacity that we need is what we already have occupied
+      # because of shift (`@offset_to_buffer`) plus my size plus the insert size.
+      resize_to_capacity(Math.pw2ceil(@offset_to_buffer + @size + insert_size))
+    end
+  end
+
+  # Returns a pointer to the buffer that was originally allocated/reallocated
+  # for this array.
+  private def root_buffer
+    @buffer - @offset_to_buffer
+  end
+
+  # Moves `@buffer` by n while at the same time increments `@offset_to_buffer`
+  private def shift_buffer_by(n)
+    @offset_to_buffer += n
+    @buffer += n
+  end
+
+  # Makes `@buffer` point at the original buffer that was allocated/reallocated.
+  private def reset_buffer_to_root_buffer
+    @buffer = root_buffer
+    @offset_to_buffer = 0
   end
 
   protected def to_lookup_hash
