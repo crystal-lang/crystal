@@ -2030,10 +2030,8 @@ module Crystal
       # {% if flag?(:foo) %}
       #   puts "This is an expression that we can format just fine"
       # {% end %}
-      if !inside_macro? && node.is_a?(MacroLiteral) && node.value.includes?("\n")
+      if !inside_macro? && (value = macro_literal_contents(node)) && value.includes?("\n")
         # Format the value and append 2 more spaces of indentation
-        value = node.value
-
         begin
           formatter, value = subformat(value)
         rescue ex : Crystal::SyntaxException
@@ -2061,9 +2059,50 @@ module Crystal
 
         increment_lines(macro_node_line + value.lines.size + 1 - @line)
 
-        next_macro_token
+        # We have to potentially skip multiple macro literal tokens
+        while @token.type == :MACRO_LITERAL
+          next_macro_token
+        end
       else
         inside_macro { no_indent node }
+      end
+    end
+
+    # Returns the node's String contents if it's composed entirely
+    # by MacroLiteral: either a MacroLiteral or an Expression composed
+    # only by MacroLiteral.
+    private def macro_literal_contents(node) : String?
+      return unless only_macro_literal?(node)
+
+      extract_macro_literal_contents(node)
+    end
+
+    private def only_macro_literal?(node)
+      case node
+      when MacroLiteral
+        true
+      when Expressions
+        node.expressions.all? do |exp|
+          only_macro_literal?(exp)
+        end
+      else
+        false
+      end
+    end
+
+    private def extract_macro_literal_contents(node)
+      String.build do |io|
+        extract_macro_literal_contents(node, io)
+      end
+    end
+
+    private def extract_macro_literal_contents(node, io)
+      if node.is_a?(MacroLiteral)
+        io << node.value
+      else
+        node.as(Expressions).expressions.each do |exp|
+          extract_macro_literal_contents(exp, io)
+        end
       end
     end
 

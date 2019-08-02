@@ -1480,6 +1480,19 @@ describe Crystal::Formatter do
     {% end %}
     CODE
 
+  assert_format <<-BEFORE,
+    {% if z %}
+      class   Foo
+      end
+    {% end %}
+    BEFORE
+    <<-AFTER
+    {% if z %}
+      class Foo
+      end
+    {% end %}
+    AFTER
+
   it "gives proper line number in syntax error inside macro" do
     source = <<-CODE
       a = 1
