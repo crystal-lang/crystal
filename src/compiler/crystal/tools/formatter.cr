@@ -95,6 +95,7 @@ module Crystal
     property inside_enum
     property inside_struct_or_union
     property indent
+    property subformat_nesting = 0
 
     def initialize(source)
       @lexer = Lexer.new(source)
@@ -1764,6 +1765,7 @@ module Crystal
         else
           check :"{{"
         end
+        write_macro_slashes
         write "{{"
       else
         case @token.type
@@ -1772,6 +1774,7 @@ module Crystal
         else
           check :MACRO_CONTROL_START
         end
+        write_macro_slashes
         write "{%"
       end
       macro_state = @macro_state
@@ -1844,6 +1847,8 @@ module Crystal
       else
         check :"{%"
       end
+
+      write_macro_slashes
       write "{% "
 
       next_token_skip_space_or_newline
@@ -1887,6 +1892,7 @@ module Crystal
         if @token.keyword?(:elsif)
           sub_if = node.else.as(MacroIf)
           next_token_skip_space_or_newline
+          write_macro_slashes
           write "{% elsif "
           outside_macro { indent(@column, sub_if.cond) }
           format_macro_if_epilogue sub_if, macro_state, check_end: false
@@ -1895,6 +1901,7 @@ module Crystal
           next_token_skip_space_or_newline
           check :"%}"
 
+          write_macro_slashes
           write "{% else %}"
 
           @macro_state = macro_state
@@ -1916,6 +1923,7 @@ module Crystal
         next_token_skip_space_or_newline
         check :"%}"
 
+        write_macro_slashes
         write "{% end %}"
 
         if inside_macro?
@@ -1938,6 +1946,8 @@ module Crystal
       else
         check :"{%"
       end
+
+      write_macro_slashes
       write "{% "
 
       macro_state = @macro_state
@@ -1982,6 +1992,7 @@ module Crystal
       next_token_skip_space_or_newline
       check :"%}"
 
+      write_macro_slashes
       write "{% end %}"
 
       if inside_macro?
@@ -2018,6 +2029,17 @@ module Crystal
       next_macro_token
 
       false
+    end
+
+    # If we are formatting macro contents, if there are nested macro
+    # control structures they are definitely escaped with `\`,
+    # because otherwise we wouln't be able to format the contents.
+    # So here we appent those slashes. In theory the nesting can be
+    # very deep but it's usually just one nesting.
+    private def write_macro_slashes
+      @subformat_nesting.times do
+        write "\\"
+      end
     end
 
     def format_macro_contents(node, macro_node_line)
@@ -2137,6 +2159,7 @@ module Crystal
       formatter.indent = @indent + 2
       formatter.skip_space_or_newline
       formatter.write_indent
+      formatter.subformat_nesting = @subformat_nesting + 1
       nodes.accept formatter
       {formatter, formatter.finish}
     end

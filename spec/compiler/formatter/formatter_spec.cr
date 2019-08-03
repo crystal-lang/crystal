@@ -1535,6 +1535,23 @@ describe Crystal::Formatter do
     end
     CODE
 
+  assert_format <<-CODE
+    def foo(x)
+      {% if true %}
+        \\{% if true %}
+          x = 1
+        \\{% else %}
+          x = 2
+        \\{% end %}
+        \\{% for x in y %}
+          x = 1
+        \\{% end %}
+        \\{{x}}
+        \\{% x %}
+      {% end %}
+    end
+    CODE
+
   it "gives proper line number in syntax error inside macro" do
     source = <<-CODE
       a = 1
