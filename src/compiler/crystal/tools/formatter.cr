@@ -2034,8 +2034,8 @@ module Crystal
     # If we are formatting macro contents, if there are nested macro
     # control structures they are definitely escaped with `\`,
     # because otherwise we wouln't be able to format the contents.
-    # So here we appent those slashes. In theory the nesting can be
-    # very deep but it's usually just one nesting.
+    # So here we append those slashes. In theory the nesting can be
+    # very deep but it's usually just one level.
     private def write_macro_slashes
       @subformat_nesting.times do
         write "\\"
