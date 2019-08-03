@@ -184,27 +184,35 @@ describe HTTP::Server::Response do
     response.close
     io.to_s.should eq("HTTP/1.1 200 OK\r\nContent-Length: 5\r\nSet-Cookie: Bar=Foo; path=/\r\n\r\nHello")
   end
-  describe "#responds_with_error" do
+
+  describe "#respond_with_status" do
     it "uses default values" do
       io = IO::Memory.new
       response = Response.new(io)
       response.content_type = "text/html"
-      response.respond_with_error
+      response.respond_with_status(500)
       io.to_s.should eq("HTTP/1.1 500 Internal Server Error\r\nContent-Type: text/plain\r\nContent-Length: 26\r\n\r\n500 Internal Server Error\n")
     end
 
-    it "sends custom message and code" do
+    it "sends custom code and message" do
       io = IO::Memory.new
       response = Response.new(io)
-      response.respond_with_error("Bad Request", 400)
-      io.to_s.should eq("HTTP/1.1 400 Bad Request\r\nContent-Type: text/plain\r\nContent-Length: 16\r\n\r\n400 Bad Request\n")
+      response.respond_with_status(400, "Request Error")
+      io.to_s.should eq("HTTP/1.1 400 Request Error\r\nContent-Type: text/plain\r\nContent-Length: 18\r\n\r\n400 Request Error\n")
     end
 
     it "sends HTTP::Status" do
       io = IO::Memory.new
       response = Response.new(io)
-      response.respond_with_error(HTTP::Status::URI_TOO_LONG)
+      response.respond_with_status(HTTP::Status::URI_TOO_LONG)
       io.to_s.should eq("HTTP/1.1 414 URI Too Long\r\nContent-Type: text/plain\r\nContent-Length: 17\r\n\r\n414 URI Too Long\n")
+    end
+
+    it "sends HTTP::Status and custom message" do
+      io = IO::Memory.new
+      response = Response.new(io)
+      response.respond_with_status(HTTP::Status::URI_TOO_LONG, "Request Error")
+      io.to_s.should eq("HTTP/1.1 414 Request Error\r\nContent-Type: text/plain\r\nContent-Length: 18\r\n\r\n414 Request Error\n")
     end
   end
 end
