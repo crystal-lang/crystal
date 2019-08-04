@@ -80,13 +80,19 @@ describe "Code gen: sizeof" do
   end
 
   it "gets sizeof Void" do
-    # Same as the size of a byte
+    # Same as the size of a byte, because doing
+    # `Pointer(Void).malloc` must work like `Pointer(UInt8).malloc`
     run("sizeof(Void)").to_i.should eq(1)
   end
 
   it "gets sizeof NoReturn" do
-    # Same as the size of a byte
-    run("sizeof(NoReturn)").to_i.should eq(1)
+    # NoReturn can't hold anything
+    run("sizeof(NoReturn)").to_i.should eq(0)
+  end
+
+  it "gets sizeof Nil (#7644)" do
+    # Nil can't hold anything
+    run("sizeof(Nil)").to_i.should eq(0)
   end
 
   it "can use sizeof in type argument (1)" do
