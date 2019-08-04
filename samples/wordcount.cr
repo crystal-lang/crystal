@@ -35,7 +35,7 @@ end
 output_filename = nil
 ignore_case = false
 
-OptionParser.parse! do |opts|
+OptionParser.parse do |opts|
   opts.banner = "Usage: wordcount [OPTIONS] [FILES]"
   opts.on("-o NAME", "set output filename") do |filename|
     output_filename = filename

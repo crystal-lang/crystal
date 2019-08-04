@@ -66,7 +66,7 @@ require "./spec/dsl"
 module Spec
 end
 
-OptionParser.parse! do |opts|
+OptionParser.parse do |opts|
   opts.banner = "crystal spec runner"
   opts.on("-e ", "--example STRING", "run examples whose full nested names include STRING") do |pattern|
     Spec.pattern = pattern
