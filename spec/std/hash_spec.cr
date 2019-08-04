@@ -817,6 +817,18 @@ describe "Hash" do
     h.to_a.should eq([{1, "hello"}, {2, "bye"}])
   end
 
+  it "does to_a after shift" do
+    h = {1 => 'a', 2 => 'b', 3 => 'c'}
+    h.shift
+    h.to_a.should eq([{2, 'b'}, {3, 'c'}])
+  end
+
+  it "does to_a after delete" do
+    h = {1 => 'a', 2 => 'b', 3 => 'c'}
+    h.delete(2)
+    h.to_a.should eq([{1, 'a'}, {3, 'c'}])
+  end
+
   it "clears" do
     h = {1 => 2, 3 => 4}
     h.clear
