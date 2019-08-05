@@ -70,7 +70,6 @@ end
       String.new(buf)
     end
   end
-
 {% elsif flag?(:freebsd) %}
   require "c/sysctl"
 
@@ -85,15 +84,14 @@ end
       end
     end
   end
-
 {% elsif flag?(:linux) %}
   class Process
     private def self.executable_path_impl
       "/proc/self/exe"
     end
   end
-
-{% else %} # openbsd, ...
+{% else %}
+  # openbsd, ...
   class Process
     private def self.executable_path_impl
       find_executable(PROGRAM_NAME, INITIAL_PATH, INITIAL_PWD)

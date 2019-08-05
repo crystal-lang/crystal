@@ -14,7 +14,8 @@ class LLVM::Module
     def name : String
       @name
     end
-  {% else %} # LLVM >= 3.9
+  {% else %}
+    # LLVM >= 3.9
     def initialize(@unwrap : LibLLVM::ModuleRef, @context : Context)
       @owned = false
     end
@@ -36,7 +37,8 @@ class LLVM::Module
   def data_layout=(data : TargetData)
     {% if LibLLVM::IS_38 %}
       LibLLVM.set_data_layout(self, data.to_data_layout_string)
-    {% else %} # LLVM >= 3.9
+    {% else %}
+      # LLVM >= 3.9
       LibLLVM.set_module_data_layout(self, data)
     {% end %}
   end

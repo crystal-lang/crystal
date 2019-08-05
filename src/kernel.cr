@@ -1,6 +1,6 @@
 {% if flag?(:win32) %}
   # The standard input file descriptor. Contains data piped to the program.
-  STDIN  = IO::FileDescriptor.new(0)
+  STDIN = IO::FileDescriptor.new(0)
 
   # The standard output file descriptor.
   #
@@ -15,7 +15,7 @@
   require "c/unistd"
 
   # The standard input file descriptor. Contains data piped to the program.
-  STDIN  = IO::FileDescriptor.from_stdio(0)
+  STDIN = IO::FileDescriptor.from_stdio(0)
 
   # The standard output file descriptor.
   #

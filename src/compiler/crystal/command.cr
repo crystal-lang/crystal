@@ -305,10 +305,10 @@ class Crystal::Command
           compiler.debug = Crystal::Debug::None
         end
         {% unless LibLLVM::IS_38 || LibLLVM::IS_39 %}
-        opts.on("--lto=FLAG", "Use ThinLTO --lto=thin") do |flag|
-          error "--lto=thin is the only lto supported option" unless flag == "thin"
-          compiler.thin_lto = true
-        end
+          opts.on("--lto=FLAG", "Use ThinLTO --lto=thin") do |flag|
+            error "--lto=thin is the only lto supported option" unless flag == "thin"
+            compiler.thin_lto = true
+          end
         {% end %}
       end
 
