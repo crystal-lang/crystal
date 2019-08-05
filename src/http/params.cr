@@ -313,7 +313,6 @@ module HTTP
     # params = HTTP::Params.parse("item=keychain&item=keynote&email=john@example.org")
     # params.to_s # => "item=keychain&item=keynote&email=john%40example.org"
     # ```
-    # TODO: `to_s` should escape @ to %40 ?
     def to_s(io : IO) : Nil
       builder = Builder.new(io)
       each do |name, value|

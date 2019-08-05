@@ -290,6 +290,20 @@ describe "Hash" do
       a.delete(2).should be_nil
     end
 
+    it "deletes many in the beginning and then will need a resize" do
+      h = {} of Int32 => Int32
+      8.times do |i|
+        h[i] = i
+      end
+      5.times do |i|
+        h.delete(i)
+      end
+      (9..12).each do |i|
+        h[i] = i
+      end
+      h.should eq({5 => 5, 6 => 6, 7 => 7, 9 => 9, 10 => 10, 11 => 11, 12 => 12})
+    end
+
     describe "with block" do
       it "returns the value if a key is found" do
         a = {1 => 2}
@@ -341,11 +355,95 @@ describe "Hash" do
     h.to_h.should be(h)
   end
 
-  it "clones" do
-    h1 = {1 => 2, 3 => 4}
-    h2 = h1.clone
-    h1.should_not be(h2)
-    h1.should eq(h2)
+  describe "clone" do
+    it "clones with size = 1" do
+      h1 = {1 => 2}
+      h2 = h1.clone
+      h1.should_not be(h2)
+      h1.should eq(h2)
+    end
+
+    it "clones empty hash" do
+      h1 = {} of Int32 => Int32
+      h2 = h1.clone
+      h2.empty?.should be_true
+    end
+
+    it "clones small hash" do
+      h1 = {} of Int32 => Array(Int32)
+      4.times do |i|
+        h1[i] = [i]
+      end
+      h2 = h1.clone
+      h1.should_not be(h2)
+      h1.should eq(h2)
+
+      4.times do |i|
+        h1[i].should_not be(h2[i])
+      end
+
+      h1.delete(0)
+      h2[0].should eq([0])
+    end
+
+    it "clones big hash" do
+      h1 = {} of Int32 => Array(Int32)
+      1_000.times do |i|
+        h1[i] = [i]
+      end
+      h2 = h1.clone
+      h1.should_not be(h2)
+      h1.should eq(h2)
+
+      1_000.times do |i|
+        h1[i].should_not be(h2[i])
+      end
+
+      h1.delete(0)
+      h2[0].should eq([0])
+    end
+  end
+
+  describe "dup" do
+    it "dups empty hash" do
+      h1 = {} of Int32 => Int32
+      h2 = h1.dup
+      h2.empty?.should be_true
+    end
+
+    it "dups small hash" do
+      h1 = {} of Int32 => Array(Int32)
+      4.times do |i|
+        h1[i] = [i]
+      end
+      h2 = h1.dup
+      h1.should_not be(h2)
+      h1.should eq(h2)
+
+      4.times do |i|
+        h1[i].should be(h2[i])
+      end
+
+      h1.delete(0)
+      h2[0].should eq([0])
+    end
+
+    it "dups big hash" do
+      h1 = {} of Int32 => Array(Int32)
+      1_000.times do |i|
+        h1[i] = [i]
+      end
+      h2 = h1.dup
+      h1.should_not be(h2)
+      h1.should eq(h2)
+
+      1_000.times do |i|
+        h1[i].should be(h2[i])
+      end
+
+      h1.delete(0)
+      h2[0].should eq([0])
+    end
   end
 
   it "initializes with block" do
@@ -557,32 +655,122 @@ describe "Hash" do
     h.first.should eq({1, 2})
   end
 
-  it "gets first key" do
-    h = {1 => 2, 3 => 4}
-    h.first_key.should eq(1)
+  describe "first_key" do
+    it "gets first key" do
+      h = {1 => 2, 3 => 4}
+      h.first_key.should eq(1)
+    end
+
+    it "raises on first key (nilable key)" do
+      h = {} of Int32? => Int32
+      expect_raises(Exception, "Can't get first key of empty Hash") do
+        h.first_key
+      end
+    end
+
+    it "doesn't raise on first key (nilable key)" do
+      h = {nil => 1} of Int32? => Int32
+      h.first_key.should be_nil
+    end
   end
 
-  it "gets first value" do
-    h = {1 => 2, 3 => 4}
-    h.first_value.should eq(2)
+  describe "first_value" do
+    it "gets first value" do
+      h = {1 => 2, 3 => 4}
+      h.first_value.should eq(2)
+    end
+
+    it "raises on first value (nilable value)" do
+      h = {} of Int32 => Int32?
+      expect_raises(Exception, "Can't get first value of empty Hash") do
+        h.first_value
+      end
+    end
+
+    it "doesn't raise on first value (nilable value)" do
+      h = {1 => nil} of Int32 => Int32?
+      h.first_value.should be_nil
+    end
   end
 
-  it "gets last key" do
-    h = {1 => 2, 3 => 4}
-    h.last_key.should eq(3)
+  describe "last_key" do
+    it "gets last key" do
+      h = {1 => 2, 3 => 4}
+      h.last_key.should eq(3)
+    end
+
+    it "raises on last key (nilable key)" do
+      h = {} of Int32? => Int32
+      expect_raises(Exception, "Can't get last key of empty Hash") do
+        h.last_key
+      end
+    end
+
+    it "doesn't raise on last key (nilable key)" do
+      h = {nil => 1} of Int32? => Int32
+      h.last_key.should be_nil
+    end
   end
 
-  it "gets last value" do
-    h = {1 => 2, 3 => 4}
-    h.last_value.should eq(4)
+  describe "last_value" do
+    it "gets last value" do
+      h = {1 => 2, 3 => 4}
+      h.last_value.should eq(4)
+    end
+
+    it "raises on last value (nilable value)" do
+      h = {} of Int32 => Int32?
+      expect_raises(Exception, "Can't get last value of empty Hash") do
+        h.last_value
+      end
+    end
+
+    it "doesn't raise on last value (nilable value)" do
+      h = {1 => nil} of Int32 => Int32?
+      h.last_value.should be_nil
+    end
   end
 
   it "shifts" do
     h = {1 => 2, 3 => 4}
+
     h.shift.should eq({1, 2})
     h.should eq({3 => 4})
+    h.first_key.should eq(3)
+    h.first_value.should eq(4)
+    h[1]?.should be_nil
+    h[3].should eq(4)
+
+    h.each.to_a.should eq([{3, 4}])
+    h.each_key.to_a.should eq([3])
+    h.each_value.to_a.should eq([4])
+
     h.shift.should eq({3, 4})
     h.empty?.should be_true
+
+    expect_raises(IndexError) do
+      h.shift
+    end
+
+    20.times do |i|
+      h[i] = i
+    end
+    h.size.should eq(20)
+
+    20.times do |i|
+      h.shift.should eq({i, i})
+    end
+    h.empty?.should be_true
+  end
+
+  it "shifts: delete elements in the middle position and then in the first position" do
+    h = {1 => 'a', 2 => 'b', 3 => 'c', 4 => 'd'}
+    h.delete(2)
+    h.delete(3)
+    h.delete(1)
+    h.size.should eq(1)
+    h.should eq({4 => 'd'})
+    h.first.should eq({4, 'd'})
   end
 
   it "shifts?" do
@@ -629,11 +817,35 @@ describe "Hash" do
     h.to_a.should eq([{1, "hello"}, {2, "bye"}])
   end
 
+  it "does to_a after shift" do
+    h = {1 => 'a', 2 => 'b', 3 => 'c'}
+    h.shift
+    h.to_a.should eq([{2, 'b'}, {3, 'c'}])
+  end
+
+  it "does to_a after delete" do
+    h = {1 => 'a', 2 => 'b', 3 => 'c'}
+    h.delete(2)
+    h.to_a.should eq([{1, 'a'}, {3, 'c'}])
+  end
+
   it "clears" do
     h = {1 => 2, 3 => 4}
     h.clear
     h.empty?.should be_true
     h.to_a.size.should eq(0)
+  end
+
+  it "clears after shift" do
+    h = {1 => 2, 3 => 4}
+    h.shift
+    h.clear
+    h.empty?.should be_true
+    h.to_a.size.should eq(0)
+    h[5] = 6
+    h.empty?.should be_false
+    h[5].should eq(6)
+    h.should eq({5 => 6})
   end
 
   it "computes hash" do
@@ -892,18 +1104,65 @@ describe "Hash" do
 
   it "creates with initial capacity" do
     hash = Hash(Int32, Int32).new(initial_capacity: 1234)
-    hash.@buckets_size.should eq(1234)
+    hash.@indices_size_pow2.should eq(11)
   end
 
   it "creates with initial capacity and default value" do
     hash = Hash(Int32, Int32).new(default_value: 3, initial_capacity: 1234)
     hash[1].should eq(3)
-    hash.@buckets_size.should eq(1234)
+    hash.@indices_size_pow2.should eq(11)
   end
 
   it "creates with initial capacity and block" do
     hash = Hash(Int32, Int32).new(initial_capacity: 1234) { |h, k| h[k] = 3 }
     hash[1].should eq(3)
-    hash.@buckets_size.should eq(1234)
+    hash.@indices_size_pow2.should eq(11)
+  end
+
+  it "rehashes" do
+    a = [1]
+    h = {a => 0}
+    (10..20).each do |i|
+      h[[i]] = i
+    end
+    a << 2
+    h[a]?.should be_nil
+    h.rehash
+    h[a].should eq(0)
+  end
+
+  describe "some edge cases while changing the implementation to open addressing" do
+    it "edge case 1" do
+      h = {1 => 10}
+      h[1]?.should eq(10)
+      h.size.should eq(1)
+
+      h.delete(1)
+      h[1]?.should be_nil
+      h.size.should eq(0)
+
+      h[2] = 10
+      h[2]?.should eq(10)
+      h.size.should eq(1)
+
+      h[2] = 10
+      h[2]?.should eq(10)
+      h.size.should eq(1)
+    end
+
+    it "edge case 2" do
+      hash = Hash(Int32, Int32).new(initial_capacity: 0)
+      hash.@indices_size_pow2.should eq(0)
+      hash[1] = 2
+      hash[1].should eq(2)
+    end
+
+    it "edge case 3" do
+      h = {} of Int32 => Int32
+      (1 << 17).times do |i|
+        h[i] = i
+        h[i].should eq(i)
+      end
+    end
   end
 end

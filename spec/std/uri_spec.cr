@@ -48,6 +48,21 @@ private def it_decodes_www_form(string, expected_result, file = __FILE__, line =
   end
 end
 
+# This helper method is used in the specs for #relativize and also ensures the
+# reversibility of #relativize and #resolve.
+private def assert_relativize(base, uri, relative)
+  base = URI.parse(base)
+  relative = URI.parse(relative)
+  base.relativize(uri).should eq relative
+
+  # Reversibility is only guaranteed on normalized URIs
+  uri = URI.parse(uri).normalize
+  base.normalize!
+  relative.normalize!
+  base.relativize(base.resolve(relative)).should eq relative
+  base.resolve(base.relativize(uri)).should eq uri
+end
+
 describe "URI" do
   describe ".parse" do
     # scheme
@@ -436,6 +451,258 @@ describe "URI" do
 
     ('\u{00}'..'\u{7F}').each do |char|
       URI.unreserved?(char.ord.to_u8).should eq(unreserved_chars.includes?(char))
+    end
+  end
+
+  describe "#resolve" do
+    it "absolute URI references" do
+      URI.parse("http://foo.com?a=b").resolve("https://bar.com/").should eq URI.parse("https://bar.com/")
+      URI.parse("http://foo.com/").resolve("https://bar.com/?a=b").should eq URI.parse("https://bar.com/?a=b")
+      URI.parse("http://foo.com/").resolve("https://bar.com/?").should eq URI.parse("https://bar.com/?")
+      URI.parse("http://foo.com/bar").resolve("mailto:urbi@orbi.va").should eq URI.parse("mailto:urbi@orbi.va")
+    end
+
+    it "path-absolute URI references" do
+      URI.parse("http://foo.com/bar").resolve("/baz").should eq URI.parse("http://foo.com/baz")
+      URI.parse("http://foo.com/bar?a=b#f").resolve("/baz").should eq URI.parse("http://foo.com/baz")
+      URI.parse("http://foo.com/bar?a=b").resolve("/baz?").should eq URI.parse("http://foo.com/baz?")
+      URI.parse("http://foo.com/bar?a=b").resolve("/baz?c=d").should eq URI.parse("http://foo.com/baz?c=d")
+    end
+
+    it "multiple slashes" do
+      URI.parse("http://foo.com/bar").resolve("http://foo.com//baz").should eq URI.parse("http://foo.com//baz")
+      URI.parse("http://foo.com/bar").resolve("http://foo.com///baz/quux").should eq URI.parse("http://foo.com///baz/quux")
+    end
+
+    it "scheme-relative" do
+      URI.parse("https://foo.com/bar?a=b").resolve("//bar.com/quux").should eq URI.parse("https://bar.com/quux")
+    end
+
+    it "path relative references" do
+      # same depth
+      URI.parse("http://foo.com").resolve(".").should eq URI.parse("http://foo.com/")
+      URI.parse("http://foo.com/bar").resolve(".").should eq URI.parse("http://foo.com/")
+      URI.parse("http://foo.com/bar/").resolve(".").should eq URI.parse("http://foo.com/bar/")
+
+      # deeper
+      URI.parse("http://foo.com").resolve("bar").should eq URI.parse("http://foo.com/bar")
+      URI.parse("http://foo.com/").resolve("bar").should eq URI.parse("http://foo.com/bar")
+      URI.parse("http://foo.com/bar/baz").resolve("quux").should eq URI.parse("http://foo.com/bar/quux")
+
+      # higher
+      URI.parse("http://foo.com/bar/baz").resolve("../quux").should eq URI.parse("http://foo.com/quux")
+      URI.parse("http://foo.com/bar/baz").resolve("../../../../../quux").should eq URI.parse("http://foo.com/quux")
+      URI.parse("http://foo.com/bar").resolve("..").should eq URI.parse("http://foo.com/")
+      URI.parse("http://foo.com/bar/baz").resolve("./..").should eq URI.parse("http://foo.com/")
+
+      # ".." in the middle
+      URI.parse("http://foo.com/bar/baz").resolve("quux/dotdot/../tail").should eq URI.parse("http://foo.com/bar/quux/tail")
+      URI.parse("http://foo.com/bar/baz").resolve("quux/./dotdot/../tail").should eq URI.parse("http://foo.com/bar/quux/tail")
+      URI.parse("http://foo.com/bar/baz").resolve("quux/./dotdot/.././tail").should eq URI.parse("http://foo.com/bar/quux/tail")
+      URI.parse("http://foo.com/bar/baz").resolve("quux/./dotdot/./../tail").should eq URI.parse("http://foo.com/bar/quux/tail")
+      URI.parse("http://foo.com/bar/baz").resolve("quux/./dotdot/dotdot/././../../tail").should eq URI.parse("http://foo.com/bar/quux/tail")
+      URI.parse("http://foo.com/bar/baz").resolve("quux/./dotdot/dotdot/./.././../tail").should eq URI.parse("http://foo.com/bar/quux/tail")
+      URI.parse("http://foo.com/bar/baz").resolve("quux/./dotdot/dotdot/dotdot/./../../.././././tail").should eq URI.parse("http://foo.com/bar/quux/tail")
+      URI.parse("http://foo.com/bar/baz").resolve("quux/./dotdot/../dotdot/../dot/./tail/..").should eq URI.parse("http://foo.com/bar/quux/dot/")
+    end
+
+    it "removes dot-segments" do
+      # http://tools.ietf.org/html/rfc3986#section-5.2.4
+      URI.parse("http://foo.com/dot/./dotdot/../foo/bar").resolve("../baz").should eq URI.parse("http://foo.com/dot/baz")
+    end
+
+    it "..." do
+      URI.parse("http://foo.com/bar").resolve("...").should eq URI.parse("http://foo.com/...")
+    end
+
+    it "fragment" do
+      URI.parse("http://foo.com/bar").resolve(".#frag").should eq URI.parse("http://foo.com/#frag")
+      URI.parse("http://example.org/bar").resolve("#!$&%27()*+,;=").should eq URI.parse("http://example.org/bar#!$&%27()*+,;=")
+    end
+
+    it "encoded characters" do
+      URI.parse("http://foo.com/foo%2fbar/").resolve("../baz").should eq URI.parse("http://foo.com/baz")
+      URI.parse("http://foo.com/1/2%2f/3%2f4/5").resolve("../../a/b/c").should eq URI.parse("http://foo.com/1/a/b/c")
+      URI.parse("http://foo.com/1/2/3").resolve("./a%2f../../b/..%2fc").should eq URI.parse("http://foo.com/1/2/b/..%2fc")
+      URI.parse("http://foo.com/1/2%2f/3%2f4/5").resolve("./a%2f../b/../c").should eq URI.parse("http://foo.com/1/2%2f/3%2f4/a%2f../c")
+      URI.parse("http://foo.com/foo%20bar/").resolve("../baz").should eq URI.parse("http://foo.com/baz")
+      URI.parse("http://foo.com/foo").resolve("../bar%2fbaz").should eq URI.parse("http://foo.com/bar%2fbaz")
+      URI.parse("http://foo.com/foo%2dbar/").resolve("./baz-quux").should eq URI.parse("http://foo.com/foo%2dbar/baz-quux")
+    end
+
+    it "RFC 3986: 5.4.1. Normal Examples" do
+      # http://tools.ietf.org/html/rfc3986#section-5.4.1
+      URI.parse("http://a/b/c/d;p?q").resolve("g:h").should eq URI.parse("g:h")
+      URI.parse("http://a/b/c/d;p?q").resolve("g").should eq URI.parse("http://a/b/c/g")
+      URI.parse("http://a/b/c/d;p?q").resolve("./g").should eq URI.parse("http://a/b/c/g")
+      URI.parse("http://a/b/c/d;p?q").resolve("g/").should eq URI.parse("http://a/b/c/g/")
+      URI.parse("http://a/b/c/d;p?q").resolve("/g").should eq URI.parse("http://a/g")
+      URI.parse("http://a/b/c/d;p?q").resolve("//g").should eq URI.parse("http://g")
+      URI.parse("http://a/b/c/d;p?q").resolve("?y").should eq URI.parse("http://a/b/c/d;p?y")
+      URI.parse("http://a/b/c/d;p?q").resolve("g?y").should eq URI.parse("http://a/b/c/g?y")
+      URI.parse("http://a/b/c/d;p?q").resolve("#s").should eq URI.parse("http://a/b/c/d;p?q#s")
+      URI.parse("http://a/b/c/d;p?q").resolve("g#s").should eq URI.parse("http://a/b/c/g#s")
+      URI.parse("http://a/b/c/d;p?q").resolve("g?y#s").should eq URI.parse("http://a/b/c/g?y#s")
+      URI.parse("http://a/b/c/d;p?q").resolve(";x").should eq URI.parse("http://a/b/c/;x")
+      URI.parse("http://a/b/c/d;p?q").resolve("g;x").should eq URI.parse("http://a/b/c/g;x")
+      URI.parse("http://a/b/c/d;p?q").resolve("g;x?y#s").should eq URI.parse("http://a/b/c/g;x?y#s")
+      URI.parse("http://a/b/c/d;p?q").resolve("").should eq URI.parse("http://a/b/c/d;p?q")
+      URI.parse("http://a/b/c/d;p?q").resolve(".").should eq URI.parse("http://a/b/c/")
+      URI.parse("http://a/b/c/d;p?q").resolve("./").should eq URI.parse("http://a/b/c/")
+      URI.parse("http://a/b/c/d;p?q").resolve("..").should eq URI.parse("http://a/b/")
+      URI.parse("http://a/b/c/d;p?q").resolve("../").should eq URI.parse("http://a/b/")
+      URI.parse("http://a/b/c/d;p?q").resolve("../g").should eq URI.parse("http://a/b/g")
+      URI.parse("http://a/b/c/d;p?q").resolve("../..").should eq URI.parse("http://a/")
+      URI.parse("http://a/b/c/d;p?q").resolve("../../").should eq URI.parse("http://a/")
+      URI.parse("http://a/b/c/d;p?q").resolve("../../g").should eq URI.parse("http://a/g")
+    end
+
+    it "RFC 3986: 5.4.2. Abnormal Examples" do
+      # http://tools.ietf.org/html/rfc3986#section-5.4.2
+      URI.parse("http://a/b/c/d;p?q").resolve("../../../g").should eq URI.parse("http://a/g")
+      URI.parse("http://a/b/c/d;p?q").resolve("../../../../g").should eq URI.parse("http://a/g")
+      URI.parse("http://a/b/c/d;p?q").resolve("/./g").should eq URI.parse("http://a/g")
+      URI.parse("http://a/b/c/d;p?q").resolve("/../g").should eq URI.parse("http://a/g")
+      URI.parse("http://a/b/c/d;p?q").resolve("g.").should eq URI.parse("http://a/b/c/g.")
+      URI.parse("http://a/b/c/d;p?q").resolve(".g").should eq URI.parse("http://a/b/c/.g")
+      URI.parse("http://a/b/c/d;p?q").resolve("g..").should eq URI.parse("http://a/b/c/g..")
+      URI.parse("http://a/b/c/d;p?q").resolve("..g").should eq URI.parse("http://a/b/c/..g")
+      URI.parse("http://a/b/c/d;p?q").resolve("./../g").should eq URI.parse("http://a/b/g")
+      URI.parse("http://a/b/c/d;p?q").resolve("./g/.").should eq URI.parse("http://a/b/c/g/")
+      URI.parse("http://a/b/c/d;p?q").resolve("g/./h").should eq URI.parse("http://a/b/c/g/h")
+      URI.parse("http://a/b/c/d;p?q").resolve("g/../h").should eq URI.parse("http://a/b/c/h")
+      URI.parse("http://a/b/c/d;p?q").resolve("g;x=1/./y").should eq URI.parse("http://a/b/c/g;x=1/y")
+      URI.parse("http://a/b/c/d;p?q").resolve("g;x=1/../y").should eq URI.parse("http://a/b/c/y")
+      URI.parse("http://a/b/c/d;p?q").resolve("g?y/./x").should eq URI.parse("http://a/b/c/g?y/./x")
+      URI.parse("http://a/b/c/d;p?q").resolve("g?y/../x").should eq URI.parse("http://a/b/c/g?y/../x")
+      URI.parse("http://a/b/c/d;p?q").resolve("g#s/./x").should eq URI.parse("http://a/b/c/g#s/./x")
+      URI.parse("http://a/b/c/d;p?q").resolve("g#s/../x").should eq URI.parse("http://a/b/c/g#s/../x")
+    end
+
+    it "Extras" do
+      URI.parse("https://a/b/c/d;p?q").resolve("//g?q").should eq URI.parse("https://g?q")
+      URI.parse("https://a/b/c/d;p?q").resolve("//g#s").should eq URI.parse("https://g#s")
+      URI.parse("https://a/b/c/d;p?q").resolve("//g/d/e/f?y#s").should eq URI.parse("https://g/d/e/f?y#s")
+      URI.parse("https://a/b/c/d;p#s").resolve("?y").should eq URI.parse("https://a/b/c/d;p?y")
+      URI.parse("https://a/b/c/d;p?q#s").resolve("?y").should eq URI.parse("https://a/b/c/d;p?y")
+    end
+
+    it "relative base" do
+      URI.parse("a/b/c").resolve("bar/baz").should eq URI.parse("a/b/bar/baz")
+    end
+
+    it "opaque URIs" do
+      URI.parse("mailto:urbi@orbi.va").resolve("bar/baz").should eq URI.parse("bar/baz")
+      URI.parse("bar/baz").resolve("mailto:urbi@orbi.va").should eq URI.parse("mailto:urbi@orbi.va")
+    end
+  end
+
+  describe "#relativize" do
+    it "absolute URI references" do
+      assert_relativize("http://foo.com?a=b", "https://bar.com/", "https://bar.com/")
+      assert_relativize("http://foo.com/", "https://bar.com/?a=b", "https://bar.com/?a=b")
+      assert_relativize("http://foo.com/", "https://bar.com/?", "https://bar.com/?")
+      assert_relativize("http://foo.com/bar", "mailto:urbi@orbi.va", "mailto:urbi@orbi.va")
+    end
+
+    it "path relative references" do
+      # same depth
+      assert_relativize("http://foo.com", "http://foo.com/", "./")
+      assert_relativize("http://foo.com/bar", "http://foo.com/", "./")
+      assert_relativize("http://foo.com/bar", "http://foo.com/bar/", "bar/")
+      assert_relativize("http://foo.com/bar", "http://foo.com/baz", "baz")
+      assert_relativize("http://foo.com/bar?a=b#f", "http://foo.com/baz", "baz")
+      assert_relativize("http://foo.com/bar?a=b", "http://foo.com/baz?", "baz?")
+      assert_relativize("http://foo.com/bar?a=b", "http://foo.com/baz?c=d", "baz?c=d")
+
+      # deeper
+      assert_relativize("http://foo.com", "http://foo.com/bar", "bar")
+      assert_relativize("http://foo.com/", "http://foo.com/bar", "bar")
+      assert_relativize("http://foo.com/bar/baz", "http://foo.com/bar/quux", "quux")
+
+      # higher
+      assert_relativize("http://foo.com/bar/baz", "http://foo.com/quux", "../quux")
+      assert_relativize("http://foo.com/bar/baz/", "http://foo.com/quux", "../../quux")
+      assert_relativize("http://foo.com/bar", "http://foo.com/", "./")
+      assert_relativize("http://foo.com/bar/baz", "http://foo.com/", "../")
+      assert_relativize("http://foo.com/bar/", "http://foo.com/qux/", "../qux/")
+      assert_relativize("http://a/b/c/d;p?q", "http://a/b/", "../")
+      assert_relativize("http://a/b/c/d;p?q", "http://a/b/g", "../g")
+      assert_relativize("http://a/b/c/d;p?q", "http://a/", "../../")
+      assert_relativize("http://a/b/c/d;p?q", "http://a/g", "../../g")
+    end
+
+    it "identical" do
+      assert_relativize("http://foo.com/a", "http://foo.com/a", "")
+      assert_relativize("http://foo.com/a", "http://FOO.com/a", "")
+    end
+
+    it "ignore base path with dot-segments" do
+      # These specs don't use assert_relativize because they explicitly not reversible as thy perform on non-normalized paths
+      URI.parse("http://foo.com/dot/./dotdot/../foo/bar").relativize("http://foo.com/dot/baz").should eq URI.parse("/dot/baz")
+      URI.parse("http://foo.com/dot/./dotdot/../foo/bar").relativize("dot/baz").should eq URI.parse("dot/baz")
+    end
+
+    it "..." do
+      assert_relativize("http://foo.com/bar", "http://foo.com/.../", ".../")
+    end
+
+    it "fragment" do
+      assert_relativize("http://foo.com/bar", "http://foo.com/#frag", "./#frag")
+      assert_relativize("http://example.org/bar", "http://example.org/bar#!$&%27()*+,;=", "#!$&%27()*+,;=")
+    end
+
+    it "encoded characters" do
+      assert_relativize("http://foo.com/foo%2fbar/", "http://foo.com/baz", "../baz")
+      assert_relativize("http://foo.com/1/2%2f/3%2f4/5", "http://foo.com/1/a/b/c", "../../a/b/c")
+      assert_relativize("http://foo.com/1/2/3", "http://foo.com/1/2/b/..%2fc", "b/..%2fc")
+      assert_relativize("http://foo.com/1/2%2f/3%2f4/5", "http://foo.com/1/2%2f/3%2f4/a%2f../c", "a%2f../c")
+      assert_relativize("http://foo.com/foo%20bar/", "http://foo.com/baz", "../baz")
+      assert_relativize("http://foo.com/foo", "http://foo.com/bar%2fbaz", "bar%2fbaz")
+      assert_relativize("http://foo.com/foo%2dbar/", "http://foo.com/foo%2dbar/baz-quux", "baz-quux")
+    end
+
+    it "RFC 3986: 5.4.1. Normal Examples" do
+      # http://tools.ietf.org/html/rfc3986#section-5.4.1
+      assert_relativize("http://a/b/c/d;p?q", "g:h", "g:h")
+      assert_relativize("http://a/b/c/d;p?q", "http://a/b/c/g", "g")
+      assert_relativize("http://a/b/c/d;p?q", "http://a/b/c/g/", "g/")
+      assert_relativize("http://a/b/c/d;p?q", "http://a/b/c/d;p?y", "?y")
+      assert_relativize("http://a/b/c/d;p?q", "http://a/b/c/g?y", "g?y")
+      assert_relativize("http://a/b/c/d;p?q", "http://a/b/c/d;p?q#s", "#s")
+      assert_relativize("http://a/b/c/d;p?q", "http://a/b/c/g#s", "g#s")
+      assert_relativize("http://a/b/c/d;p?q", "http://a/b/c/g?y#s", "g?y#s")
+      assert_relativize("http://a/b/c/d;p?q", "http://a/b/c/;x", ";x")
+      assert_relativize("http://a/b/c/d;p?q", "http://a/b/c/g;x", "g;x")
+      assert_relativize("http://a/b/c/d;p?q", "http://a/b/c/g;x?y#s", "g;x?y#s")
+      assert_relativize("http://a/b/c/d;p?q", "http://a/b/c/d;p?q", "")
+      assert_relativize("http://a/b/c/d;p?q", "http://a/b/c/", "./")
+    end
+
+    it "RFC 3986: 5.4.2. Abnormal Examples" do
+      # http://tools.ietf.org/html/rfc3986#section-5.4.2
+      assert_relativize("http://a/b/c/d;p?q", "http://a/b/c/g.", "g.")
+      assert_relativize("http://a/b/c/d;p?q", "http://a/b/c/.g", ".g")
+      assert_relativize("http://a/b/c/d;p?q", "http://a/b/c/g..", "g..")
+      assert_relativize("http://a/b/c/d;p?q", "http://a/b/c/..g", "..g")
+      assert_relativize("http://a/b/c/d;p?q", "http://a/b/c/g;x=1/y", "g;x=1/y")
+      assert_relativize("http://a/b/c/d;p?q", "http://a/b/c/g?y/./x", "g?y/./x")
+      assert_relativize("http://a/b/c/d;p?q", "http://a/b/c/g?y/../x", "g?y/../x")
+      assert_relativize("http://a/b/c/d;p?q", "http://a/b/c/g#s/./x", "g#s/./x")
+      assert_relativize("http://a/b/c/d;p?q", "http://a/b/c/g#s/../x", "g#s/../x")
+      assert_relativize("https://a/b/c/d;p#s", "https://a/b/c/d;p?y", "?y")
+      assert_relativize("https://a/b/c/d;p?q#s", "https://a/b/c/d;p?y", "?y")
+    end
+
+    it "relative base" do
+      assert_relativize("a/b/c", "a/b/bar/baz", "bar/baz")
+      assert_relativize("foo/", "foo/a:b", "./a:b")
+    end
+
+    it "opaque base" do
+      assert_relativize("mailto:urbi@orbi.va", "bar/baz", "bar/baz")
+      assert_relativize("mailto:urbi@orbi.va", "mailto:urbi@orbi.va#bar", "mailto:urbi@orbi.va#bar")
+      assert_relativize("mailto:urbi@orbi.va#bar", "mailto:urbi@orbi.va", "mailto:urbi@orbi.va")
     end
   end
 end

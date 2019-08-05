@@ -36,8 +36,14 @@ describe Number do
     it { 0.humanize.should eq "0.0" }
     it { 1.humanize.should eq "1.0" }
     it { -1.humanize.should eq "-1.0" }
+    it { 99.humanize.should eq "99.0" }
+    it { 100.humanize.should eq "100" }
+    it { 101.humanize.should eq "101" }
     it { 123.humanize.should eq "123" }
     it { 123.humanize(2).should eq "120" }
+    it { 999.humanize.should eq "999" }
+    it { 1000.humanize.should eq "1.0k" }
+    it { 1001.humanize.should eq "1.0k" }
     it { 1234.humanize.should eq "1.23k" }
     it { 12_345.humanize.should eq "12.3k" }
     it { 12_345.humanize(2).should eq "12k" }
@@ -90,7 +96,9 @@ describe Int do
 
     it { 0.humanize_bytes(format: Int::BinaryPrefixFormat::JEDEC).should eq "0B" }
     it { 1.humanize_bytes(format: Int::BinaryPrefixFormat::JEDEC).should eq "1B" }
-    it { 1000.humanize_bytes(format: Int::BinaryPrefixFormat::JEDEC).should eq "1000B" }
+    it { 999.humanize_bytes(format: Int::BinaryPrefixFormat::JEDEC).should eq "999B" }
+    it { 1000.humanize_bytes(format: Int::BinaryPrefixFormat::JEDEC).should eq "0.98KB" }
+    it { 1001.humanize_bytes(format: Int::BinaryPrefixFormat::JEDEC).should eq "0.98KB" }
     it { 1014.humanize_bytes(format: Int::BinaryPrefixFormat::JEDEC).should eq "0.99KB" }
     it { 1015.humanize_bytes(format: Int::BinaryPrefixFormat::JEDEC).should eq "1.0KB" }
     it { 1024.humanize_bytes(format: Int::BinaryPrefixFormat::JEDEC).should eq "1.0KB" }

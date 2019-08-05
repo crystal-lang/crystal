@@ -181,8 +181,7 @@ struct Number
       digits = 0
     else
       log = Math.log10(abs)
-      digits = log.ceil.to_i
-      digits += 1 if log < 0 && log == log.ceil
+      digits = log.floor.to_i + 1
     end
 
     magnitude = digits
