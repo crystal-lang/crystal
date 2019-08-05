@@ -1260,6 +1260,11 @@ describe "Array" do
       b.should eq([1])
       a.same?(b).should be_false
     end
+
+    it "uniqs large array" do
+      a = (1..32).to_a
+      (a * 4).uniq.should eq(a)
+    end
   end
 
   describe "uniq!" do

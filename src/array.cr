@@ -47,6 +47,10 @@ class Array(T)
   include Indexable(T)
   include Comparable(Array)
 
+  # Size of an Array that we consider small to do linear scans
+  # or other optimizations instead of using a lookup Hash.
+  private SMALL_ARRAY_SIZE = 16
+
   # Returns the number of elements in the array.
   #
   # ```
@@ -1806,7 +1810,22 @@ class Array(T)
   # a      # => [ "a", "a", "b", "b", "c" ]
   # ```
   def uniq
-    uniq &.itself
+    if size <= 1
+      return dup
+    end
+
+    # Heuristic: for a small array it's faster to do a linear scan
+    # than creating a Hash to find out duplicates.
+    if size <= SMALL_ARRAY_SIZE
+      ary = Array(T).new
+      each do |elem|
+        ary << elem unless ary.includes?(elem)
+      end
+      return ary
+    end
+
+    # Convert the Array into a Hash and then ask for its values
+    to_lookup_hash.values
   end
 
   # Returns a new `Array` by removing duplicate values in `self`, using the block's
