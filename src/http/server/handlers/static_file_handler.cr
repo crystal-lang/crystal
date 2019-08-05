@@ -42,7 +42,7 @@ class HTTP::StaticFileHandler
     # File path cannot contains '\0' (NUL) because all filesystem I know
     # don't accept '\0' character as file name.
     if request_path.includes? '\0'
-      context.response.status = :bad_request
+      context.response.respond_with_status(:bad_request)
       return
     end
 
