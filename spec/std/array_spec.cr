@@ -90,9 +90,19 @@ describe "Array" do
     end
   end
 
-  it "does |" do
-    ([1, 2, 3] | [5, 3, 2, 4]).should eq([1, 2, 3, 5, 4])
-    ([1, 1, 2, 3, 3] | [4, 5, 5, 6]).should eq([1, 2, 3, 4, 5, 6])
+  describe "|" do
+    it "small arrays" do
+      ([1, 2, 3, 2, 3] | ([] of Int32)).should eq([1, 2, 3])
+      (([] of Int32) | [1, 2, 3, 2, 3]).should eq([1, 2, 3])
+      ([1, 2, 3] | [5, 3, 2, 4]).should eq([1, 2, 3, 5, 4])
+      ([1, 1, 2, 3, 3] | [4, 5, 5, 6]).should eq([1, 2, 3, 4, 5, 6])
+    end
+
+    it "large arrays" do
+      a = [1, 2, 3] * 10
+      b = [4, 5, 6] * 10
+      (a | b).should eq([1, 2, 3, 4, 5, 6])
+    end
   end
 
   it "does +" do

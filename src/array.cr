@@ -244,6 +244,19 @@ class Array(T)
   #
   # See also: `#uniq`.
   def |(other : Array(U)) forall U
+    # Heurisitic: if the combined size is small we just do a linear scan
+    # instead of using a Hash for lookup.
+    if size + other.size <= SMALL_ARRAY_SIZE
+      ary = Array(T | U).new
+      each do |elem|
+        ary << elem unless ary.includes?(elem)
+      end
+      other.each do |elem|
+        ary << elem unless ary.includes?(elem)
+      end
+      return ary
+    end
+
     Array(T | U).build(size + other.size) do |buffer|
       hash = Hash(T, Bool).new
       i = 0
