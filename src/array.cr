@@ -208,6 +208,16 @@ class Array(T)
   def &(other : Array(U)) forall U
     return Array(T).new if self.empty? || other.empty?
 
+    # Heuristic: for small arrays we do a linear scan, which is usually
+    # faster than creating an intermediate Hash.
+    if self.size + other.size <= SMALL_ARRAY_SIZE * 2
+      ary = Array(T).new
+      each do |elem|
+        ary << elem if !ary.includes?(elem) && other.includes?(elem)
+      end
+      return ary
+    end
+
     hash = other.to_lookup_hash
     hash_size = hash.size
     Array(T).build(Math.min(size, other.size)) do |buffer|

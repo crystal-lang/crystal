@@ -74,12 +74,20 @@ describe "Array" do
     end
   end
 
-  it "does &" do
-    ([1, 2, 3] & [] of Int32).should eq([] of Int32)
-    ([] of Int32 & [1, 2, 3]).should eq([] of Int32)
-    ([1, 2, 3] & [3, 2, 4]).should eq([2, 3])
-    ([1, 2, 3, 1, 2, 3] & [3, 2, 4, 3, 2, 4]).should eq([2, 3])
-    ([1, 2, 3, 1, 2, 3, nil, nil] & [3, 2, 4, 3, 2, 4, nil]).should eq([2, 3, nil])
+  describe "&" do
+    it "small arrays" do
+      ([1, 2, 3] & [] of Int32).should eq([] of Int32)
+      ([] of Int32 & [1, 2, 3]).should eq([] of Int32)
+      ([1, 2, 3] & [3, 2, 4]).should eq([2, 3])
+      ([1, 2, 3, 1, 2, 3] & [3, 2, 4, 3, 2, 4]).should eq([2, 3])
+      ([1, 2, 3, 1, 2, 3, nil, nil] & [3, 2, 4, 3, 2, 4, nil]).should eq([2, 3, nil])
+    end
+
+    it "big arrays" do
+      a1 = (1..64).to_a
+      a2 = (33..96).to_a
+      (a1 & a2).should eq((33..64).to_a)
+    end
   end
 
   it "does |" do
