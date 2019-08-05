@@ -301,6 +301,16 @@ class Array(T)
   # [1, 2, 3] - [2, 1] # => [3]
   # ```
   def -(other : Array(U)) forall U
+    # Heurisitic: if any of the arrays is small we just do a linear scan
+    # instead of using a Hash for lookup.
+    if size <= SMALL_ARRAY_SIZE || other.size <= SMALL_ARRAY_SIZE
+      ary = Array(T).new
+      each do |elem|
+        ary << elem unless other.includes?(elem)
+      end
+      return ary
+    end
+
     ary = Array(T).new(Math.max(size - other.size, 0))
     hash = other.to_lookup_hash
     each do |obj|

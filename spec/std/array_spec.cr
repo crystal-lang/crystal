@@ -126,6 +126,10 @@ describe "Array" do
     it "does with larger array coming second" do
       ([4, 2] - [1, 2, 3]).should eq([4])
     end
+
+    it "does with even larger arrays" do
+      ((1..64).to_a - (1..32).to_a).should eq((33..64).to_a)
+    end
   end
 
   it "does *" do
