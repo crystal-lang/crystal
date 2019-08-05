@@ -1015,7 +1015,7 @@ class Array(T)
     match = nil
     while i1 < @size
       e = @buffer[i1]
-      if yield e
+      if yield e, i1
         match = e
       else
         if i1 != i2
@@ -1886,6 +1886,20 @@ class Array(T)
   # a       # => ["a", "b", "c"]
   # ```
   def uniq!
+    if size <= 1
+      return self
+    end
+
+    # Heuristic: for small arrays we do a linear scan, which is usually
+    # faster than creating an intermediate Hash.
+    if size <= SMALL_ARRAY_SIZE
+      # We simply delete elements we've seen before
+      internal_delete do |elem, index|
+        (0...index).any? { |subindex| elem == to_unsafe[subindex] }
+      end
+      return self
+    end
+
     uniq! &.itself
   end
 

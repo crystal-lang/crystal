@@ -1307,6 +1307,13 @@ describe "Array" do
       a.uniq! { true }
       a.should eq([1])
     end
+
+    it "uniqs large array" do
+      a = (1..32).to_a
+      b = a * 2
+      b.uniq!
+      b.should eq(a)
+    end
   end
 
   describe "unshift" do
