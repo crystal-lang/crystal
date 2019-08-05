@@ -366,7 +366,7 @@ struct Int
   end
 
   def divisible_by?(num)
-    self % num == 0
+    remainder(num) == 0
   end
 
   def even?
