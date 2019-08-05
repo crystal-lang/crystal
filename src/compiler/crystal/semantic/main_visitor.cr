@@ -2700,11 +2700,7 @@ module Crystal
 
       node.body.accept self
 
-      # We need the variables after the begin block to use in the else,
-      # but we don't dup them if we don't need them
-      if node.else
-        after_exception_handler_vars = @vars.dup
-      end
+      after_exception_handler_vars = @vars.dup
 
       @exception_handler_vars = nil
 
@@ -2741,7 +2737,7 @@ module Crystal
         # In the else block the types are the same as in the begin block,
         # because we assume no exception was raised.
         node.else.try do |a_else|
-          @vars = after_exception_handler_vars.not_nil!.dup
+          @vars = after_exception_handler_vars.dup
           @unreachable = false
           a_else.accept self
           all_rescue_vars << @vars unless @unreachable
@@ -2801,7 +2797,11 @@ module Crystal
         # successfully.
         @vars.each do |name, var|
           unless before_body_vars[name]?
-            var.nil_if_read = false
+            # But if the variable is already nilable after the begin
+            # block it must remain nilable
+            unless after_exception_handler_vars[name]?.try &.nil_if_read?
+              var.nil_if_read = false
+            end
           end
         end
       end
