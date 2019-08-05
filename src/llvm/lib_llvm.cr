@@ -313,7 +313,8 @@ lib LibLLVM
     fun copy_string_rep_of_target_data = LLVMCopyStringRepOfTargetData(data : TargetDataRef) : UInt8*
     fun get_target_machine_data = LLVMGetTargetMachineData(t : TargetMachineRef) : TargetDataRef
     fun set_data_layout = LLVMSetDataLayout(mod : ModuleRef, data : UInt8*)
-  {% else %} # LLVM >= 3.9
+  {% else %}
+    # LLVM >= 3.9
     fun create_target_data_layout = LLVMCreateTargetDataLayout(t : TargetMachineRef) : TargetDataRef
     fun set_module_data_layout = LLVMSetModuleDataLayout(mod : ModuleRef, data : TargetDataRef)
   {% end %}
@@ -324,11 +325,12 @@ lib LibLLVM
     fun add_function_attr = LLVMAddFunctionAttr(fn : ValueRef, pa : LLVM::Attribute)
     fun get_function_attr = LLVMGetFunctionAttr(fn : ValueRef) : LLVM::Attribute
     fun get_attribute = LLVMGetAttribute(arg : ValueRef) : LLVM::Attribute
-  {% else %} # LLVM >= 3.9
+  {% else %}
+    # LLVM >= 3.9
     type AttributeRef = Void*
     alias AttributeIndex = UInt
 
-    fun get_last_enum_attribute_kind = LLVMGetLastEnumAttributeKind() : UInt
+    fun get_last_enum_attribute_kind = LLVMGetLastEnumAttributeKind : UInt
     fun get_enum_attribute_kind_for_name = LLVMGetEnumAttributeKindForName(name : Char*, s_len : LibC::SizeT) : UInt
     fun create_enum_attribute = LLVMCreateEnumAttribute(c : ContextRef, kind_id : UInt, val : UInt64) : AttributeRef
     fun add_attribute_at_index = LLVMAddAttributeAtIndex(f : ValueRef, idx : AttributeIndex, a : AttributeRef)

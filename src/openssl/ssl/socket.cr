@@ -130,12 +130,12 @@ abstract class OpenSSL::SSL::Socket < IO
   end
 
   {% if compare_versions(LibSSL::OPENSSL_VERSION, "1.0.2") >= 0 %}
-  # Returns the negotiated ALPN protocol (eg: `"h2"`) of `nil` if no protocol was
-  # negotiated.
-  def alpn_protocol
-    LibSSL.ssl_get0_alpn_selected(@ssl, out protocol, out len)
-    String.new(protocol, len) unless protocol.null?
-  end
+    # Returns the negotiated ALPN protocol (eg: `"h2"`) of `nil` if no protocol was
+    # negotiated.
+    def alpn_protocol
+      LibSSL.ssl_get0_alpn_selected(@ssl, out protocol, out len)
+      String.new(protocol, len) unless protocol.null?
+    end
   {% end %}
 
   def unbuffered_close

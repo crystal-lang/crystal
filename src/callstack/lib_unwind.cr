@@ -31,33 +31,33 @@ lib LibUnwind
   {% if flag?(:arm) %}
     @[Flags]
     enum State
-      VIRTUAL_UNWIND_FRAME  = 0
-      UNWIND_FRAME_STARTING = 1
-      UNWIND_FRAME_RESUME   = 2
-      ACTION_MASK           = 3
-      FORCE_UNWIND          = 8
+      VIRTUAL_UNWIND_FRAME  =  0
+      UNWIND_FRAME_STARTING =  1
+      UNWIND_FRAME_RESUME   =  2
+      ACTION_MASK           =  3
+      FORCE_UNWIND          =  8
       END_OF_STACK          = 16
     end
 
     enum UVRSC
-      CORE = 0
-      VFP = 1
+      CORE  = 0
+      VFP   = 1
       WMMXD = 3
       WMMXC = 4
     end
 
     enum UVRSD
       UINT32 = 0
-      VFPX = 1
+      VFPX   = 1
       UINT64 = 3
-      FLOAT = 4
+      FLOAT  = 4
       DOUBLE = 5
     end
 
     enum UVRSR
-      OK = 0,
-      NOT_IMPLEMENTED = 1,
-      FAILED = 2
+      OK              = 0
+      NOT_IMPLEMENTED = 1
+      FAILED          = 2
     end
 
     # Unwinder cache, private fields for the unwinder's use
@@ -82,20 +82,20 @@ lib LibUnwind
 
     # Personality routine cache (for personality routine's benefit):
     struct ControlBlock_PrCache
-      fnstart : UInt32     # function start address
-      ehtp : UInt32*       # pointer to EHT entry header word
-      additional : UInt32  # additional data
+      fnstart : UInt32    # function start address
+      ehtp : UInt32*      # pointer to EHT entry header word
+      additional : UInt32 # additional data
       reserved1 : UInt32
     end
 
     struct ControlBlock
-      exception_class : UInt64 #StaticArray(UInt8, 8)
+      exception_class : UInt64 # StaticArray(UInt8, 8)
       exception_cleanup : UInt32
       unwinder_cache : ControlBlock_UnwinderCache
       barrier_cache : ControlBlock_BarrierCache
       cleanup_cache : ControlBlock_CleanupCache
       pr_cache : ControlBlock_PrCache
-      #__align : LibC::LongLong # Force alignment of next item to 8-byte boundary
+      # __align : LibC::LongLong # Force alignment of next item to 8-byte boundary
 
       exception_object : UInt64
       exception_type_id : Int32
@@ -188,8 +188,8 @@ end
   @[AlwaysInline]
   fun __crystal_get_language_specific_data(ucb : LibUnwind::ControlBlock*) : UInt8*
     lsd = ucb.value.pr_cache.ehtp
-    lsd += 1                                 # skip personality routine address
-    lsd += (((lsd.value) >> 24) & 0xff) + 1  # skip unwind opcodes
+    lsd += 1                                # skip personality routine address
+    lsd += (((lsd.value) >> 24) & 0xff) + 1 # skip unwind opcodes
     lsd.as(UInt8*)
   end
 {% end %}
