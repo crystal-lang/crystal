@@ -1259,10 +1259,8 @@ class Hash(K, V)
   # h = {"foo" => "bar", "baz" => "bar"}
   # h.keys # => ["foo", "baz"]
   # ```
-  def keys
-    keys = Array(K).new(@size)
-    each_key { |key| keys << key }
-    keys
+  def keys : Array(K)
+    to_a_impl &.key
   end
 
   # Returns only the values as an `Array`.
@@ -1271,10 +1269,8 @@ class Hash(K, V)
   # h = {"foo" => "bar", "baz" => "qux"}
   # h.values # => ["bar", "qux"]
   # ```
-  def values
-    values = Array(V).new(@size)
-    each_value { |value| values << value }
-    values
+  def values : Array(V)
+    to_a_impl &.value
   end
 
   # Returns the index of the given key, or `nil` when not found.
@@ -1740,6 +1736,42 @@ class Hash(K, V)
       end
     end
     pp.text "{...}" unless executed
+  end
+
+  # Returns an array of tuples with key and values belonging to this Hash.
+  #
+  # ```
+  # h = {1 => 'a', 2 => 'b', 3 => 'c'}
+  # h.to_a # => [{1, 'a'}, {2, 'b'}, {3, 'c'}]
+  # ```
+  def to_a : Array({K, V})
+    to_a_impl do |entry|
+      {entry.key, entry.value}
+    end
+  end
+
+  private def to_a_impl(&block : Entry(K, V) -> U) forall U
+    index = @first
+    if @first == @deleted_count
+      # If the deleted count equals the first element offset it
+      # means that the only deleted elements are in (0...@first)
+      # and so all the next ones are non-deleted.
+      Array(U).new(size) do |i|
+        value = yield get_entry(index)
+        index += 1
+        value
+      end
+    else
+      Array(U).new(size) do |i|
+        entry = get_entry(index)
+        while entry.deleted?
+          index += 1
+          entry = get_entry(index)
+        end
+        index += 1
+        yield entry
+      end
+    end
   end
 
   # Returns `self`.
