@@ -1112,8 +1112,12 @@ class String
   def lchop? : String?
     return if empty?
 
-    reader = Char::Reader.new(self)
-    unsafe_byte_slice_string(reader.current_char_width, bytesize - reader.current_char_width)
+    if ascii_only?
+      unsafe_byte_slice_string(1, bytesize - 1)
+    else
+      reader = Char::Reader.new(self)
+      unsafe_byte_slice_string(reader.current_char_width, bytesize - reader.current_char_width)
+    end
   end
 
   # Returns a new `String` with *prefix* removed from the beginning of the string if possible, else returns `nil`.
