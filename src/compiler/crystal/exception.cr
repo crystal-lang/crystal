@@ -242,20 +242,25 @@ module Crystal
 
     def minimize_indentation(source)
       min_leading_white_space =
-        source.map do |line|
-          if match = line.match(/^(\s+)\S/)
-            spaces = match[1]?
-            spaces.size if spaces
-          end
-        end
-          .compact
-          .min
+        source.min_of? { |line| leading_white_space(line) } || 0
 
-      source = source.map do |line|
-        replace_leading_tabs_with_spaces(line).lchop(" " * min_leading_white_space)
+      if min_leading_white_space > 0
+        source = source.map do |line|
+          replace_leading_tabs_with_spaces(line).lchop(" " * min_leading_white_space)
+        end
       end
 
       {source, min_leading_white_space}
+    end
+
+    private def leading_white_space(line)
+      match = line.match(/^(\s+)\S/)
+      return 0 unless match
+
+      spaces = match[1]?
+      return 0 unless spaces
+
+      spaces.size
     end
 
     def append_expanded_macro(io, source)
