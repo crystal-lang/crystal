@@ -29,6 +29,16 @@ require "./enumerable"
 # (1..10_000_000).each.select(&.even?).map { |x| x * 3 }.first(3).to_a # => [6, 12, 18]
 # ```
 #
+# Because iterators only go forward, when using methods that consume it entirely or partially –
+# `to_a`, `any?`, `count`, `none?`, `one?` and `size` – subsequent calls will give a different
+# result as there will be less elements to consume.
+#
+# ```
+# iter = (0...100).each
+# iter.size # => 100
+# iter.size # => 0
+# ```
+#
 # To implement an `Iterator` you need to define a `next` method that must return the next
 # element in the sequence or `Iterator::Stop::INSTANCE`, which signals the end of the sequence
 # (you can invoke `stop` inside an iterator as a shortcut).
