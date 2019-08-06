@@ -97,17 +97,15 @@ class HTTP::Request
   end
 
   # :nodoc:
-  record BadRequest
-  # :nodoc:
   record RequestLine, method : String, resource : String, http_version : String
 
   # Returns a `HTTP::Request` instance if successfully parsed,
-  # `nil` on EOF or `BadRequest` otherwise.
-  def self.from_io(io) : HTTP::Request | BadRequest | Nil
-    line = parse_request_line(io)
+  # `nil` on EOF or `HTTP::Status` otherwise.
+  def self.from_io(io, *, max_request_line_size : Int32 = HTTP::MAX_REQUEST_LINE_SIZE, max_headers_size : Int32 = HTTP::MAX_HEADERS_SIZE) : HTTP::Request | HTTP::Status | Nil
+    line = parse_request_line(io, max_request_line_size)
     return line unless line.is_a?(RequestLine)
 
-    HTTP.parse_headers_and_body(io) do |headers, body|
+    status = HTTP.parse_headers_and_body(io, max_headers_size: max_headers_size) do |headers, body|
       # No need to dup headers since nobody else holds them
       request = new line.method, line.resource, headers, body, line.http_version, internal: nil
 
@@ -119,12 +117,12 @@ class HTTP::Request
     end
 
     # Malformed or unexpectedly ended http request
-    BadRequest.new
+    status || HTTP::Status::BAD_REQUEST
   end
 
   private METHODS = %w(GET HEAD POST PUT DELETE CONNECT OPTIONS PATCH TRACE)
 
-  private def self.parse_request_line(io : IO) : RequestLine | BadRequest | Nil
+  private def self.parse_request_line(io : IO, max_request_line_size) : RequestLine | HTTP::Status | Nil
     # Optimization: see if we have a peek buffer
     # (avoids a string allocation for the entire request line)
     if peek = io.peek
@@ -133,8 +131,9 @@ class HTTP::Request
 
       # See if we can find \n
       index = peek.index('\n'.ord.to_u8)
-      # TODO: eventually increase the 4096 bytes limit
-      if index && index < 4096
+      if index
+        return HTTP::Status::URI_TOO_LONG if index > max_request_line_size
+
         end_index = index
 
         # Also check (and discard) \r before that
@@ -148,21 +147,26 @@ class HTTP::Request
       end
     end
 
-    request_line = io.gets(4096, chomp: true)
+    request_line = io.gets(max_request_line_size + 1, chomp: true)
     return nil unless request_line
+
+    # Identify Request-URI too long
+    if request_line.bytesize > max_request_line_size
+      return HTTP::Status::URI_TOO_LONG
+    end
 
     parse_request_line(request_line)
   end
 
-  private def self.parse_request_line(line : String) : RequestLine | BadRequest
+  private def self.parse_request_line(line : String) : RequestLine | HTTP::Status
     parse_request_line(line.to_slice)
   end
 
-  private def self.parse_request_line(slice : Bytes) : RequestLine | BadRequest
+  private def self.parse_request_line(slice : Bytes) : RequestLine | HTTP::Status
     space_index = slice.index(' '.ord.to_u8)
 
     # Oops, only a single part (should be three)
-    return BadRequest.new unless space_index
+    return HTTP::Status::BAD_REQUEST unless space_index
 
     subslice = slice[0...space_index]
 
@@ -178,12 +182,12 @@ class HTTP::Request
     end
 
     # Oops, we only found the "method" part followed by spaces
-    return BadRequest.new if space_index == slice.size
+    return HTTP::Status::BAD_REQUEST if space_index == slice.size
 
     next_space_index = slice.index(' '.ord.to_u8, offset: space_index)
 
     # Oops, we only found two parts (should be three)
-    return BadRequest.new unless next_space_index
+    return HTTP::Status::BAD_REQUEST unless next_space_index
 
     resource = String.new(slice[space_index...next_space_index])
 
@@ -199,13 +203,13 @@ class HTTP::Request
 
     # Optimization: avoid allocating a string for common HTTP version
     http_version = HTTP::SUPPORTED_VERSIONS.find { |version| version.to_slice == subslice }
-    return BadRequest.new unless http_version
+    return HTTP::Status::BAD_REQUEST unless http_version
 
     # Skip trailing spaces
     space_index = next_space_index
     while space_index < slice.size
       # Oops, we find something else (more than three parts)
-      return BadRequest.new unless slice[space_index] == ' '.ord.to_u8
+      return HTTP::Status::BAD_REQUEST unless slice[space_index] == ' '.ord.to_u8
       space_index += 1
     end
 
