@@ -74,17 +74,35 @@ describe "Array" do
     end
   end
 
-  it "does &" do
-    ([1, 2, 3] & [] of Int32).should eq([] of Int32)
-    ([] of Int32 & [1, 2, 3]).should eq([] of Int32)
-    ([1, 2, 3] & [3, 2, 4]).should eq([2, 3])
-    ([1, 2, 3, 1, 2, 3] & [3, 2, 4, 3, 2, 4]).should eq([2, 3])
-    ([1, 2, 3, 1, 2, 3, nil, nil] & [3, 2, 4, 3, 2, 4, nil]).should eq([2, 3, nil])
+  describe "&" do
+    it "small arrays" do
+      ([1, 2, 3] & [] of Int32).should eq([] of Int32)
+      ([] of Int32 & [1, 2, 3]).should eq([] of Int32)
+      ([1, 2, 3] & [3, 2, 4]).should eq([2, 3])
+      ([1, 2, 3, 1, 2, 3] & [3, 2, 4, 3, 2, 4]).should eq([2, 3])
+      ([1, 2, 3, 1, 2, 3, nil, nil] & [3, 2, 4, 3, 2, 4, nil]).should eq([2, 3, nil])
+    end
+
+    it "big arrays" do
+      a1 = (1..64).to_a
+      a2 = (33..96).to_a
+      (a1 & a2).should eq((33..64).to_a)
+    end
   end
 
-  it "does |" do
-    ([1, 2, 3] | [5, 3, 2, 4]).should eq([1, 2, 3, 5, 4])
-    ([1, 1, 2, 3, 3] | [4, 5, 5, 6]).should eq([1, 2, 3, 4, 5, 6])
+  describe "|" do
+    it "small arrays" do
+      ([1, 2, 3, 2, 3] | ([] of Int32)).should eq([1, 2, 3])
+      (([] of Int32) | [1, 2, 3, 2, 3]).should eq([1, 2, 3])
+      ([1, 2, 3] | [5, 3, 2, 4]).should eq([1, 2, 3, 5, 4])
+      ([1, 1, 2, 3, 3] | [4, 5, 5, 6]).should eq([1, 2, 3, 4, 5, 6])
+    end
+
+    it "large arrays" do
+      a = [1, 2, 3] * 10
+      b = [4, 5, 6] * 10
+      (a | b).should eq([1, 2, 3, 4, 5, 6])
+    end
   end
 
   it "does +" do
@@ -107,6 +125,10 @@ describe "Array" do
 
     it "does with larger array coming second" do
       ([4, 2] - [1, 2, 3]).should eq([4])
+    end
+
+    it "does with even larger arrays" do
+      ((1..64).to_a - (1..32).to_a).should eq((33..64).to_a)
     end
   end
 
@@ -1260,6 +1282,11 @@ describe "Array" do
       b.should eq([1])
       a.same?(b).should be_false
     end
+
+    it "uniqs large array" do
+      a = (1..32).to_a
+      (a * 4).uniq.should eq(a)
+    end
   end
 
   describe "uniq!" do
@@ -1279,6 +1306,13 @@ describe "Array" do
       a = [1, 2, 3]
       a.uniq! { true }
       a.should eq([1])
+    end
+
+    it "uniqs large array" do
+      a = (1..32).to_a
+      b = a * 2
+      b.uniq!
+      b.should eq(a)
     end
   end
 
