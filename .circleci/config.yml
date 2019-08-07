@@ -105,7 +105,10 @@ jobs:
           echo "export DOCKER_REPOSITORY=crystallang/crystal" >> build.env
 
           # What to build
-          echo "export CRYSTAL_SHA1=$CIRCLE_SHA1" >> build.env
+          echo "export CRYSTAL_SHA1=cbf651affab414c0f8f02c5d4ed3c77fd69b744d" >> build.env
+          echo "export CRYSTAL_VERSION=0.30.0" >> build.env
+          echo "export PACKAGE_ITERATION=2" >> build.env
+          echo "export LLVM_VERSION=3.9.1" >> build.env
 
           # Which previous version use
           export PREVIOUS_CRYSTAL_BASE_URL="https://github.com/crystal-lang/crystal/releases/download/0.29.0/crystal-0.29.0-1"
@@ -378,27 +381,27 @@ jobs:
 
 workflows:
   version: 2
-  test_all_platforms:
-    jobs:
-      - test_linux:
-          filters: &unless_maintenance
-            branches:
-              ignore:
-                - /release\/.+/
-                - /.*\bci\b.*/
-      - test_linux32:
-          filters: *unless_maintenance
-      - test_darwin:
-          filters: *unless_maintenance
-      - check_format:
-          filters: *unless_maintenance
-      - sync_docs_s3:
-          filters:
-            branches:
-              only:
-                - master
-          requires:
-            - test_linux
+  # test_all_platforms:
+  #   jobs:
+  #     - test_linux:
+  #         filters: &unless_maintenance
+  #           branches:
+  #             ignore:
+  #               - /release\/.+/
+  #               - /.*\bci\b.*/
+  #     - test_linux32:
+  #         filters: *unless_maintenance
+  #     - test_darwin:
+  #         filters: *unless_maintenance
+  #     - check_format:
+  #         filters: *unless_maintenance
+  #     - sync_docs_s3:
+  #         filters:
+  #           branches:
+  #             only:
+  #               - master
+  #         requires:
+  #           - test_linux
 
   tagged_release:
     jobs:
@@ -598,3 +601,12 @@ workflows:
             - dist_snap
             - dist_docs
 
+  manual_osx_build:
+    jobs:
+      - prepare_common
+      - dist_darwin:
+          requires:
+            - prepare_common
+      - dist_artifacts:
+          requires:
+            - dist_darwin
