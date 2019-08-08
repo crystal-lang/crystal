@@ -913,6 +913,102 @@ module HTTP
     end
   end
 
+  describe "#max_request_line_size" do
+    it "sets and gets size" do
+      server = HTTP::Server.new { |ctx| }
+      server.max_request_line_size.should eq HTTP::MAX_REQUEST_LINE_SIZE
+      server.@processor.max_request_line_size.should eq HTTP::MAX_REQUEST_LINE_SIZE
+      server.max_request_line_size = 20
+      server.max_request_line_size.should eq 20
+      server.@processor.max_request_line_size.should eq 20
+    end
+
+    it "respects size on request" do
+      server = HTTP::Server.new { |ctx| }
+      read = IO::Memory.new("GET /1234567 HTTP/1.1\r\n\r\n")
+      write = IO::Memory.new
+
+      io = IO::Stapled.new(read, write)
+      server.@processor.process(io, io)
+      write.rewind
+      HTTP::Client::Response.from_io(write).status.should eq HTTP::Status::OK
+
+      read.rewind
+      write.clear
+
+      server.max_request_line_size = 20
+
+      io = IO::Stapled.new(read, write)
+      server.@processor.process(io, io)
+      write.rewind
+      HTTP::Client::Response.from_io(write).status.should eq HTTP::Status::URI_TOO_LONG
+    end
+  end
+
+  describe "#max_request_line_size" do
+    it "sets and gets size" do
+      server = HTTP::Server.new { |ctx| }
+      server.max_request_line_size.should eq HTTP::MAX_REQUEST_LINE_SIZE
+      server.@processor.max_request_line_size.should eq HTTP::MAX_REQUEST_LINE_SIZE
+      server.max_request_line_size = 20
+      server.max_request_line_size.should eq 20
+      server.@processor.max_request_line_size.should eq 20
+    end
+
+    it "respects size on request" do
+      server = HTTP::Server.new { |ctx| }
+      read = IO::Memory.new("GET /1234567 HTTP/1.1\r\n\r\n")
+      write = IO::Memory.new
+
+      io = IO::Stapled.new(read, write)
+      server.@processor.process(io, io)
+      write.rewind
+      HTTP::Client::Response.from_io(write).status.should eq HTTP::Status::OK
+
+      read.rewind
+      write.clear
+
+      server.max_request_line_size = 20
+
+      io = IO::Stapled.new(read, write)
+      server.@processor.process(io, io)
+      write.rewind
+      HTTP::Client::Response.from_io(write).status.should eq HTTP::Status::URI_TOO_LONG
+    end
+  end
+
+  describe "#max_headers_size" do
+    it "sets and gets size" do
+      server = HTTP::Server.new { |ctx| }
+      server.max_headers_size.should eq HTTP::MAX_HEADERS_SIZE
+      server.@processor.max_headers_size.should eq HTTP::MAX_HEADERS_SIZE
+      server.max_headers_size = 20
+      server.max_headers_size.should eq 20
+      server.@processor.max_headers_size.should eq 20
+    end
+
+    it "respects size on request" do
+      server = HTTP::Server.new { |ctx| }
+      read = IO::Memory.new("GET /foo HTTP/1.1\r\nFoo: Bar Baz\r\n\r\n")
+      write = IO::Memory.new
+
+      io = IO::Stapled.new(read, write)
+      server.@processor.process(io, io)
+      write.rewind
+      HTTP::Client::Response.from_io(write).status.should eq HTTP::Status::OK
+
+      read.rewind
+      write.clear
+
+      server.max_headers_size = 10
+
+      io = IO::Stapled.new(read, write)
+      server.@processor.process(io, io)
+      write.rewind
+      HTTP::Client::Response.from_io(write).status.should eq HTTP::Status::REQUEST_HEADER_FIELDS_TOO_LARGE
+    end
+  end
+
   typeof(begin
     # Initialize with custom host
     server = Server.new { |ctx| }

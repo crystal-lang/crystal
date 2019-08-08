@@ -34,7 +34,7 @@ struct Atomic(T)
       # If so, use addresses because LLVM < 3.9 doesn't support cmpxchg with pointers
       address, success = Ops.cmpxchg(pointerof(@value).as(LibC::SizeT*), LibC::SizeT.new(cmp.as(T).object_id), LibC::SizeT.new(new.as(T).object_id), :sequentially_consistent, :sequentially_consistent)
       {address == 0 ? nil : Pointer(T).new(address).as(T), success}
-    # Check if it's a reference type
+      # Check if it's a reference type
     {% elsif T < Reference %}
       # Use addresses again (but this can't return nil)
       address, success = Ops.cmpxchg(pointerof(@value).as(LibC::SizeT*), LibC::SizeT.new(cmp.as(T).object_id), LibC::SizeT.new(new.as(T).object_id), :sequentially_consistent, :sequentially_consistent)

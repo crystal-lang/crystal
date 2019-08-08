@@ -185,6 +185,23 @@ describe BigRational do
     (br(10, 3) >> 2).should eq(br(5, 6))
   end
 
+  describe "#**" do
+    it "exponentiates with positive powers" do
+      result = br(17, 11) ** 5
+      result.should be_a(BigRational)
+      result.should eq(br(1419857, 161051))
+    end
+
+    it "exponentiates with negative powers" do
+      result = br(17, 11) ** -5
+      result.should eq(br(161051, 1419857))
+    end
+
+    it "cannot raise 0 to a negative power" do
+      expect_raises(DivisionByZeroError) { br(0, 1) ** -1 }
+    end
+  end
+
   it "#ceil" do
     br(2, 1).ceil.should eq(2)
     br(21, 10).ceil.should eq(3)

@@ -113,12 +113,12 @@ describe TCPSocket do
         client.tcp_nodelay?.should be_false
 
         {% unless flag?(:openbsd) %}
-        (client.tcp_keepalive_idle = 42).should eq 42
-        client.tcp_keepalive_idle.should eq 42
-        (client.tcp_keepalive_interval = 42).should eq 42
-        client.tcp_keepalive_interval.should eq 42
-        (client.tcp_keepalive_count = 42).should eq 42
-        client.tcp_keepalive_count.should eq 42
+          (client.tcp_keepalive_idle = 42).should eq 42
+          client.tcp_keepalive_idle.should eq 42
+          (client.tcp_keepalive_interval = 42).should eq 42
+          client.tcp_keepalive_interval.should eq 42
+          (client.tcp_keepalive_count = 42).should eq 42
+          client.tcp_keepalive_count.should eq 42
         {% end %}
       end
     end

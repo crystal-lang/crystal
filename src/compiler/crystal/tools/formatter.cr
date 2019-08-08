@@ -95,6 +95,7 @@ module Crystal
     property inside_enum
     property inside_struct_or_union
     property indent
+    property subformat_nesting = 0
 
     def initialize(source)
       @lexer = Lexer.new(source)
@@ -1764,6 +1765,7 @@ module Crystal
         else
           check :"{{"
         end
+        write_macro_slashes
         write "{{"
       else
         case @token.type
@@ -1772,6 +1774,7 @@ module Crystal
         else
           check :MACRO_CONTROL_START
         end
+        write_macro_slashes
         write "{%"
       end
       macro_state = @macro_state
@@ -1844,6 +1847,8 @@ module Crystal
       else
         check :"{%"
       end
+
+      write_macro_slashes
       write "{% "
 
       next_token_skip_space_or_newline
@@ -1887,6 +1892,7 @@ module Crystal
         if @token.keyword?(:elsif)
           sub_if = node.else.as(MacroIf)
           next_token_skip_space_or_newline
+          write_macro_slashes
           write "{% elsif "
           outside_macro { indent(@column, sub_if.cond) }
           format_macro_if_epilogue sub_if, macro_state, check_end: false
@@ -1895,6 +1901,7 @@ module Crystal
           next_token_skip_space_or_newline
           check :"%}"
 
+          write_macro_slashes
           write "{% else %}"
 
           @macro_state = macro_state
@@ -1916,6 +1923,7 @@ module Crystal
         next_token_skip_space_or_newline
         check :"%}"
 
+        write_macro_slashes
         write "{% end %}"
 
         if inside_macro?
@@ -1938,6 +1946,8 @@ module Crystal
       else
         check :"{%"
       end
+
+      write_macro_slashes
       write "{% "
 
       macro_state = @macro_state
@@ -1982,6 +1992,7 @@ module Crystal
       next_token_skip_space_or_newline
       check :"%}"
 
+      write_macro_slashes
       write "{% end %}"
 
       if inside_macro?
@@ -2020,6 +2031,17 @@ module Crystal
       false
     end
 
+    # If we are formatting macro contents, if there are nested macro
+    # control structures they are definitely escaped with `\`,
+    # because otherwise we wouln't be able to format the contents.
+    # So here we append those slashes. In theory the nesting can be
+    # very deep but it's usually just one level.
+    private def write_macro_slashes
+      @subformat_nesting.times do
+        write "\\"
+      end
+    end
+
     def format_macro_contents(node, macro_node_line)
       # If macro contents don't have interpolations nor newlines, and we
       # are at the top-level (not already inside a macro) then the content
@@ -2030,10 +2052,8 @@ module Crystal
       # {% if flag?(:foo) %}
       #   puts "This is an expression that we can format just fine"
       # {% end %}
-      if !inside_macro? && node.is_a?(MacroLiteral) && node.value.includes?("\n")
+      if !inside_macro? && (value = macro_literal_contents(node)) && value.includes?("\n")
         # Format the value and append 2 more spaces of indentation
-        value = node.value
-
         begin
           formatter, value = subformat(value)
         rescue ex : Crystal::SyntaxException
@@ -2061,9 +2081,59 @@ module Crystal
 
         increment_lines(macro_node_line + value.lines.size + 1 - @line)
 
-        next_macro_token
+        line = @line
+
+        # We have to potentially skip multiple macro literal tokens
+        while @token.type == :MACRO_LITERAL
+          next_macro_token
+        end
+
+        # Skipping the macro literal tokens might have altered `@line`:
+        # restore it to what it was before the macro tokens (we are
+        # already accounting for the lines in a different way).
+        if @line != line
+          increment_lines(line - @line)
+        end
       else
         inside_macro { no_indent node }
+      end
+    end
+
+    # Returns the node's String contents if it's composed entirely
+    # by MacroLiteral: either a MacroLiteral or an Expression composed
+    # only by MacroLiteral.
+    private def macro_literal_contents(node) : String?
+      return unless only_macro_literal?(node)
+
+      extract_macro_literal_contents(node)
+    end
+
+    private def only_macro_literal?(node)
+      case node
+      when MacroLiteral
+        true
+      when Expressions
+        node.expressions.all? do |exp|
+          only_macro_literal?(exp)
+        end
+      else
+        false
+      end
+    end
+
+    private def extract_macro_literal_contents(node)
+      String.build do |io|
+        extract_macro_literal_contents(node, io)
+      end
+    end
+
+    private def extract_macro_literal_contents(node, io)
+      if node.is_a?(MacroLiteral)
+        io << node.value
+      else
+        node.as(Expressions).expressions.each do |exp|
+          extract_macro_literal_contents(exp, io)
+        end
       end
     end
 
@@ -2086,9 +2156,10 @@ module Crystal
       formatter.inside_lib = @inside_lib
       formatter.inside_enum = @inside_enum
       formatter.inside_struct_or_union = @inside_struct_or_union
-      formatter.skip_space_or_newline
       formatter.indent = @indent + 2
+      formatter.skip_space_or_newline
       formatter.write_indent
+      formatter.subformat_nesting = @subformat_nesting + 1
       nodes.accept formatter
       {formatter, formatter.finish}
     end
@@ -2106,6 +2177,8 @@ module Crystal
           return false
         end
       end
+
+      @vars.last.add(node.name)
 
       at_skip = at_skip?
 

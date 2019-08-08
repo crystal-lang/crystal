@@ -5,8 +5,11 @@ require "mime/media_type"
 {% end %}
 
 module HTTP
-  # :nodoc:
-  MAX_HEADER_SIZE = 16_384
+  # Default maximum permitted size (in bytes) of the request line in an HTTP request.
+  MAX_REQUEST_LINE_SIZE = 8192 # 8 KB
+
+  # Default maximum permitted combined size (in bytes) of the headers in an HTTP request.
+  MAX_HEADERS_SIZE = 16_384 # 16 KB
 
   # :nodoc:
   enum BodyType
@@ -23,11 +26,11 @@ module HTTP
   record HeaderLine, name : String, value : String, bytesize : Int32
 
   # :nodoc:
-  def self.parse_headers_and_body(io, body_type : BodyType = BodyType::OnDemand, decompress = true)
+  def self.parse_headers_and_body(io, body_type : BodyType = BodyType::OnDemand, decompress = true, *, max_headers_size : Int32 = MAX_HEADERS_SIZE) : HTTP::Status?
     headers = Headers.new
 
-    headers_size = 0
-    while header_line = read_header_line(io)
+    max_size = max_headers_size
+    while header_line = read_header_line(io, max_size)
       case header_line
       when EndOfRequest
         body = nil
@@ -66,39 +69,51 @@ module HTTP
         check_content_type_charset(body, headers)
 
         yield headers, body
-        break
+        return
       else # HeaderLine
-        headers_size += header_line.bytesize
-        break if headers_size > MAX_HEADER_SIZE
+        max_size -= header_line.bytesize
+        return HTTP::Status::REQUEST_HEADER_FIELDS_TOO_LARGE if max_size < 0
 
-        break unless headers.add?(header_line.name, header_line.value)
+        return HTTP::Status::BAD_REQUEST unless headers.add?(header_line.name, header_line.value)
       end
     end
   end
 
-  private def self.read_header_line(io) : HeaderLine | EndOfRequest | Nil
+  private def self.read_header_line(io, max_size) : HeaderLine | EndOfRequest | Nil
     # Optimization: check if we have a peek buffer
     if peek = io.peek
       # peek.empty? means EOF (so bad request)
       return nil if peek.empty?
 
-      # Find \r\n (first \n, then \r before it)
+      # See if we can find \n
       index = peek.index('\n'.ord.to_u8)
-      if index && index > 0 && peek[index - 1] == '\r'.ord.to_u8
-        # `index == 1` means we just have "\r\n", so end of request
-        if index == 1
-          io.skip(2)
+      if index
+        end_index = index
+
+        # Also check (and discard) \r before that
+        if index > 0 && peek[index - 1] == '\r'.ord.to_u8
+          end_index -= 1
+        end
+
+        # Check if we just have "\n" or "\r\n" (so end of request)
+        if end_index == 0
+          io.skip(index + 1)
           return EndOfRequest.new
         end
 
-        name, value = parse_header(peek[0, index - 1])
-        io.skip(index + 1) # Must skip until after \r\n
+        return HeaderLine.new name: "", value: "", bytesize: index + 1 if index > max_size
+
+        name, value = parse_header(peek[0, end_index])
+        io.skip(index + 1) # Must skip until after \n
         return HeaderLine.new name: name, value: value, bytesize: index + 1
       end
     end
 
-    line = io.gets(MAX_HEADER_SIZE, chomp: true)
+    line = io.gets(max_size + 1, chomp: true)
     return nil unless line
+    if line.bytesize > max_size
+      return HeaderLine.new name: "", value: "", bytesize: max_size
+    end
 
     if line.empty?
       return EndOfRequest.new

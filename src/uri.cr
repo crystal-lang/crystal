@@ -21,6 +21,28 @@ require "./uri/encoding"
 # uri.to_s   # => "http://foo.com/posts?id=30&limit=5#time=1305298413"
 # ```
 #
+# ## Resolution and Relativization
+#
+# *Resolution* is the process of resolving one URI against another, *base* URI.
+# The resulting URI is constructed from components of both URIs in the manner specified by
+# [RFC 3986 section 5.2](https://tools.ietf.org/html/rfc3986#section-5.2.2), taking components
+# from the base URI for those not specified in the original.
+# For hierarchical URIs, the path of the original is resolved against the path of the base
+# and then normalized. See `#resolve` for examples.
+#
+# *Relativization* is the inverse of resolution as that it procudes an URI that
+# resolves to the original when resolved against the base.
+#
+# For normalized URIs, the following is true:
+#
+# ```
+# a.relativize(a.resolve(b)) # => b
+# a.resolve(a.relativize(b)) # => b
+# ```
+#
+# This operation is often useful when constructing a document containing URIs that must
+# be made relative to the base URI of the document wherever possible.
+#
 # # URL Encoding
 #
 # This class provides a number of methods for encoding and decoding strings using
@@ -265,6 +287,168 @@ class URI
     @path = remove_dot_segments(path)
 
     self
+  end
+
+  # Resolves *uri* against this URI.
+  #
+  # If *uri* is `absolute?`, or if this URI is `opaque?`, then an exact copy of *uri* is returned.
+  #
+  # Otherwise the URI is resolved according to the specifications in [RFC 3986 section 5.2](https://tools.ietf.org/html/rfc3986#section-5.2.2).
+  #
+  # ```
+  # URI.parse("http://foo.com/bar/baz").resolve("../quux")         # => http://foo.com/quux
+  # URI.parse("http://foo.com/bar/baz").resolve("/quux")           # => http://foo.com/quux
+  # URI.parse("http://foo.com/bar/baz").resolve("http://quux.com") # => http://quux.com
+  # URI.parse("http://foo.com/bar/baz").resolve("#quux")           # => http://foo.com/bar/baz#quux
+  # ```
+  #
+  # This method is the inverse operation to `#relativize` (see [Resolution and Relativization](#Resolution and Relativization)).
+  def resolve(uri : URI | String) : URI
+    if uri.is_a?(URI)
+      target = uri.dup
+    else
+      target = URI.parse(uri)
+    end
+
+    if target.absolute? || opaque?
+      return target
+    end
+
+    target.scheme = scheme
+
+    unless target.host || target.user
+      target.host = host
+      target.port = port
+      target.user = user
+      target.password = password
+      if target.path.empty?
+        target.path = remove_dot_segments(path)
+        target.query ||= query
+      else
+        base = path
+        if base.empty? && target.absolute?
+          base = "/"
+        end
+        target.path = resolve_path(target.path, base: base)
+      end
+    end
+
+    target
+  end
+
+  private def resolve_path(path : String, base : String) : String
+    unless path.starts_with?('/')
+      if path.empty?
+        path = base
+      elsif !base.empty?
+        path = String.build do |io|
+          if base.ends_with?('/')
+            io << base
+          elsif pos = base.rindex('/')
+            io << base[0..pos]
+          end
+          io << path
+        end
+      end
+    end
+    remove_dot_segments(path)
+  end
+
+  # Relativizes *uri* against this URI.
+  #
+  # An exact copy of *uri* is returned if
+  # * this URI or *uri* are `opaque?`, or
+  # * the scheme and authority (`host`, `port`, `user`, `password`) components are not identical.
+  #
+  # Otherwise a new relative hierarchical URI is constructed with `query` and `fragment` components
+  # from *uri* and with a path component that describes a minimum-difference relative
+  # path from `#path` to *uri*'s path.
+  #
+  # ```
+  # URI.parse("http://foo.com/bar/baz").relativize("http://foo.com/quux")         # => ../quux
+  # URI.parse("http://foo.com/bar/baz").relativize("http://foo.com/quux")         # => /quux
+  # URI.parse("http://foo.com/bar/baz").relativize("http://quux.com")             # => http://quux.com
+  # URI.parse("http://foo.com/bar/baz").relativize("http://foo.com/bar/baz#quux") # => #quux
+  # ```
+  #
+  # This method is the inverse operation to `#resolve` (see [Resolution and Relativization](#Resolution and Relativization)).
+  def relativize(uri : URI | String) : URI
+    if uri.is_a?(URI)
+      uri = uri.dup
+    else
+      uri = URI.parse(uri)
+    end
+
+    if uri.opaque? || opaque? || uri.scheme.try &.downcase != @scheme.try &.downcase ||
+       uri.host.try &.downcase != @host.try &.downcase || uri.port != @port || uri.user != @user ||
+       uri.password != @password
+      return uri
+    end
+
+    query = uri.query
+    query = nil if query == @query
+    fragment = uri.fragment
+
+    path = relativize_path(@path, uri.path)
+
+    URI.new(path: path, query: query, fragment: uri.fragment)
+  end
+
+  private def relativize_path(base : String, dst : String) : String
+    return "" if base == dst
+
+    if base =~ %r{(?:\A|/)\.\.?(?:/|\z)} && dst.starts_with?('/')
+      # dst has abnormal absolute path,
+      # like "/./", "/../", "/x/../", ...
+      return dst
+    end
+
+    base_path = base.split('/', remove_empty: true)
+    dst_path = dst.split('/', remove_empty: true)
+
+    dst_path << "" if dst.ends_with?('/')
+    base_path.pop? unless base.ends_with?('/')
+
+    # discard same parts
+    while !dst_path.empty? && !base_path.empty?
+      dst = dst_path.first
+      base = base_path.first
+      if dst == base
+        base_path.shift
+        dst_path.shift
+      elsif dst == "."
+        dst_path.shift
+      elsif base == "."
+        base_path.shift
+      else
+        break
+      end
+    end
+
+    tmp = dst_path.join('/')
+    # calculate
+    if base_path.empty?
+      if dst_path.empty?
+        "./"
+      elsif dst_path.first.includes?(':') # (see RFC2396 Section 5)
+        String.build do |io|
+          io << "./"
+          dst_path.join('/', io)
+        end
+      else
+        string = dst_path.join('/')
+        if string == ""
+          "./"
+        else
+          string
+        end
+      end
+    else
+      String.build do |io|
+        base_path.size.times { io << "../" }
+        dst_path.join('/', io)
+      end
+    end
   end
 
   # Parses the given *raw_url* into an URI. The *raw_url* may be relative or absolute.

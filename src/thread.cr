@@ -148,7 +148,6 @@ class Thread
     {% if flag?(:darwin) %}
       # FIXME: pthread_get_stacksize_np returns bogus value on macOS X 10.9.0:
       address = LibC.pthread_get_stackaddr_np(@th) - LibC.pthread_get_stacksize_np(@th)
-
     {% elsif flag?(:freebsd) %}
       ret = LibC.pthread_attr_init(out attr)
       unless ret == 0
@@ -161,14 +160,12 @@ class Thread
       end
       ret = LibC.pthread_attr_destroy(pointerof(attr))
       raise Errno.new("pthread_attr_destroy", ret) unless ret == 0
-
     {% elsif flag?(:linux) %}
       if LibC.pthread_getattr_np(@th, out attr) == 0
         LibC.pthread_attr_getstack(pointerof(attr), pointerof(address), out _)
       end
       ret = LibC.pthread_attr_destroy(pointerof(attr))
       raise Errno.new("pthread_attr_destroy", ret) unless ret == 0
-
     {% elsif flag?(:openbsd) %}
       ret = LibC.pthread_stackseg_np(@th, out stack)
       raise Errno.new("pthread_stackseg_np", ret) unless ret == 0

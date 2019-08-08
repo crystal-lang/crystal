@@ -156,6 +156,41 @@ class HTTP::Server
     @processor = RequestProcessor.new(handler)
   end
 
+  # Returns the maximum permitted size for the request line in an HTTP request.
+  #
+  # The request line is the first line of a request, consisting of method,
+  # resource and HTTP version and the delimiting line break.
+  # If the request line has a larger byte size than the permitted size,
+  # the server responds with the status code `414 URI Too Long` (see `HTTP::Status::URI_TOO_LONG`).
+  #
+  # Default: `HTTP::MAX_REQUEST_LINE_SIZE`
+  def max_request_line_size : Int32
+    @processor.max_request_line_size
+  end
+
+  # Sets the maximum permitted size for the request line in an HTTP request.
+  def max_request_line_size=(size : Int32)
+    @processor.max_request_line_size = size
+  end
+
+  # Returns the maximum permitted combined size for the headers in an HTTP request.
+  #
+  # When parsing a request, the server keeps track of the amount of total bytes
+  # consumed for all headers (including line breaks).
+  # If combined byte size of all headers is larger than the permitted size,
+  # the server responds with the status code `432 Request Header Fields Too Large`
+  # (see `HTTP::Status::REQUEST_HEADER_FIELDS_TOO_LARGE`).
+  #
+  # Default: `HTTP::MAX_HEADERS_SIZE`
+  def max_headers_size : Int32
+    @processor.max_headers_size
+  end
+
+  # Sets the maximum permitted combined size for the headers in an HTTP request.
+  def max_headers_size=(size : Int32)
+    @processor.max_headers_size = size
+  end
+
   # Creates a `TCPServer` listening on `host:port` and adds it as a socket, returning the local address
   # and port the server listens on.
   #
