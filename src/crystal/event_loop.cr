@@ -13,12 +13,17 @@ module Crystal::EventLoop
   end
 
   private def self.loop_fiber
-    @@loop_fiber ||= Fiber.new { @@eb.run_loop }
+    @@loop_fiber ||= Fiber.new do
+      loop do
+        @@eb.run_once
+        Crystal::Scheduler.reschedule
+      end
+    end
   end
 
   def self.create_resume_event(fiber)
     @@eb.new_event(-1, LibEvent2::EventFlags::None, fiber) do |s, flags, data|
-      data.as(Fiber).resume
+      Crystal::Scheduler.enqueue data.as(Fiber)
     end
   end
 
