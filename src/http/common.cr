@@ -185,9 +185,37 @@ module HTTP
     {name, value}
   end
 
+  # Important! These have to be in lexicographic order.
   private COMMON_HEADERS = %w(
-    accept-language
+    Accept-Encoding
+    Accept-Language
+    Accept-encoding
+    Accept-language
+    Allow
+    Cache-Control
+    Cache-control
+    Connection
+    Content-Disposition
+    Content-Encoding
+    Content-Language
+    Content-Length
+    Content-Type
+    Content-disposition
+    Content-encoding
+    Content-language
+    Content-length
+    Content-type
+    ETag
+    Etag
+    Expires
+    Host
+    Last-Modified
+    Last-modified
+    Referer
+    User-Agent
+    User-agent
     accept-encoding
+    accept-language
     allow
     cache-control
     connection
@@ -200,6 +228,7 @@ module HTTP
     expires
     host
     last-modified
+    referer
     user-agent
   )
 
@@ -208,17 +237,14 @@ module HTTP
     # Check if the header name is a common one.
     # If so we avoid having to allocate a string for it.
     if slice.size < 20
-      buffer = uninitialized UInt8[20]
-
-      # Copy the slice to buffer, downcased
-      slice.each_with_index do |byte, i|
-        buffer[i] = 65 <= byte <= 90 ? byte + 32 : byte
+      name = COMMON_HEADERS.bsearch do |string|
+        min_size = Math.min(slice.size, string.bytesize)
+        cmp = slice.to_unsafe.memcmp(string.to_unsafe, min_size)
+        next false if cmp > 0
+        next true if cmp < 0
+        slice.size <= string.bytesize
       end
-
-      buffer_slice = buffer.to_slice[0, slice.size]
-
-      name = COMMON_HEADERS.find { |value| value.to_slice == buffer_slice }
-      return name if name
+      return name if name && name.to_slice == slice
     end
 
     String.new(slice)
