@@ -406,10 +406,10 @@ struct Int
   def gcd(other : self) : self
     u = self.abs
     v = other.abs
-    shift = self.class.zero
     return v if u == 0
     return u if v == 0
 
+    shift = self.class.zero
     # Let shift := lg K, where K is the greatest power of 2
     # dividing both u and v.
     while (u | v) & 1 == 0
