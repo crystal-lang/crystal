@@ -28,8 +28,8 @@ module HTTP
                    @expires : Time? = nil, @domain : String? = nil,
                    @secure : Bool = false, @http_only : Bool = false,
                    @samesite : SameSite? = nil, @extension : String? = nil)
-      @name = URI.decode_www_form name
-      @value = URI.decode_www_form value
+      @name = name
+      @value = value
     end
 
     def to_set_cookie_header
@@ -106,7 +106,7 @@ module HTTP
 
       def parse_cookies(header)
         header.scan(CookieString).each do |pair|
-          yield Cookie.new(pair["name"], pair["value"])
+          yield Cookie.new(URI.decode_www_form(pair["name"]), URI.decode_www_form(pair["value"]))
         end
       end
 
@@ -127,7 +127,7 @@ module HTTP
                   end
 
         Cookie.new(
-          match["name"], match["value"],
+          URI.decode_www_form(match["name"]), URI.decode_www_form(match["value"]),
           path: match["path"]? || "/",
           expires: expires,
           domain: match["domain"]?,

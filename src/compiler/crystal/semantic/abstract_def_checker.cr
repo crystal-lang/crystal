@@ -127,7 +127,9 @@ class Crystal::AbstractDefChecker
     # we check if they match.
     if t2.is_a?(GenericType)
       generic_base = find_base_generic_instantiation(t1, t2)
-      m2 = replace_method_arg_paths_with_type_vars(t2, m2, generic_base)
+      if generic_base
+        m2 = replace_method_arg_paths_with_type_vars(t2, m2, generic_base)
+      end
     end
 
     m2.args.zip(m1.args) do |a2, a1|
@@ -160,7 +162,7 @@ class Crystal::AbstractDefChecker
 
     original_base_return_type = base_type.lookup_type?(base_return_type_node)
     unless original_base_return_type
-      @program.warning_failures << base_return_type_node.warning "can't resolve return type #{base_return_type_node}\n#{this_warning_will_become_an_error}"
+      report_warning(base_return_type_node, "can't resolve return type #{base_return_type_node}\n#{this_warning_will_become_an_error}")
       return
     end
 
@@ -171,32 +173,33 @@ class Crystal::AbstractDefChecker
     # and just then we check if they match.
     if base_type.is_a?(GenericType)
       generic_base = find_base_generic_instantiation(type, base_type)
-
-      replacer = ReplacePathWithTypeVar.new(base_type, generic_base)
-      base_return_type_node = base_return_type_node.clone
-      base_return_type_node.accept(replacer)
+      if generic_base
+        replacer = ReplacePathWithTypeVar.new(base_type, generic_base)
+        base_return_type_node = base_return_type_node.clone
+        base_return_type_node.accept(replacer)
+      end
     end
 
     base_return_type = base_type.lookup_type?(base_return_type_node)
     unless base_return_type
-      @program.warning_failures << base_return_type_node.warning "can't resolve return type #{base_return_type_node}\n#{this_warning_will_become_an_error}"
+      report_warning(base_return_type_node, "can't resolve return type #{base_return_type_node}\n#{this_warning_will_become_an_error}")
       return
     end
 
     return_type_node = method.return_type
     unless return_type_node
-      @program.warning_failures << method.warning "this method overrides #{Call.def_full_name(base_type, base_method)} which has an explicit return type of #{original_base_return_type}.\n#{@program.colorize("Please add an explicit return type (#{base_return_type} or a subtype of it) to this method as well.").yellow.bold}\n\n#{this_warning_will_become_an_error}"
+      report_warning(method, "this method overrides #{Call.def_full_name(base_type, base_method)} which has an explicit return type of #{original_base_return_type}.\n#{@program.colorize("Please add an explicit return type (#{base_return_type} or a subtype of it) to this method as well.").yellow.bold}\n\n#{this_warning_will_become_an_error}")
       return
     end
 
     return_type = type.lookup_type?(return_type_node)
     unless return_type
-      @program.warning_failures << return_type_node.warning "can't resolve return type #{return_type_node}\n#{this_warning_will_become_an_error}"
+      report_warning(return_type_node, "can't resolve return type #{return_type_node}\n#{this_warning_will_become_an_error}")
       return
     end
 
     unless return_type.implements?(base_return_type)
-      @program.warning_failures << return_type_node.warning "this method must return #{base_return_type}, which is the return type of the overridden method #{Call.def_full_name(base_type, base_method)}, or a subtype of it, not #{return_type}\n#{this_warning_will_become_an_error}"
+      report_warning(return_type_node, "this method must return #{base_return_type}, which is the return type of the overridden method #{Call.def_full_name(base_type, base_method)}, or a subtype of it, not #{return_type}\n#{this_warning_will_become_an_error}")
       return
     end
   end
@@ -212,13 +215,45 @@ class Crystal::AbstractDefChecker
   end
 
   def find_base_generic_instantiation(type : Type, base_type : GenericType)
-    type.ancestors.find do |t|
+    base = type.ancestors.find do |t|
       t.is_a?(GenericInstanceType) && t.generic_type == base_type
-    end.as(GenericInstanceType)
+    end
+
+    # It might happen that we don't find a generic instantiation in the ancestors
+    # if the method is implemented in a supertype of where the abstract method is
+    # defined, like:
+    #
+    # ```
+    # module Base(T)
+    #   def size
+    #   end
+    # end
+    #
+    # module Child(T)
+    #   include Base(T)
+    #
+    #   abstract def size
+    # end
+    #
+    # class Foo
+    #   include Child(Int32)
+    # end
+    # ```
+    #
+    # In the above we are looking for `size` and usually expect it
+    # to be in subtypes of `Child`, but in this case it's in a supertype.
+    base ? base.as(GenericInstanceType) : nil
   end
 
   private def this_warning_will_become_an_error
     @program.colorize("The above warning will become an error in a future Crystal version.").yellow.bold
+  end
+
+  private def report_warning(node, message)
+    return unless @program.warnings.all?
+    return if @program.ignore_warning_due_to_location?(node.location)
+
+    @program.warning_failures << node.warning(message)
   end
 
   class ReplacePathWithTypeVar < Visitor

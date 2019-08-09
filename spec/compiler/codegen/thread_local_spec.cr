@@ -1,9 +1,9 @@
 require "../../spec_helper"
 
 {% if !flag?(:openbsd) %}
-describe "Codegen: thread local" do
-  it "works with class variables" do
-    run(%(
+  describe "Codegen: thread local" do
+    it "works with class variables" do
+      run(%(
       require "prelude"
 
       class Foo
@@ -22,10 +22,10 @@ describe "Codegen: thread local" do
 
       Foo.var
     )).to_i.should eq(123)
-  end
+    end
 
-  it "works with class variable in main thread" do
-    run(%(
+    it "works with class variable in main thread" do
+      run(%(
       require "prelude"
 
       class Foo
@@ -39,10 +39,10 @@ describe "Codegen: thread local" do
 
       Foo.a
       )).to_i.should eq(123)
-  end
+    end
 
-  it "compiles with class variable referenced from initializer" do
-    run(%(
+    it "compiles with class variable referenced from initializer" do
+      run(%(
       require "prelude"
 
       class Foo
@@ -61,6 +61,6 @@ describe "Codegen: thread local" do
 
       0
     ))
+    end
   end
-end
 {% end %}

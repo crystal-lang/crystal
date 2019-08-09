@@ -149,5 +149,7 @@ class HTTP::Client::Response
     HTTP.parse_headers_and_body(io, body_type: body_type, decompress: decompress) do |headers, body|
       return yield new status, nil, headers, status_message, http_version, body
     end
+
+    nil
   end
 end

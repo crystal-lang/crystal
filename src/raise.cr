@@ -133,7 +133,7 @@ end
 
   # :nodoc:
   fun __crystal_personality(state : LibUnwind::State, ucb : LibUnwind::ControlBlock*, context : LibUnwind::Context) : LibUnwind::ReasonCode
-    #puts "\n__crystal_personality(#{state}, #{ucb}, #{context})"
+    # puts "\n__crystal_personality(#{state}, #{ucb}, #{context})"
 
     case LibUnwind::State.new(state.value & LibUnwind::State::ACTION_MASK.value)
     when LibUnwind::State::VIRTUAL_UNWIND_FRAME

@@ -170,6 +170,23 @@ struct BigRational < Number
     BigRational.new { |mpq| LibGMP.mpq_neg(mpq, self) }
   end
 
+  # Raises the rational to the *other*th power
+  #
+  # This will raise `DivisionByZeroError` if rational is 0 and *other* is negative.
+  #
+  # ```
+  # require "big"
+  #
+  # BigRational.new(2, 3) ** 2  # => 4/9
+  # BigRational.new(2, 3) ** -1 # => 3/2
+  # ```
+  def **(other : Int) : BigRational
+    if other < 0
+      return (self ** -other).inv
+    end
+    BigRational.new(numerator ** other, denominator ** other)
+  end
+
   # Returns a new `BigRational` as 1/r.
   #
   # This will raise an exception if rational is 0.

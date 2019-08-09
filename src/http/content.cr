@@ -97,7 +97,17 @@ module HTTP
     # in the chunked trailer part (see [RFC 7230 section 4.1.2](https://tools.ietf.org/html/rfc7230#section-4.1.2)).
     getter headers : HTTP::Headers { HTTP::Headers.new }
 
-    def initialize(@io : IO)
+    # Returns the maximum permitted combined size for the trailing headers.
+    #
+    # When parsing the trailing headers `ChunkedContent` keeps track of the
+    # amount of total bytes consumed for all headers (including line breaks).
+    # If the combined byte size of all headers is larger than the permitted size,
+    # `IO::Error` is raised.
+    #
+    # Default: `HTTP::MAX_HEADERS_SIZE`
+    getter max_headers_size : Int32
+
+    def initialize(@io : IO, *, @max_headers_size : Int32 = HTTP::MAX_HEADERS_SIZE)
       @chunk_remaining = -1
       @received_final_chunk = false
     end
@@ -192,7 +202,7 @@ module HTTP
     end
 
     private def read_chunk_size
-      line = @io.read_line(HTTP::MAX_HEADER_SIZE, chomp: true)
+      line = @io.read_line(@max_headers_size, chomp: true)
 
       if index = line.byte_index(';'.ord)
         chunk_size = line.byte_slice(0, index)
@@ -204,9 +214,15 @@ module HTTP
     end
 
     private def read_trailer
+      max_size = @max_headers_size
+
       while true
-        line = @io.read_line(HTTP::MAX_HEADER_SIZE, chomp: true)
+        line = @io.read_line(max_size + 1, chomp: true)
         break if line.empty?
+        max_size -= line.bytesize
+        if max_size < 0
+          raise IO::Error.new("Trailing headers too long")
+        end
 
         key, value = HTTP.parse_header(line)
         break unless headers.add?(key, value)

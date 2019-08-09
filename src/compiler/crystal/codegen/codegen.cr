@@ -78,9 +78,14 @@ module Crystal
     end
 
     def size_of(type)
-      size = llvm_typer.size_of(llvm_typer.llvm_type(type))
-      size = 1 if size == 0
-      size
+      if type.void?
+        # We need `sizeof(Void)` to be 1 because doing
+        # `Pointer(Void).malloc` must work like `Pointer(UInt8).malloc`,
+        # that is, consider Void like the size of a byte.
+        1
+      else
+        llvm_typer.size_of(llvm_typer.llvm_type(type))
+      end
     end
 
     def instance_size_of(type)
@@ -1209,7 +1214,12 @@ module Crystal
           @last = cast_to last_value, to_type
         end
       elsif obj_type.pointer?
-        @last = cast_to last_value, to_type
+        # Special case: for `ptr.as(Nil)` there's no bitcast involved
+        if to_type.nil_type?
+          @last = llvm_nil
+        else
+          @last = cast_to last_value, to_type
+        end
       else
         resulting_type = node.type
         if node.upcast?

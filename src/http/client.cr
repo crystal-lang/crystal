@@ -758,7 +758,14 @@ class HTTP::Client
 
     {% if !flag?(:without_openssl) %}
       if tls = @tls
-        socket = OpenSSL::SSL::Socket::Client.new(socket, context: tls, sync_close: true, hostname: @host)
+        tcp_socket = socket
+        begin
+          socket = OpenSSL::SSL::Socket::Client.new(tcp_socket, context: tls, sync_close: true, hostname: @host)
+        rescue exc
+          # don't leak the TCP socket when the SSL connection failed
+          tcp_socket.close
+          raise exc
+        end
       end
     {% end %}
 

@@ -583,4 +583,23 @@ describe "Semantic: abstract def" do
       ),
       "warning in line 8\nWarning: can't resolve return type Unknown"
   end
+
+  it "doesn't crash when abstract method is implemented by supertype (#8031)" do
+    semantic(%(
+      module Base(T)
+        def size
+        end
+      end
+
+      module Child(T)
+        include Base(T)
+
+        abstract def size
+      end
+
+      class Foo
+        include Child(Int32)
+      end
+    ))
+  end
 end
