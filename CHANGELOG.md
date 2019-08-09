@@ -1,3 +1,41 @@
+# 0.30.1 (2019-08-12)
+
+## Standard library
+
+### Numeric
+
+- Fixed `Number#humanize` digits. ([#8027](https://github.com/crystal-lang/crystal/pull/8027), thanks @straight-shoota)
+
+### Networking
+
+- Fixed TCP socket leaking after failed SSL connect in `HTTP::Client#socket`. ([#8025](https://github.com/crystal-lang/crystal/pull/8025), thanks @straight-shoota)
+- Honor normalized header names for HTTP requests. ([#8061](https://github.com/crystal-lang/crystal/pull/8061), thanks @asterite)
+
+### Concurrency
+
+- Don't resume fibers directly from event loop callbacks (or support for libevent 2.1.11). ([#8058](https://github.com/crystal-lang/crystal/pull/8058), thanks @waj)
+
+## Compiler
+
+- Fixed `sizeof(Nil)` and other empty types. ([#8040](https://github.com/crystal-lang/crystal/pull/8040), thanks @asterite)
+- Avoid internal globals of type i128 or u128. (or workaround [a llvm 128 bits bug](https://bugs.llvm.org/show_bug.cgi?id=42932)). ([#8063](https://github.com/crystal-lang/crystal/pull/8063), thanks @bcardiff, @asterite)
+
+### Language semantics
+
+- Consider abstract method implementation in supertype for abstract method checks. ([#8035](https://github.com/crystal-lang/crystal/pull/8035), thanks @asterite)
+
+## Tools
+
+### Formatter
+
+- Handle consecutive macro literals when subformatting. ([#8034](https://github.com/crystal-lang/crystal/pull/8034), thanks @asterite)
+- Fixed crash when formatting syntax error inside macro. ([#8055](https://github.com/crystal-lang/crystal/pull/8055), thanks @asterite)
+
+## Others
+
+- Use LLVM 6.0.1 for darwin official packages. ([#7994](https://github.com/crystal-lang/crystal/pull/7994), thanks @bcardiff)
+- Split std_specs in 32 bits CI. ([#8065](https://github.com/crystal-lang/crystal/pull/8065), thanks @bcardiff)
+
 # 0.30.0 (2019-08-01)
 
 ## Language changes
@@ -111,7 +149,7 @@
 
 - Update CI to use 0.29.0. ([#7863](https://github.com/crystal-lang/crystal/pull/7863), thanks @bcardiff)
 - Automated snap publishing. ([#7893](https://github.com/crystal-lang/crystal/pull/7893), thanks @bcardiff)
-- Use LLVM 6.0.1 for darwin official packages. ([#7994](https://github.com/crystal-lang/crystal/pull/7994), thanks @bcardiff)
+- ~~Use LLVM 6.0.1 for darwin official packages.~~ ([#7994](https://github.com/crystal-lang/crystal/pull/7994), thanks @bcardiff)
 
 # 0.29.0 (2019-06-05)
 
