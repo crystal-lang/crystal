@@ -1,44 +1,81 @@
 require "json"
 require "big"
 
-def BigInt.new(pull : JSON::PullParser)
-  pull.read_int
-  BigInt.new(pull.raw_value)
-end
-
-def BigInt.from_json_object_key?(key : String)
-  BigInt.new(key)
-rescue ArgumentError
-  nil
-end
-
-def BigFloat.new(pull : JSON::PullParser)
-  pull.read_float
-  BigFloat.new(pull.raw_value)
-end
-
-def BigFloat.from_json_object_key?(key : String)
-  BigFloat.new(key)
-rescue ArgumentError
-  nil
-end
-
-def BigDecimal.new(pull : JSON::PullParser)
-  case pull.kind
-  when .int?
-    pull.read_int
-    value = pull.raw_value
-  when .float?
-    pull.read_float
-    value = pull.raw_value
-  else
-    value = pull.read_string
+struct BigInt
+  def self.new(pull : JSON::PullParser)
+    case pull.kind
+    when .int?
+      pull.read_int
+      value = pull.raw_value
+    else
+      value = pull.read_string
+    end
+    new(value)
   end
-  BigDecimal.new(value)
+
+  def self.from_json_object_key?(key : String)
+    new(key)
+  rescue ArgumentError
+    nil
+  end
+
+  def to_json(json : JSON::Builder)
+    json.string(to_s)
+  end
 end
 
-def BigDecimal.from_json_object_key?(key : String)
-  BigDecimal.new(key)
-rescue InvalidBigDecimalException
-  nil
+struct BigFloat
+  def self.new(pull : JSON::PullParser)
+    case pull.kind
+    when .int?
+      pull.read_int
+      value = pull.raw_value
+    when .float?
+      pull.read_float
+      value = pull.raw_value
+    else
+      value = pull.read_string
+    end
+    new(value)
+  end
+
+  def self.from_json_object_key?(key : String)
+    new(key)
+  rescue ArgumentError
+    nil
+  end
+
+  def to_json(json : JSON::Builder)
+    json.string(to_s)
+  end
+end
+
+struct BigDecimal
+  def self.new(pull : JSON::PullParser)
+    case pull.kind
+    when .int?
+      pull.read_int
+      value = pull.raw_value
+    when .float?
+      pull.read_float
+      value = pull.raw_value
+    else
+      value = pull.read_string
+    end
+    new(value)
+  end
+
+  def self.from_json_object_key?(key : String)
+    new(key)
+  rescue InvalidBigDecimalException
+    nil
+  end
+
+  def to_json_object_key
+    to_s
+  end
+
+  def to_json(json : JSON::Builder)
+    json.string(to_s)
+  end
 end

@@ -1,26 +1,29 @@
 require "yaml"
 require "big"
 
-def BigInt.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node)
-  unless node.is_a?(YAML::Nodes::Scalar)
-    node.raise "Expected scalar, not #{node.class}"
+struct BigInt
+  def self.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node)
+    unless node.is_a?(YAML::Nodes::Scalar)
+      node.raise "Expected scalar, not #{node.class}"
+    end
+    new(node.value)
   end
-
-  BigInt.new(node.value)
 end
 
-def BigFloat.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node)
-  unless node.is_a?(YAML::Nodes::Scalar)
-    node.raise "Expected scalar, not #{node.class}"
+struct BigFloat
+  def self.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node)
+    unless node.is_a?(YAML::Nodes::Scalar)
+      node.raise "Expected scalar, not #{node.class}"
+    end
+    new(node.value)
   end
-
-  BigFloat.new(node.value)
 end
 
-def BigDecimal.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node)
-  unless node.is_a?(YAML::Nodes::Scalar)
-    node.raise "Expected scalar, not #{node.class}"
+struct BigDecimal
+  def self.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node)
+    unless node.is_a?(YAML::Nodes::Scalar)
+      node.raise "Expected scalar, not #{node.class}"
+    end
+    new(node.value)
   end
-
-  BigDecimal.new(node.value)
 end
