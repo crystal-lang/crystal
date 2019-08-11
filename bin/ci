@@ -77,8 +77,19 @@ build() {
 
   case $ARCH in
     i386)
-      with_build_env 'make crystal std_spec threads=1'
-      with_build_env 'CRYSTAL_SPEC_COMPILER_THREADS=1 make compiler_spec docs threads=1'
+      with_build_env 'make crystal threads=1'
+      with_build_env 'SPEC_SPLIT="0%4" make std_spec threads=1'
+      with_build_env 'SPEC_SPLIT="1%4" make std_spec threads=1'
+      with_build_env 'SPEC_SPLIT="2%4" make std_spec threads=1'
+      with_build_env 'SPEC_SPLIT="3%4" make std_spec threads=1'
+
+      parts=16
+      i=0
+      while [ $i -lt $parts ]; do
+        with_build_env "CRYSTAL_SPEC_COMPILER_THREADS=1 SPEC_SPLIT=\"$i%$parts\" make compiler_spec threads=1"
+        i=$((i + 1))
+      done
+
       with_build_env 'make docs threads=1'
       ;;
     *)
