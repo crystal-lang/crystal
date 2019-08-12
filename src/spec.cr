@@ -118,6 +118,8 @@ if ENV["SPEC_VERBOSE"]? == "1"
   Spec.override_default_formatter(Spec::VerboseFormatter.new)
 end
 
+Spec.add_split_filter ENV["SPEC_SPLIT"]?
+
 {% unless flag?(:win32) %}
   # TODO(windows): re-enable this once Signal is ported
   Signal::INT.trap { Spec.abort! }
