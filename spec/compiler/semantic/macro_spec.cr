@@ -1427,4 +1427,12 @@ describe "Semantic: macro" do
       ),
       "can't instantiate abstract class Foo"
   end
+
+  it "doesn't crash on syntax error inside macro (regression, #8038)" do
+    expect_raises(Crystal::SyntaxException, "unterminated array literal") do
+      semantic(%(
+        {% begin %}[{% end %}
+        ))
+    end
+  end
 end
