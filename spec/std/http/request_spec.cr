@@ -214,6 +214,21 @@ module HTTP
       request.should be_a(Request::BadRequest)
     end
 
+    it "stores normalized case for common header name (lowercase) (#8060)" do
+      request = Request.from_io(IO::Memory.new("GET / HTTP/1.1\r\ncontent-type: foo\r\n\r\n")).as(Request)
+      request.headers.to_s.should eq(%(HTTP::Headers{"content-type" => "foo"}))
+    end
+
+    it "stores normalized case for common header name (capitalized) (#8060)" do
+      request = Request.from_io(IO::Memory.new("GET / HTTP/1.1\r\nContent-Type: foo\r\n\r\n")).as(Request)
+      request.headers.to_s.should eq(%(HTTP::Headers{"Content-Type" => "foo"}))
+    end
+
+    it "stores normalized case for common header name (mixed) (#8060)" do
+      request = Request.from_io(IO::Memory.new("GET / HTTP/1.1\r\nContent-type: foo\r\n\r\n")).as(Request)
+      request.headers.to_s.should eq(%(HTTP::Headers{"Content-type" => "foo"}))
+    end
+
     it "handles long request lines" do
       request = Request.from_io(IO::Memory.new("GET /#{"a" * 4096} HTTP/1.1\r\n\r\n"))
       request.should be_a(Request::BadRequest)
