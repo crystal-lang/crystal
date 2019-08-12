@@ -113,7 +113,7 @@ def warnings_result(code, inject_primitives = true)
 
   output_filename = Crystal.tempfile("crystal-spec-output")
 
-  compiler = Compiler.new
+  compiler = create_spec_compiler
   compiler.warnings = Warnings::All
   compiler.error_on_warnings = false
   compiler.prelude = "empty" # avoid issues in the current std lib
@@ -174,6 +174,10 @@ private def apply_program_flags(target)
   ENV["CRYSTAL_SPEC_COMPILER_FLAGS"]?.try { |f| target.concat(f.split) }
 end
 
+private def spec_compiler_threads
+  ENV["CRYSTAL_SPEC_COMPILER_THREADS"]?.try(&.to_i)
+end
+
 private def encode_program_flags : String
   program_flags_options.join(' ')
 end
@@ -181,7 +185,11 @@ end
 def program_flags_options : Array(String)
   f = [] of String
   apply_program_flags(f)
-  f.map { |x| "-D#{x}" }
+  options = f.map { |x| "-D#{x}" }
+  if (n_threads = spec_compiler_threads)
+    options << "--threads=#{n_threads}"
+  end
+  options
 end
 
 class Crystal::SpecRunOutput
@@ -199,6 +207,15 @@ class Crystal::SpecRunOutput
   def to_b
     @output == "true"
   end
+end
+
+def create_spec_compiler
+  compiler = Compiler.new
+  if (n_threads = spec_compiler_threads)
+    compiler.n_threads = n_threads
+  end
+
+  compiler
 end
 
 def run(code, filename = nil, inject_primitives = true, debug = Crystal::Debug::None, flags = nil)
@@ -220,7 +237,7 @@ def run(code, filename = nil, inject_primitives = true, debug = Crystal::Debug::
 
     output_filename = Crystal.tempfile("crystal-spec-output")
 
-    compiler = Compiler.new
+    compiler = create_spec_compiler
     compiler.debug = debug
     compiler.flags.concat flags if flags
     apply_program_flags(compiler.flags)
