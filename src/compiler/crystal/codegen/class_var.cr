@@ -155,6 +155,14 @@ class Crystal::CodeGenVisitor
     end
   end
 
+  def initialize_simple_class_var(owner, class_var, initializer)
+    global = declare_class_var(owner, initializer.name, class_var.type, class_var.thread_local?)
+    request_value do
+      accept initializer.node
+    end
+    global.initializer = @last
+  end
+
   def read_class_var(node : ClassVar)
     class_var = node.var
     read_class_var(node, class_var)
@@ -180,7 +188,7 @@ class Crystal::CodeGenVisitor
     end
 
     initializer = class_var.initializer
-    if !initializer || class_var.uninitialized?
+    if !initializer || initializer.node.simple_literal? || class_var.uninitialized?
       # Read directly without init flag, but make sure to declare the global in this module too
       global_name = class_var_global_name(class_var.owner, class_var.name)
       global = get_global global_name, class_var.type, class_var
