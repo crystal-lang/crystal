@@ -530,9 +530,25 @@ struct Slice(T)
     sizeof(T) * size
   end
 
-  def ==(other : self)
-    return false if bytesize != other.bytesize
-    return LibC.memcmp(to_unsafe.as(Void*), other.to_unsafe.as(Void*), bytesize) == 0
+  # Returns `true` if `self` and *other* have the same size and all their
+  # elements are equal, `false` otherwise.
+  #
+  # ```
+  # Bytes[1, 2] == Bytes[1, 2]    # => true
+  # Bytes[1, 3] == Bytes[1, 2]    # => false
+  # Bytes[1, 2] == Bytes[1, 2, 3] # => false
+  # ```
+  def ==(other : Slice(U)) : Bool forall U
+    return false if size != other.size
+
+    {% if T == UInt8 && U == UInt8 %}
+      to_unsafe.memcmp(other.to_unsafe, size) == 0
+    {% else %}
+      each_with_index do |elem, i|
+        return false unless elem == other.to_unsafe[i]
+      end
+      true
+    {% end %}
   end
 
   def to_slice

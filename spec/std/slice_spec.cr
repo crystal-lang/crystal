@@ -351,12 +351,28 @@ describe "Slice" do
     slice.bytesize.should eq(8)
   end
 
-  it "does ==" do
-    a = Slice.new(3) { |i| i }
-    b = Slice.new(3) { |i| i }
-    c = Slice.new(3) { |i| i + 1 }
-    a.should eq(b)
-    a.should_not eq(c)
+  describe "==" do
+    it "does ==" do
+      a = Slice.new(3) { |i| i }
+      b = Slice.new(3) { |i| i }
+      c = Slice.new(3) { |i| i + 1 }
+      a.should eq(b)
+      a.should_not eq(c)
+    end
+
+    it "does == with same type, different runtime instances" do
+      a = Slice.new(3, &.to_s)
+      b = Slice.new(3, &.to_s)
+      a.should eq(b)
+    end
+
+    it "does == for bytes" do
+      a = Bytes[1, 2, 3]
+      b = Bytes[1, 2, 3]
+      c = Bytes[1, 2, 4]
+      a.should eq(b)
+      a.should_not eq(c)
+    end
   end
 
   it "does macro []" do
