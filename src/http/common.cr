@@ -237,13 +237,7 @@ module HTTP
     # Check if the header name is a common one.
     # If so we avoid having to allocate a string for it.
     if slice.size < 20
-      name = COMMON_HEADERS.bsearch do |string|
-        min_size = Math.min(slice.size, string.bytesize)
-        cmp = slice.to_unsafe.memcmp(string.to_unsafe, min_size)
-        next false if cmp > 0
-        next true if cmp < 0
-        slice.size <= string.bytesize
-      end
+      name = COMMON_HEADERS.bsearch { |string| slice <= string.to_slice }
       return name if name && name.to_slice == slice
     end
 

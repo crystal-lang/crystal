@@ -12,6 +12,7 @@ require "slice/sort"
 # `String#to_slice` is read-only.
 struct Slice(T)
   include Indexable(T)
+  include Comparable(Slice)
 
   # Creates a new `Slice` with the given *args*. The type of the
   # slice will be the union of the type of the given *args*.
@@ -530,9 +531,55 @@ struct Slice(T)
     sizeof(T) * size
   end
 
-  def ==(other : self)
-    return false if bytesize != other.bytesize
-    return LibC.memcmp(to_unsafe.as(Void*), other.to_unsafe.as(Void*), bytesize) == 0
+  # Combined comparison operator.
+  #
+  # Returns `-1`, `0` or `1` depending on whether `self` is less than *other*, equals *other*
+  # or is greater than *other*.
+  #
+  # It compares the elements of both slices in the same position using the
+  # `<=>` operator. As soon as one of such comparisons returns a non-zero
+  # value, that result is the return value of the comparison.
+  #
+  # If all elements are equal, the comparison is based on the size of the arrays.
+  #
+  # ```
+  # Bytes[8] <=> Bytes[1, 2, 3] # => 1
+  # Bytes[2] <=> Bytes[4, 2, 3] # => -1
+  # Bytes[1, 2] <=> Bytes[1, 2] # => 0
+  # ```
+  def <=>(other : Slice(U)) forall U
+    min_size = Math.min(size, other.size)
+    {% if T == UInt8 && U == UInt8 %}
+      cmp = to_unsafe.memcmp(other.to_unsafe, min_size)
+      return cmp if cmp != 0
+    {% else %}
+      0.upto(min_size - 1) do |i|
+        n = to_unsafe[i] <=> other.to_unsafe[i]
+        return n if n != 0
+      end
+    {% end %}
+    size <=> other.size
+  end
+
+  # Returns `true` if `self` and *other* have the same size and all their
+  # elements are equal, `false` otherwise.
+  #
+  # ```
+  # Bytes[1, 2] == Bytes[1, 2]    # => true
+  # Bytes[1, 3] == Bytes[1, 2]    # => false
+  # Bytes[1, 2] == Bytes[1, 2, 3] # => false
+  # ```
+  def ==(other : Slice(U)) : Bool forall U
+    return false if size != other.size
+
+    {% if T == UInt8 && U == UInt8 %}
+      to_unsafe.memcmp(other.to_unsafe, size) == 0
+    {% else %}
+      each_with_index do |elem, i|
+        return false unless elem == other.to_unsafe[i]
+      end
+      true
+    {% end %}
   end
 
   def to_slice
