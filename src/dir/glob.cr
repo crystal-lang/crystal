@@ -147,36 +147,40 @@ class Dir
     private def self.run(sequence, options, &block : String -> _)
       return if sequence.empty?
 
-      path_stack = [] of Tuple(Int32, String?)
-      path_stack << {sequence.size - 1, nil}
+      path_stack = [] of Tuple(Int32, String?, Crystal::System::Dir::Entry?)
+      path_stack << {sequence.size - 1, nil, nil}
 
       while !path_stack.empty?
-        pos, path = path_stack.pop
+        pos, path, dir_entry = path_stack.pop
         cmd = sequence[pos]
 
         next_pos = pos - 1
         case cmd
         when RootDirectory
           raise "unreachable" if path
-          path_stack << {next_pos, root}
+          path_stack << {next_pos, root, nil}
         when DirectoriesOnly
           raise "unreachable" unless path
           fullpath = path == File::SEPARATOR_STRING ? path : path + File::SEPARATOR
-          yield fullpath if dir?(fullpath)
+          if dir_entry
+            yield fullpath if dir_entry.dir?
+          else
+            yield fullpath if dir?(fullpath)
+          end
         when EntryMatch
           return if sequence[pos + 1]?.is_a?(RecursiveDirectories)
           each_child(path) do |entry|
-            next if !options[:match_hidden] && entry.starts_with?('.')
-            yield join(path, entry) if cmd.matches?(entry)
+            next if !options[:match_hidden] && entry.name.starts_with?('.')
+            yield join(path, entry.name) if cmd.matches?(entry.name)
           end
         when DirectoryMatch
           next_cmd = sequence[next_pos]?
 
           each_child(path) do |entry|
-            if cmd.matches?(entry)
-              fullpath = join(path, entry)
-              if dir?(fullpath)
-                path_stack << {next_pos, fullpath}
+            if cmd.matches?(entry.name)
+              if entry.dir?
+                fullpath = join(path, entry.name)
+                path_stack << {next_pos, fullpath, entry}
               end
             end
           end
@@ -185,11 +189,11 @@ class Dir
           full = join(path, cmd.path)
           yield full if File.exists?(full) || File.symlink?(full)
         when ConstantDirectory
-          path_stack << {next_pos, join(path, cmd.path)}
+          path_stack << {next_pos, join(path, cmd.path), nil}
           # Don't check if full exists. It just costs us time
           # and the downstream node will be able to check properly.
         when RecursiveDirectories
-          path_stack << {next_pos, path}
+          path_stack << {next_pos, path, nil}
           next_cmd = sequence[next_pos]?
 
           dir_path = path || ""
@@ -218,25 +222,25 @@ class Dir
               dir_stack.push dir
             end
 
-            if entry = dir.try(&.read)
-              next if {".", ".."}.includes?(entry)
-              next if !options[:match_hidden] && entry.starts_with?('.')
+            if entry = read_entry(dir)
+              next if {".", ".."}.includes?(entry.name)
+              next if !options[:match_hidden] && entry.name.starts_with?('.')
 
               if dir_path.bytesize == 0
-                fullpath = entry
+                fullpath = entry.name
               else
-                fullpath = File.join(dir_path, entry)
+                fullpath = File.join(dir_path, entry.name)
               end
 
               case next_cmd
               when ConstantEntry
-                yield fullpath if next_cmd.path == entry
+                yield fullpath if next_cmd.path == entry.name
               when EntryMatch
-                yield fullpath if next_cmd.matches?(entry)
+                yield fullpath if next_cmd.matches?(entry.name)
               end
 
-              if dir?(fullpath)
-                path_stack << {next_pos, fullpath}
+              if entry.dir?
+                path_stack << {next_pos, fullpath, entry}
 
                 dir_path_stack.push fullpath
                 dir_path = dir_path_stack.last
@@ -283,11 +287,23 @@ class Dir
     end
 
     private def self.each_child(path)
-      Dir.each_child(path || Dir.current) do |entry|
-        yield entry
+      Dir.open(path || Dir.current) do |dir|
+        while entry = read_entry(dir)
+          next if entry.name == "." || entry.name == ".."
+          yield entry
+        end
       end
     rescue exc : Errno
       raise exc unless exc.errno == Errno::ENOENT
+    end
+
+    private def self.read_entry(dir)
+      return unless dir
+
+      # By doing this we get an Entry struct which already tells us
+      # whether something is a directory or not, avoiding having to
+      # call File.info? which is really expensive.
+      Crystal::System::Dir.next_entry(dir.@dir)
     end
   end
 end
