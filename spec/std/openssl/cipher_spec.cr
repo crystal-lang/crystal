@@ -1,5 +1,6 @@
 require "../spec_helper"
 require "openssl/cipher"
+require "openssl/cipher/*"
 
 describe OpenSSL::Cipher do
   it "encrypts/decrypts" do
@@ -43,6 +44,22 @@ describe OpenSSL::Cipher do
     s4.write(c2.final)
     s3.to_s.should eq(data)
     s3.to_slice.should eq(s4.to_slice)
+
+    io = IO::Memory.new
+    OpenSSL::Cipher::Writer.open(io, cipher, key, iv) do |writer|
+      writer << "DATA" * 5
+    end
+
+    io.rewind
+    io.to_slice.should eq(s2.to_slice)
+
+    output = IO::Memory.new
+    OpenSSL::Cipher::Reader.open(io, cipher, key, iv) do |reader|
+      IO.copy reader, output
+    end
+
+    # Fails with extra padding (0x12, 0x12,...)
+    output.to_slice.should eq(s4.to_slice)
   end
 
   it "authenticated?" do
