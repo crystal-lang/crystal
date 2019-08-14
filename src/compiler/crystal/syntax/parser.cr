@@ -15,6 +15,7 @@ module Crystal
 
     property visibility : Visibility?
     property def_nest : Int32
+    property fun_nest : Int32
     property type_nest : Int32
     getter? wants_doc : Bool
     @block_arg_name : String?
@@ -34,6 +35,7 @@ module Crystal
       @is_macro_def = false
       @assigns_special_var = false
       @def_nest = 0
+      @fun_nest = 0
       @type_nest = 0
       @call_args_nest = 0
       @temp_arg_count = 0
@@ -344,7 +346,7 @@ module Crystal
           else
             break unless can_be_assigned?(atomic)
 
-            if atomic.is_a?(Path) && inside_def?
+            if atomic.is_a?(Path) && (inside_def? || inside_fun?)
               raise "dynamic constant assignment. Constants can only be declared at the top level or inside other types."
             end
 
@@ -995,7 +997,7 @@ module Crystal
           check_type_declaration { parse_yield_with_scope }
         when :abstract
           check_type_declaration do
-            check_not_inside_def("can't use abstract inside def") do
+            check_not_inside_def("can't use abstract") do
               doc = @token.doc
 
               next_token_skip_space_or_newline
@@ -1018,18 +1020,22 @@ module Crystal
           end
         when :def
           check_type_declaration do
-            check_not_inside_def("can't define def inside def") do
+            check_not_inside_def("can't define def") do
               parse_def
             end
           end
         when :macro
           check_type_declaration do
-            check_not_inside_def("can't define macro inside def") do
+            check_not_inside_def("can't define macro") do
               parse_macro
             end
           end
         when :require
-          check_type_declaration { parse_require }
+          check_type_declaration do
+            check_not_inside_def("can't require") do
+              parse_require
+            end
+          end
         when :case
           check_type_declaration { parse_case }
         when :select
@@ -1040,37 +1046,37 @@ module Crystal
           check_type_declaration { parse_unless }
         when :include
           check_type_declaration do
-            check_not_inside_def("can't include inside def") do
+            check_not_inside_def("can't include") do
               parse_include
             end
           end
         when :extend
           check_type_declaration do
-            check_not_inside_def("can't extend inside def") do
+            check_not_inside_def("can't extend") do
               parse_extend
             end
           end
         when :class
           check_type_declaration do
-            check_not_inside_def("can't define class inside def") do
+            check_not_inside_def("can't define class") do
               parse_class_def
             end
           end
         when :struct
           check_type_declaration do
-            check_not_inside_def("can't define struct inside def") do
+            check_not_inside_def("can't define struct") do
               parse_class_def is_struct: true
             end
           end
         when :module
           check_type_declaration do
-            check_not_inside_def("can't define module inside def") do
+            check_not_inside_def("can't define module") do
               parse_module_def
             end
           end
         when :enum
           check_type_declaration do
-            check_not_inside_def("can't define enum inside def") do
+            check_not_inside_def("can't define enum") do
               parse_enum_def
             end
           end
@@ -1086,19 +1092,19 @@ module Crystal
           check_type_declaration { parse_break }
         when :lib
           check_type_declaration do
-            check_not_inside_def("can't define lib inside def") do
+            check_not_inside_def("can't define lib") do
               parse_lib
             end
           end
         when :fun
           check_type_declaration do
-            check_not_inside_def("can't define fun inside def") do
+            check_not_inside_def("can't define fun") do
               parse_fun_def top_level: true, require_body: true
             end
           end
         when :alias
           check_type_declaration do
-            check_not_inside_def("can't define alias inside def") do
+            check_not_inside_def("can't define alias") do
               parse_alias
             end
           end
@@ -1120,7 +1126,7 @@ module Crystal
           check_type_declaration { parse_asm }
         when :annotation
           check_type_declaration do
-            check_not_inside_def("can't define annotation inside def") do
+            check_not_inside_def("can't define annotation") do
               parse_annotation_def
             end
           end
@@ -1234,15 +1240,20 @@ module Crystal
     end
 
     def check_not_inside_def(message)
-      if @def_nest == 0
+      if @def_nest == 0 && @fun_nest == 0
         yield
       else
-        raise message, @token.line_number, @token.column_number
+        suffix = @def_nest > 0 ? " inside def" : " inside fun"
+        raise message + suffix, @token.line_number, @token.column_number
       end
     end
 
     def inside_def?
       @def_nest > 0
+    end
+
+    def inside_fun?
+      @fun_nest > 0
     end
 
     def parse_annotation
@@ -2517,7 +2528,6 @@ module Crystal
     end
 
     def parse_require
-      raise "can't require inside def", @token if @def_nest > 0
       raise "can't require inside type declarations", @token if @type_nest > 0
 
       next_token_skip_space
@@ -5365,6 +5375,8 @@ module Crystal
       skip_statement_end
 
       if require_body
+        @fun_nest += 1
+
         if @token.keyword?(:end)
           body = Nop.new
           end_location = token_end_location
@@ -5373,6 +5385,8 @@ module Crystal
           body = parse_expressions
           body, end_location = parse_exception_handler body, implicit: true
         end
+
+        @fun_nest -= 1
       else
         body = nil
         end_location = token_end_location
