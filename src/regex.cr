@@ -174,8 +174,8 @@ require "./regex/*"
 # [optional flags](http://www.pcre.org/original/doc/html/pcreapi.html#SEC11):
 #
 # * `i`: ignore case (PCRE_CASELESS)
-# * `m`: multiline (PCRE_MULTILINE and PCRE_DOTALL)
-# * `x`: extended (PCRE_EXTENDED)
+# * `m`: treat a newline as a character matched by . (PCRE_DOTALL)
+# * `x`: ignore whitespace and comments in the pattern (PCRE_EXTENDED)
 #
 # ```
 # /asdf/ =~ "ASDF"    # => nil
@@ -203,24 +203,26 @@ class Regex
 
   @[Flags]
   enum Options
-    IGNORE_CASE = 1
-    # PCRE native `PCRE_MULTILINE` flag is `2`, and `PCRE_DOTALL` is `4`
-    # - `PCRE_DOTALL` changes the "`.`" meaning
-    # - `PCRE_MULTILINE` changes "`^`" and "`$`" meanings
-    #
-    # Crystal modifies this meaning to have essentially one unique "`m`"
-    # flag that activates both behaviours, so here we do the same by
-    # mapping `MULTILINE` to `PCRE_MULTILINE | PCRE_DOTALL`.
-    MULTILINE = 6
-    EXTENDED  = 8
     # :nodoc:
-    ANCHORED = 16
+    PCRE_CASELESS = 1
     # :nodoc:
-    UTF_8 = 0x00000800
+    PCRE_MULTILINE = 2
     # :nodoc:
-    NO_UTF8_CHECK = 0x00002000
+    PCRE_DOTALL = 4
     # :nodoc:
-    DUPNAMES = 0x00080000
+    PCRE_EXTENDED = 8
+    # :nodoc:
+    PCRE_ANCHORED = 16
+    # :nodoc:
+    PCRE_UTF_8 = 0x00000800
+    # :nodoc:
+    PCRE_NO_UTF8_CHECK = 0x00002000
+    # :nodoc:
+    PCRE_DUPNAMES = 0x00080000
+
+    IGNORE_CASE = PCRE_CASELESS
+    MULTILINE   = PCRE_DOTALL
+    EXTENDED    = PCRE_EXTENDED
   end
 
   # Returns a `Regex::Options` representing the optional flags applied to this `Regex`.
@@ -251,7 +253,7 @@ class Regex
     source = source.gsub('\u{0}', "\\0")
     @source = source
 
-    @re = LibPCRE.compile(@source, (options | Options::UTF_8 | Options::NO_UTF8_CHECK | Options::DUPNAMES), out errptr, out erroffset, nil)
+    @re = LibPCRE.compile(@source, self.class.with_default_options(@options), out errptr, out erroffset, nil)
     raise ArgumentError.new("#{String.new(errptr)} at #{erroffset}") if @re.null?
     @extra = LibPCRE.study(@re, 0, out studyerrptr)
     raise ArgumentError.new("#{String.new(studyerrptr)}") if @extra.null? && studyerrptr
@@ -266,12 +268,20 @@ class Regex
   # Regex.error?("(foo|bar")  # => "missing ) at 8"
   # ```
   def self.error?(source)
-    re = LibPCRE.compile(source, (Options::UTF_8 | Options::NO_UTF8_CHECK | Options::DUPNAMES), out errptr, out erroffset, nil)
+    re = LibPCRE.compile(source, with_default_options(Options::None), out errptr, out erroffset, nil)
     if re
       nil
     else
       "#{String.new(errptr)} at #{erroffset}"
     end
+  end
+
+  protected def self.with_default_options(options)
+    options |
+      Options::PCRE_UTF_8 |
+      Options::PCRE_NO_UTF8_CHECK |
+      Options::PCRE_DUPNAMES |
+      Options::PCRE_MULTILINE
   end
 
   # Returns `true` if *char* need to be escaped, `false` otherwise.
@@ -479,7 +489,7 @@ class Regex
 
     ovector_size = (@captures + 1) * 3
     ovector = Pointer(Int32).malloc(ovector_size)
-    ret = LibPCRE.exec(@re, @extra, str, str.bytesize, byte_index, (options | Options::NO_UTF8_CHECK), ovector, ovector_size)
+    ret = LibPCRE.exec(@re, @extra, str, str.bytesize, byte_index, (options | Options::PCRE_NO_UTF8_CHECK), ovector, ovector_size)
     if ret > 0
       match = MatchData.new(self, @re, str, byte_index, ovector, @captures)
     else

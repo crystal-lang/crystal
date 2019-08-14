@@ -13,7 +13,9 @@ describe "Regex" do
 
   it "does inspect" do
     /foo/.inspect.should eq("/foo/")
-    /foo/.inspect.should eq("/foo/")
+    /foo/i.inspect.should eq("/foo/i")
+    /foo/m.inspect.should eq("/foo/m")
+    /foo/x.inspect.should eq("/foo/x")
     /foo/imx.inspect.should eq("/foo/imx")
   end
 
@@ -65,12 +67,11 @@ describe "Regex" do
     ("HeLlO" =~ /hello/i).should eq(0)
   end
 
-  it "matches lines beginnings on ^ in multiline mode" do
-    ("foo\nbar" =~ /^bar/).should be_nil
-    ("foo\nbar" =~ /^bar/m).should eq(4)
+  it "matches lines beginnings (multiline on by default)" do
+    ("foo\nbar" =~ /^bar/).should eq(4)
   end
 
-  it "matches multiline" do
+  it "matches multiline (pcre dotall)" do
     ("foo\n<bar\n>baz" =~ /<bar.*?>/).should be_nil
     ("foo\n<bar\n>baz" =~ /<bar.*?>/m).should eq(4)
   end

@@ -90,7 +90,7 @@ class StringScanner
   # s.scan(/.*/)    # => ""
   # ```
   def scan(pattern)
-    match(pattern, advance: true, options: Regex::Options::ANCHORED)
+    match(pattern, advance: true, options: Regex::Options::PCRE_ANCHORED)
   end
 
   # Scans the string _until_ the *pattern* is matched. Returns the substring up
@@ -109,7 +109,7 @@ class StringScanner
     match(pattern, advance: true, options: Regex::Options::None)
   end
 
-  private def match(pattern, advance = true, options = Regex::Options::ANCHORED)
+  private def match(pattern, advance = true, options = Regex::Options::PCRE_ANCHORED)
     match = pattern.match_at_byte_index(@str, @byte_offset, options)
     @last_match = match
     if match
@@ -165,7 +165,7 @@ class StringScanner
   # s.check(/\w+/) # => "is"
   # ```
   def check(pattern)
-    match(pattern, advance: false, options: Regex::Options::ANCHORED)
+    match(pattern, advance: false, options: Regex::Options::PCRE_ANCHORED)
   end
 
   # Returns the value that `#scan_until` would return, without advancing the

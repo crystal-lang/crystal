@@ -4105,7 +4105,7 @@ class String
   end
 
   def starts_with?(re : Regex)
-    !!($~ = re.match_at_byte_index(self, 0, Regex::Options::ANCHORED))
+    !!($~ = re.match_at_byte_index(self, 0, Regex::Options::PCRE_ANCHORED))
   end
 
   def ends_with?(str : String)
