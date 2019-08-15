@@ -3,6 +3,7 @@ require "../spec_helper"
 require "http/web_socket"
 require "random/secure"
 require "../../support/ssl"
+require "../socket/spec_helper.cr"
 
 private def assert_text_packet(packet, size, final = false)
   assert_packet packet, HTTP::WebSocket::Protocol::Opcode::TEXT, size, final: final
@@ -296,83 +297,85 @@ describe HTTP::WebSocket do
     end
   end
 
-  it "negotiates over HTTP correctly" do
-    address_chan = Channel(Socket::IPAddress).new
+  each_ip_family do |family, _, any_address|
+    it "negotiates over HTTP correctly" do
+      address_chan = Channel(Socket::IPAddress).new
 
-    spawn do
-      http_ref = nil
-      ws_handler = HTTP::WebSocketHandler.new do |ws, ctx|
-        ctx.request.path.should eq("/foo/bar")
-        ctx.request.query_params["query"].should eq("arg")
-        ctx.request.query_params["yes"].should eq("please")
+      spawn do
+        http_ref = nil
+        ws_handler = HTTP::WebSocketHandler.new do |ws, ctx|
+          ctx.request.path.should eq("/foo/bar")
+          ctx.request.query_params["query"].should eq("arg")
+          ctx.request.query_params["yes"].should eq("please")
 
-        ws.on_message do |str|
-          ws.send("pong #{str}")
+          ws.on_message do |str|
+            ws.send("pong #{str}")
+          end
+
+          ws.on_close do
+            http_ref.not_nil!.close
+          end
         end
 
-        ws.on_close do
-          http_ref.not_nil!.close
-        end
+        http_server = http_ref = HTTP::Server.new([ws_handler])
+        address = http_server.bind_tcp(any_address, 0)
+        address_chan.send(address)
+        http_server.listen
       end
 
-      http_server = http_ref = HTTP::Server.new([ws_handler])
-      address = http_server.bind_unused_port
-      address_chan.send(address)
-      http_server.listen
+      listen_address = address_chan.receive
+
+      ws2 = HTTP::WebSocket.new("ws://#{listen_address}/foo/bar?query=arg&yes=please")
+
+      random = Random::Secure.hex
+      ws2.on_message do |str|
+        str.should eq("pong #{random}")
+        ws2.close
+      end
+      ws2.send(random)
+
+      ws2.run
     end
 
-    listen_address = address_chan.receive
+    it "negotiates over HTTPS correctly" do
+      address_chan = Channel(Socket::IPAddress).new
 
-    ws2 = HTTP::WebSocket.new("ws://#{listen_address}/foo/bar?query=arg&yes=please")
+      server_context, client_context = ssl_context_pair
 
-    random = Random::Secure.hex
-    ws2.on_message do |str|
-      str.should eq("pong #{random}")
-      ws2.close
-    end
-    ws2.send(random)
+      spawn do
+        http_ref = nil
+        ws_handler = HTTP::WebSocketHandler.new do |ws, ctx|
+          ctx.request.path.should eq("/")
 
-    ws2.run
-  end
+          ws.on_message do |str|
+            ws.send("pong #{str}")
+          end
 
-  it "negotiates over HTTPS correctly" do
-    address_chan = Channel(Socket::IPAddress).new
-
-    server_context, client_context = ssl_context_pair
-
-    spawn do
-      http_ref = nil
-      ws_handler = HTTP::WebSocketHandler.new do |ws, ctx|
-        ctx.request.path.should eq("/")
-
-        ws.on_message do |str|
-          ws.send("pong #{str}")
+          ws.on_close do
+            http_ref.not_nil!.close
+          end
         end
 
-        ws.on_close do
-          http_ref.not_nil!.close
-        end
+        http_server = http_ref = HTTP::Server.new([ws_handler])
+
+        address = http_server.bind_tls(any_address, context: server_context)
+        address_chan.send(address)
+        http_server.listen
       end
 
-      http_server = http_ref = HTTP::Server.new([ws_handler])
+      listen_address = address_chan.receive
 
-      address = http_server.bind_tls("127.0.0.1", context: server_context)
-      address_chan.send(address)
-      http_server.listen
+      ws2 = HTTP::WebSocket.new(listen_address.address, port: listen_address.port, path: "/", tls: client_context)
+
+      random = Random::Secure.hex
+      ws2.on_message do |str|
+        str.should eq("pong #{random}")
+        ws2.close
+      end
+      ws2.send(random)
+
+      ws2.run
     end
-
-    listen_address = address_chan.receive
-
-    ws2 = HTTP::WebSocket.new(listen_address.address, port: listen_address.port, path: "/", tls: client_context)
-
-    random = Random::Secure.hex
-    ws2.on_message do |str|
-      str.should eq("pong #{random}")
-      ws2.close
-    end
-    ws2.send(random)
-
-    ws2.run
   end
 
   it "handshake fails if server does not switch protocols" do
