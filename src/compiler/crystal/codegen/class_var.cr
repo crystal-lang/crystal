@@ -82,23 +82,21 @@ class Crystal::CodeGenVisitor
 
   def initialize_class_var(owner : ClassVarContainer, name : String, meta_vars : MetaVars, node : ASTNode)
     class_var = owner.lookup_class_var(name)
-
-    init_function_name = "~#{class_var_global_initialized_name(owner, name)}"
+    init_func = create_initialize_class_var_function(owner, name, class_var.type, class_var.thread_local?, meta_vars, node)
 
     # For unsafe class var we just initialize them without
     # using a flag to know if they were initialized
-    if class_var.uninitialized?
+    if class_var.uninitialized? || !init_func
       global = declare_class_var(owner, name, class_var.type, class_var.thread_local?)
       global = ensure_class_var_in_this_module(global, owner, name, class_var.type, class_var.thread_local?)
-      func = @main_mod.functions[init_function_name]? ||
-             create_initialize_class_var_function(init_function_name, owner, name, class_var.type, class_var.thread_local?, meta_vars, node)
-      func = check_main_fun init_function_name, func
-      call func
+      if init_func
+        check_main_fun init_func.name, init_func
+        call init_func
+      end
       return global
     end
 
     global, initialized_flag = declare_class_var_and_initialized_flag_in_this_module(owner, name, class_var.type, class_var.thread_local?)
-    # global, initialized_flag = declare_class_var_and_initialized_flag(owner, name, class_var.type, class_var.thread_local?)
 
     initialized_block, not_initialized_block = new_blocks "initialized", "not_initialized"
 
@@ -108,10 +106,8 @@ class Crystal::CodeGenVisitor
     position_at_end not_initialized_block
     store int1(1), initialized_flag
 
-    func = @main_mod.functions[init_function_name]? ||
-           create_initialize_class_var_function(init_function_name, owner, name, class_var.type, class_var.thread_local?, meta_vars, node)
-    func = check_main_fun init_function_name, func
-    call func
+    init_func = check_main_fun init_func.name, init_func
+    call init_func
 
     br initialized_block
 
@@ -120,37 +116,51 @@ class Crystal::CodeGenVisitor
     global
   end
 
-  def create_initialize_class_var_function(fun_name, owner, name, type, thread_local, meta_vars, node)
-    global = declare_class_var(owner, name, type, thread_local)
+  def create_initialize_class_var_function(owner, name, type, thread_local, meta_vars, node)
+    init_function_name = "~#{class_var_global_initialized_name(owner, name)}"
 
-    in_main do
-      define_main_function(fun_name, ([] of LLVM::Type), llvm_context.void, needs_alloca: true) do |func|
-        with_cloned_context do
-          # "self" in a constant is the class_var owner
-          context.type = owner
+    @main_mod.functions[init_function_name]? || begin
+      global = declare_class_var(owner, name, type, thread_local)
 
-          # Start with fresh variables
-          context.vars = LLVMVars.new
+      discard = false
+      new_func = in_main do
+        define_main_function(init_function_name, ([] of LLVM::Type), llvm_context.void, needs_alloca: true) do |func|
+          with_cloned_context do
+            # "self" in a constant is the class_var owner
+            context.type = owner
 
-          alloca_vars meta_vars
+            # Start with fresh variables
+            context.vars = LLVMVars.new
 
-          request_value do
-            accept node
+            alloca_vars meta_vars
+
+            request_value do
+              accept node
+            end
+
+            node_type = node.type
+
+            if node_type.nil_type? && !type.nil_type?
+              global.initializer = llvm_type(type).null
+              discard = true
+            elsif @last.constant? && (type.is_a?(PrimitiveType) || type.is_a?(EnumType))
+              global.initializer = @last
+              discard = true
+            else
+              global.initializer = llvm_type(type).null
+              assign global, type, node.type, @last
+            end
+
+            ret
           end
-
-          node_type = node.type
-
-          if node_type.nil_type? && !type.nil_type?
-            global.initializer = llvm_type(type).null
-          elsif @last.constant? && (type.is_a?(PrimitiveType) || type.is_a?(EnumType))
-            global.initializer = @last
-          else
-            global.initializer = llvm_type(type).null
-            assign global, type, node.type, @last
-          end
-
-          ret
         end
+      end
+
+      if discard
+        new_func.delete
+        nil
+      else
+        new_func
       end
     end
   end
@@ -188,21 +198,28 @@ class Crystal::CodeGenVisitor
     end
 
     initializer = class_var.initializer
-    if !initializer || initializer.node.simple_literal? || class_var.uninitialized?
+    if !initializer || class_var.uninitialized?
       # Read directly without init flag, but make sure to declare the global in this module too
-      global_name = class_var_global_name(class_var.owner, class_var.name)
-      global = get_global global_name, class_var.type, class_var
-      global = ensure_class_var_in_this_module(global, class_var.owner, class_var.name, class_var.type, class_var.thread_local?)
-      return global
+      return get_class_var_global(class_var)
     end
 
     initializer = initializer.not_nil!
 
     read_function_name = "~#{class_var_global_name(class_var.owner, class_var.name)}:read"
-    func = @main_mod.functions[read_function_name]? ||
-           create_read_class_var_function(read_function_name, class_var.owner, class_var.name, class_var.type, class_var.thread_local?, initializer.meta_vars, initializer.node)
-    func = check_main_fun read_function_name, func
-    call func
+    func = create_read_class_var_function(read_function_name, class_var.owner, class_var.name, class_var.type, class_var.thread_local?, initializer.meta_vars, initializer.node)
+    if func
+      func = check_main_fun read_function_name, func
+      call func
+    else
+      get_class_var_global(class_var)
+    end
+  end
+
+  def get_class_var_global(class_var)
+    global_name = class_var_global_name(class_var.owner, class_var.name)
+    global = get_global global_name, class_var.type, class_var
+    global = ensure_class_var_in_this_module(global, class_var.owner, class_var.name, class_var.type, class_var.thread_local?)
+    return global
   end
 
   def read_virtual_class_var_ptr(node, class_var, owner)
@@ -295,6 +312,13 @@ class Crystal::CodeGenVisitor
   end
 
   def create_read_class_var_function(fun_name, owner, name, type, thread_local, meta_vars, node)
+    if func = @main_mod.functions[fun_name]?
+      return func
+    end
+
+    init_func = create_initialize_class_var_function(owner, name, type, thread_local, meta_vars, node)
+    return nil if !init_func
+
     global, initialized_flag = declare_class_var_and_initialized_flag(owner, name, type, thread_local)
 
     in_main do
@@ -307,10 +331,8 @@ class Crystal::CodeGenVisitor
         position_at_end not_initialized_block
         store int1(1), initialized_flag
 
-        init_function_name = "~#{class_var_global_initialized_name(owner, name)}"
-        func = @main_mod.functions[init_function_name]? ||
-               create_initialize_class_var_function(init_function_name, owner, name, type, thread_local, meta_vars, node)
-        call func
+        check_main_fun init_func.name, init_func
+        call init_func
 
         br initialized_block
 

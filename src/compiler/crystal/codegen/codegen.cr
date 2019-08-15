@@ -272,27 +272,6 @@ module Crystal
           next unless initializer.simple?
 
           initialize_simple_const(initializer)
-        when ClassVarInitializer
-          next unless initializer.node.simple_literal?
-
-          owner = initializer.owner
-          class_var = owner.class_vars[initializer.name]
-          next if class_var.thread_local?
-
-          initialize_simple_class_var(owner, class_var, initializer)
-          owner.all_subclasses.each do |subclass|
-            if subclass.is_a?(ClassVarContainer)
-              initialize_simple_class_var(subclass, class_var, initializer)
-            end
-          end
-
-          if owner.responds_to?(:raw_including_types) && (including_types = owner.raw_including_types)
-            including_types.each do |type|
-              if type.is_a?(ClassVarContainer)
-                initialize_simple_class_var(type, class_var, initializer)
-              end
-            end
-          end
         end
       end
     end
@@ -964,12 +943,8 @@ module Crystal
       # or a class variable initializer
       unless target_type
         if target.is_a?(ClassVar)
-          class_var = target.var.initializer.try(&.owner.lookup_class_var(target.name))
-
-          if !class_var || class_var.thread_local? || !value.simple_literal?
-            # This is the case of a class var initializer
-            initialize_class_var(target)
-          end
+          # This is the case of a class var initializer
+          initialize_class_var(target)
         end
         return false
       end
