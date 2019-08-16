@@ -503,6 +503,10 @@ module Crystal
     # The (optional) initial value of a class variable
     property initializer : ClassVarInitializer?
 
+    # Flag used during codegen to indicate the initializer is simple
+    # and doesn't require a call to a function
+    property? simple_initializer = false
+
     # Is this variable thread local? Only applicable
     # to global and class variables.
     property? thread_local = false

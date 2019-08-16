@@ -116,6 +116,7 @@ class Crystal::CodeGenVisitor
   end
 
   def create_initialize_class_var_function(class_var, initializer)
+    return nil if class_var.simple_initializer?
     type = class_var.type
     node = initializer.node
     init_function_name = "~#{class_var_global_initialized_name(class_var)}"
@@ -158,6 +159,7 @@ class Crystal::CodeGenVisitor
       end
 
       if discard
+        class_var.simple_initializer = true
         new_func.delete
         nil
       else
