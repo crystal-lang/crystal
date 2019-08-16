@@ -322,6 +322,26 @@ describe "URI" do
     end
   end
 
+  describe "#query_params" do
+    context "when there is no query parameters" do
+      it "returns an empty instance of HTTP::Params" do
+        uri = URI.parse("http://foo.com")
+        uri.query_params.should be_a(HTTP::Params)
+        uri.query_params.should eq(HTTP::Params.new)
+      end
+    end
+
+    it "returns a HTTP::Params instance based on the query parameters" do
+      expected_params = HTTP::Params{"id" => "30", "limit" => "5"}
+
+      uri = URI.parse("http://foo.com?id=30&limit=5#time=1305298413")
+      uri.query_params.should eq(expected_params)
+
+      uri = URI.parse("?id=30&limit=5#time=1305298413")
+      uri.query_params.should eq(expected_params)
+    end
+  end
+
   describe "#==" do
     it { URI.parse("http://example.com").should eq(URI.parse("http://example.com")) }
   end
