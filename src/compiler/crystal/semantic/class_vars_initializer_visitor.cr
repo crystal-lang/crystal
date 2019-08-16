@@ -87,7 +87,7 @@ module Crystal
 
         class_var.bind_to(node)
         class_var.initializer = initializer
-        self.class_var_and_const_initializers << initializer
+        self.class_var_initializers << initializer
       end
 
       node

@@ -90,10 +90,13 @@ module Crystal
     # The cache directory where temporary files are placed.
     setter cache_dir : String?
 
-    # Here we store class var initializers and constants, in the
+    # Here we store constants, in the
     # order that they are used. They will be initialized as soon
     # as the program starts, before the main code.
-    getter class_var_and_const_initializers = [] of ClassVarInitializer | Const
+    getter const_initializers = [] of Const
+
+    # The class var initializers stored to be used by the cleanup transformer
+    getter class_var_initializers = [] of ClassVarInitializer
 
     # The constant for ARGC_UNSAFE
     getter! argc : Const
@@ -219,8 +222,8 @@ module Crystal
       types["ARGV_UNSAFE"] = @argv = argv_unsafe = Const.new self, self, "ARGV_UNSAFE", Primitive.new("argv", pointer_of(pointer_of(uint8)))
 
       # Make sure to initialize `ARGC_UNSAFE` and `ARGV_UNSAFE` as soon as the program starts
-      class_var_and_const_initializers << argc_unsafe
-      class_var_and_const_initializers << argv_unsafe
+      const_initializers << argc_unsafe
+      const_initializers << argv_unsafe
 
       types["GC"] = gc = NonGenericModuleType.new self, self, "GC"
       gc.metaclass.as(ModuleType).add_def Def.new("add_finalizer", [Arg.new("object")], Nop.new)

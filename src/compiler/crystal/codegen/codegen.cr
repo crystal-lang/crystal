@@ -243,7 +243,7 @@ module Crystal
 
       initialize_argv_and_argc
 
-      initialize_simple_class_vars_and_constants
+      initialize_simple_constants
 
       if @debug.line_numbers? && (filename = @program.filename)
         set_current_debug_location Location.new(filename, 1, 1)
@@ -261,18 +261,15 @@ module Crystal
       wrap_builder(llvm_context.new_builder)
     end
 
-    # Here we only initialize simple constants and class variables, those
+    # Here we only initialize simple constants, those
     # that has simple values like 1, "foo" and other literals.
-    def initialize_simple_class_vars_and_constants
-      @program.class_var_and_const_initializers.each do |initializer|
-        case initializer
-        when Const
-          # Simple constants are never initialized: they are always inlined
-          next if initializer.compile_time_value
-          next unless initializer.simple?
+    def initialize_simple_constants
+      @program.const_initializers.each do |initializer|
+        # Simple constants are never initialized: they are always inlined
+        next if initializer.compile_time_value
+        next unless initializer.simple?
 
-          initialize_simple_const(initializer)
-        end
+        initialize_simple_const(initializer)
       end
     end
 
