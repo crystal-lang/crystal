@@ -2681,7 +2681,7 @@ module Crystal
 
     def add_constant(constant)
       types[constant.name] = const = Const.new(program, self, constant.name, constant.default_value.not_nil!)
-      program.class_var_and_const_initializers << const
+      program.const_initializers << const
       const
     end
 

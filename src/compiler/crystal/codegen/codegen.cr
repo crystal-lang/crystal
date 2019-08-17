@@ -243,7 +243,7 @@ module Crystal
 
       initialize_argv_and_argc
 
-      initialize_simple_class_vars_and_constants
+      initialize_simple_constants
 
       if @debug.line_numbers? && (filename = @program.filename)
         set_current_debug_location Location.new(filename, 1, 1)
@@ -261,39 +261,15 @@ module Crystal
       wrap_builder(llvm_context.new_builder)
     end
 
-    # Here we only initialize simple constants and class variables, those
+    # Here we only initialize simple constants, those
     # that has simple values like 1, "foo" and other literals.
-    def initialize_simple_class_vars_and_constants
-      @program.class_var_and_const_initializers.each do |initializer|
-        case initializer
-        when Const
-          # Simple constants are never initialized: they are always inlined
-          next if initializer.compile_time_value
-          next unless initializer.simple?
+    def initialize_simple_constants
+      @program.const_initializers.each do |initializer|
+        # Simple constants are never initialized: they are always inlined
+        next if initializer.compile_time_value
+        next unless initializer.simple?
 
-          initialize_simple_const(initializer)
-        when ClassVarInitializer
-          next unless initializer.node.simple_literal?
-
-          owner = initializer.owner
-          class_var = owner.class_vars[initializer.name]
-          next if class_var.thread_local?
-
-          initialize_simple_class_var(owner, class_var, initializer)
-          owner.all_subclasses.each do |subclass|
-            if subclass.is_a?(ClassVarContainer)
-              initialize_simple_class_var(subclass, class_var, initializer)
-            end
-          end
-
-          if owner.responds_to?(:raw_including_types) && (including_types = owner.raw_including_types)
-            including_types.each do |type|
-              if type.is_a?(ClassVarContainer)
-                initialize_simple_class_var(type, class_var, initializer)
-              end
-            end
-          end
-        end
+        initialize_simple_const(initializer)
       end
     end
 
@@ -527,7 +503,7 @@ module Crystal
                 if node_exp.var.initializer
                   initialize_class_var(node_exp)
                 end
-                get_global class_var_global_name(node_exp.var.owner, node_exp.var.name), node_exp.type, node_exp.var
+                get_global class_var_global_name(node_exp.var), node_exp.type, node_exp.var
               when Global
                 get_global node_exp.name, node_exp.type, node_exp.var
               when Path
@@ -964,12 +940,8 @@ module Crystal
       # or a class variable initializer
       unless target_type
         if target.is_a?(ClassVar)
-          class_var = target.var.initializer.try(&.owner.lookup_class_var(target.name))
-
-          if !class_var || class_var.thread_local? || !value.simple_literal?
-            # This is the case of a class var initializer
-            initialize_class_var(target)
-          end
+          # This is the case of a class var initializer
+          initialize_class_var(target)
         end
         return false
       end
