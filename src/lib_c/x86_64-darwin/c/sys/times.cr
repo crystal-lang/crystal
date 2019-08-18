@@ -30,7 +30,7 @@ lib LibC
     ru_nivcsw : Int32
   end
 
-  RUSAGE_SELF = 0
+  RUSAGE_SELF     =  0
   RUSAGE_CHILDREN = -1
 
   fun times(x0 : Tms*) : ClockT
