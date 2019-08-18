@@ -602,4 +602,38 @@ describe "Semantic: abstract def" do
       end
     ))
   end
+
+  it "implements through extend (considers original type for generic lookup) (#8096)" do
+    semantic(%(
+      module ICallable(T)
+        abstract def call(foo : T)
+      end
+
+      module Moo
+        def call(foo : Int32)
+        end
+      end
+
+      module Caller
+        extend ICallable(Int32)
+        extend Moo
+      end
+    ))
+  end
+
+  it "implements through extend (considers original type for generic lookup) (2) (#8096)" do
+    semantic(%(
+      module ICallable(T)
+        abstract def call(foo : T)
+      end
+
+      module Caller
+        extend ICallable(Int32)
+        extend self
+
+        def call(foo : Int32)
+        end
+      end
+    ))
+  end
 end
