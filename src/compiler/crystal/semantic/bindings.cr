@@ -639,111 +639,114 @@ module Crystal
 
     def update(from = nil)
       # We compute all the types for each block arguments
-      args_size = block.args.size
-      block_arg_types = Array(Array(Type)?).new(args_size, nil)
-      splat_index = block.splat_index
+      block_arg_types = Array(Array(Type)?).new(block.args.size, nil)
 
       @yields.each do |a_yield, yield_vars|
-        i = 0
-
-        # Gather all exps types and then assign to block_arg_types.
-        # We need to do that in case of a block splat argument, we need
-        # to split and create tuple types for that case.
-        exps_types = Array(Type).new(a_yield.exps.size)
-
-        a_yield.exps.each do |exp|
-          exp_type = exp.type?
-          return unless exp_type
-
-          if exp.is_a?(Splat)
-            unless exp_type.is_a?(TupleInstanceType)
-              exp.raise "expected splat expression to be a tuple type, not #{exp_type}"
-            end
-
-            exps_types.concat(exp_type.tuple_types)
-            i += exp_type.tuple_types.size
-          else
-            exps_types << exp_type
-            i += 1
-          end
-        end
-
-        # Check if there are missing yield expressions to match
-        # the (optional) block signature, and if they match the declared types
-        if yield_vars
-          if exps_types.size < yield_vars.size
-            a_yield.raise "wrong number of yield arguments (given #{exps_types.size}, expected #{yield_vars.size})"
-          end
-
-          # Check that the types match
-          i = 0
-          yield_vars.zip(exps_types) do |yield_var, exp_type|
-            unless exp_type.implements?(yield_var.type)
-              a_yield.raise "argument ##{i + 1} of yield expected to be #{yield_var.type}, not #{exp_type}"
-            end
-            i += 1
-          end
-        end
-
-        # Now move exps_types to block_arg_types
-        if splat_index
-          # Error if there are less expressions than the number of block arguments
-          if exps_types.size < (args_size - 1)
-            block.raise "too many block arguments (given #{args_size - 1}+, expected maximum #{exps_types.size}+)"
-          end
-
-          j = 0
-          args_size.times do |i|
-            types = block_arg_types[i] ||= [] of Type
-            if i == splat_index
-              tuple_types = exps_types[i, exps_types.size - (args_size - 1)]
-              types << @program.tuple_of(tuple_types)
-              j += tuple_types.size
-            else
-              types << exps_types[j]
-              j += 1
-            end
-          end
-        else
-          # Check if tuple unpacking is needed
-          if exps_types.size == 1 &&
-             (exp_type = exps_types.first).is_a?(TupleInstanceType) &&
-             args_size > 1
-            if block.args.size > exp_type.tuple_types.size
-              block.raise "too many block arguments (given #{block.args.size}, expected maximum #{exp_type.tuple_types.size})"
-            end
-
-            exp_type.tuple_types.each_with_index do |tuple_type, i|
-              break if i >= block_arg_types.size
-
-              types = block_arg_types[i] ||= [] of Type
-              types << tuple_type
-            end
-          else
-            if block.args.size > exps_types.size
-              block.raise "too many block arguments (given #{block.args.size}, expected maximum #{exps_types.size})"
-            end
-
-            exps_types.each_with_index do |exp_type, i|
-              break if i >= block_arg_types.size
-
-              types = block_arg_types[i] ||= [] of Type
-              types << exp_type
-            end
-          end
-        end
+        gather_yield_block_arg_types(a_yield, yield_vars, block, block_arg_types)
       end
 
       block.args.each_with_index do |arg, i|
         block_arg_type = block_arg_types[i]
         if block_arg_type
           arg_type = Type.merge(block_arg_type) || @program.nil
-          if i == splat_index && !arg_type.is_a?(TupleInstanceType)
+          if i == block.splat_index && !arg_type.is_a?(TupleInstanceType)
             arg.raise "block splat argument must be a tuple type, not #{arg_type}"
           end
           arg.type = arg_type
         else
           # Skip, no type info found in this position
+        end
+      end
+    end
+
+    # Gather all exps types and then assign to block_arg_types.
+    # We need to do that in case of a block splat argument, we need
+    # to split and create tuple types for that case.
+    private def gather_yield_block_arg_types(a_yield, yield_vars, block, block_arg_types)
+      args_size = block.args.size
+      splat_index = block.splat_index
+      exps_types = Array(Type).new(a_yield.exps.size)
+
+      i = 0
+      a_yield.exps.each do |exp|
+        exp_type = exp.type?
+        return unless exp_type
+
+        if exp.is_a?(Splat)
+          unless exp_type.is_a?(TupleInstanceType)
+            exp.raise "expected splat expression to be a tuple type, not #{exp_type}"
+          end
+
+          exps_types.concat(exp_type.tuple_types)
+          i += exp_type.tuple_types.size
+        else
+          exps_types << exp_type
+          i += 1
+        end
+      end
+
+      # Check if there are missing yield expressions to match
+      # the (optional) block signature, and if they match the declared types
+      if yield_vars
+        if exps_types.size < yield_vars.size
+          a_yield.raise "wrong number of yield arguments (given #{exps_types.size}, expected #{yield_vars.size})"
+        end
+
+        # Check that the types match
+        i = 0
+        yield_vars.zip(exps_types) do |yield_var, exp_type|
+          unless exp_type.implements?(yield_var.type)
+            a_yield.raise "argument ##{i + 1} of yield expected to be #{yield_var.type}, not #{exp_type}"
+          end
+          i += 1
+        end
+      end
+
+      # Now move exps_types to block_arg_types
+      if splat_index
+        # Error if there are less expressions than the number of block arguments
+        if exps_types.size < (args_size - 1)
+          block.raise "too many block arguments (given #{args_size - 1}+, expected maximum #{exps_types.size}+)"
+        end
+
+        j = 0
+        args_size.times do |i|
+          types = block_arg_types[i] ||= [] of Type
+          if i == splat_index
+            tuple_types = exps_types[i, exps_types.size - (args_size - 1)]
+            types << @program.tuple_of(tuple_types)
+            j += tuple_types.size
+          else
+            types << exps_types[j]
+            j += 1
+          end
+        end
+      else
+        # Check if tuple unpacking is needed
+        if exps_types.size == 1 &&
+           (exp_type = exps_types.first).is_a?(TupleInstanceType) &&
+           args_size > 1
+          if block.args.size > exp_type.tuple_types.size
+            block.raise "too many block arguments (given #{block.args.size}, expected maximum #{exp_type.tuple_types.size})"
+          end
+
+          exp_type.tuple_types.each_with_index do |tuple_type, i|
+            break if i >= block_arg_types.size
+
+            types = block_arg_types[i] ||= [] of Type
+            types << tuple_type
+          end
+        else
+          if block.args.size > exps_types.size
+            block.raise "too many block arguments (given #{block.args.size}, expected maximum #{exps_types.size})"
+          end
+
+          exps_types.each_with_index do |exp_type, i|
+            break if i >= block_arg_types.size
+
+            types = block_arg_types[i] ||= [] of Type
+            types << exp_type
+          end
         end
       end
     end
