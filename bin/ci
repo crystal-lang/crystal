@@ -74,7 +74,29 @@ prepare_system() {
 
 build() {
   with_build_env 'make std_spec clean threads=1'
-  with_build_env 'make crystal std_spec compiler_spec docs threads=1'
+
+  case $ARCH in
+    i386)
+      with_build_env 'make crystal threads=1'
+      with_build_env 'SPEC_SPLIT="0%4" make std_spec threads=1'
+      with_build_env 'SPEC_SPLIT="1%4" make std_spec threads=1'
+      with_build_env 'SPEC_SPLIT="2%4" make std_spec threads=1'
+      with_build_env 'SPEC_SPLIT="3%4" make std_spec threads=1'
+
+      parts=16
+      i=0
+      while [ $i -lt $parts ]; do
+        with_build_env "CRYSTAL_SPEC_COMPILER_THREADS=1 SPEC_SPLIT=\"$i%$parts\" make compiler_spec threads=1"
+        i=$((i + 1))
+      done
+
+      with_build_env 'make docs threads=1'
+      ;;
+    *)
+      with_build_env 'make crystal std_spec compiler_spec docs threads=1'
+      ;;
+  esac
+
   with_build_env 'find samples -name "*.cr" | xargs -L 1 ./bin/crystal build --no-codegen'
 }
 
@@ -86,8 +108,8 @@ format() {
 prepare_build() {
   on_linux verify_linux_environment
 
-  on_osx curl -L https://github.com/crystal-lang/crystal/releases/download/0.29.0/crystal-0.29.0-1-darwin-x86_64.tar.gz -o ~/crystal.tar.gz
-  on_osx 'pushd ~;gunzip -c ~/crystal.tar.gz | tar xopf -;mv crystal-0.29.0-1 crystal;popd'
+  on_osx curl -L https://github.com/crystal-lang/crystal/releases/download/0.30.1/crystal-0.30.1-1-darwin-x86_64.tar.gz -o ~/crystal.tar.gz
+  on_osx 'pushd ~;gunzip -c ~/crystal.tar.gz | tar xopf -;mv crystal-0.30.1-1 crystal;popd'
 
   on_osx brew install llvm@8 gmp libevent pcre pkg-config
   on_osx brew upgrade libyaml
@@ -121,7 +143,7 @@ with_build_env() {
 
   on_linux verify_linux_environment
 
-  export DOCKER_TEST_PREFIX="${DOCKER_TEST_PREFIX:=crystallang/crystal:0.29.0}"
+  export DOCKER_TEST_PREFIX="${DOCKER_TEST_PREFIX:=crystallang/crystal:0.30.1}"
 
   case $ARCH in
     x86_64)

@@ -1594,6 +1594,9 @@ module Crystal
 
     assert_syntax_error "def f end", "unexpected token: end (expected ';' or newline)"
 
+    assert_syntax_error "fun foo\nclass", "can't define class inside fun"
+    assert_syntax_error "fun foo\nFoo = 1", "dynamic constant assignment"
+
     assert_syntax_error %([\n"foo"\n"bar"\n])
     it_parses "[\n1\n]", ArrayLiteral.new([1.int32] of ASTNode)
     it_parses "[\n1,2\n]", ArrayLiteral.new([1.int32, 2.int32] of ASTNode)

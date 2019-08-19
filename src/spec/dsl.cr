@@ -109,6 +109,30 @@ module Spec
     lines << line
   end
 
+  @@split_filter : NamedTuple(remainder: Int32, quotient: Int32)? = nil
+
+  def self.add_split_filter(filter)
+    if filter
+      r, m = filter.split('%').map &.to_i
+      @@split_filter = {remainder: r, quotient: m}
+    else
+      @@split_filter = nil
+    end
+  end
+
+  @@spec_counter = -1
+
+  def self.split_filter_matches
+    split_filter = @@split_filter
+
+    if split_filter
+      @@spec_counter += 1
+      @@spec_counter % split_filter[:quotient] == split_filter[:remainder]
+    else
+      true
+    end
+  end
+
   # :nodoc:
   def self.matches?(description, file, line, end_line = line)
     spec_pattern = @@pattern

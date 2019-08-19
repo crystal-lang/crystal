@@ -551,4 +551,14 @@ describe "Codegen: class var" do
       a &+ b &+ c &+ d
       )).to_i.should eq(1 + 1 + 10 + 20)
   end
+
+  it "inline initialization of simple class var" do
+    mod = codegen(%(
+      class Foo
+        @@x = 1
+      end
+    ))
+
+    mod.to_s.should_not contain("x:init")
+  end
 end

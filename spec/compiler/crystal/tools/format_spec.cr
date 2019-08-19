@@ -1,3 +1,5 @@
+{% skip_file if flag?(:bits32) %}
+
 require "spec"
 require "compiler/crystal/formatter"
 require "compiler/crystal/command/format"

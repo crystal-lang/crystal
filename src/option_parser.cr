@@ -51,16 +51,15 @@ class OptionParser
     block : String ->
 
   # Creates a new parser, with its configuration specified in the block,
-  # and uses it to parse the passed *args*.
-  def self.parse(args) : self
+  # and uses it to parse the passed *args* (defaults to `ARGV`).
+  def self.parse(args = ARGV) : self
     parser = OptionParser.new
     yield parser
     parser.parse(args)
     parser
   end
 
-  # Creates a new parser, with its configuration specified in the block,
-  # and uses it to parse the arguments passed to the program.
+  @[Deprecated("Use `parse` instead.")]
   def self.parse! : self
     parse(ARGV) { |parser| yield parser }
   end
@@ -181,15 +180,14 @@ class OptionParser
     end
   end
 
-  # Parses the passed *args*, running the handlers associated to each option.
-  def parse(args)
+  # Parses the passed *args* (defaults to `ARGV`), running the handlers associated to each option.
+  def parse(args = ARGV)
     ParseTask.new(self, args).parse
   end
 
-  # Parses the passed the arguments passed to the program,
-  # running the handlers associated to each option.
+  @[Deprecated("Use `parse` instead.")]
   def parse!
-    parse ARGV
+    parse
   end
 
   private def check_starts_with_dash(arg, name, allow_empty = false)

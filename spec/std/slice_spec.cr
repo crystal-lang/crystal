@@ -351,12 +351,28 @@ describe "Slice" do
     slice.bytesize.should eq(8)
   end
 
-  it "does ==" do
-    a = Slice.new(3) { |i| i }
-    b = Slice.new(3) { |i| i }
-    c = Slice.new(3) { |i| i + 1 }
-    a.should eq(b)
-    a.should_not eq(c)
+  describe "==" do
+    it "does ==" do
+      a = Slice.new(3) { |i| i }
+      b = Slice.new(3) { |i| i }
+      c = Slice.new(3) { |i| i + 1 }
+      a.should eq(b)
+      a.should_not eq(c)
+    end
+
+    it "does == with same type, different runtime instances" do
+      a = Slice.new(3, &.to_s)
+      b = Slice.new(3, &.to_s)
+      a.should eq(b)
+    end
+
+    it "does == for bytes" do
+      a = Bytes[1, 2, 3]
+      b = Bytes[1, 2, 3]
+      c = Bytes[1, 2, 4]
+      a.should eq(b)
+      a.should_not eq(c)
+    end
   end
 
   it "does macro []" do
@@ -623,6 +639,28 @@ describe "Slice" do
       a = Slice["foo", "a", "hello"]
       a.sort_by! { |e| calls[e] += 1; e.size }
       calls.should eq({"foo" => 1, "a" => 1, "hello" => 1})
+    end
+  end
+
+  describe "<=>" do
+    it "is comparable" do
+      Bytes[1].is_a?(Comparable).should be_true
+    end
+
+    it "compares" do
+      (Int32.slice(1, 2, 3) <=> Int32.slice(1, 2, 3)).should eq(0)
+      (Int32.slice(1, 2, 3) <=> Int32.slice(1, 3, 3)).should be < 0
+      (Int32.slice(1, 3, 3) <=> Int32.slice(1, 2, 3)).should be > 0
+      (Int32.slice(1, 2, 3) <=> Int32.slice(1, 2, 3, 4)).should be < 0
+      (Int32.slice(1, 2, 3, 4) <=> Int32.slice(1, 2, 3)).should be > 0
+    end
+
+    it "compares (UInt8)" do
+      (Bytes[1, 2, 3] <=> Bytes[1, 2, 3]).should eq(0)
+      (Bytes[1, 2, 3] <=> Bytes[1, 3, 3]).should be < 0
+      (Bytes[1, 3, 3] <=> Bytes[1, 2, 3]).should be > 0
+      (Bytes[1, 2, 3] <=> Bytes[1, 2, 3, 4]).should be < 0
+      (Bytes[1, 2, 3, 4] <=> Bytes[1, 2, 3]).should be > 0
     end
   end
 end
