@@ -2,7 +2,7 @@ abstract class OpenSSL::SSL::Socket < IO
   class Client < Socket
     def initialize(io, context : Context::Client = Context::Client.new, sync_close : Bool = false, hostname : String? = nil)
       super(io, context, sync_close)
-      begin     
+      begin
         if hostname
           # Macro from OpenSSL: SSL_ctrl(s,SSL_CTRL_SET_TLSEXT_HOSTNAME,TLSEXT_NAMETYPE_host_name,(char *)name)
           LibSSL.ssl_ctrl(
@@ -34,7 +34,7 @@ abstract class OpenSSL::SSL::Socket < IO
           raise OpenSSL::SSL::Error.new(@ssl, ret, "SSL_connect")
         end
       rescue ex
-        finalize # otherwise GC never calls finalize, mem leak
+        LibSSL.ssl_free(@ssl) # GC never calls finalize, avoid mem leak
         raise ex
       end
     end
@@ -53,14 +53,11 @@ abstract class OpenSSL::SSL::Socket < IO
   class Server < Socket
     def initialize(io, context : Context::Server = Context::Server.new, sync_close : Bool = false)
       super(io, context, sync_close)
-      begin
-        ret = LibSSL.ssl_accept(@ssl)
-        unless ret == 1
-          io.close if sync_close
-          raise OpenSSL::SSL::Error.new(@ssl, ret, "SSL_accept")
-        end
-      rescue ex
-        finalize # otherwise GC never calls finalize, mem leak
+      ret = LibSSL.ssl_accept(@ssl)
+      unless ret == 1
+        ex = OpenSSL::SSL::Error.new(@ssl, ret, "SSL_accept")
+        LibSSL.ssl_free(@ssl) # GC never calls finalize, avoid mem leak
+        io.close if sync_close
         raise ex
       end
     end
