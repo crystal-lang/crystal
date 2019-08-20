@@ -79,8 +79,11 @@ module OpenSSL
     end
 
     protected def fetch_error_details
-      code = LibCrypto.err_get_error
-      message = String.new(LibCrypto.err_error_string(code, nil)) unless code == 0
+      message = nil
+      while((code = LibCrypto.err_get_error) != 0)
+        message ||= ""
+        message += String.new(LibCrypto.err_error_string(code, nil))
+      end
       {code, message || "Unknown or no error"}
     end
   end
