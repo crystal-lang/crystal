@@ -1522,4 +1522,19 @@ describe "Code gen: block" do
       foo{|_, _| }
       ))
   end
+
+  it "doesn't crash on yield exp without a type (#8100)" do
+    codegen(%(
+      def foo
+        x = 1
+        if x.is_a?(Char)
+          yield x
+        else
+          yield x
+        end
+      end
+
+      foo { |x| }
+    ))
+  end
 end
