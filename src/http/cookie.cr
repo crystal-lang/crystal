@@ -256,6 +256,11 @@ module HTTP
       self[cookie.name] = cookie
     end
 
+    # Clears the collection, removing all cookies.
+    def clear
+      @cookies.clear
+    end
+
     # Yields each `HTTP::Cookie` in the collection.
     def each(&block : Cookie ->)
       @cookies.values.each do |cookie|
