@@ -261,6 +261,13 @@ module HTTP
       @cookies.clear
     end
 
+    # Deletes and returns the `HTTP::Cookie` for the specified *key*, or
+    # returns `nil` if *key* cannot be found in the collection. Note that
+    # *key* should match the the name attribute of the desired `HTTP::Cookie`.
+    def delete(key)
+      @cookies.delete(key)
+    end
+
     # Yields each `HTTP::Cookie` in the collection.
     def each(&block : Cookie ->)
       @cookies.values.each do |cookie|
