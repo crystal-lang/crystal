@@ -11,7 +11,7 @@ require "c/netdb"
   @[Link("event")]
 {% end %}
 {% if flag?(:preview_mt) %}
-@[Link("event_pthreads")]
+  @[Link("event_pthreads")]
 {% end %}
 lib LibEvent2
   alias Int = LibC::Int
