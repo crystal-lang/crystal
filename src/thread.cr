@@ -21,10 +21,6 @@ class Thread
   # :nodoc:
   property previous : Thread?
 
-  {% if flag?(:preview_mt) %}
-    property load = 0
-  {% end %}
-
   protected def self.threads
     @@threads ||= Thread::LinkedList(Thread).new
   end

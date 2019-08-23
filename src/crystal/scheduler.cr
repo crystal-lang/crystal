@@ -149,20 +149,6 @@ class Crystal::Scheduler
         @rr_target += 1
         @@workers[@rr_target % @@workers.size]
       end
-
-      # target = Thread.workers[@rr_target]
-      # target_i = @rr_target
-      # (Thread.workers.size - 1).times do |i|
-      #   w_i =(@rr_target + i + 1) % Thread.workers.size
-      #   w = Thread.workers[w_i]
-      #   if w.load < target.load
-      #     target = w
-      #     target_i = w_i
-      #   end
-      # end
-
-      # @rr_target = (target_i + 1) % Thread.workers.size
-      # target
     end
 
     def run_loop
@@ -177,7 +163,6 @@ class Crystal::Scheduler
           @lock.unlock
           oid = @worker_out.read_bytes(UInt64)
           fiber = Pointer(Fiber).new(oid).as(Fiber)
-          Thread.current.load += 1
 
           @lock.lock
           @sleeping = false
@@ -189,7 +174,6 @@ class Crystal::Scheduler
     end
 
     def send_fiber(fiber : Fiber)
-      Thread.current.load -= 1
       @lock.lock
       if @sleeping
         @worker_in.write_bytes(fiber.object_id)
