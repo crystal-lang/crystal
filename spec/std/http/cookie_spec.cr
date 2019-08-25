@@ -267,8 +267,7 @@ module HTTP
       cookies << Cookie.new("a", "b")
       cookies << Cookie.new("c", "d")
       cookies.clear
-      cookies.size.should eq 0
-      cookies.empty?.should be_true
+      cookies.should be_empty
     end
 
     it "allows deleting a particular cookie by key" do
