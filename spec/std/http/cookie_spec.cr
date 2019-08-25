@@ -252,6 +252,16 @@ module HTTP
       cookies["d"].value.should eq "e+f"
     end
 
+    it "allows clearing the cookies collection" do
+      cookies = Cookies.new
+      cookies << Cookie.new("test_key", "test_value")
+      cookies << Cookie.new("a", "b")
+      cookies << Cookie.new("c", "d")
+      cookies.clear
+      cookies.size.should eq 0
+      cookies.empty?.should be_true
+    end
+
     describe "adding request headers" do
       it "overwrites a pre-existing Cookie header" do
         headers = Headers.new
