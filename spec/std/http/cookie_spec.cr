@@ -252,6 +252,15 @@ module HTTP
       cookies["d"].value.should eq "e+f"
     end
 
+    it "allows retrieving the size of the cookies collection" do
+      cookies = Cookies.new
+      cookies.size.should eq 0
+      cookies << Cookie.new("1", "2")
+      cookies.size.should eq 1
+      cookies << Cookie.new("3", "4")
+      cookies.size.should eq 2
+    end
+
     it "allows clearing the cookies collection" do
       cookies = Cookies.new
       cookies << Cookie.new("test_key", "test_value")
