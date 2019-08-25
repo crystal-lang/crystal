@@ -280,6 +280,11 @@ module HTTP
       @cookies.each_value
     end
 
+    # Returns the number of cookies contained in this collection.
+    def size
+      @cookies.size
+    end
+
     # Whether the collection contains any cookies.
     def empty?
       @cookies.empty?
