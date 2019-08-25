@@ -3666,8 +3666,13 @@ module Crystal
 
     def parse_block_arg(extra_assigns)
       name_location = @token.location
-      arg_name, external_name, found_space, uses_arg = parse_arg_name(name_location, extra_assigns, allow_external_name: false)
-      @uses_block_arg = true if uses_arg
+
+      if @token.type == :")" || @token.type == :NEWLINE || @token.type == :":"
+        arg_name = ""
+      else
+        arg_name, external_name, found_space, uses_arg = parse_arg_name(name_location, extra_assigns, allow_external_name: false)
+        @uses_block_arg = true if uses_arg
+      end
 
       inputs = nil
       output = nil
