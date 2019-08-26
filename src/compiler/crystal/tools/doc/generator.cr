@@ -303,7 +303,7 @@ class Crystal::Doc::Generator
     string = isolate_flag_lines string
     string += build_flag_lines_from_annotations context
     markdown = String.build do |io|
-      Markdown.parse string, MarkdownDocRenderer.new(context, io)
+      Markdown.parse string, Markdown::DocRenderer.new(context, io)
     end
     generate_flags markdown
   end
