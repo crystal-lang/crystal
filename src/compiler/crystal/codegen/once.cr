@@ -2,12 +2,10 @@ require "./codegen"
 
 class Crystal::CodeGenVisitor
   ONCE_STATE = "~ONCE_STATE"
-  @have_once_state = false
 
   def once_init
     once_init_fun = @main_mod.functions[ONCE_INIT]?
     if once_init_fun
-      @have_once_state = true
       once_init_fun = check_main_fun ONCE_INIT, once_init_fun
 
       once_state_global = @main_mod.globals.add(once_init_fun.return_type, ONCE_STATE)
