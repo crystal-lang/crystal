@@ -5,9 +5,6 @@ class Thread
   getter(event_base) { Crystal::Event::Base.new }
 
   # :nodoc:
-  getter(dns_base) { self.event_base.new_dns_base }
-
-  # :nodoc:
   getter(loop_fiber) do
     Fiber.new(name: "Event Loop") do
       loop do
@@ -31,10 +28,6 @@ module Crystal::EventLoop
 
   private def self.event_base
     Thread.current.event_base
-  end
-
-  private def self.dns_base
-    Thread.current.dns_base
   end
 
   private def self.loop_fiber
@@ -73,9 +66,5 @@ module Crystal::EventLoop
         io_ref.resume_read(timed_out: true)
       end
     end
-  end
-
-  def self.create_dns_request(nodename, servname, hints, data, &callback : LibEvent2::DnsGetAddrinfoCallback)
-    dns_base.getaddrinfo(nodename, servname, hints, data, &callback)
   end
 end
