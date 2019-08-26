@@ -311,9 +311,12 @@ struct Path
     end
 
     # read suffix
-    if suffix && suffix.bytesize < current && suffix == @name.byte_slice(current - suffix.bytesize + 1, suffix.bytesize)
+    if suffix && suffix.bytesize <= current && suffix == @name.byte_slice(current - suffix.bytesize + 1, suffix.bytesize)
       current -= suffix.bytesize
     end
+
+    # one character left?
+    return @name.byte_slice(0, 1) if current == 0
 
     end_pos = {current, 1}.max
 

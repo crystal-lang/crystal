@@ -174,11 +174,13 @@ describe Path do
     assert_paths_raw("/foo/bar/baz.cr", "baz.cr", &.basename)
     assert_paths_raw("/foo/", "foo", &.basename)
     assert_paths_raw("foo", "foo", &.basename)
+    assert_paths_raw("x", "x", &.basename)
     assert_paths_raw("", "", &.basename)
     assert_paths_raw(".", ".", &.basename)
     assert_paths_raw("/.", ".", &.basename)
     assert_paths_raw("/", "/", &.basename)
     assert_paths_raw("////", "/", &.basename)
+    assert_paths_raw("a/x", "x", &.basename)
     assert_paths_raw("a/.x", ".x", &.basename)
     assert_paths_raw("a/x.", "x.", &.basename)
 
@@ -197,6 +199,8 @@ describe Path do
       assert_paths_raw("\\foo\\bar\\baz.cr.tmp", "\\foo\\bar\\baz", "baz", &.basename(".cr.tmp"))
       assert_paths_raw("/foo/bar/baz.cr.tmp", "baz.cr", &.basename(".tmp"))
       assert_paths_raw("\\foo\\bar\\baz.cr.tmp", "\\foo\\bar\\baz.cr", "baz.cr", &.basename(".tmp"))
+      assert_paths_raw("a.txt", "a", &.basename(".txt"))
+      assert_paths_raw("a.x", "a", &.basename(".x"))
     end
   end
 
