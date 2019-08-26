@@ -1,25 +1,17 @@
 require "./event"
 
 class Thread
-  @eb : Crystal::Event::Base?
-  @dns_base : Crystal::Event::DnsBase?
-  @loop_fiber : Fiber?
+  # :nodoc:
+  getter(event_base) { Crystal::Event::Base.new }
 
   # :nodoc:
-  def eb : Crystal::Event::Base
-    @eb ||= Crystal::Event::Base.new
-  end
+  getter(dns_base) { self.event_base.new_dns_base }
 
   # :nodoc:
-  def dns_base : Crystal::Event::DnsBase
-    @dns_base ||= self.eb.new_dns_base
-  end
-
-  # :nodoc:
-  def loop_fiber : Fiber
-    @loop_fiber ||= Fiber.new(name: "Event Loop") do
+  getter(loop_fiber) do
+    Fiber.new(name: "Event Loop") do
       loop do
-        self.eb.run_once
+        self.event_base.run_once
         Crystal::Scheduler.reschedule
       end
     end
@@ -29,7 +21,7 @@ end
 module Crystal::EventLoop
   {% unless flag?(:preview_mt) %}
     def self.after_fork
-      Thread.current.eb.reinit
+      Thread.current.event_base.reinit
     end
   {% end %}
 
@@ -37,8 +29,8 @@ module Crystal::EventLoop
     loop_fiber.resume
   end
 
-  private def self.eb
-    Thread.current.eb
+  private def self.event_base
+    Thread.current.event_base
   end
 
   private def self.dns_base
@@ -50,7 +42,7 @@ module Crystal::EventLoop
   end
 
   def self.create_resume_event(fiber)
-    eb.new_event(-1, LibEvent2::EventFlags::None, fiber) do |s, flags, data|
+    event_base.new_event(-1, LibEvent2::EventFlags::None, fiber) do |s, flags, data|
       Crystal::Scheduler.enqueue data.as(Fiber)
     end
   end
@@ -59,7 +51,7 @@ module Crystal::EventLoop
     flags = LibEvent2::EventFlags::Write
     flags |= LibEvent2::EventFlags::Persist | LibEvent2::EventFlags::ET if edge_triggered
 
-    eb.new_event(io.fd, flags, io) do |s, flags, data|
+    event_base.new_event(io.fd, flags, io) do |s, flags, data|
       io_ref = data.as(typeof(io))
       if flags.includes?(LibEvent2::EventFlags::Write)
         io_ref.resume_write
@@ -73,7 +65,7 @@ module Crystal::EventLoop
     flags = LibEvent2::EventFlags::Read
     flags |= LibEvent2::EventFlags::Persist | LibEvent2::EventFlags::ET if edge_triggered
 
-    eb.new_event(io.fd, flags, io) do |s, flags, data|
+    event_base.new_event(io.fd, flags, io) do |s, flags, data|
       io_ref = data.as(typeof(io))
       if flags.includes?(LibEvent2::EventFlags::Read)
         io_ref.resume_read
