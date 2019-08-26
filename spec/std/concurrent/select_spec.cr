@@ -1,10 +1,5 @@
 require "spec"
 
-private def yield_to(fiber)
-  Crystal::Scheduler.enqueue(Fiber.current)
-  Crystal::Scheduler.resume(fiber)
-end
-
 describe "select" do
   it "select many receviers" do
     ch1 = Channel(Int32).new
@@ -30,13 +25,14 @@ describe "select" do
   it "select many senders" do
     ch1 = Channel(Int32).new
     ch2 = Channel(Int32).new
-    res = [] of Int32
+    res = Array.new(10, 0)
+
     f1 = spawn do
-      5.times { res << ch1.receive }
+      5.times { res[ch1.receive] = 1 }
     end
 
     f2 = spawn do
-      5.times { res << ch2.receive }
+      5.times { res[ch2.receive] = 1 }
     end
 
     10.times do |i|
@@ -50,7 +46,7 @@ describe "select" do
       Fiber.yield
     end
 
-    res.sort.should eq (0...10).to_a
+    res.should eq Array.new(10, 1)
   end
 
   it "select many receivers, senders" do
@@ -104,7 +100,7 @@ describe "select" do
         x = b
       end
     ensure
-      yield_to(main)
+      Crystal::Scheduler.enqueue(main)
     end
 
     sleep
