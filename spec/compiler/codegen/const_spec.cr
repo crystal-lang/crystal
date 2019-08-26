@@ -469,7 +469,7 @@ describe "Codegen: const" do
     mod.to_s.should_not contain("CONST")
   end
 
-  it "synchronize initialization of contants" do
+  it "synchronizes initialization of constants" do
     run(%(
       require "prelude"
 
