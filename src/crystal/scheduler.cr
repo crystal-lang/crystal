@@ -190,8 +190,7 @@ class Crystal::Scheduler
     end
 
     def self.init_workers
-      count = ENV["CRYSTAL_WORKERS"]?.try &.to_i || 4
-      @@workers = Array(Thread).new(count) do |i|
+      @@workers = Array(Thread).new(worker_count) do |i|
         if i == 0
           worker_loop = Fiber.new(name: "Worker Loop") { Thread.current.scheduler.run_loop }
           Thread.current.scheduler.enqueue worker_loop
@@ -199,6 +198,25 @@ class Crystal::Scheduler
         else
           Thread.new { Thread.current.scheduler.run_loop }
         end
+      end
+    end
+
+    private def self.worker_count
+      env_workers = ENV["CRYSTAL_WORKERS"]?
+
+      if env_workers && !env_workers.empty?
+        workers = env_workers.to_i?
+        if !workers || workers < 1
+          LibC.dprintf 2, "FATAL: Invalid value for CRYSTAL_WORKERS: #{env_workers}\n"
+          exit 1
+        end
+
+        workers
+      else
+        # TODO: default worker count, currenlty hardcoded to 4 that seems to be something
+        # that is benefitial for many scenarios without adding too much contention.
+        # In the future we could use the number of cores or something associated to it.
+        4
       end
     end
   {% end %}
