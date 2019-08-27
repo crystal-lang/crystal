@@ -100,26 +100,13 @@ struct Int
   # Raises if *other* is zero, or if *other* is -1 and
   # `self` is signed and is the minimum value for that
   # integer type.
-  def //(other : Int)
+  def //(other : Int::Primitive)
     check_div_argument other
 
     div = unsafe_div other
     mod = unsafe_mod other
     div -= 1 if other > 0 ? mod < 0 : mod > 0
     div
-  end
-
-  # Divides `self` by *other* as floating point numbers and
-  # applies the floor function to that result.
-  #
-  # The result will be of the same type as `self`.
-  def //(other : Float)
-    self.class.new(to_f // other)
-  end
-
-  @[Deprecated("`Int#/` will return a `Float` in 0.29.0. Use `Int#//` for integer division.")]
-  def /(other : Int)
-    self // other
   end
 
   # Divides `self` by *other* using truncated division.
@@ -625,6 +612,11 @@ struct Int8
     value.to_i8!
   end
 
+  Number.expand_div [Int8, UInt8, Int16, UInt16, Int32, UInt32, Int64, UInt64], Float32
+  Number.expand_div [Int128, UInt128], Float64
+  Number.expand_div [Float32], Float32
+  Number.expand_div [Float64], Float64
+
   def -
     0_i8 - self
   end
@@ -660,6 +652,11 @@ struct Int16
   def self.new!(value)
     value.to_i16!
   end
+
+  Number.expand_div [Int8, UInt8, Int16, UInt16, Int32, UInt32, Int64, UInt64], Float32
+  Number.expand_div [Int128, UInt128], Float64
+  Number.expand_div [Float32], Float32
+  Number.expand_div [Float64], Float64
 
   def -
     0_i16 - self
@@ -697,6 +694,11 @@ struct Int32
     value.to_i32!
   end
 
+  Number.expand_div [Int8, UInt8, Int16, UInt16, Int32, UInt32, Int64, UInt64], Float32
+  Number.expand_div [Int128, UInt128], Float64
+  Number.expand_div [Float32], Float32
+  Number.expand_div [Float64], Float64
+
   def -
     0 - self
   end
@@ -732,6 +734,11 @@ struct Int64
   def self.new!(value)
     value.to_i64!
   end
+
+  Number.expand_div [Int8, UInt8, Int16, UInt16, Int32, UInt32, Int64, UInt64], Float32
+  Number.expand_div [Int128, UInt128], Float64
+  Number.expand_div [Float32], Float32
+  Number.expand_div [Float64], Float64
 
   def -
     0_i64 - self
@@ -770,6 +777,9 @@ struct Int128
     value.to_i128!
   end
 
+  Number.expand_div [Int8, UInt8, Int16, UInt16, Int32, UInt32, Int64, UInt64, Int128, UInt128], Float64
+  Number.expand_div [Float32, Float64], Float64
+
   def -
     # TODO: use 0_i128 - self
     Int128.new(0) - self
@@ -807,6 +817,11 @@ struct UInt8
     value.to_u8!
   end
 
+  Number.expand_div [Int8, UInt8, Int16, UInt16, Int32, UInt32, Int64, UInt64], Float32
+  Number.expand_div [Int128, UInt128], Float64
+  Number.expand_div [Float32], Float32
+  Number.expand_div [Float64], Float64
+
   def abs
     self
   end
@@ -842,6 +857,11 @@ struct UInt16
   def self.new!(value)
     value.to_u16!
   end
+
+  Number.expand_div [Int8, UInt8, Int16, UInt16, Int32, UInt32, Int64, UInt64], Float32
+  Number.expand_div [Int128, UInt128], Float64
+  Number.expand_div [Float32], Float32
+  Number.expand_div [Float64], Float64
 
   def abs
     self
@@ -879,6 +899,11 @@ struct UInt32
     value.to_u32!
   end
 
+  Number.expand_div [Int8, UInt8, Int16, UInt16, Int32, UInt32, Int64, UInt64], Float32
+  Number.expand_div [Int128, UInt128], Float64
+  Number.expand_div [Float32], Float32
+  Number.expand_div [Float64], Float64
+
   def abs
     self
   end
@@ -914,6 +939,11 @@ struct UInt64
   def self.new!(value)
     value.to_u64!
   end
+
+  Number.expand_div [Int8, UInt8, Int16, UInt16, Int32, UInt32, Int64, UInt64], Float32
+  Number.expand_div [Int128, UInt128], Float64
+  Number.expand_div [Float32], Float32
+  Number.expand_div [Float64], Float64
 
   def abs
     self
@@ -951,6 +981,9 @@ struct UInt128
   def self.new!(value)
     value.to_u128!
   end
+
+  Number.expand_div [Int8, UInt8, Int16, UInt16, Int32, UInt32, Int64, UInt64, Int128, UInt128], Float64
+  Number.expand_div [Float32, Float64], Float64
 
   def abs
     self

@@ -386,15 +386,15 @@ describe "Int" do
   end
 
   it "divides negative numbers" do
-    (7 / 2).should eq(3)
-    (-7 / 2).should eq(-4)
-    (7 / -2).should eq(-4)
-    (-7 / -2).should eq(3)
+    (7 / 2).should eq(3.5)
+    (-7 / 2).should eq(-3.5)
+    (7 / -2).should eq(-3.5)
+    (-7 / -2).should eq(3.5)
 
-    (6 / 2).should eq(3)
-    (-6 / 2).should eq(-3)
-    (6 / -2).should eq(-3)
-    (-6 / -2).should eq(3)
+    (6 / 2).should eq(3.0)
+    (-6 / 2).should eq(-3.0)
+    (6 / -2).should eq(-3.0)
+    (-6 / -2).should eq(3.0)
   end
 
   describe "floor division //" do
@@ -437,7 +437,7 @@ describe "Int" do
   end
 
   it "raises when divides by zero" do
-    expect_raises(DivisionByZeroError) { 1 / 0 }
+    (1 / 0).should eq(Float32::INFINITY)
     (4 / 2).should eq(2)
   end
 
@@ -447,10 +447,10 @@ describe "Int" do
   end
 
   it "raises when divides Int::MIN by -1" do
-    expect_raises(ArgumentError) { Int8::MIN / -1 }
-    expect_raises(ArgumentError) { Int16::MIN / -1 }
-    expect_raises(ArgumentError) { Int32::MIN / -1 }
-    expect_raises(ArgumentError) { Int64::MIN / -1 }
+    (Int8::MIN / -1).should eq(-(Int8::MIN.to_f32))
+    (Int16::MIN / -1).should eq(-(Int16::MIN.to_f32))
+    (Int32::MIN / -1).should eq(-(Int32::MIN.to_f32))
+    (Int64::MIN / -1).should eq(-(Int64::MIN.to_f32))
 
     (UInt8::MIN / -1).should eq(0)
   end

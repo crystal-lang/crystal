@@ -131,18 +131,15 @@ struct BigFloat < Float
     BigFloat.new { |mpf| LibGMP.mpf_mul(mpf, self, other.to_big_f) }
   end
 
-  def /(other : Number)
+  def /(other : BigFloat)
+    # Division by 0 in BigFloat is not allowed, there is no BigFloat::Infinitiy
     raise DivisionByZeroError.new if other == 0
-    if other.is_a?(UInt8 | UInt16 | UInt32) || (LibGMP::ULong == UInt64 && other.is_a?(UInt64))
-      BigFloat.new { |mpf| LibGMP.mpf_div_ui(mpf, self, other) }
-    else
-      BigFloat.new { |mpf| LibGMP.mpf_div(mpf, self, other.to_big_f) }
-    end
+    BigFloat.new { |mpf| LibGMP.mpf_div(mpf, self, other) }
   end
 
-  def //(other : Number)
-    (self / other).floor
-  end
+  Number.expand_div [BigInt], BigFloat
+  Number.expand_div [BigDecimal], BigDecimal
+  Number.expand_div [BigRational], BigRational
 
   def **(other : Int)
     BigFloat.new { |mpf| LibGMP.mpf_pow_ui(mpf, self, other.to_u64) }
@@ -190,6 +187,10 @@ struct BigFloat < Float
 
   def to_big_f
     self
+  end
+
+  def to_big_i
+    BigInt.new { |mpz| LibGMP.set_f(mpz, mpf) }
   end
 
   def to_i64
@@ -333,10 +334,6 @@ struct Number
 
   def /(other : BigFloat)
     to_big_f / other
-  end
-
-  def //(other : BigFloat)
-    to_big_f // other
   end
 
   def to_big_f

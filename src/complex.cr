@@ -19,9 +19,13 @@ struct Complex
   # Returns the imaginary part.
   getter imag : Float64
 
-  def initialize(real : Number, imag : Number)
+  def initialize(real : Number, imag : Number = 0)
     @real = real.to_f
     @imag = imag.to_f
+  end
+
+  def self.new(c : Complex)
+    c
   end
 
   # Determines whether `self` equals *other* or not.
@@ -70,11 +74,15 @@ struct Complex
     to_f64.to_i64
   end
 
-  # Returns the value as a `Int32` if possible (the imaginary part should be exactly zero),
+  delegate to_i32, to_i16, to_i8, to: to_i64
+
+  # Returns the value as an `UInt64` if possible (the imaginary part should be exactly zero),
   # raises otherwise.
-  def to_i32
-    to_i64.to_i32
+  def to_u64
+    to_f64.to_u64
   end
+
+  delegate to_u32, to_u16, to_u8, to: to_u64
 
   # See `#to_i32`.
   def to_i

@@ -1,47 +1,15 @@
 require "spec"
-
-private macro it_initializes_from_value_to(number_type)
-  it "initialize from value to {{number_type}}" do
-    {{number_type}}.new(1).should be_a({{number_type}})
-    {{number_type}}.new(1).should eq(1)
-
-    {{number_type}}.new(1u32).should be_a({{number_type}})
-    {{number_type}}.new(1u32).should eq(1)
-
-    {{number_type}}.new(1.0).should be_a({{number_type}})
-    {{number_type}}.new(1.0).should eq(1)
-  end
-
-  it "unchecked initialize from value to {{number_type}}" do
-    {{number_type}}.new!(1).should be_a({{number_type}})
-    {{number_type}}.new!(1).should eq(1)
-
-    {{number_type}}.new!(1u32).should be_a({{number_type}})
-    {{number_type}}.new!(1u32).should eq(1)
-
-    {{number_type}}.new!(1.0).should be_a({{number_type}})
-    {{number_type}}.new!(1.0).should eq(1)
-  end
-end
+require "big"
+require "complex"
+require "../support/number"
 
 describe "Number" do
-  it_initializes_from_value_to Int8
-  it_initializes_from_value_to Int16
-  it_initializes_from_value_to Int32
-  it_initializes_from_value_to Int64
-
-  it_initializes_from_value_to UInt8
-  it_initializes_from_value_to UInt16
-  it_initializes_from_value_to UInt32
-  it_initializes_from_value_to UInt64
-
-  {% if flag?(:bits64) %}
-    it_initializes_from_value_to Int128
-    it_initializes_from_value_to UInt128
+  {% for number_type in BUILTIN_NUMBER_TYPES %}
+    it_unchecked_initializes_from_value_to {{number_type}}
+    it_initializes_from_value_to {{number_type}}
   {% end %}
 
-  it_initializes_from_value_to Float32
-  it_initializes_from_value_to Float64
+  it_can_convert_between({{BUILTIN_NUMBER_TYPES}}, {{BUILTIN_NUMBER_TYPES}})
 
   describe "significant" do
     it "10 base" do
@@ -263,4 +231,26 @@ describe "Number" do
       iter.next.should eq(1000)
     end
   end
+
+  floor_division_returns_lhs_type {{BUILTIN_NUMBER_TYPES}}, {{BUILTIN_NUMBER_TYPES}}
+
+  division_between_returns {{BUILTIN_INTEGER_TYPES_LTE_64}}, {{BUILTIN_INTEGER_TYPES_LTE_64}}, Float32
+
+  division_between_returns {{BUILTIN_INTEGER_TYPES_128}}, {{BUILTIN_INTEGER_TYPES_LTE_64}}, Float64
+  division_between_returns {{BUILTIN_INTEGER_TYPES_LTE_64}}, {{BUILTIN_INTEGER_TYPES_128}}, Float64
+  division_between_returns {{BUILTIN_INTEGER_TYPES_128}}, {{BUILTIN_INTEGER_TYPES_128}}, Float64
+
+  division_between_returns {{BUILTIN_INTEGER_TYPES_LTE_64}}, [Float32], Float32
+  division_between_returns {{BUILTIN_INTEGER_TYPES_128}}, [Float32], Float64
+
+  division_between_returns {{BUILTIN_INTEGER_TYPES}}, [Float64], Float64
+
+  division_between_returns [Float32], {{BUILTIN_INTEGER_TYPES_LTE_64}}, Float32
+  division_between_returns [Float32], {{BUILTIN_INTEGER_TYPES_128}}, Float64
+
+  division_between_returns [Float64], {{BUILTIN_INTEGER_TYPES}}, Float64
+
+  division_between_returns [Float32], [Float32], Float32
+  division_between_returns {{BUILTIN_FLOAT_TYPES}}, [Float64], Float64
+  division_between_returns [Float64], {{BUILTIN_FLOAT_TYPES}}, Float64
 end
