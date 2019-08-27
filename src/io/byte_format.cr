@@ -131,7 +131,7 @@ module IO::ByteFormat
   {% for mod in %w(LittleEndian BigEndian) %}
     module {{mod.id}}
       {% for type, i in %w(Int8 UInt8 Int16 UInt16 Int32 UInt32 Int64 UInt64 Int128 UInt128) %}
-        {% bytesize = 2 ** (i / 2) %}
+        {% bytesize = 2 ** (i // 2) %}
 
         def self.encode(int : {{type.id}}, io : IO)
           buffer = int.unsafe_as(StaticArray(UInt8, {{bytesize}}))

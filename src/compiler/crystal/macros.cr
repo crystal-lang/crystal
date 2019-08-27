@@ -304,8 +304,14 @@ module Crystal::Macros
     def *(other : NumberLiteral) : NumberLiteral
     end
 
-    # Same as `Number#/`
-    def /(other : NumberLiteral) : NumberLiteral
+    # MathInterpreter only works with Integer and Number#/ : Float
+    #
+    # # Same as `Number#/`
+    # def /(other : NumberLiteral) : NumberLiteral
+    # end
+
+    # Same as `Number#//`
+    def //(other : NumberLiteral) : NumberLiteral
     end
 
     # Same as `Number#%`
