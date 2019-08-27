@@ -1,4 +1,5 @@
 require "./event_loop"
+require "./fiber_channel"
 require "fiber"
 require "thread"
 
@@ -58,8 +59,9 @@ class Crystal::Scheduler
     Thread.current.scheduler.yield(fiber)
   end
 
-  @worker_in : IO
-  @worker_out : IO
+  {% if flag?(:preview_mt) %}
+    @fiber_channel = Crystal::FiberChannel.new
+  {% end %}
   @lock = Crystal::SpinLock.new
   @sleeping = false
 
@@ -67,7 +69,6 @@ class Crystal::Scheduler
   def initialize(@main : Fiber)
     @current = @main
     @runnables = Deque(Fiber).new
-    @worker_out, @worker_in = IO.pipe
   end
 
   protected def enqueue(fiber : Fiber) : Nil
@@ -161,8 +162,7 @@ class Crystal::Scheduler
         else
           @sleeping = true
           @lock.unlock
-          oid = @worker_out.read_bytes(UInt64)
-          fiber = Pointer(Fiber).new(oid).as(Fiber)
+          fiber = @fiber_channel.receive
 
           @lock.lock
           @sleeping = false
@@ -176,7 +176,7 @@ class Crystal::Scheduler
     def send_fiber(fiber : Fiber)
       @lock.lock
       if @sleeping
-        @worker_in.write_bytes(fiber.object_id)
+        @fiber_channel.send(fiber)
       else
         @runnables << fiber
       end
