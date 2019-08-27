@@ -5,8 +5,8 @@
 # or fibers that become runnable by the execution of other threads, at the same
 # time it waits for other IO events or timers within the event loop
 struct Crystal::FiberChannel
-  @worker_in : IO
-  @worker_out : IO
+  @worker_in : IO::FileDescriptor
+  @worker_out : IO::FileDescriptor
 
   def initialize
     @worker_out, @worker_in = IO.pipe
