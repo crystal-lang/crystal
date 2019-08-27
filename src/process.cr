@@ -1,6 +1,6 @@
 require "c/signal"
 require "c/stdlib"
-require "c/sys/times"
+require "c/sys/process"
 require "c/unistd"
 
 class Process
