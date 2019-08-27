@@ -145,13 +145,9 @@ describe HTTP::Server::RequestProcessor do
         Hello world
         HTTP/1.1 400 Bad Request
         Content-Type: text/plain
-        Transfer-Encoding: chunked
+        Content-Length: 16
 
-        10
         400 Bad Request\\n
-        0
-
-
         RESPONSE
       ).gsub("\\n", "\n"))
     end

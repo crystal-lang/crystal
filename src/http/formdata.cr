@@ -27,7 +27,7 @@ require "mime/multipart"
 #   end
 #
 #   unless name && file
-#     context.response.status = :bad_request
+#     context.response.respond_with_status(:bad_request)
 #     next
 #   end
 #

@@ -27,7 +27,7 @@ class HTTP::WebSocketHandler
       key = context.request.headers["Sec-WebSocket-Key"]?
 
       unless key
-        response.status = :bad_request
+        response.respond_with_status(:bad_request)
         return
       end
 
