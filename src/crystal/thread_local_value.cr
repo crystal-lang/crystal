@@ -1,5 +1,5 @@
 # :nodoc:
-class Crystal::ThreadLocalValue(T)
+struct Crystal::ThreadLocalValue(T)
   @values = Hash(Thread, T).new
 
   def get(&block : -> T)
