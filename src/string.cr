@@ -467,32 +467,32 @@ class String
   end
 
   # Same as `#to_i` but returns an `Int128`.
-  def to_i128(base : Int = 10, whitespace : Bool = true, underscore : Bool = false, prefix : Bool = false, strict : Bool  = true, leading_zero_is_octal : Bool = false) : Int128
+  def to_i128(base : Int = 10, whitespace : Bool = true, underscore : Bool = false, prefix : Bool = false, strict : Bool = true, leading_zero_is_octal : Bool = false) : Int128
     to_i128(base, whitespace, underscore, prefix, strict) { raise ArgumentError.new("Invalid Int128: #{self}") }
   end
 
   # Same as `#to_i` but returns an `Int128` or `nil`.
-  def to_i128?(base : Int = 10, whitespace : Bool = true, underscore : Bool = false, prefix : Bool = false, strict : Bool  = true, leading_zero_is_octal : Bool = false) : Int128?
+  def to_i128?(base : Int = 10, whitespace : Bool = true, underscore : Bool = false, prefix : Bool = false, strict : Bool = true, leading_zero_is_octal : Bool = false) : Int128?
     to_i128(base, whitespace, underscore, prefix, strict) { nil }
   end
 
   # Same as `#to_i` but returns an `Int128` or the block's value.
-  def to_i128(base : Int = 10, whitespace : Bool = true, underscore : Bool = false, prefix : Bool = false, strict : Bool  = true, leading_zero_is_octal : Bool = false, &block)
+  def to_i128(base : Int = 10, whitespace : Bool = true, underscore : Bool = false, prefix : Bool = false, strict : Bool = true, leading_zero_is_octal : Bool = false, &block)
     gen_to_ i128, ((1 << 127) - 1).to_u128, (1 << 127).to_u128
   end
 
   # Same as `#to_i` but returns an `UInt128`.
-  def to_u128(base : Int = 10, whitespace : Bool = true, underscore : Bool = false, prefix : Bool = false, strict : Bool  = true, leading_zero_is_octal : Bool = false) : UInt128
+  def to_u128(base : Int = 10, whitespace : Bool = true, underscore : Bool = false, prefix : Bool = false, strict : Bool = true, leading_zero_is_octal : Bool = false) : UInt128
     to_u128(base, whitespace, underscore, prefix, strict) { raise ArgumentError.new("Invalid UInt128: #{self}") }
   end
 
   # Same as `#to_i` but returns an `UInt128` or `nil`.
-  def to_u128?(base : Int = 10, whitespace : Bool = true, underscore : Bool = false, prefix : Bool = false, strict : Bool  = true, leading_zero_is_octal : Bool = false) : UInt128?
+  def to_u128?(base : Int = 10, whitespace : Bool = true, underscore : Bool = false, prefix : Bool = false, strict : Bool = true, leading_zero_is_octal : Bool = false) : UInt128?
     to_u128(base, whitespace, underscore, prefix, strict) { nil }
   end
 
   # Same as `#to_i` but returns an `UInt128` or the block's value.
-  def to_u128(base : Int = 10, whitespace : Bool = true, underscore : Bool = false, prefix : Bool = false, strict : Bool  = true, leading_zero_is_octal : Bool = false, &block)
+  def to_u128(base : Int = 10, whitespace : Bool = true, underscore : Bool = false, prefix : Bool = false, strict : Bool = true, leading_zero_is_octal : Bool = false, &block)
     gen_to_ u128, ((1 << 127) - 1).to_u128
   end
 
@@ -519,14 +519,13 @@ class String
   end
 
   # :nodoc:
-  struct UIntInfo
-    getter value : (UInt64 | UInt128), negative : Bool, invalid : Bool
+  record UIntInfo, value : (UInt64 | UInt128), negative : Bool, invalid : Bool
 
   private macro gen_to_(method, max_positive = nil, max_negative = nil)
     if base == UInt128
-      info = to_u128_info(base, whitespace, underscore, prefix, strict, leading_zero_is_octal, unsigned: {{max_negative == nil}})
+      info = to_info(base, whitespace, underscore, prefix, strict, leading_zero_is_octal, unsigned: {{max_negative == nil}})
     else
-      info = to_u64_info(base, whitespace, underscore, prefix, strict, leading_zero_is_octal, unsigned: {{max_negative == nil}})
+      info = to_info(base, whitespace, underscore, prefix, strict, leading_zero_is_octal, unsigned: {{max_negative == nil}})
     end
 
     return yield if info.invalid
