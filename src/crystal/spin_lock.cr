@@ -20,8 +20,8 @@ class Crystal::SpinLock
   end
 
   def sync
+    lock
     begin
-      lock
       yield
     ensure
       unlock
@@ -29,8 +29,8 @@ class Crystal::SpinLock
   end
 
   def unsync
+    unlock
     begin
-      unlock
       yield
     ensure
       lock
