@@ -2,36 +2,40 @@ abstract class OpenSSL::SSL::Socket < IO
   class Client < Socket
     def initialize(io, context : Context::Client = Context::Client.new, sync_close : Bool = false, hostname : String? = nil)
       super(io, context, sync_close)
+      begin
+        if hostname
+          # Macro from OpenSSL: SSL_ctrl(s,SSL_CTRL_SET_TLSEXT_HOSTNAME,TLSEXT_NAMETYPE_host_name,(char *)name)
+          LibSSL.ssl_ctrl(
+            @ssl,
+            LibSSL::SSLCtrl::SET_TLSEXT_HOSTNAME,
+            LibSSL::TLSExt::NAMETYPE_host_name,
+            hostname.to_unsafe.as(Pointer(Void))
+          )
 
-      if hostname
-        # Macro from OpenSSL: SSL_ctrl(s,SSL_CTRL_SET_TLSEXT_HOSTNAME,TLSEXT_NAMETYPE_host_name,(char *)name)
-        LibSSL.ssl_ctrl(
-          @ssl,
-          LibSSL::SSLCtrl::SET_TLSEXT_HOSTNAME,
-          LibSSL::TLSExt::NAMETYPE_host_name,
-          hostname.to_unsafe.as(Pointer(Void))
-        )
+          {% if compare_versions(LibSSL::OPENSSL_VERSION, "1.0.2") >= 0 %}
+            param = LibSSL.ssl_get0_param(@ssl)
 
-        {% if compare_versions(LibSSL::OPENSSL_VERSION, "1.0.2") >= 0 %}
-          param = LibSSL.ssl_get0_param(@ssl)
-
-          if ::Socket.ip?(hostname)
-            unless LibCrypto.x509_verify_param_set1_ip_asc(param, hostname) == 1
-              raise OpenSSL::Error.new("X509_VERIFY_PARAM_set1_ip_asc")
+            if ::Socket.ip?(hostname)
+              unless LibCrypto.x509_verify_param_set1_ip_asc(param, hostname) == 1
+                raise OpenSSL::Error.new("X509_VERIFY_PARAM_set1_ip_asc")
+              end
+            else
+              unless LibCrypto.x509_verify_param_set1_host(param, hostname, 0) == 1
+                raise OpenSSL::Error.new("X509_VERIFY_PARAM_set1_host")
+              end
             end
-          else
-            unless LibCrypto.x509_verify_param_set1_host(param, hostname, 0) == 1
-              raise OpenSSL::Error.new("X509_VERIFY_PARAM_set1_host")
-            end
-          end
-        {% else %}
-          context.set_cert_verify_callback(hostname)
-        {% end %}
-      end
+          {% else %}
+            context.set_cert_verify_callback(hostname)
+          {% end %}
+        end
 
-      ret = LibSSL.ssl_connect(@ssl)
-      unless ret == 1
-        raise OpenSSL::SSL::Error.new(@ssl, ret, "SSL_connect")
+        ret = LibSSL.ssl_connect(@ssl)
+        unless ret == 1
+          raise OpenSSL::SSL::Error.new(@ssl, ret, "SSL_connect")
+        end
+      rescue ex
+        LibSSL.ssl_free(@ssl) # GC never calls finalize, avoid mem leak
+        raise ex
       end
     end
 
@@ -49,11 +53,15 @@ abstract class OpenSSL::SSL::Socket < IO
   class Server < Socket
     def initialize(io, context : Context::Server = Context::Server.new, sync_close : Bool = false)
       super(io, context, sync_close)
-
-      ret = LibSSL.ssl_accept(@ssl)
-      unless ret == 1
-        io.close if sync_close
-        raise OpenSSL::SSL::Error.new(@ssl, ret, "SSL_accept")
+      begin
+        ret = LibSSL.ssl_accept(@ssl)
+        unless ret == 1
+          io.close if sync_close
+          raise OpenSSL::SSL::Error.new(@ssl, ret, "SSL_accept")
+        end
+      rescue ex
+        LibSSL.ssl_free(@ssl) # GC never calls finalize, avoid mem leak
+        raise ex
       end
     end
 
