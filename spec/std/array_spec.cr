@@ -133,7 +133,11 @@ describe "Array" do
   end
 
   it "does *" do
+    (([] of Int32) * 10).empty?.should be_true
+    ([1, 2, 3] * 0).empty?.should be_true
+    ([1] * 3).should eq([1, 1, 1])
     ([1, 2, 3] * 3).should eq([1, 2, 3, 1, 2, 3, 1, 2, 3])
+    ([1, 2] * 10).should eq([1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2])
   end
 
   describe "[]" do

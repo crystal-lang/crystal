@@ -51,7 +51,8 @@ class Crystal::Program
       parser.filename = VirtualFile.new(the_macro, generated_source, node.location)
       parser.macro_expansion_pragmas = macro_expansion_pragmas
       parser.visibility = node.visibility
-      parser.def_nest = 1 if current_def
+      parser.def_nest = 1 if current_def && !current_def.is_a?(External)
+      parser.fun_nest = 1 if current_def && current_def.is_a?(External)
       parser.type_nest = 1 if inside_type
       parser.wants_doc = @program.wants_doc?
       generated_node = yield parser

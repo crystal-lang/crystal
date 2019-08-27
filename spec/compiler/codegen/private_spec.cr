@@ -2,7 +2,7 @@ require "../../spec_helper"
 
 describe "Codegen: private" do
   it "codegens private def in same file" do
-    compiler = Compiler.new
+    compiler = create_spec_compiler
     sources = [
       Compiler::Source.new("foo.cr", %(
                                         private def foo
@@ -22,7 +22,7 @@ describe "Codegen: private" do
   end
 
   it "codegens overloaded private def in same file" do
-    compiler = Compiler.new
+    compiler = create_spec_compiler
     sources = [
       Compiler::Source.new("foo.cr", %(
                                         private def foo(x : Int32)

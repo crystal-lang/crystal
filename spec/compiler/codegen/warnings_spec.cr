@@ -226,7 +226,7 @@ describe "Code gen: warnings" do
           end
         )
 
-        compiler = Compiler.new
+        compiler = create_spec_compiler
         compiler.warnings = Warnings::All
         compiler.warnings_exclude << Crystal.normalize_path "lib"
         compiler.prelude = "empty"

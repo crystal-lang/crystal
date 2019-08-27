@@ -66,7 +66,7 @@ require "./spec/dsl"
 module Spec
 end
 
-OptionParser.parse! do |opts|
+OptionParser.parse do |opts|
   opts.banner = "crystal spec runner"
   opts.on("-e ", "--example STRING", "run examples whose full nested names include STRING") do |pattern|
     Spec.pattern = pattern
@@ -117,6 +117,8 @@ end
 if ENV["SPEC_VERBOSE"]? == "1"
   Spec.override_default_formatter(Spec::VerboseFormatter.new)
 end
+
+Spec.add_split_filter ENV["SPEC_SPLIT"]?
 
 {% unless flag?(:win32) %}
   # TODO(windows): re-enable this once Signal is ported

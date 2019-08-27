@@ -325,11 +325,31 @@ class Array(T)
   # ["a", "b", "c"] * 2 # => [ "a", "b", "c", "a", "b", "c" ]
   # ```
   def *(times : Int)
-    ary = Array(T).new(size * times)
-    times.times do
-      ary.concat(self)
+    if times == 0 || empty?
+      return Array(T).new
     end
-    ary
+
+    if times == 1
+      return dup
+    end
+
+    if size == 1
+      return Array(T).new(times, first)
+    end
+
+    new_size = size * times
+    Array(T).build(new_size) do |buffer|
+      buffer.copy_from(to_unsafe, size)
+      n = size
+
+      while n <= new_size // 2
+        (buffer + n).copy_from(buffer, n)
+        n *= 2
+      end
+
+      (buffer + n).copy_from(buffer, new_size - n)
+      new_size
+    end
   end
 
   # Append. Alias for `push`.

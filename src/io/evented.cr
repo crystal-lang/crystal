@@ -99,7 +99,7 @@ module IO::Evented
     @read_timed_out = timed_out
 
     if reader = @readers.try &.shift?
-      reader.resume
+      Crystal::Scheduler.enqueue reader
     end
   end
 
@@ -108,7 +108,7 @@ module IO::Evented
     @write_timed_out = timed_out
 
     if writer = @writers.try &.shift?
-      writer.resume
+      Crystal::Scheduler.enqueue writer
     end
   end
 

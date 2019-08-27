@@ -647,7 +647,18 @@ struct Path
   # Path.windows("foo\\bar").join(Path.posix("baz/baq")) # => Path.windows("foo\\bar\\baz/baq")
   # ```
   def join(parts : Enumerable) : Path
-    new_name = String.build do |str|
+    if parts.is_a?(Indexable)
+      # If we know how many parts we have we can compute an approximation of
+      # the string's capacity: this path's size plus the parts' size plus the
+      # separators between them
+      capacity = @name.bytesize +
+                 parts.sum(&.to_s.bytesize) +
+                 parts.size
+    else
+      capacity = 64
+    end
+
+    new_name = String.build(capacity) do |str|
       str << @name
       last_ended_with_separator = ends_with_separator?
 

@@ -200,7 +200,7 @@ fibers_num = 1_000
 loops_num = 20
 mode = :run
 
-OptionParser.parse! do |parser|
+OptionParser.parse do |parser|
   parser.on("-i", "--ips", "Benchmark with ips") { mode = :ips }
   parser.on("-m", "--measure", "Benchmark with measure") { mode = :measure }
   parser.on("-f FIBERS", "--fibers=FIBERS", "Specifies the number of fibers") { |v| fibers_num = v.to_i }
