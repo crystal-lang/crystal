@@ -8,7 +8,7 @@ class Thread
   # Use spawn and channels instead.
 
   # all thread objects, so the GC can see them (it doesn't scan thread locals)
-  @@threads : Thread::LinkedList(Thread)?
+  protected class_getter(threads) { Thread::LinkedList(Thread).new }
 
   @th : LibC::PthreadT
   @exception : Exception?
@@ -20,10 +20,6 @@ class Thread
 
   # :nodoc:
   property previous : Thread?
-
-  protected def self.threads
-    @@threads ||= Thread::LinkedList(Thread).new
-  end
 
   def self.unsafe_each
     threads.unsafe_each { |thread| yield thread }

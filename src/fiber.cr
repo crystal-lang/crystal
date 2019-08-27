@@ -11,7 +11,8 @@ fun _fiber_get_stack_top : Void*
 end
 
 class Fiber
-  @@fibers : Thread::LinkedList(Fiber)?
+  # :nodoc:
+  protected class_getter(fibers) { Thread::LinkedList(Fiber).new }
 
   # :nodoc:
   class_getter stack_pool = StackPool.new
@@ -29,10 +30,6 @@ class Fiber
 
   # :nodoc:
   property previous : Fiber?
-
-  protected def self.fibers
-    @@fibers ||= Thread::LinkedList(Fiber).new
-  end
 
   # :nodoc:
   def self.inactive(fiber : Fiber)
