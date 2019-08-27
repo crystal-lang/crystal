@@ -101,6 +101,18 @@ describe "JSON serialization" do
       tuple.should be_a(NamedTuple(x: Int32, y: String))
     end
 
+    it "does for named tuple with nilable fields (#8089)" do
+      tuple = NamedTuple(x: Int32?, y: String).from_json(%({"y": "hello"}))
+      tuple.should eq({x: nil, y: "hello"})
+      tuple.should be_a(NamedTuple(x: Int32?, y: String))
+    end
+
+    it "does for named tuple with nilable fields and null (#8089)" do
+      tuple = NamedTuple(x: Int32?, y: String).from_json(%({"y": "hello", "x": null}))
+      tuple.should eq({x: nil, y: "hello"})
+      tuple.should be_a(NamedTuple(x: Int32?, y: String))
+    end
+
     it "does for BigInt" do
       big = BigInt.from_json("123456789123456789123456789123456789123456789")
       big.should be_a(BigInt)

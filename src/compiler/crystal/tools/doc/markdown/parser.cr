@@ -1,4 +1,4 @@
-class Markdown::Parser
+class Crystal::Doc::Markdown::Parser
   record PrefixHeader, count : Int32
   record UnorderedList, char : Char
   record CodeFence, language : String

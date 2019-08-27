@@ -28,4 +28,20 @@ describe Doc::Type do
     doc_alias_type = generator.type(alias_type)
     doc_alias_type.types.size.should eq(0)
   end
+
+  it "finds construct when searching class method (#8095)" do
+    result = semantic(%(
+      class Foo
+        def initialize(x)
+        end
+      end
+    ))
+
+    program = result.program
+
+    generator = Doc::Generator.new program, [""], ".", "html", nil
+    foo = generator.type(program.types["Foo"])
+    foo.lookup_class_method("new").should_not be_nil
+    foo.lookup_class_method("new", 1).should_not be_nil
+  end
 end

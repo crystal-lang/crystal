@@ -1,4 +1,4 @@
-module Markdown::Renderer
+module Crystal::Doc::Markdown::Renderer
   abstract def begin_paragraph
   abstract def end_paragraph
   abstract def begin_italic

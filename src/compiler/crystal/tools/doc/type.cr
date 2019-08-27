@@ -425,11 +425,11 @@ class Crystal::Doc::Type
   end
 
   def lookup_class_method(name)
-    lookup_in_methods class_methods, name
+    lookup_in_methods all_class_methods, name
   end
 
   def lookup_class_method(name, args_size)
-    lookup_in_methods class_methods, name, args_size
+    lookup_in_methods all_class_methods, name, args_size
   end
 
   def lookup_macro(name)

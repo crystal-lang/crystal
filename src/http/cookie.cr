@@ -256,6 +256,18 @@ module HTTP
       self[cookie.name] = cookie
     end
 
+    # Clears the collection, removing all cookies.
+    def clear
+      @cookies.clear
+    end
+
+    # Deletes and returns the `HTTP::Cookie` for the specified *key*, or
+    # returns `nil` if *key* cannot be found in the collection. Note that
+    # *key* should match the the name attribute of the desired `HTTP::Cookie`.
+    def delete(key)
+      @cookies.delete(key)
+    end
+
     # Yields each `HTTP::Cookie` in the collection.
     def each(&block : Cookie ->)
       @cookies.values.each do |cookie|
@@ -266,6 +278,11 @@ module HTTP
     # Returns an iterator over the cookies of this collection.
     def each
       @cookies.each_value
+    end
+
+    # Returns the number of cookies contained in this collection.
+    def size
+      @cookies.size
     end
 
     # Whether the collection contains any cookies.

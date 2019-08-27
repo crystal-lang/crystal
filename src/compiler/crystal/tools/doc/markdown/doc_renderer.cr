@@ -1,11 +1,13 @@
-require "markdown"
+require "./*"
 
-class Crystal::Doc::MarkdownDocRenderer < Markdown::HTMLRenderer
+class Crystal::Doc::Markdown::DocRenderer < Crystal::Doc::Markdown::HTMLRenderer
   def self.new(obj : Constant | Macro | Method, io)
     new obj.type, io
   end
 
-  def initialize(@type : Type, io)
+  @type : Crystal::Doc::Type
+
+  def initialize(@type : Crystal::Doc::Type, io)
     super(io)
 
     @inside_inline_code = false

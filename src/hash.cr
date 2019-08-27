@@ -237,7 +237,7 @@ class Hash(K, V)
         initial_indices_size = Math.pw2ceil(initial_capacity)
       end
 
-      @entries = malloc_entries(initial_indices_size / 2)
+      @entries = malloc_entries(initial_indices_size // 2)
 
       # Check if we can avoid allocating the `@indices` buffer for
       # small hashes.
@@ -884,7 +884,7 @@ class Hash(K, V)
 
   # Returns the capacity of `@entries`.
   protected def entries_capacity
-    indices_size / 2
+    indices_size // 2
   end
 
   # Computes the hash of a key.
