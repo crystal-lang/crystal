@@ -143,11 +143,11 @@ class Crystal::Scheduler
     @rr_target = 0
 
     protected def find_target_thread
-      if @@workers.empty?
-        Thread.current
-      else
+      if workers = @@workers
         @rr_target += 1
-        @@workers[@rr_target % @@workers.size]
+        workers[@rr_target % workers.size]
+      else
+        Thread.current
       end
     end
 
@@ -181,12 +181,6 @@ class Crystal::Scheduler
         @runnables << fiber
       end
       @lock.unlock
-    end
-
-    @@workers = [] of Thread
-
-    def self.workers
-      @@workers
     end
 
     def self.init_workers
