@@ -638,17 +638,17 @@ class Crystal::CodeGenVisitor
     end
 
     @last = case op
-            when "+"  then builder.fadd p1, p2
-            when "-"  then builder.fsub p1, p2
-            when "*"  then builder.fmul p1, p2
-            when "/"  then builder.fdiv p1, p2
-            when "==" then return builder.fcmp LLVM::RealPredicate::OEQ, p1, p2
-            when "!=" then return builder.fcmp LLVM::RealPredicate::ONE, p1, p2
-            when "<"  then return builder.fcmp LLVM::RealPredicate::OLT, p1, p2
-            when "<=" then return builder.fcmp LLVM::RealPredicate::OLE, p1, p2
-            when ">"  then return builder.fcmp LLVM::RealPredicate::OGT, p1, p2
-            when ">=" then return builder.fcmp LLVM::RealPredicate::OGE, p1, p2
-            else           raise "BUG: trying to codegen #{t1} #{op} #{t2}"
+            when "+"         then builder.fadd p1, p2
+            when "-"         then builder.fsub p1, p2
+            when "*"         then builder.fmul p1, p2
+            when "/", "fdiv" then builder.fdiv p1, p2
+            when "=="        then return builder.fcmp LLVM::RealPredicate::OEQ, p1, p2
+            when "!="        then return builder.fcmp LLVM::RealPredicate::ONE, p1, p2
+            when "<"         then return builder.fcmp LLVM::RealPredicate::OLT, p1, p2
+            when "<="        then return builder.fcmp LLVM::RealPredicate::OLE, p1, p2
+            when ">"         then return builder.fcmp LLVM::RealPredicate::OGT, p1, p2
+            when ">="        then return builder.fcmp LLVM::RealPredicate::OGE, p1, p2
+            else                  raise "BUG: trying to codegen #{t1} #{op} #{t2}"
             end
     @last = trunc_float t1, @last if t1.rank < t2.rank
     @last

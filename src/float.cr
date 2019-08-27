@@ -66,6 +66,7 @@ struct Float
   end
 
   def fdiv(other)
+    # TODO: replace with fdiv primitve after 0.31.0
     self / other
   end
 
