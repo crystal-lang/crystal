@@ -1,3 +1,5 @@
+{% skip_file if flag?(:bits32) %}
+
 require "../../support/number"
 
 private BIG_NUMBER_TYPES = [BigInt, BigFloat, BigDecimal, BigRational]
