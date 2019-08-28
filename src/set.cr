@@ -203,6 +203,17 @@ struct Set(T)
     set
   end
 
+  # Addition: returns a new set containing the elements from both sets.
+  #
+  # ```
+  # Set{1, 1, 2, 3} + Set{3, 4, 5} # => Set{1, 2, 3, 4, 5}
+  # ```
+  #
+  # Alias for `#|` (Union).
+  def +(other)
+    self | other
+  end
+
   # Difference: returns a new set containing elements in this set that are not
   # present in the other.
   #

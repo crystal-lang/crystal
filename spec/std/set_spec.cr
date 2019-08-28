@@ -142,6 +142,14 @@ describe "Set" do
     set3.should eq(Set{1, 2, 3, 4, 5, "3"})
   end
 
+  it "aliases + to |" do
+    set1 = Set{1, 1, 2, 3}
+    set2 = Set{3, 4, 5}
+    set3 = set1 + set2
+    set4 = set1 | set2
+    set3.should eq(set4)
+  end
+
   it "does -" do
     set1 = Set{1, 2, 3, 4, 5}
     set2 = Set{2, 4, 6}
