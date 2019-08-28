@@ -19,13 +19,13 @@ module Crystal::System::Dir
     DirHandle.new(LibC::INVALID_HANDLE_VALUE, to_windows_path(path + "\\*"))
   end
 
-  def self.next(dir : DirHandle) : String?
+  def self.next_entry(dir : DirHandle) : Entry?
     if dir.handle == LibC::INVALID_HANDLE_VALUE
       # Directory is at start, use FindFirstFile
       handle = LibC.FindFirstFileW(dir.query, out data)
       if handle != LibC::INVALID_HANDLE_VALUE
         dir.handle = handle
-        return String.from_utf16(data.cFileName.to_unsafe)[0]
+        return data_to_entry(data)
       else
         error = LibC.GetLastError
         if error == WinError::ERROR_FILE_NOT_FOUND
@@ -37,7 +37,7 @@ module Crystal::System::Dir
     else
       # Use FindNextFile
       if LibC.FindNextFileW(dir.handle, out data_) != 0
-        return String.from_utf16(data_.cFileName.to_unsafe)[0]
+        return data_to_entry(data_)
       else
         error = LibC.GetLastError
         if error == WinError::ERROR_NO_MORE_FILES
@@ -47,6 +47,12 @@ module Crystal::System::Dir
         end
       end
     end
+  end
+
+  def self.data_to_entry(data)
+    name = String.from_utf16(data.cFileName.to_unsafe)[0]
+    dir = (data.dwFileAttributes & LibC::FILE_ATTRIBUTE_DIRECTORY) != 0
+    Entry.new(name, dir)
   end
 
   def self.rewind(dir : DirHandle) : Nil

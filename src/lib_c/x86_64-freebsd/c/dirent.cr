@@ -3,6 +3,8 @@ require "./sys/types"
 lib LibC
   type DIR = Void
 
+  DT_DIR = 4
+
   struct Dirent
     {% if flag?(:freebsd11) %}
       d_fileno : UInt
