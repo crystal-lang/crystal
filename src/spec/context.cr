@@ -159,6 +159,46 @@ module Spec
       @@contexts_stack.pop
     end
 
+    def self.it(description, file, line, end_line, &block)
+      Spec::RootContext.check_nesting_spec(file, line) do
+        return unless Spec.split_filter_matches
+        return unless Spec.matches?(description, file, line, end_line)
+
+        Spec.formatters.each(&.before_example(description))
+
+        start = Time.monotonic
+        begin
+          Spec.run_before_each_hooks
+          block.call
+          Spec::RootContext.report(:success, description, file, line, Time.monotonic - start)
+        rescue ex : Spec::AssertionFailed
+          Spec::RootContext.report(:fail, description, file, line, Time.monotonic - start, ex)
+          Spec.abort! if Spec.fail_fast?
+        rescue ex
+          Spec::RootContext.report(:error, description, file, line, Time.monotonic - start, ex)
+          Spec.abort! if Spec.fail_fast?
+        ensure
+          Spec.run_after_each_hooks
+
+          # We do this to give a chance for signals (like CTRL+C) to be handled,
+          # which currently are only handled when there's a fiber switch
+          # (IO stuff, sleep, etc.). Without it the user might wait more than needed
+          # after pressing CTRL+C to quit the tests.
+          Fiber.yield
+        end
+      end
+    end
+
+    def self.pending(description, file, line, end_line, &block)
+      Spec::RootContext.check_nesting_spec(file, line) do
+        return unless Spec.matches?(description, file, line, end_line)
+
+        Spec.formatters.each(&.before_example(description))
+
+        Spec::RootContext.report(:pending, description, file, line)
+      end
+    end
+
     def self.matches?(description, pattern, line, locations)
       @@contexts_stack.any?(&.matches?(pattern, line, locations)) || description =~ pattern
     end
