@@ -447,10 +447,10 @@ describe "Int" do
   end
 
   it "raises when divides Int::MIN by -1" do
-    (Int8::MIN / -1).should eq(-(Int8::MIN.to_f32))
-    (Int16::MIN / -1).should eq(-(Int16::MIN.to_f32))
-    (Int32::MIN / -1).should eq(-(Int32::MIN.to_f32))
-    (Int64::MIN / -1).should eq(-(Int64::MIN.to_f32))
+    (Int8::MIN / -1).should eq(-(Int8::MIN.to_f64))
+    (Int16::MIN / -1).should eq(-(Int16::MIN.to_f64))
+    (Int32::MIN / -1).should eq(-(Int32::MIN.to_f64))
+    (Int64::MIN / -1).should eq(-(Int64::MIN.to_f64))
 
     (UInt8::MIN / -1).should eq(0)
   end

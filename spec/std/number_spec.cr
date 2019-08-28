@@ -234,21 +234,10 @@ describe "Number" do
 
   floor_division_returns_lhs_type {{BUILTIN_NUMBER_TYPES}}, {{BUILTIN_NUMBER_TYPES}}
 
-  division_between_returns {{BUILTIN_INTEGER_TYPES_LTE_64}}, {{BUILTIN_INTEGER_TYPES_LTE_64}}, Float32
-
-  division_between_returns {{BUILTIN_INTEGER_TYPES_128}}, {{BUILTIN_INTEGER_TYPES_LTE_64}}, Float64
-  division_between_returns {{BUILTIN_INTEGER_TYPES_LTE_64}}, {{BUILTIN_INTEGER_TYPES_128}}, Float64
-  division_between_returns {{BUILTIN_INTEGER_TYPES_128}}, {{BUILTIN_INTEGER_TYPES_128}}, Float64
-
-  division_between_returns {{BUILTIN_INTEGER_TYPES_LTE_64}}, [Float32], Float32
-  division_between_returns {{BUILTIN_INTEGER_TYPES_128}}, [Float32], Float64
-
-  division_between_returns {{BUILTIN_INTEGER_TYPES}}, [Float64], Float64
-
-  division_between_returns [Float32], {{BUILTIN_INTEGER_TYPES_LTE_64}}, Float32
-  division_between_returns [Float32], {{BUILTIN_INTEGER_TYPES_128}}, Float64
-
-  division_between_returns [Float64], {{BUILTIN_INTEGER_TYPES}}, Float64
+  division_between_returns {{BUILTIN_INTEGER_TYPES}}, {{BUILTIN_INTEGER_TYPES}}, Float64
+  division_between_returns {{BUILTIN_INTEGER_TYPES}}, {{BUILTIN_FLOAT_TYPES}}, Float64
+  division_between_returns {{BUILTIN_FLOAT_TYPES}}, {{BUILTIN_INTEGER_TYPES}}, Float64
+  division_between_returns {{BUILTIN_INTEGER_TYPES}}, {{BUILTIN_FLOAT_TYPES}}, Float64
 
   division_between_returns [Float32], [Float32], Float32
   division_between_returns {{BUILTIN_FLOAT_TYPES}}, [Float64], Float64
