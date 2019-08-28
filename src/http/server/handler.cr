@@ -25,9 +25,7 @@ module HTTP::Handler
     if next_handler = @next
       next_handler.call(context)
     else
-      context.response.status = :not_found
-      context.response.headers["Content-Type"] = "text/plain"
-      context.response.puts "Not Found"
+      context.response.respond_with_status(:not_found)
     end
   end
 

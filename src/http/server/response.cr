@@ -123,20 +123,40 @@ class HTTP::Server
       @output.closed?
     end
 
-    # Generates an error response using *message* and *code*.
+    # Sends an error response.
     #
-    # Calls `reset` and then writes the given message.
+    # Calls `#reset`, writes the given status, and closes the response.
+    @[Deprecated("Use #respond_with_status instead")]
     def respond_with_error(message = "Internal Server Error", code = 500)
+      respond_with_status(code, message)
+    end
+
+    @status_message : String?
+
+    # Sends *status* and *message* as response.
+    #
+    # This method calls `#reset` to remove any previous settings and writes the
+    # given *status* and *message* to the response IO. Finally, it closes the
+    # response.
+    #
+    # If *message* is `nil`, the default message for *status* is used provided
+    # by `HTTP::Status#description`.
+    def respond_with_status(status : HTTP::Status, message : String? = nil)
       reset
-      @status = HTTP::Status.new(code)
-      message ||= @status.description
+      @status = status
+      @status_message = message ||= @status.description
       self.content_type = "text/plain"
       self << @status.code << ' ' << message << '\n'
-      flush
+      close
+    end
+
+    # :ditto:
+    def respond_with_status(status : Int, message : String? = nil)
+      respond_with_status(HTTP::Status.new(status), message)
     end
 
     protected def write_headers
-      @io << @version << ' ' << @status.code << ' ' << @status.description << "\r\n"
+      @io << @version << ' ' << @status.code << ' ' << (@status_message || @status.description) << "\r\n"
       headers.each do |name, values|
         values.each do |value|
           @io << name << ": " << value << "\r\n"
