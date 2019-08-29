@@ -553,11 +553,12 @@ struct Path
   # Path["baz"].expand("/foo/bar") # => Path["/foo/bar/baz"]
   # ```
   #
-  # *home* specifies the home directory which `~` will expand to.
+  # *home* specifies the home directory which `~` will expand to. If not given
+  # (or `nil` is given) then `Path.home` will be used.
   # If *expand_base* is `true`, *base* itself will be exanded in `Dir.current`
   # if it is not an absolute path. This guarantees the method returns an absolute
   # path (assuming that `Dir.current` is absolute).
-  def expand(base : Path | String = Dir.current, *, home = Path.home, expand_base = true) : Path
+  def expand(base : Path | String = Dir.current, *, home : String | Path | Nil = nil, expand_base = true) : Path
     base = Path.new(base) unless base.is_a?(Path)
     base = base.to_kind(@kind)
     if base == self
@@ -568,9 +569,9 @@ struct Path
     name = @name
 
     if name == "~"
-      name = home.to_kind(@kind).normalize.to_s
+      name = (home || Path.home).to_kind(@kind).normalize.to_s
     elsif name.starts_with?("~/")
-      name = home.to_kind(@kind).normalize.join(name.byte_slice(2, name.bytesize - 2)).to_s
+      name = (home || Path.home).to_kind(@kind).normalize.join(name.byte_slice(2, name.bytesize - 2)).to_s
     end
 
     unless new_instance(name).absolute?
