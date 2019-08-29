@@ -6,6 +6,7 @@ class Crystal::RWLock
   def read_lock
     loop do
       while @writer.get != 0
+        Intrinsics.pause
       end
 
       @readers.add(1)
@@ -22,9 +23,11 @@ class Crystal::RWLock
 
   def write_lock
     while @writer.swap(1) != 0
+      Intrinsics.pause
     end
 
     while @readers.get != 0
+      Intrinsics.pause
     end
   end
 
