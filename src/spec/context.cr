@@ -197,8 +197,6 @@ module Spec
   class NestedContext < Context
     include Item
 
-    getter! parent : Context
-
     def initialize(@parent : Context, @description : String,
                    @file : String, @line : Int32, @end_line : Int32,
                    @focus : Bool)

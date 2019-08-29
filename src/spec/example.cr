@@ -4,7 +4,6 @@ module Spec
   class Example
     include Item
 
-    getter parent : Context
     getter block : ->
     getter? pending : Bool
 
