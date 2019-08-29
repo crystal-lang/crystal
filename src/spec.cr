@@ -63,6 +63,18 @@ require "./spec/dsl"
 # # Run the spec or group defined in line 14 of spec/my/test/file_spec.cr
 # crystal spec spec/my/test/file_spec.cr:14
 # ```
+#
+# ## Focusing on a group of specs
+#
+# A `describe`, `context` or `it` can be marked with `focus: true`, like this:
+#
+# ```
+# it "adds", focus: true do
+#   (2 + 2).should_not eq(5)
+# end
+# ```
+#
+# If any such thing is marked with `focus: true` then only those examples will run.
 module Spec
 end
 

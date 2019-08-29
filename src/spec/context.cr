@@ -135,6 +135,7 @@ module Spec
       puts "Aborted!".colorize.red if aborted
       puts "Finished in #{Spec.to_human(elapsed_time)}"
       puts Spec.color("#{total} examples, #{failures.size} failures, #{errors.size} errors, #{pendings.size} pending", final_status)
+      puts Spec.color("Only running `focus: true`", :focus) if Spec.focus?
 
       unless failures_and_errors.empty?
         puts
@@ -147,8 +148,10 @@ module Spec
       end
     end
 
-    def describe(description, file, line, end_line, &block)
-      context = Spec::NestedContext.new(@@current_context, description, file, line, end_line)
+    def describe(description, file, line, end_line, focus, &block)
+      Spec.focus = true if focus
+
+      context = Spec::NestedContext.new(@@current_context, description, file, line, end_line, focus)
       @@current_context.children << context
 
       old_context = @@current_context
@@ -160,17 +163,19 @@ module Spec
       end
     end
 
-    def it(description, file, line, end_line, &block)
-      add_example(description, file, line, end_line, block, pending: false)
+    def it(description, file, line, end_line, focus, &block)
+      add_example(description, file, line, end_line, focus, block, pending: false)
     end
 
-    def pending(description, file, line, end_line, &block)
-      add_example(description, file, line, end_line, block, pending: true)
+    def pending(description, file, line, end_line, focus, &block)
+      add_example(description, file, line, end_line, focus, block, pending: true)
     end
 
-    private def add_example(description, file, line, end_line, block, pending)
+    private def add_example(description, file, line, end_line, focus, block, pending)
       check_nesting_spec(file, line) do
-        @@current_context.children << Example.new(@@current_context, description, file, line, end_line, block, pending)
+        Spec.focus = true if focus
+        @@current_context.children <<
+          Example.new(@@current_context, description, file, line, end_line, focus, block, pending)
       end
     end
 
@@ -194,7 +199,9 @@ module Spec
 
     getter! parent : Context
 
-    def initialize(@parent : Context, @description : String, @file : String, @line : Int32, @end_line : Int32)
+    def initialize(@parent : Context, @description : String,
+                   @file : String, @line : Int32, @end_line : Int32,
+                   @focus : Bool)
     end
 
     def run

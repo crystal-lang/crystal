@@ -31,6 +31,10 @@ module Spec
       children.select!(&.filter_by_locations(locations))
     end
 
+    def filter_by_focus
+      children.select!(&.filter_by_focus)
+    end
+
     def filter_by_split(split_filter : SplitFilter)
       children.select!(&.filter_by_split(split_filter))
     end
@@ -84,6 +88,16 @@ module Spec
       false
     end
 
+    # Filters a context and its children that are marked as focus.
+    # Returns `true` if the context or any of its children have focus,
+    # `false` otherwise.
+    def filter_by_focus : Bool
+      return true if focus?
+
+      children.select!(&.filter_by_focus)
+      !children.empty?
+    end
+
     # Filters a context and its children by the given split filter
     # Returns `true` if the context matches the filter, `false` otherwise.
     def filter_by_split(split_filter : SplitFilter) : Bool
@@ -109,6 +123,11 @@ module Spec
     # `false` otherwise.
     def filter_by_locations(locations : Hash(String, Array(Int32))) : Bool
       matches_locations?(locations)
+    end
+
+    # Returns `true` if this example is marked as focus, `false` otherwise
+    def filter_by_focus : Bool
+      @focus
     end
 
     @@example_counter = -1

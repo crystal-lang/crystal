@@ -10,6 +10,7 @@ module Spec
 
     def initialize(@parent : Context, @description : String,
                    @file : String, @line : Int32, @end_line : Int32,
+                   @focus : Bool,
                    @block : ->, @pending : Bool)
     end
 

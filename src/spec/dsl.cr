@@ -8,6 +8,7 @@ module Spec
     error:   :red,
     pending: :yellow,
     comment: :cyan,
+    focus:   :cyan,
   }
 
   private LETTERS = {
@@ -125,6 +126,9 @@ module Spec
   # :nodoc:
   class_property? fail_fast = false
 
+  # :nodoc:
+  class_property? focus = false
+
   # Instructs the spec runner to execute the given block
   # before each spec, regardless of where this method is invoked.
   def self.before_each(&block)
@@ -179,6 +183,10 @@ module Spec
 
     if split_filter = @@split_filter
       root_context.filter_by_split(split_filter)
+    end
+
+    if focus = @@focus
+      root_context.filter_by_focus
     end
   end
 end

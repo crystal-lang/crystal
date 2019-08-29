@@ -7,5 +7,6 @@ module Spec
     getter file : String
     getter line : Int32
     getter end_line : Int32
+    getter? focus : Bool
   end
 end

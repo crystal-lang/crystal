@@ -12,8 +12,10 @@ module Spec::Methods
   #   end
   # end
   # ```
-  def describe(description, file = __FILE__, line = __LINE__, end_line = __END_LINE__, &block)
-    Spec.root_context.describe(description.to_s, file, line, end_line, &block)
+  #
+  # If `focus` is `true`, only this `describe`, and others marked with `focus: true`, will run.
+  def describe(description, file = __FILE__, line = __LINE__, end_line = __END_LINE__, focus : Bool = false, &block)
+    Spec.root_context.describe(description.to_s, file, line, end_line, focus, &block)
   end
 
   # Defines an example group that establishes a specific context,
@@ -21,8 +23,10 @@ module Spec::Methods
   # Inside *&block* examples are defined by `#it` or `#pending`.
   #
   # It is functionally equivalent to `#describe`.
-  def context(description, file = __FILE__, line = __LINE__, end_line = __END_LINE__, &block)
-    describe(description.to_s, file, line, end_line, &block)
+  #
+  # If `focus` is `true`, only this `context`, and others marked with `focus: true`, will run.
+  def context(description, file = __FILE__, line = __LINE__, end_line = __END_LINE__, focus : Bool = false, &block)
+    describe(description.to_s, file, line, end_line, focus, &block)
   end
 
   # Defines a concrete test case.
@@ -35,8 +39,10 @@ module Spec::Methods
   # ```
   #
   # It is usually used inside a `#describe` or `#context` section.
-  def it(description = "assert", file = __FILE__, line = __LINE__, end_line = __END_LINE__, &block)
-    Spec.root_context.it(description.to_s, file, line, end_line, &block)
+  #
+  # If `focus` is `true`, only this test, and others marked with `focus: true`, will run.
+  def it(description = "assert", file = __FILE__, line = __LINE__, end_line = __END_LINE__, focus : Bool = false, &block)
+    Spec.root_context.it(description.to_s, file, line, end_line, focus, &block)
   end
 
   # Defines a pending test case.
@@ -50,13 +56,17 @@ module Spec::Methods
   # ```
   #
   # It is usually used inside a `#describe` or `#context` section.
-  def pending(description = "assert", file = __FILE__, line = __LINE__, end_line = __END_LINE__, &block)
-    Spec.root_context.pending(description.to_s, file, line, end_line, &block)
+  #
+  # If `focus` is `true`, only this test, and others marked with `focus: true`, will run.
+  def pending(description = "assert", file = __FILE__, line = __LINE__, end_line = __END_LINE__, focus : Bool = false, &block)
+    Spec.root_context.pending(description.to_s, file, line, end_line, focus, &block)
   end
 
   # Defines a yet-to-be-implemented pending test case
-  def pending(description = "assert", file = __FILE__, line = __LINE__, end_line = __END_LINE__)
-    pending(description, file, line, end_line) { }
+  #
+  # If `focus` is `true`, only this test, and others marked with `focus: true`, will run.
+  def pending(description = "assert", file = __FILE__, line = __LINE__, end_line = __END_LINE__, focus : Bool = false)
+    pending(description, file, line, end_line, focus) { }
   end
 
   # DEPRECATED: Use `#it`
