@@ -12,8 +12,8 @@ module Spec::Methods
   #   end
   # end
   # ```
-  def describe(description, file = __FILE__, line = __LINE__, &block)
-    Spec::RootContext.describe(description.to_s, file, line, &block)
+  def describe(description, file = __FILE__, line = __LINE__, end_line = __END_LINE__, &block)
+    Spec.root_context.describe(description.to_s, file, line, end_line, &block)
   end
 
   # Defines an example group that establishes a specific context,
@@ -21,8 +21,8 @@ module Spec::Methods
   # Inside *&block* examples are defined by `#it` or `#pending`.
   #
   # It is functionally equivalent to `#describe`.
-  def context(description, file = __FILE__, line = __LINE__, &block)
-    describe(description.to_s, file, line, &block)
+  def context(description, file = __FILE__, line = __LINE__, end_line = __END_LINE__, &block)
+    describe(description.to_s, file, line, end_line, &block)
   end
 
   # Defines a concrete test case.
@@ -36,7 +36,7 @@ module Spec::Methods
   #
   # It is usually used inside a `#describe` or `#context` section.
   def it(description = "assert", file = __FILE__, line = __LINE__, end_line = __END_LINE__, &block)
-    Spec::RootContext.it(description.to_s, file, line, end_line, &block)
+    Spec.root_context.it(description.to_s, file, line, end_line, &block)
   end
 
   # Defines a pending test case.
@@ -51,7 +51,7 @@ module Spec::Methods
   #
   # It is usually used inside a `#describe` or `#context` section.
   def pending(description = "assert", file = __FILE__, line = __LINE__, end_line = __END_LINE__, &block)
-    Spec::RootContext.pending(description.to_s, file, line, end_line, &block)
+    Spec.root_context.pending(description.to_s, file, line, end_line, &block)
   end
 
   # Defines a yet-to-be-implemented pending test case

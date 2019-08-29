@@ -1,6 +1,12 @@
+require "./item"
+
 module Spec
   # :nodoc:
+  #
+  # A context represents a `describe` or `context`.
   abstract class Context
+    # All the children, which can be `describe`/`context` or `it`
+    getter children = [] of NestedContext | Example
   end
 
   # :nodoc:
@@ -12,8 +18,17 @@ module Spec
     elapsed : Time::Span?,
     exception : Exception?
 
+  def self.root_context
+    RootContext.instance
+  end
+
   # :nodoc:
+  #
+  # The root context is the main interface that the spec DSL interacts with.
   class RootContext < Context
+    class_getter instance = RootContext.new
+    @@current_context : Context = @@instance
+
     def initialize
       @results = {
         success: [] of Result,
@@ -23,35 +38,20 @@ module Spec
       }
     end
 
-    def parent
-      nil
+    def run
+      children.each &.run
     end
 
-    def succeeded
-      @results[:fail].empty? && @results[:error].empty?
-    end
-
-    def self.report(kind, full_description, file, line, elapsed = nil, ex = nil)
+    def report(kind, full_description, file, line, elapsed = nil, ex = nil)
       result = Result.new(kind, full_description, file, line, elapsed, ex)
-      @@contexts_stack.last.report(result)
-    end
 
-    def report(result)
       Spec.formatters.each(&.report(result))
 
       @results[result.kind] << result
     end
 
-    def self.print_results(elapsed_time, aborted = false)
-      @@instance.print_results(elapsed_time, aborted)
-    end
-
-    def self.succeeded
-      @@instance.succeeded
-    end
-
-    def self.finish(elapsed_time, aborted = false)
-      @@instance.finish(elapsed_time, aborted)
+    def succeeded
+      @results[:fail].empty? && @results[:error].empty?
     end
 
     def finish(elapsed_time, aborted = false)
@@ -147,69 +147,36 @@ module Spec
       end
     end
 
-    @@instance = RootContext.new
-    @@contexts_stack = [@@instance] of Context
+    def describe(description, file, line, end_line, &block)
+      context = Spec::NestedContext.new(@@current_context, description, file, line, end_line)
+      @@current_context.children << context
 
-    def self.describe(description, file, line, &block)
-      describe = Spec::NestedContext.new(description, file, line, @@contexts_stack.last)
-      @@contexts_stack.push describe
-      Spec.formatters.each(&.push(describe))
-      block.call
-      Spec.formatters.each(&.pop)
-      @@contexts_stack.pop
-    end
-
-    def self.it(description, file, line, end_line, &block)
-      Spec::RootContext.check_nesting_spec(file, line) do
-        return unless Spec.split_filter_matches
-        return unless Spec.matches?(description, file, line, end_line)
-
-        Spec.formatters.each(&.before_example(description))
-
-        start = Time.monotonic
-        begin
-          Spec.run_before_each_hooks
-          block.call
-          Spec::RootContext.report(:success, description, file, line, Time.monotonic - start)
-        rescue ex : Spec::AssertionFailed
-          Spec::RootContext.report(:fail, description, file, line, Time.monotonic - start, ex)
-          Spec.abort! if Spec.fail_fast?
-        rescue ex
-          Spec::RootContext.report(:error, description, file, line, Time.monotonic - start, ex)
-          Spec.abort! if Spec.fail_fast?
-        ensure
-          Spec.run_after_each_hooks
-
-          # We do this to give a chance for signals (like CTRL+C) to be handled,
-          # which currently are only handled when there's a fiber switch
-          # (IO stuff, sleep, etc.). Without it the user might wait more than needed
-          # after pressing CTRL+C to quit the tests.
-          Fiber.yield
-        end
+      old_context = @@current_context
+      @@current_context = context
+      begin
+        block.call
+      ensure
+        @@current_context = old_context
       end
     end
 
-    def self.pending(description, file, line, end_line, &block)
-      Spec::RootContext.check_nesting_spec(file, line) do
-        return unless Spec.matches?(description, file, line, end_line)
+    def it(description, file, line, end_line, &block)
+      add_example(description, file, line, end_line, block, pending: false)
+    end
 
-        Spec.formatters.each(&.before_example(description))
+    def pending(description, file, line, end_line, &block)
+      add_example(description, file, line, end_line, block, pending: true)
+    end
 
-        Spec::RootContext.report(:pending, description, file, line)
+    private def add_example(description, file, line, end_line, block, pending)
+      check_nesting_spec(file, line) do
+        @@current_context.children << Example.new(@@current_context, description, file, line, end_line, block, pending)
       end
-    end
-
-    def self.matches?(description, pattern, line, locations)
-      @@contexts_stack.any?(&.matches?(pattern, line, locations)) || description =~ pattern
-    end
-
-    def matches?(pattern, line, locations)
-      false
     end
 
     @@spec_nesting = false
 
-    def self.check_nesting_spec(file, line, &block)
+    def check_nesting_spec(file, line, &block)
       raise NestingSpecError.new("can't nest `it` or `pending`", file, line) if @@spec_nesting
 
       @@spec_nesting = true
@@ -223,29 +190,21 @@ module Spec
 
   # :nodoc:
   class NestedContext < Context
-    getter parent : Context
-    getter description : String
-    getter file : String
-    getter line : Int32
+    include Item
 
-    def initialize(@description : String, @file, @line, @parent)
+    getter! parent : Context
+
+    def initialize(@parent : Context, @description : String, @file : String, @line : Int32, @end_line : Int32)
+    end
+
+    def run
+      Spec.formatters.each(&.push(self))
+      children.each &.run
+      Spec.formatters.each(&.pop)
     end
 
     def report(result)
-      @parent.report Result.new(result.kind, "#{@description} #{result.description}", result.file, result.line, result.elapsed, result.exception)
-    end
-
-    def matches?(pattern, line, locations)
-      return true if @description =~ pattern
-      return true if @line == line
-
-      if locations
-        lines = locations[@file]?
-        return true unless lines
-        return lines.includes?(@line)
-      end
-
-      false
+      parent.report Result.new(result.kind, "#{@description} #{result.description}", result.file, result.line, result.elapsed, result.exception)
     end
   end
 end
