@@ -122,16 +122,8 @@ module Spec
     end
   end
 
-  @@fail_fast = false
-
   # :nodoc:
-  def self.fail_fast=(@@fail_fast)
-  end
-
-  # :nodoc:
-  def self.fail_fast?
-    @@fail_fast
-  end
+  class_property? fail_fast = false
 
   # Instructs the spec runner to execute the given block
   # before each spec, regardless of where this method is invoked.
