@@ -147,7 +147,7 @@ struct Float32
     value.to_f32!
   end
 
-  Number.expand_div [Int8, UInt8, Int16, UInt16, Int32, UInt32, Int64, UInt64, Int128, UInt128], Float64
+  Number.expand_div [Int8, UInt8, Int16, UInt16, Int32, UInt32, Int64, UInt64, Int128, UInt128], Float32
   Number.expand_div [Float64], Float64
 
   def ceil
