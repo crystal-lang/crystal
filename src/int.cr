@@ -1,5 +1,3 @@
-require "crystal/compiler_rt"
-
 # Int is the base type of all integer types.
 #
 # There are four signed integer types: `Int8`, `Int16`, `Int32` and `Int64`,

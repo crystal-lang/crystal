@@ -18,7 +18,7 @@ require "../../spec_helper"
     to_u8: UInt8, to_u16: UInt16, to_u32: UInt32, to_u64: UInt64,
   }
 
-  PreviewOverflowFlags = ["preview_overflow", "compiler_rt"]
+  PreviewOverflowFlags = ["preview_overflow"]
 {% end %}
 
 describe "Code gen: arithmetics primitives" do
