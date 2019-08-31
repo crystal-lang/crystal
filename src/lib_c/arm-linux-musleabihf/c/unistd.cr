@@ -9,33 +9,38 @@ lib LibC
   SC_CLK_TCK          =  2
   SC_NPROCESSORS_ONLN = 84
 
-  fun access(x0 : Char*, x1 : Int) : Int
-  fun chdir(x0 : Char*) : Int
-  fun chown(x0 : Char*, x1 : UidT, x2 : GidT) : Int
-  fun close(x0 : Int) : Int
-  fun dup2(x0 : Int, x1 : Int) : Int
-  fun _exit(x0 : Int) : NoReturn
-  fun execvp(x0 : Char*, x1 : Char**) : Int
+  fun chroot(path : Char*) : Int
+  fun access(name : Char*, type : Int) : Int
+  fun chdir(path : Char*) : Int
+  fun chown(file : Char*, owner : UidT, group : GidT) : Int
+  fun close(fd : Int) : Int
+  fun dup2(fd : Int, fd2 : Int) : Int
+  fun _exit(status : Int) : NoReturn
+  fun execvp(file : Char*, argv : Char**) : Int
+  fun fdatasync(fd : Int) : Int
   @[ReturnsTwice]
   fun fork : PidT
-  fun ftruncate(x0 : Int, x1 : OffT) : Int
-  fun getcwd(x0 : Char*, x1 : SizeT) : Char*
-  fun gethostname(x0 : Char*, x1 : SizeT) : Int
-  fun getpgid(x0 : PidT) : PidT
+  fun fsync(fd : Int) : Int
+  fun ftruncate(fd : Int, length : OffT) : Int
+  fun getcwd(buf : Char*, size : SizeT) : Char*
+  fun gethostname(name : Char*, len : SizeT) : Int
+  fun getpgid(pid : PidT) : PidT
   fun getpid : PidT
   fun getppid : PidT
-  fun isatty(x0 : Int) : Int
-  fun lchown(x0 : Char*, x1 : UidT, x2 : GidT) : Int
-  fun link(x0 : Char*, x1 : Char*) : Int
-  fun lockf(x0 : Int, x1 : Int, x2 : OffT) : Int
-  fun lseek(x0 : Int, x1 : OffT, x2 : Int) : OffT
-  fun pipe(x0 : StaticArray(Int, 2)) : Int
-  fun read(x0 : Int, x1 : Void*, x2 : SizeT) : SSizeT
+  fun isatty(fd : Int) : Int
+  fun ttyname_r(fd : Int, buf : Char*, buffersize : SizeT) : Int
+  fun lchown(file : Char*, owner : UidT, group : GidT) : Int
+  fun link(from : Char*, to : Char*) : Int
+  fun lockf(fd : Int, cmd : Int, len : OffT) : Int
+  fun lseek(fd : Int, offset : OffT, whence : Int) : OffT
+  fun pipe(pipedes : StaticArray(Int, 2)) : Int
+  fun read(fd : Int, buf : Void*, nbytes : SizeT) : SSizeT
   fun pread(x0 : Int, x1 : Void*, x2 : SizeT, x3 : OffT) : SSizeT
-  fun rmdir(x0 : Char*) : Int
-  fun symlink(x0 : Char*, x1 : Char*) : Int
-  fun syscall(x0 : Long, ...) : Long
-  fun sysconf(x0 : Int) : Long
-  fun unlink(x0 : Char*) : Int
-  fun write(x0 : Int, x1 : Void*, x2 : SizeT) : SSizeT
+  fun rmdir(path : Char*) : Int
+  fun symlink(from : Char*, to : Char*) : Int
+  fun readlink(path : Char*, buf : Char*, size : SizeT) : SSizeT
+  fun syscall(sysno : Long, ...) : Long
+  fun sysconf(name : Int) : Long
+  fun unlink(name : Char*) : Int
+  fun write(fd : Int, buf : Void*, n : SizeT) : SSizeT
 end
