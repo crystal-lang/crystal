@@ -39,6 +39,7 @@ class YAML::Builder
     @closed = false
     @nesting = 0
     LibYAML.yaml_emitter_initialize(@emitter)
+    LibYAML.yaml_emitter_set_unicode(@emitter, 1)
     LibYAML.yaml_emitter_set_output(@emitter, ->(data, buffer, size) {
       data_io = Box(IO).unbox(data)
       data_io.write(Slice.new(buffer, size))
