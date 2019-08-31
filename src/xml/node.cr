@@ -57,12 +57,12 @@ struct XML::Node
 
   # Returns `true` if this is an attribute node.
   def attribute?
-    type == XML::Type::ATTRIBUTE_NODE
+    type == XML::Node::Type::ATTRIBUTE_NODE
   end
 
   # Returns `true` if this is a `CDATA` section node.
   def cdata?
-    type == XML::Type::CDATA_SECTION_NODE
+    type == XML::Node::Type::CDATA_SECTION_NODE
   end
 
   # Gets the list of children for this node as a `XML::NodeSet`.
@@ -84,7 +84,7 @@ struct XML::Node
 
   # Returns `true` if this is a comment node.
   def comment?
-    type == XML::Type::COMMENT_NODE
+    type == XML::Node::Type::COMMENT_NODE
   end
 
   # Returns the content for this Node. An empty string is
@@ -109,8 +109,8 @@ struct XML::Node
   # Returns `true` if this is a Document or HTML Document node.
   def document?
     case type
-    when XML::Type::DOCUMENT_NODE,
-         XML::Type::HTML_DOCUMENT_NODE
+    when XML::Node::Type::DOCUMENT_NODE,
+         XML::Node::Type::HTML_DOCUMENT_NODE
       true
     else
       false
@@ -139,7 +139,7 @@ struct XML::Node
 
   # Returns `true` if this is an Element node.
   def element?
-    type == XML::Type::ELEMENT_NODE
+    type == XML::Node::Type::ELEMENT_NODE
   end
 
   # Returns the first child node of this node that is an element.
@@ -147,7 +147,7 @@ struct XML::Node
   def first_element_child
     child = @node.value.children
     while child
-      if child.value.type == XML::Type::ELEMENT_NODE
+      if child.value.type == XML::Node::Type::ELEMENT_NODE
         return Node.new(child)
       end
       child = child.value.next
@@ -157,7 +157,7 @@ struct XML::Node
 
   # Returns `true` if this is a DocumentFragment.
   def fragment?
-    type == XML::Type::DOCUMENT_FRAG_NODE
+    type == XML::Node::Type::DOCUMENT_FRAG_NODE
   end
 
   # See `Object#hash(hasher)`
@@ -172,27 +172,27 @@ struct XML::Node
   def inspect(io : IO) : Nil
     io << "#<XML::"
     case type
-    when XML::Type::ELEMENT_NODE       then io << "Element"
-    when XML::Type::ATTRIBUTE_NODE     then io << "Attribute"
-    when XML::Type::TEXT_NODE          then io << "Text"
-    when XML::Type::CDATA_SECTION_NODE then io << "CData"
-    when XML::Type::ENTITY_REF_NODE    then io << "EntityRef"
-    when XML::Type::ENTITY_NODE        then io << "Entity"
-    when XML::Type::PI_NODE            then io << "ProcessingInstruction"
-    when XML::Type::COMMENT_NODE       then io << "Comment"
-    when XML::Type::DOCUMENT_NODE      then io << "Document"
-    when XML::Type::DOCUMENT_TYPE_NODE then io << "DocumentType"
-    when XML::Type::DOCUMENT_FRAG_NODE then io << "DocumentFragment"
-    when XML::Type::NOTATION_NODE      then io << "Notation"
-    when XML::Type::HTML_DOCUMENT_NODE then io << "HTMLDocument"
-    when XML::Type::DTD_NODE           then io << "DTD"
-    when XML::Type::ELEMENT_DECL       then io << "Element"
-    when XML::Type::ATTRIBUTE_DECL     then io << "AttributeDecl"
-    when XML::Type::ENTITY_DECL        then io << "EntityDecl"
-    when XML::Type::NAMESPACE_DECL     then io << "NamespaceDecl"
-    when XML::Type::XINCLUDE_START     then io << "XIncludeStart"
-    when XML::Type::XINCLUDE_END       then io << "XIncludeEnd"
-    when XML::Type::DOCB_DOCUMENT_NODE then io << "DOCBDocument"
+    when XML::Node::Type::ELEMENT_NODE       then io << "Element"
+    when XML::Node::Type::ATTRIBUTE_NODE     then io << "Attribute"
+    when XML::Node::Type::TEXT_NODE          then io << "Text"
+    when XML::Node::Type::CDATA_SECTION_NODE then io << "CData"
+    when XML::Node::Type::ENTITY_REF_NODE    then io << "EntityRef"
+    when XML::Node::Type::ENTITY_NODE        then io << "Entity"
+    when XML::Node::Type::PI_NODE            then io << "ProcessingInstruction"
+    when XML::Node::Type::COMMENT_NODE       then io << "Comment"
+    when XML::Node::Type::DOCUMENT_NODE      then io << "Document"
+    when XML::Node::Type::DOCUMENT_TYPE_NODE then io << "DocumentType"
+    when XML::Node::Type::DOCUMENT_FRAG_NODE then io << "DocumentFragment"
+    when XML::Node::Type::NOTATION_NODE      then io << "Notation"
+    when XML::Node::Type::HTML_DOCUMENT_NODE then io << "HTMLDocument"
+    when XML::Node::Type::DTD_NODE           then io << "DTD"
+    when XML::Node::Type::ELEMENT_DECL       then io << "Element"
+    when XML::Node::Type::ATTRIBUTE_DECL     then io << "AttributeDecl"
+    when XML::Node::Type::ENTITY_DECL        then io << "EntityDecl"
+    when XML::Node::Type::NAMESPACE_DECL     then io << "NamespaceDecl"
+    when XML::Node::Type::XINCLUDE_START     then io << "XIncludeStart"
+    when XML::Node::Type::XINCLUDE_END       then io << "XIncludeEnd"
+    when XML::Node::Type::DOCB_DOCUMENT_NODE then io << "DOCBDocument"
     end
 
     io << ":0x"
@@ -243,7 +243,7 @@ struct XML::Node
   def next_element
     next_node = @node.value.next
     while next_node
-      if next_node.value.type == XML::Type::ELEMENT_NODE
+      if next_node.value.type == XML::Node::Type::ELEMENT_NODE
         return Node.new(next_node)
       end
       next_node = next_node.value.next
@@ -368,7 +368,7 @@ struct XML::Node
   def previous_element
     prev_node = @node.value.prev
     while prev_node
-      if prev_node.value.type == XML::Type::ELEMENT_NODE
+      if prev_node.value.type == XML::Node::Type::ELEMENT_NODE
         return Node.new(prev_node)
       end
       prev_node = prev_node.value.prev
@@ -384,7 +384,7 @@ struct XML::Node
 
   # Returns `true` if this is a Processing Instruction node.
   def processing_instruction?
-    type == XML::Type::PI_NODE
+    type == XML::Node::Type::PI_NODE
   end
 
   # Returns the root node for this document or `nil`.
@@ -405,7 +405,7 @@ struct XML::Node
 
   # Returns `true` if this is a Text node.
   def text?
-    type == XML::Type::TEXT_NODE
+    type == XML::Node::Type::TEXT_NODE
   end
 
   # Serialize this Node as XML to *io* using default options.
@@ -466,7 +466,7 @@ struct XML::Node
     @node
   end
 
-  # Returns the type for this Node as `XML::Type`.
+  # Returns the type for this Node as `XML::Node::Type`.
   def type
     @node.value.type
   end
@@ -478,7 +478,7 @@ struct XML::Node
 
   # Returns `true` if this is an xml Document node.
   def xml?
-    type == XML::Type::DOCUMENT_NODE
+    type == XML::Node::Type::DOCUMENT_NODE
   end
 
   # Searches this node for XPath *path*. Returns result with appropriate type
