@@ -1155,6 +1155,63 @@ module Crystal
     end
 
     describe "type methods" do
+      describe "#all_includers" do
+        it "returns an array of types `self` is included in" do
+          assert_type(%(
+            module Foo
+            end
+
+            module Baz
+              module Tar
+                include Baz
+              end
+            end
+
+            abstract class Parent
+            end
+
+            module Enumt(T)
+              include Baz
+            end
+
+            class Bar < Parent
+              include Foo
+              include Baz
+            end
+
+            struct Str
+              include Enumt(String)
+              include Baz
+            end
+
+            struct Gen(T)
+              include Baz
+            end
+
+            abstract struct AStr
+              include Baz
+            end
+
+            abstract class ACla
+              include Baz
+            end
+
+            class SubT(T)
+              include Baz
+            end
+
+            class ChildT(T) < SubT(T)
+            end
+
+          {% if Baz.all_includers.map(&.stringify) == ["Baz::Tar", "Enumt(T)", "Bar", "Str", "Gen(T)", "AStr", "ACla", "SubT(T)"] && Enumt.all_includers.map(&.stringify) == ["Str"]  %}
+            1
+          {% else %}
+            'a'
+          {% end %}
+        )) { int32 }
+        end
+      end
+
       it "executes name" do
         assert_macro("x", "{{x.name}}", "String") do |program|
           [TypeNode.new(program.string)] of ASTNode

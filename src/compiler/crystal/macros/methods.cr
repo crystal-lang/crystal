@@ -1535,7 +1535,7 @@ module Crystal
       when "all_subclasses"
         interpret_argless_method(method, args) { TypeNode.all_subclasses(type) }
       when "all_includers"
-        interpret_argless_method(method, args) { TypeNode.including_types type }
+        interpret_argless_method(method, args) { TypeNode.all_includers type }
       when "constants"
         interpret_argless_method(method, args) { TypeNode.constants(type) }
       when "constant"
@@ -1668,7 +1668,7 @@ module Crystal
       end
     end
 
-    def self.including_types(type)
+    def self.all_includers(type)
       case type
       when NonGenericModuleType, GenericModuleType
         return empty_no_return_array unless types = type.raw_including_types
