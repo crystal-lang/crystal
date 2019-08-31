@@ -1534,6 +1534,8 @@ module Crystal
         interpret_argless_method(method, args) { TypeNode.subclasses(type) }
       when "all_subclasses"
         interpret_argless_method(method, args) { TypeNode.all_subclasses(type) }
+      when "all_includers"
+        interpret_argless_method(method, args) { TypeNode.including_types type }
       when "constants"
         interpret_argless_method(method, args) { TypeNode.constants(type) }
       when "constant"
@@ -1562,8 +1564,6 @@ module Crystal
         fetch_annotation(self, method, args) do |type|
           self.type.annotation(type)
         end
-      when "included"
-        interpret_argless_method(method, args) { TypeNode.including_types type }
       when "annotations"
         fetch_annotation(self, method, args) do |type|
           annotations = self.type.annotations(type)
@@ -1669,14 +1669,15 @@ module Crystal
     end
 
     def self.including_types(type)
-      if type.is_a? NonGenericModuleType
+      case type
+      when NonGenericModuleType, GenericModuleType
         return empty_no_return_array unless types = type.raw_including_types
         return ArrayLiteral.map(types) do |including_type|
           TypeNode.new including_type
         end
+      else
+        empty_no_return_array
       end
-
-      empty_no_return_array
     end
 
     def self.type_vars(type)

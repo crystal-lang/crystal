@@ -1758,6 +1758,10 @@ module Crystal::Macros
     def all_subclasses : ArrayLiteral(TypeNode)
     end
 
+    # Returns all the types `self` is included in.
+    def all_includers : ArrayLiteral(TypeNode)
+    end
+
     # Returns the constants and types defined by this type.
     def constants : ArrayLiteral(MacroId)
     end
