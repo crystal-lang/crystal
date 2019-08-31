@@ -1562,6 +1562,8 @@ module Crystal
         fetch_annotation(self, method, args) do |type|
           self.type.annotation(type)
         end
+      when "included"
+        interpret_argless_method(method, args) { TypeNode.including_types type }
       when "annotations"
         fetch_annotation(self, method, args) do |type|
           annotations = self.type.annotations(type)
@@ -1664,6 +1666,17 @@ module Crystal
       else
         super
       end
+    end
+
+    def self.including_types(type)
+      if type.is_a? NonGenericModuleType
+        return empty_no_return_array unless types = type.raw_including_types
+        return ArrayLiteral.map(types) do |including_type|
+          TypeNode.new including_type
+        end
+      end
+
+      empty_no_return_array
     end
 
     def self.type_vars(type)
