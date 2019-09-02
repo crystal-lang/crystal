@@ -1,24 +1,26 @@
+require "crystal/spin_lock"
+
 # A fiber-safe mutex.
-#
-# TODO: this isn't thread-safe yet.
 class Mutex
   @mutex_fiber : Fiber?
-
-  def initialize
-    @lock_count = 0
-  end
+  @lock_count = 0
+  @queue = Deque(Fiber).new
+  @lock = Crystal::SpinLock.new
 
   def lock
+    @lock.lock
     mutex_fiber = @mutex_fiber
     current_fiber = Fiber.current
 
     if !mutex_fiber
       @mutex_fiber = current_fiber
+      @lock.unlock
     elsif mutex_fiber == current_fiber
       @lock_count += 1 # recursive lock
+      @lock.unlock
     else
-      queue = @queue ||= Deque(Fiber).new
-      queue << current_fiber
+      @queue << current_fiber
+      @lock.unlock
       Crystal::Scheduler.reschedule
     end
 
@@ -26,20 +28,26 @@ class Mutex
   end
 
   def unlock
-    unless @mutex_fiber == Fiber.current
-      raise "Attempt to unlock a mutex which is not locked"
-    end
+    @lock.lock
 
-    if @lock_count > 0
-      @lock_count -= 1
-      return
-    end
+    begin
+      unless @mutex_fiber == Fiber.current
+        raise "Attempt to unlock a mutex which is not locked"
+      end
 
-    if fiber = @queue.try &.shift?
-      @mutex_fiber = fiber
-      Crystal::Scheduler.enqueue fiber
-    else
-      @mutex_fiber = nil
+      if @lock_count > 0
+        @lock_count -= 1
+        return
+      end
+
+      if fiber = @queue.try &.shift?
+        @mutex_fiber = fiber
+        fiber.enqueue
+      else
+        @mutex_fiber = nil
+      end
+    ensure
+      @lock.unlock
     end
 
     nil

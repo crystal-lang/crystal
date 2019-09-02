@@ -6,7 +6,7 @@ class Thread
   #
   # Thread-safe doubly linked list of `T` objects that must implement
   # `#previous : T?` and `#next : T?` methods.
-  struct LinkedList(T)
+  class LinkedList(T)
     @mutex = Thread::Mutex.new
     @head : T?
     @tail : T?

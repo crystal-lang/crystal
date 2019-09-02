@@ -13,6 +13,8 @@ module Crystal
   MALLOC_ATOMIC_NAME  = "__crystal_malloc_atomic64"
   REALLOC_NAME        = "__crystal_realloc64"
   GET_EXCEPTION_NAME  = "__crystal_get_exception"
+  ONCE_INIT           = "__crystal_once_init"
+  ONCE                = "__crystal_once"
 
   class Program
     def run(code, filename = nil, debug = Debug::Default)
@@ -243,11 +245,12 @@ module Crystal
 
       initialize_argv_and_argc
 
-      initialize_simple_constants
-
-      if @debug.line_numbers? && (filename = @program.filename)
-        set_current_debug_location Location.new(filename, 1, 1)
+      if @debug.line_numbers?
+        set_current_debug_location Location.new(@program.filename || "(no name)", 1, 1)
       end
+
+      once_init
+      initialize_simple_constants
 
       alloca_vars @program.vars, @program
 
@@ -301,7 +304,9 @@ module Crystal
 
       def visit(node : FunDef)
         case node.name
-        when MALLOC_NAME, MALLOC_ATOMIC_NAME, REALLOC_NAME, RAISE_NAME, @codegen.personality_name, GET_EXCEPTION_NAME, RAISE_OVERFLOW_NAME
+        when MALLOC_NAME, MALLOC_ATOMIC_NAME, REALLOC_NAME, RAISE_NAME,
+             @codegen.personality_name, GET_EXCEPTION_NAME, RAISE_OVERFLOW_NAME,
+             ONCE_INIT, ONCE
           @codegen.accept node
         end
         false

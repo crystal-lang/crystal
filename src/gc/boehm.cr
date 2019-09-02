@@ -1,3 +1,7 @@
+{% if flag?(:preview_mt) %}
+  require "crystal/rw_lock"
+{% end %}
+
 {% unless flag?(:win32) %}
   @[Link("pthread")]
 {% end %}
@@ -71,6 +75,10 @@ lib LibGC
 end
 
 module GC
+  {% if flag?(:preview_mt) %}
+    @@lock = Crystal::RWLock.new
+  {% end %}
+
   # :nodoc:
   def self.malloc(size : LibC::SizeT) : Void*
     LibGC.malloc(size)
@@ -204,23 +212,29 @@ module GC
   # :nodoc:
   def self.lock_read
     {% if flag?(:preview_mt) %}
-      GC.disable
+      @@lock.read_lock
     {% end %}
   end
 
   # :nodoc:
   def self.unlock_read
     {% if flag?(:preview_mt) %}
-      GC.enable
+      @@lock.read_unlock
     {% end %}
   end
 
   # :nodoc:
   def self.lock_write
+    {% if flag?(:preview_mt) %}
+      @@lock.write_lock
+    {% end %}
   end
 
   # :nodoc:
   def self.unlock_write
+    {% if flag?(:preview_mt) %}
+      @@lock.write_unlock
+    {% end %}
   end
 
   # :nodoc:
@@ -247,8 +261,10 @@ module GC
 
     {% if flag?(:preview_mt) %}
       Thread.unsafe_each do |thread|
-        fiber = thread.scheduler.@current
-        GC.set_stackbottom(thread, fiber.@stack_bottom)
+        if scheduler = thread.@scheduler
+          fiber = scheduler.@current
+          GC.set_stackbottom(thread, fiber.@stack_bottom)
+        end
       end
     {% end %}
 

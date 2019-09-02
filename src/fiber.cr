@@ -11,7 +11,8 @@ fun _fiber_get_stack_top : Void*
 end
 
 class Fiber
-  @@fibers = Thread::LinkedList(Fiber).new
+  # :nodoc:
+  protected class_getter(fibers) { Thread::LinkedList(Fiber).new }
 
   # :nodoc:
   class_getter stack_pool = StackPool.new
@@ -32,12 +33,12 @@ class Fiber
 
   # :nodoc:
   def self.inactive(fiber : Fiber)
-    @@fibers.delete(fiber)
+    fibers.delete(fiber)
   end
 
   # :nodoc:
   def self.unsafe_each
-    @@fibers.unsafe_each { |fiber| yield fiber }
+    fibers.unsafe_each { |fiber| yield fiber }
   end
 
   def initialize(@name : String? = nil, &@proc : ->)
@@ -55,7 +56,7 @@ class Fiber
 
     makecontext(stack_ptr, fiber_main)
 
-    @@fibers.push(self)
+    Fiber.fibers.push(self)
   end
 
   # :nodoc:
@@ -65,7 +66,7 @@ class Fiber
     @stack_bottom = GC.current_thread_stack_bottom
     @name = "main"
     @current_thread.set(thread)
-    @@fibers.push(self)
+    Fiber.fibers.push(self)
   end
 
   # :nodoc:
@@ -84,7 +85,7 @@ class Fiber
     Fiber.stack_pool.release(@stack)
 
     # Remove the current fiber from the linked list
-    @@fibers.delete(self)
+    Fiber.fibers.delete(self)
 
     # Delete the resume event if it was used by `yield` or `sleep`
     @resume_event.try &.free
@@ -117,6 +118,10 @@ class Fiber
 
   def resume : Nil
     Crystal::Scheduler.resume(self)
+  end
+
+  def enqueue
+    Crystal::Scheduler.enqueue(self)
   end
 
   # :nodoc:

@@ -192,7 +192,7 @@ module Crystal::Signal
   end
 
   def self.start_loop
-    spawn do
+    spawn(name: "Signal Loop") do
       loop do
         value = reader.read_bytes(Int32)
       rescue Errno
@@ -269,11 +269,11 @@ module Crystal::SignalChildHandler
   # child process exited.
 
   @@pending = {} of LibC::PidT => Int32
-  @@waiting = {} of LibC::PidT => Channel::Buffered(Int32)
+  @@waiting = {} of LibC::PidT => Channel(Int32)
   @@mutex = Mutex.new
 
-  def self.wait(pid : LibC::PidT) : Channel::Buffered(Int32)
-    channel = Channel::Buffered(Int32).new(1)
+  def self.wait(pid : LibC::PidT) : Channel(Int32)
+    channel = Channel(Int32).new(1)
 
     @@mutex.lock
     if exit_code = @@pending.delete(pid)

@@ -5690,7 +5690,8 @@ module Crystal
         when :"{{"
           members << parse_percent_macro_expression
         when :"{%"
-          members << parse_percent_macro_control
+          location = @token.location
+          members << parse_percent_macro_control.at(location)
         when :"@["
           members << parse_annotation
         when :";", :NEWLINE

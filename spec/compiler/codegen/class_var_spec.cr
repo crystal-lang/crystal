@@ -106,6 +106,8 @@ describe "Codegen: class var" do
 
   it "uses var in class var initializer" do
     run(%(
+      require "prelude"
+
       class Foo
         @@var : Int32
         @@var = begin
@@ -128,6 +130,8 @@ describe "Codegen: class var" do
 
   it "reads simple class var before another complex one" do
     run(%(
+      require "prelude"
+
       class Foo
         @@var2 : Int32
         @@var2 = @@var &+ 1
@@ -145,6 +149,8 @@ describe "Codegen: class var" do
 
   it "initializes class var of union with single type" do
     run(%(
+      require "prelude"
+
       class Foo
         @@var : Int32 | String
         @@var = 42
@@ -196,6 +202,8 @@ describe "Codegen: class var" do
 
   it "initializes dependent constant before class var" do
     run(%(
+      require "prelude"
+
       def foo
         a = 1
         b = 2
@@ -233,6 +241,8 @@ describe "Codegen: class var" do
 
   it "doesn't use nilable type for initializer" do
     run(%(
+      require "prelude"
+
       class Foo
         @@foo : Int32?
         @@foo = 42
@@ -250,7 +260,9 @@ describe "Codegen: class var" do
   end
 
   it "codegens class var with begin and vars" do
-    run("
+    run(%(
+      require "prelude"
+
       class Foo
         @@foo : Int32
         @@foo = begin
@@ -265,11 +277,13 @@ describe "Codegen: class var" do
       end
 
       Foo.foo
-      ").to_i.should eq(3)
+      )).to_i.should eq(3)
   end
 
   it "codegens class var with type declaration begin and vars" do
-    run("
+    run(%(
+      require "prelude"
+
       class Foo
         @@foo : Int32 = begin
           a = 1
@@ -283,7 +297,7 @@ describe "Codegen: class var" do
       end
 
       Foo.foo
-      ").to_i.should eq(3)
+      )).to_i.should eq(3)
   end
 
   it "codegens class var with nilable reference type" do
@@ -338,6 +352,8 @@ describe "Codegen: class var" do
 
   it "gets pointerof class var complex constant" do
     run(%(
+      require "prelude"
+
       z = Foo.foo
 
       class Foo

@@ -520,26 +520,28 @@ def abort(message, status = 1) : NoReturn
   exit status
 end
 
-class Process
-  # Hooks are defined here due to load order problems.
-  def self.after_fork_child_callbacks
-    @@after_fork_child_callbacks ||= [
-      # clean ups (don't depend on event loop):
-      ->Crystal::Signal.after_fork,
-      ->Crystal::SignalChildHandler.after_fork,
+{% unless flag?(:preview_mt) %}
+  class Process
+    # Hooks are defined here due to load order problems.
+    def self.after_fork_child_callbacks
+      @@after_fork_child_callbacks ||= [
+        # clean ups (don't depend on event loop):
+        ->Crystal::Signal.after_fork,
+        ->Crystal::SignalChildHandler.after_fork,
 
-      # reinit event loop:
-      ->Crystal::EventLoop.after_fork,
+        # reinit event loop:
+        ->Crystal::EventLoop.after_fork,
 
-      # more clean ups (may depend on event loop):
-      ->Random::DEFAULT.new_seed,
-    ] of -> Nil
+        # more clean ups (may depend on event loop):
+        ->Random::DEFAULT.new_seed,
+      ] of -> Nil
+    end
   end
-end
+{% end %}
 
 {% unless flag?(:win32) %}
   # Background loop to cleanup unused fiber stacks.
-  spawn do
+  spawn(name: "Fiber Clean Loop") do
     loop do
       sleep 5
       Fiber.stack_pool.collect
@@ -548,4 +550,8 @@ end
 
   Signal.setup_default_handlers
   LibExt.setup_sigfault_handler
+{% end %}
+
+{% if flag?(:preview_mt) %}
+  Crystal::Scheduler.init_workers
 {% end %}

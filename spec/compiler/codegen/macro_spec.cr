@@ -663,6 +663,8 @@ describe "Code gen: macro" do
 
   it "transforms hooks (bug)" do
     codegen(%(
+      require "prelude"
+
       module GC
         def self.add_finalizer(object : T)
           object.responds_to?(:finalize)
@@ -800,6 +802,8 @@ describe "Code gen: macro" do
 
   it "copies base macro def to sub-subtype even after it was copied to a subtype (#448)" do
     run(%(
+      require "prelude"
+
       class Object
         def class_name : String
           {{@type.name.stringify}}

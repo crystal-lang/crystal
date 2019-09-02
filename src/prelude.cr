@@ -14,6 +14,7 @@ private macro no_win(stmt)
 end
 
 # This list requires ordered statements
+require "crystal/once"
 require "lib_c"
 require "macros"
 require "object"

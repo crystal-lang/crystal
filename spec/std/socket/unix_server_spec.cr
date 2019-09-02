@@ -78,20 +78,24 @@ describe UNIXServer do
     it "raises when server is closed" do
       with_tempfile("unix_server-closed.sock") do |path|
         server = UNIXServer.new(path)
+        ch = Channel(Symbol).new(1)
         exception = nil
+
+        delay(1) { ch.send :timeout }
 
         spawn do
           begin
+            ch.send(:begin)
             server.accept
           rescue ex
             exception = ex
           end
+          ch.send(:end)
         end
 
+        ch.receive.should eq(:begin)
         server.close
-        until exception
-          Fiber.yield
-        end
+        ch.receive.should eq(:end)
 
         exception.should be_a(IO::Error)
         exception.try(&.message).should eq("Closed stream")
@@ -115,14 +119,20 @@ describe UNIXServer do
     it "returns nil when server is closed" do
       with_tempfile("unix_server-accept2.sock") do |path|
         server = UNIXServer.new(path)
+        ch = Channel(Symbol).new(1)
         ret = :initial
 
-        spawn { ret = server.accept? }
-        server.close
+        delay(1) { ch.send :timeout }
 
-        while ret == :initial
-          Fiber.yield
+        spawn do
+          ch.send :begin
+          ret = server.accept?
+          ch.send :end
         end
+
+        ch.receive.should eq(:begin)
+        server.close
+        ch.receive.should eq(:end)
 
         ret.should be_nil
       end

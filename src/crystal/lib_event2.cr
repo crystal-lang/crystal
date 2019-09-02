@@ -10,6 +10,9 @@ require "c/netdb"
 {% else %}
   @[Link("event")]
 {% end %}
+{% if flag?(:preview_mt) %}
+  @[Link("event_pthreads")]
+{% end %}
 lib LibEvent2
   alias Int = LibC::Int
 
@@ -65,4 +68,8 @@ lib LibEvent2
   fun evdns_getaddrinfo(base : DnsBase, nodename : UInt8*, servname : UInt8*, hints : LibC::Addrinfo*, cb : DnsGetAddrinfoCallback, arg : Void*) : DnsGetAddrinfoRequest
   fun evdns_getaddrinfo_cancel(DnsGetAddrinfoRequest)
   fun evutil_freeaddrinfo(ai : LibC::Addrinfo*)
+
+  {% if flag?(:preview_mt) %}
+    fun evthread_use_pthreads : Int
+  {% end %}
 end
