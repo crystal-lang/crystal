@@ -63,7 +63,8 @@ describe UDPSocket do
     else
       it "joins and transmits to multicast groups" do
         udp = UDPSocket.new(family)
-        udp.bind(unspecified_address, 2000)
+        port = unused_local_port
+        udp.bind(unspecified_address, port)
 
         udp.multicast_loopback = false
         udp.multicast_loopback?.should eq(false)
@@ -80,14 +81,14 @@ describe UDPSocket do
                  end
                  udp.multicast_interface Socket::IPAddress.new(unspecified_address, 0)
 
-                 Socket::IPAddress.new("224.0.0.254", 2000)
+                 Socket::IPAddress.new("224.0.0.254", port)
                when Socket::Family::INET6
                  expect_raises(Socket::Error, "Unsupported IP address family: INET6. For use with IPv4 only") do
                    udp.multicast_interface(Socket::IPAddress.new(unspecified_address, 0))
                  end
                  udp.multicast_interface(0)
 
-                 Socket::IPAddress.new("ff02::102", 2000)
+                 Socket::IPAddress.new("ff02::102", port)
                else
                  raise "Unsupported IP address family: #{family}"
                end
