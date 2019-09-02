@@ -82,7 +82,11 @@ class Fiber
     ex.inspect_with_backtrace(STDERR)
     STDERR.flush
   ensure
-    Fiber.stack_pool.release(@stack)
+    {% if flag?(:preview_mt) %}
+      Crystal::Scheduler.enqueue_free_stack @stack
+    {% else %}
+      Fiber.stack_pool.release(@stack)
+    {% end %}
 
     # Remove the current fiber from the linked list
     Fiber.fibers.delete(self)
