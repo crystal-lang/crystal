@@ -19,7 +19,7 @@ describe XML do
 
     people = doc.root.not_nil!
     people.name.should eq("people")
-    people.type.should eq(XML::Type::ELEMENT_NODE)
+    people.type.should eq(XML::Node::Type::ELEMENT_NODE)
 
     people.attributes.empty?.should be_true
 
