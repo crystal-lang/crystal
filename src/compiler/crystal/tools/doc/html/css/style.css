@@ -627,3 +627,6 @@ span.flag.purple {
   margin-left: -100px;
   margin-right: 12px;
 }
+.doc-inherited {
+  font-weight: bold;
+}

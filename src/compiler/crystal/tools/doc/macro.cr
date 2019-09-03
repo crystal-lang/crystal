@@ -23,6 +23,10 @@ class Crystal::Doc::Macro
     @macro.doc
   end
 
+  def doc_copied_from
+    nil
+  end
+
   def source_link
     @generator.source_link(@macro)
   end
