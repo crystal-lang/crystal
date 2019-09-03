@@ -1301,4 +1301,22 @@ describe "Code gen: exception" do
       foo
       )).to_i.should eq(5)
   end
+
+  it "closures rescue variable (#8141)" do
+    codegen(%(
+      require "prelude"
+
+      def invoke(&block)
+        block.call
+      end
+
+      ex = nil
+
+      invoke do
+        begin
+        rescue ex
+        end
+      end
+    ))
+  end
 end
