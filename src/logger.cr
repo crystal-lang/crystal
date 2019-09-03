@@ -90,11 +90,23 @@ class Logger
     # Generic (useful) information about system operation
     INFO
 
+    # Normal but significant conditions
+    NOTICE
+
     # A warning
     WARN
 
     # A handleable error condition
     ERROR
+
+    # Critical conditions
+    CRITICAL
+
+    # Action must be taken immediately
+    ALERT
+
+    # System is unusable
+    EMERGENCY
 
     # An unhandleable error that results in a program crash
     FATAL
