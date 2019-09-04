@@ -112,7 +112,11 @@ class Zip::Writer
       raise "Unsupported compression method: #{entry.compression_method}"
     end
 
-    @written += @compressed_size_counter.count
+    if entry.compression_method.stored?
+      @written += @uncompressed_size_counter.count
+    else
+      @written += @compressed_size_counter.count
+    end
 
     crc32 = @uncompressed_size_counter.crc32.to_u32
     uncompressed_size = @uncompressed_size_counter.count
