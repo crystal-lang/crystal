@@ -338,8 +338,9 @@ class File < IO::FileDescriptor
   # Converts *path* to an absolute path. Relative paths are
   # referenced from the current working directory of the process unless
   # *dir* is given, in which case it will be used as the starting point.
-  # "~/" is expanded to the value passed to *home* or the user's home directory
-  # when *home* is `true`.
+  # "~" is expanded to the value passed to *home*.
+  # If it is `false` (default), home is not expanded.
+  # If `true`, it is expanded to the user's home directory (`Path.home`).
   #
   # ```
   # File.expand_path("foo")                 # => "/home/.../foo"

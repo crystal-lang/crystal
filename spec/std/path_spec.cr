@@ -18,14 +18,6 @@ private def it_expands_path(path, posix, windows = posix, *, base = nil, env_hom
       ENV["HOME"] = env_home || (path.windows? ? HOME_WINDOWS : HOME_POSIX)
 
       base_arg = base || (path.windows? ? BASE_WINDOWS : BASE_POSIX)
-      home_arg = case home
-                 when Path   then home
-                 when String then home
-                 when Bool   then Path.home
-                   #       home ? Path.home : raise "invalid value 'false' for home"
-                 else raise "invalid type for home #{home}"
-                 end
-      #      puts "#{typeof(home_arg)} #{home_arg.class} #{home_arg.inspect} #{home.inspect}"
       path.expand(base_arg.not_nil!, expand_base: !!expand_base, home: home)
     ensure
       ENV["HOME"] = prev_home
@@ -552,9 +544,11 @@ describe Path do
       it_expands_path("C:\\foo", "D:/C:\\foo", "C:\\foo", base: "D:/")
     end
 
-    describe "doesn't expand ~" do
-      path = Path["~"]
-      path.expand.should_not eq path.expand(home: "/foo")
+    it "doesn't expand ~" do
+      ["~", "~/foo"].each do |path|
+        path = Path[path]
+        path.expand(base: "", expand_base: false).should eq path
+      end
     end
 
     describe "checks all possible types for expand(home:)" do

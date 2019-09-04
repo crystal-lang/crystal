@@ -15,10 +15,10 @@
 # # Examples
 #
 # ```
-# Path["foo/bar/baz.cr"].parent         # => Path["foo/bar"]
-# Path["foo/bar/baz.cr"].basename       # => "baz.cr"
-# Path["./foo/../bar"].normalize        # => Path["bar"]
-# Path["~/bin"].expand(home: Path.home) # => Path["/home/crystal/bin"]
+# Path["foo/bar/baz.cr"].parent    # => Path["foo/bar"]
+# Path["foo/bar/baz.cr"].basename  # => "baz.cr"
+# Path["./foo/../bar"].normalize   # => Path["bar"]
+# Path["~/bin"].expand(home: true) # => Path["/home/crystal/bin"]
 # ```
 #
 # For now, its methods are purely lexical, there is no direct filesystem access.
@@ -554,10 +554,11 @@ struct Path
   # ```
   #
   # *home* specifies the home directory which `~` will expand to.
-  # If `true` is given then `Path.home` will be used.
-  # "~/" is expanded to the value passed to *home* or the user's home directory
-  # when *home* is `true`
-  # If *expand_base* is `true`, *base* itself will be exanded in `Dir.current`
+  # "~" is expanded to the value passed to *home*.
+  # If it is `false` (default), home is not expanded.
+  # If `true`, it is expanded to the user's home directory (`Path.home`).
+  #
+  # If *expand_base* is `true`, *base* itself will be expanded in `Dir.current`
   # if it is not an absolute path. This guarantees the method returns an absolute
   # path (assuming that `Dir.current` is absolute).
   def expand(base : Path | String = Dir.current, *, home : Path | String | Bool = false, expand_base = true) : Path
@@ -572,9 +573,9 @@ struct Path
 
     if home
       if name == "~"
-        name = (resolve_home(home)).to_kind(@kind).normalize.to_s
+        name = resolve_home(home).to_s
       elsif name.starts_with?("~/")
-        name = (resolve_home(home)).to_kind(@kind).normalize.join(name.byte_slice(2, name.bytesize - 2)).to_s
+        name = resolve_home(home).join(name.byte_slice(2, name.bytesize - 2)).to_s
       end
     end
 
@@ -631,11 +632,11 @@ struct Path
 
   private def resolve_home(home)
     case home
-    when Path   then home
-    when String then Path[home]
-    when true   then Path.home
-    else             raise ArgumentError.new("Expected Path | String | Bool, not #{home.class}")
+    when String then home = Path[home]
+    when Bool   then home = Path.home
     end
+
+    home.to_kind(@kind).normalize
   end
 
   # Appends the given *part* to this path and returns the joined path.
