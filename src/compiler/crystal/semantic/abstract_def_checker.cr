@@ -88,21 +88,23 @@ class Crystal::AbstractDefChecker
     end
   end
 
-  def implements_with_ancestors?(type : Type, method : Def, base)
-    return true if implements?(type, method, base)
+  def implements_with_ancestors?(type : Type, method : Def, base : Type)
+    return true if implements?(type, type, method, base)
 
     type.ancestors.any? do |ancestor|
-      implements?(ancestor, method, base)
+      implements?(type, ancestor, method, base)
     end
   end
 
-  def implements?(type : Type, method : Def, base)
-    type.defs.try &.each_value do |defs_with_metadata|
+  # Returns `true` if `ancestor_type` implements `method` of `base` when computing
+  # that information to check whether `target_type` implements `method` of `base`.
+  def implements?(target_type : Type, ancestor_type : Type, method : Def, base : Type)
+    ancestor_type.defs.try &.each_value do |defs_with_metadata|
       defs_with_metadata.each do |def_with_metadata|
         a_def = def_with_metadata.def
 
-        if implements?(type, a_def, base, method)
-          check_return_type(type, a_def, base, method)
+        if implements?(target_type, ancestor_type, a_def, base, method)
+          check_return_type(target_type, ancestor_type, a_def, base, method)
           return true
         end
       end
@@ -110,7 +112,10 @@ class Crystal::AbstractDefChecker
     false
   end
 
-  def implements?(t1 : Type, m1 : Def, t2 : Type, m2 : Def)
+  # Returns `true` if the method `t1#m1` implements `t2#m2` when computing
+  # that to check whether `target_type` implements `t2#m2`
+  # (`t1` is an ancestor of `target_type`).
+  def implements?(target_type : Type, t1 : Type, m1 : Def, t2 : Type, m2 : Def)
     return false if m1.abstract?
     return false unless m1.name == m2.name
     return false unless m1.yields == m2.yields
@@ -126,10 +131,10 @@ class Crystal::AbstractDefChecker
     # Then we replace all `T` in the base method with `Int32`, and just then
     # we check if they match.
     if t2.is_a?(GenericType)
-      generic_base = find_base_generic_instantiation(t1, t2)
-      if generic_base
-        m2 = replace_method_arg_paths_with_type_vars(t2, m2, generic_base)
-      end
+      # We must find the generic instantiation starting from the target type,
+      # not from t1, because maybe t1 doesn't reach the generic base type.
+      generic_base = find_base_generic_instantiation(target_type, t2)
+      m2 = replace_method_arg_paths_with_type_vars(t2, m2, generic_base)
     end
 
     m2.args.zip(m1.args) do |a2, a1|
@@ -156,7 +161,9 @@ class Crystal::AbstractDefChecker
     true
   end
 
-  def check_return_type(type : Type, method : Def, base_type : Type, base_method : Def)
+  # Checks that the return type of `type#method` matches that of `base_type#base_method`
+  # when computing that information for `target_type` (`type` is an ancestor of `target_type`).
+  def check_return_type(target_type : Type, type : Type, method : Def, base_type : Type, base_method : Def)
     base_return_type_node = base_method.return_type
     return unless base_return_type_node
 
@@ -172,12 +179,10 @@ class Crystal::AbstractDefChecker
     # Then we replace all `T` in the base method return type with `Int32`,
     # and just then we check if they match.
     if base_type.is_a?(GenericType)
-      generic_base = find_base_generic_instantiation(type, base_type)
-      if generic_base
-        replacer = ReplacePathWithTypeVar.new(base_type, generic_base)
-        base_return_type_node = base_return_type_node.clone
-        base_return_type_node.accept(replacer)
-      end
+      generic_base = find_base_generic_instantiation(target_type, base_type)
+      replacer = ReplacePathWithTypeVar.new(base_type, generic_base)
+      base_return_type_node = base_return_type_node.clone
+      base_return_type_node.accept(replacer)
     end
 
     base_return_type = base_type.lookup_type?(base_return_type_node)
@@ -215,34 +220,9 @@ class Crystal::AbstractDefChecker
   end
 
   def find_base_generic_instantiation(type : Type, base_type : GenericType)
-    base = type.ancestors.find do |t|
+    type.ancestors.find do |t|
       t.is_a?(GenericInstanceType) && t.generic_type == base_type
-    end
-
-    # It might happen that we don't find a generic instantiation in the ancestors
-    # if the method is implemented in a supertype of where the abstract method is
-    # defined, like:
-    #
-    # ```
-    # module Base(T)
-    #   def size
-    #   end
-    # end
-    #
-    # module Child(T)
-    #   include Base(T)
-    #
-    #   abstract def size
-    # end
-    #
-    # class Foo
-    #   include Child(Int32)
-    # end
-    # ```
-    #
-    # In the above we are looking for `size` and usually expect it
-    # to be in subtypes of `Child`, but in this case it's in a supertype.
-    base ? base.as(GenericInstanceType) : nil
+    end.as(GenericInstanceType)
   end
 
   private def this_warning_will_become_an_error
