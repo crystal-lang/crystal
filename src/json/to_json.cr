@@ -161,6 +161,33 @@ struct Time
   end
 end
 
+# Converter to be used with `JSON.mapping`
+# to serialize an `Array(T)` instance with a custom converter
+# since the unix epoch. See `Time#to_unix`.
+#
+# ```
+# require "json"
+#
+# class Timestamp
+#   JSON.mapping({
+#     values: {type: Array(Time), converter: JSON::ArrayConverter(Time::EpochConverter)},
+#   })
+# end
+#
+# timestamp = Timestamp.from_json(%({"dates":[1459859781,1567628762]}))
+# timestamp.values  # => [2016-04-05 12:36:21 UTC, 2019-09-04 20:26:02 UTC]
+# timestamp.to_json # => %({"dates":[1459859781,1567628762]})
+# ```
+module JSON::ArrayConverter(Converter)
+  def self.to_json(values : Array, builder : JSON::Builder)
+    builder.array do
+      values.each do |value|
+        Converter.to_json(value, builder)
+      end
+    end
+  end
+end
+
 # Converter to be used with `JSON.mapping` and `YAML.mapping`
 # to serialize a `Time` instance as the number of seconds
 # since the unix epoch. See `Time#to_unix`.
@@ -232,3 +259,4 @@ module String::RawConverter
     json.raw(value)
   end
 end
+

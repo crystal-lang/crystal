@@ -133,6 +133,12 @@ private class JSONWithRaw
   })
 end
 
+private class JSONWithJSONArrayConverter
+  JSON.mapping({
+    values: {type: Array(Time), converter: JSON::ArrayConverter(Time::EpochConverter)},
+  })
+end
+
 private class JSONWithRoot
   JSON.mapping({
     result: {type: Array(JSONPerson), root: "heroes"},
@@ -454,6 +460,14 @@ describe "JSON mapping" do
     json = JSONWithTimeEpochMillis.from_json(string)
     json.value.should be_a(Time)
     json.value.should eq(Time.unix_ms(1459860483856))
+    json.to_json.should eq(string)
+  end
+
+  it "uses JSON::ArrayConverter" do
+    string = %({"values":[1459859781,1567628762]})
+    json = JSONWithJSONArrayConverter.from_json(string)
+    json.values.should be_a(Array(Time))
+    json.values.should eq([Time.unix(1459859781), Time.unix(1567628762)])
     json.to_json.should eq(string)
   end
 

@@ -283,6 +283,16 @@ struct Time::Format
   end
 end
 
+module JSON::ArrayConverter(Converter)
+  def self.from_json(pull : JSON::PullParser)
+    ary = Array(typeof(Converter.from_json(pull))).new
+    pull.read_array do
+      ary << Converter.from_json(pull)
+    end
+    ary
+  end
+end
+
 module Time::EpochConverter
   def self.from_json(value : JSON::PullParser) : Time
     Time.unix(value.read_int)
