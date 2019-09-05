@@ -245,7 +245,7 @@ module Crystal
           exp.raise "can't interate TypeNode of type #{type}, only tuple or named tuple types"
         end
       else
-        node.exp.raise "for expression must be an array, hash or tuple literal, not #{exp.class_desc}:\n\n#{exp}"
+        node.exp.raise "`for` expression must be an array, hash, tuple, named tuple or a range literal, not #{exp.class_desc}:\n\n#{exp}"
       end
 
       false
