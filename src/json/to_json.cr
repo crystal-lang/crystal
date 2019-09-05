@@ -188,6 +188,35 @@ module JSON::ArrayConverter(Converter)
   end
 end
 
+# Converter to be used with `JSON.mapping`
+# to serialize a `Time` instance as the number of seconds
+# from a `Hash(K, V)` values.
+#
+# ```
+# require "json"
+#
+# class Timestamp
+#   JSON.mapping({
+#     values: {type: Hash(String, Time), converter: JSON::HashValueConverter(Time::EpochConverter)},
+#   })
+# end
+#
+# timestamp = Timestamp.from_json(%({"birthdays":{"foo":1459859781,"bar":1567628762}}))
+# timestamp.values  # => {"foo" => 2016-04-05 12:36:21 UTC, "bar" => 2019-09-04 20:26:02 UTC)}
+# timestamp.to_json # => ({"birthdays":{"foo":1459859781,"bar":1567628762}}))
+# ```
+module JSON::HashValueConverter(Converter)
+  def self.to_json(values : Hash, builder : JSON::Builder)
+    builder.object do
+      values.each do |key, value|
+        builder.field key.to_json_object_key do
+          Converter.to_json(value, builder)
+        end
+      end
+    end
+  end
+end
+
 # Converter to be used with `JSON.mapping` and `YAML.mapping`
 # to serialize a `Time` instance as the number of seconds
 # since the unix epoch. See `Time#to_unix`.
@@ -259,4 +288,3 @@ module String::RawConverter
     json.raw(value)
   end
 end
-

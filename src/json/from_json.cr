@@ -293,6 +293,20 @@ module JSON::ArrayConverter(Converter)
   end
 end
 
+module JSON::HashValueConverter(Converter)
+  def self.from_json(pull : JSON::PullParser)
+    hash = Hash(String, typeof(Converter.from_json(pull))).new
+    pull.read_object do |key, key_location|
+      parsed_key = String.from_json_object_key?(key)
+      unless parsed_key
+        raise JSON::ParseException.new("Can't convert #{key.inspect} into String", *key_location)
+      end
+      hash[parsed_key] = Converter.from_json(pull)
+    end
+    hash
+  end
+end
+
 module Time::EpochConverter
   def self.from_json(value : JSON::PullParser) : Time
     Time.unix(value.read_int)
