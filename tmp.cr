@@ -39,8 +39,67 @@ end
 x = 1111111111_i128
 y = 10000000000_i128
 
+puts "#{x}:#{x.class}"
+puts "#{y}:#{y.class}"
+puts "#{(x * y)}:#{(x * y).class}"
 puts "#{x} * #{y} = #{x * y}"
-p multi3(x, y)
+puts "#{x} * #{y} = #{multi3(x, y)}"
+puts "", ""
 
-# puts 1111111111_i128 * 10000000000_i128
+fun muloti4(a : Int128, b : Int128, overflow : Int32*) : Int128
+  n = 64
+  min = Int64::MIN
+  max = Int64::MAX
+  overflow.value = 0
+  result = a &* b
+  if a == min
+    if b != 0 && b != 1
+      overflow.value = 1
+    end
+    return result
+  end
+  if b == min
+    if a != 0 && a != 1
+      overflow.value = 1
+    end
+    return result
+  end
+  sa = a >> (n &- 1)
+  abs_a = (a ^ sa) &- sa
+  sb = b >> (n &- 1)
+  abs_b = (b ^ sb) &- sb
+  if abs_a < 2 || abs_b < 2
+    return result
+  end
+  if sa == sb
+    if abs_a > max // abs_b
+      overflow.value = 1
+    end
+  else
+    if abs_a > min // (0i64 &- abs_b)
+      overflow.value = 1
+    end
+  end
+  return result
+end
 
+
+x = Int128::MAX
+y = 2_i128
+
+puts "#{x}:#{x.class}"
+puts "#{y}:#{y.class}"
+begin
+  x * y
+rescue OverflowError
+  puts "x * y:raises"
+end
+
+puts "#{x} * #{y} raises true"
+
+o = 0
+muloti4(x, y, pointerof(o));
+puts "#{x} * #{y} raises #{o == 0 ? false : true}"
+
+# puts "#{Int64::MAX} * #{2_u64} = #{Int64::MAX * 2_u64}"
+# puts "#{Int64::MAX} &* #{2_u64} = #{Int64::MAX &* 2_u64}"
