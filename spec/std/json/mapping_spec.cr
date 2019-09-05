@@ -336,11 +336,9 @@ describe "JSON mapping" do
   end
 
   it "outputs JSON with properties key" do
-    input = {
-      properties: {"foo" => "bar"},
-    }.to_json
-    json = JSONWithPropertiesKey.from_json(input)
-    json.to_json.should eq(input)
+    string = %({"properties":{"foo":"bar"}})
+    json = JSONWithPropertiesKey.from_json(string)
+    json.to_json.should eq(string)
   end
 
   it "parses json with keywords" do
