@@ -1,5 +1,6 @@
 require "./uri/uri_parser"
 require "./uri/encoding"
+require "./http/params"
 
 # This class represents a URI reference as defined by [RFC 3986: Uniform Resource Identifier
 # (URI): Generic Syntax](https://www.ietf.org/rfc/rfc3986.txt).
@@ -218,6 +219,18 @@ class URI
   # i.e. no `host` and the first character of `path` is not a slash (`/`).
   def opaque? : Bool
     !@scheme.nil? && @host.nil? && !@path.starts_with?('/')
+  end
+
+  # Returns a `HTTP::Params` of the URI#query.
+  #
+  # ```
+  # require "uri"
+  #
+  # uri = URI.parse "http://foo.com?id=30&limit=5#time=1305298413"
+  # uri.query_params # => HTTP::Params(@raw_params={"id" => ["30"], "limit" => ["5"]})
+  # ```
+  def query_params : HTTP::Params
+    HTTP::Params.parse(@query || "")
   end
 
   def to_s(io : IO) : Nil
