@@ -533,7 +533,7 @@ module Crystal
       case node.name
       when "@type"
         target = @scope == @program.class_type ? @scope : @scope.instance_type
-        return @last = TypeNode.new(target)
+        return @last = TypeNode.new(target.devirtualize)
       when "@def"
         return @last = @def || NilLiteral.new
       end

@@ -1823,4 +1823,19 @@ describe "Code gen: macro" do
       end
     )).to_string.chomp.should eq("2")
   end
+
+  it "devirtualizes @type" do
+    run(%(
+      class Foo
+        def foo
+          {{@type.id.stringify}}
+        end
+      end
+
+      class Bar < Foo
+      end
+
+      (Foo.new || Bar.new).foo
+    )).to_string.should eq("Foo")
+  end
 end
