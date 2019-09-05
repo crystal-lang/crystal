@@ -207,14 +207,25 @@ class Crystal::Scheduler
     end
 
     def self.init_workers
-      @@workers = Array(Thread).new(worker_count) do |i|
+      count = worker_count
+      pending = Atomic(Int32).new(count - 1)
+      @@workers = Array(Thread).new(count) do |i|
         if i == 0
           worker_loop = Fiber.new(name: "Worker Loop") { Thread.current.scheduler.run_loop }
           Thread.current.scheduler.enqueue worker_loop
           Thread.current
         else
-          Thread.new { Thread.current.scheduler.run_loop }
+          Thread.new do
+            scheduler = Thread.current.scheduler
+            pending.sub(1)
+            scheduler.run_loop
+          end
         end
+      end
+
+      # Wait for all worker threads to be fully ready to be used
+      while pending.get > 0
+        Fiber.yield
       end
     end
 
