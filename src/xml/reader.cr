@@ -57,8 +57,8 @@ struct XML::Reader
     end
   end
 
-  # Returns the `XML::Type` of the node.
-  def node_type
+  # Returns the `XML::Reader::Type` of the node.
+  def node_type : XML::Reader::Type
     LibXML.xmlTextReaderNodeType(@reader)
   end
 
@@ -83,17 +83,17 @@ struct XML::Reader
     LibXML.xmlTextReaderAttributeCount(@reader)
   end
 
-  # Moves to the first `XML::Type::ATTRIBUTE_NODE` of the node.
+  # Moves to the first `XML::Reader::Type::ATTRIBUTE` of the node.
   def move_to_first_attribute
     LibXML.xmlTextReaderMoveToFirstAttribute(@reader) == 1
   end
 
-  # Moves to the next `XML::Type::ATTRIBUTE_NODE` of the node.
+  # Moves to the next `XML::Reader::Type::ATTRIBUTE` of the node.
   def move_to_next_attribute
     LibXML.xmlTextReaderMoveToNextAttribute(@reader) == 1
   end
 
-  # Moves to the `XML::Type::ATTRIBUTE_NODE` with the specified name.
+  # Moves to the `XML::Reader::Type::ATTRIBUTE` with the specified name.
   def move_to_attribute(name : String)
     LibXML.xmlTextReaderMoveToAttribute(@reader, name) == 1
   end
@@ -111,7 +111,7 @@ struct XML::Reader
     String.new(value) if value
   end
 
-  # Moves from the `XML::Type::ATTRIBUTE_NODE` to its containing `XML::Type::ELEMENT_NODE`.
+  # Moves from the `XML::Reader::Type::ATTRIBUTE` to its containing `XML::Reader::Type::ELEMENT`.
   def move_to_element
     LibXML.xmlTextReaderMoveToElement(@reader) == 1
   end

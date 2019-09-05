@@ -7,12 +7,14 @@ module Crystal::System::Dir
     dir
   end
 
-  def self.next(dir) : String?
+  def self.next_entry(dir) : Entry?
     # LibC.readdir returns NULL and sets errno for failure or returns NULL for EOF but leaves errno as is.
     # This means we need to reset `Errno` before calling `readdir`.
     Errno.value = 0
     if entry = LibC.readdir(dir)
-      String.new(entry.value.d_name.to_unsafe)
+      name = String.new(entry.value.d_name.to_unsafe)
+      dir = entry.value.d_type == LibC::DT_DIR
+      Entry.new(name, dir)
     elsif Errno.value != 0
       raise Errno.new("readdir")
     else

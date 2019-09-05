@@ -107,6 +107,8 @@ describe "Code gen: debug" do
 
   it "has correct debug location after constant initialization in call with block (#4719)" do
     codegen(%(
+      require "prelude"
+
       fun __crystal_malloc_atomic(size : UInt32) : Void*
         x = uninitialized Void*
         x

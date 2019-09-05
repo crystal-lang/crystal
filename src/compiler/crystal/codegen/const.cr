@@ -29,6 +29,8 @@ require "./codegen"
 # and can be done in any order (they have no side effects).
 
 class Crystal::CodeGenVisitor
+  @const_mutex : LLVM::Value?
+
   # The special constants ARGC_UNSAFE and ARGV_UNSAFE need to be initialized
   # as soon as the program starts, because we have access to argc and argv
   # in the main function
@@ -96,27 +98,16 @@ class Crystal::CodeGenVisitor
 
   def initialize_const(const)
     # Maybe the constant was simple and doesn't need a real initialization
-    return if const.initializer
 
     global, initialized_flag = declare_const_and_initialized_flag(const)
-
-    initialized_block, not_initialized_block = new_blocks "initialized", "not_initialized"
-
-    initialized = load(initialized_flag)
-    cond initialized, initialized_block, not_initialized_block
-
-    position_at_end not_initialized_block
-    store int1(1), initialized_flag
+    return global if const.initializer
 
     init_function_name = "~#{const.initialized_llvm_name}"
     func = @main_mod.functions[init_function_name]? || create_initialize_const_function(init_function_name, const)
     func = check_main_fun init_function_name, func
-    call func
 
-    br initialized_block
-
-    position_at_end initialized_block
-
+    set_current_debug_location const.locations.try &.first? if @debug.line_numbers?
+    run_once(initialized_flag, func)
     global
   end
 
@@ -202,26 +193,9 @@ class Crystal::CodeGenVisitor
   end
 
   def create_read_const_function(fun_name, const)
-    global, initialized_flag = declare_const_and_initialized_flag(const)
-
     in_main do
       define_main_function(fun_name, ([] of LLVM::Type), llvm_type(const.value.type).pointer) do |func|
-        initialized_block, not_initialized_block = new_blocks "initialized", "not_initialized"
-
-        initialized = load(initialized_flag)
-        cond initialized, initialized_block, not_initialized_block
-
-        position_at_end not_initialized_block
-        store int1(1), initialized_flag
-
-        init_function_name = "~#{const.initialized_llvm_name}"
-        func = @main_mod.functions[init_function_name]? || create_initialize_const_function(init_function_name, const)
-        call func
-
-        br initialized_block
-
-        position_at_end initialized_block
-
+        global = initialize_const(const)
         ret global
       end
     end

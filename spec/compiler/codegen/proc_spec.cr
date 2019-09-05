@@ -595,6 +595,8 @@ describe "Code gen: proc" do
 
   it "codegens proc to implicit self in constant (#647)" do
     run(%(
+      require "prelude"
+
       module Foo
         def self.blah
           1

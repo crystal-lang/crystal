@@ -289,6 +289,10 @@ describe "YAML serialization" do
       String.from_yaml("hel\\lo".to_yaml).should eq("hel\\lo")
     end
 
+    it "does for String with unicode characters (#8131)" do
+      "你好".to_yaml.should contain("你好")
+    end
+
     it "quotes string if reserved" do
       ["1", "1.2", "true", "2010-11-12"].each do |string|
         string.to_yaml.should eq(%(--- "#{string}"\n))

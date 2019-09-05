@@ -47,11 +47,21 @@ lib LibIntrinsics
 
   fun va_start = "llvm.va_start"(ap : Void*)
   fun va_end = "llvm.va_end"(ap : Void*)
+
+  {% if flag?(:i686) || flag?(:x86_64) %}
+    fun pause = "llvm.x86.sse2.pause"
+  {% end %}
 end
 
 module Intrinsics
   def self.debugtrap
     LibIntrinsics.debugtrap
+  end
+
+  def self.pause
+    {% if flag?(:i686) || flag?(:x86_64) %}
+      LibIntrinsics.pause
+    {% end %}
   end
 
   macro memcpy(dest, src, len, is_volatile)

@@ -55,6 +55,24 @@ describe HTTP::Server do
     server.listen
   end
 
+  it "closes the server" do
+    server = HTTP::Server.new { }
+    address = server.bind_unused_port
+    ch = Channel(Symbol).new
+
+    spawn do
+      server.listen
+      ch.send :end
+    end
+
+    delay(1) { ch.send :timeout }
+
+    TCPSocket.open(address.address, address.port) { }
+
+    server.close
+    ch.receive.should eq(:end)
+  end
+
   it "reuses the TCP port (SO_REUSEPORT)" do
     s1 = HTTP::Server.new { |ctx| }
     address = s1.bind_unused_port(reuse_port: true)
@@ -376,7 +394,11 @@ describe HTTP::Server do
       end
 
       server.closed?.should be_false
-      server_done.empty?.should be_true
+      select
+      when ret = server_done.receive
+        fail("Server finished with #{ret}")
+      else
+      end
     end
   end
 

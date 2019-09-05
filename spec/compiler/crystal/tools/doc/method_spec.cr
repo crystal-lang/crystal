@@ -112,4 +112,104 @@ describe Doc::Method do
       doc_method.args_to_s.should eq(%((foo = <span class="n">1</span>)))
     end
   end
+
+  describe "doc" do
+    it "gets doc from underlying method" do
+      program = semantic("
+        class Foo
+          # Some docs
+          def foo
+          end
+        end
+        ", wants_doc: true).program
+      generator = Doc::Generator.new program, [""], ".", "html", nil
+      method = generator.type(program.types["Foo"]).lookup_method("foo").not_nil!
+      method.doc.should eq("Some docs")
+      method.doc_copied_from.should be_nil
+    end
+
+    it "inherits doc from ancestor (no extra comment)" do
+      program = semantic("
+        class Foo
+          # Some docs
+          def foo
+          end
+        end
+
+        class Bar < Foo
+          def foo
+            super
+          end
+        end
+        ", wants_doc: true).program
+      generator = Doc::Generator.new program, [""], ".", "html", nil
+      method = generator.type(program.types["Bar"]).lookup_method("foo").not_nil!
+      method.doc.should eq("Some docs")
+      method.doc_copied_from.should eq(generator.type(program.types["Foo"]))
+    end
+
+    it "inherits doc from previous def (no extra comment)" do
+      program = semantic("
+        class Foo
+          # Some docs
+          def foo
+          end
+
+          def foo
+            previous_def
+          end
+        end
+        ", wants_doc: true).program
+      generator = Doc::Generator.new program, [""], ".", "html", nil
+      method = generator.type(program.types["Foo"]).lookup_method("foo").not_nil!
+      method.doc.should eq("Some docs")
+      method.doc_copied_from.should be_nil
+    end
+
+    it "inherits doc from ancestor (use :inherit:)" do
+      program = semantic("
+        class Foo
+          # Some docs
+          def foo
+          end
+        end
+
+        class Bar < Foo
+          # :inherit:
+          def foo
+            super
+          end
+        end
+        ", wants_doc: true).program
+      generator = Doc::Generator.new program, [""], ".", "html", nil
+      method = generator.type(program.types["Bar"]).lookup_method("foo").not_nil!
+      method.doc.should eq("Some docs")
+      method.doc_copied_from.should be_nil
+    end
+
+    it "inherits doc from ancestor (use :inherit: plus more content)" do
+      program = semantic("
+        class Foo
+          # Some docs
+          def foo
+          end
+        end
+
+        class Bar < Foo
+          # Before
+          #
+          # :inherit:
+          #
+          # After
+          def foo
+            super
+          end
+        end
+        ", wants_doc: true).program
+      generator = Doc::Generator.new program, [""], ".", "html", nil
+      method = generator.type(program.types["Bar"]).lookup_method("foo").not_nil!
+      method.doc.should eq("Before\n\nSome docs\n\nAfter")
+      method.doc_copied_from.should be_nil
+    end
+  end
 end

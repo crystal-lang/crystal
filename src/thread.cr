@@ -8,7 +8,7 @@ class Thread
   # Use spawn and channels instead.
 
   # all thread objects, so the GC can see them (it doesn't scan thread locals)
-  @@threads = Thread::LinkedList(Thread).new
+  protected class_getter(threads) { Thread::LinkedList(Thread).new }
 
   @th : LibC::PthreadT
   @exception : Exception?
@@ -22,7 +22,7 @@ class Thread
   property previous : Thread?
 
   def self.unsafe_each
-    @@threads.unsafe_each { |thread| yield thread }
+    threads.unsafe_each { |thread| yield thread }
   end
 
   # Starts a new system thread.
@@ -35,7 +35,7 @@ class Thread
     }, self.as(Void*))
 
     if ret == 0
-      @@threads.push(self)
+      Thread.threads.push(self)
     else
       raise Errno.new("pthread_create", ret)
     end
@@ -48,7 +48,7 @@ class Thread
     @th = LibC.pthread_self
     @main_fiber = Fiber.new(stack_address, self)
 
-    @@threads.push(self)
+    Thread.threads.push(self)
   end
 
   private def detach
@@ -98,19 +98,15 @@ class Thread
 
     # Returns the Thread object associated to the running system thread.
     def self.current : Thread
-      @@current || raise "BUG: Thread.current returned NULL"
+      # Thread#start sets @@current as soon it starts. Thus we know
+      # that if @@current is not set then we are in the main thread
+      @@current ||= new
     end
 
     # Associates the Thread object to the running system thread.
     protected def self.current=(@@current : Thread) : Thread
     end
   {% end %}
-
-  # Create the thread object for the current thread (aka the main thread of the
-  # process).
-  #
-  # TODO: consider moving to `kernel.cr` or `crystal/main.cr`
-  self.current = new
 
   def self.yield
     ret = LibC.sched_yield
@@ -136,7 +132,7 @@ class Thread
     rescue ex
       @exception = ex
     ensure
-      @@threads.delete(self)
+      Thread.threads.delete(self)
       Fiber.inactive(fiber)
       detach { GC.pthread_detach(@th) }
     end

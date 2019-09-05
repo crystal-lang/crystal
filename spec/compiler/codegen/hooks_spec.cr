@@ -115,7 +115,9 @@ describe "Code gen: hooks" do
   end
 
   it "does inherited macro before class body" do
-    run("
+    run(%(
+      require "prelude"
+
       class Global
         @@x = 123
 
@@ -142,7 +144,7 @@ describe "Code gen: hooks" do
       end
 
       Bar.y
-      ").to_i.should eq(123)
+      )).to_i.should eq(123)
   end
 
   it "does finished" do

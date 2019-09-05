@@ -77,6 +77,8 @@ class Process
   # Runs the given block inside a new process and
   # returns a `Process` representing the new child process.
   def self.fork : Process
+    {% raise("Process fork is unsupported with multithread mode") if flag?(:preview_mt) %}
+
     if pid = fork_internal(will_exec: false)
       new pid
     else
@@ -97,6 +99,8 @@ class Process
   # Returns a `Process` representing the new child process in the current process
   # and `nil` inside the new child process.
   def self.fork : Process?
+    {% raise("Process fork is unsupported with multithread mode") if flag?(:preview_mt) %}
+
     if pid = fork_internal(will_exec: false)
       new pid
     else
@@ -123,7 +127,9 @@ class Process
         LibC.sigemptyset(pointerof(newmask))
         LibC.pthread_sigmask(LibC::SIG_SETMASK, pointerof(newmask), nil)
       else
-        Process.after_fork_child_callbacks.each(&.call)
+        {% unless flag?(:preview_mt) %}
+          Process.after_fork_child_callbacks.each(&.call)
+        {% end %}
         LibC.pthread_sigmask(LibC::SIG_SETMASK, pointerof(oldmask), nil)
       end
     when -1
@@ -228,7 +234,7 @@ class Process
   # A pipe to this process's error. Raises if a pipe wasn't asked when creating the process.
   getter! error : IO::FileDescriptor
 
-  @waitpid : Channel::Buffered(Int32)
+  @waitpid : Channel(Int32)
   @wait_count = 0
 
   # Creates a process, executes it, but doesn't wait for it to complete.
@@ -295,11 +301,13 @@ class Process
         fork_io, process_io = IO.pipe(read_blocking: true)
 
         @wait_count += 1
+        ensure_channel
         spawn { copy_io(stdio, process_io, channel, close_dst: true) }
       else
         process_io, fork_io = IO.pipe(write_blocking: true)
 
         @wait_count += 1
+        ensure_channel
         spawn { copy_io(process_io, stdio, channel, close_src: true) }
       end
 
@@ -399,6 +407,14 @@ class Process
   end
 
   private def channel
+    if channel = @channel
+      channel
+    else
+      raise "BUG: Notification channel was not initialized for this process"
+    end
+  end
+
+  private def ensure_channel
     @channel ||= Channel(Exception?).new
   end
 

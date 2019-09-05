@@ -553,11 +553,12 @@ struct Path
   # Path["baz"].expand("/foo/bar") # => Path["/foo/bar/baz"]
   # ```
   #
-  # *home* specifies the home directory which `~` will expand to.
+  # *home* specifies the home directory which `~` will expand to. If not given
+  # (or `nil` is given) then `Path.home` will be used.
   # If *expand_base* is `true`, *base* itself will be exanded in `Dir.current`
   # if it is not an absolute path. This guarantees the method returns an absolute
   # path (assuming that `Dir.current` is absolute).
-  def expand(base : Path | String = Dir.current, *, home = Path.home, expand_base = true) : Path
+  def expand(base : Path | String = Dir.current, *, home : String | Path | Nil = nil, expand_base = true) : Path
     base = Path.new(base) unless base.is_a?(Path)
     base = base.to_kind(@kind)
     if base == self
@@ -568,9 +569,9 @@ struct Path
     name = @name
 
     if name == "~"
-      name = home.to_kind(@kind).normalize.to_s
+      name = (home || Path.home).to_kind(@kind).normalize.to_s
     elsif name.starts_with?("~/")
-      name = home.to_kind(@kind).normalize.join(name.byte_slice(2, name.bytesize - 2)).to_s
+      name = (home || Path.home).to_kind(@kind).normalize.join(name.byte_slice(2, name.bytesize - 2)).to_s
     end
 
     unless new_instance(name).absolute?
@@ -624,6 +625,73 @@ struct Path
     expanded.normalize(remove_final_separator: false)
   end
 
+  # Appends the given *part* to this path and returns the joined path.
+  #
+  # ```
+  # Path["foo"].join("bar")     # => Path["foo/bar"]
+  # Path["foo/"].join("/bar")   # => Path["foo/bar"]
+  # Path["/foo/"].join("/bar/") # => Path["/foo/bar/"]
+  # ```
+  def join(part) : Path
+    # If we are joining a single part we can use `String.new` instead of
+    # `String.build` which avoids an extra allocation.
+    # Given that `File.join(arg1, arg2)` is the most common usage
+    # it's good if we can optimize this case.
+
+    if part.is_a?(Path) && posix? && part.windows?
+      part = part.to_posix.to_s
+    else
+      part = part.to_s
+      part.check_no_null_byte
+    end
+
+    if @name.empty?
+      if part.empty?
+        # We could use `separators[0].to_s` but then we'd have to
+        # convert Char to String which involves a memory allocation
+        return new_instance(windows? ? "\\" : "/")
+      else
+        return new_instance(part)
+      end
+    end
+
+    bytesize = @name.bytesize + part.bytesize # bytesize of the resulting string
+    add_separator = false                     # do we need to add a separate between the parts?
+    part_ptr = part.to_unsafe                 # where do we start copying from `part`?
+    part_bytesize = part.bytesize             # how much do we copy from `part`?
+
+    case {ends_with_separator?, starts_with_separator?(part)}
+    when {true, true}
+      # There are separators on both sides so we'll just lchop from the right part
+      bytesize -= 1
+      part_ptr += 1
+      part_bytesize -= 1
+    when {false, false}
+      # No separators on any side so we need to add one
+      bytesize += 1
+      add_separator = true
+    end
+
+    new_name = String.new(bytesize) do |buffer|
+      # Copy name
+      buffer.copy_from(@name.to_unsafe, @name.bytesize)
+      buffer += @name.bytesize
+
+      # Add separator if needed
+      if add_separator
+        buffer.value = separators[0].ord.to_u8
+        buffer += 1
+      end
+
+      # Copy the part
+      buffer.copy_from(part_ptr, part_bytesize)
+
+      {bytesize, @name.ascii_only? && part.ascii_only? ? bytesize : 0}
+    end
+
+    new_instance new_name
+  end
+
   # Appends the given *parts* to this path and returns the joined path.
   #
   # ```
@@ -651,6 +719,9 @@ struct Path
   # ```
   def join(parts : Enumerable) : Path
     if parts.is_a?(Indexable)
+      # If it's just a single part we can avoid one allocation of String.build
+      return join(parts.first) if parts.size == 1
+
       # If we know how many parts we have we can compute an approximation of
       # the string's capacity: this path's size plus the parts' size plus the
       # separators between them
@@ -671,7 +742,6 @@ struct Path
           # Every POSIX path is also a valid Windows path, so we only need to
           # convert the other way around (see `#to_windows`, `#to_posix`).
           part = part.to_posix if posix? && part.windows?
-
           part = part.@name
         else
           part = part.to_s

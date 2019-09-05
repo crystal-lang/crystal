@@ -187,10 +187,14 @@ class Deque(T)
   # a             # => Deque{"a", "c"}
   # ```
   def delete(obj)
+    delete_if { |i| i == obj }
+  end
+
+  def delete_if
     found = false
     i = 0
     while i < @size
-      if self[i] == obj
+      if yield self[i]
         delete_at(i)
         found = true
       else

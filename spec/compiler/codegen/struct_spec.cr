@@ -171,7 +171,9 @@ describe "Code gen: struct" do
   end
 
   it "declares const struct" do
-    run("
+    run(%(
+      require "prelude"
+
       struct Foo
         def initialize(@x : Int32)
         end
@@ -184,11 +186,13 @@ describe "Code gen: struct" do
       FOO = Foo.new(1)
 
       FOO.x
-      ").to_i.should eq(1)
+      )).to_i.should eq(1)
   end
 
   it "uses struct in if" do
-    run("
+    run(%(
+      require "prelude"
+
       struct Foo
         def initialize(@x : Int32)
         end
@@ -206,7 +210,7 @@ describe "Code gen: struct" do
         foo = FOO
       end
       foo.x
-      ").to_i.should eq(1)
+      )).to_i.should eq(1)
   end
 
   it "uses nilable struct" do
