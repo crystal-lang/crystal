@@ -533,18 +533,6 @@ class Process
     LibC.getegid
   end
 
-  # Attempts to change real, effective, and saved user id's of the current process with no way back.
-  def self.user_id=(uid : LibC::UidT) : LibC::UidT
-    self.setresuid(uid, uid, uid)
-    uid
-  end
-
-  # Attempts to change real, effective, and saved group id's of the current process.
-  def self.group_id=(gid : LibC::GidT) : LibC::GidT
-    self.setresgid(gid, gid, gid)
-    gid
-  end
-
   # :nodoc:
   UID_DEFAULT = if LibC::UidT.new(0).is_a?(Int::Signed)
                   LibC::UidT.new(-1)
@@ -557,6 +545,41 @@ class Process
                   LibC::GidT::MAX
                 end
 
+  # Permanently transition to another account.
+  #
+  # user_id's, group_id's and groups are changed to the account provided.
+  #
+  # Call `chroot` or other privileged operations becore calling this method.
+  #
+  # Example:
+  #
+  # ```
+  # user = System::User.find_by name: "crystal"
+  # Process.become user
+  #
+  # user = System::User.find_by name: "crystal"
+  # group = System::Group.find_by name: "wheel"
+  # Process.become user, group # Use a different group other than the user's.
+  # ```
+  def self.become(user : System::User, group : System::Group? = nil)
+    group ||= user.group
+    # TODO setgroups
+    become_group group.id.to_i
+    become_user user.id.to_i
+  end
+
+  # Attempts to change real, effective, and saved user id's of the current process.
+  # When uid != 0 this is a one way transition.
+  #
+  # Example:
+  #
+  # ```
+  # Process.become_user 0 # Changes real, effective, saved user id to 0 (root).
+  # ```
+  def self.become_user(uid : LibC::UidT)
+    become_user ruid: uid, euid: uid, suid: uid
+  end
+
   # Attempts to change real, effective, and/or saved user id's of the current process.
   # Uid's not supplied in arguments are kept at their current values (if supported).
   # Explicit setting of saved id's is not supported on all platforms.
@@ -568,11 +591,11 @@ class Process
   # Example:
   #
   # ```
-  # Process.setresuid(0, 0, 0) # Changes real, effective, saved user id to 0 (root).
-  # Process.setresuid(euid: 0) # Only changes the euid.
-  # Process.setresuid(suid: 0) # Platform specific and may not function.
+  # Process.become_user ruid: 1004, euid: 0 # Changes real and saved user id to 1004 and effective to 0 (root)
+  # Process.become_user euid: 0             # Only changes the euid.
+  # Process.become_user suid: 0             # Platform specific and may not function.
   # ```
-  def self.setresuid(ruid : LibC::UidT = UID_DEFAULT, euid : LibC::UidT = UID_DEFAULT, suid : LibC::UidT = ruid)
+  def self.become_user(*, ruid : LibC::UidT = UID_DEFAULT, euid : LibC::UidT = UID_DEFAULT, suid : LibC::UidT = ruid)
     {% if LibC.has_method?(:setresuid) %}
       if LibC.setresuid(ruid, euid, suid) != 0
         raise Errno.new("setresuid failed")
@@ -590,6 +613,17 @@ class Process
     self
   end
 
+  # Attempts to change real, effective, and saved group id's of the current process.
+  #
+  # Example:
+  #
+  # ```
+  # Process.become_group 5 # Changes real, effective, saved group id to 5.
+  # ```
+  def self.become_group(gid : LibC::GidT)
+    become_group rgid: gid, egid: gid, sgid: gid
+  end
+
   # Attempts to change real, effective, and/or saved group id's of the current process.
   # Gid's not supplied in arguments are kept at their current values (if supported).
   # Explicit setting of saved id's is not supported on all platforms.
@@ -601,11 +635,11 @@ class Process
   # Example:
   #
   # ```
-  # Process.setresgid(0, 0, 0) # Changes real, effective, saved group id to 0.
-  # Process.setresgid(egid: 0) # Only changes the egid.
-  # Process.setresgid(sgid: 0) # Platform specific and may not function.
+  # Process.become_group rgid 1, egid: 2 # Changes real and saved group id to 1, effective to 2.
+  # Process.become_group egid: 0         # Only changes the egid.
+  # Process.become_group sgid: 0         # Platform specific and may not function.
   # ```
-  def self.setresgid(rgid : LibC::GidT = GID_DEFAULT, egid : LibC::GidT = GID_DEFAULT, sgid : LibC::GidT = rgid)
+  def self.become_group(*, rgid : LibC::GidT = GID_DEFAULT, egid : LibC::GidT = GID_DEFAULT, sgid : LibC::GidT = rgid)
     {% if LibC.has_method?(:setresgid) %}
       if LibC.setresgid(rgid, egid, sgid) != 0
         raise Errno.new("setresgid failed")

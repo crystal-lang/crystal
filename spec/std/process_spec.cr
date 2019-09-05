@@ -95,20 +95,21 @@ describe Process do
     Process.group_id.should eq Process.effective_group_id
   end
 
-  it "setresuid" do
+  it "become_user" do
     success = false
-    ruid = Process.effective_user_id
+    ruid = Process.user_id
     euid = Process.effective_user_id
 
     begin
       # Leave ruid at 0 to switch back
-      Process.setresuid(0, 8888, 9999)
+      Process.become_user(ruid: 0, euid: 8888, suid: 9999)
+      Process.user_id.should eq 0
       Process.effective_user_id.should eq 8888
       success = true
     rescue ex : Errno
       # Ok for non-root
     ensure
-      Process.setresuid(ruid, euid) if success
+      Process.become_user(ruid: ruid, euid: euid) if success
     end
 
     if euid == 0
@@ -118,19 +119,20 @@ describe Process do
     end
   end
 
-  it "setresgid" do
+  it "become_group" do
     success = false
     rgid = Process.group_id
     egid = Process.effective_group_id
 
     begin
-      Process.setresgid(7777, 8888, 9999)
+      Process.become_group(rgid: 7777, egid: 8888, sgid: 9999)
       Process.group_id.should eq 7777
+      Process.effective_group_id.should eq 8888
       success = true
     rescue ex : Errno
       # Ok for non-root
     ensure
-      Process.setresgid(rgid, egid) if success
+      Process.become_group(rgid: rgid, egid: egid) if success
     end
 
     if Process.effective_user_id == 0
@@ -140,18 +142,18 @@ describe Process do
     end
   end
 
-  it "setresuid raises when only setting suid on unsupported platforms" do
+  it "become_user raises when only setting suid on unsupported platforms" do
     if !LibC.responds_to?(:setresuid) && LibC.responds_to?(:setreuid)
       expect_raises_errno(Errno::ENOSYS) do
-        Process.setresuid(suid: 55)
+        Process.become_user(suid: 55)
       end
     end
   end
 
-  it "setresgid raises when only setting sgid on unsupported platforms" do
+  it "become_group raises when only setting sgid on unsupported platforms" do
     if !LibC.responds_to?(:setresgid) && LibC.responds_to?(:setregid)
       expect_raises_errno(Errno::ENOSYS) do
-        Process.setresgid(sgid: 55)
+        Process.become_group(sgid: 55)
       end
     end
   end
