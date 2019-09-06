@@ -135,8 +135,20 @@ class Reference
 
   # :nodoc:
   module ExecRecursive
+    alias Registry = Hash({UInt64, Symbol}, Bool)
+
+    {% if flag?(:preview_mt) %}
+      @@exec_recursive = Crystal::ThreadLocalValue(Registry).new
+    {% else %}
+      @@exec_recursive = Registry.new
+    {% end %}
+
     def self.hash
-      @@exec_recursive ||= {} of {UInt64, Symbol} => Bool
+      {% if flag?(:preview_mt) %}
+        @@exec_recursive.get { Registry.new }
+      {% else %}
+        @@exec_recursive
+      {% end %}
     end
   end
 
