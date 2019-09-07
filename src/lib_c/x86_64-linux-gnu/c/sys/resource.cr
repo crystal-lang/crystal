@@ -2,20 +2,20 @@ lib LibC
   struct RUsage
     ru_utime : Timeval
     ru_stime : Timeval
-    ru_maxrss : Int32
-    ru_ix_rss : Int32
-    ru_idrss : Int32
-    ru_isrss : Int32
-    ru_minflt : Int32
-    ru_majflt : Int32
-    ru_nswap : Int32
-    ru_inblock : Int32
-    ru_oublock : Int32
-    ru_msgsnd : Int32
-    ru_msgrcv : Int32
-    ru_nsignals : Int32
-    ru_nvcsw : Int32
-    ru_nivcsw : Int32
+    ru_maxrss : Long
+    ru_ix_rss : Long
+    ru_idrss : Long
+    ru_isrss : Long
+    ru_minflt : Long
+    ru_majflt : Long
+    ru_nswap : Long
+    ru_inblock : Long
+    ru_oublock : Long
+    ru_msgsnd : Long
+    ru_msgrcv : Long
+    ru_nsignals : Long
+    ru_nvcsw : Long
+    ru_nivcsw : Long
   end
 
   RUSAGE_SELF     =  0
