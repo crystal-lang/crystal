@@ -162,8 +162,7 @@ struct Time
 end
 
 # Converter to be used with `JSON.mapping`
-# to serialize an `Array(T)` instance with a custom converter
-# since the unix epoch. See `Time#to_unix`.
+# to serialize the `Array(T)` elements with the custom converter.
 #
 # ```
 # require "json"
@@ -189,8 +188,7 @@ module JSON::ArrayConverter(Converter)
 end
 
 # Converter to be used with `JSON.mapping`
-# to serialize a `Time` instance as the number of seconds
-# from a `Hash(K, V)` values.
+# to serialize the `Hash(K, V)` values elements with the custom converter.
 #
 # ```
 # require "json"
@@ -203,7 +201,7 @@ end
 #
 # timestamp = Timestamp.from_json(%({"birthdays":{"foo":1459859781,"bar":1567628762}}))
 # timestamp.values  # => {"foo" => 2016-04-05 12:36:21 UTC, "bar" => 2019-09-04 20:26:02 UTC)}
-# timestamp.to_json # => ({"birthdays":{"foo":1459859781,"bar":1567628762}}))
+# timestamp.to_json # => {"birthdays":{"foo":1459859781,"bar":1567628762}}
 # ```
 module JSON::HashValueConverter(Converter)
   def self.to_json(values : Hash, builder : JSON::Builder)
