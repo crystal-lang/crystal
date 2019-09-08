@@ -342,11 +342,11 @@ class Channel(T)
       @state = DeliveryState::None
     end
 
-    def execute
+    def execute : Channel::NotReady | T
       @channel.receive_internal { return NotReady }
     end
 
-    def result
+    def result : T
       @value
     end
 
@@ -378,12 +378,12 @@ class Channel(T)
     def initialize(@channel : Channel(T), @value : T)
     end
 
-    def execute
+    def execute : Nil
       @channel.send_internal(@value) { return NotReady }
       nil
     end
 
-    def result
+    def result : Nil
       nil
     end
 
