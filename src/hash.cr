@@ -917,11 +917,11 @@ class Hash(K, V)
   #
   # ```
   # h = {} of Int32 => String
-  # h.store(1, "one") { "didn't exist" } # => "didn't exist"
-  # h.store(1, "uno") { "didn't exist" } # => "one"
-  # h.store(2, "two") { |key| key.to_s } # => "2"
+  # h.put(1, "one") { "didn't exist" } # => "didn't exist"
+  # h.put(1, "uno") { "didn't exist" } # => "one"
+  # h.put(2, "two") { |key| key.to_s } # => "2"
   # ```
-  def store(key : K, value : V)
+  def put(key : K, value : V)
     updated_entry = upsert(key, value)
     updated_entry ? updated_entry.value : yield key
   end

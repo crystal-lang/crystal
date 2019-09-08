@@ -80,7 +80,7 @@ struct Set(T)
   # s.add? 8 # => false
   # ```
   def add?(object : T)
-    @hash.store(object, nil) { return true }
+    @hash.put(object, nil) { return true }
     false
   end
 
