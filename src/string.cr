@@ -3716,7 +3716,7 @@ class String
 
   # Searches the string for instances of *pattern*,
   # yielding a `Regex::MatchData` for each match.
-  def scan(pattern : Regex)
+  def scan(pattern : Regex, overlapping = false)
     byte_offset = 0
 
     while match = pattern.match_at_byte_index(self, byte_offset)
@@ -3724,7 +3724,7 @@ class String
       $~ = match
       yield match
       match_bytesize = match[0].bytesize
-      match_bytesize += 1 if match_bytesize == 0
+      match_bytesize = 1 if match_bytesize == 0 || overlapping
       byte_offset = index + match_bytesize
     end
 
@@ -3733,9 +3733,9 @@ class String
 
   # Searches the string for instances of *pattern*,
   # returning an `Array` of `Regex::MatchData` for each match.
-  def scan(pattern : Regex)
+  def scan(pattern : Regex, overlapping = false)
     matches = [] of Regex::MatchData
-    scan(pattern) do |match|
+    scan(pattern, overlapping: overlapping) do |match|
       matches << match
     end
     matches
@@ -3743,21 +3743,21 @@ class String
 
   # Searches the string for instances of *pattern*,
   # yielding the matched string for each match.
-  def scan(pattern : String)
+  def scan(pattern : String, overlapping = false)
     return self if pattern.empty?
     index = 0
     while index = byte_index(pattern, index)
       yield pattern
-      index += pattern.bytesize
+      index += overlapping ? 1 : pattern.bytesize
     end
     self
   end
 
   # Searches the string for instances of *pattern*,
   # returning an array of the matched string for each match.
-  def scan(pattern : String)
+  def scan(pattern : String, overlapping = false)
     matches = [] of String
-    scan(pattern) do |match|
+    scan(pattern, overlapping: overlapping) do |match|
       matches << match
     end
     matches

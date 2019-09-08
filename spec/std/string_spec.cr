@@ -1863,6 +1863,12 @@ describe "String" do
       a.scan(/(..)(..)/).map { |m| {m[1], m[2]} }.should eq([{"cr", "ue"}, {"l ", "wo"}])
     end
 
+    it "can overlap" do
+      a = "helllo polllo"
+      a.scan(/l+o/, overlapping: true).
+        map(&.[0]).should eq(["lllo", "llo", "lo", "lllo", "llo", "lo"])
+    end
+
     it "does with block" do
       a = "foo goo"
       i = 0
@@ -1876,6 +1882,28 @@ describe "String" do
           match[1].should eq("oo")
         else
           fail "expected two matches"
+        end
+        i += 1
+      end
+    end
+
+    it "can overlap with block" do
+      a = "helllo pollo"
+      i = 0
+      a.scan(/l+o/, overlapping: true) do |match|
+        case i
+        when 0
+          match[0].should eq("lllo")
+        when 1
+          match[0].should eq("llo")
+        when 2
+          match[0].should eq("lo")
+        when 3
+          match[0].should eq("llo")
+        when 4
+          match[0].should eq("lo")
+        else
+          fail "expected 5 matches"
         end
         i += 1
       end
