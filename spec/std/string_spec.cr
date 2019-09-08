@@ -1865,8 +1865,8 @@ describe "String" do
 
     it "can overlap" do
       a = "helllo polllo"
-      a.scan(/l+o/, overlapping: true).
-        map(&.[0]).should eq(["lllo", "llo", "lo", "lllo", "llo", "lo"])
+      a.scan(/l+o/, overlapping: true)
+        .map(&.[0]).should eq(["lllo", "llo", "lo", "lllo", "llo", "lo"])
     end
 
     it "does with block" do
@@ -1916,8 +1916,8 @@ describe "String" do
       a.each_match(/(...)/).map(&.[1]).to_a.should eq(["cru", "el ", "wor"])
       a.each_match(/(..)(..)/).map { |m| {m[1], m[2]} }.to_a.should eq([{"cr", "ue"}, {"l ", "wo"}])
       a = "helllo polllo"
-      a.each_match(/l+o/, overlapping: true).
-        map(&.[0]).to_a.should eq(["lllo", "llo", "lo", "lllo", "llo", "lo"])
+      a.each_match(/l+o/, overlapping: true)
+        .map(&.[0]).to_a.should eq(["lllo", "llo", "lo", "lllo", "llo", "lo"])
     end
 
     it "does with utf-8" do
