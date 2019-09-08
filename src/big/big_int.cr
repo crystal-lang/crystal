@@ -63,8 +63,23 @@ struct BigInt < Int
   end
 
   # ditto
-  def initialize(num : Float)
+  def initialize(num : Float::Primitive)
     LibGMP.init_set_d(out @mpz, num)
+  end
+
+  # ditto
+  def self.new(num : BigFloat)
+    num.to_big_i
+  end
+
+  # ditto
+  def self.new(num : BigDecimal)
+    num.to_big_i
+  end
+
+  # ditto
+  def self.new(num : BigRational)
+    num.to_big_i
   end
 
   # Returns *num*. Useful for generic code that does `T.new(...)` with `T`
@@ -172,10 +187,13 @@ struct BigInt < Int
     self * other
   end
 
-  @[Deprecated("`BigInt#/` will return a `BigFloat` in 0.29.0. Use `BigInt#//` for integer division.")]
-  def /(other : Int) : BigInt
-    # TODO replace to float division
-    self // other
+  Number.expand_div [BigInt], BigFloat
+  Number.expand_div [BigDecimal], BigDecimal
+  Number.expand_div [BigRational], BigRational
+
+  def //(other : Int::Unsigned) : BigInt
+    check_division_by_zero other
+    unsafe_floored_div(other)
   end
 
   def //(other : Int) : BigInt
@@ -542,6 +560,14 @@ struct BigInt < Int
     BigFloat.new { |mpf| LibGMP.mpf_set_z(mpf, mpz) }
   end
 
+  def to_big_d
+    BigDecimal.new(self)
+  end
+
+  def to_big_r
+    BigRational.new(self)
+  end
+
   def clone
     self
   end
@@ -603,15 +629,6 @@ struct Int
 
   def &*(other : BigInt) : BigInt
     self * other
-  end
-
-  @[Deprecated("`Int#/(other: BigInt)` will return a `BigFloat` in 0.29.0. Use `Int#//` for integer division.")]
-  def /(other : BigInt) : BigInt
-    self // other
-  end
-
-  def //(other : BigInt) : BigInt
-    to_big_i // other
   end
 
   def %(other : BigInt) : BigInt

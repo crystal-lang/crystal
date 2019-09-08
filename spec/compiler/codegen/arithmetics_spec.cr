@@ -63,14 +63,14 @@ describe "Code gen: arithmetics primitives" do
       it "wrap around for {{type}}" do
         run(%(
           require "prelude"
-          ({{type}}::MAX / {{type}}.new(2) &+ {{type}}.new(1)) &* {{type}}.new(2) == {{type}}::MIN
+          ({{type}}::MAX // {{type}}.new(2) &+ {{type}}.new(1)) &* {{type}}.new(2) == {{type}}::MIN
         )).to_b.should be_true
       end
 
       it "wrap around for {{type}} + Int64" do
         run(%(
           require "prelude"
-          ({{type}}::MAX / {{type}}.new(2) &+ {{type}}.new(1)) &* 2_i64 == {{type}}::MIN
+          ({{type}}::MAX // {{type}}.new(2) &+ {{type}}.new(1)) &* 2_i64 == {{type}}::MIN
         )).to_b.should be_true
       end
     {% end %}
@@ -138,7 +138,7 @@ describe "Code gen: arithmetics primitives" do
         run(%(
           require "prelude"
           begin
-            ({{type}}::MAX / {{type}}.new(2) &+ {{type}}.new(1)) * {{type}}.new(2)
+            ({{type}}::MAX // {{type}}.new(2) &+ {{type}}.new(1)) * {{type}}.new(2)
             0
           rescue OverflowError
             1
@@ -150,7 +150,7 @@ describe "Code gen: arithmetics primitives" do
         run(%(
           require "prelude"
           begin
-            ({{type}}::MAX / {{type}}.new(2) &+ {{type}}.new(1)) * 2_i64
+            ({{type}}::MAX // {{type}}.new(2) &+ {{type}}.new(1)) * 2_i64
             0
           rescue OverflowError
             1
