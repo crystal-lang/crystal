@@ -105,6 +105,28 @@ describe "Hash" do
     end
   end
 
+  describe "put" do
+    it "puts in a small hash" do
+      a = {} of Int32 => Int32
+      a.put(1, 2) { nil }.should eq(nil)
+      a.put(1, 3) { nil }.should eq(2)
+    end
+
+    it "puts in a big hash" do
+      a = {} of Int32 => Int32
+      100.times do |i|
+        a[i] = i
+      end
+      a.put(100, 2) { nil }.should eq(nil)
+      a.put(100, 3) { nil }.should eq(2)
+    end
+
+    it "yields key" do
+      a = {} of Int32 => Int32
+      a.put(1, 2, &.to_s).should eq("1")
+    end
+  end
+
   describe "dig?" do
     it "gets the value at given path given splat" do
       ary = [1, 2, 3]

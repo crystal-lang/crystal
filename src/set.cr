@@ -80,8 +80,8 @@ struct Set(T)
   # s.add? 8 # => false
   # ```
   def add?(object : T)
-    # TODO: optimize the hash lookup call
-    !!(add(object) unless includes?(object))
+    @hash.put(object, nil) { return true }
+    false
   end
 
   # Adds `#each` element of *elems* to the set and returns `self`.

@@ -322,7 +322,8 @@ class Hash(K, V)
   private MAX_INDICES_BYTESIZE_2 = 65536
 
   # Inserts or updates a key-value pair.
-  private def upsert(key, value) : Nil
+  # Returns an `Entry` if it was updated, otherwise `nil`.
+  private def upsert(key, value) : Entry(K, V)?
     # Empty hash table so only initialize entries for now
     if @entries.null?
       @indices_size_pow2 = 3
@@ -333,18 +334,25 @@ class Hash(K, V)
 
     # No indices allocated yet so try to do a linear scan
     if @indices.null?
-      # Try to do an upsert by doing a linear scan
-      upserted = upsert_linear_scan(key, value, hash)
-      return if upserted
+      # Try to do an update by doing a linear scan
+      updated_entry = update_linear_scan(key, value, hash)
+      return updated_entry if updated_entry
 
-      # If we couldn't upsert it means the table was full
-      # so a resize might have been done.
+      # If we still have space, add an entry.
+      if !entries_full?
+        add_entry_and_increment_size(hash, key, value)
+        return nil
+      end
+
+      # No more space so we need to do a resize
+      resize
+
       # Now, it could happen that we are still with less than 16 elements
       # and so `@indices` will be null, in which case we only need to
       # add the key-value pair at the end of the `@entries` buffer.
       if @indices.null?
         add_entry_and_increment_size(hash, key, value)
-        return
+        return nil
       end
 
       # Otherwise `@indices` became non-null which means we can't do
@@ -370,7 +378,7 @@ class Hash(K, V)
         # We have free space: store the index and then insert the entry
         set_index(index, entries_size)
         add_entry_and_increment_size(hash, key, value)
-        break
+        return nil
       end
 
       # We found a non-empty slot, let's see if the key we have matches
@@ -378,7 +386,7 @@ class Hash(K, V)
       if entry.matches?(hash, key)
         # If it does we just update the entry
         set_entry(entry_index, Entry(K, V).new(hash, key, value))
-        break
+        return entry
       else
         # Otherwise we have to keep looking...
         index = next_index(index)
@@ -386,28 +394,18 @@ class Hash(K, V)
     end
   end
 
-  # Upserts the key-value-hash triplet by doing a linear scan
-  # first to see if the key already exists.
-  # Returns true if the key was updated or inserted without needing
-  # a resize. Returns false if a resize was needed and the key
-  # wasn't inserted.
-  private def upsert_linear_scan(key, value, hash) : Bool
+  # Tries to update a key-value-hash triplet by doing a linear scan.
+  # Returns an old `Entry` if it was updated, otherwise `nil`.
+  private def update_linear_scan(key, value, hash) : Entry(K, V)?
     # Just do a linear scan...
     each_entry_with_index do |entry, index|
       if entry.matches?(hash, key)
         set_entry(index, Entry(K, V).new(entry.hash, entry.key, value))
-        return true
+        return entry
       end
     end
 
-    # If full, resize. Otherwise we have space so add as last.
-    if entries_full?
-      resize
-      false
-    else
-      add_entry_and_increment_size(hash, key, value)
-      true
-    end
+    nil
   end
 
   # Implementation of deleting a key.
@@ -910,6 +908,22 @@ class Hash(K, V)
   def []=(key : K, value : V)
     upsert(key, value)
     value
+  end
+
+  # Sets the value of *key* to the given *value*.
+  #
+  # If a value already exists for `key`, that (old) value is returned.
+  # Otherwise the given block is invoked with *key* and its value is returned.
+  #
+  # ```
+  # h = {} of Int32 => String
+  # h.put(1, "one") { "didn't exist" } # => "didn't exist"
+  # h.put(1, "uno") { "didn't exist" } # => "one"
+  # h.put(2, "two") { |key| key.to_s } # => "2"
+  # ```
+  def put(key : K, value : V)
+    updated_entry = upsert(key, value)
+    updated_entry ? updated_entry.value : yield key
   end
 
   # Returns the value for the key given by *key*.
