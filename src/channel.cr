@@ -378,7 +378,7 @@ class Channel(T)
     def initialize(@channel : Channel(T), @value : T)
     end
 
-    def execute : Nil
+    def execute : Channel::NotReady?
       @channel.send_internal(@value) { return NotReady }
       nil
     end
