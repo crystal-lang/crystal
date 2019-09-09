@@ -333,30 +333,17 @@ struct Int
     self >> bit & 1
   end
 
-  # Returns true if this number's *bit*th bit is 1, starting with the least-significant.
-  #
-  # ```
-  # 11[0] # => true
-  # 11[1] # => true
-  # 11[2] # => false
-  # 11[3] # => true
-  # 11[4] # => false
-  # ```
-  def [](index : Int)
-    bit(index) > 0
-  end
-
   # Returns the requested range of bits
   #
   # ```
-  # 0b10011[0..1] # => 0b11
-  # 0b10011[0..2] # => 0b11
-  # 0b10011[0..3] # => 0b11
-  # 0b10011[0..4] # => 0b10011
-  # 0b10011[0..5] # => 0b10011
-  # 0b10011[1..4] # => 0b1001
+  # 0b10011.bits(0..1) # => 0b11
+  # 0b10011.bits(0..2) # => 0b11
+  # 0b10011.bits(0..3) # => 0b11
+  # 0b10011.bits(0..4) # => 0b10011
+  # 0b10011.bits(0..5) # => 0b10011
+  # 0b10011.bits(1..4) # => 0b1001
   # ```
-  def [](range : Range)
+  def bits(range : Range)
     start_index = range.begin
     if start_index
       raise IndexError.new("start index (#{start_index}) must be positive") if start_index < 0
