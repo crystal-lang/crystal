@@ -162,10 +162,10 @@ module Spec
       end
     end
 
-    def describe(description, file, line, end_line, focus, &block)
+    def describe(description, file, line, end_line, focus, tags, &block)
       Spec.focus = true if focus
 
-      context = Spec::ExampleGroup.new(@@current_context, description, file, line, end_line, focus)
+      context = Spec::ExampleGroup.new(@@current_context, description, file, line, end_line, focus, tags)
       @@current_context.children << context
 
       old_context = @@current_context
@@ -177,19 +177,19 @@ module Spec
       end
     end
 
-    def it(description, file, line, end_line, focus, &block)
-      add_example(description, file, line, end_line, focus, block)
+    def it(description, file, line, end_line, focus, tags, &block)
+      add_example(description, file, line, end_line, focus, tags, block)
     end
 
-    def pending(description, file, line, end_line, focus)
-      add_example(description, file, line, end_line, focus, nil)
+    def pending(description, file, line, end_line, focus, tags)
+      add_example(description, file, line, end_line, focus, tags, nil)
     end
 
-    private def add_example(description, file, line, end_line, focus, block)
+    private def add_example(description, file, line, end_line, focus, tags, block)
       check_nesting_spec(file, line) do
         Spec.focus = true if focus
         @@current_context.children <<
-          Example.new(@@current_context, description, file, line, end_line, focus, block)
+          Example.new(@@current_context, description, file, line, end_line, focus, tags, block)
       end
     end
 
@@ -277,7 +277,8 @@ module Spec
 
     def initialize(@parent : Context, @description : String,
                    @file : String, @line : Int32, @end_line : Int32,
-                   @focus : Bool)
+                   @focus : Bool, tags)
+      initialize_tags(tags)
     end
 
     # :nodoc:

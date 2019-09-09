@@ -2,6 +2,7 @@ require "./spec_helper"
 
 module Spec::Item
   setter focus : Bool
+  setter tags : Set(String)?
 end
 
 describe Spec::RootContext do
@@ -108,6 +109,39 @@ describe Spec::RootContext do
         root = build_spec("f.cr")
         root.children[1].as(Spec::ExampleGroup).focus = true
         root.run_filters(focus: true)
+        all_spec_descriptions(root).should eq %w[root context_f_2 example_f_2_1 example_f_2_2]
+      end
+    end
+
+    describe "by tags" do
+      it "on an example" do
+        root = build_spec("f.cr")
+        root.children[1].as(Spec::ExampleGroup).children[1].as(Spec::Example).tags = Set{"fast"}
+        root.run_filters(tags: Set{"fast"})
+        all_spec_descriptions(root).should eq %w[root context_f_2 example_f_2_2]
+      end
+
+      it "on a context" do
+        root = build_spec("f.cr")
+        root.children[1].as(Spec::ExampleGroup).tags = Set{"fast"}
+        root.run_filters(tags: Set{"fast"})
+        all_spec_descriptions(root).should eq %w[root context_f_2 example_f_2_1 example_f_2_2]
+      end
+    end
+
+    describe "by anti_tags" do
+      it "on an example" do
+        root = build_spec("f.cr")
+        root.children[0].as(Spec::ExampleGroup).children[0].as(Spec::Example).tags = Set{"slow"}
+        root.children[0].as(Spec::ExampleGroup).children[1].as(Spec::Example).tags = Set{"slow"}
+        root.run_filters(anti_tags: Set{"slow"})
+        all_spec_descriptions(root).should eq %w[root context_f_2 example_f_2_1 example_f_2_2]
+      end
+
+      it "on a context" do
+        root = build_spec("f.cr")
+        root.children[0].as(Spec::ExampleGroup).tags = Set{"slow"}
+        root.run_filters(anti_tags: Set{"slow"})
         all_spec_descriptions(root).should eq %w[root context_f_2 example_f_2_1 example_f_2_2]
       end
     end
