@@ -156,36 +156,36 @@ end
 # fun __divhi3(a : Int16, b : Int16) : Int16
 # fun __divsi3(a : Int32, b : Int32) : Int32
 # fun __divdi3(a : Int64, b : Int64) : Int64
-# fun __divti3(a : Int128, b : Int128) : Int128
-#   raise "__divti3"
-# end
+fun __divti3(a : Int128, b : Int128) : Int128
+  raise "__divti3"
+end
 
 # Function returning quotient for unsigned division eg. `a / b`
 # fun __udivqi3(a : Int8, b : Int8) : Int8
 # fun __udivhi3(a : Int16, b : Int16) : Int16
 # fun __udivsi3(a : Int32, b : Int32) : Int32
 # fun __udivdi3(a : Int64, b : Int64) : Int64
-# fun __udivti3(a : Int128, b : Int128) : Int128
-#   raise "__udivti3"
-# end
+fun __udivti3(a : Int128, b : Int128) : Int128
+  raise "__udivti3"
+end
 
 # Function return the remainder of the signed division eg. `a % b`
 # fun __modqi3(a : Int8, b : Int8) : Int8
 # fun __modhi3(a : Int16, b : Int16) : Int16
 # fun __modsi3(a : Int32, b : Int32) : Int32
 # fun __moddi3(a : Int64, b : Int64) : Int64
-# fun __modti3(a : Int128, b : Int128) : Int128
-#   raise "__modti3"
-# end
+fun __modti3(a : Int128, b : Int128) : Int128
+  raise "__modti3"
+end
 
 # Function return the remainder of the unsigned division eg. `a % b`
 # fun __umodqi3(a : Int8, b : Int8) : Int8
 # fun __umodhi3(a : Int16, b : Int16) : Int16
 # fun __umodsi3(a : Int32, b : Int32) : Int32
 # fun __umoddi3(a : Int64, b : Int64) : Int64
-# fun __umodti3(a : Int128, b : Int128) : Int128
-#   raise "__modti3"
-# end
+fun __umodti3(a : Int128, b : Int128) : Int128
+  raise "__modti3"
+end
 
 
 
