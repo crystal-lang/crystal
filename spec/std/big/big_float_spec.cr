@@ -69,14 +69,20 @@ describe "BigFloat" do
   end
 
   describe "-@" do
-    bf = "0.12345".to_big_f
-    it { (-bf).to_s.should eq("-0.12345") }
+    it do
+      bf = "0.12345".to_big_f
+      (-bf).to_s.should eq("-0.12345")
+    end
 
-    bf = "61397953.0005354".to_big_f
-    it { (-bf).to_s.should eq("-61397953.0005354") }
+    it do
+      bf = "61397953.0005354".to_big_f
+      (-bf).to_s.should eq("-61397953.0005354")
+    end
 
-    bf = "395.009631567315769036".to_big_f
-    it { (-bf).to_s.should eq("-395.009631567315769036") }
+    it do
+      bf = "395.009631567315769036".to_big_f
+      (-bf).to_s.should eq("-395.009631567315769036")
+    end
   end
 
   describe "+" do

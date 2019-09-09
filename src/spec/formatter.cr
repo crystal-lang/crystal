@@ -35,7 +35,7 @@ module Spec
     end
 
     def print_results(elapsed_time : Time::Span, aborted : Bool)
-      Spec::RootContext.print_results(elapsed_time, aborted)
+      Spec.root_context.print_results(elapsed_time, aborted)
     end
   end
 
@@ -91,7 +91,7 @@ module Spec
     end
 
     def print_results(elapsed_time : Time::Span, aborted : Bool)
-      Spec::RootContext.print_results(elapsed_time, aborted)
+      Spec.root_context.print_results(elapsed_time, aborted)
     end
   end
 
