@@ -6,8 +6,6 @@ require "../../spec_helper"
     to_i8: Int8, to_i16: Int16, to_i32: Int32, to_i64: Int64, to_i128: Int128,
     to_u8: UInt8, to_u16: UInt16, to_u32: UInt32, to_u64: UInt64, to_u128: UInt128,
   }
-
-  PreviewOverflowFlags = ["preview_overflow"]
 {% else %}
   # Skip Int128 and UInt128 on linux platforms due to compiler-rt dependency.
   # PreviewOverflowFlags includes compiler_rt flag to support Int64 overflow
@@ -17,8 +15,6 @@ require "../../spec_helper"
     to_i8: Int8, to_i16: Int16, to_i32: Int32, to_i64: Int64,
     to_u8: UInt8, to_u16: UInt16, to_u32: UInt32, to_u64: UInt64,
   }
-
-  PreviewOverflowFlags = ["preview_overflow"]
 {% end %}
 
 describe "Code gen: arithmetics primitives" do
@@ -87,7 +83,7 @@ describe "Code gen: arithmetics primitives" do
           rescue OverflowError
             1
           end
-        ), flags: PreviewOverflowFlags).to_i.should eq(1)
+        )).to_i.should eq(1)
       end
 
       it "raises overflow for {{type}} + Int64" do
@@ -99,7 +95,7 @@ describe "Code gen: arithmetics primitives" do
           rescue OverflowError
             1
           end
-        ), flags: PreviewOverflowFlags).to_i.should eq(1)
+        )).to_i.should eq(1)
       end
     {% end %}
   end
@@ -115,7 +111,7 @@ describe "Code gen: arithmetics primitives" do
           rescue OverflowError
             1
           end
-        ), flags: PreviewOverflowFlags).to_i.should eq(1)
+        )).to_i.should eq(1)
       end
 
       it "raises overflow for {{type}} - Int64" do
@@ -127,7 +123,7 @@ describe "Code gen: arithmetics primitives" do
           rescue OverflowError
             1
           end
-        ), flags: PreviewOverflowFlags).to_i.should eq(1)
+        )).to_i.should eq(1)
       end
     {% end %}
   end
@@ -143,7 +139,7 @@ describe "Code gen: arithmetics primitives" do
           rescue OverflowError
             1
           end
-        ), flags: PreviewOverflowFlags).to_i.should eq(1)
+        )).to_i.should eq(1)
       end
 
       it "raises overflow for {{type}} * Int64" do
@@ -155,7 +151,7 @@ describe "Code gen: arithmetics primitives" do
           rescue OverflowError
             1
           end
-        ), flags: PreviewOverflowFlags).to_i.should eq(1)
+        )).to_i.should eq(1)
       end
     {% end %}
   end
@@ -177,7 +173,7 @@ describe "Code gen: arithmetics primitives" do
             rescue OverflowError
               1
             end
-          ), flags: PreviewOverflowFlags).to_i.should eq(1)
+          )).to_i.should eq(1)
         end
       {% end %}
 
@@ -194,7 +190,7 @@ describe "Code gen: arithmetics primitives" do
             rescue OverflowError
               1
             end
-          ), flags: PreviewOverflowFlags).to_i.should eq(1)
+          )).to_i.should eq(1)
         end
       {% end %}
 
@@ -211,7 +207,7 @@ describe "Code gen: arithmetics primitives" do
             rescue OverflowError
               1
             end
-          ), flags: PreviewOverflowFlags).to_i.should eq(1)
+          )).to_i.should eq(1)
         end
       {% end %}
 
@@ -228,7 +224,7 @@ describe "Code gen: arithmetics primitives" do
             rescue OverflowError
               1
             end
-          ), flags: PreviewOverflowFlags).to_i.should eq(1)
+          )).to_i.should eq(1)
         end
       {% end %}
 
@@ -248,7 +244,7 @@ describe "Code gen: arithmetics primitives" do
               rescue OverflowError
                 1
               end
-            ), flags: PreviewOverflowFlags).to_i.should eq(1)
+            )).to_i.should eq(1)
           end
         {% end %}
 
@@ -264,7 +260,7 @@ describe "Code gen: arithmetics primitives" do
             rescue OverflowError
               1
             end
-          ), flags: PreviewOverflowFlags).to_i.should eq(1)
+          )).to_i.should eq(1)
         end
       {% end %}
     {% end %}
@@ -282,7 +278,7 @@ describe "Code gen: arithmetics primitives" do
           rescue OverflowError
             1
           end
-        ), flags: PreviewOverflowFlags).to_i.should eq(1)
+        )).to_i.should eq(1)
       end
     {% end %}
 
@@ -298,7 +294,7 @@ describe "Code gen: arithmetics primitives" do
         rescue OverflowError
           1
         end
-      ), flags: PreviewOverflowFlags).to_i.should eq(1)
+      )).to_i.should eq(1)
     end
 
     it "raises overflow if lower than Float32::MIN" do
@@ -313,7 +309,7 @@ describe "Code gen: arithmetics primitives" do
         rescue OverflowError
           1
         end
-      ), flags: PreviewOverflowFlags).to_i.should eq(1)
+      )).to_i.should eq(1)
     end
   end
 end
