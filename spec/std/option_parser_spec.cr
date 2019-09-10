@@ -379,7 +379,7 @@ describe "OptionParser" do
           opts.on("--f FLAG", "some flag") do |v|
             f = v
           end
-        end.parse!
+        end.parse
         f.should eq("hi")
       ensure
         ARGV.clear
