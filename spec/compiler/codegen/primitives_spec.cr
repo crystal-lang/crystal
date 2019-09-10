@@ -98,12 +98,12 @@ describe "Code gen: primitives" do
     run("
       struct Int64
         def foo
-          to_u64
+          to_u64!
         end
       end
 
       a = 1_i64
-      a.foo.to_i
+      a.foo.to_i!
       ").to_i.should eq(1)
   end
 
@@ -167,7 +167,7 @@ describe "Code gen: primitives" do
         fun foo : K
       end
 
-      Test.foo.to_i
+      Test.foo.to_i!
       ))
   end
 

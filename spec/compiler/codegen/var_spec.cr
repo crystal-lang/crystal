@@ -119,11 +119,11 @@ describe "Code gen: var" do
 
   it "works with typeof with assignment (#828)" do
     run(%(
-      class String; def to_i; 0; end; end
+      class String; def to_i!; 0; end; end
 
       a = 123
       typeof(a = "hello")
-      a.to_i
+      a.to_i!
       )).to_i.should eq(123)
   end
 

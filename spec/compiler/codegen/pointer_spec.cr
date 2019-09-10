@@ -28,11 +28,11 @@ describe "Code gen: pointer" do
   end
 
   it "get value of pointer to union" do
-    run("a = 1.1; a = 1; b = pointerof(a); b.value.to_i").to_i.should eq(1)
+    run("a = 1.1; a = 1; b = pointerof(a); b.value.to_i!").to_i.should eq(1)
   end
 
   it "sets value of pointer to union" do
-    run("p = Pointer(Int32|Float64).malloc(1_u64); a = 1; a = 2.5; p.value = a; p.value.to_i").to_i.should eq(2)
+    run("p = Pointer(Int32|Float64).malloc(1_u64); a = 1; a = 2.5; p.value = a; p.value.to_i!").to_i.should eq(2)
   end
 
   it "increments pointer" do
