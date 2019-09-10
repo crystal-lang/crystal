@@ -333,7 +333,7 @@ describe "Code gen: macro" do
   it "expands def macro with instance var and method call (bug)" do
     run(%(
       struct Nil
-        def to_i
+        def to_i!
           0
         end
       end
@@ -348,7 +348,7 @@ describe "Code gen: macro" do
         end
       end
 
-      Foo.new.foo.to_i
+      Foo.new.foo.to_i!
       )).to_i.should eq(1)
   end
 
@@ -438,7 +438,7 @@ describe "Code gen: macro" do
       end
 
       foo 1
-      foo(1.5).to_i
+      foo(1.5).to_i!
       )).to_i.should eq(2)
   end
 

@@ -73,7 +73,7 @@ describe "Code gen: union type" do
         else
           2.5_f32
         end
-      end.to_i
+      end.to_i!
     ").to_i.should eq(1)
   end
 

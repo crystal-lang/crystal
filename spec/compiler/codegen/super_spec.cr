@@ -411,7 +411,7 @@ describe "Codegen: super" do
       end
 
       z = Bar.new.foo(3 || 2.5)
-      z.to_i
+      z.to_i!
       )).to_i.should eq(3)
   end
 

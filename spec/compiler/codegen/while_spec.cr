@@ -27,18 +27,18 @@ describe "Codegen: while" do
 
   it "codegens while with declared var 1" do
     run("
-      struct Nil; def to_i; 0; end; end
+      struct Nil; def to_i!; 0; end; end
 
       while 1 == 2
         a = 2
       end
-      a.to_i
+      a.to_i!
       ").to_i.should eq(0)
   end
 
   it "codegens while with declared var 2" do
     run("
-      struct Nil; def to_i; 0; end; end
+      struct Nil; def to_i!; 0; end; end
 
       while 1 == 1
         a = 2
@@ -47,13 +47,13 @@ describe "Codegen: while" do
           break
         end
       end
-      a.to_i
+      a.to_i!
       ").to_i.should eq(3)
   end
 
   it "codegens while with declared var 3" do
     run("
-      struct Nil; def to_i; 0; end; end
+      struct Nil; def to_i!; 0; end; end
 
       while 1 == 1
         a = 1
@@ -63,7 +63,7 @@ describe "Codegen: while" do
           2
         end
       end
-      a.to_i
+      a.to_i!
       ").to_i.should eq(1)
   end
 
