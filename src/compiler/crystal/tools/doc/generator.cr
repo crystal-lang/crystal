@@ -1,4 +1,4 @@
-require "markdown"
+require "./markdown"
 
 class Crystal::Doc::Generator
   getter program : Program
@@ -311,8 +311,8 @@ class Crystal::Doc::Generator
   end
 
   private def render_markdown(source, context)
-    options = ::Markdown::Options.new
-    document = ::Markdown::Parser.parse(source, options)
+    options = ::Crystal::Doc::Markdown::Options.new
+    document = ::Crystal::Doc::Markdown::Parser.parse(source, options)
     renderer = MarkdownDocRenderer.new(context, options)
     renderer.render(document)
   end
