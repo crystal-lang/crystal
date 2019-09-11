@@ -13,7 +13,6 @@ module Markdown
       if entering
         cr
         tag(tag_name, attrs(node))
-        # toc(node) if @options.toc
       else
         tag(tag_name, end_tag: true)
         cr
