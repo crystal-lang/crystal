@@ -3,16 +3,6 @@ require "./event"
 class Thread
   # :nodoc:
   getter(event_base) { Crystal::Event::Base.new }
-
-  # :nodoc:
-  getter(loop_fiber) do
-    Fiber.new(name: "Event Loop") do
-      loop do
-        self.event_base.run_once
-        Crystal::Scheduler.reschedule
-      end
-    end
-  end
 end
 
 module Crystal::EventLoop
@@ -22,16 +12,12 @@ module Crystal::EventLoop
     end
   {% end %}
 
-  def self.resume
-    loop_fiber.resume
+  def self.run_once
+    Thread.current.event_base.run_once
   end
 
   private def self.event_base
     Thread.current.event_base
-  end
-
-  private def self.loop_fiber
-    Thread.current.loop_fiber
   end
 
   def self.create_resume_event(fiber)
