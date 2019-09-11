@@ -1,6 +1,6 @@
 module Markdown
   # Markdown rendering options.
-  struct Options
+  class Options
     # If `true`:
     # - straight quotes will be made curly
     # - `--` will be changed to an en dash
