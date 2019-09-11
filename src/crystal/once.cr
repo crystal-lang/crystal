@@ -1,27 +1,49 @@
-{% if flag?(:preview_mt) %}
-  fun __crystal_once_init : Void*
-    Mutex.new.as(Void*)
+# This file defines the functions `__crystal_once_init` and `__crystal_once` expected
+# by the compiler. `__crystal_once` is called each time a constant or class variable
+# has to be initialized and is its responsibility to verify the initializer is executed
+# only once. `__crystal_once_init` is executed only once at the beginning of the program
+# and the result is passed on each call to `__crystal_once`.
+
+# This implementation uses an array to store the initialization flag pointers for each value
+# to find infinite loops and raise an error. In multithread mode a mutex is used to
+# avoid race conditions between threads.
+
+# :nodoc:
+class Crystal::OnceState
+  @rec = [] of Bool*
+  {% if flag?(:preview_mt) %}
+    @mutex = Mutex.new
+  {% end %}
+
+  def once(flag : Bool*, initializer : Void*)
+    unless flag.value
+      if @rec.includes?(flag)
+        raise "Recursion while initializing class variables and/or constants"
+      end
+      @rec << flag
+
+      Proc(Nil).new(initializer, Pointer(Void).null).call
+      flag.value = true
+
+      @rec.pop
+    end
   end
 
-  fun __crystal_once(m : Void*, f : Bool*, init : Void*)
-    unless f.value
-      m.as(Mutex).synchronize do
-        unless f.value
-          Proc(Nil).new(init, Pointer(Void).null).call
-          f.value = true
+  {% if flag?(:preview_mt) %}
+    def once(flag : Bool*, initializer : Void*)
+      unless flag.value
+        @mutex.synchronize do
+          previous_def
         end
       end
     end
-  end
-{% else %}
-  fun __crystal_once_init : Void*
-    Pointer(Void).null
-  end
+  {% end %}
+end
 
-  fun __crystal_once(m : Void*, f : Bool*, init : Void*)
-    unless f.value
-      Proc(Nil).new(init, Pointer(Void).null).call
-      f.value = true
-    end
-  end
-{% end %}
+fun __crystal_once_init : Void*
+  Crystal::OnceState.new.as(Void*)
+end
+
+fun __crystal_once(state : Void*, flag : Bool*, initializer : Void*)
+  state.as(Crystal::OnceState).once(flag, initializer)
+end
