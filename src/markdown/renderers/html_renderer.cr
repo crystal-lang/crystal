@@ -32,7 +32,7 @@ module Markdown
     def code_block(node : Node, entering : Bool)
       languages = node.fence_language ? node.fence_language.split : nil
       code_tag_attrs = attrs(node)
-      pre_tag_attrs = if @options.prettyprint
+      pre_tag_attrs = if @options.prettyprint?
                         {"class" => "prettyprint"}
                       else
                         nil
@@ -106,7 +106,7 @@ module Markdown
     def link(node : Node, entering : Bool)
       if entering
         attrs = attrs(node)
-        if !(@options.safe && potentially_unsafe(node.data["destination"].as(String)))
+        if !(@options.safe? && potentially_unsafe(node.data["destination"].as(String)))
           attrs ||= {} of String => String
           attrs["href"] = escape(node.data["destination"].as(String))
         end
@@ -129,7 +129,7 @@ module Markdown
     def image(node : Node, entering : Bool)
       if entering
         if @disable_tag == 0
-          if @options.safe && potentially_unsafe(node.data["destination"].as(String))
+          if @options.safe? && potentially_unsafe(node.data["destination"].as(String))
             lit(%(<img src="" alt=""))
           else
             lit(%(<img src="#{escape(node.data["destination"].as(String))}" alt="))
@@ -149,13 +149,13 @@ module Markdown
 
     def html_block(node : Node, entering : Bool)
       cr
-      content = @options.safe ? "<!-- raw HTML omitted -->" : node.text
+      content = @options.safe? ? "<!-- raw HTML omitted -->" : node.text
       lit(content)
       cr
     end
 
     def html_inline(node : Node, entering : Bool)
-      content = @options.safe ? "<!-- raw HTML omitted -->" : node.text
+      content = @options.safe? ? "<!-- raw HTML omitted -->" : node.text
       lit(content)
     end
 
@@ -229,7 +229,7 @@ module Markdown
     end
 
     private def attrs(node : Node)
-      if @options.source_pos && (pos = node.source_pos)
+      if @options.source_pos? && (pos = node.source_pos)
         {"data-source-pos" => "#{pos[0][0]}:#{pos[0][1]}-#{pos[1][0]}:#{pos[1][1]}"}
       else
         nil
