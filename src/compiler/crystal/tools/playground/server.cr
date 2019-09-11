@@ -2,7 +2,7 @@ require "http/server"
 require "logger"
 require "ecr/macros"
 require "compiler/crystal/tools/formatter"
-require "compiler/crystal/tools/doc/markdown"
+require "markdown"
 
 module Crystal::Playground
   class Session
@@ -247,7 +247,7 @@ module Crystal::Playground
                   end
 
         if extname == ".md" || extname == ".cr"
-          content = Crystal::Doc::Markdown.to_html(content)
+          content = Markdown.to_html(content)
         end
         content
       rescue e

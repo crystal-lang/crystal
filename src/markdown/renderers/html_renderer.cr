@@ -22,8 +22,12 @@ module Markdown
 
     def code(node : Node, entering : Bool)
       tag("code") do
-        out(node.text)
+        code_body(node.text)
       end
+    end
+
+    def code_body(text)
+      out(text)
     end
 
     def code_block(node : Node, entering : Bool)
@@ -35,18 +39,25 @@ module Markdown
                         nil
                       end
 
-      if languages && languages.size > 0 && (lang = languages[0]) && !lang.empty?
+      language = languages.try &.first?.try &.strip
+      language = nil if language.try &.empty?
+
+      if language
         code_tag_attrs ||= {} of String => String
-        code_tag_attrs["class"] = "language-#{lang.strip}"
+        code_tag_attrs["class"] = "language-#{language}"
       end
 
       cr
       tag("pre", pre_tag_attrs) do
         tag("code", code_tag_attrs) do
-          out(node.text)
+          code_block_body(node.text, language)
         end
       end
       cr
+    end
+
+    def code_block_body(text, language)
+      out(text)
     end
 
     def thematic_break(node : Node, entering : Bool)
@@ -106,10 +117,14 @@ module Markdown
           attrs["title"] = escape(title)
         end
 
-        tag("a", attrs)
+        link_tag("a", attrs)
       else
         tag("a", end_tag: true)
       end
+    end
+
+    def link_tag(tag_name, attrs)
+      tag(tag_name, attrs)
     end
 
     def image(node : Node, entering : Bool)

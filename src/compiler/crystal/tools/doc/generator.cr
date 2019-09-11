@@ -1,3 +1,5 @@
+require "markdown"
+
 class Crystal::Doc::Generator
   getter program : Program
 
@@ -302,10 +304,17 @@ class Crystal::Doc::Generator
   def doc(context, string)
     string = isolate_flag_lines string
     string += build_flag_lines_from_annotations context
-    markdown = String.build do |io|
-      Markdown.parse string, Markdown::DocRenderer.new(context, io)
-    end
+
+    markdown = render_markdown(string, context)
+
     generate_flags markdown
+  end
+
+  private def render_markdown(source, context)
+    options = ::Markdown::Options.new
+    document = ::Markdown::Parser.parse(source, options)
+    renderer = MarkdownDocRenderer.new(context, options)
+    renderer.render(document)
   end
 
   def fetch_doc_lines(doc : String) : String
