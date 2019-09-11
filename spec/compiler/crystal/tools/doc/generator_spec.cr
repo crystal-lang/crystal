@@ -108,7 +108,7 @@ describe Doc::Generator do
         a_def = Def.new "foo"
         a_def.add_annotation(program.deprecated_annotation, Annotation.new(Crystal::Path.new("Deprecated"), ["don't use me".string] of ASTNode))
         doc_method = Doc::Method.new generator, doc_type, a_def, false
-        doc_method.formatted_summary.should eq %(<p><span class="flag red">DEPRECATED</span>  don't use me</p>\n\n)
+        doc_method.formatted_summary.should eq %(<p><span class="flag red">DEPRECATED</span>  don't use me</p>\n)
       end
     end
 
@@ -122,7 +122,7 @@ describe Doc::Generator do
         a_def.doc = "Some Method"
         a_def.add_annotation(program.deprecated_annotation, Annotation.new(Crystal::Path.new("Deprecated"), ["don't use me".string] of ASTNode))
         doc_method = Doc::Method.new generator, doc_type, a_def, false
-        doc_method.formatted_summary.should eq %(<p>Some Method</p>\n\n<p><span class=\"flag red\">DEPRECATED</span>  don't use me</p>\n\n)
+        doc_method.formatted_summary.should eq %(<p>Some Method</p>\n<p><span class=\"flag red\">DEPRECATED</span>  don't use me</p>\n)
       end
     end
 
@@ -146,7 +146,7 @@ describe Doc::Generator do
       a_def = Def.new "foo"
       a_def.doc = "Some Method.  Longer description"
       doc_method = Doc::Method.new generator, doc_type, a_def, false
-      doc_method.formatted_summary.should eq %(<p>Some Method.</p>)
+      doc_method.formatted_summary.should eq %(<p>Some Method.</p>\n)
     end
 
     it "should generate the first line" do
@@ -157,7 +157,7 @@ describe Doc::Generator do
       a_def = Def.new "foo"
       a_def.doc = "Some Method\n\nMore Data"
       doc_method = Doc::Method.new generator, doc_type, a_def, false
-      doc_method.formatted_summary.should eq %(<p>Some Method</p>)
+      doc_method.formatted_summary.should eq %(<p>Some Method</p>\n)
     end
   end
 
@@ -171,7 +171,7 @@ describe Doc::Generator do
         a_def = Def.new "foo"
         a_def.add_annotation(program.deprecated_annotation, Annotation.new(Crystal::Path.new("Deprecated"), ["don't use me".string] of ASTNode))
         doc_method = Doc::Method.new generator, doc_type, a_def, false
-        doc_method.formatted_doc.should eq %(<p><span class="flag red">DEPRECATED</span>  don't use me</p>\n\n)
+        doc_method.formatted_doc.should eq %(<p><span class="flag red">DEPRECATED</span>  don't use me</p>\n)
       end
     end
 
@@ -185,7 +185,7 @@ describe Doc::Generator do
         a_def.doc = "Some Method"
         a_def.add_annotation(program.deprecated_annotation, Annotation.new(Crystal::Path.new("Deprecated"), ["don't use me".string] of ASTNode))
         doc_method = Doc::Method.new generator, doc_type, a_def, false
-        doc_method.formatted_doc.should eq %(<p>Some Method</p>\n\n<p><span class=\"flag red\">DEPRECATED</span>  don't use me</p>\n\n)
+        doc_method.formatted_doc.should eq %(<p>Some Method</p>\n<p><span class=\"flag red\">DEPRECATED</span>  don't use me</p>\n)
       end
     end
 
@@ -209,7 +209,7 @@ describe Doc::Generator do
       a_def = Def.new "foo"
       a_def.doc = "Some Method.  Longer description"
       doc_method = Doc::Method.new generator, doc_type, a_def, false
-      doc_method.formatted_doc.should eq %(<p>Some Method.  Longer description</p>)
+      doc_method.formatted_doc.should eq %(<p>Some Method.  Longer description</p>\n)
     end
 
     it "should generate the full document" do
@@ -220,7 +220,7 @@ describe Doc::Generator do
       a_def = Def.new "foo"
       a_def.doc = "Some Method\n\nMore Data"
       doc_method = Doc::Method.new generator, doc_type, a_def, false
-      doc_method.formatted_doc.should eq %(<p>Some Method</p>\n\n<p>More Data</p>)
+      doc_method.formatted_doc.should eq %(<p>Some Method</p>\n<p>More Data</p>\n)
     end
   end
 end
