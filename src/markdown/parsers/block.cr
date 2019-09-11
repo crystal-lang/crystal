@@ -52,14 +52,8 @@ module Markdown::Parser
     end
 
     def parse(source : String)
-      Utils.timer("block parsing", @options.time) do
-        parse_blocks(source)
-      end
-
-      Utils.timer("inline parsing", @options.time) do
-        process_inlines
-      end
-
+      parse_blocks(source)
+      process_inlines
       @document
     end
 
