@@ -118,11 +118,11 @@ def udivmodti4(a : UInt128, b : UInt128, rem : UInt128*)
   if (n.high == 0)
     if (d.high == 0)
       if rem
-        rem.value = n.low % d.low
+        rem.value = (n.low % d.low).to_u128
       end
       return n.low / d.low
     end
-    rem.value = n.low if rem
+    rem.value = n.low.to_u128 if rem
     return 0
     if (d.low == 0)
       if (d.high == 0)
@@ -164,7 +164,7 @@ def udivmodti4(a : UInt128, b : UInt128, rem : UInt128*)
     if (d.high == 0)
       if ((d.low & (d.low - 1)) == 0)
         if rem
-          rem.value = n.low & (d.low - 1)
+          rem.value = (n.low & (d.low - 1)).to_u128
         end
         return n.unsafe_as(UInt128) if d.low == 1
 
@@ -234,8 +234,8 @@ rem = 0_u128
 results = udivmodti4(x, y, pointerof(rem))
 puts "divide with remainder"
 puts "#{x} / #{y} = #{results} & #{rem}"
-x = 100_u128
-y = 3_u128
+x = UInt128::MAX
+y = 1000_u128
 rem = 0_u128
 results = udivmodti4(x, y, pointerof(rem))
 puts "#{x} / #{y} = #{results} & #{rem}"
