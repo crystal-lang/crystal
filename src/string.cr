@@ -916,7 +916,7 @@ class String
   # "crystal"["cry"]?  # => "cry"
   # "crystal"["ruby"]? # => nil
   # ```
-  def []?(str : String | Char)
+  def []?(str : String | Char) : (String | Char)?
     includes?(str) ? str : nil
   end
 
@@ -924,6 +924,8 @@ class String
     self[regex, 0]?
   end
 
+  # Returns the substring of *group* name or index into match by *regex*.
+  # Returns `nil` if there is no match.
   def []?(regex : Regex, group : Int | String) : String?
     match = match(regex)
     match[group]? if match
@@ -935,7 +937,7 @@ class String
   # "crystal"["cry"]  # => "cry"
   # "crystal"["ruby"] # raises NilAssertionError
   # ```
-  def [](str : String | Char)
+  def [](str : String | Char) : String | Char
     self[str]?.not_nil!
   end
 
@@ -943,6 +945,12 @@ class String
     self[regex]?.not_nil!
   end
 
+  # Returns the substring of *group* name or index into match by *regex*.
+  #
+  # ```
+  # "hello world"[/(\w+) (\w+)/, 1]                             # => "hello"
+  # "hello world"[/(?<greeting>\w+) (?<place>\w+)/, "greeting"] # => "hello"
+  # ```
   def [](regex : Regex, group : Int | String) : String
     self[regex, group]?.not_nil!
   end
@@ -975,7 +983,7 @@ class String
   # "hello".char_at(-5) { 'x' } # => 'h'
   # "hello".char_at(-6) { 'x' } # => 'x'
   # ```
-  def char_at(index : Int, &)
+  def char_at(index : Int, & : -> U) : Char | U forall U
     if single_byte_optimizable?
       byte = byte_at?(index)
       if byte
@@ -1737,7 +1745,7 @@ class String
   end
 
   # :nodoc:
-  def self.encode(slice, from, to, io, invalid)
+  def self.encode(slice, from, to, io, invalid) : Nil
     IO::EncodingOptions.check_invalid(invalid)
 
     inbuf_ptr = slice.to_unsafe
@@ -1945,7 +1953,7 @@ class String
   # ```
   # "bcadefcba".strip { |c| 'a' <= c <= 'c' } # => "def"
   # ```
-  def strip(& : Char -> _) : String
+  def strip(&block : Char -> _) : String
     return self if empty?
 
     excess_left = calc_excess_left { |c| yield c }
@@ -2004,7 +2012,7 @@ class String
   # ```
   # "bcadefcba".rstrip { |c| 'a' <= c <= 'c' } # => "bcadef"
   # ```
-  def rstrip(& : Char -> _) : String
+  def rstrip(&block : Char -> _) : String
     return self if empty?
 
     excess_right = calc_excess_right { |c| yield c }
@@ -2058,7 +2066,7 @@ class String
   # ```
   # "bcadefcba".lstrip { |c| 'a' <= c <= 'c' } # => "defcba"
   # ```
-  def lstrip(& : Char -> _) : String
+  def lstrip(&block : Char -> _) : String
     return self if empty?
 
     excess_left = calc_excess_left { |c| yield c }
@@ -2229,7 +2237,7 @@ class String
   # "hello".sub { |char| char + 1 } # => "iello"
   # "hello".sub { "hi" }            # => "hiello"
   # ```
-  def sub(& : Char -> _) : String
+  def sub(&block : Char -> _) : String
     return self if empty?
 
     String.build(bytesize) do |buffer|
@@ -2247,7 +2255,7 @@ class String
   # "hello".sub('l', "lo")      # => "helolo"
   # "hello world".sub('o', 'a') # => "hella world"
   # ```
-  def sub(char : Char, replacement : _) : String
+  def sub(char : Char, replacement) : String
     if includes?(char)
       String.build(bytesize) do |buffer|
         reader = Char::Reader.new(self)
@@ -2361,7 +2369,7 @@ class String
   # ```
   # "hello yellow".sub("ll") { "dd" } # => "heddo yellow"
   # ```
-  def sub(string : String, & : String -> _) : String
+  def sub(string : String, &block) : String
     index = self.byte_index(string)
     return self unless index
 
@@ -2373,7 +2381,7 @@ class String
   end
 
   # Returns a `String` where the first char in the string matching a key in the
-  # given *hash* is replaced by the corresponding hash value.
+  # given *hash* is replaced by the corresponding hash value of `String` or `Char`.
   #
   # ```
   # "hello".sub({'a' => 'b', 'l' => 'd'}) # => "hedlo"
@@ -2582,7 +2590,7 @@ class String
   # "hello".gsub { |char| char + 1 } # => "ifmmp"
   # "hello".gsub { "hi" }            # => "hihihihihi"
   # ```
-  def gsub(& : Char -> _) : String
+  def gsub(&block : Char -> _) : String
     String.build(bytesize) do |buffer|
       each_char do |my_char|
         buffer << yield my_char
@@ -2632,7 +2640,7 @@ class String
   # ```
   # "hello".gsub(/./) { |s| s[0].ord.to_s + ' ' } # => "104 101 108 108 111 "
   # ```
-  def gsub(pattern : Regex, &) : String
+  def gsub(pattern : Regex, &block : (String, Regex::MatchData) -> String | Char) : String
     gsub_append(pattern) do |string, match, buffer|
       $~ = match
       buffer << yield string, match
@@ -2721,7 +2729,7 @@ class String
   # ```
   # "hello yellow".gsub("ll") { "dd" } # => "heddo yeddow"
   # ```
-  def gsub(string : String, & : String -> _) : String
+  def gsub(string : String, &block) : String
     byte_offset = 0
     index = self.byte_index(string, byte_offset)
     return self unless index
@@ -4005,7 +4013,7 @@ class String
   # long_river_name.split(//) { |s| ary << s }
   # ary # => ["M", "i", "s", "s", "i", "s", "s", "i", "p", "p", "i"]
   # ```
-  def split(separator : Regex, limit = nil, *, remove_empty = false, &block : String -> _)
+  def split(separator : Regex, limit = nil, *, remove_empty = false, &block : String -> _) : Nil
     if empty?
       yield "" unless remove_empty
       return
@@ -4506,7 +4514,7 @@ class String
 
   # Searches the string for instances of *pattern*,
   # yielding a `Regex::MatchData` for each match.
-  def scan(pattern : Regex, &) : Nil
+  def scan(pattern : Regex, & : Regex::MatchData ->) : self
     byte_offset = 0
 
     while match = pattern.match_at_byte_index(self, byte_offset)

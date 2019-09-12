@@ -34,7 +34,7 @@ module Indexable(T)
   # a.fetch(2) { :default_value }    # => :default_value
   # a.fetch(2) { |index| index * 3 } # => 6
   # ```
-  def fetch(index : Int, &block)
+  def fetch(index : Int)
     index = check_index_out_of_bounds(index) do
       return yield index
     end
@@ -729,7 +729,7 @@ module Indexable(T)
   end
 
   # :inherited:
-  def first
+  def first(& : -> U) : T | U forall U
     size == 0 ? yield : unsafe_fetch(0)
   end
 

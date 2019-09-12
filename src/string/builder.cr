@@ -28,7 +28,7 @@ class String::Builder < IO
     builder.to_s
   end
 
-  def self.new(string : String) : Builder
+  def self.new(string : String) : self
     io = new(string.bytesize)
     io << string
     io
