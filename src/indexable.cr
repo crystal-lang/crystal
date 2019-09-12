@@ -34,7 +34,7 @@ module Indexable(T)
   # a.fetch(2) { :default_value }    # => :default_value
   # a.fetch(2) { |index| index * 3 } # => 6
   # ```
-  def fetch(index : Int)
+  def fetch(index : Int, &block)
     index = check_index_out_of_bounds(index) do
       return yield index
     end
@@ -49,7 +49,7 @@ module Indexable(T)
   # a.fetch(2, :default_value) # => :default_value
   # ```
   @[AlwaysInline]
-  def fetch(index, default)
+  def fetch(index, default : U) : T | U forall U
     fetch(index) { default }
   end
 
@@ -69,7 +69,7 @@ module Indexable(T)
   # ary[-4] # raises IndexError
   # ```
   @[AlwaysInline]
-  def [](index : Int)
+  def [](index : Int) : T
     fetch(index) { raise IndexError.new }
   end
 
@@ -89,7 +89,7 @@ module Indexable(T)
   # ary[-4]? # nil
   # ```
   @[AlwaysInline]
-  def []?(index : Int)
+  def []?(index : Int) : T?
     fetch(index, nil)
   end
 
@@ -147,7 +147,7 @@ module Indexable(T)
   # [2, 5, 7, 10].bsearch { |x| x >= 4 } # => 5
   # [2, 5, 7, 10].bsearch { |x| x > 10 } # => nil
   # ```
-  def bsearch(&block : T -> Bool)
+  def bsearch(&block : T -> Bool) : T?
     bsearch_index { |value| yield value }.try { |index| unsafe_fetch(index) }
   end
 
@@ -166,7 +166,7 @@ module Indexable(T)
   # [2, 5, 7, 10].bsearch_index { |x, i| x >= 4 } # => 1
   # [2, 5, 7, 10].bsearch_index { |x, i| x > 10 } # => nil
   # ```
-  def bsearch_index(&block : T, Int32 -> Bool)
+  def bsearch_index(&block : T, Int32 -> Bool) : Int32?
     (0...size).bsearch { |index| yield unsafe_fetch(index), index }
   end
 
@@ -183,7 +183,7 @@ module Indexable(T)
   # ```text
   # a -- b -- c --
   # ```
-  def each
+  def each(&block : T ->)
     each_index do |i|
       yield unsafe_fetch(i)
     end
@@ -200,7 +200,7 @@ module Indexable(T)
   #
   # The returned iterator keeps a reference to `self`: if the array
   # changes, the returned values of the iterator change as well.
-  def each
+  def each : Iterator(T)
     ItemIterator(self, T).new(self)
   end
 
@@ -281,7 +281,7 @@ module Indexable(T)
   #
   # The returned iterator keeps a reference to `self`. If the array
   # changes, the returned values of the iterator will change as well.
-  def each_index
+  def each_index : Iterator(Int32)
     IndexIterator.new(self)
   end
 
@@ -324,7 +324,7 @@ module Indexable(T)
   # all of the elements in this indexable are strings: the total string
   # bytesize to return can be computed before creating the final string,
   # which performs better because there's no need to do reallocations.
-  def join(separator = "")
+  def join(separator = "") : String
     return "" if empty?
 
     {% if T == String %}
@@ -388,7 +388,7 @@ module Indexable(T)
   # ```
   # {1, 2, 3}.to_a # => [1, 2, 3]
   # ```
-  def to_a
+  def to_a : Array(T)
     ary = Array(T).new(size)
     each { |e| ary << e }
     ary
@@ -400,12 +400,12 @@ module Indexable(T)
   # ([] of Int32).empty? # => true
   # ([1]).empty?         # => false
   # ```
-  def empty?
+  def empty? : Bool
     size == 0
   end
 
   # Optimized version of `equals?` used when `other` is also an `Indexable`.
-  def equals?(other : Indexable)
+  def equals?(other : Indexable) : Bool
     return false if size != other.size
     each_with_index do |item, i|
       return false unless yield(item, other.unsafe_fetch(i))
@@ -426,7 +426,7 @@ module Indexable(T)
   # a.equals?(b) { |x, y| x == y.size } # => true
   # a.equals?(b) { |x, y| x == y }      # => false
   # ```
-  def equals?(other)
+  def equals?(other) : Bool
     return false if size != other.size
     each_with_index do |item, i|
       return false unless yield(item, other[i])
@@ -440,7 +440,7 @@ module Indexable(T)
   # ([1, 2, 3]).first   # => 1
   # ([] of Int32).first # raises IndexError
   # ```
-  def first
+  def first : T
     first { raise IndexError.new }
   end
 
@@ -450,7 +450,7 @@ module Indexable(T)
   # ([1, 2, 3]).first { 4 }   # => 1
   # ([] of Int32).first { 4 } # => 4
   # ```
-  def first
+  def first(&block : -> U) : T | U forall U
     size == 0 ? yield : unsafe_fetch(0)
   end
 
@@ -460,12 +460,12 @@ module Indexable(T)
   # ([1, 2, 3]).first?   # => 1
   # ([] of Int32).first? # => nil
   # ```
-  def first?
+  def first? : T?
     first { nil }
   end
 
   # See `Object#hash(hasher)`
-  def hash(hasher)
+  def hash(hasher) : Int32
     hasher = size.hash(hasher)
     each do |elem|
       hasher = elem.hash(hasher)
@@ -479,7 +479,7 @@ module Indexable(T)
   # ```
   # [1, 2, 3, 1, 2, 3].index(2, offset: 2) # => 4
   # ```
-  def index(object, offset : Int = 0)
+  def index(object, offset : Int = 0) : Int32 | UInt32 | UInt64 | Nil
     index(offset) { |e| e == object }
   end
 
@@ -508,7 +508,7 @@ module Indexable(T)
   # ([1, 2, 3]).last   # => 3
   # ([] of Int32).last # raises IndexError
   # ```
-  def last
+  def last : T
     last { raise IndexError.new }
   end
 
@@ -518,7 +518,7 @@ module Indexable(T)
   # ([1, 2, 3]).last { 4 }   # => 3
   # ([] of Int32).last { 4 } # => 4
   # ```
-  def last
+  def last(&block : -> U) : T | U forall U
     size == 0 ? yield : unsafe_fetch(size - 1)
   end
 
@@ -528,19 +528,19 @@ module Indexable(T)
   # ([1, 2, 3]).last?   # => 3
   # ([] of Int32).last? # => nil
   # ```
-  def last?
+  def last? : T?
     last { nil }
   end
 
   # Same as `#each`, but works in reverse.
-  def reverse_each(&block) : Nil
+  def reverse_each(&block : T ->) : Nil
     (size - 1).downto(0) do |i|
       yield unsafe_fetch(i)
     end
   end
 
   # Returns an `Iterator` over the elements of `self` in reverse order.
-  def reverse_each
+  def reverse_each : Iterator(T)
     ReverseItemIterator(self, T).new(self)
   end
 
@@ -554,7 +554,7 @@ module Indexable(T)
   # [1, 2, 3, 2, 3].rindex(2)            # => 3
   # [1, 2, 3, 2, 3].rindex(2, offset: 2) # => 1
   # ```
-  def rindex(value, offset = size - 1)
+  def rindex(value, offset = size - 1) : Int32 | UInt32 | UInt64 | Nil
     rindex(offset) { |elem| elem == value }
   end
 
@@ -590,7 +590,7 @@ module Indexable(T)
   # a.sample                # => 1
   # a.sample(Random.new(1)) # => 3
   # ```
-  def sample(random = Random::DEFAULT)
+  def sample(random = Random::DEFAULT) : T
     raise IndexError.new if size == 0
     unsafe_fetch(random.rand(size))
   end
@@ -601,7 +601,7 @@ module Indexable(T)
   # ```
   # ["a", "b", "c", "d"].values_at(0, 2) # => {"a", "c"}
   # ```
-  def values_at(*indexes : Int)
+  def values_at(*indexes : Int) : Tuple(T)
     indexes.map { |index| self[index] }
   end
 
