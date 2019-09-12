@@ -22,13 +22,13 @@ class String::Builder < IO
     @finished = false
   end
 
-  def self.build(capacity : Int = 64) : String
+  def self.build(capacity : Int = 64, &block : Builder ->) : String
     builder = new(capacity)
     yield builder
     builder.to_s
   end
 
-  def self.new(string : String)
+  def self.new(string : String) : Builder
     io = new(string.bytesize)
     io << string
     io
@@ -76,7 +76,7 @@ class String::Builder < IO
 
   # Chomps the last byte from the string buffer.
   # If the byte is `'\n'` and there's a `'\r'` before it, it is also removed.
-  def chomp!(byte : UInt8)
+  def chomp!(byte : UInt8) : Builder
     if bytesize > 0 && buffer[bytesize - 1] == byte
       back(1)
 
@@ -89,7 +89,7 @@ class String::Builder < IO
 
   # Moves the write pointer, and the resulting string bytesize,
   # by the given *amount*.
-  def back(amount : Int)
+  def back(amount : Int) : Nil
     unless 0 <= amount <= @bytesize
       raise ArgumentError.new "Invalid back amount"
     end

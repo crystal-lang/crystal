@@ -465,7 +465,7 @@ module Indexable(T)
   end
 
   # See `Object#hash(hasher)`
-  def hash(hasher) : Int32
+  def hash(hasher : U) : U forall U
     hasher = size.hash(hasher)
     each do |elem|
       hasher = elem.hash(hasher)
@@ -601,7 +601,7 @@ module Indexable(T)
   # ```
   # ["a", "b", "c", "d"].values_at(0, 2) # => {"a", "c"}
   # ```
-  def values_at(*indexes : Int) : Tuple(T)
+  def values_at(*indexes : Int)
     indexes.map { |index| self[index] }
   end
 
