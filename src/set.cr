@@ -208,7 +208,7 @@ struct Set(T)
   # ```
   # Set{1, 1, 2, 3} + Set{3, 4, 5} # => Set{1, 2, 3, 4, 5}
   # ```
-  def +(other : Set(U))
+  def +(other : Set(U)) forall U
     self | other
   end
 
