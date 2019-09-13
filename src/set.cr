@@ -210,7 +210,7 @@ struct Set(T)
   # ```
   # Set{1, 1, 2, 3} + Set{3, 4, 5} # => Set{1, 2, 3, 4, 5}
   # ```
-  def +(other)
+  def +(other : Set(U))
     self | other
   end
 
