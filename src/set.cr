@@ -203,9 +203,7 @@ struct Set(T)
     set
   end
 
-  # Addition: returns a new, unique set containing the elements from both sets.
-  # Because sets cannot have duplicates, this is equivalent to the union of
-  # both sets.
+  # Addition: returns a new set containing the unique elements from both sets.
   #
   # ```
   # Set{1, 1, 2, 3} + Set{3, 4, 5} # => Set{1, 2, 3, 4, 5}
