@@ -203,6 +203,15 @@ struct Set(T)
     set
   end
 
+  # Addition: returns a new set containing the unique elements from both sets.
+  #
+  # ```
+  # Set{1, 1, 2, 3} + Set{3, 4, 5} # => Set{1, 2, 3, 4, 5}
+  # ```
+  def +(other : Set(U)) forall U
+    self | other
+  end
+
   # Difference: returns a new set containing elements in this set that are not
   # present in the other.
   #
