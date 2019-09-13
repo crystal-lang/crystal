@@ -59,14 +59,14 @@ module Spec::Methods
   #
   # If `focus` is `true`, only this test, and others marked with `focus: true`, will run.
   def pending(description = "assert", file = __FILE__, line = __LINE__, end_line = __END_LINE__, focus : Bool = false, &block)
-    Spec.root_context.pending(description.to_s, file, line, end_line, focus, &block)
+    pending(description, file, line, end_line, focus)
   end
 
   # Defines a yet-to-be-implemented pending test case
   #
   # If `focus` is `true`, only this test, and others marked with `focus: true`, will run.
   def pending(description = "assert", file = __FILE__, line = __LINE__, end_line = __END_LINE__, focus : Bool = false)
-    pending(description, file, line, end_line, focus) { }
+    Spec.root_context.pending(description.to_s, file, line, end_line, focus)
   end
 
   # DEPRECATED: Use `#it`

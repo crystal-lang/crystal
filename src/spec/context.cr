@@ -164,18 +164,18 @@ module Spec
     end
 
     def it(description, file, line, end_line, focus, &block)
-      add_example(description, file, line, end_line, focus, block, pending: false)
+      add_example(description, file, line, end_line, focus, block)
     end
 
-    def pending(description, file, line, end_line, focus, &block)
-      add_example(description, file, line, end_line, focus, block, pending: true)
+    def pending(description, file, line, end_line, focus)
+      add_example(description, file, line, end_line, focus, nil)
     end
 
-    private def add_example(description, file, line, end_line, focus, block, pending)
+    private def add_example(description, file, line, end_line, focus, block)
       check_nesting_spec(file, line) do
         Spec.focus = true if focus
         @@current_context.children <<
-          Example.new(@@current_context, description, file, line, end_line, focus, block, pending)
+          Example.new(@@current_context, description, file, line, end_line, focus, block)
       end
     end
 

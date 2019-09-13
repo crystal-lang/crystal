@@ -4,20 +4,19 @@ module Spec
   class Example
     include Item
 
-    getter block : ->
-    getter? pending : Bool
+    getter block : (->) | Nil
 
     def initialize(@parent : Context, @description : String,
                    @file : String, @line : Int32, @end_line : Int32,
                    @focus : Bool,
-                   @block : ->, @pending : Bool)
+                   @block : (->) | Nil)
     end
 
     def run
       Spec.root_context.check_nesting_spec(file, line) do
         Spec.formatters.each(&.before_example(description))
 
-        if pending?
+        unless block = @block
           Spec.root_context.report(:pending, description, file, line)
           return
         end
