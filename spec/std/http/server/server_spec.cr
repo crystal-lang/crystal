@@ -138,7 +138,7 @@ describe HTTP::Server do
 
   it "handles Expect: 100-continue correctly when body isn't read" do
     server = HTTP::Server.new do |context|
-      context.response.respond_with_error("I don't want your body", 400)
+      context.response.respond_with_status(400, "I don't want your body")
     end
 
     address = server.bind_unused_port
