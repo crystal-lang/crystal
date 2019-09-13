@@ -76,7 +76,7 @@ class IO::ARGF < IO
 
   private def read_from_current_io(current_io, slice, count)
     read_count = current_io.read slice[0, count]
-    if read_count < count
+    if read_count.zero?
       unless @read_from_stdin
         current_io.close
         if @argv.empty?
