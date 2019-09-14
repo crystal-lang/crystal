@@ -232,12 +232,15 @@ class Hash(K, V)
     else
       # Translate initial capacity to the nearest power of 2, but keep it a minimum of 8.
       if initial_capacity < 8
-        initial_indices_size = 8
+        initial_entries_size = 8
       else
-        initial_indices_size = Math.pw2ceil(initial_capacity)
+        initial_entries_size = Math.pw2ceil(initial_capacity)
       end
 
-      @entries = malloc_entries(initial_indices_size // 2)
+      # Because we always keep indice_size >= entries_size * 2
+      initial_indices_size = initial_entries_size * 2
+
+      @entries = malloc_entries(initial_entries_size)
 
       # Check if we can avoid allocating the `@indices` buffer for
       # small hashes.
