@@ -2296,7 +2296,7 @@ class String
   # ```
   # "hello yellow".gsub("ll", "dd") # => "heddo yeddow"
   # ```
-  def gsub(string : String, replacement : Char|String)
+  def gsub(string : String, replacement : Char | String)
     if string.bytesize == 1
       gsub(string.unsafe_byte_at(0).unsafe_chr, replacement)
     else
@@ -2310,7 +2310,7 @@ class String
   # ```
   # "hello yellow".gsub("ll") { "dd" } # => "heddo yeddow"
   # ```
-  def gsub(string : String, &block : String -> Char|String) : String
+  def gsub(string : String, &block : String -> Char | String) : String
     byte_offset = 0
     index = self.byte_index(string, byte_offset)
     return self unless index
