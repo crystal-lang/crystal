@@ -115,6 +115,12 @@ module JSON
   #   @a : Int32?
   # end
   # ```
+  #
+  # ### Abstract types
+  #
+  # When deserializing an abstract type all concrete subtypes will be
+  # tried to deserialized one by one: the first one that succeeds will
+  # be returned. Otherwise a `JSON::ParseException` is raised.
   module Serializable
     annotation Options
     end
@@ -124,10 +130,29 @@ module JSON
       # so it overloads well with other possible initializes
 
       def self.new(pull : ::JSON::PullParser)
-        instance = allocate
-        instance.initialize(__pull_for_json_serializable: pull)
-        GC.add_finalizer(instance) if instance.responds_to?(:finalize)
-        instance
+        {% verbatim do %}
+          {% if @type.abstract? %}
+            location = pull.location
+            string = pull.read_raw
+
+            {% for subclass in @type.all_subclasses %}
+              {% unless subclass.abstract? %}
+                begin
+                  return {{subclass}}.from_json(string)
+                rescue JSON::ParseException
+                  # Ignore
+                end
+              {% end %}
+            {% end %}
+
+            raise JSON::ParseException.new("Couldn't parse #{self} from #{string}", *location)
+          {% else %}
+            instance = allocate
+            instance.initialize(__pull_for_json_serializable: pull)
+            GC.add_finalizer(instance) if instance.responds_to?(:finalize)
+            instance
+          {% end %}
+        {% end %}
       end
 
       # When the type is inherited, carry over the `new`

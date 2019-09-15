@@ -328,6 +328,20 @@ struct JSONAttrPersonWithYAMLInitializeHook
   end
 end
 
+abstract class JSONBaseType
+  include JSON::Serializable
+end
+
+class JSONChild1 < JSONBaseType
+  property x : Int32
+  property y : Int32
+end
+
+class JSONChild2 < JSONBaseType
+  property w : Int32
+  property z : Int32
+end
+
 describe "JSON mapping" do
   it "works with record" do
     JSONAttrPoint.new(1, 2).to_json.should eq "{\"x\":1,\"y\":2}"
@@ -708,6 +722,25 @@ describe "JSON mapping" do
     obj = JSONAttrWithNilableUnion2.from_json(%({}))
     obj.value.should be_nil
     obj.to_json.should eq(%({}))
+  end
+
+  it "deserializes abstract type" do
+    objs = Array(JSONBaseType).from_json(%(
+      [
+        {"x": 1, "y": 2},
+        {"w": 3, "z": 4}
+      ]
+    ))
+
+    objs.size.should eq(2)
+
+    child1 = objs[0].as(JSONChild1)
+    child1.x.should eq(1)
+    child1.y.should eq(2)
+
+    child2 = objs[1].as(JSONChild2)
+    child2.w.should eq(3)
+    child2.z.should eq(4)
   end
 
   describe "parses JSON with presence markers" do
