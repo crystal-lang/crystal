@@ -342,7 +342,7 @@ class JSONChild2 < JSONBaseType
   property z : Int32
 end
 
-describe "JSON mapping" do
+describe JSON::Serializable do
   it "works with record" do
     JSONAttrPoint.new(1, 2).to_json.should eq "{\"x\":1,\"y\":2}"
     JSONAttrPoint.from_json(%({"x": 1, "y": 2})).should eq JSONAttrPoint.new(1, 2)
