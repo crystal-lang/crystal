@@ -114,6 +114,12 @@ module YAML
   #   @a : Int32?
   # end
   # ```
+  #
+  # ### Abstract types
+  #
+  # When deserializing an abstract type all concrete subtypes will be
+  # tried to deserialized one by one: the first one that succeeds will
+  # be returned. Otherwise a `YAML::ParseException` is raised.
   module Serializable
     annotation Options
     end
@@ -127,13 +133,29 @@ module YAML
           return obj
         end
 
-        instance = allocate
+        {% verbatim do %}
+          {% if @type.abstract? %}
+            {% for subclass in @type.all_subclasses %}
+              {% unless subclass.abstract? %}
+                begin
+                  return {{subclass}}.new(ctx, node)
+                rescue YAML::ParseException
+                  # Ignore
+                end
+              {% end %}
+            {% end %}
 
-        ctx.record_anchor(node, instance)
+            node.raise "Couldn't parse #{self}"
+          {% else %}
+            instance = allocate
 
-        instance.initialize(__context_for_yaml_serializable: ctx, __node_for_yaml_serializable: node)
-        GC.add_finalizer(instance) if instance.responds_to?(:finalize)
-        instance
+            ctx.record_anchor(node, instance)
+
+            instance.initialize(__context_for_yaml_serializable: ctx, __node_for_yaml_serializable: node)
+            GC.add_finalizer(instance) if instance.responds_to?(:finalize)
+            instance
+          {% end %}
+        {% end %}
       end
 
       # When the type is inherited, carry over the `new`

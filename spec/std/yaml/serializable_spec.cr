@@ -285,6 +285,20 @@ class YAMLAttrModuleTest2 < YAMLAttrModuleTest
   end
 end
 
+abstract class YAMLBaseType
+  include YAML::Serializable
+end
+
+class YAMLChild1 < YAMLBaseType
+  property x : Int32
+  property y : Int32
+end
+
+class YAMLChild2 < YAMLBaseType
+  property w : Int32
+  property z : Int32
+end
+
 describe "YAML::Serializable" do
   it "works with record" do
     YAMLAttrPoint.new(1, 2).to_yaml.should eq "---\nx: 1\ny: 2\n"
@@ -613,6 +627,25 @@ describe "YAML::Serializable" do
 
     rec = YAMLAttrRecursiveHash.from_yaml(yaml)
     rec.other["foo"].other.should be(rec.other)
+  end
+
+  it "deserializes abstract type" do
+    objs = Array(YAMLBaseType).from_yaml(%(
+      [
+        {"x": 1, "y": 2},
+        {"w": 3, "z": 4}
+      ]
+    ))
+
+    objs.size.should eq(2)
+
+    child1 = objs[0].as(YAMLChild1)
+    child1.x.should eq(1)
+    child1.y.should eq(2)
+
+    child2 = objs[1].as(YAMLChild2)
+    child2.w.should eq(3)
+    child2.z.should eq(4)
   end
 
   describe "parses yaml with defaults" do
