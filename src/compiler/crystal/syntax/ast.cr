@@ -722,6 +722,7 @@ module Crystal
     property target : ASTNode
     property op : String
     property value : ASTNode
+    property name_location : Location?
 
     def initialize(@target, @op, @value)
     end
