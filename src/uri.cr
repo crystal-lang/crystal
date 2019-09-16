@@ -309,10 +309,10 @@ class URI
   # Otherwise the URI is resolved according to the specifications in [RFC 3986 section 5.2](https://tools.ietf.org/html/rfc3986#section-5.2.2).
   #
   # ```
-  # URI.parse("http://foo.com/bar/baz").resolve("../quux")         # => http://foo.com/quux
-  # URI.parse("http://foo.com/bar/baz").resolve("/quux")           # => http://foo.com/quux
-  # URI.parse("http://foo.com/bar/baz").resolve("http://quux.com") # => http://quux.com
-  # URI.parse("http://foo.com/bar/baz").resolve("#quux")           # => http://foo.com/bar/baz#quux
+  # URI.parse("http://foo.com/bar/baz").resolve("../quux")         # => "http://foo.com/quux"
+  # URI.parse("http://foo.com/bar/baz").resolve("/quux")           # => "http://foo.com/quux"
+  # URI.parse("http://foo.com/bar/baz").resolve("http://quux.com") # => "http://quux.com"
+  # URI.parse("http://foo.com/bar/baz").resolve("#quux")           # => "http://foo.com/bar/baz#quux"
   # ```
   #
   # This method is the inverse operation to `#relativize` (see [Resolution and Relativization](#Resolution and Relativization)).
@@ -378,10 +378,10 @@ class URI
   # path from `#path` to *uri*'s path.
   #
   # ```
-  # URI.parse("http://foo.com/bar/baz").relativize("http://foo.com/quux")         # => ../quux
-  # URI.parse("http://foo.com/bar/baz").relativize("http://foo.com/quux")         # => /quux
-  # URI.parse("http://foo.com/bar/baz").relativize("http://quux.com")             # => http://quux.com
-  # URI.parse("http://foo.com/bar/baz").relativize("http://foo.com/bar/baz#quux") # => #quux
+  # URI.parse("http://foo.com/bar/baz").relativize("http://foo.com/quux")         # => "../quux"
+  # URI.parse("http://foo.com/bar/baz").relativize("http://foo.com/bar/quux")     # => "quux"
+  # URI.parse("http://foo.com/bar/baz").relativize("http://quux.com")             # => "http://quux.com"
+  # URI.parse("http://foo.com/bar/baz").relativize("http://foo.com/bar/baz#quux") # => "#quux"
   # ```
   #
   # This method is the inverse operation to `#resolve` (see [Resolution and Relativization](#Resolution and Relativization)).
