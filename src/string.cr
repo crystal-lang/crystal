@@ -3718,7 +3718,7 @@ class String
 
   # Searches the string for instances of *pattern*,
   # yielding a `Regex::MatchData` for each match.
-  def scan(pattern : Regex, overlapping = false)
+  def scan(pattern : Regex)
     byte_offset = 0
 
     while match = pattern.match_at_byte_index(self, byte_offset)
@@ -3726,7 +3726,7 @@ class String
       $~ = match
       yield match
       match_bytesize = match[0].bytesize
-      match_bytesize = 1 if match_bytesize == 0 || overlapping
+      match_bytesize += 1 if match_bytesize == 0
       byte_offset = index + match_bytesize
     end
 
@@ -3736,7 +3736,7 @@ class String
   private class MatchIterator
     include Iterator(Regex::MatchData)
 
-    def initialize(@s : String, @pattern : Regex, @overlapping : Bool)
+    def initialize(@s : String, @pattern : Regex)
       @stop = false
       @byte_offset = 0
     end
@@ -3747,7 +3747,7 @@ class String
       if match = @pattern.match_at_byte_index(@s, @byte_offset)
         index = match.byte_begin(0)
         shift_by = match[0].bytesize
-        shift_by = 1 if shift_by == 0 || @overlapping
+        shift_by = 1 if shift_by == 0
         @byte_offset = index + shift_by
         return match
       else
@@ -3759,15 +3759,15 @@ class String
 
   # Searches the string for instances of *pattern*,
   # yielding an Iterator of `Regex::MatchData` for each match.
-  def each_match(pattern : Regex, overlapping = false)
-    MatchIterator.new(self, pattern, overlapping: overlapping)
+  def each_match(pattern : Regex)
+    MatchIterator.new(self, pattern)
   end
 
   # Searches the string for instances of *pattern*,
   # returning an `Array` of `Regex::MatchData` for each match.
-  def scan(pattern : Regex, overlapping = false)
+  def scan(pattern : Regex)
     matches = [] of Regex::MatchData
-    scan(pattern, overlapping: overlapping) do |match|
+    scan(pattern) do |match|
       matches << match
     end
     matches
@@ -3775,21 +3775,21 @@ class String
 
   # Searches the string for instances of *pattern*,
   # yielding the matched string for each match.
-  def scan(pattern : String, overlapping = false)
+  def scan(pattern : String)
     return self if pattern.empty?
     index = 0
     while index = byte_index(pattern, index)
       yield pattern
-      index += overlapping ? 1 : pattern.bytesize
+      index += pattern.bytesize
     end
     self
   end
 
   # Searches the string for instances of *pattern*,
   # returning an array of the matched string for each match.
-  def scan(pattern : String, overlapping = false)
+  def scan(pattern : String)
     matches = [] of String
-    scan(pattern, overlapping: overlapping) do |match|
+    scan(pattern) do |match|
       matches << match
     end
     matches
