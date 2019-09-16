@@ -18,7 +18,6 @@
 - **(breaking-change)** Enable overflow by default. ([#8170](https://github.com/crystal-lang/crystal/pull/8170), thanks @bcardiff)
 - **(breaking-change)** Make `/` the arithmetic division for all types. ([#8120](https://github.com/crystal-lang/crystal/pull/8120), thanks @bcardiff)
 - Add `BigDecimal#**` and `BigRational#**` (pow operator). ([#7860](https://github.com/crystal-lang/crystal/pull/7860), thanks @jwbuiter)
-
 - Refactor `Int#divisible_by?` for clarity. ([#8045](https://github.com/crystal-lang/crystal/pull/8045), thanks @yxhuvud)
 
 ### Text
@@ -34,7 +33,7 @@
 - **(performance)** Add `Hash#put` and optimize `Set#add?`. ([#8116](https://github.com/crystal-lang/crystal/pull/8116), thanks @asterite)
 - Fixed `Slice#==` for some generic instantiations, add `Slice#<=>`. ([#8074](https://github.com/crystal-lang/crystal/pull/8074), thanks @asterite)
 - Add docs on idempotence and methods involving eager evaluation in `Iterator`. ([#8053](https://github.com/crystal-lang/crystal/pull/8053), thanks @KimBurgess)
-- Add `Set#|`. ([#8121](https://github.com/crystal-lang/crystal/pull/8121), thanks @sam0x17)
+- Add `Set#+`. ([#8121](https://github.com/crystal-lang/crystal/pull/8121), thanks @sam0x17)
 - Refactor `Hash` to use integer division instead of float division. ([#8104](https://github.com/crystal-lang/crystal/pull/8104), thanks @asterite)
 
 ### Serialization
