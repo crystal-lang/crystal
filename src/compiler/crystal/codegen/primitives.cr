@@ -14,7 +14,7 @@ class Crystal::CodeGenVisitor
   end
 
   def codegen_primitive(call, node, target_def, call_args)
-    @call_location = call.name_location if call && call.location
+    @call_location = call.try &.name_location
 
     @last = case node.name
             when "binary"
