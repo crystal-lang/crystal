@@ -341,6 +341,7 @@ class Crystal::CodeGenVisitor
     call.scope = with_scope || node.scope
     call.with_scope = with_scope
     call.uses_with_scope = node.uses_with_scope?
+    call.name_location = node.name_location
 
     is_super = node.name == "super"
 
