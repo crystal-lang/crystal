@@ -5,8 +5,10 @@ require "crystal/system/user"
 # Users can be retrieved by either username or their user ID:
 #
 # ```
+# require "system/user"
+#
 # System::User.find_by name: "root"
-# System::User.find_by id: "1000"
+# System::User.find_by id: "0"
 # ```
 class System::User
   # Raised on user lookup failure.
