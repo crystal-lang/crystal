@@ -38,17 +38,18 @@ def multi3(a : Int128, b : Int128) : Int128
   r.unsafe_as(Int128)
 end
 
-# x = Int128::MAX - Int32::MAX
-# y = 1000_i128
-x = 1111111111_i128
-y = 10000000000_i128
+if ENV["TEST"] == "1"
+  # x = Int128::MAX - Int32::MAX
+  # y = 1000_i128
+  x = 1111111111_i128
+  y = 10000000000_i128
 
-puts "#{x}:#{x.class}"
-puts "#{y}:#{y.class}"
-puts "#{(x * y)}:#{(x * y).class}"
-puts "#{x} * #{y} = #{x * y}"
-puts "#{x} * #{y} = #{multi3(x, y)}"
-puts "", ""
+  puts "#{x}:#{x.class}"
+  puts "#{y}:#{y.class}"
+  puts "#{(x * y)}:#{(x * y).class}"
+  puts "#{x} * #{y} = #{x * y}"
+  puts "#{x} * #{y} = #{multi3(x, y)}"
+end 
 
 fun muloti4(a : Int128, b : Int128, overflow : Int32*) : Int128
   n = 64
@@ -87,25 +88,26 @@ fun muloti4(a : Int128, b : Int128, overflow : Int32*) : Int128
   return result
 end
 
+if ENV["TEST"] == "2"
+  x = Int128::MAX
+  y = 2_i128
 
-x = Int128::MAX
-y = 2_i128
+  puts "#{x}:#{x.class}"
+  puts "#{y}:#{y.class}"
+  begin
+    x * y
+  rescue OverflowError
+    puts "x * y:raises"
+  end
 
-puts "#{x}:#{x.class}"
-puts "#{y}:#{y.class}"
-begin
-  x * y
-rescue OverflowError
-  puts "x * y:raises"
+  puts "#{x} * #{y} raises true"
+
+  o = 0
+  muloti4(x, y, pointerof(o));
+  puts "#{x} * #{y} raises #{o == 0 ? false : true}"
 end
 
-puts "#{x} * #{y} raises true"
-
-o = 0
-muloti4(x, y, pointerof(o));
-puts "#{x} * #{y} raises #{o == 0 ? false : true}"
-
-def udivmodti4(a : UInt128, b : UInt128, rem : UInt128*)
+def udivmodti4(a : UInt128, b : UInt128, rem : UInt128*) : UInt128
   n_udword_bits = sizeof(Int64) * sizeof(Char);
   n_utword_bits = sizeof(Int128) * sizeof(Char);
   n = a.unsafe_as(UInt128Info)
@@ -227,17 +229,19 @@ def udivmodti4(a : UInt128, b : UInt128, rem : UInt128*)
   return q.unsafe_as(UInt128)
 end
 
-x = 100_u128
-y = 2_u128
-rem = 0_u128
-results = udivmodti4(x, y, pointerof(rem))
-puts "divide with remainder"
-puts "#{x} / #{y} = #{results} & #{rem}"
-x = UInt128::MAX
-y = 1000_u128
-rem = 0_u128
-results = udivmodti4(x, y, pointerof(rem))
-puts "#{x} / #{y} = #{results} & #{rem}"
+if ENV["TEST"] == "3"
+  x = 100_u128
+  y = 2_u128
+  rem = 0_u128
+  results = udivmodti4(x, y, pointerof(rem))
+  puts "divide with remainder"
+  puts "#{x} / #{y} = #{results} & #{rem}"
+  x = UInt128::MAX
+  y = 1000_u128
+  rem = 0_u128
+  results = udivmodti4(x, y, pointerof(rem))
+  puts "#{x} / #{y} = #{results} & #{rem}"
+end
 
 def divti3(a : Int128, b : Int128) : Int128
   bits_in_tword_m1 = sizeof(Int128) * sizeof(Char) - 1
@@ -257,3 +261,55 @@ end
 #y = 2_i128
 #puts "#{x} / #{y} = #{x / y}"
 
+## TODO: Check if this is faster
+# def modti3(a : Int128, b : Int128) : Int128
+#   r = 0_u128
+#   udivmodti4(a.to_u128, b.to_u128, pointerof(r))
+#   return r.to_i128
+# end
+
+def modti3(a : Int128, b : Int128) : Int128
+  bits_in_tword_m1 = sizeof(Int128) * sizeof(Char) - 1
+  s = b >> bits_in_tword_m1            # s = b < 0 ? -1 : 0
+  b = (b ^ s) - s                      # negate if s == -1
+  s = a >> bits_in_tword_m1            # s = a < 0 ? -1 : 0
+  a = (a ^ s) - s                      # negate if s == -1
+  r = 0_u128
+  udivmodti4(a.unsafe_as(UInt128), b.unsafe_as(UInt128), pointerof(r))
+  return (r ^ s).unsafe_as(Int128) - s # negate if s == -1
+end
+
+if ENV["TEST"] == "4"
+  x = 10_i128
+  y = 6_i128
+  results = modti3(x, y)
+  puts "divide remainder"
+  puts "#{x} % #{y} = #{results}"
+end
+
+def umodti3(a : UInt128, b : UInt128)
+  r = 0_u128
+  udivmodti4(a, b, pointerof(r))
+  return r
+end
+
+if ENV["TEST"] == "5"
+  x = 10_u128
+  y = 6_u128
+  results = umodti3(x, y)
+  puts "divide remainder"
+  puts "#{x} % #{y} = #{results}"
+end
+
+# def udivti3(a : UInt128, b : UInt128) : UInt128
+#   r = 0_u128
+#   udivmodti4(a, b, pointerof(r))
+# end
+
+if ENV["TEST"] == "6"
+  # x = 1234567890_u128
+  # y = 1000_u128
+  # results = udivti3(x, y)
+  # puts "divide remainder"
+  # puts "#{x} % #{y} = #{results}"
+end

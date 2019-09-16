@@ -170,11 +170,11 @@ fun __divti3(a : Int128, b : Int128) : Int128
 end
 
 # Function returning quotient for unsigned division eg. `a / b`
-# fun __udivqi3(a : Int8, b : Int8) : Int8
-# fun __udivhi3(a : Int16, b : Int16) : Int16
-# fun __udivsi3(a : Int32, b : Int32) : Int32
-# fun __udivdi3(a : Int64, b : Int64) : Int64
-fun __udivti3(a : Int128, b : Int128) : Int128
+# fun __udivqi3(a : UInt8, b : UInt8) : UInt8
+# fun __udivhi3(a : UInt16, b : UInt16) : UInt16
+# fun __udivsi3(a : UInt32, b : UInt32) : UInt32
+# fun __udivdi3(a : UInt64, b : UInt64) : UInt64
+fun __udivti3(a : UInt128, b : UInt128) : UInt128
   raise "__udivti3"
 end
 
@@ -184,7 +184,14 @@ end
 # fun __modsi3(a : Int32, b : Int32) : Int32
 # fun __moddi3(a : Int64, b : Int64) : Int64
 fun __modti3(a : Int128, b : Int128) : Int128
-  raise "__modti3"
+  bits_in_tword_m1 = sizeof(Int128) * sizeof(Char) - 1
+  s = b >> bits_in_tword_m1            # s = b < 0 ? -1 : 0
+  b = (b ^ s) - s                      # negate if s == -1
+  s = a >> bits_in_tword_m1            # s = a < 0 ? -1 : 0
+  a = (a ^ s) - s                      # negate if s == -1
+  r = 0_u128
+  udivmodti4(a.unsafe_as(UInt128), b.unsafe_as(UInt128), pointerof(r))
+  return (r ^ s).unsafe_as(Int128) - s # negate if s == -1
 end
 
 # Function return the remainder of the unsigned division eg. `a % b`
@@ -193,7 +200,9 @@ end
 # fun __umodsi3(a : Int32, b : Int32) : Int32
 # fun __umoddi3(a : Int64, b : Int64) : Int64
 fun __umodti3(a : Int128, b : Int128) : Int128
-  raise "__modti3"
+  r = 0_u128
+  udivmodti4(a, b, pointerof(r))
+  return r
 end
 
 fun __udivmodti4(a : UInt128, b : UInt128, rem : UInt128*)
