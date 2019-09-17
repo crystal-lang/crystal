@@ -363,7 +363,7 @@ struct Int
 
     # Generates a mask `count` bits long maintaining the correct type
     count = end_index - start_index
-    mask = (self.class.new(1) << count) - 1
+    mask = (self.class.new(1) << count) &- 1
 
     if self < 0
       # Special case for negative to ensure the shift and mask work as expected
