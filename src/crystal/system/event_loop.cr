@@ -27,6 +27,8 @@ end
 
 {% if flag?(:unix) %}
   require "./unix/event_loop_libevent"
+{% elsif flag?(:win32) %}
+  require "./win32/event_loop_iocp"
 {% else %}
   {% raise "event_loop not supported" %}
 {% end %}
