@@ -1,4 +1,4 @@
-require "./event_loop"
+require "crystal/system/event_loop"
 require "./fiber_channel"
 require "fiber"
 require "crystal/system/thread"
