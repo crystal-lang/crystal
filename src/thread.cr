@@ -34,9 +34,7 @@ class Thread
       Pointer(Void).null
     }, self.as(Void*))
 
-    if ret == 0
-      Thread.threads.push(self)
-    else
+    if ret != 0
       raise Errno.new("pthread_create", ret)
     end
   end
@@ -124,6 +122,7 @@ class Thread
   end
 
   protected def start
+    Thread.threads.push(self)
     Thread.current = self
     @main_fiber = fiber = Fiber.new(stack_address, self)
 
