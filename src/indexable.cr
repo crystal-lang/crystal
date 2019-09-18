@@ -479,7 +479,7 @@ module Indexable(T)
   # ```
   # [1, 2, 3, 1, 2, 3].index(2, offset: 2) # => 4
   # ```
-  def index(object, offset : Int = 0) : Int32 | UInt32 | UInt64 | Nil
+  def index(object, offset : Int = 0)
     index(offset) { |e| e == object }
   end
 
@@ -554,7 +554,7 @@ module Indexable(T)
   # [1, 2, 3, 2, 3].rindex(2)            # => 3
   # [1, 2, 3, 2, 3].rindex(2, offset: 2) # => 1
   # ```
-  def rindex(value, offset = size - 1) : Int32 | UInt32 | UInt64 | Nil
+  def rindex(value, offset = size - 1)
     rindex(offset) { |elem| elem == value }
   end
 
