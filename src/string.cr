@@ -2363,8 +2363,7 @@ class String
     end
   end
 
-  private def gsub_append(pattern : Regex,
-                          &block : String, Regex::MatchData, Builder -> Nil)
+  private def gsub_append(pattern : Regex, &block)
     byte_offset = 0
     match = pattern.match_at_byte_index(self, byte_offset)
     return self unless match
