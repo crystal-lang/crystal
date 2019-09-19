@@ -243,7 +243,7 @@ class Object
   #
   # Many types in the standard library, like `Array`, `Hash`, `Set` and
   # `Deque`, and all primitive types, define `dup` and `clone`.
-  abstract def dup : Self
+  abstract def dup : self
 
   # Unsafely reinterprets the bytes of an object as being of another `type`.
   #

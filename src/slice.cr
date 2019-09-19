@@ -739,7 +739,7 @@ struct Slice(T)
   end
 
   # :nodoc:
-  def fast_index(object, offset)
+  def fast_index(object, offset) : Int32?
     offset += size if offset < 0
     if 0 <= offset < size
       result = LibC.memchr(to_unsafe + offset, object, size - offset)

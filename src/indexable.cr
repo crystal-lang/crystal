@@ -465,7 +465,7 @@ module Indexable(T)
   end
 
   # See `Object#hash(hasher)`
-  def hash(hasher : U) : U forall U
+  def hash(hasher) 
     hasher = size.hash(hasher)
     each do |elem|
       hasher = elem.hash(hasher)

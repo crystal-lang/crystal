@@ -828,7 +828,7 @@ class String
     char_at(index) { nil }
   end
 
-  def []?(str : String | Char) : (String | Char)?
+  def []?(str : String | Char)
     includes?(str) ? str : nil
   end
 
@@ -841,7 +841,7 @@ class String
     match[group]? if match
   end
 
-  def [](str : String | Char) : String | Char
+  def [](str : String | Char)
     self[str]?.not_nil!
   end
 
@@ -2403,7 +2403,7 @@ class String
   # ```
   # "aabbcc".count &.in?('a', 'b') # => 4
   # ```
-  def count : Int
+  def count(&block : Char -> _) : Int
     count = 0
     each_char do |char|
       count += 1 if yield char
