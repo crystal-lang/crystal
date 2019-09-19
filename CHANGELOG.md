@@ -2,7 +2,7 @@
 
 ## Language changes
 
-- Allow anonymous block args and their type restriction `& : T -> U`. ([#8117](https://github.com/crystal-lang/crystal/pull/8117), thanks @asterite)
+- Allow non-captured block args with type restriction using `& : T -> U`. ([#8117](https://github.com/crystal-lang/crystal/pull/8117), thanks @asterite)
 
 ### Macros
 
@@ -10,8 +10,9 @@
 
 ## Standard library
 
-- **(breaking-change)** Move `Markdown` to inside the compiler. ([#8115](https://github.com/crystal-lang/crystal/pull/8115), thanks @asterite)
+- **(breaking-change)** Remove `Markdown` from the std-lib. ([#8115](https://github.com/crystal-lang/crystal/pull/8115), thanks @asterite)
 - **(breaking-change)** Deprecate `OptionParser#parse!`, use `OptionParser#parse`. ([#8041](https://github.com/crystal-lang/crystal/pull/8041), thanks @didactic-drunk)
+- Fix example codes in multiple places. ([#8194](https://github.com/crystal-lang/crystal/pull/8194), thanks @maiha)
 
 ### Numeric
 
@@ -74,6 +75,8 @@
 - Let `exec_recursive` use a thread-local data structure. ([#8146](https://github.com/crystal-lang/crystal/pull/8146), thanks @asterite)
 - Add explicit return types for some channel methods. ([#8161](https://github.com/crystal-lang/crystal/pull/8161), thanks @Blacksmoke16)
 - Remove the dedicated fiber to run the event loop. ([#8173](https://github.com/crystal-lang/crystal/pull/8173), thanks @waj)
+- Fix corruption of thread linked list. ([#8196](https://github.com/crystal-lang/crystal/pull/8196), thanks @waj)
+- Workaround compile on win32 until fibers is implemented. ([#8195](https://github.com/crystal-lang/crystal/pull/8195), thanks @straight-shoota)
 
 ### System
 
