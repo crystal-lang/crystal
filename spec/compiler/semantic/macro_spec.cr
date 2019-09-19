@@ -53,7 +53,7 @@ describe "Semantic: macro" do
 
       Foo.new.foo
       ),
-      "type must be Int32, not Char"
+      "method must return Int32 but it is returning Char"
   end
 
   it "allows subclasses of return type for macro def" do
@@ -143,7 +143,7 @@ describe "Semantic: macro" do
       end
 
       Bar.new.bar
-    }, "type must be Foo(String), not Foo(Int32)",
+    }, "method must return Foo(String) but it is returning Foo(Int32)",
       inject_primitives: false
   end
 

@@ -52,6 +52,9 @@ module Crystal
         other_type = type.union_types.find { |type| type != freeze_type }
         trace = from.find_owner_trace(freeze_type.program, other_type)
         ex.inner = trace
+      elsif from && !ex.inner && (freeze_type = @freeze_type)
+        trace = from.find_owner_trace(freeze_type.program, type)
+        ex.inner = trace
       end
 
       if from && !location
@@ -69,12 +72,15 @@ module Crystal
         end
       end
 
-      if self.is_a?(MetaTypeVar)
+      case self
+      when MetaTypeVar
         if self.global?
           from.raise "global variable '#{self.name}' must be #{freeze_type}, not #{invalid_type}", inner, Crystal::FrozenTypeException
         else
           from.raise "#{self.kind} variable '#{self.name}' of #{self.owner} must be #{freeze_type}, not #{invalid_type}", inner, Crystal::FrozenTypeException
         end
+      when Def
+        (self.return_type || self).raise "method must return #{freeze_type} but it is returning #{invalid_type}", inner, Crystal::FrozenTypeException
       else
         from.raise "type must be #{freeze_type}, not #{invalid_type}", inner, Crystal::FrozenTypeException
       end
@@ -212,6 +218,7 @@ module Crystal
       node = self
 
       visited = Set(typeof(object_id)).new
+      owner_trace << node if node.type?.try &.includes_type?(owner)
       visited.add node.object_id
       while deps = node.dependencies?
         dependencies = deps.select { |dep| dep.type? && dep.type.includes_type?(owner) && !visited.includes?(dep.object_id) }
