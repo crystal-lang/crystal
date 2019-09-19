@@ -13,6 +13,7 @@ lib LibC
   ENOMEM          =  12
   EACCES          =  13
   EFAULT          =  14
+  ENOTBLK         =  15
   EBUSY           =  16
   EEXIST          =  17
   EXDEV           =  18
@@ -42,6 +43,7 @@ lib LibC
   ENOPROTOOPT     =  42
   EPROTONOSUPPORT =  43
   ENOTSUP         =  45
+  EPFNOSUPPORT    =  46
   EAFNOSUPPORT    =  47
   EADDRINUSE      =  48
   EADDRNOTAVAIL   =  49
