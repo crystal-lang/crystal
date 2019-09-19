@@ -2109,8 +2109,8 @@ class String
   # This returns `true` if this string has `'\\'` in it. It might not be a back reference,
   # but `'\\'` is probably used for back references, so this check is faster than parsing
   # the whole thing.
-  def has_back_references? : Int32?
-    to_slice.index('\\'.ord.to_u8)
+  def has_back_references? : Bool
+    !!to_slice.index('\\'.ord.to_u8)
   end
 
   private def scan_backreferences(replacement, match_data, buffer) : Nil
