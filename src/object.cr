@@ -496,7 +496,7 @@ class Object
 
         def {{method_prefix}}\{{name.id}}
           if (\%value = {{var_prefix}}\{{name.id}}).nil?
-            raise NilAssertionError.new("\{{name.id}} cannot be nil")
+            ::raise NilAssertionError.new("\{{name.id}} cannot be nil")
           else
             \%value
           end
