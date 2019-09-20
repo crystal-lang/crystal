@@ -476,7 +476,7 @@ describe "Codegen: const" do
       def foo
         v1, v2 = 1, 1
         rand(100000..10000000).times do
-          v1, v2 = v2, v1 + v2
+          v1, v2 = v2, v1 &+ v2
         end
         v2
       end

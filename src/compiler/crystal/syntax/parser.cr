@@ -328,6 +328,8 @@ module Crystal
       atomic = parse_question_colon
 
       while true
+        name_location = @token.location
+
         case @token.type
         when :SPACE
           next_token
@@ -428,6 +430,7 @@ module Crystal
           next_token_skip_space_or_newline
           value = parse_op_assign_no_control
           atomic = OpAssign.new(atomic, method, value).at(location)
+          atomic.name_location = name_location
         else
           break
         end
@@ -714,12 +717,14 @@ module Crystal
               atomic.name_location = name_location
               next
             when :"+=", :"-=", :"*=", :"/=", :"//=", :"%=", :"|=", :"&=", :"^=", :"**=", :"<<=", :">>=", :"||=", :"&&=", :"&+=", :"&-=", :"&*="
+              name_location = @token.location
               method = @token.type.to_s.byte_slice(0, @token.type.to_s.size - 1)
               next_token_skip_space_or_newline
               value = parse_op_assign
               call = Call.new(atomic, name).at(location)
               call.name_location = name_location
               atomic = OpAssign.new(call, method, value).at(location)
+              atomic.name_location = name_location
               next
             else
               call_args = preserve_stop_on_do { space_consumed ? parse_call_args_space_consumed : parse_call_args }

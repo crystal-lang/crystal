@@ -8,6 +8,7 @@ module Spec
     error:   :red,
     pending: :yellow,
     comment: :cyan,
+    focus:   :cyan,
   }
 
   private LETTERS = {
@@ -109,68 +110,24 @@ module Spec
     lines << line
   end
 
-  @@split_filter : NamedTuple(remainder: Int32, quotient: Int32)? = nil
+  record SplitFilter, remainder : Int32, quotient : Int32
+
+  @@split_filter : SplitFilter? = nil
 
   def self.add_split_filter(filter)
     if filter
       r, m = filter.split('%').map &.to_i
-      @@split_filter = {remainder: r, quotient: m}
+      @@split_filter = SplitFilter.new(remainder: r, quotient: m)
     else
       @@split_filter = nil
     end
   end
 
-  @@spec_counter = -1
-
-  def self.split_filter_matches
-    split_filter = @@split_filter
-
-    if split_filter
-      @@spec_counter += 1
-      @@spec_counter % split_filter[:quotient] == split_filter[:remainder]
-    else
-      true
-    end
-  end
+  # :nodoc:
+  class_property? fail_fast = false
 
   # :nodoc:
-  def self.matches?(description, file, line, end_line = line)
-    spec_pattern = @@pattern
-    spec_line = @@line
-    locations = @@locations
-
-    # When a method invokes `it` and only forwards line information,
-    # not end_line information (this can happen in code before we
-    # introduced the end_line feature) then running a spec by giving
-    # a line won't work because end_line might be located before line.
-    # So, we also check `line == spec_line` to somehow preserve
-    # backwards compatibility.
-    if spec_line && (line == spec_line || line <= spec_line <= end_line)
-      return true
-    end
-
-    if locations
-      lines = locations[file]?
-      return true if lines && lines.any? { |l| line == l || line <= l <= end_line }
-    end
-
-    if spec_pattern || spec_line || locations
-      Spec::RootContext.matches?(description, spec_pattern, spec_line, locations)
-    else
-      true
-    end
-  end
-
-  @@fail_fast = false
-
-  # :nodoc:
-  def self.fail_fast=(@@fail_fast)
-  end
-
-  # :nodoc:
-  def self.fail_fast?
-    @@fail_fast
-  end
+  class_property? focus = false
 
   # Instructs the spec runner to execute the given block
   # before each spec, regardless of where this method is invoked.
@@ -199,10 +156,37 @@ module Spec
   # :nodoc:
   def self.run
     start_time = Time.monotonic
+
     at_exit do
+      run_filters
+      root_context.run
+    ensure
       elapsed_time = Time.monotonic - start_time
-      Spec::RootContext.finish(elapsed_time, @@aborted)
-      exit 1 unless Spec::RootContext.succeeded && !@@aborted
+      root_context.finish(elapsed_time, @@aborted)
+      exit 1 unless root_context.succeeded && !@@aborted
+    end
+  end
+
+  # :nodoc:
+  def self.run_filters
+    if pattern = @@pattern
+      root_context.filter_by_pattern(pattern)
+    end
+
+    if line = @@line
+      root_context.filter_by_line(line)
+    end
+
+    if locations = @@locations
+      root_context.filter_by_locations(locations)
+    end
+
+    if split_filter = @@split_filter
+      root_context.filter_by_split(split_filter)
+    end
+
+    if focus = @@focus
+      root_context.filter_by_focus
     end
   end
 end

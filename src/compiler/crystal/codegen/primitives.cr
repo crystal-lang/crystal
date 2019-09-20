@@ -14,7 +14,7 @@ class Crystal::CodeGenVisitor
   end
 
   def codegen_primitive(call, node, target_def, call_args)
-    @call_location = call.name_location if call && call.location
+    @call_location = call.try &.name_location
 
     @last = case node.name
             when "binary"
@@ -177,8 +177,8 @@ class Crystal::CodeGenVisitor
   end
 
   def codegen_binary_op_add(t : IntegerType, t1, t2, p1, p2)
-    # TODO remove on 0.28
-    return codegen_trunc_binary_op_result(t1, t2, builder.add(p1, p2)) unless @program.has_flag?("preview_overflow")
+    # TODO remove on 0.32.0
+    return codegen_trunc_binary_op_result(t1, t2, builder.add(p1, p2)) if @program.has_flag?("disable_overflow")
 
     llvm_fun = case t.kind
                when :i8
@@ -209,8 +209,8 @@ class Crystal::CodeGenVisitor
   end
 
   def codegen_binary_op_sub(t : IntegerType, t1, t2, p1, p2)
-    # TODO remove on 0.28
-    return codegen_trunc_binary_op_result(t1, t2, builder.sub(p1, p2)) unless @program.has_flag?("preview_overflow")
+    # TODO remove on 0.32
+    return codegen_trunc_binary_op_result(t1, t2, builder.sub(p1, p2)) if @program.has_flag?("disable_overflow")
 
     llvm_fun = case t.kind
                when :i8
@@ -241,8 +241,8 @@ class Crystal::CodeGenVisitor
   end
 
   def codegen_binary_op_mul(t : IntegerType, t1, t2, p1, p2)
-    # TODO remove on 0.28
-    return codegen_trunc_binary_op_result(t1, t2, builder.mul(p1, p2)) unless @program.has_flag?("preview_overflow")
+    # TODO remove on 0.32
+    return codegen_trunc_binary_op_result(t1, t2, builder.mul(p1, p2)) if @program.has_flag?("disable_overflow")
 
     llvm_fun = case t.kind
                when :i8
@@ -638,17 +638,17 @@ class Crystal::CodeGenVisitor
     end
 
     @last = case op
-            when "+"  then builder.fadd p1, p2
-            when "-"  then builder.fsub p1, p2
-            when "*"  then builder.fmul p1, p2
-            when "/"  then builder.fdiv p1, p2
-            when "==" then return builder.fcmp LLVM::RealPredicate::OEQ, p1, p2
-            when "!=" then return builder.fcmp LLVM::RealPredicate::ONE, p1, p2
-            when "<"  then return builder.fcmp LLVM::RealPredicate::OLT, p1, p2
-            when "<=" then return builder.fcmp LLVM::RealPredicate::OLE, p1, p2
-            when ">"  then return builder.fcmp LLVM::RealPredicate::OGT, p1, p2
-            when ">=" then return builder.fcmp LLVM::RealPredicate::OGE, p1, p2
-            else           raise "BUG: trying to codegen #{t1} #{op} #{t2}"
+            when "+"         then builder.fadd p1, p2
+            when "-"         then builder.fsub p1, p2
+            when "*"         then builder.fmul p1, p2
+            when "/", "fdiv" then builder.fdiv p1, p2
+            when "=="        then return builder.fcmp LLVM::RealPredicate::OEQ, p1, p2
+            when "!="        then return builder.fcmp LLVM::RealPredicate::ONE, p1, p2
+            when "<"         then return builder.fcmp LLVM::RealPredicate::OLT, p1, p2
+            when "<="        then return builder.fcmp LLVM::RealPredicate::OLE, p1, p2
+            when ">"         then return builder.fcmp LLVM::RealPredicate::OGT, p1, p2
+            when ">="        then return builder.fcmp LLVM::RealPredicate::OGE, p1, p2
+            else                  raise "BUG: trying to codegen #{t1} #{op} #{t2}"
             end
     @last = trunc_float t1, @last if t1.rank < t2.rank
     @last
@@ -673,8 +673,8 @@ class Crystal::CodeGenVisitor
       # if the normal_rank is the same (eg: UInt64 / Int64)
       # there is still chance for overflow
 
-      # TODO remove conditional after 0.28
-      if @program.has_flag?("preview_overflow")
+      # TODO remove conditional after 0.32
+      unless @program.has_flag?("disable_overflow")
         if checked
           overflow = codegen_out_of_range(to_type, from_type, arg)
           codegen_raise_overflow_cond(overflow)
@@ -685,8 +685,8 @@ class Crystal::CodeGenVisitor
     elsif from_type.rank < to_type.rank
       extend_int from_type, to_type, arg
     else
-      # TODO remove conditional after 0.28
-      if @program.has_flag?("preview_overflow")
+      # TODO remove conditional after 0.32
+      unless @program.has_flag?("disable_overflow")
         if checked
           overflow = codegen_out_of_range(to_type, from_type, arg)
           codegen_raise_overflow_cond(overflow)
@@ -698,8 +698,8 @@ class Crystal::CodeGenVisitor
   end
 
   def codegen_convert(from_type : IntegerType, to_type : FloatType, arg, *, checked : Bool)
-    # TODO remove conditional after 0.28
-    if @program.has_flag?("preview_overflow")
+    # TODO remove conditional after 0.32
+    unless @program.has_flag?("disable_overflow")
       if checked
         if from_type.kind == :u128 && to_type.kind == :f32
           overflow = codegen_out_of_range(to_type, from_type, arg)
@@ -712,8 +712,8 @@ class Crystal::CodeGenVisitor
   end
 
   def codegen_convert(from_type : FloatType, to_type : IntegerType, arg, *, checked : Bool)
-    # TODO remove conditional after 0.28
-    if @program.has_flag?("preview_overflow")
+    # TODO remove conditional after 0.32
+    unless @program.has_flag?("disable_overflow")
       if checked
         overflow = codegen_out_of_range(to_type, from_type, arg)
         codegen_raise_overflow_cond(overflow)
@@ -727,8 +727,8 @@ class Crystal::CodeGenVisitor
     if from_type.rank < to_type.rank
       extend_float to_type, arg
     elsif from_type.rank > to_type.rank
-      # TODO remove conditional after 0.28
-      if @program.has_flag?("preview_overflow")
+      # TODO remove conditional after 0.32
+      unless @program.has_flag?("disable_overflow")
         if checked
           overflow = codegen_out_of_range(to_type, from_type, arg)
           codegen_raise_overflow_cond(overflow)

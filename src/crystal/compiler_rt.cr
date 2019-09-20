@@ -1,7 +1,10 @@
 # Low Level Runtime Functions for LLVM.
 # The function definitions and explinations can be found here.
 # https://gcc.gnu.org/onlinedocs/gccint/Libgcc.html#Libgcc
-{% skip_file unless flag?(:compiler_rt) %}
+
+{% skip_file if flag?(:skip_crystal_compiler_rt) %}
+
+require "./compiler_rt/mulodi4.cr"
 
 struct Int128Info
   property low : UInt64 = 0_u64, high : Int64 = 0_i64
@@ -75,46 +78,6 @@ def __multi3(a : Int128, b : Int128) : Int128
   r.high += (x.high * y.low + x.low * y.high).unsafe_as(Int64)
 
   r.unsafe_as(Int128)
-end
-
-# Functions for returning the product with overflow eg. `a * b`
-# NOTE: This is not in the GCC spec
-# fun __mulosi4(a : Int32, b : Int32, overflow : Int32*) : Int32
-fun __mulodi4(a : Int64, b : Int64, overflow : Int32*) : Int64
-  n = 64
-  min = Int64::MIN
-  max = Int64::MAX
-  overflow.value = 0
-  result = a &* b
-  if a == min
-    if b != 0 && b != 1
-      overflow.value = 1
-    end
-    return result
-  end
-  if b == min
-    if a != 0 && a != 1
-      overflow.value = 1
-    end
-    return result
-  end
-  sa = a >> (n &- 1)
-  abs_a = (a ^ sa) &- sa
-  sb = b >> (n &- 1)
-  abs_b = (b ^ sb) &- sb
-  if abs_a < 2 || abs_b < 2
-    return result
-  end
-  if sa == sb
-    if abs_a > max // abs_b
-      overflow.value = 1
-    end
-  else
-    if abs_a > min // (0i64 &- abs_b)
-      overflow.value = 1
-    end
-  end
-  return result
 end
 
 fun __muloti4(a : Int128, b : Int128, overflow : Int32*) : Int128

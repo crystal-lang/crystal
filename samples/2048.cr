@@ -156,8 +156,8 @@ class Drawer
     tile_value = (content == "empty" ? 0 : (content.to_i? || 0)).to_i
     content = "" if !@content_line || content == "empty"
 
-    fill_size = INNER_CELL_WIDTH / 2
-    fill_size -= content.size / 2
+    fill_size = INNER_CELL_WIDTH // 2
+    fill_size -= content.size // 2
     fill_size -= 2
 
     print fill

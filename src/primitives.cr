@@ -270,7 +270,7 @@ end
   {% ints = %w(Int8 Int16 Int32 Int64 Int128 UInt8 UInt16 UInt32 UInt64 UInt128) %}
   {% floats = %w(Float32 Float64) %}
   {% nums = %w(Int8 Int16 Int32 Int64 Int128 UInt8 UInt16 UInt32 UInt64 UInt128 Float32 Float64) %}
-  {% binaries = {"+" => "adding", "-" => "subtracting", "*" => "multiplying", "/" => "dividing"} %}
+  {% binaries = {"+" => "adding", "-" => "subtracting", "*" => "multiplying"} %}
 
   {% for num in nums %}
     struct {{num.id}}
@@ -334,20 +334,18 @@ end
 
       {% for int2 in ints %}
         {% for op, desc in binaries %}
-          {% if op != "/" %}
-            # Returns the result of {{desc.id}} `self` and *other*.
-            # Raises `OverflowError` in case of overflow.
-            @[Primitive(:binary)]
-            @[Raises]
-            def {{op.id}}(other : {{int2.id}}) : self
-            end
+          # Returns the result of {{desc.id}} `self` and *other*.
+          # Raises `OverflowError` in case of overflow.
+          @[Primitive(:binary)]
+          @[Raises]
+          def {{op.id}}(other : {{int2.id}}) : self
+          end
 
-            # Returns the result of {{desc.id}} `self` and *other*.
-            # In case of overflow a wrapping is performed.
-            @[Primitive(:binary)]
-            def &{{op.id}}(other : {{int2.id}}) : self
-            end
-          {% end %}
+          # Returns the result of {{desc.id}} `self` and *other*.
+          # In case of overflow a wrapping is performed.
+          @[Primitive(:binary)]
+          def &{{op.id}}(other : {{int2.id}}) : self
+          end
         {% end %}
 
         # Returns the result of performing a bitwise OR of `self`'s and *other*'s bits.
@@ -407,6 +405,11 @@ end
           end
         {% end %}
       {% end %}
+
+      # Returns the result of division `self` and *other*.
+      @[Primitive(:binary)]
+      def /(other : {{float.id}}) : {{float.id}}
+      end
     end
   {% end %}
 {% end %}

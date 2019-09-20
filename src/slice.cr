@@ -533,8 +533,8 @@ struct Slice(T)
 
   # Combined comparison operator.
   #
-  # Returns `-1`, `0` or `1` depending on whether `self` is less than *other*, equals *other*
-  # or is greater than *other*.
+  # Returns a negative number, `0`, or a positive number depending on
+  # whether `self` is less than *other*, equals *other*.
   #
   # It compares the elements of both slices in the same position using the
   # `<=>` operator. As soon as one of such comparisons returns a non-zero
@@ -543,8 +543,8 @@ struct Slice(T)
   # If all elements are equal, the comparison is based on the size of the arrays.
   #
   # ```
-  # Bytes[8] <=> Bytes[1, 2, 3] # => 1
-  # Bytes[2] <=> Bytes[4, 2, 3] # => -1
+  # Bytes[8] <=> Bytes[1, 2, 3] # => 7
+  # Bytes[2] <=> Bytes[4, 2, 3] # => -2
   # Bytes[1, 2] <=> Bytes[1, 2] # => 0
   # ```
   def <=>(other : Slice(U)) forall U

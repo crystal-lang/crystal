@@ -1889,6 +1889,28 @@ module Crystal
         loc = node.location.not_nil!
         loc.line_number.should eq(2)
       end
+
+      it "sets location of +=" do
+        parser = Parser.new("a = 1; a += 2")
+        node = parser.parse.as(Expressions).expressions[1]
+
+        node.name_location.should_not be_nil
+        name_location = node.name_location.not_nil!
+
+        name_location.line_number.should eq(1)
+        name_location.column_number.should eq(10)
+      end
+
+      it "sets location of obj.x += as call" do
+        parser = Parser.new("a = 1; a.x += 2")
+        node = parser.parse.as(Expressions).expressions[1]
+
+        node.name_location.should_not be_nil
+        name_location = node.name_location.not_nil!
+
+        name_location.line_number.should eq(1)
+        name_location.column_number.should eq(12)
+      end
     end
   end
 end

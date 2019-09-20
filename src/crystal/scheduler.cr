@@ -136,12 +136,15 @@ class Crystal::Scheduler
   {% end %}
 
   protected def reschedule : Nil
-    if runnable = @lock.sync { @runnables.shift? }
-      unless runnable == Fiber.current
-        runnable.resume
+    loop do
+      if runnable = @lock.sync { @runnables.shift? }
+        unless runnable == Fiber.current
+          runnable.resume
+        end
+        break
+      else
+        Crystal::EventLoop.run_once
       end
-    else
-      Crystal::EventLoop.resume
     end
 
     {% if flag?(:preview_mt) %}

@@ -190,7 +190,7 @@ describe "Code gen: if" do
       else
         n
       end
-      z.to_i
+      z.to_i!
       )).to_i.should eq(3)
   end
 

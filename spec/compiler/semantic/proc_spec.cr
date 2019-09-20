@@ -958,4 +958,31 @@ describe "Semantic: proc" do
 
     ex.to_s.should contain "'bar' exists as a macro, but macros can't be used in proc pointers"
   end
+
+  it "virtualizes proc type (#6789)" do
+    assert_type(%(
+      class Foo
+      end
+
+      class Bar < Foo
+      end
+
+      class Capture(T)
+        def initialize(@block : Foo -> T)
+        end
+
+        def block
+          @block
+        end
+      end
+
+      def capture(&block : Foo -> T) forall T
+        Capture.new(block)
+      end
+
+      capture do |foo|
+        Foo.new
+      end.block
+      )) { proc_of(types["Foo"].virtual_type!, types["Foo"].virtual_type!) }
+  end
 end

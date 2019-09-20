@@ -126,9 +126,9 @@ class URI
   # ```
   # require "uri"
   #
-  # URI.encode_www_form("hello world!")                    # => "hello+world%21")
-  # URI.encode_www_form("put: it+й")                       # => "put%3A+it%2B%D0%B9"
-  # URI.encode("http://example.com/Crystal is awesome =)") # => "http%3A%2F%2Fexample.com%2FCrystal+is+awesome+%3D%29"
+  # URI.encode_www_form("hello world!")                             # => "hello+world%21"
+  # URI.encode_www_form("put: it+й")                                # => "put%3A+it%2B%D0%B9"
+  # URI.encode_www_form("http://example.com/Crystal is awesome =)") # => "http%3A%2F%2Fexample.com%2FCrystal+is+awesome+%3D%29"
   # ```
   #
   # The encoded string returned from this method can be used as name or value
@@ -143,8 +143,7 @@ class URI
   # require "uri"
   #
   # URI.encode_www_form("peter + paul")                       # => "peter+%2B+paul"
-  # URI.encode_www_form("peter + paul", space_to_plus: false) # => "peter%20+%20paul"
-  # ```
+  # URI.encode_www_form("peter + paul", space_to_plus: false) # => "peter%20%2B%20paul"
   # ```
   #
   # * `.decode_www_form` is the reverse operation.

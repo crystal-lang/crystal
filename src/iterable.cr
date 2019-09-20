@@ -18,7 +18,7 @@ module Iterable(T)
   # based on the return value of the block.
   #
   # ```
-  # (0..7).chunk(&./(3)).to_a # => [{0, [0, 1, 2]}, {1, [3, 4, 5]}, {2, [6, 7]}]
+  # (0..7).chunk(&.//(3)).to_a # => [{0, [0, 1, 2]}, {1, [3, 4, 5]}, {2, [6, 7]}]
   # ```
   #
   # See also: `Iterator#chunks`.

@@ -5,6 +5,8 @@ require "crystal/system/group"
 # Groups can be retrieved by either group name or their group ID:
 #
 # ```
+# require "system/group"
+#
 # System::Group.find_by name: "staff"
 # System::Group.find_by id: "0"
 # ```

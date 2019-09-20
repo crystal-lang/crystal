@@ -59,6 +59,16 @@ struct BigRational < Number
     end
   end
 
+  # Creates a `BigRational` from the given *num*.
+  def self.new(num : BigRational)
+    num
+  end
+
+  # :ditto:
+  def self.new(num : BigDecimal)
+    num.to_big_r
+  end
+
   # :nodoc:
   def initialize(@mpq : LibGMP::MPQ)
   end
@@ -123,13 +133,7 @@ struct BigRational < Number
     BigRational.new { |mpq| LibGMP.mpq_div(mpq, self, other) }
   end
 
-  def /(other : Int)
-    self / other.to_big_r
-  end
-
-  def //(other)
-    (self / other).floor
-  end
+  Number.expand_div [BigInt, BigFloat, BigDecimal], BigRational
 
   def ceil
     diff = (denominator - numerator % denominator) % denominator
@@ -227,8 +231,14 @@ struct BigRational < Number
     to_f64!
   end
 
+  delegate to_i8, to_i16, to_i32, to_i64, to_u8, to_u16, to_u32, to_u64, to: to_f64
+
   def to_big_f
     BigFloat.new { |mpf| LibGMP.mpf_set_q(mpf, mpq) }
+  end
+
+  def to_big_i
+    BigInt.new { |mpz| LibGMP.set_q(mpz, mpq) }
   end
 
   # Returns the string representing this rational.
@@ -309,10 +319,6 @@ struct Int
 
   def /(other : BigRational)
     self.to_big_r / other
-  end
-
-  def //(other : BigRational)
-    self.to_big_r // other
   end
 
   def *(other : BigRational)

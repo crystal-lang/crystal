@@ -47,7 +47,7 @@ describe "Codegen: class var" do
 
   it "codegens class var as nil if assigned for the first time inside method" do
     run("
-      struct Nil; def to_i; 0; end; end
+      struct Nil; def to_i!; 0; end; end
 
       class Foo
         def self.foo
@@ -56,7 +56,7 @@ describe "Codegen: class var" do
         end
       end
 
-      Foo.foo.to_i
+      Foo.foo.to_i!
       ").to_i.should eq(1)
   end
 
@@ -576,5 +576,33 @@ describe "Codegen: class var" do
     ))
 
     mod.to_s.should_not contain("x:init")
+  end
+
+  it "catch infinite loop in class var initializer" do
+    run(%(
+      require "prelude"
+
+      module Crystal
+        def self.main_user_code(argc : Int32, argv : UInt8**)
+          LibCrystalMain.__crystal_main(argc, argv)
+        rescue ex
+          print "error: \#{ex.message}"
+        end
+      end
+
+      class Foo
+        @@x : Int32 = init
+
+        def self.init
+          @@x + 1
+        end
+
+        def self.x
+          @@x
+        end
+      end
+
+      nil
+    )).to_string.should eq("error: Recursion while initializing class variables and/or constants")
   end
 end

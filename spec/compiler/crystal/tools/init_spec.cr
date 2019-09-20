@@ -1,9 +1,11 @@
+require "compiler/crystal/syntax"
 require "compiler/crystal/config"
 require "compiler/crystal/tools/init"
 require "file_utils"
 require "ini"
 require "spec"
 require "yaml"
+require "../../../support/tempfile"
 
 private def exec_init(project_name, project_dir = nil, type = "lib", force = false, skip_existing = false)
   args = [type, project_name]
@@ -27,12 +29,8 @@ private def within_temporary_directory
   end
 end
 
-private def describe_file(name, &block : String ->)
-  describe name do
-    it "has proper contents" do
-      block.call(File.read(name))
-    end
-  end
+private def with_file(name)
+  yield File.read(name)
 end
 
 private def run_init_project(skeleton_type, name, author, email, github_name, dir = name)
@@ -43,58 +41,59 @@ end
 
 module Crystal
   describe Init::InitProject do
-    within_temporary_directory do
-      run_init_project("lib", "example", "John Smith", "john@smith.com", "jsmith")
-      run_init_project("app", "example_app", "John Smith", "john@smith.com", "jsmith")
-      run_init_project("lib", "example-lib", "John Smith", "john@smith.com", "jsmith")
-      run_init_project("lib", "camel_example-camel_lib", "John Smith", "john@smith.com", "jsmith")
-      run_init_project("lib", "example", "John Smith", "john@smith.com", "jsmith", dir: "other-example-directory")
+    it "has proper contents" do
+      within_temporary_directory do
+        run_init_project("lib", "example", "John Smith", "john@smith.com", "jsmith")
+        run_init_project("app", "example_app", "John Smith", "john@smith.com", "jsmith")
+        run_init_project("lib", "example-lib", "John Smith", "john@smith.com", "jsmith")
+        run_init_project("lib", "camel_example-camel_lib", "John Smith", "john@smith.com", "jsmith")
+        run_init_project("lib", "example", "John Smith", "john@smith.com", "jsmith", dir: "other-example-directory")
 
-      describe_file "example-lib/src/example-lib.cr" do |file|
-        file.should contain("Example::Lib")
-      end
-
-      describe_file "camel_example-camel_lib/src/camel_example-camel_lib.cr" do |file|
-        file.should contain("CamelExample::CamelLib")
-      end
-
-      describe_file "example/.gitignore" do |gitignore|
-        gitignore.should contain("/docs/")
-        gitignore.should contain("/.shards/")
-        gitignore.should contain("/shard.lock")
-        gitignore.should contain("/lib/")
-      end
-
-      describe_file "example_app/.gitignore" do |gitignore|
-        gitignore.should contain("/docs/")
-        gitignore.should contain("/.shards/")
-        gitignore.should_not contain("/shard.lock")
-        gitignore.should contain("/lib/")
-      end
-
-      {"example", "example_app", "example-lib", "camel_example-camel_lib"}.each do |name|
-        describe_file "#{name}/.editorconfig" do |editorconfig|
-          parsed = INI.parse(editorconfig)
-          parsed[""]["root"].should eq("true")
-          cr_ext = parsed["*.cr"]
-          cr_ext["charset"].should eq("utf-8")
-          cr_ext["end_of_line"].should eq("lf")
-          cr_ext["insert_final_newline"].should eq("true")
-          cr_ext["indent_style"].should eq("space")
-          cr_ext["indent_size"].should eq("2")
-          cr_ext["trim_trailing_whitespace"].should eq("true")
+        with_file "example-lib/src/example-lib.cr" do |file|
+          file.should contain("Example::Lib")
         end
-      end
 
-      describe_file "example/LICENSE" do |license|
-        license.should match %r{Copyright \(c\) \d+ John Smith}
-      end
+        with_file "camel_example-camel_lib/src/camel_example-camel_lib.cr" do |file|
+          file.should contain("CamelExample::CamelLib")
+        end
 
-      describe_file "example/README.md" do |readme|
-        readme.should contain("# example")
+        with_file "example/.gitignore" do |gitignore|
+          gitignore.should contain("/docs/")
+          gitignore.should contain("/.shards/")
+          gitignore.should contain("/shard.lock")
+          gitignore.should contain("/lib/")
+        end
 
-        readme.should contain(%{1. Add the dependency to your `shard.yml`:})
-        readme.should contain(<<-EOF
+        with_file "example_app/.gitignore" do |gitignore|
+          gitignore.should contain("/docs/")
+          gitignore.should contain("/.shards/")
+          gitignore.should_not contain("/shard.lock")
+          gitignore.should contain("/lib/")
+        end
+
+        {"example", "example_app", "example-lib", "camel_example-camel_lib"}.each do |name|
+          with_file "#{name}/.editorconfig" do |editorconfig|
+            parsed = INI.parse(editorconfig)
+            parsed[""]["root"].should eq("true")
+            cr_ext = parsed["*.cr"]
+            cr_ext["charset"].should eq("utf-8")
+            cr_ext["end_of_line"].should eq("lf")
+            cr_ext["insert_final_newline"].should eq("true")
+            cr_ext["indent_style"].should eq("space")
+            cr_ext["indent_size"].should eq("2")
+            cr_ext["trim_trailing_whitespace"].should eq("true")
+          end
+        end
+
+        with_file "example/LICENSE" do |license|
+          license.should match %r{Copyright \(c\) \d+ John Smith}
+        end
+
+        with_file "example/README.md" do |readme|
+          readme.should contain("# example")
+
+          readme.should contain(%{1. Add the dependency to your `shard.yml`:})
+          readme.should contain(<<-EOF
 
            ```yaml
            dependencies:
@@ -103,22 +102,22 @@ module Crystal
            ```
 
         EOF
-        )
-        readme.should contain(%{2. Run `shards install`})
-        readme.should contain(%{TODO: Write a description here})
-        readme.should_not contain(%{TODO: Write installation instructions here})
-        readme.should contain(%{require "example"})
-        readme.should contain(%{1. Fork it (<https://github.com/jsmith/example/fork>)})
-        readme.should contain(%{[John Smith](https://github.com/jsmith) - creator and maintainer})
-      end
+          )
+          readme.should contain(%{2. Run `shards install`})
+          readme.should contain(%{TODO: Write a description here})
+          readme.should_not contain(%{TODO: Write installation instructions here})
+          readme.should contain(%{require "example"})
+          readme.should contain(%{1. Fork it (<https://github.com/jsmith/example/fork>)})
+          readme.should contain(%{[John Smith](https://github.com/jsmith) - creator and maintainer})
+        end
 
-      describe_file "example_app/README.md" do |readme|
-        readme.should contain("# example")
+        with_file "example_app/README.md" do |readme|
+          readme.should contain("# example")
 
-        readme.should contain(%{TODO: Write a description here})
+          readme.should contain(%{TODO: Write a description here})
 
-        readme.should_not contain(%{1. Add the dependency to your `shard.yml`:})
-        readme.should_not contain(<<-EOF
+          readme.should_not contain(%{1. Add the dependency to your `shard.yml`:})
+          readme.should_not contain(<<-EOF
 
            ```yaml
            dependencies:
@@ -127,37 +126,37 @@ module Crystal
            ```
 
         EOF
-        )
-        readme.should_not contain(%{2. Run `shards install`})
-        readme.should contain(%{TODO: Write installation instructions here})
-        readme.should_not contain(%{require "example"})
-        readme.should contain(%{1. Fork it (<https://github.com/jsmith/example_app/fork>)})
-        readme.should contain(%{[John Smith](https://github.com/jsmith) - creator and maintainer})
-      end
+          )
+          readme.should_not contain(%{2. Run `shards install`})
+          readme.should contain(%{TODO: Write installation instructions here})
+          readme.should_not contain(%{require "example"})
+          readme.should contain(%{1. Fork it (<https://github.com/jsmith/example_app/fork>)})
+          readme.should contain(%{[John Smith](https://github.com/jsmith) - creator and maintainer})
+        end
 
-      describe_file "example/shard.yml" do |shard_yml|
-        parsed = YAML.parse(shard_yml)
-        parsed["name"].should eq("example")
-        parsed["version"].should eq("0.1.0")
-        parsed["authors"].should eq(["John Smith <john@smith.com>"])
-        parsed["license"].should eq("MIT")
-        parsed["crystal"].should eq(Crystal::Config.version)
-        parsed["targets"]?.should be_nil
-      end
+        with_file "example/shard.yml" do |shard_yml|
+          parsed = YAML.parse(shard_yml)
+          parsed["name"].should eq("example")
+          parsed["version"].should eq("0.1.0")
+          parsed["authors"].should eq(["John Smith <john@smith.com>"])
+          parsed["license"].should eq("MIT")
+          parsed["crystal"].should eq(Crystal::Config.version)
+          parsed["targets"]?.should be_nil
+        end
 
-      describe_file "example_app/shard.yml" do |shard_yml|
-        parsed = YAML.parse(shard_yml)
-        parsed["targets"].should eq({"example_app" => {"main" => "src/example_app.cr"}})
-      end
+        with_file "example_app/shard.yml" do |shard_yml|
+          parsed = YAML.parse(shard_yml)
+          parsed["targets"].should eq({"example_app" => {"main" => "src/example_app.cr"}})
+        end
 
-      describe_file "example/.travis.yml" do |travis|
-        parsed = YAML.parse(travis)
+        with_file "example/.travis.yml" do |travis|
+          parsed = YAML.parse(travis)
 
-        parsed["language"].should eq("crystal")
-      end
+          parsed["language"].should eq("crystal")
+        end
 
-      describe_file "example/src/example.cr" do |example|
-        example.should eq(<<-EOF
+        with_file "example/src/example.cr" do |example|
+          example.should eq(<<-EOF
         # TODO: Write documentation for `Example`
         module Example
           VERSION = "0.1.0"
@@ -166,20 +165,20 @@ module Crystal
         end
 
         EOF
-        )
-      end
+          )
+        end
 
-      describe_file "example/spec/spec_helper.cr" do |example|
-        example.should eq(<<-EOF
+        with_file "example/spec/spec_helper.cr" do |example|
+          example.should eq(<<-EOF
         require "spec"
         require "../src/example"
 
         EOF
-        )
-      end
+          )
+        end
 
-      describe_file "example/spec/example_spec.cr" do |example|
-        example.should eq(<<-EOF
+        with_file "example/spec/example_spec.cr" do |example|
+          example.should eq(<<-EOF
         require "./spec_helper"
 
         describe Example do
@@ -191,12 +190,13 @@ module Crystal
         end
 
         EOF
-        )
+          )
+        end
+
+        with_file "example/.git/config" { }
+
+        with_file "other-example-directory/.git/config" { }
       end
-
-      describe_file "example/.git/config" { }
-
-      describe_file "other-example-directory/.git/config" { }
     end
   end
 

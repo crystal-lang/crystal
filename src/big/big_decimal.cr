@@ -37,6 +37,9 @@ struct BigDecimal < Number
   end
 
   # Creates a new `BigDecimal` from `BigRational`.
+  #
+  # NOTE: BigRational are fundamentally more precise than BigDecimals,
+  # which makes initialization from them risky.
   def self.new(num : BigRational)
     num.numerator.to_big_d / num.denominator.to_big_d
   end
@@ -191,13 +194,8 @@ struct BigDecimal < Number
     div other
   end
 
-  def /(other : Int)
-    self / BigDecimal.new(other)
-  end
-
-  def //(other)
-    (self / other).floor
-  end
+  Number.expand_div [BigInt, BigFloat], BigDecimal
+  Number.expand_div [BigRational], BigRational
 
   # Divides `self` with another `BigDecimal`, with a optionally configurable *max_div_iterations*, which
   # defines a maximum number of iterations in case the division is not exact.
@@ -332,17 +330,26 @@ struct BigDecimal < Number
     end
   end
 
+  # Converts to `BigInt`. Truncates anything on the right side of the decimal point.
+  def to_big_i
+    if self >= 0
+      self.floor.value
+    else
+      self.ceil.value
+    end
+  end
+
+  # Converts to `BigFloat`.
+  def to_big_f
+    BigFloat.new(to_s)
+  end
+
   def to_big_d
     self
   end
 
-  # Converts to `BigInt`. Truncates anything on the right side of the decimal point.
-  def to_big_i
-    if @value >= 0
-      (@value // TEN ** @scale)
-    else
-      -(@value.abs // TEN ** @scale)
-    end
+  def to_big_r
+    BigRational.new(self.value, BigDecimal::TEN ** self.scale)
   end
 
   # Converts to `Int64`. Truncates anything on the right side of the decimal point.
@@ -515,11 +522,6 @@ struct BigDecimal < Number
     to_f64!
   end
 
-  # Converts to `BigFloat`.
-  def to_big_f
-    BigFloat.new(to_s)
-  end
-
   def clone
     self
   end
@@ -585,14 +587,6 @@ struct Int
 
   def *(other : BigDecimal)
     other * self
-  end
-
-  def /(other : BigDecimal)
-    to_big_d / other
-  end
-
-  def //(other : BigDecimal)
-    to_big_d // other
   end
 end
 

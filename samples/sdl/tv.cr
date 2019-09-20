@@ -132,8 +132,8 @@ while true
 
   surface.lock
 
-  (height / 10).times do |h|
-    (width / 10).times do |w|
+  (height // 10).times do |h|
+    (width // 10).times do |w|
       rect = rects.find { |rect| rect.contains?(w, h) }
       10.times do |y|
         10.times do |x|

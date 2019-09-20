@@ -530,7 +530,7 @@ class Crystal::Command
 
   private def setup_compiler_warning_options(opts, compiler)
     compiler.warnings_exclude << Crystal.normalize_path "lib"
-    opts.on("--warnings all|none", "Which warnings detect. (default: none)") do |w|
+    opts.on("--warnings all|none", "Which warnings detect. (default: all)") do |w|
       compiler.warnings = case w
                           when "all"
                             Crystal::Warnings::All

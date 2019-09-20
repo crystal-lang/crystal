@@ -1,3 +1,5 @@
+require "./codegen/target"
+
 module Crystal
   module Config
     def self.path

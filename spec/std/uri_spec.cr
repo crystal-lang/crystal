@@ -99,10 +99,6 @@ describe "URI" do
     assert_uri("http://example.com//foo", scheme: "http", host: "example.com", path: "//foo")
     assert_uri("///foo", host: "", path: "/foo")
 
-    pending "path with escape" do
-      assert_uri("http://www.example.com/file%20one%26two", scheme: "http", host: "example.com", path: "/file one&two", raw_path: "/file%20one%26two")
-    end
-
     # query
     assert_uri("http://www.example.com/foo?q=1", scheme: "http", host: "www.example.com", path: "/foo", query: "q=1")
     assert_uri("http://www.example.com/foo?", scheme: "http", host: "www.example.com", path: "/foo", query: "")

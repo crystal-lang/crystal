@@ -55,7 +55,7 @@ describe "Code gen: alias" do
         def self.new(&block : -> T)
         end
 
-        def to_i
+        def to_i!
           0
         end
       end
@@ -70,7 +70,7 @@ describe "Code gen: alias" do
         end
       end
 
-      foo(2).to_i
+      foo(2).to_i!
       )).to_i.should eq(1)
   end
 

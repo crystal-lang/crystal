@@ -236,6 +236,7 @@ module Crystal
 
       # (2) = tmp.exp
       call = Call.new(tmp.clone, target.name).at(node)
+      call.name_location = node.name_location
 
       case node.op
       when "||"
@@ -243,6 +244,7 @@ module Crystal
         #
         # (3) = tmp.exp=(b)
         right = Call.new(tmp.clone, "#{target.name}=", node.value).at(node)
+        right.name_location = node.name_location
 
         # (4) = (2) || (3)
         call = Or.new(call, right).at(node)
@@ -251,15 +253,18 @@ module Crystal
         #
         # (3) = tmp.exp=(b)
         right = Call.new(tmp.clone, "#{target.name}=", node.value).at(node)
+        right.name_location = node.name_location
 
         # (4) = (2) && (3)
         call = And.new(call, right).at(node)
       else
         # (3) = (2) + b
         call = Call.new(call, node.op, node.value).at(node)
+        call.name_location = node.name_location
 
         # (4) = tmp.exp=((3))
         call = Call.new(tmp.clone, "#{target.name}=", call).at(node)
+        call.name_location = node.name_location
       end
 
       # (1); (4)
@@ -313,12 +318,14 @@ module Crystal
         #
         # (2) = tmp[tmp1, tmp2, ...]?
         call = Call.new(tmp.clone, "[]?", tmp_args).at(node)
+        call.name_location = node.name_location
 
         # (3) = tmp[tmp1, tmp2, ...] = b
         args = Array(ASTNode).new(tmp_args.size + 1)
         tmp_args.each { |arg| args << arg.clone }
         args << node.value
         right = Call.new(tmp.clone, "[]=", args).at(node)
+        right.name_location = node.name_location
 
         # (3) = (2) || (4)
         call = Or.new(call, right).at(node)
@@ -327,34 +334,44 @@ module Crystal
         #
         # (2) = tmp[tmp1, tmp2, ...]?
         call = Call.new(tmp.clone, "[]?", tmp_args).at(node)
+        call.name_location = node.name_location
 
         # (3) = tmp[tmp1, tmp2, ...] = b
         args = Array(ASTNode).new(tmp_args.size + 1)
         tmp_args.each { |arg| args << arg.clone }
         args << node.value
         right = Call.new(tmp.clone, "[]=", args).at(node)
+        right.name_location = node.name_location
 
         # (3) = (2) && (4)
         call = And.new(call, right).at(node)
       else
         # (2) = tmp[tmp1, tmp2, ...]
         call = Call.new(tmp.clone, "[]", tmp_args).at(node)
+        call.name_location = node.name_location
 
         # (3) = (2) + b
         call = Call.new(call, node.op, node.value).at(node)
+        call.name_location = node.name_location
 
         # (4) tmp.[]=(tmp1, tmp2, ..., (3))
         args = Array(ASTNode).new(tmp_args.size + 1)
         tmp_args.each { |arg| args << arg.clone }
         args << call
         call = Call.new(tmp.clone, "[]=", args).at(node)
+        call.name_location = node.name_location
       end
 
       # (1); (4)
-      exps = Array(ASTNode).new(tmp_assigns.size + 2)
-      exps.concat(tmp_assigns)
-      exps << call
-      Expressions.new(exps).at(node)
+      if tmp_assigns.empty?
+        call
+      else
+        exps = Array(ASTNode).new(tmp_assigns.size + 2)
+        exps.concat(tmp_assigns)
+        exps << call
+
+        Expressions.new(exps).at(node)
+      end
     end
 
     def transform_op_assign_simple(node, target)
@@ -374,6 +391,7 @@ module Crystal
       else
         # (1) = a + b
         call = Call.new(target, node.op, node.value).at(node)
+        call.name_location = node.name_location
 
         # a = (1)
         Assign.new(target.clone, call).at(node)
