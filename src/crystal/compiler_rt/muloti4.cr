@@ -1,7 +1,5 @@
 # Functions for returning the product of signed multiplication with overflow eg. `a * b`
-# NOTE: This is not in the GCC spec
-
-fun __mulodi4(a : Int64, b : Int64, overflow : Int32*) : Int64
+fun __muloti4(a : Int128, b : Int128, overflow : Int32*) : Int128
   n = 64
   min = Int64::MIN
   max = Int64::MAX
