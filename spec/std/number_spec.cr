@@ -79,6 +79,12 @@ describe "Number" do
       123_456.123456.round(-5).should eq(100_000)
       753.155.round(-5, base: 2).should eq(768)
     end
+
+    it "handle medium amount of digits" do
+      1.098765432109876543210987654321.round(15).should eq(1.098765432109877)
+      1.098765432109876543210987654321.round(21).should eq(1.098765432109876543211)
+      6543210987654321.0.round(-15).should eq(7000000000000000.0)
+    end
   end
 
   describe "clamp" do
