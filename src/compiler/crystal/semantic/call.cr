@@ -1073,7 +1073,7 @@ class Crystal::Call
         owner = owner.as(ProcInstanceType)
         proc_arg_type = owner.arg_types[index]
         unless type.covariant?(proc_arg_type)
-          self.args[index].raise "type must be #{proc_arg_type}, not #{type}"
+          self.args[index].raise "method return type is restricted to #{proc_arg_type} but returns #{type} instead"
         end
       end
 
