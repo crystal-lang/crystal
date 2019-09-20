@@ -112,7 +112,7 @@ jobs:
       - run: |
           git clone https://github.com/crystal-lang/distribution-scripts.git ~/distribution-scripts
           cd ~/distribution-scripts
-          git checkout 4f026790ccff94e250ce8580b736815411eb09a4
+          git checkout 90705311d22e86220fba1b140fe62bfa2662dfdd
       # persist relevant information for build process
       - run: |
           cd ~/distribution-scripts
@@ -260,6 +260,8 @@ jobs:
       - run:
           name: Setup environment
           command: |
+            ruby-install ruby 2.5.6
+
             brew install pkgconfig libtool
 
             sudo mkdir -p /opt/crystal
@@ -271,10 +273,12 @@ jobs:
       - run:
           no_output_timeout: 40m
           command: |
-            echo "2.4.2" > /tmp/workspace/distribution-scripts/.ruby-version
+            echo "2.5.6" > /tmp/workspace/distribution-scripts/.ruby-version
             cd /tmp/workspace/distribution-scripts
             source build.env
             cd omnibus
+            ruby --version
+            gem install bundler -v "$(grep -A 1 "BUNDLED WITH" Gemfile.lock | tail -n 1)"
             bundle check || bundle install --binstubs
             cd ../darwin
             make
