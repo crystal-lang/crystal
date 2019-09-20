@@ -1,7 +1,7 @@
 # Functions for returning the product of unsigned integer multiplication eg. `a * b`
 fun __umuldi3(a : UInt64, b : UInt64) : UInt128
-  r = U128Info.new
-  bits_in_dword_2 = (sizeof(Int64) * 8) / 2
+  r = CompilerRT::U128Info.new
+  bits_in_dword_2 = (sizeof(Int64) * 8) // 2
   lower_mask = ~0_u64 >> bits_in_dword_2
   r.low = (a & lower_mask) * (b & lower_mask)
   t = (r.low >> bits_in_dword_2).unsafe_as(UInt64)
