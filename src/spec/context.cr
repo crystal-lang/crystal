@@ -208,8 +208,8 @@ module Spec
       Spec.formatters.each(&.pop)
     end
 
-    def report(result)
-      parent.report Result.new(result.kind, "#{@description} #{result.description}", result.file, result.line, result.elapsed, result.exception)
+    def report(kind, description, file, line, elapsed = nil, ex = nil)
+      parent.report kind, "#{@description} #{description}", file, line, elapsed, ex
     end
   end
 end
