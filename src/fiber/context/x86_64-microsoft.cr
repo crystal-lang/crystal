@@ -5,30 +5,50 @@ class Fiber
   def makecontext(stack_ptr, fiber_main) : Nil
     # A great explanation on stack contexts for win32:
     # https://cfsamson.gitbook.io/green-threads-explained-in-200-lines-of-rust/supporting-windows
+    #
+    # In x86-64(microsoft), the stack is required to 16-byte alignment before `call`
+    # instruction. Because `stack_ptr` has been aligned, we don't need to reserve
+    # space on alignment. When returning to `entry function`, `RSP + 8` is 16-byte
+    # alignment.
+    #
+    # Initial Stack
+    #
+    # +-----------------------+
+    # |      fiber address    |
+    # +-----------------------+
+    # |      clean helper     | ---> clean first argument and return
+    # +-----------------------+
+    # |     entry function    |
+    # +-----------------------+
+    # |       load helper     | ---> load first argument to %rcx and return to entry function
+    # +-----------------------+
+    # |       stack limit     | ---> %gs:0x10
+    # +-----------------------+
+    # |       stack base      | ---> %gs:0x08
+    # +-----------------------+
 
-    # 8 registers + 2 qwords for NT_TIB + 1 parameter + 10 128bit XMM registers
-    @context.stack_top = (stack_ptr - (11 + 10*2)).as(Void*)
+    @context.stack_top = (stack_ptr - 5).as(Void*)
     @context.resumable = 1
 
-    stack_ptr[0] = fiber_main.pointer # %rbx: Initial `resume` will `ret` to this address
-    stack_ptr[-1] = self.as(Void*)    # %rcx: puts `self` as first argument for `fiber_main`
+    stack_ptr[0] = self.as(Void*) # %rcx: puts `self` as first argument for `fiber_main`
+    stack_ptr[-1] = (->Fiber.clean_first_argument).pointer
+    stack_ptr[-2] = fiber_main.pointer
+    stack_ptr[-3] = (->Fiber.load_first_argument).pointer
 
     # The following two values are stored in the Thread Information Block (NT_TIB)
-    # and are used by Windows to track the current stack limits
-    stack_ptr[-2] = @stack_bottom # %gs:0x08: Stack Bottom
-    stack_ptr[-3] = @stack        # %gs:0x10: Stack Limit
+    # and are used by Windows to track the current stack limits. Hence, these two value
+    # will be updated immediately after switching the stack register.
+    stack_ptr[-4] = @stack        # %gs:0x10: Stack Limit
+    stack_ptr[-5] = @stack_bottom # %gs:0x08: Stack Base
   end
 
-  # :nodoc:
   @[NoInline]
   @[Naked]
-  def self.swapcontext(current_context, new_context) : Nil
+  private def self.suspend_context(current_context, new_context, resume_func)
     asm("
-          pushq %rcx
-          pushq %gs:0x10    // Thread Information Block: Stack Limit
-          pushq %gs:0x08    // Thread Information Block: Stack Base
-          pushq %rdi        // push 1st argument (because of initial resume)
-          pushq %rbx        // push callee-saved registers on the stack
+          pushq %rcx        // for stack alignment
+          pushq %rdi        // push callee-saved registers on the stack
+          pushq %rbx
           pushq %rbp
           pushq %rsi
           pushq %r12
@@ -46,10 +66,24 @@ class Fiber
           movups %xmm13, 0x70(%rsp)
           movups %xmm14, 0x80(%rsp)
           movups %xmm15, 0x90(%rsp)
+          pushq $2          // push resume_context function_pointer
+          pushq %gs:0x10    // Thread Information Block: Stack Limit
+          pushq %gs:0x08    // Thread Information Block: Stack Base
           movq %rsp, 0($0)  // current_context.stack_top = %rsp
           movl $$1, 8($0)   // current_context.resumable = 1
+
           movl $$0, 8($1)   // new_context.resumable = 0
           movq 0($1), %rsp  // %rsp = new_context.stack_top
+          popq %gs:0x08
+          popq %gs:0x10
+          "
+            :: "r"(current_context), "r"(new_context), "r"(resume_func))
+  end
+
+  @[NoInline]
+  @[Naked]
+  private def self.resume_context
+    asm("
           movups 0x00(%rsp), %xmm6 // pop XMM registers
           movups 0x10(%rsp), %xmm7
           movups 0x20(%rsp), %xmm8
@@ -68,11 +102,37 @@ class Fiber
           popq %rsi
           popq %rbp
           popq %rbx
-          popq %rdi         // pop 1st argument (for initial resume)
-          popq %gs:0x08
-          popq %gs:0x10
+          popq %rdi
           popq %rcx
-          "
-            :: "r"(current_context), "r"(new_context))
+          ")
+  end
+
+  # :nodoc:
+  def self.swapcontext(current_context, new_context) : Nil
+    suspend_context current_context, new_context, (->resume_context).pointer
+  end
+
+  @[NoInline]
+  @[Naked]
+  protected def self.load_first_argument
+    # Stack requirement
+    #
+    # |            :           |
+    # |            :           |
+    # +------------------------+
+    # |     first argument     | ---> for rcx register
+    # +------------------------+
+    # |  clean first argument  | ---> clean_first_argument
+    # +------------------------+
+    # |  target function addr  | ---> for pc register
+    # +------------------------+
+
+    asm("movq 0x10(%rsp), %rcx")
+  end
+
+  @[NoInline]
+  @[Naked]
+  protected def self.clean_first_argument
+    asm("popq %rcx")
   end
 end

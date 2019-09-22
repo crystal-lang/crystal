@@ -3,20 +3,33 @@
 class Fiber
   # :nodoc:
   def makecontext(stack_ptr, fiber_main) : Nil
-    # in ARMv8, the context switch push/pop 12 registers and 8 FPU registers,
-    # and one more to store the argument of `fiber_main` (+ alignment), we thus
-    # reserve space for 22 pointers:
-    @context.stack_top = (stack_ptr - 22).as(Void*)
-    @context.resumable = 1
+    # In ARMv8, we need to store the argument of `fiber_main`, `fiber_main` and
+    # a helper function. The helper will assign registers in order to jump to
+    # entry function.
+    #
+    # Initial Stack
+    #
+    # +-------------------------+
+    # |   dummy return address  |
+    # +-------------------------+
+    # |      entry function     |
+    # +-------------------------+
+    # |      fiber address      |
+    # +-------------------------+
+    # |     helper function     | ---> load first argument and jump to entry function
+    # +-------------------------+
 
-    stack_ptr[-2] = self.as(Void*)      # x0 (r0): puts `self` as first argument for `fiber_main`
-    stack_ptr[-14] = fiber_main.pointer # x30 (lr): initial `resume` will `ret` to this address
+    @context.stack_top = (stack_ptr - 3).as(Void*)
+    @context.resumable = 1
+    stack_ptr[0] = Pointer(Void).null
+    stack_ptr[-1] = fiber_main.pointer
+    stack_ptr[-2] = self.as(Void*)
+    stack_ptr[-3] = (->Fiber.load_first_argument).pointer
   end
 
-  # :nodoc:
   @[NoInline]
   @[Naked]
-  def self.swapcontext(current_context, new_context) : Nil
+  private def self.suspend_context(current_context, new_context, resume_func)
     # adapted from https://github.com/ldc-developers/druntime/blob/ldc/src/core/threadasm.S
     #
     # preserve/restore AAPCS64 registers:
@@ -33,10 +46,22 @@ class Fiber
     # AArch64 assembly also requires a register to load/store the stack top
     # pointer. We use x19 as a scratch register again.
     #
-    # Eventually reset LR to zero to avoid the ARM unwinder to mistake the
-    # context switch as a regular call.
+    # The stack top of new_context will always be return address, so we assign
+    # x30(link register) to that address.
+    #
+    # Stack information:
+    #
+    # |           :          |
+    # +----------------------+
+    # |        x19-x30       |
+    # +----------------------+
+    # |         d8-d15       |
+    # +----------------------+
+    # |    resume_context    | <--- stack top
+    # +----------------------+
+
     asm("
-      stp     d15, d14, [sp, #-22*8]!
+      stp     d15, d14, [sp, #-20*8]!
       stp     d13, d12, [sp, #2*8]
       stp     d11, d10, [sp, #4*8]
       stp     d9,  d8,  [sp, #6*8]
@@ -46,7 +71,9 @@ class Fiber
       stp     x24, x23, [sp, #14*8]
       stp     x22, x21, [sp, #16*8]
       stp     x20, x19, [sp, #18*8]
-      stp     x0,  x1,  [sp, #20*8] // push 1st argument (+ alignment)
+
+      // push resume_context address
+      str     $2, [sp, #-8]!
 
       mov     x19, sp               // current_context.stack_top = sp
       str     x19, [$0, #0]
@@ -58,7 +85,14 @@ class Fiber
       ldr     x19, [$1, #0]         // sp = new_context.stack_top (x19)
       mov     sp, x19
 
-      ldp     x0,  x1,  [sp, #20*8] // pop 1st argument (+ alignement)
+      ldr     x30, [sp], #8
+      " :: "r"(current_context), "r"(new_context), "r"(resume_func))
+  end
+
+  @[NoInline]
+  @[Naked]
+  private def self.resume_context
+    asm("
       ldp     x20, x19, [sp, #18*8]
       ldp     x22, x21, [sp, #16*8]
       ldp     x24, x23, [sp, #14*8]
@@ -68,12 +102,39 @@ class Fiber
       ldp     d9,  d8,  [sp, #6*8]
       ldp     d11, d10, [sp, #4*8]
       ldp     d13, d12, [sp, #2*8]
-      ldp     d15, d14, [sp], #22*8
+      ldp     d15, d14, [sp], #20*8
 
       // avoid a stack corruption that will confuse the unwinder
       mov     x16, x30 // save lr
       mov     x30, #0  // reset lr
       br      x16      // jump to new pc value
-      " :: "r"(current_context), "r"(new_context))
+      ")
+  end
+
+  # :nodoc:
+  def self.swapcontext(current_context, new_context) : Nil
+    suspend_context current_context, new_context, (->resume_context).pointer
+  end
+
+  @[NoInline]
+  @[Naked]
+  protected def self.load_first_argument
+    # Stack requirement
+    #
+    # |            :           |
+    # |            :           |
+    # +------------------------+
+    # |  next return address   | ---> for lr register
+    # +------------------------+
+    # |  target function addr  | ---> for pc register
+    # +------------------------+
+    # |     first argument     | ---> for x0 register
+    # +------------------------+
+
+    asm("
+      ldp     x16, x30, [sp, #8]
+      ldr     x0, [sp], #24
+      br      x16
+      ")
   end
 end

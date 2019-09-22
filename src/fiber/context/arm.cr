@@ -2,39 +2,63 @@
 
 class Fiber
   # :nodoc:
-  def makecontext(stack_ptr, fiber_main) : Void*
-    # in ARMv6 / ARVMv7, the context switch push/pop 8 registers, add one more
-    # to store the argument of `fiber_main`, and 8 64-bit FPU registers if a FPU
-    # is present, we thus reserve space for 9 or 25 pointers:
-    {% if flag?(:armhf) %}
-      @context.stack_top = (stack_ptr - 25).as(Void*)
-    {% else %}
-      @context.stack_top = (stack_ptr - 9).as(Void*)
-    {% end %}
-    @context.resumable = 1
+  def makecontext(stack_ptr, fiber_main) : Nil
+    # In ARMv6 / ARMv7, we need to store the argument of `fiber_main`, `fiber_main` and
+    # a helper function. The helper will assign registers in order to jump to
+    # entry function.
+    #
+    # Initial Stack
+    #
+    # +-------------------------+
+    # |   dummy return address  |
+    # +-------------------------+
+    # |      entry function     |
+    # +-------------------------+
+    # |      fiber address      |
+    # +-------------------------+
+    # |     helper function     | ---> load first argument and jump to entry function
+    # +-------------------------+
 
-    stack_ptr[0] = fiber_main.pointer # lr: initial `resume` will `ret` to this address
-    stack_ptr[-9] = self.as(Void*)    # r0: puts `self` as first argument for `fiber_main`
+    @context.stack_top = (stack_ptr - 3).as(Void*)
+    @context.resumable = 1
+    stack_ptr[0] = Pointer(Void).null
+    stack_ptr[-1] = fiber_main.pointer
+    stack_ptr[-2] = self.as(Void*)
+    stack_ptr[-3] = (->Fiber.load_first_argument).pointer
   end
 
-  # :nodoc:
   @[NoInline]
   @[Naked]
-  def self.swapcontext(current_context, new_context) : Nil
+  private def self.suspend_context(current_context, new_context, resume_func)
     # ARM assembly requires integer literals to be moved to a register before
     # being stored at an address; we use r4 as a scratch register that will be
     # overwritten by the new context.
     #
-    # Eventually reset LR to zero to avoid the ARM unwinder to mistake the
-    # context switch as a regular call.
+    # The stack top of new_context will always be return address, so we assign
+    # pc(program counter) to that address.
+    #
+    # Stack Information
+    #
+    # |           :           |
+    # +-----------------------+
+    # |      link register    |
+    # +-----------------------+
+    # | callee-saved register |
+    # +-----------------------+
+    # |     resume_context    |
+    # +-----------------------+
 
     {% if flag?(:armhf) %}
       asm("
         // declare the presence of a conservative FPU to the ASM compiler
         .fpu vfp
 
-        stmdb  sp!, {r0, r4-r11, lr}  // push 1st argument + callee-saved registers
+        stmdb  sp!, {r4-r11, lr}      // push callee-saved registers + return address
         vstmdb sp!, {d8-d15}          // push FPU registers
+
+        // store resume_context address
+        stmdb  sp!, {$2}
+
         str    sp, [$0, #0]           // current_context.stack_top = sp
         mov    r4, #1                 // current_context.resumable = 1
         str    r4, [$0, #4]
@@ -42,17 +66,16 @@ class Fiber
         mov    r4, #0                 // new_context.resumable = 0
         str    r4, [$1, #4]
         ldr    sp, [$1, #0]           // sp = new_context.stack_top
-        vldmia sp!, {d8-d15}          // pop FPU registers
-        ldmia  sp!, {r0, r4-r11, lr}  // pop 1st argument + calleed-saved registers
 
-        // avoid a stack corruption that will confuse the unwinder
-        mov    r1, lr
-        mov    lr, #0
-        mov    pc, r1
-        " :: "r"(current_context), "r"(new_context))
+        ldmia  sp!, {pc}
+        " :: "r"(current_context), "r"(new_context), "r"(resume_func))
     {% elsif flag?(:arm) %}
       asm("
-        stmdb  sp!, {r0, r4-r11, lr}  // push 1st argument + calleed-saved registers
+        stmdb  sp!, {r4-r11, lr}      // push calleed-saved registers + return address
+
+        // store resume_context address
+        stmdb  sp!, {$2}
+
         str    sp, [$0, #0]           // current_context.stack_top = sp
         mov    r4, #1                 // current_context.resumable = 1
         str    r4, [$0, #4]
@@ -60,13 +83,56 @@ class Fiber
         mov    r4, #0                 // new_context.resumable = 0
         str    r4, [$1, #4]
         ldr    sp, [$1, #0]           // sp = new_context.stack_top
-        ldmia  sp!, {r0, r4-r11, lr}  // pop 1st argument + calleed-saved registers
 
-        // avoid a stack corruption that will confuse the unwinder
-        mov    r1, lr
-        mov    lr, #0
-        mov    pc, r1
-        " :: "r"(current_context), "r"(new_context))
+        ldmia  sp, {pc}
+        " :: "r"(current_context), "r"(new_context), "r"(resume_func))
     {% end %}
+  end
+
+  @[NoInline]
+  @[Naked]
+  private def self.resume_context
+    {% if flag?(:armhf) %}
+      asm("
+        // avoid a stack corruption that will confuse the unwinder
+        mov    lr, #0
+
+        vldmia sp!, {d8-d15}          // pop FPU registers
+        ldmia  sp!, {r4-r11, pc}      // pop calleed-saved registers and return
+        ")
+    {% elsif flag?(:arm) %}
+      asm("
+        // avoid a stack corruption that will confuse the unwinder
+        mov    lr, #0
+
+        ldmia  sp!, {r4-r11, pc}      // pop calleed-saved registers and return
+        ")
+    {% end %}
+  end
+
+  # :nodoc:
+  def self.swapcontext(current_context, new_context) : Nil
+    suspend_context current_context, new_context, (->resume_context).pointer
+  end
+
+  @[NoInline]
+  @[Naked]
+  protected def self.load_first_argument
+    # Stack requirement
+    #
+    # |            :           |
+    # |            :           |
+    # +------------------------+
+    # |  next return address   | ---> for lr register
+    # +------------------------+
+    # |  target function addr  | ---> for pc register
+    # +------------------------+
+    # |     first argument     | ---> for r0 register
+    # +------------------------+
+
+    asm("
+        ldmia sp!, {r0, r4, lr}
+        mov pc, r4
+        ")
   end
 end
