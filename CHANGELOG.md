@@ -1,4 +1,4 @@
-# 0.31.0 (2019-09-??)
+# 0.31.0 (2019-09-23)
 
 ## Language changes
 
@@ -19,6 +19,7 @@
 - **(breaking-change)** Enable overflow by default. ([#8170](https://github.com/crystal-lang/crystal/pull/8170), thanks @bcardiff)
 - **(breaking-change)** Make `/` the arithmetic division for all types. ([#8120](https://github.com/crystal-lang/crystal/pull/8120), thanks @bcardiff)
 - Add `BigDecimal#**` and `BigRational#**` (pow operator). ([#7860](https://github.com/crystal-lang/crystal/pull/7860), thanks @jwbuiter)
+- Avoid overflow exception in `Number#round(digits, base)`. ([#8204](https://github.com/crystal-lang/crystal/pull/8204), thanks @bcardiff)
 - Refactor `Int#divisible_by?` for clarity. ([#8045](https://github.com/crystal-lang/crystal/pull/8045), thanks @yxhuvud)
 
 ### Text
@@ -84,13 +85,14 @@
 
 ### Spec
 
-- **(breaking-change)** Add support for `focus`. ([#8125](https://github.com/crystal-lang/crystal/pull/8125), [#8178](https://github.com/crystal-lang/crystal/pull/8178), thanks @asterite, @straight-shoota)
+- **(breaking-change)** Add support for `focus`. ([#8125](https://github.com/crystal-lang/crystal/pull/8125), [#8178](https://github.com/crystal-lang/crystal/pull/8178), [#8208](https://github.com/crystal-lang/crystal/pull/8208), thanks @asterite, @straight-shoota, @bcardiff)
 
 ## Compiler
 
 - Fixed ICE on declarations inside fun. ([#8076](https://github.com/crystal-lang/crystal/pull/8076), thanks @asterite)
 - Fixed missing `name_location` of some calls. ([#8192](https://github.com/crystal-lang/crystal/pull/8192), thanks @asterite)
 - Activate compiler warnings by default. ([#8171](https://github.com/crystal-lang/crystal/pull/8171), thanks @bcardiff)
+- Improve return type mismatch error. ([#8203](https://github.com/crystal-lang/crystal/pull/8203), thanks @asterite)
 - Improve `for` expression error. ([#7641](https://github.com/crystal-lang/crystal/pull/7641), thanks @r00ster91)
 
 ### Language semantics
@@ -115,6 +117,7 @@
 
 - Update CI to use 0.30.1. ([#8032](https://github.com/crystal-lang/crystal/pull/8032), thanks @bcardiff)
 - Use LLVM 8.0 for Linux official packages. ([#8155](https://github.com/crystal-lang/crystal/pull/8155), thanks @bcardiff, @RX14)
+- Update dependencies of the build process. ([#8205](https://github.com/crystal-lang/crystal/pull/8205), thanks @bcardiff)
 - Code cleanups. ([#8033](https://github.com/crystal-lang/crystal/pull/8033), thanks @straight-shoota)
 
 # 0.30.1 (2019-08-12)
