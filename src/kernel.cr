@@ -515,7 +515,7 @@ end
 
 # Terminates execution immediately, printing *message* to `STDERR` and
 # then calling `exit(status)`.
-def abort(message, status = 1) : NoReturn
+def abort(message = nil, status = 1) : NoReturn
   STDERR.puts message if message
   exit status
 end
