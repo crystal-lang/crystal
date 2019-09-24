@@ -53,7 +53,7 @@ module Random::Secure
   {% for type in [Int8, Int16, Int32, Int64] %}
     private def rand_type(type : {{type}}.class, needed_bytes = sizeof({{type}})) : {{type}}
       result = rand_type({{"U#{type}".id}}, needed_bytes)
-      {{type}}.new(result)
+      {{type}}.new!(result)
     end
   {% end %}
 end
