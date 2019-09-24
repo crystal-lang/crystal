@@ -4,7 +4,7 @@ require "c/string"
   require "crystal/iconv"
 {% end %}
 
-require "regex/*"
+require "regex/match_data"
 
 # A `String` represents an immutable sequence of UTF-8 characters.
 #
@@ -779,7 +779,7 @@ class String
   # Raises `IndexError` if the *start* index is out of bounds.
   #
   # Raises `ArgumentError` if *count* is negative.
-  def [](start : Int, count : Int) : String?
+  def [](start : Int, count : Int) : String
     self[start, count]? || raise IndexError.new
   end
 
@@ -881,7 +881,7 @@ class String
   # "hello".char_at(-5) { 'x' } # => 'h'
   # "hello".char_at(-6) { 'x' } # => 'x'
   # ```
-  def char_at(index : Int, &block : -> U) : Char | U forall U
+  def char_at(index : Int, &)
     if ascii_only?
       byte = byte_at?(index)
       if byte
@@ -1058,7 +1058,7 @@ class String
     end
   end
 
-  def unsafe_byte_at(index) : Int
+  def unsafe_byte_at(index) : UInt8
     to_unsafe[index]
   end
 
@@ -2171,7 +2171,7 @@ class String
   # "hello".gsub { |char| char + 1 } # => "ifmmp"
   # "hello".gsub { "hi" }            # => "hihihihihi"
   # ```
-  def gsub(&block : Char -> Char | String) : String
+  def gsub(&block : Char -> _) : String
     String.build(bytesize) do |buffer|
       each_char do |my_char|
         buffer << yield my_char
@@ -2296,7 +2296,7 @@ class String
   # ```
   # "hello yellow".gsub("ll", "dd") # => "heddo yeddow"
   # ```
-  def gsub(string : String, replacement : Char | String)
+  def gsub(string : String, replacement)
     if string.bytesize == 1
       gsub(string.unsafe_byte_at(0).unsafe_chr, replacement)
     else
@@ -2310,7 +2310,7 @@ class String
   # ```
   # "hello yellow".gsub("ll") { "dd" } # => "heddo yeddow"
   # ```
-  def gsub(string : String, &block : String -> Char | String) : String
+  def gsub(string : String, &block : String -> _) : String
     byte_offset = 0
     index = self.byte_index(string, byte_offset)
     return self unless index
@@ -2402,7 +2402,7 @@ class String
   # ```
   # "aabbcc".count &.in?('a', 'b') # => 4
   # ```
-  def count(&block : Char -> _) : Int
+  def count(&block : Char -> _) : Int32
     count = 0
     each_char do |char|
       count += 1 if yield char
@@ -2415,14 +2415,14 @@ class String
   # ```
   # "aabbcc".count('a') # => 2
   # ```
-  def count(other : Char) : Int
+  def count(other : Char) : Int32
     count { |char| char == other }
   end
 
   # Sets should be a list of strings following the rules
   # described at `Char#in_set?`. Returns the number of characters
   # in this string that match the given set.
-  def count(*sets) : Int
+  def count(*sets) : Int32
     count { |char| char.in_set?(*sets) }
   end
 
@@ -2433,7 +2433,7 @@ class String
   # ```
   # "aabbcc".delete &.in?('a', 'b') # => "cc"
   # ```
-  def delete(&block : Char -> Bool) : String
+  def delete(&block : Char -> _) : String
     String.build(bytesize) do |buffer|
       each_char do |char|
         buffer << char unless yield char
@@ -2470,7 +2470,7 @@ class String
   # "aaabbbccc".squeeze &.in?('a', 'b') # => "abccc"
   # "aaabbbccc".squeeze &.in?('a', 'c') # => "abbbc"
   # ```
-  def squeeze(&block : Char -> Bool) : String
+  def squeeze(&block : Char -> _) : String
     previous = nil
     String.build(bytesize) do |buffer|
       each_char do |char|
@@ -4035,7 +4035,7 @@ class String
 
   # Searches the string for instances of *pattern*,
   # yielding a `Regex::MatchData` for each match.
-  def scan(pattern : Regex, &block) : Nil
+  def scan(pattern : Regex, &)
     byte_offset = 0
 
     while match = pattern.match_at_byte_index(self, byte_offset)
@@ -4127,7 +4127,7 @@ class String
   #
   # Accepts an optional *offset* parameter, which tells it to start counting
   # from there.
-  def each_char_with_index(offset = 0, & : (Char, Int23) ->) : Nil
+  def each_char_with_index(offset = 0, &) : Nil
     each_char do |char|
       yield char, offset
       offset += 1
@@ -4158,7 +4158,7 @@ class String
   # ```
   #
   # See also: `Char#ord`.
-  def each_codepoint(&block)
+  def each_codepoint(&block : Int32 ->)
     each_char do |char|
       yield char.ord
     end
@@ -4524,7 +4524,7 @@ class String
   # "hello".size # => 5
   # "你好".size    # => 2
   # ```
-  def size : Int
+  def size : Int32
     if @length > 0 || @bytesize == 0
       return @length
     end
