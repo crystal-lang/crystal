@@ -81,6 +81,41 @@ class File < IO::FileDescriptor
 
   # Opens the file named by *filename*.
   #
+  # *modes* should contain at least one of:
+  # ```text
+  # Mode | Description
+  # -----+------------------------------------------------------
+  # :read    | Read, starts at the beginning of the file.
+  # :write    | Write, starts at the beginning of the file.
+  # :append | Write, all writes are appended to the end of the file atomically.
+  # ```
+  #
+  # *modes* may contain any number of these optional arguments:
+  # ```text
+  # Mode | Description
+  # -----+------------------------------------------------------
+  # :create     | creates a new file if the file doesn't exists.
+  # :create_new     | creates a new file or `raises Errno` if the file exists.
+  # :truncate     | truncate the file.
+  # :sym_link_no_follow | opening a symlink `raises Errno`.
+  # ```
+  def self.new(filename : Path | String, *modes : Mode, perm = DEFAULT_CREATE_PERMISSIONS, encoding = nil, invalid = nil)
+    filename = filename.to_s
+    fd = Crystal::System::File.open(filename, modes.reduce { |a, b| a | b }, perm)
+    new(filename, fd, blocking: true, encoding: encoding, invalid: invalid)
+  end
+
+  # Opens the file named by *filename*.
+  #
+  # *mode* must be a `File::Mode`:
+  def self.new(filename : Path | String, mode : Mode = File::Mode.flags(Read), perm = DEFAULT_CREATE_PERMISSIONS, encoding = nil, invalid = nil)
+    filename = filename.to_s
+    fd = Crystal::System::File.open(filename, mode, perm)
+    new(filename, fd, blocking: true, encoding: encoding, invalid: invalid)
+  end
+
+  # Opens the file named by *filename*.
+  #
   # *mode* must be one of the following file open modes:
   # ```text
   # Mode | Description
@@ -100,18 +135,6 @@ class File < IO::FileDescriptor
   # ab   | Same as the 'a' mode but in binary file mode.
   # ```
   # In binary file mode, line endings are not converted to CRLF on Windows.
-  def self.new(filename : Path | String, mode : Mode = File::Mode.flags(Read), perm = DEFAULT_CREATE_PERMISSIONS, encoding = nil, invalid = nil)
-    filename = filename.to_s
-    fd = Crystal::System::File.open(filename, mode, perm)
-    new(filename, fd, blocking: true, encoding: encoding, invalid: invalid)
-  end
-
-  def self.new(filename : Path | String, *modes : Mode, perm = DEFAULT_CREATE_PERMISSIONS, encoding = nil, invalid = nil)
-    filename = filename.to_s
-    fd = Crystal::System::File.open(filename, modes.reduce(&.|), perm)
-    new(filename, fd, blocking: true, encoding: encoding, invalid: invalid)
-  end
-
   @[Deprecated("Use `File.new(filename, :read, :write, :create)`")]
   def self.new(filename : Path | String, mode : String, perm = DEFAULT_CREATE_PERMISSIONS, encoding = nil, invalid = nil)
     filename = filename.to_s
