@@ -157,6 +157,14 @@ class Channel(T)
     receive_impl { return nil }
   end
 
+  # Receives a value from the channel.
+  # If there is a value waiting, it is returned immediately. Otherwise, this method returns nil.
+  #
+  # Returns `nil` if the channel is closed.
+  def nb_receive
+    @lock.sync { closed? ? nil : receive_internal { nil } }
+  end
+
   def receive_impl
     @lock.sync do
       receive_internal do
