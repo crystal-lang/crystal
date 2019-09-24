@@ -4,6 +4,17 @@ require "big"
 # A `BigFloat` can represent arbitrarily large floats.
 #
 # It is implemented under the hood with [GMP](https://gmplib.org/).
+#
+# ### Usage:
+# ```
+# require "big"
+# # From a string representation
+# BigFloat.new("123456789123456789.123456789123456789") # => 123456789123456789.123
+# # Defaults to 0
+# BigFloat.new                                          # => 0
+# # From a number
+# (BigFloat.new Float64::MAX) * 2		                # => 359538626972463141629000000... (with a lot of zeroes)
+# ```
 struct BigFloat < Float
   include Comparable(Int)
   include Comparable(BigFloat)

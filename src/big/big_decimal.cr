@@ -8,6 +8,17 @@ require "big"
 #
 # The general idea and some of the arithmetic algorithms were adapted from
 # the MIT/APACHE -licensed https://github.com/akubera/bigdecimal-rs
+#
+# ### Usage:
+# ```
+# require "big"
+# # From a string representation
+# BigDecimal.new("123456789123456789.123456789123456789") # => 123456789123456789.123456789123456789
+# # Defaults to 0
+# BigDecimal.new                                          # => 0
+# # From a number
+# BigDecimal.new(UInt64::MAX) + BigDecimal.new(1.234)     # => 18446744073709551616.234
+# ```
 
 class InvalidBigDecimalException < Exception
   def initialize(big_decimal_str : String, reason : String)
