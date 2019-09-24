@@ -74,7 +74,7 @@ class File < IO::FileDescriptor
 
   # This constructor is provided for subclasses to be able to initialize an
   # `IO::FileDescriptor` with a *path* and *fd*.
-  private def initialize(@path, fd, blocking = false, encoding = nil, invalid = nil)
+  private def initialize(@path, fd : Int, blocking = false, encoding = nil, invalid = nil)
     self.set_encoding(encoding, invalid: invalid) if encoding
     super(fd, blocking)
   end
@@ -100,7 +100,20 @@ class File < IO::FileDescriptor
   # ab   | Same as the 'a' mode but in binary file mode.
   # ```
   # In binary file mode, line endings are not converted to CRLF on Windows.
-  def self.new(filename : Path | String, mode : Mode | String = "r", perm = DEFAULT_CREATE_PERMISSIONS, encoding = nil, invalid = nil)
+  def self.new(filename : Path | String, mode : Mode = File::Mode.flags(Read), perm = DEFAULT_CREATE_PERMISSIONS, encoding = nil, invalid = nil)
+    filename = filename.to_s
+    fd = Crystal::System::File.open(filename, mode, perm)
+    new(filename, fd, blocking: true, encoding: encoding, invalid: invalid)
+  end
+
+  def self.new(filename : Path | String, *modes : Mode, perm = DEFAULT_CREATE_PERMISSIONS, encoding = nil, invalid = nil)
+    filename = filename.to_s
+    fd = Crystal::System::File.open(filename, modes.reduce(&.|), perm)
+    new(filename, fd, blocking: true, encoding: encoding, invalid: invalid)
+  end
+
+  @[Deprecated("Use `File.new(filename, :read, :write, :create)`")]
+  def self.new(filename : Path | String, mode : String, perm = DEFAULT_CREATE_PERMISSIONS, encoding = nil, invalid = nil)
     filename = filename.to_s
     fd = Crystal::System::File.open(filename, mode, perm)
     new(filename, fd, blocking: true, encoding: encoding, invalid: invalid)
