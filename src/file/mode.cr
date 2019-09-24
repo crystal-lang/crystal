@@ -3,11 +3,10 @@ class ::File < IO::FileDescriptor
   enum Mode
     Read
     Write
-    ReadWrite
+    Append
 
     Create
     CreateNew
-    Append
     Truncate
 
     Sync
