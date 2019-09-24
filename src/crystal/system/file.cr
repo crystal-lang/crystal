@@ -6,11 +6,11 @@ module Crystal::System::File
   # calls.
   private def self.open_flag(mode : ::File::Mode)
     flags = 0
+    raise ArgumentError.new("May only use `Append` or `Write`") if mode.append? && mode.write?
     mode.each do |m|
       case m
       when ::File::Mode::Read            then flags |= LibC::O_RDONLY
       when ::File::Mode::Write           then flags |= LibC::O_WRONLY
-      when ::File::Mode::ReadWrite       then flags |= LibC::O_RDWR
       when ::File::Mode::Create          then flags |= LibC::O_CREAT
       when ::File::Mode::CreateNew       then flags |= LibC::O_CREAT | LibC::O_EXCL
       when ::File::Mode::Append          then flags |= LibC::O_WRONLY | LibC::O_APPEND
