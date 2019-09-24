@@ -25,7 +25,7 @@ module OpenSSL
     end
 
     def base64digest
-      Base64.encode(digest)
+      Base64.strict_encode(digest)
     end
 
     def hexdigest
