@@ -187,13 +187,13 @@ describe "unbuffered" do
     closed.should be_true
   end
 
-  it "return nil on empty channel" do
+  it "returns nil on empty channel" do
     ch = Channel(Int32).new
     value = ch.nb_receive
     value.should eq(nil)
   end
 
-  it "return sended value" do
+  it "returns sent value" do
     ch = Channel(Int32).new
     ch.send(1)
     ch.nb_receive.should eq(1)
@@ -323,12 +323,12 @@ describe "buffered" do
     ch.pretty_inspect.should eq("#<Channel(Int32):0x#{ch.object_id.to_s(16)}>")
   end
 
-  it "return nil on empty channel" do
+  it "returns nil on empty channel" do
     ch = Channel(Int32).new(2)
     ch.nb_receive.should eq(nil)
   end
 
-  it "return sended value" do
+  it "returns sent value" do
     ch = Channel(Int32).new(2)
     ch.send(1)
     ch.nb_receive.should eq(1)
