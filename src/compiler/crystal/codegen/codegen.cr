@@ -1565,6 +1565,8 @@ module Crystal
       old_entry_block = @entry_block
       old_alloca_block = @alloca_block
       old_needs_value = @needs_value
+      old_debug_location = @current_debug_location
+
       @llvm_mod = @main_mod
       @llvm_context = @main_llvm_context
       @llvm_typer = @main_llvm_typer
@@ -1573,6 +1575,8 @@ module Crystal
       @ensure_exception_handlers = nil
       @rescue_block = nil
       @catch_pad = nil
+
+      clear_current_debug_location if @debug.line_numbers?
 
       block_value = yield
 
@@ -1589,6 +1593,7 @@ module Crystal
       @alloca_block = old_alloca_block
       @needs_value = old_needs_value
       context.fun = old_fun
+      set_current_debug_location old_debug_location if @debug.line_numbers?
 
       block_value
     end
