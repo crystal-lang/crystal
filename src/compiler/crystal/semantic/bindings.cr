@@ -252,7 +252,7 @@ module Crystal
   class PointerOf
     def map_type(type)
       old_type = self.type?
-      new_type = type.try &.program.pointer_of(type)
+      new_type = type.program.pointer_of(type)
       if old_type && grew?(old_type, new_type)
         raise "recursive pointerof expansion: #{old_type}, #{new_type}, ..."
       end

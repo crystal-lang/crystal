@@ -466,6 +466,7 @@ module Crystal
         # TODO: should we be using a binding here to recompute the type?
         if declared_type = node.declared_type.type?
           var_type = check_declare_var_type node, declared_type, "a variable"
+          var_type = var_type.virtual_type
           var.type = var_type
         else
           node.raise "can't infer type of type declaration"
