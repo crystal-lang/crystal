@@ -163,7 +163,11 @@ struct Slice(T)
   # slice2 = slice + 2
   # slice2 # => Slice[12, 13, 14]
   # ```
+  @[NoInline] 
   def +(offset : Int)
+    # This method has NotInline as a workaround for #8230. 
+    # To avoid been inlined in Evented#evented_write.
+    # Making `@size &- offset` also seems to fix the issue.
     check_size(offset)
 
     Slice.new(@pointer + offset, @size - offset, read_only: @read_only)
