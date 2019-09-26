@@ -17,6 +17,13 @@ lib LibGC
   alias SizeT = LibC::SizeT
   alias Word = LibC::ULong
 
+  struct StackBase
+    mem_base : Void*
+    # reg_base : Void* should be used also for IA-64 when/if supported
+  end
+
+  alias ThreadHandle = Void*
+
   fun init = GC_init
   fun malloc = GC_malloc(size : SizeT) : Void*
   fun malloc_atomic = GC_malloc_atomic(size : SizeT) : Void*
@@ -51,8 +58,8 @@ lib LibGC
   fun push_all_eager = GC_push_all_eager(bottom : Void*, top : Void*)
 
   {% if flag?(:preview_mt) %}
-    fun set_stackbottom = GC_set_stackbottom(LibC::PthreadT, Void*)
-    fun get_stackbottom = GC_get_stackbottom : Void*
+    fun get_my_stackbottom = GC_get_my_stackbottom(sb : StackBase*) : ThreadHandle
+    fun set_stackbottom = GC_set_stackbottom(th : ThreadHandle, sb : StackBase*) : ThreadHandle
   {% else %}
     $stackbottom = GC_stackbottom : Void*
   {% end %}
@@ -192,16 +199,19 @@ module GC
   # :nodoc:
   def self.current_thread_stack_bottom
     {% if flag?(:preview_mt) %}
-      LibGC.get_stackbottom
+      th = LibGC.get_my_stackbottom(out sb)
+      {th, sb.mem_base}
     {% else %}
-      LibGC.stackbottom
+      {Pointer(Void).null, LibGC.stackbottom}
     {% end %}
   end
 
   # :nodoc:
   {% if flag?(:preview_mt) %}
-    def self.set_stackbottom(thread : Thread, stack_bottom : Void*)
-      LibGC.set_stackbottom(thread.to_unsafe, stack_bottom)
+    def self.set_stackbottom(thread_handle : Void*, stack_bottom : Void*)
+      sb = LibGC::StackBase.new
+      sb.mem_base = stack_bottom
+      LibGC.set_stackbottom(thread_handle, pointerof(sb))
     end
   {% else %}
     def self.set_stackbottom(stack_bottom : Void*)
@@ -264,7 +274,7 @@ module GC
         Thread.unsafe_each do |thread|
           if scheduler = thread.@scheduler
             fiber = scheduler.@current
-            GC.set_stackbottom(thread, fiber.@stack_bottom)
+            GC.set_stackbottom(thread.gc_thread_handler, fiber.@stack_bottom)
           end
         end
       {% end %}
