@@ -131,6 +131,18 @@ module Spec
 
   # Instructs the spec runner to execute the given block
   # before each spec, regardless of where this method is invoked.
+  #
+  # If multiple blocks are registered they run in the order
+  # that they are given.
+  #
+  # For example:
+  #
+  # ```
+  # Spec.before_each { puts 1 }
+  # Spec.before_each { puts 2 }
+  # ```
+  #
+  # will print, just before each spec, 1 and then 2.
   def self.before_each(&block)
     before_each = @@before_each ||= [] of ->
     before_each << block
@@ -138,9 +150,59 @@ module Spec
 
   # Instructs the spec runner to execute the given block
   # after each spec, regardless of where this method is invoked.
+  #
+  # If multiple blocks are registered they run in the reversed
+  # order that they are given.
+  #
+  # For example:
+  #
+  # ```
+  # Spec.after_each { puts 1 }
+  # Spec.after_each { puts 2 }
+  # ```
+  #
+  # will print, just after each spec, 2 and then 1.
   def self.after_each(&block)
     after_each = @@after_each ||= [] of ->
     after_each << block
+  end
+
+  # Instructs the spec runner to execute the given block
+  # before the entire spec suite.
+  #
+  # If multiple blocks are registered they run in the order
+  # that they are given.
+  #
+  # For example:
+  #
+  # ```
+  # Spec.before_suite { puts 1 }
+  # Spec.before_suite { puts 2 }
+  # ```
+  #
+  # will print, just before the spec suite starts, 1 and then 2.
+  def self.before_suite(&block)
+    before_suite = @@before_suite ||= [] of ->
+    before_suite << block
+  end
+
+  # Instructs the spec runner to execute the given block
+  # after the entire spec suite.
+  #
+  # If multiple blocks are registered they run in the reversed
+  # order that they are given.
+  #
+  # For example:
+  #
+  # ```
+  # Spec.after_suite { puts 1 }
+  # Spec.after_suite { puts 2 }
+  # ```
+  #
+  # will print, just after the spec suite ends, 2 and then 1.
+  def self.after_suite(&block)
+    after_suite = @@after_suite ||= [] of ->
+    after_suite << block
   end
 
   # :nodoc:
@@ -150,7 +212,17 @@ module Spec
 
   # :nodoc:
   def self.run_after_each_hooks
-    @@after_each.try &.each &.call
+    @@after_each.try &.reverse_each &.call
+  end
+
+  # :nodoc:
+  def self.run_before_suite_hooks
+    @@before_suite.try &.each &.call
+  end
+
+  # :nodoc:
+  def self.run_after_suite_hooks
+    @@after_suite.try &.reverse_each &.call
   end
 
   # :nodoc:
@@ -159,7 +231,9 @@ module Spec
 
     at_exit do
       run_filters
+      run_before_suite_hooks
       root_context.run
+      run_after_suite_hooks
     ensure
       elapsed_time = Time.monotonic - start_time
       root_context.finish(elapsed_time, @@aborted)

@@ -170,4 +170,19 @@ describe "Semantic: pointer" do
       ),
       "undefined local variable or method 'foo'"
   end
+
+  it "can assign pointerof virtual type (#8216)" do
+    semantic(%(
+      class Base
+      end
+
+      class Sub < Base
+      end
+
+      u = uninitialized Base
+
+      x : Pointer(Base)
+      x = pointerof(u)
+    ))
+  end
 end

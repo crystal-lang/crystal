@@ -71,7 +71,7 @@ module GC
 
   # :nodoc:
   def self.current_thread_stack_bottom
-    @@stack_bottom
+    {Pointer(Void).null, @@stack_bottom}
   end
 
   # :nodoc:

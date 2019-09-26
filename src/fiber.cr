@@ -63,7 +63,7 @@ class Fiber
   def initialize(@stack : Void*, thread)
     @proc = Proc(Void).new { }
     @context = Context.new(_fiber_get_stack_top)
-    @stack_bottom = GC.current_thread_stack_bottom
+    thread.gc_thread_handler, @stack_bottom = GC.current_thread_stack_bottom
     @name = "main"
     @current_thread.set(thread)
     Fiber.fibers.push(self)

@@ -45,9 +45,13 @@ module Spec
     def report(kind, full_description, file, line, elapsed = nil, ex = nil)
       result = Result.new(kind, full_description, file, line, elapsed, ex)
 
-      Spec.formatters.each(&.report(result))
+      report_formatters result
 
       @results[result.kind] << result
+    end
+
+    def report_formatters(result)
+      Spec.formatters.each(&.report(result))
     end
 
     def succeeded
@@ -208,8 +212,8 @@ module Spec
       Spec.formatters.each(&.pop)
     end
 
-    def report(result)
-      parent.report Result.new(result.kind, "#{@description} #{result.description}", result.file, result.line, result.elapsed, result.exception)
+    def report(kind, description, file, line, elapsed = nil, ex = nil)
+      parent.report kind, "#{@description} #{description}", file, line, elapsed, ex
     end
   end
 end
