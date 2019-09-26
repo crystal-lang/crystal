@@ -79,10 +79,13 @@ class Channel(T)
     Closed
   end
 
+  private record Sender(T), fiber : Fiber, value : T, select_context : SelectContext(Nil)?
+  private record Receiver(T), fiber : Fiber, value_ptr : T*, state_ptr : DeliveryState*, select_context : SelectContext(T)?
+
   def initialize(@capacity = 0)
     @closed = false
-    @senders = Deque({Fiber, T, SelectContext(Nil)?}).new
-    @receivers = Deque({Fiber, Pointer(T), Pointer(DeliveryState), SelectContext(T)?}).new
+    @senders = Deque(Sender(T)).new
+    @receivers = Deque(Receiver(T)).new
     if capacity > 0
       @queue = Deque(T).new(capacity)
     end
@@ -91,11 +94,11 @@ class Channel(T)
   def close
     @closed = true
 
-    @senders.each &.first.enqueue
+    @senders.each &.fiber.enqueue
 
     @receivers.each do |receiver|
-      receiver[2].value = DeliveryState::Closed
-      receiver[0].enqueue
+      receiver.state_ptr.value = DeliveryState::Closed
+      receiver.fiber.enqueue
     end
 
     @senders.clear
@@ -112,7 +115,7 @@ class Channel(T)
       raise_if_closed
 
       send_internal(value) do
-        @senders << {Fiber.current, value, nil}
+        @senders << Sender(T).new(Fiber.current, value, select_context: nil)
         @lock.unsync do
           Crystal::Scheduler.reschedule
         end
@@ -125,9 +128,9 @@ class Channel(T)
 
   protected def send_internal(value : T)
     if receiver = dequeue_receiver
-      receiver[1].value = value
-      receiver[2].value = DeliveryState::Delivered
-      receiver[0].enqueue
+      receiver.value_ptr.value = value
+      receiver.state_ptr.value = DeliveryState::Delivered
+      receiver.fiber.enqueue
     elsif (queue = @queue) && queue.size < @capacity
       queue << value
     else
@@ -164,7 +167,7 @@ class Channel(T)
 
         value = uninitialized T
         state = DeliveryState::None
-        @receivers << {Fiber.current, pointerof(value), pointerof(state), nil}
+        @receivers << Receiver(T).new(Fiber.current, pointerof(value), pointerof(state), select_context: nil)
         @lock.unsync do
           Crystal::Scheduler.reschedule
         end
@@ -185,13 +188,13 @@ class Channel(T)
     if (queue = @queue) && !queue.empty?
       deque_value = queue.shift
       if sender = dequeue_sender
-        sender[0].enqueue
-        queue << sender[1]
+        sender.fiber.enqueue
+        queue << sender.value
       end
       deque_value
     elsif sender = dequeue_sender
-      sender[0].enqueue
-      sender[1]
+      sender.fiber.enqueue
+      sender.value
     else
       yield
     end
@@ -199,7 +202,7 @@ class Channel(T)
 
   private def dequeue_receiver
     while receiver = @receivers.shift?
-      if (select_context = receiver[3]) && !select_context.try_trigger
+      if (select_context = receiver.select_context) && !select_context.try_trigger
         next
       end
 
@@ -211,7 +214,7 @@ class Channel(T)
 
   private def dequeue_sender
     while sender = @senders.shift?
-      if (select_context = sender[2]) && !select_context.try_trigger
+      if (select_context = sender.select_context) && !select_context.try_trigger
         next
       end
 
@@ -229,20 +232,20 @@ class Channel(T)
     pp.text inspect
   end
 
-  protected def wait_for_receive(value, state, context)
-    @receivers << {Fiber.current, value, state, context}
+  protected def wait_for_receive(value_ptr, state_ptr, select_context)
+    @receivers << Receiver(T).new(Fiber.current, value_ptr, state_ptr, select_context)
   end
 
   protected def unwait_for_receive
-    @receivers.delete_if { |r| r[0] == Fiber.current }
+    @receivers.delete_if { |receiver| receiver.fiber == Fiber.current }
   end
 
-  protected def wait_for_send(value, context)
-    @senders << {Fiber.current, value, context}
+  protected def wait_for_send(value, select_context)
+    @senders << Sender(T).new(Fiber.current, value, select_context)
   end
 
   protected def unwait_for_send
-    @senders.delete_if { |r| r[0] == Fiber.current }
+    @senders.delete_if { |sender| sender.fiber == Fiber.current }
   end
 
   protected def raise_if_closed
