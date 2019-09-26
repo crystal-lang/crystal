@@ -131,6 +131,18 @@ module Spec
 
   # Instructs the spec runner to execute the given block
   # before each spec, regardless of where this method is invoked.
+  #
+  # If multiple blocks are registered they run in the order
+  # that they are given.
+  #
+  # For example:
+  #
+  # ```
+  # Spec.before_each { puts 1 }
+  # Spec.before_each { puts 2 }
+  # ```
+  #
+  # will print, just before each spec, 1 and then 2.
   def self.before_each(&block)
     before_each = @@before_each ||= [] of ->
     before_each << block
@@ -138,6 +150,18 @@ module Spec
 
   # Instructs the spec runner to execute the given block
   # after each spec, regardless of where this method is invoked.
+  #
+  # If multiple blocks are registered they run in the reversed
+  # order that they are given.
+  #
+  # For example:
+  #
+  # ```
+  # Spec.after_each { puts 1 }
+  # Spec.after_each { puts 2 }
+  # ```
+  #
+  # will print, just after each spec, 2 and then 1.
   def self.after_each(&block)
     after_each = @@after_each ||= [] of ->
     after_each << block
@@ -188,7 +212,7 @@ module Spec
 
   # :nodoc:
   def self.run_after_each_hooks
-    @@after_each.try &.each &.call
+    @@after_each.try &.reverse_each &.call
   end
 
   # :nodoc:
