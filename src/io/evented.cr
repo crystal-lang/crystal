@@ -70,7 +70,7 @@ module IO::Evented
 
     begin
       loop do
-        bytes_written = yield slice
+        bytes_written = (yield slice).to_i64
         if bytes_written != -1
           slice += bytes_written
           return if slice.size == 0
