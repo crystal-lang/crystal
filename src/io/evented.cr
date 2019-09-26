@@ -70,6 +70,7 @@ module IO::Evented
 
     begin
       loop do
+        # TODO: Investigate why the .to_i64 is needed as a workaround for #8230
         bytes_written = (yield slice).to_i64
         if bytes_written != -1
           slice += bytes_written
