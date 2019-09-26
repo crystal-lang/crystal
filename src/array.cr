@@ -148,7 +148,7 @@ class Array(T)
   #   LibSome.fill_buffer_and_return_number_of_elements_filled(buffer)
   # end
   # ```
-  def self.build(capacity : Int, &block : Pointer(T) -> Int) : self
+  def self.build(capacity : Int, &: Pointer(T) -> Int) : self
     ary = Array(T).new(capacity)
     ary.size = (yield ary.to_unsafe).to_i
     ary
