@@ -1,10 +1,55 @@
 module Spec
+  # Expectation to be passed to `Object#should` and `Object#should_not`.
+  #
+  # An example custom expectation that checks that some value is always 42:
+  #
+  # ```
+  # require "spec"
+  #
+  # struct Be42Expectation
+  #   include Spec::Expectation
+  #
+  #   def match(value) : Bool
+  #     value == 42
+  #   end
+  #
+  #   def failure_message(value) : String
+  #     "Expected #{value} to be 42"
+  #   end
+  #
+  #   def negative_failure_message(value) : String
+  #     "Expected #{value} not to be 42"
+  #   end
+  # end
+  #
+  # def be_42
+  #   Be42Expectation.new
+  # end
+  # ```
+  module Expectation
+    # Matches this expectation against the given `value`, which is the
+    # value that `should` or `should_not` is invoked on.
+    # Returns `true` if this expectation matches the `value`, `false`
+    # otherwise.
+    abstract def match(value) : Bool
+
+    # Returns a failure message for the `should` case against this
+    # expectation.
+    abstract def failure_message(actual_value) : String
+
+    # Returns a failure message for the `should_not` case against this
+    # expectation.
+    abstract def negative_failure_message(actual_value) : String
+  end
+
   # :nodoc:
   struct EqualExpectation(T)
+    include Expectation
+
     def initialize(@expected_value : T)
     end
 
-    def match(actual_value)
+    def match(actual_value) : Bool
       expected_value = @expected_value
 
       # For the case of comparing strings we want to make sure that two strings
@@ -20,7 +65,7 @@ module Spec
       end
     end
 
-    def failure_message(actual_value)
+    def failure_message(actual_value) : String
       expected_value = @expected_value
 
       # Check for the case of string equality when the content match
@@ -50,109 +95,123 @@ module Spec
       end
     end
 
-    def negative_failure_message(actual_value)
+    def negative_failure_message(actual_value) : String
       "Expected: actual_value != #{@expected_value.inspect}\n     got: #{actual_value.inspect}"
     end
   end
 
   # :nodoc:
   struct BeExpectation(T)
+    include Expectation
+
     def initialize(@expected_value : T)
     end
 
-    def match(actual_value)
+    def match(actual_value) : Bool
       actual_value.same? @expected_value
     end
 
-    def failure_message(actual_value)
+    def failure_message(actual_value) : String
       "Expected: #{@expected_value.inspect} (object_id: #{@expected_value.object_id})\n     got: #{actual_value.inspect} (object_id: #{actual_value.object_id})"
     end
 
-    def negative_failure_message(actual_value)
+    def negative_failure_message(actual_value) : String
       "Expected: value.same? #{@expected_value.inspect} (object_id: #{@expected_value.object_id})\n     got: #{actual_value.inspect} (object_id: #{actual_value.object_id})"
     end
   end
 
   # :nodoc:
   struct BeTruthyExpectation
-    def match(actual_value)
+    include Expectation
+
+    def match(actual_value) : Bool
       !!actual_value
     end
 
-    def failure_message(actual_value)
+    def failure_message(actual_value) : String
       "Expected: #{actual_value.inspect} to be truthy"
     end
 
-    def negative_failure_message(actual_value)
+    def negative_failure_message(actual_value) : String
       "Expected: #{actual_value.inspect} not to be truthy"
     end
   end
 
   # :nodoc:
   struct BeFalseyExpectation
-    def match(actual_value)
+    include Expectation
+
+    def match(actual_value) : Bool
       !actual_value
     end
 
-    def failure_message(actual_value)
+    def failure_message(actual_value) : String
       "Expected: #{actual_value.inspect} to be falsey"
     end
 
-    def negative_failure_message(actual_value)
+    def negative_failure_message(actual_value) : String
       "Expected: #{actual_value.inspect} not to be falsey"
     end
   end
 
   # :nodoc:
   struct BeNilExpectation
-    def match(actual_value)
+    include Expectation
+
+    def match(actual_value) : Bool
       actual_value.nil?
     end
 
-    def failure_message(actual_value)
+    def failure_message(actual_value) : String
       "Expected: #{actual_value.inspect} to be nil"
     end
 
-    def negative_failure_message(actual_value)
+    def negative_failure_message(actual_value) : String
       "Expected: #{actual_value.inspect} not to be nil"
     end
   end
 
   # :nodoc:
   struct CloseExpectation(T, D)
+    include Expectation
+
     def initialize(@expected_value : T, @delta : D)
     end
 
-    def match(actual_value)
+    def match(actual_value) : Bool
       (actual_value - @expected_value).abs <= @delta
     end
 
-    def failure_message(actual_value)
+    def failure_message(actual_value) : String
       "Expected #{actual_value.inspect} to be within #{@delta} of #{@expected_value}"
     end
 
-    def negative_failure_message(actual_value)
+    def negative_failure_message(actual_value) : String
       "Expected #{actual_value.inspect} not to be within #{@delta} of #{@expected_value}"
     end
   end
 
   # :nodoc:
   struct BeAExpectation(T)
-    def match(actual_value)
+    include Expectation
+
+    def match(actual_value) : Bool
       actual_value.is_a?(T)
     end
 
-    def failure_message(actual_value)
+    def failure_message(actual_value) : String
       "Expected #{actual_value.inspect} (#{actual_value.class}) to be a #{T}"
     end
 
-    def negative_failure_message(actual_value)
+    def negative_failure_message(actual_value) : String
       "Expected #{actual_value.inspect} (#{actual_value.class}) not to be a #{T}"
     end
   end
 
   # :nodoc:
   struct Be(T)
+    include Expectation
+
     def self.<(other)
       Be.new(other, :"<")
     end
@@ -172,7 +231,7 @@ module Spec
     def initialize(@expected_value : T, @op : Symbol)
     end
 
-    def match(actual_value)
+    def match(actual_value) : Bool
       case @op
       when :"<"
         actual_value < @expected_value
@@ -187,98 +246,108 @@ module Spec
       end
     end
 
-    def failure_message(actual_value)
+    def failure_message(actual_value) : String
       "Expected #{actual_value.inspect} to be #{@op} #{@expected_value}"
     end
 
-    def negative_failure_message(actual_value)
+    def negative_failure_message(actual_value) : String
       "Expected #{actual_value.inspect} not to be #{@op} #{@expected_value}"
     end
   end
 
   # :nodoc:
   struct MatchExpectation(T)
+    include Expectation
+
     def initialize(@expected_value : T)
     end
 
-    def match(actual_value)
-      actual_value =~ @expected_value
+    def match(actual_value) : Bool
+      !!(actual_value =~ @expected_value)
     end
 
-    def failure_message(actual_value)
+    def failure_message(actual_value) : String
       "Expected: #{actual_value.inspect}\nto match: #{@expected_value.inspect}"
     end
 
-    def negative_failure_message(actual_value)
+    def negative_failure_message(actual_value) : String
       "Expected: value #{actual_value.inspect}\n to not match: #{@expected_value.inspect}"
     end
   end
 
   # :nodoc:
   struct ContainExpectation(T)
+    include Expectation
+
     def initialize(@expected_value : T)
     end
 
-    def match(actual_value)
+    def match(actual_value) : Bool
       actual_value.includes?(@expected_value)
     end
 
-    def failure_message(actual_value)
+    def failure_message(actual_value) : String
       "Expected:   #{actual_value.inspect}\nto include: #{@expected_value.inspect}"
     end
 
-    def negative_failure_message(actual_value)
+    def negative_failure_message(actual_value) : String
       "Expected: value #{actual_value.inspect}\nto not include: #{@expected_value.inspect}"
     end
   end
 
   # :nodoc:
   struct StartWithExpectation(T)
+    include Expectation
+
     def initialize(@expected_value : T)
     end
 
-    def match(actual_value)
+    def match(actual_value) : Bool
       actual_value.starts_with?(@expected_value)
     end
 
-    def failure_message(actual_value)
+    def failure_message(actual_value) : String
       "Expected:   #{actual_value.inspect}\nto start with: #{@expected_value.inspect}"
     end
 
-    def negative_failure_message(actual_value)
+    def negative_failure_message(actual_value) : String
       "Expected: value #{actual_value.inspect}\nnot to start with: #{@expected_value.inspect}"
     end
   end
 
   # :nodoc:
   struct EndWithExpectation(T)
+    include Expectation
+
     def initialize(@expected_value : T)
     end
 
-    def match(actual_value)
+    def match(actual_value) : Bool
       actual_value.ends_with?(@expected_value)
     end
 
-    def failure_message(actual_value)
+    def failure_message(actual_value) : String
       "Expected:   #{actual_value.inspect}\nto end with: #{@expected_value.inspect}"
     end
 
-    def negative_failure_message(actual_value)
+    def negative_failure_message(actual_value) : String
       "Expected: value #{actual_value.inspect}\nnot to end with: #{@expected_value.inspect}"
     end
   end
 
   # :nodoc:
   struct BeEmptyExpectation
-    def match(actual_value)
+    include Expectation
+
+    def match(actual_value) : Bool
       actual_value.empty?
     end
 
-    def failure_message(actual_value)
+    def failure_message(actual_value) : String
       "Expected: #{actual_value.inspect} to be empty"
     end
 
-    def negative_failure_message(actual_value)
+    def negative_failure_message(actual_value) : String
       "Expected: #{actual_value.inspect} not to be empty"
     end
   end
@@ -289,42 +358,42 @@ module Spec
   # Expectations are used by `Spec::ObjectExtensions#should` and `Spec::ObjectExtensions#should_not`.
   module Expectations
     # Creates an `Expectation` that passes if actual equals *value* (`==`).
-    def eq(value)
+    def eq(value) : Expectation
       Spec::EqualExpectation.new value
     end
 
     # Creates an `Expectation` that passes if actual and *value* are identical (`.same?`).
-    def be(value)
+    def be(value) : Expectation
       Spec::BeExpectation.new value
     end
 
     # Creates an `Expectation` that passes if actual is true (`== true`).
-    def be_true
+    def be_true : Expectation
       eq true
     end
 
     # Creates an `Expectation` that passes if actual is false (`== false`).
-    def be_false
+    def be_false : Expectation
       eq false
     end
 
     # Creates an `Expectation` that passes if actual is truthy (neither `nil` nor `false`).
-    def be_truthy
+    def be_truthy : Expectation
       Spec::BeTruthyExpectation.new
     end
 
     # Creates an `Expectation` that passes if actual is falsy (`nil` or `false`).
-    def be_falsey
+    def be_falsey : Expectation
       Spec::BeFalseyExpectation.new
     end
 
     # Creates an `Expectation` that passes if actual is nil (`== nil`).
-    def be_nil
+    def be_nil : Expectation
       Spec::BeNilExpectation.new
     end
 
     # Creates an `Expectation` that passes if actual is within *delta* of *expected*.
-    def be_close(expected, delta)
+    def be_close(expected, delta) : Expectation
       Spec::CloseExpectation.new(expected, delta)
     end
 
@@ -339,30 +408,30 @@ module Spec
     end
 
     # Creates an `Expectation` that passes if actual matches *value* (`=~`).
-    def match(value)
+    def match(value) : Expectation
       Spec::MatchExpectation.new(value)
     end
 
     # Creates an `Expectation` that passes if actual includes *expected* (`.includes?`).
     # Works on collections and `String`.
-    def contain(expected)
+    def contain(expected) : Expectation
       Spec::ContainExpectation.new(expected)
     end
 
     # Creates an `Expectation` that passes if actual starts with *expected* (`.starts_with?`).
     # Works on `String`.
-    def start_with(expected)
+    def start_with(expected) : Expectation
       Spec::StartWithExpectation.new(expected)
     end
 
     # Creates an `Expectation` that passes if actual ends with *expected* (`.ends_with?`).
     # Works on `String`.
-    def end_with(expected)
+    def end_with(expected) : Expectation
       Spec::EndWithExpectation.new(expected)
     end
 
     # Creates an `Expectation` that passes if actual is empty (`.empty?`).
-    def be_empty
+    def be_empty : Expectation
       Spec::BeEmptyExpectation.new
     end
 
@@ -420,7 +489,7 @@ module Spec
     # Validates an expectation and fails the example if it does not match.
     #
     # See `Spec::Expecations` for available expectations.
-    def should(expectation, file = __FILE__, line = __LINE__)
+    def should(expectation : Expectation, file = __FILE__, line = __LINE__)
       unless expectation.match self
         fail(expectation.failure_message(self), file, line)
       end
@@ -429,7 +498,7 @@ module Spec
     # Validates an expectation and fails the example if it matches.
     #
     # See `Spec::Expecations` for available expectations.
-    def should_not(expectation, file = __FILE__, line = __LINE__)
+    def should_not(expectation : Expectation, file = __FILE__, line = __LINE__)
       if expectation.match self
         fail(expectation.negative_failure_message(self), file, line)
       end
