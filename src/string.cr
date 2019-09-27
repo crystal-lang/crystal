@@ -599,7 +599,7 @@ class String
       end
     end
 
-    value = ((base == 128) ? 0_u128 : 0_u64)
+    value = (base == 128) ? 0_u128 : 0_u64
     mul_overflow = ~value // base
     last_is_underscore = true
     invalid = false

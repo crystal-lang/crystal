@@ -8,7 +8,7 @@ fun __udivmodti4(a : UInt128, b : UInt128, rem : UInt128*)
   r = CompilerRT::U128Info.new
   sr = 0_u32
 
-  if (n.high == 0)
+  if n.high == 0
     if (d.high == 0)
       if rem
         rem.value = (n.low % d.low).to_u128
