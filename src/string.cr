@@ -478,6 +478,7 @@ class String
 
   # Same as `#to_i` but returns an `Int128` or the block's value.
   def to_i128(base : Int = 10, whitespace : Bool = true, underscore : Bool = false, prefix : Bool = false, strict : Bool = true, leading_zero_is_octal : Bool = false, &block)
+    # DEBUG: gen_to_ i128, 9223372036854775807, 9223372036854775808
     gen_to_ i128, ((1 << 127) - 1).to_u128, (1 << 127).to_u128
   end
 
@@ -493,7 +494,7 @@ class String
 
   # Same as `#to_i` but returns an `UInt128` or the block's value.
   def to_u128(base : Int = 10, whitespace : Bool = true, underscore : Bool = false, prefix : Bool = false, strict : Bool = true, leading_zero_is_octal : Bool = false, &block)
-    gen_to_ u128, ((1 << 127) - 1).to_u128 # TODO: use `gen_to_ u128, 340282366920938463463374607431768211455_u128` when 128 bit support is added
+    gen_to_ u128 #, ((1 << 127) - 1).to_u128 # TODO: use `gen_to_ u128, 340282366920938463463374607431768211455_u128` when 128 bit support is added
   end
 
   # :nodoc:
@@ -559,7 +560,7 @@ class String
     case ptr.value.unsafe_chr
     when '-'
       if unsigned
-        return UIntInfo.new 0_u64, true, true
+        return UIntInfo.new 0_u128, true, true
       end
       negative = true
       ptr += 1
@@ -599,8 +600,8 @@ class String
       end
     end
 
-    value = (base == 128) ? 0_u128 : 0_u64
-    mul_overflow = ~value // base
+    value = 0_u128
+    mul_overflow = ~0_u128 // base
     last_is_underscore = true
     invalid = false
 
