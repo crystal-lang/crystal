@@ -1,7 +1,7 @@
 # Function return the remainder of the unsigned division with overflow eg. `a % b`
 fun __udivmodti4(a : UInt128, b : UInt128, rem : UInt128*)
-  n_udword_bits = sizeof(Int64) * sizeof(Char);
-  n_utword_bits = sizeof(Int128) * sizeof(Char);
+  n_udword_bits = sizeof(Int64) * sizeof(Char)
+  n_utword_bits = sizeof(Int128) * sizeof(Char)
   n = a.unsafe_as(CompilerRT::U128Info)
   d = b.unsafe_as(CompilerRT::U128Info)
   q = CompilerRT::U128Info.new
@@ -105,10 +105,10 @@ fun __udivmodti4(a : UInt128, b : UInt128, rem : UInt128*)
 
   carry = 0_u32
   (sr..0).each do
-    r.high = (r.high << 1) | (r.low  >> (n_udword_bits - 1))
-    r.low  = (r.low  << 1) | (q.high >> (n_udword_bits - 1))
-    q.high = (q.high << 1) | (q.low  >> (n_udword_bits - 1))
-    q.low  = (q.low  << 1) | carry
+    r.high = (r.high << 1) | (r.low >> (n_udword_bits - 1))
+    r.low = (r.low << 1) | (q.high >> (n_udword_bits - 1))
+    q.high = (q.high << 1) | (q.low >> (n_udword_bits - 1))
+    q.low = (q.low << 1) | carry
     s = (d.unsafe_as(UInt128) - r.unsafe_as(UInt128) - 1) >> (n_utword_bits - 1)
     carry = s & 1
     r = (r.unsafe_as(UInt128) - (d.unsafe_as(UInt128) & s)).unsafe_as(CompilerRT::U128Info)
