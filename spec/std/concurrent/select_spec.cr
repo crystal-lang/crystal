@@ -142,6 +142,58 @@ describe "select" do
     x.should eq 2
   end
 
+  it "closing a channel over strict select does not yield a value" do
+    ready = Channel(Int32).new
+    done = Channel(Int32).new
+
+    ch1 = Channel(Int32).new
+    ch2 = Channel(Int32).new
+
+    f = spawn do
+      ready.send(1)
+      select
+      when ch1.receive
+      when b = ch2.receive
+        done.send(b)
+      end
+    end
+
+    ready.receive
+    sleep 0.1
+    ch1.close
+    sleep 0.1
+    ch2.send 42
+    done.receive.should eq(42)
+  end
+
+  it "closing all channels over strict select raise exception" do
+    ready = Channel(Int32).new
+    done = Channel(Int32).new
+
+    ch1 = Channel(Int32).new
+    ch2 = Channel(Int32).new
+
+    f = spawn do
+      ready.send(1)
+      begin
+        select
+        when ch1.receive
+        when ch2.receive
+        end
+      rescue e
+        done.send(42)
+      end
+    end
+
+    ready.receive
+    sleep 0.1
+    ch1.close
+    sleep 0.1
+    ch2.close
+    sleep 0.1
+    done.receive.should eq(42)
+  end
+
   it "stress select with send/receive in multiple fibers" do
     fibers = 4
     msg_per_sender = 1000
