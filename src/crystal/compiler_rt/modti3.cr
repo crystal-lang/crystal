@@ -7,5 +7,5 @@ fun __modti3(a : Int128, b : Int128) : Int128
   a = (a ^ s) - s           # negate if s == -1
   r = 0_u128
   __udivmodti4(a.unsafe_as(UInt128), b.unsafe_as(UInt128), pointerof(r))
-  return (r ^ s).unsafe_as(Int128) - s # negate if s == -1
+  (r ^ s).unsafe_as(Int128) - s # negate if s == -1
 end

@@ -118,5 +118,5 @@ fun __udivmodti4(a : UInt128, b : UInt128, rem : UInt128*)
   if rem
     rem.value = r.unsafe_as(UInt128)
   end
-  return q.unsafe_as(UInt128)
+  q.unsafe_as(UInt128)
 end

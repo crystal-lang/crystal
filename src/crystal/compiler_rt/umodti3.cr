@@ -2,5 +2,5 @@
 fun __umodti3(a : UInt128, b : UInt128) : UInt128
   r = 0_u128
   __udivmodti4(a, b, pointerof(r))
-  return r
+  r
 end
