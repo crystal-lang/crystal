@@ -23,6 +23,15 @@ module Spec
 
   class RootContext
     # :nodoc:
+    def run_filters(pattern = nil, line = nil, locations = nil, split_filter = nil, focus = nil)
+      filter_by_pattern(pattern) if pattern
+      filter_by_line(line) if line
+      filter_by_locations(locations) if locations
+      filter_by_split(split_filter) if split_filter
+      filter_by_focus if focus
+    end
+
+    # :nodoc:
     def filter_by_pattern(pattern : Regex)
       children.select!(&.filter_by_pattern(pattern))
     end
