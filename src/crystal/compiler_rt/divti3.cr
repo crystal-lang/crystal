@@ -6,5 +6,5 @@ fun __divti3(a : Int128, b : Int128) : Int128
   a = (a ^ s_a) - s_a
   b = (b ^ s_b) - s_b
   s_a ^= s_b
-  return __udivmodti4(a, b, (0_i128 ^ s_a)) - s_a #TODO: does not work with fun
+  return __udivmodti4(a, b, (0_i128 ^ s_a)) - s_a
 end
