@@ -40,6 +40,26 @@ module Spec
     # Returns a failure message for the `should_not` case against this
     # expectation.
     abstract def negative_failure_message(actual_value) : String
+
+    # Casts a value to possibly some other, narrower type, for the result
+    # of a `should` invocation.
+    #
+    # By default this method returns `value` but some matchers, particularly
+    # `be_nil` and `be_a(T)`, will return a non-nil and `T` instance,
+    # respectively.
+    def cast_should(value)
+      value
+    end
+
+    # Casts a value to possibly some other, narrower type, for the result
+    # of a `should_not` invocation.
+    #
+    # By default this method returns `value` but some matchers, particularly
+    # `be_nil` and `be_a(T)`, will return a nil and non-`T` instance,
+    # respectively.
+    def cast_should_not(value)
+      value
+    end
   end
 
   # :nodoc:
@@ -169,6 +189,14 @@ module Spec
     def negative_failure_message(actual_value) : String
       "Expected: #{actual_value.inspect} not to be nil"
     end
+
+    def cast_should(value)
+      value.nil? ? value : (raise "expected #{value} to be nil")
+    end
+
+    def cast_should_not(value)
+      value.nil? ? (raise "expected #{value} to not be nil") : value
+    end
   end
 
   # :nodoc:
@@ -205,6 +233,14 @@ module Spec
 
     def negative_failure_message(actual_value) : String
       "Expected #{actual_value.inspect} (#{actual_value.class}) not to be a #{T}"
+    end
+
+    def cast_should(value)
+      value.is_a?(T) ? value : (raise "expected #{value} to be a #{T}")
+    end
+
+    def cast_should_not(value)
+      value.is_a?(T) ? (raise "expected #{value} to not be a #{T}") : value
     end
   end
 
@@ -388,6 +424,19 @@ module Spec
     end
 
     # Creates an `Expectation` that passes if actual is nil (`== nil`).
+    #
+    # When using it for a `should_not` expectation, the result of the
+    # `should_not` call will be the receiver without the Nil type.
+    #
+    # For example:
+    #
+    # ```crystal
+    # value = "foo".index('o')
+    # typeof(value) # => Int32 | Nil
+    #
+    # result = value.should_not be_nil
+    # typeof(result) # => Int32
+    # ```
     def be_nil : Expectation
       Spec::BeNilExpectation.new
     end
@@ -436,6 +485,32 @@ module Spec
     end
 
     # Creates an `Expectation` that passes if actual is of type *type* (`is_a?`).
+    #
+    # When using it for a `should` expectation, the result of the
+    # `should` call will be the receiver as the given `type`.
+    #
+    # For example:
+    #
+    # ```crystal
+    # value = "foo".index('o')
+    # typeof(value) # => Int32 | Nil
+    #
+    # result = value.should be_a(Int32)
+    # typeof(result) # => Int32
+    # ```
+    #
+    # When using it for a `should_not` expectation, the result of the
+    # `should_not` call will be the receiver excluding the given `type`.
+    #
+    # For example:
+    #
+    # ```crystal
+    # value = "foo".index('o')
+    # typeof(value) # => Int32 | Nil
+    #
+    # result = value.should_not be_a(Nil)
+    # typeof(result) # => Int32
+    # ```
     macro be_a(type)
       Spec::BeAExpectation({{type}}).new
     end
@@ -493,6 +568,7 @@ module Spec
       unless expectation.match self
         fail(expectation.failure_message(self), file, line)
       end
+      expectation.cast_should(self)
     end
 
     # Validates an expectation and fails the example if it matches.
@@ -502,6 +578,7 @@ module Spec
       if expectation.match self
         fail(expectation.negative_failure_message(self), file, line)
       end
+      expectation.cast_should_not(self)
     end
   end
 end
