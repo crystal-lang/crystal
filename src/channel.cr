@@ -32,6 +32,7 @@ class Channel(T)
     abstract def lock_object_id
     abstract def lock
     abstract def unlock
+    abstract def closed? : Bool
 
     def create_context_and_wait(state_ptr)
       context = SelectContext.new(state_ptr, self)
@@ -286,42 +287,72 @@ class Channel(T)
       .uniq(&.lock_object_id)
       .sort_by(&.lock_object_id)
 
-    ops_locks.each &.lock
+    while true
+      ops_locks.each &.lock
 
-    ops.each_with_index do |op, index|
-      ignore = false
-      result = op.execute
+      ops.each_with_index do |op, index|
+        result = op.execute
 
-      unless result.is_a?(NotReady)
+        unless result.is_a?(NotReady)
+          ops_locks.each &.unlock
+          return index, result
+        end
+      end
+
+      if has_else
         ops_locks.each &.unlock
-        return index, result
+        return ops.size, NotReady
       end
-    end
 
-    if has_else
+      state = Atomic(SelectState).new(SelectState::Active)
+      all_closed = true
+      contexts = ops.map_with_index do |op, index|
+        # Avoid waiting over a closed channel
+        if op.closed?
+          nil
+        else
+          all_closed = false
+          op.create_context_and_wait(pointerof(state))
+          # Closing one of the channels will wakeup this path
+        end
+      end
+
+      if all_closed
+        ops_locks.each &.unlock
+
+        # If channels are closed, there is no need to reschedule
+        # if there is no has_else an exception is more accurate probable
+        if has_else
+          return ops.size, NotReady
+        else
+          raise "All channels are closed on a blocking select"
+        end
+      end
+
       ops_locks.each &.unlock
-      return ops.size, NotReady
-    end
+      Crystal::Scheduler.reschedule
 
-    state = Atomic(SelectState).new(SelectState::Active)
-    contexts = ops.map &.create_context_and_wait(pointerof(state))
+      ops.each do |op|
+        op.lock
+        op.unwait
+        op.unlock
+      end
 
-    ops_locks.each &.unlock
-    Crystal::Scheduler.reschedule
+      contexts.each_with_index do |context, index|
+        if context && context.activated?
+          return index, context.action.result
+        end
+      end
 
-    ops.each do |op|
-      op.lock
-      op.unwait
-      op.unlock
-    end
-
-    contexts.each_with_index do |context, index|
-      if context.activated?
-        return index, context.action.result
+      # if this point is reached !all_closed and no context was activated
+      # so the wakeup was due to a close of some channels.
+      # has_else indicated a non-blocking select, so we can stop the execution
+      # right away. We were waiting for channels, we got a signal of some channel closing
+      # but no data is ready.
+      if has_else
+        return ops.size, NotReady
       end
     end
-
-    raise "BUG: Fiber was awaken from select but no action was activated"
   end
 
   # :nodoc:
@@ -372,6 +403,10 @@ class Channel(T)
     def unlock
       @channel.@lock.unlock
     end
+
+    def closed? : Bool
+      @channel.closed?
+    end
   end
 
   # :nodoc:
@@ -408,6 +443,10 @@ class Channel(T)
 
     def unlock
       @channel.@lock.unlock
+    end
+
+    def closed? : Bool
+      @channel.closed?
     end
   end
 end
