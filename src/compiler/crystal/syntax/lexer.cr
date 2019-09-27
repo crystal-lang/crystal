@@ -1496,7 +1496,7 @@ module Crystal
     end
 
     macro gen_check_int_fits_in_size(type, method, size)
-      if num_size >= 20
+      if num_size >= 40
         raise_value_doesnt_fit_in "{{type}}", string_value, start
       end
       if num_size >= {{size}}
@@ -1514,7 +1514,7 @@ module Crystal
       if negative
         raise "Invalid negative value #{string_value} for {{type}}"
       end
-      if num_size >= 20
+      if num_size >= 40
         raise_value_doesnt_fit_in "{{type}}", string_value, start
       end
       if num_size >= {{size}}
@@ -1542,57 +1542,61 @@ module Crystal
       when :i64
         gen_check_int_fits_in_size Int64, to_u64, 19
       when :u64
+        gen_check_uint_fits_in_size UInt64, 19
+      when :i128
+        gen_check_int_fits_in_size Int128, to_u128, 39
+      when :u128
         if negative
-          raise "Invalid negative value #{string_value} for UInt64"
+          raise "Invalid negative value #{string_value} for UInt128"
         end
 
-        check_value_fits_in_uint64 string_value, num_size, start
+        check_value_fits_in_uint128 string_value, num_size, start
       end
     end
 
     def deduce_integer_kind(string_value, num_size, negative, start)
       if negative
-        check_negative_value_fits_in_int64 string_value, num_size, start
+        check_negative_value_fits_in_int128 string_value, num_size, start
       else
-        check_value_fits_in_uint64 string_value, num_size, start
+        check_value_fits_in_uint128 string_value, num_size, start
       end
 
       if num_size >= 10
         int_value = absolute_integer_value(string_value, negative)
 
+        int128max = Int128::MAX.to_u128
+        int128max += 1 if negative
+
         int64max = Int64::MAX.to_u64
         int64max += 1 if negative
 
-        int32max = Int32::MAX.to_u32
-        int32max += 1 if negative
-
-        if int_value > int64max
-          @token.number_kind = :u64
-        elsif int_value > int32max
-          @token.number_kind = :i64
+        if int_value > int128max
+          @token.number_kind = :u128
+        elsif int_value > int64max
+          @token.number_kind = :i128
         end
       end
     end
 
     def absolute_integer_value(string_value, negative)
       if negative
-        string_value[1..-1].to_u64
+        string_value[1..-1].to_u128
       else
-        string_value.to_u64
+        string_value.to_u128
       end
     end
 
-    def check_negative_value_fits_in_int64(string_value, num_size, start)
-      if num_size > 19
-        raise_value_doesnt_fit_in "Int64", string_value, start
+    def check_negative_value_fits_in_int128(string_value, num_size, start)
+      if num_size > 39
+        raise_value_doesnt_fit_in "Int128", string_value, start
       end
 
-      if num_size == 19
+      if num_size == 39
         i = 1 # skip '-'
         "9223372036854775808".each_byte do |byte|
           string_byte = string_value.byte_at(i)
           if string_byte > byte
-            raise_value_doesnt_fit_in "Int64", string_value, start
+            raise_value_doesnt_fit_in "Int128", string_value, start
           elsif string_byte < byte
             break
           end
@@ -1601,17 +1605,17 @@ module Crystal
       end
     end
 
-    def check_value_fits_in_uint64(string_value, num_size, start)
-      if num_size > 20
-        raise_value_doesnt_fit_in "UInt64", string_value, start
+    def check_value_fits_in_uint128(string_value, num_size, start)
+      if num_size > 40
+        raise_value_doesnt_fit_in "UInt128", string_value, start
       end
 
-      if num_size == 20
+      if num_size == 40
         i = 0
         "18446744073709551615".each_byte do |byte|
           string_byte = string_value.byte_at(i)
           if string_byte > byte
-            raise_value_doesnt_fit_in "UInt64", string_value, start
+            raise_value_doesnt_fit_in "UInt128", string_value, start
           elsif string_byte < byte
             break
           end
@@ -1706,7 +1710,6 @@ module Crystal
       next_char
 
       num = 0_u64
-
       while true
         char = next_char
         if '0' <= char <= '7'

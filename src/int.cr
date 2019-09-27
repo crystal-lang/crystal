@@ -758,8 +758,8 @@ end
 
 struct Int128
   # TODO: eventually update to literals once UInt128 bit support is finished
-  MIN = new(1) << 127
-  MAX = ~MIN
+  MIN = new(1) << 127 # −170141183460469231731687303715884105728_i128
+  MAX = ~MIN          # 170141183460469231731687303715884105727_i128
 
   # Returns an `Int128` by invoking `to_i128` on *value*.
   def self.new(value)
@@ -959,7 +959,7 @@ end
 
 struct UInt128
   MIN = 0_u128
-  MAX = ~MIN
+  MAX = ~MIN # NOTE: use `340282366920938463463374607431768211455_u128` when 128 int support added
 
   # Returns an `UInt128` by invoking `to_u128` on *value*.
   def self.new(value)
