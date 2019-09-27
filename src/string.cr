@@ -522,11 +522,7 @@ class String
   record UIntInfo, value : (UInt64 | UInt128), negative : Bool, invalid : Bool
 
   private macro gen_to_(method, max_positive = nil, max_negative = nil)
-    if base == UInt128
-      info = to_info(base, whitespace, underscore, prefix, strict, leading_zero_is_octal, unsigned: {{max_negative == nil}})
-    else
-      info = to_info(base, whitespace, underscore, prefix, strict, leading_zero_is_octal, unsigned: {{max_negative == nil}})
-    end
+    info = to_info(base, whitespace, underscore, prefix, strict, leading_zero_is_octal, unsigned: {{max_negative == nil}})
 
     return yield if info.invalid
 
