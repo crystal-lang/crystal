@@ -223,7 +223,7 @@ module Crystal
               print " bytes)"
             end
           else
-            print "MISSING".colorize.red.bright
+            print "MISSING".colorize.red.bold
           end
         end
         puts

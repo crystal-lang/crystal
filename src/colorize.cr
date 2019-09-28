@@ -225,8 +225,6 @@ module Colorize
   enum Mode
     # Makes the text bold.
     Bold = 1
-    # Makes the text color bright.
-    Bright = 1
     # Dims the text color.
     Dim
     # Underlines the text.
@@ -244,7 +242,6 @@ end
 struct Colorize::Object(T)
   private MODE_NONE      = '0'
   private MODE_BOLD      = '1'
-  private MODE_BRIGHT    = '1'
   private MODE_DIM       = '2'
   private MODE_UNDERLINE = '4'
   private MODE_BLINK     = '5'
@@ -418,8 +415,7 @@ struct Colorize::Object(T)
       end
 
       unless no_mode
-        # Can't reuse MODES constant because it has bold/bright duplicated
-        {% for mode in %w(Bold Dim Underline Blink Reverse Hidden) %}
+        {% for mode in Mode.constants %}
           if mode.includes? Mode::{{mode.id}}
             io << ';' if printed
             io << MODE_{{mode.upcase.id}}

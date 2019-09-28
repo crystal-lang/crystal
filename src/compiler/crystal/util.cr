@@ -15,7 +15,7 @@ module Crystal
 
   def self.error(msg, color, exit_code = 1, stderr = STDERR, leading_error = true)
     stderr.print "Error: ".colorize.toggle(color).red.bold if leading_error
-    stderr.puts msg.colorize.toggle(color).bright
+    stderr.puts msg.colorize.toggle(color).bold
     exit(exit_code) if exit_code
   end
 

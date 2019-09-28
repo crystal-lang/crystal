@@ -78,7 +78,6 @@ describe "colorize" do
 
   it "colorizes mode" do
     colorize("hello").bold.to_s.should eq("\e[1mhello\e[0m")
-    colorize("hello").bright.to_s.should eq("\e[1mhello\e[0m")
     colorize("hello").dim.to_s.should eq("\e[2mhello\e[0m")
     colorize("hello").underline.to_s.should eq("\e[4mhello\e[0m")
     colorize("hello").blink.to_s.should eq("\e[5mhello\e[0m")
