@@ -224,7 +224,10 @@ module Colorize
   @[Flags]
   enum Mode
     # Makes the text bold.
-    Bold
+    Bold = 1
+    # Makes the text color bright.
+    @[Deprecated("Please use `bold` instead.")]
+    Bright = 1
     # Dims the text color.
     Dim
     # Underlines the text.
@@ -242,6 +245,7 @@ end
 struct Colorize::Object(T)
   private MODE_NONE      = '0'
   private MODE_BOLD      = '1'
+  private MODE_BRIGHT    = '1' # TODO: Remove this in the future
   private MODE_DIM       = '2'
   private MODE_UNDERLINE = '4'
   private MODE_BLINK     = '5'
@@ -278,6 +282,12 @@ struct Colorize::Object(T)
     end
   {% end %}
 
+  @[Deprecated("Please use `bold` instead.")]
+  def bright
+    @mode |= Mode::Bold
+    self
+  end
+
   # Sets the foreground color of the object to *color*.
   def fore(color : Color)
     @fore = color
@@ -290,8 +300,16 @@ struct Colorize::Object(T)
     self
   end
 
+  @@warning_printed = false
+
   # Adds *mode* to the text's decorations.
   def mode(mode : Mode)
+    # TODO: Remove this in the future
+    if mode == Mode::Bright
+      puts "Warning: The color `bright` is deprecated. Please use `bold` instead.".colorize(:light_yellow) unless @@warning_printed
+      @@warning_printed = true
+    end
+
     @mode |= mode
     self
   end
@@ -415,7 +433,10 @@ struct Colorize::Object(T)
       end
 
       unless no_mode
-        {% for mode in Mode.constants.reject { |constant| constant == "All" || constant == "None" } %}
+        # TODO: replace this by
+        # {% for mode in Mode.constants.reject { |constant| constant == "All" || constant == "None" } %}
+        # when bright gets removed
+        {% for mode in %w(Bold Dim Underline Blink Reverse Hidden) %}
           if mode.includes? Mode::{{mode.id}}
             io << ';' if printed
             io << MODE_{{mode.upcase.id}}
