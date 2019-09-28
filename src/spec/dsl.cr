@@ -64,6 +64,13 @@ module Spec
     finish_run
   end
 
+  @@order = "default"
+
+  # :nodoc:
+  def self.order=(mode)
+    @@order = mode
+  end
+
   # :nodoc:
   def self.pattern=(pattern)
     @@pattern = Regex.new(Regex.escape(pattern))
@@ -232,6 +239,7 @@ module Spec
     @@start_time = Time.monotonic
 
     at_exit do
+      root_context.randomize if @@order == "random"
       run_filters
       run_before_suite_hooks
       root_context.run

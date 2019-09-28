@@ -5,6 +5,11 @@ module Spec
   abstract class Context
     # All the children, which can be `describe`/`context` or `it`
     getter children = [] of ExampleGroup | Example
+
+    def randomize
+      children.each { |c| c.randomize if c.responds_to?(:randomize) }
+      children.shuffle!
+    end
   end
 
   # :nodoc:

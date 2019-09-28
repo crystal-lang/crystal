@@ -1,6 +1,17 @@
 require "./spec_helper"
 
 describe Spec::ExampleGroup do
+  it "#randomize" do
+    root = build_spec("f.cr", count: 20)
+
+    before_randomize = all_spec_descriptions(root)
+    root.randomize
+    after_randomize = all_spec_descriptions(root)
+
+    after_randomize.should_not eq before_randomize
+    after_randomize.sort.should eq before_randomize.sort
+  end
+
   describe "#report" do
     it "should include parent's description" do
       root = FakeRootContext.new

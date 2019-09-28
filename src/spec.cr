@@ -75,6 +75,11 @@ require "./spec/dsl"
 # ```
 #
 # If any such thing is marked with `focus: true` then only those examples will run.
+#
+# ## Randomizing order of specs
+#
+# Specs, by default, run in the order defined, but can be run in a random order
+# by passing --order random to `crystal spec`.
 module Spec
 end
 
@@ -101,6 +106,13 @@ OptionParser.parse do |opts|
       STDERR.puts "location #{location} must be file:line"
       exit 1
     end
+  end
+  opts.on("--order MODE", "run examples in random order by passing MODE as 'random'") do |mode|
+    unless %[default random].includes?(mode)
+      STDERR.puts "order must be either 'default' or 'random'"
+      exit 1
+    end
+    Spec.order = mode
   end
   opts.on("--junit_output OUTPUT_DIR", "generate JUnit XML output") do |output_dir|
     junit_formatter = Spec::JUnitFormatter.file(output_dir)
