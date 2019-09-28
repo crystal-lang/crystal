@@ -66,15 +66,28 @@ def Bool.new(pull : JSON::PullParser)
   pull.read_bool
 end
 
-{% for type in %w(Int8 Int16 Int32 Int64 UInt8 UInt16 UInt32 UInt64) %}
+{% for type, method in {
+                         "Int8"   => "i8",
+                         "Int16"  => "i16",
+                         "Int32"  => "i32",
+                         "Int64"  => "i64",
+                         "UInt8"  => "u8",
+                         "UInt16" => "u16",
+                         "UInt32" => "u32",
+                         "UInt64" => "u64",
+                       } %}
   def {{type.id}}.new(pull : JSON::PullParser)
     {{type.id}}.new!(pull.read_int)
+  end
+
+  def {{type.id}}.from_json_object_key?(key : String)
+    key.to_{{method.id}}?
   end
 {% end %}
 
 def Float32.new(pull : JSON::PullParser)
   case pull.kind
-  when :int
+  when .int?
     value = pull.int_value.to_f32
     pull.read_next
     value
@@ -83,9 +96,13 @@ def Float32.new(pull : JSON::PullParser)
   end
 end
 
+def Float32.from_json_object_key?(key : String)
+  key.to_f32?
+end
+
 def Float64.new(pull : JSON::PullParser)
   case pull.kind
-  when :int
+  when .int?
     value = pull.int_value.to_f
     pull.read_next
     value
@@ -94,8 +111,16 @@ def Float64.new(pull : JSON::PullParser)
   end
 end
 
+def Float64.from_json_object_key?(key : String)
+  key.to_f64?
+end
+
 def String.new(pull : JSON::PullParser)
   pull.read_string
+end
+
+def String.from_json_object_key?(key : String)
+  key
 end
 
 def Array.new(pull : JSON::PullParser)
@@ -120,10 +145,21 @@ def Set.new(pull : JSON::PullParser)
   set
 end
 
+# Reads a Hash from the given pull parser.
+#
+# Keys are read by invoking `from_json_object_key?` on this hash's
+# key type (`K`), which must return a value of type `K` or `nil`.
+# If `nil` is returned a `JSON::ParseException` is raised.
+#
+# Values are parsed using the regular `new(pull : JSON::PullParser)` method.
 def Hash.new(pull : JSON::PullParser)
   hash = new
-  pull.read_object do |key|
-    hash[key] = V.new(pull)
+  pull.read_object do |key, key_location|
+    parsed_key = K.from_json_object_key?(key)
+    unless parsed_key
+      raise JSON::ParseException.new("Can't convert #{key.inspect} into #{K}", *key_location)
+    end
+    hash[parsed_key] = V.new(pull)
   end
   hash
 end
@@ -145,6 +181,7 @@ def NamedTuple.new(pull : JSON::PullParser)
   {% begin %}
     {% for key in T.keys %}
       %var{key.id} = nil
+      %found{key.id} = false
     {% end %}
 
     location = pull.location
@@ -154,21 +191,22 @@ def NamedTuple.new(pull : JSON::PullParser)
         {% for key, type in T %}
           when {{key.stringify}}
             %var{key.id} = {{type}}.new(pull)
+            %found{key.id} = true
         {% end %}
       else
         pull.skip
       end
     end
 
-    {% for key in T.keys %}
-      if %var{key.id}.nil?
+    {% for key, type in T %}
+      if %var{key.id}.nil? && !%found{key.id} && !{{type.nilable?}}
         raise JSON::ParseException.new("Missing json attribute: {{key}}", *location)
       end
     {% end %}
 
     {
-      {% for key in T.keys %}
-        {{key}}: %var{key.id},
+      {% for key, type in T %}
+        {{key}}: (%var{key.id}).as({{type}}),
       {% end %}
     }
   {% end %}
@@ -176,9 +214,9 @@ end
 
 def Enum.new(pull : JSON::PullParser)
   case pull.kind
-  when :int
+  when .int?
     from_value(pull.read_int)
-  when :string
+  when .string?
     parse(pull.read_string)
   else
     raise "Expecting int or string in JSON for #{self.class}, not #{pull.kind}"
@@ -195,7 +233,7 @@ def Union.new(pull : JSON::PullParser)
 
     {% for type, index in T %}
       {% if type == Nil %}
-        return pull.read_null if pull.kind == :null
+        return pull.read_null if pull.kind.null?
       {% elsif type == Bool ||
                  type == Int8 || type == Int16 || type == Int32 || type == Int64 ||
                  type == UInt8 || type == UInt16 || type == UInt32 || type == UInt64 ||

@@ -118,7 +118,7 @@ class Crystal::CodeGenVisitor
 
         create_local_copy_of_fun_args(target_def, self_type, args, is_fun_literal, is_closure)
 
-        if @debug.variables?
+        if @debug.variables? && !target_def.naked?
           in_alloca_block do
             args_offset = !is_fun_literal && self_type.passed_as_self? ? 2 : 1
             location = target_def.location

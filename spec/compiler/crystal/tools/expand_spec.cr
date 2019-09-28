@@ -465,24 +465,24 @@ describe "expand" do
       code = <<-CODE
       lib Foo
         #{keyword} Foo
-          ‸{{ "Foo = 1".id }}
+          ‸{{ "x : Int32".id }}
         end
       end
       CODE
 
-      assert_expand_simple code, original: %({{ "Foo = 1".id }}), expanded: "Foo = 1"
+      assert_expand_simple code, original: %({{ "x : Int32".id }}), expanded: "x : Int32"
     end
 
     it "expands macro expression inside C #{keyword} of private lib" do
       code = <<-CODE
       private lib Foo
         #{keyword} Foo
-          ‸{{ "Foo = 1".id }}
+          ‸{{ "x : Int32".id }}
         end
       end
       CODE
 
-      assert_expand_simple code, original: %({{ "Foo = 1".id }}), expanded: "Foo = 1"
+      assert_expand_simple code, original: %({{ "x : Int32".id }}), expanded: "x : Int32"
     end
   end
 

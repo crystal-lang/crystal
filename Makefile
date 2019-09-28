@@ -27,13 +27,22 @@ static ?=       ## Enable static linking
 O := .build
 SOURCES := $(shell find src -name '*.cr')
 SPEC_SOURCES := $(shell find spec -name '*.cr')
-override FLAGS += -D preview_overflow -D compiler_rt $(if $(release),--release )$(if $(stats),--stats )$(if $(progress),--progress )$(if $(threads),--threads $(threads) )$(if $(debug),-d )$(if $(static),--static )$(if $(LDFLAGS),--link-flags="$(LDFLAGS)" )
+override FLAGS += $(if $(release),--release )$(if $(stats),--stats )$(if $(progress),--progress )$(if $(threads),--threads $(threads) )$(if $(debug),-d )$(if $(static),--static )$(if $(LDFLAGS),--link-flags="$(LDFLAGS)" )
 SPEC_FLAGS := $(if $(verbose),-v )$(if $(junit_output),--junit_output $(junit_output) )
 CRYSTAL_CONFIG_BUILD_COMMIT := $(shell git rev-parse --short HEAD 2> /dev/null)
-EXPORTS := $(if $(release),,CRYSTAL_CONFIG_PATH="$(PWD)/src") CRYSTAL_CONFIG_BUILD_COMMIT="$(CRYSTAL_CONFIG_BUILD_COMMIT)"
+EXPORTS := \
+  $(if $(release),,CRYSTAL_CONFIG_PATH="$(PWD)/src") \
+  CRYSTAL_CONFIG_LIBRARY_PATH="$(shell crystal env CRYSTAL_LIBRARY_PATH)" \
+  CRYSTAL_CONFIG_BUILD_COMMIT="$(CRYSTAL_CONFIG_BUILD_COMMIT)"
 SHELL = sh
 LLVM_CONFIG_FINDER := \
   [ -n "$(LLVM_CONFIG)" ] && command -v "$(LLVM_CONFIG)" || \
+  command -v llvm-config-8 || command -v llvm-config-8.0 || command -v llvm-config80 || \
+    (command -v llvm-config > /dev/null && (case "$(llvm-config --version)" in 8.0*) command -v llvm-config;; *) false;; esac)) || \
+  command -v llvm-config-7 || \
+    (command -v llvm-config > /dev/null && (case "$(llvm-config --version)" in 7.1*) command -v llvm-config;; *) false;; esac)) || \
+  command -v llvm-config-7.0 || command -v llvm-config70 || \
+    (command -v llvm-config > /dev/null && (case "$(llvm-config --version)" in 7.0*) command -v llvm-config;; *) false;; esac)) || \
   command -v llvm-config-6.0 || command -v llvm-config60 || \
     (command -v llvm-config > /dev/null && (case "$(llvm-config --version)" in 6.0*) command -v llvm-config;; *) false;; esac)) || \
   command -v llvm-config-5.0 || command -v llvm-config50 || \
@@ -137,3 +146,7 @@ clean: clean_crystal ## Clean up built directories and files
 clean_crystal: ## Clean up crystal built files
 	rm -rf $(O)
 	rm -rf ./docs
+
+.PHONY: clean_cache
+clean_cache: ## Clean up CRYSTAL_CACHE_DIR files
+	rm -rf $(shell ./bin/crystal env CRYSTAL_CACHE_DIR)

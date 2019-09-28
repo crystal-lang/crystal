@@ -122,15 +122,12 @@ enum Signal : Int32
     LibC.sigismember(pointerof(@@sigset), self) == 1
   end
 
-  @@setup_default_handlers = Atomic(Int32).new(0)
+  @@setup_default_handlers = Atomic::Flag.new
 
   # :nodoc:
   def self.setup_default_handlers
-    _, success = @@setup_default_handlers.compare_and_set(0, 1)
-    return unless success
-
+    return unless @@setup_default_handlers.test_and_set
     LibC.sigemptyset(pointerof(@@sigset))
-
     Crystal::Signal.start_loop
     Signal::PIPE.ignore
     Signal::CHLD.reset
@@ -195,7 +192,7 @@ module Crystal::Signal
   end
 
   def self.start_loop
-    spawn do
+    spawn(name: "Signal Loop") do
       loop do
         value = reader.read_bytes(Int32)
       rescue Errno
@@ -272,11 +269,11 @@ module Crystal::SignalChildHandler
   # child process exited.
 
   @@pending = {} of LibC::PidT => Int32
-  @@waiting = {} of LibC::PidT => Channel::Buffered(Int32)
+  @@waiting = {} of LibC::PidT => Channel(Int32)
   @@mutex = Mutex.new
 
-  def self.wait(pid : LibC::PidT) : Channel::Buffered(Int32)
-    channel = Channel::Buffered(Int32).new(1)
+  def self.wait(pid : LibC::PidT) : Channel(Int32)
+    channel = Channel(Int32).new(1)
 
     @@mutex.lock
     if exit_code = @@pending.delete(pid)

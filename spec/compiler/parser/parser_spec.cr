@@ -152,6 +152,8 @@ module Crystal
     it_parses "@a, b = 1, 2", MultiAssign.new(["@a".instance_var, "b".var] of ASTNode, [1.int32, 2.int32] of ASTNode)
     it_parses "@@a, b = 1, 2", MultiAssign.new(["@@a".class_var, "b".var] of ASTNode, [1.int32, 2.int32] of ASTNode)
 
+    assert_syntax_error "b? = 1", "unexpected token: ="
+    assert_syntax_error "b! = 1", "unexpected token: ="
     assert_syntax_error "a, B = 1, 2", "can't assign to constant in multiple assignment"
 
     assert_syntax_error "1 == 2, a = 4"
@@ -243,8 +245,11 @@ module Crystal
     it_parses "def foo; yield 1; yield; end", Def.new("foo", body: [Yield.new([1.int32] of ASTNode), Yield.new] of ASTNode, yields: 1)
     it_parses "def foo(a, b = a); end", Def.new("foo", [Arg.new("a"), Arg.new("b", "a".var)])
     it_parses "def foo(&block); end", Def.new("foo", block_arg: Arg.new("block"), yields: 0)
+    it_parses "def foo(&); end", Def.new("foo", block_arg: Arg.new(""), yields: 0)
+    it_parses "def foo(&\n); end", Def.new("foo", block_arg: Arg.new(""), yields: 0)
     it_parses "def foo(a, &block); end", Def.new("foo", [Arg.new("a")], block_arg: Arg.new("block"), yields: 0)
     it_parses "def foo(a, &block : Int -> Double); end", Def.new("foo", [Arg.new("a")], block_arg: Arg.new("block", restriction: ProcNotation.new(["Int".path] of ASTNode, "Double".path)), yields: 1)
+    it_parses "def foo(a, & : Int -> Double); end", Def.new("foo", [Arg.new("a")], block_arg: Arg.new("", restriction: ProcNotation.new(["Int".path] of ASTNode, "Double".path)), yields: 1)
     it_parses "def foo(a, &block : Int, Float -> Double); end", Def.new("foo", [Arg.new("a")], block_arg: Arg.new("block", restriction: ProcNotation.new(["Int".path, "Float".path] of ASTNode, "Double".path)), yields: 2)
     it_parses "def foo(a, &block : Int, self -> Double); end", Def.new("foo", [Arg.new("a")], block_arg: Arg.new("block", restriction: ProcNotation.new(["Int".path, Self.new] of ASTNode, "Double".path)), yields: 2)
     it_parses "def foo(a, &block : -> Double); end", Def.new("foo", [Arg.new("a")], block_arg: Arg.new("block", restriction: ProcNotation.new(nil, "Double".path)), yields: 0)
@@ -373,6 +378,7 @@ module Crystal
     it_parses "foo(&.responds_to?(:foo))", Call.new(nil, "foo", block: Block.new([Var.new("__arg0")], RespondsTo.new(Var.new("__arg0"), "foo")))
     it_parses "foo &.each {\n}", Call.new(nil, "foo", block: Block.new(["__arg0".var], Call.new("__arg0".var, "each", block: Block.new)))
     it_parses "foo &.each do\nend", Call.new(nil, "foo", block: Block.new(["__arg0".var], Call.new("__arg0".var, "each", block: Block.new)))
+    it_parses "foo &.@bar", Call.new(nil, "foo", block: Block.new(["__arg0".var], ReadInstanceVar.new("__arg0".var, "@bar")))
 
     it_parses "foo(&.as(T))", Call.new(nil, "foo", block: Block.new([Var.new("__arg0")], Cast.new(Var.new("__arg0"), "T".path)))
     it_parses "foo(&.as(T).bar)", Call.new(nil, "foo", block: Block.new([Var.new("__arg0")], Call.new(Cast.new(Var.new("__arg0"), "T".path), "bar")))
@@ -809,6 +815,7 @@ module Crystal
     it_parses "(1 ... )", Expressions.new([RangeLiteral.new(1.int32, Nop.new, true)] of ASTNode)
     it_parses "foo(1.., 2)", Call.new(nil, "foo", [RangeLiteral.new(1.int32, Nop.new, false), 2.int32] of ASTNode)
     it_parses "1..;", RangeLiteral.new(1.int32, Nop.new, false)
+    it_parses "1..\n2..", Expressions.new([RangeLiteral.new(1.int32, Nop.new, false), RangeLiteral.new(2.int32, Nop.new, false)] of ASTNode)
     it_parses "{1.. => 2};", HashLiteral.new([HashLiteral::Entry.new(RangeLiteral.new(1.int32, Nop.new, false), 2.int32)])
     it_parses "..2", RangeLiteral.new(Nop.new, 2.int32, false)
     it_parses "...2", RangeLiteral.new(Nop.new, 2.int32, true)
@@ -969,6 +976,7 @@ module Crystal
     it_parses "a() /3", Call.new("a".call, "/", 3.int32)
     it_parses "a.b() /3", Call.new(Call.new("a".call, "b"), "/", 3.int32)
     it_parses "def foo(x = / /); end", Def.new("foo", [Arg.new("x", regex(" "))])
+    it_parses "begin 1 end / 2", Call.new(Expressions.new([1.int32] of ASTNode), "/", 2.int32)
 
     it_parses "1 =~ 2", Call.new(1.int32, "=~", 2.int32)
     it_parses "1.=~(2)", Call.new(1.int32, "=~", 2.int32)
@@ -1499,7 +1507,7 @@ module Crystal
     assert_syntax_error "case when .foo? then 1; end"
     assert_syntax_error "macro foo;{%end};end"
     assert_syntax_error "foo {1, 2}", "unexpected token: ,"
-    assert_syntax_error "pointerof(self)", "can't take pointerof(self)"
+    assert_syntax_error "pointerof(self)", "can't take address of self"
     assert_syntax_error "def foo 1; end"
 
     assert_syntax_error %<{"x": [] of Int32,\n}\n1.foo(>, "unterminated call", 3, 6
@@ -1588,6 +1596,9 @@ module Crystal
     assert_syntax_error "def foo(x :Int32); end", "space required after colon in type restriction"
 
     assert_syntax_error "def f end", "unexpected token: end (expected ';' or newline)"
+
+    assert_syntax_error "fun foo\nclass", "can't define class inside fun"
+    assert_syntax_error "fun foo\nFoo = 1", "dynamic constant assignment"
 
     assert_syntax_error %([\n"foo"\n"bar"\n])
     it_parses "[\n1\n]", ArrayLiteral.new([1.int32] of ASTNode)
@@ -1877,6 +1888,28 @@ module Crystal
         node = parser.parse.as(Def).body
         loc = node.location.not_nil!
         loc.line_number.should eq(2)
+      end
+
+      it "sets location of +=" do
+        parser = Parser.new("a = 1; a += 2")
+        node = parser.parse.as(Expressions).expressions[1]
+
+        node.name_location.should_not be_nil
+        name_location = node.name_location.not_nil!
+
+        name_location.line_number.should eq(1)
+        name_location.column_number.should eq(10)
+      end
+
+      it "sets location of obj.x += as call" do
+        parser = Parser.new("a = 1; a.x += 2")
+        node = parser.parse.as(Expressions).expressions[1]
+
+        node.name_location.should_not be_nil
+        name_location = node.name_location.not_nil!
+
+        name_location.line_number.should eq(1)
+        name_location.column_number.should eq(12)
       end
     end
   end

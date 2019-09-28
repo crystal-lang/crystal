@@ -22,6 +22,52 @@ class YAML::Nodes::Builder
     @anchor_count = 0
   end
 
+  # Emits an alias to the given *anchor*.
+  #
+  # ```crystal
+  # require "yaml"
+  #
+  # nodes_builder = YAML::Nodes::Builder.new
+  #
+  # nodes_builder.mapping do
+  #   nodes_builder.scalar "foo"
+  #   nodes_builder.alias "key"
+  # end
+  #
+  # yaml = YAML.build do |builder|
+  #   nodes_builder.document.to_yaml builder
+  # end
+  #
+  # yaml # => "---\nfoo: *key\n"
+  # ```
+  def alias(anchor : String) : Nil
+    push_node Alias.new anchor
+  end
+
+  # Emits the scalar `"<<"` followed by an alias to the given *anchor*.
+  #
+  # See [YAML Merge](https://yaml.org/type/merge.html).
+  #
+  # ```crystal
+  # require "yaml"
+  #
+  # nodes_builder = YAML::Nodes::Builder.new
+  #
+  # nodes_builder.mapping do
+  #   nodes_builder.merge "key"
+  # end
+  #
+  # yaml = YAML.build do |builder|
+  #   nodes_builder.document.to_yaml builder
+  # end
+  #
+  # yaml # => "---\n<<: *key\n"
+  # ```
+  def merge(anchor : String) : Nil
+    self.scalar "<<"
+    self.alias anchor
+  end
+
   def scalar(value, anchor : String? = nil, tag : String? = nil,
              style : YAML::ScalarStyle = YAML::ScalarStyle::ANY,
              reference = nil) : Nil

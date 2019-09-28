@@ -125,6 +125,8 @@ class HTTP::Client
   # be used, else the given one. In any case the active context can be accessed through `tls`.
   {% if flag?(:without_openssl) %}
     def initialize(@host : String, port = nil, tls : Bool = false)
+      check_host_only(@host)
+
       @tls = nil
       if tls
         raise "HTTP::Client TLS is disabled because `-D without_openssl` was passed at compile time"
@@ -135,6 +137,8 @@ class HTTP::Client
     end
   {% else %}
     def initialize(@host : String, port = nil, tls : Bool | OpenSSL::SSL::Context::Client = false)
+      check_host_only(@host)
+
       @tls = case tls
              when true
                OpenSSL::SSL::Context::Client.new
@@ -148,6 +152,21 @@ class HTTP::Client
       @compress = true
     end
   {% end %}
+
+  private def check_host_only(string : String)
+    # When parsing a URI with just a host
+    # we end up with a URI with just a path
+    uri = URI.parse(string)
+    if uri.scheme || uri.host || uri.port || uri.query || uri.user || uri.password || uri.path.includes?('/')
+      raise_invalid_host(string)
+    end
+  rescue URI::Error
+    raise_invalid_host(string)
+  end
+
+  private def raise_invalid_host(string : String)
+    raise ArgumentError.new("The string passed to create an HTTP::Client must be just a host, not #{string.inspect}")
+  end
 
   # Creates a new HTTP client from a URI. Parses the *host*, *port*,
   # and *tls* configuration from the URI provided. Port defaults to
@@ -739,7 +758,14 @@ class HTTP::Client
 
     {% if !flag?(:without_openssl) %}
       if tls = @tls
-        socket = OpenSSL::SSL::Socket::Client.new(socket, context: tls, sync_close: true, hostname: @host)
+        tcp_socket = socket
+        begin
+          socket = OpenSSL::SSL::Socket::Client.new(tcp_socket, context: tls, sync_close: true, hostname: @host)
+        rescue exc
+          # don't leak the TCP socket when the SSL connection failed
+          tcp_socket.close
+          raise exc
+        end
       end
     {% end %}
 

@@ -1,3 +1,7 @@
+{% if flag?(:preview_mt) %}
+  require "crystal/rw_lock"
+{% end %}
+
 {% unless flag?(:win32) %}
   @[Link("pthread")]
 {% end %}
@@ -12,6 +16,13 @@ lib LibGC
   alias Int = LibC::Int
   alias SizeT = LibC::SizeT
   alias Word = LibC::ULong
+
+  struct StackBase
+    mem_base : Void*
+    # reg_base : Void* should be used also for IA-64 when/if supported
+  end
+
+  alias ThreadHandle = Void*
 
   fun init = GC_init
   fun malloc = GC_malloc(size : SizeT) : Void*
@@ -47,8 +58,8 @@ lib LibGC
   fun push_all_eager = GC_push_all_eager(bottom : Void*, top : Void*)
 
   {% if flag?(:preview_mt) %}
-    fun set_stackbottom = GC_set_stackbottom(LibC::PthreadT, Void*)
-    fun get_stackbottom = GC_get_stackbottom : Void*
+    fun get_my_stackbottom = GC_get_my_stackbottom(sb : StackBase*) : ThreadHandle
+    fun set_stackbottom = GC_set_stackbottom(th : ThreadHandle, sb : StackBase*) : ThreadHandle
   {% else %}
     $stackbottom = GC_stackbottom : Void*
   {% end %}
@@ -71,6 +82,10 @@ lib LibGC
 end
 
 module GC
+  {% if flag?(:preview_mt) %}
+    @@lock = Crystal::RWLock.new
+  {% end %}
+
   # :nodoc:
   def self.malloc(size : LibC::SizeT) : Void*
     LibGC.malloc(size)
@@ -184,16 +199,19 @@ module GC
   # :nodoc:
   def self.current_thread_stack_bottom
     {% if flag?(:preview_mt) %}
-      LibGC.get_stackbottom
+      th = LibGC.get_my_stackbottom(out sb)
+      {th, sb.mem_base}
     {% else %}
-      LibGC.stackbottom
+      {Pointer(Void).null, LibGC.stackbottom}
     {% end %}
   end
 
   # :nodoc:
   {% if flag?(:preview_mt) %}
-    def self.set_stackbottom(thread : Thread, stack_bottom : Void*)
-      LibGC.set_stackbottom(thread.to_unsafe, stack_bottom)
+    def self.set_stackbottom(thread_handle : Void*, stack_bottom : Void*)
+      sb = LibGC::StackBase.new
+      sb.mem_base = stack_bottom
+      LibGC.set_stackbottom(thread_handle, pointerof(sb))
     end
   {% else %}
     def self.set_stackbottom(stack_bottom : Void*)
@@ -204,23 +222,29 @@ module GC
   # :nodoc:
   def self.lock_read
     {% if flag?(:preview_mt) %}
-      GC.disable
+      @@lock.read_lock
     {% end %}
   end
 
   # :nodoc:
   def self.unlock_read
     {% if flag?(:preview_mt) %}
-      GC.enable
+      @@lock.read_unlock
     {% end %}
   end
 
   # :nodoc:
   def self.lock_write
+    {% if flag?(:preview_mt) %}
+      @@lock.write_lock
+    {% end %}
   end
 
   # :nodoc:
   def self.unlock_write
+    {% if flag?(:preview_mt) %}
+      @@lock.write_unlock
+    {% end %}
   end
 
   # :nodoc:
@@ -240,18 +264,22 @@ module GC
   end
 
   # pushes the stack of pending fibers when the GC wants to collect memory:
-  GC.before_collect do
-    Fiber.unsafe_each do |fiber|
-      fiber.push_gc_roots unless fiber.running?
-    end
-
-    {% if flag?(:preview_mt) %}
-      Thread.unsafe_each do |thread|
-        fiber = thread.scheduler.@current
-        GC.set_stackbottom(thread, fiber.@stack_bottom)
+  {% unless flag?(:win32) %}
+    GC.before_collect do
+      Fiber.unsafe_each do |fiber|
+        fiber.push_gc_roots unless fiber.running?
       end
-    {% end %}
 
-    GC.unlock_write
-  end
+      {% if flag?(:preview_mt) %}
+        Thread.unsafe_each do |thread|
+          if scheduler = thread.@scheduler
+            fiber = scheduler.@current
+            GC.set_stackbottom(thread.gc_thread_handler, fiber.@stack_bottom)
+          end
+        end
+      {% end %}
+
+      GC.unlock_write
+    end
+  {% end %}
 end

@@ -45,8 +45,32 @@ describe "JSON serialization" do
       Hash(String, Int32).from_json(%({"foo": 1, "bar": 2})).should eq({"foo" => 1, "bar" => 2})
     end
 
+    it "does Hash(Int32, String)#from_json" do
+      Hash(Int32, String).from_json(%({"1": "x", "2": "y"})).should eq({1 => "x", 2 => "y"})
+    end
+
+    it "does Hash(Float32, String)#from_json" do
+      Hash(Float32, String).from_json(%({"1.23": "x", "4.56": "y"})).should eq({1.23_f32 => "x", 4.56_f32 => "y"})
+    end
+
+    it "does Hash(Float64, String)#from_json" do
+      Hash(Float64, String).from_json(%({"1.23": "x", "4.56": "y"})).should eq({1.23 => "x", 4.56 => "y"})
+    end
+
+    it "does Hash(BigInt, String)#from_json" do
+      Hash(BigInt, String).from_json(%({"12345678901234567890": "x"})).should eq({"12345678901234567890".to_big_i => "x"})
+    end
+
+    it "does Hash(BigFloat, String)#from_json" do
+      Hash(BigFloat, String).from_json(%({"1234567890.123456789": "x"})).should eq({"1234567890.123456789".to_big_f => "x"})
+    end
+
+    it "does Hash(BigDecimal, String)#from_json" do
+      Hash(BigDecimal, String).from_json(%({"1234567890.123456789": "x"})).should eq({"1234567890.123456789".to_big_d => "x"})
+    end
+
     it "raises an error Hash(String, Int32)#from_json with null value" do
-      expect_raises(JSON::ParseException, "Expected int but was null") do
+      expect_raises(JSON::ParseException, "Expected Int but was Null") do
         Hash(String, Int32).from_json(%({"foo": 1, "bar": 2, "baz": null}))
       end
     end
@@ -75,6 +99,18 @@ describe "JSON serialization" do
       tuple = NamedTuple(x: Int32, y: String).from_json(%({"y": "hello", "x": 1}))
       tuple.should eq({x: 1, y: "hello"})
       tuple.should be_a(NamedTuple(x: Int32, y: String))
+    end
+
+    it "does for named tuple with nilable fields (#8089)" do
+      tuple = NamedTuple(x: Int32?, y: String).from_json(%({"y": "hello"}))
+      tuple.should eq({x: nil, y: "hello"})
+      tuple.should be_a(NamedTuple(x: Int32?, y: String))
+    end
+
+    it "does for named tuple with nilable fields and null (#8089)" do
+      tuple = NamedTuple(x: Int32?, y: String).from_json(%({"y": "hello", "x": null}))
+      tuple.should eq({x: nil, y: "hello"})
+      tuple.should be_a(NamedTuple(x: Int32?, y: String))
     end
 
     it "does for BigInt" do
@@ -276,8 +312,24 @@ describe "JSON serialization" do
       {"foo" => 1, "bar" => 2}.to_json.should eq(%({"foo":1,"bar":2}))
     end
 
-    it "does for Hash with non-string keys" do
+    it "does for Hash with symbol keys" do
       {:foo => 1, :bar => 2}.to_json.should eq(%({"foo":1,"bar":2}))
+    end
+
+    it "does for Hash with int keys" do
+      {1 => 2, 3 => 6}.to_json.should eq(%({"1":2,"3":6}))
+    end
+
+    it "does for Hash with Float32 keys" do
+      {1.2_f32 => 2, 3.4_f32 => 6}.to_json.should eq(%({"1.2":2,"3.4":6}))
+    end
+
+    it "does for Hash with Float64 keys" do
+      {1.2 => 2, 3.4 => 6}.to_json.should eq(%({"1.2":2,"3.4":6}))
+    end
+
+    it "does for Hash with BigInt keys" do
+      {123.to_big_i => 2}.to_json.should eq(%({"123":2}))
     end
 
     it "does for Hash with newlines" do
@@ -368,6 +420,7 @@ describe "JSON serialization" do
     describe "Time" do
       it "#to_json" do
         Time.utc(2016, 11, 16, 12, 55, 48).to_json.should eq(%("2016-11-16T12:55:48Z"))
+        Time.local(2016, 11, 16, 12, 55, 48, location: Time::Location.fixed(7200)).to_json.should eq(%("2016-11-16T12:55:48+02:00"))
       end
 
       it "omit sub-second precision" do

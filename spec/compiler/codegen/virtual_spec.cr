@@ -249,7 +249,7 @@ describe "Code gen: virtual type" do
       end
 
       f = Bar.new || nil
-      f.foo.to_i
+      f.foo.to_i!
       ").to_i.should eq(1)
   end
 

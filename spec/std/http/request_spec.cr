@@ -1,6 +1,15 @@
 require "spec"
 require "http/request"
 
+private class EmptyIO < IO
+  def read(slice : Bytes)
+    0
+  end
+
+  def write(slice : Bytes) : Nil
+  end
+end
+
 module HTTP
   describe Request do
     it "serialize GET" do
@@ -117,80 +126,169 @@ module HTTP
       end
     end
 
-    it "parses GET" do
-      request = Request.from_io(IO::Memory.new("GET / HTTP/1.1\r\nHost: host.example.org\r\n\r\n")).as(Request)
-      request.method.should eq("GET")
-      request.path.should eq("/")
-      request.headers.should eq({"Host" => "host.example.org"})
-    end
+    describe ".from_io" do
+      it "parses GET" do
+        request = Request.from_io(IO::Memory.new("GET / HTTP/1.1\r\nHost: host.example.org\r\n\r\n")).as(Request)
+        request.method.should eq("GET")
+        request.path.should eq("/")
+        request.headers.should eq({"Host" => "host.example.org"})
+      end
 
-    it "parses GET with query params" do
-      request = Request.from_io(IO::Memory.new("GET /greet?q=hello&name=world HTTP/1.1\r\nHost: host.example.org\r\n\r\n")).as(Request)
-      request.method.should eq("GET")
-      request.path.should eq("/greet")
-      request.headers.should eq({"Host" => "host.example.org"})
-    end
+      it "parses GET (just \\n instead of \\r\\n)" do
+        request = Request.from_io(IO::Memory.new("GET / HTTP/1.1\nHost: host.example.org\n\n")).as(Request)
+        request.method.should eq("GET")
+        request.path.should eq("/")
+        request.headers.should eq({"Host" => "host.example.org"})
+      end
 
-    it "parses GET without \\r" do
-      request = Request.from_io(IO::Memory.new("GET / HTTP/1.1\nHost: host.example.org\n\n")).as(Request)
-      request.method.should eq("GET")
-      request.path.should eq("/")
-      request.headers.should eq({"Host" => "host.example.org"})
-    end
+      it "parses GET with query params" do
+        request = Request.from_io(IO::Memory.new("GET /greet?q=hello&name=world HTTP/1.1\r\nHost: host.example.org\r\n\r\n")).as(Request)
+        request.method.should eq("GET")
+        request.path.should eq("/greet")
+        request.headers.should eq({"Host" => "host.example.org"})
+      end
 
-    it "parses empty header" do
-      request = Request.from_io(IO::Memory.new("GET / HTTP/1.1\r\nHost: host.example.org\r\nReferer:\r\n\r\n")).as(Request)
-      request.method.should eq("GET")
-      request.path.should eq("/")
-      request.headers.should eq({"Host" => "host.example.org", "Referer" => ""})
-    end
+      it "parses GET without \\r" do
+        request = Request.from_io(IO::Memory.new("GET / HTTP/1.1\nHost: host.example.org\n\n")).as(Request)
+        request.method.should eq("GET")
+        request.path.should eq("/")
+        request.headers.should eq({"Host" => "host.example.org"})
+      end
 
-    it "parses GET with cookie" do
-      request = Request.from_io(IO::Memory.new("GET / HTTP/1.1\r\nHost: host.example.org\r\nCookie: a=b\r\n\r\n")).as(Request)
-      request.method.should eq("GET")
-      request.path.should eq("/")
-      request.cookies["a"].value.should eq("b")
+      it "parses empty string (EOF), returns nil" do
+        Request.from_io(IO::Memory.new("")).should be_nil
+      end
 
-      # Headers should not be modified (#2920)
-      request.headers.should eq({"Host" => "host.example.org", "Cookie" => "a=b"})
-    end
+      it "parses empty string (EOF), returns nil (no peek)" do
+        Request.from_io(EmptyIO.new).should be_nil
+      end
 
-    it "headers are case insensitive" do
-      request = Request.from_io(IO::Memory.new("GET / HTTP/1.1\r\nHost: host.example.org\r\n\r\n")).as(Request)
-      headers = request.headers.not_nil!
-      headers["HOST"].should eq("host.example.org")
-      headers["host"].should eq("host.example.org")
-      headers["Host"].should eq("host.example.org")
-    end
+      it "parses GET with spaces in request line" do
+        request = Request.from_io(IO::Memory.new("GET   /   HTTP/1.1  \r\nHost: host.example.org\r\n\r\n")).as(Request)
+        request.method.should eq("GET")
+        request.path.should eq("/")
+        request.headers.should eq({"Host" => "host.example.org"})
+      end
 
-    it "parses POST (with body)" do
-      request = Request.from_io(IO::Memory.new("POST /foo HTTP/1.1\r\nContent-Length: 13\r\n\r\nthisisthebody")).as(Request)
-      request.method.should eq("POST")
-      request.path.should eq("/foo")
-      request.headers.should eq({"Content-Length" => "13"})
-      request.body.not_nil!.gets_to_end.should eq("thisisthebody")
-    end
+      it "parses empty header" do
+        request = Request.from_io(IO::Memory.new("GET / HTTP/1.1\r\nHost: host.example.org\r\nReferer:\r\n\r\n")).as(Request)
+        request.method.should eq("GET")
+        request.path.should eq("/")
+        request.headers.should eq({"Host" => "host.example.org", "Referer" => ""})
+      end
 
-    it "handles malformed request" do
-      request = Request.from_io(IO::Memory.new("nonsense"))
-      request.should be_a(Request::BadRequest)
-      request = Request.from_io(IO::Memory.new("GET / HTTP/1.1\r\nX-Test-Header: \u{0}\r\n"))
-      request.should be_a(Request::BadRequest)
-    end
+      it "parses GET with cookie" do
+        request = Request.from_io(IO::Memory.new("GET / HTTP/1.1\r\nHost: host.example.org\r\nCookie: a=b\r\n\r\n")).as(Request)
+        request.method.should eq("GET")
+        request.path.should eq("/")
+        request.cookies["a"].value.should eq("b")
 
-    it "handles unsupported HTTP version" do
-      request = Request.from_io(IO::Memory.new("GET / HTTP/1.2\r\nContent-Length: 0\r\n\r\n"))
-      request.should be_a(Request::BadRequest)
-    end
+        # Headers should not be modified (#2920)
+        request.headers.should eq({"Host" => "host.example.org", "Cookie" => "a=b"})
+      end
 
-    it "handles long request lines" do
-      request = Request.from_io(IO::Memory.new("GET /#{"a" * 4096} HTTP/1.1\r\n\r\n"))
-      request.should be_a(Request::BadRequest)
-    end
+      it "headers are case insensitive" do
+        request = Request.from_io(IO::Memory.new("GET / HTTP/1.1\r\nHost: host.example.org\r\n\r\n")).as(Request)
+        headers = request.headers.not_nil!
+        headers["HOST"].should eq("host.example.org")
+        headers["host"].should eq("host.example.org")
+        headers["Host"].should eq("host.example.org")
+      end
 
-    it "handles long headers" do
-      request = Request.from_io(IO::Memory.new("GET / HTTP/1.1\r\n#{"X-Test-Header: A pretty log header value\r\n" * 1000}\r\n"))
-      request.should be_a(Request::BadRequest)
+      it "parses POST (with body)" do
+        request = Request.from_io(IO::Memory.new("POST /foo HTTP/1.1\r\nContent-Length: 13\r\n\r\nthisisthebody")).as(Request)
+        request.method.should eq("POST")
+        request.path.should eq("/foo")
+        request.headers.should eq({"Content-Length" => "13"})
+        request.body.not_nil!.gets_to_end.should eq("thisisthebody")
+      end
+
+      it "handles malformed request" do
+        request = Request.from_io(IO::Memory.new("nonsense"))
+        request.should eq HTTP::Status::BAD_REQUEST
+        request = Request.from_io(IO::Memory.new("GET / HTTP/1.1\r\nX-Test-Header: \u{0}\r\n"))
+        request.should eq HTTP::Status::BAD_REQUEST
+      end
+
+      it "handles unsupported HTTP version" do
+        request = Request.from_io(IO::Memory.new("GET / HTTP/1.2\r\nContent-Length: 0\r\n\r\n"))
+        request.should eq HTTP::Status::BAD_REQUEST
+      end
+
+      it "stores normalized case for common header name (lowercase) (#8060)" do
+        request = Request.from_io(IO::Memory.new("GET / HTTP/1.1\r\ncontent-type: foo\r\n\r\n")).as(Request)
+        request.headers.to_s.should eq(%(HTTP::Headers{"content-type" => "foo"}))
+      end
+
+      it "stores normalized case for common header name (capitalized) (#8060)" do
+        request = Request.from_io(IO::Memory.new("GET / HTTP/1.1\r\nContent-Type: foo\r\n\r\n")).as(Request)
+        request.headers.to_s.should eq(%(HTTP::Headers{"Content-Type" => "foo"}))
+      end
+
+      it "stores normalized case for common header name (mixed) (#8060)" do
+        request = Request.from_io(IO::Memory.new("GET / HTTP/1.1\r\nContent-type: foo\r\n\r\n")).as(Request)
+        request.headers.to_s.should eq(%(HTTP::Headers{"Content-type" => "foo"}))
+      end
+
+      describe "long request lines" do
+        it "handles long URI" do
+          path = "a" * 8177
+          request = Request.from_io(IO::Memory.new("GET /#{path} HTTP/1.1\r\n\r\n")).as(Request)
+          request.path.count('a').should eq 8177
+        end
+
+        it "fails for too-long URI" do
+          request = Request.from_io(IO::Memory.new("GET /#{"a" * 8192} HTTP/1.1\r\n\r\n"))
+          request.should eq HTTP::Status::URI_TOO_LONG
+        end
+
+        it "handles long URI with custom size" do
+          request = Request.from_io(IO::Memory.new("GET /12345 HTTP/1.1\r\n\r\n"), max_request_line_size: 20).as(Request)
+          request.path.should eq "/12345"
+        end
+
+        it "fails for too-long URI with custom size" do
+          request = Request.from_io(IO::Memory.new("GET /1234567 HTTP/1.1\r\n\r\n"), max_request_line_size: 20)
+          request.should eq HTTP::Status::URI_TOO_LONG
+        end
+      end
+
+      describe "long headers" do
+        it "handles long headers" do
+          request = Request.from_io(IO::Memory.new("GET / HTTP/1.1\r\n#{"X-Test-Header: A pretty log header value\r\n" * 390}\r\n"))
+          request.should be_a(Request)
+          request.as(Request).headers["X-Test-Header"].should eq (["A pretty log header value"] * 390).join(',')
+        end
+
+        it "fails for too-long headers" do
+          request = Request.from_io(IO::Memory.new("GET / HTTP/1.1\r\n#{"X-Test-Header: A pretty log header value\r\n" * 391}\r\n"))
+          request.should eq HTTP::Status::REQUEST_HEADER_FIELDS_TOO_LARGE
+        end
+
+        it "handles long headers with custom size" do
+          request = Request.from_io(IO::Memory.new("GET / HTTP/1.1\r\nFoo: Bar\r\n\r\n"), max_headers_size: 10)
+          request.should be_a(Request)
+          request.as(Request).headers["Foo"].should eq "Bar"
+        end
+
+        it "fails for too-long headers with custom size" do
+          request = Request.from_io(IO::Memory.new("GET / HTTP/1.1\r\nFoo: Bar!\r\n\r\n"), max_headers_size: 10)
+          request.should eq HTTP::Status::REQUEST_HEADER_FIELDS_TOO_LARGE
+        end
+      end
+
+      describe "long single header" do
+        it "handles long header" do
+          request = Request.from_io(IO::Memory.new("GET / HTTP/1.1\r\nFoo: #{"b" * 16377}\r\n\r\n"))
+          request.should be_a(Request)
+          request.as(Request).headers["Foo"].size.should eq 16377
+        end
+
+        it "fails for too-long header" do
+          request = Request.from_io(IO::Memory.new("GET / HTTP/1.1\r\nFoo: #{"b" * 16378}\r\n"))
+          request.should eq HTTP::Status::REQUEST_HEADER_FIELDS_TOO_LARGE
+        end
+      end
     end
 
     describe "keep-alive" do

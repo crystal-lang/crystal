@@ -42,7 +42,7 @@ private class SimpleIOMemory < IO
     count
   end
 
-  def write(slice : Bytes)
+  def write(slice : Bytes) : Nil
     count = slice.size
     new_bytesize = bytesize + count
     if new_bytesize > @capacity
@@ -820,6 +820,52 @@ describe IO do
         io = SimpleIOMemory.new
         io.set_encoding("UTF-16LE")
         io.encoding.should eq("UTF-16LE")
+      end
+    end
+
+    describe "#close" do
+      it "aborts 'read' in a different thread" do
+        ch = Channel(Symbol).new(1)
+
+        IO.pipe do |read, write|
+          spawn do
+            ch.send :start
+            read.gets
+          rescue
+            ch.send :end
+          end
+
+          delay(1) { ch.send :timeout }
+
+          ch.receive.should eq(:start)
+          read.close
+          ch.receive.should eq(:end)
+        end
+      end
+
+      it "aborts 'write' in a different thread" do
+        ch = Channel(Symbol).new(1)
+
+        IO.pipe do |read, write|
+          f = spawn do
+            ch.send :start
+            loop do
+              write.puts "some line"
+            end
+          rescue
+            ch.send :end
+          end
+
+          delay(1) { ch.send :timeout }
+
+          ch.receive.should eq(:start)
+          while f.running?
+            # Wait until the fiber is blocked
+            Fiber.yield
+          end
+          write.close
+          ch.receive.should eq(:end)
+        end
       end
     end
   end

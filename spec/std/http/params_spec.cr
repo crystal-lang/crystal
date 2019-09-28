@@ -57,13 +57,13 @@ module HTTP
 
     describe ".encode" do
       it "builds from hash" do
-        encoded = Params.encode({"foo" => "bar", "baz" => "quux"})
-        encoded.should eq("foo=bar&baz=quux")
+        encoded = Params.encode({"foo" => "bar", "baz" => ["quux", "quuz"]})
+        encoded.should eq("foo=bar&baz=quux&baz=quuz")
       end
 
       it "builds from named tuple" do
-        encoded = Params.encode({foo: "bar", baz: "quux"})
-        encoded.should eq("foo=bar&baz=quux")
+        encoded = Params.encode({foo: "bar", baz: ["quux", "quuz"]})
+        encoded.should eq("foo=bar&baz=quux&baz=quuz")
       end
     end
 

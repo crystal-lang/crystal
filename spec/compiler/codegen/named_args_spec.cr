@@ -48,7 +48,7 @@ describe "Code gen: named args" do
       value = 0
       value &+= add(1, y: 2)
       value &+= add(1, y: 1.3)
-      value.to_i
+      value.to_i!
       )).to_i.should eq(5)
   end
 
@@ -152,7 +152,7 @@ describe "Code gen: named args" do
       end
 
       def foo(x, *, z : Float64)
-        x &* z.to_i
+        x &* z.to_i!
       end
 
       a = foo(10, z: 20)

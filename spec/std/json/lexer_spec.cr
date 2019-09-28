@@ -1,17 +1,19 @@
 require "spec"
 require "json"
 
-private def it_lexes(string, expected_type, file = __FILE__, line = __LINE__)
+private def it_lexes(string, expected_kind : JSON::Token::Kind, expected_to_s = string, file = __FILE__, line = __LINE__)
   it "lexes #{string} from string", file, line do
     lexer = JSON::Lexer.new string
     token = lexer.next_token
-    token.type.should eq(expected_type)
+    token.kind.should eq(expected_kind)
+    token.to_s.should eq(expected_to_s)
   end
 
   it "lexes #{string} from IO", file, line do
     lexer = JSON::Lexer.new IO::Memory.new(string)
     token = lexer.next_token
-    token.type.should eq(expected_type)
+    token.kind.should eq(expected_kind)
+    token.to_s.should eq(expected_to_s)
   end
 end
 
@@ -19,15 +21,17 @@ private def it_lexes_string(string, string_value, file = __FILE__, line = __LINE
   it "lexes #{string} from String", file, line do
     lexer = JSON::Lexer.new string
     token = lexer.next_token
-    token.type.should eq(:STRING)
+    token.kind.should eq(JSON::Token::Kind::String)
     token.string_value.should eq(string_value)
+    token.to_s.should eq(token.string_value)
   end
 
   it "lexes #{string} from IO", file, line do
     lexer = JSON::Lexer.new IO::Memory.new(string)
     token = lexer.next_token
-    token.type.should eq(:STRING)
+    token.kind.should eq(JSON::Token::Kind::String)
     token.string_value.should eq(string_value)
+    token.to_s.should eq(token.string_value)
   end
 end
 
@@ -35,17 +39,19 @@ private def it_lexes_int(string, int_value, file = __FILE__, line = __LINE__)
   it "lexes #{string} from String", file, line do
     lexer = JSON::Lexer.new string
     token = lexer.next_token
-    token.type.should eq(:INT)
+    token.kind.should eq(JSON::Token::Kind::Int)
     token.int_value.should eq(int_value)
     token.raw_value.should eq(string)
+    token.to_s.should eq(token.raw_value)
   end
 
   it "lexes #{string} from IO", file, line do
     lexer = JSON::Lexer.new IO::Memory.new(string)
     token = lexer.next_token
-    token.type.should eq(:INT)
+    token.kind.should eq(JSON::Token::Kind::Int)
     token.int_value.should eq(int_value)
     token.raw_value.should eq(string)
+    token.to_s.should eq(token.raw_value)
   end
 end
 
@@ -53,29 +59,31 @@ private def it_lexes_float(string, float_value, file = __FILE__, line = __LINE__
   it "lexes #{string} from String", file, line do
     lexer = JSON::Lexer.new string
     token = lexer.next_token
-    token.type.should eq(:FLOAT)
+    token.kind.should eq(JSON::Token::Kind::Float)
     token.float_value.should eq(float_value)
     token.raw_value.should eq(string)
+    token.to_s.should eq(token.raw_value)
   end
 
   it "lexes #{string} from IO", file, line do
     lexer = JSON::Lexer.new IO::Memory.new(string)
     token = lexer.next_token
-    token.type.should eq(:FLOAT)
+    token.kind.should eq(JSON::Token::Kind::Float)
     token.float_value.should eq(float_value)
     token.raw_value.should eq(string)
+    token.to_s.should eq(token.raw_value)
   end
 end
 
 describe JSON::Lexer do
-  it_lexes "", :EOF
-  it_lexes "{", :"{"
-  it_lexes "}", :"}"
-  it_lexes "[", :"["
-  it_lexes "]", :"]"
-  it_lexes ",", :","
-  it_lexes ":", :":"
-  it_lexes " \n\t\r :", :":"
+  it_lexes "", :EOF, expected_to_s: "<EOF>"
+  it_lexes "{", :begin_object
+  it_lexes "}", :end_object
+  it_lexes "[", :begin_array
+  it_lexes "]", :end_array
+  it_lexes ",", :comma
+  it_lexes ":", :colon
+  it_lexes " \n\t\r :", :colon, expected_to_s: ":"
   it_lexes "true", :true
   it_lexes "false", :false
   it_lexes "null", :null

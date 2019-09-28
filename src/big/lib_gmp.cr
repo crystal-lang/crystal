@@ -37,6 +37,8 @@ lib LibGMP
   fun set_ui = __gmpz_set_ui(rop : MPZ*, op : ULong)
   fun set_si = __gmpz_set_si(rop : MPZ*, op : Long)
   fun set_d = __gmpz_set_d(rop : MPZ*, op : Double)
+  fun set_q = __gmpz_set_q(rop : MPZ*, op : MPQ*)
+  fun set_f = __gmpz_set_f(rop : MPZ*, op : MPF*)
   fun set_str = __gmpz_set_str(rop : MPZ*, str : UInt8*, base : Int) : Int
   fun get_str = __gmpz_get_str(str : UInt8*, base : Int, op : MPZ*) : UInt8*
   fun get_si = __gmpz_get_si(op : MPZ*) : Long

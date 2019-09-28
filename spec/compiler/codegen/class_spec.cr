@@ -136,7 +136,7 @@ describe "Code gen: class" do
         end
       end
 
-      Foo(Int32).new.foo.to_i
+      Foo(Int32).new.foo.to_i!
       ").to_i.should eq(1)
   end
 
@@ -318,7 +318,7 @@ describe "Code gen: class" do
   it "runs with nilable instance var" do
     run("
       struct Nil
-        def to_i
+        def to_i!
           0
         end
       end
@@ -336,14 +336,14 @@ describe "Code gen: class" do
       end
 
       bar = Bar.new
-      bar.x.to_i
+      bar.x.to_i!
       ").to_i.should eq(0)
   end
 
   it "runs with nil instance var when inheriting" do
     run("
       struct Nil
-        def to_i
+        def to_i!
           0
         end
       end
@@ -366,7 +366,7 @@ describe "Code gen: class" do
       end
 
       bar = Bar.new
-      bar.x.to_i
+      bar.x.to_i!
       ").to_i.should eq(0)
   end
 
@@ -447,6 +447,8 @@ describe "Code gen: class" do
 
   it "allows using self in class scope" do
     run(%(
+      require "prelude"
+
       class Foo
         def self.foo
           1
@@ -713,6 +715,8 @@ describe "Code gen: class" do
 
   it "codegens singleton (#718)" do
     run(%(
+      require "prelude"
+
       class Singleton
         @@instance = new
 

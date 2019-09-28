@@ -10,7 +10,7 @@ module Crystal::System::Time
   NANOSECONDS_PER_FILETIME_TICK = 100
 
   NANOSECONDS_PER_SECOND    = 1_000_000_000
-  FILETIME_TICKS_PER_SECOND = NANOSECONDS_PER_SECOND / NANOSECONDS_PER_FILETIME_TICK
+  FILETIME_TICKS_PER_SECOND = NANOSECONDS_PER_SECOND // NANOSECONDS_PER_FILETIME_TICK
 
   BIAS_TO_OFFSET_FACTOR = -60
 
@@ -49,7 +49,7 @@ module Crystal::System::Time
       raise WinError.new("QueryPerformanceCounter")
     end
 
-    {ticks / @@performance_frequency, (ticks.remainder(@@performance_frequency) * NANOSECONDS_PER_SECOND / @@performance_frequency).to_i32}
+    {ticks // @@performance_frequency, (ticks.remainder(@@performance_frequency) * NANOSECONDS_PER_SECOND / @@performance_frequency).to_i32}
   end
 
   def self.load_localtime : ::Time::Location?

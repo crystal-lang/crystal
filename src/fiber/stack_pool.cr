@@ -5,13 +5,14 @@ class Fiber
 
     def initialize
       @deque = Deque(Void*).new
+      @mutex = Thread::Mutex.new
     end
 
     # Removes and frees at most *count* stacks from the top of the pool,
     # returning memory to the operating system.
     def collect(count = lazy_size // 2)
       count.times do
-        if stack = @deque.shift?
+        if stack = @mutex.synchronize { @deque.shift? }
           LibC.munmap(stack, STACK_SIZE)
         else
           return
@@ -21,19 +22,19 @@ class Fiber
 
     # Removes a stack from the bottom of the pool, or allocates a new one.
     def checkout
-      stack = @deque.pop? || allocate
+      stack = @mutex.synchronize { @deque.pop? } || allocate
       {stack, stack + STACK_SIZE}
     end
 
     # Appends a stack to the bottom of the pool.
     def release(stack)
-      @deque.push(stack)
+      @mutex.synchronize { @deque.push(stack) }
     end
 
     # Returns the approximated size of the pool. It may be equal or slightly
     # bigger or smaller than the actual size.
     def lazy_size
-      @deque.size
+      @mutex.synchronize { @deque.size }
     end
 
     private def allocate

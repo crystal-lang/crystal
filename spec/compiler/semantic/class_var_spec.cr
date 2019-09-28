@@ -221,7 +221,7 @@ describe "Semantic: class var" do
 
       Foo.foo
       ",
-      "Can't infer the type of class variable '@@foo' of Foo"
+      "can't infer the type of class variable '@@foo' of Foo"
   end
 
   it "errors if using class variable at the top level" do
@@ -308,7 +308,7 @@ describe "Semantic: class var" do
         end
       end
       ),
-      "can't use Class as the type of class variable @@class of Foo, use a more specific type"
+      "can't use Class as the type of class variable '@@class' of Foo, use a more specific type"
   end
 
   it "gives correct error when trying to use Int as a class variable type" do

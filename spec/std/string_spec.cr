@@ -235,7 +235,16 @@ describe "String" do
     it { "0x123abc".to_i(prefix: true).should eq(1194684) }
     it { "0b1101".to_i(prefix: true).should eq(13) }
     it { "0b001101".to_i(prefix: true).should eq(13) }
-    it { "0123".to_i(prefix: true).should eq(83) }
+    it { "0123".to_i(prefix: true).should eq(123) }
+    it { "0o123".to_i(prefix: true).should eq(83) }
+    it { "0123".to_i(leading_zero_is_octal: true).should eq(83) }
+    it { "123".to_i(leading_zero_is_octal: true).should eq(123) }
+    it { "0o755".to_i(prefix: true, leading_zero_is_octal: true).should eq(493) }
+    it { "5".to_i(prefix: true).should eq(5) }
+    it { "0".to_i(prefix: true).should eq(0) }
+    it { "00".to_i(prefix: true).should eq(0) }
+    it { "00".to_i(leading_zero_is_octal: true).should eq(0) }
+    it { "00".to_i(prefix: true, leading_zero_is_octal: true).should eq(0) }
     it { "123hello".to_i(strict: false).should eq(123) }
     it { "99 red balloons".to_i(strict: false).should eq(99) }
     it { "   99 red balloons".to_i(strict: false).should eq(99) }
@@ -247,7 +256,10 @@ describe "String" do
     it { expect_raises(ArgumentError) { "0b123".to_i } }
     it { expect_raises(ArgumentError) { "000b123".to_i(prefix: true) } }
     it { expect_raises(ArgumentError) { "000x123".to_i(prefix: true) } }
+    it { expect_raises(ArgumentError) { "000o89a".to_i(prefix: true) } }
     it { expect_raises(ArgumentError) { "123hello".to_i } }
+    it { expect_raises(ArgumentError) { "0".to_i(leading_zero_is_octal: true) } }
+    it { expect_raises(ArgumentError) { "0o755".to_i(leading_zero_is_octal: true) } }
     it { "z".to_i(36).should eq(35) }
     it { "Z".to_i(36).should eq(35) }
     it { "0".to_i(62).should eq(0) }
@@ -522,6 +534,7 @@ describe "String" do
     it { "aeiou".upcase(Unicode::CaseOptions::Turkic).should eq("AEİOU") }
     it { "baﬄe".upcase.should eq("BAFFLE") }
     it { "ﬀ".upcase.should eq("FF") }
+    it { "ňž".upcase.should eq("ŇŽ") } # #7922
   end
 
   describe "capitalize" do
@@ -1709,6 +1722,12 @@ describe "String" do
 
   it "does char_at" do
     "いただきます".char_at(2).should eq('だ')
+    "foo".char_at(0).should eq('f')
+    "foo".char_at(4) { 'x' }.should eq('x')
+
+    expect_raises(IndexError) do
+      "foo".char_at(4)
+    end
   end
 
   it "does byte_at" do
@@ -1805,6 +1824,13 @@ describe "String" do
   it "does camelcase" do
     "foo".camelcase.should eq("Foo")
     "foo_bar".camelcase.should eq("FooBar")
+    "foo".camelcase(lower: true).should eq("foo")
+    "foo_bar".camelcase(lower: true).should eq("fooBar")
+
+    "Foo".camelcase.should eq("Foo")
+    "Foo_bar".camelcase.should eq("FooBar")
+    "Foo".camelcase(lower: true).should eq("foo")
+    "Foo_bar".camelcase(lower: true).should eq("fooBar")
   end
 
   it "answers ascii_only?" do
@@ -2409,15 +2435,6 @@ describe "String" do
     string = "foo"
     clone = string.clone
     string.should be(clone)
-  end
-
-  it "#at" do
-    "foo".at(0).should eq('f')
-    "foo".at(4) { 'x' }.should eq('x')
-
-    expect_raises(IndexError) do
-      "foo".at(4)
-    end
   end
 
   it "allocates buffer of correct size when UInt8 is given to new (#3332)" do

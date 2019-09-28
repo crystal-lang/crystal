@@ -1,4 +1,5 @@
-require "./type"
+require "./node/type"
+require "./reader/type"
 require "./parser_options"
 require "./html_parser_options"
 require "./save_options"
@@ -15,7 +16,7 @@ lib LibXML
 
   struct NS
     next : NS*
-    type : XML::Type
+    type : XML::Node::Type
     href : UInt8*
     prefix : UInt8*
     _private : Void*
@@ -24,7 +25,7 @@ lib LibXML
 
   struct NodeCommon
     _private : Void*
-    type : XML::Type
+    type : XML::Node::Type
     name : UInt8*
     children : Node*
     last : Node*
@@ -100,7 +101,7 @@ lib LibXML
   fun xmlTextReaderRead(reader : XMLTextReader) : Int
   fun xmlTextReaderNext(reader : XMLTextReader) : Int
   fun xmlTextReaderNextSibling(reader : XMLTextReader) : Int
-  fun xmlTextReaderNodeType(reader : XMLTextReader) : XML::Type
+  fun xmlTextReaderNodeType(reader : XMLTextReader) : XML::Reader::Type
   fun xmlTextReaderConstName(reader : XMLTextReader) : UInt8*
   fun xmlTextReaderIsEmptyElement(reader : XMLTextReader) : Int
   fun xmlTextReaderConstValue(reader : XMLTextReader) : UInt8*

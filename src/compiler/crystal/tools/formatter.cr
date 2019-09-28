@@ -72,6 +72,7 @@ module Crystal
     @inside_cond : Int32
     @inside_lib : Int32
     @inside_struct_or_union : Int32
+    @inside_enum : Int32
     @multiline_call_indent : Int32?
     @implicit_exception_handler_indent : Int32
     @last_write : String
@@ -87,6 +88,14 @@ module Crystal
     @heredoc_fixes : Array(HeredocFix)
     @assign_length : Int32?
     @current_hash : ASTNode?
+
+    getter no_rstrip_lines
+    property vars
+    property inside_lib
+    property inside_enum
+    property inside_struct_or_union
+    property indent
+    property subformat_nesting = 0
 
     def initialize(source)
       @lexer = Lexer.new(source)
@@ -108,6 +117,7 @@ module Crystal
       @inside_macro = 0
       @inside_cond = 0
       @inside_lib = 0
+      @inside_enum = 0
       @inside_struct_or_union = 0
       @multiline_call_indent = nil
       @implicit_exception_handler_indent = 0
@@ -139,6 +149,9 @@ module Crystal
 
       # Lines that must not be rstripped (HEREDOC lines)
       @no_rstrip_lines = Set(Int32).new
+
+      # Variables for when we format macro code without interpolation
+      @vars = [Set(String).new]
     end
 
     def end_visit_any(node)
@@ -1400,6 +1413,7 @@ module Crystal
     def visit(node : Def)
       @implicit_exception_handler_indent = @indent
       @inside_def += 1
+      @vars.push Set(String).new
 
       write_keyword :abstract, " " if node.abstract?
 
@@ -1456,6 +1470,7 @@ module Crystal
         format_nested_with_end body
       end
 
+      @vars.pop
       @inside_def -= 1
 
       false
@@ -1750,6 +1765,7 @@ module Crystal
         else
           check :"{{"
         end
+        write_macro_slashes
         write "{{"
       else
         case @token.type
@@ -1758,6 +1774,7 @@ module Crystal
         else
           check :MACRO_CONTROL_START
         end
+        write_macro_slashes
         write "{%"
       end
       macro_state = @macro_state
@@ -1830,6 +1847,8 @@ module Crystal
       else
         check :"{%"
       end
+
+      write_macro_slashes
       write "{% "
 
       next_token_skip_space_or_newline
@@ -1861,9 +1880,10 @@ module Crystal
       @macro_state = macro_state
       @macro_state.control_nest += 1
       check_macro_whitespace
-      next_macro_token
 
-      inside_macro { no_indent node.then }
+      macro_node_line = @line
+      next_macro_token
+      format_macro_contents(node.then, macro_node_line)
 
       unless node.else.is_a?(Nop)
         check :MACRO_CONTROL_START
@@ -1872,6 +1892,7 @@ module Crystal
         if @token.keyword?(:elsif)
           sub_if = node.else.as(MacroIf)
           next_token_skip_space_or_newline
+          write_macro_slashes
           write "{% elsif "
           outside_macro { indent(@column, sub_if.cond) }
           format_macro_if_epilogue sub_if, macro_state, check_end: false
@@ -1880,14 +1901,16 @@ module Crystal
           next_token_skip_space_or_newline
           check :"%}"
 
+          write_macro_slashes
           write "{% else %}"
 
           @macro_state = macro_state
           @macro_state.control_nest += 1
           check_macro_whitespace
-          next_macro_token
 
-          inside_macro { no_indent node.else }
+          macro_node_line = @line
+          next_macro_token
+          format_macro_contents(node.else, macro_node_line)
         end
       end
 
@@ -1900,6 +1923,7 @@ module Crystal
         next_token_skip_space_or_newline
         check :"%}"
 
+        write_macro_slashes
         write "{% end %}"
 
         if inside_macro?
@@ -1922,6 +1946,8 @@ module Crystal
       else
         check :"{%"
       end
+
+      write_macro_slashes
       write "{% "
 
       macro_state = @macro_state
@@ -1952,9 +1978,11 @@ module Crystal
 
       @macro_state.control_nest += 1
       check_macro_whitespace
-      next_macro_token
 
-      inside_macro { no_indent node.body }
+      macro_node_line = @line
+      next_macro_token
+      format_macro_contents(node.body, macro_node_line)
+
       @macro_state = old_macro_state
 
       check :MACRO_CONTROL_START
@@ -1964,6 +1992,7 @@ module Crystal
       next_token_skip_space_or_newline
       check :"%}"
 
+      write_macro_slashes
       write "{% end %}"
 
       if inside_macro?
@@ -2002,6 +2031,139 @@ module Crystal
       false
     end
 
+    # If we are formatting macro contents, if there are nested macro
+    # control structures they are definitely escaped with `\`,
+    # because otherwise we wouln't be able to format the contents.
+    # So here we append those slashes. In theory the nesting can be
+    # very deep but it's usually just one level.
+    private def write_macro_slashes
+      @subformat_nesting.times do
+        write "\\"
+      end
+    end
+
+    def format_macro_contents(node, macro_node_line)
+      # If macro contents don't have interpolations nor newlines, and we
+      # are at the top-level (not already inside a macro) then the content
+      # must be a valid Crystal expression and we can format it.
+      #
+      # For example:
+      #
+      # {% if flag?(:foo) %}
+      #   puts "This is an expression that we can format just fine"
+      # {% end %}
+      if !inside_macro? && (value = macro_literal_contents(node)) && value.includes?("\n")
+        # Format the value and append 2 more spaces of indentation
+        begin
+          formatter, value = subformat(value)
+        rescue ex : Crystal::SyntaxException
+          raise Crystal::SyntaxException.new(
+            ex.message,
+            ex.line_number + macro_node_line,
+            ex.column_number,
+            ex.filename,
+            ex.size)
+        end
+
+        # The formatted contents might have heredocs for which we must preserve
+        # trailing spaces, so here we copy those from the formatter we used
+        # to format the contents to this formatter (we add one because we insert
+        # a newline before the contents).
+        formatter.no_rstrip_lines.each do |line|
+          @no_rstrip_lines.add(macro_node_line + line + 1)
+        end
+
+        write_line
+        write value
+        # No need to append a newline because the formatter value
+        # will already have it.
+        write_indent
+
+        increment_lines(macro_node_line + value.lines.size + 1 - @line)
+
+        line = @line
+
+        # We have to potentially skip multiple macro literal tokens
+        while @token.type == :MACRO_LITERAL
+          next_macro_token
+        end
+
+        # Skipping the macro literal tokens might have altered `@line`:
+        # restore it to what it was before the macro tokens (we are
+        # already accounting for the lines in a different way).
+        if @line != line
+          increment_lines(line - @line)
+        end
+      else
+        inside_macro { no_indent node }
+      end
+    end
+
+    # Returns the node's String contents if it's composed entirely
+    # by MacroLiteral: either a MacroLiteral or an Expression composed
+    # only by MacroLiteral.
+    private def macro_literal_contents(node) : String?
+      return unless only_macro_literal?(node)
+
+      extract_macro_literal_contents(node)
+    end
+
+    private def only_macro_literal?(node)
+      case node
+      when MacroLiteral
+        true
+      when Expressions
+        node.expressions.all? do |exp|
+          only_macro_literal?(exp)
+        end
+      else
+        false
+      end
+    end
+
+    private def extract_macro_literal_contents(node)
+      String.build do |io|
+        extract_macro_literal_contents(node, io)
+      end
+    end
+
+    private def extract_macro_literal_contents(node, io)
+      if node.is_a?(MacroLiteral)
+        io << node.value
+      else
+        node.as(Expressions).expressions.each do |exp|
+          extract_macro_literal_contents(exp, io)
+        end
+      end
+    end
+
+    def subformat(source)
+      if @inside_struct_or_union > 0
+        mode = Parser::ParseMode::LibStructOrUnion
+      elsif @inside_enum < 0
+        mode = Parser::ParseMode::Enum
+      elsif @inside_lib > 0
+        mode = Parser::ParseMode::Lib
+      else
+        mode = Parser::ParseMode::Normal
+      end
+
+      parser = Parser.new(source, def_vars: @vars.clone)
+      # parser.filename = formatter.filename
+      nodes = parser.parse(mode)
+
+      formatter = Formatter.new(source)
+      formatter.inside_lib = @inside_lib
+      formatter.inside_enum = @inside_enum
+      formatter.inside_struct_or_union = @inside_struct_or_union
+      formatter.indent = @indent + 2
+      formatter.skip_space_or_newline
+      formatter.write_indent
+      formatter.subformat_nesting = @subformat_nesting + 1
+      nodes.accept formatter
+      {formatter, formatter.finish}
+    end
+
     def visit(node : Arg)
       @last_arg_is_skip = false
 
@@ -2016,24 +2178,30 @@ module Crystal
         end
       end
 
-      at_skip = at_skip?
+      if node.name.empty?
+        skip_space_or_newline
+      else
+        @vars.last.add(node.name)
 
-      if !at_skip && node.external_name != node.name
-        if node.external_name.empty?
-          write "_"
-        elsif @token.type == :DELIMITER_START
-          accept StringLiteral.new(node.external_name)
-        else
-          write @token.value
+        at_skip = at_skip?
+
+        if !at_skip && node.external_name != node.name
+          if node.external_name.empty?
+            write "_"
+          elsif @token.type == :DELIMITER_START
+            accept StringLiteral.new(node.external_name)
+          else
+            write @token.value
+          end
+          write " "
+          next_token_skip_space_or_newline
         end
-        write " "
-        next_token_skip_space_or_newline
+
+        @last_arg_is_skip = at_skip?
+
+        write @token.value
+        next_token
       end
-
-      @last_arg_is_skip = at_skip?
-
-      write @token.value
-      next_token
 
       if restriction
         skip_space_or_newline
@@ -2061,7 +2229,7 @@ module Crystal
 
       # This is the case of an enum member
       # TODO: remove comma support after 0.28.0
-      if @token.type == :";" || (node.name[0].ascii_uppercase? && @token.type == :",")
+      if @token.type == :";" || (node.name[0]?.try(&.ascii_uppercase?) && @token.type == :",")
         next_token
         @lexer.skip_space
         if @token.type == :COMMENT
@@ -2445,7 +2613,7 @@ module Crystal
       ends_with_newline = false
       has_args = !node.args.empty? || node.named_args
 
-      column = @indent
+      column = @multiline_call_indent || @indent
       has_newlines = false
       found_comment = false
 
@@ -2538,7 +2706,7 @@ module Crystal
       format_args node.args, has_parentheses, node.named_args, node.block_arg
     end
 
-    def format_args(args : Array, has_parentheses, named_args = nil, block_arg = nil, needed_indent = @indent + (@passed_backslash_newline ? 0 : 2), do_consume_newlines = false)
+    def format_args(args : Array, has_parentheses, named_args = nil, block_arg = nil, needed_indent = (@multiline_call_indent || @indent) + (@passed_backslash_newline ? 0 : 2), do_consume_newlines = false)
       has_newlines = false
       found_comment = false
       @inside_call_or_assign += 1
@@ -2630,7 +2798,7 @@ module Crystal
         write_token :","
         found_comment = skip_space(needed_indent)
         if found_comment || @token.type == :NEWLINE
-          write_indent(needed_indent)
+          write_indent(needed_indent) unless @last_is_heredoc
         else
           write " "
         end
@@ -2700,7 +2868,11 @@ module Crystal
       next_token_skip_space
       has_newlines, found_comment, _ = format_args args, true, named_args: named_args
       skip_space
-      ends_with_newline = @token.type == :NEWLINE
+      ends_with_newline = false
+      if @token.type == :NEWLINE
+        ends_with_newline = true
+        next_token
+      end
       finish_args(true, has_newlines, ends_with_newline, found_comment, @indent)
     end
 
@@ -2768,58 +2940,7 @@ module Crystal
         when Call
           call = body
           clear_object call
-
-          if !call.obj && (call.name == "[]" || call.name == "[]?")
-            case @token.type
-            when :"["
-              write_token :"["
-              skip_space_or_newline
-              format_call_args(call, false)
-              skip_space_or_newline
-              write_token :"]"
-              write_token :"?" if call.name == "[]?"
-            when :"[]", :"[]?"
-              write_token @token.type
-              skip_space_or_newline
-              if @token.type == :"("
-                write "("
-                next_token_skip_space_or_newline
-                format_call_args(call, true)
-                skip_space_or_newline
-                write_token :")"
-              end
-            else
-              raise "BUG: expected `[`, `[]` or `[]?`"
-            end
-          elsif !call.obj && call.name == "[]="
-            case @token.type
-            when :"["
-              last_arg = call.args.pop
-              write_token :"["
-              skip_space_or_newline
-              format_call_args(call, false)
-              skip_space_or_newline
-              write_token :"]"
-              skip_space
-              write_token " ", :"=", " "
-              skip_space_or_newline
-              accept last_arg
-            when :"[]="
-              write_token @token.type
-              skip_space_or_newline
-              if @token.type == :"("
-                write "("
-                next_token_skip_space_or_newline
-                format_call_args(call, true)
-                skip_space_or_newline
-                write_token :")"
-              end
-            else
-              raise "BUG: expected `[` or `[]=`"
-            end
-          else
-            indent(@indent, call)
-          end
+          indent(@indent, call)
         when IsA
           if body.obj.is_a?(Var)
             if body.nil_check?
@@ -2856,8 +2977,16 @@ module Crystal
             clear_object(body)
             accept body
           end
+        when ReadInstanceVar
+          if body.obj.is_a?(Var)
+            call = Call.new(nil, body.name)
+            accept call
+          else
+            clear_object(body)
+            accept body
+          end
         else
-          raise "BUG: expected Call, IsA or RespondsTo as &. argument, at #{node.location}, not #{body.class}"
+          raise "BUG: unexpected node for &. argument, at #{node.location}, not #{body.class}"
         end
       end
 
@@ -3065,7 +3194,11 @@ module Crystal
     end
 
     def visit(node : Assign)
-      accept node.target
+      target = node.target
+
+      @vars.last.add target.name if target.is_a?(Var)
+
+      accept target
       skip_space_or_newline
 
       check_align = check_assign_length node.target
@@ -3104,7 +3237,7 @@ module Crystal
 
     def accept_assign_value(value, check_align = false)
       before_column = @column
-      if @token.keyword?(:if) || @token.keyword?(:case)
+      if @token.keyword?(:if) || @token.keyword?(:case) || value.is_a?(MacroIf)
         indent(@column, value)
       else
         inside_call_or_assign do
@@ -3289,7 +3422,9 @@ module Crystal
         accept base_type
       end
 
+      @inside_enum += 1
       format_nested_with_end Expressions.from(node.members)
+      @inside_enum -= 1
 
       false
     end
@@ -3586,10 +3721,11 @@ module Crystal
         else
           next_token_skip_space_or_newline
           check :")"
-          next_token_skip_space_or_newline
+          next_token
         end
       end
 
+      skip_space_or_newline
       write_token :"]"
 
       false
@@ -3633,6 +3769,8 @@ module Crystal
 
     def visit(node : MultiAssign)
       node.targets.each_with_index do |target, i|
+        @vars.last.add target.name if target.is_a?(Var)
+
         accept target
         skip_space_or_newline
         if @token.type == :","
@@ -4517,8 +4655,17 @@ module Crystal
       @comment_columns << nil
     end
 
+    def decrement_line
+      @line -= 1
+      @comment_columns.pop
+    end
+
     def increment_lines(count)
-      count.times { increment_line }
+      if count < 0
+        (-count).times { decrement_line }
+      else
+        count.times { increment_line }
+      end
     end
 
     def finish
@@ -4527,7 +4674,11 @@ module Crystal
       skip_space
       write_line
       skip_space_or_newline last: true
-      result = to_s.strip
+
+      # rstrip instead of string in case this is a subformat
+      # (we want to preserve the leading indentation)
+      result = to_s.rstrip
+
       lines = result.split('\n')
       fix_heredocs(lines, @heredoc_fixes)
       align_infos(lines, @when_infos)

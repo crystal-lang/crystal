@@ -1,5 +1,9 @@
 require "./lib_event2"
 
+{% if flag?(:preview_mt) %}
+  LibEvent2.evthread_use_pthreads
+{% end %}
+
 # :nodoc:
 struct Crystal::Event
   VERSION = String.new(LibEvent2.event_get_version)

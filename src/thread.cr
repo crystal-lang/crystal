@@ -8,7 +8,7 @@ class Thread
   # Use spawn and channels instead.
 
   # all thread objects, so the GC can see them (it doesn't scan thread locals)
-  @@threads = Thread::LinkedList(Thread).new
+  protected class_getter(threads) { Thread::LinkedList(Thread).new }
 
   @th : LibC::PthreadT
   @exception : Exception?
@@ -21,8 +21,11 @@ class Thread
   # :nodoc:
   property previous : Thread?
 
+  # :nodoc:
+  property gc_thread_handler : Void* = Pointer(Void).null
+
   def self.unsafe_each
-    @@threads.unsafe_each { |thread| yield thread }
+    threads.unsafe_each { |thread| yield thread }
   end
 
   # Starts a new system thread.
@@ -34,9 +37,7 @@ class Thread
       Pointer(Void).null
     }, self.as(Void*))
 
-    if ret == 0
-      @@threads.push(self)
-    else
+    if ret != 0
       raise Errno.new("pthread_create", ret)
     end
   end
@@ -48,7 +49,7 @@ class Thread
     @th = LibC.pthread_self
     @main_fiber = Fiber.new(stack_address, self)
 
-    @@threads.push(self)
+    Thread.threads.push(self)
   end
 
   private def detach
@@ -98,19 +99,15 @@ class Thread
 
     # Returns the Thread object associated to the running system thread.
     def self.current : Thread
-      @@current || raise "BUG: Thread.current returned NULL"
+      # Thread#start sets @@current as soon it starts. Thus we know
+      # that if @@current is not set then we are in the main thread
+      @@current ||= new
     end
 
     # Associates the Thread object to the running system thread.
     protected def self.current=(@@current : Thread) : Thread
     end
   {% end %}
-
-  # Create the thread object for the current thread (aka the main thread of the
-  # process).
-  #
-  # TODO: consider moving to `kernel.cr` or `crystal/main.cr`
-  self.current = new
 
   def self.yield
     ret = LibC.sched_yield
@@ -128,6 +125,7 @@ class Thread
   end
 
   protected def start
+    Thread.threads.push(self)
     Thread.current = self
     @main_fiber = fiber = Fiber.new(stack_address, self)
 
@@ -136,7 +134,7 @@ class Thread
     rescue ex
       @exception = ex
     ensure
-      @@threads.delete(self)
+      Thread.threads.delete(self)
       Fiber.inactive(fiber)
       detach { GC.pthread_detach(@th) }
     end
@@ -148,7 +146,6 @@ class Thread
     {% if flag?(:darwin) %}
       # FIXME: pthread_get_stacksize_np returns bogus value on macOS X 10.9.0:
       address = LibC.pthread_get_stackaddr_np(@th) - LibC.pthread_get_stacksize_np(@th)
-
     {% elsif flag?(:freebsd) %}
       ret = LibC.pthread_attr_init(out attr)
       unless ret == 0
@@ -161,21 +158,19 @@ class Thread
       end
       ret = LibC.pthread_attr_destroy(pointerof(attr))
       raise Errno.new("pthread_attr_destroy", ret) unless ret == 0
-
     {% elsif flag?(:linux) %}
       if LibC.pthread_getattr_np(@th, out attr) == 0
         LibC.pthread_attr_getstack(pointerof(attr), pointerof(address), out _)
       end
       ret = LibC.pthread_attr_destroy(pointerof(attr))
       raise Errno.new("pthread_attr_destroy", ret) unless ret == 0
-
     {% elsif flag?(:openbsd) %}
       ret = LibC.pthread_stackseg_np(@th, out stack)
       raise Errno.new("pthread_stackseg_np", ret) unless ret == 0
 
       address =
         if LibC.pthread_main_np == 1
-          stack.ss_sp - stack.ss_size + sysconf(LibC::SC_PAGESIZE)
+          stack.ss_sp - stack.ss_size + LibC.sysconf(LibC::SC_PAGESIZE)
         else
           stack.ss_sp - stack.ss_size
         end

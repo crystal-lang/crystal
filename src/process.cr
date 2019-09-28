@@ -1,6 +1,6 @@
 require "c/signal"
 require "c/stdlib"
-require "c/sys/times"
+require "c/sys/resource"
 require "c/unistd"
 
 class Process
@@ -69,14 +69,22 @@ class Process
   # Returns a `Tms` for the current process. For the children times, only those
   # of terminated children are returned.
   def self.times : Tms
-    hertz = LibC.sysconf(LibC::SC_CLK_TCK).to_f
-    LibC.times(out tms)
-    Tms.new(tms.tms_utime / hertz, tms.tms_stime / hertz, tms.tms_cutime / hertz, tms.tms_cstime / hertz)
+    LibC.getrusage(LibC::RUSAGE_SELF, out usage)
+    LibC.getrusage(LibC::RUSAGE_CHILDREN, out child)
+
+    Tms.new(
+      usage.ru_utime.tv_sec.to_f64 + usage.ru_utime.tv_usec.to_f64 / 1e6,
+      usage.ru_stime.tv_sec.to_f64 + usage.ru_stime.tv_usec.to_f64 / 1e6,
+      child.ru_utime.tv_sec.to_f64 + child.ru_utime.tv_usec.to_f64 / 1e6,
+      child.ru_stime.tv_sec.to_f64 + child.ru_stime.tv_usec.to_f64 / 1e6,
+    )
   end
 
   # Runs the given block inside a new process and
   # returns a `Process` representing the new child process.
   def self.fork : Process
+    {% raise("Process fork is unsupported with multithread mode") if flag?(:preview_mt) %}
+
     if pid = fork_internal(will_exec: false)
       new pid
     else
@@ -97,6 +105,8 @@ class Process
   # Returns a `Process` representing the new child process in the current process
   # and `nil` inside the new child process.
   def self.fork : Process?
+    {% raise("Process fork is unsupported with multithread mode") if flag?(:preview_mt) %}
+
     if pid = fork_internal(will_exec: false)
       new pid
     else
@@ -123,7 +133,9 @@ class Process
         LibC.sigemptyset(pointerof(newmask))
         LibC.pthread_sigmask(LibC::SIG_SETMASK, pointerof(newmask), nil)
       else
-        Process.after_fork_child_callbacks.each(&.call)
+        {% unless flag?(:preview_mt) %}
+          Process.after_fork_child_callbacks.each(&.call)
+        {% end %}
         LibC.pthread_sigmask(LibC::SIG_SETMASK, pointerof(oldmask), nil)
       end
     when -1
@@ -208,9 +220,9 @@ class Process
       dst_io
     when Redirect::Close
       if dst_io == STDIN
-        File.open(File::DEVNULL, "r")
+        File.open(File::NULL, "r")
       else
-        File.open(File::DEVNULL, "w")
+        File.open(File::NULL, "w")
       end
     else
       raise "BUG: impossible type in ExecStdio #{stdio.class}"
@@ -228,7 +240,7 @@ class Process
   # A pipe to this process's error. Raises if a pipe wasn't asked when creating the process.
   getter! error : IO::FileDescriptor
 
-  @waitpid : Channel::Buffered(Int32)
+  @waitpid : Channel(Int32)
   @wait_count = 0
 
   # Creates a process, executes it, but doesn't wait for it to complete.
@@ -295,11 +307,13 @@ class Process
         fork_io, process_io = IO.pipe(read_blocking: true)
 
         @wait_count += 1
+        ensure_channel
         spawn { copy_io(stdio, process_io, channel, close_dst: true) }
       else
         process_io, fork_io = IO.pipe(write_blocking: true)
 
         @wait_count += 1
+        ensure_channel
         spawn { copy_io(process_io, stdio, channel, close_src: true) }
       end
 
@@ -321,9 +335,9 @@ class Process
       dst_io
     when Redirect::Close
       if dst_io == STDIN
-        File.open(File::DEVNULL, "r")
+        File.open(File::NULL, "r")
       else
-        File.open(File::DEVNULL, "w")
+        File.open(File::NULL, "w")
       end
     else
       raise "BUG: impossible type in stdio #{stdio.class}"
@@ -399,6 +413,14 @@ class Process
   end
 
   private def channel
+    if channel = @channel
+      channel
+    else
+      raise "BUG: Notification channel was not initialized for this process"
+    end
+  end
+
+  private def ensure_channel
     @channel ||= Channel(Exception?).new
   end
 

@@ -49,11 +49,11 @@ class HTTP::WebSocket::Protocol
       @pos = 0
     end
 
-    def write(slice : Bytes)
+    def write(slice : Bytes) : Nil
       return if slice.empty?
 
       count = Math.min(@buffer.size - @pos, slice.size)
-      (@buffer + @pos).copy_from(slice.pointer(count), count)
+      (@buffer + @pos).copy_from(slice.to_unsafe, count)
       @pos += count
 
       if @pos == @buffer.size
@@ -291,7 +291,7 @@ class HTTP::WebSocket::Protocol
   def self.new(uri : URI | String, headers = HTTP::Headers.new)
     uri = URI.parse(uri) if uri.is_a?(String)
 
-    if (host = uri.host) && (path = uri.full_path)
+    if (host = uri.hostname) && (path = uri.full_path)
       tls = uri.scheme == "https" || uri.scheme == "wss"
       return new(host, path, uri.port, tls, headers)
     end

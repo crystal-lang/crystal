@@ -1,10 +1,10 @@
 require "../syntax/ast"
 
 module Crystal
-  def self.check_type_allowed_in_generics(node, type, msg)
-    return if type.allowed_in_generics?
+  def self.check_type_can_be_stored(node, type, msg)
+    return if type.can_be_stored?
 
-    type = type.union_types.find { |t| !t.allowed_in_generics? } if type.is_a?(UnionType)
+    type = type.union_types.find { |t| !t.can_be_stored? } if type.is_a?(UnionType)
     node.raise "#{msg} yet, use a more specific type"
   end
 
@@ -17,14 +17,8 @@ module Crystal
       # TODO extract message formatting from exceptions
       String.build do |io|
         exception = exception_type.for_node(self, message, inner)
-        io << "Warning "
+        exception.warning = true
         exception.append_to_s(nil, io)
-        # Macro errors will first include the trace of the macro
-        # expansions, and then the warning message.
-        # In other warning messages the code snippet includes a newline
-        if exception.@filename.is_a?(VirtualFile)
-          io.puts
-        end
       end
     end
 
@@ -509,6 +503,10 @@ module Crystal
     # The (optional) initial value of a class variable
     property initializer : ClassVarInitializer?
 
+    # Flag used during codegen to indicate the initializer is simple
+    # and doesn't require a call to a function
+    property? simple_initializer = false
+
     # Is this variable thread local? Only applicable
     # to global and class variables.
     property? thread_local = false
@@ -566,6 +564,7 @@ module Crystal
 
   class Path
     property target_const : Const?
+    property target_type : Type?
     property syntax_replacement : ASTNode?
   end
 

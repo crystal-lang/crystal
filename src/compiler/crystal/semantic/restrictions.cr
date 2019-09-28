@@ -374,6 +374,17 @@ module Crystal
     def restriction_of?(other : Metaclass, owner)
       name.restriction_of?(other.name, owner)
     end
+
+    def restriction_of?(other : Path, owner)
+      other_type = owner.lookup_type(other)
+
+      # Special case: when comparing Foo.class to Class, Foo.class has precedence
+      if other_type == other_type.program.class_type
+        return true
+      end
+
+      super
+    end
   end
 
   class Type
@@ -906,7 +917,9 @@ module Crystal
       elsif base_type.is_a?(GenericInstanceType) && other.is_a?(GenericType)
         # Consider the case of Foo(Int32) vs. Bar(T), with Bar(T) < Foo(T):
         # we want to return Bar(Int32), so we search in Bar's generic instantiations
-        other.generic_types.values.each do |instance|
+        other.generic_types.each_value do |instance|
+          next if instance.unbound? || instance.abstract?
+
           if instance.implements?(base_type)
             return instance
           end

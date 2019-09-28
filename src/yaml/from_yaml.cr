@@ -53,7 +53,17 @@ end
 {% end %}
 
 def String.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node)
-  parse_scalar(ctx, node, self)
+  ctx.read_alias(node, String) do |obj|
+    return obj
+  end
+
+  if node.is_a?(YAML::Nodes::Scalar)
+    value = node.value
+    ctx.record_anchor(node, value)
+    value
+  else
+    node.raise "Expected String, not #{node.class.name}"
+  end
 end
 
 def Float32.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node)
@@ -165,6 +175,7 @@ def NamedTuple.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node)
   {% begin %}
     {% for key in T.keys %}
       %var{key.id} = nil
+      %found{key.id} = false
     {% end %}
 
     YAML::Schema::Core.each(node) do |key, value|
@@ -173,19 +184,20 @@ def NamedTuple.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node)
         {% for key, type in T %}
           when {{key.stringify}}
             %var{key.id} = {{type}}.new(ctx, value)
+            %found{key.id} = true
         {% end %}
       end
     end
 
-    {% for key in T.keys %}
-      if %var{key.id}.nil?
+    {% for key, type in T %}
+      if %var{key.id}.nil? && !%found{key.id} && !{{type.nilable?}}
         node.raise "Missing yaml attribute: {{key}}"
       end
     {% end %}
 
     {
-      {% for key in T.keys %}
-        {{key}}: %var{key.id},
+      {% for key, type in T %}
+        {{key}}: (%var{key.id}).as({{type}}),
       {% end %}
     }
   {% end %}
@@ -217,12 +229,28 @@ def Union.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node)
     node.raise("Error deserailizing alias")
   end
 
-  {% for type in T %}
-    begin
-      return {{type}}.new(ctx, node)
-    rescue YAML::ParseException
-      # Ignore
-    end
+  {% begin %}
+    # String must come last because anything can be parsed into a String.
+    # So, we give a chance first to types in the union to be parsed.
+    {% string_type = T.find { |type| type == ::String } %}
+
+    {% for type in T %}
+      {% unless type == string_type %}
+        begin
+          return {{type}}.new(ctx, node)
+        rescue YAML::ParseException
+          # Ignore
+        end
+      {% end %}
+    {% end %}
+
+    {% if string_type %}
+      begin
+        return {{string_type}}.new(ctx, node)
+      rescue YAML::ParseException
+        # Ignore
+      end
+    {% end %}
   {% end %}
 
   node.raise "Couldn't parse #{self}"

@@ -50,6 +50,7 @@ class Crystal::Command
 
   def initialize(@options : Array(String))
     @color = true
+    @error_trace = false
     @progress_tracker = ProgressTracker.new
   end
 
@@ -107,6 +108,7 @@ class Crystal::Command
     error ex.message
   rescue ex : Crystal::Exception
     ex.color = @color
+    ex.error_trace = @error_trace
     if @config.try(&.output_format) == "json"
       STDERR.puts ex.to_json
     else
@@ -206,7 +208,7 @@ class Crystal::Command
   end
 
   private def execute(output_filename, run_args, compiler, *, error_on_exit = false)
-    time? = @time && !@progress_tracker.stats?
+    time = @time && !@progress_tracker.stats?
     status, elapsed_time = @progress_tracker.stage("Execute") do
       begin
         elapsed = Time.measure do
@@ -229,7 +231,7 @@ class Crystal::Command
       end
     end
 
-    if time?
+    if time
       puts "Execute: #{elapsed_time}"
     end
 
@@ -303,10 +305,10 @@ class Crystal::Command
           compiler.debug = Crystal::Debug::None
         end
         {% unless LibLLVM::IS_38 || LibLLVM::IS_39 %}
-        opts.on("--lto=FLAG", "Use ThinLTO --lto=thin") do |flag|
-          error "--lto=thin is the only lto supported option" unless flag == "thin"
-          compiler.thin_lto = true
-        end
+          opts.on("--lto=FLAG", "Use ThinLTO --lto=thin") do |flag|
+            error "--lto=thin is the only lto supported option" unless flag == "thin"
+            compiler.thin_lto = true
+          end
         {% end %}
       end
 
@@ -341,6 +343,7 @@ class Crystal::Command
 
       opts.on("--error-trace", "Show full error trace") do
         compiler.show_error_trace = true
+        @error_trace = true
       end
 
       opts.on("-h", "--help", "Show this message") do
@@ -498,6 +501,7 @@ class Crystal::Command
       compiler.flags << flag
     end
     opts.on("--error-trace", "Show full error trace") do
+      @error_trace = true
       compiler.show_error_trace = true
     end
     opts.on("--release", "Compile in release mode") do
@@ -526,7 +530,7 @@ class Crystal::Command
 
   private def setup_compiler_warning_options(opts, compiler)
     compiler.warnings_exclude << Crystal.normalize_path "lib"
-    opts.on("--warnings all|none", "Which warnings detect. (default: none)") do |w|
+    opts.on("--warnings all|none", "Which warnings detect. (default: all)") do |w|
       compiler.warnings = case w
                           when "all"
                             Crystal::Warnings::All

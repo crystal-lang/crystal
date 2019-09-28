@@ -90,10 +90,13 @@ module Crystal
     # The cache directory where temporary files are placed.
     setter cache_dir : String?
 
-    # Here we store class var initializers and constants, in the
+    # Here we store constants, in the
     # order that they are used. They will be initialized as soon
     # as the program starts, before the main code.
-    getter class_var_and_const_initializers = [] of ClassVarInitializer | Const
+    getter const_initializers = [] of Const
+
+    # The class var initializers stored to be used by the cleanup transformer
+    getter class_var_initializers = [] of ClassVarInitializer
 
     # The constant for ARGC_UNSAFE
     getter! argc : Const
@@ -116,7 +119,7 @@ module Crystal
     property codegen_target = Config.default_target
 
     # Which kind of warnings wants to be detected.
-    property warnings : Warnings = Warnings::None
+    property warnings : Warnings = Warnings::All
 
     # Paths to ignore for warnings detection.
     property warnings_exclude : Array(String) = [] of String
@@ -135,11 +138,11 @@ module Crystal
       types = self.types
 
       types["Object"] = object = @object = NonGenericClassType.new self, self, "Object", nil
-      object.allowed_in_generics = false
+      object.can_be_stored = false
       object.abstract = true
 
       types["Reference"] = reference = @reference = NonGenericClassType.new self, self, "Reference", object
-      reference.allowed_in_generics = false
+      reference.can_be_stored = false
 
       types["Value"] = value = @value = NonGenericClassType.new self, self, "Value", object
       abstract_value_type(value)
@@ -176,18 +179,18 @@ module Crystal
       types["Symbol"] = @symbol = SymbolType.new self, self, "Symbol", value, 4
       types["Pointer"] = pointer = @pointer = PointerType.new self, self, "Pointer", value, ["T"]
       pointer.struct = true
-      pointer.allowed_in_generics = false
+      pointer.can_be_stored = false
 
       types["Tuple"] = tuple = @tuple = TupleType.new self, self, "Tuple", value, ["T"]
-      tuple.allowed_in_generics = false
+      tuple.can_be_stored = false
 
       types["NamedTuple"] = named_tuple = @named_tuple = NamedTupleType.new self, self, "NamedTuple", value, ["T"]
-      named_tuple.allowed_in_generics = false
+      named_tuple.can_be_stored = false
 
       types["StaticArray"] = static_array = @static_array = StaticArrayType.new self, self, "StaticArray", value, ["T", "N"]
       static_array.struct = true
       static_array.declare_instance_var("@buffer", static_array.type_parameter("T"))
-      static_array.allowed_in_generics = false
+      static_array.can_be_stored = false
 
       types["String"] = string = @string = NonGenericClassType.new self, self, "String", reference
       string.declare_instance_var("@bytesize", int32)
@@ -195,7 +198,7 @@ module Crystal
       string.declare_instance_var("@c", uint8)
 
       types["Class"] = klass = @class = MetaclassType.new(self, object, value, "Class")
-      klass.allowed_in_generics = false
+      klass.can_be_stored = false
 
       types["Struct"] = struct_t = @struct_t = NonGenericClassType.new self, self, "Struct", value
       abstract_value_type(struct_t)
@@ -219,8 +222,8 @@ module Crystal
       types["ARGV_UNSAFE"] = @argv = argv_unsafe = Const.new self, self, "ARGV_UNSAFE", Primitive.new("argv", pointer_of(pointer_of(uint8)))
 
       # Make sure to initialize `ARGC_UNSAFE` and `ARGV_UNSAFE` as soon as the program starts
-      class_var_and_const_initializers << argc_unsafe
-      class_var_and_const_initializers << argv_unsafe
+      const_initializers << argc_unsafe
+      const_initializers << argv_unsafe
 
       types["GC"] = gc = NonGenericModuleType.new self, self, "GC"
       gc.metaclass.as(ModuleType).add_def Def.new("add_finalizer", [Arg.new("object")], Nop.new)
@@ -540,7 +543,7 @@ module Crystal
     private def abstract_value_type(type)
       type.abstract = true
       type.struct = true
-      type.allowed_in_generics = false
+      type.can_be_stored = false
     end
 
     # Next come overrides for the type system
@@ -584,11 +587,8 @@ module Crystal
     def check_private(node)
       return nil unless node.visibility.private?
 
-      location = node.location
-      return nil unless location
-
-      filename = location.filename
-      return nil unless filename.is_a?(String)
+      filename = node.location.try &.original_filename
+      return nil unless filename
 
       file_module(filename)
     end

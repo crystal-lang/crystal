@@ -80,8 +80,8 @@ struct Set(T)
   # s.add? 8 # => false
   # ```
   def add?(object : T)
-    # TODO: optimize the hash lookup call
-    !!(add(object) unless includes?(object))
+    @hash.put(object, nil) { return true }
+    false
   end
 
   # Adds `#each` element of *elems* to the set and returns `self`.
@@ -201,6 +201,15 @@ struct Set(T)
     each { |value| set.add value }
     other.each { |value| set.add value }
     set
+  end
+
+  # Addition: returns a new set containing the unique elements from both sets.
+  #
+  # ```
+  # Set{1, 1, 2, 3} + Set{3, 4, 5} # => Set{1, 2, 3, 4, 5}
+  # ```
+  def +(other : Set(U)) forall U
+    self | other
   end
 
   # Difference: returns a new set containing elements in this set that are not

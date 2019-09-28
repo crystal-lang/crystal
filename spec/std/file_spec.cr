@@ -270,6 +270,12 @@ describe "File" do
     end
   end
 
+  describe ".readlink" do
+    it "reads link" do
+      File.readlink(datapath("symlink.txt")).should eq "test_file.txt"
+    end
+  end
+
   it "gets dirname" do
     File.dirname("/Users/foo/bar.cr").should eq("/Users/foo")
     File.dirname("foo").should eq(".")
@@ -399,7 +405,7 @@ describe "File" do
 
   # TODO: support stating nul on windows
   pending_win32 "gets info for a character device" do
-    info = File.info(File::DEVNULL)
+    info = File.info(File::NULL)
     info.type.should eq(File::Type::CharacterDevice)
   end
 

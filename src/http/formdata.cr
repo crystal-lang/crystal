@@ -11,7 +11,6 @@ require "mime/multipart"
 #
 # ```
 # require "http"
-# require "tempfile"
 #
 # server = HTTP::Server.new do |context|
 #   name = nil
@@ -28,7 +27,7 @@ require "mime/multipart"
 #   end
 #
 #   unless name && file
-#     context.response.status = :bad_request
+#     context.response.respond_with_status(:bad_request)
 #     next
 #   end
 #

@@ -21,7 +21,7 @@ class INI
   #
   # INI.parse("[foo]\na = 1") # => {"foo" => {"a" => "1"}}
   # ```
-  def self.parse(str) : Hash(String, Hash(String, String))
+  def self.parse(str : String | IO) : Hash(String, Hash(String, String))
     ini = Hash(String, Hash(String, String)).new
     current_section = ini[""] = Hash(String, String).new
     lineno = 0
@@ -70,8 +70,13 @@ class INI
   end
 
   # Appends INI data to the given IO.
-  def self.build(io : IO, ini, space : Bool = false)
+  def self.build(io : IO, ini, space : Bool = false) : Nil
+    # An empty section has to be at first, to prevent being included in another one.
+    ini[""]?.try &.each do |key, value|
+      io << key << (space ? " = " : '=') << value << '\n'
+    end
     ini.each do |section, contents|
+      next if section.to_s.empty?
       io << '[' << section << "]\n"
       contents.each do |key, value|
         io << key << (space ? " = " : '=') << value << '\n'

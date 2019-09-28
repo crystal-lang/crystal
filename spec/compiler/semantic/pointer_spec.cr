@@ -163,4 +163,26 @@ describe "Semantic: pointer" do
       pointerof(LibFoo.extern)
       )) { pointer_of(int32) }
   end
+
+  it "says undefined variable (#7556)" do
+    assert_error %(
+      pointerof(foo)
+      ),
+      "undefined local variable or method 'foo'"
+  end
+
+  it "can assign pointerof virtual type (#8216)" do
+    semantic(%(
+      class Base
+      end
+
+      class Sub < Base
+      end
+
+      u = uninitialized Base
+
+      x : Pointer(Base)
+      x = pointerof(u)
+    ))
+  end
 end

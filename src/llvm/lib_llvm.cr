@@ -2,6 +2,12 @@
 lib LibLLVM
   LLVM_CONFIG = {{
                   `[ -n "$LLVM_CONFIG" ] && command -v "$LLVM_CONFIG" || \
+                   command -v llvm-config-8 || command -v llvm-config-8.0 || command -v llvm-config80 || \
+                   (command -v llvm-config > /dev/null && (case "$(llvm-config --version)" in 8.0*) command -v llvm-config;; *) false;; esac)) || \
+                   command -v llvm-config-7 || \
+                   (command -v llvm-config > /dev/null && (case "$(llvm-config --version)" in 7.1*) command -v llvm-config;; *) false;; esac)) || \
+                   command -v llvm-config-7.0 || command -v llvm-config70 || \
+                   (command -v llvm-config > /dev/null && (case "$(llvm-config --version)" in 7.0*) command -v llvm-config;; *) false;; esac)) || \
                    command -v llvm-config-6.0 || command -v llvm-config60 || \
                    (command -v llvm-config > /dev/null && (case "$(llvm-config --version)" in 6.0*) command -v llvm-config;; *) false;; esac)) || \
                    command -v llvm-config-5.0 || command -v llvm-config50 || \
@@ -33,11 +39,16 @@ end
 
 {% begin %}
   lib LibLLVM
+    IS_80 = {{LibLLVM::VERSION.starts_with?("8.0")}}
+    IS_71 = {{LibLLVM::VERSION.starts_with?("7.1")}}
+    IS_70 = {{LibLLVM::VERSION.starts_with?("7.0")}}
     IS_60 = {{LibLLVM::VERSION.starts_with?("6.0")}}
     IS_50 = {{LibLLVM::VERSION.starts_with?("5.0")}}
     IS_40 = {{LibLLVM::VERSION.starts_with?("4.0")}}
     IS_39 = {{LibLLVM::VERSION.starts_with?("3.9")}}
     IS_38 = {{LibLLVM::VERSION.starts_with?("3.8")}}
+
+    IS_LT_70 = IS_38 || IS_39 || IS_40 || IS_50 || IS_60
   end
 {% end %}
 
@@ -149,6 +160,7 @@ lib LibLLVM
   fun create_mc_jit_compiler_for_module = LLVMCreateMCJITCompilerForModule(jit : ExecutionEngineRef*, m : ModuleRef, options : JITCompilerOptions*, options_length : UInt32, error : UInt8**) : Int32
   fun create_target_machine = LLVMCreateTargetMachine(target : TargetRef, triple : UInt8*, cpu : UInt8*, features : UInt8*, level : LLVM::CodeGenOptLevel, reloc : LLVM::RelocMode, code_model : LLVM::CodeModel) : TargetMachineRef
   fun delete_basic_block = LLVMDeleteBasicBlock(block : BasicBlockRef)
+  fun delete_function = LLVMDeleteFunction(fn : ValueRef)
   fun dispose_message = LLVMDisposeMessage(msg : UInt8*)
   fun dump_module = LLVMDumpModule(module : ModuleRef)
   fun dump_value = LLVMDumpValue(val : ValueRef)
@@ -164,6 +176,7 @@ lib LibLLVM
   fun get_insert_block = LLVMGetInsertBlock(builder : BuilderRef) : BasicBlockRef
   fun get_named_function = LLVMGetNamedFunction(mod : ModuleRef, name : UInt8*) : ValueRef
   fun get_named_global = LLVMGetNamedGlobal(mod : ModuleRef, name : UInt8*) : ValueRef
+  fun get_count_params = LLVMCountParams(fn : ValueRef) : UInt
   fun get_param = LLVMGetParam(fn : ValueRef, index : Int32) : ValueRef
   fun get_param_types = LLVMGetParamTypes(function_type : TypeRef, dest : TypeRef*)
   fun get_params = LLVMGetParams(fn : ValueRef, params : ValueRef*)
@@ -301,7 +314,8 @@ lib LibLLVM
     fun copy_string_rep_of_target_data = LLVMCopyStringRepOfTargetData(data : TargetDataRef) : UInt8*
     fun get_target_machine_data = LLVMGetTargetMachineData(t : TargetMachineRef) : TargetDataRef
     fun set_data_layout = LLVMSetDataLayout(mod : ModuleRef, data : UInt8*)
-  {% else %} # LLVM >= 3.9
+  {% else %}
+    # LLVM >= 3.9
     fun create_target_data_layout = LLVMCreateTargetDataLayout(t : TargetMachineRef) : TargetDataRef
     fun set_module_data_layout = LLVMSetModuleDataLayout(mod : ModuleRef, data : TargetDataRef)
   {% end %}
@@ -312,11 +326,12 @@ lib LibLLVM
     fun add_function_attr = LLVMAddFunctionAttr(fn : ValueRef, pa : LLVM::Attribute)
     fun get_function_attr = LLVMGetFunctionAttr(fn : ValueRef) : LLVM::Attribute
     fun get_attribute = LLVMGetAttribute(arg : ValueRef) : LLVM::Attribute
-  {% else %} # LLVM >= 3.9
+  {% else %}
+    # LLVM >= 3.9
     type AttributeRef = Void*
     alias AttributeIndex = UInt
 
-    fun get_last_enum_attribute_kind = LLVMGetLastEnumAttributeKind() : UInt
+    fun get_last_enum_attribute_kind = LLVMGetLastEnumAttributeKind : UInt
     fun get_enum_attribute_kind_for_name = LLVMGetEnumAttributeKindForName(name : Char*, s_len : LibC::SizeT) : UInt
     fun create_enum_attribute = LLVMCreateEnumAttribute(c : ContextRef, kind_id : UInt, val : UInt64) : AttributeRef
     fun add_attribute_at_index = LLVMAddAttributeAtIndex(f : ValueRef, idx : AttributeIndex, a : AttributeRef)
@@ -360,4 +375,14 @@ lib LibLLVM
 
   fun const_int_get_sext_value = LLVMConstIntGetSExtValue(ValueRef) : Int64
   fun const_int_get_zext_value = LLVMConstIntGetZExtValue(ValueRef) : UInt64
+
+  fun get_num_operands = LLVMGetNumOperands(val : ValueRef) : Int32
+  fun get_operand = LLVMGetOperand(val : ValueRef, index : UInt) : ValueRef
+
+  fun get_num_arg_operands = LLVMGetNumArgOperands(instr : ValueRef) : UInt
+  fun get_arg_operand = LLVMGetArgOperand(val : ValueRef, index : UInt) : ValueRef
+
+  fun set_instr_param_alignment = LLVMSetInstrParamAlignment(instr : ValueRef, index : UInt, align : UInt)
+
+  fun set_param_alignment = LLVMSetParamAlignment(arg : ValueRef, align : UInt)
 end

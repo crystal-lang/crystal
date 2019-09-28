@@ -1,11 +1,34 @@
 # :nodoc:
 module Crystal::System::Dir
+  # :nodoc:
+  #
+  # Information about a directory entry.
+  #
+  # In particular we only care about the name and whether its
+  # a directory or not to improve the performance of Dir.glob
+  # by avoid having to call File.info on every directory entry.
+  # In the future we might change Dir's API to expose these entries
+  # with more info but right now it's not necessary.
+  struct Entry
+    getter name
+    getter? dir
+
+    def initialize(@name : String, @dir : Bool)
+    end
+  end
+
   # Returns a new handle to an iterator of entries inside *path*.
   # def self.open(path : String) : Handle
 
+  # Returns the next directory entry name in the iterator represented by *handle*, or
+  # `nil` if iteration is complete.
+  def self.next(dir) : String?
+    next_entry(dir).try &.name
+  end
+
   # Returns the next directory entry in the iterator represented by *handle*, or
   # `nil` if iteration is complete.
-  # def self.next(handle : Handle) : String?
+  # def self.next_entry(handle : Handle) : Entry?
 
   # Rewinds the iterator to the beginning of the directory.
   # def self.rewind(handle : Handle) : Nil

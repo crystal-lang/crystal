@@ -60,15 +60,15 @@ class File < IO::FileDescriptor
   # return EOF, and any data written will be immediately discarded.
   #
   # ```
-  # File.open(File::DEVNULL) do |file|
+  # File.open(File::NULL, "w") do |file|
   #   file.puts "this is discarded"
   # end
   # ```
-  DEVNULL = {% if flag?(:win32) %}
-              "NUL"
-            {% else %}
-              "/dev/null"
-            {% end %}
+  NULL = {% if flag?(:win32) %}
+           "NUL"
+         {% else %}
+           "/dev/null"
+         {% end %}
 
   include Crystal::System::File
 
@@ -572,6 +572,11 @@ class File < IO::FileDescriptor
     else
       false
     end
+  end
+
+  # Returns value of a symbolic link .
+  def self.readlink(path) : String
+    Crystal::System::File.readlink(path)
   end
 
   # Opens the file named by *filename*. If a file is being created, its initial

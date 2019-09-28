@@ -23,6 +23,10 @@ class Crystal::Doc::Macro
     @macro.doc
   end
 
+  def doc_copied_from
+    nil
+  end
+
   def source_link
     @generator.source_link(@macro)
   end
@@ -39,7 +43,7 @@ class Crystal::Doc::Macro
   end
 
   def anchor
-    '#' + URI.escape(id)
+    '#' + URI.encode(id)
   end
 
   def prefix

@@ -94,7 +94,7 @@ describe "Code gen: proc" do
       end
 
       f = ->(x : Int32 | Float64) { x &+ 1 }
-      f.call(1).to_i
+      f.call(1).to_i!
       ").to_i.should eq(2)
   end
 
@@ -161,7 +161,7 @@ describe "Code gen: proc" do
       end
 
       f = ->(x : Int32 | Float64) { x.abs }
-      f.call(1 || 1.5).to_i
+      f.call(1 || 1.5).to_i!
       ").to_i.should eq(1)
   end
 
@@ -379,7 +379,7 @@ describe "Code gen: proc" do
   it "allows invoking proc literal with smaller type" do
     run("
       struct Nil
-        def to_i
+        def to_i!
           0
         end
       end
@@ -387,7 +387,7 @@ describe "Code gen: proc" do
       f = ->(x : Int32 | Nil) {
         x
       }
-      f.call(1).to_i
+      f.call(1).to_i!
       ").to_i.should eq(1)
   end
 
@@ -477,7 +477,7 @@ describe "Code gen: proc" do
 
       foo = ->(x : Int32 | Float64) { x }
       foo.call(a)
-      foo.call(a).to_i
+      foo.call(a).to_i!
       )).to_i.should eq(1)
   end
 
@@ -595,6 +595,8 @@ describe "Code gen: proc" do
 
   it "codegens proc to implicit self in constant (#647)" do
     run(%(
+      require "prelude"
+
       module Foo
         def self.blah
           1

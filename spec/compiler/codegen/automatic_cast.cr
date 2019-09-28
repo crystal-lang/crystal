@@ -27,7 +27,7 @@ describe "Code gen: automatic cast" do
         x
       end
 
-      foo(12345).to_i
+      foo(12345).to_i!
       )).to_i.should eq(12345)
   end
 
@@ -37,7 +37,7 @@ describe "Code gen: automatic cast" do
         x
       end
 
-      foo(12345).to_i
+      foo(12345).to_i!
       )).to_i.should eq(12345)
   end
 
@@ -47,7 +47,7 @@ describe "Code gen: automatic cast" do
         x
       end
 
-      foo(12345.0_f32).to_i
+      foo(12345.0_f32).to_i!
       )).to_i.should eq(12345)
   end
 
@@ -57,7 +57,7 @@ describe "Code gen: automatic cast" do
         x
       end
 
-      foo(12345.0).to_i
+      foo(12345.0).to_i!
       )).to_i.should eq(12345)
   end
 

@@ -33,8 +33,18 @@ class StringPool
   getter size : Int32
 
   # Creates a new empty string pool.
-  def initialize
-    @capacity = 8
+  #
+  # The *initial_capacity* is useful to avoid unnecessary reallocations
+  # of the internal buffers in case of growth. If you have an estimate
+  # of the maximum number of elements the pool will hold it should
+  # be initialized with that capacity for improved performance.
+  #
+  # ```
+  # pool = StringPool.new(256)
+  # pool.size # => 0
+  # ```
+  def initialize(initial_capacity = 8)
+    @capacity = initial_capacity
     @hashes = Pointer(UInt64).malloc(@capacity, 0_u64)
     @values = Pointer(String).malloc(@capacity, "")
     @size = 0
@@ -70,7 +80,7 @@ class StringPool
   # pool.empty? # => false
   #  ```
   def get(slice : Bytes)
-    get slice.pointer(slice.size), slice.size
+    get slice.to_unsafe, slice.size
   end
 
   # Returns a `String` with the contents given by the pointer *str* of size *len*.

@@ -59,7 +59,7 @@ describe "Code gen: case" do
 
   it "codegens case with class" do
     run("
-      struct Nil; def to_i; 0; end; end
+      struct Nil; def to_i!; 0; end; end
 
       struct Int32
         def foo
@@ -73,7 +73,7 @@ describe "Code gen: case" do
         a.foo
       when Char
         a.ord
-      end.to_i
+      end.to_i!
       ").to_i.should eq(-1)
   end
 

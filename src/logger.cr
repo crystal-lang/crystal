@@ -1,14 +1,11 @@
 # The `Logger` class provides a simple but sophisticated logging utility that you can use to output messages.
 #
 # The messages have associated levels, such as `INFO` or `ERROR` that indicate their importance.
-# You can then give the `Logger` a level, and only messages at that level of higher will be printed.
+# You can then give the `Logger` a level, and only messages at that level or higher will be printed.
 #
 # For instance, in a production system, you may have your `Logger` set to `INFO` or even `WARN`.
 # When you are developing the system, however, you probably want to know about the program’s internal state,
 # and would set the `Logger` to `DEBUG`.
-#
-# If logging to multiple locations is required, an `IO::MultiWriter` can be
-# used.
 #
 # ### Example
 #
@@ -35,6 +32,18 @@
 #   log.fatal("Caught exception; exiting")
 #   log.fatal(err)
 # end
+# ```
+#
+# If logging to multiple locations is required, an `IO::MultiWriter` can be
+# used.
+#
+# ```
+# file = File.new("production.log", "a")
+# writer = IO::MultiWriter.new(file, STDOUT)
+#
+# log = Logger.new(writer)
+# log.level = Logger::DEBUG
+# log.debug("Created logger")
 # ```
 class Logger
   property level : Severity

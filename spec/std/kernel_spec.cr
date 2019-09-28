@@ -1,5 +1,5 @@
 require "spec"
-require "../../spec_helper"
+require "../spec_helper"
 
 describe "exit" do
   it "exits normally with status 0" do

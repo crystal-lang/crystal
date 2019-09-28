@@ -29,7 +29,7 @@ require "c/errno"
 #     slice.size
 #   end
 #
-#   def write(slice : Bytes)
+#   def write(slice : Bytes) : Nil
 #     slice.size.times { |i| @slice[i] = slice[i] }
 #     @slice += slice.size
 #     nil
@@ -1123,14 +1123,14 @@ abstract class IO
   #
   # io2.to_s # => "hello"
   # ```
-  def self.copy(src, dst)
+  def self.copy(src, dst) : UInt64
     buffer = uninitialized UInt8[4096]
-    count = 0
+    count = 0_u64
     while (len = src.read(buffer.to_slice).to_i32) > 0
       dst.write buffer.to_slice[0, len]
       count += len
     end
-    len < 0 ? len : count
+    count
   end
 
   # Copy at most *limit* bytes from *src* to *dst*.
@@ -1143,8 +1143,10 @@ abstract class IO
   #
   # io2.to_s # => "hel"
   # ```
-  def self.copy(src, dst, limit : Int)
+  def self.copy(src, dst, limit : Int) : UInt64
     raise ArgumentError.new("Negative limit") if limit < 0
+
+    limit = limit.to_u64
 
     buffer = uninitialized UInt8[4096]
     remaining = limit

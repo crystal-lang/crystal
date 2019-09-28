@@ -14,6 +14,7 @@ private macro no_win(stmt)
 end
 
 # This list requires ordered statements
+require "crystal/once"
 require "lib_c"
 require "macros"
 require "object"
@@ -26,6 +27,7 @@ require "iterable"
 require "iterator"
 require "indexable"
 require "string"
+require "number"
 
 # Alpha-sorted list
 require "annotations"
@@ -37,6 +39,7 @@ require "char"
 require "char/reader"
 require "class"
 no_win require "concurrent"
+require "crystal/compiler_rt"
 require "crystal/main"
 require "deque"
 require "dir"
@@ -58,7 +61,6 @@ require "math/math"
 no_win require "mutex"
 require "named_tuple"
 require "nil"
-require "number"
 require "humanize"
 require "path"
 require "pointer"

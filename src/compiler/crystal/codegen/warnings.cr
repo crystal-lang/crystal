@@ -1,4 +1,17 @@
 module Crystal
+  class Program
+    def ignore_warning_due_to_location?(location : Location?)
+      return false unless location
+
+      filename = location.original_filename
+      return false unless filename
+
+      @program.warnings_exclude.any? do |path|
+        filename.starts_with?(path)
+      end
+    end
+  end
+
   struct DeprecatedAnnotation
     getter message : String?
 
@@ -53,7 +66,8 @@ module Crystal
 
       if (ann = node.target_def.annotation(@program.deprecated_annotation)) &&
          (deprecated_annotation = DeprecatedAnnotation.from(ann))
-        return if ignore_warning_due_to_location(node.location)
+        return if compiler_expanded_call(node)
+        return if @program.ignore_warning_due_to_location?(node.location)
         short_reference = node.target_def.short_reference
         warning_key = node.location.try { |l| "#{short_reference} #{l}" }
 
@@ -71,15 +85,9 @@ module Crystal
       end
     end
 
-    private def ignore_warning_due_to_location(location : Location?)
-      return false unless location
-
-      filename = location.original_filename
-      return false unless filename
-
-      return @program.warnings_exclude.any? do |path|
-        filename.starts_with?(path)
-      end
+    private def compiler_expanded_call(node : Call)
+      # Compiler generates a `_.initialize` call in `new`
+      node.obj.as?(Var).try { |v| v.name == "_" } && node.name == "initialize"
     end
   end
 
@@ -89,6 +97,7 @@ module Crystal
 
       result.program.warning_failures.each do |message|
         STDERR.puts message
+        STDERR.puts "\n"
       end
       STDERR.puts "A total of #{result.program.warning_failures.size} warnings were found."
     end

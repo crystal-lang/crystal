@@ -9,7 +9,14 @@
         <a class="method-permalink" href="<%= method.anchor %>">#</a>
       </div>
       <% if doc = method.formatted_doc %>
-        <div class="doc"><%= doc %></div>
+        <div class="doc">
+          <% if doc_copied_from = method.doc_copied_from %>
+            <div class="doc-inherited">
+              Description copied from <%= doc_copied_from.kind %> <%= doc_copied_from.link_from(method.type) %>
+            </div>
+          <% end %>
+          <%= doc %>
+        </div>
       <% end %>
       <br/>
       <div>

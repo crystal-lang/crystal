@@ -138,7 +138,7 @@ describe "Code gen: next" do
 
   it "codegens next without expressions" do
     run("
-      struct Nil; def to_i; 0; end; end
+      struct Nil; def to_i!; 0; end; end
 
       def foo
         yield
@@ -150,7 +150,7 @@ describe "Code gen: next" do
         else
           next
         end
-      end.to_i
+      end.to_i!
       ").to_i.should eq(1)
   end
 end

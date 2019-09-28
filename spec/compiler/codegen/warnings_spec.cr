@@ -8,7 +8,7 @@ describe "Code gen: warnings" do
       end
 
       foo
-    ), "Warning in line 6: Deprecated top-level foo. Do not use me",
+    ), "warning in line 6\nWarning: Deprecated top-level foo. Do not use me",
       inject_primitives: false
   end
 
@@ -19,7 +19,7 @@ describe "Code gen: warnings" do
       end
 
       foo
-    ), "Warning in line 6: Deprecated top-level foo.",
+    ), "warning in line 6\nWarning: Deprecated top-level foo.",
       inject_primitives: false
   end
 
@@ -32,7 +32,7 @@ describe "Code gen: warnings" do
       end
 
       Foo.new.m
-    ), "Warning in line 8: Deprecated Foo#m. Do not use me",
+    ), "warning in line 8\nWarning: Deprecated Foo#m. Do not use me",
       inject_primitives: false
   end
 
@@ -45,7 +45,7 @@ describe "Code gen: warnings" do
       end
 
       Foo.m
-    ), "Warning in line 8: Deprecated Foo.m. Do not use me",
+    ), "warning in line 8\nWarning: Deprecated Foo.m. Do not use me",
       inject_primitives: false
   end
 
@@ -58,7 +58,7 @@ describe "Code gen: warnings" do
       end
 
       Foo(Int32).new.m
-    ), "Warning in line 8: Deprecated Foo(Int32)#m. Do not use me",
+    ), "warning in line 8\nWarning: Deprecated Foo(Int32)#m. Do not use me",
       inject_primitives: false
   end
 
@@ -71,7 +71,7 @@ describe "Code gen: warnings" do
       end
 
       Foo(Int32).m
-    ), "Warning in line 8: Deprecated Foo(Int32).m. Do not use me",
+    ), "warning in line 8\nWarning: Deprecated Foo(Int32).m. Do not use me",
       inject_primitives: false
   end
 
@@ -84,7 +84,44 @@ describe "Code gen: warnings" do
       end
 
       Foo.m
-    ), "Warning in line 8: Deprecated Foo.m. Do not use me",
+    ), "warning in line 8\nWarning: Deprecated Foo.m. Do not use me",
+      inject_primitives: false
+  end
+
+  it "detects deprecated methods with named arguments" do
+    assert_warning %(
+      @[Deprecated]
+      def foo(*, a)
+      end
+
+      foo(a: 2)
+    ), "warning in line 6\nWarning: Deprecated top-level foo:a.",
+      inject_primitives: false
+  end
+
+  it "detects deprecated initialize" do
+    assert_warning %(
+      class Foo
+        @[Deprecated]
+        def initialize
+        end
+      end
+
+      Foo.new
+    ), "warning in line 8\nWarning: Deprecated Foo.new.",
+      inject_primitives: false
+  end
+
+  it "detects deprecated initialize with named arguments" do
+    assert_warning %(
+      class Foo
+        @[Deprecated]
+        def initialize(*, a)
+        end
+      end
+
+      Foo.new(a: 2)
+    ), "warning in line 8\nWarning: Deprecated Foo.new:a.",
       inject_primitives: false
   end
 
@@ -189,7 +226,7 @@ describe "Code gen: warnings" do
           end
         )
 
-        compiler = Compiler.new
+        compiler = create_spec_compiler
         compiler.warnings = Warnings::All
         compiler.warnings_exclude << Crystal.normalize_path "lib"
         compiler.prelude = "empty"
@@ -206,7 +243,7 @@ describe "Code gen: warnings" do
       def foo
       end
       ),
-      "Error in line 3: first argument must be a String"
+      "Error: first argument must be a String"
   end
 
   it "errors if too many arguments" do
@@ -215,7 +252,7 @@ describe "Code gen: warnings" do
       def foo
       end
       ),
-      "Error in line 3: wrong number of deprecated annotation arguments (given 2, expected 1)"
+      "Error: wrong number of deprecated annotation arguments (given 2, expected 1)"
   end
 
   it "errors if missing link arguments" do
@@ -224,6 +261,6 @@ describe "Code gen: warnings" do
       def foo
       end
       ),
-      "Error in line 3: too many named arguments (given 1, expected maximum 0)"
+      "Error: too many named arguments (given 1, expected maximum 0)"
   end
 end

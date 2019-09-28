@@ -81,7 +81,7 @@ struct Range(B, E)
   # ```
   #
   # Returns `nil` if the block didn't return `true` for any value.
-  def bsearch
+  def bsearch(&block : B | E -> Bool)
     from = self.begin
     to = self.end
 

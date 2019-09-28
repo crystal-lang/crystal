@@ -582,6 +582,14 @@ describe "Enumerable" do
     end
   end
 
+  describe "reduce?" do
+    it { [1, 2, 3].reduce? { |memo, i| memo + i }.should eq(6) }
+
+    it "returns nil if empty" do
+      ([] of Int32).reduce? { |memo, i| memo + i }.should be_nil
+    end
+  end
+
   describe "join" do
     it "joins with separator and block" do
       str = [1, 2, 3].join(", ") { |x| x + 1 }
@@ -688,7 +696,7 @@ describe "Enumerable" do
 
   describe "min_by?" do
     it "returns nil if empty" do
-      ([] of Int32).max_by? { |x| -x }.should be_nil
+      ([] of Int32).min_by? { |x| -x }.should be_nil
     end
   end
 
@@ -902,6 +910,12 @@ describe "Enumerable" do
         i < 3
       end
       called.should eq 3
+    end
+  end
+
+  describe "tally" do
+    it "returns a hash with counts according to the value" do
+      %w[1 2 3 3 3 2].tally.should eq({"1" => 1, "2" => 2, "3" => 3})
     end
   end
 

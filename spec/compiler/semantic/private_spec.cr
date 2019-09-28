@@ -20,6 +20,27 @@ describe "Semantic: private" do
     end
   end
 
+  it "doesn't find private def defined in macro in another file (#7681)" do
+    expect_raises Crystal::TypeException, "undefined local variable or method 'foo'" do
+      compiler = Compiler.new
+      sources = [
+        Compiler::Source.new("foo.cr", %(
+                                          {% begin %}
+                                            private def foo
+                                              1
+                                            end
+                                          {% end %}
+                                        )),
+        Compiler::Source.new("bar.cr", %(
+                                          foo
+                                        )),
+      ]
+      compiler.no_codegen = true
+      compiler.prelude = "empty"
+      compiler.compile sources, "output"
+    end
+  end
+
   it "finds private def in same file" do
     compiler = Compiler.new
     sources = [
@@ -412,5 +433,18 @@ describe "Semantic: private" do
       {{ Foo::Bar }}
       ),
       "private constant Foo::Bar referenced"
+  end
+
+  it "doesn't find private constant in another file (#7850)" do
+    expect_raises Crystal::TypeException, "undefined constant Foo" do
+      compiler = Compiler.new
+      sources = [
+        Compiler::Source.new("foo.cr", %(private Foo = 1)),
+        Compiler::Source.new("bar.cr", %(Foo)),
+      ]
+      compiler.no_codegen = true
+      compiler.prelude = "empty"
+      compiler.compile sources, "output"
+    end
   end
 end

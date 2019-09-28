@@ -304,8 +304,14 @@ module Crystal::Macros
     def *(other : NumberLiteral) : NumberLiteral
     end
 
-    # Same as `Number#/`
-    def /(other : NumberLiteral) : NumberLiteral
+    # MathInterpreter only works with Integer and Number#/ : Float
+    #
+    # # Same as `Number#/`
+    # def /(other : NumberLiteral) : NumberLiteral
+    # end
+
+    # Same as `Number#//`
+    def //(other : NumberLiteral) : NumberLiteral
     end
 
     # Same as `Number#%`
@@ -874,8 +880,16 @@ module Crystal::Macros
 
     # Returns the value of a named argument,
     # or NilLiteral if the named argument isn't
-    # used in this attribute.
+    # used on `self`.
     def [](name : SymbolLiteral | StringLiteral | MacroId) : ASTNode
+    end
+
+    # Returns a `TupleLiteral` representing the positional arguments on `self`.
+    def args : TupleLiteral
+    end
+
+    # Returns a `NamedTupleLiteral` representing the named arguments on `self`.
+    def named_args : NamedTupleLiteral
     end
   end
 
@@ -1297,6 +1311,12 @@ module Crystal::Macros
     # returns a `NilLiteral`.
     def resolve? : ASTNode | NilLiteral
     end
+
+    # Returns this path inside an array literal.
+    # This method exists so you can call `types` on the type of a type
+    # declaration and get all types, whether it's a Generic, Path or Union.
+    def types : ArrayLiteral(ASTNode)
+    end
   end
 
   # A class definition.
@@ -1343,6 +1363,12 @@ module Crystal::Macros
     # Resolves this path to a `TypeNode` if it denotes a type,
     # or otherwise returns a `NilLiteral`.
     def resolve? : ASTNode | NilLiteral
+    end
+
+    # Returns this generic inside an array literal.
+    # This method exists so you can call `types` on the type of a type
+    # declaration and get all types, whether it's a Generic, Path or Union.
+    def types : ArrayLiteral(ASTNode)
     end
   end
 
@@ -1411,6 +1437,16 @@ module Crystal::Macros
 
   # A type union, like `(Int32 | String)`.
   class Union < ASTNode
+    # Resolves this union to a `TypeNode`. Gives a compile-time error
+    # if any type inside the union can't be resolved.
+    def resolve : ASTNode
+    end
+
+    # Resolves this union to a `TypeNode`. Returns a `NilLiteral`
+    # if any type inside the union can't be resolved.
+    def resolve? : ASTNode | NilLiteral
+    end
+
     # Returns the types of this union.
     def types : ArrayLiteral(ASTNode)
     end
@@ -1675,7 +1711,7 @@ module Crystal::Macros
     end
 
     # Returns the types forming a union type, if this is a union type.
-    # Gives a compile error otherwise.
+    # Otherwise returns this single type inside an array literal (so you can safely call `union_types` on any type and treat all types uniformly).
     #
     # See also: `union?`.
     def union_types : ArrayLiteral(TypeNode)
@@ -1803,6 +1839,14 @@ module Crystal::Macros
     # {{ Bar.overrides?(Foo, "two") }} # => false
     # ```
     def overrides?(type : TypeNode, method : StringLiteral | SymbolLiteral | MacroId) : Bool
+    end
+
+    # Returns `self`. This method exists so you can safely call `resolve` on a node and resolve it to a type, even if it's a type already.
+    def resolve : TypeNode
+    end
+
+    # Returns `self`. This method exists so you can safely call `resolve` on a node and resolve it to a type, even if it's a type already.
+    def resolve? : TypeNode
     end
 
     # Returns `true` if *other* is an ancestor of `self`.

@@ -54,9 +54,9 @@ describe OpenSSL::SSL::Context do
     context.verify_mode.should eq(OpenSSL::SSL::VerifyMode::NONE)
     context.options.no_ssl_v3?.should_not be_true
     {% if compare_versions(LibSSL::OPENSSL_VERSION, "1.1.1") >= 0 %}
-    context.modes.should eq(OpenSSL::SSL::Modes::AUTO_RETRY)
+      context.modes.should eq(OpenSSL::SSL::Modes::AUTO_RETRY)
     {% else %}
-    context.modes.should eq(OpenSSL::SSL::Modes::None)
+      context.modes.should eq(OpenSSL::SSL::Modes::None)
     {% end %}
 
     OpenSSL::SSL::Context::Client.insecure(LibSSL.tlsv1_method)
@@ -68,9 +68,9 @@ describe OpenSSL::SSL::Context do
     context.verify_mode.should eq(OpenSSL::SSL::VerifyMode::NONE)
     context.options.no_ssl_v3?.should_not be_true
     {% if compare_versions(LibSSL::OPENSSL_VERSION, "1.1.1") >= 0 %}
-    context.modes.should eq(OpenSSL::SSL::Modes::AUTO_RETRY)
+      context.modes.should eq(OpenSSL::SSL::Modes::AUTO_RETRY)
     {% else %}
-    context.modes.should eq(OpenSSL::SSL::Modes::None)
+      context.modes.should eq(OpenSSL::SSL::Modes::None)
     {% end %}
 
     OpenSSL::SSL::Context::Server.insecure(LibSSL.tlsv1_method)
@@ -163,10 +163,10 @@ describe OpenSSL::SSL::Context do
   end
 
   {% if compare_versions(LibSSL::OPENSSL_VERSION, "1.0.2") >= 0 %}
-  it "alpn_protocol=" do
-    context = OpenSSL::SSL::Context::Client.insecure
-    context.alpn_protocol = "h2"
-  end
+    it "alpn_protocol=" do
+      context = OpenSSL::SSL::Context::Client.insecure
+      context.alpn_protocol = "h2"
+    end
   {% end %}
 
   it "calls #finalize on insecure client context" do

@@ -72,6 +72,7 @@ def assert_normalize(from, to, flags = nil)
   from_nodes = Parser.parse(from)
   to_nodes = program.normalize(from_nodes)
   to_nodes.to_s.strip.should eq(to.strip)
+  to_nodes
 end
 
 def assert_expand(from : String, to)
@@ -113,10 +114,12 @@ def warnings_result(code, inject_primitives = true)
 
   output_filename = Crystal.tempfile("crystal-spec-output")
 
-  compiler = Compiler.new
+  compiler = create_spec_compiler
   compiler.warnings = Warnings::All
   compiler.error_on_warnings = false
   compiler.prelude = "empty" # avoid issues in the current std lib
+  compiler.color = false
+  apply_program_flags(compiler.flags)
   result = compiler.compile Compiler::Source.new("code.cr", code), output_filename
 
   result.program.warning_failures
@@ -160,7 +163,34 @@ end
 private def new_program
   program = Program.new
   program.color = false
+  apply_program_flags(program.flags)
   program
+end
+
+# Use CRYSTAL_SPEC_COMPILER_FLAGS env var to run the compiler specs
+# against a compiler with the specified options.
+# Separate flags with a space.
+# Using CRYSTAL_SPEC_COMPILER_FLAGS="foo bar" will mimic -Dfoo -Dbar options.
+private def apply_program_flags(target)
+  ENV["CRYSTAL_SPEC_COMPILER_FLAGS"]?.try { |f| target.concat(f.split) }
+end
+
+private def spec_compiler_threads
+  ENV["CRYSTAL_SPEC_COMPILER_THREADS"]?.try(&.to_i)
+end
+
+private def encode_program_flags : String
+  program_flags_options.join(' ')
+end
+
+def program_flags_options : Array(String)
+  f = [] of String
+  apply_program_flags(f)
+  options = f.map { |x| "-D#{x}" }
+  if (n_threads = spec_compiler_threads)
+    options << "--threads=#{n_threads}"
+  end
+  options
 end
 
 class Crystal::SpecRunOutput
@@ -178,6 +208,15 @@ class Crystal::SpecRunOutput
   def to_b
     @output == "true"
   end
+end
+
+def create_spec_compiler
+  compiler = Compiler.new
+  if (n_threads = spec_compiler_threads)
+    compiler.n_threads = n_threads
+  end
+
+  compiler
 end
 
 def run(code, filename = nil, inject_primitives = true, debug = Crystal::Debug::None, flags = nil)
@@ -199,9 +238,10 @@ def run(code, filename = nil, inject_primitives = true, debug = Crystal::Debug::
 
     output_filename = Crystal.tempfile("crystal-spec-output")
 
-    compiler = Compiler.new
+    compiler = create_spec_compiler
     compiler.debug = debug
     compiler.flags.concat flags if flags
+    apply_program_flags(compiler.flags)
     compiler.compile Compiler::Source.new("spec", code), output_filename
 
     output = `#{output_filename}`
@@ -221,7 +261,7 @@ def build_and_run(code)
 
   binary_file = File.tempname("build_and_run_bin")
 
-  `bin/crystal build #{code_file.path.inspect} -o #{binary_file.path.inspect}`
+  `bin/crystal build #{encode_program_flags} #{code_file.path.inspect} -o #{binary_file.path.inspect}`
   File.exists?(binary_file).should be_true
 
   out_io, err_io = IO::Memory.new, IO::Memory.new

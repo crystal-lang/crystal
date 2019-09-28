@@ -60,6 +60,21 @@ module HTTP
     typeof(Client.post("http://www.example.com", body: Bytes[65]))
     typeof(Client.new("host").post("/", body: Bytes[65]))
 
+    describe "from String" do
+      it "raises when not a host" do
+        ["http://www.example.com",
+         "www.example.com:8080",
+         "example.com/path",
+         "example.com?query",
+         "http://example.com:bad_port",
+         "user:pass@domain"].each do |string|
+          expect_raises(ArgumentError, "The string passed to create an HTTP::Client must be just a host, not #{string.inspect}") do
+            Client.new(string)
+          end
+        end
+      end
+    end
+
     describe "from URI" do
       it "has sane defaults" do
         cl = Client.new(URI.parse("http://example.com"))

@@ -674,6 +674,7 @@ module Crystal
           @str << ", " if printed_arg
           @str << "**"
           double_splat.accept self
+          printed_arg = true
         end
         if block_arg = node.block_arg
           @str << ", " if printed_arg
@@ -732,7 +733,7 @@ module Crystal
       newline
 
       inside_macro do
-        accept_with_indent node.body
+        accept node.body
       end
 
       # newline
@@ -1145,7 +1146,11 @@ module Crystal
       else
         @str << node.name
         @str << " = "
-        @str << node.real_name
+        if Symbol.needs_quotes?(node.real_name)
+          node.real_name.inspect(@str)
+        else
+          @str << node.real_name
+        end
       end
       if node.args.size > 0
         @str << '('
@@ -1268,6 +1273,7 @@ module Crystal
       @str << ", "
       node.instance_var.accept(self)
       @str << ')'
+      false
     end
 
     def visit(node : IsA)

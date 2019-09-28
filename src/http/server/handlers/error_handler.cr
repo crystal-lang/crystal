@@ -21,7 +21,7 @@ class HTTP::ErrorHandler
         context.response.print("ERROR: ")
         ex.inspect_with_backtrace(context.response)
       else
-        context.response.respond_with_error
+        context.response.respond_with_status(:internal_server_error)
       end
     end
   end

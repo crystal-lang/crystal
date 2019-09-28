@@ -29,7 +29,7 @@ class Crystal::Path
 
     similar_name = type.lookup_similar_path(self)
     if similar_name
-      self.raise("undefined constant #{self} #{type.program.colorize("(did you mean '#{similar_name}')").yellow.bold}")
+      self.raise("undefined constant #{self}\nDid you mean '#{similar_name}'?")
     else
       self.raise("undefined constant #{self}")
     end
@@ -38,6 +38,9 @@ end
 
 class Crystal::Call
   def raise_matches_not_found(owner, def_name, arg_types, named_args_types, matches = nil, with_literals = false)
+    obj = @obj
+    with_scope = @with_scope
+
     # Special case: Foo+.class#new
     if owner.is_a?(VirtualMetaclassType) && def_name == "new"
       raise_matches_not_found_for_virtual_metaclass_new owner
@@ -58,10 +61,10 @@ class Crystal::Call
       end
     end
 
-    # Another special case: initialize is only looked up one level,
+    # Another special case: `new` and `initialize` are only looked up one level,
     # so we must find the first one defined.
     new_owner = owner
-    while defs.empty? && def_name == "initialize"
+    while defs.empty? && (def_name == "initialize" || def_name == "new")
       new_owner = new_owner.superclass
       if new_owner
         defs = new_owner.lookup_defs(def_name)
@@ -71,10 +74,13 @@ class Crystal::Call
       end
     end
 
+    # Also check with scope
+    if with_scope
+      defs.concat with_scope.lookup_defs(def_name)
+    end
+
     # Check if it's the case of an abstract def
     check_abstract_def_error(owner, matches, defs, def_name)
-
-    obj = @obj
 
     # Check if this is a `foo` call and we actually find it in the Program
     if !obj && defs.empty?
@@ -116,7 +122,6 @@ class Crystal::Call
         end
 
         owner_name = owner.is_a?(Program) ? "top-level" : owner.to_s
-        with_scope = @with_scope
 
         if with_scope && !obj && with_scope != owner
           msg << " for #{with_scope} (with ... yield) and #{owner_name} (current scope)"
@@ -133,11 +138,12 @@ class Crystal::Call
         end
 
         if similar_name
+          msg << '\n'
           if similar_name == def_name
             # This check is for the case `a if a = 1`
-            msg << colorize(" (If you declared '#{def_name}' in a suffix if, declare it in a regular if for this to work. If the variable was declared in a macro it's not visible outside it)").yellow.bold
+            msg << "If you declared '#{def_name}' in a suffix if, declare it in a regular if for this to work. If the variable was declared in a macro it's not visible outside it)"
           else
-            msg << colorize(" (did you mean '#{similar_name}'?)").yellow.bold
+            msg << "Did you mean '#{similar_name}'?"
           end
         end
 
@@ -575,7 +581,7 @@ class Crystal::Call
     named_args.each do |named_arg|
       found_index = a_def.args.index { |arg| arg.external_name == named_arg.name }
       if found_index
-        min_size = args.size
+        min_size = arg_types.size
         if found_index < min_size
           raise "argument '#{named_arg.name}' already specified"
         end
@@ -587,7 +593,9 @@ class Crystal::Call
           str << named_arg.name
           str << '\''
           if similar_name
-            str << colorize(" (did you mean '#{similar_name}'?)").yellow.bold
+            str << '\n'
+            str << "Did you mean '#{similar_name}'?"
+            str << '\n'
           end
 
           defs = owner.lookup_defs(a_def.name)

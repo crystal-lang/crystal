@@ -243,7 +243,7 @@ struct Pointer(T)
     raise ArgumentError.new("Negative count") if count < 0
 
     if self.class == source.class
-      Intrinsics.memcpy(self.as(Void*), source.as(Void*), bytesize(count), 0_u32, false)
+      Intrinsics.memcpy(self.as(Void*), source.as(Void*), bytesize(count), false)
     else
       while (count -= 1) >= 0
         self[count] = source[count]
@@ -256,7 +256,7 @@ struct Pointer(T)
     raise ArgumentError.new("Negative count") if count < 0
 
     if self.class == source.class
-      Intrinsics.memmove(self.as(Void*), source.as(Void*), bytesize(count), 0_u32, false)
+      Intrinsics.memmove(self.as(Void*), source.as(Void*), bytesize(count), false)
     else
       if source.address < address
         copy_from source, count
@@ -500,7 +500,7 @@ struct Pointer(T)
   # ptr.to_slice(6) # => Slice[0, 0, 0, 13, 14, 15]
   # ```
   def clear(count = 1)
-    Intrinsics.memset(self.as(Void*), 0_u8, bytesize(count), 0_u32, false)
+    Intrinsics.memset(self.as(Void*), 0_u8, bytesize(count), false)
   end
 
   def clone

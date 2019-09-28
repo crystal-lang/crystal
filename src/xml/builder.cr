@@ -44,12 +44,20 @@ struct XML::Builder
 
   # Emits the start of an element.
   def start_element(name : String) : Nil
-    call StartElement, string_to_unsafe(name)
+    unsafe_name = string_to_unsafe(name)
+    check_valid_element_name name, unsafe_name, "element name"
+    call StartElement, unsafe_name
   end
 
   # Emits the start of an element with namespace info.
   def start_element(prefix : String?, name : String, namespace_uri : String?) : Nil
-    call StartElementNS, string_to_unsafe(prefix), string_to_unsafe(name), string_to_unsafe(namespace_uri)
+    unsafe_name = string_to_unsafe(name)
+    unsafe_prefix = string_to_unsafe(prefix)
+
+    check_valid_element_name name, unsafe_name, "element name"
+    check_valid_element_name prefix, unsafe_prefix, "prefix" if prefix
+
+    call StartElementNS, unsafe_prefix, unsafe_name, string_to_unsafe(namespace_uri)
   end
 
   # Emits the end of an element.
@@ -273,6 +281,10 @@ struct XML::Builder
 
   private def check(ret, msg)
     raise XML::Error.new("Error in #{msg}", 0) if ret < 0
+  end
+
+  private def check_valid_element_name(name : String, unsafe_name : Pointer(UInt8), element_type : String) : Nil
+    raise XML::Error.new("Invalid #{element_type}: '#{name}'", 0) if LibXML.xmlValidateNameValue(unsafe_name).zero?
   end
 
   private def string_to_unsafe(string : String)

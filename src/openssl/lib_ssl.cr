@@ -27,6 +27,7 @@ lib LibSSL
   type SSLMethod = Void*
   type SSLContext = Void*
   type SSL = Void*
+  type SSLCipher = Void*
 
   alias VerifyCallback = (Int, LibCrypto::X509_STORE_CTX) -> Int
   alias CertVerifyCallback = (LibCrypto::X509_STORE_CTX, Void*) -> Int
@@ -107,11 +108,11 @@ lib LibSSL
       NETSCAPE_CHALLENGE_BUG           = 0x00000000
       NETSCAPE_REUSE_CIPHER_CHANGE_BUG = 0x00000000
       SSLREF2_REUSE_CERT_TYPE_BUG      = 0x00000000
-      MICROSOFT_BIG_SSL_V3_BUFFER       = 0x00000000
+      MICROSOFT_BIG_SSL_V3_BUFFER      = 0x00000000
       SSLEAY_080_CLIENT_DH_BUG         = 0x00000000
       TLS_D5_BUG                       = 0x00000000
       TLS_BLOCK_PADDING_BUG            = 0x00000000
-      NO_SSL_V2                         = 0x00000000
+      NO_SSL_V2                        = 0x00000000
       SINGLE_ECDH_USE                  = 0x00000000
       SINGLE_DH_USE                    = 0x00000000
     {% else %}
@@ -119,11 +120,11 @@ lib LibSSL
       NETSCAPE_CHALLENGE_BUG           = 0x00000002
       NETSCAPE_REUSE_CIPHER_CHANGE_BUG = 0x00000008
       SSLREF2_REUSE_CERT_TYPE_BUG      = 0x00000010
-      MICROSOFT_BIG_SSL_V3_BUFFER       = 0x00000020
+      MICROSOFT_BIG_SSL_V3_BUFFER      = 0x00000020
       SSLEAY_080_CLIENT_DH_BUG         = 0x00000080
       TLS_D5_BUG                       = 0x00000100
       TLS_BLOCK_PADDING_BUG            = 0x00000200
-      NO_SSL_V2                         = 0x01000000
+      NO_SSL_V2                        = 0x01000000
       SINGLE_ECDH_USE                  = 0x00080000
       SINGLE_DH_USE                    = 0x00100000
     {% end %}
@@ -160,6 +161,10 @@ lib LibSSL
   fun ssl_select_next_proto = SSL_select_next_proto(output : Char**, output_len : Char*, input : Char*, input_len : Int, client : Char*, client_len : Int) : Int
   fun ssl_ctrl = SSL_ctrl(handle : SSL, cmd : Int, larg : Long, parg : Void*) : Long
   fun ssl_free = SSL_free(handle : SSL)
+
+  fun ssl_get_current_cipher = SSL_get_current_cipher(ssl : SSL) : SSLCipher
+  fun ssl_cipher_get_name = SSL_CIPHER_get_name(cipher : SSLCipher) : UInt8*
+  fun ssl_get_version = SSL_get_version(ssl : SSL) : UInt8*
 
   @[Raises]
   fun ssl_new = SSL_new(context : SSLContext) : SSL

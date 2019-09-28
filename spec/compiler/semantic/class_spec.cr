@@ -516,7 +516,7 @@ describe "Semantic: class" do
       foo = Foo.new
       foo.@y
       ),
-      "Can't infer the type of instance variable '@y' of Foo"
+      "can't infer the type of instance variable '@y' of Foo"
   end
 
   it "errors if reading ivar from non-ivar container" do
@@ -603,7 +603,7 @@ describe "Semantic: class" do
 
       Bar.new(Foo.new).foo
       ",
-      "Can't infer the type of instance variable '@x' of Foo"
+      "can't infer the type of instance variable '@x' of Foo"
   end
 
   it "doesn't mark instance variable as nilable if calling another initialize" do
@@ -961,7 +961,7 @@ describe "Semantic: class" do
       f = Foo.new
       f.@foo
       ),
-      "Can't infer the type of instance variable '@foo' of Foo"
+      "can't infer the type of instance variable '@foo' of Foo"
   end
 
   it "doesn't crash with top-level initialize (#2601)" do

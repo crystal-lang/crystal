@@ -13,6 +13,23 @@ struct Number
     self
   end
 
+  # Divides `self` by *other* using floored division.
+  #
+  # The result will be of the same type as `self`.
+  def //(other)
+    self.class.new((self / other).floor)
+  end
+
+  # :nodoc:
+  macro expand_div(rhs_types, result_type)
+    {% for rhs in rhs_types %}
+      @[AlwaysInline]
+      def /(other : {{rhs}}) : {{result_type}}
+        {{result_type}}.new(self) / {{result_type}}.new(other)
+      end
+    {% end %}
+  end
+
   # Creates an `Array` of `self` with the given values, which will be casted
   # to this type with the `new` method (defined in each `Number` type).
   #
@@ -220,10 +237,10 @@ struct Number
   def round(digits = 0, base = 10)
     x = self.to_f
     if digits < 0
-      y = base ** (-digits)
+      y = base.to_f ** (-digits)
       self.class.new((x / y).round * y)
     else
-      y = base ** digits
+      y = base.to_f ** digits
       self.class.new((x * y).round / y)
     end
   end

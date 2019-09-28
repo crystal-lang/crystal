@@ -126,6 +126,12 @@ describe "Spec matchers" do
     ex.message.should eq "can't nest `it` or `pending`"
     ex.file.should eq __FILE__
   end
+
+  describe "pending block is not compiled" do
+    pending "pending has block with valid syntax, but invalid semantics" do
+      UndefinedConstant.undefined_method
+    end
+  end
 end
 
 describe "Spec" do

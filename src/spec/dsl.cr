@@ -4,10 +4,11 @@ require "option_parser"
 module Spec
   private COLORS = {
     success: Colorize::ColorANSI::Green,
-    fail:    Colorize::ColorANSI::Red,
+    fail:    Colorize::ColorANSI::Red
     error:   Colorize::ColorANSI::Red,
     pending: Colorize::ColorANSI::Yellow,
     comment: Colorize::ColorANSI::Cyan,
+    focus:   Colorize::ColorANSI::Cyan,
   }
 
   private LETTERS = {
@@ -109,47 +110,39 @@ module Spec
     lines << line
   end
 
-  # :nodoc:
-  def self.matches?(description, file, line, end_line = line)
-    spec_pattern = @@pattern
-    spec_line = @@line
-    locations = @@locations
+  record SplitFilter, remainder : Int32, quotient : Int32
 
-    # When a method invokes `it` and only forwards line information,
-    # not end_line information (this can happen in code before we
-    # introduced the end_line feature) then running a spec by giving
-    # a line won't work because end_line might be located before line.
-    # So, we also check `line == spec_line` to somehow preserve
-    # backwards compatibility.
-    if spec_line && (line == spec_line || line <= spec_line <= end_line)
-      return true
-    end
+  @@split_filter : SplitFilter? = nil
 
-    if locations
-      lines = locations[file]?
-      return true if lines && lines.any? { |l| line == l || line <= l <= end_line }
-    end
-
-    if spec_pattern || spec_line || locations
-      Spec::RootContext.matches?(description, spec_pattern, spec_line, locations)
+  def self.add_split_filter(filter)
+    if filter
+      r, m = filter.split('%').map &.to_i
+      @@split_filter = SplitFilter.new(remainder: r, quotient: m)
     else
-      true
+      @@split_filter = nil
     end
   end
 
-  @@fail_fast = false
+  # :nodoc:
+  class_property? fail_fast = false
 
   # :nodoc:
-  def self.fail_fast=(@@fail_fast)
-  end
-
-  # :nodoc:
-  def self.fail_fast?
-    @@fail_fast
-  end
+  class_property? focus = false
 
   # Instructs the spec runner to execute the given block
   # before each spec, regardless of where this method is invoked.
+  #
+  # If multiple blocks are registered they run in the order
+  # that they are given.
+  #
+  # For example:
+  #
+  # ```
+  # Spec.before_each { puts 1 }
+  # Spec.before_each { puts 2 }
+  # ```
+  #
+  # will print, just before each spec, 1 and then 2.
   def self.before_each(&block)
     before_each = @@before_each ||= [] of ->
     before_each << block
@@ -157,9 +150,59 @@ module Spec
 
   # Instructs the spec runner to execute the given block
   # after each spec, regardless of where this method is invoked.
+  #
+  # If multiple blocks are registered they run in the reversed
+  # order that they are given.
+  #
+  # For example:
+  #
+  # ```
+  # Spec.after_each { puts 1 }
+  # Spec.after_each { puts 2 }
+  # ```
+  #
+  # will print, just after each spec, 2 and then 1.
   def self.after_each(&block)
     after_each = @@after_each ||= [] of ->
     after_each << block
+  end
+
+  # Instructs the spec runner to execute the given block
+  # before the entire spec suite.
+  #
+  # If multiple blocks are registered they run in the order
+  # that they are given.
+  #
+  # For example:
+  #
+  # ```
+  # Spec.before_suite { puts 1 }
+  # Spec.before_suite { puts 2 }
+  # ```
+  #
+  # will print, just before the spec suite starts, 1 and then 2.
+  def self.before_suite(&block)
+    before_suite = @@before_suite ||= [] of ->
+    before_suite << block
+  end
+
+  # Instructs the spec runner to execute the given block
+  # after the entire spec suite.
+  #
+  # If multiple blocks are registered they run in the reversed
+  # order that they are given.
+  #
+  # For example:
+  #
+  # ```
+  # Spec.after_suite { puts 1 }
+  # Spec.after_suite { puts 2 }
+  # ```
+  #
+  # will print, just after the spec suite ends, 2 and then 1.
+  def self.after_suite(&block)
+    after_suite = @@after_suite ||= [] of ->
+    after_suite << block
   end
 
   # :nodoc:
@@ -169,16 +212,55 @@ module Spec
 
   # :nodoc:
   def self.run_after_each_hooks
-    @@after_each.try &.each &.call
+    @@after_each.try &.reverse_each &.call
+  end
+
+  # :nodoc:
+  def self.run_before_suite_hooks
+    @@before_suite.try &.each &.call
+  end
+
+  # :nodoc:
+  def self.run_after_suite_hooks
+    @@after_suite.try &.reverse_each &.call
   end
 
   # :nodoc:
   def self.run
     start_time = Time.monotonic
+
     at_exit do
+      run_filters
+      run_before_suite_hooks
+      root_context.run
+      run_after_suite_hooks
+    ensure
       elapsed_time = Time.monotonic - start_time
-      Spec::RootContext.finish(elapsed_time, @@aborted)
-      exit 1 unless Spec::RootContext.succeeded && !@@aborted
+      root_context.finish(elapsed_time, @@aborted)
+      exit 1 unless root_context.succeeded && !@@aborted
+    end
+  end
+
+  # :nodoc:
+  def self.run_filters
+    if pattern = @@pattern
+      root_context.filter_by_pattern(pattern)
+    end
+
+    if line = @@line
+      root_context.filter_by_line(line)
+    end
+
+    if locations = @@locations
+      root_context.filter_by_locations(locations)
+    end
+
+    if split_filter = @@split_filter
+      root_context.filter_by_split(split_filter)
+    end
+
+    if focus = @@focus
+      root_context.filter_by_focus
     end
   end
 end

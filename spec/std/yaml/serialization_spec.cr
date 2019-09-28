@@ -55,10 +55,12 @@ describe "YAML serialization" do
       String.from_yaml("hello").should eq("hello")
     end
 
-    it "raises on reserved string" do
-      expect_raises(YAML::ParseException) do
-        String.from_yaml(%(1.2))
-      end
+    it "does String#from_yaml (empty string)" do
+      String.from_yaml("").should eq("")
+    end
+
+    it "can parse string that looks like a number" do
+      String.from_yaml(%(1.2)).should eq ("1.2")
     end
 
     it "does Float32#from_yaml" do
@@ -136,6 +138,18 @@ describe "YAML serialization" do
       tuple.should be_a(NamedTuple(x: Int32, y: String))
     end
 
+    it "does for named tuple with nilable fields (#8089)" do
+      tuple = NamedTuple(x: Int32?, y: String).from_yaml(%({"y": "hello"}))
+      tuple.should eq({x: nil, y: "hello"})
+      tuple.should be_a(NamedTuple(x: Int32?, y: String))
+    end
+
+    it "does for named tuple with nilable fields and null (#8089)" do
+      tuple = NamedTuple(x: Int32?, y: String).from_yaml(%({"y": "hello", "x": null}))
+      tuple.should eq({x: nil, y: "hello"})
+      tuple.should be_a(NamedTuple(x: Int32?, y: String))
+    end
+
     it "does for BigInt" do
       big = BigInt.from_yaml("123456789123456789123456789123456789123456789")
       big.should be_a(BigInt)
@@ -177,8 +191,8 @@ describe "YAML serialization" do
       value.should eq(Time.utc(2014, 1, 2))
     end
 
-    it "deserializes union" do
-      Array(Int32 | String).from_yaml(%([1, "hello"])).should eq([1, "hello"])
+    it "deserializes union with nil, string and int (#7936)" do
+      Array(Int32 | String | Nil).from_yaml(%([1, "hello", null])).should eq([1, "hello", nil])
     end
 
     it "deserializes time" do
@@ -242,6 +256,10 @@ describe "YAML serialization" do
       Nil.from_yaml(nil.to_yaml).should eq(nil)
     end
 
+    it "does for Nil (empty string)" do
+      Nil.from_yaml("").should eq(nil)
+    end
+
     it "does for Bool" do
       Bool.from_yaml(true.to_yaml).should eq(true)
       Bool.from_yaml(false.to_yaml).should eq(false)
@@ -269,6 +287,10 @@ describe "YAML serialization" do
 
     it "does for String with slash" do
       String.from_yaml("hel\\lo".to_yaml).should eq("hel\\lo")
+    end
+
+    it "does for String with unicode characters (#8131)" do
+      "你好".to_yaml.should contain("你好")
     end
 
     it "quotes string if reserved" do

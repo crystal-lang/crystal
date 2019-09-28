@@ -3,6 +3,8 @@ require "./sys/types"
 lib LibC
   type DIR = Void
 
+  DT_DIR = 4
+
   struct Dirent
     d_fileno : InoT
     d_off : OffT

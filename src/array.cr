@@ -47,6 +47,10 @@ class Array(T)
   include Indexable(T)
   include Comparable(Array)
 
+  # Size of an Array that we consider small to do linear scans
+  # or other optimizations instead of using a lookup Hash.
+  private SMALL_ARRAY_SIZE = 16
+
   # Returns the number of elements in the array.
   #
   # ```
@@ -204,6 +208,16 @@ class Array(T)
   def &(other : Array(U)) forall U
     return Array(T).new if self.empty? || other.empty?
 
+    # Heuristic: for small arrays we do a linear scan, which is usually
+    # faster than creating an intermediate Hash.
+    if self.size + other.size <= SMALL_ARRAY_SIZE * 2
+      ary = Array(T).new
+      each do |elem|
+        ary << elem if !ary.includes?(elem) && other.includes?(elem)
+      end
+      return ary
+    end
+
     hash = other.to_lookup_hash
     hash_size = hash.size
     Array(T).build(Math.min(size, other.size)) do |buffer|
@@ -230,6 +244,19 @@ class Array(T)
   #
   # See also: `#uniq`.
   def |(other : Array(U)) forall U
+    # Heurisitic: if the combined size is small we just do a linear scan
+    # instead of using a Hash for lookup.
+    if size + other.size <= SMALL_ARRAY_SIZE
+      ary = Array(T | U).new
+      each do |elem|
+        ary << elem unless ary.includes?(elem)
+      end
+      other.each do |elem|
+        ary << elem unless ary.includes?(elem)
+      end
+      return ary
+    end
+
     Array(T | U).build(size + other.size) do |buffer|
       hash = Hash(T, Bool).new
       i = 0
@@ -274,6 +301,16 @@ class Array(T)
   # [1, 2, 3] - [2, 1] # => [3]
   # ```
   def -(other : Array(U)) forall U
+    # Heurisitic: if any of the arrays is small we just do a linear scan
+    # instead of using a Hash for lookup.
+    if size <= SMALL_ARRAY_SIZE || other.size <= SMALL_ARRAY_SIZE
+      ary = Array(T).new
+      each do |elem|
+        ary << elem unless other.includes?(elem)
+      end
+      return ary
+    end
+
     ary = Array(T).new(Math.max(size - other.size, 0))
     hash = other.to_lookup_hash
     each do |obj|
@@ -288,11 +325,31 @@ class Array(T)
   # ["a", "b", "c"] * 2 # => [ "a", "b", "c", "a", "b", "c" ]
   # ```
   def *(times : Int)
-    ary = Array(T).new(size * times)
-    times.times do
-      ary.concat(self)
+    if times == 0 || empty?
+      return Array(T).new
     end
-    ary
+
+    if times == 1
+      return dup
+    end
+
+    if size == 1
+      return Array(T).new(times, first)
+    end
+
+    new_size = size * times
+    Array(T).build(new_size) do |buffer|
+      buffer.copy_from(to_unsafe, size)
+      n = size
+
+      while n <= new_size // 2
+        (buffer + n).copy_from(buffer, n)
+        n *= 2
+      end
+
+      (buffer + n).copy_from(buffer, new_size - n)
+      new_size
+    end
   end
 
   # Append. Alias for `push`.
@@ -978,7 +1035,7 @@ class Array(T)
     match = nil
     while i1 < @size
       e = @buffer[i1]
-      if yield e
+      if yield e, i1
         match = e
       else
         if i1 != i2
@@ -1661,7 +1718,7 @@ class Array(T)
   # a # => [1, 2, 3]
   # ```
   def sort! : Array(T)
-    Array.intro_sort!(@buffer, @size)
+    Slice.new(to_unsafe, size).sort!
     self
   end
 
@@ -1683,7 +1740,7 @@ class Array(T)
       {% raise "expected block to return Int32 or Nil, not #{U}" %}
     {% end %}
 
-    Array.intro_sort!(@buffer, @size, block)
+    Slice.new(to_unsafe, size).sort!(&block)
     self
   end
 
@@ -1806,7 +1863,22 @@ class Array(T)
   # a      # => [ "a", "a", "b", "b", "c" ]
   # ```
   def uniq
-    uniq &.itself
+    if size <= 1
+      return dup
+    end
+
+    # Heuristic: for a small array it's faster to do a linear scan
+    # than creating a Hash to find out duplicates.
+    if size <= SMALL_ARRAY_SIZE
+      ary = Array(T).new
+      each do |elem|
+        ary << elem unless ary.includes?(elem)
+      end
+      return ary
+    end
+
+    # Convert the Array into a Hash and then ask for its values
+    to_lookup_hash.values
   end
 
   # Returns a new `Array` by removing duplicate values in `self`, using the block's
@@ -1834,6 +1906,20 @@ class Array(T)
   # a       # => ["a", "b", "c"]
   # ```
   def uniq!
+    if size <= 1
+      return self
+    end
+
+    # Heuristic: for small arrays we do a linear scan, which is usually
+    # faster than creating an intermediate Hash.
+    if size <= SMALL_ARRAY_SIZE
+      # We simply delete elements we've seen before
+      internal_delete do |elem, index|
+        (0...index).any? { |subindex| elem == to_unsafe[subindex] }
+      end
+      return self
+    end
+
     uniq! &.itself
   end
 
@@ -1923,214 +2009,6 @@ class Array(T)
     else
       @buffer = Pointer(T).malloc(@capacity)
     end
-  end
-
-  protected def self.intro_sort!(a, n)
-    return if n < 2
-    quick_sort_for_intro_sort!(a, n, Math.log2(n).to_i * 2)
-    insertion_sort!(a, n)
-  end
-
-  protected def self.quick_sort_for_intro_sort!(a, n, d)
-    while n > 16
-      if d == 0
-        heap_sort!(a, n)
-        return
-      end
-      d -= 1
-      center_median!(a, n)
-      c = partition_for_quick_sort!(a, n)
-      quick_sort_for_intro_sort!(c, n - (c - a), d)
-      n = c - a
-    end
-  end
-
-  protected def self.heap_sort!(a, n)
-    (n // 2).downto 0 do |p|
-      heapify!(a, p, n)
-    end
-    while n > 1
-      n -= 1
-      a.value, a[n] = a[n], a.value
-      heapify!(a, 0, n)
-    end
-  end
-
-  protected def self.heapify!(a, p, n)
-    v, c = a[p], p
-    while c < (n - 1) // 2
-      c = 2 * (c + 1)
-      c -= 1 if cmp(a[c], a[c - 1]) < 0
-      break unless cmp(v, a[c]) <= 0
-      a[p] = a[c]
-      p = c
-    end
-    if n & 1 == 0 && c == n // 2 - 1
-      c = 2 * c + 1
-      if cmp(v, a[c]) < 0
-        a[p] = a[c]
-        p = c
-      end
-    end
-    a[p] = v
-  end
-
-  protected def self.center_median!(a, n)
-    b, c = a + n // 2, a + n - 1
-    if cmp(a.value, b.value) <= 0
-      if cmp(b.value, c.value) <= 0
-        return
-      elsif cmp(a.value, c.value) <= 0
-        b.value, c.value = c.value, b.value
-      else
-        a.value, b.value, c.value = c.value, a.value, b.value
-      end
-    elsif cmp(a.value, c.value) <= 0
-      a.value, b.value = b.value, a.value
-    elsif cmp(b.value, c.value) <= 0
-      a.value, b.value, c.value = b.value, c.value, a.value
-    else
-      a.value, c.value = c.value, a.value
-    end
-  end
-
-  protected def self.partition_for_quick_sort!(a, n)
-    v, l, r = a[n // 2], a + 1, a + n - 1
-    loop do
-      while cmp(l.value, v) < 0
-        l += 1
-      end
-      r -= 1
-      while cmp(v, r.value) < 0
-        r -= 1
-      end
-      return l unless l < r
-      l.value, r.value = r.value, l.value
-      l += 1
-    end
-  end
-
-  protected def self.insertion_sort!(a, n)
-    (1...n).each do |i|
-      l = a + i
-      v = l.value
-      p = l - 1
-      while l > a && cmp(v, p.value) < 0
-        l.value = p.value
-        l, p = p, p - 1
-      end
-      l.value = v
-    end
-  end
-
-  protected def self.intro_sort!(a, n, comp)
-    return if n < 2
-    quick_sort_for_intro_sort!(a, n, Math.log2(n).to_i * 2, comp)
-    insertion_sort!(a, n, comp)
-  end
-
-  protected def self.quick_sort_for_intro_sort!(a, n, d, comp)
-    while n > 16
-      if d == 0
-        heap_sort!(a, n, comp)
-        return
-      end
-      d -= 1
-      center_median!(a, n, comp)
-      c = partition_for_quick_sort!(a, n, comp)
-      quick_sort_for_intro_sort!(c, n - (c - a), d, comp)
-      n = c - a
-    end
-  end
-
-  protected def self.heap_sort!(a, n, comp)
-    (n // 2).downto 0 do |p|
-      heapify!(a, p, n, comp)
-    end
-    while n > 1
-      n -= 1
-      a.value, a[n] = a[n], a.value
-      heapify!(a, 0, n, comp)
-    end
-  end
-
-  protected def self.heapify!(a, p, n, comp)
-    v, c = a[p], p
-    while c < (n - 1) // 2
-      c = 2 * (c + 1)
-      c -= 1 if cmp(a[c], a[c - 1], comp) < 0
-      break unless cmp(v, a[c], comp) <= 0
-      a[p] = a[c]
-      p = c
-    end
-    if n & 1 == 0 && c == n // 2 - 1
-      c = 2 * c + 1
-      if cmp(v, a[c], comp) < 0
-        a[p] = a[c]
-        p = c
-      end
-    end
-    a[p] = v
-  end
-
-  protected def self.center_median!(a, n, comp)
-    b, c = a + n // 2, a + n - 1
-    if cmp(a.value, b.value, comp) <= 0
-      if cmp(b.value, c.value, comp) <= 0
-        return
-      elsif cmp(a.value, c.value, comp) <= 0
-        b.value, c.value = c.value, b.value
-      else
-        a.value, b.value, c.value = c.value, a.value, b.value
-      end
-    elsif cmp(a.value, c.value, comp) <= 0
-      a.value, b.value = b.value, a.value
-    elsif cmp(b.value, c.value, comp) <= 0
-      a.value, b.value, c.value = b.value, c.value, a.value
-    else
-      a.value, c.value = c.value, a.value
-    end
-  end
-
-  protected def self.partition_for_quick_sort!(a, n, comp)
-    v, l, r = a[n // 2], a + 1, a + n - 1
-    loop do
-      while l < a + n && cmp(l.value, v, comp) < 0
-        l += 1
-      end
-      r -= 1
-      while r >= a && cmp(v, r.value, comp) < 0
-        r -= 1
-      end
-      return l unless l < r
-      l.value, r.value = r.value, l.value
-      l += 1
-    end
-  end
-
-  protected def self.insertion_sort!(a, n, comp)
-    (1...n).each do |i|
-      l = a + i
-      v = l.value
-      p = l - 1
-      while l > a && cmp(v, p.value, comp) < 0
-        l.value = p.value
-        l, p = p, p - 1
-      end
-      l.value = v
-    end
-  end
-
-  protected def self.cmp(v1, v2)
-    v = v1 <=> v2
-    raise ArgumentError.new("Comparison of #{v1} and #{v2} failed") if v.nil?
-    v
-  end
-
-  protected def self.cmp(v1, v2, block)
-    v = block.call(v1, v2)
-    raise ArgumentError.new("Comparison of #{v1} and #{v2} failed") if v.nil?
-    v
   end
 
   protected def to_lookup_hash

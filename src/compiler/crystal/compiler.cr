@@ -74,7 +74,7 @@ module Crystal
     property? no_codegen = false
 
     # Maximum number of LLVM modules that are compiled in parallel
-    property n_threads = 8
+    property n_threads : Int32 = {% if flag?(:preview_mt) %} 1 {% else %} 8 {% end %}
 
     # Default prelude file to use. This ends up adding a
     # `require "prelude"` (or whatever name is set here) to
@@ -104,7 +104,7 @@ module Crystal
     property? wants_doc = false
 
     # Which kind of warnings wants to be detected.
-    property warnings : Warnings = Warnings::None
+    property warnings : Warnings = Warnings::All
 
     # Paths to ignore for warnings detection.
     property warnings_exclude : Array(String) = [] of String
@@ -424,54 +424,58 @@ module Crystal
         return all_reused
       end
 
-      jobs_count = 0
-      wait_channel = Channel(Array(String)).new(@n_threads)
+      {% if flag?(:preview_mt) %}
+        raise "Cannot fork compiler in multithread mode"
+      {% else %}
+        jobs_count = 0
+        wait_channel = Channel(Array(String)).new(@n_threads)
 
-      units.each_slice(Math.max(units.size // @n_threads, 1)) do |slice|
-        jobs_count += 1
-        spawn do
-          # For stats output we want to count how many previous
-          # .o files were reused, mainly to detect performance regressions.
-          # Because we fork, we must communicate using a pipe.
-          reused = [] of String
-          if wants_stats_or_progress
-            pr, pw = IO.pipe
-            spawn do
-              pr.each_line do |line|
-                unit = JSON.parse(line)
-                reused << unit["name"].as_s if unit["reused"].as_bool
-                @progress_tracker.stage_progress += 1
+        units.each_slice(Math.max(units.size // @n_threads, 1)) do |slice|
+          jobs_count += 1
+          spawn do
+            # For stats output we want to count how many previous
+            # .o files were reused, mainly to detect performance regressions.
+            # Because we fork, we must communicate using a pipe.
+            reused = [] of String
+            if wants_stats_or_progress
+              pr, pw = IO.pipe
+              spawn do
+                pr.each_line do |line|
+                  unit = JSON.parse(line)
+                  reused << unit["name"].as_s if unit["reused"].as_bool
+                  @progress_tracker.stage_progress += 1
+                end
               end
             end
-          end
 
-          codegen_process = fork do
-            pipe_w = pw
-            slice.each do |unit|
-              unit.compile
-              if pipe_w
-                unit_json = {name: unit.name, reused: unit.reused_previous_compilation?}.to_json
-                pipe_w.puts unit_json
+            codegen_process = fork do
+              pipe_w = pw
+              slice.each do |unit|
+                unit.compile
+                if pipe_w
+                  unit_json = {name: unit.name, reused: unit.reused_previous_compilation?}.to_json
+                  pipe_w.puts unit_json
+                end
               end
             end
-          end
-          codegen_process.wait
+            codegen_process.wait
 
-          if pipe_w = pw
-            pipe_w.close
-            Fiber.yield
-          end
+            if pipe_w = pw
+              pipe_w.close
+              Fiber.yield
+            end
 
-          wait_channel.send reused
+            wait_channel.send reused
+          end
         end
-      end
 
-      jobs_count.times do
-        reused = wait_channel.receive
-        all_reused.concat(reused)
-      end
+        jobs_count.times do
+          reused = wait_channel.receive
+          all_reused.concat(reused)
+        end
 
-      all_reused
+        all_reused
+      {% end %}
     end
 
     private def print_macro_run_stats(program)

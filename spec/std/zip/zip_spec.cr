@@ -94,6 +94,31 @@ describe Zip do
     end
   end
 
+  it "writes entry uncompressed and reads with Zip::File" do
+    io = IO::Memory.new
+
+    text = "contents of foo"
+    crc32 = CRC32.checksum(text)
+
+    Zip::Writer.open(io) do |zip|
+      entry = Zip::Writer::Entry.new("foo.txt")
+      entry.compression_method = Zip::CompressionMethod::STORED
+      entry.crc32 = crc32
+      entry.compressed_size = text.bytesize.to_u32
+      entry.uncompressed_size = text.bytesize.to_u32
+      zip.add entry, &.print(text)
+    end
+
+    io.rewind
+
+    Zip::File.open(io) do |zip|
+      zip.entries.size.should eq(1)
+      entry = zip.entries.first
+      entry.filename.should eq("foo.txt")
+      entry.open(&.gets_to_end).should eq(text)
+    end
+  end
+
   it "adds a directory" do
     io = IO::Memory.new
 

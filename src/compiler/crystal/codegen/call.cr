@@ -240,7 +240,7 @@ class Crystal::CodeGenVisitor
       gep_call_arg = bit_cast gep(call_arg, 0, 0), llvm_context.void_pointer
       size = @abi.size(abi_arg_type.type)
       align = @abi.align(abi_arg_type.type)
-      memcpy(final_value_casted, gep_call_arg, int32(size), int32(align), int1(0))
+      memcpy(final_value_casted, gep_call_arg, int32(size), align, int1(0))
       call_arg = load final_value
     else
       # Keep same call arg
@@ -341,6 +341,7 @@ class Crystal::CodeGenVisitor
     call.scope = with_scope || node.scope
     call.with_scope = with_scope
     call.uses_with_scope = node.uses_with_scope?
+    call.name_location = node.name_location
 
     is_super = node.name == "super"
 
@@ -500,7 +501,7 @@ class Crystal::CodeGenVisitor
             final_value_casted = bit_cast final_value, llvm_context.void_pointer
             size = @abi.size(abi_return.type)
             align = @abi.align(abi_return.type)
-            memcpy(final_value_casted, cast2, int32(size), int32(align), int1(0))
+            memcpy(final_value_casted, cast2, int32(size), align, int1(0))
             @last = final_value
           end
         when LLVM::ABI::ArgKind::Indirect

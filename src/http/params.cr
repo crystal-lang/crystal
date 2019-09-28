@@ -85,9 +85,9 @@ module HTTP
     # ```
     # require "http/params"
     #
-    # HTTP::Params.encode({"foo" => "bar", "baz" => "qux"}) # => "foo=bar&baz=qux"
+    # HTTP::Params.encode({"foo" => "bar", "baz" => ["quux", "quuz"]}) # => "foo=bar&baz=quux&baz=quuz"
     # ```
-    def self.encode(hash : Hash(String, String))
+    def self.encode(hash : Hash(String, String | Array(String)))
       build do |builder|
         hash.each do |key, value|
           builder.add key, value
@@ -100,7 +100,7 @@ module HTTP
     # ```
     # require "http/params"
     #
-    # HTTP::Params.encode({foo: "bar", baz: "qux"}) # => "foo=bar&baz=qux"
+    # HTTP::Params.encode({foo: "bar", baz: ["quux", "quuz"]}) # => "foo=bar&baz=quux&baz=quuz"
     # ```
     def self.encode(named_tuple : NamedTuple)
       build do |builder|
@@ -114,7 +114,7 @@ module HTTP
     #
     # The yielded object has an `add` method that accepts two arguments,
     # a key (`String`) and a value (`String` or `Nil`).
-    # Keys and values are escaped using `URI#escape`.
+    # Keys and values are escaped using `URI.encode_www_form`.
     #
     # ```
     # require "http/params"
@@ -313,7 +313,6 @@ module HTTP
     # params = HTTP::Params.parse("item=keychain&item=keynote&email=john@example.org")
     # params.to_s # => "item=keychain&item=keynote&email=john%40example.org"
     # ```
-    # TODO: `to_s` should escape @ to %40 ?
     def to_s(io : IO) : Nil
       builder = Builder.new(io)
       each do |name, value|
@@ -322,13 +321,8 @@ module HTTP
     end
 
     # :nodoc:
-    def self.encode_www_form_component(string : String, io : IO)
-      URI.escape(string, io, true)
-    end
-
-    # :nodoc:
     def self.decode_one_www_form_component(query, bytesize, i, byte, char, buffer)
-      URI.unescape_one query, bytesize, i, byte, char, buffer, true
+      URI.decode_one query, bytesize, i, byte, char, buffer, true
     end
 
     # HTTP params builder.
@@ -344,12 +338,18 @@ module HTTP
       end
 
       # Adds a key-value pair to the params being built.
-      def add(key, value)
+      def add(key, value : String?)
         @io << '&' unless @first
         @first = false
-        URI.escape key, @io
+        URI.encode_www_form key, @io
         @io << '='
-        Params.encode_www_form_component value, @io if value
+        URI.encode_www_form value, @io if value
+        self
+      end
+
+      # Adds all of the given *values* as key-value pairs to the params being built.
+      def add(key, values : Array)
+        values.each { |value| add(key, value) }
         self
       end
 

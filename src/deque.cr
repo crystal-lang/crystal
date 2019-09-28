@@ -11,7 +11,6 @@
 # [circular buffer](https://en.wikipedia.org/wiki/Circular_buffer).
 class Deque(T)
   include Indexable(T)
-  include Comparable(Deque)
 
   # This Deque is based on a circular buffer. It works like a normal array, but when an item is removed from the left
   # side, instead of shifting all the items, only the start position is shifted. This can lead to configurations like:
@@ -188,10 +187,14 @@ class Deque(T)
   # a             # => Deque{"a", "c"}
   # ```
   def delete(obj)
+    delete_if { |i| i == obj }
+  end
+
+  def delete_if
     found = false
     i = 0
     while i < @size
-      if self[i] == obj
+      if yield self[i]
         delete_at(i)
         found = true
       else

@@ -292,7 +292,7 @@ describe "Code gen: def" do
         x
       end
 
-      foo(2).to_i
+      foo(2).to_i!
     ").to_i.should eq(0)
   end
 

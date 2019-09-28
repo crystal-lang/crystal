@@ -28,11 +28,12 @@ describe HTTP::StaticFileHandler do
 
   it "adds Last-Modified header" do
     response = handle HTTP::Request.new("GET", "/test.txt")
-    response.headers["Last-Modified"].should eq(HTTP.format_time(File.info(datapath("static_file_handler", "test.txt")).modification_time))
+    modification_time = File.info(datapath("static_file_handler", "test.txt")).modification_time
+    HTTP.parse_time(response.headers["Last-Modified"]).should eq(modification_time.at_beginning_of_second)
   end
 
   context "with If-Modified-Since header" do
-    it "returns 304 Not Modified if file mtime is equal" do
+    it "returns 304 Not Modified for equal to Last-Modified" do
       initial_response = handle HTTP::Request.new("GET", "/test.txt")
 
       headers = HTTP::Headers.new
@@ -43,21 +44,31 @@ describe HTTP::StaticFileHandler do
 
       response.headers["Last-Modified"].should eq initial_response.headers["Last-Modified"]
       response.headers["Content-Type"]?.should be_nil
+      response.body.should eq ""
     end
 
-    it "returns 304 Not Modified if file mtime is older" do
+    it "returns 304 Not Modified for younger than Last-Modified" do
+      initial_response = handle HTTP::Request.new("GET", "/test.txt")
+      last_modified = HTTP.parse_time(initial_response.headers["Last-Modified"]).not_nil!
+
       headers = HTTP::Headers.new
-      headers["If-Modified-Since"] = HTTP.format_time(File.info(datapath("static_file_handler", "test.txt")).modification_time + 1.hour)
+      headers["If-Modified-Since"] = HTTP.format_time(last_modified + 1.hour)
       response = handle HTTP::Request.new("GET", "/test.txt", headers), ignore_body: true
 
+      response.headers["Last-Modified"].should eq initial_response.headers["Last-Modified"]
       response.status_code.should eq(304)
+      response.body.should eq ""
     end
 
-    it "serves file if file mtime is younger" do
+    it "serves content for older than Last-Modified" do
+      initial_response = handle HTTP::Request.new("GET", "/test.txt")
+      last_modified = HTTP.parse_time(initial_response.headers["Last-Modified"]).not_nil!
+
       headers = HTTP::Headers.new
-      headers["If-Modified-Since"] = HTTP.format_time(File.info(datapath("static_file_handler", "test.txt")).modification_time - 1.hour)
+      headers["If-Modified-Since"] = HTTP.format_time(last_modified - 1.hour)
       response = handle HTTP::Request.new("GET", "/test.txt", headers), ignore_body: false
 
+      response.headers["Last-Modified"].should eq initial_response.headers["Last-Modified"]
       response.status_code.should eq(200)
       response.body.should eq(File.read(datapath("static_file_handler", "test.txt")))
     end

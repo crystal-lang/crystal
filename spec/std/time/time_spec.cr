@@ -175,6 +175,10 @@ describe Time do
     end
   end
 
+  it "UNIX_EPOCH" do
+    Time::UNIX_EPOCH.should eq(Time.utc(1970, 1, 1))
+  end
+
   it ".unix" do
     seconds = 1439404155
     time = Time.unix(seconds)
@@ -363,8 +367,8 @@ describe Time do
       t2 = t.shift months: 1
       t2.should eq Time.utc(2014, 11, 30, 21, 18, 13)
 
-      t2 = t.shift months: 1
-      t2.should eq Time.utc(2014, 11, 30, 21, 18, 13)
+      t2 = t.shift months: -1
+      t2.should eq Time.utc(2014, 9, 30, 21, 18, 13)
 
       t = Time.utc 2014, 10, 31, 21, 18, 13
       t2 = t.shift months: 1

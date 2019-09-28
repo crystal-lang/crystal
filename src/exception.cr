@@ -121,7 +121,7 @@ end
 # Raised when attempting to divide an integer by 0.
 #
 # ```
-# 1 / 0 # raises DivisionByZeroError (Division by 0)
+# 1 // 0 # raises DivisionByZeroError (Division by 0)
 # ```
 class DivisionByZeroError < Exception
   def initialize(message = "Division by 0")

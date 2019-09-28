@@ -245,7 +245,7 @@ module Crystal
           exp.raise "can't interate TypeNode of type #{type}, only tuple or named tuple types"
         end
       else
-        node.exp.raise "for expression must be an array, hash or tuple literal, not #{exp.class_desc}:\n\n#{exp}"
+        node.exp.raise "`for` expression must be an array, hash, tuple, named tuple or a range literal, not #{exp.class_desc}:\n\n#{exp}"
       end
 
       false
@@ -484,6 +484,31 @@ module Crystal
       nil
     end
 
+    def resolve(node : Union)
+      union_type = @program.union_of(node.types.map do |type|
+        resolve(type).type
+      end)
+      TypeNode.new(union_type.not_nil!)
+    end
+
+    def resolve?(node : Union)
+      union_type = @program.union_of(node.types.map do |type|
+        resolved = resolve?(type)
+        return nil unless resolved
+
+        resolved.type
+      end)
+      TypeNode.new(union_type.not_nil!)
+    end
+
+    def resolve(node : ASTNode?)
+      node.raise "can't resolve #{node} (#{node.class_desc})"
+    end
+
+    def resolve?(node : ASTNode)
+      node.raise "can't resolve #{node} (#{node.class_desc})"
+    end
+
     def visit(node : Splat)
       node.exp.accept self
       @last = @last.interpret("splat", [] of ASTNode, nil, self)
@@ -508,7 +533,7 @@ module Crystal
       case node.name
       when "@type"
         target = @scope == @program.class_type ? @scope : @scope.instance_type
-        return @last = TypeNode.new(target)
+        return @last = TypeNode.new(target.devirtualize)
       when "@def"
         return @last = @def || NilLiteral.new
       end

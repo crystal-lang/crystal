@@ -1,7 +1,20 @@
 require "spec"
 require "complex"
+require "../support/number"
 
 describe "Complex" do
+  describe "as numbers" do
+    it_can_convert_between([Complex], [Complex])
+    it_can_convert_between({{BUILTIN_NUMBER_TYPES_LTE_64}}, [Complex])
+    it_can_convert_between([Complex], {{BUILTIN_NUMBER_TYPES_LTE_64}})
+    # TODO pending conversion between Int128
+
+    division_between_returns {{BUILTIN_NUMBER_TYPES}}, [Complex], Complex
+    division_between_returns [Complex], {{BUILTIN_NUMBER_TYPES}}, Complex
+
+    division_between_returns [Complex], [Complex], Complex
+  end
+
   it "i" do
     a = 4.5 + 6.7.i
     b = Complex.new(4.5, 6.7)

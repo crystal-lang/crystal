@@ -82,7 +82,7 @@ class IO::Memory < IO
 
   # See `IO#write(slice)`. Raises if this `IO::Memory` is non-writeable,
   # or if it's non-resizeable and a resize is needed.
-  def write(slice : Bytes)
+  def write(slice : Bytes) : Nil
     check_writeable
     check_open
 

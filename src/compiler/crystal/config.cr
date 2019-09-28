@@ -1,3 +1,5 @@
+require "./codegen/target"
+
 module Crystal
   module Config
     def self.path
@@ -5,7 +7,7 @@ module Crystal
     end
 
     def self.version
-      {{ read_file("#{__DIR__}/../../../VERSION").chomp }}
+      {{ read_file("#{__DIR__}/../../VERSION").chomp }}
     end
 
     def self.llvm_version

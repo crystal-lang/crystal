@@ -1,4 +1,6 @@
 require "./uri/uri_parser"
+require "./uri/encoding"
+require "./http/params"
 
 # This class represents a URI reference as defined by [RFC 3986: Uniform Resource Identifier
 # (URI): Generic Syntax](https://www.ietf.org/rfc/rfc3986.txt).
@@ -19,6 +21,53 @@ require "./uri/uri_parser"
 # uri.query  # => "id=30&limit=5"
 # uri.to_s   # => "http://foo.com/posts?id=30&limit=5#time=1305298413"
 # ```
+#
+# ## Resolution and Relativization
+#
+# *Resolution* is the process of resolving one URI against another, *base* URI.
+# The resulting URI is constructed from components of both URIs in the manner specified by
+# [RFC 3986 section 5.2](https://tools.ietf.org/html/rfc3986#section-5.2.2), taking components
+# from the base URI for those not specified in the original.
+# For hierarchical URIs, the path of the original is resolved against the path of the base
+# and then normalized. See `#resolve` for examples.
+#
+# *Relativization* is the inverse of resolution as that it procudes an URI that
+# resolves to the original when resolved against the base.
+#
+# For normalized URIs, the following is true:
+#
+# ```
+# a.relativize(a.resolve(b)) # => b
+# a.resolve(a.relativize(b)) # => b
+# ```
+#
+# This operation is often useful when constructing a document containing URIs that must
+# be made relative to the base URI of the document wherever possible.
+#
+# # URL Encoding
+#
+# This class provides a number of methods for encoding and decoding strings using
+# URL Encoding (also known as Percent Encoding) as defined in [RFC 3986](https://www.ietf.org/rfc/rfc3986.txt)
+# as well as [`x-www-form-urlencoded`](https://url.spec.whatwg.org/#urlencoded-serializing).
+#
+# Each method has two variants, one returns a string, the other writes directly
+# to an IO.
+#
+# * `.decode(string : String, *, plus_to_space : Bool = false) : String`: Decodes a URL-encoded string.
+# * `.decode(string : String, io : IO, *, plus_to_space : Bool = false) : Nil`: Decodes a URL-encoded string to an IO.
+# * `.encode(string : String, *, space_to_plus : Bool = false) : String`: URL-encodes a string.
+# * `.encode(string : String, io : IO, *, space_to_plus : Bool = false) : Nil`: URL-encodes a string to an IO.
+# * `.decode_www_form(string : String, *, plus_to_space : Bool = true) : String`: Decodes an `x-www-form-urlencoded` string component.
+# * `.decode_www_form(string : String, io : IO, *, plus_to_space : Bool = true) : Nil`: Decodes an `x-www-form-urlencoded` string component to an IO.
+# * `.encode_www_form(string : String, *, space_to_plus : Bool = true) : String`: Encodes a string as a `x-www-form-urlencoded` component.
+# * `.encode_www_form(string : String, io : IO, *, space_to_plus : Bool = true) : Nil`: Encodes a string as a `x-www-form-urlencoded` component to an IO.
+#
+# The main difference is that `.encode_www_form` encodes reserved characters
+# (see `.reserved?`), while `.encode` does not. The decode methods are
+# identical except for the handling of `+` characters.
+#
+# NOTE: `HTTP::Params` provides a higher-level API for handling `x-www-form-urlencoded`
+# serialized data.
 class URI
   class Error < Exception
   end
@@ -172,6 +221,18 @@ class URI
     !@scheme.nil? && @host.nil? && !@path.starts_with?('/')
   end
 
+  # Returns a `HTTP::Params` of the URI#query.
+  #
+  # ```
+  # require "uri"
+  #
+  # uri = URI.parse "http://foo.com?id=30&limit=5#time=1305298413"
+  # uri.query_params # => HTTP::Params(@raw_params={"id" => ["30"], "limit" => ["5"]})
+  # ```
+  def query_params : HTTP::Params
+    HTTP::Params.parse(@query || "")
+  end
+
   def to_s(io : IO) : Nil
     if scheme
       io << scheme
@@ -185,9 +246,7 @@ class URI
       io << '@'
     end
     if host = @host
-      URI.escape(host, io) do |byte|
-        URI.unreserved?(byte) || URI.reserved?(byte)
-      end
+      URI.encode(host, io)
     end
     if port = @port
       io << ':' << port
@@ -212,17 +271,235 @@ class URI
     end
   end
 
-  # Returns normalized URI.
-  def normalize : self
-    uri = dup
-    uri.normalize!
-    uri
+  # Returns a normalized copy of this URI.
+  #
+  # See `#normalize!` for details.
+  def normalize : URI
+    dup.normalize!
   end
 
-  # Destructive normalize.
-  def normalize! : Nil
-    @path = remove_dot_segments(path)
+  # Normalizes this URI instance.
+  #
+  # The following normalizations are applied to the individual components (if available):
+  #
+  # * `scheme` is lowercased.
+  # * `host` is lowercased.
+  # * `port` is removed if it is the `.default_port?` of the scheme.
+  # * `path` is resolved to a minimal, semantical equivalent representation removing
+  #    dot segments `/.` and `/..`.
+  #
+  # ```
+  # uri = URI.parse("HTTP://example.COM:80/./foo/../bar/")
+  # uri.normalize!
+  # uri # => "http://example.com/bar/"
+  # ```
+  def normalize! : URI
+    @scheme = @scheme.try &.downcase
+    @host = @host.try &.downcase
     @port = nil if default_port?
+    @path = remove_dot_segments(path)
+
+    self
+  end
+
+  # Resolves *uri* against this URI.
+  #
+  # If *uri* is `absolute?`, or if this URI is `opaque?`, then an exact copy of *uri* is returned.
+  #
+  # Otherwise the URI is resolved according to the specifications in [RFC 3986 section 5.2](https://tools.ietf.org/html/rfc3986#section-5.2.2).
+  #
+  # ```
+  # URI.parse("http://foo.com/bar/baz").resolve("../quux")         # => "http://foo.com/quux"
+  # URI.parse("http://foo.com/bar/baz").resolve("/quux")           # => "http://foo.com/quux"
+  # URI.parse("http://foo.com/bar/baz").resolve("http://quux.com") # => "http://quux.com"
+  # URI.parse("http://foo.com/bar/baz").resolve("#quux")           # => "http://foo.com/bar/baz#quux"
+  # ```
+  #
+  # This method is the inverse operation to `#relativize` (see [Resolution and Relativization](#Resolution and Relativization)).
+  def resolve(uri : URI | String) : URI
+    if uri.is_a?(URI)
+      target = uri.dup
+    else
+      target = URI.parse(uri)
+    end
+
+    if target.absolute? || opaque?
+      return target
+    end
+
+    target.scheme = scheme
+
+    unless target.host || target.user
+      target.host = host
+      target.port = port
+      target.user = user
+      target.password = password
+      if target.path.empty?
+        target.path = remove_dot_segments(path)
+        target.query ||= query
+      else
+        base = path
+        if base.empty? && target.absolute?
+          base = "/"
+        end
+        target.path = resolve_path(target.path, base: base)
+      end
+    end
+
+    target
+  end
+
+  private def resolve_path(path : String, base : String) : String
+    unless path.starts_with?('/')
+      if path.empty?
+        path = base
+      elsif !base.empty?
+        path = String.build do |io|
+          if base.ends_with?('/')
+            io << base
+          elsif pos = base.rindex('/')
+            io << base[0..pos]
+          end
+          io << path
+        end
+      end
+    end
+    remove_dot_segments(path)
+  end
+
+  # Relativizes *uri* against this URI.
+  #
+  # An exact copy of *uri* is returned if
+  # * this URI or *uri* are `opaque?`, or
+  # * the scheme and authority (`host`, `port`, `user`, `password`) components are not identical.
+  #
+  # Otherwise a new relative hierarchical URI is constructed with `query` and `fragment` components
+  # from *uri* and with a path component that describes a minimum-difference relative
+  # path from `#path` to *uri*'s path.
+  #
+  # ```
+  # URI.parse("http://foo.com/bar/baz").relativize("http://foo.com/quux")         # => "../quux"
+  # URI.parse("http://foo.com/bar/baz").relativize("http://foo.com/bar/quux")     # => "quux"
+  # URI.parse("http://foo.com/bar/baz").relativize("http://quux.com")             # => "http://quux.com"
+  # URI.parse("http://foo.com/bar/baz").relativize("http://foo.com/bar/baz#quux") # => "#quux"
+  # ```
+  #
+  # This method is the inverse operation to `#resolve` (see [Resolution and Relativization](#Resolution and Relativization)).
+  def relativize(uri : URI | String) : URI
+    if uri.is_a?(URI)
+      uri = uri.dup
+    else
+      uri = URI.parse(uri)
+    end
+
+    if uri.opaque? || opaque? || uri.scheme.try &.downcase != @scheme.try &.downcase ||
+       uri.host.try &.downcase != @host.try &.downcase || uri.port != @port || uri.user != @user ||
+       uri.password != @password
+      return uri
+    end
+
+    query = uri.query
+    query = nil if query == @query
+    fragment = uri.fragment
+
+    path = relativize_path(@path, uri.path)
+
+    URI.new(path: path, query: query, fragment: uri.fragment)
+  end
+
+  private def relativize_path(base : String, dst : String) : String
+    return "" if base == dst
+
+    if base =~ %r{(?:\A|/)\.\.?(?:/|\z)} && dst.starts_with?('/')
+      # dst has abnormal absolute path,
+      # like "/./", "/../", "/x/../", ...
+      return dst
+    end
+
+    base_path = base.split('/', remove_empty: true)
+    dst_path = dst.split('/', remove_empty: true)
+
+    dst_path << "" if dst.ends_with?('/')
+    base_path.pop? unless base.ends_with?('/')
+
+    # discard same parts
+    while !dst_path.empty? && !base_path.empty?
+      dst = dst_path.first
+      base = base_path.first
+      if dst == base
+        base_path.shift
+        dst_path.shift
+      elsif dst == "."
+        dst_path.shift
+      elsif base == "."
+        base_path.shift
+      else
+        break
+      end
+    end
+
+    tmp = dst_path.join('/')
+    # calculate
+    if base_path.empty?
+      if dst_path.empty?
+        "./"
+      elsif dst_path.first.includes?(':') # (see RFC2396 Section 5)
+        String.build do |io|
+          io << "./"
+          dst_path.join('/', io)
+        end
+      else
+        string = dst_path.join('/')
+        if string == ""
+          "./"
+        else
+          string
+        end
+      end
+    else
+      String.build do |io|
+        base_path.size.times { io << "../" }
+        dst_path.join('/', io)
+      end
+    end
+  end
+
+  # Parses the given *raw_url* into an URI. The *raw_url* may be relative or absolute.
+  #
+  # ```
+  # require "uri"
+  #
+  # uri = URI.parse("http://crystal-lang.org") # => #<URI:0x1068a7e40 @scheme="http", @host="crystal-lang.org", ... >
+  # uri.scheme                                 # => "http"
+  # uri.host                                   # => "crystal-lang.org"
+  # ```
+  def self.parse(raw_url : String) : URI
+    URI::Parser.new(raw_url).run.uri
+  end
+
+  # Returns the user-information component containing
+  # the provided username and password.
+  #
+  # ```
+  # require "uri"
+  #
+  # uri = URI.parse "http://admin:password@foo.com"
+  # uri.userinfo # => "admin:password"
+  # ```
+  #
+  # The return value is URL encoded (see `#encode_www_form`).
+  def userinfo
+    if user = @user
+      String.build { |io| userinfo(user, io) }
+    end
+  end
+
+  private def userinfo(user, io)
+    URI.encode_www_form(user, io)
+    if password = @password
+      io << ':'
+      URI.encode_www_form(password, io)
+    end
   end
 
   # Parses `raw_url` into an URI. The `raw_url` may be relative or absolute.
@@ -236,192 +513,6 @@ class URI
   # ```
   def self.parse(raw_url : String) : URI
     URI::Parser.new(raw_url).run.uri
-  end
-
-  # URL-decode a `String`.
-  #
-  # If *plus_to_space* is `true`, it replace plus character (`0x2B`) to ' '.
-  # e.g. `application/x-www-form-urlencoded` wants this replace.
-  #
-  # ```
-  # require "uri"
-  #
-  # URI.unescape("%27Stop%21%27%20said%20Fred")                  # => "'Stop!' said Fred"
-  # URI.unescape("%27Stop%21%27+said+Fred", plus_to_space: true) # => "'Stop!' said Fred"
-  # ```
-  def self.unescape(string : String, plus_to_space = false) : String
-    String.build { |io| unescape(string, io, plus_to_space) }
-  end
-
-  # URL-decode a `String`.
-  #
-  # This method requires block, the block is called with each bytes
-  # whose is less than `0x80`. The bytes that block returns `true`
-  # are not unescaped, other characters are unescaped.
-  def self.unescape(string : String, plus_to_space = false, &block) : String
-    String.build { |io| unescape(string, io, plus_to_space) { |byte| yield byte } }
-  end
-
-  # URL-decode a string and write the result to an `IO`.
-  def self.unescape(string : String, io : IO, plus_to_space = false)
-    self.unescape(string, io, plus_to_space) { false }
-  end
-
-  # URL-decode a `String` and write the result to an `IO`.
-  #
-  # This method requires block.
-  def self.unescape(string : String, io : IO, plus_to_space = false, &block)
-    i = 0
-    bytesize = string.bytesize
-    while i < bytesize
-      byte = string.unsafe_byte_at(i)
-      char = byte.unsafe_chr
-      i = unescape_one(string, bytesize, i, byte, char, io, plus_to_space) { |byte| yield byte }
-    end
-    io
-  end
-
-  # URL-encode a `String`.
-  #
-  # If *space_to_plus* is `true`, it replace space character (0x20) to `'+'` and `'+'` is
-  # encoded to `'%2B'`. e.g. `application/x-www-form-urlencoded` want this replace.
-  #
-  # ```
-  # require "uri"
-  #
-  # URI.escape("'Stop!' said Fred")                      # => "%27Stop%21%27%20said%20Fred"
-  # URI.escape("'Stop!' said Fred", space_to_plus: true) # => "%27Stop%21%27+said+Fred"
-  # ```
-  def self.escape(string : String, space_to_plus = false) : String
-    String.build { |io| escape(string, io, space_to_plus) }
-  end
-
-  # URL-encode a `String`.
-  #
-  # This method requires block, the block is called with each characters
-  # whose code is less than `0x80`. The characters that block returns
-  # `true` are not escaped, other characters are escaped.
-  #
-  # ```
-  # require "uri"
-  #
-  # # Escape URI path
-  # URI.escape("/foo/file?(1).txt") do |byte|
-  #   URI.unreserved?(byte) || byte.chr == '/'
-  # end
-  # # => "/foo/file%3F%281%29.txt"
-  # ```
-  def self.escape(string : String, space_to_plus = false, &block) : String
-    String.build { |io| escape(string, io, space_to_plus) { |byte| yield byte } }
-  end
-
-  # URL-encode a `String` and write the result to an `IO`.
-  def self.escape(string : String, io : IO, space_to_plus = false)
-    self.escape(string, io, space_to_plus) { |byte| URI.unreserved? byte }
-  end
-
-  # URL-encode a `String` and write the result to an `IO`.
-  #
-  # This method requires block.
-  def self.escape(string : String, io : IO, space_to_plus = false, &block)
-    string.each_byte do |byte|
-      char = byte.unsafe_chr
-      if char == ' ' && space_to_plus
-        io.write_byte '+'.ord.to_u8
-      elsif char.ascii? && yield(byte) && (!space_to_plus || char != '+')
-        io.write_byte byte
-      else
-        io.write_byte '%'.ord.to_u8
-        io.write_byte '0'.ord.to_u8 if byte < 16
-        byte.to_s(16, io, upcase: true)
-      end
-    end
-    io
-  end
-
-  # Returns whether given byte is reserved character defined in
-  # [RFC 3986](https://tools.ietf.org/html/rfc3986).
-  #
-  # Reserved characters are ':', '/', '?', '#', '[', ']', '@', '!',
-  # '$', '&', "'", '(', ')', '*', '+', ',', ';' and '='.
-  def self.reserved?(byte) : Bool
-    char = byte.unsafe_chr
-    '&' <= char <= ',' ||
-      {'!', '#', '$', '/', ':', ';', '?', '@', '[', ']', '='}.includes?(char)
-  end
-
-  # Returns whether given byte is unreserved character defined in
-  # [RFC 3986](https://tools.ietf.org/html/rfc3986).
-  #
-  # Unreserved characters are alphabet, digit, '_', '.', '-', '~'.
-  def self.unreserved?(byte) : Bool
-    char = byte.unsafe_chr
-    char.ascii_alphanumeric? ||
-      {'_', '.', '-', '~'}.includes?(char)
-  end
-
-  # Returns the user-information component containing
-  # the provided username and password.
-  #
-  # ```
-  # require "uri"
-  #
-  # uri = URI.parse "http://admin:password@foo.com"
-  # uri.userinfo # => "admin:password"
-  # ```
-  def userinfo
-    if user = @user
-      String.build { |io| userinfo(user, io) }
-    end
-  end
-
-  # :nodoc:
-  def self.unescape_one(string, bytesize, i, byte, char, io, plus_to_space = false)
-    self.unescape_one(string, bytesize, i, byte, char, io, plus_to_space) { false }
-  end
-
-  # :nodoc:
-  # Unescapes one character. Private API
-  def self.unescape_one(string, bytesize, i, byte, char, io, plus_to_space = false)
-    if plus_to_space && char == '+'
-      io.write_byte ' '.ord.to_u8
-      i += 1
-      return i
-    end
-
-    if char == '%' && i < bytesize - 2
-      i += 1
-      first = string.unsafe_byte_at(i)
-      first_num = first.unsafe_chr.to_i? 16
-      unless first_num
-        io.write_byte byte
-        return i
-      end
-
-      i += 1
-      second = string.unsafe_byte_at(i)
-      second_num = second.unsafe_chr.to_i? 16
-      unless second_num
-        io.write_byte byte
-        io.write_byte first
-        return i
-      end
-
-      encoded = (first_num * 16 + second_num).to_u8
-      i += 1
-      if encoded < 0x80 && yield encoded
-        io.write_byte byte
-        io.write_byte first
-        io.write_byte second
-        return i
-      end
-      io.write_byte encoded
-      return i
-    end
-
-    io.write_byte byte
-    i += 1
-    i
   end
 
   # [RFC 3986 6.2.2.3](https://tools.ietf.org/html/rfc3986#section-5.2.4)
@@ -468,16 +559,12 @@ class URI
         path = path[segment_end_idx..-1]
       end
     end
+    first = result.first?
+    if first && !first.starts_with?('/') && first.includes?(':')
+      result.unshift "./"
+    end
 
     result.join
-  end
-
-  private def userinfo(user, io)
-    URI.escape(user, io)
-    if password = @password
-      io << ':'
-      URI.escape(password, io)
-    end
   end
 
   # A map of schemes and their respective default ports, seeded

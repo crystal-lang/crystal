@@ -16,7 +16,7 @@ private class PartialReaderIO < IO
     read_size
   end
 
-  def write(slice : Bytes)
+  def write(slice : Bytes) : NoReturn
     raise "write"
   end
 end

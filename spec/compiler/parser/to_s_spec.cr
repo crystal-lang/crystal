@@ -117,6 +117,7 @@ describe "ASTNode#to_s" do
   expect_to_s %(lib Foo\n  struct Foo\n    a : Void\n    b : Void\n  end\nend)
   expect_to_s %(lib Foo\n  union Foo\n    a : Int\n    b : Int32\n  end\nend)
   expect_to_s %(lib Foo\n  FOO = 0\nend)
+  expect_to_s %(lib LibC\n  fun getch = "get.char"\nend)
   expect_to_s %(enum Foo\n  A = 0\n  B\nend)
   expect_to_s %(alias Foo = Void)
   expect_to_s %(alias Foo::Bar = Void)
@@ -160,4 +161,7 @@ describe "ASTNode#to_s" do
   expect_to_s %(asm("nop" ::: "e" : "volatile"))
   expect_to_s %[(1..)]
   expect_to_s %[..3]
+  expect_to_s "offsetof(Foo, @bar)"
+  expect_to_s "def foo(**options, &block)\nend"
+  expect_to_s "macro foo\n  123\nend"
 end

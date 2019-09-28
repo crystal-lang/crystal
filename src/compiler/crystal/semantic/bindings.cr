@@ -52,6 +52,9 @@ module Crystal
         other_type = type.union_types.find { |type| type != freeze_type }
         trace = from.find_owner_trace(freeze_type.program, other_type)
         ex.inner = trace
+      elsif from && !ex.inner && (freeze_type = @freeze_type)
+        trace = from.find_owner_trace(freeze_type.program, type)
+        ex.inner = trace
       end
 
       if from && !location
@@ -69,12 +72,15 @@ module Crystal
         end
       end
 
-      if self.is_a?(MetaTypeVar)
+      case self
+      when MetaTypeVar
         if self.global?
           from.raise "global variable '#{self.name}' must be #{freeze_type}, not #{invalid_type}", inner, Crystal::FrozenTypeException
         else
           from.raise "#{self.kind} variable '#{self.name}' of #{self.owner} must be #{freeze_type}, not #{invalid_type}", inner, Crystal::FrozenTypeException
         end
+      when Def
+        (self.return_type || self).raise "method must return #{freeze_type} but it is returning #{invalid_type}", inner, Crystal::FrozenTypeException
       else
         from.raise "type must be #{freeze_type}, not #{invalid_type}", inner, Crystal::FrozenTypeException
       end
@@ -212,6 +218,7 @@ module Crystal
       node = self
 
       visited = Set(typeof(object_id)).new
+      owner_trace << node if node.type?.try &.includes_type?(owner)
       visited.add node.object_id
       while deps = node.dependencies?
         dependencies = deps.select { |dep| dep.type? && dep.type.includes_type?(owner) && !visited.includes?(dep.object_id) }
@@ -245,7 +252,7 @@ module Crystal
   class PointerOf
     def map_type(type)
       old_type = self.type?
-      new_type = type.try &.program.pointer_of(type)
+      new_type = type.program.pointer_of(type)
       if old_type && grew?(old_type, new_type)
         raise "recursive pointerof expansion: #{old_type}, #{new_type}, ..."
       end
@@ -304,7 +311,7 @@ module Crystal
         instance_type = subtype.type?
         next unless instance_type
 
-        unless instance_type.allowed_in_generics?
+        unless instance_type.can_be_stored?
           subtype.raise "can't use #{instance_type} in unions yet, use a more specific type"
         end
         instance_type.virtual_type
@@ -342,16 +349,20 @@ module Crystal
         #   1 as Int32 | Float64
         #   Bar.new as Foo # where Bar < Foo
         if obj_type == filtered_type && !to_type.is_a?(GenericClassType) &&
-           to_type.allowed_in_generics?
+           to_type.can_be_stored?
           filtered_type = to_type
           @upcast = true
         end
       end
 
+      # If we couldn't filter the type and we are casting to something that
+      # isn't allowed in variables (like Int or uninstantiated Array(T))
+      # we can't guess a type.
+      return if !filtered_type && !to_type.can_be_stored?
+
       # If we don't have a matching type, leave it as the to_type:
       # later (in cleanup) we will check again.
       filtered_type ||= to_type
-
       self.type = filtered_type.virtual_type
     end
   end
@@ -377,10 +388,18 @@ module Crystal
         #   1 as Int32 | Float64
         #   Bar.new as Foo # where Bar < Foo
         if obj_type == filtered_type && !to_type.is_a?(GenericClassType) &&
-           to_type.allowed_in_generics?
+           to_type.can_be_stored?
           filtered_type = to_type.virtual_type
           @upcast = true
         end
+      end
+
+      # If we couldn't filter the type and we are casting to something that
+      # isn't allowed in variables (like Int or uninstantiated Array(T))
+      # we can't guess a type.
+      if !filtered_type && !to_type.can_be_stored?
+        self.type = to_type.program.nil_type
+        return
       end
 
       # If we don't have a matching type, leave it as the to_type:
@@ -403,8 +422,8 @@ module Crystal
       return unless self.def.args.all? &.type?
       return unless self.def.type?
 
-      types = self.def.args.map &.type
-      return_type = @force_nil ? self.def.type.program.nil : self.def.type
+      types = self.def.args.map &.type.virtual_type
+      return_type = @force_nil ? self.def.type.program.nil : self.def.type.virtual_type
 
       expected_return_type = @expected_return_type
       if expected_return_type && !expected_return_type.nil_type? && !return_type.implements?(expected_return_type)
@@ -460,7 +479,7 @@ module Crystal
             node.raise "can't use constant as type for NamedTuple"
           end
 
-          Crystal.check_type_allowed_in_generics(node, node_type, "can't use #{node_type} as generic type argument")
+          Crystal.check_type_can_be_stored(node, node_type, "can't use #{node_type} as generic type argument")
           node_type = node_type.virtual_type
 
           NamedArgumentType.new(named_arg.name, node_type)
@@ -514,7 +533,7 @@ module Crystal
                 end
               end
             else
-              Crystal.check_type_allowed_in_generics(node, node_type, "can't use #{node_type} as generic type argument")
+              Crystal.check_type_can_be_stored(node, node_type, "can't use #{node_type} as generic type argument")
               type_var = node_type.virtual_type
             end
           end
@@ -525,7 +544,7 @@ module Crystal
         begin
           generic_type = instance_type.as(GenericType).instantiate(type_vars_types)
         rescue ex : Crystal::Exception
-          raise ex.message
+          raise ex.message, ex
         end
       end
 
@@ -627,111 +646,114 @@ module Crystal
 
     def update(from = nil)
       # We compute all the types for each block arguments
-      args_size = block.args.size
-      block_arg_types = Array(Array(Type)?).new(args_size, nil)
-      splat_index = block.splat_index
+      block_arg_types = Array(Array(Type)?).new(block.args.size, nil)
 
       @yields.each do |a_yield, yield_vars|
-        i = 0
-
-        # Gather all exps types and then assign to block_arg_types.
-        # We need to do that in case of a block splat argument, we need
-        # to split and create tuple types for that case.
-        exps_types = Array(Type).new(a_yield.exps.size)
-
-        a_yield.exps.each do |exp|
-          exp_type = exp.type?
-          return unless exp_type
-
-          if exp.is_a?(Splat)
-            unless exp_type.is_a?(TupleInstanceType)
-              exp.raise "expected splat expression to be a tuple type, not #{exp_type}"
-            end
-
-            exps_types.concat(exp_type.tuple_types)
-            i += exp_type.tuple_types.size
-          else
-            exps_types << exp_type
-            i += 1
-          end
-        end
-
-        # Check if there are missing yield expressions to match
-        # the (optional) block signature, and if they match the declared types
-        if yield_vars
-          if exps_types.size < yield_vars.size
-            a_yield.raise "wrong number of yield arguments (given #{exps_types.size}, expected #{yield_vars.size})"
-          end
-
-          # Check that the types match
-          i = 0
-          yield_vars.zip(exps_types) do |yield_var, exp_type|
-            unless exp_type.implements?(yield_var.type)
-              a_yield.raise "argument ##{i + 1} of yield expected to be #{yield_var.type}, not #{exp_type}"
-            end
-            i += 1
-          end
-        end
-
-        # Now move exps_types to block_arg_types
-        if splat_index
-          # Error if there are less expressions than the number of block arguments
-          if exps_types.size < (args_size - 1)
-            block.raise "too many block arguments (given #{args_size - 1}+, expected maximum #{exps_types.size}+)"
-          end
-
-          j = 0
-          args_size.times do |i|
-            types = block_arg_types[i] ||= [] of Type
-            if i == splat_index
-              tuple_types = exps_types[i, exps_types.size - (args_size - 1)]
-              types << @program.tuple_of(tuple_types)
-              j += tuple_types.size
-            else
-              types << exps_types[j]
-              j += 1
-            end
-          end
-        else
-          # Check if tuple unpacking is needed
-          if exps_types.size == 1 &&
-             (exp_type = exps_types.first).is_a?(TupleInstanceType) &&
-             args_size > 1
-            if block.args.size > exp_type.tuple_types.size
-              block.raise "too many block arguments (given #{block.args.size}, expected maximum #{exp_type.tuple_types.size})"
-            end
-
-            exp_type.tuple_types.each_with_index do |tuple_type, i|
-              break if i >= block_arg_types.size
-
-              types = block_arg_types[i] ||= [] of Type
-              types << tuple_type
-            end
-          else
-            if block.args.size > exps_types.size
-              block.raise "too many block arguments (given #{block.args.size}, expected maximum #{exps_types.size})"
-            end
-
-            exps_types.each_with_index do |exp_type, i|
-              break if i >= block_arg_types.size
-
-              types = block_arg_types[i] ||= [] of Type
-              types << exp_type
-            end
-          end
-        end
+        gather_yield_block_arg_types(a_yield, yield_vars, block, block_arg_types)
       end
 
       block.args.each_with_index do |arg, i|
         block_arg_type = block_arg_types[i]
         if block_arg_type
           arg_type = Type.merge(block_arg_type) || @program.nil
-          if i == splat_index && !arg_type.is_a?(TupleInstanceType)
+          if i == block.splat_index && !arg_type.is_a?(TupleInstanceType)
             arg.raise "block splat argument must be a tuple type, not #{arg_type}"
           end
           arg.type = arg_type
         else
           # Skip, no type info found in this position
+        end
+      end
+    end
+
+    # Gather all exps types and then assign to block_arg_types.
+    # We need to do that in case of a block splat argument, we need
+    # to split and create tuple types for that case.
+    private def gather_yield_block_arg_types(a_yield, yield_vars, block, block_arg_types)
+      args_size = block.args.size
+      splat_index = block.splat_index
+      exps_types = Array(Type).new(a_yield.exps.size)
+
+      i = 0
+      a_yield.exps.each do |exp|
+        exp_type = exp.type?
+        return unless exp_type
+
+        if exp.is_a?(Splat)
+          unless exp_type.is_a?(TupleInstanceType)
+            exp.raise "expected splat expression to be a tuple type, not #{exp_type}"
+          end
+
+          exps_types.concat(exp_type.tuple_types)
+          i += exp_type.tuple_types.size
+        else
+          exps_types << exp_type
+          i += 1
+        end
+      end
+
+      # Check if there are missing yield expressions to match
+      # the (optional) block signature, and if they match the declared types
+      if yield_vars
+        if exps_types.size < yield_vars.size
+          a_yield.raise "wrong number of yield arguments (given #{exps_types.size}, expected #{yield_vars.size})"
+        end
+
+        # Check that the types match
+        i = 0
+        yield_vars.zip(exps_types) do |yield_var, exp_type|
+          unless exp_type.implements?(yield_var.type)
+            a_yield.raise "argument ##{i + 1} of yield expected to be #{yield_var.type}, not #{exp_type}"
+          end
+          i += 1
+        end
+      end
+
+      # Now move exps_types to block_arg_types
+      if splat_index
+        # Error if there are less expressions than the number of block arguments
+        if exps_types.size < (args_size - 1)
+          block.raise "too many block arguments (given #{args_size - 1}+, expected maximum #{exps_types.size}+)"
+        end
+
+        j = 0
+        args_size.times do |i|
+          types = block_arg_types[i] ||= [] of Type
+          if i == splat_index
+            tuple_types = exps_types[i, exps_types.size - (args_size - 1)]
+            types << @program.tuple_of(tuple_types)
+            j += tuple_types.size
+          else
+            types << exps_types[j]
+            j += 1
+          end
+        end
+      else
+        # Check if tuple unpacking is needed
+        if exps_types.size == 1 &&
+           (exp_type = exps_types.first).is_a?(TupleInstanceType) &&
+           args_size > 1
+          if block.args.size > exp_type.tuple_types.size
+            block.raise "too many block arguments (given #{block.args.size}, expected maximum #{exp_type.tuple_types.size})"
+          end
+
+          exp_type.tuple_types.each_with_index do |tuple_type, i|
+            break if i >= block_arg_types.size
+
+            types = block_arg_types[i] ||= [] of Type
+            types << tuple_type
+          end
+        else
+          if block.args.size > exps_types.size
+            block.raise "too many block arguments (given #{block.args.size}, expected maximum #{exps_types.size})"
+          end
+
+          exps_types.each_with_index do |exp_type, i|
+            break if i >= block_arg_types.size
+
+            types = block_arg_types[i] ||= [] of Type
+            types << exp_type
+          end
         end
       end
     end

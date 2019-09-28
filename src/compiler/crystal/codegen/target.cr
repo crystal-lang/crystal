@@ -1,4 +1,5 @@
 require "llvm"
+require "../exception"
 
 class Crystal::Codegen::Target
   class Error < Crystal::LocationlessException

@@ -1,24 +1,28 @@
 require "./event"
 
+class Thread
+  # :nodoc:
+  getter(event_base) { Crystal::Event::Base.new }
+end
+
 module Crystal::EventLoop
-  @@eb = Crystal::Event::Base.new
-  @@dns_base : Crystal::Event::DnsBase?
+  {% unless flag?(:preview_mt) %}
+    def self.after_fork
+      Thread.current.event_base.reinit
+    end
+  {% end %}
 
-  def self.after_fork
-    @@eb.reinit
+  def self.run_once
+    Thread.current.event_base.run_once
   end
 
-  def self.resume
-    loop_fiber.resume
-  end
-
-  private def self.loop_fiber
-    @@loop_fiber ||= Fiber.new { @@eb.run_loop }
+  private def self.event_base
+    Thread.current.event_base
   end
 
   def self.create_resume_event(fiber)
-    @@eb.new_event(-1, LibEvent2::EventFlags::None, fiber) do |s, flags, data|
-      data.as(Fiber).resume
+    event_base.new_event(-1, LibEvent2::EventFlags::None, fiber) do |s, flags, data|
+      Crystal::Scheduler.enqueue data.as(Fiber)
     end
   end
 
@@ -26,7 +30,7 @@ module Crystal::EventLoop
     flags = LibEvent2::EventFlags::Write
     flags |= LibEvent2::EventFlags::Persist | LibEvent2::EventFlags::ET if edge_triggered
 
-    @@eb.new_event(io.fd, flags, io) do |s, flags, data|
+    event_base.new_event(io.fd, flags, io) do |s, flags, data|
       io_ref = data.as(typeof(io))
       if flags.includes?(LibEvent2::EventFlags::Write)
         io_ref.resume_write
@@ -40,7 +44,7 @@ module Crystal::EventLoop
     flags = LibEvent2::EventFlags::Read
     flags |= LibEvent2::EventFlags::Persist | LibEvent2::EventFlags::ET if edge_triggered
 
-    @@eb.new_event(io.fd, flags, io) do |s, flags, data|
+    event_base.new_event(io.fd, flags, io) do |s, flags, data|
       io_ref = data.as(typeof(io))
       if flags.includes?(LibEvent2::EventFlags::Read)
         io_ref.resume_read
@@ -48,13 +52,5 @@ module Crystal::EventLoop
         io_ref.resume_read(timed_out: true)
       end
     end
-  end
-
-  private def self.dns_base
-    @@dns_base ||= @@eb.new_dns_base
-  end
-
-  def self.create_dns_request(nodename, servname, hints, data, &callback : LibEvent2::DnsGetAddrinfoCallback)
-    dns_base.getaddrinfo(nodename, servname, hints, data, &callback)
   end
 end

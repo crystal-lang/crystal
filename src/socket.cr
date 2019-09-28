@@ -217,7 +217,7 @@ class Socket < IO
   # socket.puts Time.utc
   # socket.close
   # ```
-  def accept
+  def accept : Socket
     accept? || raise IO::Error.new("Closed stream")
   end
 

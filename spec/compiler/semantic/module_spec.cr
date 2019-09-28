@@ -383,7 +383,7 @@ describe "Semantic: module" do
       end
 
       Baz.new.foo
-      ", "type must be Bar(Float64), not Bar(Int32)"
+      ", "method must return Bar(Float64) but it is returning Bar(Int32)"
   end
 
   it "includes generic module with self (check return subclass type, error)" do
@@ -405,7 +405,7 @@ describe "Semantic: module" do
       end
 
       Baz1.new.foo
-      ", "type must be Bar(Int32), not Baz2"
+      ", "method must return Bar(Int32) but it is returning Baz2"
   end
 
   it "includes module but can't access metaclass methods" do
@@ -1303,5 +1303,69 @@ describe "Semantic: module" do
       Gen(Foo.class).foo(Moo)
       ),
       "no overload matches"
+  end
+
+  it "extends module from generic class and calls class method (#7167)" do
+    assert_type(%(
+      module Foo
+        def foo
+          1
+        end
+      end
+
+      class Gen(T)
+        extend Foo
+      end
+
+      Gen(Int32).foo
+      )) { int32 }
+  end
+
+  it "extends generic module from generic class and calls class method (#7167)" do
+    assert_type(%(
+      module Foo(T)
+        def foo
+          T
+        end
+      end
+
+      class Gen(U)
+        extend Foo(U)
+      end
+
+      Gen(Int32).foo
+      )) { int32.metaclass }
+  end
+
+  it "extends generic module from generic module and calls class method (#7167)" do
+    assert_type(%(
+      module Foo(T)
+        def foo
+          T
+        end
+      end
+
+      module Gen(U)
+        extend Foo(U)
+      end
+
+      Gen(Int32).foo
+      )) { int32.metaclass }
+  end
+
+  it "doesn't look up initialize past module that defines initialize (#7007)" do
+    assert_error %(
+      module Moo
+        def initialize(x)
+        end
+      end
+
+      class Foo
+        include Moo
+      end
+
+      Foo.new
+      ),
+      "wrong number of arguments"
   end
 end

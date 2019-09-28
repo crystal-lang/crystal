@@ -108,6 +108,10 @@ describe BigRational do
     0.3333333333333333333333_f64.to_big_r.should eq(br(6004799503160661, 18014398509481984))
   end
 
+  it "BigDecimal#to_big_r" do
+    BigDecimal.new("1.123").to_big_r.should eq(br(1123, 1000))
+  end
+
   it "#<=>(:BigRational) and Comparable" do
     a = br(11, 3)
     l = br(10, 3)
@@ -183,6 +187,23 @@ describe BigRational do
 
   it "#>>" do
     (br(10, 3) >> 2).should eq(br(5, 6))
+  end
+
+  describe "#**" do
+    it "exponentiates with positive powers" do
+      result = br(17, 11) ** 5
+      result.should be_a(BigRational)
+      result.should eq(br(1419857, 161051))
+    end
+
+    it "exponentiates with negative powers" do
+      result = br(17, 11) ** -5
+      result.should eq(br(161051, 1419857))
+    end
+
+    it "cannot raise 0 to a negative power" do
+      expect_raises(DivisionByZeroError) { br(0, 1) ** -1 }
+    end
   end
 
   it "#ceil" do

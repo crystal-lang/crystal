@@ -333,7 +333,7 @@ describe "Code gen: macro" do
   it "expands def macro with instance var and method call (bug)" do
     run(%(
       struct Nil
-        def to_i
+        def to_i!
           0
         end
       end
@@ -348,7 +348,7 @@ describe "Code gen: macro" do
         end
       end
 
-      Foo.new.foo.to_i
+      Foo.new.foo.to_i!
       )).to_i.should eq(1)
   end
 
@@ -438,7 +438,7 @@ describe "Code gen: macro" do
       end
 
       foo 1
-      foo(1.5).to_i
+      foo(1.5).to_i!
       )).to_i.should eq(2)
   end
 
@@ -663,6 +663,8 @@ describe "Code gen: macro" do
 
   it "transforms hooks (bug)" do
     codegen(%(
+      require "prelude"
+
       module GC
         def self.add_finalizer(object : T)
           object.responds_to?(:finalize)
@@ -800,6 +802,8 @@ describe "Code gen: macro" do
 
   it "copies base macro def to sub-subtype even after it was copied to a subtype (#448)" do
     run(%(
+      require "prelude"
+
       class Object
         def class_name : String
           {{@type.name.stringify}}
@@ -1818,5 +1822,20 @@ describe "Code gen: macro" do
         puts x
       end
     )).to_string.chomp.should eq("2")
+  end
+
+  it "devirtualizes @type" do
+    run(%(
+      class Foo
+        def foo
+          {{@type.id.stringify}}
+        end
+      end
+
+      class Bar < Foo
+      end
+
+      (Foo.new || Bar.new).foo
+    )).to_string.should eq("Foo")
   end
 end
