@@ -9,6 +9,7 @@ module Spec
     pending: :yellow,
     comment: :cyan,
     focus:   :cyan,
+    order:   :cyan,
   }
 
   private LETTERS = {
@@ -64,11 +65,24 @@ module Spec
     finish_run
   end
 
-  @@order = "default"
+  # :nodoc:
+  class_getter randomizer_seed : Int32?
+  class_getter randomizer : Random::PCG32?
 
   # :nodoc:
   def self.order=(mode)
-    @@order = mode
+    seed =
+      case mode
+      when "random"
+        Random::Secure.rand(1..99999) # 5 digits or less for simplicity
+      when /\A(\d{1,5})\Z/
+        $1.to_i
+      end
+
+    if seed
+      @@randomizer_seed = seed
+      @@randomizer = Random::PCG32.new(seed.to_u64)
+    end
   end
 
   # :nodoc:
@@ -239,7 +253,9 @@ module Spec
     @@start_time = Time.monotonic
 
     at_exit do
-      root_context.randomize if @@order == "random"
+      if randomizer = @@randomizer
+        root_context.randomize(randomizer)
+      end
       run_filters
       run_before_suite_hooks
       root_context.run

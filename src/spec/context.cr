@@ -6,9 +6,9 @@ module Spec
     # All the children, which can be `describe`/`context` or `it`
     getter children = [] of ExampleGroup | Example
 
-    def randomize
-      children.each { |c| c.randomize if c.responds_to?(:randomize) }
-      children.shuffle!
+    def randomize(randomizer)
+      children.each { |c| c.randomize(randomizer) if c.responds_to?(:randomize) }
+      children.shuffle!(randomizer)
     end
   end
 
@@ -144,6 +144,10 @@ module Spec
       puts "Finished in #{Spec.to_human(elapsed_time)}"
       puts Spec.color("#{total} examples, #{failures.size} failures, #{errors.size} errors, #{pendings.size} pending", final_status)
       puts Spec.color("Only running `focus: true`", :focus) if Spec.focus?
+
+      if randomizer_seed = Spec.randomizer_seed
+        puts Spec.color("Randomized with seed: #{randomizer_seed}", :order)
+      end
 
       unless failures_and_errors.empty?
         puts

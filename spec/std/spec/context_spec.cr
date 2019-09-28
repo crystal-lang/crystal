@@ -1,15 +1,31 @@
 require "./spec_helper"
 
 describe Spec::ExampleGroup do
-  it "#randomize" do
-    root = build_spec("f.cr", count: 20)
+  describe "#randomize" do
+    it "by default" do
+      root = build_spec("f.cr", count: 20)
 
-    before_randomize = all_spec_descriptions(root)
-    root.randomize
-    after_randomize = all_spec_descriptions(root)
+      before_randomize = all_spec_descriptions(root)
+      root.randomize(Random::DEFAULT)
+      after_randomize = all_spec_descriptions(root)
 
-    after_randomize.should_not eq before_randomize
-    after_randomize.sort.should eq before_randomize.sort
+      after_randomize.should_not eq before_randomize
+      after_randomize.sort.should eq before_randomize.sort
+    end
+
+    it "with a seed" do
+      seed = Random::Secure.rand(1..99999).to_u64
+
+      root = build_spec("f.cr", count: 20)
+      root.randomize(Random::PCG32.new(seed))
+      after_randomize1 = all_spec_descriptions(root)
+
+      root = build_spec("f.cr", count: 20)
+      root.randomize(Random::PCG32.new(seed))
+      after_randomize2 = all_spec_descriptions(root)
+
+      after_randomize1.should eq after_randomize2
+    end
   end
 
   describe "#report" do
