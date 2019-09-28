@@ -224,7 +224,7 @@ module Colorize
   @[Flags]
   enum Mode
     # Makes the text bold.
-    Bold = 1
+    Bold
     # Dims the text color.
     Dim
     # Underlines the text.
@@ -255,7 +255,7 @@ struct Colorize::Object(T)
     @enabled = Colorize.enabled?
   end
 
-  {% for color in ColorANSI.constants %}
+  {% for color in ColorANSI.constants.reject { |constant| constant == "All" || constant == "None" } %}
     def {{color.underscore.id}}
       @fore = ColorANSI::{{color.id}}
       self
@@ -271,7 +271,7 @@ struct Colorize::Object(T)
     back color
   end
 
-  {% for mode in Mode.constants %}
+  {% for mode in Mode.constants.reject { |constant| constant == "All" || constant == "None" } %}
     def {{mode.underscore.id}}
       @mode |= Mode::{{mode.id}}
       self
@@ -415,7 +415,7 @@ struct Colorize::Object(T)
       end
 
       unless no_mode
-        {% for mode in Mode.constants %}
+        {% for mode in Mode.constants.reject { |constant| constant == "All" || constant == "None" } %}
           if mode.includes? Mode::{{mode.id}}
             io << ';' if printed
             io << MODE_{{mode.upcase.id}}
