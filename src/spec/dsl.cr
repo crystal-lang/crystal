@@ -4,7 +4,7 @@ require "option_parser"
 module Spec
   private COLORS = {
     success: Colorize::ColorANSI::Green,
-    fail:    Colorize::ColorANSI::Red
+    fail:    Colorize::ColorANSI::Red,
     error:   Colorize::ColorANSI::Red,
     pending: Colorize::ColorANSI::Yellow,
     comment: Colorize::ColorANSI::Cyan,
