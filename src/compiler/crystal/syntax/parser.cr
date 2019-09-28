@@ -5414,7 +5414,9 @@ module Crystal
 
       next_token_skip_space_or_newline
 
-      name = parse_ident(allow_type_vars: false).as(Path)
+      name = parse_ident(allow_type_vars: false, parse_nilable: false)
+      raise "BUG: Alias name can only be a Path" unless name.is_a?(Path)
+
       skip_space
       check :"="
       next_token_skip_space_or_newline
