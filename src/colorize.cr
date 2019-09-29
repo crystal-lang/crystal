@@ -147,7 +147,7 @@ module Colorize::ObjectExtensions
 
   # Turns `self` into a `Colorize::Object` and colors it with an RGB color.
   def colorize(red : UInt8, green : UInt8, blue : UInt8)
-    Colorize::Object.new(self).fore(Colorize::ColorRGB.new(red, green, blue))
+    colorize(Colorize::ColorRGB.new(red, green, blue))
   end
 end
 
