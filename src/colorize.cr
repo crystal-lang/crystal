@@ -140,7 +140,7 @@ module Colorize::ObjectExtensions
     Colorize::Object.new(self)
   end
 
-  # Turns `self` into a `Colorize::Object` and colors it.
+  # Turns `self` into a `Colorize::Object` and colors it with a color.
   def colorize(fore : Color)
     Colorize::Object.new(self).fore(fore)
   end
@@ -306,7 +306,7 @@ struct Colorize::Object(T)
   def mode(mode : Mode)
     # TODO: Remove this in the future
     if mode == Mode::Bright
-      puts "Warning: The color `bright` is deprecated. Please use `bold` instead.".colorize(:light_yellow) unless @@warning_printed
+      puts "Warning: The text decoration `bright` is deprecated. Please use `bold` instead.".colorize(:light_yellow) unless @@warning_printed
       @@warning_printed = true
     end
 

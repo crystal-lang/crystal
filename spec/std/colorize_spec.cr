@@ -42,11 +42,11 @@ describe "colorize" do
   end
 
   it "colorizes foreground with 8-bit color" do
-    colorize("hello").fore(Colorize::Color256.new(123u8)).to_s.should eq("\e[38;5;123mhello\e[0m")
+    colorize("hello").fore(Colorize::Color256.new(123)).to_s.should eq("\e[38;5;123mhello\e[0m")
   end
 
   it "colorizes foreground with true color" do
-    colorize("hello").fore(Colorize::ColorRGB.new(12u8, 34u8, 56u8)).to_s.should eq("\e[38;2;12;34;56mhello\e[0m")
+    colorize("hello").fore(Colorize::ColorRGB.new(12, 34, 56)).to_s.should eq("\e[38;2;12;34;56mhello\e[0m")
   end
 
   it "colorizes background" do
@@ -69,11 +69,11 @@ describe "colorize" do
   end
 
   it "colorizes background with 8-bit color" do
-    colorize("hello").back(Colorize::Color256.new(123u8)).to_s.should eq("\e[48;5;123mhello\e[0m")
+    colorize("hello").back(Colorize::Color256.new(123)).to_s.should eq("\e[48;5;123mhello\e[0m")
   end
 
   it "colorizes background with true color" do
-    colorize("hello").back(Colorize::ColorRGB.new(12u8, 34u8, 56u8)).to_s.should eq("\e[48;2;12;34;56mhello\e[0m")
+    colorize("hello").back(Colorize::ColorRGB.new(12, 34, 56)).to_s.should eq("\e[48;2;12;34;56mhello\e[0m")
   end
 
   it "colorizes mode" do
