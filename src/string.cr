@@ -520,7 +520,7 @@ class String
   end
 
   # :nodoc:
-  record UIntInfo, value : (UInt64 | UInt128), negative : Bool, invalid : Bool
+  record UIntInfo, value : UInt64 | UInt128, negative : Bool, invalid : Bool
 
   private macro gen_to_(method, max_positive = nil, max_negative = nil)
     info = to_info(base, whitespace, underscore, prefix, strict, leading_zero_is_octal, unsigned: {{max_negative == nil}})
