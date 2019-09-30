@@ -25,14 +25,14 @@ class Zip::Serializer
     # We snatch the incantations from Rubyzip for this.
     unix_perms = 0o644
     file_type_file = 0o10
-    ((file_type_file << 12 | (unix_perms & 0o7777)) << 16).to_u32
+    ((file_type_file << 12 | (unix_perms & 0o7777)) << 16).to_u32!
   end
 
   def dir_external_attrs
     # Applies permissions to an empty directory.
     unix_perms = 0o755
     file_type_dir = 0o04
-    ((file_type_dir << 12 | (unix_perms & 0o7777)) << 16).to_u32
+    ((file_type_dir << 12 | (unix_perms & 0o7777)) << 16).to_u32!
   end
 
   def write_local_file_header(io : IO,
@@ -274,11 +274,15 @@ class Zip::Serializer
   end
 
   private def to_binary_dos_time(t : Time)
-    (t.second / 2) + (t.minute << 5) + (t.hour << 11)
+    (t.hour << 11) |
+      (t.minute << 5) |
+      (t.second // 2)
   end
 
   private def to_binary_dos_date(t : Time)
-    t.day + (t.month << 5) + ((t.year - 1980) << 9)
+    ((t.year - 1980) << 9) |
+      (t.month << 5) |
+      t.day
   end
 
   private def write_uint8_le(io : IO, val : Int)
