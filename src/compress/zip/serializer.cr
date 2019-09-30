@@ -274,11 +274,15 @@ class Compress::Zip::Serializer
   end
 
   private def to_binary_dos_time(t : Time)
-    (t.second // 2) + (t.minute << 5) + (t.hour << 11)
+    (t.hour << 11) |
+      (t.minute << 5) |
+      (t.second // 2)
   end
 
   private def to_binary_dos_date(t : Time)
-    t.day + (t.month << 5) + ((t.year - 1980) << 9)
+    ((t.year - 1980) << 9) |
+      (t.month << 5) |
+      t.day
   end
 
   private def write_uint8_le(io : IO, val : Int)
