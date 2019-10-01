@@ -6,6 +6,10 @@ module Crystal::System::File
   # calls.
   private def self.open_flag(mode : ::File::Mode)
     flags = 0
+    if mode.read? && mode.write?
+      flags |= LibC::O_RDWR
+      mode ^= ::File::Mode::Read | ::File::Mode::Write
+    end
     mode.each do |m|
       case m
       when ::File::Mode::Read            then flags |= LibC::O_RDONLY
