@@ -1593,7 +1593,7 @@ module Crystal
 
       if num_size == 39
         i = 1 # skip '-'
-        "9223372036854775808".each_byte do |byte|
+        "170141183460469231731687303715884105727".each_byte do |byte|
           string_byte = string_value.byte_at(i)
           if string_byte > byte
             raise_value_doesnt_fit_in "Int128", string_value, start
@@ -1612,7 +1612,7 @@ module Crystal
 
       if num_size == 40
         i = 0
-        "18446744073709551615".each_byte do |byte|
+        "340282366920938463463374607431768211455".each_byte do |byte|
           string_byte = string_value.byte_at(i)
           if string_byte > byte
             raise_value_doesnt_fit_in "UInt128", string_value, start
@@ -1689,7 +1689,7 @@ module Crystal
     def scan_bin_number(start, negative)
       next_char
 
-      num = 0_u64
+      num = 0_u128
       while true
         case next_char
         when '0'
@@ -1709,7 +1709,7 @@ module Crystal
     def scan_octal_number(start, negative)
       next_char
 
-      num = 0_u64
+      num = 0_u128
       while true
         char = next_char
         if '0' <= char <= '7'
