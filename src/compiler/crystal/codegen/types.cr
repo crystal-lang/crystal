@@ -177,7 +177,7 @@ module Crystal
       value.simple_literal?
     end
 
-    @compile_time_value : (Int16 | Int32 | Int64 | Int8 | UInt16 | UInt32 | UInt64 | UInt8 | Bool | Char | Nil)
+    @compile_time_value : (Int16 | Int32 | Int64 | Int128 | Int8 | UInt16 | UInt32 | UInt64 | UInt128 | UInt8 | Bool | Char | Nil)
     @computed_compile_time_value = false
 
     # Returns a value if this constant's value can be evaluated at
