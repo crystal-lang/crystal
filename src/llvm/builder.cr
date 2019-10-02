@@ -127,7 +127,7 @@ class LLVM::Builder
     Value.new LibLLVM.build_extract_value(self, value, index, name)
   end
 
-  {% for name in %w(bit_cast si2fp ui2fp zext sext trunc fpext fptrunc fp2si fp2ui si2fp ui2fp int2ptr ptr2int) %}
+  {% for name in %w(bit_cast zext sext trunc fpext fptrunc fp2si fp2ui si2fp ui2fp int2ptr ptr2int) %}
     def {{name.id}}(value, type, name = "")
       # check_type({{name}}, type)
       # check_value(value)
