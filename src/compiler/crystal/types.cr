@@ -1192,10 +1192,6 @@ module Crystal
       superclass.try &.add_subclass(self)
     end
 
-    def struct?
-      @struct
-    end
-
     def has_attribute?(name)
       return true if packed? && name == "Packed"
       false
