@@ -1435,4 +1435,22 @@ describe "Semantic: macro" do
         ))
     end
   end
+
+  it "has correct location after expanding assignment after instance var" do
+    result = semantic(%( #  1
+      macro foo(x)       #  2
+        @{{x}}           #  3
+                         #  4
+        def bar          #  5
+        end              #  6
+      end                #  7
+                         #  8
+      class Foo          #  9
+        foo(x = 1)       # 10
+      end
+    ), inject_primitives: false)
+
+    method = result.program.types["Foo"].lookup_first_def("bar", false).not_nil!
+    method.location.not_nil!.original_location.not_nil!.line_number.should eq(10)
+  end
 end
