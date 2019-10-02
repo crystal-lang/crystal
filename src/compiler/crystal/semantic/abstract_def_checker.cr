@@ -230,10 +230,7 @@ class Crystal::AbstractDefChecker
   end
 
   private def report_warning(node, message)
-    return unless @program.warnings.all?
-    return if @program.ignore_warning_due_to_location?(node.location)
-
-    @program.warning_failures << node.warning(message)
+    @program.report_warning(node, message)
   end
 
   class ReplacePathWithTypeVar < Visitor
