@@ -12,11 +12,6 @@ struct XML::Node
   end
 
   # ditto
-  def initialize(node : LibXML::Doc*)
-    initialize(node.as(LibXML::Node*))
-  end
-
-  # ditto
   def initialize(@node : LibXML::Node*)
   end
 
