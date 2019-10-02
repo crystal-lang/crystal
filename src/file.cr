@@ -619,6 +619,7 @@ class File < IO::FileDescriptor
   # permissions may be set using the *perm* parameter.
   #
   # See `self.new` for what *mode* can be.
+  @[Deprecated("Use `File.new(filename, :read, :write, :create)`")]
   def self.open(filename : Path | String, mode = "r", perm = DEFAULT_CREATE_PERMISSIONS, encoding = nil, invalid = nil) : self
     new filename, mode, perm, encoding, invalid
   end
@@ -628,7 +629,31 @@ class File < IO::FileDescriptor
   # file as an argument, the file will be automatically closed when the block returns.
   #
   # See `self.new` for what *mode* can be.
-  def self.open(filename : Path | String, mode = "r", perm = DEFAULT_CREATE_PERMISSIONS, encoding = nil, invalid = nil)
+  def self.open(filename : Path | String, *modes : Mode, perm = DEFAULT_CREATE_PERMISSIONS, encoding = nil, invalid = nil)
+    file = new filename, modes.reduce { |a, b| a | b }, perm, encoding, invalid
+    begin
+      yield file
+    ensure
+      file.close
+    end
+  end
+
+  # Opens the file named by *filename*. If a file is being created, its initial
+  # permissions may be set using the *perm* parameter. Then given block will be passed the opened
+  # file as an argument, the file will be automatically closed when the block returns.
+  #
+  # See `self.new` for what *mode* can be.
+  def self.open(filename : Path | String, mode : Mode = File::Mode.flags(Read), perm = DEFAULT_CREATE_PERMISSIONS, encoding = nil, invalid = nil)
+    file = new filename, mode, perm, encoding, invalid
+    begin
+      yield file
+    ensure
+      file.close
+    end
+  end
+
+  @[Deprecated("Use `File.new(filename, :read, :write, :create)`")]
+  def self.open(filename : Path | String, mode : String, perm = DEFAULT_CREATE_PERMISSIONS, encoding = nil, invalid = nil)
     file = new filename, mode, perm, encoding, invalid
     begin
       yield file
