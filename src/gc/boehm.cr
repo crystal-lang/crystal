@@ -24,6 +24,19 @@ lib LibGC
 
   alias ThreadHandle = Void*
 
+  struct ProfStats
+    heap_size : Word
+    free_bytes : Word
+    unmapped_bytes : Word
+    bytes_since_gc : Word
+    bytes_before_gc : Word
+    non_gc_bytes : Word
+    gc_no : Word
+    markers_m1 : Word
+    bytes_reclaimed_since_gc : Word
+    reclaimed_bytes_before_gc : Word
+  end
+
   fun init = GC_init
   fun malloc = GC_malloc(size : SizeT) : Void*
   fun malloc_atomic = GC_malloc_atomic(size : SizeT) : Void*
@@ -48,6 +61,8 @@ lib LibGC
 
   fun get_heap_usage_safe = GC_get_heap_usage_safe(heap_size : Word*, free_bytes : Word*, unmapped_bytes : Word*, bytes_since_gc : Word*, total_bytes : Word*)
   fun set_max_heap_size = GC_set_max_heap_size(Word)
+
+  fun get_prof_stats = GC_get_prof_stats(stats : ProfStats*, size : SizeT)
 
   fun get_start_callback = GC_get_start_callback : Void*
   fun set_start_callback = GC_set_start_callback(callback : ->)
@@ -175,6 +190,22 @@ module GC
       bytes_since_gc: bytes_since_gc,
       total_bytes: total_bytes
     )
+  end
+
+  def self.prof_stats
+    LibGC.get_prof_stats(out stats, sizeof(LibGC::ProfStats))
+
+    ProfStats.new(
+      heap_size: stats.heap_size,
+      free_bytes: stats.free_bytes,
+      unmapped_bytes: stats.unmapped_bytes,
+      bytes_since_gc: stats.bytes_since_gc,
+      bytes_before_gc: stats.bytes_before_gc,
+      non_gc_bytes: stats.non_gc_bytes,
+      gc_no: stats.gc_no,
+      markers_m1: stats.markers_m1,
+      bytes_reclaimed_since_gc: stats.bytes_reclaimed_since_gc,
+      reclaimed_bytes_before_gc: stats.reclaimed_bytes_before_gc)
   end
 
   {% unless flag?(:win32) %}
