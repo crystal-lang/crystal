@@ -293,4 +293,13 @@ describe "Tuple" do
     ({/o+/, "bar"} === {"fox", "bar"}).should be_true
     ({1, 2} === nil).should be_false
   end
+
+  it "does to_a" do
+    ary = {1, 'a', true}.to_a
+    ary.should eq([1, 'a', true])
+    ary.size.should eq(3)
+
+    ary = Tuple.new.to_a
+    ary.size.should eq(0)
+  end
 end

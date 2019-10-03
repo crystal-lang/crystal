@@ -376,6 +376,15 @@ struct Tuple
     to_s
   end
 
+  def to_a
+    Array(Union(*T)).build(size) do |buffer|
+      {% for i in 0...T.size %}
+        buffer[{{i}}] = self[{{i}}]
+      {% end %}
+      size
+    end
+  end
+
   # Appends a string representation of this tuple to the given `IO`.
   #
   # ```
