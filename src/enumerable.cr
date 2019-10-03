@@ -734,9 +734,12 @@ module Enumerable(T)
   # ["Alice", "Bob"].map_with_index { |name, i| "User ##{i}: #{name}" }
   # # => ["User #0: Alice", "User #1: Bob"]
   # ```
-  def map_with_index(&block : T, Int32 -> U) forall U
+  #
+  # Accepts an optional *offset* parameter, which tells it to start counting
+  # from there.
+  def map_with_index(offset = 0, &block : T, Int32 -> U) forall U
     ary = [] of U
-    each_with_index { |e, i| ary << yield e, i }
+    each_with_index(offset) { |e, i| ary << yield e, i }
     ary
   end
 

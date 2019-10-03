@@ -414,11 +414,14 @@ struct Tuple
   # tuple = {1, 2.5, "a"}
   # tuple.map_with_index { |e, i| "tuple[#{i}]: #{e}" } # => {"tuple[0]: 1", "tuple[1]: 2.5", "tuple[2]: a"}
   # ```
-  def map_with_index
+  #
+  # Accepts an optional *offset* parameter, which tells it to start counting
+  # from there.
+  def map_with_index(offset = 0)
     {% begin %}
       Tuple.new(
         {% for i in 0...T.size %}
-          (yield self[{{i}}], {{i}}),
+          (yield self[{{i}}], offset + {{i}}),
         {% end %}
       )
     {% end %}
