@@ -94,6 +94,10 @@ lib LibGC
     fun pthread_join = GC_pthread_join(thread : LibC::PthreadT, value : Void**) : LibC::Int
     fun pthread_detach = GC_pthread_detach(thread : LibC::PthreadT) : LibC::Int
   {% end %}
+
+  alias WarnProc = LibC::Char*, Word ->
+  fun set_warn_proc = GC_set_warn_proc(WarnProc)
+  $warn_proc = GC_current_warn_proc : WarnProc
 end
 
 module GC
