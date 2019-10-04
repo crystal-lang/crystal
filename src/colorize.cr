@@ -124,9 +124,12 @@ module Colorize
   # ```
   class_property? enabled : Bool = true
 
-  # Makes `Colorize.enabled` `true` if and only if both of `STDOUT.tty?` and `STDERR.tty?` are `true`.
+  # Makes `Colorize.enabled` `true` if and only if both of `STDOUT.tty?`
+  # and `STDERR.tty?` are `true` and the tty is not considered a dumb terminal.
+  # This is determined by the environment variable called `TERM`.
+  # If `TERM=dumb`, color won't be enabled.
   def self.on_tty_only!
-    self.enabled = STDOUT.tty? && STDERR.tty?
+    self.enabled = STDOUT.tty? && STDERR.tty? && ENV["TERM"]? != "dumb"
   end
 
   def self.reset(io = STDOUT)

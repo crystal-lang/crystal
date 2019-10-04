@@ -78,6 +78,8 @@ require "./spec/dsl"
 module Spec
 end
 
+Colorize.on_tty_only!
+
 OptionParser.parse do |opts|
   opts.banner = "crystal spec runner"
   opts.on("-e ", "--example STRING", "run examples whose full nested names include STRING") do |pattern|
