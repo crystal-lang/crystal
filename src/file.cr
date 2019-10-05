@@ -82,23 +82,25 @@ class File < IO::FileDescriptor
   # Opens the file named by *filename*.
   #
   # *mode* must be one of the following file open modes:
+  #
   # ```text
   # Mode | Description
   # -----+------------------------------------------------------
   # r    | Read-only, starts at the beginning of the file.
   # r+   | Read-write, starts at the beginning of the file.
   # w    | Write-only, truncates existing file to zero length or
-  #      | creates a new file if the file doesn't exists.
+  #      | creates a new file if the file doesn't exist.
   # w+   | Read-write, truncates existing file to zero length or
-  #      | creates a new file if the file doesn't exists.
+  #      | creates a new file if the file doesn't exist.
   # a    | Write-only, starts at the end of the file,
-  #      | creates a new file if the file doesn't exists.
+  #      | creates a new file if the file doesn't exist.
   # a+   | Read-write, starts at the end of the file,
-  #      | creates a new file if the file doesn't exists.
-  # rb   | Same as the 'r' mode but in binary file mode.
-  # wb   | Same as the 'w' mode but in binary file mode.
-  # ab   | Same as the 'a' mode but in binary file mode.
+  #      | creates a new file if the file doesn't exist.
+  # rb   | Same as 'r' but in binary file mode.
+  # wb   | Same as 'w' but in binary file mode.
+  # ab   | Same as 'a' but in binary file mode.
   # ```
+  #
   # In binary file mode, line endings are not converted to CRLF on Windows.
   def self.new(filename : Path | String, mode = "r", perm = DEFAULT_CREATE_PERMISSIONS, encoding = nil, invalid = nil)
     filename = filename.to_s
@@ -162,8 +164,8 @@ class File < IO::FileDescriptor
     info(path1, follow_symlinks).same_file? info(path2, follow_symlinks)
   end
 
-  # Returns the size of *filename* bytes. Raises `Errno` if the file at *path*
-  # does not exist.
+  # Returns the size of the file at *filename* in bytes.
+  # Raises `Errno` if the file at *filename* does not exist.
   #
   # ```
   # File.size("foo") # raises Errno

@@ -78,7 +78,7 @@ class StringPool
   # pool.empty? # => true
   # pool.get(slice)
   # pool.empty? # => false
-  #  ```
+  # ```
   def get(slice : Bytes)
     get slice.to_unsafe, slice.size
   end

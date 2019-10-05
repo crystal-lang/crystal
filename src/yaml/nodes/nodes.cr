@@ -139,7 +139,7 @@ module YAML::Nodes
     # This is set by `YAML::Nodes.parse`, and is `nil` by default.
     property value : Node?
 
-    # Creates an alias with tha given *anchor*.
+    # Creates an alias with the given *anchor*.
     def initialize(@anchor : String)
     end
 
