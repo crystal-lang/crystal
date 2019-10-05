@@ -95,6 +95,10 @@ describe "Code gen: sizeof" do
     run("sizeof(Nil)").to_i.should eq(0)
   end
 
+  it "gets sizeof Bool (#8272)" do
+    run("sizeof(Bool)").to_i.should eq(1)
+  end
+
   it "can use sizeof in type argument (1)" do
     run(%(
       struct StaticArray
