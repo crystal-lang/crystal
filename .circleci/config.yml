@@ -536,7 +536,6 @@ workflows:
             - dist_linux
             - dist_linux32
             - dist_darwin
-            - dist_docker
             - dist_snap
             - dist_docs
 
@@ -600,7 +599,6 @@ workflows:
             - dist_linux
             - dist_linux32
             - dist_darwin
-            - dist_docker
             - dist_snap
             - dist_docs
 
@@ -680,7 +678,6 @@ workflows:
             - dist_linux
             - dist_linux32
             - dist_darwin
-            - dist_docker
             - dist_snap
             - dist_docs
 
