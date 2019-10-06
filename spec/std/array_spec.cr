@@ -460,11 +460,11 @@ describe "Array" do
     it "concats enumerable to empty array (#2047)" do
       a = [] of Int32
       a.concat(1..1)
-      a.@capacity.should eq(3)
+      a.@buffer.capacity.should eq(3)
 
       a = [] of Int32
       a.concat(1..4)
-      a.@capacity.should eq(6)
+      a.@buffer.capacity.should eq(6)
     end
 
     it "concats a union of arrays" do
