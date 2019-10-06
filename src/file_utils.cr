@@ -41,8 +41,8 @@ module FileUtils
   def cmp(filename1 : String, filename2 : String)
     return false unless File.size(filename1) == File.size(filename2)
 
-    File.open(filename1, "rb") do |file1|
-      File.open(filename2, "rb") do |file2|
+    File.open(filename1) do |file1|
+      File.open(filename2) do |file2|
         cmp(file1, file2)
       end
     end
@@ -55,7 +55,7 @@ module FileUtils
   # require "file_utils"
   #
   # File.write("afile", "123")
-  # stream1 = File.open("afile")
+  # stream1 = File.new("afile")
   # stream2 = IO::Memory.new("123")
   # FileUtils.cmp(stream1, stream2) # => true
   # ```
@@ -119,7 +119,7 @@ module FileUtils
   def cp(src_path : String, dest : String)
     File.open(src_path) do |s|
       dest += File::SEPARATOR + File.basename(src_path) if Dir.exists?(dest)
-      File.open(dest, "wb", s.info.permissions) do |d|
+      File.open(dest, :write, :create, :truncate, s.info.permissions) do |d|
         IO.copy(s, d)
       end
     end

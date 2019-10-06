@@ -64,7 +64,7 @@ class File < IO::FileDescriptor
   # return EOF, and any data written will be immediately discarded.
   #
   # ```
-  # File.open(File::NULL, "w") do |file|
+  # File.open(File::NULL, :write) do |file|
   #   file.puts "this is discarded"
   # end
   # ```
@@ -682,7 +682,7 @@ class File < IO::FileDescriptor
   # File.read("bar") # => "foo"
   # ```
   def self.read(filename, encoding = nil, invalid = nil) : String
-    open(filename, "r") do |file|
+    open(filename) do |file|
       if encoding
         file.set_encoding(encoding, invalid: invalid)
         file.gets_to_end
@@ -711,7 +711,7 @@ class File < IO::FileDescriptor
   # array # => ["foo", "bar"]
   # ```
   def self.each_line(filename, encoding = nil, invalid = nil, chomp = true)
-    open(filename, "r", encoding: encoding, invalid: invalid) do |file|
+    open(filename, encoding: encoding, invalid: invalid) do |file|
       file.each_line(chomp: chomp) do |line|
         yield line
       end
@@ -740,7 +740,7 @@ class File < IO::FileDescriptor
   #
   # ```
   # File.write("foo", "bar")
-  # File.write("foo", "baz", mode: "a")
+  # File.write("foo", "baz", mode: File::Mode.flags(Append))
   # ```
   #
   # NOTE: If the content is a `Slice(UInt8)`, those bytes will be written.
@@ -749,7 +749,7 @@ class File < IO::FileDescriptor
   # (the result of invoking `to_s` on *content*).
   #
   # See `self.new` for what *mode* can be.
-  def self.write(filename, content, perm = DEFAULT_CREATE_PERMISSIONS, encoding = nil, invalid = nil, mode = "w")
+  def self.write(filename, content, perm = DEFAULT_CREATE_PERMISSIONS, encoding = nil, invalid = nil, mode = File::Mode.flags(Write, Truncate))
     open(filename, mode, perm, encoding: encoding, invalid: invalid) do |file|
       case content
       when Bytes
@@ -808,7 +808,7 @@ class File < IO::FileDescriptor
   #
   # If the file does not exist, it will be created.
   def self.touch(filename : String, time : Time = Time.utc)
-    open(filename, "a") { } unless exists?(filename)
+    open(filename, :append, :create) { } unless exists?(filename)
     utime time, time, filename
   end
 

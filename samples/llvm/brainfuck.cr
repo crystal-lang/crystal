@@ -264,6 +264,6 @@ program = Program.new(source)
 mod = program.compile
 
 output_name = get_output_name(filename)
-File.open(output_name, "w") do |file|
+File.open(output_name, :write, :create, :truncate) do |file|
   mod.to_s(file)
 end
