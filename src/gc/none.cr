@@ -82,11 +82,9 @@ module GC
     end
   {% end %}
 
-  @@stack_bottom = Pointer(Void).null
-
   # :nodoc:
   def self.current_thread_stack_bottom
-    {Pointer(Void).null, @@stack_bottom}
+    {Pointer(Void).null, Pointer(Void).null}
   end
 
   # :nodoc:
