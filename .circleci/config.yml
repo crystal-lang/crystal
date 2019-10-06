@@ -495,10 +495,6 @@ workflows:
           filters: *per_tag
       - prepare_common:
           filters: *per_tag
-          requires:
-            - test_linux
-            - test_darwin
-            - check_format
       - prepare_tagged:
           filters: *per_tag
           requires:
@@ -568,11 +564,7 @@ workflows:
       - test_darwin
       - test_preview_mt
       - check_format
-      - prepare_common:
-          requires:
-            - test_linux
-            - test_darwin
-            - check_format
+      - prepare_common
       - prepare_nightly:
           requires:
             - prepare_common
@@ -635,10 +627,6 @@ workflows:
           filters: *maintenance
       - prepare_common:
           filters: *maintenance
-          requires:
-            - test_linux
-            - test_darwin
-            - check_format
       - prepare_maintenance:
           filters: *maintenance
           requires:
