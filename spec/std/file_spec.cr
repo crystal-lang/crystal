@@ -231,6 +231,18 @@ describe "File" do
 
       with_tempfile("test_file_symlink.txt") do |symlink|
         File.symlink(File.real_path(file), symlink)
+        File.new(symlink, :read)
+        File.new(symlink, File::Mode.flags(Read))
+        expect_raises(Errno) do
+          File.new(symlink, :read, :symlink_no_follow)
+        end
+        expect_raises(Errno) do
+          File.new(symlink, File::Mode.flags(Read, SymlinkNoFollow))
+        end
+      end
+
+      with_tempfile("test_file_symlink.txt") do |symlink|
+        File.symlink(File.real_path(file), symlink)
         File.new(symlink, File::Mode.flags(Read))
         expect_raises(Errno) do
           File.new(symlink, File::Mode.flags(Read, SymlinkNoFollow))

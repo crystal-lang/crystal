@@ -619,7 +619,7 @@ class File < IO::FileDescriptor
   # permissions may be set using the *perm* parameter.
   #
   # See `self.new` for what *mode* can be.
-  @[Deprecated("Use `File.new(filename, :read, :write, :create)`")]
+  @[Deprecated("Use `File.open(filename, :read, :write, :create)`")]
   def self.open(filename : Path | String, mode = "r", perm = DEFAULT_CREATE_PERMISSIONS, encoding = nil, invalid = nil) : self
     new filename, mode, perm, encoding, invalid
   end
@@ -652,7 +652,7 @@ class File < IO::FileDescriptor
     end
   end
 
-  @[Deprecated("Use `File.new(filename, :read, :write, :create)`")]
+  @[Deprecated("Use `File.open(filename, :read, :write, :create)`")]
   def self.open(filename : Path | String, mode : String, perm = DEFAULT_CREATE_PERMISSIONS, encoding = nil, invalid = nil)
     file = new filename, mode, perm, encoding, invalid
     begin
