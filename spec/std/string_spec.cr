@@ -2045,6 +2045,24 @@ describe "String" do
     i.should eq(3)
   end
 
+  it "does each_char_with_index" do
+    s = "abc"
+    values = [] of {Char, Int32}
+    s.each_char_with_index do |c, i|
+      values << {c, i}
+    end
+    values.should eq([{'a', 0}, {'b', 1}, {'c', 2}])
+  end
+
+  it "does each_char_with_index, with offset" do
+    s = "abc"
+    values = [] of {Char, Int32}
+    s.each_char_with_index(10) do |c, i|
+      values << {c, i}
+    end
+    values.should eq([{'a', 10}, {'b', 11}, {'c', 12}])
+  end
+
   it "gets each_char iterator" do
     iter = "abc".each_char
     iter.next.should eq('a')
