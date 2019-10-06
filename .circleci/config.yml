@@ -232,6 +232,9 @@ jobs:
             source build.env
             cd linux
             make all64 release=true
+      - store_artifacts:
+          path: /tmp/workspace/distribution-scripts/linux/build
+          destination: build
       - persist_to_workspace:
           root: /tmp/workspace/distribution-scripts/linux/
           paths:
@@ -249,6 +252,9 @@ jobs:
             source build.env
             cd linux
             make all32 release=true
+      - store_artifacts:
+          path: /tmp/workspace/distribution-scripts/linux/build
+          destination: build
       - persist_to_workspace:
           root: /tmp/workspace/distribution-scripts/linux/
           paths:
@@ -287,6 +293,9 @@ jobs:
             bundle check || bundle install --binstubs
             cd ../darwin
             make
+      - store_artifacts:
+          path: /tmp/workspace/distribution-scripts/darwin/build
+          destination: build
       - persist_to_workspace:
           root: /tmp/workspace/distribution-scripts/darwin/
           paths:
@@ -349,6 +358,9 @@ jobs:
             source build.env
             cd snapcraft
             CRYSTAL_RELEASE_LINUX64_TARGZ=/tmp/workspace/build/crystal-$CRYSTAL_VERSION-1-linux-x86_64.tar.gz make
+      - store_artifacts:
+          path: /tmp/workspace/distribution-scripts/snapcraft/build
+          destination: build
       - persist_to_workspace:
           root: /tmp/workspace/distribution-scripts/snapcraft/
           paths:
@@ -379,6 +391,9 @@ jobs:
           cd docs
           gunzip -c /tmp/workspace/build/docker-${CRYSTAL_VERSION}-build.tar.gz | docker image load
           make CRYSTAL_DOCKER_IMAGE=${DOCKER_REPOSITORY}:${DOCKER_TAG}-build
+      - store_artifacts:
+          path: /tmp/workspace/distribution-scripts/docs/build
+          destination: build
       - persist_to_workspace:
           root: /tmp/workspace/distribution-scripts/docs/
           paths:
