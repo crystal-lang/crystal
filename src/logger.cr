@@ -38,7 +38,7 @@
 # used.
 #
 # ```
-# file = File.new("production.log", "a")
+# file = File.new("production.log", :append)
 # writer = IO::MultiWriter.new(file, STDOUT)
 #
 # log = Logger.new(writer)

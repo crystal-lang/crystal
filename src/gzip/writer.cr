@@ -13,8 +13,8 @@
 #
 # File.write("file.txt", "abc")
 #
-# File.open("./file.txt", "r") do |input_file|
-#   File.open("./file.gzip", "w") do |output_file|
+# File.open("./file.txt") do |input_file|
+#   File.open("./file.gzip", :write, :truncate) do |output_file|
 #     Gzip::Writer.open(output_file) do |gzip|
 #       IO.copy(input_file, gzip)
 #     end
@@ -42,7 +42,7 @@ class Gzip::Writer < IO
 
   # Creates a new writer to the given *filename*.
   def self.new(filename : String, level = Gzip::DEFAULT_COMPRESSION)
-    new(::File.new(filename, "w"), level: level, sync_close: true)
+    new(::File.new(filename, :write, :truncate), level: level, sync_close: true)
   end
 
   # Creates a new writer to the given *io*, yields it to the given block,

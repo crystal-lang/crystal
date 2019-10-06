@@ -54,7 +54,7 @@ describe "IO::MultiWriter" do
   describe "#flush" do
     it "writes to IO and File" do
       with_tempfile("multiple_writer_spec") do |path|
-        file = File.new(path, "w")
+        file = File.new(path, :write)
         io = IO::Memory.new
 
         writer = IO::MultiWriter.new(io, file)

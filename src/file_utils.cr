@@ -55,7 +55,7 @@ module FileUtils
   # require "file_utils"
   #
   # File.write("afile", "123")
-  # stream1 = File.open("afile")
+  # stream1 = File.new("afile")
   # stream2 = IO::Memory.new("123")
   # FileUtils.cmp(stream1, stream2) # => true
   # ```

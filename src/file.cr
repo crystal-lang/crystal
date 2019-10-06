@@ -60,7 +60,7 @@ class File < IO::FileDescriptor
   # return EOF, and any data written will be immediately discarded.
   #
   # ```
-  # File.open(File::NULL, "w") do |file|
+  # File.open(File::NULL, :write) do |file|
   #   file.puts "this is discarded"
   # end
   # ```
@@ -727,7 +727,7 @@ class File < IO::FileDescriptor
   #
   # ```
   # File.write("foo", "bar")
-  # File.write("foo", "baz", mode: "a")
+  # File.write("foo", "baz", mode: File::Mode.flags(Append))
   # ```
   #
   # NOTE: If the content is a `Slice(UInt8)`, those bytes will be written.
@@ -736,7 +736,7 @@ class File < IO::FileDescriptor
   # (the result of invoking `to_s` on *content*).
   #
   # See `self.new` for what *mode* can be.
-  def self.write(filename, content, perm = DEFAULT_CREATE_PERMISSIONS, encoding = nil, invalid = nil, mode = "w")
+  def self.write(filename, content, perm = DEFAULT_CREATE_PERMISSIONS, encoding = nil, invalid = nil, mode = File::Mode.flags(Write, Truncate))
     open(filename, mode, perm, encoding: encoding, invalid: invalid) do |file|
       case content
       when Bytes

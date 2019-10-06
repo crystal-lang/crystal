@@ -89,7 +89,7 @@ module Debug
     @symbols : Array(Nlist64)?
 
     def self.open(path)
-      File.open(path, "r") do |file|
+      File.open(path) do |file|
         yield new(file)
       end
     end
