@@ -30,14 +30,19 @@ jobs:
           paths:
             - docs
 
-  test_linux32:
+  test_linux32_std:
     machine: true
     environment:
       <<: *env
       TRAVIS_OS_NAME: linux
       ARCH: i386
       ARCH_CMD: linux32
-    steps: *ci_steps
+    steps:
+      - checkout
+      - run: bin/ci prepare_system
+      - run: echo 'export CURRENT_TAG="$CIRCLE_TAG"' >> $BASH_ENV
+      - run: bin/ci prepare_build
+      - run: bin/ci with_build_env 'make std_spec threads=1'
 
   test_darwin:
     macos:
@@ -405,7 +410,7 @@ workflows:
               ignore:
                 - /release\/.+/
                 - /.*\bci\b.*/
-      - test_linux32:
+      - test_linux32_std:
           filters: *unless_maintenance
       - test_darwin:
           filters: *unless_maintenance
@@ -429,7 +434,7 @@ workflows:
               ignore: /.*/
             tags:
               only: /.*/
-      - test_linux32:
+      - test_linux32_std:
           filters: *per_tag
       - test_darwin:
           filters: *per_tag
@@ -501,7 +506,7 @@ workflows:
                 - master
     jobs:
       - test_linux
-      - test_linux32
+      - test_linux32_std
       - test_darwin
       - test_preview_mt
       - check_format
@@ -557,7 +562,7 @@ workflows:
               only:
                 - /release\/.+/
                 - /.*\bci\b.*/
-      - test_linux32:
+      - test_linux32_std:
           filters: *maintenance
       - test_darwin:
           filters: *maintenance
