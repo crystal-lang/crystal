@@ -186,6 +186,26 @@ describe "unbuffered" do
 
     closed.should be_true
   end
+
+  it "can send suceesfully without raise" do
+    ch = Channel(Int32).new
+    raise_flag = false
+
+    sender = Fiber.new do
+      ch.send 1
+    rescue ex
+      raise_flag = true
+    end
+
+    yield_to(sender)
+
+    ch.receive.should eq(1)
+    ch.close
+
+    Fiber.yield
+
+    raise_flag.should be_false
+  end
 end
 
 describe "buffered" do
@@ -289,6 +309,28 @@ describe "buffered" do
     ch = Channel(Int32).new(10)
     spawn { ch.send 123 }
     ch.receive?.should eq(123)
+  end
+
+  it "can send sucessfully without raise" do
+    ch = Channel(Int32).new(1)
+    raise_flag = false
+
+    sender = Fiber.new do
+      ch.send 1
+      ch.send 2
+    rescue ex
+      raise_flag = true
+    end
+
+    yield_to(sender)
+
+    ch.receive.should eq(1)
+    ch.receive.should eq(2)
+    ch.close
+
+    Fiber.yield
+
+    raise_flag.should be_false
   end
 
   it "does inspect on unbuffered channel" do
