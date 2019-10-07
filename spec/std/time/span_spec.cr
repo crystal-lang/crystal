@@ -11,6 +11,9 @@ describe Time::Span do
     t1 = Time::Span.new nanoseconds: 123_456_789_123
     t1.to_s.should eq("00:02:03.456789123")
 
+    t1 = Time::Span.new seconds: 61
+    t1.to_s.should eq("00:01:01")
+
     t1 = Time::Span.new 1, 2, 3
     t1.to_s.should eq("01:02:03")
 

@@ -64,7 +64,7 @@ struct Time::Span
     )
   end
 
-  def initialize(*, seconds : Int, nanoseconds : Int)
+  def initialize(*, seconds : Int, nanoseconds : Int = 0)
     # Normalize nanoseconds in the range 0...1_000_000_000
     seconds += nanoseconds.tdiv(NANOSECONDS_PER_SECOND)
     nanoseconds = nanoseconds.remainder(NANOSECONDS_PER_SECOND)
