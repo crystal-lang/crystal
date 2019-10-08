@@ -61,7 +61,7 @@ struct Time::Span
   @[Deprecated("Use `new` with named arguments instead.")]
   def self.new(_days : Int, _hours : Int, _minutes : Int, _seconds : Int, _nanoseconds : Int = 0)
     new(
-      seconds: compute_seconds!(_days, _hours, _minutes, _seconds),
+      seconds: compute_seconds(_days, _hours, _minutes, _seconds),
       nanoseconds: _nanoseconds.to_i64,
     )
   end
@@ -95,68 +95,19 @@ struct Time::Span
 
   def self.new(*, days : Int = 0, hours : Int = 0, minutes : Int = 0, seconds : Int = 0, nanoseconds : Int = 0)
     new(
-      seconds: compute_seconds!(days, hours, minutes, seconds),
+      seconds: compute_seconds(days, hours, minutes, seconds),
       nanoseconds: nanoseconds.to_i64,
     )
   end
 
-  private def self.compute_seconds!(days, hours, minutes, seconds)
-    compute_seconds(days, hours, minutes, seconds, true).not_nil!
-  end
+  private def self.compute_seconds(days, hours, minutes, seconds)
+    days_to_seconds = SECONDS_PER_DAY.to_i64 * days
+    hours_to_seconds = SECONDS_PER_HOUR.to_i64 * hours
+    minutes_to_seconds = SECONDS_PER_MINUTE.to_i64 * minutes
 
-  private def self.compute_seconds(days, hours, minutes, seconds, raise_exception)
-    # TODO once overflow is the default this can be refactored
-
-    # there's no overflow checks for hours, minutes, ...
-    # so big hours/minutes values can overflow at some point and change expected values
-    hrssec = 3600_i64 &* hours # break point at (Int32::MAX - 596523)
-    minsec = 60_i64 &* minutes
-    s = hrssec &+ minsec &+ seconds
-
-    result = 0_i64
-
-    overflow = false
-    # days is problematic because it can overflow but that overflow can be
-    # "legal" (i.e. temporary) (e.g. if other parameters are negative) or
-    # illegal (e.g. sign change).
-    if days > 0
-      sd = SECONDS_PER_DAY.to_i64 &* days
-      if sd < days
-        overflow = true
-      elsif s < 0
-        temp = s
-        s += sd
-        # positive days -> total seconds should be lower
-        overflow = temp > s
-      else
-        s += sd
-        # positive + positive != negative result
-        overflow = s < 0
-      end
-    elsif days < 0
-      sd = SECONDS_PER_DAY.to_i64 &* days
-      if sd > days
-        overflow = true
-      elsif s <= 0
-        s += sd
-        # negative + negative != positive result
-        overflow = s > 0
-      else
-        nanos = s
-        s += sd
-        # negative days -> total nanos should be lower
-        overflow = s > nanos
-      end
-    end
-
-    if overflow
-      if raise_exception
-        raise ArgumentError.new "Time::Span too big or too small"
-      end
-      return nil
-    end
-
-    s
+    days_to_seconds + hours_to_seconds + minutes_to_seconds + seconds
+  rescue OverflowError
+    raise ArgumentError.new "Time::Span too big or too small"
   end
 
   # Returns the number of full days in this time span.
