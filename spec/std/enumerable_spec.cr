@@ -627,8 +627,8 @@ describe "Enumerable" do
 
   describe "map_with_index" do
     it "yields the element and the index" do
-      result = ["Alice", "Bob"].map_with_index { |name, i| "User ##{i}: #{name}" }
-      result.should eq ["User #0: Alice", "User #1: Bob"]
+      result = SpecEnumerable.new.map_with_index { |e, i| "Value ##{i}: #{e}" }
+      result.should eq ["Value #0: 1", "Value #1: 2", "Value #2: 3"]
     end
 
     it "yields the element and the index of an iterator" do

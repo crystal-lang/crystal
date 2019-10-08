@@ -97,7 +97,7 @@ describe "FileUtils" do
   end
 
   describe "touch" do
-    it "creates file if it doesn't exists" do
+    it "creates file if it doesn't exist" do
       with_tempfile("touch.txt") do |path|
         File.exists?(path).should be_false
         FileUtils.touch(path)
@@ -137,7 +137,7 @@ describe "FileUtils" do
       end
     end
 
-    it "raises an error if the directory doesn't exists" do
+    it "raises an error if the directory doesn't exist" do
       expect_raises(ArgumentError, "No such directory : not_existing_dir") do
         FileUtils.cp({datapath("test_file.txt")}, "not_existing_dir")
       end

@@ -3833,11 +3833,13 @@ class String
   # end
   # array # => [{'a', 0}, {'b', 1}, {'☃', 2}]
   # ```
-  def each_char_with_index
-    i = 0
+  #
+  # Accepts an optional *offset* parameter, which tells it to start counting
+  # from there.
+  def each_char_with_index(offset = 0)
     each_char do |char|
-      yield char, i
-      i += 1
+      yield char, offset
+      offset += 1
     end
   end
 

@@ -2387,12 +2387,12 @@ end
 private def fetch_annotation(node, method, args)
   node.interpret_one_arg_method(method, args) do |arg|
     unless arg.is_a?(Crystal::TypeNode)
-      args[0].raise "argument to '#{node.class_desc}#annotation' must be a TypeNode, not #{arg.class_desc}'"
+      args[0].raise "argument to '#{node.class_desc}#annotation' must be a TypeNode, not #{arg.class_desc}"
     end
 
     type = arg.type
     unless type.is_a?(Crystal::AnnotationType)
-      args[0].raise "argument to '#{node.class_desc}#annotation' must be an annotation type , not #{type} (#{type.type_desc})'"
+      args[0].raise "argument to '#{node.class_desc}#annotation' must be an annotation type, not #{type} (#{type.type_desc})"
     end
 
     value = yield type

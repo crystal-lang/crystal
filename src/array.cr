@@ -59,7 +59,7 @@ class Array(T)
   getter size : Int32
   @capacity : Int32
 
-  # Creates a new empty Array.
+  # Creates a new empty `Array`.
   def initialize
     @size = 0
     @capacity = 0
@@ -1058,13 +1058,19 @@ class Array(T)
   end
 
   # Optimized version of `Enumerable#map_with_index`.
-  def map_with_index(&block : T, Int32 -> U) forall U
-    Array(U).new(size) { |i| yield @buffer[i], i }
+  #
+  # Accepts an optional *offset* parameter, which tells it to start counting
+  # from there.
+  def map_with_index(offset = 0, &block : T, Int32 -> U) forall U
+    Array(U).new(size) { |i| yield @buffer[i], offset + i }
   end
 
   # Like `map_with_index`, but mutates `self` instead of allocating a new object.
-  def map_with_index!(&block : (T, Int32) -> T)
-    to_unsafe.map_with_index!(size) { |e, i| yield e, i }
+  #
+  # Accepts an optional *offset* parameter, which tells it to start counting
+  # from there.
+  def map_with_index!(offset = 0, &block : (T, Int32) -> T)
+    to_unsafe.map_with_index!(size) { |e, i| yield e, offset + i }
     self
   end
 

@@ -832,7 +832,7 @@ module Crystal::Macros
 
   # A tuple literal.
   #
-  # It's macro methods are the same as `ArrayLiteral`
+  # Its macro methods are the same as `ArrayLiteral`.
   class TupleLiteral < ASTNode
   end
 

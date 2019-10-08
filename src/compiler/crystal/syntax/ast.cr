@@ -2077,7 +2077,7 @@ module Crystal
 
   # for inside a macro:
   #
-  #    {% for x1, x2, ... , xn in exp %}
+  #    {% for x1, x2, ..., xn in exp %}
   #      body
   #    {% end %}
   class MacroFor < ASTNode
