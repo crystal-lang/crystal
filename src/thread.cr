@@ -83,7 +83,7 @@ class Thread
       if ptr = LibC.pthread_getspecific(@@current_key)
         ptr.as(Thread)
       else
-        raise "BUG: Thread.current returned NULL"
+        self.current = new
       end
     end
 
