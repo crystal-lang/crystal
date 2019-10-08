@@ -1265,7 +1265,7 @@ module Crystal
       doc = @token.doc
 
       next_token_skip_space
-      name = parse_ident(allow_type_vars: false, parse_nilable: false).as(Path)
+      name = parse_path
       skip_space
 
       args = [] of ASTNode
@@ -1588,7 +1588,7 @@ module Crystal
       next_token_skip_space_or_newline
       name_location = @token.location
 
-      name = parse_ident allow_type_vars: false
+      name = parse_path
       skip_space
 
       type_vars, splat_index = parse_type_vars
@@ -1611,8 +1611,6 @@ module Crystal
       end_location = token_end_location
       check_ident :end
       next_token_skip_space
-
-      raise "BUG: ClassDef name can only be a Path" unless name.is_a?(Path)
 
       @type_nest -= 1
 
@@ -1675,7 +1673,7 @@ module Crystal
       next_token_skip_space_or_newline
 
       name_location = @token.location
-      name = parse_ident allow_type_vars: false
+      name = parse_path
       skip_space
 
       type_vars, splat_index = parse_type_vars
@@ -1686,8 +1684,6 @@ module Crystal
       end_location = token_end_location
       check_ident :end
       next_token_skip_space
-
-      raise "BUG: ModuleDef name can only be a Path" unless name.is_a?(Path)
 
       @type_nest -= 1
 
@@ -1705,8 +1701,7 @@ module Crystal
       next_token_skip_space_or_newline
 
       name_location = @token.location
-      name = parse_ident(allow_type_vars: false, parse_nilable: false).as(Path)
-
+      name = parse_path
       skip_statement_end
 
       end_location = token_end_location
@@ -4564,6 +4559,12 @@ module Crystal
       parse_ident_after_colons(location, global, allow_type_vars, parse_nilable)
     end
 
+    def parse_path
+      name = parse_ident(allow_type_vars: false, parse_nilable: false)
+      raise "BUG: expected a Path" unless name.is_a?(Path)
+      name
+    end
+
     def parse_ident_after_colons(location, global, allow_type_vars, parse_nilable)
       start_line = location.line_number
       start_column = location.column_number
@@ -5414,7 +5415,8 @@ module Crystal
 
       next_token_skip_space_or_newline
 
-      name = parse_ident(allow_type_vars: false).as(Path)
+      name = parse_path
+
       skip_space
       check :"="
       next_token_skip_space_or_newline
@@ -5597,7 +5599,7 @@ module Crystal
 
       next_token_skip_space_or_newline
 
-      name = parse_ident allow_type_vars: false
+      name = parse_path
       skip_space
 
       case @token.type
@@ -5616,8 +5618,6 @@ module Crystal
       check_ident :end
       end_location = token_end_location
       next_token_skip_space
-
-      raise "BUG: EnumDef name can only be a Path" unless name.is_a?(Path)
 
       enum_def = EnumDef.new name, members, base_type
       enum_def.doc = doc
