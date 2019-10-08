@@ -83,6 +83,8 @@ class Thread
       if ptr = LibC.pthread_getspecific(@@current_key)
         ptr.as(Thread)
       else
+        # Thread#start sets @@current as soon it starts. Thus we know
+        # that if @@current is not set then we are in the main thread
         self.current = new
       end
     end
