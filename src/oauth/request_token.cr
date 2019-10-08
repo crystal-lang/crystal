@@ -1,4 +1,4 @@
-class OAuth::RequestToken
+struct OAuth::RequestToken
   getter token : String
   getter secret : String
 
