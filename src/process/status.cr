@@ -1,5 +1,5 @@
 # The status of a terminated process.
-class Process::Status
+struct Process::Status
   # Platform-specific exit status code, which usually contains either the exit code or a termination signal.
   # The other `Process::Status` methods extract the values from `exit_status`.
   getter exit_status : Int32
