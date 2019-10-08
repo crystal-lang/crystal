@@ -117,7 +117,7 @@ jobs:
       - run: |
           git clone https://github.com/crystal-lang/distribution-scripts.git ~/distribution-scripts
           cd ~/distribution-scripts
-          git checkout e942880dda3b100ff1143cce88b579bbec3f05b9
+          git checkout aca99b2078a171d8b4acb91a984ee21b163ee9f7
       # persist relevant information for build process
       - run: |
           cd ~/distribution-scripts
@@ -301,7 +301,22 @@ jobs:
           cd /tmp/workspace/distribution-scripts
           source build.env
           cd docker
-          make CRYSTAL_DEB=/tmp/workspace/build/crystal_${CRYSTAL_VERSION}-1_amd64.deb
+          make all64 CRYSTAL_DEB=/tmp/workspace/build/crystal_${CRYSTAL_VERSION}-1_amd64.deb
+      - persist_to_workspace:
+          root: /tmp/workspace/distribution-scripts/docker/
+          paths:
+            - build
+
+  dist_docker32:
+    machine: true
+    steps:
+      - attach_workspace:
+          at: /tmp/workspace
+      - run: |
+          cd /tmp/workspace/distribution-scripts
+          source build.env
+          cd docker
+          make all32 CRYSTAL_DEB=/tmp/workspace/build/crystal_${CRYSTAL_VERSION}-1_i386.deb
       - persist_to_workspace:
           root: /tmp/workspace/distribution-scripts/docker/
           paths:
@@ -400,6 +415,27 @@ jobs:
       - run: bin/ci prepare_build
       - run: bin/ci build
 
+  test_dist_linux32_std_on_docker:
+    machine: true
+    environment:
+      <<: *env
+      TRAVIS_OS_NAME: linux
+      ARCH: i386
+      ARCH_CMD: linux32
+    steps:
+      - attach_workspace:
+          at: /tmp/workspace
+      - run: |
+          cd /tmp/workspace/distribution-scripts
+          source ./build.env
+          gunzip -c /tmp/workspace/build/docker-${CRYSTAL_VERSION}-i386.tar.gz | docker image load
+          export DOCKER_TEST_PREFIX="crystallang/crystal:$DOCKER_TAG-i386" >> $BASH_ENV
+      - checkout
+      - run: bin/ci prepare_system
+      - run: echo 'export CURRENT_TAG="$CIRCLE_TAG"' >> $BASH_ENV
+      - run: bin/ci prepare_build
+      - run: bin/ci with_build_env 'make std_spec threads=1'
+
 workflows:
   version: 2
   test_all_platforms:
@@ -468,6 +504,10 @@ workflows:
           filters: *per_tag
           requires:
             - dist_linux
+      - dist_docker32:
+          filters: *per_tag
+          requires:
+            - dist_linux32
       - dist_snap:
           filters: *per_tag
           requires:
@@ -480,6 +520,10 @@ workflows:
           filters: *per_tag
           requires:
             - dist_docker
+      - test_dist_linux32_std_on_docker:
+          filters: *per_tag
+          requires:
+            - dist_docker32
       # Tagged release do not publish docker images since they are unsigned
       # publish_docker:
       - dist_docs:
@@ -530,6 +574,9 @@ workflows:
       - dist_docker:
           requires:
             - dist_linux
+      - dist_docker32:
+          requires:
+            - dist_linux32
       - dist_snap:
           requires:
             - dist_linux
@@ -539,6 +586,9 @@ workflows:
       - test_dist_linux_on_docker:
           requires:
             - dist_docker
+      - test_dist_linux32_std_on_docker:
+          requires:
+            - dist_docker32
       - publish_docker:
           requires:
             - dist_docker
@@ -596,6 +646,10 @@ workflows:
           filters: *maintenance
           requires:
             - dist_linux
+      - dist_docker32:
+          filters: *maintenance
+          requires:
+            - dist_linux32
       - dist_snap:
           filters: *maintenance
           requires:
@@ -608,6 +662,10 @@ workflows:
           filters: *maintenance
           requires:
             - dist_docker
+      - test_dist_linux32_std_on_docker:
+          filters: *maintenance
+          requires:
+            - dist_docker32
       - publish_docker:
           filters: *maintenance
           requires:
