@@ -92,20 +92,22 @@ class Channel(T)
   end
 
   def close
-    @closed = true
+    @lock.sync do
+      @closed = true
 
-    @senders.each do |sender|
-      sender.state_ptr.value = DeliveryState::Closed
-      sender.fiber.enqueue
+      @senders.each do |sender|
+        sender.state_ptr.value = DeliveryState::Closed
+        sender.fiber.enqueue
+      end
+
+      @receivers.each do |receiver|
+        receiver.state_ptr.value = DeliveryState::Closed
+        receiver.fiber.enqueue
+      end
+
+      @senders.clear
+      @receivers.clear
     end
-
-    @receivers.each do |receiver|
-      receiver.state_ptr.value = DeliveryState::Closed
-      receiver.fiber.enqueue
-    end
-
-    @senders.clear
-    @receivers.clear
     nil
   end
 
