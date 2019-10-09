@@ -79,7 +79,7 @@ class Channel(T)
     Closed
   end
 
-  private record Sender(T), fiber : Fiber, value : T, select_context : SelectContext(Nil)?
+  private record Sender(T), fiber : Fiber, value : T, state_ptr : DeliveryState*, select_context : SelectContext(Nil)?
   private record Receiver(T), fiber : Fiber, value_ptr : T*, state_ptr : DeliveryState*, select_context : SelectContext(T)?
 
   def initialize(@capacity = 0)
@@ -92,17 +92,22 @@ class Channel(T)
   end
 
   def close
-    @closed = true
+    @lock.sync do
+      @closed = true
 
-    @senders.each &.fiber.enqueue
+      @senders.each do |sender|
+        sender.state_ptr.value = DeliveryState::Closed
+        sender.fiber.enqueue
+      end
 
-    @receivers.each do |receiver|
-      receiver.state_ptr.value = DeliveryState::Closed
-      receiver.fiber.enqueue
+      @receivers.each do |receiver|
+        receiver.state_ptr.value = DeliveryState::Closed
+        receiver.fiber.enqueue
+      end
+
+      @senders.clear
+      @receivers.clear
     end
-
-    @senders.clear
-    @receivers.clear
     nil
   end
 
@@ -115,11 +120,20 @@ class Channel(T)
       raise_if_closed
 
       send_internal(value) do
-        @senders << Sender(T).new(Fiber.current, value, select_context: nil)
+        state = DeliveryState::None
+        @senders << Sender(T).new(Fiber.current, value, pointerof(state), select_context: nil)
         @lock.unsync do
           Crystal::Scheduler.reschedule
         end
-        raise_if_closed
+
+        case state
+        when DeliveryState::Delivered
+          # ignore
+        when DeliveryState::Closed
+          raise ClosedError.new
+        else
+          raise "BUG: Fiber was awaken without channel delivery state set"
+        end
       end
 
       self
@@ -188,11 +202,13 @@ class Channel(T)
     if (queue = @queue) && !queue.empty?
       deque_value = queue.shift
       if sender = dequeue_sender
+        sender.state_ptr.value = DeliveryState::Delivered
         sender.fiber.enqueue
         queue << sender.value
       end
       deque_value
     elsif sender = dequeue_sender
+      sender.state_ptr.value = DeliveryState::Delivered
       sender.fiber.enqueue
       sender.value
     else
@@ -240,8 +256,8 @@ class Channel(T)
     @receivers.delete_if { |receiver| receiver.fiber == Fiber.current }
   end
 
-  protected def wait_for_send(value, select_context)
-    @senders << Sender(T).new(Fiber.current, value, select_context)
+  protected def wait_for_send(value, state_ptr, select_context)
+    @senders << Sender(T).new(Fiber.current, value, state_ptr, select_context)
   end
 
   protected def unwait_for_send
@@ -379,6 +395,7 @@ class Channel(T)
     include SelectAction(Nil)
 
     def initialize(@channel : Channel(T), @value : T)
+      @state = DeliveryState::None
     end
 
     def execute : Channel::NotReady?
@@ -391,7 +408,7 @@ class Channel(T)
     end
 
     def wait(context : SelectContext(Nil))
-      @channel.wait_for_send(@value, context)
+      @channel.wait_for_send(@value, pointerof(@state), context)
     end
 
     def unwait

@@ -7,15 +7,15 @@ describe Mutex do
     mutex.unlock
   end
 
-  it "raises if unlocks without lock" do
-    mutex = Mutex.new
+  it "raises if unlocks without lock (reentrant)" do
+    mutex = Mutex.new(reentrant: true)
     expect_raises(Exception, "Attempt to unlock a mutex which is not locked") do
       mutex.unlock
     end
   end
 
-  it "can be locked many times from the same fiber" do
-    mutex = Mutex.new
+  it "can be locked many times from the same fiber (reentrant)" do
+    mutex = Mutex.new(reentrant: true)
     mutex.lock
     mutex.lock
     mutex.unlock

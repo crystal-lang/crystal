@@ -495,7 +495,11 @@ class Object
         end
 
         def {{method_prefix}}\{{name.id}}
-          {{var_prefix}}\{{name.id}}.not_nil!
+          if (\%value = {{var_prefix}}\{{name.id}}).nil?
+            ::raise NilAssertionError.new("\{{name.id}} cannot be nil")
+          else
+            \%value
+          end
         end
       \{% end %}
     end
