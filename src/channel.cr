@@ -25,9 +25,7 @@ class Channel(T)
   @lock = Crystal::SpinLock.new
   @queue : Deque(T)?
 
-  module NotReady
-    extend self
-  end
+  record NotReady
 
   module SelectAction(S)
     abstract def execute : S | NotReady
@@ -342,7 +340,7 @@ class Channel(T)
 
     if non_blocking
       ops_locks.each &.unlock
-      return ops.size, NotReady
+      return ops.size, NotReady.new
     end
 
     state = Atomic(SelectState).new(SelectState::Active)
@@ -388,7 +386,7 @@ class Channel(T)
     end
 
     def execute : Channel::NotReady | T
-      @channel.receive_internal { return NotReady }
+      @channel.receive_internal { return NotReady.new }
     end
 
     def result : T
@@ -425,7 +423,7 @@ class Channel(T)
     end
 
     def execute : Channel::NotReady?
-      @channel.send_internal(@value) { return NotReady }
+      @channel.send_internal(@value) { return NotReady.new }
       nil
     end
 
