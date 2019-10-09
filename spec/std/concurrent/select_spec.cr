@@ -107,6 +107,30 @@ describe "select" do
     x.should eq 1
   end
 
+  it "select fiber has one chance to be enqueued into scheduler" do
+    ch1 = Channel(Int32).new
+    ch2 = Channel(Int32).new
+    ch3 = Channel(Int32).new
+
+    spawn do
+      select
+      when x = ch1.receive
+      when x = ch2.receive
+      end
+
+      x.should eq(1)
+    end
+
+    spawn do
+      ch1.send 1
+      ch3.send 3
+      ch2.close
+    end
+
+    ch3.receive.should eq(3)
+    Fiber.yield
+  end
+
   it "select same channel multiple times" do
     ch = Channel(Int32).new
 

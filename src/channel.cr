@@ -96,13 +96,21 @@ class Channel(T)
       @closed = true
 
       @senders.each do |sender|
-        sender.state_ptr.value = DeliveryState::Closed
-        sender.fiber.enqueue
+        if (select_context = sender.select_context) && !select_context.try_trigger
+          next
+        else
+          sender.state_ptr.value = DeliveryState::Closed
+          sender.fiber.enqueue
+        end
       end
 
       @receivers.each do |receiver|
-        receiver.state_ptr.value = DeliveryState::Closed
-        receiver.fiber.enqueue
+        if (select_context = receiver.select_context) && !select_context.try_trigger
+          next
+        else
+          receiver.state_ptr.value = DeliveryState::Closed
+          receiver.fiber.enqueue
+        end
       end
 
       @senders.clear
