@@ -294,7 +294,28 @@ class Channel(T)
     self.select ops
   end
 
-  def self.select(ops : Indexable(SelectAction), has_else = false)
+  def self.select(ops : Indexable(SelectAction))
+    select_impl(ops, false)
+  end
+
+  @[Deprecated("Use Channel.non_blocking_select")]
+  def self.select(ops : Indexable(SelectAction), has_else)
+    # The overload of Channel.select(Indexable(SelectAction), Bool)
+    # is used by LiteralExpander with the second argument as `true`.
+    # This overload is kept as a transition, but 0.32 will emit calls to
+    # Channel.select or Channel.non_blocking_select directly
+    non_blocking_select(ops)
+  end
+
+  def self.non_blocking_select(*ops : SelectAction)
+    self.non_blocking_select ops
+  end
+
+  def self.non_blocking_select(ops : Indexable(SelectAction))
+    select_impl(ops, true)
+  end
+
+  def self.select_impl(ops : Indexable(SelectAction), non_blocking)
     # Sort the operations by the channel they contain
     # This is to avoid deadlocks between concurrent `select` calls
     ops_locks = ops
@@ -314,7 +335,7 @@ class Channel(T)
       end
     end
 
-    if has_else
+    if non_blocking
       ops_locks.each &.unlock
       return ops.size, NotReady
     end
