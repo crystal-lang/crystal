@@ -16,6 +16,11 @@ require "crystal/spin_lock"
 # channel.receive # => 0
 # channel.receive # => 1
 # ```
+#
+# NOTE: Althought a `Channel(Nil)` or any other nilable types like `Channel(Int32?)` are valid
+# they are discouraged since from certain methods or constructs it receiving a `nil` as data
+# will be indistinguishable from a closed channel.
+#
 class Channel(T)
   @lock = Crystal::SpinLock.new
   @queue : Deque(T)?
