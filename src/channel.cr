@@ -113,6 +113,7 @@ class Channel(T)
 
       @senders.each do |sender|
         sender.state_ptr.value = DeliveryState::Closed
+        sender.select_context.try &.try_trigger
         sender.fiber.enqueue
       end
 
@@ -452,6 +453,7 @@ class Channel(T)
   # :nodoc:
   class SendAction(T)
     include SelectAction(Nil)
+    property state : DeliveryState
 
     def initialize(@channel : Channel(T), @value : T)
       @state = DeliveryState::None
@@ -471,7 +473,16 @@ class Channel(T)
     end
 
     def wait_result_impl(context : SelectContext(Nil))
-      context.action.result
+      case state
+      when DeliveryState::Delivered
+        context.action.result
+      when DeliveryState::Closed
+        raise ClosedError.new
+      when DeliveryState::None
+        raise "BUG: SendAction.wait_result_impl called with DeliveryState::None"
+      else
+        raise "unreachable"
+      end
     end
 
     def unwait

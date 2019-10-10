@@ -109,6 +109,57 @@ describe Channel do
         end
       end
     end
+
+    context "send raise-on-close single-channel" do
+      it "types" do
+        ch = Channel(String).new
+        spawn_and_wait(->{ ch.receive }) do
+          i, m = Channel.select(ch.send_select_action("foo"))
+          typeof(i).should eq(Int32)
+          typeof(m).should eq(Nil)
+        end
+      end
+
+      it "types nilable channel" do
+        # Yes, although it is discouraged
+        ch = Channel(Nil).new
+        spawn_and_wait(->{ ch.receive }) do
+          i, m = Channel.select(ch.send_select_action(nil))
+          typeof(i).should eq(Int32)
+          typeof(m).should eq(Nil)
+        end
+      end
+
+      it "raises if channel was closed" do
+        ch = Channel(String).new
+        spawn_and_wait(->{ ch.close }) do
+          expect_raises Channel::ClosedError do
+            Channel.select(ch.send_select_action("foo"))
+          end
+        end
+      end
+
+      it "raises if channel is closed while waiting" do
+        ch = Channel(String).new
+        spawn_and_wait(->{ sleep 0.2; ch.close }) do
+          expect_raises Channel::ClosedError do
+            Channel.select(ch.send_select_action("foo"))
+          end
+        end
+      end
+    end
+
+    context "send raise-on-close multi-channel" do
+      it "types" do
+        ch = Channel(String).new
+        ch2 = Channel(Bool).new
+        spawn_and_wait(->{ ch.receive }) do
+          i, m = Channel.select(ch.send_select_action("foo"), ch2.send_select_action(true))
+          typeof(i).should eq(Int32)
+          typeof(m).should eq(Nil)
+        end
+      end
+    end
   end
 
   describe ".non_blocking_select" do
@@ -131,6 +182,29 @@ describe Channel do
           i, m = Channel.non_blocking_select(ch.receive_select_action, ch2.receive_select_action)
           typeof(i).should eq(Int32)
           typeof(m).should eq(String | Bool | Channel::NotReady)
+        end
+      end
+    end
+
+    context "send raise-on-close single-channel" do
+      it "types" do
+        ch = Channel(String).new
+        spawn_and_wait(->{ ch.receive }) do
+          i, m = Channel.non_blocking_select(ch.send_select_action("foo"))
+          typeof(i).should eq(Int32)
+          typeof(m).should eq(Nil | Channel::NotReady)
+        end
+      end
+    end
+
+    context "send raise-on-close multi-channel" do
+      it "types" do
+        ch = Channel(String).new
+        ch2 = Channel(Bool).new
+        spawn_and_wait(->{ ch.receive }) do
+          i, m = Channel.non_blocking_select(ch.send_select_action("foo"), ch2.send_select_action(true))
+          typeof(i).should eq(Int32)
+          typeof(m).should eq(Nil | Channel::NotReady)
         end
       end
     end
