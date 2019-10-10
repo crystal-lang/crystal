@@ -10,9 +10,12 @@ end
 # If there is an exception in the block it will be
 # re-raised in the current fiber. Ideal for specs.
 private def spawn_and_wait(before : Proc(_), &block : -> _)
+  before_done = Channel(Nil).new
   done = Channel(Exception?).new
+
   spawn do
     begin
+      before_done.receive
       block.call
 
       done.send nil
@@ -21,7 +24,7 @@ private def spawn_and_wait(before : Proc(_), &block : -> _)
     end
   end
 
-  before.call
+  parallel(before.call, before_done.send(nil))
 
   ex = done.receive
   raise ex if ex
@@ -79,6 +82,15 @@ describe Channel do
       it "raises if channel was closed" do
         ch = Channel(String).new
         spawn_and_wait(->{ ch.close }) do
+          expect_raises Channel::ClosedError do
+            Channel.select(ch.receive_select_action)
+          end
+        end
+      end
+
+      it "raises if channel is closed while waiting" do
+        ch = Channel(String).new
+        spawn_and_wait(->{ sleep 0.2; ch.close }) do
           expect_raises Channel::ClosedError do
             Channel.select(ch.receive_select_action)
           end

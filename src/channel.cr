@@ -30,6 +30,7 @@ class Channel(T)
   module SelectAction(S)
     abstract def execute : S | NotReady
     abstract def wait(context : SelectContext(S))
+    abstract def wait_result_impl(context : SelectContext(S))
     abstract def unwait
     abstract def result : S
     abstract def lock_object_id
@@ -41,6 +42,17 @@ class Channel(T)
       context = SelectContext.new(state_ptr, self)
       self.wait(context)
       context
+    end
+
+    # wait_result overload allow implementors to define
+    # wait_result_impl with the right type and Channel.select_impl
+    # to allow dispatching over unions that will not happen
+    def wait_result(context : SelectContext)
+      raise "BUG: Unexpected call to #{typeof(self)}#wait_result(context : #{typeof(context)})"
+    end
+
+    def wait_result(context : SelectContext(S))
+      wait_result_impl(context)
     end
   end
 
@@ -106,6 +118,7 @@ class Channel(T)
 
       @receivers.each do |receiver|
         receiver.state_ptr.value = DeliveryState::Closed
+        receiver.select_context.try &.try_trigger
         receiver.fiber.enqueue
       end
 
@@ -362,7 +375,7 @@ class Channel(T)
 
     contexts.each_with_index do |context, index|
       if context.activated?
-        return index, context.action.result
+        return index, ops[index].wait_result(context)
       end
     end
 
@@ -400,6 +413,19 @@ class Channel(T)
 
     def wait(context : SelectContext(T))
       @channel.wait_for_receive(pointerof(@value), pointerof(@state), context)
+    end
+
+    def wait_result_impl(context : SelectContext(T))
+      case state
+      when DeliveryState::Delivered
+        context.action.result
+      when DeliveryState::Closed
+        raise ClosedError.new
+      when DeliveryState::None
+        raise "BUG: ReceiveAction.wait_result_impl called with DeliveryState::None"
+      else
+        raise "unreachable"
+      end
     end
 
     def unwait
@@ -442,6 +468,10 @@ class Channel(T)
 
     def wait(context : SelectContext(Nil))
       @channel.wait_for_send(@value, pointerof(@state), context)
+    end
+
+    def wait_result_impl(context : SelectContext(Nil))
+      context.action.result
     end
 
     def unwait
