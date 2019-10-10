@@ -16,7 +16,7 @@ module Crystal::System::FileDescriptor
   private def unbuffered_write(slice : Bytes)
     evented_write(slice, "Error writing file") do |slice|
       LibC.write(@fd, slice, slice.size).tap do |return_code|
-        if return_code == -1 && Errno.value == Errno::EBADF
+        if return_code == -1 && Errno.value == Errno::EBADF.value
           raise IO::Error.new "File not open for writing"
         end
       end
@@ -112,7 +112,7 @@ module Crystal::System::FileDescriptor
   private def system_close
     if LibC.close(@fd) != 0
       case Errno.value
-      when Errno::EINTR, Errno::EINPROGRESS
+      when Errno::EINTR.value, Errno::EINPROGRESS.value
         # ignore
       else
         raise Errno.new("Error closing file")

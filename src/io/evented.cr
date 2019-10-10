@@ -55,7 +55,7 @@ module IO::Evented
         return bytes_read.to_i32
       end
 
-      if Errno.value == Errno::EAGAIN
+      if Errno.value == Errno::EAGAIN.value
         wait_readable
       else
         raise Errno.new(errno_msg)
@@ -76,7 +76,7 @@ module IO::Evented
           slice += bytes_written
           return if slice.size == 0
         else
-          if Errno.value == Errno::EAGAIN
+          if Errno.value == Errno::EAGAIN.value
             wait_writable
           else
             raise Errno.new(errno_msg)

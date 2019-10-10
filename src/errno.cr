@@ -18,205 +18,477 @@ end
 # dealing with C libraries.
 #
 # This class is the exception thrown when errno errors are encountered.
-class Errno < Exception
+class Errno
+  class Error < Exception
+    # Returns the numeric value of errno.
+    getter value : Int32
+
+    # Returns the message of errno.
+    getter errno_message : String
+
+    # Creates a new `Errno` with the given message. The message will
+    # have concatenated the errno message denoted by *errno*.
+    #
+    # Typical usage:
+    #
+    # ```
+    # err = LibC.some_call
+    # if err == -1
+    #   raise Errno.new("some_call")
+    # end
+    # ```
+    def initialize(message, @value = value)
+      @errno_message = String.new(LibC.strerror(@value))
+      super "#{message}: #{@errno_message}"
+    end
+    
+    def self.value
+      Errno.value
+    end
+  end
+
   # Argument list too long
-  E2BIG = LibC::E2BIG
+  class E2BIG < Error
+    class_getter value = LibC::E2BIG
+  end
+
   # Operation not permitted
-  EPERM = LibC::EPERM
+  class EPERM < Error
+    class_getter value = LibC::EPERM
+  end
+
   # No such file or directory
-  ENOENT = LibC::ENOENT
+  class ENOENT < Error
+    class_getter value = LibC::ENOENT
+  end
+
   # No such process
-  ESRCH = LibC::ESRCH
+  class ESRCH < Error
+    class_getter value = LibC::ESRCH
+  end
+
   # Interrupted system call
-  EINTR = LibC::EINTR
+  class EINTR < Error
+    class_getter value = LibC::EINTR
+  end
+
   # Input/output error
-  EIO = LibC::EIO
+  class EIO < Error
+    class_getter value = LibC::EIO
+  end
+
   # Device not configured
-  ENXIO = LibC::ENXIO
+  class ENXIO < Error
+    class_getter value = LibC::ENXIO
+  end
+
   # Exec format error
-  ENOEXEC = LibC::ENOEXEC
+  class ENOEXEC < Error
+    class_getter value = LibC::ENOEXEC
+  end
+
   # Bad file descriptor
-  EBADF = LibC::EBADF
+  class EBADF < Error
+    class_getter value = LibC::EBADF
+  end
+
   # No child processes
-  ECHILD = LibC::ECHILD
+  class ECHILD < Error
+    class_getter value = LibC::ECHILD
+  end
+
   # Resource deadlock avoided
-  EDEADLK = LibC::EDEADLK
+  class EDEADLK < Error
+    class_getter value = LibC::EDEADLK
+  end
+
   # Cannot allocate memory
-  ENOMEM = LibC::ENOMEM
+  class ENOMEM < Error
+    class_getter value = LibC::ENOMEM
+  end
+
   # Permission denied
-  EACCES = LibC::EACCES
+  class EACCES < Error
+    class_getter value = LibC::EACCES
+  end
+
   # Bad address
-  EFAULT = LibC::EFAULT
+  class EFAULT < Error
+    class_getter value = LibC::EFAULT
+  end
+
   # Block device required
-  ENOTBLK = LibC::ENOTBLK
+  class ENOTBLK < Error
+    class_getter value = LibC::ENOTBLK
+  end
+
   # Device / Resource busy
-  EBUSY = LibC::EBUSY
+  class EBUSY < Error
+    class_getter value = LibC::EBUSY
+  end
+
   # File exists
-  EEXIST = LibC::EEXIST
+  class EEXIST < Error
+    class_getter value = LibC::EEXIST
+  end
+
   # Cross-device link
-  EXDEV = LibC::EXDEV
+  class EXDEV < Error
+    class_getter value = LibC::EXDEV
+  end
+
   # Operation not supported by device
-  ENODEV = LibC::ENODEV
+  class ENODEV < Error
+    class_getter value = LibC::ENODEV
+  end
+
   # Not a directory
-  ENOTDIR = LibC::ENOTDIR
+  class ENOTDIR < Error
+    class_getter value = LibC::ENOTDIR
+  end
+
   # Is a directory
-  EISDIR = LibC::EISDIR
+  class EISDIR < Error
+    class_getter value = LibC::EISDIR
+  end
+
   # Invalid argument
-  EINVAL = LibC::EINVAL
+  class EINVAL < Error
+    class_getter value = LibC::EINVAL
+  end
+
   # Too many open files in system
-  ENFILE = LibC::ENFILE
+  class ENFILE < Error
+    class_getter value = LibC::ENFILE
+  end
+
   # Too many open files
-  EMFILE = LibC::EMFILE
+  class EMFILE < Error
+    class_getter value = LibC::EMFILE
+  end
+
   # Inappropriate ioctl for device
-  ENOTTY = LibC::ENOTTY
+  class ENOTTY < Error
+    class_getter value = LibC::ENOTTY
+  end
+
   # Text file busy
-  ETXTBSY = LibC::ETXTBSY
+  class ETXTBSY < Error
+    class_getter value = LibC::ETXTBSY
+  end
+
   # File too large
-  EFBIG = LibC::EFBIG
+  class EFBIG < Error
+    class_getter value = LibC::EFBIG
+  end
+
   # No space left on device
-  ENOSPC = LibC::ENOSPC
+  class ENOSPC < Error
+    class_getter value = LibC::ENOSPC
+  end
+
   # Illegal seek
-  ESPIPE = LibC::ESPIPE
+  class ESPIPE < Error
+    class_getter value = LibC::ESPIPE
+  end
+
   # Read-only file system
-  EROFS = LibC::EROFS
+  class EROFS < Error
+    class_getter value = LibC::EROFS
+  end
+
   # Too many links
-  EMLINK = LibC::EMLINK
+  class EMLINK < Error
+    class_getter value = LibC::EMLINK
+  end
+
   # Broken pipe
-  EPIPE = LibC::EPIPE
+  class EPIPE < Error
+    class_getter value = LibC::EPIPE
+  end
+
   # Numerical argument out of domain
-  EDOM = LibC::EDOM
+  class EDOM < Error
+    class_getter value = LibC::EDOM
+  end
+
   # Result too large
-  ERANGE = LibC::ERANGE
+  class ERANGE < Error
+    class_getter value = LibC::ERANGE
+  end
+
   # Resource temporarily unavailable
-  EAGAIN = LibC::EAGAIN
+  class EAGAIN < Error
+    class_getter value = LibC::EAGAIN
+  end
+
   # Operation would block
-  EWOULDBLOCK = LibC::EWOULDBLOCK
+  class EWOULDBLOCK < Error
+    class_getter value = LibC::EWOULDBLOCK
+  end
+
   # Operation now in progress
-  EINPROGRESS = LibC::EINPROGRESS
+  class EINPROGRESS < Error
+    class_getter value = LibC::EINPROGRESS
+  end
+
   # Operation already in progress
-  EALREADY = LibC::EALREADY
+  class EALREADY < Error
+    class_getter value = LibC::EALREADY
+  end
+
   # Socket operation on non-socket
-  ENOTSOCK = LibC::ENOTSOCK
+  class ENOTSOCK < Error
+    class_getter value = LibC::ENOTSOCK
+  end
+
   # Destination address required
-  EDESTADDRREQ = LibC::EDESTADDRREQ
+  class EDESTADDRREQ < Error
+    class_getter value = LibC::EDESTADDRREQ
+  end
+
   # Message too long
-  EMSGSIZE = LibC::EMSGSIZE
+  class EMSGSIZE < Error
+    class_getter value = LibC::EMSGSIZE
+  end
+
   # Protocol wrong type for socket
-  EPROTOTYPE = LibC::EPROTOTYPE
+  class EPROTOTYPE < Error
+    class_getter value = LibC::EPROTOTYPE
+  end
+
   # Protocol not available
-  ENOPROTOOPT = LibC::ENOPROTOOPT
+  class ENOPROTOOPT < Error
+    class_getter value = LibC::ENOPROTOOPT
+  end
+
   # Protocol not supported
-  EPROTONOSUPPORT = LibC::EPROTONOSUPPORT
+  class EPROTONOSUPPORT < Error
+    class_getter value = LibC::EPROTONOSUPPORT
+  end
+
   # Socket type not supported
-  ESOCKTNOSUPPORT = LibC::ESOCKTNOSUPPORT
+  class ESOCKTNOSUPPORT < Error
+    class_getter value = LibC::ESOCKTNOSUPPORT
+  end
+
   # Protocol family not supported
-  EPFNOSUPPORT = LibC::EPFNOSUPPORT
+  class EPFNOSUPPORT < Error
+    class_getter value = LibC::EPFNOSUPPORT
+  end
+
   # Address family not supported by protocol family
-  EAFNOSUPPORT = LibC::EAFNOSUPPORT
+  class EAFNOSUPPORT < Error
+    class_getter value = LibC::EAFNOSUPPORT
+  end
+
   # Address already in use
-  EADDRINUSE = LibC::EADDRINUSE
+  class EADDRINUSE < Error
+    class_getter value = LibC::EADDRINUSE
+  end
+
   # Can't assign requested address
-  EADDRNOTAVAIL = LibC::EADDRNOTAVAIL
+  class EADDRNOTAVAIL < Error
+    class_getter value = LibC::EADDRNOTAVAIL
+  end
+
   # Network is down
-  ENETDOWN = LibC::ENETDOWN
+  class ENETDOWN < Error
+    class_getter value = LibC::ENETDOWN
+  end
+
   # Network is unreachable
-  ENETUNREACH = LibC::ENETUNREACH
+  class ENETUNREACH < Error
+    class_getter value = LibC::ENETUNREACH
+  end
+
   # Network dropped connection on reset
-  ENETRESET = LibC::ENETRESET
+  class ENETRESET < Error
+    class_getter value = LibC::ENETRESET
+  end
+
   # Software caused connection abort
-  ECONNABORTED = LibC::ECONNABORTED
+  class ECONNABORTED < Error
+    class_getter value = LibC::ECONNABORTED
+  end
+
   # Connection reset by peer
-  ECONNRESET = LibC::ECONNRESET
+  class ECONNRESET < Error
+    class_getter value = LibC::ECONNRESET
+  end
+
   # No buffer space available
-  ENOBUFS = LibC::ENOBUFS
+  class ENOBUFS < Error
+    class_getter value = LibC::ENOBUFS
+  end
+
   # Socket is already connected
-  EISCONN = LibC::EISCONN
+  class EISCONN < Error
+    class_getter value = LibC::EISCONN
+  end
+
   # Socket is not connected
-  ENOTCONN = LibC::ENOTCONN
+  class ENOTCONN < Error
+    class_getter value = LibC::ENOTCONN
+  end
+
   # Can't send after socket shutdown
-  ESHUTDOWN = LibC::ESHUTDOWN
+  class ESHUTDOWN < Error
+    class_getter value = LibC::ESHUTDOWN
+  end
+
   # Too many references: can't splice
-  ETOOMANYREFS = LibC::ETOOMANYREFS
+  class ETOOMANYREFS < Error
+    class_getter value = LibC::ETOOMANYREFS
+  end
+
   # Operation timed out
-  ETIMEDOUT = LibC::ETIMEDOUT
+  class ETIMEDOUT < Error
+    class_getter value = LibC::ETIMEDOUT
+  end
+
   # Connection refused
-  ECONNREFUSED = LibC::ECONNREFUSED
+  class ECONNREFUSED < Error
+    class_getter value = LibC::ECONNREFUSED
+  end
+
   # Too many levels of symbolic links
-  ELOOP = LibC::ELOOP
+  class ELOOP < Error
+    class_getter value = LibC::ELOOP
+  end
+
   # File name too long
-  ENAMETOOLONG = LibC::ENAMETOOLONG
+  class ENAMETOOLONG < Error
+    class_getter value = LibC::ENAMETOOLONG
+  end
+
   # Host is down
-  EHOSTDOWN = LibC::EHOSTDOWN
+  class EHOSTDOWN < Error
+    class_getter value = LibC::EHOSTDOWN
+  end
+
   # No route to host
-  EHOSTUNREACH = LibC::EHOSTUNREACH
+  class EHOSTUNREACH < Error
+    class_getter value = LibC::EHOSTUNREACH
+  end
+
   # Directory not empty
-  ENOTEMPTY = LibC::ENOTEMPTY
+  class ENOTEMPTY < Error
+    class_getter value = LibC::ENOTEMPTY
+  end
+
   # Too many users
-  EUSERS = LibC::EUSERS
+  class EUSERS < Error
+    class_getter value = LibC::EUSERS
+  end
+
   # Disc quota exceeded
-  EDQUOT = LibC::EDQUOT
+  class EDQUOT < Error
+    class_getter value = LibC::EDQUOT
+  end
+
   # Stale NFS file handle
-  ESTALE = LibC::ESTALE
+  class ESTALE < Error
+    class_getter value = LibC::ESTALE
+  end
+
   # Too many levels of remote in path
-  EREMOTE = LibC::EREMOTE
+  class EREMOTE < Error
+    class_getter value = LibC::EREMOTE
+  end
+
   # No locks available
-  ENOLCK = LibC::ENOLCK
+  class ENOLCK < Error
+    class_getter value = LibC::ENOLCK
+  end
+
   # Function not implemented
-  ENOSYS = LibC::ENOSYS
+  class ENOSYS < Error
+    class_getter value = LibC::ENOSYS
+  end
+
   # Value too large to be stored in data type
-  EOVERFLOW = LibC::EOVERFLOW
+  class EOVERFLOW < Error
+    class_getter value = LibC::EOVERFLOW
+  end
+
   # Operation canceled
-  ECANCELED = LibC::ECANCELED
+  class ECANCELED < Error
+    class_getter value = LibC::ECANCELED
+  end
+
   # Identifier removed
-  EIDRM = LibC::EIDRM
+  class EIDRM < Error
+    class_getter value = LibC::EIDRM
+  end
+
   # No message of desired type
-  ENOMSG = LibC::ENOMSG
+  class ENOMSG < Error
+    class_getter value = LibC::ENOMSG
+  end
+
   # Illegal byte sequence
-  EILSEQ = LibC::EILSEQ
+  class EILSEQ < Error
+    class_getter value = LibC::EILSEQ
+  end
+
   # Bad message
-  EBADMSG = LibC::EBADMSG
+  class EBADMSG < Error
+    class_getter value = LibC::EBADMSG
+  end
+
   # Reserved
-  EMULTIHOP = LibC::EMULTIHOP
+  class EMULTIHOP < Error
+    class_getter value = LibC::EMULTIHOP
+  end
+
   # No message available on STREAM
-  ENODATA = LibC::ENODATA
+  class ENODATA < Error
+    class_getter value = LibC::ENODATA
+  end
+
   # Reserved
-  ENOLINK = LibC::ENOLINK
+  class ENOLINK < Error
+    class_getter value = LibC::ENOLINK
+  end
+
   # No STREAM resources
-  ENOSR = LibC::ENOSR
+  class ENOSR < Error
+    class_getter value = LibC::ENOSR
+  end
+
   # Not a STREAM
-  ENOSTR = LibC::ENOSTR
+  class ENOSTR < Error
+    class_getter value = LibC::ENOSTR
+  end
+
   # Protocol error
-  EPROTO = LibC::EPROTO
+  class EPROTO < Error
+    class_getter value = LibC::EPROTO
+  end
+
   # STREAM ioctl timeout
-  ETIME = LibC::ETIME
+  class ETIME < Error
+    class_getter value = LibC::ETIME
+  end
+
   # Operation not supported on socket
-  EOPNOTSUPP = LibC::EOPNOTSUPP
+  class EOPNOTSUPP < Error
+    class_getter value = LibC::EOPNOTSUPP
+  end
+
   # State not recoverable
-  ENOTRECOVERABLE = LibC::ENOTRECOVERABLE
+  class ENOTRECOVERABLE < Error
+    class_getter value = LibC::ENOTRECOVERABLE
+  end
+
   # Previous owner died
-  EOWNERDEAD = LibC::EOWNERDEAD
-
-  # Returns the numeric value of errno.
-  getter errno : Int32
-
-  # Returns the message of errno.
-  getter errno_message : String
-
-  # Creates a new `Errno` with the given message. The message will
-  # have concatenated the errno message denoted by *errno*.
-  #
-  # Typical usage:
-  #
-  # ```
-  # err = LibC.some_call
-  # if err == -1
-  #   raise Errno.new("some_call")
-  # end
-  # ```
-  def initialize(message, errno = Errno.value)
-    @errno = errno
-    @errno_message = String.new(LibC.strerror(@errno))
-    super "#{message}: #{@errno_message}"
+  class EOWNERDEAD < Error
+    class_getter value = LibC::EOWNERDEAD
+  end
+  
+  def self.new(message, value = Errno.value)
+    Error.new message, value
   end
 
   # Returns the value of libc's errno.
@@ -245,3 +517,4 @@ class Errno < Exception
     {% end %}
   end
 end
+

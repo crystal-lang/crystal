@@ -202,7 +202,7 @@ class Dir
           begin
             dir = Dir.new(path || ".")
             dir_stack << dir
-          rescue Errno
+          rescue Errno::Error
             return
           end
           recurse = false
@@ -211,7 +211,7 @@ class Dir
             if recurse
               begin
                 dir = Dir.new(dir_path)
-              rescue Errno
+              rescue Errno::Error
                 dir_path_stack.pop
                 break if dir_path_stack.empty?
                 dir_path = dir_path_stack.last
@@ -293,8 +293,8 @@ class Dir
           yield entry
         end
       end
-    rescue exc : Errno
-      raise exc unless exc.errno == Errno::ENOENT
+    rescue ex : Errno::Error
+      raise ex unless ex.value == Errno::ENOENT.value
     end
 
     private def self.read_entry(dir)

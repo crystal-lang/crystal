@@ -174,8 +174,8 @@ class File < IO::FileDescriptor
   # ```
   def self.size(filename : Path | String) : UInt64
     info(filename).size
-  rescue ex : Errno
-    raise Errno.new("Error determining size of '#{filename.inspect_unquoted}'", ex.errno)
+  rescue ex : Errno::Error
+    raise ex.class.new("Error determining size of '#{filename.inspect_unquoted}'", ex.value)
   end
 
   # Returns `true` if the file at *path* is empty, otherwise returns `false`.

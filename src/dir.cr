@@ -223,8 +223,8 @@ class Dir
       return false
     end
     true
-  rescue ex : Errno
-    raise Errno.new("Error determining size of '#{path}'", ex.errno)
+  rescue ex : Errno::Error
+    raise ex.class.new("Error determining size of '#{path}'", ex.value)
   end
 
   # Creates a new directory at the given path. The linux-style permission mode

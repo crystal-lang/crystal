@@ -7,9 +7,9 @@
 # *message* should usually only validate parts of the error message added by
 # Crystal.
 def expect_raises_errno(errno, message = nil, file = __FILE__, line = __LINE__, end_line = __END_LINE__)
-  error = expect_raises(Errno, message, file: file, line: line) do
+  error = expect_raises(Errno::Error, message, file: file, line: line) do
     yield
   end
-  error.errno.should eq(errno), file: file, line: line
+  error.class.value.should eq(errno.value), file: file, line: line
   error
 end

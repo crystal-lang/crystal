@@ -15,7 +15,7 @@ module Crystal::System::FileDescriptor
     until slice.empty?
       bytes_written = LibC._write(@fd, slice, slice.size)
       if bytes_written == -1
-        if Errno.value == Errno::EBADF
+        if Errno.value == Errno::EBADF.value
           raise IO::Error.new "File not open for writing"
         else
           raise Errno.new("Error writing file")
@@ -117,7 +117,7 @@ module Crystal::System::FileDescriptor
     err = nil
     if LibC._close(@fd) != 0
       case Errno.value
-      when Errno::EINTR
+      when Errno::EINTR.value
         # ignore
       else
         raise Errno.new("Error closing file")

@@ -13,7 +13,7 @@ module Crystal::System::Dir
 
   def self.open(path : String) : DirHandle
     unless ::Dir.exists? path
-      raise Errno.new("Error opening directory #{path.inspect}", Errno::ENOENT)
+      raise Errno::ENOENT.new("Error opening directory #{path.inspect}")
     end
 
     DirHandle.new(LibC::INVALID_HANDLE_VALUE, to_windows_path(path + "\\*"))

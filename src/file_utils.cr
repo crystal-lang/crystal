@@ -355,7 +355,7 @@ module FileUtils
     srcs.each do |src|
       begin
         mv(src, File.join(dest, File.basename(src)))
-      rescue Errno
+      rescue Errno::Error
       end
     end
   end
@@ -448,7 +448,7 @@ module FileUtils
   def rm_rf(path : String) : Nil
     begin
       rm_r(path)
-    rescue Errno
+    rescue Errno::Error
     end
   end
 
@@ -465,7 +465,7 @@ module FileUtils
     paths.each do |path|
       begin
         rm_r(path)
-      rescue Errno
+      rescue Errno::Error
       end
     end
   end

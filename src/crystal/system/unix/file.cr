@@ -37,7 +37,8 @@ module Crystal::System::File
     if ret == 0
       FileInfo.new(stat)
     else
-      if {Errno::ENOENT, Errno::ENOTDIR}.includes? Errno.value
+      case Errno.value
+      when Errno::ENOENT.value, Errno::ENOTDIR.value
         return nil
       else
         raise Errno.new("Unable to get info for '#{path.inspect_unquoted}'")
@@ -122,8 +123,7 @@ module Crystal::System::File
       end
     end
 
-    Errno.value = Errno::ENAMETOOLONG
-    raise Errno.new("readlink")
+    raise Errno::ENAMETOOLONG.new("readlink")
   end
 
   def self.rename(old_filename, new_filename)

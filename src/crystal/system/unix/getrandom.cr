@@ -79,7 +79,7 @@ module Crystal::System::Random
   private def self.sys_getrandom(buf : Bytes)
     loop do
       read_bytes = LibC.syscall(LibC::SYS_getrandom, buf, LibC::SizeT.new(buf.size), 0)
-      if read_bytes < 0 && (Errno.value == Errno::EINTR || Errno.value == Errno::EAGAIN)
+      if read_bytes < 0 && (Errno.value == Errno::EINTR.value || Errno.value == Errno::EAGAIN.value)
         Fiber.yield
       else
         return read_bytes

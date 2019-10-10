@@ -173,7 +173,7 @@ module Crystal::System::File
     end
 
     unless exists? real_path
-      raise Errno.new("Error resolving real path of #{path.inspect}", Errno::ENOTDIR)
+      raise Errno::ENOTDIR.new("Error resolving real path of #{path.inspect}")
     end
 
     real_path

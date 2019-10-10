@@ -52,7 +52,7 @@ class Process
     if ret == 0
       true
     else
-      return false if Errno.value == Errno::ESRCH
+      return false if Errno.value == Errno::ESRCH.value
       raise Errno.new("kill")
     end
   end
@@ -265,8 +265,8 @@ class Process
         reader_pipe.close
         writer_pipe.close_on_exec = true
         Process.exec_internal(command, args, env, clear_env, fork_input, fork_output, fork_error, chdir)
-      rescue ex : Errno
-        writer_pipe.write_bytes(ex.errno)
+      rescue ex : Errno::Error
+        writer_pipe.write_bytes(ex.value)
         writer_pipe.write_bytes(ex.message.try(&.bytesize) || 0)
         writer_pipe << ex.message
         writer_pipe.close
@@ -287,7 +287,7 @@ class Process
         message = String.build(message_size) { |io| IO.copy(reader_pipe, io, message_size) }
       end
       reader_pipe.close
-      raise Errno.new(message, errno)
+      raise errno.class.new message
     end
     reader_pipe.close
 

@@ -24,7 +24,7 @@ class Thread
       case ret = LibC.pthread_mutex_trylock(self)
       when 0
         true
-      when Errno::EBUSY
+      when Errno::EBUSY.value
         false
       else
         raise Errno.new("pthread_mutex_trylock", ret)

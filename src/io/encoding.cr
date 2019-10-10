@@ -97,10 +97,10 @@ class IO
         # Check for errors
         if result == Iconv::ERROR
           case Errno.value
-          when Errno::EILSEQ
+          when Errno::EILSEQ.value
             # For an illegal sequence we just skip one byte and we'll continue next
             @iconv.handle_invalid(pointerof(@in_buffer), pointerof(@in_buffer_left))
-          when Errno::EINVAL
+          when Errno::EINVAL.value
             # EINVAL means "An incomplete multibyte sequence has been encountered in the input."
             old_in_buffer_left = @in_buffer_left
 

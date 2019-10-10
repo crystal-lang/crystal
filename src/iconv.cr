@@ -20,7 +20,7 @@ struct Iconv
     @iconv = LibC.iconv_open(to, from)
 
     if @iconv.address == ERROR
-      if Errno.value == Errno::EINVAL
+      if Errno.value == Errno::EINVAL.value
         if original_from == "UTF-8"
           raise ArgumentError.new("Invalid encoding: #{original_to}")
         elsif original_to == "UTF-8"
@@ -62,9 +62,9 @@ struct Iconv
       end
     else
       case Errno.value
-      when Errno::EINVAL
+      when Errno::EINVAL.value
         raise ArgumentError.new "Incomplete multibyte sequence"
-      when Errno::EILSEQ
+      when Errno::EILSEQ.value
         raise ArgumentError.new "Invalid multibyte sequence"
       end
     end

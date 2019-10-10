@@ -131,9 +131,9 @@ class Socket < IO
         return
       end
       case Errno.value
-      when Errno::EISCONN
+      when Errno::EISCONN.value
         return
-      when Errno::EINPROGRESS, Errno::EALREADY
+      when Errno::EINPROGRESS.value, Errno::EALREADY.value
         wait_writable(timeout: timeout) do |error|
           return yield IO::Timeout.new("connect timed out")
         end
@@ -249,7 +249,7 @@ class Socket < IO
       if client_fd == -1
         if closed?
           return
-        elsif Errno.value == Errno::EAGAIN
+        elsif Errno.value == Errno::EAGAIN.value
           wait_readable
         else
           raise Errno.new("accept")
@@ -393,7 +393,7 @@ class Socket < IO
   def reuse_port?
     ret = getsockopt(LibC::SO_REUSEPORT, 0) do |errno|
       # If SO_REUSEPORT is not supported, the return value should be `false`
-      if errno.errno == Errno::ENOPROTOOPT
+      if errno.value == LibC::ENOPROTOOPT
         return false
       else
         raise errno
@@ -559,7 +559,7 @@ class Socket < IO
     err = nil
     if LibC.close(@fd) != 0
       case Errno.value
-      when Errno::EINTR, Errno::EINPROGRESS
+      when Errno::EINTR.value, Errno::EINPROGRESS.value
         # ignore
       else
         err = Errno.new("Error closing socket")

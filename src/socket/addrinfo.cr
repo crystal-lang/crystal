@@ -69,8 +69,8 @@ class Socket
           end
 
           unless addrinfo = addrinfo.try(&.next?)
-            if error.is_a?(Errno) && error.errno == Errno::ECONNREFUSED
-              raise Errno.new("Error connecting to '#{domain}:#{service}'", error.errno)
+            if error.is_a?(Errno) && error.errno == Errno::ECONNREFUSED.value
+              raise Errno::ECONNREFUSED.new("Error connecting to '#{domain}:#{service}'")
             else
               raise error if error
             end

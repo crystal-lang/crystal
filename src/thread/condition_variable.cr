@@ -57,7 +57,7 @@ class Thread
       case ret
       when 0
         # normal resume from #signal or #broadcast
-      when Errno::ETIMEDOUT
+      when Errno::ETIMEDOUT.value
         yield
       else
         raise Errno.new("pthread_cond_timedwait", ret)

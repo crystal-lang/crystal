@@ -46,8 +46,8 @@ require "./ip_socket"
 # ```
 # begin
 #   client.send(message, @destination)
-# rescue ex : Errno
-#   if ex.errno == Errno::ECONNREFUSED
+# rescue ex : Errno::Error
+#   if ex.errno == Errno::ECONNREFUSED.value
 #     p ex.inspect
 #   end
 # end
