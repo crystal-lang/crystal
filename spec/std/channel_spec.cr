@@ -5,6 +5,28 @@ private def yield_to(fiber)
   Crystal::Scheduler.resume(fiber)
 end
 
+# Right after executing the block in a spawn,
+# it will wait for the block to finish.
+# If there is an exception in the block it will be
+# re-raised in the current fiber. Ideal for specs.
+private def spawn_and_wait(before : Proc(_), &block : -> _)
+  done = Channel(Exception?).new
+  spawn do
+    begin
+      block.call
+
+      done.send nil
+    rescue e
+      done.send e
+    end
+  end
+
+  before.call
+
+  ex = done.receive
+  raise ex if ex
+end
+
 describe Channel do
   it "creates unbuffered with no arguments" do
     Channel(Int32).new
@@ -31,6 +53,66 @@ describe Channel do
     ch1.send(1)
     Channel.send_first(2, ch1, ch2)
     ch2.receive.should eq 2
+  end
+
+  describe ".select" do
+    context "receive raise-on-close single-channel" do
+      it "types" do
+        ch = Channel(String).new
+        spawn_and_wait(->{ ch.send "foo" }) do
+          i, m = Channel.select(ch.receive_select_action)
+          typeof(i).should eq(Int32)
+          typeof(m).should eq(String)
+        end
+      end
+
+      it "types nilable channel" do
+        # Yes, although it is discouraged
+        ch = Channel(Nil).new
+        spawn_and_wait(->{ ch.send nil }) do
+          i, m = Channel.select(ch.receive_select_action)
+          typeof(i).should eq(Int32)
+          typeof(m).should eq(Nil)
+        end
+      end
+    end
+
+    context "receive raise-on-close multi-channel" do
+      it "types" do
+        ch = Channel(String).new
+        ch2 = Channel(Bool).new
+        spawn_and_wait(->{ ch.send "foo" }) do
+          i, m = Channel.select(ch.receive_select_action, ch2.receive_select_action)
+          typeof(i).should eq(Int32)
+          typeof(m).should eq(String | Bool)
+        end
+      end
+    end
+  end
+
+  describe ".non_blocking_select" do
+    context "receive raise-on-close single-channel" do
+      it "types" do
+        ch = Channel(String).new
+        spawn_and_wait(->{ ch.send "foo" }) do
+          i, m = Channel.non_blocking_select(ch.receive_select_action)
+          typeof(i).should eq(Int32)
+          typeof(m).should eq(String | Channel::NotReady)
+        end
+      end
+    end
+
+    context "receive raise-on-close multi-channel" do
+      it "types" do
+        ch = Channel(String).new
+        ch2 = Channel(Bool).new
+        spawn_and_wait(->{ ch.send "foo" }) do
+          i, m = Channel.non_blocking_select(ch.receive_select_action, ch2.receive_select_action)
+          typeof(i).should eq(Int32)
+          typeof(m).should eq(String | Bool | Channel::NotReady)
+        end
+      end
+    end
   end
 end
 

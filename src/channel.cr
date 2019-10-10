@@ -277,10 +277,6 @@ class Channel(T)
 
   def self.receive_first(channels : Tuple | Array)
     _, value = self.select(channels.map(&.receive_select_action))
-    if value.is_a?(NotReady)
-      raise "BUG: Channel.select returned not ready status"
-    end
-
     value
   end
 
@@ -298,7 +294,9 @@ class Channel(T)
   end
 
   def self.select(ops : Indexable(SelectAction))
-    select_impl(ops, false)
+    i, m = select_impl(ops, false)
+    raise "BUG: blocking select returned not ready status" if m.is_a?(NotReady)
+    return i, m
   end
 
   @[Deprecated("Use Channel.non_blocking_select")]
