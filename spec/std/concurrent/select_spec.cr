@@ -144,6 +144,56 @@ describe "select" do
     x.should eq 1
   end
 
+  it "select fiber has one chance to be enqueued into scheduler (1)" do
+    ch1 = Channel(Int32).new
+    ch2 = Channel(Int32).new
+    ch3 = Channel(Int32).new
+    x = nil
+
+    spawn do
+      select
+      when x = ch1.receive
+      when x = ch2.receive
+      end
+    end
+
+    spawn do
+      ch1.send 1
+      ch3.send 3
+      ch2.close
+    end
+
+    ch3.receive.should eq(3)
+    Fiber.yield
+    x.should eq(1)
+  end
+
+  it "select fiber has one chance to be enqueued into scheduler (2)" do
+    ch1 = Channel(Int32).new
+    ch2 = Channel(Int32).new
+    ch3 = Channel(Int32).new
+    x = nil
+
+    spawn do
+      select
+      when ch1.send 1
+        x = 1
+      when ch2.send 2
+        x = 2
+      end
+    end
+
+    spawn do
+      ch1.receive
+      ch3.send 3
+      ch2.close
+    end
+
+    ch3.receive.should eq(3)
+    Fiber.yield
+    x.should eq(1)
+  end
+
   it "select same channel multiple times" do
     ch = Channel(Int32).new
 
