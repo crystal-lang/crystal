@@ -348,7 +348,6 @@ class Channel(T)
     end
 
     ops.each_with_index do |op, index|
-      ignore = false
       result = op.execute
 
       unless result.is_a?(NotReady)
