@@ -75,6 +75,15 @@ describe Channel do
           typeof(m).should eq(Nil)
         end
       end
+
+      it "raises if channel was closed" do
+        ch = Channel(String).new
+        spawn_and_wait(->{ ch.close }) do
+          expect_raises Channel::ClosedError do
+            Channel.select(ch.receive_select_action)
+          end
+        end
+      end
     end
 
     context "receive raise-on-close multi-channel" do

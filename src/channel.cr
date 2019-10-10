@@ -35,6 +35,7 @@ class Channel(T)
     abstract def lock_object_id
     abstract def lock
     abstract def unlock
+    abstract def available? : Bool
 
     def create_context_and_wait(state_ptr)
       context = SelectContext.new(state_ptr, self)
@@ -326,6 +327,12 @@ class Channel(T)
 
     ops_locks.each &.lock
 
+    # Check that no channel is closed
+    unless ops.all?(&.available?)
+      ops_locks.each &.unlock
+      raise ClosedError.new
+    end
+
     ops.each_with_index do |op, index|
       ignore = false
       result = op.execute
@@ -410,6 +417,10 @@ class Channel(T)
     def unlock
       @channel.@lock.unlock
     end
+
+    def available? : Bool
+      !@channel.closed?
+    end
   end
 
   # :nodoc:
@@ -447,6 +458,10 @@ class Channel(T)
 
     def unlock
       @channel.@lock.unlock
+    end
+
+    def available? : Bool
+      !@channel.closed?
     end
   end
 end
