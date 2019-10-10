@@ -26,9 +26,10 @@ class Channel(T)
   @queue : Deque(T)?
 
   record NotReady
+  record UseDefault
 
   module SelectAction(S)
-    abstract def execute : S | NotReady
+    abstract def execute : S | NotReady | UseDefault
     abstract def wait(context : SelectContext(S))
     abstract def wait_result_impl(context : SelectContext(S))
     abstract def unwait
@@ -53,6 +54,12 @@ class Channel(T)
 
     def wait_result(context : SelectContext(S))
       wait_result_impl(context)
+    end
+
+    # Implementor that returns `Channel::UseDefault` in `#execute`
+    # must redefine `#default_result`
+    def default_result
+      raise "unreachable"
     end
   end
 
@@ -352,6 +359,7 @@ class Channel(T)
 
       unless result.is_a?(NotReady)
         ops_locks.each &.unlock
+        result = op.default_result if result.is_a?(UseDefault)
         return index, result
       end
     end
@@ -389,11 +397,16 @@ class Channel(T)
 
   # :nodoc:
   def receive_select_action
-    ReceiveAction.new(self)
+    StrictReceiveAction.new(self)
   end
 
   # :nodoc:
-  class ReceiveAction(T)
+  def receive_select_action?
+    LooseReceiveAction.new(self)
+  end
+
+  # :nodoc:
+  class StrictReceiveAction(T)
     include SelectAction(T)
     property value : T
     property state : DeliveryState
@@ -403,7 +416,7 @@ class Channel(T)
       @state = DeliveryState::None
     end
 
-    def execute : Channel::NotReady | T
+    def execute : T | NotReady | UseDefault
       @channel.receive_internal { return NotReady.new }
     end
 
@@ -422,7 +435,7 @@ class Channel(T)
       when DeliveryState::Closed
         raise ClosedError.new
       when DeliveryState::None
-        raise "BUG: ReceiveAction.wait_result_impl called with DeliveryState::None"
+        raise "BUG: StrictReceiveAction.wait_result_impl called with DeliveryState::None"
       else
         raise "unreachable"
       end
@@ -450,6 +463,70 @@ class Channel(T)
   end
 
   # :nodoc:
+  class LooseReceiveAction(T)
+    include SelectAction(T)
+    property value : T
+    property state : DeliveryState
+
+    def initialize(@channel : Channel(T))
+      @value = uninitialized T
+      @state = DeliveryState::None
+    end
+
+    def execute : T | NotReady | UseDefault
+      @channel.receive_internal do
+        return @channel.closed? ? UseDefault.new : NotReady.new
+      end
+    end
+
+    def result : T
+      @value
+    end
+
+    def wait(context : SelectContext(T))
+      @channel.wait_for_receive(pointerof(@value), pointerof(@state), context)
+    end
+
+    def wait_result_impl(context : SelectContext(T))
+      case state
+      when DeliveryState::Delivered
+        context.action.result
+      when DeliveryState::Closed
+        nil
+      when DeliveryState::None
+        raise "BUG: LooseReceiveAction.wait_result_impl called with DeliveryState::None"
+      else
+        raise "unreachable"
+      end
+    end
+
+    def unwait
+      @channel.unwait_for_receive
+    end
+
+    def lock_object_id
+      @channel.object_id
+    end
+
+    def lock
+      @channel.@lock.lock
+    end
+
+    def unlock
+      @channel.@lock.unlock
+    end
+
+    def available? : Bool
+      # even if the channel is closed the loose receive action can execute
+      true
+    end
+
+    def default_result
+      nil
+    end
+  end
+
+  # :nodoc:
   class SendAction(T)
     include SelectAction(Nil)
     property state : DeliveryState
@@ -458,7 +535,7 @@ class Channel(T)
       @state = DeliveryState::None
     end
 
-    def execute : Channel::NotReady?
+    def execute : Nil | NotReady | UseDefault
       @channel.send_internal(@value) { return NotReady.new }
       nil
     end

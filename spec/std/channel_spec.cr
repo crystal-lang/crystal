@@ -110,6 +110,65 @@ describe Channel do
       end
     end
 
+    context "receive nil-on-close single-channel" do
+      it "types" do
+        ch = Channel(String).new
+        spawn_and_wait(->{ ch.send "foo" }) do
+          i, m = Channel.select(ch.receive_select_action?)
+          typeof(i).should eq(Int32)
+          typeof(m).should eq(String | Nil)
+        end
+      end
+
+      it "types nilable channel" do
+        # Yes, although it is discouraged
+        ch = Channel(Nil).new
+        spawn_and_wait(->{ ch.send nil }) do
+          i, m = Channel.select(ch.receive_select_action?)
+          typeof(i).should eq(Int32)
+          typeof(m).should eq(Nil)
+        end
+      end
+
+      it "returns nil if channel was closed" do
+        ch = Channel(String).new
+        spawn_and_wait(->{ ch.close }) do
+          i, m = Channel.select(ch.receive_select_action?)
+          m.should be_nil
+        end
+      end
+
+      it "returns nil channel is closed while waiting" do
+        ch = Channel(String).new
+        spawn_and_wait(->{ sleep 0.2; ch.close }) do
+          i, m = Channel.select(ch.receive_select_action?)
+          m.should be_nil
+        end
+      end
+    end
+
+    context "receive nil-on-close multi-channel" do
+      it "types" do
+        ch = Channel(String).new
+        ch2 = Channel(Bool).new
+        spawn_and_wait(->{ ch.send "foo" }) do
+          i, m = Channel.select(ch.receive_select_action?, ch2.receive_select_action?)
+          typeof(i).should eq(Int32)
+          typeof(m).should eq(String | Bool | Nil)
+        end
+      end
+
+      it "returns index of closed channel" do
+        ch = Channel(String).new
+        ch2 = Channel(Bool).new
+        spawn_and_wait(->{ ch2.close }) do
+          i, m = Channel.select(ch.receive_select_action?, ch2.receive_select_action?)
+          i.should eq(1)
+          m.should eq(nil)
+        end
+      end
+    end
+
     context "send raise-on-close single-channel" do
       it "types" do
         ch = Channel(String).new
@@ -182,6 +241,25 @@ describe Channel do
           i, m = Channel.non_blocking_select(ch.receive_select_action, ch2.receive_select_action)
           typeof(i).should eq(Int32)
           typeof(m).should eq(String | Bool | Channel::NotReady)
+        end
+      end
+    end
+
+    context "receive nil-on-close single-channel" do
+      it "types" do
+        ch = Channel(String).new
+        spawn_and_wait(->{ ch.send "foo" }) do
+          i, m = Channel.non_blocking_select(ch.receive_select_action?)
+          typeof(i).should eq(Int32)
+          typeof(m).should eq(String | Nil | Channel::NotReady)
+        end
+      end
+
+      it "returns nil if channel was closed" do
+        ch = Channel(String).new
+        spawn_and_wait(->{ ch.close }) do
+          i, m = Channel.non_blocking_select(ch.receive_select_action?)
+          m.should be_nil
         end
       end
     end
