@@ -96,6 +96,24 @@ describe Channel do
           end
         end
       end
+
+      it "awakes all waiting selects" do
+        ch = Channel(String).new
+
+        p = ->{
+          begin
+            Channel.select(ch.receive_select_action)
+            0
+          rescue Channel::ClosedError
+            1
+          end
+        }
+
+        spawn_and_wait(->{ sleep 0.2; ch.close }) do
+          r = parallel p.call, p.call, p.call, p.call
+          r.should eq({1, 1, 1, 1})
+        end
+      end
     end
 
     context "receive raise-on-close multi-channel" do
@@ -143,6 +161,19 @@ describe Channel do
         spawn_and_wait(->{ sleep 0.2; ch.close }) do
           i, m = Channel.select(ch.receive_select_action?)
           m.should be_nil
+        end
+      end
+
+      it "awakes all waiting selects" do
+        ch = Channel(String).new
+
+        p = ->{
+          Channel.select(ch.receive_select_action?)
+        }
+
+        spawn_and_wait(->{ sleep 0.2; ch.close }) do
+          r = parallel p.call, p.call, p.call, p.call
+          r.should eq({ {0, nil}, {0, nil}, {0, nil}, {0, nil} })
         end
       end
     end
@@ -204,6 +235,24 @@ describe Channel do
           expect_raises Channel::ClosedError do
             Channel.select(ch.send_select_action("foo"))
           end
+        end
+      end
+
+      it "awakes all waiting selects" do
+        ch = Channel(String).new
+
+        p = ->{
+          begin
+            Channel.select(ch.send_select_action("foo"))
+            0
+          rescue Channel::ClosedError
+            1
+          end
+        }
+
+        spawn_and_wait(->{ sleep 0.2; ch.close }) do
+          r = parallel p.call, p.call, p.call, p.call
+          r.should eq({1, 1, 1, 1})
         end
       end
     end
