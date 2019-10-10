@@ -1,5 +1,42 @@
 require "spec"
 
+private class Witness
+  @checked = false
+
+  def check
+    @checked = true
+  end
+
+  def checked?
+    @checked
+  end
+end
+
+private def spawn_and_check(before : Proc(_), file = __FILE__, line = __LINE__, &block : Witness -> _)
+  before_done = Channel(Nil).new
+  done = Channel(Exception?).new
+  w = Witness.new
+
+  spawn do
+    begin
+      before_done.receive
+      block.call w
+
+      done.send nil
+    rescue e
+      done.send e
+    end
+  end
+
+  parallel(before.call, before_done.send(nil))
+
+  ex = done.receive
+  unless w.checked?
+    fail "Failed to stress expected path", file, line
+  end
+  raise ex if ex
+end
+
 describe "select" do
   it "select many receviers" do
     ch1 = Channel(Int32).new
@@ -188,5 +225,497 @@ describe "select" do
 
     count.should eq(fibers * msg_per_sender)
     sum.should eq(msg_per_sender * (msg_per_sender - 1) / 2 * fibers)
+  end
+
+  context "blocking raise-on-close single-channel" do
+    it "types and exec when" do
+      ch = Channel(String).new
+
+      spawn_and_check(->{ ch.send "foo" }) do |w|
+        select
+        when m = ch.receive
+          w.check
+          typeof(m).should eq(String)
+          m.should eq("foo")
+        end
+      end
+    end
+
+    it "raises if channel was closed" do
+      ch = Channel(String).new
+
+      spawn_and_check(->{ ch.close }) do |w|
+        begin
+          select
+          when m = ch.receive
+          end
+        rescue Channel::ClosedError
+          w.check
+        end
+      end
+    end
+  end
+
+  context "non-blocking raise-on-close single-channel" do
+    it "types and exec when if message was ready" do
+      ch = Channel(String).new
+
+      spawn_and_check(->{ ch.send "foo" }) do |w|
+        select
+        when m = ch.receive
+          w.check
+          typeof(m).should eq(String)
+          m.should eq("foo")
+        else
+        end
+      end
+    end
+
+    it "exec else if no message was ready" do
+      ch = Channel(String).new
+
+      spawn_and_check(->{ nil }) do |w|
+        select
+        when m = ch.receive
+        else
+          w.check
+        end
+      end
+    end
+
+    it "raises if channel was closed" do
+      ch = Channel(String).new
+
+      spawn_and_check(->{ ch.close }) do |w|
+        begin
+          select
+          when m = ch.receive
+          else
+          end
+        rescue Channel::ClosedError
+          w.check
+        end
+      end
+    end
+  end
+
+  context "blocking raise-on-close multi-channel" do
+    it "types and exec when (1)" do
+      ch = Channel(String).new
+      ch2 = Channel(Bool).new
+
+      spawn_and_check(->{ ch.send "foo" }) do |w|
+        select
+        when m = ch.receive
+          w.check
+          typeof(m).should eq(String)
+          m.should eq("foo")
+        when m = ch2.receive
+        end
+      end
+    end
+
+    it "types and exec when (2)" do
+      ch = Channel(String).new
+      ch2 = Channel(Bool).new
+
+      spawn_and_check(->{ ch2.send true }) do |w|
+        select
+        when m = ch.receive
+        when m = ch2.receive
+          w.check
+          typeof(m).should eq(Bool)
+          m.should eq(true)
+        end
+      end
+    end
+
+    it "raises if channel was closed (1)" do
+      ch = Channel(String).new
+      ch2 = Channel(Bool).new
+
+      spawn_and_check(->{ ch.close }) do |w|
+        begin
+          select
+          when m = ch.receive
+          when m = ch2.receive
+          end
+        rescue Channel::ClosedError
+          w.check
+        end
+      end
+    end
+
+    it "raises if channel was closed (2)" do
+      ch = Channel(String).new
+      ch2 = Channel(Bool).new
+
+      spawn_and_check(->{ ch2.close }) do |w|
+        begin
+          select
+          when m = ch.receive
+          when m = ch2.receive
+          end
+        rescue Channel::ClosedError
+          w.check
+        end
+      end
+    end
+  end
+
+  context "non-blocking raise-on-close multi-channel" do
+    it "types and exec when (1)" do
+      ch = Channel(String).new
+      ch2 = Channel(Bool).new
+
+      spawn_and_check(->{ ch.send "foo" }) do |w|
+        select
+        when m = ch.receive
+          w.check
+          typeof(m).should eq(String)
+          m.should eq("foo")
+        when m = ch2.receive
+        else
+        end
+      end
+    end
+
+    it "types and exec when (2)" do
+      ch = Channel(String).new
+      ch2 = Channel(Bool).new
+
+      spawn_and_check(->{ ch2.send true }) do |w|
+        select
+        when m = ch.receive
+        when m = ch2.receive
+          w.check
+          typeof(m).should eq(Bool)
+          m.should eq(true)
+        else
+        end
+      end
+    end
+
+    it "exec else if no message was ready" do
+      ch = Channel(String).new
+      ch2 = Channel(Bool).new
+
+      spawn_and_check(->{ nil }) do |w|
+        select
+        when m = ch.receive
+        when m = ch2.receive
+        else
+          w.check
+        end
+      end
+    end
+
+    it "raises if channel was closed (1)" do
+      ch = Channel(String).new
+      ch2 = Channel(Bool).new
+
+      spawn_and_check(->{ ch.close }) do |w|
+        begin
+          select
+          when m = ch.receive
+          when m = ch2.receive
+          else
+          end
+        rescue Channel::ClosedError
+          w.check
+        end
+      end
+    end
+
+    it "raises if channel was closed (2)" do
+      ch = Channel(String).new
+      ch2 = Channel(Bool).new
+
+      spawn_and_check(->{ ch2.close }) do |w|
+        begin
+          select
+          when m = ch.receive
+          when m = ch2.receive
+          else
+          end
+        rescue Channel::ClosedError
+          w.check
+        end
+      end
+    end
+  end
+
+  context "blocking nil-on-close single-channel" do
+    it "types and exec when" do
+      ch = Channel(String).new
+
+      spawn_and_check(->{ ch.send "foo" }) do |w|
+        select
+        when m = ch.receive?
+          w.check
+          typeof(m).should eq(String?)
+          m.should eq("foo")
+        end
+      end
+    end
+
+    it "types and exec when with nil if channel was closed" do
+      ch = Channel(String).new
+
+      spawn_and_check(->{ ch.close }) do |w|
+        select
+        when m = ch.receive?
+          w.check
+          typeof(m).should eq(String?)
+          m.should be_nil
+        end
+      end
+    end
+  end
+
+  context "blocking nil-on-close multi-channel" do
+    it "types and exec when (1)" do
+      ch = Channel(String).new
+      ch2 = Channel(Bool).new
+
+      spawn_and_check(->{ ch.send "foo" }) do |w|
+        select
+        when m = ch.receive?
+          w.check
+          typeof(m).should eq(String?)
+          m.should eq("foo")
+        when m = ch2.receive?
+        end
+      end
+    end
+
+    it "types and exec when (2)" do
+      ch = Channel(String).new
+      ch2 = Channel(Bool).new
+
+      spawn_and_check(->{ ch2.send true }) do |w|
+        select
+        when m = ch.receive?
+        when m = ch2.receive?
+          w.check
+          typeof(m).should eq(Bool?)
+          m.should eq(true)
+        end
+      end
+    end
+
+    it "types and exec when with nil if channel was closed (1)" do
+      ch = Channel(String).new
+      ch2 = Channel(Bool).new
+
+      spawn_and_check(->{ ch.close }) do |w|
+        select
+        when m = ch.receive?
+          w.check
+          typeof(m).should eq(String?)
+          m.should be_nil
+        when m = ch2.receive?
+        end
+      end
+    end
+
+    it "types and exec when with nil if channel was closed (2)" do
+      ch = Channel(String).new
+      ch2 = Channel(Bool).new
+
+      spawn_and_check(->{ ch2.close }) do |w|
+        select
+        when m = ch.receive?
+        when m = ch2.receive?
+          w.check
+          typeof(m).should eq(Bool?)
+          m.should be_nil
+        end
+      end
+    end
+
+    it "types and exec when with nil if channel is closed while waiting (1)" do
+      ch = Channel(String).new
+      ch2 = Channel(Bool).new
+
+      spawn_and_check(->{ ch.close }) do |w|
+        select
+        when m = ch.receive?
+          w.check
+          typeof(m).should eq(String?)
+          m.should be_nil
+        when m = ch2.receive?
+        end
+      end
+    end
+
+    it "types and exec when with nil if channel is closed while waiting (2)" do
+      ch = Channel(String).new
+      ch2 = Channel(Bool).new
+
+      spawn_and_check(->{ ch2.close }) do |w|
+        select
+        when m = ch.receive?
+        when m = ch2.receive?
+          w.check
+          typeof(m).should eq(Bool?)
+          m.should be_nil
+        end
+      end
+    end
+  end
+
+  context "non-blocking nil-on-close single-channel" do
+    it "types and exec when" do
+      ch = Channel(String).new
+
+      spawn_and_check(->{ ch.send "foo" }) do |w|
+        select
+        when m = ch.receive?
+          w.check
+          typeof(m).should eq(String?)
+          m.should eq("foo")
+        else
+        end
+      end
+    end
+
+    it "exec else if no message was ready" do
+      ch = Channel(String).new
+
+      spawn_and_check(->{ nil }) do |w|
+        select
+        when m = ch.receive?
+        else
+          w.check
+        end
+      end
+    end
+
+    it "types and exec when with nil if channel was closed" do
+      ch = Channel(String).new
+
+      spawn_and_check(->{ ch.close }) do |w|
+        select
+        when m = ch.receive?
+          w.check
+          typeof(m).should eq(String?)
+          m.should be_nil
+        else
+        end
+      end
+    end
+  end
+
+  context "non-blocking nil-on-close multi-channel" do
+    it "types and exec when (1)" do
+      ch = Channel(String).new
+      ch2 = Channel(Bool).new
+
+      spawn_and_check(->{ ch.send "foo" }) do |w|
+        select
+        when m = ch.receive?
+          w.check
+          typeof(m).should eq(String?)
+          m.should eq("foo")
+        when m = ch2.receive?
+        else
+        end
+      end
+    end
+
+    it "types and exec when (2)" do
+      ch = Channel(String).new
+      ch2 = Channel(Bool).new
+
+      spawn_and_check(->{ ch2.send true }) do |w|
+        select
+        when m = ch.receive?
+        when m = ch2.receive?
+          w.check
+          typeof(m).should eq(Bool?)
+          m.should eq(true)
+        else
+        end
+      end
+    end
+
+    it "types and exec when with nil if channel was closed (1)" do
+      ch = Channel(String).new
+      ch2 = Channel(Bool).new
+
+      spawn_and_check(->{ ch.close }) do |w|
+        select
+        when m = ch.receive?
+          w.check
+          typeof(m).should eq(String?)
+          m.should be_nil
+        when m = ch2.receive?
+        else
+        end
+      end
+    end
+
+    it "types and exec when with nil if channel was closed (2)" do
+      ch = Channel(String).new
+      ch2 = Channel(Bool).new
+
+      spawn_and_check(->{ ch2.close }) do |w|
+        select
+        when m = ch.receive?
+        when m = ch2.receive?
+          w.check
+          typeof(m).should eq(Bool?)
+          m.should be_nil
+        else
+        end
+      end
+    end
+
+    it "types and exec when with nil if channel is closed while waiting (1)" do
+      ch = Channel(String).new
+      ch2 = Channel(Bool).new
+
+      spawn_and_check(->{ ch.close }) do |w|
+        select
+        when m = ch.receive?
+          w.check
+          typeof(m).should eq(String?)
+          m.should be_nil
+        when m = ch2.receive?
+        else
+        end
+      end
+    end
+
+    it "types and exec when with nil if channel is closed while waiting (2)" do
+      ch = Channel(String).new
+      ch2 = Channel(Bool).new
+
+      spawn_and_check(->{ ch2.close }) do |w|
+        select
+        when m = ch.receive?
+        when m = ch2.receive?
+          w.check
+          typeof(m).should eq(Bool?)
+          m.should be_nil
+        else
+        end
+      end
+    end
+
+    it "exec else if no message was ready" do
+      ch = Channel(String).new
+      ch2 = Channel(Bool).new
+
+      spawn_and_check(->{ nil }) do |w|
+        select
+        when m = ch.receive?
+        when m = ch2.receive?
+        else
+          w.check
+        end
+      end
+    end
   end
 end
