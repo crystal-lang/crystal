@@ -80,6 +80,30 @@ module Spec::Methods
   def fail(msg, file = __FILE__, line = __LINE__)
     raise Spec::AssertionFailed.new(msg, file, line)
   end
+
+  def before_each(&block)
+    Spec.root_context.before_each(&block)
+  end
+
+  def after_each(&block)
+    Spec.root_context.after_each(&block)
+  end
+
+  def before_all(&block)
+    Spec.root_context.before_all(&block)
+  end
+
+  def after_all(&block)
+    Spec.root_context.after_all(&block)
+  end
+
+  def around_each(&block : Example::Procsy ->)
+    Spec.root_context.around_each(&block)
+  end
+
+  def around_all(&block : Context::Procsy ->)
+    Spec.root_context.around_all(&block)
+  end
 end
 
 include Spec::Methods
