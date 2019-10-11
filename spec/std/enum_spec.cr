@@ -154,7 +154,7 @@ describe Enum do
       SpecEnum.valid?(SpecEnum.new(3i8)).should be_false
     end
 
-    it "for flags eunm" do
+    it "for flags enum" do
       SpecEnumFlags.valid?(SpecEnumFlags::One).should be_true
       SpecEnumFlags.valid?(SpecEnumFlags::Two).should be_true
       SpecEnumFlags.valid?(SpecEnumFlags::One | SpecEnumFlags::Two).should be_true
