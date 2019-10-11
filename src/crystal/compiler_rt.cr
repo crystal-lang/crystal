@@ -5,8 +5,7 @@
 {% skip_file if flag?(:skip_crystal_compiler_rt) %}
 
 # Structs for implementing 128bit
-require "./compiler_rt/u128_info.cr"
-require "./compiler_rt/i128_info.cr"
+require "./compiler_rt/info.cr"
 
 # Overflow operations
 require "./compiler_rt/udivmodti4.cr"
