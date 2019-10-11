@@ -114,11 +114,10 @@ OptionParser.parse do |opts|
   opts.on("--order MODE", "run examples in random order by passing MODE as 'random' or to a specific seed by passing MODE as the seed value") do |mode|
     if mode == "default" || mode == "random"
       Spec.order = mode
-    elsif mode.to_u64?
-      Spec.order = mode.to_u64
+    elsif seed = mode.to_u64?
+      Spec.order = seed
     else
-      STDERR.puts "order must be either 'default', 'random', or a seed value"
-      exit 1
+      abort("order must be either 'default', 'random', or a numeric seed value")
     end
   end
   opts.on("--junit_output OUTPUT_DIR", "generate JUnit XML output") do |output_dir|

@@ -80,11 +80,11 @@ module Spec
       when UInt64
         mode
       else
-        raise ArgumentError.new("order must be either 'default', 'random', or a seed value")
+        raise ArgumentError.new("order must be either 'default', 'random', or a numeric seed value")
       end
 
     @@randomizer_seed = seed
-    @@randomizer = seed && Random::PCG32.new(seed)
+    @@randomizer = seed ? Random::PCG32.new(seed) : nil
   end
 
   # :nodoc:

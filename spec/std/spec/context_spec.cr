@@ -14,7 +14,7 @@ describe Spec::ExampleGroup do
     end
 
     it "with a seed" do
-      seed = Random::Secure.rand(1..99999).to_u64
+      seed = 12345_u64
 
       root = build_spec("f.cr", count: 20)
       root.randomize(Random::PCG32.new(seed))

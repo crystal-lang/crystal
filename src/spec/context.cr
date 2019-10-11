@@ -7,7 +7,9 @@ module Spec
     getter children = [] of ExampleGroup | Example
 
     def randomize(randomizer)
-      children.each { |c| c.randomize(randomizer) if c.responds_to?(:randomize) }
+      children.each do |child|
+        child.randomize(randomizer) if child.is_a?(ExampleGroup)
+      end
       children.shuffle!(randomizer)
     end
   end
