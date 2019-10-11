@@ -1,41 +1,5 @@
 require "spec"
-
-private class Witness
-  @checked = false
-
-  def check
-    @checked = true
-  end
-
-  def checked?
-    @checked
-  end
-end
-
-private def spawn_and_check(before : Proc(_), file = __FILE__, line = __LINE__, &block : Witness -> _)
-  before_done = Channel(Nil).new
-  done = Channel(Exception?).new
-  w = Witness.new
-
-  spawn do
-    begin
-      before_done.receive
-      block.call w
-
-      done.send nil
-    rescue e
-      done.send e
-    end
-  end
-
-  parallel(before.call, before_done.send(nil))
-
-  ex = done.receive
-  unless w.checked?
-    fail "Failed to stress expected path", file, line
-  end
-  raise ex if ex
-end
+require "../spec_helper"
 
 describe "select" do
   it "select many receviers" do

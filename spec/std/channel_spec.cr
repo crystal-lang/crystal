@@ -1,33 +1,9 @@
 require "spec"
+require "./spec_helper"
 
 private def yield_to(fiber)
   Crystal::Scheduler.enqueue(Fiber.current)
   Crystal::Scheduler.resume(fiber)
-end
-
-# Right after executing the block in a spawn,
-# it will wait for the block to finish.
-# If there is an exception in the block it will be
-# re-raised in the current fiber. Ideal for specs.
-private def spawn_and_wait(before : Proc(_), &block : -> _)
-  before_done = Channel(Nil).new
-  done = Channel(Exception?).new
-
-  spawn do
-    begin
-      before_done.receive
-      block.call
-
-      done.send nil
-    rescue e
-      done.send e
-    end
-  end
-
-  parallel(before.call, before_done.send(nil))
-
-  ex = done.receive
-  raise ex if ex
 end
 
 describe Channel do
