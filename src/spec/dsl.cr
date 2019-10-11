@@ -253,9 +253,7 @@ module Spec
     @@start_time = Time.monotonic
 
     at_exit do
-      if randomizer = @@randomizer
-        root_context.randomize(randomizer)
-      end
+      maybe_randomize
       run_filters
       run_before_suite_hooks
       root_context.run
@@ -269,6 +267,13 @@ module Spec
     elapsed_time = Time.monotonic - @@start_time.not_nil!
     root_context.finish(elapsed_time, @@aborted)
     exit 1 if !root_context.succeeded || @@aborted
+  end
+
+  # :nodoc:
+  def self.maybe_randomize
+    if randomizer = @@randomizer
+      root_context.randomize(randomizer)
+    end
   end
 
   # :nodoc:
