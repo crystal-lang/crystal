@@ -14,7 +14,7 @@ fun __udivmodti4(a : UInt128, b : UInt128, rem : UInt128*)
       if rem
         rem.value = (n.low % d.low).to_u128
       end
-      return n.low / d.low
+      return n.low // d.low
     end
     rem.value = n.low.to_u128 if rem
     return 0
@@ -23,7 +23,7 @@ fun __udivmodti4(a : UInt128, b : UInt128, rem : UInt128*)
         if rem
           rem.value = n.high % d.low
         end
-        return n.high / d.low
+        return n.high // d.low
       end
       if (n.low == 0)
         if rem
@@ -31,7 +31,7 @@ fun __udivmodti4(a : UInt128, b : UInt128, rem : UInt128*)
           r.low = 0
           rem.value = r.unsafe_as(UInt128)
         end
-        return n.high / d.high
+        return n.high // d.high
       end
       if ((d.high & (d.high &- 1)) == 0) # if d is a power of 2
         if rem
