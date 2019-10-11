@@ -260,7 +260,6 @@ module Crystal
       emit_vars_debug_info(@program.vars) if @debug.variables?
     end
 
-    getter llvm_typer
     getter llvm_context
 
     def new_builder(llvm_context)

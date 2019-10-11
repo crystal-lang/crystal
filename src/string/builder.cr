@@ -6,7 +6,7 @@ require "io"
 class String::Builder < IO
   getter bytesize : Int32
   getter capacity : Int32
-  getter buffer : Pointer(UInt8)
+  @buffer : Pointer(UInt8)
 
   def initialize(capacity : Int = 64)
     String.check_capacity_in_bounds(capacity)
