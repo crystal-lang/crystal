@@ -1,4 +1,4 @@
-{% skip_file if flag?(:bits32) %}
+{% skip_file unless flag?(:bits32) %}
 
 require "spec"
 
