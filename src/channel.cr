@@ -16,27 +16,50 @@ require "crystal/spin_lock"
 # channel.receive # => 0
 # channel.receive # => 1
 # ```
+#
+# NOTE: Althought a `Channel(Nil)` or any other nilable types like `Channel(Int32?)` are valid
+# they are discouraged since from certain methods or constructs it receiving a `nil` as data
+# will be indistinguishable from a closed channel.
+#
 class Channel(T)
   @lock = Crystal::SpinLock.new
   @queue : Deque(T)?
 
-  module NotReady
-    extend self
-  end
+  record NotReady
+  record UseDefault
 
   module SelectAction(S)
-    abstract def execute : S | NotReady
+    abstract def execute : S | NotReady | UseDefault
     abstract def wait(context : SelectContext(S))
+    abstract def wait_result_impl(context : SelectContext(S))
     abstract def unwait
     abstract def result : S
     abstract def lock_object_id
     abstract def lock
     abstract def unlock
+    abstract def available? : Bool
 
     def create_context_and_wait(state_ptr)
       context = SelectContext.new(state_ptr, self)
       self.wait(context)
       context
+    end
+
+    # wait_result overload allow implementors to define
+    # wait_result_impl with the right type and Channel.select_impl
+    # to allow dispatching over unions that will not happen
+    def wait_result(context : SelectContext)
+      raise "BUG: Unexpected call to #{typeof(self)}#wait_result(context : #{typeof(context)})"
+    end
+
+    def wait_result(context : SelectContext(S))
+      wait_result_impl(context)
+    end
+
+    # Implementor that returns `Channel::UseDefault` in `#execute`
+    # must redefine `#default_result`
+    def default_result
+      raise "unreachable"
     end
   end
 
@@ -97,12 +120,18 @@ class Channel(T)
 
       @senders.each do |sender|
         sender.state_ptr.value = DeliveryState::Closed
-        sender.fiber.enqueue
+        select_context = sender.select_context
+        if select_context.nil? || select_context.try_trigger
+          sender.fiber.enqueue
+        end
       end
 
       @receivers.each do |receiver|
         receiver.state_ptr.value = DeliveryState::Closed
-        receiver.fiber.enqueue
+        select_context = receiver.select_context
+        if select_context.nil? || select_context.try_trigger
+          receiver.fiber.enqueue
+        end
       end
 
       @senders.clear
@@ -274,10 +303,6 @@ class Channel(T)
 
   def self.receive_first(channels : Tuple | Array)
     _, value = self.select(channels.map(&.receive_select_action))
-    if value.is_a?(NotReady)
-      raise "BUG: Channel.select returned not ready status"
-    end
-
     value
   end
 
@@ -294,7 +319,30 @@ class Channel(T)
     self.select ops
   end
 
-  def self.select(ops : Indexable(SelectAction), has_else = false)
+  def self.select(ops : Indexable(SelectAction))
+    i, m = select_impl(ops, false)
+    raise "BUG: blocking select returned not ready status" if m.is_a?(NotReady)
+    return i, m
+  end
+
+  @[Deprecated("Use Channel.non_blocking_select")]
+  def self.select(ops : Indexable(SelectAction), has_else)
+    # The overload of Channel.select(Indexable(SelectAction), Bool)
+    # is used by LiteralExpander with the second argument as `true`.
+    # This overload is kept as a transition, but 0.32 will emit calls to
+    # Channel.select or Channel.non_blocking_select directly
+    non_blocking_select(ops)
+  end
+
+  def self.non_blocking_select(*ops : SelectAction)
+    self.non_blocking_select ops
+  end
+
+  def self.non_blocking_select(ops : Indexable(SelectAction))
+    select_impl(ops, true)
+  end
+
+  def self.select_impl(ops : Indexable(SelectAction), non_blocking)
     # Sort the operations by the channel they contain
     # This is to avoid deadlocks between concurrent `select` calls
     ops_locks = ops
@@ -304,19 +352,25 @@ class Channel(T)
 
     ops_locks.each &.lock
 
+    # Check that no channel is closed
+    unless ops.all?(&.available?)
+      ops_locks.each &.unlock
+      raise ClosedError.new
+    end
+
     ops.each_with_index do |op, index|
-      ignore = false
       result = op.execute
 
       unless result.is_a?(NotReady)
         ops_locks.each &.unlock
+        result = op.default_result if result.is_a?(UseDefault)
         return index, result
       end
     end
 
-    if has_else
+    if non_blocking
       ops_locks.each &.unlock
-      return ops.size, NotReady
+      return ops.size, NotReady.new
     end
 
     state = Atomic(SelectState).new(SelectState::Active)
@@ -333,7 +387,7 @@ class Channel(T)
 
     contexts.each_with_index do |context, index|
       if context.activated?
-        return index, context.action.result
+        return index, ops[index].wait_result(context)
       end
     end
 
@@ -347,11 +401,16 @@ class Channel(T)
 
   # :nodoc:
   def receive_select_action
-    ReceiveAction.new(self)
+    StrictReceiveAction.new(self)
   end
 
   # :nodoc:
-  class ReceiveAction(T)
+  def receive_select_action?
+    LooseReceiveAction.new(self)
+  end
+
+  # :nodoc:
+  class StrictReceiveAction(T)
     include SelectAction(T)
     property value : T
     property state : DeliveryState
@@ -361,8 +420,8 @@ class Channel(T)
       @state = DeliveryState::None
     end
 
-    def execute : Channel::NotReady | T
-      @channel.receive_internal { return NotReady }
+    def execute : T | NotReady | UseDefault
+      @channel.receive_internal { return NotReady.new }
     end
 
     def result : T
@@ -371,6 +430,19 @@ class Channel(T)
 
     def wait(context : SelectContext(T))
       @channel.wait_for_receive(pointerof(@value), pointerof(@state), context)
+    end
+
+    def wait_result_impl(context : SelectContext(T))
+      case state
+      when DeliveryState::Delivered
+        context.action.result
+      when DeliveryState::Closed
+        raise ClosedError.new
+      when DeliveryState::None
+        raise "BUG: StrictReceiveAction.wait_result_impl called with DeliveryState::None"
+      else
+        raise "unreachable"
+      end
     end
 
     def unwait
@@ -388,18 +460,87 @@ class Channel(T)
     def unlock
       @channel.@lock.unlock
     end
+
+    def available? : Bool
+      !@channel.closed?
+    end
+  end
+
+  # :nodoc:
+  class LooseReceiveAction(T)
+    include SelectAction(T)
+    property value : T
+    property state : DeliveryState
+
+    def initialize(@channel : Channel(T))
+      @value = uninitialized T
+      @state = DeliveryState::None
+    end
+
+    def execute : T | NotReady | UseDefault
+      @channel.receive_internal do
+        return @channel.closed? ? UseDefault.new : NotReady.new
+      end
+    end
+
+    def result : T
+      @value
+    end
+
+    def wait(context : SelectContext(T))
+      @channel.wait_for_receive(pointerof(@value), pointerof(@state), context)
+    end
+
+    def wait_result_impl(context : SelectContext(T))
+      case state
+      when DeliveryState::Delivered
+        context.action.result
+      when DeliveryState::Closed
+        nil
+      when DeliveryState::None
+        raise "BUG: LooseReceiveAction.wait_result_impl called with DeliveryState::None"
+      else
+        raise "unreachable"
+      end
+    end
+
+    def unwait
+      @channel.unwait_for_receive
+    end
+
+    def lock_object_id
+      @channel.object_id
+    end
+
+    def lock
+      @channel.@lock.lock
+    end
+
+    def unlock
+      @channel.@lock.unlock
+    end
+
+    def available? : Bool
+      # even if the channel is closed the loose receive action can execute
+      true
+    end
+
+    def default_result
+      nil
+    end
   end
 
   # :nodoc:
   class SendAction(T)
     include SelectAction(Nil)
+    property state : DeliveryState
 
     def initialize(@channel : Channel(T), @value : T)
       @state = DeliveryState::None
     end
 
-    def execute : Channel::NotReady?
-      @channel.send_internal(@value) { return NotReady }
+    def execute : Nil | NotReady | UseDefault
+      @channel.send_internal(@value) { return NotReady.new }
       nil
     end
 
@@ -409,6 +550,19 @@ class Channel(T)
 
     def wait(context : SelectContext(Nil))
       @channel.wait_for_send(@value, pointerof(@state), context)
+    end
+
+    def wait_result_impl(context : SelectContext(Nil))
+      case state
+      when DeliveryState::Delivered
+        context.action.result
+      when DeliveryState::Closed
+        raise ClosedError.new
+      when DeliveryState::None
+        raise "BUG: SendAction.wait_result_impl called with DeliveryState::None"
+      else
+        raise "unreachable"
+      end
     end
 
     def unwait
@@ -425,6 +579,10 @@ class Channel(T)
 
     def unlock
       @channel.@lock.unlock
+    end
+
+    def available? : Bool
+      !@channel.closed?
     end
   end
 end

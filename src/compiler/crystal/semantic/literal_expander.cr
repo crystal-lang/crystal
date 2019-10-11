@@ -515,10 +515,10 @@ module Crystal
         case_else = Call.new(nil, "raise", args: [StringLiteral.new("BUG: invalid select index")] of ASTNode, global: true).at(node)
       end
 
+      call_name = node.else ? "non_blocking_select" : "select"
       call_args = [TupleLiteral.new(tuple_values).at(node)] of ASTNode
-      call_args << BoolLiteral.new(true) if node.else
 
-      call = Call.new(channel, "select", call_args).at(node)
+      call = Call.new(channel, call_name, call_args).at(node)
       multi = MultiAssign.new(targets, [call] of ASTNode)
       case_cond = Var.new(index_name).at(node)
       a_case = Case.new(case_cond, case_whens, case_else).at(node)
