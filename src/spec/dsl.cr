@@ -66,23 +66,25 @@ module Spec
   end
 
   # :nodoc:
-  class_getter randomizer_seed : Int32?
+  class_getter randomizer_seed : UInt64?
   class_getter randomizer : Random::PCG32?
 
   # :nodoc:
   def self.order=(mode)
     seed =
       case mode
+      when "default"
+        nil
       when "random"
-        Random::Secure.rand(1..99999) # 5 digits or less for simplicity
-      when /\A(\d{1,5})\Z/
-        $1.to_i
+        Random::Secure.rand(1..99999).to_u64 # 5 digits or less for simplicity
+      when UInt64
+        mode
+      else
+        raise ArgumentError.new("order must be either 'default', 'random', or a seed value")
       end
 
-    if seed
-      @@randomizer_seed = seed
-      @@randomizer = Random::PCG32.new(seed.to_u64)
-    end
+    @@randomizer_seed = seed
+    @@randomizer = seed && Random::PCG32.new(seed)
   end
 
   # :nodoc:

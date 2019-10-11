@@ -112,8 +112,10 @@ OptionParser.parse do |opts|
     end
   end
   opts.on("--order MODE", "run examples in random order by passing MODE as 'random' or to a specific seed by passing MODE as the seed value") do |mode|
-    if mode =~ /\A(?:default|random|\d{1,5})\Z/
+    if mode == "default" || mode == "random"
       Spec.order = mode
+    elsif mode.to_u64?
+      Spec.order = mode.to_u64
     else
       STDERR.puts "order must be either 'default', 'random', or a seed value"
       exit 1
