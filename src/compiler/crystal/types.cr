@@ -1192,10 +1192,6 @@ module Crystal
       superclass.try &.add_subclass(self)
     end
 
-    def struct?
-      @struct
-    end
-
     def has_attribute?(name)
       return true if packed? && name == "Packed"
       false
@@ -2097,10 +2093,6 @@ module Crystal
       else
         self
       end
-    end
-
-    def filter_by_responds_to(name)
-      including_types.try &.filter_by_responds_to(name)
     end
 
     def filter_by_responds_to(name)

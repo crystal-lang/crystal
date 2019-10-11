@@ -43,8 +43,6 @@ module IO::ByteFormat
   abstract def encode(int : UInt64, io : IO)
   abstract def encode(int : Int128, io : IO)
   abstract def encode(int : UInt128, io : IO)
-  abstract def encode(int : Float32, io : IO)
-  abstract def encode(int : Float64, io : IO)
 
   abstract def encode(int : Int8, bytes : Bytes)
   abstract def encode(int : UInt8, bytes : Bytes)
@@ -56,8 +54,6 @@ module IO::ByteFormat
   abstract def encode(int : UInt64, bytes : Bytes)
   abstract def encode(int : Int128, bytes : Bytes)
   abstract def encode(int : UInt128, bytes : Bytes)
-  abstract def encode(int : Float32, bytes : Bytes)
-  abstract def encode(int : Float64, bytes : Bytes)
 
   abstract def decode(int : Int8.class, io : IO)
   abstract def decode(int : UInt8.class, io : IO)
@@ -69,8 +65,6 @@ module IO::ByteFormat
   abstract def decode(int : UInt64.class, io : IO)
   abstract def decode(int : Int128.class, io : IO)
   abstract def decode(int : UInt128.class, io : IO)
-  abstract def decode(int : Float32.class, io : IO)
-  abstract def decode(int : Float64.class, io : IO)
 
   abstract def decode(int : Int8.class, bytes : Bytes)
   abstract def decode(int : UInt8.class, bytes : Bytes)
@@ -82,8 +76,6 @@ module IO::ByteFormat
   abstract def decode(int : UInt64.class, bytes : Bytes)
   abstract def decode(int : Int128.class, bytes : Bytes)
   abstract def decode(int : UInt128.class, bytes : Bytes)
-  abstract def decode(int : Float32.class, bytes : Bytes)
-  abstract def decode(int : Float64.class, bytes : Bytes)
 
   def encode(float : Float32, io : IO)
     encode(float.unsafe_as(Int32), io)

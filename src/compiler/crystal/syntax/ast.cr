@@ -541,7 +541,7 @@ module Crystal
     property block_arg : ASTNode?
     property named_args : Array(NamedArgument)?
     property name_location : Location?
-    property name_size = -1
+    @name_size = -1
     property doc : String?
     property visibility = Visibility::Public
     property? global : Bool
@@ -576,6 +576,8 @@ module Crystal
       end
       @name_size
     end
+
+    setter name_size
 
     def accept_children(visitor)
       @obj.try &.accept visitor
