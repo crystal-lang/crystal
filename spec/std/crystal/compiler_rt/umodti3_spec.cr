@@ -4,7 +4,7 @@ require "spec"
 
 private def test__umodti3(a : UInt128, b : UInt128, expected : UInt128, file = __FILE__, line = __LINE__)
   it "passes compiler-rt builtins unit tests" do
-    __umodti3(a, b).eq expected
+    __umodti3(a, b).should eq(expected), file, line
   end
 end
 
