@@ -385,7 +385,7 @@ struct Enum
   # an instance method `valid?` is defined by the language when a user
   # defines an enum member named `Valid`.
   def self.valid?(value : self) : Bool
-    !!from_value?(value.to_i)
+    !!from_value?(value.value)
   end
 
   # def self.to_h : Hash(String, self)

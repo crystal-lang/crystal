@@ -18,6 +18,10 @@ enum SpecEnumFlags
   Three
 end
 
+enum SpecBigEnum : Int64
+  TooBig = 4294967296i64 # == 2**32
+end
+
 describe Enum do
   describe "to_s" do
     it "for simple enum" do
@@ -155,6 +159,11 @@ describe Enum do
       SpecEnumFlags.valid?(SpecEnumFlags::Two).should be_true
       SpecEnumFlags.valid?(SpecEnumFlags::One | SpecEnumFlags::Two).should be_true
       SpecEnumFlags.valid?(SpecEnumFlags.new(8)).should be_false
+    end
+
+    it "for Int64 enum" do
+      SpecBigEnum.valid?(SpecBigEnum::TooBig).should be_true
+      SpecBigEnum.valid?(SpecBigEnum.new(0i64)).should be_false
     end
   end
 
