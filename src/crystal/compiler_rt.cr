@@ -9,11 +9,11 @@ require "./compiler_rt/i128_info.cr"
 require "./compiler_rt/u128_info.cr"
 
 # Overflow operations
-require "./compiler_rt/udivmodti4.cr"
+require "./compiler_rt/mulodi4.cr"
 require "./compiler_rt/muloti4.cr"
+require "./compiler_rt/udivmodti4.cr"
 
 # Signed Multiplication
-require "./compiler_rt/mulodi4.cr"
 require "./compiler_rt/multi3.cr"
 
 # Unsigned Multiplication
