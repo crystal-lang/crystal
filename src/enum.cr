@@ -373,7 +373,7 @@ struct Enum
     from_value?(value) || raise "Unknown enum #{self} value: #{value}"
   end
 
-  # Returns `true` if the given *value* is the enum member, or returns
+  # Returns `true` if the given *value* is an enum member, otherwise `false`.
   # `false` if not member.
   #
   # ```
