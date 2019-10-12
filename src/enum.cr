@@ -381,7 +381,7 @@ struct Enum
   # Color.valid?(Color.new(4)) # => false
   # ```
   #
-  # NOTE: this is a class method, not an instance method because
+  # NOTE: This is a class method, not an instance method because
   # an instance method `valid?` is defined by the language when a user
   # defines an enum member named `Valid`.
   def self.valid?(value : self) : Bool
