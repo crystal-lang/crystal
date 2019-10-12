@@ -1,5 +1,11 @@
-module CompilerRT
-  struct U128Info
-    property low : UInt64 = 0_u64, high : UInt64 = 0_i64
+lib CompilerRT
+  struct UInt128Info
+    low : UInt64
+    high : Int64
+  end
+
+  union UI128
+    all : UInt128
+    info : UInt128Info
   end
 end

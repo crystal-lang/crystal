@@ -1,4 +1,5 @@
 # Functions for returning the product of signed multiplication with overflow eg. `a * b`
+
 fun __muloti4(a : Int128, b : Int128, overflow : Int32*) : Int128
   n = 64
   min = Int64::MIN
@@ -35,3 +36,4 @@ fun __muloti4(a : Int128, b : Int128, overflow : Int32*) : Int128
   end
   result
 end
+
