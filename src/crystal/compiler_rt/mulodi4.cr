@@ -34,6 +34,6 @@ fun __mulodi4(a : Int64, b : Int64, overflow : Int32*) : Int64
       overflow.value = 1
     end
   end
-  result
+  return result
 end
 
