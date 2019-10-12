@@ -16,9 +16,6 @@ require "./compiler_rt/udivmodti4.cr"
 # Signed Multiplication
 require "./compiler_rt/multi3.cr"
 
-# Unsigned Multiplication
-require "./compiler_rt/umuldi3.cr"
-
 # Signed Division
 require "./compiler_rt/divti3.cr"
 
