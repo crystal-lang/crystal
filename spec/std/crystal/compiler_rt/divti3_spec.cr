@@ -1,5 +1,3 @@
-{% skip_file unless flag?(:bits32) %}
-
 require "spec"
 
 # Ported from compiler-rt:test/builtins/Unit/divti3_test.c

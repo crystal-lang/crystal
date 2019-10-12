@@ -20,7 +20,10 @@ require "./compiler_rt/multi3.cr"
 require "./compiler_rt/umuldi3.cr"
 
 # Signed Division
+require "./compiler_rt/divti3.cr"
+
+# Signed Modulus
 require "./compiler_rt/modti3.cr"
 
-# Unsigned Division
+# Unsigned Modulus
 require "./compiler_rt/umodti3.cr"
