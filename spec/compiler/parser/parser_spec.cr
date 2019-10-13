@@ -941,6 +941,18 @@ module Crystal
       )
     )
 
+    # multiline pseudo methods (#8318)
+    it_parses "sizeof(\n  Int32\n)", SizeOf.new(Path.new("Int32"))
+    it_parses "instance_sizeof(\n  Int32\n)", InstanceSizeOf.new(Path.new("Int32"))
+    it_parses "typeof(\n  1\n)", TypeOf.new([1.int32] of ASTNode)
+    it_parses "offsetof(\n  Foo,\n  @foo\n)", OffsetOf.new(Path.new("Foo"), InstanceVar.new("@foo"))
+    it_parses "pointerof(\n  foo\n)", PointerOf.new("foo".call)
+    it_parses "1.as(\n  Int32\n)", Cast.new(1.int32, Path.new("Int32"))
+    it_parses "1.as?(\n  Int32\n)", NilableCast.new(1.int32, Path.new("Int32"))
+    it_parses "1.is_a?(\n  Int32\n)", IsA.new(1.int32, Path.new("Int32"))
+    it_parses "1.responds_to?(\n  :foo\n)", RespondsTo.new(1.int32, "foo")
+    it_parses "1.nil?(\n)", IsA.new(1.int32, Path.global("Nil"), nil_check: true)
+
     it_parses "/foo/", regex("foo")
     it_parses "/foo/i", regex("foo", Regex::Options::IGNORE_CASE)
     it_parses "/foo/m", regex("foo", Regex::Options::MULTILINE)
