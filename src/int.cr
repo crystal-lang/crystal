@@ -155,14 +155,18 @@ struct Int
   #
   # See `Int#/` for more details.
   def %(other : Int)
-    if other == 0
-      raise DivisionByZeroError.new
-    elsif (self < 0) == (other < 0)
-      self.unsafe_mod(other)
-    else
-      me = self.unsafe_mod(other)
-      me == 0 ? me : me + other
-    end
+    {% begin %}
+      if other == 0
+        raise DivisionByZeroError.new
+      elsif self < 0 && self == {{@type}}::MIN && other == -1
+        self.class.new(0)
+      elsif (self < 0) == (other < 0)
+        self.unsafe_mod(other)
+      else
+        me = self.unsafe_mod(other)
+        me == 0 ? me : me + other
+      end
+    {% end %}
   end
 
   # Returns `self` remainder *other*.
@@ -171,11 +175,15 @@ struct Int
   #
   # See `Int#tdiv` for more details.
   def remainder(other : Int)
-    if other == 0
-      raise DivisionByZeroError.new
-    else
-      unsafe_mod other
-    end
+    {% begin %}
+      if other == 0
+        raise DivisionByZeroError.new
+      elsif self < 0 && self == {{@type}}::MIN && other == -1
+        self.class.new(0)
+      else
+        unsafe_mod other
+      end
+    {% end %}
   end
 
   # Returns the result of shifting this number's bits *count* positions to the right.

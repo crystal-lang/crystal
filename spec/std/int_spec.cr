@@ -509,12 +509,24 @@ describe "Int" do
     (-13 % -4).should eq(-1)
   end
 
+  it "returns 0 when doing IntN::MIN % -1 (#8306)" do
+    {% for n in [8, 16, 32, 64] %}
+      (Int{{n}}::MIN % -1_i{{n}}).should eq(0)
+    {% end %}
+  end
+
   it "does remainder" do
     7.remainder(5).should eq(2)
     -7.remainder(5).should eq(-2)
 
     13.remainder(-4).should eq(1)
     -13.remainder(-4).should eq(-1)
+  end
+
+  it "returns 0 when doing IntN::MIN.remainder(-1) (#8306)" do
+    {% for n in [8, 16, 32, 64] %}
+      (Int{{n}}::MIN.remainder(-1_i{{n}})).should eq(0)
+    {% end %}
   end
 
   it "does upto" do
