@@ -81,26 +81,76 @@ module Spec::Methods
     raise Spec::AssertionFailed.new(msg, file, line)
   end
 
+  # Executes the given block before each spec runs.
   def before_each(&block)
     Spec.root_context.before_each(&block)
   end
 
+  # Executes the given block after each spec runs.
   def after_each(&block)
     Spec.root_context.after_each(&block)
   end
 
+  # Executes the given block before all specs in a given
+  # `description` or `context` run.
   def before_all(&block)
     Spec.root_context.before_all(&block)
   end
 
+  # Executes the given block after all specs in a given
+  # `description` or `context` run.
   def after_all(&block)
     Spec.root_context.after_all(&block)
   end
 
+  # Executes the given block when each spec runs.
+  #
+  # The block must call `run` on the given `Example::Procsy`
+  # object.
+  #
+  # For example:
+  #
+  # ```
+  # require "spec"
+  #
+  # describe "something" do
+  #   around_each do |example|
+  #     puts "before example runs"
+  #     example.run
+  #     puts "after example runs"
+  #   end
+  #
+  #   it "tests something" do
+  #     # ...
+  #   end
+  # end
+  # ```
   def around_each(&block : Example::Procsy ->)
     Spec.root_context.around_each(&block)
   end
 
+  # Executes the given block when each `describe` or `context` runs.
+  #
+  # The block must call `run` on the given `Context::Procsy`
+  # object.
+  #
+  # For example:
+  #
+  # ```
+  # require "spec"
+  #
+  # describe "something" do
+  #   around_all do |context|
+  #     puts "before describe runs"
+  #     example.run
+  #     puts "after describe runs"
+  #   end
+  #
+  #   it "tests something" do
+  #     # ...
+  #   end
+  # end
+  # ```
   def around_all(&block : Context::Procsy ->)
     Spec.root_context.around_all(&block)
   end
