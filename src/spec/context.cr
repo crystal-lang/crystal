@@ -1,13 +1,10 @@
 require "./item"
-require "./context/procsy"
 
 module Spec
-  # :nodoc:
-  #
-  # A context represents a `describe` or `context`.
+  # Base type for `ExampleGroup`.
   abstract class Context
     # All the children, which can be `describe`/`context` or `it`
-    getter children = [] of NestedContext | Example
+    getter children = [] of ExampleGroup | Example
   end
 
   # :nodoc:
@@ -19,6 +16,7 @@ module Spec
     elapsed : Time::Span?,
     exception : Exception?
 
+  # :nodoc:
   def self.root_context
     RootContext.instance
   end
@@ -156,7 +154,7 @@ module Spec
     def describe(description, file, line, end_line, focus, &block)
       Spec.focus = true if focus
 
-      context = Spec::NestedContext.new(@@current_context, description, file, line, end_line, focus)
+      context = Spec::ExampleGroup.new(@@current_context, description, file, line, end_line, focus)
       @@current_context.children << context
 
       old_context = @@current_context
@@ -249,7 +247,7 @@ module Spec
       false
     end
 
-    def around_all(&block : Context::Procsy ->)
+    def around_all(&block : ExampleGroup::Procsy ->)
       if @@current_context == self
         raise "Can't call `around_all` outside of a describe/context"
       end
@@ -257,13 +255,13 @@ module Spec
       @@current_context.around_all(&block)
     end
 
-    def run_around_all_hooks(procsy : Context::Procsy) : Bool
+    def run_around_all_hooks(procsy : ExampleGroup::Procsy) : Bool
       false
     end
   end
 
-  # :nodoc:
-  class NestedContext < Context
+  # Represents a `describe` or `context`.
+  class ExampleGroup < Context
     include Item
 
     def initialize(@parent : Context, @description : String,
@@ -271,65 +269,66 @@ module Spec
                    @focus : Bool)
     end
 
+    # :nodoc:
     def run
       Spec.formatters.each(&.push(self))
 
-      ran = run_around_all_hooks(Context::Procsy.new { internal_run })
+      ran = run_around_all_hooks(ExampleGroup::Procsy.new(self) { internal_run })
       ran || internal_run
 
       Spec.formatters.each(&.pop)
     end
 
-    def internal_run
+    protected def internal_run
       run_before_all_hooks
       children.each &.run
       run_after_all_hooks
     end
 
-    def report(kind, description, file, line, elapsed = nil, ex = nil)
+    protected def report(kind, description, file, line, elapsed = nil, ex = nil)
       parent.report kind, "#{@description} #{description}", file, line, elapsed, ex
     end
 
-    def before_each(&block)
+    protected def before_each(&block)
       (@before_each ||= [] of ->) << block
     end
 
-    def run_before_each_hooks
+    protected def run_before_each_hooks
       @parent.run_before_each_hooks
       @before_each.try &.each &.call
     end
 
-    def after_each(&block)
+    protected def after_each(&block)
       (@after_each ||= [] of ->) << block
     end
 
-    def run_after_each_hooks
+    protected def run_after_each_hooks
       @after_each.try &.reverse_each &.call
       @parent.run_after_each_hooks
     end
 
-    def before_all(&block)
+    protected def before_all(&block)
       (@before_all ||= [] of ->) << block
     end
 
-    def run_before_all_hooks
+    protected def run_before_all_hooks
       @before_all.try &.each &.call
     end
 
-    def after_all(&block)
+    protected def after_all(&block)
       (@after_all ||= [] of ->) << block
     end
 
-    def run_after_all_hooks
+    protected def run_after_all_hooks
       @after_all.try &.reverse_each &.call
     end
 
-    def around_each(&block : Example::Procsy ->)
+    protected def around_each(&block : Example::Procsy ->)
       (@around_each ||= [] of Example::Procsy ->) << block
     end
 
-    def run_around_each_hooks(procsy : Example::Procsy) : Bool
-      ran = @parent.run_around_each_hooks(Example::Procsy.new do
+    protected def run_around_each_hooks(procsy : Example::Procsy) : Bool
+      ran = @parent.run_around_each_hooks(Example::Procsy.new(procsy.example) do
         if @around_each
           # If we have around callbacks we execute them, and it will
           # eventually run the example
@@ -343,7 +342,7 @@ module Spec
       ran || internal_run_around_each_hooks(procsy)
     end
 
-    def internal_run_around_each_hooks(procsy : Example::Procsy) : Bool
+    protected def internal_run_around_each_hooks(procsy : Example::Procsy) : Bool
       around_each = @around_each
       return false unless around_each
 
@@ -351,25 +350,25 @@ module Spec
       true
     end
 
-    def run_around_each_hook(around_each, procsy, index) : Nil
+    protected def run_around_each_hook(around_each, procsy, index) : Nil
       around_each[index].call(
         if index == around_each.size - 1
           # If we don't have any more hooks after this one, call the procsy
           procsy
         else
           # Otherwise, create a procsy that will invoke the next hook
-          Example::Procsy.new do
+          Example::Procsy.new(procsy.example) do
             run_around_each_hook(around_each, procsy, index + 1)
           end
         end
       )
     end
 
-    def around_all(&block : Context::Procsy ->)
-      (@around_all ||= [] of Context::Procsy ->) << block
+    protected def around_all(&block : ExampleGroup::Procsy ->)
+      (@around_all ||= [] of ExampleGroup::Procsy ->) << block
     end
 
-    def run_around_all_hooks(procsy : Context::Procsy) : Bool
+    protected def run_around_all_hooks(procsy : ExampleGroup::Procsy) : Bool
       around_all = @around_all
       return false unless around_all
 
@@ -377,14 +376,14 @@ module Spec
       true
     end
 
-    def run_around_all_hook(around_all, procsy, index) : Nil
+    protected def run_around_all_hook(around_all, procsy, index) : Nil
       around_all[index].call(
         if index == around_all.size - 1
           # If we don't have any more hooks after this one, call the procsy
           procsy
         else
           # Otherwise, create a procsy that will invoke the next hook
-          Context::Procsy.new do
+          ExampleGroup::Procsy.new(procsy.example_group) do
             run_around_all_hook(around_all, procsy, index + 1)
           end
         end
@@ -392,3 +391,5 @@ module Spec
     end
   end
 end
+
+require "./example_group/procsy"

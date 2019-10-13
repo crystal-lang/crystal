@@ -151,7 +151,7 @@ module Spec::Methods
   #   end
   # end
   # ```
-  def around_all(&block : Context::Procsy ->)
+  def around_all(&block : ExampleGroup::Procsy ->)
     Spec.root_context.around_all(&block)
   end
 end
