@@ -176,6 +176,28 @@ describe Channel do
       end
     end
 
+    context "mix of receive and receive? multi-channel" do
+      it "raises if receive channel was closed and receive? channel was not ready" do
+        ch = Channel(String).new
+        ch2 = Channel(String).new
+        spawn_and_wait(->{ ch.close }) do
+          expect_raises Channel::ClosedError do
+            Channel.select(ch.receive_select_action, ch2.receive_select_action?)
+          end
+        end
+      end
+
+      it "returns nil if receive channel was not ready and receive? channel was closed" do
+        ch = Channel(String).new
+        ch2 = Channel(String).new
+        spawn_and_wait(->{ ch2.close }) do
+          i, m = Channel.select(ch.receive_select_action, ch2.receive_select_action?)
+          i.should eq(1)
+          m.should eq(nil)
+        end
+      end
+    end
+
     context "send raise-on-close single-channel" do
       it "types" do
         ch = Channel(String).new
@@ -285,6 +307,29 @@ describe Channel do
         spawn_and_wait(->{ ch.close }) do
           i, m = Channel.non_blocking_select(ch.receive_select_action?)
           m.should be_nil
+        end
+      end
+    end
+
+    context "mix of receive and receive? multi-channel" do
+      it "raises if receive channel was close and receive? channel was not ready" do
+        ch = Channel(String).new
+        ch2 = Channel(String).new
+
+        spawn_and_wait(->{ ch.close }) do
+          expect_raises Channel::ClosedError do
+            Channel.non_blocking_select(ch.receive_select_action, ch2.receive_select_action?)
+          end
+        end
+      end
+
+      it "returns nil if receive channel was not ready and receive? channel was closed" do
+        ch = Channel(String).new
+        ch2 = Channel(String).new
+        spawn_and_wait(->{ ch2.close }) do
+          i, m = Channel.non_blocking_select(ch.receive_select_action, ch2.receive_select_action?)
+          i.should eq(1)
+          m.should eq(nil)
         end
       end
     end
