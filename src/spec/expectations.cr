@@ -580,6 +580,21 @@ module Spec
       end
       expectation.cast_should_not(self)
     end
+
+    @[Deprecated("Expectations (what you pass to `should`) must include Spec::Expectation")]
+    def should(expectation, file = __FILE__, line = __LINE__)
+      unless expectation.match self
+        fail(expectation.failure_message(self), file, line)
+      end
+    end
+
+    @[Deprecated("Expectations (what you pass to `should_not`) must include Spec::Expectation")]
+    def should_not(expectation, file = __FILE__, line = __LINE__)
+      if expectation.match self
+        fail(expectation.negative_failure_message(self), file, line)
+      end
+      expectation.cast_should_not(self)
+    end
   end
 end
 
