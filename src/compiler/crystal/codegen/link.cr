@@ -143,8 +143,10 @@ module Crystal
         end
         # Append the default paths as -L flags in case the linker doesn't know
         # about them (eg: FreeBSD won't search /usr/local/lib by default):
-        library_path.each do |path|
-          flags << " -L#{path}"
+        unless disable_default_libraries
+          library_path.each do |path|
+            flags << " -L#{path}"
+          end
         end
       end
     end

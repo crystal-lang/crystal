@@ -346,6 +346,10 @@ class Crystal::Command
         @error_trace = true
       end
 
+      opts.on("--nodefaultlibs", "Disable standard library locations") do
+        compiler.flags << "-nodefaultlibs"
+      end
+
       opts.on("-h", "--help", "Show this message") do
         puts opts
         exit
@@ -371,6 +375,7 @@ class Crystal::Command
         @color = false
         compiler.color = false
       end
+
 
       unless no_codegen
         opts.on("--no-codegen", "Don't do code generation") do
