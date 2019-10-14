@@ -39,6 +39,10 @@ class Crystal::Doc::Generator
   def run
     Dir.mkdir_p @output_dir
 
+    if @is_crystal_repo
+      insert_pseudo_methods
+    end
+
     types = collect_subtypes(@program)
 
     program_type = type(@program)
