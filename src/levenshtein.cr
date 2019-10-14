@@ -13,11 +13,11 @@ module Levenshtein
   def self.distance(string1 : String, string2 : String) : Int32
     return 0 if string1 == string2
 
-    s = string1.chars
-    t = string2.chars
+    s = string1.to_unsafe
+    t = string2.to_unsafe
 
-    s_size = s.size
-    t_size = t.size
+    s_size = string1.size
+    t_size = string2.size
 
     return t_size if s_size == 0
     return s_size if t_size == 0
