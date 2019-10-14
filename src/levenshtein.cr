@@ -13,36 +13,70 @@ module Levenshtein
   def self.distance(string1 : String, string2 : String) : Int32
     return 0 if string1 == string2
 
-    s = string1.to_unsafe
-    t = string2.to_unsafe
-
     s_size = string1.size
     t_size = string2.size
 
     return t_size if s_size == 0
     return s_size if t_size == 0
 
-    # This is to allocate less memory
-    if t_size > s_size
-      t, s = s, t
-      t_size, s_size = s_size, t_size
-    end
+    if string1.ascii_only? && string2.ascii_only?
+      s = string1.to_unsafe
+      t = string2.to_unsafe
 
-    v = Pointer(Int32).malloc(t_size + 1) { |i| i }
-
-    s_size.times do |i|
-      last_cost = i + 1
-
-      t_size.times do |j|
-        sub_cost = s[i] == t[j] ? 0 : 1
-        cost = Math.min(Math.min(last_cost + 1, v[j + 1] + 1), v[j] + sub_cost)
-        v[j] = last_cost
-        last_cost = cost
+      # This is to allocate less memory
+      if t_size > s_size
+        t, s = s, t
+        t_size, s_size = s_size, t_size
       end
-      v[t_size] = last_cost
-    end
 
-    v[t_size]
+      v = Pointer(Int32).malloc(t_size + 1) { |i| i }
+
+      i = 0
+      last_cost = 0
+      s_size.times do |i|
+        last_cost = i + 1
+
+        t_size.times do |j|
+          sub_cost = s[i] == t[j] ? 0 : 1
+          cost = Math.min(Math.min(last_cost + 1, v[j + 1] + 1), v[j] + sub_cost)
+          v[j] = last_cost
+          last_cost = cost
+        end
+        v[t_size] = last_cost
+      end
+
+      last_cost
+    else
+      reader1 = Char::Reader.new(string1)
+      reader2 = Char::Reader.new(string2)
+
+      # This is to allocate less memory
+      if t_size > s_size
+        reader2, reader1 = reader1, reader2
+        t_size = s_size
+      end
+
+      v = Pointer(Int32).malloc(t_size + 1) { |i| i }
+
+      last_cost = 1
+      reader1.each do |char1|
+        j = 0
+        reader2.each do |char2|
+          sub_cost = char1 == char2 ? 0 : 1
+          cost = Math.min(Math.min(last_cost, v[j + 1]), v[j] + sub_cost)
+          v[j] = last_cost
+          last_cost = cost
+          j += 1
+        end
+        reader2.pos = 0
+
+        last_cost += 1
+
+        v[t_size] = last_cost
+      end
+
+      last_cost
+    end
   end
 
   # Finds the closest string to a given string amongst many strings.
