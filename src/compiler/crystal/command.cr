@@ -376,7 +376,6 @@ class Crystal::Command
         compiler.color = false
       end
 
-
       unless no_codegen
         opts.on("--no-codegen", "Don't do code generation") do
           compiler.no_codegen = true
