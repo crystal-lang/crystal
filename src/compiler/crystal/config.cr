@@ -50,14 +50,14 @@ module Crystal
           # in order to use the appropriate environment target.
           default_libc = target.gnu? ? "-gnu" : "-musl"
 
-          target = Crystal::Codegen::Target.new(target.to_s.sub(default_libc, "-#{runtime_libc}"))
+          target = Crystal::Codegen::Target.new(target.to_s.sub(default_libc, "-#{linux_runtime_libc}"))
         end
 
         target
       end
     end
 
-    private def self.runtime_libc
+    def self.linux_runtime_libc
       ldd_version = String.build do |io|
         Process.run("ldd", {"--version"}, output: io, error: io)
       rescue Errno
