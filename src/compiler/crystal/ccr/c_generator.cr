@@ -2,8 +2,8 @@ require "./lexer"
 
 module Crystal::CCR
   class CGenerator
-    def initialize(string : String)
-      @lexer = Lexer.new(string)
+    def initialize(@filename : String)
+      @lexer = Lexer.new(File.read(@filename))
       @headers = String::Builder.new
       @main = String::Builder.new
     end
@@ -11,10 +11,17 @@ module Crystal::CCR
     def process
       add_include "<stdio.h>"
 
+      needs_loc_pragma = true
+
       define_main do
         until (token = @lexer.next_token).type.eof?
           case token.type
           when .string?
+            if needs_loc_pragma
+              append_loc(token.line_number, token.column_number)
+              needs_loc_pragma = false
+            end
+
             add_printf_string(token.value)
           when .control?
             pieces = token.value.split(' ', 2)
@@ -27,8 +34,11 @@ module Crystal::CCR
             when "include"
               add_include value
             else
+              append_loc(token.line_number, token.column_number)
               add_directive directive, value
             end
+
+            needs_loc_pragma = true
           end
         end
       end
@@ -83,6 +93,10 @@ module Crystal::CCR
       @main << %|  printf("%s", |
       string.inspect(@main)
       @main << ");\n"
+    end
+
+    private def append_loc(line_number, column_number)
+      add_printf_string("#<loc:#{@filename.inspect},#{line_number},#{column_number}>")
     end
   end
 end

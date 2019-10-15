@@ -12,8 +12,7 @@ module Crystal::CCR
     generated_bin_filename = File.join(dir, "#{basename}.generated.bin")
     generated_cr_filename = File.join(dir, "#{basename}.generated.cr")
 
-    file_contents = File.read(filename)
-    generator = CGenerator.new(file_contents)
+    generator = CGenerator.new(filename)
 
     File.write(generated_c_filename, generator.process)
 
