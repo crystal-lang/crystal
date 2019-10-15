@@ -65,7 +65,11 @@ module Crystal
         return "gnu"
       end
 
-      if ldd_version.starts_with?("musl")
+      # Generally, `ldd --version` should print `musl`.
+      # But there is a bug in alpine 3.10 which breaks `ldd --version`.
+      # But detection still works with `-musl`, and it doesn't do harm in other
+      # cases.
+      if ldd_version.starts_with?("musl") || ldd_version.includes?("-musl")
         "musl"
       else
         "gnu"
