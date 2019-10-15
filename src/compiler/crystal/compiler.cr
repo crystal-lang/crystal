@@ -160,7 +160,7 @@ module Crystal
     # Raises `InvalidByteSequenceError` if the source code is not
     # valid UTF-8.
     def compile(source : Source | Array(Source), output_filename : String) : Result
-      source = [source] unless source.is_a?(Array)
+      source = transform_source(source)
       program = new_program(source)
       node = parse program, source
       node = program.semantic node, cleanup: !no_cleanup?
@@ -184,7 +184,7 @@ module Crystal
     # Raises `InvalidByteSequenceError` if the source code is not
     # valid UTF-8.
     def top_level_semantic(source : Source | Array(Source)) : Result
-      source = [source] unless source.is_a?(Array)
+      source = transform_source(source)
       program = new_program(source)
       node = parse program, source
       node, processor = program.top_level_semantic(node)
@@ -193,6 +193,19 @@ module Crystal
       print_macro_run_stats(program)
 
       Result.new program, node
+    end
+
+    private def transform_source(source : Source | Array(Source)) : Array(Source)
+      source = [source] unless source.is_a?(Array)
+      source.map! do |source|
+        if source.filename.ends_with?(".ccr")
+          generated_ccr_filename = CCR.process(source.filename)
+          Source.new(generated_ccr_filename, File.read(generated_ccr_filename))
+        else
+          source
+        end
+      end
+      source
     end
 
     private def new_program(sources)

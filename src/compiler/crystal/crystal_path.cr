@@ -1,5 +1,6 @@
 require "./config"
 require "./exception"
+require "./ccr"
 
 module Crystal
   struct CrystalPath
@@ -61,10 +62,22 @@ module Crystal
         return nil
       end
 
+      ccr_file = find_file(filename, relative_to, ".ccr")
+      if ccr_file
+        return CCR.process(ccr_file)
+      end
+
+      cr_file = find_file(filename, relative_to, ".cr")
+      return cr_file if cr_file
+
+      nil
+    end
+
+    private def find_file(filename, relative_to, extension)
       relative_filename = "#{relative_to}/#{filename}"
 
-      # Check if .cr file exists.
-      relative_filename_cr = relative_filename.ends_with?(".cr") ? relative_filename : "#{relative_filename}.cr"
+      # Check if file with extension exists.
+      relative_filename_cr = relative_filename.ends_with?(extension) ? relative_filename : "#{relative_filename}#{extension}"
       if File.exists?(relative_filename_cr)
         return make_relative_unless_absolute relative_filename_cr
       end
@@ -75,24 +88,24 @@ module Crystal
         # If it's "foo/bar/baz", check if "foo/src/bar/baz.cr" exists (for a shard, non-namespaced structure)
         before_slash, after_slash = filename.split('/', 2)
 
-        absolute_filename = make_relative_unless_absolute("#{relative_to}/#{before_slash}/src/#{after_slash}.cr")
+        absolute_filename = make_relative_unless_absolute("#{relative_to}/#{before_slash}/src/#{after_slash}#{extension}")
         return absolute_filename if File.exists?(absolute_filename)
 
         # Then check if "foo/src/foo/bar/baz.cr" exists (for a shard, namespaced structure)
-        absolute_filename = make_relative_unless_absolute("#{relative_to}/#{before_slash}/src/#{before_slash}/#{after_slash}.cr")
+        absolute_filename = make_relative_unless_absolute("#{relative_to}/#{before_slash}/src/#{before_slash}/#{after_slash}#{extension}")
         return absolute_filename if File.exists?(absolute_filename)
 
         # If it's "foo/bar/baz", check if "foo/bar/baz/baz.cr" exists (std, nested)
         basename = File.basename(relative_filename)
-        absolute_filename = make_relative_unless_absolute("#{relative_to}/#{filename}/#{basename}.cr")
+        absolute_filename = make_relative_unless_absolute("#{relative_to}/#{filename}/#{basename}#{extension}")
         return absolute_filename if File.exists?(absolute_filename)
 
         # If it's "foo/bar/baz", check if "foo/src/foo/bar/baz/baz.cr" exists (shard, non-namespaced, nested)
-        absolute_filename = make_relative_unless_absolute("#{relative_to}/#{before_slash}/src/#{after_slash}/#{after_slash}.cr")
+        absolute_filename = make_relative_unless_absolute("#{relative_to}/#{before_slash}/src/#{after_slash}/#{after_slash}#{extension}")
         return absolute_filename if File.exists?(absolute_filename)
 
         # If it's "foo/bar/baz", check if "foo/src/foo/bar/baz/baz.cr" exists (shard, namespaced, nested)
-        absolute_filename = make_relative_unless_absolute("#{relative_to}/#{before_slash}/src/#{before_slash}/#{after_slash}/#{after_slash}.cr")
+        absolute_filename = make_relative_unless_absolute("#{relative_to}/#{before_slash}/src/#{before_slash}/#{after_slash}/#{after_slash}#{extension}")
         return absolute_filename if File.exists?(absolute_filename)
 
         return nil
@@ -101,12 +114,12 @@ module Crystal
       basename = File.basename(relative_filename)
 
       # If it's "foo", check if "foo/foo.cr" exists (for the std, nested)
-      absolute_filename = make_relative_unless_absolute("#{relative_filename}/#{basename}.cr")
+      absolute_filename = make_relative_unless_absolute("#{relative_filename}/#{basename}#{extension}")
       return absolute_filename if File.exists?(absolute_filename)
 
       unless filename_is_relative
         # If it's "foo", check if "foo/src/foo.cr" exists (for a shard)
-        absolute_filename = make_relative_unless_absolute("#{relative_filename}/src/#{basename}.cr")
+        absolute_filename = make_relative_unless_absolute("#{relative_filename}/src/#{basename}#{extension}")
         return absolute_filename if File.exists?(absolute_filename)
       end
 
@@ -127,6 +140,8 @@ module Crystal
         else
           if filename.ends_with?(".cr")
             files << full_name
+          elsif filename.ends_with?(".ccr")
+            files << CCR.process(full_name)
           end
         end
       end
