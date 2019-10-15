@@ -47,28 +47,29 @@ module Levenshtein
 
       last_cost
     else
-      reader1 = Char::Reader.new(string1)
-      reader2 = Char::Reader.new(string2)
+      reader = Char::Reader.new(string1)
+  
+      # Use an array instead of a reader to decode the string only once
+      chars = string2.chars 
 
       # This is to allocate less memory
       if t_size > s_size
-        reader2, reader1 = reader1, reader2
+        chars, reader = reader, chars
         t_size = s_size
       end
 
       v = Pointer(Int32).malloc(t_size + 1) { |i| i }
 
       last_cost = 1
-      reader1.each do |char1|
+      reader.each do |char1|
         j = 0
-        reader2.each do |char2|
+        chars.each do |char2|
           sub_cost = char1 == char2 ? 0 : 1
           cost = Math.min(Math.min(last_cost, v[j + 1]), v[j] + sub_cost)
           v[j] = last_cost
           last_cost = cost
           j += 1
         end
-        reader2.pos = 0
 
         last_cost += 1
 
