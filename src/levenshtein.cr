@@ -29,7 +29,7 @@ module Levenshtein
         t_size, s_size = s_size, t_size
       end
 
-      v = Pointer(Int32).malloc(t_size + 1) { |i| i }
+      costs = Pointer(Int32).malloc(t_size + 1) { |i| i }
 
       i = 0
       last_cost = 0
@@ -38,11 +38,11 @@ module Levenshtein
 
         t_size.times do |j|
           sub_cost = s[i] == t[j] ? 0 : 1
-          cost = Math.min(Math.min(last_cost + 1, v[j + 1] + 1), v[j] + sub_cost)
-          v[j] = last_cost
+          cost = Math.min(Math.min(last_cost + 1, costs[j + 1] + 1), costs[j] + sub_cost)
+          costs[j] = last_cost
           last_cost = cost
         end
-        v[t_size] = last_cost
+        costs[t_size] = last_cost
       end
 
       last_cost
@@ -58,22 +58,20 @@ module Levenshtein
         t_size = s_size
       end
 
-      v = Pointer(Int32).malloc(t_size + 1) { |i| i }
+      costs = Pointer(Int32).malloc(t_size + 1) { |i| i }
 
       last_cost = 1
       reader.each do |char1|
-        j = 0
-        chars.each do |char2|
+        chars.each_with_index do |char2, index|
           sub_cost = char1 == char2 ? 0 : 1
-          cost = Math.min(Math.min(last_cost, v[j + 1]), v[j] + sub_cost)
-          v[j] = last_cost
+          cost = Math.min(Math.min(last_cost, costs[index + 1]), costs[index] + sub_cost)
+          costs[index] = last_cost
           last_cost = cost
-          j += 1
         end
 
         last_cost += 1
 
-        v[t_size] = last_cost
+        costs[t_size] = last_cost
       end
 
       last_cost
