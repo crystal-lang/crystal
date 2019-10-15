@@ -48,9 +48,9 @@ module Levenshtein
       last_cost
     else
       reader = Char::Reader.new(string1)
-  
-      # Use an array instead of a reader to decode the string only once
-      chars = string2.chars 
+
+      # Use an array instead of a reader to decode the second string only once
+      chars = string2.chars
 
       # This is to allocate less memory
       if t_size > s_size
