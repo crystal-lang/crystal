@@ -25,7 +25,7 @@ class Crystal::Doc::Generator
       ],
       return_type: Path.new(["Bool"]),
       doc: <<-DOC)
-        Returns `true` if  inherits or includes *type*.
+        Returns `true` if `self` inherits or includes *type*.
         *type* must be a constant, it cannot be evaluated at runtime.
 
         ```
@@ -64,7 +64,7 @@ class Crystal::Doc::Generator
         If *type* is not a valid restriction for the expression type, it
         is a compile-time error.
         If *type*  is a valid restriction for the expression, but `self` can't
-        be restricted, it raises at runtime.
+        be restricted to *type*, it raises at runtime.
         *type* may be a wider restriction than the expression type, the resulting
         type is narrowed to the minimal restriction.
 
