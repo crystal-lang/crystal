@@ -110,8 +110,8 @@ module Crystal
     # Whether to show error trace
     property? show_error_trace = false
 
-    # Avoids using /usr/lib and /usr/local/lib directories
-    property disable_default_libraries = false
+    # Enables use of /usr/lib and /usr/local/lib directories
+    property default_libs = true
 
     # The main filename of this program
     property filename : String?

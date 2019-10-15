@@ -84,6 +84,10 @@ module Crystal
     # If `true`, runs LLVM optimizations.
     property? release = false
 
+    # If `true`, uses `/usr/lib` and `/usr/local/lib` directories
+    # to find libraries
+    property default_libs = true
+
     # If `true`, generates a single LLVM module. By default
     # one LLVM module is created for each type in a program.
     property? single_module = false
@@ -208,6 +212,7 @@ module Crystal
       program.wants_doc = wants_doc?
       program.color = color?
       program.stdout = stdout
+      program.default_libs = default_libs
       program.show_error_trace = show_error_trace?
       program.progress_tracker = @progress_tracker
       program.warnings = @warnings
