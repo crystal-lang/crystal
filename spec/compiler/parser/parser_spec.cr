@@ -798,6 +798,17 @@ module Crystal
     it_parses "lib LibC\nalias Foo = Bar\nend", LibDef.new("LibC", [Alias.new("Foo".path, "Bar".path)] of ASTNode)
     it_parses "lib LibC; struct Foo; include Bar; end; end", LibDef.new("LibC", [CStructOrUnionDef.new("Foo", Include.new("Bar".path))] of ASTNode)
 
+    it_parses <<-CODE, LibDef.new("LibC", [CStructOrUnionDef.new("Foo", Expressions.from([Annotation.new("A".path), TypeDeclaration.new("x".var, "Int32".path), Annotation.new("B".path), TypeDeclaration.new("y".var, "Int32".path)] of ASTNode))] of ASTNode)
+      lib LibC
+        struct Foo
+          @[A]
+          x : Int32
+          @[B]
+          y : Int32
+        end
+      end
+      CODE
+
     it_parses "lib LibC\nfun SomeFun\nend", LibDef.new("LibC", [FunDef.new("SomeFun")] of ASTNode)
 
     it_parses "fun foo(x : Int32) : Int64\nx\nend", FunDef.new("foo", [Arg.new("x", restriction: "Int32".path)], "Int64".path, body: "x".var)

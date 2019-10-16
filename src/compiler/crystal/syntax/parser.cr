@@ -5563,6 +5563,8 @@ module Crystal
           exps << parse_percent_macro_expression
         when :"{%"
           exps << parse_percent_macro_control
+        when :"@["
+          exps << parse_annotation
         when :";", :NEWLINE
           skip_statement_end
         else
