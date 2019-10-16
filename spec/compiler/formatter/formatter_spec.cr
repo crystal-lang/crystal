@@ -1570,4 +1570,19 @@ describe Crystal::Formatter do
     end
     ex.line_number.should eq(5)
   end
+
+  # #8197
+  assert_format <<-CODE
+    foo
+      .foo1(bar
+        .bar1
+        .bar2)
+    CODE
+
+  assert_format <<-CODE
+    foo.foo1(
+      bar
+        .bar1
+        .bar2)
+    CODE
 end
