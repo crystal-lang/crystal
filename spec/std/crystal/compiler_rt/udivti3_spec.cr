@@ -1,0 +1,23 @@
+require "spec"
+
+# Ported from compiler-rt:test/builtins/Unit/udivti3_test.c
+
+private def test__udivti3(a : UInt128, b : UInt128, expected : UInt128, file = __FILE__, line = __LINE__)
+  it "passes compiler-rt builtins unit tests" do
+    __udivti3(a, b).should eq(expected), file, line
+  end
+end
+
+# TODO: enable after 128 bit
+# private HEX_0_80000000000000000000000000000000 = 0x80000000000000000000000000000000.to_i128!
+# private HEX_0_40000000000000000000000000000000 = 0x40000000000000000000000000000000.to_i128!
+# private HEX_0_FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF.to_i128!
+# private HEX_0_7FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF = 0x7FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF.to_i128!
+
+describe "__udivti3" do
+  test__udivti3(0_u128, 1_u128, 0_u128)
+  test__udivti3(2_u128, 1_u128, 2_u128)
+  # test__udivti3(HEX_0_80000000000000000000000000000000, 1, HEX_0_80000000000000000000000000000000)
+  # test__udivti3(HEX_0_80000000000000000000000000000000, 2, HEX_0_40000000000000000000000000000000)
+  # test__udivti3(HEX_0_FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF, 2, HEX_0_7FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF)
+end
