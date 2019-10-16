@@ -303,9 +303,9 @@ class HTTP::WebSocket::Protocol
 
   def self.key_challenge(key)
     {% if flag?(:without_openssl) %}
-      Digest::SHA1.base64digest("#{key}#{GUID}")
+      Digest::SHA1.base64digest(key + GUID)
     {% else %}
-      Base64.strict_encode(OpenSSL::SHA1.hash("#{key}#{GUID}"))
+      Base64.strict_encode(OpenSSL::SHA1.hash(key + GUID))
     {% end %}
   end
 end
