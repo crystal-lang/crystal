@@ -11,17 +11,12 @@ module Crystal::CCR
     def process
       add_include "<stdio.h>"
 
-      needs_loc_pragma = true
-
       define_main do
         until (token = @lexer.next_token).type.eof?
+          append_loc(token.line_number, token.column_number)
+
           case token.type
           when .string?
-            if needs_loc_pragma
-              append_loc(token.line_number, token.column_number)
-              needs_loc_pragma = false
-            end
-
             add_printf_string(token.value)
           when .control?
             pieces = token.value.split(' ', 2)
@@ -38,11 +33,8 @@ module Crystal::CCR
             when "else", "endif"
               add_pragma directive
             else
-              append_loc(token.line_number, token.column_number)
               add_directive directive, value
             end
-
-            needs_loc_pragma = true
           end
         end
       end
