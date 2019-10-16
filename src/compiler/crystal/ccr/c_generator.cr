@@ -25,14 +25,18 @@ module Crystal::CCR
             add_printf_string(token.value)
           when .control?
             pieces = token.value.split(' ', 2)
-            if pieces.size != 2
-              raise "expected `<%= directive args %>`, not `<%= #{token.value} %>`"
+            if pieces.size == 2
+              directive, value = pieces
+            else
+              directive, value = pieces[0], ""
             end
-
-            directive, value = pieces
             case directive
             when "include"
               add_include value
+            when "ifdef", "ifndef", "if", "elsif"
+              add_pragma directive, value
+            when "else", "endif"
+              add_pragma directive
             else
               append_loc(token.line_number, token.column_number)
               add_directive directive, value
@@ -83,6 +87,14 @@ module Crystal::CCR
 
     def add_include(header_file)
       @headers << "#include " << header_file << "\n"
+    end
+
+    def add_pragma(name, value)
+      @main << "#" << name << " " << value << "\n"
+    end
+
+    def add_pragma(name)
+      @main << "#" << name << "\n"
     end
 
     def add_directive(directive, value)
