@@ -2,7 +2,7 @@ class Crystal::Doc::Generator
   getter program : Program
 
   @base_dir : String
-  @is_crystal_repo : Bool
+  property is_crystal_repo : Bool
   @repository : String? = nil
   getter repository_name = ""
 
@@ -38,10 +38,6 @@ class Crystal::Doc::Generator
 
   def run
     Dir.mkdir_p @output_dir
-
-    if @is_crystal_repo
-      insert_pseudo_methods
-    end
 
     types = collect_subtypes(@program)
 

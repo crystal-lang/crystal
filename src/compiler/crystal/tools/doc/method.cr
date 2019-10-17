@@ -12,7 +12,12 @@ class Crystal::Doc::Method
   end
 
   def name
-    @def.name
+    name = @def.name
+    if @generator.is_crystal_repo
+      name.lstrip("__crystal_pseudo_")
+    else
+      name
+    end
   end
 
   def args

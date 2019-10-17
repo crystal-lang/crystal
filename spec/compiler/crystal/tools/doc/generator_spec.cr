@@ -228,16 +228,14 @@ describe Doc::Generator do
     it "inserts pseudo methods" do
       program = Program.new
       generator = Doc::Generator.new program, ["."], ".", "html", nil
-      generator.insert_pseudo_methods
+      doc_type = Doc::Type.new generator, program
+      generator.is_crystal_repo = true
 
-      defs = program.object.defs.not_nil!
-      defs.keys.sort.should eq ["!", "as", "as?", "is_a?", "nil?", "responds_to?"]
-      defs.each_value do |defs|
-        defs.size.should eq 1
-        doc = defs.first.def.doc.not_nil!
-        doc.should contain("This is a pseudo-method")
-        doc.should contain("```")
-      end
+      a_def = Def.new "__crystal_pseudo_foo"
+      a_def.doc = "Pseudo method"
+      doc_method = Doc::Method.new generator, doc_type, a_def, false
+      doc_method.name.should eq "foo"
+      doc_method.formatted_doc.should eq %(<p>Pseudo method</p>)
     end
   end
 end
