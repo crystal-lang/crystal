@@ -264,6 +264,7 @@ module Crystal
       when UInt8   then :u8
       when UInt16  then :u16
       when UInt32  then :u32
+      when UInt64  then :u64
       when UInt128 then :u128
       when Float32 then :f32
       when Float64 then :f64
