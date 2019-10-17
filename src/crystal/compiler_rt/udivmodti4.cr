@@ -31,7 +31,7 @@ fun __udivmodti4(a : UInt128, b : UInt128, rem : UInt128*) : UInt128
         if rem
           r.info.high = n.info.high % d.info.high
           r.info.low = 0
-          rem.value = r.unsafe_as(UInt128)
+          rem.value = r.all
         end
         n.info.high = n.info.high // d.info.high
         return n.all
@@ -40,7 +40,7 @@ fun __udivmodti4(a : UInt128, b : UInt128, rem : UInt128*) : UInt128
         if rem
           r.info.low = n.info.low
           r.info.high = n.info.high & (d.info.high &- 1)
-          rem.value = r.unsafe_as(UInt128)
+          rem.value = r.all
         end
         n.info.high = n.info.high >> d.s.info.high.trailing_zeros_count
         return n.all
@@ -48,7 +48,7 @@ fun __udivmodti4(a : UInt128, b : UInt128, rem : UInt128*) : UInt128
       sr = d.info.high.trailing_zeros_count &- n.info.high.trailing_zeros_count
       if (sr > n_udword_bits &- 2)
         if rem
-          rem.value = n.unsafe_as(UInt128)
+          rem.value = n.all
         end
         return 0_u128
       end
@@ -114,14 +114,14 @@ fun __udivmodti4(a : UInt128, b : UInt128, rem : UInt128*) : UInt128
     r.info.low = (r.info.low << 1) | (q.info.high >> (n_udword_bits &- 1))
     q.info.high = (q.info.high << 1) | (q.info.low >> (n_udword_bits &- 1))
     q.info.low = (q.info.low << 1) | carry
-    s = (d.unsafe_as(UInt128) &- r.unsafe_as(UInt128) &- 1) >> (n_utword_bits &- 1)
+    s = (d.all &- r.all &- 1) >> (n_utword_bits &- 1)
     carry = s & 1
-    r = (r.unsafe_as(UInt128) &- (d.unsafe_as(UInt128) & s)).unsafe_as(CompilerRT::UI128)
+    r = (r.all &- (d.all & s)).unsafe_as(CompilerRT::UI128)
   end
 
-  q = ((q.unsafe_as(UInt128) << 1) | carry).unsafe_as(CompilerRT::UI128)
+  q = ((q.all << 1) | carry).unsafe_as(CompilerRT::UI128)
   if rem
-    rem.value = r.unsafe_as(UInt128)
+    rem.value = r.all
   end
   q.all
 end
