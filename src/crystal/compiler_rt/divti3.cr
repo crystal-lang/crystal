@@ -10,4 +10,3 @@ fun __divti3(a : Int128, b : Int128) : Int128
   r = (0_i128 ^ s_a).unsafe_as(UInt128)
   (__udivmodti4(a.unsafe_as(UInt128), b.unsafe_as(UInt128), pointerof(r)) &- s_a).unsafe_as(Int128)
 end
-

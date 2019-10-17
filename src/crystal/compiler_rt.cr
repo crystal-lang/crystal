@@ -19,6 +19,9 @@ require "./compiler_rt/multi3.cr"
 # Signed Division
 require "./compiler_rt/divti3.cr"
 
+# Unsigned Division
+require "./compiler_rt/udivti3.cr"
+
 # Signed Modulus
 require "./compiler_rt/modti3.cr"
 
