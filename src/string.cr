@@ -494,7 +494,7 @@ class String
 
   # Same as `#to_i` but returns an `UInt128` or the block's value.
   def to_u128(base : Int = 10, whitespace : Bool = true, underscore : Bool = false, prefix : Bool = false, strict : Bool = true, leading_zero_is_octal : Bool = false, &block)
-    gen_to_ u128 #, ((1 << 127) - 1).to_u128 # TODO: use `gen_to_ u128, 340282366920938463463374607431768211455_u128` when 128 bit support is added
+    gen_to_ u128 # , ((1 << 127) - 1).to_u128 # TODO: use `gen_to_ u128, 340282366920938463463374607431768211455_u128` when 128 bit support is added
   end
 
   # :nodoc:

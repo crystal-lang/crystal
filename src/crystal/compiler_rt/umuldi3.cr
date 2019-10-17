@@ -18,4 +18,3 @@ fun __umuldi3(a : UInt64, b : UInt64) : UInt128
   r.info.high = r.info.high &+ (a >> bits_in_dword_2) &* (b >> bits_in_dword_2)
   r.all
 end
-
