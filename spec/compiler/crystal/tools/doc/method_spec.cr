@@ -22,6 +22,16 @@ describe Doc::Method do
       doc_method.args_to_s.should eq("(*foo)")
     end
 
+    it "shows underscore restriction" do
+      program = Program.new
+      generator = Doc::Generator.new program, ["."], ".", "html", nil
+      doc_type = Doc::Type.new generator, program
+
+      a_def = Def.new "foo", ["foo".arg(restriction: Crystal::Underscore.new)], splat_index: 0
+      doc_method = Doc::Method.new generator, doc_type, a_def, false
+      doc_method.args_to_s.should eq("(*foo : _)")
+    end
+
     it "shows double splat args" do
       program = Program.new
       generator = Doc::Generator.new program, ["."], ".", "html", nil
@@ -40,6 +50,16 @@ describe Doc::Method do
       a_def = Def.new "foo", block_arg: "foo".arg
       doc_method = Doc::Method.new generator, doc_type, a_def, false
       doc_method.args_to_s.should eq("(&foo)")
+    end
+
+    it "shows block args with underscore" do
+      program = Program.new
+      generator = Doc::Generator.new program, ["."], ".", "html", nil
+      doc_type = Doc::Type.new generator, program
+
+      a_def = Def.new "foo", block_arg: "foo".arg(restriction: Crystal::ProcNotation.new(([Crystal::Underscore.new] of Crystal::ASTNode), Crystal::Underscore.new))
+      doc_method = Doc::Method.new generator, doc_type, a_def, false
+      doc_method.args_to_s.should eq("(&foo : _ -> _)")
     end
 
     it "shows block args if a def has `yield`" do
