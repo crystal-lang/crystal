@@ -50,14 +50,14 @@ module Crystal
           # in order to use the appropriate environment target.
           default_libc = target.gnu? ? "-gnu" : "-musl"
 
-          target = Crystal::Codegen::Target.new(target.to_s.sub(default_libc, "-#{runtime_libc}"))
+          target = Crystal::Codegen::Target.new(target.to_s.sub(default_libc, "-#{linux_runtime_libc}"))
         end
 
         target
       end
     end
 
-    private def self.runtime_libc
+    def self.linux_runtime_libc
       ldd_version = String.build do |io|
         Process.run("ldd", {"--version"}, output: io, error: io)
       rescue Errno
@@ -65,7 +65,11 @@ module Crystal
         return "gnu"
       end
 
-      if ldd_version.starts_with?("musl")
+      # Generally, `ldd --version` should print `musl`.
+      # But there is a bug in alpine 3.10 which breaks `ldd --version`.
+      # But detection still works with `-musl`, and it doesn't do harm in other
+      # cases.
+      if ldd_version.starts_with?("musl") || ldd_version.includes?("-musl")
         "musl"
       else
         "gnu"
