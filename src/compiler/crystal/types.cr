@@ -62,6 +62,11 @@ module Crystal
       false
     end
 
+    # Returns an integer that specifies the size in bytes this type occupies. For representing C structs as i8[N] using Sizeof + Offsetof annotations.
+    def sizeof : Int32?
+      nil
+    end
+
     # Returns `true` if this type inherits from `Reference` or if this
     # is a union type where all types are reference types or nil.
     # In this case this type can be represented with a single pointer.
@@ -1162,6 +1167,7 @@ module Crystal
     property? extern = false
     property? extern_union = false
     property? packed = false
+    property sizeof : Int32?
 
     def initialize(program, namespace, name, @superclass, add_subclass = true)
       super(program, namespace, name)

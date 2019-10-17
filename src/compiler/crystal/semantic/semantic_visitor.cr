@@ -426,6 +426,10 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
     end
   end
 
+  def clear_annotations
+    @annotations = nil
+  end
+
   def lookup_annotation(ann)
     # TODO: Since there's `Int::Primitive`, and now we'll have
     # `::Primitive`, but there's no way to specify ::Primitive

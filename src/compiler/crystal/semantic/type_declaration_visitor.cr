@@ -85,6 +85,7 @@ class Crystal::TypeDeclarationVisitor < Crystal::SemanticVisitor
   def visit(node : CStructOrUnionDef)
     pushing_type(node.resolved_type) do
       @in_c_struct_or_union = true
+      clear_annotations
       node.body.accept self
       @in_c_struct_or_union = false
     end
@@ -172,6 +173,16 @@ class Crystal::TypeDeclarationVisitor < Crystal::SemanticVisitor
   def declare_c_struct_or_union_field(node)
     type = current_type.as(NonGenericClassType)
 
+    annotations = @annotations
+    @annotations = nil
+
+    offsetof_value = nil
+    process_annotations(annotations) do |ann_type, ann|
+      if ann_type == @program.offsetof_annotation
+        offsetof_value = process_offsetof_annotation(ann)
+      end
+    end
+
     field_type = lookup_type(node.declared_type)
     field_type = check_allowed_in_lib node.declared_type, field_type
     if field_type.remove_typedef.void?
@@ -184,8 +195,18 @@ class Crystal::TypeDeclarationVisitor < Crystal::SemanticVisitor
     if type.lookup_instance_var?(var_name)
       node.raise "#{type.type_desc} #{type} already defines a field named '#{field_name}'"
     end
+
+    if type.sizeof && !offsetof_value
+      node.raise "field must have an `@[Offsetof(...)]` annotation because it belongs to a type annotated with `@[Sizeof(...)]`"
+    end
+
+    if !type.sizeof && offsetof_value
+      node.raise "field must not have an `@[Offsetof(...)]` annotation because it doesn't belong to a type annotated with `@[Sizeof(...)]`"
+    end
+
     ivar = MetaTypeVar.new(var_name, field_type)
     ivar.owner = type
+    ivar.offsetof = offsetof_value
     declare_c_struct_or_union_field(type, field_name, ivar, node.location)
   end
 
@@ -193,6 +214,30 @@ class Crystal::TypeDeclarationVisitor < Crystal::SemanticVisitor
     type.instance_vars[var.name] = var
     type.add_def Def.new("#{field_name}=", [Arg.new("value")], Primitive.new("struct_or_union_set").at(location))
     type.add_def Def.new(field_name, body: InstanceVar.new(var.name))
+  end
+
+  private def process_offsetof_annotation(ann : Annotation)
+    if ann.args.size != 1
+      ann.wrong_number_of_arguments "annotation Offsetof", ann.args.size, 1
+    end
+
+    arg = ann.args[0]
+    if !arg.is_a?(NumberLiteral) || !arg.integer?
+      arg.raise "argument to Offsetof must be an integer literal"
+    end
+
+    value =
+      begin
+        arg.integer_value.to_i
+      rescue OverflowError
+        arg.raise "argument to Offsetof must fit in Int32"
+      end
+
+    if value < 0
+      arg.raise "argument to Offsetof must be positive"
+    end
+
+    value
   end
 
   def declare_instance_var(node, var)

@@ -2118,7 +2118,11 @@ module Crystal
         end
       end
 
-      aggregate_index pointer, index
+      if type.struct?
+        struct_field_ptr type, name, pointer
+      else
+        aggregate_index pointer, index
+      end
     end
 
     def process_finished_hooks

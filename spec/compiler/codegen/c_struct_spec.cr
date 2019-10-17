@@ -379,4 +379,23 @@ describe "Code gen: struct" do
       foo.x.call(1)
       )).to_i.should eq(2)
   end
+
+  it "codegens c struct with Sizeof" do
+    run(%(
+      lib LibFoo
+        @[Sizeof(16)]
+        struct Foo
+          @[Offsetof(0)]
+          x : Int32
+          @[Offsetof(8)]
+          y : Int32
+        end
+      end
+
+      foo = LibFoo::Foo.new
+      foo.x = 1
+      foo.y = 3
+      foo.x &+ foo.y
+      )).to_i.should eq(4)
+  end
 end

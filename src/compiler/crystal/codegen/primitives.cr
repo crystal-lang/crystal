@@ -855,8 +855,21 @@ class Crystal::CodeGenVisitor
   end
 
   def struct_field_ptr(type, field_name, pointer)
-    index = type.index_of_instance_var('@' + field_name).not_nil!
-    aggregate_index pointer, index
+    instance_var_name = if field_name.starts_with?('@')
+                          field_name
+                        else
+                          '@' + field_name
+                        end
+    if type.sizeof
+      ivar = type.instance_vars[instance_var_name]
+      offsetof_value = ivar.offsetof.not_nil!
+      casted_pointer = bit_cast pointer, llvm_type(@program.uint8).pointer
+      shifted_pointer = gep casted_pointer, int(offsetof_value)
+      bit_cast shifted_pointer, llvm_type(ivar.type).pointer
+    else
+      index = type.index_of_instance_var(instance_var_name).not_nil!
+      aggregate_index pointer, index
+    end
   end
 
   def codegen_primitive_struct_or_union_set(node, target_def, call_args)

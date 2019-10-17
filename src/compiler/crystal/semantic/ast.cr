@@ -514,6 +514,9 @@ module Crystal
     # Is this variable "unsafe" (no need to check if it was initialized)?
     property? uninitialized = false
 
+    # The byte offset of this instance variable. To be used with Sizeof and Offsetof annotations.
+    property offsetof : Int32?
+
     # Annotations of this instance var
     property annotations : Hash(AnnotationType, Array(Annotation))?
 

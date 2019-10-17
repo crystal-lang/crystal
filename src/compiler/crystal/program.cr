@@ -242,6 +242,8 @@ module Crystal
       types["ReturnsTwice"] = @returns_twice_annotation = AnnotationType.new self, self, "ReturnsTwice"
       types["ThreadLocal"] = @thread_local_annotation = AnnotationType.new self, self, "ThreadLocal"
       types["Deprecated"] = @deprecated_annotation = AnnotationType.new self, self, "Deprecated"
+      types["Sizeof"] = @sizeof_annotation = AnnotationType.new self, self, "Sizeof"
+      types["Offsetof"] = @offsetof_annotation = AnnotationType.new self, self, "Offsetof"
 
       define_crystal_constants
     end
@@ -463,7 +465,8 @@ module Crystal
                      packed_annotation thread_local_annotation no_inline_annotation
                      always_inline_annotation naked_annotation returns_twice_annotation
                      raises_annotation primitive_annotation call_convention_annotation
-                     flags_annotation link_annotation extern_annotation deprecated_annotation) %}
+                     flags_annotation link_annotation extern_annotation deprecated_annotation
+                     sizeof_annotation offsetof_annotation) %}
       def {{name.id}}
         @{{name.id}}.not_nil!
       end

@@ -476,9 +476,15 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
     @annotations = nil
 
     packed = false
+    sizeof_value = nil
     unless node.union?
-      process_annotations(annotations) do |ann|
-        packed = true if ann == @program.packed_annotation
+      process_annotations(annotations) do |ann_type, ann|
+        case ann_type
+        when @program.packed_annotation
+          packed = true
+        when @program.sizeof_annotation
+          sizeof_value = process_sizeof_annotation(ann)
+        end
       end
     end
 
@@ -509,8 +515,33 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
     node.resolved_type = type
 
     type.packed = packed
+    type.sizeof = sizeof_value
 
     false
+  end
+
+  private def process_sizeof_annotation(ann : Annotation)
+    if ann.args.size != 1
+      ann.wrong_number_of_arguments "annotation Sizeof", ann.args.size, 1
+    end
+
+    arg = ann.args[0]
+    if !arg.is_a?(NumberLiteral) || !arg.integer?
+      arg.raise "argument to Sizeof must be an integer literal"
+    end
+
+    value =
+      begin
+        arg.integer_value.to_i
+      rescue OverflowError
+        arg.raise "argument to Sizeof must fit in Int32"
+      end
+
+    if value < 0
+      arg.raise "argument to Sizeof must be positive"
+    end
+
+    value
   end
 
   def visit(node : TypeDef)

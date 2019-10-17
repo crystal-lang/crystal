@@ -290,6 +290,15 @@ module Crystal
         return s
       end
 
+      # Check if we have sizeof info from a Sizeof annotation
+      sizeof_value = type.sizeof
+      if sizeof_value
+        a_struct = @llvm_context.int8.array(sizeof_value)
+        @struct_cache[type] = a_struct
+        @structs[llvm_name] = a_struct
+        return a_struct
+      end
+
       @llvm_context.struct(llvm_name, type.packed?) do |a_struct|
         if wants_size
           @wants_size_struct_cache[type] = a_struct

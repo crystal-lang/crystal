@@ -222,6 +222,16 @@ module Crystal
       @value[0] == '+' || @value[0] == '-'
     end
 
+    def integer?
+      case kind
+      when :i8, :i16, :i32, :i64, :i128,
+           :u8, :u16, :u32, :u64, :u128
+        true
+      else
+        false
+      end
+    end
+
     def integer_value
       case kind
       when :i8  then value.to_i8
@@ -254,7 +264,6 @@ module Crystal
       when UInt8   then :u8
       when UInt16  then :u16
       when UInt32  then :u32
-      when UInt64  then :u64
       when UInt128 then :u128
       when Float32 then :f32
       when Float64 then :f64
