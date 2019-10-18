@@ -2405,9 +2405,9 @@ class String
   # Returns `self` if not blank, otherwise returns `nil`.
   #
   # ```
-  # "".presence         # => nil
-  # "   ".presence      # => nil
-  # "   a   ".presence  # => "   a   "
+  # "".presence        # => nil
+  # "   ".presence     # => nil
+  # "   a   ".presence # => "   a   "
   # ```
   def presence
     self if !blank?
