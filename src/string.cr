@@ -2414,7 +2414,7 @@ class String
   # ```
   #
   # See also: `Nil#presence`.
-  def presence
+  def presence : self?
     self if !blank?
   end
 
