@@ -401,6 +401,10 @@ class Array(T)
     raise ArgumentError.new "Negative count: #{count}" if count < 0
 
     index += size if index < 0
+
+    # We allow index == size because the range to replace
+    # can start at exactly the end of the array.
+    # So, we can't use check_index_out_of_bounds.
     raise IndexError.new unless 0 <= index <= size
 
     count = index + count <= size ? count : size - index
@@ -459,6 +463,10 @@ class Array(T)
     raise ArgumentError.new "Negative count: #{count}" if count < 0
 
     index += size if index < 0
+
+    # We allow index == size because the range to replace
+    # can start at exactly the end of the array.
+    # So, we can't use check_index_out_of_bounds.
     raise IndexError.new unless 0 <= index <= size
 
     count = index + count <= size ? count : size - index
