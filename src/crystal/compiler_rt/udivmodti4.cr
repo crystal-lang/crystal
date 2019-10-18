@@ -36,7 +36,7 @@ fun __udivmodti4(a : UInt128, b : UInt128, rem : UInt128*) : UInt128
         n.info.high = n.info.high // d.info.high
         return n.all
       end
-      if ((d.info.high & (d.info.high &- 1)) == 0) # if d is a power of 2
+      if (d.info.high & (d.info.high &- 1)) == 0 # if d is a power of 2
         if rem
           r.info.low = n.info.low
           r.info.high = n.info.high & (d.info.high &- 1)
@@ -60,7 +60,7 @@ fun __udivmodti4(a : UInt128, b : UInt128, rem : UInt128*) : UInt128
     end
   else
     if d.info.high == 0
-      if ((d.info.low & (d.info.low &- 1)) == 0)
+      if (d.info.low & (d.info.low &- 1)) == 0
         if rem
           rem.value = (n.info.low & (d.info.low &- 1)).to_u128
         end
