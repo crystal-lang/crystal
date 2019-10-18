@@ -18,9 +18,6 @@ class Object
   #
   # This method is a unary operator and usually written in prefix notation
   # (`!foo`) but it can also be written as a regular method call (`foo.!`).
-  #
-  # NOTE: This is a pseudo-method provided directly by the Crystal compiler.
-  # It cannot be redefined nor overridden.
   def __crystal_pseudo_! : Bool
   end
 
@@ -35,9 +32,6 @@ class Object
   # a.is_a?(Number)         # => true
   # a.is_a?(Int32 | String) # => true
   # ```
-  #
-  # NOTE: This is a pseudo-method provided directly by the Crystal compiler.
-  # It cannot be redefined nor overridden.
   def __crystal_pseudo_is_a?(type : Class) : Bool
   end
 
@@ -49,9 +43,6 @@ class Object
   # ```
   #
   # This method is equivalent to `is_a?(Nil)`.
-  #
-  # NOTE: This is a pseudo-method provided directly by the Crystal compiler.
-  # It cannot be redefined nor overridden.
   def __crystal_pseudo_nil? : Bool
   end
 
@@ -82,9 +73,6 @@ class Object
   # typeof(a.as(Int32 | Bool)) # => Int32
   # a.as(Int32 | Bool)         # => 1
   # ```
-  #
-  # NOTE: This is a pseudo-method provided directly by the Crystal compiler.
-  # It cannot be redefined nor overridden.
   def __crystal_pseudo_as(type : Class)
   end
 
@@ -111,9 +99,6 @@ class Object
   # typeof(a.as?(Int32 | Bool)) # => Int32 | Nil
   # a.as?(Int32 | Bool)         # => 1
   # ```
-  #
-  # NOTE: This is a pseudo-method provided directly by the Crystal compiler.
-  # It cannot be redefined nor overridden.
   def __crystal_pseudo_as?(type : Class)
   end
 
@@ -126,9 +111,6 @@ class Object
   # a.responds_to?(:abs)  # => true
   # a.responds_to?(:size) # => false
   # ```
-  #
-  # NOTE: This is a pseudo-method provided directly by the Crystal compiler.
-  # It cannot be redefined nor overridden.
   def __crystal_pseudo_responds_to?(name : Symbol) : Bool
   end
 end

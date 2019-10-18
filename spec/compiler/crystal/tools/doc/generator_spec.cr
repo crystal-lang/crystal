@@ -232,10 +232,10 @@ describe Doc::Generator do
       generator.is_crystal_repo = true
 
       a_def = Def.new "__crystal_pseudo_foo"
-      a_def.doc = "Pseudo method"
+      a_def.doc = "Foo"
       doc_method = Doc::Method.new generator, doc_type, a_def, false
       doc_method.name.should eq "foo"
-      doc_method.formatted_doc.should eq %(<p>Pseudo method</p>)
+      doc_method.doc.should contain %(NOTE: This is a pseudo-method)
     end
   end
 end
