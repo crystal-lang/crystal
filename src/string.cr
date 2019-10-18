@@ -2405,12 +2405,15 @@ class String
   # Returns `self` unless `#blank?` is `true` in which case it returns `nil`.
   #
   # ```
-  # "a".presence || "default" # => "a"
-  # "".presence || "default"  # => "default"
-  # nil.presence || "default" # => "default"
+  # "a".presence || "default"         # => "a"
+  # "".presence || "default"          # => "default"
+  # "   ".presence || "default"       # => nil
+  # "    a    ".presence || "default" # => "a"
+  # nil.presence || "default"         # => "default"
   #
-  # data = {} of Symbol => String
-  # data[:missing_key]?.presence || "default" # => "default"
+  # config = {"empty" => ""}
+  # config["empty"]?.presence || "default"   # => "default"
+  # config["missing"]?.presence || "default" # => "default"
   # ```
   #
   # See also: `Nil#presence`.

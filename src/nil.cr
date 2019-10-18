@@ -107,14 +107,14 @@ struct Nil
   end
 
   # Returns `self`
-  # Added to make the code below compile.
+  # This method enables to call the `presence` method (see `String#presence`) on a union with `Nil`.
+  # The idea is to return `nil` when the value is `nil` or empty.
   #
   # ```
-  # data = {} of Symbol => String
-  # data[:missing_key]?.presence || "default" # => "default"
+  # config = {"empty" => ""}
+  # config["empty"]?.presence || "default"   # => "default"
+  # config["missing"]?.presence || "default" # => "default"
   # ```
-  #
-  # See also: `String#presence`.
   def presence
     self
   end
