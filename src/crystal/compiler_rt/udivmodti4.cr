@@ -19,45 +19,50 @@ fun __udivmodti4(a : UInt128, b : UInt128, rem : UInt128*) : UInt128
     end
     rem.value = n.info.low.to_u128 if rem
     return 0_u128
-    if d.info.low == 0
-      if d.info.high == 0
-        if rem
-          rem.value = n.info.high % d.info.low
-        end
-        n.info.high = n.info.high // d.info.low
-        return n.all
+  end
+
+  if d.info.low == 0
+    if d.info.high == 0
+      if rem
+        n.info.high = n.info.high % d.info.low
+        rem.value = n.all
       end
-      if n.info.low == 0
-        if rem
-          r.info.high = n.info.high % d.info.high
-          r.info.low = 0
-          rem.value = r.all
-        end
-        n.info.high = n.info.high // d.info.high
-        return n.all
-      end
-      if (d.info.high & (d.info.high &- 1)) == 0 # if d is a power of 2
-        if rem
-          r.info.low = n.info.low
-          r.info.high = n.info.high & (d.info.high &- 1)
-          rem.value = r.all
-        end
-        n.info.high = n.info.high >> d.s.info.high.trailing_zeros_count
-        return n.all
-      end
-      sr = d.info.high.trailing_zeros_count &- n.info.high.trailing_zeros_count
-      if sr > n_udword_bits &- 2
-        if rem
-          rem.value = n.all
-        end
-        return 0_u128
-      end
-      sr = sr &+ 1
-      q.info.low = 0
-      q.info.high = n.info.low << (n_udword_bits &- sr)
-      r.info.high = n.info.high >> sr
-      r.info.low = (n.info.high << (n_udword_bits &- sr)) | (n.info.low >> sr)
+      n.info.high = n.info.high // d.info.low
+      return n.all
     end
+
+    if n.info.low == 0
+      if rem
+        r.info.high = n.info.high % d.info.high
+        r.info.low = 0
+        rem.value = r.all
+      end
+      n.info.high = n.info.high // d.info.high
+      return n.all
+    end
+
+    if (d.info.high & (d.info.high &- 1)) == 0 # if d is a power of 2
+      if rem
+        r.info.low = n.info.low
+        r.info.high = n.info.high & (d.info.high &- 1)
+        rem.value = r.all
+      end
+      n.info.high = n.info.high >> d.info.high.trailing_zeros_count
+      return n.all
+    end
+
+    sr = d.info.high.trailing_zeros_count &- n.info.high.trailing_zeros_count
+    if sr > n_udword_bits &- 2
+      if rem
+        rem.value = n.all
+      end
+      return 0_u128
+    end
+    sr = sr &+ 1
+    q.info.low = 0
+    q.info.high = n.info.low << (n_udword_bits &- sr)
+    r.info.high = n.info.high >> sr
+    r.info.low = (n.info.high << (n_udword_bits &- sr)) | (n.info.low >> sr)
   else
     if d.info.high == 0
       if (d.info.low & (d.info.low &- 1)) == 0
