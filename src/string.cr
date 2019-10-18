@@ -2402,6 +2402,17 @@ class String
     true
   end
 
+  # Returns `self` if not blank, otherwise returns `nil`.
+  #
+  # ```
+  # "".presence         # => nil
+  # "   ".presence      # => nil
+  # "   a   ".presence  # => "   a   "
+  # ```
+  def presence
+    self if !blank?
+  end
+
   def ==(other : self)
     return true if same?(other)
     return false unless bytesize == other.bytesize
