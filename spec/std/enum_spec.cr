@@ -11,11 +11,25 @@ enum SpecEnum2
   FORTY_FOUR
 end
 
+enum SpecNonUniqueEnum
+  One      = 1
+  Two      = 2
+  OneAgain = One
+end
+
 @[Flags]
 enum SpecEnumFlags
   One
   Two
   Three
+end
+
+@[Flags]
+enum SpecNonUniqueEnumFlags
+  One    = 0b001
+  Two    = 0b010
+  Four   = 0b100
+  OneTwo = 0b011
 end
 
 describe Enum do
@@ -85,6 +99,24 @@ describe Enum do
       end
       names.should eq([SpecEnumFlags::One, SpecEnumFlags::Three])
       values.should eq([SpecEnumFlags::One.value, SpecEnumFlags::Three.value])
+    end
+  end
+
+  describe "size" do
+    it "for simple enum" do
+      SpecEnum.size.should eq 3
+    end
+
+    it "for flags enum" do
+      SpecEnumFlags.size.should eq 3
+    end
+
+    it "gives number of enum members" do
+      SpecNonUniqueEnum.size.should eq 3
+    end
+
+    it "gives number of unique enum flags" do
+      SpecNonUniqueEnumFlags.size.should eq 3
     end
   end
 
