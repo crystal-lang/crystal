@@ -235,7 +235,7 @@ describe Doc::Generator do
       a_def.doc = "Foo"
       doc_method = Doc::Method.new generator, doc_type, a_def, false
       doc_method.name.should eq "foo"
-      doc_method.doc.should contain %(NOTE: This is a pseudo-method)
+      doc_method.doc.not_nil!.should contain %(NOTE: This is a pseudo-method)
     end
   end
 end
