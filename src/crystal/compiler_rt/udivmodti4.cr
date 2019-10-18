@@ -10,7 +10,7 @@ fun __udivmodti4(a : UInt128, b : UInt128, rem : UInt128*) : UInt128
   sr = 0_u32
 
   if n.info.high == 0
-    if (d.info.high == 0)
+    if d.info.high == 0
       if rem
         rem.value = (n.info.low % d.info.low).to_u128
       end
@@ -19,15 +19,15 @@ fun __udivmodti4(a : UInt128, b : UInt128, rem : UInt128*) : UInt128
     end
     rem.value = n.info.low.to_u128 if rem
     return 0_u128
-    if (d.info.low == 0)
-      if (d.info.high == 0)
+    if d.info.low == 0
+      if d.info.high == 0
         if rem
           rem.value = n.info.high % d.info.low
         end
         n.info.high = n.info.high // d.info.low
         return n.all
       end
-      if (n.info.low == 0)
+      if n.info.low == 0
         if rem
           r.info.high = n.info.high % d.info.high
           r.info.low = 0
@@ -46,7 +46,7 @@ fun __udivmodti4(a : UInt128, b : UInt128, rem : UInt128*) : UInt128
         return n.all
       end
       sr = d.info.high.trailing_zeros_count &- n.info.high.trailing_zeros_count
-      if (sr > n_udword_bits &- 2)
+      if sr > n_udword_bits &- 2
         if rem
           rem.value = n.all
         end
@@ -59,7 +59,7 @@ fun __udivmodti4(a : UInt128, b : UInt128, rem : UInt128*) : UInt128
       r.info.low = (n.info.high << (n_udword_bits &- sr)) | (n.info.low >> sr)
     end
   else
-    if (d.info.high == 0)
+    if d.info.high == 0
       if ((d.info.low & (d.info.low &- 1)) == 0)
         if rem
           rem.value = (n.info.low & (d.info.low &- 1)).to_u128
@@ -72,12 +72,12 @@ fun __udivmodti4(a : UInt128, b : UInt128, rem : UInt128*) : UInt128
         return q.all
       end
       sr = 1 &+ n_udword_bits &+ d.info.low.trailing_zeros_count &- n.info.high.trailing_zeros_count
-      if (sr == n_udword_bits)
+      if sr == n_udword_bits
         q.info.low = 0
         q.info.high = n.info.low
         r.info.high = 0
         r.info.low = n.info.high
-      elsif (sr < n_udword_bits)
+      elsif sr < n_udword_bits
         q.info.low = 0
         q.info.high = n.info.low << (n_udword_bits &- sr)
         r.info.high = n.info.high >> sr
@@ -90,13 +90,13 @@ fun __udivmodti4(a : UInt128, b : UInt128, rem : UInt128*) : UInt128
       end
     else
       sr = d.info.high.trailing_zeros_count &- n.info.high.trailing_zeros_count
-      if (sr > n_udword_bits &- 1)
+      if sr > n_udword_bits &- 1
         rem.value = n.all if rem
         return 0_u128
       end
       sr = sr &+ 1
       q.info.low = 0
-      if (sr == n_udword_bits)
+      if sr == n_udword_bits
         q.info.high = n.info.low
         r.info.high = 0
         r.info.low = n.info.high
