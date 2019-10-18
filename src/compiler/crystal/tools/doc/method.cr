@@ -6,7 +6,7 @@ class Crystal::Doc::Method
   include Item
 
   PSEUDO_METHOD_PREFIX = "__crystal_pseudo_"
-  PSEUDO_METHOD_NOTE = <<-DOC
+  PSEUDO_METHOD_NOTE   = <<-DOC
 
     NOTE: This is a pseudo-method provided directly by the Crystal compiler.
     It cannot be redefined nor overridden.
