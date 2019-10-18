@@ -2405,10 +2405,15 @@ class String
   # Returns `self` if not blank, otherwise returns `nil`.
   #
   # ```
-  # "".presence        # => nil
-  # "   ".presence     # => nil
-  # "   a   ".presence # => "   a   "
+  # "a".presence || "default" # => "a"
+  # "".presence || "default"  # => "default"
+  # nil.presence || "default" # => "default"
+  #
+  # data = {} of Symbol => String
+  # data[:missing_key]?.presence || "default" # => "default"
   # ```
+  #
+  # See also: `Nil#presence`.
   def presence
     self if !blank?
   end

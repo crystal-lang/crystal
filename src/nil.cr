@@ -106,6 +106,19 @@ struct Nil
     raise NilAssertionError.new
   end
 
+  # Returns `self`
+  # Added to make the code below compile.
+  #
+  # ```
+  # data = {} of Symbol => String
+  # data[:missing_key]?.presence || "default" # => "default"
+  # ```
+  #
+  # See also: `String#presence`.
+  def presence
+    self
+  end
+
   def clone
     self
   end
