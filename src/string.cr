@@ -2402,7 +2402,7 @@ class String
     true
   end
 
-  # Returns `self` if not blank, otherwise returns `nil`.
+  # Returns `self` unless `#blank?` is `true` in which case it returns `nil`.
   #
   # ```
   # "a".presence || "default" # => "a"
