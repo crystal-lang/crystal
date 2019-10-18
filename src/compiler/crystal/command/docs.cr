@@ -9,7 +9,6 @@ class Crystal::Command
   private def docs
     output_format = "html"
     output_directory = File.join(".", "docs")
-    canonical_base_url = nil
 
     compiler = Compiler.new
 
@@ -32,10 +31,6 @@ class Crystal::Command
           exit
         end
         output_format = value
-      end
-
-      opts.on("--canonical-base-url=URL", "-b URL", "Set the canonical base url") do |value|
-        canonical_base_url = value
       end
 
       opts.on("-D FLAG", "--define FLAG", "Define a compile-time flag") do |flag|
@@ -88,6 +83,6 @@ class Crystal::Command
     compiler.wants_doc = true
     result = compiler.top_level_semantic sources
 
-    Doc::Generator.new(result.program, included_dirs, output_directory, output_format, canonical_base_url).run
+    Doc::Generator.new(result.program, included_dirs, output_directory, output_format).run
   end
 end

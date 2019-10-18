@@ -28,7 +28,7 @@ class Crystal::Doc::Generator
     },
   }
 
-  def initialize(@program : Program, @included_dirs : Array(String), @output_dir : String, @output_format : String, @canonical_base_url : String?)
+  def initialize(@program : Program, @included_dirs : Array(String), @output_dir : String, @output_format : String)
     @base_dir = Dir.current.chomp
     @types = {} of Crystal::Type => Doc::Type
     @repo_name = ""
@@ -89,7 +89,7 @@ class Crystal::Doc::Generator
     raw_body = read_readme
     body = doc(program_type, raw_body)
 
-    File.write File.join(@output_dir, "index.html"), MainTemplate.new(body, types, repository_name, @canonical_base_url)
+    File.write File.join(@output_dir, "index.html"), MainTemplate.new(body, types, repository_name)
 
     main_index = Main.new(raw_body, Type.new(self, @program), repository_name)
     File.write File.join(@output_dir, "index.json"), main_index
@@ -112,7 +112,7 @@ class Crystal::Doc::Generator
         filename = File.join(dir, "#{type.name}.html")
       end
 
-      File.write filename, TypeTemplate.new(type, all_types, @canonical_base_url)
+      File.write filename, TypeTemplate.new(type, all_types)
 
       next if type.program?
 
