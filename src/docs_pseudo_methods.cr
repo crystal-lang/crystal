@@ -5,6 +5,87 @@
 # their names prefixed by `__crystal_pseudo`. This prefix is removed by
 # the docs generator making it appear as the pseudo-method.
 
+# Returns the type of an expression.
+#
+# ```
+# typeof(1) #=> Int32
+# ```
+#
+# It accepts multiple arguments, and the result is the union of the expression types:
+#
+# ```
+# typeof(1, "a", 'a') #=> (Int32 | String | Char)
+# ```
+#
+# The expressions passed as arguments to `typeof` do not evaluate. The compiler
+# only analyzes their return type.
+def __crystal_pseudo_typeof(*expression) : Class
+end
+
+# Returns the size of the given type as number of bytes.
+#
+# *type* must be a constant, it cannot be evaluated at runtime.
+#
+# ```
+# sizeof(Int32)  #=> 4
+# sizeof(Int64)  #=> 8
+# ```
+#
+# For `Reference` types, the size is the same as the size of a pointer:
+#
+# ```
+# # On a 64 bits machine
+# sizeof(Pointer(Int32)) #=> 8
+# sizeof(String)         #=> 8
+# ```
+#
+# This is because a `Reference`'s memory is allocated on the heap and a pointer
+# to it is passed around. The effective size of a class can be determined using
+# `instance_sizeof`.
+def __crystal_pseudo_sizeof(type : Class) : Int32
+end
+
+
+# Returns the instance size of the given class as number of bytes.
+#
+# *type* must be a constant, it cannot be evaluated at runtime.
+#
+# ```
+# instance_sizeof(String)    #=> 16
+# instance_sizeof(Exception) # => 48
+# ```
+#
+# See `sizeof` for determining the size of value types.
+def __crystal_pseudo_instance_sizeof(type : Class) : Int32
+end
+
+# Returns a `Pointer` to the contents of a variable.
+#
+# *variable* must be a variable (local, instance, class or library).
+#
+# ```
+# a = 1
+# ptr = pointerof(a)
+# ptr.value = 2
+#
+# a #=> 2
+# ```
+def __crystal_pseudo_pointerof(variable : T) : Pointer(T) forall T
+end
+
+# Returns the byte offset of an instance variable in a struct or class type.
+#
+# *type* must be a constant, it cannot be evaluated at runtime.
+# *variable*  must be the name of an instance variable of *type*, prefixed
+# by `@`.
+# ```
+# offsetof(String, @bytesize)   # => 4
+# offsetof(Exception, @message) # => 8
+# offsetof(Time, @location)     # => 16
+# ```
+def __crystal_pseudo_offsetof(type : Class, variable) : Int32
+end
+
 class Object
   # Returns the boolean negation of `self`.
   #
@@ -102,7 +183,7 @@ class Object
   def __crystal_pseudo_as?(type : Class)
   end
 
-  # Returns `true` if `self` responds to *name*.
+  # Returns `true` if method *name* can be called on `self`.
   #
   # *name* must be a symbol literal, it cannot be evaluated at runtime.
   #
