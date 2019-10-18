@@ -46,7 +46,7 @@ jobs:
 
   test_darwin:
     macos:
-      xcode: "11.1.0"
+      xcode: "9.0"
     environment:
       <<: *env
       TRAVIS_OS_NAME: osx
