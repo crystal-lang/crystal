@@ -1,3 +1,5 @@
+require "./udivmodti4"
+
 # Function return the remainder of the signed division eg. `a % b`
 
 fun __modti3(a : Int128, b : Int128) : Int128

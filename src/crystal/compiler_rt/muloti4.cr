@@ -1,7 +1,8 @@
 # Functions for returning the product of signed multiplication with overflow eg. `a * b`
+# Ported from compiler-rt:lib/builtins/muloti4.c
 
 fun __muloti4(a : Int128, b : Int128, overflow : Int32*) : Int128
-  n = 64
+  n = sizeof(Int64) &* sizeof(Char)
   min = Int64::MIN
   max = Int64::MAX
   overflow.value = 0
@@ -30,7 +31,7 @@ fun __muloti4(a : Int128, b : Int128, overflow : Int32*) : Int128
       overflow.value = 1
     end
   else
-    if abs_a > min // (0i64 &- abs_b)
+    if abs_a > min // -abs_b
       overflow.value = 1
     end
   end
