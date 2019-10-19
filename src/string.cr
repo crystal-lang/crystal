@@ -2405,11 +2405,11 @@ class String
   # Returns `self` unless `#blank?` is `true` in which case it returns `nil`.
   #
   # ```
-  # "a".presence || "default"         # => "a"
-  # "".presence || "default"          # => "default"
-  # "   ".presence || "default"       # => nil
-  # "    a    ".presence || "default" # => "a"
-  # nil.presence || "default"         # => "default"
+  # "a".presence || "default" # => "a"
+  # "".presence || "default"  # => "default"
+  # "   ".presence            # => nil
+  # "    a    ".presence      # => "a"
+  # nil.presence              # => nil
   #
   # config = {"empty" => ""}
   # config["empty"]?.presence || "default"   # => "default"
