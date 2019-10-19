@@ -45,4 +45,18 @@ describe Crystal::Doc::Generator do
       assert_matches_pattern "https://gitlab.com/foo_bar/_baz-buzz.cx", user: "foo_bar", repo: "_baz-buzz.cx"
     end
   end
+
+  describe ".anchor_link" do
+    it "generates the correct anchor link" do
+      Crystal::Doc.anchor_link("anchor").should eq(
+        <<-ANCHOR
+        <a id="anchor" class="anchor" href="#anchor">
+          <svg class="octicon-link" viewBox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true">
+            <use href="#octicon-link"/>
+          </svg>
+        </a>
+        ANCHOR
+      )
+    end
+  end
 end

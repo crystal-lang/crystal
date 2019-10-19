@@ -111,8 +111,8 @@ class Crystal::Doc::Markdown::Parser
   def render_header(level : Int32, line : String, increment : Int32)
     anchor = line
       .underscore              # Underscore the string
-      .gsub(/[^\w\d\-.~]/, "") # Delete unsafe url characters
-      .strip                   # Strip leadin/trailing whitespace
+      .gsub(/[^\w\d\-.~]/, "") # Delete unsafe URL characters
+      .strip                   # Strip leading/trailing whitespace
       .gsub(/[\ _]/, '-')      # Replace `_` and leftover whitespace with `-`
 
     @renderer.begin_header level, anchor
