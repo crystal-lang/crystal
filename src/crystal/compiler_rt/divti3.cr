@@ -1,3 +1,5 @@
+require "./udivmodti4"
+
 # Function returning quotient for signed division eg `a / b`
 
 fun __divti3(a : Int128, b : Int128) : Int128

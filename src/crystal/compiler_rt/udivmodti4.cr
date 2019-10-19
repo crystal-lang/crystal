@@ -1,3 +1,5 @@
+require "./u128_info"
+
 # Function return the remainder of the unsigned division with overflow eg. `a % b`
 
 fun __udivmodti4(a : UInt128, b : UInt128, rem : UInt128*) : UInt128
