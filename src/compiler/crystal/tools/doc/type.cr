@@ -579,6 +579,10 @@ class Crystal::Doc::Type
     io << Highlighter.highlight(node.to_s)
   end
 
+  def node_to_html(node : Underscore, io, links = true)
+    io << '_'
+  end
+
   def type_to_html(type)
     type = type.type if type.is_a?(Type)
     String.build { |io| type_to_html(type, io) }

@@ -831,7 +831,7 @@ module Crystal
       if @token.type == :"("
         next_token_skip_space_or_newline
         type = parse_single_type
-        skip_space
+        skip_space_or_newline
         check :")"
         next_token_skip_space
       else
@@ -847,7 +847,7 @@ module Crystal
       if @token.type == :"("
         next_token_skip_space_or_newline
         type = parse_single_type
-        skip_space
+        skip_space_or_newline
         check :")"
         end_location = token_end_location
         next_token_skip_space
@@ -4914,6 +4914,9 @@ module Crystal
         exps << parse_op_assign
         if @token.type == :","
           next_token_skip_space_or_newline
+        else
+          skip_space_or_newline
+          check :")"
         end
       end
 
@@ -5440,7 +5443,7 @@ module Crystal
       end
 
       exp = parse_op_assign
-      skip_space
+      skip_space_or_newline
 
       end_location = token_end_location
       check :")"
@@ -5466,7 +5469,7 @@ module Crystal
       location = @token.location
       exp = parse_single_type.at(location)
 
-      skip_space
+      skip_space_or_newline
 
       end_location = token_end_location
       check :")"

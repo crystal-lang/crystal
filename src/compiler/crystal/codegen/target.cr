@@ -133,4 +133,16 @@ class Crystal::Codegen::Target
   def to_s(io : IO) : Nil
     io << architecture << '-' << vendor << '-' << environment
   end
+
+  def ==(other : self)
+    return false unless architecture == other.architecture
+
+    # If any vendor is unknown, we can skip it. But if both are known, they must
+    # match.
+    if vendor != "unknown" && other.vendor != "unknown"
+      return false unless vendor == other.vendor
+    end
+
+    environment == other.environment
+  end
 end
