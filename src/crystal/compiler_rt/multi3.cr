@@ -8,5 +8,5 @@ fun __multi3(a : Int128, b : Int128) : Int128
   r.info.low = x.info.low &* y.info.low
   r.info.high = r.info.high &+ (x.info.high &* y.info.low &+ x.info.low &* y.info.high)
 
-  return r.all
+  r.all
 end
