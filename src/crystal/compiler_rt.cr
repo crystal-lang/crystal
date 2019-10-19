@@ -2,7 +2,7 @@
 # The function definitions and explinations can be found here.
 # https://gcc.gnu.org/onlinedocs/gccint/Libgcc.html#Libgcc
 
-{% skip_file if flag?(:skip_crystal_compiler_rt) %}
+{% skip_file if flag?(:bits32) %}
 
 # Structs for implementing 128bit
 require "./compiler_rt/i128_info.cr"
