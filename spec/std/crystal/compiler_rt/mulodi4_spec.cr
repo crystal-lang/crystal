@@ -1,4 +1,5 @@
 require "spec"
+require "../../../../src/crystal/compiler_rt/mulodi4.cr"
 
 # Ported from compiler-rt:test/builtins/Unit/mulodi4_test.c
 

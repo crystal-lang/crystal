@@ -1,3 +1,5 @@
+require "./udivmodti4"
+
 # Functions for returning the product of signed multiplication with overflow eg. `a * b`
 
 fun __udivti3(a : UInt128, b : UInt128) : UInt128
