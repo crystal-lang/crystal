@@ -2408,7 +2408,7 @@ class String
   # "a".presence || "default" # => "a"
   # "".presence || "default"  # => "default"
   # "   ".presence            # => nil
-  # "    a    ".presence      # => "a"
+  # "    a    ".presence      # => "    a    "
   # nil.presence              # => nil
   #
   # config = {"empty" => ""}
