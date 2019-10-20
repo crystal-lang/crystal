@@ -112,8 +112,8 @@ struct Nil
   #
   # ```
   # config = {"empty" => ""}
-  # config["empty"]?.presence || "default"   # => "default"
-  # config["missing"]?.presence || "default" # => "default"
+  # config["empty"]?.presence   # => nil
+  # config["missing"]?.presence # => nil
   # ```
   def presence
     self
