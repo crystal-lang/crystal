@@ -51,7 +51,7 @@ describe Crystal::Doc::Generator do
       Crystal::Doc.anchor_link("anchor").should eq(
         <<-ANCHOR
         <a id="anchor" class="anchor" href="#anchor">
-          <svg class="octicon-link" viewBox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true">
+          <svg class="octicon-link" aria-hidden="true">
             <use href="#octicon-link"/>
           </svg>
         </a>
