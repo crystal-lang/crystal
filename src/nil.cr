@@ -106,7 +106,7 @@ struct Nil
     raise NilAssertionError.new
   end
 
-  # Returns `self`
+  # Returns `self`.
   # This method enables to call the `presence` method (see `String#presence`) on a union with `Nil`.
   # The idea is to return `nil` when the value is `nil` or empty.
   #
