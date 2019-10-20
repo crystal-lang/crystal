@@ -114,6 +114,10 @@ class Channel(T)
     end
   end
 
+  # Closes the channel.
+  # The method prevents any new value from being sent to / received from the channel.
+  # It wakes up any sender / receiver fibers waiting on the channel.
+  # It only has effect *after* any previously enqueued value in the channel has been received, up to the channel's capacity.
   def close
     @lock.sync do
       @closed = true
@@ -144,6 +148,11 @@ class Channel(T)
     @closed
   end
 
+  # Sends a value to the channel.
+  # If the channel has spare capacity, then the method returns immediately.
+  # Otherwise, this method blocks until the value is received from the channel or the channel's spare capacity becomes greater than 0.
+  #
+  # Raises `ClosedError` if the channel is closed or closes while waiting on a full channel.
   def send(value : T)
     @lock.sync do
       raise_if_closed
@@ -182,13 +191,15 @@ class Channel(T)
   end
 
   # Receives a value from the channel.
-  # If there is a value waiting, it is returned immediately. Otherwise, this method blocks until a value is sent to the channel.
+  # If there is a value waiting, then it is returned immediately. Otherwise, this method blocks until a value is sent to the channel.
   #
   # Raises `ClosedError` if the channel is closed or closes while waiting for receive.
   #
   # ```
   # channel = Channel(Int32).new
-  # channel.send(1)
+  # spawn do
+  #   channel.send(1)
+  # end
   # channel.receive # => 1
   # ```
   def receive
