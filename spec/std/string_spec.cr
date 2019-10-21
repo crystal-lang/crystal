@@ -730,6 +730,12 @@ describe "String" do
     it { "hello".blank?.should be_false }
   end
 
+  describe "presence" do
+    it { " \t\n".presence.should be_nil }
+    it { "\u{1680}\u{2029}".presence.should be_nil }
+    it { "hello".presence.should eq("hello") }
+  end
+
   describe "index" do
     describe "by char" do
       it { "foo".index('o').should eq(1) }
