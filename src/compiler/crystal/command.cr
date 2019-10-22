@@ -550,7 +550,7 @@ class Crystal::Command
                             Crystal::Warnings::None
                           else
                             error "--warnings should be all, or none"
-                            raise "unreachable"
+                            exit 1
                           end
     end
     opts.on("--error-on-warnings", "Treat warnings as errors.") do |w|
