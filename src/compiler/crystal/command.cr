@@ -366,16 +366,11 @@ class Crystal::Command
         end
         opts.on("--mcmodel MODEL", "Target specific code model") do |mcmodel|
           compiler.mcmodel = case mcmodel
-                             when "default"
-                               LLVM::CodeModel::Default
-                             when "small"
-                               LLVM::CodeModel::Small
-                             when "kernel"
-                               LLVM::CodeModel::Kernel
-                             when "medium"
-                               LLVM::CodeModel::Medium
-                             when "large"
-                               LLVM::CodeModel::Large
+                             when "default" then LLVM::CodeModel::Default
+                             when "small"   then LLVM::CodeModel::Small
+                             when "kernel"  then LLVM::CodeModel::Kernel
+                             when "medium"  then LLVM::CodeModel::Medium
+                             when "large"   then LLVM::CodeModel::Large
                              else
                                error "--mcmodel should be one of: default, kernel, small, medium, large"
                                raise "unreachable"
