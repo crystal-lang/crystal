@@ -80,6 +80,12 @@ describe "Number" do
       753.155.round(-5, base: 2).should eq(768)
     end
 
+    it "accepts unsigned precision" do
+      123.round(UInt8.new(3)).should eq(123)
+      11.308.round(UInt8.new(3)).should eq(11.308)
+      11.308.round(UInt8.new(2)).should eq(11.31)
+    end
+
     it "handle medium amount of digits" do
       1.098765432109876543210987654321.round(15).should eq(1.098765432109877)
       1.098765432109876543210987654321.round(21).should eq(1.098765432109876543211)
