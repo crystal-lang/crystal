@@ -364,7 +364,7 @@ class Crystal::Command
         opts.on("--mattr CPU", "Target specific features") do |features|
           compiler.mattr = features
         end
-        opts.on("--mcmodel CPU", "Target specific code model") do |mcmodel|
+        opts.on("--mcmodel MODEL", "Target specific code model") do |mcmodel|
           compiler.mcmodel = case mcmodel
                              when "default"
                                LLVM::CodeModel::Default
