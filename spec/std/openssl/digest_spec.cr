@@ -6,7 +6,7 @@ describe OpenSSL::Digest do
     {"SHA1", "dcf4a1e3542b1a40a4ac2a3f7c92ffdb2d19812f"},
     {"SHA256", "df81eea14671ce970fb1052e9f5dd6dbda652ed37423ed3624120ec1534784a7"},
     {"SHA512", "082907b85fe25c33bba4765185b52993a493cfd24454edf4b977ccd9301a890659c52592456cbd8aeb5215055d9dd4a7d50a4db9961715fb764fb6c393a83192"},
-  ].each do |(algorithm, expected)|
+  ].each do |algorithm, expected|
     it "should be able to calculate #{algorithm}" do
       digest = OpenSSL::Digest.new(algorithm)
       digest << "fooø"
@@ -28,6 +28,11 @@ describe OpenSSL::Digest do
   it "returns the block size" do
     OpenSSL::Digest.new("SHA1").block_size.should eq 64
     OpenSSL::Digest.new("SHA256").block_size.should eq 64
+  end
+
+  it "returns a base64 digest" do
+    digest = OpenSSL::Digest.new("SHA512").update "abc".to_slice
+    digest.base64digest.should eq "3a81oZNherrMQXNJriBBMRLm+k6JqX6iCp7u5ktV05ohkpkqJ0/BqDa6PCOj/uu9RU1EI2Q86A4qmslPpUyknw=="
   end
 
   it "correctly reads from IO" do

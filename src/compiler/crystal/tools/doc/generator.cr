@@ -2,7 +2,7 @@ class Crystal::Doc::Generator
   getter program : Program
 
   @base_dir : String
-  @is_crystal_repo : Bool
+  property is_crystal_repo : Bool
   @repository : String? = nil
   getter repository_name = ""
 

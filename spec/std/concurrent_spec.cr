@@ -18,30 +18,32 @@ private def raising_job : String
 end
 
 describe "concurrent" do
-  describe "parallel" do
-    it "does four things concurrently" do
-      a, b, c, d = parallel(1 + 2, "hello".size, [1, 2, 3, 4].size, nil)
-      a.should eq(3)
-      b.should eq(5)
-      c.should eq(4)
-      d.should be_nil
-    end
-
-    it "re-raises errors from Fibers as ConcurrentExecutionException" do
-      exception = expect_raises(ConcurrentExecutionException) do
-        a, b = parallel(raising_job, raising_job)
+  {% unless flag?(:win32) %}
+    describe "parallel" do
+      it "does four things concurrently" do
+        a, b, c, d = parallel(1 + 2, "hello".size, [1, 2, 3, 4].size, nil)
+        a.should eq(3)
+        b.should eq(5)
+        c.should eq(4)
+        d.should be_nil
       end
 
-      exception.cause.should be_a(SomeParallelJobException)
-    end
+      it "re-raises errors from Fibers as ConcurrentExecutionException" do
+        exception = expect_raises(ConcurrentExecutionException) do
+          a, b = parallel(raising_job, raising_job)
+        end
 
-    it "is strict about the return value type" do
-      a, b = parallel(1 + 2, "hello")
+        exception.cause.should be_a(SomeParallelJobException)
+      end
 
-      typeof(a).should eq(Int32)
-      typeof(b).should eq(String)
+      it "is strict about the return value type" do
+        a, b = parallel(1 + 2, "hello")
+
+        typeof(a).should eq(Int32)
+        typeof(b).should eq(String)
+      end
     end
-  end
+  {% end %}
 
   describe "spawn" do
     it "uses spawn macro" do

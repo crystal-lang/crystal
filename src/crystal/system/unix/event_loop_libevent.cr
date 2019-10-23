@@ -1,4 +1,4 @@
-require "./event"
+require "./event_libevent"
 
 class Thread
   # :nodoc:
@@ -7,26 +7,30 @@ end
 
 module Crystal::EventLoop
   {% unless flag?(:preview_mt) %}
-    def self.after_fork
-      Thread.current.event_base.reinit
+    # Reinitializes the event loop after a fork.
+    def self.after_fork : Nil
+      event_base.reinit
     end
   {% end %}
 
+  # Runs the event loop.
   def self.run_once
-    Thread.current.event_base.run_once
+    event_base.run_once
   end
 
   private def self.event_base
     Thread.current.event_base
   end
 
-  def self.create_resume_event(fiber)
+  # Create a new resume event for a fiber.
+  def self.create_resume_event(fiber : Fiber) : Crystal::Event
     event_base.new_event(-1, LibEvent2::EventFlags::None, fiber) do |s, flags, data|
       Crystal::Scheduler.enqueue data.as(Fiber)
     end
   end
 
-  def self.create_fd_write_event(io : IO::Evented, edge_triggered : Bool = false)
+  # Creates a write event for a file descriptor.
+  def self.create_fd_write_event(io : IO::Evented, edge_triggered : Bool = false) : Crystal::Event
     flags = LibEvent2::EventFlags::Write
     flags |= LibEvent2::EventFlags::Persist | LibEvent2::EventFlags::ET if edge_triggered
 
@@ -40,7 +44,8 @@ module Crystal::EventLoop
     end
   end
 
-  def self.create_fd_read_event(io : IO::Evented, edge_triggered : Bool = false)
+  # Creates a read event for a file descriptor.
+  def self.create_fd_read_event(io : IO::Evented, edge_triggered : Bool = false) : Crystal::Event
     flags = LibEvent2::EventFlags::Read
     flags |= LibEvent2::EventFlags::Persist | LibEvent2::EventFlags::ET if edge_triggered
 

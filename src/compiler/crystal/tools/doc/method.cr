@@ -5,6 +5,13 @@ require "./item"
 class Crystal::Doc::Method
   include Item
 
+  PSEUDO_METHOD_PREFIX = "__crystal_pseudo_"
+  PSEUDO_METHOD_NOTE   = <<-DOC
+
+    NOTE: This is a pseudo-method provided directly by the Crystal compiler.
+    It cannot be redefined nor overridden.
+    DOC
+
   getter type : Type
   getter def : Def
 
@@ -12,7 +19,12 @@ class Crystal::Doc::Method
   end
 
   def name
-    @def.name
+    name = @def.name
+    if @generator.is_crystal_repo
+      name.lstrip(PSEUDO_METHOD_PREFIX)
+    else
+      name
+    end
   end
 
   def args
@@ -54,6 +66,10 @@ class Crystal::Doc::Method
         end
 
         # TODO: warn about `:inherit:` not finding an ancestor
+      end
+
+      if @def.name.starts_with?(PSEUDO_METHOD_PREFIX)
+        def_doc += PSEUDO_METHOD_NOTE
       end
 
       return DocInfo.new(def_doc, nil)
