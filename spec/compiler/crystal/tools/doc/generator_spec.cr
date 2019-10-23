@@ -231,11 +231,17 @@ describe Doc::Generator do
       doc_type = Doc::Type.new generator, program
       generator.is_crystal_repo = true
 
-      a_def = Def.new "__crystal_pseudo_foo"
-      a_def.doc = "Foo"
-      doc_method = Doc::Method.new generator, doc_type, a_def, false
-      doc_method.name.should eq "foo"
+      pseudo_def = Def.new "__crystal_pseudo_typeof"
+      pseudo_def.doc = "Foo"
+      doc_method = Doc::Method.new generator, doc_type, pseudo_def, false
+      doc_method.name.should eq "typeof"
       doc_method.doc.not_nil!.should contain %(NOTE: This is a pseudo-method)
+
+      regular_def = Def.new "pseudo_bar"
+      regular_def.doc = "Foo"
+      doc_method = Doc::Method.new generator, doc_type, regular_def, false
+      doc_method.name.should eq "pseudo_bar"
+      doc_method.doc.not_nil!.should_not contain %(NOTE: This is a pseudo-method)
     end
   end
 end

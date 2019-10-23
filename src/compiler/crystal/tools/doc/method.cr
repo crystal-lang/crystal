@@ -21,7 +21,7 @@ class Crystal::Doc::Method
   def name
     name = @def.name
     if @generator.is_crystal_repo
-      name.lstrip(PSEUDO_METHOD_PREFIX)
+      name.lchop(PSEUDO_METHOD_PREFIX)
     else
       name
     end
