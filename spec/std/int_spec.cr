@@ -509,6 +509,7 @@ describe "Int" do
     (-13 % -4).should eq(-1)
   end
 
+  # TODO: add Int128 once implemented
   it "returns 0 when doing IntN::MIN % -1 (#8306)" do
     {% for n in [8, 16, 32, 64] %}
       (Int{{n}}::MIN % -1_i{{n}}).should eq(0)
@@ -523,6 +524,7 @@ describe "Int" do
     -13.remainder(-4).should eq(-1)
   end
 
+  # TODO: add Int128 once implemented
   it "returns 0 when doing IntN::MIN.remainder(-1) (#8306)" do
     {% for n in [8, 16, 32, 64] %}
       (Int{{n}}::MIN.remainder(-1_i{{n}})).should eq(0)
