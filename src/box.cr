@@ -29,9 +29,6 @@ class Box(T)
   def self.unbox(pointer : Void*) : T
     {% if T <= Reference %}
       pointer.as(T)
-    {% elsif T == Nil %}
-      # FIXME: This branch could be merged with the previous one once the issue #8015 is fixed
-      nil
     {% else %}
       pointer.as(self).object
     {% end %}
