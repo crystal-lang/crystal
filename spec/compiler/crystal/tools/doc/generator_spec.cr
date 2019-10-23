@@ -223,4 +223,19 @@ describe Doc::Generator do
       doc_method.formatted_doc.should eq %(<p>Some Method</p>\n\n<p>More Data</p>)
     end
   end
+
+  describe "crystal repo" do
+    it "inserts pseudo methods" do
+      program = Program.new
+      generator = Doc::Generator.new program, ["."], ".", "html", nil
+      doc_type = Doc::Type.new generator, program
+      generator.is_crystal_repo = true
+
+      a_def = Def.new "__crystal_pseudo_foo"
+      a_def.doc = "Foo"
+      doc_method = Doc::Method.new generator, doc_type, a_def, false
+      doc_method.name.should eq "foo"
+      doc_method.doc.not_nil!.should contain %(NOTE: This is a pseudo-method)
+    end
+  end
 end
