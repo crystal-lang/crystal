@@ -53,6 +53,7 @@ describe Crystal::Doc::Markdown do
   assert_render "# Hello", "<h1>#{Crystal::Doc.anchor_link "hello"}Hello</h1>"
   assert_render "#    Hello", "<h1>#{Crystal::Doc.anchor_link "hello"}Hello</h1>"
   assert_render "## Hello", "<h2>#{Crystal::Doc.anchor_link "hello"}Hello</h2>"
+  assert_render "## Multi Word Heading", "<h2>#{Crystal::Doc.anchor_link "multi-word-heading"}Multi Word Heading</h2>"
   assert_render "### Hello", "<h3>#{Crystal::Doc.anchor_link "hello"}Hello</h3>"
   assert_render "#### Hello", "<h4>#{Crystal::Doc.anchor_link "hello"}Hello</h4>"
   assert_render "##### Hello", "<h5>#{Crystal::Doc.anchor_link "hello"}Hello</h5>"
