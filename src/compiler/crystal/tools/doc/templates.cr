@@ -9,13 +9,9 @@ module Crystal::Doc
 </svg>
 SVGS
 
-  private module Anchorable
-    def anchor : String
-      @title.downcase.gsub(' ', '-')
-    end
-  end
-
   def self.anchor_link(anchor : String)
+    anchor = anchor.downcase.gsub(' ', '-')
+
     <<-ANCHOR
     <a id="#{anchor}" class="anchor" href="##{anchor}">
       <svg class="octicon-link" aria-hidden="true">
@@ -34,14 +30,10 @@ SVGS
   end
 
   record MethodSummaryTemplate, title : String, methods : Array(Method) | Array(Macro) do
-    include Anchorable
-
     ECR.def_to_s "#{__DIR__}/html/_method_summary.html"
   end
 
   record MethodDetailTemplate, title : String, methods : Array(Method) | Array(Macro) do
-    include Anchorable
-
     ECR.def_to_s "#{__DIR__}/html/_method_detail.html"
   end
 
@@ -50,8 +42,6 @@ SVGS
   end
 
   record OtherTypesTemplate, title : String, type : Type, other_types : Array(Type) do
-    include Anchorable
-
     ECR.def_to_s "#{__DIR__}/html/_other_types.html"
   end
 
