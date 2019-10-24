@@ -159,6 +159,8 @@ describe Enum do
       SpecEnumFlags.valid?(SpecEnumFlags::Two).should be_true
       SpecEnumFlags.valid?(SpecEnumFlags::One | SpecEnumFlags::Two).should be_true
       SpecEnumFlags.valid?(SpecEnumFlags.new(8)).should be_false
+      SpecEnumFlags.valid?(SpecEnumFlags::None).should be_true
+      SpecEnumFlags.valid?(SpecEnumFlags::All).should be_true
     end
 
     it "for Int64 enum" do
