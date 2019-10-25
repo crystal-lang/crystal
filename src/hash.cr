@@ -1343,7 +1343,17 @@ class Hash(K, V)
     self
   end
 
-  def merge!(other : Hash, &block)
+  # Adds the contents of *other* to this hash.
+  # If a key exists in both hashes, the given block is called to determine the value to be used.
+  # The block arguments are the key, the value in `self` and the value in *other*.
+  #
+  # ```
+  # hash = {"a" => 100, "b" => 200}
+  # other = {"b" => 254, "c" => 300}
+  # hash.merge!(other) { |key, v1, v2| v1 + v2 }
+  # hash # => {"a" => 100, "b" => 454, "c" => 300}
+  # ```
+  def merge!(other : Hash, &block) : self
     other.each do |k, v|
       if self.has_key?(k)
         self[k] = yield k, self[k], v
