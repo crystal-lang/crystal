@@ -1,7 +1,7 @@
 @[Extern]
 struct Int128Info
-  property low : UInt64 = 0_u64
   property high : Int64 = 0_i64
+  property low : UInt64 = 0_u64
 end
 
 @[Extern(union: true)]
