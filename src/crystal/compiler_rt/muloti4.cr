@@ -2,11 +2,12 @@
 # Ported from compiler-rt:lib/builtins/muloti4.c
 
 fun __muloti4(a : Int128, b : Int128, overflow : Int32*) : Int128
-  n = sizeof(Int64) &* sizeof(Char)
+  n = sizeof(Int128) &* sizeof(Char)
   min = Int64::MIN
   max = Int64::MAX
   overflow.value = 0
   result = a &* b
+
   if a == min
     if b != 0 && b != 1
       overflow.value = 1
@@ -19,10 +20,12 @@ fun __muloti4(a : Int128, b : Int128, overflow : Int32*) : Int128
     end
     return result
   end
+
   sa = a >> (n &- 1)
   abs_a = (a ^ sa) &- sa
   sb = b >> (n &- 1)
   abs_b = (b ^ sb) &- sb
+
   if abs_a < 2 || abs_b < 2
     return result
   end
@@ -35,5 +38,6 @@ fun __muloti4(a : Int128, b : Int128, overflow : Int32*) : Int128
       overflow.value = 1
     end
   end
+
   result
 end
