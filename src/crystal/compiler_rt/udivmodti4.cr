@@ -5,10 +5,10 @@ require "./u128_info"
 fun __udivmodti4(a : UInt128, b : UInt128, rem : UInt128*) : UInt128
   n_udword_bits = sizeof(Int64) &* sizeof(Char)
   n_utword_bits = sizeof(Int128) &* sizeof(Char)
-  n = a.unsafe_as(CompilerRT::UI128)
-  d = b.unsafe_as(CompilerRT::UI128)
-  q = CompilerRT::UI128.new
-  r = CompilerRT::UI128.new
+  n = a.unsafe_as(UInt128RT)
+  d = b.unsafe_as(UInt128RT)
+  q = UInt128RT.new
+  r = UInt128RT.new
   sr = 0_u32
 
   if n.info.high == 0
@@ -123,10 +123,10 @@ fun __udivmodti4(a : UInt128, b : UInt128, rem : UInt128*) : UInt128
     q.info.low = (q.info.low << 1) | carry
     s = (d.all &- r.all &- 1) >> (n_utword_bits &- 1)
     carry = s & 1
-    r = (r.all &- (d.all & s)).unsafe_as(CompilerRT::UI128)
+    r = (r.all &- (d.all & s)).unsafe_as(UInt128RT)
   end
 
-  q = ((q.all << 1) | carry).unsafe_as(CompilerRT::UI128)
+  q = ((q.all << 1) | carry).unsafe_as(UInt128RT)
   if rem
     rem.value = r.all
   end

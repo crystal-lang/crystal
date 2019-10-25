@@ -6,6 +6,6 @@ end
 
 @[Extern(union: true)]
 struct Int128RT
-  property all = 0_i128
-  property info = Int128Info.new
+  property all : Int128 = 0_i128
+  property info : Int128Info = Int128Info.new
 end
