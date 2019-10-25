@@ -5,11 +5,13 @@ require "./u128_info"
 fun __udivmodti4(a : UInt128, b : UInt128, rem : UInt128*) : UInt128
   n_udword_bits = sizeof(Int64) &* sizeof(Char)
   n_utword_bits = sizeof(Int128) &* sizeof(Char)
-  n = a.unsafe_as(UInt128RT)
-  d = b.unsafe_as(UInt128RT)
+  n = UInt128RT.new
+  d = UInt128RT.new
   q = UInt128RT.new
   r = UInt128RT.new
   sr = 0_u32
+  n.all = a
+  d.all = b
 
   if n.info.high == 0
     if d.info.high == 0

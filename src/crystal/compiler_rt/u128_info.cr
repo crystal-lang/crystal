@@ -15,4 +15,8 @@ struct UInt128RT
 
   property all : UInt128 = 0_u128
   property info : UInt128Info = UInt128Info.new
+
+  def debug
+    printf("%x:%x\n", info.high, info.low)
+  end
 end
