@@ -634,6 +634,10 @@ module Crystal::Macros
     def reduce(&block) : ASTNode
     end
 
+    # Similar to `Enumerable#reduce`
+    def reduce(memo : ASTNode, &block) : ASTNode
+    end
+
     # Similar to `Array#shuffle`
     def shuffle : ArrayLiteral
     end

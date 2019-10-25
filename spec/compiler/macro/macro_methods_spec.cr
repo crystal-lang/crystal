@@ -580,6 +580,7 @@ module Crystal
 
       it "executes reduce with initial value" do
         assert_macro "", %({{[1, 2, 3].reduce(4) { |acc, val| acc * val }}}), [] of ASTNode, "24"
+        assert_macro "", %({{[1, 2, 3].reduce([] of NumberLiteral) { |acc, val| acc = [val]+acc }}}), [] of ASTNode, "[3, 2, 1]"
       end
 
       it "executes map with constants" do
