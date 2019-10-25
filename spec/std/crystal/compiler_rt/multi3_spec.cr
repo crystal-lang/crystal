@@ -10,18 +10,16 @@ private def test__multi3(a : Int128, b : Int128, expected : Int128, file = __FIL
 end
 
 HEX_1 = Int128RT.new
-HEX_1.info.high = 181_i64 # NOTE: in hex `0x00000000000000B5`
 HEX_1.info.low =  0x04F333F9DE5BE000
+HEX_1.info.high = 181_i64                 # NOTE: in hex `0x00000000000000B5`
 
 HEX_2 = Int128RT.new
-HEX_2.info.high = 0_i64 # NOTE: in hex `0x0000000000000000`
 HEX_2.info.low =  0x00B504F333F9DE5B
+HEX_2.info.high = 0_i64                   # NOTE: in hex `0x0000000000000000`
 
 HEX_3 = Int128RT.new
-HEX_3.info.high = 9223372036854772520_i64 # NOTE: in hex `0x7FFFFFFFFFFFF328`
 HEX_3.info.low =  0xDF915DA296E8A000
-
-printf("%x:%x | %x:%x \n", HEX_1.info.high, HEX_1.info.low, HEX_2.info.high, HEX_2.info.low)
+HEX_3.info.high = 9223372036854772520_i64 # NOTE: in hex `0x7FFFFFFFFFFFF328`
 
 describe "__multi3" do
   test__multi3(0_i128, 0_i128, 0_i128)
