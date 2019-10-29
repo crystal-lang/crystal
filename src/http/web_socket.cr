@@ -154,7 +154,6 @@ class HTTP::WebSocket
   record Close
 
   def read : Slice(UInt8) | String | Close | Ping | Pong | Nil
-    size = 0
     begin
       info = @ws.receive(@buffer)
     rescue IO::EOFError
