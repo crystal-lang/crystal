@@ -753,6 +753,8 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
 
     const = Const.new(@program, scope, name, value)
     const.private = true if target.visibility.private?
+
+    check_ditto node
     attach_doc const, node
 
     scope.types[name] = const
