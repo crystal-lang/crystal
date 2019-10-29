@@ -23,7 +23,7 @@ struct Int128RT
   end
 
   def negate!
-    self.info.high = self.info.high * -1
+    self.all = self.all * -1
     self
   end
 
