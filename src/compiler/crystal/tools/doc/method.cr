@@ -244,7 +244,7 @@ class Crystal::Doc::Method
         arg_to_html block_arg, io, links: links
       elsif @def.yields
         io << ", " if printed
-        io << "&block"
+        io << '&'
       end
       io << ')'
     end
