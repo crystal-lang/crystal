@@ -151,7 +151,7 @@ class Channel(T)
 
   # Sends a value to the channel.
   # If the channel has spare capacity, then the method returns immediately.
-  # Otherwise, this method blocks until the value is received from the channel or the channel's spare capacity becomes greater than 0.
+  # Otherwise, this method blocks the calling fiber until another fiber calls `#receive` on the channel.
   #
   # Raises `ClosedError` if the channel is closed or closes while waiting on a full channel.
   def send(value : T)
