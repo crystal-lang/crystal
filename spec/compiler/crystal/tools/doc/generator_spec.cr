@@ -4,7 +4,7 @@ describe Doc::Generator do
   describe "#must_include_toplevel?" do
     it "returns false if program has nothing" do
       program = Program.new
-      generator = Doc::Generator.new program, ["foo"], ".", "html", nil
+      generator = Doc::Generator.new program, ["foo"]
       doc_type = Doc::Type.new generator, program
 
       generator.must_include_toplevel?(doc_type).should be_false
@@ -12,7 +12,7 @@ describe Doc::Generator do
 
     it "returns true if program has constant" do
       program = Program.new
-      generator = Doc::Generator.new program, ["foo"], ".", "html", nil
+      generator = Doc::Generator.new program, ["foo"]
       doc_type = Doc::Type.new generator, program
 
       constant = Const.new program, program, "Foo", 1.int32
@@ -24,7 +24,7 @@ describe Doc::Generator do
 
     it "returns false if program has constant which is defined in other place" do
       program = Program.new
-      generator = Doc::Generator.new program, ["foo"], ".", "html", nil
+      generator = Doc::Generator.new program, ["foo"]
       doc_type = Doc::Type.new generator, program
 
       constant = Const.new program, program, "Foo", 1.int32
@@ -36,7 +36,7 @@ describe Doc::Generator do
 
     it "returns true if program has macro" do
       program = Program.new
-      generator = Doc::Generator.new program, ["foo"], ".", "html", nil
+      generator = Doc::Generator.new program, ["foo"]
       doc_type = Doc::Type.new generator, program
 
       a_macro = Macro.new "foo"
@@ -48,7 +48,7 @@ describe Doc::Generator do
 
     it "returns false if program has macro which is defined in other place" do
       program = Program.new
-      generator = Doc::Generator.new program, ["foo"], ".", "html", nil
+      generator = Doc::Generator.new program, ["foo"]
       doc_type = Doc::Type.new generator, program
 
       a_macro = Macro.new "foo"
@@ -60,7 +60,7 @@ describe Doc::Generator do
 
     it "returns true if program has method" do
       program = Program.new
-      generator = Doc::Generator.new program, ["foo"], ".", "html", nil
+      generator = Doc::Generator.new program, ["foo"]
       doc_type = Doc::Type.new generator, program
 
       a_def = Def.new "foo"
@@ -72,7 +72,7 @@ describe Doc::Generator do
 
     it "returns false if program has method which is defined in other place" do
       program = Program.new
-      generator = Doc::Generator.new program, ["foo"], ".", "html", nil
+      generator = Doc::Generator.new program, ["foo"]
       doc_type = Doc::Type.new generator, program
 
       a_def = Def.new "foo"
@@ -86,7 +86,7 @@ describe Doc::Generator do
   describe "#collect_constants" do
     it "returns empty array when constants are private" do
       program = Program.new
-      generator = Doc::Generator.new program, ["foo"], ".", "html", nil
+      generator = Doc::Generator.new program, ["foo"]
       doc_type = Doc::Type.new generator, program
 
       constant = Const.new program, program, "Foo", 1.int32
@@ -102,7 +102,7 @@ describe Doc::Generator do
     describe "with a Deprecated annotation, and no docs" do
       it "should generate just the Deprecated tag" do
         program = Program.new
-        generator = Doc::Generator.new program, ["."], ".", "html", nil
+        generator = Doc::Generator.new program, ["."]
         doc_type = Doc::Type.new generator, program
 
         a_def = Def.new "foo"
@@ -115,7 +115,7 @@ describe Doc::Generator do
     describe "with a Deprecated annotation, and docs" do
       it "should generate both the docs and Deprecated tag" do
         program = Program.new
-        generator = Doc::Generator.new program, ["."], ".", "html", nil
+        generator = Doc::Generator.new program, ["."]
         doc_type = Doc::Type.new generator, program
 
         a_def = Def.new "foo"
@@ -129,7 +129,7 @@ describe Doc::Generator do
     describe "with no annotation, and no docs" do
       it "should generate nothing" do
         program = Program.new
-        generator = Doc::Generator.new program, ["."], ".", "html", nil
+        generator = Doc::Generator.new program, ["."]
         doc_type = Doc::Type.new generator, program
 
         a_def = Def.new "foo"
@@ -140,7 +140,7 @@ describe Doc::Generator do
 
     it "should generate the first sentence" do
       program = Program.new
-      generator = Doc::Generator.new program, ["."], ".", "html", nil
+      generator = Doc::Generator.new program, ["."]
       doc_type = Doc::Type.new generator, program
 
       a_def = Def.new "foo"
@@ -151,7 +151,7 @@ describe Doc::Generator do
 
     it "should generate the first line" do
       program = Program.new
-      generator = Doc::Generator.new program, ["."], ".", "html", nil
+      generator = Doc::Generator.new program, ["."]
       doc_type = Doc::Type.new generator, program
 
       a_def = Def.new "foo"
@@ -165,7 +165,7 @@ describe Doc::Generator do
     describe "with a Deprecated annotation, and no docs" do
       it "should generate just the Deprecated tag" do
         program = Program.new
-        generator = Doc::Generator.new program, ["."], ".", "html", nil
+        generator = Doc::Generator.new program, ["."]
         doc_type = Doc::Type.new generator, program
 
         a_def = Def.new "foo"
@@ -178,7 +178,7 @@ describe Doc::Generator do
     describe "with a Deprecated annotation, and docs" do
       it "should generate both the docs and Deprecated tag" do
         program = Program.new
-        generator = Doc::Generator.new program, ["."], ".", "html", nil
+        generator = Doc::Generator.new program, ["."]
         doc_type = Doc::Type.new generator, program
 
         a_def = Def.new "foo"
@@ -192,7 +192,7 @@ describe Doc::Generator do
     describe "with no annotation, and no docs" do
       it "should generate nothing" do
         program = Program.new
-        generator = Doc::Generator.new program, ["."], ".", "html", nil
+        generator = Doc::Generator.new program, ["."]
         doc_type = Doc::Type.new generator, program
 
         a_def = Def.new "foo"
@@ -203,7 +203,7 @@ describe Doc::Generator do
 
     it "should generate the full document" do
       program = Program.new
-      generator = Doc::Generator.new program, ["."], ".", "html", nil
+      generator = Doc::Generator.new program, ["."]
       doc_type = Doc::Type.new generator, program
 
       a_def = Def.new "foo"
@@ -214,7 +214,7 @@ describe Doc::Generator do
 
     it "should generate the full document" do
       program = Program.new
-      generator = Doc::Generator.new program, ["."], ".", "html", nil
+      generator = Doc::Generator.new program, ["."]
       doc_type = Doc::Type.new generator, program
 
       a_def = Def.new "foo"
@@ -227,7 +227,7 @@ describe Doc::Generator do
   describe "crystal repo" do
     it "inserts pseudo methods" do
       program = Program.new
-      generator = Doc::Generator.new program, ["."], ".", "html", nil
+      generator = Doc::Generator.new program, ["."]
       doc_type = Doc::Type.new generator, program
       generator.is_crystal_repo = true
 
