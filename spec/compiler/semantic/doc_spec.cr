@@ -67,7 +67,7 @@ describe "Semantic: doc" do
       # A number
       ONE = 1
 
-      # ditto
+      # :ditto:
       TWO = 2
     ), wants_doc: true
     program = result.program
