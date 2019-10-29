@@ -2511,4 +2511,31 @@ describe "String" do
       "hello".scrub.should eq("hello")
     end
   end
+
+  describe "interpolation" do
+    it "of a single string" do
+      string = "hello"
+      String.interpolation(string).should be(string)
+    end
+
+    it "of a single non-string" do
+      String.interpolation(123).should eq("123")
+    end
+
+    it "of string and char" do
+      String.interpolation("hello", '!').should eq("hello!")
+    end
+
+    it "of char and string" do
+      String.interpolation('!', "hello").should eq("!hello")
+    end
+
+    it "of multiple strings" do
+      String.interpolation("a", "bcd", "ef").should eq("abcdef")
+    end
+
+    it "of multiple possibly non-strings" do
+      String.interpolation("a", 123, "b", 456, "cde").should eq("a123b456cde")
+    end
+  end
 end

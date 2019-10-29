@@ -4428,6 +4428,134 @@ class String
       value
     end
   end
+
+  # Implementation of string interpolation of a single string.
+  #
+  # For example, this code will end up invoking this method:
+  #
+  # ```
+  # value = "hello"
+  # "#{value}" # same as String.interpolation(value)
+  # ```
+  #
+  # In this case the implementation just returns the same string value.
+  #
+  # NOTE: there should never be a need to call this method instead of using string interpolation.
+  def self.interpolation(value : String)
+    value
+  end
+
+  # Implementation of string interpolation of a single non-string value.
+  #
+  # For example, this code will end up invoking this method:
+  #
+  # ```
+  # value = 123
+  # "#{value}" # same as String.interpolation(value)
+  # ```
+  #
+  # In this case the implementation just returns the result of calling `value.to_s`.
+  #
+  # NOTE: there should never be a need to call this method instead of using string interpolation.
+  def self.interpolation(value)
+    value.to_s
+  end
+
+  # Implementation of string interpolation of a string and a char.
+  #
+  # For example, this code will end up invoking this method:
+  #
+  # ```
+  # char = '!'
+  # "hello#{value}" # same as String.interpolation("hello", char)
+  # ```
+  #
+  # In this case the implementation just does `value + char`.
+  #
+  # NOTE: there should never be a need to call this method instead of using string interpolation.
+  def self.interpolation(value : String, char : Char)
+    value + char
+  end
+
+  # Implementation of string interpolation of a char and a string.
+  #
+  # For example, this code will end up invoking this method:
+  #
+  # ```
+  # char = '!'
+  # "#{char}hello" # same as String.interpolation(char, "hello")
+  # ```
+  #
+  # In this case the implementation just does `char + value`.
+  #
+  # NOTE: there should never be a need to call this method instead of using string interpolation.
+  def self.interpolation(char : Char, value : String)
+    char + value
+  end
+
+  # Implementation of string interpolation of multiple string values.
+  #
+  # For example, this code will end up invoking this method:
+  #
+  # ```
+  # value1 = "hello"
+  # value2 = "world"
+  # "#{value1} #{value2}!" # same as String.interpolation(value1, " ", value2, "!")
+  # ```
+  #
+  # In this case the implementation can pre-compute the needed string bytesize and so
+  # it's a bit more performant than interpolating non-string values.
+  #
+  # NOTE: there should never be a need to call this method instead of using string interpolation.
+  def self.interpolation(*values : String)
+    bytesize = values.sum(&.bytesize)
+    size = if values.all?(&.size_known?)
+             values.sum(&.size)
+           else
+             0
+           end
+    String.new(bytesize) do |buffer|
+      values.each do |value|
+        buffer.copy_from(value.to_unsafe, value.bytesize)
+        buffer += value.bytesize
+      end
+      {bytesize, size}
+    end
+  end
+
+  # Implementation of string interpolation of multiple, possibly non-string values.
+  #
+  # For example, this code will end up invoking this method:
+  #
+  # ```
+  # value1 = "hello"
+  # value2 = 123
+  # "#{value1} #{value2}!" # same as String.interpolation(value1, " ", value2, "!")
+  # ```
+  #
+  # In this case the implementation will call `String.build` with the given values.
+  #
+  # NOTE: there should never be a need to call this method instead of using string interpolation.
+  def self.interpolation(*values : *T) forall T
+    capacity = 0
+    {% for i in 0...T.size %}
+      value{{i}} = values[{{i}}]
+      if value{{i}}.is_a?(String)
+        capacity += value{{i}}.bytesize
+      else
+        capacity += 15
+      end
+    {% end %}
+    String.build(capacity) do |io|
+      {% for i in 0...T.size %}
+        if value{{i}}.is_a?(String)
+          io.write(value{{i}}.to_slice)
+        else
+          io << value{{i}}
+        end
+      {% end %}
+    end
+  end
 end
 
 require "./string/*"
