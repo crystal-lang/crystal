@@ -1,3 +1,5 @@
+{% skip_file unless flag?(:compile_rt) %}
+
 require "spec"
 require "../../../../src/crystal/compiler_rt/mulodi4.cr"
 

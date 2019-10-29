@@ -1,3 +1,5 @@
+{% skip_file unless flag?(:compile_rt) %}
+
 require "spec"
 require "../../../../src/crystal/compiler_rt/divti3"
 require "../../../../src/crystal/compiler_rt/i128_info"
