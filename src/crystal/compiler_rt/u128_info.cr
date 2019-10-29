@@ -13,6 +13,12 @@ struct UInt128RT
     %i_info
   end
 
+  macro [](high)
+    %i_info = uninitialized UInt128RT
+    %i_info.all = {{high}}.unsafe_as(UInt128)
+    %i_info
+  end
+
   property all : UInt128 = 0_u128
   property info : UInt128Info = UInt128Info.new
 

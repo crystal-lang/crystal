@@ -18,7 +18,7 @@ struct Int128RT
 
   macro [](high)
     %i_info = uninitialized Int128RT
-    %i_info.all = {{high}}
+    %i_info.all = {{high}}.unsafe_as(Int128)
     %i_info
   end
 
