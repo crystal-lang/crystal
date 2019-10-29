@@ -252,6 +252,39 @@ describe "Int" do
     it { UInt64::MAX.bit(64).should eq(0) }
   end
 
+  describe "#bits" do
+    # Basic usage
+    it { 0b10011.bits(0..0).should eq(0b1) }
+    it { 0b10011.bits(0..1).should eq(0b11) }
+    it { 0b10011.bits(0..2).should eq(0b11) }
+    it { 0b10011.bits(0..3).should eq(0b11) }
+    it { 0b10011.bits(0..4).should eq(0b10011) }
+    it { 0b10011.bits(0..5).should eq(0b10011) }
+    it { 0b10011.bits(1..5).should eq(0b1001) }
+
+    # no range start indicated
+    it { 0b10011.bits(..1).should eq(0b11) }
+    it { 0b10011.bits(..2).should eq(0b11) }
+    it { 0b10011.bits(..3).should eq(0b11) }
+    it { 0b10011.bits(..4).should eq(0b10011) }
+
+    # Check against limits
+    it { 0b10011_u8.bits(0..16).should eq(0b10011_u8) }
+    it { 0b10011_u8.bits(1..16).should eq(0b1001_u8) }
+
+    # Will work with signed values
+    it { -5_i8.bits(0..16).should eq(-5_i8) }
+    it { -5_i8.bits(1..16).should eq(-3_i8) }
+    it { -5_i8.bits(2..16).should eq(-2_i8) }
+    it { -5_i8.bits(3..16).should eq(-1_i8) }
+
+    it "raises when invalid indexes are provided" do
+      expect_raises(IndexError) { 0b10011.bits(0..-1) }
+      expect_raises(IndexError) { 0b10011.bits(-1..3) }
+      expect_raises(IndexError) { 0b10011.bits(4..2) }
+    end
+  end
+
   describe "divmod" do
     it { 5.divmod(3).should eq({1, 2}) }
   end

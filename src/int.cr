@@ -339,6 +339,51 @@ struct Int
     self >> bit & 1
   end
 
+  # Returns the requested range of bits
+  #
+  # ```
+  # 0b10011.bits(0..1) # => 0b11
+  # 0b10011.bits(0..2) # => 0b11
+  # 0b10011.bits(0..3) # => 0b11
+  # 0b10011.bits(0..4) # => 0b10011
+  # 0b10011.bits(0..5) # => 0b10011
+  # 0b10011.bits(1..4) # => 0b1001
+  # ```
+  def bits(range : Range)
+    start_index = range.begin
+    if start_index
+      raise IndexError.new("start index (#{start_index}) must be positive") if start_index < 0
+    else
+      start_index = 0
+    end
+
+    end_index = range.end
+    if end_index
+      raise IndexError.new("end index (#{end_index}) must be positive") if end_index < 0
+      end_index += 1 unless range.exclusive?
+      raise IndexError.new("end index (#{end_index}) must be greater than start index (#{start_index})") if end_index <= start_index
+    else
+      # if there is no end index then we only need to shift
+      return self >> start_index
+    end
+
+    # Generates a mask `count` bits long maintaining the correct type
+    count = end_index - start_index
+    mask = (self.class.new(1) << count) &- 1
+
+    if self < 0
+      # Special case for negative to ensure the shift and mask work as expected
+      # The result is always negative
+      offset = (~self) >> start_index
+      result = offset & mask
+      ~result
+    else
+      # Shifts out the bits we want to ignore before applying the mask
+      offset = self >> start_index
+      offset & mask
+    end
+  end
+
   # Returns `true` if all bits in *mask* are set on `self`.
   #
   # ```
