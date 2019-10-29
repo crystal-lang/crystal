@@ -8,6 +8,8 @@ require "uri"
 
 # :nodoc:
 class HTTP::WebSocket::Protocol
+  GUID = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11"
+
   @[Flags]
   enum Flags : UInt8
     FINAL = 0x80
@@ -301,9 +303,9 @@ class HTTP::WebSocket::Protocol
 
   def self.key_challenge(key)
     {% if flag?(:without_openssl) %}
-      Digest::SHA1.base64digest("#{key}258EAFA5-E914-47DA-95CA-C5AB0DC85B11")
+      Digest::SHA1.base64digest(key + GUID)
     {% else %}
-      Base64.strict_encode(OpenSSL::SHA1.hash("#{key}258EAFA5-E914-47DA-95CA-C5AB0DC85B11"))
+      Base64.strict_encode(OpenSSL::SHA1.hash(key + GUID))
     {% end %}
   end
 end
