@@ -4438,11 +4438,15 @@ class String
   # "#{value}" # same as String.interpolation(value)
   # ```
   #
-  # In this case the implementation just returns the same string value.
+  # In this case the implementation just returns a new string with the contents
+  # of `value`.
   #
   # NOTE: there should never be a need to call this method instead of using string interpolation.
   def self.interpolation(value : String)
-    value
+    String.new(value.bytesize) do |buffer|
+      buffer.copy_from(value.to_unsafe, value.bytesize)
+      {value.bytesize, value.size_known? ? value.size : 0}
+    end
   end
 
   # Implementation of string interpolation of a single non-string value.
