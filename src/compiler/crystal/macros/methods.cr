@@ -1707,11 +1707,15 @@ module Crystal
     end
 
     def self.class_vars(type)
-      ArrayLiteral.map(type.all_class_vars) do |name, ivar|
-        meta_var = MetaMacroVar.new(name[2..-1], ivar.type)
-        meta_var.var = ivar
-        meta_var.default_value = ivar.initializer.try(&.node)
-        meta_var
+      if type.is_a?(ClassVarContainer)
+        ArrayLiteral.map(type.all_class_vars) do |name, ivar|
+          meta_var = MetaMacroVar.new(name[2..-1], ivar.type)
+          meta_var.var = ivar
+          meta_var.default_value = ivar.initializer.try(&.node)
+          meta_var
+        end
+      else
+        empty_no_return_array
       end
     end
 

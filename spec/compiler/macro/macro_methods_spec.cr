@@ -1115,6 +1115,34 @@ module Crystal
         end
       end
 
+      it "executes instance_vars on metaclass" do
+        assert_macro("x", "{{x.class.instance_vars.map &.stringify}}", %([])) do |program|
+          klass = NonGenericClassType.new(program, program, "SomeType", program.reference)
+          klass.declare_instance_var("@var", program.string)
+          [TypeNode.new(klass)] of ASTNode
+        end
+      end
+
+      it "executes class_vars on metaclass" do
+        assert_macro("x", "{{x.class.class_vars.map &.stringify}}", %([])) do |program|
+          klass = NonGenericClassType.new(program, program, "SomeType", program.reference)
+          klass.declare_class_var("@@class_var", program.string)
+          [TypeNode.new(klass)] of ASTNode
+        end
+      end
+
+      it "executes instance_vars on symbol literal" do
+        assert_macro("x", "{{x.instance_vars.map &.stringify}}", %([])) do |program|
+          [TypeNode.new(SymbolLiteralType.new(program, "foo".symbol))] of ASTNode
+        end
+      end
+
+      it "executes class_vars on symbol literal" do
+        assert_macro("x", "{{x.class_vars.map &.stringify}}", %([])) do |program|
+          [TypeNode.new(SymbolLiteralType.new(program, "foo".symbol))] of ASTNode
+        end
+      end
+
       it "executes methods" do
         assert_macro("x", "{{x.methods.map &.name}}", %([foo])) do |program|
           klass = NonGenericClassType.new(program, program, "SomeType", program.reference)
