@@ -1730,6 +1730,10 @@ module Crystal::Macros
     def instance_vars : ArrayLiteral(MetaVar)
     end
 
+    # Returns the class variables of this type.
+    def class_vars : ArrayLiteral(MetaVar)
+    end
+
     # Returns all ancestors of this type.
     def ancestors : ArrayLiteral(TypeNode)
     end

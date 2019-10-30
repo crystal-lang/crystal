@@ -557,6 +557,18 @@ module Crystal
       end
     end
 
+    def all_class_vars
+      all_class_vars = {} of String => MetaTypeVar
+      if (self.is_a?(ClassVarContainer))
+        self.as(ClassVarContainer).class_vars?.try { |v| all_class_vars.merge!(v) }
+      end
+      ancestors.each do |ancestor|
+        next unless ancestor.is_a?(ClassVarContainer)
+        ancestor.as(ClassVarContainer).class_vars?.try { |v| all_class_vars.merge!(v) }
+      end
+      all_class_vars
+    end
+
     def index_of_instance_var(name)
       if superclass = self.superclass
         index = superclass.index_of_instance_var(name)
@@ -973,6 +985,16 @@ module Crystal
       end
 
       nil
+    end
+
+    def declare_class_var(name, type : Type, annotations = nil)
+      var = MetaTypeVar.new(name)
+      var.owner = self
+      var.type = type
+      var.annotations = annotations
+      var.bind_to var
+      var.freeze_type = type
+      self.class_vars[name] = var
     end
   end
 
@@ -3232,6 +3254,13 @@ module Crystal
       end
 
       nil
+    end
+
+    def all_class_vars
+      all_class_vars = {} of String => MetaTypeVar
+      @class_vars.try { |v| all_class_vars.merge!(v) }
+      all_class_vars.merge!(base_type.all_class_vars)
+      all_class_vars
     end
 
     def replace_type_parameters(instance)

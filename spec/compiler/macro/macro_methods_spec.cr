@@ -1094,6 +1094,43 @@ module Crystal
         end
       end
 
+      it "executes class vars" do
+        assert_macro("x", "{{x.class_vars.map &.name}}", %([class_var])) do |program|
+          klass = NonGenericClassType.new(program, program, "SomeType", program.reference)
+          klass.declare_class_var("@@class_var", program.string)
+          [TypeNode.new(klass)] of ASTNode
+        end
+      end
+
+      it "executes class vars (with inheritance)" do
+        assert_macro("x", "{{x.class_vars.map &.name}}", %([child_class_var, base_class_var, mod_class_var])) do |program|
+          base_class = NonGenericClassType.new(program, program, "BaseType", program.reference)
+          base_class.declare_class_var("@@base_class_var", program.string)
+          mod = NonGenericModuleType.new(program, program, "SomeModule")
+          mod.declare_class_var("@@mod_class_var", program.string)
+          base_class.include mod
+          child_class = NonGenericClassType.new(program, program, "ChildType", base_class)
+          child_class.declare_class_var("@@child_class_var", program.string)
+          [TypeNode.new(child_class)] of ASTNode
+        end
+      end
+
+      it "executes methods" do
+        assert_macro("x", "{{x.methods.map &.name}}", %([foo])) do |program|
+          klass = NonGenericClassType.new(program, program, "SomeType", program.reference)
+          a_def = Def.new "foo"
+          klass.add_def a_def
+          [TypeNode.new(klass)] of ASTNode
+        end
+      end
+
+      it "executes class methods" do
+        assert_macro("x", "{{x.class.methods.map &.name}}", %([allocate])) do |program|
+          klass = NonGenericClassType.new(program, program, "SomeType", program.reference)
+          [TypeNode.new(klass)] of ASTNode
+        end
+      end
+
       it "executes ancestors" do
         assert_macro("x", "{{x.ancestors}}", %([SomeModule, Reference, Object])) do |program|
           mod = NonGenericModuleType.new(program, program, "SomeModule")
