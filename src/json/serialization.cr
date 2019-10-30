@@ -2,6 +2,9 @@ module JSON
   annotation Field
   end
 
+  annotation Discriminator
+  end
+
   # The `JSON::Serializable` module automatically generates methods for JSON serialization when included.
   #
   # ### Example
@@ -124,6 +127,36 @@ module JSON
       # so it overloads well with other possible initializes
 
       def self.new(pull : ::JSON::PullParser)
+        {% verbatim do %}
+          {% begin %}
+            {% discriminators = @type.instance_vars.select { |ivar| ivar.annotation(::JSON::Discriminator) } %}
+            {% if !discriminators.empty? %}
+              {% if discriminators.size > 1 %}
+                {% raise "Multiple JSON::Discriminator annotations found for type #{@type}, instance variables #{discriminators.map { |var| "@#{var}" }.join(", ").id}" %}
+              {% end %}
+              {% discriminator = discriminators[0] %}
+              {% mapping = discriminator.annotation(::JSON::Discriminator)[0] %}
+              {% unless mapping.is_a?(HashLiteral) || mapping.is_a?(NamedTupleLiteral) %}
+                {% raise "Argument to JSON::Discriminator must be a HashLiteral ot NamedTupleLiteral, not #{mapping}" %}
+              {% end %}
+              any = JSON::Any.new(pull)
+              discriminator_value = any[{{discriminator.id.stringify}}].to_s
+              case discriminator_value
+              {% for key, value in mapping %}
+                when {{key.id.stringify}}
+                  {{value.id}}.from_json(any.to_json)
+              {% end %}
+              else
+                raise "Unexpected {{discriminator.id}}: #{discriminator_value}"
+              end
+            {% else %}
+              new_from_json_pull_parser(pull)
+            {% end %}
+          {% end %}
+        {% end %}
+      end
+
+      private def self.new_from_json_pull_parser(pull : ::JSON::PullParser)
         instance = allocate
         instance.initialize(__pull_for_json_serializable: pull)
         GC.add_finalizer(instance) if instance.responds_to?(:finalize)
@@ -135,7 +168,7 @@ module JSON
 
       macro inherited
         def self.new(pull : ::JSON::PullParser)
-          super
+          new_from_json_pull_parser(pull)
         end
       end
     end
