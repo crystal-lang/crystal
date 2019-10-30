@@ -83,9 +83,7 @@ class IO::ARGF < IO
           @current_io = nil
         else
           read_next_argv
-          slice += read_count
-          count -= read_count
-          read_count += read slice[0, count]
+          read_count = read slice[0, count]
         end
       end
     end
