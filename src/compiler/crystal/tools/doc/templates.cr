@@ -1,7 +1,7 @@
 require "ecr/macros"
 
 module Crystal::Doc
-  record TypeTemplate, type : Type, types : Array(Type), canonical_base_url : String? do
+  record TypeTemplate, type : Type, types : Array(Type) do
     ECR.def_to_s "#{__DIR__}/html/type.html"
   end
 
@@ -25,11 +25,11 @@ module Crystal::Doc
     ECR.def_to_s "#{__DIR__}/html/_other_types.html"
   end
 
-  record MainTemplate, body : String, types : Array(Type), repository_name : String, canonical_base_url : String? do
+  record MainTemplate, body : String, types : Array(Type), repository_name : String do
     ECR.def_to_s "#{__DIR__}/html/main.html"
   end
 
-  record HeadTemplate, type : Type?, canonical_base_url : String? do
+  record HeadTemplate, base_path : String do
     ECR.def_to_s "#{__DIR__}/html/_head.html"
   end
 
@@ -55,5 +55,9 @@ module Crystal::Doc
 
   struct StyleTemplate
     ECR.def_to_s "#{__DIR__}/html/css/style.css"
+  end
+
+  record SitemapTemplate, types : Array(Type), base_url : String, priority : String, changefreq : String do
+    ECR.def_to_s "#{__DIR__}/html/sitemap.xml"
   end
 end
