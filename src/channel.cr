@@ -117,8 +117,10 @@ class Channel(T)
   # Closes the channel.
   # The method prevents any new value from being sent to / received from the channel.
   # It wakes up any sender / receiver fibers waiting on the channel.
+  #
   # Both awaiting and subsequent calls to `#send` will consider the channel closed.
   # All items successfully sent to the channel can be received, before `#receive` considers the channel closed.
+  # Calling `#close` on a closed channel does not have any effect.
   def close
     @lock.sync do
       @closed = true
