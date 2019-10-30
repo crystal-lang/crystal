@@ -29,11 +29,13 @@ class Crystal::Doc::Generator
   }
 
   def self.new(program : Program, included_dirs : Array(String))
-    new(program, included_dirs, ".", "html", nil)
+    new(program, included_dirs, ".", "html", nil, "1.0", "never")
   end
 
   def initialize(@program : Program, @included_dirs : Array(String),
-                 @output_dir : String, @output_format : String)
+                 @output_dir : String, @output_format : String,
+                 @sitemap_base_url : String?,
+                 @sitemap_priority : String, @sitemap_changefreq : String)
     @base_dir = Dir.current.chomp
     @types = {} of Crystal::Type => Doc::Type
     @repo_name = ""
@@ -88,6 +90,7 @@ class Crystal::Doc::Generator
     copy_files
     generate_types_docs types, @output_dir, types
     generate_readme program_type, types
+    generate_sitemap types
   end
 
   def generate_readme(program_type, types)
@@ -99,6 +102,12 @@ class Crystal::Doc::Generator
     main_index = Main.new(raw_body, Type.new(self, @program), repository_name)
     File.write File.join(@output_dir, "index.json"), main_index
     File.write File.join(@output_dir, "search-index.js"), main_index.to_jsonp
+  end
+
+  def generate_sitemap(types)
+    if sitemap_base_url = @sitemap_base_url
+      File.write File.join(@output_dir, "sitemap.xml"), SitemapTemplate.new(types, sitemap_base_url, "1.0", "never")
+    end
   end
 
   def copy_files

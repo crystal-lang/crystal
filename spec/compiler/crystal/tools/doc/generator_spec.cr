@@ -244,4 +244,22 @@ describe Doc::Generator do
       doc_method.doc.not_nil!.should_not contain %(NOTE: This is a pseudo-method)
     end
   end
+
+  it "generates sitemap" do
+    program = Program.new
+    generator = Doc::Generator.new program, ["."]
+    doc_type = Doc::Type.new generator, program
+
+    Doc::SitemapTemplate.new([doc_type], "http://example.com/api/1.0", "0.8", "monthly").to_s.should eq <<-XML
+      <?xml version="1.0" encoding="UTF-8"?>
+      <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+        <url>
+          <loc>http://example.com/api/1.0/toplevel.html</loc>
+          <priority>0.8</priority>
+          <changefreq>monthly</changefreq>
+        </url>
+      </urlset>
+
+      XML
+  end
 end

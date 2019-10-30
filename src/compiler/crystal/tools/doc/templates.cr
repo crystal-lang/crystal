@@ -56,4 +56,8 @@ module Crystal::Doc
   struct StyleTemplate
     ECR.def_to_s "#{__DIR__}/html/css/style.css"
   end
+
+  record SitemapTemplate, types : Array(Type), base_url : String, priority : String, changefreq : String do
+    ECR.def_to_s "#{__DIR__}/html/sitemap.xml"
+  end
 end
