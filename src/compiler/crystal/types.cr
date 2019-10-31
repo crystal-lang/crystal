@@ -987,16 +987,6 @@ module Crystal
 
       nil
     end
-
-    def declare_class_var(name, type : Type, annotations = nil)
-      var = MetaTypeVar.new(name)
-      var.owner = self
-      var.type = type
-      var.annotations = annotations
-      var.bind_to var
-      var.freeze_type = type
-      self.class_vars[name] = var
-    end
   end
 
   # Temporary type to recompute calls when a subclass is added to a type
