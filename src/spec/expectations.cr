@@ -419,10 +419,70 @@ module Spec
   module ObjectExtensions
     # Validates an expectation and fails the example if it does not match.
     #
+    # This overload will be called when doing:
+    #
+    # ```
+    # result = subject.should be_a(Type)
+    # # result will be a Type
+    # ```
+    #
+    # and make sure, at compile-time, that the returned object is of type `Type`.
+    #
+    # See `Spec::Expecations` for available expectations.
+    def should(expectation : BeAExpectation(T), file = __FILE__, line = __LINE__) forall T
+      if expectation.match self
+        self.is_a?(T) ? self : (raise "Bug: expected #{self} to be a #{T}")
+      else
+        fail(expectation.failure_message(self), file, line)
+      end
+    end
+
+    # Validates an expectation and fails the example if it does not match.
+    #
     # See `Spec::Expecations` for available expectations.
     def should(expectation, file = __FILE__, line = __LINE__)
       unless expectation.match self
         fail(expectation.failure_message(self), file, line)
+      end
+    end
+
+    # Validates an expectation and fails the example if it matches.
+    #
+    # This overload will be called when doing:
+    #
+    # ```
+    # result = subject.should_not be_a(Type)
+    # # result will not be a Type
+    # ```
+    #
+    # and make sure, at compile-time, that the returned object is not of type `Type`.
+    #
+    # See `Spec::Expecations` for available expectations.
+    def should_not(expectation : BeAExpectation(T), file = __FILE__, line = __LINE__) forall T
+      if expectation.match self
+        fail(expectation.negative_failure_message(self), file, line)
+      else
+        self.is_a?(T) ? (raise "Bug: expected #{self} not to be a #{T}") : self
+      end
+    end
+
+    # Validates an expectation and fails the example if it matches.
+    #
+    # This overload will be called when doing:
+    #
+    # ```
+    # result = subject.should_not be_nil
+    # # result will not be nil
+    # ```
+    #
+    # and make sure, at compile-time, that the returned object is not `nil`.
+    #
+    # See `Spec::Expecations` for available expectations.
+    def should_not(expectation : BeNilExpectation, file = __FILE__, line = __LINE__)
+      if expectation.match self
+        fail(expectation.negative_failure_message(self), file, line)
+      else
+        self.not_nil!
       end
     end
 
