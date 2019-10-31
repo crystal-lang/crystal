@@ -2,9 +2,6 @@ module JSON
   annotation Field
   end
 
-  annotation Discriminator
-  end
-
   # The `JSON::Serializable` module automatically generates methods for JSON serialization when included.
   #
   # ### Example
@@ -118,6 +115,15 @@ module JSON
   #   @a : Int32?
   # end
   # ```
+  #
+  # ### Discriminator field
+  #
+  # A very common JSON serialization strategy for handling different objects
+  # under a same hierarchy is to use a discriminator field. For example in
+  # [GeoJSON](https://tools.ietf.org/html/rfc7946) each object has a "type"
+  # field, and the rest of the fields, and their meaning, depend on its value.
+  #
+  # You can use `JSON::Serializable.use_discriminator` for this use case.
   module Serializable
     annotation Options
     end
@@ -127,33 +133,7 @@ module JSON
       # so it overloads well with other possible initializes
 
       def self.new(pull : ::JSON::PullParser)
-        {% verbatim do %}
-          {% begin %}
-            {% discriminators = @type.instance_vars.select { |ivar| ivar.annotation(::JSON::Discriminator) } %}
-            {% if !discriminators.empty? %}
-              {% if discriminators.size > 1 %}
-                {% raise "Multiple JSON::Discriminator annotations found for type #{@type}, instance variables #{discriminators.map { |var| "@#{var}" }.join(", ").id}" %}
-              {% end %}
-              {% discriminator = discriminators[0] %}
-              {% mapping = discriminator.annotation(::JSON::Discriminator)[0] %}
-              {% unless mapping.is_a?(HashLiteral) || mapping.is_a?(NamedTupleLiteral) %}
-                {% raise "Argument to JSON::Discriminator must be a HashLiteral ot NamedTupleLiteral, not #{mapping}" %}
-              {% end %}
-              any = JSON::Any.new(pull)
-              discriminator_value = any[{{discriminator.id.stringify}}].to_s
-              case discriminator_value
-              {% for key, value in mapping %}
-                when {{key.id.stringify}}
-                  {{value.id}}.from_json(any.to_json)
-              {% end %}
-              else
-                raise "Unexpected {{discriminator.id}}: #{discriminator_value}"
-              end
-            {% else %}
-              new_from_json_pull_parser(pull)
-            {% end %}
-          {% end %}
-        {% end %}
+        new_from_json_pull_parser(pull)
       end
 
       private def self.new_from_json_pull_parser(pull : ::JSON::PullParser)
@@ -368,6 +348,82 @@ module JSON
       protected def on_to_json(json)
         json_unmapped.each do |key, value|
           json.field(key) { value.to_json(json) }
+        end
+      end
+    end
+
+    # Tells this class to decode JSON by using a field as a discriminator.
+    #
+    # - *field* must be the field name to use as a discriminator
+    # - *mapping* must be a hash or named tuple where each key-value pair
+    #   maps a discriminator value to a class to deserialize
+    #
+    # For example:
+    #
+    # ```
+    # require "json"
+    #
+    # abstract class Shape
+    #   include JSON::Serializable
+    #
+    #   use_discriminator "type", {point: Point, circle: Circle}
+    #
+    #   property type : String
+    # end
+    #
+    # class Point < Shape
+    #   property x : Int32
+    #   property y : Int32
+    # end
+    #
+    # class Circle < Shape
+    #   property x : Int32
+    #   property y : Int32
+    #   property radius : Int32
+    # end
+    #
+    # Shape.from_json(%({"type": "point", "x": 1, "y": 2}))               # => #<Point:0x10373ae20 @type="point", @x=1, @y=2>
+    # Shape.from_json(%({"type": "circle", "x": 1, "y": 2, "radius": 3})) # => #<Circle:0x106a4cea0 @type="circle", @x=1, @y=2, @radius=3>
+    # ```
+    macro use_discriminator(field, mapping)
+      {% unless mapping.is_a?(HashLiteral) || mapping.is_a?(NamedTupleLiteral) %}
+        {% mapping.raise "mapping argument must be a HashLiteral or a NamedTupleLiteral, not #{mapping.class_name.id}" %}
+      {% end %}
+
+      def self.new(pull : ::JSON::PullParser)
+        location = pull.location
+
+        discriminator_value = nil
+
+        # Try to find the discriminator while also getting the raw
+        # string value of the parsed JSON, so then we can pass it
+        # to the final type.
+        json = String.build do |io|
+          JSON.build(io) do |builder|
+            builder.start_object
+            pull.read_object do |key|
+              if key == {{field.id.stringify}}
+                discriminator_value = pull.read_string
+                builder.field(key, discriminator_value)
+              else
+                builder.field(key) { pull.read_raw(builder) }
+              end
+            end
+            builder.end_object
+          end
+        end
+
+        unless discriminator_value
+          raise ::JSON::MappingError.new("Missing JSON discriminator field '{{field.id}}'", to_s, nil, *location, nil)
+        end
+
+        case discriminator_value
+        {% for key, value in mapping %}
+          when {{key.id.stringify}}
+            {{value.id}}.from_json(json)
+        {% end %}
+        else
+          raise ::JSON::MappingError.new("Unknown '{{field.id}}' discriminator value: #{discriminator_value.inspect}", to_s, nil, *location, nil)
         end
       end
     end
