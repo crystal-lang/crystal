@@ -49,7 +49,7 @@ class Crystal::Command
   private getter options
 
   def initialize(@options : Array(String))
-    @color = true
+    @color = ENV["TERM"]? != "dumb"
     @error_trace = false
     @progress_tracker = ProgressTracker.new
   end
@@ -563,7 +563,7 @@ class Crystal::Command
 
   private def error(msg, exit_code = 1)
     # This is for the case where the main command is wrong
-    @color = false if ARGV.includes?("--no-color")
+    @color = false if ARGV.includes?("--no-color") || ENV["TERM"]? == "dumb"
     Crystal.error msg, @color, exit_code: exit_code
   end
 end
