@@ -1,5 +1,15 @@
 require "../../spec_helper"
 
+private def declare_class_var(container : ClassVarContainer, name, var_type : Type, annotations = nil)
+  var = MetaTypeVar.new(name)
+  var.owner = container
+  var.type = var_type
+  var.annotations = annotations
+  var.bind_to var
+  var.freeze_type = var_type
+  container.class_vars[name] = var
+end
+
 module Crystal
   describe "macro methods" do
     describe "node methods" do
@@ -1091,6 +1101,71 @@ module Crystal
       it "executes instance_vars" do
         assert_macro("x", "{{x.instance_vars.map &.stringify}}", %(["bytesize", "length", "c"])) do |program|
           [TypeNode.new(program.string)] of ASTNode
+        end
+      end
+
+      it "executes class vars" do
+        assert_macro("x", "{{x.class_vars.map &.name}}", %([class_var])) do |program|
+          klass = NonGenericClassType.new(program, program, "SomeType", program.reference)
+          declare_class_var(klass, "@@class_var", program.string)
+          [TypeNode.new(klass)] of ASTNode
+        end
+      end
+
+      it "executes class vars (with inheritance)" do
+        assert_macro("x", "{{x.class_vars.map &.name}}", %([child_class_var, base_class_var, mod_class_var])) do |program|
+          base_class = NonGenericClassType.new(program, program, "BaseType", program.reference)
+          declare_class_var(base_class, "@@base_class_var", program.string)
+          mod = NonGenericModuleType.new(program, program, "SomeModule")
+          declare_class_var(mod, "@@mod_class_var", program.string)
+          base_class.include mod
+          child_class = NonGenericClassType.new(program, program, "ChildType", base_class)
+          declare_class_var(child_class, "@@child_class_var", program.string)
+          [TypeNode.new(child_class)] of ASTNode
+        end
+      end
+
+      it "executes instance_vars on metaclass" do
+        assert_macro("x", "{{x.class.instance_vars.map &.stringify}}", %([])) do |program|
+          klass = NonGenericClassType.new(program, program, "SomeType", program.reference)
+          klass.declare_instance_var("@var", program.string)
+          [TypeNode.new(klass)] of ASTNode
+        end
+      end
+
+      it "executes class_vars on metaclass" do
+        assert_macro("x", "{{x.class.class_vars.map &.stringify}}", %([])) do |program|
+          klass = NonGenericClassType.new(program, program, "SomeType", program.reference)
+          declare_class_var(klass, "@@class_var", program.string)
+          [TypeNode.new(klass)] of ASTNode
+        end
+      end
+
+      it "executes instance_vars on symbol literal" do
+        assert_macro("x", "{{x.instance_vars.map &.stringify}}", %([])) do |program|
+          [TypeNode.new(SymbolLiteralType.new(program, "foo".symbol))] of ASTNode
+        end
+      end
+
+      it "executes class_vars on symbol literal" do
+        assert_macro("x", "{{x.class_vars.map &.stringify}}", %([])) do |program|
+          [TypeNode.new(SymbolLiteralType.new(program, "foo".symbol))] of ASTNode
+        end
+      end
+
+      it "executes methods" do
+        assert_macro("x", "{{x.methods.map &.name}}", %([foo])) do |program|
+          klass = NonGenericClassType.new(program, program, "SomeType", program.reference)
+          a_def = Def.new "foo"
+          klass.add_def a_def
+          [TypeNode.new(klass)] of ASTNode
+        end
+      end
+
+      it "executes class methods" do
+        assert_macro("x", "{{x.class.methods.map &.name}}", %([allocate])) do |program|
+          klass = NonGenericClassType.new(program, program, "SomeType", program.reference)
+          [TypeNode.new(klass)] of ASTNode
         end
       end
 

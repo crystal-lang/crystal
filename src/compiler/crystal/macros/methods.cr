@@ -1514,6 +1514,8 @@ module Crystal
         interpret_argless_method(method, args) { TypeNode.type_vars(type) }
       when "instance_vars"
         interpret_argless_method(method, args) { TypeNode.instance_vars(type) }
+      when "class_vars"
+        interpret_argless_method(method, args) { TypeNode.class_vars(type) }
       when "ancestors"
         interpret_argless_method(method, args) { TypeNode.ancestors(type) }
       when "superclass"
@@ -1697,6 +1699,19 @@ module Crystal
           meta_var = MetaMacroVar.new(name[1..-1], ivar.type)
           meta_var.var = ivar
           meta_var.default_value = type.get_instance_var_initializer(name).try(&.value)
+          meta_var
+        end
+      else
+        empty_no_return_array
+      end
+    end
+
+    def self.class_vars(type)
+      if type.is_a?(ClassVarContainer)
+        ArrayLiteral.map(type.all_class_vars) do |name, ivar|
+          meta_var = MetaMacroVar.new(name[2..-1], ivar.type)
+          meta_var.var = ivar
+          meta_var.default_value = ivar.initializer.try(&.node)
           meta_var
         end
       else

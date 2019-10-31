@@ -549,12 +549,25 @@ module Crystal
       raise "BUG: #{self} doesn't implement instance_vars"
     end
 
+    def class_vars
+      raise "BUG: #{self} doesn't implement class_vars"
+    end
+
     def all_instance_vars
       if superclass = self.superclass
         superclass.all_instance_vars.merge(instance_vars)
       else
         instance_vars
       end
+    end
+
+    def all_class_vars
+      all_class_vars = {} of String => MetaTypeVar
+      all_class_vars.merge!(class_vars)
+      parents.try &.each do |parent|
+        all_class_vars.merge!(parent.all_class_vars)
+      end
+      all_class_vars
     end
 
     def index_of_instance_var(name)
@@ -3232,6 +3245,13 @@ module Crystal
       end
 
       nil
+    end
+
+    def all_class_vars
+      all_class_vars = {} of String => MetaTypeVar
+      @class_vars.try { |v| all_class_vars.merge!(v) }
+      all_class_vars.merge!(base_type.all_class_vars)
+      all_class_vars
     end
 
     def replace_type_parameters(instance)
