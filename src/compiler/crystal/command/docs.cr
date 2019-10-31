@@ -9,7 +9,9 @@ class Crystal::Command
   private def docs
     output_format = "html"
     output_directory = File.join(".", "docs")
-    canonical_base_url = nil
+    sitemap_base_url = nil
+    sitemap_priority = "1.0"
+    sitemap_changefreq = "never"
 
     compiler = Compiler.new
 
@@ -28,14 +30,25 @@ class Crystal::Command
       opts.on("--format=FORMAT", "-f FORMAT", "Set the output format [#{VALID_OUTPUT_FORMATS.join(", ")}] (default: #{output_format})") do |value|
         if !VALID_OUTPUT_FORMATS.includes? value
           STDERR.puts "Invalid format '#{value}'"
-          puts opts
-          exit
+          abort opts
         end
         output_format = value
       end
 
-      opts.on("--canonical-base-url=URL", "-b URL", "Set the canonical base url") do |value|
-        canonical_base_url = value
+      opts.on("--canonical-base-url=URL", "Deprecated option. Use --sitemap-base-url instead.") do |value|
+        abort "Option --canonical-base-url is no longer supported.  Use --sitemap-base-url instead."
+      end
+
+      opts.on("--sitemap-base-url=URL", "-b URL", "Set the sitemap base URL and generates sitemap") do |value|
+        sitemap_base_url = value
+      end
+
+      opts.on("--sitemap-priority=PRIO", "Set the sitemap priority (default: 1.0)") do |value|
+        sitemap_priority = value
+      end
+
+      opts.on("--sitemap-changefreq=FREQ", "Set the sitemap changefreq (default: never)") do |value|
+        sitemap_changefreq = value
       end
 
       opts.on("-D FLAG", "--define FLAG", "Define a compile-time flag") do |flag|
@@ -88,6 +101,6 @@ class Crystal::Command
     compiler.wants_doc = true
     result = compiler.top_level_semantic sources
 
-    Doc::Generator.new(result.program, included_dirs, output_directory, output_format, canonical_base_url).run
+    Doc::Generator.new(result.program, included_dirs, output_directory, output_format, sitemap_base_url, sitemap_priority, sitemap_changefreq).run
   end
 end

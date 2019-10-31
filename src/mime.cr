@@ -91,7 +91,7 @@ module MIME
     ".html" => "text/html; charset=utf-8",
     ".jpg"  => "image/jpeg",
     ".jpeg" => "image/jpeg",
-    ".js"   => "application/javascript; charset=utf-8",
+    ".js"   => "text/javascript; charset=utf-8",
     ".json" => "application/json",
     ".pdf"  => "application/pdf",
     ".png"  => "image/png",
@@ -99,6 +99,7 @@ module MIME
     ".txt"  => "text/plain; charset=utf-8",
     ".xml"  => "text/xml; charset=utf-8",
     ".wasm" => "application/wasm",
+    ".webp" => "image/webp",
   }
 
   # Initializes the MIME database.

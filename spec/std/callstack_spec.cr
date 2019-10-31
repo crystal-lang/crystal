@@ -2,7 +2,6 @@ require "./spec_helper"
 
 private def compile_and_run_file(source_file)
   with_tempfile("executable_file") do |executable_file|
-    puts executable_file
     Process.run("bin/crystal", ["build", "--debug", "-o", executable_file, source_file])
     File.exists?(executable_file).should be_true
 

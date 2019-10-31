@@ -379,6 +379,30 @@ describe "Array" do
       a[nil..2] = [6, 7]
       a.should eq([6, 7, 4, 5])
     end
+
+    it "replaces entire range with a value for empty array (#8341)" do
+      a = [] of Int32
+      a[..] = 6
+      a.should eq([6])
+    end
+
+    it "pushes a new value with []=(...)" do
+      a = [1, 2, 3]
+      a[3..] = 4
+      a.should eq([1, 2, 3, 4])
+    end
+
+    it "replaces entire range with an array for empty array (#8341)" do
+      a = [] of Int32
+      a[..] = [1, 2, 3]
+      a.should eq([1, 2, 3])
+    end
+
+    it "concats a new array with []=(...)" do
+      a = [1, 2, 3]
+      a[3..] = [4, 5, 6]
+      a.should eq([1, 2, 3, 4, 5, 6])
+    end
   end
 
   describe "values_at" do

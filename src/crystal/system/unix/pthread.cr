@@ -1,12 +1,7 @@
 require "c/pthread"
 require "c/sched"
-require "./thread/*"
 
-# :nodoc:
 class Thread
-  # Don't use this class, it is used internally by the event scheduler.
-  # Use spawn and channels instead.
-
   # all thread objects, so the GC can see them (it doesn't scan thread locals)
   protected class_getter(threads) { Thread::LinkedList(Thread).new }
 

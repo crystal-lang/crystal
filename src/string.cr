@@ -2402,6 +2402,25 @@ class String
     true
   end
 
+  # Returns `self` unless `#blank?` is `true` in which case it returns `nil`.
+  #
+  # ```
+  # "a".presence         # => "a"
+  # "".presence          # => nil
+  # "   ".presence       # => nil
+  # "    a    ".presence # => "    a    "
+  # nil.presence         # => nil
+  #
+  # config = {"empty" => ""}
+  # config["empty"]?.presence || "default"   # => "default"
+  # config["missing"]?.presence || "default" # => "default"
+  # ```
+  #
+  # See also: `Nil#presence`.
+  def presence : self?
+    self if !blank?
+  end
+
   def ==(other : self)
     return true if same?(other)
     return false unless bytesize == other.bytesize

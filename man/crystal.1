@@ -175,8 +175,12 @@ Options:
 .Pp
 .It Fl o Ar DIR, Fl -output Ar DIR
 Set the output directory (default: ./docs).
-.It Fl b Ar URL, Fl -canonical-base-url Ar URL
-Set the canonical base URL.
+.It Fl b Ar URL, Fl -sitemap-base-url Ar URL
+Set the sitemap base URL. Sitemap will only be generated when this option is set.
+.It Fl -sitemap-priority Ar PRIO
+Set the priority assigned to sitemap entries (default: 1.0).
+.It Fl -sitemap-changefreq Ar FREQ
+Set the changefreq assigned to sitemap entries (default: never).
 .El
 .Pp
 .It
