@@ -235,84 +235,96 @@ describe "Enumerable" do
     end
   end
 
-  describe "each_cons" do
+  describe "#each_cons" do
+    context "iterator" do
+      it "iterates" do
+        iter = [1, 2, 3, 4, 5].each_cons(3)
+        iter.next.should eq([1, 2, 3])
+        iter.next.should eq([2, 3, 4])
+        iter.next.should eq([3, 4, 5])
+        iter.next.should be_a(Iterator::Stop)
+      end
+
+      it "iterates with reuse = true" do
+        iter = [1, 2, 3, 4, 5].each_cons(3, reuse: true)
+
+        a = iter.next
+        a.should eq([1, 2, 3])
+
+        b = iter.next
+        b.should be(a)
+      end
+
+      it "iterates with reuse = array" do
+        reuse = [] of Int32
+        iter = [1, 2, 3, 4, 5].each_cons(3, reuse: reuse)
+
+        a = iter.next
+        a.should eq([1, 2, 3])
+        a.should be(reuse)
+      end
+
+      it "iterates with reuse = deque" do
+        reuse = Deque(Int32).new
+        iter = [1, 2, 3, 4, 5].each_cons(3, reuse: reuse)
+
+        a = iter.next
+        a.should eq(Deque{1, 2, 3})
+        a.should be(reuse)
+      end
+    end
+
+    context "yield" do
+      it "returns running pairs" do
+        array = [] of Array(Int32)
+        [1, 2, 3, 4].each_cons(2) { |pair| array << pair }
+        array.should eq([[1, 2], [2, 3], [3, 4]])
+      end
+
+      it "returns running triples" do
+        array = [] of Array(Int32)
+        [1, 2, 3, 4, 5].each_cons(3) { |triple| array << triple }
+        array.should eq([[1, 2, 3], [2, 3, 4], [3, 4, 5]])
+      end
+
+      it "yields running pairs with reuse = true" do
+        array = [] of Array(Int32)
+        object_ids = Set(UInt64).new
+        [1, 2, 3, 4].each_cons(2, reuse: true) do |pair|
+          object_ids << pair.object_id
+          array << pair.dup
+        end
+        array.should eq([[1, 2], [2, 3], [3, 4]])
+        object_ids.size.should eq(1)
+      end
+
+      it "yields running pairs with reuse = array" do
+        array = [] of Array(Int32)
+        reuse = [] of Int32
+        [1, 2, 3, 4].each_cons(2, reuse: reuse) do |pair|
+          pair.should be(reuse)
+          array << pair.dup
+        end
+        array.should eq([[1, 2], [2, 3], [3, 4]])
+      end
+
+      it "yields running pairs with reuse = deque" do
+        array = [] of Deque(Int32)
+        reuse = Deque(Int32).new
+        [1, 2, 3, 4].each_cons(2, reuse: reuse) do |pair|
+          pair.should be(reuse)
+          array << pair.dup
+        end
+        array.should eq([Deque{1, 2}, Deque{2, 3}, Deque{3, 4}])
+      end
+    end
+  end
+
+  describe "#each_cons_pair" do
     it "returns running pairs" do
       array = [] of Array(Int32)
-      [1, 2, 3, 4].each_cons(2) { |pair| array << pair }
+      [1, 2, 3, 4].each_cons_pair { |a, b| array << [a, b] }
       array.should eq([[1, 2], [2, 3], [3, 4]])
-    end
-
-    it "returns running triples" do
-      array = [] of Array(Int32)
-      [1, 2, 3, 4, 5].each_cons(3) { |triple| array << triple }
-      array.should eq([[1, 2, 3], [2, 3, 4], [3, 4, 5]])
-    end
-
-    it "returns each_cons iterator" do
-      iter = [1, 2, 3, 4, 5].each_cons(3)
-      iter.next.should eq([1, 2, 3])
-      iter.next.should eq([2, 3, 4])
-      iter.next.should eq([3, 4, 5])
-      iter.next.should be_a(Iterator::Stop)
-    end
-
-    it "returns each_cons iterator with reuse = true" do
-      iter = [1, 2, 3, 4, 5].each_cons(3, reuse: true)
-
-      a = iter.next
-      a.should eq([1, 2, 3])
-
-      b = iter.next
-      b.should be(a)
-    end
-
-    it "returns each_cons iterator with reuse = array" do
-      reuse = [] of Int32
-      iter = [1, 2, 3, 4, 5].each_cons(3, reuse: reuse)
-
-      a = iter.next
-      a.should eq([1, 2, 3])
-      a.should be(reuse)
-    end
-
-    it "returns each_cons iterator with reuse = deque" do
-      reuse = Deque(Int32).new
-      iter = [1, 2, 3, 4, 5].each_cons(3, reuse: reuse)
-
-      a = iter.next
-      a.should eq(Deque{1, 2, 3})
-      a.should be(reuse)
-    end
-
-    it "yields running pairs with reuse = true" do
-      array = [] of Array(Int32)
-      object_ids = Set(UInt64).new
-      [1, 2, 3, 4].each_cons(2, reuse: true) do |pair|
-        object_ids << pair.object_id
-        array << pair.dup
-      end
-      array.should eq([[1, 2], [2, 3], [3, 4]])
-      object_ids.size.should eq(1)
-    end
-
-    it "yields running pairs with reuse = array" do
-      array = [] of Array(Int32)
-      reuse = [] of Int32
-      [1, 2, 3, 4].each_cons(2, reuse: reuse) do |pair|
-        pair.should be(reuse)
-        array << pair.dup
-      end
-      array.should eq([[1, 2], [2, 3], [3, 4]])
-    end
-
-    it "yields running pairs with reuse = deque" do
-      array = [] of Deque(Int32)
-      reuse = Deque(Int32).new
-      [1, 2, 3, 4].each_cons(2, reuse: reuse) do |pair|
-        pair.should be(reuse)
-        array << pair.dup
-      end
-      array.should eq([Deque{1, 2}, Deque{2, 3}, Deque{3, 4}])
     end
   end
 

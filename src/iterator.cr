@@ -273,6 +273,10 @@ module Iterator(T)
   #
   # This can be used to prevent many memory allocations when each slice of
   # interest is to be used in a read-only fashion.
+  #
+  # Chunks oo two items can be iterated using `#cons_pair`, an optimized
+  # implementation for the special case of `size == 2` which avoids heap
+  # allocations.
   def cons(n : Int, reuse = false)
     raise ArgumentError.new "Invalid cons size: #{n}" if n <= 0
     if reuse.nil? || reuse.is_a?(Bool)
@@ -303,6 +307,49 @@ module Iterator(T)
         @values
       else
         @values.dup
+      end
+    end
+  end
+
+  # Returns an iterator that returns consecutive pairs of adjacent items.
+  #
+  # ```
+  # iter = (1..5).each.cons
+  # iter.next # => {1, 2}
+  # iter.next # => {2, 3}
+  # iter.next # => {3, 4}
+  # iter.next # => {4, 5}
+  # iter.next # => Iterator::Stop::INSTANCE
+  # ```
+  #
+  # Chunks of more than two items can be iterated using `#cons`.
+  # This method is just an optimized implementation for the special case of
+  # `size == 2` to avoid heap allocations.
+  def cons_pair : Iterator({T, T})
+    ConsTuple(typeof(self), T).new(self)
+  end
+
+  private struct ConsTuple(I, T)
+    include Iterator({T, T})
+    include IteratorWrapper
+
+    @last_elem : T | Iterator::Stop = Iterator::Stop::INSTANCE
+
+    def initialize(@iterator : I)
+    end
+
+    def next
+      elem = wrapped_next
+      return elem if elem.is_a?(Iterator::Stop)
+
+      if @last_elem.is_a?(Iterator::Stop)
+        @last_elem = elem
+
+        self.next
+      else
+        @last_elem, elem = elem, @last_elem
+
+        {elem, @last_elem}
       end
     end
   end

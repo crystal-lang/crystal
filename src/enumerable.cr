@@ -289,6 +289,10 @@ module Enumerable(T)
   #
   # This can be used to prevent many memory allocations when each slice of
   # interest is to be used in a read-only fashion.
+  #
+  # Chunks of two items can be iterated using `#each_cons_pair`, an optimized
+  # implementation for the special case of `size == 2` which avoids heap
+  # allocations.
   def each_cons(count : Int, reuse = false)
     raise ArgumentError.new "Invalid cons size: #{count}" if count <= 0
     if reuse.nil? || reuse.is_a?(Bool)
@@ -311,6 +315,40 @@ module Enumerable(T)
       end
     end
     nil
+  end
+
+  # Iterates over the collection yielding pairs of adjacent items,
+  # but advancing one by one.
+  #
+  # ```
+  # [1, 2, 3, 4, 5].each_cons do |a, b|
+  #   puts "#{a}, #{b}"
+  # end
+  # ```
+  #
+  # Prints:
+  #
+  # ```text
+  # 1, 2
+  # 2, 3
+  # 3, 4
+  # 4, 5
+  # ```
+  #
+  # Chunks of more than two items can be iterated using `#each_cons`.
+  # This method is just an optimized implementation for the special case of
+  # `size == 2` to avoid heap allocations.
+  def each_cons_pair(& : (T, T) -> _) : Nil
+    last_elem = uninitialized T
+    first_iteration = true
+    each do |elem|
+      if first_iteration
+        first_iteration = false
+      else
+        yield last_elem, elem
+      end
+      last_elem = elem
+    end
   end
 
   # Iterates over the collection in slices of size *count*,
