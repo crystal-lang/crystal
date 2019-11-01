@@ -136,6 +136,23 @@ describe "Int" do
     end
   end
 
+  describe "gcd" do
+    it { 14.gcd(0).should eq(14) }
+    it { 14.gcd(1).should eq(1) }
+    it { 10.gcd(75).should eq(5) }
+    it { 10.gcd(-75).should eq(5) }
+    it { -10.gcd(75).should eq(5) }
+
+    it { 7.gcd(5).should eq(1) }   # prime
+    it { 14.gcd(25).should eq(1) } # coprime
+    it { 24.gcd(40).should eq(8) } # common divisor
+
+    it "doesn't silently overflow" { 614_889_782_588_491_410_i64.gcd(53).should eq(1) }
+    it "raises on too big result to fit in result type" do
+      expect_raises(OverflowError, "Arithmetic overflow") { Int64::MIN.gcd(1) }
+    end
+  end
+
   describe "lcm" do
     it { 2.lcm(2).should eq(2) }
     it { 3.lcm(-7).should eq(21) }
