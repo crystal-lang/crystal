@@ -1537,6 +1537,9 @@ module Crystal
 
       instance.after_initialize
 
+      # Notify that a subclass/instance of self was added
+      self.notify_subclass_added if self.is_a?(SubclassObservable)
+
       # Notify parents that an instance was added
       notify_parents_subclass_added(self)
 

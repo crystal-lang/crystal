@@ -295,7 +295,7 @@ module Crystal
       # It might happen that a call was made on a module or an abstract class
       # and we don't know the type because there are no including classes or subclasses.
       # In that case, turn this into an untyped expression.
-      if !node.type? && obj && obj_type && (obj_type.module? || obj_type.abstract?)
+      if !node.type? && obj && obj_type && (obj_type.module? || obj_type.abstract? || obj_type.is_a?(GenericType))
         return untyped_expression(node, "`#{node}` has no type")
       end
 
