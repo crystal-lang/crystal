@@ -69,7 +69,7 @@ describe Doc::Method do
 
       a_def = Def.new "foo", yields: 1
       doc_method = Doc::Method.new generator, doc_type, a_def, false
-      doc_method.args_to_s.should eq("(&block)")
+      doc_method.args_to_s.should eq("(&)")
     end
 
     it "shows return type restriction" do
