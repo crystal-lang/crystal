@@ -320,6 +320,14 @@ describe "Enumerable" do
     end
   end
 
+  describe "#each_cons_pair" do
+    it "returns running pairs" do
+      array = [] of Array(Int32)
+      [1, 2, 3, 4].each_cons_pair { |a, b| array << [a, b] }
+      array.should eq([[1, 2], [2, 3], [3, 4]])
+    end
+  end
+
   describe "each_slice" do
     it "returns partial slices" do
       array = [] of Array(Int32)
