@@ -179,7 +179,6 @@ struct Path
   def dirname : String
     reader = Char::Reader.new(at_end: @name)
     separators = self.separators
-
     # skip trailing separators
     while separators.includes?(reader.current_char) && reader.pos > 0
       reader.previous_char
@@ -190,24 +189,21 @@ struct Path
       reader.previous_char
     end
 
+    if reader.pos == 0 && !separators.includes?(reader.current_char)
+      if windows? && reader.has_next? && reader.peek_next_char == ':' && (anchor = self.anchor)
+        return anchor.to_s
+      else
+        return "."
+      end
+    end
+
     # strip trailing separators
     while separators.includes?(reader.current_char) && reader.pos > 0
       reader.previous_char
     end
 
     if reader.pos == 0
-      current = reader.current_char
-
-      if separators.includes?(current)
-        return current.to_s
-      else
-        # skip windows here for next condition regarding anchor
-        if windows? && reader.has_next? && reader.peek_next_char == ':'
-          reader.next_char
-        else
-          return "."
-        end
-      end
+      return reader.current_char.to_s
     end
 
     if windows? && reader.current_char == ':' && reader.pos == 1 && (anchor = self.anchor)

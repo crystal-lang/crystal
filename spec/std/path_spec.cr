@@ -168,6 +168,21 @@ describe Path do
 
   describe "#dirname" do
     assert_paths_raw("/Users/foo/bar.cr", "/Users/foo", &.dirname)
+    assert_paths_raw("foo", ".", &.dirname)
+    assert_paths_raw("foo/", ".", &.dirname)
+    assert_paths_raw("/foo", "/", &.dirname)
+    assert_paths_raw("/foo/", "/", &.dirname)
+    assert_paths_raw("/foo//", "/", &.dirname)
+    assert_paths_raw("m/.gitignore", "m", &.dirname)
+    assert_paths_raw("m/", ".", &.dirname)
+    assert_paths_raw("m//", ".", &.dirname)
+    assert_paths_raw("m//a/b", "m//a", &.dirname)
+    assert_paths_raw("m", ".", &.dirname)
+    assert_paths_raw("/m", "/", &.dirname)
+    assert_paths_raw("/m/", "/", &.dirname)
+    assert_paths_raw("C:", ".", "C:", &.dirname)
+    assert_paths_raw("C:/", ".", "C:/", &.dirname)
+    assert_paths_raw("C:\\", ".", "C:\\", &.dirname)
   end
 
   describe "#basename" do
