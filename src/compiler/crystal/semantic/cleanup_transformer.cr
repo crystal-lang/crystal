@@ -61,6 +61,7 @@ module Crystal
 
     def initialize(@program : Program)
       @transformed = Set(Def).new.compare_by_identity
+      @exhaustiveness_checker = ExhaustivenessChecker.new(@program)
       @def_nest_count = 0
       @last_is_truthy = false
       @last_is_falsey = false
@@ -166,6 +167,15 @@ module Crystal
         end
       end
       false
+    end
+
+    def transform(node : Case)
+      @exhaustiveness_checker.check(node)
+
+      if expanded = node.expanded
+        return expanded.transform(self)
+      end
+      node
     end
 
     def transform(node : ExpandableNode)

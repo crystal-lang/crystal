@@ -3016,6 +3016,15 @@ module Crystal
     end
 
     def visit(node : Case)
+      # For exhaustiveness check, which is done in CleanupTransformer,
+      # we need to know the type of `cond`. However, LiteralExpander will
+      # work with copies of `cond` in case they are Var or InstanceVar so
+      # here we type them so their type is available later on.
+      cond = node.cond
+      if cond.is_a?(Var) || cond.is_a?(InstanceVar)
+        cond.accept(self)
+      end
+
       expand(node)
       false
     end
