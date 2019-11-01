@@ -36,8 +36,11 @@ class Gzip::Writer < IO
 
   # Creates a new writer to the given *io*.
   def initialize(@io : IO, @level = Gzip::DEFAULT_COMPRESSION, @sync_close = false)
-    @crc32 = CRC32.initial # CRC32 of written data
-    @isize = 0             # Total size of written data
+    # CRC32 of written data
+    @crc32 = CRC32.initial
+
+    # Total size of the original (uncompressed) input data modulo 2^32.
+    @isize = 0
   end
 
   # Creates a new writer to the given *filename*.
@@ -75,7 +78,10 @@ class Gzip::Writer < IO
 
     # Update CRC32 and total data size
     @crc32 = CRC32.update(slice, @crc32)
-    @isize += slice.size
+
+    # Using wrapping addition here because isize is only 32 bits wide but
+    # uncompressed data size can be bigger.
+    @isize &+= slice.size
   end
 
   # Flushes data, forcing writing the gzip header if no

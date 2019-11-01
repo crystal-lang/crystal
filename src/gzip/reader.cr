@@ -42,8 +42,11 @@ class Gzip::Reader < IO
 
   # Creates a new reader from the given *io*.
   def initialize(@io : IO, @sync_close = false)
-    @crc32 = CRC32.initial # CRC32 of written data
-    @isize = 0_u32         # Total size of written data
+    # CRC32 of written data
+    @crc32 = CRC32.initial
+
+    # Total size of the original (uncompressed) input data modulo 2^32.
+    @isize = 0_u32
 
     first_byte = @io.read_byte
 
@@ -113,7 +116,10 @@ class Gzip::Reader < IO
       else
         # Update CRC32 and total data size
         @crc32 = CRC32.update(slice[0, read_bytes], @crc32)
-        @isize += read_bytes
+
+        # Using wrapping addition here because isize is only 32 bits wide but
+        # uncompressed data size can be bigger.
+        @isize &+= read_bytes
 
         break
       end
