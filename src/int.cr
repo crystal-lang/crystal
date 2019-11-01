@@ -399,14 +399,13 @@ struct Int
   # integers may raise overflow if either has value equal to `MIN` of
   # its type.
   #
-  # Implementation heavily inspired by
-  # https://en.wikipedia.org/wiki/Binary_GCD_algorithm#Iterative_version_in_C
-  #
   # ```
   # 5.gcd(10) # => 2
   # 5.gcd(7)  # => 1
   # ```
   def gcd(other : self) : self
+    # Implementation heavily inspired by
+    # https://en.wikipedia.org/wiki/Binary_GCD_algorithm#Iterative_version_in_C
     u = self.abs
     v = other.abs
     return v if u == 0
