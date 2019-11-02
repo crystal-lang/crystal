@@ -62,6 +62,19 @@ describe "Semantic: doc" do
     bar.doc.should eq("Hello")
   end
 
+  it "stores doc for const when using ditto" do
+    result = semantic %(
+      # A number
+      ONE = 1
+
+      # :ditto:
+      TWO = 2
+    ), wants_doc: true
+    program = result.program
+    program.types["ONE"].doc.should eq "A number"
+    program.types["TWO"].doc.should eq "A number"
+  end
+
   it "stores doc for def when using ditto" do
     result = semantic %(
       class Foo
