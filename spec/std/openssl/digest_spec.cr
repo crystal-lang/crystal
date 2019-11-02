@@ -11,6 +11,12 @@ describe OpenSSL::Digest do
       digest = OpenSSL::Digest.new(algorithm)
       digest << "fooø"
       digest.hexdigest.should eq(expected)
+      # Check internal state isn't modified by first hexdigest call.
+      digest.hexdigest.should eq(expected)
+
+      digest.reset
+      digest << "fooø"
+      digest.hexdigest.should eq(expected)
     end
   end
 

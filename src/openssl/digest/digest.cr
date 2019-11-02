@@ -1,8 +1,9 @@
 require "../lib_crypto"
+require "digest/base"
 require "./digest_base"
 
 module OpenSSL
-  class Digest
+  class Digest < ::Digest::Base
     class Error < OpenSSL::Error; end
 
     class UnsupportedError < Error; end
@@ -38,40 +39,39 @@ module OpenSSL
       LibCrypto.evp_md_ctx_free(self)
     end
 
-    def clone
+    def dup
       ctx = LibCrypto.evp_md_ctx_new
       if LibCrypto.evp_md_ctx_copy(ctx, @ctx) == 0
         LibCrypto.evp_md_ctx_free(ctx)
-        raise Error.new("Unable to clone digest")
+        raise Error.new("Unable to dup digest")
       end
       Digest.new(@name, ctx)
     end
 
-    def reset
+    def reset : self
       if LibCrypto.evp_digestinit_ex(self, to_unsafe_md, nil) != 1
         raise Error.new "Digest initialization failed."
       end
       self
     end
 
-    def update(data : String | Slice)
+    def update(data : String | Slice) : self
       LibCrypto.evp_digestupdate(self, data, data.bytesize)
       self
     end
 
-    protected def finish
-      size = digest_size
-      data = Pointer(UInt8).malloc(size)
+    def final(data : Bytes) : Bytes
+      raise ArgumentError.new("data size incorrect") unless data.bytesize == digest_size
       LibCrypto.evp_digestfinal_ex(@ctx, data, nil)
-      data.to_slice(size)
+      data
     end
 
-    def digest_size
-      LibCrypto.evp_md_size(to_unsafe_md)
+    def digest_size : Int32
+      LibCrypto.evp_md_size(to_unsafe_md).to_i
     end
 
-    def block_size
-      LibCrypto.evp_md_block_size(to_unsafe_md)
+    def block_size : Int32
+      LibCrypto.evp_md_block_size(to_unsafe_md).to_i
     end
 
     def to_unsafe_md

@@ -23,19 +23,9 @@ module OpenSSL
       update(data)
     end
 
-    # Clones and finishes the digest.
-    def digest : Bytes
-      self.clone.finish
-    end
-
     # Returns a base64-encoded digest.
     def base64digest : String
       Base64.strict_encode(digest)
-    end
-
-    # Returns a hexadecimal-encoded digest.
-    def hexdigest : String
-      digest.hexstring
     end
 
     # :ditto:
