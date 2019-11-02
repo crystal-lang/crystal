@@ -7,20 +7,27 @@ require "./base"
 # `Crypto::Bcrypt::Password`. For a generic cryptographic hash, use SHA-256 via
 # `OpenSSL::Digest.new("SHA256")`.
 class Digest::MD5 < Digest::Base
+  @i = StaticArray(UInt32, 2).new(0_u32)
+  @buf = StaticArray(UInt32, 4).new(0_u32)
+  @in = StaticArray(UInt8, 64).new(0_u8)
+
   def initialize
-    @i = StaticArray(UInt32, 2).new(0_u32)
-    @buf = StaticArray(UInt32, 4).new(0_u32)
+    reset
+  end
+
+  def reset : self
+    @i[0] = 0_u32
+    @i[1] = 0_u32
     @buf[0] = 0x67452301_u32
     @buf[1] = 0xEFCDAB89_u32
     @buf[2] = 0x98BADCFE_u32
     @buf[3] = 0x10325476_u32
-    @in = StaticArray(UInt8, 64).new(0_u8)
-    @digest = uninitialized UInt8[16]
+    self
   end
 
-  def update(data)
-    slice = data.to_slice
-    update(slice.to_unsafe, slice.bytesize.to_u32)
+  def update(data : Bytes) : self
+    update(data.to_unsafe, data.bytesize.to_u32)
+    self
   end
 
   private def update(inBuf, inLen)
@@ -207,7 +214,7 @@ class Digest::MD5 < Digest::Base
     @buf[3] &+= d
   end
 
-  def final
+  def final(dst : Bytes) : Bytes
     tmp_in = uninitialized UInt32[16]
 
     # save number of bits
@@ -235,15 +242,17 @@ class Digest::MD5 < Digest::Base
     # store buffer in digest
     ii = 0
     4.times do |i|
-      @digest[ii] = (@buf[i] & 0xff).to_u8
-      @digest[ii + 1] = ((@buf[i] >> 8) & 0xFF).to_u8
-      @digest[ii + 2] = ((@buf[i] >> 16) & 0xFF).to_u8
-      @digest[ii + 3] = ((@buf[i] >> 24) & 0xFF).to_u8
+      dst[ii] = (@buf[i] & 0xff).to_u8
+      dst[ii + 1] = ((@buf[i] >> 8) & 0xFF).to_u8
+      dst[ii + 2] = ((@buf[i] >> 16) & 0xFF).to_u8
+      dst[ii + 3] = ((@buf[i] >> 24) & 0xFF).to_u8
       ii += 4
     end
+
+    dst
   end
 
-  def result
-    @digest
+  def digest_size : Int32
+    16
   end
 end

@@ -34,4 +34,20 @@ describe Digest::MD5 do
   it "calculates base64'd hash from string" do
     Digest::MD5.base64digest("foo").should eq("rL0Y20zC+Fzt72VPzMSk2A==")
   end
+
+  it "resets" do
+    digest = Digest::MD5.new
+    digest.update "foo"
+    digest.hexdigest.should eq("acbd18db4cc2f85cedef654fccc4a4d8")
+    # Check internal state isn't modified by first hexdigest call.
+    digest.hexdigest.should eq("acbd18db4cc2f85cedef654fccc4a4d8")
+
+    digest.reset
+    digest.update "foo"
+    digest.hexdigest.should eq("acbd18db4cc2f85cedef654fccc4a4d8")
+  end
+
+  it "return the digest size" do
+    Digest::MD5.new.digest_size.should eq 16
+  end
 end

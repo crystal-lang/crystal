@@ -16,6 +16,18 @@ describe Digest::SHA1 do
       bytes.to_slice.hexstring.should eq(hexdigest)
     end
 
+    it "resets" do
+      digest = Digest::SHA1.new
+      digest.update string
+      digest.hexdigest.should eq(hexdigest)
+      # Check internal state isn't modified by first hexdigest call.
+      digest.hexdigest.should eq(hexdigest)
+
+      digest.reset
+      digest.update string
+      digest.hexdigest.should eq(hexdigest)
+    end
+
     it "does digest for #{string.inspect} in a block" do
       bytes = Digest::SHA1.digest do |ctx|
         string.each_char do |chr|
@@ -33,5 +45,9 @@ describe Digest::SHA1 do
     it "does base64digest for #{string.inspect}" do
       Digest::SHA1.base64digest(string).should eq(base64digest)
     end
+  end
+
+  it "returns the digest_size" do
+    Digest::SHA1.new.digest_size.should eq(20)
   end
 end

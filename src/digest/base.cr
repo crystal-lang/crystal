@@ -24,7 +24,6 @@ abstract class Digest::Base
     context = new
     yield context
     context.final
-    context.result
   end
 
   # Returns the hexadecimal representation of the hash of *data*.
@@ -89,4 +88,28 @@ abstract class Digest::Base
 
     Base64.strict_encode(hashsum)
   end
+
+  def update(data) : self
+    update data.to_slice
+  end
+
+  def final : Bytes
+    dst = Bytes.new digest_size
+    final dst
+  end
+
+  # Dups and finishes the digest.
+  def digest : Bytes
+    dup.final
+  end
+
+  # Returns a hexadecimal-encoded digest.
+  def hexdigest : String
+    digest.hexstring
+  end
+
+  abstract def update(data : Bytes) : self
+  abstract def final(dst : Bytes) : Bytes
+  abstract def reset : self
+  abstract def digest_size : Int32
 end
