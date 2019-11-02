@@ -1418,7 +1418,9 @@ class Hash(K, V)
   # Returns a new `Hash` with the given keys.
   #
   # ```
-  # {"a" => 1, "b" => 2, "c" => 3, "d" => 4}.select("a", "c") # => {"a" => 1, "c" => 3}
+  # {"a" => 1, "b" => 2, "c" => 3, "d" => 4}.select({"a", "c"}) # => {"a" => 1, "c" => 3}
+  # {"a" => 1, "b" => 2, "c" => 3, "d" => 4}.select("a", "c")   # => {"a" => 1, "c" => 3}
+  # {"a" => 1, "b" => 2, "c" => 3, "d" => 4}.select(["a", "c"]) # => {"a" => 1, "c" => 3}
   # ```
   def select(keys : Array | Tuple)
     hash = {} of K => V
@@ -1426,6 +1428,7 @@ class Hash(K, V)
     hash
   end
 
+  # :ditto:
   def select(*keys)
     self.select(keys)
   end
@@ -1433,14 +1436,18 @@ class Hash(K, V)
   # Removes every element except the given ones.
   #
   # ```
-  # h = {"a" => 1, "b" => 2, "c" => 3, "d" => 4}.select!("a", "c")
-  # h # => {"a" => 1, "c" => 3}
+  # h1 = {"a" => 1, "b" => 2, "c" => 3, "d" => 4}.select!({"a", "c"})
+  # h2 = {"a" => 1, "b" => 2, "c" => 3, "d" => 4}.select!("a", "c")
+  # h3 = {"a" => 1, "b" => 2, "c" => 3, "d" => 4}.select!(["a", "c"])
+  # h1 == h2 == h3
+  # h1 # => {"a" => 1, "c" => 3}
   # ```
   def select!(keys : Array | Tuple)
     each { |k, v| delete(k) unless keys.includes?(k) }
     self
   end
 
+  # :ditto:
   def select!(*keys)
     select!(keys)
   end
