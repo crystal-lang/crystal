@@ -23,7 +23,7 @@ class Digest::MD5 < Digest::Base
     update(slice.to_unsafe, slice.bytesize.to_u32)
   end
 
-  def update(inBuf, inLen)
+  private def update(inBuf, inLen)
     tmp_in = uninitialized UInt32[16]
 
     # compute number of bytes mod 64
@@ -76,57 +76,57 @@ class Digest::MD5 < Digest::Base
   S43 = 15
   S44 = 21
 
-  PADDING = begin
+  private PADDING = begin
     padding = StaticArray(UInt8, 64).new(0_u8)
     padding[0] = 0x80_u8
     padding
   end
 
-  def f(x, y, z)
+  private def f(x, y, z)
     (x & y) | ((~x) & z)
   end
 
-  def g(x, y, z)
+  private def g(x, y, z)
     (x & z) | (y & (~z))
   end
 
-  def h(x, y, z)
+  private def h(x, y, z)
     x ^ y ^ z
   end
 
-  def i(x, y, z)
+  private def i(x, y, z)
     y ^ (x | (~z))
   end
 
-  def rotate_left(x, n)
+  private def rotate_left(x, n)
     (x << n) | (x >> (32 - n))
   end
 
-  def ff(a, b, c, d, x, s, ac)
+  private def ff(a, b, c, d, x, s, ac)
     a &+= f(b, c, d) &+ x &+ ac.to_u32
     a = rotate_left a, s
     a &+= b
   end
 
-  def gg(a, b, c, d, x, s, ac)
+  private def gg(a, b, c, d, x, s, ac)
     a &+= g(b, c, d) &+ x &+ ac.to_u32
     a = rotate_left a, s
     a &+= b
   end
 
-  def hh(a, b, c, d, x, s, ac)
+  private def hh(a, b, c, d, x, s, ac)
     a &+= h(b, c, d) &+ x &+ ac.to_u32
     a = rotate_left a, s
     a &+= b
   end
 
-  def ii(a, b, c, d, x, s, ac)
+  private def ii(a, b, c, d, x, s, ac)
     a &+= i(b, c, d) &+ x &+ ac.to_u32
     a = rotate_left a, s
     a &+= b
   end
 
-  def transform(in)
+  private def transform(in)
     a, b, c, d = @buf
 
     # Round 1

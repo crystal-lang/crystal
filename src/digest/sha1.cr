@@ -44,7 +44,7 @@ class Digest::SHA1 < Digest::Base
     end
   end
 
-  def process_message_block
+  private def process_message_block
     k = {0x5A827999_u32, 0x6ED9EBA1_u32, 0x8F1BBCDC_u32, 0xCA62C1D6_u32}
 
     w = uninitialized UInt32[80]
