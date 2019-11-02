@@ -57,7 +57,11 @@ module OpenSSL::SSL::HostnameValidation
           if LibC.inet_pton(LibC::AF_INET6, hostname, pointerof(addr6).as(Void*)) > 0
             return Result::MatchFound if addr6.unsafe_as(StaticArray(UInt32, 4)) == data.as(StaticArray(UInt32, 4)*).value
           end
+        else
+          # not a length we expect
         end
+      else
+        # not a type we expect
       end
     end
 

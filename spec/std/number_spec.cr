@@ -183,6 +183,7 @@ describe "Number" do
         when 0 then x.should eq(0.0)
         when 1 then x.should eq(0.1)
         when 2 then x.should eq(0.2)
+        else        fail "shouldn't happen"
         end
         count += 1
       end

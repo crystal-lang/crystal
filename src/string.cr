@@ -541,6 +541,8 @@ class String
       ptr += 1
     when '+'
       ptr += 1
+    else
+      # no sign prefix
     end
 
     found_digit = false
@@ -1384,18 +1386,18 @@ class String
 
     case chars.size
     when 0
-      return self
+      self
     when 1
-      return strip(chars[0])
-    end
+      strip(chars[0])
+    else
+      excess_left = calc_excess_left(chars)
+      if excess_left == bytesize
+        return ""
+      end
 
-    excess_left = calc_excess_left(chars)
-    if excess_left == bytesize
-      return ""
+      excess_right = calc_excess_right(chars)
+      remove_excess(excess_left, excess_right)
     end
-
-    excess_right = calc_excess_right(chars)
-    remove_excess(excess_left, excess_right)
   end
 
   # Returns a new string where leading and trailing characters for which
@@ -2018,6 +2020,8 @@ class String
         buffer << capture
         index = end_index + 1
         first_index = index
+      else
+        # Nothing
       end
     end
 

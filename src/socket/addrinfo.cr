@@ -189,6 +189,8 @@ class Socket
         addrinfo.value.ai_addr.as(LibC::SockaddrIn6*).copy_to(pointerof(@addr).as(LibC::SockaddrIn6*), 1)
       when Family::INET
         addrinfo.value.ai_addr.as(LibC::SockaddrIn*).copy_to(pointerof(@addr).as(LibC::SockaddrIn*), 1)
+      else
+        # TODO: (asterite) UNSPEC and UNIX unsupported?
       end
     end
 

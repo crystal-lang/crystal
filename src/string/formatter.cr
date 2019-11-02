@@ -118,6 +118,8 @@ struct String::Formatter(A)
       val = consume_dynamic_value
       flags.width = val
       flags.width_size = val.to_s.size
+    else
+      # no width
     end
     flags
   end

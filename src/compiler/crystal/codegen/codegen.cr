@@ -310,7 +310,10 @@ module Crystal
              @codegen.personality_name, GET_EXCEPTION_NAME, RAISE_OVERFLOW_NAME,
              ONCE_INIT, ONCE
           @codegen.accept node
+        else
+          # go on
         end
+
         false
       end
 
@@ -1109,6 +1112,8 @@ module Crystal
       when ClassVar
         # This is the case of a class var initializer
         initialize_class_var(var)
+      else
+        # go on
       end
 
       @last = llvm_nil

@@ -451,6 +451,7 @@ module Crystal
           else
             produce_tuple = false
           end
+
           if produce_tuple
             case matched_type
             when TupleInstanceType
@@ -462,6 +463,8 @@ module Crystal
               return NamedTupleLiteral.new(entries)
             when UnionType
               return TupleLiteral.map(matched_type.union_types) { |t| TypeNode.new(t) }
+            else
+              # go on
             end
           end
         end
@@ -534,12 +537,12 @@ module Crystal
       case node.name
       when "@type"
         target = @scope == @program.class_type ? @scope : @scope.instance_type
-        return @last = TypeNode.new(target.devirtualize)
+        @last = TypeNode.new(target.devirtualize)
       when "@def"
-        return @last = @def || NilLiteral.new
+        @last = @def || NilLiteral.new
+      else
+        node.raise "unknown macro instance var: '#{node.name}'"
       end
-
-      node.raise "unknown macro instance var: '#{node.name}'"
     end
 
     def visit(node : TupleLiteral)

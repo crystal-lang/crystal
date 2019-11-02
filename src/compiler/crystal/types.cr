@@ -923,6 +923,8 @@ module Crystal
         if a_macro.args.size != 1
           raise TypeException.new "macro 'method_missing' expects 1 argument (call)"
         end
+      else
+        # normal macro
       end
 
       macros = (@macros ||= {} of String => Array(Macro))
@@ -3398,6 +3400,8 @@ private def add_instance_var_initializer(including_types, name, value, meta_vars
       type.add_instance_var_initializer(name, value, meta_vars)
     when Crystal::GenericModuleType
       type.add_instance_var_initializer(name, value, meta_vars)
+    else
+      # skip
     end
   end
 end

@@ -282,9 +282,9 @@ class Crystal::Doc::Generator
       case type
       when Const, LibType
         next
+      else
+        types << type(type) if must_include? type
       end
-
-      types << type(type) if must_include? type
     end
 
     types.sort_by! &.name.downcase

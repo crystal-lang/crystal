@@ -300,16 +300,16 @@ module Crystal::SignalChildHandler
       when -1
         return if Errno.value == Errno::ECHILD
         raise RuntimeError.from_errno("waitpid")
-      end
-
-      @@mutex.lock
-      if channel = @@waiting.delete(pid)
-        @@mutex.unlock
-        channel.send(exit_code)
-        channel.close
       else
-        @@pending[pid] = exit_code
-        @@mutex.unlock
+        @@mutex.lock
+        if channel = @@waiting.delete(pid)
+          @@mutex.unlock
+          channel.send(exit_code)
+          channel.close
+        else
+          @@pending[pid] = exit_code
+          @@mutex.unlock
+        end
       end
     end
   end

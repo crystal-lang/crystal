@@ -377,7 +377,7 @@ module Spec
     # If *message* is a regular expression, it is used to match the error message.
     #
     # It returns the rescued exception.
-    def expect_raises(klass : T.class, message = nil, file = __FILE__, line = __LINE__) forall T
+    def expect_raises(klass : T.class, message : String | Regex | Nil = nil, file = __FILE__, line = __LINE__) forall T
       yield
     rescue ex : T
       # We usually bubble Spec::AssertaionFailed, unless this is the expected exception
@@ -404,6 +404,8 @@ module Spec
           fail "Expected #{klass} with #{message.inspect}, got #<#{ex.class}: " \
                "#{ex_to_s}> with backtrace:\n#{backtrace}", file, line
         end
+      when Nil
+        # No need to check the message
       end
 
       ex

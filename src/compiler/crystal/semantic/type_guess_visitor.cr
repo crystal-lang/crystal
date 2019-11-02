@@ -110,6 +110,8 @@ module Crystal
           process_uninitialized_instance_var(owner, var, node.declared_type)
         when GenericModuleType
           process_uninitialized_instance_var(owner, var, node.declared_type)
+        else
+          # TODO: can this be reached?
         end
       end
     end
@@ -190,6 +192,8 @@ module Crystal
             process_lib_out(owner, exp, type)
           when GenericModuleType
             process_lib_out(owner, exp, type)
+          else
+            # TODO: can this be reached?
           end
         end
       end
@@ -278,6 +282,8 @@ module Crystal
 
                 owner_vars = @class_vars[owner] ||= {} of String => TypeInfo
                 add_type_info(owner_vars, target.name, tuple_type, target)
+              else
+                # TODO: can this be reached?
               end
             end
           end
@@ -313,6 +319,8 @@ module Crystal
         value = process_assign_instance_var(owner, target, value)
       when GenericModuleType
         value = process_assign_instance_var(owner, target, value)
+      else
+        # go on
       end
 
       unless current_type.allows_instance_vars?

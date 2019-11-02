@@ -13,6 +13,8 @@ module Crystal
         first, second = types
         did_merge, merged_type = type_merge_two(first, second)
         return merged_type if did_merge
+      else
+        # combined_union_of
       end
 
       combined_union_of compact_types(types)
@@ -29,6 +31,8 @@ module Crystal
         first, second = nodes
         did_merge, merged_type = type_merge_two(first.type?, second.type?)
         return merged_type if did_merge
+      else
+        # combined_union_of
       end
 
       combined_union_of compact_types(nodes, &.type?)
@@ -340,29 +344,29 @@ private def class_common_ancestor(t1, t2)
 
   case t1
   when t1.program.struct, t1.program.number, t1.program.int, t1.program.float
-    return nil
+    nil
   when t2
-    return t1
+    t1
+  else
+    if t1.depth == t2.depth
+      t1_superclass = t1.superclass
+      t2_superclass = t2.superclass
+
+      if t1_superclass && t2_superclass
+        return t1_superclass.common_ancestor(t2_superclass)
+      end
+    elsif t1.depth > t2.depth
+      t1_superclass = t1.superclass
+      if t1_superclass
+        return t1_superclass.common_ancestor(t2)
+      end
+    elsif t1.depth < t2.depth
+      t2_superclass = t2.superclass
+      if t2_superclass
+        return t1.common_ancestor(t2_superclass)
+      end
+    end
+
+    nil
   end
-
-  if t1.depth == t2.depth
-    t1_superclass = t1.superclass
-    t2_superclass = t2.superclass
-
-    if t1_superclass && t2_superclass
-      return t1_superclass.common_ancestor(t2_superclass)
-    end
-  elsif t1.depth > t2.depth
-    t1_superclass = t1.superclass
-    if t1_superclass
-      return t1_superclass.common_ancestor(t2)
-    end
-  elsif t1.depth < t2.depth
-    t2_superclass = t2.superclass
-    if t2_superclass
-      return t1.common_ancestor(t2_superclass)
-    end
-  end
-
-  nil
 end

@@ -430,7 +430,7 @@ class Crystal::CodeGenVisitor
 
       accept body
       inline_call_return_value target_def, body
-      return true
+      true
     when Var
       if body.name == "self"
         return true unless @needs_value
@@ -438,16 +438,18 @@ class Crystal::CodeGenVisitor
         @last = self_type.passed_as_self? ? call_args.first : type_id(self_type)
         inline_call_return_value target_def, body
         return true
+      else
+        false
       end
     when InstanceVar
       return true unless @needs_value
 
       read_instance_var(body.type, self_type, body.name, call_args.first)
       inline_call_return_value target_def, body
-      return true
+      true
+    else
+      false
     end
-
-    false
   end
 
   def inline_call_return_value(target_def, body)
@@ -524,6 +526,8 @@ class Crystal::CodeGenVisitor
         else
           @last = llvm_nil
         end
+      else
+        # go on
       end
     end
 

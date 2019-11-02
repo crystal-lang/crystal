@@ -92,6 +92,7 @@ module Spec
       when :error   then "error"
       when :fail    then "failure"
       when :pending then "skipped"
+      else               nil
       end
     end
 

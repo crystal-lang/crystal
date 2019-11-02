@@ -441,6 +441,9 @@ class File < IO::FileDescriptor
             preader.next_char
           when ']'
             raise BadPatternError.new "Invalid character set: empty character set"
+          else
+            # Nothing
+            # TODO: check if this branch is fine
           end
 
           while pnext
@@ -463,6 +466,9 @@ class File < IO::FileDescriptor
                   raise BadPatternError.new "Invalid character set: missing range end"
                 when '\\'
                   range_end = preader.next_char
+                else
+                  # Nothing
+                  # TODO: check if this branch is fine
                 end
                 range = (pchar..range_end)
                 character_matched = true if range.includes?(char)
