@@ -164,6 +164,20 @@ describe Path do
     assert_paths("foo/./bar/.", [".", "foo", "foo/.", "foo/./bar"], &.parents)
     assert_paths("foo/bar/.", [".", "foo", "foo/bar"], &.parents)
     assert_paths("foo/bar/./.", [".", "foo", "foo/bar", "foo/bar/."], &.parents)
+    assert_paths("m/.gitignore", [".", "m"], &.parents)
+    assert_paths("m", ["."], &.parents)
+    assert_paths("m/", ["."], &.parents)
+    assert_paths("m//", ["."], &.parents)
+    assert_paths("m//a/b", [".", "m", "m//a"], &.parents)
+    assert_paths("/m", ["/"], &.parents)
+    assert_paths("/m/", ["/"], &.parents)
+    assert_paths("C:", ["."], [] of String, &.parents)
+    assert_paths("C:/", ["."], [] of String, &.parents)
+    assert_paths("C:\\", ["."], [] of String, &.parents)
+    assert_paths("C:folder", ["."], ["C:"] of String, &.parents)
+    assert_paths("C:\\folder", ["."], ["C:\\"] of String, &.parents)
+    assert_paths("C:\\\\folder", ["."], ["C:\\"] of String, &.parents)
+    assert_paths("C:\\.", ["."], [] of String, &.parents)
   end
 
   describe "#dirname" do

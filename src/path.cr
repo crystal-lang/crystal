@@ -253,24 +253,30 @@ struct Path
   # ```
   def each_parent(&block : Path ->)
     return if @name.empty? || @name == "."
-
+    reader = Char::Reader.new(@name)
+    last_was_separator = false
+    last_sep_pos = 0
     first = true
-    each_part_separator_index do |pos|
-      if pos == 0 || (pos == 2 && @name[1] == ':')
-        first = false
-        break if pos == @name.bytesize - 1 || @name.byte_slice(pos + 1).each_char.all? { |char| separators.includes?(char) || char == '.' }
-        path = anchor || new_instance(separators[0].to_s)
-      else
-        if first && @name[0] != '.'
+    anch = anchor
+    reader.each do |char|
+      if separators.includes?(char) || (windows? && char == ':')
+        last_sep_pos = reader.pos unless last_was_separator
+        last_was_separator = true
+        if reader.pos == 0 || (windows? && char == ':') || (windows? && @name[reader.pos - 1] == ':')
+          first = false
+          last_sep_pos += 1
+          break if reader.pos == @name.bytesize - 1 || @name.byte_slice(reader.pos + 1).each_char.all? { |char| char == '.' }
+        elsif first
           yield new_instance "."
         end
         first = false
-
-        break if pos == @name.bytesize - 1
-        path = new_instance @name.byte_slice(0, pos)
+      elsif last_was_separator
+        last_was_separator = false
+        if last_sep_pos > 0
+          n = @name.byte_slice(0, last_sep_pos)
+          yield new_instance n unless n == "."
+        end
       end
-
-      yield path
     end
 
     if first
