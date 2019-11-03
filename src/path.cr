@@ -473,10 +473,27 @@ struct Path
 
   # Yields each component of this path as a `String`.
   def each_part
-    last_pos = 0
-    each_part_separator_index do |pos|
-      yield @name.byte_slice(last_pos, pos - last_pos)
-      last_pos = pos
+    reader = Char::Reader.new(@name)
+    io = IO::Memory.new
+    anch_str = anchor.try &.to_s
+    anch_chars = [] of Char
+    if anch_str
+      yield anch_str
+      anch_chars = anch_str.chars
+    end
+    reader.each_with_index do |char, i|
+      next if i < anch_chars.size && anch_chars[i] == char
+      if separators.includes?(char)
+        unless io.empty?
+          yield io.to_s
+          io = IO::Memory.new
+        end
+      else
+        io << char
+      end
+    end
+    unless io.empty?
+      yield io.to_s
     end
   end
 

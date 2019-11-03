@@ -233,6 +233,24 @@ describe Path do
     end
   end
 
+  describe "#parts" do
+    assert_paths_raw("m/.gitignore", ["m", ".gitignore"], &.parts)
+    assert_paths_raw("m", ["m"], &.parts)
+    assert_paths_raw("m/", ["m"], &.parts)
+    assert_paths_raw("m\\", ["m\\"], ["m"], &.parts)
+    assert_paths_raw("m//a/b", ["m", "a", "b"], &.parts)
+    assert_paths_raw("m\\a/b", ["m\\a", "b"], ["m", "a", "b"], &.parts)
+    assert_paths_raw("/m", ["/", "m"], &.parts)
+    assert_paths_raw("/m/", ["/", "m"], &.parts)
+    assert_paths_raw("C:", ["C:"], &.parts)
+    assert_paths_raw("C:/", ["C:"], ["C:/"], &.parts)
+    assert_paths_raw("C:\\", ["C:\\"], &.parts)
+    assert_paths_raw("C:folder", ["C:folder"], ["C:", "folder"], &.parts)
+    assert_paths_raw("C:\\folder", ["C:\\folder"], ["C:\\", "folder"], &.parts)
+    assert_paths_raw("C:\\\\folder", ["C:\\\\folder"], ["C:\\", "folder"], &.parts)
+    assert_paths_raw("C:\\.", ["C:\\."], ["C:\\", "."], &.parts)
+  end
+
   describe "#extension" do
     assert_paths_raw("/foo/bar/baz.cr", ".cr", &.extension)
     assert_paths_raw("/foo/bar/baz.cr.cz", ".cz", &.extension)
