@@ -2222,6 +2222,19 @@ private def interpret_array_or_tuple_method(object, klass, method, args, block, 
         interpreter.accept block.body
       end
     end
+  when "map_with_index"
+    object.interpret_argless_method(method, args) do
+      raise "map_with_index expects a block" unless block
+
+      block_arg = block.args[0]?
+      index_arg = block.args[1]?
+
+      klass.map_with_index(object.elements) do |elem, idx|
+        interpreter.define_var(block_arg.name, elem) if block_arg
+        interpreter.define_var(index_arg.name, Crystal::NumberLiteral.new idx) if index_arg
+        interpreter.accept block.body
+      end
+    end
   when "select"
     object.interpret_argless_method(method, args) do
       raise "select expects a block" unless block
