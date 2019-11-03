@@ -416,6 +416,16 @@ module Crystal
         assert_macro "", %({{"foo_bar".camelcase}}), [] of ASTNode, %("FooBar")
       end
 
+      it "executes camelcase with lower" do
+        assert_macro "", %({{"foo_bar".camelcase(lower: true)}}), [] of ASTNode, %("fooBar")
+      end
+
+      it "executes camelcase with invalid lower arg type" do
+        expect_raises(Crystal::TypeException, "named argument 'lower' to StringLiteral#camelcase must be a bool, not NumberLiteral") do
+          assert_macro "", %({{"foo_bar".camelcase(lower: 99)}}), [] of ASTNode, ""
+        end
+      end
+
       it "executes underscore" do
         assert_macro "", %({{"FooBar".underscore}}), [] of ASTNode, %("foo_bar")
       end

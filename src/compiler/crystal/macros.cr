@@ -393,7 +393,7 @@ module Crystal::Macros
     end
 
     # Similar to `String#camelcase`.
-    def camelcase : StringLiteral
+    def camelcase(*, lower : BoolLiteral = false) : StringLiteral
     end
 
     # Similar to `String#capitalize`.

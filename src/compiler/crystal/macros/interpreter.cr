@@ -363,9 +363,14 @@ module Crystal
         end
 
         args = node.args.map { |arg| accept arg }
+        named_args = Hash(String, ASTNode).new
+
+        if (nargs = node.named_args)
+          nargs.each_with_object(named_args) { |arg, named_arg_hash| named_arg_hash[arg.name] = accept arg.value }
+        end
 
         begin
-          @last = receiver.interpret(node.name, args, node.block, self)
+          @last = receiver.interpret(node.name, args, named_args, node.block, self)
         rescue ex : MacroRaiseException
           raise ex
         rescue ex : Crystal::Exception
@@ -511,13 +516,15 @@ module Crystal
 
     def visit(node : Splat)
       node.exp.accept self
-      @last = @last.interpret("splat", [] of ASTNode, nil, self)
+      named_args = Hash(String, ASTNode).new
+      @last = @last.interpret("splat", [] of ASTNode, named_args, nil, self)
       false
     end
 
     def visit(node : DoubleSplat)
       node.exp.accept self
-      @last = @last.interpret("double_splat", [] of ASTNode, nil, self)
+      named_args = Hash(String, ASTNode).new
+      @last = @last.interpret("double_splat", [] of ASTNode, named_args, nil, self)
       false
     end
 
