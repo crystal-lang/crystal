@@ -178,7 +178,7 @@ describe Path do
     assert_paths("C:\\", ["."], [] of String, &.parents)
     assert_paths("C:folder", ["."], ["C:"], &.parents)
     assert_paths("C:\\folder", ["."], ["C:\\"], &.parents)
-    assert_paths("C:\\\\folder", ["."], ["C:\\"], &.parents)
+    assert_paths("C:\\\\folder", ["."], ["C:\\\\"], &.parents)
     assert_paths("C:\\.", ["."], ["C:\\"], &.parents)
   end
 
