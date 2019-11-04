@@ -253,35 +253,40 @@ struct Path
   # ```
   def each_parent(&block : Path ->)
     return if @name.empty? || @name == "."
-    reader = Char::Reader.new(@name)
-    last_was_separator = false
-    last_sep_pos = 0
-    first = true
-    anch = anchor
-    reader.each do |char|
-      if separators.includes?(char) || (windows? && char == ':')
-        last_sep_pos = reader.pos unless last_was_separator
-        last_was_separator = true
-        if reader.pos == 0 || (windows? && char == ':') || (windows? && @name[reader.pos - 1] == ':')
-          first = false
-          last_sep_pos += 1
-          break if reader.pos == @name.bytesize - 1 || @name.byte_slice(reader.pos + 1).each_char.all? { |char| char == '.' }
-        elsif first
-          yield new_instance "."
-        end
-        first = false
-      elsif last_was_separator
-        last_was_separator = false
-        if last_sep_pos > 0
-          n = @name.byte_slice(0, last_sep_pos)
-          yield new_instance n unless n == "."
-        end
-      end
+
+    anchor = self.anchor
+    if anchor
+      # (A) Absolute path
+      # Delay yielding anchor until the first non-anchor part is reached to
+      # make sure there is a path following the anchor. If path is only the
+      # anchor it would have no parents.
+      anchor_size = anchor.@name.bytesize
+    else
+      # (B) Relative path
+      # A relative path has always the current working directory as parent,
+      # so it is yielded directly.
+      yield new_instance(".")
+      anchor_size = 0
     end
 
-    if first
-      # this path didn't contain any separators
-      yield new_instance "."
+    pos_memo = nil
+    each_part_separator_index(anchor_size) do |start_pos, length|
+      # Skip leading "." because it's already been yielded in (B)
+      next if start_pos == 0 && length == 1 && @name[0] == '.'
+
+      # Delayed yielding of anchor from (A)
+      if anchor
+        yield anchor
+        anchor = nil
+      end
+
+      # Delay yielding for each part to avoid yielding for the last part, which
+      # means the entire path.
+      if pos_memo
+        yield new_instance(@name.byte_slice(0, pos_memo))
+      end
+
+      pos_memo = start_pos + length
     end
   end
 
@@ -472,32 +477,35 @@ struct Path
   end
 
   # Yields each component of this path as a `String`.
+  #
+  # ```
+  # Path.new("foo/bar/").each_part # yields: "foo", "bar"
+  # ```
+  #
+  # See `#parts` for more examples.
   def each_part
-    reader = Char::Reader.new(@name)
-    io = IO::Memory.new
-    anch_str = anchor.try &.to_s
-    anch_chars = [] of Char
-    if anch_str
-      yield anch_str
-      anch_chars = anch_str.chars
+    if windows? && (anchor = self.anchor) && anchor.@name.size > 3
+      # UNC share
+      # Yield the anchor and skip anchor_size.
+      yield anchor.to_s
+      anchor_size = anchor.@name.bytesize
+    else
+      anchor_size = 0
     end
-    reader.each_with_index do |char, i|
-      next if i < anch_chars.size && anch_chars[i] == char
-      if separators.includes?(char)
-        unless io.empty?
-          yield io.to_s
-          io = IO::Memory.new
-        end
-      else
-        io << char
-      end
-    end
-    unless io.empty?
-      yield io.to_s
+
+    each_part_separator_index(anchor_size) do |start_pos, length|
+      yield @name.byte_slice(start_pos, length)
     end
   end
 
   # Returns the components of this path as an `Array(String)`.
+  #
+  # ```
+  # Path.new("foo/bar/").parts                   # => ["foo", "bar]
+  # Path.new("/Users/foo/bar.cr").parts          # => ["/", "Users", "foo", "bar.cr"]
+  # Path.windows("C:\\Users\\foo\\bar.cr").parts # => ["C:\\", "Users", "foo", "bar.cr"]
+  # Path.posix("C:\\Users\\foo\\bar.cr").parts   # => ["C:\\Users\\foo\\bar.cr"]
+  # ```
   def parts : Array(String)
     parts = [] of String
     each_part do |part|
@@ -506,17 +514,50 @@ struct Path
     parts
   end
 
-  private def each_part_separator_index
+  private def each_part_separator_index(offset = 0)
     reader = Char::Reader.new(@name)
+    reader.pos = start_pos = offset
+
+    if (offset == 0 && windows? && windows_drive?(@name) && reader.next_char) || separators.includes?(reader.current_char)
+      # Path is absolute, consume leading separators
+      while reader.has_next?
+        char = reader.next_char
+        break unless separators.includes?(char)
+      end
+      start_pos = reader.pos
+
+      # The absolute component is yielded *including* separator index unless
+      # we're starting with an offset, then the separators are just skipped
+      # because anchor has already been handled separately.
+      yield 0, start_pos unless offset > 0
+    end
+
     last_was_separator = false
+
     reader.each do |char|
       if separators.includes?(char)
-        yield reader.pos unless last_was_separator
+        next if last_was_separator
+
+        yield start_pos, reader.pos - start_pos
         last_was_separator = true
       else
+        if last_was_separator
+          start_pos = reader.pos
+        end
         last_was_separator = false
       end
     end
+
+    unless last_was_separator
+      size = reader.pos - start_pos
+      if size > 0
+        yield start_pos, size
+      end
+    end
+  end
+
+  private def windows_drive?(name)
+    name.byte_at?(1) === ':' && @name.byte_at(0).chr.ascii_letter?
   end
 
   # Converts this path to a Windows path.
@@ -902,7 +943,7 @@ struct Path
   # Returns a tuple of `#drive` and `#root` as strings.
   def drive_and_root : {String?, String?}
     if windows?
-      if @name.byte_at?(1) == ':'.ord && @name.byte_at?(0).try(&.chr.ascii_letter?)
+      if windows_drive?(@name)
         drive = @name.byte_slice(0, 2)
         if separators.includes?(@name.byte_at?(2).try(&.chr))
           return drive, @name.byte_slice(2, 1)
@@ -911,19 +952,28 @@ struct Path
         end
       elsif (@name.starts_with?("\\\\") || @name.starts_with?("//")) && !separators.includes?(@name.byte_at?(2).try &.unsafe_chr)
         # UNC share
-        index = 0
-        last_pos = 0
-        each_part_separator_index do |pos|
-          if index == 2
-            return @name.byte_slice(0, pos), @name.byte_slice(pos, 1)
+        # path: //share/share
+        # part: 1122222 33333
+        parts = 0
+        end_pos = 0
+        each_part_separator_index do |start_pos, length|
+          parts += 1
+          case parts
+          when 3
+            if end_pos + 1 < start_pos
+              # more than one separator between 2 and 3, not a UNC share
+              return nil, nil
+            end
+          when 4
+            # current part is a path component following the UNC share
+            return @name.byte_slice(0, end_pos), @name.byte_slice(end_pos, start_pos - end_pos)
           end
-          index += 1
-          last_pos = pos
+          end_pos = start_pos + length
         end
 
-        if index == 2 && last_pos < @name.bytesize && !separators.includes?(@name.byte_at(last_pos + 1).unsafe_chr)
+        if parts == 3
           # the entire name is a UNC share without a root
-          return @name, nil
+          return @name.byte_slice(0, end_pos), @name.byte_at?(end_pos).try &.chr.to_s
         else
           # Not a UNC share, but path starts with two separators
           return nil, @name.byte_slice(0, 1)
