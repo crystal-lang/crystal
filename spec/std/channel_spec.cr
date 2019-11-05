@@ -34,11 +34,14 @@ describe Channel do
     ch2.receive.should eq 2
   end
 
-  it "does not raise nor change its status when it is closed more than once" do
+  it "does not raise or change its status when it is closed more than once" do
     ch = Channel(Int32).new
-    2.times {
-      ch.close
-    }
+    ch.closed?.should be_false
+
+    ch.close
+    ch.closed?.should be_true
+
+    ch.close
     ch.closed?.should be_true
   end
 

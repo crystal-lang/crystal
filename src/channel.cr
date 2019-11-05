@@ -116,7 +116,7 @@ class Channel(T)
 
   # Closes the channel.
   # The method prevents any new value from being sent to / received from the channel.
-  # It wakes up any sender / receiver fibers waiting on the channel.
+  # All fibers blocked in `send` or `receive` will be awakened with `Channel::ClosedError`
   #
   # Both awaiting and subsequent calls to `#send` will consider the channel closed.
   # All items successfully sent to the channel can be received, before `#receive` considers the channel closed.
