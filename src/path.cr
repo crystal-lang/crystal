@@ -486,10 +486,9 @@ struct Path
     parts
   end
 
-  private def each_part_separator_index(offset = 0)
+  private def each_part_separator_index
     reader = Char::Reader.new(@name)
-    offset = 0
-    reader.pos = start_pos = offset
+    start_pos = reader.pos
 
     if anchor = self.anchor
       reader.pos = anchor.@name.bytesize
