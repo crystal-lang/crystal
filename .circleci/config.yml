@@ -46,7 +46,7 @@ jobs:
 
   test_darwin:
     macos:
-      xcode: "9.0"
+      xcode: "11.1.0"
     environment:
       <<: *env
       TRAVIS_OS_NAME: osx
@@ -57,6 +57,7 @@ jobs:
             - brew-cache-v1
       - checkout
       - run: bin/ci prepare_system
+      - run: echo 'export PKG_CONFIG_PATH="$PKG_CONFIG_PATH:/usr/local/opt/openssl/lib/pkgconfig"' >> $BASH_ENV
       - run: echo 'export CURRENT_TAG="$CIRCLE_TAG"' >> $BASH_ENV
       - run: bin/ci prepare_build
       - run: bin/ci build
@@ -262,7 +263,7 @@ jobs:
 
   dist_darwin:
     macos:
-      xcode: "9.0"
+      xcode: "11.1.0"
     shell: /bin/bash --login -eo pipefail
     steps:
       - restore_cache:
