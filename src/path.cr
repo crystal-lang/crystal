@@ -190,7 +190,7 @@ struct Path
     end
 
     if reader.pos == 0 && !separators.includes?(reader.current_char)
-      if windows? && reader.has_next? && reader.peek_next_char == ':' && (anchor = self.anchor)
+      if windows? && windows_drive?
         return anchor.to_s
       else
         return "."
