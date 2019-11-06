@@ -26,7 +26,7 @@ struct NamedTuple
   # Creates a named tuple that will contain the given arguments.
   #
   # This method is useful in macros and generic code because with it you can
-  # creates empty named tuples, something that you can't do with a tuple literal.
+  # create empty named tuples, something that you can't do with a tuple literal.
   #
   # ```
   # NamedTuple.new(name: "Crystal", year: 2011) #=> {name: "Crystal", year: 2011}
