@@ -3346,5 +3346,9 @@ module Crystal
     def visit(node : When | Unless | Until | MacroLiteral | OpAssign)
       raise "BUG: #{node.class_desc} node '#{node}' (#{node.location}) should have been eliminated in normalize"
     end
+
+    def visit(node : ImplicitObj)
+      raise "BUG: #{node.class_desc} node '#{node}' (#{node.location}) should have been eliminated in expand"
+    end
   end
 end
