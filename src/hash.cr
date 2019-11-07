@@ -921,11 +921,19 @@ class Hash(K, V)
 
   private def entry_matches?(entry, key)
     entry_key = entry.key
-    if @compare_by_identity && entry_key.responds_to?(:object_id)
-      if key.responds_to?(:object_id)
-        entry_key.object_id == key.object_id
-      else
+
+    if @compare_by_identity
+      if entry_key.responds_to?(:object_id)
+        if key.responds_to?(:object_id)
+          entry_key.object_id == key.object_id
+        else
+          false
+        end
+      elsif key.responds_to?(:object_id)
+        # because entry_key doesn't respond to :object_id
         false
+      else
+        entry_key == key
       end
     else
       entry_key == key
