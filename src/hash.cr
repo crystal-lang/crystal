@@ -572,9 +572,12 @@ class Hash(K, V)
     # while moving non-deleted entries to the beginning (compaction).
     new_entry_index = 0
     each_entry_with_index do |entry, entry_index|
+      entry_hash = entry.hash
+
       if rehash
         # When rehashing we always have to copy the entry
-        set_entry(new_entry_index, Entry(K, V).new(key_hash(entry.key), entry.key, entry.value))
+        entry_hash = key_hash(entry.key)
+        set_entry(new_entry_index, Entry(K, V).new(entry_hash, entry.key, entry.value))
       else
         # First we move the entry to its new index (if we need to do that)
         set_entry(new_entry_index, entry) if entry_index != new_entry_index
@@ -583,7 +586,7 @@ class Hash(K, V)
       if has_indices
         # Then we try to find an empty index slot
         # (we should find one now that we have more space)
-        index = fit_in_indices(entry.hash)
+        index = fit_in_indices(entry_hash)
         until get_index(index) == -1
           index = next_index(index)
         end

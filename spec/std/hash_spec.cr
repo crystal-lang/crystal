@@ -1144,7 +1144,7 @@ describe "Hash" do
   it "rehashes" do
     a = [1]
     h = {a => 0}
-    (10..20).each do |i|
+    (10..100).each do |i|
       h[[i]] = i
     end
     a << 2
