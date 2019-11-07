@@ -363,10 +363,10 @@ module Crystal
         end
 
         args = node.args.map { |arg| accept arg }
-        named_args = Hash(String, ASTNode).new
+        named_args = nil
 
         if (nargs = node.named_args)
-          nargs.each_with_object(named_args) { |arg, named_arg_hash| named_arg_hash[arg.name] = accept arg.value }
+          named_args = nargs.each_with_object(Hash(String, ASTNode).new) { |arg, named_arg_hash| named_arg_hash[arg.name] = accept arg.value }
         end
 
         begin
@@ -516,15 +516,13 @@ module Crystal
 
     def visit(node : Splat)
       node.exp.accept self
-      named_args = Hash(String, ASTNode).new
-      @last = @last.interpret("splat", [] of ASTNode, named_args, nil, self)
+      @last = @last.interpret("splat", [] of ASTNode, nil, nil, self)
       false
     end
 
     def visit(node : DoubleSplat)
       node.exp.accept self
-      named_args = Hash(String, ASTNode).new
-      @last = @last.interpret("double_splat", [] of ASTNode, named_args, nil, self)
+      @last = @last.interpret("double_splat", [] of ASTNode, nil, nil, self)
       false
     end
 
