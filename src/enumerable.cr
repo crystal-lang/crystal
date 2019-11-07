@@ -521,6 +521,7 @@ module Enumerable(T)
   # ```
   # ["Alice", "Bob"].grep(/^A/) # => ["Alice"]
   # ```
+  @[Deprecated("Use `#select` instead")]
   def grep(pattern)
     self.select { |elem| pattern === elem }
   end
@@ -1220,9 +1221,10 @@ module Enumerable(T)
   #
   # ```
   # [1, 3, 2, 5, 4, 6].select(3..5) # => [3, 5, 4]
+  # ["Alice", "Bob"].select(/^A/)   # => ["Alice"]
   # ```
   def select(pattern)
-    self.select { |e| pattern === e }
+    self.select { |elem| pattern === elem }
   end
 
   # Returns the number of elements in the collection.
