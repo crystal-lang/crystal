@@ -243,25 +243,7 @@ module Spec
 
   # :nodoc:
   def self.run_filters
-    if pattern = @@pattern
-      root_context.filter_by_pattern(pattern)
-    end
-
-    if line = @@line
-      root_context.filter_by_line(line)
-    end
-
-    if locations = @@locations
-      root_context.filter_by_locations(locations)
-    end
-
-    if split_filter = @@split_filter
-      root_context.filter_by_split(split_filter)
-    end
-
-    if focus = @@focus
-      root_context.filter_by_focus
-    end
+    root_context.run_filters(@@pattern, @@line, @@locations, @@split_filter, @@focus)
   end
 end
 

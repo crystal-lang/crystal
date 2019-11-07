@@ -1,9 +1,4 @@
-require "spec"
-
-private class FakeRootContext < Spec::RootContext
-  def report_formatters(result)
-  end
-end
+require "./spec_helper"
 
 describe Spec::ExampleGroup do
   describe "#report" do
