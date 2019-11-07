@@ -57,8 +57,10 @@ module Crystal
   # idea on how to generate code for unreachable branches, because they have no type,
   # and for now the codegen only deals with typed nodes.
   class CleanupTransformer < Transformer
+    @transformed : Set(Def)
+
     def initialize(@program : Program)
-      @transformed = Set(UInt64).new
+      @transformed = Set(Def).new.compare_by_identity
       @def_nest_count = 0
       @last_is_truthy = false
       @last_is_falsey = false
@@ -361,9 +363,7 @@ module Crystal
         end
 
         target_defs.each do |target_def|
-          unless @transformed.includes?(target_def.object_id)
-            @transformed.add(target_def.object_id)
-
+          if @transformed.add?(target_def)
             node.bubbling_exception do
               @def_nest_count += 1
               target_def.body = target_def.body.transform(self)
