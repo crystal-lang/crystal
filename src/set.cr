@@ -347,12 +347,15 @@ struct Set(T)
 
   # Returns a new `Set` with all of the same elements.
   def dup
-    Set.new(self)
+    set = Set.new(self)
+    set.compare_by_identity if compare_by_identity?
+    set
   end
 
   # Returns a new `Set` with all of the elements cloned.
   def clone
     clone = Set(T).new(self.size)
+    clone.compare_by_identity if compare_by_identity?
     each do |element|
       clone << element.clone
     end

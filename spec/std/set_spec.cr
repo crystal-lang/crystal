@@ -397,16 +397,28 @@ describe "Set" do
 
   typeof(Set(Int32).new(initial_capacity: 1234))
 
-  it "compares by identity" do
-    string = "foo"
-    set = Set{string, "bar", "baz"}
-    set.compare_by_identity?.should be_false
-    set.includes?(string).should be_true
+  describe "compare_by_identity" do
+    it "compares by identity" do
+      string = "foo"
+      set = Set{string, "bar", "baz"}
+      set.compare_by_identity?.should be_false
+      set.includes?(string).should be_true
 
-    set.compare_by_identity
-    set.compare_by_identity?.should be_true
+      set.compare_by_identity
+      set.compare_by_identity?.should be_true
 
-    set.includes?("fo" + "o").should be_false
-    set.includes?(string).should be_true
+      set.includes?("fo" + "o").should be_false
+      set.includes?(string).should be_true
+    end
+
+    it "retains compare_by_identity on dup" do
+      set = Set(String).new.compare_by_identity
+      set.dup.compare_by_identity?.should be_true
+    end
+
+    it "retains compare_by_identity on clone" do
+      set = Set(String).new.compare_by_identity
+      set.clone.compare_by_identity?.should be_true
+    end
   end
 end

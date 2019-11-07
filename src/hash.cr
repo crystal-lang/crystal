@@ -639,6 +639,8 @@ class Hash(K, V)
 
   # Initializes a `dup` copy from the contents of `other`.
   protected def initialize_dup(other)
+    initialize_compare_by_identity(other)
+
     return if other.empty?
 
     initialize_dup_entries(other)
@@ -647,10 +649,16 @@ class Hash(K, V)
 
   # Initializes a `clone` copy from the contents of `other`.
   protected def initialize_clone(other)
+    initialize_compare_by_identity(other)
+
     return if other.empty?
 
     initialize_clone_entries(other)
     initialize_copy_non_entries_vars(other)
+  end
+
+  private def initialize_compare_by_identity(other)
+    compare_by_identity if other.compare_by_identity?
   end
 
   # Initializes `@entries` for a dup copy.

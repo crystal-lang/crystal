@@ -1214,5 +1214,15 @@ describe "Hash" do
         h[string]?.should eq(num)
       end
     end
+
+    it "retains compare_by_identity on dup" do
+      h = ({} of String => Int32).compare_by_identity
+      h.dup.compare_by_identity?.should be_true
+    end
+
+    it "retains compare_by_identity on clone" do
+      h = ({} of String => Int32).compare_by_identity
+      h.clone.compare_by_identity?.should be_true
+    end
   end
 end
