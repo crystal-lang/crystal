@@ -396,4 +396,17 @@ describe "Set" do
   end
 
   typeof(Set(Int32).new(initial_capacity: 1234))
+
+  it "compares by identity" do
+    string = "foo"
+    set = Set{string, "bar", "baz"}
+    set.compare_by_identity?.should be_false
+    set.includes?(string).should be_true
+
+    set.compare_by_identity
+    set.compare_by_identity?.should be_true
+
+    set.includes?("fo" + "o").should be_false
+    set.includes?(string).should be_true
+  end
 end
