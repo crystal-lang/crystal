@@ -61,7 +61,7 @@ module Spec
   # :nodoc:
   def self.abort!
     @@aborted = true
-    exit
+    finish_run
   end
 
   # :nodoc:
@@ -225,9 +225,11 @@ module Spec
     @@after_suite.try &.reverse_each &.call
   end
 
+  @@start_time : Time::Span? = nil
+
   # :nodoc:
   def self.run
-    start_time = Time.monotonic
+    @@start_time = Time.monotonic
 
     at_exit do
       run_filters
@@ -235,10 +237,14 @@ module Spec
       root_context.run
       run_after_suite_hooks
     ensure
-      elapsed_time = Time.monotonic - start_time
-      root_context.finish(elapsed_time, @@aborted)
-      exit 1 unless root_context.succeeded && !@@aborted
+      finish_run
     end
+  end
+
+  def self.finish_run
+    elapsed_time = Time.monotonic - @@start_time.not_nil!
+    root_context.finish(elapsed_time, @@aborted)
+    exit 1 if !root_context.succeeded || @@aborted
   end
 
   # :nodoc:
