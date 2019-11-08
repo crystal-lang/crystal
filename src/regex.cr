@@ -203,7 +203,7 @@ class Regex
 
   @[Flags]
   enum Options
-    # Case insensitive match
+    # Case insensitive match.
     IGNORE_CASE = 1
     # PCRE native `PCRE_MULTILINE` flag is `2`, and `PCRE_DOTALL` is `4`
     # - `PCRE_DOTALL` changes the "`.`" meaning
