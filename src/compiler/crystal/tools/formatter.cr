@@ -82,7 +82,7 @@ module Crystal
     @assign_infos : Array(AlignInfo)
     @doc_comments : Array(CommentInfo)
     @current_doc_comment : CommentInfo?
-    @hash_in_same_line : Set(UInt64)
+    @hash_in_same_line : Set(ASTNode)
     @shebang : Bool
     @heredoc_fixes : Array(HeredocFix)
     @assign_length : Int32?
@@ -136,7 +136,7 @@ module Crystal
       @assign_infos = [] of AlignInfo
       @doc_comments = [] of CommentInfo
       @current_doc_comment = nil
-      @hash_in_same_line = Set(UInt64).new
+      @hash_in_same_line = Set(ASTNode).new.compare_by_identity
       @shebang = @token.type == :COMMENT && @token.value.to_s.starts_with?("#!")
       @heredoc_fixes = [] of HeredocFix
       @last_is_heredoc = false
@@ -896,7 +896,7 @@ module Crystal
         format_hash_entry nil, node_of
       end
 
-      if @hash_in_same_line.includes? node.object_id
+      if @hash_in_same_line.includes? node
         @hash_infos.reject! { |info| info.id == node.object_id }
       end
 
@@ -930,8 +930,8 @@ module Crystal
       skip_space_or_newline
       accept entry.value
 
-      if found_in_same_line
-        @hash_in_same_line << hash.object_id
+      if hash && found_in_same_line
+        @hash_in_same_line << hash
       end
     end
 
@@ -941,7 +941,7 @@ module Crystal
       format_literal_elements node.entries, :"{", :"}"
       @current_hash = old_hash
 
-      if @hash_in_same_line.includes? node.object_id
+      if @hash_in_same_line.includes? node
         @hash_infos.reject! { |info| info.id == node.object_id }
       end
 
@@ -965,7 +965,7 @@ module Crystal
       accept entry.value
 
       if found_in_same_line
-        @hash_in_same_line << hash.object_id
+        @hash_in_same_line << hash
       end
     end
 
