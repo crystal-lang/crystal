@@ -3929,6 +3929,7 @@ module Crystal
       doc = @token.doc
 
       if @token.type == :"!"
+        # only trigger from `parse_when_expression`
         obj = Var.new("self").at(location)
         return parse_negation_suffix(obj)
       end
