@@ -563,7 +563,7 @@ class Process
   # ```
   def self.become(user : System::User, group : System::Group? = nil)
     group ||= user.group
-    # TODO setgroups
+    # TODO: Call setgroups() when available using user.group_ids when available.
     become_group group.id.to_i
     become_user user.id.to_i
   end
