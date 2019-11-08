@@ -419,7 +419,7 @@ module Spec
   module ObjectExtensions
     # Validates an expectation and fails the example if it does not match.
     #
-    # This overload returns a value whose type is restricted to the expected type.. For example:
+    # This overload returns a value whose type is restricted to the expected type. For example:
     #
     # ```
     # x = 1 || 'a'
