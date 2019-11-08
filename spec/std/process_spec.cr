@@ -85,17 +85,17 @@ describe Process do
     $?.exit_code.should eq(0)
   end
 
-  it "getuid" do
+  it ".effective_user_id" do
     Process.effective_user_id.should eq `id -u`.to_i
     Process.effective_user_id.should eq Process.effective_user_id
   end
 
-  it "getgid" do
+  it ".group_id" do
     Process.group_id.should eq `id -g`.to_i
     Process.group_id.should eq Process.effective_group_id
   end
 
-  it "become_user" do
+  it ".become_user" do
     success = false
     ruid = Process.user_id
     euid = Process.effective_user_id
@@ -119,7 +119,7 @@ describe Process do
     end
   end
 
-  it "become_group" do
+  it ".become_group" do
     success = false
     rgid = Process.group_id
     egid = Process.effective_group_id
@@ -142,7 +142,7 @@ describe Process do
     end
   end
 
-  it "become_user raises when only setting suid on unsupported platforms" do
+  it ".become_user raises when only setting suid on unsupported platforms" do
     if !LibC.responds_to?(:setresuid) && LibC.responds_to?(:setreuid)
       expect_raises_errno(Errno::ENOSYS) do
         Process.become_user(suid: 55)
@@ -150,7 +150,7 @@ describe Process do
     end
   end
 
-  it "become_group raises when only setting sgid on unsupported platforms" do
+  it ".become_group raises when only setting sgid on unsupported platforms" do
     if !LibC.responds_to?(:setresgid) && LibC.responds_to?(:setregid)
       expect_raises_errno(Errno::ENOSYS) do
         Process.become_group(sgid: 55)
