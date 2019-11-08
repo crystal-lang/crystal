@@ -85,9 +85,9 @@ describe Process do
     $?.exit_code.should eq(0)
   end
 
-  it ".effective_user_id" do
-    Process.effective_user_id.should eq `id -u`.to_i
-    Process.effective_user_id.should eq Process.effective_user_id
+  it ".user_id" do
+    Process.user_id.should eq `id -u`.to_i
+    Process.user_id.should eq Process.effective_user_id
   end
 
   it ".group_id" do
@@ -95,27 +95,22 @@ describe Process do
     Process.group_id.should eq Process.effective_group_id
   end
 
-  it ".become_user" do
-    success = false
-    ruid = Process.user_id
-    euid = Process.effective_user_id
+  if euid == 0
+    it ".become_user" do
+      ruid = Process.user_id
+      euid = Process.effective_user_id
 
-    begin
       # Leave ruid at 0 to switch back
       Process.become_user(ruid: 0, euid: 8888, suid: 9999)
       Process.user_id.should eq 0
       Process.effective_user_id.should eq 8888
-      success = true
-    rescue ex : Errno
-      # Ok for non-root
-    ensure
       Process.become_user(ruid: ruid, euid: euid) if success
     end
-
-    if euid == 0
-      success.should be_true
-    else
-      success.should be_false
+  else
+    it ".become_user" do
+      expect_raises_errno(Errno::EPERM) do
+        Process.become_user(ruid: 0, euid: 8888, suid: 9999)
+      end
     end
   end
 
@@ -142,8 +137,8 @@ describe Process do
     end
   end
 
-  it ".become_user raises when only setting suid on unsupported platforms" do
-    if !LibC.responds_to?(:setresuid) && LibC.responds_to?(:setreuid)
+  if !LibC.responds_to?(:setresuid) && LibC.responds_to?(:setreuid)
+    it ".become_user raises when only setting suid on unsupported platforms" do
       expect_raises_errno(Errno::ENOSYS) do
         Process.become_user(suid: 55)
       end
