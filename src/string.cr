@@ -4471,7 +4471,7 @@ class String
   #
   # ```
   # char = '!'
-  # "hello#{value}" # same as String.interpolation("hello", char)
+  # "hello#{char}" # same as String.interpolation("hello", char)
   # ```
   #
   # In this case the implementation just does `value + char`.
