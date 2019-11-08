@@ -448,7 +448,8 @@ module Spec
 
     # Validates an expectation and fails the example if it matches.
     #
-    # This overload returns a value whose type is restricted. For example:
+    # This overload returns a value whose type is restricted to exclude the given
+    # type in `should_not be_a`. For example:
     #
     # ```
     # x = 1 || 'a'
@@ -468,7 +469,7 @@ module Spec
 
     # Validates an expectation and fails the example if it matches.
     #
-    # This overload returns a value whose type is restricted. For example:
+    # This overload returns a value whose type is restricted to be not `Nil`. For example:
     #
     # ```
     # x = 1 || nil
