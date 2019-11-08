@@ -419,17 +419,17 @@ module Spec
   module ObjectExtensions
     # Validates an expectation and fails the example if it does not match.
     #
-    # This overload will be called when doing:
+    # This overload returns a value whose type is restricted. For example:
     #
     # ```
-    # result = subject.should be_a(Type)
-    # # result will be a Type
+    # x = 1 || 'a'
+    # typeof(x) # => Int32 | Char
+    # x = x.should be_a(Int32)
+    # typeof(x) # => Int32
     # ```
-    #
-    # and make sure, at compile-time, that the returned object is of type `Type`.
     #
     # See `Spec::Expecations` for available expectations.
-    def should(expectation : BeAExpectation(T), file = __FILE__, line = __LINE__) forall T
+    def should(expectation : BeAExpectation(T), file = __FILE__, line = __LINE__) : T forall T
       if expectation.match self
         self.is_a?(T) ? self : (raise "Bug: expected #{self} to be a #{T}")
       else
@@ -448,14 +448,14 @@ module Spec
 
     # Validates an expectation and fails the example if it matches.
     #
-    # This overload will be called when doing:
+    # This overload returns a value whose type is restricted. For example:
     #
     # ```
-    # result = subject.should_not be_a(Type)
-    # # result will not be a Type
+    # x = 1 || 'a'
+    # typeof(x) # => Int32 | Char
+    # x = x.should_not be_a(Char)
+    # typeof(x) # => Int32
     # ```
-    #
-    # and make sure, at compile-time, that the returned object is not of type `Type`.
     #
     # See `Spec::Expecations` for available expectations.
     def should_not(expectation : BeAExpectation(T), file = __FILE__, line = __LINE__) forall T
@@ -468,14 +468,14 @@ module Spec
 
     # Validates an expectation and fails the example if it matches.
     #
-    # This overload will be called when doing:
+    # This overload returns a value whose type is restricted. For example:
     #
     # ```
-    # result = subject.should_not be_nil
-    # # result will not be nil
+    # x = 1 || nil
+    # typeof(x) # => Int32 | Nil
+    # x = x.should_not be_nil
+    # typeof(x) # => Int32
     # ```
-    #
-    # and make sure, at compile-time, that the returned object is not `nil`.
     #
     # See `Spec::Expecations` for available expectations.
     def should_not(expectation : BeNilExpectation, file = __FILE__, line = __LINE__)
