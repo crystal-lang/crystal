@@ -213,7 +213,7 @@ class Regex
     # flag that activates both behaviours, so here we do the same by
     # mapping `MULTILINE` to `PCRE_MULTILINE | PCRE_DOTALL`.
     MULTILINE = 6
-    # Ignore white space and # comments.
+    # Ignore white space and `#` comments.
     EXTENDED = 8
     # Force pattern anchoring.
     ANCHORED = 16
