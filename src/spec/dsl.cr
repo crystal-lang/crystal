@@ -9,6 +9,7 @@ module Spec
     pending: :yellow,
     comment: :cyan,
     focus:   :cyan,
+    order:   :cyan,
   }
 
   private LETTERS = {
@@ -62,6 +63,28 @@ module Spec
   def self.abort!
     @@aborted = true
     finish_run
+  end
+
+  # :nodoc:
+  class_getter randomizer_seed : UInt64?
+  class_getter randomizer : Random::PCG32?
+
+  # :nodoc:
+  def self.order=(mode)
+    seed =
+      case mode
+      when "default"
+        nil
+      when "random"
+        Random::Secure.rand(1..99999).to_u64 # 5 digits or less for simplicity
+      when UInt64
+        mode
+      else
+        raise ArgumentError.new("order must be either 'default', 'random', or a numeric seed value")
+      end
+
+    @@randomizer_seed = seed
+    @@randomizer = seed ? Random::PCG32.new(seed) : nil
   end
 
   # :nodoc:
@@ -232,6 +255,7 @@ module Spec
     @@start_time = Time.monotonic
 
     at_exit do
+      maybe_randomize
       run_filters
       run_before_suite_hooks
       root_context.run
@@ -245,6 +269,13 @@ module Spec
     elapsed_time = Time.monotonic - @@start_time.not_nil!
     root_context.finish(elapsed_time, @@aborted)
     exit 1 if !root_context.succeeded || @@aborted
+  end
+
+  # :nodoc:
+  def self.maybe_randomize
+    if randomizer = @@randomizer
+      root_context.randomize(randomizer)
+    end
   end
 
   # :nodoc:

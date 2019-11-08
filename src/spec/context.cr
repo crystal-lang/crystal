@@ -5,6 +5,13 @@ module Spec
   abstract class Context
     # All the children, which can be `describe`/`context` or `it`
     getter children = [] of ExampleGroup | Example
+
+    def randomize(randomizer)
+      children.each do |child|
+        child.randomize(randomizer) if child.is_a?(ExampleGroup)
+      end
+      children.shuffle!(randomizer)
+    end
   end
 
   # :nodoc:
@@ -139,6 +146,10 @@ module Spec
       puts "Finished in #{Spec.to_human(elapsed_time)}"
       puts Spec.color("#{total} examples, #{failures.size} failures, #{errors.size} errors, #{pendings.size} pending", final_status)
       puts Spec.color("Only running `focus: true`", :focus) if Spec.focus?
+
+      if randomizer_seed = Spec.randomizer_seed
+        puts Spec.color("Randomized with seed: #{randomizer_seed}", :order)
+      end
 
       unless failures_and_errors.empty?
         puts
