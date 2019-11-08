@@ -23,6 +23,20 @@ describe "expectations" do
     it { 100_000.should_not be_a(String) }
     it { 100_000.should be_a(Int32) }
     it { "Hello".should_not be_a(Int32) }
+
+    it "restricts type on should" do
+      x = 1 || 'a'
+      y = x.should be_a(Int32)
+      typeof(x).should eq(Int32 | Char)
+      typeof(y).should eq(Int32)
+    end
+
+    it "restricts type on should_not" do
+      x = 1 || 'a'
+      y = x.should_not be_a(Char)
+      typeof(x).should eq(Int32 | Char)
+      typeof(y).should eq(Int32)
+    end
   end
 
   describe "be_close" do
@@ -34,6 +48,13 @@ describe "expectations" do
     it { nil.should be_nil }
     it { "".should_not be_nil }
     it { 10.should_not be_nil }
+
+    it "restricts type on should_not" do
+      x = 1 || nil
+      y = x.should_not be_nil
+      typeof(x).should eq(Int32?)
+      typeof(y).should eq(Int32)
+    end
   end
 
   describe "be_falsey" do
