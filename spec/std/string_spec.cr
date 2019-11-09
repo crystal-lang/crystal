@@ -2516,8 +2516,7 @@ describe "String" do
     it "of a single string" do
       string = "hello"
       interpolated = String.interpolation(string)
-      interpolated.should_not be(string)
-      interpolated.should eq(string)
+      interpolated.should be(string)
     end
 
     it "of a single non-string" do
