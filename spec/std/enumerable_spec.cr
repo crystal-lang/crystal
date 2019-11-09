@@ -569,6 +569,8 @@ describe "Enumerable" do
   describe "reduce" do
     it { [1, 2, 3].reduce { |memo, i| memo + i }.should eq(6) }
     it { [1, 2, 3].reduce(10) { |memo, i| memo + i }.should eq(16) }
+    it { [1, 2, 3].reduce([] of Int32) { |memo, i| memo.unshift(i) }.should eq([3, 2, 1]) }
+    it { [[0, 1], [2, 3], [4, 5]].reduce([] of Int32) { |memo, i| memo.concat(i) }.should eq([0, 1, 2, 3, 4, 5]) }
 
     it "raises if empty" do
       expect_raises Enumerable::EmptyError do

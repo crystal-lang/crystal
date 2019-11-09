@@ -628,7 +628,8 @@ module Enumerable(T)
   # Just like the other variant, but you can set the initial value of the accumulator.
   #
   # ```
-  # [1, 2, 3, 4, 5].reduce(10) { |acc, i| acc + i } # => 25
+  # [1, 2, 3, 4, 5].reduce(10) { |acc, i| acc + i }             # => 25
+  # [1, 2, 3].reduce([] of Int32) { |memo, i| memo.unshift(i) } # => [3, 2, 1]
   # ```
   def reduce(memo)
     each do |elem|
