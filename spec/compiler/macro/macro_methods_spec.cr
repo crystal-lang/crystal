@@ -1124,9 +1124,17 @@ module Crystal
           end
         end
 
+        describe "generic type" do
+          it "includes the generic_args of the type by default" do
+            assert_macro("klass", "{{klass.name}}", "SomeType(A, B)") do |program|
+              [TypeNode.new(GenericClassType.new(program, program, "SomeType", program.object, ["A", "B"]))] of ASTNode
+            end
+          end
+        end
+
         describe :generic_args do
           describe true do
-            it "includes the generic_args of the type " do
+            it "includes the generic_args of the type" do
               assert_macro("klass", "{{klass.name(generic_args: true)}}", "SomeType(A, B)") do |program|
                 [TypeNode.new(GenericClassType.new(program, program, "SomeType", program.object, ["A", "B"]))] of ASTNode
               end
@@ -1134,7 +1142,7 @@ module Crystal
           end
 
           describe false do
-            it "does not include the generic_args of the type " do
+            it "does not include the generic_args of the type" do
               assert_macro("klass", "{{klass.name(generic_args: false)}}", "SomeType") do |program|
                 [TypeNode.new(GenericClassType.new(program, program, "SomeType", program.object, ["A", "B"]))] of ASTNode
               end
