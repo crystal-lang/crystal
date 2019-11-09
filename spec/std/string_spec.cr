@@ -229,6 +229,18 @@ describe "String" do
     it "gets byte_slice with negative index" do
       "hello".byte_slice(-2, 3).should eq("lo")
     end
+
+    it "gets byte_slice(Int) with with start out of bounds" do
+      expect_raises(IndexError) do
+        "hello".byte_slice(10)
+      end
+    end
+
+    it "gets byte_slice(Int) with with start out of bounds" do
+      expect_raises(IndexError) do
+        "hello".byte_slice(-10)
+      end
+    end
   end
 
   describe "to_i" do

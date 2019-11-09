@@ -953,8 +953,10 @@ class String
     end
   end
 
-  def byte_slice(start : Int)
-    byte_slice start, bytesize - start
+  def byte_slice(start : Int) : String
+    count = bytesize - start
+    raise IndexError.new if start > 0 && count < 0
+    byte_slice start, count
   end
 
   # Returns a substring starting from the *start* byte.
