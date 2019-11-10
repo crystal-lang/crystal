@@ -96,6 +96,9 @@ struct Crystal::ExhaustivenessChecker
           else
             found_false = true
           end
+        when NilLiteral
+          # A nil literal is the same as matching the Nil type
+          cond_types.reject! &.nil_type?
         else
           # Nothing to do
         end

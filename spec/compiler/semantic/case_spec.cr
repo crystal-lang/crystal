@@ -204,4 +204,34 @@ describe "Semantic: case" do
         end
       )
   end
+
+  it "checks exhaustiveness of nil type with nil literal" do
+    assert_no_warnings %(
+        struct Nil
+          def ===(other)
+            true
+          end
+        end
+
+        case nil
+        when nil
+        end
+      )
+  end
+
+  it "checks exhaustiveness of nilable type with nil literal" do
+    assert_no_warnings %(
+        struct Nil
+          def ===(other)
+            true
+          end
+        end
+
+        a = 1 || nil
+        case a
+        when nil
+        when Int32
+        end
+      )
+  end
 end
