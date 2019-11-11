@@ -39,8 +39,8 @@ class Channel(T)
     abstract def lock
     abstract def unlock
 
-    def create_context_and_wait(state_ptr)
-      context = SelectContext.new(state_ptr, self)
+    def create_context_and_wait(shared_state)
+      context = SelectContext.new(shared_state, self)
       self.wait(context)
       context
     end
@@ -69,8 +69,20 @@ class Channel(T)
     Done   = 2
   end
 
+  private class SelectContextSharedState
+    @state : Atomic(SelectState)
+
+    def initialize(value : SelectState)
+      @state = Atomic(SelectState).new(value)
+    end
+
+    def compare_and_set(cmp : SelectState, new : SelectState) : {SelectState, Bool}
+      @state.compare_and_set(SelectState::Active, SelectState::Done)
+    end
+  end
+
   private class SelectContext(S)
-    @state : Pointer(Atomic(SelectState))
+    @state : SelectContextSharedState
     property action : SelectAction(S)
     @activated = false
 
@@ -82,7 +94,7 @@ class Channel(T)
     end
 
     def try_trigger : Bool
-      _, succeed = @state.value.compare_and_set(SelectState::Active, SelectState::Done)
+      _, succeed = @state.compare_and_set(SelectState::Active, SelectState::Done)
       if succeed
         @activated = true
       end
@@ -413,11 +425,11 @@ class Channel(T)
       return ops.size, NotReady.new
     end
 
-    # Because channel#close may clean up a long list, `select_context.try_trigger` may
+    # Because `channel#close` may clean up a long list, `select_context.try_trigger` may
     # be called after the select return. In order to prevent invalid address access,
     # the state is allocated in the heap.
-    state_ptr = Pointer.malloc(1, Atomic(SelectState).new(SelectState::Active))
-    contexts = ops.map &.create_context_and_wait(state_ptr)
+    shared_state = SelectContextSharedState.new(SelectState::Active)
+    contexts = ops.map &.create_context_and_wait(shared_state)
 
     ops_locks.each &.unlock
     Crystal::Scheduler.reschedule
