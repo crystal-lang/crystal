@@ -547,9 +547,9 @@ class Process
 
   # Permanently transition to another account.
   #
-  # user_id's, group_id's and groups are changed to the account provided.
+  # user_ids, group_ids and groups are changed to the account provided.
   #
-  # Call `chroot` or other privileged operations becore calling this method.
+  # Call `chroot` or other privileged operations before calling this method.
   #
   # Example:
   #
@@ -568,7 +568,7 @@ class Process
     become_user user.id.to_i
   end
 
-  # Attempts to change real, effective, and saved user id's of the current process.
+  # Changes the real, effective, and saved user ids of the current process.
   # When uid != 0 this is a one way transition.
   #
   # Example:
