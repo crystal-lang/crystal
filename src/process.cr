@@ -514,36 +514,35 @@ class Process
   end
 
   # Returns the **real** user id of the current process.
-  def self.user_id : LibC::UidT
-    LibC.getuid
+  def self.user_id
+    LibC.getuid.to_i
   end
 
   # Returns the **effective** user id of the current process.
-  def self.effective_user_id : LibC::UidT
-    LibC.geteuid
+  def self.effective_user_id
+    LibC.geteuid.to_i
   end
 
   # Returns the **real** group id of the current process.
-  def self.group_id : LibC::GidT
-    LibC.getgid
+  def self.group_id
+    LibC.getgid.to_i
   end
 
   # Returns the **effective** group id of the current process.
-  def self.effective_group_id : LibC::GidT
-    LibC.getegid
+  def self.effective_group_id
+    LibC.getegid.to_i
   end
 
-  # :nodoc:
-  UID_DEFAULT = if LibC::UidT.new(0).is_a?(Int::Signed)
-                  LibC::UidT.new(-1)
-                else
-                  LibC::UidT::MAX
-                end
-  GID_DEFAULT = if LibC::GidT.new(0).is_a?(Int::Signed)
-                  LibC::GidT.new(-1)
-                else
-                  LibC::GidT::MAX
-                end
+  private UID_DEFAULT = if LibC::UidT.new(0).is_a?(Int::Signed)
+                          LibC::UidT.new(-1)
+                        else
+                          LibC::UidT::MAX
+                        end
+  private GID_DEFAULT = if LibC::GidT.new(0).is_a?(Int::Signed)
+                          LibC::GidT.new(-1)
+                        else
+                          LibC::GidT::MAX
+                        end
 
   # Permanently transition to another account.
   #
@@ -569,45 +568,48 @@ class Process
   end
 
   # Changes the real, effective, and saved user ids of the current process.
-  # When uid != 0 this is a one way transition.
   #
   # Example:
   #
   # ```
   # Process.become_user 0 # Changes real, effective, saved user id to 0 (root).
   # ```
-  def self.become_user(uid : LibC::UidT)
-    become_user ruid: uid, euid: uid, suid: uid
+  def self.become_user(uid : Int)
+    become_user real: uid, effective: uid, saved: uid
   end
 
   # Attempts to change real, effective, and/or saved user id's of the current process.
   # Uid's not supplied in arguments are kept at their current values (if supported).
   # Explicit setting of saved id's is not supported on all platforms.
   #
-  # * *ruid*: real user id.
-  # * *euid*: effective user id.
-  # * *suid*: saved user id.
+  # * *real*: real user id (ruid).
+  # * *effective*: effective user id (euid).
+  # * *saved*: saved user id (suid).
   #
   # Example:
   #
   # ```
-  # Process.become_user ruid: 1004, euid: 0 # Changes real and saved user id to 1004 and effective to 0 (root)
-  # Process.become_user euid: 0             # Only changes the euid.
-  # Process.become_user suid: 0             # Platform specific and may not function.
+  # Process.become_user real: 1004, effective: 0 # Changes real and saved user id to 1004 and effective to 0 (root)
+  # Process.become_user effective: 0             # Only changes the effective.
+  # Process.become_user saved: 0                 # Platform specific and may not function.
   # ```
-  def self.become_user(*, ruid : LibC::UidT = UID_DEFAULT, euid : LibC::UidT = UID_DEFAULT, suid : LibC::UidT = ruid)
+  def self.become_user(*, real : Int? = nil, effective : Int? = nil, saved : Int? = nil)
+    real ||= UID_DEFAULT
+    effective ||= UID_DEFAULT
+    saved ||= real
+
     {% if LibC.has_method?(:setresuid) %}
-      if LibC.setresuid(ruid, euid, suid) != 0
-        raise Errno.new("setresuid failed")
+      if LibC.setresuid(real, effective, saved) != 0
+        raise Errno.new("setresaved failed")
       end
     {% else %}
-      if suid != UID_DEFAULT && ruid == UID_DEFAULT && euid == UID_DEFAULT
+      if saved != UID_DEFAULT && real == UID_DEFAULT && effective == UID_DEFAULT
         Errno.value = Errno::ENOSYS
         raise Errno.new("only setting the saved uid not supported")
       end
 
-      if LibC.setreuid(ruid, euid) != 0
-        raise Errno.new("setreuid failed")
+      if LibC.setreuid(real, effective) != 0
+        raise Errno.new("setreffective failed")
       end
     {% end %}
     self
@@ -620,38 +622,42 @@ class Process
   # ```
   # Process.become_group 5 # Changes real, effective, saved group id to 5.
   # ```
-  def self.become_group(gid : LibC::GidT)
-    become_group rgid: gid, egid: gid, sgid: gid
+  def self.become_group(gid : Int)
+    become_group real: gid, effective: gid, saved: gid
   end
 
   # Attempts to change real, effective, and/or saved group id's of the current process.
   # Gid's not supplied in arguments are kept at their current values (if supported).
   # Explicit setting of saved id's is not supported on all platforms.
   #
-  # * *rgid*: real group id.
-  # * *egid*: effective group id.
-  # * *sgid*: saved group id.
+  # * *real*: real group id (rgid).
+  # * *effective*: effective group id (egid).
+  # * *saved*: saved group id (sgid).
   #
   # Example:
   #
   # ```
-  # Process.become_group rgid 1, egid: 2 # Changes real and saved group id to 1, effective to 2.
-  # Process.become_group egid: 0         # Only changes the egid.
-  # Process.become_group sgid: 0         # Platform specific and may not function.
+  # Process.become_group real 1, effective: 2 # Changes real and saved group id to 1, effective to 2.
+  # Process.become_group effective: 0         # Only changes the effective.
+  # Process.become_group saved: 0             # Platform specific and may not function.
   # ```
-  def self.become_group(*, rgid : LibC::GidT = GID_DEFAULT, egid : LibC::GidT = GID_DEFAULT, sgid : LibC::GidT = rgid)
-    {% if LibC.has_method?(:setresgid) %}
-      if LibC.setresgid(rgid, egid, sgid) != 0
-        raise Errno.new("setresgid failed")
+  def self.become_group(*, real : Int? = nil, effective : Int? = nil, saved : Int? = nil)
+    real ||= GID_DEFAULT
+    effective ||= GID_DEFAULT
+    saved ||= real
+
+    {% if LibC.has_method?(:setresaved) %}
+      if LibC.setresgid(real, effective, saved) != 0
+        raise Errno.new("setresaved failed")
       end
     {% else %}
-      if sgid != GID_DEFAULT && rgid == GID_DEFAULT && egid == GID_DEFAULT
+      if saved != GID_DEFAULT && real == GID_DEFAULT && effective == GID_DEFAULT
         Errno.value = Errno::ENOSYS
         raise Errno.new("only setting the saved gid not supported")
       end
 
-      if LibC.setregid(rgid, egid) != 0
-        raise Errno.new("setregid failed")
+      if LibC.setregid(real, effective) != 0
+        raise Errno.new("setreffective failed")
       end
     {% end %}
     self

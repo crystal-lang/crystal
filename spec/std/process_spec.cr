@@ -101,31 +101,37 @@ describe Process do
       euid = Process.effective_user_id
 
       # Leave ruid at 0 to switch back
-      Process.become_user(ruid: 0, euid: 8888, suid: 9999)
-      Process.user_id.should eq 0
-      Process.effective_user_id.should eq 8888
-      Process.become_user(ruid: ruid, euid: euid)
+      begin
+        Process.become_user(real: 0, effective: 8888, saved: 9999)
+        Process.user_id.should eq 0
+        Process.effective_user_id.should eq 8888
+      ensure
+        Process.become_user(real: ruid, effective: euid)
+      end
     end
 
     it ".become_group as root" do
       rgid = Process.group_id
       egid = Process.effective_group_id
 
-      Process.become_group(rgid: 7777, egid: 8888, sgid: 9999)
-      Process.group_id.should eq 7777
-      Process.effective_group_id.should eq 8888
-      Process.become_group(rgid: rgid, egid: egid)
+      begin
+        Process.become_group(real: 7777, effective: 8888, saved: 9999)
+        Process.group_id.should eq 7777
+        Process.effective_group_id.should eq 8888
+      ensure
+        Process.become_group(real: rgid, effective: egid)
+      end
     end
   else
     it ".become_user non-root" do
       expect_raises_errno(Errno::EPERM) do
-        Process.become_user(ruid: 0, euid: 8888, suid: 9999)
+        Process.become_user(real: 0, effective: 8888, saved: 9999)
       end
     end
 
     it ".become_group non-root" do
       expect_raises_errno(Errno::EPERM) do
-        Process.become_group(rgid: 7777, egid: 8888, sgid: 9999)
+        Process.become_group(real: 7777, effective: 8888, saved: 9999)
       end
     end
   end
@@ -133,7 +139,7 @@ describe Process do
   if !LibC.responds_to?(:setresuid) && LibC.responds_to?(:setreuid)
     it ".become_user raises when only setting suid on unsupported platforms" do
       expect_raises_errno(Errno::ENOSYS) do
-        Process.become_user(suid: 55)
+        Process.become_user(saved: 55)
       end
     end
   end
@@ -141,7 +147,7 @@ describe Process do
   if !LibC.responds_to?(:setresgid) && LibC.responds_to?(:setregid)
     it ".become_group raises when only setting sgid on unsupported platforms" do
       expect_raises_errno(Errno::ENOSYS) do
-        Process.become_group(sgid: 55)
+        Process.become_group(saved: 55)
       end
     end
   end
