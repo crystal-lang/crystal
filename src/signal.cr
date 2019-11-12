@@ -242,7 +242,9 @@ module Crystal::Signal
       LibC.signal(signal, LibC::SIG_DFL) if signal.set?
     end
   ensure
-    @@pipe.each(&.close)
+    {% unless flag?(:preview_mt) %}
+      @@pipe.each(&.close)
+    {% end %}
   end
 
   private def self.reader
