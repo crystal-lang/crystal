@@ -338,14 +338,17 @@ class File < IO::FileDescriptor
   # Converts *path* to an absolute path. Relative paths are
   # referenced from the current working directory of the process unless
   # *dir* is given, in which case it will be used as the starting point.
+  # "~" is expanded to the value passed to *home*.
+  # If it is `false` (default), home is not expanded.
+  # If `true`, it is expanded to the user's home directory (`Path.home`).
   #
   # ```
-  # File.expand_path("foo")             # => "/home/.../foo"
-  # File.expand_path("~/crystal/foo")   # => "/home/crystal/foo"
-  # File.expand_path("baz", "/foo/bar") # => "/foo/bar/baz"
+  # File.expand_path("foo")                 # => "/home/.../foo"
+  # File.expand_path("~/foo", home: "/bar") # => "/bar/foo"
+  # File.expand_path("baz", "/foo/bar")     # => "/foo/bar/baz"
   # ```
-  def self.expand_path(path, dir = nil) : String
-    Path.new(path).expand(dir || Dir.current).to_s
+  def self.expand_path(path, dir = nil, *, home = false) : String
+    Path.new(path).expand(dir || Dir.current, home: home).to_s
   end
 
   class BadPatternError < Exception
