@@ -645,7 +645,11 @@ module Crystal
         end
       when "camelcase"
         interpret_argless_method(method, args) do
-          lower = ((nargs = named_args) && (lower_arg = nargs["lower"]?)) ? lower_arg : BoolLiteral.new(false)
+          lower = if named_args && (lower_arg = named_args["lower"]?)
+                    lower_arg
+                  else
+                    BoolLiteral.new false
+                  end
 
           raise "named argument 'lower' to StringLiteral#camelcase must be a bool, not #{lower.class_desc}" unless lower.is_a?(BoolLiteral)
 
