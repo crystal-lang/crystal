@@ -105,7 +105,8 @@ class Crystal::Codegen::Target
     environment_parts.includes?("gnueabihf") || environment_parts.includes?("musleabihf")
   end
 
-  def to_target_machine(cpu = "", features = "", release = false) : LLVM::TargetMachine
+  def to_target_machine(cpu = "", features = "", release = false,
+                        code_model = LLVM::CodeModel::Default) : LLVM::TargetMachine
     case @architecture
     when "i386", "x86_64"
       LLVM.init_x86
@@ -127,7 +128,7 @@ class Crystal::Codegen::Target
     opt_level = release ? LLVM::CodeGenOptLevel::Aggressive : LLVM::CodeGenOptLevel::None
 
     target = LLVM::Target.from_triple(self.to_s)
-    target.create_target_machine(self.to_s, cpu: cpu, features: features, opt_level: opt_level).not_nil!
+    target.create_target_machine(self.to_s, cpu: cpu, features: features, opt_level: opt_level, code_model: code_model).not_nil!
   end
 
   def to_s(io : IO) : Nil
