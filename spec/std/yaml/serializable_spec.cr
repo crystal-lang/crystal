@@ -288,7 +288,7 @@ end
 abstract class YAMLShape
   include YAML::Serializable
 
-  use_discriminator "type", {point: YAMLPoint, circle: YAMLCircle}
+  use_yaml_discriminator "type", {point: YAMLPoint, circle: YAMLCircle}
 
   property type : String
 end
@@ -808,7 +808,7 @@ describe "YAML::Serializable" do
     it { YAMLAttrModuleTest2.from_yaml(%({"bar": 30, "moo": 40})).to_tuple.should eq({40, 15, 30}) }
   end
 
-  describe "use_discriminator" do
+  describe "use_yaml_discriminator" do
     it "deserializes with discriminator" do
       point = YAMLShape.from_yaml(%({"type": "point", "x": 1, "y": 2})).as(YAMLPoint)
       point.x.should eq(1)

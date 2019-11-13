@@ -122,7 +122,7 @@ module YAML
   # [GeoJSON](https://tools.ietf.org/html/rfc7946) each object has a "type"
   # field, and the rest of the fields, and their meaning, depend on its value.
   #
-  # You can use `YAML::Serializable.use_discriminator` for this use case.
+  # You can use `YAML::Serializable.use_yaml_discriminator` for this use case.
   module Serializable
     annotation Options
     end
@@ -347,7 +347,7 @@ module YAML
     # abstract class Shape
     #   include YAML::Serializable
     #
-    #   use_discriminator "type", {point: Point, circle: Circle}
+    #   use_yaml_discriminator "type", {point: Point, circle: Circle}
     #
     #   property type : String
     # end
@@ -376,7 +376,7 @@ module YAML
     #   radius: 3
     # )) # => #<Circle:0x106a4cea0 @type="circle", @x=1, @y=2, @radius=3>
     # ```
-    macro use_discriminator(field, mapping)
+    macro use_yaml_discriminator(field, mapping)
       {% unless mapping.is_a?(HashLiteral) || mapping.is_a?(NamedTupleLiteral) %}
         {% mapping.raise "mapping argument must be a HashLiteral or a NamedTupleLiteral, not #{mapping.class_name.id}" %}
       {% end %}
@@ -387,7 +387,7 @@ module YAML
         end
 
         unless node.is_a?(YAML::Nodes::Mapping)
-          node.raise "expected YAML mapping, not #{node.class}" 
+          node.raise "expected YAML mapping, not #{node.class}"
         end
 
         node.each do |key, value|

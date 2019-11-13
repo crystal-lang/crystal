@@ -331,7 +331,7 @@ end
 abstract class JSONShape
   include JSON::Serializable
 
-  use_discriminator "type", {point: JSONPoint, circle: JSONCircle}
+  use_json_discriminator "type", {point: JSONPoint, circle: JSONCircle}
 
   property type : String
 end
@@ -830,7 +830,7 @@ describe "JSON mapping" do
     JSONAttrPersonWithYAMLInitializeHook.from_yaml(person.to_yaml).msg.should eq "Hello Vasya"
   end
 
-  describe "use_discriminator" do
+  describe "use_json_discriminator" do
     it "deserializes with discriminator" do
       point = JSONShape.from_json(%({"type": "point", "x": 1, "y": 2})).as(JSONPoint)
       point.x.should eq(1)

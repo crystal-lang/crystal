@@ -123,7 +123,7 @@ module JSON
   # [GeoJSON](https://tools.ietf.org/html/rfc7946) each object has a "type"
   # field, and the rest of the fields, and their meaning, depend on its value.
   #
-  # You can use `JSON::Serializable.use_discriminator` for this use case.
+  # You can use `JSON::Serializable.use_json_discriminator` for this use case.
   module Serializable
     annotation Options
     end
@@ -366,7 +366,7 @@ module JSON
     # abstract class Shape
     #   include JSON::Serializable
     #
-    #   use_discriminator "type", {point: Point, circle: Circle}
+    #   use_json_discriminator "type", {point: Point, circle: Circle}
     #
     #   property type : String
     # end
@@ -385,7 +385,7 @@ module JSON
     # Shape.from_json(%({"type": "point", "x": 1, "y": 2}))               # => #<Point:0x10373ae20 @type="point", @x=1, @y=2>
     # Shape.from_json(%({"type": "circle", "x": 1, "y": 2, "radius": 3})) # => #<Circle:0x106a4cea0 @type="circle", @x=1, @y=2, @radius=3>
     # ```
-    macro use_discriminator(field, mapping)
+    macro use_json_discriminator(field, mapping)
       {% unless mapping.is_a?(HashLiteral) || mapping.is_a?(NamedTupleLiteral) %}
         {% mapping.raise "mapping argument must be a HashLiteral or a NamedTupleLiteral, not #{mapping.class_name.id}" %}
       {% end %}
