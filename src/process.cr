@@ -513,22 +513,22 @@ class Process
     io.close if io
   end
 
-  # Returns the **real** user id of the current process.
+  # Returns the real user id of the current process.
   def self.user_id
     LibC.getuid.to_i
   end
 
-  # Returns the **effective** user id of the current process.
+  # Returns the effective user id of the current process.
   def self.effective_user_id
     LibC.geteuid.to_i
   end
 
-  # Returns the **real** group id of the current process.
+  # Returns the real group id of the current process.
   def self.group_id
     LibC.getgid.to_i
   end
 
-  # Returns the **effective** group id of the current process.
+  # Returns the effective group id of the current process.
   def self.effective_group_id
     LibC.getegid.to_i
   end
