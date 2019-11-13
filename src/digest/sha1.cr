@@ -21,9 +21,6 @@ class Digest::SHA1 < Digest::Base
   end
 
   def reset : self
-    @message_block.each_index do |i|
-      @message_block[i] = 0_u8
-    end
     @length_low = 0_u32
     @length_high = 0_u32
     @message_block_index = 0
