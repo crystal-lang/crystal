@@ -82,7 +82,7 @@ module Crystal
       @last = Nop.new
     end
 
-    def define_var(name, value)
+    def define_var(name : String, value : ASTNode) : Nil
       @vars[name] = value
     end
 
