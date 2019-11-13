@@ -600,7 +600,7 @@ class Process
 
     {% if LibC.has_method?(:setresuid) %}
       if LibC.setresuid(real, effective, saved) != 0
-        raise Errno.new("setresaved failed")
+        raise Errno.new("setresuid failed")
       end
     {% else %}
       if saved != UID_DEFAULT && real == UID_DEFAULT && effective == UID_DEFAULT
@@ -609,7 +609,7 @@ class Process
       end
 
       if LibC.setreuid(real, effective) != 0
-        raise Errno.new("setreffective failed")
+        raise Errno.new("setreuid failed")
       end
     {% end %}
     self
@@ -646,9 +646,9 @@ class Process
     effective ||= GID_DEFAULT
     saved ||= real
 
-    {% if LibC.has_method?(:setresaved) %}
+    {% if LibC.has_method?(:setresgid) %}
       if LibC.setresgid(real, effective, saved) != 0
-        raise Errno.new("setresaved failed")
+        raise Errno.new("setresgid failed")
       end
     {% else %}
       if saved != GID_DEFAULT && real == GID_DEFAULT && effective == GID_DEFAULT
@@ -657,7 +657,7 @@ class Process
       end
 
       if LibC.setregid(real, effective) != 0
-        raise Errno.new("setreffective failed")
+        raise Errno.new("setregid failed")
       end
     {% end %}
     self
