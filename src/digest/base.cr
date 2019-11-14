@@ -1,7 +1,7 @@
 require "base64"
 
 module Digest
-  class ApiMisuse < Exception
+  class DigestFinalizedError < Exception
   end
 end
 
