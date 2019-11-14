@@ -1,5 +1,10 @@
 require "base64"
 
+module Digest
+  class ApiMisuse < Exception
+  end
+end
+
 abstract class Digest::Base
   macro inherited
     # Returns the hash of *data*. *data* must respond to `#to_slice`.
@@ -91,27 +96,48 @@ abstract class Digest::Base
     end
   end
 
+  @finished = false
+
   def update(data) : self
     update data.to_slice
   end
 
+  # Returns the final digest output.  Only call once.
   def final : Bytes
     dst = Bytes.new digest_size
     final dst
   end
 
   # Dups and finishes the digest.
+  @[Deprecated("Use `final` instead.")]
   def digest : Bytes
     dup.final
   end
 
   # Returns a hexadecimal-encoded digest.
+  @[Deprecated("Use `final.hexstring` instead.")]
   def hexdigest : String
     digest.hexstring
   end
 
+  protected def check_finished : Nil
+    raise ApiMisuse.new("finish already called") if @finished
+  end
+
+  protected def set_finished : Nil
+    check_finished
+    @finished = true
+  end
+
+  # Override.
+  def reset : self
+    @finished = false
+    self
+  end
+
+  # When creating new digest class call #check_finished before mutating.
   abstract def update(data : Bytes) : self
+  # When creating new digest class call #set_finished before mutating.
   abstract def final(dst : Bytes) : Bytes
-  abstract def reset : self
   abstract def digest_size : Int32
 end

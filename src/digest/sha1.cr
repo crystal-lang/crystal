@@ -21,6 +21,8 @@ class Digest::SHA1 < Digest::Base
   end
 
   def reset : self
+    super
+
     @length_low = 0_u32
     @length_high = 0_u32
     @message_block_index = 0
@@ -33,6 +35,8 @@ class Digest::SHA1 < Digest::Base
   end
 
   def update(data : Bytes) : self
+    check_finished
+
     data.each do |byte|
       @message_block[@message_block_index] = byte & 0xFF_u8
       @message_block_index += 1
@@ -53,6 +57,8 @@ class Digest::SHA1 < Digest::Base
   end
 
   def final(dst : Bytes) : Bytes
+    set_finished
+
     pad_message
 
     @length_low = 0_u32

@@ -28,6 +28,14 @@ describe Digest::SHA1 do
       digest.hexdigest.should eq(hexdigest)
     end
 
+    it "resets" do
+      digest = Digest::SHA1.new
+      digest.final
+      expect_raises(Digest::ApiMisuse) do
+        digest.final
+      end
+    end
+
     it "does digest for #{string.inspect} in a block" do
       bytes = Digest::SHA1.digest do |ctx|
         string.each_char do |chr|

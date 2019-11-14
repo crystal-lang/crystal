@@ -47,6 +47,14 @@ describe Digest::MD5 do
     digest.hexdigest.should eq("acbd18db4cc2f85cedef654fccc4a4d8")
   end
 
+  it "can't call final twice" do
+    digest = Digest::MD5.new
+    digest.final
+    expect_raises(Digest::ApiMisuse) do
+      digest.final
+    end
+  end
+
   it "return the digest size" do
     Digest::MD5.new.digest_size.should eq 16
   end
