@@ -381,32 +381,32 @@ module YAML
         {% mapping.raise "mapping argument must be a HashLiteral or a NamedTupleLiteral, not #{mapping.class_name.id}" %}
       {% end %}
 
-      private def self.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node)
+      def self.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node)
         ctx.read_alias(node, \{{@type}}) do |obj|
           return obj
         end
-
-        unless node.is_a?(YAML::Nodes::Mapping)
-          node.raise "expected YAML mapping, not #{node.class}"
-        end
-
-        node.each do |key, value|
-          next unless key.is_a?(YAML::Nodes::Scalar) && value.is_a?(YAML::Nodes::Scalar)
-          next unless key.value == {{field.id.stringify}}
-
-          discriminator_value = value.value
-          case discriminator_value
-          {% for key, value in mapping %}
-            when {{key.id.stringify}}
-              return {{value.id}}.new(ctx, node)
-          {% end %}
-          else
-            node.raise "Unknown '{{field.id}}' discriminator value: #{discriminator_value.inspect}"
-          end
-        end
-
-        node.raise "Missing YAML discriminator field '{{field.id}}'"
+        YAML::Serializable.discriminate(ctx, node, {{field}}, {{mapping}})
       end
+    end
+
+    def self.discriminate(ctx : YAML::ParseContext, node : YAML::Nodes::Node, field, mapping)
+      unless node.is_a?(YAML::Nodes::Mapping)
+        node.raise "expected YAML mapping, not #{node.class}"
+      end
+
+      node.each do |key, value|
+        next unless key.is_a?(YAML::Nodes::Scalar) && value.is_a?(YAML::Nodes::Scalar)
+        next unless key.value == field
+
+        discriminator_value = value.value
+        if target = mapping[discriminator_value]?
+          return target.new(ctx, node)
+        else
+          node.raise "Unknown '#{field}' discriminator value: #{discriminator_value.inspect}"
+        end
+      end
+
+      node.raise "Missing YAML discriminator field '#{field}'"
     end
   end
 end
