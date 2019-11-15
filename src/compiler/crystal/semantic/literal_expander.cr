@@ -595,6 +595,7 @@ module Crystal
       check_implicit_obj IsA
       check_implicit_obj Cast
       check_implicit_obj NilableCast
+      check_implicit_obj Not
 
       case cond
       when NilLiteral
@@ -620,9 +621,14 @@ module Crystal
 
     macro check_implicit_obj(type)
       if cond.is_a?({{type}})
-        if (obj = cond.obj).is_a?(ImplicitObj)
+        cond_obj = cond.is_a?(Not) ? cond.exp : cond.obj
+        if cond_obj.is_a?(ImplicitObj)
           implicit_call = cond.clone.as({{type}})
-          implicit_call.obj = temp_var.clone
+          if implicit_call.is_a?(Not)
+            implicit_call.exp = temp_var.clone
+          else
+            implicit_call.obj = temp_var.clone
+          end
           return implicit_call
         end
       end
