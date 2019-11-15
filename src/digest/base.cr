@@ -1,7 +1,7 @@
 require "base64"
 
 module Digest
-  class DigestFinalizedError < Exception
+  class FinalizedError < Exception
   end
 end
 
@@ -121,7 +121,7 @@ abstract class Digest::Base
   end
 
   protected def check_finished : Nil
-    raise ApiMisuse.new("finish already called") if @finished
+    raise FinalizedError.new("finish already called") if @finished
   end
 
   protected def set_finished : Nil
@@ -135,9 +135,9 @@ abstract class Digest::Base
     self
   end
 
-  # When creating new digest class call #check_finished before mutating.
+  # When creating a new digest class call #check_finished before mutating.
   abstract def update(data : Bytes) : self
-  # When creating new digest class call #set_finished before mutating.
+  # When creating a new digest class call #set_finished before mutating.
   abstract def final(dst : Bytes) : Bytes
   abstract def digest_size : Int32
 end

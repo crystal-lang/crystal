@@ -10,28 +10,26 @@ describe Digest::SHA1 do
     {"a", "86f7e437faa5a7fce15d1ddcb9eaeaea377667b8", "hvfkN/qlp/zhXR3cuerq6jd2Z7g="},
     {"0123456701234567012345670123456701234567012345670123456701234567", "e0c094e867ef46c350ef54a7f59dd60bed92ae83", "4MCU6GfvRsNQ71Sn9Z3WC+2SroM="},
     {"fooø", "dcf4a1e3542b1a40a4ac2a3f7c92ffdb2d19812f", "3PSh41QrGkCkrCo/fJL/2y0ZgS8="},
-  ].each do |(string, hexdigest, base64digest)|
+  ].each do |(string, hexstring, base64digest)|
     it "does digest for #{string.inspect}" do
       bytes = Digest::SHA1.digest(string)
-      bytes.to_slice.hexstring.should eq(hexdigest)
+      bytes.hexstring.should eq(hexstring)
     end
 
     it "resets" do
       digest = Digest::SHA1.new
       digest.update string
-      digest.hexdigest.should eq(hexdigest)
-      # Check internal state isn't modified by first hexdigest call.
-      digest.hexdigest.should eq(hexdigest)
+      digest.final.hexstring.should eq(hexstring)
 
       digest.reset
       digest.update string
-      digest.hexdigest.should eq(hexdigest)
+      digest.final.hexstring.should eq(hexstring)
     end
 
-    it "resets" do
+    it "can't call #final more than once" do
       digest = Digest::SHA1.new
       digest.final
-      expect_raises(Digest::ApiMisuse) do
+      expect_raises(Digest::FinalizedError) do
         digest.final
       end
     end
@@ -43,11 +41,11 @@ describe Digest::SHA1 do
         end
       end
 
-      bytes.to_slice.hexstring.should eq(hexdigest)
+      bytes.hexstring.should eq(hexstring)
     end
 
-    it "does hexdigest for #{string.inspect}" do
-      Digest::SHA1.hexdigest(string).should eq(hexdigest)
+    it "does final.hexstring for #{string.inspect}" do
+      Digest::SHA1.hexdigest(string).should eq(hexstring)
     end
 
     it "does base64digest for #{string.inspect}" do

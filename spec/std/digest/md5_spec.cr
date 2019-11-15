@@ -38,19 +38,17 @@ describe Digest::MD5 do
   it "resets" do
     digest = Digest::MD5.new
     digest.update "foo"
-    digest.hexdigest.should eq("acbd18db4cc2f85cedef654fccc4a4d8")
-    # Check internal state isn't modified by first hexdigest call.
-    digest.hexdigest.should eq("acbd18db4cc2f85cedef654fccc4a4d8")
+    digest.final.hexstring.should eq("acbd18db4cc2f85cedef654fccc4a4d8")
 
     digest.reset
     digest.update "foo"
-    digest.hexdigest.should eq("acbd18db4cc2f85cedef654fccc4a4d8")
+    digest.final.hexstring.should eq("acbd18db4cc2f85cedef654fccc4a4d8")
   end
 
   it "can't call final twice" do
     digest = Digest::MD5.new
     digest.final
-    expect_raises(Digest::ApiMisuse) do
+    expect_raises(Digest::FinalizedError) do
       digest.final
     end
   end
