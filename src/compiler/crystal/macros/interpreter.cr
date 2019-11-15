@@ -366,7 +366,7 @@ module Crystal
         named_args = nil
 
         if nargs = node.named_args
-          named_args = nargs.each_with_object(Hash(String, ASTNode).new) { |arg, named_arg_hash| named_arg_hash[arg.name] = accept arg.value }
+          named_args = nargs.to_h { |arg| {arg.name, accept arg.value} }
         end
 
         begin
