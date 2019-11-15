@@ -1751,10 +1751,10 @@ describe "String" do
   end
 
   it "escapes with unicode" do
-    "\u{12}".codepoint_at(0).should eq(1 * 16 + 2)
-    "\u{A}".codepoint_at(0).should eq(10)
-    "\u{AB}".codepoint_at(0).should eq(10 * 16 + 11)
-    "\u{AB}1".codepoint_at(1).should eq('1'.ord)
+    "\u{12}".char_at(0).ord.should eq(1 * 16 + 2)
+    "\u{A}".char_at(0).ord.should eq(10)
+    "\u{AB}".char_at(0).ord.should eq(10 * 16 + 11)
+    "\u{AB}1".char_at(1).ord.should eq('1'.ord)
   end
 
   it "does char_at" do

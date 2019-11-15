@@ -901,11 +901,6 @@ class String
     byte_slice start, bytesize - start
   end
 
-  @[Deprecated("Use .char_at(index).ord instead")]
-  def codepoint_at(index)
-    char_at(index).ord
-  end
-
   def byte_at(index)
     byte_at(index) { raise IndexError.new }
   end
