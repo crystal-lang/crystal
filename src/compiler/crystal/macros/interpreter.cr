@@ -363,11 +363,7 @@ module Crystal
         end
 
         args = node.args.map { |arg| accept arg }
-        named_args = nil
-
-        if nargs = node.named_args
-          named_args = nargs.to_h { |arg| {arg.name, accept arg.value} }
-        end
+        named_args = node.named_args.try &.to_h { |arg| {arg.name, accept arg.value} }
 
         begin
           @last = receiver.interpret(node.name, args, named_args, node.block, self)
