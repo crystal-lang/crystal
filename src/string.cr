@@ -729,7 +729,7 @@ class String
   #
   # Negative indices can be used to start counting from the end of the string.
   #
-  # Raises `IndexError` if the *index* is out of range.
+  # Raises `IndexError` if the *index* is out of bounds.
   #
   # ```
   # "hello"[0]  # => 'h'
@@ -746,7 +746,7 @@ class String
   # as character indices. Indices can be negative to start
   # counting from the end of the string.
   #
-  # Raises `IndexError` if the range's start is out of range.
+  # Raises `IndexError` if the range's start is out of bounds.
   #
   # ```
   # "hello"[0..2]   # => "hel"
@@ -759,7 +759,7 @@ class String
     self[*Indexable.range_to_index_and_count(range, size)]
   end
 
-  # Like `#[Range]`, but returns `nil` if the range's start is out of range.
+  # Like `#[Range]`, but returns `nil` if the range's start is out of bounds.
   #
   # ```
   # "hello"[6..7]? # => nil
@@ -771,17 +771,17 @@ class String
 
   # Returns a substring starting from the *start* character of size *count*.
   #
-  # The *start* argument can be negative to start counting
+  # *start* can can be negative to start counting
   # from the end of the string.
   #
-  # Raises `IndexError` if the *start* index is out of range.
+  # Raises `IndexError` if the *start* index is out of bounds.
   #
   # Raises `ArgumentError` if *count* is negative.
   def [](start : Int, count : Int)
     self[start, count]? || raise IndexError.new
   end
 
-  # Like `#[Int, Int]` but returns `nil` if the *start* index is out of range.
+  # Like `#[Int, Int]` but returns `nil` if the *start* index is out of bounds.
   def []?(start : Int, count : Int)
     raise ArgumentError.new "Negative count: #{count}" if count < 0
     return byte_slice?(start, count) if ascii_only?
@@ -855,7 +855,7 @@ class String
   #
   # Negative indices can be used to start counting from the end of the string.
   #
-  # Raises `IndexError` if the *index* is out of range.
+  # Raises `IndexError` if the *index* is out of bounds.
   #
   # ```
   # "hello".char_at(0)  # => 'h'
@@ -873,8 +873,11 @@ class String
   # Negative indices can be used to start counting from the end of the string.
   #
   # ```
-  # "hello".char_at(4) { 'x' } # => 'o'
-  # "hello".char_at(5) { 'x' } # => 'x'
+  # "hello".char_at(4) { 'x' }  # => 'o'
+  # "hello".char_at(5) { 'x' }  # => 'x'
+  # "hello".char_at(-1) { 'x' } # => 'o'
+  # "hello".char_at(-5) { 'x' } # => 'h'
+  # "hello".char_at(-6) { 'x' } # => 'x'
   # ```
   def char_at(index : Int, &)
     if ascii_only?
@@ -897,18 +900,18 @@ class String
     end
   end
 
-  # Returns a new string consisted of *count* bytes starting at *start* byte.
+  # Returns a new string built from *count* bytes starting at *start* byte.
   #
-  # The *start* argument can be negative to start counting
+  # *start* can can be negative to start counting
   # from the end of the string.
-  # If `count` is bigger than number of bytes from *start* to `bytelen`,
+  # If *count* is bigger than the number of bytes from *start* to `#bytesize`,
   # only remaining bytes are returned.
   #
   # Be careful when working with multibyte characters - they can be splitted,
   # which may lead to invalid UTF-8 values. These,
   # when asked as chars, will use the unicode replacement �.
   #
-  # Raises `IndexError` if the *start* index is out of range.
+  # Raises `IndexError` if the *start* index is out of bounds.
   #
   # Raises `ArgumentError` if *count* is negative.
   #
@@ -931,7 +934,17 @@ class String
     byte_slice?(start, count) || raise IndexError.new
   end
 
-  # Like `byte_slice(Int, Int)` but returns `Nil` if the *start* index is out of range.
+  # Like `byte_slice(Int, Int)` but returns `Nil` if the *start* index is out of bounds.
+  #
+  # Raises `ArgumentError` if *count* is negative.
+  #
+  # ```
+  # "hello".byte_slice(0, 2)   # => "he"
+  # "hello".byte_slice(0, 100) # => "hello"
+  # "hello".byte_slice(6, 2)   # => nil
+  # "hello".byte_slice(-6, 2)  # => nil
+  # "hello".byte_slice(0, -2)  # raises ArgumentError
+  # ```
   def byte_slice?(start : Int, count : Int) : String | Nil
     raise ArgumentError.new "Negative count" if count < 0
 
@@ -953,21 +966,15 @@ class String
     end
   end
 
-  def byte_slice(start : Int) : String
-    count = bytesize - start
-    raise IndexError.new if start > 0 && count < 0
-    byte_slice start, count
-  end
-
   # Returns a substring starting from the *start* byte.
   #
-  # The *start* argument can be negative to start counting
+  # *start* can can be negative to start counting
   # from the end of the string.
   #
   # Be careful when working with multibyte characters - they can be splitted
   # which may lead to unexpected result.
   #
-  # Raises `IndexError` if *start* index is out of range.
+  # Raises `IndexError` if *start* index is out of bounds.
   #
   # ```
   # "hello".byte_slice(0)  # => "hello"
@@ -978,9 +985,17 @@ class String
   # "hello".byte_slice(6)  # raises IndexError
   # "hello".byte_slice(-6) # raises IndexError
   # ```
-  # Returns the codepoint of `Char` at the given *index*.
+  def byte_slice(start : Int) : String
+    count = bytesize - start
+    raise IndexError.new if start > 0 && count < 0
+    byte_slice start, count
+  end
+
+  # Returns the codepoint of the character at the given *index*.
   #
-  # Raises `IndexError` if the *index* is out of range.
+  # Negative indices can be used to start counting from the end of the string.
+  #
+  # Raises `IndexError` if the *index* is out of bounds.
   #
   # See also: `Char#ord`.
   #
@@ -995,7 +1010,7 @@ class String
 
   # Returns the byte at the given *index*.
   #
-  # Raises `IndexError` if the *index* is out of range.
+  # Raises `IndexError` if the *index* is out of bounds.
   #
   # ```
   # "¥hello".byte_at(0)  # => 194
@@ -1009,7 +1024,7 @@ class String
     byte_at(index) { raise IndexError.new }
   end
 
-  # Returns the byte at the given *index*, or nil if out of bounds.
+  # Returns the byte at the given *index*, or `nil` if out of bounds.
   #
   # ```
   # "¥hello".byte_at(0)  # => 194
@@ -1023,11 +1038,11 @@ class String
     byte_at(index) { nil }
   end
 
-  # Returns the byte at the given *index*, or yield if out of bounds.
+  # Returns the byte at the given *index*, or yields if out of bounds.
   #
   # ```
-  # "¥hello".byte_at(6) { 0 } # => 111
-  # "¥hello".byte_at(7) { 0 } # => 0
+  # "¥hello".byte_at(6) { "OUT OF BOUNDS" } # => 111
+  # "¥hello".byte_at(7) { "OUT OF BOUNDS" } # => "OUT OF BOUNDS"
   # ```
   def byte_at(index, &)
     index += bytesize if index < 0
@@ -2532,8 +2547,8 @@ class String
     self if !blank?
   end
 
-  # Returns `true` if this string is the same as other.
-  # Comparison is done byte-per-byte: if a byte is less then the other corresponding
+  # Returns `true` if this string is equal to `*other*.
+  # Comparison is done byte-per-byte: if a byte is different from the corresponding
   # byte, `false` is returned and so on.
   def ==(other : self) : Bool
     return true if same?(other)
@@ -3061,7 +3076,7 @@ class String
   # "Hello, World".byte_index(0x6f, 5) # => 8
   # "💣".byte_index(0xA3)               # => 3
   # ```
-  def byte_index(byte : Int, offset = 0)
+  def byte_index(byte : Int, offset = 0) : Int32?
     offset.upto(bytesize - 1) do |i|
       if to_unsafe[i] == byte
         return i
@@ -3073,10 +3088,17 @@ class String
   # Returns the byte index of *search* in the string, or `nil` if the string is not present.
   # If *offset* is present, it defines the position to start the search.
   #
+  # # Negative *offset* can be used to start the search from the end of the string.
+  #
   # ```
-  # "¥hello".byte_index("hello") # => 2
+  # "¥hello".byte_index("hello")              # => 2
+  # "hello".byte_index("world")               # => nil
+  # "Dizzy Miss Lizzy".byte_index("izzy")     # => 1
+  # "Dizzy Miss Lizzy".byte_index("izzy", 2)  # => 12
+  # "Dizzy Miss Lizzy".byte_index("izzy", -4) # => 12
+  # "Dizzy Miss Lizzy".byte_index("izzy", -4) # => nil
   # ```
-  def byte_index(search : String, offset = 0)
+  def byte_index(search : String, offset = 0) : Int32?
     offset += bytesize if offset < 0
     return if offset < 0
 
@@ -4351,7 +4373,7 @@ class String
     io << '}' if char.ord > 0xFFFF
   end
 
-  # Returns true if this string starts with the given *str*, otherwise `false`.
+  # Returns `true` if this string starts with the given *str*.
   #
   # ```
   # "hello".starts_with?("h")  # => true
@@ -4363,7 +4385,7 @@ class String
     to_unsafe.memcmp(str.to_unsafe, str.bytesize) == 0
   end
 
-  # Returns `true` if this string starts with the given *char*, otherwise `false`.
+  # Returns `true` if this string starts with the given *char*.
   #
   # ```
   # "hello".starts_with?('h') # => true
@@ -4377,7 +4399,7 @@ class String
     false
   end
 
-  # Returns true if this string starts with the given *re* regular expression, otherwise `false`.
+  # Returns `true` if the regular expression *re* matches at the start of this string.
   #
   # ```
   # "22hello".starts_with?(/[0-9]/) # => true
@@ -4391,7 +4413,7 @@ class String
     !!($~ = re.match_at_byte_index(self, 0, Regex::Options::ANCHORED))
   end
 
-  # Returns true if this string ends with the given *str*, otherwise `false`.
+  # Returns `true` if this string ends with the given *str*.
   #
   # ```
   # "hello".ends_with?("o")  # => true
@@ -4403,7 +4425,7 @@ class String
     (to_unsafe + bytesize - str.bytesize).memcmp(str.to_unsafe, str.bytesize) == 0
   end
 
-  # Returns true if this string ends with the given *char*, otherwise `false`.
+  # Returns `true` if this string ends with the given *char*.
   #
   # ```
   # "hello".ends_with?('o') # => true
@@ -4426,7 +4448,7 @@ class String
     true
   end
 
-  # Returns true if this string ends with the given *re* regular expression, otherwise `false`.
+  # Returns `true` if the regular expression *re* matches at the end of this string.
   #
   # ```
   # "22hello".ends_with?(/[0-9]/) # => false
@@ -4575,27 +4597,27 @@ class String
     char_index
   end
 
-  # Returns `self`
+  # Returns `self`.
   def clone : String
     self
   end
 
-  # Returns `self`
+  # ditto
   def dup : String
     self
   end
 
-  # Returns `self`
+  # ditto
   def to_s : String
     self
   end
 
-  # Appends `self` characters to the given IO object.
+  # Appends `self` to *io*.
   def to_s(io : IO) : Nil
     io.write_utf8(to_slice)
   end
 
-  # Returns the underlying bytes of this String in an **unsafe** way.
+  # Returns the underlying bytes of this String.
   #
   # The returned slice is read-only.
   def to_slice : Bytes
@@ -4607,17 +4629,17 @@ class String
     pointerof(@c)
   end
 
-  # Returns *count* of underlying bytes of this String starting at given *byte_offset* in an **unsafe** way.
+  # Returns *count* of underlying bytes of this String starting at given *byte_offset*.
   #
   # The returned slice is read-only.
-  def unsafe_byte_slice(byte_offset, count)
+  def unsafe_byte_slice(byte_offset, count) : Slice
     Slice.new(to_unsafe + byte_offset, count, read_only: true)
   end
 
-  # Returns the underlying bytes of this String starting at given *byte_offset* in an **unsafe** way.
+  # Returns the underlying bytes of this String starting at given *byte_offset*.
   #
   # The returned slice is read-only.
-  def unsafe_byte_slice(byte_offset)
+  def unsafe_byte_slice(byte_offset) : Slice
     Slice.new(to_unsafe + byte_offset, bytesize - byte_offset, read_only: true)
   end
 
