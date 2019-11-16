@@ -1439,7 +1439,7 @@ class Hash(K, V)
   # h1 = {"a" => 1, "b" => 2, "c" => 3, "d" => 4}.select!({"a", "c"})
   # h2 = {"a" => 1, "b" => 2, "c" => 3, "d" => 4}.select!("a", "c")
   # h3 = {"a" => 1, "b" => 2, "c" => 3, "d" => 4}.select!(["a", "c"])
-  # h1 == h2 == h3
+  # h1 == h2 == h3 # => true
   # h1 # => {"a" => 1, "c" => 3}
   # ```
   def select!(keys : Array | Tuple)
