@@ -53,6 +53,30 @@ struct Set(T)
     Set(T).new.concat(enumerable)
   end
 
+  # Makes this set compare objects using their object identity (`object_id)`
+  # for types that define such method (`Reference` types, but also structs that
+  # might wrap other `Reference` types and delegate the `object_id` method to them).
+  #
+  # ```
+  # s = Set{"foo", "bar"}
+  # s.includes?("fo" + "o") # => true
+  #
+  # s.compare_by_identity
+  # s.compare_by_identity?  # => true
+  # s.includes?("fo" + "o") # => false # not the same String instance
+  # ```
+  def compare_by_identity
+    @hash.compare_by_identity
+    self
+  end
+
+  # Returns `true` of this Set is comparing objects by `object_id`.
+  #
+  # See `compare_by_identity`.
+  def compare_by_identity?
+    @hash.compare_by_identity?
+  end
+
   # Alias for `add`
   def <<(object : T)
     add object
@@ -323,12 +347,15 @@ struct Set(T)
 
   # Returns a new `Set` with all of the same elements.
   def dup
-    Set.new(self)
+    set = Set.new(self)
+    set.compare_by_identity if compare_by_identity?
+    set
   end
 
   # Returns a new `Set` with all of the elements cloned.
   def clone
     clone = Set(T).new(self.size)
+    clone.compare_by_identity if compare_by_identity?
     each do |element|
       clone << element.clone
     end

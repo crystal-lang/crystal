@@ -645,7 +645,11 @@ module Crystal
         end
       when "camelcase"
         interpret_argless_method(method, args) do
-          lower = ((nargs = named_args) && (lower_arg = nargs["lower"]?)) ? lower_arg : BoolLiteral.new(false)
+          lower = if named_args && (lower_arg = named_args["lower"]?)
+                    lower_arg
+                  else
+                    BoolLiteral.new false
+                  end
 
           raise "named argument 'lower' to StringLiteral#camelcase must be a bool, not #{lower.class_desc}" unless lower.is_a?(BoolLiteral)
 
@@ -2231,6 +2235,19 @@ private def interpret_array_or_tuple_method(object, klass, method, args, block, 
 
       klass.map(object.elements) do |elem|
         interpreter.define_var(block_arg.name, elem) if block_arg
+        interpreter.accept block.body
+      end
+    end
+  when "map_with_index"
+    object.interpret_argless_method(method, args) do
+      raise "map_with_index expects a block" unless block
+
+      block_arg = block.args[0]?
+      index_arg = block.args[1]?
+
+      klass.map_with_index(object.elements) do |elem, idx|
+        interpreter.define_var(block_arg.name, elem) if block_arg
+        interpreter.define_var(index_arg.name, Crystal::NumberLiteral.new idx) if index_arg
         interpreter.accept block.body
       end
     end

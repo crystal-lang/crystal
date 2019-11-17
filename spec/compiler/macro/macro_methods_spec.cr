@@ -611,6 +611,32 @@ module Crystal
         assert_macro "x", %({{x.map { |e| e.id }}}), [ArrayLiteral.new(["hello".call] of ASTNode)] of ASTNode, "[hello]"
       end
 
+      describe "#map_with_index" do
+        context "with both arguments" do
+          it "returns the resulting array" do
+            assert_macro "", %({{[1, 2, 3].map_with_index { |e, idx| e == 2 || idx <= 1 }}}), [] of ASTNode, %([true, true, false])
+          end
+        end
+
+        context "without the index argument" do
+          it "returns the resulting array" do
+            assert_macro "", %({{[1, 2, 3].map_with_index { |e| e }}}), [] of ASTNode, %([1, 2, 3])
+          end
+        end
+
+        context "without the element argument" do
+          it "returns the resulting array" do
+            assert_macro "", %({{[1, 2, 3].map_with_index { |_, idx| idx }}}), [] of ASTNode, %([0, 1, 2])
+          end
+        end
+
+        context "without either argument" do
+          it "returns the resulting array" do
+            assert_macro "", %({{[1, 2, 3].map_with_index { 7 }}}), [] of ASTNode, %([7, 7, 7])
+          end
+        end
+      end
+
       it "executes select" do
         assert_macro "", %({{[1, 2, 3].select { |e| e == 1 }}}), [] of ASTNode, "[1]"
       end
@@ -938,6 +964,32 @@ module Crystal
 
       it "executes map with arg" do
         assert_macro "x", %({{x.map { |e| e.id }}}), [TupleLiteral.new(["hello".call] of ASTNode)] of ASTNode, "{hello}"
+      end
+
+      describe "#map_with_index" do
+        context "with both arguments" do
+          it "returns the resulting tuple" do
+            assert_macro "", %({{{1, 2, 3}.map_with_index { |e, idx| e == 2 || idx <= 1 }}}), [] of ASTNode, %({true, true, false})
+          end
+        end
+
+        context "without the index argument" do
+          it "returns the resulting tuple" do
+            assert_macro "", %({{{1, 2, 3}.map_with_index { |e| e }}}), [] of ASTNode, %({1, 2, 3})
+          end
+        end
+
+        context "without the element argument" do
+          it "returns the resulting tuple" do
+            assert_macro "", %({{{1, 2, 3}.map_with_index { |_, idx| idx }}}), [] of ASTNode, %({0, 1, 2})
+          end
+        end
+
+        context "without either argument" do
+          it "returns the resulting tuple" do
+            assert_macro "", %({{{1, 2, 3}.map_with_index { 7 }}}), [] of ASTNode, %({7, 7, 7})
+          end
+        end
       end
 
       it "executes select" do

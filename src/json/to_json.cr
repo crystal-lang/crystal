@@ -161,6 +161,60 @@ struct Time
   end
 end
 
+# Converter to be used with `JSON.mapping`
+# to serialize the `Array(T)` elements with the custom converter.
+#
+# ```
+# require "json"
+#
+# class Timestamp
+#   JSON.mapping({
+#     values: {type: Array(Time), converter: JSON::ArrayConverter(Time::EpochConverter)},
+#   })
+# end
+#
+# timestamp = Timestamp.from_json(%({"dates":[1459859781,1567628762]}))
+# timestamp.values  # => [2016-04-05 12:36:21 UTC, 2019-09-04 20:26:02 UTC]
+# timestamp.to_json # => %({"dates":[1459859781,1567628762]})
+# ```
+module JSON::ArrayConverter(Converter)
+  def self.to_json(values : Array, builder : JSON::Builder)
+    builder.array do
+      values.each do |value|
+        Converter.to_json(value, builder)
+      end
+    end
+  end
+end
+
+# Converter to be used with `JSON.mapping`
+# to serialize the `Hash(K, V)` values elements with the custom converter.
+#
+# ```
+# require "json"
+#
+# class Timestamp
+#   JSON.mapping({
+#     values: {type: Hash(String, Time), converter: JSON::HashValueConverter(Time::EpochConverter)},
+#   })
+# end
+#
+# timestamp = Timestamp.from_json(%({"birthdays":{"foo":1459859781,"bar":1567628762}}))
+# timestamp.values  # => {"foo" => 2016-04-05 12:36:21 UTC, "bar" => 2019-09-04 20:26:02 UTC)}
+# timestamp.to_json # => {"birthdays":{"foo":1459859781,"bar":1567628762}}
+# ```
+module JSON::HashValueConverter(Converter)
+  def self.to_json(values : Hash, builder : JSON::Builder)
+    builder.object do
+      values.each do |key, value|
+        builder.field key.to_json_object_key do
+          Converter.to_json(value, builder)
+        end
+      end
+    end
+  end
+end
+
 # Converter to be used with `JSON.mapping` and `YAML.mapping`
 # to serialize a `Time` instance as the number of seconds
 # since the unix epoch. See `Time#to_unix`.

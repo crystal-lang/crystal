@@ -364,6 +364,18 @@ class Crystal::Command
         opts.on("--mattr CPU", "Target specific features") do |features|
           compiler.mattr = features
         end
+        opts.on("--mcmodel MODEL", "Target specific code model") do |mcmodel|
+          compiler.mcmodel = case mcmodel
+                             when "default" then LLVM::CodeModel::Default
+                             when "small"   then LLVM::CodeModel::Small
+                             when "kernel"  then LLVM::CodeModel::Kernel
+                             when "medium"  then LLVM::CodeModel::Medium
+                             when "large"   then LLVM::CodeModel::Large
+                             else
+                               error "--mcmodel should be one of: default, kernel, small, medium, large"
+                               raise "unreachable"
+                             end
+        end
         setup_compiler_warning_options(opts, compiler)
       end
 

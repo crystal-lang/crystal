@@ -84,6 +84,9 @@ module Crystal
     # If `true`, runs LLVM optimizations.
     property? release = false
 
+    # Sets the code model. Check LLVM docs to learn about this.
+    property mcmodel = LLVM::CodeModel::Default
+
     # If `true`, generates a single LLVM module. By default
     # one LLVM module is created for each type in a program.
     property? single_module = false
@@ -249,7 +252,7 @@ module Crystal
 
     private def bc_flags_changed?(output_dir)
       bc_flags_changed = true
-      current_bc_flags = "#{@codegen_target}|#{@mcpu}|#{@mattr}|#{@release}|#{@link_flags}"
+      current_bc_flags = "#{@codegen_target}|#{@mcpu}|#{@mattr}|#{@release}|#{@link_flags}|#{@mcmodel}"
       bc_flags_filename = "#{output_dir}/bc_flags"
       if File.file?(bc_flags_filename)
         previous_bc_flags = File.read(bc_flags_filename).strip
@@ -521,7 +524,7 @@ module Crystal
     end
 
     getter(target_machine : LLVM::TargetMachine) do
-      @codegen_target.to_target_machine(@mcpu || "", @mattr || "", @release)
+      @codegen_target.to_target_machine(@mcpu || "", @mattr || "", @release, @mcmodel)
     rescue ex : ArgumentError
       stderr.print colorize("Error: ").red.bold
       stderr.print "llc: "

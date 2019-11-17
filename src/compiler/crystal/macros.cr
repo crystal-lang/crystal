@@ -622,6 +622,10 @@ module Crystal::Macros
     def map(&block) : ArrayLiteral
     end
 
+    # Similar to `Enumerable#map_with_index`
+    def map_with_index(&block) : ArrayLiteral
+    end
+
     # Similar to `Enumerable#select`
     def select(&block) : ArrayLiteral
     end
@@ -836,7 +840,7 @@ module Crystal::Macros
 
   # A tuple literal.
   #
-  # Its macro methods are the same as `ArrayLiteral`.
+  # Its macro methods are nearly the same as `ArrayLiteral`.
   class TupleLiteral < ASTNode
   end
 

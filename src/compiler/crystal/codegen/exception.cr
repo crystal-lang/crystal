@@ -1,7 +1,7 @@
 require "./codegen"
 
 class Crystal::CodeGenVisitor
-  @node_ensure_exception_handlers = {} of UInt64 => Handler
+  @node_ensure_exception_handlers : Hash(ASTNode, Handler) = ({} of ASTNode => Handler).compare_by_identity
 
   def visit(node : ExceptionHandler)
     # In this codegen, we assume that LLVM only provides us with a basic try/catch abstraction with no
@@ -289,7 +289,7 @@ class Crystal::CodeGenVisitor
   end
 
   def execute_ensures_until(node)
-    stop_exception_handler = @node_ensure_exception_handlers[node.object_id]?.try &.node
+    stop_exception_handler = @node_ensure_exception_handlers[node]?.try &.node
 
     @ensure_exception_handlers.try &.reverse_each do |exception_handler|
       break if exception_handler.node.same?(stop_exception_handler)
@@ -305,7 +305,7 @@ class Crystal::CodeGenVisitor
 
   def set_ensure_exception_handler(node)
     if eh = @ensure_exception_handlers.try &.last?
-      @node_ensure_exception_handlers[node.object_id] = eh
+      @node_ensure_exception_handlers[node] = eh
     end
   end
 

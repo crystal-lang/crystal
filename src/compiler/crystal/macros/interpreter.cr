@@ -82,7 +82,7 @@ module Crystal
       @last = Nop.new
     end
 
-    def define_var(name, value)
+    def define_var(name : String, value : ASTNode) : Nil
       @vars[name] = value
     end
 
@@ -363,7 +363,7 @@ module Crystal
         end
 
         args = node.args.map { |arg| accept arg }
-        named_args = nil
+        named_args = node.named_args.try &.to_h { |arg| {arg.name, accept arg.value} }
 
         if (nargs = node.named_args)
           named_args = nargs.each_with_object(Hash(String, ASTNode).new) { |arg, named_arg_hash| named_arg_hash[arg.name] = accept arg.value }

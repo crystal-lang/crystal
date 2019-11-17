@@ -283,38 +283,17 @@ module Crystal
       Call.new(path, "new", [node.from, node.to, bool]).at(node)
     end
 
-    # Convert an interpolation to a concatenation with an String::Builder:
+    # Convert an interpolation to a call to `String.interpolation`
     #
     # From:
     #
-    #     "foo#{bar}baz"
+    #     "foo#{bar}baz#{qux}"
     #
     # To:
     #
-    #     (String::Builder.new << "foo" << bar << "baz").to_s
+    #     String.interpolation("foo", bar, "baz", qux)
     def expand(node : StringInterpolation)
-      # Compute how long at least the string will be, so we
-      # can allocate enough space.
-      capacity = 0
-      node.expressions.each do |piece|
-        case piece
-        when StringLiteral
-          capacity += piece.value.size
-        else
-          capacity += 15
-        end
-      end
-
-      if capacity <= 64
-        call = Call.new(Path.global(["String", "Builder"]), "new").at(node)
-      else
-        call = Call.new(Path.global(["String", "Builder"]), "new", NumberLiteral.new(capacity)).at(node)
-      end
-
-      node.expressions.each do |piece|
-        call = Call.new(call, "<<", piece).at(node)
-      end
-      Call.new(call, "to_s").at(node)
+      Call.new(Path.global("String").at(node), "interpolation", node.expressions).at(node)
     end
 
     # Convert a Case into a series of if ... elseif ... end:
@@ -616,6 +595,7 @@ module Crystal
       check_implicit_obj IsA
       check_implicit_obj Cast
       check_implicit_obj NilableCast
+      check_implicit_obj Not
 
       case cond
       when NilLiteral
@@ -641,9 +621,14 @@ module Crystal
 
     macro check_implicit_obj(type)
       if cond.is_a?({{type}})
-        if (obj = cond.obj).is_a?(ImplicitObj)
+        cond_obj = cond.is_a?(Not) ? cond.exp : cond.obj
+        if cond_obj.is_a?(ImplicitObj)
           implicit_call = cond.clone.as({{type}})
-          implicit_call.obj = temp_var.clone
+          if implicit_call.is_a?(Not)
+            implicit_call.exp = temp_var.clone
+          else
+            implicit_call.obj = temp_var.clone
+          end
           return implicit_call
         end
       end
