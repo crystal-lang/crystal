@@ -3088,7 +3088,7 @@ class String
   # Returns the byte index of *search* in the string, or `nil` if the string is not present.
   # If *offset* is present, it defines the position to start the search.
   #
-  # # Negative *offset* can be used to start the search from the end of the string.
+  # Negative *offset* can be used to start the search from the end of the string.
   #
   # ```
   # "¥hello".byte_index("hello")              # => 2
