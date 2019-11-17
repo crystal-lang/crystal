@@ -11,7 +11,7 @@ private def declare_class_var(container : ClassVarContainer, name, var_type : Ty
 end
 
 module Crystal
-  describe "macro methods" do
+  describe Macro do
     describe "node methods" do
       describe "location" do
         location = Location.new("foo.cr", 1, 2)
@@ -1212,9 +1212,61 @@ module Crystal
         end
       end
 
-      it "executes name" do
-        assert_macro("x", "{{x.name}}", "String") do |program|
-          [TypeNode.new(program.string)] of ASTNode
+      describe "#name" do
+        describe "simple type" do
+          it "returns the name of the type" do
+            assert_macro("x", "{{x.name}}", "String") do |program|
+              [TypeNode.new(program.string)] of ASTNode
+            end
+          end
+        end
+
+        describe "namespaced type" do
+          it "should return the FQN of the type" do
+            assert_macro("type", "{{type.name}}", "SomeModule::SomeType") do |program|
+              mod = NonGenericModuleType.new(program, program, "SomeModule")
+
+              klass = NonGenericClassType.new(program, mod, "SomeType", program.reference)
+
+              [TypeNode.new(klass)] of ASTNode
+            end
+          end
+        end
+
+        describe "generic type" do
+          it "includes the generic_args of the type by default" do
+            assert_macro("klass", "{{klass.name}}", "SomeType(A, B)") do |program|
+              [TypeNode.new(GenericClassType.new(program, program, "SomeType", program.object, ["A", "B"]))] of ASTNode
+            end
+          end
+        end
+
+        describe :generic_args do
+          describe true do
+            it "includes the generic_args of the type" do
+              assert_macro("klass", "{{klass.name(generic_args: true)}}", "SomeType(A, B)") do |program|
+                [TypeNode.new(GenericClassType.new(program, program, "SomeType", program.object, ["A", "B"]))] of ASTNode
+              end
+            end
+          end
+
+          describe false do
+            it "does not include the generic_args of the type" do
+              assert_macro("klass", "{{klass.name(generic_args: false)}}", "SomeType") do |program|
+                [TypeNode.new(GenericClassType.new(program, program, "SomeType", program.object, ["A", "B"]))] of ASTNode
+              end
+            end
+          end
+
+          describe "with an invalid type argument" do
+            it "should raise the proper exception" do
+              expect_raises(Crystal::TypeException, "named argument 'generic_args' to TypeNode#name must be a bool, not NumberLiteral") do
+                assert_macro("x", "{{x.name(generic_args: 99)}}", "String") do |program|
+                  [TypeNode.new(program.string)] of ASTNode
+                end
+              end
+            end
+          end
         end
       end
 

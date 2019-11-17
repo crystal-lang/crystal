@@ -1519,7 +1519,17 @@ module Crystal
       when "union_types"
         interpret_argless_method(method, args) { TypeNode.union_types(self) }
       when "name"
-        interpret_argless_method(method, args) { MacroId.new(type.devirtualize.to_s) }
+        interpret_argless_method(method, args) do
+          generic_args = if named_args && (generic_arg = named_args["generic_args"]?)
+                           generic_arg
+                         else
+                           BoolLiteral.new true
+                         end
+
+          raise "named argument 'generic_args' to TypeNode#name must be a bool, not #{generic_args.class_desc}" unless generic_args.is_a?(BoolLiteral)
+
+          MacroId.new(type.devirtualize.to_s(generic_args: generic_args.value))
+        end
       when "type_vars"
         interpret_argless_method(method, args) { TypeNode.type_vars(type) }
       when "instance_vars"
