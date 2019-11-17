@@ -4602,12 +4602,12 @@ class String
     self
   end
 
-  # ditto
+  # :ditto:
   def dup : String
     self
   end
 
-  # ditto
+  # :ditto:
   def to_s : String
     self
   end
