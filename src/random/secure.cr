@@ -39,7 +39,7 @@ module Random::Secure
     # Generates a random integer of a given type. The number of bytes to
     # generate can be limited; by default it will generate as many bytes as
     # needed to fill the integer size.
-    private def self.rand_type(type : {{type}}.class, needed_parts = nil) : {{type}}
+    private def rand_type(type : {{type}}.class, needed_parts = nil) : {{type}}
       needed_bytes =
         if needed_parts
           needed_parts * sizeof(typeof(next_u))
@@ -64,7 +64,7 @@ module Random::Secure
   {% end %}
 
   {% for type in [Int8, Int16, Int32, Int64] %}
-    private def self.rand_type(type : {{type}}.class, needed_bytes = sizeof({{type}})) : {{type}}
+    private def rand_type(type : {{type}}.class, needed_bytes = sizeof({{type}})) : {{type}}
       result = rand_type({{"U#{type}".id}}, needed_bytes)
       {{type}}.new!(result)
     end
