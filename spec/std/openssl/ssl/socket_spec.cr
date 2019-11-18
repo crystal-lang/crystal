@@ -36,22 +36,21 @@ describe OpenSSL::SSL::Socket do
     end
   end
 
-  it "can close connection on servers that don't shut down right" do
+  it "closes connection to server that doesn't properly terminate SSL session" do
     tcp_server = TCPServer.new(0)
     server_context, client_context = ssl_context_pair
 
-    OpenSSL::SSL::Server.open(tcp_server, server_context, sync_close: true) do |server|
-      client_done = Channel(Nil).new
-      spawn do
-        OpenSSL::SSL::Socket::Client.open(TCPSocket.new(tcp_server.local_address.address, tcp_server.local_address.port), client_context, hostname: "example.com", sync_close: true) do |socket|
-        end
-        client_done.send(nil)
+    client_successfully_closed_socket = Channel(Nil).new
+    spawn do
+      OpenSSL::SSL::Server.open(tcp_server, server_context, sync_close: true) do |server|
+        server_client = server.accept
+        # require client to close the socket from its side, without the server closing it, IIS behave this way.
+        client_successfully_closed_socket.receive
+        server_client.close
       end
-      client = server.accept
-      # allow client to close the socket from its side, without the server closing it, IIS behaves this way
-      # should not hang
-      client_done.receive
-      client.close
     end
+    OpenSSL::SSL::Socket::Client.open(TCPSocket.new(tcp_server.local_address.address, tcp_server.local_address.port), client_context, hostname: "example.com", sync_close: true) do |socket|
+    end
+    client_successfully_closed_socket.send(nil)
   end
 end

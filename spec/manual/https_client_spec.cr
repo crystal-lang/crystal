@@ -12,8 +12,4 @@ describe "https requests" do
       break
     end
   end
-
-  it "can fetch from IIS servers that don't shutdown gracefully" do
-    HTTP::Client.post("https://login.microsoftonline.com/common/oauth2/token", form: {"hi" => "a"}).body
-  end
 end
