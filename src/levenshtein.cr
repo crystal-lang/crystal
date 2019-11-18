@@ -31,7 +31,6 @@ module Levenshtein
 
       costs = Pointer(Int32).malloc(t_size + 1) { |i| i }
 
-      i = 0
       last_cost = 0
       s_size.times do |i|
         last_cost = i + 1
