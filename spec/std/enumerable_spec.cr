@@ -687,7 +687,7 @@ describe "Enumerable" do
 
     it "raises if not comparable" do
       expect_raises ArgumentError do
-        [-1.0, Float64::NAN, -3.0].max_of { |x| -x }
+        [-1, Float64::NAN, -3.0].max_of { |x| -x }
       end
     end
   end
