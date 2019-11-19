@@ -827,11 +827,9 @@ module Enumerable(T)
     found = false
 
     each_with_index do |elem, i|
-      ele_val = yield elem
-      value = (i == 0 ? 1 : ele_val <=> max)
-      raise ArgumentError.new("Comparison of #{ele_val} and #{max} failed") if value.nil?
-      if i == 0 || value > 0
-        max = ele_val
+      value = yield elem
+      if i == 0 || compare_or_raise(value, max) > 0
+        max = value
         obj = elem
       end
       found = true
@@ -862,11 +860,9 @@ module Enumerable(T)
     found = false
 
     each_with_index do |elem, i|
-      ele_val = yield elem
-      value = (i == 0 ? 1 : ele_val <=> max)
-      raise ArgumentError.new("Comparison of #{ele_val} and #{max} failed") if value.nil?
-      if i == 0 || value > 0
-        max = ele_val
+      value = yield elem
+      if i == 0 || compare_or_raise(value, max) > 0
+        max = value
       end
       found = true
     end
@@ -920,11 +916,9 @@ module Enumerable(T)
     found = false
 
     each_with_index do |elem, i|
-      ele_val = yield elem
-      value = (i == 0 ? 1 : ele_val <=> min)
-      raise ArgumentError.new("Comparison of #{ele_val} and #{min} failed") if value.nil?
-      if i == 0 || value < 0
-        min = ele_val
+      value = yield elem
+      if i == 0 || compare_or_raise(value, min) < 0
+        min = value
         obj = elem
       end
       found = true
@@ -955,11 +949,9 @@ module Enumerable(T)
     found = false
 
     each_with_index do |elem, i|
-      ele_val = yield elem
-      value = (i == 0 ? 1 : ele_val <=> min)
-      raise ArgumentError.new("Comparison of #{ele_val} and #{min} failed") if value.nil?
-      if i == 0 || value < 0
-        min = ele_val
+      value = yield elem
+      if i == 0 || compare_or_raise(value, min) < 0
+        min = value
       end
       found = true
     end
@@ -1010,17 +1002,13 @@ module Enumerable(T)
     found = false
 
     each_with_index do |elem, i|
-      ele_val = yield elem
-      value = (i == 0 ? 1 : ele_val <=> min)
-      raise ArgumentError.new("Comparison of #{ele_val} and #{min} failed") if value.nil?
-      if i == 0 || value < 0
-        min = ele_val
+      value = yield elem
+      if i == 0 || compare_or_raise(value, min) < 0
+        min = value
         objmin = elem
       end
-      value = (i == 0 ? 1 : ele_val <=> max)
-      raise ArgumentError.new("Comparison of #{ele_val} and #{max} failed") if value.nil?
-      if i == 0 || value > 0
-        max = ele_val
+      if i == 0 || compare_or_raise(value, max) > 0
+        max = value
         objmax = elem
       end
       found = true
@@ -1055,21 +1043,21 @@ module Enumerable(T)
     found = false
 
     each_with_index do |elem, i|
-      ele_val = yield elem
-      value = (i == 0 ? 1 : ele_val <=> min)
-      raise ArgumentError.new("Comparison of #{ele_val} and #{min} failed") if value.nil?
-      if i == 0 || value < 0
-        min = ele_val
+      value = yield elem
+      if i == 0 || compare_or_raise(value, min) < 0
+        min = value
       end
-      value = (i == 0 ? 1 : ele_val <=> max)
-      raise ArgumentError.new("Comparison of #{ele_val} and #{max} failed") if value.nil?
-      if i == 0 || value > 0
-        max = ele_val
+      if i == 0 || compare_or_raise(value, max) > 0
+        max = value
       end
       found = true
     end
 
     {found, {min, max}}
+  end
+
+  private def compare_or_raise(value, memo)
+    value <=> memo || raise ArgumentError.new("Comparison of #{value} and #{memo} failed")
   end
 
   # Returns `true` if the passed block returns `true`
