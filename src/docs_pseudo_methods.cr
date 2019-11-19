@@ -25,11 +25,13 @@ end
 
 # Returns the size of the given type as number of bytes.
 #
-# *type* must be a constant, it cannot be evaluated at runtime.
+# *type* must be a constant or `typeof()` expression. It cannot be evaluated
+# at runtime.
 #
 # ```
-# sizeof(Int32) # => 4
-# sizeof(Int64) # => 8
+# sizeof(Int32)        # => 4
+# sizeof(Int64)        # => 8
+# sizeof(typeof(true)) # => 1
 # ```
 #
 # For `Reference` types, the size is the same as the size of a pointer:
@@ -41,8 +43,8 @@ end
 # ```
 #
 # This is because a `Reference`'s memory is allocated on the heap and a pointer
-# to it is passed around. The effective size of a class can be determined using
-# `instance_sizeof`.
+# to it is passed around. The size of a class on the heap can be determined
+# using `#instance_sizeof`.
 def __crystal_pseudo_sizeof(type : Class) : Int32
 end
 
