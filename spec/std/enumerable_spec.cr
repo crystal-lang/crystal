@@ -730,6 +730,12 @@ describe "Enumerable" do
         ([] of Int32).minmax
       end
     end
+
+    it "raises if NAN is one of the elements" do
+      expect_raises ArgumentError do
+        [Float64::NAN, 1.0, 2.0].minmax
+      end
+    end
   end
 
   describe "minmax?" do
