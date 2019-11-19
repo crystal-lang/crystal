@@ -828,7 +828,7 @@ module Enumerable(T)
 
     each_with_index do |elem, i|
       ele_val = yield elem
-      value = ele_val <=> max
+      value = (i == 0 ? 1 : ele_val <=> max)
       raise ArgumentError.new("Comparison of #{ele_val} and #{max} failed") if value.nil?
       if i == 0 || value > 0
         max = ele_val
@@ -863,7 +863,7 @@ module Enumerable(T)
 
     each_with_index do |elem, i|
       ele_val = yield elem
-      value = ele_val <=> max
+      value = (i == 0 ? 1 : ele_val <=> max)
       raise ArgumentError.new("Comparison of #{ele_val} and #{max} failed") if value.nil?
       if i == 0 || value > 0
         max = ele_val
@@ -921,7 +921,7 @@ module Enumerable(T)
 
     each_with_index do |elem, i|
       ele_val = yield elem
-      value = ele_val <=> min
+      value = (i == 0 ? 1 : ele_val <=> min)
       raise ArgumentError.new("Comparison of #{ele_val} and #{min} failed") if value.nil?
       if i == 0 || value < 0
         min = ele_val
@@ -956,7 +956,7 @@ module Enumerable(T)
 
     each_with_index do |elem, i|
       ele_val = yield elem
-      value = ele_val <=> min
+      value = (i == 0 ? 1 : ele_val <=> min)
       raise ArgumentError.new("Comparison of #{ele_val} and #{min} failed") if value.nil?
       if i == 0 || value < 0
         min = ele_val
@@ -1011,13 +1011,13 @@ module Enumerable(T)
 
     each_with_index do |elem, i|
       ele_val = yield elem
-      value = ele_val <=> min
+      value = (i == 0 ? 1 : ele_val <=> min)
       raise ArgumentError.new("Comparison of #{ele_val} and #{min} failed") if value.nil?
       if i == 0 || value < 0
         min = ele_val
         objmin = elem
       end
-      value = ele_val <=> max
+      value = (i == 0 ? 1 : ele_val <=> max)
       raise ArgumentError.new("Comparison of #{ele_val} and #{max} failed") if value.nil?
       if i == 0 || value > 0
         max = ele_val
@@ -1056,12 +1056,12 @@ module Enumerable(T)
 
     each_with_index do |elem, i|
       ele_val = yield elem
-      value = ele_val <=> min
+      value = (i == 0 ? 1 : ele_val <=> min)
       raise ArgumentError.new("Comparison of #{ele_val} and #{min} failed") if value.nil?
       if i == 0 || value < 0
         min = ele_val
       end
-      value = ele_val <=> max
+      value = (i == 0 ? 1 : ele_val <=> max)
       raise ArgumentError.new("Comparison of #{ele_val} and #{max} failed") if value.nil?
       if i == 0 || value > 0
         max = ele_val
