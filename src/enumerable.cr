@@ -828,7 +828,6 @@ module Enumerable(T)
 
     each_with_index do |elem, i|
       value = yield elem
-      raise ArgumentError.new if (value.is_a?(Float) && value.nan?)
       if i == 0 || value > max
         max = value
         obj = elem
@@ -862,7 +861,6 @@ module Enumerable(T)
 
     each_with_index do |elem, i|
       value = yield elem
-      raise ArgumentError.new if (value.is_a?(Float) && value.nan?)
       if i == 0 || value > max
         max = value
       end
@@ -919,7 +917,6 @@ module Enumerable(T)
 
     each_with_index do |elem, i|
       value = yield elem
-      raise ArgumentError.new if (value.is_a?(Float) && value.nan?)
       if i == 0 || value < min
         min = value
         obj = elem
@@ -953,7 +950,6 @@ module Enumerable(T)
 
     each_with_index do |elem, i|
       value = yield elem
-      raise ArgumentError.new if (value.is_a?(Float) && value.nan?)
       if i == 0 || value < min
         min = value
       end
@@ -1007,7 +1003,6 @@ module Enumerable(T)
 
     each_with_index do |elem, i|
       value = yield elem
-      raise ArgumentError.new if (value.is_a?(Float) && value.nan?)
       if i == 0 || value < min
         min = value
         objmin = elem
@@ -1049,7 +1044,6 @@ module Enumerable(T)
 
     each_with_index do |elem, i|
       value = yield elem
-      raise ArgumentError.new if (value.is_a?(Float) && value.nan?)
       if i == 0 || value < min
         min = value
       end
