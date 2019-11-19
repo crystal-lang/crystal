@@ -328,23 +328,36 @@ struct JSONAttrPersonWithYAMLInitializeHook
   end
 end
 
-abstract class JSONShape
-  include JSON::Serializable
+module JSONShape
+  def self.from_json(string_or_io)
+    parser = JSON::PullParser.new(string_or_io)
+    new parser
+  end
 
-  use_json_discriminator "type", {point: JSONPoint, circle: JSONCircle}
-
-  property type : String
+  JSON::Serializable.use_json_discriminator "type", {point: JSONPoint, circle: JSONCircle}
 end
 
-class JSONPoint < JSONShape
+abstract class Shape
+end
+
+class JSONPoint < Shape
+  include JSON::Serializable
+
+  property type : String
   property x : Int32
   property y : Int32
 end
 
-class JSONCircle < JSONShape
+class JSONCircle < Shape
+  include JSON::Serializable
+
+  property type : String
   property x : Int32
   property y : Int32
   property radius : Int32
+end
+
+class NotSerializable < Shape
 end
 
 describe "JSON mapping" do
@@ -852,6 +865,21 @@ describe "JSON mapping" do
       expect_raises(JSON::MappingError, %(Unknown 'type' discriminator value: "unknown")) do
         JSONShape.from_json(%({"type": "unknown"}))
       end
+    end
+  end
+
+  describe "discriminate" do
+    it "discriminates" do
+      pull = JSON::PullParser.new(%<
+      {
+        "type": "point",
+        "x": 1,
+        "y": 2
+      }
+      >)
+
+      value = JSON::Serializable.discriminate(pull, "type", {point: JSONPoint, circle: JSONCircle})
+      value.should be_a(JSONPoint)
     end
   end
 end
