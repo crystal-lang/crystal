@@ -1010,13 +1010,15 @@ module Enumerable(T)
     found = false
 
     each_with_index do |elem, i|
-      value = yield elem
-      if i == 0 || value < min
-        min = value
+      ele_val = yield elem
+      value = ele_val <=> min
+      if i == 0 || value < 0
+        min = ele_val
         objmin = elem
       end
-      if i == 0 || value > max
-        max = value
+      value = ele_val <=> max
+      if i == 0 || value > 0
+        max = ele_val
         objmax = elem
       end
       found = true
@@ -1051,12 +1053,14 @@ module Enumerable(T)
     found = false
 
     each_with_index do |elem, i|
-      value = yield elem
-      if i == 0 || value < min
-        min = value
+      ele_val = yield elem
+      value = ele_val <=> min
+      if i == 0 || value < 0
+        min = ele_val
       end
-      if i == 0 || value > max
-        max = value
+      value = ele_val <=> max
+      if i == 0 || value > 0
+        max = ele_val
       end
       found = true
     end
