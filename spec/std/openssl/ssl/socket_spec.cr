@@ -49,10 +49,9 @@ describe OpenSSL::SSL::Socket do
         server_client.close
       end
     end
-    socket = TCPSocket.new(tcp_server.local_address.address, tcp_server.local_address.port
+    socket = TCPSocket.new(tcp_server.local_address.address, tcp_server.local_address.port)
     socket = OpenSSL::SSL::Socket::Client.new(socket, client_context, hostname: "example.com", sync_close: true)
     socket.close
-    end
     client_successfully_closed_socket.send(nil)
   end
 end
