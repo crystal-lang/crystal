@@ -36,6 +36,12 @@ describe Socket::Addrinfo do
         typeof(addrinfo).should eq(Socket::Addrinfo)
       end
     end
+
+    it "raises helpful message on getaddrinfo failure" do
+      expect_raises(Socket::Addrinfo::Error, "for badhostname:80 over IP when attempting to lookup internet address for host.  Hint: check hostname, check resolution system (which includes DNS)") do
+        Socket::Addrinfo.resolve("badhostname", 80, type: Socket::Type::DGRAM)
+      end
+    end
   end
 
   describe ".udp" do
