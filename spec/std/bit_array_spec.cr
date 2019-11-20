@@ -246,6 +246,19 @@ describe "BitArray" do
 
       ba[28..40].should eq(from_int(13, 0b1111111111111))
     end
+
+    it "gets 32-bit boundaries" do
+      {32, 64, 128}.each do |ba_size|
+        ba = BitArray.new(ba_size, true)
+        {0, 31, 32}.each do |start|
+          {0, 31, 32}.each do |len|
+            size = {ba_size - start, len}.min
+            ba[start, len].size.should eq(size)
+            ba[start, len].should eq(BitArray.new(size, true))
+          end
+        end
+      end
+    end
   end
 
   it "toggles a bit" do

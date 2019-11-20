@@ -140,7 +140,7 @@ struct BitArray
       bits = @bits[0]
 
       bits >>= start
-      bits &= (1 << count) - 1
+      bits &= (1 << count) &- 1
 
       BitArray.new(count).tap { |ba| ba.@bits[0] = bits }
     elsif size <= 64
@@ -148,10 +148,10 @@ struct BitArray
       bits = @bits.as(UInt64*)[0]
 
       bits >>= start
-      bits &= (1 << count) - 1
+      bits &= (1 << count) &- 1
 
       if count <= 32
-        BitArray.new(count).tap { |ba| ba.@bits[0] = bits.to_u32 }
+        BitArray.new(count).tap { |ba| ba.@bits[0] = bits.to_u32! }
       else
         BitArray.new(count).tap { |ba| ba.@bits.as(UInt64*)[0] = bits }
       end
@@ -169,7 +169,7 @@ struct BitArray
         bits = @bits[start_bit_index + i + 1]
 
         high_bits = bits
-        high_bits &= (1 << start_sub_index) - 1
+        high_bits &= (1 << start_sub_index) &- 1
         high_bits <<= 32 - start_sub_index
 
         ba.@bits[i] = low_bits | high_bits
