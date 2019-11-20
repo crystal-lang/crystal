@@ -74,6 +74,27 @@ describe "BitArray" do
       (b == c).should be_false
       (a == d).should be_false
     end
+
+    it "compares last bit" do
+      a = BitArray.new(1000)
+      b = BitArray.new(1000)
+      a.should eq(b)
+      a[-1] = true
+      a.should_not eq(b)
+    end
+
+    it "compares true-initialized" do
+      BitArray.new(0, true).should eq(BitArray.new(0))
+      {31, 32, 33, 63, 64, 65}.each do |size|
+        ary = BitArray.new(size, true)
+        bry = BitArray.new(size)
+        bry.should_not eq(ary)
+        0.to(size - 2) { |i| bry[i] = true }
+        bry.should_not eq(ary)
+        bry[-1] = true
+        bry.should eq(ary)
+      end
+    end
   end
 
   describe "[]" do
@@ -336,5 +357,13 @@ describe "BitArray" do
     iter.next.should be_false
     iter.next.should be_true
     iter.next.should be_a(Iterator::Stop)
+  end
+
+  it "hashes" do
+    1.to(17) do |len|
+      ba = BitArray.new(len, true)
+      0.upto(len - 1) { |i| ba[i] = false }
+      BitArray.new(len).hash.should eq(ba.hash)
+    end
   end
 end
