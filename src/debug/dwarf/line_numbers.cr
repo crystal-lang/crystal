@@ -284,7 +284,13 @@ module Debug
             operation_advance = adjusted_opcode // sequence.line_range
             increment_address_and_op_index(operation_advance)
             registers.line &+= sequence.line_base + (adjusted_opcode % sequence.line_range)
-            register_to_matrix(sequence, registers)
+            # checking is_stmt should be enough to avoid "non statement" operations
+            # some of which have confusing line number 0.
+            # but some operations within macros seem to be useful and marked as !is_stmt
+            # so attempt to include them also
+            if registers.is_stmt || (registers.line.to_i > 0 && registers.column.to_i > 0)
+              register_to_matrix(sequence, registers)
+            end
             registers.reset
           elsif opcode == 0
             # extended opcode
@@ -319,7 +325,9 @@ module Debug
 
             case standard_opcode
             when LNS::Copy
-              register_to_matrix(sequence, registers)
+              if registers.is_stmt || (registers.line.to_i > 0 && registers.column.to_i > 0)
+                register_to_matrix(sequence, registers)
+              end
               registers.reset
             when LNS::AdvancePc
               operation_advance = DWARF.read_unsigned_leb128(@io)
