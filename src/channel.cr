@@ -667,4 +667,65 @@ class Channel(T)
       raise ClosedError.new
     end
   end
+
+  class TimeoutAction
+    include SelectAction(Nil)
+
+    # Total amount of time to wait
+    @timeout : Time::Span
+
+    def initialize(@timeout : Time::Span)
+    end
+
+    def execute : DeliveryState
+      Fiber.current.timed_out = false
+      DeliveryState::None
+    end
+
+    def result : Nil
+      nil
+    end
+
+    def wait(context : SelectContext(Nil))
+      Fiber.timeout @timeout
+      context.try_trigger
+    end
+
+    def wait_result_impl(context : SelectContext(Nil))
+      nil
+    end
+
+    def unwait
+      Fiber.cancel_timeout
+    end
+
+    def lock_object_id
+      self.object_id
+    end
+
+    def lock
+    end
+
+    def unlock
+    end
+  end
+end
+
+# Timeout keyword for use in `select`.
+#
+# ```
+# select
+# when x = ch.recieve
+#   puts "got #{x}"
+# when timeout(1.seconds)
+#   puts "timeout"
+# end
+# ```
+#
+# NOTE: It won't trigger if the `select` has an `else` case (i.e.: a non-blocking select).
+#
+# NOTE: Using negative amounts will cause the timeout to not trigger.
+#
+def timeout_select_action(timeout : Time::Span)
+  Channel::TimeoutAction.new(timeout)
 end
