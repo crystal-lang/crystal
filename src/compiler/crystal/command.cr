@@ -102,7 +102,7 @@ class Crystal::Command
     when File.file?(command)
       run_command(single_file: true)
     else
-      error "unknown command: #{command}"
+      error "unknown command (and file not found): #{command}"
     end
   rescue ex : Crystal::LocationlessException
     error ex.message
