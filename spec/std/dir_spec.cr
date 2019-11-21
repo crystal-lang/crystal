@@ -402,6 +402,16 @@ describe "Dir" do
     filenames.includes?("f1.txt").should be_true
   end
 
+  it "automatically rewinds when iterating" do
+    dir = Dir.new(datapath("dir"))
+    2.times do
+      filenames = dir.entries
+      filenames.includes?(".").should be_true
+      filenames.includes?("..").should be_true
+      filenames.includes?("f1.txt").should be_true
+    end
+  end
+
   it "lists children" do
     Dir.children(datapath("dir")).should eq(Dir.entries(datapath("dir")) - %w(. ..))
   end

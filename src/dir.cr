@@ -54,11 +54,13 @@ class Dir
   # Got config.h
   # ```
   def each : Nil
+    rewind
     while entry = read
       yield entry
     end
   end
 
+  # Calls #rewind before reading the first record.
   def each
     EntryIterator.new(self)
   end
@@ -90,11 +92,13 @@ class Dir
   # ```
   def each_child : Nil
     excluded = {".", ".."}
+    rewind
     while entry = read
       yield entry unless excluded.includes?(entry)
     end
   end
 
+  # Calls #rewind before reading the first record.
   def each_child
     ChildIterator.new(self)
   end
@@ -278,24 +282,39 @@ class Dir
     pp.text inspect
   end
 
-  private struct EntryIterator
+  private class EntryIterator
     include Iterator(String)
+
+    @rewound = false
 
     def initialize(@dir : Dir)
     end
 
     def next
+      unless @rewound
+        @dir.rewind
+        @rewound = true
+      end
+
       @dir.read || stop
     end
   end
 
-  private struct ChildIterator
+  private class ChildIterator
     include Iterator(String)
 
+    @rewound = false
+
     def initialize(@dir : Dir)
+      @dir.rewind
     end
 
     def next
+      unless @rewound
+        @dir.rewind
+        @rewound = true
+      end
+
       excluded = {".", ".."}
       while entry = @dir.read
         return entry unless excluded.includes?(entry)
