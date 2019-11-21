@@ -27,8 +27,9 @@ class Crystal::Command
         tool                     run a tool
         help, --help, -h         show this help
         version, --version, -v   show version
-    Run a command followed with --help to see command specific options, ex:
-        crystal init --help
+
+    Run a command followed by --help to see command specific information, ex:
+        crystal <command> --help
     USAGE
 
   COMMANDS_USAGE = <<-USAGE
