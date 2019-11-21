@@ -77,7 +77,7 @@ class Channel(T)
     end
 
     def compare_and_set(cmp : SelectState, new : SelectState) : {SelectState, Bool}
-      @state.compare_and_set(SelectState::Active, SelectState::Done)
+      @state.compare_and_set(cmp, new)
     end
   end
 
@@ -94,7 +94,7 @@ class Channel(T)
     end
 
     def try_trigger : Bool
-      _, succeed = @state.compare_and_set(SelectState::Active, SelectState::Done)
+      _, succeed = @state.compare_and_set(:active, :done)
       if succeed
         @activated = true
       end
