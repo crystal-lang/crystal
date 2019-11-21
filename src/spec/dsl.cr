@@ -133,6 +133,15 @@ module Spec
     lines << line
   end
 
+  # :nodoc:
+  def self.add_tag(tag)
+    if anti_tag = tag.lchop?('~')
+      (@@anti_tags ||= Set(String).new) << anti_tag
+    else
+      (@@tags ||= Set(String).new) << tag
+    end
+  end
+
   record SplitFilter, remainder : Int32, quotient : Int32
 
   @@split_filter : SplitFilter? = nil
@@ -280,7 +289,7 @@ module Spec
 
   # :nodoc:
   def self.run_filters
-    root_context.run_filters(@@pattern, @@line, @@locations, @@split_filter, @@focus)
+    root_context.run_filters(@@pattern, @@line, @@locations, @@split_filter, @@focus, @@tags, @@anti_tags)
   end
 end
 

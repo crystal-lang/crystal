@@ -20,9 +20,9 @@ def build_spec(filename, root = nil, count = 2)
 
   1.upto(count) do |i|
     line = (i - 1) * 10
-    root.children << Spec::ExampleGroup.new(root, "context_#{name}_#{i}", filename, line + 1, line + 9, false).tap do |c|
-      c.children << Spec::Example.new(c, "example_#{name}_#{i}_1", filename, line + 2, line + 4, false, nil)
-      c.children << Spec::Example.new(c, "example_#{name}_#{i}_2", filename, line + 6, line + 8, false, nil)
+    root.children << Spec::ExampleGroup.new(root, "context_#{name}_#{i}", filename, line + 1, line + 9, false, nil).tap do |c|
+      c.children << Spec::Example.new(c, "example_#{name}_#{i}_1", filename, line + 2, line + 4, false, nil, nil)
+      c.children << Spec::Example.new(c, "example_#{name}_#{i}_2", filename, line + 6, line + 8, false, nil, nil)
     end
   end
 
