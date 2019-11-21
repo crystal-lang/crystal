@@ -381,4 +381,22 @@ describe "Semantic: doc" do
     foo = program.types["Foo"]
     foo.locations.not_nil!.size.should eq(1)
   end
+
+  it "attaches doc in double macro expansion (#8463)" do
+    result = semantic %(
+      macro cls(nr)
+        class MyClass{{nr}} end
+      end
+
+      macro cls2(nr)
+        cls({{nr}})
+      end
+
+      # Some description
+      cls2(1)
+    ), wants_doc: true
+    program = result.program
+    type = program.types["MyClass1"]
+    type.doc.should eq("Some description")
+  end
 end
