@@ -64,6 +64,11 @@ module Comparable(T)
     cmp ? cmp >= 0 : false
   end
 
+  # Like <=>, but raises when nil is returned.
+  def compare_and_raise(other : T)
+    (self <=> other) || raise ArgumentError.new("Comparison of #{self} and #{other} failed")
+  end
+
   # The comparison operator. Returns `0` if the two objects are equal,
   # a negative number if this object is considered less than *other*,
   # a positive number if this object is considered greter than *other*,

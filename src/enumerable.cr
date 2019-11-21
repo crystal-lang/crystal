@@ -828,7 +828,7 @@ module Enumerable(T)
 
     each_with_index do |elem, i|
       value = yield elem
-      if i == 0 || compare_or_raise(value, max) > 0
+      if i == 0 || value.compare_and_raise(max) > 0
         max = value
         obj = elem
       end
@@ -861,7 +861,7 @@ module Enumerable(T)
 
     each_with_index do |elem, i|
       value = yield elem
-      if i == 0 || compare_or_raise(value, max) > 0
+      if i == 0 || value.compare_and_raise(max) > 0
         max = value
       end
       found = true
@@ -917,7 +917,7 @@ module Enumerable(T)
 
     each_with_index do |elem, i|
       value = yield elem
-      if i == 0 || compare_or_raise(value, min) < 0
+      if i == 0 || value.compare_and_raise(min) < 0
         min = value
         obj = elem
       end
@@ -950,7 +950,7 @@ module Enumerable(T)
 
     each_with_index do |elem, i|
       value = yield elem
-      if i == 0 || compare_or_raise(value, min) < 0
+      if i == 0 || value.compare_and_raise(min) < 0
         min = value
       end
       found = true
@@ -1003,11 +1003,11 @@ module Enumerable(T)
 
     each_with_index do |elem, i|
       value = yield elem
-      if i == 0 || compare_or_raise(value, min) < 0
+      if i == 0 || value.compare_and_raise(min) < 0
         min = value
         objmin = elem
       end
-      if i == 0 || compare_or_raise(value, max) > 0
+      if i == 0 || value.compare_and_raise(max) > 0
         max = value
         objmax = elem
       end
@@ -1044,20 +1044,16 @@ module Enumerable(T)
 
     each_with_index do |elem, i|
       value = yield elem
-      if i == 0 || compare_or_raise(value, min) < 0
+      if i == 0 || value.compare_and_raise(min) < 0
         min = value
       end
-      if i == 0 || compare_or_raise(value, max) > 0
+      if i == 0 || value.compare_and_raise(max) > 0
         max = value
       end
       found = true
     end
 
     {found, {min, max}}
-  end
-
-  private def compare_or_raise(value, memo)
-    value <=> memo || raise ArgumentError.new("Comparison of #{value} and #{memo} failed")
   end
 
   # Returns `true` if the passed block returns `true`
