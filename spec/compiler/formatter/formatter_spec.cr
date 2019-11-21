@@ -1585,4 +1585,7 @@ describe Crystal::Formatter do
         .bar1
         .bar2)
     CODE
+
+  assert_format "[] of (Array(T))"
+  assert_format "[] of (((Array(T))))"
 end

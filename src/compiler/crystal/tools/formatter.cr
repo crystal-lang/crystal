@@ -1032,9 +1032,11 @@ module Crystal
 
     def check_open_paren
       if @token.type == :"("
-        write "("
-        next_token_skip_space
-        @paren_count += 1
+        while @token.type == :"("
+          write "("
+          next_token_skip_space
+          @paren_count += 1
+        end
         true
       else
         false
@@ -1042,7 +1044,7 @@ module Crystal
     end
 
     def check_close_paren
-      if @token.type == :")" && @paren_count > 0
+      while @token.type == :")" && @paren_count > 0
         @paren_count -= 1
         write_token :")"
       end
@@ -1075,6 +1077,8 @@ module Crystal
     end
 
     def visit(node : Generic)
+      check_open_paren
+
       name = node.name.as(Path)
       first_name = name.global? && name.names.size == 1 && name.names.first
 
@@ -1204,6 +1208,8 @@ module Crystal
 
       # Restore the old parentheses count
       @paren_count = old_paren_count
+
+      check_close_paren
 
       false
     end
