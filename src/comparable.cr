@@ -65,7 +65,7 @@ module Comparable(T)
   end
 
   # Like <=>, but raises when nil is returned.
-  def compare_and_raise(other : T)
+  def compare_or_raise(other : T)
     (self <=> other) || raise ArgumentError.new("Comparison of #{self} and #{other} failed")
   end
 
