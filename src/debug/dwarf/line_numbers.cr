@@ -284,13 +284,7 @@ module Debug
             operation_advance = adjusted_opcode // sequence.line_range
             increment_address_and_op_index(operation_advance)
             registers.line &+= sequence.line_base + (adjusted_opcode % sequence.line_range)
-            # checking is_stmt should be enough to avoid "non statement" operations
-            # some of which have confusing line number 0.
-            # but some operations within macros seem to be useful and marked as !is_stmt
-            # so attempt to include them also
-            if registers.is_stmt || (registers.line.to_i > 0 && registers.column.to_i > 0)
-              register_to_matrix(sequence, registers)
-            end
+            register_to_matrix(sequence, registers)
             registers.reset
           elsif opcode == 0
             # extended opcode
@@ -325,9 +319,7 @@ module Debug
 
             case standard_opcode
             when LNS::Copy
-              if registers.is_stmt || (registers.line.to_i > 0 && registers.column.to_i > 0)
-                register_to_matrix(sequence, registers)
-              end
+              register_to_matrix(sequence, registers)
               registers.reset
             when LNS::AdvancePc
               operation_advance = DWARF.read_unsigned_leb128(@io)
@@ -367,24 +359,30 @@ module Debug
       @current_sequence_matrix : Array(Row)?
 
       private def register_to_matrix(sequence, registers)
-        file = sequence.file_names[registers.file]
-        path = sequence.include_directories[file[1]]
+        # checking is_stmt should be enough to avoid "non statement" operations
+        # some of which have confusing line number 0.
+        # but some operations within macros seem to be useful and marked as !is_stmt
+        # so attempt to include them also
+        if registers.is_stmt || (registers.line.to_i > 0 && registers.column.to_i > 0)
+          file = sequence.file_names[registers.file]
+          path = sequence.include_directories[file[1]]
 
-        row = Row.new(
-          registers.address,
-          registers.op_index,
-          path,
-          file[0],
-          registers.line.to_i,
-          registers.column.to_i,
-          registers.end_sequence
-        )
+          row = Row.new(
+            registers.address,
+            registers.op_index,
+            path,
+            file[0],
+            registers.line.to_i,
+            registers.column.to_i,
+            registers.end_sequence
+          )
 
-        if rows = @current_sequence_matrix
-          rows << row
-        else
-          matrix << (rows = [row])
-          @current_sequence_matrix = rows
+          if rows = @current_sequence_matrix
+            rows << row
+          else
+            matrix << (rows = [row])
+            @current_sequence_matrix = rows
+          end
         end
 
         if registers.end_sequence
