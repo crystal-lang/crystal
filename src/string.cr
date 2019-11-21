@@ -3070,13 +3070,22 @@ class String
   # Returns the index of *byte* in the string, or `nil` if the byte is not present.
   # If *offset* is present, it defines the position to start the search.
   #
+  # Negative *offset* can be used to start the search from the end of the string.
+  #
   # ```
-  # "Hello, World".byte_index(0x6f)    # => 4
-  # "Hello, World".byte_index(0x5a)    # => nil
-  # "Hello, World".byte_index(0x6f, 5) # => 8
-  # "💣".byte_index(0xA3)               # => 3
+  # "Hello, World".byte_index(0x6f)             # => 4
+  # "Hello, World".byte_index(0x5a)             # => nil
+  # "Hello, World".byte_index(0x6f, 5)          # => 8
+  # "💣".byte_index(0xA3)                        # => 3
+  # "Dizzy Miss Lizzy".byte_index('z'.ord)      # => 2
+  # "Dizzy Miss Lizzy".byte_index('z'.ord, 3)   # => 3
+  # "Dizzy Miss Lizzy".byte_index('z'.ord, -4)  # => 13
+  # "Dizzy Miss Lizzy".byte_index('z'.ord, -17) # => nil
   # ```
   def byte_index(byte : Int, offset = 0) : Int32?
+    offset += bytesize if offset < 0
+    return if offset < 0
+
     offset.upto(bytesize - 1) do |i|
       if to_unsafe[i] == byte
         return i

@@ -932,6 +932,14 @@ describe "String" do
     it { "foo".byte_index('o'.ord).should eq(1) }
     it { "foo bar booz".byte_index('o'.ord, 3).should eq(9) }
     it { "foo".byte_index('a'.ord).should be_nil }
+    it { "foo".byte_index('a'.ord).should be_nil }
+    it { "foo".byte_index('o'.ord, 3).should be_nil }
+    it {
+      "Dizzy Miss Lizzy".byte_index('z'.ord).should eq(2)
+      "Dizzy Miss Lizzy".byte_index('z'.ord, 3).should eq(3)
+      "Dizzy Miss Lizzy".byte_index('z'.ord, -4).should eq(13)
+      "Dizzy Miss Lizzy".byte_index('z'.ord, -17).should be_nil
+    }
 
     it "gets byte index of string" do
       "hello world".byte_index("he").should eq(0)
