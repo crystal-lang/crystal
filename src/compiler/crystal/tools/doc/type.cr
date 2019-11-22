@@ -449,7 +449,7 @@ class Crystal::Doc::Type
       methods.find { |method| method.name == name && method.args.size == args_size }
     else
       methods = methods.select { |method| method.name == name }
-      (methods.find { |method| method.args.empty? }) || methods.first?
+      methods.find(&.args.empty?) || methods.first?
     end
   end
 
