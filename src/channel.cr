@@ -33,7 +33,7 @@ class Channel(T)
     abstract def execute : DeliveryState
     abstract def wait(context : SelectContext(S))
     abstract def wait_result_impl(context : SelectContext(S))
-    abstract def unwait
+    abstract def unwait_impl(context : SelectContext(S))
     abstract def result : S
     abstract def lock_object_id
     abstract def lock
@@ -54,6 +54,15 @@ class Channel(T)
 
     def wait_result(context : SelectContext(S))
       wait_result_impl(context)
+    end
+
+    # idem wait_result/wait_result_impl
+    def unwait(context : SelectContext)
+      raise "BUG: Unexpected call to #{typeof(self)}#unwait(context : #{typeof(context)})"
+    end
+
+    def unwait(context : SelectContext(S))
+      unwait_impl(context)
     end
 
     # Implementor that returns `Channel::UseDefault` in `#execute`
@@ -448,9 +457,10 @@ class Channel(T)
     ops_locks.each &.unlock
     Crystal::Scheduler.reschedule
 
-    ops.each do |op|
+    contexts.each_with_index do |context, index|
+      op = ops[index]
       op.lock
-      op.unwait
+      op.unwait(context)
       op.unlock
     end
 
@@ -520,7 +530,7 @@ class Channel(T)
       end
     end
 
-    def unwait
+    def unwait_impl(context : SelectContext(T))
       if !@channel.closed? && @receiver.state.none?
         @channel.@receivers.delete pointerof(@receiver)
       end
@@ -585,7 +595,7 @@ class Channel(T)
       end
     end
 
-    def unwait
+    def unwait_impl(context : SelectContext(T))
       if !@channel.closed? && @receiver.state.none?
         @channel.@receivers.delete pointerof(@receiver)
       end
@@ -645,7 +655,7 @@ class Channel(T)
       end
     end
 
-    def unwait
+    def unwait_impl(context : SelectContext(Nil))
       if !@channel.closed? && @sender.state.none?
         @channel.@senders.delete pointerof(@sender)
       end
@@ -688,14 +698,14 @@ class Channel(T)
 
     def wait(context : SelectContext(Nil))
       Fiber.timeout @timeout
-      context.try_trigger
     end
 
     def wait_result_impl(context : SelectContext(Nil))
       nil
     end
 
-    def unwait
+    def unwait_impl(context : SelectContext(Nil))
+      context.try_trigger if Fiber.current.timed_out?
       Fiber.cancel_timeout
     end
 
