@@ -103,6 +103,7 @@ abstract class Digest::Base
   end
 
   # Returns the final digest output.  Only call once.
+  # `.dup.final` may be used to get an intermediate hash value.
   def final : Bytes
     dst = Bytes.new digest_size
     final dst
