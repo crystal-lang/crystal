@@ -298,6 +298,57 @@ describe Channel do
         end
       end
 
+      it "triggers timeout (reverse order)" do
+        ch = Channel(String).new
+        spawn_and_wait(->{}) do
+          i, m = Channel.select(timeout_select_action(0.1.seconds), ch.receive_select_action)
+
+          i.should eq(0)
+          m.should eq(nil)
+        end
+      end
+
+      it "triggers timeout (same fiber multiple times)" do
+        ch = Channel(String).new
+        spawn_and_wait(->{}) do
+          3.times do
+            i, m = Channel.select(ch.receive_select_action, timeout_select_action(0.1.seconds))
+
+            i.should eq(1)
+            m.should eq(nil)
+          end
+        end
+      end
+
+      it "allows receiving while waiting" do
+        ch = Channel(String).new
+        spawn_and_wait(->{ ch.send "foo" }) do
+          i, m = Channel.select(ch.receive_select_action, timeout_select_action(1.seconds))
+          i.should eq(0)
+          m.should eq("foo")
+        end
+      end
+
+      it "allows receiving while waiting (reverse order)" do
+        ch = Channel(String).new
+        spawn_and_wait(->{ ch.send "foo" }) do
+          i, m = Channel.select(timeout_select_action(1.seconds), ch.receive_select_action)
+          i.should eq(1)
+          m.should eq("foo")
+        end
+      end
+
+      it "allows receiving while waiting (same fiber multiple times)" do
+        ch = Channel(String).new
+        spawn_and_wait(->{ 3.times { ch.send "foo" } }) do
+          3.times do
+            i, m = Channel.select(ch.receive_select_action, timeout_select_action(1.seconds))
+            i.should eq(0)
+            m.should eq("foo")
+          end
+        end
+      end
+
       it "negative amounts should not trigger timeout" do
         ch = Channel(String).new
         spawn_and_wait(->{ ch.send "foo" }) do
