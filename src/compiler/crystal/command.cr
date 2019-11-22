@@ -102,7 +102,11 @@ class Crystal::Command
     when File.file?(command)
       run_command(single_file: true)
     else
-      error "unknown command (and file not found): #{command}"
+      if command =~ /.+#{File::SEPARATOR}.+/ || command.ends_with?(".cr")
+        error "file not found: #{command}"
+      else
+        error "unknown command: #{command}"
+      end
     end
   rescue ex : Crystal::LocationlessException
     error ex.message
