@@ -127,10 +127,11 @@ class Socket
     # Socket::IPAddress.parse("udp://[::1]:8080")     # => Socket::IPAddress.new("::1", 8080)
     # ```
     def self.parse(uri : URI) : IPAddress
-      host = uri.host
-      raise Socket::Error.new("Invalid IP address: missing host") if !host || host.empty?
+      host = uri.host.presence
+      raise Socket::Error.new("Invalid IP address: missing host") unless host
 
-      port = uri.port || raise Socket::Error.new("Invalid IP address: missing port")
+      port = uri.port
+      raise Socket::Error.new("Invalid IP address: missing port") unless port
 
       # remove ipv6 brackets
       if host.starts_with?('[') && host.ends_with?(']')
@@ -341,7 +342,7 @@ class Socket
         if port = uri.port
           io << ':' << port
         end
-        if (path = uri.path) && !path.empty?
+        if path = uri.path.presence
           io << path
         end
       end

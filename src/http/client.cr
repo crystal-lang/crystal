@@ -828,8 +828,8 @@ class HTTP::Client
   {% end %}
 
   protected def self.validate_host(uri)
-    host = uri.host
-    return host if host && !host.empty?
+    host = uri.host.presence
+    return host if host
 
     raise ArgumentError.new %(Request URI must have host (URI is: #{uri}))
   end
