@@ -50,7 +50,7 @@ end
 
 # Returns the instance size of the given class as number of bytes.
 #
-# *type* must be a constant, it cannot be evaluated at runtime.
+# *type* must be a constant or `typeof()` expresion. It cannot be evaluated at runtime.
 #
 # ```
 # instance_sizeof(String)    # => 16
@@ -77,7 +77,7 @@ end
 
 # Returns the byte offset of an instance variable in a struct or class type.
 #
-# *type* must be a constant, it cannot be evaluated at runtime.
+# *type* must be a constant or `typeof()` expression. It cannot be evaluated at runtime.
 # *variable*  must be the name of an instance variable of *type*, prefixed
 # by `@`.
 # ```
@@ -105,7 +105,7 @@ class Object
   end
 
   # Returns `true` if `self` inherits or includes *type*.
-  # *type* must be a constant, it cannot be evaluated at runtime.
+  # *type* must be a constant or `typeof()`expression. It cannot be evaluated at runtime.
   #
   # ```
   # a = 1
@@ -132,7 +132,7 @@ class Object
   # Returns `self`.
   #
   # The type of this expression is restricted to *type* by the compiler.
-  # *type* must be a constant, it cannot be evaluated at runtime.
+  # *type* must be a constant or `typeof()` expression. It cannot be evaluated at runtime.
   #
   # If *type* is not a valid restriction for the expression type, it
   # is a compile-time error.
@@ -164,7 +164,7 @@ class Object
   # The type of this expression is restricted to *type* by the compiler.
   # If *type* is not a valid type restriction for the expression type, then
   # it is restricted to `Nil`.
-  # *type* must be a constant, it cannot be evaluated at runtime.
+  # *type* must be a constant or `typeof()` expression. It cannot be evaluated at runtime.
   #
   # ```
   # a = [1, "foo"][0]
