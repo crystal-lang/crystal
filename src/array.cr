@@ -1579,7 +1579,7 @@ class Array(T)
       tmp = self[0..n]
       @buffer.move_from(@buffer + n, size - n)
       (@buffer + size - n).copy_from(tmp.to_unsafe, n)
-    elsif
+    else
       tmp = self[n..-1]
       (@buffer + size - n).move_from(@buffer, n)
       @buffer.copy_from(tmp.to_unsafe, size - n)
