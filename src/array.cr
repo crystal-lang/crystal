@@ -1566,15 +1566,15 @@ class Array(T)
       @buffer.move_from(@buffer + n, size - n)
       self[0] = tmp
     elsif n <= SMALL_ARRAY_SIZE
-      filler = uninitialized T
-      tmp = StaticArray(T, SMALL_ARRAY_SIZE).new{|i| i < size ? self.unsafe_fetch(i) : filler }
+      tmp_buffer = uninitialized StaticArray(T, SMALL_ARRAY_SIZE)
+      tmp_buffer.to_unsafe.copy_from((@buffer + size - n - 1), n)
       @buffer.move_from(@buffer + n, size - n)
-      (@buffer + size - n).copy_from(tmp.to_unsafe, n)
+      (@buffer + size - n).copy_from(tmp_buffer.to_unsafe, n)
     elsif n.abs <= SMALL_ARRAY_SIZE
-      filler = uninitialized T
-      tmp = StaticArray(T, SMALL_ARRAY_SIZE).new{|i| i < size ? self.unsafe_fetch(i) : filler }
+      tmp_buffer = uninitialized StaticArray(T, SMALL_ARRAY_SIZE)
+      tmp_buffer.to_unsafe.copy_from(@buffer, n - 1)
       (@buffer + size - n).move_from(@buffer, n)
-      @buffer.copy_from(tmp.to_unsafe, size - n)
+      @buffer.copy_from(tmp_buffer.to_unsafe, size - n)
     elsif n <= size // 2
       tmp = self[0..n]
       @buffer.move_from(@buffer + n, size - n)
