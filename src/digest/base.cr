@@ -102,7 +102,9 @@ abstract class Digest::Base
     update data.to_slice
   end
 
-  # Returns the final digest output.  Only call once.
+  # Returns the final digest output.
+  #
+  # This method can only be called once and raises `FinalizedError` on subsequent calls.
   #
   # NOTE: `.dup.final` call may be used to get an intermediate hash value.
   def final : Bytes
