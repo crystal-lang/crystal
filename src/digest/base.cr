@@ -76,7 +76,9 @@ abstract class Digest::Base
       base64digest &.update(data)
     end
 
-    # Returns the base64-encoded hash of *data*.
+    # Yields a context object with an `#update(data : String | Bytes)`
+    # method available. Returns the resulting digest in base64 representation
+    # afterwards.
     #
     # ```
     # require "digest/sha1"
