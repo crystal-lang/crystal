@@ -1553,7 +1553,6 @@ class Array(T)
   # a.rotate!(3) # => [3, 4, 5, 6, 7, 8, 9, 0, 1, 2]
   # ```
   def rotate!(n = 1)
-
     return self if size == 0
     # This is broken into cases for perfromance (#8515)
     n %= size
@@ -1588,7 +1587,6 @@ class Array(T)
     end
     self
   end
-end
 
   # Returns an array with all the elements shifted `n` times.
   #
