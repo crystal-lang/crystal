@@ -14,7 +14,7 @@ abstract class Digest::Base
       end
     end
 
-    # Yields a context object with an `#update(data : String | Bytes)`
+    # Yields an instance of `self` which can receive calls to `#update(data : String | Bytes)` and returns the finalized digest.
     # method available. Returns the resulting digest afterwards.
     #
     # ```
