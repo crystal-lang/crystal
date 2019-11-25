@@ -14,8 +14,8 @@ module Spec::Methods
   # ```
   #
   # If `focus` is `true`, only this `describe`, and others marked with `focus: true`, will run.
-  def describe(description, file = __FILE__, line = __LINE__, end_line = __END_LINE__, focus : Bool = false, &block)
-    Spec.root_context.describe(description.to_s, file, line, end_line, focus, &block)
+  def describe(description, file = __FILE__, line = __LINE__, end_line = __END_LINE__, focus : Bool = false, tags : String | Enumerable(String) | Nil = nil, &block)
+    Spec.root_context.describe(description.to_s, file, line, end_line, focus, tags, &block)
   end
 
   # Defines an example group that establishes a specific context,
@@ -25,8 +25,8 @@ module Spec::Methods
   # It is functionally equivalent to `#describe`.
   #
   # If `focus` is `true`, only this `context`, and others marked with `focus: true`, will run.
-  def context(description, file = __FILE__, line = __LINE__, end_line = __END_LINE__, focus : Bool = false, &block)
-    describe(description.to_s, file, line, end_line, focus, &block)
+  def context(description, file = __FILE__, line = __LINE__, end_line = __END_LINE__, focus : Bool = false, tags : String | Enumerable(String) | Nil = nil, &block)
+    describe(description.to_s, file, line, end_line, focus, tags, &block)
   end
 
   # Defines a concrete test case.
@@ -41,8 +41,8 @@ module Spec::Methods
   # It is usually used inside a `#describe` or `#context` section.
   #
   # If `focus` is `true`, only this test, and others marked with `focus: true`, will run.
-  def it(description = "assert", file = __FILE__, line = __LINE__, end_line = __END_LINE__, focus : Bool = false, &block)
-    Spec.root_context.it(description.to_s, file, line, end_line, focus, &block)
+  def it(description = "assert", file = __FILE__, line = __LINE__, end_line = __END_LINE__, focus : Bool = false, tags : String | Enumerable(String) | Nil = nil, &block)
+    Spec.root_context.it(description.to_s, file, line, end_line, focus, tags, &block)
   end
 
   # Defines a pending test case.
@@ -58,15 +58,15 @@ module Spec::Methods
   # It is usually used inside a `#describe` or `#context` section.
   #
   # If `focus` is `true`, only this test, and others marked with `focus: true`, will run.
-  def pending(description = "assert", file = __FILE__, line = __LINE__, end_line = __END_LINE__, focus : Bool = false, &block)
-    pending(description, file, line, end_line, focus)
+  def pending(description = "assert", file = __FILE__, line = __LINE__, end_line = __END_LINE__, focus : Bool = false, tags : String | Enumerable(String) | Nil = nil, &block)
+    pending(description, file, line, end_line, focus, tags)
   end
 
   # Defines a yet-to-be-implemented pending test case
   #
   # If `focus` is `true`, only this test, and others marked with `focus: true`, will run.
-  def pending(description = "assert", file = __FILE__, line = __LINE__, end_line = __END_LINE__, focus : Bool = false)
-    Spec.root_context.pending(description.to_s, file, line, end_line, focus)
+  def pending(description = "assert", file = __FILE__, line = __LINE__, end_line = __END_LINE__, focus : Bool = false, tags : String | Enumerable(String) | Nil = nil)
+    Spec.root_context.pending(description.to_s, file, line, end_line, focus, tags)
   end
 
   # DEPRECATED: Use `#it`

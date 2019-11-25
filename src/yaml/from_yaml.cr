@@ -1,4 +1,4 @@
-def Object.from_yaml(string_or_io : String | IO) : self
+def Object.from_yaml(string_or_io : String | IO)
   new(YAML::ParseContext.new, parse_yaml(string_or_io))
 end
 

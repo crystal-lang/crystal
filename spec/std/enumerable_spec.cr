@@ -581,6 +581,8 @@ describe "Enumerable" do
   describe "reduce" do
     it { [1, 2, 3].reduce { |memo, i| memo + i }.should eq(6) }
     it { [1, 2, 3].reduce(10) { |memo, i| memo + i }.should eq(16) }
+    it { [1, 2, 3].reduce([] of Int32) { |memo, i| memo.unshift(i) }.should eq([3, 2, 1]) }
+    it { [[0, 1], [2, 3], [4, 5]].reduce([] of Int32) { |memo, i| memo.concat(i) }.should eq([0, 1, 2, 3, 4, 5]) }
 
     it "raises if empty" do
       expect_raises Enumerable::EmptyError do
@@ -658,6 +660,12 @@ describe "Enumerable" do
         ([] of Int32).max
       end
     end
+
+    it "raises if not comparable" do
+      expect_raises ArgumentError do
+        [Float64::NAN, 1.0, 2.0, Float64::NAN].max
+      end
+    end
   end
 
   describe "max?" do
@@ -678,6 +686,12 @@ describe "Enumerable" do
 
   describe "max_of" do
     it { [-1, -2, -3].max_of { |x| -x }.should eq(3) }
+
+    it "raises if not comparable" do
+      expect_raises ArgumentError do
+        [-1.0, Float64::NAN, -3.0].max_of { |x| -x }
+      end
+    end
   end
 
   describe "max_of?" do
@@ -692,6 +706,12 @@ describe "Enumerable" do
     it "raises if empty" do
       expect_raises Enumerable::EmptyError do
         ([] of Int32).min
+      end
+    end
+
+    it "raises if not comparable" do
+      expect_raises ArgumentError do
+        [-1.0, Float64::NAN, -3.0].min
       end
     end
   end
@@ -714,6 +734,12 @@ describe "Enumerable" do
 
   describe "min_of" do
     it { [1, 2, 3].min_of { |x| -x }.should eq(-3) }
+
+    it "raises if not comparable" do
+      expect_raises ArgumentError do
+        [-1.0, Float64::NAN, -3.0].min_of { |x| -x }
+      end
+    end
   end
 
   describe "min_of?" do
@@ -736,6 +762,12 @@ describe "Enumerable" do
     it "returns two nils if empty" do
       ([] of Int32).minmax?.should eq({nil, nil})
     end
+
+    it "raises if not comparable" do
+      expect_raises ArgumentError do
+        [-1.0, Float64::NAN, -3.0].minmax
+      end
+    end
   end
 
   describe "minmax_by" do
@@ -750,6 +782,12 @@ describe "Enumerable" do
 
   describe "minmax_of" do
     it { [-1, -2, -3].minmax_of { |x| -x }.should eq({1, 3}) }
+
+    it "raises if not comparable" do
+      expect_raises ArgumentError do
+        [-1.0, Float64::NAN, -3.0].minmax_of { |x| -x }
+      end
+    end
   end
 
   describe "minmax_of?" do

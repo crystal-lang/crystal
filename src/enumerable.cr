@@ -521,6 +521,7 @@ module Enumerable(T)
   # ```
   # ["Alice", "Bob"].grep(/^A/) # => ["Alice"]
   # ```
+  @[Deprecated("Use `#select` instead")]
   def grep(pattern)
     self.select { |elem| pattern === elem }
   end
@@ -666,7 +667,8 @@ module Enumerable(T)
   # Just like the other variant, but you can set the initial value of the accumulator.
   #
   # ```
-  # [1, 2, 3, 4, 5].reduce(10) { |acc, i| acc + i } # => 25
+  # [1, 2, 3, 4, 5].reduce(10) { |acc, i| acc + i }             # => 25
+  # [1, 2, 3].reduce([] of Int32) { |memo, i| memo.unshift(i) } # => [3, 2, 1]
   # ```
   def reduce(memo)
     each do |elem|
@@ -828,7 +830,7 @@ module Enumerable(T)
 
     each_with_index do |elem, i|
       value = yield elem
-      if i == 0 || value > max
+      if i == 0 || compare_or_raise(value, max) > 0
         max = value
         obj = elem
       end
@@ -861,7 +863,7 @@ module Enumerable(T)
 
     each_with_index do |elem, i|
       value = yield elem
-      if i == 0 || value > max
+      if i == 0 || compare_or_raise(value, max) > 0
         max = value
       end
       found = true
@@ -917,7 +919,7 @@ module Enumerable(T)
 
     each_with_index do |elem, i|
       value = yield elem
-      if i == 0 || value < min
+      if i == 0 || compare_or_raise(value, min) < 0
         min = value
         obj = elem
       end
@@ -950,7 +952,7 @@ module Enumerable(T)
 
     each_with_index do |elem, i|
       value = yield elem
-      if i == 0 || value < min
+      if i == 0 || compare_or_raise(value, min) < 0
         min = value
       end
       found = true
@@ -1003,11 +1005,11 @@ module Enumerable(T)
 
     each_with_index do |elem, i|
       value = yield elem
-      if i == 0 || value < min
+      if i == 0 || compare_or_raise(value, min) < 0
         min = value
         objmin = elem
       end
-      if i == 0 || value > max
+      if i == 0 || compare_or_raise(value, max) > 0
         max = value
         objmax = elem
       end
@@ -1044,16 +1046,20 @@ module Enumerable(T)
 
     each_with_index do |elem, i|
       value = yield elem
-      if i == 0 || value < min
+      if i == 0 || compare_or_raise(value, min) < 0
         min = value
       end
-      if i == 0 || value > max
+      if i == 0 || compare_or_raise(value, max) > 0
         max = value
       end
       found = true
     end
 
     {found, {min, max}}
+  end
+
+  private def compare_or_raise(value, memo)
+    value <=> memo || raise ArgumentError.new("Comparison of #{value} and #{memo} failed")
   end
 
   # Returns `true` if the passed block returns `true`
@@ -1220,9 +1226,10 @@ module Enumerable(T)
   #
   # ```
   # [1, 3, 2, 5, 4, 6].select(3..5) # => [3, 5, 4]
+  # ["Alice", "Bob"].select(/^A/)   # => ["Alice"]
   # ```
   def select(pattern)
-    self.select { |e| pattern === e }
+    self.select { |elem| pattern === elem }
   end
 
   # Returns the number of elements in the collection.

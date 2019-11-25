@@ -18,5 +18,12 @@ module Spec
 
     # Does this example or example group have `focus: true` on it?
     getter? focus : Bool
+
+    # The tags defined on this example or example group
+    getter tags : Set(String)?
+
+    private def initialize_tags(tags)
+      @tags = tags.is_a?(String) ? Set{tags} : tags.try(&.to_set)
+    end
   end
 end
