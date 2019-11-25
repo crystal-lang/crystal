@@ -907,9 +907,10 @@ class String
   # If *count* is bigger than the number of bytes from *start* to `#bytesize`,
   # only remaining bytes are returned.
   #
-  # Be careful when working with multibyte characters - they can be splitted,
-  # which may lead to invalid UTF-8 values. These,
-  # when asked as chars, will use the unicode replacement �.
+  # This method should be avoided,
+  # unless the string is proven to be ASCII-only (for example `#ascii_only?`),
+  # or the byte positions are known to be at character boundaries.
+  # Otherwise the characters are splitted, which leads to invalid UTF-8 values.
   #
   # Raises `IndexError` if the *start* index is out of bounds.
   #
