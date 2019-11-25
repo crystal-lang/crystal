@@ -1,7 +1,7 @@
 require "base64"
 
 module Digest
-  class FinalizedError < Exception
+class Digest::FinalizedError < Exception
   end
 end
 
