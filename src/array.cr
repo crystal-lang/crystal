@@ -1553,29 +1553,31 @@ class Array(T)
   # a.rotate!(3) # => [3, 4, 5, 6, 7, 8, 9, 0, 1, 2]
   # ```
   def rotate!(n = 1)
+
     return self if size == 0
     # This is broken into cases for perfromance (#8515)
     n %= size
-    if n == 0
-    elsif n == 1
+    case n
+    when 0
+    when 1
       tmp = self[0]
       @buffer.move_from(@buffer + n, size - n)
       self[-1] = tmp
-    elsif n == -1
+    when -1
       tmp = self[-1]
       @buffer.move_from(@buffer + n, size - n)
       self[0] = tmp
-    elsif n <= SMALL_ARRAY_SIZE
+    when .<= SMALL_ARRAY_SIZE
       tmp_buffer = uninitialized StaticArray(T, SMALL_ARRAY_SIZE)
       tmp_buffer.to_unsafe.copy_from((@buffer + size - n - 1), n)
       @buffer.move_from(@buffer + n, size - n)
       (@buffer + size - n).copy_from(tmp_buffer.to_unsafe, n)
-    elsif n.abs <= SMALL_ARRAY_SIZE
+    when .>= -SMALL_ARRAY_SIZE
       tmp_buffer = uninitialized StaticArray(T, SMALL_ARRAY_SIZE)
       tmp_buffer.to_unsafe.copy_from(@buffer, n - 1)
       (@buffer + size - n).move_from(@buffer, n)
       @buffer.copy_from(tmp_buffer.to_unsafe, size - n)
-    elsif n <= size // 2
+    when .<= size // 2
       tmp = self[0..n]
       @buffer.move_from(@buffer + n, size - n)
       (@buffer + size - n).copy_from(tmp.to_unsafe, n)
@@ -1586,6 +1588,7 @@ class Array(T)
     end
     self
   end
+end
 
   # Returns an array with all the elements shifted `n` times.
   #
