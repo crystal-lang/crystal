@@ -1154,7 +1154,7 @@ module Crystal
       assert_macro "", %({% a = 1 %}{{a}}), [] of ASTNode, "1"
     end
 
-    describe "type methods" do
+    describe TypeNode do
       describe "#all_includers" do
         it "returns an array of types `self` is included in" do
           assert_type(%(
