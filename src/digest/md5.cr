@@ -15,22 +15,18 @@ class Digest::MD5 < Digest::Base
     reset
   end
 
-  def reset : self
-    super
-
+  private def reset_impl : Nil
     @i[0] = 0_u32
     @i[1] = 0_u32
     @buf[0] = 0x67452301_u32
     @buf[1] = 0xEFCDAB89_u32
     @buf[2] = 0x98BADCFE_u32
     @buf[3] = 0x10325476_u32
-    self
   end
 
-  def update(data : Bytes) : self
+  private def update_impl(data : Bytes) : Nil
     check_finished
     update(data.to_unsafe, data.bytesize.to_u32)
-    self
   end
 
   private def update(inBuf, inLen)
@@ -217,9 +213,7 @@ class Digest::MD5 < Digest::Base
     @buf[3] &+= d
   end
 
-  def final(dst : Bytes) : Bytes
-    set_finished
-
+  private def final_impl(dst : Bytes) : Nil
     tmp_in = uninitialized UInt32[16]
 
     # save number of bits
@@ -253,8 +247,6 @@ class Digest::MD5 < Digest::Base
       dst[ii + 3] = ((@buf[i] >> 24) & 0xFF).to_u8
       ii += 4
     end
-
-    dst
   end
 
   def digest_size : Int32

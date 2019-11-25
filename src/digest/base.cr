@@ -1,7 +1,7 @@
 require "base64"
 
 module Digest
-class Digest::FinalizedError < Exception
+  class Digest::FinalizedError < Exception
   end
 end
 
@@ -102,6 +102,12 @@ abstract class Digest::Base
     update data.to_slice
   end
 
+  def update(data : Bytes) : self
+    check_finished
+    update_impl data
+    self
+  end
+
   # Returns the final digest output.
   #
   # This method can only be called once and raises `FinalizedError` on subsequent calls.
@@ -110,6 +116,19 @@ abstract class Digest::Base
   def final : Bytes
     dst = Bytes.new digest_size
     final dst
+  end
+
+  def final(dst : Bytes) : Bytes
+    check_finished
+    @finished = true
+    final_impl dst
+    dst
+  end
+
+  def reset : self
+    reset_impl
+    @finished = false
+    self
   end
 
   # Dups and finishes the digest.
@@ -124,24 +143,11 @@ abstract class Digest::Base
     digest.hexstring
   end
 
-  protected def check_finished : Nil
+  private def check_finished : Nil
     raise FinalizedError.new("finish already called") if @finished
   end
 
-  protected def set_finished : Nil
-    check_finished
-    @finished = true
-  end
-
-  # Override.
-  def reset : self
-    @finished = false
-    self
-  end
-
-  # When creating a new digest class call #check_finished before mutating.
-  abstract def update(data : Bytes) : self
-  # When creating a new digest class call #set_finished before mutating.
-  abstract def final(dst : Bytes) : Bytes
+  abstract def update_impl(data : Bytes) : Nil
+  abstract def final_impl(dst : Bytes) : Nil
   abstract def digest_size : Int32
 end

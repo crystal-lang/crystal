@@ -48,30 +48,24 @@ module OpenSSL
       Digest.new(@name, ctx)
     end
 
-    def reset : self
-      super
-
+    private def reset_impl : Nil
       if LibCrypto.evp_digestinit_ex(self, to_unsafe_md, nil) != 1
         raise Error.new "Digest initialization failed."
       end
-      self
     end
 
-    def update(data : String | Slice) : self
+    private def update_impl(data : Bytes) : Nil
       check_finished
       if LibCrypto.evp_digestupdate(self, data, data.bytesize) != 1
         raise Error.new "EVP_DigestUpdate"
       end
-      self
     end
 
-    def final(data : Bytes) : Bytes
-      set_finished
+    private def final_impl(data : Bytes) : Nil
       raise ArgumentError.new("data size incorrect") unless data.bytesize == digest_size
       if LibCrypto.evp_digestfinal_ex(@ctx, data, nil) != 1
         raise Error.new "EVP_DigestFinal_ex"
       end
-      data
     end
 
     def digest_size : Int32

@@ -20,9 +20,7 @@ class Digest::SHA1 < Digest::Base
     reset
   end
 
-  def reset : self
-    super
-
+  private def reset_impl : Nil
     @length_low = 0_u32
     @length_high = 0_u32
     @message_block_index = 0
@@ -31,12 +29,9 @@ class Digest::SHA1 < Digest::Base
     @intermediate_hash[2] = 0x98BADCFE_u32
     @intermediate_hash[3] = 0x10325476_u32
     @intermediate_hash[4] = 0xC3D2E1F0_u32
-    self
   end
 
-  def update(data : Bytes) : self
-    check_finished
-
+  private def update_impl(data : Bytes) : Nil
     data.each do |byte|
       @message_block[@message_block_index] = byte & 0xFF_u8
       @message_block_index += 1
@@ -56,9 +51,7 @@ class Digest::SHA1 < Digest::Base
     self
   end
 
-  def final(dst : Bytes) : Bytes
-    set_finished
-
+  private def final_impl(dst : Bytes) : Nil
     pad_message
 
     @length_low = 0_u32
@@ -66,8 +59,6 @@ class Digest::SHA1 < Digest::Base
     {% for i in 0...20 %}
       dst[{{i}}] = (@intermediate_hash[{{i >> 2}}] >> 8 * (3 - ({{i & 0x03}}))).to_u8!
     {% end %}
-
-    dst
   end
 
   private def process_message_block
