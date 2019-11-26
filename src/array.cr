@@ -1565,6 +1565,7 @@ class Array(T)
     n %= size
     case n
     when 0
+      # ignore
     when 1
       tmp = self[0]
       @buffer.move_from(@buffer + n, size - n)
