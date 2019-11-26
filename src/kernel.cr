@@ -520,7 +520,7 @@ def abort(message = nil, status = 1) : NoReturn
   exit status
 end
 
-{% unless flag?(:preview_mt) %}
+{% unless flag?(:preview_mt) || flag?(:win32) %}
   class Process
     # Hooks are defined here due to load order problems.
     def self.after_fork_child_callbacks
