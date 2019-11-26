@@ -1,8 +1,6 @@
 require "base64"
 
-module Digest
-  class Digest::FinalizedError < Exception
-  end
+class Digest::FinalizedError < Exception
 end
 
 abstract class Digest::Base
