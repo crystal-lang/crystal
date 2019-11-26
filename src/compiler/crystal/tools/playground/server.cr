@@ -161,7 +161,7 @@ module Crystal::Playground
         @logger.info "Code execution killed (session=#{@session_key}, filename=#{@running_process_filename})."
         @process = nil
         File.delete @running_process_filename rescue nil
-        process.kill rescue nil
+        process.terminate_gracefully rescue nil
       end
     end
 
@@ -175,7 +175,10 @@ module Crystal::Playground
       spawn do
         status = process.wait
         @logger.info "Code execution ended (session=#{@session_key}, tag=#{tag}, filename=#{output_filename})."
-        exit_status = status.normal_exit? ? status.exit_code : status.exit_signal.value
+        exit_status = status.exit_code
+        {% unless flag?(:win32) %}
+          exit_status = status.normal_exit? ? status.exit_code : status.exit_signal.value
+        {% end %}
 
         send_with_json_builder do |json|
           json.field "type", "exit"

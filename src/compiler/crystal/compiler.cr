@@ -577,7 +577,10 @@ module Crystal
       status = yield command, args
 
       unless status.success?
-        msg = status.normal_exit? ? "code: #{status.exit_code}" : "signal: #{status.exit_signal} (#{status.exit_signal.value})"
+        msg = "code: #{status.exit_code}"
+        {% unless flag?(:win32) %}
+          msg = status.normal_exit? ? "code: #{status.exit_code}" : "signal: #{status.exit_signal} (#{status.exit_signal.value})"
+        {% end %}
         code = status.normal_exit? ? status.exit_code : 1
         error "execution of command failed with #{msg}: `#{command}`", exit_code: code
       end

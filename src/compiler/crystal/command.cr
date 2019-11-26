@@ -213,9 +213,11 @@ class Crystal::Command
       begin
         elapsed = Time.measure do
           Process.run(output_filename, args: run_args, input: Process::Redirect::Inherit, output: Process::Redirect::Inherit, error: Process::Redirect::Inherit) do |process|
-            # Ignore the signal so we don't exit the running process
-            # (the running process can still handle this signal)
-            ::Signal::INT.ignore # do
+            {% unless flag?(:win32) %}
+              # Ignore the signal so we don't exit the running process
+              # (the running process can still handle this signal)
+              ::Signal::INT.ignore # do
+            {% end %}
           end
         end
         {$?, elapsed}
@@ -238,17 +240,18 @@ class Crystal::Command
     if status.normal_exit?
       exit error_on_exit ? 1 : status.exit_code
     else
-      case status.exit_signal
-      when ::Signal::KILL
-        STDERR.puts "Program was killed"
-      when ::Signal::SEGV
-        STDERR.puts "Program exited because of a segmentation fault (11)"
-      when ::Signal::INT
-        # OK, bubbled from the sub-program
-      else
-        STDERR.puts "Program received and didn't handle signal #{status.exit_signal} (#{status.exit_signal.value})"
-      end
-
+      {% unless flag?(:win32) %}
+        case status.exit_signal
+        when ::Signal::KILL
+          STDERR.puts "Program was killed"
+        when ::Signal::SEGV
+          STDERR.puts "Program exited because of a segmentation fault (11)"
+        when ::Signal::INT
+          # OK, bubbled from the sub-program
+        else
+          STDERR.puts "Program received and didn't handle signal #{status.exit_signal} (#{status.exit_signal.value})"
+        end
+      {% end %}
       exit 1
     end
   end
