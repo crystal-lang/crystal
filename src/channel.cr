@@ -167,6 +167,13 @@ class Channel(T)
     end
   end
 
+  # Closes the channel.
+  # The method prevents any new value from being sent to / received from the channel.
+  # All fibers blocked in `send` or `receive` will be awakened with `Channel::ClosedError`
+  #
+  # Both awaiting and subsequent calls to `#send` will consider the channel closed.
+  # All items successfully sent to the channel can be received, before `#receive` considers the channel closed.
+  # Calling `#close` on a closed channel does not have any effect.
   def close : Nil
     sender_list = Crystal::PointerLinkedList(Sender(T)).new
     receiver_list = Crystal::PointerLinkedList(Receiver(T)).new
@@ -186,6 +193,11 @@ class Channel(T)
     @closed
   end
 
+  # Sends a value to the channel.
+  # If the channel has spare capacity, then the method returns immediately.
+  # Otherwise, this method blocks the calling fiber until another fiber calls `#receive` on the channel.
+  #
+  # Raises `ClosedError` if the channel is closed or closes while waiting on a full channel.
   def send(value : T)
     sender = Sender(T).new
 
@@ -237,13 +249,15 @@ class Channel(T)
   end
 
   # Receives a value from the channel.
-  # If there is a value waiting, it is returned immediately. Otherwise, this method blocks until a value is sent to the channel.
+  # If there is a value waiting, then it is returned immediately. Otherwise, this method blocks until a value is sent to the channel.
   #
   # Raises `ClosedError` if the channel is closed or closes while waiting for receive.
   #
   # ```
   # channel = Channel(Int32).new
-  # channel.send(1)
+  # spawn do
+  #   channel.send(1)
+  # end
   # channel.receive # => 1
   # ```
   def receive

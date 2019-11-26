@@ -34,6 +34,17 @@ describe Channel do
     ch2.receive.should eq 2
   end
 
+  it "does not raise or change its status when it is closed more than once" do
+    ch = Channel(Int32).new
+    ch.closed?.should be_false
+
+    ch.close
+    ch.closed?.should be_true
+
+    ch.close
+    ch.closed?.should be_true
+  end
+
   describe ".select" do
     context "receive raise-on-close single-channel" do
       it "types" do
@@ -512,7 +523,7 @@ describe "unbuffered" do
     closed.should be_true
   end
 
-  it "can send suceesfully without raise" do
+  it "can send successfully without raise" do
     ch = Channel(Int32).new
     raise_flag = false
 
