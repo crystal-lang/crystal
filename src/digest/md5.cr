@@ -25,7 +25,6 @@ class Digest::MD5 < Digest::Base
   end
 
   private def update_impl(data : Bytes) : Nil
-    check_finished
     update(data.to_unsafe, data.bytesize.to_u32)
   end
 
