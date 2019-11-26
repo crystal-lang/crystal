@@ -147,7 +147,12 @@ abstract class Digest::Base
     raise FinalizedError.new("finish already called") if @finished
   end
 
+  # Hashes data incrementally.
   abstract def update_impl(data : Bytes) : Nil
+  # Stores the output digest of #digest_size bytes in dst.
   abstract def final_impl(dst : Bytes) : Nil
+  # Resets the object to it's initial state.
+  abstract def reset_impl : Nil
+  # Returns the digest output size in bytes.
   abstract def digest_size : Int32
 end
