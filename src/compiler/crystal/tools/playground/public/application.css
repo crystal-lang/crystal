@@ -132,7 +132,7 @@ h4 {
 
 .sidebar div {
   position: absolute;
-  white-space: nowrap;
+  white-space: pre;
   left: 0;
   right: 0;
 }
