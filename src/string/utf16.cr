@@ -14,14 +14,14 @@ class String
   def to_utf16 : Slice(UInt16)
     if ascii_only?
       # size == bytesize, so each char fits in one UInt16
-      u16_size = bytesize
-    else
-      # size < bytesize, so we need to add one UInt16 for each character that
-      # is two UInt16 wide.
-      u16_size = 0
-      each_char do |char|
-        u16_size += char.ord < 0x1_0000 ? 1 : 2
-      end
+      return to_slice.map &.to_u16
+    end
+
+    # size < bytesize, so we need to count the number of characters that are
+    # two UInt16 wide.
+    u16_size = 0
+    each_char do |char|
+      u16_size += char.ord < 0x1_0000 ? 1 : 2
     end
 
     # Allocate one extra character for trailing null
