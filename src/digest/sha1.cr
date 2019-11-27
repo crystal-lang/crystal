@@ -48,7 +48,6 @@ class Digest::SHA1 < Digest::Base
         process_message_block
       end
     end
-    self
   end
 
   private def final_impl(dst : Bytes) : Nil
