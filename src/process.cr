@@ -578,11 +578,31 @@ class Process
     become_user real: uid, effective: uid, saved: uid
   end
 
+  # Attempts to change real and/or effective user id's of the current process.
+  # Uid's not supplied in arguments are kept at their current values (if supported).
+  # Attempts to mimic the behavior of [`setreuid()`](https://pubs.opengroup.org/onlinepubs/9699919799/functions/setreuid.html)
+  #
+  # * *real*: real user id (ruid).
+  # * *effective*: effective user id (euid).
+  #
+  # Example:
+  #
+  # ```
+  # Process.become_user real: 1004, effective: 0 # Changes real and saved user id to 1004 and effective to 0 (root)
+  # Process.become_user effective: 0             # Only changes the effective.
+  # ```
+  def self.become_user(*, real : Int? = nil, effective : Int? = nil)
+    real = real ? LibC::UidT.new(real) : UID_NO_CHANGE
+    effective = effective ? LibC::UidT.new(effective) : UID_NO_CHANGE
+    saved = real
+
+    become_user real, effective, saved
+    self
+  end
+
   # Attempts to change real, effective, and/or saved user id's of the current process.
   # Uid's not supplied in arguments are kept at their current values (if supported).
   # Explicit setting of saved id's is not supported on all platforms.
-  # Attempts to mimic the behavior of [`setreuid()`](https://pubs.opengroup.org/onlinepubs/9699919799/functions/setreuid.html)
-  # if saved is not provided.
   #
   # * *real*: real user id (ruid).
   # * *effective*: effective user id (euid).
@@ -591,23 +611,26 @@ class Process
   # Example:
   #
   # ```
-  # Process.become_user real: 1004, effective: 0 # Changes real and saved user id to 1004 and effective to 0 (root)
-  # Process.become_user effective: 0             # Only changes the effective.
-  # Process.become_user saved: 0                 # Platform specific and may not function.
+  # Process.become_user saved: 0 # Platform specific and may not function.
   # ```
   def self.become_user(*, real : Int? = nil, effective : Int? = nil, saved : Int? = nil)
-    real ||= UID_NO_CHANGE
-    effective ||= UID_NO_CHANGE
-    saved ||= real
+    real = real ? LibC::UidT.new(real) : UID_NO_CHANGE
+    effective = effective ? LibC::UidT.new(effective) : UID_NO_CHANGE
+    saved = saved ? LibC::UidT.new(saved) : UID_NO_CHANGE
 
+    become_user real, effective, saved
+    self
+  end
+
+  private def self.become_user(real : LibC::UidT, effective : LibC::UidT, saved : LibC::UidT)
     {% if LibC.has_method?(:setresuid) %}
       if LibC.setresuid(real, effective, saved) != 0
         raise Errno.new("setresuid failed")
       end
     {% else %}
-      if saved != UID_NO_CHANGE && real == UID_NO_CHANGE && effective == UID_NO_CHANGE
+      if real != saved
         Errno.value = Errno::ENOSYS
-        raise Errno.new("only setting the saved uid not supported")
+        raise Errno.new("setting saved is not supported on platforms without setresuid()")
       end
 
       if LibC.setreuid(real, effective) != 0

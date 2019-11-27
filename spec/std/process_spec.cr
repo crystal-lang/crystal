@@ -115,7 +115,7 @@ describe Process do
       egid = Process.effective_group_id
 
       begin
-        Process.become_group(real: 7777, effective: 8888, saved: 9999)
+        Process.become_group(real: 7777, effective: 8888, saved: 7777)
         Process.group_id.should eq 7777
         Process.effective_group_id.should eq 8888
       ensure
@@ -125,13 +125,13 @@ describe Process do
   else
     it ".become_user non-root" do
       expect_raises_errno(Errno::EPERM) do
-        Process.become_user(real: 0, effective: 8888, saved: 9999)
+        Process.become_user(real: 0, effective: 8888, saved: 0)
       end
     end
 
     it ".become_group non-root" do
       expect_raises_errno(Errno::EPERM) do
-        Process.become_group(real: 7777, effective: 8888, saved: 9999)
+        Process.become_group(real: 7777, effective: 8888, saved: 7777)
       end
     end
   end
