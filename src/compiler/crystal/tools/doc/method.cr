@@ -323,4 +323,18 @@ class Crystal::Doc::Method
   def annotations(annotation_type)
     @def.annotations(annotation_type)
   end
+
+  def platform_dependent?
+    !!annotations(@generator.program.platform_annotation)
+  end
+
+  def platforms
+    if anns = annotations(@generator.program.platform_annotation)
+      platforms = [] of String
+      anns.each do |ann|
+        platforms = platforms + PlatformAnnotation.from(ann).platforms
+      end
+      platforms.join(", ")
+    end
+  end
 end

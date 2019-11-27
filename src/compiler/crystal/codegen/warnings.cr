@@ -45,6 +45,34 @@ module Crystal
     end
   end
 
+  struct PlatformAnnotation
+    getter platforms : Array(String)
+
+    def initialize(@platforms)
+    end
+
+    def self.from(ann : Annotation)
+      args = ann.args
+      named_args = ann.named_args
+
+      if named_args
+        ann.raise "too many named arguments (given #{named_args.size}, expected maximum 0)"
+      end
+
+      platforms = [] of String
+      args.each do |arg|
+        arg.raise "argument must be a String" unless arg.is_a?(StringLiteral)
+        platforms << arg.value
+      end
+
+      new(platforms)
+    end
+
+    def message
+      platforms.join(", ")
+    end
+  end
+
   class Def
     def short_reference
       case owner
@@ -60,6 +88,7 @@ module Crystal
 
   class CodeGenVisitor
     @deprecated_methods_detected = Set(String).new
+    @platform_methods_detected = Set(String).new
 
     def check_call_to_deprecated_method(node : Call)
       return unless @program.warnings.all?
@@ -80,6 +109,24 @@ module Crystal
         message = message ? " #{message}" : ""
 
         full_message = node.warning "Deprecated #{short_reference}.#{message}"
+
+        @program.warning_failures << full_message
+      end
+
+      if (ann = node.target_def.annotation(@program.platform_annotation)) &&
+         (platform_annotation = PlatformAnnotation.from(ann))
+        return if compiler_expanded_call(node)
+        return if @program.ignore_warning_due_to_location?(node.location)
+        short_reference = node.target_def.short_reference
+        warning_key = node.location.try { |l| "#{short_reference} #{l}" }
+
+        # skip warning if the call site was already informed
+        # if there is no location information just inform it.
+        return if !warning_key || @platform_methods_detected.includes?(warning_key)
+        @platform_methods_detected.add(warning_key) if warning_key
+
+        message = platform_annotation.message
+        full_message = node.warning "Platform dependent #{short_reference} (#{message})"
 
         @program.warning_failures << full_message
       end
