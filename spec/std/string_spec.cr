@@ -2372,22 +2372,22 @@ describe "String" do
 
     it "raises if illegal byte sequence" do
       expect_raises ArgumentError, "Invalid multibyte sequence" do
-        "ñ".encode("GB2312")
+        "\xff".encode("EUC-JP")
       end
     end
 
     it "doesn't raise on invalid byte sequence" do
-      "好ñ是".encode("GB2312", invalid: :skip).to_a.should eq([186, 195, 202, 199])
+      "好\xff是".encode("EUC-JP", invalid: :skip).to_a.should eq([185, 165, 192, 167])
     end
 
     it "raises if incomplete byte sequence" do
       expect_raises ArgumentError, "Incomplete multibyte sequence" do
-        "好".byte_slice(0, 1).encode("GB2312")
+        "好".byte_slice(0, 1).encode("EUC-JP")
       end
     end
 
     it "doesn't raise if incomplete byte sequence" do
-      ("好".byte_slice(0, 1) + "是").encode("GB2312", invalid: :skip).to_a.should eq([202, 199])
+      ("好".byte_slice(0, 1) + "是").encode("EUC-JP", invalid: :skip).to_a.should eq([192, 167])
     end
 
     it "decodes" do
@@ -2396,8 +2396,8 @@ describe "String" do
     end
 
     it "decodes with skip" do
-      bytes = Bytes[186, 195, 140, 202, 199]
-      String.new(bytes, "GB2312", invalid: :skip).should eq("好是")
+      bytes = Bytes[186, 195, 255, 202, 199]
+      String.new(bytes, "EUC-JP", invalid: :skip).should eq("挫頁")
     end
   end
 

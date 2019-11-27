@@ -457,13 +457,13 @@ describe "IO::Buffered" do
         end
       end
 
-      it "gets big GB2312 string" do
-        str = ("你好我是人\n" * 1000).encode("GB2312")
+      it "gets big EUC-JP string" do
+        str = ("好我是人\n" * 1000).encode("EUC-JP")
         base_io = IO::Memory.new(str)
         io = BufferedWrapper.new(base_io)
-        io.set_encoding("GB2312")
+        io.set_encoding("EUC-JP")
         1000.times do
-          io.gets(chomp: false).should eq("你好我是人\n")
+          io.gets(chomp: false).should eq("好我是人\n")
         end
       end
 
