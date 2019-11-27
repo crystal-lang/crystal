@@ -16,9 +16,6 @@ class Thread
   # :nodoc:
   property previous : Thread?
 
-  # :nodoc:
-  property gc_thread_handler : Void* = Pointer(Void).null
-
   def self.unsafe_each
     threads.unsafe_each { |thread| yield thread }
   end
