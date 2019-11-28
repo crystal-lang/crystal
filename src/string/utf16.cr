@@ -14,7 +14,17 @@ class String
   def to_utf16 : Slice(UInt16)
     if ascii_only?
       # size == bytesize, so each char fits in one UInt16
-      return to_slice.map &.to_u16
+
+      # This is essentially equivalent to `to_slice.map(&.to_u16)` but also makes
+      # sure to allocate a null byte after the string.
+      slice = Slice(UInt16).new(bytesize + 1) do |i|
+        if i == bytesize
+          0_u16
+        else
+          unsafe_byte_at(i).to_u16
+        end
+      end
+      return slice[0, bytesize]
     end
 
     # size < bytesize, so we need to count the number of characters that are
