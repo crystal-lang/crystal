@@ -342,8 +342,8 @@ describe "Slice" do
 
   it "does rindex" do
     slice = "foobar".to_slice
-    slice.rindex('o'.ord.to_u8).should eq(2)
-    slice.rindex('z'.ord.to_u8).should be_nil
+    slice.rindex('o'.codepoint.to_u8).should eq(2)
+    slice.rindex('z'.codepoint.to_u8).should be_nil
   end
 
   it "does bytesize" do

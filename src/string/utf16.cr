@@ -14,14 +14,14 @@ class String
   def to_utf16 : Slice(UInt16)
     size = 0
     each_char do |char|
-      size += char.ord < 0x10000 ? 1 : 2
+      size += char.codepoint < 0x10000 ? 1 : 2
     end
 
     slice = Slice(UInt16).new(size + 1)
 
     i = 0
     each_char do |char|
-      ord = char.ord
+      ord = char.codepoint
       if ord <= 0xd800 || (0xe000 <= ord < 0x10000)
         # One UInt16 is enough
         slice[i] = ord.to_u16

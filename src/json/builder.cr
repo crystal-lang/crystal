@@ -125,7 +125,7 @@ class JSON::Builder
         when .ascii_control?
           io.write string.to_slice[start_pos, reader.pos - start_pos]
           io << "\\u"
-          ord = char.ord
+          ord = char.codepoint
           io << '0' if ord < 0x1000
           io << '0' if ord < 0x100
           io << '0' if ord < 0x10

@@ -162,7 +162,7 @@ describe "IO::Buffered" do
   it "writes bytes" do
     str = IO::Memory.new
     io = BufferedWrapper.new(str)
-    10_000.times { io.write_byte 'a'.ord.to_u8 }
+    10_000.times { io.write_byte 'a'.codepoint.to_u8 }
     io.flush
     str.to_s.should eq("a" * 10_000)
   end
@@ -196,11 +196,11 @@ describe "IO::Buffered" do
 
   it "reads byte" do
     io = BufferedWrapper.new(IO::Memory.new("hello"))
-    io.read_byte.should eq('h'.ord)
-    io.read_byte.should eq('e'.ord)
-    io.read_byte.should eq('l'.ord)
-    io.read_byte.should eq('l'.ord)
-    io.read_byte.should eq('o'.ord)
+    io.read_byte.should eq('h'.codepoint)
+    io.read_byte.should eq('e'.codepoint)
+    io.read_byte.should eq('l'.codepoint)
+    io.read_byte.should eq('l'.codepoint)
+    io.read_byte.should eq('o'.codepoint)
     io.read_char.should be_nil
   end
 
@@ -235,7 +235,7 @@ describe "IO::Buffered" do
 
     900.times do
       10.times do |i|
-        slice[i].should eq('a'.ord + i)
+        slice[i].should eq('a'.codepoint + i)
       end
     end
   end
@@ -312,7 +312,7 @@ describe "IO::Buffered" do
 
       byte = Bytes.new(1)
       io.read_fully(byte)
-      byte[0].should eq('a'.ord.to_u8)
+      byte[0].should eq('a'.codepoint.to_u8)
 
       str.gets_to_end.should eq("bc")
     end
@@ -328,7 +328,7 @@ describe "IO::Buffered" do
       io.buffer_size.times do
         byte = Bytes.new(1)
         io.read_fully(byte)
-        byte[0].should eq('a'.ord.to_u8)
+        byte[0].should eq('a'.codepoint.to_u8)
       end
 
       io.read_buffering = false
@@ -339,7 +339,7 @@ describe "IO::Buffered" do
 
       byte = Bytes.new(1)
       io.read_fully(byte)
-      byte[0].should eq('b'.ord.to_u8)
+      byte[0].should eq('b'.codepoint.to_u8)
 
       str.gets_to_end.should eq("cde")
     end
@@ -353,7 +353,7 @@ describe "IO::Buffered" do
       io.read_buffering = false
       io.read_buffering?.should be_false
 
-      io.read_byte.should eq('a'.ord.to_u8)
+      io.read_byte.should eq('a'.codepoint.to_u8)
 
       str.gets_to_end.should eq("bc")
     end
@@ -367,7 +367,7 @@ describe "IO::Buffered" do
       io.read_buffering?.should be_true
 
       io.buffer_size.times do
-        io.read_byte.should eq('a'.ord.to_u8)
+        io.read_byte.should eq('a'.codepoint.to_u8)
       end
 
       io.read_buffering = false
@@ -376,7 +376,7 @@ describe "IO::Buffered" do
       str << "bcde"
       str.pos -= 4
 
-      io.read_byte.should eq('b'.ord.to_u8)
+      io.read_byte.should eq('b'.codepoint.to_u8)
 
       str.gets_to_end.should eq("cde")
     end

@@ -35,11 +35,11 @@ describe "Code gen: primitives" do
   end
 
   it "codegens char" do
-    run("'a'").to_i.should eq('a'.ord)
+    run("'a'").to_i.should eq('a'.codepoint)
   end
 
   it "codegens char ord" do
-    run("'a'.ord").to_i.should eq('a'.ord)
+    run("'a'.codepoint").to_i.should eq('a'.codepoint)
   end
 
   it "codegens f32" do

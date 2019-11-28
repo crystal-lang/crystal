@@ -2,7 +2,7 @@
 # * can't be expressed in Crystal (need to be expressed in LLVM). For example unary
 #   and binary math operators fall into this category.
 # * should always be inlined with an LLVM instruction for performance reasons, even
-#   in non-release builds. An example of this is `Char#ord`, which could be implemented
+#   in non-release builds. An example of this is `Char#codepoint`, which could be implemented
 #   in Crystal by assigning `self` to a variable and casting a pointer to it to `Int32`,
 #   and then reading back the value.
 
@@ -87,7 +87,27 @@ struct Char
   # '☃'.ord      # => 9731
   # ```
   @[Primitive(:cast)]
+  @[Deprecated("Use .codepoint instead, which is less cryptic")]
   def ord : Int32
+  end
+
+  # Returns the codepoint of this char.
+  #
+  # The codepoint is the integer representation.
+  # The Universal Coded Character Set (UCS) standard, commonly known as Unicode,
+  # assigns names and meanings to numbers, these numbers are called codepoints.
+  #
+  # For values below and including 127 this matches the ASCII codes
+  # and thus its byte representation.
+  #
+  # ```
+  # 'a'.codepoint      # => 97
+  # '\0'.codepoint     # => 0
+  # '\u007f'.codepoint # => 127
+  # '☃'.codepoint      # => 9731
+  # ```
+  @[Primitive(:cast)]
+  def codepoint : Int32
   end
 
   {% for op, desc in {

@@ -243,7 +243,7 @@ struct Char
     end
 
     private macro invalid_byte_sequence(width)
-      return yield Char::REPLACEMENT.ord, {{width}}, first.to_u8
+      return yield Char::REPLACEMENT.codepoint, {{width}}, first.to_u8
     end
 
     @[AlwaysInline]

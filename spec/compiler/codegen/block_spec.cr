@@ -993,7 +993,7 @@ describe "Code gen: block" do
 
       foo do
         a = 'A'
-        a.ord
+        a.codepoint
       end
       ").to_i.should eq(65)
   end

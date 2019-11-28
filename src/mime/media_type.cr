@@ -115,7 +115,7 @@ module MIME
     # ```
     #
     def type : String
-      index = media_type.byte_index('/'.ord) || media_type.bytesize
+      index = media_type.byte_index('/'.codepoint) || media_type.bytesize
       media_type.byte_slice(0, index)
     end
 
@@ -128,7 +128,7 @@ module MIME
     # MIME::MediaType.new("foo").sub_type        # => nil
     # ```
     def sub_type : String?
-      index = media_type.byte_index('/'.ord) || return
+      index = media_type.byte_index('/'.codepoint) || return
       media_type.byte_slice(index + 1, media_type.bytesize - index - 1)
     end
 
@@ -484,7 +484,7 @@ module MIME
 
     # :nodoc:
     def self.token?(char : Char)
-      !TSPECIAL_CHARACTERS.includes?(char) && 0x20 <= char.ord < 0x7F
+      !TSPECIAL_CHARACTERS.includes?(char) && 0x20 <= char.codepoint < 0x7F
     end
 
     # :nodoc:
@@ -496,7 +496,7 @@ module MIME
     def self.quote_string(string, io)
       string.each_byte do |byte|
         case byte
-        when '"'.ord, '\\'.ord
+        when '"'.codepoint, '\\'.codepoint
           io << '\\'
         when 0x00..0x1F, 0x7F
           raise ArgumentError.new("String contained invalid character #{byte.chr.inspect}")

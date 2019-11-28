@@ -613,7 +613,7 @@ module Crystal
               # clash of 'a' and 'A' by using 'A-' for 'A'.
               str << char << '-'
             else
-              str << char.ord
+              str << char.codepoint
             end
           end
         end

@@ -130,14 +130,14 @@ class HTTP::Request
       return nil if peek.empty?
 
       # See if we can find \n
-      index = peek.index('\n'.ord.to_u8)
+      index = peek.index('\n'.codepoint.to_u8)
       if index
         return HTTP::Status::URI_TOO_LONG if index > max_request_line_size
 
         end_index = index
 
         # Also check (and discard) \r before that
-        if index > 0 && peek[index - 1] == '\r'.ord.to_u8
+        if index > 0 && peek[index - 1] == '\r'.codepoint.to_u8
           end_index -= 1
         end
 
@@ -163,7 +163,7 @@ class HTTP::Request
   end
 
   private def self.parse_request_line(slice : Bytes) : RequestLine | HTTP::Status
-    space_index = slice.index(' '.ord.to_u8)
+    space_index = slice.index(' '.codepoint.to_u8)
 
     # Oops, only a single part (should be three)
     return HTTP::Status::BAD_REQUEST unless space_index
@@ -177,14 +177,14 @@ class HTTP::Request
 
     # Skip spaces.
     # The RFC just mentions a single space but most servers allow multiple.
-    while space_index < slice.size && slice[space_index] == ' '.ord.to_u8
+    while space_index < slice.size && slice[space_index] == ' '.codepoint.to_u8
       space_index += 1
     end
 
     # Oops, we only found the "method" part followed by spaces
     return HTTP::Status::BAD_REQUEST if space_index == slice.size
 
-    next_space_index = slice.index(' '.ord.to_u8, offset: space_index)
+    next_space_index = slice.index(' '.codepoint.to_u8, offset: space_index)
 
     # Oops, we only found two parts (should be three)
     return HTTP::Status::BAD_REQUEST unless next_space_index
@@ -193,11 +193,11 @@ class HTTP::Request
 
     # Skip spaces again
     space_index = next_space_index
-    while space_index < slice.size && slice[space_index] == ' '.ord.to_u8
+    while space_index < slice.size && slice[space_index] == ' '.codepoint.to_u8
       space_index += 1
     end
 
-    next_space_index = slice.index(' '.ord.to_u8, offset: space_index) || slice.size
+    next_space_index = slice.index(' '.codepoint.to_u8, offset: space_index) || slice.size
 
     subslice = slice[space_index...next_space_index]
 
@@ -209,7 +209,7 @@ class HTTP::Request
     space_index = next_space_index
     while space_index < slice.size
       # Oops, we find something else (more than three parts)
-      return HTTP::Status::BAD_REQUEST unless slice[space_index] == ' '.ord.to_u8
+      return HTTP::Status::BAD_REQUEST unless slice[space_index] == ' '.codepoint.to_u8
       space_index += 1
     end
 

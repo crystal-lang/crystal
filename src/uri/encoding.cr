@@ -236,12 +236,12 @@ class URI
     string.each_byte do |byte|
       char = byte.unsafe_chr
       if char == ' ' && space_to_plus
-        io.write_byte '+'.ord.to_u8
+        io.write_byte '+'.codepoint.to_u8
       elsif char.ascii? && yield(byte) && (!space_to_plus || char != '+')
         io.write_byte byte
       else
-        io.write_byte '%'.ord.to_u8
-        io.write_byte '0'.ord.to_u8 if byte < 16
+        io.write_byte '%'.codepoint.to_u8
+        io.write_byte '0'.codepoint.to_u8 if byte < 16
         byte.to_s(16, io, upcase: true)
       end
     end
@@ -257,7 +257,7 @@ class URI
   # Unencodes one character. Private API
   def self.decode_one(string, bytesize, i, byte, char, io, plus_to_space = false)
     if plus_to_space && char == '+'
-      io.write_byte ' '.ord.to_u8
+      io.write_byte ' '.codepoint.to_u8
       i += 1
       return i
     end

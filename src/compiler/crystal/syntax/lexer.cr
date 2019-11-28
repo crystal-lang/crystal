@@ -1228,7 +1228,7 @@ module Crystal
           end
           @token.type = :CONST
           @token.value = string_range_from_pool(start)
-        elsif current_char.ascii_lowercase? || current_char == '_' || current_char.ord > 0x9F
+        elsif current_char.ascii_lowercase? || current_char == '_' || current_char.codepoint > 0x9F
           next_char
           scan_ident(start)
         else
@@ -2942,7 +2942,7 @@ module Crystal
     end
 
     def ident_start?(char)
-      char.ascii_letter? || char == '_' || char.ord > 0x9F
+      char.ascii_letter? || char == '_' || char.codepoint > 0x9F
     end
 
     def ident_part?(char)

@@ -58,7 +58,7 @@ struct Slice(T)
   # method does not allocate heap memory.
   #
   # ```
-  # ptr = Pointer.malloc(9) { |i| ('a'.ord + i).to_u8 }
+  # ptr = Pointer.malloc(9) { |i| ('a'.codepoint + i).to_u8 }
   #
   # slice = Slice.new(ptr, 3)
   # slice.size # => 3
@@ -495,33 +495,33 @@ struct Slice(T)
           0.upto(7) do |j|
             buffer[index_offset + 7 - j] = to_hex((i >> (4 * j)) & 0xf)
           end
-          buffer[index_offset + 8] = ' '.ord.to_u8
-          buffer[index_offset + 9] = ' '.ord.to_u8
+          buffer[index_offset + 8] = ' '.codepoint.to_u8
+          buffer[index_offset + 9] = ' '.codepoint.to_u8
           index_offset += 77
         end
 
         buffer[hex_offset] = to_hex(v >> 4)
         buffer[hex_offset + 1] = to_hex(v & 0x0f)
-        buffer[hex_offset + 2] = ' '.ord.to_u8
+        buffer[hex_offset + 2] = ' '.codepoint.to_u8
         hex_offset += 3
 
-        buffer[ascii_offset] = (v > 31 && v < 127) ? v : '.'.ord.to_u8
+        buffer[ascii_offset] = (v > 31 && v < 127) ? v : '.'.codepoint.to_u8
         ascii_offset += 1
 
         if i % 8 == 7
-          buffer[hex_offset] = ' '.ord.to_u8
+          buffer[hex_offset] = ' '.codepoint.to_u8
           hex_offset += 1
         end
 
         if i % 16 == 15 && ascii_offset < str_size
-          buffer[ascii_offset] = '\n'.ord.to_u8
+          buffer[ascii_offset] = '\n'.codepoint.to_u8
           hex_offset += 27
           ascii_offset += 61
         end
       end
 
       while hex_offset % 77 < 60
-        buffer[hex_offset] = ' '.ord.to_u8
+        buffer[hex_offset] = ' '.codepoint.to_u8
         hex_offset += 1
       end
 

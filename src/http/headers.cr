@@ -42,7 +42,7 @@ struct HTTP::Headers
 
       return byte if char.ascii_lowercase? || char == '-' # Optimize the common case
       return byte + 32 if char.ascii_uppercase?
-      return '-'.ord if char == '_'
+      return '-'.codepoint if char == '_'
 
       byte
     end

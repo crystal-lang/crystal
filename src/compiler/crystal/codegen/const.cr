@@ -157,7 +157,7 @@ class Crystal::CodeGenVisitor
     @last =
       case value = const.compile_time_value
       when Bool   then int1(value ? 1 : 0)
-      when Char   then int32(value.ord)
+      when Char   then int32(value.codepoint)
       when Int8   then int8(value)
       when Int16  then int16(value)
       when Int32  then int32(value)

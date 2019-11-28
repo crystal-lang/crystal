@@ -133,22 +133,22 @@ describe "Char" do
   end
 
   it "escapes" do
-    '\a'.ord.should eq(7)
-    '\b'.ord.should eq(8)
-    '\t'.ord.should eq(9)
-    '\n'.ord.should eq(10)
-    '\v'.ord.should eq(11)
-    '\f'.ord.should eq(12)
-    '\r'.ord.should eq(13)
-    '\e'.ord.should eq(27)
-    '\''.ord.should eq(39)
-    '\\'.ord.should eq(92)
+    '\a'.codepoint.should eq(7)
+    '\b'.codepoint.should eq(8)
+    '\t'.codepoint.should eq(9)
+    '\n'.codepoint.should eq(10)
+    '\v'.codepoint.should eq(11)
+    '\f'.codepoint.should eq(12)
+    '\r'.codepoint.should eq(13)
+    '\e'.codepoint.should eq(27)
+    '\''.codepoint.should eq(39)
+    '\\'.codepoint.should eq(92)
   end
 
   it "escapes with unicode" do
-    '\u{12}'.ord.should eq(1 * 16 + 2)
-    '\u{A}'.ord.should eq(10)
-    '\u{AB}'.ord.should eq(10 * 16 + 11)
+    '\u{12}'.codepoint.should eq(1 * 16 + 2)
+    '\u{A}'.codepoint.should eq(10)
+    '\u{AB}'.codepoint.should eq(10 * 16 + 11)
   end
 
   it "does to_i without a base" do
@@ -236,7 +236,7 @@ describe "Char" do
   end
 
   it "does ord for multibyte char" do
-    '日'.ord.should eq(26085)
+    '日'.codepoint.should eq(26085)
   end
 
   it "does to_s for single-byte char" do
@@ -339,7 +339,7 @@ describe "Char" do
   end
 
   it "does each_byte" do
-    'a'.each_byte(&.should eq('a'.ord)).should be_nil
+    'a'.each_byte(&.should eq('a'.codepoint)).should be_nil
   end
 
   it "does bytes" do
@@ -347,12 +347,12 @@ describe "Char" do
   end
 
   it "#===(:Int)" do
-    ('c'.ord).should eq(99)
+    ('c'.codepoint).should eq(99)
     ('c' === 99_u8).should be_true
     ('c' === 99).should be_true
     ('z' === 99).should be_false
 
-    ('酒'.ord).should eq(37202)
+    ('酒'.codepoint).should eq(37202)
     ('酒' === 37202).should be_true
   end
 

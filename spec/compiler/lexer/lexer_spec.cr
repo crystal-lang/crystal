@@ -391,14 +391,14 @@ describe "Lexer" do
     lexer = Lexer.new "'á'"
     token = lexer.next_token
     token.type.should eq(:CHAR)
-    token.value.as(Char).ord.should eq(225)
+    token.value.as(Char).codepoint.should eq(225)
   end
 
   it "lexes utf-8 multibyte char" do
     lexer = Lexer.new "'日'"
     token = lexer.next_token
     token.type.should eq(:CHAR)
-    token.value.as(Char).ord.should eq(26085)
+    token.value.as(Char).codepoint.should eq(26085)
   end
 
   it "doesn't raise if slash r with slash n" do
@@ -423,28 +423,28 @@ describe "Lexer" do
     lexer = Lexer.new "'\\uFEDA'"
     token = lexer.next_token
     token.type.should eq(:CHAR)
-    token.value.as(Char).ord.should eq(0xFEDA)
+    token.value.as(Char).codepoint.should eq(0xFEDA)
   end
 
   it "lexes char with unicode codepoint and curly with zeros" do
     lexer = Lexer.new "'\\u{0}'"
     token = lexer.next_token
     token.type.should eq(:CHAR)
-    token.value.as(Char).ord.should eq(0)
+    token.value.as(Char).codepoint.should eq(0)
   end
 
   it "lexes char with unicode codepoint and curly" do
     lexer = Lexer.new "'\\u{A5}'"
     token = lexer.next_token
     token.type.should eq(:CHAR)
-    token.value.as(Char).ord.should eq(0xA5)
+    token.value.as(Char).codepoint.should eq(0xA5)
   end
 
   it "lexes char with unicode codepoint and curly with six hex digits" do
     lexer = Lexer.new "'\\u{10FFFF}'"
     token = lexer.next_token
     token.type.should eq(:CHAR)
-    token.value.as(Char).ord.should eq(0x10FFFF)
+    token.value.as(Char).codepoint.should eq(0x10FFFF)
   end
 
   it "lexes float then zero (bug)" do

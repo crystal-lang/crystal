@@ -126,8 +126,8 @@ describe IO do
     it "iterates by byte" do
       io = SimpleIOMemory.new("ab")
       bytes = io.each_byte
-      bytes.next.should eq('a'.ord)
-      bytes.next.should eq('b'.ord)
+      bytes.next.should eq('a'.codepoint)
+      bytes.next.should eq('b'.codepoint)
       bytes.next.should be_a(Iterator::Stop)
     end
   end
@@ -303,11 +303,11 @@ describe IO do
 
     it "reads byte" do
       io = SimpleIOMemory.new("hello")
-      io.read_byte.should eq('h'.ord)
-      io.read_byte.should eq('e'.ord)
-      io.read_byte.should eq('l'.ord)
-      io.read_byte.should eq('l'.ord)
-      io.read_byte.should eq('o'.ord)
+      io.read_byte.should eq('h'.codepoint)
+      io.read_byte.should eq('e'.codepoint)
+      io.read_byte.should eq('l'.codepoint)
+      io.read_byte.should eq('l'.codepoint)
+      io.read_byte.should eq('o'.codepoint)
       io.read_char.should be_nil
     end
 
@@ -345,7 +345,7 @@ describe IO do
       io.each_byte do |b|
         bytes << b
       end
-      bytes.should eq ['a'.ord.to_u8, 'b'.ord.to_u8, 'c'.ord.to_u8]
+      bytes.should eq ['a'.codepoint.to_u8, 'b'.codepoint.to_u8, 'c'.codepoint.to_u8]
     end
 
     it "raises on EOF with read_line" do
@@ -429,7 +429,7 @@ describe IO do
 
     it "writes bytes" do
       io = SimpleIOMemory.new
-      10_000.times { io.write_byte 'a'.ord.to_u8 }
+      10_000.times { io.write_byte 'a'.codepoint.to_u8 }
       io.gets_to_end.should eq("a" * 10_000)
     end
 

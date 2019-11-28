@@ -60,7 +60,7 @@ struct Char
   # 'c' - 'a' # => 2
   # ```
   def -(other : Char)
-    ord - other.ord
+    codepoint - other.codepoint
   end
 
   # Concatenates this char and *string*.
@@ -90,7 +90,7 @@ struct Char
   # 'a' + 2 # => 'c'
   # ```
   def +(other : Int) : Char
-    (ord + other).chr
+    (codepoint + other).chr
   end
 
   # Returns a char that has this char's codepoint minus *other*.
@@ -100,7 +100,7 @@ struct Char
   # 'c' - 2 # => 'a'
   # ```
   def -(other : Int) : Char
-    (ord - other).chr
+    (codepoint - other).chr
   end
 
   # The comparison operator.
@@ -121,7 +121,7 @@ struct Char
   # Returns `true` if this char is an ASCII character
   # (codepoint is in (0..127))
   def ascii?
-    ord < 128
+    codepoint < 128
   end
 
   # Returns `true` if this char is an ASCII number in specified base.
@@ -247,7 +247,7 @@ struct Char
   # 'b'.ascii_whitespace?  # => false
   # ```
   def ascii_whitespace?
-    self == ' ' || 9 <= ord <= 13
+    self == ' ' || 9 <= codepoint <= 13
   end
 
   # Returns `true` if this char is a whitespace according to unicode.
@@ -425,7 +425,7 @@ struct Char
   #
   # This method allows creating a `Range` of chars.
   def succ
-    (ord + 1).chr
+    (codepoint + 1).chr
   end
 
   # Returns a Char that is one codepoint smaller than this char's codepoint.
@@ -435,7 +435,7 @@ struct Char
   # 'ぃ'.pred # => 'あ'
   # ```
   def pred
-    (ord - 1).chr
+    (codepoint - 1).chr
   end
 
   # Returns `true` if this char is an ASCII control character.
@@ -450,7 +450,7 @@ struct Char
   # end
   # ```
   def ascii_control?
-    ord < 0x20 || (0x7F <= ord <= 0x9F)
+    codepoint < 0x20 || (0x7F <= codepoint <= 0x9F)
   end
 
   # Returns `true` if this char is a control character according to unicode.
@@ -475,7 +475,7 @@ struct Char
     dump_or_inspect do |io|
       if ascii_control?
         io << "\\u{"
-        ord.to_s(16, io)
+        codepoint.to_s(16, io)
         io << '}'
       else
         to_s(io)
@@ -501,9 +501,9 @@ struct Char
   # ```
   def dump
     dump_or_inspect do |io|
-      if ascii_control? || ord >= 0x80
+      if ascii_control? || codepoint >= 0x80
         io << "\\u{"
-        ord.to_s(16, io)
+        codepoint.to_s(16, io)
         io << '}'
       else
         to_s(io)
@@ -576,9 +576,9 @@ struct Char
       return unless '0' <= self <= '9'
       self - '0'
     else
-      ord = ord()
-      if 0 <= ord < 256
-        digit = String::CHAR_TO_DIGIT.to_unsafe[ord]
+      codepoint = codepoint()
+      if 0 <= codepoint < 256
+        digit = String::CHAR_TO_DIGIT.to_unsafe[codepoint]
         return if digit == -1 || digit >= base
         digit.to_i32
       end
@@ -680,7 +680,7 @@ struct Char
   def each_byte : Nil
     # See http://en.wikipedia.org/wiki/UTF-8#Sample_code
 
-    c = ord
+    c = codepoint
     if c < 0x80
       # 0xxxxxxx
       yield c.to_u8
@@ -713,7 +713,7 @@ struct Char
   def bytesize
     # See http://en.wikipedia.org/wiki/UTF-8#Sample_code
 
-    c = ord
+    c = codepoint
     if c < 0x80
       # 0xxxxxxx
       1
@@ -764,7 +764,7 @@ struct Char
   # This appends this char's bytes as encoded by UTF-8 to the given `IO`.
   def to_s(io : IO) : Nil
     if ascii?
-      byte = ord.to_u8
+      byte = codepoint.to_u8
 
       # Optimization: writing a slice is much slower than writing a byte
       if io.has_non_utf8_encoding?
@@ -786,13 +786,13 @@ struct Char
   # Returns `true` if the codepoint is equal to *byte* ignoring the type.
   #
   # ```
-  # 'c'.ord       # => 99
+  # 'c'.codepoint # => 99
   # 'c' === 99_u8 # => true
   # 'c' === 99    # => true
   # 'z' === 99    # => false
   # ```
   def ===(byte : Int)
-    ord === byte
+    codepoint === byte
   end
 
   def clone

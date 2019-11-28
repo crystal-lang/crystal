@@ -467,7 +467,7 @@ describe "Semantic: def overload" do
       end
 
       def foo(x : Char)
-        x.ord
+        x.codepoint
         'a'
       end
 
@@ -953,7 +953,7 @@ describe "Semantic: def overload" do
 			end
 
 			def do_something(value : Char)
-			  value.ord
+			  value.codepoint
 			  false
 			end
 

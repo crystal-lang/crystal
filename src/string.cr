@@ -148,7 +148,7 @@ class String
   # the contents and size of the slice.
   #
   # ```
-  # slice = Slice.new(4) { |i| ('a'.ord + i).to_u8 }
+  # slice = Slice.new(4) { |i| ('a'.codepoint + i).to_u8 }
   # String.new(slice) # => "abcd"
   # ```
   def self.new(slice : Bytes)
@@ -184,7 +184,7 @@ class String
   # ending zero byte.
   #
   # ```
-  # ptr = Pointer.malloc(5) { |i| i == 4 ? 0_u8 : ('a'.ord + i).to_u8 }
+  # ptr = Pointer.malloc(5) { |i| i == 4 ? 0_u8 : ('a'.codepoint + i).to_u8 }
   # String.new(ptr) # => "abcd"
   # ```
   def self.new(chars : UInt8*)
@@ -199,7 +199,7 @@ class String
   # lazily computed when needed.
   #
   # ```
-  # ptr = Pointer.malloc(4) { |i| ('a'.ord + i).to_u8 }
+  # ptr = Pointer.malloc(4) { |i| ('a'.codepoint + i).to_u8 }
   # String.new(ptr, 2) # => "ab"
   # ```
   def self.new(chars : UInt8*, bytesize, size = 0)
@@ -224,8 +224,8 @@ class String
   #
   # ```
   # str = String.new(4) do |buffer|
-  #   buffer[0] = 'a'.ord.to_u8
-  #   buffer[1] = 'b'.ord.to_u8
+  #   buffer[0] = 'a'.codepoint.to_u8
+  #   buffer[1] = 'b'.codepoint.to_u8
   #   {2, 2}
   # end
   # str # => "ab"
@@ -907,9 +907,9 @@ class String
     byte_slice start, bytesize - start
   end
 
-  @[Deprecated("Use .char_at(index).ord instead")]
+  @[Deprecated("Use .char_at(index).codepoint instead")]
   def codepoint_at(index)
-    char_at(index).ord
+    char_at(index).codepoint
   end
 
   def byte_at(index)
@@ -945,7 +945,7 @@ class String
     if ascii_only? && (options.none? || options.ascii?)
       String.new(bytesize) do |buffer|
         bytesize.times do |i|
-          buffer[i] = to_unsafe[i].unsafe_chr.downcase.ord.to_u8
+          buffer[i] = to_unsafe[i].unsafe_chr.downcase.codepoint.to_u8
         end
         {@bytesize, @length}
       end
@@ -972,7 +972,7 @@ class String
     if ascii_only? && (options.none? || options.ascii?)
       String.new(bytesize) do |buffer|
         bytesize.times do |i|
-          buffer[i] = to_unsafe[i].unsafe_chr.upcase.ord.to_u8
+          buffer[i] = to_unsafe[i].unsafe_chr.upcase.codepoint.to_u8
         end
         {@bytesize, @length}
       end
@@ -1000,9 +1000,9 @@ class String
       String.new(bytesize) do |buffer|
         bytesize.times do |i|
           if i == 0
-            buffer[i] = to_unsafe[i].unsafe_chr.upcase.ord.to_u8
+            buffer[i] = to_unsafe[i].unsafe_chr.upcase.codepoint.to_u8
           else
-            buffer[i] = to_unsafe[i].unsafe_chr.downcase.ord.to_u8
+            buffer[i] = to_unsafe[i].unsafe_chr.downcase.codepoint.to_u8
           end
         end
         {@bytesize, @length}
@@ -1648,11 +1648,11 @@ class String
     char = reader.current_char
     next_char = reader.next_char
     from.each_char do |ch|
-      if ch.ord >= 256
+      if ch.codepoint >= 256
         multi ||= {} of Char => Char
         multi[ch] = char
       else
-        table[ch.ord] = char.ord
+        table[ch.codepoint] = char.codepoint
       end
       if next_char != Char::ZERO
         char = next_char
@@ -1663,8 +1663,8 @@ class String
 
     String.build(bytesize) do |buffer|
       each_char do |ch|
-        if ch.ord < 256
-          if (a = table[ch.ord]) >= 0
+        if ch.codepoint < 256
+          if (a = table[ch.codepoint]) >= 0
             buffer << a.unsafe_chr
           else
             buffer << ch
@@ -1730,7 +1730,7 @@ class String
   # the block's return value.
   #
   # ```
-  # "hello".sub(/./) { |s| s[0].ord.to_s + ' ' } # => "104 ello"
+  # "hello".sub(/./) { |s| s[0].codepoint.to_s + ' ' } # => "104 ello"
   # ```
   def sub(pattern : Regex)
     sub_append(pattern) do |str, match, buffer|
@@ -1982,7 +1982,7 @@ class String
   # but `'\\'` is probably used for back references, so this check is faster than parsing
   # the whole thing.
   def has_back_references?
-    to_slice.index('\\'.ord.to_u8)
+    to_slice.index('\\'.codepoint.to_u8)
   end
 
   private def scan_backreferences(replacement, match_data, buffer)
@@ -1994,7 +1994,7 @@ class String
     first_index = 0
     index = 0
 
-    while index = replacement.byte_index('\\'.ord.to_u8, index)
+    while index = replacement.byte_index('\\'.codepoint.to_u8, index)
       index += 1
       chr = replacement.to_unsafe[index].unsafe_chr
       case chr
@@ -2016,7 +2016,7 @@ class String
 
         index += 1
         start_index = index
-        end_index = replacement.byte_index('>'.ord.to_u8, start_index)
+        end_index = replacement.byte_index('>'.codepoint.to_u8, start_index)
         raise ArgumentError.new("Missing ending '>' for '\\\\k<...'") unless end_index
 
         name = replacement.byte_slice(start_index, end_index - start_index)
@@ -2075,8 +2075,8 @@ class String
   private def gsub_ascii_char(char, replacement)
     String.new(bytesize) do |buffer|
       to_slice.each_with_index do |byte, i|
-        if char.ord == byte
-          buffer[i] = replacement.ord.to_u8
+        if char.codepoint == byte
+          buffer[i] = replacement.codepoint.to_u8
         else
           buffer[i] = byte
         end
@@ -2089,7 +2089,7 @@ class String
   # by the block value's value.
   #
   # ```
-  # "hello".gsub(/./) { |s| s[0].ord.to_s + ' ' } # => "104 101 108 108 111 "
+  # "hello".gsub(/./) { |s| s[0].codepoint.to_s + ' ' } # => "104 101 108 108 111 "
   # ```
   def gsub(pattern : Regex)
     gsub_append(pattern) do |string, match, buffer|
@@ -2642,7 +2642,7 @@ class String
   def index(search : Char, offset = 0)
     # If it's ASCII we can delegate to slice
     if search.ascii? && ascii_only?
-      return to_slice.index(search.ord.to_u8, offset)
+      return to_slice.index(search.codepoint.to_u8, offset)
     end
 
     offset += size if offset < 0
@@ -2749,7 +2749,7 @@ class String
   def rindex(search : Char, offset = size - 1)
     # If it's ASCII we can delegate to slice
     if search.ascii? && ascii_only?
-      return to_slice.rindex(search.ord.to_u8, offset)
+      return to_slice.rindex(search.codepoint.to_u8, offset)
     end
 
     offset += size if offset < 0
@@ -3443,7 +3443,7 @@ class String
 
     offset = 0
 
-    while byte_index = byte_index('\n'.ord.to_u8, offset)
+    while byte_index = byte_index('\n'.codepoint.to_u8, offset)
       count = byte_index - offset + 1
       if chomp
         count -= 1
@@ -3645,7 +3645,7 @@ class String
       end
 
       if count == 1
-        Intrinsics.memset(buffer.as(Void*), char.ord.to_u8, difference.to_u32, false)
+        Intrinsics.memset(buffer.as(Void*), char.codepoint.to_u8, difference.to_u32, false)
         buffer += difference
       else
         difference.times do
@@ -3861,7 +3861,7 @@ class String
   # See also: `Char#ord`.
   def each_codepoint
     each_char do |char|
-      yield char.ord
+      yield char.codepoint
     end
   end
 
@@ -3876,7 +3876,7 @@ class String
   #
   # See also: `Char#ord`.
   def each_codepoint
-    each_char.map &.ord
+    each_char.map &.codepoint
   end
 
   # Returns an `Array` of the codepoints that make the string.
@@ -4083,7 +4083,7 @@ class String
 
   private def dump_char(char, error, io)
     dump_or_inspect_char char, error, io do
-      char.ascii_control? || char.ord >= 0x80
+      char.ascii_control? || char.codepoint >= 0x80
     end
   end
 
@@ -4105,12 +4105,12 @@ class String
 
   private def dump_unicode(char, io)
     io << "\\u"
-    io << '{' if char.ord > 0xFFFF
-    io << '0' if char.ord < 0x1000
-    io << '0' if char.ord < 0x0100
-    io << '0' if char.ord < 0x0010
-    char.ord.to_s(16, io, upcase: true)
-    io << '}' if char.ord > 0xFFFF
+    io << '{' if char.codepoint > 0xFFFF
+    io << '0' if char.codepoint < 0x1000
+    io << '0' if char.codepoint < 0x0100
+    io << '0' if char.codepoint < 0x0010
+    char.codepoint.to_s(16, io, upcase: true)
+    io << '}' if char.codepoint > 0xFFFF
   end
 
   def starts_with?(str : String)
@@ -4139,7 +4139,7 @@ class String
     return false unless bytesize > 0
 
     if char.ascii? || ascii_only?
-      return to_unsafe[bytesize - 1] == char.ord
+      return to_unsafe[bytesize - 1] == char.codepoint
     end
 
     bytes, count = String.char_bytes_and_bytesize(char)
@@ -4405,7 +4405,7 @@ class String
     def next
       return stop if @end
 
-      byte_index = @string.byte_index('\n'.ord.to_u8, @offset)
+      byte_index = @string.byte_index('\n'.codepoint.to_u8, @offset)
       if byte_index
         count = byte_index - @offset + 1
         if @chomp

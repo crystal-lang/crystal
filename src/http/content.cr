@@ -204,7 +204,7 @@ module HTTP
     private def read_chunk_size
       line = @io.read_line(@max_headers_size, chomp: true)
 
-      if index = line.byte_index(';'.ord)
+      if index = line.byte_index(';'.codepoint)
         chunk_size = line.byte_slice(0, index)
       else
         chunk_size = line

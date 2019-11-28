@@ -367,7 +367,7 @@ class Crystal::Doc::Markdown::Parser
           @renderer.text line.byte_slice(cursor, pos - cursor)
           cursor = pos + 1
           @renderer.begin_inline_code
-          idx = (str + pos + 1).to_slice(bytesize).index('`'.ord).not_nil!
+          idx = (str + pos + 1).to_slice(bytesize).index('`'.codepoint).not_nil!
           @renderer.text line.byte_slice(cursor, idx)
           pos = pos + 1 + idx
           @renderer.end_inline_code
@@ -379,12 +379,12 @@ class Crystal::Doc::Markdown::Parser
           if link
             @renderer.text line.byte_slice(cursor, pos - cursor)
 
-            bracket_idx = (str + pos + 2).to_slice(bytesize - pos - 2).index(']'.ord).not_nil!
+            bracket_idx = (str + pos + 2).to_slice(bytesize - pos - 2).index(']'.codepoint).not_nil!
             alt = line.byte_slice(pos + 2, bracket_idx)
 
             @renderer.image link, alt
 
-            paren_idx = (str + pos + 2 + bracket_idx + 1).to_slice(bytesize - pos - 2 - bracket_idx - 1).index(')'.ord).not_nil!
+            paren_idx = (str + pos + 2 + bracket_idx + 1).to_slice(bytesize - pos - 2 - bracket_idx - 1).index(')'.codepoint).not_nil!
             pos += 2 + bracket_idx + 1 + paren_idx
             cursor = pos + 1
           end
@@ -404,7 +404,7 @@ class Crystal::Doc::Markdown::Parser
           @renderer.text line.byte_slice(cursor, pos - cursor)
           @renderer.end_link
 
-          paren_idx = (str + pos + 1).to_slice(bytesize - pos - 1).index(')'.ord).not_nil!
+          paren_idx = (str + pos + 1).to_slice(bytesize - pos - 1).index(')'.codepoint).not_nil!
           pos += paren_idx + 1
           cursor = pos + 1
           in_link = false
@@ -424,7 +424,7 @@ class Crystal::Doc::Markdown::Parser
   def has_closing?(char, count, str, pos, bytesize)
     str += pos
     bytesize -= pos
-    idx = str.to_slice(bytesize).index char.ord
+    idx = str.to_slice(bytesize).index char.codepoint
     return false unless idx
 
     if count == 2
@@ -455,7 +455,7 @@ class Crystal::Doc::Markdown::Parser
 
     return nil unless str[bracket_idx + 1] === '('
 
-    paren_idx = (str + bracket_idx + 1).to_slice(bytesize - bracket_idx - 1).index ')'.ord
+    paren_idx = (str + bracket_idx + 1).to_slice(bytesize - bracket_idx - 1).index ')'.codepoint
     return nil unless paren_idx
 
     String.new(Slice.new(str + bracket_idx + 2, paren_idx - 1))
@@ -472,7 +472,7 @@ class Crystal::Doc::Markdown::Parser
 
   def line_is_all?(line, char)
     line.each_byte do |byte|
-      return false if byte != char.ord
+      return false if byte != char.codepoint
     end
     true
   end

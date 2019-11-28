@@ -142,7 +142,7 @@ class URI
         elsif end_of_host?
           unless start == @ptr
             @uri.port = (start...@ptr).reduce(0) do |memo, i|
-              (memo * 10) + (@input[i] - '0'.ord)
+              (memo * 10) + (@input[i] - '0'.codepoint)
             end
           end
           return parse_path
@@ -232,12 +232,12 @@ class URI
     end
 
     private def alpha?
-      ('a'.ord <= c && c <= 'z'.ord) ||
-        ('A'.ord <= c && c <= 'Z'.ord)
+      ('a'.codepoint <= c && c <= 'z'.codepoint) ||
+        ('A'.codepoint <= c && c <= 'Z'.codepoint)
     end
 
     private def numeric?
-      '0'.ord <= c && c <= '9'.ord
+      '0'.codepoint <= c && c <= '9'.codepoint
     end
 
     private def end_of_host?

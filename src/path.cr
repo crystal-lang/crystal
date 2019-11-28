@@ -291,7 +291,7 @@ struct Path
 
     current = bytes.size - 1
 
-    separators = self.separators.map &.ord
+    separators = self.separators.map &.codepoint
 
     # skip trailing separators
     while separators.includes?(bytes[current]) && current > 0
@@ -336,14 +336,14 @@ struct Path
     current = bytes.size - 1
 
     # if the pattern is `foo.`, it has no extension
-    return "" if bytes[current] == '.'.ord
+    return "" if bytes[current] == '.'.codepoint
 
-    separators = self.separators.map &.ord
+    separators = self.separators.map &.codepoint
 
     # position the reader at the last `.` or SEPARATOR
     # that is not the first char
     while !separators.includes?(bytes[current]) &&
-          bytes[current] != '.'.ord &&
+          bytes[current] != '.'.codepoint &&
           current > 0
       current -= 1
     end
@@ -721,7 +721,7 @@ struct Path
 
       # Add separator if needed
       if add_separator
-        buffer.value = separators[0].ord.to_u8
+        buffer.value = separators[0].codepoint.to_u8
         buffer += 1
       end
 

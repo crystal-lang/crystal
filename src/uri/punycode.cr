@@ -67,9 +67,9 @@ class URI
         next if m == prev
         prev = m
 
-        raise Exception.new("Overflow: input needs wider integers to process") if m.ord - n > (Int32::MAX - delta) // h
-        delta += (m.ord - n) * h
-        n = m.ord + 1
+        raise Exception.new("Overflow: input needs wider integers to process") if m.codepoint - n > (Int32::MAX - delta) // h
+        delta += (m.codepoint - n) * h
+        n = m.codepoint + 1
 
         string.each_char do |c|
           if c < m
@@ -117,11 +117,11 @@ class URI
 
         digit = case c
                 when .ascii_lowercase?
-                  c.ord - 0x61
+                  c.codepoint - 0x61
                 when .ascii_uppercase?
-                  c.ord - 0x41
+                  c.codepoint - 0x41
                 when .ascii_number?
-                  c.ord - 0x30 + 26
+                  c.codepoint - 0x30 + 26
                 else
                   raise ArgumentError.new("Invalid input")
                 end

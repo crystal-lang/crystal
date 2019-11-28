@@ -25,7 +25,7 @@ describe "Semantic: responds_to?" do
       if a.responds_to?(:\"+\")
         a.to_i32
       else
-        a.ord
+        a.codepoint
       end
       ") { int32 }
   end

@@ -72,7 +72,7 @@ describe "Code gen: case" do
       when Int32
         a.foo
       when Char
-        a.ord
+        a.codepoint
       end.to_i!
       ").to_i.should eq(-1)
   end

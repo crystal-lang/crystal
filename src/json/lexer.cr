@@ -135,7 +135,7 @@ abstract class JSON::Lexer
         next_char
         break
       else
-        if 0 <= current_char.ord < 32
+        if 0 <= current_char.codepoint < 32
           unexpected_char
         end
       end
@@ -159,7 +159,7 @@ abstract class JSON::Lexer
         next_char
         break
       else
-        if 0 <= current_char.ord < 32
+        if 0 <= current_char.codepoint < 32
           unexpected_char
         else
           @buffer << char

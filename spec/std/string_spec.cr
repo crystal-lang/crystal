@@ -908,9 +908,9 @@ describe "String" do
   end
 
   describe "byte_index" do
-    it { "foo".byte_index('o'.ord).should eq(1) }
-    it { "foo bar booz".byte_index('o'.ord, 3).should eq(9) }
-    it { "foo".byte_index('a'.ord).should be_nil }
+    it { "foo".byte_index('o'.codepoint).should eq(1) }
+    it { "foo bar booz".byte_index('o'.codepoint, 3).should eq(9) }
+    it { "foo".byte_index('a'.codepoint).should be_nil }
 
     it "gets byte index of string" do
       "hello world".byte_index("he").should eq(0)
@@ -1712,10 +1712,10 @@ describe "String" do
   end
 
   it "escapes with octal" do
-    "\3"[0].ord.should eq(3)
-    "\23"[0].ord.should eq((2 * 8) + 3)
-    "\123"[0].ord.should eq((1 * 8 * 8) + (2 * 8) + 3)
-    "\033"[0].ord.should eq((3 * 8) + 3)
+    "\3"[0].codepoint.should eq(3)
+    "\23"[0].codepoint.should eq((2 * 8) + 3)
+    "\123"[0].codepoint.should eq((1 * 8 * 8) + (2 * 8) + 3)
+    "\033"[0].codepoint.should eq((3 * 8) + 3)
     "\033a"[1].should eq('a')
   end
 
@@ -1723,7 +1723,7 @@ describe "String" do
     "\u{12}".codepoint_at(0).should eq(1 * 16 + 2)
     "\u{A}".codepoint_at(0).should eq(10)
     "\u{AB}".codepoint_at(0).should eq(10 * 16 + 11)
-    "\u{AB}1".codepoint_at(1).should eq('1'.ord)
+    "\u{AB}1".codepoint_at(1).should eq('1'.codepoint)
   end
 
   it "does char_at" do
@@ -1737,12 +1737,12 @@ describe "String" do
   end
 
   it "does byte_at" do
-    "hello".byte_at(1).should eq('e'.ord)
+    "hello".byte_at(1).should eq('e'.codepoint)
     expect_raises(IndexError) { "hello".byte_at(5) }
   end
 
   it "does byte_at?" do
-    "hello".byte_at?(1).should eq('e'.ord)
+    "hello".byte_at?(1).should eq('e'.codepoint)
     "hello".byte_at?(5).should be_nil
   end
 
@@ -1752,9 +1752,9 @@ describe "String" do
 
   it "allows creating a string with zeros" do
     p = Pointer(UInt8).malloc(3)
-    p[0] = 'a'.ord.to_u8
-    p[1] = '\0'.ord.to_u8
-    p[2] = 'b'.ord.to_u8
+    p[0] = 'a'.codepoint.to_u8
+    p[1] = '\0'.codepoint.to_u8
+    p[2] = 'b'.codepoint.to_u8
     s = String.new(p, 3)
     s[0].should eq('a')
     s[1].should eq('\0')
@@ -1844,7 +1844,7 @@ describe "String" do
     "あ".ascii_only?.should be_false
 
     str = String.new(1) do |buffer|
-      buffer.value = 'a'.ord.to_u8
+      buffer.value = 'a'.codepoint.to_u8
       {1, 0}
     end
     str.ascii_only?.should be_true
@@ -2092,11 +2092,11 @@ describe "String" do
     s.each_byte do |b|
       case i
       when 0
-        b.should eq('a'.ord)
+        b.should eq('a'.codepoint)
       when 1
-        b.should eq('b'.ord)
+        b.should eq('b'.codepoint)
       when 2
-        b.should eq('c'.ord)
+        b.should eq('c'.codepoint)
       end
       i += 1
     end.should be_nil
@@ -2105,9 +2105,9 @@ describe "String" do
 
   it "gets each_byte iterator" do
     iter = "abc".each_byte
-    iter.next.should eq('a'.ord)
-    iter.next.should eq('b'.ord)
-    iter.next.should eq('c'.ord)
+    iter.next.should eq('a'.codepoint)
+    iter.next.should eq('b'.codepoint)
+    iter.next.should eq('c'.codepoint)
     iter.next.should be_a(Iterator::Stop)
   end
 

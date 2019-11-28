@@ -775,6 +775,6 @@ describe "Int" do
 
   it "#unsafe_chr" do
     65.unsafe_chr.should eq('A')
-    (0x10ffff + 1).unsafe_chr.ord.should eq(0x10ffff + 1)
+    (0x10ffff + 1).unsafe_chr.codepoint.should eq(0x10ffff + 1)
   end
 end

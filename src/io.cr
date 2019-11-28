@@ -36,7 +36,7 @@ require "c/errno"
 #   end
 # end
 #
-# slice = Slice.new(9) { |i| ('a'.ord + i).to_u8 }
+# slice = Slice.new(9) { |i| ('a'.codepoint + i).to_u8 }
 # String.new(slice) # => "abcdefghi"
 #
 # io = SimpleSliceIO.new(slice)
@@ -105,7 +105,7 @@ abstract class IO
   #
   # ```
   # io = IO::Memory.new
-  # slice = Bytes.new(4) { |i| ('a'.ord + i).to_u8 }
+  # slice = Bytes.new(4) { |i| ('a'.codepoint + i).to_u8 }
   # io.write(slice)
   # io.to_s # => "abcd"
   # ```
@@ -624,7 +624,7 @@ abstract class IO
     # If the char's representation is a single byte and we have an encoding,
     # search the delimiter in the buffer
     if ascii && decoder
-      return decoder.gets(self, delimiter.ord.to_u8, limit: limit, chomp: chomp)
+      return decoder.gets(self, delimiter.codepoint.to_u8, limit: limit, chomp: chomp)
     end
 
     # If there's no encoding, the delimiter is ASCII and we can peek,
@@ -643,7 +643,7 @@ abstract class IO
   private def gets_peek(delimiter, limit, chomp, peek)
     limit = Int32::MAX if limit < 0
 
-    delimiter_byte = delimiter.ord.to_u8
+    delimiter_byte = delimiter.codepoint.to_u8
 
     # We first check, if the delimiter is already in the peek buffer.
     # In that case it's much faster to create a String from a slice

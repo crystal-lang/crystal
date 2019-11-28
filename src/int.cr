@@ -323,7 +323,7 @@ struct Int
   end
 
   def ===(char : Char)
-    self === char.ord
+    self === char.codepoint
   end
 
   # Returns this number's *bit*th bit, starting with the least-significant.
@@ -592,7 +592,7 @@ struct Int
 
     if neg
       ptr -= 1
-      ptr.value = '-'.ord.to_u8
+      ptr.value = '-'.codepoint.to_u8
     end
 
     count = (ptr_end - ptr).to_i32

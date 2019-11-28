@@ -13,7 +13,7 @@ module Debug
       def decode(strp)
         # See if we can read it from the buffer
         if strp < @buffer.size
-          index = @buffer.index('\0'.ord, offset: strp)
+          index = @buffer.index('\0'.codepoint, offset: strp)
           return String.new(@buffer[strp, index - strp]) if index
         end
 

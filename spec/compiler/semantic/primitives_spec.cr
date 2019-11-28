@@ -34,7 +34,7 @@ describe "Semantic: primitives" do
   end
 
   it "types char ord" do
-    assert_type("'a'.ord") { int32 }
+    assert_type("'a'.codepoint") { int32 }
   end
 
   it "types a symbol" do

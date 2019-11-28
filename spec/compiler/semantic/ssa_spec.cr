@@ -653,7 +653,7 @@ describe "Semantic: ssa" do
         if 1 == 2
           foo { }
         end
-        a.ord
+        a.codepoint
       else
         1
       end
