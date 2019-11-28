@@ -46,10 +46,19 @@ module Crystal::System::FileDescriptor
     false
   end
 
-  private def windows_handle
-    ret = LibC._get_osfhandle(@fd)
+  def self.windows_handle_for?(fd)
+    ret = LibC._get_osfhandle(fd)
     raise Errno.new("_get_osfhandle") if ret == -1
+    return nil if ret == -2
     LibC::HANDLE.new(ret)
+  end
+
+  def windows_handle?
+    Crystal::System::FileDescriptor.windows_handle_for?(@fd)
+  end
+
+  def windows_handle
+    windows_handle? || raise "FD isnt't associated with a stream"
   end
 
   private def system_info
@@ -92,23 +101,9 @@ module Crystal::System::FileDescriptor
   end
 
   private def system_reopen(other : IO::FileDescriptor)
-    {% if LibC.methods.includes? "dup3".id %}
-      # dup doesn't copy the CLOEXEC flag, so copy it manually using dup3
-      flags = other.close_on_exec? ? LibC::O_CLOEXEC : 0
-      if LibC.dup3(other.fd, self.fd, flags) == -1
-        raise Errno.new("Could not reopen file descriptor")
-      end
-    {% else %}
-      # dup doesn't copy the CLOEXEC flag, copy it manually to the new
-      if LibC.dup2(other.fd, self.fd) == -1
-        raise Errno.new("Could not reopen file descriptor")
-      end
-
-      if other.close_on_exec?
-        self.close_on_exec = true
-      end
-    {% end %}
-
+    if LibC._dup2(other.fd, self.fd) == -1
+      raise Errno.new("Could not reopen file descriptor")
+    end
     # Mark the handle open, since we had to have dup'd a live handle.
     @closed = false
   end
@@ -125,9 +120,13 @@ module Crystal::System::FileDescriptor
     end
   end
 
-  def self.pipe(read_blocking, write_blocking)
+  def self.pipe(read_blocking, write_blocking, inheritable = true)
     pipe_fds = uninitialized StaticArray(LibC::Int, 2)
-    if LibC._pipe(pipe_fds, 8192, LibC::O_BINARY) != 0
+    flags = LibC::O_BINARY
+    if !inheritable
+      flags |= LibC::O_NOINHERIT
+    end
+    if LibC._pipe(pipe_fds, 8192, flags) != 0
       raise Errno.new("Could not create pipe")
     end
 
@@ -139,9 +138,8 @@ module Crystal::System::FileDescriptor
   end
 
   def self.pread(fd, buffer, offset)
-    handle = LibC._get_osfhandle(fd)
-    raise Errno.new("_get_osfhandle") if handle == -1
-    handle = LibC::HANDLE.new(handle)
+    handle = windows_handle_for?(fd)
+    raise Errno.new("_get_osfhandle") if !handle
 
     overlapped = LibC::OVERLAPPED.new
     overlapped.union.offset.offset = LibC::DWORD.new(offset)

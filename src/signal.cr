@@ -270,11 +270,11 @@ module Crystal::SignalChildHandler
   # Process#wait through a channel, that may be created before or after the
   # child process exited.
 
-  @@pending = {} of LibC::PidT => Int32
-  @@waiting = {} of LibC::PidT => Channel(Int32)
+  @@pending = {} of Int64 => Int32
+  @@waiting = {} of Int64 => Channel(Int32)
   @@mutex = Mutex.new
 
-  def self.wait(pid : LibC::PidT) : Channel(Int32)
+  def self.wait(pid : Int64) : Channel(Int32)
     channel = Channel(Int32).new(1)
 
     @@mutex.lock
@@ -292,7 +292,7 @@ module Crystal::SignalChildHandler
 
   def self.call : Nil
     loop do
-      pid = LibC.waitpid(-1, out exit_code, LibC::WNOHANG)
+      pid = LibC.waitpid(-1, out exit_code, LibC::WNOHANG).to_i64
 
       case pid
       when 0

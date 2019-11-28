@@ -5,76 +5,73 @@ require "c/unistd"
 
 class Process
   private def initialize(@pid)
-    @waitpid = wait(pid)
+    @waitpid = Process.wait_system(pid)
     @wait_count = 0
   end
 
-  def wait(pid : LibC::PidT) : Channel(Int32)
-    return Crystal::SignalChildHandler.wait(pid)
+  protected def self.wait_system(pid : Int64) : Channel(Int32)
+    Crystal::SignalChildHandler.wait(pid)
   end
 
   protected def self.exit_system(status = 0) : NoReturn
     LibC.exit(status)
   end
 
-  protected def self.pid_system : LibC::PidT
-    LibC.getpid
-  end
-
-  # Returns `true` if the process identified by *pid* is valid for
-  # a currently registered process, `false` otherwise. Note that this
-  # returns `true` for a process in the zombie or similar state.
-  def self.exists_system(pid : Int)
-    ret = LibC.kill(pid, 0)
-    if ret == 0
-      true
-    else
-      return false if Errno.value == Errno::ESRCH
-      raise Errno.new("kill")
-    end
+  protected def self.pid_system : Int64
+    LibC.getpid.to_i64
   end
 
   # Returns the process group identifier of the current process.
-  def self.pgid : LibC::PidT
+  def self.pgid : Int64
+    self.pgid_system
+  end
+
+  protected def self.exists_system(pid : Int64)
+    ret = LibC.kill(pid.to_i32, 0)
+    return true if ret == 0
+    return false if Errno.value == Errno::ESRCH
+    raise Errno.new("kill")
+  end
+
+  # Returns the process group identifier of the current process.
+  protected def self.pgid_system : Int64
     pgid(0)
   end
 
   # Returns the process group identifier of the process identified by *pid*.
-  def self.pgid(pid : Int32) : LibC::PidT
+  def self.pgid(pid : Int64) : Int64
     ret = LibC.getpgid(pid)
     raise Errno.new("getpgid") if ret < 0
-    ret
+    ret.to_i64
   end
 
-  # Returns the process identifier of the parent process of the current process.
-  def self.ppid : LibC::PidT
-    LibC.getppid
+  protected def self.ppid_system : Int64
+    LibC.getppid.to_i64
   end
 
-  def terminate_system
-    kill Signal::TERM
+  protected def terminate_system
+    signal Signal::TERM
   end
 
-  def kill_system
-    kill Signal::KILL
+  protected def kill_system
+    signal Signal::KILL
   end
 
-  # See also: `Process.kill`
-  def kill(sig = Signal::TERM)
-    Process.kill sig, @pid
+  # See also: `Process.signal`
+  def signal(sig = Signal::TERM)
+    Process.signal sig, @pid
   end
 
   # Sends a *signal* to the processes identified by the given *pids*.
-  def self.kill(signal : Signal, *pids : Int)
+  def self.signal(signal : Signal, *pids : Int)
     pids.each do |pid|
       ret = LibC.kill(pid, signal.value)
       raise Errno.new("kill") if ret < 0
     end
-    nil
   end
 
   # Creates a process, executes it
-  def create_and_exec(command : String, args : (Array | Tuple)?, env : Env?, clear_env : Bool, fork_input : IO::FileDescriptor, fork_output : IO::FileDescriptor, fork_error : IO::FileDescriptor, chdir : String?, reader_pipe, writer_pipe)
+  protected def create_and_exec(command : String, args : (Array | Tuple)?, env : Env?, clear_env : Bool, fork_input : IO::FileDescriptor, fork_output : IO::FileDescriptor, fork_error : IO::FileDescriptor, chdir : String?, reader_pipe, writer_pipe)
     if pid = Process.fork_internal(will_exec: true)
       pid
     else
@@ -186,7 +183,7 @@ class Process
     raise Errno.new(error_message)
   end
 
-  def self.system_prepare_shell(command, args)
+  protected def self.system_prepare_shell(command, args)
     command = %(#{command} "${@}") unless command.includes?(' ')
     shell_args = ["-c", command, "--"]
 
@@ -208,7 +205,7 @@ class Process
   end
 
   # :nodoc:
-  protected def self.fork_internal(*, will_exec : Bool)
+  protected def self.fork_internal(*, will_exec : Bool) : Int64?
     newmask = uninitialized LibC::SigsetT
     oldmask = uninitialized LibC::SigsetT
 
@@ -241,10 +238,36 @@ class Process
       LibC.pthread_sigmask(LibC::SIG_SETMASK, pointerof(oldmask), nil)
     end
 
-    pid
+    pid.try &.to_i64
   end
 
-  protected def system_close
+  protected def close_system
+  end
+
+  # Changes the root directory and the current working directory for the current
+  # process.
+  #
+  # Security: `chroot` on its own is not an effective means of mitigation. At minimum
+  # the process needs to also drop privileges as soon as feasible after the `chroot`.
+  # Changes to the directory hierarchy or file descriptors passed via `recvmsg(2)` from
+  # outside the `chroot` jail may allow a restricted process to escape, even if it is
+  # unprivileged.
+  #
+  # ```
+  # Process.chroot("/var/empty")
+  # ```
+  def self.chroot(path : String) : Nil
+    path.check_no_null_byte
+    if LibC.chroot(path) != 0
+      raise Errno.new("Failed to chroot")
+    end
+
+    if LibC.chdir("/") != 0
+      errno = Errno.new("chdir after chroot failed")
+      errno.callstack = CallStack.new
+      errno.inspect_with_backtrace(STDERR)
+      abort("Unresolvable state, exiting...")
+    end
   end
 end
 

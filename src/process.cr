@@ -11,15 +11,20 @@ class Process
   end
 
   # Returns the process identifier of the current process.
-  def self.pid
-    return self.pid_system
+  def self.pid : Int64
+    self.pid_system
+  end
+
+  # Returns the process identifier of the parent process of the current process.
+  def self.ppid : Int64
+    self.ppid_system
   end
 
   # Returns `true` if the process identified by *pid* is valid for
   # a currently registered process, `false` otherwise. Note that this
   # returns `true` for a process in the zombie or similar state.
   def self.exists?(pid : Int)
-    return self.exists_system(pid)
+    self.exists_system(pid)
   end
 
   # A struct representing the CPU current times of the process,
@@ -87,19 +92,19 @@ class Process
       $? = process.wait
       value
     rescue ex
-      process.terminate_gracefully
+      process.terminate
       raise ex
     end
   end
 
   # Terminate process gracefully
-  def terminate_gracefully
-    return self.terminate_system
+  def terminate
+    self.terminate_system
   end
 
   # Terminate process immediately (kill)
-  def terminate_immediately
-    return self.kill_system
+  def kill
+    self.kill_system
   end
 
   # Replaces the current process with a new one. This function never returns.
@@ -133,7 +138,7 @@ class Process
     end
   end
 
-  getter pid : Int32 = 0
+  getter pid : Int64 = 0
 
   # A pipe to this process's input. Raises if a pipe wasn't asked when creating the process.
   getter! input : IO::FileDescriptor
@@ -144,6 +149,7 @@ class Process
   # A pipe to this process's error. Raises if a pipe wasn't asked when creating the process.
   getter! error : IO::FileDescriptor
 
+  # channel of process exit code
   @waitpid : Channel(Int32)
   @wait_count = 0
 
@@ -177,7 +183,7 @@ class Process
       raise Errno.new(message, errno)
     end
     reader_pipe.close
-    @waitpid = wait(pid)
+    @waitpid = Process.wait_system(pid)
     fork_input.close unless fork_input == input || fork_input == STDIN
     fork_output.close unless fork_output == output || fork_output == STDOUT
     fork_error.close unless fork_error == error || fork_error == STDERR
@@ -256,7 +262,7 @@ class Process
   # Closes any pipes to the child process.
   def close
     close_io
-    system_close
+    close_system
   end
 
   def close_io
@@ -315,32 +321,6 @@ class Process
 
   private def close_io(io)
     io.close if io
-  end
-
-  # Changes the root directory and the current working directory for the current
-  # process.
-  #
-  # Security: `chroot` on its own is not an effective means of mitigation. At minimum
-  # the process needs to also drop privileges as soon as feasible after the `chroot`.
-  # Changes to the directory hierarchy or file descriptors passed via `recvmsg(2)` from
-  # outside the `chroot` jail may allow a restricted process to escape, even if it is
-  # unprivileged.
-  #
-  # ```
-  # Process.chroot("/var/empty")
-  # ```
-  def self.chroot(path : String) : Nil
-    path.check_no_null_byte
-    if LibC.chroot(path) != 0
-      raise Errno.new("Failed to chroot")
-    end
-
-    if LibC.chdir("/") != 0
-      errno = Errno.new("chdir after chroot failed")
-      errno.callstack = CallStack.new
-      errno.inspect_with_backtrace(STDERR)
-      abort("Unresolvable state, exiting...")
-    end
   end
 end
 

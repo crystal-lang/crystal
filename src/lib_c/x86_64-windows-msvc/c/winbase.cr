@@ -1,7 +1,7 @@
-require "c/winnt"
 require "c/win_def"
-require "c/int_safe"
+require "c/winnt"
 
+@[Link("UserEnv")]
 lib LibC
   fun GetLastError : DWORD
   fun SetLastError(dwErrCode : DWORD)
@@ -88,6 +88,8 @@ lib LibC
 
   fun GetEnvironmentVariableW(lpName : LPWSTR, lpBuffer : LPWSTR, nSize : DWORD) : DWORD
   fun GetEnvironmentStringsW : LPWCH
+  fun CreateEnvironmentBlock(lpEnvironment : LPVOID*, hToken : HANDLE, bInherit : BOOL) : BOOL
+  fun DestroyEnvironmentBlock(lpEnvironment : LPVOID) : BOOL
   fun FreeEnvironmentStringsW(lpszEnvironmentBlock : LPWCH) : BOOL
   fun SetEnvironmentVariableW(lpName : LPWSTR, lpValue : LPWSTR) : BOOL
 end

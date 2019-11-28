@@ -59,19 +59,22 @@ module Crystal::System::Env
 
   # Iterates all environment variables.
   def self.each(&block : String, String ->)
-    orig_pointer = pointer = LibC.GetEnvironmentStringsW
+    pointer = LibC.GetEnvironmentStringsW
     raise WinError.new("GetEnvironmentStringsW") if pointer.null?
-
     begin
-      while !pointer.value.zero?
-        string, pointer = String.from_utf16(pointer)
-        key_value = string.split('=', 2)
-        key = key_value[0]
-        value = key_value[1]? || ""
-        yield key, value
-      end
+      self.parse_env_block(pointer) { |key, val| yield key, val }
     ensure
-      LibC.FreeEnvironmentStringsW(orig_pointer)
+      LibC.FreeEnvironmentStringsW(pointer)
+    end
+  end
+
+  def self.parse_env_block(pointer : Pointer(UInt16), &block : String, String ->)
+    while !pointer.value.zero?
+      string, pointer = String.from_utf16(pointer)
+      key_value = string.split('=', 2)
+      key = key_value[0]
+      value = key_value[1]? || ""
+      yield key, value
     end
   end
 end

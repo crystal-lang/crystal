@@ -90,6 +90,22 @@ end
       "/proc/self/exe"
     end
   end
+{% elsif flag?(:win32) %}
+  require "c/libloaderapi"
+
+  class Process
+    private def self.executable_path_impl
+      size = 512_u32
+      buf = GC.malloc_atomic(size).as(UInt16*)
+      len = LibC.GetModuleFileNameW(LibC::NULL, buf, size)
+      if len == 0
+        LibC.dprintf 2, "GetModuleFileNameW ERR: #{LibC.GetLastError}\n"
+        nil
+      else
+        String.from_utf16(Slice.new(buf, len))
+      end
+    end
+  end
 {% else %}
   # openbsd, ...
   class Process
