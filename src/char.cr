@@ -44,7 +44,7 @@ struct Char
   ZERO = '\0'
 
   # The maximum character.
-  MAX = 0x10ffff.unsafe_chr
+  MAX = 0x10ffff.unsafe_char
 
   # The maximum valid codepoint for a character.
   MAX_CODEPOINT = 0x10ffff
@@ -90,7 +90,7 @@ struct Char
   # 'a' + 2 # => 'c'
   # ```
   def +(other : Int) : Char
-    (codepoint + other).chr
+    (codepoint + other).char
   end
 
   # Returns a char that has this char's codepoint minus *other*.
@@ -100,7 +100,7 @@ struct Char
   # 'c' - 2 # => 'a'
   # ```
   def -(other : Int) : Char
-    (codepoint - other).chr
+    (codepoint - other).char
   end
 
   # The comparison operator.
@@ -425,7 +425,7 @@ struct Char
   #
   # This method allows creating a `Range` of chars.
   def succ
-    (codepoint + 1).chr
+    (codepoint + 1).char
   end
 
   # Returns a Char that is one codepoint smaller than this char's codepoint.
@@ -435,7 +435,7 @@ struct Char
   # 'ぃ'.pred # => 'あ'
   # ```
   def pred
-    (codepoint - 1).chr
+    (codepoint - 1).char
   end
 
   # Returns `true` if this char is an ASCII control character.

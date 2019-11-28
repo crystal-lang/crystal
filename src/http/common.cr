@@ -166,7 +166,7 @@ module HTTP
 
     # Get where the header value starts (skip space)
     middle_index = colon_index + 1
-    while middle_index < bytesize && cstr[middle_index].unsafe_chr.ascii_whitespace?
+    while middle_index < bytesize && cstr[middle_index].unsafe_char.ascii_whitespace?
       middle_index += 1
     end
 
@@ -377,7 +377,7 @@ module HTTP
     String.build do |io|
       while quoted_pair_index
         io.write(data[0, quoted_pair_index])
-        io << data[quoted_pair_index + 1].chr
+        io << data[quoted_pair_index + 1].char
 
         data += quoted_pair_index + 2
         quoted_pair_index = data.index('\\'.codepoint)
@@ -407,7 +407,7 @@ module HTTP
       when '\t'.codepoint, ' '.codepoint, '"'.codepoint, '\\'.codepoint
         io << '\\'
       when 0x00..0x1F, 0x7F
-        raise ArgumentError.new("String contained invalid character #{byte.chr.inspect}")
+        raise ArgumentError.new("String contained invalid character #{byte.char.inspect}")
       end
       io.write_byte byte
     end

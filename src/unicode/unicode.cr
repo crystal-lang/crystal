@@ -47,7 +47,7 @@ module Unicode
 
     result = special_cases_upcase[char.codepoint]?
     if result
-      result.each { |c| yield c.unsafe_chr if c != 0 }
+      result.each { |c| yield c.unsafe_char if c != 0 }
       return
     end
 
@@ -57,7 +57,7 @@ module Unicode
   private def self.check_upcase_ascii(char, options)
     if (char.ascii? && options.none?) || options.ascii?
       if char.ascii_lowercase?
-        return (char.codepoint - 32).unsafe_chr
+        return (char.codepoint - 32).unsafe_char
       else
         return char
       end
@@ -94,7 +94,7 @@ module Unicode
     return result if result
 
     results = check_downcase_fold(char, options)
-    return results[0].unsafe_chr if results && results.size == 1
+    return results[0].unsafe_char if results && results.size == 1
 
     check_downcase_ranges(char)
   end
@@ -115,13 +115,13 @@ module Unicode
 
     result = check_downcase_fold(char, options)
     if result
-      result.each { |c| yield c.unsafe_chr if c != 0 }
+      result.each { |c| yield c.unsafe_char if c != 0 }
       return
     end
 
     result = special_cases_downcase[char.codepoint]?
     if result
-      result.each { |c| yield c.unsafe_chr if c != 0 }
+      result.each { |c| yield c.unsafe_char if c != 0 }
       return
     end
 
@@ -131,7 +131,7 @@ module Unicode
   private def self.check_downcase_ascii(char, options)
     if (char.ascii? && options.none?) || options.ascii?
       if char.ascii_uppercase?
-        return (char.codepoint + 32).unsafe_chr
+        return (char.codepoint + 32).unsafe_char
       else
         return char
       end

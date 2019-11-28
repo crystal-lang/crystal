@@ -43,7 +43,7 @@ module HTTP
       bytesize = query.bytesize
       while i < bytesize
         byte = query.unsafe_byte_at(i)
-        char = byte.unsafe_chr
+        char = byte.unsafe_char
 
         case char
         when '='

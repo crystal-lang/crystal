@@ -181,7 +181,7 @@ class URI
   # Reserved characters are ':', '/', '?', '#', '[', ']', '@', '!',
   # '$', '&', "'", '(', ')', '*', '+', ',', ';' and '='.
   def self.reserved?(byte) : Bool
-    char = byte.unsafe_chr
+    char = byte.unsafe_char
     '&' <= char <= ',' ||
       {'!', '#', '$', '/', ':', ';', '?', '@', '[', ']', '='}.includes?(char)
   end
@@ -191,7 +191,7 @@ class URI
   #
   # Unreserved characters are ASCII letters, ASCII digits, `_`, `.`, `-` and `~`.
   def self.unreserved?(byte) : Bool
-    char = byte.unsafe_chr
+    char = byte.unsafe_char
     char.ascii_alphanumeric? ||
       {'_', '.', '-', '~'}.includes?(char)
   end
@@ -213,7 +213,7 @@ class URI
     bytesize = string.bytesize
     while i < bytesize
       byte = string.unsafe_byte_at(i)
-      char = byte.unsafe_chr
+      char = byte.unsafe_char
       i = decode_one(string, bytesize, i, byte, char, io, plus_to_space) { |byte| yield byte }
     end
     io
@@ -234,7 +234,7 @@ class URI
   # `.encode_www_form(string : String, *, space_to_plus : Bool = true) : String`.
   def self.encode(string : String, io : IO, space_to_plus : Bool = false, &block) : Nil
     string.each_byte do |byte|
-      char = byte.unsafe_chr
+      char = byte.unsafe_char
       if char == ' ' && space_to_plus
         io.write_byte '+'.codepoint.to_u8
       elsif char.ascii? && yield(byte) && (!space_to_plus || char != '+')
@@ -265,7 +265,7 @@ class URI
     if char == '%' && i < bytesize - 2
       i += 1
       first = string.unsafe_byte_at(i)
-      first_num = first.unsafe_chr.to_i? 16
+      first_num = first.unsafe_char.to_i? 16
       unless first_num
         io.write_byte byte
         return i
@@ -273,7 +273,7 @@ class URI
 
       i += 1
       second = string.unsafe_byte_at(i)
-      second_num = second.unsafe_chr.to_i? 16
+      second_num = second.unsafe_char.to_i? 16
       unless second_num
         io.write_byte byte
         io.write_byte first

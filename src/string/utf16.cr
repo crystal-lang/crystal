@@ -127,7 +127,7 @@ class String
         codepoint = 0xfffd
       end
 
-      yield codepoint.chr
+      yield codepoint.char
 
       i += 1
     end
@@ -152,7 +152,7 @@ class String
         codepoint = 0xfffd
       end
 
-      yield codepoint.chr
+      yield codepoint.char
 
       pointer = pointer + 1
     end

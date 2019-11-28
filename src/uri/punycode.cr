@@ -137,7 +137,7 @@ class URI
           bias = adapt i - oldi, outsize, oldi == 0
           n += i // outsize
           i %= outsize
-          output.insert i, n.chr
+          output.insert i, n.char
           i += 1
           init = true
         end

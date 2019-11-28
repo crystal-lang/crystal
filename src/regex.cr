@@ -307,7 +307,7 @@ class Regex
     String.build do |result|
       str.each_byte do |byte|
         {% begin %}
-          case byte.unsafe_chr
+          case byte.unsafe_char
           when {{*SPECIAL_CHARACTERS}}
             result << '\\'
             result.write_byte byte

@@ -328,22 +328,22 @@ abstract class IO
     first = peek[0].to_u32
     skip(1)
     if first < 0x80
-      return first.unsafe_chr, 1
+      return first.unsafe_char, 1
     end
 
     second = peek_or_read_masked(peek, 1)
     if first < 0xe0
-      return ((first & 0x1f) << 6 | second).unsafe_chr, 2
+      return ((first & 0x1f) << 6 | second).unsafe_char, 2
     end
 
     third = peek_or_read_masked(peek, 2)
     if first < 0xf0
-      return ((first & 0x0f) << 12 | (second << 6) | third).unsafe_chr, 3
+      return ((first & 0x0f) << 12 | (second << 6) | third).unsafe_char, 3
     end
 
     fourth = peek_or_read_masked(peek, 3)
     if first < 0xf8
-      return ((first & 0x07) << 18 | (second << 12) | (third << 6) | fourth).unsafe_chr, 4
+      return ((first & 0x07) << 18 | (second << 12) | (third << 6) | fourth).unsafe_char, 4
     end
 
     raise InvalidByteSequenceError.new("Unexpected byte 0x#{first.to_s(16)} in UTF-8 byte sequence")
@@ -354,16 +354,16 @@ abstract class IO
     return nil unless first
 
     first = first.to_u32
-    return first.unsafe_chr, 1 if first < 0x80
+    return first.unsafe_char, 1 if first < 0x80
 
     second = read_utf8_masked_byte
-    return ((first & 0x1f) << 6 | second).unsafe_chr, 2 if first < 0xe0
+    return ((first & 0x1f) << 6 | second).unsafe_char, 2 if first < 0xe0
 
     third = read_utf8_masked_byte
-    return ((first & 0x0f) << 12 | (second << 6) | third).unsafe_chr, 3 if first < 0xf0
+    return ((first & 0x0f) << 12 | (second << 6) | third).unsafe_char, 3 if first < 0xf0
 
     fourth = read_utf8_masked_byte
-    return ((first & 0x07) << 18 | (second << 12) | (third << 6) | fourth).unsafe_chr, 4 if first < 0xf8
+    return ((first & 0x07) << 18 | (second << 12) | (third << 6) | fourth).unsafe_char, 4 if first < 0xf8
 
     raise InvalidByteSequenceError.new("Unexpected byte 0x#{first.to_s(16)} in UTF-8 byte sequence")
   end
@@ -778,7 +778,7 @@ abstract class IO
 
     # One byte: use gets(Char)
     if delimiter.bytesize == 1
-      return gets(delimiter.unsafe_byte_at(0).unsafe_chr, chomp: chomp)
+      return gets(delimiter.unsafe_byte_at(0).unsafe_char, chomp: chomp)
     end
 
     # One char: use gets(Char)

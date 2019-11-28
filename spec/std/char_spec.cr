@@ -386,13 +386,13 @@ describe "Char" do
   end
 
   it "does mark?" do
-    0x300.chr.mark?.should be_true
+    0x300.char.mark?.should be_true
   end
 
   it "does ascii?" do
     'a'.ascii?.should be_true
-    127.chr.ascii?.should be_true
-    128.chr.ascii?.should be_false
+    127.char.ascii?.should be_true
+    128.char.ascii?.should be_false
     '酒'.ascii?.should be_false
   end
 

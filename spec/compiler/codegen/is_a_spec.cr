@@ -46,7 +46,7 @@ describe "Codegen: is_a?" do
   end
 
   it "evaluate method on filtered type" do
-    run("a = 1; a = 'a'; if a.is_a?(Char); a.codepoint; else; 0; end").to_i.chr.should eq('a')
+    run("a = 1; a = 'a'; if a.is_a?(Char); a.codepoint; else; 0; end").to_i.char.should eq('a')
   end
 
   it "evaluate method on filtered type nilable type not-nil" do

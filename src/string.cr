@@ -702,7 +702,7 @@ class String
 
     if strict
       if whitespace
-        while endptr < string_end && endptr.value.chr.ascii_whitespace?
+        while endptr < string_end && endptr.value.char.ascii_whitespace?
           endptr += 1
         end
       end
@@ -711,7 +711,7 @@ class String
     else
       ptr = to_unsafe
       if whitespace
-        while ptr < string_end && ptr.value.chr.ascii_whitespace?
+        while ptr < string_end && ptr.value.char.ascii_whitespace?
           ptr += 1
         end
       end

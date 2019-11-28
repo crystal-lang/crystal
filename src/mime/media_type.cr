@@ -499,7 +499,7 @@ module MIME
         when '"'.codepoint, '\\'.codepoint
           io << '\\'
         when 0x00..0x1F, 0x7F
-          raise ArgumentError.new("String contained invalid character #{byte.chr.inspect}")
+          raise ArgumentError.new("String contained invalid character #{byte.char.inspect}")
         end
         io.write_byte byte
       end

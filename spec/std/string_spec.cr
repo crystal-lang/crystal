@@ -2489,12 +2489,12 @@ describe "String" do
 
     it "gets chars" do
       string = String.new(Bytes[255, 0, 0, 0, 65])
-      string.chars.should eq([Char::REPLACEMENT, 0.chr, 0.chr, 0.chr, 65.chr])
+      string.chars.should eq([Char::REPLACEMENT, 0.char, 0.char, 0.char, 65.char])
     end
 
     it "gets chars (2)" do
       string = String.new(Bytes[255, 0])
-      string.chars.should eq([Char::REPLACEMENT, 0.chr])
+      string.chars.should eq([Char::REPLACEMENT, 0.char])
     end
 
     it "valid_encoding?" do

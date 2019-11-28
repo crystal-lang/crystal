@@ -349,7 +349,22 @@ end
       # 97.unsafe_chr # => 'a'
       # ```
       @[Primitive(:cast)]
+      @[Deprecated("Use .unsafe_char instead, which is less cryptic")]
       def unsafe_chr : Char
+      end
+
+      # Returns a `Char` that has the unicode codepoint of `self`,
+      # without checking if this integer is in the range valid for
+      # chars (`0..0x10ffff`).
+      #
+      # You should never use this method unless `char` turns out to
+      # be a bottleneck.
+      #
+      # ```
+      # 97.unsafe_char # => 'a'
+      # ```
+      @[Primitive(:cast)]
+      def unsafe_char : Char
       end
 
       {% for int2 in ints %}

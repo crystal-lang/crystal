@@ -132,7 +132,7 @@ def print_sol(str)
     puts if i % 5 == 0
     print ' ' if (i + 5) % 10 == 0
     print ' '
-    print c.chr
+    print c.char
     i += 1
   end
   puts

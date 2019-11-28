@@ -255,7 +255,7 @@ struct Path
     return if @name.empty? || @name == "."
 
     first_char = @name.char_at(0)
-    unless separators.includes?(first_char) || (first_char == '.' && separators.includes?(@name.byte_at?(1).try &.unsafe_chr)) || (windows? && (windows_drive? || unc_share?))
+    unless separators.includes?(first_char) || (first_char == '.' && separators.includes?(@name.byte_at?(1).try &.unsafe_char)) || (windows? && (windows_drive? || unc_share?))
       yield new_instance(".")
     end
 
@@ -416,7 +416,7 @@ struct Path
           reader.next_char
           if str.bytesize > dotdot
             str.back 1
-            while str.bytesize > dotdot && !separators.includes?((str.buffer + str.bytesize).value.unsafe_chr)
+            while str.bytesize > dotdot && !separators.includes?((str.buffer + str.bytesize).value.unsafe_char)
               str.back 1
             end
           elsif !root
@@ -431,7 +431,7 @@ struct Path
 
           # real path element
           # add slash if needed
-          if str.bytesize > anchor_pos && !separators.includes?((str.buffer + str.bytesize - 1).value.unsafe_chr)
+          if str.bytesize > anchor_pos && !separators.includes?((str.buffer + str.bytesize - 1).value.unsafe_char)
             str << separators[0]
           end
 
@@ -447,7 +447,7 @@ struct Path
         str << '.'
       end
 
-      last_char = (str.buffer + str.bytesize - 1).value.unsafe_chr
+      last_char = (str.buffer + str.bytesize - 1).value.unsafe_char
 
       if add_separator_at_end && !separators.includes?(last_char)
         str << separators[0]
@@ -927,7 +927,7 @@ struct Path
     if windows?
       if windows_drive?
         drive = @name.byte_slice(0, 2)
-        if separators.includes?(@name.byte_at?(2).try(&.chr))
+        if separators.includes?(@name.byte_at?(2).try(&.char))
           return drive, @name.byte_slice(2, 1)
         else
           return drive, nil
