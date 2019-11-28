@@ -142,7 +142,7 @@ export CRYSTAL_PATH=$CRYSTAL_ROOT/src:lib
 export CRYSTAL_HAS_WRAPPER=true
 
 if [ -x "$CRYSTAL_DIR/crystal" ]; then
-  __warning_msg "Using compiled compiler at \`.build/crystal'"
+  __warning_msg "Using compiled compiler at ${CRYSTAL_DIR#"$PWD/"}/crystal"
   exec "$CRYSTAL_DIR/crystal" "$@"
 elif ! command -v crystal > /dev/null; then
   __error_msg 'You need to have a crystal executable in your path!'
