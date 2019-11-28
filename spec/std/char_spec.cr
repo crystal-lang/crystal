@@ -235,7 +235,7 @@ describe "Char" do
     'a'.to_f64?.should be_nil
   end
 
-  it "does ord for multibyte char" do
+  it "does codepoint for multibyte char" do
     '日'.codepoint.should eq(26085)
   end
 

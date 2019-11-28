@@ -33,7 +33,7 @@ describe "Semantic: primitives" do
     assert_type("'a'") { char }
   end
 
-  it "types char ord" do
+  it "types char codepoint" do
     assert_type("'a'.codepoint") { int32 }
   end
 

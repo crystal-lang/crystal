@@ -38,7 +38,7 @@ describe "Code gen: primitives" do
     run("'a'").to_i.should eq('a'.codepoint)
   end
 
-  it "codegens char ord" do
+  it "codegens char codepoint" do
     run("'a'.codepoint").to_i.should eq('a'.codepoint)
   end
 

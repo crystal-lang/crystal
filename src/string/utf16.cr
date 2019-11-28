@@ -21,16 +21,16 @@ class String
 
     i = 0
     each_char do |char|
-      ord = char.codepoint
-      if ord <= 0xd800 || (0xe000 <= ord < 0x10000)
+      codepoint = char.codepoint
+      if codepoint <= 0xd800 || (0xe000 <= codepoint < 0x10000)
         # One UInt16 is enough
-        slice[i] = ord.to_u16
-      elsif ord >= 0x10000
+        slice[i] = codepoint.to_u16
+      elsif codepoint >= 0x10000
         # Needs surrogate pair
-        ord -= 0x10000
-        slice[i] = 0xd800_u16 + ((ord >> 10) & 0x3ff) # Keep top 10 bits
+        codepoint -= 0x10000
+        slice[i] = 0xd800_u16 + ((codepoint >> 10) & 0x3ff) # Keep top 10 bits
         i += 1
-        slice[i] = 0xdc00_u16 + (ord & 0x3ff) # Keep low 10 bits
+        slice[i] = 0xdc00_u16 + (codepoint & 0x3ff) # Keep low 10 bits
       else
         # Invalid char: use replacement
         slice[i] = 0xfffd_u16
