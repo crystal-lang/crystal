@@ -9,9 +9,6 @@ module Crystal::EventLoop
 
     if next_fiber
       Crystal::Scheduler.enqueue next_fiber
-    else
-      Crystal::System.print_error "Warning: No runnables in scheduler. Exiting program.\n"
-      ::exit
     end
   end
 
