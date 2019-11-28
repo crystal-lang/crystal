@@ -326,7 +326,7 @@ module Crystal
           object_name = %(%*)
         end
 
-        if (link_flags = @link_flags) && !link_flags.empty?
+        if link_flags = @link_flags.presence
           link_flags = "/link #{link_flags}"
         end
 

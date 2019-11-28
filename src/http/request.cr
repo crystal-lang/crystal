@@ -218,7 +218,7 @@ class HTTP::Request
 
   # Returns the request's path component.
   def path
-    (path = uri.path).empty? ? "/" : path
+    uri.path.presence || "/"
   end
 
   # Sets request's path component.
