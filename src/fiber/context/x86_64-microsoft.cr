@@ -15,8 +15,8 @@ class Fiber
 
     # The following two values are stored in the Thread Information Block (NT_TIB)
     # and are used by Windows to track the current stack limits
-    stack_ptr[-2] = @stack_bottom # %gs:0x08: Stack Bottom
-    stack_ptr[-3] = @stack        # %gs:0x10: Stack Limit
+    stack_ptr[-2] = @stack        # %gs:0x10: Stack Limit
+    stack_ptr[-3] = @stack_bottom # %gs:0x08: Stack Base
   end
 
   # :nodoc:
