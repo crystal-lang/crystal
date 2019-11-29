@@ -283,7 +283,7 @@ describe "Char" do
 
     it "raises on codepoint bigger than 0x10ffff" do
       expect_raises InvalidByteSequenceError do
-        (0x10ffff + 1).unsafe_chr.bytesize
+        (0x10ffff + 1).unsafe_char.bytesize
       end
     end
   end
@@ -334,7 +334,7 @@ describe "Char" do
 
   it "raises on codepoint bigger than 0x10ffff when doing each_byte" do
     expect_raises InvalidByteSequenceError do
-      (0x10ffff + 1).unsafe_chr.each_byte { |b| }
+      (0x10ffff + 1).unsafe_char.each_byte { |b| }
     end
   end
 
@@ -358,12 +358,12 @@ describe "Char" do
 
   it "does ascii_number?" do
     256.times do |i|
-      chr = i.chr
-      ("01".chars.includes?(chr) == chr.ascii_number?(2)).should be_true
-      ("01234567".chars.includes?(chr) == chr.ascii_number?(8)).should be_true
-      ("0123456789".chars.includes?(chr) == chr.ascii_number?).should be_true
-      ("0123456789".chars.includes?(chr) == chr.ascii_number?(10)).should be_true
-      ("0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ".includes?(chr) == chr.ascii_number?(36)).should be_true
+      char = i.char
+      ("01".chars.includes?(char) == char.ascii_number?(2)).should be_true
+      ("01234567".chars.includes?(char) == char.ascii_number?(8)).should be_true
+      ("0123456789".chars.includes?(char) == char.ascii_number?).should be_true
+      ("0123456789".chars.includes?(char) == char.ascii_number?(10)).should be_true
+      ("0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ".includes?(char) == char.ascii_number?(36)).should be_true
       unless 2 <= i <= 36
         expect_raises ArgumentError do
           '0'.ascii_number?(i)

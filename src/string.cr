@@ -521,7 +521,7 @@ class String
 
     # Skip leading whitespace
     if whitespace
-      while ptr.value.unsafe_chr.ascii_whitespace?
+      while ptr.value.unsafe_char.ascii_whitespace?
         ptr += 1
       end
     end
@@ -529,7 +529,7 @@ class String
     negative = false
 
     # Check + and -
-    case ptr.value.unsafe_chr
+    case ptr.value.unsafe_char
     when '-'
       if unsigned
         return ToU64Info.new 0, true, true
@@ -543,11 +543,11 @@ class String
     found_digit = false
 
     # Check leading zero
-    if ptr.value.unsafe_chr == '0'
+    if ptr.value.unsafe_char == '0'
       ptr += 1
 
       if prefix
-        case ptr.value.unsafe_chr
+        case ptr.value.unsafe_char
         when 'b'
           base = 2
           ptr += 1
@@ -579,7 +579,7 @@ class String
 
     digits = (base == 62 ? CHAR_TO_DIGIT62 : CHAR_TO_DIGIT).to_unsafe
     while ptr.value != 0
-      if underscore && ptr.value.unsafe_chr == '_'
+      if underscore && ptr.value.unsafe_char == '_'
         break if last_is_underscore
         last_is_underscore = true
         ptr += 1
@@ -613,7 +613,7 @@ class String
     if found_digit
       unless ptr.value == 0
         if whitespace
-          while ptr.value.unsafe_chr.ascii_whitespace?
+          while ptr.value.unsafe_char.ascii_whitespace?
             ptr += 1
           end
         end
@@ -861,7 +861,7 @@ class String
     if ascii_only?
       byte = byte_at?(index)
       if byte
-        return byte < 0x80 ? byte.unsafe_chr : Char::REPLACEMENT
+        return byte < 0x80 ? byte.unsafe_char : Char::REPLACEMENT
       else
         return yield
       end
@@ -945,7 +945,7 @@ class String
     if ascii_only? && (options.none? || options.ascii?)
       String.new(bytesize) do |buffer|
         bytesize.times do |i|
-          buffer[i] = to_unsafe[i].unsafe_chr.downcase.codepoint.to_u8
+          buffer[i] = to_unsafe[i].unsafe_char.downcase.codepoint.to_u8
         end
         {@bytesize, @length}
       end
@@ -972,7 +972,7 @@ class String
     if ascii_only? && (options.none? || options.ascii?)
       String.new(bytesize) do |buffer|
         bytesize.times do |i|
-          buffer[i] = to_unsafe[i].unsafe_chr.upcase.codepoint.to_u8
+          buffer[i] = to_unsafe[i].unsafe_char.upcase.codepoint.to_u8
         end
         {@bytesize, @length}
       end
@@ -1000,9 +1000,9 @@ class String
       String.new(bytesize) do |buffer|
         bytesize.times do |i|
           if i == 0
-            buffer[i] = to_unsafe[i].unsafe_chr.upcase.codepoint.to_u8
+            buffer[i] = to_unsafe[i].unsafe_char.upcase.codepoint.to_u8
           else
-            buffer[i] = to_unsafe[i].unsafe_chr.downcase.codepoint.to_u8
+            buffer[i] = to_unsafe[i].unsafe_char.downcase.codepoint.to_u8
           end
         end
         {@bytesize, @length}
@@ -1073,7 +1073,7 @@ class String
   # ```
   def chomp(suffix : String)
     if suffix.bytesize == 1
-      chomp(suffix.to_unsafe[0].unsafe_chr)
+      chomp(suffix.to_unsafe[0].unsafe_char)
     elsif ends_with?(suffix)
       unsafe_byte_slice_string(0, bytesize - suffix.bytesize)
     else
@@ -1264,8 +1264,8 @@ class String
 
     i = 0
     while i < bytesize
-      high_nibble = to_unsafe[i].unsafe_chr.to_u8?(16)
-      low_nibble = to_unsafe[i + 1].unsafe_chr.to_u8?(16)
+      high_nibble = to_unsafe[i].unsafe_char.to_u8?(16)
+      low_nibble = to_unsafe[i + 1].unsafe_char.to_u8?(16)
       return unless high_nibble && low_nibble
 
       bytes[i // 2] = (high_nibble << 4) | low_nibble
@@ -1533,7 +1533,7 @@ class String
 
   private def calc_excess_right
     i = bytesize - 1
-    while i >= 0 && to_unsafe[i].unsafe_chr.ascii_whitespace?
+    while i >= 0 && to_unsafe[i].unsafe_char.ascii_whitespace?
       i -= 1
     end
     bytesize - 1 - i
@@ -1569,7 +1569,7 @@ class String
     excess_left = 0
     # All strings end with '\0', and it's not a whitespace
     # so it's safe to access past 1 byte beyond the string data
-    while to_unsafe[excess_left].unsafe_chr.ascii_whitespace?
+    while to_unsafe[excess_left].unsafe_char.ascii_whitespace?
       excess_left += 1
     end
     excess_left
@@ -1639,7 +1639,7 @@ class String
     return delete(from) if to.empty?
 
     if from.bytesize == 1
-      return gsub(from.unsafe_byte_at(0).unsafe_chr, to[0])
+      return gsub(from.unsafe_byte_at(0).unsafe_char, to[0])
     end
 
     multi = nil
@@ -1665,7 +1665,7 @@ class String
       each_char do |ch|
         if ch.codepoint < 256
           if (a = table[ch.codepoint]) >= 0
-            buffer << a.unsafe_chr
+            buffer << a.unsafe_char
           else
             buffer << ch
           end
@@ -1996,21 +1996,21 @@ class String
 
     while index = replacement.byte_index('\\'.codepoint.to_u8, index)
       index += 1
-      chr = replacement.to_unsafe[index].unsafe_chr
-      case chr
+      char = replacement.to_unsafe[index].unsafe_char
+      case char
       when '\\'
         buffer.write(replacement.unsafe_byte_slice(first_index, index - first_index))
         index += 1
         first_index = index
       when '0'..'9'
         buffer.write(replacement.unsafe_byte_slice(first_index, index - 1 - first_index))
-        buffer << match_data[chr - '0']?
+        buffer << match_data[char - '0']?
         index += 1
         first_index = index
       when 'k'
         index += 1
-        chr = replacement.to_unsafe[index].unsafe_chr
-        next unless chr == '<'
+        char = replacement.to_unsafe[index].unsafe_char
+        next unless char == '<'
 
         buffer.write(replacement.unsafe_byte_slice(first_index, index - 2 - first_index))
 
@@ -2058,7 +2058,7 @@ class String
   # ```
   def gsub(char : Char, replacement)
     if replacement.is_a?(String) && replacement.bytesize == 1
-      return gsub(char, replacement.unsafe_byte_at(0).unsafe_chr)
+      return gsub(char, replacement.unsafe_byte_at(0).unsafe_char)
     end
 
     if includes?(char)
@@ -2168,7 +2168,7 @@ class String
   # ```
   def gsub(string : String, replacement)
     if string.bytesize == 1
-      gsub(string.unsafe_byte_at(0).unsafe_chr, replacement)
+      gsub(string.unsafe_byte_at(0).unsafe_char, replacement)
     else
       gsub(string) { replacement }
     end
@@ -3103,7 +3103,7 @@ class String
         while i < bytesize
           c = to_unsafe[i]
           i += 1
-          if c.unsafe_chr.ascii_whitespace?
+          if c.unsafe_char.ascii_whitespace?
             piece_bytesize = i - 1 - index
             piece_size = single_byte_optimizable ? piece_bytesize : 0
             yield String.new(to_unsafe + index, piece_bytesize, piece_size)
@@ -3121,7 +3121,7 @@ class String
         while i < bytesize
           c = to_unsafe[i]
           i += 1
-          unless c.unsafe_chr.ascii_whitespace?
+          unless c.unsafe_char.ascii_whitespace?
             index = i - 1
             looking_for_space = true
             break
@@ -3795,7 +3795,7 @@ class String
   def each_char : Nil
     if ascii_only?
       each_byte do |byte|
-        yield (byte < 0x80 ? byte.unsafe_chr : Char::REPLACEMENT)
+        yield (byte < 0x80 ? byte.unsafe_char : Char::REPLACEMENT)
       end
     else
       Char::Reader.new(self).each do |char|
@@ -3858,7 +3858,7 @@ class String
   # array # => [97, 98, 9731]
   # ```
   #
-  # See also: `Char#ord`.
+  # See also: `Char#codepoint`.
   def each_codepoint
     each_char do |char|
       yield char.codepoint
@@ -3874,7 +3874,7 @@ class String
   # codepoints.next # => 9731
   # ```
   #
-  # See also: `Char#ord`.
+  # See also: `Char#codepoint`.
   def each_codepoint
     each_char.map &.codepoint
   end
@@ -3885,7 +3885,7 @@ class String
   # "ab☃".codepoints # => [97, 98, 9731]
   # ```
   #
-  # See also: `Char#ord`.
+  # See also: `Char#codepoint`.
   def codepoints
     codepoints = Array(Int32).new(@length > 0 ? @length : bytesize)
     each_codepoint do |codepoint|

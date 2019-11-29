@@ -18,8 +18,8 @@ describe Digest::SHA1 do
 
     it "does digest for #{string.inspect} in a block" do
       bytes = Digest::SHA1.digest do |ctx|
-        string.each_char do |chr|
-          ctx.update chr.to_s
+        string.each_char do |char|
+          ctx.update char.to_s
         end
       end
 

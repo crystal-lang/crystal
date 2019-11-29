@@ -732,11 +732,11 @@ module Crystal
         interpret_one_arg_method(method, args) do |arg|
           case arg
           when CharLiteral
-            chr = arg.value
+            char = arg.value
           else
             raise "StringLiteral#count expects char, not #{arg.class_desc}"
           end
-          NumberLiteral.new(@value.count(chr))
+          NumberLiteral.new(@value.count(char))
         end
       when "starts_with?"
         interpret_one_arg_method(method, args) do |arg|
