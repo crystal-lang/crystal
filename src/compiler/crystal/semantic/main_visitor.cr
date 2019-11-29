@@ -2412,7 +2412,7 @@ module Crystal
         remove_alias: false)
 
       if type.is_a?(Type)
-        node.type = check_type_in_type_args(type.remove_alias_if_simple).devirtualize
+        node.type = type.remove_alias_if_simple
       else
         path.raise "argument must be a type"
       end
