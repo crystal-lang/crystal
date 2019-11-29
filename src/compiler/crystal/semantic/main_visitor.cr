@@ -2391,8 +2391,30 @@ module Crystal
         # Nothing to do
       when "throw_info"
         node.type = program.pointer_of(program.void)
+      when "va_arg"
+        visit_va_arg node
       else
         node.raise "BUG: unhandled primitive in MainVisitor: #{node.name}"
+      end
+    end
+
+    def visit_va_arg(node)
+      path = call.not_nil!.args[0]? || node.raise("requires type argument")
+      path = path.as?(Path) || path.raise("argument must be a type")
+
+      lookup_scope = @path_lookup || @scope || @current_type
+
+      find_root_generic_type_parameters = !lookup_scope.is_a?(GenericType)
+
+      type = lookup_scope.lookup_type_var(path,
+        free_vars: free_vars,
+        find_root_generic_type_parameters: find_root_generic_type_parameters,
+        remove_alias: false)
+
+      if type.is_a?(Type)
+        node.type = check_type_in_type_args(type.remove_alias_if_simple).devirtualize
+      else
+        path.raise "argument must be a type"
       end
     end
 

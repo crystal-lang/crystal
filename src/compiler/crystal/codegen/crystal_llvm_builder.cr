@@ -71,7 +71,7 @@ module Crystal
                      global_string_pointer icmp inbounds_gep int2ptr invoke landing_pad load
                      lshr mul not or phi ptr2int sdiv select set_current_debug_location sext
                      shl si2fp srem store store_volatile sub switch trunc udiv ui2fp urem xor
-                     zext) %}
+                     zext va_arg) %}
       def {{name.id}}(*args, **kwargs)
         return llvm_nil if @end
 
