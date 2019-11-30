@@ -36,11 +36,11 @@ struct LLVM::DIBuilder
   end
 
   def create_auto_variable(scope, name, file, line, type, align_in_bits)
-    LibLLVMExt.di_builder_create_auto_variable(self, scope, name, file, line, type, 0, DIFlags::Zero, align_in_bits)
+    LibLLVMExt.di_builder_create_auto_variable(self, scope, name, file, line, type, 1, DIFlags::Zero, align_in_bits)
   end
 
   def create_parameter_variable(scope, name, argno, file, line, type)
-    LibLLVMExt.di_builder_create_parameter_variable(self, scope, name, argno, file, line, type, 0, DIFlags::Zero)
+    LibLLVMExt.di_builder_create_parameter_variable(self, scope, name, argno, file, line, type, 1, DIFlags::Zero)
   end
 
   def create_expression(addr, length)
