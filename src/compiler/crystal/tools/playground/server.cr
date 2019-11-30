@@ -175,7 +175,10 @@ module Crystal::Playground
       spawn do
         status = process.wait
         @logger.info "Code execution ended (session=#{@session_key}, tag=#{tag}, filename=#{output_filename})."
-        exit_status = status.normal_exit? ? status.exit_code : status.exit_signal.value
+        exit_status = status.exit_code
+        {% unless flag?(:win32) %}
+          exit_status = status.exit_signal.value unless status.normal_exit?
+        {% end %}
 
         send_with_json_builder do |json|
           json.field "type", "exit"
