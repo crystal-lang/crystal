@@ -1563,28 +1563,28 @@ class Array(T)
     return self if size == 0
     # This is broken into cases for perfromance (#8515)
     n %= size
-    case n
-    when 0
+
+    if n == 0
       # ignore
-    when 1
+    elsif n == 1
       tmp = self[0]
       @buffer.move_from(@buffer + n, size - n)
       self[-1] = tmp
-    when -1
+    elsif n == -1
       tmp = self[-1]
       @buffer.move_from(@buffer + n, size - n)
       self[0] = tmp
-    when .<= SMALL_ARRAY_SIZE
+    elsif n <= SMALL_ARRAY_SIZE
       tmp_buffer = uninitialized StaticArray(T, SMALL_ARRAY_SIZE)
       tmp_buffer.to_unsafe.copy_from((@buffer + size - n - 1), n)
       @buffer.move_from(@buffer + n, size - n)
       (@buffer + size - n).copy_from(tmp_buffer.to_unsafe, n)
-    when .>= -SMALL_ARRAY_SIZE
+    elsif n.abs <= SMALL_ARRAY_SIZE
       tmp_buffer = uninitialized StaticArray(T, SMALL_ARRAY_SIZE)
       tmp_buffer.to_unsafe.copy_from(@buffer, n - 1)
       (@buffer + size - n).move_from(@buffer, n)
       @buffer.copy_from(tmp_buffer.to_unsafe, size - n)
-    when .<= size // 2
+    elsif n <= size // 2 # shift right
       tmp = self[0..n]
       @buffer.move_from(@buffer + n, size - n)
       (@buffer + size - n).copy_from(tmp.to_unsafe, n)
