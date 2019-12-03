@@ -1171,14 +1171,20 @@ module Crystal
         case next_char
         when '_'
           case next_char
-          when 'D'
-            if next_char == 'I' && next_char == 'R' && next_char == '_' && next_char == '_'
-              if ident_part_or_end?(peek_next_char)
-                scan_ident(start)
-              else
-                next_char
-                @token.type = :__DIR__
-                return @token
+          when 'D', 'd'
+            case next_char
+            when 'I', 'i'
+              case next_char
+              when 'R', 'r'
+                if next_char == '_' && next_char == '_'
+                  if ident_part_or_end?(peek_next_char)
+                    scan_ident(start)
+                  else
+                    next_char
+                    @token.type = :__DIR__
+                    return @token
+                  end
+                end
               end
             end
           when 'E'

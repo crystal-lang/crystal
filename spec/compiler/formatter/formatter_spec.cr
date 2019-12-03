@@ -400,8 +400,10 @@ describe Crystal::Formatter do
   assert_format %("foo \#{ 1  +  2 }"), %("foo \#{1 + 2}")
   assert_format %("foo \#{ 1 } \#{ __DIR__ }"), %("foo \#{1} \#{__DIR__}")
   assert_format %("foo \#{ __DIR__ }"), %("foo \#{__DIR__}")
+  assert_format %("foo \#{ __dir__ }"), %("foo \#{__DIR__}")
   assert_format "__FILE__", "__FILE__"
   assert_format "__DIR__", "__DIR__"
+  assert_format "__dir__", "__DIR__"
   assert_format "__LINE__", "__LINE__"
 
   assert_format %("\#{foo = 1\n}"), %("\#{foo = 1}")

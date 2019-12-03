@@ -373,6 +373,12 @@ describe "Lexer" do
     token.type.should eq(:__DIR__)
   end
 
+  it "lexes __dir__ as __DIR__" do
+    lexer = Lexer.new "__dir__"
+    token = lexer.next_token
+    token.type.should eq(:__DIR__)
+  end
+
   it "lexes dot and ident" do
     lexer = Lexer.new ".read"
     token = lexer.next_token
