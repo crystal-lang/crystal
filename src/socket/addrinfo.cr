@@ -82,12 +82,12 @@ class Socket
     class Error < Socket::Error
       getter error_code : Int32
 
-      def self.new(error_code, domain, service, protocol)
-        new error_code, String.new(LibC.gai_strerror(error_code)), domain, service, protocol
+      def self.new(error_code, domain)
+        new error_code, String.new(LibC.gai_strerror(error_code)), domain
       end
 
-      def initialize(@error_code, message, domain, service, protocol)
-        super("getaddrinfo: " + message + " for #{domain}:#{service} over #{protocol} when attempting to lookup internet address for host.  Hint: check hostname, check resolution system (which includes DNS)")
+      def initialize(@error_code, message, domain)
+        super("Hostname lookup for #{domain} failed: #{message}")
       end
     end
 
@@ -121,9 +121,11 @@ class Socket
       when 0
         # success
       when LibC::EAI_NONAME
-        raise Error.new(LibC::EAI_NONAME, "No address found", domain, service, protocol)
+        raise Error.new(LibC::EAI_NONAME, "No address found", domain)
+      when LibC::EAI_SOCKTYPE, LibC::EAI_SERVICE
+        raise Error.new(ret, "service #{service} protocol #{protocol}", domain)
       else
-        raise Error.new(ret, domain, service, protocol)
+        raise Error.new(ret, domain)
       end
 
       begin
