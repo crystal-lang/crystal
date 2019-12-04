@@ -121,7 +121,7 @@ class Socket
       when 0
         # success
       when LibC::EAI_NONAME
-        raise Error.new(LibC::EAI_NONAME, "No address found", domain)
+        raise Error.new(ret, "No address found", domain)
       when LibC::EAI_SOCKTYPE, LibC::EAI_SERVICE
         raise Error.new(ret, "service #{service} protocol #{protocol}", domain)
       else
