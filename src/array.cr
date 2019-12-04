@@ -1570,9 +1570,9 @@ class Array(T)
       tmp = self[0]
       @buffer.move_from(@buffer + n, size - n)
       self[-1] = tmp
-    elsif n == -1
+    elsif n == (size - 1)
       tmp = self[-1]
-      @buffer.move_from(@buffer + n, size - n)
+      (@buffer + size - n).move_from(@buffer, n)
       self[0] = tmp
     elsif n <= SMALL_ARRAY_SIZE // 2
       tmp_buffer = uninitialized StaticArray(T, SMALL_ARRAY_SIZE)
