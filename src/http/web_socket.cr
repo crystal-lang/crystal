@@ -104,7 +104,7 @@ class HTTP::WebSocket
     loop do
       begin
         info = @ws.receive(@buffer)
-      rescue IO::Error | Errno
+      rescue
         @on_close.try &.call("")
         break
       end
