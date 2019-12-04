@@ -94,7 +94,7 @@ describe OpenSSL::SSL::Socket do
     socket_ssl = OpenSSL::SSL::Socket::Client.new(socket, client_context, hostname: "example.com", sync_close: true)
     socket_ssl.print "hello"
     socket_ssl.flush # needed today see #5375
-    socket.close # close underlying socket without gracefully shutting down SSL at all
-    server_finished_reading.receive().should eq("hello")
+    socket.close     # close underlying socket without gracefully shutting down SSL at all
+    server_finished_reading.receive.should eq("hello")
   end
 end
