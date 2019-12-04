@@ -117,7 +117,7 @@ abstract class OpenSSL::SSL::Socket < IO
       if bytes <= 0 && !LibSSL.ssl_get_error(@ssl, bytes).zero_return?
         ex = OpenSSL::SSL::Error.new(@ssl, bytes, "SSL_read")
         if ex.underlying_eof?
-          # underlying BIO termianted gracefully, without terminating SSL aspect gracefully first
+          # underlying BIO terminated gracefully, without terminating SSL aspect gracefully first
           # some misbehaving servers "do this" so treat as EOF even though it's a protocol error
           return 0
         end
