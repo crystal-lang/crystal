@@ -3,19 +3,19 @@
 ## Language changes
 
 - Allow boolean negation to be written also as a regular method call `expr.!`. ([#8445](https://github.com/crystal-lang/crystal/pull/8445), thanks @jan-zajic)
-- Support named arguments in macro methods. ([#8429](https://github.com/crystal-lang/crystal/pull/8429), thanks @Blacksmoke16)
 
 ### Macros
 
 - Add `TypeNode#class_vars` to list class variables in a macros. ([#8405](https://github.com/crystal-lang/crystal/pull/8405), thanks @jan-zajic)
 - Add `ArrayLiteral#map_with_index` and `TupleLiteral#map_with_index`. ([#8049](https://github.com/crystal-lang/crystal/pull/8049), thanks @Blacksmoke16)
 - Add docs for `ArrayLiteral#reduce`. ([#8379](https://github.com/crystal-lang/crystal/pull/8379), thanks @jan-zajic)
+- Add `lower:` named argument to `StringLiteral#camelcase`. ([#8429](https://github.com/crystal-lang/crystal/pull/8429), thanks @Blacksmoke16)
 
 ## Standard library
 
-- **(breaking-change)** Remove `Readline` from std-lib. ([#8364](https://github.com/crystal-lang/crystal/pull/8364), thanks @ftarulla)
+- **(breaking-change)** Remove `Readline` from std-lib. It's now available as a shard at [crystal-lang/crystal-readline](https://www.github.com/crystal-lang/crystal-readline) ([#8364](https://github.com/crystal-lang/crystal/pull/8364), thanks @ftarulla)
 - Allow `abort` to run without arguments. ([#8214](https://github.com/crystal-lang/crystal/pull/8214), thanks @dbackeus)
-- Add class and getter name to error message in non-nil asserting getters. ([#8200](https://github.com/crystal-lang/crystal/pull/8200), [#8296](https://github.com/crystal-lang/crystal/pull/8296), thanks @icy-arctic-fox)
+- Improve error message for not-nil assertion in getters. ([#8200](https://github.com/crystal-lang/crystal/pull/8200), [#8296](https://github.com/crystal-lang/crystal/pull/8296), thanks @icy-arctic-fox)
 - Add `Enum.valid?`. ([#5716](https://github.com/crystal-lang/crystal/pull/5716), thanks @MakeNowJust)
 - Disable colored output if `TERM=dumb`. ([#8271](https://github.com/crystal-lang/crystal/pull/8271), thanks @ilanpillemer)
 - Docs improvements. ([#7656](https://github.com/crystal-lang/crystal/pull/7656), [#8337](https://github.com/crystal-lang/crystal/pull/8337), thanks @r00ster91, @vlazar)
@@ -25,7 +25,7 @@
 ### Numeric
 
 - Fixed `%` and `Int#remainder` edge case of min int value against `-1`. ([#8321](https://github.com/crystal-lang/crystal/pull/8321), thanks @asterite)
-- Fixed `gcd` types edge case and improve performance. ([#7996](https://github.com/crystal-lang/crystal/pull/7996), [#8419](https://github.com/crystal-lang/crystal/pull/8419), thanks @yxhuvud, @j8r)
+- Fixed `Int#gcd` types edge case and improve performance. ([#7996](https://github.com/crystal-lang/crystal/pull/7996), [#8419](https://github.com/crystal-lang/crystal/pull/8419), thanks @yxhuvud, @j8r)
 - Add `Int#bits` for accessing bit ranges. ([#8165](https://github.com/crystal-lang/crystal/pull/8165), thanks @stakach)
 - Allow `Number#round` with `UInt` argument. ([#8361](https://github.com/crystal-lang/crystal/pull/8361), thanks @igor-alexandrov)
 
@@ -47,24 +47,24 @@
 - **(performance)** Optimized version of `Tuple#to_a`. ([#8265](https://github.com/crystal-lang/crystal/pull/8265), thanks @asterite)
 - Add docs to `Hash.merge!(other : Hash, &)`. ([#8380](https://github.com/crystal-lang/crystal/pull/8380), thanks @jan-zajic)
 - Add docs to `Hash.select`. ([#8391](https://github.com/crystal-lang/crystal/pull/8391), thanks @jan-zajic)
-- Add docs and specs `Enumerable.reduce`. ([#8378](https://github.com/crystal-lang/crystal/pull/8378), thanks @jan-zajic)
+- Add docs and specs to `Enumerable.reduce`. ([#8378](https://github.com/crystal-lang/crystal/pull/8378), thanks @jan-zajic)
 
 ### Serialization
 
 - **(breaking-change)** Make `XML::Reader#expand` raise, introduce `XML::Reader#expand?` for former behavior. ([#8186](https://github.com/crystal-lang/crystal/pull/8186), thanks @Blacksmoke16)
-- Allow `JSON.mapping` & `YAML.mapping` converter attribute to be applied to `Array` and `Hashes`. ([#8156](https://github.com/crystal-lang/crystal/pull/8156), thanks @rodrigopinto)
+- Allow `JSON.mapping` & `YAML.mapping` converter attribute to be applied to `Array` and `Hash`. ([#8156](https://github.com/crystal-lang/crystal/pull/8156), thanks @rodrigopinto)
 - Add `use_json_discriminator` and `use_yaml_discriminator` to choose type based on property value. ([#8406](https://github.com/crystal-lang/crystal/pull/8406), thanks @asterite)
 
 ### Files
 
 - **(breaking-change)** Remove expand home (`~`) by default in `File.expand_path` and `Path#expand`, now opt-in argument. ([#7903](https://github.com/crystal-lang/crystal/pull/7903), thanks @didactic-drunk)
-- Fixed edge case bugs in `Path` regarding `#dirname`, `#each_part`, `#each_parent`. ([#8415](https://github.com/crystal-lang/crystal/pull/8415), thanks @jan-zajic)
+- Fixed bugs in `Path` regarding `#dirname`, `#each_part`, `#each_parent`. ([#8415](https://github.com/crystal-lang/crystal/pull/8415), thanks @jan-zajic)
 - Fixed `GZip::Reader` and `GZip::Writer` to handle large data sizes. ([#8421](https://github.com/crystal-lang/crystal/pull/8421), thanks @straight-shoota)
 - Fixed `File::Info#same_file?` by providing access to 64 bit inode numbers. ([#8355](https://github.com/crystal-lang/crystal/pull/8355), thanks @didactic-drunk)
 
 ### Networking
 
-- Fixed `HTTP#Response.mime_type` returns `nil` on empty `Content-Type` header. ([#8464](https://github.com/crystal-lang/crystal/pull/8464), thanks @Sija)
+- Fixed `HTTP::Response#mime_type` returns `nil` on empty `Content-Type` header. ([#8464](https://github.com/crystal-lang/crystal/pull/8464), thanks @Sija)
 - Updated mime type of `.js` files to `text/javascript` and include `image/webp`. ([#8342](https://github.com/crystal-lang/crystal/pull/8342), thanks @mamantoha)
 - Refactor websocket protocol GUID string. ([#8339](https://github.com/crystal-lang/crystal/pull/8339), thanks @vlazar)
 
