@@ -1155,7 +1155,7 @@ module Crystal
     end
 
     describe TypeNode do
-      describe "#all_includers" do
+      describe "#includers" do
         it "returns an array of types `self` is included in" do
           assert_type(%(
             module Foo
@@ -1203,7 +1203,7 @@ module Crystal
             class ChildT(T) < SubT(T)
             end
 
-          {% if Baz.all_includers.map(&.stringify) == ["Baz::Tar", "Enumt(T)", "Bar", "Str", "Gen(T)", "AStr", "ACla", "SubT(T)"] && Enumt.all_includers.map(&.stringify) == ["Str"]  %}
+          {% if Baz.includers.map(&.stringify) == ["Baz::Tar", "Enumt(T)", "Bar", "Str", "Gen(T)", "AStr", "ACla", "SubT(T)"] && Enumt.includers.map(&.stringify) == ["Str"]  %}
             1
           {% else %}
             'a'
