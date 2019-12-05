@@ -122,8 +122,10 @@ class Socket
         # success
       when LibC::EAI_NONAME
         raise Error.new(ret, "No address found", domain)
-      when LibC::EAI_SOCKTYPE, LibC::EAI_SERVICE
-        raise Error.new(ret, "service #{service} protocol #{protocol}", domain)
+      when LibC::EAI_SOCKTYPE
+        raise Error.new(ret, "The requested socket type #{type} protocol #{protocol} is not supported", domain)
+      when LibC::EAI_SERVICE
+        raise Error.new(ret, "The requested service #{service} is not available for the requested socket type #{type}", domain)
       else
         raise Error.new(ret, domain)
       end
