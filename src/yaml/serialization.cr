@@ -389,24 +389,32 @@ module YAML
       end
     end
 
-    def self.discriminate(ctx : YAML::ParseContext, node : YAML::Nodes::Node, field, mapping)
-      unless node.is_a?(YAML::Nodes::Mapping)
-        node.raise "expected YAML mapping, not #{node.class}"
+    macro discriminate(ctx, node, field, mapping)
+      unless {{node}}.is_a?(YAML::Nodes::Mapping)
+        {{node}}.raise "expected YAML mapping, not #{{{node}}.class}"
       end
 
-      node.each do |key, value|
-        next unless key.is_a?(YAML::Nodes::Scalar) && value.is_a?(YAML::Nodes::Scalar)
-        next unless key.value == field
+      %discriminator_value = nil
 
-        discriminator_value = value.value
-        if target = mapping[discriminator_value]?
-          return target.new(ctx, node)
-        else
-          node.raise "Unknown '#{field}' discriminator value: #{discriminator_value.inspect}"
+      {{node}}.each do |key, value|
+        next unless key.is_a?(YAML::Nodes::Scalar) && value.is_a?(YAML::Nodes::Scalar)
+
+        if key.value == {{field.id.stringify}}
+          %discriminator_value = value.value
+          break
         end
       end
 
-      node.raise "Missing YAML discriminator field '#{field}'"
+      case %discriminator_value
+      when Nil
+        {{node}}.raise "Missing YAML discriminator field '{{ field.id }}'"
+      {% for key, value in mapping %}
+        when {{key.id.stringify}}
+          {{value.id}}.new({{ctx}}, {{node}})
+      {% end %}
+      else
+        {{node}}.raise "Unknown '{{field.id}}' discriminator value: #{%discriminator_value.inspect}"
+      end
     end
   end
 end

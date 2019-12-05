@@ -868,7 +868,7 @@ describe "JSON mapping" do
     end
   end
 
-  describe "discriminate" do
+  describe ".discriminate" do
     it "discriminates" do
       pull = JSON::PullParser.new(%<
       {

@@ -396,20 +396,20 @@ module JSON
     end
 
     macro discriminate(pull, field, mapping)
-      location = {{ pull }}.location
+      %location = {{ pull }}.location
 
-      discriminator_value = nil
+      %discriminator_value = nil
 
       # Try to find the discriminator while also getting the raw
       # string value of the parsed JSON, so then we can pass it
       # to the final type.
-      json = String.build do |io|
+      %json = String.build do |io|
         JSON.build(io) do |builder|
           builder.start_object
           {{ pull }}.read_object do |key|
             if key == {{ field.id.stringify }}
-              discriminator_value = {{ pull }}.read_string
-              builder.field(key, discriminator_value)
+              %discriminator_value = {{ pull }}.read_string
+              builder.field(key, %discriminator_value)
             else
               builder.field(key) { {{ pull }}.read_raw(builder) }
             end
@@ -418,17 +418,15 @@ module JSON
         end
       end
 
-      unless discriminator_value
-        raise ::JSON::MappingError.new("Missing JSON discriminator field '{{ field.id }}'", {{ mapping.values.join(" | ")}}, nil, *location, nil)
-      end
-
-      case discriminator_value
+      case %discriminator_value
+      when Nil
+        raise ::JSON::MappingError.new("Missing JSON discriminator field '{{ field.id }}'", {{ mapping.values.join(" | ")}}, nil, *%location, nil)
       {% for key, value in mapping %}
         when {{key.id.stringify}}
-          {{value.id}}.from_json(json)
+          {{value.id}}.from_json(%json)
       {% end %}
       else
-        raise ::JSON::MappingError.new("Unknown '{{field.id}}' discriminator value: #{discriminator_value.inspect}", {{ mapping.values.join(" | ")}}, nil, *location, nil)
+        raise ::JSON::MappingError.new("Unknown '{{field.id}}' discriminator value: #{%discriminator_value.inspect}", {{ mapping.values.join(" | ")}}, nil, *%location, nil)
       end
     end
   end
