@@ -45,9 +45,9 @@ module Unicode
       return
     end
 
-    result = special_cases_upcase[char.ord]?
+    result = special_cases_upcase[char.codepoint]?
     if result
-      result.each { |c| yield c.unsafe_chr if c != 0 }
+      result.each { |c| yield c.unsafe_char if c != 0 }
       return
     end
 
@@ -57,7 +57,7 @@ module Unicode
   private def self.check_upcase_ascii(char, options)
     if (char.ascii? && options.none?) || options.ascii?
       if char.ascii_lowercase?
-        return (char.ord - 32).unsafe_chr
+        return (char.codepoint - 32).unsafe_char
       else
         return char
       end
@@ -76,11 +76,11 @@ module Unicode
   end
 
   private def self.check_upcase_ranges(char)
-    result = search_ranges(upcase_ranges, char.ord)
+    result = search_ranges(upcase_ranges, char.codepoint)
     return char + result if result
 
-    result = search_alternate(alternate_ranges, char.ord)
-    return char - 1 if result && (char.ord - result).odd?
+    result = search_alternate(alternate_ranges, char.codepoint)
+    return char - 1 if result && (char.codepoint - result).odd?
 
     char
   end
@@ -94,7 +94,7 @@ module Unicode
     return result if result
 
     results = check_downcase_fold(char, options)
-    return results[0].unsafe_chr if results && results.size == 1
+    return results[0].unsafe_char if results && results.size == 1
 
     check_downcase_ranges(char)
   end
@@ -115,13 +115,13 @@ module Unicode
 
     result = check_downcase_fold(char, options)
     if result
-      result.each { |c| yield c.unsafe_chr if c != 0 }
+      result.each { |c| yield c.unsafe_char if c != 0 }
       return
     end
 
-    result = special_cases_downcase[char.ord]?
+    result = special_cases_downcase[char.codepoint]?
     if result
-      result.each { |c| yield c.unsafe_chr if c != 0 }
+      result.each { |c| yield c.unsafe_char if c != 0 }
       return
     end
 
@@ -131,7 +131,7 @@ module Unicode
   private def self.check_downcase_ascii(char, options)
     if (char.ascii? && options.none?) || options.ascii?
       if char.ascii_uppercase?
-        return (char.ord + 32).unsafe_chr
+        return (char.codepoint + 32).unsafe_char
       else
         return char
       end
@@ -152,57 +152,57 @@ module Unicode
 
   private def self.check_downcase_fold(char, options)
     if options.fold?
-      result = search_ranges(casefold_ranges, char.ord)
-      return {char.ord + result} if result
+      result = search_ranges(casefold_ranges, char.codepoint)
+      return {char.codepoint + result} if result
 
-      return fold_cases[char.ord]?
+      return fold_cases[char.codepoint]?
     end
     nil
   end
 
   private def self.check_downcase_ranges(char)
-    result = search_ranges(downcase_ranges, char.ord)
+    result = search_ranges(downcase_ranges, char.codepoint)
     return char + result if result
 
-    result = search_alternate(alternate_ranges, char.ord)
-    return char + 1 if result && (char.ord - result).even?
+    result = search_alternate(alternate_ranges, char.codepoint)
+    return char + 1 if result && (char.codepoint - result).even?
 
     char
   end
 
   # :nodoc:
   def self.lowercase?(char : Char)
-    in_category?(char.ord, category_Ll)
+    in_category?(char.codepoint, category_Ll)
   end
 
   # :nodoc:
   def self.uppercase?(char : Char)
-    in_category?(char.ord, category_Lu)
+    in_category?(char.codepoint, category_Lu)
   end
 
   # :nodoc:
   def self.letter?(char : Char)
-    in_any_category?(char.ord, category_Lu, category_Ll, category_Lt)
+    in_any_category?(char.codepoint, category_Lu, category_Ll, category_Lt)
   end
 
   # :nodoc:
   def self.number?(char : Char)
-    in_any_category?(char.ord, category_Nd, category_Nl, category_No)
+    in_any_category?(char.codepoint, category_Nd, category_Nl, category_No)
   end
 
   # :nodoc:
   def self.control?(char : Char)
-    in_any_category?(char.ord, category_Cs, category_Co, category_Cn, category_Cf, category_Cc)
+    in_any_category?(char.codepoint, category_Cs, category_Co, category_Cn, category_Cf, category_Cc)
   end
 
   # :nodoc:
   def self.whitespace?(char : Char)
-    in_any_category?(char.ord, category_Zs, category_Zl, category_Zp)
+    in_any_category?(char.codepoint, category_Zs, category_Zl, category_Zp)
   end
 
   # :nodoc:
   def self.mark?(char : Char)
-    in_any_category?(char.ord, category_Mn, category_Me, category_Mc)
+    in_any_category?(char.codepoint, category_Mn, category_Me, category_Mc)
   end
 
   private def self.search_ranges(haystack, needle)

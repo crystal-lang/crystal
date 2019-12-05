@@ -86,12 +86,12 @@ module HTTP
       return nil if peek.empty?
 
       # See if we can find \n
-      index = peek.index('\n'.ord.to_u8)
+      index = peek.index('\n'.codepoint.to_u8)
       if index
         end_index = index
 
         # Also check (and discard) \r before that
-        if index > 0 && peek[index - 1] == '\r'.ord.to_u8
+        if index > 0 && peek[index - 1] == '\r'.codepoint.to_u8
           end_index -= 1
         end
 
@@ -161,12 +161,12 @@ module HTTP
     bytesize = slice.size
 
     # Get the colon index and name
-    colon_index = slice.index(':'.ord.to_u8) || 0
+    colon_index = slice.index(':'.codepoint.to_u8) || 0
     name = header_name(slice[0, colon_index])
 
     # Get where the header value starts (skip space)
     middle_index = colon_index + 1
-    while middle_index < bytesize && cstr[middle_index].unsafe_chr.ascii_whitespace?
+    while middle_index < bytesize && cstr[middle_index].unsafe_char.ascii_whitespace?
       middle_index += 1
     end
 
@@ -174,9 +174,9 @@ module HTTP
     right_index = bytesize
     if middle_index >= right_index
       return {name, ""}
-    elsif right_index > 1 && cstr[right_index - 2] == '\r'.ord.to_u8 && cstr[right_index - 1] == '\n'.ord.to_u8
+    elsif right_index > 1 && cstr[right_index - 2] == '\r'.codepoint.to_u8 && cstr[right_index - 1] == '\n'.codepoint.to_u8
       right_index -= 2
-    elsif right_index > 0 && cstr[right_index - 1] == '\n'.ord.to_u8
+    elsif right_index > 0 && cstr[right_index - 1] == '\n'.codepoint.to_u8
       right_index -= 1
     end
 
@@ -371,16 +371,16 @@ module HTTP
   # ```
   def self.dequote_string(str)
     data = str.to_slice
-    quoted_pair_index = data.index('\\'.ord)
+    quoted_pair_index = data.index('\\'.codepoint)
     return str unless quoted_pair_index
 
     String.build do |io|
       while quoted_pair_index
         io.write(data[0, quoted_pair_index])
-        io << data[quoted_pair_index + 1].chr
+        io << data[quoted_pair_index + 1].char
 
         data += quoted_pair_index + 2
-        quoted_pair_index = data.index('\\'.ord)
+        quoted_pair_index = data.index('\\'.codepoint)
       end
       io.write(data)
     end
@@ -404,10 +404,10 @@ module HTTP
 
     string.each_byte do |byte|
       case byte
-      when '\t'.ord, ' '.ord, '"'.ord, '\\'.ord
+      when '\t'.codepoint, ' '.codepoint, '"'.codepoint, '\\'.codepoint
         io << '\\'
       when 0x00..0x1F, 0x7F
-        raise ArgumentError.new("String contained invalid character #{byte.chr.inspect}")
+        raise ArgumentError.new("String contained invalid character #{byte.char.inspect}")
       end
       io.write_byte byte
     end

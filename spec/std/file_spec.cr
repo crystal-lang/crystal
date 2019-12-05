@@ -822,8 +822,8 @@ describe "File" do
       i = 0
       file.each_byte do |byte|
         case i
-        when 0 then byte.should eq('H'.ord)
-        when 1 then byte.should eq('e'.ord)
+        when 0 then byte.should eq('H'.codepoint)
+        when 1 then byte.should eq('e'.codepoint)
         else
           break
         end
@@ -1131,7 +1131,7 @@ describe "File" do
       expect_raises(IO::Error, "Closed stream") { io.seek(1) }
       expect_raises(IO::Error, "Closed stream") { io.gets }
       expect_raises(IO::Error, "Closed stream") { io.read_byte }
-      expect_raises(IO::Error, "Closed stream") { io.write_byte('a'.ord.to_u8) }
+      expect_raises(IO::Error, "Closed stream") { io.write_byte('a'.codepoint.to_u8) }
     end
   end
 

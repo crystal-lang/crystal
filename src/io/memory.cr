@@ -39,7 +39,7 @@ class IO::Memory < IO
   # The IO starts at position zero for reading.
   #
   # ```
-  # slice = Slice.new(6) { |i| ('a'.ord + i).to_u8 }
+  # slice = Slice.new(6) { |i| ('a'.codepoint + i).to_u8 }
   # io = IO::Memory.new slice, writeable: false
   # io.pos            # => 0
   # io.read(slice)    # => 6
@@ -134,13 +134,13 @@ class IO::Memory < IO
 
   # :nodoc:
   def gets(delimiter : Char, limit : Int32, chomp = false)
-    return super if @encoding || delimiter.ord >= 128
+    return super if @encoding || delimiter.codepoint >= 128
 
     check_open
 
     raise ArgumentError.new "Negative limit" if limit < 0
 
-    index = (@buffer + @pos).to_slice(@bytesize - @pos).index(delimiter.ord)
+    index = (@buffer + @pos).to_slice(@bytesize - @pos).index(delimiter.codepoint)
     if index
       if index >= limit
         index = limit

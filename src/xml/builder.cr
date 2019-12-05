@@ -271,7 +271,7 @@ struct XML::Builder
       raise ArgumentError.new("Quote char must be ' or \", not #{char}")
     end
 
-    call SetQuoteChar, char.ord
+    call SetQuoteChar, char.codepoint
   end
 
   private macro call(name, *args)

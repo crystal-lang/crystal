@@ -2,14 +2,14 @@
 # to transform source code.
 #
 # Here we transform all number literals with their char
-# equivalent using `chr`.
+# equivalent using `char`.
 
 # Use `require "compiler/crystal/syntax"` in your programs
 require "../../src/compiler/crystal/syntax"
 
 class Charify < Crystal::Transformer
   def transform(node : Crystal::NumberLiteral)
-    Crystal::CharLiteral.new(node.value.to_i.chr)
+    Crystal::CharLiteral.new(node.value.to_i.char)
   end
 end
 

@@ -63,7 +63,7 @@ describe "Semantic: is_a?" do
       if a.is_a?(Int32)
         a.to_i32
       else
-        a.ord
+        a.codepoint
       end
       ") { int32 }
   end

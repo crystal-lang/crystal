@@ -183,7 +183,7 @@ describe HTTP::WebSocket do
       8.times { |i| received_size <<= 8; received_size += bytes[2 + i] }
       received_size.should eq(size)
       size.times do |i|
-        bytes[10 + i].should eq('a'.ord)
+        bytes[10 + i].should eq('a'.codepoint)
       end
     end
 
@@ -216,7 +216,7 @@ describe HTTP::WebSocket do
       2.times { |i| received_size <<= 8; received_size += first_frame[2 + i] }
       received_size.should eq(1024)
       received_size.times do |i|
-        bytes[4 + i].should eq('a'.ord)
+        bytes[4 + i].should eq('a'.codepoint)
       end
 
       (second_frame[0] & 0x80).should_not eq(0) # FINAL bit set
@@ -226,7 +226,7 @@ describe HTTP::WebSocket do
       2.times { |i| received_size <<= 8; received_size += second_frame[2 + i] }
       received_size.should eq(512)
       received_size.times do |i|
-        bytes[4 + i].should eq('a'.ord)
+        bytes[4 + i].should eq('a'.codepoint)
       end
     end
 
@@ -250,11 +250,11 @@ describe HTTP::WebSocket do
       bytes.size.should eq(11)     # 2 bytes header, 4 bytes mask, 5 bytes content
       bytes[1].bit(7).should eq(1) # For mask bit
       (bytes[1] - 128).should eq(sent_string.size)
-      (bytes[2] ^ bytes[6]).should eq('h'.ord)
-      (bytes[3] ^ bytes[7]).should eq('e'.ord)
-      (bytes[4] ^ bytes[8]).should eq('l'.ord)
-      (bytes[5] ^ bytes[9]).should eq('l'.ord)
-      (bytes[2] ^ bytes[10]).should eq('o'.ord)
+      (bytes[2] ^ bytes[6]).should eq('h'.codepoint)
+      (bytes[3] ^ bytes[7]).should eq('e'.codepoint)
+      (bytes[4] ^ bytes[8]).should eq('l'.codepoint)
+      (bytes[5] ^ bytes[9]).should eq('l'.codepoint)
+      (bytes[2] ^ bytes[10]).should eq('o'.codepoint)
     end
 
     it "sends long data with correct header" do
@@ -271,7 +271,7 @@ describe HTTP::WebSocket do
       8.times { |i| received_size <<= 8; received_size += bytes[2 + i] }
       received_size.should eq(size)
       size.times do |i|
-        (bytes[14 + i] ^ bytes[10 + (i % 4)]).should eq('a'.ord)
+        (bytes[14 + i] ^ bytes[10 + (i % 4)]).should eq('a'.codepoint)
       end
     end
   end

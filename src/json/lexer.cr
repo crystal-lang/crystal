@@ -135,7 +135,7 @@ abstract class JSON::Lexer
         next_char
         break
       else
-        if 0 <= current_char.ord < 32
+        if 0 <= current_char.codepoint < 32
           unexpected_char
         end
       end
@@ -159,7 +159,7 @@ abstract class JSON::Lexer
         next_char
         break
       else
-        if 0 <= current_char.ord < 32
+        if 0 <= current_char.codepoint < 32
           unexpected_char
         else
           @buffer << char
@@ -194,9 +194,9 @@ abstract class JSON::Lexer
           raise "Unterminated UTF-16 sequence"
         end
         hexnum2 = read_hex_number
-        (0x10000 | (hexnum1 & 0x3FF) << 10 | (hexnum2 & 0x3FF)).chr
+        (0x10000 | (hexnum1 & 0x3FF) << 10 | (hexnum2 & 0x3FF)).char
       else
-        hexnum1.chr
+        hexnum1.char
       end
     else
       raise "Unknown escape char: #{char}"

@@ -296,7 +296,7 @@ struct BigFloat < Float
         io << '.'
         decimal_set = true
       end
-      io << cstr[i].unsafe_chr
+      io << cstr[i].unsafe_char
     end
     (expptr - length).times { io << 0 } if expptr > 0
     if !decimal_set

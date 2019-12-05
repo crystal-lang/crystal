@@ -81,7 +81,7 @@ class Time::Location
 
     # 1-byte version, then 15 bytes of padding
     version = io.read_byte
-    raise InvalidTZDataError.new unless {0_u8, '2'.ord, '3'.ord}.includes?(version)
+    raise InvalidTZDataError.new unless {0_u8, '2'.codepoint, '3'.codepoint}.includes?(version)
     io.skip(15)
 
     # six big-endian 32-bit integers:

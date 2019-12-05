@@ -88,6 +88,6 @@ module Crypto::Bcrypt::Base64
   end
 
   private def self.char64(x)
-    TABLE[x.ord]? || -1
+    TABLE[x.codepoint]? || -1
   end
 end

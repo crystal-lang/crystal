@@ -38,11 +38,11 @@ struct HTTP::Headers
     end
 
     private def normalize_byte(byte)
-      char = byte.unsafe_chr
+      char = byte.unsafe_char
 
       return byte if char.ascii_lowercase? || char == '-' # Optimize the common case
       return byte + 32 if char.ascii_uppercase?
-      return '-'.ord if char == '_'
+      return '-'.codepoint if char == '_'
 
       byte
     end
@@ -351,7 +351,7 @@ struct HTTP::Headers
 
   private def invalid_value_char(value)
     value.each_byte do |byte|
-      unless valid_char?(char = byte.unsafe_chr)
+      unless valid_char?(char = byte.unsafe_char)
         return char
       end
     end

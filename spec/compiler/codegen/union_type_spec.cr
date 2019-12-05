@@ -85,7 +85,7 @@ describe "Code gen: union type" do
 
       struct Char
         def to_i
-          ord
+          codepoint
         end
       end
 

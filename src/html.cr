@@ -154,7 +154,7 @@ module HTML
              codepoint & 0xFFFF >= 0xFFFE ||
              # unicode control characters expect space
              (codepoint < 0x0020 && !{0x0009, 0x000A, 0x000C}.includes?(codepoint))
-        codepoint.unsafe_chr
+        codepoint.unsafe_char
       end
     end
   end

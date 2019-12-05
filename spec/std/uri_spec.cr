@@ -460,7 +460,7 @@ describe "URI" do
     reserved_chars = Set{':', '/', '?', '#', '[', ']', '@', '!', '$', '&', '\'', '(', ')', '*', '+', ',', ';', '='}
 
     ('\u{00}'..'\u{7F}').each do |char|
-      URI.reserved?(char.ord.to_u8).should eq(reserved_chars.includes?(char))
+      URI.reserved?(char.codepoint.to_u8).should eq(reserved_chars.includes?(char))
     end
   end
 
@@ -468,7 +468,7 @@ describe "URI" do
     unreserved_chars = ('a'..'z').to_a + ('A'..'Z').to_a + ('0'..'9').to_a + ['_', '.', '-', '~']
 
     ('\u{00}'..'\u{7F}').each do |char|
-      URI.unreserved?(char.ord.to_u8).should eq(unreserved_chars.includes?(char))
+      URI.unreserved?(char.codepoint.to_u8).should eq(unreserved_chars.includes?(char))
     end
   end
 

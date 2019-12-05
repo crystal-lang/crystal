@@ -101,7 +101,7 @@ class Crystal::Doc::Markdown::Parser
     bytesize = line.bytesize
     str = line.to_unsafe
     pos = level
-    while pos < bytesize && str[pos].unsafe_chr.ascii_whitespace?
+    while pos < bytesize && str[pos].unsafe_char.ascii_whitespace?
       pos += 1
     end
 
@@ -302,7 +302,7 @@ class Crystal::Doc::Markdown::Parser
     str = line.to_unsafe
     pos = 0
 
-    while pos < bytesize && str[pos].unsafe_chr.ascii_whitespace?
+    while pos < bytesize && str[pos].unsafe_char.ascii_whitespace?
       pos += 1
     end
 
@@ -315,9 +315,9 @@ class Crystal::Doc::Markdown::Parser
     last_is_space = true
 
     while pos < bytesize
-      case str[pos].unsafe_chr
+      case str[pos].unsafe_char
       when '*'
-        if pos + 1 < bytesize && str[pos + 1].unsafe_chr == '*'
+        if pos + 1 < bytesize && str[pos + 1].unsafe_char == '*'
           if two_stars || has_closing?('*', 2, str, (pos + 2), bytesize)
             @renderer.text line.byte_slice(cursor, pos - cursor)
             pos += 1
@@ -340,7 +340,7 @@ class Crystal::Doc::Markdown::Parser
           one_star = !one_star
         end
       when '_'
-        if pos + 1 < bytesize && str[pos + 1].unsafe_chr == '_'
+        if pos + 1 < bytesize && str[pos + 1].unsafe_char == '_'
           if two_underscores || (last_is_space && has_closing?('_', 2, str, (pos + 2), bytesize))
             @renderer.text line.byte_slice(cursor, pos - cursor)
             pos += 1
@@ -367,7 +367,7 @@ class Crystal::Doc::Markdown::Parser
           @renderer.text line.byte_slice(cursor, pos - cursor)
           cursor = pos + 1
           @renderer.begin_inline_code
-          idx = (str + pos + 1).to_slice(bytesize).index('`'.ord).not_nil!
+          idx = (str + pos + 1).to_slice(bytesize).index('`'.codepoint).not_nil!
           @renderer.text line.byte_slice(cursor, idx)
           pos = pos + 1 + idx
           @renderer.end_inline_code
@@ -379,12 +379,12 @@ class Crystal::Doc::Markdown::Parser
           if link
             @renderer.text line.byte_slice(cursor, pos - cursor)
 
-            bracket_idx = (str + pos + 2).to_slice(bytesize - pos - 2).index(']'.ord).not_nil!
+            bracket_idx = (str + pos + 2).to_slice(bytesize - pos - 2).index(']'.codepoint).not_nil!
             alt = line.byte_slice(pos + 2, bracket_idx)
 
             @renderer.image link, alt
 
-            paren_idx = (str + pos + 2 + bracket_idx + 1).to_slice(bytesize - pos - 2 - bracket_idx - 1).index(')'.ord).not_nil!
+            paren_idx = (str + pos + 2 + bracket_idx + 1).to_slice(bytesize - pos - 2 - bracket_idx - 1).index(')'.codepoint).not_nil!
             pos += 2 + bracket_idx + 1 + paren_idx
             cursor = pos + 1
           end
@@ -404,13 +404,13 @@ class Crystal::Doc::Markdown::Parser
           @renderer.text line.byte_slice(cursor, pos - cursor)
           @renderer.end_link
 
-          paren_idx = (str + pos + 1).to_slice(bytesize - pos - 1).index(')'.ord).not_nil!
+          paren_idx = (str + pos + 1).to_slice(bytesize - pos - 1).index(')'.codepoint).not_nil!
           pos += paren_idx + 1
           cursor = pos + 1
           in_link = false
         end
       end
-      last_is_space = pos < bytesize && str[pos].unsafe_chr.ascii_whitespace?
+      last_is_space = pos < bytesize && str[pos].unsafe_char.ascii_whitespace?
       pos += 1
     end
 
@@ -424,21 +424,21 @@ class Crystal::Doc::Markdown::Parser
   def has_closing?(char, count, str, pos, bytesize)
     str += pos
     bytesize -= pos
-    idx = str.to_slice(bytesize).index char.ord
+    idx = str.to_slice(bytesize).index char.codepoint
     return false unless idx
 
     if count == 2
-      return false unless idx + 1 < bytesize && str[idx + 1].unsafe_chr == char
+      return false unless idx + 1 < bytesize && str[idx + 1].unsafe_char == char
     end
 
-    !str[idx - 1].unsafe_chr.ascii_whitespace?
+    !str[idx - 1].unsafe_char.ascii_whitespace?
   end
 
   def check_link(str, pos, bytesize)
     # We need to count nested brackets to do it right
     bracket_count = 1
     while pos < bytesize
-      case str[pos].unsafe_chr
+      case str[pos].unsafe_char
       when '['
         bracket_count += 1
       when ']'
@@ -455,7 +455,7 @@ class Crystal::Doc::Markdown::Parser
 
     return nil unless str[bracket_idx + 1] === '('
 
-    paren_idx = (str + bracket_idx + 1).to_slice(bytesize - bracket_idx - 1).index ')'.ord
+    paren_idx = (str + bracket_idx + 1).to_slice(bytesize - bracket_idx - 1).index ')'.codepoint
     return nil unless paren_idx
 
     String.new(Slice.new(str + bracket_idx + 2, paren_idx - 1))
@@ -472,7 +472,7 @@ class Crystal::Doc::Markdown::Parser
 
   def line_is_all?(line, char)
     line.each_byte do |byte|
-      return false if byte != char.ord
+      return false if byte != char.codepoint
     end
     true
   end
@@ -481,7 +481,7 @@ class Crystal::Doc::Markdown::Parser
     bytesize = line.bytesize
     str = line.to_unsafe
     pos = 0
-    while pos < bytesize && pos < 6 && str[pos].unsafe_chr == '#'
+    while pos < bytesize && pos < 6 && str[pos].unsafe_char == '#'
       pos += 1
     end
     pos == 0 ? nil : pos
@@ -491,7 +491,7 @@ class Crystal::Doc::Markdown::Parser
     bytesize = line.bytesize
     str = line.to_unsafe
     pos = 0
-    while pos < bytesize && pos < 4 && str[pos].unsafe_chr.ascii_whitespace?
+    while pos < bytesize && pos < 4 && str[pos].unsafe_char.ascii_whitespace?
       pos += 1
     end
 
@@ -506,17 +506,17 @@ class Crystal::Doc::Markdown::Parser
     bytesize = line.bytesize
     str = line.to_unsafe
     pos = 0
-    while pos < bytesize && str[pos].unsafe_chr.ascii_whitespace?
+    while pos < bytesize && str[pos].unsafe_char.ascii_whitespace?
       pos += 1
     end
 
     return false unless pos < bytesize
-    return false unless prefix ? str[pos].unsafe_chr == prefix : (str[pos].unsafe_chr == '*' || str[pos].unsafe_chr == '-' || str[pos].unsafe_chr == '+')
+    return false unless prefix ? str[pos].unsafe_char == prefix : (str[pos].unsafe_char == '*' || str[pos].unsafe_char == '-' || str[pos].unsafe_char == '+')
 
     pos += 1
 
     return false unless pos < bytesize
-    str[pos].unsafe_chr.ascii_whitespace?
+    str[pos].unsafe_char.ascii_whitespace?
   end
 
   def previous_line_is_not_intended_and_starts_with_bullet_list_marker?(prefix)
@@ -542,19 +542,19 @@ class Crystal::Doc::Markdown::Parser
     bytesize = line.bytesize
     str = line.to_unsafe
     pos = 0
-    while pos < bytesize && str[pos].unsafe_chr.ascii_whitespace?
+    while pos < bytesize && str[pos].unsafe_char.ascii_whitespace?
       pos += 1
     end
 
     return false unless pos < bytesize
-    return false unless str[pos].unsafe_chr.ascii_number?
+    return false unless str[pos].unsafe_char.ascii_number?
 
-    while pos < bytesize && str[pos].unsafe_chr.ascii_number?
+    while pos < bytesize && str[pos].unsafe_char.ascii_number?
       pos += 1
     end
 
     return false unless pos < bytesize
-    str[pos].unsafe_chr == '.'
+    str[pos].unsafe_char == '.'
   end
 
   def next_lines_empty_of_code?

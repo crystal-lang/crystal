@@ -67,11 +67,26 @@ struct Int
   # ```
   # 97.chr # => 'a'
   # ```
+  @[Deprecated("Use .char instead, which is less cryptic")]
   def chr
     unless 0 <= self <= Char::MAX_CODEPOINT
       raise ArgumentError.new("#{self} out of char range")
     end
-    unsafe_chr
+    unsafe_char
+  end
+
+  # Returns a `Char` that has the unicode codepoint of `self`.
+  #
+  # Raises `ArgumentError` if this integer's value doesn't fit a char's range (`0..0x10ffff`).
+  #
+  # ```
+  # 97.char # => 'a'
+  # ```
+  def char
+    unless 0 <= self <= Char::MAX_CODEPOINT
+      raise ArgumentError.new("#{self} out of char range")
+    end
+    unsafe_char
   end
 
   def ~
@@ -323,7 +338,7 @@ struct Int
   end
 
   def ===(char : Char)
-    self === char.ord
+    self === char.codepoint
   end
 
   # Returns this number's *bit*th bit, starting with the least-significant.
@@ -592,7 +607,7 @@ struct Int
 
     if neg
       ptr -= 1
-      ptr.value = '-'.ord.to_u8
+      ptr.value = '-'.codepoint.to_u8
     end
 
     count = (ptr_end - ptr).to_i32

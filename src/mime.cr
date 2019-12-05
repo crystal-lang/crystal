@@ -257,7 +257,7 @@ module MIME
         sub_type_start = reader.pos
         reader.next_char
       else
-        if TSPECIAL_CHARACTERS.includes?(char) || 0x20 > char.ord > 0x7F
+        if TSPECIAL_CHARACTERS.includes?(char) || 0x20 > char.codepoint > 0x7F
           return nil
         end
 

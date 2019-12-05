@@ -20,9 +20,9 @@ describe IO::Memory do
 
   it "reads byte" do
     io = IO::Memory.new("abc")
-    io.read_byte.should eq('a'.ord)
-    io.read_byte.should eq('b'.ord)
-    io.read_byte.should eq('c'.ord)
+    io.read_byte.should eq('a'.codepoint)
+    io.read_byte.should eq('b'.codepoint)
+    io.read_byte.should eq('c'.codepoint)
     io.read_byte.should be_nil
   end
 
@@ -259,7 +259,7 @@ describe IO::Memory do
   end
 
   it "creates from slice" do
-    slice = Slice.new(6) { |i| ('a'.ord + i).to_u8 }
+    slice = Slice.new(6) { |i| ('a'.codepoint + i).to_u8 }
     io = IO::Memory.new slice
     io.gets(2).should eq("ab")
     io.gets(3).should eq("cde")
@@ -273,7 +273,7 @@ describe IO::Memory do
   end
 
   it "creates from slice, non-writeable" do
-    slice = Slice.new(6) { |i| ('a'.ord + i).to_u8 }
+    slice = Slice.new(6) { |i| ('a'.codepoint + i).to_u8 }
     io = IO::Memory.new slice, writeable: false
 
     expect_raises(IO::Error, "Read-only stream") do
@@ -291,7 +291,7 @@ describe IO::Memory do
   it "writes past end with write_byte" do
     io = IO::Memory.new
     io.pos = 1000
-    io.write_byte 'a'.ord.to_u8
+    io.write_byte 'a'.codepoint.to_u8
     io.to_slice.to_a.should eq([0] * 1000 + [97])
   end
 

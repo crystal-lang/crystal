@@ -224,7 +224,7 @@ struct Crystal::Hasher
   end
 
   def char(value)
-    value.ord.hash(self)
+    value.codepoint.hash(self)
   end
 
   def enum(value)

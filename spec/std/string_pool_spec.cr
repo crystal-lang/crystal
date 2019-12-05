@@ -34,7 +34,7 @@ describe StringPool do
 
   it "gets slice" do
     pool = StringPool.new
-    slice = Bytes.new(3, 'a'.ord.to_u8)
+    slice = Bytes.new(3, 'a'.codepoint.to_u8)
 
     s1 = pool.get(slice)
     s2 = pool.get(slice)
@@ -47,7 +47,7 @@ describe StringPool do
 
   it "gets pointer with size" do
     pool = StringPool.new
-    slice = Bytes.new(3, 'a'.ord.to_u8)
+    slice = Bytes.new(3, 'a'.codepoint.to_u8)
 
     s1 = pool.get(slice.to_unsafe, slice.size)
     s2 = pool.get(slice.to_unsafe, slice.size)

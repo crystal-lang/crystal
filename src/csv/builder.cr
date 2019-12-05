@@ -159,7 +159,7 @@ class CSV::Builder
       case @quoting
       when .rfc?
         value.each_byte do |byte|
-          case byte.unsafe_chr
+          case byte.unsafe_char
           when @separator, @quote_char, '\n'
             return true
           end

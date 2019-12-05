@@ -87,7 +87,7 @@ describe "Base64" do
 
     it "works for most characters" do
       a = String.build(65536 * 4) do |buf|
-        65536.times { |i| buf << (i + 1).chr }
+        65536.times { |i| buf << (i + 1).char }
       end
       b = Base64.encode(a)
       Digest::MD5.hexdigest(Base64.decode_string(b)).should eq(Digest::MD5.hexdigest(a))
@@ -155,13 +155,13 @@ describe "Base64" do
         "Tm93IGlzIHRoZSB0aW1lIGZvciBhbGwgZ29vZCBjb2RlcnMKdG8gbGVhcm4gQ3J5c3RhbA==")
     end
     it "with spec symbols" do
-      s = String.build { |b| (160..179).each { |i| b << i.chr } }
+      s = String.build { |b| (160..179).each { |i| b << i.char } }
       se = "wqDCocKiwqPCpMKlwqbCp8KowqnCqsKrwqzCrcKuwq/CsMKxwrLCsw=="
       Base64.strict_encode(s).should eq(se)
     end
 
     it "encode to stream" do
-      s = String.build { |b| (160..179).each { |i| b << i.chr } }
+      s = String.build { |b| (160..179).each { |i| b << i.char } }
       se = "wqDCocKiwqPCpMKlwqbCp8KowqnCqsKrwqzCrcKuwq/CsMKxwrLCsw=="
       io = IO::Memory.new
       Base64.strict_encode(s, io).should eq(56)
@@ -172,13 +172,13 @@ describe "Base64" do
 
   describe "urlsafe" do
     it "work" do
-      s = String.build { |b| (160..179).each { |i| b << i.chr } }
+      s = String.build { |b| (160..179).each { |i| b << i.char } }
       se = "wqDCocKiwqPCpMKlwqbCp8KowqnCqsKrwqzCrcKuwq_CsMKxwrLCsw=="
       Base64.urlsafe_encode(s).should eq(se)
     end
 
     it "encode to stream" do
-      s = String.build { |b| (160..179).each { |i| b << i.chr } }
+      s = String.build { |b| (160..179).each { |i| b << i.char } }
       se = "wqDCocKiwqPCpMKlwqbCp8KowqnCqsKrwqzCrcKuwq_CsMKxwrLCsw=="
       io = IO::Memory.new
       Base64.urlsafe_encode(s, io).should eq(56)

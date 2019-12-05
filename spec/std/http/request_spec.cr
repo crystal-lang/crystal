@@ -84,7 +84,7 @@ module HTTP
     end
 
     it "serialize POST (with bytes body)" do
-      request = Request.new "POST", "/", body: Bytes['a'.ord, 'b'.ord]
+      request = Request.new "POST", "/", body: Bytes['a'.codepoint, 'b'.codepoint]
       io = IO::Memory.new
       request.to_io(io)
       io.to_s.should eq("POST / HTTP/1.1\r\nContent-Length: 2\r\n\r\nab")

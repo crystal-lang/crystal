@@ -121,7 +121,7 @@ struct Char
       end
 
       decode_char_at(next_pos) do |code_point|
-        code_point.unsafe_chr
+        code_point.unsafe_char
       end
     end
 
@@ -243,7 +243,7 @@ struct Char
     end
 
     private macro invalid_byte_sequence(width)
-      return yield Char::REPLACEMENT.ord, {{width}}, first.to_u8
+      return yield Char::REPLACEMENT.codepoint, {{width}}, first.to_u8
     end
 
     @[AlwaysInline]
@@ -252,7 +252,7 @@ struct Char
         @current_char_width = width
         @end = @pos == @string.bytesize
         @error = error
-        @current_char = code_point.unsafe_chr
+        @current_char = code_point.unsafe_char
       end
     end
 
@@ -268,7 +268,7 @@ struct Char
           @current_char_width = width
           @end = @pos == @string.bytesize
           @error = error
-          @current_char = code_point.unsafe_chr
+          @current_char = code_point.unsafe_char
         end
       end
     end

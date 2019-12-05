@@ -731,7 +731,7 @@ module Crystal
             @token.value = '\v'
           when 'u'
             value = consume_char_unicode_escape
-            @token.value = value.chr
+            @token.value = value.char
           when '0'
             @token.value = '\0'
           when '\0'
@@ -1228,7 +1228,7 @@ module Crystal
           end
           @token.type = :CONST
           @token.value = string_range_from_pool(start)
-        elsif current_char.ascii_lowercase? || current_char == '_' || current_char.ord > 0x9F
+        elsif current_char.ascii_lowercase? || current_char == '_' || current_char.codepoint > 0x9F
           next_char
           scan_ident(start)
         else
@@ -2540,14 +2540,14 @@ module Crystal
         next_char
         consume_string_unicode_brace_escape
       else
-        consume_non_braced_unicode_escape.chr.to_s
+        consume_non_braced_unicode_escape.char.to_s
       end
     end
 
     def consume_string_unicode_brace_escape
       String.build do |str|
         while true
-          str << consume_braced_unicode_escape(allow_spaces: true).chr
+          str << consume_braced_unicode_escape(allow_spaces: true).char
           break unless current_char == ' '
         end
       end
@@ -2942,7 +2942,7 @@ module Crystal
     end
 
     def ident_start?(char)
-      char.ascii_letter? || char == '_' || char.ord > 0x9F
+      char.ascii_letter? || char == '_' || char.codepoint > 0x9F
     end
 
     def ident_part?(char)

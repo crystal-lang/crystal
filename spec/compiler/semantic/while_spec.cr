@@ -117,7 +117,7 @@ describe "Semantic: while" do
   it "doesn't modify var's type before while" do
     assert_type(%(
       x = 'x'
-      x.ord
+      x.codepoint
       while 1 == 2
         x = 1
       end

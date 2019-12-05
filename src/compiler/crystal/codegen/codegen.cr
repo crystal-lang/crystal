@@ -429,7 +429,7 @@ module Crystal
     end
 
     def visit(node : CharLiteral)
-      @last = int32(node.value.ord)
+      @last = int32(node.value.codepoint)
     end
 
     def visit(node : NumberLiteral)
@@ -2177,7 +2177,7 @@ module Crystal
             str << char
           else
             str << '.'
-            char.ord.to_s(16, str, upcase: true)
+            char.codepoint.to_s(16, str, upcase: true)
             str << '.'
           end
         end
