@@ -3,6 +3,10 @@ require "./codegen"
 module Crystal
   class CodeGenVisitor
     CRYSTAL_LANG_DEBUG_IDENTIFIER = 0x8002_u32
+    #
+    # We have to use it because LLDB has builtin type system support for C++/clang that we can use for now for free.
+    # Later on we can implement LLDB Crystal type system so we can get official Language ID
+    #
     CPP_LANG_DEBUG_IDENTIFIER     = 0x0004_u32
 
     @current_debug_location : Location?
