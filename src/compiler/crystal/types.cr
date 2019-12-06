@@ -311,16 +311,17 @@ module Crystal
     # the types are in the same namespace. Otherwise, it means they are just
     # in the same type hierarchy.
     def has_protected_acces_to?(type, allow_same_namespace = true)
-      owner = self
+      owner = self.devirtualize
+      type = type.devirtualize
 
       # Allow two different generic instantiations
       # of the same type to have protected access
       type = type.generic_type.as(Type) if type.is_a?(GenericInstanceType)
       owner = owner.generic_type.as(Type) if owner.is_a?(GenericInstanceType)
 
-      self.implements?(type) ||
-        type.implements?(self) ||
-        (allow_same_namespace && same_namespace?(type))
+      owner.implements?(type) ||
+        type.implements?(owner) ||
+        (allow_same_namespace && owner.same_namespace?(type))
     end
 
     # Returns true if `self` and *other* are in the same namespace.
