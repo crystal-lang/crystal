@@ -310,7 +310,7 @@ module Crystal
     # If `allow_same_namespace` is true (the default), `protected` also means
     # the types are in the same namespace. Otherwise, it means they are just
     # in the same type hierarchy.
-    def has_protected_acces_to?(type, allow_same_namespace = true)
+    def has_protected_access_to?(type, allow_same_namespace = true)
       owner = self.devirtualize
       type = type.devirtualize
 
