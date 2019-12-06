@@ -41,9 +41,11 @@ describe OpenSSL::SSL::Socket do
     server_context, client_context = ssl_context_pair
 
     client_successfully_closed_socket = Channel(Nil).new
+    server_received_socket = Channel(Nil).new
     spawn do
       OpenSSL::SSL::Server.open(tcp_server, server_context, sync_close: true) do |server|
         server_client = server.accept
+        server_received_socket.send(nil)
         # require client to close the socket from its side, without the server closing it, IIS behave this way.
         client_successfully_closed_socket.receive
         server_client.close
@@ -51,6 +53,7 @@ describe OpenSSL::SSL::Socket do
     end
     socket = TCPSocket.new(tcp_server.local_address.address, tcp_server.local_address.port)
     socket = OpenSSL::SSL::Socket::Client.new(socket, client_context, hostname: "example.com", sync_close: true)
+    server_received_socket.receive # make sure connection established
     socket.close
     client_successfully_closed_socket.send(nil)
   end
