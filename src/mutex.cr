@@ -1,6 +1,14 @@
 require "crystal/spin_lock"
 
 # A fiber-safe mutex.
+#
+# By default the mutex is reentrant and can only be unlocked by the
+# same fiber that locked it. This behaviour is enforced by some additional
+# runtime checks.
+#
+# A non-reentrant mutex can be aquired only when unlocked and can lead
+# to deadlocks if used recursively. A non-reentrant mutex is neededin more
+# complex programs where the lock and unlock can happen in different fibers.
 class Mutex
   @state = Atomic(Int32).new(0)
   @mutex_fiber : Fiber?
@@ -9,7 +17,7 @@ class Mutex
   @queue_count = Atomic(Int32).new(0)
   @lock = Crystal::SpinLock.new
 
-  def initialize(*, @reentrant = false)
+  def initialize(*, @reentrant = true)
   end
 
   @[AlwaysInline]

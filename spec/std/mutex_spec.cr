@@ -2,7 +2,7 @@ require "spec"
 
 describe Mutex do
   it "locks and unlocks" do
-    mutex = Mutex.new
+    mutex = Mutex.new(reentrant: false)
     mutex.lock
     mutex.unlock
   end
@@ -23,7 +23,7 @@ describe Mutex do
   end
 
   it "can lock and unlock from multiple fibers" do
-    mutex = Mutex.new
+    mutex = Mutex.new(reentrant: false)
 
     a = 1
     two = false
@@ -67,7 +67,7 @@ describe Mutex do
 
   it "works with multiple threads" do
     x = 0
-    mutex = Mutex.new
+    mutex = Mutex.new(reentrant: false)
 
     fibers = 10.times.map do
       spawn do
