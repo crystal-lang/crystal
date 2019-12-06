@@ -7,7 +7,7 @@ require "crystal/spin_lock"
 # runtime checks.
 #
 # A non-reentrant mutex can be aquired only when unlocked and can lead
-# to deadlocks if used recursively. A non-reentrant mutex is neededin more
+# to deadlocks if used recursively. A non-reentrant mutex is needed in more
 # complex programs where the lock and unlock can happen in different fibers.
 class Mutex
   @state = Atomic(Int32).new(0)
