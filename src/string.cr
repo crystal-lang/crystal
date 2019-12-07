@@ -3654,7 +3654,7 @@ class String
     when .> 0
       leftpadding, rightpadding = padding, 0
     else
-      leftpadding = padding >> 1
+      leftpadding = padding // 2
       rightpadding = padding - leftpadding
     end
 
@@ -3665,19 +3665,19 @@ class String
           buffer += leftpadding
         else
           leftpadding.times do
-            Intrinsics.memcpy(buffer.as(Void*), bytes.to_unsafe.as(Void*), count, false)
+            buffer.copy_from(bytes.to_unsafe, count)
             buffer += count
           end
         end
       end
-      Intrinsics.memcpy(buffer.as(Void*), to_unsafe.as(Void*), bytesize, false)
+      buffer.copy_from(to_unsafe, bytesize)
       buffer += bytesize
       if rightpadding > 0
         if count == 1
           Intrinsics.memset(buffer.as(Void*), char.ord.to_u8, rightpadding.to_u32, false)
         else
           rightpadding.times do
-            Intrinsics.memcpy(buffer.as(Void*), bytes.to_unsafe.as(Void*), count, false)
+            buffer.copy_from(bytes.to_unsafe, count)
             buffer += count
           end
         end
