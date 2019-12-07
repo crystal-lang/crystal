@@ -281,6 +281,15 @@ describe "Array" do
       [1, 2, 3][1, 3]?.should eq([2, 3])
       [1, 2, 3][4, 0]?.should be_nil
     end
+
+    it "gets with range without end" do
+      [1, 2, 3][1..nil]?.should eq([2, 3])
+      [1, 2, 3][4..nil]?.should be_nil
+    end
+
+    it "gets with range without beginning" do
+      [1, 2, 3][nil..1]?.should eq([1, 2])
+    end
   end
 
   describe "[]=" do
