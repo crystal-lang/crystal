@@ -30,9 +30,9 @@ struct NamedTuple
   # useful in macros and generic code.
   #
   # ```
-  # {}             # syntax error (tuple literal)
-  # NamedTuple.new # => {}
   # NamedTuple.new(name: "Crystal", year: 2011) #=> {name: "Crystal", year: 2011}
+  # NamedTuple.new # => {}
+  # {}             # syntax error
   # ```
   def self.new(**options : **T)
     options
