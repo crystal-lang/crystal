@@ -25,13 +25,14 @@
 struct NamedTuple
   # Creates a named tuple that will contain the given arguments.
   #
-  # This method is useful in macros and generic code because with it you can
-  # create empty named tuples, something that you can't do with a tuple literal.
+  # With a named tuple literal you cannot create an empty named tuple.
+  # This method doesn't have this limitation, which makes it especially
+  # useful in macros and generic code.
   #
   # ```
-  # NamedTuple.new(name: "Crystal", year: 2011) #=> {name: "Crystal", year: 2011}
+  # {}             # syntax error (tuple literal)
   # NamedTuple.new # => {}
-  # {}             # syntax error
+  # NamedTuple.new(name: "Crystal", year: 2011) #=> {name: "Crystal", year: 2011}
   # ```
   def self.new(**options : **T)
     options
