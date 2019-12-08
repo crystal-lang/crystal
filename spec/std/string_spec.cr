@@ -188,6 +188,15 @@ describe "String" do
       "hello"[1, 3]?.should eq("ell")
       "hello"[6, 3]?.should be_nil
     end
+
+    it "gets with range without end" do
+      "hello"[1..nil]?.should eq("ello")
+      "hello"[6..nil]?.should be_nil
+    end
+
+    it "gets with range without beginning" do
+      "hello"[nil..2]?.should eq("hel")
+    end
   end
 
   describe "byte_slice" do
