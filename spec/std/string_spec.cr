@@ -1984,6 +1984,13 @@ describe "String" do
     it { "12".rjust(7, 'あ').should eq("あああああ12") }
   end
 
+  describe "center" do
+    it { "123".center(2).should eq("123") }
+    it { "123".center(5).should eq(" 123 ") }
+    it { "12".center(7, '-').should eq("--12---") }
+    it { "12".center(7, 'あ').should eq("ああ12あああ") }
+  end
+
   describe "succ" do
     it "returns an empty string for empty strings" do
       "".succ.should eq("")
