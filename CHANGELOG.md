@@ -7,6 +7,7 @@
 ### Macros
 
 - Add `TypeNode#class_vars` to list class variables in a macros. ([#8405](https://github.com/crystal-lang/crystal/pull/8405), thanks @jan-zajic)
+- Add `TypeNode#includers` to get an array of types a module is directly included in. ([#8133](https://github.com/crystal-lang/crystal/pull/8133), thanks @Blacksmoke16)
 - Add `ArrayLiteral#map_with_index` and `TupleLiteral#map_with_index`. ([#8049](https://github.com/crystal-lang/crystal/pull/8049), thanks @Blacksmoke16)
 - Add docs for `ArrayLiteral#reduce`. ([#8379](https://github.com/crystal-lang/crystal/pull/8379), thanks @jan-zajic)
 - Add `lower:` named argument to `StringLiteral#camelcase`. ([#8429](https://github.com/crystal-lang/crystal/pull/8429), thanks @Blacksmoke16)
@@ -19,7 +20,7 @@
 - Improve error message for not-nil assertion in getters. ([#8200](https://github.com/crystal-lang/crystal/pull/8200), [#8296](https://github.com/crystal-lang/crystal/pull/8296), thanks @icy-arctic-fox)
 - Add `Enum.valid?`. ([#5716](https://github.com/crystal-lang/crystal/pull/5716), thanks @MakeNowJust)
 - Disable colored output if `TERM=dumb`. ([#8271](https://github.com/crystal-lang/crystal/pull/8271), thanks @ilanpillemer)
-- Docs improvements. ([#7656](https://github.com/crystal-lang/crystal/pull/7656), [#8337](https://github.com/crystal-lang/crystal/pull/8337), thanks @r00ster91, @vlazar)
+- Docs improvements. ([#7656](https://github.com/crystal-lang/crystal/pull/7656), [#8337](https://github.com/crystal-lang/crystal/pull/8337), [#8446](https://github.com/crystal-lang/crystal/pull/8446), thanks @r00ster91, @vlazar, @cserb)
 - Add docs for pseudo methods. ([#8327](https://github.com/crystal-lang/crystal/pull/8327), [#8491](https://github.com/crystal-lang/crystal/pull/8491), thanks @straight-shoota)
 - Code cleanups. ([#8270](https://github.com/crystal-lang/crystal/pull/8270), [#8368](https://github.com/crystal-lang/crystal/pull/8368), [#8404](https://github.com/crystal-lang/crystal/pull/8404), thanks @asterite, @vlazar, @arcage)
 
@@ -36,6 +37,7 @@
 - **(breaking-change)** Deprecate `String#codepoint_at`, use `char_at(index).ord`. ([#8475](https://github.com/crystal-lang/crystal/pull/8475), thanks @vlazar)
 - Fixed encoding specs for musl iconv. ([#8525](https://github.com/crystal-lang/crystal/pull/8525), thanks @straight-shoota)
 - Add `String#presence`. ([#8345](https://github.com/crystal-lang/crystal/pull/8345), [#8508](https://github.com/crystal-lang/crystal/pull/8508), thanks @igor-alexandrov, @Sija)
+- Add `String#center`. ([#8557](https://github.com/crystal-lang/crystal/pull/8557), thanks @hutou)
 - **(performance)** Refactor `String#to_utf16` optimizing for ascii-only. ([#8526](https://github.com/crystal-lang/crystal/pull/8526), thanks @straight-shoota)
 - Add docs in `Levenshtein` module. ([#8386](https://github.com/crystal-lang/crystal/pull/8386), thanks @katafrakt)
 - Add docs to `Regex::Options`. ([#8448](https://github.com/crystal-lang/crystal/pull/8448), thanks @jan-zajic)
@@ -46,6 +48,7 @@
 - Fixed `Enumerable#minmax`, `#min`, `#max` for partially comparable values. ([#8490](https://github.com/crystal-lang/crystal/pull/8490), thanks @TedTran2019)
 - Fixed `Hash#rehash`. ([#8450](https://github.com/crystal-lang/crystal/pull/8450), thanks @asterite)
 - Fixed `Array` range assignment index out of bounds. ([#8347](https://github.com/crystal-lang/crystal/pull/8347), thanks @asterite)
+- Fixed endless ranged support for `String#[]?` and `Array#[]?`. ([#8567](https://github.com/crystal-lang/crystal/pull/8567), thanks @KarthikMAM)
 - Add `Hash#compare_by_identity` and `Set#compare_by_identity`. ([#8451](https://github.com/crystal-lang/crystal/pull/8451), thanks @asterite)
 - Add `Enumerable#each_cons_pair` and `Iterator#cons_pair` yielding a tuple. ([#8332](https://github.com/crystal-lang/crystal/pull/8332), thanks @straight-shoota)
 - Add `offset` argument to all `map_with_index` methods. ([#8264](https://github.com/crystal-lang/crystal/pull/8264), thanks @asterite)
@@ -72,6 +75,7 @@
 
 - Fixed `HTTP::Response#mime_type` returns `nil` on empty `Content-Type` header. ([#8464](https://github.com/crystal-lang/crystal/pull/8464), thanks @Sija)
 - Fixed handling of unidirectional SSL servers hang. ([#8481](https://github.com/crystal-lang/crystal/pull/8481), thanks @rdp)
+- Add `HTTP::Client#write_timeout`. ([#8507](https://github.com/crystal-lang/crystal/pull/8507), thanks @Sija)
 - Updated mime type of `.js` files to `text/javascript` and include `image/webp`. ([#8342](https://github.com/crystal-lang/crystal/pull/8342), thanks @mamantoha)
 - Refactor websocket protocol GUID string. ([#8339](https://github.com/crystal-lang/crystal/pull/8339), thanks @vlazar)
 
@@ -81,10 +85,10 @@
 
 ### Concurrency
 
-- **(breaking-change)** Faster `Mutex` implementation (optionally reentrant). ([#8295](https://github.com/crystal-lang/crystal/pull/8295), thanks @waj)
 - Fixed `Channel` successful sent and raise behavior. ([#8284](https://github.com/crystal-lang/crystal/pull/8284), thanks @firejox)
 - Fixed `Channel#close` to be thread-safe. ([#8249](https://github.com/crystal-lang/crystal/pull/8249), thanks @firejox)
 - Fixed `select` with `receive?` and closed channels. ([#8304](https://github.com/crystal-lang/crystal/pull/8304), thanks @bcardiff)
+- Faster `Mutex` implementation and policy checks. ([#8295](https://github.com/crystal-lang/crystal/pull/8295), [#8563](https://github.com/crystal-lang/crystal/pull/8563), thanks @waj, @ysbaddaden)
 - **(performance)** Channel internals refactor and optimize. ([#8322](https://github.com/crystal-lang/crystal/pull/8322), [#8497](https://github.com/crystal-lang/crystal/pull/8497), thanks @firejox, @Sija)
 - Add docs to `Channel#send` and `Channel#close`. ([#8356](https://github.com/crystal-lang/crystal/pull/8356), thanks @lbarasti)
 - Fixed `Thread#gc_thread_handler` for Windows support. ([#8519](https://github.com/crystal-lang/crystal/pull/8519), thanks @straight-shoota)
@@ -129,6 +133,7 @@
 ### Language semantics
 
 - Fixed method lookup priority when type alias of union is used. ([#8258](https://github.com/crystal-lang/crystal/pull/8258), thanks @asterite)
+- Fixed visibility modifiers in virtual types. ([#8562](https://github.com/crystal-lang/crystal/pull/8562), thanks @asterite)
 - Fixed `sizeof(Bool)`. ([#8273](https://github.com/crystal-lang/crystal/pull/8273), thanks @asterite)
 
 ## Tools
