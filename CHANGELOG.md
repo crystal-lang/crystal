@@ -6,7 +6,7 @@
 
 ### Macros
 
-- Add `TypeNode#class_vars` to list class variables in a macros. ([#8405](https://github.com/crystal-lang/crystal/pull/8405), thanks @jan-zajic)
+- Add `TypeNode#class_vars` to list class variables of a type in a macro. ([#8405](https://github.com/crystal-lang/crystal/pull/8405), thanks @jan-zajic)
 - Add `TypeNode#includers` to get an array of types a module is directly included in. ([#8133](https://github.com/crystal-lang/crystal/pull/8133), thanks @Blacksmoke16)
 - Add `ArrayLiteral#map_with_index` and `TupleLiteral#map_with_index`. ([#8049](https://github.com/crystal-lang/crystal/pull/8049), thanks @Blacksmoke16)
 - Add docs for `ArrayLiteral#reduce`. ([#8379](https://github.com/crystal-lang/crystal/pull/8379), thanks @jan-zajic)
@@ -16,11 +16,11 @@
 
 - **(breaking-change)** Remove `Readline` from std-lib. It's now available as a shard at [crystal-lang/crystal-readline](https://www.github.com/crystal-lang/crystal-readline) ([#8364](https://github.com/crystal-lang/crystal/pull/8364), thanks @ftarulla)
 - Move `Number#clamp` to `Comparable#clamp`. ([#8522](https://github.com/crystal-lang/crystal/pull/8522), thanks @wontruefree)
-- Allow `abort` to run without arguments. ([#8214](https://github.com/crystal-lang/crystal/pull/8214), thanks @dbackeus)
+- Allow `abort` without arguments. ([#8214](https://github.com/crystal-lang/crystal/pull/8214), thanks @dbackeus)
 - Improve error message for not-nil assertion in getters. ([#8200](https://github.com/crystal-lang/crystal/pull/8200), [#8296](https://github.com/crystal-lang/crystal/pull/8296), thanks @icy-arctic-fox)
 - Add `Enum.valid?`. ([#5716](https://github.com/crystal-lang/crystal/pull/5716), thanks @MakeNowJust)
 - Disable colored output if `TERM=dumb`. ([#8271](https://github.com/crystal-lang/crystal/pull/8271), thanks @ilanpillemer)
-- Docs improvements. ([#7656](https://github.com/crystal-lang/crystal/pull/7656), [#8337](https://github.com/crystal-lang/crystal/pull/8337), [#8446](https://github.com/crystal-lang/crystal/pull/8446), thanks @r00ster91, @vlazar, @cserb)
+- Documentation improvements. ([#7656](https://github.com/crystal-lang/crystal/pull/7656), [#8337](https://github.com/crystal-lang/crystal/pull/8337), [#8446](https://github.com/crystal-lang/crystal/pull/8446), thanks @r00ster91, @vlazar, @cserb)
 - Add docs for pseudo methods. ([#8327](https://github.com/crystal-lang/crystal/pull/8327), [#8491](https://github.com/crystal-lang/crystal/pull/8491), thanks @straight-shoota)
 - Code cleanups. ([#8270](https://github.com/crystal-lang/crystal/pull/8270), [#8368](https://github.com/crystal-lang/crystal/pull/8368), [#8404](https://github.com/crystal-lang/crystal/pull/8404), thanks @asterite, @vlazar, @arcage)
 
