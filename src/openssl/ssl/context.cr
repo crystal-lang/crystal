@@ -201,8 +201,8 @@ abstract class OpenSSL::SSL::Context
     def disable_session_resume_tickets
       add_options(OpenSSL::SSL::Options::NO_TICKET) # TLS v1.2 and below
       {% if compare_versions(LibSSL::OPENSSL_VERSION, "1.1.1") >= 0 %}
-        out = LibSSL.ssl_ctx_set_num_tickets(self, 0) # TLS v1.3
-        raise OpenSSL::Error.new("SSL_CTX_set_num_tickets") if out != 1
+        ret = LibSSL.ssl_ctx_set_num_tickets(self, 0) # TLS v1.3
+        raise OpenSSL::Error.new("SSL_CTX_set_num_tickets") if ret != 1
       {% end %}
     end
   end
