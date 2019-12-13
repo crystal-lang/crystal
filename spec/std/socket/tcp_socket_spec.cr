@@ -65,7 +65,7 @@ describe TCPSocket do
       end
 
       it "raises (rather than segfault on darwin) when host doesn't exist and port is 0" do
-        expect_raises(Socket::Error, /Hostname lookup for doesnotexist.example.org. failed: No address found/) do
+        expect_raises(Socket::Error, "Hostname lookup for doesnotexist.example.org. failed: No address found") do
           TCPSocket.new("doesnotexist.example.org.", 0)
         end
       end
