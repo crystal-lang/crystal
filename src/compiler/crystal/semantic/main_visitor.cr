@@ -361,7 +361,7 @@ module Crystal
         end
 
         if meta_var.closured?
-          var.bind_to(meta_var)
+          var.bind_to(meta_var) unless var.bound_to?(meta_var)
         end
 
         node.bind_to(var)
@@ -3127,6 +3127,19 @@ module Crystal
           # to the context where the variable is defined
           visitor = self
           while visitor
+            # Grab the meta var in the visitor's scope and bind
+            # all its dependencies to it (except for the program's nil var).
+            # This is a fix for #5609.
+            meta_var = visitor.meta_vars[var.name]?
+            if meta_var
+              meta_var.dependencies?.try &.each do |dependency|
+                if !dependency.same?(@program.nil_var) &&
+                   !dependency.bound_to?(meta_var)
+                  dependency.bind_to meta_var
+                end
+              end
+            end
+
             visitor_context = visitor.closure_context
             break if visitor_context == var_context
 

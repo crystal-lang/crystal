@@ -524,4 +524,26 @@ describe "Semantic: closure" do
       ),
       "can't send closure to C function (closured vars: x)"
   end
+
+  it "correctly detects previous var as closured (#5609)" do
+    assert_error %(
+      def block(&block)
+        block.call
+      end
+
+      def times
+        yield
+        yield
+      end
+
+      x = 1
+      times do
+        x &+ 2
+        block do
+          x = "hello"
+        end
+      end
+      ),
+      "undefined method '&+' for String"
+  end
 end
