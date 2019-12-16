@@ -321,7 +321,7 @@ module Enumerable(T)
   # but advancing one by one.
   #
   # ```
-  # [1, 2, 3, 4, 5].each_cons do |a, b|
+  # [1, 2, 3, 4, 5].each_cons_pair do |a, b|
   #   puts "#{a}, #{b}"
   # end
   # ```
