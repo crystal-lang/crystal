@@ -235,7 +235,7 @@ class Process
   private def stdio_to_fd(stdio : Stdio, for dst_io : IO::FileDescriptor) : IO::FileDescriptor
     case stdio
     when IO::FileDescriptor
-      stdio
+      stdio.as(IO::FileDescriptor)
     when IO
       if dst_io == STDIN
         fork_io, process_io = IO.pipe(read_blocking: true)
