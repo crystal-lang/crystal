@@ -450,7 +450,15 @@ module Crystal
     # Is this metavar assigned a value?
     property? assigned_to = false
 
+    # Local variables associated with this meta variable.
+    # Can be Var or MetaVar.
+    property(local_vars) { [] of ASTNode }
+
     def initialize(@name : String, @type : Type? = nil)
+    end
+
+    def local_vars?
+      @local_vars
     end
 
     # True if this variable belongs to the given context
