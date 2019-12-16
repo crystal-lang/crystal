@@ -45,23 +45,30 @@ describe Socket do
   it "sends messages" do
     port = unused_local_port
     server = Socket.tcp(Socket::Family::INET6)
-    server.bind("::1", port)
-    server.listen
-    address = Socket::IPAddress.new("::1", port)
-    spawn do
-      client = server.not_nil!.accept
-      client.gets.should eq "foo"
-      client.puts "bar"
+    begin
+      server.bind("::1", port)
+      server.listen
+      address = Socket::IPAddress.new("::1", port)
+      spawn do
+        client = server.accept
+        begin
+          client.gets.should eq "foo"
+          client.puts "bar"
+        ensure
+          client.close
+        end
+      end
+      socket = Socket.tcp(Socket::Family::INET6)
+      begin
+        socket.connect(address)
+        socket.puts "foo"
+        socket.gets.should eq "bar"
+      ensure
+        socket.close
+      end
     ensure
-      client.try &.close
+      server.close
     end
-    socket = Socket.tcp(Socket::Family::INET6)
-    socket.connect(address)
-    socket.puts "foo"
-    socket.gets.should eq "bar"
-  ensure
-    socket.try &.close
-    server.try &.close
   end
 
   describe "#bind" do
