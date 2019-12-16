@@ -8,6 +8,7 @@
 
 ### Networking
 
+- Fixed `HTTP::WebSocket`'s `on_close` callback is called for all errors. ([#8552](https://github.com/crystal-lang/crystal/pull/8552), thanks @stakach)
 - Fixed sporadic failure in specs with OpenSSL 1.1+. ([#8582](https://github.com/crystal-lang/crystal/pull/8582), thanks @rdp)
 
 ## Compiler
