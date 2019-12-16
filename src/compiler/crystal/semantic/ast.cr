@@ -447,8 +447,14 @@ module Crystal
     # where it wasn't created.
     property? closured = false
 
-    # Is this metavar assigned a value?
+    # Is this var used inside a while loop?
+    property? inside_loop = false
+
+    # Was something assigned to this metavar?
     property? assigned_to = false
+
+    # Was something assigned to this metavar multiple times?
+    property? assigned_to_multiple_times = false
 
     # Local variables associated with this meta variable.
     # Can be Var or MetaVar.
@@ -457,8 +463,24 @@ module Crystal
     def initialize(@name : String, @type : Type? = nil)
     end
 
+    # Incrase the times something was assigned to this metavar.
+    def increase_assigned_count
+      if assigned_to?
+        @assigned_to_multiple_times = true
+      else
+        @assigned_to = true
+      end
+    end
+
+    # Is this metavar associated with any local vars?
     def local_vars?
       @local_vars
+    end
+
+    # Is this var closured and also all local vars related to it
+    # should be bound to it?
+    def closured_multibound?
+      closured? && (assigned_to_multiple_times? || inside_loop?)
     end
 
     # True if this variable belongs to the given context
@@ -488,7 +510,8 @@ module Crystal
       end
       io << " (nil-if-read)" if nil_if_read?
       io << " (closured)" if closured?
-      io << " (assigned-to)" if assigned_to?
+      io << " (assign-to)" if assigned_to?
+      io << " (assign-to-multiple-times)" if assigned_to_multiple_times?
       io << " (object id: #{object_id})"
     end
 
