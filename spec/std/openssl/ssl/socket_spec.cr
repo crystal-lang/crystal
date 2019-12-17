@@ -81,6 +81,7 @@ describe OpenSSL::SSL::Socket do
   it "interprets graceful EOF of underlying socket as SSL termination" do
     tcp_server = TCPServer.new(0)
     server_context, client_context = ssl_context_pair
+    server_context.disable_session_resume_tickets # avoid Broken pipe
 
     server_finished_reading = Channel(String).new
     spawn do
@@ -95,6 +96,7 @@ describe OpenSSL::SSL::Socket do
     socket_ssl.print "hello"
     socket_ssl.flush # needed today see #5375
     socket.close     # close underlying socket without gracefully shutting down SSL at all
-    server_finished_reading.receive.should eq("hello")
+    server_received = server_finished_reading.receive
+    server_received.should eq("hello")
   end
 end
