@@ -33,8 +33,12 @@ module Crystal::EventLoop
   def self.create_timeout_event(fiber) : Crystal::Event
     event_base.new_event(-1, LibEvent2::EventFlags::None, fiber) do |s, flags, data|
       f = data.as(Fiber)
-      f.timed_out = true
-      Crystal::Scheduler.enqueue f
+      if (select_action = f.timeout_select_action)
+        f.timeout_select_action = nil
+        select_action.time_expired(f)
+      else
+        Crystal::Scheduler.enqueue f
+      end
     end
   end
 

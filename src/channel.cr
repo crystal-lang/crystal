@@ -678,17 +678,18 @@ class Channel(T)
     end
   end
 
+  # :nodoc:
   class TimeoutAction
     include SelectAction(Nil)
 
     # Total amount of time to wait
     @timeout : Time::Span
+    @select_context : SelectContext(Nil)?
 
     def initialize(@timeout : Time::Span)
     end
 
     def execute : DeliveryState
-      Fiber.current.timed_out = false
       DeliveryState::None
     end
 
@@ -697,7 +698,8 @@ class Channel(T)
     end
 
     def wait(context : SelectContext(Nil))
-      Fiber.timeout @timeout
+      @select_context = context
+      Fiber.timeout(@timeout, self)
     end
 
     def wait_result_impl(context : SelectContext(Nil))
@@ -705,7 +707,6 @@ class Channel(T)
     end
 
     def unwait_impl(context : SelectContext(Nil))
-      context.try_trigger if Fiber.current.timed_out?
       Fiber.cancel_timeout
     end
 
@@ -717,6 +718,12 @@ class Channel(T)
     end
 
     def unlock
+    end
+
+    def time_expired(fiber : Fiber) : Nil
+      if @select_context.try &.try_trigger
+        Crystal::Scheduler.enqueue fiber
+      end
     end
   end
 end
