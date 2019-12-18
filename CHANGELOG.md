@@ -1,3 +1,22 @@
+# 0.32.1 (2019-12-18)
+
+## Standard library
+
+### Collections
+
+- Fixed docs of `Enumerable#each_cons_pair` and `Iterator#cons_pair`. ([#8585](https://github.com/crystal-lang/crystal/pull/8585), thanks @arcage)
+
+### Networking
+
+- Fixed `HTTP::WebSocket`'s `on_close` callback is called for all errors. ([#8552](https://github.com/crystal-lang/crystal/pull/8552), thanks @stakach)
+- Fixed sporadic failure in specs with OpenSSL 1.1+. ([#8582](https://github.com/crystal-lang/crystal/pull/8582), thanks @rdp)
+
+## Compiler
+
+### Language semantics
+
+- Combine contiguous string literals before string interpolation. ([#8581](https://github.com/crystal-lang/crystal/pull/8581), thanks @asterite)
+
 # 0.32.0 (2019-12-11)
 
 ## Language changes
