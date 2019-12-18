@@ -108,8 +108,8 @@ format() {
 prepare_build() {
   on_linux verify_linux_environment
 
-  on_osx curl -L https://github.com/crystal-lang/crystal/releases/download/0.32.0/crystal-0.32.0-1-darwin-x86_64.tar.gz -o ~/crystal.tar.gz
-  on_osx 'pushd ~;gunzip -c ~/crystal.tar.gz | tar xopf -;mv crystal-0.32.0-1 crystal;popd'
+  on_osx curl -L https://github.com/crystal-lang/crystal/releases/download/0.32.1/crystal-0.32.1-1-darwin-x86_64.tar.gz -o ~/crystal.tar.gz
+  on_osx 'pushd ~;gunzip -c ~/crystal.tar.gz | tar xopf -;mv crystal-0.32.1-1 crystal;popd'
 
   on_osx brew install llvm@9 gmp libevent pcre openssl pkg-config
   on_osx brew link --force llvm@9
@@ -142,7 +142,7 @@ with_build_env() {
 
   on_linux verify_linux_environment
 
-  export DOCKER_TEST_PREFIX="${DOCKER_TEST_PREFIX:=crystallang/crystal:0.32.0}"
+  export DOCKER_TEST_PREFIX="${DOCKER_TEST_PREFIX:=crystallang/crystal:0.32.1}"
 
   case $ARCH in
     x86_64)
