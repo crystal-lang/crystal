@@ -20,6 +20,7 @@ module Spec
       io << %(" errors=") << (@summary[:error]? || 0)
       io << %(" failures=") << (@summary[:fail]? || 0)
       io << %(" time=") << elapsed_time.to_f
+      io << %(" hostname=") << System.hostname
       io << %(">)
 
       io.puts
