@@ -215,4 +215,18 @@ describe "Code gen: automatic cast" do
       Foo(Int64).new.x
       )).to_i.should eq(10)
   end
+
+  it "does multidispatch with automatic casting (#8217)" do
+    run(%(
+      def foo(mode : Int64, x : Int32)
+        10
+      end
+
+      def foo(mode : Int64, x : String)
+        20
+      end
+
+      foo(1, 1 || "a")
+      )).to_i.should eq(10)
+  end
 end
