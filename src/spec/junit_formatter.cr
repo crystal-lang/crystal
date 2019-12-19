@@ -17,7 +17,9 @@ module Spec
       io.puts %(<?xml version="1.0"?>)
       io << %(<testsuite tests=") << @results.size
       io << %(" errors=") << (@summary[:error]? || 0)
-      io << %(" failures=") << (@summary[:fail]? || 0) << %(">)
+      io << %(" failures=") << (@summary[:fail]? || 0)
+      io << %(" time=") << elapsed_time.to_f
+      io << %(">)
 
       io.puts
 
@@ -42,6 +44,11 @@ module Spec
       HTML.escape(classname(result), io)
       io << %(" name=")
       HTML.escape(result.description, io)
+
+      if elapsed = result.elapsed
+        io << %(" time=")
+        io << elapsed.to_f
+      end
 
       if tag = inner_content_tag(result.kind)
         io.puts %(">)
