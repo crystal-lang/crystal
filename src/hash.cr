@@ -908,7 +908,7 @@ class Hash(K, V)
     else
       hash = key.hash.to_u32!
     end
-    hash == 0 ? UInt32::MAX : hash
+    hash == 0_u32 ? UInt32::MAX : hash
   end
 
   private def entry_matches?(entry, hash, key)
