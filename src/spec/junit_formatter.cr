@@ -80,6 +80,11 @@ module Spec
         HTML.escape(message, io)
         io << '"'
       end
+      if tag == :error
+        io << %( type=")
+        io << exception.class.name
+        io << '"'
+      end
       io << '>'
 
       if backtrace = exception.backtrace?
