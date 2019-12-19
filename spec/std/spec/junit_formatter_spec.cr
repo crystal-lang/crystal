@@ -3,14 +3,16 @@ require "xml"
 
 describe "JUnit Formatter" do
   it "reports successful results" do
-    output = build_report do |f|
+    now = Time.utc
+
+    output = build_report_with_mocked_timestamp(now) do |f|
       f.report Spec::Result.new(:success, "should do something", "spec/some_spec.cr", 33, nil, nil)
       f.report Spec::Result.new(:success, "should do something else", "spec/some_spec.cr", 50, nil, nil)
     end
 
     expected = <<-XML
                  <?xml version="1.0"?>
-                 <testsuite tests="2" disabled="0" errors="0" failures="0" time="0.0" hostname="#{System.hostname}">
+                 <testsuite tests="2" disabled="0" errors="0" failures="0" time="0.0" timestamp="#{now.to_rfc3339}" hostname="#{System.hostname}">
                    <testcase file="spec/some_spec.cr" classname="spec.some_spec" name="should do something"/>
                    <testcase file="spec/some_spec.cr" classname="spec.some_spec" name="should do something else"/>
                  </testsuite>
@@ -20,13 +22,15 @@ describe "JUnit Formatter" do
   end
 
   it "reports failures" do
-    output = build_report do |f|
+    now = Time.utc
+
+    output = build_report_with_mocked_timestamp(now) do |f|
       f.report Spec::Result.new(:fail, "should do something", "spec/some_spec.cr", 33, nil, nil)
     end
 
     expected = <<-XML
                  <?xml version="1.0"?>
-                 <testsuite tests="1" disabled="0" errors="0" failures="1" time="0.0" hostname="#{System.hostname}">
+                 <testsuite tests="1" disabled="0" errors="0" failures="1" time="0.0" timestamp="#{now.to_rfc3339}" hostname="#{System.hostname}">
                    <testcase file="spec/some_spec.cr" classname="spec.some_spec" name="should do something">
                      <failure/>
                    </testcase>
@@ -37,13 +41,15 @@ describe "JUnit Formatter" do
   end
 
   it "reports errors" do
-    output = build_report do |f|
+    now = Time.utc
+
+    output = build_report_with_mocked_timestamp(now) do |f|
       f.report Spec::Result.new(:error, "should do something", "spec/some_spec.cr", 33, nil, nil)
     end
 
     expected = <<-XML
                  <?xml version="1.0"?>
-                 <testsuite tests="1" disabled="0" errors="1" failures="0" time="0.0" hostname="#{System.hostname}">
+                 <testsuite tests="1" disabled="0" errors="1" failures="0" time="0.0" timestamp="#{now.to_rfc3339}" hostname="#{System.hostname}">
                    <testcase file="spec/some_spec.cr" classname="spec.some_spec" name="should do something">
                      <error/>
                    </testcase>
@@ -54,7 +60,9 @@ describe "JUnit Formatter" do
   end
 
   it "reports mixed results" do
-    output = build_report do |f|
+    now = Time.utc
+
+    output = build_report_with_mocked_timestamp(now) do |f|
       f.report Spec::Result.new(:success, "should do something1", "spec/some_spec.cr", 33, 2.seconds, nil)
       f.report Spec::Result.new(:fail, "should do something2", "spec/some_spec.cr", 50, 0.5.seconds, nil)
       f.report Spec::Result.new(:error, "should do something3", "spec/some_spec.cr", 65, nil, nil)
@@ -63,7 +71,7 @@ describe "JUnit Formatter" do
 
     expected = <<-XML
                  <?xml version="1.0"?>
-                 <testsuite tests="4" disabled="0" errors="2" failures="1" time="0.0" hostname="#{System.hostname}">
+                 <testsuite tests="4" disabled="0" errors="2" failures="1" time="0.0" timestamp="#{now.to_rfc3339}" hostname="#{System.hostname}">
                    <testcase file="spec/some_spec.cr" classname="spec.some_spec" name="should do something1" time="2.0"/>
                    <testcase file="spec/some_spec.cr" classname="spec.some_spec" name="should do something2" time="0.5">
                      <failure/>
@@ -126,6 +134,13 @@ private def build_report
   yield formatter
   formatter.finish(Time::Span.zero, false)
   output.to_s.chomp
+end
+
+private def build_report_with_mocked_timestamp(timestamp)
+  output = build_report do |formatter|
+    yield formatter
+  end
+  output.gsub(/timestamp="(.+?)"/, %(timestamp="#{timestamp.to_rfc3339}"))
 end
 
 private def exception_with_backtrace(msg)

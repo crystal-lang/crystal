@@ -3,6 +3,8 @@ require "html"
 module Spec
   # :nodoc:
   class JUnitFormatter < Formatter
+    @started_at = Time.utc
+
     @results = [] of Spec::Result
     @summary = {} of Symbol => Int32
 
@@ -20,6 +22,7 @@ module Spec
       io << %(" errors=") << (@summary[:error]? || 0)
       io << %(" failures=") << (@summary[:fail]? || 0)
       io << %(" time=") << elapsed_time.to_f
+      io << %(" timestamp=") << @started_at.to_rfc3339
       io << %(" hostname=") << System.hostname
       io << %(">)
 
