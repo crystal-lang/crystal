@@ -129,9 +129,7 @@ private def build_report
 end
 
 private def exception_with_backtrace(msg)
-  begin
-    raise Exception.new(msg)
-  rescue e
-    e
-  end
+  raise Exception.new(msg)
+rescue e
+  e
 end

@@ -45,19 +45,17 @@ module Spec
     end
 
     private def internal_run(start, block)
-      begin
-        @parent.run_before_each_hooks
-        block.call
-        @parent.report(:success, description, file, line, Time.monotonic - start)
-      rescue ex : Spec::AssertionFailed
-        @parent.report(:fail, description, file, line, Time.monotonic - start, ex)
-        Spec.abort! if Spec.fail_fast?
-      rescue ex
-        @parent.report(:error, description, file, line, Time.monotonic - start, ex)
-        Spec.abort! if Spec.fail_fast?
-      ensure
-        @parent.run_after_each_hooks
-      end
+      @parent.run_before_each_hooks
+      block.call
+      @parent.report(:success, description, file, line, Time.monotonic - start)
+    rescue ex : Spec::AssertionFailed
+      @parent.report(:fail, description, file, line, Time.monotonic - start, ex)
+      Spec.abort! if Spec.fail_fast?
+    rescue ex
+      @parent.report(:error, description, file, line, Time.monotonic - start, ex)
+      Spec.abort! if Spec.fail_fast?
+    ensure
+      @parent.run_after_each_hooks
     end
   end
 end
