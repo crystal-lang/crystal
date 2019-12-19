@@ -16,7 +16,7 @@ describe "JUnit Formatter" do
                  </testsuite>
                  XML
 
-    output.chomp.should eq(expected)
+    output.should eq(expected)
   end
 
   it "reports failures" do
@@ -33,7 +33,7 @@ describe "JUnit Formatter" do
                  </testsuite>
                  XML
 
-    output.chomp.should eq(expected)
+    output.should eq(expected)
   end
 
   it "reports errors" do
@@ -50,7 +50,7 @@ describe "JUnit Formatter" do
                  </testsuite>
                  XML
 
-    output.chomp.should eq(expected)
+    output.should eq(expected)
   end
 
   it "reports mixed results" do
@@ -77,7 +77,7 @@ describe "JUnit Formatter" do
                  </testsuite>
                  XML
 
-    output.chomp.should eq(expected)
+    output.should eq(expected)
   end
 
   it "escapes spec names" do
@@ -125,7 +125,7 @@ private def build_report
   formatter = Spec::JUnitFormatter.new(output)
   yield formatter
   formatter.finish(Time::Span.zero, false)
-  output.to_s
+  output.to_s.chomp
 end
 
 private def exception_with_backtrace(msg)
