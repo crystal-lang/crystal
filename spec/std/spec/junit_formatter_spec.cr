@@ -124,7 +124,7 @@ private def build_report
   output = String::Builder.new
   formatter = Spec::JUnitFormatter.new(output)
   yield formatter
-  formatter.finish
+  formatter.finish(Time::Span.zero, false)
   output.to_s
 end
 

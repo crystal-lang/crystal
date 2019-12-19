@@ -65,7 +65,7 @@ module Spec
     end
 
     def finish(elapsed_time, aborted = false)
-      Spec.formatters.each(&.finish)
+      Spec.formatters.each(&.finish(elapsed_time, aborted))
       Spec.formatters.each(&.print_results(elapsed_time, aborted))
     end
 

@@ -12,7 +12,7 @@ module Spec
       @results << result
     end
 
-    def finish
+    def finish(elapsed_time, aborted)
       io = @io
       io.puts %(<?xml version="1.0"?>)
       io << %(<testsuite tests=") << @results.size

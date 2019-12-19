@@ -23,7 +23,7 @@ class Spec::TAPFormatter < Spec::Formatter
     @io.puts
   end
 
-  def finish
+  def finish(elapsed_time, aborted)
     @io << "1.." << @counter
     @io.puts
   end
