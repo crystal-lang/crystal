@@ -1224,5 +1224,10 @@ describe "Hash" do
       h = ({} of String => Int32).compare_by_identity
       h.clone.compare_by_identity?.should be_true
     end
+
+    it "compiles" do
+      h = Hash(NoReturn, NoReturn).new
+      h.has_key?(nil).should be_false
+    end
   end
 end
