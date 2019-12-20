@@ -253,6 +253,24 @@ module Enumerable(T)
     count { |e| e == item }
   end
 
+  # Returns a new array with the cumulative results of the bock passed
+  #
+  # ```
+  # ary = [1, 2, 3, 4, 5]
+  # ary.cumalative { |e| e.reduce { |a, b| {a, b}.max } } # => [1, 4, 4, 5, 5]
+  # ary.cumulative &.sum                                  # => [1, 3, 6, 10, 15]
+  # ary.cumulative &.product                              # => [1, 2, 6, 24, 120]
+  # ```
+  def cumulative(&block : Array(T) ->)
+    buffer = Array(T).new
+    ary = Array(T).new
+    each do |e|
+      buffer << e
+      ary << yield buffer
+    end
+    ary
+  end
+
   # Calls the given block for each element in this enumerable forever.
   def cycle
     loop { each { |x| yield x } }

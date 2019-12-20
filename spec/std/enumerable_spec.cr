@@ -235,6 +235,13 @@ describe "Enumerable" do
     end
   end
 
+  describe "#cumulative" do
+    it "returns an aray from an enumerable without a size" do
+      a = SpecEnumerable.new
+      a.cumulative(&.sum).should eq [1, 3, 6]
+    end
+  end
+
   describe "#each_cons" do
     context "iterator" do
       it "iterates" do
