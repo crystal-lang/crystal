@@ -21,6 +21,25 @@ describe "JUnit Formatter" do
     output.should eq(expected)
   end
 
+  it "reports skipped" do
+    now = Time.utc
+
+    output = build_report_with_mocked_timestamp(now) do |f|
+      f.report Spec::Result.new(:pending, "should do something", "spec/some_spec.cr", 33, nil, nil)
+    end
+
+    expected = <<-XML
+                 <?xml version="1.0"?>
+                 <testsuite tests="1" disabled="1" errors="0" failures="0" time="0.0" timestamp="#{now.to_rfc3339}" hostname="#{System.hostname}">
+                   <testcase file="spec/some_spec.cr" classname="spec.some_spec" name="should do something">
+                     <skipped/>
+                   </testcase>
+                 </testsuite>
+                 XML
+
+    output.should eq(expected)
+  end
+
   it "reports failures" do
     now = Time.utc
 

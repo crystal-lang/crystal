@@ -58,7 +58,7 @@ module Spec
       if tag = inner_content_tag(result.kind)
         io.puts %(">)
 
-        if exception = result.exception
+        if (exception = result.exception) && result.kind != :pending
           write_inner_content(tag, exception, io)
         else
           io << "    <" << tag << "/>\n"
@@ -71,8 +71,9 @@ module Spec
 
     private def inner_content_tag(kind)
       case kind
-      when :error then "error"
-      when :fail  then "failure"
+      when :error   then "error"
+      when :fail    then "failure"
+      when :pending then "skipped"
       end
     end
 
