@@ -696,9 +696,9 @@ class Array(T)
   # ary.cumulative &.sum                                  # => [1, 3, 6, 10, 15]
   # ary.cumulative &.product                              # => [1, 2, 6, 24, 120]
   # ```
-  def cumulative(reuse = false, &block : Array(T) ->)
+  def cumulative(reuse = false, &block : Array(T) -> U) forall U
     reuse = check_reuse(reuse, size)
-    ary = Array(T).new(size)
+    ary = Array(U).new(size)
     each_with_index do |e, i|
       ary << yield pool_slice(self, i + 1, reuse)
     end

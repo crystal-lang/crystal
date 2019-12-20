@@ -261,9 +261,9 @@ module Enumerable(T)
   # ary.cumulative &.sum                                  # => [1, 3, 6, 10, 15]
   # ary.cumulative &.product                              # => [1, 2, 6, 24, 120]
   # ```
-  def cumulative(&block : Array(T) ->)
+  def cumulative(&block : Array(T) -> U) forall U
     buffer = Array(T).new
-    ary = Array(T).new
+    ary = Array(U).new
     each do |e|
       buffer << e
       ary << yield buffer
