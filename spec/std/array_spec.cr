@@ -507,6 +507,26 @@ describe "Array" do
     end
   end
 
+  describe "cumulative" do
+    it "returns a new array with cumulative reductions" do
+      a = [1, 4, 2, 5, 3]
+      (a.cumulative { |e| e.reduce { |a, b| {a, b}.max } }).should eq [1, 4, 4, 5, 5]
+      a.should eq [1, 4, 2, 5, 3]
+    end
+
+    it "returns a new array with cumulative sums" do
+      a = [1, 2, 3, 4, 5]
+      a.cumulative(&.sum).should eq [1, 3, 6, 10, 15]
+      a.should eq [1, 2, 3, 4, 5]
+    end
+
+    it "returns a new array with cumulative products" do
+      a = [1, 2, 3, 4, 5]
+      a.cumulative(&.product).should eq [1, 2, 6, 24, 120]
+      a.should eq [1, 2, 3, 4, 5]
+    end
+  end
+
   describe "delete" do
     it "deletes many" do
       a = [1, 2, 3, 1, 2, 3]

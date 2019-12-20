@@ -688,6 +688,23 @@ class Array(T)
     self
   end
 
+  # Returns a new array with the cumulative results of the bock passed
+  #
+  # ```
+  # ary = [1, 2, 3, 4, 5]
+  # ary.cumalative { |e| e.reduce { |a, b| {a, b}.max } } # => [1, 4, 4, 5, 5]
+  # ary.cumulative &.sum                                  # => [1, 3, 6, 10, 15]
+  # ary.cumulative &.product                              # => [1, 2, 6, 24, 120]
+  # ```
+  def cumulative(reuse = false, &block : Array(T) -> T) : Array(T)
+    reuse = check_reuse(reuse, size)
+    ary = Array(T).new(size)
+    each_with_index do |e, i|
+      ary << yield pool_slice(self, i + 1, reuse)
+    end
+    ary
+  end
+
   # Removes all items from `self` that are equal to *obj*.
   #
   # Returns the last found element that was equal to *obj*,
