@@ -100,7 +100,12 @@ module Spec
     end
 
     private def classname(result)
-      result.file.sub(%r{\.[^/.]+\Z}, "").gsub("/", ".").gsub(/\A\.+|\.+\Z/, "")
+      path = Path[result.file].expand
+      path.to_s
+        .lchop(Dir.current)
+        .rchop(path.extension)
+        .gsub(File::SEPARATOR, '.')
+        .strip('.')
     end
   end
 end

@@ -81,16 +81,19 @@ describe "JUnit Formatter" do
   it "reports mixed results" do
     now = Time.utc
 
+    this_filename = __FILE__
+
     output = build_report_with_mocked_timestamp(now) do |f|
       f.report Spec::Result.new(:success, "should do something1", "spec/some_spec.cr", 33, 2.seconds, nil)
       f.report Spec::Result.new(:fail, "should do something2", "spec/some_spec.cr", 50, 0.5.seconds, nil)
       f.report Spec::Result.new(:error, "should do something3", "spec/some_spec.cr", 65, nil, nil)
       f.report Spec::Result.new(:error, "should do something4", "spec/some_spec.cr", 80, nil, nil)
+      f.report Spec::Result.new(:pending, "should do something5", this_filename, 90, nil, nil)
     end
 
     expected = <<-XML
                  <?xml version="1.0"?>
-                 <testsuite tests="4" disabled="0" errors="2" failures="1" time="0.0" timestamp="#{now.to_rfc3339}" hostname="#{System.hostname}">
+                 <testsuite tests="5" disabled="1" errors="2" failures="1" time="0.0" timestamp="#{now.to_rfc3339}" hostname="#{System.hostname}">
                    <testcase file="spec/some_spec.cr" classname="spec.some_spec" name="should do something1" time="2.0"/>
                    <testcase file="spec/some_spec.cr" classname="spec.some_spec" name="should do something2" time="0.5">
                      <failure/>
@@ -100,6 +103,9 @@ describe "JUnit Formatter" do
                    </testcase>
                    <testcase file="spec/some_spec.cr" classname="spec.some_spec" name="should do something4">
                      <error/>
+                   </testcase>
+                   <testcase file="#{this_filename}" classname="spec.std.spec.junit_formatter_spec" name="should do something5">
+                     <skipped/>
                    </testcase>
                  </testsuite>
                  XML
