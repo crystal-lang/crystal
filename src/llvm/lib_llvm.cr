@@ -1,25 +1,20 @@
 {% begin %}
 lib LibLLVM
   LLVM_CONFIG = {{
-                  `[ -n "$LLVM_CONFIG" ] && command -v "$LLVM_CONFIG" || \
-                   command -v llvm-config-8 || command -v llvm-config-8.0 || command -v llvm-config80 || \
-                   (command -v llvm-config > /dev/null && (case "$(llvm-config --version)" in 8.0*) command -v llvm-config;; *) false;; esac)) || \
-                   command -v llvm-config-7 || \
-                   (command -v llvm-config > /dev/null && (case "$(llvm-config --version)" in 7.1*) command -v llvm-config;; *) false;; esac)) || \
-                   command -v llvm-config-7.0 || command -v llvm-config70 || \
-                   (command -v llvm-config > /dev/null && (case "$(llvm-config --version)" in 7.0*) command -v llvm-config;; *) false;; esac)) || \
-                   command -v llvm-config-6.0 || command -v llvm-config60 || \
-                   (command -v llvm-config > /dev/null && (case "$(llvm-config --version)" in 6.0*) command -v llvm-config;; *) false;; esac)) || \
-                   command -v llvm-config-5.0 || command -v llvm-config50 || \
-                   (command -v llvm-config > /dev/null && (case "$(llvm-config --version)" in 5.0*) command -v llvm-config;; *) false;; esac)) || \
-                   command -v llvm-config-4.0 || command -v llvm-config40 || \
-                   (command -v llvm-config > /dev/null && (case "$(llvm-config --version)" in 4.0*) command -v llvm-config;; *) false;; esac)) || \
-                   command -v llvm-config-3.9 || command -v llvm-config39 || \
-                   (command -v llvm-config > /dev/null && (case "$(llvm-config --version)" in 3.9*) command -v llvm-config;; *) false;; esac)) || \
-                   command -v llvm-config-3.8 || command -v llvm-config38 || \
-                   (command -v llvm-config > /dev/null && (case "$(llvm-config --version)" in 3.8*) command -v llvm-config;; *) false;; esac)) || \
-                   command -v llvm-config
-                  `.chomp.stringify
+                  `if ! LLVM_CONFIG=$(command -v "$LLVM_CONFIG"); then
+                   llvm_config_version=$(llvm-config --version 2>/dev/null)
+                     for version in 8.0 7.1 6.0 5.0 4.0 3.9 3.8; do
+                       LLVM_CONFIG=$(
+                       command -v llvm-config-${version%.*} || \
+                       command -v llvm-config-$version || \
+                       command -v llvm-config${version%.*}${version#*.} || \
+                       command -v llvm${version%.*}-config || \
+                       [ "${llvm_config_version#$version}" = "$llvm_config_version" ] || command -v llvm-config)
+                       [ "$LLVM_CONFIG" ] && break
+                     done
+                   fi
+                   printf "$LLVM_CONFIG"
+                  `.stringify
                 }}
 end
 {% end %}
