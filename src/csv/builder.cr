@@ -158,6 +158,7 @@ class CSV::Builder
     private def needs_quotes?(value : String)
       case @quoting
       when .rfc?
+        return true if value =~ /\d+/ 
         value.each_byte do |byte|
           case byte.unsafe_chr
           when @separator, @quote_char, '\n'
