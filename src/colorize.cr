@@ -103,8 +103,9 @@ module Colorize
   # "hello".colorize.red.to_s # => "hello"
   # ```
   #
-  # NOTE: This is by default disabled on non-TTY devices as they most likely do not support ANSI escape codes.
-  class_property? enabled : Bool = STDOUT.tty? && STDERR.tty?
+  # NOTE: This is by default disabled on non-TTY devices because they likely don't support ANSI escape codes.
+  # This is also be disabled if the environment variable `TERM` is "dumb".
+  class_property? enabled : Bool = STDOUT.tty? && STDERR.tty? && ENV["TERM"]? != "dumb"
 
   # Resets the color and text decoration of the *io*.
   #

@@ -502,19 +502,6 @@ class URI
     end
   end
 
-  # Parses `raw_url` into an URI. The `raw_url` may be relative or absolute.
-  #
-  # ```
-  # require "uri"
-  #
-  # uri = URI.parse("http://crystal-lang.org") # => #<URI:0x1068a7e40 @scheme="http", @host="crystal-lang.org", ... >
-  # uri.scheme                                 # => "http"
-  # uri.host                                   # => "crystal-lang.org"
-  # ```
-  def self.parse(raw_url : String) : URI
-    URI::Parser.new(raw_url).run.uri
-  end
-
   # [RFC 3986 6.2.2.3](https://tools.ietf.org/html/rfc3986#section-5.2.4)
   private def remove_dot_segments(path : String)
     result = [] of String

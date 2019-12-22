@@ -630,3 +630,45 @@ span.flag.purple {
 .doc-inherited {
   font-weight: bold;
 }
+
+.anchor {
+  float: left;
+  padding-right: 4px;
+  margin-left: -20px;
+}
+
+.main-content .anchor .octicon-link {
+  width: 16px;
+  height: 16px;
+}
+
+.main-content .anchor:focus {
+  outline: none
+}
+
+.main-content h1:hover .anchor,
+.main-content h2:hover .anchor,
+.main-content h3:hover .anchor,
+.main-content h4:hover .anchor,
+.main-content h5:hover .anchor,
+.main-content h6:hover .anchor {
+  text-decoration: none
+}
+
+.main-content h1 .octicon-link,
+.main-content h2 .octicon-link,
+.main-content h3 .octicon-link,
+.main-content h4 .octicon-link,
+.main-content h5 .octicon-link,
+.main-content h6 .octicon-link {
+  visibility: hidden
+}
+
+.main-content h1:hover .anchor .octicon-link,
+.main-content h2:hover .anchor .octicon-link,
+.main-content h3:hover .anchor .octicon-link,
+.main-content h4:hover .anchor .octicon-link,
+.main-content h5:hover .anchor .octicon-link,
+.main-content h6:hover .anchor .octicon-link {
+  visibility: visible
+}

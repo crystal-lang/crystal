@@ -12,7 +12,7 @@
 class Crystal::OnceState
   @rec = [] of Bool*
   {% if flag?(:preview_mt) %}
-    @mutex = Mutex.new
+    @mutex = Mutex.new(:reentrant)
   {% end %}
 
   def once(flag : Bool*, initializer : Void*)

@@ -323,7 +323,11 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
                Parser::ParseMode::Normal
              end
 
-    generated_nodes = @program.parse_macro_source(expanded_macro, macro_expansion_pragmas, the_macro, node, Set.new(@vars.keys),
+    # We could do Set.new(@vars.keys) but that creates an intermediate array
+    local_vars = Set(String).new(initial_capacity: @vars.size)
+    @vars.each_key { |key| local_vars << key }
+
+    generated_nodes = @program.parse_macro_source(expanded_macro, macro_expansion_pragmas, the_macro, node, local_vars,
       current_def: @typed_def,
       inside_type: !current_type.is_a?(Program),
       inside_exp: @exp_nest > 0,
@@ -344,7 +348,7 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
     def initialize(@doc)
     end
 
-    def visit(node : ClassDef | ModuleDef | EnumDef | Def | FunDef | Alias | Assign)
+    def visit(node : ClassDef | ModuleDef | EnumDef | Def | FunDef | Alias | Assign | Call)
       node.doc ||= @doc
       false
     end

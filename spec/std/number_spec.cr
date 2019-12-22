@@ -80,47 +80,16 @@ describe "Number" do
       753.155.round(-5, base: 2).should eq(768)
     end
 
+    it "accepts unsigned precision" do
+      123.round(UInt8.new(3)).should eq(123)
+      11.308.round(UInt8.new(3)).should eq(11.308)
+      11.308.round(UInt8.new(2)).should eq(11.31)
+    end
+
     it "handle medium amount of digits" do
       1.098765432109876543210987654321.round(15).should eq(1.098765432109877)
       1.098765432109876543210987654321.round(21).should eq(1.098765432109876543211)
       6543210987654321.0.round(-15).should eq(7000000000000000.0)
-    end
-  end
-
-  describe "clamp" do
-    it "clamps integers" do
-      -5.clamp(-10, 100).should eq(-5)
-      -5.clamp(10, 100).should eq(10)
-      5.clamp(10, 100).should eq(10)
-      50.clamp(10, 100).should eq(50)
-      500.clamp(10, 100).should eq(100)
-
-      50.clamp(10..100).should eq(50)
-
-      50.clamp(10..nil).should eq(50)
-      50.clamp(10...nil).should eq(50)
-      5.clamp(10..nil).should eq(10)
-      5.clamp(10...nil).should eq(10)
-
-      5.clamp(nil..10).should eq(5)
-      50.clamp(nil..10).should eq(10)
-    end
-
-    it "clamps floats" do
-      -5.5.clamp(-10.1, 100.1).should eq(-5.5)
-      -5.5.clamp(10.1, 100.1).should eq(10.1)
-      5.5.clamp(10.1, 100.1).should eq(10.1)
-      50.5.clamp(10.1, 100.1).should eq(50.5)
-      500.5.clamp(10.1, 100.1).should eq(100.1)
-
-      50.5.clamp(10.1..100.1).should eq(50.5)
-    end
-
-    it "fails with an exclusive range" do
-      expect_raises(ArgumentError) do
-        range = Range.new(1, 2, exclusive: true)
-        5.clamp(range)
-      end
     end
   end
 

@@ -1,12 +1,17 @@
 require "./item"
 
 module Spec
-  # :nodoc:
-  #
-  # A context represents a `describe` or `context`.
+  # Base type for `ExampleGroup`.
   abstract class Context
     # All the children, which can be `describe`/`context` or `it`
-    getter children = [] of NestedContext | Example
+    getter children = [] of ExampleGroup | Example
+
+    def randomize(randomizer)
+      children.each do |child|
+        child.randomize(randomizer) if child.is_a?(ExampleGroup)
+      end
+      children.shuffle!(randomizer)
+    end
   end
 
   # :nodoc:
@@ -18,6 +23,7 @@ module Spec
     elapsed : Time::Span?,
     exception : Exception?
 
+  # :nodoc:
   def self.root_context
     RootContext.instance
   end
@@ -141,6 +147,10 @@ module Spec
       puts Spec.color("#{total} examples, #{failures.size} failures, #{errors.size} errors, #{pendings.size} pending", final_status)
       puts Spec.color("Only running `focus: true`", :focus) if Spec.focus?
 
+      if randomizer_seed = Spec.randomizer_seed
+        puts Spec.color("Randomized with seed: #{randomizer_seed}", :order)
+      end
+
       unless failures_and_errors.empty?
         puts
         puts "Failed examples:"
@@ -152,10 +162,10 @@ module Spec
       end
     end
 
-    def describe(description, file, line, end_line, focus, &block)
+    def describe(description, file, line, end_line, focus, tags, &block)
       Spec.focus = true if focus
 
-      context = Spec::NestedContext.new(@@current_context, description, file, line, end_line, focus)
+      context = Spec::ExampleGroup.new(@@current_context, description, file, line, end_line, focus, tags)
       @@current_context.children << context
 
       old_context = @@current_context
@@ -167,19 +177,19 @@ module Spec
       end
     end
 
-    def it(description, file, line, end_line, focus, &block)
-      add_example(description, file, line, end_line, focus, block)
+    def it(description, file, line, end_line, focus, tags, &block)
+      add_example(description, file, line, end_line, focus, tags, block)
     end
 
-    def pending(description, file, line, end_line, focus)
-      add_example(description, file, line, end_line, focus, nil)
+    def pending(description, file, line, end_line, focus, tags)
+      add_example(description, file, line, end_line, focus, tags, nil)
     end
 
-    private def add_example(description, file, line, end_line, focus, block)
+    private def add_example(description, file, line, end_line, focus, tags, block)
       check_nesting_spec(file, line) do
         Spec.focus = true if focus
         @@current_context.children <<
-          Example.new(@@current_context, description, file, line, end_line, focus, block)
+          Example.new(@@current_context, description, file, line, end_line, focus, tags, block)
       end
     end
 
@@ -195,25 +205,203 @@ module Spec
         @@spec_nesting = false
       end
     end
+
+    def before_each(&block)
+      if @@current_context == self
+        raise "Can't call `before_each` outside of a describe/context"
+      end
+
+      @@current_context.before_each(&block)
+    end
+
+    def run_before_each_hooks
+      # Nothing
+    end
+
+    def after_each(&block)
+      if @@current_context == self
+        raise "Can't call `after_each` outside of a describe/context"
+      end
+
+      @@current_context.after_each(&block)
+    end
+
+    def run_after_each_hooks
+      # Nothing
+    end
+
+    def before_all(&block)
+      if @@current_context == self
+        raise "Can't call `before_all` outside of a describe/context"
+      end
+
+      @@current_context.before_all(&block)
+    end
+
+    def after_all(&block)
+      if @@current_context == self
+        raise "Can't call `after_all` outside of a describe/context"
+      end
+
+      @@current_context.after_all(&block)
+    end
+
+    def around_each(&block : Example::Procsy ->)
+      if @@current_context == self
+        raise "Can't call `around_each` outside of a describe/context"
+      end
+
+      @@current_context.around_each(&block)
+    end
+
+    def run_around_each_hooks(procsy : Example::Procsy) : Bool
+      false
+    end
+
+    def around_all(&block : ExampleGroup::Procsy ->)
+      if @@current_context == self
+        raise "Can't call `around_all` outside of a describe/context"
+      end
+
+      @@current_context.around_all(&block)
+    end
+
+    def run_around_all_hooks(procsy : ExampleGroup::Procsy) : Bool
+      false
+    end
   end
 
-  # :nodoc:
-  class NestedContext < Context
+  # Represents a `describe` or `context`.
+  class ExampleGroup < Context
     include Item
 
     def initialize(@parent : Context, @description : String,
                    @file : String, @line : Int32, @end_line : Int32,
-                   @focus : Bool)
+                   @focus : Bool, tags)
+      initialize_tags(tags)
     end
 
+    # :nodoc:
     def run
       Spec.formatters.each(&.push(self))
-      children.each &.run
+
+      ran = run_around_all_hooks(ExampleGroup::Procsy.new(self) { internal_run })
+      ran || internal_run
+
       Spec.formatters.each(&.pop)
     end
 
-    def report(kind, description, file, line, elapsed = nil, ex = nil)
+    protected def internal_run
+      run_before_all_hooks
+      children.each &.run
+      run_after_all_hooks
+    end
+
+    protected def report(kind, description, file, line, elapsed = nil, ex = nil)
       parent.report kind, "#{@description} #{description}", file, line, elapsed, ex
+    end
+
+    protected def before_each(&block)
+      (@before_each ||= [] of ->) << block
+    end
+
+    protected def run_before_each_hooks
+      @parent.run_before_each_hooks
+      @before_each.try &.each &.call
+    end
+
+    protected def after_each(&block)
+      (@after_each ||= [] of ->) << block
+    end
+
+    protected def run_after_each_hooks
+      @after_each.try &.reverse_each &.call
+      @parent.run_after_each_hooks
+    end
+
+    protected def before_all(&block)
+      (@before_all ||= [] of ->) << block
+    end
+
+    protected def run_before_all_hooks
+      @before_all.try &.each &.call
+    end
+
+    protected def after_all(&block)
+      (@after_all ||= [] of ->) << block
+    end
+
+    protected def run_after_all_hooks
+      @after_all.try &.reverse_each &.call
+    end
+
+    protected def around_each(&block : Example::Procsy ->)
+      (@around_each ||= [] of Example::Procsy ->) << block
+    end
+
+    protected def run_around_each_hooks(procsy : Example::Procsy) : Bool
+      ran = @parent.run_around_each_hooks(Example::Procsy.new(procsy.example) do
+        if @around_each
+          # If we have around callbacks we execute them, and it will
+          # eventually run the example
+          internal_run_around_each_hooks(procsy)
+        else
+          # Otherwise we have to run the example now, because the parent
+          # around hooks won't run it
+          procsy.run
+        end
+      end)
+      ran || internal_run_around_each_hooks(procsy)
+    end
+
+    protected def internal_run_around_each_hooks(procsy : Example::Procsy) : Bool
+      around_each = @around_each
+      return false unless around_each
+
+      run_around_each_hook(around_each, procsy, 0)
+      true
+    end
+
+    protected def run_around_each_hook(around_each, procsy, index) : Nil
+      around_each[index].call(
+        if index == around_each.size - 1
+          # If we don't have any more hooks after this one, call the procsy
+          procsy
+        else
+          # Otherwise, create a procsy that will invoke the next hook
+          Example::Procsy.new(procsy.example) do
+            run_around_each_hook(around_each, procsy, index + 1)
+          end
+        end
+      )
+    end
+
+    protected def around_all(&block : ExampleGroup::Procsy ->)
+      (@around_all ||= [] of ExampleGroup::Procsy ->) << block
+    end
+
+    protected def run_around_all_hooks(procsy : ExampleGroup::Procsy) : Bool
+      around_all = @around_all
+      return false unless around_all
+
+      run_around_all_hook(around_all, procsy, 0)
+      true
+    end
+
+    protected def run_around_all_hook(around_all, procsy, index) : Nil
+      around_all[index].call(
+        if index == around_all.size - 1
+          # If we don't have any more hooks after this one, call the procsy
+          procsy
+        else
+          # Otherwise, create a procsy that will invoke the next hook
+          ExampleGroup::Procsy.new(procsy.example_group) do
+            run_around_all_hook(around_all, procsy, index + 1)
+          end
+        end
+      )
     end
   end
 end
+
+require "./example_group/procsy"

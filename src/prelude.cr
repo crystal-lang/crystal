@@ -4,7 +4,7 @@
 # requirement to place these in load order.
 #
 # When adding new files, use alpha-sort when possible. Make sure
-# to also add them to `docs_main.cr` if their content need to
+# to also add them to `docs_main.cr` if their content needs to
 # appear in the API docs.
 
 private macro no_win(stmt)
@@ -38,7 +38,7 @@ require "box"
 require "char"
 require "char/reader"
 require "class"
-no_win require "concurrent"
+require "concurrent"
 require "crystal/compiler_rt"
 require "crystal/main"
 require "deque"
@@ -81,7 +81,7 @@ require "static_array"
 require "struct"
 require "symbol"
 no_win require "system"
-no_win require "thread"
+require "crystal/system/thread"
 require "time"
 require "tuple"
 require "unicode"

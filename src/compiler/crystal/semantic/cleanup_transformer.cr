@@ -57,8 +57,10 @@ module Crystal
   # idea on how to generate code for unreachable branches, because they have no type,
   # and for now the codegen only deals with typed nodes.
   class CleanupTransformer < Transformer
+    @transformed : Set(Def)
+
     def initialize(@program : Program)
-      @transformed = Set(UInt64).new
+      @transformed = Set(Def).new.compare_by_identity
       @def_nest_count = 0
       @last_is_truthy = false
       @last_is_falsey = false
@@ -295,7 +297,7 @@ module Crystal
       # It might happen that a call was made on a module or an abstract class
       # and we don't know the type because there are no including classes or subclasses.
       # In that case, turn this into an untyped expression.
-      if !node.type? && obj && obj_type && (obj_type.module? || obj_type.abstract?)
+      if !node.type? && obj && obj_type && (obj_type.module? || obj_type.abstract? || obj_type.is_a?(GenericType))
         return untyped_expression(node, "`#{node}` has no type")
       end
 
@@ -361,9 +363,7 @@ module Crystal
         end
 
         target_defs.each do |target_def|
-          unless @transformed.includes?(target_def.object_id)
-            @transformed.add(target_def.object_id)
-
+          if @transformed.add?(target_def)
             node.bubbling_exception do
               @def_nest_count += 1
               target_def.body = target_def.body.transform(self)
@@ -711,7 +711,7 @@ module Crystal
 
       if exp_type
         instance_type = exp_type.instance_type.devirtualize
-        if instance_type.struct? || instance_type.module?
+        if instance_type.struct? || instance_type.module? || instance_type.is_a?(UnionType)
           node.exp.raise "instance_sizeof can only be used with a class, but #{instance_type} is a #{instance_type.type_desc}"
         end
       end

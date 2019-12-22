@@ -284,6 +284,11 @@ class HTTP::Client
       response.charset.should eq("UTF-8")
     end
 
+    it "returns content type as nil when empty (#8398)" do
+      response = Response.new(:ok, "", headers: HTTP::Headers{"Content-Type" => ""})
+      response.content_type.should be_nil
+    end
+
     it "returns status_code" do
       response = Response.new(:created)
       response.status_code.should eq 201

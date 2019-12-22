@@ -48,6 +48,21 @@ module GC
     Stats.new(zero, zero, zero, zero, zero)
   end
 
+  def self.prof_stats
+    zero = LibC::ULong.new(0)
+    ProfStats.new(
+      heap_size: zero,
+      free_bytes: zero,
+      unmapped_bytes: zero,
+      bytes_since_gc: zero,
+      bytes_before_gc: zero,
+      non_gc_bytes: zero,
+      gc_no: zero,
+      markers_m1: zero,
+      bytes_reclaimed_since_gc: zero,
+      reclaimed_bytes_before_gc: zero)
+  end
+
   {% unless flag?(:win32) %}
     # :nodoc:
     def self.pthread_create(thread : LibC::PthreadT*, attr : LibC::PthreadAttrT*, start : Void* -> Void*, arg : Void*)
@@ -67,11 +82,9 @@ module GC
     end
   {% end %}
 
-  @@stack_bottom = Pointer(Void).null
-
   # :nodoc:
   def self.current_thread_stack_bottom
-    {Pointer(Void).null, @@stack_bottom}
+    {Pointer(Void).null, Pointer(Void).null}
   end
 
   # :nodoc:

@@ -136,6 +136,23 @@ describe "Int" do
     end
   end
 
+  describe "gcd" do
+    it { 14.gcd(0).should eq(14) }
+    it { 14.gcd(1).should eq(1) }
+    it { 10.gcd(75).should eq(5) }
+    it { 10.gcd(-75).should eq(5) }
+    it { -10.gcd(75).should eq(5) }
+
+    it { 7.gcd(5).should eq(1) }   # prime
+    it { 14.gcd(25).should eq(1) } # coprime
+    it { 24.gcd(40).should eq(8) } # common divisor
+
+    it "doesn't silently overflow" { 614_889_782_588_491_410_i64.gcd(53).should eq(1) }
+    it "raises on too big result to fit in result type" do
+      expect_raises(OverflowError, "Arithmetic overflow") { Int64::MIN.gcd(1) }
+    end
+  end
+
   describe "lcm" do
     it { 2.lcm(2).should eq(2) }
     it { 3.lcm(-7).should eq(21) }
@@ -250,6 +267,39 @@ describe "Int" do
     it { Int64::MAX.bit(63).should eq(0) }
     it { UInt64::MAX.bit(63).should eq(1) }
     it { UInt64::MAX.bit(64).should eq(0) }
+  end
+
+  describe "#bits" do
+    # Basic usage
+    it { 0b10011.bits(0..0).should eq(0b1) }
+    it { 0b10011.bits(0..1).should eq(0b11) }
+    it { 0b10011.bits(0..2).should eq(0b11) }
+    it { 0b10011.bits(0..3).should eq(0b11) }
+    it { 0b10011.bits(0..4).should eq(0b10011) }
+    it { 0b10011.bits(0..5).should eq(0b10011) }
+    it { 0b10011.bits(1..5).should eq(0b1001) }
+
+    # no range start indicated
+    it { 0b10011.bits(..1).should eq(0b11) }
+    it { 0b10011.bits(..2).should eq(0b11) }
+    it { 0b10011.bits(..3).should eq(0b11) }
+    it { 0b10011.bits(..4).should eq(0b10011) }
+
+    # Check against limits
+    it { 0b10011_u8.bits(0..16).should eq(0b10011_u8) }
+    it { 0b10011_u8.bits(1..16).should eq(0b1001_u8) }
+
+    # Will work with signed values
+    it { -5_i8.bits(0..16).should eq(-5_i8) }
+    it { -5_i8.bits(1..16).should eq(-3_i8) }
+    it { -5_i8.bits(2..16).should eq(-2_i8) }
+    it { -5_i8.bits(3..16).should eq(-1_i8) }
+
+    it "raises when invalid indexes are provided" do
+      expect_raises(IndexError) { 0b10011.bits(0..-1) }
+      expect_raises(IndexError) { 0b10011.bits(-1..3) }
+      expect_raises(IndexError) { 0b10011.bits(4..2) }
+    end
   end
 
   describe "divmod" do
@@ -509,12 +559,24 @@ describe "Int" do
     (-13 % -4).should eq(-1)
   end
 
+  it "returns 0 when doing IntN::MIN % -1 (#8306)" do
+    {% for n in [8, 16, 32, 64] %}
+      (Int{{n}}::MIN % -1_i{{n}}).should eq(0)
+    {% end %}
+  end
+
   it "does remainder" do
     7.remainder(5).should eq(2)
     -7.remainder(5).should eq(-2)
 
     13.remainder(-4).should eq(1)
     -13.remainder(-4).should eq(-1)
+  end
+
+  it "returns 0 when doing IntN::MIN.remainder(-1) (#8306)" do
+    {% for n in [8, 16, 32, 64] %}
+      (Int{{n}}::MIN.remainder(-1_i{{n}})).should eq(0)
+    {% end %}
   end
 
   it "does upto" do

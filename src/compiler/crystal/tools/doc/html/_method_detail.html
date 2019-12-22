@@ -1,5 +1,8 @@
 <% unless methods.empty? %>
-  <h2><%= title %></h2>
+  <h2>
+    <%= Crystal::Doc.anchor_link(title) %>
+    <%= title %>
+  </h2>
   <% methods.each do |method| %>
     <div class="entry-detail" id="<%= method.html_id %>">
       <div class="signature">

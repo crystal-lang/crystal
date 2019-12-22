@@ -257,11 +257,12 @@ class Object
     pointerof(x).as(T*).value
   end
 
-  {% for prefixes in { {"", "", "@"}, {"class_", "self.", "@@"} } %}
+  {% for prefixes in { {"", "", "@", "#"}, {"class_", "self.", "@@", "."} } %}
     {%
       macro_prefix = prefixes[0].id
       method_prefix = prefixes[1].id
       var_prefix = prefixes[2].id
+      doc_prefix = prefixes[3].id
     %}
 
     # Defines getter methods for each of the given arguments.
@@ -487,16 +488,31 @@ class Object
       \{% for name in names %}
         \{% if name.is_a?(TypeDeclaration) %}
           {{var_prefix}}\{{name}}?
-          \{% name = name.var %}
+
+          def {{method_prefix}}\{{name.var.id}}? : \{{name.type}}?
+            {{var_prefix}}\{{name.var.id}}
+          end
+
+          def {{method_prefix}}\{{name.var.id}} : \{{name.type}}
+            if (value = {{var_prefix}}\{{name.var.id}}).nil?
+              ::raise NilAssertionError.new("\{{@type}}\{{"{{doc_prefix}}".id}}\{{name.var.id}} cannot be nil")
+            else
+              value
+            end
+          end
+        \{% else %}
+          def {{method_prefix}}\{{name.id}}?
+            {{var_prefix}}\{{name.id}}
+          end
+
+          def {{method_prefix}}\{{name.id}}
+            if (value = {{var_prefix}}\{{name.id}}).nil?
+              ::raise NilAssertionError.new("\{{@type}}\{{"{{doc_prefix}}".id}}\{{name.id}} cannot be nil")
+            else
+              value
+            end
+          end
         \{% end %}
-
-        def {{method_prefix}}\{{name.id}}?
-          {{var_prefix}}\{{name.id}}
-        end
-
-        def {{method_prefix}}\{{name.id}}
-          {{var_prefix}}\{{name.id}}.not_nil!
-        end
       \{% end %}
     end
 
@@ -604,7 +620,7 @@ class Object
         \{% if name.is_a?(TypeDeclaration) %}
           {{var_prefix}}\{{name.var.id}} : \{{name.type}}?
 
-          def {{method_prefix}}\{{name.var.id}}?
+          def {{method_prefix}}\{{name.var.id}}? : \{{name.type}}?
             if (value = {{var_prefix}}\{{name.var.id}}).nil?
               {{var_prefix}}\{{name.var.id}} = \{{yield}}
             else
@@ -888,7 +904,7 @@ class Object
         \{% if name.is_a?(TypeDeclaration) %}
           {{var_prefix}}\{{name.var.id}} : \{{name.type}}?
 
-          def {{method_prefix}}\{{name.var.id}}
+          def {{method_prefix}}\{{name.var.id}} : \{{name.type}}?
             if (value = {{var_prefix}}\{{name.var.id}}).nil?
               {{var_prefix}}\{{name.var.id}} = \{{yield}}
             else

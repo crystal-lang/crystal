@@ -223,6 +223,20 @@ module HTTP
       end
     end
 
+    it "tests write_timeout" do
+      # Here we don't want to write a response on the server side because
+      # it doesn't make sense to try to write because the client will already
+      # timeout on read. Writing a response could lead on an exception in
+      # the server if the socket is closed.
+      test_server("localhost", 0, 0, write_response: false) do |server|
+        client = Client.new("localhost", server.local_address.port)
+        expect_raises(IO::Timeout, "Write timed out") do
+          client.write_timeout = 0.001
+          client.post("/", body: "a" * 5_000_000)
+        end
+      end
+    end
+
     it "tests connect_timeout" do
       test_server("localhost", 0, 0) do |server|
         client = Client.new("localhost", server.local_address.port)

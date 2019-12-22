@@ -752,12 +752,13 @@ class String
     self[*Indexable.range_to_index_and_count(range, size)]
   end
 
-  # Like `#[Range(Int, Int)]`, but returns `nil` if the range's start is out of range.
+  # Like `#[Range]`, but returns `nil` if the range's start is out of range.
   #
   # ```
   # "hello"[6..7]? # => nil
+  # "hello"[6..]?  # => nil
   # ```
-  def []?(range : Range(Int, Int))
+  def []?(range : Range)
     self[*Indexable.range_to_index_and_count(range, size)]?
   end
 
@@ -907,6 +908,7 @@ class String
     byte_slice start, bytesize - start
   end
 
+  @[Deprecated("Use .char_at(index).ord instead")]
   def codepoint_at(index)
     char_at(index).ord
   end
@@ -2402,6 +2404,25 @@ class String
     true
   end
 
+  # Returns `self` unless `#blank?` is `true` in which case it returns `nil`.
+  #
+  # ```
+  # "a".presence         # => "a"
+  # "".presence          # => nil
+  # "   ".presence       # => nil
+  # "    a    ".presence # => "    a    "
+  # nil.presence         # => nil
+  #
+  # config = {"empty" => ""}
+  # config["empty"]?.presence || "default"   # => "default"
+  # config["missing"]?.presence || "default" # => "default"
+  # ```
+  #
+  # See also: `Nil#presence`.
+  def presence : self?
+    self if !blank?
+  end
+
   def ==(other : self)
     return true if same?(other)
     return false unless bytesize == other.bytesize
@@ -3596,7 +3617,7 @@ class String
   # "Aubergine".ljust(8)   # => "Aubergine"
   # ```
   def ljust(len, char : Char = ' ')
-    just len, char, true
+    just len, char, -1
   end
 
   # Adds instances of *char* to left of the string until it is at least size of *len*.
@@ -3607,37 +3628,61 @@ class String
   # "Aubergine".rjust(8)   # => "Aubergine"
   # ```
   def rjust(len, char : Char = ' ')
-    just len, char, false
+    just len, char, 1
   end
 
-  private def just(len, char, left)
+  # Adds instances of *char* to left ond right of the string until it is at least size of *len*.
+  #
+  # ```
+  # "Purple".center(8)      # => " Purple "
+  # "Purple".center(8, '-') # => "-Purple-"
+  # "Purple".center(9, '-') # => "-Purple--"
+  # "Aubergine".center(8)   # => "Aubergine"
+  # ```
+  def center(len, char : Char = ' ')
+    just len, char, 0
+  end
+
+  private def just(len, char, justify)
     return self if size >= len
 
     bytes, count = String.char_bytes_and_bytesize(char)
-
-    difference = len - size
-    new_bytesize = bytesize + difference * count
+    padding = (len - size)
+    new_bytesize = bytesize + padding * count
+    case justify
+    when .< 0
+      leftpadding, rightpadding = 0, padding
+    when .> 0
+      leftpadding, rightpadding = padding, 0
+    else
+      leftpadding = padding // 2
+      rightpadding = padding - leftpadding
+    end
 
     String.new(new_bytesize) do |buffer|
-      if left
-        buffer.copy_from(to_unsafe, bytesize)
-        buffer += bytesize
-      end
-
-      if count == 1
-        Intrinsics.memset(buffer.as(Void*), char.ord.to_u8, difference.to_u32, false)
-        buffer += difference
-      else
-        difference.times do
-          buffer.copy_from(bytes.to_unsafe, count)
-          buffer += count
+      if leftpadding > 0
+        if count == 1
+          Intrinsics.memset(buffer.as(Void*), char.ord.to_u8, leftpadding.to_u32, false)
+          buffer += leftpadding
+        else
+          leftpadding.times do
+            buffer.copy_from(bytes.to_unsafe, count)
+            buffer += count
+          end
         end
       end
-
-      unless left
-        buffer.copy_from(to_unsafe, bytesize)
+      buffer.copy_from(to_unsafe, bytesize)
+      buffer += bytesize
+      if rightpadding > 0
+        if count == 1
+          Intrinsics.memset(buffer.as(Void*), char.ord.to_u8, rightpadding.to_u32, false)
+        else
+          rightpadding.times do
+            buffer.copy_from(bytes.to_unsafe, count)
+            buffer += count
+          end
+        end
       end
-
       {new_bytesize, len}
     end
   end
@@ -3805,11 +3850,13 @@ class String
   # end
   # array # => [{'a', 0}, {'b', 1}, {'☃', 2}]
   # ```
-  def each_char_with_index
-    i = 0
+  #
+  # Accepts an optional *offset* parameter, which tells it to start counting
+  # from there.
+  def each_char_with_index(offset = 0)
     each_char do |char|
-      yield char, i
-      i += 1
+      yield char, offset
+      offset += 1
     end
   end
 
@@ -4405,6 +4452,134 @@ class String
       end
 
       value
+    end
+  end
+
+  # Implementation of string interpolation of a single string.
+  #
+  # For example, this code will end up invoking this method:
+  #
+  # ```
+  # value = "hello"
+  # "#{value}" # same as String.interpolation(value)
+  # ```
+  #
+  # In this case the implementation just returns the same string.
+  #
+  # NOTE: there should never be a need to call this method instead of using string interpolation.
+  def self.interpolation(value : String)
+    value
+  end
+
+  # Implementation of string interpolation of a single non-string value.
+  #
+  # For example, this code will end up invoking this method:
+  #
+  # ```
+  # value = 123
+  # "#{value}" # same as String.interpolation(value)
+  # ```
+  #
+  # In this case the implementation just returns the result of calling `value.to_s`.
+  #
+  # NOTE: there should never be a need to call this method instead of using string interpolation.
+  def self.interpolation(value)
+    value.to_s
+  end
+
+  # Implementation of string interpolation of a string and a char.
+  #
+  # For example, this code will end up invoking this method:
+  #
+  # ```
+  # char = '!'
+  # "hello#{char}" # same as String.interpolation("hello", char)
+  # ```
+  #
+  # In this case the implementation just does `value + char`.
+  #
+  # NOTE: there should never be a need to call this method instead of using string interpolation.
+  def self.interpolation(value : String, char : Char)
+    value + char
+  end
+
+  # Implementation of string interpolation of a char and a string.
+  #
+  # For example, this code will end up invoking this method:
+  #
+  # ```
+  # char = '!'
+  # "#{char}hello" # same as String.interpolation(char, "hello")
+  # ```
+  #
+  # In this case the implementation just does `char + value`.
+  #
+  # NOTE: there should never be a need to call this method instead of using string interpolation.
+  def self.interpolation(char : Char, value : String)
+    char + value
+  end
+
+  # Implementation of string interpolation of multiple string values.
+  #
+  # For example, this code will end up invoking this method:
+  #
+  # ```
+  # value1 = "hello"
+  # value2 = "world"
+  # "#{value1} #{value2}!" # same as String.interpolation(value1, " ", value2, "!")
+  # ```
+  #
+  # In this case the implementation can pre-compute the needed string bytesize and so
+  # it's a bit more performant than interpolating non-string values.
+  #
+  # NOTE: there should never be a need to call this method instead of using string interpolation.
+  def self.interpolation(*values : String)
+    bytesize = values.sum(&.bytesize)
+    size = if values.all?(&.size_known?)
+             values.sum(&.size)
+           else
+             0
+           end
+    String.new(bytesize) do |buffer|
+      values.each do |value|
+        buffer.copy_from(value.to_unsafe, value.bytesize)
+        buffer += value.bytesize
+      end
+      {bytesize, size}
+    end
+  end
+
+  # Implementation of string interpolation of multiple, possibly non-string values.
+  #
+  # For example, this code will end up invoking this method:
+  #
+  # ```
+  # value1 = "hello"
+  # value2 = 123
+  # "#{value1} #{value2}!" # same as String.interpolation(value1, " ", value2, "!")
+  # ```
+  #
+  # In this case the implementation will call `String.build` with the given values.
+  #
+  # NOTE: there should never be a need to call this method instead of using string interpolation.
+  def self.interpolation(*values : *T) forall T
+    capacity = 0
+    {% for i in 0...T.size %}
+      value{{i}} = values[{{i}}]
+      if value{{i}}.is_a?(String)
+        capacity += value{{i}}.bytesize
+      else
+        capacity += 15
+      end
+    {% end %}
+    String.build(capacity) do |io|
+      {% for i in 0...T.size %}
+        if value{{i}}.is_a?(String)
+          io.write(value{{i}}.to_slice)
+        else
+          io << value{{i}}
+        end
+      {% end %}
     end
   end
 end

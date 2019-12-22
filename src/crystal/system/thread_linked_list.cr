@@ -1,4 +1,4 @@
-require "thread/mutex"
+require "./thread_mutex"
 
 # :nodoc:
 class Thread

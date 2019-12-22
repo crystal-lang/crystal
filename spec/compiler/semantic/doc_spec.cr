@@ -62,6 +62,19 @@ describe "Semantic: doc" do
     bar.doc.should eq("Hello")
   end
 
+  it "stores doc for const when using ditto" do
+    result = semantic %(
+      # A number
+      ONE = 1
+
+      # :ditto:
+      TWO = 2
+    ), wants_doc: true
+    program = result.program
+    program.types["ONE"].doc.should eq "A number"
+    program.types["TWO"].doc.should eq "A number"
+  end
+
   it "stores doc for def when using ditto" do
     result = semantic %(
       class Foo
@@ -367,5 +380,23 @@ describe "Semantic: doc" do
     program = result.program
     foo = program.types["Foo"]
     foo.locations.not_nil!.size.should eq(1)
+  end
+
+  it "attaches doc in double macro expansion (#8463)" do
+    result = semantic %(
+      macro cls(nr)
+        class MyClass{{nr}} end
+      end
+
+      macro cls2(nr)
+        cls({{nr}})
+      end
+
+      # Some description
+      cls2(1)
+    ), wants_doc: true
+    program = result.program
+    type = program.types["MyClass1"]
+    type.doc.should eq("Some description")
   end
 end

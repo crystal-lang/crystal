@@ -753,6 +753,8 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
 
     const = Const.new(@program, scope, name, value)
     const.private = true if target.visibility.private?
+
+    check_ditto node
     attach_doc const, node
 
     scope.types[name] = const
@@ -936,7 +938,8 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
   end
 
   def visit(node : Block)
-    old_vars_keys = @vars.keys
+    # Remember how many local vars we had before the block
+    old_vars_size = @vars.size
 
     # When accepting a block, declare variables for block arguments.
     # These are needed for macro expansions to parser identifiers
@@ -947,9 +950,10 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
 
     node.body.accept self
 
-    # Now remove these vars, but only if they weren't vars before
-    node.args.each do |arg|
-      @vars.delete(arg.name) unless old_vars_keys.includes?(arg.name)
+    # After the block we should have the same number of local vars
+    # (blocks can't declare inject local vars to the outer scope)
+    while @vars.size > old_vars_size
+      @vars.delete(@vars.last_key)
     end
 
     false

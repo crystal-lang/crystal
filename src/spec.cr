@@ -51,7 +51,7 @@ require "./spec/dsl"
 # and run the specs of a project by running `crystal spec`.
 #
 # ```console
-# # Run  all specs in files matching spec/**/*_spec.cr
+# # Run all specs in files matching spec/**/*_spec.cr
 # crystal spec
 #
 # # Run all specs in files matching spec/my/test/**/*_spec.cr
@@ -62,6 +62,12 @@ require "./spec/dsl"
 #
 # # Run the spec or group defined in line 14 of spec/my/test/file_spec.cr
 # crystal spec spec/my/test/file_spec.cr:14
+#
+# # Run all specs tagged with "fast"
+# crystal spec --tag 'fast'
+#
+# # Run all specs not tagged with "slow"
+# crystal spec --tag '~slow'
 # ```
 #
 # ## Focusing on a group of specs
@@ -75,8 +81,19 @@ require "./spec/dsl"
 # ```
 #
 # If any such thing is marked with `focus: true` then only those examples will run.
+#
+# ## Randomizing order of specs
+#
+# Specs, by default, run in the order defined, but can be run in a random order
+# by passing `--order random` to `crystal spec`.
+#
+# Specs run in random order will display a seed value upon completion. This seed
+# value can be used to rerun the specs in that same order by passing the seed
+# value to `--order`.
 module Spec
 end
+
+Colorize.on_tty_only!
 
 OptionParser.parse do |opts|
   opts.banner = "crystal spec runner"
@@ -98,6 +115,18 @@ OptionParser.parse do |opts|
     else
       STDERR.puts "location #{location} must be file:line"
       exit 1
+    end
+  end
+  opts.on("--tag TAG", "run examples with the specified TAG, or exclude examples by adding ~ before the TAG.") do |tag|
+    Spec.add_tag tag
+  end
+  opts.on("--order MODE", "run examples in random order by passing MODE as 'random' or to a specific seed by passing MODE as the seed value") do |mode|
+    if mode == "default" || mode == "random"
+      Spec.order = mode
+    elsif seed = mode.to_u64?
+      Spec.order = seed
+    else
+      abort("order must be either 'default', 'random', or a numeric seed value")
     end
   end
   opts.on("--junit_output OUTPUT_DIR", "generate JUnit XML output") do |output_dir|

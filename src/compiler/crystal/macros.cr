@@ -393,7 +393,7 @@ module Crystal::Macros
     end
 
     # Similar to `String#camelcase`.
-    def camelcase : StringLiteral
+    def camelcase(*, lower : BoolLiteral = false) : StringLiteral
     end
 
     # Similar to `String#capitalize`.
@@ -622,6 +622,10 @@ module Crystal::Macros
     def map(&block) : ArrayLiteral
     end
 
+    # Similar to `Enumerable#map_with_index`
+    def map_with_index(&block) : ArrayLiteral
+    end
+
     # Similar to `Enumerable#select`
     def select(&block) : ArrayLiteral
     end
@@ -632,6 +636,10 @@ module Crystal::Macros
 
     # Similar to `Enumerable#reduce`
     def reduce(&block) : ASTNode
+    end
+
+    # Similar to `Enumerable#reduce`
+    def reduce(memo : ASTNode, &block) : ASTNode
     end
 
     # Similar to `Array#shuffle`
@@ -832,7 +840,7 @@ module Crystal::Macros
 
   # A tuple literal.
   #
-  # It's macro methods are the same as `ArrayLiteral`
+  # Its macro methods are nearly the same as `ArrayLiteral`.
   class TupleLiteral < ASTNode
   end
 
@@ -1730,6 +1738,10 @@ module Crystal::Macros
     def instance_vars : ArrayLiteral(MetaVar)
     end
 
+    # Returns the class variables of this type.
+    def class_vars : ArrayLiteral(MetaVar)
+    end
+
     # Returns all ancestors of this type.
     def ancestors : ArrayLiteral(TypeNode)
     end
@@ -1740,6 +1752,10 @@ module Crystal::Macros
 
     # Returns the direct subclasses of this type.
     def subclasses : ArrayLiteral(TypeNode)
+    end
+
+    # Returns all the types `self` is directly included in.
+    def includers : ArrayLiteral(TypeNode)
     end
 
     # Returns all subclasses of this type.

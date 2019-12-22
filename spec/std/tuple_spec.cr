@@ -213,6 +213,12 @@ describe "Tuple" do
     tuple2.should eq({1, 2, 4, 5})
   end
 
+  it "does map_with_index, with offset" do
+    tuple = {1, 1, 2, 2}
+    tuple2 = tuple.map_with_index(10) { |e, i| e + i }
+    tuple2.should eq({11, 12, 14, 15})
+  end
+
   it "does reverse" do
     {1, 2.5, "a", 'c'}.reverse.should eq({'c', "a", 2.5, 1})
   end
@@ -292,5 +298,14 @@ describe "Tuple" do
     ({1, 2, 3} === {1, 2}).should be_false
     ({/o+/, "bar"} === {"fox", "bar"}).should be_true
     ({1, 2} === nil).should be_false
+  end
+
+  it "does to_a" do
+    ary = {1, 'a', true}.to_a
+    ary.should eq([1, 'a', true])
+    ary.size.should eq(3)
+
+    ary = Tuple.new.to_a
+    ary.size.should eq(0)
   end
 end

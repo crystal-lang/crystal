@@ -188,6 +188,15 @@ describe "String" do
       "hello"[1, 3]?.should eq("ell")
       "hello"[6, 3]?.should be_nil
     end
+
+    it "gets with range without end" do
+      "hello"[1..nil]?.should eq("ello")
+      "hello"[6..nil]?.should be_nil
+    end
+
+    it "gets with range without beginning" do
+      "hello"[nil..2]?.should eq("hel")
+    end
   end
 
   describe "byte_slice" do
@@ -728,6 +737,12 @@ describe "String" do
     it { " \t\n".blank?.should be_true }
     it { "\u{1680}\u{2029}".blank?.should be_true }
     it { "hello".blank?.should be_false }
+  end
+
+  describe "presence" do
+    it { " \t\n".presence.should be_nil }
+    it { "\u{1680}\u{2029}".presence.should be_nil }
+    it { "hello".presence.should eq("hello") }
   end
 
   describe "index" do
@@ -1969,6 +1984,13 @@ describe "String" do
     it { "12".rjust(7, 'あ').should eq("あああああ12") }
   end
 
+  describe "center" do
+    it { "123".center(2).should eq("123") }
+    it { "123".center(5).should eq(" 123 ") }
+    it { "12".center(7, '-').should eq("--12---") }
+    it { "12".center(7, 'あ').should eq("ああ12あああ") }
+  end
+
   describe "succ" do
     it "returns an empty string for empty strings" do
       "".succ.should eq("")
@@ -2043,6 +2065,24 @@ describe "String" do
       i += 1
     end.should be_nil
     i.should eq(3)
+  end
+
+  it "does each_char_with_index" do
+    s = "abc"
+    values = [] of {Char, Int32}
+    s.each_char_with_index do |c, i|
+      values << {c, i}
+    end
+    values.should eq([{'a', 0}, {'b', 1}, {'c', 2}])
+  end
+
+  it "does each_char_with_index, with offset" do
+    s = "abc"
+    values = [] of {Char, Int32}
+    s.each_char_with_index(10) do |c, i|
+      values << {c, i}
+    end
+    values.should eq([{'a', 10}, {'b', 11}, {'c', 12}])
   end
 
   it "gets each_char iterator" do
@@ -2348,22 +2388,22 @@ describe "String" do
 
     it "raises if illegal byte sequence" do
       expect_raises ArgumentError, "Invalid multibyte sequence" do
-        "ñ".encode("GB2312")
+        "\xff".encode("EUC-JP")
       end
     end
 
     it "doesn't raise on invalid byte sequence" do
-      "好ñ是".encode("GB2312", invalid: :skip).to_a.should eq([186, 195, 202, 199])
+      "好\xff是".encode("EUC-JP", invalid: :skip).to_a.should eq([185, 165, 192, 167])
     end
 
     it "raises if incomplete byte sequence" do
       expect_raises ArgumentError, "Incomplete multibyte sequence" do
-        "好".byte_slice(0, 1).encode("GB2312")
+        "好".byte_slice(0, 1).encode("EUC-JP")
       end
     end
 
     it "doesn't raise if incomplete byte sequence" do
-      ("好".byte_slice(0, 1) + "是").encode("GB2312", invalid: :skip).to_a.should eq([202, 199])
+      ("好".byte_slice(0, 1) + "是").encode("EUC-JP", invalid: :skip).to_a.should eq([192, 167])
     end
 
     it "decodes" do
@@ -2372,8 +2412,8 @@ describe "String" do
     end
 
     it "decodes with skip" do
-      bytes = Bytes[186, 195, 140, 202, 199]
-      String.new(bytes, "GB2312", invalid: :skip).should eq("好是")
+      bytes = Bytes[186, 195, 255, 202, 199]
+      String.new(bytes, "EUC-JP", invalid: :skip).should eq("挫頁")
     end
   end
 
@@ -2485,6 +2525,34 @@ describe "String" do
       string.scrub("?").should eq("?a?a")
 
       "hello".scrub.should eq("hello")
+    end
+  end
+
+  describe "interpolation" do
+    it "of a single string" do
+      string = "hello"
+      interpolated = String.interpolation(string)
+      interpolated.should be(string)
+    end
+
+    it "of a single non-string" do
+      String.interpolation(123).should eq("123")
+    end
+
+    it "of string and char" do
+      String.interpolation("hello", '!').should eq("hello!")
+    end
+
+    it "of char and string" do
+      String.interpolation('!', "hello").should eq("!hello")
+    end
+
+    it "of multiple strings" do
+      String.interpolation("a", "bcd", "ef").should eq("abcdef")
+    end
+
+    it "of multiple possibly non-strings" do
+      String.interpolation("a", 123, "b", 456, "cde").should eq("a123b456cde")
     end
   end
 end

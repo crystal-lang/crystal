@@ -80,7 +80,7 @@ struct Time::Format
       end
     end
 
-    # comment or folding white space
+    # comment or folding whitespace
     def cfws?
       in_comment = false
       seen_whitespace = false

@@ -1,15 +1,13 @@
 module Crystal
-  def self.relative_filename(filename : String) : String
+  def self.relative_filename(filename)
+    return filename unless filename.is_a?(String)
+
     if base_file = filename.lchop? Dir.current
       if file_prefix = base_file.lchop? '/'
         return file_prefix
       end
       return base_file
     end
-    filename
-  end
-
-  def self.relative_filename(filename)
     filename
   end
 

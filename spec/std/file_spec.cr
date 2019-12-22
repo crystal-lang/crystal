@@ -582,26 +582,26 @@ describe "File" do
     end
 
     it "converts a pathname to an absolute pathname, using ~ (home) as base" do
-      File.expand_path("~/").should eq(File.join(home, ""))
-      File.expand_path("~/..badfilename").should eq(File.join(home, "..badfilename"))
-      File.expand_path("..").should eq("/#{base.split('/')[0...-1].join('/')}".gsub(%r{\A//}, "/"))
-      File.expand_path("~/a", "~/b").should eq(File.join(home, "a"))
-      File.expand_path("~").should eq(home)
-      File.expand_path("~", "/tmp/gumby/ddd").should eq(home)
-      File.expand_path("~/a", "/tmp/gumby/ddd").should eq(File.join([home, "a"]))
+      File.expand_path("~/", home: true).should eq(File.join(home, ""))
+      File.expand_path("~/..badfilename", home: true).should eq(File.join(home, "..badfilename"))
+      File.expand_path("..", home: true).should eq("/#{base.split('/')[0...-1].join('/')}".gsub(%r{\A//}, "/"))
+      File.expand_path("~/a", "~/b", home: true).should eq(File.join(home, "a"))
+      File.expand_path("~", home: true).should eq(home)
+      File.expand_path("~", "/tmp/gumby/ddd", home: true).should eq(home)
+      File.expand_path("~/a", "/tmp/gumby/ddd", home: true).should eq(File.join([home, "a"]))
     end
 
     it "converts a pathname to an absolute pathname, using ~ (home) as base (trailing /)" do
       prev_home = home
       begin
         ENV["HOME"] = File.expand_path(datapath)
-        File.expand_path("~/").should eq(File.join(home, ""))
-        File.expand_path("~/..badfilename").should eq(File.join(home, "..badfilename"))
-        File.expand_path("..").should eq("/#{base.split('/')[0...-1].join('/')}".gsub(%r{\A//}, "/"))
-        File.expand_path("~/a", "~/b").should eq(File.join(home, "a"))
-        File.expand_path("~").should eq(home)
-        File.expand_path("~", "/tmp/gumby/ddd").should eq(home)
-        File.expand_path("~/a", "/tmp/gumby/ddd").should eq(File.join([home, "a"]))
+        File.expand_path("~/", home: true).should eq(File.join(home, ""))
+        File.expand_path("~/..badfilename", home: true).should eq(File.join(home, "..badfilename"))
+        File.expand_path("..", home: true).should eq("/#{base.split('/')[0...-1].join('/')}".gsub(%r{\A//}, "/"))
+        File.expand_path("~/a", "~/b", home: true).should eq(File.join(home, "a"))
+        File.expand_path("~", home: true).should eq(home)
+        File.expand_path("~", "/tmp/gumby/ddd", home: true).should eq(home)
+        File.expand_path("~/a", "/tmp/gumby/ddd", home: true).should eq(File.join([home, "a"]))
       ensure
         ENV["HOME"] = prev_home
       end
@@ -611,13 +611,13 @@ describe "File" do
       prev_home = home
       begin
         ENV["HOME"] = "/"
-        File.expand_path("~/").should eq(home)
-        File.expand_path("~/..badfilename").should eq(File.join(home, "..badfilename"))
-        File.expand_path("..").should eq("/#{base.split('/')[0...-1].join('/')}".gsub(/\A\/\//, "/"))
-        File.expand_path("~/a", "~/b").should eq(File.join(home, "a"))
-        File.expand_path("~").should eq(home)
-        File.expand_path("~", "/tmp/gumby/ddd").should eq(home)
-        File.expand_path("~/a", "/tmp/gumby/ddd").should eq(File.join([home, "a"]))
+        File.expand_path("~/", home: true).should eq(home)
+        File.expand_path("~/..badfilename", home: true).should eq(File.join(home, "..badfilename"))
+        File.expand_path("..", home: true).should eq("/#{base.split('/')[0...-1].join('/')}".gsub(/\A\/\//, "/"))
+        File.expand_path("~/a", "~/b", home: true).should eq(File.join(home, "a"))
+        File.expand_path("~", home: true).should eq(home)
+        File.expand_path("~", "/tmp/gumby/ddd", home: true).should eq(home)
+        File.expand_path("~/a", "/tmp/gumby/ddd", home: true).should eq(File.join([home, "a"]))
       ensure
         ENV["HOME"] = prev_home
       end
@@ -1161,7 +1161,7 @@ describe "File" do
   end
 
   describe "touch" do
-    it "creates file if it doesn't exists" do
+    it "creates file if it doesn't exist" do
       with_tempfile("touch-create.txt") do |path|
         File.exists?(path).should be_false
         File.touch(path)

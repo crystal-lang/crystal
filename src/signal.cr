@@ -147,7 +147,7 @@ module Crystal::Signal
   @@pipe = IO.pipe(read_blocking: false, write_blocking: true)
   @@handlers = {} of ::Signal => Handler
   @@child_handler : Handler?
-  @@mutex = Mutex.new
+  @@mutex = Mutex.new(:unchecked)
 
   def self.trap(signal, handler) : Nil
     @@mutex.synchronize do
@@ -242,7 +242,9 @@ module Crystal::Signal
       LibC.signal(signal, LibC::SIG_DFL) if signal.set?
     end
   ensure
-    @@pipe.each(&.close)
+    {% unless flag?(:preview_mt) %}
+      @@pipe.each(&.close)
+    {% end %}
   end
 
   private def self.reader
@@ -270,7 +272,7 @@ module Crystal::SignalChildHandler
 
   @@pending = {} of LibC::PidT => Int32
   @@waiting = {} of LibC::PidT => Channel(Int32)
-  @@mutex = Mutex.new
+  @@mutex = Mutex.new(:unchecked)
 
   def self.wait(pid : LibC::PidT) : Channel(Int32)
     channel = Channel(Int32).new(1)

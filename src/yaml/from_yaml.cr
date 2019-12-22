@@ -1,4 +1,4 @@
-def Object.from_yaml(string_or_io : String | IO) : self
+def Object.from_yaml(string_or_io : String | IO)
   new(YAML::ParseContext.new, parse_yaml(string_or_io))
 end
 
@@ -287,6 +287,22 @@ module Time::EpochMillisConverter
     end
 
     Time.unix_ms(node.value.to_i64)
+  end
+end
+
+module YAML::ArrayConverter(Converter)
+  def self.from_yaml(ctx : YAML::ParseContext, node : YAML::Nodes::Node) : Array
+    unless node.is_a?(YAML::Nodes::Sequence)
+      node.raise "Expected sequence, not #{node.class}"
+    end
+
+    ary = Array(typeof(Converter.from_yaml(ctx, node))).new
+
+    node.each do |value|
+      ary << Converter.from_yaml(ctx, value)
+    end
+
+    ary
   end
 end
 

@@ -298,7 +298,7 @@ class Crystal::Call
           uniq_arg_names = uniq_arg_names.size == 1 ? uniq_arg_names.first : nil
           unless missing.empty?
             msg << "\nCouldn't find overloads for these types:"
-            missing.each_with_index do |missing_types|
+            missing.each do |missing_types|
               if uniq_arg_names
                 signature_names = missing_types.map_with_index do |missing_type, i|
                   if i >= arg_types.size && (named_arg = named_args_types.try &.[i - arg_types.size]?)
@@ -459,7 +459,7 @@ class Crystal::Call
       str << '*' if a_def.splat_index == i
 
       if arg.external_name != arg.name
-        str << (arg.external_name.empty? ? '_' : arg.external_name)
+        str << (arg.external_name.presence || '_')
         str << ' '
       end
 
@@ -629,7 +629,7 @@ class Crystal::Call
       scope_type = scope.instance_type
       owner_type = match.def.owner.instance_type
 
-      unless scope_type.has_protected_acces_to?(owner_type)
+      unless scope_type.has_protected_access_to?(owner_type)
         raise "protected method '#{match.def.name}' called for #{match.def.owner}"
       end
     end
@@ -638,14 +638,14 @@ class Crystal::Call
   def check_recursive_splat_call(a_def, args)
     if a_def.splat_index
       current_splat_type = args.values.last.type
-      if previous_splat_type = program.splat_expansions[a_def.object_id]?
+      if previous_splat_type = program.splat_expansions[a_def]?
         if current_splat_type.has_in_type_vars?(previous_splat_type)
           raise "recursive splat expansion: #{previous_splat_type}, #{current_splat_type}, ..."
         end
       end
-      program.splat_expansions[a_def.object_id] = current_splat_type
+      program.splat_expansions[a_def] = current_splat_type
       yield
-      program.splat_expansions.delete a_def.object_id
+      program.splat_expansions.delete a_def
     else
       yield
     end

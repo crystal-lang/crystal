@@ -187,6 +187,9 @@ class Hash(K, V)
   # Otherwise guaranteed to be at least 3.
   @indices_size_pow2 : UInt8
 
+  # Whether to compare objects using `object_id`.
+  @compare_by_identity : Bool = false
+
   # The optional block that triggers on non-existing keys.
   @block : (self, K -> V)?
 
@@ -386,7 +389,7 @@ class Hash(K, V)
 
       # We found a non-empty slot, let's see if the key we have matches
       entry = get_entry(entry_index)
-      if entry.matches?(hash, key)
+      if entry_matches?(entry, hash, key)
         # If it does we just update the entry
         set_entry(entry_index, Entry(K, V).new(hash, key, value))
         return entry
@@ -402,7 +405,7 @@ class Hash(K, V)
   private def update_linear_scan(key, value, hash) : Entry(K, V)?
     # Just do a linear scan...
     each_entry_with_index do |entry, index|
-      if entry.matches?(hash, key)
+      if entry_matches?(entry, hash, key)
         set_entry(index, Entry(K, V).new(entry.hash, entry.key, value))
         return entry
       end
@@ -438,7 +441,7 @@ class Hash(K, V)
 
       # We found a non-empty slot, let's see if the key we have matches
       entry = get_entry(entry_index)
-      if entry.matches?(hash, key)
+      if entry_matches?(entry, hash, key)
         delete_entry_and_update_counts(entry_index)
         return entry
       else
@@ -452,7 +455,7 @@ class Hash(K, V)
   # Returns the deleted Entry, if it existed, `nil` otherwise.
   private def delete_linear_scan(key, hash) : Entry(K, V)?
     each_entry_with_index do |entry, index|
-      if entry.matches?(hash, key)
+      if entry_matches?(entry, hash, key)
         delete_entry_and_update_counts(index)
         return entry
       end
@@ -487,7 +490,7 @@ class Hash(K, V)
 
       # We found a non-empty slot, let's see if the key we have matches
       entry = get_entry(entry_index)
-      if entry.matches?(hash, key)
+      if entry_matches?(entry, hash, key)
         # It does!
         return entry
       else
@@ -504,12 +507,12 @@ class Hash(K, V)
     # computing a hash code of a complex structure).
     if entries_size <= 8
       each_entry_with_index do |entry|
-        return entry if entry.key == key
+        return entry if entry_matches?(entry, key)
       end
     else
       hash = key_hash(key)
       each_entry_with_index do |entry|
-        return entry if entry.matches?(hash, key)
+        return entry if entry_matches?(entry, hash, key)
       end
     end
 
@@ -574,16 +577,18 @@ class Hash(K, V)
     each_entry_with_index do |entry, entry_index|
       if rehash
         # When rehashing we always have to copy the entry
-        set_entry(new_entry_index, Entry(K, V).new(key_hash(entry.key), entry.key, entry.value))
+        entry_hash = key_hash(entry.key)
+        set_entry(new_entry_index, Entry(K, V).new(entry_hash, entry.key, entry.value))
       else
         # First we move the entry to its new index (if we need to do that)
+        entry_hash = entry.hash
         set_entry(new_entry_index, entry) if entry_index != new_entry_index
       end
 
       if has_indices
         # Then we try to find an empty index slot
         # (we should find one now that we have more space)
-        index = fit_in_indices(entry.hash)
+        index = fit_in_indices(entry_hash)
         until get_index(index) == -1
           index = next_index(index)
         end
@@ -634,6 +639,8 @@ class Hash(K, V)
 
   # Initializes a `dup` copy from the contents of `other`.
   protected def initialize_dup(other)
+    initialize_compare_by_identity(other)
+
     return if other.empty?
 
     initialize_dup_entries(other)
@@ -642,10 +649,16 @@ class Hash(K, V)
 
   # Initializes a `clone` copy from the contents of `other`.
   protected def initialize_clone(other)
+    initialize_compare_by_identity(other)
+
     return if other.empty?
 
     initialize_clone_entries(other)
     initialize_copy_non_entries_vars(other)
+  end
+
+  private def initialize_compare_by_identity(other)
+    compare_by_identity if other.compare_by_identity?
   end
 
   # Initializes `@entries` for a dup copy.
@@ -890,8 +903,49 @@ class Hash(K, V)
 
   # Computes the hash of a key.
   private def key_hash(key)
-    hash = key.hash.to_u32!
+    if @compare_by_identity && key.responds_to?(:object_id)
+      hash = key.object_id.hash.to_u32!
+    else
+      hash = key.hash.to_u32!
+    end
     hash == 0 ? UInt32::MAX : hash
+  end
+
+  private def entry_matches?(entry, hash, key)
+    # Tiny optimization: for these primitive types it's faster to just
+    # compare the key instead of comparing the hash and the key.
+    # We still have to skip hashes with value 0 (means deleted).
+    {% if K == Bool ||
+            K == Char ||
+            K == Symbol ||
+            K < Int::Primitive ||
+            K < Float::Primitive ||
+            K < Enum %}
+      entry.key == key && entry.hash != 0_u32
+    {% else %}
+      entry.hash == hash && entry_matches?(entry, key)
+    {% end %}
+  end
+
+  private def entry_matches?(entry, key)
+    entry_key = entry.key
+
+    if @compare_by_identity
+      if entry_key.responds_to?(:object_id)
+        if key.responds_to?(:object_id)
+          entry_key.object_id == key.object_id
+        else
+          false
+        end
+      elsif key.responds_to?(:object_id)
+        # because entry_key doesn't respond to :object_id
+        false
+      else
+        entry_key == key
+      end
+    else
+      entry_key == key
+    end
   end
 
   # ===========================================================================
@@ -900,6 +954,29 @@ class Hash(K, V)
 
   # Returns the number of elements in this Hash.
   getter size : Int32
+
+  # Makes this hash compare keys using their object identity (`object_id)`
+  # for types that define such method (`Reference` types, but also structs that
+  # might wrap other `Reference` types and delegate the `object_id` method to them).
+  #
+  # ```
+  # h1 = {"foo" => 1, "bar" => 2}
+  # h1["fo" + "o"]? # => 1
+  #
+  # h1.compare_by_identity
+  # h1.compare_by_identity? # => true
+  # h1["fo" + "o"]?         # => nil # not the same String instance
+  # ```
+  def compare_by_identity
+    @compare_by_identity = true
+    rehash
+    self
+  end
+
+  # Returns `true` of this Hash is comparing keys by `object_id`.
+  #
+  # See `compare_by_identity`.
+  getter? compare_by_identity
 
   # Sets the value of *key* to the given *value*.
   #
@@ -1343,7 +1420,17 @@ class Hash(K, V)
     self
   end
 
-  def merge!(other : Hash, &block)
+  # Adds the contents of *other* to this hash.
+  # If a key exists in both hashes, the given block is called to determine the value to be used.
+  # The block arguments are the key, the value in `self` and the value in *other*.
+  #
+  # ```
+  # hash = {"a" => 100, "b" => 200}
+  # other = {"b" => 254, "c" => 300}
+  # hash.merge!(other) { |key, v1, v2| v1 + v2 }
+  # hash # => {"a" => 100, "b" => 454, "c" => 300}
+  # ```
+  def merge!(other : Hash, &block) : self
     other.each do |k, v|
       if self.has_key?(k)
         self[k] = yield k, self[k], v
@@ -1418,7 +1505,9 @@ class Hash(K, V)
   # Returns a new `Hash` with the given keys.
   #
   # ```
-  # {"a" => 1, "b" => 2, "c" => 3, "d" => 4}.select("a", "c") # => {"a" => 1, "c" => 3}
+  # {"a" => 1, "b" => 2, "c" => 3, "d" => 4}.select({"a", "c"}) # => {"a" => 1, "c" => 3}
+  # {"a" => 1, "b" => 2, "c" => 3, "d" => 4}.select("a", "c")   # => {"a" => 1, "c" => 3}
+  # {"a" => 1, "b" => 2, "c" => 3, "d" => 4}.select(["a", "c"]) # => {"a" => 1, "c" => 3}
   # ```
   def select(keys : Array | Tuple)
     hash = {} of K => V
@@ -1426,6 +1515,7 @@ class Hash(K, V)
     hash
   end
 
+  # :ditto:
   def select(*keys)
     self.select(keys)
   end
@@ -1433,14 +1523,18 @@ class Hash(K, V)
   # Removes every element except the given ones.
   #
   # ```
-  # h = {"a" => 1, "b" => 2, "c" => 3, "d" => 4}.select!("a", "c")
-  # h # => {"a" => 1, "c" => 3}
+  # h1 = {"a" => 1, "b" => 2, "c" => 3, "d" => 4}.select!({"a", "c"})
+  # h2 = {"a" => 1, "b" => 2, "c" => 3, "d" => 4}.select!("a", "c")
+  # h3 = {"a" => 1, "b" => 2, "c" => 3, "d" => 4}.select!(["a", "c"])
+  # h1 == h2 == h3 # => true
+  # h1             # => {"a" => 1, "c" => 3}
   # ```
   def select!(keys : Array | Tuple)
     each { |k, v| delete(k) unless keys.includes?(k) }
     self
   end
 
+  # :ditto:
   def select!(*keys)
     select!(keys)
   end
@@ -1833,22 +1927,6 @@ class Hash(K, V)
 
     def deleted?
       @hash == 0_u32
-    end
-
-    def matches?(hash, key)
-      # Tiny optimization: for these primitive types it's faster to just
-      # compare the key instead of comparing the hash and the key.
-      # We still have to skip hashes with value 0 (means deleted).
-      {% if K == Bool ||
-              K == Char ||
-              K == Symbol ||
-              K < Int::Primitive ||
-              K < Float::Primitive ||
-              K < Enum %}
-        @key == key && @hash != 0_u32
-      {% else %}
-        @hash == hash && @key == key
-      {% end %}
     end
 
     def clone

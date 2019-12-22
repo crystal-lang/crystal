@@ -27,11 +27,8 @@ class Box(T)
   # Unboxes a `Void*` into an object of type `T`. Note that for this you must
   # specify T: `Box(T).unbox(data)`.
   def self.unbox(pointer : Void*) : T
-    {% if T <= Reference %}
+    {% if T <= Reference || T == Nil %}
       pointer.as(T)
-    {% elsif T == Nil %}
-      # FIXME: This branch could be merged with the previous one once the issue #8015 is fixed
-      nil
     {% else %}
       pointer.as(self).object
     {% end %}

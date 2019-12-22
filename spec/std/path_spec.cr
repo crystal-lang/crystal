@@ -10,7 +10,7 @@ private def it_normalizes_path(path, posix = path, windows = path, file = __FILE
   assert_paths(path, posix, windows, "normalizes", file, line, &.normalize)
 end
 
-private def it_expands_path(path, posix, windows = posix, *, base = nil, env_home = nil, expand_base = false, file = __FILE__, line = __LINE__)
+private def it_expands_path(path, posix, windows = posix, *, base = nil, env_home = nil, expand_base = false, home = false, file = __FILE__, line = __LINE__)
   assert_paths(path, posix, windows, %((base: "#{base}")), file, line) do |path|
     prev_home = ENV["HOME"]
 
@@ -18,7 +18,7 @@ private def it_expands_path(path, posix, windows = posix, *, base = nil, env_hom
       ENV["HOME"] = env_home || (path.windows? ? HOME_WINDOWS : HOME_POSIX)
 
       base_arg = base || (path.windows? ? BASE_WINDOWS : BASE_POSIX)
-      path.expand(base_arg.not_nil!, expand_base: !!expand_base)
+      path.expand(base_arg.not_nil!, expand_base: !!expand_base, home: home)
     ensure
       ENV["HOME"] = prev_home
     end
@@ -112,6 +112,7 @@ describe Path do
     assert_paths("foo", ".", &.parent)
     assert_paths("foo/", ".", &.parent)
     assert_paths("/", "/", &.parent)
+    assert_paths("/.", "/", &.parent)
     assert_paths("////", "/", &.parent)
     assert_paths("foo//.//", "foo", &.parent)
     assert_paths("/.", "/", &.parent)
@@ -126,6 +127,7 @@ describe Path do
     assert_paths("foo\\bar\\..", ".", "foo\\bar", &.parent)
     assert_paths("foo\\", ".", &.parent)
     assert_paths("\\", ".", "\\", &.parent)
+    assert_paths("\\.", ".", "\\", &.parent)
     assert_paths(".\\foo", ".", &.parent)
     assert_paths("C:", ".", "C:", &.parent)
     assert_paths("C:/", ".", "C:/", &.parent)
@@ -144,7 +146,7 @@ describe Path do
     assert_paths("foo/", ["."], &.parents)
     assert_paths("/", [] of String, &.parents)
     assert_paths("////", [] of String, &.parents)
-    assert_paths("/.", [] of String, &.parents)
+    assert_paths("/.", ["/"], &.parents)
     assert_paths("/foo", ["/"], &.parents)
     assert_paths("", [] of String, &.parents)
     assert_paths("./foo", ["."], &.parents)
@@ -164,10 +166,39 @@ describe Path do
     assert_paths("foo/./bar/.", [".", "foo", "foo/.", "foo/./bar"], &.parents)
     assert_paths("foo/bar/.", [".", "foo", "foo/bar"], &.parents)
     assert_paths("foo/bar/./.", [".", "foo", "foo/bar", "foo/bar/."], &.parents)
+    assert_paths("m/.gitignore", [".", "m"], &.parents)
+    assert_paths("m", ["."], &.parents)
+    assert_paths("m/", ["."], &.parents)
+    assert_paths("m//", ["."], &.parents)
+    assert_paths("m//a/b", [".", "m", "m//a"], &.parents)
+    assert_paths("/m", ["/"], &.parents)
+    assert_paths("/m/", ["/"], &.parents)
+    assert_paths("C:", ["."], [] of String, &.parents)
+    assert_paths("C:/", ["."], [] of String, &.parents)
+    assert_paths("C:\\", ["."], [] of String, &.parents)
+    assert_paths("C:folder", ["."], ["C:"], &.parents)
+    assert_paths("C:\\folder", ["."], ["C:\\"], &.parents)
+    assert_paths("C:\\\\folder", ["."], ["C:\\\\"], &.parents)
+    assert_paths("C:\\.", ["."], ["C:\\"], &.parents)
   end
 
   describe "#dirname" do
     assert_paths_raw("/Users/foo/bar.cr", "/Users/foo", &.dirname)
+    assert_paths_raw("foo", ".", &.dirname)
+    assert_paths_raw("foo/", ".", &.dirname)
+    assert_paths_raw("/foo", "/", &.dirname)
+    assert_paths_raw("/foo/", "/", &.dirname)
+    assert_paths_raw("/foo//", "/", &.dirname)
+    assert_paths_raw("m/.gitignore", "m", &.dirname)
+    assert_paths_raw("m/", ".", &.dirname)
+    assert_paths_raw("m//", ".", &.dirname)
+    assert_paths_raw("m//a/b", "m//a", &.dirname)
+    assert_paths_raw("m", ".", &.dirname)
+    assert_paths_raw("/m", "/", &.dirname)
+    assert_paths_raw("/m/", "/", &.dirname)
+    assert_paths_raw("C:", ".", "C:", &.dirname)
+    assert_paths_raw("C:/", ".", "C:/", &.dirname)
+    assert_paths_raw("C:\\", ".", "C:\\", &.dirname)
   end
 
   describe "#basename" do
@@ -202,6 +233,59 @@ describe Path do
       assert_paths_raw("a.txt", "a", &.basename(".txt"))
       assert_paths_raw("a.x", "a", &.basename(".x"))
     end
+  end
+
+  describe "#parts" do
+    assert_paths_raw("/Users/foo/bar.cr", ["/", "Users", "foo", "bar.cr"], &.parts)
+    assert_paths_raw("Users/foo/bar.cr", ["Users", "foo", "bar.cr"], &.parts)
+    assert_paths_raw("foo/bar/", ["foo", "bar"], &.parts)
+    assert_paths_raw("foo/bar/.", ["foo", "bar", "."], &.parts)
+    assert_paths_raw("foo", ["foo"], &.parts)
+    assert_paths_raw("foo/", ["foo"], &.parts)
+    assert_paths_raw("/", ["/"], &.parts)
+    assert_paths_raw("////", ["////"], &.parts)
+    assert_paths_raw("/.", ["/", "."], &.parts)
+    assert_paths_raw("/foo", ["/", "foo"], &.parts)
+    assert_paths_raw("", [] of String, &.parts)
+    assert_paths_raw("./foo", [".", "foo"], &.parts)
+    assert_paths_raw(".", ["."], &.parts)
+    assert_paths_raw("\\Users\\foo\\bar.cr", ["\\Users\\foo\\bar.cr"], ["\\", "Users", "foo", "bar.cr"], &.parts)
+    assert_paths_raw("\\Users/foo\\bar.cr", ["\\Users", "foo\\bar.cr"], ["\\", "Users", "foo", "bar.cr"], &.parts)
+    assert_paths_raw("C:\\Users\\foo\\bar.cr", ["C:\\Users\\foo\\bar.cr"], ["C:\\", "Users", "foo", "bar.cr"], &.parts)
+    assert_paths_raw("\\\\some\\share\\", ["\\\\some\\share\\"], ["\\\\some\\share\\"], &.parts)
+    assert_paths_raw("\\\\some\\share", ["\\\\some\\share"], &.parts)
+    assert_paths_raw("\\\\some\\share\\bar.cr", ["\\\\some\\share\\bar.cr"], ["\\\\some\\share\\", "bar.cr"], &.parts)
+    assert_paths_raw("//some/share", ["//", "some", "share"], ["//some/share"], &.parts)
+    assert_paths_raw("//some/share/", ["//", "some", "share"], ["//some/share/"], &.parts)
+    assert_paths_raw("//some/share/bar.cr", ["//", "some", "share", "bar.cr"], ["//some/share/", "bar.cr"], &.parts)
+    assert_paths_raw("foo\\bar\\", ["foo\\bar\\"], ["foo", "bar"], &.parts)
+    assert_paths_raw("foo\\", ["foo\\"], ["foo"], &.parts)
+    assert_paths_raw("\\", ["\\"], ["\\"], &.parts)
+    assert_paths_raw(".\\foo", [".\\foo"], [".", "foo"], &.parts)
+    assert_paths_raw("foo/../bar/", ["foo", "..", "bar"], &.parts)
+    assert_paths_raw("foo/../bar/.", ["foo", "..", "bar", "."], &.parts)
+    assert_paths_raw("foo/bar/..", ["foo", "bar", ".."], &.parts)
+    assert_paths_raw("foo/bar/../.", ["foo", "bar", "..", "."], &.parts)
+    assert_paths_raw("foo/./bar/", ["foo", ".", "bar"], &.parts)
+    assert_paths_raw("foo/./bar/.", ["foo", ".", "bar", "."], &.parts)
+    assert_paths_raw("foo/bar/.", ["foo", "bar", "."], &.parts)
+    assert_paths_raw("foo/bar/./.", ["foo", "bar", ".", "."], &.parts)
+    assert_paths_raw("m/.gitignore", ["m", ".gitignore"], &.parts)
+    assert_paths_raw("m", ["m"], &.parts)
+    assert_paths_raw("m/", ["m"], &.parts)
+    assert_paths_raw("m//", ["m"], &.parts)
+    assert_paths_raw("m\\", ["m\\"], ["m"], &.parts)
+    assert_paths_raw("m//a/b", ["m", "a", "b"], &.parts)
+    assert_paths_raw("m\\a/b", ["m\\a", "b"], ["m", "a", "b"], &.parts)
+    assert_paths_raw("/m", ["/", "m"], &.parts)
+    assert_paths_raw("/m/", ["/", "m"], &.parts)
+    assert_paths_raw("C:", ["C:"], &.parts)
+    assert_paths_raw("C:/", ["C:"], ["C:/"], &.parts)
+    assert_paths_raw("C:\\", ["C:\\"], &.parts)
+    assert_paths_raw("C:folder", ["C:folder"], ["C:", "folder"], &.parts)
+    assert_paths_raw("C:\\folder", ["C:\\folder"], ["C:\\", "folder"], &.parts)
+    assert_paths_raw("C:\\\\folder", ["C:\\\\folder"], ["C:\\\\", "folder"], &.parts)
+    assert_paths_raw("C:\\.", ["C:\\."], ["C:\\", "."], &.parts)
   end
 
   describe "#extension" do
@@ -250,10 +334,12 @@ describe Path do
     assert_paths("//foo", nil, nil, &.drive)
     assert_paths("//some/share", nil, "//some/share", &.drive)
     assert_paths("//some/share/", nil, "//some/share", &.drive)
+    assert_paths("//some/share/foo/", nil, "//some/share", &.drive)
     assert_paths("///not-a/share/", nil, nil, &.drive)
     assert_paths("/not-a//share/", nil, nil, &.drive)
     assert_paths("\\\\some\\share", nil, "\\\\some\\share", &.drive)
     assert_paths("\\\\some\\share\\", nil, "\\\\some\\share", &.drive)
+    assert_paths("\\\\some\\share\\foo", nil, "\\\\some\\share", &.drive)
     assert_paths("\\\\\\not-a\\share", nil, nil, &.drive)
     assert_paths("\\\\not-a\\\\share", nil, nil, &.drive)
   end
@@ -544,34 +630,51 @@ describe Path do
       it_expands_path("C:\\foo", "D:/C:\\foo", "C:\\foo", base: "D:/")
     end
 
+    it "doesn't expand ~" do
+      ["~", "~/foo"].each do |path|
+        path = Path[path]
+        path.expand(base: "", expand_base: false).should eq path
+      end
+    end
+
+    describe "checks all possible types for expand(home:)" do
+      home_posix2 = Path.posix(BASE_POSIX).join("foo").to_s
+      home_windows2 = Path.windows(BASE_WINDOWS).join("foo").to_s
+
+      home = Path[""].windows? ? home_windows2 : home_posix2
+      it_expands_path("~/a", {BASE_POSIX, "~/a"}, {BASE_WINDOWS, "~\\a"}, home: false)
+      it_expands_path("~/a", {home_posix2, "a"}, {home_windows2, "a"}, home: home)
+      it_expands_path("~/a", {home_posix2, "a"}, {home_windows2, "a"}, home: Path[home])
+    end
+
     describe "converts a pathname to an absolute pathname, using ~ (home) as base" do
-      it_expands_path("~/", {HOME_POSIX, ""}, {HOME_WINDOWS, ""})
-      it_expands_path("~/..badfilename", {HOME_POSIX, "..badfilename"}, {HOME_WINDOWS, "..badfilename"})
-      it_expands_path("..", "/default", "\\default")
-      it_expands_path("~/a", {HOME_POSIX, "a"}, {HOME_WINDOWS, "a"}, base: "~/b")
-      it_expands_path("~", HOME_POSIX, HOME_WINDOWS)
-      it_expands_path("~", HOME_POSIX, HOME_WINDOWS, base: "/tmp/gumby/ddd")
-      it_expands_path("~/a", {HOME_POSIX, "a"}, {HOME_WINDOWS, "a"}, base: "/tmp/gumby/ddd")
+      it_expands_path("~/", {HOME_POSIX, ""}, {HOME_WINDOWS, ""}, home: true)
+      it_expands_path("~/..badfilename", {HOME_POSIX, "..badfilename"}, {HOME_WINDOWS, "..badfilename"}, home: true)
+      it_expands_path("..", "/default", "\\default", home: true)
+      it_expands_path("~/a", {HOME_POSIX, "a"}, {HOME_WINDOWS, "a"}, base: "~/b", home: true)
+      it_expands_path("~", HOME_POSIX, HOME_WINDOWS, home: true)
+      it_expands_path("~", HOME_POSIX, HOME_WINDOWS, base: "/tmp/gumby/ddd", home: true)
+      it_expands_path("~/a", {HOME_POSIX, "a"}, {HOME_WINDOWS, "a"}, base: "/tmp/gumby/ddd", home: true)
     end
 
     describe "converts a pathname to an absolute pathname, using ~ (home) as base (trailing /)" do
-      it_expands_path("~/", {HOME_POSIX, ""}, {HOME_WINDOWS, ""})
-      it_expands_path("~/..badfilename", {"#{HOME_POSIX}/", "..badfilename"}, {"#{HOME_WINDOWS}\\", "..badfilename"}, base: "")
-      it_expands_path("~/..", "/home", "C:\\Users")
-      it_expands_path("~/a", {HOME_POSIX, "a"}, {HOME_WINDOWS, "a"}, base: "~/b")
-      it_expands_path("~", HOME_POSIX, HOME_WINDOWS)
-      it_expands_path("~", HOME_POSIX, HOME_WINDOWS, base: "/tmp/gumby/ddd")
-      it_expands_path("~/a", {HOME_POSIX, "a"}, {HOME_WINDOWS, "a"}, base: "/tmp/gumby/ddd")
+      it_expands_path("~/", {HOME_POSIX, ""}, {HOME_WINDOWS, ""}, home: true)
+      it_expands_path("~/..badfilename", {"#{HOME_POSIX}/", "..badfilename"}, {"#{HOME_WINDOWS}\\", "..badfilename"}, base: "", home: true)
+      it_expands_path("~/..", "/home", "C:\\Users", home: true)
+      it_expands_path("~/a", {HOME_POSIX, "a"}, {HOME_WINDOWS, "a"}, base: "~/b", home: true)
+      it_expands_path("~", HOME_POSIX, HOME_WINDOWS, home: true)
+      it_expands_path("~", HOME_POSIX, HOME_WINDOWS, base: "/tmp/gumby/ddd", home: true)
+      it_expands_path("~/a", {HOME_POSIX, "a"}, {HOME_WINDOWS, "a"}, base: "/tmp/gumby/ddd", home: true)
     end
 
     describe "converts a pathname to an absolute pathname, using ~ (home) as base (HOME=/)" do
-      it_expands_path("~/", "/", "\\", env_home: "/")
-      it_expands_path("~/..badfilename", "/..badfilename", "\\..badfilename", env_home: "/")
-      it_expands_path("..", "/default", "\\default", env_home: "/")
-      it_expands_path("~/a", "/a", "\\a", base: "~/b", env_home: "/")
-      it_expands_path("~", "/", "\\", env_home: "/")
-      it_expands_path("~", "/", "\\", base: "/tmp/gumby/ddd", env_home: "/")
-      it_expands_path("~/a", "/a", "\\a", base: "/tmp/gumby/ddd", env_home: "/")
+      it_expands_path("~/", "/", "\\", env_home: "/", home: true)
+      it_expands_path("~/..badfilename", "/..badfilename", "\\..badfilename", env_home: "/", home: true)
+      it_expands_path("..", "/default", "\\default", env_home: "/", home: true)
+      it_expands_path("~/a", "/a", "\\a", base: "~/b", env_home: "/", home: true)
+      it_expands_path("~", "/", "\\", env_home: "/", home: true)
+      it_expands_path("~", "/", "\\", base: "/tmp/gumby/ddd", env_home: "/", home: true)
+      it_expands_path("~/a", "/a", "\\a", base: "/tmp/gumby/ddd", env_home: "/", home: true)
     end
 
     describe "ignores name starting with ~" do

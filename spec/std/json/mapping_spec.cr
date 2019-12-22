@@ -133,6 +133,18 @@ private class JSONWithRaw
   })
 end
 
+private class JSONWithArrayConverter
+  JSON.mapping({
+    values: {type: Array(Time), converter: JSON::ArrayConverter(Time::EpochConverter)},
+  })
+end
+
+private class JSONWithJSONHashValueConverter
+  JSON.mapping({
+    birthdays: {type: Hash(String, Time), converter: JSON::HashValueConverter(Time::EpochConverter)},
+  })
+end
+
 private class JSONWithRoot
   JSON.mapping({
     result: {type: Array(JSONPerson), root: "heroes"},
@@ -330,11 +342,9 @@ describe "JSON mapping" do
   end
 
   it "outputs JSON with properties key" do
-    input = {
-      properties: {"foo" => "bar"},
-    }.to_json
-    json = JSONWithPropertiesKey.from_json(input)
-    json.to_json.should eq(input)
+    string = %({"properties":{"foo":"bar"}})
+    json = JSONWithPropertiesKey.from_json(string)
+    json.to_json.should eq(string)
   end
 
   it "parses json with keywords" do
@@ -454,6 +464,22 @@ describe "JSON mapping" do
     json = JSONWithTimeEpochMillis.from_json(string)
     json.value.should be_a(Time)
     json.value.should eq(Time.unix_ms(1459860483856))
+    json.to_json.should eq(string)
+  end
+
+  it "uses JSON::ArrayConverter" do
+    string = %({"values":[1459859781,1567628762]})
+    json = JSONWithArrayConverter.from_json(string)
+    json.values.should be_a(Array(Time))
+    json.values.should eq([Time.unix(1459859781), Time.unix(1567628762)])
+    json.to_json.should eq(string)
+  end
+
+  it "uses JSON::HashValueConverter" do
+    string = %({"birthdays":{"foo":1459859781,"bar":1567628762}})
+    json = JSONWithJSONHashValueConverter.from_json(string)
+    json.birthdays.should be_a(Hash(String, Time))
+    json.birthdays.should eq({"foo" => Time.unix(1459859781), "bar" => Time.unix(1567628762)})
     json.to_json.should eq(string)
   end
 

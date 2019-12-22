@@ -56,6 +56,18 @@ module GC
     bytes_since_gc : LibC::ULong,
     total_bytes : LibC::ULong
 
+  record ProfStats,
+    heap_size : LibC::ULong,
+    free_bytes : LibC::ULong,
+    unmapped_bytes : LibC::ULong,
+    bytes_since_gc : LibC::ULong,
+    bytes_before_gc : LibC::ULong,
+    non_gc_bytes : LibC::ULong,
+    gc_no : LibC::ULong,
+    markers_m1 : LibC::ULong,
+    bytes_reclaimed_since_gc : LibC::ULong,
+    reclaimed_bytes_before_gc : LibC::ULong
+
   def self.malloc(size : Int)
     malloc(LibC::SizeT.new(size))
   end

@@ -235,84 +235,96 @@ describe "Enumerable" do
     end
   end
 
-  describe "each_cons" do
+  describe "#each_cons" do
+    context "iterator" do
+      it "iterates" do
+        iter = [1, 2, 3, 4, 5].each_cons(3)
+        iter.next.should eq([1, 2, 3])
+        iter.next.should eq([2, 3, 4])
+        iter.next.should eq([3, 4, 5])
+        iter.next.should be_a(Iterator::Stop)
+      end
+
+      it "iterates with reuse = true" do
+        iter = [1, 2, 3, 4, 5].each_cons(3, reuse: true)
+
+        a = iter.next
+        a.should eq([1, 2, 3])
+
+        b = iter.next
+        b.should be(a)
+      end
+
+      it "iterates with reuse = array" do
+        reuse = [] of Int32
+        iter = [1, 2, 3, 4, 5].each_cons(3, reuse: reuse)
+
+        a = iter.next
+        a.should eq([1, 2, 3])
+        a.should be(reuse)
+      end
+
+      it "iterates with reuse = deque" do
+        reuse = Deque(Int32).new
+        iter = [1, 2, 3, 4, 5].each_cons(3, reuse: reuse)
+
+        a = iter.next
+        a.should eq(Deque{1, 2, 3})
+        a.should be(reuse)
+      end
+    end
+
+    context "yield" do
+      it "returns running pairs" do
+        array = [] of Array(Int32)
+        [1, 2, 3, 4].each_cons(2) { |pair| array << pair }
+        array.should eq([[1, 2], [2, 3], [3, 4]])
+      end
+
+      it "returns running triples" do
+        array = [] of Array(Int32)
+        [1, 2, 3, 4, 5].each_cons(3) { |triple| array << triple }
+        array.should eq([[1, 2, 3], [2, 3, 4], [3, 4, 5]])
+      end
+
+      it "yields running pairs with reuse = true" do
+        array = [] of Array(Int32)
+        object_ids = Set(UInt64).new
+        [1, 2, 3, 4].each_cons(2, reuse: true) do |pair|
+          object_ids << pair.object_id
+          array << pair.dup
+        end
+        array.should eq([[1, 2], [2, 3], [3, 4]])
+        object_ids.size.should eq(1)
+      end
+
+      it "yields running pairs with reuse = array" do
+        array = [] of Array(Int32)
+        reuse = [] of Int32
+        [1, 2, 3, 4].each_cons(2, reuse: reuse) do |pair|
+          pair.should be(reuse)
+          array << pair.dup
+        end
+        array.should eq([[1, 2], [2, 3], [3, 4]])
+      end
+
+      it "yields running pairs with reuse = deque" do
+        array = [] of Deque(Int32)
+        reuse = Deque(Int32).new
+        [1, 2, 3, 4].each_cons(2, reuse: reuse) do |pair|
+          pair.should be(reuse)
+          array << pair.dup
+        end
+        array.should eq([Deque{1, 2}, Deque{2, 3}, Deque{3, 4}])
+      end
+    end
+  end
+
+  describe "#each_cons_pair" do
     it "returns running pairs" do
       array = [] of Array(Int32)
-      [1, 2, 3, 4].each_cons(2) { |pair| array << pair }
+      [1, 2, 3, 4].each_cons_pair { |a, b| array << [a, b] }
       array.should eq([[1, 2], [2, 3], [3, 4]])
-    end
-
-    it "returns running triples" do
-      array = [] of Array(Int32)
-      [1, 2, 3, 4, 5].each_cons(3) { |triple| array << triple }
-      array.should eq([[1, 2, 3], [2, 3, 4], [3, 4, 5]])
-    end
-
-    it "returns each_cons iterator" do
-      iter = [1, 2, 3, 4, 5].each_cons(3)
-      iter.next.should eq([1, 2, 3])
-      iter.next.should eq([2, 3, 4])
-      iter.next.should eq([3, 4, 5])
-      iter.next.should be_a(Iterator::Stop)
-    end
-
-    it "returns each_cons iterator with reuse = true" do
-      iter = [1, 2, 3, 4, 5].each_cons(3, reuse: true)
-
-      a = iter.next
-      a.should eq([1, 2, 3])
-
-      b = iter.next
-      b.should be(a)
-    end
-
-    it "returns each_cons iterator with reuse = array" do
-      reuse = [] of Int32
-      iter = [1, 2, 3, 4, 5].each_cons(3, reuse: reuse)
-
-      a = iter.next
-      a.should eq([1, 2, 3])
-      a.should be(reuse)
-    end
-
-    it "returns each_cons iterator with reuse = deque" do
-      reuse = Deque(Int32).new
-      iter = [1, 2, 3, 4, 5].each_cons(3, reuse: reuse)
-
-      a = iter.next
-      a.should eq(Deque{1, 2, 3})
-      a.should be(reuse)
-    end
-
-    it "yields running pairs with reuse = true" do
-      array = [] of Array(Int32)
-      object_ids = Set(UInt64).new
-      [1, 2, 3, 4].each_cons(2, reuse: true) do |pair|
-        object_ids << pair.object_id
-        array << pair.dup
-      end
-      array.should eq([[1, 2], [2, 3], [3, 4]])
-      object_ids.size.should eq(1)
-    end
-
-    it "yields running pairs with reuse = array" do
-      array = [] of Array(Int32)
-      reuse = [] of Int32
-      [1, 2, 3, 4].each_cons(2, reuse: reuse) do |pair|
-        pair.should be(reuse)
-        array << pair.dup
-      end
-      array.should eq([[1, 2], [2, 3], [3, 4]])
-    end
-
-    it "yields running pairs with reuse = deque" do
-      array = [] of Deque(Int32)
-      reuse = Deque(Int32).new
-      [1, 2, 3, 4].each_cons(2, reuse: reuse) do |pair|
-        pair.should be(reuse)
-        array << pair.dup
-      end
-      array.should eq([Deque{1, 2}, Deque{2, 3}, Deque{3, 4}])
     end
   end
 
@@ -569,6 +581,8 @@ describe "Enumerable" do
   describe "reduce" do
     it { [1, 2, 3].reduce { |memo, i| memo + i }.should eq(6) }
     it { [1, 2, 3].reduce(10) { |memo, i| memo + i }.should eq(16) }
+    it { [1, 2, 3].reduce([] of Int32) { |memo, i| memo.unshift(i) }.should eq([3, 2, 1]) }
+    it { [[0, 1], [2, 3], [4, 5]].reduce([] of Int32) { |memo, i| memo.concat(i) }.should eq([0, 1, 2, 3, 4, 5]) }
 
     it "raises if empty" do
       expect_raises Enumerable::EmptyError do
@@ -627,8 +641,8 @@ describe "Enumerable" do
 
   describe "map_with_index" do
     it "yields the element and the index" do
-      result = ["Alice", "Bob"].map_with_index { |name, i| "User ##{i}: #{name}" }
-      result.should eq ["User #0: Alice", "User #1: Bob"]
+      result = SpecEnumerable.new.map_with_index { |e, i| "Value ##{i}: #{e}" }
+      result.should eq ["Value #0: 1", "Value #1: 2", "Value #2: 3"]
     end
 
     it "yields the element and the index of an iterator" do
@@ -644,6 +658,12 @@ describe "Enumerable" do
     it "raises if empty" do
       expect_raises Enumerable::EmptyError do
         ([] of Int32).max
+      end
+    end
+
+    it "raises if not comparable" do
+      expect_raises ArgumentError do
+        [Float64::NAN, 1.0, 2.0, Float64::NAN].max
       end
     end
   end
@@ -666,6 +686,12 @@ describe "Enumerable" do
 
   describe "max_of" do
     it { [-1, -2, -3].max_of { |x| -x }.should eq(3) }
+
+    it "raises if not comparable" do
+      expect_raises ArgumentError do
+        [-1.0, Float64::NAN, -3.0].max_of { |x| -x }
+      end
+    end
   end
 
   describe "max_of?" do
@@ -680,6 +706,12 @@ describe "Enumerable" do
     it "raises if empty" do
       expect_raises Enumerable::EmptyError do
         ([] of Int32).min
+      end
+    end
+
+    it "raises if not comparable" do
+      expect_raises ArgumentError do
+        [-1.0, Float64::NAN, -3.0].min
       end
     end
   end
@@ -702,6 +734,12 @@ describe "Enumerable" do
 
   describe "min_of" do
     it { [1, 2, 3].min_of { |x| -x }.should eq(-3) }
+
+    it "raises if not comparable" do
+      expect_raises ArgumentError do
+        [-1.0, Float64::NAN, -3.0].min_of { |x| -x }
+      end
+    end
   end
 
   describe "min_of?" do
@@ -724,6 +762,12 @@ describe "Enumerable" do
     it "returns two nils if empty" do
       ([] of Int32).minmax?.should eq({nil, nil})
     end
+
+    it "raises if not comparable" do
+      expect_raises ArgumentError do
+        [-1.0, Float64::NAN, -3.0].minmax
+      end
+    end
   end
 
   describe "minmax_by" do
@@ -738,6 +782,12 @@ describe "Enumerable" do
 
   describe "minmax_of" do
     it { [-1, -2, -3].minmax_of { |x| -x }.should eq({1, 3}) }
+
+    it "raises if not comparable" do
+      expect_raises ArgumentError do
+        [-1.0, Float64::NAN, -3.0].minmax_of { |x| -x }
+      end
+    end
   end
 
   describe "minmax_of?" do

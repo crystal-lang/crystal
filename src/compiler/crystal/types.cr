@@ -310,17 +310,18 @@ module Crystal
     # If `allow_same_namespace` is true (the default), `protected` also means
     # the types are in the same namespace. Otherwise, it means they are just
     # in the same type hierarchy.
-    def has_protected_acces_to?(type, allow_same_namespace = true)
-      owner = self
+    def has_protected_access_to?(type, allow_same_namespace = true)
+      owner = self.devirtualize
+      type = type.devirtualize
 
       # Allow two different generic instantiations
       # of the same type to have protected access
       type = type.generic_type.as(Type) if type.is_a?(GenericInstanceType)
       owner = owner.generic_type.as(Type) if owner.is_a?(GenericInstanceType)
 
-      self.implements?(type) ||
-        type.implements?(self) ||
-        (allow_same_namespace && same_namespace?(type))
+      owner.implements?(type) ||
+        type.implements?(owner) ||
+        (allow_same_namespace && owner.same_namespace?(type))
     end
 
     # Returns true if `self` and *other* are in the same namespace.
@@ -549,12 +550,25 @@ module Crystal
       raise "BUG: #{self} doesn't implement instance_vars"
     end
 
+    def class_vars
+      raise "BUG: #{self} doesn't implement class_vars"
+    end
+
     def all_instance_vars
       if superclass = self.superclass
         superclass.all_instance_vars.merge(instance_vars)
       else
         instance_vars
       end
+    end
+
+    def all_class_vars
+      all_class_vars = {} of String => MetaTypeVar
+      all_class_vars.merge!(class_vars)
+      parents.try &.each do |parent|
+        all_class_vars.merge!(parent.all_class_vars)
+      end
+      all_class_vars
     end
 
     def index_of_instance_var(name)
@@ -1192,10 +1206,6 @@ module Crystal
       superclass.try &.add_subclass(self)
     end
 
-    def struct?
-      @struct
-    end
-
     def has_attribute?(name)
       return true if packed? && name == "Packed"
       false
@@ -1527,6 +1537,9 @@ module Crystal
       run_instance_vars_initializers self, self, instance
 
       instance.after_initialize
+
+      # Notify that a subclass/instance of self was added
+      self.notify_subclass_added if self.is_a?(SubclassObservable)
 
       # Notify parents that an instance was added
       notify_parents_subclass_added(self)
@@ -2097,10 +2110,6 @@ module Crystal
       else
         self
       end
-    end
-
-    def filter_by_responds_to(name)
-      including_types.try &.filter_by_responds_to(name)
     end
 
     def filter_by_responds_to(name)
@@ -3240,6 +3249,13 @@ module Crystal
       end
 
       nil
+    end
+
+    def all_class_vars
+      all_class_vars = {} of String => MetaTypeVar
+      @class_vars.try { |v| all_class_vars.merge!(v) }
+      all_class_vars.merge!(base_type.all_class_vars)
+      all_class_vars
     end
 
     def replace_type_parameters(instance)

@@ -137,7 +137,7 @@ module MIME
     # Media types are the values in `Content-Type` and `Content-Disposition` HTTP
     # headers (RFC 2183).
     #
-    # Media type is lowercased and trimmed of white space. Param keys are lowercased.
+    # Media type is lowercased and trimmed of whitespace. Param keys are lowercased.
     #
     # Raises `MIME::Error` on error.
     def self.parse(string : String) : MediaType
@@ -149,7 +149,7 @@ module MIME
     # Media types are the values in `Content-Type` and `Content-Disposition` HTTP
     # headers (RFC 2183).
     #
-    # Media type is lowercased and trimmed of white space. Param keys are lowercased.
+    # Media type is lowercased and trimmed of whitespace. Param keys are lowercased.
     #
     # Returns `nil` on error.
     def self.parse?(string : String) : MediaType?

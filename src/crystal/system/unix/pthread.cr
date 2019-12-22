@@ -1,12 +1,7 @@
 require "c/pthread"
 require "c/sched"
-require "./thread/*"
 
-# :nodoc:
 class Thread
-  # Don't use this class, it is used internally by the event scheduler.
-  # Use spawn and channels instead.
-
   # all thread objects, so the GC can see them (it doesn't scan thread locals)
   protected class_getter(threads) { Thread::LinkedList(Thread).new }
 
@@ -20,9 +15,6 @@ class Thread
 
   # :nodoc:
   property previous : Thread?
-
-  # :nodoc:
-  property gc_thread_handler : Void* = Pointer(Void).null
 
   def self.unsafe_each
     threads.unsafe_each { |thread| yield thread }
@@ -83,7 +75,9 @@ class Thread
       if ptr = LibC.pthread_getspecific(@@current_key)
         ptr.as(Thread)
       else
-        raise "BUG: Thread.current returned NULL"
+        # Thread#start sets @@current as soon it starts. Thus we know
+        # that if @@current is not set then we are in the main thread
+        self.current = new
       end
     end
 

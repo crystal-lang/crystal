@@ -43,7 +43,7 @@ The development is possible thanks to the community's effort, [84codes](https://
 Installing
 ----------
 
-[Follow these instructions](https://crystal-lang.org/docs/installation/index.html)
+[Follow these instructions](https://crystal-lang.org/install)
 
 Try it online
 -------------
@@ -53,7 +53,7 @@ Try it online
 Documentation
 -------------
 
-* [Official docs](http://crystal-lang.org/docs)
+* [Language Reference](http://crystal-lang.org/reference)
 * [Standard library API](https://crystal-lang.org/api)
 * [Roadmap](https://github.com/crystal-lang/crystal/wiki/Roadmap)
 

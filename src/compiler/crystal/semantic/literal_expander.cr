@@ -283,38 +283,43 @@ module Crystal
       Call.new(path, "new", [node.from, node.to, bool]).at(node)
     end
 
-    # Convert an interpolation to a concatenation with an String::Builder:
+    # Convert an interpolation to a call to `String.interpolation`
     #
     # From:
     #
-    #     "foo#{bar}baz"
+    #     "foo#{bar}baz#{qux}"
     #
     # To:
     #
-    #     (String::Builder.new << "foo" << bar << "baz").to_s
+    #     String.interpolation("foo", bar, "baz", qux)
     def expand(node : StringInterpolation)
-      # Compute how long at least the string will be, so we
-      # can allocate enough space.
-      capacity = 0
-      node.expressions.each do |piece|
-        case piece
-        when StringLiteral
-          capacity += piece.value.size
-        else
-          capacity += 15
-        end
-      end
+      # We could do `node.expressions.dup` for more purity,
+      # but the string interpolation isn't used later on so this is fine,
+      # and having pieces in a different representation but same end
+      # result is just fine.
+      pieces = node.expressions
+      combine_contiguous_string_literals(pieces)
+      Call.new(Path.global("String").at(node), "interpolation", pieces).at(node)
+    end
 
-      if capacity <= 64
-        call = Call.new(Path.global(["String", "Builder"]), "new").at(node)
-      else
-        call = Call.new(Path.global(["String", "Builder"]), "new", NumberLiteral.new(capacity)).at(node)
+    private def combine_contiguous_string_literals(pieces)
+      i = 0
+      pieces.reject! do |piece|
+        delete =
+          if i < pieces.size - 1
+            next_piece = pieces[i + 1]
+            if piece.is_a?(StringLiteral) && next_piece.is_a?(StringLiteral)
+              pieces[i + 1] = StringLiteral.new(piece.value + next_piece.value)
+              true
+            else
+              false
+            end
+          else
+            false
+          end
+        i += 1
+        delete
       end
-
-      node.expressions.each do |piece|
-        call = Call.new(call, "<<", piece).at(node)
-      end
-      Call.new(call, "to_s").at(node)
     end
 
     # Convert a Case into a series of if ... elseif ... end:
@@ -515,10 +520,10 @@ module Crystal
         case_else = Call.new(nil, "raise", args: [StringLiteral.new("BUG: invalid select index")] of ASTNode, global: true).at(node)
       end
 
+      call_name = node.else ? "non_blocking_select" : "select"
       call_args = [TupleLiteral.new(tuple_values).at(node)] of ASTNode
-      call_args << BoolLiteral.new(true) if node.else
 
-      call = Call.new(channel, "select", call_args).at(node)
+      call = Call.new(channel, call_name, call_args).at(node)
       multi = MultiAssign.new(targets, [call] of ASTNode)
       case_cond = Var.new(index_name).at(node)
       a_case = Case.new(case_cond, case_whens, case_else).at(node)
@@ -616,6 +621,7 @@ module Crystal
       check_implicit_obj IsA
       check_implicit_obj Cast
       check_implicit_obj NilableCast
+      check_implicit_obj Not
 
       case cond
       when NilLiteral
@@ -641,9 +647,14 @@ module Crystal
 
     macro check_implicit_obj(type)
       if cond.is_a?({{type}})
-        if (obj = cond.obj).is_a?(ImplicitObj)
+        cond_obj = cond.is_a?(Not) ? cond.exp : cond.obj
+        if cond_obj.is_a?(ImplicitObj)
           implicit_call = cond.clone.as({{type}})
-          implicit_call.obj = temp_var.clone
+          if implicit_call.is_a?(Not)
+            implicit_call.exp = temp_var.clone
+          else
+            implicit_call.obj = temp_var.clone
+          end
           return implicit_call
         end
       end

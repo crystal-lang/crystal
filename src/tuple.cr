@@ -376,6 +376,15 @@ struct Tuple
     to_s
   end
 
+  def to_a
+    Array(Union(*T)).build(size) do |buffer|
+      {% for i in 0...T.size %}
+        buffer[{{i}}] = self[{{i}}]
+      {% end %}
+      size
+    end
+  end
+
   # Appends a string representation of this tuple to the given `IO`.
   #
   # ```
@@ -414,11 +423,14 @@ struct Tuple
   # tuple = {1, 2.5, "a"}
   # tuple.map_with_index { |e, i| "tuple[#{i}]: #{e}" } # => {"tuple[0]: 1", "tuple[1]: 2.5", "tuple[2]: a"}
   # ```
-  def map_with_index
+  #
+  # Accepts an optional *offset* parameter, which tells it to start counting
+  # from there.
+  def map_with_index(offset = 0)
     {% begin %}
       Tuple.new(
         {% for i in 0...T.size %}
-          (yield self[{{i}}], {{i}}),
+          (yield self[{{i}}], offset + {{i}}),
         {% end %}
       )
     {% end %}

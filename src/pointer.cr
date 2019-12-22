@@ -383,9 +383,12 @@ struct Pointer(T)
   end
 
   # Like `map!`, but yields 2 arguments, the element and its index
-  def map_with_index!(count : Int, &block)
+  #
+  # Accepts an optional *offset* parameter, which tells it to start counting
+  # from there.
+  def map_with_index!(count : Int, offset = 0, &block)
     count.times do |i|
-      self[i] = yield self[i], i
+      self[i] = yield self[i], offset + i
     end
     self
   end

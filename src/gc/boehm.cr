@@ -24,6 +24,19 @@ lib LibGC
 
   alias ThreadHandle = Void*
 
+  struct ProfStats
+    heap_size : Word
+    free_bytes : Word
+    unmapped_bytes : Word
+    bytes_since_gc : Word
+    bytes_before_gc : Word
+    non_gc_bytes : Word
+    gc_no : Word
+    markers_m1 : Word
+    bytes_reclaimed_since_gc : Word
+    reclaimed_bytes_before_gc : Word
+  end
+
   fun init = GC_init
   fun malloc = GC_malloc(size : SizeT) : Void*
   fun malloc_atomic = GC_malloc_atomic(size : SizeT) : Void*
@@ -48,6 +61,8 @@ lib LibGC
 
   fun get_heap_usage_safe = GC_get_heap_usage_safe(heap_size : Word*, free_bytes : Word*, unmapped_bytes : Word*, bytes_since_gc : Word*, total_bytes : Word*)
   fun set_max_heap_size = GC_set_max_heap_size(Word)
+
+  fun get_prof_stats = GC_get_prof_stats(stats : ProfStats*, size : SizeT)
 
   fun get_start_callback = GC_get_start_callback : Void*
   fun set_start_callback = GC_set_start_callback(callback : ->)
@@ -79,6 +94,10 @@ lib LibGC
     fun pthread_join = GC_pthread_join(thread : LibC::PthreadT, value : Void**) : LibC::Int
     fun pthread_detach = GC_pthread_detach(thread : LibC::PthreadT) : LibC::Int
   {% end %}
+
+  alias WarnProc = LibC::Char*, Word ->
+  fun set_warn_proc = GC_set_warn_proc(WarnProc)
+  $warn_proc = GC_current_warn_proc : WarnProc
 end
 
 module GC
@@ -177,6 +196,22 @@ module GC
     )
   end
 
+  def self.prof_stats
+    LibGC.get_prof_stats(out stats, sizeof(LibGC::ProfStats))
+
+    ProfStats.new(
+      heap_size: stats.heap_size,
+      free_bytes: stats.free_bytes,
+      unmapped_bytes: stats.unmapped_bytes,
+      bytes_since_gc: stats.bytes_since_gc,
+      bytes_before_gc: stats.bytes_before_gc,
+      non_gc_bytes: stats.non_gc_bytes,
+      gc_no: stats.gc_no,
+      markers_m1: stats.markers_m1,
+      bytes_reclaimed_since_gc: stats.bytes_reclaimed_since_gc,
+      reclaimed_bytes_before_gc: stats.reclaimed_bytes_before_gc)
+  end
+
   {% unless flag?(:win32) %}
     # :nodoc:
     def self.pthread_create(thread : LibC::PthreadT*, attr : LibC::PthreadAttrT*, start : Void* -> Void*, arg : Void*)
@@ -264,22 +299,20 @@ module GC
   end
 
   # pushes the stack of pending fibers when the GC wants to collect memory:
-  {% unless flag?(:win32) %}
-    GC.before_collect do
-      Fiber.unsafe_each do |fiber|
-        fiber.push_gc_roots unless fiber.running?
-      end
-
-      {% if flag?(:preview_mt) %}
-        Thread.unsafe_each do |thread|
-          if scheduler = thread.@scheduler
-            fiber = scheduler.@current
-            GC.set_stackbottom(thread.gc_thread_handler, fiber.@stack_bottom)
-          end
-        end
-      {% end %}
-
-      GC.unlock_write
+  GC.before_collect do
+    Fiber.unsafe_each do |fiber|
+      fiber.push_gc_roots unless fiber.running?
     end
-  {% end %}
+
+    {% if flag?(:preview_mt) %}
+      Thread.unsafe_each do |thread|
+        if scheduler = thread.@scheduler
+          fiber = scheduler.@current
+          GC.set_stackbottom(thread.gc_thread_handler, fiber.@stack_bottom)
+        end
+      end
+    {% end %}
+
+    GC.unlock_write
+  end
 end

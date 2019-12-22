@@ -59,7 +59,7 @@ class Array(T)
   getter size : Int32
   @capacity : Int32
 
-  # Creates a new empty Array.
+  # Creates a new empty `Array`.
   def initialize
     @size = 0
     @capacity = 0
@@ -400,7 +400,13 @@ class Array(T)
   def []=(index : Int, count : Int, value : T)
     raise ArgumentError.new "Negative count: #{count}" if count < 0
 
-    index = check_index_out_of_bounds index
+    index += size if index < 0
+
+    # We allow index == size because the range to replace
+    # can start at exactly the end of the array.
+    # So, we can't use check_index_out_of_bounds.
+    raise IndexError.new unless 0 <= index <= size
+
     count = index + count <= size ? count : size - index
 
     case count
@@ -456,7 +462,13 @@ class Array(T)
   def []=(index : Int, count : Int, values : Array(T))
     raise ArgumentError.new "Negative count: #{count}" if count < 0
 
-    index = check_index_out_of_bounds index
+    index += size if index < 0
+
+    # We allow index == size because the range to replace
+    # can start at exactly the end of the array.
+    # So, we can't use check_index_out_of_bounds.
+    raise IndexError.new unless 0 <= index <= size
+
     count = index + count <= size ? count : size - index
     diff = values.size - count
 
@@ -525,13 +537,14 @@ class Array(T)
     self[*Indexable.range_to_index_and_count(range, size)]
   end
 
-  # Like `#[Range(Int, Int)]`, but returns `nil` if the range's start is out of range.
+  # Like `#[Range]`, but returns `nil` if the range's start is out of range.
   #
   # ```
   # a = ["a", "b", "c", "d", "e"]
   # a[6..10]? # => nil
+  # a[6..]?   # => nil
   # ```
-  def []?(range : Range(Int, Int))
+  def []?(range : Range)
     self[*Indexable.range_to_index_and_count(range, size)]?
   end
 
@@ -1058,13 +1071,19 @@ class Array(T)
   end
 
   # Optimized version of `Enumerable#map_with_index`.
-  def map_with_index(&block : T, Int32 -> U) forall U
-    Array(U).new(size) { |i| yield @buffer[i], i }
+  #
+  # Accepts an optional *offset* parameter, which tells it to start counting
+  # from there.
+  def map_with_index(offset = 0, &block : T, Int32 -> U) forall U
+    Array(U).new(size) { |i| yield @buffer[i], offset + i }
   end
 
   # Like `map_with_index`, but mutates `self` instead of allocating a new object.
-  def map_with_index!(&block : (T, Int32) -> T)
-    to_unsafe.map_with_index!(size) { |e, i| yield e, i }
+  #
+  # Accepts an optional *offset* parameter, which tells it to start counting
+  # from there.
+  def map_with_index!(offset = 0, &block : (T, Int32) -> T)
+    to_unsafe.map_with_index!(size) { |e, i| yield e, offset + i }
     self
   end
 

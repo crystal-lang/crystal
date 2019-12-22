@@ -85,6 +85,9 @@ module Crystal
         # `Pointer(Void).malloc` must work like `Pointer(UInt8).malloc`,
         # that is, consider Void like the size of a byte.
         1
+      elsif type.is_a?(BoolType)
+        # LLVM reports 0 for bool (i1) but it must be 1 because it does occupy memory
+        1
       else
         llvm_typer.size_of(llvm_typer.llvm_type(type))
       end
@@ -257,7 +260,6 @@ module Crystal
       emit_vars_debug_info(@program.vars) if @debug.variables?
     end
 
-    getter llvm_typer
     getter llvm_context
 
     def new_builder(llvm_context)

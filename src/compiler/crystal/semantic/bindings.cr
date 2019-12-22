@@ -217,16 +217,16 @@ module Crystal
       owner_trace = [] of ASTNode
       node = self
 
-      visited = Set(typeof(object_id)).new
+      visited = Set(ASTNode).new.compare_by_identity
       owner_trace << node if node.type?.try &.includes_type?(owner)
-      visited.add node.object_id
+      visited.add node
       while deps = node.dependencies?
-        dependencies = deps.select { |dep| dep.type? && dep.type.includes_type?(owner) && !visited.includes?(dep.object_id) }
+        dependencies = deps.select { |dep| dep.type? && dep.type.includes_type?(owner) && !visited.includes?(dep) }
         if dependencies.size > 0
           node = dependencies.first
           nil_reason = node.nil_reason if node.is_a?(MetaTypeVar)
           owner_trace << node if node
-          visited.add node.object_id
+          visited.add node
         else
           break
         end

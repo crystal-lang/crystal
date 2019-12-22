@@ -8,7 +8,7 @@
 # Int32.from_json("1")                # => 1
 # Array(Int32).from_json("[1, 2, 3]") # => [1, 2, 3]
 # ```
-def Object.from_json(string_or_io) : self
+def Object.from_json(string_or_io)
   parser = JSON::PullParser.new(string_or_io)
   new parser
 end
@@ -21,7 +21,7 @@ end
 # ```
 # Int32.from_json(%({"main": 1}), root: "main") # => 1
 # ```
-def Object.from_json(string_or_io, root : String) : self
+def Object.from_json(string_or_io, root : String)
   parser = JSON::PullParser.new(string_or_io)
   parser.on_key!(root) do
     new parser
@@ -280,6 +280,30 @@ struct Time::Format
   def from_json(pull : JSON::PullParser)
     string = pull.read_string
     parse(string, Time::Location::UTC)
+  end
+end
+
+module JSON::ArrayConverter(Converter)
+  def self.from_json(pull : JSON::PullParser)
+    ary = Array(typeof(Converter.from_json(pull))).new
+    pull.read_array do
+      ary << Converter.from_json(pull)
+    end
+    ary
+  end
+end
+
+module JSON::HashValueConverter(Converter)
+  def self.from_json(pull : JSON::PullParser)
+    hash = Hash(String, typeof(Converter.from_json(pull))).new
+    pull.read_object do |key, key_location|
+      parsed_key = String.from_json_object_key?(key)
+      unless parsed_key
+        raise JSON::ParseException.new("Can't convert #{key.inspect} into String", *key_location)
+      end
+      hash[parsed_key] = Converter.from_json(pull)
+    end
+    hash
   end
 end
 

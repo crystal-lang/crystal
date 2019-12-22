@@ -328,6 +328,25 @@ struct JSONAttrPersonWithYAMLInitializeHook
   end
 end
 
+abstract class JSONShape
+  include JSON::Serializable
+
+  use_json_discriminator "type", {point: JSONPoint, circle: JSONCircle}
+
+  property type : String
+end
+
+class JSONPoint < JSONShape
+  property x : Int32
+  property y : Int32
+end
+
+class JSONCircle < JSONShape
+  property x : Int32
+  property y : Int32
+  property radius : Int32
+end
+
 describe "JSON mapping" do
   it "works with record" do
     JSONAttrPoint.new(1, 2).to_json.should eq "{\"x\":1,\"y\":2}"
@@ -809,5 +828,30 @@ describe "JSON mapping" do
 
     JSONAttrPersonWithYAMLInitializeHook.from_json(person.to_json).msg.should eq "Hello Vasya"
     JSONAttrPersonWithYAMLInitializeHook.from_yaml(person.to_yaml).msg.should eq "Hello Vasya"
+  end
+
+  describe "use_json_discriminator" do
+    it "deserializes with discriminator" do
+      point = JSONShape.from_json(%({"type": "point", "x": 1, "y": 2})).as(JSONPoint)
+      point.x.should eq(1)
+      point.y.should eq(2)
+
+      circle = JSONShape.from_json(%({"type": "circle", "x": 1, "y": 2, "radius": 3})).as(JSONCircle)
+      circle.x.should eq(1)
+      circle.y.should eq(2)
+      circle.radius.should eq(3)
+    end
+
+    it "raises if missing discriminator" do
+      expect_raises(JSON::MappingError, "Missing JSON discriminator field 'type'") do
+        JSONShape.from_json("{}")
+      end
+    end
+
+    it "raises if unknown discriminator value" do
+      expect_raises(JSON::MappingError, %(Unknown 'type' discriminator value: "unknown")) do
+        JSONShape.from_json(%({"type": "unknown"}))
+      end
+    end
   end
 end

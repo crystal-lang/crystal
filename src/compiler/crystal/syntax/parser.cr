@@ -601,7 +601,7 @@ module Crystal
       end
     end
 
-    AtomicWithMethodCheck = [:IDENT, :CONST, :"+", :"-", :"*", :"/", :"//", :"%", :"|", :"&", :"^", :"~", :"**", :"<<", :"<", :"<=", :"==", :"!=", :"=~", :"!~", :">>", :">", :">=", :"<=>", :"===", :"[]", :"[]=", :"[]?", :"[", :"&+", :"&-", :"&*", :"&**"]
+    AtomicWithMethodCheck = [:IDENT, :CONST, :"+", :"-", :"*", :"/", :"//", :"%", :"|", :"&", :"^", :"~", :"!", :"**", :"<<", :"<", :"<=", :"==", :"!=", :"=~", :"!~", :">>", :">", :">=", :"<=>", :"===", :"[]", :"[]=", :"[]?", :"[", :"&+", :"&-", :"&*", :"&**"]
 
     def parse_atomic_with_method
       location = @token.location
@@ -667,6 +667,9 @@ module Crystal
             atomic = parse_responds_to(atomic).at(location)
           elsif @token.value == :nil?
             atomic = parse_nil?(atomic).at(location)
+          elsif @token.type == :"!"
+            atomic = parse_negation_suffix(atomic).at(location)
+            atomic = parse_atomic_method_suffix_special(atomic, location)
           elsif @token.type == :"["
             return parse_atomic_method_suffix(atomic, location)
           else
@@ -831,7 +834,7 @@ module Crystal
       if @token.type == :"("
         next_token_skip_space_or_newline
         type = parse_single_type
-        skip_space
+        skip_space_or_newline
         check :")"
         next_token_skip_space
       else
@@ -847,7 +850,7 @@ module Crystal
       if @token.type == :"("
         next_token_skip_space_or_newline
         type = parse_single_type
-        skip_space
+        skip_space_or_newline
         check :")"
         end_location = token_end_location
         next_token_skip_space
@@ -901,6 +904,18 @@ module Crystal
       end
 
       IsA.new(atomic, Path.global("Nil"), nil_check: true)
+    end
+
+    def parse_negation_suffix(atomic)
+      next_token
+
+      if @token.type == :"("
+        next_token_skip_space_or_newline
+        check :")"
+        next_token_skip_space
+      end
+
+      Not.new(atomic)
     end
 
     def parse_atomic
@@ -1265,7 +1280,7 @@ module Crystal
       doc = @token.doc
 
       next_token_skip_space
-      name = parse_ident(allow_type_vars: false, parse_nilable: false).as(Path)
+      name = parse_path
       skip_space
 
       args = [] of ASTNode
@@ -1525,6 +1540,9 @@ module Crystal
       elsif @token.value == :nil?
         call = parse_nil?(obj).at(location)
         call = parse_atomic_method_suffix_special(call, location)
+      elsif @token.type == :"!"
+        call = parse_negation_suffix(obj).at(location)
+        call = parse_atomic_method_suffix_special(call, location)
       elsif @token.type == :"["
         call = parse_atomic_method_suffix obj, location
 
@@ -1588,7 +1606,7 @@ module Crystal
       next_token_skip_space_or_newline
       name_location = @token.location
 
-      name = parse_ident allow_type_vars: false
+      name = parse_path
       skip_space
 
       type_vars, splat_index = parse_type_vars
@@ -1611,8 +1629,6 @@ module Crystal
       end_location = token_end_location
       check_ident :end
       next_token_skip_space
-
-      raise "BUG: ClassDef name can only be a Path" unless name.is_a?(Path)
 
       @type_nest -= 1
 
@@ -1675,7 +1691,7 @@ module Crystal
       next_token_skip_space_or_newline
 
       name_location = @token.location
-      name = parse_ident allow_type_vars: false
+      name = parse_path
       skip_space
 
       type_vars, splat_index = parse_type_vars
@@ -1686,8 +1702,6 @@ module Crystal
       end_location = token_end_location
       check_ident :end
       next_token_skip_space
-
-      raise "BUG: ModuleDef name can only be a Path" unless name.is_a?(Path)
 
       @type_nest -= 1
 
@@ -1705,8 +1719,7 @@ module Crystal
       next_token_skip_space_or_newline
 
       name_location = @token.location
-      name = parse_ident(allow_type_vars: false, parse_nilable: false).as(Path)
-
+      name = parse_path
       skip_statement_end
 
       end_location = token_end_location
@@ -2709,6 +2722,7 @@ module Crystal
         when IsA         then call.obj = ImplicitObj.new
         when Cast        then call.obj = ImplicitObj.new
         when NilableCast then call.obj = ImplicitObj.new
+        when Not         then call.exp = ImplicitObj.new
         else
           raise "BUG: expected Call, RespondsTo, IsA, Cast or NilableCast"
         end
@@ -3914,6 +3928,12 @@ module Crystal
       end_location = token_end_location
       doc = @token.doc
 
+      if @token.type == :"!"
+        # only trigger from `parse_when_expression`
+        obj = Var.new("self").at(location)
+        return parse_negation_suffix(obj)
+      end
+
       case @token.value
       when :is_a?
         obj = Var.new("self").at(location)
@@ -4564,6 +4584,12 @@ module Crystal
       parse_ident_after_colons(location, global, allow_type_vars, parse_nilable)
     end
 
+    def parse_path
+      name = parse_ident(allow_type_vars: false, parse_nilable: false)
+      raise "BUG: expected a Path" unless name.is_a?(Path)
+      name
+    end
+
     def parse_ident_after_colons(location, global, allow_type_vars, parse_nilable)
       start_line = location.line_number
       start_column = location.column_number
@@ -4913,6 +4939,9 @@ module Crystal
         exps << parse_op_assign
         if @token.type == :","
           next_token_skip_space_or_newline
+        else
+          skip_space_or_newline
+          check :")"
         end
       end
 
@@ -5414,7 +5443,8 @@ module Crystal
 
       next_token_skip_space_or_newline
 
-      name = parse_ident(allow_type_vars: false).as(Path)
+      name = parse_path
+
       skip_space
       check :"="
       next_token_skip_space_or_newline
@@ -5438,7 +5468,7 @@ module Crystal
       end
 
       exp = parse_op_assign
-      skip_space
+      skip_space_or_newline
 
       end_location = token_end_location
       check :")"
@@ -5464,7 +5494,7 @@ module Crystal
       location = @token.location
       exp = parse_single_type.at(location)
 
-      skip_space
+      skip_space_or_newline
 
       end_location = token_end_location
       check :")"
@@ -5597,7 +5627,7 @@ module Crystal
 
       next_token_skip_space_or_newline
 
-      name = parse_ident allow_type_vars: false
+      name = parse_path
       skip_space
 
       case @token.type
@@ -5616,8 +5646,6 @@ module Crystal
       check_ident :end
       end_location = token_end_location
       next_token_skip_space
-
-      raise "BUG: EnumDef name can only be a Path" unless name.is_a?(Path)
 
       enum_def = EnumDef.new name, members, base_type
       enum_def.doc = doc

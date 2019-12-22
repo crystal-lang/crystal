@@ -2,7 +2,7 @@ class Crystal::Doc::Generator
   getter program : Program
 
   @base_dir : String
-  @is_crystal_repo : Bool
+  property is_crystal_repo : Bool
   @repository : String? = nil
   getter repository_name = ""
 
@@ -28,7 +28,14 @@ class Crystal::Doc::Generator
     },
   }
 
-  def initialize(@program : Program, @included_dirs : Array(String), @output_dir : String, @output_format : String, @canonical_base_url : String?)
+  def self.new(program : Program, included_dirs : Array(String))
+    new(program, included_dirs, ".", "html", nil, "1.0", "never")
+  end
+
+  def initialize(@program : Program, @included_dirs : Array(String),
+                 @output_dir : String, @output_format : String,
+                 @sitemap_base_url : String?,
+                 @sitemap_priority : String, @sitemap_changefreq : String)
     @base_dir = Dir.current.chomp
     @types = {} of Crystal::Type => Doc::Type
     @repo_name = ""
@@ -83,17 +90,24 @@ class Crystal::Doc::Generator
     copy_files
     generate_types_docs types, @output_dir, types
     generate_readme program_type, types
+    generate_sitemap types
   end
 
   def generate_readme(program_type, types)
     raw_body = read_readme
     body = doc(program_type, raw_body)
 
-    File.write File.join(@output_dir, "index.html"), MainTemplate.new(body, types, repository_name, @canonical_base_url)
+    File.write File.join(@output_dir, "index.html"), MainTemplate.new(body, types, repository_name)
 
     main_index = Main.new(raw_body, Type.new(self, @program), repository_name)
     File.write File.join(@output_dir, "index.json"), main_index
     File.write File.join(@output_dir, "search-index.js"), main_index.to_jsonp
+  end
+
+  def generate_sitemap(types)
+    if sitemap_base_url = @sitemap_base_url
+      File.write File.join(@output_dir, "sitemap.xml"), SitemapTemplate.new(types, sitemap_base_url, "1.0", "never")
+    end
   end
 
   def copy_files
@@ -112,7 +126,7 @@ class Crystal::Doc::Generator
         filename = File.join(dir, "#{type.name}.html")
       end
 
-      File.write filename, TypeTemplate.new(type, all_types, @canonical_base_url)
+      File.write filename, TypeTemplate.new(type, all_types)
 
       next if type.program?
 

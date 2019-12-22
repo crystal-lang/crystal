@@ -30,10 +30,9 @@ class Crystal::Doc::Markdown::HTMLRenderer
     @io << "</strong>"
   end
 
-  def begin_header(level)
-    @io << "<h"
-    @io << level
-    @io << '>'
+  def begin_header(level : Int32, anchor : String) : Nil
+    @io << "<h" << level << '>'
+    @io << Crystal::Doc.anchor_link(anchor)
   end
 
   def end_header(level)

@@ -18,6 +18,10 @@ enum SpecEnumFlags
   Three
 end
 
+enum SpecBigEnum : Int64
+  TooBig = 4294967296i64 # == 2**32
+end
+
 describe Enum do
   describe "to_s" do
     it "for simple enum" do
@@ -139,6 +143,29 @@ describe Enum do
       SpecEnumFlags.from_value(2).should eq(SpecEnumFlags::Two)
       SpecEnumFlags.from_value(3).should eq(SpecEnumFlags::One | SpecEnumFlags::Two)
       expect_raises(Exception, "Unknown enum SpecEnumFlags value: 8") { SpecEnumFlags.from_value(8) }
+    end
+  end
+
+  describe "valid?" do
+    it "for simple enum" do
+      SpecEnum.valid?(SpecEnum::One).should be_true
+      SpecEnum.valid?(SpecEnum::Two).should be_true
+      SpecEnum.valid?(SpecEnum::Three).should be_true
+      SpecEnum.valid?(SpecEnum.new(3i8)).should be_false
+    end
+
+    it "for flags enum" do
+      SpecEnumFlags.valid?(SpecEnumFlags::One).should be_true
+      SpecEnumFlags.valid?(SpecEnumFlags::Two).should be_true
+      SpecEnumFlags.valid?(SpecEnumFlags::One | SpecEnumFlags::Two).should be_true
+      SpecEnumFlags.valid?(SpecEnumFlags.new(8)).should be_false
+      SpecEnumFlags.valid?(SpecEnumFlags::None).should be_true
+      SpecEnumFlags.valid?(SpecEnumFlags::All).should be_true
+    end
+
+    it "for Int64 enum" do
+      SpecBigEnum.valid?(SpecBigEnum::TooBig).should be_true
+      SpecBigEnum.valid?(SpecBigEnum.new(0i64)).should be_false
     end
   end
 

@@ -339,6 +339,10 @@ module Crystal
       new(values.map { |value| (yield value).as(ASTNode) }, of: of)
     end
 
+    def self.map_with_index(values)
+      new(values.map_with_index { |value, idx| (yield value, idx).as(ASTNode) }, of: nil)
+    end
+
     def accept_children(visitor)
       @name.try &.accept visitor
       elements.each &.accept visitor
@@ -450,6 +454,10 @@ module Crystal
       new(values.map { |value| (yield value).as(ASTNode) })
     end
 
+    def self.map_with_index(values)
+      new(values.map_with_index { |value, idx| (yield value, idx).as(ASTNode) })
+    end
+
     def accept_children(visitor)
       elements.each &.accept visitor
     end
@@ -539,7 +547,7 @@ module Crystal
     property block_arg : ASTNode?
     property named_args : Array(NamedArgument)?
     property name_location : Location?
-    property name_size = -1
+    @name_size = -1
     property doc : String?
     property visibility = Visibility::Public
     property? global : Bool
@@ -574,6 +582,8 @@ module Crystal
       end
       @name_size
     end
+
+    setter name_size
 
     def accept_children(visitor)
       @obj.try &.accept visitor
@@ -2075,7 +2085,7 @@ module Crystal
 
   # for inside a macro:
   #
-  #    {% for x1, x2, ... , xn in exp %}
+  #    {% for x1, x2, ..., xn in exp %}
   #      body
   #    {% end %}
   class MacroFor < ASTNode

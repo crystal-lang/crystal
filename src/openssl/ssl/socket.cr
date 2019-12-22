@@ -115,7 +115,13 @@ abstract class OpenSSL::SSL::Socket < IO
 
     LibSSL.ssl_read(@ssl, slice.to_unsafe, count).tap do |bytes|
       if bytes <= 0 && !LibSSL.ssl_get_error(@ssl, bytes).zero_return?
-        raise OpenSSL::SSL::Error.new(@ssl, bytes, "SSL_read")
+        ex = OpenSSL::SSL::Error.new(@ssl, bytes, "SSL_read")
+        if ex.underlying_eof?
+          # underlying BIO terminated gracefully, without terminating SSL aspect gracefully first
+          # some misbehaving servers "do this" so treat as EOF even though it's a protocol error
+          return 0
+        end
+        raise ex
       end
     end
   end
@@ -154,7 +160,8 @@ abstract class OpenSSL::SSL::Socket < IO
       loop do
         begin
           ret = LibSSL.ssl_shutdown(@ssl)
-          break if ret == 1
+          break if ret == 1                # done bidirectional
+          break if ret == 0 && sync_close? # done unidirectional, "this first successful call to SSL_shutdown() is sufficient"
           raise OpenSSL::SSL::Error.new(@ssl, ret, "SSL_shutdown") if ret < 0
         rescue e : OpenSSL::SSL::Error
           case e.error
@@ -171,7 +178,7 @@ abstract class OpenSSL::SSL::Socket < IO
 
         # ret == 0, retry, shutdown is not complete yet
       end
-    rescue IO::Error
+    rescue IO::Error | Errno
     ensure
       @bio.io.close if @sync_close
     end

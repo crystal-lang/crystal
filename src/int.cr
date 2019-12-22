@@ -155,27 +155,35 @@ struct Int
   #
   # See `Int#/` for more details.
   def %(other : Int)
-    if other == 0
-      raise DivisionByZeroError.new
-    elsif (self < 0) == (other < 0)
-      self.unsafe_mod(other)
-    else
-      me = self.unsafe_mod(other)
-      me == 0 ? me : me + other
-    end
+    {% begin %}
+      if other == 0
+        raise DivisionByZeroError.new
+      elsif self < 0 && self == {{@type}}::MIN && other == -1
+        self.class.new(0)
+      elsif (self < 0) == (other < 0)
+        self.unsafe_mod(other)
+      else
+        me = self.unsafe_mod(other)
+        me == 0 ? me : me + other
+      end
+    {% end %}
   end
 
   # Returns `self` remainder *other*.
   #
   # This uses truncated division.
   #
-  # See `Int#div` for more details.
+  # See `Int#tdiv` for more details.
   def remainder(other : Int)
-    if other == 0
-      raise DivisionByZeroError.new
-    else
-      unsafe_mod other
-    end
+    {% begin %}
+      if other == 0
+        raise DivisionByZeroError.new
+      elsif self < 0 && self == {{@type}}::MIN && other == -1
+        self.class.new(0)
+      else
+        unsafe_mod other
+      end
+    {% end %}
   end
 
   # Returns the result of shifting this number's bits *count* positions to the right.
@@ -331,6 +339,51 @@ struct Int
     self >> bit & 1
   end
 
+  # Returns the requested range of bits
+  #
+  # ```
+  # 0b10011.bits(0..1) # => 0b11
+  # 0b10011.bits(0..2) # => 0b11
+  # 0b10011.bits(0..3) # => 0b11
+  # 0b10011.bits(0..4) # => 0b10011
+  # 0b10011.bits(0..5) # => 0b10011
+  # 0b10011.bits(1..4) # => 0b1001
+  # ```
+  def bits(range : Range)
+    start_index = range.begin
+    if start_index
+      raise IndexError.new("start index (#{start_index}) must be positive") if start_index < 0
+    else
+      start_index = 0
+    end
+
+    end_index = range.end
+    if end_index
+      raise IndexError.new("end index (#{end_index}) must be positive") if end_index < 0
+      end_index += 1 unless range.exclusive?
+      raise IndexError.new("end index (#{end_index}) must be greater than start index (#{start_index})") if end_index <= start_index
+    else
+      # if there is no end index then we only need to shift
+      return self >> start_index
+    end
+
+    # Generates a mask `count` bits long maintaining the correct type
+    count = end_index - start_index
+    mask = (self.class.new(1) << count) &- 1
+
+    if self < 0
+      # Special case for negative to ensure the shift and mask work as expected
+      # The result is always negative
+      offset = (~self) >> start_index
+      result = offset & mask
+      ~result
+    else
+      # Shifts out the bits we want to ignore before applying the mask
+      offset = self >> start_index
+      offset & mask
+    end
+  end
+
   # Returns `true` if all bits in *mask* are set on `self`.
   #
   # ```
@@ -342,8 +395,48 @@ struct Int
     (self & mask) == mask
   end
 
-  def gcd(other : Int)
-    self == 0 ? other.abs : (other % self).gcd(self)
+  # Returns the greatest common divisor of `self` and `other`. Signed
+  # integers may raise overflow if either has value equal to `MIN` of
+  # its type.
+  #
+  # ```
+  # 5.gcd(10) # => 2
+  # 5.gcd(7)  # => 1
+  # ```
+  def gcd(other : self) : self
+    # Implementation heavily inspired by
+    # https://en.wikipedia.org/wiki/Binary_GCD_algorithm#Iterative_version_in_C
+    u = self.abs
+    v = other.abs
+    return v if u == 0
+    return u if v == 0
+
+    shift = self.class.zero
+    # Let shift := lg K, where K is the greatest power of 2
+    # dividing both u and v.
+    while (u | v) & 1 == 0
+      shift &+= 1
+      u = u.unsafe_shr 1
+      v = v.unsafe_shr 1
+    end
+    while u & 1 == 0
+      u = u.unsafe_shr 1
+    end
+    # From here on, u is always odd.
+    loop do
+      # remove all factors of 2 in v -- they are not common
+      # note: v is not zero, so while will terminate
+      while v & 1 == 0
+        v = v.unsafe_shr 1
+      end
+      # Now u and v are both odd. Swap if necessary so u <= v,
+      # then set v = v - u (which is even).
+      u, v = v, u if u > v
+      v &-= u
+      break if v.zero?
+    end
+    # restore common factors of 2
+    u.unsafe_shl shift
   end
 
   def lcm(other : Int)

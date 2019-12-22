@@ -289,6 +289,10 @@ module Enumerable(T)
   #
   # This can be used to prevent many memory allocations when each slice of
   # interest is to be used in a read-only fashion.
+  #
+  # Chunks of two items can be iterated using `#each_cons_pair`, an optimized
+  # implementation for the special case of `size == 2` which avoids heap
+  # allocations.
   def each_cons(count : Int, reuse = false)
     raise ArgumentError.new "Invalid cons size: #{count}" if count <= 0
     if reuse.nil? || reuse.is_a?(Bool)
@@ -311,6 +315,40 @@ module Enumerable(T)
       end
     end
     nil
+  end
+
+  # Iterates over the collection yielding pairs of adjacent items,
+  # but advancing one by one.
+  #
+  # ```
+  # [1, 2, 3, 4, 5].each_cons_pair do |a, b|
+  #   puts "#{a}, #{b}"
+  # end
+  # ```
+  #
+  # Prints:
+  #
+  # ```text
+  # 1, 2
+  # 2, 3
+  # 3, 4
+  # 4, 5
+  # ```
+  #
+  # Chunks of more than two items can be iterated using `#each_cons`.
+  # This method is just an optimized implementation for the special case of
+  # `size == 2` to avoid heap allocations.
+  def each_cons_pair(& : (T, T) -> _) : Nil
+    last_elem = uninitialized T
+    first_iteration = true
+    each do |elem|
+      if first_iteration
+        first_iteration = false
+      else
+        yield last_elem, elem
+      end
+      last_elem = elem
+    end
   end
 
   # Iterates over the collection in slices of size *count*,
@@ -483,6 +521,7 @@ module Enumerable(T)
   # ```
   # ["Alice", "Bob"].grep(/^A/) # => ["Alice"]
   # ```
+  @[Deprecated("Use `#select` instead")]
   def grep(pattern)
     self.select { |elem| pattern === elem }
   end
@@ -628,7 +667,8 @@ module Enumerable(T)
   # Just like the other variant, but you can set the initial value of the accumulator.
   #
   # ```
-  # [1, 2, 3, 4, 5].reduce(10) { |acc, i| acc + i } # => 25
+  # [1, 2, 3, 4, 5].reduce(10) { |acc, i| acc + i }             # => 25
+  # [1, 2, 3].reduce([] of Int32) { |memo, i| memo.unshift(i) } # => [3, 2, 1]
   # ```
   def reduce(memo)
     each do |elem|
@@ -734,9 +774,12 @@ module Enumerable(T)
   # ["Alice", "Bob"].map_with_index { |name, i| "User ##{i}: #{name}" }
   # # => ["User #0: Alice", "User #1: Bob"]
   # ```
-  def map_with_index(&block : T, Int32 -> U) forall U
+  #
+  # Accepts an optional *offset* parameter, which tells it to start counting
+  # from there.
+  def map_with_index(offset = 0, &block : T, Int32 -> U) forall U
     ary = [] of U
-    each_with_index { |e, i| ary << yield e, i }
+    each_with_index(offset) { |e, i| ary << yield e, i }
     ary
   end
 
@@ -787,7 +830,7 @@ module Enumerable(T)
 
     each_with_index do |elem, i|
       value = yield elem
-      if i == 0 || value > max
+      if i == 0 || compare_or_raise(value, max) > 0
         max = value
         obj = elem
       end
@@ -820,7 +863,7 @@ module Enumerable(T)
 
     each_with_index do |elem, i|
       value = yield elem
-      if i == 0 || value > max
+      if i == 0 || compare_or_raise(value, max) > 0
         max = value
       end
       found = true
@@ -876,7 +919,7 @@ module Enumerable(T)
 
     each_with_index do |elem, i|
       value = yield elem
-      if i == 0 || value < min
+      if i == 0 || compare_or_raise(value, min) < 0
         min = value
         obj = elem
       end
@@ -909,7 +952,7 @@ module Enumerable(T)
 
     each_with_index do |elem, i|
       value = yield elem
-      if i == 0 || value < min
+      if i == 0 || compare_or_raise(value, min) < 0
         min = value
       end
       found = true
@@ -962,11 +1005,11 @@ module Enumerable(T)
 
     each_with_index do |elem, i|
       value = yield elem
-      if i == 0 || value < min
+      if i == 0 || compare_or_raise(value, min) < 0
         min = value
         objmin = elem
       end
-      if i == 0 || value > max
+      if i == 0 || compare_or_raise(value, max) > 0
         max = value
         objmax = elem
       end
@@ -1003,16 +1046,20 @@ module Enumerable(T)
 
     each_with_index do |elem, i|
       value = yield elem
-      if i == 0 || value < min
+      if i == 0 || compare_or_raise(value, min) < 0
         min = value
       end
-      if i == 0 || value > max
+      if i == 0 || compare_or_raise(value, max) > 0
         max = value
       end
       found = true
     end
 
     {found, {min, max}}
+  end
+
+  private def compare_or_raise(value, memo)
+    value <=> memo || raise ArgumentError.new("Comparison of #{value} and #{memo} failed")
   end
 
   # Returns `true` if the passed block returns `true`
@@ -1179,9 +1226,10 @@ module Enumerable(T)
   #
   # ```
   # [1, 3, 2, 5, 4, 6].select(3..5) # => [3, 5, 4]
+  # ["Alice", "Bob"].select(/^A/)   # => ["Alice"]
   # ```
   def select(pattern)
-    self.select { |e| pattern === e }
+    self.select { |elem| pattern === elem }
   end
 
   # Returns the number of elements in the collection.

@@ -206,7 +206,7 @@ module Crystal
 
     class InitProject
       getter config : Config
-      getter views : Array(View)?
+      @views : Array(View)?
 
       def initialize(@config : Config)
       end

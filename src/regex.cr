@@ -203,6 +203,7 @@ class Regex
 
   @[Flags]
   enum Options
+    # Case insensitive match.
     IGNORE_CASE = 1
     # PCRE native `PCRE_MULTILINE` flag is `2`, and `PCRE_DOTALL` is `4`
     # - `PCRE_DOTALL` changes the "`.`" meaning
@@ -212,8 +213,9 @@ class Regex
     # flag that activates both behaviours, so here we do the same by
     # mapping `MULTILINE` to `PCRE_MULTILINE | PCRE_DOTALL`.
     MULTILINE = 6
-    EXTENDED  = 8
-    # :nodoc:
+    # Ignore white space and `#` comments.
+    EXTENDED = 8
+    # Force pattern anchoring.
     ANCHORED = 16
     # :nodoc:
     UTF_8 = 0x00000800

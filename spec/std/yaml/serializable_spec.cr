@@ -285,6 +285,25 @@ class YAMLAttrModuleTest2 < YAMLAttrModuleTest
   end
 end
 
+abstract class YAMLShape
+  include YAML::Serializable
+
+  use_yaml_discriminator "type", {point: YAMLPoint, circle: YAMLCircle}
+
+  property type : String
+end
+
+class YAMLPoint < YAMLShape
+  property x : Int32
+  property y : Int32
+end
+
+class YAMLCircle < YAMLShape
+  property x : Int32
+  property y : Int32
+  property radius : Int32
+end
+
 describe "YAML::Serializable" do
   it "works with record" do
     YAMLAttrPoint.new(1, 2).to_yaml.should eq "---\nx: 1\ny: 2\n"
@@ -787,5 +806,30 @@ describe "YAML::Serializable" do
     it { YAMLAttrModuleTest.from_yaml(%({"phoo": 20})).to_tuple.should eq({10, 20}) }
     it { YAMLAttrModuleTest2.from_yaml(%({"phoo": 20, "bar": 30})).to_tuple.should eq({10, 20, 30}) }
     it { YAMLAttrModuleTest2.from_yaml(%({"bar": 30, "moo": 40})).to_tuple.should eq({40, 15, 30}) }
+  end
+
+  describe "use_yaml_discriminator" do
+    it "deserializes with discriminator" do
+      point = YAMLShape.from_yaml(%({"type": "point", "x": 1, "y": 2})).as(YAMLPoint)
+      point.x.should eq(1)
+      point.y.should eq(2)
+
+      circle = YAMLShape.from_yaml(%({"type": "circle", "x": 1, "y": 2, "radius": 3})).as(YAMLCircle)
+      circle.x.should eq(1)
+      circle.y.should eq(2)
+      circle.radius.should eq(3)
+    end
+
+    it "raises if missing discriminator" do
+      expect_raises(YAML::ParseException, "Missing YAML discriminator field 'type'") do
+        YAMLShape.from_yaml("{}")
+      end
+    end
+
+    it "raises if unknown discriminator value" do
+      expect_raises(YAML::ParseException, %(Unknown 'type' discriminator value: "unknown")) do
+        YAMLShape.from_yaml(%({"type": "unknown"}))
+      end
+    end
   end
 end

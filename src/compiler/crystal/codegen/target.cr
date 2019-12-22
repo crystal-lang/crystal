@@ -105,7 +105,8 @@ class Crystal::Codegen::Target
     environment_parts.includes?("gnueabihf") || environment_parts.includes?("musleabihf")
   end
 
-  def to_target_machine(cpu = "", features = "", release = false) : LLVM::TargetMachine
+  def to_target_machine(cpu = "", features = "", release = false,
+                        code_model = LLVM::CodeModel::Default) : LLVM::TargetMachine
     case @architecture
     when "i386", "x86_64"
       LLVM.init_x86
@@ -127,10 +128,22 @@ class Crystal::Codegen::Target
     opt_level = release ? LLVM::CodeGenOptLevel::Aggressive : LLVM::CodeGenOptLevel::None
 
     target = LLVM::Target.from_triple(self.to_s)
-    target.create_target_machine(self.to_s, cpu: cpu, features: features, opt_level: opt_level).not_nil!
+    target.create_target_machine(self.to_s, cpu: cpu, features: features, opt_level: opt_level, code_model: code_model).not_nil!
   end
 
   def to_s(io : IO) : Nil
     io << architecture << '-' << vendor << '-' << environment
+  end
+
+  def ==(other : self)
+    return false unless architecture == other.architecture
+
+    # If any vendor is unknown, we can skip it. But if both are known, they must
+    # match.
+    if vendor != "unknown" && other.vendor != "unknown"
+      return false unless vendor == other.vendor
+    end
+
+    environment == other.environment
   end
 end
