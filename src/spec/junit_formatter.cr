@@ -21,7 +21,7 @@ module Spec
       io << %(" skipped=") << (@summary[:pending]? || 0)
       io << %(" errors=") << (@summary[:error]? || 0)
       io << %(" failures=") << (@summary[:fail]? || 0)
-      io << %(" time=") << elapsed_time.to_f
+      io << %(" time=") << elapsed_time.total_seconds
       io << %(" timestamp=") << @started_at.to_rfc3339
       io << %(" hostname=") << System.hostname
       io << %(">)
@@ -52,7 +52,7 @@ module Spec
 
       if elapsed = result.elapsed
         io << %(" time=")
-        io << elapsed.to_f
+        io << elapsed.total_seconds
       end
 
       if tag = inner_content_tag(result.kind)
