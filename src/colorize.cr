@@ -86,7 +86,7 @@
 # ```
 # require "colorize"
 #
-# "foo".colorize(some_bool ? :green : :default)
+# "foo".colorize(Random::DEFAULT.next_bool ? :green : :default)
 # ```
 #
 # See `Colorize::ColorANSI` and `Colorize::Mode` for all available colors and text decorations.
