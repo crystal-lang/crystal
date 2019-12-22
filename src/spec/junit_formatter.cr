@@ -18,7 +18,7 @@ module Spec
       io = @io
       io.puts %(<?xml version="1.0"?>)
       io << %(<testsuite tests=") << @results.size
-      io << %(" disabled=") << (@summary[:pending]? || 0)
+      io << %(" skipped=") << (@summary[:pending]? || 0)
       io << %(" errors=") << (@summary[:error]? || 0)
       io << %(" failures=") << (@summary[:fail]? || 0)
       io << %(" time=") << elapsed_time.to_f

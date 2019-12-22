@@ -10,7 +10,7 @@ describe "JUnit Formatter" do
 
     expected = <<-XML
                  <?xml version="1.0"?>
-                 <testsuite tests="2" disabled="0" errors="0" failures="0" time="0.0" hostname="#{System.hostname}">
+                 <testsuite tests="2" skipped="0" errors="0" failures="0" time="0.0" hostname="#{System.hostname}">
                    <testcase file="spec/some_spec.cr" classname="spec.some_spec" name="should do something"/>
                    <testcase file="spec/some_spec.cr" classname="spec.some_spec" name="should do something else"/>
                  </testsuite>
@@ -26,7 +26,7 @@ describe "JUnit Formatter" do
 
     expected = <<-XML
                  <?xml version="1.0"?>
-                 <testsuite tests="1" disabled="1" errors="0" failures="0" time="0.0" hostname="#{System.hostname}">
+                 <testsuite tests="1" skipped="1" errors="0" failures="0" time="0.0" hostname="#{System.hostname}">
                    <testcase file="spec/some_spec.cr" classname="spec.some_spec" name="should do something">
                      <skipped/>
                    </testcase>
@@ -43,7 +43,7 @@ describe "JUnit Formatter" do
 
     expected = <<-XML
                  <?xml version="1.0"?>
-                 <testsuite tests="1" disabled="0" errors="0" failures="1" time="0.0" hostname="#{System.hostname}">
+                 <testsuite tests="1" skipped="0" errors="0" failures="1" time="0.0" hostname="#{System.hostname}">
                    <testcase file="spec/some_spec.cr" classname="spec.some_spec" name="should do something">
                      <failure/>
                    </testcase>
@@ -60,7 +60,7 @@ describe "JUnit Formatter" do
 
     expected = <<-XML
                  <?xml version="1.0"?>
-                 <testsuite tests="1" disabled="0" errors="1" failures="0" time="0.0" hostname="#{System.hostname}">
+                 <testsuite tests="1" skipped="0" errors="1" failures="0" time="0.0" hostname="#{System.hostname}">
                    <testcase file="spec/some_spec.cr" classname="spec.some_spec" name="should do something">
                      <error/>
                    </testcase>
@@ -80,7 +80,7 @@ describe "JUnit Formatter" do
 
     expected = <<-XML
                  <?xml version="1.0"?>
-                 <testsuite tests="4" disabled="1" errors="1" failures="1" time="0.0" hostname="#{System.hostname}">
+                 <testsuite tests="4" skipped="1" errors="1" failures="1" time="0.0" hostname="#{System.hostname}">
                    <testcase file="spec/some_spec.cr" classname="spec.some_spec" name="should do something1" time="2.0"/>
                    <testcase file="spec/some_spec.cr" classname="spec.some_spec" name="should do something2" time="0.5">
                      <failure/>
