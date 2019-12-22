@@ -935,11 +935,11 @@ class Hash(K, V)
         if key.responds_to?(:object_id)
           entry_key.object_id == key.object_id
         else
-          false
+          return false
         end
       elsif key.responds_to?(:object_id)
         # because entry_key doesn't respond to :object_id
-        false
+        return false
       else
         entry_key == key
       end
