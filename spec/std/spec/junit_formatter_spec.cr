@@ -71,19 +71,16 @@ describe "JUnit Formatter" do
   end
 
   it "reports mixed results" do
-    this_filename = __FILE__
-
     output = build_report_with_no_timestamp do |f|
       f.report Spec::Result.new(:success, "should do something1", "spec/some_spec.cr", 33, 2.seconds, nil)
       f.report Spec::Result.new(:fail, "should do something2", "spec/some_spec.cr", 50, 0.5.seconds, nil)
       f.report Spec::Result.new(:error, "should do something3", "spec/some_spec.cr", 65, nil, nil)
-      f.report Spec::Result.new(:error, "should do something4", "spec/some_spec.cr", 80, nil, nil)
-      f.report Spec::Result.new(:pending, "should do something5", this_filename, 90, nil, nil)
+      f.report Spec::Result.new(:pending, "should do something4", "spec/some_spec.cr", 80, nil, nil)
     end
 
     expected = <<-XML
                  <?xml version="1.0"?>
-                 <testsuite tests="5" disabled="1" errors="2" failures="1" time="0.0" hostname="#{System.hostname}">
+                 <testsuite tests="4" disabled="1" errors="1" failures="1" time="0.0" hostname="#{System.hostname}">
                    <testcase file="spec/some_spec.cr" classname="spec.some_spec" name="should do something1" time="2.0"/>
                    <testcase file="spec/some_spec.cr" classname="spec.some_spec" name="should do something2" time="0.5">
                      <failure/>
@@ -92,15 +89,21 @@ describe "JUnit Formatter" do
                      <error/>
                    </testcase>
                    <testcase file="spec/some_spec.cr" classname="spec.some_spec" name="should do something4">
-                     <error/>
-                   </testcase>
-                   <testcase file="#{this_filename}" classname="spec.std.spec.junit_formatter_spec" name="should do something5">
                      <skipped/>
                    </testcase>
                  </testsuite>
                  XML
 
     output.should eq(expected)
+  end
+
+  it "encodes class names from the relative file path" do
+    output = build_report do |f|
+      f.report Spec::Result.new(:success, "foo", __FILE__, __LINE__, nil, nil)
+    end
+
+    classname = XML.parse(output).xpath_string("string(//testsuite/testcase[1]/@classname)")
+    classname.should eq("spec.std.spec.junit_formatter_spec")
   end
 
   it "escapes spec names" do
