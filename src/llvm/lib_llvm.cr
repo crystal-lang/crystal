@@ -3,7 +3,7 @@ lib LibLLVM
   LLVM_CONFIG = {{
                   `if ! LLVM_CONFIG=$(command -v "$LLVM_CONFIG"); then
                    llvm_config_version=$(llvm-config --version 2>/dev/null)
-                     for version in 8.0 7.1 6.0 5.0 4.0 3.9 3.8; do
+                     for version in 9.0 8.0 7.1 6.0 5.0 4.0 3.9 3.8; do
                        LLVM_CONFIG=$(
                        command -v llvm-config-${version%.*} || \
                        command -v llvm-config-$version || \
