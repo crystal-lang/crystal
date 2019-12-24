@@ -1,6 +1,10 @@
 require "spec"
 require "yaml"
 
+YAML.add_tag_handler "!double" do |value|
+  value.to_i64 * 2
+end
+
 describe "YAML" do
   describe "parser" do
     it { YAML.parse("foo").should eq("foo") }

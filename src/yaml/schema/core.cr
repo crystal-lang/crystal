@@ -288,6 +288,10 @@ module YAML::Schema::Core
       yield source.value
     when "tag:yaml.org,2002:timestamp"
       yield parse_time(source.value, source.location)
+    when "!crystal/env"
+      yield ENV[source.value]
+    when "!crystal/env?"
+      yield ENV[source.value]?
     else
       if handler = YAML.tag_handlers[tag]?
         yield handler.call source.value

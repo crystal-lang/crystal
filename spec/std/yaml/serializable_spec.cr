@@ -304,10 +304,14 @@ class YAMLCircle < YAMLShape
   property radius : Int32
 end
 
-describe "YAML::Serializable" do
+describe YAML::Serializable do
   it "works with record" do
     YAMLAttrPoint.new(1, 2).to_yaml.should eq "---\nx: 1\ny: 2\n"
     YAMLAttrPoint.from_yaml("---\nx: 1\ny: 2\n").should eq YAMLAttrPoint.new(1, 2)
+  end
+
+  it "works with a custom tag processor" do
+    YAMLAttrPoint.from_yaml("---\nx: 1\ny: !double 2\n").should eq YAMLAttrPoint.new(1, 4)
   end
 
   it "empty class" do

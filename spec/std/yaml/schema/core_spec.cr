@@ -201,6 +201,38 @@ describe YAML::Schema::Core do
   it_parses "!!float 0", 0.0
   it_parses "!!float 2.3e4", 2.3e4
 
+  # Crystal tags
+  describe "crystal" do
+    describe "env" do
+      context "that exists" do
+        ENV["TEST_VAR"] = "yes"
+        it_parses "!crystal/env TEST_VAR", "yes"
+      end
+
+      context "that does not exist" do
+        it "should raise an exception" do
+          expect_raises KeyError, %(Missing ENV key: "FOO") do
+            YAML::Schema::Core.parse("!crystal/env FOO")
+          end
+        end
+      end
+    end
+
+    describe "env?" do
+      context "that exists" do
+        ENV["TEST_VAR"] = "yes"
+        it_parses "!crystal/env? TEST_VAR", "yes"
+      end
+
+      context "that does not exist" do
+        it_parses "!crystal/env? FOO", nil
+      end
+    end
+  end
+
+  # Custom tags
+  it_parses "!double 10", 20
+
   it "parses !!float .nan" do
     YAML::Schema::Core.parse("!!float .nan").as_f.nan?.should be_true
   end
