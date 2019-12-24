@@ -14,6 +14,7 @@ module Crystal
     property doc_buffer : IO::Memory?
     property raw : String
     property start : Int32
+    property invalid_escape : Bool
 
     record MacroState,
       whitespace : Bool,
@@ -76,6 +77,7 @@ module Crystal
       @passed_backslash_newline = false
       @raw = ""
       @start = 0
+      @invalid_escape = false
     end
 
     def doc

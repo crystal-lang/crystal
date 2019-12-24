@@ -406,6 +406,11 @@ describe Crystal::Formatter do
   assert_format "__DIR__", "__DIR__"
   assert_format "__LINE__", "__LINE__"
 
+  assert_format %q("\\\"\#\a\b\n\r\t\v\f\e")
+  assert_format %q("\a\c\b\d"), %q("\ac\bd")
+  assert_format %q("\\\"\#\a\b\n\r\t#{foo}\v\f\e")
+  assert_format %q("\a\c#{foo}\b\d"), %q("\ac#{foo}\bd")
+
   assert_format %("\#{foo = 1\n}"), %("\#{foo = 1}")
   assert_format %("\#{\n  foo = 1\n}")
   assert_format %("\#{\n  foo = 1}"), %("\#{\n  foo = 1\n}")
