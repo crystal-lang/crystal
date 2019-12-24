@@ -129,8 +129,12 @@ OptionParser.parse do |opts|
       abort("order must be either 'default', 'random', or a numeric seed value")
     end
   end
-  opts.on("--junit_output OUTPUT_DIR", "generate JUnit XML output") do |output_dir|
-    junit_formatter = Spec::JUnitFormatter.file(output_dir)
+  opts.on("--junit_output OUTPUT_DIR", "generate JUnit XML output within the given OUTPUT_DIR") do |output_dir|
+    junit_formatter = Spec::JUnitFormatter.file(Path[output_dir, "output.xml"])
+    Spec.add_formatter(junit_formatter)
+  end
+  opts.on("--junit_output_path OUTPUT_PATH", "generate JUnit XML output under the given OUTPUT_PATH") do |output_path|
+    junit_formatter = Spec::JUnitFormatter.file(Path[output_path])
     Spec.add_formatter(junit_formatter)
   end
   opts.on("--help", "show this help") do |pattern|

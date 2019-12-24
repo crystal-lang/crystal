@@ -34,10 +34,9 @@ module Spec
       io.close
     end
 
-    def self.file(output_dir)
-      Dir.mkdir_p(output_dir)
-      output_file_path = File.join(output_dir, "output.xml")
-      file = File.new(output_file_path, "w")
+    def self.file(output_path : Path)
+      Dir.mkdir_p(output_path.dirname)
+      file = File.new(output_path, "w")
       JUnitFormatter.new(file)
     end
 

@@ -15,21 +15,22 @@
 
 LLVM_CONFIG ?= ## llvm-config command path to use
 
-release ?=      ## Compile in release mode
-stats ?=        ## Enable statistics output
-progress ?=     ## Enable progress output
-threads ?=      ## Maximum number of threads to use
-debug ?=        ## Add symbolic debug info
-verbose ?=      ## Run specs in verbose mode
-junit_output ?= ## Directory to output junit results
-static ?=       ## Enable static linking
+release ?=           ## Compile in release mode
+stats ?=             ## Enable statistics output
+progress ?=          ## Enable progress output
+threads ?=           ## Maximum number of threads to use
+debug ?=             ## Add symbolic debug info
+verbose ?=           ## Run specs in verbose mode
+junit_output ?=      ## Directory to output junit results
+junit_output_path ?= ## Path to output junit results
+static ?=            ## Enable static linking
 
 O := .build
 SOURCES := $(shell find src -name '*.cr')
 SPEC_SOURCES := $(shell find spec -name '*.cr')
 override FLAGS += $(if $(release),--release )$(if $(stats),--stats )$(if $(progress),--progress )$(if $(threads),--threads $(threads) )$(if $(debug),-d )$(if $(static),--static )$(if $(LDFLAGS),--link-flags="$(LDFLAGS)" )
 SPEC_WARNINGS_OFF := --exclude-warnings spec/std --exclude-warnings spec/compiler
-SPEC_FLAGS := $(if $(verbose),-v )$(if $(junit_output),--junit_output $(junit_output) )
+SPEC_FLAGS := $(if $(verbose),-v )$(if $(junit_output),--junit_output $(junit_output) )$(if $(junit_output_path),--junit_output_path $(junit_output_path) )
 CRYSTAL_CONFIG_BUILD_COMMIT := $(shell git rev-parse --short HEAD 2> /dev/null)
 EXPORTS := \
   $(if $(release),,CRYSTAL_CONFIG_PATH="$(PWD)/src") \
