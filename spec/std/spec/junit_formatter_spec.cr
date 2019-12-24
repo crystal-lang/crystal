@@ -109,10 +109,14 @@ describe "JUnit Formatter" do
   it "escapes spec names" do
     output = build_report do |f|
       f.report Spec::Result.new(:success, %(complicated " <n>'&ame), __FILE__, __LINE__, nil, nil)
+      f.report Spec::Result.new(:success, %(ctrl characters follow - \r\n), __FILE__, __LINE__, nil, nil)
     end
 
     name = XML.parse(output).xpath_string("string(//testsuite/testcase[1]/@name)")
     name.should eq(%(complicated \" <n>'&ame))
+
+    name = XML.parse(output).xpath_string("string(//testsuite/testcase[2]/@name)")
+    name.should eq(%(ctrl characters follow - \\r\\n))
   end
 
   it "report failure stacktrace if present" do

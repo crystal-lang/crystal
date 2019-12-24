@@ -41,6 +41,21 @@ module Spec
       JUnitFormatter.new(file)
     end
 
+    private def escape_xml_attr(value)
+      String.build do |io|
+        reader = Char::Reader.new(value)
+        while reader.has_next?
+          case current_char = reader.current_char
+          when .control?
+            current_char.to_s.inspect_unquoted(io)
+          else
+            current_char.to_s(io)
+          end
+          reader.next_char
+        end
+      end
+    end
+
     # -------- private utility methods
     private def write_report(result, io)
       io << %(  <testcase file=")
@@ -48,7 +63,7 @@ module Spec
       io << %(" classname=")
       HTML.escape(classname(result), io)
       io << %(" name=")
-      HTML.escape(result.description, io)
+      HTML.escape(escape_xml_attr(result.description), io)
 
       if elapsed = result.elapsed
         io << %(" time=")
