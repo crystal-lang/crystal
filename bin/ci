@@ -73,27 +73,27 @@ prepare_system() {
 }
 
 build() {
-  with_build_env 'make std_spec clean threads=1'
+  with_build_env 'make std_spec clean threads=1 junit_output=.junit/std_spec.xml'
 
   case $ARCH in
     i386)
       with_build_env 'make crystal threads=1'
-      with_build_env 'SPEC_SPLIT="0%4" make std_spec threads=1'
-      with_build_env 'SPEC_SPLIT="1%4" make std_spec threads=1'
-      with_build_env 'SPEC_SPLIT="2%4" make std_spec threads=1'
-      with_build_env 'SPEC_SPLIT="3%4" make std_spec threads=1'
+      with_build_env 'SPEC_SPLIT="0%4" make std_spec threads=1 junit_output=.junit/std_spec.0.xml'
+      with_build_env 'SPEC_SPLIT="1%4" make std_spec threads=1 junit_output=.junit/std_spec.1.xml'
+      with_build_env 'SPEC_SPLIT="2%4" make std_spec threads=1 junit_output=.junit/std_spec.2.xml'
+      with_build_env 'SPEC_SPLIT="3%4" make std_spec threads=1 junit_output=.junit/std_spec.3.xml'
 
       parts=16
       i=0
       while [ $i -lt $parts ]; do
-        with_build_env "CRYSTAL_SPEC_COMPILER_THREADS=1 SPEC_SPLIT=\"$i%$parts\" make compiler_spec threads=1"
+        with_build_env "CRYSTAL_SPEC_COMPILER_THREADS=1 SPEC_SPLIT=\"$i%$parts\" make compiler_spec threads=1 junit_output=.junit/compiler_spec.$i.xml"
         i=$((i + 1))
       done
 
       with_build_env 'make docs threads=1'
       ;;
     *)
-      with_build_env 'make crystal std_spec compiler_spec docs threads=1'
+      with_build_env 'make crystal std_spec compiler_spec docs threads=1 junit_output=.junit/spec.xml'
       ;;
   esac
 
