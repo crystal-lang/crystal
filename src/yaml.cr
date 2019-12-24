@@ -75,6 +75,14 @@ require "base64"
 # File.open("foo.yml", "w") { |f| {hello: "world"}.to_yaml(f) } # writes it to the file
 # ```
 module YAML
+  private alias HandlerResponse = Bool | Float64 | Int64 | String | Time | Nil
+
+  class_getter tag_handlers : Hash(String, Proc(String, HandlerResponse)) { Hash(String, Proc(String, HandlerResponse)).new }
+
+  def self.add_tag_handler(tag : String, &block : String -> HandlerResponse) : Nil
+    tag_handlers[tag] = block
+  end
+
   class Error < Exception
   end
 

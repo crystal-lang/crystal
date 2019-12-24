@@ -26,7 +26,12 @@ private def parse_scalar(ctx, node, type : T.class) forall T
   end
 
   if node.is_a?(YAML::Nodes::Scalar)
-    value = YAML::Schema::Core.parse_scalar(node)
+    value = if (tag = node.tag) && (handler = YAML.tag_handlers[tag]?)
+              handler.call node.value
+            else
+              YAML::Schema::Core.parse_scalar(node)
+            end
+
     if value.is_a?(T)
       ctx.record_anchor(node, value)
       value
@@ -58,7 +63,12 @@ def String.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node)
   end
 
   if node.is_a?(YAML::Nodes::Scalar)
-    value = node.value
+    value = if (tag = node.tag) && (handler = YAML.tag_handlers[tag]?)
+              handler.call(node.value).to_s
+            else
+              node.value
+            end
+
     ctx.record_anchor(node, value)
     value
   else

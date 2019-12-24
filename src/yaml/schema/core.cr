@@ -288,10 +288,14 @@ module YAML::Schema::Core
       yield source.value
     when "tag:yaml.org,2002:timestamp"
       yield parse_time(source.value, source.location)
+    else
+      if handler = YAML.tag_handlers[tag]?
+        yield handler.call source.value
+      end
     end
   end
 
-  private def self.parse_null?(string)
+  private def self.parse_null?(string : String) : Bool
     case string
     when .empty?, "~", "null", "Null", "NULL"
       true
@@ -300,7 +304,7 @@ module YAML::Schema::Core
     end
   end
 
-  private def self.parse_bool?(string)
+  private def self.parse_bool?(string : String) : Bool?
     case string
     when "yes", "Yes", "YES", "true", "True", "TRUE", "on", "On", "ON"
       true
@@ -311,20 +315,20 @@ module YAML::Schema::Core
     end
   end
 
-  private def self.parse_number?(string)
+  private def self.parse_number?(string : String) : Number::Primitive?
     parse_int?(string) || parse_float?(string)
   end
 
-  private def self.parse_int?(string)
+  private def self.parse_int?(string : String) : Int::Primitive?
     string.to_i64?(underscore: true, leading_zero_is_octal: true)
   end
 
-  private def self.parse_float?(string)
+  private def self.parse_float?(string : String) : Float::Primitive?
     string = string.delete('_') if string.includes?('_')
     string.to_f64?
   end
 
-  private def self.parse_float_infinity_and_nan?(string)
+  private def self.parse_float_infinity_and_nan?(string : String) : Float64?
     case string
     when ".inf", ".Inf", ".INF", "+.inf", "+.Inf", "+.INF"
       Float64::INFINITY
@@ -337,7 +341,7 @@ module YAML::Schema::Core
     end
   end
 
-  private def self.parse_time?(string)
+  private def self.parse_time?(string : String) : Time?
     # Minimum length is that of YYYY-M-D
     return nil if string.size < 8
 

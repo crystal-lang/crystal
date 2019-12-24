@@ -66,6 +66,11 @@ class YAML::Nodes::Parser < YAML::Parser
   end
 
   def process_tag(tag, &block)
+    node = Scalar.new @pull_parser.value
+    node.tag = tag
+
+    @pull_parser.read_next
+    yield node
   end
 
   def add_to_documents(documents, document)
