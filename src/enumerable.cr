@@ -1646,30 +1646,35 @@ module Enumerable(T)
   # :nodoc:
   def self.zip(main, others : U, &block) forall U
     {% begin %}
+      {% for type, type_index in U %}
+        other{{type_index}} = others[{{type_index}}]
+      {% end %}
+
       # Try to see if we need to create iterators (or treat as iterators)
       # for every element in `others`.
       {% for type, type_index in U %}
-        {% if type < Indexable %}
+        case other{{type_index}}
+        when Indexable
           # Nothing to do, but needed because many Indexables are Iterable/Iterator
-        {% elsif type < Iterable %}
-          iter{{type_index}} = others[{{type_index}}].each
-        {% elsif type < Iterator %}
-          iter{{type_index}} = others[{{type_index}}]
-        {% end %}
+        when Iterable
+          iter{{type_index}} = other{{type_index}}.each
+        else
+          iter{{type_index}} = other{{type_index}}
+        end
       {% end %}
 
       main.each_with_index do |elem, i|
         {% for type, type_index in U %}
-          {% if type < Indexable %}
+          if other{{type_index}}.is_a?(Indexable)
             # Index into those we can
-            other_elem{{type_index}} = others[{{type_index}}][i]
-          {% else %}
+            other_elem{{type_index}} = other{{type_index}}[i]
+          else
             # Otherwise advance the iterator
-            other_elem{{type_index}} = iter{{type_index}}.next
+            other_elem{{type_index}} = iter{{type_index}}.not_nil!.next
             if other_elem{{type_index}}.is_a?(Iterator::Stop)
               raise IndexError.new
             end
-          {% end %}
+          end
         {% end %}
 
         # Yield all elements as a tuple
@@ -1686,30 +1691,35 @@ module Enumerable(T)
   # :nodoc:
   def self.zip?(main, others : U, &block) forall U
     {% begin %}
+      {% for type, type_index in U %}
+        other{{type_index}} = others[{{type_index}}]
+      {% end %}
+
       # Try to see if we need to create iterators (or treat as iterators)
       # for every element in `others`.
       {% for type, type_index in U %}
-        {% if type < Indexable %}
+        case other{{type_index}}
+        when Indexable
           # Nothing to do, but needed because many Indexables are Iterable/Iterator
-        {% elsif type < Iterable %}
-          iter{{type_index}} = others[{{type_index}}].each
-        {% elsif type < Iterator %}
-          iter{{type_index}} = others[{{type_index}}]
-        {% end %}
+        when Iterable
+          iter{{type_index}} = other{{type_index}}.each
+        else
+          iter{{type_index}} = other{{type_index}}
+        end
       {% end %}
 
       main.each_with_index do |elem, i|
         {% for type, type_index in U %}
-          {% if type < Indexable %}
+          if other{{type_index}}.is_a?(Indexable)
             # Index into those we can
-            other_elem{{type_index}} = others[{{type_index}}][i]?
-          {% else %}
+            other_elem{{type_index}} = other{{type_index}}[i]?
+          else
             # Otherwise advance the iterator
-            other_elem{{type_index}} = iter{{type_index}}.next
+            other_elem{{type_index}} = iter{{type_index}}.not_nil!.next
             if other_elem{{type_index}}.is_a?(Iterator::Stop)
               other_elem{{type_index}} = nil
             end
-          {% end %}
+          end
         {% end %}
 
         # Yield all elements as a tuple
