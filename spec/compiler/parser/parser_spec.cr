@@ -1835,6 +1835,8 @@ module Crystal
 
       it_parses %(annotation Foo\nend\nrequire "bar"), [AnnotationDef.new("Foo".path), Require.new("bar")]
 
+      it_parses "id(x : Int32 = 1); x", Expressions.new([Call.new(nil, "id", TypeDeclaration.new("x".var, "Int32".path, 1.int32)), "x".var])
+
       it "gets corrects of ~" do
         node = Parser.parse("\n  ~1")
         loc = node.location.not_nil!

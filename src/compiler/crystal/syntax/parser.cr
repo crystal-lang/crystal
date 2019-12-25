@@ -1190,6 +1190,9 @@ module Crystal
         next_token_skip_space_or_newline
         value = parse_op_assign_no_control
       end
+
+      push_var(var) if var.is_a?(Var)
+
       TypeDeclaration.new(var, var_type, value).at(var.location)
     end
 
