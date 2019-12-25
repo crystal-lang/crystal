@@ -73,8 +73,6 @@ prepare_system() {
 }
 
 build() {
-  with_build_env 'make std_spec clean threads=1'
-
   case $ARCH in
     i386)
       with_build_env 'make crystal threads=1'
