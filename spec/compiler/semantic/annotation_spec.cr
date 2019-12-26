@@ -917,4 +917,30 @@ describe "Semantic: annotation" do
       )) { int32 }
     end
   end
+
+  it "errors if wanting to add type inside annotation (1) (#8614)" do
+    assert_error %(
+      annotation Ann
+      end
+
+      class Ann::Foo
+      end
+
+      Ann::Foo.new
+      ),
+      "can't declare type inside annotation Ann"
+  end
+
+  it "errors if wanting to add type inside annotation (2) (#8614)" do
+    assert_error %(
+      annotation Ann
+      end
+
+      class Ann::Foo::Bar
+      end
+
+      Ann::Foo::Bar.new
+      ),
+      "can't declare type inside annotation Ann"
+  end
 end
