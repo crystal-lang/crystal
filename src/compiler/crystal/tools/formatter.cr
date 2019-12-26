@@ -2444,12 +2444,16 @@ module Crystal
             if @token.type == :"," || @token.type == :NEWLINE
               if has_newlines
                 write ","
-                write_line
+                found_comment = next_token_skip_space
+                write_line unless found_comment
                 write_indent
+                skip_space_or_newline
+              else
+                next_token_skip_space_or_newline
               end
-              next_token_skip_space_or_newline
             else
-              skip_space_or_newline
+              found_comment = skip_space_or_newline
+              write_indent if found_comment
             end
             write_token :"]"
 
