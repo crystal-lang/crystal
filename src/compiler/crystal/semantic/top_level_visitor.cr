@@ -1121,11 +1121,17 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
       scope = lookup_type_def_name_creating_modules path
     end
 
-    if scope.is_a?(EnumType)
-      path.raise "can't declare type inside enum #{scope}"
+    scope = check_type_is_type_container(scope, path)
+
+    {scope, name}
+  end
+
+  def check_type_is_type_container(scope, path)
+    if scope.is_a?(EnumType) || !scope.is_a?(ModuleType)
+      path.raise "can't declare type inside #{scope.type_desc} #{scope}"
     end
 
-    {scope.as(ModuleType), name}
+    scope
   end
 
   def lookup_type_def_name_creating_modules(path : Path)
@@ -1141,10 +1147,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
             path.raise "execpted #{name} to be a type"
           end
         else
-          if base_type.is_a?(EnumType)
-            path.raise "can't declare type inside enum #{base_type}"
-          end
-
+          base_type = check_type_is_type_container(base_type, path)
           next_type = NonGenericModuleType.new(@program, base_type.as(ModuleType), name)
           if (location = path.location)
             next_type.add_location(location)
