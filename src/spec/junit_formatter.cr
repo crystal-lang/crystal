@@ -30,7 +30,7 @@ module Spec
     def self.file(output_dir)
       Dir.mkdir_p(output_dir)
       output_file_path = File.join(output_dir, "output.xml")
-      file = File.new(output_file_path, "w")
+      file = File.new(output_file_path, :write, :truncate)
       JUnitFormatter.new(file)
     end
 

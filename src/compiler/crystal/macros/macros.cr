@@ -124,7 +124,7 @@ class Crystal::Program
     # Write the new files from which 'filename' depends into the cache dir
     # (here we store how to obtain these files, because a require might use
     # '/*' or '/**' and we need to recompile if a file is added or removed)
-    File.open(recorded_requires_path, "w") do |file|
+    File.open(recorded_requires_path, :write, :truncate) do |file|
       result.program.recorded_requires.to_json(file)
     end
 
@@ -135,7 +135,7 @@ class Crystal::Program
       RequireWithTimestamp.new(required_file, epoch)
     end
 
-    File.open(requires_path, "w") do |file|
+    File.open(requires_path, :write, :truncate) do |file|
       requires_with_timestamps.to_json(file)
     end
 

@@ -197,7 +197,7 @@ describe Zip do
     filename = datapath("test_file.txt")
 
     Zip::Writer.open(io) do |zip|
-      file = File.open(filename)
+      file = File.new(filename)
       zip.add "foo.txt", file
       file.closed?.should be_true
     end

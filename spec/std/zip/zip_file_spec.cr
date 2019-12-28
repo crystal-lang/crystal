@@ -39,14 +39,14 @@ describe Zip do
     filename = datapath("file.zip")
 
     begin
-      File.open(filename, "w") do |file|
+      File.open(filename, :write, :truncate) do |file|
         Zip::Writer.open(file) do |zip|
           zip.add "foo.txt", "contents of foo"
           zip.add "bar.txt", "contents of bar"
         end
       end
 
-      File.open(filename, "r") do |file|
+      File.open(filename) do |file|
         Zip::File.open(file) do |zip|
           entries = zip.entries
           entries.size.should eq(2)
