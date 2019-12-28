@@ -89,6 +89,26 @@
 struct Enum
   include Comparable(self)
 
+  # Helper class method to ensure we have an enum instance.
+  #
+  # Useful from macro-land when using symbols and want them auto-casted to their
+  # enum type.
+  #
+  # ```
+  # {% begin %}
+  #   {% macro_sym = :red %} # get the macro symbol from somewhere..
+  #   case Color.from_self({{ macro_sym }})
+  #   when .red?
+  #     puts "It's red !"
+  #   when .blue?
+  #     puts "It's blue !"
+  #   end
+  # {% end %}
+  # ```
+  def self.from_self(value : self)
+    value
+  end
+
   # Appends a `String` representation of this enum member to the given *io*.
   #
   # See also: `to_s`.
