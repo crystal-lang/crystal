@@ -585,50 +585,29 @@ struct Time
   #
   # See `#shift` for details.
   def +(span : Time::Span) : Time
-    shift span.to_i, span.nanoseconds
+    if span.total_months == 0
+      shift(
+        seconds: span.to_i,
+        nanoseconds: span.nanoseconds
+      )
+    else
+      shift(
+        months: span.total_months,
+        seconds: span.to_i,
+        nanoseconds: span.nanoseconds,
+      )
+    end
   end
 
   # Returns a copy of this `Time` with *span* subtracted.
   #
   # See `#shift` for details.
   def -(span : Time::Span) : Time
-    shift -span.to_i, -span.nanoseconds
-  end
-
-  # Returns a copy of this `Time` with *span* added.
-  #
-  # It adds the number of months with overflow increasing the year.
-  # If the resulting day-of-month would be invalid, it is adjusted to the last
-  # valid day of the moneth.
-  #
-  # For example, adding `1.month` to `2007-03-31` would result in the invalid
-  # date `2007-04-31` which will be adjusted to `2007-04-30`.
-  #
-  # This operates on the local time-line, such that the local date-time
-  # represenations of month and year are increased by the specified amount.
-  #
-  # If the resulting date-time is ambiguous due to time zone transitions,
-  # a correct time will be returned, but it does not guarantee which.
-  def +(span : Time::MonthSpan) : Time
-    shift months: span.value.to_i
-  end
-
-  # Returns a copy of this `Time` with *span* subtracted.
-  #
-  # It adds the number of months with overflow decreasing the year.
-  # If the resulting day-of-month would be invalid, it is adjusted to the last
-  # valid day of the moneth.
-  #
-  # For example, subtracting `1.month` from `2007-05-31` would result in the invalid
-  # date `2007-04-31` which will be adjusted to `2007-04-30`.
-  #
-  # This operates on the local time-line, such that the local date-time
-  # represenations of month and year are decreased by the specified amount.
-  #
-  # If the resulting date-time is ambiguous due to time zone transitions,
-  # a correct time will be returned, but it does not guarantee which.
-  def -(span : Time::MonthSpan) : Time
-    shift months: -span.value.to_i
+    shift(
+      months: -span.total_months,
+      seconds: -span.to_i,
+      nanoseconds: -span.nanoseconds,
+    )
   end
 
   # Returns a copy of this `Time` shifted by the number of *seconds* and
@@ -737,10 +716,7 @@ struct Time
         year -= 1
       end
 
-      maxday = Time.days_in_month(year, month)
-      if day > maxday
-        day = maxday
-      end
+      day = { day, Time.days_in_month(year, month) }.min
 
       seconds += Time.absolute_days(year, month, day).to_i64 * SECONDS_PER_DAY
       seconds += offset_seconds % SECONDS_PER_DAY
@@ -767,7 +743,11 @@ struct Time
   # The difference between local date-time representations may equal to a
   # different duration, depending on time zone transitions.
   def -(other : Time) : Time::Span
+    years = year - other.year
+    months = month - other.month
+
     Span.new(
+      months: years * 12 - months,
       seconds: total_seconds - other.total_seconds,
       nanoseconds: nanosecond - other.nanosecond,
     )
@@ -916,7 +896,8 @@ struct Time
     # This calculation needs to be in UTC to avoid issues with changes in
     # the time zone offset (such as daylight savings time).
     # TODO: Use #shift or #to_local_in instead
-    time = Time.utc(year, 1, 1, hour, minute, second, nanosecond: nanosecond) + ordinal.days
+    base_time = Time.utc(year, 1, 1, hour, minute, second, nanosecond: nanosecond)
+    time = base_time + ordinal.days
 
     # If the location is UTC, we're done
     return time if location.utc?
