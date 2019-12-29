@@ -1,6 +1,10 @@
 require "spec"
 require "xml"
 
+class Spec::JUnitFormatter
+  property started_at
+end
+
 describe "JUnit Formatter" do
   it "reports successful results" do
     output = build_report_with_no_timestamp do |f|
@@ -106,6 +110,17 @@ describe "JUnit Formatter" do
     classname.should eq("spec.std.spec.junit_formatter_spec")
   end
 
+  it "outputs timestamp according to RFC 3339" do
+    now = Time.utc
+
+    output = build_report(timestamp: now) do |f|
+      f.report Spec::Result.new(:success, "foo", __FILE__, __LINE__, nil, nil)
+    end
+
+    classname = XML.parse(output).xpath_string("string(//testsuite[1]/@timestamp)")
+    classname.should eq(now.to_rfc3339)
+  end
+
   it "escapes spec names" do
     output = build_report do |f|
       f.report Spec::Result.new(:success, %(complicated " <n>'&ame), __FILE__, __LINE__, nil, nil)
@@ -150,9 +165,10 @@ describe "JUnit Formatter" do
   end
 end
 
-private def build_report
+private def build_report(timestamp = nil)
   output = String::Builder.new
   formatter = Spec::JUnitFormatter.new(output)
+  formatter.started_at = timestamp if timestamp
   yield formatter
   formatter.finish(Time::Span.zero, false)
   output.to_s.chomp
