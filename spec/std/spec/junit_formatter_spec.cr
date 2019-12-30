@@ -1,92 +1,137 @@
 require "spec"
 require "xml"
 
+class Spec::JUnitFormatter
+  property started_at
+end
+
 describe "JUnit Formatter" do
   it "reports successful results" do
-    output = build_report do |f|
+    output = build_report_with_no_timestamp do |f|
       f.report Spec::Result.new(:success, "should do something", "spec/some_spec.cr", 33, nil, nil)
       f.report Spec::Result.new(:success, "should do something else", "spec/some_spec.cr", 50, nil, nil)
     end
 
     expected = <<-XML
                  <?xml version="1.0"?>
-                 <testsuite tests="2" errors="0" failures="0">
+                 <testsuite tests="2" skipped="0" errors="0" failures="0" time="0.0" hostname="#{System.hostname}">
                    <testcase file="spec/some_spec.cr" classname="spec.some_spec" name="should do something"/>
                    <testcase file="spec/some_spec.cr" classname="spec.some_spec" name="should do something else"/>
                  </testsuite>
                  XML
 
-    output.chomp.should eq(expected)
+    output.should eq(expected)
+  end
+
+  it "reports skipped" do
+    output = build_report_with_no_timestamp do |f|
+      f.report Spec::Result.new(:pending, "should do something", "spec/some_spec.cr", 33, nil, nil)
+    end
+
+    expected = <<-XML
+                 <?xml version="1.0"?>
+                 <testsuite tests="1" skipped="1" errors="0" failures="0" time="0.0" hostname="#{System.hostname}">
+                   <testcase file="spec/some_spec.cr" classname="spec.some_spec" name="should do something">
+                     <skipped/>
+                   </testcase>
+                 </testsuite>
+                 XML
+
+    output.should eq(expected)
   end
 
   it "reports failures" do
-    output = build_report do |f|
+    output = build_report_with_no_timestamp do |f|
       f.report Spec::Result.new(:fail, "should do something", "spec/some_spec.cr", 33, nil, nil)
     end
 
     expected = <<-XML
                  <?xml version="1.0"?>
-                 <testsuite tests="1" errors="0" failures="1">
+                 <testsuite tests="1" skipped="0" errors="0" failures="1" time="0.0" hostname="#{System.hostname}">
                    <testcase file="spec/some_spec.cr" classname="spec.some_spec" name="should do something">
                      <failure/>
                    </testcase>
                  </testsuite>
                  XML
 
-    output.chomp.should eq(expected)
+    output.should eq(expected)
   end
 
   it "reports errors" do
-    output = build_report do |f|
+    output = build_report_with_no_timestamp do |f|
       f.report Spec::Result.new(:error, "should do something", "spec/some_spec.cr", 33, nil, nil)
     end
 
     expected = <<-XML
                  <?xml version="1.0"?>
-                 <testsuite tests="1" errors="1" failures="0">
+                 <testsuite tests="1" skipped="0" errors="1" failures="0" time="0.0" hostname="#{System.hostname}">
                    <testcase file="spec/some_spec.cr" classname="spec.some_spec" name="should do something">
                      <error/>
                    </testcase>
                  </testsuite>
                  XML
 
-    output.chomp.should eq(expected)
+    output.should eq(expected)
   end
 
   it "reports mixed results" do
-    output = build_report do |f|
+    output = build_report_with_no_timestamp do |f|
       f.report Spec::Result.new(:success, "should do something1", "spec/some_spec.cr", 33, 2.seconds, nil)
       f.report Spec::Result.new(:fail, "should do something2", "spec/some_spec.cr", 50, 0.5.seconds, nil)
       f.report Spec::Result.new(:error, "should do something3", "spec/some_spec.cr", 65, nil, nil)
-      f.report Spec::Result.new(:error, "should do something4", "spec/some_spec.cr", 80, nil, nil)
+      f.report Spec::Result.new(:pending, "should do something4", "spec/some_spec.cr", 80, nil, nil)
     end
 
     expected = <<-XML
                  <?xml version="1.0"?>
-                 <testsuite tests="4" errors="2" failures="1">
-                   <testcase file="spec/some_spec.cr" classname="spec.some_spec" name="should do something1"/>
-                   <testcase file="spec/some_spec.cr" classname="spec.some_spec" name="should do something2">
+                 <testsuite tests="4" skipped="1" errors="1" failures="1" time="0.0" hostname="#{System.hostname}">
+                   <testcase file="spec/some_spec.cr" classname="spec.some_spec" name="should do something1" time="2.0"/>
+                   <testcase file="spec/some_spec.cr" classname="spec.some_spec" name="should do something2" time="0.5">
                      <failure/>
                    </testcase>
                    <testcase file="spec/some_spec.cr" classname="spec.some_spec" name="should do something3">
                      <error/>
                    </testcase>
                    <testcase file="spec/some_spec.cr" classname="spec.some_spec" name="should do something4">
-                     <error/>
+                     <skipped/>
                    </testcase>
                  </testsuite>
                  XML
 
-    output.chomp.should eq(expected)
+    output.should eq(expected)
+  end
+
+  it "encodes class names from the relative file path" do
+    output = build_report do |f|
+      f.report Spec::Result.new(:success, "foo", __FILE__, __LINE__, nil, nil)
+    end
+
+    classname = XML.parse(output).xpath_string("string(//testsuite/testcase[1]/@classname)")
+    classname.should eq("spec.std.spec.junit_formatter_spec")
+  end
+
+  it "outputs timestamp according to RFC 3339" do
+    now = Time.utc
+
+    output = build_report(timestamp: now) do |f|
+      f.report Spec::Result.new(:success, "foo", __FILE__, __LINE__, nil, nil)
+    end
+
+    classname = XML.parse(output).xpath_string("string(//testsuite[1]/@timestamp)")
+    classname.should eq(now.to_rfc3339)
   end
 
   it "escapes spec names" do
     output = build_report do |f|
       f.report Spec::Result.new(:success, %(complicated " <n>'&ame), __FILE__, __LINE__, nil, nil)
+      f.report Spec::Result.new(:success, %(ctrl characters follow - \r\n), __FILE__, __LINE__, nil, nil)
     end
 
     name = XML.parse(output).xpath_string("string(//testsuite/testcase[1]/@name)")
     name.should eq(%(complicated \" <n>'&ame))
+
+    name = XML.parse(output).xpath_string("string(//testsuite/testcase[2]/@name)")
+    name.should eq(%(ctrl characters follow - \\r\\n))
   end
 
   it "report failure stacktrace if present" do
@@ -120,18 +165,24 @@ describe "JUnit Formatter" do
   end
 end
 
-private def build_report
+private def build_report(timestamp = nil)
   output = String::Builder.new
   formatter = Spec::JUnitFormatter.new(output)
+  formatter.started_at = timestamp if timestamp
   yield formatter
-  formatter.finish
-  output.to_s
+  formatter.finish(Time::Span.zero, false)
+  output.to_s.chomp
+end
+
+private def build_report_with_no_timestamp
+  output = build_report do |formatter|
+    yield formatter
+  end
+  output.gsub(/\s*timestamp="(.+?)"/, "")
 end
 
 private def exception_with_backtrace(msg)
-  begin
-    raise Exception.new(msg)
-  rescue e
-    e
-  end
+  raise Exception.new(msg)
+rescue e
+  e
 end

@@ -5,7 +5,7 @@ private def build_report
   String.build do |io|
     formatter = Spec::TAPFormatter.new(io)
     yield formatter
-    formatter.finish
+    formatter.finish(Time::Span.zero, false)
   end
 end
 

@@ -21,7 +21,7 @@ progress ?=     ## Enable progress output
 threads ?=      ## Maximum number of threads to use
 debug ?=        ## Add symbolic debug info
 verbose ?=      ## Run specs in verbose mode
-junit_output ?= ## Directory to output junit results
+junit_output ?= ## Path to output junit results
 static ?=       ## Enable static linking
 
 O := .build
