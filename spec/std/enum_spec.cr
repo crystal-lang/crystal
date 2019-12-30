@@ -37,14 +37,8 @@ describe Enum do
     end
   end
 
-  it "creates an enum instance from a (macro) symbol (#8573)" do
-    enum_value = SpecEnum.new(:one)
-    enum_value.should eq SpecEnum::One
-
-    enum_value =
-      {% begin %}
-        SpecEnum.new({{ :two }})
-      {% end %}
+  it "creates an enum instance from an auto-casted symbol (#8573)" do
+    enum_value = SpecEnum.new(:two)
     enum_value.should eq SpecEnum::Two
   end
 
