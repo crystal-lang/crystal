@@ -89,6 +89,11 @@
 struct Enum
   include Comparable(self)
 
+  # Returns *value*.
+  def self.new(value : self)
+    value
+  end
+
   # Appends a `String` representation of this enum member to the given *io*.
   #
   # See also: `to_s`.
