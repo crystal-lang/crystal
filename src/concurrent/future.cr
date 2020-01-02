@@ -121,7 +121,7 @@ end
 # Access to get is synchronized between fibers. *&block* is only called once.
 # May be canceled before *&block* is called by calling `cancel`.
 # ```
-# d = delay(1) { Process.kill(Signal::KILL, Process.pid) }
+# d = delay(1) { Process.signal(Signal::KILL, Process.pid) }
 # # ... long operations ...
 # d.cancel
 # ```
