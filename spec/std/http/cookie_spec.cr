@@ -219,7 +219,7 @@ module HTTP
       end
 
       it "not expired" do
-        parse_set_cookie("bla=1; expires=Thu, 01 Jan 2020 00:00:00 -0000").expired?.should eq false
+        parse_set_cookie("bla=1; expires=Thu, 01 Jan #{Time.utc.year + 2} 00:00:00 -0000").expired?.should eq false
       end
 
       it "not expired" do
