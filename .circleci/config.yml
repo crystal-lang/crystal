@@ -25,6 +25,15 @@ jobs:
       - run: echo 'export CURRENT_TAG="$CIRCLE_TAG"' >> $BASH_ENV
       - run: bin/ci prepare_build
       - run: bin/ci build
+      - run:
+          when: always
+          command: |
+            mkdir -p ~/test-results/spec
+            cp .junit/*.xml ~/test-results/spec/
+      - store_test_results:
+          path: ~/test-results
+      - store_artifacts:
+          path: ~/test-results/spec
       - persist_to_workspace:
           root: .
           paths:
@@ -42,7 +51,16 @@ jobs:
       - run: bin/ci prepare_system
       - run: echo 'export CURRENT_TAG="$CIRCLE_TAG"' >> $BASH_ENV
       - run: bin/ci prepare_build
-      - run: bin/ci with_build_env 'make std_spec threads=1'
+      - run: bin/ci with_build_env 'make std_spec threads=1 junit_output=.junit/std_spec.xml'
+      - run:
+          when: always
+          command: |
+            mkdir -p ~/test-results/spec
+            cp .junit/*.xml ~/test-results/spec/
+      - store_test_results:
+          path: ~/test-results
+      - store_artifacts:
+          path: ~/test-results/spec
 
   test_darwin:
     macos:
@@ -61,6 +79,15 @@ jobs:
       - run: echo 'export CURRENT_TAG="$CIRCLE_TAG"' >> $BASH_ENV
       - run: bin/ci prepare_build
       - run: bin/ci build
+      - run:
+          when: always
+          command: |
+            mkdir -p ~/test-results/spec
+            cp .junit/*.xml ~/test-results/spec/
+      - store_test_results:
+          path: ~/test-results
+      - store_artifacts:
+          path: ~/test-results/spec
       - save_cache:
           key: brew-cache-v1
           paths:
@@ -80,7 +107,16 @@ jobs:
       - run: echo 'export CURRENT_TAG="$CIRCLE_TAG"' >> $BASH_ENV
       - run: bin/ci prepare_build
       - run: bin/ci with_build_env 'make crystal'
-      - run: bin/ci with_build_env 'CRYSTAL_WORKERS=4 make std_spec threads=1 FLAGS="-D preview_mt"'
+      - run: bin/ci with_build_env 'CRYSTAL_WORKERS=4 make std_spec threads=1 FLAGS="-D preview_mt" junit_output=.junit/std_spec.xml'
+      - run:
+          when: always
+          command: |
+            mkdir -p ~/test-results/spec
+            cp .junit/*.xml ~/test-results/spec/
+      - store_test_results:
+          path: ~/test-results
+      - store_artifacts:
+          path: ~/test-results/spec
 
   check_format:
     machine: true
@@ -684,4 +720,3 @@ workflows:
             - dist_darwin
             - dist_snap
             - dist_docs
-

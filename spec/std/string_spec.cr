@@ -2200,7 +2200,7 @@ describe "String" do
     "ab☃".codepoints.should eq [97, 98, 9731]
   end
 
-  it "gets size of \0 string" do
+  it "gets size of \\0 string" do
     "\0\0".size.should eq(2)
   end
 
