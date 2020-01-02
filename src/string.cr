@@ -1853,9 +1853,8 @@ class String
         end
       end
 
-      buffer << reader.current_char
-
       if reader.has_next?
+        buffer << reader.current_char
         reader.next_char
         buffer.write unsafe_byte_slice(reader.pos)
       end

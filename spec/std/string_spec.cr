@@ -1195,6 +1195,7 @@ describe "String" do
     it "subs with char hash" do
       str = "hello"
       str.sub({'e' => 'a', 'l' => 'd'}).should eq("hallo")
+      str.sub({'a' => 'b', 'o' => 'a'}).should eq("hella")
 
       empty = ""
       empty.sub({'a' => 'b'}).should be(empty)
