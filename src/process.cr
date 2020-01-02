@@ -202,7 +202,7 @@ class Process
       $? = process.wait
       value
     rescue ex
-      process.signal
+      process.signal Signal::TERM
       raise ex
     end
   end
@@ -364,7 +364,7 @@ class Process
   end
 
   # See also: `Process.signal`
-  def signal(sig = Signal::TERM)
+  def signal(sig)
     Process.signal sig, @pid
   end
 
