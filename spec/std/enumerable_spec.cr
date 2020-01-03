@@ -478,11 +478,11 @@ describe "Enumerable" do
 
   describe "grep" do
     it "works with regexes for instance" do
-      ["Alice", "Bob", "Cipher", "Anna"].grep(/^A/).should eq ["Alice", "Anna"]
+      ["Alice", "Bob", "Cipher", "Anna"].select(/^A/).should eq ["Alice", "Anna"]
     end
 
     it "returns empty array if nothing matches" do
-      %w(Alice Bob Mallory).grep(/nothing/).should eq [] of String
+      %w(Alice Bob Mallory).select(/nothing/).should eq [] of String
     end
   end
 
