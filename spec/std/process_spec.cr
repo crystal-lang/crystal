@@ -175,7 +175,7 @@ describe Process do
 
   it "gets the pgid of a process id" do
     process = Process.new("yes")
-    Process.pgid(process.pid).should be_a(Int32)
+    Process.pgid(process.pid).should be_a(Int64)
     process.kill(Signal::KILL)
     Process.pgid.should eq(Process.pgid(Process.pid))
   end
