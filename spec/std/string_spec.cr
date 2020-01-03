@@ -230,13 +230,10 @@ describe "String" do
       "hello".byte_slice(-2, 3).should eq("lo")
     end
 
-    it "gets byte_slice(Int) with with start out of bounds" do
+    it "gets byte_slice(Int) with start out of bounds" do
       expect_raises(IndexError) do
         "hello".byte_slice(10)
       end
-    end
-
-    it "gets byte_slice(Int) with with start out of bounds" do
       expect_raises(IndexError) do
         "hello".byte_slice(-10)
       end

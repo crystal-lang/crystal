@@ -868,7 +868,7 @@ class String
     char_at(index) { raise IndexError.new }
   end
 
-  # Returns the `Char` at the given *index*, or yields if out of bounds.
+  # Returns the `Char` at the given *index*, or result of running the given block if out of bounds.
   #
   # Negative indices can be used to start counting from the end of the string.
   #
@@ -910,7 +910,7 @@ class String
   # This method should be avoided,
   # unless the string is proven to be ASCII-only (for example `#ascii_only?`),
   # or the byte positions are known to be at character boundaries.
-  # Otherwise the characters are splitted, which leads to invalid UTF-8 values.
+  # Otherwise, multi-byte characters may be split, leading to an invalid UTF-8 encoding.
   #
   # Raises `IndexError` if the *start* index is out of bounds.
   #
@@ -924,9 +924,9 @@ class String
   # "hello".byte_slice(-2, 5)  # => "he"
   # "¥hello".byte_slice(0, 2)  # => "¥"
   # "¥hello".byte_slice(2, 2)  # => "he"
-  # "¥hello".byte_slice(0, 1)  # => "�"
-  # "¥hello".byte_slice(1, 1)  # => "�"
-  # "¥hello".byte_slice(1, 2)  # => "�h"
+  # "¥hello".byte_slice(0, 1)  # => "�" (invalid UTF-8 character)
+  # "¥hello".byte_slice(1, 1)  # => "�" (invalid UTF-8 character)
+  # "¥hello".byte_slice(1, 2)  # => "�h" (invalid UTF-8 character)
   # "hello".byte_slice(6, 2)   # raises IndexError
   # "hello".byte_slice(-6, 2)  # raises IndexError
   # "hello".byte_slice(0, -2)  # raises ArgumentError
@@ -972,8 +972,10 @@ class String
   # *start* can can be negative to start counting
   # from the end of the string.
   #
-  # Be careful when working with multibyte characters - they can be splitted
-  # which may lead to unexpected result.
+  # This method should be avoided,
+  # unless the string is proven to be ASCII-only (for example `#ascii_only?`),
+  # or the byte positions are known to be at character boundaries.
+  # Otherwise, multi-byte characters may be split, leading to an invalid UTF-8 encoding.
   #
   # Raises `IndexError` if *start* index is out of bounds.
   #
@@ -982,7 +984,7 @@ class String
   # "hello".byte_slice(2)  # => "llo"
   # "hello".byte_slice(-2) # => "lo"
   # "¥hello".byte_slice(2) # => "hello"
-  # "¥hello".byte_slice(1) # => "�hello"
+  # "¥hello".byte_slice(1) # => "�hello" (invalid UTF-8 character)
   # "hello".byte_slice(6)  # raises IndexError
   # "hello".byte_slice(-6) # raises IndexError
   # ```
@@ -2551,6 +2553,8 @@ class String
   # Returns `true` if this string is equal to `*other*.
   # Comparison is done byte-per-byte: if a byte is different from the corresponding
   # byte, `false` is returned and so on.
+  #
+  # See `#compare` for more comparison options.
   def ==(other : self) : Bool
     return true if same?(other)
     return false unless bytesize == other.bytesize
