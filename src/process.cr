@@ -39,7 +39,7 @@ class Process
   @[Deprecated("Use #signal instead")]
   def self.kill(signal : Signal, *pids : Int)
     pids.each do |pid|
-      signal signal, pid
+      signal(signal, pid)
     end
     nil
   end
