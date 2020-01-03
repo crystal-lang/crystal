@@ -15,15 +15,17 @@ class Process
     pid_system
   end
 
-  # Returns the process group identifier of the current process.
-  def self.pgid : Int64
-    pgid(0)
-  end
+  {% if flag?(:unix) || flag?(:docs) %}
+    # Returns the process group identifier of the current process.
+    def self.pgid : Int64
+      pgid(0)
+    end
 
-  # Returns the process group identifier of the process identified by *pid*.
-  def self.pgid(pid : Int64) : Int64
-    Process.pgid_system(pid)
-  end
+    # Returns the process group identifier of the process identified by *pid*.
+    def self.pgid(pid : Int64) : Int64
+      Process.pgid_system(pid)
+    end
+  {% end %}
 
   # Returns the process identifier of the parent process of the current process.
   def self.ppid : Int64
@@ -59,22 +61,24 @@ class Process
     times_system
   end
 
-  # Runs the given block inside a new process and
-  # returns a `Process` representing the new child process.
-  #
-  # Available only on Unix-like operating systems.
-  def self.fork : Process
-    fork_system { yield }
-  end
+  {% if flag?(:unix) || flag?(:docs) %}
+    # Runs the given block inside a new process and
+    # returns a `Process` representing the new child process.
+    #
+    # Available only on Unix-like operating systems.
+    def self.fork : Process
+      fork_system { yield }
+    end
 
-  # Duplicates the current process.
-  # Returns a `Process` representing the new child process in the current process
-  # and `nil` inside the new child process.
-  #
-  # Available only on Unix-like operating systems.
-  def self.fork : Process?
-    fork_system
-  end
+    # Duplicates the current process.
+    # Returns a `Process` representing the new child process in the current process
+    # and `nil` inside the new child process.
+    #
+    # Available only on Unix-like operating systems.
+    def self.fork : Process?
+      fork_system
+    end
+  {% end %}
 
   # How to redirect the standard input, output and error IO of a process.
   enum Redirect
@@ -334,23 +338,25 @@ class Process
     io.close if io
   end
 
-  # Changes the root directory and the current working directory for the current
-  # process.
-  #
-  # Available only on Unix-like operating systems.
-  #
-  # Security: `chroot` on its own is not an effective means of mitigation. At minimum
-  # the process needs to also drop privileges as soon as feasible after the `chroot`.
-  # Changes to the directory hierarchy or file descriptors passed via `recvmsg(2)` from
-  # outside the `chroot` jail may allow a restricted process to escape, even if it is
-  # unprivileged.
-  #
-  # ```
-  # Process.chroot("/var/empty")
-  # ```
-  def self.chroot(path : String) : Nil
-    chroot_system(path)
-  end
+  {% if flag?(:unix) || flag?(:docs) %}
+    # Changes the root directory and the current working directory for the current
+    # process.
+    #
+    # Available only on Unix-like operating systems.
+    #
+    # Security: `chroot` on its own is not an effective means of mitigation. At minimum
+    # the process needs to also drop privileges as soon as feasible after the `chroot`.
+    # Changes to the directory hierarchy or file descriptors passed via `recvmsg(2)` from
+    # outside the `chroot` jail may allow a restricted process to escape, even if it is
+    # unprivileged.
+    #
+    # ```
+    # Process.chroot("/var/empty")
+    # ```
+    def self.chroot(path : String) : Nil
+      chroot_system(path)
+    end
+  {% end %}
 end
 
 # Executes the given command in a subshell.
@@ -400,18 +406,20 @@ def `(command) : String
   output
 end
 
-# See also: `Process.fork`
-#
-# Available only on Unix-like operating systems.
-def fork
-  ::Process.fork { yield }
-end
+{% if flag?(:unix) || flag?(:docs) %}
+  # See also: `Process.fork`
+  #
+  # Available only on Unix-like operating systems.
+  def fork
+    ::Process.fork { yield }
+  end
 
-# See also: `Process.fork`
-#
-# Available only on Unix-like operating systems.
-def fork
-  ::Process.fork
-end
+  # See also: `Process.fork`
+  #
+  # Available only on Unix-like operating systems.
+  def fork
+    ::Process.fork
+  end
+{% end %}
 
 require "./process/*"
