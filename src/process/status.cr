@@ -1,8 +1,5 @@
 # The status of a terminated process.
 class Process::Status
-  # Platform-specific exit status code, which usually contains either the exit code or a termination signal.
-  # The other `Process::Status` methods extract the values from `exit_status`.
-  getter exit_status : Int32
 
   def initialize(@exit_status : Int32)
   end
@@ -23,6 +20,13 @@ class Process::Status
   # received and didn't handle. Will raise if `signal_exit?` is `false`.
   def exit_signal
     Signal.from_value(signal_code)
+  end
+
+  # Platform-specific exit status code, which usually contains either the exit code or a termination signal.
+  # The other `Process::Status` methods extract the values from `exit_status`.
+  @[Deprecated("Use `Process::Status#exit_code`")]
+  def exit_status
+    @exit_status
   end
 
   # If `normal_exit?` is `true`, returns the exit code of the process.
