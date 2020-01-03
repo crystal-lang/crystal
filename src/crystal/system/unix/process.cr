@@ -24,6 +24,14 @@ class Process
     Process.exists_system?(@pid)
   end
 
+  protected def terminate_system
+    signal_system Signal::TERM
+  end
+
+  protected def interrupt_system
+    signal_system Signal::KILL
+  end
+
   protected def self.exists_system?(pid : Int64)
     ret = LibC.kill(pid, 0)
     return true if ret == 0

@@ -273,6 +273,16 @@ class Process
     @waitpid.closed? || !exists_system?
   end
 
+  # Terminate process gracefully
+  def terminate
+    terminate_system
+  end
+
+  # Terminate process immediately (kill it)
+  def interrupt
+    interrupt_system
+  end
+
   # Closes any system resources held for the process.
   def close
     close_io
