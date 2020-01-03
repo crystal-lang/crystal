@@ -46,13 +46,15 @@ describe Mutex do
 
     it "can't be unlocked by another fiber" do
       mutex = nil
+      done = false
 
       spawn do
         mutex = Mutex.new
         mutex.not_nil!.lock
+        done = true
       end
 
-      until mutex
+      until done
         Fiber.yield
       end
 
@@ -80,13 +82,15 @@ describe Mutex do
 
     it "can't be unlocked by another fiber" do
       mutex = nil
+      done = false
 
       spawn do
         mutex = Mutex.new(:reentrant)
         mutex.not_nil!.lock
+        done = true
       end
 
-      until mutex
+      until done
         Fiber.yield
       end
 
