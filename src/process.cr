@@ -35,21 +35,19 @@ class Process
     LibC.getppid
   end
 
+  # Sends a *signal* to the processes identified by the given *pids*.
   @[Deprecated("Use #signal instead")]
   def self.kill(signal : Signal, *pids : Int)
     pids.each do |pid|
-      ret = LibC.kill(pid, signal.value)
-      raise Errno.new("kill") if ret < 0
+      signal signal, pid
     end
     nil
   end
 
-  # Sends a *signal* to the processes identified by the given *pids*.
-  def self.signal(signal : Signal, *pids : Int)
-    pids.each do |pid|
-      ret = LibC.kill(pid, signal.value)
-      raise Errno.new("kill") if ret < 0
-    end
+  # Sends a *signal* to the process identified by the given *pid*.
+  def self.signal(signal : Signal, pid : Int)
+    ret = LibC.kill(pid, signal.value)
+    raise Errno.new("kill") if ret < 0
     nil
   end
 
@@ -358,14 +356,15 @@ class Process
     @wait_count = 0
   end
 
+  # See also: `Process.kill`
   @[Deprecated("Use #signal instead")]
   def kill(sig = Signal::TERM)
     signal sig
   end
 
-  # See also: `Process.signal`
-  def signal(sig)
-    Process.signal sig, @pid
+  # Sends *signal* to the process.
+  def signal(signal : Signal)
+    Process.signal signal, @pid
   end
 
   # Waits for this process to complete and closes any pipes.
