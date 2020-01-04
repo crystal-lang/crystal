@@ -106,6 +106,7 @@ class HTTP::WebSocket
         info = @ws.receive(@buffer)
       rescue
         @on_close.try &.call("")
+        @ws.close
         break
       end
 
@@ -141,7 +142,7 @@ class HTTP::WebSocket
         if info.final
           message = @current_message.to_s
           @on_close.try &.call(message)
-          close(message) unless closed?
+          close(message)
           @current_message.clear
           break
         end

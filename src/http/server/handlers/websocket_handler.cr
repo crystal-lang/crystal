@@ -41,6 +41,7 @@ class HTTP::WebSocketHandler
         ws_session = WebSocket.new(io)
         @proc.call(ws_session, context)
         ws_session.run
+      ensure
         io.close
       end
     else

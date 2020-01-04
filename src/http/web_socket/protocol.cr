@@ -232,11 +232,13 @@ class HTTP::WebSocket::Protocol
   end
 
   def close(message = nil)
+    return unless @io.closed?
     if message
       send(message.to_slice, Opcode::CLOSE)
     else
       send(Bytes.empty, Opcode::CLOSE)
     end
+    @io.close
   end
 
   def self.new(host : String, path : String, port = nil, tls = false, headers = HTTP::Headers.new)
