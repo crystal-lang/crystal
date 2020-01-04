@@ -2,8 +2,8 @@ class HTTP::WebSocket
   getter? closed = false
 
   # :nodoc:
-  def initialize(io : IO)
-    initialize(Protocol.new(io))
+  def initialize(io : IO, sync_close = true)
+    initialize(Protocol.new(io, sync_close: sync_close))
   end
 
   # :nodoc:
@@ -106,6 +106,7 @@ class HTTP::WebSocket
         info = @ws.receive(@buffer)
       rescue
         @on_close.try &.call("")
+        @ws.close
         break
       end
 
@@ -141,7 +142,7 @@ class HTTP::WebSocket
         if info.final
           message = @current_message.to_s
           @on_close.try &.call(message)
-          close(message) unless closed?
+          close(message)
           @current_message.clear
           break
         end
