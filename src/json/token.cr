@@ -33,40 +33,6 @@ class JSON::Token
     @raw_value = ""
   end
 
-  @[Deprecated("Use JSON::Token#kind, which is an enum")]
-  def type : Symbol
-    case @kind
-    when .null?
-      :null
-    when .false?
-      :false
-    when .true?
-      :true
-    when .int?
-      :INT
-    when .float?
-      :FLOAT
-    when .string?
-      :STRING
-    when .begin_array?
-      :"["
-    when .end_array?
-      :"]"
-    when .begin_object?
-      :"{"
-    when .end_object?
-      :"}"
-    when .colon?
-      :":"
-    when .comma?
-      :","
-    when .eof?
-      :EOF
-    else
-      raise "Unknown token kind: #{@kind}"
-    end
-  end
-
   def to_s(io : IO) : Nil
     case @kind
     when .null?

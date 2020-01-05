@@ -431,16 +431,6 @@ struct Time
     new(seconds: seconds, nanoseconds: nanosecond.to_i, location: location)
   end
 
-  @[Deprecated("Use `Time.local` instead.")]
-  def self.new(location : Location = Location.local) : Time
-    local(location)
-  end
-
-  @[Deprecated("Use `Time.local` instead.")]
-  def self.new(year : Int32, month : Int32, day : Int32, hour : Int32 = 0, minute : Int32 = 0, second : Int32 = 0, *, nanosecond : Int32 = 0, location : Location = Location.local) : Time
-    local(year, month, day, hour, minute, second, nanosecond: nanosecond, location: location)
-  end
-
   # Creates a new `Time` instance representing the given date-time in UTC.
   #
   # ```
@@ -539,20 +529,6 @@ struct Time
     seconds = UNIX_EPOCH.total_seconds + (milliseconds // 1_000)
     nanoseconds = (milliseconds % 1000) * NANOSECONDS_PER_MILLISECOND
     utc(seconds: seconds, nanoseconds: nanoseconds.to_i)
-  end
-
-  # Creates a new `Time` instance representing the current time from the
-  # system clock observed in *location* (defaults to local time zone).
-  @[Deprecated("Use `Time.local` or `Time.utc` instead.")]
-  def self.now(location : Location = Location.local) : Time
-    local(location)
-  end
-
-  # Creates a new `Time` instance representing the current time from the
-  # system clock in UTC.
-  @[Deprecated("Use `Time.utc` instead.")]
-  def self.utc_now : Time
-    utc
   end
 
   # Creates a new `Time` instance with the same local date-time representation

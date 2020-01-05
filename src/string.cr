@@ -844,16 +844,6 @@ class String
     self[regex, group]?.not_nil!
   end
 
-  @[Deprecated("Use `String#char_at` instead.")]
-  def at(index : Int)
-    char_at(index)
-  end
-
-  @[Deprecated("Use `String#char_at` instead.")]
-  def at(index : Int)
-    char_at(index) { yield }
-  end
-
   def char_at(index : Int)
     char_at(index) { raise IndexError.new }
   end

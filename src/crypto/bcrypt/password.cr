@@ -69,11 +69,6 @@ class Crypto::Bcrypt::Password
     Crypto::Subtle.constant_time_compare(@raw_hash, hashed_password)
   end
 
-  @[Deprecated("Use `Crypto::Bcrypt::Password#verify`")]
-  def ==(password : String) : Bool
-    verify(password)
-  end
-
   def to_s(io : IO) : Nil
     io << @raw_hash
   end
