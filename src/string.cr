@@ -940,11 +940,11 @@ class String
   # Raises `ArgumentError` if *count* is negative.
   #
   # ```
-  # "hello".byte_slice(0, 2)   # => "he"
-  # "hello".byte_slice(0, 100) # => "hello"
-  # "hello".byte_slice(6, 2)   # => nil
-  # "hello".byte_slice(-6, 2)  # => nil
-  # "hello".byte_slice(0, -2)  # raises ArgumentError
+  # "hello".byte_slice?(0, 2)   # => "he"
+  # "hello".byte_slice?(0, 100) # => "hello"
+  # "hello".byte_slice?(6, 2)   # => nil
+  # "hello".byte_slice?(-6, 2)  # => nil
+  # "hello".byte_slice?(0, -2)  # raises ArgumentError
   # ```
   def byte_slice?(start : Int, count : Int) : String | Nil
     raise ArgumentError.new "Negative count" if count < 0
@@ -1030,12 +1030,12 @@ class String
   # Returns the byte at the given *index*, or `nil` if out of bounds.
   #
   # ```
-  # "¥hello".byte_at(0)  # => 194
-  # "¥hello".byte_at(1)  # => 165
-  # "¥hello".byte_at(2)  # => 104
-  # "¥hello".byte_at(-1) # => 111
-  # "¥hello".byte_at(6)  # => 111
-  # "¥hello".byte_at(7)  # => nil
+  # "¥hello".byte_at?(0)  # => 194
+  # "¥hello".byte_at?(1)  # => 165
+  # "¥hello".byte_at?(2)  # => 104
+  # "¥hello".byte_at?(-1) # => 111
+  # "¥hello".byte_at?(6)  # => 111
+  # "¥hello".byte_at?(7)  # => nil
   # ```
   def byte_at?(index) : UInt8 | Nil
     byte_at(index) { nil }
