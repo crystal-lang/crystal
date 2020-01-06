@@ -86,7 +86,7 @@ struct Char
   # '\u007f'.ord # => 127
   # '☃'.ord      # => 9731
   # ```
-  @[Primitive(:cast)]
+  @[Primitive(:convert)]
   def ord : Int32
   end
 
@@ -117,7 +117,7 @@ struct Symbol
   end
 
   # Returns a unique number for this symbol.
-  @[Primitive(:cast)]
+  @[Primitive(:convert)]
   def to_i : Int32
   end
 
@@ -280,20 +280,16 @@ end
                              to_u8: UInt8, to_u16: UInt16, to_u32: UInt32, to_u64: UInt64, to_u128: UInt128,
                              to_f32: Float32, to_f64: Float64,
                            } %}
-        # TODO 0.28.0 replace with @[Primitive(:convert)]
-
         # Returns `self` converted to `{{type}}`.
         # Raises `OverflowError` in case of overflow.
-        @[Primitive(:cast)]
+        @[Primitive(:convert)]
         @[Raises]
         def {{name.id}} : {{type}}
         end
 
-        # TODO 0.28.0 replace with @[Primitive(:unchecked_convert)]
-
         # Returns `self` converted to `{{type}}`.
         # In case of overflow a wrapping is performed.
-        @[Primitive(:cast)]
+        @[Primitive(:unchecked_convert)]
         def {{name.id}}! : {{type}}
         end
       {% end %}
@@ -328,7 +324,7 @@ end
       # ```
       # 97.unsafe_chr # => 'a'
       # ```
-      @[Primitive(:cast)]
+      @[Primitive(:convert)]
       def unsafe_chr : Char
       end
 
