@@ -4,6 +4,10 @@ struct BigInt
 end
 
 struct BigFloat
+  def fdiv(other : Number::Primitive) : self
+    self.class.new(self / other)
+  end
+
   def /(other : UInt8 | UInt16 | UInt32 | UInt64)
     # Division by 0 in BigFloat is not allowed, there is no BigFloat::Infinitiy
     raise DivisionByZeroError.new if other == 0
@@ -96,6 +100,12 @@ struct UInt128
   Number.expand_div [BigFloat], BigFloat
   Number.expand_div [BigDecimal], BigDecimal
   Number.expand_div [BigRational], BigRational
+end
+
+struct Float
+  def fdiv(other : BigInt | BigFloat | BigDecimal | BigRational) : self
+    self.class.new(self / other)
+  end
 end
 
 struct Float32
