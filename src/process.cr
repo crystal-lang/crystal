@@ -45,10 +45,9 @@ class Process
   end
 
   # Sends a *signal* to the process identified by the given *pid*.
-  def self.signal(signal : Signal, pid : Int)
+  def self.signal(signal : Signal, pid : Int) : Nil
     ret = LibC.kill(pid, signal.value)
     raise Errno.new("kill") if ret < 0
-    nil
   end
 
   # Returns `true` if the process identified by *pid* is valid for
