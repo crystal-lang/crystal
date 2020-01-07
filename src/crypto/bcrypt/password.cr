@@ -44,6 +44,7 @@ class Crypto::Bcrypt::Password
   # ```
   def initialize(@raw_hash : String)
     parts = @raw_hash.split('$')
+    raise Error.new("Invalid hash string") unless parts.size == 4
 
     @version = parts[1]
     @cost = parts[2].to_i
