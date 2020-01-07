@@ -81,8 +81,8 @@ module Crystal
     it_parses ":[]=", "[]=".symbol
     it_parses ":[]?", "[]?".symbol
     it_parses %(:"\\\\foo"), "\\foo".symbol
-    it_parses %(:"\\\"foo"), "\"foo".symbol
-    it_parses %(:"\\\"foo\\\""), "\"foo\"".symbol
+    it_parses %(:"\\"foo"), "\"foo".symbol
+    it_parses %(:"\\"foo\\""), "\"foo\"".symbol
     it_parses %(:"\\a\\b\\n\\r\\t\\v\\f\\e"), "\a\b\n\r\t\v\f\e".symbol
     it_parses %(:"\\u{61}"), "a".symbol
 

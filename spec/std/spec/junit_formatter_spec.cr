@@ -128,7 +128,7 @@ describe "JUnit Formatter" do
     end
 
     name = XML.parse(output).xpath_string("string(//testsuite/testcase[1]/@name)")
-    name.should eq(%(complicated \" <n>'&ame))
+    name.should eq(%(complicated " <n>'&ame))
 
     name = XML.parse(output).xpath_string("string(//testsuite/testcase[2]/@name)")
     name.should eq(%(ctrl characters follow - \\r\\n))

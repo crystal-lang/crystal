@@ -1527,7 +1527,7 @@ describe "String" do
   it "#dump" do
     "a".dump.should eq %("a")
     "\\".dump.should eq %("\\\\")
-    "\"".dump.should eq %("\\\"")
+    "\"".dump.should eq %("\\"")
     "\a".dump.should eq %("\\a")
     "\b".dump.should eq %("\\b")
     "\e".dump.should eq %("\\e")
@@ -1555,7 +1555,7 @@ describe "String" do
   it "#inspect" do
     "a".inspect.should eq %("a")
     "\\".inspect.should eq %("\\\\")
-    "\"".inspect.should eq %("\\\"")
+    "\"".inspect.should eq %("\\"")
     "\a".inspect.should eq %("\\a")
     "\b".inspect.should eq %("\\b")
     "\e".inspect.should eq %("\\e")

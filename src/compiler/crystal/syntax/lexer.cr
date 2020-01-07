@@ -740,7 +740,7 @@ module Crystal
             raise "invalid char escape sequence '\\#{char2}'", line, column
           end
         when '\''
-          raise "invalid empty char literal (did you mean '\\\''?)", line, column
+          raise "invalid empty char literal (did you mean '\\''?)", line, column
         when '\0'
           raise "unterminated char literal", line, column
         else
