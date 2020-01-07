@@ -79,8 +79,8 @@ def spawn_and_check(before : Proc(_), file = __FILE__, line = __LINE__, &block :
   end
 
   ex = done.receive
+  raise ex if ex
   unless w.checked?
     fail "Failed to stress expected path", file, line
   end
-  raise ex if ex
 end
