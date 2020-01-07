@@ -13,6 +13,6 @@ def each_ip_family(&block : Socket::Family, String, String ->)
   end
 
   describe "using IPv6" do
-    block.call Socket::Family::INET6, "::1", "::"
+    block.call Socket::Family::INET6, "[::1]", "::"
   end
 end

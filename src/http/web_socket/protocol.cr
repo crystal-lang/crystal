@@ -247,6 +247,7 @@ class HTTP::WebSocket::Protocol
     {% end %}
 
     port = port || (tls ? 443 : 80)
+    host = host.lchop?('[').try &.rchop?(']') || host
 
     socket = TCPSocket.new(host, port)
     begin
