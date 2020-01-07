@@ -2239,8 +2239,7 @@ module Crystal
       end
 
       # This is the case of an enum member
-      # TODO: remove comma support after 0.28.0
-      if @token.type == :";" || (node.name[0]?.try(&.ascii_uppercase?) && @token.type == :",")
+      if @token.type == :";"
         next_token
         @lexer.skip_space
         if @token.type == :COMMENT
