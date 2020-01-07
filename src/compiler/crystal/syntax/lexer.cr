@@ -737,10 +737,10 @@ module Crystal
           when '\0'
             raise "unterminated char literal", line, column
           else
-            raise "invalid char escape sequence", line, column
+            raise "invalid char escape sequence '\\#{char2}'", line, column
           end
         when '\''
-          raise "invalid empty char literal (did you mean '\\\''?)", line, column
+          raise "invalid empty char literal (did you mean '\\''?)", line, column
         when '\0'
           raise "unterminated char literal", line, column
         else
@@ -1895,6 +1895,8 @@ module Crystal
     end
 
     def next_string_token(delimiter_state)
+      reset_token
+
       @token.line_number = @line_number
       @token.delimiter_state = delimiter_state
 
@@ -1941,6 +1943,14 @@ module Crystal
             end
           else
             case char = next_char
+            when '\\'
+              string_token_escape_value "\\"
+            when string_end
+              string_token_escape_value string_end.to_s
+            when string_nest
+              string_token_escape_value string_nest.to_s
+            when '#'
+              string_token_escape_value "#"
             when 'a'
               string_token_escape_value "\a"
             when 'b'
@@ -2003,6 +2013,7 @@ module Crystal
             else
               @token.type = :STRING
               @token.value = current_char.to_s
+              @token.invalid_escape = true
               next_char
             end
           end
@@ -2129,6 +2140,8 @@ module Crystal
     end
 
     def next_macro_token(macro_state, skip_whitespace)
+      reset_token
+
       nest = macro_state.nest
       control_nest = macro_state.control_nest
       whitespace = macro_state.whitespace
@@ -2626,6 +2639,8 @@ module Crystal
     end
 
     def next_string_array_token
+      reset_token
+
       while true
         if current_char == '\n'
           next_char
@@ -2879,6 +2894,7 @@ module Crystal
       @token.location = nil
       @token.passed_backslash_newline = false
       @token.doc_buffer = nil unless @token.type == :SPACE || @token.type == :NEWLINE
+      @token.invalid_escape = false
       @token_end_location = nil
     end
 
