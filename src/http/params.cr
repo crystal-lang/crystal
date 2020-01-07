@@ -132,8 +132,6 @@ module HTTP
       form_builder.to_s
     end
 
-    protected getter raw_params
-
     # Returns an empty `HTTP::Params`.
     def initialize
       @raw_params = {} of String => Array(String)
@@ -142,8 +140,23 @@ module HTTP
     def initialize(@raw_params : Hash(String, Array(String)))
     end
 
+    # Returns a `Hash` containing the raw parameters.
+    #
+    # The return value can be supplied to `.new` in order to create a new instance.
+    #
+    # ```
+    # params = HTTP::Params.parse("foo=bar&foo=baz&qux=zoo")
+    # params.to_h # => {"foo" => ["bar", "baz"], "qux" => ["zoo"]}
+    #
+    # params2 = HTTP::Params.new(params.to_h)
+    # params2.to_s # => "foo=bar&foo=baz&qux=zoo"
+    # ```
+    def to_h : Hash(String, Array(String))
+      @raw_params
+    end
+
     def ==(other : self)
-      self.raw_params == other.raw_params
+      self.@raw_params == other.@raw_params
     end
 
     def ==(other)
@@ -179,7 +192,7 @@ module HTTP
     # params.has_key?("email")   # => true
     # params.has_key?("garbage") # => false
     # ```
-    delegate has_key?, to: raw_params
+    delegate has_key?, to: @raw_params
 
     # Returns `true` if params is empty.
     #
@@ -187,7 +200,7 @@ module HTTP
     # HTTP::Params.new.empty?                              # => true
     # HTTP::Params.parse("foo=bar&foo=baz&qux=zoo").empty? # => false
     # ```
-    delegate empty?, to: raw_params
+    delegate empty?, to: @raw_params
 
     # Sets first *value* for specified param *name*.
     #
@@ -195,8 +208,8 @@ module HTTP
     # params["item"] = "pencil"
     # ```
     def []=(name, value)
-      raw_params[name] ||= [""]
-      raw_params[name][0] = value
+      @raw_params[name] ||= [""]
+      @raw_params[name][0] = value
     end
 
     # Returns all values for specified param *name*.
@@ -206,7 +219,7 @@ module HTTP
     # params.fetch_all("item") # => ["pencil", "book", "workbook"]
     # ```
     def fetch_all(name)
-      raw_params.fetch(name) { [] of String }
+      @raw_params.fetch(name) { [] of String }
     end
 
     # Returns first value for specified param *name*. Fallbacks to provided
@@ -229,7 +242,7 @@ module HTTP
     # ```
     def fetch(name)
       return yield name unless has_key?(name)
-      raw_params[name].first
+      @raw_params[name].first
     end
 
     # Appends new value for specified param *name*.
@@ -240,9 +253,9 @@ module HTTP
     # params.fetch_all("item") # => ["pencil", "book", "workbook", "keychain"]
     # ```
     def add(name, value)
-      raw_params[name] ||= [] of String
-      raw_params[name] = [] of String if raw_params[name] == [""]
-      raw_params[name] << value
+      @raw_params[name] ||= [] of String
+      @raw_params[name] = [] of String if @raw_params[name] == [""]
+      @raw_params[name] << value
     end
 
     # Sets all *values* for specified param *name* at once.
@@ -252,7 +265,7 @@ module HTTP
     # params.fetch_all("item") # => ["keychain", "keynote"]
     # ```
     def set_all(name, values)
-      raw_params[name] = values
+      @raw_params[name] = values
     end
 
     # Allows to iterate over all name-value pairs.
@@ -268,7 +281,7 @@ module HTTP
     # # item => keynote
     # ```
     def each
-      raw_params.each do |name, values|
+      @raw_params.each do |name, values|
         values.each do |value|
           yield({name, value})
         end
@@ -288,8 +301,8 @@ module HTTP
     # params.delete("non_existent_param") # KeyError
     # ```
     def delete(name)
-      value = raw_params[name].shift
-      raw_params.delete(name) if raw_params[name].size == 0
+      value = @raw_params[name].shift
+      @raw_params.delete(name) if @raw_params[name].size == 0
       value
     end
 
@@ -302,7 +315,7 @@ module HTTP
     # params.has_key?("comments")   # => false
     # ```
     def delete_all(name)
-      raw_params.delete(name)
+      @raw_params.delete(name)
     end
 
     # Serializes to string representation as http url-encoded form.

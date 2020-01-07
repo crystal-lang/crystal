@@ -247,5 +247,19 @@ module HTTP
         Params.new.empty?.should be_true
       end
     end
+
+    describe "#to_h" do
+      it "duplicate values" do
+        Params.parse("foo=bar&foo=baz&baz=qux").to_h.should eq({
+            "foo" => ["bar", "baz"],
+            "baz" => ["qux"],
+        })
+      end
+
+      it "passes as input for .new" do
+        params = Params.parse("foo=bar&foo=baz&baz=qux")
+        Params.new(params.to_h).should eq params
+      end
+    end
   end
 end
