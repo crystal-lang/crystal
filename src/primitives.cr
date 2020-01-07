@@ -401,7 +401,7 @@ end
           end
         {% end %}
 
-        # Returns the float division of division `self` and *other*.
+        # Returns the float division of `self` and *other*.
         @[Primitive(:binary)]
         def fdiv(other : {{num.id}}) : self
         end
