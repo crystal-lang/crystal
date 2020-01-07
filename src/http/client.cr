@@ -764,7 +764,7 @@ class HTTP::Client
     socket = @socket
     return socket if socket
 
-    hostname = @host.starts_with?('[') && @host.ends_with?(']') ? @host[1..-2] : @host
+    hostname = host.lchop?('[').try &.rchop?(']') || host
     socket = TCPSocket.new hostname, @port, @dns_timeout, @connect_timeout
     socket.read_timeout = @read_timeout if @read_timeout
     socket.write_timeout = @write_timeout if @write_timeout
