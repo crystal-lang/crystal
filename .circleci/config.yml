@@ -154,7 +154,7 @@ jobs:
       - run: |
           git clone https://github.com/crystal-lang/distribution-scripts.git ~/distribution-scripts
           cd ~/distribution-scripts
-          git checkout 6e8201bf133ffe2dc335d2a6e895551ba6630f14
+          git checkout 914f9580dfec8634645f0de4aa93d54a8a0b7c10
       # persist relevant information for build process
       - run: |
           cd ~/distribution-scripts
@@ -347,7 +347,7 @@ jobs:
           cd /tmp/workspace/distribution-scripts
           source build.env
           cd docker
-          make all64 CRYSTAL_DEB=/tmp/workspace/build/crystal_${CRYSTAL_VERSION}-1_amd64.deb
+          make all64 CRYSTAL_DEB=/tmp/workspace/build/crystal_${CRYSTAL_VERSION}-1_amd64.deb CRYSTAL_TARGZ=/tmp/workspace/build/crystal-$CRYSTAL_VERSION-1-linux-x86_64.tar.gz make
       - persist_to_workspace:
           root: /tmp/workspace/distribution-scripts/docker/
           paths:
@@ -378,9 +378,13 @@ jobs:
           source ./build.env
           gunzip -c /tmp/workspace/build/docker-${CRYSTAL_VERSION}.tar.gz | docker image load
           gunzip -c /tmp/workspace/build/docker-${CRYSTAL_VERSION}-build.tar.gz | docker image load
+          gunzip -c /tmp/workspace/build/docker-${CRYSTAL_VERSION}-alpine-.tar.gz | docker image load
+          gunzip -c /tmp/workspace/build/docker-${CRYSTAL_VERSION}-alpine--build.tar.gz | docker image load
           docker login -u ${DOCKER_USER} -p ${DOCKER_PASS}
           docker push ${DOCKER_REPOSITORY}:${DOCKER_TAG}
           docker push ${DOCKER_REPOSITORY}:${DOCKER_TAG}-build
+          docker push ${DOCKER_REPOSITORY}:${DOCKER_TAG}-alpine
+          docker push ${DOCKER_REPOSITORY}:${DOCKER_TAG}-alpine-build
 
   dist_snap:
     docker:
