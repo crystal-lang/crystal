@@ -3,6 +3,7 @@
 ENV["CRYSTAL_PATH"] = "#{__DIR__}/../src"
 
 require "spec"
+{% unless flag?(:win32) %}
 require "../src/compiler/crystal/**"
 require "./support/syntax"
 
@@ -296,3 +297,5 @@ end
 private def inject_primitives(code)
   %(require "primitives"\n) + code
 end
+
+{% end %}

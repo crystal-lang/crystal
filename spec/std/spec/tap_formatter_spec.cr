@@ -1,5 +1,4 @@
 require "spec"
-require "xml"
 
 private def build_report
   String.build do |io|

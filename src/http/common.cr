@@ -429,9 +429,11 @@ module HTTP
   end
 end
 
+{% unless flag?(:win32) %}
 require "./status"
 require "./request"
 require "./client/response"
 require "./headers"
 require "./content"
 require "./cookie"
+{% end %}
