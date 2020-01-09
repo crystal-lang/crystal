@@ -1,6 +1,6 @@
 require "spec"
 {% unless flag?(:win32) %}
-require "big"
+  require "big"
 {% end %}
 
 private def to_s_with_io(num)
