@@ -12,7 +12,7 @@ end
 
 private def it_expands_path(path, posix, windows = posix, *, base = nil, env_home = nil, expand_base = false, home = false, file = __FILE__, line = __LINE__)
   assert_paths(path, posix, windows, %((base: "#{base}")), file, line) do |path|
-    prev_home = ENV["HOME"]
+    prev_home = ENV["HOME"]?
 
     begin
       ENV["HOME"] = env_home || (path.windows? ? HOME_WINDOWS : HOME_POSIX)
