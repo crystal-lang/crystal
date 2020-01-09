@@ -376,10 +376,10 @@ jobs:
       - run: |
           cd /tmp/workspace/distribution-scripts
           source ./build.env
-          gunzip -c /tmp/workspace/build/docker-${CRYSTAL_VERSION}.tar.gz | docker image load
-          gunzip -c /tmp/workspace/build/docker-${CRYSTAL_VERSION}-build.tar.gz | docker image load
-          gunzip -c /tmp/workspace/build/docker-${CRYSTAL_VERSION}-alpine-.tar.gz | docker image load
-          gunzip -c /tmp/workspace/build/docker-${CRYSTAL_VERSION}-alpine--build.tar.gz | docker image load
+          gunzip -c /tmp/workspace/build/docker-${CRYSTAL_VERSION}-ubuntu-x86_64.tar.gz | docker image load
+          gunzip -c /tmp/workspace/build/docker-${CRYSTAL_VERSION}-ubuntu-x86_64-build.tar.gz | docker image load
+          gunzip -c /tmp/workspace/build/docker-${CRYSTAL_VERSION}-alpine.tar.gz | docker image load
+          gunzip -c /tmp/workspace/build/docker-${CRYSTAL_VERSION}-alpine-build.tar.gz | docker image load
           docker login -u ${DOCKER_USER} -p ${DOCKER_PASS}
           docker push ${DOCKER_REPOSITORY}:${DOCKER_TAG}
           docker push ${DOCKER_REPOSITORY}:${DOCKER_TAG}-build
@@ -430,7 +430,7 @@ jobs:
           cd /tmp/workspace/distribution-scripts
           source build.env
           cd docs
-          gunzip -c /tmp/workspace/build/docker-${CRYSTAL_VERSION}-build.tar.gz | docker image load
+          gunzip -c /tmp/workspace/build/docker-${CRYSTAL_VERSION}-ubuntu-x86_64-build.tar.gz | docker image load
           make CRYSTAL_DOCKER_IMAGE=${DOCKER_REPOSITORY}:${DOCKER_TAG}-build
       - store_artifacts:
           path: /tmp/workspace/distribution-scripts/docs/build
@@ -463,7 +463,7 @@ jobs:
       - run: |
           cd /tmp/workspace/distribution-scripts
           source ./build.env
-          gunzip -c /tmp/workspace/build/docker-${CRYSTAL_VERSION}.tar.gz | docker image load
+          gunzip -c /tmp/workspace/build/docker-${CRYSTAL_VERSION}-ubuntu-x86_64.tar.gz | docker image load
           export DOCKER_TEST_PREFIX="crystallang/crystal:$DOCKER_TAG" >> $BASH_ENV
       - checkout
       - run: bin/ci prepare_system
@@ -484,7 +484,7 @@ jobs:
       - run: |
           cd /tmp/workspace/distribution-scripts
           source ./build.env
-          gunzip -c /tmp/workspace/build/docker-${CRYSTAL_VERSION}-i386.tar.gz | docker image load
+          gunzip -c /tmp/workspace/build/docker-${CRYSTAL_VERSION}-ubuntu-i386.tar.gz | docker image load
           export DOCKER_TEST_PREFIX="crystallang/crystal:$DOCKER_TAG-i386" >> $BASH_ENV
       - checkout
       - run: bin/ci prepare_system
