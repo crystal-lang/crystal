@@ -266,8 +266,7 @@ describe "Dir" do
       end
     end
 
-    # TODO: This spec is broken on win32 because of `raise` weirdness on windows
-    pending_win32 "tests with relative path starting recursive" do
+    it "tests with relative path starting recursive" do
       Dir["**/dir/*/"].sort.should eq [
         datapath("dir", "dots", ""),
         datapath("dir", "subdir", ""),
@@ -298,8 +297,12 @@ describe "Dir" do
       Dir[""].should eq [] of String
     end
 
-    pending_win32 "root pattern" do
-      Dir["/"].should eq ["/"]
+    it "root pattern" do
+      {% if flag?(:windows) %}
+        Dir["C:/"].should eq ["C:\\"]
+      {% else %}
+        Dir["/"].should eq ["/"]
+      {% end %}
     end
 
     it "pattern ending with .." do
