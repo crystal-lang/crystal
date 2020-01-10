@@ -67,23 +67,32 @@ describe "Dir" do
     end
   end
 
-  it "tests mkdir_p with a new path" do
-    with_tempfile("mkdir_p") do |path|
-      Dir.mkdir_p(path)
-      Dir.exists?(path).should be_true
-      path = File.join(path, "a", "b", "c")
-      Dir.mkdir_p(path)
-      Dir.exists?(path).should be_true
+  describe ".mkdir_p" do
+    it "with a new path" do
+      with_tempfile("mkdir_p-new") do |path|
+        Dir.mkdir_p(path)
+        Dir.exists?(path).should be_true
+        path = File.join(path, "a", "b", "c")
+        Dir.mkdir_p(path)
+        Dir.exists?(path).should be_true
+      end
+    end
+
+    context "path exists" do
+      it "fails when path is a file" do
+        expect_raises_errno(Errno::EEXIST, "Unable to create directory '#{datapath("test_file.txt")}': File exists") do
+          Dir.mkdir_p(datapath("test_file.txt"))
+        end
+      end
+
+      it "noop when path is a directory" do
+        Dir.exists?(datapath("dir")).should be_true
+        Dir.mkdir_p(datapath("dir"))
+        Dir.exists?(datapath("dir")).should be_true
+      end
     end
   end
 
-  it "tests mkdir_p with an existing path" do
-    Dir.mkdir_p(datapath)
-    # FIXME: Refactor Dir#mkdir_p to remove leading `./` in error message
-    expect_raises_errno(Errno::EEXIST, "Unable to create directory './#{datapath("dir", "f1.txt")}'") do
-      Dir.mkdir_p(datapath("dir", "f1.txt"))
-    end
-  end
 
   it "tests rmdir with an nonexistent path" do
     with_tempfile("nonexistant") do |path|
