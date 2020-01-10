@@ -364,7 +364,7 @@ describe "Dir" do
     end
 
     it "raises" do
-      expect_raises_errno(Errno::ENOENT, "Error while changing directory to '/nope'") do
+      expect_raises_errno(Errno::ENOENT, {{ flag?(:win32) ? /SetCurrentDirectory: .* No such file or directory/ : "Error while changing directory to '/nope'" }}) do
         Dir.cd("/nope")
       end
     end
