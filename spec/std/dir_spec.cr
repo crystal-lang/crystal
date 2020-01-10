@@ -305,7 +305,7 @@ describe "Dir" do
     it "pattern ending with .." do
       Dir["#{datapath}/dir/.."].sort.should eq [
         datapath("dir", ".."),
-      ]
+      ].sort
     end
 
     it "pattern ending with */.." do
@@ -313,13 +313,13 @@ describe "Dir" do
         datapath("dir", "dots", ".."),
         datapath("dir", "subdir", ".."),
         datapath("dir", "subdir2", ".."),
-      ]
+      ].sort
     end
 
     it "pattern ending with ." do
       Dir["#{datapath}/dir/."].sort.should eq [
         datapath("dir", "."),
-      ]
+      ].sort
     end
 
     it "pattern ending with */." do
@@ -327,7 +327,7 @@ describe "Dir" do
         datapath("dir", "dots", "."),
         datapath("dir", "subdir", "."),
         datapath("dir", "subdir2", "."),
-      ]
+      ].sort
     end
 
     context "match_hidden: true" do
