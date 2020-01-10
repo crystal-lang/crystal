@@ -274,7 +274,7 @@ describe "Dir" do
       ].sort
     end
 
-    it "matches symlinks" do
+    pending_win32 "matches symlinks" do
       link = datapath("f1_link.txt")
       non_link = datapath("non_link.txt")
 
