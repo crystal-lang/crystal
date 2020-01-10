@@ -731,8 +731,7 @@ describe "Int" do
     {% end %}
   end
 
-  {% unless flag?(:win32) %}
-  it "compares signed vs. unsigned integers" do
+  pending_win32 "compares signed vs. unsigned integers" do
     signed_ints = [Int8::MAX, Int16::MAX, Int32::MAX, Int64::MAX, Int8::MIN, Int16::MIN, Int32::MIN, Int64::MIN, 0_i8, 0_i16, 0_i32, 0_i64]
     unsigned_ints = [UInt8::MAX, UInt16::MAX, UInt32::MAX, UInt64::MAX, 0_u8, 0_u16, 0_u32, 0_u64]
 
@@ -749,7 +748,6 @@ describe "Int" do
       end
     end
   end
-  {% end %}
 
   {% if compare_versions(Crystal::VERSION, "0.26.1") > 0 %}
     it "compares equality and inequality of signed vs. unsigned integers" do

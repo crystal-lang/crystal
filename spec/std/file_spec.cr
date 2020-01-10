@@ -1077,48 +1077,46 @@ describe "File" do
   end
 
   # TODO: these specs don't compile on win32 because iconv isn't implemented
-  {% unless flag?(:win32) %}
-    describe "encoding" do
-      it "writes with encoding" do
-        with_tempfile("encoding-write.txt") do |path|
-          File.write(path, "hello", encoding: "UCS-2LE")
-          File.read(path).to_slice.should eq("hello".encode("UCS-2LE"))
-        end
+  describe "encoding" do
+    pending_win32 "writes with encoding" do
+      with_tempfile("encoding-write.txt") do |path|
+        File.write(path, "hello", encoding: "UCS-2LE")
+        File.read(path).to_slice.should eq("hello".encode("UCS-2LE"))
       end
+    end
 
-      it "reads with encoding" do
-        with_tempfile("encoding-read.txt") do |path|
-          File.write(path, "hello", encoding: "UCS-2LE")
-          File.read(path, encoding: "UCS-2LE").should eq("hello")
-        end
+    pending_win32 "reads with encoding" do
+      with_tempfile("encoding-read.txt") do |path|
+        File.write(path, "hello", encoding: "UCS-2LE")
+        File.read(path, encoding: "UCS-2LE").should eq("hello")
       end
+    end
 
-      it "opens with encoding" do
-        with_tempfile("encoding-open.txt") do |path|
-          File.write(path, "hello", encoding: "UCS-2LE")
-          File.open(path, encoding: "UCS-2LE") do |file|
-            file.gets_to_end.should eq("hello")
-          end
-        end
-      end
-
-      it "does each line with encoding" do
-        with_tempfile("encoding-each_line.txt") do |path|
-          File.write(path, "hello", encoding: "UCS-2LE")
-          File.each_line(path, encoding: "UCS-2LE") do |line|
-            line.should eq("hello")
-          end
-        end
-      end
-
-      it "reads lines with encoding" do
-        with_tempfile("encoding-read_lines.txt") do |path|
-          File.write(path, "hello", encoding: "UCS-2LE")
-          File.read_lines(path, encoding: "UCS-2LE").should eq(["hello"])
+    pending_win32 "opens with encoding" do
+      with_tempfile("encoding-open.txt") do |path|
+        File.write(path, "hello", encoding: "UCS-2LE")
+        File.open(path, encoding: "UCS-2LE") do |file|
+          file.gets_to_end.should eq("hello")
         end
       end
     end
-  {% end %}
+
+    pending_win32 "does each line with encoding" do
+      with_tempfile("encoding-each_line.txt") do |path|
+        File.write(path, "hello", encoding: "UCS-2LE")
+        File.each_line(path, encoding: "UCS-2LE") do |line|
+          line.should eq("hello")
+        end
+      end
+    end
+
+    pending_win32 "reads lines with encoding" do
+      with_tempfile("encoding-read_lines.txt") do |path|
+        File.write(path, "hello", encoding: "UCS-2LE")
+        File.read_lines(path, encoding: "UCS-2LE").should eq(["hello"])
+      end
+    end
+  end
 
   describe "closed stream" do
     it "raises if writing on a closed stream" do
