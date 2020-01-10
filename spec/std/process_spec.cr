@@ -228,6 +228,20 @@ describe Process do
     process.terminated?.should be_true
   end
 
+  it "checks for existence after terminate" do
+    process = Process.new("yes")
+    process.exists?.should be_true
+    process.terminated?.should be_false
+
+    process.terminate
+    process.exists?.should be_true
+    process.terminated?.should be_false
+
+    process.wait
+    process.exists?.should be_false
+    process.terminated?.should be_true
+  end
+
   describe "executable_path" do
     it "searches executable" do
       Process.executable_path.should be_a(String | Nil)

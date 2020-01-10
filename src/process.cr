@@ -199,7 +199,7 @@ class Process
       $? = process.wait
       value
     rescue ex
-      process.signal Signal::TERM
+      process.terminate
       raise ex
     end
   end
@@ -397,6 +397,11 @@ class Process
     close_io @input
     close_io @output
     close_io @error
+  end
+
+  # Ask process for terminate gracefully
+  def terminate
+    signal Signal::TERM
   end
 
   # :nodoc:
