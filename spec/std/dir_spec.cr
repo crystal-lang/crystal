@@ -257,11 +257,11 @@ describe "Dir" do
 
     it "tests with relative path (starts with ..)" do
       Dir.cd(datapath) do
-        base_path = "../data/dir"
+        base_path = Path["..", "data", "dir"]
         Dir["#{base_path}/*/"].sort.should eq [
-          File.join(base_path, "dots", ""),
-          File.join(base_path, "subdir", ""),
-          File.join(base_path, "subdir2", ""),
+          base_path.join("dots", "").to_s,
+          base_path.join("subdir", "").to_s,
+          base_path.join("subdir2", "").to_s,
         ].sort
       end
     end

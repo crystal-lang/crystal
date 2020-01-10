@@ -631,8 +631,7 @@ describe Path do
     end
 
     it "doesn't expand ~" do
-      ["~", "~/foo"].each do |path|
-        path = Path[path]
+      [Path["~"], Path["~", "foo"]].each do |path|
         path.expand(base: "", expand_base: false).should eq path
       end
     end
