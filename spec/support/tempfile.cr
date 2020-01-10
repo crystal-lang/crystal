@@ -1,6 +1,6 @@
 require "file_utils"
 
-SPEC_TEMPFILE_PATH = File.join(Dir.tempdir, "cr-spec-#{Random.new.hex(4)}")
+SPEC_TEMPFILE_PATH    = File.join(Dir.tempdir, "cr-spec-#{Random.new.hex(4)}")
 SPEC_TEMPFILE_CLEANUP = ENV["SPEC_TEMPFILE_CLEANUP"]? != "0"
 
 # Expands *paths* in a unique temp folder and yield them to the block.

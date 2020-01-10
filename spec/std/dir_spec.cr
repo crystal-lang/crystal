@@ -93,7 +93,6 @@ describe "Dir" do
     end
   end
 
-
   it "tests rmdir with an nonexistent path" do
     with_tempfile("nonexistant") do |path|
       expect_raises_errno(Errno::ENOENT, "Unable to remove directory '#{path}'") do
