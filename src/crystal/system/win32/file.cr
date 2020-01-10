@@ -192,6 +192,10 @@ module Crystal::System::File
     end
   end
 
+  def self.readlink(path) : String
+    raise NotImplementedError.new("readlink")
+  end
+
   def self.rename(old_path : String, new_path : String) : Nil
     if LibC._wrename(to_windows_path(old_path), to_windows_path(new_path)) != 0
       raise Errno.new("Error renaming file from #{old_path.inspect} to #{new_path.inspect}")
