@@ -1,6 +1,30 @@
 require "./spec_helper"
 require "../support/errno"
 
+private def unset_tempdir
+  {% if flag?(:windows) %}
+    old_tempdirs = {ENV["TMP"]?, ENV["TEMP"]?, ENV["USERPROFILE"]?}
+    begin
+      ENV.delete("TMP")
+      ENV.delete("TEMP")
+      ENV.delete("USERPROFILE")
+
+      yield
+    ensure
+      ENV["TMP"], ENV["TEMP"], ENV["USERPROFILE"] = old_tempdirs
+    end
+  {% else %}
+    begin
+      old_tempdir = ENV["TMPDIR"]?
+      ENV.delete("TMPDIR")
+
+      yield
+    ensure
+      ENV["TMPDIR"] = old_tempdir
+    end
+  {% end %}
+end
+
 private def it_raises_on_null_byte(operation, &block)
   it "errors on #{operation}" do
     expect_raises(ArgumentError, "String contains null byte") do
@@ -355,19 +379,27 @@ describe "Dir" do
 
   describe ".tempdir" do
     it "returns default directory for tempfiles" do
-      old_tmpdir = ENV["TMPDIR"]?
-      ENV.delete("TMPDIR")
-      Dir.tempdir.should eq("/tmp")
-    ensure
-      ENV["TMPDIR"] = old_tmpdir
+      unset_tempdir do
+        {% if flag?(:windows) %}
+          # GetTempPathW defaults to the Windows directory when %TMP%, %TEMP%
+          # and %USERPROFILE% are not set.
+          # Without going further into the implementation details, simply
+          # verifying that the directory exits is sufficient.
+          Dir.exists?(Dir.tempdir).should be_true
+        {% else %}
+          # POSIX implementation is in Crystal::System::Dir and defaults to
+          # `/tmp` when $TMPDIR is not set.
+          Dir.tempdir.should eq "/tmp"
+        {% end %}
+      end
     end
 
     it "returns configure directory for tempfiles" do
-      old_tmpdir = ENV["TMPDIR"]?
-      ENV["TMPDIR"] = "/my/tmp"
-      Dir.tempdir.should eq("/my/tmp")
-    ensure
-      ENV["TMPDIR"] = old_tmpdir
+      unset_tempdir do
+        tmp_path = Path["my_temporary_path"].expand.to_s
+        ENV[{{ flag?(:windows) ? "TMP" : "TMPDIR" }}] = tmp_path
+        Dir.tempdir.should eq tmp_path
+      end
     end
   end
 
