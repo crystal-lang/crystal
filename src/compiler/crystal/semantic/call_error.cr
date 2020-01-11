@@ -629,7 +629,7 @@ class Crystal::Call
       scope_type = scope.instance_type
       owner_type = match.def.owner.instance_type
 
-      unless scope_type.has_protected_acces_to?(owner_type)
+      unless scope_type.has_protected_access_to?(owner_type)
         raise "protected method '#{match.def.name}' called for #{match.def.owner}"
       end
     end

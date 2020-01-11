@@ -1534,6 +1534,8 @@ module Crystal
         interpret_argless_method(method, args) { TypeNode.subclasses(type) }
       when "all_subclasses"
         interpret_argless_method(method, args) { TypeNode.all_subclasses(type) }
+      when "includers"
+        interpret_argless_method(method, args) { TypeNode.includers(type) }
       when "constants"
         interpret_argless_method(method, args) { TypeNode.constants(type) }
       when "constant"
@@ -1663,6 +1665,19 @@ module Crystal
         interpret_argless_method(method, args) { self }
       else
         super
+      end
+    end
+
+    def self.includers(type)
+      case type
+      when NonGenericModuleType, GenericModuleType
+        types = type.raw_including_types
+        return empty_no_return_array unless types
+        ArrayLiteral.map(types) do |including_type|
+          TypeNode.new including_type
+        end
+      else
+        empty_no_return_array
       end
     end
 

@@ -10,7 +10,7 @@ end
 
 describe XML::Builder do
   it "writes document" do
-    assert_built(%[<?xml version=\"1.0\"?>\n\n]) do
+    assert_built(%[<?xml version="1.0"?>\n\n]) do
     end
   end
 
@@ -73,7 +73,7 @@ describe XML::Builder do
   end
 
   it "writes element with namespace" do
-    assert_built(%[<?xml version=\"1.0\"?>\n<foo xmlns=\"bar\">baz</foo>\n]) do
+    assert_built(%[<?xml version="1.0"?>\n<foo xmlns="bar">baz</foo>\n]) do
       element(nil, "foo", "bar") do
         text "baz"
       end
@@ -81,7 +81,7 @@ describe XML::Builder do
   end
 
   it "writes element with prefix" do
-    assert_built(%[<?xml version=\"1.0\"?>\n<foo:bar>baz</foo:bar>\n]) do
+    assert_built(%[<?xml version="1.0"?>\n<foo:bar>baz</foo:bar>\n]) do
       element("foo", "bar", nil) do
         text "baz"
       end

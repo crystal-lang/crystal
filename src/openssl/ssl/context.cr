@@ -191,6 +191,20 @@ abstract class OpenSSL::SSL::Context
     def self.from_hash(params) : self
       super(params)
     end
+
+    # Disables all session ticket generation for this context.
+    # Tickets are used to resume earlier sessions more quickly,
+    # but in TLS 1.3 if the client connects, sends data, and closes the connection
+    # unidirectionally, the server connects, then sends a ticket
+    # after the connect handshake, the ticket send can fail with Broken Pipe.
+    # So if you have that kind of behavior (clients that never read) call this method.
+    def disable_session_resume_tickets
+      add_options(OpenSSL::SSL::Options::NO_TICKET) # TLS v1.2 and below
+      {% if compare_versions(LibSSL::OPENSSL_VERSION, "1.1.1") >= 0 %}
+        ret = LibSSL.ssl_ctx_set_num_tickets(self, 0) # TLS v1.3
+        raise OpenSSL::Error.new("SSL_CTX_set_num_tickets") if ret != 1
+      {% end %}
+    end
   end
 
   protected def initialize(method : LibSSL::SSLMethod)

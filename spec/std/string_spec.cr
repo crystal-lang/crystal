@@ -188,6 +188,15 @@ describe "String" do
       "hello"[1, 3]?.should eq("ell")
       "hello"[6, 3]?.should be_nil
     end
+
+    it "gets with range without end" do
+      "hello"[1..nil]?.should eq("ello")
+      "hello"[6..nil]?.should be_nil
+    end
+
+    it "gets with range without beginning" do
+      "hello"[nil..2]?.should eq("hel")
+    end
   end
 
   describe "byte_slice" do
@@ -1308,6 +1317,26 @@ describe "String" do
     it "subs beginless range with string" do
       "hello".sub(nil..2, "ye").should eq("yelo")
     end
+
+    it "subs the last char" do
+      str = "hello"
+      str.sub('o', 'a').should eq("hella")
+      str.sub('o', "ad").should eq("hellad")
+      str.sub(4, 'a').should eq("hella")
+      str.sub(4, "ad").should eq("hellad")
+      str.sub(4..4, 'a').should eq("hella")
+      str.sub(4..4, "ad").should eq("hellad")
+      str.sub({'a' => 'b', 'o' => 'a'}).should eq("hella")
+      str.sub({'a' => 'b', 'o' => "ad"}).should eq("hellad")
+      str.sub(/o/, 'a').should eq("hella")
+      str.sub(/o/, "ad").should eq("hellad")
+      str.sub(/o/) { 'a' }.should eq("hella")
+      str.sub(/o/) { "ad" }.should eq("hellad")
+      str.sub(/(o)/, {"o" => 'a'}).should eq("hella")
+      str.sub(/(o)/, {"o" => "ad"}).should eq("hellad")
+      str.sub(/(o)/) { 'a' }.should eq("hella")
+      str.sub(/(o)/) { "ad" }.should eq("hellad")
+    end
   end
 
   describe "gsub" do
@@ -1498,7 +1527,7 @@ describe "String" do
   it "#dump" do
     "a".dump.should eq %("a")
     "\\".dump.should eq %("\\\\")
-    "\"".dump.should eq %("\\\"")
+    "\"".dump.should eq %("\\"")
     "\a".dump.should eq %("\\a")
     "\b".dump.should eq %("\\b")
     "\e".dump.should eq %("\\e")
@@ -1526,7 +1555,7 @@ describe "String" do
   it "#inspect" do
     "a".inspect.should eq %("a")
     "\\".inspect.should eq %("\\\\")
-    "\"".inspect.should eq %("\\\"")
+    "\"".inspect.should eq %("\\"")
     "\a".inspect.should eq %("\\a")
     "\b".inspect.should eq %("\\b")
     "\e".inspect.should eq %("\\e")
@@ -1975,6 +2004,13 @@ describe "String" do
     it { "12".rjust(7, 'あ').should eq("あああああ12") }
   end
 
+  describe "center" do
+    it { "123".center(2).should eq("123") }
+    it { "123".center(5).should eq(" 123 ") }
+    it { "12".center(7, '-').should eq("--12---") }
+    it { "12".center(7, 'あ').should eq("ああ12あああ") }
+  end
+
   describe "succ" do
     it "returns an empty string for empty strings" do
       "".succ.should eq("")
@@ -2184,7 +2220,7 @@ describe "String" do
     "ab☃".codepoints.should eq [97, 98, 9731]
   end
 
-  it "gets size of \0 string" do
+  it "gets size of \\0 string" do
     "\0\0".size.should eq(2)
   end
 
@@ -2372,22 +2408,22 @@ describe "String" do
 
     it "raises if illegal byte sequence" do
       expect_raises ArgumentError, "Invalid multibyte sequence" do
-        "ñ".encode("GB2312")
+        "\xff".encode("EUC-JP")
       end
     end
 
     it "doesn't raise on invalid byte sequence" do
-      "好ñ是".encode("GB2312", invalid: :skip).to_a.should eq([186, 195, 202, 199])
+      "好\xff是".encode("EUC-JP", invalid: :skip).to_a.should eq([185, 165, 192, 167])
     end
 
     it "raises if incomplete byte sequence" do
       expect_raises ArgumentError, "Incomplete multibyte sequence" do
-        "好".byte_slice(0, 1).encode("GB2312")
+        "好".byte_slice(0, 1).encode("EUC-JP")
       end
     end
 
     it "doesn't raise if incomplete byte sequence" do
-      ("好".byte_slice(0, 1) + "是").encode("GB2312", invalid: :skip).to_a.should eq([202, 199])
+      ("好".byte_slice(0, 1) + "是").encode("EUC-JP", invalid: :skip).to_a.should eq([192, 167])
     end
 
     it "decodes" do
@@ -2396,8 +2432,8 @@ describe "String" do
     end
 
     it "decodes with skip" do
-      bytes = Bytes[186, 195, 140, 202, 199]
-      String.new(bytes, "GB2312", invalid: :skip).should eq("好是")
+      bytes = Bytes[186, 195, 255, 202, 199]
+      String.new(bytes, "EUC-JP", invalid: :skip).should eq("挫頁")
     end
   end
 

@@ -37,6 +37,9 @@ struct Set(T)
     @hash = Hash(T, Nil).new(initial_capacity: initial_capacity)
   end
 
+  protected def initialize(*, using_hash @hash : Hash(T, Nil))
+  end
+
   # Optimized version of `new` used when *other* is also an `Indexable`
   def self.new(other : Indexable(T))
     Set(T).new(other.size).concat(other)
@@ -347,7 +350,7 @@ struct Set(T)
 
   # Returns a new `Set` with all of the same elements.
   def dup
-    set = Set.new(self)
+    set = Set(T).new(using_hash: @hash.dup)
     set.compare_by_identity if compare_by_identity?
     set
   end

@@ -19,9 +19,6 @@ class Crystal::CodeGenVisitor
     @last = case node.name
             when "binary"
               codegen_primitive_binary node, target_def, call_args
-            when "cast"
-              # TODO 0.28.0 delete :cast
-              codegen_primitive_convert node, target_def, call_args, checked: !target_def.name.ends_with?('!')
             when "convert"
               codegen_primitive_convert node, target_def, call_args, checked: true
             when "unchecked_convert"

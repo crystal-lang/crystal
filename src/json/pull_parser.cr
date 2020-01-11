@@ -11,24 +11,6 @@ class JSON::PullParser
     BeginObject
     EndObject
     EOF
-
-    @[Deprecated("JSON::PullParser#kind now is an enum, please use that instead of symbols")]
-    def ==(other : Symbol)
-      case other
-      when :null         then null?
-      when :bool         then bool?
-      when :int          then int?
-      when :float        then float?
-      when :string       then string?
-      when :begin_array  then begin_array?
-      when :end_array    then end_array?
-      when :begin_object then begin_object?
-      when :end_object   then end_object?
-      when :EOF          then eof?
-      else
-        false
-      end
-    end
   end
 
   private enum ObjectStackKind
@@ -561,12 +543,5 @@ class JSON::PullParser
     end
 
     @object_stack.push(kind)
-  end
-end
-
-struct Symbol
-  @[Deprecated("JSON::PullParser#kind now is an enum, please use that instead of symbols")]
-  def ==(other : JSON::PullParser::Kind)
-    other == self
   end
 end

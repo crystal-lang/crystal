@@ -105,7 +105,11 @@ class Crystal::Command
     when File.file?(command)
       run_command(single_file: true)
     else
-      error "unknown command: #{command}"
+      if command.ends_with?(".cr")
+        error "file '#{command}' does not exist"
+      else
+        error "unknown command: #{command}"
+      end
     end
   rescue ex : Crystal::LocationlessException
     error ex.message
@@ -498,7 +502,7 @@ class Crystal::Command
   private def gather_sources(filenames)
     filenames.map do |filename|
       unless File.file?(filename)
-        error "File #{filename} does not exist"
+        error "file '#{filename}' does not exist"
       end
       filename = File.expand_path(filename)
       Compiler::Source.new(filename, File.read(filename))

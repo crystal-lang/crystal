@@ -83,13 +83,13 @@ describe TCPServer do
       end
 
       it "raises when host doesn't exist" do
-        expect_raises(Socket::Error, "No address found for doesnotexist.example.org.:12345 over TCP") do
+        expect_raises(Socket::Error, "Hostname lookup for doesnotexist.example.org. failed: No address found") do
           TCPServer.new("doesnotexist.example.org.", 12345)
         end
       end
 
       it "raises (rather than segfault on darwin) when host doesn't exist and port is 0" do
-        expect_raises(Socket::Error, /No address found for doesnotexist.example.org.:00? over TCP/) do
+        expect_raises(Socket::Error, "Hostname lookup for doesnotexist.example.org. failed: No address found") do
           TCPServer.new("doesnotexist.example.org.", 0)
         end
       end

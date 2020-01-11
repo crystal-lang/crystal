@@ -1,6 +1,8 @@
 require "spec"
 require "bit_array"
-require "big"
+{% unless flag?(:win32) %}
+  require "big"
+{% end %}
 require "random/secure"
 
 struct Crystal::Hasher
@@ -248,16 +250,18 @@ describe "Crystal::Hasher" do
       1_i32.hash.should eq(1_f64.hash)
     end
 
-    it "should 1_f32 and 1.to_big_f hashes equal" do
-      1_f32.hash.should eq(1.to_big_f.hash)
-    end
+    {% unless flag?(:win32) %}
+      it "should 1_f32 and 1.to_big_f hashes equal" do
+        1_f32.hash.should eq(1.to_big_f.hash)
+      end
 
-    it "should 1_f32 and 1.to_big_r hashes equal" do
-      1_f32.hash.should eq(1.to_big_r.hash)
-    end
+      it "should 1_f32 and 1.to_big_r hashes equal" do
+        1_f32.hash.should eq(1.to_big_r.hash)
+      end
 
-    it "should 1_f32 and 1.to_big_i hashes equal" do
-      1_f32.hash.should eq(1.to_big_i.hash)
-    end
+      it "should 1_f32 and 1.to_big_i hashes equal" do
+        1_f32.hash.should eq(1.to_big_i.hash)
+      end
+    {% end %}
   end
 end

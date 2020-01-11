@@ -1754,6 +1754,10 @@ module Crystal::Macros
     def subclasses : ArrayLiteral(TypeNode)
     end
 
+    # Returns all the types `self` is directly included in.
+    def includers : ArrayLiteral(TypeNode)
+    end
+
     # Returns all subclasses of this type.
     def all_subclasses : ArrayLiteral(TypeNode)
     end

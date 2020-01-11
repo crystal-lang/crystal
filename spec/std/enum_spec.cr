@@ -37,6 +37,11 @@ describe Enum do
     end
   end
 
+  it "creates an enum instance from an auto-casted symbol (#8573)" do
+    enum_value = SpecEnum.new(:two)
+    enum_value.should eq SpecEnum::Two
+  end
+
   it "gets value" do
     SpecEnum::Two.value.should eq(1)
     SpecEnum::Two.value.should be_a(Int8)

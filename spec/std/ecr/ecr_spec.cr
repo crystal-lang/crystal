@@ -23,7 +23,7 @@ describe "ECR" do
       %(__str__ << " 2 "),
       %(#<loc:push>#<loc:"foo.cr",2,25> end #<loc:pop>),
       %(__str__ << "\\n"),
-      %(#<loc:push>#<loc:\"foo.cr\",3,3> # skip #<loc:pop>),
+      %(#<loc:push>#<loc:"foo.cr",3,3> # skip #<loc:pop>),
       %(__str__ << " "),
       %(__str__ << "<% \\"string\\" %>"),
     ]

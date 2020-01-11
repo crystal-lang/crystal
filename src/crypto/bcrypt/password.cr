@@ -44,6 +44,7 @@ class Crypto::Bcrypt::Password
   # ```
   def initialize(@raw_hash : String)
     parts = @raw_hash.split('$')
+    raise Error.new("Invalid hash string") unless parts.size == 4
 
     @version = parts[1]
     @cost = parts[2].to_i
@@ -67,11 +68,6 @@ class Crypto::Bcrypt::Password
   def verify(password : String) : Bool
     hashed_password = Bcrypt.new(password, salt, cost)
     Crypto::Subtle.constant_time_compare(@raw_hash, hashed_password)
-  end
-
-  @[Deprecated("Use `Crypto::Bcrypt::Password#verify`")]
-  def ==(password : String) : Bool
-    verify(password)
   end
 
   def to_s(io : IO) : Nil

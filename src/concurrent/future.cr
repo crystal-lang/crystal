@@ -105,11 +105,12 @@ class Concurrent::Future(R)
   private def value_or_raise
     raise Concurrent::CanceledError.new(@cancel_msg) if @state == State::Canceled
 
+    error = @error
     value = @value
-    if value.is_a?(R)
-      value
-    elsif error = @error
+    if !error.nil?
       raise error
+    elsif value.is_a?(R)
+      value
     else
       raise "Compiler bug"
     end

@@ -220,8 +220,8 @@ class Hash(K, V)
   # The *initial_capacity* is useful to avoid unnecessary reallocations
   # of the internal buffer in case of growth. If the number of elements
   # a hash will hold is known, the hash should be initialized with that
-  # capacity for improved performance. Otherwise, the default is 11 and inputs
-  # less than 11 are ignored.
+  # capacity for improved performance. Otherwise, the default is 8.
+  # Inputs lower than 8 are ignored.
   def initialize(block : (Hash(K, V), K -> V)? = nil, *, initial_capacity = nil)
     initial_capacity = (initial_capacity || 0).to_i32
 
@@ -280,8 +280,8 @@ class Hash(K, V)
   # The *initial_capacity* is useful to avoid unnecessary reallocations
   # of the internal buffer in case of growth. If the number of elements
   # a hash will hold is known, the hash should be initialized with that
-  # capacity for improved performance. Otherwise, the default is 11 and inputs
-  # less than 11 are ignored.
+  # capacity for improved performance. Otherwise, the default is 8.
+  # Inputs lower than 8 are ignored.
   def self.new(initial_capacity = nil, &block : (Hash(K, V), K -> V))
     new block, initial_capacity: initial_capacity
   end
@@ -305,8 +305,8 @@ class Hash(K, V)
   # The *initial_capacity* is useful to avoid unnecessary reallocations
   # of the internal buffer in case of growth. If the number of elements
   # a hash will hold is known, the hash should be initialized with that
-  # capacity for improved performance. Otherwise, the default is 11 and inputs
-  # less than 11 are ignored.
+  # capacity for improved performance. Otherwise, the default is 8.
+  # Inputs lower than 8 are ignored.
   def self.new(default_value : V, initial_capacity = nil)
     new(initial_capacity: initial_capacity) { default_value }
   end

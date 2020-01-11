@@ -46,6 +46,19 @@ describe Concurrent::Future do
       f.completed?.should be_true
     end
 
+    it "computes a value even if the value is nil" do
+      chan = Channel(Nil).new
+
+      f = future { chan.receive }
+      f.running?.should be_true
+
+      chan.send nil
+      f.completed?.should be_true
+
+      f.get.should eq(nil)
+      f.completed?.should be_true
+    end
+
     it "can't cancel a completed computation" do
       f = future { 42 }
       f.running?.should be_true
@@ -64,6 +77,17 @@ describe Concurrent::Future do
       f.running?.should be_true
 
       expect_raises(IndexError) { f.get }
+      f.completed?.should be_true
+    end
+
+    it "raises even if the value type is nil" do
+      chan = Channel(Nil).new
+
+      f = future { chan.receive }
+      f.running?.should be_true
+
+      chan.close
+      expect_raises(Channel::ClosedError) { f.get }
       f.completed?.should be_true
     end
   end
