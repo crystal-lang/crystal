@@ -7,9 +7,10 @@
     <h2>Directory listing for <%= HTML.escape request_path %></h2>
     <hr/>
     <ul>
-      <% Dir.each_child(path) do |entry| %>
+      <% encoded_request_path = URI.encode(request_path) %>
+      <% each_entry do |entry| %>
         <li>
-          <a href="<%= request_path == "/" ? "" : escaped_request_path %>/<%= URI.encode entry %>"><%= HTML.escape entry %></a>
+          <a href="<%= encoded_request_path %><%= URI.encode entry %>"><%= HTML.escape entry %></a>
         </li>
       <% end %>
     </ul>

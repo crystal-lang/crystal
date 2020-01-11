@@ -36,7 +36,7 @@ class HTTP::StaticFileHandler
     end
 
     original_path = context.request.path.not_nil!
-    is_dir_path = Path.posix(original_path).ends_with_separator?
+    is_dir_path = original_path.ends_with?("/")
     request_path = self.request_path(URI.decode(original_path))
 
     # File path cannot contains '\0' (NUL) because all filesystem I know
@@ -49,6 +49,7 @@ class HTTP::StaticFileHandler
     request_path = Path.posix(request_path)
     expanded_path = request_path.expand("/")
     if is_dir_path && !expanded_path.ends_with_separator?
+      # Append / to path if missing
       expanded_path = expanded_path.join("")
     end
     is_dir_path = expanded_path.ends_with_separator?
@@ -60,6 +61,7 @@ class HTTP::StaticFileHandler
     if request_path != expanded_path || is_dir && !is_dir_path
       redirect_path = expanded_path
       if is_dir && !is_dir_path
+        # Append / to path if missing
         redirect_path = expanded_path.join("")
       end
       redirect_to context, redirect_path
@@ -133,13 +135,9 @@ class HTTP::StaticFileHandler
   end
 
   record DirectoryListing, request_path : String, path : String do
-    @escaped_request_path : String?
-
-    def escaped_request_path
-      @escaped_request_path ||= begin
-        esc_path = URI.encode(request_path)
-        esc_path = esc_path.chomp('/')
-        esc_path
+    def each_entry
+      Dir.each_child(path) do |entry|
+        yield entry
       end
     end
 
