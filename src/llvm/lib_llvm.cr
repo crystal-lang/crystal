@@ -1,6 +1,6 @@
 {% begin %}
 lib LibLLVM
-  LLVM_CONFIG = {{ system(read_file("#{__DIR__}/ext/find-llvm-config")).stringify }}
+  LLVM_CONFIG = {{ `#{__DIR__}/ext/find-llvm-config`.stringify }}
 end
 {% end %}
 
