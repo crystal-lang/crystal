@@ -15,22 +15,24 @@ jobs:
       - name: Build Crystal
         run: |
           make
-      - name: Write an example program
+      - name: Cross-compile stdlib specs
         run: |
-          echo 'puts "Hello world!"' > hello_world.cr
-      - name: Cross-compile the program for Windows
-        run: |
-          bin/crystal build --cross-compile --target x86_64-pc-windows-msvc hello_world.cr
+          bin/crystal build --cross-compile --target x86_64-pc-windows-msvc --exclude-warnings spec/std spec/std_spec.cr
       - name: Upload compiled object
         uses: actions/upload-artifact@v1
         with:
           name: objs
-          path: hello_world.o
+          path: std_spec.o
 
   windows-job:
     needs: linux-job
     runs-on: windows-latest
     steps:
+      - name: Disable CRLF line ending substitution
+        run: |
+          git config --global core.autocrlf false
+      - name: Download Crystal source
+        uses: actions/checkout@v2
       - name: Enable Developer Command Prompt
         uses: ilammy/msvc-dev-cmd@233eac407f2676fcb3648e3b153b48e60d003803
       - name: Cache libraries
@@ -86,7 +88,7 @@ jobs:
           name: objs
       - name: Link the executable
         run: |
-          cl objs\hello_world.o /Fehello_world libs\pcre.lib libs\gc.lib advapi32.lib libcmt.lib legacy_stdio_definitions.lib
+          cl objs\std_spec.o /Festd_spec libs\pcre.lib libs\gc.lib advapi32.lib libcmt.lib legacy_stdio_definitions.lib
       - name: Run the executable
         run: |
-          .\hello_world.exe
+          .\std_spec.exe
