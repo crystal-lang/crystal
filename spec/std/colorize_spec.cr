@@ -12,7 +12,7 @@ end
 private class ColorizeToS
   def to_s(io)
     io << "hello"
-    io << ::colorize("world").toggle(true).blue
+    io << ::colorize("world").blue
     io << "bye"
   end
 end
