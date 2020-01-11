@@ -1,5 +1,6 @@
 require "socket"
-require "http"
+require "http/client"
+require "http/headers"
 require "base64"
 {% if !flag?(:without_openssl) %}
   require "openssl"

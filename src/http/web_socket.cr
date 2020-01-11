@@ -1,3 +1,6 @@
+require "./client"
+require "./headers"
+
 class HTTP::WebSocket
   getter? closed = false
 

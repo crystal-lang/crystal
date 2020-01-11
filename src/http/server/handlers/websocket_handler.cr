@@ -1,7 +1,7 @@
 {% skip_file if flag?(:win32) %}
 
 require "base64"
-require "../../web_socket"
+require "http/web_socket"
 
 {% if flag?(:without_openssl) %}
   require "digest/sha1"

@@ -849,11 +849,7 @@ class HTTP::Client
   end
 end
 
-{% if !flag?(:without_openssl) %}
-  require "openssl"
-{% end %}
 require "socket"
 require "uri"
 require "base64"
-require "./client/response"
 require "./common"
