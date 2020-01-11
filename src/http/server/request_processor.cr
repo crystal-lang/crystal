@@ -1,4 +1,4 @@
-require "../server"
+require "./handler"
 
 class HTTP::Server::RequestProcessor
   # Maximum permitted size of the request line in an HTTP request.

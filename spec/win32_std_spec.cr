@@ -62,27 +62,27 @@ require "./std/gc_spec.cr"
 # require "./std/gzip/gzip_spec.cr" (failed linking)
 require "./std/hash_spec.cr"
 require "./std/html_spec.cr"
-# require "./std/http/chunked_content_spec.cr" (failed codegen)
+require "./std/http/chunked_content_spec.cr"
 # require "./std/http/client/client_spec.cr" (failed codegen)
-# require "./std/http/client/response_spec.cr" (failed codegen)
-# require "./std/http/cookie_spec.cr" (failed codegen)
-# require "./std/http/formdata/builder_spec.cr" (failed codegen)
-# require "./std/http/formdata/parser_spec.cr" (failed codegen)
-# require "./std/http/formdata_spec.cr" (failed codegen)
+require "./std/http/client/response_spec.cr"
+require "./std/http/cookie_spec.cr"
+require "./std/http/formdata/builder_spec.cr"
+require "./std/http/formdata/parser_spec.cr"
+require "./std/http/formdata_spec.cr"
 require "./std/http/headers_spec.cr"
-# require "./std/http/http_spec.cr" (failed linking)
+require "./std/http/http_spec.cr"
 require "./std/http/params_spec.cr"
-# require "./std/http/request_spec.cr" (failed codegen)
+require "./std/http/request_spec.cr"
 # require "./std/http/server/handlers/compress_handler_spec.cr" (failed codegen)
-# require "./std/http/server/handlers/error_handler_spec.cr" (failed codegen)
-# require "./std/http/server/handlers/handler_spec.cr" (failed codegen)
-# require "./std/http/server/handlers/log_handler_spec.cr" (failed codegen)
-# require "./std/http/server/handlers/static_file_handler_spec.cr" (failed codegen)
+require "./std/http/server/handlers/error_handler_spec.cr"
+require "./std/http/server/handlers/handler_spec.cr"
+require "./std/http/server/handlers/log_handler_spec.cr"
+require "./std/http/server/handlers/static_file_handler_spec.cr"
 # require "./std/http/server/handlers/websocket_handler_spec.cr" (failed codegen)
-# require "./std/http/server/request_processor_spec.cr" (failed codegen)
-# require "./std/http/server/response_spec.cr" (failed linking)
+require "./std/http/server/request_processor_spec.cr"
+require "./std/http/server/response_spec.cr"
 # require "./std/http/server/server_spec.cr" (failed codegen)
-# require "./std/http/status_spec.cr" (failed codegen)
+require "./std/http/status_spec.cr"
 # require "./std/http/web_socket_spec.cr" (failed codegen)
 require "./std/humanize_spec.cr"
 require "./std/indexable_spec.cr"

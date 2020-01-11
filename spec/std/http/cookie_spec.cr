@@ -1,5 +1,6 @@
 require "spec"
 require "http/cookie"
+require "http/headers"
 
 private def parse_first_cookie(header)
   cookies = HTTP::Cookie::Parser.parse_cookies(header)

@@ -53,10 +53,13 @@ module HTTP
         end
 
         if decompress && body
+          encoding = headers["Content-Encoding"]?
           {% if flag?(:without_zlib) %}
-            raise "Can't decompress because `-D without_zlib` was passed at compile time"
+            case encoding
+            when "gzip", "deflate"
+              raise "Can't decompress because `-D without_zlib` was passed at compile time"
+            end
           {% else %}
-            encoding = headers["Content-Encoding"]?
             case encoding
             when "gzip"
               body = Gzip::Reader.new(body, sync_close: true)
@@ -133,7 +136,7 @@ module HTTP
     return unless mime_type
 
     charset = mime_type["charset"]?
-    return unless charset
+    return if !charset || charset == "utf-8"
 
     body.set_encoding(charset, invalid: :skip)
   end
@@ -429,11 +432,10 @@ module HTTP
   end
 end
 
-{% unless flag?(:win32) %}
-  require "./status"
-  require "./request"
-  require "./client/response"
-  require "./headers"
-  require "./content"
-  require "./cookie"
-{% end %}
+require "./status"
+require "./request"
+require "./client/response"
+require "./headers"
+require "./content"
+require "./cookie"
+require "./formdata"

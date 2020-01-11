@@ -246,7 +246,9 @@ describe HTTP::Server::RequestProcessor do
 
   it "handles Errno" do
     processor = HTTP::Server::RequestProcessor.new { }
-    input = RaiseErrno.new(Errno::ECONNRESET)
+    # Using EPERM here instead of a more reasonable ECONNRESET because the
+    # latter is not available on all platforms (win32).
+    input = RaiseErrno.new(Errno::EPERM)
     output = IO::Memory.new
     processor.process(input, output)
     output.rewind.gets_to_end.empty?.should be_true

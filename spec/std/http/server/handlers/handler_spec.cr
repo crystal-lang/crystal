@@ -1,5 +1,5 @@
 require "spec"
-require "http/server"
+require "http/server/handler"
 
 private class EmptyHTTPHandler
   include HTTP::Handler

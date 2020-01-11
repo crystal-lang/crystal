@@ -1,4 +1,3 @@
-require "../client"
 require "../common"
 require "mime/media_type"
 

@@ -291,7 +291,7 @@ module HTTP
     end
 
     # Adds `Cookie` headers for the cookies in this collection to the
-    # given `HTTP::Header` instance and returns it. Removes any existing
+    # given `HTTP::Headers` instance and returns it. Removes any existing
     # `Cookie` headers in it.
     def add_request_headers(headers)
       headers.delete("Cookie")
@@ -301,7 +301,7 @@ module HTTP
     end
 
     # Adds `Set-Cookie` headers for the cookies in this collection to the
-    # given `HTTP::Header` instance and returns it. Removes any existing
+    # given `HTTP::Headers` instance and returns it. Removes any existing
     # `Set-Cookie` headers in it.
     def add_response_headers(headers)
       headers.delete("Set-Cookie")
