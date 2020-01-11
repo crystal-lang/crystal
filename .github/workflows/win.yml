@@ -1,0 +1,78 @@
+name: Windows CI
+
+on: push
+
+jobs:
+  linux-job:
+    runs-on: ubuntu-latest
+    container: crystallang/crystal:latest
+    steps:
+      - name: Download Crystal source
+        uses: actions/checkout@v2
+      - name: Install LLVM
+        run: |
+          apt-get -q update; apt-get -qy install llvm-8-dev
+      - name: Build Crystal
+        run: |
+          make
+      - name: Write an example program
+        run: |
+          echo 'puts "Hello world!"' > hello_world.cr
+      - name: Cross-compile the program for Windows
+        run: |
+          bin/crystal build --cross-compile --target x86_64-pc-windows-msvc hello_world.cr
+      - name: Upload compiled object
+        uses: actions/upload-artifact@v1
+        with:
+          name: objs
+          path: hello_world.o
+
+  windows-job:
+    needs: linux-job
+    runs-on: windows-latest
+    steps:
+      - name: Enable Developer Command Prompt
+        uses: ilammy/msvc-dev-cmd@233eac407f2676fcb3648e3b153b48e60d003803
+      - name: Download libgc
+        uses: actions/checkout@v2
+        with:
+          repository: ivmai/bdwgc
+          ref: v7.6.4
+          path: bdwgc
+      - name: Download libatomic_ops
+        uses: actions/checkout@v2
+        with:
+          repository: ivmai/libatomic_ops
+          ref: v7.6.2
+          path: bdwgc/libatomic_ops
+      - name: Download win32.mak
+        run: |
+          iwr https://gist.github.com/ynkdir/688e62f419e5374347bf/raw/d250598ddf5129addd212b8390279a01bca12706/win32.mak -OutFile bdwgc\ntwin32.mak
+      - name: Build libgc
+        working-directory: ./bdwgc
+        run: |
+          nmake -f NT_X64_STATIC_THREADS_MAKEFILE nodebug=1 _CL_=-DDONT_USE_USER32_DLL
+      - name: Download libpcre
+        run: |
+          iwr https://ftp.pcre.org/pub/pcre/pcre-8.42.zip -OutFile pcre.zip
+          Expand-Archive pcre.zip -DestinationPath .
+          mv pcre* pcre
+      - name: Build libpcre
+        working-directory: ./pcre
+        run: |
+          cmake . -G "Visual Studio 16 2019" -DBUILD_SHARED_LIBS=OFF -DPCRE_SUPPORT_UNICODE_PROPERTIES=ON -DPCRE_SUPPORT_JIT=ON -DPCRE_STATIC_RUNTIME=ON
+          cmake --build . --config release
+      - name: Gather libraries
+        run: |
+          mv pcre/release/pcre.lib pcre.lib
+          mv bdwgc/gc.lib gc.lib
+      - name: Download compiled object
+        uses: actions/download-artifact@v1
+        with:
+          name: objs
+      - name: Link the executable
+        run: |
+          cl objs\hello_world.o /Fehello_world pcre.lib gc.lib advapi32.lib libcmt.lib legacy_stdio_definitions.lib
+      - name: Run the executable
+        run: |
+          .\hello_world.exe
