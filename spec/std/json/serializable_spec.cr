@@ -201,6 +201,20 @@ class JSONAttrWithTimeEpochMillis
   property value : Time
 end
 
+class JSONAttrWithOrderedUnion
+  include JSON::Serializable
+
+  @[JSON::Field(converter: Union::OrderedConverter(Int64, Float64))]
+  property value : Int64 | Float64
+end
+
+class JSONAttrWithComplexOrderedUnion
+  include JSON::Serializable
+
+  @[JSON::Field(converter: Union::OrderedConverter(Int64, Float64, Array(Int32)))]
+  property value : Int64 | Float64 | Array(Int32)
+end
+
 class JSONAttrWithRaw
   include JSON::Serializable
 
@@ -655,6 +669,20 @@ describe "JSON mapping" do
     json = JSONAttrWithTimeEpochMillis.from_json(string)
     json.value.should be_a(Time)
     json.value.should eq(Time.unix_ms(1459860483856))
+    json.to_json.should eq(string)
+  end
+
+  it "uses Union::OrderedConverter" do
+    string = %({"value":1})
+    json = JSONAttrWithOrderedUnion.from_json(string)
+    json.value.should be_a(Int64)
+    json.to_json.should eq(string)
+  end
+
+  it "uses Union::OrderedConverter on complex types" do
+    string = %({"value":[1,2,3]})
+    json = JSONAttrWithComplexOrderedUnion.from_json(string)
+    json.value.should be_a(Array(Int32))
     json.to_json.should eq(string)
   end
 

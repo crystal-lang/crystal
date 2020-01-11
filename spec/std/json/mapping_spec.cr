@@ -127,6 +127,18 @@ private class JSONWithTimeEpochMillis
   })
 end
 
+private class JSONWithOrderedUnion
+  JSON.mapping({
+    value: {type: Int64 | Float64, converter: Union::OrderedConverter(Int64, Float64)},
+  })
+end
+
+private class JSONWithComplexOrderedUnion
+  JSON.mapping({
+    value: {type: Int64 | Float64 | Array(Int32), converter: Union::OrderedConverter(Int64, Float64, Array(Int32))},
+  })
+end
+
 private class JSONWithRaw
   JSON.mapping({
     value: {type: String, converter: String::RawConverter},
@@ -480,6 +492,20 @@ describe "JSON mapping" do
     json = JSONWithJSONHashValueConverter.from_json(string)
     json.birthdays.should be_a(Hash(String, Time))
     json.birthdays.should eq({"foo" => Time.unix(1459859781), "bar" => Time.unix(1567628762)})
+    json.to_json.should eq(string)
+  end
+
+  it "uses Union::OrderedConverter" do
+    string = %({"value":1})
+    json = JSONWithOrderedUnion.from_json(string)
+    json.value.should be_a(Int64)
+    json.to_json.should eq(string)
+  end
+
+  it "uses Union::OrderedConverter on complex types" do
+    string = %({"value":[1,2,3]})
+    json = JSONWithComplexOrderedUnion.from_json(string)
+    json.value.should be_a(Array(Int32))
     json.to_json.should eq(string)
   end
 

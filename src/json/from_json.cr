@@ -324,3 +324,43 @@ module String::RawConverter
     value.read_raw
   end
 end
+
+module Union::OrderedConverter(*T)
+  def self.from_json(pull : JSON::PullParser) : Union(*T)
+    location = pull.location
+    string = nil
+
+    # Optimised path
+    {% if T.all? do |type|
+            type == Nil ||
+              type == Bool ||
+              type == Int8 || type == Int16 || type == Int32 || type == Int64 ||
+              type == UInt8 || type == UInt16 || type == UInt32 || type == UInt64 ||
+              type == Float32 || type == Float64 ||
+              type == String
+          end %}
+      {% for type in T %}
+        {% if type == Nil %}
+          return pull.read_null if pull.kind.null?
+        {% else %}
+          value = pull.read?({{type}})
+          return value unless value.nil?
+        {% end %}
+      {% end %}
+      string = pull.read_raw
+
+    # Fallback
+    {% else %}
+      string = pull.read_raw
+      {% for type in T %}
+        begin
+          return {{type}}.from_json(string)
+        rescue JSON::ParseException
+          # Ignore
+        end
+      {% end %}
+    {% end %}
+
+    raise JSON::ParseException.new("Couldn't parse #{Union(*T)} from #{string}", *location)
+  end
+end
