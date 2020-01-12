@@ -185,7 +185,7 @@ require "./std/static_array_spec.cr"
 require "./std/string_builder_spec.cr"
 require "./std/string_pool_spec.cr"
 require "./std/string_scanner_spec.cr"
-# require "./std/string_spec.cr" (failed codegen)
+require "./std/string_spec.cr"
 require "./std/string/utf16_spec.cr"
 # require "./std/struct_spec.cr" (failed linking)
 require "./std/symbol_spec.cr"
