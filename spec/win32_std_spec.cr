@@ -187,7 +187,7 @@ require "./std/string_pool_spec.cr"
 require "./std/string_scanner_spec.cr"
 require "./std/string_spec.cr"
 require "./std/string/utf16_spec.cr"
-# require "./std/struct_spec.cr" (failed linking)
+require "./std/struct_spec.cr"
 require "./std/symbol_spec.cr"
 # require "./std/system/group_spec.cr" (failed codegen)
 # require "./std/system_spec.cr" (failed codegen)
