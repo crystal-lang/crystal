@@ -178,6 +178,7 @@ class Logger
 
     progname_to_s = progname.to_s
     message_to_s = message.to_s
+
     @mutex.synchronize do
       formatter.call(severity, datetime, progname_to_s, message_to_s, io)
       io.puts

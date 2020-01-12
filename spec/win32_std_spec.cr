@@ -115,7 +115,7 @@ require "./std/levenshtein_spec.cr"
 # require "./std/llvm/type_spec.cr" (failed linking)
 # require "./std/llvm/x86_64_abi_spec.cr" (failed linking)
 # require "./std/llvm/x86_abi_spec.cr" (failed linking)
-# require "./std/logger_spec.cr" (failed codegen)
+require "./std/logger_spec.cr"
 require "./std/match_data_spec.cr"
 # require "./std/math_spec.cr" (failed linking)
 # require "./std/mime/media_type_spec.cr" (failed linking)
