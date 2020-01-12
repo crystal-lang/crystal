@@ -48,11 +48,6 @@ class HTTP::StaticFileHandler
 
     request_path = Path.posix(request_path)
     expanded_path = request_path.expand("/")
-    if is_dir_path && !expanded_path.ends_with_separator?
-      # Append / to path if missing
-      expanded_path = expanded_path.join("")
-    end
-    is_dir_path = expanded_path.ends_with_separator?
 
     file_path = @public_dir.join(expanded_path.to_kind(Path::Kind.native))
     is_dir = Dir.exists? file_path
