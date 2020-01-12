@@ -1,6 +1,6 @@
 {% begin %}
 lib LibLLVM
-  LLVM_CONFIG = {{ ENV["LLVM_CONFIG"]? || `#{__DIR__}/ext/find-llvm-config`.stringify }}
+  LLVM_CONFIG = {{ env("LLVM_CONFIG") || `#{__DIR__}/ext/find-llvm-config`.stringify }}
 end
 {% end %}
 
