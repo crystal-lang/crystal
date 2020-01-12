@@ -97,22 +97,22 @@ struct Path
     new(name.check_no_null_byte, Kind.native)
   end
 
-  # ditto
+  # :ditto:
   def self.new(name : String, *parts) : Path
     new(name).join(*parts)
   end
 
-  # ditto
+  # :ditto:
   def self.[](name : String, *parts) : Path
     new(name, *parts)
   end
 
-  # ditto
+  # :ditto:
   def self.new(parts : Enumerable) : Path
     new("").join(parts)
   end
 
-  # ditto
+  # :ditto:
   def self.[](parts : Enumerable) : Path
     new(parts)
   end
@@ -122,12 +122,12 @@ struct Path
     new(name.check_no_null_byte, Kind::POSIX)
   end
 
-  # ditto
+  # :ditto:
   def self.posix(name : String, *parts) : Path
     posix(name).join(parts)
   end
 
-  # ditto
+  # :ditto:
   def self.posix(parts : Enumerable) : Path
     posix("").join(parts)
   end
@@ -137,12 +137,12 @@ struct Path
     new(name.check_no_null_byte, Kind::WINDOWS)
   end
 
-  # ditto
+  # :ditto:
   def self.windows(name : String, *parts) : Path
     windows(name).join(parts)
   end
 
-  # ditto
+  # :ditto:
   def self.windows(parts : Enumerable) : Path
     windows("").join(parts)
   end

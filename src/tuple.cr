@@ -224,7 +224,7 @@ struct Tuple
     true
   end
 
-  # ditto
+  # :ditto:
   def ==(other : Tuple)
     return false unless size == other.size
 
@@ -297,7 +297,7 @@ struct Tuple
     0
   end
 
-  # ditto
+  # :ditto:
   def <=>(other : Tuple)
     min_size = Math.min(size, other.size)
     min_size.times do |i|

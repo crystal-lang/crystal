@@ -1056,13 +1056,18 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
     end
   end
 
-  def check_ditto(node)
+  def check_ditto(node : Def | Assign | FunDef | Const) : Nil
+    return if !@program.wants_doc?
     stripped_doc = node.doc.try &.strip
-    if stripped_doc == ":ditto:" || stripped_doc == "ditto"
+    if stripped_doc == ":ditto:"
       node.doc = @last_doc
+    elsif stripped_doc == "ditto"
+      # TODO: remove after 0.33.0
+      @program.warning_failures << "`ditto` is no longer supported. Use `:ditto:` instead"
+      node.doc = @last_doc
+    else
+      @last_doc = node.doc
     end
-
-    @last_doc = node.doc
   end
 
   def annotations_doc(annotations)

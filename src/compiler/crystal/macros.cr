@@ -61,7 +61,7 @@ module Crystal::Macros
   def `(command) : MacroId
   end
 
-  # ditto
+  # :ditto:
   def system(command) : MacroId
   end
 
@@ -276,19 +276,19 @@ module Crystal::Macros
     def <(other : NumberLiteral) : BoolLiteral
     end
 
-    # ditto
+    # :ditto:
     def <=(other : NumberLiteral) : BoolLiteral
     end
 
-    # ditto
+    # :ditto:
     def >(other : NumberLiteral) : BoolLiteral
     end
 
-    # ditto
+    # :ditto:
     def >=(other : NumberLiteral) : BoolLiteral
     end
 
-    # ditto
+    # :ditto:
     def <=>(other : NumberLiteral) : NumberLiteral
     end
 

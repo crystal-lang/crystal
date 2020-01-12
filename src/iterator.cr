@@ -99,7 +99,7 @@ module Iterator(T)
     Iterator.stop
   end
 
-  # ditto
+  # :ditto:
   def self.stop
     Stop::INSTANCE
   end

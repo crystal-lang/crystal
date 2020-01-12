@@ -213,7 +213,7 @@ struct NamedTuple
     merge(**other)
   end
 
-  # ditto
+  # :ditto:
   def merge(**other : **U) forall U
     {% begin %}
     {
@@ -306,7 +306,7 @@ struct NamedTuple
     false
   end
 
-  # ditto
+  # :ditto:
   def has_key?(key : String) : Bool
     {% for key in T %}
       return true if {{key.stringify}} == key
@@ -534,7 +534,7 @@ struct NamedTuple
     true
   end
 
-  # ditto
+  # :ditto:
   def ==(other : NamedTuple)
     return false unless sorted_keys == other.sorted_keys
 

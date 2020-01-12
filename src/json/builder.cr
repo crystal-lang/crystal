@@ -226,17 +226,17 @@ class JSON::Builder
     null
   end
 
-  # ditto
+  # :ditto:
   def scalar(value : Bool)
     bool(value)
   end
 
-  # ditto
+  # :ditto:
   def scalar(value : Int | Float)
     number(value)
   end
 
-  # ditto
+  # :ditto:
   def scalar(value : String)
     string(value)
   end

@@ -318,7 +318,7 @@ module Crystal
       named_tuple_of(entries)
     end
 
-    # ditto
+    # :ditto:
     def named_tuple_of(entries : Array(NamedArgumentType))
       named_tuple.instantiate_named_args(entries)
     end
