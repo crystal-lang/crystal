@@ -178,7 +178,7 @@ require "./std/slice_spec.cr"
 require "./std/spec/context_spec.cr"
 require "./std/spec/expectations_spec.cr"
 require "./std/spec/filters_spec.cr"
-# require "./std/spec/junit_formatter_spec.cr" (failed linking)
+require "./std/spec/junit_formatter_spec.cr"
 require "./std/spec_spec.cr"
 require "./std/spec/tap_formatter_spec.cr"
 require "./std/static_array_spec.cr"

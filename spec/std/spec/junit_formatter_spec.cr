@@ -1,5 +1,7 @@
-require "spec"
-require "xml"
+require "../spec_helper"
+{% unless flag?(:win32) %}
+  require "xml"
+{% end %}
 
 class Spec::JUnitFormatter
   property started_at
@@ -101,7 +103,7 @@ describe "JUnit Formatter" do
     output.should eq(expected)
   end
 
-  it "encodes class names from the relative file path" do
+  pending_win32 "encodes class names from the relative file path" do
     output = build_report do |f|
       f.report Spec::Result.new(:success, "foo", __FILE__, __LINE__, nil, nil)
     end
@@ -110,7 +112,7 @@ describe "JUnit Formatter" do
     classname.should eq("spec.std.spec.junit_formatter_spec")
   end
 
-  it "outputs timestamp according to RFC 3339" do
+  pending_win32 "outputs timestamp according to RFC 3339" do
     now = Time.utc
 
     output = build_report(timestamp: now) do |f|
@@ -121,7 +123,7 @@ describe "JUnit Formatter" do
     classname.should eq(now.to_rfc3339)
   end
 
-  it "escapes spec names" do
+  pending_win32 "escapes spec names" do
     output = build_report do |f|
       f.report Spec::Result.new(:success, %(complicated " <n>'&ame), __FILE__, __LINE__, nil, nil)
       f.report Spec::Result.new(:success, %(ctrl characters follow - \r\n), __FILE__, __LINE__, nil, nil)
@@ -134,7 +136,7 @@ describe "JUnit Formatter" do
     name.should eq(%(ctrl characters follow - \\r\\n))
   end
 
-  it "report failure stacktrace if present" do
+  pending_win32 "report failure stacktrace if present" do
     cause = exception_with_backtrace("Something happened")
 
     output = build_report do |f|
@@ -149,7 +151,7 @@ describe "JUnit Formatter" do
     backtrace.should eq(cause.backtrace.join('\n'))
   end
 
-  it "report error stacktrace if present" do
+  pending_win32 "report error stacktrace if present" do
     cause = exception_with_backtrace("Something happened")
 
     output = build_report do |f|
