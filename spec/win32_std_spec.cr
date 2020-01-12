@@ -99,14 +99,14 @@ require "./std/io/multi_writer_spec.cr"
 require "./std/io/sized_spec.cr"
 require "./std/io/stapled_spec.cr"
 require "./std/iterator_spec.cr"
-# require "./std/json/any_spec.cr" (failed linking)
+require "./std/json/any_spec.cr"
 require "./std/json/builder_spec.cr"
 require "./std/json/lexer_spec.cr"
-# require "./std/json/mapping_spec.cr" (failed linking)
+require "./std/json/mapping_spec.cr"
 require "./std/json/parser_spec.cr"
 require "./std/json/pull_parser_spec.cr"
-# require "./std/json/serializable_spec.cr" (failed linking)
-# require "./std/json/serialization_spec.cr" (failed linking)
+require "./std/json/serializable_spec.cr"
+require "./std/json/serialization_spec.cr"
 # require "./std/kernel_spec.cr" (failed codegen)
 require "./std/levenshtein_spec.cr"
 # require "./std/llvm/aarch64_spec.cr" (failed linking)

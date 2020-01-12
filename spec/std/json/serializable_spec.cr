@@ -1,10 +1,12 @@
-require "spec"
+require "../spec_helper"
 require "json"
-require "big"
-require "big/json"
+{% unless flag?(:win32) %}
+  require "yaml"
+  require "big"
+  require "big/json"
+{% end %}
 require "uuid"
 require "uuid/json"
-require "yaml"
 
 record JSONAttrPoint, x : Int32, y : Int32 do
   include JSON::Serializable
@@ -94,11 +96,13 @@ class JSONAttrWithUUID
   property value : UUID
 end
 
-class JSONAttrWithBigDecimal
-  include JSON::Serializable
+{% unless flag?(:win32) %}
+  class JSONAttrWithBigDecimal
+    include JSON::Serializable
 
-  property value : BigDecimal
-end
+    property value : BigDecimal
+  end
+{% end %}
 
 class JSONAttrWithTime
   include JSON::Serializable
@@ -297,36 +301,38 @@ class JSONAttrModuleTest2 < JSONAttrModuleTest
   end
 end
 
-struct JSONAttrPersonWithYAML
-  include JSON::Serializable
-  include YAML::Serializable
+{% unless flag?(:win32) %}
+  struct JSONAttrPersonWithYAML
+    include JSON::Serializable
+    include YAML::Serializable
 
-  property name : String
-  property age : Int32?
+    property name : String
+    property age : Int32?
 
-  def initialize(@name : String, @age : Int32? = nil)
-  end
-end
-
-struct JSONAttrPersonWithYAMLInitializeHook
-  include JSON::Serializable
-  include YAML::Serializable
-
-  property name : String
-  property age : Int32?
-
-  def initialize(@name : String, @age : Int32? = nil)
-    after_initialize
+    def initialize(@name : String, @age : Int32? = nil)
+    end
   end
 
-  @[JSON::Field(ignore: true)]
-  @[YAML::Field(ignore: true)]
-  property msg : String?
+  struct JSONAttrPersonWithYAMLInitializeHook
+    include JSON::Serializable
+    include YAML::Serializable
 
-  def after_initialize
-    @msg = "Hello " + name
+    property name : String
+    property age : Int32?
+
+    def initialize(@name : String, @age : Int32? = nil)
+      after_initialize
+    end
+
+    @[JSON::Field(ignore: true)]
+    @[YAML::Field(ignore: true)]
+    property msg : String?
+
+    def after_initialize
+      @msg = "Hello " + name
+    end
   end
-end
+{% end %}
 
 abstract class JSONShape
   include JSON::Serializable
@@ -781,7 +787,7 @@ describe "JSON mapping" do
     end
   end
 
-  describe "BigDecimal" do
+  pending_win32 describe: "BigDecimal" do
     it "parses json string with BigDecimal" do
       json = JSONAttrWithBigDecimal.from_json(%({"value": "10.05"}))
       json.value.should eq(BigDecimal.new("10.05"))
@@ -810,7 +816,7 @@ describe "JSON mapping" do
     it { JSONAttrModuleTest2.from_json(%({"bar": 30, "moo": 40})).to_tuple.should eq({40, 15, 30}) }
   end
 
-  it "works together with yaml" do
+  pending_win32 "works together with yaml" do
     person = JSONAttrPersonWithYAML.new("Vasya", 30)
     person.to_json.should eq "{\"name\":\"Vasya\",\"age\":30}"
     person.to_yaml.should eq "---\nname: Vasya\nage: 30\n"
@@ -819,7 +825,7 @@ describe "JSON mapping" do
     JSONAttrPersonWithYAML.from_yaml(person.to_yaml).should eq person
   end
 
-  it "yaml and json with after_initialize hook" do
+  pending_win32 "yaml and json with after_initialize hook" do
     person = JSONAttrPersonWithYAMLInitializeHook.new("Vasya", 30)
     person.msg.should eq "Hello Vasya"
 
