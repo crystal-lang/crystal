@@ -1,4 +1,4 @@
-require "spec"
+require "../spec_helper"
 
 describe IO::Memory do
   it "writes" do
@@ -373,7 +373,7 @@ describe IO::Memory do
     io.gets_to_end.should eq("")
   end
 
-  describe "encoding" do
+  pending_win32 describe: "encoding" do
     describe "decode" do
       it "gets_to_end" do
         str = "Hello world" * 200

@@ -104,7 +104,7 @@ module Crystal::System::FileDescriptor
       end
     {% else %}
       # dup doesn't copy the CLOEXEC flag, copy it manually to the new
-      if LibC.dup2(other.fd, self.fd) == -1
+      if LibC._dup2(other.fd, self.fd) == -1
         raise Errno.new("Could not reopen file descriptor")
       end
 

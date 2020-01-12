@@ -89,12 +89,12 @@ require "./std/indexable_spec.cr"
 require "./std/ini_spec.cr"
 require "./std/int_spec.cr"
 require "./std/io/argf_spec.cr"
-# require "./std/io/buffered_spec.cr" (failed codegen)
+require "./std/io/buffered_spec.cr"
 require "./std/io/byte_format_spec.cr"
 require "./std/io/delimited_spec.cr"
 require "./std/io/hexdump_spec.cr"
-# require "./std/io/io_spec.cr" (failed codegen)
-# require "./std/io/memory_spec.cr" (failed codegen)
+require "./std/io/io_spec.cr"
+require "./std/io/memory_spec.cr"
 require "./std/io/multi_writer_spec.cr"
 require "./std/io/sized_spec.cr"
 require "./std/io/stapled_spec.cr"
