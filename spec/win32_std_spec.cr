@@ -159,7 +159,7 @@ require "./std/random/isaac_spec.cr"
 require "./std/random/pcg32_spec.cr"
 require "./std/random/secure_spec.cr"
 require "./std/random_spec.cr"
-# require "./std/range_spec.cr" (failed linking)
+require "./std/range_spec.cr"
 require "./std/record_spec.cr"
 require "./std/reference_spec.cr"
 require "./std/regex_spec.cr"
