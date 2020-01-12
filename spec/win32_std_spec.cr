@@ -118,10 +118,10 @@ require "./std/levenshtein_spec.cr"
 require "./std/logger_spec.cr"
 require "./std/match_data_spec.cr"
 # require "./std/math_spec.cr" (failed linking)
-# require "./std/mime/media_type_spec.cr" (failed linking)
-# require "./std/mime/multipart/builder_spec.cr" (failed codegen)
-# require "./std/mime/multipart/parser_spec.cr" (failed codegen)
-# require "./std/mime/multipart_spec.cr" (failed codegen)
+require "./std/mime/media_type_spec.cr"
+require "./std/mime/multipart/builder_spec.cr"
+require "./std/mime/multipart/parser_spec.cr"
+require "./std/mime/multipart_spec.cr"
 require "./std/mime_spec.cr"
 # require "./std/mutex_spec.cr" (failed codegen)
 require "./std/named_tuple_spec.cr"
