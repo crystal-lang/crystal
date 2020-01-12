@@ -190,7 +190,7 @@ require "./std/string/utf16_spec.cr"
 require "./std/struct_spec.cr"
 require "./std/symbol_spec.cr"
 # require "./std/system/group_spec.cr" (failed codegen)
-# require "./std/system_spec.cr" (failed codegen)
+require "./std/system_spec.cr"
 # require "./std/system/user_spec.cr" (failed codegen)
 # require "./std/thread/condition_variable_spec.cr" (failed codegen)
 # require "./std/thread/mutex_spec.cr" (failed codegen)
