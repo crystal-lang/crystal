@@ -232,33 +232,21 @@ class Dir
   #
   # NOTE: *mode* is ignored on windows.
   def self.mkdir(path, mode = 0o777)
-    Crystal::System::Dir.create(path, mode)
+    Crystal::System::Dir.create(path.to_s, mode)
   end
 
   # Creates a new directory at the given path, including any non-existing
   # intermediate directories. The linux-style permission mode can be specified,
   # with a default of 777 (0o777).
-  def self.mkdir_p(path, mode = 0o777)
-    return 0 if Dir.exists?(path)
+  def self.mkdir_p(path, mode = 0o777) : Nil
+    return if Dir.exists?(path)
 
-    components = path.split(File::SEPARATOR)
-    case components.first
-    when ""
-      components.shift
-      subpath = "/"
-    when "."
-      subpath = components.shift
-    else
-      subpath = "."
+    path = Path.new path
+
+    path.each_parent do |parent|
+      mkdir(parent, mode) unless Dir.exists?(parent)
     end
-
-    components.each do |component|
-      subpath = File.join subpath, component
-
-      mkdir(subpath, mode) unless Dir.exists?(subpath)
-    end
-
-    0
+    mkdir(path, mode) unless Dir.exists?(path)
   end
 
   # Removes the directory at the given path.

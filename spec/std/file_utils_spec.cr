@@ -340,16 +340,6 @@ describe "FileUtils" do
     end
   end
 
-  it "tests mkdir_p with a new path" do
-    with_tempfile("mkdir_p-new") do |path1|
-      FileUtils.mkdir_p(path1).should be_nil
-      Dir.exists?(path1).should be_true
-      path2 = File.join({path1, "a", "b", "c"})
-      FileUtils.mkdir_p(path2).should be_nil
-      Dir.exists?(path2).should be_true
-    end
-  end
-
   it "tests mkdir_p with multiples new path" do
     with_tempfile("mkdir_p-multi1", "mkdir_p-multi2") do |path1, path2|
       FileUtils.mkdir_p([path1, path2]).should be_nil
@@ -363,19 +353,10 @@ describe "FileUtils" do
     end
   end
 
-  it "tests mkdir_p with an existing path" do
-    FileUtils.mkdir_p(datapath).should be_nil
-    # FIXME: Refactor FileUtils.mkdir_p to remove leading './' in error message
-    expect_raises_errno(Errno::EEXIST, "Unable to create directory './#{datapath("test_file.txt")}'") do
-      FileUtils.mkdir_p(datapath("test_file.txt"))
-    end
-  end
-
   it "tests mkdir_p with multiple existing path" do
     FileUtils.mkdir_p([datapath, datapath]).should be_nil
     with_tempfile("mkdir_p-existing") do |path|
-      # FIXME: Refactor FileUtils.mkdir_p to remove leading './' in error message
-      expect_raises_errno(Errno::EEXIST, "Unable to create directory './#{datapath("test_file.txt")}'") do
+      expect_raises_errno(Errno::EEXIST, "Unable to create directory '#{datapath("test_file.txt")}'") do
         FileUtils.mkdir_p([datapath("test_file.txt"), path])
       end
     end
