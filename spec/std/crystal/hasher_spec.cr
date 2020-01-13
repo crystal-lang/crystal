@@ -250,18 +250,16 @@ describe "Crystal::Hasher" do
       1_i32.hash.should eq(1_f64.hash)
     end
 
-    {% unless flag?(:win32) %}
-      it "should 1_f32 and 1.to_big_f hashes equal" do
-        1_f32.hash.should eq(1.to_big_f.hash)
-      end
+    pending_win32 "should 1_f32 and 1.to_big_f hashes equal" do
+      1_f32.hash.should eq(1.to_big_f.hash)
+    end
 
-      it "should 1_f32 and 1.to_big_r hashes equal" do
-        1_f32.hash.should eq(1.to_big_r.hash)
-      end
+    pending_win32 "should 1_f32 and 1.to_big_r hashes equal" do
+      1_f32.hash.should eq(1.to_big_r.hash)
+    end
 
-      it "should 1_f32 and 1.to_big_i hashes equal" do
-        1_f32.hash.should eq(1.to_big_i.hash)
-      end
-    {% end %}
+    pending_win32 "should 1_f32 and 1.to_big_i hashes equal" do
+      1_f32.hash.should eq(1.to_big_i.hash)
+    end
   end
 end

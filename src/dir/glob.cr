@@ -161,7 +161,13 @@ class Dir
           path_stack << {next_pos, root, nil}
         when DirectoriesOnly
           raise "unreachable" unless path
-          fullpath = path == File::SEPARATOR_STRING ? path : path + File::SEPARATOR
+          # FIXME: [win32] File::SEPARATOR_STRING comparison is not sufficient for Windows paths.
+          if path == File::SEPARATOR_STRING
+            fullpath = path
+          else
+            fullpath = Path[path].join("").to_s
+          end
+
           if dir_entry
             yield fullpath if dir_entry.dir?
           else
