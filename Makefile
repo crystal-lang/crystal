@@ -36,26 +36,7 @@ EXPORTS := \
   CRYSTAL_CONFIG_LIBRARY_PATH="$(shell crystal env CRYSTAL_LIBRARY_PATH)" \
   CRYSTAL_CONFIG_BUILD_COMMIT="$(CRYSTAL_CONFIG_BUILD_COMMIT)"
 SHELL = sh
-LLVM_CONFIG_FINDER := \
-  [ -n "$(LLVM_CONFIG)" ] && command -v "$(LLVM_CONFIG)" || \
-  command -v llvm-config-8 || command -v llvm-config-8.0 || command -v llvm-config80 || \
-    (command -v llvm-config > /dev/null && (case "$(llvm-config --version)" in 8.0*) command -v llvm-config;; *) false;; esac)) || \
-  command -v llvm-config-7 || \
-    (command -v llvm-config > /dev/null && (case "$(llvm-config --version)" in 7.1*) command -v llvm-config;; *) false;; esac)) || \
-  command -v llvm-config-7.0 || command -v llvm-config70 || \
-    (command -v llvm-config > /dev/null && (case "$(llvm-config --version)" in 7.0*) command -v llvm-config;; *) false;; esac)) || \
-  command -v llvm-config-6.0 || command -v llvm-config60 || \
-    (command -v llvm-config > /dev/null && (case "$(llvm-config --version)" in 6.0*) command -v llvm-config;; *) false;; esac)) || \
-  command -v llvm-config-5.0 || command -v llvm-config50 || \
-    (command -v llvm-config > /dev/null && (case "$(llvm-config --version)" in 5.0*) command -v llvm-config;; *) false;; esac)) || \
-  command -v llvm-config-4.0 || command -v llvm-config40 || \
-    (command -v llvm-config > /dev/null && (case "$(llvm-config --version)" in 4.0*) command -v llvm-config;; *) false;; esac)) || \
-  command -v llvm-config-3.9 || command -v llvm-config39 || \
-    (command -v llvm-config > /dev/null && (case "$(llvm-config --version)" in 3.9*) command -v llvm-config;; *) false;; esac)) || \
-  command -v llvm-config-3.8 || command -v llvm-config38 || \
-    (command -v llvm-config > /dev/null && (case "$(llvm-config --version)" in 3.8*) command -v llvm-config;; *) false;; esac)) || \
-  command -v llvm-config
-LLVM_CONFIG := $(shell $(LLVM_CONFIG_FINDER))
+LLVM_CONFIG := $(shell src/llvm/ext/find-llvm-config)
 LLVM_EXT_DIR = src/llvm/ext
 LLVM_EXT_OBJ = $(LLVM_EXT_DIR)/llvm_ext.o
 LIB_CRYSTAL_SOURCES = $(shell find src/ext -name '*.c')

@@ -1,26 +1,6 @@
 {% begin %}
 lib LibLLVM
-  LLVM_CONFIG = {{
-                  `[ -n "$LLVM_CONFIG" ] && command -v "$LLVM_CONFIG" || \
-                   command -v llvm-config-8 || command -v llvm-config-8.0 || command -v llvm-config80 || \
-                   (command -v llvm-config > /dev/null && (case "$(llvm-config --version)" in 8.0*) command -v llvm-config;; *) false;; esac)) || \
-                   command -v llvm-config-7 || \
-                   (command -v llvm-config > /dev/null && (case "$(llvm-config --version)" in 7.1*) command -v llvm-config;; *) false;; esac)) || \
-                   command -v llvm-config-7.0 || command -v llvm-config70 || \
-                   (command -v llvm-config > /dev/null && (case "$(llvm-config --version)" in 7.0*) command -v llvm-config;; *) false;; esac)) || \
-                   command -v llvm-config-6.0 || command -v llvm-config60 || \
-                   (command -v llvm-config > /dev/null && (case "$(llvm-config --version)" in 6.0*) command -v llvm-config;; *) false;; esac)) || \
-                   command -v llvm-config-5.0 || command -v llvm-config50 || \
-                   (command -v llvm-config > /dev/null && (case "$(llvm-config --version)" in 5.0*) command -v llvm-config;; *) false;; esac)) || \
-                   command -v llvm-config-4.0 || command -v llvm-config40 || \
-                   (command -v llvm-config > /dev/null && (case "$(llvm-config --version)" in 4.0*) command -v llvm-config;; *) false;; esac)) || \
-                   command -v llvm-config-3.9 || command -v llvm-config39 || \
-                   (command -v llvm-config > /dev/null && (case "$(llvm-config --version)" in 3.9*) command -v llvm-config;; *) false;; esac)) || \
-                   command -v llvm-config-3.8 || command -v llvm-config38 || \
-                   (command -v llvm-config > /dev/null && (case "$(llvm-config --version)" in 3.8*) command -v llvm-config;; *) false;; esac)) || \
-                   command -v llvm-config
-                  `.chomp.stringify
-                }}
+  LLVM_CONFIG = {{ env("LLVM_CONFIG") || `#{__DIR__}/ext/find-llvm-config`.stringify }}
 end
 {% end %}
 
