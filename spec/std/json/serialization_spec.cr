@@ -206,6 +206,16 @@ describe "JSON serialization" do
       Union(Float64, Array(Int32)).from_json(%(1.23)).should eq(1.23)
     end
 
+    it "deserializes union of Int32 and Float64 (#7333)" do
+      value = Union(Int32, Float64).from_json("1")
+      value.should be_a(Int32)
+      value.should eq(1)
+
+      value = Union(Int32, Float64).from_json("1.0")
+      value.should be_a(Float64)
+      value.should eq(1.0)
+    end
+
     it "deserializes Time" do
       Time.from_json(%("2016-11-16T09:55:48-03:00")).to_utc.should eq(Time.utc(2016, 11, 16, 12, 55, 48))
       Time.from_json(%("2016-11-16T09:55:48-0300")).to_utc.should eq(Time.utc(2016, 11, 16, 12, 55, 48))

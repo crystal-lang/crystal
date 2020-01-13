@@ -231,18 +231,29 @@ def Union.new(pull : JSON::PullParser)
     # Here we store types that are not primitive types
     {% non_primitives = [] of Nil %}
 
+    # Deserialize Nil, Bool, Int and String. Leave Floats last because
+    # an integer literal should be deserialized as an int, not as a float.
     {% for type, index in T %}
       {% if type == Nil %}
         return pull.read_null if pull.kind.null?
       {% elsif type == Bool ||
                  type == Int8 || type == Int16 || type == Int32 || type == Int64 ||
                  type == UInt8 || type == UInt16 || type == UInt32 || type == UInt64 ||
-                 type == Float32 || type == Float64 ||
                  type == String %}
         value = pull.read?({{type}})
         return value unless value.nil?
+      {% elsif type == Float32 || type == Float64 %}
+        # Skip for now
       {% else %}
         {% non_primitives << type %}
+      {% end %}
+    {% end %}
+
+    # Now see if we have any Float
+    {% for type, index in T %}
+      {% if type == Float32 || type == Float64 %}
+        value = pull.read?({{type}})
+        return value unless value.nil?
       {% end %}
     {% end %}
 
