@@ -719,6 +719,12 @@ module Crystal
       nil
     end
 
+    def to_s(*, generic_args : Bool = true)
+      String.build do |io|
+        to_s_with_options io, generic_args: generic_args
+      end
+    end
+
     def inspect(io : IO) : Nil
       to_s(io)
     end
