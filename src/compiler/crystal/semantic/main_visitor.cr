@@ -2391,9 +2391,16 @@ module Crystal
         # Nothing to do
       when "throw_info"
         node.type = program.pointer_of(program.void)
+      when "va_arg"
+        visit_va_arg node
       else
         node.raise "BUG: unhandled primitive in MainVisitor: #{node.name}"
       end
+    end
+
+    def visit_va_arg(node)
+      arg = call.not_nil!.args[0]? || node.raise("requires type argument")
+      node.type = arg.type.instance_type
     end
 
     def visit_allocate(node)

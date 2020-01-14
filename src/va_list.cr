@@ -17,4 +17,10 @@ struct VaList
       Intrinsics.va_end pointerof(ap)
     end
   end
+
+  {% if compare_versions(Crystal::VERSION, "0.33.0-0") > 0 %}
+    @[Primitive(:va_arg)]
+    def next(type)
+    end
+  {% end %}
 end

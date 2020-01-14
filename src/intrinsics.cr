@@ -156,12 +156,12 @@ module Intrinsics
     LibIntrinsics.counttrailing128({{src}}, {{zero_is_undef}})
   end
 
-  def self.va_start(ap)
-    LibIntrinsics.va_start(ap)
+  macro va_start(ap)
+    LibIntrinsics.va_start({{ap}})
   end
 
-  def self.va_end(ap)
-    LibIntrinsics.va_end(ap)
+  macro va_end(ap)
+    LibIntrinsics.va_end({{ap}})
   end
 end
 

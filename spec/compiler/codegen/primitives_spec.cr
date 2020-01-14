@@ -237,4 +237,19 @@ describe "Code gen: primitives" do
       Foo.new.crystal_type_id == Foo.crystal_instance_type_id
       )).to_b.should be_true
   end
+
+  it "uses llvm's va_arg instruction" do
+    mod = codegen(%(
+      struct VaList
+        @[Primitive(:va_arg)]
+        def next(type)
+        end
+      end
+
+      list = VaList.new
+      list.next(Int32)
+      ))
+    str = mod.to_s
+    str.should contain("va_arg %VaList* %list")
+  end
 end

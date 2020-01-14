@@ -69,6 +69,7 @@ lib LibLLVM
   fun add_target_dependent_function_attr = LLVMAddTargetDependentFunctionAttr(fn : ValueRef, a : LibC::Char*, v : LibC::Char*)
   fun array_type = LLVMArrayType(element_type : TypeRef, count : UInt32) : TypeRef
   fun vector_type = LLVMVectorType(element_type : TypeRef, count : UInt32) : TypeRef
+  fun build_va_arg = LLVMBuildVAArg(builder : BuilderRef, list : ValueRef, type : TypeRef, name : UInt8*) : ValueRef
   fun build_add = LLVMBuildAdd(builder : BuilderRef, lhs : ValueRef, rhs : ValueRef, name : UInt8*) : ValueRef
   fun build_alloca = LLVMBuildAlloca(builder : BuilderRef, type : TypeRef, name : UInt8*) : ValueRef
   fun build_and = LLVMBuildAnd(builder : BuilderRef, lhs : ValueRef, rhs : ValueRef, name : UInt8*) : ValueRef

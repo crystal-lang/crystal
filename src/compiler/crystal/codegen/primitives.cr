@@ -75,6 +75,8 @@ class Crystal::CodeGenVisitor
               codegen_primitive_store_atomic call, node, target_def, call_args
             when "throw_info"
               cast_to void_ptr_throwinfo, @program.pointer_of(@program.void)
+            when "va_arg"
+              codegen_va_arg call, node, target_def, call_args
             else
               raise "BUG: unhandled primitive in codegen: #{node.name}"
             end
@@ -1238,6 +1240,11 @@ class Crystal::CodeGenVisitor
     inst.volatile = true if volatile
     set_alignment inst, node.type
     inst
+  end
+
+  def codegen_va_arg(call, node, target_def, call_args)
+    ptr = call_args.first
+    builder.va_arg(ptr, llvm_type(node.type))
   end
 
   def check_atomic_call(call, target_def)
