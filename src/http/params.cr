@@ -152,7 +152,7 @@ module HTTP
     # params2.to_s # => "foo=bar&foo=baz&qux=zoo"
     # ```
     def to_h : Hash(String, Array(String))
-      @raw_params
+      @raw_params.dup
     end
 
     def ==(other : self)

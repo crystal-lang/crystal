@@ -251,8 +251,8 @@ module HTTP
     describe "#to_h" do
       it "duplicate values" do
         Params.parse("foo=bar&foo=baz&baz=qux").to_h.should eq({
-            "foo" => ["bar", "baz"],
-            "baz" => ["qux"],
+          "foo" => ["bar", "baz"],
+          "baz" => ["qux"],
         })
       end
 
