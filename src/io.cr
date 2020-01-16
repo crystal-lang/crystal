@@ -128,7 +128,7 @@ abstract class IO
     raise IO::Error.new "Closed stream" if closed?
   end
 
-  # Returns `true` when all buffered data as been read.
+  # Returns `true` when all buffered data has been read.
   #
   # `IO` defines this as a `true` value, but including types may override.
   def empty? : Bool

@@ -43,7 +43,7 @@ module IO::Buffered
     @buffer_size = value
   end
 
-  # Indicates if there is the input buffer is empty.
+  # Indicates if the input buffer is empty.
   def empty? : Bool
     @in_buffer_rem.size == 0
   end
