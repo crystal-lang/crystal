@@ -35,6 +35,10 @@ module Spec
     end
 
     def self.file(output_path : Path)
+      if output_path.extension != ".xml"
+        output_path = output_path.join("output.xml")
+      end
+
       Dir.mkdir_p(output_path.dirname)
       file = File.new(output_path, "w")
       JUnitFormatter.new(file)
