@@ -1660,9 +1660,11 @@ module Crystal
       write_keyword :macro, " "
 
       write node.name
-      next_token_skip_space
+      next_token
+      skip_space(consume_newline: false)
 
       format_def_args node
+
       format_macro_body node
 
       false
@@ -4343,7 +4345,7 @@ module Crystal
       skip_space_or_newline
     end
 
-    def skip_space(write_comma : Bool = false)
+    def skip_space(write_comma : Bool = false, consume_newline : Bool = true)
       base_column = @column
       has_space = false
 
@@ -4361,7 +4363,7 @@ module Crystal
           next_token
           @passed_backslash_newline = true
           if @token.type == :SPACE
-            return skip_space(write_comma)
+            return skip_space(write_comma, consume_newline)
           else
             return false
           end
@@ -4378,7 +4380,7 @@ module Crystal
         else
           write " " if needs_space
         end
-        write_comment(needs_indent: !needs_space)
+        write_comment(needs_indent: !needs_space, consume_newline: consume_newline)
         true
       else
         false
@@ -4492,7 +4494,7 @@ module Crystal
       skip_space_or_newline
     end
 
-    def write_comment(needs_indent = true)
+    def write_comment(needs_indent = true, consume_newline = true)
       while @token.type == :COMMENT
         empty_line = @line_output.to_s.strip.empty?
         if empty_line
@@ -4544,8 +4546,10 @@ module Crystal
         @wrote_comment = true
         write value
         next_token_skip_space
-        consume_newlines
-        skip_space_or_newline
+        if consume_newline
+          consume_newlines
+          skip_space_or_newline
+        end
       end
     end
 
