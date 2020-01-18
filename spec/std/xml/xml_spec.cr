@@ -162,9 +162,19 @@ describe XML do
     xml.root.not_nil!.name.should eq("people")
     errors = xml.errors.not_nil!
     errors.size.should eq(1)
-    errors[0].message.should eq("Premature end of data in tag people line 1")
+
+    # Starting from libxml2 2.9.10 the error message has changed,
+    # both messages are accepted.
+    if errors[0].message.not_nil!.starts_with?("Premature")
+      # libxml2 < 2.9.10
+      expected_message = "Premature end of data in tag people line 1"
+    else
+      # libxml2 >= 2.9.10
+      expected_message = "EndTag: '</' not found"
+    end
+    errors[0].message.should eq(expected_message)
     errors[0].line_number.should eq(1)
-    errors[0].to_s.should eq("Premature end of data in tag people line 1")
+    errors[0].to_s.should eq(expected_message)
   end
 
   it "gets root namespaces scopes" do
