@@ -329,4 +329,49 @@ describe JSON::PullParser do
     assert_raw %({"foo":[1,2,{"bar":[1,"hello",true,false,1.5]}]})
     assert_raw %({"foo":"bar"})
   end
+
+  describe "read?" do
+    {% for pair in [[Int8, 1_i8],
+                    [Int16, 1_i16],
+                    [Int32, 1_i32],
+                    [Int64, 1_i64],
+                    [UInt8, 1_u8],
+                    [UInt16, 1_u16],
+                    [UInt32, 1_u32],
+                    [UInt64, 1_u64],
+                    [Float32, 1.0_f32],
+                    [Float64, 1.0],
+                    [String, "foo"],
+                    [Bool, true]] %}
+      {% type = pair[0] %}
+      {% value = pair[1] %}
+
+      it "reads {{type}} when the token is a compatible kind" do
+        pull = JSON::PullParser.new({{value}}.to_json)
+        pull.read?({{type}}).should eq({{value}})
+      end
+
+      it "returns nil instead of {{type}} when the token is not compatible" do
+        pull = JSON::PullParser.new(%({"foo": "bar"}))
+        pull.read?({{type}}).should be_nil
+      end
+    {% end %}
+
+    {% for pair in [[Int8, Int64::MAX],
+                    [Int16, Int64::MAX],
+                    [Int32, Int64::MAX],
+                    [UInt8, -1],
+                    [UInt16, -1],
+                    [UInt32, -1],
+                    [UInt64, -1],
+                    [Float32, Float64::MAX]] %}
+      {% type = pair[0] %}
+      {% value = pair[1] %}
+
+      it "returns nil in place of {{type}} when an overflow occurs" do
+        pull = JSON::PullParser.new({{value}}.to_json)
+        pull.read?({{type}}).should be_nil
+      end
+    {% end %}
+  end
 end
