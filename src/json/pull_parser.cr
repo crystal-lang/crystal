@@ -279,7 +279,7 @@ class JSON::PullParser
   # UInt64 is a special case due to exceeding bounds of @int_value
   def read?(klass : UInt64.class)
     UInt64.new(raw_value).tap { read_next } if kind.int?
-  rescue OverflowError
+  rescue ArgumentError
     nil
   end
 
