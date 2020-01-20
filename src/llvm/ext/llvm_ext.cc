@@ -237,6 +237,23 @@ LLVMMetadataRef LLVMExtDIBuilderCreateStructType(
   return wrap(CT);
 }
 
+LLVMMetadataRef LLVMExtDIBuilderCreateUnionType(
+    DIBuilderRef Dref, LLVMMetadataRef Scope, const char *Name,
+    LLVMMetadataRef File, unsigned Line, uint64_t SizeInBits,
+    uint64_t AlignInBits,
+#if LLVM_VERSION_LE(3, 9)
+    unsigned Flags,
+#else
+    DINode::DIFlags Flags,
+#endif
+    LLVMMetadataRef Elements) {
+  DICompositeType *CT = Dref->createUnionType(
+      unwrapDI<DIDescriptor>(Scope), Name, unwrapDI<DIFile>(File), Line,
+      SizeInBits, AlignInBits, Flags,
+      DINodeArray(unwrapDI<MDTuple>(Elements)));
+  return wrap(CT);
+}
+
 LLVMMetadataRef LLVMExtDIBuilderCreateReplaceableCompositeType(
   DIBuilderRef Dref, LLVMMetadataRef Scope, const char *Name,
   LLVMMetadataRef File, unsigned Line) {

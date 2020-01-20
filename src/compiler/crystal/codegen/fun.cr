@@ -120,16 +120,21 @@ class Crystal::CodeGenVisitor
 
         if @debug.variables? && !target_def.naked?
           in_alloca_block do
-            args_offset = !is_fun_literal && self_type.passed_as_self? ? 2 : 1
+            # args_offset = !is_fun_literal && self_type.passed_as_self? ? 2 : 1
+            args_offset = !is_fun_literal && self_type.passed_as_self? ? 1 : 0
             location = target_def.location
+            Crystal.debug_log { puts "codegen_fun(mangled_name=[<#{mangled_name}>], target_def=[<#{target_def}>], self_type=[<#{self_type}>], is_exported_fun = #{is_exported_fun}, is_fun_literal = #{is_fun_literal}, is_closure = #{is_closure}):" }
             context.vars.each do |name, var|
               # Self always comes as the first parameter, unless it's a closure:
               # then it will be fetched from the closure data.
               if name == "self" && !is_closure
+                Crystal.debug_log { puts "declare_parameter(name=[<#{name}>}], var.type=[<#{var.type}>}], idx=1, var.pointer=[<#{var.pointer}>}], location=[<#{location}>}])" }
                 declare_parameter(name, var.type, 1, var.pointer, location)
               elsif arg_no = args.index { |arg| arg.name == name }
-                declare_parameter(name, var.type, arg_no + args_offset, var.pointer, location)
+              Crystal.debug_log { puts "declare_parameter(name=[<{#{name}>}], var.type=[<#{var.type}>}], idx=#{arg_no + args_offset}, var.pointer=[<#{var.pointer}>}], location=[<#{location}>}])" }
+              declare_parameter(name, var.type, arg_no + args_offset, var.pointer, location)
               else
+                Crystal.debug_log { puts "declare_variable(name=[<#{name}>}], var.type=[<#{var.type}>}], var.pointer=[<#{var.pointer}>}], location=[<#{location}>}])" }
                 declare_variable(name, var.type, var.pointer, location)
               end
             end
@@ -395,29 +400,39 @@ class Crystal::CodeGenVisitor
 
   def setup_closure_vars(def_vars, closure_vars, context = self.context, closure_ptr = fun_literal_closure_ptr)
     if context.closure_skip_parent
+      Crystal.debug_log { puts "if context.closure_skip_parent:" }
       parent_context = context.closure_parent_context.not_nil!
+      Crystal.debug_log { puts "parent_context=#{parent_context}" }
+      Crystal.debug_log { puts "Before setup_closure_vars(def_vars=#{def_vars}, parent_context.closure_vars.not_nil!=#{parent_context.closure_vars.not_nil!}, parent_context=#{parent_context}, closure_ptr=[<#{parent_context}>])" }
       setup_closure_vars(def_vars, parent_context.closure_vars.not_nil!, parent_context, closure_ptr)
     else
+      Crystal.debug_log { puts "closure_vars.each_with_index:" }
       closure_vars.each_with_index do |var, i|
         # A closured var in this context might have the same name as
         # a local var in another context, for example if the local var
         # was defined before the closured var. In this case, don't
         # consider the local var as closured.
+        Crystal.debug_log { puts "var=[<#{var}>], i=#{i}" }
         def_var = def_vars.try &.[var.name]?
+        Crystal.debug_log { puts "def_var=[<#{def_var}>]" }
         next if def_var && !def_var.closured?
 
         self.context.vars[var.name] = LLVMVar.new(gep(closure_ptr, 0, i, var.name), var.type)
+        Crystal.debug_log { puts "self.context.vars[var.name=[<#{var.name}>]=[<#{self.context.vars[var.name]}>]" }
       end
 
       if (closure_parent_context = context.closure_parent_context) &&
          (parent_vars = closure_parent_context.closure_vars)
+         Crystal.debug_log { puts "if (closure_parent_context = context.closure_parent_context) && (parent_vars = closure_parent_context.closure_vars):" }
         parent_closure_ptr = gep(closure_ptr, 0, closure_vars.size, "parent_ptr")
         setup_closure_vars(def_vars, parent_vars, closure_parent_context, load(parent_closure_ptr, "parent"))
       elsif closure_self = context.closure_self
+        Crystal.debug_log { puts "elsif closure_self = context.closure_self:" }
         offset = context.closure_parent_context ? 1 : 0
         self_value = gep(closure_ptr, 0, closure_vars.size + offset, "self")
         self_value = load(self_value) unless context.type.passed_by_value?
         self.context.vars["self"] = LLVMVar.new(self_value, closure_self, true)
+        Crystal.debug_log { puts "self.context.vars['self'] = [<#{self.context.vars["self"]}>]" }
       end
     end
   end

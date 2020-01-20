@@ -77,7 +77,11 @@ lib LibLLVMExt
                                                                        scope : Metadata, name : Char*, file : Metadata, line : UInt, size_in_bits : UInt64,
                                                                        align_in_bits : UInt64, flags : LLVM::DIFlags, derived_from : Metadata, element_types : Metadata) : Metadata
 
-  fun di_builder_create_member_type = LLVMExtDIBuilderCreateMemberType(builder : DIBuilder,
+  fun di_builder_create_union_type = LLVMExtDIBuilderCreateUnionType(builder : DIBuilder,
+                                                                        scope : Metadata, name : Char*, file : Metadata, line : UInt, size_in_bits : UInt64,
+                                                                        align_in_bits : UInt64, flags : LLVM::DIFlags, element_types : Metadata) : Metadata
+ 
+   fun di_builder_create_member_type = LLVMExtDIBuilderCreateMemberType(builder : DIBuilder,
                                                                        scope : Metadata, name : Char*, file : Metadata, line : UInt, size_in_bits : UInt64,
                                                                        align_in_bits : UInt64, offset_in_bits : UInt64, flags : LLVM::DIFlags, ty : Metadata) : Metadata
 
@@ -140,4 +144,6 @@ lib LibLLVMExt
   fun normalize_target_triple = LLVMExtNormalizeTargetTriple(triple : Char*) : Char*
 
   fun basic_block_name = LLVMExtBasicBlockName(basic_block : LibLLVM::BasicBlockRef) : Char*
+
+  fun metadata_as_value = LLVMMetadataAsValue(context : LibLLVM::ContextRef, md : Metadata) : LibLLVM::ValueRef
 end

@@ -69,6 +69,11 @@ struct LLVM::DIBuilder
       flags, derived_from, element_types)
   end
 
+  def create_union_type(scope, name, file, line, size_in_bits, align_in_bits, flags, element_types)
+    LibLLVMExt.di_builder_create_union_type(self, scope, name, file, line, size_in_bits, align_in_bits,
+      flags, element_types)
+  end
+
   def create_member_type(scope, name, file, line, size_in_bits, align_in_bits, offset_in_bits, flags, ty)
     LibLLVMExt.di_builder_create_member_type(self, scope, name, file, line, size_in_bits, align_in_bits,
       offset_in_bits, flags, ty)
