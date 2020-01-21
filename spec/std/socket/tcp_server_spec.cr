@@ -54,7 +54,7 @@ describe TCPServer do
 
         it "raises when not binding with reuse_port" do
           TCPServer.open(address, 0, reuse_port: true) do |server|
-            expect_raises_errno(Errno::EADDRINUSE, {% if flag?(:gnu) %}"listen: "{% else %}"bind: "{% end %}) do
+            expect_raises_errno(Errno::EADDRINUSE) do
               TCPServer.open(address, server.local_address.port) { }
             end
           end
