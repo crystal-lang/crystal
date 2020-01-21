@@ -732,7 +732,7 @@ end
 #
 # ```
 # select
-# when x = ch.recieve
+# when x = ch.receive
 #   puts "got #{x}"
 # when timeout(1.seconds)
 #   puts "timeout"
