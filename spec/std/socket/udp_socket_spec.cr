@@ -108,7 +108,7 @@ describe UDPSocket do
           sleep 100.milliseconds
           udp.close
         end
-        expect_raises_errno(Errno::EBADF, "Error receiving datagram: Bad file descriptor") { udp.receive }
+        expect_raises(IO::Error, "Closed stream") { udp.receive }
       end
     end
   end

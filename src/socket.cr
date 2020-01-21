@@ -250,7 +250,7 @@ class Socket < IO
         if closed?
           return
         elsif Errno.value == Errno::EAGAIN
-          wait_readable
+          wait_readable rescue nil
         else
           raise Errno.new("accept")
         end
