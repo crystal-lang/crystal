@@ -131,6 +131,8 @@ module IO::Evented
       @read_timed_out = false
       yield Timeout.new("Read timed out")
     end
+
+    check_open
   end
 
   private def add_read_event(timeout = @read_timeout) : Nil
@@ -154,6 +156,8 @@ module IO::Evented
       @write_timed_out = false
       yield Timeout.new("Write timed out")
     end
+
+    check_open
   end
 
   private def add_write_event(timeout = @write_timeout) : Nil

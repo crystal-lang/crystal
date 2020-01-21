@@ -110,6 +110,11 @@ module Crystal::System::FileDescriptor
   end
 
   private def system_close
+    # Perform libevent cleanup before LibC.close.
+    # Using a file descriptor after it has been closed is never defined and can
+    # always lead to undefined results. This is not specific to libevent.
+    evented_close
+
     if LibC.close(@fd) != 0
       case Errno.value
       when Errno::EINTR, Errno::EINPROGRESS
@@ -118,8 +123,6 @@ module Crystal::System::FileDescriptor
         raise Errno.new("Error closing file")
       end
     end
-  ensure
-    evented_close
   end
 
   def self.pipe(read_blocking, write_blocking)
