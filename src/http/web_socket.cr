@@ -100,6 +100,20 @@ class HTTP::WebSocket
     @ws.close(message)
   end
 
+  # Will run the websocket in an infinite loop where it receives messages and calls previously set callbacks.
+  # The websocket will autmatically respond with pong on pings and exit the loop when the websocket is closed.
+  #  
+  # ```
+  # ws = WebSocket.new(uri)
+  # 
+  # # Create callback
+  # ws.on_message do |msg|
+  #   ws.send "response"
+  # end
+  #
+  # # Start infinite loop
+  # ws.run
+  # ```
   def run
     loop do
       begin
