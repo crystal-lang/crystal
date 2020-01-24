@@ -115,6 +115,10 @@ module Crystal::System::FileDescriptor
     # always lead to undefined results. This is not specific to libevent.
     evented_close
 
+    file_description_close
+  end
+
+  def file_description_close
     if LibC.close(@fd) != 0
       case Errno.value
       when Errno::EINTR, Errno::EINPROGRESS
