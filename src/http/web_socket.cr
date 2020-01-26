@@ -2,8 +2,8 @@ class HTTP::WebSocket
   getter? closed = false
 
   # :nodoc:
-  def initialize(io : IO)
-    initialize(Protocol.new(io))
+  def initialize(io : IO, sync_close = true)
+    initialize(Protocol.new(io, sync_close: sync_close))
   end
 
   # :nodoc:

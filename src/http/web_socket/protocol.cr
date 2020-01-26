@@ -35,7 +35,7 @@ class HTTP::WebSocket::Protocol
     size : Int32,
     final : Bool
 
-  def initialize(@io : IO, masked = false)
+  def initialize(@io : IO, masked = false, @sync_close = true)
     @header = uninitialized UInt8[2]
     @mask = uninitialized UInt8[4]
     @mask_offset = 0
@@ -232,13 +232,13 @@ class HTTP::WebSocket::Protocol
   end
 
   def close(message = nil)
-    return unless @io.closed?
+    return if @io.closed?
     if message
       send(message.to_slice, Opcode::CLOSE)
     else
       send(Bytes.empty, Opcode::CLOSE)
     end
-    @io.close
+    @io.close if @sync_close
   end
 
   def self.new(host : String, path : String, port = nil, tls = false, headers = HTTP::Headers.new)
