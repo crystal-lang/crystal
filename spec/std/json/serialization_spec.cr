@@ -206,6 +206,22 @@ describe "JSON serialization" do
       Union(Float64, Array(Int32)).from_json(%(1.23)).should eq(1.23)
     end
 
+    it "deserializes union of Int32 and Float64 (#7333)" do
+      value = Union(Int32, Float64).from_json("1")
+      value.should be_a(Int32)
+      value.should eq(1)
+
+      value = Union(Int32, Float64).from_json("1.0")
+      value.should be_a(Float64)
+      value.should eq(1.0)
+    end
+
+    it "deserializes unions of the same kind and remains stable" do
+      str = [Int32::MAX, Int64::MAX].to_json
+      value = Array(Int32 | Int64).from_json(str)
+      value.all? { |x| x.should be_a(Int64) }
+    end
+
     it "deserializes Time" do
       Time.from_json(%("2016-11-16T09:55:48-03:00")).to_utc.should eq(Time.utc(2016, 11, 16, 12, 55, 48))
       Time.from_json(%("2016-11-16T09:55:48-0300")).to_utc.should eq(Time.utc(2016, 11, 16, 12, 55, 48))
@@ -427,5 +443,17 @@ describe "JSON serialization" do
         Time.utc(2016, 11, 16, 12, 55, 48, nanosecond: 123456789).to_json.should eq(%("2016-11-16T12:55:48Z"))
       end
     end
+  end
+
+  it "provide symetric encoding and decoding for Union types" do
+    a = 1.as(Float64 | Int32)
+    b = (Float64 | Int32).from_json(a.to_json)
+    a.class.should eq(Int32)
+    a.class.should eq(b.class)
+
+    c = 1.0.as(Float64 | Int32)
+    d = (Float64 | Int32).from_json(c.to_json)
+    c.class.should eq(Float64)
+    c.class.should eq(d.class)
   end
 end
