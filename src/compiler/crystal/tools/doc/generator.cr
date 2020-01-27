@@ -44,8 +44,6 @@ class Crystal::Doc::Generator
   end
 
   def run
-    Dir.mkdir_p @output_dir
-
     types = collect_subtypes(@program)
 
     program_type = type(@program)
