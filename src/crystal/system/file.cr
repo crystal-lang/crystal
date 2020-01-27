@@ -46,7 +46,7 @@ module Crystal::System::File
   # parent's Crystal::Signal.@@pipe reference before re initializing
   # the event loop. In the case of a fork that will exec there is even
   # no need to initialize the event loop at all.
-  # def file_description_close
+  # def file_descriptor_close
 end
 
 {% if flag?(:unix) %}
