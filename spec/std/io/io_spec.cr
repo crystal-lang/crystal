@@ -828,7 +828,7 @@ describe IO do
         ch = Channel(Symbol).new(1)
 
         IO.pipe do |read, write|
-          spawn do
+          f = spawn do
             ch.send :start
             read.gets
           rescue
@@ -838,6 +838,10 @@ describe IO do
           delay(1) { ch.send :timeout }
 
           ch.receive.should eq(:start)
+          while f.running?
+            # Wait until the fiber is blocked
+            Fiber.yield
+          end
           read.close
           ch.receive.should eq(:end)
         end

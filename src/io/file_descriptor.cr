@@ -177,7 +177,11 @@ class IO::FileDescriptor < IO
   private def unbuffered_close
     return if @closed
 
-    system_close ensure @closed = true
+    # Set before the @closed state so the pending
+    # IO::Evented readers and writers can be cancelled
+    # knowing the IO is in a closed state.
+    @closed = true
+    system_close
   end
 
   private def unbuffered_flush

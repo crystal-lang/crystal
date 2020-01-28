@@ -114,6 +114,10 @@ module Crystal::System::FileDescriptor
   end
 
   private def system_close
+    file_descriptor_close
+  end
+
+  def file_descriptor_close
     err = nil
     if LibC._close(@fd) != 0
       case Errno.value
