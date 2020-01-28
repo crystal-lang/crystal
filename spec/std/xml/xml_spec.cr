@@ -158,13 +158,14 @@ describe XML do
   end
 
   it "handles errors" do
-    xml = XML.parse(%(<people>))
+    xml = XML.parse(%(<people></foo>))
     xml.root.not_nil!.name.should eq("people")
     errors = xml.errors.not_nil!
     errors.size.should eq(1)
-    errors[0].message.should eq("Premature end of data in tag people line 1")
+
+    errors[0].message.should eq("Opening and ending tag mismatch: people line 1 and foo")
     errors[0].line_number.should eq(1)
-    errors[0].to_s.should eq("Premature end of data in tag people line 1")
+    errors[0].to_s.should eq("Opening and ending tag mismatch: people line 1 and foo")
   end
 
   it "gets root namespaces scopes" do
