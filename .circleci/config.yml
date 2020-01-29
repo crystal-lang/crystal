@@ -8,6 +8,15 @@ defaults:
     - run: echo 'export CURRENT_TAG="$CIRCLE_TAG"' >> $BASH_ENV
     - run: bin/ci prepare_build
     - run: bin/ci build
+    - run:
+        when: always
+        command: |
+          mkdir -p ~/test-results/spec
+          cp .junit/*.xml ~/test-results/spec/
+    - store_test_results:
+        path: ~/test-results
+    - store_artifacts:
+        path: ~/test-results/spec
 
 version: 2
 
