@@ -14,6 +14,9 @@ class Crystal::Codegen::Target
     # triple with the architecture, vendor and OS in the correct place.
     target_triple = LLVM.normalize_triple(target_triple.downcase)
 
+    if target_triple.count('-') < 2
+      raise Target::Error.new("Invalid target triple: #{target_triple}")
+    end
     @architecture, @vendor, @environment = target_triple.split('-', 3)
 
     # Perform additional normalisation and parsing
