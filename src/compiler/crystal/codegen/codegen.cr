@@ -135,8 +135,9 @@ module Crystal
       # llvm value, so in a way it's "already loaded".
       # This field is true if that's the case.
       getter already_loaded : Bool
+      property debug_var : Bool
 
-      def initialize(@pointer, @type, @already_loaded = false)
+      def initialize(@pointer, @type, @already_loaded = false, @debug_var = false)
       end
     end
 
@@ -631,6 +632,7 @@ module Crystal
     end
 
     def visit(node : Return)
+      set_current_debug_location node.location if @debug.line_numbers? && node.location
       node_type = accept_control_expression(node)
 
       codegen_return_node(node, node_type)
@@ -789,6 +791,7 @@ module Crystal
         codegen_if_branch phi, node.then, then_block, false
         codegen_if_branch phi, node.else, else_block, true
       end
+      # set_current_debug_location(node.end_location) if @debug.line_numbers? && node.end_location
 
       false
     end
@@ -827,6 +830,7 @@ module Crystal
         br while_block
 
         position_at_end exit_block
+        set_current_debug_location node.body.not_nil!.end_location if @debug.line_numbers? && node.body
 
         if node.no_returns?
           unreachable
@@ -873,6 +877,7 @@ module Crystal
       else
         node.raise "BUG: unknown exit for break"
       end
+      set_current_debug_location(node.target.not_nil!.end_location) if @debug.line_numbers? && node.target?
 
       false
     end
@@ -889,18 +894,21 @@ module Crystal
           @last = old_last
 
           next_phi.add @last, node_type
+          set_current_debug_location(target.end_location) if @debug.line_numbers?
           return false
         end
       when While
         if while_block = context.while_block
           execute_ensures_until(target.as(While))
           br while_block
+          set_current_debug_location(target.end_location) if @debug.line_numbers?
           return false
         end
       else
         # The only possibility is that we are in a captured block,
         # so this is the same as a return
         codegen_return_node(node, node_type)
+        set_current_debug_location(target.end_location) if @debug.line_numbers?
         return false
       end
 
@@ -1345,7 +1353,13 @@ module Crystal
     end
 
     def declare_var(var)
-      context.vars[var.name] ||= LLVMVar.new(var.no_returns? ? llvm_nil : alloca(llvm_type(var.type), var.name), var.type)
+      if value = context.vars[var.name]?
+        return value
+      end
+      pointer = alloca llvm_type(var.type), var.name
+      declare_variable var.name, var.type, pointer, var.location
+      llvm_var = LLVMVar.new(var.no_returns? ? llvm_nil : pointer, var.type, false, true)
+      context.vars[var.name] = llvm_var
     end
 
     def declare_lib_var(name, type, thread_local)
@@ -1365,6 +1379,10 @@ module Crystal
 
       @last = llvm_nil
       false
+    end
+
+    def end_visit(node : Def)
+      set_current_debug_location(node.end_location) if @debug.line_numbers?
     end
 
     def visit(node : Macro)
@@ -1498,7 +1516,9 @@ module Crystal
           @needs_value = true
           set_ensure_exception_handler(block)
 
+          set_current_debug_location block.body if @debug.line_numbers? && block.body
           accept block.body
+          set_current_debug_location block.body.end_location if @debug.line_numbers? && block.body.end_location
         end
 
         phi.add @last, block.body.type?, last: true
@@ -1713,7 +1733,8 @@ module Crystal
             next if is_arg
 
             ptr = builder.alloca llvm_type(var_type), name
-            context.vars[name] = LLVMVar.new(ptr, var_type)
+            declare_variable name, var_type, ptr, var.location
+            context.vars[name] = LLVMVar.new(ptr, var_type, false, true)
 
             # Assign default nil for variables that are bound to the nil variable
             if bound_to_mod_nil?(var)
@@ -1753,7 +1774,9 @@ module Crystal
         closure_type = @llvm_typer.closure_context_type(closure_vars, parent_closure_type, (self_closured ? current_context.type : nil))
         closure_ptr = malloc closure_type
         closure_vars.each_with_index do |var, i|
-          current_context.vars[var.name] = LLVMVar.new(gep(closure_ptr, 0, i, var.name), var.type)
+          ptr = gep(closure_ptr, 0, i, var.name)
+          declare_variable var.name, var.type, ptr, var.location
+          current_context.vars[var.name] = LLVMVar.new(ptr, var.type, false, true)
         end
         closure_skip_parent = false
 

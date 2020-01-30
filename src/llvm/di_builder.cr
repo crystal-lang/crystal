@@ -25,8 +25,12 @@ struct LLVM::DIBuilder
     LibLLVMExt.di_builder_create_file(self, file, dir)
   end
 
-  def create_lexical_block(scope, file, line, column)
-    LibLLVMExt.di_builder_create_lexical_block(self, scope, file, line, column)
+  def create_lexical_block(scope, file_scope, line, column)
+    LibLLVMExt.di_builder_create_lexical_block(self, scope, file_scope, line, column)
+  end
+
+  def create_lexical_block_file(scope, file_scope, discriminator = 0)
+    LibLLVMExt.di_builder_create_lexical_block_file(self, scope, file_scope, discriminator)
   end
 
   def create_function(scope, name, linkage_name, file, line, composite_type, is_local_to_unit, is_definition,
@@ -91,6 +95,48 @@ struct LLVM::DIBuilder
     LibLLVMExt.di_builder_replace_temporary(self, from, to)
   end
 
+  def create_unspecified_type(name : String)
+    LibLLVMExt.di_builder_create_unspecified_yype(self, name, name.size)
+  end
+
+  def location_get_line(location : LibLLVMExt::Metadata)
+    LibLLVMExt.LLVMDILocationGetLine(location)
+  end
+
+  def location_get_column( location : LibLLVMExt::Metadata)
+    LibLLVMExt.LLVMDILocationGetColumn(location)
+  end
+
+  def location_get_scope(location : LibLLVMExt::Metadata)
+    LibLLVMExt.LLVMDILocationGetScope(location)
+  end
+
+  def scope_get_file(scope : LibLLVMExt::Metadata)
+    LibLLVMExt.LLVMDIScopeGetFile(scope)
+  end
+
+  def file_get_directory(file : LibLLVMExt::Metadata)
+    ptr = LibLLVMExt.LLVMDIFileGetDirectory(file,  out dir_name_size)
+    str = String.new(ptr, dir_name_size)
+  end
+
+  def file_get_filename(file : LibLLVMExt::Metadata)
+    ptr = LibLLVMExt.LLVMDIFileGetFilename(file, out file_name_size)
+    str = String.new(ptr, file_name_size)
+  end
+
+  def variable_get_file(variable : LibLLVMExt::Metadata)
+    LibLLVMExt.LLVMDIVariableGetFile(variable)
+  end
+
+  def variable_get_scope(variable : LibLLVMExt::Metadata)
+    LibLLVMExt.LLVMDIVariableGetScope(variable)
+  end
+
+  def variable_get_line(variable : LibLLVMExt::Metadata)
+    LibLLVMExt.LLVMDIVariableGetLine(variable)
+  end
+  
   def end
     LibLLVMExt.di_builder_finalize(self)
   end

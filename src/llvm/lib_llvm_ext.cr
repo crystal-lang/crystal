@@ -142,8 +142,21 @@ lib LibLLVMExt
   {% end %}
 
   fun normalize_target_triple = LLVMExtNormalizeTargetTriple(triple : Char*) : Char*
-
   fun basic_block_name = LLVMExtBasicBlockName(basic_block : LibLLVM::BasicBlockRef) : Char*
-
   fun metadata_as_value = LLVMMetadataAsValue(context : LibLLVM::ContextRef, md : Metadata) : LibLLVM::ValueRef
+  fun di_builder_create_unspecified_yype = LLVMDIBuilderCreateUnspecifiedType(builder: DIBuilder, name : Void*, size : LibC::SizeT) : Metadata
+  fun get_current_debug_location_metadata = LLVMGetCurrentDebugLocation2(builder : LibLLVM::BuilderRef) : Metadata
+  fun LLVMDILocationGetLine(location : Metadata) : UInt32
+  fun LLVMDILocationGetColumn(location : Metadata) : UInt32
+  fun LLVMDILocationGetScope(location : Metadata) : Metadata
+  fun LLVMDIScopeGetFile(scope : Metadata) : Metadata
+  fun LLVMDIFileGetDirectory(file : Metadata,  dir_name_size : UInt32*) : Char*
+  fun LLVMDIFileGetFilename(file : Metadata, file_name_size : UInt32*) : Char*
+  fun LLVMDILocationGetLine(location : Metadata) : UInt32
+  fun LLVMDIVariableGetFile(variable : Metadata) : Metadata
+  fun LLVMDIVariableGetScope(variable : Metadata) : Metadata
+  fun LLVMDIVariableGetLine(variable : Metadata) : UInt32
+  fun di_builder_create_lexical_block_file = LLVMDIBuilderCreateLexicalBlockFile(builder : DIBuilder,
+    scope : Metadata, file_scope : Metadata, discriminator : UInt32) : Metadata
 end
+

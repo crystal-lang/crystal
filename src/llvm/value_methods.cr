@@ -108,6 +108,10 @@ module LLVM::ValueMethods
     self
   end
 
+  def to_s(io : IO) : Nil
+    io << String.new(LibLLVM.print_value_to_string(self))
+  end
+
   def to_unsafe
     @unwrap
   end

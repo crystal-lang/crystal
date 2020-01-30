@@ -2,7 +2,7 @@ require "./codegen"
 
 module Crystal
   class CodeGenVisitor
-    CRYSTAL_LANG_DEBUG_IDENTIFIER = 0x8002_u32
+    CRYSTAL_LANG_DEBUG_IDENTIFIER = 0x28_u32
     #
     # We have to use it because LLDB has builtin type system support for C++/clang that we can use for now for free.
     # Later on we can implement LLDB Crystal type system so we can get official Language ID
@@ -17,7 +17,7 @@ module Crystal
       di_builders = @di_builders ||= {} of LLVM::Module => LLVM::DIBuilder
       di_builders[llvm_module] ||= LLVM::DIBuilder.new(llvm_module).tap do |di_builder|
         file, dir = file_and_dir(llvm_module.name == "" ? "main" : llvm_module.name)
-        di_builder.create_compile_unit(CPP_LANG_DEBUG_IDENTIFIER, file, dir, "Crystal", false, "", 0_u32)
+        di_builder.create_compile_unit(CPP_LANG_DEBUG_IDENTIFIER, file, dir, "Crystal", !@debug.variables?, "", 0_u32)
       end
     end
 
@@ -36,7 +36,7 @@ module Crystal
     end
 
     def fun_metadatas
-      @fun_metadatas ||= {} of LLVM::Function => LibLLVMExt::Metadata
+      @fun_metadatas ||= {} of LLVM::Function => Array(Tuple(String, LibLLVMExt::Metadata))
     end
 
     def fun_metadata_type
@@ -55,41 +55,38 @@ module Crystal
       debug_types_per_module[@llvm_mod] ||= {} of String => LibLLVMExt::Metadata?
     end
 
-    def get_debug_type(type, type_name : String? = nil)
+    def get_debug_type(type, type_name : String? = type.to_s)
       type = type.remove_indirection
-      debug_type_cache[type_name || type.to_s] ||= create_debug_type(type, type_name)
+      debug_type = debug_type_cache[type_name] ||= create_debug_type(type, type_name)
+      debug_type
     end
 
-    def create_debug_type(type : NilType, type_name : String? = nil)
-      Crystal.debug_log { puts "In create_debug_type(type[<#{type}>] : NilType)" }
-      debug_type = di_builder.create_basic_type("Nil", 8u64 * llvm_typer.pointer_size, 8u64 * llvm_typer.pointer_size, LLVM::DwarfTypeEncoding::Address)
+    def create_debug_type(type : NilType, type_name : String? = type.to_s)
+      di_builder.create_unspecified_type("decltype(nullptr)")
     end
 
-    def create_debug_type(type : VoidType, type_name : String? = nil)
-      Crystal.debug_log { puts "In create_debug_type(type[<#{type}>] : VoidType)" }
+    def create_debug_type(type : VoidType, type_name : String? = type.to_s)
       di_builder.create_basic_type("Void", 8u64 * llvm_typer.pointer_size, 8u64 * llvm_typer.pointer_size, LLVM::DwarfTypeEncoding::Address)
     end
 
-    def create_debug_type(type : CharType, type_name : String? = nil)
-      # Crystal.debug_log { puts "In create_debug_type(type[<#{type}>] : CharType)" }
-      # The name "char32_t" is used so lldb and gdb recognizes this type
+    def create_debug_type(type : CharType, type_name : String? = type.to_s)
       di_builder.create_basic_type("char32_t", 32, 32, LLVM::DwarfTypeEncoding::Utf)
     end
 
-    def create_debug_type(type : IntegerType, type_name : String? = nil)
+    def create_debug_type(type : IntegerType, type_name : String? = type.to_s)
       di_builder.create_basic_type(type.to_s, type.bits, type.bits,
         type.signed? ? LLVM::DwarfTypeEncoding::Signed : LLVM::DwarfTypeEncoding::Unsigned)
     end
 
-    def create_debug_type(type : FloatType, type_name : String? = nil)
+    def create_debug_type(type : FloatType, type_name : String? = type.to_s)
       di_builder.create_basic_type(type.to_s, 8u64 * type.bytes, 8u64 * type.bytes, LLVM::DwarfTypeEncoding::Float)
     end
 
-    def create_debug_type(type : BoolType, type_name : String? = nil)
+    def create_debug_type(type : BoolType, type_name : String? = type.to_s)
       di_builder.create_basic_type(type.to_s, 8, 8, LLVM::DwarfTypeEncoding::Boolean)
     end
 
-    def create_debug_type(type : EnumType, type_name : String? = nil)
+    def create_debug_type(type : EnumType, type_name : String? = type.to_s)
       elements = type.types.map do |name, item|
         value = if item.is_a?(Const) && (value2 = item.value).is_a?(NumberLiteral)
                   value2.value.to_i64 rescue value2.value.to_u64
@@ -99,21 +96,22 @@ module Crystal
         di_builder.create_enumerator(name, value)
       end
       elements = di_builder.get_or_create_array(elements)
-      di_builder.create_enumeration_type(nil, type.to_s, nil, 1, 32, 32, elements, get_debug_type(type.base_type))
+      di_builder.create_enumeration_type(nil, type_name, nil, 1, 32, 32, elements, get_debug_type(type.base_type))
     end
 
-    def create_debug_type(type : NonGenericModuleType, type_name : String? = nil)
-    end
+    # def create_debug_type(type : NonGenericModuleType, type_name : String? = type.to_s)
+    # end
 
-    def create_debug_type(type : InstanceVarContainer, type_name : String? = nil)
+    def create_debug_type(type : InstanceVarContainer, type_name : String? = type.to_s)
       ivars = type.all_instance_vars
       element_types = [] of LibLLVMExt::Metadata
       struct_type = llvm_struct_type(type)
 
-      tmp_debug_type = di_builder.create_replaceable_composite_type(nil, type_name || type.to_s, nil, 1, llvm_context)
-      debug_type_cache[type_name || type.to_s] = tmp_debug_type
+      tmp_debug_type = di_builder.create_replaceable_composite_type(nil, type_name, nil, 1, llvm_context)
+      debug_type_cache[type_name] = tmp_debug_type
 
       ivars.each_with_index do |(name, ivar), idx|
+        next if ivar.type.is_a? (NilType)
         if (ivar_type = ivar.type?) && (ivar_debug_type = get_debug_type(ivar_type))
           offset = @program.target_machine.data_layout.offset_of_element(struct_type, idx &+ (type.struct? ? 0 : 1))
           size = @program.target_machine.data_layout.size_in_bits(llvm_embedded_type(ivar_type))
@@ -127,114 +125,116 @@ module Crystal
       end
 
       size = @program.target_machine.data_layout.size_in_bits(struct_type)
-      debug_type = di_builder.create_struct_type(nil, type_name || type.to_s, nil, 1, size, size, LLVM::DIFlags::Zero, nil, di_builder.get_or_create_type_array(element_types))
+      debug_type = di_builder.create_struct_type(nil, type_name, nil, 1, size, size, LLVM::DIFlags::Zero, nil, di_builder.get_or_create_type_array(element_types))
       unless type.struct?
-        debug_type = di_builder.create_pointer_type(debug_type, 8u64 * llvm_typer.pointer_size, 8u64 * llvm_typer.pointer_size, type_name || type.to_s)
+        debug_type = di_builder.create_pointer_type(debug_type, 8u64 * llvm_typer.pointer_size, 8u64 * llvm_typer.pointer_size, type_name)
       end
       di_builder.replace_temporary(tmp_debug_type, debug_type)
       debug_type
     end
 
-    def create_debug_type(type : (PointerInstanceType | Pointer(T)), type_name : String? = nil)
+    def create_debug_type(type : (PointerInstanceType | Pointer(T)), type_name : String? = type.to_s)
       element_type = get_debug_type(type.element_type)
       return unless element_type
-      di_builder.create_pointer_type(element_type, 8u64 * llvm_typer.pointer_size, 8u64 * llvm_typer.pointer_size, type_name || type.to_s)
+      di_builder.create_pointer_type(element_type, 8u64 * llvm_typer.pointer_size, 8u64 * llvm_typer.pointer_size, type_name)
     end  
 
-    def create_debug_type(type : MixedUnionType, type_name : String? = nil)
+    def create_debug_type(type : MixedUnionType, type_name : String? = type.to_s)
+      debug_string = ""
       element_types = [] of LibLLVMExt::Metadata
       struct_type = llvm_type(type)
       struct_type_size = @program.target_machine.data_layout.size_in_bits(struct_type)
       is_struct = struct_type.struct_element_types.size == 1
 
-      Crystal.debug_log { puts "create_debug_type(type=[<#{type}>] : MixedUnionType, type_name : String? = [<#{type_name}>]): struct_type=[<#{struct_type}>, struct_type_size=[<#{struct_type_size}>], is_struct=[<#{is_struct}>]" }
-
-      tmp_debug_type = di_builder.create_replaceable_composite_type(nil, type_name || type.to_s, nil, 1, llvm_context)
-      debug_type_cache[type_name || type.to_s] = tmp_debug_type
-      offset = @program.target_machine.data_layout.offset_of_element(struct_type, 1)
+      tmp_debug_type = di_builder.create_replaceable_composite_type(nil, type_name, nil, 1, llvm_context)
+      debug_type_cache[type_name] = tmp_debug_type
 
       type.expand_union_types.each_with_index do |ivar_type, idx|
+        next if ivar_type.is_a? (NilType) || ivar_type.to_s == "Nil"
         if ivar_debug_type = get_debug_type(ivar_type)
-          embedded_type = llvm_embedded_type(ivar_type)
+          embedded_type = llvm_type(ivar_type)
           size = @program.target_machine.data_layout.size_in_bits(embedded_type)
-          Crystal.debug_log { puts "create_debug_type(type=[<#{type}>] : MixedUnionType, type_name : String? = [<#{type_name}>]): ivar_type=[<#{ivar_type.to_s}>], embedded_type=[<#{embedded_type}>, size=[<#{size}>]" }
-          member = di_builder.create_member_type(nil, ivar_type.to_s, nil, 1, size, size, 8u64 * offset, LLVM::DIFlags::Zero, ivar_debug_type)
+          align = llvm_typer.align_of(embedded_type) * 8u64
+          member = di_builder.create_member_type(nil, ivar_type.to_s, nil, 1, size, align, 0, LLVM::DIFlags::Zero, ivar_debug_type)
           element_types << member
         end
       end
 
-      # size = @program.target_machine.data_layout.size_in_bits(struct_type)
       size = @program.target_machine.data_layout.size_in_bits(struct_type.struct_element_types[is_struct ? 0 : 1])
-      debug_type = di_builder.create_union_type(nil, (is_struct ? "" : "union.") + (type_name || type.to_s), @current_debug_file.not_nil!, 1, size - 32, size - 32, LLVM::DIFlags::Zero, di_builder.get_or_create_type_array(element_types))
+      offset = @program.target_machine.data_layout.offset_of_element(struct_type, 1) * 8u64
+      debug_type = di_builder.create_union_type(nil, nil, @current_debug_file.not_nil!, 1, size, size, LLVM::DIFlags::Zero, di_builder.get_or_create_type_array(element_types))
       if !is_struct
         element_types.clear
         element_types << di_builder.create_member_type(nil, "type_id", nil, 1, 32, 32, 0, LLVM::DIFlags::Zero, get_debug_type(@program.uint32))
-        element_types << di_builder.create_member_type(nil, "union", nil, 1, size, size, 8u64 * offset, LLVM::DIFlags::Zero, debug_type)
-        debug_type = di_builder.create_struct_type(nil, type_name || type.to_s, nil, 1, struct_type_size, struct_type_size, LLVM::DIFlags::Zero, nil, di_builder.get_or_create_type_array(element_types))
+        element_types << di_builder.create_member_type(nil, "union", nil, 1, size, size, offset, LLVM::DIFlags::Zero, debug_type)
+        debug_type = di_builder.create_struct_type(nil, type_name, nil, 1, struct_type_size, struct_type_size, LLVM::DIFlags::Zero, nil, di_builder.get_or_create_type_array(element_types))
       end
+      Crystal.debug_log { puts debug_string }
       di_builder.replace_temporary(tmp_debug_type, debug_type)
       debug_type
     end
 
-    def create_debug_type(type : (NilableReferenceUnionType | ReferenceUnionType), type_name : String? = nil)
+    def create_debug_type(type : (NilableReferenceUnionType | ReferenceUnionType), type_name : String? = type.to_s)
       element_types = [] of LibLLVMExt::Metadata
       struct_type = llvm_type(type)
-
-      Crystal.debug_log { puts "create_debug_type(type=[<#{type.to_s}>] : (NilableReferenceUnionType | ReferenceUnionType), type_name : String? = [<#{type_name}>]): type.expand_union_types=[<#{type.expand_union_types}>], struct_type=[<#{struct_type}>]" }
-
-      tmp_debug_type = di_builder.create_replaceable_composite_type(nil, type_name || type.to_s, nil, 1, llvm_context)
-      debug_type_cache[type_name || type.to_s] = tmp_debug_type
-      offset = 0
+      tmp_debug_type = di_builder.create_replaceable_composite_type(nil, type_name, nil, 1, llvm_context)
+      debug_type_cache[type_name] = tmp_debug_type
 
       type.expand_union_types.each_with_index do |ivar_type, idx|
+        next if ivar_type.is_a? (NilType) || ivar_type.to_s == "Nil"
         if ivar_debug_type = get_debug_type(ivar_type)
-          embedded_type = llvm_embedded_type(ivar_type)
+          embedded_type = llvm_type(ivar_type)
           size = @program.target_machine.data_layout.size_in_bits(embedded_type)
-          member = di_builder.create_member_type(nil, ivar_type.to_s, nil, 1, size, size, 8u64 * offset, LLVM::DIFlags::Zero, ivar_debug_type)
+          member = di_builder.create_member_type(nil, ivar_type.to_s, nil, 1, size, size, 0, LLVM::DIFlags::Zero, ivar_debug_type)
           element_types << member
         end
       end
 
       size = @program.target_machine.data_layout.size_in_bits(struct_type)
-      debug_type = di_builder.create_union_type(nil, type_name || type.to_s, @current_debug_file.not_nil!, 1, size, size, LLVM::DIFlags::Zero, di_builder.get_or_create_type_array(element_types))
+      debug_type = di_builder.create_union_type(nil, type_name, @current_debug_file.not_nil!, 1, size, size, LLVM::DIFlags::Zero, di_builder.get_or_create_type_array(element_types))
       # debug_type = create_pointer(debug_type, type.to_s)
       di_builder.replace_temporary(tmp_debug_type, debug_type)
       debug_type
     end
 
-    def create_debug_type(type : NilableType, type_name : String? = nil)
+    def create_debug_type(type : NilableType, type_name : String? = type.to_s)
       debug_type = get_debug_type(type.not_nil_type, type.to_s)
       debug_type
     end
 
-    def create_debug_type(type : NilablePointerType, type_name : String? = nil)
+    def create_debug_type(type : NilablePointerType, type_name : String? = type.to_s)
       debug_type = get_debug_type(type.pointer_type, type.to_s)
       debug_type
     end
 
-    def create_debug_type(type : StaticArrayInstanceType, type_name : String? = nil)
+    def create_debug_type(type : StaticArrayInstanceType, type_name : String? = type.to_s)
       Crystal.debug_log { puts "Unsupported type for debugging: #{type} (#{type.class}) -> element_type=[<#{type.element_type}>], size=#{type.size}" }
     end
 
-    def create_debug_type(type, type_name : String? = nil)
-      Crystal.debug_log { puts "Unsupported type for debugging: #{type} (#{type.class}), , type_name=#{type_name}" }
+    def create_debug_type(type, type_name : String? = type.to_s)
+      Crystal.debug_log { puts "Unsupported type for debugging: #{type} (#{type.class}), type_name=#{type_name}" }
     end
 
     def declare_parameter(arg_name, arg_type, arg_no, alloca, location)
+      return unless @debug.variables?
       declare_local(arg_type, alloca, location) do |scope, file, line_number, debug_type|
-        di_builder.create_parameter_variable scope, arg_name, arg_no, file, line_number, debug_type
+        variable = di_builder.create_parameter_variable scope, arg_name, arg_no, file, line_number, debug_type
+        Crystal.debug_log { puts "declare_parameter(#{arg_name})/#{arg_no}@#{arg_type}: var: #{dump_metadata(variable)}" }
+        variable
       end
     end
 
     def declare_variable(var_name, var_type, alloca, location)
+      return unless @debug.variables?
       declare_local(var_type, alloca, location) do |scope, file, line_number, debug_type|
-        di_builder.create_auto_variable scope, var_name, file, line_number, debug_type, align_of(var_type)
+        variable = di_builder.create_auto_variable scope, var_name, file, line_number, debug_type, align_of(var_type)
+        Crystal.debug_log { puts "declare_variable(#{var_name})@#{var_type}: alloca: #{alloca} var: #{dump_metadata(variable)}" }
+        variable
       end
     end
 
     def dump_metadata (md : LibLLVMExt::Metadata?)
-      # md.nil? ? "nil" : LLVM::Value.new(LibLLVMExt.metadata_as_value(llvm_context, md.not_nil!))
-      "---disabled---"
+      md.nil? ? "nil" : LLVM::Value.new(LibLLVMExt.metadata_as_value(llvm_context, md.not_nil!))
     end
 
     private def align_of(type)
@@ -269,6 +269,7 @@ module Crystal
     # Emit debug info for toplevel variables. Used for the main module and all
     # required files.
     def emit_vars_debug_info(vars)
+      return if @debug.none?
       in_alloca_block do
         vars.each do |name, var|
           llvm_var = context.vars[name]
@@ -327,13 +328,26 @@ module Crystal
       if context.fun.name == MAIN_NAME
         main_scopes = (@main_scopes ||= {} of {String, String} => LibLLVMExt::Metadata)
         file, dir = file_and_dir(location.filename)
-        main_scopes[{file, dir}] ||= begin
+        main_scope = main_scopes[{file, dir}] ||= begin
           di_builder = di_builder(@main_mod)
           file = di_builder.create_file(file, dir)
-          di_builder.create_lexical_block(fun_metadatas[context.fun], file, 1, 1)
+          di_builder.create_lexical_block(fun_metadatas[context.fun][0][1], file, 1, 1)
         end
+        main_scope
       else
-        fun_metadatas[context.fun]?
+        array = fun_metadatas[context.fun]?
+        scope = nil
+        if array
+          array.each_with_index do |scope_pair, idx|
+            return scope_pair[1] if scope_pair[0] == location.filename
+          end
+          file, dir = file_and_dir(location.filename)
+          di_builder = di_builder()
+          file_scope = di_builder.create_file(file, dir)
+          scope = di_builder.create_lexical_block_file(fun_metadatas[context.fun][0][1], file_scope)
+          array << Tuple.new(location.original_filename || "??", scope)
+        end
+        scope
       end
     end
 
@@ -363,7 +377,7 @@ module Crystal
       scope = di_builder.create_file(file, dir)
       fn_metadata = di_builder.create_function(scope, MAIN_NAME, MAIN_NAME, scope,
         0, fun_metadata_type, true, true, 0, LLVM::DIFlags::Zero, false, main_fun)
-      fun_metadatas[main_fun] = fn_metadata
+      fun_metadatas[main_fun] = [Tuple.new(filename || "??", fn_metadata)]
     end
 
     def emit_def_debug_metadata(target_def)
@@ -374,8 +388,8 @@ module Crystal
       scope = di_builder.create_file(file, dir)
       fn_metadata = di_builder.create_function(scope, target_def.name, target_def.name, scope,
         location.line_number, fun_metadata_type, true, true,
-        location.line_number, LLVM::DIFlags::Zero, false, context.fun)
-      fun_metadatas[context.fun] = fn_metadata
+        location.line_number, LLVM::DIFlags::Zero, !@debug.variables?, context.fun)
+      fun_metadatas[context.fun] = [Tuple.new(location.original_filename || "??", fn_metadata)]
     end
 
     def create_pointer(debug_type : LibLLVMExt::Metadata, type_name : String)

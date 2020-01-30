@@ -598,21 +598,8 @@ module Crystal
     end
   end
 
-  {% if flag?(:compiler_debug) %}
-    def self.debug_log (*args)
-      old_stdout_sync = STDOUT.sync?
-      old_stderr_sync = STDERR.sync?
-      STDOUT.sync = true
-      STDERR.sync = true
-
-      puts *args
-
-      STDOUT.sync = old_stdout_sync
-      STDERR.sync = old_stderr_sync
-      nil
-    end
-
-    def self.debug_log (&block)
+  def self.debug_log : Nil
+    if ENV["COMPILER_DEBUG"]? && ["1", "true"].includes?(ENV["COMPILER_DEBUG"]) && {{ flag?(:compiler_debug) }}
       old_stdout_sync = STDOUT.sync?
       old_stderr_sync = STDERR.sync?
       STDOUT.sync = true
@@ -622,36 +609,6 @@ module Crystal
 
       STDOUT.sync = old_stdout_sync
       STDERR.sync = old_stderr_sync
-      nil
-    end
-{% else %}
-  def self.debug_log (*args)
-    if ENV["COMPILER_DEBUG"]?
-      old_stdout_sync = STDOUT.sync?
-      old_stderr_sync = STDERR.sync?
-      STDERR.sync = true
-
-      puts *args
-
-      STDOUT.sync = old_stdout_sync
-      STDERR.sync = old_stderr_sync
-      nil
     end
   end
-
-  def self.debug_log (&block)
-    if ENV["COMPILER_DEBUG"]?
-      old_stdout_sync = STDOUT.sync?
-      old_stderr_sync = STDERR.sync?
-      STDOUT.sync = true
-      STDERR.sync = true
-
-      yield
-
-      STDOUT.sync = old_stdout_sync
-      STDERR.sync = old_stderr_sync
-      nil
-    end
-  end
-{% end %}
 end

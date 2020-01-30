@@ -61,6 +61,10 @@ module Crystal
       @builder.build_operand_bundle_def(name, values)
     end
 
+    def current_debug_location_metadata
+      @builder.current_debug_location_metadata
+    end
+
     def to_unsafe
       @builder.to_unsafe
     end
