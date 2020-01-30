@@ -128,7 +128,7 @@ describe "select" do
     end
 
     ch3.receive.should eq(3)
-    while !f.dead?
+    until f.dead?
       Fiber.yield
     end
     x.should eq(1)
@@ -156,7 +156,7 @@ describe "select" do
     end
 
     ch3.receive.should eq(3)
-    while !f.dead?
+    until f.dead?
       Fiber.yield
     end
     x.should eq(1)
