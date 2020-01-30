@@ -25,7 +25,7 @@ class HTTP::StaticFileHandler
   end
 
   def call(context)
-    unless {"GET", "HEAD"}.includes?(context.request.method)
+    unless context.request.method.in?("GET", "HEAD")
       if @fallthrough
         call_next(context)
       else

@@ -303,7 +303,7 @@ describe "BitArray" do
     slice[1] = 0b01010101_u8
     slice[5] = 0b11111101_u8
     ary.each_with_index do |e, i|
-      e.should eq({1, 3, 5, 7, 8, 10, 12, 14, 40, 42}.includes?(i))
+      e.should eq(i.in?(1, 3, 5, 7, 8, 10, 12, 14, 40, 42))
     end
   end
 

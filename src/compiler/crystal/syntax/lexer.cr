@@ -2261,11 +2261,11 @@ module Crystal
 
       if !delimiter_state && current_char == '%' && ident_start?(peek_next_char)
         char = next_char
-        if char == 'q' && (peek = peek_next_char) && {'(', '<', '[', '{', '|'}.includes?(peek)
+        if char == 'q' && (peek = peek_next_char) && peek.in?('(', '<', '[', '{', '|')
           next_char
           delimiter_state = Token::DelimiterState.new(:string, char, closing_char, 1)
           next_char
-        elsif char == 'r' && (peek = peek_next_char) && {'(', '<', '[', '{', '|'}.includes?(peek)
+        elsif char == 'r' && (peek = peek_next_char) && peek.in?('(', '<', '[', '{', '|')
           next_char
           delimiter_state = Token::DelimiterState.new(:regex, char, closing_char, 1)
           next_char

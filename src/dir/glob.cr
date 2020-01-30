@@ -229,7 +229,7 @@ class Dir
             end
 
             if entry = read_entry(dir)
-              next if {".", ".."}.includes?(entry.name)
+              next if entry.name.in?(".", "..")
               next if !options[:match_hidden] && entry.name.starts_with?('.')
 
               if dir_path.bytesize == 0

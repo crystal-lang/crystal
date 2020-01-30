@@ -2,7 +2,7 @@
 
 class Crystal::Command
   private def env
-    if ARGV.size == 1 && {"--help", "-h"}.includes?(ARGV[0])
+    if ARGV.size == 1 && ARGV[0].in?("--help", "-h")
       env_usage
     end
 

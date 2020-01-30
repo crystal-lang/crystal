@@ -1979,12 +1979,12 @@ describe "String" do
     it { "hello world\\r\\n".count("\\A").should eq(0) }
     it { "hello world\\r\\n".count("X-\\w").should eq(3) }
     it { "aabbcc".count('a').should eq(2) }
-    it { "aabbcc".count { |c| ['a', 'b'].includes?(c) }.should eq(4) }
+    it { "aabbcc".count(&.in?('a', 'b')).should eq(4) }
   end
 
   describe "squeeze" do
-    it { "aaabbbccc".squeeze { |c| ['a', 'b'].includes?(c) }.should eq("abccc") }
-    it { "aaabbbccc".squeeze { |c| ['a', 'c'].includes?(c) }.should eq("abbbc") }
+    it { "aaabbbccc".squeeze(&.in?('a', 'b')).should eq("abccc") }
+    it { "aaabbbccc".squeeze(&.in?('a', 'c')).should eq("abbbc") }
     it { "a       bbb".squeeze.should eq("a b") }
     it { "a    bbb".squeeze(' ').should eq("a bbb") }
     it { "aaabbbcccddd".squeeze("b-d").should eq("aaabcd") }

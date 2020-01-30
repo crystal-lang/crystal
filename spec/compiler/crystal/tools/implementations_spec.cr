@@ -25,7 +25,7 @@ private def assert_implementations(code)
     end
   end
 
-  code = code.delete { |char| {'‸', '༓'}.includes? char }
+  code = code.delete &.in?('‸', '༓')
 
   if cursor_location
     visitor, result = processed_implementation_visitor(code, cursor_location)

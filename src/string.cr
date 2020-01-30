@@ -2260,7 +2260,7 @@ class String
   # returns the number of times the block returned a truthy value.
   #
   # ```
-  # "aabbcc".count { |c| ['a', 'b'].includes?(c) } # => 4
+  # "aabbcc".count &.in?('a', 'b') # => 4
   # ```
   def count
     count = 0
@@ -2291,7 +2291,7 @@ class String
   # block returned a truthy value removed.
   #
   # ```
-  # "aabbcc".delete { |c| ['a', 'b'].includes?(c) } # => "cc"
+  # "aabbcc".delete &.in?('a', 'b') # => "cc"
   # ```
   def delete
     String.build(bytesize) do |buffer|
@@ -2327,8 +2327,8 @@ class String
   # block returned a truthy value.
   #
   # ```
-  # "aaabbbccc".squeeze { |c| ['a', 'b'].includes?(c) } # => "abccc"
-  # "aaabbbccc".squeeze { |c| ['a', 'c'].includes?(c) } # => "abbbc"
+  # "aaabbbccc".squeeze &.in?('a', 'b') # => "abccc"
+  # "aaabbbccc".squeeze &.in?('a', 'c') # => "abbbc"
   # ```
   def squeeze
     previous = nil

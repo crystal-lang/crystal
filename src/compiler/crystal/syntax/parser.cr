@@ -2563,7 +2563,7 @@ module Crystal
         next_token_skip_space
       end
 
-      unless @token.keyword? && {:when, :else, :end}.includes?(@token.value)
+      unless @token.keyword? && @token.value.in?(:when, :else, :end)
         cond = parse_op_assign_no_control
         skip_statement_end
       end
@@ -3509,7 +3509,7 @@ module Crystal
     end
 
     def check_valid_def_name
-      if {:is_a?, :as, :as?, :responds_to?, :nil?}.includes?(@token.value)
+      if @token.value.in?(:is_a?, :as, :as?, :responds_to?, :nil?)
         raise "'#{@token.value}' is a pseudo-method and can't be redefined", @token
       end
     end
