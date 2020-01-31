@@ -579,7 +579,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
     num_members = enum_type.types.size
     if num_members > 0 && enum_type.flags?
       # skip None & All, they doesn't count as members for @[Flags] enums
-      num_members = enum_type.types.count { |(name, _)| !{"None", "All"}.includes?(name) }
+      num_members = enum_type.types.count { |(name, _)| !name.in?("None", "All") }
     end
 
     if num_members == 0

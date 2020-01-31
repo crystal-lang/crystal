@@ -85,11 +85,11 @@ class Crystal::Codegen::Target
   end
 
   def gnu?
-    environment_parts.any? { |part| {"gnu", "gnueabi", "gnueabihf"}.includes? part }
+    environment_parts.any? &.in?("gnu", "gnueabi", "gnueabihf")
   end
 
   def musl?
-    environment_parts.any? { |part| {"musl", "musleabi", "musleabihf"}.includes? part }
+    environment_parts.any? &.in?("musl", "musleabi", "musleabihf")
   end
 
   def windows?
@@ -105,7 +105,7 @@ class Crystal::Codegen::Target
   end
 
   def armhf?
-    environment_parts.includes?("gnueabihf") || environment_parts.includes?("musleabihf")
+    environment_parts.any? &.in?("gnueabihf", "musleabihf")
   end
 
   def to_target_machine(cpu = "", features = "", release = false,

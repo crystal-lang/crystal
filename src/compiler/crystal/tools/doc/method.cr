@@ -148,7 +148,7 @@ class Crystal::Doc::Method
         end
       end
     end
-    {type.name, "self"}.includes?(return_type.to_s)
+    return_type.to_s.in?(type.name, "self")
   end
 
   def abstract?

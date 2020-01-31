@@ -163,7 +163,7 @@ class URI
   def self.reserved?(byte) : Bool
     char = byte.unsafe_chr
     '&' <= char <= ',' ||
-      {'!', '#', '$', '/', ':', ';', '?', '@', '[', ']', '='}.includes?(char)
+      char.in?('!', '#', '$', '/', ':', ';', '?', '@', '[', ']', '=')
   end
 
   # Returns whether given byte is unreserved character defined in
@@ -173,7 +173,7 @@ class URI
   def self.unreserved?(byte) : Bool
     char = byte.unsafe_chr
     char.ascii_alphanumeric? ||
-      {'_', '.', '-', '~'}.includes?(char)
+      char.in?('_', '.', '-', '~')
   end
 
   # URL-decodes *string* and writes the result to *io*.

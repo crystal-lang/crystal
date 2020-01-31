@@ -4220,7 +4220,7 @@ module Crystal
       end
 
       # Mop up any trailing unused : or ::, don't write them since they should be removed
-      while {:":", :"::"}.includes? @token.type
+      while @token.type.in?(:":", :"::")
         next_token_skip_space_or_newline
       end
 

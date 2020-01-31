@@ -486,7 +486,7 @@ class Crystal::Command
 
     output_filename ||= original_output_filename
     output_format ||= "text"
-    if !["text", "json"].includes?(output_format)
+    unless output_format.in?("text", "json")
       error "You have input an invalid format, only text and JSON are supported"
     end
 
