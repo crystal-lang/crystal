@@ -115,7 +115,7 @@ lib LibUnwind
       exception_cleanup : LibC::SizeT
       private1 : UInt64
       private2 : UInt64
-      exception_object : UInt64
+      exception_object : Void*
       exception_type_id : Int32
     end
 

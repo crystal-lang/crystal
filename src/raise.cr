@@ -200,7 +200,7 @@ end
 
   # :nodoc:
   fun __crystal_get_exception(unwind_ex : LibUnwind::Exception*) : UInt64
-    unwind_ex.value.exception_object
+    unwind_ex.value.exception_object.address
   end
 
   # Raises the *exception*.
@@ -218,7 +218,7 @@ end
     unwind_ex = Pointer(LibUnwind::Exception).malloc
     unwind_ex.value.exception_class = LibC::SizeT.zero
     unwind_ex.value.exception_cleanup = LibC::SizeT.zero
-    unwind_ex.value.exception_object = exception.object_id
+    unwind_ex.value.exception_object = exception.as(Void*)
     unwind_ex.value.exception_type_id = exception.crystal_type_id
     __crystal_raise(unwind_ex)
   end
