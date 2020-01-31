@@ -169,7 +169,6 @@ module Crystal
         element_types << di_builder.create_member_type(nil, "union", nil, 1, size, size, offset, LLVM::DIFlags::Zero, debug_type)
         debug_type = di_builder.create_struct_type(nil, type_name, nil, 1, struct_type_size, struct_type_size, LLVM::DIFlags::Zero, nil, di_builder.get_or_create_type_array(element_types))
       end
-      Crystal.debug_log { puts debug_string }
       di_builder.replace_temporary(tmp_debug_type, debug_type)
       debug_type
     end
@@ -208,18 +207,18 @@ module Crystal
     end
 
     def create_debug_type(type : StaticArrayInstanceType, type_name : String? = type.to_s)
-      Crystal.debug_log { puts "Unsupported type for debugging: #{type} (#{type.class}) -> element_type=[<#{type.element_type}>], size=#{type.size}" }
+      debug_compiler_log { "Unsupported type for debugging: #{type} (#{type.class}) -> element_type=[<#{type.element_type}>], size=#{type.size}" }
     end
 
     def create_debug_type(type, type_name : String? = type.to_s)
-      Crystal.debug_log { puts "Unsupported type for debugging: #{type} (#{type.class}), type_name=#{type_name}" }
+      debug_compiler_log { "Unsupported type for debugging: #{type} (#{type.class}), type_name=#{type_name}" }
     end
 
     def declare_parameter(arg_name, arg_type, arg_no, alloca, location)
       return unless @debug.variables?
       declare_local(arg_type, alloca, location) do |scope, file, line_number, debug_type|
         variable = di_builder.create_parameter_variable scope, arg_name, arg_no, file, line_number, debug_type
-        Crystal.debug_log { puts "declare_parameter(#{arg_name})/#{arg_no}@#{arg_type}: var: #{dump_metadata(variable)}" }
+        debug_compiler_log { "declare_parameter(#{arg_name})/#{arg_no}@#{arg_type}: var: #{dump_metadata(variable)}" }
         variable
       end
     end
@@ -228,7 +227,7 @@ module Crystal
       return unless @debug.variables?
       declare_local(var_type, alloca, location) do |scope, file, line_number, debug_type|
         variable = di_builder.create_auto_variable scope, var_name, file, line_number, debug_type, align_of(var_type)
-        Crystal.debug_log { puts "declare_variable(#{var_name})@#{var_type}: alloca: #{alloca} var: #{dump_metadata(variable)}" }
+        debug_compiler_log { "declare_variable(#{var_name})@#{var_type}: alloca: #{alloca} var: #{dump_metadata(variable)}" }
         variable
       end
     end

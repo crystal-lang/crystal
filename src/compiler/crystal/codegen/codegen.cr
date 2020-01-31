@@ -1887,6 +1887,18 @@ module Crystal
       builder.unreachable
     end
 
+    def debug_compiler_log(file = __FILE__, line = __LINE__)
+      return unless ENV["CRYSTAL_DEBUG_COMPILER"]?
+      msg = yield || ""
+      puts("<#{Crystal.relative_filename(file)}:#{line}> #{msg}")
+      nil
+    end
+
+    # :ditto:
+    def debug_compiler_log(file = __FILE__, line = __LINE__)
+      debug_compiler_log(file, line) { }
+    end
+
     def allocate_aggregate(type)
       struct_type = llvm_struct_type(type)
       if type.passed_by_value?

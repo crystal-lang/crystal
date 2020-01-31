@@ -146,16 +146,15 @@ lib LibLLVMExt
   fun metadata_as_value = LLVMMetadataAsValue(context : LibLLVM::ContextRef, md : Metadata) : LibLLVM::ValueRef
   fun di_builder_create_unspecified_yype = LLVMDIBuilderCreateUnspecifiedType(builder: DIBuilder, name : Void*, size : LibC::SizeT) : Metadata
   fun get_current_debug_location_metadata = LLVMGetCurrentDebugLocation2(builder : LibLLVM::BuilderRef) : Metadata
-  fun LLVMDILocationGetLine(location : Metadata) : UInt32
-  fun LLVMDILocationGetColumn(location : Metadata) : UInt32
-  fun LLVMDILocationGetScope(location : Metadata) : Metadata
-  fun LLVMDIScopeGetFile(scope : Metadata) : Metadata
-  fun LLVMDIFileGetDirectory(file : Metadata,  dir_name_size : UInt32*) : Char*
-  fun LLVMDIFileGetFilename(file : Metadata, file_name_size : UInt32*) : Char*
-  fun LLVMDILocationGetLine(location : Metadata) : UInt32
-  fun LLVMDIVariableGetFile(variable : Metadata) : Metadata
-  fun LLVMDIVariableGetScope(variable : Metadata) : Metadata
-  fun LLVMDIVariableGetLine(variable : Metadata) : UInt32
+  fun location_get_line = LLVMDILocationGetLine(location : Metadata) : UInt32
+  fun location_get_column = LLVMDILocationGetColumn(location : Metadata) : UInt32
+  fun location_get_scope = LLVMDILocationGetScope(location : Metadata) : Metadata
+  fun scope_get_file = LLVMDIScopeGetFile(scope : Metadata) : Metadata
+  fun file_get_directory = LLVMDIFileGetDirectory(file : Metadata,  dir_name_size : UInt32*) : Char*
+  fun file_get_filename = LLVMDIFileGetFilename(file : Metadata, file_name_size : UInt32*) : Char*
+  fun variable_get_file = LLVMDIVariableGetFile(variable : Metadata) : Metadata
+  fun variable_get_scope = LLVMDIVariableGetScope(variable : Metadata) : Metadata
+  fun variable_get_line = LLVMDIVariableGetLine(variable : Metadata) : UInt32
   fun di_builder_create_lexical_block_file = LLVMDIBuilderCreateLexicalBlockFile(builder : DIBuilder,
     scope : Metadata, file_scope : Metadata, discriminator : UInt32) : Metadata
 end

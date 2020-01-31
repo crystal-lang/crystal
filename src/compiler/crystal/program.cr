@@ -597,18 +597,4 @@ module Crystal
       io << "<Program>"
     end
   end
-
-  def self.debug_log : Nil
-    if ENV["COMPILER_DEBUG"]? && ["1", "true"].includes?(ENV["COMPILER_DEBUG"]) && {{ flag?(:compiler_debug) }}
-      old_stdout_sync = STDOUT.sync?
-      old_stderr_sync = STDERR.sync?
-      STDOUT.sync = true
-      STDERR.sync = true
-
-      yield
-
-      STDOUT.sync = old_stdout_sync
-      STDERR.sync = old_stderr_sync
-    end
-  end
 end
