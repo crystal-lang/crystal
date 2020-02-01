@@ -313,6 +313,9 @@ describe "Lexer" do
   assert_syntax_error "00", "octal constants should be prefixed with 0o"
   assert_syntax_error "01_i64", "octal constants should be prefixed with 0o"
 
+  assert_syntax_error ".42", ".1 style number literal is not supported, put 0 before dot"
+  assert_syntax_error "-.42", ".1 style number literal is not supported, put 0 before dot"
+
   it "lexes not instance var" do
     lexer = Lexer.new "!@foo"
     token = lexer.next_token
