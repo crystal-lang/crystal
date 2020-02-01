@@ -78,7 +78,6 @@ jobs:
       TRAVIS_OS_NAME: linux
       ARCH: x86_64-musl
       ARCH_CMD: linux64
-      DOCKER_TEST_PREFIX: crystallang/crystal:ci-test-dev # TODO: Remove after 0.33.0
     steps: *ci_steps
 
   test_darwin:
