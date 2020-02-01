@@ -8,6 +8,15 @@ defaults:
     - run: echo 'export CURRENT_TAG="$CIRCLE_TAG"' >> $BASH_ENV
     - run: bin/ci prepare_build
     - run: bin/ci build
+    - run:
+        when: always
+        command: |
+          mkdir -p ~/test-results/spec
+          cp .junit/*.xml ~/test-results/spec/
+    - store_test_results:
+        path: ~/test-results
+    - store_artifacts:
+        path: ~/test-results/spec
 
 version: 2
 
@@ -61,6 +70,15 @@ jobs:
           path: ~/test-results
       - store_artifacts:
           path: ~/test-results/spec
+
+  test_alpine:
+    machine: true
+    environment:
+      <<: *env
+      TRAVIS_OS_NAME: linux
+      ARCH: x86_64-musl
+      ARCH_CMD: linux64
+    steps: *ci_steps
 
   test_darwin:
     macos:
@@ -504,6 +522,8 @@ workflows:
                 - /.*\bci\b.*/
       - test_linux32_std:
           filters: *unless_maintenance
+      - test_alpine:
+          filters: *unless_maintenance
       - test_darwin:
           filters: *unless_maintenance
       - test_preview_mt:
@@ -527,6 +547,8 @@ workflows:
             tags:
               only: /.*/
       - test_linux32_std:
+          filters: *per_tag
+      - test_alpine:
           filters: *per_tag
       - test_darwin:
           filters: *per_tag
@@ -602,6 +624,7 @@ workflows:
     jobs:
       - test_linux
       - test_linux32_std
+      - test_alpine
       - test_darwin
       - test_preview_mt
       - check_format
@@ -659,6 +682,8 @@ workflows:
                 - /release\/.+/
                 - /.*\bci\b.*/
       - test_linux32_std:
+          filters: *maintenance
+      - test_alpine:
           filters: *maintenance
       - test_darwin:
           filters: *maintenance

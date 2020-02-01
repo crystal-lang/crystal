@@ -148,6 +148,9 @@ with_build_env() {
     x86_64)
       export DOCKER_TEST_IMAGE="$DOCKER_TEST_PREFIX-build"
       ;;
+    x86_64-musl)
+      export DOCKER_TEST_IMAGE="$DOCKER_TEST_PREFIX-alpine-build"
+      ;;
     i386)
       export DOCKER_TEST_IMAGE="$DOCKER_TEST_PREFIX-i386-build"
       ;;
