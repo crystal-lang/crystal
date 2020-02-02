@@ -57,6 +57,6 @@ class System::Group
   end
 
   def to_s(io)
-    io << name << " (" << id << ")"
+    io << name << " (" << id << ')'
   end
 end

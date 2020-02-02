@@ -393,58 +393,58 @@ describe "File" do
     end
   end
 
-  it "gets info for this file" do
-    info = File.info(datapath("test_file.txt"))
-    info.type.should eq(File::Type::File)
-  end
-
-  it "gets info for this directory" do
-    info = File.info(datapath)
-    info.type.should eq(File::Type::Directory)
-  end
-
-  # TODO: support stating nul on windows
-  pending_win32 "gets info for a character device" do
-    info = File.info(File::NULL)
-    info.type.should eq(File::Type::CharacterDevice)
-  end
-
-  it "gets info for a symlink" do
-    info = File.info(datapath("symlink.txt"), follow_symlinks: false)
-    info.type.should eq(File::Type::Symlink)
-  end
-
-  it "gets info for open file" do
-    File.open(datapath("test_file.txt"), "r") do |file|
-      info = file.info
+  describe "File::Info" do
+    it "gets for this file" do
+      info = File.info(datapath("test_file.txt"))
       info.type.should eq(File::Type::File)
     end
-  end
 
-  it "gets info for pipe" do
-    IO.pipe do |r, w|
-      r.info.type.should eq(File::Type::Pipe)
-      w.info.type.should eq(File::Type::Pipe)
+    it "gets for this directory" do
+      info = File.info(datapath)
+      info.type.should eq(File::Type::Directory)
     end
-  end
 
-  it "gets info for non-existent file and raises" do
-    expect_raises_errno(Errno::ENOENT, "Unable to get info for 'non-existent'") do
-      File.info("non-existent")
+    # TODO: support stating nul on windows
+    pending_win32 "gets for a character device" do
+      info = File.info(File::NULL)
+      info.type.should eq(File::Type::CharacterDevice)
     end
-  end
 
-  it "gets info mtime for new file" do
-    with_tempfile("mtime") do |path|
-      File.touch(path)
-      File.open(path) do |file|
-        file.info.modification_time.should be_close(Time.utc, 1.seconds)
+    it "gets for a symlink" do
+      info = File.info(datapath("symlink.txt"), follow_symlinks: false)
+      info.type.should eq(File::Type::Symlink)
+    end
+
+    it "gets for open file" do
+      File.open(datapath("test_file.txt"), "r") do |file|
+        info = file.info
+        info.type.should eq(File::Type::File)
       end
-      File.info(path).modification_time.should be_close(Time.utc, 1.seconds)
     end
-  end
 
-  describe "File::Info" do
+    it "gets for pipe" do
+      IO.pipe do |r, w|
+        r.info.type.should eq(File::Type::Pipe)
+        w.info.type.should eq(File::Type::Pipe)
+      end
+    end
+
+    it "gets for non-existent file and raises" do
+      expect_raises_errno(Errno::ENOENT, "Unable to get info for 'non-existent'") do
+        File.info("non-existent")
+      end
+    end
+
+    it "gets mtime for new file" do
+      with_tempfile("mtime") do |path|
+        File.touch(path)
+        File.open(path) do |file|
+          file.info.modification_time.should be_close(Time.utc, 1.seconds)
+        end
+        File.info(path).modification_time.should be_close(Time.utc, 1.seconds)
+      end
+    end
+
     it "tests equal for the same file" do
       File.info(datapath("test_file.txt")).should eq(File.info(datapath("test_file.txt")))
     end
