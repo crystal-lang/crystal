@@ -81,6 +81,10 @@ lib LibLLVMExt
                                                                         scope : Metadata, name : Char*, file : Metadata, line : UInt, size_in_bits : UInt64,
                                                                         align_in_bits : UInt64, flags : LLVM::DIFlags, element_types : Metadata) : Metadata
  
+  fun di_builder_create_array_type = LLVMExtDIBuilderCreateArrayType(builder : DIBuilder, size : UInt64,
+                                                                    alignInBits : UInt32, ty : Metadata,
+                                                                    subscripts : Metadata) : Metadata
+
    fun di_builder_create_member_type = LLVMExtDIBuilderCreateMemberType(builder : DIBuilder,
                                                                        scope : Metadata, name : Char*, file : Metadata, line : UInt, size_in_bits : UInt64,
                                                                        align_in_bits : UInt64, offset_in_bits : UInt64, flags : LLVM::DIFlags, ty : Metadata) : Metadata
@@ -157,5 +161,6 @@ lib LibLLVMExt
   fun variable_get_line = LLVMDIVariableGetLine(variable : Metadata) : UInt32
   fun di_builder_create_lexical_block_file = LLVMDIBuilderCreateLexicalBlockFile(builder : DIBuilder,
     scope : Metadata, file_scope : Metadata, discriminator : UInt32) : Metadata
+  fun di_builder_get_or_create_array_subrange = LLVMExtDIBuilderGetOrCreateArraySubrange(builder: DIBuilder, lo : UInt64, count : UInt64) : Metadata
 end
 

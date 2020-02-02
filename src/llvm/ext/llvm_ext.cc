@@ -254,6 +254,13 @@ LLVMMetadataRef LLVMExtDIBuilderCreateUnionType(
   return wrap(CT);
 }
 
+LLVMMetadataRef LLVMExtDIBuilderCreateArrayType(
+    DIBuilderRef Dref, uint64_t Size, uint64_t AlignInBits,
+    LLVMMetadataRef Type, LLVMMetadataRef Subs) {
+      return wrap(Dref->createArrayType(Size, AlignInBits, unwrapDI<DIType>(Type), DINodeArray(unwrapDI<MDTuple>(Subs))));
+}
+
+
 LLVMMetadataRef LLVMExtDIBuilderCreateReplaceableCompositeType(
   DIBuilderRef Dref, LLVMMetadataRef Scope, const char *Name,
   LLVMMetadataRef File, unsigned Line) {
@@ -420,6 +427,7 @@ LLVMValueRef LLVMExtBuildInvoke(
 #endif
 }
 
+
 void LLVMExtWriteBitcodeWithSummaryToFile(LLVMModuleRef mref, const char *File) {
 #if LLVM_VERSION_GE(4, 0)
   // https://github.com/ldc-developers/ldc/pull/1840/files
@@ -450,6 +458,12 @@ char *LLVMExtBasicBlockName(LLVMBasicBlockRef BB) {
 #else
   return NULL;
 #endif
+}
+
+LLVMMetadataRef LLVMExtDIBuilderGetOrCreateArraySubrange(
+  DIBuilderRef Dref, uint64_t Lo, 
+  uint64_t Count) {
+    return wrap(Dref->getOrCreateSubrange(Lo, Count));
 }
 
 }

@@ -78,6 +78,11 @@ struct LLVM::DIBuilder
       flags, element_types)
   end
 
+  def create_array_type(size_in_bits, align_in_bits, type, subs)
+    elements = self.get_or_create_array(subs)
+    LibLLVMExt.di_builder_create_array_type(self, size_in_bits, align_in_bits, type, elements)
+  end
+
   def create_member_type(scope, name, file, line, size_in_bits, align_in_bits, offset_in_bits, flags, ty)
     LibLLVMExt.di_builder_create_member_type(self, scope, name, file, line, size_in_bits, align_in_bits,
       offset_in_bits, flags, ty)
@@ -100,28 +105,28 @@ struct LLVM::DIBuilder
   end
 
   def location_get_line(location : LibLLVMExt::Metadata)
-    LibLLVMExt.LLVMDILocationGetLine(location)
+    LibLLVMExt.location_get_line(location)
   end
 
   def location_get_column( location : LibLLVMExt::Metadata)
-    LibLLVMExt.LLVMDILocationGetColumn(location)
+    LibLLVMExt.location_get_column(location)
   end
 
   def location_get_scope(location : LibLLVMExt::Metadata)
-    LibLLVMExt.LLVMDILocationGetScope(location)
+    LibLLVMExt.location_get_scope(location)
   end
 
   def scope_get_file(scope : LibLLVMExt::Metadata)
-    LibLLVMExt.LLVMDIScopeGetFile(scope)
+    LibLLVMExt.scope_get_file(scope)
   end
 
   def file_get_directory(file : LibLLVMExt::Metadata)
-    ptr = LibLLVMExt.LLVMDIFileGetDirectory(file,  out dir_name_size)
+    ptr = LibLLVMExt.file_get_directory(file,  out dir_name_size)
     str = String.new(ptr, dir_name_size)
   end
 
   def file_get_filename(file : LibLLVMExt::Metadata)
-    ptr = LibLLVMExt.LLVMDIFileGetFilename(file, out file_name_size)
+    ptr = LibLLVMExt.file_get_filename(file, out file_name_size)
     str = String.new(ptr, file_name_size)
   end
 
@@ -130,11 +135,15 @@ struct LLVM::DIBuilder
   end
 
   def variable_get_scope(variable : LibLLVMExt::Metadata)
-    LibLLVMExt.LLVMDIVariableGetScope(variable)
+    LibLLVMExt.variable_get_scope(variable)
   end
 
   def variable_get_line(variable : LibLLVMExt::Metadata)
-    LibLLVMExt.LLVMDIVariableGetLine(variable)
+    LibLLVMExt.variable_get_line(variable)
+  end
+
+  def get_or_create_array_subrange(lo, count)
+    LibLLVMExt.di_builder_get_or_create_array_subrange(self, lo, count)
   end
   
   def end

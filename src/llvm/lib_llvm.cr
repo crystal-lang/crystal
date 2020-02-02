@@ -39,6 +39,8 @@ end
 
 {% begin %}
   lib LibLLVM
+    IS_100 = {{LibLLVM::VERSION.starts_with?("10.0")}}
+    IS_90 = {{LibLLVM::VERSION.starts_with?("9.0")}}
     IS_80 = {{LibLLVM::VERSION.starts_with?("8.0")}}
     IS_71 = {{LibLLVM::VERSION.starts_with?("7.1")}}
     IS_70 = {{LibLLVM::VERSION.starts_with?("7.0")}}
