@@ -299,6 +299,16 @@ describe "Semantic: macro" do
     ex.to_s.should_not contain("expanding macro")
   end
 
+  it "executes raise inside macro, with empty message (#8631)" do
+    assert_error %(
+      macro foo
+        {{ raise "" }}
+      end
+
+      foo
+      ), ""
+  end
+
   it "can specify tuple as return type" do
     assert_type(%(
       class Foo
