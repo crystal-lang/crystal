@@ -47,14 +47,16 @@ describe "Exception" do
     ex.inspect_with_backtrace.should contain("inner")
   end
 
-  it "collect memory within ensure block" do
-    sample = datapath("collect_within_ensure")
+  {% unless flag?(:win32) %}
+    it "collect memory within ensure block" do
+      sample = datapath("collect_within_ensure")
 
-    output, error = compile_and_run_file(sample)
+      output, error = compile_and_run_file(sample)
 
-    output.to_s.empty?.should be_true
-    error.to_s.should contain("Unhandled exception: Oh no! (Exception)")
-    error.to_s.should_not contain("Invalid memory access")
-    error.to_s.should_not contain("Illegal instruction")
-  end
+      output.to_s.empty?.should be_true
+      error.to_s.should contain("Unhandled exception: Oh no! (Exception)")
+      error.to_s.should_not contain("Invalid memory access")
+      error.to_s.should_not contain("Illegal instruction")
+    end
+  {% end %}
 end
