@@ -97,7 +97,7 @@ lib LibUnwind
       pr_cache : ControlBlock_PrCache
       # __align : LibC::LongLong # Force alignment of next item to 8-byte boundary
 
-      exception_object : UInt64
+      exception_object : Void*
       exception_type_id : Int32
       __align : StaticArray(UInt8, 4)
     end
