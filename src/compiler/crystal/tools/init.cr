@@ -81,6 +81,11 @@ module Crystal
         raise Error.new "Cannot use --force and --skip-existing together"
       end
 
+      if config.name == "."
+        config.dir = Dir.current
+        config.name = File.basename config.dir
+      end
+
       config.author = fetch_author
       config.email = fetch_email
       config.github_name = fetch_github_name
