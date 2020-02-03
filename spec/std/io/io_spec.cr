@@ -822,54 +822,54 @@ describe IO do
         io.encoding.should eq("UTF-16LE")
       end
     end
+  end
 
-    describe "#close" do
-      it "aborts 'read' in a different thread" do
-        ch = Channel(Symbol).new(1)
+  describe "#close" do
+    it "aborts 'read' in a different thread" do
+      ch = Channel(Symbol).new(1)
 
-        IO.pipe do |read, write|
-          f = spawn do
-            ch.send :start
-            read.gets
-          rescue
-            ch.send :end
-          end
-
-          delay(1) { ch.send :timeout }
-
-          ch.receive.should eq(:start)
-          while f.running?
-            # Wait until the fiber is blocked
-            Fiber.yield
-          end
-          read.close
-          ch.receive.should eq(:end)
+      IO.pipe do |read, write|
+        f = spawn do
+          ch.send :start
+          read.gets
+        rescue
+          ch.send :end
         end
+
+        delay(1) { ch.send :timeout }
+
+        ch.receive.should eq(:start)
+        while f.running?
+          # Wait until the fiber is blocked
+          Fiber.yield
+        end
+        read.close
+        ch.receive.should eq(:end)
       end
+    end
 
-      it "aborts 'write' in a different thread" do
-        ch = Channel(Symbol).new(1)
+    it "aborts 'write' in a different thread" do
+      ch = Channel(Symbol).new(1)
 
-        IO.pipe do |read, write|
-          f = spawn do
-            ch.send :start
-            loop do
-              write.puts "some line"
-            end
-          rescue
-            ch.send :end
+      IO.pipe do |read, write|
+        f = spawn do
+          ch.send :start
+          loop do
+            write.puts "some line"
           end
-
-          delay(1) { ch.send :timeout }
-
-          ch.receive.should eq(:start)
-          while f.running?
-            # Wait until the fiber is blocked
-            Fiber.yield
-          end
-          write.close
-          ch.receive.should eq(:end)
+        rescue
+          ch.send :end
         end
+
+        delay(1) { ch.send :timeout }
+
+        ch.receive.should eq(:start)
+        while f.running?
+          # Wait until the fiber is blocked
+          Fiber.yield
+        end
+        write.close
+        ch.receive.should eq(:end)
       end
     end
   end
