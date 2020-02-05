@@ -2042,12 +2042,14 @@ module Crystal
     end
 
     def memset(pointer, value, size)
+      len_arg = @program.bits64? ? size : trunc(size, llvm_context.int32)
+
       pointer = cast_to_void_pointer pointer
       res = call @program.memset(@llvm_mod, llvm_context),
         if LibLLVM::IS_LT_70
-          [pointer, value, trunc(size, llvm_context.int32), int32(4), int1(0)]
+          [pointer, value, len_arg, int32(4), int1(0)]
         else
-          [pointer, value, trunc(size, llvm_context.int32), int1(0)]
+          [pointer, value, len_arg, int1(0)]
         end
 
       unless LibLLVM::IS_LT_70
@@ -2197,28 +2199,34 @@ module Crystal
     end
 
     def memset(llvm_mod, llvm_context)
-      llvm_mod.functions["llvm.memset.p0i8.i32"]? || begin
+      name = bits64? ? "llvm.memset.p0i8.i64" : "llvm.memset.p0i8.i32"
+      len_type = bits64? ? llvm_context.int64 : llvm_context.int32
+
+      llvm_mod.functions[name]? || begin
         arg_types =
           if LibLLVM::IS_LT_70
-            [llvm_context.void_pointer, llvm_context.int8, llvm_context.int32, llvm_context.int32, llvm_context.int1]
+            [llvm_context.void_pointer, llvm_context.int8, len_type, llvm_context.int32, llvm_context.int1]
           else
-            [llvm_context.void_pointer, llvm_context.int8, llvm_context.int32, llvm_context.int1]
+            [llvm_context.void_pointer, llvm_context.int8, len_type, llvm_context.int1]
           end
 
-        llvm_mod.functions.add("llvm.memset.p0i8.i32", arg_types, llvm_context.void)
+        llvm_mod.functions.add(name, arg_types, llvm_context.void)
       end
     end
 
     def memcpy(llvm_mod, llvm_context)
-      llvm_mod.functions["llvm.memcpy.p0i8.p0i8.i32"]? || begin
+      name = bits64? ? "llvm.memcpy.p0i8.p0i8.i64" : "llvm.memcpy.p0i8.p0i8.i32"
+      len_type = bits64? ? llvm_context.int64 : llvm_context.int32
+
+      llvm_mod.functions[name]? || begin
         arg_types =
           if LibLLVM::IS_LT_70
-            [llvm_context.void_pointer, llvm_context.void_pointer, llvm_context.int32, llvm_context.int32, llvm_context.int1]
+            [llvm_context.void_pointer, llvm_context.void_pointer, len_type, llvm_context.int32, llvm_context.int1]
           else
-            [llvm_context.void_pointer, llvm_context.void_pointer, llvm_context.int32, llvm_context.int1]
+            [llvm_context.void_pointer, llvm_context.void_pointer, len_type, llvm_context.int1]
           end
 
-        llvm_mod.functions.add("llvm.memcpy.p0i8.p0i8.i32", arg_types, llvm_context.void)
+        llvm_mod.functions.add(name, arg_types, llvm_context.void)
       end
     end
   end
