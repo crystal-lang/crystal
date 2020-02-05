@@ -8,7 +8,7 @@
 
 ---
 
-[![born-and-raised](https://cloud.githubusercontent.com/assets/209371/13291809/022e2360-daf8-11e5-8be7-d02c1c8b38fb.png)](https://manas.tech/)
+[<img src="https://user-images.githubusercontent.com/22697/73868614-8a556c80-4827-11ea-944d-38a99963a3be.png" alt="crystal" width="576" height="248" />](https://manas.tech)
 
 Crystal is a programming language with the following goals:
 
