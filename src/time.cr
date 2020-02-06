@@ -719,7 +719,8 @@ struct Time
       end
 
       seconds += Time.absolute_days(year, month, day).to_i64 * SECONDS_PER_DAY
-      seconds += offset_seconds % SECONDS_PER_DAY
+      seconds += @seconds % SECONDS_PER_DAY
+      seconds += offset
     end
 
     # FIXME: These operations currently don't have overflow checks applied.
