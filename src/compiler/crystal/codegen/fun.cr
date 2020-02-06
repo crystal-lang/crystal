@@ -127,11 +127,11 @@ class Crystal::CodeGenVisitor
               # Self always comes as the first parameter, unless it's a closure:
               # then it will be fetched from the closure data.
               if name == "self" && !is_closure
-                declare_parameter(name, var.type, 1, var.pointer, location)
+                declare_parameter(name, var.type, 1, var.pointer, var.location)
               elsif arg_no = args.index { |arg| arg.name == name }
-                declare_parameter(name, var.type, arg_no + args_offset, var.pointer, location)
+                declare_parameter(name, var.type, arg_no + args_offset, var.pointer, var.location)
               else
-                declare_variable(name, var.type, var.pointer, location)
+                declare_variable(name, var.type, var.pointer, var.location)
               end
             end
           end
@@ -408,7 +408,7 @@ class Crystal::CodeGenVisitor
         next if def_var && !def_var.closured?
 
         ptr = gep(closure_ptr, 0, i, var.name)
-        self.context.vars[var.name] = LLVMVar.new(ptr, var.type)
+        self.context.vars[var.name] = LLVMVar.new(ptr, var.type, location: var.location)
       end
 
       if (closure_parent_context = context.closure_parent_context) &&
@@ -488,10 +488,10 @@ class Crystal::CodeGenVisitor
         pointer = alloca(llvm_type(var_type), arg.name)
         casted_pointer = bit_cast pointer, value.type.pointer
         store value, casted_pointer
-        context.vars[arg.name] = LLVMVar.new(pointer, var_type)
+        context.vars[arg.name] = LLVMVar.new(pointer, var_type, location: arg.location)
         return
       elsif arg.special_var?
-        context.vars[arg.name] = LLVMVar.new(value, var_type)
+        context.vars[arg.name] = LLVMVar.new(value, var_type, location: arg.location)
         return
       else
         # We don't need to create a copy of the argument if it's never
@@ -499,7 +499,7 @@ class Crystal::CodeGenVisitor
         needs_copy = target_def_var.try &.assigned_to?
         if needs_copy
           pointer = alloca(llvm_type(var_type), arg.name)
-          context.vars[arg.name] = LLVMVar.new(pointer, var_type)
+          context.vars[arg.name] = LLVMVar.new(pointer, var_type, location: arg.location)
 
           if arg.type.passed_by_value? && !context.fun.attributes(index + 1).by_val?
             # Create an alloca and store it there, so assign works well
@@ -513,10 +513,10 @@ class Crystal::CodeGenVisitor
             # is behind a pointer, as everywhere else
             pointer = alloca(llvm_type(var_type), arg.name)
             store value, pointer
-            context.vars[arg.name] = LLVMVar.new(pointer, var_type)
+            context.vars[arg.name] = LLVMVar.new(pointer, var_type, location: arg.location)
             return
           else
-            context.vars[arg.name] = LLVMVar.new(value, var_type, true)
+            context.vars[arg.name] = LLVMVar.new(value, var_type, true, location: arg.location)
             return
           end
         end

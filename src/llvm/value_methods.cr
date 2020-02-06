@@ -99,17 +99,18 @@ module LLVM::ValueMethods
     LLVM::Value.new @unwrap
   end
 
+  def instruction_metadata(kind : LLVM::Metadata::Type = LLVM::Metadata::Type::Dbg)
+    return nil unless LibLLVM.instruction_has_metadata(self)
+    metadata_value = LibLLVM.get_instruction_metadata(self, kind)
+    LLVM::Value.new metadata_value
+  end
+
   def dump
     LibLLVM.dump_value self
   end
 
   def inspect(io : IO) : Nil
     LLVM.to_io(LibLLVM.print_value_to_string(self), io)
-    self
-  end
-
-  def to_s(io : IO) : Nil
-    io << String.new(LibLLVM.print_value_to_string(self))
   end
 
   def to_unsafe

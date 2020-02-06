@@ -136,8 +136,9 @@ module Crystal
       # This field is true if that's the case.
       getter already_loaded : Bool
       property debug_var : Bool
+      property location : Location?
 
-      def initialize(@pointer, @type, @already_loaded = false, @debug_var = false)
+      def initialize(@pointer, @type, @already_loaded = false, @debug_var = false, @location = nil)
       end
     end
 
@@ -361,6 +362,13 @@ module Crystal
       @modules.each do |name, info|
         mod = info.mod
         push_debug_info_metadata(mod) unless @debug.none?
+
+        if ENV["CRYSTAL_DEBUG_LL_DUMP"]?
+          debug_compiler_log { "Module #{name}:" }
+          mod.functions.each do |func|
+            debug_compiler_log { func.body_to_ll_string }
+          end
+        end
 
         mod.dump if dump_all_llvm || name =~ dump_llvm_regex
 
@@ -791,7 +799,7 @@ module Crystal
         codegen_if_branch phi, node.then, then_block, false
         codegen_if_branch phi, node.else, else_block, true
       end
-      # set_current_debug_location(node.end_location) if @debug.line_numbers? && node.end_location
+      set_current_debug_location(node.end_location) if @debug.line_numbers? && node.end_location
 
       false
     end
@@ -1352,13 +1360,13 @@ module Crystal
       false
     end
 
-    def declare_var(var)
+    def declare_var(var, call_file = __FILE__, call_line = __LINE__)
       if value = context.vars[var.name]?
         return value
       end
       pointer = alloca llvm_type(var.type), var.name
-      declare_variable var.name, var.type, pointer, var.location
-      llvm_var = LLVMVar.new(var.no_returns? ? llvm_nil : pointer, var.type, false, true)
+      debug_var_allocated = declare_variable var.name, var.type, pointer, var.location, call_file, call_line
+      llvm_var = LLVMVar.new(var.no_returns? ? llvm_nil : pointer, var.type, debug_var: debug_var_allocated, location: var.location)
       context.vars[var.name] = llvm_var
     end
 
@@ -1379,10 +1387,6 @@ module Crystal
 
       @last = llvm_nil
       false
-    end
-
-    def end_visit(node : Def)
-      set_current_debug_location(node.end_location) if @debug.line_numbers?
     end
 
     def visit(node : Macro)
@@ -1433,7 +1437,8 @@ module Crystal
         request_value do
           accept node_scope
         end
-        block_context.vars["%scope"] = LLVMVar.new(@last, node_scope.type)
+        debug_var_allocated = declare_variable "%scope", node_scope.type, @last, block.location
+        block_context.vars["%scope"] = LLVMVar.new(@last, node_scope.type, debug_var: debug_var_allocated)
       end
 
       # First accept all yield expressions and assign them to block vars
@@ -1722,7 +1727,7 @@ module Crystal
           var_type = var.type? || @program.nil
 
           if var_type.void?
-            context.vars[name] = LLVMVar.new(llvm_nil, @program.void)
+            context.vars[name] = LLVMVar.new(llvm_nil, @program.void, location: var.location)
           elsif var_type.no_return?
             # No alloca for NoReturn
           elsif var.closure_in?(obj)
@@ -1733,8 +1738,18 @@ module Crystal
             next if is_arg
 
             ptr = builder.alloca llvm_type(var_type), name
-            declare_variable name, var_type, ptr, var.location
-            context.vars[name] = LLVMVar.new(ptr, var_type, false, true)
+            debug_var_allocated = false
+
+            location = var.location
+            if location.nil? && obj.is_a? (ASTNode)
+              location = obj.location
+            end
+
+            if location
+              debug_compiler_log { "Calling 'declare_variable name=(#{name}), var_type, ptr, location=#{location}'"}
+              debug_var_allocated = declare_variable name, var_type, ptr, location
+            end
+            context.vars[name] = LLVMVar.new(ptr, var_type, debug_var: debug_var_allocated, location: location)
 
             # Assign default nil for variables that are bound to the nil variable
             if bound_to_mod_nil?(var)
@@ -1775,8 +1790,7 @@ module Crystal
         closure_ptr = malloc closure_type
         closure_vars.each_with_index do |var, i|
           ptr = gep(closure_ptr, 0, i, var.name)
-          declare_variable var.name, var.type, ptr, var.location
-          current_context.vars[var.name] = LLVMVar.new(ptr, var.type, false, true)
+          current_context.vars[var.name] = LLVMVar.new(ptr, var.type, location: var.location)
         end
         closure_skip_parent = false
 

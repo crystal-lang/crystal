@@ -18,4 +18,12 @@ struct LLVM::InstructionCollection
   private def llvm_first
     LibLLVM.get_first_instruction @basic_block
   end
+
+  def each : Nil
+    inst = llvm_first
+    while inst
+      yield LLVM::Value.new inst
+      inst = LibLLVM.get_next_instruction(inst)
+    end
+  end
 end

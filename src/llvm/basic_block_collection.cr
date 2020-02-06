@@ -16,4 +16,27 @@ struct LLVM::BasicBlockCollection
     yield builder
     block
   end
+
+  def each : Nil
+    bb = LibLLVM.get_first_basic_block(@function)
+    while bb
+      yield LLVM::BasicBlock.new bb
+      bb = LibLLVM.get_next_basic_block(bb)
+    end
+  end
+
+  def []?(name : String)
+    self.each do |bb|
+      return bb if bb.name == name
+    end
+    nil
+  end
+
+  def [](name : String)
+    self[name]? || raise IndexError.new
+  end
+
+  def alloca_block?
+    self["alloca"]?
+  end
 end

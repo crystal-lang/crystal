@@ -175,6 +175,7 @@ lib LibLLVM
   fun get_element_type = LLVMGetElementType(ty : TypeRef) : TypeRef
   fun get_first_instruction = LLVMGetFirstInstruction(block : BasicBlockRef) : ValueRef
   fun get_first_target = LLVMGetFirstTarget : TargetRef
+  fun get_first_basic_block = LLVMGetFirstBasicBlock(fn : ValueRef) : BasicBlockRef
   fun get_insert_block = LLVMGetInsertBlock(builder : BuilderRef) : BasicBlockRef
   fun get_named_function = LLVMGetNamedFunction(mod : ModuleRef, name : UInt8*) : ValueRef
   fun get_named_global = LLVMGetNamedGlobal(mod : ModuleRef, name : UInt8*) : ValueRef
@@ -257,6 +258,8 @@ lib LibLLVM
   fun is_multithreaded = LLVMIsMultithreaded : Int32
   fun get_first_function = LLVMGetFirstFunction(m : ModuleRef) : ValueRef?
   fun get_next_function = LLVMGetNextFunction(f : ValueRef) : ValueRef?
+  fun get_next_basic_block = LLVMGetNextBasicBlock(bb : BasicBlockRef) : BasicBlockRef
+  fun get_next_instruction = LLVMGetNextInstruction(inst : ValueRef) : ValueRef
   fun get_global_pass_registry = LLVMGetGlobalPassRegistry : PassRegistryRef
   fun initialize_core = LLVMInitializeCore(r : PassRegistryRef)
   fun initialize_transform_utils = LLVMInitializeTransformUtils(r : PassRegistryRef)
@@ -387,4 +390,6 @@ lib LibLLVM
   fun set_instr_param_alignment = LLVMSetInstrParamAlignment(instr : ValueRef, index : UInt, align : UInt)
 
   fun set_param_alignment = LLVMSetParamAlignment(arg : ValueRef, align : UInt)
+  fun instruction_has_metadata = LLVMHasMetadata(inst : ValueRef) : Bool
+  fun get_instruction_metadata = LLVMGetMetadata(inst : ValueRef, kind : LLVM::Metadata::Type) : ValueRef
 end

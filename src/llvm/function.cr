@@ -83,4 +83,17 @@ struct LLVM::Function
   def delete
     LibLLVM.delete_function(self)
   end
+
+  def body_to_ll_string
+    String.build do |str|
+      str << "def " << self.name << "(#{self.params.join(", ")}):\n"
+      self.basic_blocks.each do |block|
+        str << "Block " << block.name << ":\n"
+        block.instructions.each do |inst|
+          str << "\t" << inst << " -> metadata: " << (inst.instruction_metadata || "N/A") << "\n"
+        end
+        str << "\n"
+      end
+    end
+  end
 end

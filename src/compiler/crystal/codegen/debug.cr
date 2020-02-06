@@ -226,19 +226,19 @@ module Crystal
     end
 
     def declare_parameter(arg_name, arg_type, arg_no, alloca, location)
-      return unless @debug.variables?
+      return false unless @debug.variables?
       declare_local(arg_type, alloca, location) do |scope, file, line_number, debug_type|
         variable = di_builder.create_parameter_variable scope, arg_name, arg_no, file, line_number, debug_type
-        debug_compiler_log { "declare_parameter(#{arg_name})/#{arg_no}@#{arg_type}: var: #{dump_metadata(variable)}" }
+        debug_compiler_log { "declare_parameter(#{arg_name})/#{arg_no}@#{arg_type}: var: #{dump_metadata(variable)}, loc: #{location}, cur_loc: #{builder.current_debug_location}" }
         variable
       end
     end
 
-    def declare_variable(var_name, var_type, alloca, location)
-      return unless @debug.variables?
+    def declare_variable(var_name, var_type, alloca, location, call_file = __FILE__, call_line = __LINE__)
+      return false unless @debug.variables?
       declare_local(var_type, alloca, location) do |scope, file, line_number, debug_type|
         variable = di_builder.create_auto_variable scope, var_name, file, line_number, debug_type, align_of(var_type)
-        debug_compiler_log { "declare_variable(#{var_name})@#{var_type}: alloca: #{alloca} var: #{dump_metadata(variable)}" }
+        debug_compiler_log { "from #{call_file}:#{call_line} -> declare_variable(#{var_name})@#{var_type}: alloca: #{alloca} var: #{dump_metadata(variable)}, loc: #{location}, cur_loc: #{builder.current_debug_location}" }
         variable
       end
     end
@@ -259,32 +259,33 @@ module Crystal
 
     private def declare_local(type, alloca, location)
       location = location.try &.original_location
-      return unless location
+      return false unless location
 
       file, dir = file_and_dir(location.filename)
       @current_debug_file = file = @debug_files[location.filename] ||= di_builder.create_file(file, dir)
 
       debug_type = get_debug_type(type)
-      return unless debug_type
+      return false unless debug_type
 
       scope = get_current_debug_scope(location)
-      return unless scope
+      return false unless scope
 
       var = yield scope, file, location.line_number, debug_type
       expr = di_builder.create_expression(nil, 0)
 
       di_builder.insert_declare_at_end(alloca, var, expr, builder.current_debug_location, alloca_block)
+      true
     end
 
     # Emit debug info for toplevel variables. Used for the main module and all
     # required files.
-    def emit_vars_debug_info(vars)
+    def emit_vars_debug_info(vars, call_file = __FILE__, call_line = __LINE__)
       return if @debug.none?
       in_alloca_block do
         vars.each do |name, var|
           llvm_var = context.vars[name]
           set_current_debug_location var.location
-          declare_variable name, var.type, llvm_var.pointer, var.location
+          declare_variable name, var.type, llvm_var.pointer, var.location, call_file, call_line
         end
         clear_current_debug_location
       end
