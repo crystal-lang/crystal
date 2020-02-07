@@ -203,6 +203,13 @@ module HTTP
         delta.should be > 0.seconds
         delta.should be < 1.seconds
       end
+
+      it "parses large max-age (#8744)" do
+        cookie = parse_set_cookie("a=1; max-age=3153600000")
+        delta = cookie.expires.not_nil! - Time.utc
+        delta.should be > (3153600000 - 1).seconds
+        delta.should be < (3153600000 + 1).seconds
+      end
     end
 
     describe "expired?" do
