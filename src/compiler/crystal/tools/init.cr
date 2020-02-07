@@ -175,11 +175,9 @@ module Crystal
       )
       end
 
-      @expanded_dir : ::Path?
+      getter expanded_dir : ::Path { ::Path.new(dir).expand(home: true) }
 
-      def expanded_dir
-        @expanded_dir ||= ::Path.new(dir).expand(home: true)
-      end
+      getter github_repo : String { "#{github_name}/#{expanded_dir.basename}" }
     end
 
     abstract class View
