@@ -406,6 +406,10 @@ describe "BigInt" do
     it { BigInt.new("1180591620717411303424").humanize_bytes.should eq("1.0ZiB") }
     it { BigInt.new("1208925819614629174706176").humanize_bytes.should eq("1.0YiB") }
   end
+
+  it "has unsafe_shr (#8691)" do
+    BigInt.new(8).unsafe_shr(1).should eq(4)
+  end
 end
 
 describe "BigInt Math" do

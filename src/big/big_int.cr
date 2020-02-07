@@ -355,6 +355,13 @@ struct BigInt < Int
     BigInt.new { |mpz| LibGMP.fdiv_q_2exp(mpz, self, other) }
   end
 
+  # :nodoc:
+  #
+  # Because every Int needs this method.
+  def unsafe_shr(count : Int) : self
+    self >> count
+  end
+
   def <<(other : Int) : BigInt
     BigInt.new { |mpz| LibGMP.mul_2exp(mpz, self, other) }
   end
