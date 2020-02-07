@@ -9,6 +9,40 @@ fun _fiber_get_stack_top : Void*
   pointerof(dummy).as(Void*)
 end
 
+# A `Fiber` is a light-weight execution unit managed by the Crystal runtime.
+#
+# It is conceptually similar to an operating system thread but with less
+# overhead and completely internal to the Crystal process. The runtime includes
+# a scheduler which schedules execution of fibers.
+#
+# A `Fiber` has a stack size of `8 MiB` which is usually also assigned
+# to an operating system thread. But only `4KiB` are actually allocated at first
+# so the memory footprint is very small.
+#
+# Communication between fibers is usually passed through `Channel`.
+#
+# ## Cooperative
+#
+# Fibers are cooperative. That means execution can only be drawn from a fiber
+# when it offers it. It can't be interrupted in its execution at random.
+# In order to make concurrency work, fibers must make sure to occasionally
+# provide hooks for the scheduler to swap in other fibers.
+# IO operations like reading from a file descriptor are natural implementations
+# for this and the developer does not need to take further action on that. When
+# IO access can't be served immediately by a buffer, the fiber will
+# automatically wait and yield execution. When IO is ready it's going to be
+# resumed through the event loop.
+#
+# When a computation-intensive task has none or only rare IO operations, a fiber
+# should explicitly offer to yield execution from time to time using
+# `Fiber.yield` to break up tight loops. The frequency of this call depends on
+# the application and concurrency model.
+#
+# ## Event loop
+#
+# The event loop is responsible for keeping track of sleeping fibers waiting for
+# notifications that IO is ready or a timeout reached. When a fiber can be woken,
+# the event loop enqueues it in the scheduler
 class Fiber
   # :nodoc:
   protected class_getter(fibers) { Thread::LinkedList(Fiber).new }
@@ -23,7 +57,10 @@ class Fiber
   # :nodoc:
   property timeout_select_action : Channel::TimeoutAction?
   protected property stack_bottom : Void*
+
+  # The name of the fiber, used as internal reference.
   property name : String?
+
   @alive = true
   @current_thread = Atomic(Thread?).new(nil)
 
@@ -43,6 +80,11 @@ class Fiber
     fibers.unsafe_each { |fiber| yield fiber }
   end
 
+  # Creates a new `Fiber` instance.
+  #
+  # When the fiber is executed, it runs *proc* in its context.
+  #
+  # *name* is an optional and used only as an internal reference.
   def initialize(@name : String? = nil, &@proc : ->)
     @context = Context.new
     @stack, @stack_bottom = Fiber.stack_pool.checkout
@@ -114,6 +156,7 @@ class Fiber
     Crystal::Scheduler.reschedule
   end
 
+  # Returns the current fiber.
   def self.current
     Crystal::Scheduler.current_fiber
   end
@@ -136,10 +179,29 @@ class Fiber
     @alive == false
   end
 
+  # Immediately resumes execution of this fiber.
+  #
+  # There are no provisions for resuming the current fiber (where this
+  # method is called). Unless it is explicitly added for rescheduling (for
+  # example using `#enqueue`) the current fiber won't ever reach any instructions
+  # after the call to this method.
+  #
+  # ```cr
+  # fiber = Fiber.new do
+  #   puts "in fiber"
+  # end
+  # fiber.resume
+  # puts "never reached"
+  # ```
   def resume : Nil
     Crystal::Scheduler.resume(self)
   end
 
+  # Adds this fiber to the scheduler's runnables queue for the current thread.
+  #
+  # This signals to the scheduler that the fiber is eligible for being resumed
+  # the next time it has the opportunity to reschedule to an other fiber. There
+  # are no guarantees when that will happen.
   def enqueue
     Crystal::Scheduler.enqueue(self)
   end
@@ -177,6 +239,34 @@ class Fiber
     Crystal::Scheduler.current_fiber.cancel_timeout
   end
 
+  # Yields to the scheduler and allows it to swap execution to other
+  # waiting fibers.
+  #
+  # This is equivalent to `sleep 0.seconds`. It gives the scheduler an option
+  # to interrupt the current fiber's execution. If no other fibers are ready to
+  # be resumed, it immediately resumes the current fiber.
+  #
+  # This method is particularly useful to break up tight loops which are only
+  # computation intensive and don't offer natural opportunities for swapping
+  # fibers as with IO operations.
+  #
+  # ```cr
+  # counter = 0
+  # spawn name: "status" do
+  #   loop do
+  #     puts "Status: #{counter}"
+  #     sleep(2.seconds)
+  #   end
+  # end
+  #
+  # while counter < Int32::MAX
+  #   counter += 1
+  #   if counter % 1_000_000 == 0
+  #     # Without this, there would never be an opportunity to resume the status fiber
+  #     Fiber.yield
+  #   end
+  # end
+  # ```
   def self.yield
     Crystal::Scheduler.yield
   end
