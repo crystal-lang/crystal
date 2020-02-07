@@ -723,17 +723,22 @@ describe "buffered" do
 
   it "blocks when full" do
     ch = Channel(Int32).new(2)
-    freed = false
-    spawn { 2.times { ch.receive }; freed = true }
+    done = false
+    f = spawn { 5.times { |i| ch.send i }; done = true }
 
-    ch.send 1
-    freed.should be_false
+    ch.receive
+    done.should be_false
 
-    ch.send 2
-    freed.should be_false
+    ch.receive
+    done.should be_false
 
-    ch.send 3
-    freed.should be_true
+    # after the third receive, since the buffer is 2
+    # f should be able to exec fully
+    ch.receive
+    until f.dead?
+      Fiber.yield
+    end
+    done.should be_true
   end
 
   it "doesn't block when not full" do
