@@ -73,7 +73,7 @@ module Crystal
       ]
       candidates = candidates
         .compact
-        .map { |file| File.expand_path(file) }
+        .map { |file| File.expand_path(file, home: true) }
         .uniq
 
       # Return the first one for which we could create a directory
