@@ -2282,28 +2282,33 @@ module Crystal
         end
       end
 
-      if !delimiter_state && current_char == 'e' && next_char == 'n'
-        beginning_of_line = false
-        case next_char
-        when 'd'
-          if whitespace && !ident_part_or_end?(peek_next_char)
-            if nest == 0 && control_nest == 0
-              next_char
-              @token.type = :MACRO_END
-              @token.macro_state = Token::MacroState.default
-              return @token
-            else
-              nest -= 1
-              whitespace = current_char.ascii_whitespace?
-              next_char
+      if !delimiter_state && current_char == 'e'
+        if next_char == 'n'
+          beginning_of_line = false
+          case next_char
+          when 'd'
+            if whitespace && !ident_part_or_end?(peek_next_char)
+              if nest == 0 && control_nest == 0
+                next_char
+                @token.type = :MACRO_END
+                @token.macro_state = Token::MacroState.default
+                return @token
+              else
+                nest -= 1
+                whitespace = current_char.ascii_whitespace?
+                next_char
+              end
+            end
+          when 'u'
+            if !delimiter_state && whitespace && next_char == 'm' && !ident_part_or_end?(next_char)
+              char = current_char
+              nest += 1
+              whitespace = true
             end
           end
-        when 'u'
-          if !delimiter_state && whitespace && next_char == 'm' && !ident_part_or_end?(next_char)
-            char = current_char
-            nest += 1
-            whitespace = true
-          end
+        else
+          whitespace = false
+          beginning_of_line = false
         end
       end
 
