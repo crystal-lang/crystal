@@ -2795,23 +2795,26 @@ module Crystal
             before_var = before_ensure_vars[name]?
             @vars[name] = var unless var.same?(before_var)
           end
-        else
-          @vars = exception_handler_vars
-        end
 
-        # However, those previous variables can't be nil afterwards:
-        # if an exception was raised then we won't be running the code
-        # after the ensure clause, so variables don't matter. But if
-        # an exception was not raised then all variables were declared
-        # successfully.
-        @vars.each do |name, var|
-          unless before_body_vars[name]?
-            # But if the variable is already nilable after the begin
-            # block it must remain nilable
-            unless after_exception_handler_vars[name]?.try &.nil_if_read?
-              var.nil_if_read = false
+          # However, those previous variables can't be nil afterwards:
+          # if an exception was raised then we won't be running the code
+          # after the ensure clause, so variables don't matter. But if
+          # an exception was not raised then all variables were declared
+          # successfully.
+          @vars.each do |name, var|
+            unless before_body_vars[name]?
+              # But if the variable is already nilable after the begin
+              # block it must remain nilable
+              unless after_exception_handler_vars[name]?.try &.nil_if_read?
+                var.nil_if_read = false
+              end
             end
           end
+        else
+          # If there's no ensure, because all rescue/else end with unreacahble
+          # we know all the vars after the exception handler will have the types
+          # after the handle (begin) block.
+          @vars = after_exception_handler_vars
         end
       end
 
