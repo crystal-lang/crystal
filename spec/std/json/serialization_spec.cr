@@ -250,6 +250,17 @@ describe "JSON serialization" do
         end
         ex.location.should eq({2, 3})
       end
+
+      it "captures overflows for integer types" do
+        ex = expect_raises(JSON::ParseException) do
+          Array(Int32).from_json <<-JSON
+            [
+              #{Int64::MAX.to_json}
+            ]
+            JSON
+        end
+        ex.location.should eq({2, 3})
+      end
     end
   end
 

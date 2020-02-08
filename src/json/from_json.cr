@@ -77,7 +77,13 @@ end
                          "UInt64" => "u64",
                        } %}
   def {{type.id}}.new(pull : JSON::PullParser)
-    {{type.id}}.new!(pull.read_int)
+    location = pull.location
+    value = pull.read_int
+    begin
+      value.to_{{method.id}}
+    rescue ex : OverflowError
+      raise JSON::ParseException.new("Can't read {{type.id}}", *location, ex)
+    end
   end
 
   def {{type.id}}.from_json_object_key?(key : String)
