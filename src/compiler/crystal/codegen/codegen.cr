@@ -1746,7 +1746,6 @@ module Crystal
             end
 
             if location
-              debug_compiler_log { "Calling 'declare_variable name=(#{name}), var_type, ptr, location=#{location}'"}
               debug_var_allocated = declare_variable name, var_type, ptr, location
             end
             context.vars[name] = LLVMVar.new(ptr, var_type, debug_var: debug_var_allocated, location: location)

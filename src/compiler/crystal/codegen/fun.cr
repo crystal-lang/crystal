@@ -127,11 +127,11 @@ class Crystal::CodeGenVisitor
               # Self always comes as the first parameter, unless it's a closure:
               # then it will be fetched from the closure data.
               if name == "self" && !is_closure
-                declare_parameter(name, var.type, 1, var.pointer, var.location)
+                declare_parameter(name, var.type, 1, var.pointer, var.location || location)
               elsif arg_no = args.index { |arg| arg.name == name }
-                declare_parameter(name, var.type, arg_no + args_offset, var.pointer, var.location)
+                declare_parameter(name, var.type, arg_no + args_offset, var.pointer, var.location || location)
               else
-                declare_variable(name, var.type, var.pointer, var.location)
+                declare_variable(name, var.type, var.pointer, var.location || location)
               end
             end
           end

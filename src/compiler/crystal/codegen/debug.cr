@@ -80,6 +80,10 @@ module Crystal
         type.signed? ? LLVM::DwarfTypeEncoding::Signed : LLVM::DwarfTypeEncoding::Unsigned)
     end
 
+    def create_debug_type(type : SymbolType, type_name : String? = type.to_s)
+      di_builder.create_basic_type(type.to_s, 32, 32, LLVM::DwarfTypeEncoding::Unsigned)
+    end
+
     def create_debug_type(type : FloatType, type_name : String? = type.to_s)
       di_builder.create_basic_type(type.to_s, 8u64 * type.bytes, 8u64 * type.bytes, LLVM::DwarfTypeEncoding::Float)
     end
@@ -116,6 +120,11 @@ module Crystal
       ivars.each_with_index do |(name, ivar), idx|
         next if ivar.type.is_a? (NilType)
         if (ivar_type = ivar.type?) && (ivar_debug_type = get_debug_type(ivar_type))
+          if type_name.starts_with?("Array(") && name == "buffer"
+            subrange = di_builder.get_or_create_array_subrange(0, 0)
+            ivar_debug_type = di_builder.create_array_type(0, llvm_typer.pointer_size, ivar_debug_type, [subrange])
+          end
+
           offset = @program.target_machine.data_layout.offset_of_element(struct_type, idx &+ (type.struct? ? 0 : 1))
           size = @program.target_machine.data_layout.size_in_bits(llvm_embedded_type(ivar_type))
 
@@ -219,6 +228,77 @@ module Crystal
       return unless debug_type
       subrange = di_builder.get_or_create_array_subrange(0, type.size.as(NumberLiteral).value.to_i)
       di_builder.create_array_type(type.size.as(NumberLiteral).value.to_i, llvm_typer.pointer_size, debug_type, [subrange])
+    end
+
+    def create_debug_type(type : TypeDefType, type_name : String? = type.to_s)
+      # debug_compiler_log { "create_debug_type(#{type} : #{type.class}, type_name = #{type_name}, type.typedef = #{type.typedef}" }
+      debug_type = get_debug_type(type.typedef, type_name)
+    end
+
+    def create_debug_type(type : TupleInstanceType, type_name : String? = type.to_s)
+      ivars = type.tuple_types
+      element_types = [] of LibLLVMExt::Metadata
+      struct_type = llvm_struct_type(type)
+
+      tmp_debug_type = di_builder.create_replaceable_composite_type(nil, type_name, nil, 1, llvm_context)
+      debug_type_cache[type_name] = tmp_debug_type
+
+      ivars.each_with_index do |ivar_type, idx|
+        next if ivar_type.is_a? (NilType)
+        if ivar_debug_type = get_debug_type(ivar_type)
+          offset = @program.target_machine.data_layout.offset_of_element(struct_type, idx &+ (type.struct? ? 0 : 1))
+          size = @program.target_machine.data_layout.size_in_bits(llvm_embedded_type(ivar_type))
+
+          # FIXME structs like LibC::PthreadMutexT generate huge offset values
+          next if offset > UInt64::MAX // 8u64
+
+          member = di_builder.create_member_type(nil, "[#{idx}]", nil, 1, size, size, 8u64 * offset, LLVM::DIFlags::Zero, ivar_debug_type)
+          element_types << member
+        end
+      end
+
+      size = @program.target_machine.data_layout.size_in_bits(struct_type)
+      debug_type = di_builder.create_struct_type(nil, type_name, nil, 1, size, size, LLVM::DIFlags::Zero, nil, di_builder.get_or_create_type_array(element_types))
+      unless type.struct?
+        debug_type = di_builder.create_pointer_type(debug_type, 8u64 * llvm_typer.pointer_size, 8u64 * llvm_typer.pointer_size, type_name)
+      end
+      di_builder.replace_temporary(tmp_debug_type, debug_type)
+      debug_type
+    end
+
+    def create_debug_type(type : NamedTupleInstanceType, type_name : String? = type.to_s)
+      ivars = type.entries
+      element_types = [] of LibLLVMExt::Metadata
+      struct_type = llvm_struct_type(type)
+
+      tmp_debug_type = di_builder.create_replaceable_composite_type(nil, type_name, nil, 1, llvm_context)
+      debug_type_cache[type_name] = tmp_debug_type
+
+      ivars.each_with_index do |ivar, idx|
+        next if (ivar_type = ivar.type).is_a? (NilType)
+        if ivar_debug_type = get_debug_type(ivar_type)
+          offset = @program.target_machine.data_layout.offset_of_element(struct_type, idx &+ (type.struct? ? 0 : 1))
+          size = @program.target_machine.data_layout.size_in_bits(llvm_embedded_type(ivar_type))
+
+          # FIXME structs like LibC::PthreadMutexT generate huge offset values
+          next if offset > UInt64::MAX // 8u64
+
+          member = di_builder.create_member_type(nil, ivar.name, nil, 1, size, size, 8u64 * offset, LLVM::DIFlags::Zero, ivar_debug_type)
+          element_types << member
+        end
+      end
+
+      size = @program.target_machine.data_layout.size_in_bits(struct_type)
+      debug_type = di_builder.create_struct_type(nil, type_name, nil, 1, size, size, LLVM::DIFlags::Zero, nil, di_builder.get_or_create_type_array(element_types))
+      unless type.struct?
+        debug_type = di_builder.create_pointer_type(debug_type, 8u64 * llvm_typer.pointer_size, 8u64 * llvm_typer.pointer_size, type_name)
+      end
+      di_builder.replace_temporary(tmp_debug_type, debug_type)
+      debug_type
+    end
+
+    # This is a sinkhole for debug types that does not need to be implemented
+    def create_debug_type(type : (NonGenericModuleType | GenericClassInstanceMetaclassType | MetaclassType | NilableProcType | VirtualMetaclassType), type_name : String? = type.to_s)
     end
 
     def create_debug_type(type, type_name : String? = type.to_s)
