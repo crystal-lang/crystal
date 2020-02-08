@@ -1636,6 +1636,7 @@ module Crystal
       class_def.doc = doc
       class_def.name_location = name_location
       class_def.end_location = end_location
+      set_visibility class_def
       class_def
     end
 
@@ -1709,6 +1710,7 @@ module Crystal
       module_def.doc = doc
       module_def.name_location = name_location
       module_def.end_location = end_location
+      set_visibility module_def
       module_def
     end
 
@@ -2968,6 +2970,7 @@ module Crystal
       node.name_location = name_location
       node.doc = doc
       node.end_location = end_location
+      set_visibility node
       node
     end
 

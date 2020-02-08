@@ -447,4 +447,76 @@ describe "Semantic: private" do
       compiler.compile sources, "output"
     end
   end
+
+  it "doesn't find private class defined through macro (#8715)" do
+    assert_error %(
+      macro bar
+        class Bar
+        end
+      end
+
+      class Foo
+        private bar
+      end
+
+      Foo::Bar
+      ),
+      "private constant Foo::Bar referenced",
+      inject_primitives: false
+  end
+
+  it "doesn't find private module defined through macro (#8715)" do
+    assert_error %(
+      macro bar
+        module Bar
+        end
+      end
+
+      class Foo
+        private bar
+      end
+
+      Foo::Bar
+      ),
+      "private constant Foo::Bar referenced",
+      inject_primitives: false
+  end
+
+  it "doesn't find private macro defined through macro (#8715)" do
+    assert_error %(
+      macro bar
+        macro bar
+        end
+      end
+
+      class Foo
+        private bar
+      end
+
+      Foo.bar
+      ),
+      "private macro 'bar' called for Foo",
+      inject_primitives: false
+  end
+
+  it "doesn't find private thing defined through recursive macro (#8715)" do
+    assert_error %(
+      macro bar
+        baz
+      end
+
+      macro baz
+        class Bar
+        end
+      end
+
+      class Foo
+        private bar
+      end
+
+      Foo::Bar
+      ),
+      "private constant Foo::Bar referenced",
+      inject_primitives: false
+  end
 end
