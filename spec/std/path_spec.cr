@@ -66,6 +66,13 @@ describe Path do
     end
 
     it { Path.new.to_s.should eq "" }
+
+    it "joins components" do
+      Path.new("foo", "bar").should eq Path.new("foo").join("bar")
+      Path.new(Path.new("foo"), "bar").should eq Path.new("foo", "bar")
+      Path.new(Path.posix("foo"), "bar").should eq Path.new("foo", "bar")
+      Path.new(Path.windows("foo"), "bar").should eq Path.new("foo", "bar")
+    end
   end
 
   describe ".posix" do
@@ -80,6 +87,13 @@ describe Path do
     end
 
     it { Path.posix.to_s.should eq "" }
+
+    it "joins components" do
+      Path.posix("foo", "bar").should eq Path.posix("foo").join("bar")
+      Path.posix(Path.new("foo"), "bar").should eq Path.posix("foo", "bar")
+      Path.posix(Path.posix("foo"), "bar").should eq Path.posix("foo", "bar")
+      Path.posix(Path.windows("foo"), "bar").should eq Path.posix("foo", "bar")
+    end
   end
 
   describe ".windows" do
@@ -94,6 +108,13 @@ describe Path do
     end
 
     it { Path.windows.to_s.should eq "" }
+
+    it "joins components" do
+      Path.windows("foo", "bar").should eq Path.windows("foo").join("bar")
+      Path.windows(Path.new("foo"), "bar").should eq Path.windows("foo", "bar")
+      Path.windows(Path.posix("foo"), "bar").should eq Path.windows("foo", "bar")
+      Path.windows(Path.windows("foo"), "bar").should eq Path.windows("foo", "bar")
+    end
   end
 
   it ".[]" do

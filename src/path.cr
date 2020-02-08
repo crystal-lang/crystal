@@ -98,12 +98,17 @@ struct Path
   end
 
   # :ditto:
-  def self.new(name : String, *parts) : Path
+  def self.new(path : Path) : Path
+    path.to_native
+  end
+
+  # :ditto:
+  def self.new(name : String | Path, *parts : String | Path) : Path
     new(name).join(*parts)
   end
 
   # :ditto:
-  def self.[](name : String, *parts) : Path
+  def self.[](name : String | Path, *parts) : Path
     new(name, *parts)
   end
 
@@ -123,7 +128,12 @@ struct Path
   end
 
   # :ditto:
-  def self.posix(name : String, *parts) : Path
+  def self.posix(path : Path) : Path
+    path.to_posix
+  end
+
+  # :ditto:
+  def self.posix(name : String | Path, *parts : String | Path) : Path
     posix(name).join(parts)
   end
 
@@ -138,7 +148,12 @@ struct Path
   end
 
   # :ditto:
-  def self.windows(name : String, *parts) : Path
+  def self.windows(path : Path) : Path
+    path.to_windows
+  end
+
+  # :ditto:
+  def self.windows(name : String | Path, *parts : String | Path) : Path
     windows(name).join(parts)
   end
 
@@ -528,6 +543,11 @@ struct Path
     @name.byte_at?(1) === ':' && @name.char_at(0).ascii_letter?
   end
 
+  # Converts this path to a native path.
+  def to_native : Path
+    to_kind(Kind.native)
+  end
+
   # Converts this path to a Windows path.
   #
   # ```
@@ -761,6 +781,8 @@ struct Path
   # ```
   def join(parts : Enumerable) : Path
     if parts.is_a?(Indexable)
+      return self if parts.empty?
+
       # If it's just a single part we can avoid one allocation of String.build
       return join(parts.first) if parts.size == 1
 
