@@ -985,4 +985,20 @@ describe "Semantic: proc" do
       end.block
       )) { proc_of(types["Foo"].virtual_type!, types["Foo"].virtual_type!) }
   end
+
+  it "virtualizes proc type with -> (#8730)" do
+    assert_type(%(
+      class Foo
+      end
+
+      class Bar < Foo
+      end
+
+      def foo(x)
+        Foo.new
+      end
+
+      ->foo(Foo)
+      )) { proc_of(types["Foo"].virtual_type!, types["Foo"].virtual_type!) }
+  end
 end
