@@ -3189,9 +3189,18 @@ module Crystal
     end
 
     def visit(node : Not)
-      write_token :"!"
-      skip_space_or_newline
-      accept node.exp
+      if @token.type == :"!"
+        write_token :"!"
+        skip_space_or_newline
+        accept node.exp
+      else
+        # Can be `exp.!`
+        accept node.exp
+        skip_space_or_newline
+        write_token :"."
+        skip_space_or_newline
+        write_token :"!"
+      end
 
       false
     end

@@ -1600,4 +1600,6 @@ describe Crystal::Formatter do
       baz
     end
     CODE
+
+  assert_format "a.!"
 end
