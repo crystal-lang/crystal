@@ -195,13 +195,17 @@ module HTTP
       it "parse max-age as seconds from current time" do
         cookie = parse_set_cookie("a=1; max-age=10")
         delta = cookie.expires.not_nil! - Time.utc
-        delta.should be > 9.seconds
-        delta.should be < 11.seconds
+        delta.should be_close(10.seconds, 1.second)
 
         cookie = parse_set_cookie("a=1; max-age=0")
         delta = Time.utc - cookie.expires.not_nil!
-        delta.should be > 0.seconds
-        delta.should be < 1.seconds
+        delta.should be_close(0.seconds, 1.second)
+      end
+
+      it "parses large max-age (#8744)" do
+        cookie = parse_set_cookie("a=1; max-age=3153600000")
+        delta = cookie.expires.not_nil! - Time.utc
+        delta.should be_close(3153600000.seconds, 1.second)
       end
     end
 
