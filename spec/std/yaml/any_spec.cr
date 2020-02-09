@@ -165,6 +165,11 @@ describe YAML::Any do
       obj.dig?("bar", "baz").should be_nil
       obj.dig?("").should be_nil
     end
+
+    it "returns nil for non-Hash/Array intermediary values" do
+      YAML::Any.new(nil).dig?("foo").should be_nil
+      YAML::Any.new(0.0).dig?("foo").should be_nil
+    end
   end
 
   describe "dig" do
