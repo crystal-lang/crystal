@@ -330,11 +330,6 @@ module Crystal
         Crystal::Init.validate_name("Foo")
       end
     end
-    it "contain crystal" do
-      expect_raises Crystal::Init::Error, "NAME should not contain 'crystal'" do
-        Crystal::Init.validate_name("foo-crystal")
-      end
-    end
     it "digits" do
       Crystal::Init.validate_name("i18n")
       expect_raises Crystal::Init::Error, "NAME must start with a letter" do

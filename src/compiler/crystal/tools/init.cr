@@ -142,7 +142,6 @@ module Crystal
       when name.blank?                       then raise Error.new("NAME must not be empty")
       when name.size > 50                    then raise Error.new("NAME must not be longer than 50 characters")
       when name.each_char.any?(&.uppercase?) then raise Error.new("NAME should be all lower cased")
-      when name.index("crystal")             then raise Error.new("NAME should not contain 'crystal'")
       when !name[0].ascii_letter?            then raise Error.new("NAME must start with a letter")
       when name.index("--")                  then raise Error.new("NAME must not have consecutive dashes")
       when name.index("__")                  then raise Error.new("NAME must not have consecutive underscores")
