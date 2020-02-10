@@ -153,7 +153,7 @@ module Crystal
       tmp_debug_type = di_builder.create_replaceable_composite_type(nil, type_name, nil, 1, llvm_context)
       debug_type_cache[type_name] = tmp_debug_type
 
-      type.expand_union_types.each_with_index do |ivar_type, idx|
+      type.expand_union_types.each do |ivar_type|
         next if ivar_type.is_a?(NilType) || ivar_type.to_s == "Nil"
         if ivar_debug_type = get_debug_type(ivar_type)
           embedded_type = llvm_type(ivar_type)

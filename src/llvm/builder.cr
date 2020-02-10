@@ -248,7 +248,7 @@ class LLVM::Builder
   end
 
   def current_debug_location_metadata
-    LibLLVMExt.get_current_debug_location_metadata(self)
+    LibLLVM.get_current_debug_location_metadata(self)
   end
 
   def to_unsafe

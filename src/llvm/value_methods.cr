@@ -100,9 +100,8 @@ module LLVM::ValueMethods
   end
 
   def instruction_metadata(kind : LLVM::Metadata::Type = LLVM::Metadata::Type::Dbg)
-    return nil unless LibLLVM.instruction_has_metadata(self)
-    metadata_value = LibLLVM.get_instruction_metadata(self, kind)
-    LLVM::Value.new metadata_value
+    return unless LibLLVM.instruction_has_metadata(self)
+    LLVM::Value.new LibLLVM.get_instruction_metadata(self, kind)
   end
 
   def dump

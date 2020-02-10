@@ -1,4 +1,8 @@
+require "./basic_block"
+
 struct LLVM::BasicBlockCollection
+  include Enumerable(LLVM::BasicBlock)
+
   def initialize(@function : Function)
   end
 
@@ -26,10 +30,7 @@ struct LLVM::BasicBlockCollection
   end
 
   def []?(name : String)
-    self.each do |bb|
-      return bb if bb.name == name
-    end
-    nil
+    find(&.name.==(name))
   end
 
   def [](name : String)
