@@ -108,7 +108,7 @@ struct LLVM::DIBuilder
     LibLLVMExt.location_get_line(location)
   end
 
-  def location_get_column( location : LibLLVMExt::Metadata)
+  def location_get_column(location : LibLLVMExt::Metadata)
     LibLLVMExt.location_get_column(location)
   end
 
@@ -121,7 +121,7 @@ struct LLVM::DIBuilder
   end
 
   def file_get_directory(file : LibLLVMExt::Metadata)
-    ptr = LibLLVMExt.file_get_directory(file,  out dir_name_size)
+    ptr = LibLLVMExt.file_get_directory(file, out dir_name_size)
     str = String.new(ptr, dir_name_size)
   end
 
@@ -145,7 +145,7 @@ struct LLVM::DIBuilder
   def get_or_create_array_subrange(lo, count)
     LibLLVMExt.di_builder_get_or_create_array_subrange(self, lo, count)
   end
-  
+
   def end
     LibLLVMExt.di_builder_finalize(self)
   end

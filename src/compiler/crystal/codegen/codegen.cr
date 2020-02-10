@@ -364,9 +364,9 @@ module Crystal
         push_debug_info_metadata(mod) unless @debug.none?
 
         if ENV["CRYSTAL_DEBUG_LL_DUMP"]?
-          debug_compiler_log { "Module #{name}:" }
+          puts "Module #{name}:"
           mod.functions.each do |func|
-            debug_compiler_log { func.body_to_ll_string }
+            puts func.body_to_ll_string
           end
         end
 
@@ -1741,7 +1741,7 @@ module Crystal
             debug_var_allocated = false
 
             location = var.location
-            if location.nil? && obj.is_a? (ASTNode)
+            if location.nil? && obj.is_a?(ASTNode)
               location = obj.location
             end
 

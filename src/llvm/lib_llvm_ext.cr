@@ -78,14 +78,14 @@ lib LibLLVMExt
                                                                        align_in_bits : UInt64, flags : LLVM::DIFlags, derived_from : Metadata, element_types : Metadata) : Metadata
 
   fun di_builder_create_union_type = LLVMExtDIBuilderCreateUnionType(builder : DIBuilder,
-                                                                        scope : Metadata, name : Char*, file : Metadata, line : UInt, size_in_bits : UInt64,
-                                                                        align_in_bits : UInt64, flags : LLVM::DIFlags, element_types : Metadata) : Metadata
- 
-  fun di_builder_create_array_type = LLVMExtDIBuilderCreateArrayType(builder : DIBuilder, size : UInt64,
-                                                                    alignInBits : UInt32, ty : Metadata,
-                                                                    subscripts : Metadata) : Metadata
+                                                                     scope : Metadata, name : Char*, file : Metadata, line : UInt, size_in_bits : UInt64,
+                                                                     align_in_bits : UInt64, flags : LLVM::DIFlags, element_types : Metadata) : Metadata
 
-   fun di_builder_create_member_type = LLVMExtDIBuilderCreateMemberType(builder : DIBuilder,
+  fun di_builder_create_array_type = LLVMExtDIBuilderCreateArrayType(builder : DIBuilder, size : UInt64,
+                                                                     alignInBits : UInt32, ty : Metadata,
+                                                                     subscripts : Metadata) : Metadata
+
+  fun di_builder_create_member_type = LLVMExtDIBuilderCreateMemberType(builder : DIBuilder,
                                                                        scope : Metadata, name : Char*, file : Metadata, line : UInt, size_in_bits : UInt64,
                                                                        align_in_bits : UInt64, offset_in_bits : UInt64, flags : LLVM::DIFlags, ty : Metadata) : Metadata
 
@@ -148,19 +148,18 @@ lib LibLLVMExt
   fun normalize_target_triple = LLVMExtNormalizeTargetTriple(triple : Char*) : Char*
   fun basic_block_name = LLVMExtBasicBlockName(basic_block : LibLLVM::BasicBlockRef) : Char*
   fun metadata_as_value = LLVMMetadataAsValue(context : LibLLVM::ContextRef, md : Metadata) : LibLLVM::ValueRef
-  fun di_builder_create_unspecified_yype = LLVMDIBuilderCreateUnspecifiedType(builder: DIBuilder, name : Void*, size : LibC::SizeT) : Metadata
+  fun di_builder_create_unspecified_yype = LLVMDIBuilderCreateUnspecifiedType(builder : DIBuilder, name : Void*, size : LibC::SizeT) : Metadata
   fun get_current_debug_location_metadata = LLVMGetCurrentDebugLocation2(builder : LibLLVM::BuilderRef) : Metadata
   fun location_get_line = LLVMDILocationGetLine(location : Metadata) : UInt32
   fun location_get_column = LLVMDILocationGetColumn(location : Metadata) : UInt32
   fun location_get_scope = LLVMDILocationGetScope(location : Metadata) : Metadata
   fun scope_get_file = LLVMDIScopeGetFile(scope : Metadata) : Metadata
-  fun file_get_directory = LLVMDIFileGetDirectory(file : Metadata,  dir_name_size : UInt32*) : Char*
+  fun file_get_directory = LLVMDIFileGetDirectory(file : Metadata, dir_name_size : UInt32*) : Char*
   fun file_get_filename = LLVMDIFileGetFilename(file : Metadata, file_name_size : UInt32*) : Char*
   fun variable_get_file = LLVMDIVariableGetFile(variable : Metadata) : Metadata
   fun variable_get_scope = LLVMDIVariableGetScope(variable : Metadata) : Metadata
   fun variable_get_line = LLVMDIVariableGetLine(variable : Metadata) : UInt32
   fun di_builder_create_lexical_block_file = LLVMDIBuilderCreateLexicalBlockFile(builder : DIBuilder,
-    scope : Metadata, file_scope : Metadata, discriminator : UInt32) : Metadata
-  fun di_builder_get_or_create_array_subrange = LLVMExtDIBuilderGetOrCreateArraySubrange(builder: DIBuilder, lo : UInt64, count : UInt64) : Metadata
+                                                                                 scope : Metadata, file_scope : Metadata, discriminator : UInt32) : Metadata
+  fun di_builder_get_or_create_array_subrange = LLVMExtDIBuilderGetOrCreateArraySubrange(builder : DIBuilder, lo : UInt64, count : UInt64) : Metadata
 end
-

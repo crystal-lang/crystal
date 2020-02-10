@@ -7,7 +7,7 @@ module Crystal
     # We have to use it because LLDB has builtin type system support for C++/clang that we can use for now for free.
     # Later on we can implement LLDB Crystal type system so we can get official Language ID
     #
-    CPP_LANG_DEBUG_IDENTIFIER     = 0x0004_u32
+    CPP_LANG_DEBUG_IDENTIFIER = 0x0004_u32
 
     @current_debug_location : Location?
     @debug_files : Hash((Crystal::VirtualFile | String | Nil), LibLLVMExt::Metadata) = {} of (Crystal::VirtualFile | String | Nil) => LibLLVMExt::Metadata
@@ -62,12 +62,10 @@ module Crystal
     end
 
     def create_debug_type(type : NilType, type_name : String? = type.to_s)
-      debug_compiler_log { "create_debug_type(#{type} : NilType, type_name = #{type_name}" }
       di_builder.create_unspecified_type("decltype(nullptr)")
     end
 
     def create_debug_type(type : VoidType, type_name : String? = type.to_s)
-      debug_compiler_log { "create_debug_type(#{type} : VoidType, type_name = #{type_name}" }
       di_builder.create_basic_type("Void", 8u64 * llvm_typer.pointer_size, 8u64 * llvm_typer.pointer_size, LLVM::DwarfTypeEncoding::Address)
     end
 
@@ -105,11 +103,7 @@ module Crystal
       di_builder.create_enumeration_type(nil, type_name, nil, 1, 32, 32, elements, get_debug_type(type.base_type))
     end
 
-    # def create_debug_type(type : NonGenericModuleType, type_name : String? = type.to_s)
-    # end
-
     def create_debug_type(type : InstanceVarContainer, type_name : String? = type.to_s)
-      debug_compiler_log { "create_debug_type(#{type} : InstanceVarContainer, type_name = #{type_name}" }
       ivars = type.all_instance_vars
       element_types = [] of LibLLVMExt::Metadata
       struct_type = llvm_struct_type(type)
@@ -118,7 +112,7 @@ module Crystal
       debug_type_cache[type_name] = tmp_debug_type
 
       ivars.each_with_index do |(name, ivar), idx|
-        next if ivar.type.is_a? (NilType)
+        next if ivar.type.is_a?(NilType)
         if (ivar_type = ivar.type?) && (ivar_debug_type = get_debug_type(ivar_type))
           if type_name.starts_with?("Array(") && name == "buffer"
             subrange = di_builder.get_or_create_array_subrange(0, 0)
@@ -146,14 +140,12 @@ module Crystal
     end
 
     def create_debug_type(type : (PointerInstanceType | Pointer(T)), type_name : String? = type.to_s)
-      debug_compiler_log { "create_debug_type(#{type} : (PointerInstanceType | Pointer(T)), type_name = #{type_name}" }
       element_type = get_debug_type(type.element_type)
       return unless element_type
       di_builder.create_pointer_type(element_type, 8u64 * llvm_typer.pointer_size, 8u64 * llvm_typer.pointer_size, type_name)
-    end  
+    end
 
     def create_debug_type(type : MixedUnionType, type_name : String? = type.to_s)
-      debug_compiler_log { "create_debug_type(#{type} : MixedUnionType, type_name = #{type_name}, union_types=#{type.union_types}" }
       element_types = [] of LibLLVMExt::Metadata
       struct_type = llvm_type(type)
       struct_type_size = @program.target_machine.data_layout.size_in_bits(struct_type)
@@ -163,7 +155,7 @@ module Crystal
       debug_type_cache[type_name] = tmp_debug_type
 
       type.expand_union_types.each_with_index do |ivar_type, idx|
-        next if ivar_type.is_a? (NilType) || ivar_type.to_s == "Nil"
+        next if ivar_type.is_a?(NilType) || ivar_type.to_s == "Nil"
         if ivar_debug_type = get_debug_type(ivar_type)
           embedded_type = llvm_type(ivar_type)
           size = @program.target_machine.data_layout.size_in_bits(embedded_type)
@@ -187,14 +179,13 @@ module Crystal
     end
 
     def create_debug_type(type : (NilableReferenceUnionType | ReferenceUnionType), type_name : String? = type.to_s)
-      debug_compiler_log { "create_debug_type(#{type} : (NilableReferenceUnionType | ReferenceUnionType), type_name = #{type_name}" }
       element_types = [] of LibLLVMExt::Metadata
       struct_type = llvm_type(type)
       tmp_debug_type = di_builder.create_replaceable_composite_type(nil, type_name, nil, 1, llvm_context)
       debug_type_cache[type_name] = tmp_debug_type
 
       type.expand_union_types.each_with_index do |ivar_type, idx|
-        next if ivar_type.is_a? (NilType) || ivar_type.to_s == "Nil"
+        next if ivar_type.is_a?(NilType) || ivar_type.to_s == "Nil"
         if ivar_debug_type = get_debug_type(ivar_type)
           embedded_type = llvm_type(ivar_type)
           size = @program.target_machine.data_layout.size_in_bits(embedded_type)
@@ -205,25 +196,21 @@ module Crystal
 
       size = @program.target_machine.data_layout.size_in_bits(struct_type)
       debug_type = di_builder.create_union_type(nil, type_name, @current_debug_file.not_nil!, 1, size, size, LLVM::DIFlags::Zero, di_builder.get_or_create_type_array(element_types))
-      # debug_type = create_pointer(debug_type, type.to_s)
       di_builder.replace_temporary(tmp_debug_type, debug_type)
       debug_type
     end
 
     def create_debug_type(type : NilableType, type_name : String? = type.to_s)
-      debug_compiler_log { "create_debug_type(#{type} : NilableType, type_name = #{type_name}" }
       debug_type = get_debug_type(type.not_nil_type, type.to_s)
       debug_type
     end
 
     def create_debug_type(type : NilablePointerType, type_name : String? = type.to_s)
-      debug_compiler_log { "create_debug_type(#{type} : NilablePointerType, type_name = #{type_name}" }
       debug_type = get_debug_type(type.pointer_type, type.to_s)
       debug_type
     end
 
     def create_debug_type(type : StaticArrayInstanceType, type_name : String? = type.to_s)
-      debug_compiler_log { "create_debug_type: #{type} (#{type.class}) -> element_type=[<#{type.element_type}>], size=#{type.size}" }
       debug_type = get_debug_type(type.element_type)
       return unless debug_type
       subrange = di_builder.get_or_create_array_subrange(0, type.size.as(NumberLiteral).value.to_i)
@@ -231,7 +218,6 @@ module Crystal
     end
 
     def create_debug_type(type : TypeDefType, type_name : String? = type.to_s)
-      # debug_compiler_log { "create_debug_type(#{type} : #{type.class}, type_name = #{type_name}, type.typedef = #{type.typedef}" }
       debug_type = get_debug_type(type.typedef, type_name)
     end
 
@@ -244,7 +230,7 @@ module Crystal
       debug_type_cache[type_name] = tmp_debug_type
 
       ivars.each_with_index do |ivar_type, idx|
-        next if ivar_type.is_a? (NilType)
+        next if ivar_type.is_a?(NilType)
         if ivar_debug_type = get_debug_type(ivar_type)
           offset = @program.target_machine.data_layout.offset_of_element(struct_type, idx &+ (type.struct? ? 0 : 1))
           size = @program.target_machine.data_layout.size_in_bits(llvm_embedded_type(ivar_type))
@@ -275,7 +261,7 @@ module Crystal
       debug_type_cache[type_name] = tmp_debug_type
 
       ivars.each_with_index do |ivar, idx|
-        next if (ivar_type = ivar.type).is_a? (NilType)
+        next if (ivar_type = ivar.type).is_a?(NilType)
         if ivar_debug_type = get_debug_type(ivar_type)
           offset = @program.target_machine.data_layout.offset_of_element(struct_type, idx &+ (type.struct? ? 0 : 1))
           size = @program.target_machine.data_layout.size_in_bits(llvm_embedded_type(ivar_type))
@@ -297,7 +283,7 @@ module Crystal
       debug_type
     end
 
-    # This is a sinkhole for debug types that does not need to be implemented
+    # This is a sinkhole for debug types thatmost likely does not need to be implemented
     def create_debug_type(type : (NonGenericModuleType | GenericClassInstanceMetaclassType | MetaclassType | NilableProcType | VirtualMetaclassType), type_name : String? = type.to_s)
     end
 
@@ -308,22 +294,18 @@ module Crystal
     def declare_parameter(arg_name, arg_type, arg_no, alloca, location)
       return false unless @debug.variables?
       declare_local(arg_type, alloca, location) do |scope, file, line_number, debug_type|
-        variable = di_builder.create_parameter_variable scope, arg_name, arg_no, file, line_number, debug_type
-        debug_compiler_log { "declare_parameter(#{arg_name})/#{arg_no}@#{arg_type}: var: #{dump_metadata(variable)}, loc: #{location}, cur_loc: #{builder.current_debug_location}" }
-        variable
+        di_builder.create_parameter_variable scope, arg_name, arg_no, file, line_number, debug_type
       end
     end
 
     def declare_variable(var_name, var_type, alloca, location, call_file = __FILE__, call_line = __LINE__)
       return false unless @debug.variables?
       declare_local(var_type, alloca, location) do |scope, file, line_number, debug_type|
-        variable = di_builder.create_auto_variable scope, var_name, file, line_number, debug_type, align_of(var_type)
-        debug_compiler_log { "from #{call_file}:#{call_line} -> declare_variable(#{var_name})@#{var_type}: alloca: #{alloca} var: #{dump_metadata(variable)}, loc: #{location}, cur_loc: #{builder.current_debug_location}" }
-        variable
+        di_builder.create_auto_variable scope, var_name, file, line_number, debug_type, align_of(var_type)
       end
     end
 
-    def dump_metadata (md : LibLLVMExt::Metadata?)
+    def dump_metadata(md : LibLLVMExt::Metadata?)
       md.nil? ? "nil" : LLVM::Value.new(LibLLVMExt.metadata_as_value(llvm_context, md.not_nil!))
     end
 
