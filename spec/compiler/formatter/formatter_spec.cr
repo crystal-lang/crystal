@@ -1602,4 +1602,12 @@ describe Crystal::Formatter do
     CODE
 
   assert_format "a.!"
+
+  assert_format <<-CODE
+    ->{
+      # first comment
+      puts "hi"
+      # second comment
+    }
+    CODE
 end
