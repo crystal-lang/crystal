@@ -30,7 +30,7 @@ struct LLVM::DIBuilder
   end
 
   def create_lexical_block_file(scope, file_scope, discriminator = 0)
-    LibLLVMExt.di_builder_create_lexical_block_file(self, scope, file_scope, discriminator)
+    LibLLVM.di_builder_create_lexical_block_file(self, scope, file_scope, discriminator)
   end
 
   def create_function(scope, name, linkage_name, file, line, composite_type, is_local_to_unit, is_definition,
@@ -101,45 +101,45 @@ struct LLVM::DIBuilder
   end
 
   def create_unspecified_type(name : String)
-    LibLLVMExt.di_builder_create_unspecified_yype(self, name, name.size)
+    LibLLVM.di_builder_create_unspecified_yype(self, name, name.size)
   end
 
   def location_get_line(location : LibLLVMExt::Metadata)
-    LibLLVMExt.location_get_line(location)
+    LibLLVM.location_get_line(location)
   end
 
   def location_get_column(location : LibLLVMExt::Metadata)
-    LibLLVMExt.location_get_column(location)
+    LibLLVM.location_get_column(location)
   end
 
   def location_get_scope(location : LibLLVMExt::Metadata)
-    LibLLVMExt.location_get_scope(location)
+    LibLLVM.location_get_scope(location)
   end
 
   def scope_get_file(scope : LibLLVMExt::Metadata)
-    LibLLVMExt.scope_get_file(scope)
+    LibLLVM.scope_get_file(scope)
   end
 
   def file_get_directory(file : LibLLVMExt::Metadata)
-    ptr = LibLLVMExt.file_get_directory(file, out dir_name_size)
+    ptr = LibLLVM.file_get_directory(file, out dir_name_size)
     str = String.new(ptr, dir_name_size)
   end
 
   def file_get_filename(file : LibLLVMExt::Metadata)
-    ptr = LibLLVMExt.file_get_filename(file, out file_name_size)
+    ptr = LibLLVM.file_get_filename(file, out file_name_size)
     str = String.new(ptr, file_name_size)
   end
 
   def variable_get_file(variable : LibLLVMExt::Metadata)
-    LibLLVMExt.LLVMDIVariableGetFile(variable)
+    LibLLVM.variable_get_file(variable)
   end
 
   def variable_get_scope(variable : LibLLVMExt::Metadata)
-    LibLLVMExt.variable_get_scope(variable)
+    LibLLVM.variable_get_scope(variable)
   end
 
   def variable_get_line(variable : LibLLVMExt::Metadata)
-    LibLLVMExt.variable_get_line(variable)
+    LibLLVM.variable_get_line(variable)
   end
 
   def get_or_create_array_subrange(lo, count)
