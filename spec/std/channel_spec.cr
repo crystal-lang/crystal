@@ -735,9 +735,7 @@ describe "buffered" do
     # after the third receive, since the buffer is 2
     # f should be able to exec fully
     ch.receive
-    until f.dead?
-      Fiber.yield
-    end
+    wait_until_finished f
     done.should be_true
   end
 

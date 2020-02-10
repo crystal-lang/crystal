@@ -20,9 +20,7 @@ describe Mutex do
     end.to_a
 
     fibers.each do |f|
-      while !f.dead?
-        Fiber.yield
-      end
+      wait_until_finished f
     end
 
     x.should eq(1000)

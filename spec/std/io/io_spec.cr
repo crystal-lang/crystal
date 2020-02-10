@@ -858,10 +858,8 @@ describe IO do
         delay(1) { ch.send :timeout }
 
         ch.receive.should eq(:start)
-        while f.running?
-          # Wait until the fiber is blocked
-          Fiber.yield
-        end
+        wait_until_blocked f
+
         read.close
         ch.receive.should eq(:end)
       end
@@ -883,10 +881,8 @@ describe IO do
         delay(1) { ch.send :timeout }
 
         ch.receive.should eq(:start)
-        while f.running?
-          # Wait until the fiber is blocked
-          Fiber.yield
-        end
+        wait_until_blocked f
+
         write.close
         ch.receive.should eq(:end)
       end

@@ -96,9 +96,7 @@ describe UNIXServer do
         ch.receive.should eq(:begin)
 
         # wait for the server to call accept
-        until f.resumable?
-          Fiber.yield
-        end
+        wait_until_blocked f
 
         server.close
         ch.receive.should eq(:end)
@@ -139,9 +137,7 @@ describe UNIXServer do
         ch.receive.should eq(:begin)
 
         # wait for the server to call accept
-        until f.resumable?
-          Fiber.yield
-        end
+        wait_until_blocked f
 
         server.close
         ch.receive.should eq(:end)
