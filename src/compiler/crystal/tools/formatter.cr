@@ -4060,7 +4060,9 @@ module Crystal
         end
       end
 
-      skip_space_or_newline
+      indent do
+        skip_space_or_newline
+      end
 
       if is_do
         check_end
