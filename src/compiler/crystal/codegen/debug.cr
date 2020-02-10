@@ -57,8 +57,7 @@ module Crystal
 
     def get_debug_type(type, type_name : String? = type.to_s)
       type = type.remove_indirection
-      debug_type = debug_type_cache[type_name] ||= create_debug_type(type, type_name)
-      debug_type
+      debug_type_cache[type_name] ||= create_debug_type(type, type_name)
     end
 
     def create_debug_type(type : NilType, type_name : String? = type.to_s)
@@ -201,13 +200,11 @@ module Crystal
     end
 
     def create_debug_type(type : NilableType, type_name : String? = type.to_s)
-      debug_type = get_debug_type(type.not_nil_type, type.to_s)
-      debug_type
+      get_debug_type(type.not_nil_type, type.to_s)
     end
 
     def create_debug_type(type : NilablePointerType, type_name : String? = type.to_s)
-      debug_type = get_debug_type(type.pointer_type, type.to_s)
-      debug_type
+      get_debug_type(type.pointer_type, type.to_s)
     end
 
     def create_debug_type(type : StaticArrayInstanceType, type_name : String? = type.to_s)
@@ -218,7 +215,7 @@ module Crystal
     end
 
     def create_debug_type(type : TypeDefType, type_name : String? = type.to_s)
-      debug_type = get_debug_type(type.typedef, type_name)
+      get_debug_type(type.typedef, type_name)
     end
 
     def create_debug_type(type : TupleInstanceType, type_name : String? = type.to_s)
@@ -411,7 +408,7 @@ module Crystal
         array = fun_metadatas[context.fun]?
         scope = nil
         if array
-          array.each_with_index do |scope_pair, idx|
+          array.each do |scope_pair|
             return scope_pair[1] if scope_pair[0] == location.filename
           end
           file, dir = file_and_dir(location.filename)
