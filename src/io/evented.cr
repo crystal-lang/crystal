@@ -170,21 +170,17 @@ module IO::Evented
   end
 
   def evented_close
-    @read_event.each &.free
-    @read_event.clear
+    @read_event.consume_each &.free
 
-    @write_event.each &.free
-    @write_event.clear
+    @write_event.consume_each &.free
 
-    @readers.each do |readers|
+    @readers.consume_each do |readers|
       Crystal::Scheduler.enqueue readers
     end
-    @readers.clear
 
-    @writers.each do |writers|
+    @writers.consume_each do |writers|
       Crystal::Scheduler.enqueue writers
     end
-    @writers.clear
   end
 
   private def resume_pending_readers

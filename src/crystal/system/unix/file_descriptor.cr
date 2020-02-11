@@ -9,7 +9,11 @@ module Crystal::System::FileDescriptor
 
   private def unbuffered_read(slice : Bytes)
     evented_read(slice, "Error reading file") do
-      LibC.read(@fd, slice, slice.size)
+      LibC.read(@fd, slice, slice.size).tap do |return_code|
+        if return_code == -1 && Errno.value == Errno::EBADF
+          raise IO::Error.new "File not open for reading"
+        end
+      end
     end
   end
 
