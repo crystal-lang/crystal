@@ -12,10 +12,10 @@ class IO::FileDescriptor < IO
   def initialize(@fd, blocking = nil)
     @closed = system_closed?
 
-    if blocking == nil
+    if blocking.nil?
       blocking =
         case system_info.type
-        when File::Type::Pipe, File::Type::Socket, File::Type::CharacterDevice
+        when .pipe?, .socket?, .character_device?
           false
         else
           true
