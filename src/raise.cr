@@ -45,7 +45,7 @@ private def traverse_eh_table(leb, start, ip, actions)
 
   lp_start_encoding = leb.read_uint8 # @LPStart encoding
   if lp_start_encoding != 0xff_u8
-    LibC.dprintf 2, "Unexpected encoding for LPStart: #{lp_start_encoding}\n"
+    Crystal::System.print_error "Unexpected encoding for LPStart: #{lp_start_encoding}\n"
     LibC.exit 1
   end
 
@@ -55,7 +55,7 @@ private def traverse_eh_table(leb, start, ip, actions)
 
   cs_encoding = leb.read_uint8 # CS Encoding (1: uleb128, 3: uint32)
   if cs_encoding != 1 && cs_encoding != 3
-    LibC.dprintf 2, "Unexpected CS encoding: #{cs_encoding}\n"
+    Crystal::System.print_error "Unexpected CS encoding: #{cs_encoding}\n"
     LibC.exit 1
   end
 
@@ -193,7 +193,7 @@ end
   @[Raises]
   fun __crystal_raise(unwind_ex : LibUnwind::Exception*) : NoReturn
     ret = LibUnwind.raise_exception(unwind_ex)
-    LibC.dprintf 2, "Failed to raise an exception: %s\n", ret.to_s
+    Crystal::System.print_error "Failed to raise an exception: %s\n", ret.to_s
     CallStack.print_backtrace
     LibC.exit(ret)
   end
