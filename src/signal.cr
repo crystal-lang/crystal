@@ -339,9 +339,9 @@ fun __crystal_sigfault_handler(sig : LibC::Int, addr : Void*)
     end
 
   if is_stack_overflow
-    LibC.dprintf 2, "Stack overflow (e.g., infinite or very deep recursion)\n"
+    Crystal::System.print_error "Stack overflow (e.g., infinite or very deep recursion)\n"
   else
-    LibC.dprintf 2, "Invalid memory access (signal %d) at address 0x%lx\n", sig, addr
+    Crystal::System.print_error "Invalid memory access (signal %d) at address 0x%lx\n", sig, addr
   end
 
   CallStack.print_backtrace
