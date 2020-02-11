@@ -122,12 +122,12 @@ struct LLVM::DIBuilder
 
   def file_get_directory(file : LibLLVMExt::Metadata)
     ptr = LibLLVM.file_get_directory(file, out dir_name_size)
-    str = String.new(ptr, dir_name_size)
+    String.new(ptr, dir_name_size)
   end
 
   def file_get_filename(file : LibLLVMExt::Metadata)
     ptr = LibLLVM.file_get_filename(file, out file_name_size)
-    str = String.new(ptr, file_name_size)
+    String.new(ptr, file_name_size)
   end
 
   def variable_get_file(variable : LibLLVMExt::Metadata)

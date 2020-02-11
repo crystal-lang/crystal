@@ -50,14 +50,13 @@ def CrystalString_SummaryProvider(value, dict):
     process = value.GetTarget().GetProcess()
     byteSize = int(value.child[0].value)
     len = int(value.child[1].value)
-    len = len or byteSize
+    len = byteSize or len
     strAddr = value.child[2].load_addr
     val = process.ReadCStringFromMemory(strAddr, len + 1, error)
     return '"%s"' % val
 
 
 def __lldb_init_module(debugger, dict):
-    # debugger.HandleCommand('type summary add --summary-string "Count: ${var.size%#}" -x "^Array\(.+\)$" -w Crystal')
     debugger.HandleCommand('type synthetic add -l crystal_formatters.CrystalArraySyntheticProvider -x "^Array\(.+\)(\s*\**)?$" -w Crystal')
     debugger.HandleCommand('type summary add -F crystal_formatters.CrystalString_SummaryProvider -x "^(String|\(String \| Nil\))(\s*\**)?$" -w Crystal')
     debugger.HandleCommand('type category enable Crystal')
