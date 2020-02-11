@@ -103,17 +103,17 @@ module Crystal
     begin
       yield
     rescue e
-      LibC.dprintf 2, "Unhandled exception in main (%s): %s\n", e.class.name, e.message || "(no message)"
+      Crystal::System.print_error "Unhandled exception in main (%s): %s\n", e.class.name, e.message || "(no message)"
       begin
         if bt = e.backtrace?
           bt.each do |frame|
-            LibC.dprintf 2, "  %s\n", frame
+            Crystal::System.print_error "  %s\n", frame
           end
         else
-          LibC.dprintf 2, "  (no backtrace)\n"
+          Crystal::System.print_error "  (no backtrace)\n"
         end
       rescue e
-        LibC.dprintf 2, "Error while trying to dump the backtrace (%s): %s\n", e.class.name, e.message || "(no message)"
+        Crystal::System.print_error "Error while trying to dump the backtrace (%s): %s\n", e.class.name, e.message || "(no message)"
       end
       2
     end
