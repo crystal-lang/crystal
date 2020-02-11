@@ -256,7 +256,7 @@ def run(code, filename = nil, inject_primitives = true, debug = Crystal::Debug::
   end
 end
 
-def build_and_run(code)
+def build(code)
   code_file = File.tempname("build_and_run_code")
 
   # write code to the temp file
@@ -267,13 +267,19 @@ def build_and_run(code)
   `bin/crystal build #{encode_program_flags} #{code_file.path.inspect} -o #{binary_file.path.inspect}`
   File.exists?(binary_file).should be_true
 
-  out_io, err_io = IO::Memory.new, IO::Memory.new
-  status = Process.run(binary_file, output: out_io, error: err_io)
-
-  {status, out_io.to_s, err_io.to_s}
+  yield binary_file
 ensure
   File.delete(code_file) if code_file
   File.delete(binary_file) if binary_file
+end
+
+def build_and_run(code)
+  build(code) do |binary_file|
+    out_io, err_io = IO::Memory.new, IO::Memory.new
+    status = Process.run(binary_file, output: out_io, error: err_io)
+
+    {status, out_io.to_s, err_io.to_s}
+  end
 end
 
 def test_c(c_code, crystal_code)
