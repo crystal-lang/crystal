@@ -1662,26 +1662,7 @@ module Crystal
         consume_uint_suffix
         set_token_raw_from_start(start)
       when '_'
-        case peek_next_char
-        when 'i'
-          @token.type = :NUMBER
-          @token.value = "0"
-          next_char
-          consume_int_suffix
-          set_token_raw_from_start(start)
-        when 'f'
-          @token.type = :NUMBER
-          @token.value = "0"
-          next_char
-          consume_float_suffix
-        when 'u'
-          @token.type = :NUMBER
-          @token.value = "0"
-          next_char
-          consume_uint_suffix
-        else
-          scan_number(start)
-        end
+        scan_number(start)
       else
         if next_char.ascii_number?
           raise "octal constants should be prefixed with 0o"
