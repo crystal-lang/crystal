@@ -1434,7 +1434,7 @@ module Crystal
             end
           end
 
-          if current_char == 'f' || current_char == 'F'
+          if current_char == 'f'
             suffix_size = consume_float_suffix
           else
             @token.number_kind = :f64
@@ -1462,12 +1462,12 @@ module Crystal
           next_char
         end
 
-        if current_char == 'f' || current_char == 'F'
+        if current_char == 'f'
           suffix_size = consume_float_suffix
         else
           @token.number_kind = :f64
         end
-      when 'f', 'F'
+      when 'f'
         is_integer = false
         suffix_size = consume_float_suffix
       when 'i'
