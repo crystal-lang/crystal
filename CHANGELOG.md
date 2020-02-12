@@ -10,7 +10,7 @@
 
 ## Standard library
 
-- **(breaking-change)** Remove several deprecated methods and modules. ([#8646](https://github.com/crystal-lang/crystal/pull/8646), [#8596](https://github.com/crystal-lang/crystal/pull/8596), thanks @bcardiff, @Blacksmoke16)
+- **(breaking-change)** Remove several previously deprecated methods and modules: `PartialComparable`, `Crypto::Bcrypt::Password#==`, `HTTP::Server::Response#respond_with_error`, `JSON::PullParser::Kind#==`, `Symbol#==(JSON::PullParser::Kind)`, `JSON::Token#type`, `String#at`, `Time.new`, `Time.now`, `Time.utc_now`, `URI.escape`, `URI.unescape`. ([#8646](https://github.com/crystal-lang/crystal/pull/8646), [#8596](https://github.com/crystal-lang/crystal/pull/8596), thanks @bcardiff, @Blacksmoke16)
 - Fixed docs wording. ([#8606](https://github.com/crystal-lang/crystal/pull/8606), [#8784](https://github.com/crystal-lang/crystal/pull/8784), thanks @fxn)
 - Add `Object#in?`. ([#8720](https://github.com/crystal-lang/crystal/pull/8720), [#8723](https://github.com/crystal-lang/crystal/pull/8723), thanks @Sija)
 - Allow to create an enum from a symbol. ([#8634](https://github.com/crystal-lang/crystal/pull/8634), thanks @bew)
@@ -91,12 +91,12 @@
 
 ### Spec
 
-- **(breaking-change)** Remove deprecated spec method `assert`. ([#8767](https://github.com/crystal-lang/crystal/pull/8767), thanks @Blacksmoke16)
+- **(breaking-change)** Remove previously deprecated spec method `assert`. ([#8767](https://github.com/crystal-lang/crystal/pull/8767), thanks @Blacksmoke16)
 - `Spec::JUnitFormatter` output and options enhancements. ([#8599](https://github.com/crystal-lang/crystal/pull/8599), [#8692](https://github.com/crystal-lang/crystal/pull/8692), thanks @Sija, @bcardiff)
 
 ## Compiler
 
-- **(breaking-change)** Drop support for deprecated comma separators in enums and other cleanups. ([#8657](https://github.com/crystal-lang/crystal/pull/8657), thanks @bcardiff)
+- **(breaking-change)** Drop support for previously deprecated comma separators in enums and other cleanups. ([#8657](https://github.com/crystal-lang/crystal/pull/8657), thanks @bcardiff)
 - **(breaking-change)** Drop uppercase F32 and F64 float number suffixes. ([#8782](https://github.com/crystal-lang/crystal/pull/8782), thanks @rhysd)
 - Fixed memory corruption issues by using LLVM's `memset` and `memcpy` that matches target machine. ([#8746](https://github.com/crystal-lang/crystal/pull/8746), thanks @bcardiff)
 - Fixed ICE when trying to add type inside annotation. ([#8628](https://github.com/crystal-lang/crystal/pull/8628), thanks @asterite)
