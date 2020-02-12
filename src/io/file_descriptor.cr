@@ -9,8 +9,18 @@ class IO::FileDescriptor < IO
   # platform-specific.
   getter fd
 
-  def initialize(@fd, blocking = false)
+  def initialize(@fd, blocking = nil)
     @closed = system_closed?
+
+    if blocking.nil?
+      blocking =
+        case system_info.type
+        when .pipe?, .socket?, .character_device?
+          false
+        else
+          true
+        end
+    end
 
     unless blocking || {{flag?(:win32)}}
       self.blocking = false
@@ -25,10 +35,10 @@ class IO::FileDescriptor < IO
     # Figure out the terminal TTY name. If ttyname fails we have a non-tty, or something strange.
     path = uninitialized UInt8[256]
     ret = LibC.ttyname_r(fd, path, 256)
-    return new(fd, blocking: true) unless ret == 0
+    return new(fd) unless ret == 0
 
     clone_fd = LibC.open(path, LibC::O_RDWR)
-    return new(fd, blocking: true) if clone_fd == -1
+    return new(fd) if clone_fd == -1
 
     # We don't buffer output for TTY devices to see their output right away
     io = new(clone_fd)
