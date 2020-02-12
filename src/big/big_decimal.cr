@@ -260,7 +260,8 @@ struct BigDecimal < Number
     in_scale(new_scale.scale)
   end
 
-  private def in_scale(new_scale : UInt64) : BigDecimal
+  # :nodoc:
+  def in_scale(new_scale : UInt64) : BigDecimal
     if @value == 0
       BigDecimal.new(0.to_big_i, new_scale)
     elsif @scale > new_scale
@@ -291,7 +292,8 @@ struct BigDecimal < Number
   def ceil : BigDecimal
     mask = power_ten_to(@scale)
     diff = (mask - @value % mask) % mask
-    (self + BigDecimal.new(diff, @scale))
+    value = self + BigDecimal.new(diff, @scale)
+    value.in_scale(0)
   end
 
   def floor : BigDecimal
@@ -331,11 +333,7 @@ struct BigDecimal < Number
 
   # Converts to `BigInt`. Truncates anything on the right side of the decimal point.
   def to_big_i
-    if self >= 0
-      self.floor.value
-    else
-      self.ceil.value
-    end
+    trunc.value
   end
 
   # Converts to `BigFloat`.

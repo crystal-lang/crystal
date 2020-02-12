@@ -337,36 +337,50 @@ describe BigDecimal do
     bd2 = BigDecimal.new(-123, 5)
     bd3 = BigDecimal.new(123, 0)
     bd4 = BigDecimal.new(-123, 0)
+    bd5 = "-123.000".to_big_d
+    bd6 = "-1.1".to_big_d
 
     bd1.to_i.should eq 0
     bd2.to_i.should eq 0
     bd3.to_i.should eq 123
     bd4.to_i.should eq -123
+    bd5.to_i.should eq -123
+    bd6.to_i.should eq -1
 
     bd1.to_u.should eq 0
     bd2.to_u.should eq 0
     bd3.to_u.should eq 123
     bd4.to_u.should eq 123
+    bd5.to_u.should eq 123
+    bd6.to_u.should eq 1
 
     bd1.to_f.should eq 0.00123
     bd2.to_f.should eq -0.00123
     bd3.to_f.should eq 123.0
     bd4.to_f.should eq -123.0
+    bd5.to_f.should eq -123.0
+    bd6.to_f.should eq -1.1
 
     bd1.to_i!.should eq 0
     bd2.to_i!.should eq 0
     bd3.to_i!.should eq 123
     bd4.to_i!.should eq -123
+    bd5.to_i!.should eq -123
+    bd6.to_i!.should eq -1
 
     bd1.to_u!.should eq 0
     bd2.to_u!.should eq 0
     bd3.to_u!.should eq 123
     bd4.to_u!.should eq 123
+    bd5.to_u!.should eq 123
+    bd6.to_u!.should eq 1
 
     bd1.to_f!.should eq 0.00123
     bd2.to_f!.should eq -0.00123
     bd3.to_f!.should eq 123.0
     bd4.to_f!.should eq -123.0
+    bd5.to_f!.should eq -123.0
+    bd6.to_f!.should eq -1.1
   end
 
   it "hashes" do
@@ -435,6 +449,9 @@ describe BigDecimal do
 
     it { -2.01.to_big_d.ceil.should eq(-2) }
     it { -2.91.to_big_d.ceil.should eq(-2) }
+
+    it { "-123.000".to_big_d.ceil.value.should eq(-123) }
+    it { "-1.1".to_big_d.ceil.value.should eq(-1) }
   end
 
   describe "#floor" do
@@ -445,6 +462,9 @@ describe BigDecimal do
     it { 2.11.to_big_d.floor.should eq(2) }
     it { 2.91.to_big_d.floor.should eq(2) }
     it { -2.91.to_big_d.floor.should eq(-3) }
+
+    it { "-123.000".to_big_d.floor.value.should eq(-123) }
+    it { "-1.1".to_big_d.floor.value.should eq(-2) }
   end
 
   describe "#trunc" do
