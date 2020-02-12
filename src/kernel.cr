@@ -501,15 +501,15 @@ end
 # Registered `at_exit` procs are executed.
 def exit(status = 0) : NoReturn
   status = AtExitHandlers.run status
-  STDOUT.flush
-  STDERR.flush
+  Crystal.ignore_stdio_errors { STDOUT.flush }
+  Crystal.ignore_stdio_errors { STDERR.flush }
   Process.exit(status)
 end
 
 # Terminates execution immediately, printing *message* to `STDERR` and
 # then calling `exit(status)`.
 def abort(message = nil, status = 1) : NoReturn
-  STDERR.puts message if message
+  Crystal.ignore_stdio_errors { STDERR.puts message } if message
   exit status
 end
 

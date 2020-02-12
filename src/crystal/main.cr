@@ -43,14 +43,15 @@ module Crystal
       end
 
     status = AtExitHandlers.run status, ex
-    handle_stdio_errors { STDOUT.flush }
-    handle_stdio_errors { STDERR.flush }
+    ignore_stdio_errors { STDOUT.flush }
+    ignore_stdio_errors { STDERR.flush }
 
     raise ex if ex
     status
   end
 
-  private def self.handle_stdio_errors
+  # :nodoc:
+  def self.ignore_stdio_errors
     yield
   rescue IO::Error
   rescue Errno
