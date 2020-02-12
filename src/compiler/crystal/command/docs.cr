@@ -12,6 +12,8 @@ class Crystal::Command
     sitemap_base_url = nil
     sitemap_priority = "1.0"
     sitemap_changefreq = "never"
+    project_name = nil
+    project_version = "master"
 
     compiler = Compiler.new
 
@@ -23,6 +25,14 @@ class Crystal::Command
 
         Options:
         BANNER
+
+      opts.on("--project-name=NAME", "Set project name") do |value|
+        project_name = value
+      end
+
+      opts.on("--project-version=VERSION", "Set project version") do |value|
+        project_version = value
+      end
 
       opts.on("--output=DIR", "-o DIR", "Set the output directory (default: #{output_directory})") do |value|
         output_directory = value
@@ -88,6 +98,10 @@ class Crystal::Command
       setup_compiler_warning_options(opts, compiler)
     end
 
+    unless project_name
+      abort "missing --project-name"
+    end
+
     if options.empty?
       sources = [Compiler::Source.new("require", %(require "./src/**"))]
       included_dirs = [] of String
@@ -103,7 +117,8 @@ class Crystal::Command
     compiler.wants_doc = true
     result = compiler.top_level_semantic sources
 
-    Doc::Generator.new(result.program, included_dirs, output_directory, output_format, sitemap_base_url, sitemap_priority, sitemap_changefreq).run
+    project_info = Doc::ProjectInfo.new(project_name.not_nil!, project_version)
+    Doc::Generator.new(result.program, included_dirs, output_directory, output_format, sitemap_base_url, sitemap_priority, sitemap_changefreq, project_info).run
 
     report_warnings result
     exit 1 if warnings_fail_on_exit?(result)

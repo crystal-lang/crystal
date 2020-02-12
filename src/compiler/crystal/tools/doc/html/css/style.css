@@ -59,7 +59,7 @@ body {
 }
 
 .sidebar .search-box {
-  padding: 8px 9px;
+  padding: 13px 9px;
 }
 
 .sidebar input {
@@ -104,6 +104,24 @@ body {
   color: #C8C8C8;
   font-size: 14px;
   text-indent: 2px;
+}
+
+.project-summary {
+  display: inline-block;
+  padding: 9px 15px 30px 30px;
+  text-align: right;
+}
+
+.project-name {
+  font-size: 1.4rem;
+  margin: 0;
+  color: #f4f4f4;
+  font-weight: 600;
+}
+
+.project-version {
+  margin-top: 5px;
+  display: block;
 }
 
 .sidebar ul {
