@@ -71,7 +71,7 @@ module Crystal::Playground
           return # if we don't exit here we've found a bug
         end
 
-        @logger.error "Instrumention bug found (session=#{@session_key}, tag=#{tag})."
+        @logger.error "Instrumentation bug found (session=#{@session_key}, tag=#{tag})."
         send_with_json_builder do |json|
           json.field "type", "bug"
           json.field "tag", tag
