@@ -334,7 +334,7 @@ fun __crystal_sigfault_handler(sig : LibC::Int, addr : Void*)
       stack_bottom = Fiber.current.@stack_bottom
       stack_top <= addr < stack_bottom
     rescue e
-      LibC.dprintf 2, "Error while trying to determine if a stack overflow has occurred. Probable memory corrpution\n"
+      Crystal::System.print_error "Error while trying to determine if a stack overflow has occurred. Probable memory corrpution\n"
       false
     end
 

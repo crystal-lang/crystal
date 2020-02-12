@@ -82,8 +82,10 @@ module Crystal
   # is not setup yet, so nothing that allocates memory
   # in Crystal (like `new` for classes) can be used.
   def self.main(argc : Int32, argv : UInt8**)
-    main do
-      main_user_code(argc, argv)
+    handle_exceptions do
+      main do
+        main_user_code(argc, argv)
+      end
     end
   end
 
@@ -95,6 +97,26 @@ module Crystal
   # more details.
   def self.main_user_code(argc : Int32, argv : UInt8**)
     LibCrystalMain.__crystal_main(argc, argv)
+  end
+
+  protected def self.handle_exceptions
+    begin
+      yield
+    rescue e
+      Crystal::System.print_error "Unhandled exception in main (%s): %s\n", e.class.name, e.message || "(no message)"
+      begin
+        if bt = e.backtrace?
+          bt.each do |frame|
+            Crystal::System.print_error "  %s\n", frame
+          end
+        else
+          Crystal::System.print_error "  (no backtrace)\n"
+        end
+      rescue e
+        Crystal::System.print_error "Error while trying to dump the backtrace (%s): %s\n", e.class.name, e.message || "(no message)"
+      end
+      2
+    end
   end
 end
 
