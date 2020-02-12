@@ -129,20 +129,20 @@ describe MIME do
   end
 
   it ".load_mime_database" do
-    MIME.from_extension?(".bar").should be_nil
-    MIME.from_extension?(".fbaz").should be_nil
+    MIME.from_extension?(".cr-test-bar").should be_nil
+    MIME.from_extension?(".cr-test-fbaz").should be_nil
 
     MIME.load_mime_database IO::Memory.new <<-EOF
-      foo/bar          bar
-      foo/baz          baz fbaz #foobaz
-      # foo/foo        foo
+      foo/bar          cr-test-bar
+      foo/baz          cr-test-baz cr-test-fbaz #cr-test-foobaz
+      # foo/foo        cr-test-foo
     EOF
 
-    MIME.from_extension?(".bar").should eq "foo/bar"
-    MIME.from_extension?(".fbaz").should eq "foo/baz"
-    MIME.from_extension?(".#foobaz").should be_nil
-    MIME.from_extension?(".foobaz").should be_nil
-    MIME.from_extension?(".foo").should be_nil
+    MIME.from_extension?(".cr-test-bar").should eq "foo/bar"
+    MIME.from_extension?(".cr-test-fbaz").should eq "foo/baz"
+    MIME.from_extension?(".#cr-test-foobaz").should be_nil
+    MIME.from_extension?(".cr-test-foobaz").should be_nil
+    MIME.from_extension?(".cr-test-foo").should be_nil
   end
 
   describe ".init" do
