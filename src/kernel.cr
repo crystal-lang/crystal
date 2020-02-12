@@ -440,8 +440,6 @@ end
 module AtExitHandlers
   @@running = false
 
-  class_property exception : Exception?
-
   private class_getter(handlers) { [] of Int32, Exception? -> }
 
   def self.add(handler)
@@ -450,7 +448,7 @@ module AtExitHandlers
     handlers << handler
   end
 
-  def self.run(status)
+  def self.run(status, exception = nil)
     @@running = true
 
     if handlers = @@handlers
@@ -459,19 +457,10 @@ module AtExitHandlers
         begin
           handler.call status, exception
         rescue handler_ex
-          STDERR.puts "Error running at_exit handler: #{handler_ex}"
+          Crystal::System.print_error "Error running at_exit handler: %s\n", handler_ex.message || ""
           status = 1 if status.zero?
         end
       end
-    end
-
-    if ex = @@exception
-      # Print the exception after all at_exit handlers, to make sure
-      # the user sees it.
-
-      STDERR.print "Unhandled exception: "
-      ex.inspect_with_backtrace(STDERR)
-      STDERR.flush
     end
 
     status
@@ -512,15 +501,15 @@ end
 # Registered `at_exit` procs are executed.
 def exit(status = 0) : NoReturn
   status = AtExitHandlers.run status
-  STDOUT.flush
-  STDERR.flush
+  Crystal.ignore_stdio_errors { STDOUT.flush }
+  Crystal.ignore_stdio_errors { STDERR.flush }
   Process.exit(status)
 end
 
 # Terminates execution immediately, printing *message* to `STDERR` and
 # then calling `exit(status)`.
 def abort(message = nil, status = 1) : NoReturn
-  STDERR.puts message if message
+  Crystal.ignore_stdio_errors { STDERR.puts message } if message
   exit status
 end
 
