@@ -519,4 +519,50 @@ describe "Semantic: private" do
       "private constant Foo::Bar referenced",
       inject_primitives: false
   end
+
+  it "doesn't inherit visibility from class node in macro hook (#8794)" do
+    semantic(%(
+      module M1
+        macro included
+          include M2
+        end
+      end
+
+      module M2
+        macro setup_initializer_hook
+          macro finished
+            generate_needy_initializer
+          end
+
+          macro included
+            setup_initializer_hook
+          end
+
+          macro inherited
+            setup_initializer_hook
+          end
+        end
+
+        macro included
+          setup_initializer_hook
+        end
+
+        macro generate_needy_initializer
+          {% if !@type.abstract? %}
+            def initialize(a)
+            end
+          {% end %}
+        end
+      end
+
+      abstract class Base
+        include M1
+      end
+
+      private class Foo < Base
+      end
+
+      Foo.new(1)
+      ), inject_primitives: false)
+  end
 end

@@ -1003,7 +1003,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
     type_with_hooks.as?(ModuleType).try &.hooks.try &.each do |hook|
       next if hook.kind != kind
 
-      expansion = expand_macro(hook.macro, node) do
+      expansion = expand_macro(hook.macro, node, visibility: :public) do
         if call
           @program.expand_macro hook.macro, call, current_type.instance_type
         else
@@ -1180,7 +1180,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
   def process_finished_hooks
     @finished_hooks.each do |hook|
       self.current_type = hook.scope
-      expansion = expand_macro(hook.macro, hook.macro) do
+      expansion = expand_macro(hook.macro, hook.macro, visibility: :public) do
         @program.expand_macro hook.macro.body, hook.scope
       end
       program.add_finished_hook(hook.scope, hook.macro, expansion)
