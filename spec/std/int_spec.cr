@@ -749,17 +749,15 @@ describe "Int" do
     end
   end
 
-  {% if compare_versions(Crystal::VERSION, "0.26.1") > 0 %}
-    it "compares equality and inequality of signed vs. unsigned integers" do
-      x = -1
-      y = x.unsafe_as(UInt32)
+  it "compares equality and inequality of signed vs. unsigned integers" do
+    x = -1
+    y = x.unsafe_as(UInt32)
 
-      (x == y).should be_false
-      (y == x).should be_false
-      (x != y).should be_true
-      (y != x).should be_true
-    end
-  {% end %}
+    (x == y).should be_false
+    (y == x).should be_false
+    (x != y).should be_true
+    (y != x).should be_true
+  end
 
   it "clones" do
     [1_u8, 2_u16, 3_u32, 4_u64, 5_i8, 6_i16, 7_i32, 8_i64].each do |value|
