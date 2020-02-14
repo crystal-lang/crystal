@@ -317,7 +317,7 @@ class URI
   #
   # This method is the inverse operation to `#relativize` (see [Resolution and Relativization](#Resolution and Relativization)).
   def resolve(uri : URI | String) : URI
-    uri.is_a?(URI) ? target = uri.dup : target = URI.parse(uri)
+    target = uri.is_a?(URI) ? uri.dup : URI.parse(uri)
   
     return target if target.absolute? || opaque?
   
