@@ -1,15 +1,10 @@
 require "spec"
 
 {% if flag?(:musl) %}
-  # FIXME: These thread specs occasionally fail on musl, so they're disabled
-  # for now to reduce noise.
+  # FIXME: These thread specs occasionally fail on musl/alpine based ci, so
+  # they're disabled for now to reduce noise.
   # See https://github.com/crystal-lang/crystal/issues/8738
-  describe Thread do
-    pending "allows passing an argumentless fun to execute"
-    pending "raises inside thread and gets it on join"
-    pending "returns current thread object"
-    pending "yields the processor"
-  end
+  pending Thread
   {% skip_file %}
 {% end %}
 
