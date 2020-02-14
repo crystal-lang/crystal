@@ -6,7 +6,7 @@
 
 ### Macros
 
-- Add `TypeNode.name(generic_args : BoolLiteral)` to return `TypeNode`'s name with or without type vars. ([#8483](https://github.com/crystal-lang/crystal/pull/8483), thanks @Blacksmoke16)
+- Add `TypeNode#name(generic_args : BoolLiteral)` to return `TypeNode`'s name with or without type vars. ([#8483](https://github.com/crystal-lang/crystal/pull/8483), thanks @Blacksmoke16)
 
 ## Standard library
 
