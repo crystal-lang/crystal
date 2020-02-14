@@ -328,13 +328,13 @@ class URI
       target.port = port
       target.user = user
       target.password = password
-      target.path = target_path
+      target.path = fill_target_path
     end
 
     target
   end
 
-  private def target_path(target : URI)
+  private def fill_target_path(target : URI)
     if target.path.empty?
       target.path = remove_dot_segments(path)
       target.query ||= query
