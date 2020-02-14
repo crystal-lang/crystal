@@ -318,11 +318,11 @@ class URI
   # This method is the inverse operation to `#relativize` (see [Resolution and Relativization](#Resolution and Relativization)).
   def resolve(uri : URI | String) : URI
     target = uri.is_a?(URI) ? uri.dup : URI.parse(uri)
-  
+
     return target if target.absolute? || opaque?
-  
+
     target.scheme = scheme
-  
+
     unless target.host || target.user
       target.host = host
       target.port = port
@@ -330,10 +330,10 @@ class URI
       target.password = password
       target.path = target_path
     end
-  
+
     target
   end
-  
+
   private def target_path(target : URI)
     if target.path.empty?
       target.path = remove_dot_segments(path)
