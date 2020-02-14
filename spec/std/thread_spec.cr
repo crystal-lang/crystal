@@ -1,5 +1,18 @@
 require "spec"
 
+{% if flag?(:musl) %}
+  # FIXME: These thread specs occasionally fail on musl, so they're disabled
+  # for now to reduce noise.
+  # See https://github.com/crystal-lang/crystal/issues/8738
+  describe Thread do
+    pending "allows passing an argumentless fun to execute"
+    pending "raises inside thread and gets it on join"
+    pending "returns current thread object"
+    pending "yields the processor"
+  end
+  {% skip_file %}
+{% end %}
+
 describe Thread do
   it "allows passing an argumentless fun to execute" do
     a = 0
