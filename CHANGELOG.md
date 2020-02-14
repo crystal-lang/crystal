@@ -139,7 +139,6 @@
 - Simplify script to determine installed LLVM version. ([#8605](https://github.com/crystal-lang/crystal/pull/8605), thanks @j8r)
 - Add CircleCI test summaries. ([#8617](https://github.com/crystal-lang/crystal/pull/8617), thanks @Sija)
 - Add helper scripts to identify working std-lib specs on Win32. ([#8664](https://github.com/crystal-lang/crystal/pull/8664), thanks @straight-shoota)
-- Use a high-res logo in README.md. ([#8747](https://github.com/crystal-lang/crystal/pull/8747), thanks @waj)
 
 # 0.32.1 (2019-12-18)
 
