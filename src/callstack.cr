@@ -367,7 +367,9 @@ struct CallStack
       @@base_address : UInt64|UInt32|Nil
 
       protected def self.read_dwarf_sections
-        Debug::ELF.open(PROGRAM_NAME) do |elf|
+        program = Process.executable_path
+        return unless program && File.readable? program
+        Debug::ELF.open(program) do |elf|
           elf.read_section?(".text") do |sh, _|
             @@base_address = sh.addr - sh.offset
           end
