@@ -300,6 +300,8 @@ end
 module XML
   # Returns the resulting `String` of writing XML to the yielded `XML::Builder`.
   #
+  # Builds an XML document (see `#document`) including XML declaration (`<?xml?>`).
+  #
   # ```
   # require "xml"
   #
@@ -320,14 +322,53 @@ module XML
     end
   end
 
-  # Writes XML into the given `IO`. An `XML::Builder` is yielded to the block.
+  # Returns the resulting `String` of writing XML to the yielded `XML::Builder`.
+  #
+  # Builds an XML fragment without XML declaration (`<?xml?>`).
+  #
+  # ```
+  # require "xml"
+  #
+  # string = XML.build_fragment(indent: "  ") do |xml|
+  #   xml.element("person", id: 1) do
+  #     xml.element("firstname") { xml.text "Jane" }
+  #     xml.element("lastname") { xml.text "Doe" }
+  #   end
+  # end
+  #
+  # string # => "<person id=\"1\">\n  <firstname>Jane</firstname>\n  <lastname>Doe</lastname>\n</person>\n"
+  # ```
+  def self.build_fragment(*, indent = nil, quote_char = nil)
+    String.build do |str|
+      build_fragment(str, indent: indent, quote_char: quote_char) do |xml|
+        yield xml
+      end
+    end
+  end
+
+  # Writes XML document into the given `IO`. An `XML::Builder` is yielded to the block.
+  #
+  # Builds an XML document (see `#document`) including XML declaration (`<?xml?>`).
   def self.build(io : IO, version : String? = nil, encoding : String? = nil, indent = nil, quote_char = nil)
+    build_fragment(io, indent: indent, quote_char: quote_char) do |xml|
+      xml.start_document version, encoding
+      yield xml
+      # omit end_document because it is called in build_fragment
+    end
+  end
+
+  # Writes XML fragment into the given `IO`. An `XML::Builder` is yielded to the block.
+  #
+  # Builds an XML fragment without XML declaration (`<?xml?>`).
+  def self.build_fragment(io : IO, *, indent = nil, quote_char = nil)
     xml = XML::Builder.new(io)
     xml.indent = indent if indent
     xml.quote_char = quote_char if quote_char
-    v = xml.document(version, encoding) do
-      yield xml
-    end
+    v = yield xml
+
+    # EndDocument is still necessary to ensure all all elements are closed, even
+    # when StartDocument is omitted.
+    xml.end_document
     xml.flush
     v
   end

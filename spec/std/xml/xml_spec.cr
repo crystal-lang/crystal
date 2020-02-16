@@ -373,4 +373,25 @@ describe XML do
     res = root.delete("biz")
     res.should be_nil
   end
+
+  it ".build" do
+    XML.build do |builder|
+      builder.element "foo" { }
+    end.should eq %[<?xml version="1.0"?>\n<foo/>\n]
+  end
+
+  describe ".build_fragment" do
+    it "builds fragment without XML declaration" do
+      XML.build_fragment do |builder|
+        builder.element "foo" { }
+      end.should eq %[<foo/>\n]
+    end
+
+    it "closes open elements" do
+      XML.build_fragment do |builder|
+        builder.start_element "foo"
+        builder.start_element "bar"
+      end.should eq %[<foo><bar/></foo>\n]
+    end
+  end
 end
