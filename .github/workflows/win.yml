@@ -40,7 +40,7 @@ jobs:
         uses: actions/cache@v1
         with:
           path: libs
-          key: win-libs-v1
+          key: win-libs-${{ hashFiles('.github/workflows/win.yml') }}
       - name: Download libgc
         if: steps.cache-libs.outputs.cache-hit != 'true'
         uses: actions/checkout@v2
