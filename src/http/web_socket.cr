@@ -106,12 +106,11 @@ class HTTP::WebSocket
         info = @ws.receive(@buffer)
       rescue
         @on_close.try &.call("")
-        @ws.close
         break
       end
 
       case info.opcode
-      when Protocol::Opcode::PING
+      when .ping?
         @current_message.write @buffer[0, info.size]
         if info.final
           message = @current_message.to_s
@@ -119,25 +118,25 @@ class HTTP::WebSocket
           pong(message) unless closed?
           @current_message.clear
         end
-      when Protocol::Opcode::PONG
+      when .pong?
         @current_message.write @buffer[0, info.size]
         if info.final
           @on_pong.try &.call(@current_message.to_s)
           @current_message.clear
         end
-      when Protocol::Opcode::TEXT
+      when .text?
         @current_message.write @buffer[0, info.size]
         if info.final
           @on_message.try &.call(@current_message.to_s)
           @current_message.clear
         end
-      when Protocol::Opcode::BINARY
+      when .binary?
         @current_message.write @buffer[0, info.size]
         if info.final
           @on_binary.try &.call(@current_message.to_slice)
           @current_message.clear
         end
-      when Protocol::Opcode::CLOSE
+      when .close?
         @current_message.write @buffer[0, info.size]
         if info.final
           message = @current_message.to_s
