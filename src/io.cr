@@ -274,7 +274,7 @@ abstract class IO
     printf format_string, args
   end
 
-  # ditto
+  # :ditto:
   def printf(format_string, args : Array | Tuple) : Nil
     String::Formatter(typeof(args)).new(format_string, args, self).format
     nil

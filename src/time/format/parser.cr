@@ -332,7 +332,7 @@ struct Time::Format
     end
 
     def time_zone_z
-      raise "Invalid timezone" unless {'Z', 'z'}.includes? current_char
+      raise "Invalid timezone" unless current_char.in?('Z', 'z')
 
       @location = Location::UTC
       next_char

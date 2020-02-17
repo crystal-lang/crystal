@@ -579,7 +579,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
     num_members = enum_type.types.size
     if num_members > 0 && enum_type.flags?
       # skip None & All, they doesn't count as members for @[Flags] enums
-      num_members = enum_type.types.count { |(name, _)| !{"None", "All"}.includes?(name) }
+      num_members = enum_type.types.count { |(name, _)| !name.in?("None", "All") }
     end
 
     if num_members == 0
@@ -938,7 +938,8 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
   end
 
   def visit(node : Block)
-    old_vars_keys = @vars.keys
+    # Remember how many local vars we had before the block
+    old_vars_size = @vars.size
 
     # When accepting a block, declare variables for block arguments.
     # These are needed for macro expansions to parser identifiers
@@ -949,9 +950,10 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
 
     node.body.accept self
 
-    # Now remove these vars, but only if they weren't vars before
-    node.args.each do |arg|
-      @vars.delete(arg.name) unless old_vars_keys.includes?(arg.name)
+    # After the block we should have the same number of local vars
+    # (blocks can't declare inject local vars to the outer scope)
+    while @vars.size > old_vars_size
+      @vars.delete(@vars.last_key)
     end
 
     false
@@ -1001,7 +1003,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
     type_with_hooks.as?(ModuleType).try &.hooks.try &.each do |hook|
       next if hook.kind != kind
 
-      expansion = expand_macro(hook.macro, node) do
+      expansion = expand_macro(hook.macro, node, visibility: :public) do
         if call
           @program.expand_macro hook.macro, call, current_type.instance_type
         else
@@ -1054,13 +1056,18 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
     end
   end
 
-  def check_ditto(node)
+  def check_ditto(node : Def | Assign | FunDef | Const) : Nil
+    return if !@program.wants_doc?
     stripped_doc = node.doc.try &.strip
-    if stripped_doc == ":ditto:" || stripped_doc == "ditto"
+    if stripped_doc == ":ditto:"
       node.doc = @last_doc
+    elsif stripped_doc == "ditto"
+      # TODO: remove after 0.33.0
+      @program.warning_failures << "`ditto` is no longer supported. Use `:ditto:` instead"
+      node.doc = @last_doc
+    else
+      @last_doc = node.doc
     end
-
-    @last_doc = node.doc
   end
 
   def annotations_doc(annotations)
@@ -1119,11 +1126,17 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
       scope = lookup_type_def_name_creating_modules path
     end
 
-    if scope.is_a?(EnumType)
-      path.raise "can't declare type inside enum #{scope}"
+    scope = check_type_is_type_container(scope, path)
+
+    {scope, name}
+  end
+
+  def check_type_is_type_container(scope, path)
+    if scope.is_a?(EnumType) || !scope.is_a?(ModuleType)
+      path.raise "can't declare type inside #{scope.type_desc} #{scope}"
     end
 
-    {scope.as(ModuleType), name}
+    scope
   end
 
   def lookup_type_def_name_creating_modules(path : Path)
@@ -1139,10 +1152,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
             path.raise "execpted #{name} to be a type"
           end
         else
-          if base_type.is_a?(EnumType)
-            path.raise "can't declare type inside enum #{base_type}"
-          end
-
+          base_type = check_type_is_type_container(base_type, path)
           next_type = NonGenericModuleType.new(@program, base_type.as(ModuleType), name)
           if (location = path.location)
             next_type.add_location(location)
@@ -1170,7 +1180,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
   def process_finished_hooks
     @finished_hooks.each do |hook|
       self.current_type = hook.scope
-      expansion = expand_macro(hook.macro, hook.macro) do
+      expansion = expand_macro(hook.macro, hook.macro, visibility: :public) do
         @program.expand_macro hook.macro.body, hook.scope
       end
       program.add_finished_hook(hook.scope, hook.macro, expansion)

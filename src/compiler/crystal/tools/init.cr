@@ -81,6 +81,11 @@ module Crystal
         raise Error.new "Cannot use --force and --skip-existing together"
       end
 
+      if config.name == "."
+        config.dir = Dir.current
+        config.name = File.basename config.dir
+      end
+
       config.author = fetch_author
       config.email = fetch_email
       config.github_name = fetch_github_name
@@ -127,7 +132,7 @@ module Crystal
 
     def self.fetch_skeleton_type(opts, args)
       skeleton_type = fetch_required_parameter(opts, args, "TYPE")
-      unless {"lib", "app"}.includes?(skeleton_type)
+      unless skeleton_type.in?("lib", "app")
         raise Error.new "Invalid TYPE value: #{skeleton_type}", opts
       end
       skeleton_type

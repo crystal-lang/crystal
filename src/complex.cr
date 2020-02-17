@@ -33,12 +33,12 @@ struct Complex
     @real == other.real && @imag == other.imag
   end
 
-  # ditto
+  # :ditto:
   def ==(other : Number)
     self == other.to_c
   end
 
-  # ditto
+  # :ditto:
   def ==(other)
     false
   end
@@ -235,7 +235,7 @@ struct Complex
     Complex.new(@real + other.real, @imag + other.imag)
   end
 
-  # ditto
+  # :ditto:
   def +(other : Number)
     Complex.new(@real + other, @imag)
   end
@@ -250,7 +250,7 @@ struct Complex
     Complex.new(@real - other.real, @imag - other.imag)
   end
 
-  # ditto
+  # :ditto:
   def -(other : Number)
     Complex.new(@real - other, @imag)
   end
@@ -260,7 +260,7 @@ struct Complex
     Complex.new(@real * other.real - @imag * other.imag, @real * other.imag + @imag * other.real)
   end
 
-  # ditto
+  # :ditto:
   def *(other : Number)
     Complex.new(@real * other, @imag * other)
   end
@@ -278,7 +278,7 @@ struct Complex
     end
   end
 
-  # ditto
+  # :ditto:
   def /(other : Number)
     Complex.new(@real / other, @imag / other)
   end

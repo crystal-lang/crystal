@@ -54,7 +54,7 @@ describe TCPServer do
 
         it "raises when not binding with reuse_port" do
           TCPServer.open(address, 0, reuse_port: true) do |server|
-            expect_raises_errno(Errno::EADDRINUSE, {% if flag?(:gnu) %}"listen: "{% else %}"bind: "{% end %}) do
+            expect_raises_errno(Errno::EADDRINUSE) do
               TCPServer.open(address, server.local_address.port) { }
             end
           end
@@ -83,13 +83,13 @@ describe TCPServer do
       end
 
       it "raises when host doesn't exist" do
-        expect_raises(Socket::Error, "No address found for doesnotexist.example.org.:12345 over TCP") do
+        expect_raises(Socket::Error, "Hostname lookup for doesnotexist.example.org. failed: No address found") do
           TCPServer.new("doesnotexist.example.org.", 12345)
         end
       end
 
       it "raises (rather than segfault on darwin) when host doesn't exist and port is 0" do
-        expect_raises(Socket::Error, /No address found for doesnotexist.example.org.:00? over TCP/) do
+        expect_raises(Socket::Error, "Hostname lookup for doesnotexist.example.org. failed: No address found") do
           TCPServer.new("doesnotexist.example.org.", 0)
         end
       end

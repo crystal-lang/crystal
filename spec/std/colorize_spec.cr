@@ -12,7 +12,7 @@ end
 private class ColorizeToS
   def to_s(io)
     io << "hello"
-    io << "world".colorize.blue
+    io << ::colorize("world").blue
     io << "bye"
   end
 end
@@ -133,7 +133,7 @@ describe "colorize" do
     io = IO::Memory.new
     with_color_wrap.red.surround(io) do
       io << "hello"
-      with_color.green.surround(io) do
+      with_color_wrap.green.surround(io) do
         io << "world"
       end
       io << "bye"
@@ -178,7 +178,7 @@ describe "colorize" do
   end
 
   it "colorizes with to_s" do
-    ColorizeToS.new.colorize.red.to_s.should eq("\e[31mhello\e[0;34mworld\e[0;31mbye\e[0m")
+    colorize(ColorizeToS.new).red.to_s.should eq("\e[31mhello\e[0;34mworld\e[0;31mbye\e[0m")
   end
 
   it "toggles off" do

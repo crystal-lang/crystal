@@ -1636,6 +1636,7 @@ module Crystal
       class_def.doc = doc
       class_def.name_location = name_location
       class_def.end_location = end_location
+      set_visibility class_def
       class_def
     end
 
@@ -1709,6 +1710,7 @@ module Crystal
       module_def.doc = doc
       module_def.name_location = name_location
       module_def.end_location = end_location
+      set_visibility module_def
       module_def
     end
 
@@ -2563,7 +2565,7 @@ module Crystal
         next_token_skip_space
       end
 
-      unless @token.keyword? && {:when, :else, :end}.includes?(@token.value)
+      unless @token.keyword? && @token.value.in?(:when, :else, :end)
         cond = parse_op_assign_no_control
         skip_statement_end
       end
@@ -2968,6 +2970,7 @@ module Crystal
       node.name_location = name_location
       node.doc = doc
       node.end_location = end_location
+      set_visibility node
       node
     end
 
@@ -3509,7 +3512,7 @@ module Crystal
     end
 
     def check_valid_def_name
-      if {:is_a?, :as, :as?, :responds_to?, :nil?}.includes?(@token.value)
+      if @token.value.in?(:is_a?, :as, :as?, :responds_to?, :nil?)
         raise "'#{@token.value}' is a pseudo-method and can't be redefined", @token
       end
     end
@@ -5677,8 +5680,7 @@ module Crystal
           skip_space
 
           case @token.type
-          # TODO: remove comma support after 0.28.0
-          when :",", :";", :NEWLINE, :EOF
+          when :";", :NEWLINE, :EOF
             next_token_skip_statement_end
           else
             unless @token.keyword?(:end)

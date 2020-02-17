@@ -65,11 +65,21 @@ describe HTTP::Server do
       ch.send :end
     end
 
+    # wait for the server to start listening, and a little longer
+    # so the spawn that performs the accept has chance to run
+    while !server.listening?
+      Fiber.yield
+    end
+    sleep 0.1
+
     delay(1) { ch.send :timeout }
 
     TCPSocket.open(address.address, address.port) { }
 
+    # wait before closing the server
+    sleep 0.1
     server.close
+
     ch.receive.should eq(:end)
   end
 

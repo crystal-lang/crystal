@@ -237,4 +237,48 @@ describe "Code gen: primitives" do
       Foo.new.crystal_type_id == Foo.crystal_instance_type_id
       )).to_b.should be_true
   end
+
+  describe "va_arg" do
+    it "uses llvm's va_arg instruction" do
+      mod = codegen(%(
+        struct VaList
+          @[Primitive(:va_arg)]
+          def next(type)
+          end
+        end
+
+        list = VaList.new
+        list.next(Int32)
+      ))
+      str = mod.to_s
+      str.should contain("va_arg %VaList* %list")
+    end
+
+    it "works with C code" do
+      test_c(
+        %(
+          extern int foo_f(int,...);
+          int foo() {
+            return foo_f(3,1,2,3);
+          }
+        ),
+        %(
+          lib LibFoo
+            fun foo() : LibC::Int
+          end
+
+          fun foo_f(count : Int32, ...) : LibC::Int
+            sum = 0
+            VaList.open do |list|
+              count.times do |i|
+                sum += list.next(Int32)
+              end
+            end
+            sum
+          end
+
+          LibFoo.foo
+        ), &.to_i.should eq(6))
+    end
+  end
 end

@@ -25,8 +25,9 @@
 struct NamedTuple
   # Creates a named tuple that will contain the given arguments.
   #
-  # This method is useful in macros and generic code because with it you can
-  # creates empty named tuples, something that you can't do with a tuple literal.
+  # With a named tuple literal you cannot create an empty named tuple.
+  # This method doesn't have this limitation, which makes it especially
+  # useful in macros and generic code.
   #
   # ```
   # NamedTuple.new(name: "Crystal", year: 2011) #=> {name: "Crystal", year: 2011}
@@ -212,7 +213,7 @@ struct NamedTuple
     merge(**other)
   end
 
-  # ditto
+  # :ditto:
   def merge(**other : **U) forall U
     {% begin %}
     {
@@ -305,7 +306,7 @@ struct NamedTuple
     false
   end
 
-  # ditto
+  # :ditto:
   def has_key?(key : String) : Bool
     {% for key in T %}
       return true if {{key.stringify}} == key
@@ -533,7 +534,7 @@ struct NamedTuple
     true
   end
 
-  # ditto
+  # :ditto:
   def ==(other : NamedTuple)
     return false unless sorted_keys == other.sorted_keys
 

@@ -232,12 +232,16 @@ describe "seg fault" do
     error.should_not contain("Stack overflow")
   end
 
-  it "detects stack overflow on the main stack" do
-    # This spec can take some time under FreeBSD where
-    # the default stack size is 0.5G.  Setting a
-    # smaller stack size with `ulimit -s 8192`
-    # will address this.
-    status, _, error = build_and_run <<-'CODE'
+  {% if flag?(:musl) %}
+    # FIXME: Pending as mitigation for https://github.com/crystal-lang/crystal/issues/7482
+    pending "detects stack overflow on the main stack"
+  {% else %}
+    it "detects stack overflow on the main stack" do
+      # This spec can take some time under FreeBSD where
+      # the default stack size is 0.5G.  Setting a
+      # smaller stack size with `ulimit -s 8192`
+      # will address this.
+      status, _, error = build_and_run <<-'CODE'
       def foo
         y = StaticArray(Int8,512).new(0)
         foo
@@ -245,9 +249,10 @@ describe "seg fault" do
       foo
     CODE
 
-    status.success?.should be_false
-    error.should contain("Stack overflow")
-  end
+      status.success?.should be_false
+      error.should contain("Stack overflow")
+    end
+  {% end %}
 
   it "detects stack overflow on a fiber stack" do
     status, _, error = build_and_run <<-'CODE'

@@ -6,12 +6,12 @@ struct XML::Node
     initialize(node.as(LibXML::Node*))
   end
 
-  # ditto
+  # :ditto:
   def initialize(node : LibXML::Doc*)
     initialize(node.as(LibXML::Node*))
   end
 
-  # ditto
+  # :ditto:
   def initialize(@node : LibXML::Node*)
   end
 
@@ -229,7 +229,7 @@ struct XML::Node
     next_node ? Node.new(next_node) : nil
   end
 
-  # ditto
+  # :ditto:
   def next_sibling
     self.next
   end

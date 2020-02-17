@@ -8,7 +8,7 @@ class Dir
     glob(patterns)
   end
 
-  # ditto
+  # :ditto:
   def self.[](patterns : Enumerable(String)) : Array(String)
     glob(patterns)
   end
@@ -24,7 +24,7 @@ class Dir
     glob(patterns, match_hidden: match_hidden)
   end
 
-  # ditto
+  # :ditto:
   def self.glob(patterns : Enumerable(String), match_hidden = false) : Array(String)
     paths = [] of String
     glob(patterns, match_hidden: match_hidden) do |path|
@@ -46,7 +46,7 @@ class Dir
     end
   end
 
-  # ditto
+  # :ditto:
   def self.glob(patterns : Enumerable(String), match_hidden = false, &block : String -> _)
     Globber.glob(patterns, match_hidden: match_hidden) do |path|
       yield path
@@ -161,7 +161,13 @@ class Dir
           path_stack << {next_pos, root, nil}
         when DirectoriesOnly
           raise "unreachable" unless path
-          fullpath = path == File::SEPARATOR_STRING ? path : path + File::SEPARATOR
+          # FIXME: [win32] File::SEPARATOR_STRING comparison is not sufficient for Windows paths.
+          if path == File::SEPARATOR_STRING
+            fullpath = path
+          else
+            fullpath = Path[path].join("").to_s
+          end
+
           if dir_entry
             yield fullpath if dir_entry.dir?
           else
@@ -223,7 +229,7 @@ class Dir
             end
 
             if entry = read_entry(dir)
-              next if {".", ".."}.includes?(entry.name)
+              next if entry.name.in?(".", "..")
               next if !options[:match_hidden] && entry.name.starts_with?('.')
 
               if dir_path.bytesize == 0

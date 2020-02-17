@@ -81,8 +81,8 @@ module Crystal
     it_parses ":[]=", "[]=".symbol
     it_parses ":[]?", "[]?".symbol
     it_parses %(:"\\\\foo"), "\\foo".symbol
-    it_parses %(:"\\\"foo"), "\"foo".symbol
-    it_parses %(:"\\\"foo\\\""), "\"foo\"".symbol
+    it_parses %(:"\\"foo"), "\"foo".symbol
+    it_parses %(:"\\"foo\\""), "\"foo\"".symbol
     it_parses %(:"\\a\\b\\n\\r\\t\\v\\f\\e"), "\a\b\n\r\t\v\f\e".symbol
     it_parses %(:"\\u{61}"), "a".symbol
 
@@ -882,6 +882,8 @@ module Crystal
 
     it_parses "macro foo\n{%\nif 1\n2\nelse\n3\nend\n%}end", Macro.new("foo", body: MacroExpression.new(If.new(1.int32, 2.int32, 3.int32), output: false))
 
+    it_parses "macro foo\neenum\nend", Macro.new("foo", body: Expressions.from(["eenum\n".macro_literal] of ASTNode))
+
     assert_syntax_error "macro foo; {% foo = 1 }; end"
     assert_syntax_error "macro def foo : String; 1; end"
 
@@ -1395,6 +1397,7 @@ module Crystal
     it_parses "enum Foo; @[Bar]; end", EnumDef.new("Foo".path, [Annotation.new("Bar".path)] of ASTNode)
 
     assert_syntax_error "enum Foo; A B; end", "expecting ';', 'end' or newline after enum member"
+    assert_syntax_error "enum Foo\n  A,   B,   C\nend\n", "expecting ';', 'end' or newline after enum member"
 
     it_parses "1.[](2)", Call.new(1.int32, "[]", 2.int32)
     it_parses "1.[]?(2)", Call.new(1.int32, "[]?", 2.int32)

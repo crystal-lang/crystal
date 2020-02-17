@@ -141,15 +141,15 @@ struct CallStack
     if frame
       offset, sname = frame
       if repeated_frame.count == 0
-        LibC.dprintf 2, "[0x%lx] %s +%ld\n", repeated_frame.ip, sname, offset
+        Crystal::System.print_error "[0x%lx] %s +%ld\n", repeated_frame.ip, sname, offset
       else
-        LibC.dprintf 2, "[0x%lx] %s +%ld (%ld times)\n", repeated_frame.ip, sname, offset, repeated_frame.count + 1
+        Crystal::System.print_error "[0x%lx] %s +%ld (%ld times)\n", repeated_frame.ip, sname, offset, repeated_frame.count + 1
       end
     else
       if repeated_frame.count == 0
-        LibC.dprintf 2, "[0x%lx] ???\n", repeated_frame.ip
+        Crystal::System.print_error "[0x%lx] ???\n", repeated_frame.ip
       else
-        LibC.dprintf 2, "[0x%lx] ??? (%ld times)\n", repeated_frame.ip, repeated_frame.count + 1
+        Crystal::System.print_error "[0x%lx] ??? (%ld times)\n", repeated_frame.ip, repeated_frame.count + 1
       end
     end
   end

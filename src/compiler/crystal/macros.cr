@@ -61,7 +61,7 @@ module Crystal::Macros
   def `(command) : MacroId
   end
 
-  # ditto
+  # :ditto:
   def system(command) : MacroId
   end
 
@@ -276,19 +276,19 @@ module Crystal::Macros
     def <(other : NumberLiteral) : BoolLiteral
     end
 
-    # ditto
+    # :ditto:
     def <=(other : NumberLiteral) : BoolLiteral
     end
 
-    # ditto
+    # :ditto:
     def >(other : NumberLiteral) : BoolLiteral
     end
 
-    # ditto
+    # :ditto:
     def >=(other : NumberLiteral) : BoolLiteral
     end
 
-    # ditto
+    # :ditto:
     def <=>(other : NumberLiteral) : NumberLiteral
     end
 
@@ -1725,8 +1725,18 @@ module Crystal::Macros
     def union_types : ArrayLiteral(TypeNode)
     end
 
-    # Returns the fully qualified name of this type.
-    def name : MacroId
+    # Returns the fully qualified name of this type.  Optionally without *generic_args* if `self` is a generic type; see `#type_vars`.
+    #
+    # ```
+    # class Foo(T); end
+    #
+    # module Bar::Baz; end
+    #
+    # {{Bar::Baz.name}}                 # => Bar::Baz
+    # {{Foo.name}}                      # => Foo(T)
+    # {{Foo.name(generic_args: false)}} # => Foo
+    # ```
+    def name(*, generic_args : BoolLiteral = true) : MacroId
     end
 
     # Returns the type variables of the generic type. If the type is not
@@ -1752,6 +1762,10 @@ module Crystal::Macros
 
     # Returns the direct subclasses of this type.
     def subclasses : ArrayLiteral(TypeNode)
+    end
+
+    # Returns all the types `self` is directly included in.
+    def includers : ArrayLiteral(TypeNode)
     end
 
     # Returns all subclasses of this type.

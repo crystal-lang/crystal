@@ -250,7 +250,7 @@ class Socket < IO
         if closed?
           return
         elsif Errno.value == Errno::EAGAIN
-          wait_readable
+          wait_readable rescue nil
         else
           raise Errno.new("accept")
         end
@@ -556,6 +556,12 @@ class Socket < IO
   private def unbuffered_close
     return if @closed
 
+    # Perform libevent cleanup before LibC.close.
+    # Using a file descriptor after it has been closed is never defined and can
+    # always lead to undefined results. This is not specific to libevent.
+    @closed = true
+    evented_close
+
     err = nil
     if LibC.close(@fd) != 0
       case Errno.value
@@ -565,9 +571,6 @@ class Socket < IO
         err = Errno.new("Error closing socket")
       end
     end
-
-    @closed = true
-    evented_close
 
     raise err if err
   end

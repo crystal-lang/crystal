@@ -1,5 +1,7 @@
 require "spec"
-require "big"
+{% unless flag?(:win32) %}
+  require "big"
+{% end %}
 
 private def to_s_with_io(num)
   String.build { |str| num.to_s(str) }
@@ -729,7 +731,7 @@ describe "Int" do
     {% end %}
   end
 
-  it "compares signed vs. unsigned integers" do
+  pending_win32 "compares signed vs. unsigned integers" do
     signed_ints = [Int8::MAX, Int16::MAX, Int32::MAX, Int64::MAX, Int8::MIN, Int16::MIN, Int32::MIN, Int64::MIN, 0_i8, 0_i16, 0_i32, 0_i64]
     unsigned_ints = [UInt8::MAX, UInt16::MAX, UInt32::MAX, UInt64::MAX, 0_u8, 0_u16, 0_u32, 0_u64]
 
@@ -747,17 +749,15 @@ describe "Int" do
     end
   end
 
-  {% if compare_versions(Crystal::VERSION, "0.26.1") > 0 %}
-    it "compares equality and inequality of signed vs. unsigned integers" do
-      x = -1
-      y = x.unsafe_as(UInt32)
+  it "compares equality and inequality of signed vs. unsigned integers" do
+    x = -1
+    y = x.unsafe_as(UInt32)
 
-      (x == y).should be_false
-      (y == x).should be_false
-      (x != y).should be_true
-      (y != x).should be_true
-    end
-  {% end %}
+    (x == y).should be_false
+    (y == x).should be_false
+    (x != y).should be_true
+    (y != x).should be_true
+  end
 
   it "clones" do
     [1_u8, 2_u16, 3_u32, 4_u64, 5_i8, 6_i16, 7_i32, 8_i64].each do |value|

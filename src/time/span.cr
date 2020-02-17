@@ -401,7 +401,7 @@ struct Int
     Time::Span.new 7 * self, 0, 0, 0
   end
 
-  # ditto
+  # :ditto:
   def week : Time::Span
     weeks
   end
@@ -411,7 +411,7 @@ struct Int
     Time::Span.new self, 0, 0, 0
   end
 
-  # ditto
+  # :ditto:
   def day : Time::Span
     days
   end
@@ -421,7 +421,7 @@ struct Int
     Time::Span.new self, 0, 0
   end
 
-  # ditto
+  # :ditto:
   def hour : Time::Span
     hours
   end
@@ -431,7 +431,7 @@ struct Int
     Time::Span.new 0, self, 0
   end
 
-  # ditto
+  # :ditto:
   def minute : Time::Span
     minutes
   end
@@ -441,7 +441,7 @@ struct Int
     Time::Span.new 0, 0, self
   end
 
-  # ditto
+  # :ditto:
   def second : Time::Span
     seconds
   end
@@ -451,7 +451,7 @@ struct Int
     Time::Span.new 0, 0, 0, 0, (self.to_i64 * Time::NANOSECONDS_PER_MILLISECOND)
   end
 
-  # ditto
+  # :ditto:
   def millisecond : Time::Span
     milliseconds
   end
@@ -461,7 +461,7 @@ struct Int
     Time::Span.new 0, 0, 0, 0, (self.to_i64 * Time::NANOSECONDS_PER_MICROSECOND)
   end
 
-  # ditto
+  # :ditto:
   def microsecond : Time::Span
     microseconds
   end
@@ -471,7 +471,7 @@ struct Int
     Time::Span.new(nanoseconds: self.to_i64)
   end
 
-  # ditto
+  # :ditto:
   def nanosecond : Time::Span
     nanoseconds
   end
@@ -569,7 +569,7 @@ struct Int
     Time::MonthSpan.new(self)
   end
 
-  # ditto
+  # :ditto:
   def month : Time::MonthSpan
     months
   end
@@ -579,7 +579,7 @@ struct Int
     Time::MonthSpan.new(self * 12)
   end
 
-  # ditto
+  # :ditto:
   def year : Time::MonthSpan
     years
   end

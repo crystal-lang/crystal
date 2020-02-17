@@ -429,9 +429,11 @@ module HTTP
   end
 end
 
-require "./status"
-require "./request"
-require "./client/response"
-require "./headers"
-require "./content"
-require "./cookie"
+{% unless flag?(:win32) %}
+  require "./status"
+  require "./request"
+  require "./client/response"
+  require "./headers"
+  require "./content"
+  require "./cookie"
+{% end %}

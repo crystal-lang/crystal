@@ -115,11 +115,13 @@ module IO::Evented
     end
   end
 
-  protected def wait_readable(timeout = @read_timeout)
+  # :nodoc:
+  def wait_readable(timeout = @read_timeout)
     wait_readable(timeout: timeout) { |err| raise err }
   end
 
-  protected def wait_readable(timeout = @read_timeout) : Nil
+  # :nodoc:
+  def wait_readable(timeout = @read_timeout) : Nil
     readers = @readers.get { Deque(Fiber).new }
     readers << Fiber.current
     add_read_event(timeout)
@@ -129,6 +131,8 @@ module IO::Evented
       @read_timed_out = false
       yield Timeout.new("Read timed out")
     end
+
+    check_open
   end
 
   private def add_read_event(timeout = @read_timeout) : Nil
@@ -136,11 +140,13 @@ module IO::Evented
     event.add timeout
   end
 
-  protected def wait_writable(timeout = @write_timeout)
+  # :nodoc:
+  def wait_writable(timeout = @write_timeout)
     wait_writable(timeout: timeout) { |err| raise err }
   end
 
-  protected def wait_writable(timeout = @write_timeout) : Nil
+  # :nodoc:
+  def wait_writable(timeout = @write_timeout) : Nil
     writers = @writers.get { Deque(Fiber).new }
     writers << Fiber.current
     add_write_event(timeout)
@@ -150,6 +156,8 @@ module IO::Evented
       @write_timed_out = false
       yield Timeout.new("Write timed out")
     end
+
+    check_open
   end
 
   private def add_write_event(timeout = @write_timeout) : Nil
@@ -162,21 +170,17 @@ module IO::Evented
   end
 
   def evented_close
-    @read_event.each &.free
-    @read_event.clear
+    @read_event.consume_each &.free
 
-    @write_event.each &.free
-    @write_event.clear
+    @write_event.consume_each &.free
 
-    @readers.each do |readers|
+    @readers.consume_each do |readers|
       Crystal::Scheduler.enqueue readers
     end
-    @readers.clear
 
-    @writers.each do |writers|
+    @writers.consume_each do |writers|
       Crystal::Scheduler.enqueue writers
     end
-    @writers.clear
   end
 
   private def resume_pending_readers

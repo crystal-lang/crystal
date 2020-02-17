@@ -29,6 +29,19 @@ module Crystal::EventLoop
     end
   end
 
+  # Creates a timeout_event.
+  def self.create_timeout_event(fiber) : Crystal::Event
+    event_base.new_event(-1, LibEvent2::EventFlags::None, fiber) do |s, flags, data|
+      f = data.as(Fiber)
+      if (select_action = f.timeout_select_action)
+        f.timeout_select_action = nil
+        select_action.time_expired(f)
+      else
+        Crystal::Scheduler.enqueue f
+      end
+    end
+  end
+
   # Creates a write event for a file descriptor.
   def self.create_fd_write_event(io : IO::Evented, edge_triggered : Bool = false) : Crystal::Event
     flags = LibEvent2::EventFlags::Write

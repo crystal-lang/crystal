@@ -235,6 +235,10 @@ class LLVM::Builder
     Value.new LibLLVM.build_fence(self, ordering, singlethread ? 1 : 0, name)
   end
 
+  def va_arg(list, type, name = "")
+    Value.new LibLLVM.build_va_arg(self, list, type, name)
+  end
+
   def set_current_debug_location(line, column, scope, inlined_at = nil)
     LibLLVMExt.set_current_debug_location(self, line, column, scope, inlined_at)
   end

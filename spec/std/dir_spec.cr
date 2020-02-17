@@ -1,6 +1,30 @@
 require "./spec_helper"
 require "../support/errno"
 
+private def unset_tempdir
+  {% if flag?(:windows) %}
+    old_tempdirs = {ENV["TMP"]?, ENV["TEMP"]?, ENV["USERPROFILE"]?}
+    begin
+      ENV.delete("TMP")
+      ENV.delete("TEMP")
+      ENV.delete("USERPROFILE")
+
+      yield
+    ensure
+      ENV["TMP"], ENV["TEMP"], ENV["USERPROFILE"] = old_tempdirs
+    end
+  {% else %}
+    begin
+      old_tempdir = ENV["TMPDIR"]?
+      ENV.delete("TMPDIR")
+
+      yield
+    ensure
+      ENV["TMPDIR"] = old_tempdir
+    end
+  {% end %}
+end
+
 private def it_raises_on_null_byte(operation, &block)
   it "errors on #{operation}" do
     expect_raises(ArgumentError, "String contains null byte") do
@@ -67,21 +91,29 @@ describe "Dir" do
     end
   end
 
-  it "tests mkdir_p with a new path" do
-    with_tempfile("mkdir_p") do |path|
-      Dir.mkdir_p(path)
-      Dir.exists?(path).should be_true
-      path = File.join(path, "a", "b", "c")
-      Dir.mkdir_p(path)
-      Dir.exists?(path).should be_true
+  describe ".mkdir_p" do
+    it "with a new path" do
+      with_tempfile("mkdir_p-new") do |path|
+        Dir.mkdir_p(path)
+        Dir.exists?(path).should be_true
+        path = File.join(path, "a", "b", "c")
+        Dir.mkdir_p(path)
+        Dir.exists?(path).should be_true
+      end
     end
-  end
 
-  it "tests mkdir_p with an existing path" do
-    Dir.mkdir_p(datapath)
-    # FIXME: Refactor Dir#mkdir_p to remove leading `./` in error message
-    expect_raises_errno(Errno::EEXIST, "Unable to create directory './#{datapath("dir", "f1.txt")}'") do
-      Dir.mkdir_p(datapath("dir", "f1.txt"))
+    context "path exists" do
+      it "fails when path is a file" do
+        expect_raises_errno(Errno::EEXIST, "Unable to create directory '#{datapath("test_file.txt")}': File exists") do
+          Dir.mkdir_p(datapath("test_file.txt"))
+        end
+      end
+
+      it "noop when path is a directory" do
+        Dir.exists?(datapath("dir")).should be_true
+        Dir.mkdir_p(datapath("dir"))
+        Dir.exists?(datapath("dir")).should be_true
+      end
     end
   end
 
@@ -233,17 +265,16 @@ describe "Dir" do
 
     it "tests with relative path (starts with ..)" do
       Dir.cd(datapath) do
-        base_path = "../data/dir"
+        base_path = Path["..", "data", "dir"]
         Dir["#{base_path}/*/"].sort.should eq [
-          File.join(base_path, "dots", ""),
-          File.join(base_path, "subdir", ""),
-          File.join(base_path, "subdir2", ""),
+          base_path.join("dots", "").to_s,
+          base_path.join("subdir", "").to_s,
+          base_path.join("subdir2", "").to_s,
         ].sort
       end
     end
 
-    # TODO: This spec is broken on win32 because of `raise` weirdness on windows
-    pending_win32 "tests with relative path starting recursive" do
+    it "tests with relative path starting recursive" do
       Dir["**/dir/*/"].sort.should eq [
         datapath("dir", "dots", ""),
         datapath("dir", "subdir", ""),
@@ -251,7 +282,7 @@ describe "Dir" do
       ].sort
     end
 
-    it "matches symlinks" do
+    pending_win32 "matches symlinks" do
       link = datapath("f1_link.txt")
       non_link = datapath("non_link.txt")
 
@@ -274,14 +305,18 @@ describe "Dir" do
       Dir[""].should eq [] of String
     end
 
-    pending_win32 "root pattern" do
-      Dir["/"].should eq ["/"]
+    it "root pattern" do
+      {% if flag?(:windows) %}
+        Dir["C:/"].should eq ["C:\\"]
+      {% else %}
+        Dir["/"].should eq ["/"]
+      {% end %}
     end
 
     it "pattern ending with .." do
       Dir["#{datapath}/dir/.."].sort.should eq [
         datapath("dir", ".."),
-      ]
+      ].sort
     end
 
     it "pattern ending with */.." do
@@ -289,13 +324,13 @@ describe "Dir" do
         datapath("dir", "dots", ".."),
         datapath("dir", "subdir", ".."),
         datapath("dir", "subdir2", ".."),
-      ]
+      ].sort
     end
 
     it "pattern ending with ." do
       Dir["#{datapath}/dir/."].sort.should eq [
         datapath("dir", "."),
-      ]
+      ].sort
     end
 
     it "pattern ending with */." do
@@ -303,7 +338,7 @@ describe "Dir" do
         datapath("dir", "dots", "."),
         datapath("dir", "subdir", "."),
         datapath("dir", "subdir2", "."),
-      ]
+      ].sort
     end
 
     context "match_hidden: true" do
@@ -337,7 +372,7 @@ describe "Dir" do
     end
 
     it "raises" do
-      expect_raises_errno(Errno::ENOENT, "Error while changing directory to '/nope'") do
+      expect_raises_errno(Errno::ENOENT, {{ flag?(:win32) ? /SetCurrentDirectory: .* No such file or directory/ : "Error while changing directory to '/nope'" }}) do
         Dir.cd("/nope")
       end
     end
@@ -355,19 +390,27 @@ describe "Dir" do
 
   describe ".tempdir" do
     it "returns default directory for tempfiles" do
-      old_tmpdir = ENV["TMPDIR"]?
-      ENV.delete("TMPDIR")
-      Dir.tempdir.should eq("/tmp")
-    ensure
-      ENV["TMPDIR"] = old_tmpdir
+      unset_tempdir do
+        {% if flag?(:windows) %}
+          # GetTempPathW defaults to the Windows directory when %TMP%, %TEMP%
+          # and %USERPROFILE% are not set.
+          # Without going further into the implementation details, simply
+          # verifying that the directory exits is sufficient.
+          Dir.exists?(Dir.tempdir).should be_true
+        {% else %}
+          # POSIX implementation is in Crystal::System::Dir and defaults to
+          # `/tmp` when $TMPDIR is not set.
+          Dir.tempdir.should eq "/tmp"
+        {% end %}
+      end
     end
 
     it "returns configure directory for tempfiles" do
-      old_tmpdir = ENV["TMPDIR"]?
-      ENV["TMPDIR"] = "/my/tmp"
-      Dir.tempdir.should eq("/my/tmp")
-    ensure
-      ENV["TMPDIR"] = old_tmpdir
+      unset_tempdir do
+        tmp_path = Path["my_temporary_path"].expand.to_s
+        ENV[{{ flag?(:windows) ? "TMP" : "TMPDIR" }}] = tmp_path
+        Dir.tempdir.should eq tmp_path
+      end
     end
   end
 

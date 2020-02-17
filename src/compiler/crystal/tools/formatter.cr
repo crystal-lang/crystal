@@ -472,7 +472,11 @@ module Crystal
       while true
         case @token.type
         when :STRING
-          write @token.raw
+          if @token.invalid_escape
+            write @token.value
+          else
+            write @token.raw
+          end
           next_string_token
         when :INTERPOLATION_START
           # This is the case of #{__DIR__}
@@ -583,7 +587,11 @@ module Crystal
             write "}"
             @token.delimiter_state = delimiter_state
           else
-            write @token.raw
+            if @token.invalid_escape
+              write @token.value
+            else
+              write @token.raw
+            end
           end
           next_string_token
         else
@@ -1652,9 +1660,11 @@ module Crystal
       write_keyword :macro, " "
 
       write node.name
-      next_token_skip_space
+      next_token
+      skip_space(consume_newline: false)
 
       format_def_args node
+
       format_macro_body node
 
       false
@@ -2231,8 +2241,7 @@ module Crystal
       end
 
       # This is the case of an enum member
-      # TODO: remove comma support after 0.28.0
-      if @token.type == :";" || (node.name[0]?.try(&.ascii_uppercase?) && @token.type == :",")
+      if @token.type == :";"
         next_token
         @lexer.skip_space
         if @token.type == :COMMENT
@@ -2444,12 +2453,16 @@ module Crystal
             if @token.type == :"," || @token.type == :NEWLINE
               if has_newlines
                 write ","
-                write_line
+                found_comment = next_token_skip_space
+                write_line unless found_comment
                 write_indent
+                skip_space_or_newline
+              else
+                next_token_skip_space_or_newline
               end
-              next_token_skip_space_or_newline
             else
-              skip_space_or_newline
+              found_comment = skip_space_or_newline
+              write_indent if found_comment
             end
             write_token :"]"
 
@@ -3176,9 +3189,18 @@ module Crystal
     end
 
     def visit(node : Not)
-      write_token :"!"
-      skip_space_or_newline
-      accept node.exp
+      if @token.type == :"!"
+        write_token :"!"
+        skip_space_or_newline
+        accept node.exp
+      else
+        # Can be `exp.!`
+        accept node.exp
+        skip_space_or_newline
+        write_token :"."
+        skip_space_or_newline
+        write_token :"!"
+      end
 
       false
     end
@@ -4038,7 +4060,9 @@ module Crystal
         end
       end
 
-      skip_space_or_newline
+      indent do
+        skip_space_or_newline
+      end
 
       if is_do
         check_end
@@ -4207,7 +4231,7 @@ module Crystal
       end
 
       # Mop up any trailing unused : or ::, don't write them since they should be removed
-      while {:":", :"::"}.includes? @token.type
+      while @token.type.in?(:":", :"::")
         next_token_skip_space_or_newline
       end
 
@@ -4332,7 +4356,7 @@ module Crystal
       skip_space_or_newline
     end
 
-    def skip_space(write_comma : Bool = false)
+    def skip_space(write_comma : Bool = false, consume_newline : Bool = true)
       base_column = @column
       has_space = false
 
@@ -4350,7 +4374,7 @@ module Crystal
           next_token
           @passed_backslash_newline = true
           if @token.type == :SPACE
-            return skip_space(write_comma)
+            return skip_space(write_comma, consume_newline)
           else
             return false
           end
@@ -4367,7 +4391,7 @@ module Crystal
         else
           write " " if needs_space
         end
-        write_comment(needs_indent: !needs_space)
+        write_comment(needs_indent: !needs_space, consume_newline: consume_newline)
         true
       else
         false
@@ -4481,7 +4505,7 @@ module Crystal
       skip_space_or_newline
     end
 
-    def write_comment(needs_indent = true)
+    def write_comment(needs_indent = true, consume_newline = true)
       while @token.type == :COMMENT
         empty_line = @line_output.to_s.strip.empty?
         if empty_line
@@ -4533,8 +4557,10 @@ module Crystal
         @wrote_comment = true
         write value
         next_token_skip_space
-        consume_newlines
-        skip_space_or_newline
+        if consume_newline
+          consume_newlines
+          skip_space_or_newline
+        end
       end
     end
 

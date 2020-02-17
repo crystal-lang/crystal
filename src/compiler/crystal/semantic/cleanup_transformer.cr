@@ -783,7 +783,10 @@ module Crystal
       node = super
 
       unless node.type?
-        node.unbind_from node.dependencies
+        if dependencies = node.dependencies?
+          node.unbind_from node.dependencies
+        end
+
         node.bind_to node.expressions
       end
 

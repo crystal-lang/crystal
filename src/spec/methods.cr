@@ -69,11 +69,6 @@ module Spec::Methods
     Spec.root_context.pending(description.to_s, file, line, end_line, focus, tags)
   end
 
-  # DEPRECATED: Use `#it`
-  def assert(file = __FILE__, line = __LINE__, end_line = __END_LINE__, &block)
-    {{ raise "'assert' was removed: use 'it' instead".id }}
-  end
-
   # Fails an example.
   #
   # This method can be used to manually fail an example defined in an `#it` block.

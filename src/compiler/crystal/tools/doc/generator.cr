@@ -44,8 +44,6 @@ class Crystal::Doc::Generator
   end
 
   def run
-    Dir.mkdir_p @output_dir
-
     types = collect_subtypes(@program)
 
     program_type = type(@program)
@@ -211,9 +209,14 @@ class Crystal::Doc::Generator
     toplevel_items.any? { |item| must_include? item }
   end
 
-  def nodoc?(str : String?)
-    return false unless str
-    str.starts_with?(":nodoc:") || str.starts_with?("nodoc")
+  def nodoc?(str : String?) : Bool
+    return false if !str || !@program.wants_doc?
+    # TODO: remove after 0.33.0
+    if str.starts_with?("nodoc")
+      @program.warning_failures << "`nodoc` is no longer supported. Use `:nodoc:` instead"
+      return true
+    end
+    str.starts_with?(":nodoc:")
   end
 
   def nodoc?(obj)

@@ -752,12 +752,13 @@ class String
     self[*Indexable.range_to_index_and_count(range, size)]
   end
 
-  # Like `#[Range(Int, Int)]`, but returns `nil` if the range's start is out of range.
+  # Like `#[Range]`, but returns `nil` if the range's start is out of range.
   #
   # ```
   # "hello"[6..7]? # => nil
+  # "hello"[6..]?  # => nil
   # ```
-  def []?(range : Range(Int, Int))
+  def []?(range : Range)
     self[*Indexable.range_to_index_and_count(range, size)]?
   end
 
@@ -841,16 +842,6 @@ class String
 
   def [](regex : Regex, group)
     self[regex, group]?.not_nil!
-  end
-
-  @[Deprecated("Use `String#char_at` instead.")]
-  def at(index : Int)
-    char_at(index)
-  end
-
-  @[Deprecated("Use `String#char_at` instead.")]
-  def at(index : Int)
-    char_at(index) { yield }
   end
 
   def char_at(index : Int)
@@ -1852,9 +1843,8 @@ class String
         end
       end
 
-      buffer << reader.current_char
-
       if reader.has_next?
+        buffer << reader.current_char
         reader.next_char
         buffer.write unsafe_byte_slice(reader.pos)
       end
@@ -2270,7 +2260,7 @@ class String
   # returns the number of times the block returned a truthy value.
   #
   # ```
-  # "aabbcc".count { |c| ['a', 'b'].includes?(c) } # => 4
+  # "aabbcc".count &.in?('a', 'b') # => 4
   # ```
   def count
     count = 0
@@ -2301,7 +2291,7 @@ class String
   # block returned a truthy value removed.
   #
   # ```
-  # "aabbcc".delete { |c| ['a', 'b'].includes?(c) } # => "cc"
+  # "aabbcc".delete &.in?('a', 'b') # => "cc"
   # ```
   def delete
     String.build(bytesize) do |buffer|
@@ -2337,8 +2327,8 @@ class String
   # block returned a truthy value.
   #
   # ```
-  # "aaabbbccc".squeeze { |c| ['a', 'b'].includes?(c) } # => "abccc"
-  # "aaabbbccc".squeeze { |c| ['a', 'c'].includes?(c) } # => "abbbc"
+  # "aaabbbccc".squeeze &.in?('a', 'b') # => "abccc"
+  # "aaabbbccc".squeeze &.in?('a', 'c') # => "abbbc"
   # ```
   def squeeze
     previous = nil
@@ -2536,7 +2526,7 @@ class String
     match.try &.begin(0)
   end
 
-  # ditto
+  # :ditto:
   def =~(other)
     nil
   end
@@ -2564,7 +2554,7 @@ class String
     end
   end
 
-  # ditto
+  # :ditto:
   def +(char : Char)
     bytes, count = String.char_bytes_and_bytesize(char)
     size = bytesize + count
@@ -2657,7 +2647,7 @@ class String
     nil
   end
 
-  # ditto
+  # :ditto:
   def index(search : String, offset = 0)
     offset += size if offset < 0
     return if offset < 0
@@ -2728,7 +2718,7 @@ class String
     end
   end
 
-  # ditto
+  # :ditto:
   def index(search : Regex, offset = 0)
     offset += size if offset < 0
     return nil unless 0 <= offset <= size
@@ -2775,7 +2765,7 @@ class String
     end
   end
 
-  # ditto
+  # :ditto:
   def rindex(search : String, offset = size - search.size)
     offset += size if offset < 0
     return if offset < 0
@@ -2828,7 +2818,7 @@ class String
     end
   end
 
-  # ditto
+  # :ditto:
   def rindex(search : Regex, offset = size - 1)
     offset += size if offset < 0
     return nil unless 0 <= offset <= size
@@ -2867,7 +2857,7 @@ class String
     {pre, mid, post}
   end
 
-  # ditto
+  # :ditto:
   def partition(search : Regex) : Tuple(String, String, String)
     pre = mid = post = ""
     case m = self.match(search)
@@ -2910,7 +2900,7 @@ class String
     {pre, mid, post}
   end
 
-  # ditto
+  # :ditto:
   def rpartition(search : Regex) : Tuple(String, String, String)
     match_result = nil
     pos = self.size - 1
@@ -3616,7 +3606,7 @@ class String
   # "Aubergine".ljust(8)   # => "Aubergine"
   # ```
   def ljust(len, char : Char = ' ')
-    just len, char, true
+    just len, char, -1
   end
 
   # Adds instances of *char* to left of the string until it is at least size of *len*.
@@ -3627,37 +3617,61 @@ class String
   # "Aubergine".rjust(8)   # => "Aubergine"
   # ```
   def rjust(len, char : Char = ' ')
-    just len, char, false
+    just len, char, 1
   end
 
-  private def just(len, char, left)
+  # Adds instances of *char* to left ond right of the string until it is at least size of *len*.
+  #
+  # ```
+  # "Purple".center(8)      # => " Purple "
+  # "Purple".center(8, '-') # => "-Purple-"
+  # "Purple".center(9, '-') # => "-Purple--"
+  # "Aubergine".center(8)   # => "Aubergine"
+  # ```
+  def center(len, char : Char = ' ')
+    just len, char, 0
+  end
+
+  private def just(len, char, justify)
     return self if size >= len
 
     bytes, count = String.char_bytes_and_bytesize(char)
-
-    difference = len - size
-    new_bytesize = bytesize + difference * count
+    padding = (len - size)
+    new_bytesize = bytesize + padding * count
+    case justify
+    when .< 0
+      leftpadding, rightpadding = 0, padding
+    when .> 0
+      leftpadding, rightpadding = padding, 0
+    else
+      leftpadding = padding // 2
+      rightpadding = padding - leftpadding
+    end
 
     String.new(new_bytesize) do |buffer|
-      if left
-        buffer.copy_from(to_unsafe, bytesize)
-        buffer += bytesize
-      end
-
-      if count == 1
-        Intrinsics.memset(buffer.as(Void*), char.ord.to_u8, difference.to_u32, false)
-        buffer += difference
-      else
-        difference.times do
-          buffer.copy_from(bytes.to_unsafe, count)
-          buffer += count
+      if leftpadding > 0
+        if count == 1
+          Intrinsics.memset(buffer.as(Void*), char.ord.to_u8, leftpadding.to_u32, false)
+          buffer += leftpadding
+        else
+          leftpadding.times do
+            buffer.copy_from(bytes.to_unsafe, count)
+            buffer += count
+          end
         end
       end
-
-      unless left
-        buffer.copy_from(to_unsafe, bytesize)
+      buffer.copy_from(to_unsafe, bytesize)
+      buffer += bytesize
+      if rightpadding > 0
+        if count == 1
+          Intrinsics.memset(buffer.as(Void*), char.ord.to_u8, rightpadding.to_u32, false)
+        else
+          rightpadding.times do
+            buffer.copy_from(bytes.to_unsafe, count)
+            buffer += count
+          end
+        end
       end
-
       {new_bytesize, len}
     end
   end

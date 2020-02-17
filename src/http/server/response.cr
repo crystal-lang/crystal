@@ -123,14 +123,6 @@ class HTTP::Server
       @output.closed?
     end
 
-    # Sends an error response.
-    #
-    # Calls `#reset`, writes the given status, and closes the response.
-    @[Deprecated("Use #respond_with_status instead")]
-    def respond_with_error(message = "Internal Server Error", code = 500)
-      respond_with_status(code, message)
-    end
-
     @status_message : String?
 
     # Sends *status* and *message* as response.

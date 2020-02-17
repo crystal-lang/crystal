@@ -300,8 +300,8 @@ class Regex
   # Returns a `String` constructed by escaping any metacharacters in *str*.
   #
   # ```
-  # string = Regex.escape("\*?{}.") # => "\\*\\?\\{\\}\\."
-  # /#{string}/                     # => /\*\?\{\}\./
+  # string = Regex.escape("*?{}.") # => "\\*\\?\\{\\}\\."
+  # /#{string}/                    # => /\*\?\{\}\./
   # ```
   def self.escape(str) : String
     String.build do |result|

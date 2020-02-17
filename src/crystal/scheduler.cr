@@ -243,7 +243,7 @@ class Crystal::Scheduler
       if env_workers && !env_workers.empty?
         workers = env_workers.to_i?
         if !workers || workers < 1
-          LibC.dprintf 2, "FATAL: Invalid value for CRYSTAL_WORKERS: #{env_workers}\n"
+          Crystal::System.print_error "FATAL: Invalid value for CRYSTAL_WORKERS: #{env_workers}\n"
           exit 1
         end
 

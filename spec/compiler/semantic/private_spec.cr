@@ -447,4 +447,122 @@ describe "Semantic: private" do
       compiler.compile sources, "output"
     end
   end
+
+  it "doesn't find private class defined through macro (#8715)" do
+    assert_error %(
+      macro bar
+        class Bar
+        end
+      end
+
+      class Foo
+        private bar
+      end
+
+      Foo::Bar
+      ),
+      "private constant Foo::Bar referenced",
+      inject_primitives: false
+  end
+
+  it "doesn't find private module defined through macro (#8715)" do
+    assert_error %(
+      macro bar
+        module Bar
+        end
+      end
+
+      class Foo
+        private bar
+      end
+
+      Foo::Bar
+      ),
+      "private constant Foo::Bar referenced",
+      inject_primitives: false
+  end
+
+  it "doesn't find private macro defined through macro (#8715)" do
+    assert_error %(
+      macro bar
+        macro bar
+        end
+      end
+
+      class Foo
+        private bar
+      end
+
+      Foo.bar
+      ),
+      "private macro 'bar' called for Foo",
+      inject_primitives: false
+  end
+
+  it "doesn't find private thing defined through recursive macro (#8715)" do
+    assert_error %(
+      macro bar
+        baz
+      end
+
+      macro baz
+        class Bar
+        end
+      end
+
+      class Foo
+        private bar
+      end
+
+      Foo::Bar
+      ),
+      "private constant Foo::Bar referenced",
+      inject_primitives: false
+  end
+
+  it "doesn't inherit visibility from class node in macro hook (#8794)" do
+    semantic(%(
+      module M1
+        macro included
+          include M2
+        end
+      end
+
+      module M2
+        macro setup_initializer_hook
+          macro finished
+            generate_needy_initializer
+          end
+
+          macro included
+            setup_initializer_hook
+          end
+
+          macro inherited
+            setup_initializer_hook
+          end
+        end
+
+        macro included
+          setup_initializer_hook
+        end
+
+        macro generate_needy_initializer
+          {% if !@type.abstract? %}
+            def initialize(a)
+            end
+          {% end %}
+        end
+      end
+
+      abstract class Base
+        include M1
+      end
+
+      private class Foo < Base
+      end
+
+      Foo.new(1)
+      ), inject_primitives: false)
+  end
 end

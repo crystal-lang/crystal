@@ -37,7 +37,7 @@ module Crystal::System::File
     if ret == 0
       FileInfo.new(stat)
     else
-      if {Errno::ENOENT, Errno::ENOTDIR}.includes? Errno.value
+      if Errno.value.in?(Errno::ENOENT, Errno::ENOTDIR)
         return nil
       else
         raise Errno.new("Unable to get info for '#{path.inspect_unquoted}'")

@@ -125,7 +125,7 @@ def printf(format_string, *args) : Nil
   printf format_string, args
 end
 
-# ditto
+# :ditto:
 def printf(format_string, args : Array | Tuple) : Nil
   STDOUT.printf format_string, args
 end
@@ -180,9 +180,9 @@ end
 #       | The precision specifies the number of significant digits.
 #   G   | Equivalent to g, but use an uppercase E in exponent form.
 #   a   | Formats floating point argument as [-]0xh.hhhhp[+-]dd,
-#       | which is consisted from optional sign, "0x", fraction part
+#       | which consists of an optional sign, "0x", fraction part
 #       | as hexadecimal, "p", and exponential part as decimal.
-#   A   | Equivalent to a, but use uppercase X and P.
+#   A   | Equivalent to a, but uses uppercase X and P.
 #
 # Field | Other Format
 # ------+------------------------------------------------------------
@@ -192,8 +192,9 @@ end
 #       | will be copied.
 #   %   | A percent sign itself will be displayed. No argument taken.
 # ```
-# The flags modifies the behavior of the formats.
-# The flag characters are:
+#
+# Flags modify the behavior of the format specifiers:
+#
 # ```text
 # Flag     | Applies to    | Meaning
 # ---------+---------------+--------------------------------------------
@@ -219,14 +220,14 @@ end
 #
 # Examples of flags:
 #
-# Decimal number conversion
+# Decimal number conversion:
 # ```
 # sprintf "%d", 123  # => "123"
 # sprintf "%+d", 123 # => "+123"
 # sprintf "% d", 123 # => " 123"
 # ```
 #
-# Octal number conversion
+# Octal number conversion:
 # ```
 # sprintf "%o", 123   # => "173"
 # sprintf "%+o", 123  # => "+173"
@@ -234,7 +235,7 @@ end
 # sprintf "%+o", -123 # => "-173"
 # ```
 #
-# Hexadecimal number conversion
+# Hexadecimal number conversion:
 # ```
 # sprintf "%x", 123   # => "7b"
 # sprintf "%+x", 123  # => "+7b"
@@ -247,7 +248,7 @@ end
 # sprintf "%#X", -123 # => "-7B"
 # ```
 #
-# Binary number conversion
+# Binary number conversion:
 # ```
 # sprintf "%b", 123    # => "1111011"
 # sprintf "%+b", 123   # => "+1111011"
@@ -260,13 +261,13 @@ end
 # sprintf "%+ b", -123 # => "-1111011"
 # ```
 #
-# Floating point conversion
+# Floating point conversion:
 # ```
 # sprintf "%a", 123 # => "0x1.ecp+6"
 # sprintf "%A", 123 # => "0X1.ECP+6"
 # ```
 #
-# Exponential form conversion
+# Exponential form conversion:
 # ```
 # sprintf "%g", 123.4          # => "123.4"
 # sprintf "%g", 123.4567       # => "123.457"
@@ -304,7 +305,7 @@ end
 # Examples of precisions:
 #
 # Precision for `d`, `o`, `x` and `b` is
-# minimum number of digits
+# minimum number of digits:
 # ```
 # sprintf "%20.8d", 123   # => "                 123"
 # sprintf "%020.8d", 123  # => "00000000000000000123"
@@ -320,24 +321,24 @@ end
 # sprintf "%20.8b", -11   # => "               -1011"
 # ```
 #
-# Precision for `e` is number of digits after the decimal point.
+# Precision for `e` is number of digits after the decimal point:
 # ```
 # sprintf "%20.8e", 1234.56789 # => "      1.23456789e+03"
 # ```
 #
-# Precision for `f` is number of digits after the decimal point.
+# Precision for `f` is number of digits after the decimal point:
 # ```
 # sprintf "%20.8f", 1234.56789 # => "       1234.56789000"
 # ```
 #
-# Precision for `g` is number of significant digits.
+# Precision for `g` is number of significant digits:
 # ```
 # sprintf "%20.8g", 1234.56789 # => "           1234.5679"
 # sprintf "%20.8g", 123456789  # => "       1.2345679e+08"
 # sprintf "%-20.8g", 123456789 # => "1.2345679e+08       "
 # ```
 #
-# Precision for `s` is maximum number of characters.
+# Precision for `s` is maximum number of characters:
 # ```
 # sprintf "%20.8s", "string test" # => "            string t"
 # ```
@@ -352,7 +353,7 @@ def sprintf(format_string, *args) : String
   sprintf format_string, args
 end
 
-# ditto
+# :ditto:
 def sprintf(format_string, args : Array | Tuple) : String
   String.build(format_string.bytesize) do |str|
     String::Formatter(typeof(args)).new(format_string, args, str).format
@@ -360,6 +361,9 @@ def sprintf(format_string, args : Array | Tuple) : String
 end
 
 # Prints objects to `STDOUT`, each followed by a newline.
+#
+# If the string representation of an object ends with a newline, no additional
+# newline is printed for that object.
 #
 # See also: `IO#puts`.
 def puts(*objects) : Nil
@@ -436,8 +440,6 @@ end
 module AtExitHandlers
   @@running = false
 
-  class_property exception : Exception?
-
   private class_getter(handlers) { [] of Int32, Exception? -> }
 
   def self.add(handler)
@@ -446,7 +448,7 @@ module AtExitHandlers
     handlers << handler
   end
 
-  def self.run(status)
+  def self.run(status, exception = nil)
     @@running = true
 
     if handlers = @@handlers
@@ -455,19 +457,10 @@ module AtExitHandlers
         begin
           handler.call status, exception
         rescue handler_ex
-          STDERR.puts "Error running at_exit handler: #{handler_ex}"
+          Crystal::System.print_error "Error running at_exit handler: %s\n", handler_ex.message || ""
           status = 1 if status.zero?
         end
       end
-    end
-
-    if ex = @@exception
-      # Print the exception after all at_exit handlers, to make sure
-      # the user sees it.
-
-      STDERR.print "Unhandled exception: "
-      ex.inspect_with_backtrace(STDERR)
-      STDERR.flush
     end
 
     status
@@ -497,7 +490,7 @@ end
 # the block as its first argument. In case of any unhandled exception, it is
 # passed as the second argument to the block, if the program terminates
 # normally or `exit(status)` is called explicitly, then the second argument
-# will be nil.
+# will be `nil`.
 def at_exit(&handler : Int32, Exception? ->) : Nil
   AtExitHandlers.add(handler)
 end
@@ -508,15 +501,15 @@ end
 # Registered `at_exit` procs are executed.
 def exit(status = 0) : NoReturn
   status = AtExitHandlers.run status
-  STDOUT.flush
-  STDERR.flush
+  Crystal.ignore_stdio_errors { STDOUT.flush }
+  Crystal.ignore_stdio_errors { STDERR.flush }
   Process.exit(status)
 end
 
 # Terminates execution immediately, printing *message* to `STDERR` and
 # then calling `exit(status)`.
 def abort(message = nil, status = 1) : NoReturn
-  STDERR.puts message if message
+  Crystal.ignore_stdio_errors { STDERR.puts message } if message
   exit status
 end
 

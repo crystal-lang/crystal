@@ -16,7 +16,7 @@ module Spec
     def report(result)
     end
 
-    def finish
+    def finish(elapsed_time, aborted)
     end
 
     def print_results(elapsed_time : Time::Span, aborted : Bool)
@@ -30,7 +30,7 @@ module Spec
       @io.flush
     end
 
-    def finish
+    def finish(elapsed_time, aborted)
       @io.puts
     end
 

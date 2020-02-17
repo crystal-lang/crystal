@@ -281,6 +281,15 @@ describe "Array" do
       [1, 2, 3][1, 3]?.should eq([2, 3])
       [1, 2, 3][4, 0]?.should be_nil
     end
+
+    it "gets with range without end" do
+      [1, 2, 3][1..nil]?.should eq([2, 3])
+      [1, 2, 3][4..nil]?.should be_nil
+    end
+
+    it "gets with range without beginning" do
+      [1, 2, 3][nil..1]?.should eq([1, 2])
+    end
   end
 
   describe "[]=" do
@@ -1471,6 +1480,15 @@ describe "Array" do
           r.should be_a(Array({Int32, Char, Char}))
           r.should eq([{1, 'a', 'x'}, {2, 'b', 'y'}, {3, 'c', 'z'}])
         end
+
+        it "zips union type (#8608)" do
+          a = [1, 2, 3]
+          b = 'a'..'c'
+          c = ('x'..'z').each
+          r = a.zip(a || b || c)
+          r.should be_a(Array({Int32, Int32 | Char}))
+          r.should eq([{1, 1}, {2, 2}, {3, 3}])
+        end
       end
     end
   end
@@ -1538,6 +1556,15 @@ describe "Array" do
             r = a.zip?(b, c)
             r.should be_a(Array({Int32, Char?, Char?}))
             r.should eq([{1, 'a', 'x'}, {2, 'b', 'y'}, {3, nil, nil}])
+          end
+
+          it "zips union type (#8608)" do
+            a = [1, 2, 3]
+            b = 'a'..'c'
+            c = ('x'..'z').each
+            r = a.zip?(a || b || c)
+            r.should be_a(Array({Int32, Int32 | Char | Nil}))
+            r.should eq([{1, 1}, {2, 2}, {3, 3}])
           end
         end
       end

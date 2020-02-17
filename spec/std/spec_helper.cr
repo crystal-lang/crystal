@@ -7,7 +7,7 @@ end
 
 {% if flag?(:win32) %}
   def pending_win32(description = "assert", file = __FILE__, line = __LINE__, end_line = __END_LINE__, &block)
-    pending(description, file, line, end_line, &block)
+    pending("#{description} [win32]", file, line, end_line)
   end
 {% else %}
   def pending_win32(description = "assert", file = __FILE__, line = __LINE__, end_line = __END_LINE__, &block)
@@ -79,8 +79,8 @@ def spawn_and_check(before : Proc(_), file = __FILE__, line = __LINE__, &block :
   end
 
   ex = done.receive
+  raise ex if ex
   unless w.checked?
     fail "Failed to stress expected path", file, line
   end
-  raise ex if ex
 end

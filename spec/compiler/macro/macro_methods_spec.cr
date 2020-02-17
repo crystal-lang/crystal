@@ -11,7 +11,7 @@ private def declare_class_var(container : ClassVarContainer, name, var_type : Ty
 end
 
 module Crystal
-  describe "macro methods" do
+  describe Macro do
     describe "node methods" do
       describe "location" do
         location = Location.new("foo.cr", 1, 2)
@@ -1154,10 +1154,119 @@ module Crystal
       assert_macro "", %({% a = 1 %}{{a}}), [] of ASTNode, "1"
     end
 
-    describe "type methods" do
-      it "executes name" do
-        assert_macro("x", "{{x.name}}", "String") do |program|
-          [TypeNode.new(program.string)] of ASTNode
+    describe TypeNode do
+      describe "#includers" do
+        it "returns an array of types `self` is included in" do
+          assert_type(%(
+            module Foo
+            end
+
+            module Baz
+              module Tar
+                include Baz
+              end
+            end
+
+            abstract class Parent
+            end
+
+            module Enumt(T)
+              include Baz
+            end
+
+            class Bar < Parent
+              include Foo
+              include Baz
+            end
+
+            struct Str
+              include Enumt(String)
+              include Baz
+            end
+
+            struct Gen(T)
+              include Baz
+            end
+
+            abstract struct AStr
+              include Baz
+            end
+
+            abstract class ACla
+              include Baz
+            end
+
+            class SubT(T)
+              include Baz
+            end
+
+            class ChildT(T) < SubT(T)
+            end
+
+          {% if Baz.includers.map(&.stringify) == ["Baz::Tar", "Enumt(T)", "Bar", "Str", "Gen(T)", "AStr", "ACla", "SubT(T)"] && Enumt.includers.map(&.stringify) == ["Str"]  %}
+            1
+          {% else %}
+            'a'
+          {% end %}
+        )) { int32 }
+        end
+      end
+
+      describe "#name" do
+        describe "simple type" do
+          it "returns the name of the type" do
+            assert_macro("x", "{{x.name}}", "String") do |program|
+              [TypeNode.new(program.string)] of ASTNode
+            end
+          end
+        end
+
+        describe "namespaced type" do
+          it "should return the FQN of the type" do
+            assert_macro("type", "{{type.name}}", "SomeModule::SomeType") do |program|
+              mod = NonGenericModuleType.new(program, program, "SomeModule")
+
+              klass = NonGenericClassType.new(program, mod, "SomeType", program.reference)
+
+              [TypeNode.new(klass)] of ASTNode
+            end
+          end
+        end
+
+        describe "generic type" do
+          it "includes the generic_args of the type by default" do
+            assert_macro("klass", "{{klass.name}}", "SomeType(A, B)") do |program|
+              [TypeNode.new(GenericClassType.new(program, program, "SomeType", program.object, ["A", "B"]))] of ASTNode
+            end
+          end
+        end
+
+        describe :generic_args do
+          describe true do
+            it "includes the generic_args of the type" do
+              assert_macro("klass", "{{klass.name(generic_args: true)}}", "SomeType(A, B)") do |program|
+                [TypeNode.new(GenericClassType.new(program, program, "SomeType", program.object, ["A", "B"]))] of ASTNode
+              end
+            end
+          end
+
+          describe false do
+            it "does not include the generic_args of the type" do
+              assert_macro("klass", "{{klass.name(generic_args: false)}}", "SomeType") do |program|
+                [TypeNode.new(GenericClassType.new(program, program, "SomeType", program.object, ["A", "B"]))] of ASTNode
+              end
+            end
+          end
+
+          describe "with an invalid type argument" do
+            it "should raise the proper exception" do
+              expect_raises(Crystal::TypeException, "named argument 'generic_args' to TypeNode#name must be a bool, not NumberLiteral") do
+                assert_macro("x", "{{x.name(generic_args: 99)}}", "String") do |program|
+                  [TypeNode.new(program.string)] of ASTNode
+                end
+              end
+            end
+          end
         end
       end
 

@@ -121,7 +121,7 @@ class Logger
   # If *io* is `nil` then all log calls will be silently ignored.
   def initialize(@io : IO?, @level = Severity::INFO, @formatter = DEFAULT_FORMATTER, @progname = "")
     @closed = false
-    @mutex = Mutex.new
+    @mutex = Mutex.new(:unchecked)
   end
 
   # Calls the *close* method on the object passed to `initialize`.

@@ -107,16 +107,6 @@ class URI
     decode(string, io, plus_to_space: plus_to_space)
   end
 
-  @[Deprecated("Use .decode or .decode_www_form instead")]
-  def self.unescape(string : String, io : IO, plus_to_space = false)
-    decode_www_form(string, io, plus_to_space: plus_to_space)
-  end
-
-  @[Deprecated("Use .decode or .decode_www_form instead")]
-  def self.unescape(string : String, plus_to_space = false)
-    decode_www_form(string, plus_to_space: plus_to_space)
-  end
-
   # URL-encodes *string* as [`x-www-form-urlencoded`](https://url.spec.whatwg.org/#urlencoded-serializing).
   #
   # Reserved characters are escaped, unreserved characters are not.
@@ -165,16 +155,6 @@ class URI
     end
   end
 
-  @[Deprecated("Use .encode or .encode_www_form instead")]
-  def self.escape(string : String, io : IO, space_to_plus = false)
-    encode_www_form(string, io, space_to_plus: space_to_plus)
-  end
-
-  @[Deprecated("Use .encode or .encode_www_form instead")]
-  def self.escape(string : String, space_to_plus = false)
-    encode_www_form(string, space_to_plus: space_to_plus)
-  end
-
   # Returns whether given byte is reserved character defined in
   # [RFC 3986](https://tools.ietf.org/html/rfc3986).
   #
@@ -183,7 +163,7 @@ class URI
   def self.reserved?(byte) : Bool
     char = byte.unsafe_chr
     '&' <= char <= ',' ||
-      {'!', '#', '$', '/', ':', ';', '?', '@', '[', ']', '='}.includes?(char)
+      char.in?('!', '#', '$', '/', ':', ';', '?', '@', '[', ']', '=')
   end
 
   # Returns whether given byte is unreserved character defined in
@@ -193,7 +173,7 @@ class URI
   def self.unreserved?(byte) : Bool
     char = byte.unsafe_chr
     char.ascii_alphanumeric? ||
-      {'_', '.', '-', '~'}.includes?(char)
+      char.in?('_', '.', '-', '~')
   end
 
   # URL-decodes *string* and writes the result to *io*.

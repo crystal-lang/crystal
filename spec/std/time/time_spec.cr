@@ -429,6 +429,12 @@ describe Time do
       time = Time.local(location)
       (time + 5.minutes).location.should eq location
     end
+
+    it "covers date boundaries with zone offset (#8741)" do
+      zone = Time::Location.fixed(7 * 3600)
+
+      Time.local(2020, 2, 5, 0, 13, location: zone).shift(months: 3).should eq Time.local(2020, 5, 5, 0, 13, location: zone)
+    end
   end
 
   it "#time_of_day" do

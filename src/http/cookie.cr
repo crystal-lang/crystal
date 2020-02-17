@@ -121,7 +121,7 @@ module HTTP
         return unless match
 
         expires = if max_age = match["max_age"]?
-                    Time.utc + max_age.to_i.seconds
+                    Time.utc + max_age.to_i64.seconds
                   else
                     parse_time(match["expires"]?)
                   end

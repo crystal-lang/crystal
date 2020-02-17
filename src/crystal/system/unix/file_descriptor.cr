@@ -9,7 +9,11 @@ module Crystal::System::FileDescriptor
 
   private def unbuffered_read(slice : Bytes)
     evented_read(slice, "Error reading file") do
-      LibC.read(@fd, slice, slice.size)
+      LibC.read(@fd, slice, slice.size).tap do |return_code|
+        if return_code == -1 && Errno.value == Errno::EBADF
+          raise IO::Error.new "File not open for reading"
+        end
+      end
     end
   end
 
@@ -110,6 +114,15 @@ module Crystal::System::FileDescriptor
   end
 
   private def system_close
+    # Perform libevent cleanup before LibC.close.
+    # Using a file descriptor after it has been closed is never defined and can
+    # always lead to undefined results. This is not specific to libevent.
+    evented_close
+
+    file_descriptor_close
+  end
+
+  def file_descriptor_close
     if LibC.close(@fd) != 0
       case Errno.value
       when Errno::EINTR, Errno::EINPROGRESS
@@ -118,8 +131,6 @@ module Crystal::System::FileDescriptor
         raise Errno.new("Error closing file")
       end
     end
-  ensure
-    evented_close
   end
 
   def self.pipe(read_blocking, write_blocking)

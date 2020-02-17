@@ -4,7 +4,7 @@ module Crystal::System::User
   private GETPW_R_SIZE_MAX = 1024 * 16
 
   private def from_struct(pwd)
-    user = String.new(pwd.pw_gecos).split(",").first
+    user = String.new(pwd.pw_gecos).partition(',')[0]
     new(String.new(pwd.pw_name), pwd.pw_uid.to_s, pwd.pw_gid.to_s, user, String.new(pwd.pw_dir), String.new(pwd.pw_shell))
   end
 
