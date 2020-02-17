@@ -34,40 +34,37 @@ jobs:
       - name: Download Crystal source
         uses: actions/checkout@v2
       - name: Enable Developer Command Prompt
-        uses: ilammy/msvc-dev-cmd@233eac407f2676fcb3648e3b153b48e60d003803
+        uses: ilammy/msvc-dev-cmd@1eed9c12159dd2d2f8804980fbba1abe36ff77d2
       - name: Cache libraries
         id: cache-libs
         uses: actions/cache@v1
         with:
           path: libs
-          key: win-libs-v1
+          key: win-libs-${{ hashFiles('.github/workflows/win.yml') }}
       - name: Download libgc
         if: steps.cache-libs.outputs.cache-hit != 'true'
         uses: actions/checkout@v2
         with:
           repository: ivmai/bdwgc
-          ref: v7.6.4
+          ref: 2fd48a92b8bff3afb64b3528ad78b63f033f0436  # master @ 2020-02-13
           path: bdwgc
       - name: Download libatomic_ops
         if: steps.cache-libs.outputs.cache-hit != 'true'
         uses: actions/checkout@v2
         with:
           repository: ivmai/libatomic_ops
-          ref: v7.6.2
+          ref: v7.6.10
           path: bdwgc/libatomic_ops
-      - name: Download win32.mak
-        if: steps.cache-libs.outputs.cache-hit != 'true'
-        run: |
-          iwr https://gist.github.com/ynkdir/688e62f419e5374347bf/raw/d250598ddf5129addd212b8390279a01bca12706/win32.mak -OutFile bdwgc\ntwin32.mak
       - name: Build libgc
         if: steps.cache-libs.outputs.cache-hit != 'true'
         working-directory: ./bdwgc
         run: |
-          nmake -f NT_X64_STATIC_THREADS_MAKEFILE nodebug=1 _CL_=-DDONT_USE_USER32_DLL
+          cmake . -G "Visual Studio 16 2019" -DBUILD_SHARED_LIBS=OFF -DCMAKE_POLICY_DEFAULT_CMP0091=NEW -DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreaded
+          cmake --build . --config Release
       - name: Download libpcre
         if: steps.cache-libs.outputs.cache-hit != 'true'
         run: |
-          iwr https://ftp.pcre.org/pub/pcre/pcre-8.42.zip -OutFile pcre.zip
+          iwr https://ftp.pcre.org/pub/pcre/pcre-8.43.zip -OutFile pcre.zip
           Expand-Archive pcre.zip -DestinationPath .
           mv pcre* pcre
       - name: Build libpcre
@@ -75,20 +72,20 @@ jobs:
         working-directory: ./pcre
         run: |
           cmake . -G "Visual Studio 16 2019" -DBUILD_SHARED_LIBS=OFF -DPCRE_SUPPORT_UNICODE_PROPERTIES=ON -DPCRE_SUPPORT_JIT=ON -DPCRE_STATIC_RUNTIME=ON
-          cmake --build . --config release
+          cmake --build . --config Release
       - name: Gather libraries
         if: steps.cache-libs.outputs.cache-hit != 'true'
         run: |
           mkdir libs
-          mv pcre/release/pcre.lib libs/pcre.lib
-          mv bdwgc/gc.lib libs/gc.lib
+          mv pcre/Release/pcre.lib libs/
+          mv bdwgc/Release/gc.lib libs/
       - name: Download compiled object
         uses: actions/download-artifact@v1
         with:
           name: objs
-      - name: Link the executable
+      - name: Link stdlib spec executable
         run: |
           cl objs\std_spec.o /Festd_spec libs\pcre.lib libs\gc.lib advapi32.lib libcmt.lib legacy_stdio_definitions.lib
-      - name: Run the executable
+      - name: Run stdlib specs
         run: |
           .\std_spec.exe
