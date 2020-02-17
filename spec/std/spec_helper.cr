@@ -1,5 +1,6 @@
 require "spec"
 require "../support/tempfile"
+require "../support/fibers"
 
 def datapath(*components)
   File.join("spec", "std", "data", *components)
@@ -67,9 +68,7 @@ def spawn_and_check(before : Proc(_), file = __FILE__, line = __LINE__, &block :
       end
 
       # Now wait until the "before" fiber is blocked
-      while !before_fiber.resumable?
-        Fiber.yield
-      end
+      wait_until_blocked before_fiber
       block.call w
 
       done.send nil
