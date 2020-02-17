@@ -466,4 +466,10 @@ LLVMMetadataRef LLVMExtDIBuilderGetOrCreateArraySubrange(
     return wrap(Dref->getOrCreateSubrange(Lo, Count));
 }
 
+LLVMMetadataRef LLVMExtDIBuilderGetOrCreateArraySubrangeVariable(
+  DIBuilderRef Dref, uint64_t Lo, 
+  LLVMMetadataRef Count) {
+    return wrap(Dref->getOrCreateSubrange(Lo, unwrap(Count)));
+}
+
 }

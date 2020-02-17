@@ -146,6 +146,10 @@ struct LLVM::DIBuilder
     LibLLVMExt.di_builder_get_or_create_array_subrange(self, lo, count)
   end
 
+  def get_or_create_array_subrange_variable(lo, count)
+    LibLLVMExt.di_builder_get_or_create_array_subrange_variable(self, lo, count)
+  end
+
   def end
     LibLLVMExt.di_builder_finalize(self)
   end

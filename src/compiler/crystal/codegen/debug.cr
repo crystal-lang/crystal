@@ -113,11 +113,6 @@ module Crystal
       ivars.each_with_index do |(name, ivar), idx|
         next if ivar.type.is_a?(NilType)
         if (ivar_type = ivar.type?) && (ivar_debug_type = get_debug_type(ivar_type))
-          if type_name.starts_with?("Array(") && name == "buffer"
-            subrange = di_builder.get_or_create_array_subrange(0, 0)
-            ivar_debug_type = di_builder.create_array_type(0, llvm_typer.pointer_size, ivar_debug_type, [subrange])
-          end
-
           offset = @program.target_machine.data_layout.offset_of_element(struct_type, idx &+ (type.struct? ? 0 : 1))
           size = @program.target_machine.data_layout.size_in_bits(llvm_embedded_type(ivar_type))
 
@@ -200,11 +195,11 @@ module Crystal
     end
 
     def create_debug_type(type : NilableType, type_name : String? = type.to_s)
-      get_debug_type(type.not_nil_type, type.to_s)
+      get_debug_type(type.not_nil_type, type_name)
     end
 
     def create_debug_type(type : NilablePointerType, type_name : String? = type.to_s)
-      get_debug_type(type.pointer_type, type.to_s)
+      get_debug_type(type.pointer_type, type_name)
     end
 
     def create_debug_type(type : StaticArrayInstanceType, type_name : String? = type.to_s)
