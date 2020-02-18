@@ -27,9 +27,6 @@ class Crystal::Program
     flags.add codegen_target.vendor
     flags.concat codegen_target.environment_parts
 
-    # TODO(0.28.0) remove this
-    flags.add "i686" if codegen_target.architecture == "i386"
-
     flags.add "bits#{codegen_target.pointer_bit_width}"
 
     flags.add "armhf" if codegen_target.armhf?

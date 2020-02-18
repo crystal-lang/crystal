@@ -259,12 +259,10 @@ struct Range(B, E)
     begin_value = @begin
     end_value = @end
 
-    # TODO: change to `nil?` after removing the `nil?` error related to `Pointer`
-
     # begin passes
-    (begin_value.is_a?(Nil) || value >= begin_value) &&
+    (begin_value.nil? || value >= begin_value) &&
       # end passes
-      (end_value.is_a?(Nil) ||
+      (end_value.nil? ||
         (@exclusive ? value < end_value : value <= end_value))
   end
 
