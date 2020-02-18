@@ -20,32 +20,34 @@ class PrettyPrinter
 
   def read_any
     case @pull.kind
-    when :null
+    when .null?
       with_color.bold.surround(@output) do
         @pull.read_null.to_json(@output)
       end
-    when :bool
+    when .bool?
       with_color.light_blue.surround(@output) do
         @pull.read_bool.to_json(@output)
       end
-    when :int
+    when .int?
       with_color.red.surround(@output) do
         @pull.read_int.to_json(@output)
       end
-    when :float
+    when .float?
       with_color.red.surround(@output) do
         @pull.read_float.to_json(@output)
       end
-    when :string
+    when .string?
       with_color.yellow.surround(@output) do
         @pull.read_string.to_json(@output)
       end
-    when :begin_array
+    when .begin_array?
       read_array
-    when :begin_object
+    when .begin_object?
       read_object
-    when :EOF
+    when .eof?
       # We are done
+    else
+      raise "Bug: unexpected kind: #{@pull.kind}"
     end
   end
 
