@@ -908,7 +908,7 @@ struct Time
   # This is equivalent to creating a `Time::Span` from the time-of-day fields:
   #
   # ```
-  # time.time_of_day == Time::Span.new(time.hour, time.minute, time.second, time.nanosecond)
+  # time.time_of_day == Time::Span.new(hours: time.hour, minutes: time.minute, seconds: time.second, nanoseconds: time.nanosecond)
   # ```
   def time_of_day : Time::Span
     Span.new(nanoseconds: NANOSECONDS_PER_SECOND * (offset_seconds % SECONDS_PER_DAY) + nanosecond)
