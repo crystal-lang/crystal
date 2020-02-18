@@ -228,12 +228,15 @@ module Crystal
 
     it "errors if files will be overwritten by a generated file" do
       within_temporary_directory do
-        File.touch("README.md")
+        File.write("README.md", "content before init")
 
         ex = expect_raises(Crystal::Init::FilesConflictError) do
           exec_init("my_lib", ".")
         end
-        ex.conflicting_files.should contain("./README.md")
+        ex.conflicting_files.should contain("README.md")
+
+        File.read("README.md").should eq("content before init")
+        File.exists?("LICENSE").should_not be_true
       end
     end
 
@@ -258,6 +261,107 @@ module Crystal
         File.read("README.md").should eq("content before init")
         File.exists?("LICENSE").should be_true
       end
+    end
+  end
+
+  describe ".parse_args" do
+    it "DIR" do
+      config = Crystal::Init.parse_args(["lib", "foo"])
+      config.name.should eq "foo"
+      config.dir.should eq "foo"
+      config.expanded_dir.should eq ::Path[Dir.current, "foo"]
+    end
+
+    it "DIR with path" do
+      path = ::Path["foo", "bar"].to_s
+      config = Crystal::Init.parse_args(["lib", path])
+      config.name.should eq "bar"
+      config.dir.should eq path
+      config.expanded_dir.should eq ::Path[Dir.current, "foo", "bar"]
+    end
+
+    it "DIR (relative to home)" do
+      path = ::Path["~", "foo"].to_s
+      config = Crystal::Init.parse_args(["lib", path])
+      config.name.should eq "foo"
+      config.dir.should eq path
+      config.expanded_dir.should eq ::Path.home.join("foo")
+    end
+
+    it "DIR (absolute)" do
+      path = ::Path[::Path[Dir.current].anchor.to_s, "foo"].to_s
+      config = Crystal::Init.parse_args(["lib", path])
+      config.name.should eq "foo"
+      config.dir.should eq path
+      config.expanded_dir.should eq ::Path[path]
+    end
+
+    it "DIR = ." do
+      within_temporary_directory do
+        config = Crystal::Init.parse_args(["lib", "."])
+        config.name.should eq File.basename(Dir.current)
+        config.dir.should eq "."
+        config.expanded_dir.should eq ::Path[Dir.current]
+      end
+    end
+
+    it "NAME DIR" do
+      config = Crystal::Init.parse_args(["lib", "foo", "foo-shard"])
+      config.name.should eq "foo"
+      config.dir.should eq "foo-shard"
+      config.expanded_dir.should eq ::Path[Dir.current, "foo-shard"]
+    end
+  end
+
+  describe ".validate_name" do
+    it "empty" do
+      expect_raises Crystal::Init::Error, "NAME must not be empty" do
+        Crystal::Init.validate_name("")
+      end
+    end
+    it "length" do
+      Crystal::Init.validate_name("a" * 50)
+      expect_raises Crystal::Init::Error, "NAME must not be longer than 50 characters" do
+        Crystal::Init.validate_name("a" * 51)
+      end
+    end
+    it "uppercase" do
+      expect_raises Crystal::Init::Error, "NAME should be all lower cased" do
+        Crystal::Init.validate_name("Foo")
+      end
+    end
+    it "digits" do
+      Crystal::Init.validate_name("i18n")
+      expect_raises Crystal::Init::Error, "NAME must start with a letter" do
+        Crystal::Init.validate_name("4u")
+      end
+    end
+    it "dashes" do
+      Crystal::Init.validate_name("foo-bar")
+      expect_raises Crystal::Init::Error, "NAME must start with a letter" do
+        Crystal::Init.validate_name("-foo")
+      end
+      expect_raises Crystal::Init::Error, "NAME must not have consecutive dashes" do
+        Crystal::Init.validate_name("foo--bar")
+      end
+    end
+    it "underscores" do
+      Crystal::Init.validate_name("foo_bar")
+      expect_raises Crystal::Init::Error, "NAME must start with a letter" do
+        Crystal::Init.validate_name("_foo")
+      end
+      expect_raises Crystal::Init::Error, "NAME must not have consecutive underscores" do
+        Crystal::Init.validate_name("foo__bar")
+      end
+    end
+    it "invalid character" do
+      expect_raises Crystal::Init::Error, "NAME must only contain alphanumerical characters, underscores or dashes" do
+        Crystal::Init.validate_name("foo bar")
+      end
+      expect_raises Crystal::Init::Error, "NAME must only contain alphanumerical characters, underscores or dashes" do
+        Crystal::Init.validate_name("foo\abar")
+      end
+      Crystal::Init.validate_name("grüß-gott")
     end
   end
 end

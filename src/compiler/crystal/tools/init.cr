@@ -44,16 +44,17 @@ module Crystal
 
       OptionParser.parse(args) do |opts|
         opts.banner = <<-USAGE
-          Usage: crystal init TYPE NAME [DIR]
+          Usage: crystal init TYPE (DIR | NAME DIR)
+
+          Initializes a project folder as a git repository and default folder
+          structure for Crystal projects.
 
           TYPE is one of:
-              lib                      creates library skeleton
-              app                      creates application skeleton
+              lib                      Creates a library skeleton
+              app                      Creates an application skeleton
 
-          NAME - name of project to be generated,
-                 eg: example
-          DIR  - directory where project will be generated,
-                 default: NAME, eg: ./custom/path/example
+          DIR  - directory where project will be generated
+          NAME - name of project to be generated, default: basename of DIR
 
           USAGE
 
@@ -72,8 +73,16 @@ module Crystal
 
         opts.unknown_args do |args, after_dash|
           config.skeleton_type = fetch_skeleton_type(opts, args)
-          config.name = fetch_name(opts, args)
-          config.dir = fetch_directory(args, config.name)
+          dir = fetch_required_parameter(opts, args, "DIR")
+          if args.empty?
+            # crystal init TYPE DIR
+            config.dir = dir
+            config.name = config.expanded_dir.basename
+          else
+            # crystal init TYPE NAME DIR
+            config.name = dir
+            config.dir = args.shift
+          end
         end
       end
 
@@ -81,10 +90,7 @@ module Crystal
         raise Error.new "Cannot use --force and --skip-existing together"
       end
 
-      if config.name == "."
-        config.dir = Dir.current
-        config.name = File.basename config.dir
-      end
+      validate_name(config.name)
 
       config.author = fetch_author
       config.email = fetch_email
@@ -116,20 +122,6 @@ module Crystal
       github_user || "your-github-user"
     end
 
-    def self.fetch_name(opts, args)
-      fetch_required_parameter(opts, args, "NAME")
-    end
-
-    def self.fetch_directory(args, project_name)
-      directory = args.empty? ? project_name : args.shift
-
-      if File.file?(directory)
-        raise Error.new "#{directory.inspect} is a file"
-      end
-
-      directory
-    end
-
     def self.fetch_skeleton_type(opts, args)
       skeleton_type = fetch_required_parameter(opts, args, "TYPE")
       unless skeleton_type.in?("lib", "app")
@@ -143,6 +135,19 @@ module Crystal
         raise Error.new "Argument #{name} is missing", opts
       end
       args.shift
+    end
+
+    def self.validate_name(name)
+      case
+      when name.blank?                       then raise Error.new("NAME must not be empty")
+      when name.size > 50                    then raise Error.new("NAME must not be longer than 50 characters")
+      when name.each_char.any?(&.uppercase?) then raise Error.new("NAME should be all lower cased")
+      when !name[0].ascii_letter?            then raise Error.new("NAME must start with a letter")
+      when name.index("--")                  then raise Error.new("NAME must not have consecutive dashes")
+      when name.index("__")                  then raise Error.new("NAME must not have consecutive underscores")
+      when !name.each_char.all? { |c| c.alphanumeric? || c == '-' || c == '_' }
+        raise Error.new("NAME must only contain alphanumerical characters, underscores or dashes")
+      end
     end
 
     class Config
@@ -168,10 +173,15 @@ module Crystal
         @skip_existing = false
       )
       end
+
+      getter expanded_dir : ::Path { ::Path.new(dir).expand(home: true) }
+
+      getter github_repo : String { "#{github_name}/#{expanded_dir.basename}" }
     end
 
     abstract class View
       getter config : Config
+      getter full_path : ::Path
 
       @@views = [] of View.class
 
@@ -184,12 +194,17 @@ module Crystal
       end
 
       def initialize(@config)
+        @full_path = config.expanded_dir.join(path)
+      end
+
+      def overwriting?
+        File.exists?(full_path)
       end
 
       def render
-        overwriting = File.exists?(full_path)
+        overwriting = overwriting?
 
-        Dir.mkdir_p(File.dirname(full_path))
+        Dir.mkdir_p(full_path.dirname)
         File.write(full_path, to_s)
         puts log_message(overwriting) unless config.silent
       end
@@ -206,39 +221,41 @@ module Crystal
         config.name.split('-').map(&.camelcase).join("::")
       end
 
-      abstract def full_path
+      abstract def path
     end
 
     class InitProject
       getter config : Config
-      @views : Array(View)?
 
       def initialize(@config : Config)
       end
 
-      def overwrite_checks
-        overwriting_files = views.compact_map do |view|
-          path = view.full_path
-          File.exists?(path) ? path : nil
+      def overwrite_checks(views)
+        existing_views, new_views = views.partition(&.overwriting?)
+
+        if existing_views.any? && !config.skip_existing
+          raise FilesConflictError.new existing_views.map(&.path)
         end
 
-        if overwriting_files.any?
-          if config.skip_existing
-            views.reject! { |view| File.exists?(view.full_path) }
-          else
-            raise FilesConflictError.new overwriting_files
-          end
-        end
+        new_views
       end
 
       def run
-        overwrite_checks unless config.force
+        if File.file?(config.expanded_dir)
+          raise Error.new "#{config.dir.inspect} is a file"
+        end
+
+        views = self.views
+
+        unless config.force
+          views = overwrite_checks(views)
+        end
 
         views.each &.render
       end
 
-      def views
-        @views ||= View.views.map(&.new(config))
+      private def views
+        View.views.map(&.new(config))
       end
     end
 
@@ -249,8 +266,8 @@ module Crystal
         puts command
       end
 
-      def full_path
-        "#{config.dir}/.git"
+      def path
+        ".git"
       end
 
       private def command
@@ -260,11 +277,12 @@ module Crystal
 
     TEMPLATE_DIR = "#{__DIR__}/init/template"
 
-    macro template(name, template_path, full_path)
+    macro template(name, template_path, destination_path)
       class {{name.id}} < View
         ECR.def_to_s "{{TEMPLATE_DIR.id}}/{{template_path.id}}"
-        def full_path
-          "#{config.dir}/#{{{full_path}}}"
+
+        def path
+          {{destination_path}}
         end
       end
 

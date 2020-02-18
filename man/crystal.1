@@ -63,10 +63,9 @@ The crystal command accepts the following options
 .It
 .Cm init
 TYPE
-NAME
-.Op DIR
+.Op DIR | NAME DIR
 .Pp
-Generate a new project.
+Generates a new Crystal project.
 .Pp
 TYPE is one of:
 .Bl -tag -width "12345678" -compact
@@ -79,9 +78,9 @@ Creates an application skeleton
 
 This initializes the lib/app project folder as a git repository, with a license file, a README file, a .travis.yml file for Travis CI integration, a shard.yml for use with shards (the Crystal dependency manager), a .gitignore file, and src and spec folders.
 .Bd -literal -offset
-NAME - name of project to be generated, e.g.: example
+DIR  - directory where project will be generated
 .Pp
-DIR  - directory where project will be generated, default: NAME
+NAME - name of project to be generated (default: basename of DIR)
 .Ed
 .Pp
 Options:
