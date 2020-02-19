@@ -22,8 +22,8 @@ module Crystal::System::Dir
 
   # Returns the next directory entry name in the iterator represented by *handle*, or
   # `nil` if iteration is complete.
-  def self.next(dir) : String?
-    next_entry(dir).try &.name
+  def self.next(dir, path) : String?
+    next_entry(dir, path).try &.name
   end
 
   # Returns the next directory entry in the iterator represented by *handle*, or

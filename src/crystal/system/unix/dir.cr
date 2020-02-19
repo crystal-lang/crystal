@@ -7,7 +7,7 @@ module Crystal::System::Dir
     dir
   end
 
-  def self.next_entry(dir) : Entry?
+  def self.next_entry(dir, path) : Entry?
     # LibC.readdir returns NULL and sets errno for failure or returns NULL for EOF but leaves errno as is.
     # This means we need to reset `Errno` before calling `readdir`.
     Errno.value = 0
@@ -16,7 +16,7 @@ module Crystal::System::Dir
       dir = entry.value.d_type == LibC::DT_DIR
       Entry.new(name, dir)
     elsif Errno.value != 0
-      raise Errno.new("readdir")
+      raise IO::FileSystemError.from_errno("Error reading directory entries", path)
     else
       nil
     end
@@ -26,15 +26,15 @@ module Crystal::System::Dir
     LibC.rewinddir(dir)
   end
 
-  def self.close(dir) : Nil
+  def self.close(dir, path) : Nil
     if LibC.closedir(dir) != 0
-      raise Errno.new("closedir")
+      raise IO::FileSystemError.from_errno("Error closing directory", path)
     end
   end
 
   def self.current : String
     unless dir = LibC.getcwd(nil, 0)
-      raise Errno.new("getcwd")
+      raise IO::FileSystemError.from_errno("Error getting current directory", "./")
     end
 
     dir_str = String.new(dir)

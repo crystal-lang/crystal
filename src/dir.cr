@@ -120,7 +120,7 @@ class Dir
   # array.sort # => [".", "..", "config.h"]
   # ```
   def read
-    Crystal::System::Dir.next(@dir)
+    Crystal::System::Dir.next(@dir, path)
   end
 
   # Repositions this directory to the first entry.
@@ -132,7 +132,7 @@ class Dir
   # Closes the directory stream.
   def close
     return if @closed
-    Crystal::System::Dir.close(@dir)
+    Crystal::System::Dir.close(@dir, path)
     @closed = true
   end
 

@@ -308,7 +308,7 @@ class Dir
       # By doing this we get an Entry struct which already tells us
       # whether something is a directory or not, avoiding having to
       # call File.info? which is really expensive.
-      Crystal::System::Dir.next_entry(dir.@dir)
+      Crystal::System::Dir.next_entry(dir.@dir, dir.path)
     end
   end
 end

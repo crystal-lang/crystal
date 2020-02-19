@@ -71,7 +71,7 @@ module Crystal::System::File
           else
             LibC.chown(path, uid, gid)
           end
-    raise Errno.new("Error changing owner of '#{path.inspect_unquoted}'") if ret == -1
+    raise IO::FileSystemError.from_errno("Error changing owner", path) if ret == -1
   end
 
   def self.chmod(path, mode)
@@ -180,14 +180,15 @@ module Crystal::System::File
   end
 
   private def system_fsync(flush_metadata = true) : Nil
-    if flush_metadata
-      if LibC.fsync(fd) != 0
-        raise Errno.new("fsync")
+    ret =
+      if flush_metadata
+        LibC.fsync(fd)
+      else
+        LibC.fdatasync(fd)
       end
-    else
-      if LibC.fdatasync(fd) != 0
-        raise Errno.new("fdatasync")
-      end
+
+    if ret != 0
+      raise IO::Error.from_errno("Error syncing file")
     end
   end
 end
