@@ -215,8 +215,13 @@ class Errno < Exception
   # ```
   def initialize(message, errno = Errno.value)
     @errno = errno
-    @errno_message = String.new(LibC.strerror(@errno))
+    @errno_message = Errno.message(errno)
     super "#{message}: #{@errno_message}"
+  end
+
+  # Convert an errno to an error message
+  def self.message(errno = Errno.value) : String
+    String.new(LibC.strerror(errno))
   end
 
   # Returns the value of libc's errno.

@@ -299,8 +299,7 @@ class Dir
           yield entry
         end
       end
-    rescue exc : Errno
-      raise exc unless exc.errno == Errno::ENOENT
+    rescue exc : IO::NotFoundError
     end
 
     private def self.read_entry(dir)

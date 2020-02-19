@@ -3,7 +3,7 @@ require "c/dirent"
 module Crystal::System::Dir
   def self.open(path : String) : LibC::DIR*
     dir = LibC.opendir(path.check_no_null_byte)
-    raise Errno.new("Error opening directory '#{path.inspect_unquoted}'") unless dir
+    raise IO::FileSystemError.from_errno("Error opening directory", path) unless dir
     dir
   end
 
@@ -44,7 +44,7 @@ module Crystal::System::Dir
 
   def self.current=(path : String)
     if LibC.chdir(path.check_no_null_byte) != 0
-      raise Errno.new("Error while changing directory to '#{path.inspect_unquoted}'")
+      raise IO::FileSystemError.from_errno("Error while changing directory", path)
     end
 
     path
@@ -57,13 +57,13 @@ module Crystal::System::Dir
 
   def self.create(path : String, mode : Int32) : Nil
     if LibC.mkdir(path.check_no_null_byte, mode) == -1
-      raise Errno.new("Unable to create directory '#{path.inspect_unquoted}'")
+      raise IO::FileSystemError.from_errno("Unable to create directory", path)
     end
   end
 
   def self.delete(path : String) : Nil
     if LibC.rmdir(path.check_no_null_byte) == -1
-      raise Errno.new("Unable to remove directory '#{path.inspect_unquoted}'")
+      raise IO::FileSystemError.from_errno("Unable to remove directory", path)
     end
   end
 end

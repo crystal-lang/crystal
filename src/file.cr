@@ -143,7 +143,7 @@ class File < IO::FileDescriptor
   # File.info("bar", follow_symlinks: false).type.symlink? # => true
   # ```
   def self.info(path : Path | String, follow_symlinks = true) : Info
-    info?(path, follow_symlinks) || raise Errno.new("Unable to get info for '#{path.to_s.inspect_unquoted}''")
+    info?(path, follow_symlinks) || raise IO::FileSystemError.from_errno("Unable to get file info", path.to_s)
   end
 
   # Returns `true` if *path* exists else returns `false`
@@ -174,8 +174,8 @@ class File < IO::FileDescriptor
   # ```
   def self.size(filename : Path | String) : UInt64
     info(filename).size
-  rescue ex : Errno
-    raise Errno.new("Error determining size of '#{filename.to_s.inspect_unquoted}'", ex.errno)
+  rescue ex : FileSystemError
+    raise ex.class.new("Error determining file size", filename.to_s, ex.reason)
   end
 
   # Returns `true` if the file at *path* is empty, otherwise returns `false`.
