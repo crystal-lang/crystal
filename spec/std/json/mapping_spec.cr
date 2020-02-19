@@ -1,8 +1,10 @@
-require "spec"
+require "../spec_helper"
 require "json"
 require "uuid"
 require "uuid/json"
-require "big/json"
+{% unless flag?(:win32) %}
+  require "big/json"
+{% end %}
 
 private class JSONPerson
   JSON.mapping({
@@ -38,9 +40,11 @@ private class JSONWithUUID
   JSON.mapping value: UUID
 end
 
-private class JSONWithBigDecimal
-  JSON.mapping value: BigDecimal
-end
+{% unless flag?(:win32) %}
+  private class JSONWithBigDecimal
+    JSON.mapping value: BigDecimal
+  end
+{% end %}
 
 private class JSONWithTime
   JSON.mapping({
@@ -612,7 +616,7 @@ describe "JSON mapping" do
     end
   end
 
-  describe "BigDecimal" do
+  pending_win32 describe: "BigDecimal" do
     it "parses json string with BigDecimal" do
       json = JSONWithBigDecimal.from_json(%({"value": "10.05"}))
       json.value.should eq(BigDecimal.new("10.05"))

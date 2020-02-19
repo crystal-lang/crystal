@@ -1,9 +1,9 @@
 require "uri"
-{% if flag?(:win32) %}
-  require "./http/common"
-{% else %}
-  require "./http/**"
+{% unless flag?(:win32) %}
+  require "./http/client"
+  require "./http/server"
 {% end %}
+require "./http/common"
 
 # The HTTP module contains `HTTP::Client`, `HTTP::Server` and `HTTP::WebSocket` implementations.
 module HTTP

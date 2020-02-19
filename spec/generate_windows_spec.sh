@@ -65,7 +65,7 @@ echo
 for spec in $(find "spec/$SPEC_SUITE" -type f -iname "*_spec.cr" | sort); do
   require="require \"./${spec##spec/}\""
 
-  if ! linker_command=$($CRYSTAL_BIN build --cross-compile --target x86_64--windows-msvc "$spec" 2>/dev/null); then
+  if ! linker_command=$($CRYSTAL_BIN build --cross-compile --target x86_64--windows-msvc -Dwithout_zlib -Dwithout_openssl "$spec" 2>/dev/null); then
     echo "# $require (failed codegen)"
     continue
   fi

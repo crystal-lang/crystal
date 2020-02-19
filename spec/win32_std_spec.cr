@@ -62,27 +62,27 @@ require "./std/gc_spec.cr"
 # require "./std/gzip/gzip_spec.cr" (failed linking)
 require "./std/hash_spec.cr"
 require "./std/html_spec.cr"
-# require "./std/http/chunked_content_spec.cr" (failed codegen)
+require "./std/http/chunked_content_spec.cr"
 # require "./std/http/client/client_spec.cr" (failed codegen)
-# require "./std/http/client/response_spec.cr" (failed codegen)
-# require "./std/http/cookie_spec.cr" (failed codegen)
-# require "./std/http/formdata/builder_spec.cr" (failed codegen)
-# require "./std/http/formdata/parser_spec.cr" (failed codegen)
-# require "./std/http/formdata_spec.cr" (failed codegen)
+require "./std/http/client/response_spec.cr"
+require "./std/http/cookie_spec.cr"
+require "./std/http/formdata/builder_spec.cr"
+require "./std/http/formdata/parser_spec.cr"
+require "./std/http/formdata_spec.cr"
 require "./std/http/headers_spec.cr"
-# require "./std/http/http_spec.cr" (failed linking)
+require "./std/http/http_spec.cr"
 require "./std/http/params_spec.cr"
-# require "./std/http/request_spec.cr" (failed codegen)
+require "./std/http/request_spec.cr"
 # require "./std/http/server/handlers/compress_handler_spec.cr" (failed codegen)
-# require "./std/http/server/handlers/error_handler_spec.cr" (failed codegen)
-# require "./std/http/server/handlers/handler_spec.cr" (failed codegen)
-# require "./std/http/server/handlers/log_handler_spec.cr" (failed codegen)
-# require "./std/http/server/handlers/static_file_handler_spec.cr" (failed codegen)
+require "./std/http/server/handlers/error_handler_spec.cr"
+require "./std/http/server/handlers/handler_spec.cr"
+require "./std/http/server/handlers/log_handler_spec.cr"
+require "./std/http/server/handlers/static_file_handler_spec.cr"
 # require "./std/http/server/handlers/websocket_handler_spec.cr" (failed codegen)
-# require "./std/http/server/request_processor_spec.cr" (failed codegen)
-# require "./std/http/server/response_spec.cr" (failed linking)
+require "./std/http/server/request_processor_spec.cr"
+require "./std/http/server/response_spec.cr"
 # require "./std/http/server/server_spec.cr" (failed codegen)
-# require "./std/http/status_spec.cr" (failed codegen)
+require "./std/http/status_spec.cr"
 # require "./std/http/web_socket_spec.cr" (failed codegen)
 require "./std/humanize_spec.cr"
 require "./std/indexable_spec.cr"
@@ -99,14 +99,14 @@ require "./std/io/multi_writer_spec.cr"
 require "./std/io/sized_spec.cr"
 require "./std/io/stapled_spec.cr"
 require "./std/iterator_spec.cr"
-# require "./std/json/any_spec.cr" (failed linking)
+require "./std/json/any_spec.cr"
 require "./std/json/builder_spec.cr"
 require "./std/json/lexer_spec.cr"
-# require "./std/json/mapping_spec.cr" (failed linking)
+require "./std/json/mapping_spec.cr"
 require "./std/json/parser_spec.cr"
 require "./std/json/pull_parser_spec.cr"
-# require "./std/json/serializable_spec.cr" (failed linking)
-# require "./std/json/serialization_spec.cr" (failed linking)
+require "./std/json/serializable_spec.cr"
+require "./std/json/serialization_spec.cr"
 # require "./std/kernel_spec.cr" (failed codegen)
 require "./std/levenshtein_spec.cr"
 # require "./std/llvm/aarch64_spec.cr" (failed linking)
@@ -115,13 +115,13 @@ require "./std/levenshtein_spec.cr"
 # require "./std/llvm/type_spec.cr" (failed linking)
 # require "./std/llvm/x86_64_abi_spec.cr" (failed linking)
 # require "./std/llvm/x86_abi_spec.cr" (failed linking)
-# require "./std/logger_spec.cr" (failed codegen)
+require "./std/logger_spec.cr"
 require "./std/match_data_spec.cr"
 # require "./std/math_spec.cr" (failed linking)
-# require "./std/mime/media_type_spec.cr" (failed linking)
-# require "./std/mime/multipart/builder_spec.cr" (failed codegen)
-# require "./std/mime/multipart/parser_spec.cr" (failed codegen)
-# require "./std/mime/multipart_spec.cr" (failed codegen)
+require "./std/mime/media_type_spec.cr"
+require "./std/mime/multipart/builder_spec.cr"
+require "./std/mime/multipart/parser_spec.cr"
+require "./std/mime/multipart_spec.cr"
 require "./std/mime_spec.cr"
 # require "./std/mutex_spec.cr" (failed codegen)
 require "./std/named_tuple_spec.cr"
@@ -158,8 +158,8 @@ require "./std/raise_spec.cr"
 require "./std/random/isaac_spec.cr"
 require "./std/random/pcg32_spec.cr"
 require "./std/random/secure_spec.cr"
-# require "./std/random_spec.cr" (failed linking)
-# require "./std/range_spec.cr" (failed linking)
+require "./std/random_spec.cr"
+require "./std/range_spec.cr"
 require "./std/record_spec.cr"
 require "./std/reference_spec.cr"
 require "./std/regex_spec.cr"
@@ -178,19 +178,19 @@ require "./std/slice_spec.cr"
 require "./std/spec/context_spec.cr"
 require "./std/spec/expectations_spec.cr"
 require "./std/spec/filters_spec.cr"
-# require "./std/spec/junit_formatter_spec.cr" (failed linking)
+require "./std/spec/junit_formatter_spec.cr"
 require "./std/spec_spec.cr"
 require "./std/spec/tap_formatter_spec.cr"
 require "./std/static_array_spec.cr"
 require "./std/string_builder_spec.cr"
 require "./std/string_pool_spec.cr"
 require "./std/string_scanner_spec.cr"
-# require "./std/string_spec.cr" (failed codegen)
+require "./std/string_spec.cr"
 require "./std/string/utf16_spec.cr"
-# require "./std/struct_spec.cr" (failed linking)
+require "./std/struct_spec.cr"
 require "./std/symbol_spec.cr"
 # require "./std/system/group_spec.cr" (failed codegen)
-# require "./std/system_spec.cr" (failed codegen)
+require "./std/system_spec.cr"
 # require "./std/system/user_spec.cr" (failed codegen)
 # require "./std/thread/condition_variable_spec.cr" (failed codegen)
 # require "./std/thread/mutex_spec.cr" (failed codegen)

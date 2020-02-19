@@ -1,3 +1,7 @@
+require "http/headers"
+require "http/status"
+require "http/cookie"
+
 class HTTP::Server
   # The response to configure and write to in an `HTTP::Server` handler.
   #
@@ -29,6 +33,8 @@ class HTTP::Server
     # The status code of this response, which must be set before writing the response
     # body. If not set, the default value is 200 (OK).
     property status : HTTP::Status
+
+    @cookies : HTTP::Cookies?
 
     # :nodoc:
     def initialize(@io : IO, @version = "HTTP/1.1")

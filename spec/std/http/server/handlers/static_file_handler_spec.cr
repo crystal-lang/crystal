@@ -1,5 +1,6 @@
 require "../../../spec_helper"
-require "http/server"
+require "http/server/handler"
+require "http/client/response"
 
 private def handle(request, fallthrough = true, directory_listing = true, ignore_body = false)
   io = IO::Memory.new

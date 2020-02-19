@@ -17,7 +17,7 @@ jobs:
           make
       - name: Cross-compile stdlib specs
         run: |
-          bin/crystal build --cross-compile --target x86_64-pc-windows-msvc --exclude-warnings spec/std spec/std_spec.cr
+          bin/crystal build --cross-compile --target x86_64-pc-windows-msvc --exclude-warnings spec/std spec/std_spec.cr -Dwithout_zlib -Dwithout_openssl
       - name: Upload compiled object
         uses: actions/upload-artifact@v1
         with:
