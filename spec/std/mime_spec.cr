@@ -15,7 +15,16 @@ module MIME
 end
 
 describe MIME do
+  before_each do
+    MIME.reset!
+  end
+
+  after_each do
+    MIME.reset!
+  end
+
   it ".from_extension" do
+    MIME.init
     MIME.from_extension(".html").partition(';')[0].should eq "text/html"
     MIME.from_extension(".HTML").partition(';')[0].should eq "text/html"
 
@@ -27,6 +36,7 @@ describe MIME do
   end
 
   it ".from_extension?" do
+    MIME.init
     MIME.from_extension?(".html").should eq MIME.from_extension(".html")
     MIME.from_extension?(".HTML").should eq MIME.from_extension(".HTML")
 
@@ -34,18 +44,19 @@ describe MIME do
   end
 
   it ".from_filename" do
+    MIME.init
     MIME.from_filename("test.html").should eq MIME.from_extension(".html")
     MIME.from_filename("foo/bar.not-exists", "foo/bar-exist").should eq "foo/bar-exist"
     MIME.from_filename("foo/bar.not-exists") { "foo/bar-exist" }.should eq "foo/bar-exist"
   end
 
   it ".from_filename" do
+    MIME.init
     MIME.from_filename?("test.html").should eq MIME.from_extension(".html")
   end
 
   describe ".register" do
     it "registers new type" do
-      MIME.reset!
       MIME.init(load_defaults: false)
       MIME.register(".Custom-Type", "text/custom-type")
 
@@ -59,8 +70,6 @@ describe MIME do
       MIME.register(".custom-type", "text/custom-type-lower")
       MIME.from_extension(".custom-type").should eq "text/custom-type-lower"
       MIME.from_extension(".Custom-Type").should eq "text/custom-type"
-    ensure
-      MIME.reset!
     end
 
     it "fails for invalid extension" do
@@ -71,37 +80,31 @@ describe MIME do
       expect_raises ArgumentError, "String contains null byte" do
         MIME.register(".foo\0", "text/foo")
       end
-    ensure
-      MIME.reset!
     end
   end
 
   describe ".extensions" do
     it "lists extensions" do
+      MIME.init
       MIME.extensions("text/html").should contain ".htm"
       MIME.extensions("text/html").should contain ".html"
     end
 
     it "returns empty set" do
-      MIME.reset!
       MIME.init(load_defaults: false)
       MIME.extensions("foo/bar").should eq Set(String).new
     end
 
     it "recognizes overridden types" do
-      MIME.reset!
       MIME.init(load_defaults: false)
       MIME.register(".custom-type-overridden", "text/custom-type-overridden")
       MIME.register(".custom-type-overridden", "text/custom-type-override")
 
       MIME.extensions("text/custom-type-overridden").should eq Set(String).new
-    ensure
-      MIME.reset!
     end
   end
 
   it "parses media types" do
-    MIME.reset!
     MIME.init(load_defaults: false)
     MIME.register(".parse-media-type1", "text/html; charset=utf-8")
     MIME.extensions("text/html").should contain (".parse-media-type1")
@@ -140,20 +143,17 @@ describe MIME do
     expect_raises ArgumentError, "Invalid media type" do
       MIME.register(".parse-media-type10", "filename=foo.html")
     end
-  ensure
-    MIME.reset!
   end
 
   it ".load_mime_database" do
-    MIME.reset!
     MIME.init(load_defaults: false)
     MIME.from_extension?(".bar").should be_nil
     MIME.from_extension?(".fbaz").should be_nil
 
     MIME.load_mime_database IO::Memory.new <<-EOF
-      foo/bar          cr-test-bar
-      foo/baz          cr-test-baz cr-test-fbaz #cr-test-foobaz
-      # foo/foo        cr-test-foo
+      foo/bar          bar
+      foo/baz          baz fbaz #foobaz
+      # foo/foo        foo
     EOF
 
     MIME.from_extension?(".bar").should eq "foo/bar"
@@ -161,18 +161,13 @@ describe MIME do
     MIME.from_extension?(".#foobaz").should be_nil
     MIME.from_extension?(".foobaz").should be_nil
     MIME.from_extension?(".foo").should be_nil
-  ensure
-    MIME.reset!
   end
 
   describe ".init" do
     it "loads defaults" do
-      MIME.reset!
       MIME.init
       MIME.initialized.should be_true
       MIME.from_extension(".html").partition(';')[0].should eq "text/html"
-    ensure
-      MIME.reset!
     end
 
     it "skips loading defaults" do
@@ -180,8 +175,6 @@ describe MIME do
       MIME.init(load_defaults: false)
       MIME.initialized.should be_true
       MIME.from_extension?(".html").should be_nil
-    ensure
-      MIME.reset!
     end
 
     it "loads file" do
@@ -189,8 +182,6 @@ describe MIME do
       MIME.initialized.should be_false
       MIME.init(datapath("mime.types"))
       MIME.from_extension?(".foo").should eq "foo/bar"
-    ensure
-      MIME.reset!
     end
   end
 end
