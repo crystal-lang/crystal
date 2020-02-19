@@ -171,14 +171,12 @@ describe MIME do
     end
 
     it "skips loading defaults" do
-      MIME.reset!
       MIME.init(load_defaults: false)
       MIME.initialized.should be_true
       MIME.from_extension?(".html").should be_nil
     end
 
     it "loads file" do
-      MIME.reset!
       MIME.initialized.should be_false
       MIME.init(datapath("mime.types"))
       MIME.from_extension?(".foo").should eq "foo/bar"
