@@ -304,7 +304,7 @@ struct Complex
   end
 
   # Rounds to the nearest *digits*.
-  def round(digits)
+  def round(digits = 0)
     Complex.new(@real.round(digits), @imag.round(digits))
   end
 end
