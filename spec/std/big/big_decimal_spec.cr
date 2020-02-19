@@ -348,11 +348,11 @@ describe BigDecimal do
     bd6.to_i.should eq -1
 
     bd1.to_u.should eq 0
-    bd2.to_u.should eq 0
+    expect_raises(OverflowError) { bd2.to_u }
     bd3.to_u.should eq 123
-    bd4.to_u.should eq 123
-    bd5.to_u.should eq 123
-    bd6.to_u.should eq 1
+    expect_raises(OverflowError) { bd4.to_u }
+    expect_raises(OverflowError) { bd5.to_u }
+    expect_raises(OverflowError) { bd6.to_u }
 
     bd1.to_f.should eq 0.00123
     bd2.to_f.should eq -0.00123

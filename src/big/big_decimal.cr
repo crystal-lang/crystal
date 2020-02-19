@@ -410,39 +410,39 @@ struct BigDecimal < Number
   end
 
   private def to_big_u
+    raise OverflowError.new if self < 0
+    to_big_u!
+  end
+
+  private def to_big_u!
     (@value.abs // TEN ** @scale)
   end
 
-  # Converts to `UInt64`. Truncates anything on the right side of the decimal point,
-  # converting negative to positive.
+  # Converts to `UInt64`. Truncates anything on the right side of the decimal point.
   # Raises `OverflowError` in case of overflow.
   def to_u64
     to_big_u.to_u64
   end
 
-  # Converts to `UInt32`. Truncates anything on the right side of the decimal point,
-  # converting negative to positive.
+  # Converts to `UInt32`. Truncates anything on the right side of the decimal point.
   # Raises `OverflowError` in case of overflow.
   def to_u32
     to_big_u.to_u32
   end
 
-  # Converts to `UInt16`. Truncates anything on the right side of the decimal point,
-  # converting negative to positive.
+  # Converts to `UInt16`. Truncates anything on the right side of the decimal point.
   # Raises `OverflowError` in case of overflow.
   def to_u16
     to_big_u.to_u16
   end
 
-  # Converts to `UInt8`. Truncates anything on the right side of the decimal point,
-  # converting negative to positive.
+  # Converts to `UInt8`. Truncates anything on the right side of the decimal point.
   # Raises `OverflowError` in case of overflow.
   def to_u8
     to_big_u.to_u8
   end
 
-  # Converts to `UInt32`. Truncates anything on the right side of the decimal point,
-  # converting negative to positive.
+  # Converts to `UInt32`. Truncates anything on the right side of the decimal point.
   # Raises `OverflowError` in case of overflow.
   def to_u
     to_u32
@@ -452,28 +452,28 @@ struct BigDecimal < Number
   # converting negative to positive.
   # In case of overflow a wrapping is performed.
   def to_u8!
-    to_big_u.to_u8!
+    to_big_u!.to_u8!
   end
 
   # Converts to `UInt16`. Truncates anything on the right side of the decimal point,
   # converting negative to positive.
   # In case of overflow a wrapping is performed.
   def to_u16!
-    to_big_u.to_u16!
+    to_big_u!.to_u16!
   end
 
   # Converts to `UInt32`. Truncates anything on the right side of the decimal point,
   # converting negative to positive.
   # In case of overflow a wrapping is performed.
   def to_u32!
-    to_big_u.to_u32!
+    to_big_u!.to_u32!
   end
 
   # Converts to `UInt64`. Truncates anything on the right side of the decimal point,
   # converting negative to positive.
   # In case of overflow a wrapping is performed.
   def to_u64!
-    to_big_u.to_u64!
+    to_big_u!.to_u64!
   end
 
   # Converts to `UInt32`. Truncates anything on the right side of the decimal point,
