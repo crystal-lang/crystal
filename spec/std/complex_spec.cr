@@ -197,4 +197,9 @@ describe "Complex" do
     Complex.new(1.2, 0).zero?.should eq false
     Complex.new(1.2, 3.4).zero?.should eq false
   end
+
+  it "rounds" do
+    (Complex.new(1.125, 0.875).round(2)).should eq(Complex.new(1.13, 0.88))
+    (Complex.new(1.125, 0.875).round(digits: 1)).should eq(Complex.new(1.1, 0.9))
+  end
 end
