@@ -1,4 +1,4 @@
-require "spec"
+require "../spec_helper"
 
 private class BufferedWrapper < IO
   include IO::Buffered
@@ -416,7 +416,7 @@ describe "IO::Buffered" do
     io.read_char.should eq('b')
   end
 
-  describe "encoding" do
+  pending_win32 describe: "encoding" do
     describe "decode" do
       it "gets_to_end" do
         str = "Hello world" * 200
