@@ -500,10 +500,11 @@ struct BigInt < Int
   end
 
   def to_u32
-    LibGMP.get_ui(self).to_u32
+    to_u64.to_u32
   end
 
   def to_u64
+    raise OverflowError.new if self < 0
     if LibGMP::ULong == UInt64 || (UInt32::MIN <= self <= UInt32::MAX)
       LibGMP.get_ui(self).to_u64
     else

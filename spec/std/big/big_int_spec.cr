@@ -363,6 +363,8 @@ describe "BigInt" do
     big.to_u16!.should eq(722)
     big.to_u32.should eq(1234567890)
 
+    expect_raises(OverflowError) { BigInt.new(-1234567890).to_u }
+
     u64 = big.to_u64
     u64.should eq(1234567890)
     u64.should be_a(UInt64)
