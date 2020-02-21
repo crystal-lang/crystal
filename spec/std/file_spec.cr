@@ -105,14 +105,14 @@ describe "File" do
 
     it "raises an error when the file does not exist" do
       filename = datapath("non_existing_file.txt")
-      expect_raises(File::NotFoundError, "Error determining file size: '#{filename}'") do
+      expect_raises(File::NotFoundError, "Unable to get file info: '#{filename}'") do
         File.empty?(filename)
       end
     end
 
     # TODO: do we even want this?
     pending_win32 "raises an error when a component of the path is a file" do
-      expect_raises(File::Error, "Error determining file size: '#{datapath("test_file.txt", "")}'") do
+      expect_raises(File::Error, "Unable to get file info: '#{datapath("test_file.txt", "")}'") do
         File.empty?(datapath("test_file.txt", ""))
       end
     end
@@ -471,14 +471,14 @@ describe "File" do
 
     it "raises an error when the file does not exist" do
       filename = datapath("non_existing_file.txt")
-      expect_raises(File::NotFoundError, "Error determining file size: '#{filename}'") do
+      expect_raises(File::NotFoundError, "Unable to get file info: '#{filename}'") do
         File.size(filename)
       end
     end
 
     # TODO: do we even want this?
     pending_win32 "raises an error when a component of the path is a file" do
-      expect_raises(File::Error, "Error determining file size: '#{datapath("test_file.txt", "")}'") do
+      expect_raises(File::Error, "Unable to get file info: '#{datapath("test_file.txt", "")}'") do
         File.size(datapath("test_file.txt", ""))
       end
     end

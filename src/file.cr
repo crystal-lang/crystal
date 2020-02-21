@@ -178,8 +178,6 @@ class File < IO::FileDescriptor
   # ```
   def self.size(filename : Path | String) : UInt64
     info(filename).size
-  rescue ex : File::Error
-    raise ex.class.new("Error determining file size", filename.to_s, ex.reason)
   end
 
   # Returns `true` if the file at *path* is empty, otherwise returns `false`.
