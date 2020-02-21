@@ -85,7 +85,7 @@ describe File do
     end
 
     it "fails in unwritable folder" do
-      expect_raises(IO::NotFoundError, "Error creating temporary file: '#{datapath("non-existing-folder")}/") do
+      expect_raises(File::NotFoundError, "Error creating temporary file: '#{datapath("non-existing-folder")}/") do
         File.tempfile dir: datapath("non-existing-folder")
       end
     end

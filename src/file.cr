@@ -1,3 +1,7 @@
+class File < IO::FileDescriptor
+end
+
+require "./file/error"
 require "crystal/system/file"
 
 # A `File` instance represents a file entry in the local file system and allows using it as an `IO`.
@@ -143,7 +147,7 @@ class File < IO::FileDescriptor
   # File.info("bar", follow_symlinks: false).type.symlink? # => true
   # ```
   def self.info(path : Path | String, follow_symlinks = true) : Info
-    info?(path, follow_symlinks) || raise IO::FileSystemError.from_errno("Unable to get file info", path.to_s)
+    info?(path, follow_symlinks) || raise File::Error.from_errno("Unable to get file info", path.to_s)
   end
 
   # Returns `true` if *path* exists else returns `false`
@@ -174,7 +178,7 @@ class File < IO::FileDescriptor
   # ```
   def self.size(filename : Path | String) : UInt64
     info(filename).size
-  rescue ex : FileSystemError
+  rescue ex : File::Error
     raise ex.class.new("Error determining file size", filename.to_s, ex.reason)
   end
 

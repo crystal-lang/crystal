@@ -355,7 +355,7 @@ module FileUtils
     srcs.each do |src|
       begin
         mv(src, File.join(dest, File.basename(src)))
-      rescue IO::FileSystemError
+      rescue File::Error
       end
     end
   end
@@ -465,7 +465,7 @@ module FileUtils
     paths.each do |path|
       begin
         rm_r(path)
-      rescue IO::FileSystemError
+      rescue File::Error
       end
     end
   end

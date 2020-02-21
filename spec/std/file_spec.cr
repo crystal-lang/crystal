@@ -105,14 +105,14 @@ describe "File" do
 
     it "raises an error when the file does not exist" do
       filename = datapath("non_existing_file.txt")
-      expect_raises(IO::NotFoundError, "Error determining file size: '#{filename}'") do
+      expect_raises(File::NotFoundError, "Error determining file size: '#{filename}'") do
         File.empty?(filename)
       end
     end
 
     # TODO: do we even want this?
     pending_win32 "raises an error when a component of the path is a file" do
-      expect_raises(IO::FileSystemError, "Error determining file size: '#{datapath("test_file.txt", "")}'") do
+      expect_raises(File::Error, "Error determining file size: '#{datapath("test_file.txt", "")}'") do
         File.empty?(datapath("test_file.txt", ""))
       end
     end
@@ -386,7 +386,7 @@ describe "File" do
     end
 
     it "raises when destination doesn't exist" do
-      expect_raises(IO::NotFoundError, "Error changing permissions: '#{datapath("unknown_chmod_path.txt")}'") do
+      expect_raises(File::NotFoundError, "Error changing permissions: '#{datapath("unknown_chmod_path.txt")}'") do
         File.chmod(datapath("unknown_chmod_path.txt"), 0o664)
       end
     end
@@ -429,7 +429,7 @@ describe "File" do
     end
 
     it "gets for non-existent file and raises" do
-      expect_raises(IO::NotFoundError, "Unable to get file info: 'non-existent'") do
+      expect_raises(File::NotFoundError, "Unable to get file info: 'non-existent'") do
         File.info("non-existent")
       end
     end
@@ -471,14 +471,14 @@ describe "File" do
 
     it "raises an error when the file does not exist" do
       filename = datapath("non_existing_file.txt")
-      expect_raises(IO::NotFoundError, "Error determining file size: '#{filename}'") do
+      expect_raises(File::NotFoundError, "Error determining file size: '#{filename}'") do
         File.size(filename)
       end
     end
 
     # TODO: do we even want this?
     pending_win32 "raises an error when a component of the path is a file" do
-      expect_raises(IO::FileSystemError, "Error determining file size: '#{datapath("test_file.txt", "")}'") do
+      expect_raises(File::Error, "Error determining file size: '#{datapath("test_file.txt", "")}'") do
         File.size(datapath("test_file.txt", ""))
       end
     end
@@ -496,7 +496,7 @@ describe "File" do
 
     it "raises when file doesn't exist" do
       with_tempfile("nonexistant_file.txt") do |path|
-        expect_raises(IO::NotFoundError, "Error deleting file: '#{path}'") do
+        expect_raises(File::NotFoundError, "Error deleting file: '#{path}'") do
           File.delete(path)
         end
       end
@@ -517,7 +517,7 @@ describe "File" do
 
     it "raises if old file doesn't exist" do
       with_tempfile("rename-fail-source.txt", "rename-fail-target.txt") do |source_path, target_path|
-        expect_raises(IO::NotFoundError, "Error renaming file: '#{source_path}' -> '#{target_path}'") do
+        expect_raises(File::NotFoundError, "Error renaming file: '#{source_path}' -> '#{target_path}'") do
           File.rename(source_path, target_path)
         end
       end
@@ -635,7 +635,7 @@ describe "File" do
     end
 
     it "raises if file doesn't exist" do
-      expect_raises(IO::NotFoundError, "Error resolving real path: '/usr/share/foo/bar'") do
+      expect_raises(File::NotFoundError, "Error resolving real path: '/usr/share/foo/bar'") do
         File.real_path("/usr/share/foo/bar")
       end
     end
@@ -871,7 +871,7 @@ describe "File" do
       with_tempfile("truncate-opened.txt") do |path|
         File.write(path, "0123456789")
         File.open(path, "r") do |f|
-          expect_raises(IO::FileSystemError, "Error truncating file: '#{path}'") do
+          expect_raises(File::Error, "Error truncating file: '#{path}'") do
             f.truncate(4)
           end
         end
@@ -1151,7 +1151,7 @@ describe "File" do
       atime = Time.utc(2000, 1, 2)
       mtime = Time.utc(2000, 3, 4)
 
-      expect_raises(IO::NotFoundError, "Error setting time on file: '#{datapath("nonexistent_file.txt")}'") do
+      expect_raises(File::NotFoundError, "Error setting time on file: '#{datapath("nonexistent_file.txt")}'") do
         File.utime(atime, mtime, datapath("nonexistent_file.txt"))
       end
     end
@@ -1187,7 +1187,7 @@ describe "File" do
 
     it "raises if path contains non-existent directory" do
       with_tempfile(File.join("nonexistant-dir", "touch.txt")) do |path|
-        expect_raises(IO::NotFoundError, "Error opening file with mode 'a': '#{path}'") do
+        expect_raises(File::NotFoundError, "Error opening file with mode 'a': '#{path}'") do
           File.touch(path)
         end
       end
@@ -1195,7 +1195,7 @@ describe "File" do
 
     # TODO: there is no file which is reliably unwritable on windows
     pending_win32 "raises if file cannot be accessed" do
-      expect_raises(IO::FileSystemError, "Error setting time on file: '/bin/ls'") do
+      expect_raises(File::Error, "Error setting time on file: '/bin/ls'") do
         File.touch("/bin/ls")
       end
     end

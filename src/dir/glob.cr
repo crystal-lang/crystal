@@ -299,7 +299,7 @@ class Dir
           yield entry
         end
       end
-    rescue exc : IO::NotFoundError
+    rescue exc : File::NotFoundError
     end
 
     private def self.read_entry(dir)
