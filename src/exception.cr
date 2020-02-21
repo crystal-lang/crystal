@@ -67,6 +67,22 @@ class Exception
 
     io.flush
   end
+
+  # :nodoc:
+  def self.from_errno(message : String, errno : Int32 = Errno.value, **opts)
+    message = self.build_message(message, **opts)
+    self.new_from_errno("#{message}: #{Errno.message(errno)}", errno, **opts)
+  end
+
+  # :nodoc:
+  protected def self.build_message(message, **opts)
+    message
+  end
+
+  # :nodoc:
+  protected def self.new_from_errno(message : String, errno : Int32, **opts)
+    self.new(message, **opts)
+  end
 end
 
 # Raised when the given index is invalid.
