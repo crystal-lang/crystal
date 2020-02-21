@@ -346,6 +346,10 @@ struct Range(B, E)
 
   # :nodoc:
   def size
+    {% if B == Nil || E == Nil %}
+      {% raise "Can't calculate size of an open range" %}
+    {% end %}
+
     b = self.begin
     e = self.end
 
@@ -355,6 +359,9 @@ struct Range(B, E)
       n = e - b + 1
       n < 0 ? 0 : n
     else
+      if b.nil? || e.nil?
+        raise ArgumentError.new("Can't calculate size of an open range")
+      end
       super
     end
   end

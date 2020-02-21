@@ -481,6 +481,18 @@ describe "Range" do
     it "works for other types" do
       ('a'..'c').size.should eq(3)
     end
+
+    it "raises on beginless range" do
+      expect_raises(ArgumentError, "Can't calculate size of an open range") do
+        ((true ? nil : 1)..3).size
+      end
+    end
+
+    it "raises on endless range" do
+      expect_raises(ArgumentError, "Can't calculate size of an open range") do
+        (3..(true ? nil : 1)).size
+      end
+    end
   end
 
   it "clones" do
