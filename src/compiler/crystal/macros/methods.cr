@@ -38,8 +38,65 @@ module Crystal
     end
 
     def interpret_top_level_call(node)
-      interpret_top_level_call?(node) ||
-        node.raise("undefined macro method: '#{node.name}'")
+      value = interpret_top_level_call?(node)
+      return value if value
+
+      args = node.args.map do |arg|
+        accept(arg)
+        @last
+      end
+
+      named_args = node.named_args.try &.map do |named_arg|
+        accept(named_arg.value)
+        NamedArgument.new(named_arg.name, @last)
+      end
+
+      # Top-levels macro calls are looked up inside the Crystal::Macros module,
+      # just like built-in top-level macro methods.
+      macros = @program.crystal.lookup_type?(Path.new("Macros"))
+      if macros
+        value = interpret_call_inside_type(macros, node.name, args, named_args, node.block)
+        return value if value
+      end
+
+      node.raise("undefined macro method: '#{node.name}'")
+    end
+
+    def interpret_call_inside_type(owner, name, args, named_args, block, self self_value = nil)
+      if named_args.is_a?(Hash)
+        named_args = named_args.map do |name, value|
+          NamedArgument.new(name, value)
+        end
+      end
+
+      matching_macro = owner.lookup_macro(name, args, named_args)
+      return unless matching_macro.is_a?(Macro)
+
+      interpreter = MacroInterpreter.new(
+        @program,
+        @scope,
+        @program.crystal,
+        matching_macro,
+        Call.new(
+          obj: nil,
+          name: name,
+          args: args,
+          named_args: named_args,
+          block: block),
+        nil,
+        true)
+      interpreter.macro_method_mode = true
+      interpreter.define_var("self", self_value) if self_value
+
+      vars = Set(String).new
+      matching_macro.args.each do |arg|
+        vars << arg.name
+      end
+
+      body = gather_macro_literals(matching_macro.body)
+      body_node = Parser.parse(body, def_vars: [vars])
+      interpreter.accept(body_node)
+      @last = interpreter.last
     end
 
     def interpret_top_level_call?(node)
@@ -73,6 +130,38 @@ module Crystal
         interpret_run(node)
       else
         nil
+      end
+    end
+
+    def gather_macro_literals(body)
+      gatherer = MacroLiteralGatherer.new
+      body.accept gatherer
+      gatherer.to_s
+    end
+
+    class MacroLiteralGatherer < Visitor
+      def initialize
+        @io = String::Builder.new
+      end
+
+      def visit(node : Expressions)
+        node.expressions.each do |exp|
+          exp.accept self
+        end
+        false
+      end
+
+      def visit(node : MacroLiteral)
+        @io << node.value
+        false
+      end
+
+      def visit(node)
+        node.raise "Can't use #{node.class} this inside macro methods"
+      end
+
+      def to_s
+        @io.to_s
       end
     end
 
@@ -381,6 +470,14 @@ module Crystal
       when "!"
         BoolLiteral.new(!truthy?)
       else
+        # Try to lookup a type for this node, for example Crystal::Macros::StringLiteral
+        owner = interpreter.program.crystal.lookup_type?(Path.new(["Macros", class_desc]))
+        if owner
+          # Then try to lookup a user-defined macro in that type
+          value = interpreter.interpret_call_inside_type(owner, method, args, named_args, block, self: self)
+          return value if value
+        end
+
         raise "undefined macro method '#{class_desc}##{method}'", exception_type: Crystal::UndefinedMacroMethodError
       end
     end
@@ -1731,6 +1828,10 @@ module Crystal
       when "resolve?"
         interpret_argless_method(method, args) { self }
       else
+        # Lookup a user-defined macro method inside the type
+        value = interpreter.interpret_call_inside_type(type, method, args, named_args, block)
+        return value if value
+
         super
       end
     end
