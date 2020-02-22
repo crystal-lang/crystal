@@ -1838,4 +1838,68 @@ describe "Code gen: macro" do
       (Foo.new || Bar.new).foo
     )).to_string.should eq("Foo")
   end
+
+  it "invokes macro method inside Crystal::Macros module" do
+    run(%(
+      module Crystal::Macros
+        macro foo(x)
+          x + "bar"
+        end
+      end
+
+      macro bar(x)
+        {{ foo(x) }}
+      end
+
+      bar("foo")
+    ), inject_primitives: false).to_string.should eq("foobar")
+  end
+
+  it "invokes macro method of ASTNode" do
+    run(%(
+      class Crystal::Macros::StringLiteral
+        macro plus_bar
+          self + "bar"
+        end
+      end
+
+      macro bar(x)
+        {{ x.plus_bar }}
+      end
+
+      bar("foo")
+    ), inject_primitives: false).to_string.should eq("foobar")
+  end
+
+  it "invokes macro method of any type" do
+    run(%(
+      module Foo
+        macro foo(x)
+          x + "bar"
+        end
+      end
+
+      macro bar(x)
+        {{ Foo.foo(x) }}
+      end
+
+      bar("foo")
+    ), inject_primitives: false).to_string.should eq("foobar")
+  end
+
+  it "invokes macro method of any type, with return" do
+    run(%(
+      module Foo
+        macro foo(x)
+          return x + "bar"
+        end
+      end
+
+      macro bar(x)
+        {{ Foo.foo(x) }}
+      end
+
+      bar("foo")
+    ), inject_primitives: false).to_string.should eq("foobar")
+  end
 end
