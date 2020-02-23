@@ -88,14 +88,7 @@ module Crystal
       interpreter.macro_method_mode = true
       interpreter.define_var("self", self_value) if self_value
 
-      vars = Set(String).new
-      matching_macro.args.each do |arg|
-        vars << arg.name
-      end
-
-      body = gather_macro_literals(matching_macro.body)
-      body_node = Parser.parse(body, def_vars: [vars])
-      interpreter.accept(body_node)
+      interpreter.accept(matching_macro.parsed_body)
       @last = interpreter.last
     end
 
@@ -130,38 +123,6 @@ module Crystal
         interpret_run(node)
       else
         nil
-      end
-    end
-
-    def gather_macro_literals(body)
-      gatherer = MacroLiteralGatherer.new
-      body.accept gatherer
-      gatherer.to_s
-    end
-
-    class MacroLiteralGatherer < Visitor
-      def initialize
-        @io = String::Builder.new
-      end
-
-      def visit(node : Expressions)
-        node.expressions.each do |exp|
-          exp.accept self
-        end
-        false
-      end
-
-      def visit(node : MacroLiteral)
-        @io << node.value
-        false
-      end
-
-      def visit(node)
-        node.raise "Can't use #{node.class} this inside macro methods"
-      end
-
-      def to_s
-        @io.to_s
       end
     end
 
@@ -1468,6 +1429,45 @@ module Crystal
         end
       else
         super
+      end
+    end
+
+    property(parsed_body : ASTNode) do
+      vars = Set(String).new
+      args.each do |arg|
+        vars << arg.name
+      end
+
+      gatherer = MacroLiteralGatherer.new
+      body.accept gatherer
+      gathered_body = gatherer.to_s
+
+      Parser.parse(gathered_body, def_vars: [vars])
+    end
+
+    class MacroLiteralGatherer < Visitor
+      def initialize
+        @io = String::Builder.new
+      end
+
+      def visit(node : Expressions)
+        node.expressions.each do |exp|
+          exp.accept self
+        end
+        false
+      end
+
+      def visit(node : MacroLiteral)
+        @io << node.value
+        false
+      end
+
+      def visit(node)
+        node.raise "Can't use #{node.class} inside macro methods"
+      end
+
+      def to_s
+        @io.to_s
       end
     end
   end
