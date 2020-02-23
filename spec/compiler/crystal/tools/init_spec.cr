@@ -62,6 +62,7 @@ module Crystal
           gitignore.should contain("/.shards/")
           gitignore.should contain("/shard.lock")
           gitignore.should contain("/lib/")
+          gitignore.should contain("/example")
         end
 
         with_file "example_app/.gitignore" do |gitignore|
@@ -69,6 +70,7 @@ module Crystal
           gitignore.should contain("/.shards/")
           gitignore.should_not contain("/shard.lock")
           gitignore.should contain("/lib/")
+          gitignore.should contain("/example")
         end
 
         {"example", "example_app", "example-lib", "camel_example-camel_lib"}.each do |name|
