@@ -3,6 +3,7 @@ require "uri"
 require "./server/context"
 require "./server/handler"
 require "./server/response"
+require "./server/request_processor"
 require "./common"
 {% unless flag?(:without_openssl) %}
   require "openssl"

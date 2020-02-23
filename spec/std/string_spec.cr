@@ -1,4 +1,4 @@
-require "spec"
+require "./spec_helper"
 
 describe "String" do
   describe "[]" do
@@ -1697,6 +1697,11 @@ describe "String" do
     ("こんに%xちは" % 123).should eq("こんに7bちは")
     ("こんに%Xちは" % 123).should eq("こんに7Bちは")
 
+    span = 1.second
+    ("%s" % span).should eq(span.to_s)
+  end
+
+  pending_win32 "does % with floats" do
     ("%f" % 123).should eq("123.000000")
 
     ("%g" % 123).should eq("123")
@@ -1716,9 +1721,6 @@ describe "String" do
     ("%a" % 12345678.45).should eq("0x1.78c29ce666666p+23")
     ("%A" % 12345678.45).should eq("0X1.78C29CE666666P+23")
     ("%100.50g" % 123.45).should eq("                                                  123.4500000000000028421709430404007434844970703125")
-
-    span = 1.second
-    ("%s" % span).should eq(span.to_s)
 
     ("%.2f" % 2.536_f32).should eq("2.54")
     ("%0*.*f" % [10, 2, 2.536_f32]).should eq("0000002.54")
@@ -2066,7 +2068,7 @@ describe "String" do
     sprintf("Hello %d world", [123]).should eq("Hello 123 world")
   end
 
-  it "formats floats (#1562)" do
+  pending_win32 "formats floats (#1562)" do
     sprintf("%12.2f %12.2f %6.2f %.2f" % {2.0, 3.0, 4.0, 5.0}).should eq("        2.00         3.00   4.00 5.00")
   end
 
@@ -2298,7 +2300,7 @@ describe "String" do
       end
     end
 
-    it "applies formatting to %<...> placeholder" do
+    pending_win32 "applies formatting to %<...> placeholder" do
       res = "change %<this>.2f" % {"this" => 23.456}
       res.should eq "change 23.46"
 
@@ -2388,7 +2390,7 @@ describe "String" do
     end
   end
 
-  describe "encode" do
+  pending_win32 describe: "encode" do
     it "encodes" do
       bytes = "Hello".encode("UCS-2LE")
       bytes.to_a.should eq([72, 0, 101, 0, 108, 0, 108, 0, 111, 0])

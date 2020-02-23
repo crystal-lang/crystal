@@ -302,6 +302,11 @@ struct Complex
   def zero? : Bool
     @real == 0 && @imag == 0
   end
+
+  # Rounds to the nearest *digits*.
+  def round(digits = 0)
+    Complex.new(@real.round(digits), @imag.round(digits))
+  end
 end
 
 struct Number

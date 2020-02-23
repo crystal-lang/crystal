@@ -234,6 +234,7 @@ struct BigFloat < Float
   end
 
   def to_u64
+    raise OverflowError.new if self < 0
     LibGMP.mpf_get_ui(self)
   end
 

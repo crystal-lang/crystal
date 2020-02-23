@@ -1,7 +1,7 @@
 require "spec"
 require "http/client/response"
 
-class HTTP::Client
+class HTTP::Client::Response
   describe Response do
     it "parses response with body" do
       response = Response.from_io(IO::Memory.new("HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: 5\r\n\r\nhelloworld"))

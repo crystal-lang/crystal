@@ -72,9 +72,7 @@ describe "select" do
       end
     end
 
-    until f.dead?
-      Fiber.yield
-    end
+    wait_until_finished f
 
     res.should eq (0...10).to_a
   end
@@ -128,9 +126,7 @@ describe "select" do
     end
 
     ch3.receive.should eq(3)
-    until f.dead?
-      Fiber.yield
-    end
+    wait_until_finished f
     x.should eq(1)
   end
 
@@ -156,9 +152,7 @@ describe "select" do
     end
 
     ch3.receive.should eq(3)
-    until f.dead?
-      Fiber.yield
-    end
+    wait_until_finished f
     x.should eq(1)
   end
 

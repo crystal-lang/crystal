@@ -83,7 +83,7 @@ describe UNIXServer do
 
         delay(1) { ch.send :timeout }
 
-        spawn do
+        f = spawn do
           begin
             ch.send(:begin)
             server.accept
@@ -94,6 +94,10 @@ describe UNIXServer do
         end
 
         ch.receive.should eq(:begin)
+
+        # wait for the server to call accept
+        wait_until_blocked f
+
         server.close
         ch.receive.should eq(:end)
 
@@ -124,13 +128,17 @@ describe UNIXServer do
 
         delay(1) { ch.send :timeout }
 
-        spawn do
+        f = spawn do
           ch.send :begin
           ret = server.accept?
           ch.send :end
         end
 
         ch.receive.should eq(:begin)
+
+        # wait for the server to call accept
+        wait_until_blocked f
+
         server.close
         ch.receive.should eq(:end)
 

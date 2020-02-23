@@ -1,5 +1,6 @@
 require "spec"
 require "../support/tempfile"
+require "../support/fibers"
 
 def datapath(*components)
   File.join("spec", "std", "data", *components)
@@ -9,9 +10,17 @@ end
   def pending_win32(description = "assert", file = __FILE__, line = __LINE__, end_line = __END_LINE__, &block)
     pending("#{description} [win32]", file, line, end_line)
   end
+
+  def pending_win32(*, describe, file = __FILE__, line = __LINE__, end_line = __END_LINE__, &block)
+    pending_win32(describe, file, line, end_line) { }
+  end
 {% else %}
   def pending_win32(description = "assert", file = __FILE__, line = __LINE__, end_line = __END_LINE__, &block)
     it(description, file, line, end_line, &block)
+  end
+
+  def pending_win32(*, describe, file = __FILE__, line = __LINE__, end_line = __END_LINE__, &block)
+    describe(describe, file, line, end_line, &block)
   end
 {% end %}
 
@@ -67,9 +76,7 @@ def spawn_and_check(before : Proc(_), file = __FILE__, line = __LINE__, &block :
       end
 
       # Now wait until the "before" fiber is blocked
-      while !before_fiber.resumable?
-        Fiber.yield
-      end
+      wait_until_blocked before_fiber
       block.call w
 
       done.send nil
