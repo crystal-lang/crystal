@@ -640,7 +640,6 @@ module Crystal
     end
 
     def visit(node : Return)
-      set_current_debug_location node.location if @debug.line_numbers? && node.location
       node_type = accept_control_expression(node)
 
       codegen_return_node(node, node_type)
@@ -799,7 +798,6 @@ module Crystal
         codegen_if_branch phi, node.then, then_block, false
         codegen_if_branch phi, node.else, else_block, true
       end
-      set_current_debug_location(node.end_location) if @debug.line_numbers? && node.end_location
 
       false
     end
@@ -838,7 +836,6 @@ module Crystal
         br while_block
 
         position_at_end exit_block
-        set_current_debug_location node.body.not_nil!.end_location if @debug.line_numbers? && node.body
 
         if node.no_returns?
           unreachable
@@ -885,7 +882,6 @@ module Crystal
       else
         node.raise "BUG: unknown exit for break"
       end
-      set_current_debug_location(node.target.not_nil!.end_location) if @debug.line_numbers? && node.target?
 
       false
     end
@@ -902,21 +898,18 @@ module Crystal
           @last = old_last
 
           next_phi.add @last, node_type
-          set_current_debug_location(target.end_location) if @debug.line_numbers?
           return false
         end
       when While
         if while_block = context.while_block
           execute_ensures_until(target.as(While))
           br while_block
-          set_current_debug_location(target.end_location) if @debug.line_numbers?
           return false
         end
       else
         # The only possibility is that we are in a captured block,
         # so this is the same as a return
         codegen_return_node(node, node_type)
-        set_current_debug_location(target.end_location) if @debug.line_numbers?
         return false
       end
 
@@ -1521,9 +1514,7 @@ module Crystal
           @needs_value = true
           set_ensure_exception_handler(block)
 
-          set_current_debug_location block.body if @debug.line_numbers? && block.body
           accept block.body
-          set_current_debug_location block.body.end_location if @debug.line_numbers? && block.body.end_location
         end
 
         phi.add @last, block.body.type?, last: true
