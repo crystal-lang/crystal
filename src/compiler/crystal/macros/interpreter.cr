@@ -589,6 +589,11 @@ module Crystal
       end
     end
 
+    def visit(node : OpAssign)
+      @program.normalize(node).accept self
+      false
+    end
+
     def visit(node : ASTNode)
       cant_execute(node)
     end
