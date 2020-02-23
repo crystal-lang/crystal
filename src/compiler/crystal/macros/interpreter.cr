@@ -589,6 +589,24 @@ module Crystal
       end
     end
 
+    def visit(node : While)
+      while true
+        node.cond.accept self
+        break if !@last.truthy?
+        node.body.accept self
+      end
+      false
+    end
+
+    def visit(node : Until)
+      while true
+        node.cond.accept self
+        break if @last.truthy?
+        node.body.accept self
+      end
+      false
+    end
+
     def visit(node : OpAssign)
       @program.normalize(node).accept self
       false
