@@ -38,28 +38,8 @@ module Crystal
     end
 
     def interpret_top_level_call(node)
-      value = interpret_top_level_call?(node)
-      return value if value
-
-      args = node.args.map do |arg|
-        accept(arg)
-        @last
-      end
-
-      named_args = node.named_args.try &.map do |named_arg|
-        accept(named_arg.value)
-        NamedArgument.new(named_arg.name, @last)
-      end
-
-      # Top-levels macro calls are looked up inside the Crystal::Macros module,
-      # just like built-in top-level macro methods.
-      macros = @program.crystal.lookup_type?(Path.new("Macros"))
-      if macros
-        value = interpret_call_inside_type(macros, node.name, args, named_args, node.block)
-        return value if value
-      end
-
-      node.raise("undefined macro method: '#{node.name}'")
+      interpret_top_level_call?(node) ||
+        node.raise("undefined macro method: '#{node.name}'")
     end
 
     def interpret_call_inside_type(owner, name, args, named_args, block, self self_value = nil)
@@ -122,8 +102,27 @@ module Crystal
       when "run"
         interpret_run(node)
       else
-        nil
+        interpret_user_defined_top_level_call(node)
       end
+    end
+
+    def interpret_user_defined_top_level_call(node)
+      args = node.args.map do |arg|
+        accept(arg)
+        @last
+      end
+
+      named_args = node.named_args.try &.map do |named_arg|
+        accept(named_arg.value)
+        NamedArgument.new(named_arg.name, @last)
+      end
+
+      # Top-levels macro calls are looked up inside the Crystal::Macros module,
+      # just like built-in top-level macro methods.
+      macros = @program.crystal.lookup_type?(Path.new("Macros"))
+      return unless macros
+
+      interpret_call_inside_type(macros, node.name, args, named_args, node.block)
     end
 
     def interpret_compare_versions(node)
