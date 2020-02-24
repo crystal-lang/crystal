@@ -10,7 +10,7 @@ module Crystal
     CPP_LANG_DEBUG_IDENTIFIER = 0x0004_u32
 
     @current_debug_location : Location?
-    @debug_files  = {} of Crystal::VirtualFile | String? => LibLLVMExt::Metadata
+    @debug_files = {} of Crystal::VirtualFile | String? => LibLLVMExt::Metadata
     @current_debug_file : LibLLVMExt::Metadata?
 
     def di_builder(llvm_module = @llvm_mod || @main_mod)
