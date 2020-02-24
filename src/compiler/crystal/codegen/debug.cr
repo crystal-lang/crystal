@@ -10,8 +10,8 @@ module Crystal
     CPP_LANG_DEBUG_IDENTIFIER = 0x0004_u32
 
     @current_debug_location : Location?
-    @debug_files : Hash((Crystal::VirtualFile | String | Nil), LibLLVMExt::Metadata) = {} of (Crystal::VirtualFile | String | Nil) => LibLLVMExt::Metadata
-    @current_debug_file : LibLLVMExt::Metadata? = nil
+    @debug_files  = {} of Crystal::VirtualFile | String? => LibLLVMExt::Metadata
+    @current_debug_file : LibLLVMExt::Metadata?
 
     def di_builder(llvm_module = @llvm_mod || @main_mod)
       di_builders = @di_builders ||= {} of LLVM::Module => LLVM::DIBuilder
@@ -133,7 +133,7 @@ module Crystal
       debug_type
     end
 
-    def create_debug_type(type : (PointerInstanceType | Pointer(T)), type_name : String? = type.to_s)
+    def create_debug_type(type : PointerInstanceType | Pointer(T), type_name : String? = type.to_s)
       element_type = get_debug_type(type.element_type)
       return unless element_type
       di_builder.create_pointer_type(element_type, 8u64 * llvm_typer.pointer_size, 8u64 * llvm_typer.pointer_size, type_name)
@@ -149,7 +149,7 @@ module Crystal
       debug_type_cache[type_name] = tmp_debug_type
 
       type.expand_union_types.each do |ivar_type|
-        next if ivar_type.is_a?(NilType) || ivar_type.to_s == "Nil"
+        next if ivar_type.is_a?(NilType)
         if ivar_debug_type = get_debug_type(ivar_type)
           embedded_type = llvm_type(ivar_type)
           size = @program.target_machine.data_layout.size_in_bits(embedded_type)
@@ -179,7 +179,7 @@ module Crystal
       debug_type_cache[type_name] = tmp_debug_type
 
       type.expand_union_types.each_with_index do |ivar_type, idx|
-        next if ivar_type.is_a?(NilType) || ivar_type.to_s == "Nil"
+        next if ivar_type.is_a?(NilType)
         if ivar_debug_type = get_debug_type(ivar_type)
           embedded_type = llvm_type(ivar_type)
           size = @program.target_machine.data_layout.size_in_bits(embedded_type)
@@ -298,7 +298,8 @@ module Crystal
     end
 
     def dump_metadata(md : LibLLVMExt::Metadata?)
-      md.nil? ? "nil" : LLVM::Value.new(LibLLVMExt.metadata_as_value(llvm_context, md.not_nil!))
+      "nil" unless md
+      LLVM::Value.new(LibLLVMExt.metadata_as_value(llvm_context, md.not_nil!))
     end
 
     private def align_of(type)
