@@ -135,6 +135,8 @@ describe "#print Float32" do
   it { test_pair 1000000000000000.0_f32, "1.0e+15" }
   it { test_pair 1111111111111111.0_f32, "1.1111111e+15" }
   it { test_pair -3.9292015898194142585311918e-10_f32, "-3.9292017e-10" }
+  # fails grisu check; ensures libc fallback works correctly
+  it { test_pair 85_f32 / 512_f32, "0.166016" }
 
   it "largest float" do
     test_pair 3.4028234e38_f32, "3.4028235e+38"
