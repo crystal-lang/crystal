@@ -226,7 +226,7 @@ module Crystal
         if ivar_debug_type = get_debug_type(ivar_type)
           offset = @program.target_machine.data_layout.offset_of_element(struct_type, idx &+ (type.struct? ? 0 : 1))
           size = @program.target_machine.data_layout.size_in_bits(llvm_embedded_type(ivar_type))
-          next if offset > UInt64::MAX // 8u64
+          next if offset > UInt64::MAX // 8u64 ### TODO: Figure out why it is happening sometimse with offset
           member = di_builder.create_member_type(nil, "[#{idx}]", nil, 1, size, size, 8u64 * offset, LLVM::DIFlags::Zero, ivar_debug_type)
           element_types << member
         end
