@@ -415,6 +415,11 @@ struct Slice(T)
     @pointer.move_to(target.to_unsafe, size)
   end
 
+  # Returns the `Slice(UInt8)` representation of the underlying bytes
+  def to_bytes
+    Slice(UInt8).new(self.to_unsafe.as(Pointer(UInt8)), self.bytesize)
+  end
+
   # Moves the contents of *source* into this slice. *source* and `self` may
   # overlap; the copy is always done in a non-destructive manner.
   #
