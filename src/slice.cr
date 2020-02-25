@@ -416,7 +416,7 @@ struct Slice(T)
   end
 
   # Returns the `Slice(UInt8)` representation of the underlying bytes
-  def to_bytes
+  def unsafe_bytes
     Slice(UInt8).new(self.to_unsafe.as(Pointer(UInt8)), self.bytesize)
   end
 
