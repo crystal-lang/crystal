@@ -1610,4 +1610,8 @@ describe Crystal::Formatter do
       # second comment
     }
     CODE
+
+  # 7272
+  assert_format "1 # => =>1+2"
+  assert_format "1 # => #=>1+2", "1 # => # => 1 + 2"
 end
