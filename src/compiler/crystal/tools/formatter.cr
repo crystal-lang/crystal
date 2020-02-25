@@ -4516,7 +4516,15 @@ module Crystal
         raw_after_comment_value = value[1..-1]
         after_comment_value = raw_after_comment_value.strip
         if after_comment_value.starts_with?("=>")
-          value = "\# => #{after_comment_value[2..-1].strip}"
+          # If a comment starts with `=>`, it indicates the result of an expression which
+          # is a valid expression itself and should be properly formatted.
+          formatted_result_expression = after_comment_value[2..-1]
+          begin
+            formatted_result_expression = Formatter.format(formatted_result_expression)
+          rescue Crystal::SyntaxException
+            # A failure to parse the comment is ignored. It is only a comment after all.
+          end
+          value = "\# => #{formatted_result_expression.strip}"
         elsif after_comment_value.each_char.all? { |c| c.ascii_whitespace? || c == '#' }
           # Nothing, leave sequences of whitespaces and '#' as is
         else
