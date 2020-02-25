@@ -143,7 +143,7 @@ describe "Slice" do
 
     expect_raises(IndexError) { slice.copy_to(pointer, 5) }
   end
-  
+
   it "does convert to_bytes" do
     slice = Slice.new(3) { |i| i + 1 }
     slice.to_bytes.should eq(Bytes[1, 0, 0, 0, 2, 0, 0, 0, 3, 0, 0, 0])
