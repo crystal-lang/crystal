@@ -11,6 +11,13 @@ private class TupleSpecObj
   end
 end
 
+module TestModule
+end
+
+class TestClass
+  include TestModule
+end
+
 describe "Tuple" do
   it "does size" do
     {1, 2, 1, 2}.size.should eq(4)
@@ -163,6 +170,10 @@ describe "Tuple" do
     t = Tuple(Int32, Float64).from([1_i32, 2.0_f64])
     t.should eq({1_i32, 2.0_f64})
     t.class.should eq(Tuple(Int32, Float64))
+
+    t = Tuple(Int32, TestClass?).from [1, nil.as(TestModule?)]
+    t.should eq({1, nil})
+    t.class.should eq (Tuple(Int32, TestModule?))
 
     expect_raises ArgumentError do
       Tuple(Int32).from([1, 2])
