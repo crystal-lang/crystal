@@ -172,7 +172,7 @@ module Crystal
       debug_type
     end
 
-    def create_debug_type(type : (NilableReferenceUnionType | ReferenceUnionType), type_name : String? = type.to_s)
+    def create_debug_type(type : NilableReferenceUnionType | ReferenceUnionType, type_name : String? = type.to_s)
       element_types = [] of LibLLVMExt::Metadata
       struct_type = llvm_type(type)
       tmp_debug_type = di_builder.create_replaceable_composite_type(nil, type_name, nil, 1, llvm_context)
@@ -275,8 +275,8 @@ module Crystal
       debug_type
     end
 
-    # This is a sinkhole for debug types thatmost likely does not need to be implemented
-    def create_debug_type(type : (NonGenericModuleType | GenericClassInstanceMetaclassType | MetaclassType | NilableProcType | VirtualMetaclassType), type_name : String? = type.to_s)
+    # This is a sinkhole for debug types that most likely does not need to be implemented
+    def create_debug_type(type : NonGenericModuleType | GenericClassInstanceMetaclassType | MetaclassType | NilableProcType | VirtualMetaclassType, type_name : String? = type.to_s)
     end
 
     def create_debug_type(type, type_name : String? = type.to_s)
@@ -290,7 +290,7 @@ module Crystal
       end
     end
 
-    def declare_variable(var_name, var_type, alloca, location, call_file = __FILE__, call_line = __LINE__)
+    def declare_variable(var_name, var_type, alloca, location)
       return false unless @debug.variables?
       declare_local(var_type, alloca, location) do |scope, file, line_number, debug_type|
         di_builder.create_auto_variable scope, var_name, file, line_number, debug_type, align_of(var_type)
@@ -299,7 +299,7 @@ module Crystal
 
     def dump_metadata(md : LibLLVMExt::Metadata?)
       "nil" unless md
-      LLVM::Value.new(LibLLVMExt.metadata_as_value(llvm_context, md.not_nil!))
+      LLVM::Value.new(LibLLVMExt.metadata_as_value(llvm_context, md))
     end
 
     private def align_of(type)
@@ -334,13 +334,13 @@ module Crystal
 
     # Emit debug info for toplevel variables. Used for the main module and all
     # required files.
-    def emit_vars_debug_info(vars, call_file = __FILE__, call_line = __LINE__)
+    def emit_vars_debug_info(vars)
       return if @debug.none?
       in_alloca_block do
         vars.each do |name, var|
           llvm_var = context.vars[name]
           set_current_debug_location var.location
-          declare_variable name, var.type, llvm_var.pointer, var.location, call_file, call_line
+          declare_variable name, var.type, llvm_var.pointer, var.location
         end
         clear_current_debug_location
       end
