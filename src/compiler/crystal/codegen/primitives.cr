@@ -849,7 +849,7 @@ class Crystal::CodeGenVisitor
     # Check if we need to do a numeric conversion
     if (extra = node.extra)
       existing_value = context.vars["value"]?
-      context.vars["value"] = LLVMVar.new(call_arg, node.type, true, location: node.location)
+      context.vars["value"] = LLVMVar.new(call_arg, node.type, true)
       request_value { accept extra }
       call_arg = @last
       context.vars["value"] = existing_value if existing_value

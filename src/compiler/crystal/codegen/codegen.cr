@@ -135,10 +135,8 @@ module Crystal
       # llvm value, so in a way it's "already loaded".
       # This field is true if that's the case.
       getter already_loaded : Bool
-      property debug_var : Bool
-      property location : Location?
 
-      def initialize(@pointer, @type, @already_loaded = false, @debug_var = false, @location = nil)
+      def initialize(@pointer, @type, @already_loaded = false)
       end
     end
 
@@ -1353,14 +1351,8 @@ module Crystal
       false
     end
 
-    def declare_var(var, call_file = __FILE__, call_line = __LINE__)
-      if value = context.vars[var.name]?
-        return value
-      end
-      pointer = alloca llvm_type(var.type), var.name
-      debug_var_allocated = declare_variable var.name, var.type, pointer, var.location, call_file, call_line
-      llvm_var = LLVMVar.new(var.no_returns? ? llvm_nil : pointer, var.type, debug_var: debug_var_allocated, location: var.location)
-      context.vars[var.name] = llvm_var
+    def declare_var(var)
+      context.vars[var.name] ||= LLVMVar.new(var.no_returns? ? llvm_nil : alloca(llvm_type(var.type), var.name), var.type)
     end
 
     def declare_lib_var(name, type, thread_local)
@@ -1430,8 +1422,7 @@ module Crystal
         request_value do
           accept node_scope
         end
-        debug_var_allocated = declare_variable "%scope", node_scope.type, @last, block.location
-        block_context.vars["%scope"] = LLVMVar.new(@last, node_scope.type, debug_var: debug_var_allocated)
+        block_context.vars["%scope"] = LLVMVar.new(@last, node_scope.type)
       end
 
       # First accept all yield expressions and assign them to block vars
@@ -1718,7 +1709,7 @@ module Crystal
           var_type = var.type? || @program.nil
 
           if var_type.void?
-            context.vars[name] = LLVMVar.new(llvm_nil, @program.void, location: var.location)
+            context.vars[name] = LLVMVar.new(llvm_nil, @program.void)
           elsif var_type.no_return?
             # No alloca for NoReturn
           elsif var.closure_in?(obj)
@@ -1737,9 +1728,9 @@ module Crystal
             end
 
             if location
-              debug_var_allocated = declare_variable name, var_type, ptr, location
+              declare_variable name, var_type, ptr, location
             end
-            context.vars[name] = LLVMVar.new(ptr, var_type, debug_var: debug_var_allocated, location: location)
+            context.vars[name] = LLVMVar.new(ptr, var_type)
 
             # Assign default nil for variables that are bound to the nil variable
             if bound_to_mod_nil?(var)
@@ -1780,7 +1771,7 @@ module Crystal
         closure_ptr = malloc closure_type
         closure_vars.each_with_index do |var, i|
           ptr = gep(closure_ptr, 0, i, var.name)
-          current_context.vars[var.name] = LLVMVar.new(ptr, var.type, location: var.location)
+          current_context.vars[var.name] = LLVMVar.new(ptr, var.type)
         end
         closure_skip_parent = false
 
