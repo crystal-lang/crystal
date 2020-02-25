@@ -298,7 +298,7 @@ module Crystal
     end
 
     def dump_metadata(md : LibLLVMExt::Metadata?)
-      "nil" unless md
+      return "nil" unless md
       LLVM::Value.new(LibLLVMExt.metadata_as_value(llvm_context, md))
     end
 
