@@ -88,6 +88,14 @@ class Array
   end
 end
 
+class Deque
+  def to_json(json : JSON::Builder)
+    json.array do
+      each &.to_json(json)
+    end
+  end
+end
+
 struct Set
   def to_json(json : JSON::Builder)
     json.array do
