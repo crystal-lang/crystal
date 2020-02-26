@@ -39,6 +39,10 @@ describe "JSON serialization" do
       Array(Float64).from_json("[1.5, 2, 3.5]").should eq([1.5, 2, 3.5])
     end
 
+    it "does Deque(String)#from_json" do
+      Deque(String).from_json(%(["a", "b"])).should eq(Deque.new(["a", "b"]))
+    end
+
     it "does Hash(String, String)#from_json" do
       Hash(String, String).from_json(%({"foo": "x", "bar": "y"})).should eq({"foo" => "x", "bar" => "y"})
     end
@@ -331,6 +335,10 @@ describe "JSON serialization" do
 
     it "does for Array" do
       [1, 2, 3].to_json.should eq("[1,2,3]")
+    end
+
+    it "does for Deque" do
+      Deque.new([1, 2, 3]).to_json.should eq("[1,2,3]")
     end
 
     it "does for Set" do

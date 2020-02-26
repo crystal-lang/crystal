@@ -58,6 +58,13 @@ def Array.from_json(string_or_io) : Nil
   nil
 end
 
+def Deque.from_json(string_or_io) : Nil
+  parser = JSON::PullParser.new(string_or_io)
+  new(parser) do |element|
+    yield element
+  end
+end
+
 def Nil.new(pull : JSON::PullParser)
   pull.read_null
 end
@@ -138,6 +145,20 @@ def Array.new(pull : JSON::PullParser)
 end
 
 def Array.new(pull : JSON::PullParser)
+  pull.read_array do
+    yield T.new(pull)
+  end
+end
+
+def Deque.new(pull : JSON::PullParser)
+  ary = new
+  new(pull) do |element|
+    ary << element
+  end
+  ary
+end
+
+def Deque.new(pull : JSON::PullParser)
   pull.read_array do
     yield T.new(pull)
   end
