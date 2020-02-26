@@ -46,6 +46,11 @@ describe Time::Span do
     t.total_seconds.should eq(1231231231231)
   end
 
+  it "initialize deprecated constructors" do
+    t = Time::Span.new(0, 0, 0, 0, nanoseconds: 1)
+    t.total_nanoseconds.should eq(1)
+  end
+
   it "days overflows" do
     expect_overflow do
       days = 106751991167301
