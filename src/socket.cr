@@ -10,7 +10,13 @@ class Socket < IO
   include IO::Buffered
   include IO::Evented
 
-  class Error < Exception
+  class Error < IO::Error
+  end
+
+  class ConnectError < Error
+  end
+
+  class BindError < Error
   end
 
   enum Type
@@ -71,7 +77,7 @@ class Socket < IO
   def initialize(@family, @type, @protocol = Protocol::IP, blocking = false)
     @closed = false
     fd = LibC.socket(family, type, protocol)
-    raise Errno.new("failed to create socket:") if fd == -1
+    raise Socket::Error.from_errno("Failed to create socket") if fd == -1
     init_close_on_exec(fd)
     @volatile_fd = Atomic.new(fd)
 
@@ -143,7 +149,7 @@ class Socket < IO
           return yield IO::Timeout.new("connect timed out")
         end
       else
-        return yield Errno.new("connect")
+        return yield Socket::ConnectError.from_errno("connect")
       end
     end
   end
@@ -158,7 +164,7 @@ class Socket < IO
   # ```
   def bind(host : String, port : Int)
     Addrinfo.resolve(host, port, @family, @type, @protocol) do |addrinfo|
-      bind(addrinfo) { |errno| errno }
+      bind(addrinfo, "#{host}:#{port}") { |errno| errno }
     end
   end
 
@@ -172,7 +178,7 @@ class Socket < IO
   # ```
   def bind(port : Int)
     Addrinfo.resolve("::", port, @family, @type, @protocol) do |addrinfo|
-      bind(addrinfo) { |errno| errno }
+      bind(addrinfo, "::#{port}") { |errno| errno }
     end
   end
 
@@ -184,15 +190,15 @@ class Socket < IO
   # sock = Socket.udp(Socket::Family::INET)
   # sock.bind Socket::IPAddress.new("192.168.1.25", 80)
   # ```
-  def bind(addr)
+  private def bind(addr, addrstr)
     bind(addr) { |errno| raise errno }
   end
 
   # Tries to bind the socket to a local address.
   # Yields an `Errno` if the binding failed.
-  def bind(addr)
+  private def bind(addr, addrstr)
     unless LibC.bind(fd, addr, addr.size) == 0
-      yield Errno.new("bind")
+      yield BindError.from_errno("Could not bind to '#{addrstr}'")
     end
   end
 
