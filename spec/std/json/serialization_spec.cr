@@ -338,7 +338,7 @@ describe "JSON serialization" do
     end
 
     it "does for Deque" do
-      Deque.new([1,2,3]).to_json.should eq("[1,2,3]")
+      Deque.new([1, 2, 3]).to_json.should eq("[1,2,3]")
     end
 
     it "does for Set" do
