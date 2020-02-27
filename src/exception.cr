@@ -179,3 +179,7 @@ class NilAssertionError < Exception
     super(message)
   end
 end
+
+# Raised when there is an internal runtime error
+class RuntimeError < Exception
+end

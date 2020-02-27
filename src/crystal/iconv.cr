@@ -29,7 +29,7 @@ struct Crystal::Iconv
           raise ArgumentError.new("Invalid encoding: #{original_from} -> #{original_to}")
         end
       else
-        raise Errno.new("iconv_open")
+        raise RuntimeError.from_errno("iconv_open")
       end
     end
   end
@@ -72,7 +72,7 @@ struct Crystal::Iconv
 
   def close
     if LibC.iconv_close(@iconv) == -1
-      raise Errno.new("iconv_close")
+      raise RuntimeError.from_errno("iconv_close")
     end
   end
 end
