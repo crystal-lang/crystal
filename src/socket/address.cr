@@ -188,7 +188,7 @@ class Socket
     private def address(addr : LibC::In6Addr)
       String.new(46) do |buffer|
         unless LibC.inet_ntop(family, pointerof(addr).as(Void*), buffer, 46)
-          raise Errno.new("Failed to convert IP address")
+          raise Socket::Error.from_errno("Failed to convert IP address")
         end
         {LibC.strlen(buffer), 0}
       end
@@ -197,7 +197,7 @@ class Socket
     private def address(addr : LibC::InAddr)
       String.new(16) do |buffer|
         unless LibC.inet_ntop(family, pointerof(addr).as(Void*), buffer, 16)
-          raise Errno.new("Failed to convert IP address")
+          raise Socket::Error.from_errno("Failed to convert IP address")
         end
         {LibC.strlen(buffer), 0}
       end

@@ -1,5 +1,4 @@
 require "./spec_helper"
-require "../../support/errno"
 require "socket"
 
 describe UDPSocket do

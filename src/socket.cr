@@ -211,7 +211,7 @@ class Socket < IO
   # Yields an `Errno` on failure.
   def listen(backlog : Int = SOMAXCONN)
     unless LibC.listen(fd, backlog) == 0
-      yield Errno.new("listen")
+      yield Socket::Error.from_errno("Listen failed")
     end
   end
 
@@ -229,7 +229,7 @@ class Socket < IO
   # socket.close
   # ```
   def accept : Socket
-    accept? || raise IO::Error.new("Closed stream")
+    accept? || raise Socket::Error.new("Closed stream")
   end
 
   # Accepts an incoming connection.
@@ -263,7 +263,7 @@ class Socket < IO
         elsif Errno.value == Errno::EAGAIN
           wait_readable rescue nil
         else
-          raise Errno.new("accept")
+          raise Socket::Error.from_errno("accept")
         end
       else
         return client_fd
@@ -303,7 +303,7 @@ class Socket < IO
   def send(message, to addr : Address) : Int32
     slice = message.to_slice
     bytes_sent = LibC.sendto(fd, slice.to_unsafe.as(Void*), slice.size, 0, addr, addr.size)
-    raise Errno.new("Error sending datagram to #{addr}") if bytes_sent == -1
+    raise Socket::Error.from_errno("Error sending datagram to #{addr}") if bytes_sent == -1
     # to_i32 is fine because string/slice sizes are an Int32
     bytes_sent.to_i32
   end
@@ -367,7 +367,7 @@ class Socket < IO
 
   private def shutdown(how)
     if LibC.shutdown(fd, how) != 0
-      raise Errno.new("shutdown #{how}")
+      raise Socket::Error.from_errno("shutdown #{how}")
     end
   end
 
@@ -402,15 +402,15 @@ class Socket < IO
   end
 
   def reuse_port?
-    ret = getsockopt(LibC::SO_REUSEPORT, 0) do |errno|
-      # If SO_REUSEPORT is not supported, the return value should be `false`
-      if errno.errno == Errno::ENOPROTOOPT
-        return false
-      else
-        raise errno
-      end
+    getsockopt(LibC::SO_REUSEPORT, 0) do |value|
+      return value != 0
     end
-    ret != 0
+
+    if Errno.value == Errno::ENOPROTOOPT
+      return false
+    else
+      raise Socket::Error.from_errno("getsockopt")
+    end
   end
 
   def reuse_port=(val : Bool)
@@ -463,22 +463,23 @@ class Socket < IO
   end
 
   # Returns the modified *optval*.
-  def getsockopt(optname, optval, level = LibC::SOL_SOCKET)
-    getsockopt(optname, optval, level) { |errno| raise errno }
+  protected def getsockopt(optname, optval, level = LibC::SOL_SOCKET)
+    getsockopt(optname, optval, level) { |value| return value }
+    raise Socket::Error.from_errno("getsockopt")
   end
 
   protected def getsockopt(optname, optval, level = LibC::SOL_SOCKET)
     optsize = LibC::SocklenT.new(sizeof(typeof(optval)))
     ret = LibC.getsockopt(fd, level, optname, (pointerof(optval).as(Void*)), pointerof(optsize))
-    yield Errno.new("getsockopt") if ret == -1
-    optval
+    yield optval if ret == 0
+    ret
   end
 
   # NOTE: *optval* is restricted to `Int32` until sizeof works on variables.
   def setsockopt(optname, optval, level = LibC::SOL_SOCKET)
     optsize = LibC::SocklenT.new(sizeof(typeof(optval)))
     ret = LibC.setsockopt(fd, level, optname, (pointerof(optval).as(Void*)), optsize)
-    raise Errno.new("setsockopt") if ret == -1
+    raise Socket::Error.from_errno("setsockopt") if ret == -1
     ret
   end
 
@@ -526,7 +527,7 @@ class Socket < IO
 
   def self.fcntl(fd, cmd, arg = 0)
     r = LibC.fcntl fd, cmd, arg
-    raise Errno.new("fcntl() failed") if r == -1
+    raise Socket::Error.from_errno("fcntl() failed") if r == -1
     r
   end
 
@@ -561,7 +562,7 @@ class Socket < IO
   end
 
   private def unbuffered_rewind
-    raise IO::Error.new("Can't rewind")
+    raise Socket::Error.new("Can't rewind")
   end
 
   private def unbuffered_close
@@ -583,7 +584,7 @@ class Socket < IO
       when Errno::EINTR, Errno::EINPROGRESS
         # ignore
       else
-        err = Errno.new("Error closing socket")
+        err = Socket::Error.from_errno("Error closing socket")
       end
     end
 

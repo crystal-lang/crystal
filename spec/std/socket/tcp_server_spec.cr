@@ -1,5 +1,4 @@
 require "./spec_helper"
-require "../../support/errno"
 
 describe TCPServer do
   describe ".new" do
@@ -20,7 +19,7 @@ describe TCPServer do
         server.close
 
         server.closed?.should be_true
-        expect_raises_errno(Errno::EBADF, "getsockname: ") do
+        expect_raises(Socket::Error, "getsockname: ") do
           server.local_address
         end
       end
