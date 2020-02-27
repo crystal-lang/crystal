@@ -69,9 +69,16 @@ class Exception
   end
 
   # :nodoc:
-  def self.from_errno(message : String, errno : Int32 = Errno.value, **opts)
+  def self.from_errno(message : String? = nil, errno : Int32 = Errno.value, **opts)
     message = self.build_message(message, **opts)
-    self.new_from_errno("#{message}: #{Errno.message(errno)}", errno, **opts)
+    message =
+      if message
+        "#{message}: #{Errno.message(errno)}"
+      else
+        Errno.message(errno)
+      end
+
+    self.new_from_errno(message, errno, **opts)
   end
 
   # :nodoc:
