@@ -52,7 +52,7 @@ struct CallStack
     @backtrace ||= decode_backtrace
   end
 
-  {% if flag?(:gnu) && flag?(:i686) %}
+  {% if flag?(:gnu) && flag?(:i386) %}
     # This is only used for the workaround described in `Exception.unwind`
     @@makecontext_range : Range(Void*, Void*)?
 
@@ -84,7 +84,7 @@ struct CallStack
            {% end %}
       bt << ip
 
-      {% if flag?(:gnu) && flag?(:i686) %}
+      {% if flag?(:gnu) && flag?(:i386) %}
         # This is a workaround for glibc bug: https://sourceware.org/bugzilla/show_bug.cgi?id=18635
         # The unwind info is corrupted when `makecontext` is used.
         # Stop the backtrace here. There is nothing interest beyond this point anyway.
