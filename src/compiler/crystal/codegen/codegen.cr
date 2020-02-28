@@ -123,7 +123,7 @@ module Crystal
     property last : LLVM::Value
 
     class LLVMVar
-      getter pointer : LLVM::Value
+      property pointer : LLVM::Value
       getter type : Type
 
       # Normally a variable is associated with an alloca.
@@ -135,8 +135,9 @@ module Crystal
       # llvm value, so in a way it's "already loaded".
       # This field is true if that's the case.
       getter already_loaded : Bool
+      getter debug_pointer : LLVM::Value?
 
-      def initialize(@pointer, @type, @already_loaded = false)
+      def initialize(@pointer, @type, @already_loaded = false, @debug_pointer = nil)
       end
     end
 
@@ -1720,7 +1721,6 @@ module Crystal
             next if is_arg
 
             ptr = builder.alloca llvm_type(var_type), name
-            debug_var_allocated = false
 
             location = var.location
             if location.nil? && obj.is_a?(ASTNode)
@@ -1728,7 +1728,7 @@ module Crystal
             end
 
             if location
-              declare_variable name, var_type, ptr, location
+              declare_variable name, var_type, ptr, location, alloca_block
             end
             context.vars[name] = LLVMVar.new(ptr, var_type)
 
@@ -1880,18 +1880,6 @@ module Crystal
     def unreachable(file = __FILE__, line = __LINE__)
       debug_codegen_log(file, line) { "Reached the unreachable!" }
       builder.unreachable
-    end
-
-    def debug_compiler_log(file = __FILE__, line = __LINE__)
-      return unless ENV["CRYSTAL_DEBUG_COMPILER"]?
-      msg = yield || ""
-      puts("<#{Crystal.relative_filename(file)}:#{line}> #{msg}")
-      nil
-    end
-
-    # :ditto:
-    def debug_compiler_log(file = __FILE__, line = __LINE__)
-      debug_compiler_log(file, line) { }
     end
 
     def allocate_aggregate(type)

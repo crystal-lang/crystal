@@ -128,9 +128,9 @@ class Crystal::CodeGenVisitor
               if name == "self" && !is_closure
                 declare_parameter(name, var.type, 1, var.pointer, location)
               elsif arg_no = args.index { |arg| arg.name == name }
-                declare_parameter(name, var.type, arg_no + args_offset, var.pointer, location)
+                # declare_parameter(name, var.type, arg_no + args_offset, var.pointer, location)
               else
-                declare_variable(name, var.type, var.pointer, location)
+                # declare_variable(name, var.type, var.pointer, location, alloca_block)
               end
             end
           end
@@ -382,7 +382,14 @@ class Crystal::CodeGenVisitor
   def setup_context_fun(mangled_name, target_def, llvm_args_types, llvm_return_type) : Nil
     context.fun = @llvm_mod.functions.add(mangled_name, llvm_args_types, llvm_return_type, target_def.varargs?)
 
-    context.fun.add_attribute LLVM::Attribute::AlwaysInline if target_def.always_inline?
+    unless @debug.variables?
+      context.fun.add_attribute LLVM::Attribute::AlwaysInline if target_def.always_inline?
+    else
+      context.fun.add_attribute LLVM::Attribute::NoInline
+      context.fun.add_attribute LLVM::Attribute::NoUnwind
+      context.fun.add_attribute LLVM::Attribute::OptimizeNone
+      context.fun.add_attribute LLVM::Attribute::UWTable
+    end
     context.fun.add_attribute LLVM::Attribute::ReturnsTwice if target_def.returns_twice?
     context.fun.add_attribute LLVM::Attribute::Naked if target_def.naked?
     context.fun.add_attribute LLVM::Attribute::NoReturn if target_def.no_returns?
@@ -436,12 +443,14 @@ class Crystal::CodeGenVisitor
     offset += 1 if sret
 
     target_def_vars = target_def.vars
+    # self_offset = 0
     args.each_with_index do |arg, i|
       param = context.fun.params[i + offset]
       if !is_fun_literal && (i == 0 && self_type.passed_as_self?)
         # here self is already in context.vars
+        # self_offset = 1
       else
-        create_local_copy_of_arg(target_def, target_def_vars, arg, param, i + offset)
+        create_local_copy_of_arg(target_def, target_def_vars, arg, param, i + offset) # + self_offset)
       end
     end
   end
@@ -467,6 +476,7 @@ class Crystal::CodeGenVisitor
     return if arg.name == "_"
 
     target_def_var = target_def_vars.try &.[arg.name]
+    location = target_def_var.try &.location || target_def.location
 
     var_type = (target_def_var || arg).type
     return if var_type.void?
@@ -487,9 +497,11 @@ class Crystal::CodeGenVisitor
         pointer = alloca(llvm_type(var_type), arg.name)
         casted_pointer = bit_cast pointer, value.type.pointer
         store value, casted_pointer
+        pointer = declare_debug_for_funciton_argument(arg.name, var_type, index + 1, pointer, location)
         context.vars[arg.name] = LLVMVar.new(pointer, var_type)
         return
       elsif arg.special_var?
+        value = declare_debug_for_funciton_argument(arg.name, var_type, index + 1, value, location)
         context.vars[arg.name] = LLVMVar.new(value, var_type)
         return
       else
@@ -498,6 +510,7 @@ class Crystal::CodeGenVisitor
         needs_copy = target_def_var.try &.assigned_to?
         if needs_copy
           pointer = alloca(llvm_type(var_type), arg.name)
+          pointer = declare_debug_for_funciton_argument(arg.name, var_type, index + 1, pointer, location)
           context.vars[arg.name] = LLVMVar.new(pointer, var_type)
 
           if arg.type.passed_by_value? && !context.fun.attributes(index + 1).by_val?
@@ -512,9 +525,11 @@ class Crystal::CodeGenVisitor
             # is behind a pointer, as everywhere else
             pointer = alloca(llvm_type(var_type), arg.name)
             store value, pointer
+            pointer = declare_debug_for_funciton_argument(arg.name, var_type, index + 1, pointer, location)
             context.vars[arg.name] = LLVMVar.new(pointer, var_type)
             return
           else
+            value = declare_debug_for_funciton_argument(arg.name, var_type, index + 1, value, location)
             context.vars[arg.name] = LLVMVar.new(value, var_type, true)
             return
           end

@@ -387,4 +387,6 @@ lib LibLLVM
   fun variable_get_line = LLVMDIVariableGetLine(variable : LibLLVMExt::Metadata) : UInt32
   fun di_builder_create_lexical_block_file = LLVMDIBuilderCreateLexicalBlockFile(builder : LibLLVMExt::DIBuilder,
                                                                                  scope : LibLLVMExt::Metadata, file_scope : LibLLVMExt::Metadata, discriminator : UInt32) : LibLLVMExt::Metadata
+  fun di_builder_create_reference_type = LLVMDIBuilderCreateReferenceType(builder : LibLLVMExt::DIBuilder,
+                                                                          tag : UInt32, debug_type : LibLLVMExt::Metadata) : LibLLVMExt::Metadata
 end

@@ -55,6 +55,10 @@ module Crystal
       debug_types_per_module[@llvm_mod] ||= {} of String => LibLLVMExt::Metadata?
     end
 
+    def get_debug_type(type)
+      get_debug_type(type, type.to_s)
+    end
+
     def get_debug_type(type, type_name : String? = type.to_s)
       type = type.remove_indirection
       debug_type_cache[type_name] ||= create_debug_type(type, type_name)
@@ -277,26 +281,27 @@ module Crystal
     end
 
     def create_debug_type(type, type_name : String? = type.to_s)
-      debug_compiler_log { "Unsupported type for debugging: #{type} (#{type.class}), type_name=#{type_name}" }
+      #"Unsupported type for debugging: #{type} (#{type.class}), type_name=#{type_name}" }
     end
 
     def declare_parameter(arg_name, arg_type, arg_no, alloca, location)
-      return false unless @debug.variables?
+      return alloca unless @debug.variables?
+
       declare_local(arg_type, alloca, location) do |scope, file, line_number, debug_type|
         di_builder.create_parameter_variable scope, arg_name, arg_no, file, line_number, debug_type
       end
     end
 
-    def declare_variable(var_name, var_type, alloca, location)
+    def declare_variable(var_name, var_type, alloca, location, basic_block : LLVM::BasicBlock? = nil)
       return false unless @debug.variables?
-      declare_local(var_type, alloca, location) do |scope, file, line_number, debug_type|
+      declare_local(var_type, alloca, location, basic_block) do |scope, file, line_number, debug_type|
         di_builder.create_auto_variable scope, var_name, file, line_number, debug_type, align_of(var_type)
       end
     end
 
     def dump_metadata(md : LibLLVMExt::Metadata?)
       return "nil" unless md
-      LLVM::Value.new(LibLLVMExt.metadata_as_value(llvm_context, md))
+      LLVM::Value.new(LibLLVM.metadata_as_value(llvm_context, md))
     end
 
     private def align_of(type)
@@ -309,7 +314,7 @@ module Crystal
       end
     end
 
-    private def declare_local(type, alloca, location)
+    private def declare_local(type, alloca, location, basic_block : LLVM::BasicBlock? = nil)
       location = location.try &.original_location
       return false unless location
 
@@ -324,9 +329,22 @@ module Crystal
 
       var = yield scope, file, location.line_number, debug_type
       expr = di_builder.create_expression(nil, 0)
-
-      di_builder.insert_declare_at_end(alloca, var, expr, builder.current_debug_location, alloca_block)
-      true
+      if basic_block
+        block = basic_block
+      else
+        basic_blocks = context.fun.basic_blocks.to_a
+        block = basic_blocks.size == 0 ? new_block("alloca") : basic_blocks[-1]
+      end
+      old_debug_location = @current_debug_location
+      set_current_debug_location location
+      if builder.current_debug_location != llvm_nil && (ptr = alloca)
+        di_builder.insert_declare_at_end(ptr, var, expr, builder.current_debug_location, block)
+        set_current_debug_location old_debug_location
+        true
+      else
+        set_current_debug_location old_debug_location
+        false
+      end
     end
 
     # Emit debug info for toplevel variables. Used for the main module and all
@@ -337,7 +355,7 @@ module Crystal
         vars.each do |name, var|
           llvm_var = context.vars[name]
           set_current_debug_location var.location
-          declare_variable name, var.type, llvm_var.pointer, var.location
+          declare_variable name, var.type, llvm_var.pointer, var.location, alloca_block
         end
         clear_current_debug_location
       end
@@ -398,9 +416,8 @@ module Crystal
         end
         main_scope
       else
-        array = fun_metadatas[context.fun]?
         scope = nil
-        if array
+        if array = fun_metadatas[context.fun]?
           array.each do |scope_pair|
             return scope_pair[1] if scope_pair[0] == location.filename
           end
@@ -457,6 +474,18 @@ module Crystal
 
     def create_pointer(debug_type : LibLLVMExt::Metadata, type_name : String)
       di_builder.create_pointer_type(debug_type, 8u64 * llvm_typer.pointer_size, 8u64 * llvm_typer.pointer_size, type_name)
+    end
+
+    def declare_debug_for_funciton_argument(arg_name, arg_type, arg_no, alloca, location)
+      return alloca unless @debug.variables?
+      old_debug_location = @current_debug_location
+      set_current_debug_location location
+      debug_alloca = builder.alloca alloca.type, "dbg.#{arg_name}"
+      store alloca, debug_alloca
+      declare_parameter(arg_name, arg_type, arg_no, debug_alloca, location)
+      alloca = load debug_alloca
+      set_current_debug_location old_debug_location
+      alloca
     end
   end
 end

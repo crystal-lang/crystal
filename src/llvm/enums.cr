@@ -378,6 +378,13 @@ module LLVM
     BitField            = 1 << 19
     NoReturn            = 1 << 20
     MainSubprogram      = 1 << 21
+    PassByValue         = 1 << 22
+    TypePassByReference = 1 << 23
+    EnumClass           = 1 << 24
+    Thunk               = 1 << 25
+    NonTrivial          = 1 << 26
+    BigEndian           = 1 << 27
+    LittleEndian        = 1 << 28
   end
 
   struct Value

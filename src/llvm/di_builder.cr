@@ -39,12 +39,12 @@ struct LLVM::DIBuilder
       is_local_to_unit, is_definition, scope_line, flags, is_optimized, func)
   end
 
-  def create_auto_variable(scope, name, file, line, type, align_in_bits)
-    LibLLVMExt.di_builder_create_auto_variable(self, scope, name, file, line, type, 1, DIFlags::Zero, align_in_bits)
+  def create_auto_variable(scope, name, file, line, type, align_in_bits, flags = DIFlags::Zero)
+    LibLLVMExt.di_builder_create_auto_variable(self, scope, name, file, line, type, 1, flags, align_in_bits)
   end
 
-  def create_parameter_variable(scope, name, argno, file, line, type)
-    LibLLVMExt.di_builder_create_parameter_variable(self, scope, name, argno, file, line, type, 1, DIFlags::Zero)
+  def create_parameter_variable(scope, name, argno, file, line, type, flags = DIFlags::Zero)
+    LibLLVMExt.di_builder_create_parameter_variable(self, scope, name, argno, file, line, type, 1, flags)
   end
 
   def create_expression(addr, length)
@@ -148,6 +148,10 @@ struct LLVM::DIBuilder
 
   def get_or_create_array_subrange_variable(lo, count)
     LibLLVMExt.di_builder_get_or_create_array_subrange_variable(self, lo, count)
+  end
+
+  def create_reference_type(debug_type)
+    LibLLVM.di_builder_create_reference_type(self, 16, debug_type) # 16 is the code for DW_TAG_reference_type
   end
 
   def end
