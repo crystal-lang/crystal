@@ -443,14 +443,12 @@ class Crystal::CodeGenVisitor
     offset += 1 if sret
 
     target_def_vars = target_def.vars
-    # self_offset = 0
     args.each_with_index do |arg, i|
       param = context.fun.params[i + offset]
       if !is_fun_literal && (i == 0 && self_type.passed_as_self?)
         # here self is already in context.vars
-        # self_offset = 1
       else
-        create_local_copy_of_arg(target_def, target_def_vars, arg, param, i + offset) # + self_offset)
+        create_local_copy_of_arg(target_def, target_def_vars, arg, param, i + offset)
       end
     end
   end

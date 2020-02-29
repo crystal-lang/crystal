@@ -480,7 +480,7 @@ module Crystal
       return alloca unless @debug.variables?
       old_debug_location = @current_debug_location
       set_current_debug_location location
-      debug_alloca = builder.alloca alloca.type, "dbg.#{arg_name}"
+      debug_alloca = alloca alloca.type, "dbg.#{arg_name}"
       store alloca, debug_alloca
       declare_parameter(arg_name, arg_type, arg_no, debug_alloca, location)
       alloca = load debug_alloca

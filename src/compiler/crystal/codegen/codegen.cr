@@ -1720,7 +1720,7 @@ module Crystal
             is_arg = args.try &.any? { |arg| arg.name == var.name }
             next if is_arg
 
-            ptr = builder.alloca llvm_type(var_type), name
+            ptr = alloca llvm_type(var_type), name
 
             location = var.location
             if location.nil? && obj.is_a?(ASTNode)
