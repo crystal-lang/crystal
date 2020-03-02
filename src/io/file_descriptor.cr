@@ -7,9 +7,12 @@ class IO::FileDescriptor < IO
 
   # The raw file-descriptor. It is defined to be an `Int`, but its size is
   # platform-specific.
-  getter fd
+  def fd
+    @volatile_fd.get
+  end
 
-  def initialize(@fd, blocking = nil)
+  def initialize(fd, blocking = nil)
+    @volatile_fd = Atomic.new(fd)
     @closed = system_closed?
 
     if blocking.nil?
@@ -69,7 +72,7 @@ class IO::FileDescriptor < IO
     end
 
     def fcntl(cmd, arg = 0)
-      Crystal::System::FileDescriptor.fcntl(@fd, cmd, arg)
+      Crystal::System::FileDescriptor.fcntl(fd, cmd, arg)
     end
   {% end %}
 
@@ -171,7 +174,7 @@ class IO::FileDescriptor < IO
     if closed?
       io << "(closed)"
     else
-      io << " fd=" << @fd
+      io << " fd=" << fd
     end
     io << '>'
   end

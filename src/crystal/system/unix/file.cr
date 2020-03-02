@@ -173,7 +173,7 @@ module Crystal::System::File
   private def flock(op : LibC::FlockOp, blocking : Bool = true)
     op |= LibC::FlockOp::NB unless blocking
 
-    if LibC.flock(@fd, op) != 0
+    if LibC.flock(fd, op) != 0
       raise Errno.new("flock")
     end
 
