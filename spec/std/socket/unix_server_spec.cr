@@ -1,6 +1,7 @@
 require "spec"
 require "socket"
 require "../../support/errno"
+require "../../support/fibers"
 require "../../support/tempfile"
 
 describe UNIXServer do
