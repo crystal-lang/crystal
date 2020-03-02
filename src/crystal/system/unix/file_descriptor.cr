@@ -123,7 +123,12 @@ module Crystal::System::FileDescriptor
   end
 
   def file_descriptor_close
-    if LibC.close(@fd) != 0
+    # Clear the @fd before actually closing it in order to
+    # reduce the chance of reading an outdated fd value
+    fd = @fd
+    @fd = -1
+
+    if LibC.close(fd) != 0
       case Errno.value
       when Errno::EINTR, Errno::EINPROGRESS
         # ignore

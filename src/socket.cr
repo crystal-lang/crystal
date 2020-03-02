@@ -562,8 +562,13 @@ class Socket < IO
     @closed = true
     evented_close
 
+    # Clear the @fd before actually closing it in order to
+    # reduce the chance of reading an outdated fd value
+    fd = @fd
+    @fd = -1
+
     err = nil
-    if LibC.close(@fd) != 0
+    if LibC.close(fd) != 0
       case Errno.value
       when Errno::EINTR, Errno::EINPROGRESS
         # ignore
