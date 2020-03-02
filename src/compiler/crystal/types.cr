@@ -41,7 +41,7 @@ module Crystal
       false
     end
 
-    # Returns `true` if this type is abstract and and it has no
+    # Returns `true` if this type is abstract and it has no
     # concrete subclasses. This can happen if this type has abstract
     # subclasses, or non-abstract generic subclasses without instantiations.
     def abstract_leaf?
