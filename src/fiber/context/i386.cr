@@ -1,4 +1,4 @@
-{% skip_file unless flag?(:i686) %}
+{% skip_file unless flag?(:i386) %}
 
 class Fiber
   # :nodoc:
