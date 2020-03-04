@@ -16,11 +16,11 @@ module Crystal::System::Time
   def self.compute_utc_seconds_and_nanoseconds : {Int64, Int32}
     {% if LibC.methods.includes?("clock_gettime".id) %}
       ret = LibC.clock_gettime(LibC::CLOCK_REALTIME, out timespec)
-      raise Errno.new("clock_gettime") unless ret == 0
+      raise RuntimeError.from_errno("clock_gettime") unless ret == 0
       {timespec.tv_sec.to_i64 + UnixEpochInSeconds, timespec.tv_nsec.to_i}
     {% else %}
       ret = LibC.gettimeofday(out timeval, nil)
-      raise Errno.new("gettimeofday") unless ret == 0
+      raise RuntimeError.from_errno("gettimeofday") unless ret == 0
       {timeval.tv_sec.to_i64 + UnixEpochInSeconds, timeval.tv_usec.to_i * 1_000}
     {% end %}
   end
@@ -34,7 +34,7 @@ module Crystal::System::Time
       {seconds.to_i64, nanoseconds.to_i32}
     {% else %}
       if LibC.clock_gettime(LibC::CLOCK_MONOTONIC, out tp) == 1
-        raise Errno.new("clock_gettime(CLOCK_MONOTONIC)")
+        raise RuntimeError.from_errno("clock_gettime(CLOCK_MONOTONIC)")
       end
       {tp.tv_sec.to_i64, tp.tv_nsec.to_i32}
     {% end %}

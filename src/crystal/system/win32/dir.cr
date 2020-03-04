@@ -13,7 +13,7 @@ module Crystal::System::Dir
 
   def self.open(path : String) : DirHandle
     unless ::Dir.exists? path
-      raise Errno.new("Error opening directory #{path.inspect}", Errno::ENOENT)
+      raise File::Error.from_errno("Error opening directory", Errno::ENOENT, file: path)
     end
 
     DirHandle.new(LibC::INVALID_HANDLE_VALUE, to_windows_path(path + "\\*"))
@@ -107,13 +107,13 @@ module Crystal::System::Dir
 
   def self.create(path : String, mode : Int32) : Nil
     if LibC._wmkdir(to_windows_path(path)) == -1
-      raise Errno.new("Unable to create directory '#{path}'")
+      raise File::Error.from_errno("Unable to create directory", file: path)
     end
   end
 
   def self.delete(path : String) : Nil
     if LibC._wrmdir(to_windows_path(path)) == -1
-      raise Errno.new("Unable to remove directory '#{path}'")
+      raise File::Error.from_errno("Unable to remove directory", file: path)
     end
   end
 

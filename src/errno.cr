@@ -232,7 +232,7 @@ class Errno < Exception
       LibC.__error.value
     {% elsif flag?(:win32) %}
       ret = LibC._get_errno(out errno)
-      raise Errno.new("_get_errno", ret) unless ret == 0
+      raise RuntimeError.from_errno("_get_errno", ret) unless ret == 0
       errno
     {% end %}
   end
@@ -245,7 +245,7 @@ class Errno < Exception
       LibC.__error.value = value
     {% elsif flag?(:win32) %}
       ret = LibC._set_errno(value)
-      raise Errno.new("_set_errno", ret) unless ret == 0
+      raise RuntimeError.from_errno("_set_errno", ret) unless ret == 0
       value
     {% end %}
   end

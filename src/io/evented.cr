@@ -58,7 +58,7 @@ module IO::Evented
       if Errno.value == Errno::EAGAIN
         wait_readable
       else
-        raise Errno.new(errno_msg)
+        raise IO::Error.from_errno(errno_msg)
       end
     end
   ensure
@@ -79,7 +79,7 @@ module IO::Evented
           if Errno.value == Errno::EAGAIN
             wait_writable
           else
-            raise Errno.new(errno_msg)
+            raise IO::Error.from_errno(errno_msg)
           end
         end
       end
@@ -90,7 +90,7 @@ module IO::Evented
 
   def evented_send(slice : Bytes, errno_msg : String) : Int32
     bytes_written = yield slice
-    raise Errno.new(errno_msg) if bytes_written == -1
+    raise IO::Error.from_errno(errno_msg) if bytes_written == -1
     # `to_i32` is acceptable because `Slice#size` is an Int32
     bytes_written.to_i32
   ensure

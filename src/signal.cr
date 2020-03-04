@@ -299,7 +299,7 @@ module Crystal::SignalChildHandler
         return
       when -1
         return if Errno.value == Errno::ECHILD
-        raise Errno.new("waitpid")
+        raise RuntimeError.from_errno("waitpid")
       end
 
       @@mutex.lock

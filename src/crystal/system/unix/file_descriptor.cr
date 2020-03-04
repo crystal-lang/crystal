@@ -59,13 +59,13 @@ module Crystal::System::FileDescriptor
 
   def self.fcntl(fd, cmd, arg = 0)
     r = LibC.fcntl(fd, cmd, arg)
-    raise Errno.new("fcntl() failed") if r == -1
+    raise IO::Error.from_errno("fcntl() failed") if r == -1
     r
   end
 
   private def system_info
     if LibC.fstat(fd, out stat) != 0
-      raise Errno.new("Unable to get info")
+      raise IO::Error.from_errno("Unable to get info")
     end
 
     FileInfo.new(stat)
@@ -75,13 +75,13 @@ module Crystal::System::FileDescriptor
     seek_value = LibC.lseek(fd, offset, whence)
 
     if seek_value == -1
-      raise Errno.new "Unable to seek"
+      raise IO::Error.from_errno "Unable to seek"
     end
   end
 
   private def system_pos
     pos = LibC.lseek(fd, 0, IO::Seek::Current)
-    raise Errno.new "Unable to tell" if pos == -1
+    raise IO::Error.from_errno "Unable to tell" if pos == -1
     pos
   end
 
@@ -94,12 +94,12 @@ module Crystal::System::FileDescriptor
       # dup doesn't copy the CLOEXEC flag, so copy it manually using dup3
       flags = other.close_on_exec? ? LibC::O_CLOEXEC : 0
       if LibC.dup3(other.fd, fd, flags) == -1
-        raise Errno.new("Could not reopen file descriptor")
+        raise IO::Error.from_errno("Could not reopen file descriptor")
       end
     {% else %}
       # dup doesn't copy the CLOEXEC flag, copy it manually to the new
       if LibC.dup2(other.fd, fd) == -1
-        raise Errno.new("Could not reopen file descriptor")
+        raise IO::Error.from_errno("Could not reopen file descriptor")
       end
 
       if other.close_on_exec?
@@ -132,7 +132,7 @@ module Crystal::System::FileDescriptor
       when Errno::EINTR, Errno::EINPROGRESS
         # ignore
       else
-        raise Errno.new("Error closing file")
+        raise IO::Error.from_errno("Error closing file")
       end
     end
   end
@@ -140,7 +140,7 @@ module Crystal::System::FileDescriptor
   def self.pipe(read_blocking, write_blocking)
     pipe_fds = uninitialized StaticArray(LibC::Int, 2)
     if LibC.pipe(pipe_fds) != 0
-      raise Errno.new("Could not create pipe")
+      raise IO::Error.from_errno("Could not create pipe")
     end
 
     r = IO::FileDescriptor.new(pipe_fds[0], read_blocking)
@@ -156,7 +156,7 @@ module Crystal::System::FileDescriptor
     bytes_read = LibC.pread(fd, buffer, buffer.size, offset)
 
     if bytes_read == -1
-      raise Errno.new "Error reading file"
+      raise IO::Error.from_errno "Error reading file"
     end
 
     bytes_read

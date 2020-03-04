@@ -19,7 +19,7 @@ module Crystal::System::File
 
     fd = LibC._wopen(to_windows_path(filename), oflag, perm)
     if fd == -1
-      raise Errno.new("Error opening file #{filename.inspect} with mode #{mode.inspect}")
+      raise File::Error.from_errno("Error opening file with mode #{mode.inspect}", file: filename)
     end
 
     fd
@@ -30,7 +30,7 @@ module Crystal::System::File
 
     fd = LibC._wopen(to_windows_path(path), LibC::O_RDWR | LibC::O_CREAT | LibC::O_EXCL | LibC::O_BINARY, ::File::DEFAULT_CREATE_PERMISSIONS)
     if fd == -1
-      raise Errno.new("Error creating temporary file at #{path.inspect}")
+      raise File::Error.from_errno("Error creating temporary file", file: path)
     end
 
     {fd, path}
@@ -153,7 +153,7 @@ module Crystal::System::File
 
   def self.delete(path : String) : Nil
     if LibC._wunlink(to_windows_path(path)) != 0
-      raise Errno.new("Error deleting file #{path.inspect}")
+      raise File::Error.from_errno("Error deleting file", file: path)
     end
   end
 
@@ -173,7 +173,7 @@ module Crystal::System::File
     end
 
     unless exists? real_path
-      raise Errno.new("Error resolving real path of #{path.inspect}", Errno::ENOTDIR)
+      raise File::Error.from_errno("Error resolving real path", Errno::ENOTDIR, file: path)
     end
 
     real_path
@@ -198,7 +198,7 @@ module Crystal::System::File
 
   def self.rename(old_path : String, new_path : String) : Nil
     if LibC._wrename(to_windows_path(old_path), to_windows_path(new_path)) != 0
-      raise Errno.new("Error renaming file from #{old_path.inspect} to #{new_path.inspect}")
+      raise File::Error.from_errno("Error renaming file", file: old_path, other: new_path)
     end
   end
 
@@ -208,13 +208,13 @@ module Crystal::System::File
     times.modtime = modification_time.to_unix
 
     if LibC._wutime64(to_windows_path(path), pointerof(times)) != 0
-      raise Errno.new("Error setting time on file #{path.inspect}")
+      raise File::Error.from_errno("Error setting time on file", file: path)
     end
   end
 
   private def system_truncate(size : Int) : Nil
     if LibC._chsize(fd, size) != 0
-      raise Errno.new("Error truncating file #{path.inspect}")
+      raise File::Error.from_errno("Error truncating file", file: path)
     end
   end
 
