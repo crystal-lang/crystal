@@ -206,4 +206,18 @@ describe HTTP::Headers do
     headers.add?("foobar", invalid_value).should be_false
     headers.add?("foobar", [invalid_value]).should be_false
   end
+
+  it "raises when read_only (#8712)" do
+    headers = HTTP::Headers.new
+    headers.read_only = true
+
+    expect_raises(ReadOnlyError) { headers["Foo"] = "Bar" }
+    expect_raises(ReadOnlyError) { headers["Foo"] = ["Bar", "Baz"] }
+    expect_raises(ReadOnlyError) { headers.add "Foo", "Bar" }
+    expect_raises(ReadOnlyError) { headers.add "Foo", ["Bar", "Baz"] }
+    expect_raises(ReadOnlyError) { headers.add? "Foo", "Bar" }
+    expect_raises(ReadOnlyError) { headers.add? "Foo", ["Bar", "Baz"] }
+    expect_raises(ReadOnlyError) { headers.delete "Foo" }
+    expect_raises(ReadOnlyError) { headers.merge!({"Foo" => "Bar"}) }
+  end
 end

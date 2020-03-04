@@ -185,6 +185,17 @@ describe HTTP::Server::Response do
     io.to_s.should eq("HTTP/1.1 200 OK\r\nContent-Length: 5\r\nSet-Cookie: Bar=Foo; path=/\r\n\r\nHello")
   end
 
+  it "raises if setting headers but response was already sent (#8712)" do
+    io = IO::Memory.new
+    response = Response.new(io)
+    response.print("Hello")
+    response.flush
+
+    expect_raises(ReadOnlyError) do
+      response.headers["Content-Type"] = "text/plain"
+    end
+  end
+
   describe "#respond_with_status" do
     it "uses default values" do
       io = IO::Memory.new

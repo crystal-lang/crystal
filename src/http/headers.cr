@@ -48,6 +48,11 @@ struct HTTP::Headers
     end
   end
 
+  # Determines whethere these headers are in read-only mode.
+  # When in read-only mode, trying to modify these headers will
+  # raise `ReadOnlyError`.
+  property? read_only = false
+
   def initialize
     # We keep a Hash with String | Array(String) values because
     # the most common case is a single value and so we avoid allocating
@@ -56,12 +61,14 @@ struct HTTP::Headers
   end
 
   def []=(key, value : String)
+    check_writeable
     check_invalid_header_content(value)
 
     @hash[wrap(key)] = value
   end
 
   def []=(key, value : Array(String))
+    check_writeable
     value.each { |val| check_invalid_header_content val }
 
     @hash[wrap(key)] = value
@@ -119,24 +126,28 @@ struct HTTP::Headers
   end
 
   def add(key, value : String)
+    check_writeable
     check_invalid_header_content value
     unsafe_add(key, value)
     self
   end
 
   def add(key, value : Array(String))
+    check_writeable
     value.each { |val| check_invalid_header_content val }
     unsafe_add(key, value)
     self
   end
 
   def add?(key, value : String)
+    check_writeable
     return false unless valid_value?(value)
     unsafe_add(key, value)
     true
   end
 
   def add?(key, value : Array(String))
+    check_writeable
     value.each { |val| return false unless valid_value?(val) }
     unsafe_add(key, value)
     true
@@ -160,11 +171,13 @@ struct HTTP::Headers
   end
 
   def delete(key)
+    check_writeable
     values = @hash.delete wrap(key)
     values ? concat(values) : nil
   end
 
   def merge!(other)
+    check_writeable
     other.each do |key, value|
       self[wrap(key)] = value
     end
@@ -354,6 +367,12 @@ struct HTTP::Headers
       unless valid_char?(char = byte.unsafe_chr)
         return char
       end
+    end
+  end
+
+  private def check_writeable
+    if read_only?
+      raise ReadOnlyError.new("HTTP::Headers are in read-only mode (it probably means the HTTP::Server headers were already sent)")
     end
   end
 end
