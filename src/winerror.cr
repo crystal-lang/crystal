@@ -14,6 +14,16 @@ class WinError < Errno
     super("#{message}: [WinError #{code}, #{details}]", winerror_to_errno(code))
   end
 
+  def self.value
+    LibC.GetLastError
+  end
+
+  def self.message(code = WinError.value)
+    buffer = uninitialized UInt16[256]
+    size = LibC.FormatMessageW(LibC::FORMAT_MESSAGE_FROM_SYSTEM, nil, code, 0, buffer, buffer.size, nil)
+    String.from_utf16(buffer.to_slice[0, size]).strip
+  end
+
   # https://github.com/python/cpython/blob/master/PC/generrmap.c
   # https://github.com/python/cpython/blob/master/PC/errmap.h
   def winerror_to_errno(winerror)

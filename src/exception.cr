@@ -90,6 +90,26 @@ class Exception
   protected def self.new_from_errno(message : String, errno : Int32, **opts)
     self.new(message, **opts)
   end
+
+  {% if flag?(:win32) %}
+    # :nodoc:
+    def self.from_winerror(message : String? = nil, code : UInt32 = WinError.value, **opts)
+      message = self.build_message(message, **opts)
+      message =
+        if message
+          "#{message}: #{WinError.message(code)}"
+        else
+          WinError.message(code)
+        end
+
+      self.new_from_winerror(message, code, **opts)
+    end
+
+    # :nodoc:
+    protected def self.new_from_winerror(message : String, code : UInt32, **opts)
+      self.new(message, **opts)
+    end
+  {% end %}
 end
 
 # Raised when the given index is invalid.

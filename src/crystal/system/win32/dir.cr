@@ -13,13 +13,13 @@ module Crystal::System::Dir
 
   def self.open(path : String) : DirHandle
     unless ::Dir.exists? path
-      raise File::Error.from_errno("Error opening directory", Errno::ENOENT, file: path)
+      raise ::File::Error.from_errno("Error opening directory", Errno::ENOENT, file: path)
     end
 
     DirHandle.new(LibC::INVALID_HANDLE_VALUE, to_windows_path(path + "\\*"))
   end
 
-  def self.next_entry(dir : DirHandle) : Entry?
+  def self.next_entry(dir : DirHandle, path : String) : Entry?
     if dir.handle == LibC::INVALID_HANDLE_VALUE
       # Directory is at start, use FindFirstFile
       handle = LibC.FindFirstFileW(dir.query, out data)
@@ -59,7 +59,7 @@ module Crystal::System::Dir
     close(dir)
   end
 
-  def self.close(dir : DirHandle) : Nil
+  def self.close(dir : DirHandle, path : String) : Nil
     return if dir.handle == LibC::INVALID_HANDLE_VALUE
 
     if LibC.FindClose(dir.handle) == 0
@@ -84,7 +84,7 @@ module Crystal::System::Dir
 
   def self.current=(path : String) : String
     if LibC.SetCurrentDirectoryW(to_windows_path(path)) == 0
-      raise WinError.new("SetCurrentDirectory")
+      raise ::File::Error.from_winerror("Error while changing directory", file: path)
     end
 
     path
@@ -107,13 +107,13 @@ module Crystal::System::Dir
 
   def self.create(path : String, mode : Int32) : Nil
     if LibC._wmkdir(to_windows_path(path)) == -1
-      raise File::Error.from_errno("Unable to create directory", file: path)
+      raise ::File::Error.from_errno("Unable to create directory", file: path)
     end
   end
 
   def self.delete(path : String) : Nil
     if LibC._wrmdir(to_windows_path(path)) == -1
-      raise File::Error.from_errno("Unable to remove directory", file: path)
+      raise ::File::Error.from_errno("Unable to remove directory", file: path)
     end
   end
 
