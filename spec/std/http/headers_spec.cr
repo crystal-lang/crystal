@@ -209,7 +209,7 @@ describe HTTP::Headers do
 
   it "raises when read_only (#8712)" do
     headers = HTTP::Headers.new
-    headers.read_only = true
+    headers.read_only!
 
     expect_raises(ReadOnlyError) { headers["Foo"] = "Bar" }
     expect_raises(ReadOnlyError) { headers["Foo"] = ["Bar", "Baz"] }

@@ -162,7 +162,7 @@ class HTTP::Server
       end
       @io << "\r\n"
       @wrote_headers = true
-      headers.read_only = true
+      headers.read_only!
     end
 
     protected def wrote_headers?

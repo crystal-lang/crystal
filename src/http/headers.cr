@@ -48,16 +48,24 @@ struct HTTP::Headers
     end
   end
 
-  # Determines whethere these headers are in read-only mode.
-  # When in read-only mode, trying to modify these headers will
-  # raise `ReadOnlyError`.
-  property? read_only = false
-
   def initialize
     # We keep a Hash with String | Array(String) values because
     # the most common case is a single value and so we avoid allocating
     # memory for arrays.
     @hash = Hash(Key, String | Array(String)).new
+    @read_only = false
+  end
+
+  # Makes these headers read-only.
+  # When in read-only mode, trying to modify these headers
+  # will raise `ReadOnlyError`.
+  def read_only!
+    @read_only = true
+  end
+
+  # Returns `true` if these headers are in read-only mode.
+  def read_only?
+    @read_only
   end
 
   def []=(key, value : String)
