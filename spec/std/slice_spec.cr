@@ -455,14 +455,14 @@ describe "Slice" do
 
   it "creates read-only slice" do
     slice = Slice.new(3, 0, read_only: true)
-    expect_raises(Exception, "Can't write to read-only Slice") { slice[0] = 1 }
-    expect_raises(Exception, "Can't write to read-only Slice") { slice.copy_from(slice) }
+    expect_raises(ReadOnlyError, "Can't write to read-only Slice") { slice[0] = 1 }
+    expect_raises(ReadOnlyError, "Can't write to read-only Slice") { slice.copy_from(slice) }
 
     subslice = slice[0, 1]
-    expect_raises(Exception, "Can't write to read-only Slice") { subslice[0] = 1 }
+    expect_raises(ReadOnlyError, "Can't write to read-only Slice") { subslice[0] = 1 }
 
     slice = Bytes[1, 2, 3, read_only: true]
-    expect_raises(Exception, "Can't write to read-only Slice") { slice[0] = 0_u8 }
+    expect_raises(ReadOnlyError, "Can't write to read-only Slice") { slice[0] = 0_u8 }
   end
 
   it "hashes each item in collection" do

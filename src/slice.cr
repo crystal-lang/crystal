@@ -761,7 +761,7 @@ struct Slice(T)
   end
 
   protected def check_writable
-    raise "Can't write to read-only Slice" if @read_only
+    raise ReadOnlyError.new("Can't write to read-only Slice") if @read_only
   end
 
   private def check_size(count : Int)
