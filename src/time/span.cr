@@ -59,10 +59,10 @@ struct Time::Span
   end
 
   @[Deprecated("Use `new` with named arguments instead.")]
-  def self.new(_days : Int, _hours : Int, _minutes : Int, _seconds : Int, _nanoseconds : Int = 0)
+  def self.new(_days : Int, _hours : Int, _minutes : Int, _seconds : Int, nanoseconds : Int = 0)
     new(
       seconds: compute_seconds(_days, _hours, _minutes, _seconds),
-      nanoseconds: _nanoseconds.to_i64,
+      nanoseconds: nanoseconds.to_i64,
     )
   end
 
