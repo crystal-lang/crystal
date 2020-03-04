@@ -402,11 +402,12 @@ module JSON
   end
 
   # Writes JSON into the given `IO`. A `JSON::Builder` is yielded to the block.
-  def self.build(io : IO, indent = nil)
+  def self.build(io : IO, indent = nil) : Nil
     builder = JSON::Builder.new(io)
     builder.indent = indent if indent
     builder.document do
       yield builder
     end
+    io.flush
   end
 end

@@ -83,5 +83,6 @@ class INI
       end
       io.puts
     end
+    io.flush
   end
 end
