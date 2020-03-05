@@ -9,7 +9,7 @@ class File::Error < IO::Error
     if errno == Errno::ENOENT
       File::NotFoundError.new(message, **opts)
     else
-      File::Error.new(message, **opts)
+      super message, errno, **opts
     end
   end
 
@@ -20,7 +20,7 @@ class File::Error < IO::Error
          WinError::ERROR_FILENAME_EXCED_RANGE
       File::NotFoundError.new(message, **opts)
     else
-      File::Error.new(message, **opts)
+      super message, code, **opts
     end
   end
 

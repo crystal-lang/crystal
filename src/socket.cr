@@ -11,6 +11,13 @@ class Socket < IO
   include IO::Evented
 
   class Error < IO::Error
+    private def self.new_from_errno(message, errno, **opts)
+      if errno == Errno::ECONNREFUSED
+        Socket::ConnectError.new(message, **opts)
+      else
+        super message, errno, **opts
+      end
+    end
   end
 
   class ConnectError < Error

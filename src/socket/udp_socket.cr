@@ -39,17 +39,15 @@ require "./ip_socket"
 # server.close
 # ```
 #
-# The `send` methods may sporadically fail with `Errno::ECONNREFUSED` when sending datagrams
+# The `send` methods may sporadically fail with `Socket::ConnectError` when sending datagrams
 # to a non-listening server.
 # Wrap with an exception handler to prevent raising. Example:
 #
 # ```
 # begin
 #   client.send(message, @destination)
-# rescue ex : Errno
-#   if ex.errno == Errno::ECONNREFUSED
-#     p ex.inspect
-#   end
+# rescue ex : Socket::ConnectError
+#   p ex.inspect
 # end
 # ```
 class UDPSocket < IPSocket
