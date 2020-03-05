@@ -208,7 +208,7 @@ class Dir
           begin
             dir = Dir.new(path || ".")
             dir_stack << dir
-          rescue Errno
+          rescue File::Error
             return
           end
           recurse = false
@@ -217,7 +217,7 @@ class Dir
             if recurse
               begin
                 dir = Dir.new(dir_path)
-              rescue Errno
+              rescue File::Error
                 dir_path_stack.pop
                 break if dir_path_stack.empty?
                 dir_path = dir_path_stack.last

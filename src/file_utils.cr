@@ -448,7 +448,7 @@ module FileUtils
   def rm_rf(path : String) : Nil
     begin
       rm_r(path)
-    rescue Errno
+    rescue File::Error
     end
   end
 

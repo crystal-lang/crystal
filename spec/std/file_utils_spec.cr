@@ -229,6 +229,12 @@ describe "FileUtils" do
     end
 
     it "doesn't return error on non existing file" do
+      with_tempfile("rm_rf-nonexistent") do |path|
+        FileUtils.rm_rf(path).should be_nil
+      end
+    end
+
+    it "doesn't return error on non existing files" do
       with_tempfile("rm_rf-nonexistent") do |path1|
         path2 = File.join(path1, "a")
         FileUtils.mkdir(path1)

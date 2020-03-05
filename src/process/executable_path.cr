@@ -23,7 +23,7 @@ class Process
     if executable = executable_path_impl
       begin
         File.real_path(executable)
-      rescue Errno
+      rescue File::Error
       end
     end
   end
