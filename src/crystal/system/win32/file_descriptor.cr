@@ -55,12 +55,12 @@ module Crystal::System::FileDescriptor
 
     if file_type == LibC::FILE_TYPE_UNKNOWN
       error = LibC.GetLastError
-      raise WinError.new("GetFileType", error) unless error == WinError::ERROR_SUCCESS
+      raise IO::Error.from_winerror("Unable to get info", error) unless error == WinError::ERROR_SUCCESS
     end
 
     if file_type == LibC::FILE_TYPE_DISK
       if LibC.GetFileInformationByHandle(handle, out file_info) == 0
-        raise WinError.new("GetFileInformationByHandle")
+        raise IO::Error.from_winerror("Unable to get info")
       end
 
       FileInfo.new(file_info, file_type)
@@ -149,7 +149,7 @@ module Crystal::System::FileDescriptor
     if LibC.ReadFile(handle, buffer, buffer.size, out bytes_read, pointerof(overlapped)) == 0
       error = LibC.GetLastError
       return 0 if error == WinError::ERROR_HANDLE_EOF
-      raise WinError.new("ReadFile", error)
+      raise IO::Error.from_winerror "Error reading file", error
     end
 
     bytes_read

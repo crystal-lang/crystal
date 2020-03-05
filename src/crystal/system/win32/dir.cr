@@ -31,7 +31,7 @@ module Crystal::System::Dir
         if error == WinError::ERROR_FILE_NOT_FOUND
           return nil
         else
-          raise WinError.new("FindFirstFile", error)
+          raise ::File::Error.from_winerror("Error reading directory entries", error, file: path)
         end
       end
     else
@@ -43,7 +43,7 @@ module Crystal::System::Dir
         if error == WinError::ERROR_NO_MORE_FILES
           return nil
         else
-          raise WinError.new("FindNextFile", error)
+          raise ::File::Error.from_winerror("Error reading directory entries", error, file: path)
         end
       end
     end
@@ -63,7 +63,7 @@ module Crystal::System::Dir
     return if dir.handle == LibC::INVALID_HANDLE_VALUE
 
     if LibC.FindClose(dir.handle) == 0
-      raise WinError.new("FindClose")
+      raise ::File::Error.from_winerror("Error closing directory", file: path)
     end
 
     dir.handle = LibC::INVALID_HANDLE_VALUE
@@ -77,7 +77,7 @@ module Crystal::System::Dir
       elsif small_buf && len > 0
         next len
       else
-        raise WinError.new("Error while getting current directory")
+        raise ::File::Error.from_winerror("Error getting current directory", file: "./")
       end
     end
   end
@@ -98,7 +98,7 @@ module Crystal::System::Dir
       elsif small_buf && len > 0
         next len
       else
-        raise WinError.new("Error while getting current directory")
+        raise RuntimeError.from_winerror("Error getting temporary directory")
       end
     end
 
