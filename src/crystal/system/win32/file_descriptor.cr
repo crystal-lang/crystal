@@ -6,7 +6,11 @@ module Crystal::System::FileDescriptor
   private def unbuffered_read(slice : Bytes)
     bytes_read = LibC._read(fd, slice, slice.size)
     if bytes_read == -1
-      raise IO::Error.from_errno("Error reading file")
+      if Errno.value == Errno::EBADF
+        raise IO::Error.new "File not open for reading"
+      else
+        raise IO::Error.from_errno("Error reading file")
+      end
     end
     bytes_read
   end
@@ -15,7 +19,11 @@ module Crystal::System::FileDescriptor
     until slice.empty?
       bytes_written = LibC._write(fd, slice, slice.size)
       if bytes_written == -1
-        raise IO::Error.from_errno("Error writing file")
+        if Errno.value == Errno::EBADF
+          raise IO::Error.new "File not open for writing"
+        else
+          raise IO::Error.from_errno("Error writing file")
+        end
       end
 
       slice += bytes_written
