@@ -2,11 +2,11 @@ require "spec"
 require "http/server/request_processor"
 
 private class RaiseIOError < IO
-  def initialize(@value : Errno)
+  def initialize
   end
 
   def read(slice : Bytes)
-    raise IO::Error.from_errno("...", @value)
+    raise IO::Error.new("...")
   end
 
   def write(slice : Bytes) : Nil
@@ -245,9 +245,7 @@ describe HTTP::Server::RequestProcessor do
 
   it "handles IO::Error" do
     processor = HTTP::Server::RequestProcessor.new { }
-    # Using EPERM here instead of a more reasonable ECONNRESET because the
-    # latter is not available on all platforms (win32).
-    input = RaiseIOError.new(Errno::EPERM)
+    input = RaiseIOError.new
     output = IO::Memory.new
     processor.process(input, output)
     output.rewind.gets_to_end.empty?.should be_true
