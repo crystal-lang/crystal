@@ -18,6 +18,12 @@ class Exception
   getter cause : Exception?
   property callstack : CallStack?
 
+  {% if flag?(:windows) %}
+    getter os_error : Errno | WinError | Nil
+  {% else %}
+    getter os_error : Errno?
+  {% end %}
+
   def initialize(@message : String? = nil, @cause : Exception? = nil)
   end
 
@@ -68,6 +74,9 @@ class Exception
     io.flush
   end
 
+  protected def os_error=(@os_error)
+  end
+
   # :nodoc:
   def self.from_errno(message : String? = nil, errno : Errno = Errno.value, **opts)
     message = self.build_message(message, **opts)
@@ -78,7 +87,9 @@ class Exception
         errno.message
       end
 
-    self.new_from_errno(message, errno, **opts)
+    self.new_from_errno(message, errno, **opts).tap do |e|
+      e.os_error = errno
+    end
   end
 
   # :nodoc:
@@ -102,7 +113,9 @@ class Exception
           winerror.message
         end
 
-      self.new_from_winerror(message, winerror, **opts)
+      self.new_from_winerror(message, winerror, **opts).tap do |e|
+        e.os_error = winerror
+      end
     end
 
     # :nodoc:
