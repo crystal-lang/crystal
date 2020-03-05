@@ -2,7 +2,6 @@ require "spec"
 require "process"
 require "./spec_helper"
 require "../spec_helper"
-require "../support/errno"
 
 describe Process do
   it "runs true" do
