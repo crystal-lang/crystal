@@ -136,7 +136,7 @@ class UDPSocket < IPSocket
   # The multicast hops option controls the `hoplimit` field on uni-cast packets.
   # If `-1` is specified, the kernel will use a default value.
   # If a value of `0` to `255` is specified, the packet will have the specified
-  # value as `hoplimit`. Other values are considered invalid and `Errno` will be raised.
+  # value as `hoplimit`. Other values are considered invalid and `Socket::Error` will be raised.
   # Datagrams with a `hoplimit` of `1` are not forwarded beyond the local network.
   # Multicast datagrams with a `hoplimit` of `0` will not be transmitted on any
   # network, but may be delivered locally if the sending host belongs to the

@@ -66,7 +66,7 @@ ARGV = Array.new(ARGC_UNSAFE - 1) { |i| String.new(ARGV_UNSAFE[1 + i]) }
 # $ echo "hello" | ./program
 # hello
 # $ ./program unknown
-# Unhandled exception: Error opening file 'unknown' with mode 'r': No such file or directory (Errno)
+# Unhandled exception: Error opening file with mode 'r': 'unknown': No such file or directory (File::NotFoundError)
 # ...
 # ```
 #

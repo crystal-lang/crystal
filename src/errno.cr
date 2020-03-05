@@ -16,8 +16,6 @@ end
 
 # Errno wraps and gives access to libc's errno. This is mostly useful when
 # dealing with C libraries.
-#
-# This class is the exception thrown when errno errors are encountered.
 enum Errno
   NONE = 0
 
@@ -36,7 +34,7 @@ enum Errno
     {% end %}
   {% end %}
 
-  # Convert an errno to an error message
+  # Convert an Errno to an error message
   def message : String
     String.new(LibC.strerror(value))
   end

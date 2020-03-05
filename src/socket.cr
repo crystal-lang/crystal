@@ -141,7 +141,7 @@ class Socket < IO
   end
 
   # Tries to connect to a remote address. Yields an `IO::Timeout` or an
-  # `Errno` error if the connection failed.
+  # `Socket::ConnectError` error if the connection failed.
   def connect(addr, timeout = nil)
     timeout = timeout.seconds unless timeout.is_a? Time::Span | Nil
     loop do
@@ -202,7 +202,7 @@ class Socket < IO
   end
 
   # Tries to bind the socket to a local address.
-  # Yields an `Errno` if the binding failed.
+  # Yields an `Socket::BindError` if the binding failed.
   private def bind(addr, addrstr)
     unless LibC.bind(fd, addr, addr.size) == 0
       yield BindError.from_errno("Could not bind to '#{addrstr}'")
@@ -215,7 +215,7 @@ class Socket < IO
   end
 
   # Tries to listen for connections on the previously bound socket.
-  # Yields an `Errno` on failure.
+  # Yields an `Socket::Error` on failure.
   def listen(backlog : Int = SOMAXCONN)
     unless LibC.listen(fd, backlog) == 0
       yield Socket::Error.from_errno("Listen failed")

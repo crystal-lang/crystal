@@ -210,7 +210,7 @@ class Dir
   end
 
   # Returns `true` if the directory at *path* is empty, otherwise returns `false`.
-  # Raises `Errno` if the directory at *path* does not exist.
+  # Raises `File::NotFoundError` if the directory at *path* does not exist.
   #
   # ```
   # Dir.mkdir("bar")
