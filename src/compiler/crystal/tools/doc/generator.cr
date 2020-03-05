@@ -143,7 +143,7 @@ class Crystal::Doc::Generator
 
   def must_include?(type : Crystal::Type)
     return false if type.private?
-    return false if nodoc?(type)
+    return false if nodoc?(type, type.locations.try(&.first?))
     return true if crystal_builtin?(type)
 
     # Don't include lib types or types inside a lib type
@@ -159,7 +159,7 @@ class Crystal::Doc::Generator
   end
 
   def must_include?(a_def : Crystal::Def)
-    return false if nodoc?(a_def)
+    return false if nodoc?(a_def, a_def.location)
 
     must_include? a_def.location
   end
@@ -169,7 +169,7 @@ class Crystal::Doc::Generator
   end
 
   def must_include?(a_macro : Crystal::Macro)
-    return false if nodoc?(a_macro)
+    return false if nodoc?(a_macro, a_macro.location)
 
     must_include? a_macro.location
   end
@@ -179,7 +179,7 @@ class Crystal::Doc::Generator
   end
 
   def must_include?(const : Crystal::Const)
-    return false if nodoc?(const)
+    return false if nodoc?(const, const.locations.try(&.first?))
     return true if crystal_builtin?(const)
 
     const.locations.try &.any? { |location| must_include? location }
@@ -209,18 +209,32 @@ class Crystal::Doc::Generator
     toplevel_items.any? { |item| must_include? item }
   end
 
-  def nodoc?(str : String?) : Bool
+  # TODO: remove after 0.34.0
+  # Needed because there are multiple passes while generating docs
+  # and we want to avoid duplicate warnings per location
+  @nodoc_warnings_locations = Set(String).new
+
+  def nodoc?(str : String?, location : Location?) : Bool
     return false if !str || !@program.wants_doc?
-    # TODO: remove after 0.33.0
+
+    # TODO: remove after 0.34.0
     if str.starts_with?("nodoc")
-      @program.warning_failures << "`nodoc` is no longer supported. Use `:nodoc:` instead"
+      if location
+        # Show one line above to highlight the nodoc line
+        location = Location.new(location.filename, location.line_number - 1, location.column_number)
+      end
+
+      if !location || @nodoc_warnings_locations.add?(location.to_s)
+        @program.report_warning_at location, "`nodoc` is no longer supported. Use `:nodoc:` instead"
+      end
       return true
     end
+
     str.starts_with?(":nodoc:")
   end
 
-  def nodoc?(obj)
-    nodoc? obj.doc.try &.strip
+  def nodoc?(obj, location : Location?)
+    nodoc? obj.doc.try(&.strip), location
   end
 
   def crystal_builtin?(type)
