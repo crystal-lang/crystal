@@ -2,7 +2,7 @@ require "spec"
 require "http/server/request_processor"
 
 private class RaiseIOError < IO
-  def initialize(@value : Int32)
+  def initialize(@value : Errno)
   end
 
   def read(slice : Bytes)

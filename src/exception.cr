@@ -69,13 +69,13 @@ class Exception
   end
 
   # :nodoc:
-  def self.from_errno(message : String? = nil, errno : Int32 = Errno.value, **opts)
+  def self.from_errno(message : String? = nil, errno : Errno = Errno.value, **opts)
     message = self.build_message(message, **opts)
     message =
       if message
-        "#{message}: #{Errno.message(errno)}"
+        "#{message}: #{errno.message}"
       else
-        Errno.message(errno)
+        errno.message
       end
 
     self.new_from_errno(message, errno, **opts)
@@ -87,26 +87,26 @@ class Exception
   end
 
   # :nodoc:
-  protected def self.new_from_errno(message : String, errno : Int32, **opts)
+  protected def self.new_from_errno(message : String, errno : Errno, **opts)
     self.new(message, **opts)
   end
 
   {% if flag?(:win32) %}
     # :nodoc:
-    def self.from_winerror(message : String? = nil, code : UInt32 = WinError.value, **opts)
+    def self.from_winerror(message : String? = nil, winerror : WinError = WinError.value, **opts)
       message = self.build_message(message, **opts)
       message =
         if message
-          "#{message}: #{WinError.message(code)}"
+          "#{message}: #{winerror.message}"
         else
-          WinError.message(code)
+          winerror.message
         end
 
-      self.new_from_winerror(message, code, **opts)
+      self.new_from_winerror(message, winerror, **opts)
     end
 
     # :nodoc:
-    protected def self.new_from_winerror(message : String, code : UInt32, **opts)
+    protected def self.new_from_winerror(message : String, winerror : WinError, **opts)
       self.new(message, **opts)
     end
   {% end %}

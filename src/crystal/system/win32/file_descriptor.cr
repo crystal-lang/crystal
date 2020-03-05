@@ -54,7 +54,7 @@ module Crystal::System::FileDescriptor
     file_type = LibC.GetFileType(handle)
 
     if file_type == LibC::FILE_TYPE_UNKNOWN
-      error = LibC.GetLastError
+      error = WinError.value
       raise IO::Error.from_winerror("Unable to get info", error) unless error == WinError::ERROR_SUCCESS
     end
 
@@ -147,7 +147,7 @@ module Crystal::System::FileDescriptor
     overlapped.union.offset.offset = LibC::DWORD.new(offset)
     overlapped.union.offset.offsetHigh = LibC::DWORD.new(offset >> 32)
     if LibC.ReadFile(handle, buffer, buffer.size, out bytes_read, pointerof(overlapped)) == 0
-      error = LibC.GetLastError
+      error = WinError.value
       return 0 if error == WinError::ERROR_HANDLE_EOF
       raise IO::Error.from_winerror "Error reading file", error
     end

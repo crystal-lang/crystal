@@ -37,7 +37,7 @@ module Crystal::System::Env
       elsif small_buf && length > 0
         next length
       else
-        case last_error = LibC.GetLastError
+        case last_error = WinError.value
         when WinError::ERROR_SUCCESS
           return ""
         when WinError::ERROR_ENVVAR_NOT_FOUND

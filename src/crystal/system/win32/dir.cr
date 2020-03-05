@@ -27,7 +27,7 @@ module Crystal::System::Dir
         dir.handle = handle
         return data_to_entry(data)
       else
-        error = LibC.GetLastError
+        error = WinError.value
         if error == WinError::ERROR_FILE_NOT_FOUND
           return nil
         else
@@ -39,7 +39,7 @@ module Crystal::System::Dir
       if LibC.FindNextFileW(dir.handle, out data_) != 0
         return data_to_entry(data_)
       else
-        error = LibC.GetLastError
+        error = WinError.value
         if error == WinError::ERROR_NO_MORE_FILES
           return nil
         else
