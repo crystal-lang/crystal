@@ -81,9 +81,9 @@ abstract class IO
   #
   # ```
   # STDIN.read_timeout = 1
-  # STDIN.gets # raises IO::Timeout (after 1 second)
+  # STDIN.gets # raises IO::TimeoutError (after 1 second)
   # ```
-  class Timeout < Exception
+  class TimeoutError < Exception
   end
 
   # Reads at most *slice.size* bytes from this `IO` into *slice*.

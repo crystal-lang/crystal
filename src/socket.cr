@@ -140,7 +140,7 @@ class Socket < IO
     connect(addr, timeout) { |error| raise error }
   end
 
-  # Tries to connect to a remote address. Yields an `IO::Timeout` or an
+  # Tries to connect to a remote address. Yields an `IO::TimeoutError` or an
   # `Socket::ConnectError` error if the connection failed.
   def connect(addr, timeout = nil)
     timeout = timeout.seconds unless timeout.is_a? Time::Span | Nil
@@ -153,7 +153,7 @@ class Socket < IO
         return
       when Errno::EINPROGRESS, Errno::EALREADY
         wait_writable(timeout: timeout) do |error|
-          return yield IO::Timeout.new("connect timed out")
+          return yield IO::TimeoutError.new("connect timed out")
         end
       else
         return yield Socket::ConnectError.from_errno("connect")
