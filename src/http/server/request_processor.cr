@@ -80,12 +80,12 @@ class HTTP::Server::RequestProcessor
           break unless body.closed?
         end
       end
-    rescue ex : Errno
+    rescue IO::Error
       # IO-related error, nothing to do
     ensure
       begin
         input.close if must_close
-      rescue ex : Errno
+      rescue IO::Error
         # IO-related error, nothing to do
       end
     end
