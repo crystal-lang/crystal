@@ -3,7 +3,7 @@ require "digest/crc32"
 
 # The Gzip module contains readers and writers of gzip format compressed
 # data, as specified in [RFC 1952](https://www.ietf.org/rfc/rfc1952.txt).
-module Gzip
+module Compress::Gzip
   NO_COMPRESSION      = Compress::Deflate::NO_COMPRESSION
   BEST_SPEED          = Compress::Deflate::BEST_SPEED
   BEST_COMPRESSION    = Compress::Deflate::BEST_COMPRESSION

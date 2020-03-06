@@ -15,18 +15,18 @@
 # ### Example: decompress a gzip file
 #
 # ```
-# require "gzip"
+# require "compress/gzip"
 #
 # File.write("file.gzip", Bytes[31, 139, 8, 0, 0, 0, 0, 0, 0, 3, 75, 76, 74, 6, 0, 194, 65, 36, 53, 3, 0, 0, 0])
 #
 # string = File.open("file.gzip") do |file|
-#   Gzip::Reader.open(file) do |gzip|
+#   Compress::Gzip::Reader.open(file) do |gzip|
 #     gzip.gets_to_end
 #   end
 # end
 # string # => "abc"
 # ```
-class Gzip::Reader < IO
+class Compress::Gzip::Reader < IO
   include IO::Buffered
 
   # Whether to close the enclosed `IO` when closing this reader.
@@ -93,11 +93,11 @@ class Gzip::Reader < IO
         isize = @io.read_bytes(UInt32, IO::ByteFormat::LittleEndian)
 
         if crc32 != @crc32
-          raise Gzip::Error.new("CRC32 checksum mismatch")
+          raise Compress::Gzip::Error.new("CRC32 checksum mismatch")
         end
 
         if isize != @isize
-          raise Gzip::Error.new("isize mismatch")
+          raise Compress::Gzip::Error.new("isize mismatch")
         end
 
         # Reset checksum and total size for next entry
@@ -130,11 +130,11 @@ class Gzip::Reader < IO
 
   # Always raises `IO::Error` because this is a read-only `IO`.
   def unbuffered_write(slice : Bytes) : Nil
-    raise IO::Error.new("Can't write to Gzip::Reader")
+    raise IO::Error.new("Can't write to Compress::Gzip::Reader")
   end
 
   def unbuffered_flush
-    raise IO::Error.new "Can't flush Gzip::Reader"
+    raise IO::Error.new "Can't flush Compress::Gzip::Reader"
   end
 
   # Closes this reader.
