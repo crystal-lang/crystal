@@ -14,7 +14,7 @@ enum WinError : UInt32
   # https://github.com/python/cpython/blob/master/PC/generrmap.c
   # https://github.com/python/cpython/blob/master/PC/errmap.h
   def to_errno
-    case value
+    case self
     when ERROR_FILE_NOT_FOUND            then Errno::ENOENT
     when ERROR_PATH_NOT_FOUND            then Errno::ENOENT
     when ERROR_TOO_MANY_OPEN_FILES       then Errno::EMFILE

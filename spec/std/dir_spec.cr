@@ -85,7 +85,7 @@ describe "Dir" do
   end
 
   it "tests mkdir with an existing path" do
-    expect_raises(File::Error, "Unable to create directory: '#{datapath.inspect_unquoted}'") do
+    expect_raises(File::AlreadyExistsError, "Unable to create directory: '#{datapath.inspect_unquoted}'") do
       Dir.mkdir(datapath, 0o700)
     end
   end
@@ -103,7 +103,7 @@ describe "Dir" do
 
     context "path exists" do
       it "fails when path is a file" do
-        expect_raises(File::Error, "Unable to create directory: '#{datapath("test_file.txt").inspect_unquoted}': File exists") do
+        expect_raises(File::AlreadyExistsError, "Unable to create directory: '#{datapath("test_file.txt").inspect_unquoted}': File exists") do
           Dir.mkdir_p(datapath("test_file.txt"))
         end
       end

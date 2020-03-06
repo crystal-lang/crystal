@@ -840,6 +840,14 @@ describe "File" do
     end
   end
 
+  it "raises when reading a file with no permission" do
+    with_tempfile("file.txt") do |path|
+      File.touch(path)
+      File.chmod(path, 0)
+      expect_raises(File::AccessDeniedError) { File.read(path) }
+    end
+  end
+
   describe "truncate" do
     it "truncates" do
       with_tempfile("truncate.txt") do |path|

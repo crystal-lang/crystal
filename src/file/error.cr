@@ -6,22 +6,20 @@ class File::Error < IO::Error
   getter other : String?
 
   private def self.new_from_errno(message, errno, **opts)
-    if errno == Errno::ENOENT
+    case errno
+    when Errno::ENOENT
       File::NotFoundError.new(message, **opts)
+    when Errno::EEXIST
+      File::AlreadyExistsError.new(message, **opts)
+    when Errno::EACCES
+      File::AccessDeniedError.new(message, **opts)
     else
       super message, errno, **opts
     end
   end
 
-  private def self.new_from_winerror(message, code, **opts)
-    case code
-    when WinError::ERROR_FILE_NOT_FOUND, WinError::ERROR_PATH_NOT_FOUND, WinError::ERROR_INVALID_DRIVE,
-         WinError::ERROR_NO_MORE_FILES, WinError::ERROR_BAD_NETPATH, WinError::ERROR_BAD_NET_NAME, WinError::ERROR_BAD_PATHNAME,
-         WinError::ERROR_FILENAME_EXCED_RANGE
-      File::NotFoundError.new(message, **opts)
-    else
-      super message, code, **opts
-    end
+  private def self.new_from_winerror(message, winerror, **opts)
+    new_from_errno(message, winerror.to_errno, **opts)
   end
 
   protected def self.build_message(message, *, file : String)
@@ -38,4 +36,10 @@ class File::Error < IO::Error
 end
 
 class File::NotFoundError < File::Error
+end
+
+class File::AlreadyExistsError < File::Error
+end
+
+class File::AccessDeniedError < File::Error
 end

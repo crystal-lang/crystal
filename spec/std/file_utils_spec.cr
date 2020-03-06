@@ -328,18 +328,18 @@ describe "FileUtils" do
   end
 
   it "tests mkdir with an existing path" do
-    expect_raises(File::Error, "Unable to create directory: '#{datapath}'") do
+    expect_raises(File::AlreadyExistsError, "Unable to create directory: '#{datapath}'") do
       Dir.mkdir(datapath, 0o700)
     end
   end
 
   it "tests mkdir with multiples existing paths" do
-    expect_raises(File::Error, "Unable to create directory: '#{datapath}'") do
+    expect_raises(File::AlreadyExistsError, "Unable to create directory: '#{datapath}'") do
       FileUtils.mkdir([datapath, datapath], 0o700)
     end
 
     with_tempfile("mkdir-nonexisting") do |path|
-      expect_raises(File::Error, "Unable to create directory: '#{datapath}'") do
+      expect_raises(File::AlreadyExistsError, "Unable to create directory: '#{datapath}'") do
         FileUtils.mkdir([path, datapath], 0o700)
       end
     end
@@ -361,7 +361,7 @@ describe "FileUtils" do
   it "tests mkdir_p with multiple existing path" do
     FileUtils.mkdir_p([datapath, datapath]).should be_nil
     with_tempfile("mkdir_p-existing") do |path|
-      expect_raises(File::Error, "Unable to create directory: '#{datapath("test_file.txt")}'") do
+      expect_raises(File::AlreadyExistsError, "Unable to create directory: '#{datapath("test_file.txt")}'") do
         FileUtils.mkdir_p([datapath("test_file.txt"), path])
       end
     end
@@ -499,7 +499,7 @@ describe "FileUtils" do
       begin
         FileUtils.touch([path1, path2])
 
-        expect_raises(File::Error, "Error creating link: '#{path1}' -> '#{path2}'") do
+        expect_raises(File::AlreadyExistsError, "Error creating link: '#{path1}' -> '#{path2}'") do
           FileUtils.ln(path1, path2)
         end
       ensure
@@ -583,7 +583,7 @@ describe "FileUtils" do
       begin
         FileUtils.touch([path1, path2])
 
-        expect_raises(File::Error, "Error creating symlink: '#{path1}' -> '#{path2}'") do
+        expect_raises(File::AlreadyExistsError, "Error creating symlink: '#{path1}' -> '#{path2}'") do
           FileUtils.ln_s(path1, path2)
         end
       ensure
