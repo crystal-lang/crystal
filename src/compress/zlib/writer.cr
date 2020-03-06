@@ -5,7 +5,7 @@
 #
 # NOTE: unless created with a block, `close` must be invoked after all
 # data has been written to a Zlib::Writer instance.
-class Zlib::Writer < IO
+class Compress::Zlib::Writer < IO
   # Whether to close the enclosed `IO` when closing this writer.
   property? sync_close = false
 
