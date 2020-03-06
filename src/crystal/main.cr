@@ -42,7 +42,7 @@ module Crystal
         1
       end
 
-    status = AtExitHandlers.run status, ex
+    status = Crystal::AtExitHandlers.run status, ex
     ignore_stdio_errors { STDOUT.flush }
     ignore_stdio_errors { STDERR.flush }
 

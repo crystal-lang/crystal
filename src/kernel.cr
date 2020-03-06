@@ -1,3 +1,5 @@
+require "crystal/at_exit_handlers"
+
 {% if flag?(:win32) %}
   # The standard input file descriptor. Contains data piped to the program.
   STDIN = IO::FileDescriptor.new(0)
@@ -436,37 +438,6 @@ def pp(**objects)
   pp(objects) unless objects.empty?
 end
 
-# :nodoc:
-module AtExitHandlers
-  @@running = false
-
-  private class_getter(handlers) { [] of Int32, Exception? -> }
-
-  def self.add(handler)
-    raise "Cannot use at_exit from an at_exit handler" if @@running
-
-    handlers << handler
-  end
-
-  def self.run(status, exception = nil)
-    @@running = true
-
-    if handlers = @@handlers
-      # Run the registered handlers in reverse order
-      while handler = handlers.pop?
-        begin
-          handler.call status, exception
-        rescue handler_ex
-          Crystal::System.print_error "Error running at_exit handler: %s\n", handler_ex.message || ""
-          status = 1 if status.zero?
-        end
-      end
-    end
-
-    status
-  end
-end
-
 # Registers the given `Proc` for execution when the program exits.
 # If multiple handlers are registered, they are executed in reverse order of registration.
 #
@@ -492,7 +463,7 @@ end
 # normally or `exit(status)` is called explicitly, then the second argument
 # will be `nil`.
 def at_exit(&handler : Int32, Exception? ->) : Nil
-  AtExitHandlers.add(handler)
+  Crystal::AtExitHandlers.add(handler)
 end
 
 # Terminates execution immediately, returning the given status code
@@ -500,7 +471,7 @@ end
 #
 # Registered `at_exit` procs are executed.
 def exit(status = 0) : NoReturn
-  status = AtExitHandlers.run status
+  status = Crystal::AtExitHandlers.run status
   Crystal.ignore_stdio_errors { STDOUT.flush }
   Crystal.ignore_stdio_errors { STDERR.flush }
   Process.exit(status)
