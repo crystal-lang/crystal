@@ -12,8 +12,11 @@ class Socket < IO
 
   class Error < IO::Error
     private def self.new_from_errno(message, errno, **opts)
-      if errno == Errno::ECONNREFUSED
+      case errno
+      when Errno::ECONNREFUSED
         Socket::ConnectError.new(message, **opts)
+      when Errno::EADDRINUSE
+        Socket::BindError.new(message, **opts)
       else
         super message, errno, **opts
       end
