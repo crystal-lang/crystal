@@ -3,7 +3,7 @@ module Zip
   # optionally verifying the computed value against an
   # expected one.
   private class ChecksumReader < IO
-    getter crc32 = CRC32.initial
+    getter crc32 = Digest::CRC32.initial
 
     def initialize(@io : IO, @filename : String, verify @expected_crc32 : UInt32? = nil)
     end
@@ -15,7 +15,7 @@ module Zip
           raise Zip::Error.new("Checksum failed for entry #{@filename} (expected #{expected_crc32}, got #{crc32}")
         end
       else
-        @crc32 = CRC32.update(slice[0, read_bytes], @crc32)
+        @crc32 = Digest::CRC32.update(slice[0, read_bytes], @crc32)
       end
       read_bytes
     end
