@@ -49,7 +49,7 @@ module Crystal::System::File
     if NOT_FOUND_ERRORS.includes? error
       return nil
     else
-      raise ::File::Error.from_winerror(message, file: path)
+      raise ::File::Error.from_winerror(message, error, file: path)
     end
   end
 
