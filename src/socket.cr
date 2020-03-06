@@ -200,8 +200,8 @@ class Socket < IO
   # sock = Socket.udp(Socket::Family::INET)
   # sock.bind Socket::IPAddress.new("192.168.1.25", 80)
   # ```
-  private def bind(addr, addrstr)
-    bind(addr) { |errno| raise errno }
+  def bind(addr : Socket::Address)
+    bind(addr, addr.to_s) { |errno| raise errno }
   end
 
   # Tries to bind the socket to a local address.
