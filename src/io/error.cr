@@ -1,5 +1,6 @@
 class IO
   class Error < Exception
+    include SystemError
   end
 
   class EOFError < Error
