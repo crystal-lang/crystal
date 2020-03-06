@@ -18,10 +18,6 @@ class File::Error < IO::Error
     end
   end
 
-  private def self.new_from_winerror(message, winerror, **opts)
-    new_from_errno(message, winerror.to_errno, **opts)
-  end
-
   protected def self.build_message(message, *, file : String)
     "#{message}: '#{file.inspect_unquoted}'"
   end

@@ -120,7 +120,7 @@ class Exception
 
     # :nodoc:
     protected def self.new_from_winerror(message : String, winerror : WinError, **opts)
-      self.new(message, **opts)
+      new_from_errno(message, winerror.to_errno, **opts)
     end
   {% end %}
 end
