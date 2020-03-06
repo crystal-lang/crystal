@@ -112,7 +112,7 @@ class Gzip::Writer < IO
   private def write_header
     flate_io = @flate_io
     unless flate_io
-      flate_io = @flate_io = Flate::Writer.new(@io, level: @level)
+      flate_io = @flate_io = Compress::Deflate::Writer.new(@io, level: @level)
       header.to_io(@io)
     end
     flate_io

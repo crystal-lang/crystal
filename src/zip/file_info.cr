@@ -121,7 +121,7 @@ module Zip::FileInfo
         io = IO::Sized.new(io, compressed_size) unless is_sized
       end
 
-      io = Flate::Reader.new(io)
+      io = Compress::Deflate::Reader.new(io)
     else
       raise "Unsupported compression method: #{compression_method}"
     end

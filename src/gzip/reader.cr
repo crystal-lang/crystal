@@ -38,7 +38,7 @@ class Gzip::Reader < IO
   # Returns the first header in the gzip stream, if any.
   getter header : Header?
 
-  @flate_io : Flate::Reader?
+  @flate_io : Compress::Deflate::Reader?
 
   # Creates a new reader from the given *io*.
   def initialize(@io : IO, @sync_close = false)
@@ -55,7 +55,7 @@ class Gzip::Reader < IO
     return unless first_byte
 
     @header = Header.new(first_byte, @io)
-    @flate_io = Flate::Reader.new(@io)
+    @flate_io = Compress::Deflate::Reader.new(@io)
   end
 
   # Creates a new reader from the given *filename*.
@@ -108,7 +108,7 @@ class Gzip::Reader < IO
         first_byte = @io.read_byte
         if first_byte
           Header.new(first_byte, @io)
-          @flate_io = Flate::Reader.new(@io)
+          @flate_io = Compress::Deflate::Reader.new(@io)
         else
           @flate_io = nil
           break

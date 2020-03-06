@@ -1,4 +1,4 @@
-require "flate"
+require "compress/deflate"
 require "digest/crc32"
 require "./*"
 

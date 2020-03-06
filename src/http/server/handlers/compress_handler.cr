@@ -1,5 +1,5 @@
 {% if !flag?(:without_zlib) %}
-  require "flate"
+  require "compress/deflate"
   require "gzip"
 {% end %}
 
@@ -19,7 +19,7 @@ class HTTP::CompressHandler
         context.response.output = Gzip::Writer.new(context.response.output, sync_close: true)
       elsif request_headers.includes_word?("Accept-Encoding", "deflate")
         context.response.headers["Content-Encoding"] = "deflate"
-        context.response.output = Flate::Writer.new(context.response.output, sync_close: true)
+        context.response.output = Compress::Deflate::Writer.new(context.response.output, sync_close: true)
       end
 
       call_next(context)

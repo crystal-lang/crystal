@@ -80,7 +80,7 @@ module Zlib
 
       reader = Reader.new(io)
 
-      expect_raises(Flate::Error, "flate: buffer error") do
+      expect_raises(Compress::Deflate::Error, "deflate: buffer error") do
         reader.gets_to_end
       end
     end

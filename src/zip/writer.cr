@@ -104,7 +104,7 @@ class Zip::Writer
       yield @uncompressed_size_counter
     when .deflated?
       @compressed_size_counter.io = @io
-      io = Flate::Writer.new(@compressed_size_counter)
+      io = Compress::Deflate::Writer.new(@compressed_size_counter)
       @uncompressed_size_counter.io = io
       yield @uncompressed_size_counter
       io.close

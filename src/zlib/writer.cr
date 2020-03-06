@@ -16,7 +16,7 @@ class Zlib::Writer < IO
   def initialize(@io : IO, @level = Zlib::DEFAULT_COMPRESSION, @sync_close = false, @dict : Bytes? = nil)
     @wrote_header = false
     @adler32 = Digest::Adler32.initial
-    @flate_io = Flate::Writer.new(@io, level: level, dict: @dict)
+    @flate_io = Compress::Deflate::Writer.new(@io, level: level, dict: @dict)
   end
 
   # Creates a new writer to the given *filename*.
