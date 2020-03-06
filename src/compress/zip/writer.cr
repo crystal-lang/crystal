@@ -5,10 +5,10 @@ require "./file_info"
 # ### Example
 #
 # ```
-# require "zip"
+# require "compress/zip"
 #
 # File.open("./file.zip", "w") do |file|
-#   Zip::Writer.open(file) do |zip|
+#   Compress::Zip::Writer.open(file) do |zip|
 #     # Add a file with a String content
 #     zip.add "foo.txt", "contents of foo"
 #
@@ -23,7 +23,7 @@ require "./file_info"
 #   end
 # end
 # ```
-class Zip::Writer
+class Compress::Zip::Writer
   # Whether to close the enclosed `IO` when closing this writer.
   property? sync_close = false
 

@@ -11,9 +11,9 @@ require "./file_info"
 # ### Example
 #
 # ```
-# require "zip"
+# require "compress/zip"
 #
-# File.open("./file.zip") do |file|
+# Compress::File.open("./file.zip") do |file|
 #   Zip::Reader.open(file) do |zip|
 #     zip.each_entry do |entry|
 #       p entry.filename
@@ -24,7 +24,7 @@ require "./file_info"
 #   end
 # end
 # ```
-class Zip::Reader
+class Compress::Zip::Reader
   # Whether to close the enclosed `IO` when closing this reader.
   property? sync_close = false
 
@@ -136,7 +136,7 @@ class Zip::Reader
 
   private def verify_checksum(entry)
     if entry.crc32 != entry.checksum_io.crc32
-      raise Zip::Error.new("Checksum failed for entry #{entry.filename} (expected #{entry.crc32}, got #{entry.checksum_io.crc32}")
+      raise Compress::Zip::Error.new("Checksum failed for entry #{entry.filename} (expected #{entry.crc32}, got #{entry.checksum_io.crc32}")
     end
   end
 

@@ -1,5 +1,5 @@
 # Base type for file information related to zip entries.
-module Zip::FileInfo
+module Compress::Zip::FileInfo
   SIGNATURE                 = 0x04034b50
   DATA_DESCRIPTOR_SIGNATURE = 0x08074b50
 
