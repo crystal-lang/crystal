@@ -152,7 +152,7 @@ class Thread
       end
       ret = LibC.pthread_attr_destroy(pointerof(attr))
       raise Errno.new("pthread_attr_destroy", ret) unless ret == 0
-    {% elsif flag?(:linux) %}
+    {% elsif flag?(:linux) || flag?(:netbsd) %}
       if LibC.pthread_getattr_np(@th, out attr) == 0
         LibC.pthread_attr_getstack(pointerof(attr), pointerof(address), out _)
       end

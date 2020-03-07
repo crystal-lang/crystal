@@ -29,7 +29,7 @@ module Termios
       TAB0   = LibC::TAB0
       TAB3   = LibC::TAB3
     end
-  {% elsif flag?(:openbsd) %}
+  {% elsif flag?(:openbsd) || flag?(:netbsd) %}
     @[Flags]
     enum OutputMode
       OPOST  = LibC::OPOST

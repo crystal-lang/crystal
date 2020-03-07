@@ -70,7 +70,7 @@ end
       String.new(buf)
     end
   end
-{% elsif flag?(:freebsd) %}
+{% elsif flag?(:freebsd) || flag?(:netbsd) %}
   require "c/sysctl"
 
   class Process
