@@ -3,6 +3,8 @@ require "./value_methods"
 struct LLVM::Function
   include LLVM::ValueMethods
 
+  property debug_params : Array(LibLLVMExt::Metadata) = [] of LibLLVMExt::Metadata
+
   def basic_blocks
     BasicBlockCollection.new self
   end
@@ -82,6 +84,10 @@ struct LLVM::Function
 
   def delete
     LibLLVM.delete_function(self)
+  end
+
+  def add_debug_param(debug_type)
+    debug_params << debug_type if debug_type
   end
 
   def body_to_ll_string

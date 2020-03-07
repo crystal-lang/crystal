@@ -123,14 +123,16 @@ class Crystal::CodeGenVisitor
             args_offset = !is_fun_literal && self_type.passed_as_self? ? 2 : 1
             location = target_def.location
             context.vars.each do |name, var|
+              next if var.debug_variable_created
+
               # Self always comes as the first parameter, unless it's a closure:
               # then it will be fetched from the closure data.
               if name == "self" && !is_closure
-                declare_parameter(name, var.type, 1, var.pointer, location)
-              elsif arg_no = args.index { |arg| arg.name == name }
-                # declare_parameter(name, var.type, arg_no + args_offset, var.pointer, location)
-              else
-                # declare_variable(name, var.type, var.pointer, location, alloca_block)
+                declare_debug_for_funciton_argument(name, var.type, 1, var.pointer, location)
+              # Method debug parameters are skipped as they were defined in create_local_copy_of_fun_args()
+              # due to LLVM variable dominance issue in some closure cases
+              elsif args.none? { |arg| arg.name == name }
+                declare_variable(name, var.type, var.pointer, location, alloca_block)
               end
             end
           end
@@ -283,6 +285,17 @@ class Crystal::CodeGenVisitor
     end
 
     setup_context_fun(mangled_name, target_def, llvm_args_types, llvm_return_type)
+
+    if @debug.variables?
+      if context.fun
+        context.fun.add_debug_param(get_debug_type(target_def.type))
+      end
+      args.each do |arg|
+        if context.fun
+          context.fun.add_debug_param(get_debug_type(arg.type))
+        end
+      end
+    end
 
     if @single_module && !target_def.no_inline? && !target_def.is_a?(External)
       context.fun.linkage = LLVM::Linkage::Internal

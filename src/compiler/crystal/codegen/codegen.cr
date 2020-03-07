@@ -135,9 +135,9 @@ module Crystal
       # llvm value, so in a way it's "already loaded".
       # This field is true if that's the case.
       getter already_loaded : Bool
-      getter debug_pointer : LLVM::Value?
+      getter debug_variable_created : Bool
 
-      def initialize(@pointer, @type, @already_loaded = false, @debug_pointer = nil)
+      def initialize(@pointer, @type, @already_loaded = false, @debug_variable_created = false)
       end
     end
 
@@ -1353,7 +1353,11 @@ module Crystal
     end
 
     def declare_var(var)
-      context.vars[var.name] ||= LLVMVar.new(var.no_returns? ? llvm_nil : alloca(llvm_type(var.type), var.name), var.type)
+      context.vars[var.name] ||= begin
+        pointer = var.no_returns? ? llvm_nil : alloca(llvm_type(var.type), var.name)
+        debug_variable_created = declare_variable(var.name, var.type, pointer, var.location)
+        LLVMVar.new(pointer, var.type, debug_variable_created: debug_variable_created)
+      end
     end
 
     def declare_lib_var(name, type, thread_local)
@@ -1727,10 +1731,11 @@ module Crystal
               location = obj.location
             end
 
+            debug_variable_created = false
             if location
-              declare_variable name, var_type, ptr, location, alloca_block
+              debug_variable_created = declare_variable name, var_type, ptr, location, alloca_block
             end
-            context.vars[name] = LLVMVar.new(ptr, var_type)
+            context.vars[name] = LLVMVar.new(ptr, var_type, debug_variable_created: debug_variable_created)
 
             # Assign default nil for variables that are bound to the nil variable
             if bound_to_mod_nil?(var)
