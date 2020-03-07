@@ -47,11 +47,11 @@ lib LibC
   end
 
   fun chmod(x0 : Char*, x1 : ModeT) : Int
-  fun fstat(x0 : Int, x1 : Stat*) : Int
-  fun lstat(x0 : Char*, x1 : Stat*) : Int
+  fun fstat = __fstat50(x0 : Int, x1 : Stat*) : Int
+  fun lstat = __lstat50(x0 : Char*, x1 : Stat*) : Int
   fun mkdir(x0 : Char*, x1 : ModeT) : Int
   fun mkfifo(x0 : Char*, x1 : ModeT) : Int
-  fun mknod(x0 : Char*, x1 : ModeT, x2 : DevT) : Int
-  fun stat(x0 : Char*, x1 : Stat*) : Int
+  fun mknod = __mknod50(x0 : Char*, x1 : ModeT, x2 : DevT) : Int
+  fun stat = __stat50(x0 : Char*, x1 : Stat*) : Int
   fun umask(x0 : ModeT) : ModeT
 end

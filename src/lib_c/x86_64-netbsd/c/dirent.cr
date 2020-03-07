@@ -14,7 +14,7 @@ lib LibC
   end
 
   fun closedir(x0 : DIR*) : Int
-  fun opendir(x0 : Char*) : DIR*
+  fun opendir = __opendir30(x0 : Char*) : DIR*
   fun readdir(x0 : DIR*) : Dirent*
   fun rewinddir(x0 : DIR*) : Void
 end

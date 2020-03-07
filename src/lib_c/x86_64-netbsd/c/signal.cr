@@ -47,9 +47,9 @@ lib LibC
   fun kill(x0 : PidT, x1 : Int) : Int
   fun pthread_sigmask(Int, SigsetT*, SigsetT*) : Int
   fun signal(x0 : Int, x1 : Int -> Void) : Int -> Void
-  fun sigemptyset(SigsetT*) : Int
-  fun sigfillset(SigsetT*) : Int
-  fun sigaddset(SigsetT*, Int) : Int
-  fun sigdelset(SigsetT*, Int) : Int
-  fun sigismember(SigsetT*, Int) : Int
+  fun sigemptyset = __sigemptyset14(SigsetT*) : Int
+  fun sigfillset = __sigfillset14(SigsetT*) : Int
+  fun sigaddset = __sigaddset14(SigsetT*, Int) : Int
+  fun sigdelset = __sigdelset14(SigsetT*, Int) : Int
+  fun sigismember = __sigismember14(SigsetT*, Int) : Int
 end
