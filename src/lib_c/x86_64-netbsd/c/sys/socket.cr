@@ -1,10 +1,10 @@
 require "./types"
 
 lib LibC
+  SOCK_STREAM    =      1
   SOCK_DGRAM     =      2
   SOCK_RAW       =      3
   SOCK_SEQPACKET =      5
-  SOCK_STREAM    =      1
   SOL_SOCKET     = 0xffff
   SO_BROADCAST   = 0x0020
   SO_KEEPALIVE   = 0x0008
@@ -24,24 +24,24 @@ lib LibC
   AF_UNSPEC      =      0
   AF_LOCAL       =      1
   SHUT_RD        =      0
-  SHUT_RDWR      =      2
   SHUT_WR        =      1
-  SOCK_CLOEXEC   = 0x8000
+  SHUT_RDWR      =      2
+  SOCK_CLOEXEC   = 0x10000000
 
   alias SocklenT = UInt
   alias SaFamilyT = Char
 
   struct Sockaddr
-    sa_len : Char
+    sa_len : UInt8
     sa_family : SaFamilyT
     sa_data : StaticArray(Char, 14)
   end
 
   struct SockaddrStorage
-    ss_len : UChar
+    ss_len : UInt8
     ss_family : SaFamilyT
     __ss_pad1 : StaticArray(Char, 6)
-    __ss_pad2 : ULongLong
+    __ss_pad2 : UInt16
     __ss_pad3 : StaticArray(Char, 240)
   end
 
@@ -63,6 +63,6 @@ lib LibC
   fun sendto(x0 : Int, x1 : Void*, x2 : SizeT, x3 : Int, x4 : Sockaddr*, x5 : SocklenT) : SSizeT
   fun setsockopt(x0 : Int, x1 : Int, x2 : Int, x3 : Void*, x4 : SocklenT) : Int
   fun shutdown(x0 : Int, x1 : Int) : Int
-  fun socket(x0 : Int, x1 : Int, x2 : Int) : Int
+  fun socket = __socket30(x0 : Int, x1 : Int, x2 : Int) : Int
   fun socketpair(x0 : Int, x1 : Int, x2 : Int, x3 : Int*) : Int
 end
