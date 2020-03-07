@@ -93,7 +93,7 @@ lib LibC
   ENOSTR = 91 # Not a STREAM
   ETIME = 92 # STREAM ioctl timeout
   ENOATTR = 93 # Attribute not found
-  EMULTIHOP = 94 # Multihop attempted 
+  EMULTIHOP = 94 # Multihop attempted
   ENOLINK = 95 # Link has been severed
   EPROTO = 96 # Protocol error
 end
