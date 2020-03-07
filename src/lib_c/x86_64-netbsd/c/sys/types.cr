@@ -52,7 +52,7 @@ lib LibC
     ptm_pad2 : UInt8[2]
     ptm_owner: PthreadT
     ptm_waiters : PthreadT*
-    ptm_recursed : Uint
+    ptm_recursed : UInt
     ptm_spare2 : Void*
   end
 
