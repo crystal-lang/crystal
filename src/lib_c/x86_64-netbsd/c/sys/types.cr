@@ -3,18 +3,18 @@ require "../stdint"
 
 lib LibC
 
-  alias BlkcntT = LongLong
-  alias BlksizeT = Int
-  alias ClockT = LongLong
+  alias BlkcntT = Int64
+  alias BlksizeT = Int32
+  alias ClockT = UInt
   alias ClockidT = Int
-  alias DevT = Int
-  alias GidT = UInt
-  alias IdT = UInt
-  alias InoT = ULongLong
-  alias ModeT = UInt
-  alias NlinkT = UInt
-  alias OffT = LongLong
-  alias PidT = Int
+  alias DevT = UInt64
+  alias GidT = UInt32
+  alias IdT = UInt32
+  alias InoT = UInt64
+  alias ModeT = UInt32
+  alias NlinkT = UInt32
+  alias OffT = Int64
+  alias PidT = Int32
 
   type PthreadT = Void*
 
@@ -62,7 +62,7 @@ lib LibC
   end
 
   alias SSizeT = Long
-  alias SusecondsT = Long
-  alias TimeT = LongLong
-  alias UidT = UInt
+  alias SusecondsT = UInt
+  alias TimeT = Int64
+  alias UidT = UInt32
 end
