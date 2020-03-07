@@ -129,8 +129,8 @@ class Crystal::CodeGenVisitor
               # then it will be fetched from the closure data.
               if name == "self" && !is_closure
                 declare_debug_for_funciton_argument(name, var.type, 1, var.pointer, location)
-              # Method debug parameters are skipped as they were defined in create_local_copy_of_fun_args()
-              # due to LLVM variable dominance issue in some closure cases
+                # Method debug parameters are skipped as they were defined in create_local_copy_of_fun_args()
+                # due to LLVM variable dominance issue in some closure cases
               elsif args.none? { |arg| arg.name == name }
                 declare_variable(name, var.type, var.pointer, location, alloca_block)
               end
