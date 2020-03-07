@@ -40,6 +40,8 @@ class Crystal::Program
       flags.add "freebsd#{codegen_target.freebsd_version}"
     end
     flags.add "openbsd" if codegen_target.openbsd?
+    flags.add "netbsd" if codegen_target.netbsd?
+    flags.add "bsd" if codegen_target.bsd?
 
     flags
   end
