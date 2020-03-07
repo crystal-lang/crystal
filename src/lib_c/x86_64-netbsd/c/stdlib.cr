@@ -23,5 +23,5 @@ lib LibC
   fun setenv(x0 : Char*, x1 : Char*, x2 : Int) : Int
   fun strtof(x0 : Char*, x1 : Char**) : Float
   fun strtod(x0 : Char*, x1 : Char**) : Double
-  fun unsetenv(x0 : Char*) : Int
+  fun unsetenv = __unsetenv13(x0 : Char*) : Int
 end
