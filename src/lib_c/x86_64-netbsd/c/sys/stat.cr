@@ -27,8 +27,8 @@ lib LibC
   S_ISVTX  = 0o001000
 
   struct Stat
-    st_mode : ModeT
     st_dev : DevT
+    st_mode : ModeT
     st_ino : InoT
     st_nlink : NlinkT
     st_uid : UidT
@@ -37,12 +37,13 @@ lib LibC
     st_atim : Timespec
     st_mtim : Timespec
     st_ctim : Timespec
+    st_birthtim : Timespec
     st_size : OffT
     st_blocks : BlkcntT
     st_blksize : BlksizeT
     st_flags : UInt32T
     st_gen : UInt32T
-    __st_birthtim : Timespec
+    st_spare : UInt32[2]
   end
 
   fun chmod(x0 : Char*, x1 : ModeT) : Int
