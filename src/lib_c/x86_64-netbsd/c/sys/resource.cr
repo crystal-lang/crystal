@@ -3,7 +3,7 @@ lib LibC
     ru_utime : Timeval
     ru_stime : Timeval
     ru_maxrss : Long
-    ru_ix_rss : Long
+    ru_ixrss : Long
     ru_idrss : Long
     ru_isrss : Long
     ru_minflt : Long
@@ -21,5 +21,5 @@ lib LibC
   RUSAGE_SELF     =  0
   RUSAGE_CHILDREN = -1
 
-  fun getrusage(who : Int, usage : RUsage*) : Int16
+  fun getrusage(who : Int, usage : RUsage*) : Int
 end

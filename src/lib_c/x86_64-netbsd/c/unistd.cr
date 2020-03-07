@@ -3,10 +3,10 @@ require "./stdint"
 
 lib LibC
   F_OK        =    0
-  R_OK        = 0x04
-  W_OK        = 0x02
   X_OK        = 0x01
-  SC_CLK_TCK  =    3
+  W_OK        = 0x02
+  R_OK        = 0x04
+  SC_CLK_TCK  =   39
   SC_PAGESIZE =   28
 
   fun chroot(dirname : Char*) : Int

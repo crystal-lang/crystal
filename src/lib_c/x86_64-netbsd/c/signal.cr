@@ -9,6 +9,7 @@ lib LibC
   SIGTRAP   = 5
   SIGIOT    = LibC::SIGABRT
   SIGABRT   =  6
+  SIGEMT    =  7
   SIGFPE    =  8
   SIGKILL   =  9
   SIGBUS    = 10
@@ -30,7 +31,6 @@ lib LibC
   SIGVTALRM = 26
   SIGUSR1   = 30
   SIGUSR2   = 31
-  SIGEMT    =  7
   SIGINFO   = 29
   SIGWINCH  = 28
 
