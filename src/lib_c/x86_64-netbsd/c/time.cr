@@ -23,13 +23,13 @@ lib LibC
     tv_nsec : Long
   end
 
-  fun clock_gettime(x0 : ClockidT, x1 : Timespec*) : Int
-  fun clock_settime(x0 : ClockidT, x1 : Timespec*) : Int
-  fun gmtime_r(x0 : TimeT*, x1 : Tm*) : Tm*
-  fun localtime_r(x0 : TimeT*, x1 : Tm*) : Tm*
-  fun mktime(x0 : Tm*) : TimeT
+  fun clock_gettime = __clock_gettime50(x0 : ClockidT, x1 : Timespec*) : Int
+  fun clock_settime = __clock_settime50(x0 : ClockidT, x1 : Timespec*) : Int
+  fun gmtime_r = __gmtime_r50(x0 : TimeT*, x1 : Tm*) : Tm*
+  fun localtime_r = __localtime_r50(x0 : TimeT*, x1 : Tm*) : Tm*
+  fun mktime = __mktime50(x0 : Tm*) : TimeT
   fun tzset : Void
-  fun timegm(x0 : Tm*) : TimeT
+  fun timegm = __timegm50(x0 : Tm*) : TimeT
 
   $daylight : Int
   $timezone : Long
