@@ -785,7 +785,7 @@ class File < IO::FileDescriptor
       raise ArgumentError.new("Bytesize out of bounds")
     end
 
-    io = PReader.new(fd, offset, bytesize)
+    io = PReader.new(self, offset, bytesize)
     yield io ensure io.close
   end
 

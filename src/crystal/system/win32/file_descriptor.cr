@@ -1,10 +1,10 @@
 require "c/io"
 
 module Crystal::System::FileDescriptor
-  @fd : LibC::Int
+  @volatile_fd : Atomic(LibC::Int)
 
   private def unbuffered_read(slice : Bytes)
-    bytes_read = LibC._read(@fd, slice, slice.size)
+    bytes_read = LibC._read(fd, slice, slice.size)
     if bytes_read == -1
       if Errno.value == Errno::EBADF
         raise IO::Error.new "File not open for reading"
@@ -17,7 +17,7 @@ module Crystal::System::FileDescriptor
 
   private def unbuffered_write(slice : Bytes)
     until slice.empty?
-      bytes_written = LibC._write(@fd, slice, slice.size)
+      bytes_written = LibC._write(fd, slice, slice.size)
       if bytes_written == -1
         if Errno.value == Errno::EBADF
           raise IO::Error.new "File not open for writing"
@@ -51,7 +51,7 @@ module Crystal::System::FileDescriptor
   end
 
   private def windows_handle
-    ret = LibC._get_osfhandle(@fd)
+    ret = LibC._get_osfhandle(fd)
     raise Errno.new("_get_osfhandle") if ret == -1
     LibC::HANDLE.new(ret)
   end
@@ -78,7 +78,7 @@ module Crystal::System::FileDescriptor
   end
 
   private def system_seek(offset, whence : IO::Seek) : Nil
-    seek_value = LibC._lseek(@fd, offset, whence)
+    seek_value = LibC._lseek(fd, offset, whence)
 
     if seek_value == -1
       raise Errno.new "Unable to seek"
@@ -86,13 +86,13 @@ module Crystal::System::FileDescriptor
   end
 
   private def system_pos
-    pos = LibC._lseek(@fd, 0, IO::Seek::Current)
+    pos = LibC._lseek(fd, 0, IO::Seek::Current)
     raise Errno.new "Unable to tell" if pos == -1
     pos
   end
 
   private def system_tty?
-    LibC._isatty(@fd) != 0
+    LibC._isatty(fd) != 0
   end
 
   private def system_reopen(other : IO::FileDescriptor)
@@ -123,7 +123,7 @@ module Crystal::System::FileDescriptor
 
   def file_descriptor_close
     err = nil
-    if LibC._close(@fd) != 0
+    if LibC._close(fd) != 0
       case Errno.value
       when Errno::EINTR
         # ignore

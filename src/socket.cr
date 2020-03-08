@@ -38,7 +38,11 @@ class Socket < IO
   # :nodoc:
   SOMAXCONN = 128
 
-  getter fd : Int32
+  @volatile_fd : Atomic(Int32)
+
+  def fd : Int32
+    @volatile_fd.get
+  end
 
   @closed : Bool
 
@@ -69,7 +73,7 @@ class Socket < IO
     fd = LibC.socket(family, type, protocol)
     raise Errno.new("failed to create socket:") if fd == -1
     init_close_on_exec(fd)
-    @fd = fd
+    @volatile_fd = Atomic.new(fd)
 
     self.sync = true
     unless blocking
@@ -78,9 +82,10 @@ class Socket < IO
   end
 
   # Creates a Socket from an existing socket file descriptor.
-  def initialize(@fd : Int32, @family, @type, @protocol = Protocol::IP, blocking = false)
+  def initialize(fd : Int32, @family, @type, @protocol = Protocol::IP, blocking = false)
+    @volatile_fd = Atomic.new(fd)
     @closed = false
-    init_close_on_exec(@fd)
+    init_close_on_exec(fd)
 
     self.sync = true
     unless blocking
@@ -355,13 +360,13 @@ class Socket < IO
   end
 
   private def shutdown(how)
-    if LibC.shutdown(@fd, how) != 0
+    if LibC.shutdown(fd, how) != 0
       raise Errno.new("shutdown #{how}")
     end
   end
 
   def inspect(io : IO) : Nil
-    io << "#<#{self.class}:fd #{@fd}>"
+    io << "#<#{self.class}:fd #{fd}>"
   end
 
   def send_buffer_size
@@ -520,7 +525,7 @@ class Socket < IO
   end
 
   def fcntl(cmd, arg = 0)
-    self.class.fcntl @fd, cmd, arg
+    self.class.fcntl fd, cmd, arg
   end
 
   def finalize
@@ -539,13 +544,13 @@ class Socket < IO
 
   private def unbuffered_read(slice : Bytes)
     evented_read(slice, "Error reading socket") do
-      LibC.recv(@fd, slice, slice.size, 0).to_i32
+      LibC.recv(fd, slice, slice.size, 0).to_i32
     end
   end
 
   private def unbuffered_write(slice : Bytes)
     evented_write(slice, "Error writing to socket") do |slice|
-      LibC.send(@fd, slice, slice.size, 0)
+      LibC.send(fd, slice, slice.size, 0)
     end
   end
 
@@ -562,8 +567,12 @@ class Socket < IO
     @closed = true
     evented_close
 
+    # Clear the @volatile_fd before actually closing it in order to
+    # reduce the chance of reading an outdated fd value
+    _fd = @volatile_fd.swap(-1)
+
     err = nil
-    if LibC.close(@fd) != 0
+    if LibC.close(_fd) != 0
       case Errno.value
       when Errno::EINTR, Errno::EINPROGRESS
         # ignore

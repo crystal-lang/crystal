@@ -5,11 +5,11 @@ require "io/evented"
 module Crystal::System::FileDescriptor
   include IO::Evented
 
-  @fd : Int32
+  @volatile_fd : Atomic(Int32)
 
   private def unbuffered_read(slice : Bytes)
     evented_read(slice, "Error reading file") do
-      LibC.read(@fd, slice, slice.size).tap do |return_code|
+      LibC.read(fd, slice, slice.size).tap do |return_code|
         if return_code == -1 && Errno.value == Errno::EBADF
           raise IO::Error.new "File not open for reading"
         end
@@ -19,7 +19,7 @@ module Crystal::System::FileDescriptor
 
   private def unbuffered_write(slice : Bytes)
     evented_write(slice, "Error writing file") do |slice|
-      LibC.write(@fd, slice, slice.size).tap do |return_code|
+      LibC.write(fd, slice, slice.size).tap do |return_code|
         if return_code == -1 && Errno.value == Errno::EBADF
           raise IO::Error.new "File not open for writing"
         end
@@ -54,7 +54,7 @@ module Crystal::System::FileDescriptor
   end
 
   private def system_closed?
-    LibC.fcntl(@fd, LibC::F_GETFL) == -1
+    LibC.fcntl(fd, LibC::F_GETFL) == -1
   end
 
   def self.fcntl(fd, cmd, arg = 0)
@@ -64,7 +64,7 @@ module Crystal::System::FileDescriptor
   end
 
   private def system_info
-    if LibC.fstat(@fd, out stat) != 0
+    if LibC.fstat(fd, out stat) != 0
       raise Errno.new("Unable to get info")
     end
 
@@ -72,7 +72,7 @@ module Crystal::System::FileDescriptor
   end
 
   private def system_seek(offset, whence : IO::Seek) : Nil
-    seek_value = LibC.lseek(@fd, offset, whence)
+    seek_value = LibC.lseek(fd, offset, whence)
 
     if seek_value == -1
       raise Errno.new "Unable to seek"
@@ -80,25 +80,25 @@ module Crystal::System::FileDescriptor
   end
 
   private def system_pos
-    pos = LibC.lseek(@fd, 0, IO::Seek::Current)
+    pos = LibC.lseek(fd, 0, IO::Seek::Current)
     raise Errno.new "Unable to tell" if pos == -1
     pos
   end
 
   private def system_tty?
-    LibC.isatty(@fd) == 1
+    LibC.isatty(fd) == 1
   end
 
   private def system_reopen(other : IO::FileDescriptor)
     {% if LibC.methods.includes? "dup3".id %}
       # dup doesn't copy the CLOEXEC flag, so copy it manually using dup3
       flags = other.close_on_exec? ? LibC::O_CLOEXEC : 0
-      if LibC.dup3(other.@fd, @fd, flags) == -1
+      if LibC.dup3(other.fd, fd, flags) == -1
         raise Errno.new("Could not reopen file descriptor")
       end
     {% else %}
       # dup doesn't copy the CLOEXEC flag, copy it manually to the new
-      if LibC.dup2(other.@fd, @fd) == -1
+      if LibC.dup2(other.fd, fd) == -1
         raise Errno.new("Could not reopen file descriptor")
       end
 
@@ -123,7 +123,11 @@ module Crystal::System::FileDescriptor
   end
 
   def file_descriptor_close
-    if LibC.close(@fd) != 0
+    # Clear the @volatile_fd before actually closing it in order to
+    # reduce the chance of reading an outdated fd value
+    _fd = @volatile_fd.swap(-1)
+
+    if LibC.close(_fd) != 0
       case Errno.value
       when Errno::EINTR, Errno::EINPROGRESS
         # ignore
