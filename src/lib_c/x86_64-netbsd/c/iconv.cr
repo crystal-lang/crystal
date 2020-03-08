@@ -1,6 +1,5 @@
 require "./stddef"
 
-@[Link("iconv")]
 lib LibC
   type IconvT = Void*
 
