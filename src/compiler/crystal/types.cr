@@ -41,6 +41,25 @@ module Crystal
       false
     end
 
+    # Returns `true` if this type is abstract and it has no
+    # concrete subclasses. This can happen if this type has abstract
+    # subclasses, or non-abstract generic subclasses without instantiations.
+    def abstract_leaf?
+      type = self.devirtualize
+
+      case type
+      when GenericType
+        (type.abstract? && type.generic_types.empty?) ||
+          (type.generic_types.all? { |name, type| type.abstract_leaf? })
+      when GenericClassInstanceType
+        type.abstract? && type.subclasses.all?(&.abstract_leaf?)
+      when ClassType
+        type.abstract? && type.subclasses.all?(&.abstract_leaf?)
+      else
+        false
+      end
+    end
+
     # Returns `true` if this type is a struct.
     def struct?
       false
