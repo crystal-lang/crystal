@@ -16,7 +16,7 @@ class Zlib::Reader < IO
   def initialize(@io : IO, @sync_close = false, dict : Bytes? = nil)
     Zlib::Reader.read_header(io, dict)
     @flate_io = Flate::Reader.new(@io, dict: dict)
-    @adler32 = Adler32.initial
+    @adler32 = Digest::Adler32.initial
     @end = false
   end
 
@@ -50,7 +50,7 @@ class Zlib::Reader < IO
       end
 
       checksum = io.read_bytes(UInt32, IO::ByteFormat::BigEndian)
-      dict_checksum = Adler32.checksum(dict)
+      dict_checksum = Digest::Adler32.checksum(dict)
       if checksum != dict_checksum
         raise Zlib::Error.new("Dictionary ADLER-32 checksum mismatch")
       end
@@ -75,7 +75,7 @@ class Zlib::Reader < IO
       end
     else
       # Update ADLER-32 checksum
-      @adler32 = Adler32.update(slice[0, read_bytes], @adler32)
+      @adler32 = Digest::Adler32.update(slice[0, read_bytes], @adler32)
     end
     read_bytes
   end

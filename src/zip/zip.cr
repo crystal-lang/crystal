@@ -1,5 +1,5 @@
 require "flate"
-require "crc32"
+require "digest/crc32"
 require "./*"
 
 # The Zip module contains readers and writers of the zip
