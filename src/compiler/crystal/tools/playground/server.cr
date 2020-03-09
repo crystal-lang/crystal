@@ -5,11 +5,7 @@ require "compiler/crystal/tools/formatter"
 require "compiler/crystal/tools/doc/markdown"
 
 module Crystal::Playground
-  Log = begin
-    builder = ::Log::Builder.new
-    builder.bind("crystal.playground", :warning, ::Log::StdioBackend.new)
-    builder.for("crystal.playground")
-  end
+  Log = ::Log.for("crystal.playground")
 
   class Session
     getter tag : Int32
