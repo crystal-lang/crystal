@@ -1,7 +1,7 @@
 require "c/iconv"
 
 # :nodoc:
-struct Iconv
+struct Crystal::Iconv
   @skip_invalid : Bool
 
   ERROR = LibC::SizeT::MAX # (size_t)(-1)
