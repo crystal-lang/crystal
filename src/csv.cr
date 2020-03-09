@@ -155,9 +155,10 @@ class CSV
   # end
   # io.to_s # => "HEADER\none,two\nthree\n"
   # ```
-  def self.build(io : IO, separator : Char = DEFAULT_SEPARATOR, quote_char : Char = DEFAULT_QUOTE_CHAR, quoting : Builder::Quoting = Builder::Quoting::RFC)
+  def self.build(io : IO, separator : Char = DEFAULT_SEPARATOR, quote_char : Char = DEFAULT_QUOTE_CHAR, quoting : Builder::Quoting = Builder::Quoting::RFC) : Nil
     builder = Builder.new(io, separator, quote_char, quoting)
     yield builder
+    io.flush
   end
 
   @headers : Array(String)?
