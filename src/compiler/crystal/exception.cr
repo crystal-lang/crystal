@@ -56,7 +56,7 @@ module Crystal
     end
 
     def with_color
-      ::with_color.toggle(@color)
+      Colorize.with.toggle(@color)
     end
 
     def replace_leading_tabs_with_spaces(line)
@@ -126,7 +126,7 @@ module Crystal
       size ||= 0
       io << '\n'
       io << (" " * (offset + column_number - 1))
-      with_color.green.bold.surround(io) do
+      Colorize.with.green.bold.surround(io) do
         io << '^'
         if size > 0
           io << ("-" * (size - 1))
