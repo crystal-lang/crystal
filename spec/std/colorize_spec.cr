@@ -132,9 +132,9 @@ describe "colorize" do
   describe "with_color deprecated top-level method" do
     it "without args" do
       io = IO::Memory.new
-      with_color.red.surround(io) do
+      with_color.red.toggle(true).surround(io) do
         io << "hello"
-        with_color.green.surround(io) do
+        with_color.green.toggle(true).surround(io) do
           io << "world"
         end
         io << "bye"
@@ -144,9 +144,9 @@ describe "colorize" do
 
     it "with args" do
       io = IO::Memory.new
-      with_color(:red).surround(io) do
+      with_color(:red).toggle(true).surround(io) do
         io << "hello"
-        with_color(:green).surround(io) do
+        with_color(:green).toggle(true).surround(io) do
           io << "world"
         end
         io << "bye"
