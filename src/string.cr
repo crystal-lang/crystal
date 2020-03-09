@@ -1,5 +1,8 @@
 require "c/stdlib"
 require "c/string"
+{% unless flag?(:win32) %}
+  require "crystal/iconv"
+{% end %}
 
 # A `String` represents an immutable sequence of UTF-8 characters.
 #
@@ -1209,12 +1212,12 @@ class String
     inbytesleft = LibC::SizeT.new(slice.size)
     outbuf = uninitialized UInt8[1024]
 
-    Iconv.new(from, to, invalid) do |iconv|
+    Crystal::Iconv.new(from, to, invalid) do |iconv|
       while inbytesleft > 0
         outbuf_ptr = outbuf.to_unsafe
         outbytesleft = LibC::SizeT.new(outbuf.size)
         err = iconv.convert(pointerof(inbuf_ptr), pointerof(inbytesleft), pointerof(outbuf_ptr), pointerof(outbytesleft))
-        if err == Iconv::ERROR
+        if err == Crystal::Iconv::ERROR
           iconv.handle_invalid(pointerof(inbuf_ptr), pointerof(inbytesleft))
         end
         io.write(outbuf.to_slice[0, outbuf.size - outbytesleft])

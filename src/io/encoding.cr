@@ -1,3 +1,7 @@
+{% unless flag?(:win32) %}
+  require "crystal/iconv"
+{% end %}
+
 class IO
   # Has the `name` and the `invalid` option.
   struct EncodingOptions
@@ -19,7 +23,7 @@ class IO
 
   private class Encoder
     def initialize(@encoding_options : EncodingOptions)
-      @iconv = Iconv.new("UTF-8", encoding_options.name, encoding_options.invalid)
+      @iconv = Crystal::Iconv.new("UTF-8", encoding_options.name, encoding_options.invalid)
       @closed = false
     end
 
@@ -31,7 +35,7 @@ class IO
         outbuf_ptr = outbuf.to_unsafe
         outbytesleft = LibC::SizeT.new(outbuf.size)
         err = @iconv.convert(pointerof(inbuf_ptr), pointerof(inbytesleft), pointerof(outbuf_ptr), pointerof(outbytesleft))
-        if err == Iconv::ERROR
+        if err == Crystal::Iconv::ERROR
           @iconv.handle_invalid(pointerof(inbuf_ptr), pointerof(inbytesleft))
         end
         io.write(outbuf.to_slice[0, outbuf.size - outbytesleft])
@@ -58,7 +62,7 @@ class IO
     @in_buffer : Pointer(UInt8)
 
     def initialize(@encoding_options : EncodingOptions)
-      @iconv = Iconv.new(encoding_options.name, "UTF-8", encoding_options.invalid)
+      @iconv = Crystal::Iconv.new(encoding_options.name, "UTF-8", encoding_options.invalid)
       @buffer = Bytes.new((GC.malloc_atomic(BUFFER_SIZE).as(UInt8*)), BUFFER_SIZE)
       @in_buffer = @buffer.to_unsafe
       @in_buffer_left = LibC::SizeT.new(0)
@@ -95,7 +99,7 @@ class IO
         @out_slice = @out_buffer[0, OUT_BUFFER_SIZE - out_buffer_left]
 
         # Check for errors
-        if result == Iconv::ERROR
+        if result == Crystal::Iconv::ERROR
           case Errno.value
           when Errno::EILSEQ
             # For an illegal sequence we just skip one byte and we'll continue next
