@@ -72,7 +72,7 @@ struct NamedTuple
   #
   # speak_about(**{thing: String, n: Int64}.from(hash)) # => "I see 2 worlds"
   # ```
-  def from(hash : Hash)
+  def from(hash : Hash(K, V)) forall K, V
     if size != hash.size
       raise ArgumentError.new("Expected a hash with #{size} keys but one with #{hash.size} keys was given.")
     end
@@ -80,7 +80,13 @@ struct NamedTuple
     {% begin %}
       NamedTuple.new(
       {% for key, value in T %}
-        {{key.stringify}}: self[{{key.symbolize}}].cast(hash.fetch({{key.symbolize}}) { hash["{{key}}"] }),
+        {% if K == String %}
+          {{key.stringify}}: self[{{key.symbolize}}].cast(hash[{{key.stringify}}]),
+        {% elsif K == Symbol %}
+          {{key.stringify}}: self[{{key.symbolize}}].cast(hash[{{key.symbolize}}]),
+        {% else %}
+          {% raise "Hash keys must be String or Symbol to convert into a NamedTuple" %}
+        {% end %}
       {% end %}
       )
     {% end %}

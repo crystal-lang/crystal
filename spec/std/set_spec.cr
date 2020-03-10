@@ -179,13 +179,6 @@ describe "Set" do
   end
 
   it "does -" do
-    set1 = Set{1, 2, 3, 4, 5}
-    set2 = [2, 4, 'a']
-    set3 = set1 - set2
-    set3.should eq(Set{1, 3, 5})
-  end
-
-  it "does -" do
     set1 = Set{1, 2, 3, 4, 'b'}
     set2 = [2, 4, 5]
     set3 = set1 - set2
@@ -242,13 +235,6 @@ describe "Set" do
   end
 
   it "does subtract" do
-    set1 = Set{1, 2, 3, 4, 5}
-    set2 = Set{2, 4, 'a'}
-    set1.subtract set2
-    set1.should eq(Set{1, 3, 5})
-  end
-
-  it "does subtract" do
     set1 = Set{1, 2, 3, 4, 'b'}
     set2 = Set{2, 4, 5}
     set1.subtract set2
@@ -258,13 +244,6 @@ describe "Set" do
   it "does subtract" do
     set1 = Set{1, 2, 3, 4, 5}
     set2 = [2, 4, 6]
-    set1.subtract set2
-    set1.should eq(Set{1, 3, 5})
-  end
-
-  it "does subtract" do
-    set1 = Set{1, 2, 3, 4, 5}
-    set2 = [2, 4, 'a']
     set1.subtract set2
     set1.should eq(Set{1, 3, 5})
   end

@@ -61,7 +61,11 @@ struct YAML::Any
 
       new hash
     when YAML::Nodes::Alias
-      anchors[node.anchor]
+      if anchor = node.anchor
+        anchors[anchor]
+      else
+        raise "Unknown YAML alias: #{node}"
+      end
     else
       raise "Unknown node: #{node.class}"
     end
@@ -101,7 +105,14 @@ struct YAML::Any
         raise "Expected int key for Array#[], not #{object.class}"
       end
     when Hash
-      object[index_or_key]
+      case index_or_key
+      when String
+        object[Any.new(index_or_key)]
+      when Any
+        object[index_or_key]
+      else
+        raise "Expected YAML::Any | String, not #{object.class}"
+      end
     else
       raise "Expected Array or Hash, not #{object.class}"
     end
@@ -120,7 +131,14 @@ struct YAML::Any
         nil
       end
     when Hash
-      object[index_or_key]?
+      case index_or_key
+      when String
+        object[Any.new(index_or_key)]
+      when Any
+        object[index_or_key]
+      else
+        raise "Expected YAML::Any | String, not #{object.class}"
+      end
     else
       raise "Expected Array or Hash, not #{object.class}"
     end
@@ -296,14 +314,14 @@ struct YAML::Any
     @raw.pretty_print(pp)
   end
 
-  # Returns `true` if both `self` and *other*'s raw object are equal.
-  def ==(other : YAML::Any)
-    raw == other.raw
-  end
-
   # Returns `true` if the raw object is equal to *other*.
   def ==(other)
     raw == other
+  end
+
+  # Returns `true` if both `self` and *other*'s raw object are equal.
+  def ==(other : YAML::Any)
+    raw == other.raw
   end
 
   # See `Object#hash(hasher)`
