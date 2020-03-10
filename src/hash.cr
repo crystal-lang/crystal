@@ -1763,7 +1763,16 @@ class Hash(K, V)
   end
 
   def ==(other : Hash(K2, V2)) forall K2, V2
-    false
+    {% if K <= K2 %}
+      return false unless size == other.size
+      each do |key, value|
+        entry = other.find_entry(key)
+        return false unless entry && entry.value == value
+      end
+      true
+    {% else %}
+      false
+    {% end %}
   end
 
   # See `Object#hash(hasher)`
