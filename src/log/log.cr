@@ -19,7 +19,7 @@ class Log
     @level || @initial_level
   end
 
-  # Change this log severity level filter
+  # Change this log severity level filter.
   def level=(value : Severity)
     @level = value
     if (backend = @backend).responds_to?(:level=)

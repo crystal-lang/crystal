@@ -26,7 +26,7 @@ class Log::Builder
     end
   end
 
-  # Removes all existing bindings
+  # Removes all existing bindings.
   def clear
     @mutex.synchronize do
       @bindings.clear

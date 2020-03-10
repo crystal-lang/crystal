@@ -1,12 +1,20 @@
 require "spec"
 require "log"
 
-def c(value)
+private def c(value)
   Log::Context.new(value)
 end
 
 describe Log::Context do
-  describe "initialize" do
+  before_each do
+    Log.context.clear
+  end
+
+  after_each do
+    Log.context.clear
+  end
+
+  it "initialize" do
     c({a: 1}).should eq(c({"a" => c(1)}))
     c({a: 1, b: ["str", true], num: 1i64}).should eq(c({"a" => c(1), "b" => c([c("str"), c(true)]), "num" => c(1i64)}))
     c({a: 1f32, b: 1f64}).should eq(c({"a" => c(1f32), "b" => c(1f64)}))
@@ -15,7 +23,7 @@ describe Log::Context do
     Log::Context.new.should eq(c(NamedTuple.new))
   end
 
-  describe "immutability" do
+  it "immutability" do
     context = c({a: 1})
     other = context.as_h
     other["a"] = c(2)
@@ -24,13 +32,13 @@ describe Log::Context do
     context.should eq(c({a: 1}))
   end
 
-  describe "merge" do
+  it "merge" do
     c({a: 1}).merge(c({b: 2})).should eq(c({a: 1, b: 2}))
+    c({a: 1, b: 3}).merge(c({b: 2})).should eq(c({a: 1, b: 2}))
   end
 
   describe "implicit context" do
     it "can be set and cleared" do
-      Log.context.clear
       Log.context.should eq(Log::Context.new)
 
       Log.context.set a: 1
@@ -41,23 +49,18 @@ describe Log::Context do
     end
 
     it "is extended by set" do
-      Log.context.clear
       Log.context.set a: 1
       Log.context.set b: 2
       Log.context.should eq(c({a: 1, b: 2}))
-      Log.context.clear
     end
 
     it "existing keys are overwritten by set" do
-      Log.context.clear
       Log.context.set a: 1, b: 1
       Log.context.set b: 2, c: 3
       Log.context.should eq(c({a: 1, b: 2, c: 3}))
-      Log.context.clear
     end
 
     it "is restored with using" do
-      Log.context.clear
       Log.context.set a: 1
 
       Log.context.using do
@@ -66,11 +69,9 @@ describe Log::Context do
       end
 
       Log.context.should eq(c({a: 1}))
-      Log.context.clear
     end
 
     it "is per fiber" do
-      Log.context.clear
       Log.context.set a: 1
       done = Channel(Nil).new
 
@@ -86,34 +87,27 @@ describe Log::Context do
       done.send nil
       Log.context.should eq(c({a: 1}))
       done.send nil
-      Log.context.clear
     end
 
     it "is assignable from a hash with symbol keys" do
-      Log.context.clear
       Log.context.set a: 1
       extra = {:b => 2}
       Log.context.set extra
       Log.context.should eq(c({a: 1, b: 2}))
-      Log.context.clear
     end
 
     it "is assignable from a hash with string keys" do
-      Log.context.clear
       Log.context.set a: 1
       extra = {"b" => 2}
       Log.context.set extra
       Log.context.should eq(c({a: 1, b: 2}))
-      Log.context.clear
     end
 
     it "is assignable from a named tuple" do
-      Log.context.clear
       Log.context.set a: 1
       extra = {b: 2}
       Log.context.set extra
       Log.context.should eq(c({a: 1, b: 2}))
-      Log.context.clear
     end
   end
 end

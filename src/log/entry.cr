@@ -6,7 +6,7 @@ enum Log::Severity
   Warning
   Error
   Fatal
-  # Used only for severity level filter
+  # Used only for severity level filter.
   None
 end
 

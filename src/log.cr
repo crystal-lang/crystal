@@ -22,7 +22,7 @@
 #
 # To add structured information to the message you can use the `Log::Context`.
 #
-# When creating logs messages they belong to a _source_. If the top-level `Log` is used
+# When creating log messages they belong to a _source_. If the top-level `Log` is used
 # as in the above examples its source is the empty string.
 #
 # The source can be used to identify the module or part of the application that is logging.
@@ -69,20 +69,20 @@
 #
 # ### Configure logging explicitly in the code
 #
-# Use `Log.builder` to indicate the which sources should go to which backends.
+# Use `Log.builder` to indicate which sources should go to which backends.
 #
 # You can indicate actual sources or patterns.
 #
-# * the empty string will show only the top-level source
-# * `*` will show all the sources
-# * `foo.bar.*` will show `foo.bar` and every nested source
-# * `foo.bar` will show `foo.bar`, but not its nested sources
+# * the empty string matches only the top-level source
+# * `*` matches all the sources
+# * `foo.bar.*` matches `foo.bar` and every nested source
+# * `foo.bar` matches `foo.bar`, but not its nested sources
 #
 #
 # The following configuration will setup for all sources to emit
 # warnings (or higher) to `STDOUT`, allow any of the `db.*` and
 # nested source to emit debug (or higher), and to also emit for all
-# sources errors (or higher) to an elasticsearch search.
+# sources errors (or higher) to an elasticsearch backend.
 #
 # ```
 # backend = Log::StdioBackend.new
@@ -99,16 +99,16 @@
 # Log.setup_from_env
 # ```
 #
-# The `CRYSTAL_LOG_LEVEL`, `CRYSTAL_LOG_SOURCES` environment variables are used to indicate
-# which severity level emit (defaults to `INFO`, use `NONE` to skip all messages) and to restrict
+# The environment variables `CRYSTAL_LOG_LEVEL` and `CRYSTAL_LOG_SOURCES` are used to indicate
+# which severity level to emit (defaults to `INFO`; use `NONE` to skip all messages) and to restrict
 # which sources you are interested in.
 #
 # The valid values for `CRYSTAL_LOG_SOURCES` are:
 #
-# * the empty string will show only the top-level source (default)
-# * `*` will show all the sources
-# * `foo.bar.*` will show `foo.bar` and every nested source
-# * `foo.bar` will show `foo.bar`, but not its nested sources
+# * the empty string matches only the top-level source (default)
+# * `*` matches all the sources
+# * `foo.bar.*` matches `foo.bar` and every nested source
+# * `foo.bar` matches `foo.bar`, but not its nested sources
 # * Any comma separated combination of the above
 #
 # The logs are emitted to `STDOUT` using a `Log::StdioBackend`.

@@ -6,6 +6,14 @@ private def s(value : Log::Severity)
 end
 
 describe Log do
+  before_each do
+    Log.context.clear
+  end
+
+  after_each do
+    Log.context.clear
+  end
+
   describe Log::Severity do
     it "values are ordered" do
       s(:debug).should be < s(:verbose)
@@ -97,7 +105,5 @@ describe Log do
     log.info { "info message" }
 
     backend.entries.first.context.should eq(Log::Context.new({a: 1}))
-
-    Log.context.clear
   end
 end

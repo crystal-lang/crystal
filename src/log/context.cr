@@ -4,12 +4,12 @@
 class Log::Context
   Crystal.datum types: {bool: Bool, i: Int32, i64: Int64, f: Float32, f64: Float64, s: String, time: Time}, hash_key_type: String, immutable: true
 
-  # Creates an empty `Log::Context`
+  # Creates an empty `Log::Context`.
   def initialize
     @raw = Hash(String, Context).new
   end
 
-  # Creates `Log::Context` from the given *tuple*
+  # Creates `Log::Context` from the given *tuple*.
   def initialize(tuple : NamedTuple)
     @raw = raw = Hash(String, Context).new
     tuple.each do |key, value|
@@ -17,7 +17,7 @@ class Log::Context
     end
   end
 
-  # Creates `Log::Context` from the given *hash*
+  # Creates `Log::Context` from the given *hash*.
   def initialize(hash : Hash(String, V)) forall V
     @raw = raw = Hash(String, Context).new
     hash.each do |key, value|
@@ -25,7 +25,7 @@ class Log::Context
     end
   end
 
-  # Creates `Log::Context` from the given *hash*
+  # Creates `Log::Context` from the given *hash*.
   def initialize(hash : Hash(Symbol, V)) forall V
     @raw = raw = Hash(String, Context).new
     hash.each do |key, value|
