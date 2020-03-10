@@ -400,7 +400,7 @@ struct Int
   # its type.
   #
   # ```
-  # 5.gcd(10) # => 2
+  # 5.gcd(10) # => 5
   # 5.gcd(7)  # => 1
   # ```
   def gcd(other : self) : self
