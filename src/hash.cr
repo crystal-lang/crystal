@@ -1752,10 +1752,6 @@ class Hash(K, V)
     self
   end
 
-  def ==(other : Hash)
-    false
-  end
-
   # Compares with *other*. Returns `true` if all key-value pairs are the same.
   def ==(other : self)
     return false unless size == other.size
@@ -1764,6 +1760,10 @@ class Hash(K, V)
       return false unless entry && entry.value == value
     end
     true
+  end
+
+  def ==(other : Hash(K2, V2)) forall K2, V2
+    false
   end
 
   # See `Object#hash(hasher)`
