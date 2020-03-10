@@ -1,6 +1,5 @@
-require "spec"
+require "../spec_helper"
 require "socket"
-require "../../support/errno"
 require "../../support/fibers"
 require "../../support/tempfile"
 
@@ -40,7 +39,7 @@ describe UNIXServer do
         server = UNIXServer.new(path)
 
         begin
-          expect_raises_errno(Errno::EADDRINUSE, "bind: ") do
+          expect_raises(Socket::BindError) do
             UNIXServer.new(path)
           end
         ensure
@@ -54,7 +53,7 @@ describe UNIXServer do
         File.write(path, "")
         File.exists?(path).should be_true
 
-        expect_raises_errno(Errno::EADDRINUSE, "bind: ") do
+        expect_raises(Socket::BindError) do
           UNIXServer.new(path)
         end
 

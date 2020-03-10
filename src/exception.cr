@@ -1,4 +1,5 @@
 require "callstack"
+require "system_error"
 
 CallStack.skip(__FILE__)
 
@@ -162,4 +163,9 @@ class NilAssertionError < Exception
   def initialize(message = "Nil assertion failed")
     super(message)
   end
+end
+
+# Raised when there is an internal runtime error
+class RuntimeError < Exception
+  include SystemError
 end

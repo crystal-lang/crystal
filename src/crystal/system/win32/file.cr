@@ -19,7 +19,7 @@ module Crystal::System::File
 
     fd = LibC._wopen(to_windows_path(filename), oflag, perm)
     if fd == -1
-      raise Errno.new("Error opening file #{filename.inspect} with mode #{mode.inspect}")
+      raise ::File::Error.from_errno("Error opening file with mode #{mode.inspect}", file: filename)
     end
 
     fd
@@ -30,7 +30,7 @@ module Crystal::System::File
 
     fd = LibC._wopen(to_windows_path(path), LibC::O_RDWR | LibC::O_CREAT | LibC::O_EXCL | LibC::O_BINARY, ::File::DEFAULT_CREATE_PERMISSIONS)
     if fd == -1
-      raise Errno.new("Error creating temporary file at #{path.inspect}")
+      raise ::File::Error.from_errno("Error creating temporary file", file: path)
     end
 
     {fd, path}
@@ -44,12 +44,12 @@ module Crystal::System::File
 
   REPARSE_TAG_NAME_SURROGATE_MASK = 1 << 29
 
-  private def self.check_not_found_error(func_name)
-    error = LibC.GetLastError
+  private def self.check_not_found_error(message, path)
+    error = WinError.value
     if NOT_FOUND_ERRORS.includes? error
       return nil
     else
-      raise WinError.new(func_name, error)
+      raise ::File::Error.from_winerror(message, error, file: path)
     end
   end
 
@@ -64,15 +64,15 @@ module Crystal::System::File
         LibC::GET_FILEEX_INFO_LEVELS::GetFileExInfoStandard,
         pointerof(file_attributes)
       )
-      return check_not_found_error("GetFileAttributesEx") if ret == 0
+      return check_not_found_error("Unable to get file info", path) if ret == 0
 
       if file_attributes.dwFileAttributes.bits_set? LibC::FILE_ATTRIBUTE_REPARSE_POINT
         # Could be a symlink, retrieve its reparse tag with FindFirstFile
         handle = LibC.FindFirstFileW(winpath, out find_data)
-        return check_not_found_error("FindFirstFile") if handle == LibC::INVALID_HANDLE_VALUE
+        return check_not_found_error("Unable to get file info", path) if handle == LibC::INVALID_HANDLE_VALUE
 
         if LibC.FindClose(handle) == 0
-          raise WinError.new("FindClose")
+          raise RuntimeError.from_winerror("FindClose")
         end
 
         if find_data.dwReserved0.bits_set? REPARSE_TAG_NAME_SURROGATE_MASK
@@ -91,11 +91,11 @@ module Crystal::System::File
       LibC::HANDLE.null
     )
 
-    return check_not_found_error("CreateFile") if handle == LibC::INVALID_HANDLE_VALUE
+    return check_not_found_error("Unable to get file info", path) if handle == LibC::INVALID_HANDLE_VALUE
 
     begin
       if LibC.GetFileInformationByHandle(handle, out file_info) == 0
-        raise WinError.new("GetFileInformationByHandle")
+        raise ::File::Error.from_winerror("Unable to get file info", file: path)
       end
 
       FileInfo.new(file_info, LibC::FILE_TYPE_DISK)
@@ -135,7 +135,7 @@ module Crystal::System::File
 
     attributes = LibC.GetFileAttributesW(to_windows_path(path))
     if attributes == LibC::INVALID_FILE_ATTRIBUTES
-      raise WinError.new("GetFileAttributes")
+      raise ::File::Error.from_winerror("Error changing permissions", file: path)
     end
 
     # Only the owner writable bit is used, since windows only supports
@@ -147,13 +147,13 @@ module Crystal::System::File
     end
 
     if LibC.SetFileAttributesW(to_windows_path(path), attributes) == 0
-      raise WinError.new("SetFileAttributes")
+      raise ::File::Error.from_winerror("Error changing permissions", file: path)
     end
   end
 
   def self.delete(path : String) : Nil
     if LibC._wunlink(to_windows_path(path)) != 0
-      raise Errno.new("Error deleting file #{path.inspect}")
+      raise ::File::Error.from_errno("Error deleting file", file: path)
     end
   end
 
@@ -168,12 +168,12 @@ module Crystal::System::File
       elsif small_buf && len > 0
         next len
       else
-        raise WinError.new("Error resolving real path of #{path.inspect}")
+        raise ::File::Error.from_winerror("Error resolving real path", file: path)
       end
     end
 
     unless exists? real_path
-      raise Errno.new("Error resolving real path of #{path.inspect}", Errno::ENOTDIR)
+      raise ::File::Error.from_errno("Error resolving real path", Errno::ENOTDIR, file: path)
     end
 
     real_path
@@ -181,14 +181,14 @@ module Crystal::System::File
 
   def self.link(old_path : String, new_path : String) : Nil
     if LibC.CreateHardLinkW(to_windows_path(new_path), to_windows_path(old_path), nil) == 0
-      raise WinError.new("Error creating hard link from #{new_path.inspect} to #{old_path.inspect}")
+      raise ::File::Error.from_winerror("Error creating hard link", path: old_path, other: new_path)
     end
   end
 
   def self.symlink(old_path : String, new_path : String) : Nil
     # TODO: support directory symlinks (copy Go's stdlib logic here)
     if LibC.CreateSymbolicLinkW(to_windows_path(new_path), to_windows_path(old_path), 0) == 0
-      raise WinError.new("Error creating symbolic link from #{new_path.inspect} to #{old_path.inspect}")
+      raise ::File::Error.from_winerror("Error creating symbolic link", path: old_path, other: new_path)
     end
   end
 
@@ -198,7 +198,7 @@ module Crystal::System::File
 
   def self.rename(old_path : String, new_path : String) : Nil
     if LibC._wrename(to_windows_path(old_path), to_windows_path(new_path)) != 0
-      raise Errno.new("Error renaming file from #{old_path.inspect} to #{new_path.inspect}")
+      raise ::File::Error.from_errno("Error renaming file", file: old_path, other: new_path)
     end
   end
 
@@ -208,13 +208,13 @@ module Crystal::System::File
     times.modtime = modification_time.to_unix
 
     if LibC._wutime64(to_windows_path(path), pointerof(times)) != 0
-      raise Errno.new("Error setting time on file #{path.inspect}")
+      raise ::File::Error.from_errno("Error setting time on file", file: path)
     end
   end
 
   private def system_truncate(size : Int) : Nil
     if LibC._chsize(fd, size) != 0
-      raise Errno.new("Error truncating file #{path.inspect}")
+      raise ::File::Error.from_errno("Error truncating file", file: path)
     end
   end
 

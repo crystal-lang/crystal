@@ -262,7 +262,7 @@ class HTTP::Client
     end
   end
 
-  # Sets the number of seconds to wait when reading before raising an `IO::Timeout`.
+  # Sets the number of seconds to wait when reading before raising an `IO::TimeoutError`.
   #
   # ```
   # require "http/client"
@@ -271,7 +271,7 @@ class HTTP::Client
   # client.read_timeout = 1.5
   # begin
   #   response = client.get("/")
-  # rescue IO::Timeout
+  # rescue IO::TimeoutError
   #   puts "Timeout!"
   # end
   # ```
@@ -279,7 +279,7 @@ class HTTP::Client
     @read_timeout = read_timeout.to_f
   end
 
-  # Sets the read timeout with a `Time::Span`, to wait when reading before raising an `IO::Timeout`.
+  # Sets the read timeout with a `Time::Span`, to wait when reading before raising an `IO::TimeoutError`.
   #
   # ```
   # require "http/client"
@@ -288,7 +288,7 @@ class HTTP::Client
   # client.read_timeout = 5.minutes
   # begin
   #   response = client.get("/")
-  # rescue IO::Timeout
+  # rescue IO::TimeoutError
   #   puts "Timeout!"
   # end
   # ```
@@ -297,18 +297,18 @@ class HTTP::Client
   end
 
   # Sets the write timeout - if any chunk of request is not written
-  # within the number of seconds provided, `IO::Timeout` exception is raised.
+  # within the number of seconds provided, `IO::TimeoutError` exception is raised.
   def write_timeout=(write_timeout : Number)
     @write_timeout = write_timeout.to_f
   end
 
   # Sets the write timeout - if any chunk of request is not written
-  # within the provided `Time::Span`,  `IO::Timeout` exception is raised.
+  # within the provided `Time::Span`,  `IO::TimeoutError` exception is raised.
   def write_timeout=(write_timeout : Time::Span)
     self.write_timeout = write_timeout.total_seconds
   end
 
-  # Sets the number of seconds to wait when connecting, before raising an `IO::Timeout`.
+  # Sets the number of seconds to wait when connecting, before raising an `IO::TimeoutError`.
   #
   # ```
   # require "http/client"
@@ -317,7 +317,7 @@ class HTTP::Client
   # client.connect_timeout = 1.5
   # begin
   #   response = client.get("/")
-  # rescue IO::Timeout
+  # rescue IO::TimeoutError
   #   puts "Timeout!"
   # end
   # ```
@@ -325,7 +325,7 @@ class HTTP::Client
     @connect_timeout = connect_timeout.to_f
   end
 
-  # Sets the open timeout with a `Time::Span` to wait when connecting, before raising an `IO::Timeout`.
+  # Sets the open timeout with a `Time::Span` to wait when connecting, before raising an `IO::TimeoutError`.
   #
   # ```
   # require "http/client"
@@ -334,7 +334,7 @@ class HTTP::Client
   # client.connect_timeout = 5.minutes
   # begin
   #   response = client.get("/")
-  # rescue IO::Timeout
+  # rescue IO::TimeoutError
   #   puts "Timeout!"
   # end
   # ```
@@ -344,7 +344,7 @@ class HTTP::Client
 
   # **This method has no effect right now**
   #
-  # Sets the number of seconds to wait when resolving a name, before raising an `IO::Timeout`.
+  # Sets the number of seconds to wait when resolving a name, before raising an `IO::TimeoutError`.
   #
   # ```
   # require "http/client"
@@ -353,7 +353,7 @@ class HTTP::Client
   # client.dns_timeout = 1.5
   # begin
   #   response = client.get("/")
-  # rescue IO::Timeout
+  # rescue IO::TimeoutError
   #   puts "Timeout!"
   # end
   # ```
@@ -363,7 +363,7 @@ class HTTP::Client
 
   # **This method has no effect right now**
   #
-  # Sets the number of seconds to wait when resolving a name with a `Time::Span`, before raising an `IO::Timeout`.
+  # Sets the number of seconds to wait when resolving a name with a `Time::Span`, before raising an `IO::TimeoutError`.
   #
   # ```
   # require "http/client"
@@ -372,7 +372,7 @@ class HTTP::Client
   # client.dns_timeout = 1.5.seconds
   # begin
   #   response = client.get("/")
-  # rescue IO::Timeout
+  # rescue IO::TimeoutError
   #   puts "Timeout!"
   # end
   # ```

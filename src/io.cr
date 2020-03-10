@@ -77,15 +77,6 @@ abstract class IO
   @encoder : Encoder?
   @decoder : Decoder?
 
-  # Raised when an `IO` operation times out.
-  #
-  # ```
-  # STDIN.read_timeout = 1
-  # STDIN.gets # raises IO::Timeout (after 1 second)
-  # ```
-  class Timeout < Exception
-  end
-
   # Reads at most *slice.size* bytes from this `IO` into *slice*.
   # Returns the number of bytes read, which is 0 if and only if there is no
   # more data to read (so checking for 0 is the way to detect end of file).

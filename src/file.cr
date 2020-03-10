@@ -1,3 +1,7 @@
+class File < IO::FileDescriptor
+end
+
+require "./file/error"
 require "crystal/system/file"
 
 # A `File` instance represents a file entry in the local file system and allows using it as an `IO`.
@@ -129,7 +133,7 @@ class File < IO::FileDescriptor
   end
 
   # Returns a `File::Info` object for the file given by *path* or raises
-  # `Errno` in case of an error.
+  # `File::Error` in case of an error.
   #
   # If *follow_symlinks* is set (the default), symbolic links are followed. Otherwise,
   # symbolic links return information on the symlink itself.
@@ -143,7 +147,7 @@ class File < IO::FileDescriptor
   # File.info("bar", follow_symlinks: false).type.symlink? # => true
   # ```
   def self.info(path : Path | String, follow_symlinks = true) : Info
-    info?(path, follow_symlinks) || raise Errno.new("Unable to get info for '#{path.to_s.inspect_unquoted}''")
+    info?(path, follow_symlinks) || raise File::Error.from_errno("Unable to get file info", file: path.to_s)
   end
 
   # Returns `true` if *path* exists else returns `false`
@@ -165,21 +169,19 @@ class File < IO::FileDescriptor
   end
 
   # Returns the size of the file at *filename* in bytes.
-  # Raises `Errno` if the file at *filename* does not exist.
+  # Raises `File::NotFoundError` if the file at *filename* does not exist.
   #
   # ```
-  # File.size("foo") # raises Errno
+  # File.size("foo") # raises File::NotFoundError
   # File.write("foo", "foo")
   # File.size("foo") # => 3
   # ```
   def self.size(filename : Path | String) : UInt64
     info(filename).size
-  rescue ex : Errno
-    raise Errno.new("Error determining size of '#{filename.to_s.inspect_unquoted}'", ex.errno)
   end
 
   # Returns `true` if the file at *path* is empty, otherwise returns `false`.
-  # Raises `Errno` if the file at *path* does not exist.
+  # Raises `File::NotFoundError` if the file at *path* does not exist.
   #
   # ```
   # File.write("foo", "")
@@ -320,7 +322,7 @@ class File < IO::FileDescriptor
   # ```
   # File.write("foo", "")
   # File.delete("./foo")
-  # File.delete("./bar") # raises Errno (No such file or directory)
+  # File.delete("./bar") # raises File::NotFoundError (No such file or directory)
   # ```
   def self.delete(path : Path | String)
     Crystal::System::File.delete(path.to_s)
@@ -808,7 +810,7 @@ class File < IO::FileDescriptor
   end
 
   # Places a shared advisory lock. More than one process may hold a shared lock for a given file at a given time.
-  # `Errno::EWOULDBLOCK` is raised if *blocking* is set to `false` and an existing exclusive lock is set.
+  # `IO::Error` is raised if *blocking* is set to `false` and an existing exclusive lock is set.
   def flock_shared(blocking = true)
     system_flock_shared(blocking)
   end
@@ -823,7 +825,7 @@ class File < IO::FileDescriptor
   end
 
   # Places an exclusive advisory lock. Only one process may hold an exclusive lock for a given file at a given time.
-  # `Errno::EWOULDBLOCK` is raised if *blocking* is set to `false` and any existing lock is set.
+  # `IO::Error` is raised if *blocking* is set to `false` and any existing lock is set.
   def flock_exclusive(blocking = true)
     system_flock_exclusive(blocking)
   end

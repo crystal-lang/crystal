@@ -1,5 +1,4 @@
 require "./spec_helper"
-require "../support/errno"
 
 private def base
   Dir.current
@@ -106,14 +105,14 @@ describe "File" do
 
     it "raises an error when the file does not exist" do
       filename = datapath("non_existing_file.txt")
-      expect_raises_errno(Errno::ENOENT, "Error determining size of '#{filename}'") do
+      expect_raises(File::NotFoundError, "Unable to get file info: '#{filename}'") do
         File.empty?(filename)
       end
     end
 
     # TODO: do we even want this?
     pending_win32 "raises an error when a component of the path is a file" do
-      expect_raises_errno(Errno::ENOTDIR, "Error determining size of '#{datapath("test_file.txt", "")}'") do
+      expect_raises(File::Error, "Unable to get file info: '#{datapath("test_file.txt", "")}'") do
         File.empty?(datapath("test_file.txt", ""))
       end
     end
@@ -387,7 +386,7 @@ describe "File" do
     end
 
     it "raises when destination doesn't exist" do
-      expect_raises_errno(Errno::ENOENT, "Error changing permissions of '#{datapath("unknown_chmod_path.txt")}'") do
+      expect_raises(File::NotFoundError, "Error changing permissions: '#{datapath("unknown_chmod_path.txt")}'") do
         File.chmod(datapath("unknown_chmod_path.txt"), 0o664)
       end
     end
@@ -430,7 +429,7 @@ describe "File" do
     end
 
     it "gets for non-existent file and raises" do
-      expect_raises_errno(Errno::ENOENT, "Unable to get info for 'non-existent'") do
+      expect_raises(File::NotFoundError, "Unable to get file info: 'non-existent'") do
         File.info("non-existent")
       end
     end
@@ -472,14 +471,14 @@ describe "File" do
 
     it "raises an error when the file does not exist" do
       filename = datapath("non_existing_file.txt")
-      expect_raises_errno(Errno::ENOENT, "Error determining size of '#{filename}'") do
+      expect_raises(File::NotFoundError, "Unable to get file info: '#{filename}'") do
         File.size(filename)
       end
     end
 
     # TODO: do we even want this?
     pending_win32 "raises an error when a component of the path is a file" do
-      expect_raises_errno(Errno::ENOTDIR, "Error determining size of '#{datapath("test_file.txt", "")}'") do
+      expect_raises(File::Error, "Unable to get file info: '#{datapath("test_file.txt", "")}'") do
         File.size(datapath("test_file.txt", ""))
       end
     end
@@ -495,9 +494,9 @@ describe "File" do
       end
     end
 
-    it "raises errno when file doesn't exist" do
+    it "raises when file doesn't exist" do
       with_tempfile("nonexistant_file.txt") do |path|
-        expect_raises_errno(Errno::ENOENT, "Error deleting file '#{path}'") do
+        expect_raises(File::NotFoundError, "Error deleting file: '#{path}'") do
           File.delete(path)
         end
       end
@@ -518,7 +517,7 @@ describe "File" do
 
     it "raises if old file doesn't exist" do
       with_tempfile("rename-fail-source.txt", "rename-fail-target.txt") do |source_path, target_path|
-        expect_raises_errno(Errno::ENOENT, "Error renaming file '#{source_path}' to '#{target_path}'") do
+        expect_raises(File::NotFoundError, "Error renaming file: '#{source_path}' -> '#{target_path}'") do
           File.rename(source_path, target_path)
         end
       end
@@ -635,8 +634,8 @@ describe "File" do
       {% end %}
     end
 
-    it "raises Errno if file doesn't exist" do
-      expect_raises_errno(Errno::ENOENT, "Error resolving real path of '/usr/share/foo/bar'") do
+    it "raises if file doesn't exist" do
+      expect_raises(File::NotFoundError, "Error resolving real path: '/usr/share/foo/bar'") do
         File.real_path("/usr/share/foo/bar")
       end
     end
@@ -841,6 +840,14 @@ describe "File" do
     end
   end
 
+  it "raises when reading a file with no permission" do
+    with_tempfile("file.txt") do |path|
+      File.touch(path)
+      File.chmod(path, 0)
+      expect_raises(File::AccessDeniedError) { File.read(path) }
+    end
+  end
+
   describe "truncate" do
     it "truncates" do
       with_tempfile("truncate.txt") do |path|
@@ -872,7 +879,7 @@ describe "File" do
       with_tempfile("truncate-opened.txt") do |path|
         File.write(path, "0123456789")
         File.open(path, "r") do |f|
-          expect_raises_errno(Errno::EINVAL, "Error truncating file '#{path}'") do
+          expect_raises(File::Error, "Error truncating file: '#{path}'") do
             f.truncate(4)
           end
         end
@@ -899,7 +906,7 @@ describe "File" do
         File.open(datapath("test_file.txt")) do |file2|
           file1.flock_exclusive do
             # BUG: check for EWOULDBLOCK when exception filters are implemented
-            expect_raises_errno(Errno::EAGAIN, "flock") do
+            expect_raises(IO::Error, "Error applying or removing file lock") do
               file2.flock_exclusive(blocking: false) { }
             end
           end
@@ -1152,7 +1159,7 @@ describe "File" do
       atime = Time.utc(2000, 1, 2)
       mtime = Time.utc(2000, 3, 4)
 
-      expect_raises_errno(Errno::ENOENT, "Error setting time on file '#{datapath("nonexistent_file.txt")}'") do
+      expect_raises(File::NotFoundError, "Error setting time on file: '#{datapath("nonexistent_file.txt")}'") do
         File.utime(atime, mtime, datapath("nonexistent_file.txt"))
       end
     end
@@ -1188,7 +1195,7 @@ describe "File" do
 
     it "raises if path contains non-existent directory" do
       with_tempfile(File.join("nonexistant-dir", "touch.txt")) do |path|
-        expect_raises_errno(Errno::ENOENT, "Error opening file '#{path}'") do
+        expect_raises(File::NotFoundError, "Error opening file with mode 'a': '#{path}'") do
           File.touch(path)
         end
       end
@@ -1196,7 +1203,7 @@ describe "File" do
 
     # TODO: there is no file which is reliably unwritable on windows
     pending_win32 "raises if file cannot be accessed" do
-      expect_raises_errno(Errno::EPERM, "Error setting time on file '/bin/ls'") do
+      expect_raises(File::Error, "Error setting time on file: '/bin/ls'") do
         File.touch("/bin/ls")
       end
     end

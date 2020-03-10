@@ -208,7 +208,7 @@ class Dir
           begin
             dir = Dir.new(path || ".")
             dir_stack << dir
-          rescue Errno
+          rescue File::Error
             return
           end
           recurse = false
@@ -217,7 +217,7 @@ class Dir
             if recurse
               begin
                 dir = Dir.new(dir_path)
-              rescue Errno
+              rescue File::Error
                 dir_path_stack.pop
                 break if dir_path_stack.empty?
                 dir_path = dir_path_stack.last
@@ -299,8 +299,7 @@ class Dir
           yield entry
         end
       end
-    rescue exc : Errno
-      raise exc unless exc.errno == Errno::ENOENT
+    rescue exc : File::NotFoundError
     end
 
     private def self.read_entry(dir)
@@ -309,7 +308,7 @@ class Dir
       # By doing this we get an Entry struct which already tells us
       # whether something is a directory or not, avoiding having to
       # call File.info? which is really expensive.
-      Crystal::System::Dir.next_entry(dir.@dir)
+      Crystal::System::Dir.next_entry(dir.@dir, dir.path)
     end
   end
 end

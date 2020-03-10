@@ -2,7 +2,6 @@ require "spec"
 require "process"
 require "./spec_helper"
 require "../spec_helper"
-require "../support/errno"
 
 describe Process do
   it "runs true" do
@@ -16,8 +15,7 @@ describe Process do
   end
 
   it "raises if command could not be executed" do
-    # FIXME: Oddly doubled error message
-    expect_raises_errno(Errno::ENOENT, %(execvp (foobarbaz "foo"): No such file or directory: No such file or directory)) do
+    expect_raises(RuntimeError, "Error executing process: No such file or directory") do
       Process.new("foobarbaz", ["foo"])
     end
   end
@@ -90,15 +88,13 @@ describe Process do
       begin
         Process.chroot("/usr")
         puts "FAIL"
-      rescue ex : Errno
-        puts (ex.errno == Errno::EPERM) ? "Success" : "FAIL: #{ex.message}"
       rescue ex
-        puts "FAIL: #{ex.message}"
+        puts ex.inspect
       end
     CODE
 
     status.success?.should be_true
-    output.should eq("Success\n")
+    output.should eq("#<RuntimeError:Failed to chroot: Operation not permitted>\n")
   end
 
   it "sets working directory" do

@@ -195,7 +195,7 @@ module Crystal::Signal
     spawn(name: "Signal Loop") do
       loop do
         value = reader.read_bytes(Int32)
-      rescue Errno
+      rescue IO::Error
         next
       else
         process(::Signal.new(value))
@@ -299,7 +299,7 @@ module Crystal::SignalChildHandler
         return
       when -1
         return if Errno.value == Errno::ECHILD
-        raise Errno.new("waitpid")
+        raise RuntimeError.from_errno("waitpid")
       end
 
       @@mutex.lock
