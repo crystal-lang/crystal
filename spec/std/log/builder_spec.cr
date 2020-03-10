@@ -160,8 +160,14 @@ describe Log::Builder do
     10.times do |i|
       builder.for("a.#{i}")
     end
+    original_size = builder.@logs.values.size
+    original_size.should be >= 10
     GC.collect
     builder.@logs.values.count(&.value.nil?).should be > 0
+
+    # force a cleanup
+    builder.bind("a.9", :info, Log::MemoryBackend.new)
+    builder.@logs.values.size.should be < original_size
   end
 
   it "should allow recreation of deallocated logs" do

@@ -61,11 +61,12 @@ class Log::Builder
   end
 
   # :nodoc:
-  def each_log
+  private def each_log
+    @logs.reject! { |_, log_ref| log_ref.value.nil? }
+
     @logs.each_value do |log_ref|
       log = log_ref.value
       yield log if log
-      # TODO should remove entry if log.nil?
     end
   end
 
