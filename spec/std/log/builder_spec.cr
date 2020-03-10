@@ -41,8 +41,8 @@ describe Log::Builder do
     log = builder.for("db")
 
     backend = log.backend.should be_a(Log::BroadcastBackend)
-    backend.@backends[a] = s(:fatal)
-    backend.@backends[b] = s(:info)
+    backend.@backends[a].should eq(s(:fatal))
+    backend.@backends[b].should eq(s(:info))
     log.source.should eq("db")
     log.level.should eq(s(:info))
   end
@@ -58,8 +58,8 @@ describe Log::Builder do
     log = builder.for("db")
 
     backend = log.backend.should be_a(Log::BroadcastBackend)
-    backend.@backends[a] = s(:debug)
-    backend.@backends[b] = s(:info)
+    backend.@backends[a].should eq(s(:debug))
+    backend.@backends[b].should eq(s(:info))
     log.source.should eq("db")
     log.level.should eq(s(:debug))
   end
