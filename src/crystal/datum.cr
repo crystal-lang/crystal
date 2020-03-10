@@ -22,7 +22,7 @@ module Crystal
     end
   end
 
-  # `Crysta.datum` macro is an internal helper to create data types that will hold
+  # `Crystal.datum` macro is an internal helper to create data types that will hold
   # values of multiple kinds similar to `JSON::Any` and `YAML::Any`.
   #
   # * **types**: contains a named tuple of prefixes and datatypes of each leaf

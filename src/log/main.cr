@@ -124,7 +124,7 @@ class Log
     # ```
     # Log.context.set a: 1
     # Log.info { "message with {"a" => 1} context" }
-    # Log.using do
+    # Log.context.using do
     #   Log.context.set b: 2
     #   Log.info { "message with {"a" => 1, "b" => 2} context" }
     # end

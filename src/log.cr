@@ -28,7 +28,7 @@
 # The source can be used to identify the module or part of the application that is logging.
 # You can configure for each source a different level to filter the messages.
 #
-# A recommended patter is to declare a `Log` constant in the namespace of your shard or module as follows:
+# A recommended pattern is to declare a `Log` constant in the namespace of your shard or module as follows:
 #
 # ```
 # module DB
@@ -57,8 +57,9 @@
 # A `Log` will emit the messages to the `Log::Backends` attached to it as long as
 # the configured severity filter `level` permits it.
 #
-# Logs can also be created from a type directly. The full name without generic arguments
-# will be used as a source. So for the type `Foo::Bar(Baz)` the source `foo.bar` will be used.
+# Logs can also be created from a type directly. For the type `DB::Pool` the source `db.pool` will be used
+# The full name without generic arguments will be used as a source. So for the type `Foo::Bar(Baz)`
+# the source `foo.bar` will be used.
 #
 # ```
 # module DB
@@ -112,6 +113,11 @@
 #
 # The logs are emitted to `STDOUT` using a `Log::StdioBackend`.
 #
+# If `./bin/app` uses `Log.setup_from_env` you can tweak the logging as
+#
+# ```
+# $ CRYSTAL_LOG_LEVEL=DEBUG CRYSTAL_LOG_SOURCES=* ./bin/app
+# ```
 class Log
 end
 

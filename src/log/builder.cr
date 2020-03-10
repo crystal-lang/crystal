@@ -1,6 +1,6 @@
 require "weak_ref"
 
-# A `Log::Builder` while create `Log` instances for a given source.
+# A `Log::Builder` creates `Log` instances for a given source.
 # It allows you to bind sources and patterns to a given backend.
 # Already created `Log` will be reconfigured as needed.
 class Log::Builder
