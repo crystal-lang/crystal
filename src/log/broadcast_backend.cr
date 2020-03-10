@@ -25,9 +25,7 @@ class Log::BroadcastBackend < Log::Backend
   end
 
   # :nodoc:
-  def min_level
-    @backends.reduce(Severity::None) do |memo, (_, v)|
-      {memo, v}.min
-    end
+  def min_level : Severity
+    @backends.each_value.min? || Severity::None
   end
 end

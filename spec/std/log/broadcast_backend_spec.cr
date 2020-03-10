@@ -58,4 +58,26 @@ describe Log::BroadcastBackend do
     backend_a.entries.should_not be_empty
     backend_b.entries.should be_empty
   end
+
+  describe "#min_level" do
+    it "on empty" do
+      main = Log::BroadcastBackend.new
+      main.min_level.should eq(s(:none))
+    end
+
+    it "single backend" do
+      main = Log::BroadcastBackend.new
+      main.append(Log::MemoryBackend.new, s(:warning))
+
+      main.min_level.should eq(s(:warning))
+    end
+
+    it "multiple backends" do
+      main = Log::BroadcastBackend.new
+      main.append(Log::MemoryBackend.new, s(:info))
+      main.append(Log::MemoryBackend.new, s(:warning))
+
+      main.min_level.should eq(s(:info))
+    end
+  end
 end
