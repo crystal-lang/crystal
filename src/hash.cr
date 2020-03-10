@@ -1239,7 +1239,7 @@ class Hash(K, V)
     @size == 0
   end
 
-  # Calls the given block for each key-value pair and passes in the key and the value as a `Tuple`.
+  # Calls the given block for each key-value pair and passes in the key and the value as `each(& : Tuple(K, V) ->) : Nil`
   #
   # ```
   # h = {"foo" => "bar"}
