@@ -110,8 +110,10 @@ struct YAML::Any
         object[Any.new(index_or_key)]
       when Any
         object[index_or_key]
+      when Int
+        object[Any.new(index_or_key.to_i64)]
       else
-        raise "Expected YAML::Any | String, not #{object.class}"
+        raise "Expected YAML::Any | String | Int, not #{index_or_key.inspect}"
       end
     else
       raise "Expected Array or Hash, not #{object.class}"
@@ -133,11 +135,13 @@ struct YAML::Any
     when Hash
       case index_or_key
       when String
-        object[Any.new(index_or_key)]
+        object[Any.new(index_or_key)]?
       when Any
-        object[index_or_key]
+        object[index_or_key]?
+      when Int
+        object[Any.new(index_or_key.to_i64)]?
       else
-        raise "Expected YAML::Any | String, not #{object.class}"
+        nil
       end
     else
       raise "Expected Array or Hash, not #{object.class}"
