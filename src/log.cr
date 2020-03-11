@@ -57,9 +57,8 @@
 # A `Log` will emit the messages to the `Log::Backends` attached to it as long as
 # the configured severity filter `level` permits it.
 #
-# Logs can also be created from a type directly. For the type `DB::Pool` the source `db.pool` will be used
-# The full name without generic arguments will be used as a source. So for the type `Foo::Bar(Baz)`
-# the source `foo.bar` will be used.
+# Logs can also be created from a type directly. For the type `DB::Pool` the source `db.pool` will be used.
+# For generic types as `Foo::Bar(Baz)` the source `foo.bar` will be used (i.e. without generic arguments).
 #
 # ```
 # module DB
@@ -113,7 +112,7 @@
 #
 # The logs are emitted to `STDOUT` using a `Log::StdioBackend`.
 #
-# If `./bin/app` uses `Log.setup_from_env` you can tweak the logging as
+# If `Log.setup_from_env` is called on startup you can tweak the logging as:
 #
 # ```
 # $ CRYSTAL_LOG_LEVEL=DEBUG CRYSTAL_LOG_SOURCES=* ./bin/app
