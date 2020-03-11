@@ -242,7 +242,7 @@ describe "Set" do
   end
 
   it "does subtract" do
-    set1 = Set(Int32 | Char){1, 2, 3, 4, 5}
+    set1 = Set{1, 2, 3, 4, 5}
     set2 = Set{2, 4, 'a'}
     set1.subtract set2
     set1.should eq(Set{1, 3, 5})
