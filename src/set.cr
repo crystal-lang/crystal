@@ -247,11 +247,7 @@ struct Set(T)
   # Set{'a', 'b', 'b', 'z'} - Set{'a', 'b', 'c'} # => Set{'z'}
   # ```
   def -(other : Set)
-    set = Set(T).new
-    each do |value|
-      set.add value unless other.includes?(value)
-    end
-    set
+    dup.subtract other
   end
 
   # Difference: returns a new set containing elements in this set that are not
@@ -311,7 +307,7 @@ struct Set(T)
   # ```
   def subtract(other : Enumerable)
     other.each do |value|
-      delete value
+      delete value if value.is_a? T
     end
     self
   end
