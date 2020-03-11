@@ -1753,20 +1753,18 @@ class Hash(K, V)
   end
 
   # Compares with *other*. Returns `true` if all key-value pairs are the same.
-  def ==(other : self)
-    return false unless size == other.size
-    each do |key, value|
-      entry = other.find_entry(key)
-      return false unless entry && entry.value == value
-    end
-    true
-  end
-
   def ==(other : Hash(K2, V2)) forall K2, V2
     {% if K <= K2 %}
       return false unless size == other.size
       each do |key, value|
-        entry = other.find_entry(key)
+        entry = other.find_entry(key.as(K))
+        return false unless entry && entry.value == value
+      end
+      true
+    {% elsif K2 < K %}
+      return false unless size == other.size
+      each do |key, value|
+        entry = other.find_entry(key.as(K2))
         return false unless entry && entry.value == value
       end
       true
