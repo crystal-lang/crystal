@@ -140,7 +140,7 @@ module Crystal
       debug_type
     end
 
-    def create_debug_type(type : PointerInstanceType | Pointer(T), type_name : String)
+    def create_debug_type(type : PointerInstanceType, type_name : String)
       element_type = get_debug_type(type.element_type)
       return unless element_type
       di_builder.create_pointer_type(element_type, 8u64 * llvm_typer.pointer_size, 8u64 * llvm_typer.pointer_size, type_name)
@@ -480,7 +480,7 @@ module Crystal
       di_builder.create_pointer_type(debug_type, 8u64 * llvm_typer.pointer_size, 8u64 * llvm_typer.pointer_size, type_name)
     end
 
-    def declare_debug_for_funciton_argument(arg_name, arg_type, arg_no, alloca, location)
+    def declare_debug_for_function_argument(arg_name, arg_type, arg_no, alloca, location)
       return alloca unless @debug.variables?
       old_debug_location = @current_debug_location
       set_current_debug_location location
