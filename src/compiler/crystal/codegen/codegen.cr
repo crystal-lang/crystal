@@ -1355,7 +1355,8 @@ module Crystal
     def declare_var(var)
       context.vars[var.name] ||= begin
         pointer = var.no_returns? ? llvm_nil : alloca(llvm_type(var.type), var.name)
-        debug_variable_created = declare_variable(var.name, var.type, pointer, var.location)
+        debug_variable_created = false
+        debug_variable_created = declare_variable(var.name, var.type, pointer, var.location) unless context.fun.naked?
         LLVMVar.new(pointer, var.type, debug_variable_created: debug_variable_created)
       end
     end
@@ -1732,7 +1733,7 @@ module Crystal
             end
 
             debug_variable_created = false
-            if location
+            if location && !context.fun.naked?
               debug_variable_created = declare_variable name, var_type, ptr, location, alloca_block
             end
             context.vars[name] = LLVMVar.new(ptr, var_type, debug_variable_created: debug_variable_created)

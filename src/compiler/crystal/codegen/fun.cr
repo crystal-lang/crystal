@@ -487,7 +487,7 @@ class Crystal::CodeGenVisitor
     return if arg.name == "_"
 
     target_def_var = target_def_vars.try &.[arg.name]
-    location = target_def_var.try &.location || target_def.location
+    location = target_def_var.try(&.location) || target_def.location
 
     var_type = (target_def_var || arg).type
     return if var_type.void?
@@ -508,11 +508,11 @@ class Crystal::CodeGenVisitor
         pointer = alloca(llvm_type(var_type), arg.name)
         casted_pointer = bit_cast pointer, value.type.pointer
         store value, casted_pointer
-        pointer = declare_debug_for_funciton_argument(arg.name, var_type, index + 1, pointer, location)
+        pointer = declare_debug_for_funciton_argument(arg.name, var_type, index + 1, pointer, location) unless target_def.naked?
         context.vars[arg.name] = LLVMVar.new(pointer, var_type)
         return
       elsif arg.special_var?
-        value = declare_debug_for_funciton_argument(arg.name, var_type, index + 1, value, location)
+        value = declare_debug_for_funciton_argument(arg.name, var_type, index + 1, value, location) unless target_def.naked?
         context.vars[arg.name] = LLVMVar.new(value, var_type)
         return
       else
@@ -521,7 +521,7 @@ class Crystal::CodeGenVisitor
         needs_copy = target_def_var.try &.assigned_to?
         if needs_copy
           pointer = alloca(llvm_type(var_type), arg.name)
-          pointer = declare_debug_for_funciton_argument(arg.name, var_type, index + 1, pointer, location)
+          pointer = declare_debug_for_funciton_argument(arg.name, var_type, index + 1, pointer, location) unless target_def.naked?
           context.vars[arg.name] = LLVMVar.new(pointer, var_type)
 
           if arg.type.passed_by_value? && !context.fun.attributes(index + 1).by_val?
@@ -536,11 +536,11 @@ class Crystal::CodeGenVisitor
             # is behind a pointer, as everywhere else
             pointer = alloca(llvm_type(var_type), arg.name)
             store value, pointer
-            pointer = declare_debug_for_funciton_argument(arg.name, var_type, index + 1, pointer, location)
+            pointer = declare_debug_for_funciton_argument(arg.name, var_type, index + 1, pointer, location) unless target_def.naked?
             context.vars[arg.name] = LLVMVar.new(pointer, var_type)
             return
           else
-            value = declare_debug_for_funciton_argument(arg.name, var_type, index + 1, value, location)
+            value = declare_debug_for_funciton_argument(arg.name, var_type, index + 1, value, location) unless target_def.naked?
             context.vars[arg.name] = LLVMVar.new(value, var_type, true)
             return
           end

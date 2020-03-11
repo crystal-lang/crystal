@@ -90,6 +90,10 @@ struct LLVM::Function
     debug_params << debug_type if debug_type
   end
 
+  def naked?
+    (attributes & LLVM::Attribute::Naked) == LLVM::Attribute::Naked
+  end
+
   def body_to_ll_string
     String.build do |str|
       str << "def " << self.name << "(#{self.params.join(", ")}):\n"
