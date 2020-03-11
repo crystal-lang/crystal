@@ -112,6 +112,8 @@ module Crystal
     # Paths to ignore for warnings detection.
     property warnings_exclude : Array(String) = [] of String
 
+    property warnings_exclude_default : Bool = true
+
     # If `true` compiler will error if warnings are found.
     property error_on_warnings : Bool = false
 
