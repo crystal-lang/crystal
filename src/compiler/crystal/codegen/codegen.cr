@@ -123,7 +123,7 @@ module Crystal
     property last : LLVM::Value
 
     class LLVMVar
-      property pointer : LLVM::Value
+      getter pointer : LLVM::Value
       getter type : Type
 
       # Normally a variable is associated with an alloca.
@@ -1776,8 +1776,7 @@ module Crystal
         closure_type = @llvm_typer.closure_context_type(closure_vars, parent_closure_type, (self_closured ? current_context.type : nil))
         closure_ptr = malloc closure_type
         closure_vars.each_with_index do |var, i|
-          ptr = gep(closure_ptr, 0, i, var.name)
-          current_context.vars[var.name] = LLVMVar.new(ptr, var.type)
+          current_context.vars[var.name] = LLVMVar.new(gep(closure_ptr, 0, i, var.name), var.type)
         end
         closure_skip_parent = false
 
