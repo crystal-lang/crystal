@@ -47,12 +47,21 @@ class YAML::Builder
     }, @box)
   end
 
-  # Creates a `YAML::Builder` that will write to the given `IO`,
-  # invokes the block and closes the builder.
-  def self.new(io : IO) : Nil
-    emitter = new(io)
-    yield emitter ensure emitter.close
+  # Creates a `YAML::Builder` that writes to *io* and yields it to the block.
+  #
+  # After returning from the block the builder is closed.
+  def self.build(io : IO, & : self ->) : Nil
+    builder = new(io)
+    yield builder ensure builder.close
     io.flush
+  end
+
+  # :ditto:
+  @[Deprecated("Use .build instead")]
+  def self.new(io : IO, & : self ->) : Nil
+    build(io) do |builder|
+      yield builder
+    end
   end
 
   # Starts a YAML stream.
@@ -246,7 +255,7 @@ module YAML
 
   # Writes YAML into the given `IO`. A `YAML::Builder` is yielded to the block.
   def self.build(io : IO) : Nil
-    YAML::Builder.new(io) do |yaml|
+    YAML::Builder.build(io) do |yaml|
       yaml.stream do
         yaml.document do
           yield yaml
