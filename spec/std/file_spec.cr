@@ -279,6 +279,7 @@ describe "File" do
     File.dirname("/Users/foo/bar.cr").should eq("/Users/foo")
     File.dirname("foo").should eq(".")
     File.dirname("").should eq(".")
+    File.dirname("/τελεία/łódź").should eq("/τελεία")
   end
 
   it "gets basename" do
