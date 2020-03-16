@@ -225,7 +225,7 @@ struct Path
       return anchor.to_s
     end
 
-    @name.byte_slice(0, reader.pos + 1)
+    @name.byte_slice(0, reader.pos + reader.current_char_width)
   end
 
   # Returns the parent path of this path.
