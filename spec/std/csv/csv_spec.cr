@@ -156,4 +156,54 @@ describe CSV do
       break
     end
   end
+
+  describe "rewind" do
+    describe "string based" do
+      it "without headers" do
+        csv = CSV.new("one,two\nthree,four", headers: false)
+        csv.next
+        csv.row.to_a.should eq(%w(one two))
+        csv.next
+        csv.row.to_a.should eq(%w(three four))
+        csv.rewind
+        csv.next
+        csv.row.to_a.should eq(%w(one two))
+      end
+
+      it "with headers" do
+        csv = CSV.new("one,two\nthree,four\nfive,six", headers: true)
+        csv.next
+        csv.row.to_h.should eq({"one" => "three", "two" => "four"})
+        csv.next
+        csv.row.to_h.should eq({"one" => "five", "two" => "six"})
+        csv.rewind
+        csv.next
+        csv.row.to_h.should eq({"one" => "three", "two" => "four"})
+      end
+    end
+
+    describe "IO based" do
+      it "without headers" do
+        csv = CSV.new(IO::Memory.new("one,two\nthree,four"), headers: false)
+        csv.next
+        csv.row.to_a.should eq(%w(one two))
+        csv.next
+        csv.row.to_a.should eq(%w(three four))
+        csv.rewind
+        csv.next
+        csv.row.to_a.should eq(%w(one two))
+      end
+
+      it "with headers" do
+        csv = CSV.new(IO::Memory.new("one,two\nthree,four\nfive,six"), headers: true)
+        csv.next
+        csv.row.to_h.should eq({"one" => "three", "two" => "four"})
+        csv.next
+        csv.row.to_h.should eq({"one" => "five", "two" => "six"})
+        csv.rewind
+        csv.next
+        csv.row.to_h.should eq({"one" => "three", "two" => "four"})
+      end
+    end
+  end
 end

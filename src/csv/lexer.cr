@@ -38,6 +38,13 @@ abstract class CSV::Lexer
     @last_empty_column = false
   end
 
+  # Rewinds this lexer to the beginning
+  def rewind
+    @column_number = 1
+    @line_number = 1
+    @last_empty_column = false
+  end
+
   private abstract def consume_unquoted_cell
   private abstract def next_char_no_column_increment
   private abstract def current_char

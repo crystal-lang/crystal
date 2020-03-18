@@ -295,6 +295,13 @@ class CSV
     Row.new(self, current_row.dup)
   end
 
+  # Rewinds this CSV to the beginning, rewinding the underlying IO if any.
+  def rewind
+    @parser.rewind
+    @parser.next_row if @headers
+    @traversed = false
+  end
+
   private def row_internal
     Row.new(self, current_row)
   end
