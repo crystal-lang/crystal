@@ -8,6 +8,20 @@ enum Log::Severity
   Fatal
   # Used only for severity level filter.
   None
+
+  def label
+    case self
+    when Debug  ; "DEBUG"
+    when Verbose; "VERBOSE"
+    when Info   ; "INFO"
+    when Warning; "WARNING"
+    when Error  ; "ERROR"
+    when Fatal  ; "FATAL"
+    when None   ; "NONE"
+    else
+      raise "unreachable"
+    end
+  end
 end
 
 struct Log::Entry

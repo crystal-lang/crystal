@@ -10,28 +10,35 @@ class Log::StdioBackend < Log::Backend
 
   def initialize
     @mutex = Mutex.new(:unchecked)
-    @progname = File.basename(PROGRAM_NAME) || ""
+    @progname = File.basename(PROGRAM_NAME)
   end
 
   def write(entry : Entry)
     @mutex.synchronize do
-      if formatter = @formatter
-        formatter.call(entry, stdout)
-      else
-        format(entry, stdout)
-      end
+      format(entry, stdout)
       stdout.puts
       stdout.flush
     end
   end
 
   # Emits the *entry* to the given *io*.
+  # It will use the `#formatter` if defined, otherwise will call `#default_format`.
   def format(entry : Entry, io : IO)
-    label = entry.severity.to_s.upcase
-    io << label[0] << ", [" << entry.timestamp << " #" << Process.pid << "] "
+    if formatter = @formatter
+      formatter.call(entry, stdout)
+    else
+      default_format(entry, stdout)
+    end
+  end
+
+  # Emits the *entry* to the given *io*.
+  def default_format(entry : Entry, io : IO)
+    label = entry.severity.label
+    io << label[0] << ", [" << entry.timestamp.to_rfc3339 << " #" << Process.pid << "] "
     io << label.rjust(7) << " -- " << @progname << ":" << entry.source << ": " << entry.message
     if entry.context.size > 0
-      io << " -- " << entry.context
+      io << " -- "
+      entry.context.to_s(io)
     end
     if ex = entry.exception
       io << " -- " << ex.class << ": " << ex

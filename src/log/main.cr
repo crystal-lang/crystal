@@ -123,12 +123,12 @@ class Log
     #
     # ```
     # Log.context.set a: 1
-    # Log.info { "message with {"a" => 1} context" }
+    # Log.info { %(message with {"a" => 1} context) }
     # Log.context.using do
     #   Log.context.set b: 2
-    #   Log.info { "message with {"a" => 1, "b" => 2} context" }
+    #   Log.info { %(message with {"a" => 1, "b" => 2} context) }
     # end
-    # Log.info { "message with {"a" => 1} context" }
+    # Log.info { %(message with {"a" => 1} context) }
     # ```
     def using
       previous = Log.context
