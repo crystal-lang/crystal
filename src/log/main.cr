@@ -71,6 +71,26 @@ class Log
     Log.context = value
   end
 
+  # Method to save and restore the current logging context.
+  #
+  # ```
+  # Log.context.set a: 1
+  # Log.info { %(message with {"a" => 1} context) }
+  # Log.with_context do
+  #   Log.context.set b: 2
+  #   Log.info { %(message with {"a" => 1, "b" => 2} context) }
+  # end
+  # Log.info { %(message with {"a" => 1} context) }
+  # ```
+  def self.with_context
+    previous = Log.context
+    begin
+      yield
+    ensure
+      Log.context = previous
+    end
+  end
+
   class Context
     # Clears the current `Fiber` logging context.
     #
@@ -117,26 +137,6 @@ class Log
     private def extend_fiber_context(fiber : Fiber, values : Context) forall V
       context = fiber.logging_context
       fiber.logging_context = context.merge(values)
-    end
-
-    # Method to save and restore the current logging context.
-    #
-    # ```
-    # Log.context.set a: 1
-    # Log.info { %(message with {"a" => 1} context) }
-    # Log.context.using do
-    #   Log.context.set b: 2
-    #   Log.info { %(message with {"a" => 1, "b" => 2} context) }
-    # end
-    # Log.info { %(message with {"a" => 1} context) }
-    # ```
-    def using
-      previous = Log.context
-      begin
-        yield
-      ensure
-        Log.context = previous
-      end
     end
   end
 end

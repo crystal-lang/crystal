@@ -39,7 +39,7 @@ describe Log::IOBackend do
     IO.pipe do |r, w|
       logger = stdio_logger(stdout: w)
       Log.context.clear
-      Log.context.using do
+      Log.with_context do
         Log.context.set foo: "bar"
         logger.info { "info:show" }
       end

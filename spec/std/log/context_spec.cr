@@ -63,7 +63,7 @@ describe Log::Context do
     it "is restored with using" do
       Log.context.set a: 1
 
-      Log.context.using do
+      Log.with_context do
         Log.context.set b: 2
         Log.context.should eq(c({a: 1, b: 2}))
       end
