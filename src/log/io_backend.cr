@@ -1,10 +1,6 @@
-# A `Log::Backend` that emits to STDOUT.
-class Log::StdioBackend < Log::Backend
-  # TODO allow emitting entries from certain level to stderr
-
-  # :nodoc:
-  property stdout : IO = STDOUT
-
+# A `Log::Backend` that emits to an `IO` (defaults to STDOUT).
+class Log::IOBackend < Log::Backend
+  property io : IO = STDOUT
   property progname : String
   property formatter : Formatter? = nil
 
@@ -15,24 +11,24 @@ class Log::StdioBackend < Log::Backend
 
   def write(entry : Entry)
     @mutex.synchronize do
-      format(entry, stdout)
-      stdout.puts
-      stdout.flush
+      format(entry)
+      io.puts
+      io.flush
     end
   end
 
   # Emits the *entry* to the given *io*.
   # It will use the `#formatter` if defined, otherwise will call `#default_format`.
-  def format(entry : Entry, io : IO)
+  def format(entry : Entry)
     if formatter = @formatter
-      formatter.call(entry, stdout)
+      formatter.call(entry, io)
     else
-      default_format(entry, stdout)
+      default_format(entry)
     end
   end
 
   # Emits the *entry* to the given *io*.
-  def default_format(entry : Entry, io : IO)
+  def default_format(entry : Entry)
     label = entry.severity.label
     io << label[0] << ", [" << entry.timestamp.to_rfc3339 << " #" << Process.pid << "] "
     io << label.rjust(7) << " -- " << @progname << ":" << entry.source << ": " << entry.message

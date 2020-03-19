@@ -7,14 +7,14 @@ end
 
 private def stdio_logger(*, stdout : IO, config = nil, source : String = "", progname : String? = nil)
   builder = Log::Builder.new
-  backend = Log::StdioBackend.new
+  backend = Log::IOBackend.new
   backend.progname = progname if progname
-  backend.stdout = stdout
+  backend.io = stdout
   builder.bind("*", s(:info), backend)
   builder.for(source)
 end
 
-describe Log::StdioBackend do
+describe Log::IOBackend do
   it "logs messages" do
     IO.pipe do |r, w|
       logger = stdio_logger(stdout: w)
@@ -69,7 +69,7 @@ describe Log::StdioBackend do
   it "uses custom formatter" do
     IO.pipe do |r, w|
       logger = stdio_logger(stdout: w)
-      logger.backend.as(Log::StdioBackend).formatter = Log::Formatter.new do |entry, io|
+      logger.backend.as(Log::IOBackend).formatter = Log::Formatter.new do |entry, io|
         io << entry.severity.to_s[0].upcase << ": " << entry.message
       end
       logger.warn { "message" }

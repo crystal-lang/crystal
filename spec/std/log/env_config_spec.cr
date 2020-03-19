@@ -10,7 +10,7 @@ describe "Log.setup_from_env" do
     builder = Log::Builder.new
     Log.setup_from_env(builder: builder, level: "info", sources: "")
 
-    builder.for("").backend.should be_a(Log::StdioBackend)
+    builder.for("").backend.should be_a(Log::IOBackend)
   end
 
   it "raises on invalid level" do

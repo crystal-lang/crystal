@@ -4,7 +4,7 @@ class Log
   def self.setup_from_env(*, builder : Log::Builder = Log.builder,
                           level = ENV.fetch("CRYSTAL_LOG_LEVEL", "INFO"),
                           sources = ENV.fetch("CRYSTAL_LOG_SOURCES", ""),
-                          backend = Log::StdioBackend.new)
+                          backend = Log::IOBackend.new)
     builder.clear
 
     level = Log::Severity.parse(level)

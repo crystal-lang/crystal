@@ -84,7 +84,7 @@
 # sources errors (or higher) to an elasticsearch backend.
 #
 # ```
-# backend = Log::StdioBackend.new
+# backend = Log::IOBackend.new
 # Log.builder.bind "*", :warning, backend
 # Log.builder.bind "db.*", :debug, backend
 # Log.builder.bind "*", :error, ElasticSearchBackend.new("http://localhost:9200")
@@ -110,7 +110,7 @@
 # * `foo.bar` matches `foo.bar`, but not its nested sources
 # * Any comma separated combination of the above
 #
-# The logs are emitted to `STDOUT` using a `Log::StdioBackend`.
+# The logs are emitted to `STDOUT` using a `Log::IOBackend`.
 #
 # If `Log.setup_from_env` is called on startup you can tweak the logging as:
 #
@@ -130,4 +130,4 @@ require "./log/main"
 require "./log/env_config"
 require "./log/log"
 require "./log/memory_backend"
-require "./log/stdio_backend"
+require "./log/io_backend"
