@@ -1,10 +1,10 @@
 # A `Log::Backend` that emits to an `IO` (defaults to STDOUT).
 class Log::IOBackend < Log::Backend
-  property io : IO = STDOUT
+  property io : IO
   property progname : String
   property formatter : Formatter? = nil
 
-  def initialize
+  def initialize(@io = STDOUT)
     @mutex = Mutex.new(:unchecked)
     @progname = File.basename(PROGRAM_NAME)
   end
