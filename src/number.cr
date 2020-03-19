@@ -255,6 +255,28 @@ struct Number
     self == 0
   end
 
+  # Returns `true` if value is larger than zero.
+  #
+  # ```
+  # -5.zero? # => false
+  # 0.zero?  # => false
+  # 5.zero?  # => true
+  # ```
+  def positive? : Bool
+    self > 0
+  end
+
+  # Returns `true` if value is smaller than zero.
+  #
+  # ```
+  # -5.zero? # => true
+  # 0.zero?  # => false
+  # 5.zero?  # => false
+  # ```
+  def positive? : Bool
+    self < 0
+  end
+
   private class StepIterator(T, L, B)
     include Iterator(T)
 

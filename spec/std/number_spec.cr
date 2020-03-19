@@ -174,6 +174,30 @@ describe "Number" do
     1f32.zero?.should eq false
   end
 
+  it "test positive?" do
+    0.positive?.should eq false
+    0.0.positive?.should eq false
+    0f32.positive?.should eq false
+    1.positive?.should eq true
+    1.0.positive?.should eq true
+    1f32.positive?.should eq true
+    -1.positive?.should eq false
+    -1.0.positive?.should eq false
+    -1f32.positive?.should eq false
+  end
+
+  it "test negative?" do
+    0.positive?.should eq false
+    0.0.positive?.should eq false
+    0f32.positive?.should eq false
+    1.positive?.should eq false
+    1.0.positive?.should eq false
+    1f32.positive?.should eq false
+    -1.positive?.should eq true
+    -1.0.positive?.should eq true
+    -1f32.positive?.should eq true
+  end
+
   describe "step" do
     it "from int to float" do
       count = 0
