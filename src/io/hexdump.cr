@@ -59,4 +59,8 @@ class IO::Hexdump < IO
   def tty?
     @io.tty?
   end
+
+  def pos
+    @io.pos
+  end
 end
