@@ -1148,6 +1148,27 @@ abstract class IO
     limit - remaining
   end
 
+  {% if flag?(:linux) %}
+    # :nodoc:
+    def self.copy(src : IO::FileDescriptor, dst : IO::FileDescriptor, limit : Int) : UInt64
+      return 0_u64 if limit.zero?
+      raise ArgumentError.new("Negative limit") if limit < 0
+
+      remaining = limit = limit.to_u64
+
+      while remaining > 0
+        len = LibC.copy_file_range(src.fd, nil, dst.fd, nil, remaining, 0)
+        if len == -1
+          raise Errno.new "copy_file_range"
+        end
+        break if len.zero?
+        remaining -= len
+      end
+
+      limit - remaining
+    end
+  {% end %}
+
   private struct LineIterator(I, A, N)
     include Iterator(String)
 
