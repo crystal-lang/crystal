@@ -209,6 +209,22 @@ module IO::Buffered
     self
   end
 
+  # reads only what's already been buffered
+  # and won't refill the buffer even it's possible
+  # a way to flush the read buffer
+  def buffered_read(slice)
+    check_open
+
+    count = slice.size
+    return 0 if count.zero?
+    return 0 if @in_buffer_rem.empty?
+
+    to_read = Math.min(count, @in_buffer_rem.size)
+    slice.copy_from(@in_buffer_rem.to_unsafe, to_read)
+    @in_buffer_rem += to_read
+    to_read
+  end
+
   private def fill_buffer
     in_buffer = in_buffer()
     size = unbuffered_read(Slice.new(in_buffer, @buffer_size)).to_i
