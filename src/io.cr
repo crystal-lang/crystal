@@ -1164,6 +1164,62 @@ abstract class IO
     count
   end
 
+  {% if LibC.has_method?(:copy_file_range) %}
+    # Copy all contents from *src* to *dst*.
+    #
+    # Uses the `copy_file_range` optimization on supported platforms
+    def self.copy(src : File, dst : File, limit : Int) : UInt64
+      raise ArgumentError.new("Negative limit") if limit < 0
+      return 0_u64 if limit.zero?
+
+      remaining = limit = limit.to_u64
+      if limit < src.read_buffer.size
+        dst.write(src.read_buffer[0, limit])
+        src.skip(limit)
+        return limit
+      end
+
+      dst.write(src.read_buffer)
+      remaining -= src.read_buffer.size
+      src.skip(src.read_buffer.size)
+      dst.flush
+
+      while remaining > 0
+        len = LibC.copy_file_range(src.fd, nil, dst.fd, nil, remaining, 0)
+        if len == -1
+          raise IO::Error.from_errno "copy_file_range"
+        end
+        break if len.zero?
+        remaining -= len
+      end
+
+      limit - remaining
+    end
+
+    # Copy at most *limit* bytes from *src* to *dst*.
+    #
+    # Uses the `copy_file_range` optimization on supported platforms
+    def self.copy(src : File, dst : File) : UInt64
+      count = 0_u64
+
+      dst.write(src.read_buffer)
+      count += src.read_buffer.size
+      src.skip(src.read_buffer.size)
+      dst.flush
+
+      loop do
+        len = LibC.copy_file_range(src.fd, nil, dst.fd, nil, LibC::SSizeT::MAX, 0)
+        if len == -1
+          raise IO::Error.from_errno "copy_file_range"
+        end
+        break if len.zero?
+        count += len
+      end
+
+      count
+    end
+  {% end %}
+
   # Copy at most *limit* bytes from *src* to *dst*.
   #
   # ```
