@@ -186,6 +186,8 @@ class HTTP::WebSocket::Protocol
     when 127
       size = 0_u64
       8.times { size <<= 8; size += @io.read_byte.not_nil! }
+    else
+      # not a special case
     end
     size
   end

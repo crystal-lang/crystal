@@ -682,6 +682,7 @@ struct Path
     case home
     when String then home = Path[home]
     when Bool   then home = Path.home
+    when Path # no transformation needed
     end
 
     home.to_kind(@kind).normalize
