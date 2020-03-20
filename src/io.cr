@@ -1156,6 +1156,15 @@ abstract class IO
 
       remaining = limit = limit.to_u64
 
+      dst.flush
+      buffer = uninitialized UInt8[8192] # default read buffer size is 8192 so lets match that
+      while remaining > 0
+        len = src.buffered_read(buffer.to_slice[0, Math.min(buffer.size, Math.max(remaining, 0))])
+        break if len.zero?
+        dst.write buffer.to_slice[0, len]
+        remaining -= len
+      end
+
       while remaining > 0
         len = LibC.copy_file_range(src.fd, nil, dst.fd, nil, remaining, 0)
         if len == -1
