@@ -1150,9 +1150,9 @@ abstract class IO
 
   {% if flag?(:linux) %}
     # :nodoc:
-    def self.copy(src : IO::FileDescriptor, dst : IO::FileDescriptor, limit : Int) : UInt64
-      return 0_u64 if limit.zero?
+    def self.copy(src : File, dst : File, limit : Int) : UInt64
       raise ArgumentError.new("Negative limit") if limit < 0
+      return 0_u64 if limit.zero?
 
       remaining = limit = limit.to_u64
 
