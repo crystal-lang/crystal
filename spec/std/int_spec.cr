@@ -780,8 +780,8 @@ describe "Int" do
 
   it "#bit_length" do
     0.bit_length.should eq(0)
-    (1..100).each do |i|
-      i.bit_length.should eq(Math.log2(i).to_i + 1)
-    end
+    0b1.bit_length.should eq(1)
+    0b1001.bit_length.should eq(4)
+    0b1001001_i64.bit_length.should eq(7)
   end
 end
