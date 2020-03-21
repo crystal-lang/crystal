@@ -422,7 +422,12 @@ struct Int
   # ```
   def bit_length : self
     x = self < 0 ? ~self : self
-    self.class.new(sizeof(self) * 8 - x.leading_zeros_count)
+
+    if x.is_a?(Int::Primitive)
+      self.class.new(sizeof(self) * 8 - x.leading_zeros_count)
+    else
+      self.class.new(Math.log2(x).to_i + 1)
+    end
   end
 
   # Returns the greatest common divisor of `self` and `other`. Signed

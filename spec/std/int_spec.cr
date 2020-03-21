@@ -785,5 +785,7 @@ describe "Int" do
     0b1001001_i64.bit_length.should eq(7)
     -1.bit_length.should eq(0)
     -10.bit_length.should eq(4)
+
+    BigInt.new("1234567890123456789012345678901234567890").bit_length.should eq(130)
   end
 end
