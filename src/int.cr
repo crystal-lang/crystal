@@ -402,7 +402,7 @@ struct Int
   # (The bit position of the bit 2**n is n+1.)
   # If there is no such bit (zero or minus one), zero is returned.
   #
-  # I.e. This method returns `ceil(log2(self < 0 ? -self : self+1))`.
+  # I.e. This method returns `ceil(log2(self < 0 ? -self : self + 1))`.
   #
   # ```
   # 0.bit_length # => 0
