@@ -1,4 +1,4 @@
-require "spec"
+require "./spec_helper"
 {% unless flag?(:win32) %}
   require "big"
 {% end %}
@@ -776,5 +776,12 @@ describe "Int" do
   it "#unsafe_chr" do
     65.unsafe_chr.should eq('A')
     (0x10ffff + 1).unsafe_chr.ord.should eq(0x10ffff + 1)
+  end
+
+  it "#bit_length" do
+    0.bit_length.should eq(0)
+    (1..100).each do |i|
+      i.bit_length.should eq(Math.log2(i).to_i + 1)
+    end
   end
 end

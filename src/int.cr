@@ -395,6 +395,36 @@ struct Int
     (self & mask) == mask
   end
 
+  # Returns the number of bits of this int value.
+  #
+  # “The number of bits” means that the bit position of the highest bit
+  # which is different to the sign bit.
+  # (The bit position of the bit 2**n is n+1.)
+  # If there is no such bit (zero or minus one), zero is returned.
+  #
+  # I.e. This method returns `ceil(log2(self < 0 ? -self : self+1))`.
+  #
+  # ```
+  # 0.bit_length # => 0
+  # 1.bit_length # => 1
+  # 2.bit_length # => 2
+  # 3.bit_length # => 2
+  # 4.bit_length # => 3
+  # 5.bit_length # => 3
+  #
+  # # The above is the same as
+  # 0b0.bit_length   # => 0
+  # 0b1.bit_length   # => 1
+  # 0b10.bit_length  # => 2
+  # 0b11.bit_length  # => 2
+  # 0b100.bit_length # => 3
+  # 0b101.bit_length # => 3
+  # ```
+  def bit_length : self
+    x = self < 0 ? ~self : self
+    self.class.new(sizeof(self) * 8 - x.leading_zeros_count)
+  end
+
   # Returns the greatest common divisor of `self` and `other`. Signed
   # integers may raise overflow if either has value equal to `MIN` of
   # its type.
