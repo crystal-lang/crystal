@@ -395,13 +395,13 @@ class Crystal::CodeGenVisitor
   def setup_context_fun(mangled_name, target_def, llvm_args_types, llvm_return_type) : Nil
     context.fun = @llvm_mod.functions.add(mangled_name, llvm_args_types, llvm_return_type, target_def.varargs?)
 
-    unless @debug.variables?
-      context.fun.add_attribute LLVM::Attribute::AlwaysInline if target_def.always_inline?
-    else
+    if @debug.variables?
       context.fun.add_attribute LLVM::Attribute::NoInline
       context.fun.add_attribute LLVM::Attribute::NoUnwind
       context.fun.add_attribute LLVM::Attribute::OptimizeNone
       context.fun.add_attribute LLVM::Attribute::UWTable
+    else
+      context.fun.add_attribute LLVM::Attribute::AlwaysInline if target_def.always_inline?
     end
     context.fun.add_attribute LLVM::Attribute::ReturnsTwice if target_def.returns_twice?
     context.fun.add_attribute LLVM::Attribute::Naked if target_def.naked?
