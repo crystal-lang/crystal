@@ -783,5 +783,7 @@ describe "Int" do
     0b1.bit_length.should eq(1)
     0b1001.bit_length.should eq(4)
     0b1001001_i64.bit_length.should eq(7)
+    -1.bit_length.should eq(0)
+    -10.bit_length.should eq(4)
   end
 end
