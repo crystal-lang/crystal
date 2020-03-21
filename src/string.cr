@@ -3607,8 +3607,33 @@ class String
   # "Purple".ljust(8, '-') # => "Purple--"
   # "Aubergine".ljust(8)   # => "Aubergine"
   # ```
-  def ljust(len, char : Char = ' ')
+  def ljust(len : Int, char : Char = ' ')
     just len, char, -1
+  end
+
+  # Adds spaces to right of the string until it is at least size of *len*,
+  # and then appends the result to the given IO.
+  #
+  # ```
+  # io = IO::Memory.new
+  # "Purple".ljust(8, io)
+  # io.to_s # => "Purple  "
+  # ```
+  def ljust(len : Int, io : IO) : Nil
+    ljust(len, ' ', io)
+  end
+
+  # Adds instances of *char* to right of the string until it is at least size of *len*,
+  # and then appends the result to the given IO.
+  #
+  # ```
+  # io = IO::Memory.new
+  # "Purple".ljust(8, '-', io)
+  # io.to_s # => "Purple--"
+  # ```
+  def ljust(len : Int, char : Char, io : IO) : Nil
+    io << self
+    (len - size).times { io << char }
   end
 
   # Adds instances of *char* to left of the string until it is at least size of *len*.
@@ -3618,8 +3643,33 @@ class String
   # "Purple".rjust(8, '-') # => "--Purple"
   # "Aubergine".rjust(8)   # => "Aubergine"
   # ```
-  def rjust(len, char : Char = ' ')
+  def rjust(len : Int, char : Char = ' ')
     just len, char, 1
+  end
+
+  # Adds spaces to left of the string until it is at least size of *len*,
+  # and then appends the result to the given IO.
+  #
+  # ```
+  # io = IO::Memory.new
+  # "Purple".rjust(8, io)
+  # io.to_s # => "  Purple"
+  # ```
+  def rjust(len : Int, io : IO) : Nil
+    rjust(len, ' ', io)
+  end
+
+  # Adds instances of *char* to left of the string until it is at least size of *len*,
+  # and then appends the result to the given IO.
+  #
+  # ```
+  # io = IO::Memory.new
+  # "Purple".rjust(8, '-', io)
+  # io.to_s # => "--Purple"
+  # ```
+  def rjust(len : Int, char : Char, io : IO) : Nil
+    (len - size).times { io << char }
+    io << self
   end
 
   # Adds instances of *char* to left ond right of the string until it is at least size of *len*.
@@ -3630,8 +3680,44 @@ class String
   # "Purple".center(9, '-') # => "-Purple--"
   # "Aubergine".center(8)   # => "Aubergine"
   # ```
-  def center(len, char : Char = ' ')
+  def center(len : Int, char : Char = ' ')
     just len, char, 0
+  end
+
+  # Adds spaces to left ond right of the string until it is at least size of *len*,
+  # then appends the result to the given IO.
+  #
+  # ```
+  # io = IO::Memory.new
+  # "Purple".center(9, io)
+  # io.to_s # => " Purple  "
+  # ```
+  def center(len : Int, io : IO) : Nil
+    center(len, ' ', io)
+  end
+
+  # Adds instances of *char* to left ond right of the string until it is at least size of *len*,
+  # then appends the result to the given IO.
+  #
+  # ```
+  # io = IO::Memory.new
+  # "Purple".center(9, '-', io)
+  # io.to_s # => "-Purple--"
+  # ```
+  def center(len : Int, char : Char, io : IO) : Nil
+    difference = len - size
+
+    if difference <= 0
+      io << self
+      return
+    end
+
+    left_padding = difference // 2
+    right_padding = difference - left_padding
+
+    left_padding.times { io << char }
+    io << self
+    right_padding.times { io << char }
   end
 
   private def just(len, char, justify)
