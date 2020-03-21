@@ -3607,7 +3607,7 @@ class String
   # "Purple".ljust(8, '-') # => "Purple--"
   # "Aubergine".ljust(8)   # => "Aubergine"
   # ```
-  def ljust(len, char : Char = ' ')
+  def ljust(len : Int, char : Char = ' ')
     just len, char, -1
   end
 
@@ -3619,7 +3619,7 @@ class String
   # "Purple".ljust(8, io)
   # io.to_s # => "Purple  "
   # ```
-  def ljust(len, io : IO) : Nil
+  def ljust(len : Int, io : IO) : Nil
     ljust(len, ' ', io)
   end
 
@@ -3631,7 +3631,7 @@ class String
   # "Purple".ljust(8, '-', io)
   # io.to_s # => "Purple--"
   # ```
-  def ljust(len, char : Char, io : IO) : Nil
+  def ljust(len : Int, char : Char, io : IO) : Nil
     io << self
     (len - size).times { io << char }
   end
@@ -3643,7 +3643,7 @@ class String
   # "Purple".rjust(8, '-') # => "--Purple"
   # "Aubergine".rjust(8)   # => "Aubergine"
   # ```
-  def rjust(len, char : Char = ' ')
+  def rjust(len : Int, char : Char = ' ')
     just len, char, 1
   end
 
@@ -3655,7 +3655,7 @@ class String
   # "Purple".rjust(8, io)
   # io.to_s # => "  Purple"
   # ```
-  def rjust(len, io : IO) : Nil
+  def rjust(len : Int, io : IO) : Nil
     rjust(len, ' ', io)
   end
 
@@ -3667,7 +3667,7 @@ class String
   # "Purple".rjust(8, '-', io)
   # io.to_s # => "--Purple"
   # ```
-  def rjust(len, char : Char, io : IO) : Nil
+  def rjust(len : Int, char : Char, io : IO) : Nil
     (len - size).times { io << char }
     io << self
   end
@@ -3680,7 +3680,7 @@ class String
   # "Purple".center(9, '-') # => "-Purple--"
   # "Aubergine".center(8)   # => "Aubergine"
   # ```
-  def center(len, char : Char = ' ')
+  def center(len : Int, char : Char = ' ')
     just len, char, 0
   end
 
@@ -3692,7 +3692,7 @@ class String
   # "Purple".center(9, io)
   # io.to_s # => " Purple  "
   # ```
-  def center(len, io : IO) : Nil
+  def center(len : Int, io : IO) : Nil
     center(len, ' ', io)
   end
 
@@ -3704,7 +3704,7 @@ class String
   # "Purple".center(9, '-', io)
   # io.to_s # => "-Purple--"
   # ```
-  def center(len, char : Char, io : IO) : Nil
+  def center(len : Int, char : Char, io : IO) : Nil
     difference = len - size
 
     if difference <= 0
