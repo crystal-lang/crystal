@@ -30,11 +30,13 @@ class Log::IOBackend < Log::Backend
   # Emits the *entry* to the given *io*.
   def default_format(entry : Entry)
     label = entry.severity.label
-    io << label[0] << ", [" << entry.timestamp.to_rfc3339 << " #" << Process.pid << "] "
-    io << label.rjust(7) << " -- " << @progname << ":" << entry.source << ": " << entry.message
+    io << label[0] << ", ["
+    entry.timestamp.to_rfc3339(io)
+    io << " #" << Process.pid << "] "
+    label.rjust(7, io)
+    io << " -- " << @progname << ":" << entry.source << ": " << entry.message
     if entry.context.size > 0
-      io << " -- "
-      entry.context.to_s(io)
+      io << " -- " << entry.context
     end
     if ex = entry.exception
       io << " -- " << ex.class << ": " << ex
