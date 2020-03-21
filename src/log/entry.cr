@@ -11,13 +11,13 @@ enum Log::Severity
 
   def label
     case self
-    when Debug  ; "DEBUG"
-    when Verbose; "VERBOSE"
-    when Info   ; "INFO"
-    when Warning; "WARNING"
-    when Error  ; "ERROR"
-    when Fatal  ; "FATAL"
-    when None   ; "NONE"
+    when Debug   then "DEBUG"
+    when Verbose then "VERBOSE"
+    when Info    then "INFO"
+    when Warning then "WARNING"
+    when Error   then "ERROR"
+    when Fatal   then "FATAL"
+    when None    then "NONE"
     else
       raise "unreachable"
     end
