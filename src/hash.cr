@@ -1239,7 +1239,7 @@ class Hash(K, V)
     @size == 0
   end
 
-  # Calls the given block for each key-value pair and passes in the key and the value as `each(& : Tuple(K, V) ->) : Nil`
+  # Calls the given block for each key-value pair and passes in the key and the value.
   #
   # ```
   # h = {"foo" => "bar"}
@@ -1255,7 +1255,7 @@ class Hash(K, V)
   # ```
   #
   # The enumeration follows the order the keys were inserted.
-  def each : Nil
+  def each(& : Tuple(K, V) ->) : Nil
     each_entry_with_index do |entry, i|
       yield({entry.key, entry.value})
     end
