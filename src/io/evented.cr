@@ -88,6 +88,23 @@ module IO::Evented
     end
   end
 
+  def evented_sendfile(remaining, errno_msg : String) : Nil
+    while remaining > 0
+      bytes_written = (yield remaining).to_i32
+      if bytes_written == -1
+        if Errno.value == Errno::EAGAIN
+          wait_writable
+        else
+          raise IO::Error.from_errno(errno_msg)
+        end
+      else
+        remaining -= bytes_written
+      end
+    end
+  ensure
+    resume_pending_writers
+  end
+
   def evented_send(slice : Bytes, errno_msg : String) : Int32
     bytes_written = yield slice
     raise Socket::Error.from_errno(errno_msg) if bytes_written == -1

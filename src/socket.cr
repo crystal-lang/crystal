@@ -300,6 +300,12 @@ class Socket < IO
     end
   end
 
+  def sendfile(file : IO::FileDescriptor, count)
+    evented_sendfile(count, "sendfile") do |remaining|
+      LibC.sendfile(fd, file.fd, nil, remaining)
+    end
+  end
+
   # Sends a message to the specified remote address.
   #
   # ```
