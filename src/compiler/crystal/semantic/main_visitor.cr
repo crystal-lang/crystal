@@ -3045,8 +3045,12 @@ module Crystal
       # work with copies of `cond` in case they are Var or InstanceVar so
       # here we type them so their type is available later on.
       cond = node.cond
-      if cond.is_a?(Var) || cond.is_a?(InstanceVar)
-        cond.accept(self)
+      case cond
+      when Var          then cond.accept(self)
+      when InstanceVar  then cond.accept(self)
+      when TupleLiteral then cond.accept(self)
+      else
+        # Nothing to do
       end
 
       expand(node)

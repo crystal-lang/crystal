@@ -306,4 +306,84 @@ describe "Semantic: case" do
       ),
       "warning in line 10\nWarning: case is not exhaustive.\n\nMissing cases: false, Int32"
   end
+
+  it "checks exhaustiveness for tuple literal, and passes" do
+    assert_no_warnings %(
+        a = 1 || 'a'
+        b = 1 || 'a'
+
+        case {a, b}
+        when {Int32, Char}
+        when {Int32, Int32}
+        when {Char, Int32}
+        when {Char, Char}
+        end
+      )
+  end
+
+  it "checks exhaustiveness for tuple literal of 2 elements, and warns" do
+    assert_warning %(
+        a = 1 || 'a'
+
+        case {a, a}
+        when {Int32, Char}
+        when {Int32, Int32}
+        when {Char, Char}
+        end
+      ),
+      "warning in line 5\nWarning: case is not exhaustive.\n\nMissing cases: {Char, Int32}"
+  end
+
+  it "checks exhaustiveness for tuple literal of 3 elements, and warns" do
+    assert_warning %(
+        a = 1 || 'a'
+
+        case {a, a, a}
+        when {Int32, Int32, Int32}
+        when {Int32, Char, Int32}
+        when {Int32, Char, Char}
+        when {Char, Int32, Int32}
+        when {Char, Char, Int32}
+        when {Char, Char, Char}
+        end
+      ),
+      "warning in line 5\nWarning: case is not exhaustive.\n\nMissing cases: {Char, Int32, Char}, {Int32, Int32, Char}"
+  end
+
+  it "checks exhaustiveness for tuple literal of 2 elements, first is bool" do
+    assert_warning %(
+        struct Bool
+          def ===(other)
+            true
+          end
+        end
+
+        case {true, 'a'}
+        when {true, Char}
+        end
+      ),
+      "warning in line 9\nWarning: case is not exhaustive.\n\nMissing cases: {false, Char}"
+  end
+
+  it "checks exhaustiveness for tuple literal of 2 elements, first is enum" do
+    assert_warning %(
+        struct Enum
+          def ==(other : self)
+            value == other.value
+          end
+        end
+
+        enum Color
+          Red
+          Green
+          Blue
+        end
+
+        case {Color::Red, 'a'}
+        when {.red?, Char}
+        when {.blue?, Char}
+        end
+      ),
+      "warning in line 15\nWarning: case is not exhaustive.\n\nMissing cases: {Color::Green, Char}"
+  end
 end
