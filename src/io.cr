@@ -1148,7 +1148,7 @@ abstract class IO
     limit - remaining
   end
 
-  {% if flag?(:linux) %}
+  {% if flag?(:linux) || flag?(:freebsd) %}
     # :nodoc:
     def self.copy(src : File, dst : File, limit : Int) : UInt64
       raise ArgumentError.new("Negative limit") if limit < 0
