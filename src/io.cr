@@ -1183,7 +1183,7 @@ abstract class IO
       dst.flush
 
       loop do
-        len = LibC.copy_file_range(src.fd, nil, dst.fd, nil, Int32::MAX, 0)
+        len = LibC.copy_file_range(src.fd, nil, dst.fd, nil, LibC::SizeT::MAX, 0)
         if len == -1
           raise IO::Error.from_errno "copy_file_range"
         end
