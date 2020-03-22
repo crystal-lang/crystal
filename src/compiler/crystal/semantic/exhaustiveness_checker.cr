@@ -50,7 +50,7 @@ struct Crystal::ExhaustivenessChecker
     found_true = false
 
     # All enum members, as strings, in case we are matching against an enum
-    enum_members = if single_cond_type.is_a?(EnumType)
+    enum_members = if single_cond_type.is_a?(EnumType) && !single_cond_type.flags?
                      single_cond_type.types.values.select(Const).map(&.name)
                    else
                      nil
