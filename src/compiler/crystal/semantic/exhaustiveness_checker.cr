@@ -1,72 +1,4 @@
 struct Crystal::ExhaustivenessChecker
-  # A target to check for exhaustiveness
-  abstract class Target
-    # The type this target is based on.
-    getter type
-
-    def initialize(@type : Type)
-    end
-
-    # Was this target covered?
-    abstract def covered? : Bool
-
-    # What are the cases that we didn't cover?
-    abstract def missing_cases : Array(String)
-  end
-
-  # A bool target. Subtargets are the `false` and `true` literals.
-  class BoolTarget < Target
-    property? found_true = false
-    property? found_false = false
-
-    def covered? : Bool
-      found_true? && found_false?
-    end
-
-    def missing_cases : Array(String)
-      missing_cases = [] of String
-      missing_cases << "false" unless found_false?
-      missing_cases << "true" unless found_true?
-      missing_cases
-    end
-  end
-
-  # An enum target. Subtargets are the enum members.
-  class EnumTarget < Target
-    getter members : Array(Const)
-
-    @original_members_size : Int32
-
-    def initialize(type)
-      super
-      @members = type.types.values.select(Const)
-      @original_members_size = @members.size
-    end
-
-    def covered? : Bool
-      @members.empty?
-    end
-
-    def missing_cases : Array(String)
-      if @original_members_size == @members.size
-        [type.to_s]
-      else
-        @members.map(&.to_s)
-      end
-    end
-  end
-
-  # Any other target is a type target. The target to cover is the type itself.
-  class TypeTarget < Target
-    def covered? : Bool
-      false
-    end
-
-    def missing_cases : Array(String)
-      [type.to_s]
-    end
-  end
-
   def initialize(@program : Program)
   end
 
@@ -128,53 +60,16 @@ struct Crystal::ExhaustivenessChecker
     # Start checking each `when`...
     node.whens.each do |a_when|
       a_when.conds.each do |when_cond|
-        case when_cond
-        when Path
-          # In case of a Path that points to a type,
-          # remove that type from the types we must cover
-          if !when_cond.syntax_replacement && !when_cond.target_const &&
-             when_cond.type?
-            remove_type_from_targets(targets, when_cond.type)
-            next
-          end
+        pattern_info = when_pattern_info(when_cond)
+        pattern = pattern_info.pattern
 
+        if !pattern_info.pattern_is_type
           all_patterns_are_types = false
+        end
 
-          # If we find a constant that doesn't point to a type (so a value),
-          # if it's an enum member, try to remove it from the targets.
-          if (target_const = when_cond.target_const) &&
-             target_const.namespace.is_a?(EnumType)
-            remove_enum_member_from_targets(targets, target_const)
-            next
-          end
-
-          all_provable_patterns = false
-        when Call
-          all_patterns_are_types = false
-
-          # Check if it's something like `.foo?` to remove that member from the ones
-          # we must cover.
-          # Note: a user could override the meaning of such methods.
-          # In the future it would be wise to mark these as non-redefinable
-          # so this checks are sounds.
-          if when_cond.obj.is_a?(ImplicitObj) &&
-             when_cond.args.empty? && when_cond.named_args.nil? &&
-             !when_cond.block && !when_cond.block_arg && when_cond.name.ends_with?('?')
-            remove_enum_member_name_from_targets(targets, when_cond.name.rchop)
-          else
-            all_provable_patterns = false
-          end
-        when BoolLiteral
-          all_patterns_are_types = false
-
-          remove_bool_literal_from_targets(targets, when_cond.value)
-        when NilLiteral
-          all_patterns_are_types = false
-
-          # A nil literal is the same as matching the Nil type
-          remove_type_from_targets(targets, @program.nil_type)
+        if pattern
+          targets.each &.cover(pattern)
         else
-          all_patterns_are_types = false
           all_provable_patterns = false
         end
       end
@@ -233,36 +128,186 @@ struct Crystal::ExhaustivenessChecker
       MSG
   end
 
-  private def remove_type_from_targets(targets, type : Type)
-    type = type.devirtualize
-    targets.reject! { |target| target.type.implements?(type) }
-  end
-
-  private def remove_enum_member_from_targets(targets, member)
-    targets.each do |target|
-      if target.is_a?(EnumTarget)
-        target.members.delete(member)
-      end
+  record PatternInfo,
+    pattern : Pattern?,
+    pattern_is_type : Bool do
+    def self.empty
+      new(pattern: nil, pattern_is_type: false)
     end
   end
 
-  private def remove_enum_member_name_from_targets(targets, name)
-    targets.each do |target|
-      if target.is_a?(EnumTarget)
-        target.members.reject! { |member| member.name.underscore == name }
+  private def when_pattern_info(when_cond) : PatternInfo
+    case when_cond
+    when Path
+      # In case of a Path that points to a type,
+      # remove that type from the types we must cover
+      if !when_cond.syntax_replacement && !when_cond.target_const &&
+         when_cond.type?
+        return PatternInfo.new(
+          pattern: TypePattern.new(when_cond.type),
+          pattern_is_type: true
+        )
       end
+
+      # If we find a constant that doesn't point to a type (so a value),
+      # if it's an enum member, try to remove it from the targets.
+      if (target_const = when_cond.target_const) &&
+         target_const.namespace.is_a?(EnumType)
+        return PatternInfo.new(
+          pattern: EnumMemberPattern.new(target_const),
+          pattern_is_type: false,
+        )
+      end
+
+      PatternInfo.empty
+    when Call
+      # Check if it's something like `.foo?` to remove that member from the ones
+      # we must cover.
+      # Note: a user could override the meaning of such methods.
+      # In the future it would be wise to mark these as non-redefinable
+      # so this checks are sounds.
+      if when_cond.obj.is_a?(ImplicitObj) &&
+         when_cond.args.empty? && when_cond.named_args.nil? &&
+         !when_cond.block && !when_cond.block_arg && when_cond.name.ends_with?('?')
+        PatternInfo.new(
+          pattern: EnumMemberNamePattern.new(when_cond.name.rchop),
+          pattern_is_type: false,
+        )
+      else
+        PatternInfo.empty
+      end
+    when BoolLiteral
+      PatternInfo.new(
+        pattern: BoolPattern.new(when_cond.value),
+        pattern_is_type: false,
+      )
+    when NilLiteral
+      PatternInfo.new(
+        pattern: TypePattern.new(@program.nil_type),
+        pattern_is_type: false,
+      )
+    else
+      PatternInfo.empty
     end
   end
 
-  private def remove_bool_literal_from_targets(targets, bool)
-    targets.each do |target|
-      if target.is_a?(BoolTarget)
-        if bool
-          target.found_true = true
-        else
-          target.found_false = true
+  # A type pattern is when you do `when Type`
+  record TypePattern, type : Type
+
+  # An enum member pattern is when you do `when Foo::Bar`
+  # and `Bar` is an enum member of `Foo`
+  record EnumMemberPattern, member : Const
+
+  # An enum member pattern is when you do `when .foo?`
+  record EnumMemberNamePattern, name : String
+
+  # A bool pattern is when you do `when true` or `when false`
+  record BoolPattern, value : Bool
+
+  alias Pattern = TypePattern | EnumMemberPattern | EnumMemberNamePattern | BoolPattern
+
+  # A target to check for exhaustiveness
+  abstract class Target
+    # The type this target is based on.
+    getter type
+
+    def initialize(@type : Type)
+      @type_covered = false
+    end
+
+    # Tries to cover this target with the given pattern.
+    # By default, a TypePatteren will cover a target.
+    # Other, more specific, patterns will partially cover a target.
+    def cover(pattern : Pattern) : Nil
+      if pattern.is_a?(TypePattern)
+        if @type.implements?(pattern.type.devirtualize)
+          @type_covered = true
         end
       end
+    end
+
+    # Was this target covered?
+    abstract def covered? : Bool
+
+    # What are the cases that we didn't cover?
+    abstract def missing_cases : Array(String)
+  end
+
+  # A bool target. Subtargets are the `false` and `true` literals.
+  class BoolTarget < Target
+    property? found_true = false
+    property? found_false = false
+
+    def cover(pattern : Pattern) : Nil
+      super
+
+      if pattern.is_a?(BoolPattern)
+        if pattern.value
+          @found_true = true
+        else
+          @found_false = true
+        end
+      end
+    end
+
+    def covered? : Bool
+      @type_covered || found_true? && found_false?
+    end
+
+    def missing_cases : Array(String)
+      missing_cases = [] of String
+      missing_cases << "false" unless found_false?
+      missing_cases << "true" unless found_true?
+      missing_cases
+    end
+  end
+
+  # An enum target. Subtargets are the enum members.
+  class EnumTarget < Target
+    getter members : Array(Const)
+
+    @original_members_size : Int32
+
+    def initialize(type)
+      super
+      @members = type.types.values.select(Const)
+      @original_members_size = @members.size
+    end
+
+    def cover(pattern : Pattern) : Nil
+      super
+
+      case pattern
+      when EnumMemberPattern
+        @members.delete(pattern.member)
+      when EnumMemberNamePattern
+        @members.reject! { |member| member.name.underscore == pattern.name }
+      else
+        # Not interested in other patterns
+      end
+    end
+
+    def covered? : Bool
+      @type_covered || @members.empty?
+    end
+
+    def missing_cases : Array(String)
+      if @original_members_size == @members.size
+        [type.to_s]
+      else
+        @members.map(&.to_s)
+      end
+    end
+  end
+
+  # Any other target is a type target. The target to cover is the type itself.
+  class TypeTarget < Target
+    def covered? : Bool
+      @type_covered
+    end
+
+    def missing_cases : Array(String)
+      [type.to_s]
     end
   end
 end
