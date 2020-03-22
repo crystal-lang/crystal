@@ -1164,7 +1164,7 @@ abstract class IO
       while remaining > 0
         len = LibC.copy_file_range(src.fd, nil, dst.fd, nil, remaining, 0)
         if len == -1
-          raise Errno.new "copy_file_range"
+          raise IO::Error.from_errno "copy_file_range"
         end
         break if len.zero?
         remaining -= len
