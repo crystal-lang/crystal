@@ -1139,6 +1139,13 @@ abstract class IO
 
     limit = limit.to_u64
 
+    if socket = dst.as?(Socket)
+      if file = src.as?(IO::FileDescriptor)
+        socket.sendfile file, limit
+        return limit
+      end
+    end
+
     buffer = uninitialized UInt8[4096]
     remaining = limit
     while (len = src.read(buffer.to_slice[0, Math.min(buffer.size, Math.max(remaining, 0))])) > 0
