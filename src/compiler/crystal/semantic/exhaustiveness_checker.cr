@@ -3,16 +3,22 @@ struct Crystal::ExhaustivenessChecker
   end
 
   def check(node : Case)
+    # If there's an else clause we don't need to check anything
+    return if node.else
+
     cond = node.cond
+
+    unless cond
+      @program.report_warning(node,
+        "case without condition must have an `else` clause.")
+      return
+    end
 
     # No condition means it's just like a series of if/else
     return unless cond
 
     # TODO: check exhaustiveness over a tuple
     return if cond.is_a?(TupleLiteral)
-
-    # If there's an else clause we don't need to check anything
-    return if node.else
 
     cond_type = cond.type?
 
