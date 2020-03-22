@@ -267,4 +267,43 @@ describe "Semantic: case" do
       ),
       "warning in line 17\nWarning: can't prove case is exhaustive.\n\nPlease add an `else` clause."
   end
+
+  it "checks exhaustiveness of enum combined with another type" do
+    assert_warning %(
+        struct Enum
+          def ==(other : self)
+            value == other.value
+          end
+        end
+
+        enum Color
+          Red
+          Green
+          Blue
+        end
+
+        e = Color::Red || 1
+        case e
+        when Int32
+        when .red?
+        end
+      ),
+      "warning in line 16\nWarning: case is not exhaustive for enum Color.\n\nMissing members: Green, Blue"
+  end
+
+  it "checks exhaustiveness of union with bool" do
+    assert_warning %(
+        struct Bool
+          def ===(other)
+            true
+          end
+        end
+
+        e = 1 || true
+        case e
+        when true
+        end
+      ),
+      "warning in line 10\nWarning: case is not exhaustive.\n\nMissing cases: false, Int32"
+  end
 end
