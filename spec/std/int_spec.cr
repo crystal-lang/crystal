@@ -778,16 +778,20 @@ describe "Int" do
     (0x10ffff + 1).unsafe_chr.ord.should eq(0x10ffff + 1)
   end
 
-  it "#bit_length" do
-    0.bit_length.should eq(0)
-    0b1.bit_length.should eq(1)
-    0b1001.bit_length.should eq(4)
-    0b1001001_i64.bit_length.should eq(7)
-    0b1111111111.bit_length.should eq(10)
-    0b1000000000.bit_length.should eq(10)
-    -1.bit_length.should eq(0)
-    -10.bit_length.should eq(4)
+  describe "#bit_length" do
+    it "for primitve integers" do
+      0.bit_length.should eq(0)
+      0b1.bit_length.should eq(1)
+      0b1001.bit_length.should eq(4)
+      0b1001001_i64.bit_length.should eq(7)
+      0b1111111111.bit_length.should eq(10)
+      0b1000000000.bit_length.should eq(10)
+      -1.bit_length.should eq(0)
+      -10.bit_length.should eq(4)
+    end
 
-    BigInt.new("1234567890123456789012345678901234567890").bit_length.should eq(130)
+    pending_win32 "for BigInt" do
+      BigInt.new("1234567890123456789012345678901234567890").bit_length.should eq(130)
+    end
   end
 end
