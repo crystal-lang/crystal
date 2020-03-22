@@ -1172,6 +1172,27 @@ abstract class IO
 
       limit - remaining
     end
+
+    # :nodoc:
+    def self.copy(src : File, dst : File) : UInt64
+      count = 0_u64
+
+      dst.write(src.read_buffer)
+      count += src.read_buffer.size
+      src.skip(src.read_buffer.size)
+      dst.flush
+
+      loop do
+        len = LibC.copy_file_range(src.fd, nil, dst.fd, nil, Int32::MAX, 0)
+        if len == -1
+          raise IO::Error.from_errno "copy_file_range"
+        end
+        break if len.zero?
+        count += len
+      end
+
+      count
+    end
   {% end %}
 
   private struct LineIterator(I, A, N)
