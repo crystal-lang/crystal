@@ -1115,6 +1115,12 @@ abstract class IO
   # io2.to_s # => "hello"
   # ```
   def self.copy(src, dst) : UInt64
+    if socket = dst.as?(Socket)
+      if file = src.as?(File)
+        return socket.sendfile file, file.size - file.pos
+      end
+    end
+
     buffer = uninitialized UInt8[4096]
     count = 0_u64
     while (len = src.read(buffer.to_slice).to_i32) > 0
