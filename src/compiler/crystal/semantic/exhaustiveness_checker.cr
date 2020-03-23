@@ -394,7 +394,7 @@ struct Crystal::ExhaustivenessChecker
       if subtargets = @subtargets
         subtargets.all? { |b, targets| targets.all? &.covered? }
       else
-        @type_covered || found_true? && found_false?
+        @type_covered || (found_true? && found_false?)
       end
     end
 
