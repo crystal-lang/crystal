@@ -420,13 +420,14 @@ struct Int
   # 0b100.bit_length # => 3
   # 0b101.bit_length # => 3
   # ```
-  def bit_length : self
+  def bit_length : Int32
     x = self < 0 ? ~self : self
 
     if x.is_a?(Int::Primitive)
-      self.class.new(sizeof(self) * 8 - x.leading_zeros_count)
+      Int32.new(sizeof(self) * 8 - x.leading_zeros_count)
     else
-      self.class.new(Math.log2(x).to_i + 1)
+      # Safe fallback for any non-primitive Int type
+      to_s(2).size
     end
   end
 

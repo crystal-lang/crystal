@@ -791,7 +791,8 @@ describe "Int" do
     end
 
     pending_win32 "for BigInt" do
-      BigInt.new("1234567890123456789012345678901234567890").bit_length.should eq(130)
+      (10.to_big_i ** 20).bit_length.should eq(67)
+      (10.to_big_i ** 309).bit_length.should eq(1027)
     end
   end
 end
