@@ -733,6 +733,8 @@ struct Path
       # No separators on any side so we need to add one
       bytesize += 1
       add_separator = true
+    else
+      # There's at least on separator in the middle, so nothing to do
     end
 
     new_name = String.new(bytesize) do |buffer|
@@ -833,6 +835,8 @@ struct Path
           byte_count -= 1
         when {false, false}
           str << separators[0] unless str.bytesize == 0
+        else
+          # There's one separator, so nothing to do
         end
 
         last_ended_with_separator = ends_with_separator?(part)

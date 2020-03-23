@@ -354,6 +354,8 @@ module Crystal::Playground
           context.response << page
           return
         end
+      else
+        # Not a special path
       end
 
       call_next(context)

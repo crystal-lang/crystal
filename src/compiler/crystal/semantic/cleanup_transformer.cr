@@ -563,6 +563,8 @@ module Crystal
         node.truthy = true
       when cond_is_falsey
         node.falsey = true
+      else
+        # Not a special condition
       end
 
       if node.falsey?

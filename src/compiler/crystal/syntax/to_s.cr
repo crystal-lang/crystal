@@ -201,6 +201,8 @@ module Crystal
         @str << "begin"
         @indent += 1
         newline
+      else
+        # Not a special condition
       end
 
       if @inside_macro > 0
@@ -222,6 +224,8 @@ module Crystal
         @indent -= 1
         append_indent
         @str << "end"
+      else
+        # Not a special condition
       end
 
       false
