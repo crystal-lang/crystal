@@ -47,11 +47,7 @@ describe "Semantic: case" do
 
   it "checks exhaustiveness of bool type (missing true)" do
     assert_warning %(
-        struct Bool
-          def ===(other)
-            true
-          end
-        end
+        #{bool_case_eq}
 
         case false
         when false
@@ -62,11 +58,7 @@ describe "Semantic: case" do
 
   it "checks exhaustiveness of bool type (missing false)" do
     assert_warning %(
-        struct Bool
-          def ===(other)
-            true
-          end
-        end
+        #{bool_case_eq}
 
         case false
         when true
@@ -77,11 +69,7 @@ describe "Semantic: case" do
 
   it "checks exhaustiveness of enum via question method" do
     assert_warning %(
-        struct Enum
-          def ==(other : self)
-            value == other.value
-          end
-        end
+        #{enum_eq}
 
         enum Color
           Red
@@ -94,20 +82,12 @@ describe "Semantic: case" do
         when .red?
         end
       ),
-      "warning in line 16\nWarning: case is not exhaustive for enum Color.\n\nMissing members: Green, Blue"
+      "warning in line 20\nWarning: case is not exhaustive for enum Color.\n\nMissing members: Green, Blue"
   end
 
   it "checks exhaustiveness of enum via const" do
     assert_warning %(
-        struct Enum
-          def ==(other : self)
-            value == other.value
-          end
-
-          def ===(other)
-            true
-          end
-        end
+        #{enum_eq}
 
         enum Color
           Red
@@ -125,11 +105,7 @@ describe "Semantic: case" do
 
   it "checks exhaustiveness of enum (all cases covered)" do
     assert_no_warnings %(
-        struct Enum
-          def ==(other : self)
-            value == other.value
-          end
-        end
+        #{enum_eq}
 
         enum Color
           Red
@@ -148,11 +124,7 @@ describe "Semantic: case" do
 
   it "checks exhaustiveness of bool type with other types" do
     assert_no_warnings %(
-        struct Bool
-          def ===(other)
-            true
-          end
-        end
+        #{bool_case_eq}
 
         case 1 || true
         when Int32
@@ -270,11 +242,7 @@ describe "Semantic: case" do
 
   it "checks exhaustiveness of enum combined with another type" do
     assert_warning %(
-        struct Enum
-          def ==(other : self)
-            value == other.value
-          end
-        end
+        #{enum_eq}
 
         enum Color
           Red
@@ -288,16 +256,12 @@ describe "Semantic: case" do
         when .red?
         end
       ),
-      "warning in line 16\nWarning: case is not exhaustive for enum Color.\n\nMissing members: Green, Blue"
+      "warning in line 20\nWarning: case is not exhaustive for enum Color.\n\nMissing members: Green, Blue"
   end
 
   it "checks exhaustiveness of union with bool" do
     assert_warning %(
-        struct Bool
-          def ===(other)
-            true
-          end
-        end
+        #{bool_case_eq}
 
         e = 1 || true
         case e
@@ -352,11 +316,7 @@ describe "Semantic: case" do
 
   it "checks exhaustiveness for tuple literal of 2 elements, first is bool" do
     assert_warning %(
-        struct Bool
-          def ===(other)
-            true
-          end
-        end
+        #{bool_case_eq}
 
         case {true, 'a'}
         when {true, Char}
@@ -367,11 +327,7 @@ describe "Semantic: case" do
 
   it "checks exhaustiveness for tuple literal of 2 elements, first is enum" do
     assert_warning %(
-        struct Enum
-          def ==(other : self)
-            value == other.value
-          end
-        end
+        #{enum_eq}
 
         enum Color
           Red
@@ -384,6 +340,168 @@ describe "Semantic: case" do
         when {.blue?, Char}
         end
       ),
-      "warning in line 15\nWarning: case is not exhaustive.\n\nMissing cases: {Color::Green, Char}"
+      "warning in line 19\nWarning: case is not exhaustive.\n\nMissing cases: {Color::Green, Char}"
   end
+
+  it "checks exhaustiveness for tuple literal with types and underscore at first position" do
+    assert_warning %(
+        a = 1 || 'a'
+
+        case {a, a}
+        when {_, Int32}
+        end
+      ),
+      "warning in line 5\nWarning: case is not exhaustive.\n\nMissing cases: {Char, Char}, {Int32, Char}"
+  end
+
+  it "checks exhaustiveness for tuple literal with types and underscore at second position" do
+    assert_warning %(
+        a = 1 || 'a'
+
+        case {a, a}
+        when {Int32, _}
+        end
+      ),
+      "warning in line 5\nWarning: case is not exhaustive.\n\nMissing cases: {Char, Char}, {Char, Int32}"
+  end
+
+  it "checks exhaustiveness for tuple literal with bool and underscore at first position" do
+    assert_warning %(
+        #{bool_case_eq}
+
+        case {true, 1 || 'a'}
+        when {_, Int32}
+        end
+      ),
+      "warning in line 9\nWarning: case is not exhaustive.\n\nMissing cases: {Bool, Char}"
+  end
+
+  it "checks exhaustiveness for tuple literal with bool and underscore at first position, with partial match" do
+    assert_warning %(
+        #{bool_case_eq}
+
+        case {true, 1 || 'a'}
+        when {_, Int32}
+        when {false, Char}
+        end
+      ),
+      "warning in line 9\nWarning: case is not exhaustive.\n\nMissing cases: {true, Char}"
+  end
+
+  it "checks exhaustiveness for tuple literal with bool and underscore at second position" do
+    assert_warning %(
+        #{bool_case_eq}
+
+        case {1 || 'a', true}
+        when {Int32, _}
+        end
+      ),
+      "warning in line 9\nWarning: case is not exhaustive.\n\nMissing cases: {Char, Bool}"
+  end
+
+  it "checks exhaustiveness for tuple literal with bool and underscore at second position, with partial match" do
+    assert_warning %(
+        #{bool_case_eq}
+
+        case {1 || 'a', true}
+        when {Int32, _}
+        when {Char, false}
+        end
+      ),
+      "warning in line 9\nWarning: case is not exhaustive.\n\nMissing cases: {Char, true}"
+  end
+
+  it "checks exhaustiveness for tuple literal with bool and underscore at first position" do
+    assert_warning %(
+        #{enum_eq}
+
+        enum Color
+          Red
+          Green
+          Blue
+        end
+
+        case {Color::Red, 1 || 'a'}
+        when {_, Int32}
+        end
+      ),
+      "warning in line 19\nWarning: case is not exhaustive.\n\nMissing cases: {Color, Char}"
+  end
+
+  it "checks exhaustiveness for tuple literal with bool and underscore at first position, partial match" do
+    assert_warning %(
+        #{enum_eq}
+
+        enum Color
+          Red
+          Green
+          Blue
+        end
+
+        case {Color::Red, 1 || 'a'}
+        when {_, Int32}
+        when {.blue?, Char}
+        end
+      ),
+      "warning in line 19\nWarning: case is not exhaustive.\n\nMissing cases: {Color::Red, Char}, {Color::Green, Char}"
+  end
+
+  it "checks exhaustiveness for tuple literal with bool and underscore at second position" do
+    assert_warning %(
+        #{enum_eq}
+
+        enum Color
+          Red
+          Green
+          Blue
+        end
+
+        case {1 || 'a', Color::Red}
+        when {Int32, _}
+        end
+      ),
+      "warning in line 19\nWarning: case is not exhaustive.\n\nMissing cases: {Char, Color}"
+  end
+
+  it "checks exhaustiveness for tuple literal with bool and underscore at second position, partial match" do
+    assert_warning %(
+        #{enum_eq}
+
+        enum Color
+          Red
+          Green
+          Blue
+        end
+
+        case {1 || 'a', Color::Red}
+        when {Int32, _}
+        when {Char, .blue?}
+        end
+      ),
+      "warning in line 19\nWarning: case is not exhaustive.\n\nMissing cases: {Char, Color::Red}, {Char, Color::Green}"
+  end
+end
+
+private def bool_case_eq
+  <<-CODE
+  struct Bool
+    def ===(other)
+      true
+    end
+  end
+  CODE
+end
+
+private def enum_eq
+  <<-CODE
+  struct Enum
+    def ==(other : self)
+      value == other.value
+    end
+
+    def ===(other)
+      true
+    end
+  end
+  CODE
 end

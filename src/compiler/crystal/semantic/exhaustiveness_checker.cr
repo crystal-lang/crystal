@@ -53,10 +53,9 @@ struct Crystal::ExhaustivenessChecker
     # Start checking each `when`...
     node.whens.each do |a_when|
       a_when.conds.each do |when_cond|
-        pattern_info = when_pattern_info(when_cond)
-        pattern = pattern_info.pattern
+        pattern = when_pattern(when_cond)
 
-        if !pattern_info.pattern_is_type
+        unless pattern.is_a?(TypePattern)
           all_patterns_are_types = false
         end
 
@@ -136,9 +135,6 @@ struct Crystal::ExhaustivenessChecker
     # Compute all the targets that we must cover
     targets = compute_targets(all_expanded_types)
 
-    # Are all patterns Path types?
-    all_patterns_are_types = true
-
     # Are all patterns things that we can handle?
     # For example an integer literal is something that we don't
     # take into account for exhaustiveness.
@@ -151,16 +147,12 @@ struct Crystal::ExhaustivenessChecker
     node.whens.each do |a_when|
       a_when.conds.each do |when_cond|
         if when_cond.is_a?(TupleLiteral)
-          pattern_infos = when_cond.elements.map do |when_cond_exp|
-            when_pattern_info(when_cond_exp)
+          patterns = when_cond.elements.map do |when_cond_exp|
+            when_pattern(when_cond_exp)
           end
 
-          if !pattern_infos.all? &.pattern_is_type
-            all_patterns_are_types = false
-          end
-
-          if pattern_infos.all? &.pattern
-            patterns = pattern_infos.map &.pattern.not_nil!
+          if patterns.all?
+            patterns = patterns.map &.not_nil!
             targets.each &.cover(patterns, 0)
           else
             all_provable_patterns = false
@@ -217,11 +209,11 @@ struct Crystal::ExhaustivenessChecker
     end
   end
 
-  private def compute_target(type)
+  private def compute_target(type : Type)
     ExhaustivenessChecker.compute_target(type)
   end
 
-  def self.compute_target(type)
+  def self.compute_target(type : Type)
     case type
     when BoolType
       BoolTarget.new(type)
@@ -236,38 +228,22 @@ struct Crystal::ExhaustivenessChecker
     end
   end
 
-  record PatternInfo,
-    pattern : Pattern?,
-    pattern_is_type : Bool do
-    def self.empty
-      new(pattern: nil, pattern_is_type: false)
-    end
-  end
-
-  private def when_pattern_info(when_cond) : PatternInfo
+  private def when_pattern(when_cond) : Pattern?
     case when_cond
     when Path
-      # In case of a Path that points to a type,
-      # remove that type from the types we must cover
       if !when_cond.syntax_replacement && !when_cond.target_const &&
          when_cond.type?
-        return PatternInfo.new(
-          pattern: TypePattern.new(when_cond.type.devirtualize),
-          pattern_is_type: true
-        )
+        # In case of a Path that points to a type,
+        # remove that type from the types we must cover
+        TypePattern.new(when_cond.type.devirtualize)
+      elsif (target_const = when_cond.target_const) &&
+            target_const.namespace.is_a?(EnumType)
+        # If we find a constant that doesn't point to a type (so a value),
+        # if it's an enum member, try to remove it from the targets.
+        EnumMemberPattern.new(target_const)
+      else
+        nil
       end
-
-      # If we find a constant that doesn't point to a type (so a value),
-      # if it's an enum member, try to remove it from the targets.
-      if (target_const = when_cond.target_const) &&
-         target_const.namespace.is_a?(EnumType)
-        return PatternInfo.new(
-          pattern: EnumMemberPattern.new(target_const),
-          pattern_is_type: false,
-        )
-      end
-
-      PatternInfo.empty
     when Call
       # Check if it's something like `.foo?` to remove that member from the ones
       # we must cover.
@@ -277,25 +253,18 @@ struct Crystal::ExhaustivenessChecker
       if when_cond.obj.is_a?(ImplicitObj) &&
          when_cond.args.empty? && when_cond.named_args.nil? &&
          !when_cond.block && !when_cond.block_arg && when_cond.name.ends_with?('?')
-        PatternInfo.new(
-          pattern: EnumMemberNamePattern.new(when_cond.name.rchop),
-          pattern_is_type: false,
-        )
+        EnumMemberNamePattern.new(when_cond.name.rchop)
       else
-        PatternInfo.empty
+        nil
       end
     when BoolLiteral
-      PatternInfo.new(
-        pattern: BoolPattern.new(when_cond.value),
-        pattern_is_type: false,
-      )
+      BoolPattern.new(when_cond.value)
     when NilLiteral
-      PatternInfo.new(
-        pattern: TypePattern.new(@program.nil_type),
-        pattern_is_type: false,
-      )
+      TypePattern.new(@program.nil_type)
+    when Underscore
+      UnderscorePattern.new
     else
-      PatternInfo.empty
+      nil
     end
   end
 
@@ -312,7 +281,10 @@ struct Crystal::ExhaustivenessChecker
   # A bool pattern is when you do `when true` or `when false`
   record BoolPattern, value : Bool
 
-  alias Pattern = TypePattern | EnumMemberPattern | EnumMemberNamePattern | BoolPattern
+  # An underscore pattern is when you do `when {.., _}` (only in tuple literals)
+  record UnderscorePattern
+
+  alias Pattern = TypePattern | EnumMemberPattern | EnumMemberNamePattern | BoolPattern | UnderscorePattern
 
   # A target to check for exhaustiveness
   #
@@ -332,10 +304,15 @@ struct Crystal::ExhaustivenessChecker
     # By default, a TypePatteren will cover a target.
     # Other, more specific, patterns will partially cover a target.
     def cover(pattern : Pattern) : Nil
-      if pattern.is_a?(TypePattern)
+      case pattern
+      when TypePattern
         if @type.implements?(pattern.type)
           @type_covered = true
         end
+      when UnderscorePattern
+        @type_covered = true
+      when EnumMemberPattern, EnumMemberNamePattern, BoolPattern
+        # No cover
       end
     end
 
@@ -361,17 +338,23 @@ struct Crystal::ExhaustivenessChecker
   class BoolTarget < Target
     property? found_true = false
     property? found_false = false
-    property! subtargets : Hash(Bool, Target)
+    property! subtargets : Hash(Bool, Array(Target))
 
     def cover(pattern : Pattern) : Nil
       super
 
-      if pattern.is_a?(BoolPattern)
+      case pattern
+      when BoolPattern
         if pattern.value
           @found_true = true
         else
           @found_false = true
         end
+      when UnderscorePattern
+        @found_true = true
+        @found_false = true
+      when TypePattern, EnumMemberPattern, EnumMemberNamePattern
+        # No cover
       end
     end
 
@@ -385,21 +368,26 @@ struct Crystal::ExhaustivenessChecker
       case pattern
       when TypePattern
         if @type.implements?(pattern.type)
-          subtargets.each do |key, subtarget|
-            subtarget.cover(patterns, index + 1)
-          end
+          subtargets.each_value &.each &.cover(patterns, index + 1)
         end
       when BoolPattern
-        subtargets[pattern.value].cover(patterns, index + 1)
-      else
-        # Not a matching pattern
+        subtargets[pattern.value].each &.cover(patterns, index + 1)
+      when UnderscorePattern
+        subtargets.each do |key, targets|
+          subtargets.each_value &.each &.cover(patterns, index + 1)
+        end
+      when EnumMemberPattern, EnumMemberNamePattern
+        # No cover
       end
     end
 
     def reject_covered! : Bool
       if subtargets = @subtargets
-        subtargets.reject! { |b, target| target.reject_covered! }
-        subtargets.all? { |b, target| target.covered? }
+        subtargets.reject! do |b, targets|
+          targets.reject! &.reject_covered!
+          targets.all? &.covered?
+        end
+        subtargets.all? { |b, targets| targets.all? &.covered? }
       else
         covered?
       end
@@ -407,7 +395,7 @@ struct Crystal::ExhaustivenessChecker
 
     def covered? : Bool
       if subtargets = @subtargets
-        subtargets.all? { |b, target| target.covered? }
+        subtargets.all? { |b, targets| targets.all? &.covered? }
       else
         @type_covered || found_true? && found_false?
       end
@@ -415,15 +403,35 @@ struct Crystal::ExhaustivenessChecker
 
     def missing_cases : Array(String)
       if subtargets = @subtargets
-        subtargets.flat_map do |bool, target|
-          target.missing_cases.map do |missing_case|
-            "#{bool}, #{missing_case}"
+        # First get all missing cases for each bool value
+        missing_cases_per_bool = subtargets.to_h do |bool, targets|
+          {bool, targets.flat_map &.missing_cases}
+        end
+
+        gathered_missing_cases = [] of String
+
+        # See if a case is missing for both false and true: show it as Bool in that case
+        missing_cases_per_bool.values.flatten.uniq.each do |missing_case|
+          if {true, false}.all? { |bool| missing_cases_per_bool[bool]?.try &.includes?(missing_case) }
+            gathered_missing_cases << "Bool, #{missing_case}"
+            {true, false}.each { |bool| missing_cases_per_bool[bool]?.try &.delete(missing_case) }
           end
         end
+
+        missing_cases_per_bool.each do |bool, missing_cases|
+          next if missing_cases.empty?
+          gathered_missing_cases << "#{bool}, #{missing_cases.join(", ")}"
+        end
+
+        gathered_missing_cases
       else
         missing_cases = [] of String
         missing_cases << "false" unless found_false?
         missing_cases << "true" unless found_true?
+        if missing_cases.size == 2
+          missing_cases.clear
+          missing_cases << "Bool"
+        end
         missing_cases
       end
     end
@@ -431,13 +439,13 @@ struct Crystal::ExhaustivenessChecker
     def add_subtargets(type_groups : Array(Array(Type)), index : Int32) : Nil
       return if index >= type_groups.size
 
-      subtargets = @subtargets = {} of Bool => Target
+      subtargets = @subtargets = {} of Bool => Array(Target)
 
-      type_groups[index].each do |expanded_type|
-        {true, false}.each do |bool_value|
+      {true, false}.each do |bool_value|
+        subtargets[bool_value] = type_groups[index].map do |expanded_type|
           target = ExhaustivenessChecker.compute_target(expanded_type)
           target.add_subtargets(type_groups, index + 1)
-          subtargets[bool_value] = target
+          target
         end
       end
     end
@@ -449,7 +457,7 @@ struct Crystal::ExhaustivenessChecker
 
     @original_members_size : Int32
 
-    property! subtargets : Hash(Const, Target)
+    property! subtargets : Hash(Const, Array(Target))
 
     def initialize(type)
       super
@@ -465,8 +473,10 @@ struct Crystal::ExhaustivenessChecker
         @members.delete(pattern.member)
       when EnumMemberNamePattern
         @members.reject! { |member| member.name.underscore == pattern.name }
-      else
-        # Not interested in other patterns
+      when UnderscorePattern
+        @members.clear
+      when TypePattern, BoolPattern
+        # No cover
       end
     end
 
@@ -480,31 +490,34 @@ struct Crystal::ExhaustivenessChecker
       case pattern
       when TypePattern
         if @type.implements?(pattern.type)
-          subtargets.each do |key, subtarget|
-            subtarget.cover(patterns, index + 1)
-          end
+          subtargets.each_value &.each &.cover(patterns, index + 1)
         end
       when EnumMemberPattern
-        subtargets.each do |member, target|
+        subtargets.each do |member, targets|
           if member == pattern.member
-            target.cover(patterns, index + 1)
+            targets.each &.cover(patterns, index + 1)
           end
         end
       when EnumMemberNamePattern
-        subtargets.each do |member, target|
+        subtargets.each do |member, targets|
           if member.name.underscore == pattern.name
-            target.cover(patterns, index + 1)
+            targets.each &.cover(patterns, index + 1)
           end
         end
-      else
-        # Not a matching pattern
+      when UnderscorePattern
+        subtargets.each_value &.each &.cover(patterns, index + 1)
+      when BoolPattern
+        # No cover
       end
     end
 
     def reject_covered! : Bool
       if subtargets = @subtargets
-        subtargets.reject! { |c, target| target.reject_covered! }
-        subtargets.all? { |c, target| target.covered? }
+        subtargets.reject! do |c, targets|
+          targets.reject! &.reject_covered!
+          targets.all? &.covered?
+        end
+        subtargets.all? { |c, targets| targets.all? &.covered? }
       else
         covered?
       end
@@ -512,7 +525,7 @@ struct Crystal::ExhaustivenessChecker
 
     def covered? : Bool
       if subtargets = @subtargets
-        subtargets.all? { |c, target| target.covered? }
+        subtargets.all? { |c, targets| targets.all? &.covered? }
       else
         @type_covered || @members.empty?
       end
@@ -520,11 +533,27 @@ struct Crystal::ExhaustivenessChecker
 
     def missing_cases : Array(String)
       if subtargets = @subtargets
-        subtargets.flat_map do |const, target|
-          target.missing_cases.map do |missing_case|
-            "#{const}, #{missing_case}"
+        # First get all missing cases for each member
+        missing_cases_per_member = subtargets.to_h do |member, targets|
+          {member, targets.flat_map &.missing_cases}
+        end
+
+        gathered_missing_cases = [] of String
+
+        # See if a case is missing for all members: show it as the enum name in that case
+        missing_cases_per_member.values.flatten.uniq.each do |missing_case|
+          if @members.all? { |member| missing_cases_per_member[member]?.try &.includes?(missing_case) }
+            gathered_missing_cases << "#{@type}, #{missing_case}"
+            @members.each { |member| missing_cases_per_member[member]?.try &.delete(missing_case) }
           end
         end
+
+        missing_cases_per_member.each do |member, missing_cases|
+          next if missing_cases.empty?
+          gathered_missing_cases << "#{member}, #{missing_cases.join(", ")}"
+        end
+
+        gathered_missing_cases
       else
         if @original_members_size == @members.size
           [type.to_s]
@@ -537,13 +566,13 @@ struct Crystal::ExhaustivenessChecker
     def add_subtargets(type_groups : Array(Array(Type)), index : Int32) : Nil
       return if index >= type_groups.size
 
-      subtargets = @subtargets = {} of Const => Target
+      subtargets = @subtargets = {} of Const => Array(Target)
 
-      type_groups[index].each do |expanded_type|
-        @members.each do |member|
+      @members.each do |member|
+        subtargets[member] = type_groups[index].map do |expanded_type|
           target = ExhaustivenessChecker.compute_target(expanded_type)
           target.add_subtargets(type_groups, index + 1)
-          subtargets[member] = target
+          target
         end
       end
     end
@@ -565,8 +594,10 @@ struct Crystal::ExhaustivenessChecker
         if @type.implements?(pattern.type)
           subtargets.each &.cover(patterns, index + 1)
         end
-      else
-        # Not a matching pattern
+      when UnderscorePattern
+        subtargets.each &.cover(patterns, index + 1)
+      when BoolPattern, EnumMemberPattern, EnumMemberNamePattern
+        # No cover
       end
     end
 
