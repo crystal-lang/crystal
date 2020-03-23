@@ -8,7 +8,7 @@ describe "Semantic: case" do
         when Int32
         end
       ),
-      "warning in line 4\nWarning: case is not exhaustive.\n\nMissing types: Nil"
+      "warning in line 4\nWarning: case is not exhaustive.\n\nMissing types:\n - Nil"
   end
 
   it "checks exhaustiveness of single type" do
@@ -17,7 +17,7 @@ describe "Semantic: case" do
         when Nil
         end
       ),
-      "warning in line 3\nWarning: case is not exhaustive.\n\nMissing types: Int32"
+      "warning in line 3\nWarning: case is not exhaustive.\n\nMissing types:\n - Int32"
   end
 
   it "covers all types" do
@@ -53,7 +53,7 @@ describe "Semantic: case" do
         when false
         end
       ),
-      "warning in line 9\nWarning: case is not exhaustive.\n\nMissing cases: true"
+      "warning in line 9\nWarning: case is not exhaustive.\n\nMissing cases:\n - true"
   end
 
   it "checks exhaustiveness of bool type (missing false)" do
@@ -64,7 +64,7 @@ describe "Semantic: case" do
         when true
         end
       ),
-      "warning in line 9\nWarning: case is not exhaustive.\n\nMissing cases: false"
+      "warning in line 9\nWarning: case is not exhaustive.\n\nMissing cases:\n - false"
   end
 
   it "checks exhaustiveness of enum via question method" do
@@ -82,7 +82,7 @@ describe "Semantic: case" do
         when .red?
         end
       ),
-      "warning in line 20\nWarning: case is not exhaustive for enum Color.\n\nMissing members: Green, Blue"
+      "warning in line 20\nWarning: case is not exhaustive for enum Color.\n\nMissing members:\n - Green\n - Blue"
   end
 
   it "checks exhaustiveness of enum via const" do
@@ -100,7 +100,7 @@ describe "Semantic: case" do
         when Color::Red
         end
       ),
-      "warning in line 20\nWarning: case is not exhaustive for enum Color.\n\nMissing members: Green, Blue"
+      "warning in line 20\nWarning: case is not exhaustive for enum Color.\n\nMissing members:\n - Green\n - Blue"
   end
 
   it "checks exhaustiveness of enum (all cases covered)" do
@@ -147,7 +147,7 @@ describe "Semantic: case" do
         when Foo
         end
       ),
-      "warning in line 10\nWarning: case is not exhaustive.\n\nMissing types: Int32"
+      "warning in line 10\nWarning: case is not exhaustive.\n\nMissing types:\n - Int32"
   end
 
   it "checks exhaustiveness, covers when base type covers" do
@@ -256,7 +256,7 @@ describe "Semantic: case" do
         when .red?
         end
       ),
-      "warning in line 20\nWarning: case is not exhaustive for enum Color.\n\nMissing members: Green, Blue"
+      "warning in line 20\nWarning: case is not exhaustive for enum Color.\n\nMissing members:\n - Green\n - Blue"
   end
 
   it "checks exhaustiveness of union with bool" do
@@ -268,7 +268,7 @@ describe "Semantic: case" do
         when true
         end
       ),
-      "warning in line 10\nWarning: case is not exhaustive.\n\nMissing cases: false, Int32"
+      "warning in line 10\nWarning: case is not exhaustive.\n\nMissing cases:\n - false\n - Int32"
   end
 
   it "checks exhaustiveness for tuple literal, and passes" do
@@ -295,7 +295,7 @@ describe "Semantic: case" do
         when {Char, Char}
         end
       ),
-      "warning in line 5\nWarning: case is not exhaustive.\n\nMissing cases: {Char, Int32}"
+      "warning in line 5\nWarning: case is not exhaustive.\n\nMissing cases:\n - {Char, Int32}"
   end
 
   it "checks exhaustiveness for tuple literal of 3 elements, and warns" do
@@ -311,7 +311,7 @@ describe "Semantic: case" do
         when {Char, Char, Char}
         end
       ),
-      "warning in line 5\nWarning: case is not exhaustive.\n\nMissing cases: {Char, Int32, Char}, {Int32, Int32, Char}"
+      "warning in line 5\nWarning: case is not exhaustive.\n\nMissing cases:\n - {Char, Int32, Char}\n - {Int32, Int32, Char}"
   end
 
   it "checks exhaustiveness for tuple literal of 2 elements, first is bool" do
@@ -322,7 +322,7 @@ describe "Semantic: case" do
         when {true, Char}
         end
       ),
-      "warning in line 9\nWarning: case is not exhaustive.\n\nMissing cases: {false, Char}"
+      "warning in line 9\nWarning: case is not exhaustive.\n\nMissing cases:\n - {false, Char}"
   end
 
   it "checks exhaustiveness for tuple literal of 2 elements, first is enum" do
@@ -340,7 +340,7 @@ describe "Semantic: case" do
         when {.blue?, Char}
         end
       ),
-      "warning in line 19\nWarning: case is not exhaustive.\n\nMissing cases: {Color::Green, Char}"
+      "warning in line 19\nWarning: case is not exhaustive.\n\nMissing cases:\n - {Color::Green, Char}"
   end
 
   it "checks exhaustiveness for tuple literal with types and underscore at first position" do
@@ -351,7 +351,7 @@ describe "Semantic: case" do
         when {_, Int32}
         end
       ),
-      "warning in line 5\nWarning: case is not exhaustive.\n\nMissing cases: {Char, Char}, {Int32, Char}"
+      "warning in line 5\nWarning: case is not exhaustive.\n\nMissing cases:\n - {Char, Char}\n - {Int32, Char}"
   end
 
   it "checks exhaustiveness for tuple literal with types and underscore at second position" do
@@ -362,7 +362,7 @@ describe "Semantic: case" do
         when {Int32, _}
         end
       ),
-      "warning in line 5\nWarning: case is not exhaustive.\n\nMissing cases: {Char, Char}, {Char, Int32}"
+      "warning in line 5\nWarning: case is not exhaustive.\n\nMissing cases:\n - {Char, Char}\n - {Char, Int32}"
   end
 
   it "checks exhaustiveness for tuple literal with bool and underscore at first position" do
@@ -373,7 +373,7 @@ describe "Semantic: case" do
         when {_, Int32}
         end
       ),
-      "warning in line 9\nWarning: case is not exhaustive.\n\nMissing cases: {Bool, Char}"
+      "warning in line 9\nWarning: case is not exhaustive.\n\nMissing cases:\n - {Bool, Char}"
   end
 
   it "checks exhaustiveness for tuple literal with bool and underscore at first position, with partial match" do
@@ -385,7 +385,7 @@ describe "Semantic: case" do
         when {false, Char}
         end
       ),
-      "warning in line 9\nWarning: case is not exhaustive.\n\nMissing cases: {true, Char}"
+      "warning in line 9\nWarning: case is not exhaustive.\n\nMissing cases:\n - {true, Char}"
   end
 
   it "checks exhaustiveness for tuple literal with bool and underscore at second position" do
@@ -396,7 +396,7 @@ describe "Semantic: case" do
         when {Int32, _}
         end
       ),
-      "warning in line 9\nWarning: case is not exhaustive.\n\nMissing cases: {Char, Bool}"
+      "warning in line 9\nWarning: case is not exhaustive.\n\nMissing cases:\n - {Char, Bool}"
   end
 
   it "checks exhaustiveness for tuple literal with bool and underscore at second position, with partial match" do
@@ -408,7 +408,7 @@ describe "Semantic: case" do
         when {Char, false}
         end
       ),
-      "warning in line 9\nWarning: case is not exhaustive.\n\nMissing cases: {Char, true}"
+      "warning in line 9\nWarning: case is not exhaustive.\n\nMissing cases:\n - {Char, true}"
   end
 
   it "checks exhaustiveness for tuple literal with bool and underscore at first position" do
@@ -425,7 +425,7 @@ describe "Semantic: case" do
         when {_, Int32}
         end
       ),
-      "warning in line 19\nWarning: case is not exhaustive.\n\nMissing cases: {Color, Char}"
+      "warning in line 19\nWarning: case is not exhaustive.\n\nMissing cases:\n - {Color, Char}"
   end
 
   it "checks exhaustiveness for tuple literal with bool and underscore at first position, partial match" do
@@ -443,7 +443,7 @@ describe "Semantic: case" do
         when {.blue?, Char}
         end
       ),
-      "warning in line 19\nWarning: case is not exhaustive.\n\nMissing cases: {Color::Red, Char}, {Color::Green, Char}"
+      "warning in line 19\nWarning: case is not exhaustive.\n\nMissing cases:\n - {Color::Red, Char}\n - {Color::Green, Char}"
   end
 
   it "checks exhaustiveness for tuple literal with bool and underscore at second position" do
@@ -460,7 +460,7 @@ describe "Semantic: case" do
         when {Int32, _}
         end
       ),
-      "warning in line 19\nWarning: case is not exhaustive.\n\nMissing cases: {Char, Color}"
+      "warning in line 19\nWarning: case is not exhaustive.\n\nMissing cases:\n - {Char, Color}"
   end
 
   it "checks exhaustiveness for tuple literal with bool and underscore at second position, partial match" do
@@ -478,7 +478,7 @@ describe "Semantic: case" do
         when {Char, .blue?}
         end
       ),
-      "warning in line 19\nWarning: case is not exhaustive.\n\nMissing cases: {Char, Color::Red}, {Char, Color::Green}"
+      "warning in line 19\nWarning: case is not exhaustive.\n\nMissing cases:\n - {Char, Color::Red}\n - {Char, Color::Green}"
   end
 end
 

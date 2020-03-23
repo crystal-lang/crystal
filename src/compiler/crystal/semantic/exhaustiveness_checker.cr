@@ -76,7 +76,8 @@ struct Crystal::ExhaustivenessChecker
       @program.report_warning(node, <<-MSG)
         case is not exhaustive.
 
-        Missing types: #{targets.map(&.type).join(", ")}
+        Missing types:
+         - #{targets.map(&.type).join("\n - ")}
         MSG
       return
     end
@@ -88,14 +89,16 @@ struct Crystal::ExhaustivenessChecker
       @program.report_warning(node, <<-MSG)
         case is not exhaustive.
 
-        Missing cases: #{single_target.missing_cases.join(", ")}
+        Missing cases:
+         - #{single_target.missing_cases.join("\n - ")}
         MSG
       return
     when EnumTarget
       @program.report_warning(node, <<-MSG)
         case is not exhaustive for enum #{single_target.type}.
 
-        Missing members: #{single_target.members.map(&.name).join(", ")}
+        Missing members:
+         - #{single_target.members.map(&.name).join("\n - ")}
         MSG
       return
     else
@@ -106,7 +109,8 @@ struct Crystal::ExhaustivenessChecker
       @program.report_warning(node, <<-MSG)
         case is not exhaustive.
 
-        Missing cases: #{targets.flat_map(&.missing_cases).join(", ")}
+        Missing cases:
+         - #{targets.flat_map(&.missing_cases).join("\n - ")}
         MSG
       return
     end
@@ -176,12 +180,13 @@ struct Crystal::ExhaustivenessChecker
       missing_cases = targets
         .flat_map(&.missing_cases)
         .map { |cases| "{#{cases}}" }
-        .join(", ")
+        .join("\n - ")
 
       @program.report_warning(node, <<-MSG)
       case is not exhaustive.
 
-      Missing cases: #{missing_cases}
+      Missing cases:
+       - #{missing_cases}
       MSG
       return
     end
