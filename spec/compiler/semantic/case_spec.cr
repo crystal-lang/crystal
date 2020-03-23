@@ -505,6 +505,25 @@ describe "Semantic: case" do
       ),
       "warning in line 19\nWarning: case is not exhaustive.\n\nMissing cases:\n - {Char, Color::Red}\n - {Char, Color::Green}"
   end
+
+  it "checks exhaustiveness for tuple literal, with call" do
+    assert_no_warnings %(
+        struct Int
+          def bar
+            1 || 'a'
+          end
+        end
+
+        foo = 1
+
+        case {foo.bar, foo.bar}
+        when {Int32, Char}
+        when {Int32, Int32}
+        when {Char, Int32}
+        when {Char, Char}
+        end
+      )
+  end
 end
 
 private def bool_case_eq

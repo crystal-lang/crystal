@@ -3046,9 +3046,17 @@ module Crystal
       # here we type them so their type is available later on.
       cond = node.cond
       case cond
-      when Var          then cond.accept(self)
-      when InstanceVar  then cond.accept(self)
-      when TupleLiteral then cond.accept(self)
+      when Var         then cond.accept(self)
+      when InstanceVar then cond.accept(self)
+      when TupleLiteral
+        cond.elements.each do |element|
+          case element
+          when Var         then element.accept(self)
+          when InstanceVar then element.accept(self)
+          else
+            # Nothing to do
+          end
+        end
       else
         # Nothing to do
       end
