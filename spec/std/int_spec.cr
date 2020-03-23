@@ -793,6 +793,7 @@ describe "Int" do
     pending_win32 "for BigInt" do
       (10.to_big_i ** 20).bit_length.should eq(67)
       (10.to_big_i ** 309).bit_length.should eq(1027)
+      (10.to_big_i ** 3010).bit_length.should eq(10000)
     end
   end
 end
