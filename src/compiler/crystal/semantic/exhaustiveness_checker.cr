@@ -372,9 +372,7 @@ struct Crystal::ExhaustivenessChecker
       when BoolPattern
         subtargets[pattern.value].each &.cover(patterns, index + 1)
       when UnderscorePattern
-        subtargets.each do |key, targets|
-          subtargets.each_value &.each &.cover(patterns, index + 1)
-        end
+        subtargets.each_value &.each &.cover(patterns, index + 1)
       when EnumMemberPattern, EnumMemberNamePattern
         # No cover
       end
