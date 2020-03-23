@@ -1147,8 +1147,7 @@ abstract class IO
 
     if socket = dst.as?(Socket)
       if file = src.as?(IO::FileDescriptor)
-        socket.sendfile file, limit
-        return limit
+        return socket.sendfile file, limit
       end
     end
 
