@@ -207,14 +207,12 @@ describe "Semantic: case" do
       )
   end
 
-  it "always warns on condless case without else" do
-    assert_warning %(
+  it "never warns on condless case without else" do
+    assert_no_warnings %(
         case
         when 1 == 2
-        when 3 == 4
         end
-      ),
-      "warning in line 3\nWarning: case without condition must have an `else` clause."
+      )
   end
 
   it "always requires an else for Flags enum (no coverage)" do

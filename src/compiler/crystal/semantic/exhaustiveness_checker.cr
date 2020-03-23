@@ -8,12 +8,6 @@ struct Crystal::ExhaustivenessChecker
 
     cond = node.cond
 
-    unless cond
-      @program.report_warning(node,
-        "case without condition must have an `else` clause.")
-      return
-    end
-
     # No condition means it's just like a series of if/else
     return unless cond
 
