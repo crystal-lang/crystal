@@ -45,6 +45,7 @@
 # log.level = Logger::DEBUG
 # log.debug("Created logger")
 # ```
+@[Deprecated("Use `Log` module instead")]
 class Logger
   property level : Severity
   property progname : String
@@ -119,6 +120,7 @@ class Logger
 
   # Creates a new logger that will log to the given *io*.
   # If *io* is `nil` then all log calls will be silently ignored.
+  @[Deprecated("Use `Log` module instead")]
   def initialize(@io : IO?, @level = Severity::INFO, @formatter = DEFAULT_FORMATTER, @progname = "")
     @closed = false
     @mutex = Mutex.new(:unchecked)
@@ -159,6 +161,7 @@ class Logger
 
   # Logs *message* if *severity* is higher or equal with the logger's current
   # severity. *progname* overrides a default progname set in this logger.
+  @[Deprecated("Use `Log` module instead")]
   def log(severity, message, progname = nil)
     return if severity < level || !@io
     write(severity, Time.local, progname || @progname, message)
@@ -167,6 +170,7 @@ class Logger
   # Logs the message as returned from the given block if *severity*
   # is higher or equal with the loggers current severity. The block is not run
   # if *severity* is lower. *progname* overrides a default progname set in this logger.
+  @[Deprecated("Use `Log` module instead")]
   def log(severity, progname = nil)
     return if severity < level || !@io
     write(severity, Time.local, progname || @progname, yield)
