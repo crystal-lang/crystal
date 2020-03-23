@@ -144,9 +144,6 @@ struct Crystal::ExhaustivenessChecker
     # take into account for exhaustiveness.
     all_provable_patterns = true
 
-    # Is any type a @[Flags] enum?
-    has_flags_enum = all_expanded_types.any? &.any? { |type| type.is_a?(EnumType) && type.flags? }
-
     # Start checking each `when`...
     node.whens.each do |a_when|
       a_when.conds.each do |when_cond|
@@ -183,11 +180,11 @@ struct Crystal::ExhaustivenessChecker
         .join("\n - ")
 
       @program.report_warning(node, <<-MSG)
-      case is not exhaustive.
+        case is not exhaustive.
 
-      Missing cases:
-       - #{missing_cases}
-      MSG
+        Missing cases:
+         - #{missing_cases}
+        MSG
       return
     end
 
