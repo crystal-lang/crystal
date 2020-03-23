@@ -158,7 +158,10 @@ struct Crystal::ExhaustivenessChecker
             all_provable_patterns = false
           end
         else
-          # TODO ...
+          # Not a tuple literal so we don't care
+          # TOOD: one could put `Tuple` or `Object` here and that would make
+          # the entire tuple match, but who would do that?
+          # We can do it, but it has very low priority.
         end
       end
     end
