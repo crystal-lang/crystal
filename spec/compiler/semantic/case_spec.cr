@@ -217,7 +217,7 @@ describe "Semantic: case" do
       "warning in line 3\nWarning: case without condition must have an `else` clause."
   end
 
-  it "always requires an else for Flags enum" do
+  it "always requires an else for Flags enum (no coverage)" do
     assert_warning %(
         struct Enum
           def includes?(other : self)
@@ -235,6 +235,31 @@ describe "Semantic: case" do
         e = Color::Red
         case e
         when .red?
+        end
+      ),
+      "warning in line 17\nWarning: can't prove case is exhaustive.\n\nPlease add an `else` clause."
+  end
+
+  it "always requires an else for Flags enum (all members covered but doesn't count)" do
+    assert_warning %(
+        struct Enum
+          def includes?(other : self)
+            false
+          end
+        end
+
+        @[Flags]
+        enum Color
+          Red
+          Green
+          Blue
+        end
+
+        e = Color::Red
+        case e
+        when .red?
+        when .green?
+        when .blue?
         end
       ),
       "warning in line 17\nWarning: can't prove case is exhaustive.\n\nPlease add an `else` clause."
