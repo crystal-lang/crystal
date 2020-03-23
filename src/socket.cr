@@ -300,8 +300,11 @@ class Socket < IO
     end
   end
 
-  def sendfile(file : IO::FileDescriptor, count)
-    evented_sendfile(count, "sendfile") do |remaining|
+  # Zero-copy implementation of sending *limit* bytes of *file*
+  # to the socket
+  # Returns the number of bytes sent
+  def sendfile(file : IO::FileDescriptor, limit : Int) : UInt64
+    evented_sendfile(limit, "sendfile") do |remaining|
       LibC.sendfile(fd, file.fd, nil, remaining)
     end
   end
