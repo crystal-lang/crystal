@@ -70,7 +70,7 @@ module Unicode
       case char
       when 'ı' then 'I'
       when 'i' then 'İ'
-      else           nil
+      else          nil
       end
     else
       nil
@@ -147,7 +147,7 @@ module Unicode
       case char
       when 'I' then 'ı'
       when 'İ' then 'i'
-      else           nil
+      else          nil
       end
     else
       nil
