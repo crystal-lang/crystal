@@ -38,10 +38,10 @@ class IO::FileDescriptor < IO
     # Figure out the terminal TTY name. If ttyname fails we have a non-tty, or something strange.
     path = uninitialized UInt8[256]
     ret = LibC.ttyname_r(fd, path, 256)
-    return new(fd) unless ret == 0
+    return new(fd).tap(&.flush_on_newline=(true)) unless ret == 0
 
     clone_fd = LibC.open(path, LibC::O_RDWR)
-    return new(fd) if clone_fd == -1
+    return new(fd).tap(&.flush_on_newline=(true)) if clone_fd == -1
 
     # We don't buffer output for TTY devices to see their output right away
     io = new(clone_fd)
