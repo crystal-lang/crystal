@@ -1,7 +1,7 @@
 ---
 name: "\U0001F914 Language Improvement Discussion"
 about: I want to start a new discussion about improving the language.
-labels: type:question
+labels: status:discussion
 ---
 
 ## Discussion
