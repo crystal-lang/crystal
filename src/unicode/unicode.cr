@@ -145,9 +145,9 @@ module Unicode
   private def self.check_downcase_turkic(char, options)
     if options.turkic?
       case char
-      when 'I'; 'ı'
-      when 'İ'; 'i'
-      else      nil
+      when 'I' then 'ı'
+      when 'İ' then 'i'
+      else           nil
       end
     else
       nil
