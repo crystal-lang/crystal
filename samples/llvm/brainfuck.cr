@@ -145,7 +145,7 @@ class Program
     program = [] of Instruction
     i = from
     while i < to
-      case char = source[i]
+      case source[i]
       when '+'
         program << Increment.new(1)
       when '-'
