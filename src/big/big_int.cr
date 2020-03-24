@@ -390,6 +390,10 @@ struct BigInt < Int
     BigInt.new { |mpz| LibGMP.lcm_ui(mpz, self, other.abs.to_u64) }
   end
 
+  def bit_length : Int32
+    LibGMP.sizeinbase(self, 2).to_i
+  end
+
   # TODO: improve this
   def_hash to_u64
 
