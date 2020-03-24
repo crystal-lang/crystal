@@ -68,9 +68,9 @@ module Unicode
   private def self.check_upcase_turkic(char, options)
     if options.turkic?
       case char
-      when 'ı'; 'I'
-      when 'i'; 'İ'
-      else      nil
+      when 'ı' then 'I'
+      when 'i' then 'İ'
+      else           nil
       end
     else
       nil
