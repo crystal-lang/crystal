@@ -397,9 +397,7 @@ class Crystal::CodeGenVisitor
 
     if @debug.variables?
       context.fun.add_attribute LLVM::Attribute::NoInline
-      context.fun.add_attribute LLVM::Attribute::NoUnwind
       context.fun.add_attribute LLVM::Attribute::OptimizeNone
-      context.fun.add_attribute LLVM::Attribute::UWTable
     else
       context.fun.add_attribute LLVM::Attribute::AlwaysInline if target_def.always_inline?
     end
