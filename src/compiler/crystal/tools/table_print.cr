@@ -36,7 +36,7 @@ module Crystal
           right = " " * (available_width - cell.text.size - left.size)
           "#{left}#{cell.text}#{right}"
         else
-          raise "Uknown alignment: #{cell.align}"
+          raise "Unknown alignment: #{cell.align}"
         end
       end
     end
