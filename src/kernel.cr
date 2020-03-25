@@ -1,40 +1,27 @@
 require "crystal/at_exit_handlers"
 
-{% if flag?(:win32) %}
-  # The standard input file descriptor. Contains data piped to the program.
-  STDIN = IO::FileDescriptor.new(0)
-
-  # The standard output file descriptor.
-  #
-  # Typically used to output data and information.
-  STDOUT = IO::FileDescriptor.new(1)
-
-  # The standard error file descriptor.
-  #
-  # Typically used to output error messages and diagnostics.
-  STDERR = IO::FileDescriptor.new(2)
-{% else %}
+{% unless flag?(:win32) %}
   require "c/unistd"
-
-  # The standard input file descriptor. Contains data piped to the program.
-  STDIN = IO::FileDescriptor.from_stdio(0)
-
-  # The standard output file descriptor.
-  #
-  # Typically used to output data and information.
-  #
-  # When this is a TTY device, `sync` will be true for it
-  # at the start of the program.
-  STDOUT = IO::FileDescriptor.from_stdio(1)
-
-  # The standard error file descriptor.
-  #
-  # Typically used to output error messages and diagnostics.
-  #
-  # When this is a TTY device, `sync` will be true for it
-  # at the start of the program.
-  STDERR = IO::FileDescriptor.from_stdio(2)
 {% end %}
+
+# The standard input file descriptor. Contains data piped to the program.
+STDIN = IO::FileDescriptor.from_stdio(0)
+
+# The standard output file descriptor.
+#
+# Typically used to output data and information.
+#
+# When this is a TTY device, `sync` will be true for it
+# at the start of the program.
+STDOUT = IO::FileDescriptor.from_stdio(1)
+
+# The standard error file descriptor.
+#
+# Typically used to output error messages and diagnostics.
+#
+# When this is a TTY device, `sync` will be true for it
+# at the start of the program.
+STDERR = IO::FileDescriptor.from_stdio(2)
 
 # The name, the program was called with.
 PROGRAM_NAME = String.new(ARGV_UNSAFE.value)
