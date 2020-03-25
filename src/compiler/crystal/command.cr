@@ -347,7 +347,6 @@ class Crystal::Command
       end
 
       opts.on("--nodefaultlibs", "Disable standard library locations") do
-        compiler.flags << "-nodefaultlibs"
         compiler.default_libs = false
       end
 
