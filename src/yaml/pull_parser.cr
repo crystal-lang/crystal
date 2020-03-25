@@ -241,6 +241,20 @@ class YAML::PullParser
         skip
       end
       read_next
+    when .document_start?
+      read_next
+      until kind.document_end?
+        skip
+      end
+      read_next
+    when .stream_start?
+      read_next
+      until kind.stream_end?
+        skip
+      end
+      read_next
+    else
+      read_next
     end
   end
 
