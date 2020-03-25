@@ -46,7 +46,7 @@ module Crystal
     # associated to a def's object id (the UInt64), and on an instantiation
     # we compare the new type with the previous one and check if it contains
     # the previous type.
-    getter splat_expansions = {} of UInt64 => Type
+    getter splat_expansions : Hash(Def, Type) = ({} of Def => Type).compare_by_identity
 
     # All FileModules indexed by their filename.
     # These store file-private defs, and top-level variables in files other
@@ -321,7 +321,7 @@ module Crystal
       named_tuple_of(entries)
     end
 
-    # ditto
+    # :ditto:
     def named_tuple_of(entries : Array(NamedArgumentType))
       named_tuple.instantiate_named_args(entries)
     end

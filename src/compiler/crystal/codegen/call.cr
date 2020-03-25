@@ -239,8 +239,9 @@ class Crystal::CodeGenVisitor
       final_value_casted = bit_cast final_value, llvm_context.void_pointer
       gep_call_arg = bit_cast gep(call_arg, 0, 0), llvm_context.void_pointer
       size = @abi.size(abi_arg_type.type)
+      size = @program.bits64? ? int64(size) : int32(size)
       align = @abi.align(abi_arg_type.type)
-      memcpy(final_value_casted, gep_call_arg, int32(size), align, int1(0))
+      memcpy(final_value_casted, gep_call_arg, size, align, int1(0))
       call_arg = load final_value
     else
       # Keep same call arg
@@ -500,8 +501,9 @@ class Crystal::CodeGenVisitor
             final_value = alloca abi_return.type
             final_value_casted = bit_cast final_value, llvm_context.void_pointer
             size = @abi.size(abi_return.type)
+            size = @program.@program.bits64? ? int64(size) : int32(size)
             align = @abi.align(abi_return.type)
-            memcpy(final_value_casted, cast2, int32(size), align, int1(0))
+            memcpy(final_value_casted, cast2, size, align, int1(0))
             @last = final_value
           end
         when LLVM::ABI::ArgKind::Indirect

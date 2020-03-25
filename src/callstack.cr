@@ -52,7 +52,7 @@ struct CallStack
     @backtrace ||= decode_backtrace
   end
 
-  {% if flag?(:gnu) && flag?(:i686) %}
+  {% if flag?(:gnu) && flag?(:i386) %}
     # This is only used for the workaround described in `Exception.unwind`
     @@makecontext_range : Range(Void*, Void*)?
 
@@ -84,7 +84,7 @@ struct CallStack
            {% end %}
       bt << ip
 
-      {% if flag?(:gnu) && flag?(:i686) %}
+      {% if flag?(:gnu) && flag?(:i386) %}
         # This is a workaround for glibc bug: https://sourceware.org/bugzilla/show_bug.cgi?id=18635
         # The unwind info is corrupted when `makecontext` is used.
         # Stop the backtrace here. There is nothing interest beyond this point anyway.
@@ -141,15 +141,15 @@ struct CallStack
     if frame
       offset, sname = frame
       if repeated_frame.count == 0
-        LibC.dprintf 2, "[0x%lx] %s +%ld\n", repeated_frame.ip, sname, offset
+        Crystal::System.print_error "[0x%lx] %s +%ld\n", repeated_frame.ip, sname, offset
       else
-        LibC.dprintf 2, "[0x%lx] %s +%ld (%ld times)\n", repeated_frame.ip, sname, offset, repeated_frame.count + 1
+        Crystal::System.print_error "[0x%lx] %s +%ld (%ld times)\n", repeated_frame.ip, sname, offset, repeated_frame.count + 1
       end
     else
       if repeated_frame.count == 0
-        LibC.dprintf 2, "[0x%lx] ???\n", repeated_frame.ip
+        Crystal::System.print_error "[0x%lx] ???\n", repeated_frame.ip
       else
-        LibC.dprintf 2, "[0x%lx] ??? (%ld times)\n", repeated_frame.ip, repeated_frame.count + 1
+        Crystal::System.print_error "[0x%lx] ??? (%ld times)\n", repeated_frame.ip, repeated_frame.count + 1
       end
     end
   end
@@ -367,7 +367,9 @@ struct CallStack
       @@base_address : UInt64|UInt32|Nil
 
       protected def self.read_dwarf_sections
-        Debug::ELF.open(PROGRAM_NAME) do |elf|
+        program = Process.executable_path
+        return unless program && File.readable? program
+        Debug::ELF.open(program) do |elf|
           elf.read_section?(".text") do |sh, _|
             @@base_address = sh.addr - sh.offset
           end

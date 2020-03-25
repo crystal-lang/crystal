@@ -65,13 +65,6 @@ struct Float
     !nan? && !infinite?
   end
 
-  # Float divivision that will obey the left hand side argument type.
-  def fdiv(other) : self
-    # TODO: replace with fdiv primitve after 0.31.0
-    # This is to implement efficiently the // operation
-    self.class.new(self / other)
-  end
-
   def modulo(other)
     if other == 0.0
       raise DivisionByZeroError.new

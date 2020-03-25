@@ -81,8 +81,8 @@ module Crystal
     it_parses ":[]=", "[]=".symbol
     it_parses ":[]?", "[]?".symbol
     it_parses %(:"\\\\foo"), "\\foo".symbol
-    it_parses %(:"\\\"foo"), "\"foo".symbol
-    it_parses %(:"\\\"foo\\\""), "\"foo\"".symbol
+    it_parses %(:"\\"foo"), "\"foo".symbol
+    it_parses %(:"\\"foo\\""), "\"foo\"".symbol
     it_parses %(:"\\a\\b\\n\\r\\t\\v\\f\\e"), "\a\b\n\r\t\v\f\e".symbol
     it_parses %(:"\\u{61}"), "a".symbol
 
@@ -130,6 +130,7 @@ module Crystal
     it_parses "+ 1", Call.new(1.int32, "+")
     it_parses "~ 1", Call.new(1.int32, "~")
     it_parses "1.~", Call.new(1.int32, "~")
+    it_parses "1.!", Not.new(1.int32)
     it_parses "1 && 2", And.new(1.int32, 2.int32)
     it_parses "1 || 2", Or.new(1.int32, 2.int32)
     it_parses "&- 1", Call.new(1.int32, "&-")
@@ -375,6 +376,7 @@ module Crystal
     it_parses "foo &.[0]", Call.new(nil, "foo", block: Block.new([Var.new("__arg0")], Call.new(Var.new("__arg0"), "[]", 0.int32)))
     it_parses "foo &.[0] = 1", Call.new(nil, "foo", block: Block.new([Var.new("__arg0")], Call.new(Var.new("__arg0"), "[]=", 0.int32, 1.int32)))
     it_parses "foo(&.is_a?(T))", Call.new(nil, "foo", block: Block.new([Var.new("__arg0")], IsA.new(Var.new("__arg0"), "T".path)))
+    it_parses "foo(&.!)", Call.new(nil, "foo", block: Block.new([Var.new("__arg0")], Not.new(Var.new("__arg0"))))
     it_parses "foo(&.responds_to?(:foo))", Call.new(nil, "foo", block: Block.new([Var.new("__arg0")], RespondsTo.new(Var.new("__arg0"), "foo")))
     it_parses "foo &.each {\n}", Call.new(nil, "foo", block: Block.new(["__arg0".var], Call.new("__arg0".var, "each", block: Block.new)))
     it_parses "foo &.each do\nend", Call.new(nil, "foo", block: Block.new(["__arg0".var], Call.new("__arg0".var, "each", block: Block.new)))
@@ -880,6 +882,8 @@ module Crystal
 
     it_parses "macro foo\n{%\nif 1\n2\nelse\n3\nend\n%}end", Macro.new("foo", body: MacroExpression.new(If.new(1.int32, 2.int32, 3.int32), output: false))
 
+    it_parses "macro foo\neenum\nend", Macro.new("foo", body: Expressions.from(["eenum\n".macro_literal] of ASTNode))
+
     assert_syntax_error "macro foo; {% foo = 1 }; end"
     assert_syntax_error "macro def foo : String; 1; end"
 
@@ -941,6 +945,12 @@ module Crystal
       )
     )
 
+    it_parses "foo.!", Not.new("foo".call)
+    it_parses "foo.!.!", Not.new(Not.new("foo".call))
+    it_parses "foo.!(  )", Not.new("foo".call)
+
+    it_parses "foo &.!", Call.new(nil, "foo", block: Block.new([Var.new("__arg0")], Not.new(Var.new("__arg0"))))
+
     # multiline pseudo methods (#8318)
     it_parses "sizeof(\n  Int32\n)", SizeOf.new(Path.new("Int32"))
     it_parses "instance_sizeof(\n  Int32\n)", InstanceSizeOf.new(Path.new("Int32"))
@@ -952,6 +962,7 @@ module Crystal
     it_parses "1.is_a?(\n  Int32\n)", IsA.new(1.int32, Path.new("Int32"))
     it_parses "1.responds_to?(\n  :foo\n)", RespondsTo.new(1.int32, "foo")
     it_parses "1.nil?(\n)", IsA.new(1.int32, Path.global("Nil"), nil_check: true)
+    it_parses "1.!(\n)", Not.new(1.int32)
 
     it_parses "/foo/", regex("foo")
     it_parses "/foo/i", regex("foo", Regex::Options::IGNORE_CASE)
@@ -1058,6 +1069,7 @@ module Crystal
     it_parses "case 1\nwhen .is_a?(T)\n2\nend", Case.new(1.int32, [When.new([IsA.new(ImplicitObj.new, "T".path)] of ASTNode, 2.int32)])
     it_parses "case 1\nwhen .as(T)\n2\nend", Case.new(1.int32, [When.new([Cast.new(ImplicitObj.new, "T".path)] of ASTNode, 2.int32)])
     it_parses "case 1\nwhen .as?(T)\n2\nend", Case.new(1.int32, [When.new([NilableCast.new(ImplicitObj.new, "T".path)] of ASTNode, 2.int32)])
+    it_parses "case 1\nwhen .!()\n2\nend", Case.new(1.int32, [When.new([Not.new(ImplicitObj.new)] of ASTNode, 2.int32)])
     it_parses "case when 1\n2\nend", Case.new(nil, [When.new([1.int32] of ASTNode, 2.int32)])
     it_parses "case \nwhen 1\n2\nend", Case.new(nil, [When.new([1.int32] of ASTNode, 2.int32)])
     it_parses "case {1, 2}\nwhen {3, 4}\n5\nend", Case.new(TupleLiteral.new([1.int32, 2.int32] of ASTNode), [When.new([TupleLiteral.new([3.int32, 4.int32] of ASTNode)] of ASTNode, 5.int32)])
@@ -1385,6 +1397,7 @@ module Crystal
     it_parses "enum Foo; @[Bar]; end", EnumDef.new("Foo".path, [Annotation.new("Bar".path)] of ASTNode)
 
     assert_syntax_error "enum Foo; A B; end", "expecting ';', 'end' or newline after enum member"
+    assert_syntax_error "enum Foo\n  A,   B,   C\nend\n", "expecting ';', 'end' or newline after enum member"
 
     it_parses "1.[](2)", Call.new(1.int32, "[]", 2.int32)
     it_parses "1.[]?(2)", Call.new(1.int32, "[]?", 2.int32)
@@ -1650,7 +1663,7 @@ module Crystal
 
     assert_syntax_error "def foo(var : Foo+); end"
 
-    %w(&& || !).each do |name|
+    %w(&& ||).each do |name|
       assert_syntax_error "foo.#{name}"
       assert_syntax_error "foo.#{name}()"
       assert_syntax_error "foo &.#{name}"

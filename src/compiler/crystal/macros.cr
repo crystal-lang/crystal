@@ -61,7 +61,7 @@ module Crystal::Macros
   def `(command) : MacroId
   end
 
-  # ditto
+  # :ditto:
   def system(command) : MacroId
   end
 
@@ -276,19 +276,19 @@ module Crystal::Macros
     def <(other : NumberLiteral) : BoolLiteral
     end
 
-    # ditto
+    # :ditto:
     def <=(other : NumberLiteral) : BoolLiteral
     end
 
-    # ditto
+    # :ditto:
     def >(other : NumberLiteral) : BoolLiteral
     end
 
-    # ditto
+    # :ditto:
     def >=(other : NumberLiteral) : BoolLiteral
     end
 
-    # ditto
+    # :ditto:
     def <=>(other : NumberLiteral) : NumberLiteral
     end
 
@@ -393,7 +393,7 @@ module Crystal::Macros
     end
 
     # Similar to `String#camelcase`.
-    def camelcase : StringLiteral
+    def camelcase(*, lower : BoolLiteral = false) : StringLiteral
     end
 
     # Similar to `String#capitalize`.
@@ -622,6 +622,10 @@ module Crystal::Macros
     def map(&block) : ArrayLiteral
     end
 
+    # Similar to `Enumerable#map_with_index`
+    def map_with_index(&block) : ArrayLiteral
+    end
+
     # Similar to `Enumerable#select`
     def select(&block) : ArrayLiteral
     end
@@ -632,6 +636,10 @@ module Crystal::Macros
 
     # Similar to `Enumerable#reduce`
     def reduce(&block) : ASTNode
+    end
+
+    # Similar to `Enumerable#reduce`
+    def reduce(memo : ASTNode, &block) : ASTNode
     end
 
     # Similar to `Array#shuffle`
@@ -832,7 +840,7 @@ module Crystal::Macros
 
   # A tuple literal.
   #
-  # Its macro methods are the same as `ArrayLiteral`.
+  # Its macro methods are nearly the same as `ArrayLiteral`.
   class TupleLiteral < ASTNode
   end
 
@@ -1717,8 +1725,18 @@ module Crystal::Macros
     def union_types : ArrayLiteral(TypeNode)
     end
 
-    # Returns the fully qualified name of this type.
-    def name : MacroId
+    # Returns the fully qualified name of this type.  Optionally without *generic_args* if `self` is a generic type; see `#type_vars`.
+    #
+    # ```
+    # class Foo(T); end
+    #
+    # module Bar::Baz; end
+    #
+    # {{Bar::Baz.name}}                 # => Bar::Baz
+    # {{Foo.name}}                      # => Foo(T)
+    # {{Foo.name(generic_args: false)}} # => Foo
+    # ```
+    def name(*, generic_args : BoolLiteral = true) : MacroId
     end
 
     # Returns the type variables of the generic type. If the type is not
@@ -1728,6 +1746,10 @@ module Crystal::Macros
 
     # Returns the instance variables of this type.
     def instance_vars : ArrayLiteral(MetaVar)
+    end
+
+    # Returns the class variables of this type.
+    def class_vars : ArrayLiteral(MetaVar)
     end
 
     # Returns all ancestors of this type.
@@ -1740,6 +1762,10 @@ module Crystal::Macros
 
     # Returns the direct subclasses of this type.
     def subclasses : ArrayLiteral(TypeNode)
+    end
+
+    # Returns all the types `self` is directly included in.
+    def includers : ArrayLiteral(TypeNode)
     end
 
     # Returns all subclasses of this type.

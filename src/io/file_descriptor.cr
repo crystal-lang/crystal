@@ -7,10 +7,23 @@ class IO::FileDescriptor < IO
 
   # The raw file-descriptor. It is defined to be an `Int`, but its size is
   # platform-specific.
-  getter fd
+  def fd
+    @volatile_fd.get
+  end
 
-  def initialize(@fd, blocking = false)
+  def initialize(fd, blocking = nil)
+    @volatile_fd = Atomic.new(fd)
     @closed = system_closed?
+
+    if blocking.nil?
+      blocking =
+        case system_info.type
+        when .pipe?, .socket?, .character_device?
+          false
+        else
+          true
+        end
+    end
 
     unless blocking || {{flag?(:win32)}}
       self.blocking = false
@@ -25,10 +38,10 @@ class IO::FileDescriptor < IO
     # Figure out the terminal TTY name. If ttyname fails we have a non-tty, or something strange.
     path = uninitialized UInt8[256]
     ret = LibC.ttyname_r(fd, path, 256)
-    return new(fd, blocking: true) unless ret == 0
+    return new(fd) unless ret == 0
 
     clone_fd = LibC.open(path, LibC::O_RDWR)
-    return new(fd, blocking: true) if clone_fd == -1
+    return new(fd) if clone_fd == -1
 
     # We don't buffer output for TTY devices to see their output right away
     io = new(clone_fd)
@@ -59,7 +72,7 @@ class IO::FileDescriptor < IO
     end
 
     def fcntl(cmd, arg = 0)
-      Crystal::System::FileDescriptor.fcntl(@fd, cmd, arg)
+      Crystal::System::FileDescriptor.fcntl(fd, cmd, arg)
     end
   {% end %}
 
@@ -161,7 +174,7 @@ class IO::FileDescriptor < IO
     if closed?
       io << "(closed)"
     else
-      io << " fd=" << @fd
+      io << " fd=" << fd
     end
     io << '>'
   end
@@ -177,7 +190,11 @@ class IO::FileDescriptor < IO
   private def unbuffered_close
     return if @closed
 
-    system_close ensure @closed = true
+    # Set before the @closed state so the pending
+    # IO::Evented readers and writers can be cancelled
+    # knowing the IO is in a closed state.
+    @closed = true
+    system_close
   end
 
   private def unbuffered_flush

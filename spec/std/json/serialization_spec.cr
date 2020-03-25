@@ -1,7 +1,9 @@
-require "spec"
+require "../spec_helper"
 require "json"
-require "big"
-require "big/json"
+{% unless flag?(:win32) %}
+  require "big"
+  require "big/json"
+{% end %}
 require "uuid"
 require "uuid/json"
 
@@ -37,6 +39,10 @@ describe "JSON serialization" do
       Array(Float64).from_json("[1.5, 2, 3.5]").should eq([1.5, 2, 3.5])
     end
 
+    it "does Deque(String)#from_json" do
+      Deque(String).from_json(%(["a", "b"])).should eq(Deque.new(["a", "b"]))
+    end
+
     it "does Hash(String, String)#from_json" do
       Hash(String, String).from_json(%({"foo": "x", "bar": "y"})).should eq({"foo" => "x", "bar" => "y"})
     end
@@ -57,15 +63,15 @@ describe "JSON serialization" do
       Hash(Float64, String).from_json(%({"1.23": "x", "4.56": "y"})).should eq({1.23 => "x", 4.56 => "y"})
     end
 
-    it "does Hash(BigInt, String)#from_json" do
+    pending_win32 "does Hash(BigInt, String)#from_json" do
       Hash(BigInt, String).from_json(%({"12345678901234567890": "x"})).should eq({"12345678901234567890".to_big_i => "x"})
     end
 
-    it "does Hash(BigFloat, String)#from_json" do
+    pending_win32 "does Hash(BigFloat, String)#from_json" do
       Hash(BigFloat, String).from_json(%({"1234567890.123456789": "x"})).should eq({"1234567890.123456789".to_big_f => "x"})
     end
 
-    it "does Hash(BigDecimal, String)#from_json" do
+    pending_win32 "does Hash(BigDecimal, String)#from_json" do
       Hash(BigDecimal, String).from_json(%({"1234567890.123456789": "x"})).should eq({"1234567890.123456789".to_big_d => "x"})
     end
 
@@ -113,19 +119,19 @@ describe "JSON serialization" do
       tuple.should be_a(NamedTuple(x: Int32?, y: String))
     end
 
-    it "does for BigInt" do
+    pending_win32 "does for BigInt" do
       big = BigInt.from_json("123456789123456789123456789123456789123456789")
       big.should be_a(BigInt)
       big.should eq(BigInt.new("123456789123456789123456789123456789123456789"))
     end
 
-    it "does for BigFloat" do
+    pending_win32 "does for BigFloat" do
       big = BigFloat.from_json("1234.567891011121314")
       big.should be_a(BigFloat)
       big.should eq(BigFloat.new("1234.567891011121314"))
     end
 
-    it "does for BigFloat from int" do
+    pending_win32 "does for BigFloat from int" do
       big = BigFloat.from_json("1234")
       big.should be_a(BigFloat)
       big.should eq(BigFloat.new("1234"))
@@ -149,13 +155,13 @@ describe "JSON serialization" do
       uuid.should eq(UUID.new("ee843b26-56d8-472b-b343-0b94ed9077ff"))
     end
 
-    it "does for BigDecimal from int" do
+    pending_win32 "does for BigDecimal from int" do
       big = BigDecimal.from_json("1234")
       big.should be_a(BigDecimal)
       big.should eq(BigDecimal.new("1234"))
     end
 
-    it "does for BigDecimal from float" do
+    pending_win32 "does for BigDecimal from float" do
       big = BigDecimal.from_json("1234.05")
       big.should be_a(BigDecimal)
       big.should eq(BigDecimal.new("1234.05"))
@@ -206,6 +212,22 @@ describe "JSON serialization" do
       Union(Float64, Array(Int32)).from_json(%(1.23)).should eq(1.23)
     end
 
+    it "deserializes union of Int32 and Float64 (#7333)" do
+      value = Union(Int32, Float64).from_json("1")
+      value.should be_a(Int32)
+      value.should eq(1)
+
+      value = Union(Int32, Float64).from_json("1.0")
+      value.should be_a(Float64)
+      value.should eq(1.0)
+    end
+
+    it "deserializes unions of the same kind and remains stable" do
+      str = [Int32::MAX, Int64::MAX].to_json
+      value = Array(Int32 | Int64).from_json(str)
+      value.all? { |x| x.should be_a(Int64) }
+    end
+
     it "deserializes Time" do
       Time.from_json(%("2016-11-16T09:55:48-03:00")).to_utc.should eq(Time.utc(2016, 11, 16, 12, 55, 48))
       Time.from_json(%("2016-11-16T09:55:48-0300")).to_utc.should eq(Time.utc(2016, 11, 16, 12, 55, 48))
@@ -229,6 +251,17 @@ describe "JSON serialization" do
           Array(Int32 | Bool).from_json <<-JSON
             [
               {"foo": "bar"}
+            ]
+            JSON
+        end
+        ex.location.should eq({2, 3})
+      end
+
+      it "captures overflows for integer types" do
+        ex = expect_raises(JSON::ParseException) do
+          Array(Int32).from_json <<-JSON
+            [
+              #{Int64::MAX.to_json}
             ]
             JSON
         end
@@ -304,6 +337,10 @@ describe "JSON serialization" do
       [1, 2, 3].to_json.should eq("[1,2,3]")
     end
 
+    it "does for Deque" do
+      Deque.new([1, 2, 3]).to_json.should eq("[1,2,3]")
+    end
+
     it "does for Set" do
       Set(Int32).new([1, 1, 2]).to_json.should eq("[1,2]")
     end
@@ -328,7 +365,7 @@ describe "JSON serialization" do
       {1.2 => 2, 3.4 => 6}.to_json.should eq(%({"1.2":2,"3.4":6}))
     end
 
-    it "does for Hash with BigInt keys" do
+    pending_win32 "does for Hash with BigInt keys" do
       {123.to_big_i => 2}.to_json.should eq(%({"123":2}))
     end
 
@@ -348,12 +385,12 @@ describe "JSON serialization" do
       JSONSpecEnum::One.to_json.should eq("1")
     end
 
-    it "does for BigInt" do
+    pending_win32 "does for BigInt" do
       big = BigInt.new("123456789123456789123456789123456789123456789")
       big.to_json.should eq("123456789123456789123456789123456789123456789")
     end
 
-    it "does for BigFloat" do
+    pending_win32 "does for BigFloat" do
       big = BigFloat.new("1234.567891011121314")
       big.to_json.should eq("1234.567891011121314")
     end
@@ -427,5 +464,17 @@ describe "JSON serialization" do
         Time.utc(2016, 11, 16, 12, 55, 48, nanosecond: 123456789).to_json.should eq(%("2016-11-16T12:55:48Z"))
       end
     end
+  end
+
+  it "provide symetric encoding and decoding for Union types" do
+    a = 1.as(Float64 | Int32)
+    b = (Float64 | Int32).from_json(a.to_json)
+    a.class.should eq(Int32)
+    a.class.should eq(b.class)
+
+    c = 1.0.as(Float64 | Int32)
+    d = (Float64 | Int32).from_json(c.to_json)
+    c.class.should eq(Float64)
+    c.class.should eq(d.class)
   end
 end

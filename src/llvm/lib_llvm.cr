@@ -1,26 +1,6 @@
 {% begin %}
 lib LibLLVM
-  LLVM_CONFIG = {{
-                  `[ -n "$LLVM_CONFIG" ] && command -v "$LLVM_CONFIG" || \
-                   command -v llvm-config-8 || command -v llvm-config-8.0 || command -v llvm-config80 || \
-                   (command -v llvm-config > /dev/null && (case "$(llvm-config --version)" in 8.0*) command -v llvm-config;; *) false;; esac)) || \
-                   command -v llvm-config-7 || \
-                   (command -v llvm-config > /dev/null && (case "$(llvm-config --version)" in 7.1*) command -v llvm-config;; *) false;; esac)) || \
-                   command -v llvm-config-7.0 || command -v llvm-config70 || \
-                   (command -v llvm-config > /dev/null && (case "$(llvm-config --version)" in 7.0*) command -v llvm-config;; *) false;; esac)) || \
-                   command -v llvm-config-6.0 || command -v llvm-config60 || \
-                   (command -v llvm-config > /dev/null && (case "$(llvm-config --version)" in 6.0*) command -v llvm-config;; *) false;; esac)) || \
-                   command -v llvm-config-5.0 || command -v llvm-config50 || \
-                   (command -v llvm-config > /dev/null && (case "$(llvm-config --version)" in 5.0*) command -v llvm-config;; *) false;; esac)) || \
-                   command -v llvm-config-4.0 || command -v llvm-config40 || \
-                   (command -v llvm-config > /dev/null && (case "$(llvm-config --version)" in 4.0*) command -v llvm-config;; *) false;; esac)) || \
-                   command -v llvm-config-3.9 || command -v llvm-config39 || \
-                   (command -v llvm-config > /dev/null && (case "$(llvm-config --version)" in 3.9*) command -v llvm-config;; *) false;; esac)) || \
-                   command -v llvm-config-3.8 || command -v llvm-config38 || \
-                   (command -v llvm-config > /dev/null && (case "$(llvm-config --version)" in 3.8*) command -v llvm-config;; *) false;; esac)) || \
-                   command -v llvm-config
-                  `.chomp.stringify
-                }}
+  LLVM_CONFIG = {{ env("LLVM_CONFIG") || `#{__DIR__}/ext/find-llvm-config`.stringify }}
 end
 {% end %}
 
@@ -89,6 +69,7 @@ lib LibLLVM
   fun add_target_dependent_function_attr = LLVMAddTargetDependentFunctionAttr(fn : ValueRef, a : LibC::Char*, v : LibC::Char*)
   fun array_type = LLVMArrayType(element_type : TypeRef, count : UInt32) : TypeRef
   fun vector_type = LLVMVectorType(element_type : TypeRef, count : UInt32) : TypeRef
+  fun build_va_arg = LLVMBuildVAArg(builder : BuilderRef, list : ValueRef, type : TypeRef, name : UInt8*) : ValueRef
   fun build_add = LLVMBuildAdd(builder : BuilderRef, lhs : ValueRef, rhs : ValueRef, name : UInt8*) : ValueRef
   fun build_alloca = LLVMBuildAlloca(builder : BuilderRef, type : TypeRef, name : UInt8*) : ValueRef
   fun build_and = LLVMBuildAnd(builder : BuilderRef, lhs : ValueRef, rhs : ValueRef, name : UInt8*) : ValueRef

@@ -82,7 +82,7 @@ module Crystal
       @last = Nop.new
     end
 
-    def define_var(name, value)
+    def define_var(name : String, value : ASTNode) : Nil
       @vars[name] = value
     end
 
@@ -363,9 +363,10 @@ module Crystal
         end
 
         args = node.args.map { |arg| accept arg }
+        named_args = node.named_args.try &.to_h { |arg| {arg.name, accept arg.value} }
 
         begin
-          @last = receiver.interpret(node.name, args, node.block, self)
+          @last = receiver.interpret(node.name, args, named_args, node.block, self)
         rescue ex : MacroRaiseException
           raise ex
         rescue ex : Crystal::Exception
@@ -511,13 +512,13 @@ module Crystal
 
     def visit(node : Splat)
       node.exp.accept self
-      @last = @last.interpret("splat", [] of ASTNode, nil, self)
+      @last = @last.interpret("splat", [] of ASTNode, nil, nil, self)
       false
     end
 
     def visit(node : DoubleSplat)
       node.exp.accept self
-      @last = @last.interpret("double_splat", [] of ASTNode, nil, self)
+      @last = @last.interpret("double_splat", [] of ASTNode, nil, nil, self)
       false
     end
 

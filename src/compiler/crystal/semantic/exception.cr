@@ -124,8 +124,10 @@ module Crystal
         io << '\n'
       end
 
-      io << error_headline(error_message_lines.shift)
-      io << remaining error_message_lines
+      unless error_message_lines.empty?
+        io << error_headline(error_message_lines.shift)
+        io << remaining error_message_lines
+      end
 
       if inner
         return if inner.is_a? MethodTraceException && !inner.has_message?

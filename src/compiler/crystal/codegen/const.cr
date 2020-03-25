@@ -188,8 +188,7 @@ class Crystal::CodeGenVisitor
     read_function_name = "~#{const.llvm_name}:read"
     func = @main_mod.functions[read_function_name]? || create_read_const_function(read_function_name, const)
     func = check_main_fun read_function_name, func
-    @last = call func
-    @last
+    call func
   end
 
   def create_read_const_function(fun_name, const)

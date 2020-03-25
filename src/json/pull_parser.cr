@@ -11,24 +11,6 @@ class JSON::PullParser
     BeginObject
     EndObject
     EOF
-
-    @[Deprecated("JSON::PullParser#kind now is an enum, please use that instead of symbols")]
-    def ==(other : Symbol)
-      case other
-      when :null         then null?
-      when :bool         then bool?
-      when :int          then int?
-      when :float        then float?
-      when :string       then string?
-      when :begin_array  then begin_array?
-      when :end_array    then end_array?
-      when :begin_object then begin_object?
-      when :end_object   then end_object?
-      when :EOF          then eof?
-      else
-        false
-      end
-    end
   end
 
   private enum ObjectStackKind
@@ -286,41 +268,26 @@ class JSON::PullParser
     read_bool if kind.bool?
   end
 
-  def read?(klass : Int8.class)
-    read_int.to_i8! if kind.int?
-  end
+  {% for type in [Int8, Int16, Int32, Int64, UInt8, UInt16, UInt32] %}
+    def read?(klass : {{type}}.class)
+      {{type}}.new(int_value).tap { read_next } if kind.int?
+    rescue OverflowError
+      nil
+    end
+  {% end %}
 
-  def read?(klass : Int16.class)
-    read_int.to_i16! if kind.int?
-  end
-
-  def read?(klass : Int32.class)
-    read_int.to_i32! if kind.int?
-  end
-
-  def read?(klass : Int64.class)
-    read_int.to_i64! if kind.int?
-  end
-
-  def read?(klass : UInt8.class)
-    read_int.to_u8! if kind.int?
-  end
-
-  def read?(klass : UInt16.class)
-    read_int.to_u16! if kind.int?
-  end
-
-  def read?(klass : UInt32.class)
-    read_int.to_u32! if kind.int?
-  end
-
+  # UInt64 is a special case due to exceeding bounds of @int_value
   def read?(klass : UInt64.class)
-    read_int.to_u64! if kind.int?
+    UInt64.new(raw_value).tap { read_next } if kind.int?
+  rescue ArgumentError
+    nil
   end
 
   def read?(klass : Float32.class)
     return read_int.to_f32 if kind.int?
-    return read_float.to_f32 if kind.float?
+    return float_value.to_f32.tap { read_next } if kind.float?
+  rescue OverflowError
+    nil
   end
 
   def read?(klass : Float64.class)
@@ -561,12 +528,5 @@ class JSON::PullParser
     end
 
     @object_stack.push(kind)
-  end
-end
-
-struct Symbol
-  @[Deprecated("JSON::PullParser#kind now is an enum, please use that instead of symbols")]
-  def ==(other : JSON::PullParser::Kind)
-    other == self
   end
 end

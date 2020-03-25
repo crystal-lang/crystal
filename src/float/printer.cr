@@ -44,7 +44,7 @@ module Float::Printer
       if v.class == Float64
         LibC.snprintf(buffer.to_unsafe, BUFFER_SIZE, "%.17g", v)
       else
-        LibC.snprintf(buffer.to_unsafe, BUFFER_SIZE, "%g", v)
+        LibC.snprintf(buffer.to_unsafe, BUFFER_SIZE, "%g", v.to_f64)
       end
       len = LibC.strlen(buffer)
       io.write_utf8 buffer.to_slice[0, len]

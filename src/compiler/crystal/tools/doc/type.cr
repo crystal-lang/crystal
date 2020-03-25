@@ -449,7 +449,7 @@ class Crystal::Doc::Type
       methods.find { |method| method.name == name && method.args.size == args_size }
     else
       methods = methods.select { |method| method.name == name }
-      (methods.find { |method| method.args.empty? }) || methods.first?
+      methods.find(&.args.empty?) || methods.first?
     end
   end
 
@@ -577,6 +577,10 @@ class Crystal::Doc::Type
 
   def node_to_html(node, io, links = true)
     io << Highlighter.highlight(node.to_s)
+  end
+
+  def node_to_html(node : Underscore, io, links = true)
+    io << '_'
   end
 
   def type_to_html(type)

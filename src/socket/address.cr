@@ -127,10 +127,11 @@ class Socket
     # Socket::IPAddress.parse("udp://[::1]:8080")     # => Socket::IPAddress.new("::1", 8080)
     # ```
     def self.parse(uri : URI) : IPAddress
-      host = uri.host
-      raise Socket::Error.new("Invalid IP address: missing host") if !host || host.empty?
+      host = uri.host.presence
+      raise Socket::Error.new("Invalid IP address: missing host") unless host
 
-      port = uri.port || raise Socket::Error.new("Invalid IP address: missing port")
+      port = uri.port
+      raise Socket::Error.new("Invalid IP address: missing port") unless port
 
       # remove ipv6 brackets
       if host.starts_with?('[') && host.ends_with?(']')
@@ -187,7 +188,7 @@ class Socket
     private def address(addr : LibC::In6Addr)
       String.new(46) do |buffer|
         unless LibC.inet_ntop(family, pointerof(addr).as(Void*), buffer, 46)
-          raise Errno.new("Failed to convert IP address")
+          raise Socket::Error.from_errno("Failed to convert IP address")
         end
         {LibC.strlen(buffer), 0}
       end
@@ -196,7 +197,7 @@ class Socket
     private def address(addr : LibC::InAddr)
       String.new(16) do |buffer|
         unless LibC.inet_ntop(family, pointerof(addr).as(Void*), buffer, 16)
-          raise Errno.new("Failed to convert IP address")
+          raise Socket::Error.from_errno("Failed to convert IP address")
         end
         {LibC.strlen(buffer), 0}
       end
@@ -341,7 +342,7 @@ class Socket
         if port = uri.port
           io << ':' << port
         end
-        if (path = uri.path) && !path.empty?
+        if path = uri.path.presence
           io << path
         end
       end

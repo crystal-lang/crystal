@@ -120,7 +120,7 @@ class Dir
   # array.sort # => [".", "..", "config.h"]
   # ```
   def read
-    Crystal::System::Dir.next(@dir)
+    Crystal::System::Dir.next(@dir, path)
   end
 
   # Repositions this directory to the first entry.
@@ -132,7 +132,7 @@ class Dir
   # Closes the directory stream.
   def close
     return if @closed
-    Crystal::System::Dir.close(@dir)
+    Crystal::System::Dir.close(@dir, path)
     @closed = true
   end
 
@@ -210,7 +210,7 @@ class Dir
   end
 
   # Returns `true` if the directory at *path* is empty, otherwise returns `false`.
-  # Raises `Errno` if the directory at *path* does not exist.
+  # Raises `File::NotFoundError` if the directory at *path* does not exist.
   #
   # ```
   # Dir.mkdir("bar")
@@ -223,8 +223,6 @@ class Dir
       return false
     end
     true
-  rescue ex : Errno
-    raise Errno.new("Error determining size of '#{path}'", ex.errno)
   end
 
   # Creates a new directory at the given path. The linux-style permission mode
@@ -232,33 +230,21 @@ class Dir
   #
   # NOTE: *mode* is ignored on windows.
   def self.mkdir(path, mode = 0o777)
-    Crystal::System::Dir.create(path, mode)
+    Crystal::System::Dir.create(path.to_s, mode)
   end
 
   # Creates a new directory at the given path, including any non-existing
   # intermediate directories. The linux-style permission mode can be specified,
   # with a default of 777 (0o777).
-  def self.mkdir_p(path, mode = 0o777)
-    return 0 if Dir.exists?(path)
+  def self.mkdir_p(path, mode = 0o777) : Nil
+    return if Dir.exists?(path)
 
-    components = path.split(File::SEPARATOR)
-    case components.first
-    when ""
-      components.shift
-      subpath = "/"
-    when "."
-      subpath = components.shift
-    else
-      subpath = "."
+    path = Path.new path
+
+    path.each_parent do |parent|
+      mkdir(parent, mode) unless Dir.exists?(parent)
     end
-
-    components.each do |component|
-      subpath = File.join subpath, component
-
-      mkdir(subpath, mode) unless Dir.exists?(subpath)
-    end
-
-    0
+    mkdir(path, mode) unless Dir.exists?(path)
   end
 
   # Removes the directory at the given path.

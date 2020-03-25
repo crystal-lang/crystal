@@ -201,6 +201,23 @@ class Object
     yield self
   end
 
+  # Returns `true` if `self` is included in the *collection* argument.
+  #
+  # ```
+  # 10.in?(0..100)     # => true
+  # 10.in?({0, 1, 10}) # => true
+  # 10.in?(0, 1, 10)   # => true
+  # 10.in?(:foo, :bar) # => false
+  # ```
+  def in?(collection) : Bool
+    collection.includes?(self)
+  end
+
+  # :ditto:
+  def in?(*values : Object) : Bool
+    in?(values)
+  end
+
   # Returns `self`.
   # `Nil` overrides this method and raises `NilAssertionError`, see `Nil#not_nil!`.
   def not_nil!

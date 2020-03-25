@@ -359,24 +359,30 @@ module Debug
       @current_sequence_matrix : Array(Row)?
 
       private def register_to_matrix(sequence, registers)
-        file = sequence.file_names[registers.file]
-        path = sequence.include_directories[file[1]]
+        # checking is_stmt should be enough to avoid "non statement" operations
+        # some of which have confusing line number 0.
+        # but some operations within macros seem to be useful and marked as !is_stmt
+        # so attempt to include them also
+        if registers.is_stmt || (registers.line.to_i > 0 && registers.column.to_i > 0)
+          file = sequence.file_names[registers.file]
+          path = sequence.include_directories[file[1]]
 
-        row = Row.new(
-          registers.address,
-          registers.op_index,
-          path,
-          file[0],
-          registers.line.to_i,
-          registers.column.to_i,
-          registers.end_sequence
-        )
+          row = Row.new(
+            registers.address,
+            registers.op_index,
+            path,
+            file[0],
+            registers.line.to_i,
+            registers.column.to_i,
+            registers.end_sequence
+          )
 
-        if rows = @current_sequence_matrix
-          rows << row
-        else
-          matrix << (rows = [row])
-          @current_sequence_matrix = rows
+          if rows = @current_sequence_matrix
+            rows << row
+          else
+            matrix << (rows = [row])
+            @current_sequence_matrix = rows
+          end
         end
 
         if registers.end_sequence

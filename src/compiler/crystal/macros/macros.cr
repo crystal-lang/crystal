@@ -41,16 +41,16 @@ class Crystal::Program
     {interpreter.to_s, interpreter.macro_expansion_pragmas}
   end
 
-  def parse_macro_source(generated_source, macro_expansion_pragmas, the_macro, node, vars, current_def = nil, inside_type = false, inside_exp = false, mode : Parser::ParseMode = :normal)
-    parse_macro_source generated_source, macro_expansion_pragmas, the_macro, node, vars, current_def, inside_type, inside_exp, &.parse(mode)
+  def parse_macro_source(generated_source, macro_expansion_pragmas, the_macro, node, vars, current_def = nil, inside_type = false, inside_exp = false, mode : Parser::ParseMode = :normal, visibility : Visibility = :public)
+    parse_macro_source generated_source, macro_expansion_pragmas, the_macro, node, vars, current_def, inside_type, inside_exp, visibility, &.parse(mode)
   end
 
-  def parse_macro_source(generated_source, macro_expansion_pragmas, the_macro, node, vars, current_def = nil, inside_type = false, inside_exp = false)
+  def parse_macro_source(generated_source, macro_expansion_pragmas, the_macro, node, vars, current_def = nil, inside_type = false, inside_exp = false, visibility : Visibility = :public)
     begin
       parser = Parser.new(generated_source, @program.string_pool, [vars.dup])
       parser.filename = VirtualFile.new(the_macro, generated_source, node.location)
       parser.macro_expansion_pragmas = macro_expansion_pragmas
-      parser.visibility = node.visibility
+      parser.visibility = visibility
       parser.def_nest = 1 if current_def && !current_def.is_a?(External)
       parser.fun_nest = 1 if current_def && current_def.is_a?(External)
       parser.type_nest = 1 if inside_type

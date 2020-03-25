@@ -101,12 +101,34 @@ module Levenshtein
     end
   end
 
+  # Finds the best match for *name* among strings added within the given block.
+  # *tolerance* can be used to set maximum Levenshtein distance allowed.
+  #
+  # ```
+  # require "levenshtein"
+  #
+  # Levenshtein.find("hello") do |l|
+  #   l.test "hulk"
+  #   l.test "holk"
+  #   l.test "halka"
+  #   l.test "ello"
+  # end # => "ello"
+  # ```
   def self.find(name, tolerance = nil)
     Finder.find(name, tolerance) do |sn|
       yield sn
     end
   end
 
+  # Finds the best match for *name* among strings provided in *all_names*.
+  # *tolerance* can be used to set maximum Levenshtein distance allowed.
+  #
+  # ```
+  # require "levenshtein"
+  #
+  # Levenshtein.find("hello", ["hullo", "hel", "hall", "hell"], 2) # => "hullo"
+  # Levenshtein.find("hello", ["hurlo", "hel", "hall"], 1)         # => nil
+  # ```
   def self.find(name, all_names, tolerance = nil)
     Finder.find(name, all_names, tolerance)
   end

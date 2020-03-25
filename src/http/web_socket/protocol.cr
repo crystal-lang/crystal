@@ -8,6 +8,8 @@ require "uri"
 
 # :nodoc:
 class HTTP::WebSocket::Protocol
+  GUID = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11"
+
   @[Flags]
   enum Flags : UInt8
     FINAL = 0x80
@@ -33,7 +35,7 @@ class HTTP::WebSocket::Protocol
     size : Int32,
     final : Bool
 
-  def initialize(@io : IO, masked = false)
+  def initialize(@io : IO, masked = false, @sync_close = true)
     @header = uninitialized UInt8[2]
     @mask = uninitialized UInt8[4]
     @mask_offset = 0
@@ -63,8 +65,6 @@ class HTTP::WebSocket::Protocol
       if count < slice.size
         write(slice + count)
       end
-
-      nil
     end
 
     def read(slice : Bytes)
@@ -139,7 +139,7 @@ class HTTP::WebSocket::Protocol
 
     data.each_with_index do |byte, index|
       mask = mask_array[index & 0b11] # x & 0b11 == x % 4
-      @io.write_byte(byte ^ mask_array[index & 0b11])
+      @io.write_byte(byte ^ mask)
     end
   end
 
@@ -162,6 +162,7 @@ class HTTP::WebSocket::Protocol
 
   private def read_opcode
     raw_opcode = @header[0] & 0x0f_u8
+
     parsed_opcode = Opcode.from_value?(raw_opcode)
     unless parsed_opcode
       raise "Invalid packet opcode: #{raw_opcode}"
@@ -178,10 +179,11 @@ class HTTP::WebSocket::Protocol
 
   private def read_size
     size = (@header[1] & 0x7f_u8).to_u64
-    if size == 126
+    case size
+    when 126
       size = 0_u64
       2.times { size <<= 8; size += @io.read_byte.not_nil! }
-    elsif size == 127
+    when 127
       size = 0_u64
       8.times { size <<= 8; size += @io.read_byte.not_nil! }
     end
@@ -197,7 +199,6 @@ class HTTP::WebSocket::Protocol
         @mask_offset += 1
       end
     end
-
     count
   end
 
@@ -230,11 +231,13 @@ class HTTP::WebSocket::Protocol
   end
 
   def close(message = nil)
+    return if @io.closed?
     if message
       send(message.to_slice, Opcode::CLOSE)
     else
       send(Bytes.empty, Opcode::CLOSE)
     end
+    @io.close if @sync_close
   end
 
   def self.new(host : String, path : String, port = nil, tls = false, headers = HTTP::Headers.new)
@@ -244,7 +247,7 @@ class HTTP::WebSocket::Protocol
       end
     {% end %}
 
-    port = port || (tls ? 443 : 80)
+    port ||= tls ? 443 : 80
 
     socket = TCPSocket.new(host, port)
     begin
@@ -271,6 +274,7 @@ class HTTP::WebSocket::Protocol
       handshake = HTTP::Request.new("GET", path, headers)
       handshake.to_io(socket)
       socket.flush
+
       handshake_response = HTTP::Client::Response.from_io(socket)
       unless handshake_response.status.switching_protocols?
         raise Socket::Error.new("Handshake got denied. Status code was #{handshake_response.status.code}.")
@@ -292,7 +296,7 @@ class HTTP::WebSocket::Protocol
     uri = URI.parse(uri) if uri.is_a?(String)
 
     if (host = uri.hostname) && (path = uri.full_path)
-      tls = uri.scheme == "https" || uri.scheme == "wss"
+      tls = uri.scheme.in?("https", "wss")
       return new(host, path, uri.port, tls, headers)
     end
 
@@ -301,9 +305,9 @@ class HTTP::WebSocket::Protocol
 
   def self.key_challenge(key)
     {% if flag?(:without_openssl) %}
-      Digest::SHA1.base64digest("#{key}258EAFA5-E914-47DA-95CA-C5AB0DC85B11")
+      Digest::SHA1.base64digest(key + GUID)
     {% else %}
-      Base64.strict_encode(OpenSSL::SHA1.hash("#{key}258EAFA5-E914-47DA-95CA-C5AB0DC85B11"))
+      Base64.strict_encode(OpenSSL::SHA1.hash(key + GUID))
     {% end %}
   end
 end

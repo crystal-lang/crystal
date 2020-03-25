@@ -69,7 +69,7 @@ describe "ASTNode#to_s" do
   expect_to_s "def foo(x : T = 1)\nend"
   expect_to_s "def foo(x : X, y : Y) forall X, Y\nend"
   expect_to_s %(foo : A | (B -> C))
-  expect_to_s %[%("\#{foo}")], %["\\\"\#{foo}\\\""]
+  expect_to_s %[%("\#{foo}")], %["\\"\#{foo}\\""]
   expect_to_s "class Foo\n  private def bar\n  end\nend"
   expect_to_s "foo(&.==(2))"
   expect_to_s "foo.nil?"
@@ -83,10 +83,13 @@ describe "ASTNode#to_s" do
   expect_to_s "{ {1 => 2} }"
   expect_to_s "{ {1, 2, 3} => 4 }"
   expect_to_s "{ {foo: 2} }"
+  expect_to_s "def foo(*args)\nend"
+  expect_to_s "def foo(*args : _)\nend"
   expect_to_s "def foo(**args)\nend"
   expect_to_s "def foo(**args : T)\nend"
   expect_to_s "def foo(x, **args)\nend"
   expect_to_s "def foo(x, **args, &block)\nend"
+  expect_to_s "def foo(x, **args, &block : (_ -> _))\nend"
   expect_to_s "macro foo(**args)\nend"
   expect_to_s "macro foo(x, **args)\nend"
   expect_to_s "def foo(x y)\nend"

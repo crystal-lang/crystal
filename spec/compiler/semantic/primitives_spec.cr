@@ -223,4 +223,17 @@ describe "Semantic: primitives" do
       ),
       "method marked as Primitive must have an empty body"
   end
+
+  it "types va_arg primitive" do
+    assert_type(%(
+      struct VaList
+        @[Primitive(:va_arg)]
+        def next(type)
+        end
+      end
+
+      list = VaList.new
+      list.next(Int32)
+      )) { int32 }
+  end
 end

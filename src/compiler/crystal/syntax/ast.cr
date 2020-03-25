@@ -339,6 +339,10 @@ module Crystal
       new(values.map { |value| (yield value).as(ASTNode) }, of: of)
     end
 
+    def self.map_with_index(values)
+      new(values.map_with_index { |value, idx| (yield value, idx).as(ASTNode) }, of: nil)
+    end
+
     def accept_children(visitor)
       @name.try &.accept visitor
       elements.each &.accept visitor
@@ -448,6 +452,10 @@ module Crystal
 
     def self.map(values)
       new(values.map { |value| (yield value).as(ASTNode) })
+    end
+
+    def self.map_with_index(values)
+      new(values.map_with_index { |value, idx| (yield value, idx).as(ASTNode) })
     end
 
     def accept_children(visitor)

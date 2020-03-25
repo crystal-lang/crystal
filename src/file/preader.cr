@@ -4,7 +4,7 @@ class File::PReader < IO
 
   getter? closed = false
 
-  def initialize(@fd : Int32, @offset : Int32, @bytesize : Int32)
+  def initialize(@file : File, @offset : Int32, @bytesize : Int32)
     @pos = 0
   end
 
@@ -14,7 +14,7 @@ class File::PReader < IO
     count = slice.size
     count = Math.min(count, @bytesize - @pos)
 
-    bytes_read = Crystal::System::FileDescriptor.pread(@fd, slice[0, count], @offset + @pos)
+    bytes_read = Crystal::System::FileDescriptor.pread(@file.fd, slice[0, count], @offset + @pos)
 
     @pos += bytes_read
 

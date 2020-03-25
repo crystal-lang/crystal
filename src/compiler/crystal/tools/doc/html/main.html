@@ -1,9 +1,12 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <%= HeadTemplate.new(nil, canonical_base_url) %>
+  <%= HeadTemplate.new("") %>
   <meta id="repository-name" content="<%= repository_name %>">
   <title>README - <%= repository_name %></title>
+  <script type="text/javascript">
+  CrystalDoc.base_path = "";
+  </script>
 </head>
 <body>
 

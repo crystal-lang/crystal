@@ -263,7 +263,7 @@ module Crystal
     end
 
     def with_color
-      ::with_color.toggle(@program.color?)
+      Colorize.with.toggle(@program.color?)
     end
   end
 

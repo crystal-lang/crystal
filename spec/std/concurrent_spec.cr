@@ -1,4 +1,4 @@
-require "spec"
+require "./spec_helper"
 
 private def method_with_named_args(chan, x = 1, y = 2)
   chan.send(x + y)
@@ -19,7 +19,7 @@ end
 
 describe "concurrent" do
   describe "parallel" do
-    it "does four things concurrently" do
+    pending_win32 "does four things concurrently" do
       a, b, c, d = parallel(1 + 2, "hello".size, [1, 2, 3, 4].size, nil)
       a.should eq(3)
       b.should eq(5)
@@ -27,7 +27,7 @@ describe "concurrent" do
       d.should be_nil
     end
 
-    it "re-raises errors from Fibers as ConcurrentExecutionException" do
+    pending_win32 "re-raises errors from Fibers as ConcurrentExecutionException" do
       exception = expect_raises(ConcurrentExecutionException) do
         a, b = parallel(raising_job, raising_job)
       end
@@ -35,12 +35,15 @@ describe "concurrent" do
       exception.cause.should be_a(SomeParallelJobException)
     end
 
-    it "is strict about the return value type" do
-      a, b = parallel(1 + 2, "hello")
+    # FIXME: Compiler bug with typeof inside an unused block https://github.com/crystal-lang/crystal/issues/8669
+    {% unless flag?(:win32) %}
+      pending_win32 "is strict about the return value type" do
+        a, b = parallel(1 + 2, "hello")
 
-      typeof(a).should eq(Int32)
-      typeof(b).should eq(String)
-    end
+        typeof(a).should eq(Int32)
+        typeof(b).should eq(String)
+      end
+    {% end %}
   end
 
   describe "spawn" do

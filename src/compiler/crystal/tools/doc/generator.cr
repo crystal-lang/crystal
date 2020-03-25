@@ -2,7 +2,7 @@ class Crystal::Doc::Generator
   getter program : Program
 
   @base_dir : String
-  @is_crystal_repo : Bool
+  property is_crystal_repo : Bool
   @repository : String? = nil
   getter repository_name = ""
 
@@ -28,7 +28,14 @@ class Crystal::Doc::Generator
     },
   }
 
-  def initialize(@program : Program, @included_dirs : Array(String), @output_dir : String, @output_format : String, @canonical_base_url : String?)
+  def self.new(program : Program, included_dirs : Array(String))
+    new(program, included_dirs, ".", "html", nil, "1.0", "never")
+  end
+
+  def initialize(@program : Program, @included_dirs : Array(String),
+                 @output_dir : String, @output_format : String,
+                 @sitemap_base_url : String?,
+                 @sitemap_priority : String, @sitemap_changefreq : String)
     @base_dir = Dir.current.chomp
     @types = {} of Crystal::Type => Doc::Type
     @repo_name = ""
@@ -37,8 +44,6 @@ class Crystal::Doc::Generator
   end
 
   def run
-    Dir.mkdir_p @output_dir
-
     types = collect_subtypes(@program)
 
     program_type = type(@program)
@@ -83,17 +88,24 @@ class Crystal::Doc::Generator
     copy_files
     generate_types_docs types, @output_dir, types
     generate_readme program_type, types
+    generate_sitemap types
   end
 
   def generate_readme(program_type, types)
     raw_body = read_readme
     body = doc(program_type, raw_body)
 
-    File.write File.join(@output_dir, "index.html"), MainTemplate.new(body, types, repository_name, @canonical_base_url)
+    File.write File.join(@output_dir, "index.html"), MainTemplate.new(body, types, repository_name)
 
     main_index = Main.new(raw_body, Type.new(self, @program), repository_name)
     File.write File.join(@output_dir, "index.json"), main_index
     File.write File.join(@output_dir, "search-index.js"), main_index.to_jsonp
+  end
+
+  def generate_sitemap(types)
+    if sitemap_base_url = @sitemap_base_url
+      File.write File.join(@output_dir, "sitemap.xml"), SitemapTemplate.new(types, sitemap_base_url, "1.0", "never")
+    end
   end
 
   def copy_files
@@ -112,7 +124,7 @@ class Crystal::Doc::Generator
         filename = File.join(dir, "#{type.name}.html")
       end
 
-      File.write filename, TypeTemplate.new(type, all_types, @canonical_base_url)
+      File.write filename, TypeTemplate.new(type, all_types)
 
       next if type.program?
 
@@ -131,7 +143,7 @@ class Crystal::Doc::Generator
 
   def must_include?(type : Crystal::Type)
     return false if type.private?
-    return false if nodoc?(type)
+    return false if nodoc?(type, type.locations.try(&.first?))
     return true if crystal_builtin?(type)
 
     # Don't include lib types or types inside a lib type
@@ -147,7 +159,7 @@ class Crystal::Doc::Generator
   end
 
   def must_include?(a_def : Crystal::Def)
-    return false if nodoc?(a_def)
+    return false if nodoc?(a_def, a_def.location)
 
     must_include? a_def.location
   end
@@ -157,7 +169,7 @@ class Crystal::Doc::Generator
   end
 
   def must_include?(a_macro : Crystal::Macro)
-    return false if nodoc?(a_macro)
+    return false if nodoc?(a_macro, a_macro.location)
 
     must_include? a_macro.location
   end
@@ -167,7 +179,7 @@ class Crystal::Doc::Generator
   end
 
   def must_include?(const : Crystal::Const)
-    return false if nodoc?(const)
+    return false if nodoc?(const, const.locations.try(&.first?))
     return true if crystal_builtin?(const)
 
     const.locations.try &.any? { |location| must_include? location }
@@ -197,13 +209,32 @@ class Crystal::Doc::Generator
     toplevel_items.any? { |item| must_include? item }
   end
 
-  def nodoc?(str : String?)
-    return false unless str
-    str.starts_with?(":nodoc:") || str.starts_with?("nodoc")
+  # TODO: remove after 0.34.0
+  # Needed because there are multiple passes while generating docs
+  # and we want to avoid duplicate warnings per location
+  @nodoc_warnings_locations = Set(String).new
+
+  def nodoc?(str : String?, location : Location?) : Bool
+    return false if !str || !@program.wants_doc?
+
+    # TODO: remove after 0.34.0
+    if str.starts_with?("nodoc")
+      if location
+        # Show one line above to highlight the nodoc line
+        location = Location.new(location.filename, location.line_number - 1, location.column_number)
+      end
+
+      if !location || @nodoc_warnings_locations.add?(location.to_s)
+        @program.report_warning_at location, "`nodoc` is no longer supported. Use `:nodoc:` instead"
+      end
+      return true
+    end
+
+    str.starts_with?(":nodoc:")
   end
 
-  def nodoc?(obj)
-    nodoc? obj.doc.try &.strip
+  def nodoc?(obj, location : Location?)
+    nodoc? obj.doc.try(&.strip), location
   end
 
   def crystal_builtin?(type)

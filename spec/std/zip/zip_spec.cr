@@ -59,7 +59,7 @@ describe Zip do
     io = IO::Memory.new
 
     text = "contents of foo"
-    crc32 = CRC32.checksum(text)
+    crc32 = Digest::CRC32.checksum(text)
 
     Zip::Writer.open(io) do |zip|
       entry = Zip::Writer::Entry.new("foo.txt")
@@ -98,7 +98,7 @@ describe Zip do
     io = IO::Memory.new
 
     text = "contents of foo"
-    crc32 = CRC32.checksum(text)
+    crc32 = Digest::CRC32.checksum(text)
 
     Zip::Writer.open(io) do |zip|
       entry = Zip::Writer::Entry.new("foo.txt")

@@ -2,6 +2,7 @@ require "./spec_helper"
 require "../spec_helper"
 require "http/web_socket"
 require "random/secure"
+require "../../support/fibers"
 require "../../support/ssl"
 require "../socket/spec_helper.cr"
 
@@ -301,7 +302,7 @@ describe HTTP::WebSocket do
     it "negotiates over HTTP correctly" do
       address_chan = Channel(Socket::IPAddress).new
 
-      spawn do
+      f = spawn do
         http_ref = nil
         ws_handler = HTTP::WebSocketHandler.new do |ws, ctx|
           ctx.request.path.should eq("/foo/bar")
@@ -324,6 +325,7 @@ describe HTTP::WebSocket do
       end
 
       listen_address = address_chan.receive
+      wait_until_blocked f
 
       ws2 = HTTP::WebSocket.new("ws://#{listen_address}/foo/bar?query=arg&yes=please")
 
@@ -342,7 +344,7 @@ describe HTTP::WebSocket do
 
       server_context, client_context = ssl_context_pair
 
-      spawn do
+      f = spawn do
         http_ref = nil
         ws_handler = HTTP::WebSocketHandler.new do |ws, ctx|
           ctx.request.path.should eq("/")
@@ -364,6 +366,7 @@ describe HTTP::WebSocket do
       end
 
       listen_address = address_chan.receive
+      wait_until_blocked f
 
       ws2 = HTTP::WebSocket.new(listen_address.address, port: listen_address.port, path: "/", tls: client_context)
 

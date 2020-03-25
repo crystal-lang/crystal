@@ -9,6 +9,7 @@ module Spec
     pending: :yellow,
     comment: :cyan,
     focus:   :cyan,
+    order:   :cyan,
   }
 
   private LETTERS = {
@@ -61,7 +62,29 @@ module Spec
   # :nodoc:
   def self.abort!
     @@aborted = true
-    exit
+    finish_run
+  end
+
+  # :nodoc:
+  class_getter randomizer_seed : UInt64?
+  class_getter randomizer : Random::PCG32?
+
+  # :nodoc:
+  def self.order=(mode)
+    seed =
+      case mode
+      when "default"
+        nil
+      when "random"
+        Random::Secure.rand(1..99999).to_u64 # 5 digits or less for simplicity
+      when UInt64
+        mode
+      else
+        raise ArgumentError.new("order must be either 'default', 'random', or a numeric seed value")
+      end
+
+    @@randomizer_seed = seed
+    @@randomizer = seed ? Random::PCG32.new(seed) : nil
   end
 
   # :nodoc:
@@ -108,6 +131,15 @@ module Spec
     locations = @@locations ||= {} of String => Array(Int32)
     lines = locations[File.expand_path(file)] ||= [] of Int32
     lines << line
+  end
+
+  # :nodoc:
+  def self.add_tag(tag)
+    if anti_tag = tag.lchop?('~')
+      (@@anti_tags ||= Set(String).new) << anti_tag
+    else
+      (@@tags ||= Set(String).new) << tag
+    end
   end
 
   record SplitFilter, remainder : Int32, quotient : Int32
@@ -225,43 +257,39 @@ module Spec
     @@after_suite.try &.reverse_each &.call
   end
 
+  @@start_time : Time::Span? = nil
+
   # :nodoc:
   def self.run
-    start_time = Time.monotonic
+    @@start_time = Time.monotonic
 
     at_exit do
+      maybe_randomize
       run_filters
       run_before_suite_hooks
       root_context.run
       run_after_suite_hooks
     ensure
-      elapsed_time = Time.monotonic - start_time
-      root_context.finish(elapsed_time, @@aborted)
-      exit 1 unless root_context.succeeded && !@@aborted
+      finish_run
+    end
+  end
+
+  def self.finish_run
+    elapsed_time = Time.monotonic - @@start_time.not_nil!
+    root_context.finish(elapsed_time, @@aborted)
+    exit 1 if !root_context.succeeded || @@aborted
+  end
+
+  # :nodoc:
+  def self.maybe_randomize
+    if randomizer = @@randomizer
+      root_context.randomize(randomizer)
     end
   end
 
   # :nodoc:
   def self.run_filters
-    if pattern = @@pattern
-      root_context.filter_by_pattern(pattern)
-    end
-
-    if line = @@line
-      root_context.filter_by_line(line)
-    end
-
-    if locations = @@locations
-      root_context.filter_by_locations(locations)
-    end
-
-    if split_filter = @@split_filter
-      root_context.filter_by_split(split_filter)
-    end
-
-    if focus = @@focus
-      root_context.filter_by_focus
-    end
+    root_context.run_filters(@@pattern, @@line, @@locations, @@split_filter, @@focus, @@tags, @@anti_tags)
   end
 end
 

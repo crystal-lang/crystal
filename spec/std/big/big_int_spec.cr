@@ -334,19 +334,15 @@ describe "BigInt" do
     a_17 = a * 17
 
     (abc * b).gcd(abc * c).should eq(abc)
+    abc.gcd(a_17).should eq(a)
     (abc * b).lcm(abc * c).should eq(abc * b * c)
     (abc * b).gcd(abc * c).should be_a(BigInt)
 
     (a_17).gcd(17).should eq(17)
-    (17).gcd(a_17).should eq(17)
     (-a_17).gcd(17).should eq(17)
-    (-17).gcd(a_17).should eq(17)
 
     (a_17).gcd(17).should be_a(Int::Unsigned)
-    (17).gcd(a_17).should be_a(Int::Unsigned)
-
     (a_17).lcm(17).should eq(a_17)
-    (17).lcm(a_17).should eq(a_17)
   end
 
   it "can use Number::[]" do
@@ -366,6 +362,8 @@ describe "BigInt" do
     big.to_u8!.should eq(210)
     big.to_u16!.should eq(722)
     big.to_u32.should eq(1234567890)
+
+    expect_raises(OverflowError) { BigInt.new(-1234567890).to_u }
 
     u64 = big.to_u64
     u64.should eq(1234567890)
@@ -409,6 +407,10 @@ describe "BigInt" do
   describe "#humanize_bytes" do
     it { BigInt.new("1180591620717411303424").humanize_bytes.should eq("1.0ZiB") }
     it { BigInt.new("1208925819614629174706176").humanize_bytes.should eq("1.0YiB") }
+  end
+
+  it "has unsafe_shr (#8691)" do
+    BigInt.new(8).unsafe_shr(1).should eq(4)
   end
 end
 

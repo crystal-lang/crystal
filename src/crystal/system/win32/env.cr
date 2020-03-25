@@ -8,7 +8,7 @@ module Crystal::System::Env
     value.check_no_null_byte("value")
 
     if LibC.SetEnvironmentVariableW(key.to_utf16, value.to_utf16) == 0
-      raise WinError.new("SetEnvironmentVariableW")
+      raise RuntimeError.from_winerror("SetEnvironmentVariableW")
     end
   end
 
@@ -17,7 +17,7 @@ module Crystal::System::Env
     key.check_no_null_byte("key")
 
     if LibC.SetEnvironmentVariableW(key.to_utf16, nil) == 0
-      raise WinError.new("SetEnvironmentVariableW")
+      raise RuntimeError.from_winerror("SetEnvironmentVariableW")
     end
   end
 
@@ -37,13 +37,13 @@ module Crystal::System::Env
       elsif small_buf && length > 0
         next length
       else
-        case last_error = LibC.GetLastError
+        case last_error = WinError.value
         when WinError::ERROR_SUCCESS
           return ""
         when WinError::ERROR_ENVVAR_NOT_FOUND
           return
         else
-          raise WinError.new("GetEnvironmentVariableW", last_error)
+          raise RuntimeError.from_winerror("GetEnvironmentVariableW", last_error)
         end
       end
     end
@@ -60,7 +60,7 @@ module Crystal::System::Env
   # Iterates all environment variables.
   def self.each(&block : String, String ->)
     orig_pointer = pointer = LibC.GetEnvironmentStringsW
-    raise WinError.new("GetEnvironmentStringsW") if pointer.null?
+    raise RuntimeError.from_winerror("GetEnvironmentStringsW") if pointer.null?
 
     begin
       while !pointer.value.zero?

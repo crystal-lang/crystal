@@ -81,7 +81,7 @@ class Time::Location
 
     # 1-byte version, then 15 bytes of padding
     version = io.read_byte
-    raise InvalidTZDataError.new unless {0_u8, '2'.ord, '3'.ord}.includes?(version)
+    raise InvalidTZDataError.new unless version.in?(0_u8, '2'.ord, '3'.ord)
     io.skip(15)
 
     # six big-endian 32-bit integers:
@@ -138,8 +138,8 @@ class Time::Location
       zone_idx = transition_indexes[transition_id]
       raise InvalidTZDataError.new unless zone_idx < zones.size
 
-      isstd = !{nil, 0_u8}.includes? isstddata[transition_id]?
-      isutc = !{nil, 0_u8}.includes? isstddata[transition_id]?
+      isstd = !isstddata[transition_id]?.in?(nil, 0_u8)
+      isutc = !isstddata[transition_id]?.in?(nil, 0_u8)
 
       ZoneTransition.new(time, zone_idx, isstd, isutc)
     end

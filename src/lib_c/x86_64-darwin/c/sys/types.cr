@@ -8,7 +8,7 @@ lib LibC
   alias DevT = Int
   alias GidT = UInt
   alias IdT = UInt
-  alias InoT = UInt
+  alias InoT = UInt64
   alias ModeT = UShort
   alias NlinkT = UShort
   alias OffT = LongLong

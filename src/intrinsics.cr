@@ -48,7 +48,7 @@ lib LibIntrinsics
   fun va_start = "llvm.va_start"(ap : Void*)
   fun va_end = "llvm.va_end"(ap : Void*)
 
-  {% if flag?(:i686) || flag?(:x86_64) %}
+  {% if flag?(:i386) || flag?(:x86_64) %}
     fun pause = "llvm.x86.sse2.pause"
   {% end %}
 end
@@ -59,7 +59,7 @@ module Intrinsics
   end
 
   def self.pause
-    {% if flag?(:i686) || flag?(:x86_64) %}
+    {% if flag?(:i386) || flag?(:x86_64) %}
       LibIntrinsics.pause
     {% end %}
   end
@@ -156,12 +156,12 @@ module Intrinsics
     LibIntrinsics.counttrailing128({{src}}, {{zero_is_undef}})
   end
 
-  def self.va_start(ap)
-    LibIntrinsics.va_start(ap)
+  macro va_start(ap)
+    LibIntrinsics.va_start({{ap}})
   end
 
-  def self.va_end(ap)
-    LibIntrinsics.va_end(ap)
+  macro va_end(ap)
+    LibIntrinsics.va_end({{ap}})
   end
 end
 

@@ -6,7 +6,7 @@ require "http/client"
 require "ecr"
 require "../src/compiler/crystal/formatter"
 
-UCD_ROOT = "http://www.unicode.org/Public/12.0.0/ucd/"
+UCD_ROOT = "http://www.unicode.org/Public/13.0.0/ucd/"
 
 # Each entry in UnicodeData.txt
 # (some info is missing but we don't use it yet)

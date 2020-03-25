@@ -5,7 +5,7 @@ module Crystal::Doc::Markdown::Renderer
   abstract def end_italic
   abstract def begin_bold
   abstract def end_bold
-  abstract def begin_header(level)
+  abstract def begin_header(level : Int32, anchor : String) : Nil
   abstract def end_header(level)
   abstract def begin_inline_code
   abstract def end_inline_code

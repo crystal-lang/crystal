@@ -20,6 +20,12 @@ describe "Crypto::Bcrypt::Password" do
     it "parses digest" do
       password.digest.should eq("weXJt7sno2HdPVrMvVf06kGgAZvPkga")
     end
+
+    it "validates the hash string has the required amount of parts" do
+      expect_raises(Crypto::Bcrypt::Error, "Invalid hash string") do
+        Crypto::Bcrypt::Password.new("blarp")
+      end
+    end
   end
 
   describe "create" do

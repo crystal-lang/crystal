@@ -1633,7 +1633,7 @@ module Crystal
       @scope : Type
       @in_super : Int32
       @callstack : Array(ASTNode)
-      @visited : Set(UInt64)?
+      @visited : Set(Def)?
       @vars : MetaVars
 
       def initialize(a_def, @scope, @vars)
@@ -1687,10 +1687,10 @@ module Crystal
 
         node.target_defs.try &.each do |target_def|
           if target_def.owner == @scope
-            next if visited.try &.includes?(target_def.object_id)
+            next if visited.try &.includes?(target_def)
 
-            visited = @visited ||= Set(typeof(object_id)).new
-            visited << target_def.object_id
+            visited = @visited ||= Set(Def).new.compare_by_identity
+            visited << target_def
 
             @callstack.push(node)
             target_def.body.accept self
@@ -2391,9 +2391,16 @@ module Crystal
         # Nothing to do
       when "throw_info"
         node.type = program.pointer_of(program.void)
+      when "va_arg"
+        visit_va_arg node
       else
         node.raise "BUG: unhandled primitive in MainVisitor: #{node.name}"
       end
+    end
+
+    def visit_va_arg(node)
+      arg = call.not_nil!.args[0]? || node.raise("requires type argument")
+      node.type = arg.type.instance_type
     end
 
     def visit_allocate(node)
@@ -2788,23 +2795,26 @@ module Crystal
             before_var = before_ensure_vars[name]?
             @vars[name] = var unless var.same?(before_var)
           end
-        else
-          @vars = exception_handler_vars
-        end
 
-        # However, those previous variables can't be nil afterwards:
-        # if an exception was raised then we won't be running the code
-        # after the ensure clause, so variables don't matter. But if
-        # an exception was not raised then all variables were declared
-        # successfully.
-        @vars.each do |name, var|
-          unless before_body_vars[name]?
-            # But if the variable is already nilable after the begin
-            # block it must remain nilable
-            unless after_exception_handler_vars[name]?.try &.nil_if_read?
-              var.nil_if_read = false
+          # However, those previous variables can't be nil afterwards:
+          # if an exception was raised then we won't be running the code
+          # after the ensure clause, so variables don't matter. But if
+          # an exception was not raised then all variables were declared
+          # successfully.
+          @vars.each do |name, var|
+            unless before_body_vars[name]?
+              # But if the variable is already nilable after the begin
+              # block it must remain nilable
+              unless after_exception_handler_vars[name]?.try &.nil_if_read?
+                var.nil_if_read = false
+              end
             end
           end
+        else
+          # If there's no ensure, because all rescue/else end with unreacahble
+          # we know all the vars after the exception handler will have the types
+          # after the handle (begin) block.
+          @vars = after_exception_handler_vars
         end
       end
 
@@ -3345,6 +3355,10 @@ module Crystal
 
     def visit(node : When | Unless | Until | MacroLiteral | OpAssign)
       raise "BUG: #{node.class_desc} node '#{node}' (#{node.location}) should have been eliminated in normalize"
+    end
+
+    def visit(node : ImplicitObj)
+      raise "BUG: #{node.class_desc} node '#{node}' (#{node.location}) should have been eliminated in expand"
     end
   end
 end

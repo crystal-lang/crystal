@@ -4,7 +4,7 @@ module Crystal::System::User
   private GETPW_R_SIZE_MAX = 1024 * 16
 
   private def from_struct(pwd)
-    user = String.new(pwd.pw_gecos).split(",").first
+    user = String.new(pwd.pw_gecos).partition(',')[0]
     new(String.new(pwd.pw_name), pwd.pw_uid.to_s, pwd.pw_gid.to_s, user, String.new(pwd.pw_dir), String.new(pwd.pw_shell))
   end
 
@@ -22,7 +22,7 @@ module Crystal::System::User
       ret = LibC.getpwnam_r(username, pwd_pointer, buf, buf.size, pointerof(pwd_pointer))
     end
 
-    raise Errno.new("getpwnam_r") if ret != 0
+    raise RuntimeError.from_errno("getpwnam_r") if ret != 0
 
     from_struct(pwd) if pwd_pointer
   end
@@ -42,7 +42,7 @@ module Crystal::System::User
       ret = LibC.getpwuid_r(id, pwd_pointer, buf, buf.size, pointerof(pwd_pointer))
     end
 
-    raise Errno.new("getpwuid_r") if ret != 0
+    raise RuntimeError.from_errno("getpwuid_r") if ret != 0
 
     from_struct(pwd) if pwd_pointer
   end

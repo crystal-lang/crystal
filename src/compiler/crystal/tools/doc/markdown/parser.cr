@@ -108,8 +108,14 @@ class Crystal::Doc::Markdown::Parser
     render_header level, line.byte_slice(pos), 1
   end
 
-  def render_header(level, line, increment)
-    @renderer.begin_header level
+  def render_header(level : Int32, line : String, increment : Int32)
+    anchor = line
+      .underscore                # Underscore the string
+      .gsub(/[^\w\d\s\-.~]/, "") # Delete unsafe URL characters
+      .strip                     # Strip leading/trailing whitespace
+      .gsub(/[\s_-]+/, '-')      # Replace `_` and leftover whitespace with `-`
+
+    @renderer.begin_header level, anchor
     process_line line
     @renderer.end_header level
     @line += increment

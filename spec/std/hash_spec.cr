@@ -1144,7 +1144,7 @@ describe "Hash" do
   it "rehashes" do
     a = [1]
     h = {a => 0}
-    (10..20).each do |i|
+    (10..100).each do |i|
       h[[i]] = i
     end
     a << 2
@@ -1185,6 +1185,44 @@ describe "Hash" do
         h[i] = i
         h[i].should eq(i)
       end
+    end
+  end
+
+  describe "compare_by_identity" do
+    it "small hash" do
+      string = "foo"
+      h = {string => 1}
+      h.compare_by_identity?.should be_false
+      h.compare_by_identity
+      h.compare_by_identity?.should be_true
+      h[string]?.should eq(1)
+      h["fo" + "o"]?.should be_nil
+    end
+
+    it "big hash" do
+      h = {} of String => Int32
+      nums = (100..116).to_a
+      strings = nums.map(&.to_s)
+      strings.zip(nums) do |string, num|
+        h[string] = num
+      end
+      h.compare_by_identity
+      nums.each do |num|
+        h[num.to_s]?.should be_nil
+      end
+      strings.zip(nums) do |string, num|
+        h[string]?.should eq(num)
+      end
+    end
+
+    it "retains compare_by_identity on dup" do
+      h = ({} of String => Int32).compare_by_identity
+      h.dup.compare_by_identity?.should be_true
+    end
+
+    it "retains compare_by_identity on clone" do
+      h = ({} of String => Int32).compare_by_identity
+      h.clone.compare_by_identity?.should be_true
     end
   end
 end

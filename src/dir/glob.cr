@@ -8,7 +8,7 @@ class Dir
     glob(patterns)
   end
 
-  # ditto
+  # :ditto:
   def self.[](patterns : Enumerable(String)) : Array(String)
     glob(patterns)
   end
@@ -24,7 +24,7 @@ class Dir
     glob(patterns, match_hidden: match_hidden)
   end
 
-  # ditto
+  # :ditto:
   def self.glob(patterns : Enumerable(String), match_hidden = false) : Array(String)
     paths = [] of String
     glob(patterns, match_hidden: match_hidden) do |path|
@@ -46,7 +46,7 @@ class Dir
     end
   end
 
-  # ditto
+  # :ditto:
   def self.glob(patterns : Enumerable(String), match_hidden = false, &block : String -> _)
     Globber.glob(patterns, match_hidden: match_hidden) do |path|
       yield path
@@ -161,7 +161,13 @@ class Dir
           path_stack << {next_pos, root, nil}
         when DirectoriesOnly
           raise "unreachable" unless path
-          fullpath = path == File::SEPARATOR_STRING ? path : path + File::SEPARATOR
+          # FIXME: [win32] File::SEPARATOR_STRING comparison is not sufficient for Windows paths.
+          if path == File::SEPARATOR_STRING
+            fullpath = path
+          else
+            fullpath = Path[path].join("").to_s
+          end
+
           if dir_entry
             yield fullpath if dir_entry.dir?
           else
@@ -202,7 +208,7 @@ class Dir
           begin
             dir = Dir.new(path || ".")
             dir_stack << dir
-          rescue Errno
+          rescue File::Error
             return
           end
           recurse = false
@@ -211,7 +217,7 @@ class Dir
             if recurse
               begin
                 dir = Dir.new(dir_path)
-              rescue Errno
+              rescue File::Error
                 dir_path_stack.pop
                 break if dir_path_stack.empty?
                 dir_path = dir_path_stack.last
@@ -223,7 +229,7 @@ class Dir
             end
 
             if entry = read_entry(dir)
-              next if {".", ".."}.includes?(entry.name)
+              next if entry.name.in?(".", "..")
               next if !options[:match_hidden] && entry.name.starts_with?('.')
 
               if dir_path.bytesize == 0
@@ -293,8 +299,7 @@ class Dir
           yield entry
         end
       end
-    rescue exc : Errno
-      raise exc unless exc.errno == Errno::ENOENT
+    rescue exc : File::NotFoundError
     end
 
     private def self.read_entry(dir)
@@ -303,7 +308,7 @@ class Dir
       # By doing this we get an Entry struct which already tells us
       # whether something is a directory or not, avoiding having to
       # call File.info? which is really expensive.
-      Crystal::System::Dir.next_entry(dir.@dir)
+      Crystal::System::Dir.next_entry(dir.@dir, dir.path)
     end
   end
 end

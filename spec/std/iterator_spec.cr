@@ -104,7 +104,7 @@ describe Iterator do
     end
   end
 
-  describe "cons" do
+  describe "#cons" do
     it "conses" do
       iter = (1..5).each.cons(3)
       iter.next.should eq([1, 2, 3])
@@ -165,6 +165,17 @@ describe Iterator do
         value.should eq(Deque{3, 4, 5})
         iter.next.should be_a(Iterator::Stop)
       end
+    end
+  end
+
+  describe "#cons_pair" do
+    it "conses" do
+      iter = (1..5).each.cons_pair
+      iter.next.should eq({1, 2})
+      iter.next.should eq({2, 3})
+      iter.next.should eq({3, 4})
+      iter.next.should eq({4, 5})
+      iter.next.should be_a(Iterator::Stop)
     end
   end
 

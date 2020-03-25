@@ -117,6 +117,7 @@ class HTTP::Client
   @dns_timeout : Float64?
   @connect_timeout : Float64?
   @read_timeout : Float64?
+  @write_timeout : Float64?
 
   # Creates a new HTTP client with the given *host*, *port* and *tls*
   # configurations. If no port is given, the default one will
@@ -261,7 +262,7 @@ class HTTP::Client
     end
   end
 
-  # Sets the number of seconds to wait when reading before raising an `IO::Timeout`.
+  # Sets the number of seconds to wait when reading before raising an `IO::TimeoutError`.
   #
   # ```
   # require "http/client"
@@ -270,7 +271,7 @@ class HTTP::Client
   # client.read_timeout = 1.5
   # begin
   #   response = client.get("/")
-  # rescue IO::Timeout
+  # rescue IO::TimeoutError
   #   puts "Timeout!"
   # end
   # ```
@@ -278,7 +279,7 @@ class HTTP::Client
     @read_timeout = read_timeout.to_f
   end
 
-  # Sets the read timeout with a `Time::Span`, to wait when reading before raising an `IO::Timeout`.
+  # Sets the read timeout with a `Time::Span`, to wait when reading before raising an `IO::TimeoutError`.
   #
   # ```
   # require "http/client"
@@ -287,7 +288,7 @@ class HTTP::Client
   # client.read_timeout = 5.minutes
   # begin
   #   response = client.get("/")
-  # rescue IO::Timeout
+  # rescue IO::TimeoutError
   #   puts "Timeout!"
   # end
   # ```
@@ -295,7 +296,19 @@ class HTTP::Client
     self.read_timeout = read_timeout.total_seconds
   end
 
-  # Sets the number of seconds to wait when connecting, before raising an `IO::Timeout`.
+  # Sets the write timeout - if any chunk of request is not written
+  # within the number of seconds provided, `IO::TimeoutError` exception is raised.
+  def write_timeout=(write_timeout : Number)
+    @write_timeout = write_timeout.to_f
+  end
+
+  # Sets the write timeout - if any chunk of request is not written
+  # within the provided `Time::Span`,  `IO::TimeoutError` exception is raised.
+  def write_timeout=(write_timeout : Time::Span)
+    self.write_timeout = write_timeout.total_seconds
+  end
+
+  # Sets the number of seconds to wait when connecting, before raising an `IO::TimeoutError`.
   #
   # ```
   # require "http/client"
@@ -304,7 +317,7 @@ class HTTP::Client
   # client.connect_timeout = 1.5
   # begin
   #   response = client.get("/")
-  # rescue IO::Timeout
+  # rescue IO::TimeoutError
   #   puts "Timeout!"
   # end
   # ```
@@ -312,7 +325,7 @@ class HTTP::Client
     @connect_timeout = connect_timeout.to_f
   end
 
-  # Sets the open timeout with a `Time::Span` to wait when connecting, before raising an `IO::Timeout`.
+  # Sets the open timeout with a `Time::Span` to wait when connecting, before raising an `IO::TimeoutError`.
   #
   # ```
   # require "http/client"
@@ -321,7 +334,7 @@ class HTTP::Client
   # client.connect_timeout = 5.minutes
   # begin
   #   response = client.get("/")
-  # rescue IO::Timeout
+  # rescue IO::TimeoutError
   #   puts "Timeout!"
   # end
   # ```
@@ -331,7 +344,7 @@ class HTTP::Client
 
   # **This method has no effect right now**
   #
-  # Sets the number of seconds to wait when resolving a name, before raising an `IO::Timeout`.
+  # Sets the number of seconds to wait when resolving a name, before raising an `IO::TimeoutError`.
   #
   # ```
   # require "http/client"
@@ -340,7 +353,7 @@ class HTTP::Client
   # client.dns_timeout = 1.5
   # begin
   #   response = client.get("/")
-  # rescue IO::Timeout
+  # rescue IO::TimeoutError
   #   puts "Timeout!"
   # end
   # ```
@@ -350,7 +363,7 @@ class HTTP::Client
 
   # **This method has no effect right now**
   #
-  # Sets the number of seconds to wait when resolving a name with a `Time::Span`, before raising an `IO::Timeout`.
+  # Sets the number of seconds to wait when resolving a name with a `Time::Span`, before raising an `IO::TimeoutError`.
   #
   # ```
   # require "http/client"
@@ -359,7 +372,7 @@ class HTTP::Client
   # client.dns_timeout = 1.5.seconds
   # begin
   #   response = client.get("/")
-  # rescue IO::Timeout
+  # rescue IO::TimeoutError
   #   puts "Timeout!"
   # end
   # ```
@@ -754,6 +767,7 @@ class HTTP::Client
     hostname = @host.starts_with?('[') && @host.ends_with?(']') ? @host[1..-2] : @host
     socket = TCPSocket.new hostname, @port, @dns_timeout, @connect_timeout
     socket.read_timeout = @read_timeout if @read_timeout
+    socket.write_timeout = @write_timeout if @write_timeout
     socket.sync = false
 
     {% if !flag?(:without_openssl) %}
@@ -828,8 +842,8 @@ class HTTP::Client
   {% end %}
 
   protected def self.validate_host(uri)
-    host = uri.host
-    return host if host && !host.empty?
+    host = uri.host.presence
+    return host if host
 
     raise ArgumentError.new %(Request URI must have host (URI is: #{uri}))
   end

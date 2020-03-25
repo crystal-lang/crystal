@@ -16,4 +16,7 @@ lib LibC
   FILE_ATTRIBUTE_REPARSE_POINT = 0x400
 
   FILE_READ_ATTRIBUTES = 0x80
+
+  # Memory protection constants
+  PAGE_READWRITE = 0x04
 end

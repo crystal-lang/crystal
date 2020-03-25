@@ -51,4 +51,9 @@ describe "Semantic: sizeof" do
   it "gives error if using instance_sizeof on a generic type without type vars" do
     assert_error "instance_sizeof(Array)", "can't take instance_sizeof uninstantiated generic type Array(T)"
   end
+
+  it "gives error if using instance_sizeof on a union type (#8349)" do
+    assert_error "instance_sizeof(Int32 | Bool)",
+      "instance_sizeof can only be used with a class, but (Bool | Int32) is a union"
+  end
 end

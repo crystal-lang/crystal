@@ -10,7 +10,7 @@ describe "Semantic: responds_to?" do
       require "primitives"
 
       a = 1 || 'a'
-      if a.responds_to?(:\"+\")
+      if a.responds_to?(:"+")
         a
       end
       )

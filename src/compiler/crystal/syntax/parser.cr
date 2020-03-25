@@ -601,7 +601,7 @@ module Crystal
       end
     end
 
-    AtomicWithMethodCheck = [:IDENT, :CONST, :"+", :"-", :"*", :"/", :"//", :"%", :"|", :"&", :"^", :"~", :"**", :"<<", :"<", :"<=", :"==", :"!=", :"=~", :"!~", :">>", :">", :">=", :"<=>", :"===", :"[]", :"[]=", :"[]?", :"[", :"&+", :"&-", :"&*", :"&**"]
+    AtomicWithMethodCheck = [:IDENT, :CONST, :"+", :"-", :"*", :"/", :"//", :"%", :"|", :"&", :"^", :"~", :"!", :"**", :"<<", :"<", :"<=", :"==", :"!=", :"=~", :"!~", :">>", :">", :">=", :"<=>", :"===", :"[]", :"[]=", :"[]?", :"[", :"&+", :"&-", :"&*", :"&**"]
 
     def parse_atomic_with_method
       location = @token.location
@@ -667,6 +667,9 @@ module Crystal
             atomic = parse_responds_to(atomic).at(location)
           elsif @token.value == :nil?
             atomic = parse_nil?(atomic).at(location)
+          elsif @token.type == :"!"
+            atomic = parse_negation_suffix(atomic).at(location)
+            atomic = parse_atomic_method_suffix_special(atomic, location)
           elsif @token.type == :"["
             return parse_atomic_method_suffix(atomic, location)
           else
@@ -901,6 +904,18 @@ module Crystal
       end
 
       IsA.new(atomic, Path.global("Nil"), nil_check: true)
+    end
+
+    def parse_negation_suffix(atomic)
+      next_token
+
+      if @token.type == :"("
+        next_token_skip_space_or_newline
+        check :")"
+        next_token_skip_space
+      end
+
+      Not.new(atomic)
     end
 
     def parse_atomic
@@ -1525,6 +1540,9 @@ module Crystal
       elsif @token.value == :nil?
         call = parse_nil?(obj).at(location)
         call = parse_atomic_method_suffix_special(call, location)
+      elsif @token.type == :"!"
+        call = parse_negation_suffix(obj).at(location)
+        call = parse_atomic_method_suffix_special(call, location)
       elsif @token.type == :"["
         call = parse_atomic_method_suffix obj, location
 
@@ -1618,6 +1636,7 @@ module Crystal
       class_def.doc = doc
       class_def.name_location = name_location
       class_def.end_location = end_location
+      set_visibility class_def
       class_def
     end
 
@@ -1691,6 +1710,7 @@ module Crystal
       module_def.doc = doc
       module_def.name_location = name_location
       module_def.end_location = end_location
+      set_visibility module_def
       module_def
     end
 
@@ -2545,7 +2565,7 @@ module Crystal
         next_token_skip_space
       end
 
-      unless @token.keyword? && {:when, :else, :end}.includes?(@token.value)
+      unless @token.keyword? && @token.value.in?(:when, :else, :end)
         cond = parse_op_assign_no_control
         skip_statement_end
       end
@@ -2704,6 +2724,7 @@ module Crystal
         when IsA         then call.obj = ImplicitObj.new
         when Cast        then call.obj = ImplicitObj.new
         when NilableCast then call.obj = ImplicitObj.new
+        when Not         then call.exp = ImplicitObj.new
         else
           raise "BUG: expected Call, RespondsTo, IsA, Cast or NilableCast"
         end
@@ -2949,6 +2970,7 @@ module Crystal
       node.name_location = name_location
       node.doc = doc
       node.end_location = end_location
+      set_visibility node
       node
     end
 
@@ -3490,7 +3512,7 @@ module Crystal
     end
 
     def check_valid_def_name
-      if {:is_a?, :as, :as?, :responds_to?, :nil?}.includes?(@token.value)
+      if @token.value.in?(:is_a?, :as, :as?, :responds_to?, :nil?)
         raise "'#{@token.value}' is a pseudo-method and can't be redefined", @token
       end
     end
@@ -3908,6 +3930,12 @@ module Crystal
       location = @token.location
       end_location = token_end_location
       doc = @token.doc
+
+      if @token.type == :"!"
+        # only trigger from `parse_when_expression`
+        obj = Var.new("self").at(location)
+        return parse_negation_suffix(obj)
+      end
 
       case @token.value
       when :is_a?
@@ -5652,8 +5680,7 @@ module Crystal
           skip_space
 
           case @token.type
-          # TODO: remove comma support after 0.28.0
-          when :",", :";", :NEWLINE, :EOF
+          when :";", :NEWLINE, :EOF
             next_token_skip_statement_end
           else
             unless @token.keyword?(:end)

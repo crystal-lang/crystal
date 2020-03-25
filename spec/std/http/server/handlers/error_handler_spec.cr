@@ -1,5 +1,5 @@
 require "spec"
-require "http/server"
+require "http/server/handler"
 
 describe HTTP::ErrorHandler do
   it "rescues from exception" do

@@ -444,6 +444,26 @@ describe Object do
     end
   end
 
+  describe "#in?" do
+    it "works with Enumerable-s" do
+      :foo.in?([:foo, :bar]).should be_true
+      :bar.in?({:foo, :baz}).should be_false
+      42.in?(0..100).should be_true
+      4242.in?(0..100).should be_false
+    end
+
+    it "works with splatted arguments" do
+      :baz.in?(:foo, :bar).should be_false
+      1.in?(1, 10, 100).should be_true
+    end
+
+    it "works with other objects implementing #includes?" do
+      "o".in?("foo").should be_true
+      'o'.in?("foo").should be_true
+      'x'.in?("foo").should be_false
+    end
+  end
+
   it "#unsafe_as" do
     0x12345678.unsafe_as(Tuple(UInt8, UInt8, UInt8, UInt8)).should eq({0x78, 0x56, 0x34, 0x12})
   end
