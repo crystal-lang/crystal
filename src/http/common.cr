@@ -58,6 +58,8 @@ module HTTP
             case encoding
             when "gzip", "deflate"
               raise "Can't decompress because `-D without_zlib` was passed at compile time"
+            else
+              # not a format we support
             end
           {% else %}
             case encoding
