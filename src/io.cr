@@ -59,6 +59,8 @@ require "c/errno"
 # avoided, as string operations might need to read extra bytes in order to get characters
 # in the given encoding.
 abstract class IO
+  BUFFER_SIZE = 8192
+
   # Argument to a `seek` operation.
   enum Seek
     # Seeks to an absolute location
@@ -541,7 +543,7 @@ abstract class IO
           decoder.write(str)
         end
       else
-        buffer = uninitialized UInt8[4096]
+        buffer = uninitialized UInt8[BUFFER_SIZE]
         while (read_bytes = read(buffer.to_slice)) > 0
           str.write buffer.to_slice[0, read_bytes]
         end
@@ -815,9 +817,9 @@ abstract class IO
   # io.skip(1) # raises IO::EOFError
   # ```
   def skip(bytes_count : Int) : Nil
-    buffer = uninitialized UInt8[4096]
+    buffer = uninitialized UInt8[BUFFER_SIZE]
     while bytes_count > 0
-      read_count = read(buffer.to_slice[0, Math.min(bytes_count, 4096)])
+      read_count = read(buffer.to_slice[0, Math.min(bytes_count, BUFFER_SIZE)])
       raise IO::EOFError.new if read_count == 0
 
       bytes_count -= read_count
@@ -827,7 +829,7 @@ abstract class IO
   # Reads and discards bytes from `self` until there
   # are no more bytes.
   def skip_to_end : Nil
-    buffer = uninitialized UInt8[4096]
+    buffer = uninitialized UInt8[BUFFER_SIZE]
     while read(buffer.to_slice) > 0
     end
   end
@@ -1115,7 +1117,7 @@ abstract class IO
   # io2.to_s # => "hello"
   # ```
   def self.copy(src, dst) : UInt64
-    buffer = uninitialized UInt8[4096]
+    buffer = uninitialized UInt8[BUFFER_SIZE]
     count = 0_u64
     while (len = src.read(buffer.to_slice).to_i32) > 0
       dst.write buffer.to_slice[0, len]
@@ -1139,7 +1141,7 @@ abstract class IO
 
     limit = limit.to_u64
 
-    buffer = uninitialized UInt8[4096]
+    buffer = uninitialized UInt8[BUFFER_SIZE]
     remaining = limit
     while (len = src.read(buffer.to_slice[0, Math.min(buffer.size, Math.max(remaining, 0))])) > 0
       dst.write buffer.to_slice[0, len]
