@@ -323,9 +323,9 @@ module Spec
       Spec.formatters.each(&.pop)
     end
 
-    def run(&on_finish)
+    def run
       run
-      on_finish.call
+      yield
     end
 
     protected def internal_run

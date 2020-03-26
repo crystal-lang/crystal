@@ -42,9 +42,9 @@ module Spec
       Fiber.yield
     end
 
-    def run(&on_finish)
+    def run
       run
-      on_finish.call
+      yield
     end
 
     private def internal_run(start, block)
