@@ -59,7 +59,22 @@ require "c/errno"
 # avoided, as string operations might need to read extra bytes in order to get characters
 # in the given encoding.
 abstract class IO
-  BUFFER_SIZE = 8192
+  # Changes the default buffer size that is used in `IO.copy`, `IO::Buffered`
+  # and othe operations. The first invocation defines the value.
+  # Defaults to 8192 (8kb)
+  #
+  # ```
+  # IO.set_buffer_size 16384
+  # ```
+  macro set_buffer_size(value)
+    {% if !IO.has_constant?(:BUFFER_SIZE) %}
+      ::IO::BUFFER_SIZE = {{value}}
+    {% end %}
+  end
+
+  macro finished
+    set_buffer_size 8192
+  end
 
   # Argument to a `seek` operation.
   enum Seek
