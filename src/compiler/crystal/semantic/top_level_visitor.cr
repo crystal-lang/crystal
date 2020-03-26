@@ -135,7 +135,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
 
     if created_new_type && superclass
       if node.struct? != superclass.struct?
-        node.raise "can't make #{node.struct? ? "struct" : "class"} '#{node.name}' inherit #{superclass.type_desc} '#{superclass.to_s}'"
+        node.raise "can't make #{node.struct? ? "struct" : "class"} '#{node.name}' inherit #{superclass.type_desc} '#{superclass}'"
       end
 
       if superclass.struct? && !superclass.abstract?

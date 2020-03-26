@@ -409,7 +409,7 @@ module Spec
       ex
     rescue ex
       backtrace = ex.backtrace.join('\n') { |f| "  # #{f}" }
-      fail "Expected #{klass}, got #<#{ex.class}: #{ex.to_s}> with backtrace:\n" \
+      fail "Expected #{klass}, got #<#{ex.class}: #{ex}> with backtrace:\n" \
            "#{backtrace}", file, line
     else
       fail "Expected #{klass} but nothing was raised", file, line
