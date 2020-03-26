@@ -492,4 +492,40 @@ describe "Semantic: enum" do
       end
     ))
   end
+
+  it "can include module" do
+    assert_type(%(
+      module Moo
+        def moo
+          1
+        end
+      end
+
+      enum Color
+        Red
+
+        include Moo
+      end
+
+      Color::Red.moo
+      )) { int32 }
+  end
+
+  it "can extend module" do
+    assert_type(%(
+      module Moo
+        def moo
+          1
+        end
+      end
+
+      enum Color
+        Red
+
+        extend Moo
+      end
+
+      Color.moo
+      )) { int32 }
+  end
 end

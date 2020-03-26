@@ -1396,6 +1396,9 @@ module Crystal
 
     it_parses "enum Foo; @[Bar]; end", EnumDef.new("Foo".path, [Annotation.new("Bar".path)] of ASTNode)
 
+    it_parses "enum Foo; include Bar; end", EnumDef.new("Foo".path, [Include.new("Bar".path)] of ASTNode)
+    it_parses "enum Foo; extend Bar; end", EnumDef.new("Foo".path, [Extend.new("Bar".path)] of ASTNode)
+
     assert_syntax_error "enum Foo; A B; end", "expecting ';', 'end' or newline after enum member"
     assert_syntax_error "enum Foo\n  A,   B,   C\nend\n", "expecting ';', 'end' or newline after enum member"
 

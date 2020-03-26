@@ -5715,6 +5715,10 @@ module Crystal
             member = parse_macro.at(def_location)
             member = VisibilityModifier.new(visibility, member) if visibility
             members << member
+          when :include
+            members << parse_include
+          when :extend
+            members << parse_extend
           else
             unexpected_token
           end
