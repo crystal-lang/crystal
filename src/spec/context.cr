@@ -5,6 +5,7 @@ module Spec
   abstract class Context
     # All the children, which can be `describe`/`context` or `it`
     getter children = [] of ExampleGroup | Example
+    getter async_children = [] of ExampleGroup | Example
 
     def randomize(randomizer)
       children.each do |child|
@@ -35,6 +36,8 @@ module Spec
     class_getter instance = RootContext.new
     @@current_context : Context = @@instance
 
+    getter? running = false
+
     def initialize
       @results = {
         success: [] of Result,
@@ -45,7 +48,20 @@ module Spec
     end
 
     def run
+      @running = true
+
+      channel = Channel(Nil).new
+
+      async_children.each do |child|
+        spawn { child.run { channel.send nil } }
+      end
+
       children.each &.run
+
+      # Wait for each child to tell it they're done
+      async_children.each { channel.receive }
+    ensure
+      @running = false
     end
 
     def report(kind, full_description, file, line, elapsed = nil, ex = nil)
@@ -162,11 +178,12 @@ module Spec
       end
     end
 
-    def describe(description, file, line, end_line, focus, tags, &block)
+    def describe(description, file, line, end_line, focus, async, tags, &block)
       Spec.focus = true if focus
 
-      context = Spec::ExampleGroup.new(@@current_context, description, file, line, end_line, focus, tags)
-      @@current_context.children << context
+      async = @@current_context.async? || async
+
+      context = Spec::ExampleGroup.new(@@current_context, description, file, line, end_line, focus, async, tags)
 
       old_context = @@current_context
       @@current_context = context
@@ -177,19 +194,30 @@ module Spec
       end
     end
 
-    def it(description, file, line, end_line, focus, tags, &block)
-      add_example(description, file, line, end_line, focus, tags, block)
+    def it(description, file, line, end_line, focus, async, tags, &block)
+      add_example(description, file, line, end_line, focus, async, tags, block)
     end
 
-    def pending(description, file, line, end_line, focus, tags)
-      add_example(description, file, line, end_line, focus, tags, nil)
+    def pending(description, file, line, end_line, focus, async, tags)
+      add_example(description, file, line, end_line, focus, async, tags, nil)
     end
 
-    private def add_example(description, file, line, end_line, focus, tags, block)
-      check_nesting_spec(file, line) do
-        Spec.focus = true if focus
-        @@current_context.children <<
-          Example.new(@@current_context, description, file, line, end_line, focus, tags, block)
+    private def add_example(description, file, line, end_line, focus, async, tags, block)
+      if running?
+        raise NestingSpecError.new("can't nest `it` or `pending`", file, line)
+      end
+
+      Spec.focus = true if focus
+
+      async = @@current_context.async? || async
+
+      example =
+        Example.new(@@current_context, description, file, line, end_line, focus, async, tags, block)
+
+      if async
+        async_children << example
+      else
+        children << example
       end
     end
 
@@ -269,6 +297,10 @@ module Spec
     def run_around_all_hooks(procsy : ExampleGroup::Procsy) : Bool
       false
     end
+
+    def async?
+      false
+    end
   end
 
   # Represents a `describe` or `context`.
@@ -277,7 +309,7 @@ module Spec
 
     def initialize(@parent : Context, @description : String,
                    @file : String, @line : Int32, @end_line : Int32,
-                   @focus : Bool, tags)
+                   @focus : Bool, @async : Bool, tags)
       initialize_tags(tags)
     end
 
@@ -291,9 +323,24 @@ module Spec
       Spec.formatters.each(&.pop)
     end
 
+    def run(&on_finish)
+      run
+      on_finish.call
+    end
+
     protected def internal_run
       run_before_all_hooks
+      # children.each &.run
+      channel = Channel(Nil).new
+
+      async_children.each do |child|
+        spawn child.run { channel.send nil }
+      end
+
       children.each &.run
+
+      # Wait for each child to tell it they're done
+      async_children.each { channel.receive }
       run_after_all_hooks
     end
 

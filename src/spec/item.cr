@@ -19,6 +19,9 @@ module Spec
     # Does this example or example group have `focus: true` on it?
     getter? focus : Bool
 
+    # Does this example or example group have `async: true` on it?
+    getter? async : Bool
+
     # The tags defined on this example or example group
     getter tags : Set(String)?
 
