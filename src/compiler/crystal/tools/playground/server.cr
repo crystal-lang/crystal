@@ -356,6 +356,8 @@ module Crystal::Playground
           context.response << page
           return
         end
+      else
+        # Not a special path
       end
 
       call_next(context)
@@ -507,6 +509,8 @@ module Crystal::Playground
               source = json["source"].as_s
               tag = json["tag"].as_i
               session.format source, tag
+            else
+              # TODO: maybe raise because it's an unexpected message?
             end
           end
         end

@@ -167,6 +167,8 @@ class Program
         i = matching_close_index
       when ']'
         abort "Unmatched ']' at position #{i}"
+      else
+        # skip
       end
       i += 1
     end
@@ -181,6 +183,8 @@ class Program
         open_count += 1
       when ']'
         open_count -= 1
+      else
+        # go on
       end
 
       if open_count == 0

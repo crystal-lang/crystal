@@ -500,6 +500,8 @@ module MIME
           io << '\\'
         when 0x00..0x1F, 0x7F
           raise ArgumentError.new("String contained invalid character #{byte.chr.inspect}")
+        else
+          # leave the byte as is
         end
         io.write_byte byte
       end

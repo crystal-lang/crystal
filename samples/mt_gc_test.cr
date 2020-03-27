@@ -195,10 +195,16 @@ def run(threads_num, fibers_num, loops_num, log)
   context.log "Done"
 end
 
+enum Mode
+  Run
+  Ips
+  Measure
+end
+
 threads_num = 4
 fibers_num = 1_000
 loops_num = 20
-mode = :run
+mode : Mode = :run
 
 OptionParser.parse do |parser|
   parser.on("-i", "--ips", "Benchmark with ips") { mode = :ips }
@@ -218,12 +224,12 @@ OptionParser.parse do |parser|
 end
 
 case mode
-when :run
+when .run?
   run(threads_num, fibers_num, loops_num, true)
-when :ips
+when .ips?
   Benchmark.ips do |x|
     x.report("run") { run(threads_num, fibers_num, loops_num, false) }
   end
-when :measure
+when .measure?
   puts Benchmark.measure { run(threads_num, fibers_num, loops_num, false) }
 end

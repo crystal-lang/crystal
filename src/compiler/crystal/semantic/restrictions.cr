@@ -760,6 +760,8 @@ module Crystal
             context.set_free_var(name, type_var)
             return type_var
           end
+        else
+          # Restriction is not possible (maybe retur nil here?)
         end
       else
         type_var = type_var.type? || type_var

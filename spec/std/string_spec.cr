@@ -2104,6 +2104,8 @@ describe "String" do
         c.should eq('b')
       when 2
         c.should eq('c')
+      else
+        fail "shouldn't happen"
       end
       i += 1
     end.should be_nil
@@ -2156,6 +2158,8 @@ describe "String" do
         b.should eq('b'.ord)
       when 2
         b.should eq('c'.ord)
+      else
+        fail "shouldn't happen"
       end
       i += 1
     end.should be_nil

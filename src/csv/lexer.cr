@@ -122,6 +122,8 @@ abstract class CSV::Lexer
     case next_char
     when '\r', '\n', '\0'
       @last_empty_column = true
+    else
+      # not empty
     end
   end
 

@@ -130,6 +130,8 @@ struct JSON::Any
     case @raw
     when Hash, Array
       self[key]?
+    else
+      nil
     end
   end
 

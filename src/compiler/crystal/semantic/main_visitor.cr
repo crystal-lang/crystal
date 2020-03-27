@@ -443,6 +443,8 @@ module Crystal
           node.bind_to(var)
           return false
         end
+      else
+        raise "Bug: unexpected var type: #{var.class}"
       end
 
       node.type = @program.nil
@@ -522,6 +524,8 @@ module Crystal
 
         class_var = visit_class_var var
         class_var.thread_local = true if thread_local
+      else
+        raise "Bug: unexpected var type: #{var.class}"
       end
 
       node.type = @program.nil unless node.type?
@@ -585,10 +589,10 @@ module Crystal
         expanded.accept self
         node.bind_to expanded
         node.expanded = expanded
-        return false
+      else
+        visit_global node
       end
 
-      visit_global node
       false
     end
 
@@ -627,12 +631,12 @@ module Crystal
     def lookup_similar_instance_variable_name(node, owner)
       case owner
       when NonGenericModuleType, GenericClassType, GenericModuleType
-        return nil
-      end
-
-      Levenshtein.find(node.name) do |finder|
-        owner.all_instance_vars.each_key do |name|
-          finder.test(name)
+        nil
+      else
+        Levenshtein.find(node.name) do |finder|
+          owner.all_instance_vars.each_key do |name|
+            finder.test(name)
+          end
         end
       end
     end
@@ -1380,9 +1384,9 @@ module Crystal
         case exp
         when Var, InstanceVar, ClassVar, Global
           next
+        else
+          return true
         end
-
-        return true
       end
 
       false
@@ -1405,6 +1409,8 @@ module Crystal
         case exp
         when Var, InstanceVar, ClassVar, Global
           next
+        else
+          # go on
         end
 
         temp_var = @program.new_temp_var.at(arg.location)
@@ -1517,6 +1523,8 @@ module Crystal
               arg.args.push TypeNode.new(arg_type)
             end
           end
+        else
+          # keep checking
         end
       end
     end
@@ -1546,6 +1554,8 @@ module Crystal
           if instance_type.namespace.is_a?(LibType) && (named_args = node.named_args)
             return special_c_struct_or_union_new_with_named_args(node, instance_type, named_args)
           end
+        else
+          # go on, nothing special
         end
       end
 
@@ -1817,6 +1827,8 @@ module Crystal
       when Expressions
         return unless exp = exp.single_expression?
         return get_expression_var(exp)
+      else
+        # go on
       end
       nil
     end
@@ -1841,6 +1853,8 @@ module Crystal
         node.raise "can't cast to Reference yet"
       when @program.class_type
         node.raise "can't cast to Class yet"
+      else
+        # go on
       end
 
       obj_type = node.obj.type?
@@ -1946,6 +1960,8 @@ module Crystal
         elsif or_right_type_filters
           filter_vars or_right_type_filters.not
         end
+      else
+        # go on
       end
 
       before_else_vars = @vars.dup
@@ -1966,6 +1982,8 @@ module Crystal
           @or_left_type_filters = or_left_type_filters = then_type_filters
           @or_right_type_filters = or_right_type_filters = else_type_filters
           @type_filters = TypeFilters.or(cond_type_filters, then_type_filters, else_type_filters)
+        else
+          # go on: a regular if
         end
       end
 
@@ -2257,6 +2275,8 @@ module Crystal
       when Expressions
         return unless node = node.single_expression?
         return get_while_cond_assign_target(node)
+      else
+        # go on
       end
 
       nil
@@ -2413,13 +2433,13 @@ module Crystal
         node.raise "can't create instance of a union type"
       when PointerInstanceType
         node.raise "can't create instance of a pointer type"
-      end
+      else
+        if !instance_type.virtual? && instance_type.abstract?
+          node.raise "can't instantiate abstract #{instance_type.type_desc} #{instance_type}"
+        end
 
-      if !instance_type.virtual? && instance_type.abstract?
-        node.raise "can't instantiate abstract #{instance_type.type_desc} #{instance_type}"
+        node.type = instance_type
       end
-
-      node.type = instance_type
     end
 
     def visit_pointer_malloc(node)
@@ -2480,6 +2500,8 @@ module Crystal
           node.extra = convert_call
           return
         end
+      else
+        # go on
       end
 
       unsafe_call = Conversions.to_unsafe(node, Var.new("value").at(node), self, actual_type, expected_type)
@@ -2543,6 +2565,8 @@ module Crystal
         return unless obj_type.is_a?(LibType)
 
         obj_type.lookup_var(exp.name)
+      else
+        nil
       end
     end
 
@@ -3016,6 +3040,27 @@ module Crystal
     end
 
     def visit(node : Case)
+      # For exhaustiveness check, which is done in CleanupTransformer,
+      # we need to know the type of `cond`. However, LiteralExpander will
+      # work with copies of `cond` in case they are Var or InstanceVar so
+      # here we type them so their type is available later on.
+      cond = node.cond
+      case cond
+      when Var         then cond.accept(self)
+      when InstanceVar then cond.accept(self)
+      when TupleLiteral
+        cond.elements.each do |element|
+          case element
+          when Var         then element.accept(self)
+          when InstanceVar then element.accept(self)
+          else
+            # Nothing to do
+          end
+        end
+      else
+        # Nothing to do
+      end
+
       expand(node)
       false
     end
@@ -3067,6 +3112,8 @@ module Crystal
         case exp
         when Var, IsA, RespondsTo, Not
           return type_filters.not
+        else
+          # go on
         end
       end
 

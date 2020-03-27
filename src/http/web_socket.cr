@@ -145,6 +145,8 @@ class HTTP::WebSocket
           @current_message.clear
           break
         end
+      when Protocol::Opcode::CONTINUATION
+        # TODO: (asterite) I think this is good, but this case wasn't originally handled
       end
     end
   end

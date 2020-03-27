@@ -188,6 +188,8 @@ class Crystal::CodeGenVisitor
         value = upcast(value, compatible_type, value_type)
         return assign(target_pointer, target_type, compatible_type, value)
       end
+    else
+      # go on
     end
 
     value = to_rhs(value, value_type)
@@ -449,6 +451,8 @@ class Crystal::CodeGenVisitor
         value = downcast(value, to_type, compatible_type, true)
         return value
       end
+    else
+      # go on
     end
 
     _, value_ptr = union_type_and_value_pointer(value, from_type)
@@ -663,6 +667,8 @@ class Crystal::CodeGenVisitor
         value = upcast(value, compatible_type, from_type)
         return upcast(value, to_type, compatible_type)
       end
+    else
+      # go on
     end
 
     union_ptr = alloca(llvm_type(to_type))

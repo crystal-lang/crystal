@@ -9,6 +9,8 @@ module Crystal
       HierarchyPrinter.new(program, exp).execute
     when "json"
       JSONHierarchyPrinter.new(program, exp).execute
+    else
+      raise "Unknown hierarchy format: #{format}"
     end
   end
 

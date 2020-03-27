@@ -580,13 +580,13 @@ struct Int
 
     case self
     when 0
-      return "0"
+      "0"
     when 1
-      return "1"
-    end
-
-    internal_to_s(base, upcase) do |ptr, count|
-      String.new(ptr, count, count)
+      "1"
+    else
+      internal_to_s(base, upcase) do |ptr, count|
+        String.new(ptr, count, count)
+      end
     end
   end
 
@@ -597,14 +597,12 @@ struct Int
     case self
     when 0
       io << '0'
-      return
     when 1
       io << '1'
-      return
-    end
-
-    internal_to_s(base, upcase) do |ptr, count|
-      io.write_utf8 Slice.new(ptr, count)
+    else
+      internal_to_s(base, upcase) do |ptr, count|
+        io.write_utf8 Slice.new(ptr, count)
+      end
     end
   end
 

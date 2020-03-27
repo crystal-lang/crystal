@@ -147,6 +147,8 @@ module Crystal
       when name.index("__")                  then raise Error.new("NAME must not have consecutive underscores")
       when !name.each_char.all? { |c| c.alphanumeric? || c == '-' || c == '_' }
         raise Error.new("NAME must only contain alphanumerical characters, underscores or dashes")
+      else
+        # name is valid
       end
     end
 
