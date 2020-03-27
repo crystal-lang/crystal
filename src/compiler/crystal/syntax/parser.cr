@@ -5873,19 +5873,19 @@ module Crystal
     end
 
     def check(token_types : Array)
-      raise "expecting any of these tokens: #{token_types.join ", "} (not '#{@token.type.to_s}')", @token unless token_types.any? { |type| @token.type == type }
+      raise "expecting any of these tokens: #{token_types.join ", "} (not '#{@token.type}')", @token unless token_types.any? { |type| @token.type == type }
     end
 
     def check(token_type)
-      raise "expecting token '#{token_type}', not '#{@token.to_s}'", @token unless token_type == @token.type
+      raise "expecting token '#{token_type}', not '#{@token}'", @token unless token_type == @token.type
     end
 
     def check_token(value)
-      raise "expecting token '#{value}', not '#{@token.to_s}'", @token unless @token.type == :TOKEN && @token.value == value
+      raise "expecting token '#{value}', not '#{@token}'", @token unless @token.type == :TOKEN && @token.value == value
     end
 
     def check_ident(value)
-      raise "expecting identifier '#{value}', not '#{@token.to_s}'", @token unless @token.keyword?(value)
+      raise "expecting identifier '#{value}', not '#{@token}'", @token unless @token.keyword?(value)
     end
 
     def check_ident
