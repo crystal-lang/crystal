@@ -128,10 +128,18 @@ describe "Number" do
     -11.divmod(-2).should eq({5, -1})
   end
 
-  it "compare the numbers" do
-    10.<=>(10).should eq(0)
-    10.<=>(11).should eq(-1)
-    11.<=>(10).should eq(1)
+  describe "<=>" do
+    it "compare the numbers" do
+      10.<=>(10).should eq(0)
+      10.<=>(11).should eq(-1)
+      11.<=>(10).should eq(1)
+    end
+
+    it "is not comparable to other types" do
+      (1 <=> "x").should be_nil
+      (1 <=> 'a').should be_nil
+      (1.0 <=> true).should be_nil
+    end
   end
 
   it "creates an array with [] and some elements" do

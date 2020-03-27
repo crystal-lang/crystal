@@ -58,6 +58,27 @@ class Object
     nil
   end
 
+  # The comparison operator. Returns `0` if the two objects are equal,
+  # a negative number if this object is considered less than *other*,
+  # a positive number if this object is considered greter than *other*,
+  # or `nil` if the two objects are not comparable.
+  #
+  # By default returns `nil`.
+  # Subclasses define this method to provide class-specific ordering.
+  #
+  # The comparison operator is usually used to sort values:
+  #
+  # ```
+  # # Sort in a descending way:
+  # [3, 1, 2].sort { |x, y| y <=> x } # => [3, 2, 1]
+  #
+  # # Sort in an ascending way:
+  # [3, 1, 2].sort { |x, y| x <=> y } # => [1, 2, 3]
+  # ```
+  def <=>(other)
+    nil
+  end
+
   # Appends this object's value to *hasher*, and returns the modified *hasher*.
   #
   # Usually the macro `def_hash` can be used to generate this method.

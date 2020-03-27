@@ -52,7 +52,7 @@ class Crystal::Location
     pp.text to_s
   end
 
-  def <=>(other)
+  def <=>(other : self)
     self_file = @filename
     other_file = other.filename
     if self_file.is_a?(String) && other_file.is_a?(String) && self_file == other_file
