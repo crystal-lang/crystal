@@ -362,13 +362,6 @@ module Crystal
         mod = info.mod
         push_debug_info_metadata(mod) unless @debug.none?
 
-        if ENV["CRYSTAL_DEBUG_LL_DUMP"]?
-          puts "Module #{name}:"
-          mod.functions.each do |func|
-            puts func.body_to_ll_string
-          end
-        end
-
         mod.dump if dump_all_llvm || name =~ dump_llvm_regex
 
         # Always run verifications so we can catch bugs earlier and more often.
@@ -1355,8 +1348,13 @@ module Crystal
     def declare_var(var)
       context.vars[var.name] ||= begin
         pointer = var.no_returns? ? llvm_nil : alloca(llvm_type(var.type), var.name)
-        debug_variable_created = false
-        debug_variable_created = declare_variable(var.name, var.type, pointer, var.location) unless context.fun.naked?
+        debug_variable_created =
+          if context.fun.naked?
+            # Naked functions must not have debug info associated with them
+            false
+          else
+            declare_variable(var.name, var.type, pointer, var.location)
+          end
         LLVMVar.new(pointer, var.type, debug_variable_created: debug_variable_created)
       end
     end
@@ -1732,10 +1730,12 @@ module Crystal
               location = obj.location
             end
 
-            debug_variable_created = false
-            if location && !context.fun.naked?
-              debug_variable_created = declare_variable name, var_type, ptr, location, alloca_block
-            end
+            debug_variable_created =
+              if location && !context.fun.naked?
+                declare_variable name, var_type, ptr, location, alloca_block
+              else
+                false
+              end
             context.vars[name] = LLVMVar.new(ptr, var_type, debug_variable_created: debug_variable_created)
 
             # Assign default nil for variables that are bound to the nil variable

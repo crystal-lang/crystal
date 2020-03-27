@@ -251,10 +251,6 @@ class LLVM::Builder
     Value.new LibLLVM.get_current_debug_location(self)
   end
 
-  def current_debug_location_metadata
-    LibLLVM.get_current_debug_location_metadata(self)
-  end
-
   def to_unsafe
     @unwrap
   end

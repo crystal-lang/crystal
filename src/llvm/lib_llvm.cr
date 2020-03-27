@@ -375,7 +375,6 @@ lib LibLLVM
   fun get_instruction_metadata = LLVMGetMetadata(inst : ValueRef, kind : LLVM::Metadata::Type) : ValueRef
   fun metadata_as_value = LLVMMetadataAsValue(context : LibLLVM::ContextRef, md : LibLLVMExt::Metadata) : LibLLVM::ValueRef
   fun di_builder_create_unspecified_yype = LLVMDIBuilderCreateUnspecifiedType(builder : LibLLVMExt::DIBuilder, name : Void*, size : LibC::SizeT) : LibLLVMExt::Metadata
-  fun get_current_debug_location_metadata = LLVMGetCurrentDebugLocation2(builder : LibLLVM::BuilderRef) : LibLLVMExt::Metadata
   fun location_get_line = LLVMDILocationGetLine(location : LibLLVMExt::Metadata) : UInt32
   fun location_get_column = LLVMDILocationGetColumn(location : LibLLVMExt::Metadata) : UInt32
   fun location_get_scope = LLVMDILocationGetScope(location : LibLLVMExt::Metadata) : LibLLVMExt::Metadata

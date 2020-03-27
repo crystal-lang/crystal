@@ -287,12 +287,11 @@ class Crystal::CodeGenVisitor
     setup_context_fun(mangled_name, target_def, llvm_args_types, llvm_return_type)
 
     if @debug.variables?
+      context.fun_debug_params.clear
       if context.fun
-        context.fun.add_debug_param(get_debug_type(target_def.type))
-      end
-      args.each do |arg|
-        if context.fun
-          context.fun.add_debug_param(get_debug_type(arg.type))
+        context.add_fun_debug_param(get_debug_type(target_def.type))
+        args.each do |arg|
+          context.add_fun_debug_param(get_debug_type(arg.type))
         end
       end
     end
@@ -424,8 +423,7 @@ class Crystal::CodeGenVisitor
         def_var = def_vars.try &.[var.name]?
         next if def_var && !def_var.closured?
 
-        ptr = gep(closure_ptr, 0, i, var.name)
-        self.context.vars[var.name] = LLVMVar.new(ptr, var.type)
+        self.context.vars[var.name] = LLVMVar.new(gep(closure_ptr, 0, i, var.name), var.type)
       end
 
       if (closure_parent_context = context.closure_parent_context) &&
