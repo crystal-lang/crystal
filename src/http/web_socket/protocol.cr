@@ -1,5 +1,6 @@
 require "socket"
-require "http"
+require "http/client"
+require "http/headers"
 require "base64"
 {% if !flag?(:without_openssl) %}
   require "openssl"
@@ -242,7 +243,7 @@ class HTTP::WebSocket::Protocol
     @io.close if @sync_close
   end
 
-  def self.new(host : String, path : String, port = nil, tls = false, headers = HTTP::Headers.new)
+  def self.new(host : String, path : String, port = nil, tls : HTTP::Client::TLSContext = nil, headers = HTTP::Headers.new)
     {% if flag?(:without_openssl) %}
       if tls
         raise "WebSocket TLS is disabled because `-D without_openssl` was passed at compile time"
