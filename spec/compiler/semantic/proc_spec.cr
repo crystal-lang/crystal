@@ -881,12 +881,12 @@ describe "Semantic: proc" do
       )) { proc_of(int32) }
   end
 
-  it "merges Proc that returns Nil with another one that returns something else (#3655)" do
+  it "*doesn't* merge Proc that returns Nil with another one that returns something else (#3655) (this was reverted)" do
     assert_type(%(
       a = ->(x : Int32) { 1 }
       b = ->(x : Int32) { nil }
       a || b
-      )) { proc_of(int32, nil_type) }
+      )) { union_of proc_of(int32, int32), proc_of(int32, nil_type) }
   end
 
   it "can assign proc that returns anything to proc that returns nil (#3655)" do
