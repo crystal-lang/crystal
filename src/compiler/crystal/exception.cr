@@ -128,7 +128,7 @@ module Crystal
       size ||= 0
       io << '\n'
       io << (" " * (offset + column_number - 1))
-      Colorize.with.green.bold.surround(io) do
+      with_color.green.bold.surround(io) do
         io << '^'
         if size > 0
           io << ("-" * (size - 1))
