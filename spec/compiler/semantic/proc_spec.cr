@@ -889,7 +889,7 @@ describe "Semantic: proc" do
       )) { union_of proc_of(int32, int32), proc_of(int32, nil_type) }
   end
 
-  it "can assign proc that returns anything to proc that returns nil (#3655)" do
+  it "can assign proc that returns anything to proc that returns nil, with instance var (#3655)" do
     assert_type(%(
       class Foo
         @block : -> Nil
@@ -904,6 +904,36 @@ describe "Semantic: proc" do
       end
 
       Foo.new.block
+      )) { proc_of(nil_type) }
+  end
+
+  it "can assign proc that returns anything to proc that returns nil, with class var (#3655)" do
+    assert_type(%(
+      module Moo
+        @@block : -> Nil = ->{ nil }
+
+        def self.block=(@@block)
+        end
+
+        def self.block
+          @@block
+        end
+      end
+
+      Moo.block = ->{ 1 }
+      Moo.block
+      )) { proc_of(nil_type) }
+  end
+
+  it "can assign proc that returns anything to proc that returns nil, with local var (#3655)" do
+    assert_type(%(
+      proc : -> Nil
+
+      a = ->{ 1 }
+      b = ->{ nil }
+      proc = a || b
+
+      proc
       )) { proc_of(nil_type) }
   end
 

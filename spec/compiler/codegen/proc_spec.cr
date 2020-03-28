@@ -774,4 +774,49 @@ describe "Code gen: proc" do
       a
       )).to_i.should eq(2)
   end
+
+  it "can assign proc that returns anything to proc that returns nil (#3655)" do
+    run(%(
+      class Foo
+        @block : -> Nil
+
+        def initialize(@block)
+        end
+
+        def call
+          @block.call
+        end
+      end
+
+      a = 1
+      block = ->{ a = 2 }
+
+      Foo.new(block).call
+
+      a
+      )).to_i.should eq(2)
+  end
+
+  it "can assign proc that returns anything to proc that returns nil, using union type (#3655)" do
+    run(%(
+      class Foo
+        @block : -> Nil
+
+        def initialize(@block)
+        end
+
+        def call
+          @block.call
+        end
+      end
+
+      a = 1
+      block1 = ->{ a = 2 }
+      block2 = ->{ a = 3; nil }
+
+      Foo.new(block2 || block1).call
+
+      a
+      )).to_i.should eq(3)
+  end
 end

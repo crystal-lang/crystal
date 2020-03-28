@@ -757,8 +757,9 @@ module Crystal
 
       var_name = target.name
       meta_var = (@meta_vars[var_name] ||= new_meta_var(var_name))
+      freeze_type = meta_var.freeze_type
 
-      if freeze_type = meta_var.freeze_type
+      if freeze_type
         if casted_value = check_automatic_cast(value, freeze_type, node)
           value = casted_value
         end
@@ -799,10 +800,17 @@ module Crystal
       check_closured meta_var
 
       simple_var = MetaVar.new(var_name)
-      simple_var.bind_to(target)
 
-      if meta_var.closured?
+      # When we assign to a local variable with a fixed type, and it's
+      # a Proc, we always want to keep that proc's type.
+      if freeze_type && freeze_type.is_a?(ProcInstanceType)
         simple_var.bind_to(meta_var)
+      else
+        simple_var.bind_to(target)
+
+        if meta_var.closured?
+          simple_var.bind_to(meta_var)
+        end
       end
 
       @vars[var_name] = simple_var
