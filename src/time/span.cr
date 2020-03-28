@@ -220,6 +220,11 @@ struct Time::Span
     (to_i.to_f * NANOSECONDS_PER_SECOND) + nanoseconds
   end
 
+  # Converts to a number of microseconds.
+  def total_microseconds : Float64
+    total_nanoseconds / NANOSECONDS_PER_MICROSECOND
+  end
+
   # Converts to a number of milliseconds.
   def total_milliseconds : Float64
     total_nanoseconds / NANOSECONDS_PER_MILLISECOND
