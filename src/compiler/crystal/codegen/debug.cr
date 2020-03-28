@@ -335,11 +335,7 @@ module Crystal
       if basic_block
         block = basic_block
       else
-        block = nil
-        context.fun.basic_blocks.each do |current_block|
-          block = current_block
-        end
-        block = new_block("alloca") unless block
+        block = context.fun.basic_blocks.last? || new_block("alloca")
       end
       old_debug_location = @current_debug_location
       set_current_debug_location location

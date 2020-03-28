@@ -37,6 +37,14 @@ struct LLVM::BasicBlockCollection
     self[name]? || raise IndexError.new
   end
 
+  def last?
+    block = nil
+    each do |current_block|
+      block = current_block
+    end
+    block
+  end
+
   def alloca_block?
     self["alloca"]?
   end
