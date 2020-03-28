@@ -1051,4 +1051,14 @@ describe "Semantic: proc" do
       foo(->(x : String) { 1 })
       )) { proc_of string, nil_type }
   end
+
+  it "casts to Proc(Nil) when specified in return type" do
+    assert_type(%(
+      def foo : Proc(Nil)
+        ->{ 1 }
+      end
+
+      foo
+      )) { proc_of nil_type }
+  end
 end
