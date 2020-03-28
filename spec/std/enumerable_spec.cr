@@ -10,6 +10,13 @@ private class SpecEnumerable
   end
 end
 
+private class SpecEmptyEnumerable
+  include Enumerable(Int32)
+
+  def each(&block : T -> _)
+  end
+end
+
 describe "Enumerable" do
   describe "all? with block" do
     it "returns true" do
@@ -414,6 +421,11 @@ describe "Enumerable" do
       iter.next.should eq({2, "a"})
       iter.next.should be_a(Iterator::Stop)
     end
+  end
+
+  describe "empty?" do
+    it { SpecEnumerable.new.empty?.should be_false }
+    it { SpecEmptyEnumerable.new.empty?.should be_true }
   end
 
   describe "find" do
