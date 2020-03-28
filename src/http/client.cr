@@ -140,6 +140,8 @@ class HTTP::Client
                OpenSSL::SSL::Context::Client.new
              when OpenSSL::SSL::Context::Client
                tls
+             when false, nil
+               nil
              end
     {% end %}
 
