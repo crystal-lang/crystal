@@ -4,7 +4,7 @@
 # When this backend level is set that level setting takes precedence
 # over the severity filter of each referenced backend.
 #
-# This backend is not to be used explictly. It is used by `Log::Builder` configuration
+# This backend is not to be used explicitly. It is used by `Log::Builder` configuration
 # to allow a given source to emit to multiple backends.
 class Log::BroadcastBackend < Log::Backend
   property level : Severity? = nil
