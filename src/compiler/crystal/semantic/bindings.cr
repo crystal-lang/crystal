@@ -39,7 +39,6 @@ module Crystal
       if !type.no_return? && (freeze_type = @freeze_type) && !type.implements?(freeze_type)
         raise_frozen_type freeze_type, type, self
       end
-
       @type = type
     end
 
@@ -135,7 +134,7 @@ module Crystal
       new_type = map_type(new_type) if new_type
 
       if new_type && (freeze_type = @freeze_type)
-        new_type = assign_type(freeze_type, new_type)
+        new_type = restrict_type_to_freeze_type(freeze_type, new_type)
       end
 
       return if @type.same? new_type
@@ -197,7 +196,7 @@ module Crystal
       new_type = map_type(new_type) if new_type
 
       if new_type && (freeze_type = @freeze_type)
-        new_type = assign_type(freeze_type, new_type)
+        new_type = restrict_type_to_freeze_type(freeze_type, new_type)
       end
 
       return if @type.same? new_type
@@ -228,7 +227,7 @@ module Crystal
     # in the case where freeze_type is not nil.
     #
     # Special cases are listed inside the method body.
-    def assign_type(freeze_type, type)
+    def restrict_type_to_freeze_type(freeze_type, type)
       # We allow assigning Proc(*T, R) to Proc(*T, Nil)
       if freeze_type.is_a?(ProcInstanceType) && freeze_type.return_type.nil_type?
         if (type.is_a?(UnionType) && type.union_types.all?(&.implements?(freeze_type))) ||
