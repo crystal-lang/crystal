@@ -493,6 +493,31 @@ module Enumerable(T)
     nil
   end
 
+  # Returns the last element in the collection. Raises `Enumerable::EmptyError`
+  # if the collection is empty.
+  def last
+    found = false
+    obj = uninitialized T
+
+    each do |elem|
+      found = true
+      obj = elem
+    end
+    return yield unless found
+    obj
+  end
+
+  # :ditto:
+  def last
+    last { raise Enumerable::EmptyError.new }
+  end
+
+  # Returns the last element in the collection.
+  # When the collection is empty, returns `nil`.
+  def last?
+    last { nil }
+  end
+
   # Returns a new array with the concatenated results of running the block
   # (which is expected to return arrays) once for every element in the collection.
   #

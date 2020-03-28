@@ -466,6 +466,38 @@ describe "Enumerable" do
     end
   end
 
+  describe "last" do
+    it "gets last" do
+      (1..3).last.should eq(3)
+    end
+
+    it "calls block if empty" do
+      (1...1).last { 10 }.should eq(10)
+    end
+
+    it "raises if enumerable is empty" do
+      expect_raises Enumerable::EmptyError do
+        (1...1).last
+      end
+    end
+
+    it "doesn't raise if last element is nil" do
+      [nil].last.should be_nil
+    end
+
+    it { [-1, -2, -3].last.should eq(-3) }
+  end
+
+  describe "last?" do
+    it "gets last?" do
+      (1..3).last?.should eq(3)
+    end
+
+    it "returns nil if enumerable is empty" do
+      (1...1).last?.should be_nil
+    end
+  end
+
   describe "flat_map" do
     it "does example 1" do
       [1, 2, 3, 4].flat_map { |e| [e, -e] }.should eq([1, -1, 2, -2, 3, -3, 4, -4])
