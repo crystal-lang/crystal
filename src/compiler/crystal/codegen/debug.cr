@@ -44,7 +44,7 @@ module Crystal
       @fun_metadatas ||= {} of LLVM::Function => Array(FunMetadata)
     end
 
-    def fun_metadata_type(debug_types : Array(LibLLVMExt::Metadata) = Array(LibLLVMExt::Metadata).new)
+    def fun_metadata_type(debug_types = [] of LibLLVMExt::Metadata)
       if debug_types.empty?
         int = di_builder.create_basic_type("int", 32, 32, LLVM::DwarfTypeEncoding::Signed)
         debug_types << int
@@ -474,10 +474,6 @@ module Crystal
         location.line_number, fun_metadata_type(context.fun_debug_params), true, true,
         location.line_number, LLVM::DIFlags::Zero, is_optimised, context.fun)
       fun_metadatas[context.fun] = [FunMetadata.new(location.original_filename || "??", fn_metadata)]
-    end
-
-    def create_pointer(debug_type : LibLLVMExt::Metadata, original_type : Type)
-      di_builder.create_pointer_type(debug_type, 8u64 * llvm_typer.pointer_size, 8u64 * llvm_typer.pointer_size, original_type.to_s)
     end
 
     def declare_debug_for_function_argument(arg_name, arg_type, arg_no, alloca, location)

@@ -44,8 +44,4 @@ struct LLVM::BasicBlockCollection
     end
     block
   end
-
-  def alloca_block?
-    self["alloca"]?
-  end
 end

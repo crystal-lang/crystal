@@ -148,5 +148,4 @@ lib LibLLVMExt
   fun normalize_target_triple = LLVMExtNormalizeTargetTriple(triple : Char*) : Char*
   fun basic_block_name = LLVMExtBasicBlockName(basic_block : LibLLVM::BasicBlockRef) : Char*
   fun di_builder_get_or_create_array_subrange = LLVMExtDIBuilderGetOrCreateArraySubrange(builder : DIBuilder, lo : UInt64, count : UInt64) : Metadata
-  fun di_builder_get_or_create_array_subrange_variable = LLVMExtDIBuilderGetOrCreateArraySubrangeVariable(builder : DIBuilder, lo : UInt64, count : Metadata) : Metadata
 end

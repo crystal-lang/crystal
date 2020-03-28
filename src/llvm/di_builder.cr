@@ -104,50 +104,8 @@ struct LLVM::DIBuilder
     LibLLVM.di_builder_create_unspecified_yype(self, name, name.size)
   end
 
-  def location_get_line(location : LibLLVMExt::Metadata)
-    LibLLVM.location_get_line(location)
-  end
-
-  def location_get_column(location : LibLLVMExt::Metadata)
-    LibLLVM.location_get_column(location)
-  end
-
-  def location_get_scope(location : LibLLVMExt::Metadata)
-    LibLLVM.location_get_scope(location)
-  end
-
-  def scope_get_file(scope : LibLLVMExt::Metadata)
-    LibLLVM.scope_get_file(scope)
-  end
-
-  def file_get_directory(file : LibLLVMExt::Metadata)
-    ptr = LibLLVM.file_get_directory(file, out dir_name_size)
-    String.new(ptr, dir_name_size)
-  end
-
-  def file_get_filename(file : LibLLVMExt::Metadata)
-    ptr = LibLLVM.file_get_filename(file, out file_name_size)
-    String.new(ptr, file_name_size)
-  end
-
-  def variable_get_file(variable : LibLLVMExt::Metadata)
-    LibLLVM.variable_get_file(variable)
-  end
-
-  def variable_get_scope(variable : LibLLVMExt::Metadata)
-    LibLLVM.variable_get_scope(variable)
-  end
-
-  def variable_get_line(variable : LibLLVMExt::Metadata)
-    LibLLVM.variable_get_line(variable)
-  end
-
   def get_or_create_array_subrange(lo, count)
     LibLLVMExt.di_builder_get_or_create_array_subrange(self, lo, count)
-  end
-
-  def get_or_create_array_subrange_variable(lo, count)
-    LibLLVMExt.di_builder_get_or_create_array_subrange_variable(self, lo, count)
   end
 
   def create_reference_type(debug_type)

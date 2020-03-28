@@ -371,21 +371,7 @@ lib LibLLVM
   fun set_instr_param_alignment = LLVMSetInstrParamAlignment(instr : ValueRef, index : UInt, align : UInt)
 
   fun set_param_alignment = LLVMSetParamAlignment(arg : ValueRef, align : UInt)
-  fun instruction_has_metadata = LLVMHasMetadata(inst : ValueRef) : Bool
-  fun get_instruction_metadata = LLVMGetMetadata(inst : ValueRef, kind : LLVM::Metadata::Type) : ValueRef
-  fun metadata_as_value = LLVMMetadataAsValue(context : LibLLVM::ContextRef, md : LibLLVMExt::Metadata) : LibLLVM::ValueRef
   fun di_builder_create_unspecified_yype = LLVMDIBuilderCreateUnspecifiedType(builder : LibLLVMExt::DIBuilder, name : Void*, size : LibC::SizeT) : LibLLVMExt::Metadata
-  fun location_get_line = LLVMDILocationGetLine(location : LibLLVMExt::Metadata) : UInt32
-  fun location_get_column = LLVMDILocationGetColumn(location : LibLLVMExt::Metadata) : UInt32
-  fun location_get_scope = LLVMDILocationGetScope(location : LibLLVMExt::Metadata) : LibLLVMExt::Metadata
-  fun scope_get_file = LLVMDIScopeGetFile(scope : LibLLVMExt::Metadata) : LibLLVMExt::Metadata
-  fun file_get_directory = LLVMDIFileGetDirectory(file : LibLLVMExt::Metadata, dir_name_size : UInt32*) : Char*
-  fun file_get_filename = LLVMDIFileGetFilename(file : LibLLVMExt::Metadata, file_name_size : UInt32*) : Char*
-  fun variable_get_file = LLVMDIVariableGetFile(variable : LibLLVMExt::Metadata) : LibLLVMExt::Metadata
-  fun variable_get_scope = LLVMDIVariableGetScope(variable : LibLLVMExt::Metadata) : LibLLVMExt::Metadata
-  fun variable_get_line = LLVMDIVariableGetLine(variable : LibLLVMExt::Metadata) : UInt32
   fun di_builder_create_lexical_block_file = LLVMDIBuilderCreateLexicalBlockFile(builder : LibLLVMExt::DIBuilder,
                                                                                  scope : LibLLVMExt::Metadata, file_scope : LibLLVMExt::Metadata, discriminator : UInt32) : LibLLVMExt::Metadata
-  fun di_builder_create_reference_type = LLVMDIBuilderCreateReferenceType(builder : LibLLVMExt::DIBuilder,
-                                                                          tag : UInt32, debug_type : LibLLVMExt::Metadata) : LibLLVMExt::Metadata
 end
