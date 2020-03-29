@@ -345,7 +345,7 @@ describe "Semantic: lib" do
       lib LibFoo
       end
       ),
-      "unknown link argument: 'boo' (valid arguments are 'lib', 'ldflags', 'static' and 'framework')"
+      "unknown link argument: 'boo' (valid arguments are 'lib', 'ldflags', 'static', 'pkg_config' and 'framework')"
   end
 
   it "errors if lib already specified with positional argument" do

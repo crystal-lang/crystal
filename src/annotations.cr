@@ -27,7 +27,7 @@ end
 annotation Flags
 end
 
-# A `lib` can be marked with `@[Link(lib : String, *, ldflags : String, static : Bool, framework : String)]`
+# A `lib` can be marked with `@[Link(lib : String, *, ldflags : String, static : Bool, framework : String, pkg_config : String)]`
 # to declare the library that should be linked when compiling the program.
 #
 # At least one of the *lib*, *ldflags*, *framework* arguments needs to be specified.
@@ -36,6 +36,11 @@ end
 #
 # `@[Link("pcre")]` will lookup for a shared library.
 # 1. will lookup `pcre` using `pkg-config`, if not found
+# 2. will pass `-lpcre` to the linker.
+#
+# `@[Link("pcre", pkg_config: "libpcre")]` will lookup for a shared library.
+# 1. will lookup `libpcre` using `pkg-config`, if not found
+# 2. will lookup `pcre` using `pkg-config`, if not found
 # 2. will pass `-lpcre` to the linker.
 #
 # `@[Link(framework: "Cocoa")]` will pass `-framework Cocoa` to the linker.
