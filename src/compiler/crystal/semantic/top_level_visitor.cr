@@ -470,6 +470,10 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
           @program.report_warning(ann, "specifying static linking for individual libraries is deprecated")
         end
 
+        if ann.args.size > 1
+          @program.report_warning(ann, "using non-named arguments for Link annotations is deprecated")
+        end
+
         type.add_link_annotation(link_annotation)
       when @program.call_convention_annotation
         type.call_convention = parse_call_convention(ann, type.call_convention)
