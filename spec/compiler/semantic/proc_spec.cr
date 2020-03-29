@@ -1001,4 +1001,24 @@ describe "Semantic: proc" do
       ->foo(Foo)
       )) { proc_of(types["Foo"].virtual_type!, types["Foo"].virtual_type!) }
   end
+
+  it "can pass Proc(T) to Proc(Nil) in type restriction (#8964)" do
+    assert_type(%(
+      def foo(x : Proc(Nil))
+        x
+      end
+
+      foo(->{ 1 })
+      )) { proc_of nil_type }
+  end
+
+  it "can pass Proc(X, T) to Proc(X, Nil) in type restriction (#8964)" do
+    assert_type(%(
+      def foo(x : Proc(String, Nil))
+        x
+      end
+
+      foo(->(x : String) { 1 })
+      )) { proc_of string, nil_type }
+  end
 end

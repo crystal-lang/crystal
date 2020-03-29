@@ -761,4 +761,17 @@ describe "Code gen: proc" do
       f.call(20)
       )).to_i.should eq(21)
   end
+
+  it "can pass Proc(T) to Proc(Nil) in type restriction (#8964)" do
+    run(%(
+      def foo(x : Proc(Nil))
+        x
+      end
+
+      a = 1
+      proc = foo(->{ a = 2 })
+      proc.call
+      a
+      )).to_i.should eq(2)
+  end
 end
