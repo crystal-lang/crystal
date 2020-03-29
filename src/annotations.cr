@@ -38,11 +38,6 @@ end
 # 1. will lookup `pcre` using `pkg-config`, if not found
 # 2. will pass `-lpcre` to the linker.
 #
-# `@[Link("pcre", static: true)]` will favor static libraries over shared libraries.
-# 1. will lookup `libpcre.a` in `CRYSTAL_LIBRARY_PATH`, if not found
-# 2. will lookup `pcre` using `pkg-config --static`, if not found,
-# 3. will lookup `libpcre.a` in `/usr/lib`, `/usr/local/lib`
-#
 # `@[Link(framework: "Cocoa")]` will pass `-framework Cocoa` to the linker.
 #
 # When an `-l` option is passed to the linker, it will lookup the libraries in

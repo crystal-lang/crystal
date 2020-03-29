@@ -376,6 +376,15 @@ describe "Semantic: lib" do
       )) { int32 }
   end
 
+  it "warns if @[Link(static: true)] is specified" do
+    assert_warning %(
+      @[Link("foo", static: true)]
+      lib Foo
+      end
+      ),
+      "warning in line 3\nWarning: specifying static linking for individual libraries is deprecated"
+  end
+
   it "allows invoking lib call without obj inside lib" do
     assert_type(%(
       lib LibFoo
