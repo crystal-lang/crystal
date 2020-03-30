@@ -1241,6 +1241,17 @@ module Enumerable(T)
     count { true }
   end
 
+  # Returns `true` if `self` is empty, `false` otherwise.
+  #
+  # ```
+  # ([] of Int32).empty? # => true
+  # ([1]).empty?         # => false
+  # ```
+  def empty?
+    each { return false }
+    true
+  end
+
   # Returns an `Array` with the first *count* elements removed
   # from the original collection.
   #
