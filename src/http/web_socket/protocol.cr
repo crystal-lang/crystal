@@ -233,13 +233,27 @@ class HTTP::WebSocket::Protocol
     end
   end
 
-  def close(message = nil)
+  def close(code : Int? = nil, message = nil)
     return if @io.closed?
+
     if message
-      send(message.to_slice, Opcode::CLOSE)
+      message = message.to_slice
+      code ||= CloseCodes::NormalClosure
+
+      payload = Bytes.new(2 + message.size)
+      IO::ByteFormat::NetworkEndian.encode(code.to_u16, payload)
+      message.copy_to(payload + 2)
     else
-      send(Bytes.empty, Opcode::CLOSE)
+      if code
+        payload = Bytes.new(2)
+        IO::ByteFormat::NetworkEndian.encode(code.to_u16, payload)
+      else
+        payload = Bytes.empty
+      end
     end
+
+    send(payload, Opcode::CLOSE)
+
     @io.close if @sync_close
   end
 
