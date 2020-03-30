@@ -274,6 +274,16 @@ class Crystal::CodeGenVisitor
     store value, target_pointer
   end
 
+  def assign_distinct(target_pointer, target_type : ProcInstanceType, value_type : MixedUnionType, value)
+    # The only case when a union is assigned to a proc is when
+    # target_type is Proc(*T, Nil) and all the types in the union are Proc(*T, R).
+    # In that case we can simply get the union value and cast it to the target type.
+    # Cast of a non-void proc to a void proc
+    _, union_value_ptr = union_type_and_value_pointer(value, value_type)
+    value = bit_cast(union_value_ptr, llvm_type(target_type).pointer)
+    store load(value), target_pointer
+  end
+
   def assign_distinct(target_pointer, target_type : Type, value_type : Type, value)
     raise "BUG: trying to assign #{target_type} <- #{value_type}"
   end
