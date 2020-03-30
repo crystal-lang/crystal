@@ -5,7 +5,7 @@ private def s(value : Log::Severity)
   value
 end
 
-private def stdio_logger(*, stdout : IO, config = nil, source : String = "", progname : String? = nil)
+private def io_logger(*, stdout : IO, config = nil, source : String = "", progname : String? = nil)
   builder = Log::Builder.new
   backend = Log::IOBackend.new
   backend.progname = progname if progname
@@ -17,7 +17,7 @@ end
 describe Log::IOBackend do
   it "logs messages" do
     IO.pipe do |r, w|
-      logger = stdio_logger(stdout: w)
+      logger = io_logger(stdout: w)
       logger.debug { "debug:skip" }
       logger.info { "info:show" }
 
@@ -37,7 +37,7 @@ describe Log::IOBackend do
 
   it "logs context" do
     IO.pipe do |r, w|
-      logger = stdio_logger(stdout: w)
+      logger = io_logger(stdout: w)
       Log.context.clear
       Log.with_context do
         Log.context.set foo: "bar"
@@ -50,7 +50,7 @@ describe Log::IOBackend do
 
   it "logs any object" do
     IO.pipe do |r, w|
-      logger = stdio_logger(stdout: w)
+      logger = io_logger(stdout: w)
       logger.info { 12345 }
 
       r.gets.should match(/12345/)
@@ -59,7 +59,7 @@ describe Log::IOBackend do
 
   it "formats message" do
     IO.pipe do |r, w|
-      logger = stdio_logger(progname: "the-program", stdout: w, source: "db.pool")
+      logger = io_logger(progname: "the-program", stdout: w, source: "db.pool")
       logger.warn { "message" }
 
       r.gets(chomp: false).should match(/W, \[.+? #\d+\] WARNING -- the-program:db.pool: message\n/)
@@ -68,7 +68,7 @@ describe Log::IOBackend do
 
   it "uses custom formatter" do
     IO.pipe do |r, w|
-      logger = stdio_logger(stdout: w)
+      logger = io_logger(stdout: w)
       logger.backend.as(Log::IOBackend).formatter = Log::Formatter.new do |entry, io|
         io << entry.severity.to_s[0].upcase << ": " << entry.message
       end
@@ -80,7 +80,7 @@ describe Log::IOBackend do
 
   it "yields message" do
     IO.pipe do |r, w|
-      logger = stdio_logger(stdout: w, progname: "prog", source: "db")
+      logger = io_logger(stdout: w, progname: "prog", source: "db")
       logger.error { "message" }
       logger.fatal { "another message" }
 

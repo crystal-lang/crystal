@@ -1,6 +1,6 @@
 # Immutable structured context information for logging.
 #
-# See `Log.context`, `Log.context=`, `Log::Context#clear`, `Log::Context#set`, `Log::Context#using`.
+# See `Log.context`, `Log.context=`, `Log::Context#clear`, `Log::Context#set`, `Log.with_context`.
 class Log::Context
   Crystal.datum types: {bool: Bool, i: Int32, i64: Int64, f: Float32, f64: Float64, s: String, time: Time}, hash_key_type: String, immutable: true
 

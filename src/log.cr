@@ -54,7 +54,7 @@
 # end
 # ```
 #
-# A `Log` will emit the messages to the `Log::Backends` attached to it as long as
+# A `Log` will emit the messages to the `Log::Backend`s attached to it as long as
 # the configured severity filter `level` permits it.
 #
 # Logs can also be created from a type directly. For the type `DB::Pool` the source `db.pool` will be used.

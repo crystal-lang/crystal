@@ -130,11 +130,11 @@ class Log
     end
 
     # :ditto:
-    def set(values : NamedTuple) forall V
+    def set(values : NamedTuple)
       extend_fiber_context(Fiber.current, Log::Context.new(values))
     end
 
-    private def extend_fiber_context(fiber : Fiber, values : Context) forall V
+    private def extend_fiber_context(fiber : Fiber, values : Context)
       context = fiber.logging_context
       fiber.logging_context = context.merge(values)
     end
