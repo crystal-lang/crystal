@@ -109,6 +109,7 @@ class HTTP::WebSocket
         info = @ws.receive(@buffer)
       rescue
         @on_close.try &.call("")
+        @closed = true
         break
       end
 
