@@ -889,6 +889,14 @@ describe "Semantic: proc" do
       )) { union_of proc_of(int32, int32), proc_of(int32, nil_type) }
   end
 
+  it "merges return type" do
+    assert_type(%(
+      a = ->(x : Int32) { 1 }
+      b = ->(x : Int32) { nil }
+      (a || b).call(1)
+      )) { nilable int32 }
+  end
+
   it "can assign proc that returns anything to proc that returns nil, with instance var (#3655)" do
     assert_type(%(
       class Foo
