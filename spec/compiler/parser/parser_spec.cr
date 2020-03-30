@@ -70,7 +70,7 @@ module Crystal
     it_parses %(%q{hello \\n world}), "hello \\n world".string
     it_parses %(%q{hello \#{foo} world}), "hello \#{foo} world".string
 
-    [":foo", ":foo!", ":foo?", ":\"foo\"", ":かたな", ":+", ":-", ":*", ":/", ":==", ":<", ":<=", ":>",
+    [":foo", ":foo!", ":foo?", ":foo?!", ":\"foo\"", ":かたな", ":+", ":-", ":*", ":/", ":==", ":<", ":<=", ":>",
      ":>=", ":!", ":!=", ":=~", ":!~", ":&", ":|", ":^", ":~", ":**", ":>>", ":<<", ":%", ":[]", ":[]?",
      ":[]=", ":<=>", ":==="].each do |symbol|
       value = symbol[1, symbol.size - 1]
@@ -155,6 +155,7 @@ module Crystal
 
     assert_syntax_error "b? = 1", "unexpected token: ="
     assert_syntax_error "b! = 1", "unexpected token: ="
+    assert_syntax_error "b?! = 1", "unexpected token: ="
     assert_syntax_error "a, B = 1, 2", "can't assign to constant in multiple assignment"
 
     assert_syntax_error "1 == 2, a = 4"
@@ -179,6 +180,7 @@ module Crystal
     # #4815
     assert_syntax_error "def foo!=; end", "unexpected token: !="
     assert_syntax_error "def foo?=(x); end", "unexpected token: ?"
+    assert_syntax_error "def foo?!=(x); end", "unexpected token: !="
 
     # #5856
     assert_syntax_error "def foo=(a,b); end", "setter method 'foo=' cannot have more than one argument"

@@ -612,9 +612,16 @@ module Crystal
             while ident_part?(next_char)
               # Nothing to do
             end
-            if current_char == '?' || ((current_char == '!' || current_char == '=') && peek_next_char != '=')
+            question_mark = current_char == '?'
+            if question_mark || ((current_char == '!' || current_char == '=') && peek_next_char != '=')
               next_char
             end
+
+            # For the 'wtf' ending
+            if question_mark && current_char == '!' && peek_next_char != '='
+              next_char
+            end
+
             @token.type = :SYMBOL
             @token.value = string_range_from_pool(start)
             set_token_raw_from_start(start - 1)
@@ -1421,9 +1428,17 @@ module Crystal
       while ident_part?(current_char)
         next_char
       end
-      if (current_char == '?' || current_char == '!') && peek_next_char != '='
+
+      question_mark = current_char == '?'
+      if (question_mark || current_char == '!') && peek_next_char != '='
         next_char
       end
+
+      # For the 'wtf' ending
+      if question_mark && current_char == '!' && peek_next_char != '='
+        next_char
+      end
+
       @token.type = :IDENT
       @token.value = string_range_from_pool(start)
       @token

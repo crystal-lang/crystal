@@ -150,12 +150,14 @@ describe "Lexer" do
                      :pointerof, :sizeof, :instance_sizeof, :offsetof, :as, :as?, :typeof, :for, :in,
                      :with, :self, :super, :private, :protected, :asm, :uninitialized, :nil?,
                      :annotation, :verbatim]
-  it_lexes_idents ["ident", "something", "with_underscores", "with_1", "foo?", "bar!", "fooBar",
+  it_lexes_idents ["ident", "something", "with_underscores", "with_1", "foo?", "bar!", "foo?!", "fooBar",
                    "❨╯°□°❩╯︵┻━┻"]
   it_lexes_idents ["def?", "if?", "else?", "elsif?", "end?", "true?", "false?", "class?", "while?",
                    "do?", "yield?", "return?", "unless?", "next?", "break?", "begin?"]
   it_lexes_idents ["def!", "if!", "else!", "elsif!", "end!", "true!", "false!", "class!", "while!",
                    "nil!", "do!", "yield!", "return!", "unless!", "next!", "break!", "begin!"]
+  it_lexes_idents ["def?!", "if?!", "else?!", "elsif?!", "end?!", "true?!", "false?!", "class?!", "while?!",
+                   "nil?!", "do?!", "yield?!", "return?!", "unless?!", "next?!", "break?!", "begin?!"]
   it_lexes_i32 ["1", ["0i32", "0"], ["1hello", "1"], "+1", "-1", "1234", "+1234", "-1234",
                 ["1.foo", "1"], ["1_000", "1000"], ["100_000", "100000"]]
   it_lexes_i64 [["1i64", "1"], ["1_i64", "1"], ["1i64hello", "1"], ["+1_i64", "+1"], ["-1_i64", "-1"]]
@@ -265,7 +267,7 @@ describe "Lexer" do
   it_lexes_instance_var "@foo"
   it_lexes_class_var "@@foo"
   it_lexes_globals ["$foo", "$FOO", "$_foo", "$foo123"]
-  it_lexes_symbols [":foo", ":foo!", ":foo?", ":foo=", ":\"foo\"", ":かたな", ":+", ":-", ":*", ":/", "://",
+  it_lexes_symbols [":foo", ":foo!", ":foo?", ":foo?!", ":foo=", ":\"foo\"", ":かたな", ":+", ":-", ":*", ":/", "://",
                     ":==", ":<", ":<=", ":>", ":>=", ":!", ":!=", ":=~", ":!~", ":&", ":|",
                     ":^", ":~", ":**", ":>>", ":<<", ":%", ":[]", ":[]?", ":[]=", ":<=>", ":===",
                     ":&+", ":&-", ":&*", ":&**"]
