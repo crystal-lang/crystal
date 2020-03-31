@@ -183,9 +183,7 @@ module Crystal
 
       if @program.has_flag? "windows"
         @personality_name = "__CxxFrameHandler3"
-
-        personality_function = @llvm_mod.functions.add(@personality_name, [] of LLVM::Type, llvm_context.int32, true)
-        @main.personality_function = personality_function
+        @main.personality_function = windows_personality_fun
       else
         @personality_name = "__crystal_personality"
       end
