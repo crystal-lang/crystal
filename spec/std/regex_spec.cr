@@ -162,4 +162,20 @@ describe "Regex" do
     regex = /foo/
     regex.clone.should be(regex)
   end
+
+  it "checks equality by ==" do
+    regex = Regex.new("foo", Regex::Options::IGNORE_CASE)
+    (regex == Regex.new("foo", Regex::Options::IGNORE_CASE)).should be_true
+    (regex == Regex.new("foo")).should be_false
+    (regex == Regex.new("bar", Regex::Options::IGNORE_CASE)).should be_false
+    (regex == Regex.new("bar")).should be_false
+  end
+
+  it "hashes" do
+    hash = Regex.new("foo", Regex::Options::IGNORE_CASE).hash
+    hash.should eq(Regex.new("foo", Regex::Options::IGNORE_CASE).hash)
+    hash.should_not eq(Regex.new("foo").hash)
+    hash.should_not eq(Regex.new("bar", Regex::Options::IGNORE_CASE).hash)
+    hash.should_not eq(Regex.new("bar").hash)
+  end
 end

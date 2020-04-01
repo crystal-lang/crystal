@@ -377,6 +377,13 @@ class Regex
       return @ovector.memcmp(other.@ovector, size * 2) == 0
     end
 
+    # See `Object#hash(hasher)`
+    def hash(hasher)
+      hasher = regex.hash hasher
+      hasher = string.hash hasher
+      Slice.new(@ovector, size * 2).hash(hasher)
+    end
+
     private def check_index_out_of_bounds(index)
       raise_invalid_group_index(index) unless valid_group?(index)
     end
