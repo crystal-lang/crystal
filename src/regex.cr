@@ -481,14 +481,36 @@ class Regex
 
     ovector_size = (@captures + 1) * 3
     ovector = Pointer(Int32).malloc(ovector_size)
-    ret = LibPCRE.exec(@re, @extra, str, str.bytesize, byte_index, (options | Options::NO_UTF8_CHECK), ovector, ovector_size)
-    if ret > 0
+    if internal_matches?(str, byte_index, options, ovector, ovector_size)
       match = MatchData.new(self, @re, str, byte_index, ovector, @captures)
     else
       match = nil
     end
 
     $~ = match
+  end
+
+  # Match at character index. It behaves like `#match`, however it does not create `MatchData`.
+  def matches?(str, pos = 0, options = Regex::Options::None) : Bool
+    if byte_index = str.char_index_to_byte_index(pos)
+      matches_at_byte_index?(str, byte_index, options)
+    else
+      false
+    end
+  end
+
+  # Match at byte index. It behaves like `#match`, however it does not create `MatchData`.
+  def matches_at_byte_index?(str, byte_index = 0, options = Regex::Options::None) : Bool
+    return false if byte_index > str.bytesize
+
+    internal_matches?(str, byte_index, options, nil, 0)
+  end
+
+  # Calls `pcre_exec` C function, and handles returning value.
+  private def internal_matches?(str, byte_index, options, ovector, ovector_size)
+    ret = LibPCRE.exec(@re, @extra, str, str.bytesize, byte_index, (options | Options::NO_UTF8_CHECK), ovector, ovector_size)
+    # TODO: when `ret < -1`, it means PCRE error. It should handle correctly.
+    ret >= 0
   end
 
   # Returns a `Hash` where the values are the names of capture groups and the

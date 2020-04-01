@@ -95,6 +95,17 @@ describe "Regex" do
     $2.should eq("ba")
   end
 
+  describe "matches?" do
+    it "matches but create no MatchData" do
+      /f(o+)(bar?)/.matches?("fooba").should eq(true)
+      /f(o+)(bar?)/.matches?("barfo").should eq(false)
+    end
+
+    it "can specify initial position of matching" do
+      /f(o+)(bar?)/.matches?("fooba", 1).should eq(false)
+    end
+  end
+
   describe "name_table" do
     it "is a map of capture group number to name" do
       table = (/(?<date> (?<year>(\d\d)?\d\d) - (?<month>\d\d) - (?<day>\d\d) )/x).name_table

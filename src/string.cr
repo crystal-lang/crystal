@@ -3840,6 +3840,11 @@ class String
     match
   end
 
+  # Finds match of *regex* like `#match`, but it does not create `MatchData`.
+  def matches?(regex : Regex, pos = 0) : Bool
+    regex.matches? self, pos
+  end
+
   # Searches the string for instances of *pattern*,
   # yielding a `Regex::MatchData` for each match.
   def scan(pattern : Regex)
