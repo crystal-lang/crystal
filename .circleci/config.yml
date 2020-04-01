@@ -326,6 +326,8 @@ jobs:
       - run:
           name: Setup environment
           command: |
+            brew unlink python@2 || echo "ignore"
+
             ruby-install ruby 2.5.6
 
             brew install pkgconfig libtool
