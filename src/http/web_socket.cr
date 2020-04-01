@@ -60,7 +60,7 @@ class HTTP::WebSocket
   def on_binary(&@on_binary : Bytes ->)
   end
 
-  def on_close(&@on_close : Int32, String ->)
+  def on_close(&@on_close : CloseCode, String ->)
   end
 
   protected def check_open
@@ -102,7 +102,7 @@ class HTTP::WebSocket
     close(nil, message)
   end
 
-  def close(code : Int? = nil, message = nil)
+  def close(code : CloseCode | Int? = nil, message = nil)
     return if closed?
     @closed = true
     @ws.close(code, message)
@@ -113,7 +113,7 @@ class HTTP::WebSocket
       begin
         info = @ws.receive(@buffer)
       rescue
-        @on_close.try &.call(CloseCodes::AbnormalClosure, "")
+        @on_close.try &.call(CloseCode::AbnormalClosure, "")
         @closed = true
         break
       end
@@ -152,8 +152,9 @@ class HTTP::WebSocket
 
           if @current_message.size >= 2
             code = @current_message.read_bytes(UInt16, IO::ByteFormat::NetworkEndian).to_i
+            code = CloseCode.new(code)
           else
-            code = CloseCodes::NoStatusReceived
+            code = CloseCode::NoStatusReceived
           end
           message = @current_message.gets_to_end
 

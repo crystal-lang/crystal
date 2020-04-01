@@ -490,7 +490,7 @@ module Crystal::Playground
         origin = context.request.headers["Origin"]
         if !accept_request?(origin)
           Log.warn { "Invalid Request Origin: #{origin}" }
-          ws.close HTTP::WebSocket::CloseCodes::PolicyViolation, "Invalid Request Origin"
+          ws.close :policy_violation, "Invalid Request Origin"
         else
           @sessions_key += 1
           @sessions[@sessions_key] = session = Session.new(ws, @sessions_key, @port)

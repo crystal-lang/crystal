@@ -343,7 +343,7 @@ describe HTTP::WebSocket do
 
           ws.on_close do |code, message|
             http_ref.not_nil!.close
-            close_chan.send({code, message})
+            close_chan.send({code.to_i, message})
           end
         end
 
