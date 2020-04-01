@@ -104,7 +104,7 @@ end
 # ```
 # [1, "hi"][1].as(Int32) # raises TypeCastError (cast to Int32 failed)
 # ```
-class TypeCastError < Exception
+class TypeCastError < Raisable
   def initialize(message = "Type Cast error")
     super(message)
   end
@@ -154,7 +154,7 @@ end
 #
 # This can be used either to stub out method bodies, or when the method is not
 # implemented on the current platform.
-class NotImplementedError < Exception
+class NotImplementedError < Raisable
   def initialize(item)
     super("Not Implemented: #{item}")
   end
@@ -165,7 +165,7 @@ end
 # ```
 # "hello".index('x').not_nil! # raises NilAssertionError ("hello" does not contain 'x')
 # ```
-class NilAssertionError < Exception
+class NilAssertionError < Raisable
   def initialize(message = "Nil assertion failed")
     super(message)
   end

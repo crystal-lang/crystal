@@ -838,15 +838,15 @@ class String
   end
 
   def [](str : String | Char)
-    self[str]?.not_nil!
+    self[str]? || raise ArgumentError.new("Value not found in the string")
   end
 
   def [](regex : Regex)
-    self[regex]?.not_nil!
+    self[regex]? || raise ArgumentError.new("Value didn't match in the string")
   end
 
   def [](regex : Regex, group)
-    self[regex, group]?.not_nil!
+    self[regex, group]? || raise ArgumentError.new("Value didn't match in the string")
   end
 
   def char_at(index : Int)

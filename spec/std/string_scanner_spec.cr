@@ -146,7 +146,7 @@ describe StringScanner, "#[]" do
     s = StringScanner.new("Fri Dec 12 1975 14:39")
     s.scan(/this is not there/)
 
-    expect_raises(Exception, "Nil assertion failed") { s[0] }
+    expect_raises(IndexError) { s[0] }
   end
 
   it "raises when there is no subgroup" do

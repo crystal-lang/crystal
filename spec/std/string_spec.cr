@@ -147,11 +147,11 @@ describe "String" do
 
     it "gets with a string" do
       "FooBar"["Bar"].should eq "Bar"
-      expect_raises(Exception, "Nil assertion failed") { "FooBar"["Baz"] }
+      expect_raises(ArgumentError, "Value not found in the string") { "FooBar"["Baz"] }
     end
 
     it "gets with a char" do
-      expect_raises(Exception, "Nil assertion failed") { "foo/bar"['-'] }
+      expect_raises(ArgumentError, "Value not found in the string") { "foo/bar"['-'] }
     end
   end
 
@@ -163,7 +163,7 @@ describe "String" do
 
     it "gets with a char" do
       "foo/bar"['/'].should eq '/'
-      expect_raises(Exception, "Nil assertion failed") { "foo/bar"['-'] }
+      expect_raises(ArgumentError, "Value not found in the string") { "foo/bar"['-'] }
       "foo/bar"['/']?.should eq '/'
       "foo/bar"['-']?.should be_nil
     end

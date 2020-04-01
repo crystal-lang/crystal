@@ -47,8 +47,8 @@ describe "Code gen: cast" do
       begin
         a.as(Char)
         false
-      rescue ex
-        ex.message.not_nil!.includes?("cast from Int32 to Char failed") && (ex.class == TypeCastError)
+      rescue ex : TypeCastError
+        ex.message.not_nil!.includes?("cast from Int32 to Char failed")
       end
       )).to_b.should be_true
   end
@@ -71,8 +71,8 @@ describe "Code gen: cast" do
       begin
         a.as(Float64 | Char)
         false
-      rescue ex
-        ex.message.not_nil!.includes?("cast from Int32 to (Char | Float64) failed") && (ex.class == TypeCastError)
+      rescue ex : TypeCastError
+        ex.message.not_nil!.includes?("cast from Int32 to (Char | Float64) failed")
       end
       )).to_b.should be_true
   end
@@ -119,8 +119,8 @@ describe "Code gen: cast" do
       begin
         a.as(CastSpecBaz)
         false
-      rescue ex
-        ex.message.not_nil!.includes?("cast from CastSpecBar to CastSpecBaz failed") && (ex.class == TypeCastError)
+      rescue ex : TypeCastError
+        ex.message.not_nil!.includes?("cast from CastSpecBar to CastSpecBaz failed")
       end
       )).to_b.should be_true
   end
@@ -186,8 +186,8 @@ describe "Code gen: cast" do
       begin
         a.as(Nil)
         false
-      rescue ex
-        ex.message.not_nil!.includes?("cast from Reference to Nil failed") && (ex.class == TypeCastError)
+      rescue ex : TypeCastError
+        ex.message.not_nil!.includes?("cast from Reference to Nil failed")
       end
       )).to_b.should be_true
   end

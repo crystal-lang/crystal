@@ -201,7 +201,7 @@ class StringScanner
   # s["day"]      # => "12"
   # ```
   def [](n)
-    @last_match.not_nil![n]
+    (@last_match || raise IndexError.new)[n]
   end
 
   # Returns the nilable *n*-th subgroup in the most recent match.
