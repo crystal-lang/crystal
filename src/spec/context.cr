@@ -21,7 +21,7 @@ module Spec
     file : String,
     line : Int32,
     elapsed : Time::Span?,
-    exception : Exception?
+    exception : Raisable?
 
   # :nodoc:
   def self.root_context

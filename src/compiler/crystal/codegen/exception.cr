@@ -168,10 +168,25 @@ class Crystal::CodeGenVisitor
           # `this_rescue_block` if the exception type is covered by the type restriction, or
           # branches to `next_rescue_block` if the restriction doesn't match.
           this_rescue_block, next_rescue_block = new_blocks "this_rescue", "next_rescue"
-          if a_rescue_types = a_rescue.types
+
+          # If no rescue types are specified we catch any subclass of Exception.
+          # Otherwise, if only Raisable was specified, the check can be skipped
+          # because every exception inherits from it.
+          rescue_types =
+            if a_rescue_types = a_rescue.types
+              if a_rescue_types.size == 1 && a_rescue_types[0] == @program.raisable
+                nil
+              else
+                a_rescue_types.map &.type
+              end
+            else
+              [@program.exception]
+            end
+
+          if rescue_types
             cond = nil
-            a_rescue_types.each do |type|
-              rescue_type = type.type.instance_type.virtual_type
+            rescue_types.each do |type|
+              rescue_type = type.instance_type.virtual_type
               rescue_type_cond = match_any_type_id(rescue_type, exception_type_id)
               cond = cond ? or(cond, rescue_type_cond) : rescue_type_cond
             end

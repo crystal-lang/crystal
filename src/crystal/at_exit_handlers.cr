@@ -2,7 +2,7 @@
 module Crystal::AtExitHandlers
   @@running = false
 
-  private class_getter(handlers) { [] of Int32, ::Exception? -> }
+  private class_getter(handlers) { [] of Int32, ::Raisable? -> }
 
   def self.add(handler)
     raise "Cannot use at_exit from an at_exit handler" if @@running

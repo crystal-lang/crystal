@@ -3,6 +3,12 @@ require "system_error"
 
 CallStack.skip(__FILE__)
 
+# This alias is defined to make the standard library code compatible with
+# Crystal version < 0.34 and should be removed after the release of 0.34
+{% unless @type.has_constant?("Raisable") %}
+  alias Raisable = Exception
+{% end %}
+
 # Represents errors that occur during application execution.
 #
 # Exception and its descendants are used to communicate between raise and
@@ -11,15 +17,15 @@ CallStack.skip(__FILE__)
 # exception’s class name), an optional descriptive string, and
 # optional traceback information.
 # Exception subclasses may add additional information.
-class Exception
+class Raisable
   getter message : String?
   # Returns the previous exception at the time this exception was raised.
   # This is useful for wrapping exceptions and retaining the original
   # exception information.
-  getter cause : Exception?
+  getter cause : Raisable?
   property callstack : CallStack?
 
-  def initialize(@message : String? = nil, @cause : Exception? = nil)
+  def initialize(@message : String? = nil, @cause : Raisable? = nil)
   end
 
   # Returns any backtrace associated with the exception.

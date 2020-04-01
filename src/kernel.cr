@@ -467,7 +467,7 @@ end
 # passed as the second argument to the block, if the program terminates
 # normally or `exit(status)` is called explicitly, then the second argument
 # will be `nil`.
-def at_exit(&handler : Int32, Exception? ->) : Nil
+def at_exit(&handler : Int32, Raisable? ->) : Nil
   Crystal::AtExitHandlers.add(handler)
 end
 

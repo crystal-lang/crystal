@@ -1319,4 +1319,24 @@ describe "Code gen: exception" do
       end
     ))
   end
+
+  it "default rescue doesn't handle Raisable" do
+    run(%(
+      require "prelude"
+
+      def foo
+        begin
+          begin
+            raise Raisable.new("foo")
+          rescue
+            1
+          end
+        rescue Raisable
+          2
+        end
+      end
+
+      foo
+      )).to_i.should eq(2)
+  end
 end

@@ -2689,8 +2689,8 @@ module Crystal
         types = node_types.map do |type|
           type.accept self
           instance_type = type.type.instance_type
-          unless instance_type.implements?(@program.exception)
-            type.raise "#{instance_type} is not a subclass of Exception"
+          unless instance_type.implements?(@program.raisable)
+            type.raise "#{instance_type} is not a subclass of Exception (or Raisable)"
           end
           instance_type
         end

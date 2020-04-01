@@ -51,7 +51,7 @@ module Spec
     rescue ex : Spec::AssertionFailed
       @parent.report(:fail, description, file, line, Time.monotonic - start, ex)
       Spec.abort! if Spec.fail_fast?
-    rescue ex
+    rescue ex : Raisable
       @parent.report(:error, description, file, line, Time.monotonic - start, ex)
       Spec.abort! if Spec.fail_fast?
     ensure

@@ -129,7 +129,7 @@ class Fiber
   def run
     GC.unlock_read
     @proc.call
-  rescue ex
+  rescue ex : Raisable
     if name = @name
       STDERR.print "Unhandled exception in spawn(name: #{name}): "
     else

@@ -5,7 +5,7 @@ class Thread
   # all thread objects, so the GC can see them (it doesn't scan thread locals)
   @@threads = Thread::LinkedList(Thread).new
 
-  @exception : Exception?
+  @exception : Raisable?
   @detached = Atomic(UInt8).new(0)
   @main_fiber : Fiber?
 
@@ -57,7 +57,7 @@ class Thread
 
     begin
       @func.call
-    rescue ex
+    rescue ex : Raisable
       @exception = ex
     ensure
       @@threads.delete(self)

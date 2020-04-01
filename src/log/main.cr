@@ -37,7 +37,7 @@ class Log
 
   {% for method in %i(debug verbose info warn error fatal) %}
     # See `Log#{{method.id}}`.
-    def self.{{method.id}}(*, exception : Exception? = nil)
+    def self.{{method.id}}(*, exception : Raisable? = nil)
       Top.{{method.id}}(exception: exception) do
         yield
       end

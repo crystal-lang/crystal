@@ -144,12 +144,23 @@ describe "Semantic: exception" do
       ") { nilable int32 }
   end
 
-  it "errors if catched exception is not a subclass of Exception" do
-    assert_error "begin; rescue ex : Int32; end", "Int32 is not a subclass of Exception"
+  it "errors if catched exception is not a subclass of Raisable" do
+    assert_error "begin; rescue ex : Int32; end", "Int32 is not a subclass of Exception (or Raisable)"
   end
 
-  it "errors if catched exception is not a subclass of Exception without var" do
-    assert_error "begin; rescue Int32; end", "Int32 is not a subclass of Exception"
+  it "errors if catched exception is not a subclass of Raisable without var" do
+    assert_error "begin; rescue Int32; end", "Int32 is not a subclass of Exception (or Raisable)"
+  end
+
+  it "allows rescue from Raisable exception" do
+    assert_type("
+      a = nil
+      begin
+      rescue ex : Raisable
+        a = ex
+      end
+      a
+    ") { union_of(nil_type, raisable.virtual_type) }
   end
 
   assert_syntax_error "begin; rescue ex; rescue ex : Foo; end; ex",

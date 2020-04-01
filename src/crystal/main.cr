@@ -38,7 +38,7 @@ module Crystal
       begin
         yield
         0
-      rescue ex
+      rescue ex : Raisable
         1
       end
 
@@ -90,7 +90,7 @@ module Crystal
     main do
       main_user_code(argc, argv)
     end
-  rescue ex
+  rescue ex : Raisable
     Crystal::System.print_exception "Unhandled exception", ex
     1
   end
