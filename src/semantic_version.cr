@@ -109,6 +109,8 @@ struct SemanticVersion
 
   # Contains the pre-release version related to this semantic version
   struct Prerelease
+    include Comparable(self)
+
     # Parses a `Prerelease` from the given pre-release version string
     #
     # ```
