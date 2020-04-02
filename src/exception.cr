@@ -11,12 +11,20 @@ CallStack.skip(__FILE__)
 
 # Represents errors that occur during application execution.
 #
-# Exception and its descendants are used to communicate between raise and
+# Raisable and its descendants are used to communicate between raise and
 # rescue statements in `begin ... end` blocks.
-# Exception objects carry information about the exception – its type (the
+# Raisable objects carry information about the exception – its type (the
 # exception’s class name), an optional descriptive string, and
 # optional traceback information.
-# Exception subclasses may add additional information.
+# Raisable subclasses may add additional information.
+# Raisable objects that are not subclasses of `Exception` are not handled
+# by default on a `rescue` statement, and the type must be explicitly specified:
+# ```
+# begin
+#   raise Raisable.new
+# rescue Raisable
+# end
+# ```
 class Raisable
   getter message : String?
   # Returns the previous exception at the time this exception was raised.
@@ -74,6 +82,21 @@ class Raisable
 
     io.flush
   end
+end
+
+# The base class for most common errors that might be handled at runtime
+#
+# Instances of this class (and subclasses) are handled by `rescue` statements
+# without types.
+#
+# ```
+# begin
+#   # ...
+# rescue
+#   # Any exception of `Exception` class is handled here
+# end
+# ```
+class Exception
 end
 
 # Raised when the given index is invalid.
