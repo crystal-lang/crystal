@@ -1,16 +1,41 @@
 <% unless methods.empty? %>
-  <h2>
-    <%= Crystal::Doc.anchor_link(title) %>
-    <%= title %>
-  </h2>
-  <ul class="list-summary">
-    <% methods.each do |method| %>
-      <li class="entry-summary">
-        <a href="<%= method.anchor %>" class="signature"><strong><%= method.prefix %><%= method.name %></strong><%= method.args_to_s %></a>
-        <% if summary = method.formatted_summary %>
-          <div class="summary"><%= summary %></div>
+  <% unless cross_platform_methods.empty? %>
+    <h2>
+      <%= Crystal::Doc.anchor_link(title) %>
+      <%= title %>
+    </h2>
+    <ul class="list-summary">
+      <% cross_platform_methods.each do |method| %>
+        <li class="entry-summary">
+          <a href="<%= method.anchor %>" class="signature"><strong><%= method.prefix %><%= method.name %></strong><%= method.args_to_s %></a>
+          <% if summary = method.formatted_summary %>
+            <div class="summary"><%= summary %></div>
+          <% end %>
+        </li>
+      <% end %>
+    </ul>  
+  <% end %>
+  <% unless platform_dependent_methods.empty? %>
+    <h3 class="collapsible-header">
+      Platform dependent
+    </h3>
+    <div class=" collapsible-content">
+      <p>
+        <span  class="warning">
+        Warning: Following methods are available only on listed platforms. If you used them, the resulting program cannot be compiled on other supported platforms.
+        </span>
+      </p>
+      <ul class="list-summary">
+        <% platform_dependent_methods.each do |method| %>
+          <li class="entry-summary">
+            <a href="<%= method.anchor %>" class="signature"><strong><%= method.prefix %><%= method.name %></strong><%= method.args_to_s %></a>
+            <span class="platform"><%= method.platforms %></span>
+            <% if summary = method.formatted_summary %>
+              <div class="summary"><%= summary %></div>
+            <% end %>
+          </li>
         <% end %>
-      </li>
-    <% end %>
-  </ul>
+      </ul>
+    </div>
+  <% end %>
 <% end %>

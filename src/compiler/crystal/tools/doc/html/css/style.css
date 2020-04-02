@@ -261,6 +261,14 @@ body {
   transition: background .15s, border-color .15s;
 }
 
+.entry-summary .platform {
+  padding: 4px 8px;
+  display: inline-block;
+  font-family: Menlo, Monaco, Consolas, 'Courier New', Courier, monospace;
+  margin-bottom: 4px;
+  font-style: italic;
+}
+
 .superclass-hierarchy .superclass a:hover,
 .other-type a:hover,
 .entry-summary .signature:hover {
@@ -295,6 +303,12 @@ body {
   border: 1px solid #f0f0f0;
   font-family: Menlo, Monaco, Consolas, 'Courier New', Courier, monospace;
   transition: .2s ease-in-out;
+}
+
+.entry-detail .platform {
+  display: block;
+  font-style: italic;
+  font-size: 0.9em;
 }
 
 .entry-detail:target .signature {
@@ -672,3 +686,33 @@ span.flag.purple {
 .main-content h6:hover .anchor .octicon-link {
   visibility: visible
 }
+
+span.warning {
+  background-color: #fff3cd;
+  color: #856404;
+  border: 1px solid #ffeeba;
+  border-radius: .25rem;
+}
+
+.collapsible-header {
+  cursor: pointer;
+  width: 100%;
+  text-align: left;
+}
+
+/* Style the collapsible content. Note: hidden by default */
+.collapsible-content {
+  display: none;
+}
+
+.collapsible-header:before {
+  transform: rotateZ(-90deg);
+  content: "▼";
+  display: inline-block;
+}
+
+.collapsible-header.active:before {
+  transform: rotateZ(0);
+}
+
+

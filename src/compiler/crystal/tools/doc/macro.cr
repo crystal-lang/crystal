@@ -148,4 +148,11 @@ class Crystal::Doc::Macro
     # macros does not support annotations
     nil
   end
+
+  def platform_dependent?
+    false
+  end
+
+  def platforms
+  end
 end

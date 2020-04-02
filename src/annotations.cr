@@ -51,3 +51,8 @@ end
 # using `ldflags`: `@[Link(ldflags: "-Lvendor/bin")]`.
 annotation Link
 end
+
+# This annotations marks methods, classes and constants as platform dependent.
+#
+annotation Platform
+end

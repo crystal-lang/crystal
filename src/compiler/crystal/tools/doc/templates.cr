@@ -21,6 +21,17 @@ module Crystal::Doc
     ANCHOR
   end
 
+  abstract struct MethodsTemplate
+    getter methods : Array(Method) | Array(Macro)
+    getter cross_platform_methods : Array(Method) | Array(Macro)
+    getter platform_dependent_methods : Array(Method) | Array(Macro)
+    getter title : String
+
+    def initialize(@title : String, @methods : Array(Method) | Array(Macro))
+      @platform_dependent_methods, @cross_platform_methods = @methods.partition &.platform_dependent?
+    end
+  end
+
   record TypeTemplate, type : Type, types : Array(Type) do
     ECR.def_to_s "#{__DIR__}/html/type.html"
   end
@@ -29,11 +40,11 @@ module Crystal::Doc
     ECR.def_to_s "#{__DIR__}/html/_list_items.html"
   end
 
-  record MethodSummaryTemplate, title : String, methods : Array(Method) | Array(Macro) do
+  struct MethodSummaryTemplate < MethodsTemplate
     ECR.def_to_s "#{__DIR__}/html/_method_summary.html"
   end
 
-  record MethodDetailTemplate, title : String, methods : Array(Method) | Array(Macro) do
+  struct MethodDetailTemplate < MethodsTemplate
     ECR.def_to_s "#{__DIR__}/html/_method_detail.html"
   end
 
