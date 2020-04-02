@@ -29,7 +29,7 @@ describe "Codegen: special vars" do
 
         begin
           #{name}
-        rescue ex
+        rescue ex : NilAssertionError
           "ouch"
         end
         )).to_string.should eq("ouch")
@@ -49,7 +49,7 @@ describe "Codegen: special vars" do
 
         begin
           #{name}
-        rescue ex
+        rescue ex : NilAssertionError
           "ouch"
         end
         )).to_string.should eq("foo")
