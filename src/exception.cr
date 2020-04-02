@@ -198,3 +198,7 @@ end
 class RuntimeError < Exception
   include SystemError
 end
+
+# Raised when there is an inconsistent or unreachable state
+class UnexpectedStateError < Raisable
+end

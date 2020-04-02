@@ -517,7 +517,8 @@ module Crystal
       if node_else = node.else
         case_else = node_else.clone
       else
-        case_else = Call.new(nil, "raise", args: [StringLiteral.new("BUG: invalid select index")] of ASTNode, global: true).at(node)
+        exception = Call.new(Path.global("UnexpectedStateError").at(node), "new", args: [StringLiteral.new("BUG: invalid select index")] of ASTNode).at(node)
+        case_else = Call.new(nil, "raise", args: [exception] of ASTNode, global: true).at(node)
       end
 
       call_name = node.else ? "non_blocking_select" : "select"

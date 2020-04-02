@@ -225,7 +225,7 @@ class Process
         File.open(File::NULL, "w")
       end
     else
-      raise "BUG: impossible type in ExecStdio #{stdio.class}"
+      raise UnexpectedStateError.new "BUG: impossible type in ExecStdio #{stdio.class}"
     end
   end
 
@@ -322,7 +322,7 @@ class Process
       when STDERR
         @error, fork_io = IO.pipe(write_blocking: true)
       else
-        raise "BUG: unknown destination io #{dst_io}"
+        raise UnexpectedStateError.new "BUG: unknown destination io #{dst_io}"
       end
 
       fork_io
@@ -335,7 +335,7 @@ class Process
         File.open(File::NULL, "w")
       end
     else
-      raise "BUG: impossible type in stdio #{stdio.class}"
+      raise UnexpectedStateError.new "BUG: impossible type in stdio #{stdio.class}"
     end
   end
 
@@ -411,7 +411,7 @@ class Process
     if channel = @channel
       channel
     else
-      raise "BUG: Notification channel was not initialized for this process"
+      raise UnexpectedStateError.new "BUG: Notification channel was not initialized for this process"
     end
   end
 

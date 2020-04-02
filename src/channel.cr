@@ -49,7 +49,7 @@ class Channel(T)
     # wait_result_impl with the right type and Channel.select_impl
     # to allow dispatching over unions that will not happen
     def wait_result(context : SelectContext)
-      raise "BUG: Unexpected call to #{typeof(self)}#wait_result(context : #{typeof(context)})"
+      raise UnexpectedStateError.new "BUG: Unexpected call to #{typeof(self)}#wait_result(context : #{typeof(context)})"
     end
 
     def wait_result(context : SelectContext(S))
@@ -58,7 +58,7 @@ class Channel(T)
 
     # idem wait_result/wait_result_impl
     def unwait(context : SelectContext)
-      raise "BUG: Unexpected call to #{typeof(self)}#unwait(context : #{typeof(context)})"
+      raise UnexpectedStateError.new "BUG: Unexpected call to #{typeof(self)}#unwait(context : #{typeof(context)})"
     end
 
     def unwait(context : SelectContext(S))
@@ -232,7 +232,7 @@ class Channel(T)
       when DeliveryState::Closed
         raise ClosedError.new
       else
-        raise "BUG: Fiber was awaken without channel delivery state set"
+        raise UnexpectedStateError.new "BUG: Fiber was awaken without channel delivery state set"
       end
     end
 
@@ -291,7 +291,7 @@ class Channel(T)
     case state
     when DeliveryState::Delivered
       @lock.unlock
-      raise "BUG: Unexpected UseDefault value for delivered receive" if value.is_a?(UseDefault)
+      raise UnexpectedStateError.new "BUG: Unexpected UseDefault value for delivered receive" if value.is_a?(UseDefault)
       value
     when DeliveryState::Closed
       @lock.unlock
@@ -309,7 +309,7 @@ class Channel(T)
       when DeliveryState::Closed
         yield
       else
-        raise "BUG: Fiber was awaken without channel delivery state set"
+        raise UnexpectedStateError.new "BUG: Fiber was awaken without channel delivery state set"
       end
     end
   end
@@ -397,7 +397,7 @@ class Channel(T)
 
   def self.select(ops : Indexable(SelectAction))
     i, m = select_impl(ops, false)
-    raise "BUG: blocking select returned not ready status" if m.is_a?(NotReady)
+    raise UnexpectedStateError.new "BUG: blocking select returned not ready status" if m.is_a?(NotReady)
     return i, m
   end
 
@@ -470,7 +470,7 @@ class Channel(T)
       end
     end
 
-    raise "BUG: Fiber was awaken from select but no action was activated"
+    raise UnexpectedStateError.new "BUG: Fiber was awaken from select but no action was activated"
   end
 
   # :nodoc:
@@ -524,9 +524,9 @@ class Channel(T)
       when DeliveryState::Closed
         raise ClosedError.new
       when DeliveryState::None
-        raise "BUG: StrictReceiveAction.wait_result_impl called with DeliveryState::None"
+        raise UnexpectedStateError.new "BUG: StrictReceiveAction.wait_result_impl called with DeliveryState::None"
       else
-        raise "unreachable"
+        raise UnexpectedStateError.new "unreachable"
       end
     end
 
@@ -589,9 +589,9 @@ class Channel(T)
       when DeliveryState::Closed
         nil
       when DeliveryState::None
-        raise "BUG: LooseReceiveAction.wait_result_impl called with DeliveryState::None"
+        raise UnexpectedStateError.new "BUG: LooseReceiveAction.wait_result_impl called with DeliveryState::None"
       else
-        raise "unreachable"
+        raise UnexpectedStateError.new "unreachable"
       end
     end
 
@@ -649,9 +649,9 @@ class Channel(T)
       when DeliveryState::Closed
         raise ClosedError.new
       when DeliveryState::None
-        raise "BUG: SendAction.wait_result_impl called with DeliveryState::None"
+        raise UnexpectedStateError.new "BUG: SendAction.wait_result_impl called with DeliveryState::None"
       else
-        raise "unreachable"
+        raise UnexpectedStateError.new "unreachable"
       end
     end
 
