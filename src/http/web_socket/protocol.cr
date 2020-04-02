@@ -233,12 +233,12 @@ class HTTP::WebSocket::Protocol
     end
   end
 
-  def close(code : Int? = nil, message = nil)
+  def close(code : CloseCode? = nil, message = nil)
     return if @io.closed?
 
     if message
       message = message.to_slice
-      code ||= CloseCodes::NormalClosure
+      code ||= CloseCode::NormalClosure
 
       payload = Bytes.new(2 + message.size)
       IO::ByteFormat::NetworkEndian.encode(code.to_u16, payload)
@@ -255,6 +255,10 @@ class HTTP::WebSocket::Protocol
     send(payload, Opcode::CLOSE)
 
     @io.close if @sync_close
+  end
+
+  def close(code : Int, message = nil)
+    close(CloseCode.new(code), message)
   end
 
   def self.new(host : String, path : String, port = nil, tls : HTTP::Client::TLSContext = nil, headers = HTTP::Headers.new)
