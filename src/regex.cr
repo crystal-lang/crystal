@@ -383,6 +383,13 @@ class Regex
     source == other.source && options == other.options
   end
 
+  # See `Object#hash(hasher)`
+  def hash(hasher)
+    hasher = source.hash hasher
+    hasher = options.hash hasher
+    hasher
+  end
+
   # Case equality. This is equivalent to `#match` or `#=~` but only returns
   # `true` or `false`. Used in `case` expressions. The special variable
   # `$~` will contain a `Regex::MatchData` if there was a match, `nil` otherwise.
