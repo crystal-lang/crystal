@@ -215,6 +215,7 @@ module HTTP
     Host
     Last-Modified
     Last-modified
+    Location
     Referer
     User-Agent
     User-agent
@@ -232,6 +233,7 @@ module HTTP
     expires
     host
     last-modified
+    location
     referer
     user-agent
   )
