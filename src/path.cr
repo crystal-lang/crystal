@@ -570,7 +570,7 @@ struct Path
   # ```
   #
   # It returns a copy of this instance if it already has POSIX kind. Otherwise
-  # a new instance is created with `Kind::POSIX` and all occurences of
+  # a new instance is created with `Kind::POSIX` and all occurrences of
   # backslash file separators (`\\`) replaced by forward slash (`/`).
   def to_posix : Path
     if posix?

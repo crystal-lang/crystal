@@ -113,7 +113,7 @@ struct Time::Span
 
   # Creates a new `Time::Span` from the *days*, *hours*, *minutes*, *seconds* and *nanoseconds* given
   #
-  # Any time unit can be ommited.
+  # Any time unit can be omitted.
   #
   # ```
   # Time::Span.new(days: 1)                                                   # => 1.00:00:00

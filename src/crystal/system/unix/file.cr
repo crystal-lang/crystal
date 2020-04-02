@@ -108,7 +108,7 @@ module Crystal::System::File
 
   def self.readlink(path) : String
     buf = Bytes.new 256
-    # First pass at 256 bytes handles all normal occurences in 1 system call.
+    # First pass at 256 bytes handles all normal occurrences in 1 system call.
     # Second pass at 1024 bytes handles outliers?
     # Third pass is the max or double what Linux/MacOS can store.
     3.times do |iter|

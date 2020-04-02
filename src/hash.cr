@@ -714,7 +714,7 @@ class Hash(K, V)
             end
 
     # Because we increment the value by one when we store the value
-    # here we have to substract one
+    # here we have to subtract one
     value - 1
   end
 
