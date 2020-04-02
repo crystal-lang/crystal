@@ -2,12 +2,13 @@
 
 ## Language changes
 
-- **(breaking-change)** Exhaustive `case` expression check added, for now it produces warnings. ([#8424](https://github.com/crystal-lang/crystal/pull/8424), thanks @asterite)
+- **(breaking-change)** Exhaustive `case` expression check added, for now it produces warnings. ([#8424](https://github.com/crystal-lang/crystal/pull/8424), [#8962](https://github.com/crystal-lang/crystal/pull/8962), thanks @asterite, @Sija)
+- Let `Proc(T)` be used as a `Proc(Nil)`. ([#8969](https://github.com/crystal-lang/crystal/pull/8969), [#8970](https://github.com/crystal-lang/crystal/pull/8970), thanks @asterite)
 
 ## Standard library
 
 - **(breaking-change)** Replace `Errno`, `WinError`, `IO::Timeout` with `RuntimeError`, `IO::TimeoutError`, `IO::Error`, `File::Error`, `Socket::Error`, and subclasses. ([#8885](https://github.com/crystal-lang/crystal/pull/8885), thanks @waj)
-- **(breaking-change)** Replace `Logger` module in favor of `Log` module. ([#8847](https://github.com/crystal-lang/crystal/pull/8847), thanks @bcardiff)
+- **(breaking-change)** Replace `Logger` module in favor of `Log` module. ([#8847](https://github.com/crystal-lang/crystal/pull/8847), [#8976](https://github.com/crystal-lang/crystal/pull/8976), thanks @bcardiff)
 - **(breaking-change)** Move `Adler32` and `CRC32` to `Digest`. ([#8881](https://github.com/crystal-lang/crystal/pull/8881), thanks @bcardiff)
 - **(breaking-change)** Remove `DL` module. ([#8882](https://github.com/crystal-lang/crystal/pull/8882), thanks @bcardiff)
 - Enable more win32 specs. ([#8683](https://github.com/crystal-lang/crystal/pull/8683), [#8822](https://github.com/crystal-lang/crystal/pull/8822), thanks @straight-shoota)
@@ -27,8 +28,9 @@
 
 ### Text
 
-- **(breaking-change)** Deprecate top-level `with_color` in favor of `Colorize.with`. ([#8892](https://github.com/crystal-lang/crystal/pull/8892), thanks @bcardiff)
+- **(breaking-change)** Deprecate top-level `with_color` in favor of `Colorize.with`. ([#8892](https://github.com/crystal-lang/crystal/pull/8892), [#8958](https://github.com/crystal-lang/crystal/pull/8958), thanks @bcardiff, @oprypin)
 - Add overloads for `String#ljust`, `String#rjust` and `String#center` that take an `IO`. ([#8923](https://github.com/crystal-lang/crystal/pull/8923), thanks @asterite)
+- Add missing `Regex#hash` and `Regex::MatchData#hash`. ([#8986](https://github.com/crystal-lang/crystal/pull/8986), thanks @MakeNowJust)
 - Upgrade Unicode to 13.0.0. ([#8906](https://github.com/crystal-lang/crystal/pull/8906), thanks @Blacksmoke16)
 - Revert deprecation of `String#codepoint_at`. ([#8902](https://github.com/crystal-lang/crystal/pull/8902), thanks @vlazar)
 - Move `Iconv` to `Crystal` namespace. ([#8890](https://github.com/crystal-lang/crystal/pull/8890), thanks @bcardiff)
@@ -36,6 +38,7 @@
 ### Collections
 
 - Fixed make `Range#size` raise on an open range. ([#8829](https://github.com/crystal-lang/crystal/pull/8829), thanks @Sija)
+- Add `Enumerable#empty?`. ([#8960](https://github.com/crystal-lang/crystal/pull/8960), thanks @Sija)
 - **(performance)** Optimized Implementation of `Array#fill` for zero Values. ([#8903](https://github.com/crystal-lang/crystal/pull/8903), thanks @toddsundsted)
 - Refactor `Reflect` to an `Enumerable` private definition. ([#8884](https://github.com/crystal-lang/crystal/pull/8884), thanks @bcardiff)
 
@@ -51,6 +54,7 @@
 ### Time
 
 - **(breaking-change)** Improve `Time::Span` initialization API with mandatory named arguments. ([#8257](https://github.com/crystal-lang/crystal/pull/8257), [#8857](https://github.com/crystal-lang/crystal/pull/8857), thanks @dnamsons, @bcardiff)
+- Add `Time::Span#total_microseconds`. ([#8966](https://github.com/crystal-lang/crystal/pull/8966), thanks @vlazar)
 
 ### Files
 
@@ -61,9 +65,12 @@
 
 ### Networking
 
+- **(breaking-change)** Correctly support WebSocket close codes. ([#8975](https://github.com/crystal-lang/crystal/pull/8975), thanks @RX14)
+- Make `HTTP::Client` return empty `body_io` if content-length is zero. ([#8503](https://github.com/crystal-lang/crystal/pull/8503), thanks @asterite)
 - Fixed `UDP` specs in the case of a local firewall. ([#8817](https://github.com/crystal-lang/crystal/pull/8817), thanks @RX14)
 - Fixed `MIME` spec examples to not collide with actual registry. ([#8795](https://github.com/crystal-lang/crystal/pull/8795), thanks @straight-shoota)
 - Fixed `UNIXServer`, and `HTTP::WebSocket` specs to ensure server is accepting before closing. ([#8755](https://github.com/crystal-lang/crystal/pull/8755), [#8879](https://github.com/crystal-lang/crystal/pull/8879), thanks @bcardiff)
+- Add type annotation to `tls` argument in `HTTP`. ([#8678](https://github.com/crystal-lang/crystal/pull/8678), thanks @j8r)
 
 ### Concurrency
 
@@ -87,6 +94,7 @@
 - Use `CRYSTAL_OPTS` environment variable as default compiler options. ([#8900](https://github.com/crystal-lang/crystal/pull/8900), thanks @bcardiff)
 - Avoid using the default `--exclude-warnings` value if some is specified. ([#8899](https://github.com/crystal-lang/crystal/pull/8899), thanks @bcardiff)
 - Honor `LIBRARY_PATH` as default library path, and allow linking with no explicit `/usr/lib:/usr/local/lib` paths. ([#8948](https://github.com/crystal-lang/crystal/pull/8948), thanks @bcardiff)
+- Fix Windows LLVM globals codegen in non-single-module mode. ([#8978](https://github.com/crystal-lang/crystal/pull/8978), thanks @oprypin)
 - Add support for LLVM 10. ([#8940](https://github.com/crystal-lang/crystal/pull/8940), thanks @RX14)
 - Remove redundant calls to `Object.to_s` in interpolation in compiler's code. ([#8947](https://github.com/crystal-lang/crystal/pull/8947), thanks @veelenga)
 
@@ -104,7 +112,8 @@
 
 ## Others
 
-- CI improvements and housekeeping. ([#8804](https://github.com/crystal-lang/crystal/pull/8804), [#8811](https://github.com/crystal-lang/crystal/pull/8811), thanks @bcardiff, @oprypin)
+- CI improvements and housekeeping. ([#8804](https://github.com/crystal-lang/crystal/pull/8804), [#8811](https://github.com/crystal-lang/crystal/pull/8811), [#8982](https://github.com/crystal-lang/crystal/pull/8982), thanks @bcardiff, @oprypin)
+- Update to Shards 0.10.0. ([#8988](https://github.com/crystal-lang/crystal/pull/8988), thanks @bcardiff)
 - Fixed `pretty_json` sample. ([#8816](https://github.com/crystal-lang/crystal/pull/8816), thanks @asterite)
 
 # 0.33.0 (2020-02-14)
