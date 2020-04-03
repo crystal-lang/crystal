@@ -20,6 +20,13 @@ module JSON
   #   )
   # end
   #
+  # class SecretHouse
+  #   JSON.mapping(
+  #     address: String,
+  #     location: {type: Location, nilable: true, hidden: true},
+  #   )
+  # end
+  #
   # house = House.from_json(%({"address": "Crystal Road 1234", "location": {"lat": 12.3, "lng": 34.5}}))
   # house.address  # => "Crystal Road 1234"
   # house.location # => #<Location:0x10cd93d80 @lat=12.3, @lng=34.5>
@@ -28,6 +35,11 @@ module JSON
   # houses = Array(House).from_json(%([{"address": "Crystal Road 1234", "location": {"lat": 12.3, "lng": 34.5}}]))
   # houses.size    # => 1
   # houses.to_json # => %([{"address":"Crystal Road 1234","location":{"lat":12.3,"lng":34.5}}])
+  #
+  # secret_house = SecretHouse.from_json(%({"address": "Crystal Road 1234", "location": {"lat": 12.3, "lng": 34.5}}))
+  # secret_house.to_json   # => %({"address":"Crystal Road 1234","location":{"lat":12.3,"lng":34.5}})
+  # secret_house.to_safe   # => %({"address":"Crystal Road 1234"})
+  # secret_house.to_unsafe # => %({"address":"Crystal Road 1234","location":{"lat":12.3,"lng":34.5}})
   # ```
   #
   # ### Usage
@@ -51,6 +63,7 @@ module JSON
   # * **setter**: if `true`, will generate a setter for the variable, `true` by default
   # * **getter**: if `true`, will generate a getter for the variable, `true` by default
   # * **presence**: if `true`, a `{{key}}_present?` method will be generated when the key was present (even if it has a `null` value), `false` by default
+  # * **hidden**: if `true`, `to_safe` function will generate a JSON document by omitting the hidden key, keep in mind this doesn't apply to the `to_unsafe`/`to_json` functions.
   #
   # This macro by default defines getters and setters for each variable (this can be overrided with *setter* and *getter*).
   # The mapping doesn't define a constructor accepting these variables as arguments, but you can provide an overload.
@@ -221,6 +234,61 @@ module JSON
             end
           {% end %}
         {% end %}
+      end
+    end
+
+    def to_unsafe
+      to_json
+    end
+
+    def to_safe
+      string = JSON.build do |json|
+        json.object do
+          {% for key, value in _properties_ %}
+            if !{{value[:hidden]}}
+              _{{value[:key_id]}} = @{{value[:key_id]}}
+    
+              {% unless value[:emit_null] %}
+                unless _{{value[:key_id]}}.nil?
+              {% end %}
+  
+              json.field({{value[:key] || value[:key_id].stringify}}) do
+                {% if value[:root] %}
+                  {% if value[:emit_null] %}
+                    if _{{value[:key_id]}}.nil?
+                      nil.to_json(json)
+                    else
+                  {% end %}
+  
+                  json.object do
+                    json.field({{value[:root]}}) do
+                {% end %}
+  
+                {% if value[:converter] %}
+                  if _{{value[:key_id]}}
+                    {{ value[:converter] }}.to_json(_{{value[:key_id]}}, json)
+                  else
+                    nil.to_json(json)
+                  end
+                {% else %}
+                  _{{value[:key_id]}}.to_json(json)
+                {% end %}
+  
+                {% if value[:root] %}
+                  {% if value[:emit_null] %}
+                    end
+                  {% end %}
+                    end
+                  end
+                {% end %}
+              end
+  
+              {% unless value[:emit_null] %}
+                end
+              {% end %}
+            end
+          {% end %}
+        end
       end
     end
   end
