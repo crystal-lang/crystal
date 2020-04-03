@@ -86,6 +86,14 @@ describe "Hash" do
       b = { {1 => 2} => 3 }
       a.should eq(b)
     end
+
+    it "compares recursive" do
+      a = {} of RecursiveHash => RecursiveHash
+      b = {} of RecursiveHash => RecursiveHash
+      a[b] = b
+      b[a] = a
+      (a == b).should be_true
+    end
   end
 
   describe "[]" do
@@ -870,15 +878,25 @@ describe "Hash" do
     h.should eq({5 => 6})
   end
 
-  it "computes hash" do
-    h1 = { {1 => 2} => {3 => 4} }
-    h2 = { {1 => 2} => {3 => 4} }
-    h1.hash.should eq(h2.hash)
+  describe "hash" do
+    it "hashes" do
+      h1 = { {1 => 2} => {3 => 4} }
+      h2 = { {1 => 2} => {3 => 4} }
+      h1.hash.should eq(h2.hash)
 
-    h3 = {1 => 2, 3 => 4}
-    h4 = {3 => 4, 1 => 2}
+      h3 = {1 => 2, 3 => 4}
+      h4 = {3 => 4, 1 => 2}
 
-    h3.hash.should eq(h4.hash)
+      h3.hash.should eq(h4.hash)
+    end
+
+    it "hashes recursive" do
+      a = {} of RecursiveHash => RecursiveHash
+      b = {} of RecursiveHash => RecursiveHash
+      a[b] = b
+      b[a] = a
+      a.hash.should eq(b.hash)
+    end
   end
 
   it "fetches from empty hash with default value" do

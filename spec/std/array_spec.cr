@@ -1,6 +1,6 @@
 require "spec"
 
-private alias RecursiveArray = Array(RecursiveArray)
+private alias RecursiveArray = Array(RecursiveArray) | Int32
 
 private class BadSortingClass
   include Comparable(self)
@@ -71,6 +71,16 @@ describe "Array" do
       (a == b).should be_true
       (b == c).should be_false
       (a == d).should be_false
+    end
+
+    it "compares recurisve" do
+      a = [] of RecursiveArray
+      b = [] of RecursiveArray
+      a << b
+      b << a
+      (a == b).should be_true
+      b << 1
+      (a == b).should be_false
     end
   end
 
@@ -807,10 +817,20 @@ describe "Array" do
     end
   end
 
-  it "does hash" do
-    a = [1, 2, [3]]
-    b = [1, 2, [3]]
-    a.hash.should eq(b.hash)
+  describe "hash" do
+    it "hashes" do
+      a = [1, 2, [3]]
+      b = [1, 2, [3]]
+      a.hash.should eq(b.hash)
+    end
+
+    it "hashes recursive" do
+      a = [] of RecursiveArray
+      b = [] of RecursiveArray
+      a << b
+      b << a
+      a.hash.should eq(b.hash)
+    end
   end
 
   describe "index" do

@@ -1754,11 +1754,16 @@ class Hash(K, V)
 
   # Compares with *other*. Returns `true` if all key-value pairs are the same.
   def ==(other : Hash)
+    return true if same?(other)
     return false unless size == other.size
-    each do |key, value|
-      entry = other.find_entry(key)
-      return false unless entry && entry.value == value
+
+    exec_recursive_pair(:==, other) do
+      each do |key, value|
+        entry = other.find_entry(key)
+        return false unless entry && entry.value == value
+      end
     end
+
     true
   end
 
@@ -1766,16 +1771,18 @@ class Hash(K, V)
   def hash(hasher)
     # The hash value must be the same regardless of the
     # order of the keys.
-    result = hasher.result
+    initial_result = result = hasher.result
 
-    each do |key, value|
-      copy = hasher
-      copy = key.hash(copy)
-      copy = value.hash(copy)
-      result &+= copy.result
+    executed = exec_recursive_outer(:hash) do
+      each do |key, value|
+        copy = hasher
+        copy = key.hash(copy)
+        copy = value.hash(copy)
+        result &+= copy.result
+      end
     end
 
-    result.hash(hasher)
+    (executed ? result : initial_result).hash(hasher)
   end
 
   # Duplicates a `Hash`.

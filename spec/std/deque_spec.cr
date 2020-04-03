@@ -34,7 +34,7 @@ private class DequeTester
   end
 end
 
-private alias RecursiveDeque = Deque(RecursiveDeque)
+private alias RecursiveDeque = Deque(RecursiveDeque) | Int32
 
 describe "Deque" do
   describe "implementation" do
@@ -144,6 +144,16 @@ describe "Deque" do
       (a == b).should be_true
       (b == c).should be_false
       (a == d).should be_false
+    end
+
+    it "compares recursive" do
+      a = Deque(RecursiveDeque).new
+      b = Deque(RecursiveDeque).new
+      a << b
+      b << a
+      (a == b).should be_true
+      b << 1
+      (a == b).should be_false
     end
   end
 
@@ -332,10 +342,20 @@ describe "Deque" do
     end
   end
 
-  it "does hash" do
-    a = Deque{1, 2, Deque{3}}
-    b = Deque{1, 2, Deque{3}}
-    a.hash.should eq(b.hash)
+  describe "hash" do
+    it "hashes" do
+      a = Deque{1, 2, Deque{3}}
+      b = Deque{1, 2, Deque{3}}
+      a.hash.should eq(b.hash)
+    end
+
+    it "hashes recursive" do
+      a = Deque(RecursiveDeque).new
+      b = Deque(RecursiveDeque).new
+      a << b
+      b << a
+      a.hash.should eq(b.hash)
+    end
   end
 
   describe "insert" do
