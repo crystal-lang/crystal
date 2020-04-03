@@ -394,7 +394,7 @@ class Process
     close_io @error
   end
 
-  # Ask process for terminate gracefully
+  # Asks the process to terminate gracefully
   def terminate
     signal Signal::TERM
   end
