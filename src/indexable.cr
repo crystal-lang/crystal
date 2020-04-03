@@ -434,16 +434,6 @@ module Indexable(T)
     true
   end
 
-  # Returns the first element of `self` if it's not empty, or raises `IndexError`.
-  #
-  # ```
-  # ([1, 2, 3]).first   # => 1
-  # ([] of Int32).first # raises IndexError
-  # ```
-  def first
-    first { raise IndexError.new }
-  end
-
   # Returns the first element of `self` if it's not empty, or the given block's value.
   #
   # ```
@@ -452,16 +442,6 @@ module Indexable(T)
   # ```
   def first
     size == 0 ? yield : unsafe_fetch(0)
-  end
-
-  # Returns the first element of `self` if it's not empty, or `nil`.
-  #
-  # ```
-  # ([1, 2, 3]).first?   # => 1
-  # ([] of Int32).first? # => nil
-  # ```
-  def first?
-    first { nil }
   end
 
   # See `Object#hash(hasher)`
