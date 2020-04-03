@@ -204,6 +204,19 @@ module Indexable(T)
     ItemIterator(self, T).new(self)
   end
 
+  # Same as `#map`, but returns an `Array` with results in reverse.
+  #
+  # ```
+  # [1, 2, 3].reverse_map { |i| i * 10 } # => [30, 20, 10]
+  # ```
+  def reverse_map(& : T -> U) forall U
+    ary = [] of U
+    (size - 1).downto(0) do |i|
+      ary << yield unsafe_fetch(i)
+    end
+    ary
+  end
+
   # Calls the given block once for `count` number of elements in `self`
   # starting from index `start`, passing each element as a parameter.
   #

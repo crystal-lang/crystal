@@ -236,6 +236,16 @@ struct StaticArray(T, N)
     self
   end
 
+  # Returns a new static array where elements are mapped in reverse order by the given block.
+  #
+  # ```
+  # slice = StaticArray[1, 2.5, "a"]
+  # slice.reverse_map &.to_s # => StaticArray["a", "2.5", "1"]
+  # ```
+  def reverse_map(&block : T -> U) forall U
+    StaticArray(U, N).new { |i| yield to_unsafe[size - i - 1] }
+  end
+
   # Returns a slice that points to the elements of this static array.
   # Changes made to the returned slice also affect this static array.
   #

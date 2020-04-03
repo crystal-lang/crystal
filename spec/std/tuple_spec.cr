@@ -219,6 +219,12 @@ describe "Tuple" do
     tuple2.should eq({11, 12, 14, 15})
   end
 
+  it "does reverse_map" do
+    tuple = {1, 2, 3}
+    tuple.reverse_map { |x| x * 2 }.should eq({6, 4, 2})
+    tuple.should eq({1, 2, 3})
+  end
+
   it "does reverse" do
     {1, 2.5, "a", 'c'}.reverse.should eq({'c', "a", 2.5, 1})
   end

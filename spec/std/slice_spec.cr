@@ -422,6 +422,12 @@ describe "Slice" do
     a.to_unsafe.should eq(b.to_unsafe)
   end
 
+  it "does reverse_map" do
+    a = Slice[1, 2, 3]
+    b = a.reverse_map { |x| x * 2 }
+    b.should eq(Slice[6, 4, 2])
+  end
+
   it "does map_with_index" do
     a = Slice[1, 1, 2, 2]
     b = a.map_with_index { |e, i| e + i }

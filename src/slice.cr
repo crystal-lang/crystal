@@ -292,6 +292,16 @@ struct Slice(T)
     self
   end
 
+  # Returns a new slice where elements are mapped in reverse order by the given block.
+  #
+  # ```
+  # slice = Slice[1, 2.5, "a"]
+  # slice.reverse_map &.to_s # => Slice["a", "2.5", "1"]
+  # ```
+  def reverse_map(*, read_only = false, &block : T -> U) forall U
+    Slice.new(size, read_only: read_only) { |i| yield @pointer[size - i - 1] }
+  end
+
   def shuffle!(random = Random::DEFAULT)
     check_writable
 

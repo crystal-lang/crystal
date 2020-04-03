@@ -1596,6 +1596,11 @@ class Array(T)
     self
   end
 
+  # Optimized version of `Enumerable#reverse_map`.
+  def reverse_map(&block : T -> U) forall U
+    Array(U).new(size) { |i| yield @buffer[size - i - 1] }
+  end
+
   def rotate!(n = 1)
     return self if size == 0
     n %= size

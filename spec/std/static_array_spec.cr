@@ -109,6 +109,12 @@ describe "StaticArray" do
     a[2].should eq(1)
   end
 
+  it "does reverse_map" do
+    a = StaticArray[0, 1, 2]
+    b = a.reverse_map { |e| e * 2 }
+    b.should eq(StaticArray[4, 2, 0])
+  end
+
   it "does map" do
     a = StaticArray[0, 1, 2]
     b = a.map { |e| e * 2 }

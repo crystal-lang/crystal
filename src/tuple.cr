@@ -475,6 +475,22 @@ struct Tuple
     nil
   end
 
+  # Returns a new tuple where elements are reverse mapped by the given block.
+  #
+  # ```
+  # tuple = {1, 2.5, "a"}
+  # tuple.reverse_map &.to_s # => {"a", "2.5", "1"}
+  # ```
+  def reverse_map
+    {% begin %}
+      Tuple.new(
+        {% for i in 0...T.size %}
+          (yield self[{{T.size - i - 1}}]),
+        {% end %}
+      )
+   {% end %}
+  end
+
   # Returns the first element of this tuple. Doesn't compile
   # if the tuple is empty.
   #

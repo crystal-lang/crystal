@@ -924,6 +924,12 @@ describe "Array" do
     a.should eq([2, 4, 6])
   end
 
+  it "does reverse_map" do
+    a = [1, 2, 3]
+    a.reverse_map { |x| x * 2 }.should eq([6, 4, 2])
+    a.should eq([1, 2, 3])
+  end
+
   describe "pop" do
     it "pops when non empty" do
       a = [1, 2, 3]
