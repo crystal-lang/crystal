@@ -479,18 +479,23 @@ module Enumerable(T)
     if_none
   end
 
+  # Returns the first element in the collection,
+  # or the given block's value.
+  def first
+    each { |e| return e }
+    yield
+  end
+
   # Returns the first element in the collection. Raises `Enumerable::EmptyError`
   # if the collection is empty.
   def first
-    each { |e| return e }
-    raise Enumerable::EmptyError.new
+    first { raise Enumerable::EmptyError.new }
   end
 
   # Returns the first element in the collection.
   # When the collection is empty, returns `nil`.
   def first?
-    each { |e| return e }
-    nil
+    first { nil }
   end
 
   # Returns a new array with the concatenated results of running the block
