@@ -134,6 +134,11 @@ def assert_warning(code, message, inject_primitives = true)
   warning_failures[0].should start_with(message)
 end
 
+def assert_no_warnings(code, inject_primitives = true)
+  warning_failures = warnings_result(code, inject_primitives)
+  warning_failures.size.should eq(0)
+end
+
 def assert_macro(macro_args, macro_body, call_args, expected, expected_pragmas = nil, flags = nil)
   assert_macro(macro_args, macro_body, expected, expected_pragmas, flags) { call_args }
 end

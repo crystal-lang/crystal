@@ -135,7 +135,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
 
     if created_new_type && superclass
       if node.struct? != superclass.struct?
-        node.raise "can't make #{node.struct? ? "struct" : "class"} '#{node.name}' inherit #{superclass.type_desc} '#{superclass.to_s}'"
+        node.raise "can't make #{node.struct? ? "struct" : "class"} '#{node.name}' inherit #{superclass.type_desc} '#{superclass}'"
       end
 
       if superclass.struct? && !superclass.abstract?
@@ -185,6 +185,8 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
           type.extern = true
         when @program.packed_annotation
           type.packed = true
+        else
+          # not a built-in annotation
         end
       end
 
@@ -326,7 +328,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
     end
 
     node.doc ||= annotations_doc(annotations)
-    check_ditto node
+    check_ditto node, node.location
 
     is_instance_method = false
 
@@ -349,6 +351,8 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
                       receiver.raise "can't define method in generic instance #{metaclass}"
                     when GenericModuleInstanceMetaclassType
                       receiver.raise "can't define method in generic instance #{metaclass}"
+                    else
+                      # go on
                     end
                     metaclass
                   end
@@ -458,6 +462,8 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
         type.add_link_annotation(LinkAnnotation.from(ann))
       when @program.call_convention_annotation
         type.call_convention = parse_call_convention(ann, type.call_convention)
+      else
+        # not a built-in annotation
       end
       type.add_annotation(annotation_type, ann)
     end
@@ -672,7 +678,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
 
       const_member = enum_type.add_constant member
       const_member.doc = member.doc
-      check_ditto const_member
+      check_ditto const_member, member.location
 
       if member_location = member.location
         const_member.add_location(member_location)
@@ -754,7 +760,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
     const = Const.new(@program, scope, name, value)
     const.private = true if target.visibility.private?
 
-    check_ditto node
+    check_ditto node, node.location
     attach_doc const, node
 
     scope.types[name] = const
@@ -807,6 +813,8 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
       # Don't give an error yet: wait to see if the
       # call doesn't resolve to a method/macro
       return false
+    else
+      # go on
     end
 
     node.raise "can't apply visibility modifier"
@@ -851,7 +859,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
     end
 
     node.doc ||= annotations_doc(annotations)
-    check_ditto node
+    check_ditto node, node.location
 
     # Copy call convention from lib, if any
     scope = current_type
@@ -1056,14 +1064,18 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
     end
   end
 
-  def check_ditto(node : Def | Assign | FunDef | Const) : Nil
+  def check_ditto(node : Def | Assign | FunDef | Const, location : Location?) : Nil
     return if !@program.wants_doc?
     stripped_doc = node.doc.try &.strip
     if stripped_doc == ":ditto:"
       node.doc = @last_doc
     elsif stripped_doc == "ditto"
-      # TODO: remove after 0.33.0
-      @program.warning_failures << "`ditto` is no longer supported. Use `:ditto:` instead"
+      # TODO: remove after 0.34.0
+      if location
+        # Show one line above to highlight the ditto line
+        location = Location.new(location.filename, location.line_number - 1, location.column_number)
+      end
+      @program.report_warning_at location, "`ditto` is no longer supported. Use `:ditto:` instead"
       node.doc = @last_doc
     else
       @last_doc = node.doc

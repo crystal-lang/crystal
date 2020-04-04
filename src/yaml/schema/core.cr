@@ -80,30 +80,30 @@ module YAML::Schema::Core
          .starts_with?("+0x"),
          .starts_with?("-0x")
       value = string.to_i64?(base: 16, prefix: true)
-      return value || string
+      value || string
     when .starts_with?("0."),
          .starts_with?('.')
       value = parse_float?(string)
-      return value || string
+      value || string
     when .starts_with?('0')
       return 0_i64 if string.size == 1
       value = string.to_i64?(base: 8, prefix: true, leading_zero_is_octal: true)
-      return value || string
+      value || string
     when .starts_with?('-'),
          .starts_with?('+')
       value = parse_number?(string)
-      return value || string
+      value || string
+    else
+      if string[0].ascii_number?
+        value = parse_number?(string)
+        return value if value
+
+        value = parse_time?(string)
+        return value if value
+      end
+
+      string
     end
-
-    if string[0].ascii_number?
-      value = parse_number?(string)
-      return value if value
-
-      value = parse_time?(string)
-      return value if value
-    end
-
-    string
   end
 
   # Returns whether a string is reserved and must non be output
@@ -288,6 +288,8 @@ module YAML::Schema::Core
       yield source.value
     when "tag:yaml.org,2002:timestamp"
       yield parse_time(source.value, source.location)
+    else
+      # not a tag we support
     end
   end
 

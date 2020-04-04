@@ -172,7 +172,7 @@ jobs:
       - run: |
           git clone https://github.com/crystal-lang/distribution-scripts.git ~/distribution-scripts
           cd ~/distribution-scripts
-          git checkout 70a3f17810d0460b4a4c9810f1024edcda1e9321
+          git checkout cfe843ff938697174afea976f4499fef806b5286
       # persist relevant information for build process
       - run: |
           cd ~/distribution-scripts
@@ -326,6 +326,8 @@ jobs:
       - run:
           name: Setup environment
           command: |
+            brew unlink python@2 || echo "ignore"
+
             ruby-install ruby 2.5.6
 
             brew install pkgconfig libtool

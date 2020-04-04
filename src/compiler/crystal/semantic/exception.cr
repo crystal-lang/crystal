@@ -240,6 +240,8 @@ module Crystal
         io << "'self' was used before initializing instance variable '#{nil_reason.name}', rendering it nilable"
       when :initialized_in_rescue
         io << "Instance variable '#{nil_reason.name}' is initialized inside a begin-rescue, so it can potentially be left uninitialized if an exception is raised and rescued"
+      else
+        # TODO: we should probably change nil_reason to be an enum so we don't need this else branch
       end
     end
 

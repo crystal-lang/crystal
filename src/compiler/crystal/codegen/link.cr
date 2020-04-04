@@ -105,7 +105,8 @@ module Crystal
     end
 
     private def lib_flags_posix
-      library_path = ["/usr/lib", "/usr/local/lib"]
+      library_path = ENV["LIBRARY_PATH"]?.try(&.split(':', remove_empty: true)) ||
+                     ["/usr/lib", "/usr/local/lib"]
       has_pkg_config = nil
 
       String.build do |flags|

@@ -250,6 +250,8 @@ class Crystal::Doc::Method
     end
 
     case return_type
+    when Nil
+      # Nothing to do
     when ASTNode
       io << " : "
       node_to_html return_type, io, links: links

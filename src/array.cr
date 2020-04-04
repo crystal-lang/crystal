@@ -861,7 +861,17 @@ class Array(T)
   # a.fill(9) # => [9, 9, 9]
   # ```
   def fill(value : T)
-    fill { value }
+    {% if Int::Primitive.union_types.includes?(T) || Float::Primitive.union_types.includes?(T) %}
+      if value == 0
+        to_unsafe.clear(size)
+
+        self
+      else
+        fill { value }
+      end
+    {% else %}
+      fill { value }
+    {% end %}
   end
 
   # Replaces every element in `self`, starting at *from*, with the given *value*. Returns `self`.
@@ -873,7 +883,21 @@ class Array(T)
   # a.fill(9, 2) # => [1, 2, 9, 9, 9]
   # ```
   def fill(value : T, from : Int)
-    fill(from) { value }
+    {% if Int::Primitive.union_types.includes?(T) || Float::Primitive.union_types.includes?(T) %}
+      if value == 0
+        from += size if from < 0
+
+        raise IndexError.new unless 0 <= from < size
+
+        (to_unsafe + from).clear(size - from)
+
+        self
+      else
+        fill(from) { value }
+      end
+    {% else %}
+      fill(from) { value }
+    {% end %}
   end
 
   # Replaces every element in `self`, starting at *from* and only *count* times,
@@ -886,7 +910,23 @@ class Array(T)
   # a.fill(9, 2, 2) # => [1, 2, 9, 9, 5]
   # ```
   def fill(value : T, from : Int, count : Int)
-    fill(from, count) { value }
+    {% if Int::Primitive.union_types.includes?(T) || Float::Primitive.union_types.includes?(T) %}
+      if value == 0
+        return self if count <= 0
+
+        from += size if from < 0
+
+        raise IndexError.new unless 0 <= from < size && from + count <= size
+
+        (to_unsafe + from).clear(count)
+
+        self
+      else
+        fill(from, count) { value }
+      end
+    {% else %}
+      fill(from, count) { value }
+    {% end %}
   end
 
   # Replaces every element in *range* with *value*. Returns `self`.
@@ -898,7 +938,17 @@ class Array(T)
   # a.fill(9, 2..3) # => [1, 2, 9, 9, 5]
   # ```
   def fill(value : T, range : Range)
-    fill(range) { value }
+    {% if Int::Primitive.union_types.includes?(T) || Float::Primitive.union_types.includes?(T) %}
+      if value == 0
+        fill(value, *Indexable.range_to_index_and_count(range, size))
+
+        self
+      else
+        fill(range) { value }
+      end
+    {% else %}
+      fill(range) { value }
+    {% end %}
   end
 
   # Returns the first *n* elements of the array.

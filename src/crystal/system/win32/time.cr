@@ -38,7 +38,7 @@ module Crystal::System::Time
   @@performance_frequency : Int64 = begin
     ret = LibC.QueryPerformanceFrequency(out frequency)
     if ret == 0
-      raise WinError.new("QueryPerformanceFrequency")
+      raise RuntimeError.from_winerror("QueryPerformanceFrequency")
     end
 
     frequency
@@ -46,7 +46,7 @@ module Crystal::System::Time
 
   def self.monotonic : {Int64, Int32}
     if LibC.QueryPerformanceCounter(out ticks) == 0
-      raise WinError.new("QueryPerformanceCounter")
+      raise RuntimeError.from_winerror("QueryPerformanceCounter")
     end
 
     {ticks // @@performance_frequency, (ticks.remainder(@@performance_frequency) * NANOSECONDS_PER_SECOND / @@performance_frequency).to_i32}

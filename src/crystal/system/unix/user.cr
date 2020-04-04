@@ -22,7 +22,7 @@ module Crystal::System::User
       ret = LibC.getpwnam_r(username, pwd_pointer, buf, buf.size, pointerof(pwd_pointer))
     end
 
-    raise Errno.new("getpwnam_r") if ret != 0
+    raise RuntimeError.from_errno("getpwnam_r") if ret != 0
 
     from_struct(pwd) if pwd_pointer
   end
@@ -42,7 +42,7 @@ module Crystal::System::User
       ret = LibC.getpwuid_r(id, pwd_pointer, buf, buf.size, pointerof(pwd_pointer))
     end
 
-    raise Errno.new("getpwuid_r") if ret != 0
+    raise RuntimeError.from_errno("getpwuid_r") if ret != 0
 
     from_struct(pwd) if pwd_pointer
   end

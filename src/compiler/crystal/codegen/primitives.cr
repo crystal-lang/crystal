@@ -128,6 +128,7 @@ class Crystal::CodeGenVisitor
     when ">=" then return codegen_binary_op_gte(t1, t2, p1, p2)
     when "==" then return codegen_binary_op_eq(t1, t2, p1, p2)
     when "!=" then return codegen_binary_op_ne(t1, t2, p1, p2)
+    else # go on
     end
 
     tmax, p1, p2 = codegen_binary_extend_int(t1, t2, p1, p2)
@@ -1277,32 +1278,45 @@ class Crystal::CodeGenVisitor
   def void_ptr_type_descriptor
     void_ptr_type_descriptor_name = "\u{1}??_R0PEAX@8"
 
-    @llvm_mod.globals[void_ptr_type_descriptor_name]? || begin
+    if existing = @llvm_mod.globals[void_ptr_type_descriptor_name]?
+      return existing
+    end
+
+    type_descriptor = llvm_context.struct([
+      llvm_context.void_pointer.pointer,
+      llvm_context.void_pointer,
+      llvm_context.int8.array(6),
+    ])
+
+    if !@main_mod.globals[void_ptr_type_descriptor_name]?
       base_type_descriptor = external_constant(llvm_context.void_pointer, "\u{1}??_7type_info@@6B@")
 
       # .PEAX is void*
-      void_ptr_type_descriptor = @llvm_mod.globals.add(
-        llvm_context.struct([
-          llvm_context.void_pointer.pointer,
-          llvm_context.void_pointer,
-          llvm_context.int8.array(6),
-        ]), void_ptr_type_descriptor_name)
+      void_ptr_type_descriptor = @main_mod.globals.add(
+        type_descriptor, void_ptr_type_descriptor_name)
       void_ptr_type_descriptor.initializer = llvm_context.const_struct [
         base_type_descriptor,
         llvm_context.void_pointer.null,
         llvm_context.const_string(".PEAX"),
       ]
-
-      void_ptr_type_descriptor
     end
+
+    # if @llvm_mod == @main_mod, this will find the previously created void_ptr_type_descriptor
+    external_constant(type_descriptor, void_ptr_type_descriptor_name)
   end
 
   def void_ptr_throwinfo
     void_ptr_throwinfo_name = "_TI1PEAX"
 
-    @llvm_mod.globals[void_ptr_throwinfo_name]? || begin
+    if existing = @llvm_mod.globals[void_ptr_throwinfo_name]?
+      return existing
+    end
+
+    eh_throwinfo = llvm_context.struct([llvm_context.int32, llvm_context.int32, llvm_context.int32, llvm_context.int32])
+
+    if !@main_mod.globals[void_ptr_throwinfo_name]?
       catchable_type = llvm_context.struct([llvm_context.int32, llvm_context.int32, llvm_context.int32, llvm_context.int32, llvm_context.int32, llvm_context.int32, llvm_context.int32])
-      void_ptr_catchable_type = @llvm_mod.globals.add(
+      void_ptr_catchable_type = @main_mod.globals.add(
         catchable_type, "_CT??_R0PEAX@88")
       void_ptr_catchable_type.initializer = llvm_context.const_struct [
         int32(1),
@@ -1315,15 +1329,14 @@ class Crystal::CodeGenVisitor
       ]
 
       catchable_type_array = llvm_context.struct([llvm_context.int32, llvm_context.int32.array(1)])
-      catchable_void_ptr = @llvm_mod.globals.add(
+      catchable_void_ptr = @main_mod.globals.add(
         catchable_type_array, "_CTA1PEAX")
       catchable_void_ptr.initializer = llvm_context.const_struct [
         int32(1),
         llvm_context.int32.const_array([sub_image_base(void_ptr_catchable_type)]),
       ]
 
-      eh_throwinfo = llvm_context.struct([llvm_context.int32, llvm_context.int32, llvm_context.int32, llvm_context.int32])
-      void_ptr_throwinfo = @llvm_mod.globals.add(
+      void_ptr_throwinfo = @main_mod.globals.add(
         eh_throwinfo, void_ptr_throwinfo_name)
       void_ptr_throwinfo.initializer = llvm_context.const_struct [
         int32(0),
@@ -1331,9 +1344,10 @@ class Crystal::CodeGenVisitor
         int32(0),
         sub_image_base(catchable_void_ptr),
       ]
-
-      void_ptr_throwinfo
     end
+
+    # if @llvm_mod == @main_mod, this will find the previously created void_ptr_throwinfo
+    external_constant(eh_throwinfo, void_ptr_throwinfo_name)
   end
 
   def external_constant(type, name)

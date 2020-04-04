@@ -178,7 +178,7 @@ abstract class OpenSSL::SSL::Socket < IO
 
         # ret == 0, retry, shutdown is not complete yet
       end
-    rescue IO::Error | Errno
+    rescue IO::Error
     ensure
       @bio.io.close if @sync_close
     end

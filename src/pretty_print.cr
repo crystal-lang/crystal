@@ -3,7 +3,7 @@
 #
 # ### References
 #
-# * [Ruby's prettyprint.rb](https://github.com/ruby/ruby/blob/trunk/lib/prettyprint.rb)
+# * [Ruby's prettyprint.rb](https://github.com/ruby/ruby/blob/master/lib/prettyprint.rb)
 # * [Christian Lindig, Strictly Pretty, March 2000](http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.34.2200)
 # * [Philip Wadler, A prettier printer, March 1998](http://homepages.inf.ed.ac.uk/wadler/topics/language-design.html#prettier)
 class PrettyPrint

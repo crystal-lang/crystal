@@ -1,7 +1,14 @@
 # :nodoc:
 class ECR::Lexer
   class Token
-    property type : Symbol
+    enum Type
+      String
+      Output
+      Control
+      EOF
+    end
+
+    property type : Type
     property value : String
     property line_number : Int32
     property column_number : Int32
@@ -59,6 +66,8 @@ class ECR::Lexer
 
         return consume_control(is_output, is_escape)
       end
+    else
+      # consume string
     end
 
     consume_string
@@ -77,11 +86,13 @@ class ECR::Lexer
         if peek_next_char == '%'
           break
         end
+      else
+        # keep going
       end
       next_char
     end
 
-    @token.type = :STRING
+    @token.type = :string
     @token.value = string_range(start_pos)
     @token
   end
@@ -128,11 +139,19 @@ class ECR::Lexer
           setup_control_token(start_pos, is_escape)
           break
         end
+      else
+        # keep going
       end
       next_char
     end
 
-    @token.type = is_escape ? :STRING : (is_output ? :OUTPUT : :CONTROL)
+    if is_escape
+      @token.type = :string
+    elsif is_output
+      @token.type = :output
+    else
+      @token.type = :control
+    end
     @token
   end
 

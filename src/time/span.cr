@@ -113,7 +113,7 @@ struct Time::Span
 
   # Creates a new `Time::Span` from the *days*, *hours*, *minutes*, *seconds* and *nanoseconds* given
   #
-  # Any time unit can be ommited.
+  # Any time unit can be omitted.
   #
   # ```
   # Time::Span.new(days: 1)                                                   # => 1.00:00:00
@@ -215,14 +215,19 @@ struct Time::Span
     to_i.to_f + (nanoseconds.to_f / NANOSECONDS_PER_SECOND)
   end
 
-  # Converts to a number of nanoseconds.
-  def total_nanoseconds : Float64
-    (to_i.to_f * NANOSECONDS_PER_SECOND) + nanoseconds
-  end
-
   # Converts to a number of milliseconds.
   def total_milliseconds : Float64
     total_nanoseconds / NANOSECONDS_PER_MILLISECOND
+  end
+
+  # Converts to a number of microseconds.
+  def total_microseconds : Float64
+    total_nanoseconds / NANOSECONDS_PER_MICROSECOND
+  end
+
+  # Converts to a number of nanoseconds.
+  def total_nanoseconds : Float64
+    (to_i.to_f * NANOSECONDS_PER_SECOND) + nanoseconds
   end
 
   # Alias of `total_seconds`.

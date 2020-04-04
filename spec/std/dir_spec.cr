@@ -1,5 +1,4 @@
 require "./spec_helper"
-require "../support/errno"
 
 private def unset_tempdir
   {% if flag?(:windows) %}
@@ -63,14 +62,14 @@ describe "Dir" do
     end
 
     it "tests empty? on nonexistent directory" do
-      expect_raises_errno(Errno::ENOENT, "Error determining size of '#{datapath("foo", "bar")}'") do
+      expect_raises(File::NotFoundError, "Error opening directory: '#{datapath("foo", "bar").inspect_unquoted}'") do
         Dir.empty?(datapath("foo", "bar"))
       end
     end
 
     # TODO: do we even want this?
     pending_win32 "tests empty? on a directory path to a file" do
-      expect_raises_errno(Errno::ENOTDIR, "Error determining size of '#{datapath("dir", "f1.txt", "/")}'") do
+      expect_raises(File::Error, "Error opening directory: '#{datapath("dir", "f1.txt", "/").inspect_unquoted}'") do
         Dir.empty?(datapath("dir", "f1.txt", "/"))
       end
     end
@@ -86,7 +85,7 @@ describe "Dir" do
   end
 
   it "tests mkdir with an existing path" do
-    expect_raises_errno(Errno::EEXIST, "Unable to create directory '#{datapath}'") do
+    expect_raises(File::AlreadyExistsError, "Unable to create directory: '#{datapath.inspect_unquoted}'") do
       Dir.mkdir(datapath, 0o700)
     end
   end
@@ -104,7 +103,7 @@ describe "Dir" do
 
     context "path exists" do
       it "fails when path is a file" do
-        expect_raises_errno(Errno::EEXIST, "Unable to create directory '#{datapath("test_file.txt")}': File exists") do
+        expect_raises(File::AlreadyExistsError, "Unable to create directory: '#{datapath("test_file.txt").inspect_unquoted}': File exists") do
           Dir.mkdir_p(datapath("test_file.txt"))
         end
       end
@@ -119,14 +118,14 @@ describe "Dir" do
 
   it "tests rmdir with an nonexistent path" do
     with_tempfile("nonexistant") do |path|
-      expect_raises_errno(Errno::ENOENT, "Unable to remove directory '#{path}'") do
+      expect_raises(File::NotFoundError, "Unable to remove directory: '#{path.inspect_unquoted}'") do
         Dir.rmdir(path)
       end
     end
   end
 
   it "tests rmdir with a path that cannot be removed" do
-    expect_raises_errno(Errno::ENOTEMPTY, "Unable to remove directory '#{datapath}'") do
+    expect_raises(File::Error, "Unable to remove directory: '#{datapath.inspect_unquoted}'") do
       Dir.rmdir(datapath)
     end
   end
@@ -372,7 +371,7 @@ describe "Dir" do
     end
 
     it "raises" do
-      expect_raises_errno(Errno::ENOENT, {{ flag?(:win32) ? /SetCurrentDirectory: .* No such file or directory/ : "Error while changing directory to '/nope'" }}) do
+      expect_raises(File::NotFoundError, "Error while changing directory: '/nope'") do
         Dir.cd("/nope")
       end
     end

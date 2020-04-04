@@ -1458,20 +1458,20 @@ module Crystal
         case arg = args.first?
         when StringLiteral, SymbolLiteral
           if method == "=="
-            return BoolLiteral.new(@value == arg.value)
+            BoolLiteral.new(@value == arg.value)
           else
-            return BoolLiteral.new(@value != arg.value)
+            BoolLiteral.new(@value != arg.value)
           end
         else
-          return super
+          super
         end
       when "stringify", "class_name", "symbolize"
-        return super
+        super
+      else
+        value = StringLiteral.new(@value).interpret(method, args, named_args, block, interpreter)
+        value = MacroId.new(value.value) if value.is_a?(StringLiteral)
+        value
       end
-
-      value = StringLiteral.new(@value).interpret(method, args, named_args, block, interpreter)
-      value = MacroId.new(value.value) if value.is_a?(StringLiteral)
-      value
     rescue UndefinedMacroMethodError
       raise "undefined macro method '#{class_desc}##{method}'", exception_type: Crystal::UndefinedMacroMethodError
     end
@@ -1488,20 +1488,20 @@ module Crystal
         case arg = args.first?
         when MacroId
           if method == "=="
-            return BoolLiteral.new(@value == arg.value)
+            BoolLiteral.new(@value == arg.value)
           else
-            return BoolLiteral.new(@value != arg.value)
+            BoolLiteral.new(@value != arg.value)
           end
         else
-          return super
+          super
         end
       when "stringify", "class_name", "symbolize"
-        return super
+        super
+      else
+        value = StringLiteral.new(@value).interpret(method, args, named_args, block, interpreter)
+        value = SymbolLiteral.new(value.value) if value.is_a?(StringLiteral)
+        value
       end
-
-      value = StringLiteral.new(@value).interpret(method, args, named_args, block, interpreter)
-      value = SymbolLiteral.new(value.value) if value.is_a?(StringLiteral)
-      value
     rescue UndefinedMacroMethodError
       raise "undefined macro method '#{class_desc}##{method}'", exception_type: Crystal::UndefinedMacroMethodError
     end
@@ -2217,6 +2217,8 @@ private def interpret_array_or_tuple_method(object, klass, method, args, block, 
           Crystal::MacroId.new((object.elements.join ", ") + arg.value)
         end
       end
+    else
+      object.wrong_number_of_arguments "#{klass}#splat", args.size, "0..1"
     end
   when "empty?"
     object.interpret_argless_method(method, args) { Crystal::BoolLiteral.new(object.elements.empty?) }

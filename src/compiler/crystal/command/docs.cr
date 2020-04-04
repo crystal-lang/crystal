@@ -84,6 +84,8 @@ class Crystal::Command
         puts opts
         exit
       end
+
+      setup_compiler_warning_options(opts, compiler)
     end
 
     if options.empty?
@@ -102,5 +104,8 @@ class Crystal::Command
     result = compiler.top_level_semantic sources
 
     Doc::Generator.new(result.program, included_dirs, output_directory, output_format, sitemap_base_url, sitemap_priority, sitemap_changefreq).run
+
+    report_warnings result
+    exit 1 if warnings_fail_on_exit?(result)
   end
 end

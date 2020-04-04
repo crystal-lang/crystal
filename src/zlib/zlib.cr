@@ -1,5 +1,5 @@
 require "flate"
-require "adler32"
+require "digest/adler32"
 require "./*"
 
 # The Zlib module contains readers and writers of zlib format compressed

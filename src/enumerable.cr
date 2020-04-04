@@ -1241,6 +1241,17 @@ module Enumerable(T)
     count { true }
   end
 
+  # Returns `true` if `self` is empty, `false` otherwise.
+  #
+  # ```
+  # ([] of Int32).empty? # => true
+  # ([1]).empty?         # => false
+  # ```
+  def empty?
+    each { return false }
+    true
+  end
+
   # Returns an `Array` with the first *count* elements removed
   # from the original collection.
   #
@@ -1731,5 +1742,19 @@ module Enumerable(T)
         })
       end
     {% end %}
+  end
+
+  # :nodoc:
+  private struct Reflect(X)
+    # For now it's just a way to implement `Enumerable#sum` in a way that the
+    # initial value given to it has the type of the first type in the union,
+    # if the type is a union.
+    def self.first
+      {% if X.union? %}
+        {{X.union_types.first}}
+      {% else %}
+        X
+      {% end %}
+    end
   end
 end

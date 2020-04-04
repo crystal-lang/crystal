@@ -215,7 +215,7 @@ class URI
 
   # Returns `true` if this URI is opaque.
   #
-  # A URI is considered opaque if it has a `scheme` but no hierachical part,
+  # A URI is considered opaque if it has a `scheme` but no hierarchical part,
   # i.e. no `host` and the first character of `path` is not a slash (`/`).
   def opaque? : Bool
     !@scheme.nil? && @host.nil? && !@path.starts_with?('/')

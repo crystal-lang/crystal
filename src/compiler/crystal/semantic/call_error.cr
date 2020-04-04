@@ -632,6 +632,8 @@ class Crystal::Call
       unless scope_type.has_protected_access_to?(owner_type)
         raise "protected method '#{match.def.name}' called for #{match.def.owner}"
       end
+    when .public?
+      # okay
     end
   end
 

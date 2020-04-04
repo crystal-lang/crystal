@@ -62,7 +62,7 @@ class Crystal::CodeGenVisitor
 
     windows = @program.has_flag? "windows"
 
-    context.fun.personality_function = @llvm_mod.functions[@personality_name] if windows
+    context.fun.personality_function = windows_personality_fun if windows
 
     # This is the block which is entered when the body raises an exception
     rescue_block = new_block "rescue"
@@ -312,6 +312,12 @@ class Crystal::CodeGenVisitor
   private def windows_throw_fun
     @llvm_mod.functions["_CxxThrowException"]? || begin
       @llvm_mod.functions.add("_CxxThrowException", [llvm_context.void_pointer, llvm_context.void_pointer], llvm_context.void, false)
+    end
+  end
+
+  private def windows_personality_fun
+    @llvm_mod.functions["__CxxFrameHandler3"]? || begin
+      @llvm_mod.functions.add("__CxxFrameHandler3", [] of LLVM::Type, llvm_context.int32, true)
     end
   end
 end

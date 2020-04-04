@@ -90,7 +90,7 @@ describe IO do
         read.read_timeout = 1
         read.read(slice).should eq(6)
 
-        expect_raises(IO::Timeout) do
+        expect_raises(IO::TimeoutError) do
           read.read_timeout = 0.0000001
           read.read(slice)
         end

@@ -68,6 +68,7 @@ class Crystal::Command
       init
     when "build".starts_with?(command)
       options.shift
+      use_crystal_opts
       result = build
       report_warnings result
       exit 1 if warnings_fail_on_exit?(result)
@@ -86,12 +87,15 @@ class Crystal::Command
       env
     when command == "eval"
       options.shift
+      use_crystal_opts
       eval
     when "run".starts_with?(command)
       options.shift
+      use_crystal_opts
       run_command(single_file: false)
     when "spec/".starts_with?(command)
       options.shift
+      use_crystal_opts
       spec
     when "tool".starts_with?(command)
       options.shift
@@ -103,6 +107,7 @@ class Crystal::Command
       puts Crystal::Config.description
       exit
     when File.file?(command)
+      use_crystal_opts
       run_command(single_file: true)
     else
       if command.ends_with?(".cr")
@@ -549,6 +554,7 @@ class Crystal::Command
 
   private def setup_compiler_warning_options(opts, compiler)
     compiler.warnings_exclude << Crystal.normalize_path "lib"
+    warnings_exclude_default = true
     opts.on("--warnings all|none", "Which warnings detect. (default: all)") do |w|
       compiler.warnings = case w
                           when "all"
@@ -564,6 +570,11 @@ class Crystal::Command
       compiler.error_on_warnings = true
     end
     opts.on("--exclude-warnings <path>", "Exclude warnings from path (default: lib)") do |f|
+      if warnings_exclude_default
+        # if an --exclude-warnings is used explicitly, then we remove the default value
+        compiler.warnings_exclude.clear
+        warnings_exclude_default = false
+      end
       compiler.warnings_exclude << Crystal.normalize_path f
     end
   end
@@ -584,5 +595,9 @@ class Crystal::Command
     # This is for the case where the main command is wrong
     @color = false if ARGV.includes?("--no-color") || ENV["TERM"]? == "dumb"
     Crystal.error msg, @color, exit_code: exit_code
+  end
+
+  private def use_crystal_opts
+    @options = ENV.fetch("CRYSTAL_OPTS", "").split.concat(options)
   end
 end
