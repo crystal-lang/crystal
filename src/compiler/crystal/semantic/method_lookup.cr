@@ -80,19 +80,7 @@ module Crystal
             # we are done. We don't just compare types with ==, there is a special case:
             # a function type with return T can be transpass a restriction of a function
             # with the same arguments but which returns Void.
-            arg_types_equal = signature.arg_types.equals?(match.arg_types) { |x, y| x.compatible_with?(y) }
-            if (match_named_args = match.named_arg_types) && (signature_named_args = signature.named_args) &&
-               match_named_args.size == signature_named_args.size
-              match_named_args = match_named_args.sort_by &.name
-              signature_named_args = signature_named_args.sort_by &.name
-              named_arg_types_equal = signature_named_args.equals?(match_named_args) do |x, y|
-                x.name == y.name && x.type.compatible_with?(y.type)
-              end
-            else
-              named_arg_types_equal = !match.named_arg_types && !signature.named_args
-            end
-
-            if arg_types_equal && named_arg_types_equal
+            if signature.matches_exactly?(match)
               return Matches.new(matches_array, true, owner)
             end
 
@@ -312,6 +300,33 @@ module Crystal
       context = context.clone if context.free_vars
 
       Match.new(a_def, (matched_arg_types || arg_types), context, matched_named_arg_types)
+    end
+
+    def matches_exactly?(match : Match, *, with_literals : Bool = false)
+      arg_types_equal = self.arg_types.equals?(match.arg_types) do |x, y|
+        if with_literals && x.is_a?(LiteralType)
+          x = x.match || x.remove_literal
+        end
+
+        x.compatible_with?(y)
+      end
+      if (match_named_args = match.named_arg_types) && (signature_named_args = self.named_args) &&
+         match_named_args.size == signature_named_args.size
+        match_named_args = match_named_args.sort_by &.name
+        signature_named_args = signature_named_args.sort_by &.name
+        named_arg_types_equal = signature_named_args.equals?(match_named_args) do |x, y|
+          x_type = x.type
+          if with_literals && x_type.is_a?(LiteralType)
+            x_type = x_type.match || x_type.remove_literal
+          end
+
+          x.name == y.name && x_type.compatible_with?(y.type)
+        end
+      else
+        named_arg_types_equal = !match.named_arg_types && !self.named_args
+      end
+
+      arg_types_equal && named_arg_types_equal
     end
   end
 

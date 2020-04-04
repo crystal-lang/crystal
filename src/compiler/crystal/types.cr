@@ -1401,7 +1401,7 @@ module Crystal
 
   abstract class LiteralType < Type
     # The most exact match type, or the first match otherwise
-    @match : Type?
+    getter match : Type?
 
     # All matches. It's nil if `@match` is an exact match.
     @all_matches : Set(Type)?
