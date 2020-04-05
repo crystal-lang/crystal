@@ -44,7 +44,7 @@ class Process
     nil
   end
 
-  # Sends a *signal* to the process identified by the given *pid*.
+  # Sends *signal* to the process identified by *pid*.
   def self.signal(signal : Signal, pid : Int) : Nil
     ret = LibC.kill(pid, signal.value)
     raise RuntimeError.from_errno("kill") if ret < 0
