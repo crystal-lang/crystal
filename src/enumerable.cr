@@ -481,6 +481,11 @@ module Enumerable(T)
 
   # Returns the first element in the collection,
   # or the given block's value.
+  #
+  # ```
+  # ([1, 2, 3]).first { 4 }   # => 1
+  # ([] of Int32).first { 4 } # => 4
+  # ```
   def first
     each { |e| return e }
     yield
@@ -488,12 +493,22 @@ module Enumerable(T)
 
   # Returns the first element in the collection. Raises `Enumerable::EmptyError`
   # if the collection is empty.
+  #
+  # ```
+  # ([1, 2, 3]).first   # => 1
+  # ([] of Int32).first # raises Enumerable::EmptyError
+  # ```
   def first
     first { raise Enumerable::EmptyError.new }
   end
 
   # Returns the first element in the collection.
   # When the collection is empty, returns `nil`.
+  #
+  # ```
+  # ([1, 2, 3]).first?   # => 1
+  # ([] of Int32).first? # => nil
+  # ```
   def first?
     first { nil }
   end
