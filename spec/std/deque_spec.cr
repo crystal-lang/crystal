@@ -315,7 +315,7 @@ describe "Deque" do
     end
 
     it "raises when empty" do
-      expect_raises IndexError do
+      expect_raises Enumerable::EmptyError do
         Deque(Int32).new.first
       end
     end
