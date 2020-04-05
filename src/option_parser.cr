@@ -2,6 +2,7 @@
 #
 # * Short and long modifier style options (example: `-h`, `--help`)
 # * Passing arguments to the flags (example: `-f filename.txt`)
+# * Subcommands
 # * Automatic help message generation
 #
 # Run `crystal` for an example of a CLI built with `OptionParser`.
@@ -31,6 +32,51 @@
 #
 # destination = destination.upcase if upcase
 # puts "Hello #{destination}!"
+# ```
+#
+# # Subcommands
+#
+# `OptionParser` also supports subcommands.
+#
+# Short example:
+#
+# ```
+# require "option_parser"
+#
+# verbose = false
+# salute = false
+# welcome = false
+# name = "World"
+# parser = OptionParser.new do |parser|
+#   parser.banner = "Usage: example [subcommand] [arguments]"
+#   parser.on("salute", "Salute a name") do
+#     salute = true
+#     parser.banner = "Usage: example salute [arguments]"
+#     parser.on("-t NAME", "--to=NAME", "Specify the name to salute") { |_name| name = _name }
+#   end
+#   parser.on("welcome", "Print a greeting message") do
+#     welcome = true
+#     parser.banner = "Usage: example welcome"
+#   end
+#   parser.on("-v", "--verbose", "Enabled servose output") { verbose = true }
+#   parser.on("-h", "--help", "Show this help") do
+#     puts parser
+#     exit
+#   end
+# end
+#
+# parser.parse
+#
+# if salute
+#   STDERR.puts "Saluting #{name}" if verbose
+#   puts "Hello #{name}"
+# elsif welcome
+#   STDERR.puts "Welcoming #{name}" if verbose
+#   puts "Welcome!"
+# else
+#   puts parser
+#   exit(1)
+# end
 # ```
 class OptionParser
   class Exception < ::Exception
@@ -101,20 +147,27 @@ class OptionParser
   # ```
   setter banner : String?
 
-  # Establishes a handler for a *flag*.
+  # Establishes a handler for a *flag* or subcommand.
   #
   # Flags must start with a dash or double dash. They can also have
   # an optional argument, which will get passed to the block.
   # Each flag has a description, which will be used for the help message.
+  #
+  # Subcommands are any *flag* passed which does not start with a dash. They
+  # cannot take arguments. When a subcommand is parsed, all subcommands are
+  # removed from the OptionParser, simulating a "tree" of subcommands. All flags
+  # remain valid. For a longer example, see the examples at the top of the page.
   #
   # Examples of valid flags:
   #
   # * `-a`, `-B`
   # * `--something-longer`
   # * `-f FILE`, `--file FILE`, `--file=FILE` (these will yield the passed value to the block as a string)
+  #
+  # Examples of valid subcommands:
+  #
+  # * `foo`, `run`
   def on(flag : String, description : String, &block : String ->)
-    check_starts_with_dash flag, "flag"
-
     append_flag flag, description
 
     flag, value_type = parse_flag_definition(flag)
@@ -123,7 +176,8 @@ class OptionParser
 
   # Establishes a handler for a pair of short and long flags.
   #
-  # See the other definition of `on` for examples.
+  # See the other definition of `on` for examples. This method does not support
+  # subcommands.
   def on(short_flag : String, long_flag : String, description : String, &block : String ->)
     check_starts_with_dash short_flag, "short_flag", allow_empty: true
     check_starts_with_dash long_flag, "long_flag"
@@ -254,7 +308,8 @@ class OptionParser
           value = nil
         end
       else
-        next
+        flag = arg
+        value = nil
       end
 
       if handler = @handlers[flag]?
@@ -272,6 +327,13 @@ class OptionParser
 
         # If we require a value and we don't have one, call missing option
         @missing_option.call(flag) if handler.value_type.required? && value.nil?
+
+        # If this is a subcommand (flag not starting with -), delete all
+        # subcommands since they are no longer valid.
+        unless flag.starts_with?('-')
+          @handlers.select! { |k, v| k.starts_with?('-') }
+          @flags.select! { |flag| flag.starts_with?("    -") }
+        end
 
         handler.block.call(value || "")
       end

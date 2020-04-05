@@ -429,12 +429,8 @@ describe "OptionParser" do
     end
   end
 
-  it "raises if flag doesn't start with dash (#4001)" do
+  it "raises if flag pair doesn't start with dash (#4001)" do
     OptionParser.parse([] of String) do |opts|
-      expect_raises ArgumentError, %(Argument 'flag' ("foo") must start with a dash) do
-        opts.on("foo", "") { }
-      end
-
       expect_raises ArgumentError, %(Argument 'short_flag' ("foo") must start with a dash) do
         opts.on("foo", "bar", "baz") { }
       end
@@ -445,5 +441,87 @@ describe "OptionParser" do
 
       opts.on("", "-bar", "baz") { }
     end
+  end
+
+  it "handles subcommands" do
+    args = %w(--verbose subcommand --foo 1 --bar sub2 -z)
+    verbose = false
+    subcommand = false
+    foo = nil
+    bar = false
+    sub2 = false
+    z = false
+    OptionParser.parse(args) do |opts|
+      opts.on("subcommand", "") do
+        subcommand = true
+        opts.on("--foo arg", "") { |v| foo = v }
+        opts.on("--bar", "") { bar = true }
+        opts.on("sub2", "") { sub2 = true }
+      end
+      opts.on("--verbose", "") { verbose = true }
+      opts.on("-z", "--baz", "") { z = true }
+    end
+
+    verbose.should be_true
+    subcommand.should be_true
+    foo.should be("1")
+    bar.should be_true
+    sub2.should be_true
+    z.should be_true
+  end
+
+  it "unregisters subcommands on call" do
+    foo = false
+    bar = false
+    baz = false
+    OptionParser.parse(%w(foo baz)) do |opts|
+      opts.on("foo", "") do
+        foo = true
+        opts.on("bar", "") { bar = true }
+      end
+      opts.on("baz", "") { baz = true }
+    end
+    foo.should be_true
+    bar.should be_false
+    baz.should be_false
+  end
+
+  it "handles subcommand --help well (top level)" do
+    help = nil
+    OptionParser.parse(%w(--help)) do |opts|
+      opts.banner = "Usage: foo"
+      opts.on("subcommand", "Subcommand Description") do
+        opts.on("-f", "--foo", "Foo") { }
+      end
+      opts.on("--verbose", "Verbose mode") { }
+      opts.on("--help", "Help") { help = opts.to_s }
+    end
+
+    help.should eq <<-USAGE
+      Usage: foo
+          subcommand                       Subcommand Description
+          --verbose                        Verbose mode
+          --help                           Help
+      USAGE
+  end
+
+  it "handles subcommand --help well (subcommand)" do
+    help = nil
+    OptionParser.parse(%w(subcommand --help)) do |opts|
+      opts.banner = "Usage: foo"
+      opts.on("subcommand", "Subcommand Description") do
+        opts.banner = "Usage: foo subcommand"
+        opts.on("-f", "--foo", "Foo") { }
+      end
+      opts.on("--verbose", "Verbose mode") { }
+      opts.on("--help", "Help") { help = opts.to_s }
+    end
+
+    help.should eq <<-USAGE
+      Usage: foo subcommand
+          --verbose                        Verbose mode
+          --help                           Help
+          -f, --foo                        Foo
+      USAGE
   end
 end
