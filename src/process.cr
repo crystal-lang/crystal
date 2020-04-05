@@ -356,7 +356,7 @@ class Process
     signal sig
   end
 
-  # Sends *signal* to the process.
+  # Sends *signal* to this process.
   def signal(signal : Signal)
     Process.signal signal, @pid
   end
@@ -394,7 +394,7 @@ class Process
     close_io @error
   end
 
-  # Asks the process to terminate gracefully
+  # Asks this process to terminate gracefully
   def terminate
     signal Signal::TERM
   end
