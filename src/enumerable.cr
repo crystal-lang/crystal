@@ -493,8 +493,13 @@ module Enumerable(T)
     nil
   end
 
-  # Returns the last element in the collection. Raises `Enumerable::EmptyError`
-  # if the collection is empty.
+  # Returns the last element of `self` if it's not empty,
+  # or the given block's value.
+  #
+  # ```
+  # ([1, 2, 3]).last { 4 }   # => 3
+  # ([] of Int32).last { 4 } # => 4
+  # ```
   def last
     found = false
     obj = uninitialized T
@@ -507,13 +512,23 @@ module Enumerable(T)
     obj
   end
 
-  # :ditto:
+  # Returns the last element of `self` if it's not empty,
+  # or raises `Enumerable::EmptyError`.
+  #
+  # ```
+  # ([1, 2, 3]).last   # => 3
+  # ([] of Int32).last # raises Enumerable::EmptyError
+  # ```
   def last
     last { raise Enumerable::EmptyError.new }
   end
 
-  # Returns the last element in the collection.
-  # When the collection is empty, returns `nil`.
+  # Returns the last element of `self` if it's not empty, or `nil`.
+  #
+  # ```
+  # ([1, 2, 3]).last?   # => 3
+  # ([] of Int32).last? # => nil
+  # ```
   def last?
     last { nil }
   end

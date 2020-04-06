@@ -502,34 +502,9 @@ module Indexable(T)
     nil
   end
 
-  # Returns the last element of `self` if it's not empty, or raises `IndexError`.
-  #
-  # ```
-  # ([1, 2, 3]).last   # => 3
-  # ([] of Int32).last # raises IndexError
-  # ```
-  def last
-    last { raise IndexError.new }
-  end
-
-  # Returns the last element of `self` if it's not empty, or the given block's value.
-  #
-  # ```
-  # ([1, 2, 3]).last { 4 }   # => 3
-  # ([] of Int32).last { 4 } # => 4
-  # ```
+  # :inherited:
   def last
     size == 0 ? yield : unsafe_fetch(size - 1)
-  end
-
-  # Returns the last element of `self` if it's not empty, or `nil`.
-  #
-  # ```
-  # ([1, 2, 3]).last?   # => 3
-  # ([] of Int32).last? # => nil
-  # ```
-  def last?
-    last { nil }
   end
 
   # Same as `#each`, but works in reverse.
