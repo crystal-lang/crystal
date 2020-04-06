@@ -509,7 +509,7 @@ class Regex
   end
 
   # Match at byte index. It behaves like `#match_at_byte_inbdex`, however it returns `Bool` value.
-  # It does not create `MatchData` and does not update `$~` also.
+  # It neither returns `MatchData` nor assigns it to the `$~` variable.
   def matches_at_byte_index?(str, byte_index = 0, options = Regex::Options::None) : Bool
     return false if byte_index > str.bytesize
 

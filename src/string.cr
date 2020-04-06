@@ -3834,7 +3834,7 @@ class String
   end
 
   # Finds match of *regex*, starting at *pos*.
-  # It updaate `$~` by its result.
+  # It also updates `$~` with the result.
   #
   # ```
   # "foo".match(/foo/) # => Regex::MatchData("foo")
@@ -3850,13 +3850,13 @@ class String
   end
 
   # Finds match of *regex* like `#match`, but it returns `Bool` value.
-  # It does not create `MatchData` and does not update `$~` also.
+  # It neither returns `MatchData` nor assigns it to the `$~` variable.
   #
   # ```
   # "foo".matches?(/bar/) # => false
   # "foo".matches?(/foo/) # => true
   #
-  # # `$~` is not set even if last matching is succeeded.
+  # # `$~` is not set even if last match succeeds.
   # $~ # raises Exception
   # ```
   def matches?(regex : Regex, pos = 0) : Bool
