@@ -1,4 +1,4 @@
-# 0.34.0 (2020-??-??)
+# 0.34.0 (2020-04-06)
 
 ## Language changes
 
@@ -12,6 +12,7 @@
 - **(breaking-change)** Move `Adler32` and `CRC32` to `Digest`. ([#8881](https://github.com/crystal-lang/crystal/pull/8881), thanks @bcardiff)
 - **(breaking-change)** Remove `DL` module. ([#8882](https://github.com/crystal-lang/crystal/pull/8882), thanks @bcardiff)
 - Enable more win32 specs. ([#8683](https://github.com/crystal-lang/crystal/pull/8683), [#8822](https://github.com/crystal-lang/crystal/pull/8822), thanks @straight-shoota)
+- Make `SemanticVersion::Prerelease` comparable. ([#8991](https://github.com/crystal-lang/crystal/pull/8991), thanks @MakeNowJust)
 - Use `flag?(:i386)` instead of obsolete `flag?(:i686)`. ([#8863](https://github.com/crystal-lang/crystal/pull/8863), thanks @bcardiff)
 - Remove Windows workaround using `vsnprintf`. ([#8942](https://github.com/crystal-lang/crystal/pull/8942), thanks @oprypin)
 - Fixed docs broken link to ruby's prettyprint source. ([#8915](https://github.com/crystal-lang/crystal/pull/8915), thanks @matthin)
@@ -65,12 +66,13 @@
 
 ### Networking
 
-- **(breaking-change)** Correctly support WebSocket close codes. ([#8975](https://github.com/crystal-lang/crystal/pull/8975), thanks @RX14)
+- **(breaking-change)** Correctly support WebSocket close codes. ([#8975](https://github.com/crystal-lang/crystal/pull/8975), [#8981](https://github.com/crystal-lang/crystal/pull/8981), thanks @RX14, @Sija)
 - Make `HTTP::Client` return empty `body_io` if content-length is zero. ([#8503](https://github.com/crystal-lang/crystal/pull/8503), thanks @asterite)
 - Fixed `UDP` specs in the case of a local firewall. ([#8817](https://github.com/crystal-lang/crystal/pull/8817), thanks @RX14)
 - Fixed `MIME` spec examples to not collide with actual registry. ([#8795](https://github.com/crystal-lang/crystal/pull/8795), thanks @straight-shoota)
 - Fixed `UNIXServer`, and `HTTP::WebSocket` specs to ensure server is accepting before closing. ([#8755](https://github.com/crystal-lang/crystal/pull/8755), [#8879](https://github.com/crystal-lang/crystal/pull/8879), thanks @bcardiff)
 - Add type annotation to `tls` argument in `HTTP`. ([#8678](https://github.com/crystal-lang/crystal/pull/8678), thanks @j8r)
+- Add `Location` to `HTTP::Request` common header names. ([#8992](https://github.com/crystal-lang/crystal/pull/8992), thanks @mamantoha)
 
 ### Concurrency
 
@@ -114,7 +116,8 @@
 
 - CI improvements and housekeeping. ([#8804](https://github.com/crystal-lang/crystal/pull/8804), [#8811](https://github.com/crystal-lang/crystal/pull/8811), [#8982](https://github.com/crystal-lang/crystal/pull/8982), thanks @bcardiff, @oprypin)
 - Update to Shards 0.10.0. ([#8988](https://github.com/crystal-lang/crystal/pull/8988), thanks @bcardiff)
-- Fixed `pretty_json` sample. ([#8816](https://github.com/crystal-lang/crystal/pull/8816), thanks @asterite)
+- Fix `pretty_json` sample. ([#8816](https://github.com/crystal-lang/crystal/pull/8816), thanks @asterite)
+- Fix typos throughout the codebase. ([#8971](https://github.com/crystal-lang/crystal/pull/8971), thanks @Sija)
 
 # 0.33.0 (2020-02-14)
 
