@@ -133,6 +133,35 @@ class Reference
     io << '>'
   end
 
+  # Returns whether this can be recursive or not.
+  # It calculates on compile-time, and it determines `exec_recursive` handling is needed really.
+  private def possibly_recursive?
+    {% begin %}
+      {% stack = {} of TypeNode => Bool %}
+      {% stack[@type] = true %}
+      {% rec = false %}
+      {% for t, ok in stack %}
+        {% us = [] of TypeNode %}
+        {% for v in t.instance_vars %}{% us << v.type %}{% end %}
+        {% for u in t.subclasses %}{% us << u %}{% end %}
+        {% if t.union? %}
+          {% for u in t.union_types %}{% us << u %}{% end %}
+        {% end %}
+        {% if t <= Tuple || t <= Pointer %}
+          {% for u in t.type_vars %}{% us << u %}{% end %}
+        {% end %}
+        {% if t <= NamedTuple %}
+          {% for k in t.keys %}{% us << t[k] %}{% end %}
+        {% end %}
+        {% for u in us %}
+          {% rec = rec || @type <= u %}
+          {% stack[u] = true if !rec && !stack[u] %}
+        {% end %}
+      {% end %}
+      {{ rec }}
+    {% end %}
+  end
+
   # :nodoc:
   module ExecRecursive
     alias Registry = Hash({UInt64, Symbol}, Bool)
@@ -167,6 +196,11 @@ class Reference
   end
 
   private def exec_recursive(method)
+    unless possibly_recursive?
+      yield
+      return true
+    end
+
     hash = ExecRecursive.hash
     key = {object_id, method}
     if hash[key]?
@@ -183,6 +217,11 @@ class Reference
   end
 
   private def exec_recursive_outer(method)
+    unless possibly_recursive?
+      yield
+      return true
+    end
+
     outers = ExecRecursive.outers
     outmost = !outers[method]?
 
@@ -223,6 +262,11 @@ class Reference
   end
 
   private def exec_recursive_pair(method, pair)
+    unless possibly_recursive?
+      yield
+      return true
+    end
+
     hash = ExecRecursivePair.hash
     pair_id = pair.object_id
     key = {object_id, pair_id, method}
