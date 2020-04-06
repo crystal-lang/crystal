@@ -490,7 +490,16 @@ class Regex
     $~ = match
   end
 
-  # Match at character index. It behaves like `#match`, however it does not create `MatchData`.
+  # Match at character index. It behaves like `#match`, however it returns `Bool` value.
+  # It does not create `MatchData` and does not update `$~` also.
+  #
+  # ```
+  # /foo/.matches?("bar") # => false
+  # /foo/.matches?("foo") # => true
+  #
+  # # `$~` is not set even if last matching is succeeded.
+  # $~ # raises Exception
+  # ```
   def matches?(str, pos = 0, options = Regex::Options::None) : Bool
     if byte_index = str.char_index_to_byte_index(pos)
       matches_at_byte_index?(str, byte_index, options)
@@ -499,7 +508,8 @@ class Regex
     end
   end
 
-  # Match at byte index. It behaves like `#match`, however it does not create `MatchData`.
+  # Match at byte index. It behaves like `#match_at_byte_inbdex`, however it returns `Bool` value.
+  # It does not create `MatchData` and does not update `$~` also.
   def matches_at_byte_index?(str, byte_index = 0, options = Regex::Options::None) : Bool
     return false if byte_index > str.bytesize
 
