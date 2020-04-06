@@ -491,13 +491,13 @@ class Regex
   end
 
   # Match at character index. It behaves like `#match`, however it returns `Bool` value.
-  # It does not create `MatchData` and does not update `$~` also.
+  # It neither returns `MatchData` nor assigns it to the `$~` variable.
   #
   # ```
   # /foo/.matches?("bar") # => false
   # /foo/.matches?("foo") # => true
   #
-  # # `$~` is not set even if last matching is succeeded.
+  # # `$~` is not set even if last match succeeds.
   # $~ # raises Exception
   # ```
   def matches?(str, pos = 0, options = Regex::Options::None) : Bool
