@@ -157,6 +157,7 @@ class Reference
           {% rec = rec || @type <= u %}
           {% stack[u] = true if !rec && !stack[u] %}
         {% end %}
+        {% stack.clear if rec %}
       {% end %}
       {{ rec }}
     {% end %}
