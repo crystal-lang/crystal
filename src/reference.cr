@@ -150,7 +150,7 @@ class Reference
         {% if t <= Tuple || t <= Pointer %}
           {% for u in t.type_vars %}{% us << u %}{% end %}
         {% end %}
-        {% if t <= NamedTuple %}
+        {% if t <= NamedTuple && t != NoReturn %}
           {% for k in t.keys %}{% us << t[k] %}{% end %}
         {% end %}
         {% for u in us %}
