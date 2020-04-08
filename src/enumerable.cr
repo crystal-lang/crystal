@@ -480,7 +480,7 @@ module Enumerable(T)
   end
 
   # Returns the first element in the collection,
-  # or the given block's value.
+  # If the collection is empty, calls the block and returns its value.
   #
   # ```
   # ([1, 2, 3]).first { 4 }   # => 1
