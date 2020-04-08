@@ -85,7 +85,7 @@ struct NamedTuple
         {% elsif K == Symbol %}
           {{key.stringify}}: self[{{key.symbolize}}].cast(hash[{{key.symbolize}}]),
         {% else %}
-          {% raise "Hash keys must be String or Symbol to convert into a NamedTuple" %}
+          {% raise "Hash keys must be all String or all Symbol to convert into a NamedTuple" %}
         {% end %}
       {% end %}
       )
