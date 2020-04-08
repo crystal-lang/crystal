@@ -60,19 +60,20 @@ module Crystal
     def needs_suffix?(node : NumberLiteral)
       case node.kind
       when :i32
-        return false
+        false
       when :f64
         # If there's no '.' nor 'e', for example in `1_f64`,
         # we need to include it (#3315)
         node.value.each_char do |char|
-          case char
-          when '.', 'e'
+          if char == '.' || char == 'e'
             return false
           end
         end
-      end
 
-      true
+        true
+      else
+        true
+      end
     end
 
     def visit(node : CharLiteral)
@@ -200,6 +201,8 @@ module Crystal
         @str << "begin"
         @indent += 1
         newline
+      else
+        # Not a special condition
       end
 
       if @inside_macro > 0
@@ -221,6 +224,8 @@ module Crystal
         @indent -= 1
         append_indent
         @str << "end"
+      else
+        # Not a special condition
       end
 
       false
@@ -522,6 +527,8 @@ module Crystal
         @str << exp.value.inspect_unquoted.gsub('`', "\\`")
       when StringInterpolation
         visit_interpolation exp, &.inspect_unquoted.gsub('`', "\\`")
+      else
+        raise "Bug: shouldn't happen"
       end
       @str << '`'
       false
@@ -885,6 +892,8 @@ module Crystal
             @str << ']'
             return false
           end
+        else
+          # Not a special type
         end
       end
 
@@ -1011,6 +1020,8 @@ module Crystal
           Regex.append_source exp.value, @str
         when StringInterpolation
           visit_interpolation(exp) { |s| Regex.append_source s, @str }
+        else
+          raise "Bug: shouldn't happen"
         end
         @str << '/'
       end

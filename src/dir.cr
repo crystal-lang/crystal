@@ -120,7 +120,7 @@ class Dir
   # array.sort # => [".", "..", "config.h"]
   # ```
   def read
-    Crystal::System::Dir.next(@dir)
+    Crystal::System::Dir.next(@dir, path)
   end
 
   # Repositions this directory to the first entry.
@@ -132,7 +132,7 @@ class Dir
   # Closes the directory stream.
   def close
     return if @closed
-    Crystal::System::Dir.close(@dir)
+    Crystal::System::Dir.close(@dir, path)
     @closed = true
   end
 
@@ -210,7 +210,7 @@ class Dir
   end
 
   # Returns `true` if the directory at *path* is empty, otherwise returns `false`.
-  # Raises `Errno` if the directory at *path* does not exist.
+  # Raises `File::NotFoundError` if the directory at *path* does not exist.
   #
   # ```
   # Dir.mkdir("bar")
@@ -223,8 +223,6 @@ class Dir
       return false
     end
     true
-  rescue ex : Errno
-    raise Errno.new("Error determining size of '#{path}'", ex.errno)
   end
 
   # Creates a new directory at the given path. The linux-style permission mode

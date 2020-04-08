@@ -649,7 +649,7 @@ struct Time
   # Positive values result in a later time, negative values in an earlier time.
   #
   # This operates on the local time-line, such that the local date-time
-  # represenation of the result will be apart by the specified amounts, but the
+  # representation of the result will be apart by the specified amounts, but the
   # elapsed time between both instances might not equal to the combined default
   # durations
   # This is the case for example when adding a day over a daylight-savings time
@@ -1495,6 +1495,8 @@ struct Time
         zone = location.lookup(range[0] - 1)
       when .>=(range[1])
         zone = location.lookup(range[1])
+      else
+        # in range
       end
     end
 

@@ -1,6 +1,17 @@
 require "./sdl/sdl"
 
 class ColorMaker
+  enum State
+    BlueUp
+    BlueDown
+    GreenUp
+    GreenDown
+    RedUp
+    RedDown
+  end
+
+  @state : State
+
   def initialize(@delay : Int32)
     @r = 0
     @g = 255
@@ -19,22 +30,22 @@ class ColorMaker
 
   def next_state
     case @state
-    when :green_up
+    when .green_up?
       @g += 1
       @state = :red_down if @g == 255
-    when :red_down
+    when .red_down?
       @r -= 1
       @state = :blue_up if @r == 0
-    when :blue_up
+    when .blue_up?
       @b += 1
       @state = :green_down if @b == 255
-    when :green_down
+    when .green_down?
       @g -= 1
       @state = :red_up if @g == 0
-    when :red_up
+    when .red_up?
       @r += 1
       @state = :blue_down if @r == 255
-    when :blue_down
+    when .blue_down?
       @b -= 1
       @state = :green_up if @b == 0
     end

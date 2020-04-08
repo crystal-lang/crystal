@@ -123,6 +123,12 @@ class HTTP::Client::Response
       response.body.should eq("")
     end
 
+    it "parses response without body but Content-Length == 0, block form (#8461)" do
+      Response.from_io(IO::Memory.new("HTTP/1.1 301 OK\r\nContent-Length: 0\r\n\r\n")) do |response|
+        response.body_io.gets_to_end.should eq("")
+      end
+    end
+
     it "parses long request lines" do
       request = Response.from_io?(IO::Memory.new("HTTP/1.1 200 #{"OK" * 600_000}\r\n\r\n"))
       request.should eq(nil)

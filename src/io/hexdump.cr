@@ -40,23 +40,5 @@ class IO::Hexdump < IO
     end
   end
 
-  def peek
-    @io.peek
-  end
-
-  def closed?
-    @io.closed?
-  end
-
-  def close
-    @io.close
-  end
-
-  def flush
-    @io.flush
-  end
-
-  def tty?
-    @io.tty?
-  end
+  delegate :peek, :close, :closed?, :flush, :tty?, :pos, :pos=, :seek, to: @io
 end

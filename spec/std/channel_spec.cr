@@ -819,7 +819,7 @@ describe "buffered" do
     ch.receive?.should eq(123)
   end
 
-  it "can send sucessfully without raise" do
+  it "can send successfully without raise" do
     ch = Channel(Int32).new(1)
     raise_flag = false
 

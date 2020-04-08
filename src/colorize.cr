@@ -135,14 +135,29 @@ module Colorize
   def self.reset(io = STDOUT)
     io << "\e[0m" if enabled?
   end
+
+  # Helper method to use colorize with `IO`.
+  #
+  # ```
+  # io = IO::Memory.new
+  # io << "not-green"
+  # Colorize.with.green.bold.surround(io) do
+  #   io << "green and bold if Colorize.enabled"
+  # end
+  # ```
+  def self.with
+    "".colorize
+  end
 end
 
+@[Deprecated("Use `Colorize.with`")]
 def with_color
-  "".colorize
+  Colorize.with
 end
 
+@[Deprecated("Use `Colorize.with.fore(color)`")]
 def with_color(color : Symbol)
-  "".colorize(color)
+  Colorize.with.fore(color)
 end
 
 module Colorize::ObjectExtensions

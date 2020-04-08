@@ -77,6 +77,18 @@ describe Socket do
       ensure
         socket.try &.close
       end
+
+      it "binds to port using Socket::IPAddress" do
+        socket = TCPSocket.new family
+        socket.bind Socket::IPAddress.new(any_address, 0)
+        socket.listen
+
+        address = socket.local_address.as(Socket::IPAddress)
+        address.address.should eq(any_address)
+        address.port.should be > 0
+      ensure
+        socket.try &.close
+      end
     end
   end
 end

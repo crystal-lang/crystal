@@ -1,7 +1,7 @@
 require "c/iconv"
 
 # :nodoc:
-struct Iconv
+struct Crystal::Iconv
   @skip_invalid : Bool
 
   ERROR = LibC::SizeT::MAX # (size_t)(-1)
@@ -29,7 +29,7 @@ struct Iconv
           raise ArgumentError.new("Invalid encoding: #{original_from} -> #{original_to}")
         end
       else
-        raise Errno.new("iconv_open")
+        raise RuntimeError.from_errno("iconv_open")
       end
     end
   end
@@ -66,13 +66,15 @@ struct Iconv
         raise ArgumentError.new "Incomplete multibyte sequence"
       when Errno::EILSEQ
         raise ArgumentError.new "Invalid multibyte sequence"
+      else
+        # All is good
       end
     end
   end
 
   def close
     if LibC.iconv_close(@iconv) == -1
-      raise Errno.new("iconv_close")
+      raise RuntimeError.from_errno("iconv_close")
     end
   end
 end

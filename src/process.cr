@@ -26,7 +26,7 @@ class Process
   # Returns the process group identifier of the process identified by *pid*.
   def self.pgid(pid : Int32) : LibC::PidT
     ret = LibC.getpgid(pid)
-    raise Errno.new("getpgid") if ret < 0
+    raise RuntimeError.from_errno("getpgid") if ret < 0
     ret
   end
 
@@ -39,7 +39,7 @@ class Process
   def self.kill(signal : Signal, *pids : Int)
     pids.each do |pid|
       ret = LibC.kill(pid, signal.value)
-      raise Errno.new("kill") if ret < 0
+      raise RuntimeError.from_errno("kill") if ret < 0
     end
     nil
   end
@@ -53,7 +53,7 @@ class Process
       true
     else
       return false if Errno.value == Errno::ESRCH
-      raise Errno.new("kill")
+      raise RuntimeError.from_errno("kill")
     end
   end
 
@@ -121,7 +121,7 @@ class Process
 
     LibC.sigfillset(pointerof(newmask))
     ret = LibC.pthread_sigmask(LibC::SIG_SETMASK, pointerof(newmask), pointerof(oldmask))
-    raise Errno.new("Failed to disable signals") unless ret == 0
+    raise RuntimeError.from_errno("Failed to disable signals") unless ret == 0
 
     case pid = LibC.fork
     when 0
@@ -142,7 +142,7 @@ class Process
       # error:
       errno = Errno.value
       LibC.pthread_sigmask(LibC::SIG_SETMASK, pointerof(oldmask), nil)
-      raise Errno.new("fork", errno)
+      raise RuntimeError.from_errno("fork", errno)
     else
       # parent:
       LibC.pthread_sigmask(LibC::SIG_SETMASK, pointerof(oldmask), nil)
@@ -265,14 +265,10 @@ class Process
         reader_pipe.close
         writer_pipe.close_on_exec = true
         Process.exec_internal(command, args, env, clear_env, fork_input, fork_output, fork_error, chdir)
-      rescue ex : Errno
-        writer_pipe.write_bytes(ex.errno)
+      rescue ex
         writer_pipe.write_bytes(ex.message.try(&.bytesize) || 0)
         writer_pipe << ex.message
         writer_pipe.close
-      rescue ex
-        ex.inspect_with_backtrace STDERR
-        STDERR.flush
       ensure
         LibC._exit 127
       end
@@ -281,13 +277,12 @@ class Process
     writer_pipe.close
     bytes = uninitialized UInt8[4]
     if reader_pipe.read(bytes.to_slice) == 4
-      errno = IO::ByteFormat::SystemEndian.decode(Int32, bytes.to_slice)
-      message_size = reader_pipe.read_bytes(Int32)
+      message_size = IO::ByteFormat::SystemEndian.decode(Int32, bytes.to_slice)
       if message_size > 0
         message = String.build(message_size) { |io| IO.copy(reader_pipe, io, message_size) }
       end
       reader_pipe.close
-      raise Errno.new(message, errno)
+      raise RuntimeError.new("Error executing process: #{message}")
     end
     reader_pipe.close
 
@@ -479,17 +474,7 @@ class Process
     argv << Pointer(UInt8).null
 
     LibC.execvp(command, argv)
-
-    error_message = String.build do |io|
-      io << "execvp ("
-      command.inspect_unquoted(io)
-      args.try &.each do |arg|
-        io << ' '
-        arg.inspect(io)
-      end
-      io << ")"
-    end
-    raise Errno.new(error_message)
+    raise RuntimeError.from_errno
   end
 
   private def self.reopen_io(src_io : IO::FileDescriptor, dst_io : IO::FileDescriptor)
@@ -528,11 +513,11 @@ class Process
   def self.chroot(path : String) : Nil
     path.check_no_null_byte
     if LibC.chroot(path) != 0
-      raise Errno.new("Failed to chroot")
+      raise RuntimeError.from_errno("Failed to chroot")
     end
 
     if LibC.chdir("/") != 0
-      errno = Errno.new("chdir after chroot failed")
+      errno = RuntimeError.from_errno("chdir after chroot failed")
       errno.callstack = CallStack.new
       errno.inspect_with_backtrace(STDERR)
       abort("Unresolvable state, exiting...")

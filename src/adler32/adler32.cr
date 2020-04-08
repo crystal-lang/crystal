@@ -1,20 +1,23 @@
-require "lib_z"
+require "digest"
 
 module Adler32
+  @[Deprecated("Use `Digest::Adler32.initial` instead")]
   def self.initial : UInt32
-    LibZ.adler32(0, nil, 0).to_u32
+    Digest::Adler32.initial
   end
 
+  @[Deprecated("Use `Digest::Adler32.checksum` instead")]
   def self.checksum(data) : UInt32
-    update(data, initial)
+    Digest::Adler32.checksum(data)
   end
 
+  @[Deprecated("Use `Digest::Adler32.update` instead")]
   def self.update(data, adler32 : UInt32) : UInt32
-    slice = data.to_slice
-    LibZ.adler32(adler32, slice, slice.size).to_u32
+    Digest::Adler32.update(data, adler32)
   end
 
+  @[Deprecated("Use `Digest::Adler32.combine` instead")]
   def self.combine(adler1 : UInt32, adler2 : UInt32, len) : UInt32
-    LibZ.adler32_combine(adler1, adler2, len).to_u32
+    Digest::Adler32.combine(adler1, adler2, len)
   end
 end

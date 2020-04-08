@@ -121,5 +121,94 @@ module YAML
         end
       end
     end
+
+    describe "skip" do
+      it "scalar" do
+        parser = PullParser.new("[1, 2]")
+        parser.read_stream do
+          parser.read_document do
+            parser.read_sequence do
+              parser.skip
+              parser.read_scalar.should eq("2")
+            end
+          end
+        end
+      end
+
+      it "alias" do
+        parser = PullParser.new(<<-YAML)
+          - &value 1
+          - *value
+          - 2
+          YAML
+        parser.read_stream do
+          parser.read_document do
+            parser.read_sequence do
+              parser.read_scalar.should eq("1")
+              parser.skip
+              parser.read_scalar.should eq("2")
+            end
+          end
+        end
+      end
+
+      it "sequence" do
+        parser = PullParser.new("[[1, [2]], 3]")
+        parser.read_stream do
+          parser.read_document do
+            parser.read_sequence do
+              parser.skip
+              parser.read_scalar.should eq("3")
+            end
+          end
+        end
+      end
+
+      it "mapping" do
+        parser = PullParser.new(%([{"foo": [1, 2]}, 3]))
+        parser.read_stream do
+          parser.read_document do
+            parser.read_sequence do
+              parser.skip
+              parser.read_scalar.should eq("3")
+            end
+          end
+        end
+      end
+
+      it "stream" do
+        parser = PullParser.new("[1]")
+        parser.skip
+        parser.read_next.should eq(EventKind::NONE)
+      end
+
+      it "document" do
+        parser = PullParser.new("[1]")
+        parser.read_stream do
+          parser.skip
+        end
+        parser.read_next.should eq(EventKind::NONE)
+      end
+
+      it "skips event in other cases" do
+        parser = PullParser.new(%([ {"foo": 1}]))
+        parser.kind.should eq(EventKind::STREAM_START)
+        parser.read_next.should eq(EventKind::DOCUMENT_START)
+        parser.read_next.should eq(EventKind::SEQUENCE_START)
+        parser.read_next.should eq(EventKind::MAPPING_START)
+        parser.read_next.should eq(EventKind::SCALAR)
+        parser.read_next.should eq(EventKind::SCALAR)
+        parser.skip
+        parser.kind.should eq(EventKind::MAPPING_END)
+        parser.skip
+        parser.kind.should eq(EventKind::SEQUENCE_END)
+        parser.skip
+        parser.kind.should eq(EventKind::DOCUMENT_END)
+        parser.skip
+        parser.kind.should eq(EventKind::STREAM_END)
+        parser.skip
+        parser.kind.should eq(EventKind::NONE)
+      end
+    end
   end
 end

@@ -38,7 +38,7 @@ module Crystal
 
       io << error_body(source, default_message)
       io << '\n'
-      io << colorize("Error: #{error_message_lines.shift}").yellow.bold
+      io << colorize("#{@warning ? "Warning" : "Error"}: #{error_message_lines.shift}").yellow.bold
       io << remaining error_message_lines
     end
 

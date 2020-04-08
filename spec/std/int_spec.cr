@@ -1,4 +1,4 @@
-require "spec"
+require "./spec_helper"
 {% unless flag?(:win32) %}
   require "big"
 {% end %}
@@ -776,5 +776,24 @@ describe "Int" do
   it "#unsafe_chr" do
     65.unsafe_chr.should eq('A')
     (0x10ffff + 1).unsafe_chr.ord.should eq(0x10ffff + 1)
+  end
+
+  describe "#bit_length" do
+    it "for primitve integers" do
+      0.bit_length.should eq(0)
+      0b1.bit_length.should eq(1)
+      0b1001.bit_length.should eq(4)
+      0b1001001_i64.bit_length.should eq(7)
+      0b1111111111.bit_length.should eq(10)
+      0b1000000000.bit_length.should eq(10)
+      -1.bit_length.should eq(0)
+      -10.bit_length.should eq(4)
+    end
+
+    pending_win32 "for BigInt" do
+      (10.to_big_i ** 20).bit_length.should eq(67)
+      (10.to_big_i ** 309).bit_length.should eq(1027)
+      (10.to_big_i ** 3010).bit_length.should eq(10000)
+    end
   end
 end

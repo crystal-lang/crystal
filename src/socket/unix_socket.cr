@@ -71,7 +71,7 @@ class UNIXSocket < Socket
     {% end %}
 
     if LibC.socketpair(Family::UNIX, socktype, 0, fds) != 0
-      raise Errno.new("socketpair:")
+      raise Socket::Error.new("socketpair:")
     end
 
     {UNIXSocket.new(fd: fds[0], type: type), UNIXSocket.new(fd: fds[1], type: type)}

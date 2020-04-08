@@ -274,6 +274,8 @@ describe Time::Span do
     t1.total_minutes.should be_close(1563.07, 1e-02)
     t1.total_seconds.should be_close(93784, 1e-01)
     t1.total_milliseconds.should be_close(9.3784e+07, 1e+01)
+    t1.total_microseconds.should be_close(9.3784e+10, 1e+04)
+    t1.total_nanoseconds.should be_close(9.3784e+13, 1e+07)
     t1.to_f.should be_close(93784, 1e-01)
     t1.to_i.should eq(93784)
 

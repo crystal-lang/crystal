@@ -349,7 +349,7 @@ module XML
   # Writes XML document into the given `IO`. An `XML::Builder` is yielded to the block.
   #
   # Builds an XML document (see `#document`) including XML declaration (`<?xml?>`).
-  def self.build(io : IO, version : String? = nil, encoding : String? = nil, indent = nil, quote_char = nil)
+  def self.build(io : IO, version : String? = nil, encoding : String? = nil, indent = nil, quote_char = nil) : Nil
     build_fragment(io, indent: indent, quote_char: quote_char) do |xml|
       xml.start_document version, encoding
       yield xml
@@ -360,7 +360,7 @@ module XML
   # Writes XML fragment into the given `IO`. An `XML::Builder` is yielded to the block.
   #
   # Builds an XML fragment without XML declaration (`<?xml?>`).
-  def self.build_fragment(io : IO, *, indent = nil, quote_char = nil)
+  def self.build_fragment(io : IO, *, indent = nil, quote_char = nil) : Nil
     xml = XML::Builder.new(io)
     xml.indent = indent if indent
     xml.quote_char = quote_char if quote_char
@@ -370,6 +370,7 @@ module XML
     # when StartDocument is omitted.
     xml.end_document
     xml.flush
+    io.flush
     v
   end
 end

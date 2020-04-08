@@ -118,8 +118,13 @@ class Concurrent::Future(R)
 end
 
 # Spawns a `Fiber` to compute *&block* in the background after *delay* has elapsed.
-# Access to get is synchronized between fibers. *&block* is only called once.
+# Access to `get` is synchronized between fibers, and returns the block value
+# after the *&block* completes.  *&block* is only called once.
+# `get` may be called multiple times, and returns the block's return value or
+# re-raises any unrescued Exception.
 # May be canceled before *&block* is called by calling `cancel`.
+# Calling `get` before the delay has elapsed results in the call waiting for the delay
+# to fully elapse and compute to next finish, then the value is returned.
 # ```
 # d = delay(1) { Process.kill(Signal::KILL, Process.pid) }
 # # ... long operations ...
@@ -130,7 +135,10 @@ def delay(delay, &block : -> _)
 end
 
 # Spawns a `Fiber` to compute *&block* in the background.
-# Access to get is synchronized between fibers.  *&block* is only called once.
+# Access to `get` is synchronized between fibers, and returns the block value
+# after the *&block* completes.  *&block* is only called once.
+# `get` may be called multiple times, and returns the block's return value or
+# re-raises any unrescued Exception.
 # ```
 # f = future { `echo hello` }
 # # ... other actions ...
@@ -141,7 +149,10 @@ def future(&exp : -> _)
 end
 
 # Conditionally spawns a `Fiber` to run *&block* in the background.
-# Access to get is synchronized between fibers. *&block* is only called once.
+# Access to `get` is synchronized between fibers, and returns the block value
+# after the *&block* completes.  *&block* is only called once.
+# `get` may be called multiple times, and returns the block's return value or
+# re-raises any unrescued Exception.
 # *&block* doesn't run by default, only when `get` is called.
 # ```
 # l = lazy { expensive_computation }

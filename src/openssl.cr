@@ -112,7 +112,7 @@ module OpenSSL
               message = "Unexpected EOF"
               @underlying_eof = true
             when -1
-              cause = Errno.new(func || "OpenSSL")
+              cause = RuntimeError.from_errno(func || "OpenSSL")
               message = "I/O error"
             else
               message = "Unknown error"

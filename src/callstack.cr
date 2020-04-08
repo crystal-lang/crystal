@@ -257,6 +257,8 @@ struct CallStack
             elsif value.responds_to?(:to_i)
               high_pc = low_pc.as(LibC::SizeT) + value.to_i
             end
+          else
+            # Not an attribute we care
           end
         end
 

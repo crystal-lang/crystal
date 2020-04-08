@@ -15,33 +15,33 @@ module IO::Evented
   @read_event = Crystal::ThreadLocalValue(Crystal::Event).new
   @write_event = Crystal::ThreadLocalValue(Crystal::Event).new
 
-  # Returns the time to wait when reading before raising an `IO::Timeout`.
+  # Returns the time to wait when reading before raising an `IO::TimeoutError`.
   def read_timeout : Time::Span?
     @read_timeout
   end
 
-  # Sets the time to wait when reading before raising an `IO::Timeout`.
+  # Sets the time to wait when reading before raising an `IO::TimeoutError`.
   def read_timeout=(timeout : Time::Span?) : ::Time::Span?
     @read_timeout = timeout
   end
 
-  # Sets the number of seconds to wait when reading before raising an `IO::Timeout`.
+  # Sets the number of seconds to wait when reading before raising an `IO::TimeoutError`.
   def read_timeout=(read_timeout : Number) : Number
     self.read_timeout = read_timeout.seconds
     read_timeout
   end
 
-  # Returns the time to wait when writing before raising an `IO::Timeout`.
+  # Returns the time to wait when writing before raising an `IO::TimeoutError`.
   def write_timeout : Time::Span?
     @write_timeout
   end
 
-  # Sets the time to wait when writing before raising an `IO::Timeout`.
+  # Sets the time to wait when writing before raising an `IO::TimeoutError`.
   def write_timeout=(timeout : Time::Span?) : ::Time::Span?
     @write_timeout = timeout
   end
 
-  # Sets the number of seconds to wait when writing before raising an `IO::Timeout`.
+  # Sets the number of seconds to wait when writing before raising an `IO::TimeoutError`.
   def write_timeout=(write_timeout : Number) : Number
     self.write_timeout = write_timeout.seconds
     write_timeout
@@ -58,7 +58,7 @@ module IO::Evented
       if Errno.value == Errno::EAGAIN
         wait_readable
       else
-        raise Errno.new(errno_msg)
+        raise IO::Error.from_errno(errno_msg)
       end
     end
   ensure
@@ -79,7 +79,7 @@ module IO::Evented
           if Errno.value == Errno::EAGAIN
             wait_writable
           else
-            raise Errno.new(errno_msg)
+            raise IO::Error.from_errno(errno_msg)
           end
         end
       end
@@ -90,7 +90,7 @@ module IO::Evented
 
   def evented_send(slice : Bytes, errno_msg : String) : Int32
     bytes_written = yield slice
-    raise Errno.new(errno_msg) if bytes_written == -1
+    raise Socket::Error.from_errno(errno_msg) if bytes_written == -1
     # `to_i32` is acceptable because `Slice#size` is an Int32
     bytes_written.to_i32
   ensure
@@ -129,7 +129,7 @@ module IO::Evented
 
     if @read_timed_out
       @read_timed_out = false
-      yield Timeout.new("Read timed out")
+      yield TimeoutError.new("Read timed out")
     end
 
     check_open
@@ -154,7 +154,7 @@ module IO::Evented
 
     if @write_timed_out
       @write_timed_out = false
-      yield Timeout.new("Write timed out")
+      yield TimeoutError.new("Write timed out")
     end
 
     check_open

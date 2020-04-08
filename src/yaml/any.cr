@@ -139,6 +139,8 @@ struct YAML::Any
     case @raw
     when Hash, Array
       self[index_or_key]?
+    else
+      nil
     end
   end
 

@@ -42,7 +42,7 @@ module Crystal
         1
       end
 
-    status = AtExitHandlers.run status, ex
+    status = Crystal::AtExitHandlers.run status, ex
     ignore_stdio_errors { STDOUT.flush }
     ignore_stdio_errors { STDERR.flush }
 
@@ -54,7 +54,6 @@ module Crystal
   def self.ignore_stdio_errors
     yield
   rescue IO::Error
-  rescue Errno
   end
 
   # Main method run by all Crystal programs at startup.
