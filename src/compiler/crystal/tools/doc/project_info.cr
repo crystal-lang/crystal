@@ -19,5 +19,17 @@ module Crystal::Doc
         tags.first
       end
     end
+
+    def self.find_default_name
+      return unless File.readable?("shard.yml")
+
+      # Poor man's YAML reader
+      File.each_line("shard.yml") do |line|
+        if line.starts_with?("name:")
+          end_pos = line.byte_index("#") || line.bytesize
+          return line.byte_slice(5, end_pos - 5).strip.presence
+        end
+      end
+    end
   end
 end

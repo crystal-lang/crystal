@@ -97,4 +97,28 @@ describe Crystal::Doc::ProjectInfo do
       end
     end
   end
+
+  it "find_default_name" do
+    with_tempfile("docs-shard-name") do |tempdir|
+      Dir.mkdir tempdir
+      Dir.cd(tempdir) do
+        Crystal::Doc::ProjectInfo.find_default_name.should be_nil
+
+        File.write("shard.yml", "foo: bar\n")
+        Crystal::Doc::ProjectInfo.find_default_name.should be_nil
+
+        File.write("shard.yml", "name: \n")
+        Crystal::Doc::ProjectInfo.find_default_name.should be_nil
+
+        File.write("shard.yml", "  name: bar\n")
+        Crystal::Doc::ProjectInfo.find_default_name.should be_nil
+
+        File.write("shard.yml", "name: bar\n")
+        Crystal::Doc::ProjectInfo.find_default_name.should eq "bar"
+
+        File.write("shard.yml", "name: bar # comment\n")
+        Crystal::Doc::ProjectInfo.find_default_name.should eq "bar"
+      end
+    end
+  end
 end

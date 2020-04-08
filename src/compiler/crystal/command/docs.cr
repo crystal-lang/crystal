@@ -98,12 +98,7 @@ class Crystal::Command
       setup_compiler_warning_options(opts, compiler)
     end
 
-    unless project_name
-      abort "missing --project-name"
-    end
-
-    project_version ||= Doc::ProjectInfo.find_default_project_version
-    project_info = Doc::ProjectInfo.new(project_name.not_nil!, project_version)
+    project_info = create_project_info(project_name, project_version)
 
     if options.empty?
       sources = [Compiler::Source.new("require", %(require "./src/**"))]
@@ -124,5 +119,23 @@ class Crystal::Command
 
     report_warnings result
     exit 1 if warnings_fail_on_exit?(result)
+  end
+
+  private def create_project_info(name, version)
+    name ||= Doc::ProjectInfo.find_default_name
+    unless name
+      STDERR.puts "Couldn't determine name from shard.yml, please provide --project-name option"
+    end
+
+    version ||= Doc::ProjectInfo.find_default_version
+    unless version
+      STDERR.puts "Couldn't determine version from git, please provide --project-version option"
+    end
+
+    unless name && version
+      abort
+    end
+
+    Doc::ProjectInfo.new(name, version)
   end
 end
