@@ -53,30 +53,29 @@ struct HTTP::Headers
     # the most common case is a single value and so we avoid allocating
     # memory for arrays.
     @hash = Hash(Key, String | Array(String)).new
-    @read_only = false
+    @sent = false
   end
 
-  # Makes these headers read-only.
-  # When in read-only mode, trying to modify these headers
-  # will raise `ReadOnlyError`.
-  def read_only!
-    @read_only = true
+  # Marks these headers as being sent.
+  # If so, trying to modify these headers will raise `ReadOnlyError`.
+  def mark_as_sent!
+    @sent = true
   end
 
-  # Returns `true` if these headers are in read-only mode.
-  def read_only?
-    @read_only
+  # Returns `true` if these headers were already sent.
+  def sent?
+    @sent
   end
 
   def []=(key, value : String)
-    check_writeable
+    check_not_sent
     check_invalid_header_content(value)
 
     @hash[wrap(key)] = value
   end
 
   def []=(key, value : Array(String))
-    check_writeable
+    check_not_sent
     value.each { |val| check_invalid_header_content val }
 
     @hash[wrap(key)] = value
@@ -134,28 +133,28 @@ struct HTTP::Headers
   end
 
   def add(key, value : String)
-    check_writeable
+    check_not_sent
     check_invalid_header_content value
     unsafe_add(key, value)
     self
   end
 
   def add(key, value : Array(String))
-    check_writeable
+    check_not_sent
     value.each { |val| check_invalid_header_content val }
     unsafe_add(key, value)
     self
   end
 
   def add?(key, value : String)
-    check_writeable
+    check_not_sent
     return false unless valid_value?(value)
     unsafe_add(key, value)
     true
   end
 
   def add?(key, value : Array(String))
-    check_writeable
+    check_not_sent
     value.each { |val| return false unless valid_value?(val) }
     unsafe_add(key, value)
     true
@@ -179,13 +178,13 @@ struct HTTP::Headers
   end
 
   def delete(key)
-    check_writeable
+    check_not_sent
     values = @hash.delete wrap(key)
     values ? concat(values) : nil
   end
 
   def merge!(other)
-    check_writeable
+    check_not_sent
     other.each do |key, value|
       self[wrap(key)] = value
     end
@@ -378,9 +377,9 @@ struct HTTP::Headers
     end
   end
 
-  private def check_writeable
-    if read_only?
-      raise ReadOnlyError.new("HTTP::Headers are in read-only mode (it probably means the HTTP::Server headers were already sent)")
+  private def check_not_sent
+    if sent?
+      raise ReadOnlyError.new("HTTP::Headers were already sent")
     end
   end
 end
