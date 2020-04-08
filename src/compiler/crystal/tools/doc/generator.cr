@@ -1,5 +1,3 @@
-record Crystal::Doc::ProjectInfo, name : String, version : String
-
 class Crystal::Doc::Generator
   getter program : Program
 

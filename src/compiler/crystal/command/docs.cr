@@ -13,7 +13,7 @@ class Crystal::Command
     sitemap_priority = "1.0"
     sitemap_changefreq = "never"
     project_name = nil
-    project_version = "master"
+    project_version = nil
 
     compiler = Compiler.new
 
@@ -102,6 +102,9 @@ class Crystal::Command
       abort "missing --project-name"
     end
 
+    project_version ||= Doc::ProjectInfo.find_default_project_version
+    project_info = Doc::ProjectInfo.new(project_name.not_nil!, project_version)
+
     if options.empty?
       sources = [Compiler::Source.new("require", %(require "./src/**"))]
       included_dirs = [] of String
@@ -117,7 +120,6 @@ class Crystal::Command
     compiler.wants_doc = true
     result = compiler.top_level_semantic sources
 
-    project_info = Doc::ProjectInfo.new(project_name.not_nil!, project_version)
     Doc::Generator.new(result.program, included_dirs, output_directory, output_format, sitemap_base_url, sitemap_priority, sitemap_changefreq, project_info).run
 
     report_warnings result
