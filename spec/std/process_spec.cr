@@ -214,7 +214,7 @@ describe Process do
     process.terminated?.should be_false
 
     # Kill, zombie now
-    process.kill
+    process.signal(Signal::KILL)
     process.exists?.should be_true
     process.terminated?.should be_false
 
@@ -222,6 +222,15 @@ describe Process do
     process.wait
     process.exists?.should be_false
     process.terminated?.should be_true
+  end
+
+  it "terminates the process" do
+    process = Process.new("yes")
+    process.exists?.should be_true
+    process.terminated?.should be_false
+
+    process.terminate
+    process.wait
   end
 
   describe "executable_path" do
