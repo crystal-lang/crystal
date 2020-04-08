@@ -218,8 +218,8 @@ module Enumerable(T)
   # of the collection, removing `nil` values.
   #
   # ```
-  # ["Alice", "Bob"].map { |name| name.match(/^A./) }         # => [#<Regex::MatchData "Al">, nil]
-  # ["Alice", "Bob"].compact_map { |name| name.match(/^A./) } # => [#<Regex::MatchData "Al">]
+  # ["Alice", "Bob"].map { |name| name.match(/^A./) }         # => [Regex::MatchData("Al"), nil]
+  # ["Alice", "Bob"].compact_map { |name| name.match(/^A./) } # => [Regex::MatchData("Al")]
   # ```
   def compact_map
     ary = [] of typeof((yield first).not_nil!)
