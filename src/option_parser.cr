@@ -124,6 +124,7 @@ class OptionParser
   def initialize
     @flags = [] of String
     @handlers = Hash(String, Handler).new
+    @stop = false
     @missing_option = ->(option : String) { raise MissingOption.new(option) }
     @invalid_option = ->(option : String) { raise InvalidOption.new(option) }
   end
@@ -248,6 +249,13 @@ class OptionParser
   def invalid_option(&@invalid_option : String ->)
   end
 
+  # Stops the current parse and returns immediately, leaving the remaining flags
+  # unparsed. This is treated identically to `--` being inserted *behind* the
+  # current parsed flag.
+  def stop
+    @stop = true
+  end
+
   # Returns all the setup options, formatted in a help message.
   def to_s(io : IO) : Nil
     if banner = @banner
@@ -282,6 +290,12 @@ class OptionParser
     arg_index = 0
     while arg_index < args.size
       arg = args[arg_index]
+
+      if @stop
+        double_dash_index = arg_index - 1
+        @stop = false
+        break
+      end
 
       # -- means to stop parsing arguments
       if arg == "--"

@@ -524,4 +524,22 @@ describe "OptionParser" do
           -f, --foo                        Foo
       USAGE
   end
+
+  it "stops when asked" do
+    args = %w(--foo --stop --bar)
+    foo = false
+    bar = false
+    OptionParser.parse(args) do |opts|
+      opts.on("--foo", "") { foo = true }
+      opts.on("--bar", "") { bar = true }
+      opts.on("--stop", "") { opts.stop }
+      opts.unknown_args do |before, after|
+        before.should eq(%w())
+        after.should eq(%w(--bar))
+      end
+    end
+    foo.should be_true
+    bar.should be_false
+    args.should eq(%w(--bar))
+  end
 end
