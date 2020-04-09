@@ -462,8 +462,8 @@ struct Crystal::TypeDeclarationProcessor
     # Get ancestor's non-nilable variables
     ancestor = owner.ancestors.first?
     ancestor = uninstantiate(ancestor)
-    if ancestor
-      ancestor_non_nilable = @non_nilable_instance_vars[ancestor]? if ancestor.is_a?(Type)
+    if ancestor.is_a?(Type)
+      ancestor_non_nilable = @non_nilable_instance_vars[ancestor]?
     end
 
     # If the ancestor has non-nilable instance vars, check that all initialize either call
