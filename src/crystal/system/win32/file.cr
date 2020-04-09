@@ -213,7 +213,7 @@ module Crystal::System::File
   end
 
   private def system_truncate(size : Int) : Nil
-    if LibC._chsize(fd, size) != 0
+    if LibC._chsize_s(fd, size) != 0
       raise ::File::Error.from_errno("Error truncating file", file: path)
     end
   end
