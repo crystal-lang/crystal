@@ -249,6 +249,15 @@ class OptionParser
   def invalid_option(&@invalid_option : String ->)
   end
 
+  # Sets a handler which runs before each argument is parsed. This callback is
+  # not passed flag arguments. For example, `--foo=foo_arg --bar bar_arg` would
+  # pass `--foo=foo_arg` and `--bar` to the callback only.
+  #
+  # You typically use this to implement advanced option parsing behaviour such
+  # as treating all options after a filename differently (along with `#stop`).
+  def before_each(&@before_each : String ->)
+  end
+
   # Stops the current parse and returns immediately, leaving the remaining flags
   # unparsed. This is treated identically to `--` being inserted *behind* the
   # current parsed flag.
@@ -295,6 +304,10 @@ class OptionParser
         double_dash_index = arg_index - 1
         @stop = false
         break
+      end
+
+      if before_each = @before_each
+        before_each.call(arg)
       end
 
       # -- means to stop parsing arguments

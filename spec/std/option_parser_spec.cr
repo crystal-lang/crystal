@@ -542,4 +542,27 @@ describe "OptionParser" do
     bar.should be_false
     args.should eq(%w(--bar))
   end
+
+  it "can run a callback on every argument" do
+    args = %w(--foo file --bar)
+    foo = false
+    bar = false
+    OptionParser.parse(args) do |opts|
+      opts.on("--foo", "") { foo = true }
+      opts.on("--bar", "") { bar = true }
+      opts.before_each do |arg|
+        if arg == "file"
+          opts.stop
+        end
+      end
+      opts.unknown_args do |before, after|
+        before.should eq(%w(file))
+        after.should eq(%w(--bar))
+      end
+    end
+
+    foo.should be_true
+    bar.should be_false
+    args.should eq(%w(file --bar))
+  end
 end
