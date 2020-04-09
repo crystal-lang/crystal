@@ -50,6 +50,7 @@ class HTTP::Server
     def reset
       # This method is called by RequestProcessor to avoid allocating a new instance for each iteration.
       @headers.clear
+      @headers.sent = false
       @cookies = nil
       @status = :ok
       @wrote_headers = false
@@ -162,7 +163,7 @@ class HTTP::Server
       end
       @io << "\r\n"
       @wrote_headers = true
-      headers.mark_as_sent!
+      headers.sent = true
     end
 
     protected def wrote_headers?

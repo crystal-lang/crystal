@@ -207,17 +207,41 @@ describe HTTP::Headers do
     headers.add?("foobar", [invalid_value]).should be_false
   end
 
-  it "raises when already sent (#8712)" do
-    headers = HTTP::Headers.new
-    headers.mark_as_sent!
+  describe "sent" do
+    it "raises when already sent (#8712)" do
+      headers = HTTP::Headers.new
+      headers.sent = true
 
-    expect_raises(ReadOnlyError) { headers["Foo"] = "Bar" }
-    expect_raises(ReadOnlyError) { headers["Foo"] = ["Bar", "Baz"] }
-    expect_raises(ReadOnlyError) { headers.add "Foo", "Bar" }
-    expect_raises(ReadOnlyError) { headers.add "Foo", ["Bar", "Baz"] }
-    expect_raises(ReadOnlyError) { headers.add? "Foo", "Bar" }
-    expect_raises(ReadOnlyError) { headers.add? "Foo", ["Bar", "Baz"] }
-    expect_raises(ReadOnlyError) { headers.delete "Foo" }
-    expect_raises(ReadOnlyError) { headers.merge!({"Foo" => "Bar"}) }
+      expect_raises(ReadOnlyError) { headers["Foo"] = "Bar" }
+      expect_raises(ReadOnlyError) { headers["Foo"] = ["Bar", "Baz"] }
+      expect_raises(ReadOnlyError) { headers.add "Foo", "Bar" }
+      expect_raises(ReadOnlyError) { headers.add "Foo", ["Bar", "Baz"] }
+      expect_raises(ReadOnlyError) { headers.add? "Foo", "Bar" }
+      expect_raises(ReadOnlyError) { headers.add? "Foo", ["Bar", "Baz"] }
+      expect_raises(ReadOnlyError) { headers.delete "Foo" }
+      expect_raises(ReadOnlyError) { headers.merge!({"Foo" => "Bar"}) }
+    end
+
+    it "can still read them" do
+      headers = HTTP::Headers{"Foo" => "Bar"}
+      headers.sent = true
+
+      headers["Foo"].should eq("Bar")
+    end
+
+    it "can still read them" do
+      headers = HTTP::Headers{"Foo" => "Bar"}
+      headers.sent = true
+
+      headers["Foo"].should eq("Bar")
+    end
+
+    it "can write them if sent is false" do
+      headers = HTTP::Headers{"Foo" => "Bar"}
+      headers.sent = true
+      headers.sent = false
+
+      headers["Foo"] = ["Bar", "Baz"]
+    end
   end
 end

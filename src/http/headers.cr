@@ -56,10 +56,12 @@ struct HTTP::Headers
     @sent = false
   end
 
-  # Marks these headers as being sent.
-  # If so, trying to modify these headers will raise `ReadOnlyError`.
-  def mark_as_sent!
-    @sent = true
+  # Marks these headers as being sent or not.
+  # If sent, trying to modify these headers will raise `ReadOnlyError`.
+  #
+  # You usually shouldn't set this property unless you are implementing
+  # an HTTP server. This property is controlled by `HTTP::Server`.
+  def sent=(@sent)
   end
 
   # Returns `true` if these headers were already sent.
