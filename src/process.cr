@@ -36,12 +36,18 @@ class Process
   end
 
   # Sends a *signal* to the processes identified by the given *pids*.
+  @[Deprecated("Use #signal instead")]
   def self.kill(signal : Signal, *pids : Int)
     pids.each do |pid|
-      ret = LibC.kill(pid, signal.value)
-      raise RuntimeError.from_errno("kill") if ret < 0
+      signal(signal, pid)
     end
     nil
+  end
+
+  # Sends *signal* to the process identified by *pid*.
+  def self.signal(signal : Signal, pid : Int) : Nil
+    ret = LibC.kill(pid, signal.value)
+    raise RuntimeError.from_errno("kill") if ret < 0
   end
 
   # Returns `true` if the process identified by *pid* is valid for
@@ -193,7 +199,7 @@ class Process
       $? = process.wait
       value
     rescue ex
-      process.kill
+      process.terminate
       raise ex
     end
   end
@@ -345,8 +351,14 @@ class Process
   end
 
   # See also: `Process.kill`
+  @[Deprecated("Use #signal instead")]
   def kill(sig = Signal::TERM)
-    Process.kill sig, @pid
+    signal sig
+  end
+
+  # Sends *signal* to this process.
+  def signal(signal : Signal)
+    Process.signal signal, @pid
   end
 
   # Waits for this process to complete and closes any pipes.
@@ -380,6 +392,11 @@ class Process
     close_io @input
     close_io @output
     close_io @error
+  end
+
+  # Asks this process to terminate gracefully
+  def terminate
+    signal Signal::TERM
   end
 
   # :nodoc:

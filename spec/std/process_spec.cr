@@ -155,24 +155,24 @@ describe Process do
     end
   end
 
-  describe "kill" do
+  describe "signal" do
     it "kills a process" do
       process = Process.new("yes")
-      process.kill(Signal::KILL).should be_nil
+      process.signal(Signal::KILL).should be_nil
     end
 
     it "kills many process" do
       process1 = Process.new("yes")
       process2 = Process.new("yes")
-      process1.kill(Signal::KILL).should be_nil
-      process2.kill(Signal::KILL).should be_nil
+      process1.signal(Signal::KILL).should be_nil
+      process2.signal(Signal::KILL).should be_nil
     end
   end
 
   it "gets the pgid of a process id" do
     process = Process.new("yes")
     Process.pgid(process.pid).should be_a(Int32)
-    process.kill(Signal::KILL)
+    process.signal(Signal::KILL)
     Process.pgid.should eq(Process.pgid(Process.pid))
   end
 
@@ -214,7 +214,7 @@ describe Process do
     process.terminated?.should be_false
 
     # Kill, zombie now
-    process.kill
+    process.signal(Signal::KILL)
     process.exists?.should be_true
     process.terminated?.should be_false
 
@@ -222,6 +222,15 @@ describe Process do
     process.wait
     process.exists?.should be_false
     process.terminated?.should be_true
+  end
+
+  it "terminates the process" do
+    process = Process.new("yes")
+    process.exists?.should be_true
+    process.terminated?.should be_false
+
+    process.terminate
+    process.wait
   end
 
   describe "executable_path" do
