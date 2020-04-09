@@ -60,7 +60,7 @@ module Crystal
     def self.linux_runtime_libc
       ldd_version = String.build do |io|
         Process.run("ldd", {"--version"}, output: io, error: io)
-      rescue Errno
+      rescue
         # In case of an error (eg. `ldd` not available), we assume it's gnu.
         return "gnu"
       end

@@ -18,7 +18,10 @@
 #   parser.banner = "Usage: salute [arguments]"
 #   parser.on("-u", "--upcase", "Upcases the salute") { upcase = true }
 #   parser.on("-t NAME", "--to=NAME", "Specifies the name to salute") { |name| destination = name }
-#   parser.on("-h", "--help", "Show this help") { puts parser }
+#   parser.on("-h", "--help", "Show this help") do
+#     puts parser
+#     exit
+#   end
 #   parser.invalid_option do |flag|
 #     STDERR.puts "ERROR: #{flag} is not a valid option."
 #     STDERR.puts parser

@@ -395,12 +395,48 @@ struct Int
     (self & mask) == mask
   end
 
+  # Returns the number of bits of this int value.
+  #
+  # “The number of bits” means that the bit position of the highest bit
+  # which is different to the sign bit.
+  # (The bit position of the bit 2**n is n+1.)
+  # If there is no such bit (zero or minus one), zero is returned.
+  #
+  # I.e. This method returns `ceil(log2(self < 0 ? -self : self + 1))`.
+  #
+  # ```
+  # 0.bit_length # => 0
+  # 1.bit_length # => 1
+  # 2.bit_length # => 2
+  # 3.bit_length # => 2
+  # 4.bit_length # => 3
+  # 5.bit_length # => 3
+  #
+  # # The above is the same as
+  # 0b0.bit_length   # => 0
+  # 0b1.bit_length   # => 1
+  # 0b10.bit_length  # => 2
+  # 0b11.bit_length  # => 2
+  # 0b100.bit_length # => 3
+  # 0b101.bit_length # => 3
+  # ```
+  def bit_length : Int32
+    x = self < 0 ? ~self : self
+
+    if x.is_a?(Int::Primitive)
+      Int32.new(sizeof(self) * 8 - x.leading_zeros_count)
+    else
+      # Safe fallback for any non-primitive Int type
+      to_s(2).size
+    end
+  end
+
   # Returns the greatest common divisor of `self` and `other`. Signed
   # integers may raise overflow if either has value equal to `MIN` of
   # its type.
   #
   # ```
-  # 5.gcd(10) # => 2
+  # 5.gcd(10) # => 5
   # 5.gcd(7)  # => 1
   # ```
   def gcd(other : self) : self
@@ -544,13 +580,13 @@ struct Int
 
     case self
     when 0
-      return "0"
+      "0"
     when 1
-      return "1"
-    end
-
-    internal_to_s(base, upcase) do |ptr, count|
-      String.new(ptr, count, count)
+      "1"
+    else
+      internal_to_s(base, upcase) do |ptr, count|
+        String.new(ptr, count, count)
+      end
     end
   end
 
@@ -561,14 +597,12 @@ struct Int
     case self
     when 0
       io << '0'
-      return
     when 1
       io << '1'
-      return
-    end
-
-    internal_to_s(base, upcase) do |ptr, count|
-      io.write_utf8 Slice.new(ptr, count)
+    else
+      internal_to_s(base, upcase) do |ptr, count|
+        io.write_utf8 Slice.new(ptr, count)
+      end
     end
   end
 

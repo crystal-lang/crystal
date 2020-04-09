@@ -126,7 +126,7 @@ end
 # Calling `get` before the delay has elapsed results in the call waiting for the delay
 # to fully elapse and compute to next finish, then the value is returned.
 # ```
-# d = delay(1) { Process.kill(Signal::KILL, Process.pid) }
+# d = delay(1) { Process.signal(Signal::KILL, Process.pid) }
 # # ... long operations ...
 # d.cancel
 # ```

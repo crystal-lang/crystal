@@ -86,5 +86,5 @@ macro floor_division_returns_lhs_type(a_types, b_types)
 end
 
 # TODO test to_X conversions return types
-# TODO test zero? comparission
-# TODO test <=> comparission between types
+# TODO test zero? comparisons
+# TODO test <=> comparisons between types

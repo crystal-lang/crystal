@@ -189,6 +189,7 @@ class HTTP::Server
         @in_buffer_rem = Bytes.empty
         @out_count = 0
         @sync = false
+        @flush_on_newline = false
         @chunked = false
         @closed = false
       end

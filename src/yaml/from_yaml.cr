@@ -196,6 +196,8 @@ def NamedTuple.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node)
             %var{key.id} = {{type}}.new(ctx, value)
             %found{key.id} = true
         {% end %}
+      else
+        # ignore the key
       end
     end
 

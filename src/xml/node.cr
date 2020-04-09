@@ -167,6 +167,7 @@ struct XML::Node
   def inspect(io : IO) : Nil
     io << "#<XML::"
     case type
+    when XML::Node::Type::NONE               then io << "None"
     when XML::Node::Type::ELEMENT_NODE       then io << "Element"
     when XML::Node::Type::ATTRIBUTE_NODE     then io << "Attribute"
     when XML::Node::Type::TEXT_NODE          then io << "Text"
@@ -286,11 +287,11 @@ struct XML::Node
   def namespace
     case type
     when Type::DOCUMENT_NODE, Type::ATTRIBUTE_DECL, Type::DTD_NODE, Type::ELEMENT_DECL
-      return nil
+      nil
+    else
+      ns = @node.value.ns
+      ns ? Namespace.new(document, ns) : nil
     end
-
-    ns = @node.value.ns
-    ns ? Namespace.new(document, ns) : nil
   end
 
   # Returns namespaces in scope for self – those defined on self element

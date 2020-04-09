@@ -30,7 +30,7 @@ class Thread
     }, self.as(Void*))
 
     if ret != 0
-      raise Errno.new("pthread_create", ret)
+      raise RuntimeError.from_errno("pthread_create", Errno.new(ret))
     end
   end
 
@@ -66,7 +66,7 @@ class Thread
 
     @@current_key = begin
       ret = LibC.pthread_key_create(out current_key, nil)
-      raise Errno.new("pthread_key_create", ret) unless ret == 0
+      raise RuntimeError.from_errno("pthread_key_create", Errno.new(ret)) unless ret == 0
       current_key
     end
 
@@ -84,7 +84,7 @@ class Thread
     # Associates the Thread object to the running system thread.
     protected def self.current=(thread : Thread) : Thread
       ret = LibC.pthread_setspecific(@@current_key, thread.as(Void*))
-      raise Errno.new("pthread_setspecific", ret) unless ret == 0
+      raise RuntimeError.from_errno("pthread_setspecific", Errno.new(ret)) unless ret == 0
       thread
     end
   {% else %}
@@ -105,7 +105,7 @@ class Thread
 
   def self.yield
     ret = LibC.sched_yield
-    raise Errno.new("sched_yield") unless ret == 0
+    raise RuntimeError.from_errno("sched_yield") unless ret == 0
   end
 
   # Returns the Fiber representing the thread's main stack.
@@ -144,23 +144,23 @@ class Thread
       ret = LibC.pthread_attr_init(out attr)
       unless ret == 0
         LibC.pthread_attr_destroy(pointerof(attr))
-        raise Errno.new("pthread_attr_init", ret)
+        raise RuntimeError.from_errno("pthread_attr_init", Errno.new(ret))
       end
 
       if LibC.pthread_attr_get_np(@th, pointerof(attr)) == 0
         LibC.pthread_attr_getstack(pointerof(attr), pointerof(address), out _)
       end
       ret = LibC.pthread_attr_destroy(pointerof(attr))
-      raise Errno.new("pthread_attr_destroy", ret) unless ret == 0
+      raise RuntimeError.from_errno("pthread_attr_destroy", Errno.new(ret)) unless ret == 0
     {% elsif flag?(:linux) %}
       if LibC.pthread_getattr_np(@th, out attr) == 0
         LibC.pthread_attr_getstack(pointerof(attr), pointerof(address), out _)
       end
       ret = LibC.pthread_attr_destroy(pointerof(attr))
-      raise Errno.new("pthread_attr_destroy", ret) unless ret == 0
+      raise RuntimeError.from_errno("pthread_attr_destroy", Errno.new(ret)) unless ret == 0
     {% elsif flag?(:openbsd) %}
       ret = LibC.pthread_stackseg_np(@th, out stack)
-      raise Errno.new("pthread_stackseg_np", ret) unless ret == 0
+      raise RuntimeError.from_errno("pthread_stackseg_np", Errno.new(ret)) unless ret == 0
 
       address =
         if LibC.pthread_main_np == 1

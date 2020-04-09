@@ -135,7 +135,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
 
     if created_new_type && superclass
       if node.struct? != superclass.struct?
-        node.raise "can't make #{node.struct? ? "struct" : "class"} '#{node.name}' inherit #{superclass.type_desc} '#{superclass.to_s}'"
+        node.raise "can't make #{node.struct? ? "struct" : "class"} '#{node.name}' inherit #{superclass.type_desc} '#{superclass}'"
       end
 
       if superclass.struct? && !superclass.abstract?
@@ -185,6 +185,8 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
           type.extern = true
         when @program.packed_annotation
           type.packed = true
+        else
+          # not a built-in annotation
         end
       end
 
@@ -349,6 +351,8 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
                       receiver.raise "can't define method in generic instance #{metaclass}"
                     when GenericModuleInstanceMetaclassType
                       receiver.raise "can't define method in generic instance #{metaclass}"
+                    else
+                      # go on
                     end
                     metaclass
                   end
@@ -458,6 +462,8 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
         type.add_link_annotation(LinkAnnotation.from(ann))
       when @program.call_convention_annotation
         type.call_convention = parse_call_convention(ann, type.call_convention)
+      else
+        # not a built-in annotation
       end
       type.add_annotation(annotation_type, ann)
     end
@@ -807,6 +813,8 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
       # Don't give an error yet: wait to see if the
       # call doesn't resolve to a method/macro
       return false
+    else
+      # go on
     end
 
     node.raise "can't apply visibility modifier"

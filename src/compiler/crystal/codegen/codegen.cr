@@ -183,9 +183,7 @@ module Crystal
 
       if @program.has_flag? "windows"
         @personality_name = "__CxxFrameHandler3"
-
-        personality_function = @llvm_mod.functions.add(@personality_name, [] of LLVM::Type, llvm_context.int32, true)
-        @main.personality_function = personality_function
+        @main.personality_function = windows_personality_fun
       else
         @personality_name = "__crystal_personality"
       end
@@ -310,7 +308,10 @@ module Crystal
              @codegen.personality_name, GET_EXCEPTION_NAME, RAISE_OVERFLOW_NAME,
              ONCE_INIT, ONCE
           @codegen.accept node
+        else
+          # go on
         end
+
         false
       end
 
@@ -1109,6 +1110,8 @@ module Crystal
       when ClassVar
         # This is the case of a class var initializer
         initialize_class_var(var)
+      else
+        # go on
       end
 
       @last = llvm_nil

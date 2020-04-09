@@ -292,7 +292,7 @@ module Unicode
 
   private def self.alternate_ranges
     @@alternate_ranges ||= begin
-      data = Array({Int32, Int32}).new(57)
+      data = Array({Int32, Int32}).new(59)
       put(data, 256, 303)
       put(data, 306, 311)
       put(data, 313, 328)
@@ -350,6 +350,8 @@ module Unicode
       put(data, 42902, 42921)
       put(data, 42932, 42943)
       put(data, 42946, 42947)
+      put(data, 42951, 42954)
+      put(data, 42997, 42998)
       data
     end
   end
@@ -367,7 +369,7 @@ module Unicode
 
   private def self.category_Lu
     @@category_Lu ||= begin
-      data = Array({Int32, Int32, Int32}).new(143)
+      data = Array({Int32, Int32, Int32}).new(144)
       put(data, 65, 90, 1)
       put(data, 192, 214, 1)
       put(data, 216, 222, 1)
@@ -473,7 +475,8 @@ module Unicode
       put(data, 42928, 42932, 1)
       put(data, 42934, 42942, 2)
       put(data, 42946, 42948, 2)
-      put(data, 42949, 42950, 1)
+      put(data, 42949, 42951, 1)
+      put(data, 42953, 42997, 44)
       put(data, 65313, 65338, 1)
       put(data, 66560, 66599, 1)
       put(data, 66736, 66771, 1)
@@ -519,7 +522,7 @@ module Unicode
 
   private def self.category_Ll
     @@category_Ll ||= begin
-      data = Array({Int32, Int32, Int32}).new(154)
+      data = Array({Int32, Int32, Int32}).new(156)
       put(data, 97, 122, 1)
       put(data, 181, 223, 42)
       put(data, 224, 246, 1)
@@ -633,9 +636,11 @@ module Unicode
       put(data, 42903, 42921, 2)
       put(data, 42927, 42933, 6)
       put(data, 42935, 42943, 2)
-      put(data, 42947, 43002, 55)
-      put(data, 43824, 43866, 1)
-      put(data, 43872, 43879, 1)
+      put(data, 42947, 42952, 5)
+      put(data, 42954, 42998, 44)
+      put(data, 43002, 43824, 822)
+      put(data, 43825, 43866, 1)
+      put(data, 43872, 43880, 1)
       put(data, 43888, 43967, 1)
       put(data, 64256, 64262, 1)
       put(data, 64275, 64279, 1)
@@ -698,7 +703,7 @@ module Unicode
 
   private def self.category_Mn
     @@category_Mn ||= begin
-      data = Array({Int32, Int32, Int32}).new(285)
+      data = Array({Int32, Int32, Int32}).new(292)
       put(data, 768, 879, 1)
       put(data, 1155, 1159, 1)
       put(data, 1425, 1469, 1)
@@ -750,12 +755,12 @@ module Unicode
       put(data, 2817, 2876, 59)
       put(data, 2879, 2881, 2)
       put(data, 2882, 2884, 1)
-      put(data, 2893, 2902, 9)
-      put(data, 2914, 2915, 1)
-      put(data, 2946, 3008, 62)
-      put(data, 3021, 3072, 51)
-      put(data, 3076, 3134, 58)
-      put(data, 3135, 3136, 1)
+      put(data, 2893, 2901, 8)
+      put(data, 2902, 2914, 12)
+      put(data, 2915, 2946, 31)
+      put(data, 3008, 3021, 13)
+      put(data, 3072, 3076, 4)
+      put(data, 3134, 3136, 1)
       put(data, 3142, 3144, 1)
       put(data, 3146, 3149, 1)
       put(data, 3157, 3158, 1)
@@ -768,8 +773,9 @@ module Unicode
       put(data, 3387, 3388, 1)
       put(data, 3393, 3396, 1)
       put(data, 3405, 3426, 21)
-      put(data, 3427, 3530, 103)
-      put(data, 3538, 3540, 1)
+      put(data, 3427, 3457, 30)
+      put(data, 3530, 3538, 8)
+      put(data, 3539, 3540, 1)
       put(data, 3542, 3633, 91)
       put(data, 3636, 3642, 1)
       put(data, 3655, 3662, 1)
@@ -819,6 +825,7 @@ module Unicode
       put(data, 6771, 6780, 1)
       put(data, 6783, 6832, 49)
       put(data, 6833, 6845, 1)
+      put(data, 6847, 6848, 1)
       put(data, 6912, 6915, 1)
       put(data, 6964, 6966, 2)
       put(data, 6967, 6970, 1)
@@ -854,9 +861,9 @@ module Unicode
       put(data, 42736, 42737, 1)
       put(data, 43010, 43014, 4)
       put(data, 43019, 43045, 26)
-      put(data, 43046, 43204, 158)
-      put(data, 43205, 43232, 27)
-      put(data, 43233, 43249, 1)
+      put(data, 43046, 43052, 6)
+      put(data, 43204, 43205, 1)
+      put(data, 43232, 43249, 1)
       put(data, 43263, 43302, 39)
       put(data, 43303, 43309, 1)
       put(data, 43335, 43345, 1)
@@ -888,6 +895,7 @@ module Unicode
       put(data, 68159, 68325, 166)
       put(data, 68326, 68900, 574)
       put(data, 68901, 68903, 1)
+      put(data, 69291, 69292, 1)
       put(data, 69446, 69456, 1)
       put(data, 69633, 69688, 55)
       put(data, 69689, 69702, 1)
@@ -901,7 +909,8 @@ module Unicode
       put(data, 70017, 70070, 53)
       put(data, 70071, 70078, 1)
       put(data, 70089, 70092, 1)
-      put(data, 70191, 70193, 1)
+      put(data, 70095, 70191, 96)
+      put(data, 70192, 70193, 1)
       put(data, 70196, 70198, 2)
       put(data, 70199, 70206, 7)
       put(data, 70367, 70371, 4)
@@ -933,6 +942,8 @@ module Unicode
       put(data, 71463, 71467, 1)
       put(data, 71727, 71735, 1)
       put(data, 71737, 71738, 1)
+      put(data, 71995, 71996, 1)
+      put(data, 71998, 72003, 5)
       put(data, 72148, 72151, 1)
       put(data, 72154, 72155, 1)
       put(data, 72160, 72193, 33)
@@ -963,8 +974,9 @@ module Unicode
       put(data, 92976, 92982, 1)
       put(data, 94031, 94095, 64)
       put(data, 94096, 94098, 1)
-      put(data, 113821, 113822, 1)
-      put(data, 119143, 119145, 1)
+      put(data, 94180, 113821, 19641)
+      put(data, 113822, 119143, 5321)
+      put(data, 119144, 119145, 1)
       put(data, 119163, 119170, 1)
       put(data, 119173, 119179, 1)
       put(data, 119210, 119213, 1)
@@ -992,7 +1004,7 @@ module Unicode
 
   private def self.category_Mc
     @@category_Mc ||= begin
-      data = Array({Int32, Int32, Int32}).new(147)
+      data = Array({Int32, Int32, Int32}).new(153)
       put(data, 2307, 2363, 56)
       put(data, 2366, 2368, 1)
       put(data, 2377, 2380, 1)
@@ -1097,7 +1109,8 @@ module Unicode
       put(data, 69958, 70018, 60)
       put(data, 70067, 70069, 1)
       put(data, 70079, 70080, 1)
-      put(data, 70188, 70190, 1)
+      put(data, 70094, 70188, 94)
+      put(data, 70189, 70190, 1)
       put(data, 70194, 70195, 1)
       put(data, 70197, 70368, 171)
       put(data, 70369, 70370, 1)
@@ -1125,7 +1138,11 @@ module Unicode
       put(data, 71350, 71456, 106)
       put(data, 71457, 71462, 5)
       put(data, 71724, 71726, 1)
-      put(data, 71736, 72145, 409)
+      put(data, 71736, 71984, 248)
+      put(data, 71985, 71989, 1)
+      put(data, 71991, 71992, 1)
+      put(data, 71997, 72000, 3)
+      put(data, 72002, 72145, 143)
       put(data, 72146, 72147, 1)
       put(data, 72156, 72159, 1)
       put(data, 72164, 72249, 85)
@@ -1138,6 +1155,7 @@ module Unicode
       put(data, 73110, 73461, 351)
       put(data, 73462, 94033, 20571)
       put(data, 94034, 94087, 1)
+      put(data, 94192, 94193, 1)
       put(data, 119141, 119142, 1)
       put(data, 119149, 119154, 1)
       data
@@ -1162,7 +1180,7 @@ module Unicode
 
   private def self.category_Nd
     @@category_Nd ||= begin
-      data = Array({Int32, Int32, Int32}).new(59)
+      data = Array({Int32, Int32, Int32}).new(61)
       put(data, 48, 57, 1)
       put(data, 1632, 1641, 1)
       put(data, 1776, 1785, 1)
@@ -1213,6 +1231,7 @@ module Unicode
       put(data, 71360, 71369, 1)
       put(data, 71472, 71481, 1)
       put(data, 71904, 71913, 1)
+      put(data, 72016, 72025, 1)
       put(data, 72784, 72793, 1)
       put(data, 73040, 73049, 1)
       put(data, 73120, 73129, 1)
@@ -1222,6 +1241,7 @@ module Unicode
       put(data, 123200, 123209, 1)
       put(data, 123632, 123641, 1)
       put(data, 125264, 125273, 1)
+      put(data, 130032, 130041, 1)
       data
     end
   end
@@ -1250,7 +1270,7 @@ module Unicode
 
   private def self.category_No
     @@category_No ||= begin
-      data = Array({Int32, Int32, Int32}).new(69)
+      data = Array({Int32, Int32, Int32}).new(70)
       put(data, 178, 179, 1)
       put(data, 185, 188, 3)
       put(data, 189, 190, 1)
@@ -1303,6 +1323,7 @@ module Unicode
       put(data, 69216, 69246, 1)
       put(data, 69405, 69414, 1)
       put(data, 69457, 69460, 1)
+      put(data, 69573, 69579, 1)
       put(data, 69714, 69733, 1)
       put(data, 70113, 70132, 1)
       put(data, 71482, 71483, 1)
@@ -1434,7 +1455,7 @@ module Unicode
 
   private def self.casefold_ranges
     @@casefold_ranges ||= begin
-      data = Array({Int32, Int32, Int32}).new(670)
+      data = Array({Int32, Int32, Int32}).new(673)
       put(data, 65, 90, 32)
       put(data, 181, 181, 775)
       put(data, 192, 214, 32)
@@ -2097,6 +2118,9 @@ module Unicode
       put(data, 42948, 42948, -48)
       put(data, 42949, 42949, -42307)
       put(data, 42950, 42950, -35384)
+      put(data, 42951, 42951, 1)
+      put(data, 42953, 42953, 1)
+      put(data, 42997, 42997, 1)
       put(data, 43888, 43967, -38864)
       put(data, 65313, 65338, 32)
       put(data, 66560, 66599, 40)

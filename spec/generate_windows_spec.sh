@@ -47,7 +47,7 @@ function crystal-windows-wsl {
 }
 
 if [ "$LINKER" == "crystal-windows-wsl" ] && [ -z "$MSVC_BUILD_TOOLS" ]; then
-  echo "Missing environemnt variable MSVC_BUILD_TOOLS" >&2
+  echo "Missing environment variable MSVC_BUILD_TOOLS" >&2
   exit 1
 fi
 

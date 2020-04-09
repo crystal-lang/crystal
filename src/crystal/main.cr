@@ -54,7 +54,6 @@ module Crystal
   def self.ignore_stdio_errors
     yield
   rescue IO::Error
-  rescue Errno
   end
 
   # Main method run by all Crystal programs at startup.

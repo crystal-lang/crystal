@@ -229,6 +229,15 @@ describe "String" do
     it "gets byte_slice with negative index" do
       "hello".byte_slice(-2, 3).should eq("lo")
     end
+
+    it "gets byte_slice(Int) with start out of bounds" do
+      expect_raises(IndexError) do
+        "hello".byte_slice(10)
+      end
+      expect_raises(IndexError) do
+        "hello".byte_slice(-10)
+      end
+    end
   end
 
   describe "to_i" do
@@ -920,6 +929,14 @@ describe "String" do
     it { "foo".byte_index('o'.ord).should eq(1) }
     it { "foo bar booz".byte_index('o'.ord, 3).should eq(9) }
     it { "foo".byte_index('a'.ord).should be_nil }
+    it { "foo".byte_index('a'.ord).should be_nil }
+    it { "foo".byte_index('o'.ord, 3).should be_nil }
+    it {
+      "Dizzy Miss Lizzy".byte_index('z'.ord).should eq(2)
+      "Dizzy Miss Lizzy".byte_index('z'.ord, 3).should eq(3)
+      "Dizzy Miss Lizzy".byte_index('z'.ord, -4).should eq(13)
+      "Dizzy Miss Lizzy".byte_index('z'.ord, -17).should be_nil
+    }
 
     it "gets byte index of string" do
       "hello world".byte_index("he").should eq(0)
@@ -1997,6 +2014,13 @@ describe "String" do
     it { "123".ljust(5).should eq("123  ") }
     it { "12".ljust(7, '-').should eq("12-----") }
     it { "12".ljust(7, 'あ').should eq("12あああああ") }
+
+    describe "to io" do
+      it { with_io_memory { |io| "123".ljust(2, io) }.should eq("123") }
+      it { with_io_memory { |io| "123".ljust(5, io) }.should eq("123  ") }
+      it { with_io_memory { |io| "12".ljust(7, '-', io) }.should eq("12-----") }
+      it { with_io_memory { |io| "12".ljust(7, 'あ', io) }.should eq("12あああああ") }
+    end
   end
 
   describe "rjust" do
@@ -2004,6 +2028,13 @@ describe "String" do
     it { "123".rjust(5).should eq("  123") }
     it { "12".rjust(7, '-').should eq("-----12") }
     it { "12".rjust(7, 'あ').should eq("あああああ12") }
+
+    describe "to io" do
+      it { with_io_memory { |io| "123".rjust(2, io) }.should eq("123") }
+      it { with_io_memory { |io| "123".rjust(5, io) }.should eq("  123") }
+      it { with_io_memory { |io| "12".rjust(7, '-', io) }.should eq("-----12") }
+      it { with_io_memory { |io| "12".rjust(7, 'あ', io) }.should eq("あああああ12") }
+    end
   end
 
   describe "center" do
@@ -2011,6 +2042,13 @@ describe "String" do
     it { "123".center(5).should eq(" 123 ") }
     it { "12".center(7, '-').should eq("--12---") }
     it { "12".center(7, 'あ').should eq("ああ12あああ") }
+
+    describe "to io" do
+      it { with_io_memory { |io| "123".center(2, io) }.should eq("123") }
+      it { with_io_memory { |io| "123".center(5, io) }.should eq(" 123 ") }
+      it { with_io_memory { |io| "12".center(7, '-', io) }.should eq("--12---") }
+      it { with_io_memory { |io| "12".center(7, 'あ', io) }.should eq("ああ12あああ") }
+    end
   end
 
   describe "succ" do
@@ -2083,6 +2121,8 @@ describe "String" do
         c.should eq('b')
       when 2
         c.should eq('c')
+      else
+        fail "shouldn't happen"
       end
       i += 1
     end.should be_nil
@@ -2135,6 +2175,8 @@ describe "String" do
         b.should eq('b'.ord)
       when 2
         b.should eq('c'.ord)
+      else
+        fail "shouldn't happen"
       end
       i += 1
     end.should be_nil
@@ -2577,4 +2619,10 @@ describe "String" do
       String.interpolation("a", 123, "b", 456, "cde").should eq("a123b456cde")
     end
   end
+end
+
+private def with_io_memory
+  io = IO::Memory.new
+  yield io
+  io.to_s
 end

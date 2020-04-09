@@ -72,7 +72,7 @@ module GC
     # :nodoc:
     def self.pthread_join(thread : LibC::PthreadT) : Void*
       ret = LibC.pthread_join(thread, out value)
-      raise Errno.new("pthread_join") unless ret == 0
+      raise RuntimeError.from_errno("pthread_join") unless ret == 0
       value
     end
 

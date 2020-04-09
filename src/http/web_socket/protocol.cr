@@ -1,5 +1,6 @@
 require "socket"
-require "http"
+require "http/client"
+require "http/headers"
 require "base64"
 {% if !flag?(:without_openssl) %}
   require "openssl"
@@ -186,6 +187,8 @@ class HTTP::WebSocket::Protocol
     when 127
       size = 0_u64
       8.times { size <<= 8; size += @io.read_byte.not_nil! }
+    else
+      # not a special case
     end
     size
   end
@@ -230,17 +233,35 @@ class HTTP::WebSocket::Protocol
     end
   end
 
-  def close(message = nil)
+  def close(code : CloseCode? = nil, message = nil)
     return if @io.closed?
+
     if message
-      send(message.to_slice, Opcode::CLOSE)
+      message = message.to_slice
+      code ||= CloseCode::NormalClosure
+
+      payload = Bytes.new(2 + message.size)
+      IO::ByteFormat::NetworkEndian.encode(code.to_u16, payload)
+      message.copy_to(payload + 2)
     else
-      send(Bytes.empty, Opcode::CLOSE)
+      if code
+        payload = Bytes.new(2)
+        IO::ByteFormat::NetworkEndian.encode(code.to_u16, payload)
+      else
+        payload = Bytes.empty
+      end
     end
+
+    send(payload, Opcode::CLOSE)
+
     @io.close if @sync_close
   end
 
-  def self.new(host : String, path : String, port = nil, tls = false, headers = HTTP::Headers.new)
+  def close(code : Int, message = nil)
+    close(CloseCode.new(code), message)
+  end
+
+  def self.new(host : String, path : String, port = nil, tls : HTTP::Client::TLSContext = nil, headers = HTTP::Headers.new)
     {% if flag?(:without_openssl) %}
       if tls
         raise "WebSocket TLS is disabled because `-D without_openssl` was passed at compile time"

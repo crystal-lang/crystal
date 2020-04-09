@@ -56,7 +56,7 @@ module Crystal
     end
 
     def with_color
-      ::with_color.toggle(@color)
+      Colorize.with.toggle(@color)
     end
 
     def replace_leading_tabs_with_spaces(line)
@@ -112,6 +112,8 @@ module Crystal
         if File.file?(filename)
           return format_error_from_file(filename)
         end
+      else
+        # go on
       end
 
       return format_error(source) if source
@@ -207,12 +209,16 @@ module Crystal
 
     def source_lines(filename)
       case filename
+      when Nil
+        nil
       when String
         if File.file? filename
-          source_lines = File.read_lines(filename)
+          File.read_lines(filename)
+        else
+          nil
         end
       when VirtualFile
-        source_lines = filename.source.lines
+        filename.source.lines
       end
     end
 

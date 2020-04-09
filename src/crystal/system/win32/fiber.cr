@@ -6,7 +6,7 @@ module Crystal::System::Fiber
     memory_pointer = LibC.VirtualAlloc(nil, stack_size, LibC::MEM_COMMIT | LibC::MEM_RESERVE, LibC::PAGE_READWRITE)
 
     if memory_pointer.null?
-      raise WinError.new("VirtualAlloc")
+      raise RuntimeError.from_winerror("VirtualAlloc")
     end
 
     memory_pointer
@@ -14,7 +14,7 @@ module Crystal::System::Fiber
 
   def self.free_stack(stack : Void*, stack_size) : Nil
     if LibC.VirtualFree(stack, stack_size, LibC::MEM_RELEASE) == 0
-      raise WinError.new("VirtualFree")
+      raise RuntimeError.from_winerror("VirtualFree")
     end
   end
 end

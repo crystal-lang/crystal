@@ -50,6 +50,8 @@ class JSON::Builder
       raise JSON::Error.new("Unterminated JSON array")
     when ObjectState
       raise JSON::Error.new("Unterminated JSON object")
+    when DocumentEndState
+      # okay
     end
   end
 
@@ -295,6 +297,8 @@ class JSON::Builder
   private def start_scalar(string = false)
     object_value = false
     case state = @state.last
+    when DocumentStartState
+      # okay
     when StartState
       raise JSON::Error.new("Write before start_document")
     when DocumentEndState
@@ -320,6 +324,8 @@ class JSON::Builder
     when ObjectState
       colon if state.name
       @state[-1] = ObjectState.new(empty: false, name: !state.name)
+    else
+      raise "Bug: unexpected state: #{state.class}"
     end
   end
 

@@ -619,6 +619,8 @@ module Crystal
           case atomic
           when ClassDef, ModuleDef, EnumDef, FunDef, Def
             break
+          else
+            # continue chaining
           end
 
           # Allow '.' after newline for chaining calls
@@ -1410,6 +1412,8 @@ module Crystal
         end
       when :CONST, :"::"
         types = parse_rescue_types
+      else
+        # keep going
       end
 
       check SemicolonOrNewLine
@@ -1984,6 +1988,8 @@ module Crystal
         end
 
         result = RegexLiteral.new(result, options)
+      else
+        # no special treatment
       end
 
       result.end_location = token_end_location
@@ -2952,6 +2958,8 @@ module Crystal
         else
           unexpected_token @token.to_s, "parentheses are mandatory for macro arguments"
         end
+      else
+        # keep going
       end
 
       end_location = nil
@@ -3123,8 +3131,7 @@ module Crystal
     def parse_macro_control(start_location, macro_state = Token::MacroState.default)
       next_token_skip_space_or_newline
 
-      case @token.type
-      when :IDENT
+      if @token.type == :IDENT
         case @token.value
         when :for
           next_token_skip_space
@@ -3169,6 +3176,8 @@ module Crystal
             if (exp = macro_if.exp).is_a?(If)
               exp.then, exp.else = exp.else, exp.then
             end
+          else
+            # Nothing special to do
           end
           return macro_if
         when :begin
@@ -3203,6 +3212,8 @@ module Crystal
           check :"%}"
 
           return MacroVerbatim.new(body).at_end(token_end_location)
+        else
+          # will be parsed as a normal expression
         end
       end
 
@@ -3588,6 +3599,8 @@ module Crystal
         double_splat = true
         allow_external_name = false
         next_token_skip_space
+      else
+        # not a splat
       end
 
       found_space = false
@@ -3885,6 +3898,8 @@ module Crystal
           a_else = parse_expressions
         when :elsif
           a_else = parse_if check_end: false
+        else
+          # go on
         end
       end
 
@@ -3953,6 +3968,8 @@ module Crystal
       when :nil?
         obj = Var.new("self").at(location)
         return parse_nil?(obj)
+      else
+        # Not a special call, go on
       end
 
       name = @token.value.to_s
@@ -3982,6 +3999,8 @@ module Crystal
         @calls_initialize = true
       when "previous_def"
         @calls_previous_def = true
+      else
+        # Not a special call
       end
 
       call_args = preserve_stop_on_do(@stop_on_do) { parse_call_args stop_on_do_after_space: @stop_on_do }
@@ -4357,6 +4376,8 @@ module Crystal
         return nil unless next_comes_colon_space?
       when :yield
         return nil if @stop_on_yield > 0 && !next_comes_colon_space?
+      else
+        # keep going
       end
 
       args = [] of ASTNode
@@ -4505,6 +4526,8 @@ module Crystal
             splat = :double
             next_token
           end
+        else
+          # not a splat
         end
 
         arg = parse_op_assign_no_control
@@ -4518,6 +4541,8 @@ module Crystal
           arg = Splat.new(arg).at(arg.location)
         when :double
           arg = DoubleSplat.new(arg).at(arg.location)
+        else
+          # no splat
         end
 
         arg
@@ -4575,12 +4600,13 @@ module Crystal
 
       global = false
 
-      case @token.type
-      when :"::"
+      if @token.type == :UNDERSCORE
+        return node_and_next_token Underscore.new.at(location)
+      end
+
+      if @token.type == :"::"
         global = true
         next_token_skip_space_or_newline
-      when :UNDERSCORE
-        return node_and_next_token Underscore.new.at(location)
       end
 
       check :CONST
@@ -4862,8 +4888,7 @@ module Crystal
           end
         else
           if allow_primitives
-            case @token.type
-            when :NUMBER
+            if @token.type == :NUMBER
               num = NumberLiteral.new(@token.value.to_s, @token.number_kind).at(@token.location)
               types << node_and_next_token(num)
               skip_space
@@ -4975,34 +5000,32 @@ module Crystal
           next_token_skip_space
           if @token.type == :"."
             next_token_skip_space
-            if @token.keyword?(:class)
-              return true
-            end
+            @token.keyword?(:class)
           else
-            return true
+            true
           end
         when :UNDERSCORE
-          return true
+          true
         when :"->"
-          return true
+          true
         when :"*"
           next_token
-          return true if @token.type == :CONST
+          @token.type == :CONST
         when :NUMBER
-          return allow_int && @token.number_kind == :i32
+          allow_int && @token.number_kind == :i32
         when :IDENT
           case @token.value
           when :typeof, :self, :sizeof, :instance_sizeof, :offsetof
-            return true
+            true
+          else
+            false
           end
         when :"::"
           next_token_skip_space
-          if @token.type == :CONST
-            return true
-          end
+          @token.type == :CONST
+        else
+          false
         end
-
-        false
       ensure
         @token.copy_from(@temp_token)
         self.current_pos, @line_number, @column_number = old_pos, old_line, old_column
@@ -5702,6 +5725,8 @@ module Crystal
           when :protected
             visibility = Visibility::Protected
             next_token_skip_space
+          else
+            # not a visibility modifier
           end
 
           def_location = @token.location
@@ -5752,21 +5777,17 @@ module Crystal
     def end_token?
       case @token.type
       when :"}", :"]", :"%}", :EOF
-        return true
-      end
-
-      if @token.type == :IDENT
+        true
+      when :IDENT
         case @token.value
         when :do, :end, :else, :elsif, :when, :rescue, :ensure, :then
-          if next_comes_colon_space?
-            return false
-          end
-
-          return true
+          !next_comes_colon_space?
+        else
+          false
         end
+      else
+        false
       end
-
-      false
     end
 
     def can_be_assigned?(node)
@@ -5868,24 +5889,28 @@ module Crystal
           unless next_comes_colon_space?
             raise "void value expression", @token, @token.value.to_s.size
           end
+        else
+          # not a void expression
         end
+      else
+        # not a void expression
       end
     end
 
     def check(token_types : Array)
-      raise "expecting any of these tokens: #{token_types.join ", "} (not '#{@token.type.to_s}')", @token unless token_types.any? { |type| @token.type == type }
+      raise "expecting any of these tokens: #{token_types.join ", "} (not '#{@token.type}')", @token unless token_types.any? { |type| @token.type == type }
     end
 
     def check(token_type)
-      raise "expecting token '#{token_type}', not '#{@token.to_s}'", @token unless token_type == @token.type
+      raise "expecting token '#{token_type}', not '#{@token}'", @token unless token_type == @token.type
     end
 
     def check_token(value)
-      raise "expecting token '#{value}', not '#{@token.to_s}'", @token unless @token.type == :TOKEN && @token.value == value
+      raise "expecting token '#{value}', not '#{@token}'", @token unless @token.type == :TOKEN && @token.value == value
     end
 
     def check_ident(value)
-      raise "expecting identifier '#{value}', not '#{@token.to_s}'", @token unless @token.keyword?(value)
+      raise "expecting identifier '#{value}', not '#{@token}'", @token unless @token.keyword?(value)
     end
 
     def check_ident

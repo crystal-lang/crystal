@@ -46,8 +46,8 @@ class PrettyPrinter
       read_object
     when .eof?
       # We are done
-    else
-      raise "Bug: unexpected kind: #{@pull.kind}"
+    when .end_array?, .end_object?
+      raise "Bug: shouldn't happen"
     end
   end
 
