@@ -16,7 +16,7 @@ struct HTTP::Headers
       hasher
     end
 
-    # Returns true if the normilized name of self is the same as the normalized value passed.
+    # Returns true if the normalized name of self is the same as the normalized value passed.
     #
     # ```
     # key1 = HTTP::Headers::Key.new("foo")
