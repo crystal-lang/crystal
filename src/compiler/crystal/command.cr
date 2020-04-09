@@ -75,7 +75,12 @@ class Crystal::Command
       result
     when "play".starts_with?(command)
       options.shift
-      playground
+      {% if flag?(:without_playground) %}
+        puts "Crystal was compiled without playground support"
+        exit 1
+      {% else %}
+        playground
+      {% end %}
     when "deps".starts_with?(command)
       STDERR.puts "Please use 'shards': 'crystal deps' has been removed"
       exit 1

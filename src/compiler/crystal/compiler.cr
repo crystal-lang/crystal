@@ -1,6 +1,5 @@
 require "option_parser"
 require "file_utils"
-require "socket"
 require "colorize"
 require "digest/md5"
 
