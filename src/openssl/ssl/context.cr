@@ -1,5 +1,12 @@
 require "uri/punycode"
 
+# An `SSL::Context` represents a generic secure socket protocol configuration.
+#
+# For both server and client applications exist more specialized subclassses
+# `SSL::Context::Server` and `SSL::Context::Client` which need to be instantiated
+# appropriately.
+#
+# All instances use `CIPHERS_INTERMEDIATE` ciphers by default.
 abstract class OpenSSL::SSL::Context
   # :nodoc:
   def self.default_method
@@ -9,51 +16,6 @@ abstract class OpenSSL::SSL::Context
       LibSSL.sslv23_method
     {% end %}
   end
-
-  # The list of secure ciphers (intermediate security) as of May 2016 as per
-  # https://wiki.mozilla.org/Security/Server_Side_TLS
-  CIPHERS = %w(
-    ECDHE-ECDSA-CHACHA20-POLY1305
-    ECDHE-RSA-CHACHA20-POLY1305
-    ECDHE-ECDSA-AES128-GCM-SHA256
-    ECDHE-RSA-AES128-GCM-SHA256
-    ECDHE-ECDSA-AES256-GCM-SHA384
-    ECDHE-RSA-AES256-GCM-SHA384
-    DHE-RSA-AES128-GCM-SHA256
-    DHE-RSA-AES256-GCM-SHA384
-    ECDHE-ECDSA-AES128-SHA256
-    ECDHE-RSA-AES128-SHA256
-    ECDHE-ECDSA-AES128-SHA
-    ECDHE-RSA-AES256-SHA384
-    ECDHE-RSA-AES128-SHA
-    ECDHE-ECDSA-AES256-SHA384
-    ECDHE-ECDSA-AES256-SHA
-    ECDHE-RSA-AES256-SHA
-    DHE-RSA-AES128-SHA256
-    DHE-RSA-AES128-SHA
-    DHE-RSA-AES256-SHA256
-    DHE-RSA-AES256-SHA
-    ECDHE-ECDSA-DES-CBC3-SHA
-    ECDHE-RSA-DES-CBC3-SHA
-    EDH-RSA-DES-CBC3-SHA
-    AES128-GCM-SHA256
-    AES256-GCM-SHA384
-    AES128-SHA256
-    AES256-SHA256
-    AES128-SHA
-    AES256-SHA
-    DES-CBC3-SHA
-    !RC4
-    !aNULL
-    !eNULL
-    !LOW
-    !3DES
-    !MD5
-    !EXP
-    !PSK
-    !SRP
-    !DSS
-  ).join(' ')
 
   class Client < Context
     # Generates a new TLS client context with sane defaults for a client connection.
@@ -224,7 +186,7 @@ abstract class OpenSSL::SSL::Context
 
     add_modes(OpenSSL::SSL::Modes.flags(AUTO_RETRY, RELEASE_BUFFERS))
 
-    self.ciphers = CIPHERS
+    self.ciphers = CIPHERS_INTERMEDIATE
   end
 
   # Overriding initialize or new in the child classes as public methods,
