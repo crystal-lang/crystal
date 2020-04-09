@@ -5,7 +5,7 @@ on: [push, pull_request]
 jobs:
   linux-job:
     runs-on: ubuntu-latest
-    container: crystallang/crystal:0.33.0
+    container: crystallang/crystal:0.34.0
     steps:
       - name: Download Crystal source
         uses: actions/checkout@v2
