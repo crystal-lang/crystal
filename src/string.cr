@@ -2761,7 +2761,7 @@ class String
     {% end %}
   end
 
-  # Returns the index of *search* in the string, or `nil` if the string is not present.
+  # Returns the index of the _first_ occurrence of *search* in the string, or `nil` if not present.
   # If *offset* is present, it defines the position to start the search.
   #
   # ```
@@ -3072,7 +3072,7 @@ class String
     {pre, mid, post}
   end
 
-  # Returns the index of *byte* in the string, or `nil` if the byte is not present.
+  # Returns the index of the _first_ ocurrence of *byte* in the string, or `nil` if not present.
   # If *offset* is present, it defines the position to start the search.
   #
   # Negative *offset* can be used to start the search from the end of the string.
