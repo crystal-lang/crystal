@@ -44,7 +44,6 @@ struct HTTP::Headers
       true
     end
 
-    # TODO: Error: method must return UInt8 but it is returning (Int32 | UInt8)
     private def normalize_byte(byte)
       char = byte.unsafe_chr
 
@@ -119,7 +118,7 @@ struct HTTP::Headers
   # headers["baz"]? #=> nil
   # ```
   def []?(key : HTTP::Headers::Key | String) : String?
-    fetch(key, nil).as(String?) # TODO: fixup
+    fetch(key, nil).as(String?)
   end
 
   # Returns if among the headers for *key* there is some that contains *word* as a value.
@@ -560,7 +559,6 @@ struct HTTP::Headers
     true
   end
 
-  # TODO: should this return Nil
   private def invalid_value_char(value) : Char?
     value.each_byte do |byte|
       unless valid_char?(char = byte.unsafe_chr)
