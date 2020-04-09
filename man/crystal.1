@@ -351,6 +351,10 @@ Defines path where Crystal caches partial compilation results for faster subsequ
 .It
 .It Sy CRYSTAL_PATH
 Defines paths where Crystal searches for required files.
+.Pp
+.It
+.It Sy CRYSTAL_OPTS
+Defines options for the Crystal compiler to be used besides the command line arguments. The syntax is identical to the command line arguments. This is hany when using Crystal in build setups, for example 'CRYSTAL_OPTS=--debug make build'.
 .El
 .Sh SEE ALSO
 .Fn shards 1
