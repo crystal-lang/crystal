@@ -462,6 +462,13 @@ class Crystal::Command
         filenames << stdin_filename
       end
 
+      if single_file
+        opts.before_each do |arg|
+          opts.stop if !arg.starts_with?('-') && arg.ends_with?(".cr")
+          opts.stop if File.file?(arg)
+        end
+      end
+
       opts.unknown_args do |before, after|
         opt_filenames = before
         opt_arguments = after
