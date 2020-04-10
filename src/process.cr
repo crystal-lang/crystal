@@ -4,10 +4,6 @@ require "c/sys/resource"
 require "c/unistd"
 
 class Process
-  # A platform-specific identifier of a running process.
-  # Int64 is enough to fit underlying values of different platforms (Int32 or UInt32).
-  alias PID = Int64
-
   # Terminate the current process immediately. All open files, pipes and sockets
   # are flushed and closed, all child processes are inherited by PID 1. This does
   # not run any handlers registered with `at_exit`, use `::exit` for that.
@@ -18,25 +14,25 @@ class Process
   end
 
   # Returns the process identifier of the current process.
-  def self.pid : PID
-    PID.new(LibC.getpid)
+  def self.pid : Int64
+    LibC.getpid.to_i64
   end
 
   # Returns the process group identifier of the current process.
-  def self.pgid : PID
-    PID.new(pgid(0))
+  def self.pgid : Int64
+    pgid(0).to_i64
   end
 
   # Returns the process group identifier of the process identified by *pid*.
-  def self.pgid(pid : Int) : PID
+  def self.pgid(pid : Int) : Int64
     ret = LibC.getpgid(pid)
     raise RuntimeError.from_errno("getpgid") if ret < 0
-    PID.new(ret)
+    ret.to_i64
   end
 
   # Returns the process identifier of the parent process of the current process.
-  def self.ppid : PID
-    PID.new(LibC.getppid)
+  def self.ppid : Int64
+    LibC.getppid.to_i64
   end
 
   # Sends a *signal* to the processes identified by the given *pids*.
@@ -240,8 +236,8 @@ class Process
   end
 
   # Returns the process identifier of this process.
-  def pid : PID
-    PID.new(@pid)
+  def pid : Int64
+    @pid.to_i64
   end
 
   # A pipe to this process's input. Raises if a pipe wasn't asked when creating the process.
