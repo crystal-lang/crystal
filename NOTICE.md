@@ -30,11 +30,11 @@ Crystal standard library uses the following libraries, which have their own lice
   * [libiconv][] - [LGPLv3][]
   * [bdwgc][] - [MIT][]
   * [Zlib][] - [Zlib][Zlib-license]
-  * [OpenSSL][] - [Apache License v2.0](https://www.openssl.org/source/apache-license-2.0.txt)
+  * [OpenSSL][] - [Apache-2.0][]
   * [Libxml2][] - [MIT][]
   * [LibYAML][] - [MIT][]
-  * [readline](https://tiswww.case.edu/php/chet/readline/rltop.html) - [GPLv3][]
-  * [GMP](https://gmplib.org/) - [LGPLv3][]
+  * [readline][] - [GPLv3][]
+  * [GMP][] - [LGPLv3][]
 
 Crystal playground includes the following libraries, which have their own licenses.
 (There are these files under [/src/compiler/crystal/tools/playground/public/vendor](/src/compiler/crystal/tools/playground/public/vendor)):
@@ -47,6 +47,7 @@ Crystal playground includes the following libraries, which have their own licens
    * [ansi\_up][] - [MIT][] `Copyright (c) 2011 Dru Nelson`
 
 <!-- licenses -->
+[Apache-2.0]: https://www.openssl.org/source/apache-license-2.0.txt
 [BSD-3]: https://opensource.org/licenses/BSD-3-Clause
 [BSD-3, effectively]: http://releases.llvm.org/2.8/LICENSE.TXT
 [GPLv3]: https://www.gnu.org/licenses/gpl-3.0.en.html
@@ -59,6 +60,7 @@ Crystal playground includes the following libraries, which have their own licens
 [bdwgc]: http://www.hboehm.info/gc/
 [Codemirror]: https://codemirror.net/
 [jQuery]: https://jquery.com/
+[GMP]: https://gmplib.org/
 [libevent2]: http://libevent.org/
 [libiconv]: https://www.gnu.org/software/libiconv/
 [Libxml2]: http://xmlsoft.org/
@@ -68,4 +70,5 @@ Crystal playground includes the following libraries, which have their own licens
 [Octicons]: https://octicons.github.com/
 [OpenSSL]: https://www.openssl.org/
 [PCRE]: http://pcre.org/
+[readline]: https://tiswww.case.edu/php/chet/readline/rltop.html
 [Zlib]: http://www.zlib.net/
