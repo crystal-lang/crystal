@@ -1,5 +1,4 @@
 require "../../../spec_helper"
-require "../../../support/tempfile"
 
 private def assert_matches_pattern(url, **options)
   match = Crystal::Doc::Generator::GIT_REMOTE_PATTERNS.each_key.compact_map(&.match(url)).first?
@@ -58,67 +57,6 @@ describe Crystal::Doc::Generator do
         </a>
         ANCHOR
       )
-    end
-  end
-end
-
-describe Crystal::Doc::ProjectInfo do
-  it "find_default_version" do
-    with_tempfile("docs-git-version") do |tempdir|
-      Dir.mkdir tempdir
-      Dir.cd(tempdir) do
-        # Non-git directory
-        Crystal::Doc::ProjectInfo.find_default_version.should be_nil
-
-        `git init`
-        Crystal::Doc::ProjectInfo.find_default_version.should be_nil
-
-        File.write("file.txt", "foo")
-        `git add file.txt`
-        `git commit -m 'Initial commit' --no-gpg-sign`
-        Crystal::Doc::ProjectInfo.find_default_version.should be_nil
-
-        `git tag v0.1.0`
-        `git tag --list`
-        `git log`
-        Crystal::Doc::ProjectInfo.find_default_version.should eq "v0.1.0"
-
-        File.write("file.txt", "bar")
-        Crystal::Doc::ProjectInfo.find_default_version.should be_nil
-
-        `git add file.txt`
-        Crystal::Doc::ProjectInfo.find_default_version.should be_nil
-
-        `git reset --hard v0.1.0`
-        Crystal::Doc::ProjectInfo.find_default_version.should eq "v0.1.0"
-
-        `git tag v0.2.0`
-        Crystal::Doc::ProjectInfo.find_default_version.should be_nil
-      end
-    end
-  end
-
-  it "find_default_name" do
-    with_tempfile("docs-shard-name") do |tempdir|
-      Dir.mkdir tempdir
-      Dir.cd(tempdir) do
-        Crystal::Doc::ProjectInfo.find_default_name.should be_nil
-
-        File.write("shard.yml", "foo: bar\n")
-        Crystal::Doc::ProjectInfo.find_default_name.should be_nil
-
-        File.write("shard.yml", "name: \n")
-        Crystal::Doc::ProjectInfo.find_default_name.should be_nil
-
-        File.write("shard.yml", "  name: bar\n")
-        Crystal::Doc::ProjectInfo.find_default_name.should be_nil
-
-        File.write("shard.yml", "name: bar\n")
-        Crystal::Doc::ProjectInfo.find_default_name.should eq "bar"
-
-        File.write("shard.yml", "name: bar # comment\n")
-        Crystal::Doc::ProjectInfo.find_default_name.should eq "bar"
-      end
     end
   end
 end
