@@ -247,6 +247,8 @@ abstract class OpenSSL::SSL::Context
   end
 
   # Specify a list of TLS ciphers to use or discard.
+  #
+  # This affects only TLSv1.2 and below.
   def ciphers=(ciphers : String)
     ret = LibSSL.ssl_ctx_set_cipher_list(@handle, ciphers)
     raise OpenSSL::Error.new("SSL_CTX_set_cipher_list") if ret == 0
