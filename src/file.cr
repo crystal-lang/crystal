@@ -147,7 +147,7 @@ class File < IO::FileDescriptor
   # File.info("bar", follow_symlinks: false).type.symlink? # => true
   # ```
   def self.info(path : Path | String, follow_symlinks = true) : Info
-    info?(path, follow_symlinks) || raise File::Error.from_errno("Unable to get file info", file: path.to_s)
+    Crystal::System::File.info(path.to_s, follow_symlinks)
   end
 
   # Returns `true` if *path* exists else returns `false`

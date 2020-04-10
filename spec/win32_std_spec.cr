@@ -49,7 +49,7 @@ require "./std/enumerable_spec.cr"
 require "./std/enum_spec.cr"
 require "./std/env_spec.cr"
 require "./std/exception_spec.cr"
-# require "./std/file_spec.cr" (failed codegen)
+require "./std/file_spec.cr"
 # require "./std/file/tempfile_spec.cr" (failed codegen)
 # require "./std/file_utils_spec.cr" (failed codegen)
 # require "./std/flate/flate_spec.cr" (failed linking)
