@@ -17,14 +17,30 @@ module Crystal::Doc
     end
 
     def self.find_git_version
+      if ref = git_ref
+        case git_clean?
+        when Nil
+        when true
+          ref
+        when false
+          "#{ref}-dev"
+        end
+      end
+    end
+
+    def self.git_clean?
       # Use git to determine if index and working directory are clean
       io = IO::Memory.new
       status = Process.run("git", ["status", "--porcelain"], output: io)
       # If clean, output of `git status --porcelain` is empty. Still need to check
       # the status code, to make sure empty doesn't mean error.
+      return unless status.success?
       io.rewind
-      return unless status.success? && io.bytesize == 0
+      io.bytesize == 0
+    end
 
+    def self.git_ref
+      io = IO::Memory.new
       # Check if current HEAD is tagged
       status = Process.run("git", ["tag", "--points-at", "HEAD"], output: io)
       return unless status.success?
@@ -35,6 +51,13 @@ module Crystal::Doc
       if versions.size == 1
         return versions.first.byte_slice(1)
       end
+
+      # Otherwise, return current branch name
+      io.clear
+      status = Process.run("git", ["rev-parse", "--abbrev-ref", "HEAD"], output: io)
+      return unless status.success?
+
+      io.to_s.strip.presence
     end
 
     def self.read_shard_properties

@@ -51,6 +51,27 @@ describe Crystal::Doc::ProjectInfo do
         ProjectInfo.new_with_defaults(nil, "1.1") { |name, version| "missing:#{name}:#{version}" }.should eq ProjectInfo.new("foo", "1.1")
         ProjectInfo.new_with_defaults("bar", "2.0") { |name, version| "missing:#{name}:#{version}" }.should eq ProjectInfo.new("bar", "2.0")
       end
+
+      it "git non-tagged commit" do
+        `git init`
+        `git add shard.yml`
+        `git commit -m 'Initial commit' --no-gpg-sign`
+
+        ProjectInfo.new_with_defaults(nil, nil) { |name, version| "missing:#{name}:#{version}" }.should eq ProjectInfo.new("foo", "master")
+        ProjectInfo.new_with_defaults(nil, "1.1") { |name, version| "missing:#{name}:#{version}" }.should eq ProjectInfo.new("foo", "1.1")
+        ProjectInfo.new_with_defaults("bar", "2.0") { |name, version| "missing:#{name}:#{version}" }.should eq ProjectInfo.new("bar", "2.0")
+      end
+
+      it "git non-tagged commit dirty" do
+        `git init`
+        `git add shard.yml`
+        `git commit -m 'Initial commit' --no-gpg-sign`
+        File.write("foo.txt", "bar")
+
+        ProjectInfo.new_with_defaults(nil, nil) { |name, version| "missing:#{name}:#{version}" }.should eq ProjectInfo.new("foo", "master-dev")
+        ProjectInfo.new_with_defaults(nil, "1.1") { |name, version| "missing:#{name}:#{version}" }.should eq ProjectInfo.new("foo", "1.1")
+        ProjectInfo.new_with_defaults("bar", "2.0") { |name, version| "missing:#{name}:#{version}" }.should eq ProjectInfo.new("bar", "2.0")
+      end
     end
 
     it "no shard.yml, but git tagged version" do
@@ -70,28 +91,44 @@ describe Crystal::Doc::ProjectInfo do
     # Non-git directory
     ProjectInfo.find_git_version.should be_nil
 
+    # Empty git directory
     `git init`
     ProjectInfo.find_git_version.should be_nil
 
+    # Non-tagged commit
     File.write("file.txt", "foo")
     `git add file.txt`
     `git commit -m 'Initial commit' --no-gpg-sign`
-    ProjectInfo.find_git_version.should be_nil
+    ProjectInfo.find_git_version.should eq "master"
 
+    # Non-tagged commit, dirty workdir
+    File.write("file.txt", "bar")
+    ProjectInfo.find_git_version.should eq "master-dev"
+
+    `git checkout -- .`
+
+    # Tagged commit
     `git tag v0.1.0`
     ProjectInfo.find_git_version.should eq "0.1.0"
 
+    # Tagged commit, dirty workdir
     File.write("file.txt", "bar")
-    ProjectInfo.find_git_version.should be_nil
+    ProjectInfo.find_git_version.should eq "0.1.0-dev"
 
+    # Tagged commit, dirty index
     `git add file.txt`
-    ProjectInfo.find_git_version.should be_nil
+    ProjectInfo.find_git_version.should eq "0.1.0-dev"
 
     `git reset --hard v0.1.0`
     ProjectInfo.find_git_version.should eq "0.1.0"
 
+    # Multiple tags
     `git tag v0.2.0`
-    ProjectInfo.find_git_version.should be_nil
+    ProjectInfo.find_git_version.should eq "master"
+
+    # Other branch
+    `git checkout -b foo`
+    ProjectInfo.find_git_version.should eq "foo"
   end
 
   describe ".read_shard_properties" do
