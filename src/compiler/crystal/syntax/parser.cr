@@ -2493,7 +2493,7 @@ module Crystal
     end
 
     def parse_named_tuple(location, first_key)
-      next_token
+      next_token_never_a_symbol
 
       slash_is_regex!
       next_token_skip_space
@@ -2512,7 +2512,7 @@ module Crystal
         while @token.type != :"}"
           key = @token.value.to_s
           if named_tuple_start?
-            next_token
+            next_token_never_a_symbol
           elsif string_literal_start?
             key = parse_string_without_interpolation("named tuple name", want_skip_space: false)
           else
@@ -4460,7 +4460,7 @@ module Crystal
         else
           if named_tuple_start?
             name = @token.value.to_s
-            next_token
+            next_token_never_a_symbol
           elsif string_literal_start?
             name = parse_string_without_interpolation("named argument")
           else

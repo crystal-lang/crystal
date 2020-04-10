@@ -1509,6 +1509,12 @@ module Crystal
       it_parses "{% begin %}%q#{open} %s #{close}{% end %}", MacroIf.new(true.bool, MacroLiteral.new("%q#{open} %s #{close}"))
     end
 
+    it_parses %(foo(bar:"a", baz:"b")), Call.new(nil, "foo", named_args: [NamedArgument.new("bar", "a".string), NamedArgument.new("baz", "b".string)])
+    it_parses %(foo(bar:a, baz:b)), Call.new(nil, "foo", named_args: [NamedArgument.new("bar", "a".call), NamedArgument.new("baz", "b".call)])
+    it_parses %({foo:"a", bar:"b"}), NamedTupleLiteral.new([NamedTupleLiteral::Entry.new("foo", "a".string), NamedTupleLiteral::Entry.new("bar", "b".string)])
+    it_parses %({foo:'a', bar:'b'}), NamedTupleLiteral.new([NamedTupleLiteral::Entry.new("foo", CharLiteral.new('a')), NamedTupleLiteral::Entry.new("bar", CharLiteral.new('b'))])
+    it_parses %({foo:a, bar:b}), NamedTupleLiteral.new([NamedTupleLiteral::Entry.new("foo", "a".call), NamedTupleLiteral::Entry.new("bar", "b".call)])
+
     assert_syntax_error "return do\nend", "unexpected token: do"
 
     %w(def macro class struct module fun alias abstract include extend lib).each do |keyword|
