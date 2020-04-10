@@ -314,6 +314,7 @@ describe "File" do
     File.extname("").should eq("")
   end
 
+  # TODO: these specs are redundant with path_spec.cr
   pending_win32 "constructs a path from parts" do
     File.join(["///foo", "bar"]).should eq("///foo/bar")
     File.join(["///foo", "//bar"]).should eq("///foo//bar")
@@ -527,7 +528,7 @@ describe "File" do
     end
   end
 
-  # TODO: expand_path is horribly broken on win32
+  # TODO: these specs are redundant with path_spec.cr
   describe "expand_path" do
     pending_win32 "converts a pathname to an absolute pathname" do
       File.expand_path("").should eq(base)
