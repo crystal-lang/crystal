@@ -516,6 +516,17 @@ describe "File" do
       end
     end
 
+    it "replaces a file" do
+      with_tempfile("rename-source.txt", "rename-target.txt") do |source_path, target_path|
+        File.write(source_path, "foo")
+        File.write(target_path, "bar")
+        File.rename(source_path, target_path)
+        File.exists?(source_path).should be_false
+        File.read(target_path).strip.should eq("foo")
+        File.delete(target_path)
+      end
+    end
+
     it "raises if old file doesn't exist" do
       with_tempfile("rename-fail-source.txt", "rename-fail-target.txt") do |source_path, target_path|
         expect_raises(File::NotFoundError, "Error renaming file: '#{source_path}' -> '#{target_path}'") do
