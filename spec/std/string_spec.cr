@@ -1983,6 +1983,11 @@ describe "String" do
     match[0].should eq("")
   end
 
+  it "matches, but returns Bool" do
+    "foo".matches?(/foo/).should eq(true)
+    "foo".matches?(/bar/).should eq(false)
+  end
+
   it "has size (same as size)" do
     "テスト".size.should eq(3)
   end
