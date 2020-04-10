@@ -3,6 +3,7 @@ require "c/fcntl"
 require "c/fileapi"
 require "c/sys/utime"
 require "c/sys/stat"
+require "c/winbase"
 
 module Crystal::System::File
   def self.open(filename : String, mode : String, perm : Int32 | ::File::Permissions) : LibC::Int
@@ -197,8 +198,8 @@ module Crystal::System::File
   end
 
   def self.rename(old_path : String, new_path : String) : Nil
-    if LibC._wrename(to_windows_path(old_path), to_windows_path(new_path)) != 0
-      raise ::File::Error.from_errno("Error renaming file", file: old_path, other: new_path)
+    if LibC.MoveFileExW(to_windows_path(old_path), to_windows_path(new_path), LibC::MOVEFILE_REPLACE_EXISTING) == 0
+      raise ::File::Error.from_winerror("Error renaming file", file: old_path, other: new_path)
     end
   end
 

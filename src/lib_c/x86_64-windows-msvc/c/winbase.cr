@@ -90,4 +90,13 @@ lib LibC
   fun GetEnvironmentStringsW : LPWCH
   fun FreeEnvironmentStringsW(lpszEnvironmentBlock : LPWCH) : BOOL
   fun SetEnvironmentVariableW(lpName : LPWSTR, lpValue : LPWSTR) : BOOL
+
+  MOVEFILE_REPLACE_EXISTING      =  0x1_u32
+  MOVEFILE_COPY_ALLOWED          =  0x2_u32
+  MOVEFILE_DELAY_UNTIL_REBOOT    =  0x4_u32
+  MOVEFILE_WRITE_THROUGH         =  0x8_u32
+  MOVEFILE_CREATE_HARDLINK       = 0x10_u32
+  MOVEFILE_FAIL_IF_NOT_TRACKABLE = 0x20_u32
+
+  fun MoveFileExW(lpExistingFileName : LPWSTR, lpNewFileName : LPWSTR, dwFlags : DWORD) : BOOL
 end
