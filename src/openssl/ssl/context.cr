@@ -179,6 +179,8 @@ abstract class OpenSSL::SSL::Context
       ALL,
       NO_SSL_V2,
       NO_SSL_V3,
+      NO_TLS_V1,
+      NO_TLS_V1_1,
       NO_SESSION_RESUMPTION_ON_RENEGOTIATION,
       SINGLE_ECDH_USE,
       SINGLE_DH_USE
