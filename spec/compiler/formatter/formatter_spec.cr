@@ -1610,4 +1610,33 @@ describe Crystal::Formatter do
       # second comment
     }
     CODE
+
+  # #9014
+  assert_format <<-CODE
+    {%
+      unless true
+        1
+      end
+    %}
+    CODE
+
+  assert_format <<-CODE
+    {%
+      unless true
+        1
+      else
+        2
+      end
+    %}
+    CODE
+
+  assert_format <<-CODE
+    {%
+      if true
+        1
+      else
+        2
+      end
+    %}
+    CODE
 end

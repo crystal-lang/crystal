@@ -3173,9 +3173,8 @@ module Crystal
           when MacroIf
             macro_if.then, macro_if.else = macro_if.else, macro_if.then
           when MacroExpression
-            if (exp = macro_if.exp).is_a?(If)
-              exp.then, exp.else = exp.else, exp.then
-            end
+            exp = macro_if.exp.as(If)
+            macro_if.exp = Unless.new(exp.cond, exp.then, exp.else).at(exp)
           else
             # Nothing special to do
           end
