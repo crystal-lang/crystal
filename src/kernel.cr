@@ -41,10 +41,6 @@ STDOUT = IO::FileDescriptor.from_stdio(1)
 #   output you can do `STDERR.flush_on_newline = false`.
 STDERR = IO::FileDescriptor.from_stdio(2)
 
-ORIGINAL_STDIN  = IO::FileDescriptor.new(0, blocking: true)
-ORIGINAL_STDOUT = IO::FileDescriptor.new(1, blocking: true)
-ORIGINAL_STDERR = IO::FileDescriptor.new(2, blocking: true)
-
 # The name, the program was called with.
 PROGRAM_NAME = String.new(ARGV_UNSAFE.value)
 
