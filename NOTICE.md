@@ -58,7 +58,7 @@ Crystal playground includes the following libraries, which have their own licens
 <!-- libraries -->
 [ansi\_up]: https://github.com/drudru/ansi\_up
 [bdwgc]: http://www.hboehm.info/gc/
-[Codemirror]: https://codemirror.net/
+[CodeMirror]: https://codemirror.net/
 [jQuery]: https://jquery.com/
 [GMP]: https://gmplib.org/
 [libevent2]: http://libevent.org/
