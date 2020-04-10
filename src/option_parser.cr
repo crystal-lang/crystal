@@ -220,8 +220,9 @@ class OptionParser
     end
   end
 
-  # Adds a separator, with an optional header message,
-  # that will be used to print the help.
+  # Adds a separator, with an optional header message, that will be used to
+  # print the help. The seperator is placed between the flags registered (`#on`)
+  # before, and the flags registered after the call.
   #
   # This way, you can group the different options in an easier to read way.
   def separator(message = "")
@@ -231,21 +232,23 @@ class OptionParser
   # Sets a handler for regular arguments that didn't match any of the setup options.
   #
   # You typically use this to get the main arguments (not modifiers)
-  # that your program expects (for example, filenames)
+  # that your program expects (for example, filenames). The default behaviour
+  # is to do nothing. The arguments can also be extracted from the *args* array
+  # passed to `#parse` after parsing.
   def unknown_args(&@unknown_args : Array(String), Array(String) ->)
   end
 
   # Sets a handler for when a option that expects an argument wasn't given any.
   #
   # You typically use this to display a help message.
-  # The default raises `MissingOption`.
+  # The default behaviour is to raise `MissingOption`.
   def missing_option(&@missing_option : String ->)
   end
 
   # Sets a handler for option arguments that didn't match any of the setup options.
   #
   # You typically use this to display a help message.
-  # The default raises `InvalidOption`.
+  # The default behaviour is to raise `InvalidOption`.
   def invalid_option(&@invalid_option : String ->)
   end
 
