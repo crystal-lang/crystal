@@ -251,7 +251,8 @@ describe "File" do
   end
 
   describe "symlink?" do
-    it "gives true" do
+    # TODO: this fails depending on how Git checks out the repository
+    pending_win32 "gives true" do
       File.symlink?(datapath("symlink.txt")).should be_true
     end
 
@@ -410,7 +411,8 @@ describe "File" do
       info.type.should eq(File::Type::CharacterDevice)
     end
 
-    it "gets for a symlink" do
+    # TODO: this fails depending on how Git checks out the repository
+    pending_win32 "gets for a symlink" do
       info = File.info(datapath("symlink.txt"), follow_symlinks: false)
       info.type.should eq(File::Type::Symlink)
     end
