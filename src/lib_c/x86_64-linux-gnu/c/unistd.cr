@@ -24,6 +24,12 @@ lib LibC
   fun ftruncate(fd : Int, length : OffT) : Int
   fun getcwd(buf : Char*, size : SizeT) : Char*
   fun gethostname(name : Char*, len : SizeT) : Int
+  fun getuid : UidT
+  fun geteuid : UidT
+  fun getgid : GidT
+  fun getegid : GidT
+  fun setresuid(UidT, UidT, UidT) : Int
+  fun setresgid(GidT, GidT, GidT) : Int
   fun getpgid(pid : PidT) : PidT
   fun getpid : PidT
   fun getppid : PidT

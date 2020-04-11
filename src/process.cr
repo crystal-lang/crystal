@@ -519,6 +519,183 @@ class Process
     io.close if io
   end
 
+  # Returns the real user id of the current process.
+  def self.user_id
+    LibC.getuid.to_i
+  end
+
+  # Returns the effective user id of the current process.
+  def self.effective_user_id
+    LibC.geteuid.to_i
+  end
+
+  # Returns the real group id of the current process.
+  def self.group_id
+    LibC.getgid.to_i
+  end
+
+  # Returns the effective group id of the current process.
+  def self.effective_group_id
+    LibC.getegid.to_i
+  end
+
+  private UID_NO_CHANGE = if LibC::UidT.new(0).is_a?(Int::Signed)
+                            LibC::UidT.new(-1)
+                          else
+                            LibC::UidT::MAX
+                          end
+  private GID_NO_CHANGE = if LibC::GidT.new(0).is_a?(Int::Signed)
+                            LibC::GidT.new(-1)
+                          else
+                            LibC::GidT::MAX
+                          end
+
+  # Permanently transition to another account.
+  #
+  # user_ids, group_ids and groups are changed to the account provided.
+  #
+  # Call `chroot` or other privileged operations before calling this method.
+  #
+  # Example:
+  #
+  # ```
+  # user = System::User.find_by name: "crystal"
+  # Process.become user
+  #
+  # user = System::User.find_by name: "crystal"
+  # group = System::Group.find_by name: "wheel"
+  # Process.become user, group # Use a different group other than the user's.
+  # ```
+  def self.become(user : System::User, group : System::Group? = nil)
+    group ||= user.group
+    # TODO: Call setgroups() when available using user.group_ids when available.
+    become_group group.id.to_i
+    become_user user.id.to_i
+  end
+
+  # Changes the real, effective, and saved user ids of the current process.
+  #
+  # Example:
+  #
+  # ```
+  # Process.become_user 0 # Changes real, effective, saved user id to 0 (root).
+  # ```
+  def self.become_user(uid : Int)
+    become_user real: uid, effective: uid, saved: uid
+  end
+
+  # Attempts to change real and/or effective user id's of the current process.
+  # Uid's not supplied in arguments are kept at their current values (if supported).
+  # Attempts to mimic the behavior of [`setreuid()`](https://pubs.opengroup.org/onlinepubs/9699919799/functions/setreuid.html)
+  #
+  # * *real*: real user id (ruid).
+  # * *effective*: effective user id (euid).
+  #
+  # Example:
+  #
+  # ```
+  # Process.become_user real: 1004, effective: 0 # Changes real and saved user id to 1004 and effective to 0 (root)
+  # Process.become_user effective: 0             # Only changes the effective.
+  # ```
+  def self.become_user(*, real : Int? = nil, effective : Int? = nil)
+    real = real ? LibC::UidT.new(real) : UID_NO_CHANGE
+    effective = effective ? LibC::UidT.new(effective) : UID_NO_CHANGE
+    saved = real
+
+    become_user real, effective, saved
+    self
+  end
+
+  # Attempts to change real, effective, and/or saved user id's of the current process.
+  # Uid's not supplied in arguments are kept at their current values (if supported).
+  # Explicit setting of saved id's is not supported on all platforms.
+  #
+  # * *real*: real user id (ruid).
+  # * *effective*: effective user id (euid).
+  # * *saved*: saved user id (suid).
+  #
+  # Example:
+  #
+  # ```
+  # Process.become_user saved: 0 # Platform specific and may not function.
+  # ```
+  def self.become_user(*, real : Int? = nil, effective : Int? = nil, saved : Int? = nil)
+    real = real ? LibC::UidT.new(real) : UID_NO_CHANGE
+    effective = effective ? LibC::UidT.new(effective) : UID_NO_CHANGE
+    saved = saved ? LibC::UidT.new(saved) : UID_NO_CHANGE
+
+    become_user real, effective, saved
+    self
+  end
+
+  private def self.become_user(real : LibC::UidT, effective : LibC::UidT, saved : LibC::UidT)
+    {% if LibC.has_method?(:setresuid) %}
+      if LibC.setresuid(real, effective, saved) != 0
+        raise Errno.new("setresuid failed")
+      end
+    {% else %}
+      if real != saved
+        Errno.value = Errno::ENOSYS
+        raise Errno.new("setting saved is not supported on platforms without setresuid()")
+      end
+
+      if LibC.setreuid(real, effective) != 0
+        raise Errno.new("setreuid failed")
+      end
+    {% end %}
+    self
+  end
+
+  # Attempts to change real, effective, and saved group id's of the current process.
+  #
+  # Example:
+  #
+  # ```
+  # Process.become_group 5 # Changes real, effective, saved group id to 5.
+  # ```
+  def self.become_group(gid : Int)
+    become_group real: gid, effective: gid, saved: gid
+  end
+
+  # Attempts to change real, effective, and/or saved group id's of the current process.
+  # Gid's not supplied in arguments are kept at their current values (if supported).
+  # Explicit setting of saved id's is not supported on all platforms.
+  # Attempts to mimic the behavior of [`setregid()`](https://pubs.opengroup.org/onlinepubs/9699919799/functions/setregid.html#)
+  # if saved is not provided.
+  #
+  # * *real*: real group id (rgid).
+  # * *effective*: effective group id (egid).
+  # * *saved*: saved group id (sgid).
+  #
+  # Example:
+  #
+  # ```
+  # Process.become_group real 1, effective: 2 # Changes real and saved group id to 1, effective to 2.
+  # Process.become_group effective: 0         # Only changes the effective.
+  # Process.become_group saved: 0             # Platform specific and may not function.
+  # ```
+  def self.become_group(*, real : Int? = nil, effective : Int? = nil, saved : Int? = nil)
+    real ||= GID_NO_CHANGE
+    effective ||= GID_NO_CHANGE
+    saved ||= real
+
+    {% if LibC.has_method?(:setresgid) %}
+      if LibC.setresgid(real, effective, saved) != 0
+        raise Errno.new("setresgid failed")
+      end
+    {% else %}
+      if saved != GID_NO_CHANGE && real == GID_NO_CHANGE && effective == GID_NO_CHANGE
+        Errno.value = Errno::ENOSYS
+        raise Errno.new("only setting the saved gid not supported")
+      end
+
+      if LibC.setregid(real, effective) != 0
+        raise Errno.new("setregid failed")
+      end
+    {% end %}
+    self
+  end
+
   # Changes the root directory and the current working directory for the current
   # process.
   #
