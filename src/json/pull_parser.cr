@@ -13,6 +13,7 @@ class JSON::PullParser
     EOF
   end
 
+  # :nodoc:
   enum ObjectStackKind
     Object
     Array
