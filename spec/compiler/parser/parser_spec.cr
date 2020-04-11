@@ -844,7 +844,8 @@ module Crystal
     it_parses "{% a = 1 if 2 %}", MacroExpression.new(If.new(2.int32, Assign.new("a".var, 1.int32)), output: false)
     it_parses "{% if 1; 2; end %}", MacroExpression.new(If.new(1.int32, 2.int32), output: false)
     it_parses "{%\nif 1; 2; end\n%}", MacroExpression.new(If.new(1.int32, 2.int32), output: false)
-    it_parses "{% unless 1; 2; end %}", MacroExpression.new(If.new(1.int32, Nop.new, 2.int32), output: false)
+    it_parses "{% unless 1; 2; end %}", MacroExpression.new(Unless.new(1.int32, 2.int32, Nop.new), output: false)
+    it_parses "{% unless 1; 2; else 3; end %}", MacroExpression.new(Unless.new(1.int32, 2.int32, 3.int32), output: false)
     it_parses "{%\n1\n2\n3\n%}", MacroExpression.new(Expressions.new([1.int32, 2.int32, 3.int32] of ASTNode), output: false)
 
     it_parses "{{ 1 // 2 }}", MacroExpression.new(Expressions.from([Call.new(1.int32, "//", 2.int32)] of ASTNode))
@@ -1507,6 +1508,12 @@ module Crystal
       it_parses "{% begin %}%#{open} %s #{close}{% end %}", MacroIf.new(true.bool, MacroLiteral.new("%#{open} %s #{close}"))
       it_parses "{% begin %}%q#{open} %s #{close}{% end %}", MacroIf.new(true.bool, MacroLiteral.new("%q#{open} %s #{close}"))
     end
+
+    it_parses %(foo(bar:"a", baz:"b")), Call.new(nil, "foo", named_args: [NamedArgument.new("bar", "a".string), NamedArgument.new("baz", "b".string)])
+    it_parses %(foo(bar:a, baz:b)), Call.new(nil, "foo", named_args: [NamedArgument.new("bar", "a".call), NamedArgument.new("baz", "b".call)])
+    it_parses %({foo:"a", bar:"b"}), NamedTupleLiteral.new([NamedTupleLiteral::Entry.new("foo", "a".string), NamedTupleLiteral::Entry.new("bar", "b".string)])
+    it_parses %({foo:'a', bar:'b'}), NamedTupleLiteral.new([NamedTupleLiteral::Entry.new("foo", CharLiteral.new('a')), NamedTupleLiteral::Entry.new("bar", CharLiteral.new('b'))])
+    it_parses %({foo:a, bar:b}), NamedTupleLiteral.new([NamedTupleLiteral::Entry.new("foo", "a".call), NamedTupleLiteral::Entry.new("bar", "b".call)])
 
     assert_syntax_error "return do\nend", "unexpected token: do"
 

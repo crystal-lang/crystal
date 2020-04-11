@@ -1,10 +1,6 @@
 require "crystal/system/process"
 
 class Process
-  # A platform-specific identifier of a running process.
-  # Int64 is enough to fit underlying values of different platforms (Int32 or UInt32).
-  alias PID = Int64
-
   # Terminate the current process immediately. All open files, pipes and sockets
   # are flushed and closed, all child processes are inherited by PID 1. This does
   # not run any handlers registered with `at_exit`, use `::exit` for that.
@@ -15,23 +11,23 @@ class Process
   end
 
   # Returns the process identifier of the current process.
-  def self.pid : PID
-    PID.new(Crystal::System::Process.pid)
+  def self.pid : Int64
+    Crystal::System::Process.pid.to_i64
   end
 
   # Returns the process group identifier of the current process.
-  def self.pgid : PID
-    PID.new(Crystal::System::Process.pgid)
+  def self.pgid : Int64
+    Crystal::System::Process.pgid.to_i64
   end
 
   # Returns the process group identifier of the process identified by *pid*.
-  def self.pgid(pid : Int) : PID
-    PID.new(Crystal::System::Process.pgid(pid))
+  def self.pgid(pid : Int) : Int64
+    Crystal::System::Process.pgid(pid).to_i64
   end
 
   # Returns the process identifier of the parent process of the current process.
-  def self.ppid : PID
-    PID.new(Crystal::System::Process.ppid)
+  def self.ppid : Int64
+    Crystal::System::Process.ppid.to_i64
   end
 
   # Sends a *signal* to the processes identified by the given *pids*.
@@ -177,8 +173,9 @@ class Process
     end
   end
 
-  def pid : PID
-    PID.new(@process_info.pid)
+  # Returns the process identifier of this process.
+  def pid : Int64
+    @process_info.pid.to_i64
   end
 
   # A pipe to this process's input. Raises if a pipe wasn't asked when creating the process.
