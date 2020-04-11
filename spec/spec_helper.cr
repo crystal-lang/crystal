@@ -112,6 +112,10 @@ def assert_error(str, message, inject_primitives = true)
   end
 end
 
+def assert_no_errors(*args)
+  semantic(*args)
+end
+
 def warnings_result(code, inject_primitives = true)
   code = inject_primitives(code) if inject_primitives
 

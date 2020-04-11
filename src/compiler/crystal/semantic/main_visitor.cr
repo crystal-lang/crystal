@@ -3159,6 +3159,10 @@ module Crystal
       false
     end
 
+    def visit(node : Unreachable)
+      node.type = @program.no_return
+    end
+
     # # Helpers
 
     def free_vars

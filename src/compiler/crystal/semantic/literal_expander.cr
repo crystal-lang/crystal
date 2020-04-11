@@ -465,9 +465,7 @@ module Crystal
         a_if = wh_if
       end
 
-      if node_else = node.else
-        a_if.not_nil!.else = node_else
-      end
+      a_if.not_nil!.else = node.else || Unreachable.new
 
       final_if = final_if.not_nil!
       final_exp = if assigns && !assigns.empty?

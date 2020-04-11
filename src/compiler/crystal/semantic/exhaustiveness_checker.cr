@@ -67,50 +67,46 @@ struct Crystal::ExhaustivenessChecker
     return if targets.empty?
 
     if targets.all?(&.is_a?(TypeTarget)) && all_patterns_are_types
-      @program.report_warning(node, <<-MSG)
+      node.raise <<-MSG
         case is not exhaustive.
 
         Missing types:
          - #{targets.map(&.type).join("\n - ")}
         MSG
-      return
     end
 
     single_target = targets.size == 1 ? targets.first : nil
 
     case single_target
     when BoolTarget
-      @program.report_warning(node, <<-MSG)
+      node.raise <<-MSG
         case is not exhaustive.
 
         Missing cases:
          - #{single_target.missing_cases.join("\n - ")}
         MSG
-      return
     when EnumTarget
-      @program.report_warning(node, <<-MSG)
+      node.raise <<-MSG
         case is not exhaustive for enum #{single_target.type}.
 
         Missing members:
          - #{single_target.members.map(&.name).join("\n - ")}
         MSG
-      return
     else
       # No specific error messages for non-single types
     end
 
     if all_provable_patterns && !has_flags_enum
-      @program.report_warning(node, <<-MSG)
+      node.raise <<-MSG
         case is not exhaustive.
 
         Missing cases:
          - #{targets.flat_map(&.missing_cases).join("\n - ")}
         MSG
-      return
     end
 
     # Otherwise we can't prove exhaustiveness and an `else` clause is required
-    @program.report_warning(node, <<-MSG)
+    node.raise <<-MSG
       can't prove case is exhaustive.
 
       Please add an `else` clause.
@@ -173,17 +169,16 @@ struct Crystal::ExhaustivenessChecker
         .map { |cases| "{#{cases}}" }
         .join("\n - ")
 
-      @program.report_warning(node, <<-MSG)
+      node.raise <<-MSG
         case is not exhaustive.
 
         Missing cases:
          - #{missing_cases}
         MSG
-      return
     end
 
     # Otherwise we can't prove exhaustiveness and an `else` clause is required
-    @program.report_warning(node, <<-MSG)
+    node.raise <<-MSG
       can't prove case is exhaustive.
 
       Please add an `else` clause.
