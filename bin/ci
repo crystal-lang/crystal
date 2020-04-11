@@ -73,10 +73,6 @@ prepare_system() {
 }
 
 build() {
-  # Set git config for doc generator specs
-  with_build_env 'git config --global user.email "you@example.com"'
-  with_build_env 'git config --global user.name "Your Name"'
-
   with_build_env 'make std_spec clean threads=1 junit_output=.junit/std_spec.xml'
 
   case $ARCH in
