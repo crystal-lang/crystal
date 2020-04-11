@@ -9,6 +9,9 @@ struct Crystal::System::Process
   # Creates a structure representing a running process based on its ID.
   # def self.new(pi : ProcessInformation)
 
+  # Releases any resources acquired by this structure.
+  # def release
+
   # Returns the PID of the running process.
   # def pid : Int
 
@@ -69,6 +72,8 @@ end
 
 {% if flag?(:unix) %}
   require "./unix/process"
+{% elsif flag?(:win32) %}
+  require "./win32/process"
 {% else %}
   {% raise "No Crystal::System::Process implementation available" %}
 {% end %}

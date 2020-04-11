@@ -61,12 +61,16 @@ class Process
 
   # Returns a `Tms` for the current process. For the children times, only those
   # of terminated children are returned.
+  #
+  # Available only on Unix-like operating systems.
   def self.times : Tms
     Tms.new(**Crystal::System::Process.times)
   end
 
   # Runs the given block inside a new process and
   # returns a `Process` representing the new child process.
+  #
+  # Available only on Unix-like operating systems.
   def self.fork : Process
     if process = fork
       process
@@ -87,6 +91,8 @@ class Process
   # Duplicates the current process.
   # Returns a `Process` representing the new child process in the current process
   # and `nil` inside the new child process.
+  #
+  # Available only on Unix-like operating systems.
   def self.fork : Process?
     {% raise("Process fork is unsupported with multithread mode") if flag?(:preview_mt) %}
 
@@ -298,11 +304,12 @@ class Process
     !exists?
   end
 
-  # Closes any pipes to the child process.
+  # Closes any system resources (e.g. pipes) held for the child process.
   def close
     close_io @input
     close_io @output
     close_io @error
+    @process_info.release
   end
 
   # Asks this process to terminate gracefully
@@ -351,6 +358,8 @@ class Process
 
   # Changes the root directory and the current working directory for the current
   # process.
+  #
+  # Available only on Unix-like operating systems.
   #
   # Security: `chroot` on its own is not an effective means of mitigation. At minimum
   # the process needs to also drop privileges as soon as feasible after the `chroot`.
@@ -414,11 +423,15 @@ def `(command) : String
 end
 
 # See also: `Process.fork`
+#
+# Available only on Unix-like operating systems.
 def fork
   Process.fork { yield }
 end
 
 # See also: `Process.fork`
+#
+# Available only on Unix-like operating systems.
 def fork
   Process.fork
 end

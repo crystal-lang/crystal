@@ -96,6 +96,10 @@ class Mutex
   end
 end
 
+enum Signal
+  KILL = 0
+end
+
 def sleep(seconds : Number)
   sleep(seconds.seconds)
 end
