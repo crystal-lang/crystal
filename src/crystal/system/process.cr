@@ -61,9 +61,11 @@ struct Crystal::System::Process
   # def self.chroot(path : String)
 end
 
-ORIGINAL_STDIN  = IO::FileDescriptor.new(0, blocking: true)
-ORIGINAL_STDOUT = IO::FileDescriptor.new(1, blocking: true)
-ORIGINAL_STDERR = IO::FileDescriptor.new(2, blocking: true)
+module Crystal::System
+  ORIGINAL_STDIN  = IO::FileDescriptor.new(0, blocking: true)
+  ORIGINAL_STDOUT = IO::FileDescriptor.new(1, blocking: true)
+  ORIGINAL_STDERR = IO::FileDescriptor.new(2, blocking: true)
+end
 
 {% if flag?(:unix) %}
   require "./unix/process"
