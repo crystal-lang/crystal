@@ -13,7 +13,7 @@ class JSON::PullParser
     EOF
   end
 
-  private enum ObjectStackKind
+  enum ObjectStackKind
     Object
     Array
   end
