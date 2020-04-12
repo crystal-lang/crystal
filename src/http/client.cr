@@ -109,7 +109,11 @@ class HTTP::Client
     alias TLSContext = Bool | Nil
   {% else %}
     getter! tls : OpenSSL::SSL::Context::Client
-    @socket : TCPSocket | OpenSSL::SSL::Socket | Nil
+
+    # TODO: change this to
+    # @socket : TCPSocket | OpenSSL::SSL::Socket | Nil
+    @socket : IO | Nil
+
     alias TLSContext = OpenSSL::SSL::Context::Client | Bool | Nil
   {% end %}
 
