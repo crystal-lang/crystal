@@ -13,7 +13,7 @@ module Crystal
     @crystal_path : Array(String)
 
     def initialize(path = CrystalPath.default_path, codegen_target = Config.default_target)
-      @crystal_path = path.split(':').reject &.empty?
+      @crystal_path = path.split(Process::PATH_DELIMITER).reject &.empty?
       add_target_path(codegen_target)
     end
 
@@ -144,7 +144,6 @@ module Crystal
     end
 
     private def make_relative_unless_absolute(filename)
-      filename = "#{Dir.current}/#{filename}" unless filename.starts_with?('/')
       File.expand_path(filename)
     end
 
