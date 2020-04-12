@@ -24,7 +24,7 @@ abstract class Digest::Base
     # end
     # digest.to_slice.hexstring # => "acbd18db4cc2f85cedef654fccc4a4d8"
     # ```
-    def self.digest : Bytes
+    def self.digest(& : Digest::Base -> _) : Bytes
       context = new
       yield context
       context.final
