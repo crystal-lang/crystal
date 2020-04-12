@@ -60,16 +60,6 @@ abstract class IO
   end
 end
 
-class Process
-  def self.exit(status = 0)
-    LibC.exit(status)
-  end
-
-  def self.pid
-    1
-  end
-end
-
 class Mutex
   enum Protection
     Checked
