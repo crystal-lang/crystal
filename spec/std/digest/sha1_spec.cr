@@ -44,7 +44,7 @@ describe Digest::SHA1 do
       bytes.hexstring.should eq(hexstring)
     end
 
-    it "does final.hexstring for #{string.inspect}" do
+    it "does hexdigest for #{string.inspect}" do
       Digest::SHA1.hexdigest(string).should eq(hexstring)
     end
 
