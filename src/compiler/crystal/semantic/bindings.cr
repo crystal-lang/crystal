@@ -126,16 +126,7 @@ module Crystal
 
       node = yield dependencies
 
-      if dependencies.size == 1
-        new_type = node.type?
-      else
-        new_type = Type.merge dependencies
-      end
-      new_type = map_type(new_type) if new_type
-
-      if new_type && (freeze_type = @freeze_type)
-        new_type = restrict_type_to_freeze_type(freeze_type, new_type)
-      end
+      new_type = compute_type_from_dependencies(node)
 
       return if @type.same? new_type
       return unless new_type
@@ -192,12 +183,7 @@ module Crystal
     def update(from = nil)
       return if @type && @type.same? from.try &.type?
 
-      new_type = Type.merge dependencies
-      new_type = map_type(new_type) if new_type
-
-      if new_type && (freeze_type = @freeze_type)
-        new_type = restrict_type_to_freeze_type(freeze_type, new_type)
-      end
+      new_type = compute_type_from_dependencies
 
       return if @type.same? new_type
 
@@ -210,6 +196,30 @@ module Crystal
       end
 
       @dirty = true
+    end
+
+    def compute_type_from_dependencies(node = nil)
+      freeze_type = @freeze_type
+
+      if node && dependencies.size == 1
+        new_type = node.type?
+      else
+        # If this node's type is set by the user (or frozen by the compiler),
+        # don't merge union types into their parent type.
+        if freeze_type
+          new_type = Type.merge_union_of dependencies
+        else
+          new_type = Type.merge dependencies
+        end
+      end
+
+      new_type = map_type(new_type) if new_type
+
+      if new_type && freeze_type
+        new_type = restrict_type_to_freeze_type(freeze_type, new_type)
+      end
+
+      new_type
     end
 
     def propagate
@@ -347,11 +357,11 @@ module Crystal
 
       program = computed_types.first.program
 
-      if inside_is_a?
-        self.type = program.type_merge_union_of(computed_types)
-      else
-        self.type = program.type_merge(computed_types)
-      end
+      # if inside_is_a?
+      self.type = program.type_merge_union_of(computed_types)
+      # else
+      #   self.type = program.type_merge(computed_types)
+      # end
     end
   end
 

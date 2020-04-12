@@ -181,8 +181,8 @@ struct Crystal::TypeDeclarationProcessor
     var = MetaTypeVar.new(name)
     var.owner = owner
     var.type = type
-    var.bind_to(var)
     var.freeze_type = type if freeze_type
+    var.bind_to(var)
     var.location = location
 
     annotations.try &.each do |annotation_type, ann|

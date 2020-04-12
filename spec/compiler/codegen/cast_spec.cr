@@ -411,4 +411,24 @@ describe "Code gen: cast" do
       x.foo
       )).to_i.should eq(1)
   end
+
+  it "fails cast virtual type to union" do
+    run(%(
+      require "prelude"
+
+      class Base; end
+      class One < Base; end
+      class Two < Base; end
+      class Three < Base; end
+
+      x = One.new || Two.new
+
+      begin
+        w = x.as(Two | Three)
+        1
+      rescue ex
+        2
+      end
+      )).to_i.should eq(2)
+  end
 end

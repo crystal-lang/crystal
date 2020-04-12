@@ -5247,4 +5247,25 @@ describe "Semantic: instance var" do
       ),
       "can't infer the type parameter T for the generic class Gen(T)"
   end
+
+  it "types union without going to parent (#9050)" do
+    assert_type(%(
+      class Base; end
+      class One < Base; end
+      class Two < Base; end
+
+      class Foo
+        @x : One | Two
+
+        def initialize(@x)
+        end
+
+        def x
+          @x
+        end
+      end
+
+      Foo.new(One.new).x
+      )) { union_of types["One"], types["Two"] }
+  end
 end

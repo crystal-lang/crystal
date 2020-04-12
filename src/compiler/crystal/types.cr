@@ -3017,7 +3017,7 @@ module Crystal
 
     def virtual_type
       if union_types.any? { |t| t.virtual_type != t }
-        program.type_merge(union_types.map(&.virtual_type)).not_nil!
+        program.type_merge_union_of(union_types.map(&.virtual_type)).not_nil!
       else
         self
       end
@@ -3050,7 +3050,8 @@ module Crystal
           new_union_types << type.replace_type_parameters(instance)
         end
       end
-      program.type_merge(new_union_types) || program.no_return
+
+      program.type_merge_union_of(new_union_types) || program.no_return
     end
 
     def to_s_with_options(io : IO, skip_union_parens : Bool = false, generic_args : Bool = true, codegen : Bool = false) : Nil

@@ -359,4 +359,15 @@ describe "Semantic: cast" do
       x.foo if x
       )) { nil_type }
   end
+
+  it "casts to union, doesn't merge to parent type" do
+    assert_type(%(
+      class Base; end
+      class One < Base; end
+      class Two < Base; end
+      class Three < Base; end
+
+      (One.new || Three.new).as(One | Two)
+      )) { union_of types["One"], types["Two"] }
+  end
 end

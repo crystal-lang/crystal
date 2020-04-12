@@ -2,7 +2,7 @@ require "../program"
 
 module Crystal
   class Program
-    def type_merge(types : Array(Type?))
+    def type_merge(types : Array(Type?)) : Type?
       case types.size
       when 0
         return nil
@@ -20,7 +20,7 @@ module Crystal
       combined_union_of compact_types(types)
     end
 
-    def type_merge(nodes : Array(ASTNode))
+    def type_merge(nodes : Array(ASTNode)) : Type?
       case nodes.size
       when 0
         return nil
@@ -67,8 +67,26 @@ module Crystal
       end
     end
 
-    def type_merge_union_of(types : Array(Type))
-      union_of compact_types(types)
+    def type_merge_union_of(types : Array(Type)) : Type?
+      combined_union_of compact_types(types), merge_to_parent: false
+    end
+
+    def type_merge_union_of(nodes : Array(ASTNode)) : Type?
+      case nodes.size
+      when 0
+        return nil
+      when 1
+        return nodes.first.type?
+      when 2
+        # Merging two types is the most common case, so we optimize it
+        first, second = nodes
+        did_merge, merged_type = type_merge_two(first.type?, second.type?)
+        return merged_type if did_merge
+      else
+        # union_of
+      end
+
+      combined_union_of compact_types(nodes, &.type?), merge_to_parent: false
     end
 
     def compact_types(types)
@@ -111,25 +129,54 @@ module Crystal
       # Nothing to do
     end
 
-    def combined_union_of(types : Array)
+    def combined_union_of(types : Array, merge_to_parent = true)
       case types.size
       when 0
         nil
       when 1
         types.first
       else
-        combined_types = type_combine types
+        combined_types = type_combine types, merge_to_parent: merge_to_parent
         union_of combined_types
       end
     end
 
-    def type_combine(types)
+    # If merge to parent is true, types will be merged to common ancestors.
+    # If false, types will only be merged to a common ancestor if any of those
+    # types is the common ancestor. For example:
+    #
+    # ```
+    # class Base; end
+    #
+    # class One < Base; end
+    #
+    # class Two < Base; end
+    # ```
+    #
+    # Merging One | Two:
+    # - merge_to_parent = true: Base+
+    # - merge_to_parent = false: One | Two
+    #
+    # Merging Base | One:
+    # - merge_to_parent = true: Base
+    # - merge_to_parent = false: Base+
+    def type_combine(types, merge_to_parent = true)
       all_types = [types.shift] of Type
+
+      # Sort by depth so that types deep in the hierarchy will combine with
+      # types we find first.
+      if merge_to_parent == false
+        types = types.sort_by!(&.depth)
+      end
 
       types.each do |t2|
         not_found = all_types.all? do |t1|
           ancestor = t1.common_ancestor(t2)
-          if ancestor
+          if ancestor &&
+             (
+               merge_to_parent ||
+               (ancestor.virtual_type == t1.virtual_type || ancestor.virtual_type == t2.virtual_type)
+             )
             all_types.delete t1
             all_types << ancestor.virtual_type
             false
@@ -147,11 +194,15 @@ module Crystal
   end
 
   class Type
-    def self.merge(nodes : Array(ASTNode))
+    def self.merge(nodes : Array(ASTNode)) : Type?
       nodes.find(&.type?).try &.type.program.type_merge(nodes)
     end
 
-    def self.merge(types : Array(Type))
+    def self.merge_union_of(nodes : Array(ASTNode)) : Type?
+      nodes.find(&.type?).try &.type.program.type_merge_union_of(nodes)
+    end
+
+    def self.merge(types : Array(Type)) : Type?
       if types.size == 0
         nil
       else
@@ -159,11 +210,19 @@ module Crystal
       end
     end
 
-    def self.merge!(types_or_nodes)
+    def self.merge_union(types : Array(Type)) : Type?
+      if types.size == 0
+        nil
+      else
+        types.first.program.type_merge_union_of(types)
+      end
+    end
+
+    def self.merge!(types_or_nodes) : Type
       merge(types_or_nodes).not_nil!
     end
 
-    def self.merge!(type1 : Type, type2 : Type)
+    def self.merge!(type1 : Type, type2 : Type) : Type
       merge!([type1, type2])
     end
 

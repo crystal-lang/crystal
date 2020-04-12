@@ -154,7 +154,7 @@ class Crystal::Type
 
         type.virtual_type
       end
-      program.type_merge(types)
+      program.type_merge_union_of(types)
     end
 
     def lookup(node : Metaclass)

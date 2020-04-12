@@ -899,7 +899,7 @@ module Crystal
         types = other.union_types.compact_map do |t|
           restrict(t, context).as(Type?)
         end
-        program.type_merge types
+        program.type_merge_union_of types
       elsif other.is_a?(VirtualType)
         result = base_type.restrict(other.base_type, context) || other.base_type.restrict(base_type, context)
         result ? result.virtual_type : nil
