@@ -55,7 +55,7 @@ abstract class Digest::Base
     # end
     # # => "acbd18db4cc2f85cedef654fccc4a4d8"
     # ```
-    def self.hexdigest : String
+    def self.hexdigest(& : Digest::Base -> _) : String
       hashsum = digest do |ctx|
         yield ctx
       end
