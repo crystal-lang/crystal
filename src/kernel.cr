@@ -104,6 +104,20 @@ def loop
   end
 end
 
+# Repeatedly executes the block, but with the given delay between executions.
+#
+# ```
+# every 1.second do
+#   puts Time.local
+# end
+# ```
+def every(delay : Time::Span) : Nil
+  loop do
+    yield
+    sleep delay
+  end
+end
+
 # Reads a line from `STDIN`.
 #
 # See also: `IO#gets`.
