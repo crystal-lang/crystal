@@ -130,6 +130,9 @@ module Crystal
     # If `true` compiler will error if warnings are found.
     property error_on_warnings : Bool = false
 
+    # Returns the source time of this program.
+    property timestamp : Time = Time.utc
+
     def initialize
       super(self, self, "main")
 

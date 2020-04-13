@@ -149,6 +149,13 @@ module Crystal::Macros
   def skip_file : Nop
   end
 
+  # Returns the current time at compilation  as a unix time stamp.
+  #
+  # The value is identical throughout each invocation inside a program and
+  # represents the start of the compilation process.
+  def timestamp : NumberLiteral
+  end
+
   # This is the base class of all AST nodes. This methods are
   # available to all AST nodes.
   abstract class ASTNode

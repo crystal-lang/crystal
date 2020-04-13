@@ -2170,4 +2170,14 @@ module Crystal
       end
     end
   end
+
+  describe "timestamp" do
+    it "prints current timestamp" do
+      time = Time.utc(2020, 4, 13, 16, 8)
+      assert_macro "", %({{timestamp}}), "#{time.to_unix}_i64" do |program|
+        program.timestamp = time
+        [] of ASTNode
+      end
+    end
+  end
 end

@@ -71,6 +71,8 @@ module Crystal
         interpret_read_file(node, nilable: true)
       when "run"
         interpret_run(node)
+      when "timestamp"
+        interpret_timestamp(node)
       else
         nil
       end
@@ -295,6 +297,14 @@ module Crystal
         end
 
         node.raise message.to_s
+      end
+    end
+
+    def interpret_timestamp(node)
+      if node.args.size == 0
+        @last = NumberLiteral.new(@program.timestamp.to_unix)
+      else
+        node.wrong_number_of_arguments "macro call 'timestamp'", node.args.size, 0
       end
     end
   end
