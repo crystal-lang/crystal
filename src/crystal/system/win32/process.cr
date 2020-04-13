@@ -1,5 +1,4 @@
 require "c/processthreadsapi"
-require "process/shell"
 
 struct Crystal::System::Process
   getter pid : LibC::DWORD
@@ -143,7 +142,35 @@ struct Crystal::System::Process
     else
       command_args = [command]
       command_args.concat(args) if args
-      ::Process.shell_quote_windows(command_args)
+      String.build { |io| args_to_string(command_args, io) }
+    end
+  end
+
+  private def self.args_to_string(args, io : IO)
+    args.join(' ', io) do |arg|
+      quotes = arg.empty? || arg.includes?(' ') || arg.includes?('\t')
+
+      io << '"' if quotes
+
+      slashes = 0
+      arg.each_char do |c|
+        case c
+        when '\\'
+          slashes += 1
+        when '"'
+          (slashes + 1).times { io << '\\' }
+          slashes = 0
+        else
+          slashes = 0
+        end
+
+        io << c
+      end
+
+      if quotes
+        slashes.times { io << '\\' }
+        io << '"'
+      end
     end
   end
 
