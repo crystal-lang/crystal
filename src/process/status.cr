@@ -49,7 +49,14 @@ class Process::Status
   end
 
   # If `normal_exit?` is `true`, returns the exit code of the process.
+  #
+  # * POSIX: Otherwise, returns a placeholder negative value related to the exit signal.
+  # * Windows: The exit is always "normal" but the exit codes can be negative
+  #   (wrapped around after `Int32::MAX`; take them modulo 2**32 if the actual value is needed)
   def exit_code : Int32
+    if !normal_exit?
+      return -signal_code
+    end
     {% if flag?(:unix) %}
       # define __WEXITSTATUS(status) (((status) & 0xff00) >> 8)
       (@exit_status & 0xff00) >> 8
