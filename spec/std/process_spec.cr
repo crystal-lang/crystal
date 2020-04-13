@@ -154,7 +154,7 @@ describe Process do
   it "sets working directory" do
     parent = File.dirname(Dir.current)
     command = {% if flag?(:win32) %}
-                "cmd /c echo %cd%"
+                "cmd.exe /c echo %cd%"
               {% else %}
                 "pwd"
               {% end %}
