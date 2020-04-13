@@ -4,9 +4,9 @@ require "./spec_helper"
 require "../spec_helper"
 
 private def exit_code_command(code)
-  if {{flag?(:win32)}}
+  {% if flag?(:win32) %}
     {"cmd.exe", {"/c", "exit #{code}"}}
-  else
+  {% else %}
     case code
     when 0
       {"true", [] of String}
@@ -15,35 +15,39 @@ private def exit_code_command(code)
     else
       {"/bin/sh", {"-c", "exit #{code}"}}
     end
-  end
+  {% end %}
 end
 
 private def shell_command(command)
-  if {{flag?(:win32)}}
+  {% if flag?(:win32) %}
     {"cmd.exe", {"/c", command}}
-  else
+  {% else %}
     {"/bin/sh", {"-c", command}}
-  end
+  {% end %}
 end
 
 private def stdin_to_stdout_command
-  if {{flag?(:win32)}}
+  {% if flag?(:win32) %}
     {"powershell.exe", {"-C", "$Input"}}
-  else
+  {% else %}
     {"/bin/cat", [] of String}
-  end
+  {% end %}
 end
 
 private def standing_command
-  if {{flag?(:win32)}}
+  {% if flag?(:win32) %}
     {"cmd.exe"}
-  else
+  {% else %}
     {"yes"}
-  end
+  {% end %}
 end
 
 private def newline
-  {{flag?(:win32)}} ? "\r\n" : "\n"
+  {% if flag?(:win32) %}
+    "\r\n"
+  {% else %}
+    "\n"
+  {% end %}
 end
 
 describe Process do
