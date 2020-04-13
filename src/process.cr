@@ -1,3 +1,14 @@
+class Process
+  # A struct representing the CPU current times of the process,
+  # in fractions of seconds.
+  #
+  # * *utime*: CPU time a process spent in userland.
+  # * *stime*: CPU time a process spent in the kernel.
+  # * *cutime*: CPU time a processes terminated children (and their terminated children) spent in the userland.
+  # * *cstime*: CPU time a processes terminated children (and their terminated children) spent in the kernel.
+  record Tms, utime : Float64, stime : Float64, cutime : Float64, cstime : Float64
+end
+
 require "crystal/system/process"
 
 class Process
@@ -50,21 +61,12 @@ class Process
     Crystal::System::Process.exists?(pid)
   end
 
-  # A struct representing the CPU current times of the process,
-  # in fractions of seconds.
-  #
-  # * *utime*: CPU time a process spent in userland.
-  # * *stime*: CPU time a process spent in the kernel.
-  # * *cutime*: CPU time a processes terminated children (and their terminated children) spent in the userland.
-  # * *cstime*: CPU time a processes terminated children (and their terminated children) spent in the kernel.
-  record Tms, utime : Float64, stime : Float64, cutime : Float64, cstime : Float64
-
   # Returns a `Tms` for the current process. For the children times, only those
   # of terminated children are returned.
   #
   # Available only on Unix-like operating systems.
   def self.times : Tms
-    Tms.new(**Crystal::System::Process.times)
+    Crystal::System::Process.times
   end
 
   # Runs the given block inside a new process and

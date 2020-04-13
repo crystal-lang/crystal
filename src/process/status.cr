@@ -3,7 +3,7 @@ class Process::Status
   # Platform-specific exit status code, which usually contains either the exit code or a termination signal.
   # The other `Process::Status` methods extract the values from `exit_status`.
   def exit_status : Int32
-    @exit_status.to_i32
+    @exit_status.to_i32!
   end
 
   {% if flag?(:win32) %}

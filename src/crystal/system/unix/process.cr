@@ -71,12 +71,12 @@ struct Crystal::System::Process
     LibC.getrusage(LibC::RUSAGE_SELF, out usage)
     LibC.getrusage(LibC::RUSAGE_CHILDREN, out child)
 
-    {
-      utime:  usage.ru_utime.tv_sec.to_f64 + usage.ru_utime.tv_usec.to_f64 / 1e6,
-      stime:  usage.ru_stime.tv_sec.to_f64 + usage.ru_stime.tv_usec.to_f64 / 1e6,
-      cutime: child.ru_utime.tv_sec.to_f64 + child.ru_utime.tv_usec.to_f64 / 1e6,
-      cstime: child.ru_stime.tv_sec.to_f64 + child.ru_stime.tv_usec.to_f64 / 1e6,
-    }
+    ::Process::Tms.new(
+      usage.ru_utime.tv_sec.to_f64 + usage.ru_utime.tv_usec.to_f64 / 1e6,
+      usage.ru_stime.tv_sec.to_f64 + usage.ru_stime.tv_usec.to_f64 / 1e6,
+      child.ru_utime.tv_sec.to_f64 + child.ru_utime.tv_usec.to_f64 / 1e6,
+      child.ru_stime.tv_sec.to_f64 + child.ru_stime.tv_usec.to_f64 / 1e6,
+    )
   end
 
   def self.fork(*, will_exec = false)

@@ -45,8 +45,8 @@ struct Crystal::System::Process
   # Whether the process identified by *pid* is still registered in the system.
   # def self.exists?(pid : Int) : Bool
 
-  # Measures CPU times and returns valid arguments for `Tms.new`.
-  # def self.times : NamedTuple
+  # Measures CPU times.
+  # def self.times : ::Process::Tms
 
   # Duplicates the current process.
   # def self.fork : ProcessInformation
