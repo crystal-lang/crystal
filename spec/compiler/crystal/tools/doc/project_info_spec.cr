@@ -4,7 +4,7 @@ require "../../../../support/tempfile"
 private alias ProjectInfo = Crystal::Doc::ProjectInfo
 
 private def run_git(command)
-  `git  -c user.email="" -c user.name="spec" #{command}`
+  `git -c user.email="" -c user.name="spec" #{command}`
 end
 
 describe Crystal::Doc::ProjectInfo do
