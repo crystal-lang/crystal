@@ -166,7 +166,7 @@ module Crystal
       # Sort by depth so that types deep in the hierarchy will combine with
       # types we find first.
       if merge_to_parent == false
-        types = types.sort_by!(&.depth)
+        types.sort_by!(&.depth)
       end
 
       types.each do |t2|
