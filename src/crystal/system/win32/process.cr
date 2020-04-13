@@ -30,9 +30,9 @@ struct Crystal::System::Process
       raise RuntimeError.from_winerror("GetExitCodeProcess")
     end
     if exit_code == LibC::STILL_ACTIVE
-      raise "BUG: process still active"
+      raise ::Process::Status::UnexpectedStatusError.new(exit_code.to_i32!, "The process might still be active")
     end
-    exit_code
+    ::Process::Status::Exited.new(exit_code.to_i32!)
   end
 
   def exists?

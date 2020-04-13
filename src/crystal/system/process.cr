@@ -16,7 +16,7 @@ struct Crystal::System::Process
   # def pid : Int
 
   # Waits until the process finishes and returns its status code
-  # def wait : Int
+  # def wait : ::Process::Status
 
   # Whether the process is still registered in the system.
   # def exists? : Bool

@@ -1,33 +1,13 @@
 # The status of a terminated process. Returned by `Process#wait`.
-class Process::Status
-  {% if flag?(:win32) %}
-    # :nodoc:
-    def initialize(@exit_status : UInt32)
-    end
-  {% else %}
-    # :nodoc:
-    def initialize(@exit_status : Int32)
-    end
-  {% end %}
-
-  # Returns `true` if the process was terminated by a signal.
-  def signal_exit? : Bool
-    {% if flag?(:unix) %}
-      # define __WIFSIGNALED(status) (((signed char) (((status) & 0x7f) + 1) >> 1) > 0)
-      ((LibC::SChar.new(@exit_status & 0x7f) + 1) >> 1) > 0
-    {% else %}
-      false
-    {% end %}
+abstract struct Process::Status
+  # Returns `Signaled` if the process was terminated by a signal, otherwise `nil`.
+  def signal_exit? : Signaled?
+    self.as? Signaled
   end
 
-  # Returns `true` if the process terminated normally.
-  def normal_exit? : Bool
-    {% if flag?(:unix) %}
-      # define __WIFEXITED(status) (__WTERMSIG(status) == 0)
-      signal_code == 0
-    {% else %}
-      true
-    {% end %}
+  # Returns `Exited` if the process terminated normally, otherwise `nil`.
+  def normal_exit? : Exited?
+    self.as? Exited
   end
 
   # If `signal_exit?` is `true`, returns the *Signal* the process
@@ -35,11 +15,7 @@ class Process::Status
   #
   # Available only on Unix-like operating systems.
   def exit_signal : Signal
-    {% if flag?(:unix) %}
-      Signal.from_value(signal_code)
-    {% else %}
-      raise NotImplementedError.new("Process::Status#exit_signal")
-    {% end %}
+    self.as(Signaled).signal
   end
 
   # If `normal_exit?` is `true`, returns the exit code of the process.
@@ -47,31 +23,84 @@ class Process::Status
   # * POSIX: Otherwise, returns a placeholder negative value related to the exit signal.
   # * Windows: The exit is always "normal" but the exit codes can be negative
   #   (wrapped around after `Int32::MAX`; take them modulo 2**32 if the actual value is needed)
-  def exit_code : Int32
-    if !normal_exit?
-      return -signal_code
-    end
-    {% if flag?(:unix) %}
-      # define __WEXITSTATUS(status) (((status) & 0xff00) >> 8)
-      (@exit_status & 0xff00) >> 8
-    {% else %}
-      exit_status
-    {% end %}
-  end
+  abstract def exit_code : Int32
 
   # Returns `true` if the process exited normally with an exit code of `0`.
   def success? : Bool
-    normal_exit? && exit_code == 0
+    false
   end
 
-  private def signal_code
-    # define __WTERMSIG(status) ((status) & 0x7f)
-    @exit_status & 0x7f
+  struct Exited < Status
+    # :nodoc:
+    def initialize(@exit_code : Int32)
+    end
+
+    getter exit_code : Int32
+
+    def success? : Bool
+      exit_code == 0
+    end
   end
 
-  # Platform-specific exit status code, which usually contains either the exit code or a termination signal.
+  struct Signaled < Status
+    # :nodoc:
+    def initialize(signal_code : Int32, @core_dumped : Bool)
+      @signal_code = UInt8.new(signal_code)
+    end
+
+    def signal : Signal
+      Signal.new(signal_code)
+    end
+
+    def signal_code : Int32
+      @signal_code.to_i32
+    end
+
+    def exit_code : Int32
+      -signal_code
+    end
+
+    getter? core_dumped : Bool
+  end
+
+  struct Stopped < Status
+    # :nodoc:
+    def initialize(@stop_signal : Int32)
+    end
+
+    getter stop_signal : Int32
+
+    def exit_code : Int32
+      -0x7F
+    end
+  end
+
+  struct Continued < Status
+    def exit_code : Int32
+      -0x7F
+    end
+  end
+
+  # POSIX-specific exit status code, a complex bitmask of an exit code or termination signal.
   @[Deprecated("Use `Process::Status#exit_code`")]
   def exit_status : Int32
-    @exit_status.to_i32!
+    case self
+    when Exited
+      self.exit_code << 8
+    when Signaled
+      self.signal_code + (core_dumped? ? 0x80 : 0)
+    when Stopped
+      (self.stop_signal << 8) + 0x7f
+    when Continued
+      0xffff
+    end
+  end
+
+  class UnexpectedStatusError < RuntimeError
+    def initialize(@exit_status : Int32, msg = "The process exited with an unknown status")
+      super("#{msg} (#{@exit_status})")
+    end
+
+    getter exit_status : Int32
   end
 end

@@ -14,7 +14,23 @@ struct Crystal::System::Process
   end
 
   def wait
-    @channel.receive
+    status = @channel.receive
+    case status & 0xff
+    when 0
+      ::Process::Status::Exited.new((status & 0xff00) >> 8)
+    when 0x01..0x7e
+      ::Process::Status::Signaled.new(status & 0x7f, core_dumped: false)
+    when 0x7f
+      ::Process::Status::Stopped.new((status & 0xff00) >> 8)
+    when 0x81..0xfe
+      ::Process::Status::Signaled.new(status & 0x7f, core_dumped: true)
+    else
+      if status == 0xffff
+        ::Process::Status::Continued.new
+      else
+        raise ::Process::Status::UnexpectedStatusError.new(status)
+      end
+    end
   end
 
   def exists?

@@ -9,6 +9,7 @@ class Process
   record Tms, utime : Float64, stime : Float64, cutime : Float64, cstime : Float64
 end
 
+require "process/status"
 require "crystal/system/process"
 
 class Process
@@ -303,7 +304,7 @@ class Process
     end
     @wait_count = 0
 
-    Process::Status.new(@process_info.wait)
+    @process_info.wait
   ensure
     close
   end
