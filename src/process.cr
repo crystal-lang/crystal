@@ -124,6 +124,8 @@ class Process
   # Executes a process and waits for it to complete.
   #
   # By default the process is configured without input, output or error.
+  #
+  # Available only on Unix-like operating systems.
   def self.run(command : String, args = nil, env : Env = nil, clear_env : Bool = false, shell : Bool = false,
                input : Stdio = Redirect::Close, output : Stdio = Redirect::Close, error : Stdio = Redirect::Close, chdir : String? = nil) : Process::Status
     status = new(command, args, env, clear_env, shell, input, output, error, chdir).wait
@@ -203,6 +205,17 @@ class Process
   # To wait for it to finish, invoke `wait`.
   #
   # By default the process is configured without input, output or error.
+  #
+  # If *shell* is false, the *command* is the path to the executable to run,
+  # along with a list of *args*.
+  #
+  # If *shell* is true, the *command* should be the full command line
+  # including space-separated args.
+  # * On POSIX this uses `/bin/sh` to process the command string. *args* are
+  #   also passed to the shell, and you need to include the string `"${@}"` in
+  #   the *command* to safely insert them there.
+  # * On Windows this is implemented by passing the string as-is to the
+  #   process, and passing *args* is not supported.
   def initialize(command : String, args = nil, env : Env = nil, clear_env : Bool = false, shell : Bool = false,
                  input : Stdio = Redirect::Close, output : Stdio = Redirect::Close, error : Stdio = Redirect::Close, chdir : String? = nil)
     command_args = Crystal::System::Process.prepare_args(command, args, shell)
