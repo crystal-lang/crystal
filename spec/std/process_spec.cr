@@ -88,13 +88,11 @@ describe Process do
 
   it "redirects output to /dev/null" do
     # This doesn't test anything but no output should be seen while running tests
-    if {{flag?(:win32)}}
-      command = "cmd.exe"
-      args = {"/c", "dir"}
-    else
-      command = "/bin/ls"
-      args = [] of String
-    end
+    command, args = {% if flag?(:win32) %}
+                      {"cmd.exe", {"/c", "dir"}}
+                    {% else %}
+                      {"/bin/ls", [] of String}
+                    {% end %}
     Process.run(command, args, output: Process::Redirect::Close).exit_code.should eq(0)
   end
 
@@ -155,7 +153,11 @@ describe Process do
 
   it "sets working directory" do
     parent = File.dirname(Dir.current)
-    command = {{flag?(:win32)}} ? "cmd /c echo %cd%" : "pwd"
+    command = {% if flag?(:win32) %}
+                "cmd /c echo %cd%"
+              {% else %}
+                "pwd"
+              {% end %}
     value = Process.run(command, shell: true, chdir: parent, output: Process::Redirect::Pipe) do |proc|
       proc.output.gets_to_end
     end
