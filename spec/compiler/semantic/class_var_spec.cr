@@ -510,4 +510,26 @@ describe "Semantic: class var" do
       Foo(Int32).inc
       )) { int32 }
   end
+
+  it "types union without going to parent (#9050)" do
+    assert_type(%(
+      class Base; end
+      class One < Base; end
+      class Two < Base; end
+
+      class Foo
+        @@x : One | Two = One.new
+
+        def self.x=(@@x)
+        end
+
+        def self.x
+          @@x
+        end
+      end
+
+      Foo.x = Two.new
+      Foo.x
+      )) { union_of types["One"], types["Two"] }
+  end
 end
