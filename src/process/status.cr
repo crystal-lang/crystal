@@ -1,11 +1,5 @@
 # The status of a terminated process. Returned by `Process#wait`.
 class Process::Status
-  # Platform-specific exit status code, which usually contains either the exit code or a termination signal.
-  # The other `Process::Status` methods extract the values from `exit_status`.
-  def exit_status : Int32
-    @exit_status.to_i32!
-  end
-
   {% if flag?(:win32) %}
     # :nodoc:
     def initialize(@exit_status : UInt32)
@@ -73,5 +67,11 @@ class Process::Status
   private def signal_code
     # define __WTERMSIG(status) ((status) & 0x7f)
     @exit_status & 0x7f
+  end
+
+  # Platform-specific exit status code, which usually contains either the exit code or a termination signal.
+  @[Deprecated("Use `Process::Status#exit_code`")]
+  def exit_status : Int32
+    @exit_status.to_i32!
   end
 end
