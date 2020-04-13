@@ -63,7 +63,7 @@ module HTTP
 
     def expired?
       if e = expires
-        e < Time.utc
+        e <= Time.utc
       else
         false
       end
