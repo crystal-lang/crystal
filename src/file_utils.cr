@@ -119,7 +119,7 @@ module FileUtils
   def cp(src_path : String, dest : String)
     File.open(src_path) do |s|
       dest += File::SEPARATOR + File.basename(src_path) if Dir.exists?(dest)
-      File.open(dest, :write, :create, :truncate, permissions: s.info.permissions) do |d|
+      File.open(dest, :overwrite, permissions: s.info.permissions) do |d|
         IO.copy(s, d)
       end
     end

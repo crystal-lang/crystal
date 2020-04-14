@@ -5,6 +5,11 @@ module Crystal::System::File
   # Helper method for calculating file open modes on systems with posix-y `open`
   # calls.
   private def self.open_flag(mode : ::File::Mode)
+    if mode.overwrite?
+      mode |= ::File::Mode::Write | ::File::Mode::Create | ::File::Mode::Truncate
+      mode &= ~(::File::Mode::Overwrite)
+    end
+
     flags = 0
     if mode.read? && (mode.write? || mode.append?)
       flags |= LibC::O_RDWR

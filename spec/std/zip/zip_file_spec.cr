@@ -39,7 +39,7 @@ describe Zip do
     filename = datapath("file.zip")
 
     begin
-      File.open(filename, :write, :create, :truncate) do |file|
+      File.open(filename, :overwrite) do |file|
         Zip::Writer.open(file) do |zip|
           zip.add "foo.txt", "contents of foo"
           zip.add "bar.txt", "contents of bar"

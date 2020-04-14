@@ -90,9 +90,10 @@ class File < IO::FileDescriptor
   # ```text
   # Mode    | Description
   # --------+------------------------------------------------------
-  # :read   | Read, starts at the beginning of the file.
-  # :write  | Write, starts at the beginning of the file.
-  # :append | Write, all writes are appended to the end of the file atomically.
+  # :read      | Read, starts at the beginning of the file.
+  # :write     | Write, starts at the beginning of the file.
+  # :overwrite | Same as :write, :create, :truncate
+  # :append    | Write, all writes are appended to the end of the file atomically.
   # ```
   #
   # *modes* may contain any number of these optional arguments:

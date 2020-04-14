@@ -3,6 +3,7 @@ class ::File < IO::FileDescriptor
   enum Mode
     Read
     Write
+    Overwrite
     Append
 
     Create

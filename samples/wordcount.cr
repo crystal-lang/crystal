@@ -10,7 +10,7 @@ def do_work(in_filenames, output_filename, ignore_case)
   end
 
   if output_filename
-    out_file = File.open(output_filename, :write, :create, :truncate)
+    out_file = File.open(output_filename, :overwrite)
   else
     out_file = STDOUT
   end
