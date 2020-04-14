@@ -5,6 +5,7 @@ class Crystal::Doc::Generator
   property is_crystal_repo : Bool
   @repository : String? = nil
   getter repository_name = ""
+  getter project_info
 
   # Adding a flag and associated css class will add support in parser
   FLAG_COLORS = {
@@ -29,13 +30,14 @@ class Crystal::Doc::Generator
   }
 
   def self.new(program : Program, included_dirs : Array(String))
-    new(program, included_dirs, ".", "html", nil, "1.0", "never")
+    new(program, included_dirs, ".", "html", nil, "1.0", "never", ProjectInfo.new("test", "0.0.0-test"))
   end
 
   def initialize(@program : Program, @included_dirs : Array(String),
                  @output_dir : String, @output_format : String,
                  @sitemap_base_url : String?,
-                 @sitemap_priority : String, @sitemap_changefreq : String)
+                 @sitemap_priority : String, @sitemap_changefreq : String,
+                 @project_info : ProjectInfo)
     @base_dir = Dir.current.chomp
     @types = {} of Crystal::Type => Doc::Type
     @repo_name = ""
@@ -95,7 +97,7 @@ class Crystal::Doc::Generator
     raw_body = read_readme
     body = doc(program_type, raw_body)
 
-    File.write File.join(@output_dir, "index.html"), MainTemplate.new(body, types, repository_name)
+    File.write File.join(@output_dir, "index.html"), MainTemplate.new(body, types, project_info)
 
     main_index = Main.new(raw_body, Type.new(self, @program), repository_name)
     File.write File.join(@output_dir, "index.json"), main_index
@@ -124,7 +126,7 @@ class Crystal::Doc::Generator
         filename = File.join(dir, "#{type.name}.html")
       end
 
-      File.write filename, TypeTemplate.new(type, all_types)
+      File.write filename, TypeTemplate.new(type, all_types, project_info)
 
       next if type.program?
 

@@ -2,15 +2,15 @@
 <html lang="en">
 <head>
   <%= HeadTemplate.new(type.path_to "") %>
-  <meta id="repository-name" content="<%= type.repository_name %>">
-  <title><%= type.full_name %> - <%= type.repository_name %></title>
+  <meta id="repository-name" content="<%= project_info.name %>">
+  <title><%= type.full_name %> - <%= project_info.name %> <%= project_info.version %></title>
   <script type="text/javascript">
     CrystalDoc.base_path = "<%= type.path_to "" %>";
   </script>
 </head>
 <body>
 
-<%= SidebarTemplate.new(type.repository_name, types, type) %>
+<%= SidebarTemplate.new(project_info, types, type) %>
 
 <div class="main-content">
 <h1 class="type-name">

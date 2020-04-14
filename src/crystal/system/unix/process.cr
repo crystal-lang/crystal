@@ -10,6 +10,9 @@ struct Crystal::System::Process
     @channel = Crystal::SignalChildHandler.wait(@pid)
   end
 
+  def release
+  end
+
   def wait
     @channel.receive
   end

@@ -63,12 +63,16 @@ class Process
 
   # Returns a `Tms` for the current process. For the children times, only those
   # of terminated children are returned.
+  #
+  # Available only on Unix-like operating systems.
   def self.times : Tms
     Crystal::System::Process.times
   end
 
   # Runs the given block inside a new process and
   # returns a `Process` representing the new child process.
+  #
+  # Available only on Unix-like operating systems.
   def self.fork : Process
     if process = fork
       process
@@ -89,6 +93,8 @@ class Process
   # Duplicates the current process.
   # Returns a `Process` representing the new child process in the current process
   # and `nil` inside the new child process.
+  #
+  # Available only on Unix-like operating systems.
   def self.fork : Process?
     {% raise("Process fork is unsupported with multithread mode") if flag?(:preview_mt) %}
 
@@ -145,6 +151,8 @@ class Process
   end
 
   # Replaces the current process with a new one. This function never returns.
+  #
+  # Available only on Unix-like operating systems.
   def self.exec(command : String, args = nil, env : Env = nil, clear_env : Bool = false, shell : Bool = false,
                 input : ExecStdio = Redirect::Inherit, output : ExecStdio = Redirect::Inherit, error : ExecStdio = Redirect::Inherit, chdir : String? = nil)
     command_args = Crystal::System::Process.prepare_args(command, args, shell)
@@ -197,6 +205,17 @@ class Process
   # To wait for it to finish, invoke `wait`.
   #
   # By default the process is configured without input, output or error.
+  #
+  # If *shell* is false, the *command* is the path to the executable to run,
+  # along with a list of *args*.
+  #
+  # If *shell* is true, the *command* should be the full command line
+  # including space-separated args.
+  # * On POSIX this uses `/bin/sh` to process the command string. *args* are
+  #   also passed to the shell, and you need to include the string `"${@}"` in
+  #   the *command* to safely insert them there.
+  # * On Windows this is implemented by passing the string as-is to the
+  #   process, and passing *args* is not supported.
   def initialize(command : String, args = nil, env : Env = nil, clear_env : Bool = false, shell : Bool = false,
                  input : Stdio = Redirect::Close, output : Stdio = Redirect::Close, error : Stdio = Redirect::Close, chdir : String? = nil)
     command_args = Crystal::System::Process.prepare_args(command, args, shell)
@@ -300,11 +319,12 @@ class Process
     !exists?
   end
 
-  # Closes any pipes to the child process.
+  # Closes any system resources (e.g. pipes) held for the child process.
   def close
     close_io @input
     close_io @output
     close_io @error
+    @process_info.release
   end
 
   # Asks this process to terminate gracefully
@@ -353,6 +373,8 @@ class Process
 
   # Changes the root directory and the current working directory for the current
   # process.
+  #
+  # Available only on Unix-like operating systems.
   #
   # Security: `chroot` on its own is not an effective means of mitigation. At minimum
   # the process needs to also drop privileges as soon as feasible after the `chroot`.
@@ -416,11 +438,15 @@ def `(command) : String
 end
 
 # See also: `Process.fork`
+#
+# Available only on Unix-like operating systems.
 def fork
   Process.fork { yield }
 end
 
 # See also: `Process.fork`
+#
+# Available only on Unix-like operating systems.
 def fork
   Process.fork
 end
