@@ -11,7 +11,7 @@ describe "Signal" do
     Signal::USR1.trap do
       ran = true
     end
-    Process.kill Signal::USR1, Process.pid
+    Process.signal Signal::USR1, Process.pid
     10.times do |i|
       break if ran
       sleep 0.1
@@ -21,7 +21,7 @@ describe "Signal" do
 
   it "ignores a signal" do
     Signal::USR2.ignore
-    Process.kill Signal::USR2, Process.pid
+    Process.signal Signal::USR2, Process.pid
   end
 
   it "CHLD.reset sets default Crystal child handler" do

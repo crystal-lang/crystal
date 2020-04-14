@@ -60,7 +60,7 @@ describe Log::Context do
       Log.context.should eq(c({a: 1, b: 2, c: 3}))
     end
 
-    it "is restored with using" do
+    it "is restored after with_context" do
       Log.context.set a: 1
 
       Log.with_context do
@@ -69,6 +69,18 @@ describe Log::Context do
       end
 
       Log.context.should eq(c({a: 1}))
+    end
+
+    it "is restored after with_context of Log instance" do
+      Log.context.set a: 1
+      log = Log.for("temp")
+
+      log.with_context do
+        log.context.set b: 2
+        log.context.should eq(c({a: 1, b: 2}))
+      end
+
+      log.context.should eq(c({a: 1}))
     end
 
     it "is per fiber" do

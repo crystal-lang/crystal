@@ -78,7 +78,7 @@ module Crystal::System::FileDescriptor
   end
 
   private def system_seek(offset, whence : IO::Seek) : Nil
-    seek_value = LibC._lseek(fd, offset, whence)
+    seek_value = LibC._lseeki64(fd, offset, whence)
 
     if seek_value == -1
       raise IO::Error.from_errno "Unable to seek"
@@ -86,7 +86,7 @@ module Crystal::System::FileDescriptor
   end
 
   private def system_pos
-    pos = LibC._lseek(fd, 0, IO::Seek::Current)
+    pos = LibC._lseeki64(fd, 0, IO::Seek::Current)
     raise IO::Error.from_errno "Unable to tell" if pos == -1
     pos
   end

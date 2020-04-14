@@ -1,3 +1,5 @@
+{% skip_file if flag?(:without_playground) %}
+
 require "http"
 require "json"
 

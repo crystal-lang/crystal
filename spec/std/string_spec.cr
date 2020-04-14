@@ -229,6 +229,15 @@ describe "String" do
     it "gets byte_slice with negative index" do
       "hello".byte_slice(-2, 3).should eq("lo")
     end
+
+    it "gets byte_slice(Int) with start out of bounds" do
+      expect_raises(IndexError) do
+        "hello".byte_slice(10)
+      end
+      expect_raises(IndexError) do
+        "hello".byte_slice(-10)
+      end
+    end
   end
 
   describe "to_i" do
@@ -920,6 +929,14 @@ describe "String" do
     it { "foo".byte_index('o'.ord).should eq(1) }
     it { "foo bar booz".byte_index('o'.ord, 3).should eq(9) }
     it { "foo".byte_index('a'.ord).should be_nil }
+    it { "foo".byte_index('a'.ord).should be_nil }
+    it { "foo".byte_index('o'.ord, 3).should be_nil }
+    it {
+      "Dizzy Miss Lizzy".byte_index('z'.ord).should eq(2)
+      "Dizzy Miss Lizzy".byte_index('z'.ord, 3).should eq(3)
+      "Dizzy Miss Lizzy".byte_index('z'.ord, -4).should eq(13)
+      "Dizzy Miss Lizzy".byte_index('z'.ord, -17).should be_nil
+    }
 
     it "gets byte index of string" do
       "hello world".byte_index("he").should eq(0)
@@ -1964,6 +1981,11 @@ describe "String" do
     match = "".match(/.*/).not_nil!
     match.group_size.should eq(0)
     match[0].should eq("")
+  end
+
+  it "matches, but returns Bool" do
+    "foo".matches?(/foo/).should eq(true)
+    "foo".matches?(/bar/).should eq(false)
   end
 
   it "has size (same as size)" do

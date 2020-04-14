@@ -105,14 +105,14 @@ describe "File" do
 
     it "raises an error when the file does not exist" do
       filename = datapath("non_existing_file.txt")
-      expect_raises(File::NotFoundError, "Unable to get file info: '#{filename}'") do
+      expect_raises(File::NotFoundError, "Unable to get file info: '#{filename.inspect_unquoted}'") do
         File.empty?(filename)
       end
     end
 
     # TODO: do we even want this?
-    pending_win32 "raises an error when a component of the path is a file" do
-      expect_raises(File::Error, "Unable to get file info: '#{datapath("test_file.txt", "")}'") do
+    it "raises an error when a component of the path is a file" do
+      expect_raises(File::Error, "Unable to get file info: '#{datapath("test_file.txt", "").inspect_unquoted}'") do
         File.empty?(datapath("test_file.txt", ""))
       end
     end
@@ -251,7 +251,8 @@ describe "File" do
   end
 
   describe "symlink?" do
-    it "gives true" do
+    # TODO: this fails depending on how Git checks out the repository
+    pending_win32 "gives true" do
       File.symlink?(datapath("symlink.txt")).should be_true
     end
 
@@ -270,7 +271,7 @@ describe "File" do
   end
 
   describe ".readlink" do
-    it "reads link" do
+    pending_win32 "reads link" do
       File.readlink(datapath("symlink.txt")).should eq "test_file.txt"
     end
   end
@@ -313,7 +314,8 @@ describe "File" do
     File.extname("").should eq("")
   end
 
-  it "constructs a path from parts" do
+  # TODO: these specs are redundant with path_spec.cr
+  pending_win32 "constructs a path from parts" do
     File.join(["///foo", "bar"]).should eq("///foo/bar")
     File.join(["///foo", "//bar"]).should eq("///foo//bar")
     File.join(["/foo/", "/bar"]).should eq("/foo/bar")
@@ -387,7 +389,7 @@ describe "File" do
     end
 
     it "raises when destination doesn't exist" do
-      expect_raises(File::NotFoundError, "Error changing permissions: '#{datapath("unknown_chmod_path.txt")}'") do
+      expect_raises(File::NotFoundError, "Error changing permissions: '#{datapath("unknown_chmod_path.txt").inspect_unquoted}'") do
         File.chmod(datapath("unknown_chmod_path.txt"), 0o664)
       end
     end
@@ -410,7 +412,8 @@ describe "File" do
       info.type.should eq(File::Type::CharacterDevice)
     end
 
-    it "gets for a symlink" do
+    # TODO: this fails depending on how Git checks out the repository
+    pending_win32 "gets for a symlink" do
       info = File.info(datapath("symlink.txt"), follow_symlinks: false)
       info.type.should eq(File::Type::Symlink)
     end
@@ -472,14 +475,14 @@ describe "File" do
 
     it "raises an error when the file does not exist" do
       filename = datapath("non_existing_file.txt")
-      expect_raises(File::NotFoundError, "Unable to get file info: '#{filename}'") do
+      expect_raises(File::NotFoundError, "Unable to get file info: '#{filename.inspect_unquoted}'") do
         File.size(filename)
       end
     end
 
     # TODO: do we even want this?
-    pending_win32 "raises an error when a component of the path is a file" do
-      expect_raises(File::Error, "Unable to get file info: '#{datapath("test_file.txt", "")}'") do
+    it "raises an error when a component of the path is a file" do
+      expect_raises(File::Error, "Unable to get file info: '#{datapath("test_file.txt", "").inspect_unquoted}'") do
         File.size(datapath("test_file.txt", ""))
       end
     end
@@ -497,7 +500,7 @@ describe "File" do
 
     it "raises when file doesn't exist" do
       with_tempfile("nonexistant_file.txt") do |path|
-        expect_raises(File::NotFoundError, "Error deleting file: '#{path}'") do
+        expect_raises(File::NotFoundError, "Error deleting file: '#{path.inspect_unquoted}'") do
           File.delete(path)
         end
       end
@@ -516,16 +519,27 @@ describe "File" do
       end
     end
 
+    it "replaces a file" do
+      with_tempfile("rename-source.txt", "rename-target.txt") do |source_path, target_path|
+        File.write(source_path, "foo")
+        File.write(target_path, "bar")
+        File.rename(source_path, target_path)
+        File.exists?(source_path).should be_false
+        File.read(target_path).strip.should eq("foo")
+        File.delete(target_path)
+      end
+    end
+
     it "raises if old file doesn't exist" do
       with_tempfile("rename-fail-source.txt", "rename-fail-target.txt") do |source_path, target_path|
-        expect_raises(File::NotFoundError, "Error renaming file: '#{source_path}' -> '#{target_path}'") do
+        expect_raises(File::NotFoundError, "Error renaming file: '#{source_path.inspect_unquoted}' -> '#{target_path.inspect_unquoted}'") do
           File.rename(source_path, target_path)
         end
       end
     end
   end
 
-  # TODO: expand_path is horribly broken on win32
+  # TODO: these specs are redundant with path_spec.cr
   describe "expand_path" do
     pending_win32 "converts a pathname to an absolute pathname" do
       File.expand_path("").should eq(base)
@@ -572,7 +586,7 @@ describe "File" do
       File.expand_path("../bin", "x/../tmp").should eq(File.join([base, "bin"]))
     end
 
-    it "expand_path for commoms unix path  give a full path" do
+    pending_win32 "expand_path for common unix path gives a full path" do
       File.expand_path("/tmp/").should eq("/tmp/")
       File.expand_path("/tmp/../../../tmp").should eq("/tmp")
       File.expand_path("").should eq(base)
@@ -581,7 +595,7 @@ describe "File" do
       File.expand_path(base).should eq(base)
     end
 
-    it "converts a pathname to an absolute pathname, using ~ (home) as base" do
+    pending_win32 "converts a pathname to an absolute pathname, using ~ (home) as base" do
       File.expand_path("~/", home: true).should eq(File.join(home, ""))
       File.expand_path("~/..badfilename", home: true).should eq(File.join(home, "..badfilename"))
       File.expand_path("..", home: true).should eq("/#{base.split('/')[0...-1].join('/')}".gsub(%r{\A//}, "/"))
@@ -591,7 +605,7 @@ describe "File" do
       File.expand_path("~/a", "/tmp/gumby/ddd", home: true).should eq(File.join([home, "a"]))
     end
 
-    it "converts a pathname to an absolute pathname, using ~ (home) as base (trailing /)" do
+    pending_win32 "converts a pathname to an absolute pathname, using ~ (home) as base (trailing /)" do
       prev_home = home
       begin
         ENV["HOME"] = File.expand_path(datapath)
@@ -607,7 +621,7 @@ describe "File" do
       end
     end
 
-    it "converts a pathname to an absolute pathname, using ~ (home) as base (HOME=/)" do
+    pending_win32 "converts a pathname to an absolute pathname, using ~ (home) as base (HOME=/)" do
       prev_home = home
       begin
         ENV["HOME"] = "/"
@@ -841,7 +855,7 @@ describe "File" do
     end
   end
 
-  it "raises when reading a file with no permission" do
+  pending_win32 "raises when reading a file with no permission" do
     with_tempfile("file.txt") do |path|
       File.touch(path)
       File.chmod(path, 0)
@@ -880,7 +894,7 @@ describe "File" do
       with_tempfile("truncate-opened.txt") do |path|
         File.write(path, "0123456789")
         File.open(path, "r") do |f|
-          expect_raises(File::Error, "Error truncating file: '#{path}'") do
+          expect_raises(File::Error, "Error truncating file: '#{path.inspect_unquoted}'") do
             f.truncate(4)
           end
         end
@@ -889,7 +903,7 @@ describe "File" do
   end
 
   describe "fsync" do
-    it "syncs OS file buffer to disk" do
+    pending_win32 "syncs OS file buffer to disk" do
       with_tempfile("fsync.txt") do |path|
         File.open(path, "a") do |f|
           f.puts("333")
@@ -1160,7 +1174,7 @@ describe "File" do
       atime = Time.utc(2000, 1, 2)
       mtime = Time.utc(2000, 3, 4)
 
-      expect_raises(File::NotFoundError, "Error setting time on file: '#{datapath("nonexistent_file.txt")}'") do
+      expect_raises(File::NotFoundError, "Error setting time on file: '#{datapath("nonexistent_file.txt").inspect_unquoted}'") do
         File.utime(atime, mtime, datapath("nonexistent_file.txt"))
       end
     end
@@ -1196,7 +1210,7 @@ describe "File" do
 
     it "raises if path contains non-existent directory" do
       with_tempfile(File.join("nonexistant-dir", "touch.txt")) do |path|
-        expect_raises(File::NotFoundError, "Error opening file with mode 'a': '#{path}'") do
+        expect_raises(File::NotFoundError, "Error opening file with mode 'a': '#{path.inspect_unquoted}'") do
           File.touch(path)
         end
       end

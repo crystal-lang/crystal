@@ -1017,8 +1017,10 @@ module Crystal
         @str << '/'
         case exp = node.value
         when StringLiteral
+          @str << '\\' if exp.value[0]?.try &.ascii_whitespace?
           Regex.append_source exp.value, @str
         when StringInterpolation
+          @str << '\\' if exp.expressions.first?.as?(StringLiteral).try &.value[0]?.try &.ascii_whitespace?
           visit_interpolation(exp) { |s| Regex.append_source s, @str }
         else
           raise "Bug: shouldn't happen"

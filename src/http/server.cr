@@ -5,6 +5,7 @@ require "./server/handler"
 require "./server/response"
 require "./server/request_processor"
 require "./common"
+require "log"
 {% unless flag?(:without_openssl) %}
   require "openssl"
 {% end %}
@@ -128,6 +129,8 @@ require "./common"
 # Reusing the connection also requires that the request body (if present) is
 # entirely consumed in the handler chain. Otherwise the connection will be closed.
 class HTTP::Server
+  Log = ::Log.for("http.server")
+
   @sockets = [] of Socket::Server
 
   # Returns `true` if this server is closed.
@@ -498,9 +501,12 @@ class HTTP::Server
     @processor.process(io, io)
   end
 
+  # This method handles exceptions raised at `Socket#accept?`.
   private def handle_exception(e : Exception)
-    e.inspect_with_backtrace STDERR
-    STDERR.flush
+    # TODO: This needs more refinement. Not every exception is an actual server
+    # error and should be logged as such. Client malfunction should only be informational.
+    # See https://github.com/crystal-lang/crystal/pull/9034#discussion_r407038999
+    Log.error(exception: e) { "Error while connecting a new socket" }
   end
 
   # Builds all handlers as the middleware for `HTTP::Server`.

@@ -91,6 +91,13 @@ class Log
     end
   end
 
+  # :ditto:
+  def with_context
+    self.class.with_context do
+      yield
+    end
+  end
+
   class Context
     # Clears the current `Fiber` logging context.
     #

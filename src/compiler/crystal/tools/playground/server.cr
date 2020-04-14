@@ -1,3 +1,5 @@
+{% skip_file if flag?(:without_playground) %}
+
 require "http/server"
 require "log"
 require "ecr/macros"
@@ -163,7 +165,7 @@ module Crystal::Playground
         Log.info { "Code execution killed (session=#{@session_key}, filename=#{@running_process_filename})." }
         @process = nil
         File.delete @running_process_filename rescue nil
-        process.kill rescue nil
+        process.terminate rescue nil
       end
     end
 

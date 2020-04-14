@@ -3,6 +3,7 @@ require "c/fcntl"
 require "c/fileapi"
 require "c/sys/utime"
 require "c/sys/stat"
+require "c/winbase"
 
 module Crystal::System::File
   def self.open(filename : String, mode : String, perm : Int32 | ::File::Permissions) : LibC::Int
@@ -19,7 +20,7 @@ module Crystal::System::File
 
     fd = LibC._wopen(to_windows_path(filename), oflag, perm)
     if fd == -1
-      raise ::File::Error.from_errno("Error opening file with mode #{mode.inspect}", file: filename)
+      raise ::File::Error.from_errno("Error opening file with mode '#{mode}'", file: filename)
     end
 
     fd
@@ -104,6 +105,10 @@ module Crystal::System::File
     end
   end
 
+  def self.info(path, follow_symlinks)
+    info?(path, follow_symlinks) || raise ::File::Error.from_winerror("Unable to get file info", file: path)
+  end
+
   def self.exists?(path)
     accessible?(path, 0)
   end
@@ -173,7 +178,7 @@ module Crystal::System::File
     end
 
     unless exists? real_path
-      raise ::File::Error.from_errno("Error resolving real path", Errno::ENOTDIR, file: path)
+      raise ::File::Error.from_errno("Error resolving real path", Errno::ENOENT, file: path)
     end
 
     real_path
@@ -181,14 +186,14 @@ module Crystal::System::File
 
   def self.link(old_path : String, new_path : String) : Nil
     if LibC.CreateHardLinkW(to_windows_path(new_path), to_windows_path(old_path), nil) == 0
-      raise ::File::Error.from_winerror("Error creating hard link", path: old_path, other: new_path)
+      raise ::File::Error.from_winerror("Error creating hard link", file: old_path, other: new_path)
     end
   end
 
   def self.symlink(old_path : String, new_path : String) : Nil
     # TODO: support directory symlinks (copy Go's stdlib logic here)
     if LibC.CreateSymbolicLinkW(to_windows_path(new_path), to_windows_path(old_path), 0) == 0
-      raise ::File::Error.from_winerror("Error creating symbolic link", path: old_path, other: new_path)
+      raise ::File::Error.from_winerror("Error creating symbolic link", file: old_path, other: new_path)
     end
   end
 
@@ -197,8 +202,8 @@ module Crystal::System::File
   end
 
   def self.rename(old_path : String, new_path : String) : Nil
-    if LibC._wrename(to_windows_path(old_path), to_windows_path(new_path)) != 0
-      raise ::File::Error.from_errno("Error renaming file", file: old_path, other: new_path)
+    if LibC.MoveFileExW(to_windows_path(old_path), to_windows_path(new_path), LibC::MOVEFILE_REPLACE_EXISTING) == 0
+      raise ::File::Error.from_winerror("Error renaming file", file: old_path, other: new_path)
     end
   end
 
@@ -213,7 +218,7 @@ module Crystal::System::File
   end
 
   private def system_truncate(size : Int) : Nil
-    if LibC._chsize(fd, size) != 0
+    if LibC._chsize_s(fd, size) != 0
       raise ::File::Error.from_errno("Error truncating file", file: path)
     end
   end
