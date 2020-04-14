@@ -114,10 +114,6 @@ class Crystal::Doc::Type
     @generator.relative_locations(@type)
   end
 
-  def repository_name
-    @generator.repository_name
-  end
-
   def program?
     @type.is_a?(Program)
   end
@@ -790,7 +786,7 @@ class Crystal::Doc::Type
         end
       end
       builder.field "locations", locations
-      builder.field "repository_name", repository_name
+      builder.field "repository_name", @generator.repository_name
       builder.field "program", program?
       builder.field "enum", enum?
       builder.field "alias", alias?

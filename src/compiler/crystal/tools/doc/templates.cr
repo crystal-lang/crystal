@@ -21,7 +21,7 @@ module Crystal::Doc
     ANCHOR
   end
 
-  record TypeTemplate, type : Type, types : Array(Type) do
+  record TypeTemplate, type : Type, types : Array(Type), project_info : ProjectInfo do
     ECR.def_to_s "#{__DIR__}/html/type.html"
   end
 
@@ -45,7 +45,7 @@ module Crystal::Doc
     ECR.def_to_s "#{__DIR__}/html/_other_types.html"
   end
 
-  record MainTemplate, body : String, types : Array(Type), repository_name : String do
+  record MainTemplate, body : String, types : Array(Type), project_info : ProjectInfo do
     ECR.def_to_s "#{__DIR__}/html/main.html"
   end
 
@@ -53,7 +53,7 @@ module Crystal::Doc
     ECR.def_to_s "#{__DIR__}/html/_head.html"
   end
 
-  record SidebarTemplate, repository_name : String, types : Array(Type), current_type : Type? do
+  record SidebarTemplate, project_info : ProjectInfo, types : Array(Type), current_type : Type? do
     ECR.def_to_s "#{__DIR__}/html/_sidebar.html"
   end
 
