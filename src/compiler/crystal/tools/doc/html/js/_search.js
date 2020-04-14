@@ -353,9 +353,11 @@ CrystalDoc.displaySearchResults = function(results, query) {
 CrystalDoc.toggleResultsList = function(visible) {
   if (visible) {
     document.querySelector(".types-list").classList.add("hidden");
+    document.querySelector(".repository-links").classList.add("hidden");
     document.querySelector(".search-results").classList.remove("hidden");
   } else {
     document.querySelector(".types-list").classList.remove("hidden");
+    document.querySelector(".repository-links").classList.remove("hidden");
     document.querySelector(".search-results").classList.add("hidden");
   }
 };
