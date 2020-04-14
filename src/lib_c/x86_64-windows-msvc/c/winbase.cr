@@ -91,6 +91,16 @@ lib LibC
   fun FreeEnvironmentStringsW(lpszEnvironmentBlock : LPWCH) : BOOL
   fun SetEnvironmentVariableW(lpName : LPWSTR, lpValue : LPWSTR) : BOOL
 
+  INFINITE = 0xFFFFFFFF
+
+  STILL_ACTIVE = 0x103
+
+  STARTF_USESTDHANDLES = 0x00000100
+
+  fun DuplicateHandle(hSourceProcessHandle : HANDLE, hSourceHandle : HANDLE,
+                      hTargetProcessHandle : HANDLE, lpTargetHandle : HANDLE*,
+                      dwDesiredAccess : DWORD, bInheritHandle : BOOL, dwOptions : DWORD) : BOOL
+
   MOVEFILE_REPLACE_EXISTING      =  0x1_u32
   MOVEFILE_COPY_ALLOWED          =  0x2_u32
   MOVEFILE_DELAY_UNTIL_REBOOT    =  0x4_u32

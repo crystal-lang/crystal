@@ -152,7 +152,7 @@ require "./std/path_spec.cr"
 require "./std/pointer_spec.cr"
 require "./std/pp_spec.cr"
 require "./std/pretty_print_spec.cr"
-# require "./std/process_spec.cr" (failed codegen)
+require "./std/process_spec.cr"
 require "./std/proc_spec.cr"
 require "./std/raise_spec.cr"
 require "./std/random/isaac_spec.cr"
