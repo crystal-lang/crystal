@@ -181,4 +181,14 @@ module Crystal::System::FileDescriptor
     io.sync = true
     io
   end
+
+  def self.write_at(fd, buffer, offset)
+    bytes_written = LibC.pwrite(fd, buffer, buffer.size, offset)
+
+    if bytes_written == -1
+      raise IO::Error.from_errno("Could not write to file")
+    end
+
+    bytes_written
+  end
 end

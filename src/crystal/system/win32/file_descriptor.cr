@@ -183,4 +183,8 @@ module Crystal::System::FileDescriptor
     end
     io
   end
+
+  def self.write_at(fd, buffer, offset)
+    raise NotImplementedError.new("Crystal::System::FileDescriptor#write_at")
+  end
 end

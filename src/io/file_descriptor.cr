@@ -149,6 +149,14 @@ class IO::FileDescriptor < IO
     system_fsync(flush_metadata)
   end
 
+  # Write to a specific position in a file
+  # It will flush the current write buffer and not buffer this write.
+  def write_at(bytes, offset)
+    check_open
+    flush
+    Crystal::System::FileDescriptor.write_at(fd, bytes, offset)
+  end
+
   # TODO: use fcntl/lockf instead of flock (which doesn't lock over NFS)
   # TODO: always use non-blocking locks, yield fiber until resource becomes available
 
