@@ -230,21 +230,21 @@ describe "File" do
 
       with_tempfile("test_file_symlink.txt") do |symlink|
         File.symlink(File.real_path(file), symlink)
-        File.new(symlink, :read)
-        File.new(symlink, File::Mode.flags(Read))
+        File.open(symlink, :read)
+        File.open(symlink, File::Mode.flags(Read))
         expect_raises(IO::Error) do
-          File.new(symlink, :read, :symlink_no_follow)
+          File.open(symlink, :read, :symlink_no_follow)
         end
         expect_raises(IO::Error) do
-          File.new(symlink, File::Mode.flags(Read, SymlinkNoFollow))
+          File.open(symlink, File::Mode.flags(Read, SymlinkNoFollow))
         end
       end
 
       with_tempfile("test_file_symlink.txt") do |symlink|
         File.symlink(File.real_path(file), symlink)
-        File.new(symlink, File::Mode.flags(Read))
+        File.open(symlink, File::Mode.flags(Read))
         expect_raises(IO::Error) do
-          File.new(symlink, File::Mode.flags(Read, SymlinkNoFollow))
+          File.open(symlink, File::Mode.flags(Read, SymlinkNoFollow))
         end
       end
     end
@@ -763,19 +763,19 @@ describe "File" do
     end
 
     it "is closed when closed" do
-      file = File.new(datapath("test_file.txt"))
+      file = File.open(datapath("test_file.txt"))
       file.close
       file.closed?.should be_true
     end
 
     it "should not raise when closing twice" do
-      file = File.new(datapath("test_file.txt"))
+      file = File.open(datapath("test_file.txt"))
       file.close
       file.close
     end
 
     it "does to_s when closed" do
-      file = File.new(datapath("test_file.txt"))
+      file = File.open(datapath("test_file.txt"))
       file.close
       file.to_s.should eq("#<File:0x#{file.object_id.to_s(16)}>")
       file.inspect.should eq("#<File:#{datapath("test_file.txt")} (closed)>")
@@ -817,7 +817,7 @@ describe "File" do
   end
 
   it "raises if invoking seek with a closed file" do
-    file = File.new(datapath("test_file.txt"))
+    file = File.open(datapath("test_file.txt"))
     file.close
     expect_raises(IO::Error, "Closed stream") { file.seek(1) }
   end
@@ -842,7 +842,7 @@ describe "File" do
   end
 
   it "raises if invoking tell with a closed file" do
-    file = File.new(datapath("test_file.txt"))
+    file = File.open(datapath("test_file.txt"))
     file.close
     expect_raises(IO::Error, "Closed stream") { file.tell }
   end
@@ -1007,7 +1007,7 @@ describe "File" do
 
   describe "raises on null byte" do
     it_raises_on_null_byte "new" do
-      File.new("foo\0bar")
+      File.open("foo\0bar")
     end
 
     it_raises_on_null_byte "join" do
@@ -1118,7 +1118,7 @@ describe "File" do
       path = datapath("file-to-be-deleted")
       File.touch(path)
 
-      file = File.new path
+      file = File.open path
       file.close
 
       File.exists?(path).should be_true
@@ -1173,7 +1173,7 @@ describe "File" do
 
   describe "closed stream" do
     it "raises if writing on a closed stream" do
-      io = File.new(datapath("test_file.txt"))
+      io = File.open(datapath("test_file.txt"))
       io.close
 
       expect_raises(IO::Error, "Closed stream") { io.gets_to_end }

@@ -19,7 +19,7 @@ require "./file_info"
 #
 #     # Add a file by referencing a file in the filesystem
 #     # (the file is automatically closed after this call)
-#     zip.add("baz.txt", File.new("./some_file.txt"))
+#     zip.add("baz.txt", File.open("./some_file.txt"))
 #   end
 # end
 # ```
@@ -46,7 +46,7 @@ class Zip::Writer
 
   # Creates a new writer to the given *filename*.
   def self.new(filename : String)
-    new(::File.new(filename, :write, :create, :truncate), sync_close: true)
+    new(::File.open(filename, :write, :create, :truncate), sync_close: true)
   end
 
   # Creates a new writer to the given *io*, yields it to the given block,

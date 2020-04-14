@@ -7,7 +7,7 @@ require "crystal/system/file"
 # A `File` instance represents a file entry in the local file system and allows using it as an `IO`.
 #
 # ```
-# file = File.new("path/to/file")
+# file = File.open("path/to/file")
 # content = file.gets_to_end
 # file.close
 #
@@ -725,7 +725,7 @@ class File < IO::FileDescriptor
   #
   # ```
   # File.write("foo", "bar")
-  # File.write("foo", "baz", mode: File::Mode.flags(Append))
+  # File.write("foo", "baz", mode: :append)
   # ```
   #
   # NOTE: If the content is a `Slice(UInt8)`, those bytes will be written.

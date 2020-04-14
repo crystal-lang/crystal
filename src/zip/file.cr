@@ -45,7 +45,7 @@ class Zip::File
 
   # Opens a `Zip::File` for reading from the given *filename*.
   def self.new(filename : String)
-    new(::File.new(filename), sync_close: true)
+    new(::File.open(filename), sync_close: true)
   end
 
   # Opens a `Zip::File` for reading from the given *io*, yields

@@ -14,7 +14,7 @@ module Crystal::System::Random
     if sys_getrandom(Bytes.new(16)) >= 0
       @@getrandom_available = true
     else
-      urandom = ::File.new("/dev/urandom")
+      urandom = ::File.open("/dev/urandom")
       return unless urandom.info.type.character_device?
 
       urandom.close_on_exec = true

@@ -40,7 +40,7 @@ module Spec
       end
 
       Dir.mkdir_p(output_path.dirname)
-      file = File.new(output_path, :write, :create, :truncate)
+      file = File.open(output_path, :write, :create, :truncate)
       JUnitFormatter.new(file)
     end
 

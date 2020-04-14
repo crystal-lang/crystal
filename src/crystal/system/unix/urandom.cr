@@ -7,7 +7,7 @@ module Crystal::System::Random
   private def self.init
     @@initialized = true
 
-    urandom = ::File.new("/dev/urandom")
+    urandom = ::File.open("/dev/urandom")
     return unless urandom.info.type.character_device?
 
     urandom.close_on_exec = true

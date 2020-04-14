@@ -39,7 +39,7 @@ class Zip::Reader
 
   # Creates a new reader from the given *filename*.
   def self.new(filename : String)
-    new(::File.new(filename), sync_close: true)
+    new(::File.open(filename), sync_close: true)
   end
 
   # Creates a new reader from the given *io*, yields it to the given block,

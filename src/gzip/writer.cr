@@ -45,7 +45,7 @@ class Gzip::Writer < IO
 
   # Creates a new writer to the given *filename*.
   def self.new(filename : String, level = Gzip::DEFAULT_COMPRESSION)
-    new(::File.new(filename, :write, :create, :truncate), level: level, sync_close: true)
+    new(::File.open(filename, :write, :create, :truncate), level: level, sync_close: true)
   end
 
   # Creates a new writer to the given *io*, yields it to the given block,
