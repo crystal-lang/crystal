@@ -7,6 +7,11 @@ private def run_git(command)
   Process.run(%(git -c user.email="" -c user.name="spec" #{command}), shell: true)
 end
 
+private def assert_with_defaults(initial, expected, *, file = __FILE__, line = __LINE__)
+  initial.fill_with_defaults
+  initial.should eq(expected), file: file, line: line
+end
+
 describe Crystal::Doc::ProjectInfo do
   around_each do |example|
     with_tempfile("docs-project") do |tempdir|
@@ -19,8 +24,8 @@ describe Crystal::Doc::ProjectInfo do
 
   describe ".new_with_defaults" do
     it "empty folder" do
-      ProjectInfo.new_with_defaults(nil, nil) { |name, version| "missing:#{name}:#{version}" }.should eq "missing::"
-      ProjectInfo.new_with_defaults("foo", "1.0") { |name, version| "missing:#{name}:#{version}" }.should eq ProjectInfo.new("foo", "1.0")
+      assert_with_defaults(ProjectInfo.new(nil, nil), ProjectInfo.new(nil, nil))
+      assert_with_defaults(ProjectInfo.new("foo", "1.0"), ProjectInfo.new("foo", "1.0"))
     end
 
     context "with shard.yml" do
@@ -29,9 +34,17 @@ describe Crystal::Doc::ProjectInfo do
       end
 
       it "no git" do
-        ProjectInfo.new_with_defaults(nil, nil) { |name, version| "missing:#{name}:#{version}" }.should eq ProjectInfo.new("foo", "1.0")
-        ProjectInfo.new_with_defaults("bar", "2.0") { |name, version| "missing:#{name}:#{version}" }.should eq ProjectInfo.new("bar", "2.0")
-        ProjectInfo.new_with_defaults(nil, "2.0") { |name, version| "missing:#{name}:#{version}" }.should eq ProjectInfo.new("foo", "2.0")
+        assert_with_defaults(ProjectInfo.new(nil, nil), ProjectInfo.new("foo", "1.0"))
+        assert_with_defaults(ProjectInfo.new("bar", "2.0"), ProjectInfo.new("bar", "2.0"))
+        assert_with_defaults(ProjectInfo.new(nil, "2.0"), ProjectInfo.new("foo", "2.0"))
+      end
+
+      it "git but no commit" do
+        run_git "init"
+
+        assert_with_defaults(ProjectInfo.new(nil, nil), ProjectInfo.new("foo", nil))
+        assert_with_defaults(ProjectInfo.new("bar", "2.0"), ProjectInfo.new("bar", "2.0"))
+        assert_with_defaults(ProjectInfo.new(nil, "2.0"), ProjectInfo.new("foo", "2.0"))
       end
 
       it "git tagged version" do
@@ -40,8 +53,8 @@ describe Crystal::Doc::ProjectInfo do
         run_git "commit -m 'Initial commit' --no-gpg-sign"
         run_git "tag v3.0"
 
-        ProjectInfo.new_with_defaults(nil, nil) { |name, version| "missing:#{name}:#{version}" }.should eq ProjectInfo.new("foo", "3.0")
-        ProjectInfo.new_with_defaults("bar", "2.0") { |name, version| "missing:#{name}:#{version}" }.should eq ProjectInfo.new("bar", "2.0")
+        assert_with_defaults(ProjectInfo.new(nil, nil), ProjectInfo.new("foo", "3.0"))
+        assert_with_defaults(ProjectInfo.new("bar", "2.0"), ProjectInfo.new("bar", "2.0"))
       end
 
       it "git tagged version dirty" do
@@ -51,9 +64,9 @@ describe Crystal::Doc::ProjectInfo do
         run_git "tag v3.0"
         File.write("foo.txt", "bar")
 
-        ProjectInfo.new_with_defaults(nil, nil) { |name, version| "missing:#{name}:#{version}" }.should eq ProjectInfo.new("foo", "3.0-dev")
-        ProjectInfo.new_with_defaults(nil, "1.1") { |name, version| "missing:#{name}:#{version}" }.should eq ProjectInfo.new("foo", "1.1")
-        ProjectInfo.new_with_defaults("bar", "2.0") { |name, version| "missing:#{name}:#{version}" }.should eq ProjectInfo.new("bar", "2.0")
+        assert_with_defaults(ProjectInfo.new(nil, nil), ProjectInfo.new("foo", "3.0-dev"))
+        assert_with_defaults(ProjectInfo.new(nil, "1.1"), ProjectInfo.new("foo", "1.1"))
+        assert_with_defaults(ProjectInfo.new("bar", "2.0"), ProjectInfo.new("bar", "2.0"))
       end
 
       it "git non-tagged commit" do
@@ -61,9 +74,9 @@ describe Crystal::Doc::ProjectInfo do
         run_git "add shard.yml"
         run_git "commit -m 'Initial commit' --no-gpg-sign"
 
-        ProjectInfo.new_with_defaults(nil, nil) { |name, version| "missing:#{name}:#{version}" }.should eq ProjectInfo.new("foo", "master")
-        ProjectInfo.new_with_defaults(nil, "1.1") { |name, version| "missing:#{name}:#{version}" }.should eq ProjectInfo.new("foo", "1.1")
-        ProjectInfo.new_with_defaults("bar", "2.0") { |name, version| "missing:#{name}:#{version}" }.should eq ProjectInfo.new("bar", "2.0")
+        assert_with_defaults(ProjectInfo.new(nil, nil), ProjectInfo.new("foo", "master"))
+        assert_with_defaults(ProjectInfo.new(nil, "1.1"), ProjectInfo.new("foo", "1.1"))
+        assert_with_defaults(ProjectInfo.new("bar", "2.0"), ProjectInfo.new("bar", "2.0"))
       end
 
       it "git non-tagged commit dirty" do
@@ -72,9 +85,9 @@ describe Crystal::Doc::ProjectInfo do
         run_git "commit -m 'Initial commit' --no-gpg-sign"
         File.write("foo.txt", "bar")
 
-        ProjectInfo.new_with_defaults(nil, nil) { |name, version| "missing:#{name}:#{version}" }.should eq ProjectInfo.new("foo", "master-dev")
-        ProjectInfo.new_with_defaults(nil, "1.1") { |name, version| "missing:#{name}:#{version}" }.should eq ProjectInfo.new("foo", "1.1")
-        ProjectInfo.new_with_defaults("bar", "2.0") { |name, version| "missing:#{name}:#{version}" }.should eq ProjectInfo.new("bar", "2.0")
+        assert_with_defaults(ProjectInfo.new(nil, nil), ProjectInfo.new("foo", "master-dev"))
+        assert_with_defaults(ProjectInfo.new(nil, "1.1"), ProjectInfo.new("foo", "1.1"))
+        assert_with_defaults(ProjectInfo.new("bar", "2.0"), ProjectInfo.new("bar", "2.0"))
       end
     end
 
@@ -85,9 +98,9 @@ describe Crystal::Doc::ProjectInfo do
       run_git "commit -m 'Remove shard.yml' --no-gpg-sign"
       run_git "tag v4.0"
 
-      ProjectInfo.new_with_defaults(nil, nil) { |name, version| "missing:#{name}:#{version}" }.should eq "missing::4.0"
-      ProjectInfo.new_with_defaults("foo", nil) { |name, version| "missing:#{name}:#{version}" }.should eq ProjectInfo.new("foo", "4.0")
-      ProjectInfo.new_with_defaults("bar", "2.0") { |name, version| "missing:#{name}:#{version}" }.should eq ProjectInfo.new("bar", "2.0")
+      assert_with_defaults(ProjectInfo.new(nil, nil), ProjectInfo.new(nil, "4.0"))
+      assert_with_defaults(ProjectInfo.new("foo", nil), ProjectInfo.new("foo", "4.0"))
+      assert_with_defaults(ProjectInfo.new("bar", "2.0"), ProjectInfo.new("bar", "2.0"))
     end
   end
 

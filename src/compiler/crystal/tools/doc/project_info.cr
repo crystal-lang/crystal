@@ -3,27 +3,31 @@ module Crystal::Doc
     property! name : String
     property! version : String
 
-    def initialize(@name : String? = nil, @version : String? = nil )
+    def initialize(@name : String? = nil, @version : String? = nil)
     end
 
     def_equals_and_hash @name, @version
 
     def fill_with_defaults
-      unless self.version
+      unless version?
         if git_version = ProjectInfo.find_git_version
           self.version = git_version
         end
       end
 
-      unless name && version
+      unless name? && version?
         shard_name, shard_version = ProjectInfo.read_shard_properties
-        if shard_name
-          self.name ||= shard_name
+        if shard_name && !name?
+          self.name = shard_name
         end
-        if shard_version
-          self.version ||= shard_version
+        if shard_version && !version? && !ProjectInfo.git_dir?
+          self.version = shard_version
         end
       end
+    end
+
+    def self.git_dir?
+      Process.run("git", ["rev-parse", "--is-inside-work-tree"]).success?
     end
 
     def self.find_git_version
