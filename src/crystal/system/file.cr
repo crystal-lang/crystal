@@ -18,14 +18,24 @@ module Crystal::System::File
     end
     mode.each do |m|
       case m
-      when ::File::Mode::Read            then flags |= LibC::O_RDONLY
-      when ::File::Mode::Write           then flags |= LibC::O_WRONLY
-      when ::File::Mode::Create          then flags |= LibC::O_CREAT
-      when ::File::Mode::CreateNew       then flags |= LibC::O_CREAT | LibC::O_EXCL
-      when ::File::Mode::Append          then flags |= LibC::O_WRONLY | LibC::O_APPEND
-      when ::File::Mode::Truncate        then flags |= LibC::O_TRUNC
-      when ::File::Mode::Sync            then flags |= LibC::O_SYNC
-      when ::File::Mode::SymlinkNoFollow then flags |= LibC::O_NOFOLLOW
+      when ::File::Mode::Read      then flags |= LibC::O_RDONLY
+      when ::File::Mode::Write     then flags |= LibC::O_WRONLY
+      when ::File::Mode::Create    then flags |= LibC::O_CREAT
+      when ::File::Mode::CreateNew then flags |= LibC::O_CREAT | LibC::O_EXCL
+      when ::File::Mode::Append    then flags |= LibC::O_WRONLY | LibC::O_APPEND
+      when ::File::Mode::Truncate  then flags |= LibC::O_TRUNC
+      when ::File::Mode::Sync
+        {% if flag?(:win32) %}
+          raise NotImplementedError.new("File.open(..., :sync)")
+        {% else %}
+          flags |= LibC::O_SYNC
+        {% end %}
+      when ::File::Mode::SymlinkNoFollow
+        {% if flag?(:win32) %}
+          raise NotImplementedError.new("File.open(..., :symlink_no_follow)")
+        {% else %}
+          flags |= LibC::O_NOFOLLOW
+        {% end %}
       else
         raise "Unknown mode #{m}"
       end

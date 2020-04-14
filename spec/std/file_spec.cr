@@ -224,7 +224,7 @@ describe "File" do
   end
 
   describe "open with symnofollow" do
-    it "doesn't follow symlinks" do
+    pending_win32 "doesn't follow symlinks" do
       file = datapath("test_file.txt")
       other = datapath("test_file.ini")
 
