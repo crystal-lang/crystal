@@ -69,6 +69,10 @@ module Crystal::Doc
     ECR.def_to_s "#{__DIR__}/html/js/_navigator.js"
   end
 
+  struct JsVersionsTemplate
+    ECR.def_to_s "#{__DIR__}/html/js/_versions.js"
+  end
+
   struct JsUsageModal
     ECR.def_to_s "#{__DIR__}/html/js/_usage-modal.js"
   end

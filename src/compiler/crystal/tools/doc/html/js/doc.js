@@ -4,6 +4,7 @@ CrystalDocs.base_path = (CrystalDocs.base_path || "");
 
 <%= JsSearchTemplate.new %>
 <%= JsNavigatorTemplate.new %>
+<%= JsVersionsTemplate.new %>
 <%= JsUsageModal.new %>
 
 document.addEventListener('DOMContentLoaded', function() {
