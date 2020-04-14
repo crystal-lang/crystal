@@ -314,7 +314,11 @@ module Crystal
 
       target_machine.emit_obj_to_file llvm_mod, object_name
 
-      stdout.puts linker_command(program, [object_name], output_filename, nil)
+      print_command(*linker_command(program, [object_name], output_filename, nil))
+    end
+
+    private def print_command(command, args)
+      stdout.puts command.sub(%("${@}"), args && args.join(" "))
     end
 
     private def linker_command(program : Program, object_names, output_filename, output_dir)
@@ -328,12 +332,14 @@ module Crystal
 
         if cmd.to_utf16.size > 32000
           # The command line would be too big, pass the args through a UTF-16-encoded file instead.
-          # TODO: Do this the proper way when iconv is supported.
-          cmd_filename = "#{output_dir}/link_command.cmd"
-          cmd_16 = "\ufeff#{args}".to_utf16
-          cmd_bytes = cmd_16.to_unsafe.as(UInt8*).to_slice(cmd_16.bytesize)
-          File.write(cmd_filename, cmd_bytes)
-          cmd = "#{CL} @#{cmd_filename}"
+          # TODO: Use a proper way to write encoded text to a file when that's supported.
+          # The first character is the BOM; it will be converted in the same endianness as the rest.
+          args_16 = "\ufeff#{args}".to_utf16
+          args_bytes = args_16.to_unsafe.as(UInt8*).to_slice(args_16.bytesize)
+
+          args_filename = "#{output_dir}/linker_args.txt"
+          File.write(args_filename, args_bytes)
+          cmd = "#{CL} @#{args_filename}"
         end
 
         {cmd, nil}
@@ -565,7 +571,7 @@ module Crystal
     end
 
     private def process_wrapper(command, args = nil)
-      stdout.puts command.sub(%("${@}"), args && args.join(" ")) if verbose?
+      print_command(command, args) if verbose?
 
       status = yield command, args
 
