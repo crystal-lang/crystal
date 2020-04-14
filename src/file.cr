@@ -76,9 +76,10 @@ class File < IO::FileDescriptor
 
   include Crystal::System::File
 
+  # :nodoc:
   # This constructor is provided for subclasses to be able to initialize an
   # `IO::FileDescriptor` with a *path* and *fd*.
-  private def initialize(@path, fd : Int, blocking = false, encoding = nil, invalid = nil)
+  def initialize(@path, fd : Int, blocking = false, encoding = nil, invalid = nil)
     self.set_encoding(encoding, invalid: invalid) if encoding
     super(fd, blocking)
   end
@@ -87,35 +88,50 @@ class File < IO::FileDescriptor
   #
   # *modes* should contain at least one of:
   # ```text
-  # Mode | Description
-  # -----+------------------------------------------------------
-  # :read    | Read, starts at the beginning of the file.
-  # :write    | Write, starts at the beginning of the file.
+  # Mode    | Description
+  # --------+------------------------------------------------------
+  # :read   | Read, starts at the beginning of the file.
+  # :write  | Write, starts at the beginning of the file.
   # :append | Write, all writes are appended to the end of the file atomically.
   # ```
   #
   # *modes* may contain any number of these optional arguments:
   # ```text
-  # Mode | Description
-  # -----+------------------------------------------------------
-  # :create     | creates a new file if the file doesn't exists.
-  # :create_new     | creates a new file or `raises Errno` if the file exists.
-  # :truncate     | truncate the file.
-  # :sym_link_no_follow | opening a symlink `raises Errno`.
+  # Mode                | Description
+  # --------------------+------------------------------------------------------
+  # :create             | Creates a new file if the file doesn't exists.
+  # :create_new         | Creates a new file, or raises if the file already exists.
+  # :truncate           | Truncates the file (wipes the data and starts at the beginning).
+  # :sync               | All writes to the file are comitted immediately to disk.
+  # :symlink_no_follow  | Opening a symlink causes an error, instead of following the symlink.
   # ```
-  def self.new(filename : Path | String, *modes : Mode, perm = DEFAULT_CREATE_PERMISSIONS, encoding = nil, invalid = nil)
+  def self.open(filename : Path | String, *modes : Mode, permissions = DEFAULT_CREATE_PERMISSIONS, encoding = nil, invalid = nil) : File
     filename = filename.to_s
-    fd = Crystal::System::File.open(filename, modes.reduce { |a, b| a | b }, perm)
+    mode = modes.reduce(File::Mode::None) { |a, b| a | b }
+    fd = Crystal::System::File.open(filename, mode, permissions)
     new(filename, fd, blocking: true, encoding: encoding, invalid: invalid)
   end
 
-  # Opens the file named by *filename*.
-  #
-  # *mode* must be a `File::Mode`:
-  def self.new(filename : Path | String, mode : Mode = File::Mode.flags(Read), perm = DEFAULT_CREATE_PERMISSIONS, encoding = nil, invalid = nil)
-    filename = filename.to_s
-    fd = Crystal::System::File.open(filename, mode, perm)
-    new(filename, fd, blocking: true, encoding: encoding, invalid: invalid)
+  # :ditto:
+  def self.open(filename : Path | String, *, permissions = DEFAULT_CREATE_PERMISSIONS, encoding = nil, invalid = nil) : File
+    open(filename, :read, permissions: permissions, encoding: encoding, invalid: invalid)
+  end
+
+  # Opens the file named by *filename*. Arguments are interpreted identically to
+  # `File.open`, but the file is passed to the block as an argument, and closed
+  # when the block returns.
+  def self.open(filename : Path | String, *modes : Mode, permissions = DEFAULT_CREATE_PERMISSIONS, encoding = nil, invalid = nil)
+    file = open(filename, *modes, permissions: permissions, encoding: encoding, invalid: invalid)
+    begin
+      yield file
+    ensure
+      file.close
+    end
+  end
+
+  # :ditto:
+  def self.open(filename : Path | String, *, permissions = DEFAULT_CREATE_PERMISSIONS, encoding = nil, invalid = nil)
+    open(filename, :read, permissions: permissions, encoding: encoding, invalid: invalid) { |file| yield file }
   end
 
   # Opens the file named by *filename*.
@@ -141,11 +157,27 @@ class File < IO::FileDescriptor
   # ```
   #
   # In binary file mode, line endings are not converted to CRLF on Windows.
-  @[Deprecated("Use `File.new(filename, :read, :write, :create)`")]
+  @[Deprecated("Use `File.open(filename, :read, :write, :create)`")]
   def self.new(filename : Path | String, mode : String, perm = DEFAULT_CREATE_PERMISSIONS, encoding = nil, invalid = nil)
     filename = filename.to_s
     fd = Crystal::System::File.open(filename, mode, perm)
     new(filename, fd, blocking: true, encoding: encoding, invalid: invalid)
+  end
+
+  # :ditto:
+  @[Deprecated("Use `File.open(filename, :read, :write, :create)`")]
+  def self.open(filename : Path | String, mode : String, perm = DEFAULT_CREATE_PERMISSIONS, encoding = nil, invalid = nil) : self
+    new filename, mode, perm, encoding, invalid
+  end
+
+  @[Deprecated("Use `File.open(filename, :read, :write, :create)`")]
+  def self.open(filename : Path | String, mode : String, perm = DEFAULT_CREATE_PERMISSIONS, encoding = nil, invalid = nil)
+    file = new filename, mode, perm, encoding, invalid
+    begin
+      yield file
+    ensure
+      file.close
+    end
   end
 
   getter path : String
@@ -628,53 +660,6 @@ class File < IO::FileDescriptor
     Crystal::System::File.readlink(path)
   end
 
-  # Opens the file named by *filename*. If a file is being created, its initial
-  # permissions may be set using the *perm* parameter.
-  #
-  # See `self.new` for what *mode* can be.
-  @[Deprecated("Use `File.open(filename, :read, :write, :create)`")]
-  def self.open(filename : Path | String, mode = "r", perm = DEFAULT_CREATE_PERMISSIONS, encoding = nil, invalid = nil) : self
-    new filename, mode, perm, encoding, invalid
-  end
-
-  # Opens the file named by *filename*. If a file is being created, its initial
-  # permissions may be set using the *perm* parameter. Then given block will be passed the opened
-  # file as an argument, the file will be automatically closed when the block returns.
-  #
-  # See `self.new` for what *mode* can be.
-  def self.open(filename : Path | String, *modes : Mode, perm = DEFAULT_CREATE_PERMISSIONS, encoding = nil, invalid = nil)
-    file = new filename, modes.reduce { |a, b| a | b }, perm, encoding, invalid
-    begin
-      yield file
-    ensure
-      file.close
-    end
-  end
-
-  # Opens the file named by *filename*. If a file is being created, its initial
-  # permissions may be set using the *perm* parameter. Then given block will be passed the opened
-  # file as an argument, the file will be automatically closed when the block returns.
-  #
-  # See `self.new` for what *mode* can be.
-  def self.open(filename : Path | String, mode : Mode = File::Mode.flags(Read), perm = DEFAULT_CREATE_PERMISSIONS, encoding = nil, invalid = nil)
-    file = new filename, mode, perm, encoding, invalid
-    begin
-      yield file
-    ensure
-      file.close
-    end
-  end
-
-  @[Deprecated("Use `File.open(filename, :read, :write, :create)`")]
-  def self.open(filename : Path | String, mode : String, perm = DEFAULT_CREATE_PERMISSIONS, encoding = nil, invalid = nil)
-    file = new filename, mode, perm, encoding, invalid
-    begin
-      yield file
-    ensure
-      file.close
-    end
-  end
-
   # Returns the content of *filename* as a string.
   #
   # ```
@@ -748,9 +733,10 @@ class File < IO::FileDescriptor
   # Otherwise, the string representation of *content* will be written
   # (the result of invoking `to_s` on *content*).
   #
-  # See `self.new` for what *mode* can be.
-  def self.write(filename, content, perm = DEFAULT_CREATE_PERMISSIONS, encoding = nil, invalid = nil, mode = File::Mode.flags(Write, Truncate))
-    open(filename, mode, perm, encoding: encoding, invalid: invalid) do |file|
+  # See `File.open` for what *mode* can be.
+  def self.write(filename, content, permissions = DEFAULT_CREATE_PERMISSIONS, encoding = nil, invalid = nil, mode : File::Mode = File::Mode.flags(Create, Truncate))
+    mode |= File::Mode::Write
+    open(filename, mode, permissions: permissions, encoding: encoding, invalid: invalid) do |file|
       case content
       when Bytes
         file.write(content)

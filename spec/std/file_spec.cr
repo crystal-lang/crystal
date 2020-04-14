@@ -731,23 +731,19 @@ describe "File" do
       end
     end
 
-    {"a", File::Mode.flags(Write, Create, Append)}.each do |mode|
-      describe "mode(#{mode})" do
-        it "can create a new file in append mode" do
-          with_tempfile("append-create.txt") do |path|
-            File.write(path, "hello", mode: mode)
-            File.read(path).should eq("hello")
-          end
-        end
+    it "can create a new file in append mode" do
+      with_tempfile("append-create.txt") do |path|
+        File.write(path, "hello", mode: File::Mode.flags(Create, Append))
+        File.read(path).should eq("hello")
+      end
+    end
 
-        it "can append to an existing file" do
-          with_tempfile("append-existing.txt") do |path|
-            File.write(path, "hello")
-            File.read(path).should eq("hello")
-            File.write(path, " world", mode: mode)
-            File.read(path).should eq("hello world")
-          end
-        end
+    it "can append to an existing file" do
+      with_tempfile("append-existing.txt") do |path|
+        File.write(path, "hello")
+        File.read(path).should eq("hello")
+        File.write(path, " world", mode: File::Mode.flags(Create, Append))
+        File.read(path).should eq("hello world")
       end
     end
   end
@@ -789,7 +785,7 @@ describe "File" do
   it "opens with perm (int)" do
     with_tempfile("write_with_perm-int.txt") do |path|
       perm = 0o600
-      File.open(path, :write, :create, perm) do |file|
+      File.open(path, :write, :create, permissions: perm) do |file|
         file.info.permissions.should eq(normalize_permissions(perm, directory: false))
       end
     end
@@ -798,7 +794,7 @@ describe "File" do
   it "opens with perm (File::Permissions)" do
     with_tempfile("write_with_perm.txt") do |path|
       perm = File::Permissions.flags(OwnerRead, OwnerWrite)
-      File.open(path, :write, :create, perm) do |file|
+      File.open(path, :write, :create, permissions: perm) do |file|
         file.info.permissions.should eq(normalize_permissions(perm.value, directory: false))
       end
     end
