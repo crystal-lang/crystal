@@ -1,19 +1,29 @@
 module Crystal::Doc
-  record ProjectInfo, name : String, version : String do
-    def self.new_with_defaults(name, version)
-      version ||= find_git_version
+  class ProjectInfo
+    property! name : String
+    property! version : String
 
-      unless name && version
-        shard_name, shard_version = read_shard_properties
-        name ||= shard_name
-        version ||= shard_version
+    def initialize(@name : String? = nil, @version : String? = nil )
+    end
 
-        unless name && version
-          return yield name, version
+    def_equals_and_hash @name, @version
+
+    def fill_with_defaults
+      unless self.version
+        if git_version = ProjectInfo.find_git_version
+          self.version = git_version
         end
       end
 
-      new(name, version)
+      unless name && version
+        shard_name, shard_version = ProjectInfo.read_shard_properties
+        if shard_name
+          self.name ||= shard_name
+        end
+        if shard_version
+          self.version ||= shard_version
+        end
+      end
     end
 
     def self.find_git_version

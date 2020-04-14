@@ -12,8 +12,7 @@ class Crystal::Command
     sitemap_base_url = nil
     sitemap_priority = "1.0"
     sitemap_changefreq = "never"
-    project_name = nil
-    project_version = nil
+    project_info = Doc::ProjectInfo.new
 
     compiler = Compiler.new
 
@@ -27,11 +26,11 @@ class Crystal::Command
         BANNER
 
       opts.on("--project-name=NAME", "Set project name") do |value|
-        project_name = value
+        project_info.name = value
       end
 
       opts.on("--project-version=VERSION", "Set project version") do |value|
-        project_version = value
+        project_info.version = value
       end
 
       opts.on("--output=DIR", "-o DIR", "Set the output directory (default: #{output_directory})") do |value|
@@ -98,13 +97,17 @@ class Crystal::Command
       setup_compiler_warning_options(opts, compiler)
     end
 
-    project_info = Doc::ProjectInfo.new_with_defaults(project_name, project_version) do |name, version|
-      unless name
-        STDERR.puts "Couldn't determine name from shard.yml, please provide --project-name option"
-      end
-      unless version
-        STDERR.puts "Couldn't determine version from git or shard.yml, please provide --project-version option"
-      end
+    project_info.fill_with_defaults
+
+    unless project_info.name?
+      STDERR.puts "Couldn't determine name from shard.yml, please provide --project-name option"
+    end
+
+    unless project_info.version?
+      STDERR.puts "Couldn't determine version from git or shard.yml, please provide --project-version option"
+    end
+
+    unless project_info.name? && project_info.version?
       abort
     end
 
