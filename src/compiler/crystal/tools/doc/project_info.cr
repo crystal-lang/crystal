@@ -8,6 +8,10 @@ module Crystal::Doc
 
     def_equals_and_hash @name, @version
 
+    def crystal_stdlib?
+      name == "Crystal"
+    end
+
     def fill_with_defaults
       unless version?
         if git_version = ProjectInfo.find_git_version
