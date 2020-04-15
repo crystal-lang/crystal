@@ -60,10 +60,9 @@ module Crystal::Doc
       return unless status.success?
       io.rewind
       tags = io.to_s.lines
-      versions = tags.select(&.starts_with?("v"))
-      # Only accept when there's exactly one version tag pointing at HEAD.
-      if versions.size == 1
-        return versions.first.byte_slice(1)
+      # Return tag if commit is tagged, select first one if multiple
+      if tag = tags.first?
+        return tag
       end
 
       # Otherwise, return current branch name
@@ -93,7 +92,12 @@ module Crystal::Doc
         end
       end
 
-      return name.presence, version.presence
+      version = version.presence
+      if version
+        version = "v#{version}"
+      end
+
+      return name.presence, version
     end
   end
 end
