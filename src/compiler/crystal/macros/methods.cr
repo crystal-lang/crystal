@@ -257,7 +257,7 @@ module Crystal
       if result.status.success?
         @last = MacroId.new(result.stdout)
       else
-        command = "#{original_filename} #{run_args.map(&.inspect).join " "}"
+        command = "#{Process.quote(original_filename)} #{Process.quote(run_args)}"
 
         message = IO::Memory.new
         message << "Error executing run (exit code: #{result.status.exit_code}): #{command}\n"

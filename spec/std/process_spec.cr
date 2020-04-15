@@ -321,4 +321,42 @@ describe Process do
       Process.find_executable("some_very_unlikely_file_to_exist").should be_nil
     end
   end
+
+  describe "quote_posix" do
+    it { Process.quote_posix("").should eq "''" }
+    it { Process.quote_posix(" ").should eq "' '" }
+    it { Process.quote_posix("$hi").should eq "'$hi'" }
+    it { Process.quote_posix(orig = "aZ5+,-./:=@_").should eq orig }
+    it { Process.quote_posix(orig = "cafe").should eq orig }
+    it { Process.quote_posix("café").should eq "'café'" }
+    it { Process.quote_posix("I'll").should eq %('I'"'"'ll') }
+    it { Process.quote_posix("'").should eq %(''"'"'') }
+    it { Process.quote_posix("\\").should eq "'\\'" }
+
+    context "join" do
+      it { Process.quote_posix([] of String).should eq "" }
+      it { Process.quote_posix(["my file.txt", "another.txt"]).should eq "'my file.txt' another.txt" }
+      it { Process.quote_posix(["foo ", "", " ", " bar"]).should eq "'foo ' '' ' ' ' bar'" }
+      it { Process.quote_posix(["foo'", "\"bar"]).should eq %('foo'"'"'' '"bar') }
+    end
+  end
+
+  describe "quote_windows" do
+    it { Process.quote_windows("").should eq %("") }
+    it { Process.quote_windows(" ").should eq %(" ") }
+    it { Process.quote_windows(orig = "%hi%").should eq orig }
+    it { Process.quote_windows(%q(C:\"foo" project.txt)).should eq %q("C:\\\"foo\" project.txt") }
+    it { Process.quote_windows(%q(C:\"foo"_project.txt)).should eq %q(C:\\\"foo\"_project.txt) }
+    it { Process.quote_windows(%q(C:\Program Files\Foo Bar\foobar.exe)).should eq %q("C:\Program Files\Foo Bar\foobar.exe") }
+    it { Process.quote_windows(orig = "café").should eq orig }
+    it { Process.quote_windows(%(")).should eq %q(\") }
+    it { Process.quote_windows(%q(a\\b\ c\)).should eq %q("a\\b\ c\\") }
+    it { Process.quote_windows(orig = %q(a\\b\c\)).should eq orig }
+
+    context "join" do
+      it { Process.quote_windows([] of String).should eq "" }
+      it { Process.quote_windows(["my file.txt", "another.txt"]).should eq %("my file.txt" another.txt) }
+      it { Process.quote_windows(["foo ", "", " ", " bar"]).should eq %("foo " "" " " " bar") }
+    end
+  end
 end

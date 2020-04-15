@@ -318,16 +318,18 @@ module Crystal
     end
 
     private def print_command(command, args)
-      stdout.puts command.sub(%("${@}"), args && args.join(" "))
+      stdout.puts command.sub(%("${@}"), args && Process.quote(args))
     end
 
     private def linker_command(program : Program, object_names, output_filename, output_dir)
       if program.has_flag? "windows"
+        object_arg = Process.quote_windows(object_names)
+        output_arg = Process.quote_windows("/Fe#{output_filename}")
         if link_flags = @link_flags.presence
           link_flags = "/link #{link_flags}"
         end
 
-        args = %(#{object_names.join(" ")} "/Fe#{output_filename}" #{program.lib_flags} #{link_flags})
+        args = %(#{object_arg} #{output_arg} #{program.lib_flags} #{link_flags})
         cmd = "#{CL} #{args}"
 
         if cmd.to_utf16.size > 32000
@@ -361,7 +363,7 @@ module Crystal
         link_flags += " -rdynamic"
         link_flags += " -static" if static?
 
-        { %(#{cc} "${@}" -o '#{output_filename}' #{link_flags} #{program.lib_flags}), object_names }
+        { %(#{cc} "${@}" -o #{Process.quote_posix(output_filename)} #{link_flags} #{program.lib_flags}), object_names }
       end
     end
 
