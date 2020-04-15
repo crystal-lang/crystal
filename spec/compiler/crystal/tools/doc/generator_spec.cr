@@ -229,7 +229,7 @@ describe Doc::Generator do
       program = Program.new
       generator = Doc::Generator.new program, ["."]
       doc_type = Doc::Type.new generator, program
-      generator.is_crystal_repo = true
+      generator.project_info.name = "Crystal"
 
       pseudo_def = Def.new "__crystal_pseudo_typeof"
       pseudo_def.doc = "Foo"
