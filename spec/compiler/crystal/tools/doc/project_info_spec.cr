@@ -24,8 +24,8 @@ describe Crystal::Doc::ProjectInfo do
 
   describe "#fill_with_defaults" do
     it "empty folder" do
-      assert_with_defaults(ProjectInfo.new(nil, nil), ProjectInfo.new(nil, nil))
-      assert_with_defaults(ProjectInfo.new("foo", "1.0"), ProjectInfo.new("foo", "1.0"))
+      assert_with_defaults(ProjectInfo.new(nil, nil), ProjectInfo.new(nil, nil, refname: nil))
+      assert_with_defaults(ProjectInfo.new("foo", "1.0"), ProjectInfo.new("foo", "1.0", refname: nil))
     end
 
     context "with shard.yml" do
@@ -34,17 +34,17 @@ describe Crystal::Doc::ProjectInfo do
       end
 
       it "no git" do
-        assert_with_defaults(ProjectInfo.new(nil, nil), ProjectInfo.new("foo", "1.0"))
-        assert_with_defaults(ProjectInfo.new("bar", "2.0"), ProjectInfo.new("bar", "2.0"))
-        assert_with_defaults(ProjectInfo.new(nil, "2.0"), ProjectInfo.new("foo", "2.0"))
+        assert_with_defaults(ProjectInfo.new(nil, nil), ProjectInfo.new("foo", "1.0", refname: nil))
+        assert_with_defaults(ProjectInfo.new("bar", "2.0"), ProjectInfo.new("bar", "2.0", refname: nil))
+        assert_with_defaults(ProjectInfo.new(nil, "2.0"), ProjectInfo.new("foo", "2.0", refname: nil))
       end
 
       it "git but no commit" do
         run_git "init"
 
-        assert_with_defaults(ProjectInfo.new(nil, nil), ProjectInfo.new("foo", nil))
-        assert_with_defaults(ProjectInfo.new("bar", "2.0"), ProjectInfo.new("bar", "2.0"))
-        assert_with_defaults(ProjectInfo.new(nil, "2.0"), ProjectInfo.new("foo", "2.0"))
+        assert_with_defaults(ProjectInfo.new(nil, nil), ProjectInfo.new("foo", nil, refname: nil))
+        assert_with_defaults(ProjectInfo.new("bar", "2.0"), ProjectInfo.new("bar", "2.0", refname: nil))
+        assert_with_defaults(ProjectInfo.new(nil, "2.0"), ProjectInfo.new("foo", "2.0", refname: nil))
       end
 
       it "git tagged version" do
@@ -53,8 +53,9 @@ describe Crystal::Doc::ProjectInfo do
         run_git "commit -m 'Initial commit' --no-gpg-sign"
         run_git "tag v3.0"
 
-        assert_with_defaults(ProjectInfo.new(nil, nil), ProjectInfo.new("foo", "3.0"))
-        assert_with_defaults(ProjectInfo.new("bar", "2.0"), ProjectInfo.new("bar", "2.0"))
+        assert_with_defaults(ProjectInfo.new(nil, nil), ProjectInfo.new("foo", "3.0", refname: "v3.0"))
+        assert_with_defaults(ProjectInfo.new("bar", "2.0"), ProjectInfo.new("bar", "2.0", refname: "v3.0"))
+        assert_with_defaults(ProjectInfo.new("bar", "2.0", refname: "12345"), ProjectInfo.new("bar", "2.0", refname: "12345"))
       end
 
       it "git tagged version dirty" do
@@ -64,19 +65,21 @@ describe Crystal::Doc::ProjectInfo do
         run_git "tag v3.0"
         File.write("foo.txt", "bar")
 
-        assert_with_defaults(ProjectInfo.new(nil, nil), ProjectInfo.new("foo", "3.0-dev"))
-        assert_with_defaults(ProjectInfo.new(nil, "1.1"), ProjectInfo.new("foo", "1.1"))
-        assert_with_defaults(ProjectInfo.new("bar", "2.0"), ProjectInfo.new("bar", "2.0"))
+        assert_with_defaults(ProjectInfo.new(nil, nil), ProjectInfo.new("foo", "3.0-dev", refname: nil))
+        assert_with_defaults(ProjectInfo.new(nil, "1.1"), ProjectInfo.new("foo", "1.1", refname: nil))
+        assert_with_defaults(ProjectInfo.new("bar", "2.0"), ProjectInfo.new("bar", "2.0", refname: nil))
       end
 
       it "git non-tagged commit" do
         run_git "init"
         run_git "add shard.yml"
         run_git "commit -m 'Initial commit' --no-gpg-sign"
+        commit_sha = `git rev-parse HEAD`.chomp
 
-        assert_with_defaults(ProjectInfo.new(nil, nil), ProjectInfo.new("foo", "master"))
-        assert_with_defaults(ProjectInfo.new(nil, "1.1"), ProjectInfo.new("foo", "1.1"))
-        assert_with_defaults(ProjectInfo.new("bar", "2.0"), ProjectInfo.new("bar", "2.0"))
+        assert_with_defaults(ProjectInfo.new(nil, nil), ProjectInfo.new("foo", "master", refname: commit_sha))
+        assert_with_defaults(ProjectInfo.new(nil, "1.1"), ProjectInfo.new("foo", "1.1", refname: commit_sha))
+        assert_with_defaults(ProjectInfo.new("bar", "2.0"), ProjectInfo.new("bar", "2.0", refname: commit_sha))
+        assert_with_defaults(ProjectInfo.new("bar", "2.0", refname: "12345"), ProjectInfo.new("bar", "2.0", refname: "12345"))
       end
 
       it "git non-tagged commit dirty" do
@@ -85,9 +88,9 @@ describe Crystal::Doc::ProjectInfo do
         run_git "commit -m 'Initial commit' --no-gpg-sign"
         File.write("foo.txt", "bar")
 
-        assert_with_defaults(ProjectInfo.new(nil, nil), ProjectInfo.new("foo", "master-dev"))
-        assert_with_defaults(ProjectInfo.new(nil, "1.1"), ProjectInfo.new("foo", "1.1"))
-        assert_with_defaults(ProjectInfo.new("bar", "2.0"), ProjectInfo.new("bar", "2.0"))
+        assert_with_defaults(ProjectInfo.new(nil, nil), ProjectInfo.new("foo", "master-dev", refname: nil))
+        assert_with_defaults(ProjectInfo.new(nil, "1.1"), ProjectInfo.new("foo", "1.1", refname: nil))
+        assert_with_defaults(ProjectInfo.new("bar", "2.0"), ProjectInfo.new("bar", "2.0", refname: nil))
       end
     end
 
@@ -98,9 +101,10 @@ describe Crystal::Doc::ProjectInfo do
       run_git "commit -m 'Remove shard.yml' --no-gpg-sign"
       run_git "tag v4.0"
 
-      assert_with_defaults(ProjectInfo.new(nil, nil), ProjectInfo.new(nil, "4.0"))
-      assert_with_defaults(ProjectInfo.new("foo", nil), ProjectInfo.new("foo", "4.0"))
-      assert_with_defaults(ProjectInfo.new("bar", "2.0"), ProjectInfo.new("bar", "2.0"))
+      assert_with_defaults(ProjectInfo.new(nil, nil), ProjectInfo.new(nil, "4.0", refname: "v4.0"))
+      assert_with_defaults(ProjectInfo.new("foo", nil), ProjectInfo.new("foo", "4.0", refname: "v4.0"))
+      assert_with_defaults(ProjectInfo.new("bar", "2.0"), ProjectInfo.new("bar", "2.0", refname: "v4.0"))
+      assert_with_defaults(ProjectInfo.new("bar", "2.0", refname: "12345"), ProjectInfo.new("bar", "2.0", refname: "12345"))
     end
   end
 

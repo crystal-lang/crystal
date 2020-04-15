@@ -3,11 +3,12 @@ module Crystal::Doc
     property! name : String
     property! version : String
     property json_config_url : String? = nil
+    property refname : String? = nil
 
-    def initialize(@name : String? = nil, @version : String? = nil)
+    def initialize(@name : String? = nil, @version : String? = nil, @refname : String? = nil)
     end
 
-    def_equals_and_hash @name, @version, @json_config_url
+    def_equals_and_hash @name, @version, @json_config_url, @refname
 
     def crystal_stdlib?
       name == "Crystal"
@@ -18,6 +19,10 @@ module Crystal::Doc
         if git_version = ProjectInfo.find_git_version
           self.version = git_version
         end
+      end
+
+      if ProjectInfo.git_clean?
+        self.refname ||= ProjectInfo.git_ref(branch: false)
       end
 
       unless name? && version?
@@ -38,7 +43,7 @@ module Crystal::Doc
     VERSION_TAG = /^v(\d+[-.][-.a-zA-Z\d]+)$/
 
     def self.find_git_version
-      if ref = git_ref
+      if ref = git_ref(branch: true)
         if ref.matches?(VERSION_TAG)
           ref = ref.byte_slice(1)
         end
@@ -62,7 +67,7 @@ module Crystal::Doc
       io.bytesize == 0
     end
 
-    def self.git_ref
+    def self.git_ref(*, branch)
       io = IO::Memory.new
       # Check if current HEAD is tagged
       status = Process.run("git", ["tag", "--points-at", "HEAD"], output: io)
@@ -73,13 +78,26 @@ module Crystal::Doc
       if tag = tags.first?
         return tag
       end
-
-      # Otherwise, return current branch name
       io.clear
-      status = Process.run("git", ["rev-parse", "--abbrev-ref", "HEAD"], output: io)
+
+      if branch
+        # Read current branch name
+        status = Process.run("git", ["rev-parse", "--abbrev-ref", "HEAD"], output: io)
+        return unless status.success?
+
+        if branch_name = io.to_s.strip.presence
+          return branch_name
+        end
+        io.clear
+      end
+
+      # Otherwise, return current commit sha
+      status = Process.run("git", ["rev-parse", "HEAD"], output: io)
       return unless status.success?
 
-      io.to_s.strip.presence
+      if sha = io.to_s.strip.presence
+        return sha
+      end
     end
 
     def self.read_shard_properties
