@@ -1,7 +1,6 @@
 require "fiber"
 require "channel"
 require "crystal/scheduler"
-require "./concurrent/*"
 
 # Blocks the current fiber for the specified number of seconds.
 #
