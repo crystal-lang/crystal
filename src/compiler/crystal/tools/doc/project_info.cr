@@ -30,15 +30,19 @@ module Crystal::Doc
       Process.run("git", ["rev-parse", "--is-inside-work-tree"]).success?
     end
 
+    VERSION_TAG = /^v(\d+[-.][-.a-zA-Z\d]+)$/
+
     def self.find_git_version
       if ref = git_ref
-        case git_clean?
-        when Nil
-        when true
-          ref
-        when false
-          "#{ref}-dev"
+        if ref.matches?(VERSION_TAG)
+          ref = ref.byte_slice(1)
         end
+
+        unless git_clean?
+          ref = "#{ref}-dev"
+        end
+
+        ref
       end
     end
 
@@ -92,12 +96,7 @@ module Crystal::Doc
         end
       end
 
-      version = version.presence
-      if version
-        version = "v#{version}"
-      end
-
-      return name.presence, version
+      return name.presence, version.presence
     end
   end
 end
