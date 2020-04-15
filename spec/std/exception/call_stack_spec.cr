@@ -1,4 +1,4 @@
-require "./spec_helper"
+require "../spec_helper"
 
 private def compile_and_run_file(source_file)
   with_tempfile("executable_file") do |executable_file|
