@@ -32,7 +32,7 @@ module Crystal
     end
 
     def self.date
-      time = {{ run("compiler/print_timestamp", "compiler/print_timestamp").to_i }}
+      time = {{ (env("SOURCE_DATE_EPOCH") || `date +%s`).to_i }}
       Time.unix(time).to_s("%Y-%m-%d")
     end
 
