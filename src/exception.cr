@@ -1,7 +1,7 @@
-require "callstack"
+require "./exception/call_stack"
 require "system_error"
 
-CallStack.skip(__FILE__)
+Exception::CallStack.skip(__FILE__)
 
 # Represents errors that occur during application execution.
 #
