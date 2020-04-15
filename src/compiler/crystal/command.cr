@@ -5,7 +5,7 @@
 # some in `tools`, some here, and some create a Compiler and
 # manipulate it.
 #
-# Other commands create a `Compiler` and use it to to build
+# Other commands create a `Compiler` and use it to build
 # an executable.
 
 require "json"
