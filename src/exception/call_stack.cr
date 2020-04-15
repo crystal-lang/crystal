@@ -19,7 +19,9 @@ require "./lib_unwind"
   require "debug/dwarf"
 {% end %}
 
-def caller
+# Returns the current execution stack as an array containing strings
+# usually in the form file:line:column or file:line:column in 'method'.
+def caller : Array(String)
   Exception::CallStack.new.printable_backtrace
 end
 
