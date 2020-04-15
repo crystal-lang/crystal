@@ -175,6 +175,7 @@ module Spec
   # ```
   #
   # will print, just before each spec, 1 and then 2.
+  @[Deprecated("Use `Spec::Methods.before_each` instead")]
   def self.before_each(&block)
     before_each = @@before_each ||= [] of ->
     before_each << block
@@ -194,6 +195,7 @@ module Spec
   # ```
   #
   # will print, just after each spec, 2 and then 1.
+  @[Deprecated("Use `Spec::Methods.after_each` instead")]
   def self.after_each(&block)
     after_each = @@after_each ||= [] of ->
     after_each << block
@@ -213,6 +215,7 @@ module Spec
   # ```
   #
   # will print, just before the spec suite starts, 1 and then 2.
+  @[Deprecated("Use `Spec::Methods.before_all  ` instead")]
   def self.before_suite(&block)
     before_suite = @@before_suite ||= [] of ->
     before_suite << block
@@ -232,29 +235,10 @@ module Spec
   # ```
   #
   # will print, just after the spec suite ends, 2 and then 1.
+  @[Deprecated("Use `Spec::Methods.after_all` instead")]
   def self.after_suite(&block)
     after_suite = @@after_suite ||= [] of ->
     after_suite << block
-  end
-
-  # :nodoc:
-  def self.run_before_each_hooks
-    @@before_each.try &.each &.call
-  end
-
-  # :nodoc:
-  def self.run_after_each_hooks
-    @@after_each.try &.reverse_each &.call
-  end
-
-  # :nodoc:
-  def self.run_before_suite_hooks
-    @@before_suite.try &.each &.call
-  end
-
-  # :nodoc:
-  def self.run_after_suite_hooks
-    @@after_suite.try &.reverse_each &.call
   end
 
   @@start_time : Time::Span? = nil
@@ -266,9 +250,7 @@ module Spec
     at_exit do
       maybe_randomize
       run_filters
-      run_before_suite_hooks
       root_context.run
-      run_after_suite_hooks
     ensure
       finish_run
     end
