@@ -17,6 +17,8 @@ class Exception
   # This is useful for wrapping exceptions and retaining the original
   # exception information.
   getter cause : Exception?
+
+  # :nodoc:
   property callstack : CallStack?
 
   def initialize(@message : String? = nil, @cause : Exception? = nil)
