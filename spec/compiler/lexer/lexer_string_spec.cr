@@ -307,6 +307,24 @@ describe "Lexer string" do
     tester.string_should_end_correctly
   end
 
+  it "lexes regex string with '\\/'" do
+    lexer = Lexer.new(%(/\\//))
+    tester = LexerObjects::Strings.new(lexer)
+
+    tester.string_should_be_delimited_by('/', '/')
+    tester.next_string_token_should_be("/")
+    tester.string_should_end_correctly
+  end
+
+  it "lexes regex string with '\\ '" do
+    lexer = Lexer.new(%(/\\ /))
+    tester = LexerObjects::Strings.new(lexer)
+
+    tester.string_should_be_delimited_by('/', '/')
+    tester.next_string_token_should_be(" ")
+    tester.string_should_end_correctly
+  end
+
   it "lexes regex string with special chars with /.../" do
     lexer = Lexer.new(%(/\\w/))
     tester = LexerObjects::Strings.new(lexer)
