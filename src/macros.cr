@@ -185,11 +185,3 @@ macro p!(*exps)
     }
   {% end %}
 end
-
-macro assert_responds_to(var, method)
-  if {{var}}.responds_to?(:{{method}})
-    {{var}}
-  else
-    raise "Expected {{var}} to respond to :{{method}}, not #{ {{var}} }"
-  end
-end
