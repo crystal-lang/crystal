@@ -1,7 +1,7 @@
 # A logging severity level.
 enum Log::Severity
-  Debug
   Verbose
+  Debug
   Info
   Warning
   Error
@@ -11,8 +11,8 @@ enum Log::Severity
 
   def label
     case self
-    when Debug   then "DEBUG"
     when Verbose then "VERBOSE"
+    when Debug   then "DEBUG"
     when Info    then "INFO"
     when Warning then "WARNING"
     when Error   then "ERROR"

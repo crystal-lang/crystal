@@ -16,8 +16,8 @@ describe Log do
 
   describe Log::Severity do
     it "values are ordered" do
-      s(:debug).should be < s(:verbose)
-      s(:verbose).should be < s(:info)
+      s(:verbose).should be < s(:debug)
+      s(:debug).should be < s(:info)
       s(:info).should be < s(:warning)
       s(:warning).should be < s(:error)
       s(:error).should be < s(:fatal)
