@@ -321,13 +321,16 @@ module Crystal
       stdout.puts command.sub(%("${@}"), args && args.join(" "))
     end
 
-    private def linker_command(program : Program, object_names, output_filename, output_dir)
+    private def linker_command(program : Program, object_names, output_filename, output_dir, expand = false)
       if program.has_flag? "windows"
         if link_flags = @link_flags.presence
           link_flags = "/link #{link_flags}"
         end
+        lib_flags = program.lib_flags
+        # Execute and expand `subcommands`.
+        lib_flags = lib_flags.gsub(/`(.*?)`/) { `#{$1}` } if expand
 
-        args = %(#{object_names.join(" ")} "/Fe#{output_filename}" #{program.lib_flags} #{link_flags})
+        args = %(#{object_names.join(" ")} "/Fe#{output_filename}" #{lib_flags} #{link_flags})
         cmd = "#{CL} #{args}"
 
         if cmd.to_utf16.size > 32000
@@ -396,7 +399,7 @@ module Crystal
 
       @progress_tracker.stage("Codegen (linking)") do
         Dir.cd(output_dir) do
-          linker_command = linker_command(program, object_names, output_filename, output_dir)
+          linker_command = linker_command(program, object_names, output_filename, output_dir, expand: true)
 
           process_wrapper(*linker_command) do |command, args|
             Process.run(command, args, shell: true,
