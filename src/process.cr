@@ -232,6 +232,10 @@ class Process
     fork_error.close unless fork_error == error || fork_error == STDERR
   end
 
+  def finalize
+    @process_info.release
+  end
+
   private def stdio_to_fd(stdio : Stdio, for dst_io : IO::FileDescriptor) : IO::FileDescriptor
     case stdio
     when IO::FileDescriptor

@@ -12,7 +12,9 @@ struct Crystal::System::Process
   end
 
   def release
+    return if @process_handle == LibC::HANDLE.null
     close_handle(@process_handle)
+    @process_handle = LibC::HANDLE.null
   end
 
   def wait
