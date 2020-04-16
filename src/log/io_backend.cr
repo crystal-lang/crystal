@@ -4,7 +4,7 @@ class Log::IOBackend < Log::Backend
   property progname : String
   property formatter : Formatter? = nil
 
-  def initialize(@io = STDOUT)
+  def initialize(@io = STDOUT, @formatter = nil)
     @mutex = Mutex.new(:unchecked)
     @progname = File.basename(PROGRAM_NAME)
   end
