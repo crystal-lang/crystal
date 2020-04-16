@@ -176,6 +176,12 @@ module Crystal
     it_parses "def foo(n); foo(n -1); end", Def.new("foo", ["n".arg], "foo".call(Call.new("n".var, "-", 1.int32)))
     it_parses "def type(type); end", Def.new("type", ["type".arg])
 
+    it_parses "def foo = 1", Def.new("foo", body: 1.int32)
+    it_parses "def foo =\n1", Def.new("foo", body: 1.int32)
+    it_parses "def foo(x) = 1", Def.new("foo", ["x".arg], body: 1.int32)
+    it_parses "def foo(x) =\n1", Def.new("foo", ["x".arg], body: 1.int32)
+    it_parses "def foo(@x) =\n1", Def.new("foo", ["x".arg], body: Expressions.new([Assign.new("@x".instance_var, "x".var), 1.int32]))
+
     # #4815
     assert_syntax_error "def foo!=; end", "unexpected token: !="
     assert_syntax_error "def foo?=(x); end", "unexpected token: ?"

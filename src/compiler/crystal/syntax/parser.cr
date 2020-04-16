@@ -3455,9 +3455,7 @@ module Crystal
         else
           unexpected_token @token.to_s, "parentheses are mandatory for def arguments"
         end
-      when :";", :"NEWLINE"
-        # Skip
-      when :":"
+      when :";", :"NEWLINE", :":", :"="
         # Skip
       when :"&"
         unexpected_token @token.to_s, "parentheses are mandatory for def arguments"
@@ -3486,27 +3484,26 @@ module Crystal
       if is_abstract
         body = Nop.new
       else
-        slash_is_regex!
-        skip_statement_end
-
-        end_location = token_end_location
-
-        if @token.keyword?(:end)
-          body = Expressions.from(extra_assigns)
-          next_token_skip_space
+        if @token.type == :"="
+          slash_is_regex!
+          next_token_skip_space_or_newline
+          body = parse_multi_assign
+          body = process_extra_assigns(body, extra_assigns)
+          end_location = body.end_location
         else
-          body = parse_expressions
-          if extra_assigns.size > 0
-            exps = [] of ASTNode
-            exps.concat extra_assigns
-            if body.is_a?(Expressions)
-              exps.concat body.expressions
-            else
-              exps.push body
-            end
-            body = Expressions.from(exps)
+          slash_is_regex!
+          skip_statement_end
+
+          end_location = token_end_location
+
+          if @token.keyword?(:end)
+            body = Expressions.from(extra_assigns)
+            next_token_skip_space
+          else
+            body = parse_expressions
+            body = process_extra_assigns(body, extra_assigns)
+            body, end_location = parse_exception_handler body, implicit: true
           end
-          body, end_location = parse_exception_handler body, implicit: true
         end
       end
 
@@ -3519,6 +3516,21 @@ module Crystal
       set_visibility node
       node.end_location = end_location
       node
+    end
+
+    def process_extra_assigns(body, extra_assigns)
+      if extra_assigns.size > 0
+        exps = [] of ASTNode
+        exps.concat extra_assigns
+        if body.is_a?(Expressions)
+          exps.concat body.expressions
+        else
+          exps.push body
+        end
+        body = Expressions.from(exps)
+      else
+        body
+      end
     end
 
     def check_valid_def_name

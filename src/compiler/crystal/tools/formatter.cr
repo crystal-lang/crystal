@@ -1449,7 +1449,7 @@ module Crystal
 
       indent do
         next_token_skip_space
-        next_token_skip_space if @token.type == :"="
+        next_token_skip_space if @token.type == :"=" && node.name.ends_with?('=')
       end
 
       to_skip = format_def_args node
@@ -1481,8 +1481,25 @@ module Crystal
 
       body = remove_to_skip node, to_skip
 
-      unless node.abstract?
-        format_nested_with_end body
+      indent { skip_space }
+
+      if @token.type == :"="
+        write " = "
+        next_token_skip_space
+        if @token.type == :NEWLINE
+          skip_space_or_newline
+          write_line
+          indent do
+            write_indent
+            accept body
+          end
+        else
+          indent(@column) { accept body }
+        end
+      else
+        unless node.abstract?
+          format_nested_with_end body
+        end
       end
 
       @vars.pop
