@@ -43,14 +43,11 @@ describe Log::Context do
       c(17).empty?.should be_false
     end
 
-    describe Array do
-      it "empty" do
-        c([] of Int32).empty?.should be_true
-      end
-
-      it "not empty" do
-        c([1, 2, 3]).empty?.should be_false
-      end
+    it Bool do
+      c(false).empty?.should be_false
+    end
+    it Nil do
+      c(nil).empty?.should be_true
     end
 
     describe String do
@@ -60,6 +57,16 @@ describe Log::Context do
 
       it "not empty" do
         c("foo").empty?.should be_false
+      end
+    end
+
+    describe Array do
+      it "empty" do
+        c([] of Int32).empty?.should be_true
+      end
+
+      it "not empty" do
+        c([1, 2, 3]).empty?.should be_false
       end
     end
 

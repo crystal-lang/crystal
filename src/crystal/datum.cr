@@ -60,7 +60,7 @@ module Crystal
       end
     end
 
-    # Returns `true` if `self` does not currently have a value.
+    # Returns `true` if `self` does not currently have a value, or the value is `nil`.
     #
     # If the underlying value is an `Array` or `Hash` then `Enumerable#empty?` is invoked.
     #
@@ -70,7 +70,8 @@ module Crystal
     def empty? : Bool
       case raw = @raw
       when Array, Hash then raw.empty?
-      when String then raw.empty?
+      when String      then raw.empty?
+      when Nil         then true
       else
         false
       end
@@ -156,11 +157,6 @@ module Crystal
     # :nodoc:
     def pretty_print(pp)
       @raw.pretty_print(pp)
-    end
-
-    # :nodoc:
-    def to_json(builder : JSON::Builder) : Nil
-      @raw.to_json builder
     end
 
     # Returns `true` if both `self` and *other*'s raw object are equal.

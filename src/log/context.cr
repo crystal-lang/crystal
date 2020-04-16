@@ -2,7 +2,7 @@
 #
 # See `Log.context`, `Log.context=`, `Log::Context#clear`, `Log::Context#set`, `Log.with_context`.
 class Log::Context
-  Crystal.datum types: {bool: Bool, i: Int32, i64: Int64, f: Float32, f64: Float64, s: String, time: Time}, hash_key_type: String, immutable: true
+  Crystal.datum types: {bool: Bool, i: Int32, i64: Int64, f: Float32, f64: Float64, s: String, time: Time, nil: Nil}, hash_key_type: String, immutable: true
 
   # Creates an empty `Log::Context`.
   def initialize
@@ -42,6 +42,11 @@ class Log::Context
   # A value in *other* takes precedence over the one in this context.
   def merge(other : Context)
     Context.new(self.as_h.merge(other.as_h).clone)
+  end
+
+  # :nodoc:
+  def to_json(builder : JSON::Builder) : Nil
+    @raw.to_json builder
   end
 
   private def to_context(value)
