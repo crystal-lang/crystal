@@ -115,6 +115,11 @@ describe Log::Context do
       Log.context.should eq(c({a: 1, b: 2}))
     end
 
+    it "allows setting Nil values" do
+      Log.context.set current_user_id: nil
+      Log.context.should eq(c({current_user_id: nil}))
+    end
+
     it "is assignable from a named tuple" do
       Log.context.set a: 1
       extra = {b: 2}
