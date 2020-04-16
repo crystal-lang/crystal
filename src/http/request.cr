@@ -173,7 +173,7 @@ class HTTP::Request
     # Optimization: see if it's one of the common methods
     # (avoids a string allocation for these methods)
     method = METHODS.find { |method| method.to_slice == subslice } ||
-             String.new(subslice)
+             return HTTP::Status::BAD_REQUEST
 
     # Skip spaces.
     # The RFC just mentions a single space but most servers allow multiple.
