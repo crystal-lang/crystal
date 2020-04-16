@@ -54,8 +54,11 @@ describe Log::Context do
     end
 
     describe String do
+      it "empty" do
+        c("").empty?.should be_true
+      end
+
       it "not empty" do
-        c("").empty?.should be_false
         c("foo").empty?.should be_false
       end
     end

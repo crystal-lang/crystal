@@ -66,8 +66,8 @@ module Crystal
     # then `Enumerable#empty?` is invoked, otherwise `false` is returned.
     def empty? : Bool
       case raw = @raw
-      when Array, Hash
-        raw.empty?
+      when Array, Hash then raw.empty?
+      when String then raw.empty?
       else
         false
       end
