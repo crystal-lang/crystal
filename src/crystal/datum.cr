@@ -62,8 +62,11 @@ module Crystal
 
     # Returns `true` if `self` does not currently have a value.
     #
-    # If the underlying value is `Array` or `Hash`,
-    # then `Enumerable#empty?` is invoked, otherwise `false` is returned.
+    # If the underlying value is an `Array` or `Hash` then `Enumerable#empty?` is invoked.
+    #
+    # If the underlying value is a `String`, then `String#empty?` is invoked.
+    #
+    # Otherwise, `false` is returned.
     def empty? : Bool
       case raw = @raw
       when Array, Hash then raw.empty?
