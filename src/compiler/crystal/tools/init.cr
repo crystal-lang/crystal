@@ -281,7 +281,7 @@ module Crystal
 
     macro template(name, template_path, destination_path)
       class {{name.id}} < View
-        ECR.def_to_s "{{TEMPLATE_DIR.id}}/{{template_path.id}}"
+        ECR.def_to_s {{"#{TEMPLATE_DIR.id}/#{template_path.id}"}}
 
         def path
           {{destination_path}}

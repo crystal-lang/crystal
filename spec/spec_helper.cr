@@ -115,7 +115,7 @@ end
 def warnings_result(code, inject_primitives = true)
   code = inject_primitives(code) if inject_primitives
 
-  output_filename = Crystal.tempfile("crystal-spec-output")
+  output_filename = Crystal.temp_executable("crystal-spec-output")
 
   compiler = create_spec_compiler
   compiler.warnings = Warnings::All
@@ -244,7 +244,7 @@ def run(code, filename = nil, inject_primitives = true, debug = Crystal::Debug::
     ast.expressions[-1] = exps
     code = ast.to_s
 
-    output_filename = Crystal.tempfile("crystal-spec-output")
+    output_filename = Crystal.temp_executable("crystal-spec-output")
 
     compiler = create_spec_compiler
     compiler.debug = debug
