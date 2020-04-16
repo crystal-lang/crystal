@@ -1189,7 +1189,7 @@ describe "Code gen: macro" do
       end
 
       Foo.bar
-      )).to_string.should eq("Foo")
+      )).to_string.should eq("<Program>")
   end
 
   it "codegens macro with comment (bug) (#1396)" do

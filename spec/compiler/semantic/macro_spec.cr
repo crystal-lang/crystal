@@ -1463,4 +1463,34 @@ describe "Semantic: macro" do
     method = result.program.types["Foo"].lookup_first_def("bar", false).not_nil!
     method.location.not_nil!.original_location.not_nil!.line_number.should eq(10)
   end
+
+  it "resolves @type as the caller scope (top-level) (#9099)" do
+    assert_type(%(
+      macro foo
+        {{@type}}
+      end
+
+      class Foo
+        A = foo
+      end
+
+      Foo::A
+      )) { types["Foo"].metaclass }
+  end
+
+  it "resolves @type as the caller scope (inside another type) (#9099)" do
+    assert_type(%(
+      module Bar
+        macro foo
+          {{@type}}
+        end
+      end
+
+      class Foo
+        A = Bar.foo
+      end
+
+      Foo::A
+      )) { types["Foo"].metaclass }
+  end
 end

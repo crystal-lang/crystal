@@ -288,15 +288,16 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
       node.raise "macro '#{node.name}' must be defined before this point but is defined later"
     end
 
-    expansion_scope = (macro_scope || @scope || current_type)
+    type_scope = @scope || current_type
+    path_lookup = macro_scope || type_scope
 
-    args = expand_macro_arguments(node, expansion_scope)
+    args = expand_macro_arguments(node, type_scope)
 
     @exp_nest -= 1
     generated_nodes = expand_macro(the_macro, node, visibility: node.visibility) do
       old_args = node.args
       node.args = args
-      expanded_macro, macro_expansion_pragmas = @program.expand_macro the_macro, node, expansion_scope, expansion_scope, @untyped_def
+      expanded_macro, macro_expansion_pragmas = @program.expand_macro the_macro, node, type_scope, path_lookup, @untyped_def
       node.args = old_args
       {expanded_macro, macro_expansion_pragmas}
     end
