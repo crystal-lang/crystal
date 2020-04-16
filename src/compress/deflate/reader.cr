@@ -3,7 +3,7 @@
 # Instances of this class wrap another IO object. When you read from this instance
 # instance, it reads data from the underlying IO, decompresses it, and returns
 # it to the caller.
-class Flate::Reader < IO
+class Compress::Deflate::Reader < IO
   include IO::Buffered
 
   # If `#sync_close?` is `true`, closing this IO will close the underlying IO.
@@ -25,7 +25,7 @@ class Flate::Reader < IO
     @stream.zalloc = LibZ::AllocFunc.new { |opaque, items, size| GC.malloc(items * size) }
     @stream.zfree = LibZ::FreeFunc.new { |opaque, address| GC.free(address) }
     ret = LibZ.inflateInit2(pointerof(@stream), -LibZ::MAX_BITS, LibZ.zlibVersion, sizeof(LibZ::ZStream))
-    raise Flate::Error.new(ret, @stream) unless ret.ok?
+    raise Compress::Deflate::Error.new(ret, @stream) unless ret.ok?
 
     @peek = nil
     @end = false
@@ -53,7 +53,7 @@ class Flate::Reader < IO
 
   # Always raises `IO::Error` because this is a read-only `IO`.
   def unbuffered_write(slice : Bytes)
-    raise IO::Error.new "Can't write to Flate::Reader"
+    raise IO::Error.new "Can't write to Compress::Deflate::Reader"
   end
 
   # See `IO#read`.
@@ -102,13 +102,13 @@ class Flate::Reader < IO
           next if ret.ok?
         end
 
-        raise Flate::Error.new(ret, @stream)
+        raise Compress::Deflate::Error.new(ret, @stream)
       when .errno?,
            .data_error?,
            .mem_error?,
            .buf_error?,
            .version_error?
-        raise Flate::Error.new(ret, @stream)
+        raise Compress::Deflate::Error.new(ret, @stream)
       when .stream_end?
         @end = true
         return read_bytes
@@ -126,7 +126,7 @@ class Flate::Reader < IO
   end
 
   def unbuffered_flush
-    raise IO::Error.new "Can't flush Flate::Reader"
+    raise IO::Error.new "Can't flush Compress::Deflate::Reader"
   end
 
   # Closes this reader.
@@ -135,7 +135,7 @@ class Flate::Reader < IO
     @closed = true
 
     ret = LibZ.inflateEnd(pointerof(@stream))
-    raise Flate::Error.new(ret, @stream) unless ret.ok?
+    raise Compress::Deflate::Error.new(ret, @stream) unless ret.ok?
 
     @io.close if @sync_close
   end

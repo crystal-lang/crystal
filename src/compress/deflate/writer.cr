@@ -5,14 +5,14 @@
 #
 # NOTE: unless created with a block, `close` must be invoked after all
 # data has been written to a Flate::Writer instance.
-class Flate::Writer < IO
+class Compress::Deflate::Writer < IO
   # If `#sync_close?` is `true`, closing this IO will close the underlying IO.
   property? sync_close : Bool
 
   # Creates an instance of Flate::Writer. `close` must be invoked after all data
   # has written.
-  def initialize(@output : IO, level : Int32 = Flate::DEFAULT_COMPRESSION,
-                 strategy : Flate::Strategy = Flate::Strategy::DEFAULT,
+  def initialize(@output : IO, level : Int32 = Compress::Deflate::DEFAULT_COMPRESSION,
+                 strategy : Compress::Deflate::Strategy = Compress::Deflate::Strategy::DEFAULT,
                  @sync_close : Bool = false, @dict : Bytes? = nil)
     unless -1 <= level <= 9
       raise ArgumentError.new("Invalid Flate level: #{level} (must be in -1..9)")
@@ -25,13 +25,13 @@ class Flate::Writer < IO
     @closed = false
     ret = LibZ.deflateInit2(pointerof(@stream), level, LibZ::Z_DEFLATED, -LibZ::MAX_BITS, LibZ::DEF_MEM_LEVEL,
       strategy.value, LibZ.zlibVersion, sizeof(LibZ::ZStream))
-    raise Flate::Error.new(ret, @stream) unless ret.ok?
+    raise Compress::Deflate::Error.new(ret, @stream) unless ret.ok?
   end
 
   # Creates a new writer for the given *io*, yields it to the given block,
   # and closes it at its end.
-  def self.open(io : IO, level : Int32 = Flate::DEFAULT_COMPRESSION,
-                strategy : Flate::Strategy = Flate::Strategy::DEFAULT,
+  def self.open(io : IO, level : Int32 = Compress::Deflate::DEFAULT_COMPRESSION,
+                strategy : Compress::Deflate::Strategy = Compress::Deflate::Strategy::DEFAULT,
                 sync_close : Bool = false, dict : Bytes? = nil)
     writer = new(io, level: level, strategy: strategy, sync_close: sync_close, dict: dict)
     yield writer ensure writer.close
@@ -70,7 +70,7 @@ class Flate::Writer < IO
     consume_output LibZ::Flush::FINISH
 
     ret = LibZ.deflateEnd(pointerof(@stream))
-    raise Flate::Error.new(ret, @stream) unless ret.ok?
+    raise Compress::Deflate::Error.new(ret, @stream) unless ret.ok?
 
     @output.close if @sync_close
   end
