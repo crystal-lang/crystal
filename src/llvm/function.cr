@@ -83,4 +83,8 @@ struct LLVM::Function
   def delete
     LibLLVM.delete_function(self)
   end
+
+  def naked?
+    attributes.naked?
+  end
 end
