@@ -34,10 +34,10 @@ module Crystal
     # All possible `{{@type}}` types.
     alias Type = {% for short, type in types %}{{type}} | {% end %}Array(self) | Hash({{hash_key_type}}, self)
 
-    # Returns the raw underlying value, a `Raw`.
+    # Returns the raw underlying value, a `Type`.
     getter raw : Type
 
-    # Creates a `{{@type}}` that wraps the given `Raw`.
+    # Creates a `{{@type}}` that wraps the given `Type`.
     def initialize(@raw : Type)
     end
 
@@ -53,12 +53,23 @@ module Crystal
     # Raises if the underlying value is not an `Array` or `Hash`.
     def size : Int
       case object = @raw
-      when Array
-        object.size
-      when Hash
+      when Array, Hash
         object.size
       else
         raise "Expected Array or Hash for #size, not #{object.class}"
+      end
+    end
+
+    # Returns `true` if `self` does not currently have a value.
+    #
+    # If the underlying value is `Array` or `Hash`,
+    # then `Enumerable#empty?` is invoked, otherwise `false` is returned.
+    def empty? : Bool
+      case raw = @raw
+      when Array, Hash
+        raw.empty?
+      else
+        false
       end
     end
 
@@ -144,13 +155,18 @@ module Crystal
       @raw.pretty_print(pp)
     end
 
+    # :nodoc:
+    def to_json(builder : JSON::Builder) : Nil
+      @raw.to_json builder
+    end
+
     # Returns `true` if both `self` and *other*'s raw object are equal.
-    def ==(other : self)
+    def ==(other : self) : Bool
       raw == other.raw
     end
 
     # Returns `true` if the raw object is equal to *other*.
-    def ==(other)
+    def ==(other) : Bool
       raw == other
     end
 

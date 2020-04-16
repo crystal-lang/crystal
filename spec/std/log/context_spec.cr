@@ -1,5 +1,6 @@
 require "spec"
 require "log"
+require "json"
 
 private def c(value)
   Log::Context.new(value)
@@ -35,6 +36,53 @@ describe Log::Context do
   it "merge" do
     c({a: 1}).merge(c({b: 2})).should eq(c({a: 1, b: 2}))
     c({a: 1, b: 3}).merge(c({b: 2})).should eq(c({a: 1, b: 2}))
+  end
+
+  describe "#empty?" do
+    it Number do
+      c(17).empty?.should be_false
+    end
+
+    describe Array do
+      it "empty" do
+        c([] of Int32).empty?.should be_true
+      end
+
+      it "not empty" do
+        c([1, 2, 3]).empty?.should be_false
+      end
+    end
+
+    describe String do
+      it "not empty" do
+        c("").empty?.should be_false
+        c("foo").empty?.should be_false
+      end
+    end
+
+    describe Hash do
+      it "empty" do
+        c(Hash(String, String).new).empty?.should be_true
+      end
+
+      it "not empty" do
+        c({"key" => "value"}).empty?.should be_false
+      end
+    end
+  end
+
+  describe "#to_json" do
+    it Number do
+      c(17).to_json.should eq "17"
+    end
+
+    it Array do
+      c([1, 2, 3]).to_json.should eq "[1,2,3]"
+    end
+
+    it Hash do
+      c({"key" => "value"}).to_json.should eq %({"key":"value"})
+    end
   end
 
   describe "implicit context" do
