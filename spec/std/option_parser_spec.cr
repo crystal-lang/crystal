@@ -470,6 +470,53 @@ describe "OptionParser" do
     z.should be_true
   end
 
+  it "parses with subcommands twice" do
+    args = %w(--verbose subcommand --foo 1 --bar sub2 -z)
+    verbose = false
+    subcommand = false
+    foo = nil
+    bar = false
+    sub2 = false
+    z = false
+
+    parser = OptionParser.new do |opts|
+      opts.on("subcommand", "") do
+        subcommand = true
+        opts.on("--foo arg", "") { |v| foo = v }
+        opts.on("--bar", "") { bar = true }
+        opts.on("sub2", "") { sub2 = true }
+      end
+      opts.on("--verbose", "") { verbose = true }
+      opts.on("-z", "--baz", "") { z = true }
+    end
+
+    parser.parse args
+
+    verbose.should be_true
+    subcommand.should be_true
+    foo.should be("1")
+    bar.should be_true
+    sub2.should be_true
+    z.should be_true
+
+    args = %w(--verbose subcommand --foo 1 --bar sub2 -z)
+    verbose = false
+    subcommand = false
+    foo = nil
+    bar = false
+    sub2 = false
+    z = false
+
+    parser.parse args
+
+    verbose.should be_true
+    subcommand.should be_true
+    foo.should be("1")
+    bar.should be_true
+    sub2.should be_true
+    z.should be_true
+  end
+
   it "unregisters subcommands on call" do
     foo = false
     bar = false

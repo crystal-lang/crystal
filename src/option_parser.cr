@@ -295,6 +295,14 @@ class OptionParser
 
   # Parses the passed *args* (defaults to `ARGV`), running the handlers associated to each option.
   def parse(args = ARGV)
+    old_flags = @flags.clone
+    old_handlers = @handlers.clone
+    old_banner = @banner
+    old_unknown_args = @unknown_args
+    old_missing_option = @missing_option
+    old_invalid_option = @invalid_option
+    old_before_each = @before_each
+
     # List of indexes in `args` which have been handled and must be deleted
     handled_args = [] of Int32
     double_dash_index = nil
@@ -417,6 +425,15 @@ class OptionParser
         @invalid_option.call(arg)
       end
     end
+  ensure
+    @flags = old_flags.not_nil!
+    @handlers = old_handlers.not_nil!
+    @stop = false
+    @banner = old_banner
+    @unknown_args = old_unknown_args
+    @missing_option = old_missing_option.not_nil!
+    @invalid_option = old_invalid_option.not_nil!
+    @before_each = old_before_each
   end
 
   @[Deprecated("Use `parse` instead.")]
