@@ -22,7 +22,7 @@ class Crystal::CodeGenVisitor
 
     call_args, has_out = prepare_call_args node, owner
 
-    # It can happen that one of the arguments caused an unreacahble
+    # It can happen that one of the arguments caused an unreachable
     # to happen, so we must stop here
     return false if @builder.end
 

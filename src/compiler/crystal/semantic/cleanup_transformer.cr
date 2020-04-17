@@ -176,7 +176,7 @@ module Crystal
 
       if expanded = node.expanded
         unless node.else
-          replace_unreacahble_if_needed(node, expanded)
+          replace_unreachable_if_needed(node, expanded)
         end
 
         return expanded.transform(self)
@@ -190,7 +190,7 @@ module Crystal
     # In that case we replace the Unreachable node with `raise "..."`.
     # In the future we should disallow creating such values unless the
     # enum is marked as "open".
-    def replace_unreacahble_if_needed(node, expanded)
+    def replace_unreachable_if_needed(node, expanded)
       cond = node.cond
       return unless cond
 
