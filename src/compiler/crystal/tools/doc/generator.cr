@@ -3,7 +3,6 @@ class Crystal::Doc::Generator
 
   @base_dir : String
   @repository : String? = nil
-  getter repository_name = ""
   getter project_info
 
   # Adding a flag and associated css class will add support in parser
@@ -39,7 +38,6 @@ class Crystal::Doc::Generator
                  @project_info : ProjectInfo)
     @base_dir = Dir.current.chomp
     @types = {} of Crystal::Type => Doc::Type
-    @repo_name = ""
     compute_repository
   end
 
@@ -80,7 +78,7 @@ class Crystal::Doc::Generator
 
   def generate_docs_json(program_type, types)
     readme = read_readme
-    json = Main.new(readme, Type.new(self, @program), repository_name)
+    json = Main.new(readme, Type.new(self, @program), project_info)
     puts json
   end
 
@@ -97,7 +95,7 @@ class Crystal::Doc::Generator
 
     File.write File.join(@output_dir, "index.html"), MainTemplate.new(body, types, project_info)
 
-    main_index = Main.new(raw_body, Type.new(self, @program), repository_name)
+    main_index = Main.new(raw_body, Type.new(self, @program), project_info)
     File.write File.join(@output_dir, "index.json"), main_index
     File.write File.join(@output_dir, "search-index.js"), main_index.to_jsonp
   end
@@ -404,7 +402,6 @@ class Crystal::Doc::Generator
 
     info = GIT_REMOTE_PATTERNS[origin.regex]
     @repository = info[:repository] % {user: user, repo: repo, rev: rev}
-    @repository_name = info[:repo_name] % {user: user, repo: repo}
   end
 
   def source_link(node)
