@@ -3520,7 +3520,11 @@ module Crystal
 
     def process_extra_assigns(body, extra_assigns)
       return body if extra_assigns.empty?
-      body.is_a?(Expressions) ? extra_assigns.concat body.expressions : extra_assigns.push body
+      if body.is_a?(Expressions)
+        extra_assigns.concat body.expressions
+      else
+        extra_assigns.push body
+      end
       Expressions.from(extra_assigns)
     end
 
