@@ -3570,7 +3570,7 @@ module Crystal
         next_token_skip_space_or_newline
         block_arg = parse_block_arg(extra_assigns)
         skip_space_or_newline
-        if args.any?(&.name.==(block_arg.name)) || (found_double_splat && found_double_splat.name == block_arg.name)
+        if (!block_arg.name.empty? && args.any?(&.name.==(block_arg.name))) || (found_double_splat && found_double_splat.name == block_arg.name)
           raise "duplicated argument name: #{block_arg.name}", block_arg.location.not_nil!
         end
         return ArgExtras.new(block_arg, false, false, false)
