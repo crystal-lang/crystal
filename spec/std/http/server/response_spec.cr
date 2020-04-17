@@ -215,7 +215,7 @@ describe HTTP::Server::Response do
       io.to_s.should eq("HTTP/1.1 414 Request Error\r\nContent-Type: text/plain\r\nContent-Length: 18\r\n\r\n414 Request Error\n")
     end
 
-    it "closes when if fails to write" do
+    it "closes when it fails to write" do
       io = IO::Memory.new
       response = Response.new(io)
       response.print("Hello")
