@@ -1,5 +1,6 @@
 require "spec"
 require "http/server/request_processor"
+require "../../../support/log"
 
 private class RaiseIOError < IO
   getter writes = 0
@@ -23,21 +24,6 @@ end
 
 private def requestize(string)
   string.gsub('\n', "\r\n")
-end
-
-private def capture_log(source, level : Log::Severity)
-  log = Log.for(source)
-  old_backend = log.backend
-  old_level = log.level
-  log.backend = mem_backend = Log::MemoryBackend.new
-  log.level = level
-  begin
-    yield
-    mem_backend.entries
-  ensure
-    log.backend = old_backend
-    log.level = old_level
-  end
 end
 
 describe HTTP::Server::RequestProcessor do

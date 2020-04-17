@@ -1,20 +1,16 @@
 # A handler that logs the request method, resource, status code, and
-# the time used to execute the next handler, to the given `IO`.
+# the time used to execute the next handler, to the log with source `http.server`.
 class HTTP::LogHandler
   include HTTP::Handler
-
-  # Initializes this handler to log to the given `IO`.
-  def initialize(@io : IO = STDOUT)
-  end
+  Log = HTTP::Server::Log
 
   def call(context)
     elapsed = Time.measure { call_next(context) }
     elapsed_text = elapsed_text(elapsed)
 
-    @io.puts "#{context.request.method} #{context.request.resource} - #{context.response.status_code} (#{elapsed_text})"
+    Log.info { "#{context.request.method} #{context.request.resource} - #{context.response.status_code} (#{elapsed_text})" }
   rescue e
-    @io.puts "#{context.request.method} #{context.request.resource} - Unhandled exception:"
-    e.inspect_with_backtrace(@io)
+    Log.error(exception: e) { "#{context.request.method} #{context.request.resource} - Unhandled exception:" }
     raise e
   end
 

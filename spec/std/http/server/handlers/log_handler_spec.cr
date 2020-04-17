@@ -1,5 +1,6 @@
 require "spec"
 require "http/server/handler"
+require "../../../../support/log"
 
 describe HTTP::LogHandler do
   it "logs" do
@@ -9,11 +10,11 @@ describe HTTP::LogHandler do
     context = HTTP::Server::Context.new(request, response)
 
     called = false
-    log_io = IO::Memory.new
-    handler = HTTP::LogHandler.new(log_io)
+    handler = HTTP::LogHandler.new
     handler.next = ->(ctx : HTTP::Server::Context) { called = true }
-    handler.call(context)
-    log_io.to_s.should match %r(GET / - 200 \(\d+(\.\d+)?[mµn]s\))
+    log = capture_log("http.server") { handler.call(context) }
+    log[0].severity.should eq(Log::Severity::Info)
+    log[0].message.should match %r(GET / - 200 \(\d+(\.\d+)?[mµn]s\))
     called.should be_true
   end
 
@@ -24,12 +25,14 @@ describe HTTP::LogHandler do
     context = HTTP::Server::Context.new(request, response)
 
     called = false
-    log_io = IO::Memory.new
-    handler = HTTP::LogHandler.new(log_io)
+    handler = HTTP::LogHandler.new
     handler.next = ->(ctx : HTTP::Server::Context) { raise "foo" }
-    expect_raises(Exception, "foo") do
-      handler.call(context)
+    log = capture_log("http.server") do
+      expect_raises(Exception, "foo") do
+        handler.call(context)
+      end
     end
-    (log_io.to_s =~ %r(GET / - Unhandled exception:)).should be_truthy
+    log[0].severity.should eq(Log::Severity::Error)
+    log[0].message.should match %r(GET / - Unhandled exception:)
   end
 end
