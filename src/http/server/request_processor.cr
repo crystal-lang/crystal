@@ -47,8 +47,10 @@ class HTTP::Server::RequestProcessor
         begin
           @handler.call(context)
         rescue ex
-          Log.error(exception: ex) { "Unhandled exception on HTTP::Handler" }
-          response.respond_with_status(:internal_server_error)
+          unless response.closed?
+            Log.error(exception: ex) { "Unhandled exception on HTTP::Handler" }
+            response.respond_with_status(:internal_server_error)
+          end
           return
         end
 

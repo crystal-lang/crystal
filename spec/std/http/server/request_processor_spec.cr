@@ -2,7 +2,9 @@ require "spec"
 require "http/server/request_processor"
 
 private class RaiseIOError < IO
-  def initialize
+  getter writes = 0
+
+  def initialize(@raise_on_write = false)
   end
 
   def read(slice : Bytes)
@@ -10,7 +12,12 @@ private class RaiseIOError < IO
   end
 
   def write(slice : Bytes) : Nil
-    raise "not implemented"
+    @writes += 1
+    raise IO::Error.new("...") if @raise_on_write
+  end
+
+  def flush
+    raise IO::Error.new("...")
   end
 end
 
@@ -258,12 +265,38 @@ describe HTTP::Server::RequestProcessor do
     end
   end
 
-  it "handles IO::Error" do
+  it "handles IO::Error while reading" do
     processor = HTTP::Server::RequestProcessor.new { }
     input = RaiseIOError.new
     output = IO::Memory.new
     processor.process(input, output)
     output.rewind.gets_to_end.empty?.should be_true
+  end
+
+  it "handles IO::Error while writing" do
+    processor = HTTP::Server::RequestProcessor.new do |context|
+      context.response.content_type = "text/plain"
+      context.response.print "Hello world"
+      context.response.flush
+    end
+    input = IO::Memory.new("GET / HTTP/1.1\r\n\r\n")
+    output = RaiseIOError.new(true)
+    logs = capture_log("http.server", :info) do
+      processor.process(input, output)
+    end
+    logs.should be_empty
+  end
+
+  it "handles IO::Error while flushing" do
+    processor = HTTP::Server::RequestProcessor.new do |context|
+      context.response.flush
+    end
+    input = IO::Memory.new("GET / HTTP/1.1\r\n\r\n")
+    output = RaiseIOError.new(false)
+    logs = capture_log("http.server", :info) do
+      processor.process(input, output)
+    end
+    logs.should be_empty
   end
 
   it "catches raised error on handler" do
