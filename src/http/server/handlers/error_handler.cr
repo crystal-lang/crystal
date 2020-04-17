@@ -14,14 +14,16 @@ class HTTP::ErrorHandler
     begin
       call_next(context)
     rescue ex : Exception
-      if @verbose
-        context.response.reset
-        context.response.status = :internal_server_error
-        context.response.content_type = "text/plain"
-        context.response.print("ERROR: ")
-        ex.inspect_with_backtrace(context.response)
-      else
-        context.response.respond_with_status(:internal_server_error)
+      unless context.response.closed? || context.response.wrote_headers?
+        if @verbose
+          context.response.reset
+          context.response.status = :internal_server_error
+          context.response.content_type = "text/plain"
+          context.response.print("ERROR: ")
+          ex.inspect_with_backtrace(context.response)
+        else
+          context.response.respond_with_status(:internal_server_error)
+        end
       end
     end
   end
