@@ -97,7 +97,7 @@ as the standard library. Otherwise the barebones `crystal` executable uses the s
 your installation.
 
 Next, make changes to the standard library, making sure you also provide corresponding specs. To run
-the specs for the standard library, run `make std_spec`. To run a particular spec: `bin/crystal spec/std/array_spec.cr`.
+the specs for the standard library, run `make std_spec`. To run a particular spec: `bin/crystal spec spec/std/array_spec.cr`.
 You can use `make help` for a list of available make targets.
 
 Note: at this point you might get long compile error that include "library not found for: ...". This means
