@@ -19,7 +19,7 @@ class HTTP::Server::RequestProcessor
     @wants_close = true
   end
 
-  def process(input, output, error = STDERR)
+  def process(input, output)
     must_close = true
     response = Response.new(output)
 
@@ -47,9 +47,8 @@ class HTTP::Server::RequestProcessor
         begin
           @handler.call(context)
         rescue ex
+          Log.error(exception: ex) { "Unhandled exception on HTTP::Handler" }
           response.respond_with_status(:internal_server_error)
-          error.puts "Unhandled exception on HTTP::Handler"
-          ex.inspect_with_backtrace(error)
           return
         end
 

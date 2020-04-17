@@ -18,6 +18,21 @@ private def requestize(string)
   string.gsub('\n', "\r\n")
 end
 
+private def capture_log(source, level : Log::Severity)
+  log = Log.for(source)
+  old_backend = log.backend
+  old_level = log.level
+  log.backend = mem_backend = Log::MemoryBackend.new
+  log.level = level
+  begin
+    yield
+    mem_backend.entries
+  ensure
+    log.backend = old_backend
+    log.level = old_level
+  end
+end
+
 describe HTTP::Server::RequestProcessor do
   it "works" do
     processor = HTTP::Server::RequestProcessor.new do |context|
@@ -255,8 +270,12 @@ describe HTTP::Server::RequestProcessor do
     processor = HTTP::Server::RequestProcessor.new { raise "OH NO" }
     input = IO::Memory.new("GET / HTTP/1.1\r\n\r\n")
     output = IO::Memory.new
-    error = IO::Memory.new
-    processor.process(input, output, error)
+    logs = capture_log("http.server", :info) do
+      processor.process(input, output)
+    end
+    logs[0].severity.should eq(Log::Severity::Error)
+    logs[0].message.should eq("Unhandled exception on HTTP::Handler")
+    logs[0].exception.should_not be_nil
     output.rewind.gets_to_end.should match(/Internal Server Error/)
   end
 end
