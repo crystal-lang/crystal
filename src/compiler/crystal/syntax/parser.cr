@@ -3519,18 +3519,9 @@ module Crystal
     end
 
     def process_extra_assigns(body, extra_assigns)
-      if extra_assigns.size > 0
-        exps = [] of ASTNode
-        exps.concat extra_assigns
-        if body.is_a?(Expressions)
-          exps.concat body.expressions
-        else
-          exps.push body
-        end
-        body = Expressions.from(exps)
-      else
-        body
-      end
+      return body if extra_assigns.empty?
+      body.is_a?(Expressions) ? extra_assigns.concat body.expressions : extra_assigns.push body
+      Expressions.from(extra_assigns)
     end
 
     def check_valid_def_name
