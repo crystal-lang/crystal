@@ -54,6 +54,8 @@ class HTTP::Server::RequestProcessor
             end
           end
           return
+        ensure
+          response.output.close
         end
 
         if response.upgraded?
@@ -61,7 +63,6 @@ class HTTP::Server::RequestProcessor
           return
         end
 
-        response.output.close
         output.flush
 
         break unless request.keep_alive?

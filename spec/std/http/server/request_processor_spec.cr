@@ -324,4 +324,18 @@ describe HTTP::Server::RequestProcessor do
     processor.process(input, output)
     output.rewind.gets_to_end.should_not match(/Internal Server Error/)
   end
+
+  it "flushes output buffer when an error happens and some content was already sent" do
+    processor = HTTP::Server::RequestProcessor.new do |context|
+      context.response.content_type = "text/plain"
+      context.response.print "Hello "
+      context.response.flush
+      context.response.print "world"
+      raise "OH NO"
+    end
+    input = IO::Memory.new("GET / HTTP/1.1\r\n\r\n")
+    output = IO::Memory.new
+    processor.process(input, output)
+    output.rewind.gets_to_end.should match(/world/)
+  end
 end
