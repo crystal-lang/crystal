@@ -1,6 +1,7 @@
 require "spec"
 require "http/server/handler"
 require "../../../../support/log"
+require "../../../../support/io"
 
 describe HTTP::LogHandler do
   it "logs" do
@@ -34,5 +35,17 @@ describe HTTP::LogHandler do
     end
     log[0].severity.should eq(Log::Severity::Error)
     log[0].message.should match %r(GET / - Unhandled exception:)
+  end
+
+  it "doesn't log error when the response has been closed" do
+    io = RaiseIOError.new
+    request = HTTP::Request.new("GET", "/")
+    response = HTTP::Server::Response.new(io)
+    context = HTTP::Server::Context.new(request, response)
+
+    handler = HTTP::LogHandler.new
+    handler.next = ->(ctx : HTTP::Server::Context) { ctx.response.flush }
+    log = capture_log("http.server") { handler.call(context) rescue nil }
+    log.should be_empty
   end
 end

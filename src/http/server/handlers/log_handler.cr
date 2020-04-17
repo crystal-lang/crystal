@@ -10,7 +10,9 @@ class HTTP::LogHandler
 
     Log.info { "#{context.request.method} #{context.request.resource} - #{context.response.status_code} (#{elapsed_text})" }
   rescue e
-    Log.error(exception: e) { "#{context.request.method} #{context.request.resource} - Unhandled exception:" }
+    unless context.response.closed?
+      Log.error(exception: e) { "#{context.request.method} #{context.request.resource} - Unhandled exception:" }
+    end
     raise e
   end
 
