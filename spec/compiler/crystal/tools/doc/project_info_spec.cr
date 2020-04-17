@@ -92,6 +92,17 @@ describe Crystal::Doc::ProjectInfo do
         assert_with_defaults(ProjectInfo.new(nil, "1.1"), ProjectInfo.new("foo", "1.1", refname: nil))
         assert_with_defaults(ProjectInfo.new("bar", "2.0"), ProjectInfo.new("bar", "2.0", refname: nil))
       end
+
+      it "git with remote" do
+        run_git "init"
+        run_git "remote add origin git@github.com:foo/bar"
+
+        url_pattern = "https://github.com/foo/bar/blob/%{refname}/%{path}#L%{line}"
+        assert_with_defaults(ProjectInfo.new(nil, nil), ProjectInfo.new("foo", nil, refname: nil, source_url_pattern: url_pattern))
+        assert_with_defaults(ProjectInfo.new("bar", "2.0"), ProjectInfo.new("bar", "2.0", refname: nil, source_url_pattern: url_pattern))
+        assert_with_defaults(ProjectInfo.new(nil, "2.0"), ProjectInfo.new("foo", "2.0", refname: nil, source_url_pattern: url_pattern))
+        assert_with_defaults(ProjectInfo.new(nil, "2.0", source_url_pattern: "foo_bar"), ProjectInfo.new("foo", "2.0", refname: nil, source_url_pattern: "foo_bar"))
+      end
     end
 
     it "no shard.yml, but git tagged version" do
@@ -153,6 +164,40 @@ describe Crystal::Doc::ProjectInfo do
     ProjectInfo.find_git_version.should eq "0.1.0"
   end
 
+  describe ".git_remote" do
+    it "no git workdir" do
+      ProjectInfo.git_remote.should be_nil
+    end
+
+    it "no remote" do
+      run_git "init"
+      ProjectInfo.git_remote.should be_nil
+    end
+
+    it "simple origin" do
+      run_git "init"
+      run_git "remote add origin https://example.com/foo.git"
+      ProjectInfo.git_remote.should eq "https://example.com/foo.git"
+    end
+
+    it "origin plus other" do
+      run_git "init"
+      run_git "remote add bar https://example.com/bar.git"
+      run_git "remote add origin https://example.com/foo.git"
+      run_git "remote add baz https://example.com/baz.git"
+      `git remote -v`
+      ProjectInfo.git_remote.should eq "https://example.com/foo.git"
+    end
+
+    it "no origin remote" do
+      run_git "init"
+      run_git "remote add bar https://example.com/bar.git"
+      run_git "remote add baz https://example.com/baz.git"
+      `git remote -v`
+      ProjectInfo.git_remote.should eq "https://example.com/bar.git"
+    end
+  end
+
   describe ".read_shard_properties" do
     it "no shard.yml" do
       ProjectInfo.read_shard_properties.should eq({nil, nil})
@@ -204,6 +249,85 @@ describe Crystal::Doc::ProjectInfo do
 
       File.write("shard.yml", "name: # comment\nversion: # comment")
       ProjectInfo.read_shard_properties.should eq({nil, nil})
+    end
+  end
+
+  it ".find_source_url_pattern" do
+    ProjectInfo.find_source_url_pattern("no a uri").should be_nil
+    ProjectInfo.find_source_url_pattern("git@example.com:foo/bar").should be_nil
+    ProjectInfo.find_source_url_pattern("http://example.com/foo/bar").should be_nil
+
+    ProjectInfo.find_source_url_pattern("git@github.com:foo/bar/").should eq "https://github.com/foo/bar/blob/%{refname}/%{path}#L%{line}"
+    ProjectInfo.find_source_url_pattern("git@github.com:foo/bar.git").should eq "https://github.com/foo/bar.git/blob/%{refname}/%{path}#L%{line}"
+
+    ProjectInfo.find_source_url_pattern("git@github.com:foo/bar").should eq "https://github.com/foo/bar/blob/%{refname}/%{path}#L%{line}"
+    ProjectInfo.find_source_url_pattern("http://github.com/foo/bar").should eq "https://github.com/foo/bar/blob/%{refname}/%{path}#L%{line}"
+    ProjectInfo.find_source_url_pattern("https://github.com/foo/bar").should eq "https://github.com/foo/bar/blob/%{refname}/%{path}#L%{line}"
+    ProjectInfo.find_source_url_pattern("http://www.github.com/foo/bar").should eq "https://github.com/foo/bar/blob/%{refname}/%{path}#L%{line}"
+    ProjectInfo.find_source_url_pattern("https://www.github.com/foo/bar").should eq "https://github.com/foo/bar/blob/%{refname}/%{path}#L%{line}"
+
+    ProjectInfo.find_source_url_pattern("https://github.com/foo/bar.git").should eq "https://github.com/foo/bar.git/blob/%{refname}/%{path}#L%{line}"
+    ProjectInfo.find_source_url_pattern("https://github.com/foo/bar.cr").should eq "https://github.com/foo/bar.cr/blob/%{refname}/%{path}#L%{line}"
+    ProjectInfo.find_source_url_pattern("https://github.com/foo/bar.cr.git").should eq "https://github.com/foo/bar.cr.git/blob/%{refname}/%{path}#L%{line}"
+
+    ProjectInfo.find_source_url_pattern("git@gitlab.com:foo/bar").should eq "https://gitlab.com/foo/bar/blob/%{refname}/%{path}#L%{line}"
+    ProjectInfo.find_source_url_pattern("http://gitlab.com/foo/bar").should eq "https://gitlab.com/foo/bar/blob/%{refname}/%{path}#L%{line}"
+
+    ProjectInfo.find_source_url_pattern("git@bitbucket.com:foo/bar").should eq "https://bitbucket.com/foo/bar/src/%{refname}/%{path}#%{filename}-%{line}"
+    ProjectInfo.find_source_url_pattern("http://bitbucket.com/foo/bar").should eq "https://bitbucket.com/foo/bar/src/%{refname}/%{path}#%{filename}-%{line}"
+
+    ProjectInfo.find_source_url_pattern("git@git.sr.ht:~foo/bar").should eq "https://git.sr.ht/~foo/bar/tree/%{refname}/%{path}#L%{line}"
+    ProjectInfo.find_source_url_pattern("http://git.sr.ht/~foo/bar").should eq "https://git.sr.ht/~foo/bar/tree/%{refname}/%{path}#L%{line}"
+  end
+
+  describe "#source_url" do
+    it "fails if refname is missing" do
+      location = Crystal::Doc::Generator::RelativeLocation.new("foo/bar.baz", 42, "", true)
+      info = ProjectInfo.new("test", "v1.0", refname: nil, source_url_pattern: "http://git.example.com/test.git/src/%{refname}/%{path}#L%{line}")
+      info.source_url(location).should be_nil
+    end
+
+    it "fails if pattern is missing" do
+      location = Crystal::Doc::Generator::RelativeLocation.new("foo/bar.baz", 42, "", true)
+      info = ProjectInfo.new("test", "v1.0", refname: "master")
+      info.source_url(location).should be_nil
+    end
+
+    it "builds url" do
+      info = ProjectInfo.new("test", "v1.0", refname: "master", source_url_pattern: "http://git.example.com/test.git/src/%{refname}/%{path}#L%{line}")
+      location = Crystal::Doc::Generator::RelativeLocation.new("foo/bar.baz", 42, "", true)
+      info.source_url(location).should eq "http://git.example.com/test.git/src/master/foo/bar.baz#L42"
+    end
+
+    it "returns nil for empty pattern" do
+      info = ProjectInfo.new("test", "v1.0", refname: "master", source_url_pattern: "")
+      location = Crystal::Doc::Generator::RelativeLocation.new("foo/bar.baz", 42, "", true)
+      info.source_url(location).should be_nil
+    end
+  end
+
+  describe "#source_url" do
+    it "fails if refname is missing" do
+      location = Crystal::Doc::Generator::RelativeLocation.new("foo/bar.baz", 42, "", true)
+      info = ProjectInfo.new("test", "v1.0")
+      info.source_url_pattern = "http://git.example.com/test.git/src/%{refname}/%{path}#L%{line}"
+      info.refname = nil
+      info.source_url(location).should be_nil
+    end
+
+    it "fails if pattern is missing" do
+      location = Crystal::Doc::Generator::RelativeLocation.new("foo/bar.baz", 42, "", true)
+      info = ProjectInfo.new("test", "v1.0")
+      info.refname = "master"
+      info.source_url(location).should be_nil
+    end
+
+    it "builds url" do
+      info = ProjectInfo.new("test", "v1.0")
+      info.refname = "master"
+      info.source_url_pattern = "http://git.example.com/test.git/src/%{refname}/%{path}#L%{line}"
+      location = Crystal::Doc::Generator::RelativeLocation.new("foo/bar.baz", 42, "", true)
+      info.source_url(location).should eq "http://git.example.com/test.git/src/master/foo/bar.baz#L42"
     end
   end
 end

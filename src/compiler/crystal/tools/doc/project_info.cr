@@ -4,11 +4,12 @@ module Crystal::Doc
     property! version : String
     property json_config_url : String? = nil
     property refname : String? = nil
+    property source_url_pattern : String? = nil
 
-    def initialize(@name : String? = nil, @version : String? = nil, @refname : String? = nil)
+    def initialize(@name : String? = nil, @version : String? = nil, @refname : String? = nil, @source_url_pattern : String? = nil)
     end
 
-    def_equals_and_hash @name, @version, @json_config_url, @refname
+    def_equals_and_hash @name, @version, @json_config_url, @refname, @source_url_pattern
 
     def crystal_stdlib?
       name == "Crystal"
@@ -25,6 +26,12 @@ module Crystal::Doc
         self.refname ||= ProjectInfo.git_ref(branch: false)
       end
 
+      unless source_url_pattern
+        if remote = ProjectInfo.git_remote
+          self.source_url_pattern = ProjectInfo.find_source_url_pattern(remote)
+        end
+      end
+
       unless name? && version?
         shard_name, shard_version = ProjectInfo.read_shard_properties
         if shard_name && !name?
@@ -34,6 +41,16 @@ module Crystal::Doc
           self.version = shard_version
         end
       end
+    end
+
+    def source_url(location : Generator::RelativeLocation)
+      refname = self.refname
+      url_pattern = source_url_pattern
+
+      return unless refname && url_pattern
+
+      url = url_pattern % {refname: refname, path: location.filename, filename: File.basename(location.filename), line: location.line_number}
+      url.presence
     end
 
     def self.git_dir?
@@ -54,6 +71,56 @@ module Crystal::Doc
 
         ref
       end
+    end
+
+    def self.find_source_url_pattern(remote)
+      if (at_index = remote.index('@')) && (colon_index = remote.index(':')) && at_index < colon_index
+        # SSH URI
+        host = remote[(at_index + 1)...colon_index]
+        path = remote[(colon_index + 1)..]
+      else
+        begin
+          uri = URI.parse(remote)
+        rescue URI::Error
+          return
+        end
+        host = uri.host
+        path = uri.path
+      end
+
+      path = path.strip("/")
+
+      case host
+      when "github.com", "www.github.com"
+        "https://github.com/#{path}/blob/%{refname}/%{path}#L%{line}"
+      when "gitlab.com", "www.gitlab.com"
+        "https://gitlab.com/#{path}/blob/%{refname}/%{path}#L%{line}"
+      when "bitbucket.com", "www.bitbucket.com"
+        "https://bitbucket.com/#{path}/src/%{refname}/%{path}#%{filename}-%{line}"
+      when "git.sr.ht"
+        "https://git.sr.ht/#{path}/tree/%{refname}/%{path}#L%{line}"
+      else
+        # Unknown remote host, can't determine source url pattern
+      end
+    end
+
+    def self.git_remote
+      # check whether inside git work-tree
+      status = Process.run("git", ["rev-parse", "--is-inside-work-tree"])
+      return unless status.success?
+
+      io = IO::Memory.new
+      status = Process.run("git", ["remote", "-v"], output: io)
+      return unless status.success?
+
+      remotes = io.to_s.lines.select(&.ends_with?(" (fetch)"))
+
+      git_remote = remotes.find(&.starts_with?("origin\t")) || remotes.first? || return
+
+      start_pos = git_remote.index("\t")
+      end_pos = git_remote.rindex(" ")
+      return unless start_pos && end_pos
+      git_remote[(start_pos + 1)...end_pos].presence
     end
 
     def self.git_clean?
