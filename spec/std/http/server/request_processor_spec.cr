@@ -311,4 +311,17 @@ describe HTTP::Server::RequestProcessor do
     logs[0].exception.should_not be_nil
     output.rewind.gets_to_end.should match(/Internal Server Error/)
   end
+
+  it "doesn't respond with error when headers were already sent" do
+    processor = HTTP::Server::RequestProcessor.new do |context|
+      context.response.content_type = "text/plain"
+      context.response.print "Hello world"
+      context.response.flush
+      raise "OH NO"
+    end
+    input = IO::Memory.new("GET / HTTP/1.1\r\n\r\n")
+    output = IO::Memory.new
+    processor.process(input, output)
+    output.rewind.gets_to_end.should_not match(/Internal Server Error/)
+  end
 end

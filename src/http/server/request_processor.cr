@@ -49,7 +49,9 @@ class HTTP::Server::RequestProcessor
         rescue ex
           unless response.closed?
             Log.error(exception: ex) { "Unhandled exception on HTTP::Handler" }
-            response.respond_with_status(:internal_server_error)
+            unless response.wrote_headers?
+              response.respond_with_status(:internal_server_error)
+            end
           end
           return
         end
