@@ -1,8 +1,10 @@
+require "log"
+
 # A handler that logs the request method, resource, status code, and
 # the time used to execute the next handler, to the log with source `http.server`.
 class HTTP::LogHandler
   include HTTP::Handler
-  Log = HTTP::Server::Log
+  Log = ::Log.for("http.server")
 
   @[Deprecated("Use `new` without arguments instead")]
   def initialize(io : IO)

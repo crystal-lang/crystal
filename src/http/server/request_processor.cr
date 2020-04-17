@@ -1,6 +1,9 @@
 require "./handler"
+require "log"
 
 class HTTP::Server::RequestProcessor
+  Log = ::Log.for("http.server")
+
   # Maximum permitted size of the request line in an HTTP request.
   property max_request_line_size = HTTP::MAX_REQUEST_LINE_SIZE
 
