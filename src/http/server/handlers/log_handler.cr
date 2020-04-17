@@ -4,6 +4,13 @@ class HTTP::LogHandler
   include HTTP::Handler
   Log = HTTP::Server::Log
 
+  @[Deprecated("Use `new` without arguments instead")]
+  def initialize(io : IO)
+  end
+
+  def initialize
+  end
+
   def call(context)
     elapsed = Time.measure { call_next(context) }
     elapsed_text = elapsed_text(elapsed)
