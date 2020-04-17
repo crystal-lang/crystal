@@ -2,7 +2,7 @@
 class Log::IOBackend < Log::Backend
   property io : IO
   property progname : String
-  property formatter : Formatter? = nil
+  property formatter : Formatter?
 
   def initialize(@io = STDOUT, @formatter = nil)
     @mutex = Mutex.new(:unchecked)
