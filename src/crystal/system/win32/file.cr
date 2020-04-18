@@ -6,9 +6,9 @@ require "c/sys/stat"
 require "c/winbase"
 
 module Crystal::System::File
-  def self.open(filename : String, mode : String, perm : Int32 | ::File::Permissions) : LibC::Int
+  def self.open(filename : String, mode : String | ::File::Mode, perm : Int32 | ::File::Permissions) : LibC::Int
     perm = ::File::Permissions.new(perm) if perm.is_a? Int32
-    oflag = open_flag(mode) | LibC::O_BINARY | LibC::O_NOINHERIT
+    oflag = open_flag(mode).to_i32 | LibC::O_BINARY | LibC::O_NOINHERIT
 
     # Only the owner writable bit is used, since windows only supports
     # the read only attribute.

@@ -223,6 +223,33 @@ describe "File" do
     end
   end
 
+  describe "open with symnofollow" do
+    pending_win32 "doesn't follow symlinks" do
+      file = datapath("test_file.txt")
+      other = datapath("test_file.ini")
+
+      with_tempfile("test_file_symlink.txt") do |symlink|
+        File.symlink(File.real_path(file), symlink)
+        File.open(symlink, :read)
+        File.open(symlink, File::Mode.flags(Read))
+        expect_raises(IO::Error) do
+          File.open(symlink, :read, :symlink_no_follow)
+        end
+        expect_raises(IO::Error) do
+          File.open(symlink, File::Mode.flags(Read, SymlinkNoFollow))
+        end
+      end
+
+      with_tempfile("test_file_symlink.txt") do |symlink|
+        File.symlink(File.real_path(file), symlink)
+        File.open(symlink, File::Mode.flags(Read))
+        expect_raises(IO::Error) do
+          File.open(symlink, File::Mode.flags(Read, SymlinkNoFollow))
+        end
+      end
+    end
+  end
+
   describe "same?" do
     it "compares following symlinks only if requested" do
       file = datapath("test_file.txt")
@@ -419,7 +446,7 @@ describe "File" do
     end
 
     it "gets for open file" do
-      File.open(datapath("test_file.txt"), "r") do |file|
+      File.open(datapath("test_file.txt")) do |file|
         info = file.info
         info.type.should eq(File::Type::File)
       end
@@ -468,7 +495,7 @@ describe "File" do
   describe "size" do
     it { File.size(datapath("test_file.txt")).should eq(240) }
     it do
-      File.open(datapath("test_file.txt"), "r") do |file|
+      File.open(datapath("test_file.txt")) do |file|
         file.size.should eq(240)
       end
     end
@@ -489,12 +516,16 @@ describe "File" do
   end
 
   describe "delete" do
-    it "deletes a file" do
-      with_tempfile("delete-file.txt") do |filename|
-        File.open(filename, "w") { }
-        File.exists?(filename).should be_true
-        File.delete(filename)
-        File.exists?(filename).should be_false
+    {"w", File::Mode.flags(Write, Create)}.each do |mode|
+      describe "mode(#{mode})" do
+        it "deletes a file" do
+          with_tempfile("delete-file.txt") do |filename|
+            File.open(filename, mode) { }
+            File.exists?(filename).should be_true
+            File.delete(filename)
+            File.exists?(filename).should be_false
+          end
+        end
       end
     end
 
@@ -702,7 +733,7 @@ describe "File" do
 
     it "can create a new file in append mode" do
       with_tempfile("append-create.txt") do |path|
-        File.write(path, "hello", mode: "a")
+        File.write(path, "hello", mode: File::Mode.flags(Create, Append))
         File.read(path).should eq("hello")
       end
     end
@@ -711,7 +742,7 @@ describe "File" do
       with_tempfile("append-existing.txt") do |path|
         File.write(path, "hello")
         File.read(path).should eq("hello")
-        File.write(path, " world", mode: "a")
+        File.write(path, " world", mode: File::Mode.flags(Create, Append))
         File.read(path).should eq("hello world")
       end
     end
@@ -732,19 +763,19 @@ describe "File" do
     end
 
     it "is closed when closed" do
-      file = File.new(datapath("test_file.txt"))
+      file = File.open(datapath("test_file.txt"))
       file.close
       file.closed?.should be_true
     end
 
     it "should not raise when closing twice" do
-      file = File.new(datapath("test_file.txt"))
+      file = File.open(datapath("test_file.txt"))
       file.close
       file.close
     end
 
     it "does to_s when closed" do
-      file = File.new(datapath("test_file.txt"))
+      file = File.open(datapath("test_file.txt"))
       file.close
       file.to_s.should eq("#<File:0x#{file.object_id.to_s(16)}>")
       file.inspect.should eq("#<File:#{datapath("test_file.txt")} (closed)>")
@@ -754,7 +785,7 @@ describe "File" do
   it "opens with perm (int)" do
     with_tempfile("write_with_perm-int.txt") do |path|
       perm = 0o600
-      File.open(path, "w", perm) do |file|
+      File.open(path, :write, :create, permissions: perm) do |file|
         file.info.permissions.should eq(normalize_permissions(perm, directory: false))
       end
     end
@@ -763,7 +794,7 @@ describe "File" do
   it "opens with perm (File::Permissions)" do
     with_tempfile("write_with_perm.txt") do |path|
       perm = File::Permissions.flags(OwnerRead, OwnerWrite)
-      File.open(path, "w", perm) do |file|
+      File.open(path, :write, :create, permissions: perm) do |file|
         file.info.permissions.should eq(normalize_permissions(perm.value, directory: false))
       end
     end
@@ -786,7 +817,7 @@ describe "File" do
   end
 
   it "raises if invoking seek with a closed file" do
-    file = File.new(datapath("test_file.txt"))
+    file = File.open(datapath("test_file.txt"))
     file.close
     expect_raises(IO::Error, "Closed stream") { file.seek(1) }
   end
@@ -811,7 +842,7 @@ describe "File" do
   end
 
   it "raises if invoking tell with a closed file" do
-    file = File.new(datapath("test_file.txt"))
+    file = File.open(datapath("test_file.txt"))
     file.close
     expect_raises(IO::Error, "Closed stream") { file.tell }
   end
@@ -867,7 +898,7 @@ describe "File" do
     it "truncates" do
       with_tempfile("truncate.txt") do |path|
         File.write(path, "0123456789")
-        File.open(path, "r+") do |f|
+        File.open(path, :read, :write) do |f|
           f.gets_to_end.should eq("0123456789")
           f.rewind
           f.puts("333")
@@ -881,7 +912,7 @@ describe "File" do
     it "truncates completely when no size is passed" do
       with_tempfile("truncate-no_size.txt") do |path|
         File.write(path, "0123456789")
-        File.open(path, "r+") do |f|
+        File.open(path, :read, :write) do |f|
           f.puts("333")
           f.truncate
         end
@@ -893,7 +924,7 @@ describe "File" do
     it "requires a file opened for writing" do
       with_tempfile("truncate-opened.txt") do |path|
         File.write(path, "0123456789")
-        File.open(path, "r") do |f|
+        File.open(path) do |f|
           expect_raises(File::Error, "Error truncating file: '#{path.inspect_unquoted}'") do
             f.truncate(4)
           end
@@ -905,7 +936,7 @@ describe "File" do
   describe "fsync" do
     pending_win32 "syncs OS file buffer to disk" do
       with_tempfile("fsync.txt") do |path|
-        File.open(path, "a") do |f|
+        File.open(path, :append, :create) do |f|
           f.puts("333")
           f.fsync
           File.read(path).should eq("333\n")
@@ -976,7 +1007,7 @@ describe "File" do
 
   describe "raises on null byte" do
     it_raises_on_null_byte "new" do
-      File.new("foo\0bar")
+      File.open("foo\0bar")
     end
 
     it_raises_on_null_byte "join" do
@@ -1087,7 +1118,7 @@ describe "File" do
       path = datapath("file-to-be-deleted")
       File.touch(path)
 
-      file = File.new path
+      file = File.open path
       file.close
 
       File.exists?(path).should be_true
@@ -1142,7 +1173,7 @@ describe "File" do
 
   describe "closed stream" do
     it "raises if writing on a closed stream" do
-      io = File.open(datapath("test_file.txt"), "r")
+      io = File.open(datapath("test_file.txt"))
       io.close
 
       expect_raises(IO::Error, "Closed stream") { io.gets_to_end }
@@ -1210,7 +1241,7 @@ describe "File" do
 
     it "raises if path contains non-existent directory" do
       with_tempfile(File.join("nonexistant-dir", "touch.txt")) do |path|
-        expect_raises(File::NotFoundError, "Error opening file with mode 'a': '#{path.inspect_unquoted}'") do
+        expect_raises(File::NotFoundError, "Error opening file with mode 'Append | Create': '#{path.inspect_unquoted}'") do
           File.touch(path)
         end
       end

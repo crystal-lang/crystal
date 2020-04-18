@@ -91,7 +91,7 @@ class IO::FileDescriptor < IO
   # ```
   # File.write("testfile", "abc")
   #
-  # file = File.new("testfile")
+  # file = File.open("testfile")
   # file.gets(3) # => "abc"
   # file.seek(1, IO::Seek::Set)
   # file.gets(2) # => "bc"
@@ -128,7 +128,7 @@ class IO::FileDescriptor < IO
   # ```
   # File.write("testfile", "hello")
   #
-  # file = File.new("testfile")
+  # file = File.open("testfile")
   # file.pos     # => 0
   # file.gets(2) # => "he"
   # file.pos     # => 2
@@ -144,7 +144,7 @@ class IO::FileDescriptor < IO
   # ```
   # File.write("testfile", "hello")
   #
-  # file = File.new("testfile")
+  # file = File.open("testfile")
   # file.pos = 3
   # file.gets_to_end # => "lo"
   # ```
