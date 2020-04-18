@@ -140,6 +140,8 @@ struct Enum
       String.build { |io| to_s(io) }
     {% else %}
       {% for member, i in @type.constants %}
+        # Can't use `case` here because case with duplicate values do
+        # not compile, but enums can have duplicates (such as `enum Foo; FOO = 1; BAR = 1; end`).
         {{ (i > 0 ? "elsif" : "if").id }} value == {{@type.constant(member)}}
           {{member.stringify}}
       {% end %}
