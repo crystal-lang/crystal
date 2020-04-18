@@ -72,7 +72,7 @@ class OAuth2::Client
                  @authorize_uri = "/oauth2/authorize",
                  @token_uri = "/oauth2/token",
                  @redirect_uri : String? = nil,
-                 @auth_scheme = AuthScheme::HTTP_Basic)
+                 @auth_scheme = AuthScheme::HTTPBasic)
   end
 
   # Builds an authorize URI, as specified by

@@ -129,7 +129,7 @@ describe OAuth2::Client do
         address = server.bind_unused_port "::1"
 
         run_server(server) do
-          client = OAuth2::Client.new "[::1]", "client_id", "client_secret", port: address.port, scheme: "http", auth_scheme: OAuth2::AuthScheme::Request_Body
+          client = OAuth2::Client.new "[::1]", "client_id", "client_secret", port: address.port, scheme: "http", auth_scheme: OAuth2::AuthScheme::RequestBody
 
           token = client.get_access_token_using_authorization_code(authorization_code: "SDFhw39fwfg23flSfpawbef")
           token.extra.not_nil!["body"].should eq expected
@@ -148,7 +148,7 @@ describe OAuth2::Client do
         address = server.bind_unused_port "::1"
 
         run_server(server) do
-          client = OAuth2::Client.new "[::1]", "client_id", "client_secret", port: address.port, scheme: "http", auth_scheme: OAuth2::AuthScheme::Request_Body
+          client = OAuth2::Client.new "[::1]", "client_id", "client_secret", port: address.port, scheme: "http", auth_scheme: OAuth2::AuthScheme::RequestBody
 
           token = client.get_access_token_using_resource_owner_credentials(username: "user123", password: "monkey", scope: "read_posts")
           token.extra.not_nil!["body"].should eq expected
@@ -167,7 +167,7 @@ describe OAuth2::Client do
         address = server.bind_unused_port "::1"
 
         run_server(server) do
-          client = OAuth2::Client.new "[::1]", "client_id", "client_secret", port: address.port, scheme: "http", auth_scheme: OAuth2::AuthScheme::Request_Body
+          client = OAuth2::Client.new "[::1]", "client_id", "client_secret", port: address.port, scheme: "http", auth_scheme: OAuth2::AuthScheme::RequestBody
 
           token = client.get_access_token_using_client_credentials(scope: "read_posts")
           token.extra.not_nil!["body"].should eq expected
@@ -186,7 +186,7 @@ describe OAuth2::Client do
         address = server.bind_unused_port "::1"
 
         run_server(server) do
-          client = OAuth2::Client.new "[::1]", "client_id", "client_secret", port: address.port, scheme: "http", auth_scheme: OAuth2::AuthScheme::Request_Body
+          client = OAuth2::Client.new "[::1]", "client_id", "client_secret", port: address.port, scheme: "http", auth_scheme: OAuth2::AuthScheme::RequestBody
 
           token = client.get_access_token_using_refresh_token(scope: "read_posts", refresh_token: "some_refresh_token")
           token.extra.not_nil!["body"].should eq expected
